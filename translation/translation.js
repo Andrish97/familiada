@@ -1,15 +1,15 @@
-import pl from "./pl.js";
+const TRANSLATION_VERSION = "20260312-1";
 
 const LANG_LOADERS = {
-  pl: async () => pl,
-  en: async () => (await import("./en.js")).default,
-  uk: async () => (await import("./uk.js")).default,
+  pl: async () => (await import(`./pl.js?v=${TRANSLATION_VERSION}`)).default,
+  en: async () => (await import(`./en.js?v=${TRANSLATION_VERSION}`)).default,
+  uk: async () => (await import(`./uk.js?v=${TRANSLATION_VERSION}`)).default,
 };
 
 const LANG_ORDER = ["pl", "en", "uk"];
 
 let currentLang = "pl";
-let translations = pl;
+let translations = null;
 
 let switcherEl = null; // container w topbarze
 let menuEl = null;     // portal w body
@@ -98,7 +98,7 @@ export function t(key, vars = {}) {
     .split(".")
     .reduce(
       (acc, part) => (acc && acc[part] !== undefined ? acc[part] : undefined),
-      translations || pl
+      translations
     );
 
   if (value == null) return key;
@@ -108,7 +108,7 @@ export function t(key, vars = {}) {
 }
 
 export function getI18nSection(section) {
-  return (translations && translations[section]) || (pl && pl[section]) || {};
+  return (translations && translations[section]) || {};
 }
 
 export function withLangParam(url) {
@@ -302,7 +302,7 @@ function updateSwitcherLabel() {
   const btn = switcherEl.querySelector(".lang-btn");
   if (!btn) return;
 
-  const meta = translations?.meta || pl.meta;
+  const meta = translations?.meta || {};
   btn.textContent = meta.flag;
   btn.setAttribute("aria-label", t("common.languageLabel"));
 }
