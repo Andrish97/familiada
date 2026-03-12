@@ -27,8 +27,13 @@ function buildModalHtml() {
           </div>
           <div class="field" style="margin-top:10px">
             <label class="field-label" id="cModalAttachLabel"></label>
-            <input type="file" id="cModalAttachments" multiple accept="image/*,.pdf,.doc,.docx,.txt,.zip" style="width:100%;font-size:12px;color:rgba(255,255,255,.6);background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);border-radius:6px;padding:6px 8px;box-sizing:border-box;cursor:pointer;"/>
-            <div style="font-size:11px;opacity:.4;margin-top:3px" id="cModalAttachHint"></div>
+            <input type="file" id="cModalAttachments" multiple style="display:none"/>
+            <label for="cModalAttachments" style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);font-size:12px;color:rgba(255,255,255,.65);cursor:pointer;user-select:none">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+              <span id="cModalAttachBtnLabel"></span>
+            </label>
+            <div id="cModalAttachHint" style="font-size:11px;opacity:.4;margin-top:3px"></div>
+            <div id="cModalFileList" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px"></div>
           </div>
           <div id="cModalError" style="margin-top:8px;font-size:13px;color:#ff6b6b;display:none"></div>
           <div class="modal-actions" style="margin-top:14px">
@@ -55,7 +60,8 @@ function applyLabels() {
   set("cModalTicketLabel",  "contact.modal.ticket");
   set("cModalSubjectLabel", "contact.modal.subject");
   set("cModalMessageLabel", "contact.modal.message");
-  set("cModalAttachLabel",  "contact.modal.attachments");
+  set("cModalAttachLabel",    "contact.modal.attachments");
+  set("cModalAttachBtnLabel", "contact.modal.chooseFiles");
   set("cModalClose",        "common.cancel");
   set("cModalSubmit",       "contact.modal.submit");
   set("cModalSuccessTitle", "contact.modal.successTitle");
@@ -78,6 +84,15 @@ function ensureModal() {
     const ticket = document.getElementById("cModalTicket")?.value.trim();
     const subjectField = document.getElementById("cModalSubjectField");
     if (subjectField) subjectField.style.display = ticket ? "none" : "";
+  });
+
+  document.getElementById("cModalAttachments")?.addEventListener("change", (e) => {
+    const list = document.getElementById("cModalFileList");
+    if (!list) return;
+    const files = Array.from(e.target.files || []);
+    list.innerHTML = files.map(f =>
+      `<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;border:1px solid rgba(255,255,255,.12);font-size:11px;color:rgba(255,255,255,.6)">${f.name}</span>`
+    ).join("");
   });
 
   window.addEventListener("i18n:lang", applyLabels);

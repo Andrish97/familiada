@@ -2390,10 +2390,9 @@ async function sendCompose(defaults) {
     const json = await res.json();
     if (!json.ok) throw new Error(json.error);
     showToast(t("settings.reports.compose.sent") || "Wysłano.", "success");
-    if (status) status.textContent = t("settings.reports.compose.sent") || "Wysłano.";
-    document.getElementById("composeToInput").value = "";
-    document.getElementById("composeSubjectInput").value = "";
-    document.getElementById("composeMessageArea").value = "";
+    const conv = document.getElementById("mailConv");
+    if (conv) conv.innerHTML = `<div class="mail-conv-placeholder"><div style="font-size:48px;margin-bottom:12px;opacity:.3">✉</div><div style="opacity:.4;font-size:13px">${t("settings.reports.selectMsg") || "Wybierz wątek"}</div></div>`;
+    msgActiveId = null;
     await loadMailFolder({ silent: true });
   } catch (err) {
     if (status) status.textContent = "";
