@@ -1776,10 +1776,22 @@ async function openReport(id) {
   renderConversation(report, messages);
 }
 
-function renderSentPreview(row) {
+async function renderSentPreview(row) {
   const conv = document.getElementById("mailConv");
   if (!conv) return;
   const statusMap = { sent: "Wysłany", pending: "Oczekujący", failed: "Błąd", sending: "Wysyłanie" };
+  conv.innerHTML = `<div style="flex:1;display:flex;align-items:center;justify-content:center;opacity:.35;font-size:12px">Ładowanie…</div>`;
+
+  // Fetch full item with HTML
+  let htmlContent = null;
+  try {
+    const res = await adminFetch(`/mail/queue/item?id=${encodeURIComponent(row.id)}`);
+    if (res.ok) {
+      const j = await res.json();
+      htmlContent = j.item?.html || null;
+    }
+  } catch {}
+
   conv.innerHTML = "";
 
   const header = document.createElement("div");
@@ -1793,9 +1805,30 @@ function renderSentPreview(row) {
   msgs.className = "mail-conv-messages";
   const el = document.createElement("div");
   el.className = "mail-msg outbound";
-  el.innerHTML = `
-    <div class="mail-msg-meta"><span>↗ ${escSetting(row.email)}</span></div>
-    <div class="mail-msg-body" style="opacity:.5;font-style:italic">${escSetting(row.preview || t("settings.reports.sentNoPreview") || "(podgląd treści niedostępny)")}</div>`;
+
+  const metaDiv = document.createElement("div");
+  metaDiv.className = "mail-msg-meta";
+  metaDiv.innerHTML = `<span>↗ ${escSetting(row.email)}</span>`;
+  el.appendChild(metaDiv);
+
+  const bodyDiv = document.createElement("div");
+  if (htmlContent) {
+    bodyDiv.className = "mail-msg-body-html";
+    const frame = document.createElement("iframe");
+    frame.className = "mail-msg-html-frame";
+    frame.sandbox = "allow-same-origin allow-popups";
+    frame.srcdoc = htmlContent;
+    frame.onload = () => {
+      try { frame.style.height = (frame.contentDocument.documentElement.scrollHeight + 20) + "px"; } catch {}
+    };
+    bodyDiv.appendChild(frame);
+  } else {
+    bodyDiv.className = "mail-msg-body";
+    bodyDiv.style.opacity = ".5";
+    bodyDiv.style.fontStyle = "italic";
+    bodyDiv.textContent = t("settings.reports.sentNoPreview") || "(podgląd treści niedostępny)";
+  }
+  el.appendChild(bodyDiv);
   msgs.appendChild(el);
   conv.appendChild(msgs);
 }
@@ -1852,21 +1885,22 @@ function renderConversation(report, messages) {
     }
     el.appendChild(metaEl);
 
-    // Body — detect HTML
+    // Body — prefer body_html, fall back to body text
     const bodyEl = document.createElement("div");
-    const bodyText = msg.body || "";
-    if (/<[a-z][\s\S]*>/i.test(bodyText)) {
-      // HTML content — show in iframe
+    const htmlSrc = msg.body_html || (/<[a-z][\s\S]*>/i.test(msg.body || "") ? msg.body : null);
+    if (htmlSrc) {
       bodyEl.className = "mail-msg-body-html";
       const frame = document.createElement("iframe");
       frame.className = "mail-msg-html-frame";
-      frame.sandbox = "allow-same-origin";
-      frame.srcdoc = bodyText;
-      frame.onload = () => { try { frame.style.height = (frame.contentDocument.body.scrollHeight + 20) + "px"; } catch {} };
+      frame.sandbox = "allow-same-origin allow-popups";
+      frame.srcdoc = htmlSrc;
+      frame.onload = () => {
+        try { frame.style.height = (frame.contentDocument.documentElement.scrollHeight + 20) + "px"; } catch {}
+      };
       bodyEl.appendChild(frame);
     } else {
       bodyEl.className = "mail-msg-body";
-      bodyEl.textContent = bodyText;
+      bodyEl.textContent = msg.body || "";
     }
     el.appendChild(bodyEl);
     msgs.appendChild(el);

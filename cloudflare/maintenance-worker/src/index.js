@@ -409,12 +409,26 @@ async function handleAdminMailApi(request, env, url) {
     return new Response("Method Not Allowed", { status: 405 });
   }
 
+  // GET /_admin_api/mail/queue/item?id=xxx — full row with html
+  if (url.pathname === "/_admin_api/mail/queue/item") {
+    if (request.method !== "GET") return new Response("Method Not Allowed", { status: 405 });
+    const id = String(url.searchParams.get("id") || "").trim();
+    if (!id) return json({ ok: false, error: "Missing id" }, 400);
+    const res = await supabaseRequest(env,
+      `/rest/v1/mail_queue?id=eq.${encodeURIComponent(id)}&select=id,created_at,to_email,subject,html,status,provider_used,meta&limit=1`,
+      { method: "GET" });
+    if (!res.ok) return json({ ok: false, error: "not_found" }, 404);
+    const rows = Array.isArray(res.data) ? res.data : [];
+    if (!rows.length) return json({ ok: false, error: "not_found" }, 404);
+    return json({ ok: true, item: rows[0] });
+  }
+
   if (url.pathname === "/_admin_api/mail/queue") {
     if (request.method !== "GET") return new Response("Method Not Allowed", { status: 405 });
 
     const limit = clampInt(url.searchParams.get("limit"), 1, 500, 150);
     const status = String(url.searchParams.get("status") || "all").toLowerCase();
-    const allowedStatuses = new Set(["all", "pending", "sending", "failed"]);
+    const allowedStatuses = new Set(["all", "pending", "sending", "failed", "sent"]);
     if (!allowedStatuses.has(status)) {
       return json({ ok: false, error: "Invalid status filter" }, 400);
     }
@@ -1203,13 +1217,17 @@ async function handleInboundEmail(message, env) {
 
   // Parse body from raw MIME stream
   let body = "";
+  let bodyHtml = null;
   try {
     const rawText = await new Response(message.raw).text();
-    body = extractMimeText(rawText);
+    const parts = extractMimeParts(rawText);
+    body = parts.text;
+    bodyHtml = parts.html || null;
   } catch (err) {
     console.error("[email] body parse failed:", err);
   }
   body = body.slice(0, 5000).trim();
+  if (bodyHtml) bodyHtml = bodyHtml.slice(0, 200000);
 
   // Forward copy to iCloud (best-effort)
   const forwardTo = env.FORWARD_EMAIL || "";
@@ -1229,6 +1247,7 @@ async function handleInboundEmail(message, env) {
       p_direction:     "inbound",
       p_body:          body || "(brak treści)",
       p_from_email:    from,
+      p_body_html:     bodyHtml,
     });
 
     if (rpc.ok) {
@@ -1264,6 +1283,7 @@ async function handleInboundEmail(message, env) {
     p_lang:       "pl",
     p_user_id:    null,
     p_ip_address: null,
+    p_body_html:  bodyHtml,
   });
 
   if (!rpc.ok) {
@@ -1313,34 +1333,41 @@ async function handleInboundEmail(message, env) {
   } catch {}
 }
 
-function extractMimeText(raw) {
-  // Look for multipart boundary
+function decodeMimePart(part, content) {
+  if (/Content-Transfer-Encoding:\s*quoted-printable/i.test(part)) {
+    return content.replace(/=\r?\n/g, "").replace(/=([0-9A-Fa-f]{2})/g, (_, h) => String.fromCharCode(parseInt(h, 16)));
+  }
+  if (/Content-Transfer-Encoding:\s*base64/i.test(part)) {
+    try { return atob(content.replace(/\s+/g, "")); } catch {}
+  }
+  return content;
+}
+
+function extractMimeParts(raw) {
   const boundaryMatch = raw.match(/Content-Type:\s*multipart\/[^\r\n]+boundary="?([^"\r\n;]+)"?/i);
   if (boundaryMatch) {
     const boundary = boundaryMatch[1].trim();
-    const escaped = boundary.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const parts = raw.split(new RegExp(`--${escaped}(?:--|\r?\n)`));
+    const escaped  = boundary.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const parts    = raw.split(new RegExp(`--${escaped}(?:--|\r?\n)`));
+    let text = "";
+    let html = "";
     for (const part of parts) {
-      if (!/Content-Type:\s*text\/plain/i.test(part)) continue;
       const bodyStart = part.indexOf("\r\n\r\n");
       if (bodyStart === -1) continue;
-      let body = part.slice(bodyStart + 4);
-      // strip trailing boundary markers
-      const nextBoundary = body.indexOf("\r\n--");
-      if (nextBoundary !== -1) body = body.slice(0, nextBoundary);
-      if (/Content-Transfer-Encoding:\s*quoted-printable/i.test(part)) {
-        body = body.replace(/=\r?\n/g, "").replace(/=([0-9A-Fa-f]{2})/g, (_, h) => String.fromCharCode(parseInt(h, 16)));
-      } else if (/Content-Transfer-Encoding:\s*base64/i.test(part)) {
-        try { body = atob(body.replace(/\s+/g, "")); } catch {}
-      }
-      return body.trim();
+      let content = part.slice(bodyStart + 4);
+      const nextBoundary = content.indexOf("\r\n--");
+      if (nextBoundary !== -1) content = content.slice(0, nextBoundary);
+      content = decodeMimePart(part, content).trim();
+      if (/Content-Type:\s*text\/plain/i.test(part) && !text) text = content;
+      if (/Content-Type:\s*text\/html/i.test(part)  && !html) html = content;
     }
+    return { text, html };
   }
-
   // Simple email (no multipart)
   const bodyStart = raw.indexOf("\r\n\r\n");
-  if (bodyStart !== -1) return raw.slice(bodyStart + 4).trim();
-  return "";
+  const content = bodyStart !== -1 ? raw.slice(bodyStart + 4).trim() : "";
+  const isHtml = /^\s*<!doctype html|^\s*<html/i.test(content);
+  return { text: isHtml ? "" : content, html: isHtml ? content : "" };
 }
 
 // ============================================================
