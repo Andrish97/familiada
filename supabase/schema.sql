@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict J8WElw0NVBEZAZxnnRmsfJsyjFFuLG2TEmEpYrLbCXGFk3c01xaSGe1Mh3YJ3uS
+\restrict wDI2S229FvvwrRwNTc2inQpva9WLKgXjWh5d7CZl5BnSn0ANcNLLHQBlNIHCn1w
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -2422,6 +2422,24 @@ BEGIN
     LEFT JOIN public.reports r ON r.id = m.report_id
     WHERE m.id = p_id
     LIMIT 1;
+END;
+$$;
+
+
+--
+-- Name: get_message_attachments("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."get_message_attachments"("p_message_id" "uuid") RETURNS TABLE("id" "uuid", "filename" "text", "mime_type" "text", "size" integer, "storage_path" "text", "content_id" "text", "inline" boolean, "created_at" timestamp with time zone)
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+BEGIN
+  RETURN QUERY
+  SELECT a.id, a.filename, a.mime_type, a.size, a.storage_path, a.content_id, a.inline, a.created_at
+  FROM message_attachments a
+  WHERE a.message_id = p_message_id
+  ORDER BY a.inline DESC, a.created_at ASC;
 END;
 $$;
 
@@ -7786,6 +7804,24 @@ $$;
 
 
 --
+-- Name: save_attachment("uuid", "text", "text", integer, "text", "text", boolean); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."save_attachment"("p_message_id" "uuid", "p_filename" "text", "p_mime_type" "text", "p_size" integer, "p_storage_path" "text", "p_content_id" "text" DEFAULT NULL::"text", "p_inline" boolean DEFAULT false) RETURNS "uuid"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE v_id uuid;
+BEGIN
+  INSERT INTO message_attachments(message_id, filename, mime_type, size, storage_path, content_id, inline)
+  VALUES (p_message_id, p_filename, p_mime_type, p_size, p_storage_path, p_content_id, p_inline)
+  RETURNING id INTO v_id;
+  RETURN v_id;
+END;
+$$;
+
+
+--
 -- Name: save_form_message("text", "text", "text", "text"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -8953,6 +8989,23 @@ CREATE TABLE "public"."market_games" (
 
 
 --
+-- Name: message_attachments; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."message_attachments" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "message_id" "uuid",
+    "filename" "text" DEFAULT ''::"text" NOT NULL,
+    "mime_type" "text" DEFAULT 'application/octet-stream'::"text" NOT NULL,
+    "size" integer DEFAULT 0 NOT NULL,
+    "storage_path" "text" DEFAULT ''::"text" NOT NULL,
+    "content_id" "text",
+    "inline" boolean DEFAULT false NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL
+);
+
+
+--
 -- Name: messages; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -9465,6 +9518,14 @@ ALTER TABLE ONLY "public"."market_games"
 
 
 --
+-- Name: message_attachments message_attachments_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."message_attachments"
+    ADD CONSTRAINT "message_attachments_pkey" PRIMARY KEY ("id");
+
+
+--
 -- Name: messages messages_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -9903,6 +9964,13 @@ CREATE INDEX "market_games_library_cnt_idx" ON "public"."market_games" USING "bt
 --
 
 CREATE INDEX "market_games_status_idx" ON "public"."market_games" USING "btree" ("status");
+
+
+--
+-- Name: message_attachments_message_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "message_attachments_message_id_idx" ON "public"."message_attachments" USING "btree" ("message_id");
 
 
 --
@@ -10443,6 +10511,14 @@ ALTER TABLE ONLY "public"."market_games"
 
 
 --
+-- Name: message_attachments message_attachments_message_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."message_attachments"
+    ADD CONSTRAINT "message_attachments_message_id_fkey" FOREIGN KEY ("message_id") REFERENCES "public"."messages"("id") ON DELETE CASCADE;
+
+
+--
 -- Name: messages messages_report_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -10747,6 +10823,13 @@ ALTER TABLE ONLY "public"."user_market_library"
 
 
 --
+-- Name: message_attachments No public access; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "No public access" ON "public"."message_attachments" USING (false);
+
+
+--
 -- Name: messages No public access; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -11008,6 +11091,12 @@ CREATE POLICY "mail_settings_write_none" ON "public"."mail_settings" TO "authent
 --
 
 ALTER TABLE "public"."market_games" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: message_attachments; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."message_attachments" ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: messages; Type: ROW SECURITY; Schema: public; Owner: -
@@ -11672,5 +11761,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict J8WElw0NVBEZAZxnnRmsfJsyjFFuLG2TEmEpYrLbCXGFk3c01xaSGe1Mh3YJ3uS
+\unrestrict wDI2S229FvvwrRwNTc2inQpva9WLKgXjWh5d7CZl5BnSn0ANcNLLHQBlNIHCn1w
 
