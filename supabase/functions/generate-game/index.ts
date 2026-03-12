@@ -1,4 +1,4 @@
-// Supabase self-hosted: `serve` jest globalnie dostępne – BEZ żadnych importów
+import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -71,7 +71,6 @@ Zwróć TYLKO czysty JSON, zero markdown, zero tekstu poza JSONem:
 }
 
 // `serve` jest globalnie wstrzyknięte przez Supabase edge runtime
-// @ts-ignore
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   if (req.method !== "POST") return respond({ error: "Method not allowed" }, 405);
