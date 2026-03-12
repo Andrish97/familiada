@@ -4445,6 +4445,7 @@ const en = {
     reports: {
       title: "Reports",
       subtitle: "Messages from users",
+      tabAll: "All",
       tabOpen: "Open",
       tabReplied: "Replied",
       tabClosed: "Closed",
