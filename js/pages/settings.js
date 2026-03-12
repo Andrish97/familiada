@@ -1609,43 +1609,14 @@ async function syncGithub() {
   }
 }
 
-async function loadNtfyConfig() {
-  const input  = document.getElementById("ntfyTopicInput");
-  if (!input) return;
+async function testTelegram() {
+  const status = document.getElementById("telegramStatus");
   try {
-    const res  = await adminFetch("/config/ntfy");
-    const json = await res.json();
-    if (json.ok) input.value = json.topic || "";
-  } catch { /* ignore */ }
-}
-
-async function saveNtfyConfig() {
-  const input  = document.getElementById("ntfyTopicInput");
-  const status = document.getElementById("ntfyStatus");
-  if (!input) return;
-  try {
-    const res  = await adminFetch("/config/ntfy", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ topic: input.value.trim() }),
-    });
-    const json = await res.json();
-    if (!json.ok) throw new Error(json.error || "save_failed");
-    if (status) status.textContent = t("settings.marketplace.ntfySaved") || "Zapisano.";
-    showToast(t("settings.marketplace.ntfySaved") || "Zapisano.", "success");
-  } catch (err) {
-    showToast(String(err?.message || err), "error");
-  }
-}
-
-async function testNtfy() {
-  const status = document.getElementById("ntfyStatus");
-  try {
-    const res  = await adminFetch("/marketplace/notify-test", { method: "POST" });
+    const res  = await adminFetch("/config/telegram/test", { method: "POST" });
     const json = await res.json();
     if (!json.ok) throw new Error(json.error || "test_failed");
-    if (status) status.textContent = t("settings.marketplace.ntfyTestSent") || "Testowe powiadomienie wysłane.";
-    showToast(t("settings.marketplace.ntfyTestSent") || "Testowe powiadomienie wysłane.", "success");
+    if (status) status.textContent = "Testowe powiadomienie wysłane.";
+    showToast("Testowe powiadomienie Telegram wysłane.", "success");
   } catch (err) {
     showToast(String(err?.message || err), "error");
   }
@@ -2645,9 +2616,8 @@ function wireMarketplaceEvents() {
   // Sync GH
   document.getElementById("btnMarketSyncGh")?.addEventListener("click", syncGithub);
 
-  // Ntfy config
-  document.getElementById("btnNtfySave")?.addEventListener("click", saveNtfyConfig);
-  document.getElementById("btnNtfyTest")?.addEventListener("click", testNtfy);
+  // Telegram config
+  document.getElementById("btnTelegramTest")?.addEventListener("click", testTelegram);
 
   // Delegacja kliknięć w tabeli
   document.getElementById("marketTableBody")?.addEventListener("click", async (e) => {
@@ -3121,7 +3091,7 @@ function wireEvents() {
     els.btnTabMarketplace.addEventListener("click", async () => {
       if (activeTab === "tools") closeTools();
       setActiveTab("marketplace");
-      await Promise.all([loadMarketplace({ silent: true }), loadNtfyConfig()]);
+      await loadMarketplace({ silent: true });
     });
   }
 
