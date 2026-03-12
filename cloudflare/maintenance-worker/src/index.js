@@ -1228,15 +1228,15 @@ async function handleAdminMessagesApi(request, env, url) {
       if (!cfg) return json({ ok: false, error: "missing_supabase_config" }, 500);
 
       const tempId = crypto.randomUUID();
-      const storagePath = `compose/${tempId}_${filename}`;
-      const storageUrl = `${cfg.baseUrl}/storage/v1/object/message-attachments/${storagePath}`;
+      const objectKey = `${tempId}_${filename}`;
+      const storagePath = objectKey;
+      const storageUrl = `${cfg.baseUrl}/storage/v1/object/message-attachments/${objectKey}`;
 
       const upRes = await fetch(storageUrl, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${cfg.serviceRoleKey}`,
           "Content-Type": mimeType,
-          "x-upsert": "true",
         },
         body: arrayBuf,
       });
@@ -1526,7 +1526,8 @@ async function handleInboundEmail(message, env) {
     if (msgId && inboundAttachments.length) {
       for (const att of inboundAttachments) {
         try {
-          const storagePath = `message-attachments/${msgId}/${att.filename}`;
+          const objectKey = `inbound_${msgId}_${att.filename}`;
+          const storagePath = `message-attachments/${objectKey}`;
           await uploadToStorage(env, storagePath, att.data_b64, att.mimeType);
           await supabaseRpc(env, "save_attachment", {
             p_message_id: msgId,
@@ -1675,7 +1676,7 @@ async function uploadToStorage(env, bucketPath, data_b64, mimeType) {
   for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
   const res = await fetch(url, {
     method: "POST",
-    headers: { "Authorization": `Bearer ${cfg.serviceRoleKey}`, "Content-Type": mimeType, "x-upsert": "true" },
+    headers: { "Authorization": `Bearer ${cfg.serviceRoleKey}`, "Content-Type": mimeType },
     body: bytes,
   });
   if (!res.ok) {
