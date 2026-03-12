@@ -8,11 +8,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg:#0d0d0f;--surface:#16161a;--surface2:#1e1e24;--border:#2a2a35;
-    --accent:#e8c547;--accent2:#f07b3f;--text:#e8e8f0;--muted:#6b6b80;
-    --green:#4ade80;--red:#f87171;
-  }
+  :root{--bg:#0d0d0f;--surface:#16161a;--surface2:#1e1e24;--border:#2a2a35;--accent:#e8c547;--accent2:#f07b3f;--text:#e8e8f0;--muted:#6b6b80;--green:#4ade80;--red:#f87171}
   *{box-sizing:border-box;margin:0;padding:0}
   body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:40px 20px 80px}
   .wrap{width:100%;max-width:720px}
@@ -69,11 +65,8 @@
         <label>Język gier</label>
         <select id="lang">
           <option value="pl">🇵🇱 Polski</option>
-          <option value="en">🇬🇧 English</option>
-          <option value="de">🇩🇪 Deutsch</option>
           <option value="uk">🇺🇦 Українська</option>
-          <option value="fr">🇫🇷 Français</option>
-          <option value="es">🇪🇸 Español</option>
+          <option value="en">🇬🇧 English</option>
         </select>
       </div>
       <div class="field">
@@ -83,7 +76,7 @@
     </div>
     <div class="field" style="margin-bottom:16px">
       <label>Temat / kategoria (opcjonalnie)</label>
-      <textarea id="topic" placeholder="Zostaw puste = AI dobierze różnorodne tematy. Lub wpisz np. historia Polski, kuchnia, sport..."></textarea>
+      <textarea id="topic" placeholder="Zostaw puste = AI dobierze różnorodne tematy. Lub wpisz np. historia, kuchnia, sport..."></textarea>
     </div>
     <div class="field">
       <label>Zakres numerów gier</label>
@@ -120,6 +113,11 @@
 <script type="module">
 import { sb } from '/../js/core/supabase.js';
 
+// prefix auto-sync z językiem
+document.getElementById('lang').addEventListener('change', e => {
+  document.getElementById('prefix').value = e.target.value;
+});
+
 let generatedFiles = {};
 let running = false;
 const $ = id => document.getElementById(id);
@@ -150,6 +148,9 @@ function slugify(text) {
     .replace(/ą/g,'a').replace(/ć/g,'c').replace(/ę/g,'e')
     .replace(/ł/g,'l').replace(/ń/g,'n').replace(/ó/g,'o')
     .replace(/ś/g,'s').replace(/[źż]/g,'z')
+    // Ukrainian
+    .replace(/і/g,'i').replace(/є/g,'e').replace(/ї/g,'i').replace(/а/g,'a')
+    .replace(/[а-яёА-ЯЁ]/g, c => c.charCodeAt(0).toString(36))
     .replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
 }
 
