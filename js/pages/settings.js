@@ -15,7 +15,7 @@ Settings panel (admin)
 import { initI18n, t } from "../../translation/translation.js";
 import { initUiSelect } from "../core/ui-select.js";
 import { guardDesktopOnly } from "../core/device-guard.js";
-import { confirmModal } from "../core/modal.js";
+import { confirmModal, syncProgressModal } from "../core/modal.js";
 
 const API_BASE = "/_admin_api";
 const TOOLS_MANIFEST = "/settings-tools/tools.json";
@@ -1536,6 +1536,8 @@ async function syncGithub() {
   const status = document.getElementById("marketSyncStatus");
   if (btn) btn.disabled = true;
 
+  const modal = syncProgressModal({ title: "Synchronizacja z GitHub" });
+
   let totalSynced = 0, totalFailed = 0, grandTotal = 0;
   const allResults = [];
 
@@ -1544,45 +1546,40 @@ async function syncGithub() {
     let hasMore = true;
 
     while (hasMore) {
-      if (status) status.textContent = `Synchronizuję… (${totalSynced + totalFailed}${grandTotal ? "/" + grandTotal : ""})`;
+      modal.update(totalSynced + totalFailed, grandTotal || "?");
       const res  = await adminFetch("/marketplace/sync-gh", { method: "POST", body: JSON.stringify({ offset }) });
       const json = await res.json();
 
       if (json.error) {
-        const msg = `Błąd: ${json.error}`;
-        if (status) status.textContent = msg;
-        showToast(msg, "error");
+        modal.finish(false, `Błąd: ${json.error}`);
+        if (status) status.textContent = `Błąd: ${json.error}`;
         return;
       }
 
-      grandTotal    = json.total ?? grandTotal;
-      totalSynced  += json.synced ?? 0;
-      totalFailed  += json.failed ?? 0;
-      allResults.push(...(json.results ?? []));
-      hasMore       = json.hasMore ?? false;
-      offset       += (json.results?.length ?? 0);
-    }
+      grandTotal   = json.total ?? grandTotal;
+      totalSynced += json.synced ?? 0;
+      totalFailed += json.failed ?? 0;
 
-    const failed = allResults.filter(r => !r.ok);
-    console.groupCollapsed(`[sync-gh] ${totalSynced} ok, ${totalFailed} failed`);
-    failed.forEach(r => console.warn(`  FAIL: ${r.slug} — ${r.error}`));
-    allResults.filter(r => r.ok).forEach(r => console.log(`  OK: ${r.slug}`));
-    console.groupEnd();
+      for (const r of (json.results ?? [])) {
+        if (!r.ok) modal.update(totalSynced + totalFailed, grandTotal, `FAIL: ${r.slug} — ${r.error}`);
+      }
+      allResults.push(...(json.results ?? []));
+      hasMore  = json.hasMore ?? false;
+      offset  += (json.results?.length ?? 0);
+      modal.update(totalSynced + totalFailed, grandTotal);
+    }
 
     const ok  = totalFailed === 0;
     const msg = ok
       ? `${t("settings.marketplace.syncOk") || "Sync OK"} — ${totalSynced}/${grandTotal}`
       : `Sync: ${totalSynced}/${grandTotal} OK, ${totalFailed} błędów`;
-    if (status) {
-      status.textContent = msg;
-      if (!ok && failed.length) {
-        status.textContent += " | " + failed.slice(0, 3).map(r => `${r.slug}: ${r.error}`).join("; ");
-      }
-    }
+    modal.finish(ok, msg);
+    if (status) status.textContent = msg;
     showToast(msg, ok ? "success" : "error");
     await loadMarketplace({ silent: true });
   } catch (err) {
     const msg = String(err?.message || err);
+    modal.finish(false, msg);
     if (status) status.textContent = msg;
     showToast(msg, "error");
   } finally {
