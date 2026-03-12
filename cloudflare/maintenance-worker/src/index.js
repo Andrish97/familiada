@@ -1148,19 +1148,17 @@ async function handleAdminMessagesApi(request, env, url) {
     if (messageId && saveRes.ok && sendAttachments?.length) {
       const msgId = messageId;
       for (const att of sendAttachments) {
-        try {
-          // Keep compose path, save reference
-          await supabaseRpc(env, "save_attachment", {
-            p_message_id:  msgId,
-            p_filename:    att.filename,
-            p_mime_type:   att.mime_type,
-            p_size:        att.size || 0,
-            p_storage_path: att.storage_path,
-            p_content_id:  null,
-            p_inline:      false,
-          });
-        } catch (err) {
-          console.error("[worker] send:attachment_save_failed:", att.filename, err);
+        const attSave = await supabaseRpc(env, "save_attachment", {
+          p_message_id:  msgId,
+          p_filename:    att.filename,
+          p_mime_type:   att.mime_type,
+          p_size:        att.size || 0,
+          p_storage_path: att.storage_path,
+          p_content_id:  null,
+          p_inline:      false,
+        });
+        if (!attSave.ok) {
+          console.error("[worker] send:attachment_save_failed:", att.filename, summarizeSupabaseError(attSave));
         }
       }
     }
@@ -1586,7 +1584,7 @@ async function handleInboundEmail(message, env) {
           const objectKey = `inbound_${msgId}_${att.filename}`;
           const storagePath = `message-attachments/${objectKey}`;
           await uploadToStorage(env, storagePath, att.data_b64, att.mimeType);
-          await supabaseRpc(env, "save_attachment", {
+          const saveRes = await supabaseRpc(env, "save_attachment", {
             p_message_id: msgId,
             p_filename:   att.filename,
             p_mime_type:  att.mimeType,
@@ -1595,6 +1593,9 @@ async function handleInboundEmail(message, env) {
             p_content_id: att.cid || null,
             p_inline:     att.inline,
           });
+          if (!saveRes.ok) {
+            console.error("[email] save_attachment failed:", att.filename, summarizeSupabaseError(saveRes));
+          }
         } catch (err) {
           console.error("[email] attachment_upload_failed:", att.filename, err);
         }
@@ -1693,7 +1694,7 @@ function extractMimeParts(raw) {
 
       const filename = fnMatch ? decodeURIComponent(fnMatch[1].trim()) : `attachment_${Date.now()}`;
       const cid      = cidMatch ? cidMatch[1] : null;
-      const inline   = !!cidMatch || (dispMatch && dispMatch[1].toLowerCase() === "inline");
+      const inline   = !!cidMatch; // only truly inline when referenced via cid:
 
       if (cid) {
         cidMap[cid] = `data:${mimeType};base64,${b64}`;
