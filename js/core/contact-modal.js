@@ -102,8 +102,10 @@ async function prefillEmail() {
   try {
     const { supabase } = await import("./supabase.js");
     const { data } = await supabase.auth.getUser();
-    const email = data?.user?.email;
-    if (email) {
+    const user = data?.user;
+    const isGuest = user?.user_metadata?.is_guest === true || user?.app_metadata?.is_guest === true;
+    const email = user?.email;
+    if (email && !isGuest) {
       const inp = document.getElementById("cModalEmail");
       if (inp && !inp.value) inp.value = email;
     }
