@@ -5,6 +5,7 @@ const pl = {
     flag: "🇵🇱",
   },
   common: {
+    contactBtn: "Kontakt",
     languageLabel: "Język",
     backToLogin: "Wróć do logowania",
     goToPanel: "Przejdź do panelu",
@@ -4470,6 +4471,8 @@ const pl = {
       previewTitle: "Zgłoszenie",
       replyPlaceholder: "Treść odpowiedzi…",
       sendReply: "Wyślij odpowiedź",
+      selectMsg: "Wybierz wątek",
+      reopen: "Otwórz ponownie",
       compose: {
         title: "Napisz wiadomość",
         to: "Do (e-mail)",

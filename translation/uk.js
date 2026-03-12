@@ -5,6 +5,7 @@ const uk = {
     flag: "🇺🇦",
   },
   common: {
+    contactBtn: "Контакт",
     languageLabel: "Мова",
     backToLogin: "Повернутися до входу",
     goToPanel: "Перейти до панелі",
@@ -4353,6 +4354,8 @@ const uk = {
       previewTitle: "Звернення",
       replyPlaceholder: "Текст відповіді…",
       sendReply: "Надіслати відповідь",
+      selectMsg: "Оберіть гілку",
+      reopen: "Відкрити знову",
       compose: {
         title: "Написати повідомлення",
         to: "Кому (e-mail)",

@@ -1656,144 +1656,256 @@ async function testNtfy() {
 // REPORTS ADMIN
 // ============================================================
 
-let reportsActiveStatus = "open";
-let currentReportId = null;
+// ── Mail client state ──────────────────────────────────────────
+let mailActiveFolder  = "open";   // open | replied | closed
+let mailActiveReportId = null;
+let mailReports       = [];
+let mailSearchQuery   = "";
 let pendingMoveMessageId = null;
 
 async function loadReports({ silent = false } = {}) {
-  const tbody = document.getElementById("reportsTableBody");
-  const info  = document.getElementById("reportsTableInfo");
-  if (!tbody) return;
-  if (!silent && info) info.textContent = "Ładowanie…";
-
-  let data;
   try {
-    const res = await adminFetch(`/reports/list?status=${reportsActiveStatus}&limit=100`);
+    const res = await adminFetch(`/reports/list?status=${encodeURIComponent(mailActiveFolder)}`);
     if (!res.ok) throw new Error(await res.text());
     const json = await res.json();
-    data = json.rows || [];
+    mailReports = json.reports || [];
+    renderMailList(mailReports);
+    updateFolderBadges();
   } catch (err) {
-    if (info) info.textContent = String(err?.message || err);
+    if (!silent) showToast(String(err?.message || err), "error");
+  }
+}
+
+function updateFolderBadges() {
+  const badge = document.getElementById("fBadgeOpen");
+  if (badge && mailActiveFolder === "open") {
+    badge.textContent = mailReports.length > 0 ? String(mailReports.length) : "";
+  }
+}
+
+function renderMailList(reports) {
+  const body = document.getElementById("mailListBody");
+  if (!body) return;
+  const q = mailSearchQuery.toLowerCase();
+  const filtered = q
+    ? reports.filter(r =>
+        (r.email || "").toLowerCase().includes(q) ||
+        (r.subject || "").toLowerCase().includes(q) ||
+        (r.ticket_number || "").toLowerCase().includes(q)
+      )
+    : reports;
+
+  body.innerHTML = "";
+  if (!filtered.length) {
+    body.innerHTML = `<div style="padding:20px;text-align:center;opacity:.35;font-size:12px">${t("settings.reports.empty") || "Brak wiadomości."}</div>`;
     return;
   }
 
-  tbody.innerHTML = "";
-  if (!data.length) {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `<td colspan="6" style="text-align:center;opacity:.6">${t("settings.reports.empty") || "Brak zgłoszeń."}</td>`;
-    tbody.appendChild(tr);
-    if (info) info.textContent = "";
-    return;
+  for (const r of filtered) {
+    const item = document.createElement("div");
+    item.className = "mail-thread-item" + (r.status === "open" ? " unread" : "") + (r.id === mailActiveReportId ? " active" : "");
+    item.dataset.reportId = r.id;
+    const date = new Date(r.created_at);
+    const dateStr = date.toLocaleDateString("pl-PL", { day:"2-digit", month:"2-digit" });
+    item.innerHTML = `
+      <div class="mail-ti-row">
+        <span class="mail-ti-from">${escSetting(r.email)}</span>
+        <span class="mail-ti-date">${dateStr}</span>
+      </div>
+      <div class="mail-ti-subject">${escSetting(r.subject || "—")}</div>
+      <div class="mail-ti-preview">${escSetting((r.preview || "").slice(0, 80))}</div>
+      <div class="mail-ti-ticket">${escSetting(r.ticket_number || "")}</div>`;
+    item.addEventListener("click", () => openReport(r.id));
+    body.appendChild(item);
   }
-
-  for (const r of data) {
-    const tr = document.createElement("tr");
-    const date = r.created_at ? new Date(r.created_at).toLocaleDateString() : "—";
-    const statusLabel = t(`settings.reports.status.${r.status}`) || r.status;
-
-    const actions = `<button class="btn sm" data-report-preview="${escSetting(r.id)}">${t("settings.reports.reply") || "Odpowiedz"}</button>` +
-      (reportsActiveStatus !== "closed"
-        ? ` <button class="btn sm" data-report-close="${escSetting(r.id)}">${t("settings.reports.close") || "Zamknij"}</button>`
-        : "");
-
-    tr.innerHTML = `
-      <td>${escSetting(r.ticket_number)}</td>
-      <td>${escSetting(r.email)}</td>
-      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escSetting(r.subject)}</td>
-      <td>${date}</td>
-      <td>${escSetting(statusLabel)}</td>
-      <td class="market-actions">${actions}</td>`;
-    tbody.appendChild(tr);
-  }
-
-  if (info) info.textContent = `${data.length} ${t("settings.marketplace.items") || "pozycji"}`;
 }
 
 async function openReport(id) {
-  const overlay = document.getElementById("reportPreviewOverlay");
-  if (!overlay) return;
+  mailActiveReportId = id;
 
-  currentReportId = id;
+  // Update active state in list
+  document.querySelectorAll(".mail-thread-item").forEach(el => {
+    el.classList.toggle("active", el.dataset.reportId === id);
+  });
 
-  let report;
-  let messages = [];
+  const conv = document.getElementById("mailConv");
+  if (!conv) return;
+  conv.innerHTML = `<div style="flex:1;display:flex;align-items:center;justify-content:center;opacity:.35;font-size:12px">Ładowanie…</div>`;
+
+  let report, messages = [];
   try {
     const [reportRes, msgRes] = await Promise.all([
       adminFetch(`/reports/detail?id=${encodeURIComponent(id)}`),
       adminFetch(`/reports/messages?id=${encodeURIComponent(id)}`),
     ]);
     if (!reportRes.ok) throw new Error(await reportRes.text());
-    const reportJson = await reportRes.json();
-    report = reportJson.report;
-    if (msgRes.ok) {
-      const msgJson = await msgRes.json();
-      messages = msgJson.messages || [];
-    }
+    const rj = await reportRes.json();
+    report = rj.report;
+    if (msgRes.ok) messages = (await msgRes.json()).messages || [];
   } catch (err) {
     showToast(String(err?.message || err), "error");
     return;
   }
 
-  const titleEl   = document.getElementById("reportPreviewTitle");
-  const metaEl    = document.getElementById("reportPreviewMeta");
-  const replyArea = document.getElementById("reportReplyArea");
-
-  if (titleEl) titleEl.textContent = `${t("settings.reports.previewTitle") || "Zgłoszenie"} #${report.ticket_number}`;
-  if (metaEl)  metaEl.textContent  = `${report.email} · ${report.lang?.toUpperCase()} · ${new Date(report.created_at).toLocaleString()}`;
-  if (replyArea) replyArea.value = "";
-
-  renderReportThread(messages);
-
-  overlay.dataset.lang = report.lang || "pl";
-  overlay.style.display = "flex";
-
-  const thread = document.getElementById("reportThread");
-  if (thread) thread.scrollTop = thread.scrollHeight;
+  renderConversation(report, messages);
 }
 
-function renderReportThread(messages) {
-  const container = document.getElementById("reportThread");
-  if (!container) return;
-  container.innerHTML = "";
+function renderConversation(report, messages) {
+  const conv = document.getElementById("mailConv");
+  if (!conv) return;
+
+  const statusLabel = {
+    open: t("settings.reports.status.open") || "Otwarte",
+    replied: t("settings.reports.status.replied") || "Odpowiedziano",
+    closed: t("settings.reports.status.closed") || "Zamknięte",
+  }[report.status] || report.status;
+
+  conv.innerHTML = "";
+
+  // Header
+  const header = document.createElement("div");
+  header.className = "mail-conv-header";
+  header.innerHTML = `
+    <div class="mail-conv-subject">${escSetting(report.subject || "—")}</div>
+    <div class="mail-conv-meta">${escSetting(report.email)} · #${escSetting(report.ticket_number)} · ${statusLabel} · ${new Date(report.created_at).toLocaleString("pl-PL")}</div>
+    <div class="mail-conv-actions">
+      ${report.status !== "closed"
+        ? `<button class="btn sm danger" id="btnConvClose" type="button" data-i18n="settings.reports.close">${t("settings.reports.close") || "Zamknij zgłoszenie"}</button>`
+        : `<button class="btn sm" id="btnConvReopen" type="button">${t("settings.reports.reopen") || "Otwórz ponownie"}</button>`}
+    </div>`;
+  conv.appendChild(header);
+
+  // Messages
+  const msgs = document.createElement("div");
+  msgs.className = "mail-conv-messages";
+  msgs.id = "mailConvMessages";
 
   for (const msg of messages) {
     const isOut = msg.direction === "outbound";
-    const wasMoved = !!msg.moved_from_report_id;
-
     const el = document.createElement("div");
-    el.style.cssText = `padding:10px 12px;border-radius:10px;font-size:13px;` +
-      (isOut
-        ? "background:rgba(255,234,166,.08);border:1px solid rgba(255,234,166,.25);margin-left:32px;"
-        : "background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);margin-right:32px;");
+    el.className = `mail-msg ${isOut ? "outbound" : "inbound"}`;
+    el.dataset.msgId = msg.id;
 
-    const meta = document.createElement("div");
-    meta.style.cssText = "font-size:11px;opacity:.5;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;";
-
+    const metaEl = document.createElement("div");
+    metaEl.className = "mail-msg-meta";
     const metaLeft = document.createElement("span");
-    metaLeft.textContent = `${isOut ? "↗" : "↙"} ${msg.from_email || "—"} · ${new Date(msg.created_at).toLocaleString()}${wasMoved ? " · (przeniesiona)" : ""}`;
-    meta.appendChild(metaLeft);
-
+    metaLeft.textContent = `${isOut ? "↗" : "↙"} ${msg.from_email || "—"} · ${new Date(msg.created_at).toLocaleString("pl-PL")}${msg.moved_from_report_id ? " · (przeniesiona)" : ""}`;
+    metaEl.appendChild(metaLeft);
     if (!isOut) {
       const moveBtn = document.createElement("button");
       moveBtn.className = "btn sm";
       moveBtn.type = "button";
-      moveBtn.style.cssText = "font-size:10px;padding:2px 7px;opacity:.6;";
+      moveBtn.style.cssText = "font-size:10px;padding:1px 6px;opacity:.55;";
       moveBtn.textContent = t("settings.reports.moveBtn") || "Przenieś";
       moveBtn.dataset.moveMessageId = msg.id;
-      meta.appendChild(moveBtn);
+      metaEl.appendChild(moveBtn);
     }
+    el.appendChild(metaEl);
 
-    const body = document.createElement("div");
-    body.style.cssText = "white-space:pre-wrap;line-height:1.5;";
-    body.textContent = msg.body;
+    // Body — detect HTML
+    const bodyEl = document.createElement("div");
+    const bodyText = msg.body || "";
+    if (/<[a-z][\s\S]*>/i.test(bodyText)) {
+      // HTML content — show in iframe
+      bodyEl.className = "mail-msg-body-html";
+      const frame = document.createElement("iframe");
+      frame.className = "mail-msg-html-frame";
+      frame.sandbox = "allow-same-origin";
+      frame.srcdoc = bodyText;
+      frame.onload = () => { try { frame.style.height = (frame.contentDocument.body.scrollHeight + 20) + "px"; } catch {} };
+      bodyEl.appendChild(frame);
+    } else {
+      bodyEl.className = "mail-msg-body";
+      bodyEl.textContent = bodyText;
+    }
+    el.appendChild(bodyEl);
+    msgs.appendChild(el);
+  }
+  conv.appendChild(msgs);
 
-    el.appendChild(meta);
-    el.appendChild(body);
-    container.appendChild(el);
+  // Move section (hidden by default)
+  const moveSection = document.createElement("div");
+  moveSection.className = "mail-move-section";
+  moveSection.id = "mailMoveSection";
+  moveSection.style.cssText = "display:none;margin:0 14px 6px;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);";
+  moveSection.innerHTML = `
+    <input class="inp" id="mailMoveTicket" type="text" placeholder="np. 2026-0001" style="flex:1;min-width:0;box-sizing:border-box" autocomplete="off">
+    <button class="btn sm gold" id="btnMoveConfirm" type="button">${t("settings.reports.moveConfirm") || "Przenieś"}</button>
+    <button class="btn sm" id="btnMoveCancel" type="button">${t("common.cancel") || "Anuluj"}</button>`;
+  conv.appendChild(moveSection);
+
+  // Reply area
+  const replySection = document.createElement("div");
+  replySection.className = "mail-conv-reply";
+  replySection.id = "mailConvReply";
+  if (report.status === "closed") replySection.style.display = "none";
+  replySection.innerHTML = `
+    <textarea class="inp" id="mailReplyArea" rows="4" placeholder="${t("settings.reports.replyPlaceholder") || "Treść odpowiedzi…"}" style="width:100%;box-sizing:border-box;resize:vertical;min-height:80px"></textarea>
+    <div class="mail-conv-reply-actions">
+      <span class="field-hint" id="mailReplyStatus"></span>
+      <button class="btn sm gold" id="btnConvReply" type="button">${t("settings.reports.sendReply") || "Wyślij odpowiedź"}</button>
+    </div>`;
+  conv.appendChild(replySection);
+
+  // Scroll messages to bottom
+  setTimeout(() => { msgs.scrollTop = msgs.scrollHeight; }, 50);
+
+  // Wire events for this conversation
+  document.getElementById("btnConvClose")?.addEventListener("click", () => closeReport(report.id));
+  document.getElementById("btnConvReopen")?.addEventListener("click", () => reopenReport(report.id));
+  document.getElementById("btnConvReply")?.addEventListener("click", () => {
+    const msg2 = (document.getElementById("mailReplyArea")?.value || "").trim();
+    if (!msg2) { showToast("Podaj treść odpowiedzi.", "error"); return; }
+    replyReport(report.id, msg2, report.lang || "pl");
+  });
+
+  // Move delegation
+  msgs.addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-move-message-id]");
+    if (!btn) return;
+    pendingMoveMessageId = btn.dataset.moveMessageId;
+    const ms = document.getElementById("mailMoveSection");
+    if (ms) { ms.style.display = "flex"; ms.style.gap = "6px"; document.getElementById("mailMoveTicket")?.focus(); }
+  });
+  document.getElementById("btnMoveConfirm")?.addEventListener("click", confirmMoveMessage);
+  document.getElementById("btnMoveCancel")?.addEventListener("click", () => {
+    pendingMoveMessageId = null;
+    const ms = document.getElementById("mailMoveSection");
+    if (ms) ms.style.display = "none";
+    const inp = document.getElementById("mailMoveTicket");
+    if (inp) inp.value = "";
+  });
+}
+
+async function confirmMoveMessage() {
+  const ticket = (document.getElementById("mailMoveTicket")?.value || "").trim();
+  if (!ticket || !pendingMoveMessageId) return;
+  try {
+    const res = await adminFetch("/reports/move-message", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message_id: pendingMoveMessageId, target_ticket: ticket }),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const json = await res.json();
+    if (!json.ok) throw new Error(json.error);
+    showToast(`Przeniesiono do ${json.new_ticket}`, "success");
+    pendingMoveMessageId = null;
+    const ms = document.getElementById("mailMoveSection");
+    if (ms) ms.style.display = "none";
+    const inp = document.getElementById("mailMoveTicket");
+    if (inp) inp.value = "";
+    if (mailActiveReportId) await openReport(mailActiveReportId);
+  } catch (err) {
+    showToast(String(err?.message || err), "error");
   }
 }
 
 async function replyReport(id, message, lang) {
+  const btn = document.getElementById("btnConvReply");
+  const status = document.getElementById("mailReplyStatus");
+  if (btn) btn.disabled = true;
+  if (status) status.textContent = "Wysyłam…";
   try {
     const res = await adminFetch("/reports/reply", {
       method: "POST",
@@ -1802,19 +1914,22 @@ async function replyReport(id, message, lang) {
     });
     if (!res.ok) throw new Error(await res.text());
     showToast(t("settings.reports.replied") || "Odpowiedź wysłana.", "success");
-    // Refresh thread in overlay
-    const msgRes = await adminFetch(`/reports/messages?id=${encodeURIComponent(id)}`);
-    if (msgRes.ok) {
-      const msgJson = await msgRes.json();
-      renderReportThread(msgJson.messages || []);
-      const thread = document.getElementById("reportThread");
-      if (thread) thread.scrollTop = thread.scrollHeight;
+    // refresh conversation
+    const [rr, mr] = await Promise.all([
+      adminFetch(`/reports/detail?id=${encodeURIComponent(id)}`),
+      adminFetch(`/reports/messages?id=${encodeURIComponent(id)}`),
+    ]);
+    if (rr.ok && mr.ok) {
+      const report = (await rr.json()).report;
+      const messages = (await mr.json()).messages || [];
+      renderConversation(report, messages);
     }
-    const replyArea = document.getElementById("reportReplyArea");
-    if (replyArea) replyArea.value = "";
     await loadReports({ silent: true });
   } catch (err) {
     showToast(String(err?.message || err), "error");
+  } finally {
+    if (btn) btn.disabled = false;
+    if (status) status.textContent = "";
   }
 }
 
@@ -1830,9 +1945,62 @@ async function closeReport(id) {
     if (!res.ok) throw new Error(await res.text());
     showToast(t("settings.reports.closed") || "Zamknięto.", "success");
     await loadReports({ silent: true });
+    if (mailActiveReportId === id) await openReport(id);
   } catch (err) {
     showToast(String(err?.message || err), "error");
   }
+}
+
+async function reopenReport(id) {
+  try {
+    const res = await adminFetch("/reports/reopen", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    showToast("Otwarto ponownie.", "success");
+    await loadReports({ silent: true });
+    if (mailActiveReportId === id) await openReport(id);
+  } catch (err) {
+    showToast(String(err?.message || err), "error");
+  }
+}
+
+function showComposePaneInConv() {
+  const conv = document.getElementById("mailConv");
+  if (!conv) return;
+  mailActiveReportId = null;
+  document.querySelectorAll(".mail-thread-item").forEach(el => el.classList.remove("active"));
+  conv.innerHTML = `
+    <div class="mail-compose-pane" id="composePaneInner">
+      <div style="font-size:14px;font-weight:700;margin-bottom:6px" data-i18n="settings.reports.compose.title">${t("settings.reports.compose.title") || "Napisz nową wiadomość"}</div>
+      <div class="field">
+        <label class="field-label" data-i18n="settings.reports.compose.to">${t("settings.reports.compose.to") || "Do (e-mail)"}</label>
+        <input class="inp" id="composeToInput" type="email" autocomplete="off" style="width:100%;box-sizing:border-box">
+      </div>
+      <div class="field">
+        <label class="field-label" data-i18n="settings.reports.compose.subject">${t("settings.reports.compose.subject") || "Temat"}</label>
+        <input class="inp" id="composeSubjectInput" type="text" autocomplete="off" style="width:100%;box-sizing:border-box">
+      </div>
+      <div class="field">
+        <label class="field-label" data-i18n="settings.reports.compose.lang">${t("settings.reports.compose.lang") || "Język"}</label>
+        <select class="inp" id="composeLangSelect" style="width:100%;box-sizing:border-box">
+          <option value="pl">Polski (pl)</option>
+          <option value="en">English (en)</option>
+          <option value="uk">Українська (uk)</option>
+        </select>
+      </div>
+      <div class="field" style="flex:1;display:flex;flex-direction:column">
+        <label class="field-label" data-i18n="settings.reports.compose.message">${t("settings.reports.compose.message") || "Treść"}</label>
+        <textarea class="inp" id="composeMessageArea" rows="8" style="width:100%;box-sizing:border-box;flex:1;resize:vertical"></textarea>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;align-items:center;padding-bottom:4px">
+        <span class="field-hint" id="composeSendStatus"></span>
+        <button class="btn sm gold" id="btnComposeSend" type="button" data-i18n="settings.reports.compose.send">${t("settings.reports.compose.send") || "Wyślij"}</button>
+      </div>
+    </div>`;
+  document.getElementById("btnComposeSend")?.addEventListener("click", sendCompose);
 }
 
 async function sendCompose() {
@@ -1840,18 +2008,15 @@ async function sendCompose() {
   const subject = (document.getElementById("composeSubjectInput")?.value || "").trim();
   const message = (document.getElementById("composeMessageArea")?.value || "").trim();
   const lang    = document.getElementById("composeLangSelect")?.value || "pl";
-  const replyAs = "";
   const status  = document.getElementById("composeSendStatus");
-
   if (!to || !to.includes("@")) { showToast("Podaj poprawny e-mail.", "error"); return; }
   if (!message) { showToast("Podaj treść wiadomości.", "error"); return; }
-
   if (status) status.textContent = "Wysyłam…";
   try {
     const res = await adminFetch("/reports/send", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ to, subject, message, lang, reply_as: replyAs || undefined }),
+      body: JSON.stringify({ to, subject, message, lang }),
     });
     if (!res.ok) throw new Error(await res.text());
     showToast(t("settings.reports.compose.sent") || "Wysłano.", "success");
@@ -1865,101 +2030,32 @@ async function sendCompose() {
   }
 }
 
-function closeReportPreview() {
-  const overlay = document.getElementById("reportPreviewOverlay");
-  if (overlay) overlay.style.display = "none";
-  currentReportId = null;
-}
-
 function wireReportsEvents() {
-  // Sub-tabs
-  const rptTabs = [
-    { id: "rptTabOpen",    status: "open" },
-    { id: "rptTabReplied", status: "replied" },
-    { id: "rptTabClosed",  status: "closed" },
-  ];
-  for (const { id, status } of rptTabs) {
-    document.getElementById(id)?.addEventListener("click", async () => {
-      rptTabs.forEach(tb => document.getElementById(tb.id)?.classList.toggle("active", tb.id === id));
-      reportsActiveStatus = status;
+  // Folder nav
+  document.querySelectorAll(".mail-folder").forEach(el => {
+    el.addEventListener("click", async () => {
+      document.querySelectorAll(".mail-folder").forEach(f => f.classList.remove("active"));
+      el.classList.add("active");
+      mailActiveFolder = el.dataset.folder;
+      mailActiveReportId = null;
+      const conv = document.getElementById("mailConv");
+      if (conv) {
+        conv.innerHTML = `<div class="mail-conv-placeholder"><div style="font-size:48px;margin-bottom:12px;opacity:.3">✉</div><div style="opacity:.4;font-size:13px">Wybierz wątek</div></div>`;
+      }
       await loadReports();
     });
-  }
+  });
 
   // Refresh
-  document.getElementById("btnReportsRefresh")?.addEventListener("click", () => loadReports());
-
-  // Table delegacja
-  document.getElementById("reportsTableBody")?.addEventListener("click", async (e) => {
-    const btn = e.target.closest("button");
-    if (!btn) return;
-    const previewId = btn.dataset.reportPreview;
-    const closeId   = btn.dataset.reportClose;
-    if (previewId) await openReport(previewId);
-    if (closeId)   await closeReport(closeId);
-  });
-
-  // Preview modal
-  document.getElementById("btnReportPreviewClose")?.addEventListener("click", closeReportPreview);
-  document.getElementById("btnReportPreviewClose2")?.addEventListener("click", () => {
-    if (currentReportId) closeReport(currentReportId);
-  });
-  document.getElementById("btnReportPreviewReply")?.addEventListener("click", () => {
-    if (!currentReportId) return;
-    const overlay  = document.getElementById("reportPreviewOverlay");
-    const message  = (document.getElementById("reportReplyArea")?.value || "").trim();
-    const lang     = overlay?.dataset.lang || "pl";
-    if (!message) { showToast("Podaj treść odpowiedzi.", "error"); return; }
-    replyReport(currentReportId, message, lang);
-  });
-  document.getElementById("reportPreviewOverlay")?.addEventListener("click", (e) => {
-    if (e.target === e.currentTarget) closeReportPreview();
-  });
+  document.getElementById("btnMailRefresh")?.addEventListener("click", () => loadReports());
 
   // Compose
-  document.getElementById("btnComposeSend")?.addEventListener("click", sendCompose);
+  document.getElementById("btnMailCompose")?.addEventListener("click", showComposePaneInConv);
 
-  // Move message delegation
-  document.getElementById("reportThread")?.addEventListener("click", (e) => {
-    const btn = e.target.closest("button[data-move-message-id]");
-    if (!btn) return;
-    pendingMoveMessageId = btn.dataset.moveMessageId;
-    const moveSection = document.getElementById("reportMoveSection");
-    if (moveSection) {
-      moveSection.style.display = "";
-      document.getElementById("reportMoveTicket")?.focus();
-    }
-  });
-
-  document.getElementById("btnReportMoveConfirm")?.addEventListener("click", async () => {
-    const ticket = (document.getElementById("reportMoveTicket")?.value || "").trim();
-    if (!ticket || !pendingMoveMessageId) return;
-    try {
-      const res = await adminFetch("/reports/move-message", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message_id: pendingMoveMessageId, target_ticket: ticket }),
-      });
-      if (!res.ok) throw new Error(await res.text());
-      const json = await res.json();
-      if (!json.ok) throw new Error(json.error);
-      showToast(`Przeniesiono do ${json.new_ticket}`, "success");
-      pendingMoveMessageId = null;
-      document.getElementById("reportMoveSection").style.display = "none";
-      document.getElementById("reportMoveTicket").value = "";
-      if (currentReportId) {
-        const msgRes = await adminFetch(`/reports/messages?id=${encodeURIComponent(currentReportId)}`);
-        if (msgRes.ok) renderReportThread((await msgRes.json()).messages || []);
-      }
-    } catch (err) {
-      showToast(String(err?.message || err), "error");
-    }
-  });
-
-  document.getElementById("btnReportMoveCancel")?.addEventListener("click", () => {
-    pendingMoveMessageId = null;
-    document.getElementById("reportMoveSection").style.display = "none";
-    document.getElementById("reportMoveTicket").value = "";
+  // Search
+  document.getElementById("mailSearch")?.addEventListener("input", (e) => {
+    mailSearchQuery = e.target.value;
+    renderMailList(mailReports);
   });
 }
 
