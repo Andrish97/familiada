@@ -559,25 +559,34 @@ async function handleAdminMarketplaceApi(request, env, url) {
   if (url.pathname === "/_admin_api/marketplace/sync-gh") {
     if (request.method !== "POST") return new Response("Method Not Allowed", { status: 405 });
 
+    const BATCH = 20; // max ~41 subrequests: 1 index + 20 gh fetches + 20 rpc calls
+    let body = {};
+    try { body = await request.json(); } catch { /* no body = first batch */ }
+    const offset = Number(body?.offset ?? 0);
+
     // 1. Pobierz index.json
-    let slugs;
+    let allSlugs;
     try {
       const indexRes = await fetch(`${GH_RAW_BASE}/index.json`, { cf: { cacheEverything: false } });
       if (!indexRes.ok) {
         return json({ ok: false, error: `gh_index_fetch_failed: ${indexRes.status}` }, 502);
       }
-      slugs = await indexRes.json();
-      if (!Array.isArray(slugs)) {
+      allSlugs = await indexRes.json();
+      if (!Array.isArray(allSlugs)) {
         return json({ ok: false, error: "gh_index_invalid_format" }, 502);
       }
-      console.log("[worker] sync-gh slugs to process:", slugs.length);
     } catch (err) {
       return json({ ok: false, error: `gh_index_error: ${String(err?.message || err)}` }, 502);
     }
 
-    // 2. Upsert każdej gry
+    const total   = allSlugs.length;
+    const batch   = allSlugs.slice(offset, offset + BATCH);
+    const hasMore = offset + BATCH < total;
+    console.log(`[worker] sync-gh offset:${offset} batch:${batch.length} total:${total}`);
+
+    // 2. Upsert batcha
     const results = [];
-    for (const slug of slugs) {
+    for (const slug of batch) {
       const safeSlug = String(slug || "").trim();
       if (!safeSlug) continue;
 
@@ -617,10 +626,12 @@ async function handleAdminMarketplaceApi(request, env, url) {
     }
 
     const failed = results.filter(r => !r.ok);
-    console.log("[worker] sync-gh done synced:", results.filter(r => r.ok).length, "failed:", failed.length);
+    console.log(`[worker] sync-gh batch done synced:${results.filter(r => r.ok).length} failed:${failed.length} hasMore:${hasMore}`);
     return json({
-      ok: failed.length === 0,
-      total: results.length,
+      ok: !hasMore && failed.length === 0,
+      total,
+      offset,
+      hasMore,
       synced: results.filter(r => r.ok).length,
       failed: failed.length,
       results,
