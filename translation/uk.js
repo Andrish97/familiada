@@ -4328,6 +4328,8 @@ const uk = {
       tabOpen: "Відкриті",
       tabReplied: "З відповіддю",
       tabClosed: "Закриті",
+      tabSent: "Надіслані",
+      sentNoPreview: "(попередній перегляд недоступний)",
       refresh: "Оновити",
       empty: "Немає звернень.",
       col: {

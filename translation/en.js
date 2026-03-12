@@ -4448,6 +4448,8 @@ const en = {
       tabOpen: "Open",
       tabReplied: "Replied",
       tabClosed: "Closed",
+      tabSent: "Sent",
+      sentNoPreview: "(message preview unavailable)",
       refresh: "Refresh",
       empty: "No reports.",
       col: {

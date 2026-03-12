@@ -1665,10 +1665,29 @@ let pendingMoveMessageId = null;
 
 async function loadReports({ silent = false } = {}) {
   try {
-    const res = await adminFetch(`/reports/list?status=${encodeURIComponent(mailActiveFolder)}`);
-    if (!res.ok) throw new Error(await res.text());
-    const json = await res.json();
-    mailReports = json.reports || json.rows || [];
+    if (mailActiveFolder === "sent") {
+      const res = await adminFetch("/mail/queue?status=all&limit=200");
+      if (!res.ok) throw new Error(await res.text());
+      const json = await res.json();
+      // map mail_queue rows to report-like shape for renderMailList
+      mailReports = (json.rows || []).map(r => ({
+        id: r.id,
+        _isSent: true,
+        email: r.to_email,
+        subject: r.subject || "—",
+        preview: r.meta?.type || "",
+        ticket_number: r.meta?.ticket || "",
+        created_at: r.created_at,
+        status: r.status,
+        provider: r.provider_used,
+        html: null,
+      }));
+    } else {
+      const res = await adminFetch(`/reports/list?status=${encodeURIComponent(mailActiveFolder)}`);
+      if (!res.ok) throw new Error(await res.text());
+      const json = await res.json();
+      mailReports = json.reports || json.rows || [];
+    }
     renderMailList(mailReports);
     updateFolderBadges();
   } catch (err) {
@@ -1728,6 +1747,13 @@ async function openReport(id) {
     el.classList.toggle("active", el.dataset.reportId === id);
   });
 
+  // Sent folder — show mail_queue item preview
+  const sentRow = mailActiveFolder === "sent" ? mailReports.find(r => r.id === id) : null;
+  if (sentRow) {
+    renderSentPreview(sentRow);
+    return;
+  }
+
   const conv = document.getElementById("mailConv");
   if (!conv) return;
   conv.innerHTML = `<div style="flex:1;display:flex;align-items:center;justify-content:center;opacity:.35;font-size:12px">Ładowanie…</div>`;
@@ -1748,6 +1774,30 @@ async function openReport(id) {
   }
 
   renderConversation(report, messages);
+}
+
+function renderSentPreview(row) {
+  const conv = document.getElementById("mailConv");
+  if (!conv) return;
+  const statusMap = { sent: "Wysłany", pending: "Oczekujący", failed: "Błąd", sending: "Wysyłanie" };
+  conv.innerHTML = "";
+
+  const header = document.createElement("div");
+  header.className = "mail-conv-header";
+  header.innerHTML = `
+    <div class="mail-conv-subject">${escSetting(row.subject)}</div>
+    <div class="mail-conv-meta">Do: ${escSetting(row.email)} · ${new Date(row.created_at).toLocaleString("pl-PL")} · ${statusMap[row.status] || row.status}${row.provider ? " · " + escSetting(row.provider) : ""}${row.ticket_number ? " · #" + escSetting(row.ticket_number) : ""}</div>`;
+  conv.appendChild(header);
+
+  const msgs = document.createElement("div");
+  msgs.className = "mail-conv-messages";
+  const el = document.createElement("div");
+  el.className = "mail-msg outbound";
+  el.innerHTML = `
+    <div class="mail-msg-meta"><span>↗ ${escSetting(row.email)}</span></div>
+    <div class="mail-msg-body" style="opacity:.5;font-style:italic">${escSetting(row.preview || t("settings.reports.sentNoPreview") || "(podgląd treści niedostępny)")}</div>`;
+  msgs.appendChild(el);
+  conv.appendChild(msgs);
 }
 
 function renderConversation(report, messages) {

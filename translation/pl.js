@@ -4445,6 +4445,8 @@ const pl = {
       tabOpen: "Otwarte",
       tabReplied: "Odpowiedziane",
       tabClosed: "Zamknięte",
+      tabSent: "Wysłane",
+      sentNoPreview: "(podgląd treści niedostępny)",
       refresh: "Odśwież",
       empty: "Brak zgłoszeń.",
       col: {
