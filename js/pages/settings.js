@@ -1927,7 +1927,7 @@ function renderMessageDetail(msg, attachments = []) {
     btnAssign.type = "button";
     btnAssign.title = t("settings.reports.assignReport") || "Przydziel zgłoszenie";
     btnAssign.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>`;
-    btnAssign.addEventListener("click", () => assignReport(msg.id));
+    btnAssign.addEventListener("click", () => assignReport(msg));
     leftGroup.appendChild(btnAssign);
   } else {
     const btnUnassign = document.createElement("button");
@@ -2173,7 +2173,10 @@ function renderReportThread(report, messages, attsByMsg = {}) {
   });
 }
 
-async function assignReport(messageId) {
+let _assignMsgData = null;
+
+async function assignReport(msgOrId) {
+  _assignMsgData = msgOrId && typeof msgOrId === "object" ? msgOrId : { id: msgOrId };
   // Load reports for modal
   try {
     const res = await adminFetch("/reports?status=all&limit=100");
@@ -2182,7 +2185,7 @@ async function assignReport(messageId) {
       msgReports = json.rows || [];
     }
   } catch {}
-  openAssignModal(messageId);
+  openAssignModal(_assignMsgData.id);
 }
 
 function openAssignModal(messageId) {
@@ -2204,12 +2207,15 @@ function openAssignModal(messageId) {
         <span style="opacity:.6;font-size:12px;margin-left:8px">${escSetting(r.subject || "—")}</span>
         <span style="font-size:10px;margin-left:4px;opacity:.4">${isOpen ? "open" : "closed"}</span>`;
       opt.addEventListener("click", () => {
+        const wasSelected = opt.classList.contains("selected");
         list.querySelectorAll(".assign-report-option").forEach(el => {
           el.style.background = "";
           el.classList.remove("selected");
         });
-        opt.classList.add("selected");
-        opt.style.background = "rgba(255,234,166,.12)";
+        if (!wasSelected) {
+          opt.classList.add("selected");
+          opt.style.background = "rgba(255,234,166,.12)";
+        }
       });
       list.appendChild(opt);
     }
@@ -2219,7 +2225,17 @@ function openAssignModal(messageId) {
   }
 
   const subjectInput = document.getElementById("assignNewSubject");
-  if (subjectInput) subjectInput.value = "";
+  if (subjectInput) {
+    subjectInput.value = "";
+    subjectInput.oninput = () => {
+      const quoteLabel = document.getElementById("assignQuoteLabel");
+      if (quoteLabel) quoteLabel.style.display = subjectInput.value.trim() ? "flex" : "none";
+    };
+  }
+  const quoteLabel = document.getElementById("assignQuoteLabel");
+  if (quoteLabel) quoteLabel.style.display = "none";
+  const quoteCheck = document.getElementById("assignQuoteCheck");
+  if (quoteCheck) quoteCheck.checked = false;
   modal.hidden = false;
 }
 
@@ -2229,7 +2245,7 @@ async function fallbackAssign(messageId) {
   await doAssign(messageId, ticketOrId, false);
 }
 
-async function doAssign(messageId, reportId, isNew) {
+async function doAssign(messageId, reportId, isNew, withQuote = false, ticketNumber = null) {
   try {
     const res = await adminFetch("/messages/assign", {
       method: "PUT",
@@ -2241,6 +2257,25 @@ async function doAssign(messageId, reportId, isNew) {
     if (!json.ok) throw new Error(json.error);
     showToast(t("settings.reports.reportAssigned") || "Zgłoszenie przydzielone.", "success");
     closeAssignModal();
+
+    if (isNew && withQuote && _assignMsgData && _assignMsgData.from_email) {
+      const msg = _assignMsgData;
+      const ticket = ticketNumber || "";
+      const userQuote = (msg.body || "").trim();
+      const replyBody = `Twoja wiadomość:\n"${userQuote}"\nzostała zarejestrowana jako zgłoszenie nr ${ticket}.\nMożesz odpowiadać na ten email aby kontynuować rozmowę.`;
+      const replySubject = `[${ticket}] Zgłoszenie zarejestrowane`;
+      await adminFetch("/messages/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to_email: msg.from_email,
+          subject: replySubject,
+          body: replyBody,
+          report_id: reportId,
+        }),
+      });
+    }
+
     await loadMailFolder({ silent: true });
     if (msgActiveId) await openMessage(msgActiveId);
   } catch (err) {
@@ -2248,7 +2283,7 @@ async function doAssign(messageId, reportId, isNew) {
   }
 }
 
-async function doCreateAndAssign(messageId, subject) {
+async function doCreateAndAssign(messageId, subject, withQuote = false) {
   try {
     const createRes = await adminFetch("/reports", {
       method: "POST",
@@ -2258,7 +2293,7 @@ async function doCreateAndAssign(messageId, subject) {
     if (!createRes.ok) throw new Error(await createRes.text());
     const createJson = await createRes.json();
     if (!createJson.ok) throw new Error(createJson.error);
-    await doAssign(messageId, createJson.id, true);
+    await doAssign(messageId, createJson.id, true, withQuote, createJson.ticket_number);
   } catch (err) {
     showToast(String(err?.message || err), "error");
   }
@@ -2549,7 +2584,8 @@ function wireReportsEvents() {
 
     const newSubject = (document.getElementById("assignNewSubject")?.value || "").trim();
     if (newSubject) {
-      await doCreateAndAssign(messageId, newSubject);
+      const withQuote = document.getElementById("assignQuoteCheck")?.checked ?? false;
+      await doCreateAndAssign(messageId, newSubject, withQuote);
       return;
     }
 
