@@ -1715,32 +1715,66 @@ async function openReport(id) {
   currentReportId = id;
 
   let report;
+  let messages = [];
   try {
-    const res = await adminFetch(`/reports/detail?id=${encodeURIComponent(id)}`);
-    if (!res.ok) throw new Error(await res.text());
-    const json = await res.json();
-    report = json.report;
+    const [reportRes, msgRes] = await Promise.all([
+      adminFetch(`/reports/detail?id=${encodeURIComponent(id)}`),
+      adminFetch(`/reports/messages?id=${encodeURIComponent(id)}`),
+    ]);
+    if (!reportRes.ok) throw new Error(await reportRes.text());
+    const reportJson = await reportRes.json();
+    report = reportJson.report;
+    if (msgRes.ok) {
+      const msgJson = await msgRes.json();
+      messages = msgJson.messages || [];
+    }
   } catch (err) {
     showToast(String(err?.message || err), "error");
     return;
   }
 
-  const titleEl  = document.getElementById("reportPreviewTitle");
-  const metaEl   = document.getElementById("reportPreviewMeta");
-  const bodyEl   = document.getElementById("reportPreviewBody");
+  const titleEl   = document.getElementById("reportPreviewTitle");
+  const metaEl    = document.getElementById("reportPreviewMeta");
   const replyArea = document.getElementById("reportReplyArea");
 
   if (titleEl) titleEl.textContent = `${t("settings.reports.previewTitle") || "Zgłoszenie"} #${report.ticket_number}`;
   if (metaEl)  metaEl.textContent  = `${report.email} · ${report.lang?.toUpperCase()} · ${new Date(report.created_at).toLocaleString()}`;
-  if (bodyEl)  bodyEl.textContent  = `${report.subject}\n\n${report.message}`;
-  if (replyArea) {
-    replyArea.value = "";
-    if (report.reply_message) replyArea.value = report.reply_message;
-  }
+  if (replyArea) replyArea.value = "";
 
-  // Store lang on overlay for use in reply
+  renderReportThread(messages);
+
   overlay.dataset.lang = report.lang || "pl";
   overlay.style.display = "flex";
+
+  const thread = document.getElementById("reportThread");
+  if (thread) thread.scrollTop = thread.scrollHeight;
+}
+
+function renderReportThread(messages) {
+  const container = document.getElementById("reportThread");
+  if (!container) return;
+  container.innerHTML = "";
+
+  for (const msg of messages) {
+    const isOut = msg.direction === "outbound";
+    const el = document.createElement("div");
+    el.style.cssText = `padding:10px 12px;border-radius:10px;font-size:13px;` +
+      (isOut
+        ? "background:rgba(255,234,166,.08);border:1px solid rgba(255,234,166,.25);margin-left:32px;"
+        : "background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);margin-right:32px;");
+
+    const meta = document.createElement("div");
+    meta.style.cssText = "font-size:11px;opacity:.5;margin-bottom:6px;";
+    meta.textContent = `${isOut ? "↗" : "↙"} ${msg.from_email || "—"} · ${new Date(msg.created_at).toLocaleString()}`;
+
+    const body = document.createElement("div");
+    body.style.cssText = "white-space:pre-wrap;line-height:1.5;";
+    body.textContent = msg.body;
+
+    el.appendChild(meta);
+    el.appendChild(body);
+    container.appendChild(el);
+  }
 }
 
 async function replyReport(id, message, lang) {
@@ -1752,7 +1786,16 @@ async function replyReport(id, message, lang) {
     });
     if (!res.ok) throw new Error(await res.text());
     showToast(t("settings.reports.replied") || "Odpowiedź wysłana.", "success");
-    closeReportPreview();
+    // Refresh thread in overlay
+    const msgRes = await adminFetch(`/reports/messages?id=${encodeURIComponent(id)}`);
+    if (msgRes.ok) {
+      const msgJson = await msgRes.json();
+      renderReportThread(msgJson.messages || []);
+      const thread = document.getElementById("reportThread");
+      if (thread) thread.scrollTop = thread.scrollHeight;
+    }
+    const replyArea = document.getElementById("reportReplyArea");
+    if (replyArea) replyArea.value = "";
     await loadReports({ silent: true });
   } catch (err) {
     showToast(String(err?.message || err), "error");
@@ -1781,7 +1824,7 @@ async function sendCompose() {
   const subject = (document.getElementById("composeSubjectInput")?.value || "").trim();
   const message = (document.getElementById("composeMessageArea")?.value || "").trim();
   const lang    = document.getElementById("composeLangSelect")?.value || "pl";
-  const replyAs = (document.getElementById("composeReplyAsInput")?.value || "").trim();
+  const replyAs = "";
   const status  = document.getElementById("composeSendStatus");
 
   if (!to || !to.includes("@")) { showToast("Podaj poprawny e-mail.", "error"); return; }
@@ -1800,7 +1843,6 @@ async function sendCompose() {
     document.getElementById("composeToInput").value = "";
     document.getElementById("composeSubjectInput").value = "";
     document.getElementById("composeMessageArea").value = "";
-    document.getElementById("composeReplyAsInput").value = "";
   } catch (err) {
     if (status) status.textContent = "";
     showToast(String(err?.message || err), "error");
