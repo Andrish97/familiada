@@ -186,6 +186,114 @@ export function alertModal({ title, text, okText, onReady } = {}) {
   });
 }
 
+export function syncProgressModal({ title = "Synchronizacja" } = {}) {
+  modalSeq += 1;
+  const titleId = `uniTitle${modalSeq}`;
+
+  const overlay = document.createElement("div");
+  overlay.className = "overlay";
+
+  const modal = document.createElement("div");
+  modal.className = "modal uni-modal";
+  modal.setAttribute("role", "dialog");
+  modal.setAttribute("aria-modal", "true");
+  modal.setAttribute("aria-labelledby", titleId);
+
+  // head
+  const head = document.createElement("div");
+  head.className = "uni-head";
+  const titleEl = document.createElement("div");
+  titleEl.className = "mTitle";
+  titleEl.id = titleId;
+  titleEl.textContent = title;
+  const closeBtn = document.createElement("button");
+  closeBtn.className = "btn sm";
+  closeBtn.type = "button";
+  closeBtn.setAttribute("aria-label", modalText("common.modal.closeLabel", "Zamknij"));
+  closeBtn.textContent = "✕";
+  closeBtn.disabled = true;
+  head.appendChild(titleEl);
+  head.appendChild(closeBtn);
+
+  // body
+  const bodyWrap = document.createElement("div");
+  bodyWrap.className = "uni-body";
+  bodyWrap.style.cssText = "padding: .75rem 1rem .25rem; display:flex; flex-direction:column; gap:.5rem;";
+
+  const progressLabel = document.createElement("div");
+  progressLabel.className = "mSub";
+  progressLabel.style.margin = "0";
+  progressLabel.textContent = "Przygotowuję…";
+
+  const barTrack = document.createElement("div");
+  barTrack.style.cssText = "background:rgba(255,255,255,.12);border-radius:4px;height:8px;overflow:hidden;";
+  const bar = document.createElement("div");
+  bar.style.cssText = "height:100%;width:0%;background:var(--gold);transition:width .3s;border-radius:4px;";
+  barTrack.appendChild(bar);
+
+  const logArea = document.createElement("textarea");
+  logArea.readOnly = true;
+  logArea.className = "inp";
+  logArea.style.cssText = "width:100%;height:110px;font-size:.72rem;font-family:monospace;resize:none;opacity:.85;";
+  logArea.placeholder = "Brak błędów.";
+
+  bodyWrap.appendChild(progressLabel);
+  bodyWrap.appendChild(barTrack);
+  bodyWrap.appendChild(logArea);
+
+  // foot
+  const foot = document.createElement("div");
+  foot.className = "importRow uni-foot";
+  const okBtn = document.createElement("button");
+  okBtn.className = "btn sm gold";
+  okBtn.type = "button";
+  okBtn.textContent = "OK";
+  okBtn.disabled = true;
+  foot.appendChild(okBtn);
+
+  modal.appendChild(head);
+  modal.appendChild(bodyWrap);
+  modal.appendChild(foot);
+  overlay.appendChild(modal);
+
+  let done = false;
+  const close = () => {
+    if (!done) return;
+    overlay.remove();
+    document.removeEventListener("keydown", onKeydown, true);
+  };
+  const onKeydown = (e) => {
+    if (e.key === "Escape" && done) { e.preventDefault(); close(); }
+    else if (e.key === "Escape") e.preventDefault(); // block close while running
+  };
+  overlay.addEventListener("click", (e) => { if (e.target === overlay) close(); });
+  closeBtn.addEventListener("click", close);
+  okBtn.addEventListener("click", close);
+  document.addEventListener("keydown", onKeydown, true);
+  document.body.appendChild(overlay);
+
+  return {
+    update(synced, total, errLine = null) {
+      const pct = total > 0 ? Math.round((synced / total) * 100) : 0;
+      bar.style.width = pct + "%";
+      progressLabel.textContent = `Synchronizuję… ${synced} / ${total}`;
+      if (errLine) {
+        logArea.value += errLine + "\n";
+        logArea.scrollTop = logArea.scrollHeight;
+      }
+    },
+    finish(ok, summary) {
+      done = true;
+      bar.style.width = "100%";
+      bar.style.background = ok ? "#4caf50" : "#e53935";
+      progressLabel.textContent = summary;
+      closeBtn.disabled = false;
+      okBtn.disabled = false;
+      setTimeout(() => okBtn.focus(), 0);
+    },
+  };
+}
+
 export function promptModal({
   title,
   text,
