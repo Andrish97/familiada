@@ -5,7 +5,7 @@ let isSubmitting = false;
 
 function buildModalHtml() {
   return `
-    <div style="width:100%;max-width:480px;padding:24px 16px;">
+    <div style="width:min(480px,100%);margin:auto;padding:40px 16px;min-height:100%;display:flex;align-items:center;">
       <div class="modal">
         <div class="mTitle" id="cModalTitle"></div>
         <div id="cModalForm">
@@ -60,7 +60,7 @@ function ensureModal() {
   if (modalEl) return;
   modalEl = document.createElement("div");
   modalEl.id = "contactModalOverlay";
-  modalEl.style.cssText = "display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);overflow-y:auto;align-items:center;justify-content:center;";
+  modalEl.style.cssText = "display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);overflow-y:auto;";
   modalEl.innerHTML = buildModalHtml();
   document.body.appendChild(modalEl);
 
@@ -109,7 +109,7 @@ export function openContactModal(opts = {}) {
     if (subjectField) subjectField.style.display = "";
   }
 
-  modalEl.style.display = "flex";
+  modalEl.style.display = "block";
   document.body.style.overflow = "hidden";
   prefillEmail();
   setTimeout(() => {
