@@ -1,0 +1,277 @@
+{
+  "meta": {
+    "title": "Polska Kuchnia Regionalna",
+    "description": "Pytania o regionalne przysmaki z różnych stron Polski.",
+    "lang": "pl"
+  },
+  "game": {
+    "name": "Polska Kuchnia Regionalna",
+    "type": "prepared"
+  },
+  "questions": [
+    {
+      "text": "Wymień regionalny przysmak z Podhala.",
+      "answers": [
+        {
+          "text": "Oscypek",
+          "fixed_points": 61
+        },
+        {
+          "text": "Bryndza",
+          "fixed_points": 21
+        },
+        {
+          "text": "Kwaśnica",
+          "fixed_points": 11
+        },
+        {
+          "text": "Żentyca",
+          "fixed_points": 6
+        }
+      ]
+    },
+    {
+      "text": "Podaj potrawę charakterystyczną dla Śląska.",
+      "answers": [
+        {
+          "text": "Kluski śląskie",
+          "fixed_points": 44
+        },
+        {
+          "text": "Żur śląski",
+          "fixed_points": 27
+        },
+        {
+          "text": "Rolada śląska",
+          "fixed_points": 16
+        },
+        {
+          "text": "Modra kapusta",
+          "fixed_points": 12
+        }
+      ]
+    },
+    {
+      "text": "Wymień coś, z czego słynie kuchnia wielkopolska.",
+      "answers": [
+        {
+          "text": "Pyry z gzikiem",
+          "fixed_points": 43
+        },
+        {
+          "text": "Czernina",
+          "fixed_points": 26
+        },
+        {
+          "text": "Rogale marcińskie",
+          "fixed_points": 18
+        },
+        {
+          "text": "Plendze",
+          "fixed_points": 12
+        }
+      ]
+    },
+    {
+      "text": "Podaj polskie regionalne ciasto znane w całym kraju.",
+      "answers": [
+        {
+          "text": "Piernik toruński",
+          "fixed_points": 44
+        },
+        {
+          "text": "Makowiec",
+          "fixed_points": 27
+        },
+        {
+          "text": "Sernik krakowski",
+          "fixed_points": 18
+        },
+        {
+          "text": "Faworki",
+          "fixed_points": 10
+        }
+      ]
+    },
+    {
+      "text": "Wymień potrawę z kuchni mazurskiej.",
+      "answers": [
+        {
+          "text": "Ryba wędzona",
+          "fixed_points": 48
+        },
+        {
+          "text": "Karp mazurski",
+          "fixed_points": 27
+        },
+        {
+          "text": "Sielawa",
+          "fixed_points": 16
+        },
+        {
+          "text": "Zupa rybna",
+          "fixed_points": 8
+        }
+      ]
+    },
+    {
+      "text": "Podaj składnik charakterystyczny dla kuchni podlaskiej.",
+      "answers": [
+        {
+          "text": "Kartofle",
+          "fixed_points": 38
+        },
+        {
+          "text": "Grzyby leśne",
+          "fixed_points": 28
+        },
+        {
+          "text": "Len i konopie",
+          "fixed_points": 19
+        },
+        {
+          "text": "Bób",
+          "fixed_points": 14
+        }
+      ]
+    },
+    {
+      "text": "Wymień polską wędlinę regionalną.",
+      "answers": [
+        {
+          "text": "Kiełbasa lisiecka",
+          "fixed_points": 33
+        },
+        {
+          "text": "Kiełbasa krakowska",
+          "fixed_points": 28
+        },
+        {
+          "text": "Szynka staropolska",
+          "fixed_points": 21
+        },
+        {
+          "text": "Kabanosy",
+          "fixed_points": 11
+        },
+        {
+          "text": "Salceson",
+          "fixed_points": 6
+        }
+      ]
+    },
+    {
+      "text": "Podaj coś, z czego słynie region Lubelszczyzny.",
+      "answers": [
+        {
+          "text": "Cebularz lubelski",
+          "fixed_points": 49
+        },
+        {
+          "text": "Kapuśniak lubelski",
+          "fixed_points": 26
+        },
+        {
+          "text": "Gryczane potrawy",
+          "fixed_points": 16
+        },
+        {
+          "text": "Miód",
+          "fixed_points": 8
+        }
+      ]
+    },
+    {
+      "text": "Wymień polski ser regionalny.",
+      "answers": [
+        {
+          "text": "Oscypek",
+          "fixed_points": 48
+        },
+        {
+          "text": "Bryndza podhalańska",
+          "fixed_points": 26
+        },
+        {
+          "text": "Ser koryciński",
+          "fixed_points": 17
+        },
+        {
+          "text": "Twaróg",
+          "fixed_points": 8
+        }
+      ]
+    },
+    {
+      "text": "Podaj polskie regionalne danie z ziemniaków.",
+      "answers": [
+        {
+          "text": "Pyzy",
+          "fixed_points": 36
+        },
+        {
+          "text": "Kopytka",
+          "fixed_points": 28
+        },
+        {
+          "text": "Babka ziemniaczana",
+          "fixed_points": 19
+        },
+        {
+          "text": "Placki ziemniaczane",
+          "fixed_points": 11
+        },
+        {
+          "text": "Kluski śląskie",
+          "fixed_points": 5
+        }
+      ]
+    },
+    {
+      "text": "Wymień coś, co każdy Polak z regionu chwali jako najlepsze w Polsce.",
+      "answers": [
+        {
+          "text": "Swoje lokalne jedzenie",
+          "fixed_points": 47
+        },
+        {
+          "text": "Swój regionalny ser",
+          "fixed_points": 24
+        },
+        {
+          "text": "Swoje piwo regionalne",
+          "fixed_points": 17
+        },
+        {
+          "text": "Swoje lokalne wędliny",
+          "fixed_points": 11
+        }
+      ]
+    },
+    {
+      "text": "Podaj napój alkoholowy znany w Polsce regionalnie.",
+      "answers": [
+        {
+          "text": "Żubrówka",
+          "fixed_points": 36
+        },
+        {
+          "text": "Miód pitny",
+          "fixed_points": 27
+        },
+        {
+          "text": "Nalewka wiśniowa",
+          "fixed_points": 19
+        },
+        {
+          "text": "Piwo regionalne",
+          "fixed_points": 11
+        },
+        {
+          "text": "Śliwowica łącka",
+          "fixed_points": 6
+        }
+      ]
+    }
+  ]
+}

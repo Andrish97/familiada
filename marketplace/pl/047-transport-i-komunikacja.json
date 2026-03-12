@@ -1,0 +1,223 @@
+{
+  "meta": {
+    "title": "Transport i Komunikacja",
+    "description": "Pytania o sposób poruszania się po Polsce.",
+    "lang": "pl"
+  },
+  "game": {
+    "name": "Transport i Komunikacja",
+    "type": "prepared"
+  },
+  "questions": [
+    {
+      "text": "Wymień środek transportu, którym Polacy podróżują po Polsce.",
+      "answers": [
+        {
+          "text": "Samochodem",
+          "fixed_points": 48
+        },
+        {
+          "text": "Autobusem PKS",
+          "fixed_points": 21
+        },
+        {
+          "text": "Pociągiem PKP",
+          "fixed_points": 18
+        },
+        {
+          "text": "Rowerem",
+          "fixed_points": 9
+        },
+        {
+          "text": "Samolotem",
+          "fixed_points": 3
+        }
+      ]
+    },
+    {
+      "text": "Podaj powód, dla którego Polacy wolą auto od pociągu.",
+      "answers": [
+        {
+          "text": "Wygoda i prywatność",
+          "fixed_points": 44
+        },
+        {
+          "text": "Opóźnione pociągi",
+          "fixed_points": 28
+        },
+        {
+          "text": "Tańszy koszt",
+          "fixed_points": 17
+        },
+        {
+          "text": "Elastyczność czasu",
+          "fixed_points": 10
+        }
+      ]
+    },
+    {
+      "text": "Wymień coś, co denerwuje w polskim pociągu.",
+      "answers": [
+        {
+          "text": "Opóźnienia",
+          "fixed_points": 53
+        },
+        {
+          "text": "Brudne wagony",
+          "fixed_points": 22
+        },
+        {
+          "text": "Głośni pasażerowie",
+          "fixed_points": 14
+        },
+        {
+          "text": "Brak klimatyzacji",
+          "fixed_points": 10
+        }
+      ]
+    },
+    {
+      "text": "Podaj coś, co pasażerowie robią w pociągu.",
+      "answers": [
+        {
+          "text": "Patrzą w telefon",
+          "fixed_points": 44
+        },
+        {
+          "text": "Śpią",
+          "fixed_points": 26
+        },
+        {
+          "text": "Jedzą kanapki",
+          "fixed_points": 17
+        },
+        {
+          "text": "Czytają",
+          "fixed_points": 12
+        }
+      ]
+    },
+    {
+      "text": "Wymień polskie miasto z rozbudowanym metro.",
+      "answers": [
+        {
+          "text": "Warszawa",
+          "fixed_points": 89
+        },
+        {
+          "text": "Kraków",
+          "fixed_points": 7
+        },
+        {
+          "text": "Wrocław",
+          "fixed_points": 3
+        }
+      ]
+    },
+    {
+      "text": "Podaj powód, dla którego coraz więcej Polaków jeździ rowerem.",
+      "answers": [
+        {
+          "text": "Zdrowie i kondycja",
+          "fixed_points": 42
+        },
+        {
+          "text": "Ekologia",
+          "fixed_points": 26
+        },
+        {
+          "text": "Oszczędność",
+          "fixed_points": 18
+        },
+        {
+          "text": "Korki w mieście",
+          "fixed_points": 13
+        }
+      ]
+    },
+    {
+      "text": "Wymień rodzaj biletu na komunikację miejską.",
+      "answers": [
+        {
+          "text": "Jednorazowy bilet",
+          "fixed_points": 43
+        },
+        {
+          "text": "Miesięczny abonament",
+          "fixed_points": 28
+        },
+        {
+          "text": "Bilet dobowy",
+          "fixed_points": 17
+        },
+        {
+          "text": "Kodowy aplikacyjny",
+          "fixed_points": 11
+        }
+      ]
+    },
+    {
+      "text": "Podaj coś, co ludzie robią stojąc w korku.",
+      "answers": [
+        {
+          "text": "Słuchają radia",
+          "fixed_points": 41
+        },
+        {
+          "text": "Denerwują się",
+          "fixed_points": 24
+        },
+        {
+          "text": "Piszą SMS pod stołem",
+          "fixed_points": 19
+        },
+        {
+          "text": "Słuchają podcastów",
+          "fixed_points": 15
+        }
+      ]
+    },
+    {
+      "text": "Wymień lotnisko w Polsce.",
+      "answers": [
+        {
+          "text": "Okęcie Warszawa",
+          "fixed_points": 47
+        },
+        {
+          "text": "Balice Kraków",
+          "fixed_points": 26
+        },
+        {
+          "text": "Gdańsk Lech Wałęsa",
+          "fixed_points": 14
+        },
+        {
+          "text": "Wrocław",
+          "fixed_points": 12
+        }
+      ]
+    },
+    {
+      "text": "Podaj coś, co pasażerowie często zostawiają w taksówce.",
+      "answers": [
+        {
+          "text": "Telefon",
+          "fixed_points": 44
+        },
+        {
+          "text": "Klucze",
+          "fixed_points": 27
+        },
+        {
+          "text": "Portfel",
+          "fixed_points": 18
+        },
+        {
+          "text": "Parasol",
+          "fixed_points": 10
+        }
+      ]
+    }
+  ]
+}

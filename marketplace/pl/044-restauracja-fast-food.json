@@ -1,0 +1,227 @@
+{
+  "meta": {
+    "title": "Fast Food i Bary",
+    "description": "Pytania o fast food i jedzenie na szybko.",
+    "lang": "pl"
+  },
+  "game": {
+    "name": "Fast Food i Bary",
+    "type": "prepared"
+  },
+  "questions": [
+    {
+      "text": "Wymień sieć fast food popularną w Polsce.",
+      "answers": [
+        {
+          "text": "McDonald's",
+          "fixed_points": 44
+        },
+        {
+          "text": "KFC",
+          "fixed_points": 28
+        },
+        {
+          "text": "Burger King",
+          "fixed_points": 17
+        },
+        {
+          "text": "Subway",
+          "fixed_points": 10
+        }
+      ]
+    },
+    {
+      "text": "Podaj coś, co dzieci zamawiają w McDonald's.",
+      "answers": [
+        {
+          "text": "Happy Meal",
+          "fixed_points": 52
+        },
+        {
+          "text": "Frytki",
+          "fixed_points": 24
+        },
+        {
+          "text": "Nuggetsy",
+          "fixed_points": 14
+        },
+        {
+          "text": "Milkshake",
+          "fixed_points": 9
+        }
+      ]
+    },
+    {
+      "text": "Wymień polskie danie fast food z barów mlecznych.",
+      "answers": [
+        {
+          "text": "Pierogi",
+          "fixed_points": 38
+        },
+        {
+          "text": "Naleśniki",
+          "fixed_points": 27
+        },
+        {
+          "text": "Barszcz z uszkami",
+          "fixed_points": 19
+        },
+        {
+          "text": "Kopytka",
+          "fixed_points": 11
+        },
+        {
+          "text": "Kotlet schabowy",
+          "fixed_points": 4
+        }
+      ]
+    },
+    {
+      "text": "Podaj powód, dla którego rodzice kochają McDonald's z dziećmi.",
+      "answers": [
+        {
+          "text": "Dzieci nie marudzą",
+          "fixed_points": 44
+        },
+        {
+          "text": "Szybko i wygodnie",
+          "fixed_points": 27
+        },
+        {
+          "text": "Zabawka w zestawie",
+          "fixed_points": 18
+        },
+        {
+          "text": "Plac zabaw",
+          "fixed_points": 10
+        }
+      ]
+    },
+    {
+      "text": "Wymień sos podawany do frytek.",
+      "answers": [
+        {
+          "text": "Ketchup",
+          "fixed_points": 48
+        },
+        {
+          "text": "Majonez",
+          "fixed_points": 28
+        },
+        {
+          "text": "Musztarda",
+          "fixed_points": 14
+        },
+        {
+          "text": "Sos czosnkowy",
+          "fixed_points": 9
+        }
+      ]
+    },
+    {
+      "text": "Podaj coś, czego nie powinno się jeść w fast foodzie ale się je.",
+      "answers": [
+        {
+          "text": "Burgery codziennie",
+          "fixed_points": 44
+        },
+        {
+          "text": "Podwójne porcje",
+          "fixed_points": 26
+        },
+        {
+          "text": "Za dużo frytek",
+          "fixed_points": 19
+        },
+        {
+          "text": "Wielkie napoje z cukrem",
+          "fixed_points": 10
+        }
+      ]
+    },
+    {
+      "text": "Wymień coś, co kojarzy się z polskim barem mlecznym.",
+      "answers": [
+        {
+          "text": "Tanim jedzeniu",
+          "fixed_points": 41
+        },
+        {
+          "text": "Starszym pokoleniu",
+          "fixed_points": 26
+        },
+        {
+          "text": "Pierogami i zupami",
+          "fixed_points": 19
+        },
+        {
+          "text": "Kolejce przy ladzie",
+          "fixed_points": 13
+        }
+      ]
+    },
+    {
+      "text": "Podaj kebab jako polskie fast foodowe danie uliczne.",
+      "answers": [
+        {
+          "text": "Kebab",
+          "fixed_points": 71
+        },
+        {
+          "text": "Döner kebab",
+          "fixed_points": 18
+        },
+        {
+          "text": "Shawarma",
+          "fixed_points": 10
+        }
+      ]
+    },
+    {
+      "text": "Wymień coś, co ludzie zamawiają przez internet na jedzenie.",
+      "answers": [
+        {
+          "text": "Pizzę",
+          "fixed_points": 44
+        },
+        {
+          "text": "Sushi",
+          "fixed_points": 24
+        },
+        {
+          "text": "Burgery",
+          "fixed_points": 17
+        },
+        {
+          "text": "Azjatyckie",
+          "fixed_points": 11
+        },
+        {
+          "text": "Kebab",
+          "fixed_points": 3
+        }
+      ]
+    },
+    {
+      "text": "Podaj coś, co widać z zewnątrz restauracji fast food.",
+      "answers": [
+        {
+          "text": "Złote łuki McDonald's",
+          "fixed_points": 47
+        },
+        {
+          "text": "Menu na szyldzie",
+          "fixed_points": 27
+        },
+        {
+          "text": "Kolejkę",
+          "fixed_points": 16
+        },
+        {
+          "text": "Kosze z odpadkami",
+          "fixed_points": 9
+        }
+      ]
+    }
+  ]
+}
