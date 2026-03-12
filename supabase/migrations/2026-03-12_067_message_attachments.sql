@@ -56,3 +56,8 @@ BEGIN
   RETURN v_id;
 END;
 $$;
+
+-- Storage bucket (prywatny — dostęp tylko przez service_role)
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES ('message-attachments', 'message-attachments', false, 10485760, NULL)
+ON CONFLICT (id) DO NOTHING;
