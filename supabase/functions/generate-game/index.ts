@@ -1,6 +1,5 @@
 // supabase/functions/generate-game/index.ts
-
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+// Bez zewnętrznych importów – działa na self-hosted Supabase
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -34,38 +33,32 @@ Do NOT ask in first person. All answers and questions ONLY in English.`,
     en: topic ? `Topic for this game: "${topic}".` : `Choose an ORIGINAL everyday topic. Do not repeat: [${alreadyUsed.join(", ")}].`,
   };
 
-  const instruction = instructions[lang] ?? instructions.en;
-  const hint = topicHint[lang] ?? topicHint.en;
+  return `${instructions[lang] ?? instructions.en}
 
-  return `${instruction}
-
-${hint}
+${topicHint[lang] ?? topicHint.en}
 Game number ${index} of ${total}.
 
 RULES:
 - Exactly 10 questions
 - Each question: 3-6 answers (usually 4-5)
-- Points: irregular numbers (e.g. 43, 27, 16, 9) — not always round
-- Sum of points per question: 60-95 (NOT necessarily 100)
+- Points: irregular numbers (e.g. 43, 27, 16, 9)
+- Sum of points per question: 60-95
 - Answers: max 17 characters
 - Title: 2-4 words
 
-Return ONLY raw JSON (no markdown, no backticks, no explanation):
-{"slug":"short-ascii-slug","meta":{"title":"Game Title","description":"One sentence.","lang":"${lang}"},"game":{"name":"Game Title","type":"prepared"},"questions":[{"text":"Question?","answers":[{"text":"Answer","fixed_points":43},{"text":"Answer","fixed_points":27}]}]}`;
+Return ONLY raw JSON (no markdown, no backticks):
+{"slug":"short-ascii-slug","meta":{"title":"Title","description":"One sentence.","lang":"${lang}"},"game":{"name":"Title","type":"prepared"},"questions":[{"text":"Question?","answers":[{"text":"Answer","fixed_points":43},{"text":"Answer","fixed_points":27}]}]}`;
 }
 
-serve(async (req) => {
+Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   if (req.method !== "POST") return respond({ error: "Method not allowed" }, 405);
 
-  // ── Klucz Groq ──────────────────────────────────────────────
-  // Self-hosted: ustaw w supabase/functions/.env jako GROQ_API_KEY=gsk_...
   const groqKey = Deno.env.get("GROQ_API_KEY");
   if (!groqKey) {
-    return respond({ error: "Brak GROQ_API_KEY w zmiennych środowiskowych funkcji." }, 500);
+    return respond({ error: "Brak GROQ_API_KEY w secrets funkcji" }, 500);
   }
 
-  // ── Body ─────────────────────────────────────────────────────
   let body: { lang?: string; index?: number; total?: number; topic?: string; alreadyUsed?: string[] };
   try { body = await req.json(); }
   catch { return respond({ error: "Invalid JSON body" }, 400); }
@@ -76,7 +69,6 @@ serve(async (req) => {
     return respond({ error: `Nieobsługiwany język: ${lang}` }, 400);
   }
 
-  // ── Groq API ─────────────────────────────────────────────────
   let groqResp: Response;
   try {
     groqResp = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -110,20 +102,20 @@ serve(async (req) => {
   const raw: string = groqData?.choices?.[0]?.message?.content ?? "";
 
   if (!raw) {
-    return respond({ error: "Groq returned empty response", debug: groqData }, 502);
+    return respond({ error: "Groq returned empty response" }, 502);
   }
 
   let game: Record<string, unknown>;
   try {
     const clean = raw.replace(/^```[a-z]*\n?/, "").replace(/\n?```$/, "").trim();
     game = JSON.parse(clean);
-  } catch (e) {
+  } catch {
     console.error("JSON parse failed:", raw.slice(0, 200));
     return respond({ error: "Model returned invalid JSON", raw: raw.slice(0, 500) }, 502);
   }
 
   if (!Array.isArray(game.questions) || game.questions.length === 0) {
-    return respond({ error: "Missing questions in response", raw: raw.slice(0, 500) }, 502);
+    return respond({ error: "Missing questions in response" }, 502);
   }
 
   return respond({ game });

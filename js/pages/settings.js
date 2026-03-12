@@ -1569,10 +1569,30 @@ async function syncGithub() {
       modal.update(totalSynced + totalFailed, grandTotal);
     }
 
+    // Cleanup — usuń z DB gry GH których nie ma już w index.json
+    const allSlugs = allResults.map(r => r.slug);
+    modal.setStep("Czyszczę usunięte gry…");
+    let deleted = 0;
+    try {
+      const cleanRes  = await adminFetch("/marketplace/sync-gh-cleanup", { method: "POST", body: JSON.stringify({ slugs: allSlugs }) });
+      const cleanJson = await cleanRes.json();
+      if (cleanJson.ok) {
+        deleted = cleanJson.deleted ?? 0;
+        if (deleted > 0) {
+          modal.log(`USUNIĘTO: ${cleanJson.slugs?.join(", ") || deleted}`);
+        }
+      } else {
+        modal.log(`WARN cleanup: ${cleanJson.error}`);
+      }
+    } catch (err) {
+      modal.log(`WARN cleanup: ${String(err?.message || err)}`);
+    }
+
     const ok  = totalFailed === 0;
+    const deletedPart = deleted > 0 ? `, usunięto ${deleted}` : "";
     const msg = ok
-      ? `${t("settings.marketplace.syncOk") || "Sync OK"} — ${totalSynced}/${grandTotal}`
-      : `Sync: ${totalSynced}/${grandTotal} OK, ${totalFailed} błędów`;
+      ? `Sync OK — ${totalSynced}/${grandTotal}${deletedPart}`
+      : `Sync: ${totalSynced}/${grandTotal} OK, ${totalFailed} błędów${deletedPart}`;
     modal.finish(ok, msg);
     if (status) status.textContent = msg;
     showToast(msg, ok ? "success" : "error");

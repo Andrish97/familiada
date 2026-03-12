@@ -282,6 +282,13 @@ export function syncProgressModal({ title = "Synchronizacja" } = {}) {
         logArea.scrollTop = logArea.scrollHeight;
       }
     },
+    setStep(label) {
+      progressLabel.textContent = label;
+    },
+    log(line) {
+      logArea.value += line + "\n";
+      logArea.scrollTop = logArea.scrollHeight;
+    },
     finish(ok, summary) {
       done = true;
       bar.style.width = "100%";
