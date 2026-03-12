@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict UUD8or6fi4zZQmFIpPBB5pLIsePQhxfbvVvPMLBhJICYSb8c1zK1fQ3VxY9cRaO
+\restrict J8WElw0NVBEZAZxnnRmsfJsyjFFuLG2TEmEpYrLbCXGFk3c01xaSGe1Mh3YJ3uS
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -389,6 +389,20 @@ begin
 
   return new;
 end $$;
+
+
+--
+-- Name: assign_message_to_report("uuid", "uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."assign_message_to_report"("p_message_id" "uuid", "p_report_id" "uuid") RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+BEGIN
+  UPDATE public.messages SET report_id = p_report_id WHERE id = p_message_id;
+END;
+$$;
 
 
 --
@@ -1106,6 +1120,29 @@ $$;
 
 
 --
+-- Name: cleanup_trash(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."cleanup_trash"() RETURNS integer
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE
+  v_count int;
+BEGIN
+  WITH deleted AS (
+    DELETE FROM public.messages
+     WHERE deleted_at IS NOT NULL
+       AND deleted_at < now() - interval '30 days'
+     RETURNING id
+  )
+  SELECT COUNT(*) INTO v_count FROM deleted;
+  RETURN v_count;
+END;
+$$;
+
+
+--
 -- Name: contact_reports_set_updated_at(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -1443,6 +1480,41 @@ BEGIN
 
   RETURN QUERY SELECT FALSE, cur_next;
   RETURN;
+END;
+$$;
+
+
+--
+-- Name: create_report("text", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."create_report"("p_subject" "text", "p_lang" "text" DEFAULT 'pl'::"text") RETURNS TABLE("id" "uuid", "ticket_number" "text")
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE
+  v_ticket text;
+  v_id     uuid;
+BEGIN
+  v_ticket := public.generate_ticket_number();
+  INSERT INTO public.reports (ticket_number, status, subject, lang)
+  VALUES (v_ticket, 'open', COALESCE(p_subject,''), COALESCE(p_lang,'pl'))
+  RETURNING reports.id INTO v_id;
+  RETURN QUERY SELECT v_id, v_ticket;
+END;
+$$;
+
+
+--
+-- Name: delete_message("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."delete_message"("p_message_id" "uuid") RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+BEGIN
+  DELETE FROM public.messages WHERE id = p_message_id AND deleted_at IS NOT NULL;
 END;
 $$;
 
@@ -2241,6 +2313,35 @@ $$;
 
 
 --
+-- Name: generate_ticket_number(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."generate_ticket_number"() RETURNS "text"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE
+  v_year  int;
+  v_seq   int;
+  v_num   text;
+BEGIN
+  v_year := EXTRACT(year FROM now())::int;
+  SELECT COUNT(*) + 1
+    INTO v_seq
+    FROM public.reports
+   WHERE EXTRACT(year FROM created_at)::int = v_year;
+  v_num := 'TICKET-' || v_year::text || '-' || LPAD(v_seq::text, 4, '0');
+  -- handle collision
+  WHILE EXISTS (SELECT 1 FROM public.reports WHERE ticket_number = v_num) LOOP
+    v_seq := v_seq + 1;
+    v_num := 'TICKET-' || v_year::text || '-' || LPAD(v_seq::text, 4, '0');
+  END LOOP;
+  RETURN v_num;
+END;
+$$;
+
+
+--
 -- Name: get_device_snapshot("uuid", "text", "text"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -2296,6 +2397,32 @@ CREATE FUNCTION "public"."get_game_by_key"("p_key" "text") RETURNS TABLE("id" "u
      or g.share_key_display = p_key
      or g.share_key_host = p_key
   limit 1;
+$$;
+
+
+--
+-- Name: get_message("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."get_message"("p_id" "uuid") RETURNS TABLE("id" "uuid", "source" "text", "direction" "text", "from_email" "text", "to_email" "text", "subject" "text", "body" "text", "body_html" "text", "report_id" "uuid", "ticket_number" "text", "report_status" "text", "report_subject" "text", "queue_id" "uuid", "created_at" timestamp with time zone, "deleted_at" timestamp with time zone)
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+BEGIN
+  RETURN QUERY
+    SELECT
+      m.id, m.source, m.direction, m.from_email, m.to_email, m.subject,
+      m.body, m.body_html,
+      m.report_id,
+      r.ticket_number,
+      r.status       AS report_status,
+      r.subject      AS report_subject,
+      m.queue_id, m.created_at, m.deleted_at
+    FROM public.messages m
+    LEFT JOIN public.reports r ON r.id = m.report_id
+    WHERE m.id = p_id
+    LIMIT 1;
+END;
 $$;
 
 
@@ -2862,6 +2989,118 @@ CREATE FUNCTION "public"."list_base_shares"("p_base_id" "uuid") RETURNS TABLE("u
   join public.profiles p on p.id = s.user_id
   where s.base_id = p_base_id
     and public.is_base_owner(p_base_id);
+$$;
+
+
+--
+-- Name: list_messages("text", integer, integer); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."list_messages"("p_filter" "text" DEFAULT 'inbox'::"text", "p_limit" integer DEFAULT 50, "p_offset" integer DEFAULT 0) RETURNS TABLE("id" "uuid", "source" "text", "direction" "text", "from_email" "text", "to_email" "text", "subject" "text", "body_preview" "text", "report_id" "uuid", "ticket_number" "text", "report_status" "text", "queue_id" "uuid", "created_at" timestamp with time zone, "deleted_at" timestamp with time zone)
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE
+  v_report_id uuid;
+BEGIN
+  -- check if filter is a UUID (report view)
+  BEGIN
+    v_report_id := p_filter::uuid;
+  EXCEPTION WHEN others THEN
+    v_report_id := NULL;
+  END;
+
+  IF v_report_id IS NOT NULL THEN
+    RETURN QUERY
+      SELECT
+        m.id, m.source, m.direction, m.from_email, m.to_email, m.subject,
+        left(m.body, 120) AS body_preview,
+        m.report_id,
+        r.ticket_number,
+        r.status AS report_status,
+        m.queue_id, m.created_at, m.deleted_at
+      FROM public.messages m
+      LEFT JOIN public.reports r ON r.id = m.report_id
+      WHERE m.report_id = v_report_id
+        AND m.deleted_at IS NULL
+      ORDER BY m.created_at ASC
+      LIMIT p_limit OFFSET p_offset;
+
+  ELSIF p_filter = 'inbox' THEN
+    RETURN QUERY
+      SELECT
+        m.id, m.source, m.direction, m.from_email, m.to_email, m.subject,
+        left(m.body, 120),
+        m.report_id, r.ticket_number, r.status,
+        m.queue_id, m.created_at, m.deleted_at
+      FROM public.messages m
+      LEFT JOIN public.reports r ON r.id = m.report_id
+      WHERE m.direction = 'inbound'
+        AND m.deleted_at IS NULL
+      ORDER BY m.created_at DESC
+      LIMIT p_limit OFFSET p_offset;
+
+  ELSIF p_filter = 'sent' THEN
+    RETURN QUERY
+      SELECT
+        m.id, m.source, m.direction, m.from_email, m.to_email, m.subject,
+        left(m.body, 120),
+        m.report_id, r.ticket_number, r.status,
+        m.queue_id, m.created_at, m.deleted_at
+      FROM public.messages m
+      LEFT JOIN public.reports r ON r.id = m.report_id
+      WHERE m.direction = 'outbound'
+        AND m.deleted_at IS NULL
+      ORDER BY m.created_at DESC
+      LIMIT p_limit OFFSET p_offset;
+
+  ELSIF p_filter = 'trash' THEN
+    RETURN QUERY
+      SELECT
+        m.id, m.source, m.direction, m.from_email, m.to_email, m.subject,
+        left(m.body, 120),
+        m.report_id, r.ticket_number, r.status,
+        m.queue_id, m.created_at, m.deleted_at
+      FROM public.messages m
+      LEFT JOIN public.reports r ON r.id = m.report_id
+      WHERE m.deleted_at IS NOT NULL
+      ORDER BY m.deleted_at DESC
+      LIMIT p_limit OFFSET p_offset;
+
+  ELSE
+    -- unknown filter → empty
+    RETURN;
+  END IF;
+END;
+$$;
+
+
+--
+-- Name: list_reports("text", integer, integer); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."list_reports"("p_status" "text" DEFAULT 'all'::"text", "p_limit" integer DEFAULT 50, "p_offset" integer DEFAULT 0) RETURNS TABLE("id" "uuid", "ticket_number" "text", "status" "text", "subject" "text", "lang" "text", "created_at" timestamp with time zone, "message_count" bigint, "last_message_at" timestamp with time zone)
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+BEGIN
+  RETURN QUERY
+    SELECT
+      r.id,
+      r.ticket_number,
+      r.status,
+      r.subject,
+      r.lang,
+      r.created_at,
+      COUNT(m.id)        AS message_count,
+      MAX(m.created_at)  AS last_message_at
+    FROM public.reports r
+    LEFT JOIN public.messages m ON m.report_id = r.id AND m.deleted_at IS NULL
+    WHERE p_status = 'all' OR r.status = p_status
+    GROUP BY r.id
+    ORDER BY COALESCE(MAX(m.created_at), r.created_at) DESC
+    LIMIT p_limit OFFSET p_offset;
+END;
 $$;
 
 
@@ -7417,6 +7656,20 @@ $$;
 
 
 --
+-- Name: restore_message("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."restore_message"("p_message_id" "uuid") RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+BEGIN
+  UPDATE public.messages SET deleted_at = NULL WHERE id = p_message_id;
+END;
+$$;
+
+
+--
 -- Name: restore_my_demo("text"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -7529,6 +7782,101 @@ CREATE FUNCTION "public"."rpc_example"("p_x" integer) RETURNS integer
     SET "search_path" TO 'public', 'pg_temp'
     AS $$
   select p_x + 1;
+$$;
+
+
+--
+-- Name: save_form_message("text", "text", "text", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."save_form_message"("p_email" "text", "p_subject" "text", "p_body" "text", "p_lang" "text" DEFAULT 'pl'::"text") RETURNS TABLE("ok" boolean, "err" "text", "message_id" "uuid", "ticket_number" "text")
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE
+  v_report_id  uuid;
+  v_ticket     text;
+  v_msg_id     uuid;
+  v_last_ts    timestamptz;
+BEGIN
+  -- rate limit: 1 form message per email per 24h
+  SELECT MAX(m.created_at) INTO v_last_ts
+    FROM public.messages m
+   WHERE m.source = 'form'
+     AND m.from_email = lower(trim(p_email))
+     AND m.created_at > now() - interval '24 hours';
+
+  IF v_last_ts IS NOT NULL THEN
+    RETURN QUERY SELECT false, 'rate_limited_email'::text, NULL::uuid, NULL::text;
+    RETURN;
+  END IF;
+
+  -- create report
+  v_ticket := public.generate_ticket_number();
+  INSERT INTO public.reports (ticket_number, status, subject, lang)
+  VALUES (v_ticket, 'open', COALESCE(p_subject,''), COALESCE(p_lang,'pl'))
+  RETURNING id INTO v_report_id;
+
+  -- create message
+  INSERT INTO public.messages (source, direction, from_email, subject, body, report_id)
+  VALUES ('form', 'inbound', lower(trim(p_email)), COALESCE(p_subject,''), COALESCE(p_body,''), v_report_id)
+  RETURNING id INTO v_msg_id;
+
+  RETURN QUERY SELECT true, NULL::text, v_msg_id, v_ticket;
+END;
+$$;
+
+
+--
+-- Name: save_inbound_message("text", "text", "text", "text", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."save_inbound_message"("p_from_email" "text", "p_subject" "text", "p_body" "text", "p_body_html" "text" DEFAULT NULL::"text", "p_ticket_number" "text" DEFAULT NULL::"text") RETURNS TABLE("id" "uuid", "report_id" "uuid", "ticket_number" "text")
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE
+  v_report_id  uuid;
+  v_ticket     text;
+  v_msg_id     uuid;
+  v_clean_ticket text;
+BEGIN
+  -- normalise ticket: strip TICKET- prefix if present, keep YYYY-NNNN part
+  IF p_ticket_number IS NOT NULL AND p_ticket_number <> '' THEN
+    v_clean_ticket := regexp_replace(p_ticket_number, '^TICKET-', '');
+    -- try full match first
+    SELECT r.id, r.ticket_number INTO v_report_id, v_ticket
+      FROM public.reports r
+     WHERE r.ticket_number = p_ticket_number
+        OR r.ticket_number = 'TICKET-' || v_clean_ticket
+     LIMIT 1;
+  END IF;
+
+  INSERT INTO public.messages (source, direction, from_email, subject, body, body_html, report_id)
+  VALUES ('email', 'inbound', p_from_email, COALESCE(p_subject,''), COALESCE(p_body,''), p_body_html, v_report_id)
+  RETURNING messages.id INTO v_msg_id;
+
+  RETURN QUERY SELECT v_msg_id, v_report_id, v_ticket;
+END;
+$$;
+
+
+--
+-- Name: save_outbound_message("text", "text", "text", "text", "uuid", "uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."save_outbound_message"("p_to_email" "text", "p_subject" "text", "p_body" "text", "p_body_html" "text" DEFAULT NULL::"text", "p_report_id" "uuid" DEFAULT NULL::"uuid", "p_queue_id" "uuid" DEFAULT NULL::"uuid") RETURNS "uuid"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE
+  v_msg_id uuid;
+BEGIN
+  INSERT INTO public.messages (source, direction, to_email, subject, body, body_html, report_id, queue_id)
+  VALUES ('compose', 'outbound', p_to_email, COALESCE(p_subject,''), COALESCE(p_body,''), p_body_html, p_report_id, p_queue_id)
+  RETURNING id INTO v_msg_id;
+  RETURN v_msg_id;
+END;
 $$;
 
 
@@ -7850,6 +8198,23 @@ $$;
 
 
 --
+-- Name: set_report_status("uuid", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."set_report_status"("p_report_id" "uuid", "p_status" "text") RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+BEGIN
+  IF p_status NOT IN ('open','closed') THEN
+    RAISE EXCEPTION 'invalid status: %', p_status;
+  END IF;
+  UPDATE public.reports SET status = p_status WHERE id = p_report_id;
+END;
+$$;
+
+
+--
 -- Name: set_updated_at(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -8126,6 +8491,20 @@ end $$;
 
 
 --
+-- Name: trash_message("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."trash_message"("p_message_id" "uuid") RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+BEGIN
+  UPDATE public.messages SET deleted_at = now() WHERE id = p_message_id AND deleted_at IS NULL;
+END;
+$$;
+
+
+--
 -- Name: trg_market_library_count(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -8214,6 +8593,20 @@ begin
     new.updated_at = now();
     return new;
 end;
+$$;
+
+
+--
+-- Name: unassign_message_report("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."unassign_message_report"("p_message_id" "uuid") RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+BEGIN
+  UPDATE public.messages SET report_id = NULL WHERE id = p_message_id;
+END;
 $$;
 
 
@@ -8560,6 +8953,28 @@ CREATE TABLE "public"."market_games" (
 
 
 --
+-- Name: messages; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."messages" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "source" "text" DEFAULT 'email'::"text" NOT NULL,
+    "direction" "text" NOT NULL,
+    "from_email" "text",
+    "to_email" "text",
+    "subject" "text" DEFAULT ''::"text" NOT NULL,
+    "body" "text" DEFAULT ''::"text" NOT NULL,
+    "body_html" "text",
+    "report_id" "uuid",
+    "queue_id" "uuid",
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "deleted_at" timestamp with time zone,
+    CONSTRAINT "messages_direction_check" CHECK (("direction" = ANY (ARRAY['inbound'::"text", 'outbound'::"text"]))),
+    CONSTRAINT "messages_source_check" CHECK (("source" = ANY (ARRAY['email'::"text", 'form'::"text", 'compose'::"text"])))
+);
+
+
+--
 -- Name: poll_sessions; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -8791,6 +9206,21 @@ CREATE TABLE "public"."questions" (
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     CONSTRAINT "questions_ord_positive" CHECK (("ord" >= 1)),
     CONSTRAINT "questions_text_len" CHECK ((("char_length"("text") >= 1) AND ("char_length"("text") <= 200)))
+);
+
+
+--
+-- Name: reports; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."reports" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "ticket_number" "text" NOT NULL,
+    "status" "text" DEFAULT 'open'::"text" NOT NULL,
+    "subject" "text" DEFAULT ''::"text" NOT NULL,
+    "lang" "text" DEFAULT 'pl'::"text" NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    CONSTRAINT "reports_status_check" CHECK (("status" = ANY (ARRAY['open'::"text", 'closed'::"text"])))
 );
 
 
@@ -9035,6 +9465,14 @@ ALTER TABLE ONLY "public"."market_games"
 
 
 --
+-- Name: messages messages_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."messages"
+    ADD CONSTRAINT "messages_pkey" PRIMARY KEY ("id");
+
+
+--
 -- Name: poll_sessions poll_sessions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -9192,6 +9630,22 @@ ALTER TABLE ONLY "public"."questions"
 
 ALTER TABLE ONLY "public"."questions"
     ADD CONSTRAINT "questions_pkey" PRIMARY KEY ("id");
+
+
+--
+-- Name: reports reports_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."reports"
+    ADD CONSTRAINT "reports_pkey" PRIMARY KEY ("id");
+
+
+--
+-- Name: reports reports_ticket_number_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."reports"
+    ADD CONSTRAINT "reports_ticket_number_key" UNIQUE ("ticket_number");
 
 
 --
@@ -9449,6 +9903,34 @@ CREATE INDEX "market_games_library_cnt_idx" ON "public"."market_games" USING "bt
 --
 
 CREATE INDEX "market_games_status_idx" ON "public"."market_games" USING "btree" ("status");
+
+
+--
+-- Name: messages_created_at_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "messages_created_at_idx" ON "public"."messages" USING "btree" ("created_at" DESC);
+
+
+--
+-- Name: messages_deleted_at_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "messages_deleted_at_idx" ON "public"."messages" USING "btree" ("deleted_at") WHERE ("deleted_at" IS NOT NULL);
+
+
+--
+-- Name: messages_direction_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "messages_direction_idx" ON "public"."messages" USING "btree" ("direction");
+
+
+--
+-- Name: messages_report_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "messages_report_id_idx" ON "public"."messages" USING "btree" ("report_id") WHERE ("report_id" IS NOT NULL);
 
 
 --
@@ -9732,6 +10214,13 @@ CREATE UNIQUE INDEX "questions_game_ord_uq" ON "public"."questions" USING "btree
 
 
 --
+-- Name: reports_status_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "reports_status_idx" ON "public"."reports" USING "btree" ("status");
+
+
+--
 -- Name: uml_market_game_idx; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -9951,6 +10440,14 @@ ALTER TABLE ONLY "public"."market_games"
 
 ALTER TABLE ONLY "public"."market_games"
     ADD CONSTRAINT "market_games_source_game_fkey" FOREIGN KEY ("source_game_id") REFERENCES "public"."games"("id") ON DELETE SET NULL;
+
+
+--
+-- Name: messages messages_report_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."messages"
+    ADD CONSTRAINT "messages_report_id_fkey" FOREIGN KEY ("report_id") REFERENCES "public"."reports"("id") ON DELETE SET NULL;
 
 
 --
@@ -10250,6 +10747,20 @@ ALTER TABLE ONLY "public"."user_market_library"
 
 
 --
+-- Name: messages No public access; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "No public access" ON "public"."messages" USING (false);
+
+
+--
+-- Name: reports No public access; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "No public access" ON "public"."reports" USING (false);
+
+
+--
 -- Name: answers; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -10497,6 +11008,12 @@ CREATE POLICY "mail_settings_write_none" ON "public"."mail_settings" TO "authent
 --
 
 ALTER TABLE "public"."market_games" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: messages; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."messages" ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: market_games mg_insert_own; Type: POLICY; Schema: public; Owner: -
@@ -11045,6 +11562,12 @@ CREATE POLICY "questions_owner_write" ON "public"."questions" TO "authenticated"
 
 
 --
+-- Name: reports; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."reports" ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: user_market_library uml_own; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -11149,5 +11672,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict UUD8or6fi4zZQmFIpPBB5pLIsePQhxfbvVvPMLBhJICYSb8c1zK1fQ3VxY9cRaO
+\unrestrict J8WElw0NVBEZAZxnnRmsfJsyjFFuLG2TEmEpYrLbCXGFk3c01xaSGe1Mh3YJ3uS
 
