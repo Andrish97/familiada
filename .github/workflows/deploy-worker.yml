@@ -22,3 +22,4 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           workingDirectory: cloudflare/maintenance-worker
+          wranglerVersion: "4"
