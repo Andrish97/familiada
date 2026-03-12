@@ -1228,7 +1228,7 @@ async function handleAdminMessagesApi(request, env, url) {
       if (!cfg) return json({ ok: false, error: "missing_supabase_config" }, 500);
 
       const tempId = crypto.randomUUID();
-      const storagePath = `compose/${tempId}/${filename}`;
+      const storagePath = `compose/${tempId}_${filename}`;
       const storageUrl = `${cfg.baseUrl}/storage/v1/object/message-attachments/${storagePath}`;
 
       const upRes = await fetch(storageUrl, {
