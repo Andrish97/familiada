@@ -1,0 +1,263 @@
+{
+  "meta": {
+    "title": "Życie na wsi",
+    "description": "Gra oparta na ankiecie przeprowadzonej wśród mieszkańców wsi.",
+    "lang": "pl"
+  },
+  "game": {
+    "name": "Życie na wsi",
+    "type": "prepared"
+  },
+  "questions": [
+    {
+      "text": "Co robią mieszkańcy wsi rano?",
+      "answers": [
+        {
+          "text": "Idą do pracy",
+          "fixed_points": 31
+        },
+        {
+          "text": "Karmią zwierzęta",
+          "fixed_points": 25
+        },
+        {
+          "text": "Patrzą na telewizję",
+          "fixed_points": 14
+        },
+        {
+          "text": "Czytają gazety",
+          "fixed_points": 10
+        },
+        {
+          "text": "Łowią ryby",
+          "fixed_points": 20
+        }
+      ]
+    },
+    {
+      "text": "Jaki jest ulubiony posiłek wiejskich dzieci?",
+      "answers": [
+        {
+          "text": "Zupa",
+          "fixed_points": 28
+        },
+        {
+          "text": "Makaron",
+          "fixed_points": 22
+        },
+        {
+          "text": "Kaszanka",
+          "fixed_points": 18
+        },
+        {
+          "text": "Kiełbasa",
+          "fixed_points": 12
+        },
+        {
+          "text": "Pierogi",
+          "fixed_points": 20
+        }
+      ]
+    },
+    {
+      "text": "Co znajduje się w każdym wiejskim ogrodzie?",
+      "answers": [
+        {
+          "text": "Kwiaty",
+          "fixed_points": 35
+        },
+        {
+          "text": "Warzywa",
+          "fixed_points": 26
+        },
+        {
+          "text": "Owoce",
+          "fixed_points": 19
+        },
+        {
+          "text": "Zioła",
+          "fixed_points": 10
+        },
+        {
+          "text": "Krzewy",
+          "fixed_points": 10
+        }
+      ]
+    },
+    {
+      "text": "Jak mieszkańcy wsi spędzają niedzielę?",
+      "answers": [
+        {
+          "text": "Odpoczywają",
+          "fixed_points": 32
+        },
+        {
+          "text": "Idą do kościoła",
+          "fixed_points": 24
+        },
+        {
+          "text": "Odwiedzają rodziny",
+          "fixed_points": 20
+        },
+        {
+          "text": "Chodzą na spacer",
+          "fixed_points": 14
+        },
+        {
+          "text": "Robią remont",
+          "fixed_points": 10
+        }
+      ]
+    },
+    {
+      "text": "Co jest niezbędne w wiejskim gospodarstwie?",
+      "answers": [
+        {
+          "text": "Traktor",
+          "fixed_points": 38
+        },
+        {
+          "text": "Krowa",
+          "fixed_points": 23
+        },
+        {
+          "text": "Świnia",
+          "fixed_points": 17
+        },
+        {
+          "text": "Koń",
+          "fixed_points": 12
+        },
+        {
+          "text": "Owca",
+          "fixed_points": 10
+        }
+      ]
+    },
+    {
+      "text": "Jakim środkiem transportu poruszają się mieszkańcy wsi?",
+      "answers": [
+        {
+          "text": "Samochód",
+          "fixed_points": 40
+        },
+        {
+          "text": "Rowery",
+          "fixed_points": 22
+        },
+        {
+          "text": "Traktor",
+          "fixed_points": 15
+        },
+        {
+          "text": "Koń",
+          "fixed_points": 10
+        },
+        {
+          "text": "Pieszy",
+          "fixed_points": 13
+        }
+      ]
+    },
+    {
+      "text": "Co jest ulubionym zajęciem wiejskich emerytów?",
+      "answers": [
+        {
+          "text": "Ogród",
+          "fixed_points": 30
+        },
+        {
+          "text": "Wędkarstwo",
+          "fixed_points": 25
+        },
+        {
+          "text": "Czytanie",
+          "fixed_points": 20
+        },
+        {
+          "text": "Telewizja",
+          "fixed_points": 15
+        },
+        {
+          "text": "Rękodzieło",
+          "fixed_points": 10
+        }
+      ]
+    },
+    {
+      "text": "Jaki jest ulubiony sport wiejskich dzieci?",
+      "answers": [
+        {
+          "text": "Piłka nożna",
+          "fixed_points": 34
+        },
+        {
+          "text": "Siatkówka",
+          "fixed_points": 22
+        },
+        {
+          "text": "Koszykówka",
+          "fixed_points": 18
+        },
+        {
+          "text": "Tenis",
+          "fixed_points": 12
+        },
+        {
+          "text": "Biegi",
+          "fixed_points": 14
+        }
+      ]
+    },
+    {
+      "text": "Co jest niezbędne w wiejskim domu?",
+      "answers": [
+        {
+          "text": "Lodówka",
+          "fixed_points": 36
+        },
+        {
+          "text": "Telewizor",
+          "fixed_points": 24
+        },
+        {
+          "text": "Kuchenka",
+          "fixed_points": 20
+        },
+        {
+          "text": "Pralka",
+          "fixed_points": 10
+        },
+        {
+          "text": "Komputer",
+          "fixed_points": 10
+        }
+      ]
+    },
+    {
+      "text": "Jaki jest ulubiony rodzaj muzyki wiejskich mieszkańców?",
+      "answers": [
+        {
+          "text": "Ludowa",
+          "fixed_points": 29
+        },
+        {
+          "text": "Pop",
+          "fixed_points": 23
+        },
+        {
+          "text": "Rock",
+          "fixed_points": 18
+        },
+        {
+          "text": "Klasyczna",
+          "fixed_points": 15
+        },
+        {
+          "text": "Jazz",
+          "fixed_points": 15
+        }
+      ]
+    }
+  ]
+}

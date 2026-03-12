@@ -1,0 +1,223 @@
+{
+  "meta": {
+    "title": "Życie wśród zwierząt",
+    "description": "Gra Familiada o zwierzętach.",
+    "lang": "pl"
+  },
+  "game": {
+    "name": "Familiada - Zwierzęta",
+    "type": "prepared"
+  },
+  "questions": [
+    {
+      "text": "Co lubią koty?",
+      "answers": [
+        {
+          "text": "Mięso",
+          "fixed_points": 38
+        },
+        {
+          "text": "Mleko",
+          "fixed_points": 21
+        },
+        {
+          "text": "Łakocie",
+          "fixed_points": 15
+        },
+        {
+          "text": "Drapanie",
+          "fixed_points": 26
+        }
+      ]
+    },
+    {
+      "text": "Co jest niebezpieczne dla psów?",
+      "answers": [
+        {
+          "text": "Cukier",
+          "fixed_points": 29
+        },
+        {
+          "text": "Czekolada",
+          "fixed_points": 42
+        },
+        {
+          "text": "Kość",
+          "fixed_points": 12
+        },
+        {
+          "text": "Szczepionka",
+          "fixed_points": 17
+        }
+      ]
+    },
+    {
+      "text": "Jaki ptak jest największy?",
+      "answers": [
+        {
+          "text": "Strus",
+          "fixed_points": 51
+        },
+        {
+          "text": "Orzeł",
+          "fixed_points": 24
+        },
+        {
+          "text": "Sęp",
+          "fixed_points": 13
+        },
+        {
+          "text": "Paw",
+          "fixed_points": 12
+        }
+      ]
+    },
+    {
+      "text": "Co jedzą słonie?",
+      "answers": [
+        {
+          "text": "Trawa",
+          "fixed_points": 35
+        },
+        {
+          "text": "Liście",
+          "fixed_points": 28
+        },
+        {
+          "text": "Owoce",
+          "fixed_points": 21
+        },
+        {
+          "text": "Korzenie",
+          "fixed_points": 16
+        }
+      ]
+    },
+    {
+      "text": "Które zwierzę jest najszybsze?",
+      "answers": [
+        {
+          "text": "Gepard",
+          "fixed_points": 58
+        },
+        {
+          "text": "Lew",
+          "fixed_points": 18
+        },
+        {
+          "text": "Sęp",
+          "fixed_points": 11
+        },
+        {
+          "text": "Koń",
+          "fixed_points": 13
+        }
+      ]
+    },
+    {
+      "text": "Co robią mrówki?",
+      "answers": [
+        {
+          "text": "Noszą",
+          "fixed_points": 41
+        },
+        {
+          "text": "Gryzą",
+          "fixed_points": 25
+        },
+        {
+          "text": "Kopią",
+          "fixed_points": 19
+        },
+        {
+          "text": "Chodzą",
+          "fixed_points": 15
+        }
+      ]
+    },
+    {
+      "text": "Jaki ryba jest najbardziej jadalna?",
+      "answers": [
+        {
+          "text": "Łosoś",
+          "fixed_points": 46
+        },
+        {
+          "text": "Pstrąg",
+          "fixed_points": 26
+        },
+        {
+          "text": "Sandacz",
+          "fixed_points": 14
+        },
+        {
+          "text": "Karp",
+          "fixed_points": 14
+        }
+      ]
+    },
+    {
+      "text": "Co jest niebezpieczne dla pszczół?",
+      "answers": [
+        {
+          "text": "Truty",
+          "fixed_points": 39
+        },
+        {
+          "text": "Kwiaty",
+          "fixed_points": 21
+        },
+        {
+          "text": "Mrówki",
+          "fixed_points": 16
+        },
+        {
+          "text": "Ptaki",
+          "fixed_points": 24
+        }
+      ]
+    },
+    {
+      "text": "Jaki zwierzę jest symbolem Afryki?",
+      "answers": [
+        {
+          "text": "Lew",
+          "fixed_points": 54
+        },
+        {
+          "text": "Słoń",
+          "fixed_points": 23
+        },
+        {
+          "text": "Gepard",
+          "fixed_points": 12
+        },
+        {
+          "text": "Hiena",
+          "fixed_points": 11
+        }
+      ]
+    },
+    {
+      "text": "Co robią niedźwiedzie zimą?",
+      "answers": [
+        {
+          "text": "Hibernują",
+          "fixed_points": 59
+        },
+        {
+          "text": "Śpią",
+          "fixed_points": 18
+        },
+        {
+          "text": "Jadą",
+          "fixed_points": 10
+        },
+        {
+          "text": "Polują",
+          "fixed_points": 13
+        }
+      ]
+    }
+  ]
+}

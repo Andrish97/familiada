@@ -13,14 +13,10 @@ on:
   push:
     branches: ["main"]
     paths-ignore:
-      - "supabase/migrations/**"
-      - "supabase/migration_logs/**"
-      - "supabase/schema.sql"
-      - "supabase/functions/**"
-      - "supabase/scripts/**"
+      - "markerplace/**"
+      - "supabase/**"
       - "cloudflare/**"
-      - ".github/workflows/db-migrate.yml"
-      - ".github/workflows/deploy-edge.yml"
+      - ".github/workflows/**"
       - "README*"
       - "LICENSE*"
       - "*.md"
