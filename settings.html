@@ -410,7 +410,11 @@
           <div style="font-size:12px;opacity:.5;margin-bottom:8px">Wybierz istniejące:</div>
           <div id="assignReportList" style="max-height:200px;overflow-y:auto;border:1px solid rgba(255,255,255,.1);border-radius:8px;margin-bottom:14px;padding:4px"></div>
           <div style="font-size:12px;opacity:.5;margin-bottom:6px" data-i18n="settings.reports.createReport">…lub utwórz nowe:</div>
-          <input class="inp" id="assignNewSubject" type="text" placeholder="Temat nowego zgłoszenia" style="width:100%;box-sizing:border-box;margin-bottom:14px">
+          <input class="inp" id="assignNewSubject" type="text" placeholder="Temat nowego zgłoszenia" style="width:100%;box-sizing:border-box;margin-bottom:8px">
+          <label id="assignQuoteLabel" style="display:none;align-items:center;gap:7px;font-size:12px;opacity:.6;cursor:pointer;user-select:none;margin-bottom:14px">
+            <input type="checkbox" id="assignQuoteCheck" style="accent-color:#ffeaa6">
+            Dołącz cytat wiadomości użytkownika w odpowiedzi
+          </label>
           <div style="display:flex;justify-content:flex-end;gap:8px">
             <button class="btn sm" id="btnAssignCancel" type="button" data-i18n="common.cancel">Anuluj</button>
             <button class="btn sm gold" id="btnAssignConfirm" type="button" data-i18n="settings.reports.assignReport">Przydziel</button>
