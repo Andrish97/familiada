@@ -1,0 +1,263 @@
+{
+  "meta": {
+    "title": "Życie codzienne",
+    "description": "Gra Familiady o codziennym życiu.",
+    "lang": "pl"
+  },
+  "game": {
+    "name": "Życie codzienne",
+    "type": "prepared"
+  },
+  "questions": [
+    {
+      "text": "Co robi się rano?",
+      "answers": [
+        {
+          "text": "Budzi się",
+          "fixed_points": 38
+        },
+        {
+          "text": "Myje twarz",
+          "fixed_points": 21
+        },
+        {
+          "text": "Ubiera się",
+          "fixed_points": 14
+        },
+        {
+          "text": "Je śniadanie",
+          "fixed_points": 11
+        },
+        {
+          "text": "Pije kawę",
+          "fixed_points": 6
+        }
+      ]
+    },
+    {
+      "text": "Jaki jest ulubiony kolor?",
+      "answers": [
+        {
+          "text": "Niebieski",
+          "fixed_points": 29
+        },
+        {
+          "text": "Czerwony",
+          "fixed_points": 23
+        },
+        {
+          "text": "Zielony",
+          "fixed_points": 18
+        },
+        {
+          "text": "Żółty",
+          "fixed_points": 12
+        },
+        {
+          "text": "Fioletowy",
+          "fixed_points": 8
+        }
+      ]
+    },
+    {
+      "text": "Co się robi w sobotę?",
+      "answers": [
+        {
+          "text": "Spać",
+          "fixed_points": 41
+        },
+        {
+          "text": "Robić zakupy",
+          "fixed_points": 25
+        },
+        {
+          "text": "Chodzić na spacer",
+          "fixed_points": 15
+        },
+        {
+          "text": "Spotykać się z przyjaciółmi",
+          "fixed_points": 10
+        },
+        {
+          "text": "Oglądać TV",
+          "fixed_points": 9
+        }
+      ]
+    },
+    {
+      "text": "Jaki jest ulubiony owoc?",
+      "answers": [
+        {
+          "text": "Jabłko",
+          "fixed_points": 35
+        },
+        {
+          "text": "Banany",
+          "fixed_points": 20
+        },
+        {
+          "text": "Truskawki",
+          "fixed_points": 16
+        },
+        {
+          "text": "Winogrona",
+          "fixed_points": 12
+        },
+        {
+          "text": "Pomarańcze",
+          "fixed_points": 7
+        }
+      ]
+    },
+    {
+      "text": "Co się używa do pisania?",
+      "answers": [
+        {
+          "text": "Długopis",
+          "fixed_points": 42
+        },
+        {
+          "text": "Ołówek",
+          "fixed_points": 26
+        },
+        {
+          "text": "Marker",
+          "fixed_points": 14
+        },
+        {
+          "text": "Pióro",
+          "fixed_points": 8
+        },
+        {
+          "text": "Kredka",
+          "fixed_points": 5
+        }
+      ]
+    },
+    {
+      "text": "Jaki jest ulubiony sport?",
+      "answers": [
+        {
+          "text": "Piłka nożna",
+          "fixed_points": 48
+        },
+        {
+          "text": "Koszykówka",
+          "fixed_points": 20
+        },
+        {
+          "text": "Siatkówka",
+          "fixed_points": 12
+        },
+        {
+          "text": "Tenis",
+          "fixed_points": 10
+        },
+        {
+          "text": "Pływanie",
+          "fixed_points": 5
+        }
+      ]
+    },
+    {
+      "text": "Co się robi podczas deszczu?",
+      "answers": [
+        {
+          "text": "Zostaje w domu",
+          "fixed_points": 45
+        },
+        {
+          "text": "Bierze parasol",
+          "fixed_points": 24
+        },
+        {
+          "text": "Używa kurta",
+          "fixed_points": 13
+        },
+        {
+          "text": "Chodzi po kałużach",
+          "fixed_points": 8
+        },
+        {
+          "text": "Tańczy w deszczu",
+          "fixed_points": 5
+        }
+      ]
+    },
+    {
+      "text": "Jaka jest ulubiona potrawa?",
+      "answers": [
+        {
+          "text": "Pierogi",
+          "fixed_points": 39
+        },
+        {
+          "text": "Bigos",
+          "fixed_points": 22
+        },
+        {
+          "text": "Zupa",
+          "fixed_points": 15
+        },
+        {
+          "text": "Kotlet",
+          "fixed_points": 10
+        },
+        {
+          "text": "Kaszanka",
+          "fixed_points": 6
+        }
+      ]
+    },
+    {
+      "text": "Co się robi w niedzielę?",
+      "answers": [
+        {
+          "text": "Odpoczywa",
+          "fixed_points": 46
+        },
+        {
+          "text": "Robi obiad",
+          "fixed_points": 25
+        },
+        {
+          "text": "Chodzi do kościoła",
+          "fixed_points": 12
+        },
+        {
+          "text": "Spotyka się z rodziną",
+          "fixed_points": 8
+        },
+        {
+          "text": "Ogląda telewizję",
+          "fixed_points": 4
+        }
+      ]
+    },
+    {
+      "text": "Jaki jest ulubiony sposób spędzania czasu?",
+      "answers": [
+        {
+          "text": "Czytanie",
+          "fixed_points": 31
+        },
+        {
+          "text": "Oglądanie filmów",
+          "fixed_points": 24
+        },
+        {
+          "text": "Gry komputerowe",
+          "fixed_points": 18
+        },
+        {
+          "text": "Słuchanie muzyki",
+          "fixed_points": 12
+        },
+        {
+          "text": "Robienie zdjęć",
+          "fixed_points": 5
+        }
+      ]
+    }
+  ]
+}

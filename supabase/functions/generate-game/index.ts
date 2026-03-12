@@ -62,7 +62,7 @@ ZASADY TECHNICZNE:
 - Dokładnie 10 pytań
 - Każde pytanie: 3–6 odpowiedzi
 - Punkty: nieregularne liczby jak z prawdziwej ankiety (np. 43, 28, 14, 9) – nie 10/20/30/40
-- Suma punktów w pytaniu: 60–95
+- Suma punktów w pytaniu: 80–100 (bardziej 100 niz 80)
 - Odpowiedzi: maksymalnie 17 znaków
 - Tytuł gry: 2–4 słowa
 

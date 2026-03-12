@@ -92,6 +92,11 @@ export default {
       return handleNotifySubmission(env);
     }
 
+    // Public contact form endpoint
+    if (url.pathname === "/_api/contact" && request.method === "POST") {
+      return handleContactSubmit(request, env);
+    }
+
     // Boty zawsze dostają prawdziwą treść niezależnie od maintenance
     if (request.method === "GET" && isBot(request)) {
       if (url.pathname.startsWith("/marketplace")) {
@@ -235,6 +240,10 @@ async function handleAdminApi(request, env) {
 
   if (url.pathname.startsWith("/_admin_api/marketplace/")) {
     return handleAdminMarketplaceApi(request, env, url);
+  }
+
+  if (url.pathname.startsWith("/_admin_api/reports/")) {
+    return handleAdminReportsApi(request, env, url);
   }
 
   if (url.pathname.startsWith("/_admin_api/config/")) {
@@ -710,6 +719,434 @@ async function handleAdminMarketplaceApi(request, env, url) {
   return new Response("Not Found", { status: 404 });
 }
 
+
+// ============================================================
+// CONTACT FORM — PUBLIC
+// ============================================================
+
+async function handleContactSubmit(request, env) {
+  let body;
+  try { body = await request.json(); } catch { return json({ ok: false, error: "invalid_json" }, 400); }
+  if (!body || typeof body !== "object") return json({ ok: false, error: "invalid_body" }, 400);
+
+  const { email, subject, message, lang = "pl", user_id } = body;
+  const ip = request.headers.get("CF-Connecting-IP") || request.headers.get("X-Forwarded-For") || null;
+
+  const rpc = await supabaseRpc(env, "submit_contact_report", {
+    p_email:      String(email   || "").trim(),
+    p_subject:    String(subject || "").trim(),
+    p_message:    String(message || "").trim(),
+    p_lang:       String(lang    || "pl"),
+    p_user_id:    user_id || null,
+    p_ip_address: ip ? String(ip).split(",")[0].trim() : null,
+  });
+
+  if (!rpc.ok) {
+    return json({ ok: false, error: "rpc_failed", details: summarizeSupabaseError(rpc) }, rpc.status || 500);
+  }
+
+  const row = normalizeRpcValue(rpc.data);
+  if (!row?.ok) {
+    const err = row?.err || "submit_failed";
+    const status = (err === "rate_limited_email" || err === "rate_limited_ip") ? 429 : 422;
+    return json({ ok: false, error: err }, status);
+  }
+
+  const ticket = row.ticket_number;
+  const safeLang = ["pl","en","uk"].includes(lang) ? lang : "pl";
+
+  // Send confirmation email
+  try {
+    const { subject: confirmSubject, html } = buildContactEmail({
+      type: "confirmation",
+      lang: safeLang,
+      ticket,
+      subject: String(subject || "").trim(),
+      message: String(message || "").trim(),
+    });
+
+    await supabaseRequest(env, "/rest/v1/mail_queue", {
+      method: "POST",
+      headers: { Prefer: "return=minimal" },
+      body: {
+        to_email: String(email || "").trim().toLowerCase(),
+        subject: confirmSubject,
+        html,
+        meta: { type: "contact_confirmation", ticket },
+      },
+    });
+  } catch (err) {
+    console.error("[worker] contact: mail_queue insert failed:", err);
+  }
+
+  // Notify admin via ntfy (best-effort, rate-limited like marketplace)
+  try {
+    const topicRes = await supabaseRpc(env, "admin_config_get", { p_key: "ntfy_topic" });
+    const topic = topicRes.ok ? String(normalizeRpcValue(topicRes.data) ?? "").trim() : "";
+    if (topic) {
+      const ntfyKey = "notify_contact_ts";
+      const last = await env.MAINT_KV.get(ntfyKey);
+      const now = Date.now();
+      if (!last || now - Number(last) >= 5 * 60 * 1000) {
+        await env.MAINT_KV.put(ntfyKey, String(now), { expirationTtl: 600 });
+        await sendNtfy(topic, "Familiada — zgłoszenie", `Nowe zgłoszenie kontaktowe #${ticket}`);
+      }
+    }
+  } catch (err) {
+    console.error("[worker] contact: ntfy notify failed:", err);
+  }
+
+  return json({ ok: true, ticket_number: ticket });
+}
+
+// ============================================================
+// CONTACT EMAIL BUILDER
+// ============================================================
+
+function buildContactEmail(opts) {
+  const { type, lang = "pl", ticket, subject, message, originalMessage, replyMessage } = opts;
+
+  const copy = {
+    pl: {
+      brand: "FAMILIADA",
+      confirmation: {
+        subtitle: "POTWIERDZENIE ZGŁOSZENIA",
+        title: "Zgłoszenie przyjęte",
+        greeting: "Dziękujemy za kontakt!",
+        ticketLabel: "Numer zgłoszenia:",
+        subjectLabel: "Temat:",
+        messageLabel: "Treść:",
+        footer: "Odpowiedzi udzielimy wkrótce. Numer zgłoszenia: #" + (ticket || ""),
+        mailSubject: `[Familiada] Potwierdzenie zgłoszenia #${ticket || ""}`,
+      },
+      reply: {
+        subtitle: "ODPOWIEDŹ NA ZGŁOSZENIE",
+        title: `Odpowiedź na Twoje zgłoszenie #${ticket || ""}`,
+        greeting: "Cześć,",
+        replyLabel: "Odpowiedź:",
+        originalLabel: "Twoje zgłoszenie:",
+        footer: "Zespół Familiada",
+        mailSubject: `[Familiada] Odpowiedź na zgłoszenie #${ticket || ""}`,
+      },
+      compose: {
+        subtitle: "WIADOMOŚĆ OD FAMILIADA",
+        title: "Wiadomość od Familiada",
+        footer: "Zespół Familiada",
+        replyAsLabel: "Odpowiadamy na wiadomość:",
+        mailSubject: subject || "[Familiada] Wiadomość",
+      },
+    },
+    en: {
+      brand: "FAMILIADA",
+      confirmation: {
+        subtitle: "REPORT RECEIVED",
+        title: "Report received",
+        greeting: "Thank you for contacting us!",
+        ticketLabel: "Ticket number:",
+        subjectLabel: "Subject:",
+        messageLabel: "Message:",
+        footer: "We will reply soon. Ticket number: #" + (ticket || ""),
+        mailSubject: `[Familiada] Report confirmation #${ticket || ""}`,
+      },
+      reply: {
+        subtitle: "REPLY TO YOUR REPORT",
+        title: `Reply to your report #${ticket || ""}`,
+        greeting: "Hello,",
+        replyLabel: "Reply:",
+        originalLabel: "Your report:",
+        footer: "Familiada Team",
+        mailSubject: `[Familiada] Reply to report #${ticket || ""}`,
+      },
+      compose: {
+        subtitle: "MESSAGE FROM FAMILIADA",
+        title: "Message from Familiada",
+        footer: "Familiada Team",
+        replyAsLabel: "Replying to your message:",
+        mailSubject: subject || "[Familiada] Message",
+      },
+    },
+    uk: {
+      brand: "FAMILIADA",
+      confirmation: {
+        subtitle: "ПІДТВЕРДЖЕННЯ ЗВЕРНЕННЯ",
+        title: "Звернення прийнято",
+        greeting: "Дякуємо за звернення!",
+        ticketLabel: "Номер звернення:",
+        subjectLabel: "Тема:",
+        messageLabel: "Повідомлення:",
+        footer: "Відповімо найближчим часом. Номер звернення: #" + (ticket || ""),
+        mailSubject: `[Familiada] Підтвердження звернення #${ticket || ""}`,
+      },
+      reply: {
+        subtitle: "ВІДПОВІДЬ НА ЗВЕРНЕННЯ",
+        title: `Відповідь на ваше звернення #${ticket || ""}`,
+        greeting: "Вітаємо,",
+        replyLabel: "Відповідь:",
+        originalLabel: "Ваше звернення:",
+        footer: "Команда Familiada",
+        mailSubject: `[Familiada] Відповідь на звернення #${ticket || ""}`,
+      },
+      compose: {
+        subtitle: "ПОВІДОМЛЕННЯ ВІД FAMILIADA",
+        title: "Повідомлення від Familiada",
+        footer: "Команда Familiada",
+        replyAsLabel: "Відповідаємо на повідомлення:",
+        mailSubject: subject || "[Familiada] Повідомлення",
+      },
+    },
+  };
+
+  const safeLang = ["pl","en","uk"].includes(lang) ? lang : "pl";
+  const c = copy[safeLang];
+  const esc = (s) => String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+
+  let bodyHtml = "";
+  let mailSubject = "";
+
+  if (type === "confirmation") {
+    const t = c.confirmation;
+    mailSubject = t.mailSubject;
+    bodyHtml = `
+      <div style="font-size:14px;opacity:.9;line-height:1.5;margin:0 0 14px;">${esc(t.greeting)}</div>
+      <div style="margin:14px 0;padding:12px 14px;border-radius:14px;border:1px solid rgba(255,234,166,.3);background:rgba(255,234,166,.07);">
+        <div style="font-size:12px;opacity:.7;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">${esc(t.ticketLabel)}</div>
+        <div style="font-weight:1000;font-size:20px;color:#ffeaa6;letter-spacing:.1em;">#${esc(ticket)}</div>
+      </div>
+      <div style="margin:14px 0;padding:12px 14px;border-radius:14px;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.18);">
+        <div style="font-size:12px;opacity:.7;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">${esc(t.subjectLabel)}</div>
+        <div style="font-size:14px;font-weight:700;margin-bottom:10px;">${esc(subject)}</div>
+        <div style="font-size:12px;opacity:.7;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">${esc(t.messageLabel)}</div>
+        <div style="font-size:13px;white-space:pre-wrap;opacity:.9;">${esc(message)}</div>
+      </div>
+    `;
+  } else if (type === "reply") {
+    const t = c.reply;
+    mailSubject = t.mailSubject;
+    bodyHtml = `
+      <div style="font-size:14px;opacity:.9;line-height:1.5;margin:0 0 14px;">${esc(t.greeting)}</div>
+      <div style="margin:14px 0;padding:14px;border-radius:14px;border:1px solid rgba(255,234,166,.3);background:rgba(255,234,166,.07);">
+        <div style="font-size:12px;opacity:.7;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">${esc(t.replyLabel)}</div>
+        <div style="font-size:14px;white-space:pre-wrap;line-height:1.5;">${esc(replyMessage || "")}</div>
+      </div>
+      ${originalMessage ? `
+      <div style="margin:14px 0;padding:12px 14px;border-radius:14px;border:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.18);">
+        <div style="font-size:12px;opacity:.7;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">${esc(t.originalLabel)}</div>
+        <div style="font-size:13px;white-space:pre-wrap;opacity:.75;">${esc(originalMessage)}</div>
+      </div>` : ""}
+    `;
+  } else {
+    // compose
+    const t = c.compose;
+    mailSubject = t.mailSubject;
+    bodyHtml = `
+      ${opts.reply_as ? `
+      <div style="margin:0 0 14px;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.18);">
+        <div style="font-size:12px;opacity:.7;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">${esc(t.replyAsLabel)}</div>
+        <div style="font-size:13px;opacity:.75;">${esc(opts.reply_as)}</div>
+      </div>` : ""}
+      <div style="padding:14px;border-radius:14px;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.14);">
+        <div style="font-size:14px;white-space:pre-wrap;line-height:1.5;opacity:.9;">${esc(message || "")}</div>
+      </div>
+    `;
+  }
+
+  const tEntry = type === "confirmation" ? c.confirmation : type === "reply" ? c.reply : c.compose;
+  const subtitle = tEntry.subtitle;
+  const title = tEntry.title;
+  const footer = tEntry.footer;
+
+  const html = `<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/></head>
+<body style="margin:0;padding:0;background:#050914;">
+<div style="margin:0;padding:0;background:#050914;">
+  <div style="max-width:560px;margin:0 auto;padding:26px 16px;font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#ffffff;">
+    <div style="padding:14px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.12);border-radius:18px;backdrop-filter:blur(10px);">
+      <div style="font-weight:1000;letter-spacing:.18em;text-transform:uppercase;color:#ffeaa6;">${esc(c.brand)}</div>
+      <div style="margin-top:6px;font-size:12px;opacity:.85;letter-spacing:.08em;text-transform:uppercase;">${esc(subtitle)}</div>
+    </div>
+    <div style="margin-top:14px;padding:18px;border-radius:20px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);box-shadow:0 24px 60px rgba(0,0,0,.45);">
+      <div style="font-weight:1000;font-size:18px;letter-spacing:.06em;color:#ffeaa6;margin:0 0 10px;">${esc(title)}</div>
+      ${bodyHtml}
+    </div>
+    <div style="margin-top:14px;font-size:12px;opacity:.7;text-align:center;">${esc(footer)}</div>
+  </div>
+</div>
+</body>
+</html>`;
+
+  return { subject: mailSubject, html };
+}
+
+// ============================================================
+// REPORTS ADMIN API
+// ============================================================
+
+async function handleAdminReportsApi(request, env, url) {
+
+  // GET /_admin_api/reports/list?status=open&limit=50&offset=0
+  if (url.pathname === "/_admin_api/reports/list") {
+    if (request.method !== "GET") return new Response("Method Not Allowed", { status: 405 });
+
+    const status = String(url.searchParams.get("status") || "open").toLowerCase();
+    const allowedStatuses = new Set(["open","replied","closed","all"]);
+    if (!allowedStatuses.has(status)) return json({ ok: false, error: "Invalid status" }, 400);
+
+    const limit  = clampInt(url.searchParams.get("limit"),  1, 200, 50);
+    const offset = clampInt(url.searchParams.get("offset"), 0, 100000, 0);
+
+    let qs = "select=id,ticket_number,created_at,email,subject,lang,status,replied_at";
+    qs += `&order=created_at.desc&limit=${limit}&offset=${offset}`;
+    if (status !== "all") qs += `&status=eq.${encodeURIComponent(status)}`;
+
+    const list = await supabaseRequest(env, `/rest/v1/contact_reports?${qs}`, { method: "GET" });
+    if (!list.ok) {
+      return json({ ok: false, error: "reports_load_failed", details: summarizeSupabaseError(list) }, list.status || 500);
+    }
+
+    const rows = Array.isArray(list.data) ? list.data : [];
+    return json({ ok: true, rows, total: rows.length });
+  }
+
+  // GET /_admin_api/reports/detail?id=xxx
+  if (url.pathname === "/_admin_api/reports/detail") {
+    if (request.method !== "GET") return new Response("Method Not Allowed", { status: 405 });
+
+    const id = String(url.searchParams.get("id") || "").trim();
+    if (!id) return json({ ok: false, error: "Missing id" }, 400);
+
+    const res = await supabaseRequest(env, `/rest/v1/contact_reports?id=eq.${encodeURIComponent(id)}&select=*&limit=1`, { method: "GET" });
+    if (!res.ok) {
+      return json({ ok: false, error: "report_load_failed", details: summarizeSupabaseError(res) }, res.status || 500);
+    }
+
+    const rows = Array.isArray(res.data) ? res.data : [];
+    if (!rows.length) return json({ ok: false, error: "not_found" }, 404);
+    return json({ ok: true, report: rows[0] });
+  }
+
+  // POST /_admin_api/reports/reply { id, message, lang }
+  if (url.pathname === "/_admin_api/reports/reply") {
+    if (request.method !== "POST") return new Response("Method Not Allowed", { status: 405 });
+
+    let body;
+    try { body = await request.json(); } catch { return json({ ok: false, error: "invalid_json" }, 400); }
+    const { id, message, lang } = body || {};
+    if (!id || !message) return json({ ok: false, error: "Missing id or message" }, 400);
+
+    const safeLang = ["pl","en","uk"].includes(lang) ? lang : "pl";
+
+    // Fetch report for original data
+    const reportRes = await supabaseRequest(env, `/rest/v1/contact_reports?id=eq.${encodeURIComponent(id)}&select=*&limit=1`, { method: "GET" });
+    const reportRow = Array.isArray(reportRes.data) && reportRes.data.length ? reportRes.data[0] : null;
+    if (!reportRow) return json({ ok: false, error: "not_found" }, 404);
+
+    const rpc = await supabaseRpc(env, "admin_update_contact_report", {
+      p_id:            String(id),
+      p_status:        "replied",
+      p_reply_message: String(message),
+    });
+    if (!rpc.ok) {
+      return json({ ok: false, error: "update_failed", details: summarizeSupabaseError(rpc) }, rpc.status || 500);
+    }
+    const result = normalizeRpcValue(rpc.data);
+    if (!result?.ok) {
+      return json({ ok: false, error: result?.err || "update_failed" }, 422);
+    }
+
+    // Send reply email
+    try {
+      const { subject: replySubject, html } = buildContactEmail({
+        type: "reply",
+        lang: safeLang,
+        ticket: reportRow.ticket_number,
+        subject: reportRow.subject,
+        message: String(message),
+        replyMessage: String(message),
+        originalMessage: reportRow.message,
+      });
+
+      await supabaseRequest(env, "/rest/v1/mail_queue", {
+        method: "POST",
+        headers: { Prefer: "return=minimal" },
+        body: {
+          to_email: reportRow.email,
+          subject: replySubject,
+          html,
+          meta: { type: "contact_reply", ticket: reportRow.ticket_number, report_id: id },
+        },
+      });
+    } catch (err) {
+      console.error("[worker] reports reply: mail_queue insert failed:", err);
+    }
+
+    return json({ ok: true });
+  }
+
+  // POST /_admin_api/reports/close { id }
+  if (url.pathname === "/_admin_api/reports/close") {
+    if (request.method !== "POST") return new Response("Method Not Allowed", { status: 405 });
+
+    let body;
+    try { body = await request.json(); } catch { return json({ ok: false, error: "invalid_json" }, 400); }
+    const { id } = body || {};
+    if (!id) return json({ ok: false, error: "Missing id" }, 400);
+
+    const rpc = await supabaseRpc(env, "admin_update_contact_report", {
+      p_id:     String(id),
+      p_status: "closed",
+    });
+    if (!rpc.ok) {
+      return json({ ok: false, error: "update_failed", details: summarizeSupabaseError(rpc) }, rpc.status || 500);
+    }
+    const result = normalizeRpcValue(rpc.data);
+    if (!result?.ok) {
+      return json({ ok: false, error: result?.err || "update_failed" }, 422);
+    }
+    return json({ ok: true });
+  }
+
+  // POST /_admin_api/reports/send { to, subject, message, lang, reply_as? }
+  if (url.pathname === "/_admin_api/reports/send") {
+    if (request.method !== "POST") return new Response("Method Not Allowed", { status: 405 });
+
+    let body;
+    try { body = await request.json(); } catch { return json({ ok: false, error: "invalid_json" }, 400); }
+    const { to, subject: msgSubject, message, lang, reply_as } = body || {};
+    if (!to || !message) return json({ ok: false, error: "Missing to or message" }, 400);
+
+    const safeLang = ["pl","en","uk"].includes(lang) ? lang : "pl";
+
+    try {
+      const { subject: mailSubject, html } = buildContactEmail({
+        type: "compose",
+        lang: safeLang,
+        ticket: null,
+        subject: String(msgSubject || ""),
+        message: String(message),
+        reply_as: reply_as || null,
+      });
+
+      await supabaseRequest(env, "/rest/v1/mail_queue", {
+        method: "POST",
+        headers: { Prefer: "return=minimal" },
+        body: {
+          to_email: String(to).trim().toLowerCase(),
+          subject: mailSubject,
+          html,
+          meta: { type: "contact_compose" },
+        },
+      });
+    } catch (err) {
+      console.error("[worker] reports send: mail_queue insert failed:", err);
+      return json({ ok: false, error: String(err?.message || err) }, 500);
+    }
+
+    return json({ ok: true });
+  }
+
+  return new Response("Not Found", { status: 404 });
+}
 
 // ============================================================
 // NTFY HELPER

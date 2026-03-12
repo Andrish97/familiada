@@ -62,11 +62,13 @@ const els = {
   btnTabMaintenance: document.getElementById("btnTabMaintenance"),
   btnTabMail: document.getElementById("btnTabMail"),
   btnTabMarketplace: document.getElementById("btnTabMarketplace"),
+  btnTabReports: document.getElementById("btnTabReports"),
   mainWrap: document.querySelector("main.wrap"),
   footer: document.querySelector("footer.footer"),
   maintenancePanel: document.querySelector(".maintenance-panel"),
   mailPanel: document.getElementById("mailPanel"),
   marketplacePanel: document.getElementById("marketplacePanel"),
+  reportsPanel: document.getElementById("reportsPanel"),
   maintenanceControls: document.getElementById("maintenanceControls"),
   modeStatus: document.getElementById("modeStatus"),
   modeStatusValue: document.getElementById("modeStatusValue"),
@@ -1650,6 +1652,216 @@ async function testNtfy() {
 }
 
 // helper — fetch do /_admin_api/*
+// ============================================================
+// REPORTS ADMIN
+// ============================================================
+
+let reportsActiveStatus = "open";
+let currentReportId = null;
+
+async function loadReports({ silent = false } = {}) {
+  const tbody = document.getElementById("reportsTableBody");
+  const info  = document.getElementById("reportsTableInfo");
+  if (!tbody) return;
+  if (!silent && info) info.textContent = "Ładowanie…";
+
+  let data;
+  try {
+    const res = await adminFetch(`/reports/list?status=${reportsActiveStatus}&limit=100`);
+    if (!res.ok) throw new Error(await res.text());
+    const json = await res.json();
+    data = json.rows || [];
+  } catch (err) {
+    if (info) info.textContent = String(err?.message || err);
+    return;
+  }
+
+  tbody.innerHTML = "";
+  if (!data.length) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td colspan="6" style="text-align:center;opacity:.6">${t("settings.reports.empty") || "Brak zgłoszeń."}</td>`;
+    tbody.appendChild(tr);
+    if (info) info.textContent = "";
+    return;
+  }
+
+  for (const r of data) {
+    const tr = document.createElement("tr");
+    const date = r.created_at ? new Date(r.created_at).toLocaleDateString() : "—";
+    const statusLabel = t(`settings.reports.status.${r.status}`) || r.status;
+
+    const actions = `<button class="btn sm" data-report-preview="${escSetting(r.id)}">${t("settings.reports.reply") || "Odpowiedz"}</button>` +
+      (reportsActiveStatus !== "closed"
+        ? ` <button class="btn sm" data-report-close="${escSetting(r.id)}">${t("settings.reports.close") || "Zamknij"}</button>`
+        : "");
+
+    tr.innerHTML = `
+      <td>${escSetting(r.ticket_number)}</td>
+      <td>${escSetting(r.email)}</td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escSetting(r.subject)}</td>
+      <td>${date}</td>
+      <td>${escSetting(statusLabel)}</td>
+      <td class="market-actions">${actions}</td>`;
+    tbody.appendChild(tr);
+  }
+
+  if (info) info.textContent = `${data.length} ${t("settings.marketplace.items") || "pozycji"}`;
+}
+
+async function openReport(id) {
+  const overlay = document.getElementById("reportPreviewOverlay");
+  if (!overlay) return;
+
+  currentReportId = id;
+
+  let report;
+  try {
+    const res = await adminFetch(`/reports/detail?id=${encodeURIComponent(id)}`);
+    if (!res.ok) throw new Error(await res.text());
+    const json = await res.json();
+    report = json.report;
+  } catch (err) {
+    showToast(String(err?.message || err), "error");
+    return;
+  }
+
+  const titleEl  = document.getElementById("reportPreviewTitle");
+  const metaEl   = document.getElementById("reportPreviewMeta");
+  const bodyEl   = document.getElementById("reportPreviewBody");
+  const replyArea = document.getElementById("reportReplyArea");
+
+  if (titleEl) titleEl.textContent = `${t("settings.reports.previewTitle") || "Zgłoszenie"} #${report.ticket_number}`;
+  if (metaEl)  metaEl.textContent  = `${report.email} · ${report.lang?.toUpperCase()} · ${new Date(report.created_at).toLocaleString()}`;
+  if (bodyEl)  bodyEl.textContent  = `${report.subject}\n\n${report.message}`;
+  if (replyArea) {
+    replyArea.value = "";
+    if (report.reply_message) replyArea.value = report.reply_message;
+  }
+
+  // Store lang on overlay for use in reply
+  overlay.dataset.lang = report.lang || "pl";
+  overlay.style.display = "flex";
+}
+
+async function replyReport(id, message, lang) {
+  try {
+    const res = await adminFetch("/reports/reply", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, message, lang }),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    showToast(t("settings.reports.replied") || "Odpowiedź wysłana.", "success");
+    closeReportPreview();
+    await loadReports({ silent: true });
+  } catch (err) {
+    showToast(String(err?.message || err), "error");
+  }
+}
+
+async function closeReport(id) {
+  const ok = await confirmModal({ text: t("settings.reports.closeConfirm") || "Zamknąć to zgłoszenie?" });
+  if (!ok) return;
+  try {
+    const res = await adminFetch("/reports/close", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    showToast(t("settings.reports.closed") || "Zamknięto.", "success");
+    await loadReports({ silent: true });
+  } catch (err) {
+    showToast(String(err?.message || err), "error");
+  }
+}
+
+async function sendCompose() {
+  const to      = (document.getElementById("composeToInput")?.value || "").trim();
+  const subject = (document.getElementById("composeSubjectInput")?.value || "").trim();
+  const message = (document.getElementById("composeMessageArea")?.value || "").trim();
+  const lang    = document.getElementById("composeLangSelect")?.value || "pl";
+  const replyAs = (document.getElementById("composeReplyAsInput")?.value || "").trim();
+  const status  = document.getElementById("composeSendStatus");
+
+  if (!to || !to.includes("@")) { showToast("Podaj poprawny e-mail.", "error"); return; }
+  if (!message) { showToast("Podaj treść wiadomości.", "error"); return; }
+
+  if (status) status.textContent = "Wysyłam…";
+  try {
+    const res = await adminFetch("/reports/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ to, subject, message, lang, reply_as: replyAs || undefined }),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    showToast(t("settings.reports.compose.sent") || "Wysłano.", "success");
+    if (status) status.textContent = t("settings.reports.compose.sent") || "Wysłano.";
+    document.getElementById("composeToInput").value = "";
+    document.getElementById("composeSubjectInput").value = "";
+    document.getElementById("composeMessageArea").value = "";
+    document.getElementById("composeReplyAsInput").value = "";
+  } catch (err) {
+    if (status) status.textContent = "";
+    showToast(String(err?.message || err), "error");
+  }
+}
+
+function closeReportPreview() {
+  const overlay = document.getElementById("reportPreviewOverlay");
+  if (overlay) overlay.style.display = "none";
+  currentReportId = null;
+}
+
+function wireReportsEvents() {
+  // Sub-tabs
+  const rptTabs = [
+    { id: "rptTabOpen",    status: "open" },
+    { id: "rptTabReplied", status: "replied" },
+    { id: "rptTabClosed",  status: "closed" },
+  ];
+  for (const { id, status } of rptTabs) {
+    document.getElementById(id)?.addEventListener("click", async () => {
+      rptTabs.forEach(tb => document.getElementById(tb.id)?.classList.toggle("active", tb.id === id));
+      reportsActiveStatus = status;
+      await loadReports();
+    });
+  }
+
+  // Refresh
+  document.getElementById("btnReportsRefresh")?.addEventListener("click", () => loadReports());
+
+  // Table delegacja
+  document.getElementById("reportsTableBody")?.addEventListener("click", async (e) => {
+    const btn = e.target.closest("button");
+    if (!btn) return;
+    const previewId = btn.dataset.reportPreview;
+    const closeId   = btn.dataset.reportClose;
+    if (previewId) await openReport(previewId);
+    if (closeId)   await closeReport(closeId);
+  });
+
+  // Preview modal
+  document.getElementById("btnReportPreviewClose")?.addEventListener("click", closeReportPreview);
+  document.getElementById("btnReportPreviewClose2")?.addEventListener("click", () => {
+    if (currentReportId) closeReport(currentReportId);
+  });
+  document.getElementById("btnReportPreviewReply")?.addEventListener("click", () => {
+    if (!currentReportId) return;
+    const overlay  = document.getElementById("reportPreviewOverlay");
+    const message  = (document.getElementById("reportReplyArea")?.value || "").trim();
+    const lang     = overlay?.dataset.lang || "pl";
+    if (!message) { showToast("Podaj treść odpowiedzi.", "error"); return; }
+    replyReport(currentReportId, message, lang);
+  });
+  document.getElementById("reportPreviewOverlay")?.addEventListener("click", (e) => {
+    if (e.target === e.currentTarget) closeReportPreview();
+  });
+
+  // Compose
+  document.getElementById("btnComposeSend")?.addEventListener("click", sendCompose);
+}
+
 function adminFetch(path, init = {}) {
   return fetch(`/_admin_api${path}`, init);
 }
@@ -1977,14 +2189,17 @@ function setActiveTab(tab) {
   const btn = document.getElementById("btnTabMaintenance");
   const btnMail = document.getElementById("btnTabMail");
   const btnMarket = document.getElementById("btnTabMarketplace");
+  const btnReports = document.getElementById("btnTabReports");
   const tools = document.getElementById("toolsSelect");
   if (btn) btn.classList.toggle("active", tab === "maintenance");
   if (btnMail) btnMail.classList.toggle("active", tab === "mail");
   if (btnMarket) btnMarket.classList.toggle("active", tab === "marketplace");
+  if (btnReports) btnReports.classList.toggle("active", tab === "reports");
   if (tools) tools.classList.toggle("active", tab === "tools");
   if (els.maintenancePanel) els.maintenancePanel.hidden = tab !== "maintenance";
   if (els.mailPanel) els.mailPanel.hidden = tab !== "mail";
   if (els.marketplacePanel) els.marketplacePanel.hidden = tab !== "marketplace";
+  if (els.reportsPanel) els.reportsPanel.hidden = tab !== "reports";
 }
 
 function labelFromPath(pathname) {
@@ -2161,7 +2376,16 @@ function wireEvents() {
     });
   }
 
+  if (els.btnTabReports) {
+    els.btnTabReports.addEventListener("click", async () => {
+      if (activeTab === "tools") closeTools();
+      setActiveTab("reports");
+      await loadReports({ silent: true });
+    });
+  }
+
   wireMarketplaceEvents();
+  wireReportsEvents();
 
   if (els.toolsShell) {
     els.toolsShell.addEventListener("dblclick", closeTools);
