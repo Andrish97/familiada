@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Familiada Generator</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0d0d0f;--surface:#16161a;--surface2:#1e1e24;--border:#2a2a35;
+    --accent:#e8c547;--accent2:#f07b3f;--text:#e8e8f0;--muted:#6b6b80;
+    --green:#4ade80;--red:#f87171;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:40px 20px 80px}
+  .wrap{width:100%;max-width:720px}
+  header{text-align:center;margin-bottom:48px}
+  .logo{font-family:'Bebas Neue',sans-serif;font-size:clamp(52px,10vw,88px);letter-spacing:4px;line-height:1;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .subtitle{font-size:13px;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-top:6px}
+  .badge{display:inline-block;background:#1a2a1a;border:1px solid #2a4a2a;color:var(--green);font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;padding:4px 10px;border-radius:99px;margin-top:10px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px;margin-bottom:20px}
+  .card-title{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;color:var(--accent);margin-bottom:24px}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .field{display:flex;flex-direction:column;gap:6px}
+  label{font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+  input,select,textarea{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;padding:10px 14px;width:100%;outline:none;transition:border-color .2s}
+  input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+  select option{background:var(--surface2)}
+  textarea{resize:vertical;min-height:68px}
+  .range-row{display:flex;align-items:center;gap:12px}
+  .range-row input{width:80px;text-align:center}
+  .range-sep{color:var(--muted);font-size:13px;white-space:nowrap}
+  .btn{display:flex;align-items:center;justify-content:center;gap:10px;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:10px;color:#0d0d0f;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;padding:14px 28px;width:100%;transition:opacity .2s,transform .1s}
+  .btn:hover:not(:disabled){opacity:.9;transform:translateY(-1px)}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  #progress-section{display:none}
+  #progress-section.visible{display:block}
+  .progress-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px}
+  .progress-label{font-size:13px;font-weight:500;color:var(--muted)}
+  .progress-counter{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--accent)}
+  .progress-bar-bg{background:var(--surface2);border-radius:99px;height:6px;overflow:hidden;margin-bottom:20px}
+  .progress-bar-fill{background:linear-gradient(90deg,var(--accent),var(--accent2));height:100%;border-radius:99px;transition:width .4s ease;width:0%}
+  #log{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;max-height:260px;overflow-y:auto;font-size:12.5px;display:flex;flex-direction:column;gap:4px}
+  .log-line{display:flex;gap:10px;align-items:flex-start}
+  .log-icon{flex-shrink:0;margin-top:1px}
+  .log-ok .log-icon{color:var(--green)}.log-err .log-icon{color:var(--red)}.log-wait .log-icon{color:var(--accent)}
+  .log-text{color:var(--text);line-height:1.5}
+  .log-sub{color:var(--muted);font-size:11px}
+  #dl-btn{display:none;margin-top:20px;background:var(--green);color:#0d0d0f}
+  #dl-btn.visible{display:flex}
+  .tip{background:var(--surface2);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;font-size:12px;color:var(--muted);padding:10px 14px;line-height:1.6;margin-top:12px}
+  @media(max-width:520px){.grid-2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">FAMILIADA</div>
+    <div class="subtitle">Generator gier &nbsp;·&nbsp; Groq Llama 3.3</div>
+    <div class="badge">✦ Klucz Groq tylko w Supabase Secrets</div>
+  </header>
+
+  <div class="card">
+    <div class="card-title">⚙️ Ustawienia generowania</div>
+    <div class="grid-2" style="margin-bottom:16px">
+      <div class="field">
+        <label>Język gier</label>
+        <select id="lang">
+          <option value="pl">🇵🇱 Polski</option>
+          <option value="en">🇬🇧 English</option>
+          <option value="de">🇩🇪 Deutsch</option>
+          <option value="uk">🇺🇦 Українська</option>
+          <option value="fr">🇫🇷 Français</option>
+          <option value="es">🇪🇸 Español</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Prefix folderu</label>
+        <input type="text" id="prefix" value="pl" placeholder="pl">
+      </div>
+    </div>
+    <div class="field" style="margin-bottom:16px">
+      <label>Temat / kategoria (opcjonalnie)</label>
+      <textarea id="topic" placeholder="Zostaw puste = AI dobierze różnorodne tematy. Lub wpisz np. historia Polski, kuchnia, sport..."></textarea>
+    </div>
+    <div class="field">
+      <label>Zakres numerów gier</label>
+      <div class="range-row">
+        <input type="number" id="from" value="1" min="1" max="999">
+        <span class="range-sep">od — do</span>
+        <input type="number" id="to" value="10" min="1" max="999">
+        <span class="range-sep" style="color:var(--text);font-weight:500" id="count-label">= 10 gier</span>
+      </div>
+    </div>
+    <div class="tip">Groq Free: ~14 400 requestów / dzień. Każda gra to 1 request (~2–3 sek).</div>
+  </div>
+
+  <button class="btn" id="gen-btn" onclick="startGeneration()">
+    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
+    Generuj gry
+  </button>
+
+  <div class="card" id="progress-section" style="margin-top:20px">
+    <div class="card-title">📡 Postęp generowania</div>
+    <div class="progress-header">
+      <span class="progress-label" id="progress-text">Inicjalizacja…</span>
+      <span class="progress-counter"><span id="done-count">0</span> / <span id="total-count">0</span></span>
+    </div>
+    <div class="progress-bar-bg"><div class="progress-bar-fill" id="progress-fill"></div></div>
+    <div id="log"></div>
+    <button class="btn" id="dl-btn" onclick="downloadZip()">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 3v13M7 12l5 5 5-5"/><path d="M3 19h18"/></svg>
+      Pobierz archiwum ZIP
+    </button>
+  </div>
+</div>
+
+<script type="module">
+import { sb } from '/../js/core/supabase.js';
+
+let generatedFiles = {};
+let running = false;
+const $ = id => document.getElementById(id);
+
+function updateCountLabel() {
+  const n = Math.max(0, (parseInt($('to').value)||1) - (parseInt($('from').value)||1) + 1);
+  $('count-label').textContent = `= ${n} ${n===1?'gra':n<5?'gry':'gier'}`;
+}
+$('from').addEventListener('input', updateCountLabel);
+$('to').addEventListener('input', updateCountLabel);
+
+function log(icon, text, sub='', cls='') {
+  const el = document.createElement('div');
+  el.className = 'log-line ' + cls;
+  el.innerHTML = `<span class="log-icon">${icon}</span><span class="log-text">${text}${sub?`<br><span class="log-sub">${sub}</span>`:''}</span>`;
+  $('log').appendChild(el);
+  $('log').scrollTop = $('log').scrollHeight;
+}
+
+function setProgress(done, total) {
+  $('done-count').textContent = done;
+  $('total-count').textContent = total;
+  $('progress-fill').style.width = total > 0 ? `${(done/total)*100}%` : '0%';
+}
+
+function slugify(text) {
+  return (text||'').toLowerCase()
+    .replace(/ą/g,'a').replace(/ć/g,'c').replace(/ę/g,'e')
+    .replace(/ł/g,'l').replace(/ń/g,'n').replace(/ó/g,'o')
+    .replace(/ś/g,'s').replace(/[źż]/g,'z')
+    .replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+}
+
+async function callEdgeFunction(payload) {
+  const { data, error } = await sb().functions.invoke('generate-game', { body: payload });
+  if (error) throw new Error(error.message || JSON.stringify(error));
+  if (data?.error) throw new Error(data.error);
+  return data.game;
+}
+
+window.startGeneration = async function() {
+  if (running) return;
+  const lang   = $('lang').value;
+  const prefix = $('prefix').value.trim() || lang;
+  const topic  = $('topic').value.trim();
+  const from   = parseInt($('from').value) || 1;
+  const to     = parseInt($('to').value)   || 1;
+  if (to < from) { alert('Numer "do" musi być >= "od"'); return; }
+
+  const total = to - from + 1;
+  generatedFiles = {};
+  running = true;
+  $('gen-btn').disabled = true;
+  $('dl-btn').classList.remove('visible');
+  $('log').innerHTML = '';
+  $('progress-section').classList.add('visible');
+  $('progress-text').textContent = 'Łączenie z Supabase…';
+  setProgress(0, total);
+
+  const usedTitles = [];
+  let done = 0, errors = 0;
+
+  for (let i = from; i <= to; i++) {
+    const num = String(i).padStart(3, '0');
+    log('⏳', `Generuję grę ${num}…`, topic || 'temat losowany przez AI', 'log-wait');
+    try {
+      const game = await callEdgeFunction({ lang, index: i, total, topic, alreadyUsed: usedTitles });
+      const gameSlug = game.slug || slugify(game.meta?.title || `game-${num}`);
+      const key = `${prefix}/${num}-${gameSlug}`;
+      delete game.slug;
+      generatedFiles[key] = game;
+      usedTitles.push(game.meta?.title || gameSlug);
+      done++;
+      setProgress(done, total);
+      $('progress-text').textContent = `Wygenerowano ${done} z ${total}…`;
+      $('log').lastChild.remove();
+      log('✓', `<strong>${num} – ${game.meta?.title}</strong>`, `${game.questions?.length??'?'} pytań · ${key}.json`, 'log-ok');
+    } catch(e) {
+      errors++;
+      $('log').lastChild.remove();
+      log('✗', `Błąd gry ${num}`, e.message, 'log-err');
+    }
+    if (i < to) await new Promise(r => setTimeout(r, 200));
+  }
+
+  running = false;
+  $('gen-btn').disabled = false;
+  if (Object.keys(generatedFiles).length > 0) {
+    $('progress-text').textContent = `Gotowe! ${done} gier${errors?`, ${errors} błędów`:''}`;
+    $('dl-btn').classList.add('visible');
+    log('🎉', '<strong>Wszystko gotowe!</strong>', `${done} plików gotowych do pobrania.`, 'log-ok');
+  } else {
+    $('progress-text').textContent = 'Nie udało się wygenerować żadnej gry.';
+  }
+};
+
+window.downloadZip = async function() {
+  const zip = new JSZip();
+  for (const [key, data] of Object.entries(generatedFiles)) {
+    const [folder, file] = key.split('/');
+    zip.folder(folder).file(`${file}.json`, JSON.stringify(data, null, 2));
+  }
+  zip.file('index.json', JSON.stringify(Object.keys(generatedFiles), null, 2));
+  const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
+  const a = Object.assign(document.createElement('a'), {
+    href: URL.createObjectURL(blob),
+    download: `familiada-${Date.now()}.zip`,
+  });
+  a.click();
+  URL.revokeObjectURL(a.href);
+};
+</script>
+</body>
+</html>

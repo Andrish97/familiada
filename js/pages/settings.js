@@ -1539,10 +1539,26 @@ async function syncGithub() {
   try {
     const res = await adminFetch("/marketplace/sync-gh", { method: "POST" });
     const json = await res.json();
+    if (json.results) {
+      const failed = json.results.filter(r => !r.ok);
+      const ok     = json.results.filter(r => r.ok);
+      console.groupCollapsed(`[sync-gh] ${ok.length} ok, ${failed.length} failed`);
+      failed.forEach(r => console.warn(`  FAIL: ${r.slug} — ${r.error}`));
+      ok.forEach(r => console.log(`  OK: ${r.slug}`));
+      console.groupEnd();
+    }
     const msg = json.ok
       ? `${t("settings.marketplace.syncOk") || "Sync OK"} — ${json.synced}/${json.total}`
       : `Błąd: ${json.error || "sync_failed"} (${json.failed || 0} failed)`;
-    if (status) status.textContent = msg;
+    if (status) {
+      status.textContent = msg;
+      if (!json.ok && json.results) {
+        const firstErrors = json.results.filter(r => !r.ok).slice(0, 3);
+        if (firstErrors.length) {
+          status.textContent += " | " + firstErrors.map(r => `${r.slug}: ${r.error}`).join("; ");
+        }
+      }
+    }
     showToast(msg, json.ok ? "success" : "error");
     if (json.ok) await loadMarketplace({ silent: true });
   } catch (err) {
