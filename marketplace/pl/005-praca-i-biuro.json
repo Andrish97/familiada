@@ -1,0 +1,243 @@
+{
+  "meta": {
+    "title": "Praca i Biuro",
+    "description": "Pytania o życie zawodowe Polaków.",
+    "lang": "pl"
+  },
+  "game": {
+    "name": "Praca i Biuro",
+    "type": "prepared"
+  },
+  "questions": [
+    {
+      "text": "Wymień coś, co pracownicy robią jako pierwsze w biurze.",
+      "answers": [
+        {
+          "text": "Nalewają kawę",
+          "fixed_points": 48
+        },
+        {
+          "text": "Sprawdzają maile",
+          "fixed_points": 27
+        },
+        {
+          "text": "Rozmawiają ze współprac.",
+          "fixed_points": 14
+        },
+        {
+          "text": "Logują się do komputera",
+          "fixed_points": 9
+        }
+      ]
+    },
+    {
+      "text": "Podaj powód, dla którego pracownicy są niezadowoleni z pracy.",
+      "answers": [
+        {
+          "text": "Za niskie zarobki",
+          "fixed_points": 39
+        },
+        {
+          "text": "Trudny szef",
+          "fixed_points": 24
+        },
+        {
+          "text": "Za dużo obowiązków",
+          "fixed_points": 17
+        },
+        {
+          "text": "Brak szacunku",
+          "fixed_points": 11
+        },
+        {
+          "text": "Brak perspektyw",
+          "fixed_points": 8
+        }
+      ]
+    },
+    {
+      "text": "Wymień coś, co ludzie jedzą w pracy na drugie śniadanie.",
+      "answers": [
+        {
+          "text": "Kanapki",
+          "fixed_points": 44
+        },
+        {
+          "text": "Owoce",
+          "fixed_points": 21
+        },
+        {
+          "text": "Batonik lub ciastko",
+          "fixed_points": 18
+        },
+        {
+          "text": "Jogurt",
+          "fixed_points": 11
+        },
+        {
+          "text": "Nic nie jedzą",
+          "fixed_points": 5
+        }
+      ]
+    },
+    {
+      "text": "Podaj coś, co ludzie robią podczas nudnego zebrania.",
+      "answers": [
+        {
+          "text": "Patrzą w telefon",
+          "fixed_points": 46
+        },
+        {
+          "text": "Rysują coś na kartce",
+          "fixed_points": 23
+        },
+        {
+          "text": "Marzą o kawie",
+          "fixed_points": 17
+        },
+        {
+          "text": "Zasypiają",
+          "fixed_points": 12
+        }
+      ]
+    },
+    {
+      "text": "Wymień coś, co pracownik chowa w szufladzie biurka.",
+      "answers": [
+        {
+          "text": "Słodycze i przekąski",
+          "fixed_points": 44
+        },
+        {
+          "text": "Leki i tabletki",
+          "fixed_points": 21
+        },
+        {
+          "text": "Rzeczy osobiste",
+          "fixed_points": 17
+        },
+        {
+          "text": "Długopisy i notatniki",
+          "fixed_points": 11
+        },
+        {
+          "text": "Szuflada jest pusta",
+          "fixed_points": 6
+        }
+      ]
+    },
+    {
+      "text": "Podaj powód, dla którego ludzie chcą pracować z domu.",
+      "answers": [
+        {
+          "text": "Oszczędność czasu na dojazd",
+          "fixed_points": 43
+        },
+        {
+          "text": "Większy komfort",
+          "fixed_points": 26
+        },
+        {
+          "text": "Oszczędność pieniędzy",
+          "fixed_points": 17
+        },
+        {
+          "text": "Brak stresu w biurze",
+          "fixed_points": 11
+        }
+      ]
+    },
+    {
+      "text": "Wymień coś, czego nie wypada robić w pracy.",
+      "answers": [
+        {
+          "text": "Plotkować",
+          "fixed_points": 36
+        },
+        {
+          "text": "Spóźniać się",
+          "fixed_points": 27
+        },
+        {
+          "text": "Jeść głośno",
+          "fixed_points": 18
+        },
+        {
+          "text": "Przeglądać social media",
+          "fixed_points": 11
+        },
+        {
+          "text": "Spać",
+          "fixed_points": 7
+        }
+      ]
+    },
+    {
+      "text": "Podaj środek transportu, którym Polacy dojeżdżają do pracy.",
+      "answers": [
+        {
+          "text": "Samochodem",
+          "fixed_points": 49
+        },
+        {
+          "text": "Autobusem lub tramwajem",
+          "fixed_points": 26
+        },
+        {
+          "text": "Pracują zdalnie",
+          "fixed_points": 14
+        },
+        {
+          "text": "Pieszo lub rowerem",
+          "fixed_points": 9
+        }
+      ]
+    },
+    {
+      "text": "Wymień coś, o czym pracownicy marzą w pracy.",
+      "answers": [
+        {
+          "text": "O urlopie",
+          "fixed_points": 44
+        },
+        {
+          "text": "O podwyżce",
+          "fixed_points": 28
+        },
+        {
+          "text": "O weekendzie",
+          "fixed_points": 17
+        },
+        {
+          "text": "O wcześniejszym wyjściu",
+          "fixed_points": 9
+        }
+      ]
+    },
+    {
+      "text": "Podaj coś, co pracownicy robią w przerwie obiadowej.",
+      "answers": [
+        {
+          "text": "Jedzą obiad",
+          "fixed_points": 41
+        },
+        {
+          "text": "Wychodzą na spacer",
+          "fixed_points": 24
+        },
+        {
+          "text": "Przeglądają telefon",
+          "fixed_points": 19
+        },
+        {
+          "text": "Robią zakupy online",
+          "fixed_points": 11
+        },
+        {
+          "text": "Drzemią w samochodzie",
+          "fixed_points": 4
+        }
+      ]
+    }
+  ]
+}

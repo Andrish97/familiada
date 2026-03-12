@@ -1,0 +1,235 @@
+{
+  "meta": {
+    "title": "Seriale i Telewizja",
+    "description": "Pytania o telewizję i oglądanie seriali.",
+    "lang": "pl"
+  },
+  "game": {
+    "name": "Seriale i Telewizja",
+    "type": "prepared"
+  },
+  "questions": [
+    {
+      "text": "Wymień gatunek serialu chętnie oglądanego przez Polaków.",
+      "answers": [
+        {
+          "text": "Kryminalny/thriller",
+          "fixed_points": 34
+        },
+        {
+          "text": "Romans/obyczajowy",
+          "fixed_points": 27
+        },
+        {
+          "text": "Komedia",
+          "fixed_points": 19
+        },
+        {
+          "text": "Fantasy",
+          "fixed_points": 11
+        },
+        {
+          "text": "Historyczny",
+          "fixed_points": 8
+        }
+      ]
+    },
+    {
+      "text": "Podaj coś, co ludzie robią oglądając telewizję wieczorem.",
+      "answers": [
+        {
+          "text": "Jedzą przekąski",
+          "fixed_points": 44
+        },
+        {
+          "text": "Piją herbatę lub kawę",
+          "fixed_points": 27
+        },
+        {
+          "text": "Leżą na kanapie",
+          "fixed_points": 18
+        },
+        {
+          "text": "Zasypiają",
+          "fixed_points": 10
+        }
+      ]
+    },
+    {
+      "text": "Wymień polską telewizję publiczną.",
+      "answers": [
+        {
+          "text": "TVP1",
+          "fixed_points": 43
+        },
+        {
+          "text": "TVP2",
+          "fixed_points": 28
+        },
+        {
+          "text": "TVP Info",
+          "fixed_points": 17
+        },
+        {
+          "text": "TVP Polonia",
+          "fixed_points": 11
+        }
+      ]
+    },
+    {
+      "text": "Podaj platformę streamingową popularną wśród Polaków.",
+      "answers": [
+        {
+          "text": "Netflix",
+          "fixed_points": 58
+        },
+        {
+          "text": "Canal+",
+          "fixed_points": 17
+        },
+        {
+          "text": "HBO Max",
+          "fixed_points": 13
+        },
+        {
+          "text": "Disney+",
+          "fixed_points": 8
+        },
+        {
+          "text": "Player",
+          "fixed_points": 3
+        }
+      ]
+    },
+    {
+      "text": "Wymień coś, co Polacy robią przy pilocie do telewizora.",
+      "answers": [
+        {
+          "text": "Przełączają kanały",
+          "fixed_points": 52
+        },
+        {
+          "text": "Kłócą się kto ma pilota",
+          "fixed_points": 22
+        },
+        {
+          "text": "Szukają pilota",
+          "fixed_points": 16
+        },
+        {
+          "text": "Ściszają reklamy",
+          "fixed_points": 9
+        }
+      ]
+    },
+    {
+      "text": "Podaj porę, o której Polacy najchętniej oglądają telewizję.",
+      "answers": [
+        {
+          "text": "Wieczorem po 20:00",
+          "fixed_points": 54
+        },
+        {
+          "text": "W południe",
+          "fixed_points": 22
+        },
+        {
+          "text": "Późno w nocy",
+          "fixed_points": 16
+        },
+        {
+          "text": "Rano przy śniadaniu",
+          "fixed_points": 7
+        }
+      ]
+    },
+    {
+      "text": "Wymień coś, co ludzie robi podczas reklam telewizyjnych.",
+      "answers": [
+        {
+          "text": "Wychodzą do kuchni",
+          "fixed_points": 38
+        },
+        {
+          "text": "Przełączają kanał",
+          "fixed_points": 27
+        },
+        {
+          "text": "Patrzą w telefon",
+          "fixed_points": 22
+        },
+        {
+          "text": "Idą do łazienki",
+          "fixed_points": 12
+        }
+      ]
+    },
+    {
+      "text": "Podaj polskie miasto, w którym kręcono popularny serial.",
+      "answers": [
+        {
+          "text": "Warszawa",
+          "fixed_points": 43
+        },
+        {
+          "text": "Kraków",
+          "fixed_points": 27
+        },
+        {
+          "text": "Gdańsk",
+          "fixed_points": 18
+        },
+        {
+          "text": "Wrocław",
+          "fixed_points": 11
+        }
+      ]
+    },
+    {
+      "text": "Wymień coś, co ludzie narzekają na telewizję.",
+      "answers": [
+        {
+          "text": "Za dużo reklam",
+          "fixed_points": 48
+        },
+        {
+          "text": "Słabe programy",
+          "fixed_points": 26
+        },
+        {
+          "text": "Polityczność",
+          "fixed_points": 14
+        },
+        {
+          "text": "Powtórki starych filmów",
+          "fixed_points": 11
+        }
+      ]
+    },
+    {
+      "text": "Podaj polskie show rozrywkowe emitowane w telewizji.",
+      "answers": [
+        {
+          "text": "Familiada",
+          "fixed_points": 42
+        },
+        {
+          "text": "Jaka to melodia",
+          "fixed_points": 23
+        },
+        {
+          "text": "Mam talent",
+          "fixed_points": 18
+        },
+        {
+          "text": "The Voice",
+          "fixed_points": 11
+        },
+        {
+          "text": "Taniec z gwiazdami",
+          "fixed_points": 5
+        }
+      ]
+    }
+  ]
+}
