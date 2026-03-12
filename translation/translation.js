@@ -1,4 +1,4 @@
-const TRANSLATION_VERSION = "20260312-1";
+const TRANSLATION_VERSION = "20260312-2";
 
 const LANG_LOADERS = {
   pl: async () => (await import(`./pl.js?v=${TRANSLATION_VERSION}`)).default,

@@ -4325,6 +4325,7 @@ const uk = {
     reports: {
       title: "Звернення",
       subtitle: "Повідомлення від користувачів",
+      tabAll: "Всі",
       tabOpen: "Відкриті",
       tabReplied: "З відповіддю",
       tabClosed: "Закриті",

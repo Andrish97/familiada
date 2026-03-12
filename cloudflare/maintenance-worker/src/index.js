@@ -882,7 +882,7 @@ function buildContactEmail(opts) {
 
   const copy = {
     pl: {
-      greeting: "Cześć,",
+      greeting: "Witaj,",
       closing: "Pozdrawiamy,\nZespół Familiada",
       confirmation: {
         body: `Dziękujemy za kontakt. Twoje zgłoszenie zostało przyjęte.\n\nNumer zgłoszenia: ${ticket || ""}\nTemat: ${subject || ""}`,
@@ -971,7 +971,7 @@ function buildContactEmail(opts) {
   <style>:root{color-scheme:dark}</style>
 </head>
 <body style="margin:0;padding:0;background:#050914;color:#ffffff;">
-<div style="max-width:560px;margin:0 auto;padding:26px 16px;font-family:system-ui,-apple-system,'Segoe UI',Arial,sans-serif;color:#ffffff;">
+<div style="max-width:560px;margin:0 auto;padding:26px 16px;font-family:system-ui,-apple-system,'Segoe UI',Arial,sans-serif;font-size:14px;color:#ffffff;">
   <div style="padding:14px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.12);border-radius:18px;margin-bottom:14px;">
     <div style="font-weight:1000;letter-spacing:.18em;text-transform:uppercase;color:#ffeaa6;">FAMILIADA</div>
     <div style="margin-top:4px;font-size:11px;opacity:.7;letter-spacing:.06em;">familiada.online</div>

@@ -4442,6 +4442,7 @@ const pl = {
     reports: {
       title: "Zgłoszenia",
       subtitle: "Wiadomości od użytkowników",
+      tabAll: "Wszystkie",
       tabOpen: "Otwarte",
       tabReplied: "Odpowiedziane",
       tabClosed: "Zamknięte",

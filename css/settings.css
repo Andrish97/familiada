@@ -1081,6 +1081,8 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   display: flex;
   flex-direction: column;
   min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .mail-folders { display: flex; flex-direction: column; gap: 2px; }
@@ -1118,6 +1120,7 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   flex-direction: column;
   overflow: hidden;
   min-width: 0;
+  min-height: 0;
 }
 
 .mail-list-toolbar {
@@ -1137,7 +1140,7 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   box-sizing: border-box;
 }
 
-#mailListBody { flex: 1; overflow-y: auto; }
+#mailListBody { flex: 1; overflow-y: auto; min-height: 0; }
 
 .mail-thread-item {
   padding: 11px 12px 9px;
@@ -1162,6 +1165,7 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   flex-direction: column;
   overflow: hidden;
   min-width: 0;
+  min-height: 0;
 }
 .mail-conv-placeholder {
   flex: 1;
