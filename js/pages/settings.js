@@ -1780,8 +1780,10 @@ async function openMessage(id) {
       if (attRes.ok) {
         const attJson = await attRes.json();
         attachments = attJson.attachments || [];
+      } else {
+        console.error("[openMessage] attachments fetch failed:", attRes.status, await attRes.text().catch(() => ""));
       }
-    } catch {}
+    } catch (e) { console.error("[openMessage] attachments error:", e); }
     renderMessageDetail(json.message, attachments);
   } catch (err) {
     showToast(String(err?.message || err), "error");
@@ -2019,8 +2021,10 @@ async function openReport(id) {
         if (attRes.ok) {
           const attJson = await attRes.json();
           attsByMsg[msg.id] = attJson.attachments || [];
+        } else {
+          console.error("[openReport] attachments fetch failed:", msg.id, attRes.status);
         }
-      } catch {}
+      } catch (e) { console.error("[openReport] attachments error:", msg.id, e); }
     }));
 
     const report = msgRows.find(r => r.id === id) || null;
