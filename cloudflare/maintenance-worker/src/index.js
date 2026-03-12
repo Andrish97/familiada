@@ -9,6 +9,10 @@ export default {
     }
   },
 
+  async scheduled(_event, env, ctx) {
+    ctx.waitUntil(cleanupExpiredAttachments(env));
+  },
+
   async fetch(request, env) {
     const url = new URL(request.url);
     const host = url.host.toLowerCase();
@@ -1141,7 +1145,7 @@ async function handleAdminMessagesApi(request, env, url) {
     const messageId = normalizeRpcValue(saveRes.data);
 
     // Save attachments (already uploaded to storage) to message_attachments
-    if (queueId && saveRes.ok && sendAttachments?.length) {
+    if (messageId && saveRes.ok && sendAttachments?.length) {
       const msgId = messageId;
       for (const att of sendAttachments) {
         try {
@@ -1499,6 +1503,35 @@ async function handleAdminReportsApi(request, env, url) {
 }
 
 // ============================================================
+// CRON: cleanup expired attachments (runs daily at 3:00 UTC)
+// ============================================================
+
+async function cleanupExpiredAttachments(env) {
+  try {
+    const listRes = await supabaseRpc(env, "get_expired_attachments", {});
+    if (!listRes.ok || !Array.isArray(listRes.data) || !listRes.data.length) return;
+    const cfg = getSupabaseConfig(env);
+    for (const att of listRes.data) {
+      if (att.storage_path) {
+        try {
+          const storageUrl = `${cfg.baseUrl}/storage/v1/object/message-attachments/${encodeURIComponent(att.storage_path)}`;
+          await fetch(storageUrl, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${cfg.serviceRoleKey}`, apikey: cfg.serviceRoleKey },
+          });
+        } catch (err) {
+          console.error("[cron] storage delete failed:", att.storage_path, err);
+        }
+      }
+      await supabaseRpc(env, "mark_attachment_expired", { p_id: att.id });
+    }
+    console.log(`[cron] expired ${listRes.data.length} attachments`);
+  } catch (err) {
+    console.error("[cron] cleanupExpiredAttachments failed:", err);
+  }
+}
+
+// ============================================================
 // INBOUND EMAIL HANDLER (Cloudflare Email Routing)
 // ============================================================
 
@@ -1534,7 +1567,7 @@ async function handleInboundEmail(message, env) {
   const ticketMatch = subject.match(/\[(?:TICKET-)?(\d{4}-\d{4})\]/i);
   const ticketArg = ticketMatch ? ticketMatch[1] : null;
 
-  if (!from || !body) return;
+  if (!from || (!body && !inboundAttachments.length)) return;
 
   const rpc = await supabaseRpc(env, "save_inbound_message", {
     p_from_email:    from,

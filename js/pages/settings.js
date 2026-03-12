@@ -1789,6 +1789,24 @@ async function openMessage(id) {
   }
 }
 
+function showAttachmentPreview(url, filename) {
+  let overlay = document.getElementById("attPreviewOverlay");
+  if (!overlay) {
+    overlay = document.createElement("div");
+    overlay.id = "attPreviewOverlay";
+    overlay.style.cssText = "position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;cursor:zoom-out;";
+    overlay.addEventListener("click", () => {
+      URL.revokeObjectURL(overlay.querySelector("img")?.src || "");
+      overlay.remove();
+    });
+    document.body.appendChild(overlay);
+  }
+  overlay.innerHTML = `<div style="position:relative;max-width:92vw;max-height:90vh;display:flex;flex-direction:column;align-items:center;gap:8px;">
+    <img src="${url}" alt="${escSetting(filename)}" style="max-width:100%;max-height:80vh;border-radius:6px;box-shadow:0 8px 40px rgba(0,0,0,.7);">
+    <a href="${url}" download="${escSetting(filename)}" style="font-size:11px;color:rgba(255,255,255,.6);text-decoration:none;" onclick="event.stopPropagation()">Pobierz</a>
+  </div>`;
+}
+
 function renderMessageDetail(msg, attachments = []) {
   const conv = document.getElementById("mailConv");
   if (!conv) return;
@@ -1848,20 +1866,43 @@ function renderMessageDetail(msg, attachments = []) {
     for (const att of nonInline) {
       const chip = document.createElement("a");
       chip.href = "#";
-      chip.style.cssText = "display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;border:1px solid rgba(255,255,255,.15);font-size:11px;color:rgba(255,255,255,.7);text-decoration:none;cursor:pointer;background:rgba(255,255,255,.04);";
-      chip.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>${escSetting(att.filename)} <span style="opacity:.45">${att.mime_type.split('/')[1] || ''}</span>`;
-      chip.addEventListener("click", async (e) => {
-        e.preventDefault();
-        try {
-          const res = await adminFetch(`/attachments/download?id=${encodeURIComponent(att.id)}`);
-          if (!res.ok) { showToast("Błąd pobierania.", "error"); return; }
-          const blob = await res.blob();
-          const url = URL.createObjectURL(blob);
-          const a2 = document.createElement("a");
-          a2.href = url; a2.download = att.filename; a2.click();
-          setTimeout(() => URL.revokeObjectURL(url), 10000);
-        } catch { showToast("Błąd pobierania.", "error"); }
-      });
+      const isExpired = !!att.expired;
+      const isImage = att.mime_type?.startsWith("image/");
+      const isPdf   = att.mime_type === "application/pdf";
+
+      if (isExpired) {
+        chip.style.cssText = "display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;border:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.3);text-decoration:none;cursor:default;background:rgba(255,255,255,.02);";
+        chip.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>${escSetting(att.filename)} <span style="opacity:.5">— załącznik wygasł</span>`;
+      } else {
+        chip.style.cssText = "display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;border:1px solid rgba(255,255,255,.15);font-size:11px;color:rgba(255,255,255,.7);text-decoration:none;cursor:pointer;background:rgba(255,255,255,.04);";
+        const icon = isImage
+          ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`
+          : isPdf
+          ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`
+          : `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>`;
+        chip.innerHTML = `${icon}${escSetting(att.filename)} <span style="opacity:.45">${att.mime_type.split('/')[1] || ''}</span>`;
+        chip.addEventListener("click", async (e) => {
+          e.preventDefault();
+          try {
+            chip.style.opacity = "0.5";
+            const res = await adminFetch(`/attachments/download?id=${encodeURIComponent(att.id)}`);
+            chip.style.opacity = "";
+            if (!res.ok) { showToast("Błąd pobierania.", "error"); return; }
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            if (isImage) {
+              showAttachmentPreview(url, att.filename);
+            } else if (isPdf) {
+              window.open(url, "_blank");
+              setTimeout(() => URL.revokeObjectURL(url), 60000);
+            } else {
+              const a2 = document.createElement("a");
+              a2.href = url; a2.download = att.filename; a2.click();
+              setTimeout(() => URL.revokeObjectURL(url), 10000);
+            }
+          } catch { chip.style.opacity = ""; showToast("Błąd pobierania.", "error"); }
+        });
+      }
       attList.appendChild(chip);
     }
     bubble.appendChild(attList);
