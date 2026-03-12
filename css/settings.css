@@ -1349,6 +1349,33 @@ body.tools-fullscreen .tools-frame-wrap iframe{
 .mail-compose-pane .field { margin: 0; }
 .mail-compose-pane .field-label { font-size: 11px; }
 .mail-compose-pane textarea { min-height: 140px; resize: vertical; }
+.mail-compose-pane input[type="file"] {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: rgba(255,255,255,.6);
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 8px;
+  cursor: pointer;
+}
+.mail-compose-pane input[type="file"]::file-selector-button {
+  background: rgba(255,234,166,.1);
+  color: #ffeaa6;
+  border: 1px solid rgba(255,234,166,.25);
+  border-radius: 6px;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-right: 10px;
+  transition: background .13s;
+}
+.mail-compose-pane input[type="file"]::file-selector-button:hover {
+  background: rgba(255,234,166,.18);
+}
 
 /* Move section */
 .mail-move-section {
