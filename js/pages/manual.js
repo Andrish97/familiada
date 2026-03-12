@@ -4,6 +4,7 @@
 
 import { confirmModal } from "../core/modal.js";
 import { initI18n, setUiLang, t, withLangParam } from "../../translation/translation.js";
+import "../core/contact-modal.js";
 
 function isControlModal() {
   const p = new URLSearchParams(location.search);

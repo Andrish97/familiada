@@ -12,6 +12,7 @@ import {
 import { exportGame, importGame, downloadJson } from "./builder-import-export.js";
 
 import {
+import "../core/contact-modal.js";
   TYPES,
   STATUS,
   loadGameBasic,

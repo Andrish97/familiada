@@ -4,6 +4,7 @@ import { requireAuth } from "../core/auth.js";
 import { alertModal, confirmModal } from "../core/modal.js";
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
 import { initI18n, t, withLangParam } from "../../translation/translation.js";
+import "../core/contact-modal.js";
 
 initI18n({ withSwitcher: true });
 

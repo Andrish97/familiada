@@ -23,6 +23,7 @@ import { alertModal, confirmModal } from "../core/modal.js";
 import { sb } from "../core/supabase.js";
 import { cooldownEmailGet, cooldownEmailReserve } from "../core/cooldown.js";
 import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../translation/translation.js";
+import "../core/contact-modal.js";
 
 const $ = (s) => document.querySelector(s);
 const email = $("#email");

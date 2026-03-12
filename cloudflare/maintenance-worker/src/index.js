@@ -101,6 +101,9 @@ export default {
     }
 
     // Public contact form endpoint
+    if (url.pathname === "/_api/contact/append") {
+      return handleContactAppend(request, env);
+    }
     if (url.pathname === "/_api/contact" && request.method === "POST") {
       return handleContactSubmit(request, env);
     }
@@ -808,6 +811,54 @@ async function handleContactSubmit(request, env) {
   return json({ ok: true, ticket_number: ticket });
 }
 
+async function handleContactAppend(request, env) {
+  if (request.method !== "POST") return json({ ok: false, error: "method_not_allowed" }, 405);
+  let body;
+  try { body = await request.json(); } catch { return json({ ok: false, error: "invalid_json" }, 400); }
+
+  const { email, ticket, message, lang = "pl" } = body || {};
+  if (!email || !email.includes("@")) return json({ ok: false, error: "invalid_email" }, 422);
+  if (!ticket) return json({ ok: false, error: "missing_ticket" }, 422);
+  if (!message || String(message).trim().length < 2) return json({ ok: false, error: "invalid_message" }, 422);
+
+  const rpc = await supabaseRpc(env, "find_report_and_append_message", {
+    p_ticket_number: String(ticket).trim(),
+    p_direction:     "inbound",
+    p_body:          String(message).trim().slice(0, 5000),
+    p_from_email:    String(email).trim().toLowerCase(),
+  });
+
+  if (!rpc.ok) return json({ ok: false, error: "rpc_failed" }, 500);
+  const row = Array.isArray(rpc.data) && rpc.data.length ? rpc.data[0] : null;
+  if (!row?.found) return json({ ok: false, error: "ticket_not_found" }, 404);
+
+  try {
+    const safeLang = ["pl","en","uk"].includes(lang) ? lang : "pl";
+    const confirmTexts = {
+      pl: "Twoja wiadomość została dołączona do zgłoszenia.",
+      en: "Your message has been added to the ticket.",
+      uk: "Ваше повідомлення додано до звернення.",
+    };
+    const { subject: confirmSubject, html } = buildContactEmail({
+      type: "reply",
+      lang: safeLang,
+      ticket: String(ticket).trim(),
+      subject: "",
+      replyMessage: confirmTexts[safeLang],
+      originalMessage: null,
+    });
+    await supabaseRequest(env, "/rest/v1/mail_queue", {
+      method: "POST",
+      headers: { Prefer: "return=minimal" },
+      body: { to_email: String(email).trim().toLowerCase(), subject: confirmSubject, html, from_email: "kontakt@familiada.online", meta: { type: "contact_append", ticket } },
+    });
+  } catch (err) {
+    console.error("[worker] contact/append: mail_queue failed:", err);
+  }
+
+  return json({ ok: true, ticket_number: String(ticket).trim() });
+}
+
 // ============================================================
 // CONTACT EMAIL BUILDER
 // ============================================================
@@ -1094,6 +1145,41 @@ async function handleAdminReportsApi(request, env, url) {
     }
 
     return json({ ok: true });
+  }
+
+  // POST /_admin_api/reports/move-message { message_id, target_ticket }
+  if (url.pathname === "/_admin_api/reports/move-message") {
+    if (request.method !== "POST") return new Response("Method Not Allowed", { status: 405 });
+    let body;
+    try { body = await request.json(); } catch { return json({ ok: false, error: "invalid_json" }, 400); }
+    const { message_id, target_ticket } = body || {};
+    if (!message_id || !target_ticket) return json({ ok: false, error: "Missing message_id or target_ticket" }, 400);
+
+    const rpc = await supabaseRpc(env, "admin_move_message", {
+      p_message_id:    String(message_id),
+      p_target_ticket: String(target_ticket).trim(),
+    });
+    if (!rpc.ok) return json({ ok: false, error: "rpc_failed", details: summarizeSupabaseError(rpc) }, rpc.status || 500);
+    const row = Array.isArray(rpc.data) && rpc.data.length ? rpc.data[0] : null;
+    if (!row?.ok) return json({ ok: false, error: row?.err || "move_failed" }, 422);
+
+    try {
+      if (row.old_email && row.new_email && row.old_email !== row.new_email) {
+        const { subject: s1, html: h1 } = buildContactEmail({
+          type: "reply", lang: "pl", ticket: row.old_ticket, subject: "",
+          replyMessage: `Twoja wiadomość została przeniesiona do zgłoszenia ${row.new_ticket}.`,
+          originalMessage: null,
+        });
+        await supabaseRequest(env, "/rest/v1/mail_queue", {
+          method: "POST", headers: { Prefer: "return=minimal" },
+          body: { to_email: row.old_email, subject: s1, html: h1, from_email: "kontakt@familiada.online", meta: { type: "message_moved", from: row.old_ticket, to: row.new_ticket } },
+        });
+      }
+    } catch (err) {
+      console.error("[worker] move-message notify failed:", err);
+    }
+
+    return json({ ok: true, old_ticket: row.old_ticket, new_ticket: row.new_ticket });
   }
 
   return new Response("Not Found", { status: 404 });

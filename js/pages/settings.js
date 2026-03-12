@@ -1658,6 +1658,7 @@ async function testNtfy() {
 
 let reportsActiveStatus = "open";
 let currentReportId = null;
+let pendingMoveMessageId = null;
 
 async function loadReports({ silent = false } = {}) {
   const tbody = document.getElementById("reportsTableBody");
@@ -1757,6 +1758,8 @@ function renderReportThread(messages) {
 
   for (const msg of messages) {
     const isOut = msg.direction === "outbound";
+    const wasMoved = !!msg.moved_from_report_id;
+
     const el = document.createElement("div");
     el.style.cssText = `padding:10px 12px;border-radius:10px;font-size:13px;` +
       (isOut
@@ -1764,8 +1767,21 @@ function renderReportThread(messages) {
         : "background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);margin-right:32px;");
 
     const meta = document.createElement("div");
-    meta.style.cssText = "font-size:11px;opacity:.5;margin-bottom:6px;";
-    meta.textContent = `${isOut ? "↗" : "↙"} ${msg.from_email || "—"} · ${new Date(msg.created_at).toLocaleString()}`;
+    meta.style.cssText = "font-size:11px;opacity:.5;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;";
+
+    const metaLeft = document.createElement("span");
+    metaLeft.textContent = `${isOut ? "↗" : "↙"} ${msg.from_email || "—"} · ${new Date(msg.created_at).toLocaleString()}${wasMoved ? " · (przeniesiona)" : ""}`;
+    meta.appendChild(metaLeft);
+
+    if (!isOut) {
+      const moveBtn = document.createElement("button");
+      moveBtn.className = "btn sm";
+      moveBtn.type = "button";
+      moveBtn.style.cssText = "font-size:10px;padding:2px 7px;opacity:.6;";
+      moveBtn.textContent = t("settings.reports.moveBtn") || "Przenieś";
+      moveBtn.dataset.moveMessageId = msg.id;
+      meta.appendChild(moveBtn);
+    }
 
     const body = document.createElement("div");
     body.style.cssText = "white-space:pre-wrap;line-height:1.5;";
@@ -1902,6 +1918,49 @@ function wireReportsEvents() {
 
   // Compose
   document.getElementById("btnComposeSend")?.addEventListener("click", sendCompose);
+
+  // Move message delegation
+  document.getElementById("reportThread")?.addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-move-message-id]");
+    if (!btn) return;
+    pendingMoveMessageId = btn.dataset.moveMessageId;
+    const moveSection = document.getElementById("reportMoveSection");
+    if (moveSection) {
+      moveSection.style.display = "";
+      document.getElementById("reportMoveTicket")?.focus();
+    }
+  });
+
+  document.getElementById("btnReportMoveConfirm")?.addEventListener("click", async () => {
+    const ticket = (document.getElementById("reportMoveTicket")?.value || "").trim();
+    if (!ticket || !pendingMoveMessageId) return;
+    try {
+      const res = await adminFetch("/reports/move-message", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message_id: pendingMoveMessageId, target_ticket: ticket }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.error);
+      showToast(`Przeniesiono do ${json.new_ticket}`, "success");
+      pendingMoveMessageId = null;
+      document.getElementById("reportMoveSection").style.display = "none";
+      document.getElementById("reportMoveTicket").value = "";
+      if (currentReportId) {
+        const msgRes = await adminFetch(`/reports/messages?id=${encodeURIComponent(currentReportId)}`);
+        if (msgRes.ok) renderReportThread((await msgRes.json()).messages || []);
+      }
+    } catch (err) {
+      showToast(String(err?.message || err), "error");
+    }
+  });
+
+  document.getElementById("btnReportMoveCancel")?.addEventListener("click", () => {
+    pendingMoveMessageId = null;
+    document.getElementById("reportMoveSection").style.display = "none";
+    document.getElementById("reportMoveTicket").value = "";
+  });
 }
 
 function adminFetch(path, init = {}) {
