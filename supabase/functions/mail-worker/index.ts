@@ -104,34 +104,44 @@ async function writeLog(entry: {
   }
 }
 
+type Attachment = { filename: string; content: string; contentType: string };
+
 // Providers (same jak w send-mail, skrócone)
-async function sendViaSendgrid(to: string, subject: string, html: string, fromEmail?: string) {
+async function sendViaSendgrid(to: string, subject: string, html: string, fromEmail?: string, attachments?: Attachment[]) {
   if (!SENDGRID_KEY) throw new Error("missing_SENDGRID_API_KEY");
   const from = fromEmail || FROM_EMAIL;
+  const payload: any = {
+    personalizations: [{ to: [{ email: to }] }],
+    from: { email: from, name: FROM_NAME },
+    subject,
+    content: [{ type: "text/html", value: html }],
+    tracking_settings: { click_tracking: { enable: false, enable_text: false }, open_tracking: { enable: false } },
+  };
+  if (attachments?.length) {
+    payload.attachments = attachments.map(a => ({ content: a.content, filename: a.filename, type: a.contentType, disposition: "attachment" }));
+  }
   const res = await fetch("https://api.sendgrid.com/v3/mail/send", {
     method: "POST",
     headers: { Authorization: `Bearer ${SENDGRID_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      personalizations: [{ to: [{ email: to }] }],
-      from: { email: from, name: FROM_NAME },
-      subject,
-      content: [{ type: "text/html", value: html }],
-      tracking_settings: { click_tracking: { enable: false, enable_text: false }, open_tracking: { enable: false } },
-    }),
+    body: JSON.stringify(payload),
   });
   if (!res.ok) throw new Error(`sendgrid_failed:${await res.text().catch(() => "")}`);
 }
-async function sendViaBrevo(to: string, subject: string, html: string, fromEmail?: string) {
+async function sendViaBrevo(to: string, subject: string, html: string, fromEmail?: string, attachments?: Attachment[]) {
   if (!BREVO_KEY) throw new Error("missing_BREVO_API_KEY");
   const from = fromEmail || FROM_EMAIL;
+  const payload: any = { sender: { email: from, name: FROM_NAME }, to: [{ email: to }], subject, htmlContent: html };
+  if (attachments?.length) {
+    payload.attachment = attachments.map(a => ({ name: a.filename, content: a.content, contentType: a.contentType }));
+  }
   const res = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
     headers: { "api-key": BREVO_KEY, "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify({ sender: { email: from, name: FROM_NAME }, to: [{ email: to }], subject, htmlContent: html }),
+    body: JSON.stringify(payload),
   });
   if (!res.ok) throw new Error(`brevo_failed:${await res.text().catch(() => "")}`);
 }
-async function sendViaMailgun(to: string, subject: string, html: string, fromEmail?: string) {
+async function sendViaMailgun(to: string, subject: string, html: string, fromEmail?: string, attachments?: Attachment[]) {
   if (!MAILGUN_KEY) throw new Error("missing_MAILGUN_API_KEY");
   if (!MAILGUN_DOMAIN) throw new Error("missing_MAILGUN_DOMAIN");
   const from = fromEmail || FROM_EMAIL;
@@ -143,18 +153,23 @@ async function sendViaMailgun(to: string, subject: string, html: string, fromEma
   form.append("to", to);
   form.append("subject", subject);
   form.append("html", html);
+  if (attachments?.length) {
+    for (const a of attachments) {
+      form.append("attachment", new Blob([Uint8Array.from(atob(a.content), c => c.charCodeAt(0))], { type: a.contentType }), a.filename);
+    }
+  }
 
   const res = await fetch(url, { method: "POST", headers: { Authorization: `Basic ${btoa(`api:${MAILGUN_KEY}`)}` }, body: form });
   if (!res.ok) throw new Error(`mailgun_failed:${await res.text().catch(() => "")}`);
 }
 
-async function sendWithFallbacks(to: string, subject: string, html: string, order: Provider[], fromEmail?: string) {
+async function sendWithFallbacks(to: string, subject: string, html: string, order: Provider[], fromEmail?: string, attachments?: Attachment[]) {
   const errs: string[] = [];
   for (const p of order) {
     try {
-      if (p === "sendgrid") { await sendViaSendgrid(to, subject, html, fromEmail); return p; }
-      if (p === "brevo") { await sendViaBrevo(to, subject, html, fromEmail); return p; }
-      await sendViaMailgun(to, subject, html, fromEmail); return p;
+      if (p === "sendgrid") { await sendViaSendgrid(to, subject, html, fromEmail, attachments); return p; }
+      if (p === "brevo") { await sendViaBrevo(to, subject, html, fromEmail, attachments); return p; }
+      await sendViaMailgun(to, subject, html, fromEmail, attachments); return p;
     } catch (e) {
       errs.push(`${p}:${String((e as any)?.message || e)}`);
     }
@@ -240,7 +255,27 @@ serve(async (req) => {
     const r = rows[i];
     try {
       console.log("[mail-worker] queue:item_start", { id: r.id, to: scrubEmail(r.to_email), subjectLen: String(r.subject || "").length });
-      const provider = await sendWithFallbacks(r.to_email, r.subject, r.html, order, r.from_email || undefined);
+
+      // Load attachments from storage if any
+      let emailAttachments: Attachment[] = [];
+      const metaAttachments = (r.meta?.attachments || []) as Array<{filename: string, mime_type: string, storage_path: string}>;
+      if (metaAttachments.length) {
+        for (const att of metaAttachments) {
+          try {
+            const storageBucketPath = att.storage_path.replace(/^message-attachments\//, "");
+            const { data, error } = await sbAdmin.storage.from("message-attachments").download(storageBucketPath);
+            if (!error && data) {
+              const buf = await data.arrayBuffer();
+              const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+              emailAttachments.push({ filename: att.filename, content: b64, contentType: att.mime_type || "application/octet-stream" });
+            }
+          } catch (err) {
+            console.error("[mail-worker] attachment_load_failed:", att.filename, err);
+          }
+        }
+      }
+
+      const provider = await sendWithFallbacks(r.to_email, r.subject, r.html, order, r.from_email || undefined, emailAttachments.length ? emailAttachments : undefined);
       const { error: markOkError } = await sbAdmin.rpc("mail_queue_mark", { p_id: r.id, p_ok: true, p_provider: provider, p_error: "" });
       if (markOkError) {
         console.error("[mail-worker] queue:mark_sent_failed", { id: r.id, error: markOkError });

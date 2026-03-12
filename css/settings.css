@@ -1063,6 +1063,28 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   flex-wrap: wrap;
 }
 
+/* ── Generic modal overlay ──────────────────────────────────── */
+.market-preview-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  background: rgba(0,0,0,.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.market-preview-card {
+  background: #0d1229;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 16px;
+  padding: 22px 24px;
+  max-height: 90vh;
+  overflow-y: auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
 /* ── Mail client layout ─────────────────────────────────────── */
 .mail-client {
   display: grid;
@@ -1239,6 +1261,58 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   background: #fff;
   border-radius: 6px;
   min-height: 80px;
+}
+
+/* ── Message action bar ─────────────────────────────────────── */
+.mail-msg-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 12px 8px;
+  border-top: 1px solid rgba(255,255,255,.07);
+  flex-shrink: 0;
+}
+.msg-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: rgba(255,255,255,.45);
+  cursor: pointer;
+  transition: background .13s, color .13s, border-color .13s;
+  padding: 0;
+  flex-shrink: 0;
+}
+.msg-icon-btn:hover {
+  background: rgba(255,255,255,.08);
+  color: rgba(255,255,255,.85);
+  border-color: rgba(255,255,255,.1);
+}
+.msg-icon-btn--gold {
+  color: rgba(255,234,166,.6);
+  border-color: rgba(255,234,166,.2);
+}
+.msg-icon-btn--gold:hover {
+  background: rgba(255,234,166,.1);
+  color: #ffeaa6;
+  border-color: rgba(255,234,166,.4);
+}
+.msg-icon-btn--tagged {
+  color: #ffeaa6;
+  background: rgba(255,234,166,.1);
+  border-color: rgba(255,234,166,.3);
+}
+.msg-icon-btn--tagged:hover {
+  background: rgba(255,234,166,.18);
+}
+.msg-icon-btn--danger:hover {
+  background: rgba(220,50,50,.15);
+  color: #f88;
+  border-color: rgba(220,50,50,.25);
 }
 
 .mail-conv-reply {

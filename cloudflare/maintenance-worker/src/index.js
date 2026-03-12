@@ -253,7 +253,7 @@ async function handleAdminApi(request, env) {
     return handleAdminMarketplaceApi(request, env, url);
   }
 
-  if (url.pathname.startsWith("/_admin_api/messages") || url.pathname.startsWith("/_admin_api/cleanup/")) {
+  if (url.pathname.startsWith("/_admin_api/messages") || url.pathname.startsWith("/_admin_api/cleanup/") || url.pathname.startsWith("/_admin_api/attachments")) {
     return handleAdminMessagesApi(request, env, url);
   }
 
@@ -1028,16 +1028,16 @@ async function handleAdminMessagesApi(request, env, url) {
           const lang = repRow?.lang || "pl";
           const safeLang = ["pl","en","uk"].includes(lang) ? lang : "pl";
           const assignedCopy = {
-            pl: `Witaj,\n\nTwoja wiadomość została zarejestrowana jako zgłoszenie nr ${ticket}.\nMożesz odpowiadać na ten email aby kontynuować rozmowę.`,
-            en: `Hello,\n\nYour message has been registered as ticket ${ticket}.\nYou can reply to this email to continue the conversation.`,
-            uk: `Вітаємо,\n\nВашe повідомлення зареєстровано як звернення ${ticket}.\nВи можете відповідати на цей email для продовження розмови.`,
+            pl: `Twoja wiadomość została zarejestrowana jako zgłoszenie nr ${ticket}.\nMożesz odpowiadać na ten email aby kontynuować rozmowę.`,
+            en: `Your message has been registered as ticket ${ticket}.\nYou can reply to this email to continue the conversation.`,
+            uk: `Ваше повідомлення зареєстровано як звернення ${ticket}.\nВи можете відповідати на цей email для продовження розмови.`,
           };
           const subjectCopy = {
             pl: `Twoje zgłoszenie zostało zarejestrowane [${ticket}]`,
             en: `Your ticket has been registered [${ticket}]`,
             uk: `Ваше звернення зареєстровано [${ticket}]`,
           };
-          const { html } = buildContactEmail({ type: "confirmation", lang: safeLang, ticket, subject: subjectCopy[safeLang], message: assignedCopy[safeLang] });
+          const { html } = buildContactEmail({ type: "compose", lang: safeLang, ticket, subject: subjectCopy[safeLang], message: assignedCopy[safeLang] });
           await supabaseRequest(env, "/rest/v1/mail_queue", {
             method: "POST",
             headers: { Prefer: "return=minimal" },
@@ -1082,11 +1082,13 @@ async function handleAdminMessagesApi(request, env, url) {
     return json({ ok: true });
   }
 
-  // POST /_admin_api/messages/send  { to_email, subject, body, body_html?, report_id? }
+  // POST /_admin_api/messages/send  { to_email, subject, body, body_html?, report_id?, attachments? }
   if (url.pathname === "/_admin_api/messages/send" && request.method === "POST") {
     const body = await readJson(request);
-    const { to_email, subject: msgSubject, body: msgBody, body_html, report_id } = body || {};
+    const { to_email, subject: msgSubject, body: msgBody, body_html, report_id, quote, attachments: sendAttachments } = body || {};
     if (!to_email || !msgBody) return json({ ok: false, error: "missing_to_email_or_body" }, 400);
+
+    const emailHtml = body_html || buildContactEmail({ type: "compose", lang: "pl", subject: String(msgSubject || ""), message: String(msgBody), reply_as: quote || undefined }).html;
 
     // Insert into mail_queue first
     const queueRes = await supabaseRequest(env, "/rest/v1/mail_queue", {
@@ -1095,9 +1097,9 @@ async function handleAdminMessagesApi(request, env, url) {
       body: {
         to_email: String(to_email).trim().toLowerCase(),
         subject:  String(msgSubject || ""),
-        html:     body_html || buildContactEmail({ type: "compose", lang: "pl", subject: String(msgSubject || ""), message: String(msgBody) }).html,
+        html:     emailHtml,
         from_email: "kontakt@familiada.online",
-        meta: { type: "admin_compose", report_id: report_id || null },
+        meta: { type: "admin_compose", report_id: report_id || null, attachments: sendAttachments?.map(a => ({ filename: a.filename, mime_type: a.mime_type, storage_path: a.storage_path })) || [] },
       },
     });
     const queueRow = Array.isArray(queueRes.data) && queueRes.data.length ? queueRes.data[0] : null;
@@ -1107,12 +1109,34 @@ async function handleAdminMessagesApi(request, env, url) {
       p_to_email:  String(to_email).trim().toLowerCase(),
       p_subject:   String(msgSubject || ""),
       p_body:      String(msgBody),
-      p_body_html: body_html || null,
+      p_body_html: emailHtml,
       p_report_id: report_id || null,
       p_queue_id:  queueId,
     });
     if (!saveRes.ok) return json({ ok: false, error: "save_outbound_failed", details: summarizeSupabaseError(saveRes) }, saveRes.status || 500);
     const messageId = normalizeRpcValue(saveRes.data);
+
+    // Save attachments (already uploaded to storage) to message_attachments
+    if (queueId && saveRes.ok && sendAttachments?.length) {
+      const msgId = messageId;
+      for (const att of sendAttachments) {
+        try {
+          // Keep compose path, save reference
+          await supabaseRpc(env, "save_attachment", {
+            p_message_id:  msgId,
+            p_filename:    att.filename,
+            p_mime_type:   att.mime_type,
+            p_size:        att.size || 0,
+            p_storage_path: att.storage_path,
+            p_content_id:  null,
+            p_inline:      false,
+          });
+        } catch (err) {
+          console.error("[worker] send:attachment_save_failed:", att.filename, err);
+        }
+      }
+    }
+
     return json({ ok: true, message_id: messageId });
   }
 
@@ -1155,6 +1179,55 @@ async function handleAdminMessagesApi(request, env, url) {
     if (!res.ok) return json({ ok: false, error: "cleanup_failed", details: summarizeSupabaseError(res) }, res.status || 500);
     const deleted = extractScalarNumber(res.data, 0);
     return json({ ok: true, deleted });
+  }
+
+  // GET /_admin_api/attachments?message_id=xxx — lista załączników wiadomości
+  if (url.pathname === "/_admin_api/attachments" && request.method === "GET") {
+    const messageId = String(url.searchParams.get("message_id") || "").trim();
+    if (!messageId) return json({ ok: false, error: "missing_message_id" }, 400);
+    const res = await supabaseRpc(env, "get_message_attachments", { p_message_id: messageId });
+    if (!res.ok) return json({ ok: false, error: "get_attachments_failed" }, 500);
+    return json({ ok: true, attachments: Array.isArray(res.data) ? res.data : [] });
+  }
+
+  // GET /_admin_api/attachments/download?id=xxx — pobierz załącznik
+  if (url.pathname === "/_admin_api/attachments/download" && request.method === "GET") {
+    const id = String(url.searchParams.get("id") || "").trim();
+    if (!id) return json({ ok: false, error: "missing_id" }, 400);
+    // fetch storage_path from DB
+    const attRes = await supabaseRequest(env, `/rest/v1/message_attachments?id=eq.${encodeURIComponent(id)}&select=storage_path,filename,mime_type&limit=1`, { method: "GET" });
+    if (!attRes.ok) return json({ ok: false, error: "not_found" }, 404);
+    const row = Array.isArray(attRes.data) && attRes.data.length ? attRes.data[0] : null;
+    if (!row) return json({ ok: false, error: "not_found" }, 404);
+    const storageRes = await downloadFromStorage(env, row.storage_path);
+    if (!storageRes.ok) return json({ ok: false, error: "storage_error" }, 502);
+    const blob = await storageRes.arrayBuffer();
+    return new Response(blob, {
+      headers: {
+        "Content-Type": row.mime_type || "application/octet-stream",
+        "Content-Disposition": `attachment; filename="${row.filename}"`,
+        "Cache-Control": "private, max-age=3600",
+      },
+    });
+  }
+
+  // POST /_admin_api/attachments/upload — upload pliku (do compose)
+  // multipart/form-data z polem "file"
+  if (url.pathname === "/_admin_api/attachments/upload" && request.method === "POST") {
+    let formData;
+    try { formData = await request.formData(); } catch { return json({ ok: false, error: "invalid_form" }, 400); }
+    const file = formData.get("file");
+    if (!file || typeof file === "string") return json({ ok: false, error: "missing_file" }, 400);
+    const filename = file.name || "upload";
+    const mimeType = file.type || "application/octet-stream";
+    const arrayBuf = await file.arrayBuffer();
+    if (arrayBuf.byteLength > 10 * 1024 * 1024) return json({ ok: false, error: "file_too_large" }, 413);
+    const bytes = new Uint8Array(arrayBuf);
+    const b64 = btoa(bytes.reduce((acc, b) => acc + String.fromCharCode(b), ""));
+    const tempId = crypto.randomUUID();
+    const storagePath = `message-attachments/compose/${tempId}/${filename}`;
+    await uploadToStorage(env, storagePath, b64, mimeType);
+    return json({ ok: true, id: tempId, filename, mime_type: mimeType, storage_path: storagePath, size: arrayBuf.byteLength });
   }
 
   return new Response("Not Found", { status: 404 });
@@ -1390,11 +1463,13 @@ async function handleInboundEmail(message, env) {
   // Parse body from raw MIME stream
   let body = "";
   let bodyHtml = null;
+  let inboundAttachments = [];
   try {
     const rawText = await new Response(message.raw).text();
     const parts = extractMimeParts(rawText);
     body = parts.text;
     bodyHtml = parts.html || null;
+    inboundAttachments = parts.attachments || [];
   } catch (err) {
     console.error("[email] body parse failed:", err);
   }
@@ -1423,6 +1498,30 @@ async function handleInboundEmail(message, env) {
     p_ticket_number: ticketArg,
   });
 
+  if (rpc.ok) {
+    const msgRow = Array.isArray(rpc.data) && rpc.data.length ? rpc.data[0] : null;
+    const msgId = msgRow?.id;
+    if (msgId && inboundAttachments.length) {
+      for (const att of inboundAttachments) {
+        try {
+          const storagePath = `message-attachments/${msgId}/${att.filename}`;
+          await uploadToStorage(env, storagePath, att.data_b64, att.mimeType);
+          await supabaseRpc(env, "save_attachment", {
+            p_message_id: msgId,
+            p_filename:   att.filename,
+            p_mime_type:  att.mimeType,
+            p_size:       att.size,
+            p_storage_path: storagePath,
+            p_content_id: att.cid || null,
+            p_inline:     att.inline,
+          });
+        } catch (err) {
+          console.error("[email] attachment_upload_failed:", att.filename, err);
+        }
+      }
+    }
+  }
+
   if (!rpc.ok) {
     console.error("[email] save_inbound_message failed:", summarizeSupabaseError(rpc));
     return;
@@ -1450,10 +1549,20 @@ async function handleInboundEmail(message, env) {
 
 function decodeMimePart(part, content) {
   if (/Content-Transfer-Encoding:\s*quoted-printable/i.test(part)) {
-    return content.replace(/=\r?\n/g, "").replace(/=([0-9A-Fa-f]{2})/g, (_, h) => String.fromCharCode(parseInt(h, 16)));
+    const latin = content.replace(/=\r?\n/g, "").replace(/=([0-9A-Fa-f]{2})/g, (_, h) => String.fromCharCode(parseInt(h, 16)));
+    try {
+      const bytes = new Uint8Array(latin.length);
+      for (let i = 0; i < latin.length; i++) bytes[i] = latin.charCodeAt(i);
+      return new TextDecoder("utf-8").decode(bytes);
+    } catch { return latin; }
   }
   if (/Content-Transfer-Encoding:\s*base64/i.test(part)) {
-    try { return atob(content.replace(/\s+/g, "")); } catch {}
+    try {
+      const latin = atob(content.replace(/\s+/g, ""));
+      const bytes = new Uint8Array(latin.length);
+      for (let i = 0; i < latin.length; i++) bytes[i] = latin.charCodeAt(i);
+      return new TextDecoder("utf-8").decode(bytes);
+    } catch {}
   }
   return content;
 }
@@ -1463,26 +1572,111 @@ function extractMimeParts(raw) {
   if (boundaryMatch) {
     const boundary = boundaryMatch[1].trim();
     const escaped  = boundary.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const parts    = raw.split(new RegExp(`--${escaped}(?:--|\r?\n)`));
+    const rawParts = raw.split(new RegExp(`--${escaped}(?:\r?\n)`, "")).slice(1);
+
     let text = "";
-    let html = "";
-    for (const part of parts) {
+    let html  = "";
+    const cidMap  = {};      // cid → data URI (inline images)
+    const attachments = [];  // { filename, mimeType, data_b64, cid, inline, size }
+
+    for (const part of rawParts) {
       const bodyStart = part.indexOf("\r\n\r\n");
       if (bodyStart === -1) continue;
       let content = part.slice(bodyStart + 4);
-      const nextBoundary = content.indexOf("\r\n--");
-      if (nextBoundary !== -1) content = content.slice(0, nextBoundary);
-      content = decodeMimePart(part, content).trim();
-      if (/Content-Type:\s*text\/plain/i.test(part) && !text) text = content;
-      if (/Content-Type:\s*text\/html/i.test(part)  && !html) html = content;
+      const nextBound = content.indexOf("\r\n--");
+      if (nextBound !== -1) content = content.slice(0, nextBound);
+
+      const ctMatch  = part.match(/Content-Type:\s*([^;\r\n]+)/i);
+      const mimeType = ctMatch ? ctMatch[1].trim().toLowerCase() : "application/octet-stream";
+      const cidMatch  = part.match(/Content-ID:\s*<([^>]+)>/i);
+      const dispMatch = part.match(/Content-Disposition:\s*(attachment|inline)/i);
+      const fnMatch   = part.match(/filename\*?=(?:.*?'')?["']?([^"'\r\n;]+)["']?/i);
+      const isB64     = /Content-Transfer-Encoding:\s*base64/i.test(part);
+      const isQP      = /Content-Transfer-Encoding:\s*quoted-printable/i.test(part);
+
+      if (/text\/plain/i.test(mimeType) && !dispMatch && !text) {
+        text = decodeMimePart(part, content).trim();
+        continue;
+      }
+      if (/text\/html/i.test(mimeType) && !dispMatch && !html) {
+        html = decodeMimePart(part, content).trim();
+        continue;
+      }
+
+      // Inline image (CID) or attachment
+      const isAttachment = dispMatch || cidMatch || (mimeType.startsWith("image/") && !text && !html);
+      if (!isAttachment) continue;
+
+      const b64 = isB64
+        ? content.replace(/\s+/g, "")
+        : btoa(String.fromCharCode(...new TextEncoder().encode(isQP ? decodeMimePart(part, content) : content)));
+
+      const filename = fnMatch ? decodeURIComponent(fnMatch[1].trim()) : `attachment_${Date.now()}`;
+      const cid      = cidMatch ? cidMatch[1] : null;
+      const inline   = !!cidMatch || (dispMatch && dispMatch[1].toLowerCase() === "inline");
+
+      if (cid) {
+        cidMap[cid] = `data:${mimeType};base64,${b64}`;
+      }
+      // approximate size from base64 length
+      const size = Math.round(b64.length * 0.75);
+      attachments.push({ filename, mimeType, data_b64: b64, cid, inline, size });
     }
-    return { text, html };
+
+    // Replace CID refs in HTML
+    if (html && Object.keys(cidMap).length) {
+      for (const [cid, dataUri] of Object.entries(cidMap)) {
+        html = html.split(`cid:${cid}`).join(dataUri);
+      }
+    }
+    return { text, html, attachments };
   }
-  // Simple email (no multipart)
+
+  // Non-multipart
   const bodyStart = raw.indexOf("\r\n\r\n");
-  const content = bodyStart !== -1 ? raw.slice(bodyStart + 4).trim() : "";
-  const isHtml = /^\s*<!doctype html|^\s*<html/i.test(content);
-  return { text: isHtml ? "" : content, html: isHtml ? content : "" };
+  const content   = bodyStart !== -1 ? raw.slice(bodyStart + 4).trim() : "";
+  const isHtml    = /^\s*<!doctype html|^\s*<html/i.test(content);
+  return { text: isHtml ? "" : content, html: isHtml ? content : "", attachments: [] };
+}
+
+// ============================================================
+// STORAGE HELPERS
+// ============================================================
+
+async function uploadToStorage(env, bucketPath, data_b64, mimeType) {
+  // Supabase Storage: POST /storage/v1/object/{bucket}/{path}
+  const cfg = getSupabaseConfig(env);
+  if (!cfg) throw new Error("storage_upload_failed:missing_supabase_config");
+  const url = `${cfg.baseUrl}/storage/v1/object/${bucketPath}`;
+  // decode base64 to binary
+  const binaryStr = atob(data_b64);
+  const bytes = new Uint8Array(binaryStr.length);
+  for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${cfg.serviceRoleKey}`,
+      "Content-Type": mimeType,
+      "x-upsert": "true",
+    },
+    body: bytes,
+  });
+  if (!res.ok) {
+    const err = await res.text().catch(() => "");
+    throw new Error(`storage_upload_failed:${res.status}:${err.slice(0,200)}`);
+  }
+  return bucketPath;
+}
+
+async function downloadFromStorage(env, bucketPath) {
+  const cfg = getSupabaseConfig(env);
+  if (!cfg) throw new Error("storage_download_failed:missing_supabase_config");
+  const url = `${cfg.baseUrl}/storage/v1/object/${bucketPath}`;
+  const res = await fetch(url, {
+    headers: { "Authorization": `Bearer ${cfg.serviceRoleKey}` },
+  });
+  return res; // return raw Response to proxy
 }
 
 // ============================================================

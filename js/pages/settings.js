@@ -1774,14 +1774,22 @@ async function openMessage(id) {
     if (!res.ok) throw new Error(await res.text());
     const json = await res.json();
     if (!json.ok) throw new Error(json.error);
-    renderMessageDetail(json.message);
+    let attachments = [];
+    try {
+      const attRes = await adminFetch(`/attachments?message_id=${encodeURIComponent(id)}`);
+      if (attRes.ok) {
+        const attJson = await attRes.json();
+        attachments = attJson.attachments || [];
+      }
+    } catch {}
+    renderMessageDetail(json.message, attachments);
   } catch (err) {
     showToast(String(err?.message || err), "error");
     conv.innerHTML = "";
   }
 }
 
-function renderMessageDetail(msg) {
+function renderMessageDetail(msg, attachments = []) {
   const conv = document.getElementById("mailConv");
   if (!conv) return;
   conv.innerHTML = "";
@@ -1831,64 +1839,106 @@ function renderMessageDetail(msg) {
     bodyEl.textContent = msg.body || "";
   }
   bubble.appendChild(bodyEl);
+
+  // Attachments (non-inline)
+  const nonInline = attachments.filter(a => !a.inline);
+  if (nonInline.length) {
+    const attList = document.createElement("div");
+    attList.style.cssText = "margin-top:10px;display:flex;flex-wrap:wrap;gap:6px;";
+    for (const att of nonInline) {
+      const chip = document.createElement("a");
+      chip.href = "#";
+      chip.style.cssText = "display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;border:1px solid rgba(255,255,255,.15);font-size:11px;color:rgba(255,255,255,.7);text-decoration:none;cursor:pointer;background:rgba(255,255,255,.04);";
+      chip.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>${escSetting(att.filename)} <span style="opacity:.45">${att.mime_type.split('/')[1] || ''}</span>`;
+      chip.addEventListener("click", async (e) => {
+        e.preventDefault();
+        try {
+          const res = await adminFetch(`/attachments/download?id=${encodeURIComponent(att.id)}`);
+          if (!res.ok) { showToast("Błąd pobierania.", "error"); return; }
+          const blob = await res.blob();
+          const url = URL.createObjectURL(blob);
+          const a2 = document.createElement("a");
+          a2.href = url; a2.download = att.filename; a2.click();
+          setTimeout(() => URL.revokeObjectURL(url), 10000);
+        } catch { showToast("Błąd pobierania.", "error"); }
+      });
+      attList.appendChild(chip);
+    }
+    bubble.appendChild(attList);
+  }
+
   msgEl.appendChild(bubble);
   conv.appendChild(msgEl);
 
-  // Action buttons
+  // Action bar — icon buttons
   const actions = document.createElement("div");
-  actions.className = "mail-conv-reply";
-  actions.style.cssText = "display:flex;flex-wrap:wrap;gap:8px;padding:12px 14px;";
+  actions.className = "mail-msg-actions";
+
+  // Left group: assign/unassign + reply
+  const leftGroup = document.createElement("div");
+  leftGroup.style.cssText = "display:flex;gap:4px;align-items:center;";
 
   if (!msg.report_id) {
     const btnAssign = document.createElement("button");
-    btnAssign.className = "btn sm gold";
+    btnAssign.className = "msg-icon-btn msg-icon-btn--gold";
     btnAssign.type = "button";
-    btnAssign.textContent = t("settings.reports.assignReport") || "Przydziel zgłoszenie";
+    btnAssign.title = t("settings.reports.assignReport") || "Przydziel zgłoszenie";
+    btnAssign.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>`;
     btnAssign.addEventListener("click", () => assignReport(msg.id));
-    actions.appendChild(btnAssign);
+    leftGroup.appendChild(btnAssign);
   } else {
     const btnUnassign = document.createElement("button");
-    btnUnassign.className = "btn sm";
+    btnUnassign.className = "msg-icon-btn msg-icon-btn--tagged";
     btnUnassign.type = "button";
-    btnUnassign.style.opacity = ".55";
-    btnUnassign.textContent = "Odepnij zgłoszenie";
+    btnUnassign.title = `${escSetting(msg.ticket_number || "")} — odepnij`;
+    btnUnassign.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>`;
     btnUnassign.addEventListener("click", () => unassignReport(msg.id));
-    actions.appendChild(btnUnassign);
+    leftGroup.appendChild(btnUnassign);
   }
 
   if (isInbound && msg.from_email) {
     const btnReply = document.createElement("button");
-    btnReply.className = "btn sm";
+    btnReply.className = "msg-icon-btn";
     btnReply.type = "button";
-    btnReply.textContent = t("settings.reports.replyBtn") || "Odpowiedz";
-    btnReply.addEventListener("click", () => showCompose({ to: msg.from_email, subject: `Re: ${msg.subject || ""}`, report_id: msg.report_id }));
-    actions.appendChild(btnReply);
+    btnReply.title = t("settings.reports.replyBtn") || "Odpowiedz";
+    btnReply.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 00-4-4H4"/></svg>`;
+    btnReply.addEventListener("click", () => showCompose({ to: msg.from_email, subject: `Re: ${msg.subject || ""}`, report_id: msg.report_id, quote: msg.body, quoteFrom: msg.from_email, quoteDate: msg.created_at }));
+    leftGroup.appendChild(btnReply);
   }
+
+  actions.appendChild(leftGroup);
+
+  // Right group: trash / restore + delete
+  const rightGroup = document.createElement("div");
+  rightGroup.style.cssText = "display:flex;gap:4px;align-items:center;margin-left:auto;";
 
   if (!msg.deleted_at) {
     const btnTrash = document.createElement("button");
-    btnTrash.className = "btn sm";
+    btnTrash.className = "msg-icon-btn msg-icon-btn--danger";
     btnTrash.type = "button";
-    btnTrash.style.opacity = ".55";
-    btnTrash.textContent = t("settings.reports.trashMsg") || "Do kosza";
+    btnTrash.title = t("settings.reports.trashMsg") || "Do kosza";
+    btnTrash.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>`;
     btnTrash.addEventListener("click", () => trashMessage(msg.id));
-    actions.appendChild(btnTrash);
+    rightGroup.appendChild(btnTrash);
   } else {
     const btnRestore = document.createElement("button");
-    btnRestore.className = "btn sm";
+    btnRestore.className = "msg-icon-btn";
     btnRestore.type = "button";
-    btnRestore.textContent = t("settings.reports.restore") || "Przywróć";
+    btnRestore.title = t("settings.reports.restore") || "Przywróć";
+    btnRestore.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>`;
     btnRestore.addEventListener("click", () => restoreMessage(msg.id));
-    actions.appendChild(btnRestore);
+    rightGroup.appendChild(btnRestore);
 
     const btnDelete = document.createElement("button");
-    btnDelete.className = "btn sm danger";
+    btnDelete.className = "msg-icon-btn msg-icon-btn--danger";
     btnDelete.type = "button";
-    btnDelete.textContent = t("settings.reports.deleteForever") || "Usuń na zawsze";
+    btnDelete.title = t("settings.reports.deleteForever") || "Usuń na zawsze";
+    btnDelete.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
     btnDelete.addEventListener("click", () => deleteForever(msg.id));
-    actions.appendChild(btnDelete);
+    rightGroup.appendChild(btnDelete);
   }
 
+  actions.appendChild(rightGroup);
   conv.appendChild(actions);
 
   // click on ticket badge → open report
@@ -2206,6 +2256,16 @@ function showCompose(defaults = {}) {
   if (!conv) return;
   msgActiveId = null;
   document.querySelectorAll(".mail-thread-item").forEach(el => el.classList.remove("active"));
+
+  const hasQuote = !!defaults.quote;
+  let quoteBlockHtml = "";
+  if (hasQuote) {
+    const dateStr = defaults.quoteDate ? new Date(defaults.quoteDate).toLocaleString("pl-PL") : "";
+    const fromStr = defaults.quoteFrom ? `${escSetting(defaults.quoteFrom)}, ${dateStr}` : dateStr;
+    quoteBlockHtml = `<div id="composeQuoteBlock" style="margin-top:10px;padding:10px 14px;border-left:3px solid rgba(255,234,166,.35);background:rgba(0,0,0,.2);border-radius:0 8px 8px 0;font-size:12px;opacity:.65;white-space:pre-wrap;word-break:break-word">
+      <div style="font-size:11px;opacity:.7;margin-bottom:6px">${fromStr}</div>${escSetting(defaults.quote)}</div>`;
+  }
+
   conv.innerHTML = `
     <div class="mail-compose-pane" id="composePaneInner">
       <div style="font-size:14px;font-weight:700;margin-bottom:6px">${t("settings.reports.compose.title") || "Napisz nową wiadomość"}</div>
@@ -2219,15 +2279,31 @@ function showCompose(defaults = {}) {
       </div>
       <div class="field" style="flex:1;display:flex;flex-direction:column">
         <label class="field-label">${t("settings.reports.compose.message") || "Treść"}</label>
-        <textarea class="inp" id="composeMessageArea" rows="8" style="width:100%;box-sizing:border-box;flex:1;resize:vertical">${escSetting(defaults.body || "")}</textarea>
+        <textarea class="inp" id="composeMessageArea" rows="6" style="width:100%;box-sizing:border-box;resize:vertical">${escSetting(defaults.body || "")}</textarea>
       </div>
+      <div class="field">
+        <label class="field-label" style="display:flex;align-items:center;justify-content:space-between">
+          Załączniki
+          <span style="opacity:.4;font-size:10px">maks. 10 MB</span>
+        </label>
+        <input type="file" id="composeAttachmentInput" multiple style="font-size:12px;opacity:.7">
+        <div id="composeAttachmentList" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:6px"></div>
+      </div>
+      ${hasQuote ? `<label style="display:flex;align-items:center;gap:7px;font-size:12px;opacity:.55;cursor:pointer;margin-top:8px;user-select:none"><input type="checkbox" id="composeQuoteToggle" checked style="accent-color:#ffeaa6"> Dołącz cytat</label>` : ""}
+      ${quoteBlockHtml}
       <input type="hidden" id="composeReportId" value="${escSetting(defaults.report_id || "")}">
-      <div style="display:flex;justify-content:flex-end;gap:8px;align-items:center;padding-bottom:4px">
+      <input type="hidden" id="composeQuoteBody" value="${escSetting(defaults.quote || "")}">
+      <div style="display:flex;justify-content:flex-end;gap:8px;align-items:center;padding-bottom:4px;margin-top:10px">
         <span class="field-hint" id="composeSendStatus"></span>
         <button class="btn sm gold" id="btnComposeSend" type="button">${t("settings.reports.compose.send") || "Wyślij"}</button>
       </div>
     </div>`;
   document.getElementById("btnComposeSend")?.addEventListener("click", sendCompose);
+
+  document.getElementById("composeQuoteToggle")?.addEventListener("change", (e) => {
+    const block = document.getElementById("composeQuoteBlock");
+    if (block) block.style.display = e.target.checked ? "" : "none";
+  });
 }
 
 async function sendCompose(defaults) {
@@ -2236,17 +2312,37 @@ async function sendCompose(defaults) {
   const subject = (document.getElementById("composeSubjectInput")?.value || "").trim();
   const body    = (document.getElementById("composeMessageArea")?.value || "").trim();
   const reportId = (document.getElementById("composeReportId")?.value || "").trim() || null;
+  const quoteToggle = document.getElementById("composeQuoteToggle");
+  const quoteIncluded = !quoteToggle || quoteToggle.checked;
+  const quote   = quoteIncluded ? ((document.getElementById("composeQuoteBody")?.value || "").trim() || null) : null;
   const status  = document.getElementById("composeSendStatus");
 
   if (!to || !to.includes("@")) { showToast("Podaj poprawny e-mail.", "error"); return; }
   if (!body) { showToast("Podaj treść wiadomości.", "error"); return; }
   if (status) status.textContent = "Wysyłam…";
 
+  // Upload attachments
+  const fileInput = document.getElementById("composeAttachmentInput");
+  const uploadedAttachments = [];
+  if (fileInput?.files?.length) {
+    for (const file of fileInput.files) {
+      try {
+        const fd = new FormData();
+        fd.append("file", file);
+        const upRes = await adminFetch("/attachments/upload", { method: "POST", body: fd });
+        if (upRes.ok) {
+          const upJson = await upRes.json();
+          if (upJson.ok) uploadedAttachments.push(upJson);
+        }
+      } catch {}
+    }
+  }
+
   try {
     const res = await adminFetch("/messages/send", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ to_email: to, subject, body, report_id: reportId || undefined }),
+      body: JSON.stringify({ to_email: to, subject, body, quote: quote || undefined, report_id: reportId || undefined, attachments: uploadedAttachments.length ? uploadedAttachments : undefined }),
     });
     if (!res.ok) throw new Error(await res.text());
     const json = await res.json();
