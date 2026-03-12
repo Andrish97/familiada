@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="css/builder.css"/>
   <link rel="stylesheet" href="css/settings.css?v=20260312-1"/>
 
-  <script type="module" src="js/pages/settings.js?v=20260312-2" defer></script>
+  <script type="module" src="js/pages/settings.js?v=20260312-3" defer></script>
 </head>
 <body class="builder-body settings-body settings-locked no-footer-line">
   <header class="topbar topbar-layout-4 topbar-mobile-keep-brand">
@@ -483,6 +483,14 @@
       <div class="mTitle" id="reportPreviewTitle" data-i18n="settings.reports.previewTitle">Zgłoszenie</div>
       <div class="mSub" id="reportPreviewMeta">—</div>
       <div id="reportThread" style="margin:12px 0;max-height:45vh;overflow-y:auto;display:flex;flex-direction:column;gap:8px;"></div>
+      <div id="reportMoveSection" style="display:none;margin-top:10px;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04)">
+        <div style="font-size:12px;opacity:.6;margin-bottom:6px" data-i18n="settings.reports.moveTitle">Przenieś wiadomość do zgłoszenia</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input class="inp" id="reportMoveTicket" type="text" placeholder="np. 2026-0001" style="flex:1;box-sizing:border-box" autocomplete="off"/>
+          <button class="btn sm" id="btnReportMoveConfirm" type="button" data-i18n="settings.reports.moveConfirm">Przenieś</button>
+          <button class="btn sm" id="btnReportMoveCancel" type="button" data-i18n="settings.actions.cancel">Anuluj</button>
+        </div>
+      </div>
       <div id="reportReplySection" style="margin-top:14px">
         <label class="field-label" for="reportReplyArea" data-i18n="settings.reports.replyPlaceholder">Treść odpowiedzi…</label>
         <textarea class="inp" id="reportReplyArea" rows="8" style="width:100%;box-sizing:border-box;margin-top:6px;resize:vertical" data-i18n-placeholder="settings.reports.replyPlaceholder" placeholder="Treść odpowiedzi…"></textarea>

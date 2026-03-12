@@ -41,6 +41,23 @@ const uk = {
     fullscreenUnavailable: "Fullscreen API недоступний.",
     footer: {
       left: "© {year} Familiada — система для гри наживо",
+      contactBtn: "Контакт",
+    },
+  },
+  contact: {
+    modal: {
+      title: "Написати нам",
+      email: "Ваш e-mail",
+      ticket: "Номер звернення (необов'язково)",
+      subject: "Тема",
+      message: "Повідомлення",
+      submit: "Надіслати",
+      successTitle: "Надіслано!",
+      ticketLabel: "Номер звернення:",
+      addedTo: "Додано до звернення:",
+      errEmail: "Введіть коректну адресу e-mail.",
+      errMessage: "Повідомлення занадто коротке (мін. 5 символів).",
+      errSubject: "Вкажіть тему.",
     },
   },
   deviceGuard: {
@@ -2445,6 +2462,7 @@ const uk = {
       </p>
     `,
     contact: {
+      openBtn: "Написати нам",
       title: "Контакт",
       desc: "Є питання або зауваження? Напишіть нам.",
       email: "Ваш e-mail",
@@ -4324,6 +4342,9 @@ const uk = {
         replied: "Відповідь надіслано",
         closed: "Закрите",
       },
+      moveBtn: "Перемістити",
+      moveTitle: "Перемістити повідомлення до звернення",
+      moveConfirm: "Перемістити",
       reply: "Відповісти",
       close: "Закрити звернення",
       closeConfirm: "Закрити це звернення?",

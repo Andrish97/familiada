@@ -41,6 +41,23 @@ const pl = {
     fullscreenUnavailable: "Brak dostępnego Fullscreen API.",
     footer: {
       left: "© {year} Familiada — system do gry na żywo",
+      contactBtn: "Kontakt",
+    },
+  },
+  contact: {
+    modal: {
+      title: "Napisz do nas",
+      email: "Twój e-mail",
+      ticket: "Numer zgłoszenia (opcjonalnie)",
+      subject: "Temat",
+      message: "Wiadomość",
+      submit: "Wyślij",
+      successTitle: "Wysłano!",
+      ticketLabel: "Numer zgłoszenia:",
+      addedTo: "Dodano do zgłoszenia:",
+      errEmail: "Podaj poprawny adres e-mail.",
+      errMessage: "Wiadomość jest za krótka (min. 5 znaków).",
+      errSubject: "Podaj temat.",
     },
   },
   deviceGuard: {
@@ -2566,6 +2583,7 @@ const pl = {
       <p class="m-p">Serwis wykorzystuje wyłącznie techniczne pliki cookies niezbędne do działania aplikacji.</p>
     `,
     contact: {
+      openBtn: "Napisz do nas",
       title: "Kontakt",
       desc: "Masz pytanie lub uwagę? Napisz do nas.",
       email: "Twój e-mail",
@@ -4441,6 +4459,9 @@ const pl = {
         replied: "Odpowiedziano",
         closed: "Zamknięte",
       },
+      moveBtn: "Przenieś",
+      moveTitle: "Przenieś wiadomość do zgłoszenia",
+      moveConfirm: "Przenieś",
       reply: "Odpowiedz",
       close: "Zamknij zgłoszenie",
       closeConfirm: "Zamknąć to zgłoszenie?",

@@ -41,6 +41,23 @@ const en = {
     fullscreenUnavailable: "Fullscreen API is not available.",
     footer: {
       left: "© {year} Familiada — live game system",
+      contactBtn: "Contact",
+    },
+  },
+  contact: {
+    modal: {
+      title: "Contact us",
+      email: "Your e-mail",
+      ticket: "Ticket number (optional)",
+      subject: "Subject",
+      message: "Message",
+      submit: "Send",
+      successTitle: "Sent!",
+      ticketLabel: "Ticket number:",
+      addedTo: "Added to ticket:",
+      errEmail: "Please enter a valid e-mail address.",
+      errMessage: "Message is too short (min. 5 characters).",
+      errSubject: "Please enter a subject.",
     },
   },
   deviceGuard: {
@@ -2569,6 +2586,7 @@ const en = {
       </p>
     `,
     contact: {
+      openBtn: "Contact us",
       title: "Contact",
       desc: "Have a question or feedback? Write to us.",
       email: "Your e-mail",
@@ -4444,6 +4462,9 @@ const en = {
         replied: "Replied",
         closed: "Closed",
       },
+      moveBtn: "Move",
+      moveTitle: "Move message to ticket",
+      moveConfirm: "Move",
       reply: "Reply",
       close: "Close report",
       closeConfirm: "Close this report?",

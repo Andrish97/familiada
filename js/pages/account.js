@@ -5,6 +5,7 @@ import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "..
 import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js";
 import { confirmModal } from "../core/modal.js";
 import { isGuestUser, showGuestBlockedOverlay } from "../core/guest-mode.js";
+import "../core/contact-modal.js";
 
 
 const status = document.getElementById("status");

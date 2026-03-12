@@ -7,6 +7,7 @@ import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../
 import { exportGame } from "./builder-import-export.js";
 import { initUiSelect } from "../core/ui-select.js";
 import { confirmModal } from "../core/modal.js";
+import "../core/contact-modal.js";
 
 /* =========================================================
    Constants
