@@ -5,6 +5,7 @@ const en = {
     flag: "🇬🇧",
   },
   common: {
+    contactBtn: "Contact",
     languageLabel: "Language",
     backToLogin: "Back to login",
     goToPanel: "Go to panel",
@@ -4473,6 +4474,8 @@ const en = {
       previewTitle: "Report",
       replyPlaceholder: "Reply message…",
       sendReply: "Send reply",
+      selectMsg: "Select a thread",
+      reopen: "Reopen",
       compose: {
         title: "Compose message",
         to: "To (e-mail)",
