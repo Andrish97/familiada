@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 3ufbH3bdYjPkQr1RQoG1AwYg5swTLDYS4ufXbseT86lDEQDtBqCnoj8ru4VD6Nn
+\restrict FMCo7Y1zk4GLzTn7Gw179JCHUdNFyRHvuSduhnKiRbABPzLGsZNyERa64Ytd78P
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -2592,17 +2592,27 @@ end $$;
 -- Name: get_report_messages("uuid"); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION "public"."get_report_messages"("p_report_id" "uuid") RETURNS TABLE("id" "uuid", "direction" "text", "body" "text", "from_email" "text", "created_at" timestamp with time zone)
+CREATE FUNCTION "public"."get_report_messages"("p_report_id" "uuid") RETURNS TABLE("id" "uuid", "source" "text", "direction" "text", "from_email" "text", "to_email" "text", "subject" "text", "body" "text", "body_html" "text", "created_at" timestamp with time zone)
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
     AS $$
-begin
-  return query
-  select m.id, m.direction, m.body, m.from_email, m.created_at
-  from public.contact_report_messages m
-  where m.report_id = p_report_id
-  order by m.created_at asc;
-end;
+BEGIN
+  RETURN QUERY
+    SELECT
+      m.id,
+      m.source,
+      m.direction,
+      m.from_email,
+      m.to_email,
+      m.subject,
+      m.body,
+      m.body_html,
+      m.created_at
+    FROM public.messages m
+    WHERE m.report_id = p_report_id
+      AND m.deleted_at IS NULL
+    ORDER BY m.created_at ASC;
+END;
 $$;
 
 
@@ -11761,5 +11771,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 3ufbH3bdYjPkQr1RQoG1AwYg5swTLDYS4ufXbseT86lDEQDtBqCnoj8ru4VD6Nn
+\unrestrict FMCo7Y1zk4GLzTn7Gw179JCHUdNFyRHvuSduhnKiRbABPzLGsZNyERa64Ytd78P
 
