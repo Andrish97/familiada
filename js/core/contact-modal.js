@@ -101,8 +101,8 @@ function ensureModal() {
 async function prefillEmail() {
   try {
     const { supabase } = await import("./supabase.js");
-    const { data } = await supabase.auth.getUser();
-    const user = data?.user;
+    const { data } = await supabase.auth.getSession();
+    const user = data?.session?.user;
     const isGuest = user?.user_metadata?.is_guest === true || user?.app_metadata?.is_guest === true;
     const email = user?.email;
     if (email && !isGuest) {
@@ -112,7 +112,7 @@ async function prefillEmail() {
   } catch {}
 }
 
-export function openContactModal(opts = {}) {
+export async function openContactModal(opts = {}) {
   ensureModal();
   applyLabels();
 
@@ -139,12 +139,10 @@ export function openContactModal(opts = {}) {
 
   modalEl.style.display = "block";
   document.body.style.overflow = "hidden";
-  prefillEmail();
-  setTimeout(() => {
-    const email = document.getElementById("cModalEmail");
-    if (email && !email.value) email.focus();
-    else document.getElementById("cModalMessage")?.focus();
-  }, 50);
+  await prefillEmail();
+  const emailInp = document.getElementById("cModalEmail");
+  if (emailInp && !emailInp.value) emailInp.focus();
+  else document.getElementById("cModalMessage")?.focus();
 }
 
 export function closeContactModal() {
