@@ -1,0 +1,244 @@
+{
+  "meta": {
+    "title": "Familiada Nauka",
+    "description": "Gra przybliża uczestnikom fascynujący świat nauki i techniki. Idealna dla rodziców i dzieci, które chcą dowiedzieć się więcej o tym, jak działa świat. Podczas gry, uczestnicy będą rywalizować, aby podać odpowiedzi, które często odpowiadają na pytania dotyczące nauki i codziennego życia.",
+    "lang": "pl"
+  },
+  "game": {
+    "name": "Familiada Nauka",
+    "type": "prepared"
+  },
+  "questions": [
+    {
+      "text": "Co jest potrzebne do fotosyntezy?",
+      "answers": [
+        {
+          "text": "Słońce",
+          "fixed_points": 38
+        },
+        {
+          "text": "Woda",
+          "fixed_points": 29
+        },
+        {
+          "text": "Tlen",
+          "fixed_points": 15
+        },
+        {
+          "text": "Gleba",
+          "fixed_points": 8
+        }
+      ]
+    },
+    {
+      "text": "Jaki jest największy żywioł?",
+      "answers": [
+        {
+          "text": "Woda",
+          "fixed_points": 42
+        },
+        {
+          "text": "Ogień",
+          "fixed_points": 25
+        },
+        {
+          "text": "Ziemia",
+          "fixed_points": 18
+        },
+        {
+          "text": "Powietrze",
+          "fixed_points": 5
+        }
+      ]
+    },
+    {
+      "text": "Który ssak ma najdłuższy okres ciąży?",
+      "answers": [
+        {
+          "text": "Słoń",
+          "fixed_points": 45
+        },
+        {
+          "text": "Żubr",
+          "fixed_points": 20
+        },
+        {
+          "text": "Nosorożec",
+          "fixed_points": 14
+        },
+        {
+          "text": "Hipopotam",
+          "fixed_points": 11
+        }
+      ]
+    },
+    {
+      "text": "Co jest źródłem energii dla człowieka?",
+      "answers": [
+        {
+          "text": "Jedzenie",
+          "fixed_points": 48
+        },
+        {
+          "text": "Woda",
+          "fixed_points": 22
+        },
+        {
+          "text": "Słońce",
+          "fixed_points": 12
+        },
+        {
+          "text": "Powietrze",
+          "fixed_points": 8
+        }
+      ]
+    },
+    {
+      "text": "Jaki jest największy grzbiet górski?",
+      "answers": [
+        {
+          "text": "Andy",
+          "fixed_points": 39
+        },
+        {
+          "text": "Himalaje",
+          "fixed_points": 28
+        },
+        {
+          "text": "Karakorum",
+          "fixed_points": 16
+        },
+        {
+          "text": "Góry Skandynawskie",
+          "fixed_points": 7
+        }
+      ]
+    },
+    {
+      "text": "Co powoduje, że kwiaty pachną?",
+      "answers": [
+        {
+          "text": "Nektar",
+          "fixed_points": 35
+        },
+        {
+          "text": "Pyłek",
+          "fixed_points": 25
+        },
+        {
+          "text": "Kwiaty same",
+          "fixed_points": 18
+        },
+        {
+          "text": "Zapach",
+          "fixed_points": 12
+        }
+      ]
+    },
+    {
+      "text": "Jaki jest największy kręgowiec?",
+      "answers": [
+        {
+          "text": "Wieloryb",
+          "fixed_points": 46
+        },
+        {
+          "text": "Słoń morski",
+          "fixed_points": 24
+        },
+        {
+          "text": "Żółw",
+          "fixed_points": 14
+        },
+        {
+          "text": "Krokodyl",
+          "fixed_points": 6
+        }
+      ]
+    },
+    {
+      "text": "Co jest potrzebne do wzrostu roślin?",
+      "answers": [
+        {
+          "text": "Woda",
+          "fixed_points": 40
+        },
+        {
+          "text": "Słońce",
+          "fixed_points": 26
+        },
+        {
+          "text": "Nawóz",
+          "fixed_points": 17
+        },
+        {
+          "text": "Gleba",
+          "fixed_points": 7
+        }
+      ]
+    },
+    {
+      "text": "Jaki jest największy ssak drapieżny?",
+      "answers": [
+        {
+          "text": "Lew",
+          "fixed_points": 32
+        },
+        {
+          "text": "Tygrys",
+          "fixed_points": 28
+        },
+        {
+          "text": "Niedźwiedź",
+          "fixed_points": 19
+        },
+        {
+          "text": "Wilki",
+          "fixed_points": 11
+        }
+      ]
+    },
+    {
+      "text": "Co jest źródłem energii dla samochodów?",
+      "answers": [
+        {
+          "text": "Benzyna",
+          "fixed_points": 49
+        },
+        {
+          "text": "Diesel",
+          "fixed_points": 23
+        },
+        {
+          "text": "Elektryczność",
+          "fixed_points": 13
+        },
+        {
+          "text": "Woda",
+          "fixed_points": 5
+        }
+      ]
+    },
+    {
+      "text": "Jaki jest największy ptak?",
+      "answers": [
+        {
+          "text": "Struś",
+          "fixed_points": 44
+        },
+        {
+          "text": "Albatros",
+          "fixed_points": 25
+        },
+        {
+          "text": "Orzeł",
+          "fixed_points": 16
+        },
+        {
+          "text": "Sęp",
+          "fixed_points": 5
+        }
+      ]
+    }
+  ]
+}
