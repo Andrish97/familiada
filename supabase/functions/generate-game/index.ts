@@ -196,7 +196,12 @@ serve(async (req: Request) => {
       if (job.status !== "pending" && job.status !== "failed") return respond({ error: "Job already processing or completed" }, 400);
 
       // 2. Update status to processing
-      await supabase.from("game_gen_queue").update({ status: "processing", started_at: new Date().toISOString(), attempts: job.attempts + 1 }).eq("id", jobId);
+      await supabase.from("game_gen_queue").update({ 
+        status: "processing", 
+        started_at: new Date().toISOString(), 
+        attempts: job.attempts + 1,
+        processed_games: 0 // Reset progress on restart
+      }).eq("id", jobId);
 
       try {
         const results = [];
@@ -210,6 +215,11 @@ serve(async (req: Request) => {
           
           results.push(game);
           if (game.meta?.title) alreadyUsed.push(game.meta.title);
+          
+          // Update progress in DB after each game
+          await supabase.from("game_gen_queue").update({ 
+            processed_games: i + 1 
+          }).eq("id", jobId);
           
           // Small delay between LLM calls to be safe
           if (i < job.total_games - 1) await new Promise(r => setTimeout(r, 500));

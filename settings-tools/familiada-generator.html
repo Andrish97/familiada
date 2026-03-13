@@ -453,18 +453,28 @@ async function checkQueueStatus() {
     return;
   }
 
-  qStatus.innerHTML = jobs.map(j => `
-    <div style="font-size:12px; padding:8px; background:rgba(255,255,255,0.05); border-radius:8px; margin-bottom:5px; border-left:3px solid ${j.status === 'processing' ? 'var(--blue)' : 'var(--muted)'}">
-      <div style="display:flex; justify-content:space-between">
-        <strong>${j.status === 'processing' ? '⚙️ Przetwarzanie' : '⏳ W kolejce'}</strong>
-        <span>${j.total_games} gier (${j.lang})</span>
+  qStatus.innerHTML = jobs.map(j => {
+    const pct = j.total_games > 0 ? Math.round((j.processed_games / j.total_games) * 100) : 0;
+    const isProcessing = j.status === 'processing';
+    const statusLabel = isProcessing ? `⚙️ Przetwarzanie (${j.processed_games}/${j.total_games})` : `⏳ W kolejce`;
+    const color = isProcessing ? 'var(--blue)' : 'var(--muted)';
+    
+    return `
+      <div style="font-size:12px; padding:8px; background:rgba(255,255,255,0.05); border-radius:8px; margin-bottom:8px; border-left:3px solid ${color}">
+        <div style="display:flex; justify-content:space-between; margin-bottom:4px">
+          <strong>${statusLabel}</strong>
+          <span>${j.lang.toUpperCase()}</span>
+        </div>
+        <div style="height:4px; background:rgba(255,255,255,0.1); border-radius:2px; overflow:hidden">
+          <div style="height:100%; width:${pct}%; background:${color}; transition: width 0.3s ease"></div>
+        </div>
+        <div style="font-size:11px; color:var(--muted); margin-top:4px">${j.topic ? 'Temat: ' + j.topic : 'Temat losowy'}</div>
       </div>
-      <div style="font-size:11px; color:var(--muted)">${j.topic ? 'Temat: ' + j.topic : 'Temat losowy'}</div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 
-  // Re-check after 5s if there are active jobs
-  setTimeout(checkQueueStatus, 5000);
+  // Re-check after 3s if there are active jobs
+  setTimeout(checkQueueStatus, 3000);
 }
 
 
