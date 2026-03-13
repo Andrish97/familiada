@@ -96,10 +96,7 @@
 </head>
 <body>
 <div class="wrap">
-  <header>
-    <div class="logo">FAMILIADA</div>
-    <div class="subtitle">Generator gier &nbsp;·&nbsp; Groq + GitHub</div>
-  </header>
+
 
   <!-- Session -->
   <div class="card" id="session-card">
@@ -115,6 +112,7 @@
       </div>
       <button class="btn btn-sm btn-secondary" id="load-btn" onclick="loadGameList()">Wczytaj</button>
       <button class="btn btn-sm btn-danger" id="reset-btn" onclick="resetSession()" style="display:none">↺ Zrezygnuj</button>
+      <span id="groq-counter" style="display:none;font-size:11px;color:var(--muted);margin-left:4px"></span>
     </div>
     <div class="status-bar" id="session-status"></div>
   </div>
@@ -265,8 +263,16 @@ class QuestionIndex {
   }
 }
 
-let marketplaceQIndex = null; // zbudowany po skanie lub wczytaniu gier
+let marketplaceQIndex = null;
 let sessionActive = false;
+let groqCalls = 0;
+
+function incGroq(n=1){
+  groqCalls+=n;
+  const el=$('groq-counter');
+  el.style.display='';
+  el.textContent=`Groq: ${groqCalls} req`;
+}
 
 function lockSession(){
   sessionActive=true;
@@ -289,6 +295,7 @@ window.resetSession = function(){
   hideStatus('manage-status');
   hideStatus('session-status');
   genGames=[]; generating=false; $('gen-btn').disabled=false; $('gen-section').style.display='none';
+  groqCalls=0; $('groq-counter').style.display='none';
 };
 
 async function call(body) {
@@ -547,6 +554,7 @@ window.scanGames = async function(){
     // 3. AI — tylko duplikaty tematyczne (tytuły, 1 call, nie słabe)
     showStatus('manage-status',`AI: duplikaty (${total} gier)…`,'info');
     const dupRes=await call({action:'scan',lang,mode:'duplicates',games:loadedGames.map(g=>({slug:g.slug,title:g.title,description:''}))});
+    incGroq();
     applyIssues(dupRes.issues.filter(i=>i.type==='duplicate'));
 
     selectedGames.clear(); updateBulkBar();
@@ -671,6 +679,7 @@ window.regenerate = async function(idx){
     const existingTitles=genGames.filter((_,i)=>i!==idx&&_.game).map(g=>g.game.meta?.title).filter(Boolean);
     loadedGames.filter(g=>g.lang===lang).forEach(g=>existingTitles.push(g.title));
     const res=await callWithRetry({action:'generate',lang,index:idx+1,total:genGames.length,topic:$('topic').value.trim(),alreadyUsed:existingTitles},idx+1);
+    incGroq();
     item.game=res.game;
     item.status='pending';
     if(marketplaceQIndex&&res.game?.questions){const hits=marketplaceQIndex.findSimilar(res.game.questions).filter(h=>h.slug!==(item.slug||''));item.simWarning=hits.length?`${Math.round(hits[0].pct*100)}% pytań podobnych do marketplace: "${hits[0].title}"`:null;}
@@ -716,7 +725,7 @@ window.startGeneration = async function(){
     const allUsed=[...existingTitles,...genGames.slice(0,i).filter(g=>g.game).map(g=>g.game.meta?.title).filter(Boolean)];
     try{
       const res=await callWithRetry({action:'generate',lang,index:i+1,total:count,topic,alreadyUsed:allUsed},i+1);
-      genGames[i].game=res.game; genGames[i].status='pending';
+      incGroq(); genGames[i].game=res.game; genGames[i].status='pending';
       if(marketplaceQIndex&&res.game?.questions){
         const hits=marketplaceQIndex.findSimilar(res.game.questions);
         if(hits.length) genGames[i].simWarning=`${Math.round(hits[0].pct*100)}% pytań podobnych do marketplace: "${hits[0].title}"`;
