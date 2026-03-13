@@ -219,18 +219,21 @@ serve(async (req: Request) => {
           
           if (updErr) throw updErr;
 
-          // If there are more games, trigger next step asynchronously
+          // If there are more games, trigger next step
           if (results.length < job.total_games) {
             console.log(`[process] More games to generate, triggering next step...`);
-            // We don't await this to respond to the current request quickly
-            fetch(`${supabaseUrl}/functions/v1/generate-game`, {
+            // Trigger next run but don't wait for it to finish
+            const nextRun = fetch(`${supabaseUrl}/functions/v1/generate-game`, {
               method: 'POST',
               headers: { 
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${supabaseKey}`
               },
               body: JSON.stringify({ action: 'process', jobId })
-            }).catch(err => console.error("[process] Self-trigger failed:", err));
+            });
+            
+            // Give it a tiny bit of time to ensure request is sent
+            await Promise.race([nextRun, new Promise(r => setTimeout(r, 500))]);
           } else {
             // All done
             await supabase.from("game_gen_queue").update({

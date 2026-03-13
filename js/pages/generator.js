@@ -136,38 +136,52 @@ window.enqueueGeneration = async function() {
 };
 
 async function checkQueueStatus() {
-  if (window.activeTab !== 'generator') return;
+  if (window.activeTab !== 'generator') {
+    console.log("[Generator] Tab not active, stopping poll.");
+    return;
+  }
 
   try {
+    console.log("[Generator] Polling queue status...");
     const { data: jobs, error } = await supabase()
       .from('game_gen_queue')
       .select('*')
       .in('status', ['pending', 'processing', 'completed'])
       .order('created_at', { ascending: false })
-      .limit(10);
+      .limit(5);
 
-    if (error || !jobs?.length) return;
+    if (error) throw error;
+    if (!jobs?.length) {
+      console.log("[Generator] No jobs found in queue.");
+      return;
+    }
 
     const mainJobId = genGames[0]?.mainJobId;
     const mainJob = jobs.find(j => j.id === mainJobId) || jobs[0];
     
+    console.log(`[Generator] Main job status: ${mainJob.status}, progress: ${mainJob.processed_games}/${mainJob.total_games}`);
+
     const isMainActive = mainJob.status === 'pending' || mainJob.status === 'processing';
     const anyRegenActive = genGames.some(g => g.jobId && jobs.find(j => j.id === g.jobId && (j.status === 'pending' || j.status === 'processing')));
 
     // Update global progress bar
     const pct = mainJob.total_games > 0 ? Math.round((mainJob.processed_games / mainJob.total_games) * 100) : 0;
-    $('gen-progress-fill').style.width = `${pct}%`;
-    $('gen-results-counter').textContent = `${mainJob.processed_games} / ${mainJob.total_games} gier`;
-
-    // Clear queue status text, we use slot-based progress now
-    $('gen-queue-status').innerHTML = '';
+    const fill = $('gen-progress-fill');
+    if (fill) fill.style.width = `${pct}%`;
+    const counter = $('gen-results-counter');
+    if (counter) counter.textContent = `${mainJob.processed_games} / ${mainJob.total_games} gier`;
 
     syncGenSlotsFromJobs(jobs);
 
     if (isMainActive || anyRegenActive) {
       setTimeout(checkQueueStatus, 2000);
+    } else {
+      console.log("[Generator] All jobs finished.");
     }
-  } catch (e) { console.error("Queue check failed", e); }
+  } catch (e) { 
+    console.error("[Generator] Queue check failed:", e); 
+    setTimeout(checkQueueStatus, 5000); // Retry later
+  }
 }
 
 function syncGenSlotsFromJobs(jobs) {
