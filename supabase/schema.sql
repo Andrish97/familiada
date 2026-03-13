@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 56u8jjUMud3QhxVnN69J4qkAtVIqwaXzdmpfLohlnXd3J72LzTHCOxPrdNKKfpb
+\restrict BVREX7pC9RiPWvgz8Ox5hsnLLC0sicgMrYkMCa4zdjOTL9aXnoRMkheiyodkAhs
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -3794,29 +3794,29 @@ $$;
 -- Name: market_admin_sync_cleanup("text"[]); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION "public"."market_admin_sync_cleanup"("p_slugs" "text"[]) RETURNS TABLE("deleted" integer, "slugs" "text"[])
+CREATE FUNCTION "public"."market_admin_sync_cleanup"("p_storage_paths" "text"[]) RETURNS TABLE("deleted" integer, "paths" "text"[])
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
     AS $$
 declare
-    v_slugs text[];
+    v_paths text[];
     v_count int;
 begin
-    -- zbierz slug-i które zostaną usunięte (do logowania)
-    select array_agg(gh_slug)
-      into v_slugs
+    -- zbierz ścieżki które zostaną usunięte (te, które są w marketplace/ ale nie ma ich w przesłanej liście)
+    select array_agg(storage_path)
+      into v_paths
       from public.market_games
-     where gh_slug is not null
-       and gh_slug != all(p_slugs);
+     where storage_path LIKE 'marketplace/%'
+       and storage_path != all(p_storage_paths);
 
     -- usuń
     delete from public.market_games
-     where gh_slug is not null
-       and gh_slug != all(p_slugs);
+     where storage_path LIKE 'marketplace/%'
+       and storage_path != all(p_storage_paths);
 
     get diagnostics v_count = row_count;
 
-    return query select v_count, coalesce(v_slugs, '{}'::text[]);
+    return query select v_count, coalesce(v_paths, '{}'::text[]);
 end;
 $$;
 
@@ -11917,5 +11917,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 56u8jjUMud3QhxVnN69J4qkAtVIqwaXzdmpfLohlnXd3J72LzTHCOxPrdNKKfpb
+\unrestrict BVREX7pC9RiPWvgz8Ox5hsnLLC0sicgMrYkMCa4zdjOTL9aXnoRMkheiyodkAhs
 
