@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict fyOjNMYRGdM7ILqboS1pkcMwQ3ivwPuasMNBzeJt2yyAY0pFkdocYXAHofxOYbf
+\restrict SUHIwaz5BzzixEfRmgN4vuBT7Yb4Xhd7yblSIJgX62CQKysmoXfAe0BWN0HngUD
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -10953,6 +10953,20 @@ ALTER TABLE ONLY "public"."user_market_library"
 
 
 --
+-- Name: game_gen_queue Allow public insert to queue; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Allow public insert to queue" ON "public"."game_gen_queue" FOR INSERT TO "authenticated", "anon" WITH CHECK (true);
+
+
+--
+-- Name: game_gen_queue Allow public read access to queue; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Allow public read access to queue" ON "public"."game_gen_queue" FOR SELECT TO "authenticated", "anon" USING (true);
+
+
+--
 -- Name: message_attachments No public access; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -11918,5 +11932,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict fyOjNMYRGdM7ILqboS1pkcMwQ3ivwPuasMNBzeJt2yyAY0pFkdocYXAHofxOYbf
+\unrestrict SUHIwaz5BzzixEfRmgN4vuBT7Yb4Xhd7yblSIJgX62CQKysmoXfAe0BWN0HngUD
 
