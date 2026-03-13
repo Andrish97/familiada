@@ -5,80 +5,146 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Familiada Generator</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root{--bg:#0d0d0f;--surface:#16161a;--surface2:#1e1e24;--border:#2a2a35;--accent:#e8c547;--accent2:#f07b3f;--text:#e8e8f0;--muted:#6b6b80;--green:#4ade80;--red:#f87171}
+  :root{--bg:#0d0d0f;--surface:#16161a;--surface2:#1e1e24;--border:#2a2a35;--accent:#e8c547;--accent2:#f07b3f;--text:#e8e8f0;--muted:#6b6b80;--green:#4ade80;--red:#f87171;--blue:#60a5fa;--yellow:#fbbf24}
   *{box-sizing:border-box;margin:0;padding:0}
   body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:40px 20px 80px}
-  .wrap{width:100%;max-width:720px}
-  header{text-align:center;margin-bottom:48px}
-  .logo{font-family:'Bebas Neue',sans-serif;font-size:clamp(52px,10vw,88px);letter-spacing:4px;line-height:1;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-  .subtitle{font-size:13px;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-top:6px}
-  .badge{display:inline-block;background:#1a2a1a;border:1px solid #2a4a2a;color:var(--green);font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;padding:4px 10px;border-radius:99px;margin-top:10px}
-  .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px;margin-bottom:20px}
-  .card-title{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;color:var(--accent);margin-bottom:24px}
-  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-  .field{display:flex;flex-direction:column;gap:6px}
-  label{font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
-  input,select,textarea{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;padding:10px 14px;width:100%;outline:none;transition:border-color .2s}
+  .wrap{width:100%;max-width:800px}
+  header{text-align:center;margin-bottom:40px}
+  .logo{font-family:'Bebas Neue',sans-serif;font-size:clamp(48px,9vw,80px);letter-spacing:4px;line-height:1;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .subtitle{font-size:12px;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-top:5px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px 28px;margin-bottom:18px}
+  .card-title{font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:2px;color:var(--accent);margin-bottom:18px}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+  .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:13px}
+  .field{display:flex;flex-direction:column;gap:5px}
+  label{font-size:11px;font-weight:600;letter-spacing:1.8px;text-transform:uppercase;color:var(--muted)}
+  input,select,textarea{background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13.5px;padding:8px 12px;width:100%;outline:none;transition:border-color .2s}
   input:focus,select:focus,textarea:focus{border-color:var(--accent)}
   select option{background:var(--surface2)}
-  textarea{resize:vertical;min-height:68px}
-  .range-row{display:flex;align-items:center;gap:12px}
-  .range-row input{width:80px;text-align:center}
-  .range-sep{color:var(--muted);font-size:13px;white-space:nowrap}
-  .btn{display:flex;align-items:center;justify-content:center;gap:10px;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:10px;color:#0d0d0f;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;padding:14px 28px;width:100%;transition:opacity .2s,transform .1s}
-  .btn:hover:not(:disabled){opacity:.9;transform:translateY(-1px)}
-  .btn:disabled{opacity:.4;cursor:not-allowed}
-  .btn-sm{font-size:13px;padding:9px 18px;border-radius:8px;width:auto;font-family:'DM Sans',sans-serif;font-weight:600;letter-spacing:0}
+  textarea{resize:vertical;min-height:56px}
+  /* buttons */
+  .btn{display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:10px;color:#0d0d0f;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:2px;padding:12px 24px;width:100%;transition:opacity .2s,transform .1s}
+  .btn:hover:not(:disabled){opacity:.88;transform:translateY(-1px)}
+  .btn:disabled{opacity:.35;cursor:not-allowed;transform:none}
+  .btn-sm{font-size:12.5px;padding:6px 13px;border-radius:7px;width:auto;font-family:'DM Sans',sans-serif;font-weight:600;letter-spacing:0;gap:5px}
   .btn-secondary{background:var(--surface2);border:1px solid var(--border);color:var(--text)}
-  .btn-secondary:hover:not(:disabled){background:var(--border);opacity:1}
+  .btn-secondary:hover:not(:disabled){background:#252530;opacity:1;transform:none}
+  .btn-danger{background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.25);color:var(--red)}
+  .btn-danger:hover:not(:disabled){background:rgba(248,113,113,.22);opacity:1;transform:none}
+  .btn-green{background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.25);color:var(--green)}
+  .btn-blue{background:rgba(96,165,250,.1);border:1px solid rgba(96,165,250,.25);color:var(--blue)}
+  /* status bar */
+  .status-bar{font-size:12px;padding:7px 11px;border-radius:7px;margin-top:10px;display:none}
+  .status-bar.visible{display:block}
+  .status-bar.ok{background:rgba(74,222,128,.07);border:1px solid rgba(74,222,128,.2);color:var(--green)}
+  .status-bar.err{background:rgba(248,113,113,.07);border:1px solid rgba(248,113,113,.2);color:var(--red)}
+  .status-bar.info{background:rgba(96,165,250,.07);border:1px solid rgba(96,165,250,.2);color:var(--blue)}
+  /* progress */
   #progress-section{display:none}
   #progress-section.visible{display:block}
-  .progress-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px}
+  .progress-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
   .progress-label{font-size:13px;font-weight:500;color:var(--muted)}
-  .progress-counter{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--accent)}
-  .progress-bar-bg{background:var(--surface2);border-radius:99px;height:6px;overflow:hidden;margin-bottom:20px}
+  .progress-counter{font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--accent)}
+  .progress-bar-bg{background:var(--surface2);border-radius:99px;height:5px;overflow:hidden;margin-bottom:14px}
   .progress-bar-fill{background:linear-gradient(90deg,var(--accent),var(--accent2));height:100%;border-radius:99px;transition:width .4s ease;width:0%}
-  #log{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;max-height:260px;overflow-y:auto;font-size:12.5px;display:flex;flex-direction:column;gap:4px}
-  .log-line{display:flex;gap:10px;align-items:flex-start}
-  .log-icon{flex-shrink:0;margin-top:1px}
+  #log{background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:11px 13px;max-height:220px;overflow-y:auto;font-size:12px;display:flex;flex-direction:column;gap:3px}
+  .log-line{display:flex;gap:7px;align-items:flex-start}
+  .log-icon{flex-shrink:0}
   .log-ok .log-icon{color:var(--green)}.log-err .log-icon{color:var(--red)}.log-wait .log-icon{color:var(--accent)}
-  .log-text{color:var(--text);line-height:1.5}
+  .log-text{color:var(--text);line-height:1.45}
   .log-sub{color:var(--muted);font-size:11px}
-  #dl-btn{display:none;margin-top:20px;background:var(--green);color:#0d0d0f}
-  #dl-btn.visible{display:flex}
-  .tip{background:var(--surface2);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;font-size:12px;color:var(--muted);padding:10px 14px;line-height:1.6;margin-top:12px}
-  .folder-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-  .folder-status{font-size:12px;color:var(--muted);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .folder-status.ok{color:var(--green)}
-  .folder-status.warn{color:var(--accent)}
-  @media(max-width:520px){.grid-2{grid-template-columns:1fr}}
+  .tip{background:var(--surface2);border-left:3px solid var(--accent);border-radius:0 7px 7px 0;font-size:12px;color:var(--muted);padding:8px 12px;line-height:1.6}
+  /* game list */
+  #game-list{display:flex;flex-direction:column;gap:4px;margin-top:12px;max-height:480px;overflow-y:auto}
+  .game-item{border-radius:7px;background:var(--surface2);border:1px solid var(--border);overflow:hidden}
+  .game-item.issue-dup{border-color:rgba(251,191,36,.35);background:rgba(251,191,36,.04)}
+  .game-item.issue-weak{border-color:rgba(248,113,113,.3);background:rgba(248,113,113,.03)}
+  .game-row{display:flex;align-items:center;gap:8px;padding:7px 10px;cursor:pointer;user-select:none}
+  .game-row:hover{background:rgba(255,255,255,.02)}
+  .game-num{font-family:'Bebas Neue',sans-serif;font-size:15px;color:var(--accent);min-width:32px}
+  .game-title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
+  .game-desc{font-size:11px;color:var(--muted);margin-left:3px}
+  .game-badge{font-size:10px;padding:2px 7px;border-radius:99px;font-weight:600;flex-shrink:0}
+  .badge-dup{background:rgba(251,191,36,.15);color:var(--yellow);border:1px solid rgba(251,191,36,.25)}
+  .badge-weak{background:rgba(248,113,113,.1);color:var(--red);border:1px solid rgba(248,113,113,.2)}
+  .game-actions{display:flex;gap:5px;flex-shrink:0}
+  .game-chevron{color:var(--muted);font-size:11px;flex-shrink:0;transition:transform .2s}
+  .game-chevron.open{transform:rotate(90deg)}
+  /* preview */
+  .game-preview{display:none;padding:0 12px 12px;border-top:1px solid var(--border)}
+  .game-preview.open{display:block}
+  .preview-desc{font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.55;font-style:italic}
+  .preview-issue{font-size:11.5px;padding:5px 9px;border-radius:6px;margin-bottom:8px}
+  .preview-issue.dup{background:rgba(251,191,36,.1);color:var(--yellow)}
+  .preview-issue.weak{background:rgba(248,113,113,.08);color:var(--red)}
+  .q-block{margin-bottom:10px}
+  .q-text{font-size:12.5px;font-weight:600;margin-bottom:5px;color:var(--text)}
+  .answers-grid{display:flex;flex-wrap:wrap;gap:4px}
+  .ans-chip{font-size:11px;padding:2px 9px;border-radius:99px;background:var(--surface);border:1px solid var(--border);color:var(--muted);display:flex;gap:5px;align-items:center}
+  .ans-pts{color:var(--accent);font-weight:600}
+  .list-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:2px}
+  @media(max-width:520px){.grid-2,.grid-3{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
     <div class="logo">FAMILIADA</div>
-    <div class="subtitle">Generator gier &nbsp;·&nbsp; Groq Llama 3.3</div>
-    <div class="badge">✦ Klucz Groq tylko w Supabase Secrets</div>
+    <div class="subtitle">Generator gier &nbsp;·&nbsp; Groq + GitHub</div>
   </header>
 
+  <!-- GitHub config -->
   <div class="card">
-    <div class="card-title">📁 Folder marketplace</div>
-    <div class="folder-row">
-      <button class="btn btn-sm btn-secondary" id="pick-btn" onclick="pickFolder()">Wybierz folder marketplace</button>
-      <span class="folder-status" id="folder-status">Nie wybrano — gry zostaną pobrane jako ZIP</span>
+    <div class="card-title">🔑 GitHub</div>
+    <div class="grid-3" style="margin-bottom:12px">
+      <div class="field">
+        <label>Token (PAT)</label>
+        <input type="password" id="gh-token" placeholder="ghp_…" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Repozytorium</label>
+        <input type="text" id="gh-repo" placeholder="owner/repo">
+      </div>
+      <div class="field">
+        <label>Gałąź</label>
+        <input type="text" id="gh-branch" value="main">
+      </div>
     </div>
-    <div class="tip" style="margin-top:14px">Wybierz folder <code>marketplace/</code> z repo — narzędzie odczyta istniejące gry, naliczy kolejne numery i zapisze pliki bezpośrednio. Wymaga Chrome/Edge.</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-sm btn-secondary" onclick="saveGhConfig()">Zapisz</button>
+      <button class="btn btn-sm btn-secondary" onclick="testGhConnection()">Testuj połączenie</button>
+    </div>
+    <div class="status-bar" id="gh-status"></div>
   </div>
 
+  <!-- Manage -->
   <div class="card">
-    <div class="card-title">⚙️ Ustawienia generowania</div>
-    <div class="grid-2" style="margin-bottom:16px">
+    <div class="card-title">📋 Gry w marketplace</div>
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:14px">
+      <div class="field" style="flex:1;min-width:130px">
+        <label>Język</label>
+        <select id="manage-lang">
+          <option value="pl">🇵🇱 Polski</option>
+          <option value="uk">🇺🇦 Українська</option>
+          <option value="en">🇬🇧 English</option>
+        </select>
+      </div>
+      <button class="btn btn-sm btn-secondary" onclick="loadGameList()">Wczytaj listę</button>
+      <button class="btn btn-sm btn-blue" id="scan-btn" onclick="scanGames()" disabled>🔍 Skanuj duplikaty</button>
+      <button class="btn btn-sm btn-green" id="renumber-btn" onclick="renumberGames()" disabled>Renumeruj</button>
+    </div>
+    <div id="game-list"><div style="color:var(--muted);font-size:12px;padding:12px 0;text-align:center">Wczytaj listę aby zobaczyć gry</div></div>
+    <div class="status-bar" id="manage-status"></div>
+  </div>
+
+  <!-- Generate -->
+  <div class="card">
+    <div class="card-title">⚙️ Generuj nowe gry</div>
+    <div class="grid-2" style="margin-bottom:13px">
       <div class="field">
-        <label>Język gier</label>
+        <label>Język</label>
         <select id="lang">
           <option value="pl">🇵🇱 Polski</option>
           <option value="uk">🇺🇦 Українська</option>
@@ -86,54 +152,37 @@
         </select>
       </div>
       <div class="field">
-        <label>Liczba gier do wygenerowania</label>
+        <label>Liczba gier</label>
         <input type="number" id="count" value="10" min="1" max="200">
       </div>
     </div>
-    <div class="field" style="margin-bottom:16px">
+    <div class="field" style="margin-bottom:10px">
       <label>Temat / kategoria (opcjonalnie)</label>
-      <textarea id="topic" placeholder="Zostaw puste = AI dobierze różnorodne tematy. Lub wpisz np. historia, kuchnia, sport..."></textarea>
+      <textarea id="topic" placeholder="Zostaw puste = AI dobierze różnorodne, unikalne tematy…"></textarea>
     </div>
-    <div class="field" id="existing-topics-field" style="display:none">
-      <label>Tematy już istniejące w marketplace (odczytano automatycznie)</label>
-      <textarea id="existing-topics-display" rows="3" readonly style="opacity:.5;font-size:11px;resize:none"></textarea>
-    </div>
-    <div class="tip">Groq Free: ~14 400 requestów / dzień. Każda gra to 1 request (~2–3 sek).</div>
+    <div class="tip">Tematy istniejących gier przekazywane automatycznie. 12–16 pytań na grę. Groq Free: ~14 400 req/dzień.</div>
   </div>
 
   <button class="btn" id="gen-btn" onclick="startGeneration()">
-    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
-    Generuj gry
+    <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
+    Generuj i wypchnij na GitHub
   </button>
 
-  <div class="card" id="progress-section" style="margin-top:20px">
-    <div class="card-title">📡 Postęp generowania</div>
+  <div class="card" id="progress-section" style="margin-top:18px">
+    <div class="card-title">📡 Postęp</div>
     <div class="progress-header">
       <span class="progress-label" id="progress-text">Inicjalizacja…</span>
       <span class="progress-counter"><span id="done-count">0</span> / <span id="total-count">0</span></span>
     </div>
     <div class="progress-bar-bg"><div class="progress-bar-fill" id="progress-fill"></div></div>
     <div id="log"></div>
-    <button class="btn" id="dl-btn" onclick="downloadZip()">
-      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 3v13M7 12l5 5 5-5"/><path d="M3 19h18"/></svg>
-      Pobierz archiwum ZIP
-    </button>
   </div>
 </div>
 
 <script type="module">
 import { sb } from '/../js/core/supabase.js';
 
-// ─── state ───────────────────────────────────────────────────────────────────
-let marketplaceDir = null;   // FileSystemDirectoryHandle
-let existingTitles = [];     // titles already in marketplace for selected lang
-let nextNumber = 1;          // next game number for selected lang
-let fullIndex = [];          // full index.json content
-let generatedFiles = {};
-let running = false;
-const $ = id => document.getElementById(id);
-
-// ─── utils ───────────────────────────────────────────────────────────────────
+// ─── utils ────────────────────────────────────────────────────────────────────
 function slugify(text) {
   return (text||'').toLowerCase()
     .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
@@ -144,260 +193,309 @@ function slugify(text) {
     .replace(/[а-яёА-ЯЁ]/g, c => c.charCodeAt(0).toString(36))
     .replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
 }
-
 const sleep = ms => new Promise(r => setTimeout(r, ms));
+const $ = id => document.getElementById(id);
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function isRateLimit(e){ const m=(e?.message||'').toLowerCase(); return m.includes('429')||m.includes('rate')||m.includes('limit')||m.includes('too many'); }
+function showStatus(id, msg, type='info'){ const el=$(id); el.textContent=msg; el.className=`status-bar visible ${type}`; }
+function log(icon,text,sub='',cls=''){ const el=document.createElement('div'); el.className='log-line '+cls; el.innerHTML=`<span class="log-icon">${icon}</span><span class="log-text">${text}${sub?`<br><span class="log-sub">${sub}</span>`:''}</span>`; $('log').appendChild(el); $('log').scrollTop=$('log').scrollHeight; }
+function setProgress(done,total){ $('done-count').textContent=done; $('total-count').textContent=total; $('progress-fill').style.width=total>0?`${(done/total)*100}%`:'0%'; }
 
-function isRateLimit(err) {
-  const msg = (err?.message || '').toLowerCase();
-  return msg.includes('429') || msg.includes('rate') || msg.includes('limit') || msg.includes('too many');
+// ─── localStorage config ──────────────────────────────────────────────────────
+(function loadConfig(){
+  const cfg = JSON.parse(localStorage.getItem('gh_cfg')||'{}');
+  if(cfg.token) $('gh-token').value=cfg.token;
+  if(cfg.repo)  $('gh-repo').value=cfg.repo;
+  if(cfg.branch)$('gh-branch').value=cfg.branch;
+})();
+window.saveGhConfig = function(){ localStorage.setItem('gh_cfg',JSON.stringify({token:$('gh-token').value.trim(),repo:$('gh-repo').value.trim(),branch:$('gh-branch').value.trim()||'main'})); showStatus('gh-status','Zapisano.','ok'); };
+function ghConfig(){ return { token:$('gh-token').value.trim(), repo:$('gh-repo').value.trim(), branch:$('gh-branch').value.trim()||'main' }; }
+
+// ─── GitHub API ───────────────────────────────────────────────────────────────
+async function ghGet(path){
+  const {token,repo}=ghConfig();
+  const res=await fetch(`https://api.github.com/repos/${repo}/contents/${path}`,{headers:{Authorization:`Bearer ${token}`,Accept:'application/vnd.github+json'}});
+  if(!res.ok){ if(res.status===404)return null; throw new Error(`GitHub GET ${path}: ${res.status}`); }
+  return res.json();
 }
-
-function log(icon, text, sub='', cls='') {
-  const el = document.createElement('div');
-  el.className = 'log-line ' + cls;
-  el.innerHTML = `<span class="log-icon">${icon}</span><span class="log-text">${text}${sub?`<br><span class="log-sub">${sub}</span>`:''}</span>`;
-  $('log').appendChild(el);
-  $('log').scrollTop = $('log').scrollHeight;
+async function ghPut(path,content,message,sha=undefined){
+  const {token,repo,branch}=ghConfig();
+  const body={message,content:btoa(unescape(encodeURIComponent(content))),branch};
+  if(sha)body.sha=sha;
+  const res=await fetch(`https://api.github.com/repos/${repo}/contents/${path}`,{method:'PUT',headers:{Authorization:`Bearer ${token}`,Accept:'application/vnd.github+json','Content-Type':'application/json'},body:JSON.stringify(body)});
+  if(!res.ok) throw new Error(`GitHub PUT ${path}: ${res.status} ${await res.text()}`);
+  return res.json();
 }
-
-function setProgress(done, total) {
-  $('done-count').textContent = done;
-  $('total-count').textContent = total;
-  $('progress-fill').style.width = total > 0 ? `${(done/total)*100}%` : '0%';
+async function ghDelete(path,message,sha){
+  const {token,repo,branch}=ghConfig();
+  const res=await fetch(`https://api.github.com/repos/${repo}/contents/${path}`,{method:'DELETE',headers:{Authorization:`Bearer ${token}`,Accept:'application/vnd.github+json','Content-Type':'application/json'},body:JSON.stringify({message,sha,branch})});
+  if(!res.ok) throw new Error(`GitHub DELETE ${path}: ${res.status}`);
 }
+function ghDecodeContent(raw){ return decodeURIComponent(escape(atob(raw.replace(/\n/g,'')))); }
 
-// ─── folder picker & index reader ────────────────────────────────────────────
-window.pickFolder = async function() {
-  if (!('showDirectoryPicker' in window)) {
-    alert('Twoja przeglądarka nie obsługuje File System Access API.\nUżyj Chrome lub Edge.');
-    return;
-  }
-  try {
-    const dir = await window.showDirectoryPicker({ mode: 'readwrite' });
-    marketplaceDir = dir;
-    $('folder-status').textContent = `✓ ${dir.name} — wczytuję…`;
-    $('folder-status').className = 'folder-status';
-    await loadMarketplaceData();
-  } catch(e) {
-    if (e.name !== 'AbortError') {
-      $('folder-status').textContent = 'Błąd: ' + e.message;
-    }
-  }
+async function readIndex(){ const res=await ghGet('marketplace/index.json'); if(!res)return{data:[],sha:null}; return{data:JSON.parse(ghDecodeContent(res.content)),sha:res.sha}; }
+async function writeIndex(data,sha,msg){ await ghPut('marketplace/index.json',JSON.stringify(data,null,2)+'\n',msg,sha||undefined); }
+async function refreshIndexSha(){ const r=await ghGet('marketplace/index.json'); return r?.sha||null; }
+
+window.testGhConnection = async function(){
+  showStatus('gh-status','Łączę…','info');
+  try{ const {token,repo}=ghConfig(); const res=await fetch(`https://api.github.com/repos/${repo}`,{headers:{Authorization:`Bearer ${token}`}}); if(!res.ok)throw new Error(`${res.status} ${res.statusText}`); const j=await res.json(); showStatus('gh-status',`✓ Połączono z ${j.full_name}  (${j.default_branch})`,'ok'); }
+  catch(e){ showStatus('gh-status','✗ '+e.message,'err'); }
 };
 
-async function loadMarketplaceData() {
-  if (!marketplaceDir) return;
-  try {
-    // read index.json
-    try {
-      const idxFile = await marketplaceDir.getFileHandle('index.json');
-      const txt = await (await idxFile.getFile()).text();
-      fullIndex = JSON.parse(txt);
-    } catch { fullIndex = []; }
+// ─── game list state ──────────────────────────────────────────────────────────
+// { num, filename, title, description, slug, sha, lang, indexKey, data: null|GameData, issueType: null|'dup'|'weak', issueReason: '' }
+let loadedGames = [];
 
-    await refreshLangStats($('lang').value);
-  } catch(e) {
-    $('folder-status').textContent = 'Błąd odczytu: ' + e.message;
-  }
+window.loadGameList = async function(){
+  const lang=$('manage-lang').value;
+  showStatus('manage-status','Wczytuję…','info');
+  $('game-list').innerHTML='<div style="color:var(--muted);font-size:12px;padding:12px 0;text-align:center">Wczytuję z GitHub…</div>';
+  $('scan-btn').disabled=true; $('renumber-btn').disabled=true;
+  try{
+    const dirRes=await ghGet(`marketplace/${lang}`);
+    if(!dirRes||!Array.isArray(dirRes)){ $('game-list').innerHTML='<div style="color:var(--muted);font-size:12px;padding:12px 0;text-align:center">Brak gier.</div>'; showStatus('manage-status','Brak folderu.','info'); loadedGames=[]; return; }
+    loadedGames=[];
+    for(const f of dirRes){
+      if(!f.name.endsWith('.json'))continue;
+      const m=f.name.match(/^(\d+)-(.+)\.json$/);
+      const num=m?parseInt(m[1]):999;
+      let title=f.name, description='', gameData=null;
+      try{
+        const fRes=await ghGet(`marketplace/${lang}/${f.name}`);
+        if(fRes){ const d=JSON.parse(ghDecodeContent(fRes.content)); gameData=d; title=d?.meta?.title||d?.game?.name||f.name; description=d?.meta?.description||''; }
+      }catch{}
+      loadedGames.push({num,filename:f.name,title,description,slug:m?.[2]||'',sha:f.sha,lang,indexKey:`${lang}/${f.name.replace('.json','')}`,data:gameData,issueType:null,issueReason:''});
+    }
+    loadedGames.sort((a,b)=>a.num-b.num);
+    renderGameList();
+    const hasGaps=checkGaps();
+    $('scan-btn').disabled=false; $('renumber-btn').disabled=!hasGaps;
+    showStatus('manage-status',`Wczytano ${loadedGames.length} gier.${hasGaps?' Wykryto luki — kliknij Renumeruj.':''}`,'ok');
+  }catch(e){ showStatus('manage-status','✗ '+e.message,'err'); }
+};
+
+function checkGaps(){ for(let i=0;i<loadedGames.length;i++){ if(loadedGames[i].num!==i+1)return true; } return false; }
+
+function renderGameList(){
+  const list=$('game-list'); list.innerHTML='';
+  if(!loadedGames.length){ list.innerHTML='<div style="color:var(--muted);font-size:12px;padding:12px 0;text-align:center">Brak gier.</div>'; return; }
+  loadedGames.forEach((g,idx)=>{
+    const issueClass=g.issueType==='dup'?'issue-dup':g.issueType==='weak'?'issue-weak':'';
+    const badgeHtml=g.issueType==='dup'?`<span class="game-badge badge-dup">duplikat</span>`:g.issueType==='weak'?`<span class="game-badge badge-weak">słaba</span>`:'';
+    const el=document.createElement('div');
+    el.className=`game-item ${issueClass}`; el.dataset.idx=idx;
+    el.innerHTML=`
+      <div class="game-row" onclick="togglePreview(${idx},this)">
+        <span class="game-num">${String(g.num).padStart(3,'0')}</span>
+        <span class="game-title">${esc(g.title)}</span>
+        ${badgeHtml}
+        <div class="game-actions">
+          <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();deleteGame(${idx})" title="Usuń">✕</button>
+        </div>
+        <span class="game-chevron">▶</span>
+      </div>
+      <div class="game-preview" id="preview-${idx}">
+        ${g.issueReason?`<div class="preview-issue ${g.issueType==='dup'?'dup':'weak'}">⚠ ${esc(g.issueReason)}</div>`:''}
+        ${g.description?`<div class="preview-desc">${esc(g.description)}</div>`:''}
+        <div id="preview-questions-${idx}" style="color:var(--muted);font-size:12px">Kliknij aby załadować pytania…</div>
+      </div>`;
+    list.appendChild(el);
+  });
 }
 
-async function refreshLangStats(lang) {
-  if (!marketplaceDir) return;
+window.togglePreview = function(idx, rowEl){
+  const preview=document.getElementById(`preview-${idx}`);
+  const chevron=rowEl.querySelector('.game-chevron');
+  const isOpen=preview.classList.contains('open');
+  if(isOpen){ preview.classList.remove('open'); chevron.classList.remove('open'); return; }
+  preview.classList.add('open'); chevron.classList.add('open');
+  // render questions if data available
+  const g=loadedGames[idx];
+  if(g.data?.questions){ renderQuestions(idx,g); }
+};
 
-  existingTitles = [];
-  nextNumber = 1;
-
-  // get language subfolder
-  let langDir;
-  try {
-    langDir = await marketplaceDir.getDirectoryHandle(lang, { create: false });
-  } catch {
-    // folder doesn't exist yet — start from 1
-    $('folder-status').textContent = `✓ ${marketplaceDir.name} — brak folderu "${lang}/", zostanie utworzony`;
-    $('folder-status').className = 'folder-status ok';
-    updateExistingTopicsUI();
-    return;
-  }
-
-  // scan existing files
-  const nums = [];
-  for await (const [name] of langDir.entries()) {
-    if (!name.endsWith('.json')) continue;
-    const m = name.match(/^(\d+)-/);
-    if (m) nums.push(parseInt(m[1]));
-
-    // read title for alreadyUsed
-    try {
-      const fh = await langDir.getFileHandle(name);
-      const data = JSON.parse(await (await fh.getFile()).text());
-      const title = data?.meta?.title || data?.game?.name;
-      if (title) existingTitles.push(title);
-    } catch {}
-  }
-
-  nextNumber = nums.length > 0 ? Math.max(...nums) + 1 : 1;
-  $('folder-status').textContent = `✓ ${marketplaceDir.name}/${lang}/ — ${nums.length} gier, następny nr: ${String(nextNumber).padStart(3,'0')}`;
-  $('folder-status').className = 'folder-status ok';
-  updateExistingTopicsUI();
+function renderQuestions(idx, g){
+  const qEl=document.getElementById(`preview-questions-${idx}`);
+  if(!qEl)return;
+  const qs=g.data?.questions||[];
+  if(!qs.length){ qEl.textContent='Brak pytań.'; return; }
+  qEl.innerHTML = qs.map((q,qi)=>`
+    <div class="q-block">
+      <div class="q-text">${qi+1}. ${esc(q.text)}</div>
+      <div class="answers-grid">${(q.answers||[]).map(a=>`<span class="ans-chip">${esc(a.text)}<span class="ans-pts">${a.fixed_points}</span></span>`).join('')}</div>
+    </div>`).join('');
 }
 
-function updateExistingTopicsUI() {
-  if (existingTitles.length > 0) {
-    $('existing-topics-field').style.display = '';
-    $('existing-topics-display').value = existingTitles.join(', ');
-  } else {
-    $('existing-topics-field').style.display = 'none';
-  }
-}
+// ─── scan ─────────────────────────────────────────────────────────────────────
+window.scanGames = async function(){
+  if(!loadedGames.length)return;
+  $('scan-btn').disabled=true;
+  showStatus('manage-status','Skanowanie przez AI…','info');
+  const lang=$('manage-lang').value;
+  const games=loadedGames.map(g=>({slug:g.slug||g.filename.replace('.json',''),title:g.title,description:g.description||''}));
+  try{
+    const {data,error}=await sb().functions.invoke('generate-game',{body:{action:'scan',lang,games}});
+    if(error)throw new Error(error.message||JSON.stringify(error));
+    const issues=data?.issues||[];
+    // reset
+    loadedGames.forEach(g=>{g.issueType=null;g.issueReason='';});
+    // apply
+    for(const issue of issues){
+      for(const slug of (issue.slugs||[])){
+        const g=loadedGames.find(x=>x.slug===slug||(x.filename.replace('.json','')===slug));
+        if(g){ g.issueType=issue.type; g.issueReason=issue.reason||''; }
+      }
+    }
+    const dups=issues.filter(i=>i.type==='duplicate').length;
+    const weaks=issues.filter(i=>i.type==='weak').length;
+    renderGameList();
+    showStatus('manage-status',issues.length===0?'✓ Brak problemów.':`Znaleziono: ${dups} grup duplikatów, ${weaks} słabych gier.`,issues.length===0?'ok':'info');
+  }catch(e){ showStatus('manage-status','✗ '+e.message,'err'); }
+  finally{ $('scan-btn').disabled=false; }
+};
 
-// re-scan on lang change
-$('lang').addEventListener('change', async e => {
-  await refreshLangStats(e.target.value);
-});
+// ─── delete ───────────────────────────────────────────────────────────────────
+window.deleteGame = async function(idx){
+  const g=loadedGames[idx];
+  if(!confirm(`Usunąć grę ${String(g.num).padStart(3,'0')} – ${g.title}?`))return;
+  showStatus('manage-status',`Usuwam ${g.filename}…`,'info');
+  try{
+    await ghDelete(`marketplace/${g.lang}/${g.filename}`,`chore: remove game ${g.indexKey}`,g.sha);
+    const {data:idx2,sha:idxSha}=await readIndex();
+    const newIndex=idx2.filter(k=>k!==g.indexKey);
+    await writeIndex(newIndex,idxSha,`chore: remove ${g.indexKey} from index`);
+    loadedGames.splice(idx,1);
+    renderGameList();
+    const hasGaps=checkGaps();
+    $('renumber-btn').disabled=!hasGaps;
+    showStatus('manage-status',`Usunięto.${hasGaps?' Wykryto luki — kliknij Renumeruj.':''}`,'ok');
+  }catch(e){ showStatus('manage-status','✗ '+e.message,'err'); }
+};
 
-// ─── edge function ────────────────────────────────────────────────────────────
-async function callEdgeFunctionWithRetry(payload, num, maxRetries = 4) {
+// ─── renumber ─────────────────────────────────────────────────────────────────
+window.renumberGames = async function(){
+  if(!loadedGames.length)return;
+  if(!confirm('Renumerowanie zmieni nazwy plików na GitHubie. Kontynuować?'))return;
+  $('renumber-btn').disabled=true;
+  showStatus('manage-status','Renumeruję…','info');
+  try{
+    const renames=[];
+    for(let i=0;i<loadedGames.length;i++){
+      const g=loadedGames[i]; const newNum=i+1;
+      if(g.num!==newNum) renames.push({g,newNum,newFilename:`${String(newNum).padStart(3,'0')}-${g.slug}.json`});
+    }
+    if(!renames.length){ showStatus('manage-status','Brak zmian.','ok'); $('renumber-btn').disabled=false; return; }
+    let {data:currentIndex,sha:idxSha}=await readIndex();
+    for(const {g,newNum,newFilename} of renames){
+      showStatus('manage-status',`${g.filename} → ${newFilename}…`,'info');
+      const fRes=await ghGet(`marketplace/${g.lang}/${g.filename}`);
+      const rawContent=ghDecodeContent(fRes.content);
+      await ghPut(`marketplace/${g.lang}/${newFilename}`,rawContent,`chore: renumber ${g.indexKey} → ${g.lang}/${newFilename.replace('.json','')}`);
+      await ghDelete(`marketplace/${g.lang}/${g.filename}`,`chore: remove old ${g.filename} after renumber`,fRes.sha);
+      const newKey=`${g.lang}/${newFilename.replace('.json','')}`;
+      currentIndex=currentIndex.map(k=>k===g.indexKey?newKey:k);
+      g.num=newNum; g.filename=newFilename; g.indexKey=newKey;
+      await sleep(200);
+    }
+    await writeIndex(currentIndex,idxSha,'chore: update index after renumber');
+    renderGameList();
+    showStatus('manage-status',`Renumerowano ${renames.length} gier.`,'ok');
+  }catch(e){ showStatus('manage-status','✗ '+e.message,'err'); $('renumber-btn').disabled=false; }
+};
+
+// ─── generate ─────────────────────────────────────────────────────────────────
+let running=false;
+
+async function callEdge(payload,num,maxRetries=4){
   let lastErr;
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      const { data, error } = await sb().functions.invoke('generate-game', { body: payload });
-      if (error) throw new Error(error.message || JSON.stringify(error));
-      if (data?.error) throw new Error(data.error);
+  for(let attempt=1;attempt<=maxRetries;attempt++){
+    try{
+      const {data,error}=await sb().functions.invoke('generate-game',{body:payload});
+      if(error)throw new Error(error.message||JSON.stringify(error));
+      if(data?.error)throw new Error(data.error);
       return data.game;
-    } catch(e) {
-      lastErr = e;
-      if (attempt >= maxRetries) break;
-      const cooldown = isRateLimit(e) ? (attempt === 1 ? 15000 : 30000) : (attempt === 1 ? 3000 : 8000);
-      $('progress-text').textContent = `Gra ${num} – błąd, próba ${attempt}/${maxRetries-1}, czekam ${cooldown/1000}s…`;
-      const logEl = $('log').lastChild;
-      if (logEl) logEl.querySelector('.log-sub').textContent = `${e.message} — ponawiam za ${cooldown/1000}s (próba ${attempt})`;
-      await sleep(cooldown);
+    }catch(e){
+      lastErr=e; if(attempt>=maxRetries)break;
+      const cd=isRateLimit(e)?(attempt===1?15000:30000):(attempt===1?3000:8000);
+      $('progress-text').textContent=`Gra ${num} – błąd, próba ${attempt}/${maxRetries-1}, czekam ${cd/1000}s…`;
+      const logEl=$('log').lastChild;
+      if(logEl)logEl.querySelector('.log-sub').textContent=`${e.message} — ponawiam za ${cd/1000}s (próba ${attempt})`;
+      await sleep(cd);
     }
   }
   throw lastErr;
 }
 
-// ─── write to filesystem ──────────────────────────────────────────────────────
-async function saveToMarketplace(lang, filename, gameData) {
-  // get or create lang subfolder
-  const langDir = await marketplaceDir.getDirectoryHandle(lang, { create: true });
-  const fh = await langDir.getFileHandle(filename, { create: true });
-  const writable = await fh.createWritable();
-  await writable.write(JSON.stringify(gameData, null, 2));
-  await writable.close();
-}
+window.startGeneration = async function(){
+  if(running)return;
+  const lang=$('lang').value; const count=Math.max(1,parseInt($('count').value)||10); const topic=$('topic').value.trim();
+  const {token,repo}=ghConfig();
+  if(!token||!repo){ alert('Uzupełnij token i repozytorium GitHub.'); return; }
 
-async function updateIndexJson(newEntries) {
-  const merged = [...new Set([...fullIndex, ...newEntries])];
-  const fh = await marketplaceDir.getFileHandle('index.json', { create: true });
-  const writable = await fh.createWritable();
-  await writable.write(JSON.stringify(merged, null, 2));
-  await writable.close();
-  fullIndex = merged;
-}
+  $('progress-section').classList.add('visible'); $('log').innerHTML='';
+  $('progress-text').textContent='Odczytuję istniejące gry…'; setProgress(0,count);
+  running=true; $('gen-btn').disabled=true;
 
-// ─── main generation ─────────────────────────────────────────────────────────
-window.startGeneration = async function() {
-  if (running) return;
-  const lang  = $('lang').value;
-  const count = Math.max(1, parseInt($('count').value) || 10);
-  const topic = $('topic').value.trim();
+  let nextNum=1; const existingTitles=[];
+  try{
+    const dirRes=await ghGet(`marketplace/${lang}`);
+    if(Array.isArray(dirRes)){
+      const nums=[];
+      for(const f of dirRes){
+        if(!f.name.endsWith('.json'))continue;
+        const m=f.name.match(/^(\d+)-/); if(m)nums.push(parseInt(m[1]));
+        try{
+          const fRes=await ghGet(`marketplace/${lang}/${f.name}`);
+          if(fRes){ const d=JSON.parse(ghDecodeContent(fRes.content)); const t=d?.meta?.title||d?.game?.name; if(t)existingTitles.push(t); }
+        }catch{}
+      }
+      nextNum=nums.length?Math.max(...nums)+1:1;
+    }
+  }catch(e){ log('⚠','Nie można odczytać istniejących gier',e.message,'log-wait'); }
+  log('ℹ',`Start od numeru ${String(nextNum).padStart(3,'0')}`,`${existingTitles.length} tematów przekazanych do AI`,'log-wait');
 
-  if (marketplaceDir) await refreshLangStats(lang);
+  let {data:currentIndex,sha:idxSha}=await readIndex();
+  let done=0,errors=0,currentNum=nextNum;
 
-  const total = count;
-  generatedFiles = {};
-  running = true;
-  $('gen-btn').disabled = true;
-  $('dl-btn').classList.remove('visible');
-  $('log').innerHTML = '';
-  $('progress-section').classList.add('visible');
-  $('progress-text').textContent = 'Łączenie z Supabase…';
-  setProgress(0, total);
-
-  // combine manual topic + existing titles for AI
-  const allUsedTitles = [...existingTitles];
-  const newIndexEntries = [];
-  let done = 0, errors = 0;
-  let currentNum = nextNumber;
-
-  for (let i = 0; i < total; i++) {
-    const num = String(currentNum).padStart(3, '0');
-    log('⏳', `Generuję grę ${num}…`, topic || 'temat losowany przez AI', 'log-wait');
-    try {
-      const game = await callEdgeFunctionWithRetry({
-        lang,
-        index: currentNum,
-        total,
-        topic,
-        alreadyUsed: allUsedTitles,
-      }, num);
-
-      const rawSlug = game.slug || game.meta?.title || `game-${num}`;
-      const gameSlug = slugify(rawSlug) || slugify(`game-${num}`);
-      const filename = `${num}-${gameSlug}.json`;
-      const indexKey = `${lang}/${num}-${gameSlug}`;
+  for(let i=0;i<count;i++){
+    const num=String(currentNum).padStart(3,'0');
+    log('⏳',`Generuję grę ${num}…`,topic||'temat losowany przez AI','log-wait');
+    try{
+      const game=await callEdge({action:'generate',lang,index:currentNum,total:count,topic,alreadyUsed:existingTitles},num);
+      const rawSlug=game.slug||game.meta?.title||`game-${num}`;
+      const gameSlug=slugify(rawSlug)||`game-${num}`;
+      const filename=`${num}-${gameSlug}.json`;
+      const indexKey=`${lang}/${num}-${gameSlug}`;
       delete game.slug;
 
-      // save to filesystem or collect for ZIP
-      if (marketplaceDir) {
-        await saveToMarketplace(lang, filename, game);
-        newIndexEntries.push(indexKey);
-        await updateIndexJson(newIndexEntries);
+      await ghPut(`marketplace/${lang}/${filename}`,JSON.stringify(game,null,2)+'\n',`feat: add game ${indexKey}`);
+
+      if(!currentIndex.includes(indexKey)){
+        currentIndex=[...currentIndex,indexKey];
+        idxSha=await refreshIndexSha();
+        await writeIndex(currentIndex,idxSha,`chore: add ${indexKey} to index`);
+        idxSha=await refreshIndexSha();
       }
-      generatedFiles[indexKey] = game;
-      allUsedTitles.push(game.meta?.title || gameSlug);
-      done++;
+
+      existingTitles.push(game.meta?.title||gameSlug);
+      done++; currentNum++;
+      setProgress(done,count);
+      $('progress-text').textContent=`Wygenerowano ${done} z ${count}…`;
+      $('log').lastChild.remove();
+      const qCount=game.questions?.length??'?';
+      log('✓',`<strong>${num} – ${esc(game.meta?.title)}</strong>`,`${qCount} pytań · ${indexKey}`,'log-ok');
+    }catch(e){
+      errors++; $('log').lastChild.remove();
+      log('✗',`Błąd gry ${num} (wszystkie próby wyczerpane)`,e.message,'log-err');
       currentNum++;
-      setProgress(done, total);
-      $('progress-text').textContent = `Wygenerowano ${done} z ${total}…`;
-      $('log').lastChild.remove();
-      const savedTo = marketplaceDir ? `zapisano → ${lang}/${filename}` : `${indexKey}.json`;
-      log('✓', `<strong>${num} – ${game.meta?.title}</strong>`, `${game.questions?.length??'?'} pytań · ${savedTo}`, 'log-ok');
-    } catch(e) {
-      errors++;
-      $('log').lastChild.remove();
-      log('✗', `Błąd gry ${num} (wszystkie próby wyczerpane)`, e.message, 'log-err');
-      currentNum++; // advance number even on failure to keep sequence
     }
-    if (i < total - 1) await sleep(300);
+    if(i<count-1)await sleep(400);
   }
 
-  running = false;
-  $('gen-btn').disabled = false;
-
-  if (marketplaceDir) await refreshLangStats(lang);
-
-  if (Object.keys(generatedFiles).length > 0) {
-    $('progress-text').textContent = `Gotowe! ${done} gier${errors?`, ${errors} błędów`:''}`;
-    if (!marketplaceDir) {
-      $('dl-btn').classList.add('visible');
-      log('🎉', '<strong>Gotowe!</strong>', `${done} plików — pobierz ZIP poniżej.`, 'log-ok');
-    } else {
-      log('🎉', '<strong>Wszystko zapisane w marketplace!</strong>', `${done} gier · index.json zaktualizowany.`, 'log-ok');
-    }
-  } else {
-    $('progress-text').textContent = 'Nie udało się wygenerować żadnej gry.';
-  }
-};
-
-// ─── ZIP fallback ─────────────────────────────────────────────────────────────
-window.downloadZip = async function() {
-  const zip = new JSZip();
-  for (const [key, data] of Object.entries(generatedFiles)) {
-    const slash = key.indexOf('/');
-    const folder = key.slice(0, slash);
-    const file   = key.slice(slash + 1);
-    zip.folder(folder).file(`${file}.json`, JSON.stringify(data, null, 2));
-  }
-  zip.file('index.json', JSON.stringify(Object.keys(generatedFiles), null, 2));
-  const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
-  const a = Object.assign(document.createElement('a'), {
-    href: URL.createObjectURL(blob),
-    download: `familiada-${Date.now()}.zip`,
-  });
-  a.click();
-  URL.revokeObjectURL(a.href);
+  running=false; $('gen-btn').disabled=false;
+  $('progress-text').textContent=`Gotowe! ${done} gier${errors?`, ${errors} błędów`:''}`;
+  if(done)log('🎉','<strong>Gotowe!</strong>',`${done} gier wypchnięto na GitHub · index.json zaktualizowany.`,'log-ok');
 };
 </script>
 </body>
