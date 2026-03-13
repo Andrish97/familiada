@@ -100,10 +100,10 @@
     <div class="subtitle">Generator gier &nbsp;·&nbsp; Groq + GitHub</div>
   </header>
 
-  <!-- Manage existing -->
-  <div class="card" id="manage-card">
-    <div class="card-title">📋 Gry w marketplace</div>
-    <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:4px">
+  <!-- Session -->
+  <div class="card" id="session-card">
+    <div class="card-title">🌐 Sesja</div>
+    <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
       <div class="field" style="flex:1;min-width:120px">
         <label>Język</label>
         <select id="manage-lang" onchange="resetManage()">
@@ -112,7 +112,16 @@
           <option value="en">🇬🇧 English</option>
         </select>
       </div>
-      <button class="btn btn-sm btn-secondary" onclick="loadGameList()">Wczytaj</button>
+      <button class="btn btn-sm btn-secondary" id="load-btn" onclick="loadGameList()">Wczytaj</button>
+      <button class="btn btn-sm btn-danger" id="reset-btn" onclick="resetSession()" style="display:none">↺ Zrezygnuj</button>
+    </div>
+    <div class="status-bar" id="session-status"></div>
+  </div>
+
+  <!-- Manage existing -->
+  <div class="card" id="manage-card" style="display:none">
+    <div class="card-title">📋 Gry w marketplace</div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:4px">
       <button class="btn btn-sm btn-blue" id="scan-btn" onclick="scanGames()" disabled>🔍 Skanuj</button>
     </div>
     <div class="pending-bar" id="pending-bar">
@@ -134,15 +143,7 @@
   <!-- Generate -->
   <div class="card">
     <div class="card-title">⚙️ Generuj nowe gry</div>
-    <div class="grid-2" style="margin-bottom:12px">
-      <div class="field">
-        <label>Język</label>
-        <select id="lang">
-          <option value="pl">🇵🇱 Polski</option>
-          <option value="uk">🇺🇦 Українська</option>
-          <option value="en">🇬🇧 English</option>
-        </select>
-      </div>
+    <div style="margin-bottom:12px">
       <div class="field">
         <label>Liczba gier</label>
         <input type="number" id="count" value="5" min="1" max="100">
@@ -264,6 +265,29 @@ class QuestionIndex {
 }
 
 let marketplaceQIndex = null; // zbudowany po skanie lub wczytaniu gier
+let sessionActive = false;
+
+function lockSession(){
+  sessionActive=true;
+  $('manage-lang').disabled=true;
+  $('load-btn').disabled=true;
+  $('reset-btn').style.display='';
+  $('manage-card').style.display='';
+}
+
+window.resetSession = function(){
+  loadedGames=[];
+  pendingDelete.clear(); updatePendingBar();
+  selectedGames.clear(); updateBulkBar();
+  sessionActive=false;
+  $('manage-lang').disabled=false;
+  $('load-btn').disabled=false;
+  $('scan-btn').disabled=true;
+  $('reset-btn').style.display='none';
+  $('manage-card').style.display='none';
+  hideStatus('manage-status');
+  hideStatus('session-status');
+};
 
 async function call(body) {
   const {data,error} = await sb().functions.invoke('generate-game', {body});
@@ -295,11 +319,9 @@ window.saveChanges = async function(){
     const files=loadedGames.filter(g=>pendingDelete.has(g.slug)).map(g=>({filename:g.filename,indexKey:g.indexKey,slug:g.slug,sha:g.sha}));
     const remaining=loadedGames.filter(g=>!pendingDelete.has(g.slug)).map(g=>({filename:g.filename,indexKey:g.indexKey,slug:g.slug,sha:g.sha}));
     const res=await call({action:'batch-delete',lang,files,remaining});
-    showStatus('manage-status',`✓ Usunięto ${res.deleted}${res.renamed?' + renumeracja':''}.`,'ok');
-    loadedGames=loadedGames.filter(g=>!pendingDelete.has(g.slug));
-    loadedGames.forEach((g,i)=>{const n=i+1;g.num=n;g.filename=`${String(n).padStart(3,'0')}-${g.slug}.json`;g.indexKey=`${g.lang}/${g.filename.replace('.json','')}`;});
-    pendingDelete.clear();
-    updatePendingBar(); renderManageList();
+    const msg=`✓ Usunięto ${res.deleted}${res.renamed?' + renumeracja':''}.`;
+    resetSession();
+    showStatus('manage-status',msg,'ok');
   }catch(e){ showStatus('manage-status','✗ '+e.message,'err'); }
   finally{ setListBusy(false); }
 };
@@ -329,18 +351,22 @@ window.toggleSelect = function(idx,cb,e){
 window.loadGameList = async function(){
   const lang=$('manage-lang').value;
   setListBusy(true);
-  showStatus('manage-status','Wczytuję…','info');
-  $('game-list').innerHTML='<div style="color:var(--muted);font-size:12px;padding:10px 0;text-align:center">Ładowanie…</div>';
+  showStatus('session-status','Wczytuję…','info');
   $('scan-btn').disabled=true;
   try{
     const res=await call({action:'list-games',lang});
     loadedGames=res.games||[];
     selectedGames.clear(); updateBulkBar();
     pendingDelete.clear(); updatePendingBar();
+    if(loadedGames.length){
+      lockSession();
+      showStatus('session-status',`Sesja aktywna · ${loadedGames.length} gier · ${lang.toUpperCase()}`,'ok');
+    } else {
+      showStatus('session-status','Brak gier dla tego języka.','info');
+    }
     renderManageList();
     $('scan-btn').disabled=loadedGames.length===0;
-    showStatus('manage-status',`${loadedGames.length} gier.`,'ok');
-  }catch(e){ showStatus('manage-status','✗ '+e.message,'err'); $('game-list').innerHTML=''; }
+  }catch(e){ showStatus('session-status','✗ '+e.message,'err'); }
   finally{ setListBusy(false); }
 };
 
@@ -604,10 +630,9 @@ window.regenerate = async function(idx){
   item.game=null; item.status='pending'; item.generating=true;
   renderGenList();
   try{
-    const lang=$('lang').value;
+    const lang=$('manage-lang').value;
     const existingTitles=genGames.filter((_,i)=>i!==idx&&_.game).map(g=>g.game.meta?.title).filter(Boolean);
-    // also get marketplace titles
-    try{ const r=await call({action:'list-games',lang}); (r.games||[]).forEach(g=>existingTitles.push(g.title)); }catch{}
+    loadedGames.filter(g=>g.lang===lang).forEach(g=>existingTitles.push(g.title));
     const res=await callWithRetry({action:'generate',lang,index:idx+1,total:genGames.length,topic:$('topic').value.trim(),alreadyUsed:existingTitles},idx+1);
     item.game=res.game;
     item.status='pending';
@@ -634,7 +659,7 @@ async function callWithRetry(payload,num,maxRetries=4){
 
 window.startGeneration = async function(){
   if(generating)return;
-  const lang=$('lang').value;
+  const lang=$('manage-lang').value;
   const count=Math.max(1,parseInt($('count').value)||5);
   const topic=$('topic').value.trim();
   generating=true;
@@ -646,9 +671,8 @@ window.startGeneration = async function(){
   genGames=Array.from({length:count},(_,i)=>({game:null,status:'pending',generating:true,idx:i}));
   renderGenList();
 
-  // get existing titles
-  const existingTitles=[];
-  try{ const r=await call({action:'list-games',lang}); (r.games||[]).forEach(g=>{ if(g.title)existingTitles.push(g.title); }); }catch{}
+  // get existing titles from local list
+  const existingTitles=loadedGames.filter(g=>g.lang===lang).map(g=>g.title).filter(Boolean);
 
   // generate one by one
   for(let i=0;i<count;i++){
@@ -675,7 +699,7 @@ window.startGeneration = async function(){
 };
 
 window.pushApproved = async function(){
-  const lang=$('lang').value;
+  const lang=$('manage-lang').value;
   const approved=genGames.filter(g=>g.status==='approved'&&g.game);
   if(!approved.length){ showStatus('push-status','Brak zatwierdzonych gier.','info'); return; }
   $('push-btn').disabled=true;
