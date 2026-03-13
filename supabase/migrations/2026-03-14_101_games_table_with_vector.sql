@@ -1,6 +1,10 @@
 -- 101: Games table with pg_vector
 -- This migration creates the new unified 'games' table and enables pg_vector.
 
+-- 0. Drop existing objects if they exist
+DROP VIEW IF EXISTS public.published_games;
+DROP TABLE IF EXISTS public.games;
+
 -- 1. Enable pg_vector extension
 CREATE EXTENSION IF NOT EXISTS vector;
 
