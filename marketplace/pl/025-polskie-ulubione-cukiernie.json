@@ -1,0 +1,326 @@
+{
+  "meta": {
+    "title": "Polskie ulubione cukiernie",
+    "description": "Gra powiązana z popularnymi polskimi cukierniami, w której gracze muszą odgadnąć najbardziej znane i lubiane przez Polaków słodycze. Gra jest idealna dla rodzin, grup przyjaciół i wszystkich, którzy kochają słodkie przysmaki. Dla prowadzącego: zachęcamy do przygotowania słodkich niespodzianek dla graczy, aby jeszcze bardziej uwzpełnić atmosferę gry.",
+    "lang": "pl"
+  },
+  "game": {
+    "name": "Polskie ulubione cukiernie",
+    "type": "prepared"
+  },
+  "questions": [
+    {
+      "text": "Co to jest ulubiona przełomowa słodycz Polaków?",
+      "answers": [
+        {
+          "text": "Pączek",
+          "fixed_points": 51
+        },
+        {
+          "text": "Makowiec",
+          "fixed_points": 23
+        },
+        {
+          "text": "Sernik",
+          "fixed_points": 15
+        },
+        {
+          "text": "Faworki",
+          "fixed_points": 6
+        },
+        {
+          "text": "Kremówka",
+          "fixed_points": 5
+        }
+      ]
+    },
+    {
+      "text": "Jaki jest najczęstszy prezent słodki na urodziny?",
+      "answers": [
+        {
+          "text": "Tort",
+          "fixed_points": 67
+        },
+        {
+          "text": "Cukiernica",
+          "fixed_points": 18
+        },
+        {
+          "text": "Ciasto",
+          "fixed_points": 8
+        },
+        {
+          "text": "Lody",
+          "fixed_points": 5
+        },
+        {
+          "text": "Czekolada",
+          "fixed_points": 2
+        }
+      ]
+    },
+    {
+      "text": "Jakie ciasto jest ulubionym rodzinnym ciastem?",
+      "answers": [
+        {
+          "text": "Makowiec",
+          "fixed_points": 38
+        },
+        {
+          "text": "Sernik",
+          "fixed_points": 29
+        },
+        {
+          "text": "Szarlotka",
+          "fixed_points": 16
+        },
+        {
+          "text": "Pączek",
+          "fixed_points": 6
+        },
+        {
+          "text": "Faworki",
+          "fixed_points": 1
+        }
+      ]
+    },
+    {
+      "text": "Czy Polacy wolą słodycze ze sztucznymi dodatkami, czy naturalne?",
+      "answers": [
+        {
+          "text": "Naturalne",
+          "fixed_points": 85
+        },
+        {
+          "text": "Sztuczne",
+          "fixed_points": 5
+        },
+        {
+          "text": "Nie ważne",
+          "fixed_points": 4
+        },
+        {
+          "text": "Inne",
+          "fixed_points": 6
+        }
+      ]
+    },
+    {
+      "text": "Jaki jest najpopularniejszy smak lodów?",
+      "answers": [
+        {
+          "text": "Czekolada",
+          "fixed_points": 48
+        },
+        {
+          "text": "Wanilia",
+          "fixed_points": 26
+        },
+        {
+          "text": "Truskawka",
+          "fixed_points": 12
+        },
+        {
+          "text": "Karmel",
+          "fixed_points": 8
+        },
+        {
+          "text": "Orzech",
+          "fixed_points": 6
+        }
+      ]
+    },
+    {
+      "text": "Co to jest ulubiona Wigilijna potrawa słodka?",
+      "answers": [
+        {
+          "text": "Makowiec",
+          "fixed_points": 42
+        },
+        {
+          "text": "Pierniki",
+          "fixed_points": 25
+        },
+        {
+          "text": "Sernik",
+          "fixed_points": 18
+        },
+        {
+          "text": "Kutia",
+          "fixed_points": 5
+        },
+        {
+          "text": "Faworki",
+          "fixed_points": 10
+        }
+      ]
+    },
+    {
+      "text": "Jaki jest najczęstszy prezent dla dziecka w postaci słodyczy?",
+      "answers": [
+        {
+          "text": "Czekolada",
+          "fixed_points": 55
+        },
+        {
+          "text": "Lody",
+          "fixed_points": 20
+        },
+        {
+          "text": "Ciastka",
+          "fixed_points": 10
+        },
+        {
+          "text": "Pączki",
+          "fixed_points": 5
+        }
+      ]
+    },
+    {
+      "text": "Co to jest ulubiona słodycz wśród seniorów?",
+      "answers": [
+        {
+          "text": "Makowiec",
+          "fixed_points": 35
+        },
+        {
+          "text": "Sernik",
+          "fixed_points": 28
+        },
+        {
+          "text": "Pączek",
+          "fixed_points": 15
+        },
+        {
+          "text": "Faworki",
+          "fixed_points": 12
+        },
+        {
+          "text": "Kremówka",
+          "fixed_points": 10
+        }
+      ]
+    },
+    {
+      "text": "Jaki jest najpopularniejszy rodzaj ciasta w kuchni polskiej?",
+      "answers": [
+        {
+          "text": "Makowiec",
+          "fixed_points": 40
+        },
+        {
+          "text": "Sernik",
+          "fixed_points": 30
+        },
+        {
+          "text": "Szarlotka",
+          "fixed_points": 15
+        },
+        {
+          "text": "Pączek",
+          "fixed_points": 10
+        },
+        {
+          "text": "Faworki",
+          "fixed_points": 5
+        }
+      ]
+    },
+    {
+      "text": "Co to jest ulubiona słodycz dziecięca?",
+      "answers": [
+        {
+          "text": "Lody",
+          "fixed_points": 50
+        },
+        {
+          "text": "Czekolada",
+          "fixed_points": 25
+        },
+        {
+          "text": "Ciastka",
+          "fixed_points": 10
+        },
+        {
+          "text": "Pączki",
+          "fixed_points": 5
+        }
+      ]
+    },
+    {
+      "text": "Jaki jest najczęstszy sposób spożywania słodyczy?",
+      "answers": [
+        {
+          "text": "Samodzielnie",
+          "fixed_points": 60
+        },
+        {
+          "text": "Z rodzina",
+          "fixed_points": 20
+        },
+        {
+          "text": "Z przyjaciółmi",
+          "fixed_points": 10
+        },
+        {
+          "text": "W pracy",
+          "fixed_points": 5
+        },
+        {
+          "text": "Inne",
+          "fixed_points": 5
+        }
+      ]
+    },
+    {
+      "text": "Co to jest ulubiona słodycz do kawy?",
+      "answers": [
+        {
+          "text": "Pączek",
+          "fixed_points": 45
+        },
+        {
+          "text": "Makowiec",
+          "fixed_points": 25
+        },
+        {
+          "text": "Sernik",
+          "fixed_points": 15
+        },
+        {
+          "text": "Faworki",
+          "fixed_points": 5
+        },
+        {
+          "text": "Kremówka",
+          "fixed_points": 10
+        }
+      ]
+    },
+    {
+      "text": "Jaki jest najpopularniejszy sposób kupowania słodyczy?",
+      "answers": [
+        {
+          "text": "W sklepie",
+          "fixed_points": 70
+        },
+        {
+          "text": "W cukierni",
+          "fixed_points": 15
+        },
+        {
+          "text": "Online",
+          "fixed_points": 5
+        },
+        {
+          "text": "U sąsiada",
+          "fixed_points": 5
+        },
+        {
+          "text": "Inne",
+          "fixed_points": 5
+        }
+      ]
+    }
+  ]
+}
