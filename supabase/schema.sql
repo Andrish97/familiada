@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict szUvgI4WYHyKeqqp4UibGNnOMw1CyNW0OUw92d4hAHZi6mOpAgBCgaMi5ikwXUj
+\restrict eKRcRZBTK6NVGvdopGvB72kdYdGmNmrWTcZgsKCmLjNWdJMTFtUHtSpyimU3sfg
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -3825,7 +3825,7 @@ $$;
 -- Name: market_admin_upsert("text", "text", "text", "text", "jsonb"); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION "public"."market_admin_upsert"("p_storage_path" "text", "p_title" "text", "p_description" "text", "p_lang" "text", "p_payload" "jsonb") RETURNS TABLE("ok" boolean, "err" "text", "market_id" "uuid")
+CREATE FUNCTION "public"."market_admin_upsert"("p_storage_path" "text", "p_title" "text", "p_description" "text", "p_lang" "text", "p_payload" "jsonb") RETURNS TABLE("ok" boolean, "err" "text", "market_id" "uuid", "existing" boolean)
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
     AS $$
@@ -3834,33 +3834,32 @@ declare
   v_existing uuid;
 begin
   if p_storage_path is null or p_storage_path = '' then
-    return query select false, 'storage_path_required'::text, null::uuid;
+    return query select false, 'storage_path_required'::text, null::uuid, false;
     return;
   end if;
-  
+
   if p_payload is null then
-    return query select false, 'payload_required'::text, null::uuid;
+    return query select false, 'payload_required'::text, null::uuid, false;
     return;
   end if;
-  
+
   select id into v_existing
     from public.market_games
    where storage_path = p_storage_path;
-  
+
   if v_existing is not null then
     update public.market_games
        set title = p_title,
            description = p_description,
            lang = p_lang,
            payload = p_payload,
-           status = 'pending',
            updated_at = now()
      where id = v_existing;
-    
-    return query select true, ''::text, v_existing;
+
+    return query select true, ''::text, v_existing, true;
     return;
   end if;
-  
+
   insert into public.market_games (
     storage_path,
     title,
@@ -3875,12 +3874,12 @@ begin
     p_description,
     p_lang,
     p_payload,
-    'pending',
+    'published',
     auth.uid()
   )
   returning id into v_id;
-  
-  return query select true, ''::text, v_id;
+
+  return query select true, ''::text, v_id, false;
 end;
 $$;
 
@@ -3889,42 +3888,7 @@ $$;
 -- Name: FUNCTION "market_admin_upsert"("p_storage_path" "text", "p_title" "text", "p_description" "text", "p_lang" "text", "p_payload" "jsonb"); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION "public"."market_admin_upsert"("p_storage_path" "text", "p_title" "text", "p_description" "text", "p_lang" "text", "p_payload" "jsonb") IS 'Upsertuje grę do market_games';
-
-
---
--- Name: market_admin_upsert_gh("text", "text", "text", "text", "jsonb"); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."market_admin_upsert_gh"("p_slug" "text", "p_title" "text", "p_description" "text", "p_lang" "text", "p_payload" "jsonb") RETURNS TABLE("ok" boolean, "err" "text", "market_id" "uuid")
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public'
-    AS $$
-declare
-    v_id uuid;
-begin
-    if p_lang not in ('pl', 'en', 'uk') then
-        return query select false, 'invalid_lang', null::uuid;
-        return;
-    end if;
-
-    insert into public.market_games
-        (gh_slug, author_user_id, source_game_id, title, description, lang, payload, status)
-    values
-        (p_slug, null, null, btrim(p_title), btrim(coalesce(p_description, '')), p_lang, p_payload, 'published')
-    on conflict (gh_slug)
-    do update set
-        title       = excluded.title,
-        description = excluded.description,
-        lang        = excluded.lang,
-        payload     = excluded.payload,
-        status      = 'published',
-        updated_at  = now()
-    returning id into v_id;
-
-    return query select true, '', v_id;
-end;
-$$;
+COMMENT ON FUNCTION "public"."market_admin_upsert"("p_storage_path" "text", "p_title" "text", "p_description" "text", "p_lang" "text", "p_payload" "jsonb") IS 'Upsertuje grę do market_games - nowe gry są automatycznie published';
 
 
 --
@@ -8401,7 +8365,7 @@ $$;
 -- Name: storage_list_objects("text", "text", integer); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION "public"."storage_list_objects"("p_bucket" "text", "p_prefix" "text" DEFAULT ''::"text", "p_limit" integer DEFAULT 1000) RETURNS TABLE("name" "text", "id" "uuid", "metadata" "jsonb", "created_at" timestamp with time zone, "updated_at" timestamp with time zone, "last_accessed_at" timestamp with time zone, "version" "text", "size_bytes" bigint, "owner" "uuid")
+CREATE FUNCTION "public"."storage_list_objects"("p_bucket" "text", "p_prefix" "text" DEFAULT ''::"text", "p_limit" integer DEFAULT 1000) RETURNS TABLE("name" "text", "id" "uuid", "metadata" "jsonb", "created_at" timestamp with time zone, "updated_at" timestamp with time zone, "last_accessed_at" timestamp with time zone, "version" "text", "size_bytes" bigint, "owner_id" "uuid")
     LANGUAGE "sql" SECURITY DEFINER
     SET "search_path" TO 'public'
     AS $$
@@ -8414,7 +8378,7 @@ CREATE FUNCTION "public"."storage_list_objects"("p_bucket" "text", "p_prefix" "t
     o.last_accessed_at::timestamptz,
     o.version::text,
     COALESCE(NULLIF(o.metadata->>'size', ''), '0')::bigint as size_bytes,
-    o.owner::uuid
+    o.owner_id::uuid
   FROM storage.objects o
   WHERE o.bucket_id = p_bucket
     AND (p_prefix = '' OR o.name LIKE (p_prefix || '%'))
@@ -8999,6 +8963,29 @@ CREATE TABLE "public"."example_table" (
 
 
 --
+-- Name: game_gen_queue; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."game_gen_queue" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "created_by" "uuid" DEFAULT "auth"."uid"() NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "lang" "text" DEFAULT 'pl'::"text" NOT NULL,
+    "topic" "text",
+    "total_games" integer DEFAULT 1 NOT NULL,
+    "already_used" "text"[] DEFAULT '{}'::"text"[],
+    "status" "text" DEFAULT 'pending'::"text" NOT NULL,
+    "attempts" integer DEFAULT 0 NOT NULL,
+    "max_attempts" integer DEFAULT 3 NOT NULL,
+    "last_error" "text",
+    "result" "jsonb",
+    "started_at" timestamp with time zone,
+    "completed_at" timestamp with time zone,
+    CONSTRAINT "game_gen_queue_status_check" CHECK (("status" = ANY (ARRAY['pending'::"text", 'processing'::"text", 'completed'::"text", 'failed'::"text"])))
+);
+
+
+--
 -- Name: games; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -9576,6 +9563,14 @@ ALTER TABLE ONLY "public"."example_table"
 
 
 --
+-- Name: game_gen_queue game_gen_queue_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."game_gen_queue"
+    ADD CONSTRAINT "game_gen_queue_pkey" PRIMARY KEY ("id");
+
+
+--
 -- Name: games games_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -9916,6 +9911,20 @@ CREATE INDEX "email_intents_status_idx" ON "public"."email_intents" USING "btree
 --
 
 CREATE INDEX "example_table_created_at_idx" ON "public"."example_table" USING "btree" ("created_at" DESC);
+
+
+--
+-- Name: game_gen_queue_created_by_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "game_gen_queue_created_by_idx" ON "public"."game_gen_queue" USING "btree" ("created_by", "created_at" DESC);
+
+
+--
+-- Name: game_gen_queue_pick_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "game_gen_queue_pick_idx" ON "public"."game_gen_queue" USING "btree" ("status", "created_at");
 
 
 --
@@ -11099,6 +11108,33 @@ CREATE POLICY "email_intents_service_only" ON "public"."email_intents" TO "authe
 
 
 --
+-- Name: game_gen_queue; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."game_gen_queue" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: game_gen_queue game_gen_queue_insert_own; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "game_gen_queue_insert_own" ON "public"."game_gen_queue" FOR INSERT TO "authenticated" WITH CHECK (("created_by" = "auth"."uid"()));
+
+
+--
+-- Name: game_gen_queue game_gen_queue_select_own; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "game_gen_queue_select_own" ON "public"."game_gen_queue" FOR SELECT TO "authenticated" USING (("created_by" = "auth"."uid"()));
+
+
+--
+-- Name: game_gen_queue game_gen_queue_worker_all; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "game_gen_queue_worker_all" ON "public"."game_gen_queue" TO "service_role" USING (true) WITH CHECK (true);
+
+
+--
 -- Name: games; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -11874,5 +11910,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict szUvgI4WYHyKeqqp4UibGNnOMw1CyNW0OUw92d4hAHZi6mOpAgBCgaMi5ikwXUj
+\unrestrict eKRcRZBTK6NVGvdopGvB72kdYdGmNmrWTcZgsKCmLjNWdJMTFtUHtSpyimU3sfg
 

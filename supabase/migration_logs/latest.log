@@ -1,95 +1,106 @@
-[2026-03-13T20:06:21Z] == DB migrations runner ==
-[2026-03-13T20:06:21Z] STAGING_DIR: /home/andrish97/.deploy/db-migrate/74c4752fe3d8df42ec8e4976187ad2180cc803f8
-[2026-03-13T20:06:21Z] MIG_DIR    : /home/andrish97/.deploy/db-migrate/74c4752fe3d8df42ec8e4976187ad2180cc803f8/migrations
-[2026-03-13T20:06:21Z] OUT_DIR    : /home/andrish97/.deploy/db-migrate/74c4752fe3d8df42ec8e4976187ad2180cc803f8/out
-[2026-03-13T20:06:21Z] 
-[2026-03-13T20:06:21Z] == Ensure public.schema_migrations ==
+[2026-03-13T20:08:16Z] == DB migrations runner ==
+[2026-03-13T20:08:16Z] STAGING_DIR: /home/andrish97/.deploy/db-migrate/89e832707cfc84cea62f26043786dca1bdad9bae
+[2026-03-13T20:08:16Z] MIG_DIR    : /home/andrish97/.deploy/db-migrate/89e832707cfc84cea62f26043786dca1bdad9bae/migrations
+[2026-03-13T20:08:16Z] OUT_DIR    : /home/andrish97/.deploy/db-migrate/89e832707cfc84cea62f26043786dca1bdad9bae/out
+[2026-03-13T20:08:16Z] 
+[2026-03-13T20:08:16Z] == Ensure public.schema_migrations ==
 NOTICE:  relation "schema_migrations" already exists, skipping
 CREATE TABLE
-[2026-03-13T20:06:22Z] OK
-[2026-03-13T20:06:22Z] 
-[2026-03-13T20:06:22Z] Existing public tables (excluding schema_migrations): 38
-[2026-03-13T20:06:22Z] Applied migrations in tracking table: 51
-[2026-03-13T20:06:22Z] 
-/home/andrish97/supabase-selfhost/supabase/scripts/apply-migrations.sh: line 94: SUPERSEDES_MAP: unbound variable
-[2026-03-13T20:06:22Z] == Apply migrations (sorted) ==
-[2026-03-13T20:06:22Z] SKIP  2026-03-01_000_baseline.sql (already applied)
-[2026-03-13T20:06:22Z] SKIP  2026-03-01_010_example_add_table.sql (already applied)
-[2026-03-13T20:06:22Z] SKIP  2026-03-01_020_rpc_example.sql (already applied)
-[2026-03-13T20:06:22Z] SKIP  2026-03-05_030_cancel_my_email_change.sql (already applied)
-[2026-03-13T20:06:22Z] SKIP  2026-03-09_040_demo_in_db.sql (already applied)
-[2026-03-13T20:06:22Z] SKIP  2026-03-09_041_fix_demo_logo_active.sql (already applied)
-[2026-03-13T20:06:23Z] SKIP  2026-03-10_042_fix_restore_demo_old_logos.sql (already applied)
-[2026-03-13T20:06:23Z] SKIP  2026-03-10_043_drop_user_flags_demo.sql (already applied)
-[2026-03-13T20:06:23Z] SKIP  2026-03-10_044_marketplace.sql (already applied)
-[2026-03-13T20:06:23Z] SKIP  2026-03-10_045_market_admin_actions.sql (already applied)
-[2026-03-13T20:06:23Z] SKIP  2026-03-10_046_market_submit_require_playable.sql (already applied)
-[2026-03-13T20:06:23Z] SKIP  2026-03-11_047_market_games_as_library.sql (already applied)
-[2026-03-13T20:06:23Z] SKIP  2026-03-11_048_backfill_and_notifications.sql (already applied)
-[2026-03-13T20:06:23Z] SKIP  2026-03-11_049_market_per_user_games.sql (already applied)
-[2026-03-13T20:06:23Z] SKIP  2026-03-11_050_fix_market_my_library.sql (already applied)
-[2026-03-13T20:06:23Z] SKIP  2026-03-11_051_fix_add_to_library_conflict.sql (already applied)
-[2026-03-13T20:06:23Z] SKIP  2026-03-11_052_backfill_missing_market_games.sql (already applied)
-[2026-03-13T20:06:24Z] SKIP  2026-03-11_053_library_game_copy_robust.sql (already applied)
-[2026-03-13T20:06:24Z] SKIP  2026-03-11_054_game_type_market.sql (already applied)
-[2026-03-13T20:06:24Z] SKIP  2026-03-11_055_game_type_market_backfill.sql (already applied)
-[2026-03-13T20:06:24Z] SKIP  2026-03-11_056_market_cleanup_rejected.sql (already applied)
-[2026-03-13T20:06:24Z] SKIP  2026-03-11_057_fix_gen_share_key_security.sql (already applied)
-[2026-03-13T20:06:24Z] SKIP  2026-03-12_058_market_admin_delete_force.sql (already applied)
-[2026-03-13T20:06:24Z] SKIP  2026-03-12_059_market_sync_cleanup.sql (already applied)
-[2026-03-13T20:06:24Z] SKIP  2026-03-12_060_contact_reports.sql (already applied)
-[2026-03-13T20:06:24Z] SKIP  2026-03-12_061_contact_reports_rate_limit.sql (already applied)
-[2026-03-13T20:06:24Z] SKIP  2026-03-12_062_contact_report_messages.sql (already applied)
-[2026-03-13T20:06:25Z] SKIP  2026-03-12_063_mail_queue_from_email.sql (already applied)
-[2026-03-13T20:06:25Z] SKIP  2026-03-12_064_contact_move_message.sql (already applied)
-[2026-03-13T20:06:25Z] SKIP  2026-03-12_065_contact_report_messages_html.sql (already applied)
-[2026-03-13T20:06:25Z] SKIP  2026-03-12_066_unified_messages.sql (already applied)
-[2026-03-13T20:06:25Z] WARN  checksum mismatch for already applied migration: 2026-03-12_067_message_attachments.sql
-[2026-03-13T20:06:25Z]   applied: 65f555843b745b17066b55f2d9f3c359c65d26a0d094a1a8be6d32cec3587a00
-[2026-03-13T20:06:25Z]   current: d37845927715259395ad9df22a96913e3cb392d67fc802506736af64f5bbce74
-[2026-03-13T20:06:25Z]   Tip: add '-- SUPERSEDES: 2026-03-12_067_message_attachments.sql' to a newer fix migration to accept this change.
-[2026-03-13T20:06:25Z] SKIP  2026-03-12_068_storage_bucket_attachments.sql (already applied)
-[2026-03-13T20:06:25Z] SKIP  2026-03-12_069_attachment_expiry.sql (already applied)
-[2026-03-13T20:06:25Z] SKIP  2026-03-13_070_fix_get_report_messages.sql (already applied)
-[2026-03-13T20:06:25Z] SKIP  2026-03-13_071_fix_get_report_messages_v2.sql (already applied)
-[2026-03-13T20:06:25Z] SKIP  2026-03-13_076_fix_community_games_policies.sql (already applied)
-[2026-03-13T20:06:25Z] SKIP  2026-03-13_077_fix_market_games_storage_path.sql (already applied)
-[2026-03-13T20:06:26Z] SKIP  2026-03-13_081_fix_market_admin_functions_v2.sql (already applied)
-[2026-03-13T20:06:26Z] SKIP  2026-03-13_083_storage_list_objects_fix.sql (already applied)
-[2026-03-13T20:06:26Z] WARN  checksum mismatch for already applied migration: 2026-03-13_086_revert_to_586f3a9.sql
-[2026-03-13T20:06:26Z]   applied: 5e22df34d7e84cbe757493ae68190d4b76edb7e4cf2d6a110a40bfd0b76743f0
-[2026-03-13T20:06:26Z]   current: 6635aade04263b5727e88563f01b30f44d051419942885824c07af69b9de869c
-[2026-03-13T20:06:26Z]   Tip: add '-- SUPERSEDES: 2026-03-13_086_revert_to_586f3a9.sql' to a newer fix migration to accept this change.
-[2026-03-13T20:06:26Z] WARN  checksum mismatch for already applied migration: 2026-03-13_087_queue_and_storage.sql
-[2026-03-13T20:06:26Z]   applied: 072df637cf1e8678433be52cb07381102989602e861aca9ef71aa487f99d2535
-[2026-03-13T20:06:26Z]   current: c550b8783423dc0d6b5f59b2c808a4e07078faea5dec06dd8f0353ca217f3cf2
-[2026-03-13T20:06:26Z]   Tip: add '-- SUPERSEDES: 2026-03-13_087_queue_and_storage.sql' to a newer fix migration to accept this change.
-[2026-03-13T20:06:26Z] APPLY 2026-03-13_088_fix_broken_state.sql
-psql:/dev/stdin:8: NOTICE:  index "community_games_bucket_folder_idx" does not exist, skipping
+[2026-03-13T20:08:16Z] OK
+[2026-03-13T20:08:16Z] 
+[2026-03-13T20:08:16Z] Existing public tables (excluding schema_migrations): 38
+[2026-03-13T20:08:16Z] Applied migrations in tracking table: 52
+[2026-03-13T20:08:16Z] 
+[2026-03-13T20:08:16Z] SUPERSEDES declarations found:
+[2026-03-13T20:08:16Z]   2026-03-13_089_final_fix.sql supersedes 2026-03-12_067_message_attachments.sql
+[2026-03-13T20:08:16Z] 
+[2026-03-13T20:08:16Z] == Apply migrations (sorted) ==
+[2026-03-13T20:08:17Z] SKIP  2026-03-01_000_baseline.sql (already applied)
+[2026-03-13T20:08:17Z] SKIP  2026-03-01_010_example_add_table.sql (already applied)
+[2026-03-13T20:08:17Z] SKIP  2026-03-01_020_rpc_example.sql (already applied)
+[2026-03-13T20:08:17Z] SKIP  2026-03-05_030_cancel_my_email_change.sql (already applied)
+[2026-03-13T20:08:17Z] SKIP  2026-03-09_040_demo_in_db.sql (already applied)
+[2026-03-13T20:08:17Z] SKIP  2026-03-09_041_fix_demo_logo_active.sql (already applied)
+[2026-03-13T20:08:17Z] SKIP  2026-03-10_042_fix_restore_demo_old_logos.sql (already applied)
+[2026-03-13T20:08:17Z] SKIP  2026-03-10_043_drop_user_flags_demo.sql (already applied)
+[2026-03-13T20:08:17Z] SKIP  2026-03-10_044_marketplace.sql (already applied)
+[2026-03-13T20:08:17Z] SKIP  2026-03-10_045_market_admin_actions.sql (already applied)
+[2026-03-13T20:08:17Z] SKIP  2026-03-10_046_market_submit_require_playable.sql (already applied)
+[2026-03-13T20:08:18Z] SKIP  2026-03-11_047_market_games_as_library.sql (already applied)
+[2026-03-13T20:08:18Z] SKIP  2026-03-11_048_backfill_and_notifications.sql (already applied)
+[2026-03-13T20:08:18Z] SKIP  2026-03-11_049_market_per_user_games.sql (already applied)
+[2026-03-13T20:08:18Z] SKIP  2026-03-11_050_fix_market_my_library.sql (already applied)
+[2026-03-13T20:08:18Z] SKIP  2026-03-11_051_fix_add_to_library_conflict.sql (already applied)
+[2026-03-13T20:08:18Z] SKIP  2026-03-11_052_backfill_missing_market_games.sql (already applied)
+[2026-03-13T20:08:18Z] SKIP  2026-03-11_053_library_game_copy_robust.sql (already applied)
+[2026-03-13T20:08:18Z] SKIP  2026-03-11_054_game_type_market.sql (already applied)
+[2026-03-13T20:08:18Z] SKIP  2026-03-11_055_game_type_market_backfill.sql (already applied)
+[2026-03-13T20:08:18Z] SKIP  2026-03-11_056_market_cleanup_rejected.sql (already applied)
+[2026-03-13T20:08:19Z] SKIP  2026-03-11_057_fix_gen_share_key_security.sql (already applied)
+[2026-03-13T20:08:19Z] SKIP  2026-03-12_058_market_admin_delete_force.sql (already applied)
+[2026-03-13T20:08:19Z] SKIP  2026-03-12_059_market_sync_cleanup.sql (already applied)
+[2026-03-13T20:08:19Z] SKIP  2026-03-12_060_contact_reports.sql (already applied)
+[2026-03-13T20:08:19Z] SKIP  2026-03-12_061_contact_reports_rate_limit.sql (already applied)
+[2026-03-13T20:08:19Z] SKIP  2026-03-12_062_contact_report_messages.sql (already applied)
+[2026-03-13T20:08:19Z] SKIP  2026-03-12_063_mail_queue_from_email.sql (already applied)
+[2026-03-13T20:08:19Z] SKIP  2026-03-12_064_contact_move_message.sql (already applied)
+[2026-03-13T20:08:19Z] SKIP  2026-03-12_065_contact_report_messages_html.sql (already applied)
+[2026-03-13T20:08:19Z] SKIP  2026-03-12_066_unified_messages.sql (already applied)
+[2026-03-13T20:08:19Z] WARN  2026-03-12_067_message_attachments.sql: checksum mismatch, superseded by 2026-03-13_089_final_fix.sql — updating stored checksum
+[2026-03-13T20:08:19Z]   stored : 65f555843b745b17066b55f2d9f3c359c65d26a0d094a1a8be6d32cec3587a00
+[2026-03-13T20:08:19Z]   current: d37845927715259395ad9df22a96913e3cb392d67fc802506736af64f5bbce74
+UPDATE 1
+[2026-03-13T20:08:20Z] SKIP  2026-03-12_068_storage_bucket_attachments.sql (already applied)
+[2026-03-13T20:08:20Z] SKIP  2026-03-12_069_attachment_expiry.sql (already applied)
+[2026-03-13T20:08:20Z] SKIP  2026-03-13_070_fix_get_report_messages.sql (already applied)
+[2026-03-13T20:08:20Z] SKIP  2026-03-13_071_fix_get_report_messages_v2.sql (already applied)
+[2026-03-13T20:08:20Z] SKIP  2026-03-13_076_fix_community_games_policies.sql (already applied)
+[2026-03-13T20:08:20Z] SKIP  2026-03-13_077_fix_market_games_storage_path.sql (already applied)
+[2026-03-13T20:08:20Z] SKIP  2026-03-13_081_fix_market_admin_functions_v2.sql (already applied)
+[2026-03-13T20:08:20Z] SKIP  2026-03-13_083_storage_list_objects_fix.sql (already applied)
+[2026-03-13T20:08:20Z] WARN  checksum mismatch for already applied migration: 2026-03-13_086_revert_to_586f3a9.sql
+[2026-03-13T20:08:20Z]   applied: 5e22df34d7e84cbe757493ae68190d4b76edb7e4cf2d6a110a40bfd0b76743f0
+[2026-03-13T20:08:20Z]   current: 6635aade04263b5727e88563f01b30f44d051419942885824c07af69b9de869c
+[2026-03-13T20:08:20Z]   Tip: add '-- SUPERSEDES: 2026-03-13_086_revert_to_586f3a9.sql' to a newer fix migration to accept this change.
+[2026-03-13T20:08:20Z] WARN  checksum mismatch for already applied migration: 2026-03-13_087_queue_and_storage.sql
+[2026-03-13T20:08:20Z]   applied: 072df637cf1e8678433be52cb07381102989602e861aca9ef71aa487f99d2535
+[2026-03-13T20:08:20Z]   current: c550b8783423dc0d6b5f59b2c808a4e07078faea5dec06dd8f0353ca217f3cf2
+[2026-03-13T20:08:20Z]   Tip: add '-- SUPERSEDES: 2026-03-13_087_queue_and_storage.sql' to a newer fix migration to accept this change.
+[2026-03-13T20:08:21Z] SKIP  2026-03-13_088_fix_broken_state.sql (already applied)
+[2026-03-13T20:08:21Z] APPLY 2026-03-13_089_final_fix.sql
+psql:/dev/stdin:11: NOTICE:  index "community_games_bucket_folder_idx" does not exist, skipping
 DROP INDEX
 CREATE INDEX
 CREATE TABLE
 CREATE INDEX
 CREATE INDEX
 ALTER TABLE
-psql:/dev/stdin:49: NOTICE:  policy "game_gen_queue_select_own" for relation "public.game_gen_queue" does not exist, skipping
+psql:/dev/stdin:51: NOTICE:  policy "game_gen_queue_select_own" for relation "public.game_gen_queue" does not exist, skipping
+psql:/dev/stdin:51: NOTICE:  policy "game_gen_queue_insert_own" for relation "public.game_gen_queue" does not exist, skipping
+psql:/dev/stdin:51: NOTICE:  policy "game_gen_queue_worker_all" for relation "public.game_gen_queue" does not exist, skipping
 DO
 CREATE POLICY
-psql:/dev/stdin:59: NOTICE:  policy "game_gen_queue_insert_own" for relation "public.game_gen_queue" does not exist, skipping
-DO
+CREATE POLICY
 CREATE POLICY
 DO
-psql:/dev/stdin:69: NOTICE:  policy "game_gen_queue_worker_all" for relation "public.game_gen_queue" does not exist, skipping
-CREATE POLICY
 DO
-psql:/dev/stdin:92: ERROR:  column "gh_slug" does not exist
-LINE 3: WHERE storage_path IS NULL AND gh_slug IS NOT NULL;
-                                       ^
-[2026-03-13T20:06:26Z] FAIL  2026-03-13_088_fix_broken_state.sql (SQL error — see output above)
-[2026-03-13T20:06:26Z] WARN  2026-03-13_088_fix_broken_state.sql — marking as applied to prevent retry; fix manually if needed
+psql:/dev/stdin:95: NOTICE:  relation "market_games_storage_path_idx" already exists, skipping
+CREATE INDEX
+DROP FUNCTION
+DROP FUNCTION
+DROP FUNCTION
+DROP FUNCTION
+DROP FUNCTION
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE FUNCTION
+COMMENT
+COMMENT
 INSERT 0 1
-[2026-03-13T20:06:26Z] 
-[2026-03-13T20:06:26Z] == Dump schema.sql (schema-only) ==
-[2026-03-13T20:06:26Z] Wrote: /home/andrish97/.deploy/db-migrate/74c4752fe3d8df42ec8e4976187ad2180cc803f8/out/schema.sql (11878 lines)
-[2026-03-13T20:06:26Z] 
-[2026-03-13T20:06:26Z] DONE
+[2026-03-13T20:08:21Z] OK    2026-03-13_089_final_fix.sql
+[2026-03-13T20:08:21Z] 
+[2026-03-13T20:08:21Z] == Dump schema.sql (schema-only) ==
+[2026-03-13T20:08:21Z] Wrote: /home/andrish97/.deploy/db-migrate/89e832707cfc84cea62f26043786dca1bdad9bae/out/schema.sql (11914 lines)
+[2026-03-13T20:08:21Z] 
+[2026-03-13T20:08:21Z] DONE
