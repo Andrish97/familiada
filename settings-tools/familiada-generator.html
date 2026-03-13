@@ -114,6 +114,11 @@
       <button class="btn btn-sm btn-danger" id="reset-btn" onclick="resetSession()" style="display:none">↺ Zrezygnuj</button>
       <span id="groq-counter" style="display:none;font-size:11px;color:var(--muted);margin-left:4px"></span>
     </div>
+    <div class="pending-bar" id="pending-bar">
+      <span style="font-size:12px;font-weight:700;color:var(--red);flex:1" id="pending-count"></span>
+      <button class="btn btn-sm btn-secondary" onclick="clearPending()">Cofnij</button>
+      <button class="btn btn-sm btn-danger" id="save-btn" onclick="saveChanges()">💾 Zapisz zmiany</button>
+    </div>
     <div class="status-bar" id="session-status"></div>
   </div>
 
@@ -122,11 +127,6 @@
     <div class="card-title">📋 Gry w marketplace</div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:4px">
       <button class="btn btn-sm btn-blue" id="scan-btn" onclick="scanGames()" disabled>🔍 Skanuj</button>
-    </div>
-    <div class="pending-bar" id="pending-bar">
-      <span style="font-size:12px;font-weight:700;color:var(--red);flex:1" id="pending-count"></span>
-      <button class="btn btn-sm btn-secondary" onclick="clearPending()">Cofnij</button>
-      <button class="btn btn-sm btn-danger" id="save-btn" onclick="saveChanges()">💾 Zapisz zmiany</button>
     </div>
     <div class="bulk-bar" id="bulk-bar">
       <span class="bulk-count" id="bulk-count">0 zaznaczonych</span>

@@ -162,10 +162,10 @@ function slugify(text: string): string {
 
 // ─── Groq call ────────────────────────────────────────────────────────────────
 
-async function groqChat(groqKey: string, prompt: string, temperature: number, maxTokens: number) {
+async function groqChat(groqKey: string, prompt: string, temperature: number, maxTokens: number, timeoutMs = 22000) {
   const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
-    signal: ghSignal(22000),
+    signal: ghSignal(timeoutMs),
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${groqKey}` },
     body: JSON.stringify({
       model: "llama-3.3-70b-versatile",
@@ -527,7 +527,7 @@ serve(async (req: Request) => {
     const { lang = "pl", games = [], mode = "full" } = body as { lang: string; games: { slug: string; title: string; description: string }[]; mode?: string };
     if (!Array.isArray(games) || !games.length) return respond({ issues: [] });
     const prompt = mode === "duplicates" ? buildDupeScanPrompt(String(lang), games) : buildScanPrompt(String(lang), games);
-    const result = await groqChat(groqKey, prompt, 0.2, 4000);
+    const result = await groqChat(groqKey, prompt, 0.2, 4000, 28000);
     return respond(result);
   }
 
