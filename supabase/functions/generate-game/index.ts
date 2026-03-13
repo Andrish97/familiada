@@ -203,35 +203,28 @@ serve(async (req: Request) => {
 
   // ── list-games ──────────────────────────────────────────────────────────────
   if (action === "list-games") {
+    if (!ghToken || !ghRepo) return respond({ error: "Brak GITHUB_TOKEN lub GITHUB_REPO w secrets" }, 500);
     const lang = String(body.lang ?? "pl");
-    const rawBase = `https://raw.githubusercontent.com/${ghRepo}/main/marketplace`;
-
-    // Read index.json from raw (no auth, no API rate limits)
-    const idxRes = await fetch(`${rawBase}/index.json`, { signal: ghSignal(8000) });
-    if (!idxRes.ok) return respond({ games: [] });
-    const allSlugs: string[] = await idxRes.json();
-
-    const langSlugs = allSlugs
-      .map(s => String(s))
-      .filter(s => s.startsWith(`${lang}/`))
-      .map(s => s.slice(lang.length + 1)); // e.g. "001-zwierzeta"
+    const dirRes = await ghGet(ghToken, ghRepo, `marketplace/${lang}`);
+    if (!dirRes || !Array.isArray(dirRes)) return respond({ games: [] });
 
     const games = await Promise.all(
-      langSlugs.map(async (slug) => {
-        const filename = `${slug}.json`;
-        const m = filename.match(/^(\d+)-(.+)\.json$/);
-        const num = m ? parseInt(m[1]) : 999;
-        let title = filename, description = "", data = null;
-        try {
-          const fRes = await fetch(`${rawBase}/${lang}/${filename}`, { signal: ghSignal(8000) });
-          if (fRes.ok) {
-            data = await fRes.json();
-            title = data?.meta?.title ?? data?.game?.name ?? filename;
-            description = data?.meta?.description ?? "";
-          }
-        } catch { /* skip */ }
-        return { num, filename, title, description, slug: m?.[2] ?? "", sha: "", lang, indexKey: `${lang}/${slug}`, data };
-      })
+      dirRes
+        .filter((f: { name: string }) => f.name.endsWith(".json"))
+        .map(async (f: { name: string; sha: string }) => {
+          const m = f.name.match(/^(\d+)-(.+)\.json$/);
+          const num = m ? parseInt(m[1]) : 999;
+          let title = f.name, description = "", data = null;
+          try {
+            const fRes = await ghGet(ghToken, ghRepo, `marketplace/${lang}/${f.name}`);
+            if (fRes) {
+              data = JSON.parse(ghDecode(fRes.content));
+              title = data?.meta?.title ?? data?.game?.name ?? f.name;
+              description = data?.meta?.description ?? "";
+            }
+          } catch { /* skip */ }
+          return { num, filename: f.name, title, description, slug: m?.[2] ?? "", sha: f.sha, lang, indexKey: `${lang}/${f.name.replace(".json", "")}`, data };
+        })
     );
     games.sort((a, b) => a.num - b.num);
     return respond({ games });
@@ -240,12 +233,9 @@ serve(async (req: Request) => {
   // ── delete-game ─────────────────────────────────────────────────────────────
   if (action === "delete-game") {
     if (!ghToken || !ghRepo) return respond({ error: "Brak GitHub secrets" }, 500);
-    const { lang, filename, indexKey } = body as { lang: string; filename: string; sha?: string; indexKey: string };
-    if (!lang || !filename) return respond({ error: "Brak wymaganych pól" }, 400);
-    // Fetch current SHA (list-games no longer returns it)
-    const fileInfo = await ghGet(ghToken, ghRepo, `marketplace/${lang}/${filename}`);
-    if (!fileInfo?.sha) return respond({ error: "Nie znaleziono pliku na GitHub" }, 404);
-    await ghDelete(ghToken, ghRepo, ghBranch, `marketplace/${lang}/${filename}`, `chore: remove game ${indexKey}`, fileInfo.sha);
+    const { lang, filename, sha, indexKey } = body as { lang: string; filename: string; sha: string; indexKey: string };
+    if (!lang || !filename || !sha) return respond({ error: "Brak wymaganych pól" }, 400);
+    await ghDelete(ghToken, ghRepo, ghBranch, `marketplace/${lang}/${filename}`, `chore: remove game ${indexKey}`, sha);
     const { data: idx } = await readIndex(ghToken, ghRepo);
     await writeIndex(ghToken, ghRepo, ghBranch, idx.filter(k => k !== indexKey), null, `chore: remove ${indexKey} from index`);
     return respond({ ok: true });
