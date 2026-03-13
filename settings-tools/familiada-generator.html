@@ -31,6 +31,9 @@
   .btn{display:flex;align-items:center;justify-content:center;gap:10px;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:10px;color:#0d0d0f;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;padding:14px 28px;width:100%;transition:opacity .2s,transform .1s}
   .btn:hover:not(:disabled){opacity:.9;transform:translateY(-1px)}
   .btn:disabled{opacity:.4;cursor:not-allowed}
+  .btn-sm{font-size:13px;padding:9px 18px;border-radius:8px;width:auto;font-family:'DM Sans',sans-serif;font-weight:600;letter-spacing:0}
+  .btn-secondary{background:var(--surface2);border:1px solid var(--border);color:var(--text)}
+  .btn-secondary:hover:not(:disabled){background:var(--border);opacity:1}
   #progress-section{display:none}
   #progress-section.visible{display:block}
   .progress-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px}
@@ -47,6 +50,10 @@
   #dl-btn{display:none;margin-top:20px;background:var(--green);color:#0d0d0f}
   #dl-btn.visible{display:flex}
   .tip{background:var(--surface2);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;font-size:12px;color:var(--muted);padding:10px 14px;line-height:1.6;margin-top:12px}
+  .folder-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .folder-status{font-size:12px;color:var(--muted);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .folder-status.ok{color:var(--green)}
+  .folder-status.warn{color:var(--accent)}
   @media(max-width:520px){.grid-2{grid-template-columns:1fr}}
 </style>
 </head>
@@ -57,6 +64,15 @@
     <div class="subtitle">Generator gier &nbsp;·&nbsp; Groq Llama 3.3</div>
     <div class="badge">✦ Klucz Groq tylko w Supabase Secrets</div>
   </header>
+
+  <div class="card">
+    <div class="card-title">📁 Folder marketplace</div>
+    <div class="folder-row">
+      <button class="btn btn-sm btn-secondary" id="pick-btn" onclick="pickFolder()">Wybierz folder marketplace</button>
+      <span class="folder-status" id="folder-status">Nie wybrano — gry zostaną pobrane jako ZIP</span>
+    </div>
+    <div class="tip" style="margin-top:14px">Wybierz folder <code>marketplace/</code> z repo — narzędzie odczyta istniejące gry, naliczy kolejne numery i zapisze pliki bezpośrednio. Wymaga Chrome/Edge.</div>
+  </div>
 
   <div class="card">
     <div class="card-title">⚙️ Ustawienia generowania</div>
@@ -70,22 +86,17 @@
         </select>
       </div>
       <div class="field">
-        <label>Prefix folderu</label>
-        <input type="text" id="prefix" value="pl" placeholder="pl">
+        <label>Liczba gier do wygenerowania</label>
+        <input type="number" id="count" value="10" min="1" max="200">
       </div>
     </div>
     <div class="field" style="margin-bottom:16px">
       <label>Temat / kategoria (opcjonalnie)</label>
       <textarea id="topic" placeholder="Zostaw puste = AI dobierze różnorodne tematy. Lub wpisz np. historia, kuchnia, sport..."></textarea>
     </div>
-    <div class="field">
-      <label>Zakres numerów gier</label>
-      <div class="range-row">
-        <input type="number" id="from" value="1" min="1" max="999">
-        <span class="range-sep">od — do</span>
-        <input type="number" id="to" value="10" min="1" max="999">
-        <span class="range-sep" style="color:var(--text);font-weight:500" id="count-label">= 10 gier</span>
-      </div>
+    <div class="field" id="existing-topics-field" style="display:none">
+      <label>Tematy już istniejące w marketplace (odczytano automatycznie)</label>
+      <textarea id="existing-topics-display" rows="3" readonly style="opacity:.5;font-size:11px;resize:none"></textarea>
     </div>
     <div class="tip">Groq Free: ~14 400 requestów / dzień. Każda gra to 1 request (~2–3 sek).</div>
   </div>
@@ -113,21 +124,33 @@
 <script type="module">
 import { sb } from '/../js/core/supabase.js';
 
-// prefix auto-sync z językiem
-document.getElementById('lang').addEventListener('change', e => {
-  document.getElementById('prefix').value = e.target.value;
-});
-
+// ─── state ───────────────────────────────────────────────────────────────────
+let marketplaceDir = null;   // FileSystemDirectoryHandle
+let existingTitles = [];     // titles already in marketplace for selected lang
+let nextNumber = 1;          // next game number for selected lang
+let fullIndex = [];          // full index.json content
 let generatedFiles = {};
 let running = false;
 const $ = id => document.getElementById(id);
 
-function updateCountLabel() {
-  const n = Math.max(0, (parseInt($('to').value)||1) - (parseInt($('from').value)||1) + 1);
-  $('count-label').textContent = `= ${n} ${n===1?'gra':n<5?'gry':'gier'}`;
+// ─── utils ───────────────────────────────────────────────────────────────────
+function slugify(text) {
+  return (text||'').toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/ą/g,'a').replace(/ć/g,'c').replace(/ę/g,'e')
+    .replace(/ł/g,'l').replace(/ń/g,'n').replace(/ó/g,'o')
+    .replace(/ś/g,'s').replace(/ź/g,'z').replace(/ż/g,'z')
+    .replace(/і/g,'i').replace(/є/g,'e').replace(/ї/g,'i')
+    .replace(/[а-яёА-ЯЁ]/g, c => c.charCodeAt(0).toString(36))
+    .replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
 }
-$('from').addEventListener('input', updateCountLabel);
-$('to').addEventListener('input', updateCountLabel);
+
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+function isRateLimit(err) {
+  const msg = (err?.message || '').toLowerCase();
+  return msg.includes('429') || msg.includes('rate') || msg.includes('limit') || msg.includes('too many');
+}
 
 function log(icon, text, sub='', cls='') {
   const el = document.createElement('div');
@@ -143,34 +166,146 @@ function setProgress(done, total) {
   $('progress-fill').style.width = total > 0 ? `${(done/total)*100}%` : '0%';
 }
 
-function slugify(text) {
-  return (text||'').toLowerCase()
-    .replace(/ą/g,'a').replace(/ć/g,'c').replace(/ę/g,'e')
-    .replace(/ł/g,'l').replace(/ń/g,'n').replace(/ó/g,'o')
-    .replace(/ś/g,'s').replace(/[źż]/g,'z')
-    // Ukrainian
-    .replace(/і/g,'i').replace(/є/g,'e').replace(/ї/g,'i').replace(/а/g,'a')
-    .replace(/[а-яёА-ЯЁ]/g, c => c.charCodeAt(0).toString(36))
-    .replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+// ─── folder picker & index reader ────────────────────────────────────────────
+window.pickFolder = async function() {
+  if (!('showDirectoryPicker' in window)) {
+    alert('Twoja przeglądarka nie obsługuje File System Access API.\nUżyj Chrome lub Edge.');
+    return;
+  }
+  try {
+    const dir = await window.showDirectoryPicker({ mode: 'readwrite' });
+    marketplaceDir = dir;
+    $('folder-status').textContent = `✓ ${dir.name} — wczytuję…`;
+    $('folder-status').className = 'folder-status';
+    await loadMarketplaceData();
+  } catch(e) {
+    if (e.name !== 'AbortError') {
+      $('folder-status').textContent = 'Błąd: ' + e.message;
+    }
+  }
+};
+
+async function loadMarketplaceData() {
+  if (!marketplaceDir) return;
+  try {
+    // read index.json
+    try {
+      const idxFile = await marketplaceDir.getFileHandle('index.json');
+      const txt = await (await idxFile.getFile()).text();
+      fullIndex = JSON.parse(txt);
+    } catch { fullIndex = []; }
+
+    await refreshLangStats($('lang').value);
+  } catch(e) {
+    $('folder-status').textContent = 'Błąd odczytu: ' + e.message;
+  }
 }
 
-async function callEdgeFunction(payload) {
-  const { data, error } = await sb().functions.invoke('generate-game', { body: payload });
-  if (error) throw new Error(error.message || JSON.stringify(error));
-  if (data?.error) throw new Error(data.error);
-  return data.game;
+async function refreshLangStats(lang) {
+  if (!marketplaceDir) return;
+
+  existingTitles = [];
+  nextNumber = 1;
+
+  // get language subfolder
+  let langDir;
+  try {
+    langDir = await marketplaceDir.getDirectoryHandle(lang, { create: false });
+  } catch {
+    // folder doesn't exist yet — start from 1
+    $('folder-status').textContent = `✓ ${marketplaceDir.name} — brak folderu "${lang}/", zostanie utworzony`;
+    $('folder-status').className = 'folder-status ok';
+    updateExistingTopicsUI();
+    return;
+  }
+
+  // scan existing files
+  const nums = [];
+  for await (const [name] of langDir.entries()) {
+    if (!name.endsWith('.json')) continue;
+    const m = name.match(/^(\d+)-/);
+    if (m) nums.push(parseInt(m[1]));
+
+    // read title for alreadyUsed
+    try {
+      const fh = await langDir.getFileHandle(name);
+      const data = JSON.parse(await (await fh.getFile()).text());
+      const title = data?.meta?.title || data?.game?.name;
+      if (title) existingTitles.push(title);
+    } catch {}
+  }
+
+  nextNumber = nums.length > 0 ? Math.max(...nums) + 1 : 1;
+  $('folder-status').textContent = `✓ ${marketplaceDir.name}/${lang}/ — ${nums.length} gier, następny nr: ${String(nextNumber).padStart(3,'0')}`;
+  $('folder-status').className = 'folder-status ok';
+  updateExistingTopicsUI();
 }
 
+function updateExistingTopicsUI() {
+  if (existingTitles.length > 0) {
+    $('existing-topics-field').style.display = '';
+    $('existing-topics-display').value = existingTitles.join(', ');
+  } else {
+    $('existing-topics-field').style.display = 'none';
+  }
+}
+
+// re-scan on lang change
+$('lang').addEventListener('change', async e => {
+  await refreshLangStats(e.target.value);
+});
+
+// ─── edge function ────────────────────────────────────────────────────────────
+async function callEdgeFunctionWithRetry(payload, num, maxRetries = 4) {
+  let lastErr;
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const { data, error } = await sb().functions.invoke('generate-game', { body: payload });
+      if (error) throw new Error(error.message || JSON.stringify(error));
+      if (data?.error) throw new Error(data.error);
+      return data.game;
+    } catch(e) {
+      lastErr = e;
+      if (attempt >= maxRetries) break;
+      const cooldown = isRateLimit(e) ? (attempt === 1 ? 15000 : 30000) : (attempt === 1 ? 3000 : 8000);
+      $('progress-text').textContent = `Gra ${num} – błąd, próba ${attempt}/${maxRetries-1}, czekam ${cooldown/1000}s…`;
+      const logEl = $('log').lastChild;
+      if (logEl) logEl.querySelector('.log-sub').textContent = `${e.message} — ponawiam za ${cooldown/1000}s (próba ${attempt})`;
+      await sleep(cooldown);
+    }
+  }
+  throw lastErr;
+}
+
+// ─── write to filesystem ──────────────────────────────────────────────────────
+async function saveToMarketplace(lang, filename, gameData) {
+  // get or create lang subfolder
+  const langDir = await marketplaceDir.getDirectoryHandle(lang, { create: true });
+  const fh = await langDir.getFileHandle(filename, { create: true });
+  const writable = await fh.createWritable();
+  await writable.write(JSON.stringify(gameData, null, 2));
+  await writable.close();
+}
+
+async function updateIndexJson(newEntries) {
+  const merged = [...new Set([...fullIndex, ...newEntries])];
+  const fh = await marketplaceDir.getFileHandle('index.json', { create: true });
+  const writable = await fh.createWritable();
+  await writable.write(JSON.stringify(merged, null, 2));
+  await writable.close();
+  fullIndex = merged;
+}
+
+// ─── main generation ─────────────────────────────────────────────────────────
 window.startGeneration = async function() {
   if (running) return;
-  const lang   = $('lang').value;
-  const prefix = $('prefix').value.trim() || lang;
-  const topic  = $('topic').value.trim();
-  const from   = parseInt($('from').value) || 1;
-  const to     = parseInt($('to').value)   || 1;
-  if (to < from) { alert('Numer "do" musi być >= "od"'); return; }
+  const lang  = $('lang').value;
+  const count = Math.max(1, parseInt($('count').value) || 10);
+  const topic = $('topic').value.trim();
 
-  const total = to - from + 1;
+  if (marketplaceDir) await refreshLangStats(lang);
+
+  const total = count;
   generatedFiles = {};
   running = true;
   $('gen-btn').disabled = true;
@@ -180,47 +315,79 @@ window.startGeneration = async function() {
   $('progress-text').textContent = 'Łączenie z Supabase…';
   setProgress(0, total);
 
-  const usedTitles = [];
+  // combine manual topic + existing titles for AI
+  const allUsedTitles = [...existingTitles];
+  const newIndexEntries = [];
   let done = 0, errors = 0;
+  let currentNum = nextNumber;
 
-  for (let i = from; i <= to; i++) {
-    const num = String(i).padStart(3, '0');
+  for (let i = 0; i < total; i++) {
+    const num = String(currentNum).padStart(3, '0');
     log('⏳', `Generuję grę ${num}…`, topic || 'temat losowany przez AI', 'log-wait');
     try {
-      const game = await callEdgeFunction({ lang, index: i, total, topic, alreadyUsed: usedTitles });
-      const gameSlug = game.slug || slugify(game.meta?.title || `game-${num}`);
-      const key = `${prefix}/${num}-${gameSlug}`;
+      const game = await callEdgeFunctionWithRetry({
+        lang,
+        index: currentNum,
+        total,
+        topic,
+        alreadyUsed: allUsedTitles,
+      }, num);
+
+      const rawSlug = game.slug || game.meta?.title || `game-${num}`;
+      const gameSlug = slugify(rawSlug) || slugify(`game-${num}`);
+      const filename = `${num}-${gameSlug}.json`;
+      const indexKey = `${lang}/${num}-${gameSlug}`;
       delete game.slug;
-      generatedFiles[key] = game;
-      usedTitles.push(game.meta?.title || gameSlug);
+
+      // save to filesystem or collect for ZIP
+      if (marketplaceDir) {
+        await saveToMarketplace(lang, filename, game);
+        newIndexEntries.push(indexKey);
+        await updateIndexJson(newIndexEntries);
+      }
+      generatedFiles[indexKey] = game;
+      allUsedTitles.push(game.meta?.title || gameSlug);
       done++;
+      currentNum++;
       setProgress(done, total);
       $('progress-text').textContent = `Wygenerowano ${done} z ${total}…`;
       $('log').lastChild.remove();
-      log('✓', `<strong>${num} – ${game.meta?.title}</strong>`, `${game.questions?.length??'?'} pytań · ${key}.json`, 'log-ok');
+      const savedTo = marketplaceDir ? `zapisano → ${lang}/${filename}` : `${indexKey}.json`;
+      log('✓', `<strong>${num} – ${game.meta?.title}</strong>`, `${game.questions?.length??'?'} pytań · ${savedTo}`, 'log-ok');
     } catch(e) {
       errors++;
       $('log').lastChild.remove();
-      log('✗', `Błąd gry ${num}`, e.message, 'log-err');
+      log('✗', `Błąd gry ${num} (wszystkie próby wyczerpane)`, e.message, 'log-err');
+      currentNum++; // advance number even on failure to keep sequence
     }
-    if (i < to) await new Promise(r => setTimeout(r, 200));
+    if (i < total - 1) await sleep(300);
   }
 
   running = false;
   $('gen-btn').disabled = false;
+
+  if (marketplaceDir) await refreshLangStats(lang);
+
   if (Object.keys(generatedFiles).length > 0) {
     $('progress-text').textContent = `Gotowe! ${done} gier${errors?`, ${errors} błędów`:''}`;
-    $('dl-btn').classList.add('visible');
-    log('🎉', '<strong>Wszystko gotowe!</strong>', `${done} plików gotowych do pobrania.`, 'log-ok');
+    if (!marketplaceDir) {
+      $('dl-btn').classList.add('visible');
+      log('🎉', '<strong>Gotowe!</strong>', `${done} plików — pobierz ZIP poniżej.`, 'log-ok');
+    } else {
+      log('🎉', '<strong>Wszystko zapisane w marketplace!</strong>', `${done} gier · index.json zaktualizowany.`, 'log-ok');
+    }
   } else {
     $('progress-text').textContent = 'Nie udało się wygenerować żadnej gry.';
   }
 };
 
+// ─── ZIP fallback ─────────────────────────────────────────────────────────────
 window.downloadZip = async function() {
   const zip = new JSZip();
   for (const [key, data] of Object.entries(generatedFiles)) {
-    const [folder, file] = key.split('/');
+    const slash = key.indexOf('/');
+    const folder = key.slice(0, slash);
+    const file   = key.slice(slash + 1);
     zip.folder(folder).file(`${file}.json`, JSON.stringify(data, null, 2));
   }
   zip.file('index.json', JSON.stringify(Object.keys(generatedFiles), null, 2));
