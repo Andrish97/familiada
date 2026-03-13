@@ -223,9 +223,25 @@ window.renderManageList = function(){
   });
 };
 
-window.toggleManagePreview = function(idx,row){
+window.toggleManagePreview = async function(idx,row){
   const p=document.getElementById(`mp-${idx}`);
-  row.querySelector('.game-chevron').classList.toggle('open',p.classList.toggle('open'));
+  const isOpening=!p.classList.contains('open');
+  p.classList.toggle('open');
+  row.querySelector('.game-chevron').classList.toggle('open',p.classList.contains('open'));
+  if(isOpening && !loadedGames[idx].data){
+    p.innerHTML='<div style="color:var(--muted);font-size:12px;padding:8px 0">Ładowanie…</div>';
+    try{
+      const g=loadedGames[idx];
+      const res=await call({action:'get-game',lang:g.lang,filename:g.filename});
+      g.data=res.data;
+      g.title=res.data?.meta?.title||res.data?.game?.name||g.title;
+      g.description=res.data?.meta?.description||'';
+      row.querySelector('.game-title').textContent=g.title;
+    }catch(e){ p.innerHTML=`<div style="color:var(--red);font-size:12px;padding:8px 0">✗ ${e.message}</div>`; return; }
+    p.innerHTML=`
+      ${loadedGames[idx].description?`<div class="preview-desc">${esc(loadedGames[idx].description)}</div>`:''}
+      ${loadedGames[idx].data?.questions?renderQs(loadedGames[idx].data.questions):''}`;
+  }
 };
 
 window.scanGames = async function(){

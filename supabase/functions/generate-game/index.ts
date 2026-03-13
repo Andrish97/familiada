@@ -209,26 +209,28 @@ serve(async (req: Request) => {
     const dirRes = await ghGet(ghToken, ghRepo, `marketplace/${lang}`);
     if (!dirRes || !Array.isArray(dirRes)) return respond({ games: [] });
 
-    const games = await Promise.all(
-      dirRes
-        .filter((f: { name: string }) => f.name.endsWith(".json"))
-        .map(async (f: { name: string; sha: string }) => {
-          const m = f.name.match(/^(\d+)-(.+)\.json$/);
-          const num = m ? parseInt(m[1]) : 999;
-          let title = f.name, description = "", data = null;
-          try {
-            const fRes = await ghGet(ghToken, ghRepo, `marketplace/${lang}/${f.name}`);
-            if (fRes) {
-              data = JSON.parse(ghDecode(fRes.content));
-              title = data?.meta?.title ?? data?.game?.name ?? f.name;
-              description = data?.meta?.description ?? "";
-            }
-          } catch { /* skip */ }
-          return { num, filename: f.name, title, description, slug: m?.[2] ?? "", sha: f.sha, lang, indexKey: `${lang}/${f.name.replace(".json", "")}`, data };
-        })
-    );
-    games.sort((a, b) => a.num - b.num);
+    const games = dirRes
+      .filter((f: { name: string }) => f.name.endsWith(".json"))
+      .map((f: { name: string; sha: string }) => {
+        const m = f.name.match(/^(\d+)-(.+)\.json$/);
+        const num = m ? parseInt(m[1]) : 999;
+        const slug = m?.[2] ?? "";
+        const title = slug.replace(/-/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase());
+        return { num, filename: f.name, title, description: "", slug, sha: f.sha, lang, indexKey: `${lang}/${f.name.replace(".json", "")}`, data: null };
+      });
+    games.sort((a: { num: number }, b: { num: number }) => a.num - b.num);
     return respond({ games });
+  }
+
+  // ── get-game ─────────────────────────────────────────────────────────────────
+  if (action === "get-game") {
+    if (!ghToken || !ghRepo) return respond({ error: "Brak GitHub secrets" }, 500);
+    const { lang, filename } = body as { lang: string; filename: string };
+    if (!lang || !filename) return respond({ error: "Brak wymaganych pól" }, 400);
+    const fRes = await ghGet(ghToken, ghRepo, `marketplace/${lang}/${filename}`);
+    if (!fRes) return respond({ error: "Nie znaleziono" }, 404);
+    const data = JSON.parse(ghDecode(fRes.content));
+    return respond({ data });
   }
 
   // ── delete-game ─────────────────────────────────────────────────────────────
