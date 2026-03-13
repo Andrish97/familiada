@@ -202,10 +202,10 @@ serve(async (req: Request) => {
       }).eq("id", jobId);
 
       try {
-        const results: any[] = [];
+        // Prepare results as a fixed-size array filled with nulls
+        const results: any[] = Array.from({ length: job.total_games }).map(() => null);
         const alreadyUsed = [...(job.already_used || [])];
         
-        // Parallel generation with a limit of 5 concurrent requests to Groq
         const generateGame = async (index: number) => {
           const prompt = buildGeneratePrompt(job.lang, index + 1, job.topic, job.total_games, alreadyUsed);
           const game = await groqChat(groqKey, prompt, 0.9, 4000);
@@ -213,17 +213,16 @@ serve(async (req: Request) => {
           
           results[index] = game;
           
-          // Update progress in DB as they finish
+          // Update progress in DB (save full array to preserve indices)
           const completedCount = results.filter(Boolean).length;
           await supabase.from("game_gen_queue").update({ 
             processed_games: completedCount,
-            results: results.filter(Boolean)
+            results: results 
           }).eq("id", jobId);
           
           return game;
         };
 
-        // Run in chunks of 5 to avoid Groq rate limits
         const CHUNK_SIZE = 5;
         for (let i = 0; i < job.total_games; i += CHUNK_SIZE) {
           const chunk = Array.from({ length: Math.min(CHUNK_SIZE, job.total_games - i) }, (_, k) => i + k);
