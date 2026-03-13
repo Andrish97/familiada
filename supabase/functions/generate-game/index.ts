@@ -152,31 +152,42 @@ serve(async (req: Request) => {
         lang?: string; total?: number; topic?: string; alreadyUsed?: string[];
       };
 
-      // Get user identity from Authorization header
+      // Get user identity safely
       const authHeader = req.headers.get("Authorization");
       let userId: string | undefined;
       
       if (authHeader) {
-        const { data: { user } } = await createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY") ?? "", {
-          global: { headers: { Authorization: authHeader } }
-        }).auth.getUser();
-        userId = user?.id;
+        try {
+          const authClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY") ?? "", {
+            global: { headers: { Authorization: authHeader } }
+          });
+          const { data: authData } = await authClient.auth.getUser();
+          userId = authData?.user?.id;
+        } catch (err) {
+          console.error("[enqueue] Auth check failed:", err);
+        }
       }
+
+      const insertData: any = {
+        lang,
+        topic,
+        total_games: Number(total),
+        already_used: alreadyUsed,
+        status: 'pending'
+      };
+      
+      if (userId) insertData.created_by = userId;
 
       const { data, error } = await supabase
         .from("game_gen_queue")
-        .insert({
-          lang,
-          topic,
-          total_games: total,
-          already_used: alreadyUsed,
-          status: 'pending',
-          created_by: userId // explicitly set to ensure NOT NULL constraint is satisfied
-        })
+        .insert(insertData)
         .select()
         .single();
 
-      if (error) return respond({ error: error.message }, 500);
+      if (error) {
+        console.error("[enqueue] Insert error:", error);
+        return respond({ error: error.message }, 500);
+      }
       return respond({ ok: true, jobId: data.id });
     }
 
