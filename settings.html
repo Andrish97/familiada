@@ -12,7 +12,8 @@
   <link rel="stylesheet" href="css/builder.css"/>
   <link rel="stylesheet" href="css/settings.css?v=20260312-5"/>
 
-  <script type="module" src="js/pages/settings.js?v=20260312-5" defer></script>
+  <script type="module" src="js/pages/settings.js?v=20260313-1" defer></script>
+  <script type="module" src="js/pages/generator.js?v=20260313-1" defer></script>
 </head>
 <body class="builder-body settings-body settings-locked no-footer-line">
   <header class="topbar topbar-layout-4 topbar-mobile-keep-brand">
@@ -25,6 +26,7 @@
       <button class="btn sm tab-btn active" id="btnTabMaintenance" type="button" data-i18n="settings.tabs.maintenance">Prace techniczne</button>
       <button class="btn sm tab-btn" id="btnTabMail" type="button" data-i18n="settings.tabs.mail">Maile</button>
       <button class="btn sm tab-btn" id="btnTabMarketplace" type="button" data-i18n="settings.tabs.marketplace">Marketplace</button>
+      <button class="btn sm tab-btn" id="btnTabGenerator" type="button" data-i18n="settings.tabs.generator">Generator</button>
       <button class="btn sm tab-btn" id="btnTabReports" type="button" data-i18n="settings.tabs.reports">Zgłoszenia</button>
       <div class="ui-select" id="toolsSelect">
         <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
@@ -352,6 +354,99 @@
         <div class="field-hint" id="marketTableInfo">—</div>
       </div>
 
+      <!-- GENERATOR PANEL -->
+      <div class="market-admin-panel" id="generatorPanel" hidden>
+        <div class="panel-head">
+          <div class="panel-title" data-i18n="settings.generator.title">Generator gier</div>
+          <div class="panel-sub" data-i18n="settings.generator.subtitle">Generowanie i zarządzanie plikami marketplace</div>
+        </div>
+
+        <!-- Session -->
+        <div class="mail-card" id="gen-session-card">
+          <div class="mail-card-title">🌐 Sesja</div>
+          <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
+            <div class="field" style="flex:1;min-width:120px">
+              <label class="field-label">Język</label>
+              <select id="gen-manage-lang">
+                <option value="pl">🇵🇱 Polski</option>
+                <option value="uk">🇺🇦 Українська</option>
+                <option value="en">🇬🇧 English</option>
+              </select>
+            </div>
+            <button class="btn sm" id="gen-load-btn">Wczytaj</button>
+            <button class="btn sm danger" id="gen-reset-btn" style="display:none">↺ Zrezygnuj</button>
+            <span id="gen-groq-counter" style="display:none;font-size:11px;color:var(--muted);margin-left:4px"></span>
+          </div>
+          <div class="pending-bar" id="gen-pending-bar" style="display:none">
+            <span style="font-size:12px;font-weight:700;color:var(--red);flex:1" id="gen-pending-count"></span>
+            <button class="btn sm" id="gen-clear-pending-btn">Cofnij</button>
+            <button class="btn sm danger" id="gen-save-btn">💾 Zapisz zmiany</button>
+          </div>
+          <div class="status-bar" id="gen-session-status"></div>
+        </div>
+
+        <!-- Manage existing -->
+        <div class="mail-card" id="gen-manage-card" style="display:none">
+          <div class="mail-card-title">📋 Gry w marketplace</div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:4px">
+            <button class="btn sm btn-blue" id="gen-scan-btn" disabled>🔍 Skanuj</button>
+          </div>
+          <div class="bulk-bar" id="gen-bulk-bar" style="display:none">
+            <span class="bulk-count" id="gen-bulk-count">0 zaznaczonych</span>
+            <button class="btn sm" id="gen-select-issues-btn">Zaznacz problemy</button>
+            <button class="btn sm" id="gen-sel-all-btn">Zaznacz wszystkie</button>
+            <button class="btn sm" id="gen-clear-sel-btn">Odznacz</button>
+            <button class="btn sm danger" id="gen-delete-sel-btn">✕ Usuń zaznaczone</button>
+          </div>
+          <div id="gen-game-list" class="gen-game-list-container">
+            <div style="color:var(--muted);font-size:12px;padding:10px 0;text-align:center">Wczytaj listę aby zobaczyć gry</div>
+          </div>
+          <div class="status-bar" id="gen-manage-status"></div>
+        </div>
+
+        <!-- Generate -->
+        <div class="mail-card" id="gen-input-card" style="display:none">
+          <div class="mail-card-title">⚙️ Kolejka generowania gier</div>
+          <div style="margin-bottom:12px">
+            <div class="field">
+              <label class="field-label">Liczba gier</label>
+              <input type="number" id="gen-count" value="5" min="1" max="100">
+            </div>
+          </div>
+          <div class="field" style="margin-bottom:10px">
+            <label class="field-label">Temat (opcjonalnie)</label>
+            <textarea id="gen-topic" placeholder="Zostaw puste = AI dobierze unikalne tematy…" class="inp"></textarea>
+          </div>
+          <div class="tip">Nowe gry zostaną dodane do kolejki i wygenerowane w tle. Po zakończeniu pojawią się w marketplace.</div>
+          <div id="gen-queue-status" style="margin-top:10px"></div>
+        </div>
+
+        <button class="btn gold" id="gen-enqueue-btn" style="display:none">
+          <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
+          Dodaj do kolejki generowania
+        </button>
+
+        <!-- Generated results -->
+        <div class="mail-card" id="gen-results-section" style="display:none;margin-top:16px">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:4px">
+            <div class="mail-card-title" style="margin-bottom:0">📝 Wygenerowane gry</div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <span id="gen-results-counter" style="font-size:12px;color:var(--muted)"></span>
+              <div class="progress-bar-bg" style="width:120px;margin:0"><div class="progress-bar-fill" id="gen-progress-fill"></div></div>
+            </div>
+          </div>
+          <div id="gen-results-list"></div>
+          <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn btn-green" id="gen-push-approved-btn" style="flex:1;min-width:180px" disabled>
+              <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+              Dodaj zatwierdzone do listy
+            </button>
+            <button class="btn sm" id="gen-approve-all-btn" style="font-size:13px;padding:10px 16px">Zatwierdź wszystkie</button>
+          </div>
+          <div class="status-bar" id="gen-push-status"></div>
+        </div>
+      </div>
+
       <!-- REPORTS PANEL -->
       <div class="market-admin-panel" id="reportsPanel" hidden>
         <div class="mail-client">
@@ -503,5 +598,5 @@
       </div>
     </div>
   </div>
-</body>
+ </body>
 </html>

@@ -4218,10 +4218,15 @@ const en = {
     },
     tabs: {
       maintenance: "Maintenance",
-      mail: "Mail",
+      mail: "Emails",
       marketplace: "Community Games",
+      generator: "Generator",
       tools: "Tools",
       reports: "Reports",
+    },
+    generator: {
+      title: "Game Generator",
+      subtitle: "Generate and manage marketplace files",
     },
     modes: {
       message: "Message",

@@ -4095,9 +4095,14 @@ const uk = {
     tabs: {
       maintenance: "Технічні роботи",
       mail: "Пошта",
-      marketplace: "Ігри Спільноти",
+      marketplace: "Ігри спільноти",
+      generator: "Генератор",
       tools: "Інструменти",
-      reports: "Звернення",
+      reports: "Заявки",
+    },
+    generator: {
+      title: "Генератор ігор",
+      subtitle: "Генерація та управління файлами marketplace",
     },
     modes: {
       message: "Повідомлення",

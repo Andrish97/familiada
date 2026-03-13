@@ -62,12 +62,14 @@ const els = {
   btnTabMaintenance: document.getElementById("btnTabMaintenance"),
   btnTabMail: document.getElementById("btnTabMail"),
   btnTabMarketplace: document.getElementById("btnTabMarketplace"),
+  btnTabGenerator: document.getElementById("btnTabGenerator"),
   btnTabReports: document.getElementById("btnTabReports"),
   mainWrap: document.querySelector("main.wrap"),
   footer: document.querySelector("footer.footer"),
   maintenancePanel: document.querySelector(".maintenance-panel"),
   mailPanel: document.getElementById("mailPanel"),
   marketplacePanel: document.getElementById("marketplacePanel"),
+  generatorPanel: document.getElementById("generatorPanel"),
   reportsPanel: document.getElementById("reportsPanel"),
   maintenanceControls: document.getElementById("maintenanceControls"),
   modeStatus: document.getElementById("modeStatus"),
@@ -2935,20 +2937,28 @@ function closeTools() {
 
 function setActiveTab(tab) {
   activeTab = tab;
+  window.activeTab = tab; // dla generator.js
   const btn = document.getElementById("btnTabMaintenance");
   const btnMail = document.getElementById("btnTabMail");
   const btnMarket = document.getElementById("btnTabMarketplace");
+  const btnGen = document.getElementById("btnTabGenerator");
   const btnReports = document.getElementById("btnTabReports");
   const tools = document.getElementById("toolsSelect");
   if (btn) btn.classList.toggle("active", tab === "maintenance");
   if (btnMail) btnMail.classList.toggle("active", tab === "mail");
   if (btnMarket) btnMarket.classList.toggle("active", tab === "marketplace");
+  if (btnGen) btnGen.classList.toggle("active", tab === "generator");
   if (btnReports) btnReports.classList.toggle("active", tab === "reports");
   if (tools) tools.classList.toggle("active", tab === "tools");
   if (els.maintenancePanel) els.maintenancePanel.hidden = tab !== "maintenance";
   if (els.mailPanel) els.mailPanel.hidden = tab !== "mail";
   if (els.marketplacePanel) els.marketplacePanel.hidden = tab !== "marketplace";
+  if (els.generatorPanel) els.generatorPanel.hidden = tab !== "generator";
   if (els.reportsPanel) els.reportsPanel.hidden = tab !== "reports";
+  
+  if (tab === "generator" && window.resetGeneratorSession) {
+    window.resetGeneratorSession();
+  }
 }
 
 function labelFromPath(pathname) {
@@ -3122,6 +3132,13 @@ function wireEvents() {
       if (activeTab === "tools") closeTools();
       setActiveTab("marketplace");
       await loadMarketplace({ silent: true });
+    });
+  }
+
+  if (els.btnTabGenerator) {
+    els.btnTabGenerator.addEventListener("click", async () => {
+      if (activeTab === "tools") closeTools();
+      setActiveTab("generator");
     });
   }
 
