@@ -275,7 +275,50 @@ serve(async (req: Request) => {
     return respond(result);
   }
 
-  // ── generate ─────────────────────────────────────────────────────────────────
+  // ── save-games ───────────────────────────────────────────────────────────────
+  if (action === "save-games") {
+    if (!ghToken || !ghRepo) return respond({ error: "Brak GITHUB_TOKEN lub GITHUB_REPO w secrets" }, 500);
+    const { lang, games: gamesToSave } = body as { lang: string; games: Record<string, unknown>[] };
+    if (!lang || !Array.isArray(gamesToSave) || !gamesToSave.length) return respond({ error: "Brak wymaganych pól" }, 400);
+
+    // determine next number
+    let nextNum = 1;
+    try {
+      const dirRes = await ghGet(ghToken, ghRepo, `marketplace/${lang}`);
+      if (Array.isArray(dirRes)) {
+        const nums = dirRes
+          .filter((f: { name: string }) => f.name.match(/^\d+-.+\.json$/))
+          .map((f: { name: string }) => parseInt(f.name));
+        if (nums.length) nextNum = Math.max(...nums) + 1;
+      }
+    } catch { /* start from 1 */ }
+
+    const saved: { indexKey: string; filename: string }[] = [];
+    const { data: currentIndex } = await readIndex(ghToken, ghRepo);
+
+    for (let i = 0; i < gamesToSave.length; i++) {
+      const game = { ...gamesToSave[i] };
+      const rawSlug = String(game.slug ?? (game.meta as Record<string,unknown>)?.title ?? `game-${nextNum + i}`);
+      const gameSlug = slugify(rawSlug) || `game-${String(nextNum + i).padStart(3, "0")}`;
+      const num = String(nextNum + i).padStart(3, "0");
+      const filename = `${num}-${gameSlug}.json`;
+      const indexKey = `${lang}/${num}-${gameSlug}`;
+      delete game.slug;
+
+      await ghPut(ghToken, ghRepo, ghBranch, `marketplace/${lang}/${filename}`,
+        JSON.stringify(game, null, 2) + "\n", `feat: add game ${indexKey}`);
+
+      if (!currentIndex.includes(indexKey)) currentIndex.push(indexKey);
+      saved.push({ indexKey, filename });
+    }
+
+    await writeIndex(ghToken, ghRepo, ghBranch, currentIndex, null,
+      `chore: add ${saved.length} game(s) to index`);
+
+    return respond({ ok: true, saved });
+  }
+
+  // ── generate (Groq only, no GitHub) ──────────────────────────────────────────
   {
     const { lang = "pl", index = 1, total = 1, topic = "", alreadyUsed = [] } = body as {
       lang?: string; index?: number; total?: number; topic?: string; alreadyUsed?: string[];
@@ -289,27 +332,6 @@ serve(async (req: Request) => {
       return respond({ error: `Groq failed: ${(e as Error).message}` }, 502);
     }
     if (!Array.isArray(game.questions)) return respond({ error: "Missing questions" }, 502);
-
-    // save to GitHub if configured
-    if (ghToken && ghRepo) {
-      const rawSlug = String(game.slug ?? game?.meta?.title ?? `game-${index}`);
-      const gameSlug = slugify(rawSlug) || `game-${String(index).padStart(3, "0")}`;
-      const num = String(index).padStart(3, "0");
-      const filename = `${num}-${gameSlug}.json`;
-      const indexKey = `${lang}/${num}-${gameSlug}`;
-      delete game.slug;
-
-      await ghPut(ghToken, ghRepo, ghBranch, `marketplace/${lang}/${filename}`,
-        JSON.stringify(game, null, 2) + "\n", `feat: add game ${indexKey}`);
-
-      const { data: idx } = await readIndex(ghToken, ghRepo);
-      if (!idx.includes(indexKey)) {
-        await writeIndex(ghToken, ghRepo, ghBranch, [...idx, indexKey], null, `chore: add ${indexKey} to index`);
-      }
-
-      return respond({ game, indexKey, filename });
-    }
-
     return respond({ game });
   }
 });
