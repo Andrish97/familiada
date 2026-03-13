@@ -152,22 +152,6 @@ serve(async (req: Request) => {
         lang?: string; total?: number; topic?: string; alreadyUsed?: string[];
       };
 
-      // Get user identity safely
-      const authHeader = req.headers.get("Authorization");
-      let userId: string | undefined;
-      
-      if (authHeader) {
-        try {
-          const authClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY") ?? "", {
-            global: { headers: { Authorization: authHeader } }
-          });
-          const { data: authData } = await authClient.auth.getUser();
-          userId = authData?.user?.id;
-        } catch (err) {
-          console.error("[enqueue] Auth check failed:", err);
-        }
-      }
-
       const insertData: any = {
         lang,
         topic,
@@ -175,8 +159,6 @@ serve(async (req: Request) => {
         already_used: alreadyUsed,
         status: 'pending'
       };
-      
-      if (userId) insertData.created_by = userId;
 
       const { data, error } = await supabase
         .from("game_gen_queue")
