@@ -1,0 +1,223 @@
+{
+  "meta": {
+    "title": "Co Jest w Torebce",
+    "description": "Pytania o zawartość torebki lub portfela.",
+    "lang": "pl"
+  },
+  "game": {
+    "name": "Co Jest w Torebce",
+    "type": "prepared"
+  },
+  "questions": [
+    {
+      "text": "Wymień coś, co zawsze jest w damskiej torebce.",
+      "answers": [
+        {
+          "text": "Portfel",
+          "fixed_points": 46
+        },
+        {
+          "text": "Telefon",
+          "fixed_points": 28
+        },
+        {
+          "text": "Klucze",
+          "fixed_points": 14
+        },
+        {
+          "text": "Kosmetyki",
+          "fixed_points": 7
+        },
+        {
+          "text": "Chusteczki",
+          "fixed_points": 4
+        }
+      ]
+    },
+    {
+      "text": "Podaj coś, czego nie można znaleźć gdy pilnie potrzeba.",
+      "answers": [
+        {
+          "text": "Kluczy",
+          "fixed_points": 41
+        },
+        {
+          "text": "Telefonu",
+          "fixed_points": 27
+        },
+        {
+          "text": "Portfela",
+          "fixed_points": 18
+        },
+        {
+          "text": "Okularów",
+          "fixed_points": 13
+        }
+      ]
+    },
+    {
+      "text": "Wymień coś, co mężczyźni noszą w kieszeni spodni.",
+      "answers": [
+        {
+          "text": "Telefon",
+          "fixed_points": 48
+        },
+        {
+          "text": "Portfel",
+          "fixed_points": 31
+        },
+        {
+          "text": "Klucze",
+          "fixed_points": 14
+        },
+        {
+          "text": "Drobne monety",
+          "fixed_points": 6
+        }
+      ]
+    },
+    {
+      "text": "Podaj dokument, który Polak powinien mieć zawsze przy sobie.",
+      "answers": [
+        {
+          "text": "Dowód osobisty",
+          "fixed_points": 64
+        },
+        {
+          "text": "Prawo jazdy",
+          "fixed_points": 22
+        },
+        {
+          "text": "PESEL (telefon)",
+          "fixed_points": 13
+        }
+      ]
+    },
+    {
+      "text": "Wymień coś zbędnego, co ludzie noszą w torebce.",
+      "answers": [
+        {
+          "text": "Stare paragony",
+          "fixed_points": 38
+        },
+        {
+          "text": "Za dużo kart",
+          "fixed_points": 24
+        },
+        {
+          "text": "Stare leki",
+          "fixed_points": 18
+        },
+        {
+          "text": "Bezużyteczne klucze",
+          "fixed_points": 11
+        },
+        {
+          "text": "Zapomniane słodycze",
+          "fixed_points": 8
+        }
+      ]
+    },
+    {
+      "text": "Podaj coś, co kobieta wkłada do torebki wychodząc na imprezę.",
+      "answers": [
+        {
+          "text": "Kosmetyki do makijażu",
+          "fixed_points": 44
+        },
+        {
+          "text": "Telefon",
+          "fixed_points": 27
+        },
+        {
+          "text": "Gotówkę",
+          "fixed_points": 16
+        },
+        {
+          "text": "Plastry na obcasy",
+          "fixed_points": 12
+        }
+      ]
+    },
+    {
+      "text": "Wymień coś, co mężczyźni uważają że torebka jest zbędna.",
+      "answers": [
+        {
+          "text": "Wszystko zmieści się w kieszeni",
+          "fixed_points": 48
+        },
+        {
+          "text": "Portfel wystarczy",
+          "fixed_points": 28
+        },
+        {
+          "text": "Telefon za wszystko",
+          "fixed_points": 16
+        },
+        {
+          "text": "Plecak zastępuje torebkę",
+          "fixed_points": 7
+        }
+      ]
+    },
+    {
+      "text": "Podaj rzecz, którą wyjmuje się z portfela przy płaceniu.",
+      "answers": [
+        {
+          "text": "Kartę płatniczą",
+          "fixed_points": 54
+        },
+        {
+          "text": "Gotówkę",
+          "fixed_points": 28
+        },
+        {
+          "text": "Telefon z BLIK",
+          "fixed_points": 17
+        }
+      ]
+    },
+    {
+      "text": "Wymień coś, czego w portfelu jest za mało.",
+      "answers": [
+        {
+          "text": "Pieniędzy",
+          "fixed_points": 72
+        },
+        {
+          "text": "Miejsca na karty",
+          "fixed_points": 17
+        },
+        {
+          "text": "Bonów i kuponów",
+          "fixed_points": 10
+        }
+      ]
+    },
+    {
+      "text": "Podaj coś, co można znaleźć na dnie starej torebki.",
+      "answers": [
+        {
+          "text": "Zapomniane monety",
+          "fixed_points": 39
+        },
+        {
+          "text": "Stare paragony",
+          "fixed_points": 26
+        },
+        {
+          "text": "Kruszonki i cukierki",
+          "fixed_points": 19
+        },
+        {
+          "text": "Zapomniane leki",
+          "fixed_points": 11
+        },
+        {
+          "text": "Zużyte długopisy",
+          "fixed_points": 4
+        }
+      ]
+    }
+  ]
+}
