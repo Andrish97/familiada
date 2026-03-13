@@ -125,9 +125,6 @@ window.enqueueGeneration = async function() {
     renderGenList();
     
     checkQueueStatus();
-    
-    // Auto-trigger process
-    callEdgeAction({ action: 'process', jobId: res.jobId }).catch(console.error);
   } catch (e) {
     showStatus('gen-session-status', '✗ ' + e.message, 'err');
   } finally {
