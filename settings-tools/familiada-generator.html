@@ -370,7 +370,7 @@ window.saveChanges = async function(){
 
     // Obsługa dodawania (pętla po pendingAdd)
     if (pendingAdd.length > 0) {
-      const { data: files } = await sb().storage.from('community-games').list(`admin/${lang}`);
+      const { data: files } = await sb().storage.from('community-games').list(`marketplace/${lang}`);
       let nextNum = 1;
       if (files) {
         const nums = files.map(f => parseInt(f.name)).filter(n => !isNaN(n));
@@ -381,7 +381,7 @@ window.saveChanges = async function(){
         const item = pendingAdd[i];
         const numStr = String(nextNum + i).padStart(3, "0");
         const filename = `${numStr}-${item.slug}.json`;
-        const storagePath = `admin/${lang}/${filename}`;
+        const storagePath = `marketplace/${lang}/${filename}`;
         const gameData = JSON.parse(item.content);
 
         await sb().storage.from('community-games').upload(storagePath, item.content, { upsert: true });

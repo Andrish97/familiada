@@ -601,79 +601,75 @@ async function handleAdminMarketplaceApi(request, env, url) {
     return json({ ok: true });
   }
 
-  // POST /_admin_api/marketplace/sync-gh
-  // Czyta marketplace/index.json z GitHub, upsertuje każdą grę producenta
-  if (url.pathname === "/_admin_api/marketplace/sync-gh") {
+  // POST /_admin_api/marketplace/sync-storage
+  // Listuje obiekty w community-games/marketplace/, upsertuje każdą grę producenta
+  if (url.pathname === "/_admin_api/marketplace/sync-storage") {
     if (request.method !== "POST") return new Response("Method Not Allowed", { status: 405 });
 
-    const BATCH = 20; // max ~41 subrequests: 1 index + 20 gh fetches + 20 rpc calls
+    const BATCH = 20;
     let body = {};
-    try { body = await request.json(); } catch { /* no body = first batch */ }
+    try { body = await request.json(); } catch { }
     const offset = Number(body?.offset ?? 0);
 
-    // 1. Pobierz index.json
-    let allSlugs;
+    // 1. Listuj obiekty w Storage (RPC)
+    let allFiles;
     try {
-      const indexRes = await fetch(`${GH_RAW_BASE}/index.json`, { cf: { cacheEverything: false } });
-      if (!indexRes.ok) {
-        return json({ ok: false, error: `gh_index_fetch_failed: ${indexRes.status}` }, 502);
-      }
-      allSlugs = await indexRes.json();
-      if (!Array.isArray(allSlugs)) {
-        return json({ ok: false, error: "gh_index_invalid_format" }, 502);
-      }
+      const listRes = await supabaseRpc(env, "storage_list_objects", {
+        p_bucket: "community-games",
+        p_prefix: "marketplace/",
+        p_limit: 5000
+      });
+      if (!listRes.ok) return json({ ok: false, error: "storage_list_failed", details: summarizeSupabaseError(listRes) }, 502);
+      allFiles = (listRes.data || []).filter(f => f.name.endsWith(".json"));
     } catch (err) {
-      return json({ ok: false, error: `gh_index_error: ${String(err?.message || err)}` }, 502);
+      return json({ ok: false, error: `storage_list_error: ${String(err?.message || err)}` }, 502);
     }
 
-    const total   = allSlugs.length;
-    const batch   = allSlugs.slice(offset, offset + BATCH);
+    const total   = allFiles.length;
+    const batch   = allFiles.slice(offset, offset + BATCH);
     const hasMore = offset + BATCH < total;
-    console.log(`[worker] sync-gh offset:${offset} batch:${batch.length} total:${total}`);
+    console.log(`[worker] sync-storage offset:${offset} batch:${batch.length} total:${total}`);
 
     // 2. Upsert batcha
     const results = [];
-    for (const slug of batch) {
-      const safeSlug = String(slug || "").trim();
-      if (!safeSlug) continue;
-
+    for (const file of batch) {
+      const path = `community-games/${file.name}`;
       let gameJson;
       try {
-        const gameRes = await fetch(`${GH_RAW_BASE}/${safeSlug}.json`, { cf: { cacheEverything: false } });
-        if (!gameRes.ok) {
-          results.push({ slug: safeSlug, ok: false, error: `fetch_failed: ${gameRes.status}` });
+        const res = await downloadFromStorage(env, path);
+        if (!res.ok) {
+          results.push({ path: file.name, ok: false, error: `download_failed: ${res.status}` });
           continue;
         }
-        gameJson = await gameRes.json();
+        gameJson = await res.json();
       } catch (err) {
-        results.push({ slug: safeSlug, ok: false, error: `fetch_error: ${String(err?.message || err)}` });
+        results.push({ path: file.name, ok: false, error: `download_error: ${String(err?.message || err)}` });
         continue;
       }
 
       if (!gameJson?.meta || !gameJson?.game || !Array.isArray(gameJson?.questions)) {
-        results.push({ slug: safeSlug, ok: false, error: "invalid_format" });
+        results.push({ path: file.name, ok: false, error: "invalid_format" });
         continue;
       }
 
-      const payload = { game: gameJson.game, questions: gameJson.questions };
-      const upsert = await supabaseRpc(env, "market_admin_upsert_gh", {
-        p_slug:        safeSlug,
+      const upsert = await supabaseRpc(env, "market_admin_upsert", {
+        p_storage_path: file.name,
         p_title:       String(gameJson.meta.title || gameJson.game.name || ""),
         p_description: String(gameJson.meta.description || ""),
         p_lang:        String(gameJson.meta.lang || "pl"),
-        p_payload:     payload,
+        p_payload:     gameJson,
       });
 
       if (!upsert.ok) {
-        results.push({ slug: safeSlug, ok: false, error: summarizeSupabaseError(upsert) });
+        results.push({ path: file.name, ok: false, error: summarizeSupabaseError(upsert) });
         continue;
       }
       const upsertResult = normalizeRpcValue(upsert.data);
-      results.push({ slug: safeSlug, ok: upsertResult?.ok ?? true, id: upsertResult?.market_id });
+      results.push({ path: file.name, ok: upsertResult?.ok ?? true, id: upsertResult?.market_id });
     }
 
     const failed = results.filter(r => !r.ok);
-    console.log(`[worker] sync-gh batch done synced:${results.filter(r => r.ok).length} failed:${failed.length} hasMore:${hasMore}`);
+    console.log(`[worker] sync-storage batch done synced:${results.filter(r => r.ok).length} failed:${failed.length} hasMore:${hasMore}`);
     return json({
       ok: !hasMore && failed.length === 0,
       total,
@@ -685,26 +681,26 @@ async function handleAdminMarketplaceApi(request, env, url) {
     });
   }
 
-  // POST /_admin_api/marketplace/sync-gh-cleanup { slugs: string[] }
-  // Usuwa z DB gry GH których nie ma już w aktualnym index.json
-  if (url.pathname === "/_admin_api/marketplace/sync-gh-cleanup") {
+  // POST /_admin_api/marketplace/sync-storage-cleanup { paths: string[] }
+  // Usuwa z DB gry które są w marketplace/ ale nie ma ich już w Storage
+  if (url.pathname === "/_admin_api/marketplace/sync-storage-cleanup") {
     if (request.method !== "POST") return new Response("Method Not Allowed", { status: 405 });
     let body = {};
     try { body = await request.json(); } catch { return json({ ok: false, error: "invalid_json" }, 400); }
-    const slugs = body?.slugs;
-    if (!Array.isArray(slugs)) return json({ ok: false, error: "missing_slugs" }, 400);
+    const paths = body?.paths;
+    if (!Array.isArray(paths)) return json({ ok: false, error: "missing_paths" }, 400);
 
-    console.log("[worker] sync-gh-cleanup valid slugs:", slugs.length);
-    const result = await supabaseRpc(env, "market_admin_sync_cleanup", { p_slugs: slugs });
+    console.log("[worker] sync-storage-cleanup valid paths:", paths.length);
+    const result = await supabaseRpc(env, "market_admin_sync_cleanup", { p_storage_paths: paths });
     if (!result.ok) {
-      console.error("[worker] sync-gh-cleanup failed:", result);
+      console.error("[worker] sync-storage-cleanup failed:", result);
       return json({ ok: false, error: summarizeSupabaseError(result) }, 502);
     }
     const row = normalizeRpcValue(result.data);
     const deleted = row?.deleted ?? 0;
-    const removedSlugs = row?.slugs ?? [];
-    console.log("[worker] sync-gh-cleanup deleted:", deleted, removedSlugs);
-    return json({ ok: true, deleted, slugs: removedSlugs });
+    const removedPaths = row?.paths ?? [];
+    console.log("[worker] sync-storage-cleanup deleted:", deleted, removedPaths);
+    return json({ ok: true, deleted, paths: removedPaths });
   }
 
   // POST /_admin_api/marketplace/withdraw { id }

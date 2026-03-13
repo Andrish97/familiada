@@ -1533,12 +1533,12 @@ async function adminHardDelete(id) {
   }
 }
 
-async function syncGithub() {
-  const btn    = document.getElementById("btnMarketSyncGh");
+async function syncStorage() {
+  const btn    = document.getElementById("btnMarketSyncStorage");
   const status = document.getElementById("marketSyncStatus");
   if (btn) btn.disabled = true;
 
-  const modal = syncProgressModal({ title: "Synchronizacja z GitHub" });
+  const modal = syncProgressModal({ title: "Synchronizacja ze Storage" });
 
   let totalSynced = 0, totalFailed = 0, grandTotal = 0;
   const allResults = [];
@@ -1549,7 +1549,7 @@ async function syncGithub() {
 
     while (hasMore) {
       modal.update(totalSynced + totalFailed, grandTotal || "?");
-      const res  = await adminFetch("/marketplace/sync-gh", { method: "POST", body: JSON.stringify({ offset }) });
+      const res  = await adminFetch("/marketplace/sync-storage", { method: "POST", body: JSON.stringify({ offset }) });
       const json = await res.json();
 
       if (json.error) {
@@ -1563,7 +1563,7 @@ async function syncGithub() {
       totalFailed += json.failed ?? 0;
 
       for (const r of (json.results ?? [])) {
-        if (!r.ok) modal.update(totalSynced + totalFailed, grandTotal, `FAIL: ${r.slug} — ${r.error}`);
+        if (!r.ok) modal.update(totalSynced + totalFailed, grandTotal, `FAIL: ${r.path} — ${r.error}`);
       }
       allResults.push(...(json.results ?? []));
       hasMore  = json.hasMore ?? false;
@@ -1571,17 +1571,17 @@ async function syncGithub() {
       modal.update(totalSynced + totalFailed, grandTotal);
     }
 
-    // Cleanup — usuń z DB gry GH których nie ma już w index.json
-    const allSlugs = allResults.map(r => r.slug);
+    // Cleanup — usuń z DB gry których nie ma już w Storage
+    const allPaths = allResults.map(r => r.path);
     modal.setStep("Czyszczę usunięte gry…");
     let deleted = 0;
     try {
-      const cleanRes  = await adminFetch("/marketplace/sync-gh-cleanup", { method: "POST", body: JSON.stringify({ slugs: allSlugs }) });
+      const cleanRes  = await adminFetch("/marketplace/sync-storage-cleanup", { method: "POST", body: JSON.stringify({ paths: allPaths }) });
       const cleanJson = await cleanRes.json();
       if (cleanJson.ok) {
         deleted = cleanJson.deleted ?? 0;
         if (deleted > 0) {
-          modal.log(`USUNIĘTO: ${cleanJson.slugs?.join(", ") || deleted}`);
+          modal.log(`USUNIĘTO: ${cleanJson.paths?.join(", ") || deleted}`);
         }
       } else {
         modal.log(`WARN cleanup: ${cleanJson.error}`);
@@ -2643,8 +2643,8 @@ function wireMarketplaceEvents() {
   // Odśwież
   document.getElementById("btnMarketRefresh")?.addEventListener("click", () => loadMarketplace());
 
-  // Sync GH
-  document.getElementById("btnMarketSyncGh")?.addEventListener("click", syncGithub);
+  // Sync Storage
+  document.getElementById("btnMarketSyncStorage")?.addEventListener("click", syncStorage);
 
   // Telegram config
   document.getElementById("btnTelegramTest")?.addEventListener("click", testTelegram);

@@ -4287,7 +4287,7 @@ const uk = {
     marketplace: {
       title: "Ігри Спільноти",
       subtitle: "Модерація заявок та ігри виробника",
-      syncGh: "Синхронізувати з GitHub",
+      syncStorage: "Синхронізувати зі Storage",
       syncing: "Синхронізую…",
       syncOk: "Синхронізовано",
       tabPending: "На перевірці",
