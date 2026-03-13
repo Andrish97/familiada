@@ -34,26 +34,6 @@ https://www.familiada.online
 Projekt jest aktywnie rozwijany.  
 Publiczne repozytorium służy wyłącznie do prezentacji kodu źródłowego.
 
-## ⚙️ Generator Gier (Worker)
-
-Generator gier wykorzystuje model LLM (Groq) do automatycznego tworzenia treści gier. Praca odbywa się asynchronicznie za pomocą samodzielnego procesu (workera).
-
-### Uruchomienie Workera
-
-Worker jest napisanym w Deno skryptem, który monitoruje kolejkę w bazie danych.
-
-1. Zainstaluj [Deno](https://deno.com/).
-2. Ustaw zmienne środowiskowe:
-   ```bash
-   export SUPABASE_URL="twoj-url"
-   export SUPABASE_SERVICE_ROLE_KEY="twoj-klucz-admina"
-   export GROQ_API_KEY="twoj-klucz-groq"
-   ```
-3. Uruchom skrypt:
-   ```bash
-   deno run --allow-net --allow-env supabase/worker.ts
-   ```
-
 ## 📜 Licencja
 
 © 2026 Familiada Online. Wszelkie prawa zastrzeżone.

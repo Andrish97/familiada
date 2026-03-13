@@ -54,12 +54,11 @@ window.loadGeneratorList = async function() {
     if (loadedGames.length) {
       showStatus('gen-session-status', `Sesja aktywna · ${loadedGames.length} gier · ${lang.toUpperCase()}`, 'ok');
     } else {
-      showStatus('gen-session-status', `Sesja aktywna · brak gier (możesz generować nowe) · ${lang.toUpperCase()}`, 'ok');
+      showStatus('gen-session-status', `Sesja aktywna · brak gier · ${lang.toUpperCase()}`, 'ok');
     }
     
     renderManageList();
     $('gen-scan-btn').disabled = loadedGames.length === 0;
-    checkQueueStatus();
   } catch (e) {
     showStatus('gen-session-status', '✗ ' + e.message, 'err');
   } finally {
@@ -98,7 +97,7 @@ window.resetGeneratorSession = function() {
   renderGenList();
 };
 
-// Queue & Generation
+// Direct Generation (Queue-based for reliability)
 window.enqueueGeneration = async function() {
   const lang = $('gen-manage-lang').value;
   const count = Math.max(1, parseInt($('gen-count').value) || 5);
@@ -117,7 +116,7 @@ window.enqueueGeneration = async function() {
       alreadyUsed: existingTitles
     });
 
-    showStatus('gen-session-status', '✓ Dodano do kolejki. Śledź postęp poniżej.', 'ok');
+    showStatus('gen-session-status', '✓ Dodano do kolejki. Możesz zamknąć kartę, proces trwa w tle.', 'ok');
     $('gen-topic').value = '';
     
     show('gen-results-section');
@@ -125,21 +124,19 @@ window.enqueueGeneration = async function() {
     renderGenList();
     
     checkQueueStatus();
+    
+    // Kickstart the process
+    callEdgeAction({ action: 'process-step', jobId: res.jobId }).catch(console.error);
   } catch (e) {
     showStatus('gen-session-status', '✗ ' + e.message, 'err');
-  } finally {
     $('gen-enqueue-btn').disabled = false;
   }
 };
 
 async function checkQueueStatus() {
-  if (window.activeTab !== 'generator') {
-    console.log("[Generator] Tab not active, stopping poll.");
-    return;
-  }
+  if (window.activeTab !== 'generator') return;
 
   try {
-    console.log("[Generator] Polling queue status...");
     const { data: jobs, error } = await supabase()
       .from('game_gen_queue')
       .select('*')
@@ -147,20 +144,13 @@ async function checkQueueStatus() {
       .order('created_at', { ascending: false })
       .limit(5);
 
-    if (error) throw error;
-    if (!jobs?.length) {
-      console.log("[Generator] No jobs found in queue.");
-      return;
-    }
+    if (error || !jobs?.length) return;
 
-    const mainJobId = genGames[0]?.mainJobId;
+    const mainJobId = genGames[0]?.mainJobId || (jobs[0].status !== 'completed' ? jobs[0].id : null);
+    if (!mainJobId) return;
+
     const mainJob = jobs.find(j => j.id === mainJobId) || jobs[0];
     
-    console.log(`[Generator] Main job status: ${mainJob.status}, progress: ${mainJob.processed_games}/${mainJob.total_games}`);
-
-    const isMainActive = mainJob.status === 'pending' || mainJob.status === 'processing';
-    const anyRegenActive = genGames.some(g => g.jobId && jobs.find(j => j.id === g.jobId && (j.status === 'pending' || j.status === 'processing')));
-
     // Update global progress bar
     const pct = mainJob.total_games > 0 ? Math.round((mainJob.processed_games / mainJob.total_games) * 100) : 0;
     const fill = $('gen-progress-fill');
@@ -168,53 +158,30 @@ async function checkQueueStatus() {
     const counter = $('gen-results-counter');
     if (counter) counter.textContent = `${mainJob.processed_games} / ${mainJob.total_games} gier`;
 
-    syncGenSlotsFromJobs(jobs);
+    // Sync slots
+    if (!genGames.length || genGames[0].mainJobId !== mainJob.id) {
+      show('gen-results-section');
+      genGames = Array.from({length: mainJob.total_games}, (_, i) => ({game: null, status: 'pending', generating: true, idx: i, mainJobId: mainJob.id}));
+    }
 
-    if (isMainActive || anyRegenActive) {
+    genGames.forEach((slot, idx) => {
+      if (mainJob.results?.[idx]) {
+        slot.game = mainJob.results[idx];
+        slot.generating = false;
+        slot.status = 'pending';
+      } else {
+        slot.generating = mainJob.status === 'processing' && idx === (mainJob.results?.length || 0);
+      }
+    });
+
+    renderGenList();
+
+    if (mainJob.status === 'pending' || mainJob.status === 'processing') {
       setTimeout(checkQueueStatus, 2000);
     } else {
-      console.log("[Generator] All jobs finished.");
+      $('gen-enqueue-btn').disabled = false;
     }
-  } catch (e) { 
-    console.error("[Generator] Queue check failed:", e); 
-    setTimeout(checkQueueStatus, 5000); // Retry later
-  }
-}
-
-function syncGenSlotsFromJobs(jobs) {
-  if (!genGames.length) return;
-
-  genGames.forEach((slot, idx) => {
-    // 1. If it's a single regeneration job
-    if (slot.jobId) {
-      const job = jobs.find(j => j.id === slot.jobId);
-      if (job && job.status === 'completed' && job.results?.[0]) {
-        slot.game = job.results[0];
-        slot.generating = false;
-        slot.jobId = null;
-        slot.status = 'pending';
-      } else if (job) {
-        slot.generating = job.status === 'processing' || job.status === 'pending';
-      }
-    } 
-    // 2. If it belongs to the main batch job
-    else if (!slot.game) {
-      const mainJobId = slot.mainJobId;
-      const job = jobs.find(j => j.id === mainJobId);
-      if (job) {
-        if (job.results?.[idx]) {
-          slot.game = job.results[idx];
-          slot.generating = false;
-          slot.status = 'pending';
-        } else {
-          // It' "generating" only if it's the NEXT one to be processed
-          slot.generating = job.status === 'processing' && idx === (job.results?.length || 0);
-        }
-      }
-    }
-  });
-
-  renderGenList();
+  } catch (e) { console.error("Queue check failed", e); }
 }
 
 // Rendering
@@ -360,30 +327,34 @@ window.approveGenGame = function(i) {
   renderGenList();
 };
 
-window.regenerateGenGame = function(idx) {
+window.regenerateGenGame = async function(idx) {
   const item = genGames[idx];
   if (item.generating) return;
-  item.game = null; item.status = 'pending'; item.generating = true; item.jobId = null;
+  item.game = null; item.status = 'pending'; item.generating = true;
   renderGenList();
   
   const lang = $('gen-manage-lang').value;
   const existingTitles = genGames.filter((_,i) => i !== idx && _.game).map(g => g.game.meta?.title).filter(Boolean);
   loadedGames.filter(g => g.lang === lang).forEach(g => existingTitles.push(g.title));
   
-  callEdgeAction({
-    action: 'enqueue',
-    lang,
-    total: 1,
-    topic: $('gen-topic').value.trim(),
-    alreadyUsed: existingTitles
-  }).then(res => {
-    item.jobId = res.jobId;
-    checkQueueStatus();
-  }).catch(e => {
-    item.status = 'rejected'; item.generating = false;
+  try {
+    const res = await callEdgeAction({
+      action: 'generate',
+      lang,
+      index: idx + 1,
+      total: genGames.length,
+      topic: $('gen-topic').value.trim(),
+      alreadyUsed: existingTitles
+    });
+    item.game = res.game;
+    item.status = 'pending';
+  } catch (e) {
+    item.status = 'rejected';
     showStatus('gen-session-status', '✗ Błąd: ' + e.message, 'err');
+  } finally {
+    item.generating = false;
     renderGenList();
-  });
+  }
 };
 
 window.pushApprovedGames = function() {
