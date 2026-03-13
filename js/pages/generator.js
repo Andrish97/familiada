@@ -2,7 +2,7 @@
  * Generator Page Logic
  */
 
-import { t } from "../core/translate.js";
+import { t } from "../../translation/translation.js";
 import { sb as supabase } from "../core/supabase.js";
 
 let loadedGames = [];
