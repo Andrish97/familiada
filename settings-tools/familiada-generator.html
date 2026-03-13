@@ -435,7 +435,7 @@ window.enqueueGeneration = async function() {
     
     // Inicjalizacja slotów generowania
     $('gen-section').style.display = 'block';
-    genGames = Array.from({length: count}, (_, i) => ({game: null, status: 'pending', generating: true, idx: i}));
+    genGames = Array.from({length: count}, (_, i) => ({game: null, status: 'pending', generating: true, idx: i, mainJobId: res.jobId}));
     renderGenList();
     
     checkQueueStatus();
@@ -447,12 +447,13 @@ window.enqueueGeneration = async function() {
 };
 
 async function checkQueueStatus() {
+  // Pobierz ostatnie zadania (główne i regeneracje)
   const { data: jobs, error } = await sb()
     .from('game_gen_queue')
     .select('*')
     .in('status', ['pending', 'processing', 'completed'])
     .order('created_at', { ascending: false })
-    .limit(1);
+    .limit(10);
 
   const qStatus = $('queue-status');
   if (error || !jobs?.length) {
@@ -460,74 +461,81 @@ async function checkQueueStatus() {
     return;
   }
 
-  const j = jobs[0];
-  const pct = j.total_games > 0 ? Math.round((j.processed_games / j.total_games) * 100) : 0;
-  const isProcessing = j.status === 'processing' || j.status === 'pending';
+  // Szukamy głównego zadania (tego, które zainicjowało obecne genGames)
+  const mainJobId = genGames[0]?.mainJobId;
+  const mainJob = jobs.find(j => j.id === mainJobId) || jobs[0];
   
-  if (j.status === 'completed' && j.processed_games === j.total_games && !isProcessing) {
-    // Zadanie zakończone, ale upewnijmy się że sloty są wypełnione
-    syncGenSlots(j);
-    qStatus.innerHTML = '<div class="tip">Zadanie ukończone. Przejrzyj gry poniżej i zatwierdź je.</div>';
-    return;
+  const isMainActive = mainJob.status === 'pending' || mainJob.status === 'processing';
+  const anyRegenActive = genGames.some(g => g.jobId && jobs.find(j => j.id === g.jobId && (j.status === 'pending' || j.status === 'processing')));
+
+  if (isMainActive || anyRegenActive) {
+    const pct = mainJob.total_games > 0 ? Math.round((mainJob.processed_games / mainJob.total_games) * 100) : 0;
+    const statusLabel = mainJob.status === 'processing' ? `⚙️ Generowanie (${mainJob.processed_games}/${mainJob.total_games})` : `⏳ W kolejce`;
+    const color = mainJob.status === 'processing' ? 'var(--blue)' : 'var(--muted)';
+    
+    qStatus.innerHTML = `
+      <div style="font-size:12px; padding:8px; background:rgba(255,255,255,0.05); border-radius:8px; margin-bottom:8px; border-left:3px solid ${color}">
+        <div style="display:flex; justify-content:space-between; margin-bottom:4px">
+          <strong>${statusLabel}</strong>
+          <span>${mainJob.lang.toUpperCase()}</span>
+        </div>
+        <div style="height:4px; background:rgba(255,255,255,0.1); border-radius:2px; overflow:hidden">
+          <div style="height:100%; width:${pct}%; background:${color}; transition: width 0.3s ease"></div>
+        </div>
+      </div>
+    `;
+  } else {
+    qStatus.innerHTML = '<div class="tip">Wszystkie zadania ukończone. Przejrzyj gry poniżej i zatwierdź je.</div>';
   }
 
-  const statusLabel = j.status === 'processing' ? `⚙️ Przetwarzanie (${j.processed_games}/${j.total_games})` : `⏳ W kolejce`;
-  const color = j.status === 'processing' ? 'var(--blue)' : 'var(--muted)';
-  
-  qStatus.innerHTML = `
-    <div style="font-size:12px; padding:8px; background:rgba(255,255,255,0.05); border-radius:8px; margin-bottom:8px; border-left:3px solid ${color}">
-      <div style="display:flex; justify-content:space-between; margin-bottom:4px">
-        <strong>${statusLabel}</strong>
-        <span>${j.lang.toUpperCase()}</span>
-      </div>
-      <div style="height:4px; background:rgba(255,255,255,0.1); border-radius:2px; overflow:hidden">
-        <div style="height:100%; width:${pct}%; background:${color}; transition: width 0.3s ease"></div>
-      </div>
-      <div style="font-size:11px; color:var(--muted); margin-top:4px">${j.topic ? 'Temat: ' + j.topic : 'Temat losowy'}</div>
-    </div>
-  `;
+  // Synchronizacja slotów
+  syncGenSlotsFromJobs(jobs);
 
-  // Aktualizuj sloty na podstawie wyników z bazy
-  syncGenSlots(j);
-
-  // Re-check after 3s if active
-  if (j.status === 'pending' || j.status === 'processing') {
-    setTimeout(checkQueueStatus, 3000);
+  // Kontynuuj polling jeśli cokolwiek jest aktywne
+  if (isMainActive || anyRegenActive) {
+    setTimeout(checkQueueStatus, 2000);
   }
 }
 
-function syncGenSlots(job) {
-  if (!genGames.length || genGames.length !== job.total_games) {
-    genGames = Array.from({length: job.total_games}, (_, i) => ({game: null, status: 'pending', generating: true, idx: i}));
-  }
+function syncGenSlotsFromJobs(jobs) {
+  if (!genGames.length) return;
 
-  const results = job.results || [];
-  results.forEach((game, i) => {
-    if (genGames[i] && !genGames[i].game) {
-      genGames[i].game = game;
-      genGames[i].generating = false;
-      genGames[i].status = 'pending';
-      // Auto-open first found
-      if (i === 0) setTimeout(() => {
-        const row = document.querySelector('#gen-list .game-row');
-        if (row) {
-          const p = document.getElementById('gp-0');
-          if (p && !p.classList.contains('open')) {
-            p.classList.add('open');
-            row.querySelector('.game-chevron')?.classList.add('open');
+  genGames.forEach((slot, idx) => {
+    // 1. Jeśli to regeneracja
+    if (slot.jobId) {
+      const job = jobs.find(j => j.id === slot.jobId);
+      if (job && job.status === 'completed' && job.results?.[0]) {
+        slot.game = job.results[0];
+        slot.generating = false;
+        slot.jobId = null;
+        slot.status = 'pending';
+      }
+    } 
+    // 2. Jeśli to główne zadanie
+    else if (!slot.game) {
+      const mainJobId = slot.mainJobId;
+      const job = jobs.find(j => j.id === mainJobId);
+      if (job && job.results?.[idx]) {
+        slot.game = job.results[idx];
+        slot.generating = false;
+        slot.status = 'pending';
+        // Auto-open first
+        if (idx === 0) setTimeout(() => {
+          const row = document.querySelector('#gen-list .game-row');
+          if (row) {
+            const p = document.getElementById('gp-0');
+            if (p && !p.classList.contains('open')) {
+              p.classList.add('open');
+              row.querySelector('.game-chevron')?.classList.add('open');
+            }
           }
-        }
-      }, 50);
+        }, 50);
+      } else if (job) {
+        slot.generating = job.status === 'processing' || job.status === 'pending';
+      }
     }
   });
-  
-  // Mark remaining as generating/waiting
-  for (let i = results.length; i < job.total_games; i++) {
-    if (genGames[i]) {
-      genGames[i].generating = job.status === 'processing' && i === results.length;
-    }
-  }
-  
+
   renderGenList();
 }
 
@@ -800,76 +808,29 @@ window.approveAll = function(){
 window.regenerate = async function(idx){
   const item=genGames[idx];
   if(item.generating)return;
-  item.game=null; item.status='pending'; item.generating=true;
+  item.game=null; item.status='pending'; item.generating=true; item.jobId=null;
   renderGenList();
   try{
     const lang=$('manage-lang').value;
     const existingTitles=genGames.filter((_,i)=>i!==idx&&_.game).map(g=>g.game.meta?.title).filter(Boolean);
     loadedGames.filter(g=>g.lang===lang).forEach(g=>existingTitles.push(g.title));
-    const res=await callWithRetry({action:'generate',lang,index:idx+1,total:genGames.length,topic:$('topic').value.trim(),alreadyUsed:existingTitles},idx+1);
-    incGroq();
-    item.game=res.game;
-    item.status='pending';
-    if(marketplaceQIndex&&res.game?.questions){const hits=marketplaceQIndex.findSimilar(res.game.questions).filter(h=>h.slug!==(item.slug||''));item.simWarning=hits.length?`${Math.round(hits[0].pct*100)}% pytań podobnych do marketplace: "${hits[0].title}"`:null;}
-  }catch(e){ item.status='rejected'; item.game=null; }
-  item.generating=false;
-  renderGenList();
-  // auto-open preview
-  setTimeout(()=>{ const row=document.querySelector(`#gen-list .game-item:nth-child(${idx+1}) .game-row`); if(row){ const p=document.getElementById(`gp-${idx}`); if(p&&!p.classList.contains('open')){ p.classList.add('open'); row.querySelector('.game-chevron')?.classList.add('open'); } } },50);
-};
-
-async function callWithRetry(payload,num,maxRetries=4){
-  let lastErr;
-  for(let attempt=1;attempt<=maxRetries;attempt++){
-    try{ return await call(payload); }
-    catch(e){
-      lastErr=e; if(attempt>=maxRetries)break;
-      const cd=isRateLimit(e)?(attempt===1?15000:30000):(attempt===1?3000:8000);
-      await sleep(cd);
-    }
+    
+    // Używamy kolejki zamiast bezpośredniego wywołania generate
+    const res = await call({
+      action: 'enqueue',
+      lang,
+      total: 1,
+      topic: $('topic').value.trim(),
+      alreadyUsed: existingTitles
+    });
+    
+    item.jobId = res.jobId;
+    checkQueueStatus(); // Odśwież status żeby zacząć śledzić nowe zadanie
+  }catch(e){ 
+    item.status='rejected'; item.game=null; item.generating=false; 
+    showStatus('session-status', '✗ Błąd regeneracji: ' + e.message, 'err');
   }
-  throw lastErr;
-}
-
-window.startGeneration = async function(){
-  if(generating)return;
-  const lang=$('manage-lang').value;
-  const count=Math.max(1,parseInt($('count').value)||5);
-  const topic=$('topic').value.trim();
-  generating=true;
-  $('gen-btn').disabled=true;
-  $('gen-section').style.display='block';
-  hideStatus('push-status');
-
-  // init slots
-  genGames=Array.from({length:count},(_,i)=>({game:null,status:'pending',generating:true,idx:i}));
   renderGenList();
-
-  // get existing titles from local list
-  const existingTitles=loadedGames.filter(g=>g.lang===lang).map(g=>g.title).filter(Boolean);
-
-  // generate one by one
-  for(let i=0;i<count;i++){
-    const allUsed=[...existingTitles,...genGames.slice(0,i).filter(g=>g.game).map(g=>g.game.meta?.title).filter(Boolean)];
-    try{
-      const res=await callWithRetry({action:'generate',lang,index:i+1,total:count,topic,alreadyUsed:allUsed},i+1);
-      incGroq(); genGames[i].game=res.game; genGames[i].status='pending';
-      if(marketplaceQIndex&&res.game?.questions){
-        const hits=marketplaceQIndex.findSimilar(res.game.questions);
-        if(hits.length) genGames[i].simWarning=`${Math.round(hits[0].pct*100)}% pytań podobnych do marketplace: "${hits[0].title}"`;
-        else genGames[i].simWarning=null;
-      }
-    }catch(e){
-      genGames[i].game=null; genGames[i].status='rejected';
-    }
-    genGames[i].generating=false;
-    renderGenList();
-    // auto-open first generated
-    if(i===0) setTimeout(()=>{ const row=document.querySelector('#gen-list .game-row'); if(row){ const p=document.getElementById('gp-0'); if(p){ p.classList.add('open'); row.querySelector('.game-chevron')?.classList.add('open'); } } },50);
-    if(i<count-1) await sleep(300);
-  }
-  generating=false;
-  $('gen-btn').disabled=false;
 };
 
 window.pushApproved = function(){
