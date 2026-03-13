@@ -485,8 +485,15 @@ async function checkQueueStatus() {
         <div style="height:4px; background:rgba(255,255,255,0.1); border-radius:2px; overflow:hidden">
           <div style="height:100%; width:${pct}%; background:${color}; transition: width 0.3s ease"></div>
         </div>
+        ${mainJob.status === 'pending' ? `<div style="font-size:10px; color:var(--muted); margin-top:4px">Jeśli generowanie nie ruszy w ciągu 10s, odśwież stronę.</div>` : ''}
       </div>
     `;
+    
+    // Jeśli zadanie utknęło w pending (np. worker nie odpalił), spróbuj pchnąć jeszcze raz po 5s
+    if (mainJob.status === 'pending' && !window._triggerRetried) {
+      window._triggerRetried = true;
+      setTimeout(() => call({ action: 'process', jobId: mainJob.id }).catch(() => {}), 5000);
+    }
   } else {
     qStatus.innerHTML = '<div class="tip">Wszystkie zadania ukończone. Przejrzyj gry poniżej i zatwierdź je.</div>';
   }
