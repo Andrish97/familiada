@@ -1,87 +1,19 @@
--- 087: System kolejki dla generowania gier i migracja na Supabase Storage (marketplace)
+-- 088: Fix broken state from failed migrations 086 and 087
+-- This migration ensures that everything skipped due to SQL errors in 086/087 is correctly applied.
 
 -- ============================================================================
--- 1. community-games bucket (marketplace)
+-- 1. Fix Storage Index (Failed in 087 due to syntax error)
 -- ============================================================================
 
-INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-VALUES (
-  'community-games',
-  'community-games',
-  false,
-  10485760, -- 10MB
-  ARRAY['application/json']
-)
-ON CONFLICT (id) DO NOTHING;
+DROP INDEX IF EXISTS community_games_bucket_folder_idx;
 
--- RLS dla storage.objects (bucket community-games)
--- SELECT: wszyscy zalogowani
-DO $$ BEGIN
-  DROP POLICY IF EXISTS "community-games-select" ON storage.objects;
-EXCEPTION WHEN undefined_object THEN NULL;
-END $$;
-
-CREATE POLICY "community-games-select"
-  ON storage.objects FOR SELECT
-  TO authenticated
-  USING (bucket_id = 'community-games');
-
--- INSERT/UPDATE/DELETE: tylko admin (service_role) lub autor (folder oparty o auth.uid())
--- Dla gier producenta będziemy używać folderu 'admin/'
-DO $$ BEGIN
-  DROP POLICY IF EXISTS "community-games-insert" ON storage.objects;
-EXCEPTION WHEN undefined_object THEN NULL;
-END $$;
-
-CREATE POLICY "community-games-insert"
-  ON storage.objects FOR INSERT
-  TO authenticated
-  WITH CHECK (
-    bucket_id = 'community-games'
-    AND (
-      (storage.foldername(name))[1] = auth.uid()::text
-      OR (storage.foldername(name))[1] = 'admin'
-    )
-  );
-
-DO $$ BEGIN
-  DROP POLICY IF EXISTS "community-games-update" ON storage.objects;
-EXCEPTION WHEN undefined_object THEN NULL;
-END $$;
-
-CREATE POLICY "community-games-update"
-  ON storage.objects FOR UPDATE
-  TO authenticated
-  USING (
-    bucket_id = 'community-games'
-    AND (
-      (storage.foldername(name))[1] = auth.uid()::text
-      OR (storage.foldername(name))[1] = 'admin'
-    )
-  );
-
-DO $$ BEGIN
-  DROP POLICY IF EXISTS "community-games-delete" ON storage.objects;
-EXCEPTION WHEN undefined_object THEN NULL;
-END $$;
-
-CREATE POLICY "community-games-delete"
-  ON storage.objects FOR DELETE
-  TO authenticated
-  USING (
-    bucket_id = 'community-games'
-    AND (
-      (storage.foldername(name))[1] = auth.uid()::text
-      OR (storage.foldername(name))[1] = 'admin'
-    )
-  );
-
+-- Use double parentheses for expression index
 CREATE INDEX IF NOT EXISTS community_games_bucket_folder_idx
   ON storage.objects USING btree (bucket_id, ((storage.foldername(name))[1]))
   WHERE bucket_id = 'community-games';
 
 -- ============================================================================
--- 2. game_gen_queue - kolejka do generowania gier
+-- 2. Game Generation Queue (Skipped in 087)
 -- ============================================================================
 
 CREATE TABLE IF NOT EXISTS public.game_gen_queue (
@@ -107,8 +39,10 @@ CREATE INDEX IF NOT EXISTS game_gen_queue_pick_idx
 CREATE INDEX IF NOT EXISTS game_gen_queue_created_by_idx 
   ON public.game_gen_queue (created_by, created_at DESC);
 
+-- Enable RLS
 ALTER TABLE public.game_gen_queue ENABLE ROW LEVEL SECURITY;
 
+-- Policies for queue
 DO $$ BEGIN
   DROP POLICY IF EXISTS "game_gen_queue_select_own" ON public.game_gen_queue;
 EXCEPTION WHEN undefined_object THEN NULL;
@@ -141,10 +75,10 @@ CREATE POLICY "game_gen_queue_worker_all"
   WITH CHECK (true);
 
 -- ============================================================================
--- 3. Zmiany w market_games (powrót do storage_path, ale dla bucketu)
+-- 3. Market Games Schema (Skipped in 087)
 -- ============================================================================
 
--- Dodaj storage_path jeśli nie istnieje
+-- Ensure storage_path exists
 DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'market_games' AND column_name = 'storage_path') THEN
@@ -152,23 +86,30 @@ BEGIN
   END IF;
 END $$;
 
--- Migracja danych z gh_slug na storage_path (dla gier z GitHub)
+-- Migrate data from gh_slug if needed (if 086 column drop didn't run)
 UPDATE public.market_games 
 SET storage_path = 'admin/' || lang || '/' || gh_slug || '.json'
 WHERE storage_path IS NULL AND gh_slug IS NOT NULL;
 
--- Usuń gh_slug (już nie będzie potrzebny, wszystko idzie do Storage)
+-- Remove gh_slug
 ALTER TABLE public.market_games DROP COLUMN IF EXISTS gh_slug;
 
--- Index na storage_path
+-- Index
 CREATE INDEX IF NOT EXISTS market_games_storage_path_idx 
   ON public.market_games (storage_path);
 
 -- ============================================================================
--- 4. Funkcje RPC dla admina i storage
+-- 4. RPC Functions (Failed in 086/087 due to return type changes)
 -- ============================================================================
 
--- Funkcja do listowania obiektów w Storage (pomocna dla admina)
+-- Drop functions first to avoid "cannot change return type" error
+DROP FUNCTION IF EXISTS public.market_admin_list(text);
+DROP FUNCTION IF EXISTS public.market_admin_detail(uuid);
+DROP FUNCTION IF EXISTS public.market_admin_upsert(text, text, text, text, jsonb);
+DROP FUNCTION IF EXISTS public.market_admin_upsert_gh(text, text, text, text, jsonb);
+DROP FUNCTION IF EXISTS public.storage_list_objects(text, text, integer);
+
+-- 4a. storage_list_objects
 CREATE OR REPLACE FUNCTION public.storage_list_objects(
   p_bucket text,
   p_prefix text DEFAULT '',
@@ -206,9 +147,7 @@ AS $$
   LIMIT p_limit;
 $$;
 
--- market_admin_upsert dla gier z Storage (zastępuje market_admin_upsert_gh)
-DROP FUNCTION IF EXISTS public.market_admin_upsert_gh(text, text, text, text, jsonb);
-
+-- 4b. market_admin_upsert
 CREATE OR REPLACE FUNCTION public.market_admin_upsert(
   p_storage_path text,
   p_title text,
@@ -266,7 +205,7 @@ begin
     p_description,
     p_lang,
     p_payload,
-    'published', -- Gry od producenta są automatycznie published
+    'published',
     auth.uid()
   )
   returning id into v_id;
@@ -275,7 +214,7 @@ begin
 end;
 $$;
 
--- Aktualizacja market_admin_list i detail
+-- 4c. market_admin_list
 CREATE OR REPLACE FUNCTION public.market_admin_list(p_status text DEFAULT 'pending'::text)
 RETURNS TABLE(
   id uuid,
@@ -313,6 +252,7 @@ AS $$
   ORDER BY mg.created_at ASC;
 $$;
 
+-- 4d. market_admin_detail
 CREATE OR REPLACE FUNCTION public.market_admin_detail(p_id uuid)
 RETURNS TABLE(
   id uuid,

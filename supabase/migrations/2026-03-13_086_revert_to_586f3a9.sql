@@ -7,6 +7,7 @@ DROP FUNCTION IF EXISTS public.storage_list_objects(text, text, integer);
 DROP FUNCTION IF EXISTS public.market_admin_upsert(text, text, text, text, jsonb);
 
 -- Restore market_admin_list from 044
+DROP FUNCTION IF EXISTS public.market_admin_list(text);
 CREATE OR REPLACE FUNCTION "public"."market_admin_list"("p_status" text DEFAULT 'pending'::text)
 RETURNS TABLE(
     "id"              uuid,
@@ -43,6 +44,7 @@ RETURNS TABLE(
 $$;
 
 -- Restore market_admin_detail from 044
+DROP FUNCTION IF EXISTS public.market_admin_detail(uuid);
 CREATE OR REPLACE FUNCTION "public"."market_admin_detail"("p_id" uuid)
 RETURNS TABLE(
     "id"              uuid,
