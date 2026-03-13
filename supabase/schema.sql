@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict eKRcRZBTK6NVGvdopGvB72kdYdGmNmrWTcZgsKCmLjNWdJMTFtUHtSpyimU3sfg
+\restrict 56u8jjUMud3QhxVnN69J4qkAtVIqwaXzdmpfLohlnXd3J72LzTHCOxPrdNKKfpb
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -9090,6 +9090,13 @@ CREATE TABLE "public"."market_games" (
 
 
 --
+-- Name: COLUMN "market_games"."storage_path"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN "public"."market_games"."storage_path" IS 'Path to JSON in community-games bucket (prefix: marketplace/)';
+
+
+--
 -- Name: message_attachments; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -11910,5 +11917,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict eKRcRZBTK6NVGvdopGvB72kdYdGmNmrWTcZgsKCmLjNWdJMTFtUHtSpyimU3sfg
+\unrestrict 56u8jjUMud3QhxVnN69J4qkAtVIqwaXzdmpfLohlnXd3J72LzTHCOxPrdNKKfpb
 
