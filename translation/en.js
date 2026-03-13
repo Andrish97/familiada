@@ -4407,7 +4407,7 @@ const en = {
     marketplace: {
       title: "Community Games",
       subtitle: "Moderate submissions and manage producer games",
-      syncGh: "Sync from GitHub",
+      syncStorage: "Sync from Storage",
       syncing: "Syncing…",
       syncOk: "Sync OK",
       tabPending: "Pending",

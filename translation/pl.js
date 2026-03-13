@@ -4404,7 +4404,7 @@ const pl = {
     marketplace: {
       title: "Gry Społeczności",
       subtitle: "Moderacja zgłoszeń i gry producenta",
-      syncGh: "Sync z GitHub",
+      syncStorage: "Sync ze Storage",
       syncing: "Synchronizuję…",
       syncOk: "Sync OK",
       tabPending: "Do zatwierdzenia",

@@ -203,7 +203,7 @@ serve(async (req: Request) => {
 
         // 3. Save to Storage and DB
         // Determine next number from existing files in Storage
-        const { data: files } = await supabase.storage.from("community-games").list(`admin/${job.lang}`);
+        const { data: files } = await supabase.storage.from("community-games").list(`marketplace/${job.lang}`);
         let nextNum = 1;
         if (files) {
           const nums = files.map((f: { name: string }) => parseInt(f.name)).filter((n: number) => !isNaN(n));
@@ -217,7 +217,7 @@ serve(async (req: Request) => {
           const slug = slugify(rawSlug);
           const numStr = String(nextNum + i).padStart(3, "0");
           const filename = `${numStr}-${slug}.json`;
-          const storagePath = `admin/${job.lang}/${filename}`;
+          const storagePath = `marketplace/${job.lang}/${filename}`;
 
           // Upload to storage
           const { error: uploadError } = await supabase.storage
@@ -266,7 +266,7 @@ serve(async (req: Request) => {
       const { lang, filename } = body as { lang: string; filename: string };
       if (!lang || !filename) return respond({ error: "Missing lang or filename" }, 400);
 
-      const path = `admin/${lang}/${filename}`;
+      const path = `marketplace/${lang}/${filename}`;
       const { data, error } = await supabase.storage.from("community-games").download(path);
       if (error) return respond({ error: error.message }, 500);
 
