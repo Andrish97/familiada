@@ -154,30 +154,13 @@ async function checkQueueStatus() {
     const isMainActive = mainJob.status === 'pending' || mainJob.status === 'processing';
     const anyRegenActive = genGames.some(g => g.jobId && jobs.find(j => j.id === g.jobId && (j.status === 'pending' || j.status === 'processing')));
 
-    const qStatus = $('gen-queue-status');
-    if (isMainActive || anyRegenActive) {
-      const pct = mainJob.total_games > 0 ? Math.round((mainJob.processed_games / mainJob.total_games) * 100) : 0;
-      const statusLabel = mainJob.status === 'processing' ? `⚙️ Generowanie (${mainJob.processed_games}/${mainJob.total_games})` : `⏳ W kolejce`;
-      const color = mainJob.status === 'processing' ? 'var(--blue)' : 'var(--muted)';
-      
-      qStatus.innerHTML = `
-        <div style="font-size:12px; padding:8px; background:rgba(255,255,255,0.05); border-radius:8px; margin-bottom:8px; border-left:3px solid ${color}">
-          <div style="display:flex; justify-content:space-between; margin-bottom:4px">
-            <strong>${statusLabel}</strong>
-            <span>${mainJob.lang.toUpperCase()}</span>
-          </div>
-          <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
-          ${mainJob.status === 'pending' ? `<div style="font-size:10px; color:var(--muted); margin-top:4px">Jeśli generowanie nie ruszy w ciągu 10s, odśwież stronę.</div>` : ''}
-        </div>
-      `;
-      
-      if (mainJob.status === 'pending' && !window._genTriggerRetried) {
-        window._genTriggerRetried = true;
-        setTimeout(() => callEdgeAction({ action: 'process', jobId: mainJob.id }).catch(() => {}), 5000);
-      }
-    } else {
-      qStatus.innerHTML = '<div class="tip">Wszystkie zadania ukończone. Przejrzyj gry poniżej i zatwierdź je.</div>';
-    }
+    // Update global progress bar
+    const pct = mainJob.total_games > 0 ? Math.round((mainJob.processed_games / mainJob.total_games) * 100) : 0;
+    $('gen-progress-fill').style.width = `${pct}%`;
+    $('gen-results-counter').textContent = `${mainJob.processed_games} / ${mainJob.total_games} gier`;
+
+    // Clear queue status text, we use slot-based progress now
+    $('gen-queue-status').innerHTML = '';
 
     syncGenSlotsFromJobs(jobs);
 
@@ -191,6 +174,7 @@ function syncGenSlotsFromJobs(jobs) {
   if (!genGames.length) return;
 
   genGames.forEach((slot, idx) => {
+    // 1. If it's a single regeneration job
     if (slot.jobId) {
       const job = jobs.find(j => j.id === slot.jobId);
       if (job && job.status === 'completed' && job.results?.[0]) {
@@ -198,16 +182,23 @@ function syncGenSlotsFromJobs(jobs) {
         slot.generating = false;
         slot.jobId = null;
         slot.status = 'pending';
-      }
-    } else if (!slot.game) {
-      const mainJobId = slot.mainJobId;
-      const job = jobs.find(j => j.id === mainJobId);
-      if (job && job.results?.[idx]) {
-        slot.game = job.results[idx];
-        slot.generating = false;
-        slot.status = 'pending';
       } else if (job) {
         slot.generating = job.status === 'processing' || job.status === 'pending';
+      }
+    } 
+    // 2. If it belongs to the main batch job
+    else if (!slot.game) {
+      const mainJobId = slot.mainJobId;
+      const job = jobs.find(j => j.id === mainJobId);
+      if (job) {
+        if (job.results?.[idx]) {
+          slot.game = job.results[idx];
+          slot.generating = false;
+          slot.status = 'pending';
+        } else {
+          // It' "generating" only if it's the NEXT one to be processed
+          slot.generating = job.status === 'processing' && idx === (job.results?.length || 0);
+        }
       }
     }
   });
