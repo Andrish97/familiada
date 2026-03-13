@@ -164,20 +164,23 @@ Zwróć TYLKO czysty JSON:
 }
 
 function buildScanPrompt(lang: string, games: { slug: string; title: string; description: string }[]): string {
-  const list = games.map((g, i) => `${i + 1}. slug="${g.slug}" | title="${g.title}" | desc="${g.description}"`).join("\n");
+  const list = games.map((g, i) => `${i + 1}. slug="${g.slug}" title="${g.title}"`).join("\n");
   const instructions: Record<string, string> = {
-    pl: `Masz listę gier Familiady. Wskaż:
-1. DUPLIKATY — pary/grupy gier o tym samym temacie (nawet jeśli tytuły brzmią różnie).
-2. SŁABE GRY — zbyt ogólne, banalne, nudne tytuły lub opisy które nic nie mówią.
+    pl: `Masz listę ${games.length} gier Familiady (teleturniej Family Feud). Analiza TYLKO po tytule i slug — opisy ignoruj.
+
+ZADANIE 1 — DUPLIKATY: znajdź pary/grupy gier których TYTUŁY dotyczą dokładnie tego samego tematu (np. dwie gry o jedzeniu, dwie o sporcie). Podobne tytuły to NIE duplikat — muszą pokrywać ten sam konkretny temat. Bądź ostrożny, oznaczaj tylko oczywiste duplikaty.
+
+ZADANIE 2 — SŁABE: flaguj TYLKO gry których tytuł jest skrajnie ogólny jak "Różności", "Inne", "Różne", "Gra 1" lub dosłownie bez tematu. NIE flaguj normalnych konkretnych tytułów tematycznych.
 
 Lista:
 ${list}
 
+WAŻNE: używaj DOKŁADNIE tych slugów które widzisz na liście. Nie modyfikuj slugów.
 Zwróć TYLKO JSON:
-{"issues":[{"type":"duplicate","slugs":["slug1","slug2"],"reason":"wyjaśnienie po polsku"},{"type":"weak","slugs":["slug3"],"reason":"wyjaśnienie"}]}
+{"issues":[{"type":"duplicate","slugs":["slug1","slug2"],"reason":"wyjaśnienie"},{"type":"weak","slugs":["slug3"],"reason":"wyjaśnienie"}]}
 Jeśli brak problemów: {"issues":[]}`,
-    uk: `Проаналізуй список ігор, вкажи дублікати та слабкі ігри.\n\nСписок:\n${list}\n\nJSON: {"issues":[{"type":"duplicate","slugs":["s1","s2"],"reason":"..."},{"type":"weak","slugs":["s3"],"reason":"..."}]}`,
-    en: `Analyze the game list, identify duplicates and weak games.\n\nList:\n${list}\n\nJSON: {"issues":[{"type":"duplicate","slugs":["s1","s2"],"reason":"..."},{"type":"weak","slugs":["s3"],"reason":"..."}]}`,
+    uk: `Проаналізуй ${games.length} ігор, знайди лише очевидні дублікати (однакова тема) та справді слабкі назви (надто загальні). Ігноруй порожні описи.\n\nСписок:\n${list}\n\nВикористовуй ТОЧНІ slug зі списку. JSON: {"issues":[{"type":"duplicate","slugs":["s1","s2"],"reason":"..."},{"type":"weak","slugs":["s3"],"reason":"..."}]}`,
+    en: `Analyze ${games.length} games. Find only obvious duplicates (same topic) and truly weak titles (too generic like "Misc", "Other"). Ignore empty descriptions.\n\nList:\n${list}\n\nUse EXACT slugs from the list. JSON: {"issues":[{"type":"duplicate","slugs":["s1","s2"],"reason":"..."},{"type":"weak","slugs":["s3"],"reason":"..."}]}`,
   };
   return instructions[lang] ?? instructions.en;
 }
