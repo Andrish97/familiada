@@ -99,7 +99,7 @@
     <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:4px">
       <div class="field" style="flex:1;min-width:120px">
         <label>Język</label>
-        <select id="manage-lang" onchange="loadedGames=[];renderManageList();$('scan-btn').disabled=true;$('renumber-btn').disabled=true;hideStatus('manage-status')">
+        <select id="manage-lang" onchange="resetManage()">
           <option value="pl">🇵🇱 Polski</option>
           <option value="uk">🇺🇦 Українська</option>
           <option value="en">🇬🇧 English</option>
@@ -112,7 +112,8 @@
     <div class="bulk-bar" id="bulk-bar">
       <span class="bulk-count" id="bulk-count">0 zaznaczonych</span>
       <button class="btn btn-sm btn-secondary" onclick="selectIssues()">Zaznacz problemy</button>
-      <button class="btn btn-sm btn-secondary" onclick="toggleSelectAll()">Zaznacz wszystkie</button>
+      <button class="btn btn-sm btn-secondary" id="sel-all-btn" onclick="toggleSelectAll()">Zaznacz wszystkie</button>
+      <button class="btn btn-sm btn-secondary" onclick="clearSelection()">Odznacz</button>
       <button class="btn btn-sm btn-danger" onclick="deleteSelected()">✕ Usuń zaznaczone</button>
     </div>
     <div id="game-list"><div style="color:var(--muted);font-size:12px;padding:10px 0;text-align:center">Wczytaj listę aby zobaczyć gry</div></div>
@@ -188,6 +189,11 @@ async function call(body) {
 
 // ─── manage list ──────────────────────────────────────────────────────────────
 let loadedGames = [];
+
+window.resetManage = function(){
+  loadedGames=[]; selectedGames.clear(); updateBulkBar(); renderManageList();
+  $('scan-btn').disabled=true; $('renumber-btn').disabled=true; hideStatus('manage-status');
+};
 let selectedGames = new Set();
 
 function updateBulkBar(){
@@ -276,11 +282,15 @@ window.scanGames = async function(){
     const res=await call({action:'scan',lang,games});
     loadedGames.forEach(g=>{g.issueType=null;g.issueReason='';});
     for(const issue of (res.issues||[])){
+      const itype=issue.type==='duplicate'?'dup':issue.type;
       for(const slug of (issue.slugs||[])){
-        const g=loadedGames.find(x=>x.slug===slug);
-        if(g){g.issueType=issue.type==='duplicate'?'dup':issue.type;g.issueReason=issue.reason||'';}
+        // match by slug first, fallback by slugified title
+        const slugified=slug.toLowerCase().replace(/\s+/g,'-');
+        const g=loadedGames.find(x=>x.slug===slug||x.slug===slugified||x.title.toLowerCase().replace(/\s+/g,'-')===slug.toLowerCase());
+        if(g){g.issueType=itype;g.issueReason=issue.reason||'';}
       }
     }
+    selectedGames.clear(); updateBulkBar();
     const dups=(res.issues||[]).filter(i=>i.type==='duplicate').length;
     const weaks=(res.issues||[]).filter(i=>i.type==='weak').length;
     renderManageList();
@@ -315,6 +325,10 @@ window.toggleSelectAll = function(){
   else { loadedGames.forEach((_,i)=>selectedGames.add(i)); }
   updateBulkBar();
   renderManageList();
+};
+
+window.clearSelection = function(){
+  selectedGames.clear(); updateBulkBar(); renderManageList();
 };
 
 window.deleteSelected = async function(){
