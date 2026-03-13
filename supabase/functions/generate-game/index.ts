@@ -13,68 +13,130 @@ function respond(data: unknown, status = 200) {
   });
 }
 
-// ─── GENERATE ────────────────────────────────────────────────────────────────
+// ─── GitHub helpers ───────────────────────────────────────────────────────────
+
+function ghHeaders(token: string) {
+  return { Authorization: `Bearer ${token}`, Accept: "application/vnd.github+json", "Content-Type": "application/json" };
+}
+
+function ghBase(repo: string) {
+  return `https://api.github.com/repos/${repo}/contents`;
+}
+
+function ghDecode(content: string) {
+  return new TextDecoder().decode(Uint8Array.from(atob(content.replace(/\n/g, "")), c => c.charCodeAt(0)));
+}
+
+function ghEncode(text: string) {
+  return btoa(unescape(encodeURIComponent(text)));
+}
+
+async function ghGet(token: string, repo: string, path: string) {
+  const res = await fetch(`${ghBase(repo)}/${path}`, { headers: ghHeaders(token) });
+  if (!res.ok) { if (res.status === 404) return null; throw new Error(`GitHub GET ${path}: ${res.status}`); }
+  return res.json();
+}
+
+async function ghPut(token: string, repo: string, branch: string, path: string, content: string, message: string, sha?: string) {
+  const body: Record<string, unknown> = { message, content: ghEncode(content), branch };
+  if (sha) body.sha = sha;
+  const res = await fetch(`${ghBase(repo)}/${path}`, {
+    method: "PUT", headers: ghHeaders(token), body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`GitHub PUT ${path}: ${res.status} ${await res.text()}`);
+  return res.json();
+}
+
+async function ghDelete(token: string, repo: string, branch: string, path: string, message: string, sha: string) {
+  const res = await fetch(`${ghBase(repo)}/${path}`, {
+    method: "DELETE", headers: ghHeaders(token),
+    body: JSON.stringify({ message, sha, branch }),
+  });
+  if (!res.ok) throw new Error(`GitHub DELETE ${path}: ${res.status}`);
+}
+
+async function readIndex(token: string, repo: string): Promise<{ data: string[]; sha: string | null }> {
+  const res = await ghGet(token, repo, "marketplace/index.json");
+  if (!res) return { data: [], sha: null };
+  return { data: JSON.parse(ghDecode(res.content)), sha: res.sha };
+}
+
+async function writeIndex(token: string, repo: string, branch: string, data: string[], sha: string | null, msg: string) {
+  const current = await ghGet(token, repo, "marketplace/index.json");
+  const currentSha = current?.sha ?? sha;
+  await ghPut(token, repo, branch, "marketplace/index.json", JSON.stringify(data, null, 2) + "\n", msg, currentSha ?? undefined);
+}
+
+// ─── Slugify ──────────────────────────────────────────────────────────────────
+
+function slugify(text: string): string {
+  return (text || "").toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/ą/g,"a").replace(/ć/g,"c").replace(/ę/g,"e")
+    .replace(/ł/g,"l").replace(/ń/g,"n").replace(/ó/g,"o")
+    .replace(/ś/g,"s").replace(/ź/g,"z").replace(/ż/g,"z")
+    .replace(/і/g,"i").replace(/є/g,"e").replace(/ї/g,"i")
+    .replace(/[а-яёА-ЯЁ]/g, (c: string) => c.charCodeAt(0).toString(36))
+    .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+}
+
+// ─── Groq call ────────────────────────────────────────────────────────────────
+
+async function groqChat(groqKey: string, prompt: string, temperature: number, maxTokens: number) {
+  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${groqKey}` },
+    body: JSON.stringify({
+      model: "llama-3.3-70b-versatile",
+      temperature,
+      max_tokens: maxTokens,
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: "Return ONLY valid JSON, nothing else." },
+        { role: "user", content: prompt },
+      ],
+    }),
+  });
+  if (!res.ok) throw new Error(`Groq ${res.status}: ${await res.text()}`);
+  const data = await res.json();
+  const raw: string = data?.choices?.[0]?.message?.content ?? "";
+  if (!raw) throw new Error("Groq empty response");
+  return JSON.parse(raw.replace(/^```[a-z]*\n?/, "").replace(/\n?```$/, "").trim());
+}
+
+// ─── Prompts ──────────────────────────────────────────────────────────────────
 
 function buildGeneratePrompt(lang: string, index: number, topic: string, total: number, alreadyUsed: string[]): string {
-  const usedList = alreadyUsed.length
-    ? alreadyUsed.join(" / ")
-    : "(brak)";
+  const usedList = alreadyUsed.length ? alreadyUsed.join(" / ") : "(brak)";
 
   const topicHint: Record<string, string> = {
     pl: topic
-      ? `Temat tej gry: "${topic}". Upewnij się, że gra jest unikalna i nie pokrywa się z żadną z poniższych.`
-      : `Wymyśl własny temat – coś konkretnego z codziennego życia, kultury, przyrody, jedzenia, miejsc, emocji, przedmiotów, zwierząt, pracy, rozrywki, historii, nauki, sportu...
-WAŻNE: poniższe tematy już ISTNIEJĄ w bazie. Twój temat musi być semantycznie inny – nie tylko inaczej nazwany, ale naprawdę różny w treści:
+      ? `Temat tej gry: "${topic}". Upewnij się, że gra jest unikalna.`
+      : `Wymyśl własny, konkretny temat z codziennego życia, kultury, przyrody, jedzenia, miejsc, emocji, zwierząt, pracy, rozrywki, historii, sportu...
+WAŻNE: poniższe tematy już ISTNIEJĄ w bazie — twój musi być semantycznie inny, naprawdę różny w treści:
 [${usedList}]`,
     uk: topic
-      ? `Тема гри: "${topic}". Переконайся, що гра унікальна.`
-      : `Придумай власну тему. Ці теми вже ІСНУЮТЬ — твоя має бути семантично інша:
-[${usedList}]`,
+      ? `Тема гри: "${topic}".`
+      : `Придумай власну тему. Ці вже ІСНУЮТЬ — твоя має бути семантично інша: [${usedList}]`,
     en: topic
-      ? `Game topic: "${topic}". Make sure the game is unique.`
-      : `Invent your own topic. These topics ALREADY EXIST — yours must be semantically different, not just renamed:
-[${usedList}]`,
+      ? `Game topic: "${topic}".`
+      : `Invent your own topic. These ALREADY EXIST — yours must be semantically different: [${usedList}]`,
   };
 
   const systemDesc: Record<string, string> = {
-    pl: `Familiada to polski teleturniej w stylu "Family Feud". Prowadzący zadaje pytanie, a rodziny podają odpowiedzi, które wcześniej zebrała ankieta przeprowadzona wśród 100 losowych osób. Wygrywa ten, kto trafi w najpopularniejsze odpowiedzi z ankiety.
+    pl: `Familiada to polski teleturniej w stylu "Family Feud". Prowadzący zadaje pytanie, a rodziny podają odpowiedzi, które wcześniej zebrała ankieta przeprowadzona wśród 100 losowych osób.
 
-Twoim zadaniem jest wygenerowanie jednej pełnej gry Familiady po polsku.
+Twoim zadaniem jest wygenerowanie jednej pełnej gry Familiady po polsku. Pytania mogą dotyczyć absolutnie wszystkiego. Niech każde pytanie w grze będzie inne w formie i podejściu — poważne, zabawne, zaskakujące, nostalgiczne, abstrakcyjne.
 
-Pytania mogą dotyczyć absolutnie wszystkiego – ludzi, zwierząt, przedmiotów, miejsc, jedzenia, przyrody, skojarzeń, definicji, list, rankingów, sytuacji, emocji, faktów. Niech każde pytanie w grze będzie inne w formie i podejściu. Niektóre pytania mogą być poważne, inne zabawne, zaskakujące, nostalgiczne albo abstrakcyjne.
-
-Odpowiedzi w ankiecie to to co powiedziałby przeciętny Polak zapytany z ulicy. Konkretne, krótkie, oczywiste słowa.`,
-
-    uk: `Сімейка (Familiada) — телегра у стилі "Family Feud". Ведучий ставить питання, а учасники вгадують найпопулярніші відповіді з опитування 100 випадкових людей.
-
-Твоє завдання — згенерувати одну повну гру Сімейки українською мовою (НЕ російською).
-
-Питання можуть стосуватися будь-чого. Нехай кожне питання буде різним за формою. Деякі можуть бути серйозними, інші — веселими або абстрактними.
-
-Відповіді — це те, що сказала б звичайна людина на вулиці. Конкретні, короткі слова.`,
-
-    en: `Family Feud is a game show where a host asks a question and contestants guess the most popular answers from a survey of 100 random people.
-
-Your task is to generate one complete Family Feud game in English.
-
-Questions can be about absolutely anything. Make each question different in style and approach. Some can be serious, some funny, surprising or abstract.
-
-Answers are what an average person on the street would say. Specific, short, obvious words.`,
+Odpowiedzi to co powiedziałby przeciętny Polak zapytany z ulicy. Konkretne, krótkie, oczywiste słowa.`,
+    uk: `Сімейка — телегра у стилі Family Feud. Генеруй гру УКРАЇНСЬКОЮ (не російською). Питання різноманітні, відповіді — короткі конкретні слова.`,
+    en: `Family Feud game. Generate one complete game in English. Questions can be about anything, varied in style.`,
   };
 
   const descHint: Record<string, string> = {
-    pl: `Opis gry (pole "description") musi mieć 2–4 zdania:
-1. Co jest tematem gry i jaka jest jej atmosfera.
-2. Dla kogo jest dobra (np. dla rodzin z dziećmi, dla dorosłych, dla seniorów, na imprezy, szkolne zajęcia, integrację w pracy, wieczór kawalerski/panieński...).
-3. Opcjonalnie: jakiś ciekawy fakt lub wskazówka dla prowadzącego.`,
-    uk: `Опис (поле "description") має містити 2–4 речення:
-1. Тема та атмосфера гри.
-2. Для кого підходить (для сім'ї, дорослих, дітей, вечірок...).
-3. Опціонально: цікавий факт або порада ведучому.`,
-    en: `The description field must have 2–4 sentences:
-1. The topic and atmosphere of the game.
-2. Who it's best for (families, adults, kids, parties, school, team building...).
-3. Optional: a fun fact or tip for the host.`,
+    pl: `Pole "description" musi mieć 2–4 zdania: (1) temat i atmosfera, (2) dla kogo jest gra (rodziny, dzieci, seniorzy, imprezy, szkoła, praca, wieczór kawalerski...), (3) opcjonalnie ciekawostka lub wskazówka dla prowadzącego.`,
+    uk: `Поле "description": 2–4 речення про тему, для кого підходить, порада ведучому.`,
+    en: `Field "description": 2–4 sentences about topic, who it's for (families, adults, parties, school...), optional host tip.`,
   };
 
   return `${systemDesc[lang] ?? systemDesc.en}
@@ -83,162 +145,171 @@ ${topicHint[lang] ?? topicHint.en}
 Gra ${index} z ${total}.
 
 ZASADY TECHNICZNE:
-- Liczba pytań: od 12 do 16 (wybierz losowo, nie zawsze tyle samo)
+- Liczba pytań: ${10 + Math.floor(Math.random() * 7)} (między 10 a 16)
 - Każde pytanie: 4–7 odpowiedzi
-- Punkty: nieregularne liczby jak z prawdziwej ankiety (np. 43, 28, 14, 9, 6) – NIGDY 10/20/30/40/50
+- Punkty: nieregularne jak z prawdziwej ankiety (np. 43, 28, 14, 9, 6) — NIGDY równe 10/20/30/40/50
 - Suma punktów w pytaniu: 90–110
-- Odpowiedzi: maksymalnie 17 znaków
-- Tytuł gry: 2–5 słów
+- Odpowiedzi: maks. 17 znaków
+- Tytuł: 2–5 słów
 - ${descHint[lang] ?? descHint.en}
 
-Zwróć TYLKO czysty JSON, zero markdown, zero tekstu poza JSONem:
-{"slug":"ascii-slug","meta":{"title":"Tytuł","description":"Opis gry 2-4 zdania.","lang":"${lang}"},"game":{"name":"Tytuł","type":"prepared"},"questions":[{"text":"Pytanie?","answers":[{"text":"Odpowiedź","fixed_points":43},{"text":"Odpowiedź","fixed_points":27}]}]}`;
+Zwróć TYLKO czysty JSON:
+{"slug":"ascii-slug","meta":{"title":"Tytuł","description":"Opis 2-4 zdania.","lang":"${lang}"},"game":{"name":"Tytuł","type":"prepared"},"questions":[{"text":"Pytanie?","answers":[{"text":"Odpowiedź","fixed_points":43}]}]}`;
 }
-
-// ─── SCAN ─────────────────────────────────────────────────────────────────────
 
 function buildScanPrompt(lang: string, games: { slug: string; title: string; description: string }[]): string {
   const list = games.map((g, i) => `${i + 1}. slug="${g.slug}" | title="${g.title}" | desc="${g.description}"`).join("\n");
-
   const instructions: Record<string, string> = {
-    pl: `Masz listę gier Familiady. Przeanalizuj ją i wskaż:
+    pl: `Masz listę gier Familiady. Wskaż:
+1. DUPLIKATY — pary/grupy gier o tym samym temacie (nawet jeśli tytuły brzmią różnie).
+2. SŁABE GRY — zbyt ogólne, banalne, nudne tytuły lub opisy które nic nie mówią.
 
-1. DUPLIKATY / BARDZO PODOBNE — pary lub grupy gier, które pokrywają ten sam temat (nawet jeśli tytuły brzmią różnie). Przykład: "Kolacja w restauracji" i "Wieczór w restauracji" to duplikat.
-
-2. SŁABE GRY — gry z tytułem zbyt ogólnym/banalnym/nudnym, zbyt podobnym do wielu innych w tej samej bazie, lub z opisem który nic nie mówi.
-
-Lista gier:
+Lista:
 ${list}
 
-Zwróć TYLKO czysty JSON (zero tekstu poza JSONem):
-{"issues":[{"type":"duplicate","slugs":["slug1","slug2"],"reason":"Krótkie wyjaśnienie po polsku"},{"type":"weak","slugs":["slug3"],"reason":"Krótkie wyjaśnienie"}]}
-
-Jeśli nie ma żadnych problemów, zwróć: {"issues":[]}`,
-
-    uk: `У тебе є список ігор Сімейки. Проаналізуй та вкажи дублікати і слабкі ігри.
-
-Список:
-${list}
-
-Повернути ТІЛЬКИ JSON:
-{"issues":[{"type":"duplicate","slugs":["slug1","slug2"],"reason":"пояснення"},{"type":"weak","slugs":["slug3"],"reason":"пояснення"}]}`,
-
-    en: `You have a list of Family Feud games. Analyze and identify duplicates and weak games.
-
-List:
-${list}
-
-Return ONLY JSON:
-{"issues":[{"type":"duplicate","slugs":["slug1","slug2"],"reason":"explanation"},{"type":"weak","slugs":["slug3"],"reason":"explanation"}]}`,
+Zwróć TYLKO JSON:
+{"issues":[{"type":"duplicate","slugs":["slug1","slug2"],"reason":"wyjaśnienie po polsku"},{"type":"weak","slugs":["slug3"],"reason":"wyjaśnienie"}]}
+Jeśli brak problemów: {"issues":[]}`,
+    uk: `Проаналізуй список ігор, вкажи дублікати та слабкі ігри.\n\nСписок:\n${list}\n\nJSON: {"issues":[{"type":"duplicate","slugs":["s1","s2"],"reason":"..."},{"type":"weak","slugs":["s3"],"reason":"..."}]}`,
+    en: `Analyze the game list, identify duplicates and weak games.\n\nList:\n${list}\n\nJSON: {"issues":[{"type":"duplicate","slugs":["s1","s2"],"reason":"..."},{"type":"weak","slugs":["s3"],"reason":"..."}]}`,
   };
-
   return instructions[lang] ?? instructions.en;
 }
 
-// ─── HANDLER ──────────────────────────────────────────────────────────────────
+// ─── Handler ──────────────────────────────────────────────────────────────────
 
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   if (req.method !== "POST") return respond({ error: "Method not allowed" }, 405);
 
-  const groqKey = Deno.env.get("GROQ_API_KEY");
+  const groqKey  = Deno.env.get("GROQ_API_KEY")  ?? "";
+  const ghToken  = Deno.env.get("GITHUB_TOKEN")  ?? "";
+  const ghRepo   = Deno.env.get("GITHUB_REPO")   ?? "";
+  const ghBranch = Deno.env.get("GITHUB_BRANCH") ?? "main";
+
   if (!groqKey) return respond({ error: "Brak GROQ_API_KEY" }, 500);
 
-  let body: {
-    action?: string;
-    lang?: string;
-    index?: number;
-    total?: number;
-    topic?: string;
-    alreadyUsed?: string[];
-    games?: { slug: string; title: string; description: string }[];
-  };
+  let body: Record<string, unknown>;
   try { body = await req.json(); }
   catch { return respond({ error: "Invalid JSON" }, 400); }
 
-  const action = body.action ?? "generate";
+  const action = String(body.action ?? "generate");
 
-  // ── scan ──────────────────────────────────────────────────────────────────
+  // ── list-games ──────────────────────────────────────────────────────────────
+  if (action === "list-games") {
+    if (!ghToken || !ghRepo) return respond({ error: "Brak GITHUB_TOKEN lub GITHUB_REPO w secrets" }, 500);
+    const lang = String(body.lang ?? "pl");
+    const dirRes = await ghGet(ghToken, ghRepo, `marketplace/${lang}`);
+    if (!dirRes || !Array.isArray(dirRes)) return respond({ games: [] });
+
+    const games = await Promise.all(
+      dirRes
+        .filter((f: { name: string }) => f.name.endsWith(".json"))
+        .map(async (f: { name: string; sha: string }) => {
+          const m = f.name.match(/^(\d+)-(.+)\.json$/);
+          const num = m ? parseInt(m[1]) : 999;
+          let title = f.name, description = "", data = null;
+          try {
+            const fRes = await ghGet(ghToken, ghRepo, `marketplace/${lang}/${f.name}`);
+            if (fRes) {
+              data = JSON.parse(ghDecode(fRes.content));
+              title = data?.meta?.title ?? data?.game?.name ?? f.name;
+              description = data?.meta?.description ?? "";
+            }
+          } catch { /* skip */ }
+          return { num, filename: f.name, title, description, slug: m?.[2] ?? "", sha: f.sha, lang, indexKey: `${lang}/${f.name.replace(".json", "")}`, data };
+        })
+    );
+    games.sort((a, b) => a.num - b.num);
+    return respond({ games });
+  }
+
+  // ── delete-game ─────────────────────────────────────────────────────────────
+  if (action === "delete-game") {
+    if (!ghToken || !ghRepo) return respond({ error: "Brak GitHub secrets" }, 500);
+    const { lang, filename, sha, indexKey } = body as { lang: string; filename: string; sha: string; indexKey: string };
+    if (!lang || !filename || !sha) return respond({ error: "Brak wymaganych pól" }, 400);
+    await ghDelete(ghToken, ghRepo, ghBranch, `marketplace/${lang}/${filename}`, `chore: remove game ${indexKey}`, sha);
+    const { data: idx } = await readIndex(ghToken, ghRepo);
+    await writeIndex(ghToken, ghRepo, ghBranch, idx.filter(k => k !== indexKey), null, `chore: remove ${indexKey} from index`);
+    return respond({ ok: true });
+  }
+
+  // ── renumber ─────────────────────────────────────────────────────────────────
+  if (action === "renumber") {
+    if (!ghToken || !ghRepo) return respond({ error: "Brak GitHub secrets" }, 500);
+    const { lang, games } = body as { lang: string; games: { num: number; filename: string; sha: string; slug: string; indexKey: string }[] };
+    if (!lang || !Array.isArray(games)) return respond({ error: "Brak wymaganych pól" }, 400);
+
+    const renames = games
+      .sort((a, b) => a.num - b.num)
+      .map((g, i) => ({ g, newNum: i + 1, newFilename: `${String(i + 1).padStart(3, "0")}-${g.slug}.json` }))
+      .filter(({ g, newFilename }) => g.filename !== newFilename);
+
+    if (!renames.length) return respond({ ok: true, renamed: 0 });
+
+    let { data: currentIndex } = await readIndex(ghToken, ghRepo);
+
+    for (const { g, newFilename } of renames) {
+      const fRes = await ghGet(ghToken, ghRepo, `marketplace/${lang}/${g.filename}`);
+      if (!fRes) continue;
+      const content = ghDecode(fRes.content);
+      await ghPut(ghToken, ghRepo, ghBranch, `marketplace/${lang}/${newFilename}`, content,
+        `chore: renumber ${g.indexKey} → ${lang}/${newFilename.replace(".json", "")}`);
+      await ghDelete(ghToken, ghRepo, ghBranch, `marketplace/${lang}/${g.filename}`,
+        `chore: remove old ${g.filename} after renumber`, fRes.sha);
+      const newKey = `${lang}/${newFilename.replace(".json", "")}`;
+      currentIndex = currentIndex.map(k => k === g.indexKey ? newKey : k);
+    }
+
+    await writeIndex(ghToken, ghRepo, ghBranch, currentIndex, null, "chore: update index after renumber");
+    return respond({ ok: true, renamed: renames.length });
+  }
+
+  // ── scan ─────────────────────────────────────────────────────────────────────
   if (action === "scan") {
-    const { lang = "pl", games = [] } = body;
-    if (!games.length) return respond({ issues: [] });
+    if (!groqKey) return respond({ error: "Brak GROQ_API_KEY" }, 500);
+    const { lang = "pl", games = [] } = body as { lang: string; games: { slug: string; title: string; description: string }[] };
+    if (!Array.isArray(games) || !games.length) return respond({ issues: [] });
+    const result = await groqChat(groqKey, buildScanPrompt(String(lang), games), 0.2, 3000);
+    return respond(result);
+  }
 
-    const prompt = buildScanPrompt(lang, games);
-    let groqResp: Response;
+  // ── generate ─────────────────────────────────────────────────────────────────
+  {
+    const { lang = "pl", index = 1, total = 1, topic = "", alreadyUsed = [] } = body as {
+      lang?: string; index?: number; total?: number; topic?: string; alreadyUsed?: string[];
+    };
+
+    const prompt = buildGeneratePrompt(String(lang), Number(index), String(topic), Number(total), alreadyUsed as string[]);
+    let game: Record<string, unknown>;
     try {
-      groqResp = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${groqKey}` },
-        body: JSON.stringify({
-          model: "llama-3.3-70b-versatile",
-          temperature: 0.2,
-          max_tokens: 3000,
-          response_format: { type: "json_object" },
-          messages: [
-            { role: "system", content: "Return ONLY valid JSON, nothing else." },
-            { role: "user", content: prompt },
-          ],
-        }),
-      });
+      game = await groqChat(groqKey, prompt, 0.9, 4000);
     } catch (e) {
-      return respond({ error: `Groq fetch failed: ${(e as Error).message}` }, 502);
+      return respond({ error: `Groq failed: ${(e as Error).message}` }, 502);
+    }
+    if (!Array.isArray(game.questions)) return respond({ error: "Missing questions" }, 502);
+
+    // save to GitHub if configured
+    if (ghToken && ghRepo) {
+      const rawSlug = String(game.slug ?? game?.meta?.title ?? `game-${index}`);
+      const gameSlug = slugify(rawSlug) || `game-${String(index).padStart(3, "0")}`;
+      const num = String(index).padStart(3, "0");
+      const filename = `${num}-${gameSlug}.json`;
+      const indexKey = `${lang}/${num}-${gameSlug}`;
+      delete game.slug;
+
+      await ghPut(ghToken, ghRepo, ghBranch, `marketplace/${lang}/${filename}`,
+        JSON.stringify(game, null, 2) + "\n", `feat: add game ${indexKey}`);
+
+      const { data: idx } = await readIndex(ghToken, ghRepo);
+      if (!idx.includes(indexKey)) {
+        await writeIndex(ghToken, ghRepo, ghBranch, [...idx, indexKey], null, `chore: add ${indexKey} to index`);
+      }
+
+      return respond({ game, indexKey, filename });
     }
 
-    if (!groqResp.ok) {
-      return respond({ error: `Groq ${groqResp.status}`, detail: await groqResp.text() }, 502);
-    }
-
-    const groqData = await groqResp.json();
-    const raw = groqData?.choices?.[0]?.message?.content ?? "";
-    try {
-      const parsed = JSON.parse(raw.replace(/^```[a-z]*\n?/, "").replace(/\n?```$/, "").trim());
-      return respond(parsed);
-    } catch {
-      return respond({ error: "Invalid JSON from scan model", raw: raw.slice(0, 300) }, 502);
-    }
+    return respond({ game });
   }
-
-  // ── generate ──────────────────────────────────────────────────────────────
-  const { lang = "pl", index = 1, total = 1, topic = "", alreadyUsed = [] } = body;
-  const prompt = buildGeneratePrompt(lang, index, topic, total, alreadyUsed);
-
-  let groqResp: Response;
-  try {
-    groqResp = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${groqKey}` },
-      body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
-        temperature: 0.9,
-        max_tokens: 4000,
-        response_format: { type: "json_object" },
-        messages: [
-          { role: "system", content: "Return ONLY valid JSON, nothing else." },
-          { role: "user", content: prompt },
-        ],
-      }),
-    });
-  } catch (e) {
-    return respond({ error: `Groq fetch failed: ${(e as Error).message}` }, 502);
-  }
-
-  if (!groqResp.ok) {
-    const txt = await groqResp.text();
-    return respond({ error: `Groq ${groqResp.status}`, detail: txt }, 502);
-  }
-
-  const groqData = await groqResp.json();
-  const raw: string = groqData?.choices?.[0]?.message?.content ?? "";
-  if (!raw) return respond({ error: "Groq empty response" }, 502);
-
-  let game: Record<string, unknown>;
-  try {
-    game = JSON.parse(raw.replace(/^```[a-z]*\n?/, "").replace(/\n?```$/, "").trim());
-  } catch {
-    return respond({ error: "Invalid JSON from model", raw: raw.slice(0, 300) }, 502);
-  }
-
-  if (!Array.isArray(game.questions)) return respond({ error: "Missing questions" }, 502);
-
-  return respond({ game });
 });
