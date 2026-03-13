@@ -185,7 +185,6 @@ serve(async (req: Request) => {
       const { jobId } = body as { jobId: string };
       if (!jobId) return respond({ error: "Missing jobId" }, 400);
 
-      // 1. Get job
       const { data: job, error: getError } = await supabase
         .from("game_gen_queue")
         .select("*")
@@ -193,51 +192,51 @@ serve(async (req: Request) => {
         .single();
 
       if (getError || !job) return respond({ error: "Job not found" }, 404);
-      if (job.status !== "pending" && job.status !== "failed") return respond({ error: "Job already processing or completed" }, 400);
+      if (job.status === "completed") return respond({ ok: true, msg: "Already completed" });
 
-      // 2. Update status to processing
       await supabase.from("game_gen_queue").update({ 
         status: "processing", 
         started_at: new Date().toISOString(), 
         attempts: job.attempts + 1,
-        processed_games: 0 // Reset progress on restart
+        processed_games: 0 
       }).eq("id", jobId);
 
       try {
-        const results = [];
+        const results: any[] = [];
         const alreadyUsed = [...(job.already_used || [])];
-
-        for (let i = 0; i < job.total_games; i++) {
-          const prompt = buildGeneratePrompt(job.lang, i + 1, job.topic, job.total_games, alreadyUsed);
+        
+        // Parallel generation with a limit of 5 concurrent requests to Groq
+        const generateGame = async (index: number) => {
+          const prompt = buildGeneratePrompt(job.lang, index + 1, job.topic, job.total_games, alreadyUsed);
           const game = await groqChat(groqKey, prompt, 0.9, 4000);
+          if (!game.questions) throw new Error(`Invalid game at index ${index}`);
           
-          if (!game.questions) throw new Error(`Invalid game generated at index ${i}`);
+          results[index] = game;
           
-          results.push(game);
-          if (game.meta?.title) alreadyUsed.push(game.meta.title);
-          
-          // Update progress and intermediate results in DB after each game
+          // Update progress in DB as they finish
+          const completedCount = results.filter(Boolean).length;
           await supabase.from("game_gen_queue").update({ 
-            processed_games: i + 1,
-            results: results
+            processed_games: completedCount,
+            results: results.filter(Boolean)
           }).eq("id", jobId);
           
-          // Small delay between LLM calls to be safe
-          if (i < job.total_games - 1) await new Promise(r => setTimeout(r, 500));
+          return game;
+        };
+
+        // Run in chunks of 5 to avoid Groq rate limits
+        const CHUNK_SIZE = 5;
+        for (let i = 0; i < job.total_games; i += CHUNK_SIZE) {
+          const chunk = Array.from({ length: Math.min(CHUNK_SIZE, job.total_games - i) }, (_, k) => i + k);
+          await Promise.all(chunk.map(idx => generateGame(idx)));
         }
 
-        // 3. Mark job as completed
-        // Note: We no longer save to Storage directly here. 
-        // The UI will do it after user approval.
         await supabase.from("game_gen_queue").update({
           status: "completed",
           completed_at: new Date().toISOString()
         }).eq("id", jobId);
 
         return respond({ ok: true, total: results.length });
-
       } catch (err) {
-        // Mark job as failed
         await supabase.from("game_gen_queue").update({
           status: "failed",
           last_error: (err as Error).message
