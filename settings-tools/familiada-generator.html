@@ -495,7 +495,7 @@ window.scanGames = async function(){
     // 3. AI — tylko duplikaty tematyczne (tytuły, 1 call, nie słabe)
     showStatus('manage-status',`AI: duplikaty (${total} gier)…`,'info');
     const dupRes=await call({action:'scan',lang,mode:'duplicates',games:loadedGames.map(g=>({slug:g.slug,title:g.title,description:''}))});
-    applyIssues(dupRes.issues.filter((i:{type:string})=>i.type==='duplicate'));
+    applyIssues(dupRes.issues.filter(i=>i.type==='duplicate'));
 
     selectedGames.clear(); updateBulkBar();
     const dups=loadedGames.filter(g=>g.issueType==='dup').length;
