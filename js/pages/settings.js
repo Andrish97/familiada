@@ -2880,7 +2880,7 @@ async function loadToolsManifest() {
     if (!data || !Array.isArray(data.tools)) throw new Error("invalid manifest");
     const items = data.tools
       .filter((t) => t && typeof t.title === "string" && typeof t.path === "string")
-      .map((t) => ({ value: t.path, label: labelFromPath(t.path) }));
+      .map((t) => ({ value: t.path, label: t.title }));
     if (items.length) return items;
   } catch {
     // fall back to static list

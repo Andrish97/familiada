@@ -182,6 +182,7 @@ serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   if (req.method !== "POST") return respond({ error: "Method not allowed" }, 405);
 
+  try {
   const groqKey  = Deno.env.get("GROQ_API_KEY")  ?? "";
   const ghToken  = Deno.env.get("GITHUB_TOKEN")  ?? "";
   const ghRepo   = Deno.env.get("GITHUB_REPO")   ?? "";
@@ -333,5 +334,8 @@ serve(async (req: Request) => {
     }
     if (!Array.isArray(game.questions)) return respond({ error: "Missing questions" }, 502);
     return respond({ game });
+  }
+  } catch (e) {
+    return respond({ error: `Unexpected error: ${(e as Error).message}` }, 500);
   }
 });
