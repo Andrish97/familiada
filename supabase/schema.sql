@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 8Tu4lngtNKtqM7LeTbKASgNVXw36KKtGY9bw4bWZk5nPZ8XixdE9j9u34NrOj1E
+\restrict tumJPhv8mAAGlePKEBI19bmuQRhgBabEHiidBS3zOBniqRc6nQbGxAIWOamQaVk
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -8981,6 +8981,7 @@ CREATE TABLE "public"."game_gen_queue" (
     "result" "jsonb",
     "started_at" timestamp with time zone,
     "completed_at" timestamp with time zone,
+    "processed_games" integer DEFAULT 0 NOT NULL,
     CONSTRAINT "game_gen_queue_status_check" CHECK (("status" = ANY (ARRAY['pending'::"text", 'processing'::"text", 'completed'::"text", 'failed'::"text"])))
 );
 
@@ -11917,5 +11918,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 8Tu4lngtNKtqM7LeTbKASgNVXw36KKtGY9bw4bWZk5nPZ8XixdE9j9u34NrOj1E
+\unrestrict tumJPhv8mAAGlePKEBI19bmuQRhgBabEHiidBS3zOBniqRc6nQbGxAIWOamQaVk
 
