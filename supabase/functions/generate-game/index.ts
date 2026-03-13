@@ -163,24 +163,39 @@ Zwróć TYLKO czysty JSON:
 {"slug":"ascii-slug","meta":{"title":"Tytuł","description":"Opis 2-4 zdania.","lang":"${lang}"},"game":{"name":"Tytuł","type":"prepared"},"questions":[{"text":"Pytanie?","answers":[{"text":"Odpowiedź","fixed_points":43}]}]}`;
 }
 
-function buildScanPrompt(lang: string, games: { slug: string; title: string; description: string }[]): string {
+function buildDupeScanPrompt(lang: string, games: { slug: string; title: string }[]): string {
   const list = games.map((g, i) => `${i + 1}. slug="${g.slug}" title="${g.title}"`).join("\n");
   const instructions: Record<string, string> = {
-    pl: `Masz listę ${games.length} gier Familiady (teleturniej Family Feud). Analiza TYLKO po tytule i slug — opisy ignoruj.
+    pl: `Masz listę ${games.length} tytułów gier Familiady. Znajdź TYLKO duplikaty — pary/grupy gier o tym samym lub bardzo podobnym temacie (nawet jeśli tytuły brzmią inaczej).
 
-ZADANIE 1 — DUPLIKATY: znajdź pary/grupy gier których TYTUŁY dotyczą dokładnie tego samego tematu (np. dwie gry o jedzeniu, dwie o sporcie). Podobne tytuły to NIE duplikat — muszą pokrywać ten sam konkretny temat. Bądź ostrożny, oznaczaj tylko oczywiste duplikaty.
+Lista:
+${list}
 
-ZADANIE 2 — SŁABE: flaguj TYLKO gry których tytuł jest skrajnie ogólny jak "Różności", "Inne", "Różne", "Gra 1" lub dosłownie bez tematu. NIE flaguj normalnych konkretnych tytułów tematycznych.
+WAŻNE: używaj DOKŁADNIE tych slugów ze listy. Nie szukaj słabych gier — tylko duplikaty.
+Zwróć TYLKO JSON: {"issues":[{"type":"duplicate","slugs":["slug1","slug2"],"reason":"wyjaśnienie"}]}
+Jeśli brak duplikatów: {"issues":[]}`,
+    uk: `Знайди лише дублікати (схожа тема) серед ${games.length} ігор.\n\nСписок:\n${list}\n\nJSON: {"issues":[{"type":"duplicate","slugs":["s1","s2"],"reason":"..."}]}`,
+    en: `Find only duplicates (same topic) among ${games.length} games.\n\nList:\n${list}\n\nJSON: {"issues":[{"type":"duplicate","slugs":["s1","s2"],"reason":"..."}]}`,
+  };
+  return instructions[lang] ?? instructions.en;
+}
+
+function buildScanPrompt(lang: string, games: { slug: string; title: string; description: string }[]): string {
+  const list = games.map((g, i) => `${i + 1}. slug="${g.slug}" | title="${g.title}" | desc="${g.description}"`).join("\n");
+  const instructions: Record<string, string> = {
+    pl: `Masz listę ${games.length} gier Familiady (teleturniej Family Feud). Każda gra ma slug, tytuł i opis.
+
+ZADANIE — SŁABE GRY: flaguj gry które są zbyt ogólne, banalne lub mają nieatrakcyjny temat dla teleturnieju rodzinnego. Sprawdź opis — jeśli brzmi nudno, bez konkretnego pomysłu lub jest zbyt abstrakcyjny, to słaba gra. Duplikatów nie szukaj.
 
 Lista:
 ${list}
 
 WAŻNE: używaj DOKŁADNIE tych slugów które widzisz na liście. Nie modyfikuj slugów.
 Zwróć TYLKO JSON:
-{"issues":[{"type":"duplicate","slugs":["slug1","slug2"],"reason":"wyjaśnienie"},{"type":"weak","slugs":["slug3"],"reason":"wyjaśnienie"}]}
+{"issues":[{"type":"duplicate","slugs":["slug1","slug2"],"reason":"wyjaśnienie po polsku"},{"type":"weak","slugs":["slug3"],"reason":"wyjaśnienie"}]}
 Jeśli brak problemów: {"issues":[]}`,
-    uk: `Проаналізуй ${games.length} ігор, знайди лише очевидні дублікати (однакова тема) та справді слабкі назви (надто загальні). Ігноруй порожні описи.\n\nСписок:\n${list}\n\nВикористовуй ТОЧНІ slug зі списку. JSON: {"issues":[{"type":"duplicate","slugs":["s1","s2"],"reason":"..."},{"type":"weak","slugs":["s3"],"reason":"..."}]}`,
-    en: `Analyze ${games.length} games. Find only obvious duplicates (same topic) and truly weak titles (too generic like "Misc", "Other"). Ignore empty descriptions.\n\nList:\n${list}\n\nUse EXACT slugs from the list. JSON: {"issues":[{"type":"duplicate","slugs":["s1","s2"],"reason":"..."},{"type":"weak","slugs":["s3"],"reason":"..."}]}`,
+    uk: `Проаналізуй ${games.length} ігор. Знайди дублікати (схожа тема) та слабкі ігри (нецікаві, банальні).\n\nСписок:\n${list}\n\nВикористовуй ТОЧНІ slug зі списку. JSON: {"issues":[{"type":"duplicate","slugs":["s1","s2"],"reason":"..."},{"type":"weak","slugs":["s3"],"reason":"..."}]}`,
+    en: `Analyze ${games.length} games. Find duplicates (same topic) and weak games (boring, too generic, unattractive for families).\n\nList:\n${list}\n\nUse EXACT slugs from the list. JSON: {"issues":[{"type":"duplicate","slugs":["s1","s2"],"reason":"..."},{"type":"weak","slugs":["s3"],"reason":"..."}]}`,
   };
   return instructions[lang] ?? instructions.en;
 }
@@ -281,9 +296,10 @@ serve(async (req: Request) => {
   // ── scan ─────────────────────────────────────────────────────────────────────
   if (action === "scan") {
     if (!groqKey) return respond({ error: "Brak GROQ_API_KEY" }, 500);
-    const { lang = "pl", games = [] } = body as { lang: string; games: { slug: string; title: string; description: string }[] };
+    const { lang = "pl", games = [], mode = "full" } = body as { lang: string; games: { slug: string; title: string; description: string }[]; mode?: string };
     if (!Array.isArray(games) || !games.length) return respond({ issues: [] });
-    const result = await groqChat(groqKey, buildScanPrompt(String(lang), games), 0.2, 3000);
+    const prompt = mode === "duplicates" ? buildDupeScanPrompt(String(lang), games) : buildScanPrompt(String(lang), games);
+    const result = await groqChat(groqKey, prompt, 0.2, 4000);
     return respond(result);
   }
 
