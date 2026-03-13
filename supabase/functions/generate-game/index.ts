@@ -31,8 +31,12 @@ function ghEncode(text: string) {
   return btoa(unescape(encodeURIComponent(text)));
 }
 
+function ghSignal(ms = 10000) {
+  return AbortSignal.timeout(ms);
+}
+
 async function ghGet(token: string, repo: string, path: string) {
-  const res = await fetch(`${ghBase(repo)}/${path}`, { headers: ghHeaders(token) });
+  const res = await fetch(`${ghBase(repo)}/${path}`, { headers: ghHeaders(token), signal: ghSignal() });
   if (!res.ok) { if (res.status === 404) return null; throw new Error(`GitHub GET ${path}: ${res.status}`); }
   return res.json();
 }
@@ -41,7 +45,7 @@ async function ghPut(token: string, repo: string, branch: string, path: string, 
   const body: Record<string, unknown> = { message, content: ghEncode(content), branch };
   if (sha) body.sha = sha;
   const res = await fetch(`${ghBase(repo)}/${path}`, {
-    method: "PUT", headers: ghHeaders(token), body: JSON.stringify(body),
+    method: "PUT", headers: ghHeaders(token), body: JSON.stringify(body), signal: ghSignal(),
   });
   if (!res.ok) throw new Error(`GitHub PUT ${path}: ${res.status} ${await res.text()}`);
   return res.json();
@@ -51,6 +55,7 @@ async function ghDelete(token: string, repo: string, branch: string, path: strin
   const res = await fetch(`${ghBase(repo)}/${path}`, {
     method: "DELETE", headers: ghHeaders(token),
     body: JSON.stringify({ message, sha, branch }),
+    signal: ghSignal(),
   });
   if (!res.ok) throw new Error(`GitHub DELETE ${path}: ${res.status}`);
 }
