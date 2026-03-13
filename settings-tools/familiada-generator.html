@@ -183,6 +183,80 @@ function isRateLimit(e){ const m=(e?.message||'').toLowerCase(); return m.includ
 function showStatus(id,msg,type='info'){ const el=$(id); el.textContent=msg; el.className=`status-bar visible ${type}`; }
 function hideStatus(id){ $(id).className='status-bar'; }
 
+// ─── QuestionIndex ─────────────────────────────────────────────────────────────
+const Q_STOPWORDS=new Set(['co','ile','jak','czy','jakie','jaki','jaka','które','który','która','w','na','do','z','i','a','o','po','ze','się','nie','to','jest','są','was','by','też','już','że','przy','nad','pod','za','przed','przez','dla','oraz','wymien','wymiencie','podaj','podajcie','wskaż','wskazcie','powiedz','powiedzcie','napisz','napiszcie','nazwij','nazwijcie','zgadnij','zgadnijcie','wskaz']);
+const Q_SIM=0.50;   // Jaccard tokenów → pytania "podobne"
+const Q_DUP=0.30;   // % podobnych pytań między grami → duplikat
+
+function qNormWord(s){
+  return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/ą/g,'a').replace(/ć/g,'c').replace(/ę/g,'e').replace(/ł/g,'l')
+    .replace(/ń/g,'n').replace(/ó/g,'o').replace(/ś/g,'s').replace(/ź/g,'z').replace(/ż/g,'z')
+    .replace(/і/g,'i').replace(/є/g,'e').replace(/ї/g,'i');
+}
+function qTokenize(text){
+  return qNormWord(text).split(/\W+/).filter(w=>w.length>=3&&!Q_STOPWORDS.has(w));
+}
+function qJaccard(a,b){
+  const sa=new Set(a),sb=new Set(b);
+  const inter=[...sa].filter(x=>sb.has(x)).length;
+  return inter/(sa.size+sb.size-inter)||0;
+}
+
+class QuestionIndex {
+  constructor(){ this.entries=[]; this.tokIdx=new Map(); } // entries: {slug,title,qtoks}
+
+  add(slug, title, questions){
+    const idx=this.entries.length;
+    const qtoks=questions.map(q=>qTokenize(q.text||q)).filter(t=>t.length>=2);
+    this.entries.push({slug,title,qtoks});
+    for(const toks of qtoks) for(const tok of toks){
+      if(!this.tokIdx.has(tok)) this.tokIdx.set(tok,new Set());
+      this.tokIdx.get(tok).add(idx);
+    }
+  }
+
+  // zwraca [{slug,title}] — gry które mają pytanie podobne do podanego (single question)
+  findSimilarGames(question){
+    const tokens=qTokenize(question.text||question);
+    if(tokens.length<2) return [];
+    const candidates=new Set();
+    for(const tok of tokens){const idxs=this.tokIdx.get(tok);if(idxs)for(const i of idxs)candidates.add(i);}
+    const results=[];
+    for(const i of candidates){
+      const {slug,title,qtoks}=this.entries[i];
+      for(const bt of qtoks){if(qJaccard(tokens,bt)>=Q_SIM){results.push({slug,title});break;}}
+    }
+    return results;
+  }
+
+  // zwraca [{slug,title,pct}] — gry z >Q_DUP pokryciem podobnych pytań
+  findSimilar(questions){
+    const qtoks=questions.map(q=>qTokenize(q.text||q)).filter(t=>t.length>=2);
+    if(!qtoks.length) return [];
+    const candidates=new Set();
+    for(const toks of qtoks) for(const tok of toks){
+      const idxs=this.tokIdx.get(tok);
+      if(idxs) for(const i of idxs) candidates.add(i);
+    }
+    const results=[];
+    for(const i of candidates){
+      const {slug,title,qtoks:bqt}=this.entries[i];
+      let sim=0; const used=new Set();
+      for(const at of qtoks){
+        let best=0,bestB=-1;
+        for(let b=0;b<bqt.length;b++){if(used.has(b))continue;const s=qJaccard(at,bqt[b]);if(s>best){best=s;bestB=b;}}
+        if(best>=Q_SIM){sim++;used.add(bestB);}
+      }
+      const pct=sim/Math.min(qtoks.length,bqt.length);
+      if(pct>=Q_DUP) results.push({slug,title,pct});
+    }
+    return results.sort((a,b)=>b.pct-a.pct);
+  }
+}
+
+let marketplaceQIndex = null; // zbudowany po skanie lub wczytaniu gier
+
 async function call(body) {
   const {data,error} = await sb().functions.invoke('generate-game', {body});
   if (error) throw new Error(error.message||JSON.stringify(error));
@@ -296,7 +370,7 @@ function applyIssues(issues){
 window.scanGames = async function(){
   $('scan-btn').disabled=true;
   setListBusy(true);
-  const LOAD_BATCH=8, BLOCK=40;
+  const LOAD_BATCH=8;
   try{
     const lang=$('manage-lang').value;
 
@@ -314,32 +388,77 @@ window.scanGames = async function(){
       }
     }
 
-    // 2. reset + local checks
+    // 2. reset + lokalne sprawdzenia
     loadedGames.forEach(g=>{g.issueType=null;g.issueReason='';});
 
-    // empty/short description → weak
-    loadedGames.forEach(g=>{ if(!g.description||g.description.trim().length<20){g.issueType='weak';g.issueReason='Brak lub zbyt krótki opis.';} });
-
-    // duplicate questions (client-side, cross-game)
-    const normQ=s=>s.toLowerCase().replace(/[^a-z0-9ąćęłńóśźżіїє]/gi,'').trim();
-    const qMap=new Map();
-    for(const g of loadedGames) for(const q of (g.data?.questions||[])){const n=normQ(q.text);if(n.length>=10){if(!qMap.has(n))qMap.set(n,[]);qMap.get(n).push(g.slug);}}
-    for(const [,slugs] of qMap){const u=[...new Set(slugs)];if(u.length<2)continue;for(const s of u){const g=loadedGames.find(x=>x.slug===s);if(g&&!g.issueType){g.issueType='dup';g.issueReason='Powtarzające się pytania z inną grą.';}}}
-
-    // 3. AI faza 1 — duplikaty globalne (tylko tytuły, 1 call)
-    const total=loadedGames.length;
-    showStatus('manage-status',`AI: duplikaty globalne (${total} gier)…`,'info');
-    const dupRes=await call({action:'scan',lang,mode:'duplicates',games:loadedGames.map(g=>({slug:g.slug,title:g.title,description:''}))});
-    applyIssues(dupRes.issues);
-
-    // 4. AI faza 2 — słabe gry, bloki po BLOCK
-    const blocks=Math.ceil(total/BLOCK);
-    for(let b=0;b<blocks;b++){
-      showStatus('manage-status',`AI: słabe gry blok ${b+1}/${blocks}…`,'info');
-      const slice=loadedGames.slice(b*BLOCK,(b+1)*BLOCK);
-      const res=await call({action:'scan',lang,mode:'full',games:slice.map(g=>({slug:g.slug,title:g.title,description:g.description||''}))});
-      applyIssues(res.issues);
+    // reguły jakości
+    for(const g of loadedGames){
+      const qs=g.data?.questions||[];
+      const reasons=[];
+      if(!g.description||g.description.trim().length<30) reasons.push('zbyt krótki opis');
+      if(qs.length>0&&qs.length<10) reasons.push(`za mało pytań (${qs.length}/10)`);
+      if(qs.length>0){const thin=qs.filter(q=>(q.answers||[]).length<=3).length;const pct=Math.round(thin/qs.length*100);if(pct>30)reasons.push(`${pct}% pytań ma ≤3 odpowiedzi`);}
+      if(reasons.length){g.issueType='weak';g.issueReason=reasons.join(', ')+'.';}
     }
+
+    // buduj globalną pulę pytań
+    marketplaceQIndex=new QuestionIndex();
+    for(const g of loadedGames) if(g.data?.questions) marketplaceQIndex.add(g.slug,g.title,g.data.questions);
+
+    // parametry
+    const DUP_MIN_REPS=4;                    // ≥N powtórzonych pytań w puli → duplikat (check 1)
+    const GENERIC_RATIO=0.08;                // pytanie w >8% gier = generyczne, pomijamy
+    const PAIR_THRESHOLD=0.9*total/(total+350); // Michaelis-Menten: 100gr=20%, →90%
+    const slugToIdx=new Map(loadedGames.map((g,i)=>[g.slug,i]));
+
+    // check 1: per-gra — ile jej pytań istnieje w puli (spread > 0, nie generyczne)
+    for(const g of loadedGames){
+      if(g.issueType||!g.data?.questions?.length) continue;
+      const spreads=[];
+      for(const q of g.data.questions){
+        const hits=marketplaceQIndex.findSimilarGames(q).filter(h=>h.slug!==g.slug);
+        if(!hits.length) continue;
+        if(hits.length/total>GENERIC_RATIO) continue;
+        spreads.push(hits.length);
+      }
+      if(spreads.length<DUP_MIN_REPS) continue;
+      const bySpread={};
+      for(const s of spreads) bySpread[s]=(bySpread[s]||0)+1;
+      const breakdown=Object.entries(bySpread).sort(([a],[b])=>+a-+b).map(([s,c])=>`${c}×w ${s} ${+s===1?'grze':'grach'}`).join(', ');
+      g.issueType='dup';
+      g.issueReason=`${spreads.length} powtórzonych pytań: ${breakdown}.`;
+    }
+
+    // check 2: pairwise — dwie gry nie mogą dzielić >total/5% pytań między sobą
+    const pairShared=new Map(); // "i,j" → liczba podobnych pytań
+    for(let i=0;i<loadedGames.length;i++){
+      const g=loadedGames[i];
+      if(!g.data?.questions) continue;
+      for(const q of g.data.questions){
+        for(const hit of marketplaceQIndex.findSimilarGames(q)){
+          const j=slugToIdx.get(hit.slug);
+          if(j===undefined||j<=i) continue;
+          const key=`${i},${j}`;
+          pairShared.set(key,(pairShared.get(key)||0)+1);
+        }
+      }
+    }
+    for(const [key,shared] of pairShared){
+      const [i,j]=key.split(',').map(Number);
+      const gi=loadedGames[i], gj=loadedGames[j];
+      const minQ=Math.min(gi.data?.questions?.length||0,gj.data?.questions?.length||0);
+      if(!minQ) continue;
+      const pct=shared/minQ;
+      if(pct<=PAIR_THRESHOLD) continue;
+      const pctStr=Math.round(pct*100)+'%', maxStr=Math.round(PAIR_THRESHOLD*100)+'%';
+      if(!gi.issueType){gi.issueType='dup';gi.issueReason=`${pctStr} pytań pokrywa się z "${gj.title}" (max ${maxStr}).`;}
+      if(!gj.issueType){gj.issueType='dup';gj.issueReason=`${pctStr} pytań pokrywa się z "${gi.title}" (max ${maxStr}).`;}
+    }
+
+    // 3. AI — tylko duplikaty tematyczne (tytuły, 1 call, nie słabe)
+    showStatus('manage-status',`AI: duplikaty (${total} gier)…`,'info');
+    const dupRes=await call({action:'scan',lang,mode:'duplicates',games:loadedGames.map(g=>({slug:g.slug,title:g.title,description:''}))});
+    applyIssues(dupRes.issues.filter((i:{type:string})=>i.type==='duplicate'));
 
     selectedGames.clear(); updateBulkBar();
     const dups=loadedGames.filter(g=>g.issueType==='dup').length;
@@ -457,6 +576,7 @@ function renderGenList(){
         <span class="game-num" style="color:var(--muted)">${String(idx+1).padStart(2,'0')}</span>
         <span class="game-title">${esc(title)}</span>
         ${badgeHtml}
+        ${item.simWarning?`<span class="game-badge badge-dup" title="${esc(item.simWarning)}">⚠ powtórzenia</span>`:''}
         ${qCount?`<span style="font-size:11px;color:var(--muted);flex-shrink:0">${qCount}p</span>`:''}
         <div class="gen-actions" onclick="event.stopPropagation()">
           <button class="btn-sm btn-green" onclick="setStatus(${idx},'approved')" ${!item.game?'disabled':''} title="Zatwierdź">✓ Zatwierdź</button>
@@ -465,6 +585,7 @@ function renderGenList(){
         <span class="game-chevron">▶</span>
       </div>
       <div class="game-preview" id="gp-${idx}">
+        ${item.simWarning?`<div class="preview-issue weak">${esc(item.simWarning)}</div>`:''}
         ${item.game?.meta?.description?`<div class="preview-desc">${esc(item.game.meta.description)}</div>`:''}
         ${item.game?.questions?renderQs(item.game.questions):'<span style="color:var(--muted);font-size:12px">Generowanie…</span>'}
       </div>`;
@@ -502,6 +623,7 @@ window.regenerate = async function(idx){
     const res=await callWithRetry({action:'generate',lang,index:idx+1,total:genGames.length,topic:$('topic').value.trim(),alreadyUsed:existingTitles},idx+1);
     item.game=res.game;
     item.status='pending';
+    if(marketplaceQIndex&&res.game?.questions){const hits=marketplaceQIndex.findSimilar(res.game.questions).filter(h=>h.slug!==(item.slug||''));item.simWarning=hits.length?`${Math.round(hits[0].pct*100)}% pytań podobnych do marketplace: "${hits[0].title}"`:null;}
   }catch(e){ item.status='rejected'; item.game=null; }
   item.generating=false;
   renderGenList();
@@ -546,6 +668,11 @@ window.startGeneration = async function(){
     try{
       const res=await callWithRetry({action:'generate',lang,index:i+1,total:count,topic,alreadyUsed:allUsed},i+1);
       genGames[i].game=res.game; genGames[i].status='pending';
+      if(marketplaceQIndex&&res.game?.questions){
+        const hits=marketplaceQIndex.findSimilar(res.game.questions);
+        if(hits.length) genGames[i].simWarning=`${Math.round(hits[0].pct*100)}% pytań podobnych do marketplace: "${hits[0].title}"`;
+        else genGames[i].simWarning=null;
+      }
     }catch(e){
       genGames[i].game=null; genGames[i].status='rejected';
     }

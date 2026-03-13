@@ -166,16 +166,16 @@ Zwróć TYLKO czysty JSON:
 function buildDupeScanPrompt(lang: string, games: { slug: string; title: string }[]): string {
   const list = games.map((g, i) => `${i + 1}. slug="${g.slug}" title="${g.title}"`).join("\n");
   const instructions: Record<string, string> = {
-    pl: `Masz listę ${games.length} tytułów gier Familiady. Znajdź TYLKO duplikaty — pary/grupy gier o tym samym lub bardzo podobnym temacie (nawet jeśli tytuły brzmią inaczej).
+    pl: `Masz listę ${games.length} tytułów gier Familiady. Znajdź TYLKO pary/grupy które są NIEMAL IDENTYCZNE tematycznie — czyli pokrywają się w co najmniej 90% zakresu (np. dwie gry dosłownie o "polskiej kuchni domowej"). Gry z podobnej kategorii (np. "jedzenie" i "gotowanie") to NIE duplikat. Flaguj tylko oczywiste, niemal identyczne tematy.
 
 Lista:
 ${list}
 
-WAŻNE: używaj DOKŁADNIE tych slugów ze listy. Nie szukaj słabych gier — tylko duplikaty.
+WAŻNE: używaj DOKŁADNIE tych slugów ze listy. Nie szukaj słabych gier — tylko duplikaty tematyczne ≥90%.
 Zwróć TYLKO JSON: {"issues":[{"type":"duplicate","slugs":["slug1","slug2"],"reason":"wyjaśnienie"}]}
-Jeśli brak duplikatów: {"issues":[]}`,
-    uk: `Знайди лише дублікати (схожа тема) серед ${games.length} ігор.\n\nСписок:\n${list}\n\nJSON: {"issues":[{"type":"duplicate","slugs":["s1","s2"],"reason":"..."}]}`,
-    en: `Find only duplicates (same topic) among ${games.length} games.\n\nList:\n${list}\n\nJSON: {"issues":[{"type":"duplicate","slugs":["s1","s2"],"reason":"..."}]}`,
+Jeśli brak: {"issues":[]}`,
+    uk: `Знайди лише майже ідентичні дублікати (≥90% збігу теми) серед ${games.length} ігор. Схожі категорії — не дублікат.\n\nСписок:\n${list}\n\nJSON: {"issues":[{"type":"duplicate","slugs":["s1","s2"],"reason":"..."}]}`,
+    en: `Find only near-identical topic duplicates (≥90% overlap) among ${games.length} games. Similar categories are NOT duplicates.\n\nList:\n${list}\n\nJSON: {"issues":[{"type":"duplicate","slugs":["s1","s2"],"reason":"..."}]}`,
   };
   return instructions[lang] ?? instructions.en;
 }
