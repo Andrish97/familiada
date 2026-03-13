@@ -229,17 +229,7 @@ serve(async (req: Request) => {
 
           if (uploadError) throw uploadError;
 
-          // Upsert to market_games via RPC
-          const { data: rpcRes, error: rpcError } = await supabase.rpc("market_admin_upsert", {
-            p_storage_path: storagePath,
-            p_title: game.meta?.title || slug,
-            p_description: game.meta?.description || "",
-            p_lang: job.lang,
-            p_payload: game
-          });
-
-          if (rpcError) throw rpcError;
-          savedGames.push({ storagePath, marketId: rpcRes?.[0]?.market_id });
+          savedGames.push({ storagePath });
         }
 
         // 4. Mark job as completed
@@ -258,6 +248,100 @@ serve(async (req: Request) => {
           last_error: (err as Error).message
         }).eq("id", jobId);
         throw err;
+      }
+    }
+
+    // ── list-games (List JSON files in storage with sorting) ─────────────────
+    if (action === "list-games") {
+      const { lang = "pl" } = body as { lang?: string };
+      const prefix = `marketplace/${lang}`;
+      const { data: files, error } = await supabase.storage.from("community-games").list(prefix, { limit: 1000 });
+      if (error) return respond({ error: error.message }, 500);
+
+      const games = (files || [])
+        .filter((f: { name: string }) => f.name.endsWith(".json"))
+        .map((f: { name: string; id: string }) => {
+          const m = f.name.match(/^(\d+)-(.+)\.json$/);
+          const num = m ? parseInt(m[1]) : 999;
+          const slug = m?.[2] ?? "";
+          const title = slug.replace(/-/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase());
+          return {
+            num,
+            filename: f.name,
+            title,
+            description: "",
+            slug,
+            sha: f.id,
+            lang,
+            indexKey: `${prefix}/${f.name}`,
+            data: null
+          };
+        });
+      
+      games.sort((a: { num: number }, b: { num: number }) => a.num - b.num);
+      return respond({ games });
+    }
+
+    // ── batch-commit (Handles renumbering + additions + deletions) ────────────
+    if (action === "batch-commit") {
+      const { lang, deletes = [], adds = [], remaining = [] } = body as {
+        lang: string;
+        deletes: { filename: string; indexKey: string; slug: string; sha: string }[];
+        adds: { slug: string; content: string }[];
+        remaining: { filename: string; indexKey: string; slug: string; sha: string }[];
+      };
+
+      if (!lang) return respond({ error: "Missing lang" }, 400);
+      const prefix = `marketplace/${lang}`;
+
+      // 1. Sort remaining by current number
+      const sorted = remaining.slice().sort((a, b) => parseInt(a.filename) - parseInt(b.filename));
+
+      let counter = 1;
+      const tasks: Promise<any>[] = [];
+
+      // 2. Handle renames for remaining files
+      for (const g of sorted) {
+        const newNum = String(counter++).padStart(3, "0");
+        const newFilename = `${newNum}-${g.slug}.json`;
+        if (newFilename !== g.filename) {
+          const oldPath = `${prefix}/${g.filename}`;
+          const newPath = `${prefix}/${newFilename}`;
+          
+          // In Storage we have to copy and then delete
+          tasks.push((async () => {
+            const { error: cpErr } = await supabase.storage.from("community-games").copy(oldPath, newPath);
+            if (cpErr) throw cpErr;
+            const { error: rmErr } = await supabase.storage.from("community-games").remove([oldPath]);
+            if (rmErr) throw rmErr;
+          })());
+        }
+      }
+
+      // 3. Handle deletions
+      if (deletes.length > 0) {
+        const pathsToDelete = deletes.map(d => `${prefix}/${d.filename}`);
+        tasks.push(supabase.storage.from("community-games").remove(pathsToDelete));
+      }
+
+      // 4. Handle new additions
+      for (const a of adds) {
+        const newNum = String(counter++).padStart(3, "0");
+        const slug = a.slug || `game-${newNum}`;
+        const filename = `${newNum}-${slug}.json`;
+        const path = `${prefix}/${filename}`;
+        
+        tasks.push(supabase.storage.from("community-games").upload(path, a.content, {
+          contentType: "application/json",
+          upsert: true
+        }));
+      }
+
+      try {
+        await Promise.all(tasks);
+        return respond({ ok: true, deleted: deletes.length, added: adds.length });
+      } catch (err) {
+        return respond({ error: (err as Error).message }, 500);
       }
     }
 
