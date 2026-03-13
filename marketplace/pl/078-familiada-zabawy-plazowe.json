@@ -1,0 +1,290 @@
+{
+  "meta": {
+    "title": "Familiada Zabawy Plażowe",
+    "description": "Gra Familiada Zabawy Plażowe to propozycja dla rodzin i grup przyjaciół, którzy lubią spędzać czas nad morzem lub jeziorem. To idealna zabawa na letnie wieczory lub dni wolne, podczas których można odpoczywać i bawić się razem. Nasza gra zawiera pytania dotyczące plażowych aktywności, sportów wodnych, oraz relaksu na słońcu.",
+    "lang": "pl"
+  },
+  "game": {
+    "name": "Familiada Zabawy Plażowe",
+    "type": "prepared"
+  },
+  "questions": [
+    {
+      "text": "Co najczęściej robimy na plaży?",
+      "answers": [
+        {
+          "text": "Kąpiemy się",
+          "fixed_points": 41
+        },
+        {
+          "text": "Opalamy się",
+          "fixed_points": 29
+        },
+        {
+          "text": "Graamy w piłkę",
+          "fixed_points": 15
+        },
+        {
+          "text": "Czytamy książki",
+          "fixed_points": 12
+        },
+        {
+          "text": "Biegamy",
+          "fixed_points": 3
+        }
+      ]
+    },
+    {
+      "text": "Jaki jest najpopularniejszy sport wodny?",
+      "answers": [
+        {
+          "text": "Pływanie",
+          "fixed_points": 51
+        },
+        {
+          "text": "Nurkowanie",
+          "fixed_points": 23
+        },
+        {
+          "text": "Surfowanie",
+          "fixed_points": 11
+        },
+        {
+          "text": "Kajakarstwo",
+          "fixed_points": 5
+        }
+      ]
+    },
+    {
+      "text": "Co to jest plażowa lektura?",
+      "answers": [
+        {
+          "text": "Książka",
+          "fixed_points": 38
+        },
+        {
+          "text": "Gazeta",
+          "fixed_points": 25
+        },
+        {
+          "text": "Magazyn",
+          "fixed_points": 18
+        },
+        {
+          "text": "Komiks",
+          "fixed_points": 9
+        }
+      ]
+    },
+    {
+      "text": "Jaki jest najbardziej popularny rodzaj plażowego jedzenia?",
+      "answers": [
+        {
+          "text": "Lody",
+          "fixed_points": 32
+        },
+        {
+          "text": "Hot-dog",
+          "fixed_points": 28
+        },
+        {
+          "text": "Frytki",
+          "fixed_points": 20
+        },
+        {
+          "text": "Owoce morza",
+          "fixed_points": 10
+        }
+      ]
+    },
+    {
+      "text": "Co to jest plażowy przebrań?",
+      "answers": [
+        {
+          "text": "Kąpielówka",
+          "fixed_points": 43
+        },
+        {
+          "text": "Szorty",
+          "fixed_points": 26
+        },
+        {
+          "text": "Koszulka",
+          "fixed_points": 15
+        },
+        {
+          "text": "Buty",
+          "fixed_points": 6
+        }
+      ]
+    },
+    {
+      "text": "Jaki jest najpopularniejszy zabieg spa na plaży?",
+      "answers": [
+        {
+          "text": "Masаж",
+          "fixed_points": 35
+        },
+        {
+          "text": "Pielęgnacja stóp",
+          "fixed_points": 24
+        },
+        {
+          "text": "Masaż głowy",
+          "fixed_points": 18
+        },
+        {
+          "text": "Peeling",
+          "fixed_points": 13
+        }
+      ]
+    },
+    {
+      "text": "Co to jest plażowa rozrywka dla dzieci?",
+      "answers": [
+        {
+          "text": "Piaskowe zamki",
+          "fixed_points": 40
+        },
+        {
+          "text": "Zabawy w piasku",
+          "fixed_points": 27
+        },
+        {
+          "text": "Pływanie",
+          "fixed_points": 16
+        },
+        {
+          "text": "Gra w piłkę",
+          "fixed_points": 7
+        }
+      ]
+    },
+    {
+      "text": "Jaki jest najpopularniejszy rodzaj muzyki na plaży?",
+      "answers": [
+        {
+          "text": "Muzyka relaksacyjna",
+          "fixed_points": 31
+        },
+        {
+          "text": "Muzyka taneczna",
+          "fixed_points": 25
+        },
+        {
+          "text": "Muzyka rockowa",
+          "fixed_points": 20
+        },
+        {
+          "text": "Muzyka hip-hop",
+          "fixed_points": 14
+        }
+      ]
+    },
+    {
+      "text": "Co to jest plażowa trudność?",
+      "answers": [
+        {
+          "text": "Uderzenia fal",
+          "fixed_points": 39
+        },
+        {
+          "text": "Promieniowanie UV",
+          "fixed_points": 26
+        },
+        {
+          "text": "Meduze",
+          "fixed_points": 17
+        },
+        {
+          "text": "Wężowe ukąszenia",
+          "fixed_points": 8
+        }
+      ]
+    },
+    {
+      "text": "Jaki jest najpopularniejszy rodzaj plażowych aktywności?",
+      "answers": [
+        {
+          "text": "Pływanie",
+          "fixed_points": 48
+        },
+        {
+          "text": "Bieganie",
+          "fixed_points": 23
+        },
+        {
+          "text": "Jazda na rowerze",
+          "fixed_points": 14
+        },
+        {
+          "text": "Gra w piłkę",
+          "fixed_points": 5
+        }
+      ]
+    },
+    {
+      "text": "Co to jest plażowa moda?",
+      "answers": [
+        {
+          "text": "Kąpielówka",
+          "fixed_points": 42
+        },
+        {
+          "text": "Szorty",
+          "fixed_points": 28
+        },
+        {
+          "text": "Koszulka",
+          "fixed_points": 15
+        },
+        {
+          "text": "Buty",
+          "fixed_points": 5
+        }
+      ]
+    },
+    {
+      "text": "Jaki jest najpopularniejszy rodzaj plażowych atrakcji?",
+      "answers": [
+        {
+          "text": "Wodne parki rozrywki",
+          "fixed_points": 36
+        },
+        {
+          "text": "Rejsy statkiem",
+          "fixed_points": 24
+        },
+        {
+          "text": "Nurkowanie",
+          "fixed_points": 20
+        },
+        {
+          "text": "Wycieczki piesze",
+          "fixed_points": 10
+        }
+      ]
+    },
+    {
+      "text": "Co to jest plażowy poczęstunek?",
+      "answers": [
+        {
+          "text": "Lody",
+          "fixed_points": 34
+        },
+        {
+          "text": "Hot-dog",
+          "fixed_points": 26
+        },
+        {
+          "text": "Frytki",
+          "fixed_points": 19
+        },
+        {
+          "text": "Owoce morza",
+          "fixed_points": 11
+        }
+      ]
+    }
+  ]
+}
