@@ -325,6 +325,77 @@ serve(async (req: Request) => {
     return respond({ data });
   }
 
+  // ── batch-commit (delete + add + auto-renumber, 1 commit) ────────────────────
+  if (action === "batch-commit") {
+    if (!ghToken || !ghRepo) return respond({ error: "Brak GitHub secrets" }, 500);
+    type GameRef = { filename: string; indexKey: string; slug: string; sha: string };
+    type GameAdd = { slug: string; content: string };
+    const { lang, deletes = [], adds = [], remaining = [] } =
+      body as { lang: string; deletes: GameRef[]; adds: GameAdd[]; remaining: GameRef[] };
+    if (!lang) return respond({ error: "Brak lang" }, 400);
+
+    // sort remaining by current number
+    const sorted = (remaining as GameRef[]).slice().sort((a, b) => parseInt(a.filename) - parseInt(b.filename));
+
+    let counter = 1;
+    const renames: { oldPath: string; newPath: string; blobSha: string; oldKey: string; newKey: string }[] = [];
+    for (const g of sorted) {
+      const newNum = String(counter++).padStart(3, "0");
+      const newFilename = `${newNum}-${g.slug}.json`;
+      if (newFilename !== g.filename) {
+        renames.push({ oldPath: `marketplace/${lang}/${g.filename}`, newPath: `marketplace/${lang}/${newFilename}`, blobSha: g.sha, oldKey: g.indexKey, newKey: `${lang}/${newNum}-${g.slug}` });
+      }
+    }
+
+    const newFiles: { path: string; content: string; key: string }[] = [];
+    for (const a of adds as GameAdd[]) {
+      const newNum = String(counter++).padStart(3, "0");
+      const slug = a.slug || `game-${newNum}`;
+      newFiles.push({ path: `marketplace/${lang}/${newNum}-${slug}.json`, content: a.content, key: `${lang}/${newNum}-${slug}` });
+    }
+
+    // update index
+    const { data: currentIdx } = await readIndex(ghToken, ghRepo);
+    const deleteKeys = new Set((deletes as GameRef[]).map(f => f.indexKey));
+    const renameMap = new Map(renames.map(r => [r.oldKey, r.newKey]));
+    const newIdx = [
+      ...currentIdx.filter(k => !deleteKeys.has(k)).map(k => renameMap.get(k) ?? k),
+      ...newFiles.map(f => f.key),
+    ];
+
+    // build tree
+    const ref = await ghGetRef(ghToken, ghRepo, ghBranch);
+    const parentSha: string = ref.object.sha;
+    const baseTree: string = (await ghGetCommit(ghToken, ghRepo, parentSha)).tree.sha;
+
+    const treeItems: { path: string; mode: string; type: string; sha: string | null }[] = [
+      ...(deletes as GameRef[]).map(f => ({ path: `marketplace/${lang}/${f.filename}`, mode: "100644", type: "blob", sha: null })),
+      ...renames.map(r => ({ path: r.oldPath, mode: "100644", type: "blob", sha: null })),
+      ...renames.map(r => ({ path: r.newPath, mode: "100644", type: "blob", sha: r.blobSha })),
+    ];
+
+    const newFileShas = await Promise.all(newFiles.map(f => ghCreateBlob(ghToken, ghRepo, f.content)));
+    newFiles.forEach((f, i) => treeItems.push({ path: f.path, mode: "100644", type: "blob", sha: newFileShas[i] }));
+
+    const idxSha = await ghCreateBlob(ghToken, ghRepo, JSON.stringify(newIdx, null, 2) + "\n");
+    treeItems.push({ path: "marketplace/index.json", mode: "100644", type: "blob", sha: idxSha });
+
+    const res2 = await fetch(`https://api.github.com/repos/${ghRepo}/git/trees`, {
+      method: "POST", headers: ghHeaders(ghToken), signal: ghSignal(20000),
+      body: JSON.stringify({ base_tree: baseTree, tree: treeItems }),
+    });
+    if (!res2.ok) throw new Error(`tree: ${res2.status}`);
+    const treeSha = (await res2.json()).sha;
+    const parts = [];
+    if ((deletes as GameRef[]).length) parts.push(`remove ${(deletes as GameRef[]).length}`);
+    if (newFiles.length) parts.push(`add ${newFiles.length}`);
+    const commitMsg = `chore: ${parts.join(", ")} game(s) in ${lang}`;
+    const newCommitSha = await ghCreateCommit(ghToken, ghRepo, commitMsg, treeSha, parentSha);
+    await ghUpdateRef(ghToken, ghRepo, ghBranch, newCommitSha);
+
+    return respond({ ok: true, deleted: (deletes as GameRef[]).length, added: newFiles.length, renamed: renames.length });
+  }
+
   // ── batch-delete (z auto-renumeracją) ────────────────────────────────────────
   if (action === "batch-delete") {
     if (!ghToken || !ghRepo) return respond({ error: "Brak GitHub secrets" }, 500);
