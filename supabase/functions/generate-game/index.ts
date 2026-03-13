@@ -41,6 +41,26 @@ async function groqChat(groqKey: string, prompt: string, temperature: number, ma
 
 // ─── Prompts ──────────────────────────────────────────────────────────────────
 
+function buildScanPrompt(lang: string, games: any[]): string {
+  const gamesList = games.map(g => `Slug: ${g.slug}\nTitle: ${g.title}\nDescription: ${g.description}`).join("\n---\n");
+  return `Oto lista gier Familiady (${lang}). Twoim zadaniem jest ocenić ich jakość i zidentyfikować "słabe" gry (nudne tematy, błędy logiczne, zbyt krótkie opisy).
+
+Lista gier:
+${gamesList}
+
+Zwróć JSON: {"issues": [{"type": "weak", "slugs": ["slug1", "slug2"], "reason": "powód"}]}`;
+}
+
+function buildDupeScanPrompt(lang: string, games: any[]): string {
+  const titles = games.map(g => `[${g.slug}] ${g.title}`).join("\n");
+  return `Oto lista tytułów gier Familiady (${lang}). Zidentyfikuj grupy gier, które dotyczą tego samego tematu (duplikaty tematyczne), nawet jeśli mają nieco inne tytuły.
+
+Tytuły:
+${titles}
+
+Zwróć JSON: {"issues": [{"type": "duplicate", "slugs": ["slug1", "slug2"], "reason": "te same tematy"}]}`;
+}
+
 function buildGeneratePrompt(lang: string, index: number, topic: string, total: number, alreadyUsed: string[]): string {
   const usedList = alreadyUsed.length ? alreadyUsed.join(" / ") : "(brak)";
 
@@ -186,7 +206,7 @@ serve(async (req: Request) => {
         const { data: files } = await supabase.storage.from("community-games").list(`admin/${job.lang}`);
         let nextNum = 1;
         if (files) {
-          const nums = files.map(f => parseInt(f.name)).filter(n => !isNaN(n));
+          const nums = files.map((f: { name: string }) => parseInt(f.name)).filter((n: number) => !isNaN(n));
           if (nums.length) nextNum = Math.max(...nums) + 1;
         }
 
@@ -239,6 +259,33 @@ serve(async (req: Request) => {
         }).eq("id", jobId);
         throw err;
       }
+    }
+
+    // ── get-game (Fetch a single game file from storage) ──────────────────────
+    if (action === "get-game") {
+      const { lang, filename } = body as { lang: string; filename: string };
+      if (!lang || !filename) return respond({ error: "Missing lang or filename" }, 400);
+
+      const path = `admin/${lang}/${filename}`;
+      const { data, error } = await supabase.storage.from("community-games").download(path);
+      if (error) return respond({ error: error.message }, 500);
+
+      const text = await data.text();
+      return respond({ data: JSON.parse(text) });
+    }
+
+    // ── scan (AI scan for duplicates or weak games) ───────────────────────────
+    if (action === "scan") {
+      const { lang = "pl", mode = "duplicates", games = [] } = body as {
+        lang?: string; mode?: string; games?: any[];
+      };
+
+      const prompt = mode === "duplicates"
+        ? buildDupeScanPrompt(String(lang), games)
+        : buildScanPrompt(String(lang), games);
+
+      const result = await groqChat(groqKey, prompt, 0.2, 4000, 28000);
+      return respond(result);
     }
 
     // ── generate (Old behavior for backward compatibility, but discouraged) ─────
