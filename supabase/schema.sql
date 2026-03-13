@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict FMCo7Y1zk4GLzTn7Gw179JCHUdNFyRHvuSduhnKiRbABPzLGsZNyERa64Ytd78P
+\restrict XozvkKHOwxzpmTSMneICQ01L7nppDci8ySwFcBahzMxjGZl6J0Lj8BW3WzUzDVp
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -3704,26 +3704,26 @@ $$;
 -- Name: market_admin_detail("uuid"); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION "public"."market_admin_detail"("p_id" "uuid") RETURNS TABLE("id" "uuid", "title" "text", "description" "text", "lang" "text", "status" "public"."market_game_status", "moderation_note" "text", "library_count" integer, "author_username" "text", "author_email" "text", "gh_slug" "text", "payload" "jsonb", "created_at" timestamp with time zone)
+CREATE FUNCTION "public"."market_admin_detail"("p_id" "uuid") RETURNS TABLE("id" "uuid", "title" "text", "description" "text", "lang" "text", "status" "public"."market_game_status", "moderation_note" "text", "library_count" integer, "author_username" "text", "author_email" "text", "storage_path" "text", "payload" "jsonb", "created_at" timestamp with time zone)
     LANGUAGE "sql" STABLE SECURITY DEFINER
     SET "search_path" TO 'public'
     AS $$
-    SELECT
-        mg.id,
-        mg.title,
-        mg.description,
-        mg.lang,
-        mg.status,
-        mg.moderation_note,
-        mg.library_count,
-        COALESCE(pr.username, '') AS author_username,
-        COALESCE(pr.email, '')    AS author_email,
-        mg.gh_slug,
-        mg.payload,
-        mg.created_at
-    FROM public.market_games mg
-    LEFT JOIN public.profiles pr ON pr.id = mg.author_user_id
-    WHERE mg.id = p_id;
+  SELECT
+    mg.id,
+    mg.title,
+    mg.description,
+    mg.lang,
+    mg.status,
+    mg.moderation_note,
+    mg.library_count,
+    COALESCE(pr.username, '') AS author_username,
+    COALESCE(pr.email, '') AS author_email,
+    mg.storage_path,
+    mg.payload,
+    mg.created_at
+  FROM public.market_games mg
+  LEFT JOIN public.profiles pr ON pr.id = mg.author_user_id
+  WHERE mg.id = p_id;
 $$;
 
 
@@ -3731,26 +3731,26 @@ $$;
 -- Name: market_admin_list("text"); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION "public"."market_admin_list"("p_status" "text" DEFAULT 'pending'::"text") RETURNS TABLE("id" "uuid", "title" "text", "description" "text", "lang" "text", "status" "public"."market_game_status", "moderation_note" "text", "library_count" integer, "author_username" "text", "author_email" "text", "gh_slug" "text", "created_at" timestamp with time zone)
+CREATE FUNCTION "public"."market_admin_list"("p_status" "text" DEFAULT 'pending'::"text") RETURNS TABLE("id" "uuid", "title" "text", "description" "text", "lang" "text", "status" "public"."market_game_status", "moderation_note" "text", "library_count" integer, "author_username" "text", "author_email" "text", "storage_path" "text", "created_at" timestamp with time zone)
     LANGUAGE "sql" STABLE SECURITY DEFINER
     SET "search_path" TO 'public'
     AS $$
-    SELECT
-        mg.id,
-        mg.title,
-        mg.description,
-        mg.lang,
-        mg.status,
-        mg.moderation_note,
-        mg.library_count,
-        COALESCE(pr.username, '') AS author_username,
-        COALESCE(pr.email, '')    AS author_email,
-        mg.gh_slug,
-        mg.created_at
-    FROM public.market_games mg
-    LEFT JOIN public.profiles pr ON pr.id = mg.author_user_id
-    WHERE mg.status = p_status::public.market_game_status
-    ORDER BY mg.created_at ASC;
+  SELECT
+    mg.id,
+    mg.title,
+    mg.description,
+    mg.lang,
+    mg.status,
+    mg.moderation_note,
+    mg.library_count,
+    COALESCE(pr.username, '') AS author_username,
+    COALESCE(pr.email, '') AS author_email,
+    mg.storage_path,
+    mg.created_at
+  FROM public.market_games mg
+  LEFT JOIN public.profiles pr ON pr.id = mg.author_user_id
+  WHERE mg.status = p_status::public.market_game_status
+  ORDER BY mg.created_at ASC;
 $$;
 
 
@@ -3819,6 +3819,77 @@ begin
     return query select v_count, coalesce(v_slugs, '{}'::text[]);
 end;
 $$;
+
+
+--
+-- Name: market_admin_upsert("text", "text", "text", "text", "jsonb"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."market_admin_upsert"("p_storage_path" "text", "p_title" "text", "p_description" "text", "p_lang" "text", "p_payload" "jsonb") RETURNS TABLE("ok" boolean, "err" "text", "market_id" "uuid")
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+declare
+  v_id uuid;
+  v_existing uuid;
+begin
+  if p_storage_path is null or p_storage_path = '' then
+    return query select false, 'storage_path_required'::text, null::uuid;
+    return;
+  end if;
+  
+  if p_payload is null then
+    return query select false, 'payload_required'::text, null::uuid;
+    return;
+  end if;
+  
+  select id into v_existing
+    from public.market_games
+   where storage_path = p_storage_path;
+  
+  if v_existing is not null then
+    update public.market_games
+       set title = p_title,
+           description = p_description,
+           lang = p_lang,
+           payload = p_payload,
+           status = 'pending',
+           updated_at = now()
+     where id = v_existing;
+    
+    return query select true, ''::text, v_existing;
+    return;
+  end if;
+  
+  insert into public.market_games (
+    storage_path,
+    title,
+    description,
+    lang,
+    payload,
+    status,
+    author_user_id
+  ) values (
+    p_storage_path,
+    p_title,
+    p_description,
+    p_lang,
+    p_payload,
+    'pending',
+    auth.uid()
+  )
+  returning id into v_id;
+  
+  return query select true, ''::text, v_id;
+end;
+$$;
+
+
+--
+-- Name: FUNCTION "market_admin_upsert"("p_storage_path" "text", "p_title" "text", "p_description" "text", "p_lang" "text", "p_payload" "jsonb"); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION "public"."market_admin_upsert"("p_storage_path" "text", "p_title" "text", "p_description" "text", "p_lang" "text", "p_payload" "jsonb") IS 'Upsertuje grę do market_games';
 
 
 --
@@ -8327,6 +8398,39 @@ $$;
 
 
 --
+-- Name: storage_list_objects("text", "text", integer); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."storage_list_objects"("p_bucket" "text", "p_prefix" "text" DEFAULT ''::"text", "p_limit" integer DEFAULT 1000) RETURNS TABLE("name" "text", "id" "uuid", "metadata" "jsonb", "created_at" timestamp with time zone, "updated_at" timestamp with time zone, "last_accessed_at" timestamp with time zone, "version" "text", "size_bytes" bigint, "owner" "uuid")
+    LANGUAGE "sql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+  SELECT
+    o.name::text,
+    o.id::uuid,
+    o.metadata::jsonb,
+    o.created_at::timestamptz,
+    o.updated_at::timestamptz,
+    o.last_accessed_at::timestamptz,
+    o.version::text,
+    COALESCE(NULLIF(o.metadata->>'size', ''), '0')::bigint as size_bytes,
+    o.owner::uuid
+  FROM storage.objects o
+  WHERE o.bucket_id = p_bucket
+    AND (p_prefix = '' OR o.name LIKE (p_prefix || '%'))
+  ORDER BY o.name
+  LIMIT p_limit;
+$$;
+
+
+--
+-- Name: FUNCTION "storage_list_objects"("p_bucket" "text", "p_prefix" "text", "p_limit" integer); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION "public"."storage_list_objects"("p_bucket" "text", "p_prefix" "text", "p_limit" integer) IS 'Listuje obiekty w bucket Supabase Storage (RPC dla admina)';
+
+
+--
 -- Name: submit_contact_report("text", "text", "text", "text", "uuid"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -8988,10 +9092,10 @@ CREATE TABLE "public"."market_games" (
     "payload" "jsonb" NOT NULL,
     "status" "public"."market_game_status" DEFAULT 'pending'::"public"."market_game_status" NOT NULL,
     "moderation_note" "text",
-    "gh_slug" "text",
     "library_count" integer DEFAULT 0 NOT NULL,
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "storage_path" "text",
     CONSTRAINT "market_games_lang_check" CHECK (("lang" = ANY (ARRAY['pl'::"text", 'en'::"text", 'uk'::"text"]))),
     CONSTRAINT "market_games_library_count_nn" CHECK (("library_count" >= 0)),
     CONSTRAINT "market_games_title_len" CHECK ((("char_length"("title") >= 1) AND ("char_length"("title") <= 120)))
@@ -9512,14 +9616,6 @@ ALTER TABLE ONLY "public"."mail_settings"
 
 
 --
--- Name: market_games market_games_gh_slug_key; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY "public"."market_games"
-    ADD CONSTRAINT "market_games_gh_slug_key" UNIQUE ("gh_slug");
-
-
---
 -- Name: market_games market_games_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -9974,6 +10070,13 @@ CREATE INDEX "market_games_library_cnt_idx" ON "public"."market_games" USING "bt
 --
 
 CREATE INDEX "market_games_status_idx" ON "public"."market_games" USING "btree" ("status");
+
+
+--
+-- Name: market_games_storage_path_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "market_games_storage_path_idx" ON "public"."market_games" USING "btree" ("storage_path");
 
 
 --
@@ -11771,5 +11874,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict FMCo7Y1zk4GLzTn7Gw179JCHUdNFyRHvuSduhnKiRbABPzLGsZNyERa64Ytd78P
+\unrestrict XozvkKHOwxzpmTSMneICQ01L7nppDci8ySwFcBahzMxjGZl6J0Lj8BW3WzUzDVp
 
