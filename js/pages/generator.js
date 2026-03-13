@@ -59,6 +59,12 @@ window.loadGeneratorList = async function() {
     
     renderManageList();
     $('gen-scan-btn').disabled = loadedGames.length === 0;
+    
+    // Zapamiętaj język w localStorage
+    localStorage.setItem('gen_last_lang', lang);
+
+    // Sprawdź czy są aktywne zadania dla tego języka
+    checkQueueStatus();
   } catch (e) {
     showStatus('gen-session-status', '✗ ' + e.message, 'err');
   } finally {
@@ -97,7 +103,7 @@ window.resetGeneratorSession = function() {
   renderGenList();
 };
 
-// Direct Generation (Queue-based for reliability)
+// Direct Generation (Simple version)
 window.enqueueGeneration = async function() {
   const lang = $('gen-manage-lang').value;
   const count = Math.max(1, parseInt($('gen-count').value) || 5);
@@ -105,32 +111,51 @@ window.enqueueGeneration = async function() {
   const existingTitles = loadedGames.filter(g => g.lang === lang).map(g => g.title).filter(Boolean);
 
   $('gen-enqueue-btn').disabled = true;
-  showStatus('gen-session-status', 'Dodaję do kolejki...', 'info');
+  show('gen-results-section');
+  
+  // Init slots
+  genGames = Array.from({length: count}, (_, i) => ({game: null, status: 'pending', generating: true, idx: i}));
+  renderGenList();
 
-  try {
-    const res = await callEdgeAction({
-      action: 'enqueue',
-      lang,
-      total: count,
-      topic,
-      alreadyUsed: existingTitles
-    });
+  // Generate one by one directly from browser
+  for (let i = 0; i < count; i++) {
+    // Check if user has reset the session in the meantime
+    if (!genGames.length || genGames.length !== count) break;
 
-    showStatus('gen-session-status', '✓ Dodano do kolejki. Możesz zamknąć kartę, proces trwa w tle.', 'ok');
-    $('gen-topic').value = '';
-    
-    show('gen-results-section');
-    genGames = Array.from({length: count}, (_, i) => ({game: null, status: 'pending', generating: true, idx: i, mainJobId: res.jobId}));
+    const allUsed = [...existingTitles, ...genGames.filter(g => g.game).map(g => g.game.meta?.title).filter(Boolean)];
+    try {
+      const res = await callEdgeAction({
+        lang,
+        index: i + 1,
+        total: count,
+        topic,
+        alreadyUsed: allUsed
+      });
+      
+      if (!genGames[i]) break; // Check again after long AI wait
+
+      genGames[i].game = res.game;
+      genGames[i].status = 'pending';
+    } catch (e) {
+      if (genGames[i]) genGames[i].status = 'rejected';
+      console.error("Generation error:", e);
+    }
+    if (genGames[i]) genGames[i].generating = false;
     renderGenList();
     
-    checkQueueStatus();
+    if (i === 0) setTimeout(() => {
+      const row = document.querySelector('#gen-results-list .game-row');
+      if (row) {
+        const p = document.getElementById('gp-0');
+        if (p) p.classList.add('open');
+        row.querySelector('.game-chevron')?.classList.add('open');
+      }
+    }, 50);
     
-    // Kickstart the process
-    callEdgeAction({ action: 'process-step', jobId: res.jobId }).catch(console.error);
-  } catch (e) {
-    showStatus('gen-session-status', '✗ ' + e.message, 'err');
-    $('gen-enqueue-btn').disabled = false;
+    if (i < count - 1) await new Promise(r => setTimeout(r, 300));
   }
+
+  $('gen-enqueue-btn').disabled = false;
 };
 
 async function checkQueueStatus() {
@@ -414,6 +439,58 @@ function updatePendingBar() {
   }
 }
 
+// Session Persistence
+function saveSessionState() {
+  if (!$('gen-reset-btn') || $('gen-reset-btn').style.display === 'none') return;
+  const state = {
+    lang: $('gen-manage-lang').value,
+    topic: $('gen-topic').value,
+    loadedGames: loadedGames,
+    genGames: genGames,
+    pendingAdd: pendingAdd,
+    pendingDelete: Array.from(pendingDelete),
+    selectedGames: Array.from(selectedGames),
+    timestamp: Date.now()
+  };
+  localStorage.setItem('generator_session', JSON.stringify(state));
+}
+
+function loadSessionState() {
+  const savedState = localStorage.getItem('generator_session');
+  if (!savedState) return false;
+
+  try {
+    const state = JSON.parse(savedState);
+    if (!state.lang) return false;
+
+    $('gen-manage-lang').value = state.lang;
+    $('gen-topic').value = state.topic || '';
+    loadedGames = state.loadedGames || [];
+    genGames = state.genGames || [];
+    pendingAdd = state.pendingAdd || [];
+    pendingDelete = new Set(state.pendingDelete || []);
+    selectedGames = new Set(state.selectedGames || []);
+
+    lockGeneratorSession();
+    renderManageList();
+    renderGenList();
+    updatePendingBar();
+    updateBulkBar();
+    showStatus('gen-session-status', `✓ Sesja przywrócona.`, 'ok');
+    
+    if (genGames.length > 0) show('gen-results-section');
+
+    // If there were active jobs, start polling
+    if (genGames.some(g => g.generating) || (genGames.length > 0 && genGames.some(g => !g.game))) {
+      checkQueueStatus();
+    }
+    return true;
+  } catch (e) {
+    localStorage.removeItem('generator_session');
+    return false;
+  }
+}
+
 // Utility
 async function callEdgeAction(body) {
   const { data, error } = await supabase().functions.invoke('generate-game', { body });
@@ -429,6 +506,12 @@ function slugify(text) {
 
 // Bindings
 document.addEventListener('DOMContentLoaded', () => {
+  // Przywróć ostatni język z sesji
+  const lastLang = localStorage.getItem('gen_last_lang');
+  if (lastLang && $('gen-manage-lang')) {
+    $('gen-manage-lang').value = lastLang;
+  }
+
   $('gen-load-btn')?.addEventListener('click', window.loadGeneratorList);
   $('gen-scan-btn')?.addEventListener('click', window.scanGames);
   $('gen-reset-btn')?.addEventListener('click', window.resetGeneratorSession);
