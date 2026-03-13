@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict bdjBfOQ3blZ6WTWmw300ssWLiq43gI8ia21uS5A14tOrpYULeB0WxvbDMhbTgVf
+\restrict 8Tu4lngtNKtqM7LeTbKASgNVXw36KKtGY9bw4bWZk5nPZ8XixdE9j9u34NrOj1E
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -8968,7 +8968,7 @@ CREATE TABLE "public"."example_table" (
 
 CREATE TABLE "public"."game_gen_queue" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
-    "created_by" "uuid" DEFAULT "auth"."uid"() NOT NULL,
+    "created_by" "uuid" DEFAULT "auth"."uid"(),
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "lang" "text" DEFAULT 'pl'::"text" NOT NULL,
     "topic" "text",
@@ -11917,5 +11917,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict bdjBfOQ3blZ6WTWmw300ssWLiq43gI8ia21uS5A14tOrpYULeB0WxvbDMhbTgVf
+\unrestrict 8Tu4lngtNKtqM7LeTbKASgNVXw36KKtGY9bw4bWZk5nPZ8XixdE9j9u34NrOj1E
 
