@@ -1,0 +1,231 @@
+{
+  "meta": {
+    "title": "Polskie Piosenki i Muzyka",
+    "description": "Pytania o polską muzykę i artystów.",
+    "lang": "pl"
+  },
+  "game": {
+    "name": "Polskie Piosenki i Muzyka",
+    "type": "prepared"
+  },
+  "questions": [
+    {
+      "text": "Wymień gatunek muzyczny słuchany przez Polaków w samochodzie.",
+      "answers": [
+        {
+          "text": "Disco polo",
+          "fixed_points": 33
+        },
+        {
+          "text": "Pop",
+          "fixed_points": 27
+        },
+        {
+          "text": "Rock",
+          "fixed_points": 19
+        },
+        {
+          "text": "Rap/hip-hop",
+          "fixed_points": 13
+        },
+        {
+          "text": "Muzyka klasyczna",
+          "fixed_points": 7
+        }
+      ]
+    },
+    {
+      "text": "Podaj nazwisko polskiego kompozytora granego na całym świecie.",
+      "answers": [
+        {
+          "text": "Chopin",
+          "fixed_points": 78
+        },
+        {
+          "text": "Paderewski",
+          "fixed_points": 13
+        },
+        {
+          "text": "Wieniawski",
+          "fixed_points": 8
+        }
+      ]
+    },
+    {
+      "text": "Wymień polskiego wykonawcę disco polo.",
+      "answers": [
+        {
+          "text": "Zenek Martyniuk",
+          "fixed_points": 41
+        },
+        {
+          "text": "Boys",
+          "fixed_points": 24
+        },
+        {
+          "text": "Shazza",
+          "fixed_points": 17
+        },
+        {
+          "text": "Weekend",
+          "fixed_points": 11
+        },
+        {
+          "text": "Top Girls",
+          "fixed_points": 6
+        }
+      ]
+    },
+    {
+      "text": "Podaj polskie miasto znane z festiwalu muzycznego.",
+      "answers": [
+        {
+          "text": "Opole",
+          "fixed_points": 43
+        },
+        {
+          "text": "Sopot",
+          "fixed_points": 28
+        },
+        {
+          "text": "Kraków",
+          "fixed_points": 17
+        },
+        {
+          "text": "Jarocin",
+          "fixed_points": 11
+        }
+      ]
+    },
+    {
+      "text": "Wymień taniec narodowy Polski.",
+      "answers": [
+        {
+          "text": "Polonez",
+          "fixed_points": 44
+        },
+        {
+          "text": "Mazurek",
+          "fixed_points": 27
+        },
+        {
+          "text": "Krakowiak",
+          "fixed_points": 17
+        },
+        {
+          "text": "Oberek",
+          "fixed_points": 9
+        },
+        {
+          "text": "Kujawiak",
+          "fixed_points": 3
+        }
+      ]
+    },
+    {
+      "text": "Podaj polską piosenkę śpiewaną na urodzinach.",
+      "answers": [
+        {
+          "text": "Sto lat",
+          "fixed_points": 83
+        },
+        {
+          "text": "Happy Birthday po pol.",
+          "fixed_points": 11
+        },
+        {
+          "text": "Wszystkiego najlepszego",
+          "fixed_points": 5
+        }
+      ]
+    },
+    {
+      "text": "Wymień polskiego artystę słynącego z ballad.",
+      "answers": [
+        {
+          "text": "Edyta Górniak",
+          "fixed_points": 36
+        },
+        {
+          "text": "Maryla Rodowicz",
+          "fixed_points": 28
+        },
+        {
+          "text": "Kayah",
+          "fixed_points": 19
+        },
+        {
+          "text": "Ania Dąbrowska",
+          "fixed_points": 11
+        },
+        {
+          "text": "Natalia Kukulska",
+          "fixed_points": 5
+        }
+      ]
+    },
+    {
+      "text": "Podaj coś, co Polacy robią na weselu gdy gra muzyka.",
+      "answers": [
+        {
+          "text": "Tańczą",
+          "fixed_points": 62
+        },
+        {
+          "text": "Śpiewają razem",
+          "fixed_points": 21
+        },
+        {
+          "text": "Wychodzą na papierosa",
+          "fixed_points": 9
+        },
+        {
+          "text": "Proszą o ciszę",
+          "fixed_points": 7
+        }
+      ]
+    },
+    {
+      "text": "Wymień instrument kojarzony z polską muzyką ludową.",
+      "answers": [
+        {
+          "text": "Skrzypce",
+          "fixed_points": 46
+        },
+        {
+          "text": "Dudy",
+          "fixed_points": 22
+        },
+        {
+          "text": "Bębenek",
+          "fixed_points": 17
+        },
+        {
+          "text": "Akordeon",
+          "fixed_points": 14
+        }
+      ]
+    },
+    {
+      "text": "Podaj okazję, przy której śpiewa się kolędy.",
+      "answers": [
+        {
+          "text": "Wigilia",
+          "fixed_points": 53
+        },
+        {
+          "text": "Boże Narodzenie",
+          "fixed_points": 27
+        },
+        {
+          "text": "Pasterka",
+          "fixed_points": 13
+        },
+        {
+          "text": "Sylwester",
+          "fixed_points": 6
+        }
+      ]
+    }
+  ]
+}
