@@ -165,6 +165,7 @@ function slugify(text: string): string {
 async function groqChat(groqKey: string, prompt: string, temperature: number, maxTokens: number) {
   const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
+    signal: ghSignal(22000),
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${groqKey}` },
     body: JSON.stringify({
       model: "llama-3.3-70b-versatile",
@@ -328,14 +329,16 @@ serve(async (req: Request) => {
   // ── batch-commit (delete + add + auto-renumber, 1 commit) ────────────────────
   if (action === "batch-commit") {
     if (!ghToken || !ghRepo) return respond({ error: "Brak GitHub secrets" }, 500);
-    type GameRef = { filename: string; indexKey: string; slug: string; sha: string };
-    type GameAdd = { slug: string; content: string };
-    const { lang, deletes = [], adds = [], remaining = [] } =
-      body as { lang: string; deletes: GameRef[]; adds: GameAdd[]; remaining: GameRef[] };
+    const { lang, deletes = [], adds = [], remaining = [] } = body as {
+      lang: string;
+      deletes: { filename: string; indexKey: string; slug: string; sha: string }[];
+      adds: { slug: string; content: string }[];
+      remaining: { filename: string; indexKey: string; slug: string; sha: string }[];
+    };
     if (!lang) return respond({ error: "Brak lang" }, 400);
 
     // sort remaining by current number
-    const sorted = (remaining as GameRef[]).slice().sort((a, b) => parseInt(a.filename) - parseInt(b.filename));
+    const sorted = remaining.slice().sort((a, b) => parseInt(a.filename) - parseInt(b.filename));
 
     let counter = 1;
     const renames: { oldPath: string; newPath: string; blobSha: string; oldKey: string; newKey: string }[] = [];
@@ -356,7 +359,7 @@ serve(async (req: Request) => {
 
     // update index
     const { data: currentIdx } = await readIndex(ghToken, ghRepo);
-    const deleteKeys = new Set((deletes as GameRef[]).map(f => f.indexKey));
+    const deleteKeys = new Set(deletes.map(f => f.indexKey));
     const renameMap = new Map(renames.map(r => [r.oldKey, r.newKey]));
     const newIdx = [
       ...currentIdx.filter(k => !deleteKeys.has(k)).map(k => renameMap.get(k) ?? k),
@@ -369,7 +372,7 @@ serve(async (req: Request) => {
     const baseTree: string = (await ghGetCommit(ghToken, ghRepo, parentSha)).tree.sha;
 
     const treeItems: { path: string; mode: string; type: string; sha: string | null }[] = [
-      ...(deletes as GameRef[]).map(f => ({ path: `marketplace/${lang}/${f.filename}`, mode: "100644", type: "blob", sha: null })),
+      ...deletes.map(f => ({ path: `marketplace/${lang}/${f.filename}`, mode: "100644", type: "blob", sha: null })),
       ...renames.map(r => ({ path: r.oldPath, mode: "100644", type: "blob", sha: null })),
       ...renames.map(r => ({ path: r.newPath, mode: "100644", type: "blob", sha: r.blobSha })),
     ];
@@ -387,13 +390,13 @@ serve(async (req: Request) => {
     if (!res2.ok) throw new Error(`tree: ${res2.status}`);
     const treeSha = (await res2.json()).sha;
     const parts = [];
-    if ((deletes as GameRef[]).length) parts.push(`remove ${(deletes as GameRef[]).length}`);
+    if (deletes.length) parts.push(`remove ${deletes.length}`);
     if (newFiles.length) parts.push(`add ${newFiles.length}`);
     const commitMsg = `chore: ${parts.join(", ")} game(s) in ${lang}`;
     const newCommitSha = await ghCreateCommit(ghToken, ghRepo, commitMsg, treeSha, parentSha);
     await ghUpdateRef(ghToken, ghRepo, ghBranch, newCommitSha);
 
-    return respond({ ok: true, deleted: (deletes as GameRef[]).length, added: newFiles.length, renamed: renames.length });
+    return respond({ ok: true, deleted: deletes.length, added: newFiles.length, renamed: renames.length });
   }
 
   // ── batch-delete (z auto-renumeracją) ────────────────────────────────────────
