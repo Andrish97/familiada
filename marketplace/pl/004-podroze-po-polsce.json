@@ -1,0 +1,235 @@
+{
+  "meta": {
+    "title": "Podróże po Polsce",
+    "description": "Pytania o turystykę w Polsce.",
+    "lang": "pl"
+  },
+  "game": {
+    "name": "Podróże po Polsce",
+    "type": "prepared"
+  },
+  "questions": [
+    {
+      "text": "Wymień polskie miasto, które turyści odwiedzają najchętniej.",
+      "answers": [
+        {
+          "text": "Kraków",
+          "fixed_points": 46
+        },
+        {
+          "text": "Warszawa",
+          "fixed_points": 27
+        },
+        {
+          "text": "Gdańsk",
+          "fixed_points": 14
+        },
+        {
+          "text": "Wrocław",
+          "fixed_points": 9
+        },
+        {
+          "text": "Zakopane",
+          "fixed_points": 3
+        }
+      ]
+    },
+    {
+      "text": "Podaj atrakcję turystyczną na Wawelu w Krakowie.",
+      "answers": [
+        {
+          "text": "Zamek Królewski",
+          "fixed_points": 48
+        },
+        {
+          "text": "Katedrę Wawelską",
+          "fixed_points": 28
+        },
+        {
+          "text": "Smoczą Jamę",
+          "fixed_points": 16
+        },
+        {
+          "text": "Kopiec Kościuszki",
+          "fixed_points": 7
+        }
+      ]
+    },
+    {
+      "text": "Wymień polskie pasmo górskie chętnie odwiedzane latem.",
+      "answers": [
+        {
+          "text": "Tatry",
+          "fixed_points": 54
+        },
+        {
+          "text": "Bieszczady",
+          "fixed_points": 21
+        },
+        {
+          "text": "Beskidy",
+          "fixed_points": 14
+        },
+        {
+          "text": "Sudety",
+          "fixed_points": 10
+        }
+      ]
+    },
+    {
+      "text": "Podaj coś, co turyści zwiedzają w Gdańsku.",
+      "answers": [
+        {
+          "text": "Stare Miasto",
+          "fixed_points": 39
+        },
+        {
+          "text": "Żuraw portowy",
+          "fixed_points": 26
+        },
+        {
+          "text": "Westerplatte",
+          "fixed_points": 19
+        },
+        {
+          "text": "Długi Targ",
+          "fixed_points": 11
+        },
+        {
+          "text": "Muzeum II Wojny",
+          "fixed_points": 4
+        }
+      ]
+    },
+    {
+      "text": "Wymień polskie jezioro popularne wśród żeglarzy.",
+      "answers": [
+        {
+          "text": "Śniardwy",
+          "fixed_points": 38
+        },
+        {
+          "text": "Mamry",
+          "fixed_points": 27
+        },
+        {
+          "text": "Niegocin",
+          "fixed_points": 19
+        },
+        {
+          "text": "Wigry",
+          "fixed_points": 14
+        }
+      ]
+    },
+    {
+      "text": "Podaj coś, co kupuje się w Zakopanem jako pamiątkę.",
+      "answers": [
+        {
+          "text": "Oscypek",
+          "fixed_points": 52
+        },
+        {
+          "text": "Góralskie cuhy",
+          "fixed_points": 19
+        },
+        {
+          "text": "Drewniane wyroby",
+          "fixed_points": 14
+        },
+        {
+          "text": "Nalewkę borówkową",
+          "fixed_points": 9
+        },
+        {
+          "text": "Magnes na lodówkę",
+          "fixed_points": 5
+        }
+      ]
+    },
+    {
+      "text": "Wymień polskie miasto znane z pierników.",
+      "answers": [
+        {
+          "text": "Toruń",
+          "fixed_points": 83
+        },
+        {
+          "text": "Kraków",
+          "fixed_points": 11
+        },
+        {
+          "text": "Poznań",
+          "fixed_points": 5
+        }
+      ]
+    },
+    {
+      "text": "Podaj coś, co widać na krakowskim Rynku Głównym.",
+      "answers": [
+        {
+          "text": "Sukiennice",
+          "fixed_points": 44
+        },
+        {
+          "text": "Wieżę ratuszową",
+          "fixed_points": 26
+        },
+        {
+          "text": "Kościół Mariacki",
+          "fixed_points": 19
+        },
+        {
+          "text": "Gołębie",
+          "fixed_points": 10
+        }
+      ]
+    },
+    {
+      "text": "Wymień polskie miasto nad morzem popularne latem.",
+      "answers": [
+        {
+          "text": "Sopot",
+          "fixed_points": 38
+        },
+        {
+          "text": "Kołobrzeg",
+          "fixed_points": 27
+        },
+        {
+          "text": "Gdynię",
+          "fixed_points": 19
+        },
+        {
+          "text": "Łebę",
+          "fixed_points": 11
+        },
+        {
+          "text": "Ustka",
+          "fixed_points": 4
+        }
+      ]
+    },
+    {
+      "text": "Podaj coś, bez czego trudno podróżować po Polsce.",
+      "answers": [
+        {
+          "text": "Samochodu",
+          "fixed_points": 47
+        },
+        {
+          "text": "Map lub nawigacji",
+          "fixed_points": 27
+        },
+        {
+          "text": "Gotówki",
+          "fixed_points": 14
+        },
+        {
+          "text": "Dowodu osobistego",
+          "fixed_points": 11
+        }
+      ]
+    }
+  ]
+}
