@@ -288,6 +288,7 @@ window.resetSession = function(){
   $('manage-card').style.display='none';
   hideStatus('manage-status');
   hideStatus('session-status');
+  genGames=[]; generating=false; $('gen-btn').disabled=false; $('gen-section').style.display='none';
 };
 
 async function call(body) {
