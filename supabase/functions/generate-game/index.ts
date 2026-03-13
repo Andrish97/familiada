@@ -117,12 +117,10 @@ Zwróć TYLKO czysty JSON:
 function slugify(text: string): string {
   return (text || "").toLowerCase()
     .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-    .replace(/ą/g,"a").replace(/ć/g,"c").replace(/ę/g,"e")
-    .replace(/ł/g,"l").replace(/ń/g,"n").replace(/ó/g,"o")
-    .replace(/ś/g,"s").replace(/ź/g,"z").replace(/ż/g,"z")
-    .replace(/і/g,"i").replace(/є/g,"e").replace(/ї/g,"i")
-    .replace(/[а-яёА-ЯЁ]/g, (c: string) => c.charCodeAt(0).toString(36))
-    .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+    .replace(/ł/g, "l").replace(/ł/g, "l")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    || "game-" + Math.random().toString(36).substring(2, 7);
 }
 
 // ─── Handler ──────────────────────────────────────────────────────────────────
@@ -187,39 +185,39 @@ serve(async (req: Request) => {
       if (getError || !job) return respond({ error: "Job not found" }, 404);
       if (job.status === "completed") return respond({ ok: true, msg: "Already completed" });
 
-      await supabase.from("game_gen_queue").update({ 
-        status: "processing", 
-        started_at: new Date().toISOString(), 
-        attempts: job.attempts + 1,
-        processed_games: 0 
-      }).eq("id", jobId);
+      // Lock the job to prevent multiple parallel workers
+      const { error: lockError } = await supabase
+        .from("game_gen_queue")
+        .update({ 
+          status: "processing", 
+          started_at: new Date().toISOString(), 
+          attempts: job.attempts + 1
+        })
+        .eq("id", jobId)
+        .eq("status", "pending");
+
+      if (lockError) return respond({ ok: true, msg: "Job already processing" });
 
       try {
-        // Prepare results as a fixed-size array filled with nulls
-        const results: any[] = Array.from({ length: job.total_games }).map(() => null);
+        const results: any[] = Array.isArray(job.results) ? job.results : [];
         const alreadyUsed = [...(job.already_used || [])];
         
-        const generateGame = async (index: number) => {
-          const prompt = buildGeneratePrompt(job.lang, index + 1, job.topic, job.total_games, alreadyUsed);
+        // Generate sequentially to avoid race conditions on DB updates 
+        // and provide reliable progress updates.
+        for (let i = results.length; i < job.total_games; i++) {
+          const prompt = buildGeneratePrompt(job.lang, i + 1, job.topic, job.total_games, alreadyUsed);
           const game = await groqChat(groqKey, prompt, 0.9, 4000);
-          if (!game.questions) throw new Error(`Invalid game at index ${index}`);
           
-          results[index] = game;
+          if (!game.questions) throw new Error(`Invalid game at index ${i}`);
           
-          // Update progress in DB (save full array to preserve indices)
-          const completedCount = results.filter(Boolean).length;
+          results[i] = game;
+          if (game.meta?.title) alreadyUsed.push(game.meta.title);
+
+          // Immediate update after each game
           await supabase.from("game_gen_queue").update({ 
-            processed_games: completedCount,
+            processed_games: results.filter(Boolean).length,
             results: results 
           }).eq("id", jobId);
-          
-          return game;
-        };
-
-        const CHUNK_SIZE = 5;
-        for (let i = 0; i < job.total_games; i += CHUNK_SIZE) {
-          const chunk = Array.from({ length: Math.min(CHUNK_SIZE, job.total_games - i) }, (_, k) => i + k);
-          await Promise.all(chunk.map(idx => generateGame(idx)));
         }
 
         await supabase.from("game_gen_queue").update({
@@ -229,11 +227,12 @@ serve(async (req: Request) => {
 
         return respond({ ok: true, total: results.length });
       } catch (err) {
+        console.error("[process] Error:", err);
         await supabase.from("game_gen_queue").update({
           status: "failed",
           last_error: (err as Error).message
         }).eq("id", jobId);
-        throw err;
+        return respond({ error: (err as Error).message }, 500);
       }
     }
 
