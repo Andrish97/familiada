@@ -62,6 +62,7 @@
   .badge-dup{background:rgba(251,191,36,.12);color:var(--yellow);border:1px solid rgba(251,191,36,.25)}
   .badge-weak{background:rgba(248,113,113,.08);color:var(--red);border:1px solid rgba(248,113,113,.2)}
   .badge-ok{background:rgba(74,222,128,.08);color:var(--green);border:1px solid rgba(74,222,128,.2)}
+  .badge-new{background:rgba(96,165,250,.1);color:var(--blue);border:1px solid rgba(96,165,250,.25)}
   .badge-rej{background:rgba(248,113,113,.08);color:var(--red);border:1px solid rgba(248,113,113,.2)}
   .game-chevron{color:var(--muted);font-size:10px;flex-shrink:0;transition:transform .2s;opacity:.6}
   .game-chevron.open{transform:rotate(90deg)}
@@ -174,7 +175,7 @@
     <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
       <button class="btn btn-green" id="push-btn" onclick="pushApproved()" style="flex:1;min-width:180px" disabled>
         <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
-        Wypchnij zatwierdzone na GitHub
+        Dodaj zatwierdzone do listy
       </button>
       <button class="btn btn-secondary btn-sm" onclick="approveAll()" style="font-size:13px;padding:10px 16px">Zatwierdź wszystkie</button>
     </div>
@@ -276,7 +277,7 @@ function lockSession(){
 }
 
 window.resetSession = function(){
-  loadedGames=[];
+  loadedGames=[]; pendingAdd=[];
   pendingDelete.clear(); updatePendingBar();
   selectedGames.clear(); updateBulkBar();
   sessionActive=false;
@@ -296,32 +297,52 @@ async function call(body) {
   return data;
 }
 
+// ─── slugify (client-side, matches server) ────────────────────────────────────
+function slugify(text){
+  return (text||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/ą/g,'a').replace(/ć/g,'c').replace(/ę/g,'e').replace(/ł/g,'l')
+    .replace(/ń/g,'n').replace(/ó/g,'o').replace(/ś/g,'s').replace(/ź/g,'z').replace(/ż/g,'z')
+    .replace(/і/g,'i').replace(/є/g,'e').replace(/ї/g,'i')
+    .replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+}
+
 // ─── manage list ──────────────────────────────────────────────────────────────
-let loadedGames = [];
-let pendingDelete = new Set(); // slug gier do usunięcia przy zapisie
+let loadedGames = [];   // {num,filename,slug,sha,lang,indexKey,title,description,data,issueType,issueReason}
+let pendingDelete = new Set(); // slugi gier z GitHub do usunięcia
+let pendingAdd = [];    // [{slug, content}] — nowe gry do dodania (tylko lokalne)
 
 function updatePendingBar(){
-  const n=pendingDelete.size;
-  $('pending-bar').classList.toggle('visible',n>0);
-  $('pending-count').textContent=`${n} ${n===1?'gra do usunięcia':'gier do usunięcia'}`;
+  const nd=pendingDelete.size, na=pendingAdd.length, total=nd+na;
+  $('pending-bar').classList.toggle('visible',total>0);
+  const parts=[];
+  if(na) parts.push(`+${na} do dodania`);
+  if(nd) parts.push(`−${nd} do usunięcia`);
+  $('pending-count').textContent=parts.join(' · ');
 }
 
 window.clearPending = function(){
-  pendingDelete.clear(); updatePendingBar(); renderManageList();
+  // usuń pending-add z loadedGames
+  loadedGames=loadedGames.filter(g=>!g.isPendingAdd);
+  pendingAdd=[];
+  pendingDelete.clear();
+  updatePendingBar(); renderManageList();
 };
 
 window.saveChanges = async function(){
-  if(!pendingDelete.size) return;
+  if(!pendingDelete.size&&!pendingAdd.length) return;
   setListBusy(true);
-  showStatus('manage-status',`Zapisuję zmiany…`,'info');
+  showStatus('manage-status','Zapisuję zmiany…','info');
   try{
     const lang=$('manage-lang').value;
-    const files=loadedGames.filter(g=>pendingDelete.has(g.slug)).map(g=>({filename:g.filename,indexKey:g.indexKey,slug:g.slug,sha:g.sha}));
-    const remaining=loadedGames.filter(g=>!pendingDelete.has(g.slug)).map(g=>({filename:g.filename,indexKey:g.indexKey,slug:g.slug,sha:g.sha}));
-    const res=await call({action:'batch-delete',lang,files,remaining});
-    const msg=`✓ Usunięto ${res.deleted}${res.renamed?' + renumeracja':''}.`;
+    const deletes=loadedGames.filter(g=>!g.isPendingAdd&&pendingDelete.has(g.slug)).map(g=>({filename:g.filename,indexKey:g.indexKey,slug:g.slug,sha:g.sha}));
+    const remaining=loadedGames.filter(g=>!g.isPendingAdd&&!pendingDelete.has(g.slug)).map(g=>({filename:g.filename,indexKey:g.indexKey,slug:g.slug,sha:g.sha}));
+    const res=await call({action:'batch-commit',lang,deletes,adds:pendingAdd,remaining});
+    const parts=[];
+    if(res.deleted) parts.push(`usunięto ${res.deleted}`);
+    if(res.added) parts.push(`dodano ${res.added}`);
+    const msg=`✓ ${parts.join(', ')}.`;
     resetSession();
-    showStatus('manage-status',msg,'ok');
+    showStatus('session-status',msg,'ok');
   }catch(e){ showStatus('manage-status','✗ '+e.message,'err'); }
   finally{ setListBusy(false); }
 };
@@ -335,6 +356,10 @@ window.resetManage = function(){
   $('scan-btn').disabled=true; hideStatus('manage-status');
 };
 let selectedGames = new Set();
+
+function visibleIndices(){
+  return loadedGames.map((_,i)=>i).filter(i=>!pendingDelete.has(loadedGames[i].slug));
+}
 
 function updateBulkBar(){
   const n=selectedGames.size;
@@ -376,14 +401,14 @@ window.renderManageList = function(){
   if(!loadedGames.length){ list.innerHTML='<div style="color:var(--muted);font-size:12px;padding:10px 0;text-align:center">Brak gier.</div>'; return; }
   loadedGames.forEach((g,idx)=>{
     if(pendingDelete.has(g.slug)) return;
-    const issueClass=g.issueType==='dup'?'issue-dup':g.issueType==='weak'?'issue-weak':'';
-    const badge=g.issueType==='dup'?`<span class="game-badge badge-dup">duplikat</span>`:g.issueType==='weak'?`<span class="game-badge badge-weak">słaba</span>`:'';
+    const issueClass=g.isPendingAdd?'':g.issueType==='dup'?'issue-dup':g.issueType==='weak'?'issue-weak':'';
+    const badge=g.isPendingAdd?`<span class="game-badge badge-new">nowa</span>`:g.issueType==='dup'?`<span class="game-badge badge-dup">duplikat</span>`:g.issueType==='weak'?`<span class="game-badge badge-weak">słaba</span>`:'';
+    const numStr=g.isPendingAdd?'···':String(g.num).padStart(3,'0');
     const el=document.createElement('div');
-    el.className=`game-item ${issueClass}${pendingDelete.has(g.slug)?' pending-delete':''}`;
+    el.className=`game-item ${issueClass}`;
     el.innerHTML=`
       <div class="game-row" onclick="toggleManagePreview(${idx},this)">
         <input type="checkbox" class="game-cb" ${selectedGames.has(idx)?'checked':''} onclick="toggleSelect(${idx},this,event)">
-        <span class="game-num">${String(g.num).padStart(3,'0')}</span>
         <span class="game-title">${esc(g.title)}</span>${badge}
         <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();deleteGame(${idx})" style="padding:3px 9px">✕</button>
         <span class="game-chevron">▶</span>
@@ -534,21 +559,28 @@ window.scanGames = async function(){
 
 window.deleteGame = function(idx){
   const g=loadedGames[idx];
-  if(pendingDelete.has(g.slug)){ pendingDelete.delete(g.slug); }
-  else { pendingDelete.add(g.slug); }
+  if(g.isPendingAdd){
+    pendingAdd=pendingAdd.filter(a=>a.slug!==g.slug);
+    loadedGames.splice(idx,1);
+    selectedGames.clear(); updateBulkBar();
+  } else {
+    if(pendingDelete.has(g.slug)) pendingDelete.delete(g.slug);
+    else pendingDelete.add(g.slug);
+  }
   updatePendingBar(); renderManageList();
 };
 
 window.selectIssues = function(){
   selectedGames.clear();
-  loadedGames.forEach((g,i)=>{ if(g.issueType) selectedGames.add(i); });
+  visibleIndices().forEach(i=>{ if(loadedGames[i].issueType) selectedGames.add(i); });
   updateBulkBar();
   renderManageList();
 };
 
 window.toggleSelectAll = function(){
-  if(selectedGames.size===loadedGames.length){ selectedGames.clear(); }
-  else { loadedGames.forEach((_,i)=>selectedGames.add(i)); }
+  const vis=visibleIndices();
+  if(vis.every(i=>selectedGames.has(i))){ selectedGames.clear(); }
+  else { vis.forEach(i=>selectedGames.add(i)); }
   updateBulkBar();
   renderManageList();
 };
@@ -558,9 +590,13 @@ window.clearSelection = function(){
 };
 
 window.deleteSelected = function(){
-  const indices=[...selectedGames];
+  const indices=[...selectedGames].sort((a,b)=>b-a); // reverse for splice safety
   if(!indices.length) return;
-  for(const idx of indices) pendingDelete.add(loadedGames[idx].slug);
+  for(const idx of indices){
+    const g=loadedGames[idx];
+    if(g.isPendingAdd){ pendingAdd=pendingAdd.filter(a=>a.slug!==g.slug); loadedGames.splice(idx,1); }
+    else pendingDelete.add(g.slug);
+  }
   selectedGames.clear(); updateBulkBar(); updatePendingBar(); renderManageList();
 };
 
@@ -698,31 +734,22 @@ window.startGeneration = async function(){
   $('gen-btn').disabled=false;
 };
 
-window.pushApproved = async function(){
+window.pushApproved = function(){
   const lang=$('manage-lang').value;
   const approved=genGames.filter(g=>g.status==='approved'&&g.game);
-  if(!approved.length){ showStatus('push-status','Brak zatwierdzonych gier.','info'); return; }
-  $('push-btn').disabled=true;
-  showStatus('push-status',`Zapisuję ${approved.length} gier na GitHub…`,'info');
-  try{
-    const games=approved.map(g=>g.game);
-    const res=await call({action:'save-games',lang,games});
-    showStatus('push-status',`✓ Zapisano ${res.saved?.length||approved.length} gier.`,'ok');
-    // add to local manage list if same lang
-    const manageLang=$('manage-lang').value;
-    if(manageLang===lang&&res.saved){
-      let nextNum=loadedGames.length+1;
-      res.saved.forEach((s,i)=>{
-        const gd=approved[i].game;
-        const slug=s.filename.replace(/^\d+-/,'').replace('.json','');
-        loadedGames.push({num:nextNum+i,filename:s.filename,title:gd?.meta?.title||slug,description:gd?.meta?.description||'',slug,sha:s.sha||'',lang,indexKey:s.indexKey,data:gd,issueType:null,issueReason:''});
-      });
-      $('scan-btn').disabled=false;
-      renderManageList();
-    }
-    // reset gen section
-    genGames=[]; generating=false; $('gen-btn').disabled=false; $('gen-section').style.display='none';
-  }catch(e){ showStatus('push-status','✗ '+e.message,'err'); $('push-btn').disabled=false; }
+  if(!approved.length) return;
+  if(!sessionActive) lockSession();
+  approved.forEach(item=>{
+    const gd=item.game;
+    const slug=slugify(gd.slug||gd.meta?.title||'game');
+    const gameForSave={...gd}; delete gameForSave.slug;
+    loadedGames.push({num:null,filename:null,slug,sha:'',lang,indexKey:'',title:gd.meta?.title||slug,description:gd.meta?.description||'',data:gd,issueType:null,issueReason:'',isPendingAdd:true});
+    pendingAdd.push({slug,content:JSON.stringify(gameForSave,null,2)+'\n'});
+  });
+  $('scan-btn').disabled=false;
+  updatePendingBar(); renderManageList();
+  // reset gen section
+  genGames=[]; generating=false; $('gen-btn').disabled=false; $('gen-section').style.display='none';
 };
 </script>
 </body>
