@@ -141,7 +141,7 @@
 
   <!-- Generate -->
   <div class="card" id="gen-card" style="display:none">
-    <div class="card-title">⚙️ Generuj nowe gry</div>
+    <div class="card-title">⚙️ Kolejka generowania gier</div>
     <div style="margin-bottom:12px">
       <div class="field">
         <label>Liczba gier</label>
@@ -152,12 +152,13 @@
       <label>Temat (opcjonalnie)</label>
       <textarea id="topic" placeholder="Zostaw puste = AI dobierze unikalne tematy…"></textarea>
     </div>
-    <div class="tip">Tematy istniejących gier są automatycznie przekazywane do AI. Gry możesz przejrzeć przed zapisem na GitHub.</div>
+    <div class="tip">Nowe gry zostaną dodane do kolejki i wygenerowane w tle. Po zakończeniu pojawią się w marketplace.</div>
+    <div id="queue-status" style="margin-top:10px"></div>
   </div>
 
-  <button class="btn" id="gen-btn" onclick="startGeneration()" style="display:none">
+  <button class="btn" id="gen-btn" onclick="enqueueGeneration()" style="display:none">
     <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
-    Generuj z podglądem
+    Dodaj do kolejki generowania
   </button>
 
   <!-- Generated results -->
@@ -345,15 +346,58 @@ window.saveChanges = async function(){
   showStatus('manage-status','Zapisuję zmiany…','info');
   try{
     const lang=$('manage-lang').value;
-    const deletes=loadedGames.filter(g=>!g.isPendingAdd&&pendingDelete.has(g.slug)).map(g=>({filename:g.filename,indexKey:g.indexKey,slug:g.slug,sha:g.sha}));
-    const remaining=loadedGames.filter(g=>!g.isPendingAdd&&!pendingDelete.has(g.slug)).map(g=>({filename:g.filename,indexKey:g.indexKey,slug:g.slug,sha:g.sha}));
-    const res=await call({action:'batch-commit',lang,deletes,adds:pendingAdd,remaining});
-    const parts=[];
-    if(res.deleted) parts.push(`usunięto ${res.deleted}`);
-    if(res.added) parts.push(`dodano ${res.added}`);
-    const msg=`✓ ${parts.join(', ')}.`;
+    
+    // Obsługa usuwania
+    if (pendingDelete.size > 0) {
+      const slugsToDelete = [...pendingDelete];
+      // Pobieramy ID i storage_path gier do usunięcia
+      const { data: toDelete } = await sb()
+        .from('market_games')
+        .select('id, storage_path')
+        .in('storage_path', loadedGames.filter(g => pendingDelete.has(g.slug)).map(g => g.indexKey));
+      
+      if (toDelete) {
+        for (const g of toDelete) {
+          // Usuwamy z bazy (RPC z p_force=true dla admina jeśli trzeba, ale tutaj upraszczamy)
+          await sb().from('market_games').delete().eq('id', g.id);
+          // Usuwamy ze storage
+          if (g.storage_path) {
+            await sb().storage.from('community-games').remove([g.storage_path]);
+          }
+        }
+      }
+    }
+
+    // Obsługa dodawania (pętla po pendingAdd)
+    if (pendingAdd.length > 0) {
+      const { data: files } = await sb().storage.from('community-games').list(`admin/${lang}`);
+      let nextNum = 1;
+      if (files) {
+        const nums = files.map(f => parseInt(f.name)).filter(n => !isNaN(n));
+        if (nums.length) nextNum = Math.max(...nums) + 1;
+      }
+
+      for (let i = 0; i < pendingAdd.length; i++) {
+        const item = pendingAdd[i];
+        const numStr = String(nextNum + i).padStart(3, "0");
+        const filename = `${numStr}-${item.slug}.json`;
+        const storagePath = `admin/${lang}/${filename}`;
+        const gameData = JSON.parse(item.content);
+
+        await sb().storage.from('community-games').upload(storagePath, item.content, { upsert: true });
+        
+        await sb().rpc('market_admin_upsert', {
+          p_storage_path: storagePath,
+          p_title: gameData.meta?.title || item.slug,
+          p_description: gameData.meta?.description || "",
+          p_lang: lang,
+          p_payload: gameData
+        });
+      }
+    }
+
     resetSession();
-    showStatus('session-status',msg,'ok');
+    showStatus('session-status', '✓ Zmiany zapisane.', 'ok');
   }catch(e){ showStatus('manage-status','✗ '+e.message,'err'); }
   finally{ setListBusy(false); }
 };
@@ -390,8 +434,28 @@ window.loadGameList = async function(){
   showStatus('session-status','Wczytuję…','info');
   $('scan-btn').disabled=true;
   try{
-    const res=await call({action:'list-games',lang});
-    loadedGames=res.games||[];
+    const { data: games, error } = await sb()
+      .from('market_games')
+      .select('*')
+      .eq('lang', lang)
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+
+    loadedGames = (games || []).map((g, i) => ({
+      num: i + 1,
+      filename: g.storage_path ? g.storage_path.split('/').pop() : '',
+      slug: g.storage_path ? g.storage_path.split('/').pop().replace(/^\d+-/, '').replace('.json', '') : '',
+      sha: '',
+      lang: g.lang,
+      indexKey: g.storage_path,
+      title: g.title,
+      description: g.description,
+      data: g.payload,
+      issueType: null,
+      issueReason: ''
+    }));
+
     selectedGames.clear(); updateBulkBar();
     pendingDelete.clear(); updatePendingBar();
     if(loadedGames.length){
@@ -402,9 +466,65 @@ window.loadGameList = async function(){
     }
     renderManageList();
     $('scan-btn').disabled=loadedGames.length===0;
+    checkQueueStatus();
   }catch(e){ showStatus('session-status','✗ '+e.message,'err'); }
   finally{ setListBusy(false); }
 };
+
+window.enqueueGeneration = async function() {
+  const lang = $('manage-lang').value;
+  const count = Math.max(1, parseInt($('count').value) || 5);
+  const topic = $('topic').value.trim();
+  const existingTitles = loadedGames.filter(g => g.lang === lang).map(g => g.title).filter(Boolean);
+
+  $('gen-btn').disabled = true;
+  showStatus('session-status', 'Dodaję do kolejki...', 'info');
+
+  try {
+    const res = await call({
+      action: 'enqueue',
+      lang,
+      total: count,
+      topic,
+      alreadyUsed: existingTitles
+    });
+
+    showStatus('session-status', '✓ Dodano do kolejki. Gry pojawią się wkrótce.', 'ok');
+    $('topic').value = '';
+    checkQueueStatus();
+  } catch (e) {
+    showStatus('session-status', '✗ ' + e.message, 'err');
+  } finally {
+    $('gen-btn').disabled = false;
+  }
+};
+
+async function checkQueueStatus() {
+  const { data: jobs, error } = await sb()
+    .from('game_gen_queue')
+    .select('*')
+    .in('status', ['pending', 'processing'])
+    .order('created_at', { ascending: false });
+
+  const qStatus = $('queue-status');
+  if (error || !jobs?.length) {
+    qStatus.innerHTML = '';
+    return;
+  }
+
+  qStatus.innerHTML = jobs.map(j => `
+    <div style="font-size:12px; padding:8px; background:rgba(255,255,255,0.05); border-radius:8px; margin-bottom:5px; border-left:3px solid ${j.status === 'processing' ? 'var(--blue)' : 'var(--muted)'}">
+      <div style="display:flex; justify-content:space-between">
+        <strong>${j.status === 'processing' ? '⚙️ Przetwarzanie' : '⏳ W kolejce'}</strong>
+        <span>${j.total_games} gier (${j.lang})</span>
+      </div>
+      <div style="font-size:11px; color:var(--muted)">${j.topic ? 'Temat: ' + j.topic : 'Temat losowy'}</div>
+    </div>
+  `).join('');
+
+  // Re-check after 5s if there are active jobs
+  setTimeout(checkQueueStatus, 5000);
+}
 
 
 window.renderManageList = function(){
