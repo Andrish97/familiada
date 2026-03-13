@@ -273,28 +273,69 @@ window.toggleManagePreview = async function(idx,row){
   }
 };
 
+function applyIssues(issues){
+  for(const issue of (issues||[])){
+    const itype=issue.type==='duplicate'?'dup':issue.type;
+    for(const slug of (issue.slugs||[])){
+      const slugified=slug.toLowerCase().replace(/\s+/g,'-');
+      const g=loadedGames.find(x=>x.slug===slug||x.slug===slugified||x.title.toLowerCase().replace(/\s+/g,'-')===slug.toLowerCase());
+      if(g){g.issueType=itype;g.issueReason=issue.reason||'';}
+    }
+  }
+}
+
 window.scanGames = async function(){
   $('scan-btn').disabled=true;
-  showStatus('manage-status','Analizuję przez AI…','info');
+  const LOAD_BATCH=8, BLOCK=40;
   try{
     const lang=$('manage-lang').value;
-    const games=loadedGames.map(g=>({slug:g.slug,title:g.title,description:g.description||''}));
-    const res=await call({action:'scan',lang,games});
-    loadedGames.forEach(g=>{g.issueType=null;g.issueReason='';});
-    for(const issue of (res.issues||[])){
-      const itype=issue.type==='duplicate'?'dup':issue.type;
-      for(const slug of (issue.slugs||[])){
-        // match by slug first, fallback by slugified title
-        const slugified=slug.toLowerCase().replace(/\s+/g,'-');
-        const g=loadedGames.find(x=>x.slug===slug||x.slug===slugified||x.title.toLowerCase().replace(/\s+/g,'-')===slug.toLowerCase());
-        if(g){g.issueType=itype;g.issueReason=issue.reason||'';}
+
+    // 1. pre-load all game data
+    const missing=loadedGames.filter(g=>!g.data);
+    if(missing.length){
+      for(let i=0;i<missing.length;i+=LOAD_BATCH){
+        showStatus('manage-status',`Ładuję dane ${i}/${missing.length}…`,'info');
+        await Promise.all(missing.slice(i,i+LOAD_BATCH).map(async g=>{
+          try{
+            const res=await call({action:'get-game',lang:g.lang,filename:g.filename});
+            g.data=res.data; g.title=res.data?.meta?.title||res.data?.game?.name||g.title; g.description=res.data?.meta?.description||'';
+          }catch{}
+        }));
       }
     }
+
+    // 2. reset + local checks
+    loadedGames.forEach(g=>{g.issueType=null;g.issueReason='';});
+
+    // empty/short description → weak
+    loadedGames.forEach(g=>{ if(!g.description||g.description.trim().length<20){g.issueType='weak';g.issueReason='Brak lub zbyt krótki opis.';} });
+
+    // duplicate questions (client-side, cross-game)
+    const normQ=s=>s.toLowerCase().replace(/[^a-z0-9ąćęłńóśźżіїє]/gi,'').trim();
+    const qMap=new Map();
+    for(const g of loadedGames) for(const q of (g.data?.questions||[])){const n=normQ(q.text);if(n.length>=10){if(!qMap.has(n))qMap.set(n,[]);qMap.get(n).push(g.slug);}}
+    for(const [,slugs] of qMap){const u=[...new Set(slugs)];if(u.length<2)continue;for(const s of u){const g=loadedGames.find(x=>x.slug===s);if(g&&!g.issueType){g.issueType='dup';g.issueReason='Powtarzające się pytania z inną grą.';}}}
+
+    // 3. AI faza 1 — duplikaty globalne (tylko tytuły, 1 call)
+    const total=loadedGames.length;
+    showStatus('manage-status',`AI: duplikaty globalne (${total} gier)…`,'info');
+    const dupRes=await call({action:'scan',lang,mode:'duplicates',games:loadedGames.map(g=>({slug:g.slug,title:g.title,description:''}))});
+    applyIssues(dupRes.issues);
+
+    // 4. AI faza 2 — słabe gry, bloki po BLOCK
+    const blocks=Math.ceil(total/BLOCK);
+    for(let b=0;b<blocks;b++){
+      showStatus('manage-status',`AI: słabe gry blok ${b+1}/${blocks}…`,'info');
+      const slice=loadedGames.slice(b*BLOCK,(b+1)*BLOCK);
+      const res=await call({action:'scan',lang,mode:'full',games:slice.map(g=>({slug:g.slug,title:g.title,description:g.description||''}))});
+      applyIssues(res.issues);
+    }
+
     selectedGames.clear(); updateBulkBar();
-    const dups=(res.issues||[]).filter(i=>i.type==='duplicate').length;
-    const weaks=(res.issues||[]).filter(i=>i.type==='weak').length;
+    const dups=loadedGames.filter(g=>g.issueType==='dup').length;
+    const weaks=loadedGames.filter(g=>g.issueType==='weak').length;
     renderManageList();
-    showStatus('manage-status',(res.issues||[]).length===0?'✓ Brak problemów.':`${dups} grup duplikatów · ${weaks} słabych`,(res.issues||[]).length===0?'ok':'info');
+    showStatus('manage-status',(!dups&&!weaks)?'✓ Brak problemów.':`${dups} duplikatów · ${weaks} słabych`,(!dups&&!weaks)?'ok':'info');
   }catch(e){ showStatus('manage-status','✗ '+e.message,'err'); }
   finally{ $('scan-btn').disabled=false; }
 };
