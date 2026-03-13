@@ -216,54 +216,25 @@ serve(async (req: Request) => {
           results.push(game);
           if (game.meta?.title) alreadyUsed.push(game.meta.title);
           
-          // Update progress in DB after each game
+          // Update progress and intermediate results in DB after each game
           await supabase.from("game_gen_queue").update({ 
-            processed_games: i + 1 
+            processed_games: i + 1,
+            results: results
           }).eq("id", jobId);
           
           // Small delay between LLM calls to be safe
           if (i < job.total_games - 1) await new Promise(r => setTimeout(r, 500));
         }
 
-        // 3. Save to Storage and DB
-        // Determine next number from existing files in Storage
-        const { data: files } = await supabase.storage.from("marketplace").list(`marketplace/${job.lang}`);
-        let nextNum = 1;
-        if (files) {
-          const nums = files.map((f: { name: string }) => parseInt(f.name)).filter((n: number) => !isNaN(n));
-          if (nums.length) nextNum = Math.max(...nums) + 1;
-        }
-
-        const savedGames = [];
-        for (let i = 0; i < results.length; i++) {
-          const game = results[i];
-          const rawSlug = game.slug || game.meta?.title || `game-${nextNum + i}`;
-          const slug = slugify(rawSlug);
-          const numStr = String(nextNum + i).padStart(3, "0");
-          const filename = `${numStr}-${slug}.json`;
-          const storagePath = `marketplace/${job.lang}/${filename}`;
-
-          // Upload to storage
-          const { error: uploadError } = await supabase.storage
-            .from("marketplace")
-            .upload(storagePath, JSON.stringify(game, null, 2), {
-              contentType: 'application/json',
-              upsert: true
-            });
-
-          if (uploadError) throw uploadError;
-
-          savedGames.push({ storagePath });
-        }
-
-        // 4. Mark job as completed
+        // 3. Mark job as completed
+        // Note: We no longer save to Storage directly here. 
+        // The UI will do it after user approval.
         await supabase.from("game_gen_queue").update({
           status: "completed",
-          completed_at: new Date().toISOString(),
-          result: { savedGames }
+          completed_at: new Date().toISOString()
         }).eq("id", jobId);
 
-        return respond({ ok: true, savedGames });
+        return respond({ ok: true, total: results.length });
 
       } catch (err) {
         // Mark job as failed

@@ -430,8 +430,14 @@ window.enqueueGeneration = async function() {
       alreadyUsed: existingTitles
     });
 
-    showStatus('session-status', '✓ Dodano do kolejki. Gry pojawią się wkrótce.', 'ok');
+    showStatus('session-status', '✓ Dodano do kolejki. Śledź postęp poniżej.', 'ok');
     $('topic').value = '';
+    
+    // Inicjalizacja slotów generowania
+    $('gen-section').style.display = 'block';
+    genGames = Array.from({length: count}, (_, i) => ({game: null, status: 'pending', generating: true, idx: i}));
+    renderGenList();
+    
     checkQueueStatus();
   } catch (e) {
     showStatus('session-status', '✗ ' + e.message, 'err');
@@ -444,8 +450,9 @@ async function checkQueueStatus() {
   const { data: jobs, error } = await sb()
     .from('game_gen_queue')
     .select('*')
-    .in('status', ['pending', 'processing'])
-    .order('created_at', { ascending: false });
+    .in('status', ['pending', 'processing', 'completed'])
+    .order('created_at', { ascending: false })
+    .limit(1);
 
   const qStatus = $('queue-status');
   if (error || !jobs?.length) {
@@ -453,28 +460,75 @@ async function checkQueueStatus() {
     return;
   }
 
-  qStatus.innerHTML = jobs.map(j => {
-    const pct = j.total_games > 0 ? Math.round((j.processed_games / j.total_games) * 100) : 0;
-    const isProcessing = j.status === 'processing';
-    const statusLabel = isProcessing ? `⚙️ Przetwarzanie (${j.processed_games}/${j.total_games})` : `⏳ W kolejce`;
-    const color = isProcessing ? 'var(--blue)' : 'var(--muted)';
-    
-    return `
-      <div style="font-size:12px; padding:8px; background:rgba(255,255,255,0.05); border-radius:8px; margin-bottom:8px; border-left:3px solid ${color}">
-        <div style="display:flex; justify-content:space-between; margin-bottom:4px">
-          <strong>${statusLabel}</strong>
-          <span>${j.lang.toUpperCase()}</span>
-        </div>
-        <div style="height:4px; background:rgba(255,255,255,0.1); border-radius:2px; overflow:hidden">
-          <div style="height:100%; width:${pct}%; background:${color}; transition: width 0.3s ease"></div>
-        </div>
-        <div style="font-size:11px; color:var(--muted); margin-top:4px">${j.topic ? 'Temat: ' + j.topic : 'Temat losowy'}</div>
-      </div>
-    `;
-  }).join('');
+  const j = jobs[0];
+  const pct = j.total_games > 0 ? Math.round((j.processed_games / j.total_games) * 100) : 0;
+  const isProcessing = j.status === 'processing' || j.status === 'pending';
+  
+  if (j.status === 'completed' && j.processed_games === j.total_games && !isProcessing) {
+    // Zadanie zakończone, ale upewnijmy się że sloty są wypełnione
+    syncGenSlots(j);
+    qStatus.innerHTML = '<div class="tip">Zadanie ukończone. Przejrzyj gry poniżej i zatwierdź je.</div>';
+    return;
+  }
 
-  // Re-check after 3s if there are active jobs
-  setTimeout(checkQueueStatus, 3000);
+  const statusLabel = j.status === 'processing' ? `⚙️ Przetwarzanie (${j.processed_games}/${j.total_games})` : `⏳ W kolejce`;
+  const color = j.status === 'processing' ? 'var(--blue)' : 'var(--muted)';
+  
+  qStatus.innerHTML = `
+    <div style="font-size:12px; padding:8px; background:rgba(255,255,255,0.05); border-radius:8px; margin-bottom:8px; border-left:3px solid ${color}">
+      <div style="display:flex; justify-content:space-between; margin-bottom:4px">
+        <strong>${statusLabel}</strong>
+        <span>${j.lang.toUpperCase()}</span>
+      </div>
+      <div style="height:4px; background:rgba(255,255,255,0.1); border-radius:2px; overflow:hidden">
+        <div style="height:100%; width:${pct}%; background:${color}; transition: width 0.3s ease"></div>
+      </div>
+      <div style="font-size:11px; color:var(--muted); margin-top:4px">${j.topic ? 'Temat: ' + j.topic : 'Temat losowy'}</div>
+    </div>
+  `;
+
+  // Aktualizuj sloty na podstawie wyników z bazy
+  syncGenSlots(j);
+
+  // Re-check after 3s if active
+  if (j.status === 'pending' || j.status === 'processing') {
+    setTimeout(checkQueueStatus, 3000);
+  }
+}
+
+function syncGenSlots(job) {
+  if (!genGames.length || genGames.length !== job.total_games) {
+    genGames = Array.from({length: job.total_games}, (_, i) => ({game: null, status: 'pending', generating: true, idx: i}));
+  }
+
+  const results = job.results || [];
+  results.forEach((game, i) => {
+    if (genGames[i] && !genGames[i].game) {
+      genGames[i].game = game;
+      genGames[i].generating = false;
+      genGames[i].status = 'pending';
+      // Auto-open first found
+      if (i === 0) setTimeout(() => {
+        const row = document.querySelector('#gen-list .game-row');
+        if (row) {
+          const p = document.getElementById('gp-0');
+          if (p && !p.classList.contains('open')) {
+            p.classList.add('open');
+            row.querySelector('.game-chevron')?.classList.add('open');
+          }
+        }
+      }, 50);
+    }
+  });
+  
+  // Mark remaining as generating/waiting
+  for (let i = results.length; i < job.total_games; i++) {
+    if (genGames[i]) {
+      genGames[i].generating = job.status === 'processing' && i === results.length;
+    }
+  }
+  
+  renderGenList();
 }
 
 
