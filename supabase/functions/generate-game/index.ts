@@ -61,6 +61,80 @@ async function ghDelete(token: string, repo: string, branch: string, path: strin
   if (!res.ok) throw new Error(`GitHub DELETE ${path}: ${res.status}`);
 }
 
+// ─── Git Trees API (batch commit) ────────────────────────────────────────────
+
+async function ghGetRef(token: string, repo: string, branch: string) {
+  const res = await fetch(`https://api.github.com/repos/${repo}/git/refs/heads/${branch}`, { headers: ghHeaders(token), signal: ghSignal() });
+  if (!res.ok) throw new Error(`GitHub ref: ${res.status}`);
+  return res.json();
+}
+
+async function ghGetCommit(token: string, repo: string, sha: string) {
+  const res = await fetch(`https://api.github.com/repos/${repo}/git/commits/${sha}`, { headers: ghHeaders(token), signal: ghSignal() });
+  if (!res.ok) throw new Error(`GitHub commit: ${res.status}`);
+  return res.json();
+}
+
+async function ghCreateBlob(token: string, repo: string, content: string) {
+  const res = await fetch(`https://api.github.com/repos/${repo}/git/blobs`, {
+    method: "POST", headers: ghHeaders(token), signal: ghSignal(),
+    body: JSON.stringify({ content: ghEncode(content), encoding: "base64" }),
+  });
+  if (!res.ok) throw new Error(`GitHub blob: ${res.status}`);
+  return (await res.json()).sha;
+}
+
+async function ghCreateTree(token: string, repo: string, baseTree: string, items: { path: string; sha: string | null }[]) {
+  const tree = items.map(i => i.sha === null
+    ? { path: i.path, mode: "100644", type: "blob", sha: null }
+    : { path: i.path, mode: "100644", type: "blob", sha: i.sha });
+  const res = await fetch(`https://api.github.com/repos/${repo}/git/trees`, {
+    method: "POST", headers: ghHeaders(token), signal: ghSignal(20000),
+    body: JSON.stringify({ base_tree: baseTree, tree }),
+  });
+  if (!res.ok) throw new Error(`GitHub tree: ${res.status} ${await res.text()}`);
+  return (await res.json()).sha;
+}
+
+async function ghCreateCommit(token: string, repo: string, message: string, treeSha: string, parentSha: string) {
+  const res = await fetch(`https://api.github.com/repos/${repo}/git/commits`, {
+    method: "POST", headers: ghHeaders(token), signal: ghSignal(),
+    body: JSON.stringify({ message, tree: treeSha, parents: [parentSha] }),
+  });
+  if (!res.ok) throw new Error(`GitHub commit create: ${res.status}`);
+  return (await res.json()).sha;
+}
+
+async function ghUpdateRef(token: string, repo: string, branch: string, sha: string) {
+  const res = await fetch(`https://api.github.com/repos/${repo}/git/refs/heads/${branch}`, {
+    method: "PATCH", headers: ghHeaders(token), signal: ghSignal(),
+    body: JSON.stringify({ sha }),
+  });
+  if (!res.ok) throw new Error(`GitHub updateRef: ${res.status}`);
+}
+
+async function ghBatchCommit(
+  token: string, repo: string, branch: string, message: string,
+  deletePaths: string[], upserts: { path: string; content: string }[]
+) {
+  const ref = await ghGetRef(token, repo, branch);
+  const parentSha: string = ref.object.sha;
+  const commit = await ghGetCommit(token, repo, parentSha);
+  const baseTree: string = commit.tree.sha;
+
+  const items: { path: string; sha: string | null }[] = deletePaths.map(p => ({ path: p, sha: null }));
+  for (const u of upserts) {
+    const blobSha = await ghCreateBlob(token, repo, u.content);
+    items.push({ path: u.path, sha: blobSha });
+  }
+
+  const treeSha = await ghCreateTree(token, repo, baseTree, items);
+  const newCommitSha = await ghCreateCommit(token, repo, message, treeSha, parentSha);
+  await ghUpdateRef(token, repo, branch, newCommitSha);
+}
+
+// ─── Index ────────────────────────────────────────────────────────────────────
+
 async function readIndex(token: string, repo: string): Promise<{ data: string[]; sha: string | null }> {
   const res = await ghGet(token, repo, "marketplace/index.json");
   if (!res) return { data: [], sha: null };
@@ -251,6 +325,86 @@ serve(async (req: Request) => {
     return respond({ data });
   }
 
+  // ── batch-delete (z auto-renumeracją) ────────────────────────────────────────
+  if (action === "batch-delete") {
+    if (!ghToken || !ghRepo) return respond({ error: "Brak GitHub secrets" }, 500);
+    type GameRef = { filename: string; indexKey: string; slug: string; sha: string };
+    const { lang, files, remaining } = body as { lang: string; files: GameRef[]; remaining: GameRef[] };
+    if (!lang || !Array.isArray(files) || !files.length) return respond({ error: "Brak wymaganych pól" }, 400);
+
+    const deleteSet = new Set(files.map(f => f.filename));
+    const sorted = (remaining || []).slice().sort((a, b) => {
+      const na = parseInt(a.filename), nb = parseInt(b.filename);
+      return na - nb;
+    });
+
+    // oblicz nowe nazwy plików
+    const renames: { oldPath: string; newPath: string; blobSha: string; newKey: string }[] = [];
+    for (let i = 0; i < sorted.length; i++) {
+      const g = sorted[i];
+      const newNum = String(i + 1).padStart(3, "0");
+      const newFilename = `${newNum}-${g.slug}.json`;
+      if (newFilename !== g.filename) {
+        renames.push({
+          oldPath: `marketplace/${lang}/${g.filename}`,
+          newPath: `marketplace/${lang}/${newFilename}`,
+          blobSha: g.sha,
+          newKey: `${lang}/${newNum}-${g.slug}`,
+        });
+      }
+    }
+
+    // buduj nowy index
+    const { data: currentIdx } = await readIndex(ghToken, ghRepo);
+    const deleteKeys = new Set(files.map(f => f.indexKey));
+    const renameMap = new Map(renames.map(r => {
+      const old = sorted.find(g => `marketplace/${lang}/${g.filename}` === r.oldPath);
+      return [old?.indexKey ?? "", r.newKey];
+    }));
+    const newIdx = currentIdx
+      .filter(k => !deleteKeys.has(k))
+      .map(k => renameMap.get(k) ?? k);
+
+    // tree items: usuń stare, dodaj nowe (reuse blob sha), zaktualizuj index
+    const deletePaths = [
+      ...files.map(f => `marketplace/${lang}/${f.filename}`),
+      ...renames.map(r => r.oldPath),
+    ];
+    const upserts = [
+      ...renames.map(r => ({ path: r.newPath, sha: r.blobSha })),
+      { path: "marketplace/index.json", sha: null as unknown as string, content: JSON.stringify(newIdx, null, 2) + "\n" },
+    ];
+
+    // batch commit — blob dla index.json tworzymy, reszta reuse sha
+    const ref = await ghGetRef(ghToken, ghRepo, ghBranch);
+    const parentSha: string = ref.object.sha;
+    const commitData = await ghGetCommit(ghToken, ghRepo, parentSha);
+    const baseTree: string = commitData.tree.sha;
+
+    const treeItems: { path: string; mode: string; type: string; sha: string | null }[] = [
+      ...deletePaths.map(p => ({ path: p, mode: "100644", type: "blob", sha: null })),
+      ...renames.map(r => ({ path: r.newPath, mode: "100644", type: "blob", sha: r.blobSha })),
+    ];
+    // index.json jako nowy blob
+    const idxBlobSha = await ghCreateBlob(ghToken, ghRepo, JSON.stringify(newIdx, null, 2) + "\n");
+    treeItems.push({ path: "marketplace/index.json", mode: "100644", type: "blob", sha: idxBlobSha });
+
+    const res2 = await fetch(`https://api.github.com/repos/${ghRepo}/git/trees`, {
+      method: "POST", headers: ghHeaders(ghToken), signal: ghSignal(20000),
+      body: JSON.stringify({ base_tree: baseTree, tree: treeItems }),
+    });
+    if (!res2.ok) throw new Error(`tree: ${res2.status}`);
+    const treeSha = (await res2.json()).sha;
+
+    const msg = renames.length
+      ? `chore: remove ${files.length} + renumber ${lang} (1 commit)`
+      : `chore: remove ${files.length} game(s) from ${lang}`;
+    const newCommitSha = await ghCreateCommit(ghToken, ghRepo, msg, treeSha, parentSha);
+    await ghUpdateRef(ghToken, ghRepo, ghBranch, newCommitSha);
+
+    return respond({ ok: true, deleted: files.length, renamed: renames.length });
+  }
+
   // ── delete-game ─────────────────────────────────────────────────────────────
   if (action === "delete-game") {
     if (!ghToken || !ghRepo) return respond({ error: "Brak GitHub secrets" }, 500);
@@ -303,7 +457,7 @@ serve(async (req: Request) => {
     return respond(result);
   }
 
-  // ── save-games ───────────────────────────────────────────────────────────────
+  // ── save-games (1 commit via Trees API) ──────────────────────────────────────
   if (action === "save-games") {
     if (!ghToken || !ghRepo) return respond({ error: "Brak GITHUB_TOKEN lub GITHUB_REPO w secrets" }, 500);
     const { lang, games: gamesToSave } = body as { lang: string; games: Record<string, unknown>[] };
@@ -323,6 +477,7 @@ serve(async (req: Request) => {
 
     const saved: { indexKey: string; filename: string }[] = [];
     const { data: currentIndex } = await readIndex(ghToken, ghRepo);
+    const gameContents: { path: string; content: string }[] = [];
 
     for (let i = 0; i < gamesToSave.length; i++) {
       const game = { ...gamesToSave[i] };
@@ -332,18 +487,32 @@ serve(async (req: Request) => {
       const filename = `${num}-${gameSlug}.json`;
       const indexKey = `${lang}/${num}-${gameSlug}`;
       delete game.slug;
-
-      await ghPut(ghToken, ghRepo, ghBranch, `marketplace/${lang}/${filename}`,
-        JSON.stringify(game, null, 2) + "\n", `feat: add game ${indexKey}`);
-
+      gameContents.push({ path: `marketplace/${lang}/${filename}`, content: JSON.stringify(game, null, 2) + "\n" });
       if (!currentIndex.includes(indexKey)) currentIndex.push(indexKey);
       saved.push({ indexKey, filename });
     }
 
-    await writeIndex(ghToken, ghRepo, ghBranch, currentIndex, null,
-      `chore: add ${saved.length} game(s) to index`);
+    // wszystko w 1 commicie
+    const ref = await ghGetRef(ghToken, ghRepo, ghBranch);
+    const parentSha: string = ref.object.sha;
+    const commitData = await ghGetCommit(ghToken, ghRepo, parentSha);
+    const baseTree: string = commitData.tree.sha;
 
-    return respond({ ok: true, saved });
+    // utwórz blob dla każdej gry + index
+    const allContents = [...gameContents, { path: "marketplace/index.json", content: JSON.stringify(currentIndex, null, 2) + "\n" }];
+    const blobShas = await Promise.all(allContents.map(({ content }) => ghCreateBlob(ghToken, ghRepo, content)));
+    const treeItems = allContents.map(({ path }, i) => ({ path, mode: "100644", type: "blob", sha: blobShas[i] }));
+
+    const res2 = await fetch(`https://api.github.com/repos/${ghRepo}/git/trees`, {
+      method: "POST", headers: ghHeaders(ghToken), signal: ghSignal(20000),
+      body: JSON.stringify({ base_tree: baseTree, tree: treeItems }),
+    });
+    if (!res2.ok) throw new Error(`tree: ${res2.status}`);
+    const treeSha = (await res2.json()).sha;
+    const newCommitSha = await ghCreateCommit(ghToken, ghRepo, `feat: add ${saved.length} game(s) to ${lang}`, treeSha, parentSha);
+    await ghUpdateRef(ghToken, ghRepo, ghBranch, newCommitSha);
+
+    return respond({ ok: true, saved: saved.map((s, i) => ({ ...s, sha: blobShas[i] })) });
   }
 
   // ── generate (Groq only, no GitHub) ──────────────────────────────────────────
