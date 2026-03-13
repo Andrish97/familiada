@@ -185,47 +185,63 @@ serve(async (req: Request) => {
       if (getError || !job) return respond({ error: "Job not found" }, 404);
       if (job.status === "completed") return respond({ ok: true, msg: "Already completed" });
 
-      // Lock the job to prevent multiple parallel workers
-      const { error: lockError } = await supabase
-        .from("game_gen_queue")
-        .update({ 
+      console.log(`[process] Processing job ${jobId}, progress: ${job.processed_games}/${job.total_games}`);
+
+      // Update status to processing if not already
+      if (job.status !== "processing") {
+        await supabase.from("game_gen_queue").update({ 
           status: "processing", 
           started_at: new Date().toISOString(), 
           attempts: job.attempts + 1
-        })
-        .eq("id", jobId)
-        .eq("status", "pending");
-
-      if (lockError) return respond({ ok: true, msg: "Job already processing" });
+        }).eq("id", jobId);
+      }
 
       try {
         const results: any[] = Array.isArray(job.results) ? job.results : [];
         const alreadyUsed = [...(job.already_used || [])];
-        
-        // Generate sequentially to avoid race conditions on DB updates 
-        // and provide reliable progress updates.
-        for (let i = results.length; i < job.total_games; i++) {
-          const prompt = buildGeneratePrompt(job.lang, i + 1, job.topic, job.total_games, alreadyUsed);
+        const nextIdx = results.length;
+
+        if (nextIdx < job.total_games) {
+          console.log(`[process] Generating game ${nextIdx + 1}/${job.total_games} for topic: ${job.topic || 'random'}`);
+          
+          const prompt = buildGeneratePrompt(job.lang, nextIdx + 1, job.topic, job.total_games, alreadyUsed);
           const game = await groqChat(groqKey, prompt, 0.9, 4000);
           
-          if (!game.questions) throw new Error(`Invalid game at index ${i}`);
+          if (!game.questions) throw new Error(`Invalid game at index ${nextIdx}`);
           
-          results[i] = game;
-          if (game.meta?.title) alreadyUsed.push(game.meta.title);
-
-          // Immediate update after each game
-          await supabase.from("game_gen_queue").update({ 
-            processed_games: results.filter(Boolean).length,
+          results[nextIdx] = game;
+          
+          // Update DB immediately
+          const { error: updErr } = await supabase.from("game_gen_queue").update({ 
+            processed_games: results.length,
             results: results 
           }).eq("id", jobId);
+          
+          if (updErr) throw updErr;
+
+          // If there are more games, trigger next step asynchronously
+          if (results.length < job.total_games) {
+            console.log(`[process] More games to generate, triggering next step...`);
+            // We don't await this to respond to the current request quickly
+            fetch(`${supabaseUrl}/functions/v1/generate-game`, {
+              method: 'POST',
+              headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${supabaseKey}`
+              },
+              body: JSON.stringify({ action: 'process', jobId })
+            }).catch(err => console.error("[process] Self-trigger failed:", err));
+          } else {
+            // All done
+            await supabase.from("game_gen_queue").update({
+              status: "completed",
+              completed_at: new Date().toISOString()
+            }).eq("id", jobId);
+            console.log(`[process] Job ${jobId} completed successfully.`);
+          }
         }
 
-        await supabase.from("game_gen_queue").update({
-          status: "completed",
-          completed_at: new Date().toISOString()
-        }).eq("id", jobId);
-
-        return respond({ ok: true, total: results.length });
+        return respond({ ok: true, progress: results.length, total: job.total_games });
       } catch (err) {
         console.error("[process] Error:", err);
         await supabase.from("game_gen_queue").update({
