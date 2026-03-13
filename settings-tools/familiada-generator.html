@@ -395,12 +395,16 @@ window.loadGameList = async function(){
     loadedGames=res.games||[];
     selectedGames.clear(); updateBulkBar();
     pendingDelete.clear(); updatePendingBar();
+    
+    // Zawsze aktywuj sesję, nawet jeśli lista gier jest pusta
+    lockSession();
+    
     if(loadedGames.length){
-      lockSession();
       showStatus('session-status',`Sesja aktywna · ${loadedGames.length} gier · ${lang.toUpperCase()}`,'ok');
     } else {
-      showStatus('session-status','Brak gier dla tego języka.','info');
+      showStatus('session-status',`Sesja aktywna · brak gier (możesz generować nowe) · ${lang.toUpperCase()}`,'ok');
     }
+    
     renderManageList();
     $('scan-btn').disabled=loadedGames.length===0;
     checkQueueStatus();

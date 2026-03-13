@@ -602,7 +602,7 @@ async function handleAdminMarketplaceApi(request, env, url) {
   }
 
   // POST /_admin_api/marketplace/sync-storage
-  // Listuje obiekty w community-games/marketplace/, upsertuje każdą grę producenta
+  // Listuje obiekty w marketplace/marketplace/, upsertuje każdą grę producenta
   if (url.pathname === "/_admin_api/marketplace/sync-storage") {
     if (request.method !== "POST") return new Response("Method Not Allowed", { status: 405 });
 
@@ -615,7 +615,7 @@ async function handleAdminMarketplaceApi(request, env, url) {
     let allFiles;
     try {
       const listRes = await supabaseRpc(env, "storage_list_objects", {
-        p_bucket: "community-games",
+        p_bucket: "marketplace",
         p_prefix: "marketplace/",
         p_limit: 5000
       });
@@ -633,7 +633,7 @@ async function handleAdminMarketplaceApi(request, env, url) {
     // 2. Upsert batcha
     const results = [];
     for (const file of batch) {
-      const path = `community-games/${file.name}`;
+      const path = `marketplace/${file.name}`;
       let gameJson;
       try {
         const res = await downloadFromStorage(env, path);

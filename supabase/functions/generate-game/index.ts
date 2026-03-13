@@ -203,7 +203,7 @@ serve(async (req: Request) => {
 
         // 3. Save to Storage and DB
         // Determine next number from existing files in Storage
-        const { data: files } = await supabase.storage.from("community-games").list(`marketplace/${job.lang}`);
+        const { data: files } = await supabase.storage.from("marketplace").list(`marketplace/${job.lang}`);
         let nextNum = 1;
         if (files) {
           const nums = files.map((f: { name: string }) => parseInt(f.name)).filter((n: number) => !isNaN(n));
@@ -221,7 +221,7 @@ serve(async (req: Request) => {
 
           // Upload to storage
           const { error: uploadError } = await supabase.storage
-            .from("community-games")
+            .from("marketplace")
             .upload(storagePath, JSON.stringify(game, null, 2), {
               contentType: 'application/json',
               upsert: true
@@ -255,7 +255,7 @@ serve(async (req: Request) => {
     if (action === "list-games") {
       const { lang = "pl" } = body as { lang?: string };
       const prefix = `marketplace/${lang}`;
-      const { data: files, error } = await supabase.storage.from("community-games").list(prefix, { limit: 1000 });
+      const { data: files, error } = await supabase.storage.from("marketplace").list(prefix, { limit: 1000 });
       if (error) return respond({ error: error.message }, 500);
 
       const games = (files || [])
@@ -310,9 +310,9 @@ serve(async (req: Request) => {
           
           // In Storage we have to copy and then delete
           tasks.push((async () => {
-            const { error: cpErr } = await supabase.storage.from("community-games").copy(oldPath, newPath);
+            const { error: cpErr } = await supabase.storage.from("marketplace").copy(oldPath, newPath);
             if (cpErr) throw cpErr;
-            const { error: rmErr } = await supabase.storage.from("community-games").remove([oldPath]);
+            const { error: rmErr } = await supabase.storage.from("marketplace").remove([oldPath]);
             if (rmErr) throw rmErr;
           })());
         }
@@ -321,7 +321,7 @@ serve(async (req: Request) => {
       // 3. Handle deletions
       if (deletes.length > 0) {
         const pathsToDelete = deletes.map(d => `${prefix}/${d.filename}`);
-        tasks.push(supabase.storage.from("community-games").remove(pathsToDelete));
+        tasks.push(supabase.storage.from("marketplace").remove(pathsToDelete));
       }
 
       // 4. Handle new additions
@@ -331,7 +331,7 @@ serve(async (req: Request) => {
         const filename = `${newNum}-${slug}.json`;
         const path = `${prefix}/${filename}`;
         
-        tasks.push(supabase.storage.from("community-games").upload(path, a.content, {
+        tasks.push(supabase.storage.from("marketplace").upload(path, a.content, {
           contentType: "application/json",
           upsert: true
         }));
@@ -351,7 +351,7 @@ serve(async (req: Request) => {
       if (!lang || !filename) return respond({ error: "Missing lang or filename" }, 400);
 
       const path = `marketplace/${lang}/${filename}`;
-      const { data, error } = await supabase.storage.from("community-games").download(path);
+      const { data, error } = await supabase.storage.from("marketplace").download(path);
       if (error) return respond({ error: error.message }, 500);
 
       const text = await data.text();
