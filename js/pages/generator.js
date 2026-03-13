@@ -1,9 +1,10 @@
 /**
  * Generator Page Logic
+ * v: 20260313-3
  */
 
-import { t } from "../../translation/translation.js";
-import { sb as supabase } from "../core/supabase.js";
+import { t } from "/translation/translation.js?v=20260313-3";
+import { sb as supabase } from "/js/core/supabase.js?v=20260313-3";
 
 let loadedGames = [];
 let genGames = [];
