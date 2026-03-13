@@ -4217,8 +4217,13 @@ const pl = {
       maintenance: "Prace techniczne",
       mail: "Maile",
       marketplace: "Gry Społeczności",
+      generator: "Generator",
       tools: "Narzędzia",
       reports: "Zgłoszenia",
+    },
+    generator: {
+      title: "Generator gier",
+      subtitle: "Generowanie i zarządzanie plikami marketplace",
     },
     modes: {
       message: "Wiadomość",
