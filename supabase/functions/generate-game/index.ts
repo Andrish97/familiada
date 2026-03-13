@@ -135,6 +135,8 @@ serve(async (req: Request) => {
   const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
   const groqKey = Deno.env.get("GROQ_API_KEY") ?? "";
 
+  // Initialize client with service_role to bypass RLS for internal logic,
+  // but we will also check the user's identity if provided.
   const supabase = createClient(supabaseUrl, supabaseKey);
 
   try {
@@ -150,6 +152,17 @@ serve(async (req: Request) => {
         lang?: string; total?: number; topic?: string; alreadyUsed?: string[];
       };
 
+      // Get user identity from Authorization header
+      const authHeader = req.headers.get("Authorization");
+      let userId: string | undefined;
+      
+      if (authHeader) {
+        const { data: { user } } = await createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY") ?? "", {
+          global: { headers: { Authorization: authHeader } }
+        }).auth.getUser();
+        userId = user?.id;
+      }
+
       const { data, error } = await supabase
         .from("game_gen_queue")
         .insert({
@@ -157,7 +170,8 @@ serve(async (req: Request) => {
           topic,
           total_games: total,
           already_used: alreadyUsed,
-          status: 'pending'
+          status: 'pending',
+          created_by: userId // explicitly set to ensure NOT NULL constraint is satisfied
         })
         .select()
         .single();
