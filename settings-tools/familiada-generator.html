@@ -83,6 +83,9 @@
   .bulk-bar{display:none;align-items:center;gap:8px;padding:8px 10px;background:rgba(255,234,166,.06);border:1px solid rgba(255,234,166,.2);border-radius:10px;margin-top:8px;flex-wrap:wrap}
   .bulk-bar.visible{display:flex}
   .bulk-count{font-size:12px;font-weight:700;color:var(--gold);flex:1}
+  #manage-card.busy{pointer-events:none;opacity:.55}
+  #manage-card.busy #game-list::after{content:'';position:absolute;inset:0;background:rgba(5,9,20,.4);border-radius:10px;z-index:10}
+  #game-list{position:relative}
   @media(max-width:520px){.grid-2{grid-template-columns:1fr}}
 </style>
 </head>
@@ -94,7 +97,7 @@
   </header>
 
   <!-- Manage existing -->
-  <div class="card">
+  <div class="card" id="manage-card">
     <div class="card-title">📋 Gry w marketplace</div>
     <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:4px">
       <div class="field" style="flex:1;min-width:120px">
@@ -190,6 +193,10 @@ async function call(body) {
 // ─── manage list ──────────────────────────────────────────────────────────────
 let loadedGames = [];
 
+function setListBusy(busy){
+  $('manage-card').classList.toggle('busy', busy);
+}
+
 window.resetManage = function(){
   loadedGames=[]; selectedGames.clear(); updateBulkBar(); renderManageList();
   $('scan-btn').disabled=true; $('renumber-btn').disabled=true; hideStatus('manage-status');
@@ -210,6 +217,7 @@ window.toggleSelect = function(idx,cb,e){
 
 window.loadGameList = async function(){
   const lang=$('manage-lang').value;
+  setListBusy(true);
   showStatus('manage-status','Wczytuję…','info');
   $('game-list').innerHTML='<div style="color:var(--muted);font-size:12px;padding:10px 0;text-align:center">Ładowanie…</div>';
   $('scan-btn').disabled=true; $('renumber-btn').disabled=true;
@@ -223,6 +231,7 @@ window.loadGameList = async function(){
     $('renumber-btn').disabled=!hasGaps;
     showStatus('manage-status',`${loadedGames.length} gier.${hasGaps?' Wykryto luki — kliknij Renumeruj.':''}`,'ok');
   }catch(e){ showStatus('manage-status','✗ '+e.message,'err'); $('game-list').innerHTML=''; }
+  finally{ setListBusy(false); }
 };
 
 function checkGaps(){ return loadedGames.some((g,i)=>g.num!==i+1); }
@@ -286,6 +295,7 @@ function applyIssues(issues){
 
 window.scanGames = async function(){
   $('scan-btn').disabled=true;
+  setListBusy(true);
   const LOAD_BATCH=8, BLOCK=40;
   try{
     const lang=$('manage-lang').value;
@@ -337,12 +347,13 @@ window.scanGames = async function(){
     renderManageList();
     showStatus('manage-status',(!dups&&!weaks)?'✓ Brak problemów.':`${dups} duplikatów · ${weaks} słabych`,(!dups&&!weaks)?'ok':'info');
   }catch(e){ showStatus('manage-status','✗ '+e.message,'err'); }
-  finally{ $('scan-btn').disabled=false; }
+  finally{ $('scan-btn').disabled=false; setListBusy(false); }
 };
 
 window.deleteGame = async function(idx){
   const g=loadedGames[idx];
   if(!confirm(`Usunąć ${String(g.num).padStart(3,'0')} – ${g.title}?`))return;
+  setListBusy(true);
   showStatus('manage-status','Usuwam…','info');
   try{
     await call({action:'delete-game',lang:g.lang,filename:g.filename,sha:g.sha,indexKey:g.indexKey});
@@ -352,6 +363,7 @@ window.deleteGame = async function(idx){
     $('renumber-btn').disabled=!checkGaps();
     showStatus('manage-status','Usunięto.','ok');
   }catch(e){ showStatus('manage-status','✗ '+e.message,'err'); }
+  finally{ setListBusy(false); }
 };
 
 window.selectIssues = function(){
@@ -372,37 +384,52 @@ window.clearSelection = function(){
   selectedGames.clear(); updateBulkBar(); renderManageList();
 };
 
+let deletingInProgress = false;
+
 window.deleteSelected = async function(){
-  const indices=[...selectedGames].sort((a,b)=>b-a); // reverse order
-  if(!indices.length)return;
-  if(!confirm(`Usunąć ${indices.length} gier? Operacja nieodwracalna.`))return;
-  showStatus('manage-status',`Usuwam 0 / ${indices.length}…`,'info');
-  let done=0,failed=0;
+  if(deletingInProgress) return;
+  const indices=[...selectedGames].sort((a,b)=>b-a);
+  if(!indices.length) return;
+  if(!confirm(`Usunąć ${indices.length} gier? Operacja nieodwracalna.`)) return;
+
+  deletingInProgress=true;
+  setListBusy(true);
+
+  let done=0, failed=0;
   for(const idx of indices){
     const g=loadedGames[idx];
-    try{
-      await call({action:'delete-game',lang:g.lang,filename:g.filename,sha:g.sha,indexKey:g.indexKey});
-      loadedGames.splice(idx,1);
-      done++;
-    }catch(e){ failed++; }
-    showStatus('manage-status',`Usuwam ${done} / ${indices.length}…`,'info');
+    showStatus('manage-status',`Usuwam ${done+failed+1} / ${indices.length}…`,'info');
+    let ok=false;
+    for(let attempt=1;attempt<=3&&!ok;attempt++){
+      try{
+        await call({action:'delete-game',lang:g.lang,filename:g.filename,sha:g.sha,indexKey:g.indexKey});
+        ok=true;
+      }catch(e){
+        if(attempt<3) await new Promise(r=>setTimeout(r,1500*attempt));
+      }
+    }
+    if(ok){ loadedGames.splice(idx,1); selectedGames.clear(); done++; }
+    else failed++;
   }
-  selectedGames.clear(); updateBulkBar();
-  renderManageList();
+
+  deletingInProgress=false;
+  setListBusy(false);
+  updateBulkBar(); renderManageList();
   $('renumber-btn').disabled=!checkGaps();
-  showStatus('manage-status',failed?`Usunięto ${done}, błąd ${failed}.`:`✓ Usunięto ${done} gier.`,failed?'err':'ok');
+  showStatus('manage-status',failed?`Usunięto ${done}, nie udało się ${failed}.`:`✓ Usunięto ${done} gier.`,failed?'err':'ok');
 };
 
 window.renumberGames = async function(){
   if(!confirm('Renumerowanie zmieni nazwy plików na GitHubie. Kontynuować?'))return;
-  $('renumber-btn').disabled=true;
+  setListBusy(true);
   showStatus('manage-status','Renumeruję…','info');
   try{
     const lang=$('manage-lang').value;
     const res=await call({action:'renumber',lang,games:loadedGames.map(g=>({num:g.num,filename:g.filename,sha:g.sha,slug:g.slug,indexKey:g.indexKey}))});
     showStatus('manage-status',`Renumerowano ${res.renamed} gier.`,'ok');
     await loadGameList();
-  }catch(e){ showStatus('manage-status','✗ '+e.message,'err'); $('renumber-btn').disabled=false; }
+  }catch(e){ showStatus('manage-status','✗ '+e.message,'err'); }
+  finally{ setListBusy(false); }
 };
 
 // ─── generate ─────────────────────────────────────────────────────────────────
