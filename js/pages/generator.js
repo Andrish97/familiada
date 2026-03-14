@@ -308,6 +308,10 @@ function analyzeWeakness(game) {
   let badPoints = 0;
   let shortQuestions = 0;
   let dupQuestions = 0;
+  let zeroHeavyPoints = 0;
+  let topHeavyPoints = 0;
+  let badSumPoints = 0;
+  let divBy5Points = 0;
 
   const qSeen = new Set();
 
@@ -325,16 +329,30 @@ function analyzeWeakness(game) {
     if (ans.length < 3) qWithLt3++;
 
     let sum = 0;
+    let maxPts = 0;
+    let zeros = 0;
+    let allDiv5 = true;
     for (const a of ans) {
       const ptsRaw = a?.fixed_points;
       const pts = typeof ptsRaw === "number" ? ptsRaw : Number(ptsRaw);
       if (!Number.isFinite(pts)) badPoints++;
-      else sum += pts;
+      else {
+        sum += pts;
+        if (pts === 0) zeros++;
+        if (pts > maxPts) maxPts = pts;
+        if (pts % 5 !== 0) allDiv5 = false;
+      }
+    }
+    if (sum > 100 || sum < 80) {
+      badSumPoints++;
     }
     if (sum > 100) {
       score -= 2;
       reasons.push(`Suma punktów > 100 w pytaniu: "${qText}" (−2).`);
     }
+    if (zeros >= 2) zeroHeavyPoints++;
+    if (maxPts >= 85) topHeavyPoints++;
+    if (ans.length === 4 && allDiv5) divBy5Points++;
   }
 
   const avgAnswers = qCount ? answersTotal / qCount : 0;
@@ -368,6 +386,26 @@ function analyzeWeakness(game) {
     const penalty = Math.min(15, badPoints);
     score -= penalty;
     reasons.push(`Brakujące/nienumeryczne punkty: ${badPoints} (−${penalty}).`);
+  }
+  if (badSumPoints > 0) {
+    const penalty = Math.min(18, badSumPoints * 3);
+    score -= penalty;
+    reasons.push(`Nietypowa suma punktów (poza 80–100): ${badSumPoints} (−${penalty}).`);
+  }
+  if (zeroHeavyPoints > 0) {
+    const penalty = Math.min(30, zeroHeavyPoints * 6);
+    score -= penalty;
+    reasons.push(`Pytania z 2+ zerami w punktach: ${zeroHeavyPoints} (−${penalty}).`);
+  }
+  if (topHeavyPoints > 0) {
+    const penalty = Math.min(20, topHeavyPoints * 3);
+    score -= penalty;
+    reasons.push(`Pytania z bardzo wysokim top wynikiem (≥85): ${topHeavyPoints} (−${penalty}).`);
+  }
+  if (divBy5Points > 0) {
+    const penalty = Math.min(12, divBy5Points * 2);
+    score -= penalty;
+    reasons.push(`Pytania z punktami wyłącznie /5: ${divBy5Points} (−${penalty}).`);
   }
 
   if (title.length < 6) {

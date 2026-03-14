@@ -360,7 +360,55 @@ function normalizeGamePayload(payload: any) {
     const rounded = scaled.map((n: number) => Math.max(0, Math.round(n)));
     let rsum = rounded.reduce((acc: number, n: number) => acc + n, 0);
     rounded[0] = Math.max(0, rounded[0] + (100 - rsum));
-    for (let i = 0; i < 4; i++) q.answers[i].fixed_points = rounded[i];
+    // Enforce a non-degenerate distribution:
+    // - avoid 100/0/0/0
+    // - avoid too many zeros
+    // - keep totals at 100
+    rounded.sort((a: number, b: number) => b - a);
+    const minOther = 5;
+    const minTop = 40;
+
+    let top = rounded[0];
+    let o1 = rounded[1];
+    let o2 = rounded[2];
+    let o3 = rounded[3];
+
+    if (o1 < minOther || o2 < minOther || o3 < minOther) {
+      const n1 = Math.max(minOther, o1);
+      const n2 = Math.max(minOther, o2);
+      const n3 = Math.max(minOther, o3);
+      const extra = (n1 + n2 + n3) - (o1 + o2 + o3);
+      top = Math.max(100 - (n1 + n2 + n3), top - extra);
+      o1 = n1; o2 = n2; o3 = n3;
+    }
+
+    if (top < minTop) {
+      const need = minTop - top;
+      const take1 = Math.min(need, Math.max(0, o1 - minOther));
+      o1 -= take1; top += take1;
+      const left1 = need - take1;
+      const take2 = Math.min(left1, Math.max(0, o2 - minOther));
+      o2 -= take2; top += take2;
+      const left2 = left1 - take2;
+      const take3 = Math.min(left2, Math.max(0, o3 - minOther));
+      o3 -= take3; top += take3;
+    }
+
+    const total = top + o1 + o2 + o3;
+    if (total !== 100) top = Math.max(0, top + (100 - total));
+
+    const finalPts = [top, o1, o2, o3].sort((a: number, b: number) => b - a);
+    if (finalPts.every((p) => p % 5 === 0)) {
+      if (finalPts[0] >= minTop + 1) {
+        finalPts[0] -= 1;
+        finalPts[1] += 1;
+      } else if (finalPts[1] >= minOther + 1) {
+        finalPts[1] -= 1;
+        finalPts[0] += 1;
+      }
+      finalPts.sort((a: number, b: number) => b - a);
+    }
+    for (let i = 0; i < 4; i++) q.answers[i].fixed_points = finalPts[i];
     q.answers.sort((a: any, b: any) => (Number(b.fixed_points) || 0) - (Number(a.fixed_points) || 0));
   }
 
