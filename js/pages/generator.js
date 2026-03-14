@@ -154,6 +154,7 @@ function updateBulkBar() {
   const countEl = $('gen-bulk-count');
   if (!bar || !countEl) return;
   const count = selectedIds.size;
+  bar.style.display = 'flex';
   bar.classList.add('visible');
   countEl.textContent = `${count} zaznaczonych`;
 
