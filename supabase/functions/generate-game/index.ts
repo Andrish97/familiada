@@ -278,7 +278,7 @@ serve(async (req: Request) => {
         if (!normalized) continue;
 
         if (avoidSet.has(String(normalized.title || "").toLowerCase())) continue;
-        if (!topic && /\bświat\b/i.test(String(normalized.title || ""))) continue;
+        if (!topic && /(świat|world)/i.test(String(normalized.title || ""))) continue;
 
         const questionsText = buildQuestionsText(normalized);
         const embedding = await generateEmbedding(questionsText, 8000);
