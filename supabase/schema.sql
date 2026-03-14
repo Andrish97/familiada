@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict rPGM1pJnOXmt069PXj9KfSGAxlMS98aprHIH0dgKBU70HWLfjXeRiq0UGML9is3
+\restrict oOsidzoYALRJvFbTqv6uJIi8x0muJdGYjg4UpjoqGK6dJFJZzS4Kgsvz4nORSdl
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -1512,6 +1512,38 @@ BEGIN
   RETURNING reports.id INTO v_id;
   RETURN QUERY SELECT v_id, v_ticket;
 END;
+$$;
+
+
+--
+-- Name: cron_embed_missing_market_games(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."cron_embed_missing_market_games"() RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+declare
+  v_url text;
+  v_jwt text;
+begin
+  select value into v_url from public.app_config where key = 'edge_url';
+  select value into v_jwt from public.app_config where key = 'edge_service_role_jwt';
+
+  if coalesce(v_url, '') = '' or coalesce(v_jwt, '') = '' then
+    return;
+  end if;
+
+  perform net.http_post(
+    url := v_url || '/functions/v1/generate-game',
+    headers := jsonb_build_object(
+      'Content-Type', 'application/json',
+      'Authorization', 'Bearer ' || v_jwt,
+      'apikey', v_jwt
+    ),
+    body := '{"action":"embed-missing","lang":"all","limit":25}'
+  );
+end;
 $$;
 
 
@@ -12085,5 +12117,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict rPGM1pJnOXmt069PXj9KfSGAxlMS98aprHIH0dgKBU70HWLfjXeRiq0UGML9is3
+\unrestrict oOsidzoYALRJvFbTqv6uJIi8x0muJdGYjg4UpjoqGK6dJFJZzS4Kgsvz4nORSdl
 
