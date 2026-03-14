@@ -145,7 +145,7 @@ function buildGeneratePrompt(lang: string, topic: string, avoidTitles: string[])
 Zwróć TYLKO poprawny JSON w tym schemacie:
 {
   "title": "string (krótki, unikalny, bez słowa 'Familiada')",
-  "description": "string (1-2 zdania, o temacie, bez gadania że 'to gra')",
+  "description": "string (2-4 zdania: temat/klimat, dla kogo, ewentualnie wskazówka dla prowadzącego)",
   "questions": [
     {
       "text": "string",
@@ -165,9 +165,10 @@ Wymagania:
 - Pytania różnorodne: mieszaj "Podaj…", "Wymień…", "Nazwij…", "Co ludzie…", "Co bywa…".
 - Unikaj powtarzania początków typu "Co robią…" i "Co jest często…".
 - Odpowiedzi to krótkie frazy (1-4 słowa), bez pełnych zdań i bez tak/nie.
-- fixed_points: liczby całkowite, w każdym pytaniu suma ok. 100, najwyższe dla najpopularniejszej odpowiedzi.
-Przykład stylu (NIE kopiuj dosłownie):
-- Pytanie: "Podaj coś, co ludzie robią zaraz po przebudzeniu." Odpowiedzi: "kawa", "toaleta", "telefon", "przeciąganie się".`;
+- Odpowiedzi: maks. 17 znaków.
+- fixed_points: liczby całkowite, nieregularne jak z prawdziwej ankiety (np. 43, 27, 16, 9).
+- fixed_points: suma w pytaniu 80–100.
+- fixed_points: nie rób układów 100/0/0/0 ani wszystkich podzielnych przez 5.`;
   }
 
   const topicClause = topic ? `Theme: "${topic}".` : `Choose a unique, fun theme.`;
@@ -442,7 +443,7 @@ serve(async (req: Request) => {
 
     if (action === 'generate-producer-game') {
       const { lang, topic, avoidTitles = [] } = body;
-      const model = "llama-3.1-8b-instant";
+      const model = "llama-3.3-70b-versatile";
       const effectiveTopic = String(topic || "").trim() || pickDefaultTopic(lang);
       const rawAvoid = Array.isArray(avoidTitles) ? avoidTitles : [];
       const avoidList = Array.from(new Set(rawAvoid.map((t: any) => String(t || "").trim()).filter(Boolean))).slice(0, 200);
