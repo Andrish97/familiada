@@ -158,51 +158,37 @@ body.home-body .wrap {
   background: rgba(0,0,0,.2);
 }
 
-/* MOBILE */
+/* MOBILE: Identyczny jak desktop, ale bez kropek i z mniejszym fontem */
 @media (max-width: 640px) {
   .pipeline {
-    padding: 0 16px;
+    padding: 0 12px;
+    height: 42px;
+    justify-content: space-between;
   }
-
-  /* MOBILE: Pokaż wszystkie etykiety, ale w kompaktowej formie */
-  .pipeline {
-    padding: 0 10px;
-    justify-content: flex-start; /* Pozwól na przewijanie od lewej */
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    gap: 6px;
-    scrollbar-width: none; /* Ukryj scrollbar Firefox */
-  }
-  .pipeline::-webkit-scrollbar { display: none; } /* Ukryj scrollbar Chrome/Safari */
 
   .pipeline-node {
-    width: auto;
-    height: 30px;
-    padding: 0 10px;
-    border-radius: 15px;
-    flex-shrink: 0; /* Nie pozwól na zgniatanie przycisków */
-    border-color: rgba(255,234,166,.2);
-    background: rgba(255,234,166,.04);
+    padding: 4px 8px;
+    border-radius: 14px;
+    font-size: 8.5px;
+    letter-spacing: 0.02em;
     gap: 0;
   }
 
-  .pipeline-node-label { 
-    display: inline !important; 
-    font-size: 10px;
-    letter-spacing: 0.02em;
+  .pipeline-node-dot { 
+    display: none !important; 
   }
-  
-  .pipeline-node-dot { display: none !important; }
 
-  /* aktywny: wyróżnienie złotym tłem */
+  .pipeline-line {
+    display: block !important;
+    height: 4px;
+    border-top: 1px solid rgba(255,234,166,.12);
+    border-bottom: 1px solid rgba(255,234,166,.12);
+    min-width: 4px;
+  }
+
   .pipeline-node.is-active {
-    background: var(--gold);
-    color: #1a1608;
-    border-color: var(--gold);
+    font-weight: 1000;
   }
-
-  /* ukryj linie między węzłami na mobile, żeby było czyściej */
-  .pipeline-line { display: none; }
 }
 
 /* =====================
