@@ -104,7 +104,7 @@ async function groqChat(
   { temperature = 0.2, jsonMode = true }: { temperature?: number; jsonMode?: boolean } = {},
 ) {
   const ac = new AbortController();
-  const timeoutMs = Number(Deno.env.get("GROQ_TIMEOUT_MS") || "25000");
+  const timeoutMs = Number(Deno.env.get("GROQ_TIMEOUT_MS") || "15000");
   const timer = setTimeout(() => ac.abort(), timeoutMs);
   try {
     const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -397,94 +397,54 @@ serve(async (req: Request) => {
       const model = "llama-3.1-8b-instant";
       const effectiveTopic = String(topic || "").trim() || pickDefaultTopic(lang);
       const rawAvoid = Array.isArray(avoidTitles) ? avoidTitles : [];
-      const avoidList = Array.from(
-        new Set(rawAvoid.map((t: any) => String(t || "").trim()).filter(Boolean)),
-      ) as string[];
-      const avoidListCapped = avoidList.slice(0, 200);
-      const avoidSet = new Set(avoidListCapped.map((t) => t.toLowerCase()));
+      const avoidList = Array.from(new Set(rawAvoid.map((t: any) => String(t || "").trim()).filter(Boolean))).slice(0, 200);
+      const avoidSet = new Set(avoidList.map((t) => t.toLowerCase()));
 
-      const maxAttempts = 20;
-      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-        const seed = crypto.randomUUID();
-        const prompt = buildGeneratePromptWithSeed(lang, effectiveTopic, avoidTitles, seed);
+      const seed = crypto.randomUUID();
+      const prompt = buildGeneratePromptWithSeed(lang, effectiveTopic, avoidTitles, seed);
 
-        let payload: any = null;
-        try {
-          payload = await groqChat(groqKey, model, prompt, { temperature: 0.55, jsonMode: true });
-        } catch {
-          payload = null;
-        }
-
-        let normalized = normalizeGamePayload(payload);
-        if (!normalized) {
-          try {
-            payload = await groqChat(groqKey, model, prompt, { temperature: 0.2, jsonMode: false });
-            normalized = normalizeGamePayload(payload);
-          } catch (e) {
-            const msg = e instanceof Error ? e.message : String(e);
-            if (isGroqRateLimit(msg)) {
-              const waitMs = parseGroqWaitMs(msg) ?? 6000;
-              return new Response(JSON.stringify({ ok: false, retry: true, reason: "rate_limit", wait_ms: waitMs }), {
-                headers: { ...CORS, "Content-Type": "application/json" },
-              });
-            }
-            payload = null;
-            normalized = null;
-          }
-        }
-        if (!normalized) continue;
-
-        if (avoidSet.has(String(normalized.title || "").toLowerCase())) continue;
-        if (!topic && /(świat|world)/i.test(String(normalized.title || ""))) continue;
-        if (isLowQualityCandidate(normalized)) continue;
-
-        const questionsText = buildQuestionsText(normalized);
-        const embedding = await generateEmbedding(questionsText, 8000);
-        const embeddingLiteral = embedding ? toVectorLiteral(embedding) : null;
-
-        if (embeddingLiteral) {
-          const rejectThreshold = 0.80;
-          const { data: vecMatches, error: vecErr } = await supabase.rpc("market_find_similar_embeddings", {
-            p_lang: lang,
-            p_embedding: embeddingLiteral,
-            p_threshold: rejectThreshold,
-            p_limit: 3,
+      let payload: any;
+      try {
+        payload = await groqChat(groqKey, model, prompt, { temperature: 0.55, jsonMode: true });
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        if (isGroqRateLimit(msg)) {
+          const waitMs = parseGroqWaitMs(msg) ?? 6000;
+          return new Response(JSON.stringify({ ok: false, retry: true, reason: "rate_limit", wait_ms: waitMs }), {
+            headers: { ...CORS, "Content-Type": "application/json" },
           });
-          if (vecErr) throw vecErr;
-          const matches = Array.isArray(vecMatches) ? vecMatches : [];
-          const top = matches[0];
-          if (top && Number(top.similarity) >= rejectThreshold) continue;
-          return new Response(JSON.stringify({
-            candidate: { lang, title: normalized.title, description: normalized.description ?? "", payload: normalized },
-            matches,
-            attempt,
-          }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
         }
-
-        const rejectThreshold = 0.60;
-        const { data: matchesRaw, error: simError } = await supabase.rpc("market_find_similar_questions", {
-          p_lang: lang,
-          p_questions_text: questionsText,
-          p_threshold: rejectThreshold,
-          p_limit: 3,
+        return new Response(JSON.stringify({ ok: false, retry: true, reason: "groq_error" }), {
+          headers: { ...CORS, "Content-Type": "application/json" },
         });
-        if (simError) throw simError;
-        const matches = Array.isArray(matchesRaw) ? matchesRaw : [];
-        const top = matches[0];
-        if (top && Number(top.similarity) >= rejectThreshold) continue;
+      }
 
-        return new Response(JSON.stringify({
-          candidate: { lang, title: normalized.title, description: normalized.description ?? "", payload: normalized },
-          matches,
-          attempt,
-        }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
+      const normalized = normalizeGamePayload(payload);
+      if (!normalized) {
+        return new Response(JSON.stringify({ ok: false, retry: true, reason: "invalid_json" }), {
+          headers: { ...CORS, "Content-Type": "application/json" },
+        });
+      }
+
+      if (avoidSet.has(String(normalized.title || "").toLowerCase())) {
+        return new Response(JSON.stringify({ ok: false, retry: true, reason: "title_dup" }), {
+          headers: { ...CORS, "Content-Type": "application/json" },
+        });
+      }
+      if (!topic && /(świat|world)/i.test(String(normalized.title || ""))) {
+        return new Response(JSON.stringify({ ok: false, retry: true, reason: "world_default" }), {
+          headers: { ...CORS, "Content-Type": "application/json" },
+        });
+      }
+      if (isLowQualityCandidate(normalized)) {
+        return new Response(JSON.stringify({ ok: false, retry: true, reason: "low_quality" }), {
+          headers: { ...CORS, "Content-Type": "application/json" },
+        });
       }
 
       return new Response(JSON.stringify({
-        ok: false,
-        retry: true,
-        reason: "low_quality_or_similarity",
-        attempts: maxAttempts,
+        candidate: { lang, title: normalized.title, description: normalized.description ?? "", payload: normalized, topic: effectiveTopic },
+        matches: [],
       }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
     }
 
