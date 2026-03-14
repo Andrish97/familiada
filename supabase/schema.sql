@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict oOsidzoYALRJvFbTqv6uJIi8x0muJdGYjg4UpjoqGK6dJFJZzS4Kgsvz4nORSdl
+\restrict CJUBxeTRNQboXcSqKvynJ73MXvbzTJ40YEwfrSIdHSG2aNAckSNlTU7r68oh5UB
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -2891,6 +2891,40 @@ BEGIN
     user_id       = auth.uid(),
     updated_at    = now();
 END;
+$$;
+
+
+--
+-- Name: invoke_embed_missing_market_games("text", integer); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."invoke_embed_missing_market_games"("p_lang" "text" DEFAULT 'all'::"text", "p_limit" integer DEFAULT 25) RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+declare
+  v_base text := (select decrypted_secret from vault.decrypted_secrets where name = 'project_url');
+  v_anon text := (select decrypted_secret from vault.decrypted_secrets where name = 'anon_key');
+  v_url  text := v_base || '/functions/v1/generate-game';
+begin
+  if coalesce(v_base, '') = '' or coalesce(v_anon, '') = '' then
+    return;
+  end if;
+
+  perform net.http_post(
+    url := v_url,
+    headers := jsonb_build_object(
+      'Content-Type', 'application/json',
+      'Authorization', 'Bearer ' || v_anon,
+      'apikey', v_anon
+    ),
+    body := jsonb_build_object(
+      'action', 'embed-missing',
+      'lang', coalesce(nullif(p_lang, ''), 'all'),
+      'limit', greatest(1, least(coalesce(p_limit, 25), 50))
+    )
+  );
+end;
 $$;
 
 
@@ -12117,5 +12151,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict oOsidzoYALRJvFbTqv6uJIi8x0muJdGYjg4UpjoqGK6dJFJZzS4Kgsvz4nORSdl
+\unrestrict CJUBxeTRNQboXcSqKvynJ73MXvbzTJ40YEwfrSIdHSG2aNAckSNlTU7r68oh5UB
 
