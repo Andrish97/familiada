@@ -84,6 +84,19 @@ function extractFirstJsonObject(text: string): any {
   }
 }
 
+function parseGroqWaitMs(message: string): number | null {
+  const m = String(message || "").match(/try again in ([0-9]+(\.[0-9]+)?)s/i);
+  if (!m) return null;
+  const sec = Number(m[1]);
+  if (!Number.isFinite(sec) || sec <= 0) return null;
+  return Math.ceil(sec * 1000);
+}
+
+function isGroqRateLimit(message: string): boolean {
+  const s = String(message || "");
+  return s.includes("Groq 429") || s.includes("rate_limit_exceeded") || /rate limit/i.test(s);
+}
+
 async function groqChat(
   groqKey: string,
   model: string,
@@ -404,8 +417,20 @@ serve(async (req: Request) => {
 
         let normalized = normalizeGamePayload(payload);
         if (!normalized) {
-          payload = await groqChat(groqKey, model, prompt, { temperature: 0.2, jsonMode: false });
-          normalized = normalizeGamePayload(payload);
+          try {
+            payload = await groqChat(groqKey, model, prompt, { temperature: 0.2, jsonMode: false });
+            normalized = normalizeGamePayload(payload);
+          } catch (e) {
+            const msg = e instanceof Error ? e.message : String(e);
+            if (isGroqRateLimit(msg)) {
+              const waitMs = parseGroqWaitMs(msg) ?? 6000;
+              return new Response(JSON.stringify({ ok: false, retry: true, reason: "rate_limit", wait_ms: waitMs }), {
+                headers: { ...CORS, "Content-Type": "application/json" },
+              });
+            }
+            payload = null;
+            normalized = null;
+          }
         }
         if (!normalized) continue;
 
