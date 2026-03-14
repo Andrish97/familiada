@@ -276,4 +276,49 @@ document.addEventListener("DOMContentLoaded", async () => {
   initImageViewer();
 
   await redirectIfSession();
+
+  // Tab Title Animation (Accepted)
+  const originalTitle = document.title;
+  window.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      const messages = ["Wracaj do gry! 🎮", "Suchar czeka... 🤣", "Pytanie: więcej niż jedno zwierzę? 🐑"];
+      document.title = messages[Math.floor(Math.random() * messages.length)];
+    } else {
+      document.title = originalTitle;
+    }
+  });
+
+  // Persistent Teaser Logic (Accepted)
+  const teaser = document.getElementById("quickPollTeaser");
+  if (teaser) {
+    if (localStorage.getItem("fam:teaser_clicked")) {
+      teaser.style.display = "none";
+    } else {
+      teaser.querySelectorAll(".teaser-btn").forEach(btn => {
+        btn.addEventListener("click", function() {
+          const pts = this.dataset.pts;
+          const txt = this.innerText;
+          this.innerHTML = `${txt} (${pts} pkt!)`;
+          this.style.background = "var(--gold)";
+          this.style.color = "#000";
+          localStorage.setItem("fam:teaser_clicked", "1");
+          setTimeout(() => {
+            teaser.style.opacity = "0";
+            teaser.style.transition = "opacity 0.5s ease";
+            setTimeout(() => teaser.style.display = "none", 500);
+          }, 2000);
+        });
+      });
+    }
+  }
+
+  // Console Joke (Accepted)
+  const suchary = [
+    "Dlaczego matematyka jest smutna? Bo ma dużo problemów.",
+    "Co mówi ryba, gdy uderzy w ścianę? Dam!",
+    "Jak się nazywa ser, który nie jest twój? Nacho cheese.",
+    "Co robią policjanci w kinie? Śledzą akcję."
+  ];
+  console.log("%cFAMILIADA ONLINE", "color: #ffda7e; font-size: 20px; font-weight: bold;");
+  console.log(`%cSuchar dnia: ${suchary[Math.floor(Math.random() * suchary.length)]}`, "color: #aaa; font-style: italic;");
 });
