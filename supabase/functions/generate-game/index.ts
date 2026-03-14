@@ -474,25 +474,15 @@ serve(async (req: Request) => {
         });
       }
 
-      if (avoidSet.has(String(normalized.title || "").toLowerCase())) {
-        return new Response(JSON.stringify({ ok: false, retry: true, reason: "title_dup" }), {
-          headers: { ...CORS, "Content-Type": "application/json" },
-        });
-      }
-      if (!topic && /(świat|world)/i.test(String(normalized.title || ""))) {
-        return new Response(JSON.stringify({ ok: false, retry: true, reason: "world_default" }), {
-          headers: { ...CORS, "Content-Type": "application/json" },
-        });
-      }
-      if (isLowQualityCandidate(normalized)) {
-        return new Response(JSON.stringify({ ok: false, retry: true, reason: "low_quality" }), {
-          headers: { ...CORS, "Content-Type": "application/json" },
-        });
-      }
+      const warnings: string[] = [];
+      if (avoidSet.has(String(normalized.title || "").toLowerCase())) warnings.push("title_dup");
+      if (!topic && /(świat|world)/i.test(String(normalized.title || ""))) warnings.push("world_default");
+      if (isLowQualityCandidate(normalized)) warnings.push("low_quality");
 
       return new Response(JSON.stringify({
         candidate: { lang, title: normalized.title, description: normalized.description ?? "", payload: normalized, topic: effectiveTopic },
         matches: [],
+        warnings,
       }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
     }
 
