@@ -150,34 +150,22 @@ ZASADA NR 3: Każde pytanie musi być osadzone w kontekście tematu i jego "kąt
     const topicHint =
       lang === "uk"
         ? (topic
-          ? `Тема гри: "${topic}". Всі 10 питань ПОВИННІ бути пов'язані з цією темою.`
-          : `Придумай власну, конкретну тему з повсякденного життя. Ці теми вже ІСНУЮТЬ — твоя має бути семантично інша:\n[${usedList}]`)
+          ? `Тема гри: "${topic}". Питання мають охоплювати широкий спектр цієї теми (різні аспекти, ситуації, асоціації).`
+          : `Придумай власну, широку і цікаву тему. Ці теми вже ІСНУЮТЬ:\n[${usedList}]`)
         : (topic
-          ? `Temat: "${topic}". Każde pytanie musi dotyczyć tego tematu. Jeśli temat to "Ubrania — w łazience", nie pytaj o garnitury, tylko o pranie, kąpiel, szlafroki, brudną bieliznę.`
-          : `Wymyśl własny, KONKRETNY temat z codziennego życia (np. "Problemy z sąsiadami", "Wyprawa do lasu", "Niedzielny obiad").\nWAŻNE: poniższe tematy już ISTNIEJĄ — twój musi być INNY:\n[${usedList}]`);
+          ? `Temat: "${topic}". Gra ma mieć SZEROKI ZAKRES. Nie skupiaj się na jednym detalu. Jeśli temat to "Ubrania", pytaj o zakupy, pranie, ulubione ciuchy, ubrania na różne pory roku itp. Każde pytanie ma dotyczyć innego aspektu tematu "${topic}".`
+          : `Wymyśl własny, SZEROKI i ciekawy temat (np. "Podróże", "Kuchnia", "Sport", "Życie rodzinne").\nWAŻNE: poniższe tematy już ISTNIEJĄ — twój musi być INNY:\n[${usedList}]`);
 
     const fewShot = lang === "pl" ? `
-TWOJA BAZA WIEDZY (STYL I STRUKTURA):
-Pytanie: Co najczęściej pijemy do obiadu?
-Odpowiedzi: Kompot (44), Woda (26), Sok (18), Herbata (12)
-
-Pytanie: Więcej niż jedno zwierzę to...?
-Odpowiedzi: Stado (38), Klucze (25), Wataha (19), Ławica (14)
-
-Pytanie: Co robimy, gdy wejdziemy do ciemnego pomieszczenia?
-Odpowiedzi: Zapalamy światło (48), Szukamy włącznika (24), Zapalamy latarkę (15), Czekamy aż wzrok się przyzwyczai (9)
-
-Pytanie: Popularne imię dla psa?
-Odpowiedzi: Burek (35), Azor (27), Reksio (19), Łatek (14)
-
-ZASADY GENEROWANIA NA PODSTAWIE REALNYCH DANYCH:
-1. Przeszukaj swoją bazę treningową pod kątem autentycznych pytań z Familiady dla tematu: "${topic}".
-2. Odpowiedzi MUSZĄ odzwierciedlać polską mentalność i stereotypy (np. na pytanie o jedzenie w łazience, nikt nie powie "kawior", tylko "kanapka" lub "jabłko").
-3. Unikaj odpowiedzi "technicznych" - stawiaj na te, które podałoby 100 przypadkowych przechodniów na ulicy w Polsce.
-4. Każde pytanie musi być unikalne i dotyczyć innego aspektu tematu.
+PRZYKŁAD SZEROKIEJ GRY (Temat: Dom):
+Pytanie 1: Co najczęściej robimy w kuchni?
+Pytanie 2: Wymień urządzenie AGD, bez którego trudno się obejść?
+Pytanie 3: Gdzie w domu zazwyczaj trzymamy stare gazety?
+Pytanie 4: Jakie pomieszczenie w domu jest najbardziej przytulne?
+...itd. (każde o czymś innym w ramach "Domu")
 ` : "";
 
-    const descHint = `Opis gry (description): Napisz krótki, zabawny wstęp (2 zdania), który brzmi jak zapowiedź Karola Strasburgera. Nie używaj słowa "wygenerowano".`;
+    const descHint = `Opis gry (description): Napisz zachęcający wstęp (2 zdania) w stylu Karola Strasburgera, który uogólnia cały temat "${topic}".`;
 
     return `${systemDesc}
 
@@ -185,15 +173,16 @@ ${topicHint}
 ${fewShot}
 
 WYTYCZNE TECHNICZNE:
-- 10 pytań, każde po 4 odpowiedzi.
+- 10 pytań, każde po 4 odpowiedzi. Każde pytanie musi być o czymś innym (różne aspekty tematu).
 - Pytania formy: "Co najczęściej...", "Gdzie zazwyczaj...", "Wymień coś, co...", "Co kojarzy się z...".
-- Odpowiedzi: Krótkie rzeczowniki/frazy (1-3 słowa), MAX 17 znaków.
-- Punkty: Suma 80-100, nieregularne (np. 42, 27, 16, 12).
+- Tytuł: Krótki (2-4 słowa), ogólny, np. "Domowe Zacisze", "Magia Kuchni", "Świat Sportu".
+- Odpowiedzi: Krótkie rzeczowniki/frazy, MAX 17 znaków.
+- Punkty: Suma 80-100, nieregularne.
 - ZERO faktów szkolnych. TYLKO skojarzenia.
 - ${descHint}
 
 Zwróć TYLKO czysty JSON:
-{"title":"Tytuł w stylu teleturnieju","description":"Opis w stylu prowadzącego.","questions":[{"text":"Pytanie?","answers":[{"text":"Odpowiedź","fixed_points":43},{"text":"Odpowiedź","fixed_points":27},{"text":"Odpowiedź","fixed_points":16},{"text":"Odpowiedź","fixed_points":9}]}]}`;
+{"title":"Ogólny Tytuł","description":"Opis uogólniający temat.","questions":[{"text":"Pytanie o konkretny aspekt?","answers":[{"text":"Odpowiedź","fixed_points":43},{"text":"Odpowiedź","fixed_points":27},{"text":"Odpowiedź","fixed_points":16},{"text":"Odpowiedź","fixed_points":9}]}]}`;
   }
 
   const avoidClause = trimmed.length ? `Avoid these titles: ${trimmed.join(", ")}.` : "";
@@ -326,95 +315,58 @@ Do not include the seed in JSON.`;
 }
 
 function pickDefaultTopic(lang: string): string {
-  const u = new Uint32Array(2);
+  const u = new Uint32Array(1);
   crypto.getRandomValues(u);
 
   if (lang === "en") {
     const base = [
-      "Food",
-      "Home",
-      "School",
-      "Work",
-      "Vacation",
-      "Sports",
-      "Family",
-      "Pets",
-      "Shopping",
-      "Cars",
-      "Phone & internet",
-      "Holidays",
-      "Dating",
-      "Health",
-      "Fashion",
-      "Music",
-      "Movies & TV",
-      "Childhood",
-      "Hobbies",
-      "Weather",
+      "Food & Cooking",
+      "Home Life",
+      "School Memories",
+      "Work & Office",
+      "Summer Vacations",
+      "Popular Sports",
+      "Family Relations",
+      "Pets & Animals",
+      "Shopping Habits",
+      "Travel & Tourism",
+      "Internet & Technology",
+      "Holidays & Traditions",
+      "Health & Fitness",
+      "Fashion & Clothes",
+      "Music & Entertainment",
+      "Movies & TV Shows",
+      "Childhood Games",
+      "Daily Habits",
+      "Transportation",
+      "Weather & Seasons",
     ];
-    const angle = [
-      "first thing in the morning",
-      "late at night",
-      "when you're in a hurry",
-      "when you're bored",
-      "at a family dinner",
-      "on a road trip",
-      "during a party",
-      "on a rainy day",
-      "when you are stressed",
-      "when something breaks",
-      "when you lose something",
-      "when guests arrive",
-      "at the supermarket",
-      "at school",
-      "at the office",
-    ];
-    return `${base[u[0] % base.length]} — ${angle[u[1] % angle.length]}`;
+    return base[u[0] % base.length];
   }
 
   const base = [
-    "Jedzenie",
-    "Dom",
-    "Szkoła",
-    "Praca",
-    "Wakacje",
-    "Sport",
-    "Rodzina",
-    "Zwierzęta domowe",
-    "Zakupy",
-    "Podróże",
-    "Internet i telefon",
-    "Święta",
-    "Randki i związki",
-    "Zdrowie",
-    "Ubrania",
-    "Muzyka",
-    "Filmy i seriale",
-    "Dzieciństwo",
-    "Sąsiedzi",
-    "Pogoda",
-    "Hobby",
-    "Nawyki",
+    "Jedzenie i Kuchnia",
+    "Życie w Domu",
+    "Szkoła i Edukacja",
+    "Praca i Biuro",
+    "Wakacje i Podróże",
+    "Sport i Rekreacja",
+    "Relacje Rodzinne",
+    "Zwierzęta Domowe",
+    "Zakupy i Pieniądze",
+    "Transport i Samochody",
+    "Internet i Technologia",
+    "Święta i Tradycje",
+    "Zdrowie i Uroda",
+    "Moda i Ubrania",
+    "Muzyka i Koncerty",
+    "Filmy i Seriale",
+    "Dzieciństwo i Zabawki",
+    "Pogoda i Pory Roku",
+    "Hobby i Czas Wolny",
+    "Nawyki i Codzienność",
   ];
-  const angle = [
-    "rano po przebudzeniu",
-    "wieczorem przed snem",
-    "gdy się spieszysz",
-    "gdy się nudzisz",
-    "na rodzinnej imprezie",
-    "w pracy w poniedziałek",
-    "w kolejce w sklepie",
-    "w deszczowy dzień",
-    "gdy coś się zepsuje",
-    "gdy zgubisz coś ważnego",
-    "gdy przychodzą goście",
-    "w podróży autem",
-    "na wakacjach",
-    "w szkole na przerwie",
-    "w kuchni",
-    "w łazience",
-  ];
-  return `${base[u[0] % base.length]} — ${angle[u[1] % angle.length]}`;
+  return base[u[0] % base.length];
 }
 
 function isLowQualityCandidate(game: any): boolean {
