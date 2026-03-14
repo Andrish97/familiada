@@ -151,13 +151,49 @@ Rules:
 - Keys must be exactly: title, description, questions, text, answers, fixed_points. Do not translate keys.`;
 }
 
-function validateGamePayload(payload: any) {
+function normalizeGamePayload(payload: any) {
   const title = String(payload?.title || "").trim();
   const description = String(payload?.description || "").trim();
-  const questions = payload?.questions;
-  if (!title || !Array.isArray(questions) || questions.length === 0) return false;
-  if (!description) return false;
-  return true;
+  const questionsRaw = Array.isArray(payload?.questions) ? payload.questions : [];
+
+  if (!title || !description) return null;
+
+  const questions = questionsRaw
+    .map((q: any) => {
+      const text = String(q?.text || "").trim();
+      const answersRaw = Array.isArray(q?.answers) ? q.answers : [];
+      const answers = answersRaw
+        .map((a: any) => ({
+          text: String(a?.text || "").trim(),
+          fixed_points: typeof a?.fixed_points === "number" ? a.fixed_points : Number(a?.fixed_points),
+        }))
+        .filter((a: any) => a.text);
+      return { text, answers };
+    })
+    .filter((q: any) => q.text && Array.isArray(q.answers) && q.answers.length >= 4)
+    .slice(0, 10)
+    .map((q: any) => ({ ...q, answers: q.answers.slice(0, 4) }));
+
+  if (questions.length !== 10) return null;
+
+  for (const q of questions) {
+    const pts = q.answers.map((a: any) => (Number.isFinite(a.fixed_points) ? a.fixed_points : 0));
+    let sum = pts.reduce((acc: number, n: number) => acc + Math.max(0, n), 0);
+    if (sum <= 0) {
+      q.answers[0].fixed_points = 40;
+      q.answers[1].fixed_points = 30;
+      q.answers[2].fixed_points = 20;
+      q.answers[3].fixed_points = 10;
+      continue;
+    }
+    const scaled = pts.map((n: number) => Math.max(0, n) * (100 / sum));
+    const rounded = scaled.map((n: number) => Math.max(0, Math.round(n)));
+    let rsum = rounded.reduce((acc: number, n: number) => acc + n, 0);
+    rounded[0] = Math.max(0, rounded[0] + (100 - rsum));
+    for (let i = 0; i < 4; i++) q.answers[i].fixed_points = rounded[i];
+  }
+
+  return { title, description, questions };
 }
 
 serve(async (req: Request) => {
@@ -195,14 +231,14 @@ serve(async (req: Request) => {
       } catch {
         payload = null;
       }
-      if (!validateGamePayload(payload)) {
+      let normalized = normalizeGamePayload(payload);
+      if (!normalized) {
         payload = await groqChat(groqKey, model, prompt, { temperature: 0, jsonMode: false });
+        normalized = normalizeGamePayload(payload);
       }
-      if (!validateGamePayload(payload)) {
-        throw new Error("Groq returned invalid game JSON.");
-      }
+      if (!normalized) throw new Error("Groq returned invalid game JSON.");
 
-      const questionsText = buildQuestionsText(payload);
+      const questionsText = buildQuestionsText(normalized);
       const embedding = await generateEmbedding(questionsText, 12000);
       const embeddingLiteral = embedding ? toVectorLiteral(embedding) : null;
 
@@ -210,10 +246,10 @@ serve(async (req: Request) => {
         source_game_id: null,
         author_user_id: null,
         origin: "producer",
-        title: payload.title,
-        description: payload.description ?? "",
+        title: normalized.title,
+        description: normalized.description ?? "",
         lang,
-        payload,
+        payload: normalized,
         embedding: embeddingLiteral,
         status: "published",
         moderation_note: null,
