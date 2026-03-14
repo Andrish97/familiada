@@ -14,6 +14,7 @@ declare
     v_lang text;
 begin
   v_email    := new.email;
+  v_is_guest := coalesce((new.raw_user_meta_data->>'is_guest')::boolean, false);
 
   -- Auto-generate guest username if missing
   v_username := coalesce(
