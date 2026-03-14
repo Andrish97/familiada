@@ -8,6 +8,7 @@ const weaknessCache = new Map();
 const selectedIds = new Set();
 let generated = [];
 let lastGenerateParams = { lang: 'pl', topic: '' };
+let cancelGenerate = false;
 
 // Helpers
 const $ = id => document.getElementById(id);
@@ -80,6 +81,17 @@ async function generateGames() {
   const count = parseInt($('gen-count').value) || 1;
   const topic = $('gen-topic').value.trim();
   lastGenerateParams = { lang, topic };
+  cancelGenerate = false;
+  const resetBtn = $('gen-reset-btn');
+  if (resetBtn) {
+    resetBtn.style.display = '';
+    resetBtn.textContent = '✕ Przerwij generowanie';
+    resetBtn.onclick = (e) => {
+      e.preventDefault();
+      cancelGenerate = true;
+      showStatus('gen-session-status', 'Przerywam…', 'info');
+    };
+  }
   
   setBusy(true);
   showStatus('gen-session-status', `Generowanie ${count} gier...`, 'info');
@@ -88,15 +100,14 @@ async function generateGames() {
   generated = [];
   renderGeneratedList();
 
-  const maxTriesPerGame = 3;
   let produced = 0;
   let attempts = 0;
+  let backoffMs = 400;
 
-  while (produced < count && attempts < count * maxTriesPerGame) {
+  while (!cancelGenerate && produced < count) {
     attempts++;
     const slot = produced + 1;
-    const tryNo = ((attempts - 1) % maxTriesPerGame) + 1;
-    showStatus('gen-session-status', `Generowanie ${slot}/${count} (próba ${tryNo}/${maxTriesPerGame})...`, 'info');
+    showStatus('gen-session-status', `Generowanie ${slot}/${count} (próba ${attempts})...`, 'info');
     try {
       const existingTitles = games.map(g => String(g.title || "").trim()).filter(Boolean);
       const generatedTitles = generated.map(g => String(g?.candidate?.title || "").trim()).filter(Boolean);
@@ -116,14 +127,25 @@ async function generateGames() {
       produced++;
       renderGeneratedList();
       setProgress(produced, count);
+      backoffMs = 400;
     } catch (e) {
-      showStatus('gen-session-status', `⚠️ Błąd generowania (spróbuję ponownie): ${e.message}`, 'err');
+      const msg = e?.message || String(e);
+      showStatus('gen-session-status', `⚠️ Błąd generowania (retry): ${msg}`, 'err');
+      await new Promise(r => setTimeout(r, backoffMs));
+      backoffMs = Math.min(5000, Math.floor(backoffMs * 1.6));
     }
   }
 
-  if (produced === count) showStatus('gen-session-status', 'Zakończono generowanie.', 'ok');
-  else showStatus('gen-session-status', `Zakończono: ${produced}/${count} (część nie przeszła).`, 'err');
+  if (cancelGenerate) {
+    showStatus('gen-session-status', `Przerwano: ${produced}/${count}.`, 'err');
+  } else {
+    showStatus('gen-session-status', 'Zakończono generowanie.', 'ok');
+  }
   setBusy(false);
+  if (resetBtn) {
+    resetBtn.style.display = 'none';
+    resetBtn.onclick = null;
+  }
 }
 
 async function deleteGame(id) {
