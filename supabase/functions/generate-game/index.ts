@@ -242,6 +242,43 @@ serve(async (req: Request) => {
       const embedding = await generateEmbedding(questionsText, 12000);
       const embeddingLiteral = embedding ? toVectorLiteral(embedding) : null;
 
+      if (embeddingLiteral) {
+        const { data: vecMatches, error: vecErr } = await supabase.rpc("market_find_similar_embeddings", {
+          p_lang: lang,
+          p_embedding: embeddingLiteral,
+          p_threshold: 0.78,
+          p_limit: 8,
+        });
+        if (vecErr) throw vecErr;
+        return new Response(JSON.stringify({
+          candidate: { lang, title: normalized.title, description: normalized.description ?? "", payload: normalized },
+          matches: vecMatches || [],
+        }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
+      }
+
+      const { data: matches, error: simError } = await supabase.rpc("market_find_similar_questions", {
+        p_lang: lang,
+        p_questions_text: questionsText,
+        p_threshold: 0.45,
+        p_limit: 8,
+      });
+      if (simError) throw simError;
+
+      return new Response(JSON.stringify({
+        candidate: { lang, title: normalized.title, description: normalized.description ?? "", payload: normalized },
+        matches: matches || [],
+      }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
+    }
+
+    if (action === "publish-producer-game") {
+      const { lang, title, description, payload } = body;
+      const normalized = normalizeGamePayload({ title, description, questions: payload?.questions });
+      if (!normalized) throw new Error("Invalid payload.");
+
+      const questionsText = buildQuestionsText(normalized);
+      const embedding = await generateEmbedding(questionsText, 12000);
+      const embeddingLiteral = embedding ? toVectorLiteral(embedding) : null;
+
       const { data, error } = await supabase.from("market_games").insert({
         source_game_id: null,
         author_user_id: null,
@@ -257,28 +294,7 @@ serve(async (req: Request) => {
       }).select("id, title, description, lang, payload, created_at").single();
       if (error) throw error;
 
-      if (embedding) {
-        const { data: vecMatches, error: vecErr } = await supabase.rpc("market_find_similar_embeddings", {
-          p_lang: data.lang,
-          p_embedding: embeddingLiteral,
-          p_threshold: 0.78,
-          p_limit: 8,
-        });
-        if (vecErr) throw vecErr;
-        const filtered = (vecMatches || []).filter((m: any) => m.id !== data.id);
-        return new Response(JSON.stringify({ game: data, matches: filtered }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
-      }
-
-      const { data: matches, error: simError } = await supabase.rpc("market_find_similar_questions", {
-        p_lang: data.lang,
-        p_questions_text: questionsText,
-        p_threshold: 0.45,
-        p_limit: 8,
-      });
-      if (simError) throw simError;
-
-      const filtered = (matches || []).filter((m: any) => m.id !== data.id);
-      return new Response(JSON.stringify({ game: data, matches: filtered }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ ok: true, game: data }), { headers: { ...CORS, "Content-Type": "application/json" } });
     }
 
     if (action === 'delete-game') {
