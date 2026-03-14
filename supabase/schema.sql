@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict OdgONvrRADso4cKm1fAAz2BVbbEwxLMiE2ZbBokvbBsPkxDjasuaiWPlOa3sUBc
+\restrict cErHnUHDedfmx9unJsie8eQ6aEa9myC8s9Av9MTnlu1kcTnSVRfiWomgCCZvLXY
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -3754,12 +3754,14 @@ CREATE FUNCTION "public"."market_admin_delete"("p_id" "uuid", "p_force" boolean 
 declare
     v_rows int;
 begin
-    -- gry z GitHub mogą być usunięte tylko przez admina z p_force = true
+    -- gry z origin = 'producer' lub majace storage_path (dawniej gh_slug)
+    -- moga byc usuniete tylko przez admina z p_force = true
+    -- Sprawdzamy czy to gra producenta (admina), bo te sa 'chronione'
     if not p_force and exists (
         select 1 from public.market_games
-         where id = p_id and gh_slug is not null
+         where id = p_id and (origin = 'producer' or storage_path is not null)
     ) then
-        return query select false, 'gh_game_cannot_be_deleted';
+        return query select false, 'admin_game_cannot_be_deleted_without_force';
         return;
     end if;
 
@@ -12151,5 +12153,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict OdgONvrRADso4cKm1fAAz2BVbbEwxLMiE2ZbBokvbBsPkxDjasuaiWPlOa3sUBc
+\unrestrict cErHnUHDedfmx9unJsie8eQ6aEa9myC8s9Av9MTnlu1kcTnSVRfiWomgCCZvLXY
 
