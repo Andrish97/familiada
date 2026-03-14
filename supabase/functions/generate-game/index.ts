@@ -149,7 +149,10 @@ Rules:
 - fixed_points are integers and should sum to ~100 per question.
 - No duplicate questions/answers within the game.
 - Keys must be exactly: title, description, questions, text, answers, fixed_points. Do not translate keys.
-- Title must NOT start with 'Familiada' and must not contain prefixes like 'Familiada -' or 'Familiada:'.`;
+- Title must NOT start with 'Familiada' and must not contain prefixes like 'Familiada -' or 'Familiada:'.
+- Questions must be survey-style (Family Feud), not trivia. Prefer "Podaj/Wymień/Nazwij coś...".
+- Avoid repetitive stems like "Co robią..." or "Co jest często...".
+- Answers must be short phrases (1-4 words), not full sentences and not yes/no.`;
 }
 
 function normalizeTitle(raw: any): string {
@@ -176,6 +179,96 @@ Additional rules:
 ${topic ? "" : "- If topic is empty, do NOT pick a \"świat\"/world theme unless explicitly requested."}
 Seed: ${seed}
 Do not include the seed in JSON.`;
+}
+
+function pickDefaultTopic(lang: string): string {
+  const pl = [
+    "Jedzenie i gotowanie",
+    "Dom i sprzątanie",
+    "Szkoła",
+    "Praca",
+    "Wakacje",
+    "Sport",
+    "Rodzina",
+    "Zwierzęta domowe",
+    "Zakupy",
+    "Samochody i podróże",
+    "Internet i telefon",
+    "Święta",
+    "Randki i związki",
+    "Zdrowie i lekarz",
+    "Moda i ubrania",
+    "Muzyka",
+    "Filmy i seriale",
+    "Dzieciństwo",
+    "Kuchnia polska",
+    "Sąsiedzi",
+    "Pogoda",
+    "Ogród",
+    "Remont",
+    "Hobby",
+    "Nawyki i przyzwyczajenia",
+  ];
+  const en = [
+    "Food and cooking",
+    "Home chores",
+    "School",
+    "Work",
+    "Vacation",
+    "Sports",
+    "Family",
+    "Pets",
+    "Shopping",
+    "Cars and travel",
+    "Internet and phone",
+    "Holidays",
+    "Dating",
+    "Health",
+    "Fashion",
+    "Music",
+    "Movies and TV",
+    "Childhood",
+    "Hobbies",
+    "Weather",
+  ];
+  const list = lang === "en" ? en : pl;
+  const u = new Uint32Array(1);
+  crypto.getRandomValues(u);
+  return list[u[0] % list.length];
+}
+
+function isLowQualityCandidate(game: any): boolean {
+  const desc = String(game?.description || "").trim();
+  if (desc.length < 40) return true;
+  const qs = Array.isArray(game?.questions) ? game.questions : [];
+  if (qs.length !== 10) return true;
+
+  const startCounts = new Map<string, number>();
+  const answerCounts = new Map<string, number>();
+  let tooShortQ = 0;
+
+  for (const q of qs) {
+    const qt = String(q?.text || "").trim();
+    if (qt.length < 16) tooShortQ++;
+
+    const start = qt.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, "").trim().split(/\s+/).slice(0, 2).join(" ");
+    if (start) startCounts.set(start, (startCounts.get(start) || 0) + 1);
+    if (/^co robi(a|ą)/i.test(qt) || /^co jest często/i.test(qt)) return true;
+    if (/^czy\b/i.test(qt)) return true;
+
+    const ans = Array.isArray(q?.answers) ? q.answers : [];
+    for (const a of ans) {
+      const at = String(a?.text || "").trim().toLowerCase();
+      if (!at) continue;
+      if (at.length > 40) return true;
+      answerCounts.set(at, (answerCounts.get(at) || 0) + 1);
+    }
+  }
+
+  if (tooShortQ >= 3) return true;
+  for (const [, c] of startCounts) if (c >= 3) return true;
+  for (const [, c] of answerCounts) if (c >= 3) return true;
+  return false;
 }
 
 function normalizeGamePayload(payload: any) {
@@ -218,6 +311,7 @@ function normalizeGamePayload(payload: any) {
     let rsum = rounded.reduce((acc: number, n: number) => acc + n, 0);
     rounded[0] = Math.max(0, rounded[0] + (100 - rsum));
     for (let i = 0; i < 4; i++) q.answers[i].fixed_points = rounded[i];
+    q.answers.sort((a: any, b: any) => (Number(b.fixed_points) || 0) - (Number(a.fixed_points) || 0));
   }
 
   return { title, description, questions };
@@ -251,6 +345,7 @@ serve(async (req: Request) => {
     if (action === 'generate-producer-game') {
       const { lang, topic, avoidTitles = [] } = body;
       const model = "llama-3.1-8b-instant";
+      const effectiveTopic = String(topic || "").trim() || pickDefaultTopic(lang);
       const rawAvoid = Array.isArray(avoidTitles) ? avoidTitles : [];
       const avoidList = Array.from(
         new Set(rawAvoid.map((t: any) => String(t || "").trim()).filter(Boolean)),
@@ -261,7 +356,7 @@ serve(async (req: Request) => {
       const maxAttempts = 10;
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         const seed = crypto.randomUUID();
-        const prompt = buildGeneratePromptWithSeed(lang, topic, avoidTitles, seed);
+        const prompt = buildGeneratePromptWithSeed(lang, effectiveTopic, avoidTitles, seed);
 
         let payload: any = null;
         try {
@@ -279,6 +374,7 @@ serve(async (req: Request) => {
 
         if (avoidSet.has(String(normalized.title || "").toLowerCase())) continue;
         if (!topic && /(świat|world)/i.test(String(normalized.title || ""))) continue;
+        if (isLowQualityCandidate(normalized)) continue;
 
         const questionsText = buildQuestionsText(normalized);
         const embedding = await generateEmbedding(questionsText, 8000);
