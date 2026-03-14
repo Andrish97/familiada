@@ -162,6 +162,7 @@ Wymagania:
 - Dokładnie 10 pytań.
 - Każde pytanie ma dokładnie 4 odpowiedzi.
 - To ma być ankietowa Familiada (Family Feud), NIE trivia/quiz faktograficzny.
+- Tytuł: 2–5 słów, bez myślników i bez dwukropków, nie powtarza dosłownie tematu.
 - Pytania różnorodne: mieszaj "Podaj…", "Wymień…", "Nazwij…", "Co ludzie…", "Co bywa…".
 - Unikaj powtarzania początków typu "Co robią…" i "Co jest często…".
 - Odpowiedzi to krótkie frazy (1-4 słowa), bez pełnych zdań i bez tak/nie.
@@ -228,9 +229,55 @@ Do not include the seed in JSON.`;
 }
 
 function pickDefaultTopic(lang: string): string {
-  const pl = [
-    "Jedzenie i gotowanie",
-    "Dom i sprzątanie",
+  const u = new Uint32Array(2);
+  crypto.getRandomValues(u);
+
+  if (lang === "en") {
+    const base = [
+      "Food",
+      "Home",
+      "School",
+      "Work",
+      "Vacation",
+      "Sports",
+      "Family",
+      "Pets",
+      "Shopping",
+      "Cars",
+      "Phone & internet",
+      "Holidays",
+      "Dating",
+      "Health",
+      "Fashion",
+      "Music",
+      "Movies & TV",
+      "Childhood",
+      "Hobbies",
+      "Weather",
+    ];
+    const angle = [
+      "first thing in the morning",
+      "late at night",
+      "when you're in a hurry",
+      "when you're bored",
+      "at a family dinner",
+      "on a road trip",
+      "during a party",
+      "on a rainy day",
+      "when you are stressed",
+      "when something breaks",
+      "when you lose something",
+      "when guests arrive",
+      "at the supermarket",
+      "at school",
+      "at the office",
+    ];
+    return `${base[u[0] % base.length]} — ${angle[u[1] % angle.length]}`;
+  }
+
+  const base = [
+    "Jedzenie",
+    "Dom",
     "Szkoła",
     "Praca",
     "Wakacje",
@@ -238,49 +285,39 @@ function pickDefaultTopic(lang: string): string {
     "Rodzina",
     "Zwierzęta domowe",
     "Zakupy",
-    "Samochody i podróże",
+    "Podróże",
     "Internet i telefon",
     "Święta",
     "Randki i związki",
-    "Zdrowie i lekarz",
-    "Moda i ubrania",
+    "Zdrowie",
+    "Ubrania",
     "Muzyka",
     "Filmy i seriale",
     "Dzieciństwo",
-    "Kuchnia polska",
     "Sąsiedzi",
     "Pogoda",
-    "Ogród",
-    "Remont",
     "Hobby",
-    "Nawyki i przyzwyczajenia",
+    "Nawyki",
   ];
-  const en = [
-    "Food and cooking",
-    "Home chores",
-    "School",
-    "Work",
-    "Vacation",
-    "Sports",
-    "Family",
-    "Pets",
-    "Shopping",
-    "Cars and travel",
-    "Internet and phone",
-    "Holidays",
-    "Dating",
-    "Health",
-    "Fashion",
-    "Music",
-    "Movies and TV",
-    "Childhood",
-    "Hobbies",
-    "Weather",
+  const angle = [
+    "rano po przebudzeniu",
+    "wieczorem przed snem",
+    "gdy się spieszysz",
+    "gdy się nudzisz",
+    "na rodzinnej imprezie",
+    "w pracy w poniedziałek",
+    "w kolejce w sklepie",
+    "w deszczowy dzień",
+    "gdy coś się zepsuje",
+    "gdy zgubisz coś ważnego",
+    "gdy przychodzą goście",
+    "w podróży autem",
+    "na wakacjach",
+    "w szkole na przerwie",
+    "w kuchni",
+    "w łazience",
   ];
-  const list = lang === "en" ? en : pl;
-  const u = new Uint32Array(1);
-  crypto.getRandomValues(u);
-  return list[u[0] % list.length];
+  return `${base[u[0] % base.length]} — ${angle[u[1] % angle.length]}`;
 }
 
 function isLowQualityCandidate(game: any): boolean {
