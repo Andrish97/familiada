@@ -115,7 +115,8 @@ async function generateGames() {
 
       const res = await callEdgeAction('generate-producer-game', { lang, topic, avoidTitles });
       if (res?.retry && !res?.candidate) {
-        await new Promise(r => setTimeout(r, backoffMs));
+        const waitMs = Number(res?.wait_ms) || backoffMs;
+        await new Promise(r => setTimeout(r, waitMs));
         backoffMs = Math.min(5000, Math.floor(backoffMs * 1.6));
         continue;
       }
