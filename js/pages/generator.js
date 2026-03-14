@@ -7,6 +7,7 @@ const uniquenessCache = new Map();
 const weaknessCache = new Map();
 const selectedIds = new Set();
 let generated = [];
+let lastGenerateParams = { lang: 'pl', topic: '' };
 
 // Helpers
 const $ = id => document.getElementById(id);
@@ -78,6 +79,7 @@ async function generateGames() {
   const lang = $('gen-manage-lang').value;
   const count = parseInt($('gen-count').value) || 1;
   const topic = $('gen-topic').value.trim();
+  lastGenerateParams = { lang, topic };
   
   setBusy(true);
   showStatus('gen-session-status', `Generowanie ${count} gier...`, 'info');
@@ -96,6 +98,7 @@ async function generateGames() {
       const item = {
         id: makeLocalId(),
         approved: false,
+        generating: false,
         candidate,
         matches: Array.isArray(res?.matches) ? res.matches : [],
       };
@@ -140,8 +143,13 @@ function updateBulkBar() {
   const countEl = $('gen-bulk-count');
   if (!bar || !countEl) return;
   const count = selectedIds.size;
-  bar.classList.toggle('visible', !!count);
+  bar.classList.add('visible');
   countEl.textContent = `${count} zaznaczonych`;
+
+  const delBtn = $('gen-delete-sel-btn');
+  const clearBtn = $('gen-clear-sel-btn');
+  if (delBtn) delBtn.disabled = count === 0;
+  if (clearBtn) clearBtn.disabled = count === 0;
 }
 
 function setSelected(id, checked) {
@@ -384,8 +392,8 @@ function renderGameList() {
 
   games.forEach(game => {
     const item = document.createElement('div');
-    item.className = 'game-item';
     const matches = uniquenessCache.get(game.id);
+    const hasDup = Array.isArray(matches) && matches.length > 0;
     const top = Array.isArray(matches) && matches.length ? matches[0] : null;
     const topLine = top
       ? `Podobne: ${Math.round((top.similarity || 0) * 100)}% · ${top.title} · ${top.origin}`
@@ -394,11 +402,15 @@ function renderGameList() {
     const weak = weaknessCache.get(game.id) || analyzeWeakness(game);
     weaknessCache.set(game.id, weak);
     const qualityLine = weak?.summary || '';
+    const isWeak = weak.level !== 'ok';
+    item.className = `game-item${hasDup ? ' issue-dup' : ''}${isWeak ? ' issue-weak' : ''}`;
     const checked = selectedIds.has(game.id) ? 'checked' : '';
     item.innerHTML = `
       <div class="game-row">
         <input type="checkbox" class="game-cb" data-id="${game.id}" ${checked} />
         <span class="game-title">${game.title}</span>
+        ${hasDup ? `<span class="game-badge badge-dup">DUP</span>` : ``}
+        ${isWeak ? `<span class="game-badge badge-weak">SŁABE</span>` : ``}
         <span class="game-title" style="color:var(--muted);font-size:12px;flex:1;margin-left:10px">${topLine} · ${qualityLine}</span>
         <button class="btn sm" data-action="uniq" data-id="${game.id}">Unikalność</button>
         <button class="btn sm danger" data-id="${game.id}">Usuń</button>
@@ -468,12 +480,13 @@ function renderGeneratedList() {
     const dupLine = top ? `Podobne: ${Math.round((top.similarity || 0) * 100)}% · ${top.title} · ${top.origin}` : 'Podobne: brak';
 
     const item = document.createElement('div');
-    item.className = `game-item ${g.approved ? 'approved' : ''}`;
+    item.className = `game-item ${g.approved ? 'approved' : ''} ${g.generating ? 'generating' : ''}`;
     item.innerHTML = `
       <div class="game-row">
         <input type="checkbox" class="game-cb" data-id="${g.id}" ${g.approved ? 'checked' : ''} />
         <span class="game-title">${cand.title || '—'}</span>
         <span class="game-title" style="color:var(--muted);font-size:12px;flex:1;margin-left:10px">${dupLine} · ${w.summary}</span>
+        <button class="btn sm danger" data-action="reject" data-id="${g.id}" ${g.generating ? 'disabled' : ''}>Odrzuć</button>
         <span class="game-chevron">▶</span>
       </div>
       <div class="game-preview">
@@ -494,7 +507,15 @@ function renderGeneratedList() {
       });
     }
 
-    item.querySelector('.game-row').addEventListener('click', () => {
+    item.querySelector('.game-row').addEventListener('click', (e) => {
+      if (e.target.tagName === 'BUTTON') {
+        const action = e.target.dataset.action;
+        const id = e.target.dataset.id;
+        if (action === 'reject') {
+          rejectGenerated(id);
+        }
+        return;
+      }
       const preview = item.querySelector('.game-preview');
       const chevron = item.querySelector('.game-chevron');
       const isOpen = preview.classList.toggle('open');
@@ -506,6 +527,49 @@ function renderGeneratedList() {
     });
 
     list.appendChild(item);
+  }
+}
+
+async function rejectGenerated(id) {
+  const it = generated.find(x => x.id === id);
+  if (!it || it.generating) return;
+
+  const ok = await confirmModal({
+    title: "Odrzuć i wygeneruj ponownie",
+    text: "Odrzucić tę grę i wygenerować nową w jej miejsce?",
+    okText: "Odrzuć",
+    cancelText: "Anuluj",
+  });
+  if (!ok) return;
+
+  it.generating = true;
+  it.approved = false;
+  renderGeneratedList();
+
+  const lang = lastGenerateParams.lang || $('gen-manage-lang')?.value || 'pl';
+  const topic = lastGenerateParams.topic || $('gen-topic')?.value?.trim?.() || '';
+
+  const existingTitles = games.map(g => String(g.title || "").trim()).filter(Boolean);
+  const generatedTitles = generated
+    .filter(g => g.id !== id)
+    .map(g => String(g?.candidate?.title || "").trim())
+    .filter(Boolean);
+  const avoidTitles = Array.from(new Set([...existingTitles, ...generatedTitles])).slice(0, 25);
+
+  try {
+    showStatus('gen-session-status', 'Regeneruję odrzuconą grę...', 'info');
+    const res = await callEdgeAction('generate-producer-game', { lang, topic, avoidTitles });
+    const candidate = res?.candidate;
+    if (!candidate) throw new Error('Brak danych gry z serwera');
+    it.candidate = candidate;
+    it.matches = Array.isArray(res?.matches) ? res.matches : [];
+    it.generating = false;
+    renderGeneratedList();
+    showStatus('gen-session-status', 'Gotowe.', 'ok');
+  } catch (e) {
+    it.generating = false;
+    renderGeneratedList();
+    showStatus('gen-session-status', `✗ Regenerowanie: ${e.message}`, 'err');
   }
 }
 
