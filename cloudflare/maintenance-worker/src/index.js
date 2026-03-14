@@ -734,7 +734,8 @@ async function handleAdminMarketplaceApi(request, env, url) {
     const result = await supabaseRpc(env, "market_admin_delete", { p_id: id, p_force: true });
     if (!result.ok || !result.data?.[0]?.ok) {
       console.error("[worker] marketplace delete failed:", result);
-      return json({ ok: false, error: result.data?.[0]?.err || result.error || "delete_failed" }, 422);
+      const errMessage = result.data?.[0]?.err || result.error || "delete_failed";
+      return json({ ok: false, error: errMessage }, 422);
     }
     return json({ ok: true });
   }
@@ -1976,7 +1977,11 @@ async function supabaseRequest(env, path, { method = "GET", body, headers } = {}
       }
     }
 
-    return { ok: res.ok, status: res.status, data, text };
+    const result = { ok: res.ok, status: res.status, data, text };
+    if (!res.ok) {
+      result.error = summarizeSupabaseError(result);
+    }
+    return result;
   } catch (err) {
     return {
       ok: false,
