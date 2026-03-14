@@ -625,6 +625,13 @@ serve(async (req: Request) => {
     return new Response(JSON.stringify({ error: "Unknown action" }), { status: 400, headers: CORS });
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
+    if (isGroqRateLimit(message)) {
+      const waitMs = parseGroqWaitMs(message) ?? 6000;
+      return new Response(JSON.stringify({ ok: false, retry: true, reason: "rate_limit", wait_ms: waitMs }), {
+        status: 200,
+        headers: { ...CORS, "Content-Type": "application/json" },
+      });
+    }
     return new Response(JSON.stringify({ error: message }), {
       status: 500,
       headers: { ...CORS, "Content-Type": "application/json" },
