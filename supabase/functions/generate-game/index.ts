@@ -6,25 +6,45 @@ const CORS = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-let extractorPromise: Promise<any> | null = null;
-async function getExtractor() {
-  if (!extractorPromise) {
-    extractorPromise = import("https://esm.sh/@xenova/transformers@2.17.1")
-      .then((m) => m.pipeline("feature-extraction", "Xenova/all-MiniLM-L6-v2"));
-  }
-  return await extractorPromise;
-}
-
 function buildQuestionsText(payload: any): string {
   const qs = payload?.questions || [];
   if (!Array.isArray(qs)) return "";
   return qs.map((q: any) => String(q?.text || "").trim()).filter(Boolean).join("\n");
 }
 
-async function generateEmbedding(text: string): Promise<number[]> {
-  const extractor = await getExtractor();
-  const result = await extractor(text, { pooling: "mean", normalize: true });
-  return Array.from(result.data);
+function l2Normalize(vec: number[]): number[] {
+  let sumSq = 0;
+  for (const x of vec) sumSq += x * x;
+  const norm = Math.sqrt(sumSq) || 1;
+  return vec.map((x) => x / norm);
+}
+
+async function generateEmbedding(text: string): Promise<number[] | null> {
+  const token = Deno.env.get("HUGGINGFACE_API_TOKEN") || "";
+  if (!token) return null;
+
+  const res = await fetch(
+    "https://api-inference.huggingface.co/pipeline/feature-extraction/sentence-transformers/all-MiniLM-L6-v2",
+    {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ inputs: text, options: { wait_for_model: true } }),
+    },
+  );
+
+  if (!res.ok) throw new Error(`hf_embeddings_${res.status}:${await res.text().catch(() => "")}`);
+  const data = await res.json();
+
+  if (!Array.isArray(data) || !Array.isArray(data[0])) return null;
+  const rows = data as number[][];
+  if (!rows.length || !Array.isArray(rows[0]) || rows[0].length !== 384) return null;
+
+  const sums = new Array<number>(384).fill(0);
+  for (const row of rows) {
+    for (let i = 0; i < 384; i++) sums[i] += row[i] || 0;
+  }
+  const mean = sums.map((x) => x / rows.length);
+  return l2Normalize(mean);
 }
 
 async function groqChat(groqKey: string, model: string, prompt: string) {
@@ -93,22 +113,34 @@ serve(async (req: Request) => {
         description: payload.description ?? "",
         lang,
         payload,
-        embedding,
+        embedding: embedding ?? null,
         status: "published",
         moderation_note: null,
         storage_path: null,
       }).select("id, title, description, lang, payload, created_at").single();
       if (error) throw error;
 
-      const { data: vecMatches, error: vecErr } = await supabase.rpc("market_find_similar_embeddings", {
+      if (embedding) {
+        const { data: vecMatches, error: vecErr } = await supabase.rpc("market_find_similar_embeddings", {
+          p_lang: data.lang,
+          p_embedding: embedding,
+          p_threshold: 0.78,
+          p_limit: 8,
+        });
+        if (vecErr) throw vecErr;
+        const filtered = (vecMatches || []).filter((m: any) => m.id !== data.id);
+        return new Response(JSON.stringify({ game: data, matches: filtered }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
+      }
+
+      const { data: matches, error: simError } = await supabase.rpc("market_find_similar_questions", {
         p_lang: data.lang,
-        p_embedding: embedding,
-        p_threshold: 0.78,
+        p_questions_text: questionsText,
+        p_threshold: 0.45,
         p_limit: 8,
       });
-      if (vecErr) throw vecErr;
+      if (simError) throw simError;
 
-      const filtered = (vecMatches || []).filter((m: any) => m.id !== data.id);
+      const filtered = (matches || []).filter((m: any) => m.id !== data.id);
       return new Response(JSON.stringify({ game: data, matches: filtered }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
     }
 
@@ -127,34 +159,58 @@ serve(async (req: Request) => {
       const { id } = body;
       const { data: g, error: gErr } = await supabase
         .from("market_games")
-        .select("id, lang, payload, embedding")
+        .select("id, lang, payload, embedding, questions_text")
         .eq("id", id)
         .single();
       if (gErr) throw gErr;
 
-      let embedding: number[] | null = g.embedding ?? null;
+      const questionsText = String(g.questions_text || "") || buildQuestionsText(g.payload);
+
+      const hasEmbedding = Array.isArray(g.embedding) && g.embedding.length > 0;
+      let embedding: number[] | null = hasEmbedding ? g.embedding : null;
+
       if (!embedding) {
-        const questionsText = buildQuestionsText(g.payload);
-        embedding = await generateEmbedding(questionsText);
-        const { error: upErr } = await supabase.from("market_games").update({ embedding }).eq("id", g.id);
-        if (upErr) throw upErr;
+        const maybe = await generateEmbedding(questionsText);
+        if (maybe) {
+          embedding = maybe;
+          const { error: upErr } = await supabase.from("market_games").update({ embedding }).eq("id", g.id);
+          if (upErr) throw upErr;
+        }
       }
 
-      const { data: matches, error: simError } = await supabase.rpc("market_find_similar_embeddings", {
+      if (embedding) {
+        const { data: matches, error: simError } = await supabase.rpc("market_find_similar_embeddings", {
+          p_lang: g.lang,
+          p_embedding: embedding,
+          p_threshold: 0.78,
+          p_limit: 8,
+        });
+        if (simError) throw simError;
+        const filtered = (matches || []).filter((m: any) => m.id !== g.id);
+        return new Response(JSON.stringify({ ok: true, matches: filtered, mode: "embeddings" }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
+      }
+
+      const { data: matches, error: simError } = await supabase.rpc("market_find_similar_questions", {
         p_lang: g.lang,
-        p_embedding: embedding,
-        p_threshold: 0.78,
+        p_questions_text: questionsText,
+        p_threshold: 0.45,
         p_limit: 8,
       });
       if (simError) throw simError;
-
       const filtered = (matches || []).filter((m: any) => m.id !== g.id);
-      return new Response(JSON.stringify({ ok: true, matches: filtered }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ ok: true, matches: filtered, mode: "trgm" }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
     }
 
     if (action === "embed-missing") {
       const { lang, limit } = body;
       const batchSize = Math.max(1, Math.min(50, Number(limit) || 20));
+
+      const token = Deno.env.get("HUGGINGFACE_API_TOKEN") || "";
+      if (!token) {
+        return new Response(JSON.stringify({ ok: false, processed: 0, err: "missing_HUGGINGFACE_API_TOKEN" }), {
+          headers: { ...CORS, "Content-Type": "application/json" },
+        });
+      }
 
       let query = supabase
         .from("market_games")
@@ -174,9 +230,11 @@ serve(async (req: Request) => {
         const text = String(row.questions_text || "") || buildQuestionsText(row.payload);
         if (!text) continue;
         const emb = await generateEmbedding(text);
-        const { error: upErr } = await supabase.from("market_games").update({ embedding: emb }).eq("id", row.id);
-        if (upErr) throw upErr;
-        processed++;
+        if (emb) {
+          const { error: upErr } = await supabase.from("market_games").update({ embedding: emb }).eq("id", row.id);
+          if (upErr) throw upErr;
+          processed++;
+        }
       }
 
       return new Response(JSON.stringify({ ok: true, processed }), { headers: { ...CORS, "Content-Type": "application/json" } });
