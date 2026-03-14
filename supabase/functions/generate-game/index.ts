@@ -129,7 +129,7 @@ function buildGeneratePrompt(lang: string, topic: string, avoidTitles: string[])
   return `Generate a JSON object for a "Familiada" game in ${l}. ${topicClause} ${avoidClause}
 Return JSON ONLY with this schema:
 {
-  "title": "string (short, unique)",
+  "title": "string (short, unique, without the word 'Familiada')",
   "description": "string (1-2 sentences)",
   "questions": [
     {
@@ -148,11 +148,22 @@ Rules:
 - Each question has 4 answers.
 - fixed_points are integers and should sum to ~100 per question.
 - No duplicate questions/answers within the game.
-- Keys must be exactly: title, description, questions, text, answers, fixed_points. Do not translate keys.`;
+- Keys must be exactly: title, description, questions, text, answers, fixed_points. Do not translate keys.
+- Title must NOT start with 'Familiada' and must not contain prefixes like 'Familiada -' or 'Familiada:'.`;
+}
+
+function normalizeTitle(raw: any): string {
+  let t = String(raw || "").trim();
+  t = t.replace(/^\s*familiada\s*[-:–—]\s*/i, "");
+  t = t.replace(/^\s*familiada\s+/i, "");
+  t = t.replace(/\s+/g, " ").trim();
+  if (!t) t = "Bez tytułu";
+  if (t.length > 80) t = t.slice(0, 80).trim();
+  return t;
 }
 
 function normalizeGamePayload(payload: any) {
-  const title = String(payload?.title || "").trim();
+  const title = normalizeTitle(payload?.title);
   const description = String(payload?.description || "").trim();
   const questionsRaw = Array.isArray(payload?.questions) ? payload.questions : [];
 
