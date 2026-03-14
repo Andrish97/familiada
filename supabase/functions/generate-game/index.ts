@@ -136,42 +136,47 @@ async function groqChat(
 
 function buildGeneratePrompt(lang: string, topic: string, avoidTitles: string[]) {
   const trimmed = Array.from(new Set((avoidTitles || []).map((t) => String(t || "").trim()).filter(Boolean))).slice(0, 25);
-  const avoidClause = trimmed.length ? `Avoid these titles: ${trimmed.join(", ")}.` : "";
-  const avoidClausePl = trimmed.length ? `Unikaj tych tytułów: ${trimmed.join(", ")}.` : "";
+  const usedList = trimmed.length ? trimmed.join(" / ") : "(brak)";
 
-  if (lang !== "en") {
-    const topicClausePl = topic ? `Temat: "${topic}".` : `Wybierz unikalny, zabawny temat.`;
-    return `Wygeneruj obiekt JSON dla gry typu "Familiada" w języku ${lang === "uk" ? "ukraińskim" : "polskim"}. ${topicClausePl} ${avoidClausePl}
-Zwróć TYLKO poprawny JSON w tym schemacie:
-{
-  "title": "string (krótki, unikalny, bez słowa 'Familiada')",
-  "description": "string (2-4 zdania: temat/klimat, dla kogo, ewentualnie wskazówka dla prowadzącego)",
-  "questions": [
-    {
-      "text": "string",
-      "answers": [
-        { "text": "string", "fixed_points": number },
-        { "text": "string", "fixed_points": number },
-        { "text": "string", "fixed_points": number },
-        { "text": "string", "fixed_points": number }
-      ]
-    }
-  ]
-}
-Wymagania:
-- Dokładnie 10 pytań.
-- Każde pytanie ma dokładnie 4 odpowiedzi.
-- To ma być ankietowa Familiada (Family Feud), NIE trivia/quiz faktograficzny.
-- Tytuł: 2–5 słów, bez myślników i bez dwukropków, nie powtarza dosłownie tematu.
-- Pytania różnorodne: mieszaj "Podaj…", "Wymień…", "Nazwij…", "Co ludzie…", "Co bywa…".
-- Unikaj powtarzania początków typu "Co robią…" i "Co jest często…".
-- Odpowiedzi to krótkie frazy (1-4 słowa), bez pełnych zdań i bez tak/nie.
-- Odpowiedzi: maks. 17 znaków.
-- fixed_points: liczby całkowite, nieregularne jak z prawdziwej ankiety (np. 43, 27, 16, 9).
-- fixed_points: suma w pytaniu 80–100.
-- fixed_points: nie rób układów 100/0/0/0 ani wszystkich podzielnych przez 5.`;
+  if (lang === "pl" || lang === "uk") {
+    const systemDesc =
+      lang === "uk"
+        ? `Сімейка — телегра у стилі Family Feud. Генеруй гру УКРАЇНСЬКОЮ (не російською). Питання різноманітні, відповіді — короткі конкретні слова.`
+        : `Familiada to polski teleturniej w stylu "Family Feud". Prowadzący zadaje pytanie, a rodziny podają odpowiedzi, które wcześniej zebrała ankieta. Odpowiedzi mają brzmieć jak od przeciętnej osoby z ulicy — krótkie, konkretne, oczywiste skojarzenia.`;
+
+    const topicHint =
+      lang === "uk"
+        ? (topic
+          ? `Тема гри: "${topic}".`
+          : `Придумай власну, конкретну тему з повсякденного життя. Ці теми вже ІСНУЮТЬ — твоя має бути семантично інша:\n[${usedList}]`)
+        : (topic
+          ? `Temat tej gry: "${topic}".`
+          : `Wymyśl własny, KONKRETNY temat z codziennego życia, kultury, jedzenia, miejsc, emocji, zwierząt, pracy, rozrywki…\nWAŻNE: poniższe tematy już ISTNIEJĄ — twój musi być semantycznie inny (nie wariacja \"prawie to samo\"):\n[${usedList}]`);
+
+    const descHint =
+      lang === "uk"
+        ? `Поле "description": 2–4 речення: (1) тема і настрій, (2) для кого підходить, (3) опційно підказка для ведучого.`
+        : `Pole "description" ma mieć 2–4 zdania: (1) temat i klimat, (2) dla kogo jest gra (rodzina, impreza, szkoła, praca…), (3) opcjonalnie wskazówka dla prowadzącego.`;
+
+    return `${systemDesc}
+
+${topicHint}
+
+ZASADY TECHNICZNE:
+- Liczba pytań: 10
+- Każde pytanie: dokładnie 4 odpowiedzi
+- Punkty: nieregularne jak z prawdziwej ankiety (np. 43, 27, 16, 9) — nie rób 100/0/0/0 i nie rób samych wartości /5
+- Suma punktów w pytaniu: 80–100
+- Odpowiedzi: krótkie frazy (1–4 słowa), maks. 17 znaków, bez pełnych zdań i bez tak/nie
+- Pytania ankietowe (Family Feud), NIE trivia/faktograficzne
+- Tytuł: 2–5 słów, bez myślników i dwukropków, nie powtarza dosłownie tematu
+- ${descHint}
+
+Zwróć TYLKO czysty JSON:
+{"title":"Tytuł","description":"Opis 2-4 zdania.","questions":[{"text":"Pytanie?","answers":[{"text":"Odpowiedź","fixed_points":43},{"text":"Odpowiedź","fixed_points":27},{"text":"Odpowiedź","fixed_points":16},{"text":"Odpowiedź","fixed_points":9}]}]}`;
   }
 
+  const avoidClause = trimmed.length ? `Avoid these titles: ${trimmed.join(", ")}.` : "";
   const topicClause = topic ? `Theme: "${topic}".` : `Choose a unique, fun theme.`;
   return `Generate a JSON object for a "Familiada" game in English. ${topicClause} ${avoidClause}
 Return JSON ONLY with this schema:
@@ -250,6 +255,7 @@ function improveDescription(description: string, effectiveTopic: string): string
     !d ||
     d.length < 50 ||
     /gra toczy się/i.test(d) ||
+    /w tej grze/i.test(d) ||
     /uczestnicy muszą/i.test(d) ||
     /prowadzący/i.test(d);
 
@@ -440,7 +446,7 @@ function normalizeGamePayload(payload: any) {
     const pts = q.answers.map((a: any) => (Number.isFinite(a.fixed_points) ? a.fixed_points : 0));
     let sum = pts.reduce((acc: number, n: number) => acc + Math.max(0, n), 0);
     const targetSum =
-      sum >= 80 && sum <= 100 ? Math.round(sum) :
+      sum >= 80 && sum <= 100 ? (sum >= 95 ? randomInt(85, 100) : Math.round(sum)) :
       sum < 80 ? randomInt(80, 95) :
       randomInt(85, 100);
 
