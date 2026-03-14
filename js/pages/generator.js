@@ -87,11 +87,21 @@ async function generateGames() {
   setProgress(0, count);
   generated = [];
   renderGeneratedList();
-  
-  for (let i = 0; i < count; i++) {
+
+  const maxTriesPerGame = 3;
+  let produced = 0;
+  let attempts = 0;
+
+  while (produced < count && attempts < count * maxTriesPerGame) {
+    attempts++;
+    const slot = produced + 1;
+    const tryNo = ((attempts - 1) % maxTriesPerGame) + 1;
+    showStatus('gen-session-status', `Generowanie ${slot}/${count} (próba ${tryNo}/${maxTriesPerGame})...`, 'info');
     try {
-      showStatus('gen-session-status', `Generowanie ${i + 1}/${count}...`, 'info');
-      const avoidTitles = Array.from(new Set(games.map(g => String(g.title || "").trim()).filter(Boolean))).slice(0, 25);
+      const existingTitles = games.map(g => String(g.title || "").trim()).filter(Boolean);
+      const generatedTitles = generated.map(g => String(g?.candidate?.title || "").trim()).filter(Boolean);
+      const avoidTitles = Array.from(new Set([...existingTitles, ...generatedTitles])).slice(0, 25);
+
       const res = await callEdgeAction('generate-producer-game', { lang, topic, avoidTitles });
       const candidate = res?.candidate;
       if (!candidate) throw new Error('Brak danych gry z serwera');
@@ -103,15 +113,16 @@ async function generateGames() {
         matches: Array.isArray(res?.matches) ? res.matches : [],
       };
       generated.unshift(item);
+      produced++;
       renderGeneratedList();
-      setProgress(i + 1, count);
+      setProgress(produced, count);
     } catch (e) {
-      showStatus('gen-session-status', `✗ Błąd generowania: ${e.message}`, 'err');
-      break;
+      showStatus('gen-session-status', `⚠️ Błąd generowania (spróbuję ponownie): ${e.message}`, 'err');
     }
   }
-  
-  showStatus('gen-session-status', 'Zakończono generowanie.', 'ok');
+
+  if (produced === count) showStatus('gen-session-status', 'Zakończono generowanie.', 'ok');
+  else showStatus('gen-session-status', `Zakończono: ${produced}/${count} (część nie przeszła).`, 'err');
   setBusy(false);
 }
 
@@ -558,14 +569,25 @@ async function rejectGenerated(id) {
 
   try {
     showStatus('gen-session-status', 'Regeneruję odrzuconą grę...', 'info');
-    const res = await callEdgeAction('generate-producer-game', { lang, topic, avoidTitles });
-    const candidate = res?.candidate;
-    if (!candidate) throw new Error('Brak danych gry z serwera');
-    it.candidate = candidate;
-    it.matches = Array.isArray(res?.matches) ? res.matches : [];
-    it.generating = false;
-    renderGeneratedList();
-    showStatus('gen-session-status', 'Gotowe.', 'ok');
+    const maxTries = 3;
+    let lastErr = null;
+    for (let attempt = 1; attempt <= maxTries; attempt++) {
+      try {
+        showStatus('gen-session-status', `Regeneruję odrzuconą grę (próba ${attempt}/${maxTries})...`, 'info');
+        const res = await callEdgeAction('generate-producer-game', { lang, topic, avoidTitles });
+        const candidate = res?.candidate;
+        if (!candidate) throw new Error('Brak danych gry z serwera');
+        it.candidate = candidate;
+        it.matches = Array.isArray(res?.matches) ? res.matches : [];
+        it.generating = false;
+        renderGeneratedList();
+        showStatus('gen-session-status', 'Gotowe.', 'ok');
+        return;
+      } catch (e) {
+        lastErr = e;
+      }
+    }
+    throw lastErr || new Error('Regenerowanie nieudane.');
   } catch (e) {
     it.generating = false;
     renderGeneratedList();
