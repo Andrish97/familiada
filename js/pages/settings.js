@@ -1341,7 +1341,7 @@ async function loadMarketplace({ silent = false } = {}) {
     const res = await adminFetch(`/marketplace/list?status=${marketActiveStatus}`);
     if (!res.ok) throw new Error(await res.text());
     const json = await res.json();
-    data = json.rows || [];
+    data = (json.rows || []).filter(r => r.origin !== "producer");
   } catch (err) {
     if (info) info.textContent = String(err?.message || err);
     return;
@@ -1367,10 +1367,14 @@ async function loadMarketplace({ silent = false } = {}) {
       actions += ` <button class="btn sm" data-market-reject="${escSetting(g.id)}">Odrzuć</button>`;
     }
 
+    const authorLabel = g.origin === "producer"
+      ? "♟ Producent"
+      : (g.author_username || "—");
+
     tr.innerHTML = `
       <td>${escSetting(g.title)}${note}</td>
       <td>${escSetting(g.lang.toUpperCase())}</td>
-      <td>${escSetting(g.author_username || (g.gh_slug ? "♟ Producent" : "—"))}</td>
+      <td>${escSetting(authorLabel)}</td>
       <td>${date}</td>
       <td class="market-actions">${actions}</td>`;
     tbody.appendChild(tr);
