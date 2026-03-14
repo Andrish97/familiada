@@ -68,11 +68,13 @@ async function generateGames() {
   
   for (let i = 0; i < count; i++) {
     try {
+      showStatus('gen-session-status', `Generowanie ${i + 1}/${count}...`, 'info');
       const res = await callEdgeAction('generate-producer-game', { lang, topic, avoidTitles: games.map(g => g.title) });
       const newGame = res?.game;
       if (!newGame) throw new Error('Brak danych gry z serwera');
       games.unshift(newGame);
       uniquenessCache.set(newGame.id, Array.isArray(res?.matches) ? res.matches : []);
+      weaknessCache.set(newGame.id, analyzeWeakness(newGame));
       renderGameList();
     } catch (e) {
       showStatus('gen-session-status', `✗ Błąd generowania: ${e.message}`, 'err');
@@ -131,7 +133,8 @@ function selectIssues() {
   for (const g of games) {
     const r = weaknessCache.get(g.id) || analyzeWeakness(g);
     weaknessCache.set(g.id, r);
-    if (r.level !== 'ok') selectedIds.add(g.id);
+    const hasDup = Array.isArray(uniquenessCache.get(g.id)) && uniquenessCache.get(g.id).length > 0;
+    if (r.level !== 'ok' || hasDup) selectedIds.add(g.id);
   }
   renderGameList();
 }
