@@ -149,7 +149,7 @@ function makeGameCard(g) {
   card.className = "mkt-card";
   card.dataset.id = g.id;
 
-  const isProducer = !g.author_username || g.author_username === "";
+  const isProducer = g.origin === "producer" || !g.author_username || g.author_username === "";
   const authorLabel = isProducer
     ? `<span class="mkt-badge mkt-badge-producer">${esc(t("marketplace.producerBadge"))}</span>`
     : `<span class="mkt-author">${esc(t("marketplace.authorLabel").replace("{author}", g.author_username))}</span>`;
@@ -189,7 +189,7 @@ async function openDetail(id) {
   const g = data;
   if (els.detailTitle) els.detailTitle.textContent = g.title;
   if (els.detailMeta) {
-    const isProducer = !g.author_username;
+    const isProducer = g.origin === "producer" || !g.author_username;
     const author = isProducer ? t("marketplace.producerBadge") : g.author_username;
     els.detailMeta.textContent = `${g.lang.toUpperCase()} · ${author}`;
   }

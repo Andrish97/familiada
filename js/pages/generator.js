@@ -1,17 +1,9 @@
-/**
- * Generator Page Logic
- * v: 20260313-3
- */
 
-import { t } from "/translation/translation.js?v=20260313-3";
-import { sb as supabase } from "/js/core/supabase.js?v=20260313-3";
+import { sb as supabase } from "/js/core/supabase.js?v=20260314-1";
 
-let loadedGames = [];
-let genGames = [];
-let selectedGames = new Set();
-let pendingDelete = new Set();
-let pendingAdd = [];
-let generating = false;
+let games = [];
+const uniquenessCache = new Map();
+const weaknessCache = new Map();
 
 // Helpers
 const $ = id => document.getElementById(id);
@@ -25,524 +17,274 @@ function showStatus(id, msg, type) {
   el.className = 'status-bar visible ' + (type || '');
 }
 
-function hideStatus(id) {
-  const el = $(id);
-  if(el) el.className = 'status-bar';
-}
-
-function setListBusy(busy) {
+function setBusy(busy) {
+  ['gen-load-btn', 'gen-scan-btn', 'gen-enqueue-btn'].forEach(id => $(id).disabled = busy);
   $('gen-game-list').style.opacity = busy ? '0.5' : '1';
-  $('gen-game-list').style.pointerEvents = busy ? 'none' : 'auto';
 }
 
-// Session Management
-window.loadGeneratorList = async function() {
-  const lang = $('gen-manage-lang').value;
-  setListBusy(true);
-  showStatus('gen-session-status', 'Wczytuję…', 'info');
-  $('gen-scan-btn').disabled = true;
-  
-  try {
-    const res = await callEdgeAction({ action: 'list-games', lang });
-    loadedGames = res.games || [];
-    selectedGames.clear();
-    pendingDelete.clear();
-    pendingAdd = [];
-    
-    lockGeneratorSession();
-    
-    if (loadedGames.length) {
-      showStatus('gen-session-status', `Sesja aktywna · ${loadedGames.length} gier · ${lang.toUpperCase()}`, 'ok');
-    } else {
-      showStatus('gen-session-status', `Sesja aktywna · brak gier · ${lang.toUpperCase()}`, 'ok');
-    }
-    
-    renderManageList();
-    $('gen-scan-btn').disabled = loadedGames.length === 0;
-    
-    // Zapamiętaj język w localStorage
-    localStorage.setItem('gen_last_lang', lang);
+// API Call
+async function callEdgeAction(action, body = {}) {
+  const { data, error } = await supabase().functions.invoke('generate-game', { body: { action, ...body } });
+  if (error) throw new Error(error.message || 'Unknown error');
+  return data;
+}
 
-    // Sprawdź czy są aktywne zadania dla tego języka
-    checkQueueStatus();
+// Main logic
+async function loadGames() {
+  const lang = $('gen-manage-lang').value;
+  setBusy(true);
+  showStatus('gen-session-status', 'Wczytuję gry...', 'info');
+  try {
+    games = await callEdgeAction('list-producer-games', { lang });
+    uniquenessCache.clear();
+    weaknessCache.clear();
+    renderGameList();
+    showStatus('gen-session-status', `Załadowano ${games.length} gier.`, 'ok');
   } catch (e) {
-    showStatus('gen-session-status', '✗ ' + e.message, 'err');
+    showStatus('gen-session-status', `✗ ${e.message}`, 'err');
   } finally {
-    setListBusy(false);
+    setBusy(false);
   }
-};
-
-function lockGeneratorSession() {
-  $('gen-manage-lang').disabled = true;
-  $('gen-load-btn').style.display = 'none';
-  show('gen-reset-btn');
-  show('gen-manage-card');
-  show('gen-input-card');
-  show('gen-enqueue-btn');
 }
 
-window.resetGeneratorSession = function() {
-  if (pendingAdd.length || pendingDelete.size) {
-    if (!confirm("Masz niezapisane zmiany. Czy na pewno chcesz wyjść?")) return;
-  }
-  $('gen-manage-lang').disabled = false;
-  show('gen-load-btn');
-  hide('gen-reset-btn');
-  hide('gen-manage-card');
-  hide('gen-input-card');
-  hide('gen-enqueue-btn');
-  hide('gen-results-section');
-  hide('gen-pending-bar');
-  hideStatus('gen-session-status');
-  loadedGames = [];
-  pendingAdd = [];
-  pendingDelete.clear();
-  selectedGames.clear();
-  genGames = [];
-  renderManageList();
-  renderGenList();
-};
-
-// Direct Generation (Simple version)
-window.enqueueGeneration = async function() {
+async function generateGames() {
   const lang = $('gen-manage-lang').value;
-  const count = Math.max(1, parseInt($('gen-count').value) || 5);
+  const count = parseInt($('gen-count').value) || 1;
   const topic = $('gen-topic').value.trim();
-  const existingTitles = loadedGames.filter(g => g.lang === lang).map(g => g.title).filter(Boolean);
-
-  $('gen-enqueue-btn').disabled = true;
-  show('gen-results-section');
   
-  // Init slots
-  genGames = Array.from({length: count}, (_, i) => ({game: null, status: 'pending', generating: true, idx: i}));
-  renderGenList();
-
-  // Generate one by one directly from browser
+  setBusy(true);
+  showStatus('gen-session-status', `Generowanie ${count} gier...`, 'info');
+  
   for (let i = 0; i < count; i++) {
-    // Check if user has reset the session in the meantime
-    if (!genGames.length || genGames.length !== count) break;
-
-    const allUsed = [...existingTitles, ...genGames.filter(g => g.game).map(g => g.game.meta?.title).filter(Boolean)];
     try {
-      const res = await callEdgeAction({
-        lang,
-        index: i + 1,
-        total: count,
-        topic,
-        alreadyUsed: allUsed
-      });
-      
-      if (!genGames[i]) break; // Check again after long AI wait
-
-      genGames[i].game = res.game;
-      genGames[i].status = 'pending';
+      const res = await callEdgeAction('generate-producer-game', { lang, topic, avoidTitles: games.map(g => g.title) });
+      const newGame = res?.game;
+      if (!newGame) throw new Error('Brak danych gry z serwera');
+      games.unshift(newGame);
+      uniquenessCache.set(newGame.id, Array.isArray(res?.matches) ? res.matches : []);
+      renderGameList();
     } catch (e) {
-      if (genGames[i]) genGames[i].status = 'rejected';
-      console.error("Generation error:", e);
+      showStatus('gen-session-status', `✗ Błąd generowania: ${e.message}`, 'err');
+      break;
     }
-    if (genGames[i]) genGames[i].generating = false;
-    renderGenList();
-    
-    if (i === 0) setTimeout(() => {
-      const row = document.querySelector('#gen-results-list .game-row');
-      if (row) {
-        const p = document.getElementById('gp-0');
-        if (p) p.classList.add('open');
-        row.querySelector('.game-chevron')?.classList.add('open');
-      }
-    }, 50);
-    
-    if (i < count - 1) await new Promise(r => setTimeout(r, 300));
+  }
+  
+  showStatus('gen-session-status', 'Zakończono generowanie.', 'ok');
+  setBusy(false);
+}
+
+async function deleteGame(id) {
+  if (!confirm('Czy na pewno usunąć tę grę?')) return;
+  setBusy(true);
+  try {
+    await callEdgeAction('delete-game', { id });
+    games = games.filter(g => g.id !== id);
+    uniquenessCache.delete(id);
+    weaknessCache.delete(id);
+    renderGameList();
+  } catch (e) {
+    showStatus('gen-session-status', `✗ Błąd usuwania: ${e.message}`, 'err');
+  } finally {
+    setBusy(false);
+  }
+}
+
+function analyzeWeakness(payload) {
+  const reasons = [];
+  const qs = payload?.questions || [];
+
+  if (!Array.isArray(qs) || qs.length === 0) {
+    return { level: "weak", reasons: ["Brak pytań w payload."], summary: "Słabe: brak pytań" };
   }
 
-  $('gen-enqueue-btn').disabled = false;
-};
+  if (qs.length < 10) {
+    reasons.push(`Za mało pytań (${qs.length}/10).`);
+  }
 
-async function checkQueueStatus() {
-  if (window.activeTab !== 'generator') return;
+  let badAnswers = 0;
+  let badPoints = 0;
+  let shortQuestions = 0;
+  let dupQuestions = 0;
 
-  try {
-    const { data: jobs, error } = await supabase()
-      .from('game_gen_queue')
-      .select('*')
-      .in('status', ['pending', 'processing', 'completed'])
-      .order('created_at', { ascending: false })
-      .limit(5);
+  const qSeen = new Set();
 
-    if (error || !jobs?.length) return;
+  for (const q of qs) {
+    const qText = String(q?.text || "").trim();
+    if (qText.length < 8) shortQuestions++;
 
-    const mainJobId = genGames[0]?.mainJobId || (jobs[0].status !== 'completed' ? jobs[0].id : null);
-    if (!mainJobId) return;
+    const qKey = qText.toLowerCase();
+    if (qKey && qSeen.has(qKey)) dupQuestions++;
+    if (qKey) qSeen.add(qKey);
 
-    const mainJob = jobs.find(j => j.id === mainJobId) || jobs[0];
-    
-    // Update global progress bar
-    const pct = mainJob.total_games > 0 ? Math.round((mainJob.processed_games / mainJob.total_games) * 100) : 0;
-    const fill = $('gen-progress-fill');
-    if (fill) fill.style.width = `${pct}%`;
-    const counter = $('gen-results-counter');
-    if (counter) counter.textContent = `${mainJob.processed_games} / ${mainJob.total_games} gier`;
+    const ans = Array.isArray(q?.answers) ? q.answers : [];
+    if (ans.length < 3) badAnswers++;
 
-    // Sync slots
-    if (!genGames.length || genGames[0].mainJobId !== mainJob.id) {
-      show('gen-results-section');
-      genGames = Array.from({length: mainJob.total_games}, (_, i) => ({game: null, status: 'pending', generating: true, idx: i, mainJobId: mainJob.id}));
-    }
-
-    genGames.forEach((slot, idx) => {
-      if (mainJob.results?.[idx]) {
-        slot.game = mainJob.results[idx];
-        slot.generating = false;
-        slot.status = 'pending';
-      } else {
-        slot.generating = mainJob.status === 'processing' && idx === (mainJob.results?.length || 0);
+    const ansTexts = new Set();
+    let sum = 0;
+    for (const a of ans) {
+      const aText = String(a?.text || "").trim();
+      const aKey = aText.toLowerCase();
+      if (aKey) {
+        if (ansTexts.has(aKey)) reasons.push(`Duplikat odpowiedzi w pytaniu: "${qText}".`);
+        ansTexts.add(aKey);
       }
-    });
 
-    renderGenList();
-
-    if (mainJob.status === 'pending' || mainJob.status === 'processing') {
-      setTimeout(checkQueueStatus, 2000);
-    } else {
-      $('gen-enqueue-btn').disabled = false;
+      const ptsRaw = a?.fixed_points;
+      const pts = typeof ptsRaw === "number" ? ptsRaw : Number(ptsRaw);
+      if (!Number.isFinite(pts)) badPoints++;
+      else sum += pts;
     }
-  } catch (e) { console.error("Queue check failed", e); }
+    if (sum > 100) reasons.push(`Suma punktów > 100 w pytaniu: "${qText}" (${sum}).`);
+  }
+
+  if (shortQuestions > 0) reasons.push(`Krótkie pytania: ${shortQuestions}.`);
+  if (dupQuestions > 0) reasons.push(`Powtórzone pytania: ${dupQuestions}.`);
+  if (badAnswers > 0) reasons.push(`Pytania z <3 odpowiedzi: ${badAnswers}.`);
+  if (badPoints > 0) reasons.push(`Odpowiedzi z brakującymi/nienumerycznymi punktami: ${badPoints}.`);
+
+  const level = reasons.length ? "weak" : "ok";
+  const summary = level === "ok" ? "Jakość: OK" : `Słabe: ${reasons.length} sygnałów`;
+  return { level, reasons, summary };
+}
+
+function renderWeakInfo(container, report) {
+  if (!container) return;
+  if (!report) {
+    container.textContent = "";
+    return;
+  }
+  if (report.level === "ok") {
+    container.textContent = report.summary;
+    return;
+  }
+  const items = report.reasons.slice(0, 6).map(r => `<li>${r}</li>`).join("");
+  const more = report.reasons.length > 6 ? `<li>… i ${report.reasons.length - 6} więcej</li>` : "";
+  container.innerHTML = `<div>${report.summary}</div><ul style="margin:6px 0 0 16px">${items}${more}</ul>`;
+}
+
+async function scanForDuplicates() {
+  setBusy(true);
+  const lang = $('gen-manage-lang').value;
+  showStatus('gen-session-status', 'Dobiłem embeddingi (synonimy/parafrazy) i skanuję unikalność...', 'info');
+  try {
+    await callEdgeAction('embed-missing', { lang, limit: 25 });
+    for (const g of games) {
+      if (uniquenessCache.has(g.id)) continue;
+      const res = await callEdgeAction('check-uniqueness', { id: g.id });
+      uniquenessCache.set(g.id, Array.isArray(res?.matches) ? res.matches : []);
+      renderGameList();
+    }
+    showStatus('gen-session-status', `Skanowanie zakończone.`, 'ok');
+  } catch (e) {
+    showStatus('gen-session-status', `✗ Błąd skanowania: ${e.message}`, 'err');
+  } finally {
+    setBusy(false);
+  }
+}
+
+async function checkUniqueness(id) {
+  setBusy(true);
+  showStatus('gen-session-status', 'Sprawdzam podobne gry...', 'info');
+  try {
+    const res = await callEdgeAction('check-uniqueness', { id });
+    uniquenessCache.set(id, Array.isArray(res?.matches) ? res.matches : []);
+    renderGameList();
+    showStatus('gen-session-status', 'Gotowe.', 'ok');
+  } catch (e) {
+    showStatus('gen-session-status', `✗ Błąd: ${e.message}`, 'err');
+  } finally {
+    setBusy(false);
+  }
 }
 
 // Rendering
-function renderManageList() {
+function renderGameList() {
   const list = $('gen-game-list');
   list.innerHTML = '';
-  
-  const all = [...loadedGames, ...pendingAdd.map(p => ({ ...JSON.parse(p.content), isPendingAdd: true, slug: p.slug }))];
-  
-  if (!all.length) {
-    list.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:10px 0;text-align:center">Brak gier.</div>';
+  if (!games.length) {
+    list.innerHTML = '<div class="text-center text-muted p-3">Brak gier.</div>';
     return;
   }
 
-  all.forEach((g, idx) => {
-    if (pendingDelete.has(g.slug)) return;
-    
+  games.forEach(game => {
     const item = document.createElement('div');
     item.className = 'game-item';
-    const title = g.meta?.title || g.title || g.slug;
-    
+    const matches = uniquenessCache.get(game.id);
+    const top = Array.isArray(matches) && matches.length ? matches[0] : null;
+    const topLine = top
+      ? `Podobne: ${Math.round((top.similarity || 0) * 100)}% · ${top.title} · ${top.origin}`
+      : (matches ? 'Podobne: brak (>=45%)' : 'Podobne: nie sprawdzono');
+
+    const weak = weaknessCache.get(game.id) || analyzeWeakness(game.payload);
+    weaknessCache.set(game.id, weak);
+    const qualityLine = weak?.summary || '';
     item.innerHTML = `
       <div class="game-row">
-        <input type="checkbox" class="game-cb" ${selectedGames.has(g.slug) ? 'checked' : ''}>
-        <span class="game-num">#${idx + 1}</span>
-        <span class="game-title">${title}</span>
-        ${g.isPendingAdd ? '<span class="game-badge badge-new">nowa</span>' : ''}
+        <span class="game-title">${game.title}</span>
+        <span class="game-title" style="color:var(--muted);font-size:12px;flex:1;margin-left:10px">${topLine} · ${qualityLine}</span>
+        <button class="btn sm" data-action="uniq" data-id="${game.id}">Unikalność</button>
+        <button class="btn sm danger" data-id="${game.id}">Usuń</button>
         <span class="game-chevron">▶</span>
       </div>
-      <div class="game-preview" id="prev-${g.slug}">
-        <div class="preview-desc">${g.meta?.description || g.description || ''}</div>
+      <div class="game-preview">
+        <div class="preview-desc">${game.description || ''}</div>
+        <div class="preview-weak" style="color:var(--muted);font-size:12px;margin:6px 0 10px"></div>
         <div class="preview-questions"></div>
       </div>
     `;
     
-    const row = item.querySelector('.game-row');
-    row.onclick = (e) => {
-      if (e.target.classList.contains('game-cb')) {
-        if (e.target.checked) selectedGames.add(g.slug);
-        else selectedGames.delete(g.slug);
-        updateBulkBar();
+    item.querySelector('.game-row').addEventListener('click', (e) => {
+      if (e.target.tagName === 'BUTTON') {
+        const action = e.target.dataset.action;
+        const id = e.target.dataset.id;
+        if (action === 'uniq') {
+          checkUniqueness(id);
+          return;
+        }
+        deleteGame(id);
         return;
       }
-      const prev = item.querySelector('.game-preview');
-      const chev = item.querySelector('.game-chevron');
-      const isOpen = prev.classList.toggle('open');
-      chev.classList.toggle('open', isOpen);
-      if (isOpen && !prev.querySelector('.preview-questions').innerHTML) {
-        renderPreviewQuestions(prev.querySelector('.preview-questions'), g.payload || g);
+      const preview = item.querySelector('.game-preview');
+      const chevron = item.querySelector('.game-chevron');
+      const isOpen = preview.classList.toggle('open');
+      chevron.classList.toggle('open', isOpen);
+      if (isOpen) {
+        renderWeakInfo(preview.querySelector('.preview-weak'), weaknessCache.get(game.id));
+        renderPreviewQuestions(preview.querySelector('.preview-questions'), game.payload);
       }
-    };
+    });
     
     list.appendChild(item);
   });
 }
 
-function renderPreviewQuestions(container, data) {
-  if (!data?.questions) return;
-  container.innerHTML = data.questions.map(q => `
+function renderPreviewQuestions(container, payload) {
+  if (!payload || !payload.questions) return;
+  container.innerHTML = payload.questions.map(q => `
     <div class="q-block">
       <div class="q-text">${q.text}</div>
       <div class="answers-grid">
-        ${(q.answers || []).map(a => `<span class="ans-chip">${a.text} <span class="ans-pts">${a.fixed_points}</span></span>`).join('')}
+        ${(q.answers || []).map(a => `<span class="ans-chip">${a.text} <span class="ans-pts">${a.fixed_points || ''}</span></span>`).join('')}
       </div>
     </div>
   `).join('');
 }
 
-function renderGenList() {
-  const list = $('gen-results-list');
-  list.innerHTML = '';
-  
-  genGames.forEach((item, i) => {
-    const el = document.createElement('div');
-    el.className = `game-item ${item.status} ${item.generating ? 'generating' : ''}`;
-    
-    const title = item.game?.meta?.title || (item.generating ? 'Generowanie...' : 'Oczekiwanie...');
-    
-    el.innerHTML = `
-      <div class="game-row">
-        <span class="game-num">#${i + 1}</span>
-        <span class="game-title">${title}</span>
-        <div class="gen-actions">
-          ${item.game ? `
-            <button class="btn sm" onclick="window.approveGenGame(${i})">Zatwierdź</button>
-            <button class="btn sm danger" onclick="window.regenerateGenGame(${i})">Odrzuć</button>
-          ` : ''}
-        </div>
-        <span class="game-chevron">▶</span>
-      </div>
-      <div class="game-preview" id="gp-${i}">
-        <div class="preview-desc">${item.game?.meta?.description || ''}</div>
-        <div class="preview-questions"></div>
-      </div>
-    `;
-    
-    const row = el.querySelector('.game-row');
-    row.onclick = (e) => {
-      if (e.target.closest('.gen-actions')) return;
-      const prev = el.querySelector('.game-preview');
-      const chev = el.querySelector('.game-chevron');
-      const isOpen = prev.classList.toggle('open');
-      chev.classList.toggle('open', isOpen);
-      if (isOpen && item.game) renderPreviewQuestions(prev.querySelector('.preview-questions'), item.game);
-    };
-    
-    list.appendChild(el);
-  });
-  
-  const approvedCount = genGames.filter(g => g.status === 'approved').length;
-  $('gen-results-counter').textContent = `${approvedCount} / ${genGames.length} zatwierdzonych`;
-  $('gen-progress-fill').style.width = `${(approvedCount / genGames.length) * 100}%`;
-  $('gen-push-approved-btn').disabled = approvedCount === 0;
-}
-
-window.scanGames = async function() {
-  const lang = $('gen-manage-lang').value;
-  setListBusy(true);
-  showStatus('gen-manage-status', 'AI skanuje gry…', 'info');
-  try {
-    const res = await callEdgeAction({ action: 'scan', lang, mode: 'duplicates', games: loadedGames });
-    if (res.issues) {
-      res.issues.forEach(iss => {
-        iss.slugs.forEach(slug => {
-          const game = loadedGames.find(g => g.slug === slug);
-          if (game) {
-            game.issueType = iss.type === 'duplicate' ? 'dup' : 'weak';
-            game.issueReason = iss.reason;
-          }
-        });
-      });
-      renderManageList();
-      showStatus('gen-manage-status', `🔍 Skonczono skanowanie. Znaleziono problemy.`, 'ok');
-    }
-  } catch (e) {
-    showStatus('gen-manage-status', '✗ Błąd skanowania: ' + e.message, 'err');
-  } finally {
-    setListBusy(false);
-  }
-};
-window.approveGenGame = function(i) {
-  genGames[i].status = 'approved';
-  renderGenList();
-};
-
-window.regenerateGenGame = async function(idx) {
-  const item = genGames[idx];
-  if (item.generating) return;
-  item.game = null; item.status = 'pending'; item.generating = true;
-  renderGenList();
-  
-  const lang = $('gen-manage-lang').value;
-  const existingTitles = genGames.filter((_,i) => i !== idx && _.game).map(g => g.game.meta?.title).filter(Boolean);
-  loadedGames.filter(g => g.lang === lang).forEach(g => existingTitles.push(g.title));
-  
-  try {
-    const res = await callEdgeAction({
-      action: 'generate',
-      lang,
-      index: idx + 1,
-      total: genGames.length,
-      topic: $('gen-topic').value.trim(),
-      alreadyUsed: existingTitles
-    });
-    item.game = res.game;
-    item.status = 'pending';
-  } catch (e) {
-    item.status = 'rejected';
-    showStatus('gen-session-status', '✗ Błąd: ' + e.message, 'err');
-  } finally {
-    item.generating = false;
-    renderGenList();
-  }
-};
-
-window.pushApprovedGames = function() {
-  const approved = genGames.filter(g => g.status === 'approved' && g.game);
-  approved.forEach(item => {
-    const slug = slugify(item.game.slug || item.game.meta?.title || 'game');
-    pendingAdd.push({ slug, content: JSON.stringify(item.game, null, 2) });
-  });
-  genGames = genGames.filter(g => g.status !== 'approved');
-  if (!genGames.length) hide('gen-results-section');
-  updatePendingBar();
-  renderManageList();
-  renderGenList();
-};
-
-window.saveGeneratorChanges = async function() {
-  if (!pendingDelete.size && !pendingAdd.length) return;
-  setListBusy(true);
-  showStatus('gen-manage-status', 'Zapisuję zmiany…', 'info');
-  try {
-    const lang = $('gen-manage-lang').value;
-    const deletes = loadedGames.filter(g => pendingDelete.has(g.slug)).map(g => ({ filename: g.filename, indexKey: g.indexKey, slug: g.slug, sha: g.sha }));
-    const remaining = loadedGames.filter(g => !pendingDelete.has(g.slug)).map(g => ({ filename: g.filename, indexKey: g.indexKey, slug: g.slug, sha: g.sha }));
-    
-    await callEdgeAction({ action: 'batch-commit', lang, deletes, adds: pendingAdd, remaining });
-    
-    pendingAdd = [];
-    pendingDelete.clear();
-    updatePendingBar();
-    showStatus('gen-session-status', '✓ Zmiany zapisane.', 'ok');
-    window.loadGeneratorList();
-  } catch (e) {
-    showStatus('gen-manage-status', '✗ ' + e.message, 'err');
-  } finally {
-    setListBusy(false);
-  }
-};
-
-function updateBulkBar() {
-  const bar = $('gen-bulk-bar');
-  if (selectedGames.size > 0) {
-    bar.classList.add('visible');
-    $('gen-bulk-count').textContent = `${selectedGames.size} zaznaczonych`;
-  } else {
-    bar.classList.remove('visible');
-  }
-}
-
-function updatePendingBar() {
-  const bar = $('gen-pending-bar');
-  const count = pendingDelete.size + pendingAdd.length;
-  if (count > 0) {
-    bar.classList.add('visible');
-    $('gen-pending-count').textContent = `${count} niezapisanych zmian`;
-  } else {
-    bar.classList.remove('visible');
-  }
-}
-
-// Session Persistence
-function saveSessionState() {
-  if (!$('gen-reset-btn') || $('gen-reset-btn').style.display === 'none') return;
-  const state = {
-    lang: $('gen-manage-lang').value,
-    topic: $('gen-topic').value,
-    loadedGames: loadedGames,
-    genGames: genGames,
-    pendingAdd: pendingAdd,
-    pendingDelete: Array.from(pendingDelete),
-    selectedGames: Array.from(selectedGames),
-    timestamp: Date.now()
-  };
-  localStorage.setItem('generator_session', JSON.stringify(state));
-}
-
-function loadSessionState() {
-  const savedState = localStorage.getItem('generator_session');
-  if (!savedState) return false;
-
-  try {
-    const state = JSON.parse(savedState);
-    if (!state.lang) return false;
-
-    $('gen-manage-lang').value = state.lang;
-    $('gen-topic').value = state.topic || '';
-    loadedGames = state.loadedGames || [];
-    genGames = state.genGames || [];
-    pendingAdd = state.pendingAdd || [];
-    pendingDelete = new Set(state.pendingDelete || []);
-    selectedGames = new Set(state.selectedGames || []);
-
-    lockGeneratorSession();
-    renderManageList();
-    renderGenList();
-    updatePendingBar();
-    updateBulkBar();
-    showStatus('gen-session-status', `✓ Sesja przywrócona.`, 'ok');
-    
-    if (genGames.length > 0) show('gen-results-section');
-
-    // If there were active jobs, start polling
-    if (genGames.some(g => g.generating) || (genGames.length > 0 && genGames.some(g => !g.game))) {
-      checkQueueStatus();
-    }
-    return true;
-  } catch (e) {
-    localStorage.removeItem('generator_session');
-    return false;
-  }
-}
-
-// Utility
-async function callEdgeAction(body) {
-  const { data, error } = await supabase().functions.invoke('generate-game', { body });
-  if (error) throw error;
-  return data;
-}
-
-function slugify(text) {
-  return (text || "").toLowerCase()
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
-}
-
-// Bindings
+// Init
 document.addEventListener('DOMContentLoaded', () => {
-  // Przywróć ostatni język z sesji
+  $('gen-load-btn').addEventListener('click', loadGames);
+  $('gen-enqueue-btn').addEventListener('click', generateGames);
+  $('gen-scan-btn').addEventListener('click', scanForDuplicates);
+  
   const lastLang = localStorage.getItem('gen_last_lang');
-  if (lastLang && $('gen-manage-lang')) {
+  if (lastLang) {
     $('gen-manage-lang').value = lastLang;
   }
-
-  $('gen-load-btn')?.addEventListener('click', window.loadGeneratorList);
-  $('gen-scan-btn')?.addEventListener('click', window.scanGames);
-  $('gen-reset-btn')?.addEventListener('click', window.resetGeneratorSession);
-  $('gen-enqueue-btn')?.addEventListener('click', window.enqueueGeneration);
-  $('gen-push-approved-btn')?.addEventListener('click', window.pushApprovedGames);
-  $('gen-save-btn')?.addEventListener('click', window.saveGeneratorChanges);
-  $('gen-clear-pending-btn')?.addEventListener('click', () => {
-    pendingAdd = [];
-    pendingDelete.clear();
-    updatePendingBar();
-    renderManageList();
+  
+  $('gen-manage-lang').addEventListener('change', (e) => {
+    localStorage.setItem('gen_last_lang', e.target.value);
+    loadGames();
   });
-  $('gen-delete-sel-btn')?.addEventListener('click', () => {
-    selectedGames.forEach(slug => pendingDelete.add(slug));
-    selectedGames.clear();
-    updateBulkBar();
-    updatePendingBar();
-    renderManageList();
-  });
-  $('gen-sel-all-btn')?.addEventListener('click', () => {
-    loadedGames.forEach(g => selectedGames.add(g.slug));
-    updateBulkBar();
-    renderManageList();
-  });
-  $('gen-clear-sel-btn')?.addEventListener('click', () => {
-    selectedGames.clear();
-    updateBulkBar();
-    renderManageList();
-  });
-  $('gen-approve-all-btn')?.addEventListener('click', () => {
-    genGames.forEach(g => { if(g.game) g.status = 'approved'; });
-    renderGenList();
-  });
+  
+  loadGames();
 });
