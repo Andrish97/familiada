@@ -142,38 +142,39 @@ function buildGeneratePrompt(lang: string, topic: string, avoidTitles: string[])
     const systemDesc =
       lang === "uk"
         ? `Сімейка — телегра у стилі Family Feud. Генеруй гру УКРАЇНСЬКОЮ (не російською). Питання різноманітні, відповіді — короткі конкретні слова.`
-        : `Familiada to polski teleturniej w stylu "Family Feud". Prowadzący zadaje pytanie, a rodziny podają odpowiedzi, które wcześniej zebrała ankieta. Odpowiedzi mają brzmieć jak od przeciętnej osoby z ulicy — krótkie, konkretne, oczywiste skojarzenia.`;
+        : `Familiada to polski teleturniej ("Family Feud"). Prowadzący zadaje pytanie, a rodziny podają odpowiedzi, które wcześniej zebrała ankieta. Odpowiedzi mają brzmieć jak od przeciętnej osoby z ulicy — krótkie, konkretne, oczywiste skojarzenia.
+WAŻNE: To NIE jest quiz wiedzy. Pytania muszą dotyczyć skojarzeń, codzienności, stereotypów i intuicji (np. "Co najczęściej gubimy?", a NIE "Kto napisał Pana Tadeusza?").`;
 
     const topicHint =
       lang === "uk"
         ? (topic
-          ? `Тема гри: "${topic}".`
+          ? `Тема гри: "${topic}". Всі 10 питань ПОВИННІ бути пов'язані з цією темою.`
           : `Придумай власну, конкретну тему з повсякденного життя. Ці теми вже ІСНУЮТЬ — твоя має бути семантично інша:\n[${usedList}]`)
         : (topic
-          ? `Temat tej gry: "${topic}".`
+          ? `Temat tej gry: "${topic}". Każde z 10 pytań MUSI być ściśle powiązane z tym tematem oraz jego specyficznym kontekstem (angle). Jeśli temat to "Ubrania — w łazience", pytaj o ubrania w kontekście łazienki, prania, kąpieli, a nie o garnitury na ślub.`
           : `Wymyśl własny, KONKRETNY temat z codziennego życia, kultury, jedzenia, miejsc, emocji, zwierząt, pracy, rozrywki…\nWAŻNE: poniższe tematy już ISTNIEJĄ — twój musi być semantycznie inny (nie wariacja \"prawie to samo\"):\n[${usedList}]`);
 
     const descHint =
       lang === "uk"
-        ? `Поле "description": 2–4 речення: (1) тема і настрій, (2) для кого підходить, (3) опційно підказка для ведучого.`
-        : `Pole "description" ma mieć 2–4 zdania: (1) temat i klimat, (2) dla kogo jest gra (rodzina, impreza, szkoła, praca…), (3) opcjonalnie wskazówka dla prowadzącego.`;
+        ? `Поле "description": 2–4 речення: (1) тема і настрій, (2) для кого підходить.`
+        : `Pole "description" ma mieć 2–4 ciekawe zdania opisujące klimat tej konkretnej gry. Nie używaj ogólników typu "Szybka gra dla całej rodziny". Opisz co ciekawego znajdziemy w pytaniach o "${topic}".`;
 
     return `${systemDesc}
 
 ${topicHint}
 
 ZASADY TECHNICZNE:
-- Liczba pytań: 10
+- Liczba pytań: dokładnie 10
 - Każde pytanie: dokładnie 4 odpowiedzi
-- Punkty: nieregularne jak z prawdziwej ankiety (np. 43, 27, 16, 9) — nie rób 100/0/0/0 i nie rób samych wartości /5
-- Suma punktów w pytaniu: 80–100
-- Odpowiedzi: krótkie frazy (1–4 słowa), maks. 17 znaków, bez pełnych zdań i bez tak/nie
-- Pytania ankietowe (Family Feud), NIE trivia/faktograficzne
-- Tytuł: 2–5 słów, bez myślników i dwukropków, nie powtarza dosłownie tematu
+- Punkty: nieregularne jak z prawdziwej ankiety (np. 43, 27, 16, 9). Suma 80-100.
+- Odpowiedzi: krótkie (1–3 słowa), maks. 17 znaków. Bez tak/nie.
+- Pytania: Formułuj je naturalnie, np. "Co najczęściej...", "Gdzie zazwyczaj...", "Wymień coś, co...". 
+- UNIKAJ faktów (daty, stolice, nazwiska). STAWIAJ na skojarzenia.
+- Różnorodność: Każde pytanie powinno badać inny aspekt tematu "${topic}".
 - ${descHint}
 
 Zwróć TYLKO czysty JSON:
-{"title":"Tytuł","description":"Opis 2-4 zdania.","questions":[{"text":"Pytanie?","answers":[{"text":"Odpowiedź","fixed_points":43},{"text":"Odpowiedź","fixed_points":27},{"text":"Odpowiedź","fixed_points":16},{"text":"Odpowiedź","fixed_points":9}]}]}`;
+{"title":"Krótki Chwytliwy Tytuł","description":"Opis specyficzny dla tematu.","questions":[{"text":"Pytanie związane z tematem?","answers":[{"text":"Odpowiedź","fixed_points":43},{"text":"Odpowiedź","fixed_points":27},{"text":"Odpowiedź","fixed_points":16},{"text":"Odpowiedź","fixed_points":9}]}]}`;
   }
 
   const avoidClause = trimmed.length ? `Avoid these titles: ${trimmed.join(", ")}.` : "";
@@ -226,8 +227,12 @@ function improveTitle(title: string, effectiveTopic: string): string {
 
   const tLower = t.toLowerCase();
   const baseLower = base.toLowerCase();
-  if (!t || tLower === baseLower || tLower === topic.toLowerCase() || t.split(/\s+/).length <= 1) {
+  const topicLower = topic.toLowerCase();
+
+  // Jeśli tytuł jest pusty, generyczny lub identyczny z tematem
+  if (!t || tLower === baseLower || tLower === topicLower || t.split(/\s+/).length <= 1) {
     if (angle) {
+      // Wyciągnij sensowne słowa z angle
       const angleWords = angle
         .replace(/^[\p{P}\p{S}\s]+/gu, "")
         .replace(/\s+/g, " ")
@@ -241,27 +246,42 @@ function improveTitle(title: string, effectiveTopic: string): string {
     }
   }
 
+  // Usuń zbędne znaki i ogranicz długość
   t = t.replace(/[:\-–—]/g, " ").replace(/\s+/g, " ").trim();
   const words = t.split(/\s+/).filter(Boolean).slice(0, 5);
   t = words.join(" ");
-  if (!t) t = "Bez tytułu";
+  
+  if (!t || t.length < 3) t = base || "Bez tytułu";
   return t;
 }
 
 function improveDescription(description: string, effectiveTopic: string): string {
   const d = String(description || "").trim();
   const topic = String(effectiveTopic || "").trim();
-  const generic =
-    !d ||
-    d.length < 50 ||
-    /gra toczy się/i.test(d) ||
-    /w tej grze/i.test(d) ||
+  const baseTopic = topic.split("—")[0].trim().toLowerCase();
+
+  // Jeśli opis jest sensowny (nie za krótki) i nie zawiera rażących ogólników, zostawiamy
+  const isGeneric =
+    d.length < 40 ||
+    /to (niezwykła|świetna|idealna) gra/i.test(d) ||
     /uczestnicy muszą/i.test(d) ||
-    /prowadzący/i.test(d);
+    /prowadzący zadaje/i.test(d);
 
-  if (!generic) return d;
+  // Jeśli opis zawiera słowo kluczowe z tematu i nie jest totalnym śmieciem, jest OK
+  const hasKeyword = d.toLowerCase().includes(baseTopic);
+  
+  if (!isGeneric && hasKeyword) return d;
+  if (d.length > 60 && !isGeneric) return d;
 
-  return `Pytania o temacie: ${topic}. Szybka, rodzinna Familiada do grania w domu i na imprezie. Krótkie odpowiedzi, zaskakująco trafne skojarzenia.`;
+  // Fallback, ale nieco bardziej urozmaicony
+  const variants = [
+    `Zestaw 10 pytań o tematyce: ${topic}. Idealna rozrywka na spotkania z rodziną i przyjaciółmi. Sprawdź swoje skojarzenia!`,
+    `Czy wiesz wszystko o: ${topic}? Ta gra sprawdzi Twoją intuicję i szybkość myślenia. Zaproś bliskich do wspólnej zabawy.`,
+    `Emocjonująca Familiada z pytaniami o ${topic}. Krótkie odpowiedzi, zaskakujące wyniki ankiety i mnóstwo śmiechu.`,
+  ];
+  
+  const seed = topic.length % variants.length;
+  return variants[seed];
 }
 
 function randomInt(min: number, max: number): number {
@@ -380,7 +400,7 @@ function pickDefaultTopic(lang: string): string {
 
 function isLowQualityCandidate(game: any): boolean {
   const desc = String(game?.description || "").trim();
-  if (desc.length < 40) return true;
+  if (desc.length < 30) return true;
   if (/to (niezwykła|świetna|idealna) gra/i.test(desc)) return true;
   if (/to miejsce/i.test(desc)) return true;
   const qs = Array.isArray(game?.questions) ? game.questions : [];
@@ -388,30 +408,40 @@ function isLowQualityCandidate(game: any): boolean {
 
   const startCounts = new Map<string, number>();
   const answerCounts = new Map<string, number>();
-  let tooShortQ = 0;
+  let triviaCount = 0;
 
   for (const q of qs) {
     const qt = String(q?.text || "").trim();
-    if (qt.length < 16) tooShortQ++;
+    if (qt.length < 12) return true; // Too short
 
-    const start = qt.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, "").trim().split(/\s+/).slice(0, 2).join(" ");
+    const lowerQ = qt.toLowerCase();
+    
+    // Catch trivia keywords
+    if (/\b(stolican|stolicą|państwo|rzeka|jezioro|kontynent|rok|wiek|stulecie|naukowiec|odkrył|wynalazł|autor|napisał|stolica)\b/i.test(lowerQ)) {
+       triviaCount++;
+    }
+
+    const start = lowerQ.replace(/[^\p{L}\p{N}\s]/gu, "").trim().split(/\s+/).slice(0, 2).join(" ");
     if (start) startCounts.set(start, (startCounts.get(start) || 0) + 1);
+    
+    // Repetitive stems
     if (/^co robi(a|ą)/i.test(qt) || /^co jest często/i.test(qt)) return true;
     if (/^czy\b/i.test(qt)) return true;
-    if (/^jaka jest (stolica|najwyższa|największa)/i.test(qt)) return true;
 
     const ans = Array.isArray(q?.answers) ? q.answers : [];
+    if (ans.length < 4) return true;
+
     for (const a of ans) {
       const at = String(a?.text || "").trim().toLowerCase();
-      if (!at) continue;
+      if (!at) return true;
       if (/^(tak|nie|nie wiem)$/i.test(at)) return true;
-      if (/\d{4}/.test(at)) return true;
-      if (at.length > 40) return true;
+      if (/\d{4}/.test(at)) return true; // Likely years
+      if (at.length > 45) return true;
       answerCounts.set(at, (answerCounts.get(at) || 0) + 1);
     }
   }
 
-  if (tooShortQ >= 3) return true;
+  if (triviaCount >= 2) return true; // Too much trivia
   for (const [, c] of startCounts) if (c >= 3) return true;
   for (const [, c] of answerCounts) if (c >= 3) return true;
   return false;
@@ -552,7 +582,7 @@ serve(async (req: Request) => {
 
       let payload: any;
       try {
-        payload = await groqChat(groqKey, model, prompt, { temperature: 0.55, jsonMode: true });
+        payload = await groqChat(groqKey, model, prompt, { temperature: 0.65, jsonMode: true });
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
         if (isGroqRateLimit(msg)) {
