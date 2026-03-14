@@ -1,5 +1,6 @@
 
 import { sb as supabase } from "/js/core/supabase.js?v=20260314-1";
+import { alertModal, confirmModal } from "../core/modal.js";
 
 let games = [];
 const uniquenessCache = new Map();
@@ -87,7 +88,13 @@ async function generateGames() {
 }
 
 async function deleteGame(id) {
-  if (!confirm('Czy na pewno usunąć tę grę?')) return;
+  const ok = await confirmModal({
+    title: "Usuń grę",
+    text: "Czy na pewno usunąć tę grę?",
+    okText: "Usuń",
+    cancelText: "Anuluj",
+  });
+  if (!ok) return;
   setBusy(true);
   try {
     await callEdgeAction('delete-game', { id });
@@ -141,15 +148,24 @@ function selectIssues() {
 
 async function deleteSelected() {
   const ids = Array.from(selectedIds);
-  if (!ids.length) return;
-  if (!confirm(`Usunąć zaznaczone gry (${ids.length})?`)) return;
+  if (!ids.length) {
+    await alertModal({ title: "Usuwanie", text: "Brak zaznaczonych gier." });
+    return;
+  }
+  const confirmed = await confirmModal({
+    title: "Usuń zaznaczone",
+    text: `Usunąć zaznaczone gry (${ids.length})?`,
+    okText: "Usuń",
+    cancelText: "Anuluj",
+  });
+  if (!confirmed) return;
   setBusy(true);
   showStatus('gen-session-status', `Usuwam ${ids.length} gier...`, 'info');
-  let ok = 0;
+  let deletedCount = 0;
   try {
     for (const id of ids) {
       await callEdgeAction('delete-game', { id });
-      ok++;
+      deletedCount++;
       games = games.filter(g => g.id !== id);
       uniquenessCache.delete(id);
       weaknessCache.delete(id);
@@ -157,9 +173,9 @@ async function deleteSelected() {
       updateBulkBar();
     }
     renderGameList();
-    showStatus('gen-session-status', `Usunięto ${ok}/${ids.length}.`, 'ok');
+    showStatus('gen-session-status', `Usunięto ${deletedCount}/${ids.length}.`, 'ok');
   } catch (e) {
-    showStatus('gen-session-status', `✗ Błąd po ${ok}/${ids.length}: ${e.message}`, 'err');
+    showStatus('gen-session-status', `✗ Błąd po ${deletedCount}/${ids.length}: ${e.message}`, 'err');
   } finally {
     setBusy(false);
   }
