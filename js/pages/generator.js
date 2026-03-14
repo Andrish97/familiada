@@ -4,6 +4,7 @@ import { sb as supabase } from "/js/core/supabase.js?v=20260314-1";
 let games = [];
 const uniquenessCache = new Map();
 const weaknessCache = new Map();
+const selectedIds = new Set();
 
 // Helpers
 const $ = id => document.getElementById(id);
@@ -42,6 +43,7 @@ async function loadGames() {
     games = await callEdgeAction('list-producer-games', { lang });
     uniquenessCache.clear();
     weaknessCache.clear();
+    selectedIds.clear();
     show('gen-manage-card');
     show('gen-input-card');
     show('gen-enqueue-btn');
@@ -90,9 +92,71 @@ async function deleteGame(id) {
     games = games.filter(g => g.id !== id);
     uniquenessCache.delete(id);
     weaknessCache.delete(id);
+    selectedIds.delete(id);
     renderGameList();
   } catch (e) {
     showStatus('gen-session-status', `✗ Błąd usuwania: ${e.message}`, 'err');
+  } finally {
+    setBusy(false);
+  }
+}
+
+function updateBulkBar() {
+  const bar = $('gen-bulk-bar');
+  const countEl = $('gen-bulk-count');
+  if (!bar || !countEl) return;
+  const count = selectedIds.size;
+  bar.style.display = count ? '' : 'none';
+  countEl.textContent = `${count} zaznaczonych`;
+}
+
+function setSelected(id, checked) {
+  if (checked) selectedIds.add(id);
+  else selectedIds.delete(id);
+  updateBulkBar();
+}
+
+function clearSelection() {
+  selectedIds.clear();
+  renderGameList();
+}
+
+function selectAll() {
+  for (const g of games) selectedIds.add(g.id);
+  renderGameList();
+}
+
+function selectIssues() {
+  selectedIds.clear();
+  for (const g of games) {
+    const r = weaknessCache.get(g.id) || analyzeWeakness(g);
+    weaknessCache.set(g.id, r);
+    if (r.level !== 'ok') selectedIds.add(g.id);
+  }
+  renderGameList();
+}
+
+async function deleteSelected() {
+  const ids = Array.from(selectedIds);
+  if (!ids.length) return;
+  if (!confirm(`Usunąć zaznaczone gry (${ids.length})?`)) return;
+  setBusy(true);
+  showStatus('gen-session-status', `Usuwam ${ids.length} gier...`, 'info');
+  let ok = 0;
+  try {
+    for (const id of ids) {
+      await callEdgeAction('delete-game', { id });
+      ok++;
+      games = games.filter(g => g.id !== id);
+      uniquenessCache.delete(id);
+      weaknessCache.delete(id);
+      selectedIds.delete(id);
+      updateBulkBar();
+    }
+    renderGameList();
+    showStatus('gen-session-status', `Usunięto ${ok}/${ids.length}.`, 'ok');
+  } catch (e) {
+    showStatus('gen-session-status', `✗ Błąd po ${ok}/${ids.length}: ${e.message}`, 'err');
   } finally {
     setBusy(false);
   }
@@ -105,17 +169,37 @@ function analyzeWeakness(game) {
   const qs = game?.payload?.questions || [];
 
   if (!Array.isArray(qs) || qs.length === 0) {
-    return { level: "weak", reasons: ["Brak pytań w payload."], summary: "Słabe: brak pytań" };
+    return { level: "weak", score: 0, reasons: ["Brak pytań w payload."], summary: "Jakość: 0/100 (brak pytań)" };
   }
 
-  if (title.length < 6) reasons.push(`Krótki tytuł (${title.length} znaków).`);
-  if (desc.length < 25) reasons.push(`Krótki opis (${desc.length} znaków).`);
+  let score = 100;
 
-  if (qs.length < 10) {
-    reasons.push(`Za mało pytań (${qs.length}/10).`);
+  const descLen = desc.length;
+  if (descLen === 0) {
+    score -= 25;
+    reasons.push("Opis pusty (−25).");
+  } else if (descLen < 30) {
+    score -= 18;
+    reasons.push(`Opis bardzo krótki (${descLen} znaków) (−18).`);
+  } else if (descLen < 60) {
+    score -= 10;
+    reasons.push(`Opis krótki (${descLen} znaków) (−10).`);
   }
 
-  let badAnswers = 0;
+  const qCount = qs.length;
+  if (qCount < 10) {
+    const penalty = Math.min(60, (10 - qCount) * 8);
+    score -= penalty;
+    reasons.push(`Za mało pytań (${qCount}/10) (−${penalty}).`);
+  } else if (qCount > 12) {
+    const penalty = Math.min(10, (qCount - 12) * 2);
+    score -= penalty;
+    reasons.push(`Bardzo dużo pytań (${qCount}) (−${penalty}).`);
+  }
+
+  let answersTotal = 0;
+  let qWithLt4 = 0;
+  let qWithLt3 = 0;
   let badPoints = 0;
   let shortQuestions = 0;
   let dupQuestions = 0;
@@ -124,41 +208,74 @@ function analyzeWeakness(game) {
 
   for (const q of qs) {
     const qText = String(q?.text || "").trim();
-    if (qText.length < 8) shortQuestions++;
+    if (qText.length < 10) shortQuestions++;
 
     const qKey = qText.toLowerCase();
     if (qKey && qSeen.has(qKey)) dupQuestions++;
     if (qKey) qSeen.add(qKey);
 
     const ans = Array.isArray(q?.answers) ? q.answers : [];
-    if (ans.length < 3) badAnswers++;
+    answersTotal += ans.length;
+    if (ans.length < 4) qWithLt4++;
+    if (ans.length < 3) qWithLt3++;
 
-    const ansTexts = new Set();
     let sum = 0;
     for (const a of ans) {
-      const aText = String(a?.text || "").trim();
-      const aKey = aText.toLowerCase();
-      if (aKey) {
-        if (ansTexts.has(aKey)) reasons.push(`Duplikat odpowiedzi w pytaniu: "${qText}".`);
-        ansTexts.add(aKey);
-      }
-
       const ptsRaw = a?.fixed_points;
       const pts = typeof ptsRaw === "number" ? ptsRaw : Number(ptsRaw);
       if (!Number.isFinite(pts)) badPoints++;
       else sum += pts;
     }
-    if (sum > 100) reasons.push(`Suma punktów > 100 w pytaniu: "${qText}" (${sum}).`);
+    if (sum > 100) {
+      score -= 2;
+      reasons.push(`Suma punktów > 100 w pytaniu: "${qText}" (−2).`);
+    }
   }
 
-  if (shortQuestions > 0) reasons.push(`Krótkie pytania: ${shortQuestions}.`);
-  if (dupQuestions > 0) reasons.push(`Powtórzone pytania: ${dupQuestions}.`);
-  if (badAnswers > 0) reasons.push(`Pytania z <3 odpowiedzi: ${badAnswers}.`);
-  if (badPoints > 0) reasons.push(`Odpowiedzi z brakującymi/nienumerycznymi punktami: ${badPoints}.`);
+  const avgAnswers = qCount ? answersTotal / qCount : 0;
+  if (qWithLt4 > 0) {
+    const penalty = Math.min(30, qWithLt4 * 4);
+    score -= penalty;
+    reasons.push(`Pytania z <4 odpowiedzi: ${qWithLt4} (−${penalty}).`);
+  }
+  if (qWithLt3 > 0) {
+    const penalty = Math.min(30, qWithLt3 * 6);
+    score -= penalty;
+    reasons.push(`Pytania z <3 odpowiedzi: ${qWithLt3} (−${penalty}).`);
+  }
+  if (avgAnswers > 0 && avgAnswers < 4) {
+    const penalty = Math.min(20, Math.ceil((4 - avgAnswers) * 10));
+    score -= penalty;
+    reasons.push(`Średnio mało odpowiedzi na pytanie (${avgAnswers.toFixed(1)}) (−${penalty}).`);
+  }
 
-  const level = reasons.length ? "weak" : "ok";
-  const summary = level === "ok" ? "Jakość: OK" : `Słabe: ${reasons.length} sygnałów`;
-  return { level, reasons, summary };
+  if (shortQuestions > 0) {
+    const penalty = Math.min(12, shortQuestions * 2);
+    score -= penalty;
+    reasons.push(`Krótkie pytania: ${shortQuestions} (−${penalty}).`);
+  }
+  if (dupQuestions > 0) {
+    const penalty = Math.min(20, dupQuestions * 5);
+    score -= penalty;
+    reasons.push(`Powtórzone pytania: ${dupQuestions} (−${penalty}).`);
+  }
+  if (badPoints > 0) {
+    const penalty = Math.min(15, badPoints);
+    score -= penalty;
+    reasons.push(`Brakujące/nienumeryczne punkty: ${badPoints} (−${penalty}).`);
+  }
+
+  if (title.length < 6) {
+    score -= 5;
+    reasons.push(`Krótki tytuł (${title.length} znaków) (−5).`);
+  }
+
+  score = Math.max(0, Math.min(100, Math.round(score)));
+
+  const level = score >= 80 ? "ok" : score >= 60 ? "mid" : "weak";
+  const label = level === "ok" ? "OK" : level === "mid" ? "średnia" : "słaba";
+  const summary = `Jakość: ${score}/100 (${label})`;
+  return { level, score, reasons, summary };
 }
 
 function renderWeakInfo(container, report) {
@@ -217,6 +334,7 @@ function renderGameList() {
   list.innerHTML = '';
   if (!games.length) {
     list.innerHTML = '<div class="text-center text-muted p-3">Brak gier.</div>';
+    updateBulkBar();
     return;
   }
 
@@ -232,8 +350,10 @@ function renderGameList() {
     const weak = weaknessCache.get(game.id) || analyzeWeakness(game);
     weaknessCache.set(game.id, weak);
     const qualityLine = weak?.summary || '';
+    const checked = selectedIds.has(game.id) ? 'checked' : '';
     item.innerHTML = `
       <div class="game-row">
+        <input type="checkbox" class="gen-game-select" data-id="${game.id}" ${checked} />
         <span class="game-title">${game.title}</span>
         <span class="game-title" style="color:var(--muted);font-size:12px;flex:1;margin-left:10px">${topLine} · ${qualityLine}</span>
         <button class="btn sm" data-action="uniq" data-id="${game.id}">Unikalność</button>
@@ -247,6 +367,14 @@ function renderGameList() {
       </div>
     `;
     
+    const cb = item.querySelector('.gen-game-select');
+    if (cb) {
+      cb.addEventListener('click', (e) => {
+        e.stopPropagation();
+        setSelected(cb.dataset.id, cb.checked);
+      });
+    }
+
     item.querySelector('.game-row').addEventListener('click', (e) => {
       if (e.target.tagName === 'BUTTON') {
         const action = e.target.dataset.action;
@@ -270,6 +398,7 @@ function renderGameList() {
     
     list.appendChild(item);
   });
+  updateBulkBar();
 }
 
 function renderPreviewQuestions(container, payload) {
@@ -289,6 +418,14 @@ document.addEventListener('DOMContentLoaded', () => {
   $('gen-load-btn').addEventListener('click', loadGames);
   $('gen-enqueue-btn').addEventListener('click', generateGames);
   $('gen-scan-btn').addEventListener('click', scanForDuplicates);
+  const selIssuesBtn = $('gen-select-issues-btn');
+  if (selIssuesBtn) selIssuesBtn.addEventListener('click', (e) => { e.preventDefault(); selectIssues(); });
+  const selAllBtn = $('gen-sel-all-btn');
+  if (selAllBtn) selAllBtn.addEventListener('click', (e) => { e.preventDefault(); selectAll(); });
+  const clearBtn = $('gen-clear-sel-btn');
+  if (clearBtn) clearBtn.addEventListener('click', (e) => { e.preventDefault(); clearSelection(); });
+  const delBtn = $('gen-delete-sel-btn');
+  if (delBtn) delBtn.addEventListener('click', (e) => { e.preventDefault(); deleteSelected(); });
   
   const lastLang = localStorage.getItem('gen_last_lang');
   if (lastLang) {
