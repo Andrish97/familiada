@@ -157,16 +157,27 @@ ZASADA NR 3: Każde pytanie musi być osadzone w kontekście tematu i jego "kąt
           : `Wymyśl własny, KONKRETNY temat z codziennego życia (np. "Problemy z sąsiadami", "Wyprawa do lasu", "Niedzielny obiad").\nWAŻNE: poniższe tematy już ISTNIEJĄ — twój musi być INNY:\n[${usedList}]`);
 
     const fewShot = lang === "pl" ? `
-PRZYKŁADY DOBRYCH PYTAŃ I ODPOWIEDZI:
-Pytanie: Co najczęściej gubimy w domu?
-Odpowiedzi: Klucze (42), Pilot do TV (28), Telefon (16), Skarpetki (14)
+TWOJA BAZA WIEDZY (STYL I STRUKTURA):
+Pytanie: Co najczęściej pijemy do obiadu?
+Odpowiedzi: Kompot (44), Woda (26), Sok (18), Herbata (12)
 
-Pytanie: Wymień zwierzę, które kojarzy się z Afryką?
-Odpowiedzi: Lew (45), Słoń (25), Żyrafa (18), Zebra (12)
+Pytanie: Więcej niż jedno zwierzę to...?
+Odpowiedzi: Stado (38), Klucze (25), Wataha (19), Ławica (14)
 
-Pytanie: Gdzie zazwyczaj chowamy pieniądze na czarną godzinę?
-Odpowiedzi: Skarpeta (40), Materac (26), Słoik (19), Pod łóżkiem (15)
+Pytanie: Co robimy, gdy wejdziemy do ciemnego pomieszczenia?
+Odpowiedzi: Zapalamy światło (48), Szukamy włącznika (24), Zapalamy latarkę (15), Czekamy aż wzrok się przyzwyczai (9)
+
+Pytanie: Popularne imię dla psa?
+Odpowiedzi: Burek (35), Azor (27), Reksio (19), Łatek (14)
+
+ZASADY GENEROWANIA NA PODSTAWIE REALNYCH DANYCH:
+1. Przeszukaj swoją bazę treningową pod kątem autentycznych pytań z Familiady dla tematu: "${topic}".
+2. Odpowiedzi MUSZĄ odzwierciedlać polską mentalność i stereotypy (np. na pytanie o jedzenie w łazience, nikt nie powie "kawior", tylko "kanapka" lub "jabłko").
+3. Unikaj odpowiedzi "technicznych" - stawiaj na te, które podałoby 100 przypadkowych przechodniów na ulicy w Polsce.
+4. Każde pytanie musi być unikalne i dotyczyć innego aspektu tematu.
 ` : "";
+
+    const descHint = `Opis gry (description): Napisz krótki, zabawny wstęp (2 zdania), który brzmi jak zapowiedź Karola Strasburgera. Nie używaj słowa "wygenerowano".`;
 
     return `${systemDesc}
 
@@ -177,12 +188,12 @@ WYTYCZNE TECHNICZNE:
 - 10 pytań, każde po 4 odpowiedzi.
 - Pytania formy: "Co najczęściej...", "Gdzie zazwyczaj...", "Wymień coś, co...", "Co kojarzy się z...".
 - Odpowiedzi: Krótkie rzeczowniki/frazy (1-3 słowa), MAX 17 znaków.
-- Punkty: Suma 80-100, nieregularne (np. 42, 27, 16, 12). Unikaj samych wielokrotności 5.
-- ZERO faktów, dat, stolic, nazwisk. TYLKO skojarzenia "zwykłych ludzi".
-- Opis gry (description): Musi być zachęcający, wesoły i dotyczyć KONKRETNIE tematu "${topic}". Unikaj fraz typu "To świetna gra dla rodziny".
+- Punkty: Suma 80-100, nieregularne (np. 42, 27, 16, 12).
+- ZERO faktów szkolnych. TYLKO skojarzenia.
+- ${descHint}
 
 Zwróć TYLKO czysty JSON:
-{"title":"Krótki Chwytliwy Tytuł","description":"Opis specyficzny dla tematu i pełen energii.","questions":[{"text":"Pytanie związane z tematem?","answers":[{"text":"Odpowiedź","fixed_points":43},{"text":"Odpowiedź","fixed_points":27},{"text":"Odpowiedź","fixed_points":16},{"text":"Odpowiedź","fixed_points":9}]}]}`;
+{"title":"Tytuł w stylu teleturnieju","description":"Opis w stylu prowadzącego.","questions":[{"text":"Pytanie?","answers":[{"text":"Odpowiedź","fixed_points":43},{"text":"Odpowiedź","fixed_points":27},{"text":"Odpowiedź","fixed_points":16},{"text":"Odpowiedź","fixed_points":9}]}]}`;
   }
 
   const avoidClause = trimmed.length ? `Avoid these titles: ${trimmed.join(", ")}.` : "";
