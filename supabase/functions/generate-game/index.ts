@@ -72,19 +72,30 @@ async function generateEmbedding(text: string, timeoutMs = 12000): Promise<numbe
 }
 
 async function groqChat(groqKey: string, model: string, prompt: string) {
-  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${groqKey}` },
-    body: JSON.stringify({
-      model,
-      temperature: 0.8,
-      response_format: { type: "json_object" },
-      messages: [{ role: "user", content: prompt }],
-    }),
-  });
-  if (!res.ok) throw new Error(`Groq ${res.status}: ${await res.text()}`);
-  const data = await res.json();
-  return JSON.parse(data?.choices?.[0]?.message?.content || "{}");
+  const ac = new AbortController();
+  const timeoutMs = Number(Deno.env.get("GROQ_TIMEOUT_MS") || "25000");
+  const timer = setTimeout(() => ac.abort(), timeoutMs);
+  try {
+    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${groqKey}` },
+      body: JSON.stringify({
+        model,
+        temperature: 0.8,
+        response_format: { type: "json_object" },
+        messages: [{ role: "user", content: prompt }],
+      }),
+      signal: ac.signal,
+    });
+    if (!res.ok) throw new Error(`Groq ${res.status}: ${await res.text()}`);
+    const data = await res.json();
+    return JSON.parse(data?.choices?.[0]?.message?.content || "{}");
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    throw new Error(`Groq timeout/error: ${msg}`);
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 function buildGeneratePrompt(lang: string, topic: string, avoidTitles: string[]) {
