@@ -71,7 +71,25 @@ async function generateEmbedding(text: string, timeoutMs = 12000): Promise<numbe
   }
 }
 
-async function groqChat(groqKey: string, model: string, prompt: string) {
+function extractFirstJsonObject(text: string): any {
+  const s = String(text || "");
+  const start = s.indexOf("{");
+  const end = s.lastIndexOf("}");
+  if (start === -1 || end === -1 || end <= start) return null;
+  const slice = s.slice(start, end + 1);
+  try {
+    return JSON.parse(slice);
+  } catch {
+    return null;
+  }
+}
+
+async function groqChat(
+  groqKey: string,
+  model: string,
+  prompt: string,
+  { temperature = 0.2, jsonMode = true }: { temperature?: number; jsonMode?: boolean } = {},
+) {
   const ac = new AbortController();
   const timeoutMs = Number(Deno.env.get("GROQ_TIMEOUT_MS") || "25000");
   const timer = setTimeout(() => ac.abort(), timeoutMs);
@@ -81,15 +99,20 @@ async function groqChat(groqKey: string, model: string, prompt: string) {
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${groqKey}` },
       body: JSON.stringify({
         model,
-        temperature: 0.8,
-        response_format: { type: "json_object" },
-        messages: [{ role: "user", content: prompt }],
+        temperature,
+        ...(jsonMode ? { response_format: { type: "json_object" } } : {}),
+        messages: [
+          { role: "system", content: "Return ONLY valid JSON. Do not add explanations or markdown." },
+          { role: "user", content: prompt },
+        ],
       }),
       signal: ac.signal,
     });
     if (!res.ok) throw new Error(`Groq ${res.status}: ${await res.text()}`);
     const data = await res.json();
-    return JSON.parse(data?.choices?.[0]?.message?.content || "{}");
+    const content = data?.choices?.[0]?.message?.content || "";
+    if (jsonMode) return JSON.parse(content || "{}");
+    return extractFirstJsonObject(content);
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     throw new Error(`Groq timeout/error: ${msg}`);
@@ -124,7 +147,17 @@ Rules:
 - Exactly 10 questions.
 - Each question has 4 answers.
 - fixed_points are integers and should sum to ~100 per question.
-- No duplicate questions/answers within the game.`;
+- No duplicate questions/answers within the game.
+- Keys must be exactly: title, description, questions, text, answers, fixed_points. Do not translate keys.`;
+}
+
+function validateGamePayload(payload: any) {
+  const title = String(payload?.title || "").trim();
+  const description = String(payload?.description || "").trim();
+  const questions = payload?.questions;
+  if (!title || !Array.isArray(questions) || questions.length === 0) return false;
+  if (!description) return false;
+  return true;
 }
 
 serve(async (req: Request) => {
@@ -156,7 +189,18 @@ serve(async (req: Request) => {
       const { lang, topic, avoidTitles = [] } = body;
       const model = "llama-3.1-8b-instant";
       const prompt = buildGeneratePrompt(lang, topic, avoidTitles);
-      const payload = await groqChat(groqKey, model, prompt);
+      let payload: any = null;
+      try {
+        payload = await groqChat(groqKey, model, prompt, { temperature: 0.2, jsonMode: true });
+      } catch {
+        payload = null;
+      }
+      if (!validateGamePayload(payload)) {
+        payload = await groqChat(groqKey, model, prompt, { temperature: 0, jsonMode: false });
+      }
+      if (!validateGamePayload(payload)) {
+        throw new Error("Groq returned invalid game JSON.");
+      }
 
       const questionsText = buildQuestionsText(payload);
       const embedding = await generateEmbedding(questionsText, 12000);
@@ -311,6 +355,9 @@ serve(async (req: Request) => {
     return new Response(JSON.stringify({ error: "Unknown action" }), { status: 400, headers: CORS });
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
-    return new Response(JSON.stringify({ error: message }), { status: 500, headers: CORS });
+    return new Response(JSON.stringify({ error: message }), {
+      status: 500,
+      headers: { ...CORS, "Content-Type": "application/json" },
+    });
   }
 });
