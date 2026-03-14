@@ -101,13 +101,15 @@ async function generateGames() {
   renderGeneratedList();
 
   let produced = 0;
-  let attempts = 0;
+  let slotAttempts = 0;
+  let slotStartedAt = Date.now();
   let backoffMs = 400;
 
   while (!cancelGenerate && produced < count) {
-    attempts++;
     const slot = produced + 1;
-    showStatus('gen-session-status', `Generowanie ${slot}/${count} (próba ${attempts})...`, 'info');
+    slotAttempts++;
+    const elapsedSec = Math.max(0, Math.round((Date.now() - slotStartedAt) / 1000));
+    showStatus('gen-session-status', `Generowanie ${slot}/${count}… (${elapsedSec}s)`, 'info');
     try {
       const existingTitles = games.map(g => String(g.title || "").trim()).filter(Boolean);
       const generatedTitles = generated.map(g => String(g?.candidate?.title || "").trim()).filter(Boolean);
@@ -116,9 +118,13 @@ async function generateGames() {
       const res = await callEdgeAction('generate-producer-game', { lang, topic, avoidTitles });
       if (res?.retry && !res?.candidate) {
         const reason = String(res?.reason || '');
-        const waitMs = reason === 'rate_limit'
-          ? (Number(res?.wait_ms) || 6000)
-          : 200;
+        const waitMs = reason === 'rate_limit' ? (Number(res?.wait_ms) || 6000) : 200;
+        if (reason === 'rate_limit') {
+          const sec = Math.max(1, Math.round(waitMs / 1000));
+          showStatus('gen-session-status', `Limit Groq — czekam ${sec}s… (${slot}/${count})`, 'info');
+        } else if (slotAttempts % 5 === 0) {
+          showStatus('gen-session-status', `Szukam lepszej gry… (${slot}/${count})`, 'info');
+        }
         await new Promise(r => setTimeout(r, waitMs));
         backoffMs = reason === 'rate_limit'
           ? Math.min(5000, Math.floor(backoffMs * 1.6))
@@ -136,6 +142,8 @@ async function generateGames() {
       };
       generated.unshift(item);
       produced++;
+      slotAttempts = 0;
+      slotStartedAt = Date.now();
       renderGeneratedList();
       setProgress(produced, count);
       backoffMs = 400;
