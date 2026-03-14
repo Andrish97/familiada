@@ -26,6 +26,10 @@ function truncateForEmbedding(text: string): string {
   return t.length > max ? t.slice(0, max) : t;
 }
 
+function toVectorLiteral(vec: number[]): string {
+  return `[${vec.join(",")}]`;
+}
+
 async function generateEmbedding(text: string, timeoutMs = 12000): Promise<number[] | null> {
   const token = Deno.env.get("HUGGINGFACE_API_TOKEN") || "";
   if (!token) return null;
@@ -124,6 +128,7 @@ serve(async (req: Request) => {
 
       const questionsText = buildQuestionsText(payload);
       const embedding = await generateEmbedding(questionsText, 12000);
+      const embeddingLiteral = embedding ? toVectorLiteral(embedding) : null;
 
       const { data, error } = await supabase.from("market_games").insert({
         source_game_id: null,
@@ -133,7 +138,7 @@ serve(async (req: Request) => {
         description: payload.description ?? "",
         lang,
         payload,
-        embedding: embedding ?? null,
+        embedding: embeddingLiteral,
         status: "published",
         moderation_note: null,
         storage_path: null,
@@ -143,7 +148,7 @@ serve(async (req: Request) => {
       if (embedding) {
         const { data: vecMatches, error: vecErr } = await supabase.rpc("market_find_similar_embeddings", {
           p_lang: data.lang,
-          p_embedding: embedding,
+          p_embedding: embeddingLiteral,
           p_threshold: 0.78,
           p_limit: 8,
         });
@@ -186,22 +191,22 @@ serve(async (req: Request) => {
 
       const questionsText = String(g.questions_text || "") || buildQuestionsText(g.payload);
 
-      const hasEmbedding = Array.isArray(g.embedding) && g.embedding.length > 0;
-      let embedding: number[] | null = hasEmbedding ? g.embedding : null;
+      let embeddingLiteral: string | null =
+        typeof g.embedding === "string" && g.embedding.length ? g.embedding : null;
 
-      if (!embedding) {
+      if (!embeddingLiteral) {
         const maybe = await generateEmbedding(questionsText, 8000);
         if (maybe) {
-          embedding = maybe;
-          const { error: upErr } = await supabase.from("market_games").update({ embedding }).eq("id", g.id);
+          embeddingLiteral = toVectorLiteral(maybe);
+          const { error: upErr } = await supabase.from("market_games").update({ embedding: embeddingLiteral }).eq("id", g.id);
           if (upErr) throw upErr;
         }
       }
 
-      if (embedding) {
+      if (embeddingLiteral) {
         const { data: matches, error: simError } = await supabase.rpc("market_find_similar_embeddings", {
           p_lang: g.lang,
-          p_embedding: embedding,
+          p_embedding: embeddingLiteral,
           p_threshold: 0.78,
           p_limit: 8,
         });
@@ -256,7 +261,7 @@ serve(async (req: Request) => {
         attempted++;
         const emb = await generateEmbedding(text, 8000);
         if (emb) {
-          const { error: upErr } = await supabase.from("market_games").update({ embedding: emb }).eq("id", row.id);
+          const { error: upErr } = await supabase.from("market_games").update({ embedding: toVectorLiteral(emb) }).eq("id", row.id);
           if (upErr) throw upErr;
           processed++;
         }
