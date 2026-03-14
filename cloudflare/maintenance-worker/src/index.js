@@ -732,10 +732,19 @@ async function handleAdminMarketplaceApi(request, env, url) {
 
     console.log("[worker] marketplace delete id:", id);
     const result = await supabaseRpc(env, "market_admin_delete", { p_id: id, p_force: true });
-    if (!result.ok || !result.data?.[0]?.ok) {
-      console.error("[worker] marketplace delete failed:", result);
-      const errMessage = result.data?.[0]?.err || result.error || "delete_failed";
-      return json({ ok: false, error: errMessage }, 422);
+    
+    // Sprawdź czy result jest poprawny i czy zwrócił oczekiwany wiersz
+    const row = Array.isArray(result.data) ? result.data[0] : (result.data || {});
+    const ok = result.ok && (row.ok === true);
+
+    if (!ok) {
+      console.error("[worker] marketplace delete failed. Full result:", JSON.stringify(result));
+      const errDetail = row.err || result.error || (result.status ? `status_${result.status}` : "delete_failed");
+      return json({ 
+        ok: false, 
+        error: errDetail,
+        debug: { status: result.status, has_data: !!result.data, row_err: row.err } 
+      }, 422);
     }
     return json({ ok: true });
   }

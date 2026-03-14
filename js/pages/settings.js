@@ -1529,7 +1529,11 @@ async function adminHardDelete(id) {
     });
     const json = await res.json();
     console.log("[settings] adminHardDelete response:", json);
-    if (!json.ok) throw new Error(json.error || "delete_failed");
+    if (!json.ok) {
+      let msg = json.error || "delete_failed";
+      if (json.debug) msg += ` (status: ${json.debug.status}, row_err: ${json.debug.row_err})`;
+      throw new Error(msg);
+    }
     showToast(t("settings.marketplace.hardDeleted") || "Usunięto.");
     closeMarketPreview();
     await loadMarketplace({ silent: true });
