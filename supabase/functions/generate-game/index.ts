@@ -455,7 +455,12 @@ serve(async (req: Request) => {
         }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
       }
 
-      throw new Error("Nie udało się wygenerować wystarczająco unikalnej gry. Spróbuj ponownie.");
+      return new Response(JSON.stringify({
+        ok: false,
+        retry: true,
+        reason: "low_quality_or_similarity",
+        attempts: maxAttempts,
+      }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
     }
 
     if (action === "publish-producer-game") {

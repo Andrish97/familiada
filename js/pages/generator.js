@@ -114,6 +114,11 @@ async function generateGames() {
       const avoidTitles = Array.from(new Set([...existingTitles, ...generatedTitles])).slice(0, 25);
 
       const res = await callEdgeAction('generate-producer-game', { lang, topic, avoidTitles });
+      if (res?.retry && !res?.candidate) {
+        await new Promise(r => setTimeout(r, backoffMs));
+        backoffMs = Math.min(5000, Math.floor(backoffMs * 1.6));
+        continue;
+      }
       const candidate = res?.candidate;
       if (!candidate) throw new Error('Brak danych gry z serwera');
       const item = {
