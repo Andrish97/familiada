@@ -122,11 +122,43 @@ async function groqChat(
 }
 
 function buildGeneratePrompt(lang: string, topic: string, avoidTitles: string[]) {
-  const l = lang === 'uk' ? 'Ukrainian' : lang === 'en' ? 'English' : 'Polish';
-  const topicClause = topic ? `Theme: "${topic}".` : `Choose a unique, fun theme.`;
   const trimmed = Array.from(new Set((avoidTitles || []).map((t) => String(t || "").trim()).filter(Boolean))).slice(0, 25);
   const avoidClause = trimmed.length ? `Avoid these titles: ${trimmed.join(", ")}.` : "";
-  return `Generate a JSON object for a "Familiada" game in ${l}. ${topicClause} ${avoidClause}
+  const avoidClausePl = trimmed.length ? `Unikaj tych tytułów: ${trimmed.join(", ")}.` : "";
+
+  if (lang !== "en") {
+    const topicClausePl = topic ? `Temat: "${topic}".` : `Wybierz unikalny, zabawny temat.`;
+    return `Wygeneruj obiekt JSON dla gry typu "Familiada" w języku ${lang === "uk" ? "ukraińskim" : "polskim"}. ${topicClausePl} ${avoidClausePl}
+Zwróć TYLKO poprawny JSON w tym schemacie:
+{
+  "title": "string (krótki, unikalny, bez słowa 'Familiada')",
+  "description": "string (1-2 zdania, o temacie, bez gadania że 'to gra')",
+  "questions": [
+    {
+      "text": "string",
+      "answers": [
+        { "text": "string", "fixed_points": number },
+        { "text": "string", "fixed_points": number },
+        { "text": "string", "fixed_points": number },
+        { "text": "string", "fixed_points": number }
+      ]
+    }
+  ]
+}
+Wymagania:
+- Dokładnie 10 pytań.
+- Każde pytanie ma dokładnie 4 odpowiedzi.
+- To ma być ankietowa Familiada (Family Feud), NIE trivia/quiz faktograficzny.
+- Pytania różnorodne: mieszaj "Podaj…", "Wymień…", "Nazwij…", "Co ludzie…", "Co bywa…".
+- Unikaj powtarzania początków typu "Co robią…" i "Co jest często…".
+- Odpowiedzi to krótkie frazy (1-4 słowa), bez pełnych zdań i bez tak/nie.
+- fixed_points: liczby całkowite, w każdym pytaniu suma ok. 100, najwyższe dla najpopularniejszej odpowiedzi.
+Przykład stylu (NIE kopiuj dosłownie):
+- Pytanie: "Podaj coś, co ludzie robią zaraz po przebudzeniu." Odpowiedzi: "kawa", "toaleta", "telefon", "przeciąganie się".`;
+  }
+
+  const topicClause = topic ? `Theme: "${topic}".` : `Choose a unique, fun theme.`;
+  return `Generate a JSON object for a "Familiada" game in English. ${topicClause} ${avoidClause}
 Return JSON ONLY with this schema:
 {
   "title": "string (short, unique, without the word 'Familiada')",
@@ -240,6 +272,8 @@ function pickDefaultTopic(lang: string): string {
 function isLowQualityCandidate(game: any): boolean {
   const desc = String(game?.description || "").trim();
   if (desc.length < 40) return true;
+  if (/to (niezwykła|świetna|idealna) gra/i.test(desc)) return true;
+  if (/to miejsce/i.test(desc)) return true;
   const qs = Array.isArray(game?.questions) ? game.questions : [];
   if (qs.length !== 10) return true;
 
@@ -255,11 +289,14 @@ function isLowQualityCandidate(game: any): boolean {
     if (start) startCounts.set(start, (startCounts.get(start) || 0) + 1);
     if (/^co robi(a|ą)/i.test(qt) || /^co jest często/i.test(qt)) return true;
     if (/^czy\b/i.test(qt)) return true;
+    if (/^jaka jest (stolica|najwyższa|największa)/i.test(qt)) return true;
 
     const ans = Array.isArray(q?.answers) ? q.answers : [];
     for (const a of ans) {
       const at = String(a?.text || "").trim().toLowerCase();
       if (!at) continue;
+      if (/^(tak|nie|nie wiem)$/i.test(at)) return true;
+      if (/\d{4}/.test(at)) return true;
       if (at.length > 40) return true;
       answerCounts.set(at, (answerCounts.get(at) || 0) + 1);
     }
@@ -353,14 +390,14 @@ serve(async (req: Request) => {
       const avoidListCapped = avoidList.slice(0, 200);
       const avoidSet = new Set(avoidListCapped.map((t) => t.toLowerCase()));
 
-      const maxAttempts = 10;
+      const maxAttempts = 20;
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         const seed = crypto.randomUUID();
         const prompt = buildGeneratePromptWithSeed(lang, effectiveTopic, avoidTitles, seed);
 
         let payload: any = null;
         try {
-          payload = await groqChat(groqKey, model, prompt, { temperature: 0.75, jsonMode: true });
+          payload = await groqChat(groqKey, model, prompt, { temperature: 0.55, jsonMode: true });
         } catch {
           payload = null;
         }
