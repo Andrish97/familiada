@@ -212,6 +212,58 @@ function normalizeTitle(raw: any): string {
   return t;
 }
 
+function improveTitle(title: string, effectiveTopic: string): string {
+  let t = String(title || "").trim();
+  const topic = String(effectiveTopic || "").trim();
+  const [baseRaw, angleRaw] = topic.split("—").map((s) => s.trim());
+  const base = baseRaw || topic;
+  const angle = angleRaw || "";
+
+  const tLower = t.toLowerCase();
+  const baseLower = base.toLowerCase();
+  if (!t || tLower === baseLower || tLower === topic.toLowerCase() || t.split(/\s+/).length <= 1) {
+    if (angle) {
+      const angleWords = angle
+        .replace(/^[\p{P}\p{S}\s]+/gu, "")
+        .replace(/\s+/g, " ")
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 3);
+      t = `${base} ${angleWords.join(" ")}`.trim();
+    } else {
+      t = base || t;
+    }
+  }
+
+  t = t.replace(/[:\-–—]/g, " ").replace(/\s+/g, " ").trim();
+  const words = t.split(/\s+/).filter(Boolean).slice(0, 5);
+  t = words.join(" ");
+  if (!t) t = "Bez tytułu";
+  return t;
+}
+
+function improveDescription(description: string, effectiveTopic: string): string {
+  const d = String(description || "").trim();
+  const topic = String(effectiveTopic || "").trim();
+  const generic =
+    !d ||
+    d.length < 50 ||
+    /gra toczy się/i.test(d) ||
+    /uczestnicy muszą/i.test(d) ||
+    /prowadzący/i.test(d);
+
+  if (!generic) return d;
+
+  return `Pytania o temacie: ${topic}. Szybka, rodzinna Familiada do grania w domu i na imprezie. Krótkie odpowiedzi, zaskakująco trafne skojarzenia.`;
+}
+
+function randomInt(min: number, max: number): number {
+  const u = new Uint32Array(1);
+  crypto.getRandomValues(u);
+  return min + (u[0] % (max - min + 1));
+}
+
 function buildGeneratePromptWithSeed(lang: string, topic: string, avoidTitles: string[], seed: string) {
   const bannedWords = [
     "familiada",
@@ -387,24 +439,27 @@ function normalizeGamePayload(payload: any) {
   for (const q of questions) {
     const pts = q.answers.map((a: any) => (Number.isFinite(a.fixed_points) ? a.fixed_points : 0));
     let sum = pts.reduce((acc: number, n: number) => acc + Math.max(0, n), 0);
+    const targetSum =
+      sum >= 80 && sum <= 100 ? Math.round(sum) :
+      sum < 80 ? randomInt(80, 95) :
+      randomInt(85, 100);
+
     if (sum <= 0) {
-      q.answers[0].fixed_points = 40;
-      q.answers[1].fixed_points = 30;
-      q.answers[2].fixed_points = 20;
-      q.answers[3].fixed_points = 10;
+      const base = [0.42, 0.26, 0.18, 0.14].map((p) => Math.round(p * targetSum));
+      let bsum = base.reduce((a, b) => a + b, 0);
+      base[0] = Math.max(0, base[0] + (targetSum - bsum));
+      for (let i = 0; i < 4; i++) q.answers[i].fixed_points = base[i];
+      q.answers.sort((a: any, b: any) => (Number(b.fixed_points) || 0) - (Number(a.fixed_points) || 0));
       continue;
     }
-    const scaled = pts.map((n: number) => Math.max(0, n) * (100 / sum));
+
+    const scaled = pts.map((n: number) => Math.max(0, n) * (targetSum / sum));
     const rounded = scaled.map((n: number) => Math.max(0, Math.round(n)));
     let rsum = rounded.reduce((acc: number, n: number) => acc + n, 0);
-    rounded[0] = Math.max(0, rounded[0] + (100 - rsum));
-    // Enforce a non-degenerate distribution:
-    // - avoid 100/0/0/0
-    // - avoid too many zeros
-    // - keep totals at 100
+    rounded[0] = Math.max(0, rounded[0] + (targetSum - rsum));
     rounded.sort((a: number, b: number) => b - a);
-    const minOther = 5;
-    const minTop = 40;
+    const minOther = Math.max(3, Math.round(targetSum * 0.06));
+    const minTop = Math.max(25, Math.round(targetSum * 0.40));
 
     let top = rounded[0];
     let o1 = rounded[1];
@@ -433,7 +488,7 @@ function normalizeGamePayload(payload: any) {
     }
 
     const total = top + o1 + o2 + o3;
-    if (total !== 100) top = Math.max(0, top + (100 - total));
+    if (total !== targetSum) top = Math.max(0, top + (targetSum - total));
 
     const finalPts = [top, o1, o2, o3].sort((a: number, b: number) => b - a);
     if (finalPts.every((p) => p % 5 === 0)) {
@@ -516,6 +571,9 @@ serve(async (req: Request) => {
       if (avoidSet.has(String(normalized.title || "").toLowerCase())) warnings.push("title_dup");
       if (!topic && /(świat|world)/i.test(String(normalized.title || ""))) warnings.push("world_default");
       if (isLowQualityCandidate(normalized)) warnings.push("low_quality");
+
+      normalized.title = improveTitle(normalized.title, effectiveTopic);
+      normalized.description = improveDescription(normalized.description ?? "", effectiveTopic);
 
       return new Response(JSON.stringify({
         candidate: { lang, title: normalized.title, description: normalized.description ?? "", payload: normalized, topic: effectiveTopic },
