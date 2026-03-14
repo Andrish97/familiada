@@ -18,8 +18,12 @@ function showStatus(id, msg, type) {
 }
 
 function setBusy(busy) {
-  ['gen-load-btn', 'gen-scan-btn', 'gen-enqueue-btn'].forEach(id => $(id).disabled = busy);
-  $('gen-game-list').style.opacity = busy ? '0.5' : '1';
+  ['gen-load-btn', 'gen-scan-btn', 'gen-enqueue-btn'].forEach(id => {
+    const el = $(id);
+    if (el) el.disabled = busy;
+  });
+  const list = $('gen-game-list');
+  if (list) list.style.opacity = busy ? '0.5' : '1';
 }
 
 // API Call
@@ -38,6 +42,11 @@ async function loadGames() {
     games = await callEdgeAction('list-producer-games', { lang });
     uniquenessCache.clear();
     weaknessCache.clear();
+    show('gen-manage-card');
+    show('gen-input-card');
+    show('gen-enqueue-btn');
+    const scanBtn = $('gen-scan-btn');
+    if (scanBtn) scanBtn.disabled = games.length === 0;
     renderGameList();
     showStatus('gen-session-status', `Załadowano ${games.length} gier.`, 'ok');
   } catch (e) {
