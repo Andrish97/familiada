@@ -139,6 +139,7 @@ async function generateGames() {
         generating: false,
         candidate,
         matches: Array.isArray(res?.matches) ? res.matches : [],
+        warnings: Array.isArray(res?.warnings) ? res.warnings : [],
       };
       generated.unshift(item);
       produced++;
@@ -673,6 +674,7 @@ async function rejectGenerated(id) {
       }
       it.candidate = candidate;
       it.matches = Array.isArray(res?.matches) ? res.matches : [];
+      it.warnings = Array.isArray(res?.warnings) ? res.warnings : [];
       it.generating = false;
       renderGeneratedList();
       showStatus('gen-session-status', 'Gotowe.', 'ok');
