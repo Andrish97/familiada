@@ -649,25 +649,40 @@ async function rejectGenerated(id) {
 
   try {
     showStatus('gen-session-status', 'Regeneruję odrzuconą grę...', 'info');
-    const maxTries = 3;
-    let lastErr = null;
-    for (let attempt = 1; attempt <= maxTries; attempt++) {
-      try {
-        showStatus('gen-session-status', `Regeneruję odrzuconą grę (próba ${attempt}/${maxTries})...`, 'info');
-        const res = await callEdgeAction('generate-producer-game', { lang, topic, avoidTitles });
-        const candidate = res?.candidate;
-        if (!candidate) throw new Error('Brak danych gry z serwera');
-        it.candidate = candidate;
-        it.matches = Array.isArray(res?.matches) ? res.matches : [];
-        it.generating = false;
-        renderGeneratedList();
-        showStatus('gen-session-status', 'Gotowe.', 'ok');
-        return;
-      } catch (e) {
-        lastErr = e;
+    const startedAt = Date.now();
+    const maxMs = 90000;
+    let tries = 0;
+
+    while (Date.now() - startedAt < maxMs) {
+      tries++;
+      showStatus('gen-session-status', `Regeneruję… (${Math.round((Date.now() - startedAt) / 1000)}s)`, 'info');
+      const res = await callEdgeAction('generate-producer-game', { lang, topic, avoidTitles });
+      if (res?.retry && !res?.candidate) {
+        const reason = String(res?.reason || '');
+        const waitMs = reason === 'rate_limit' ? (Number(res?.wait_ms) || 6000) : 200;
+        if (reason === 'rate_limit') {
+          showStatus('gen-session-status', `Limit Groq — czekam ${Math.max(1, Math.round(waitMs / 1000))}s…`, 'info');
+        }
+        await new Promise(r => setTimeout(r, waitMs));
+        continue;
       }
+      const candidate = res?.candidate;
+      if (!candidate) {
+        await new Promise(r => setTimeout(r, 250));
+        continue;
+      }
+      it.candidate = candidate;
+      it.matches = Array.isArray(res?.matches) ? res.matches : [];
+      it.generating = false;
+      renderGeneratedList();
+      showStatus('gen-session-status', 'Gotowe.', 'ok');
+      return;
     }
-    throw lastErr || new Error('Regenerowanie nieudane.');
+
+    await alertModal({
+      title: "Regenerowanie",
+      text: "Nie udało się szybko wygenerować lepszej gry (limity/filtry jakości). Spróbuj za chwilę.",
+    });
   } catch (e) {
     it.generating = false;
     renderGeneratedList();
