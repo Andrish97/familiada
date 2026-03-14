@@ -162,6 +162,22 @@ function normalizeTitle(raw: any): string {
   return t;
 }
 
+function buildGeneratePromptWithSeed(lang: string, topic: string, avoidTitles: string[], seed: string) {
+  const bannedWords = [
+    "familiada",
+    "quiz",
+    "gra",
+    "pytania",
+    "test",
+  ];
+  return `${buildGeneratePrompt(lang, topic, avoidTitles)}
+Additional rules:
+- Do not start the title with any of: ${bannedWords.join(", ")}.
+${topic ? "" : "- If topic is empty, do NOT pick a \"świat\"/world theme unless explicitly requested."}
+Seed: ${seed}
+Do not include the seed in JSON.`;
+}
+
 function normalizeGamePayload(payload: any) {
   const title = normalizeTitle(payload?.title);
   const description = String(payload?.description || "").trim();
@@ -235,50 +251,78 @@ serve(async (req: Request) => {
     if (action === 'generate-producer-game') {
       const { lang, topic, avoidTitles = [] } = body;
       const model = "llama-3.1-8b-instant";
-      const prompt = buildGeneratePrompt(lang, topic, avoidTitles);
-      let payload: any = null;
-      try {
-        payload = await groqChat(groqKey, model, prompt, { temperature: 0.2, jsonMode: true });
-      } catch {
-        payload = null;
-      }
-      let normalized = normalizeGamePayload(payload);
-      if (!normalized) {
-        payload = await groqChat(groqKey, model, prompt, { temperature: 0, jsonMode: false });
-        normalized = normalizeGamePayload(payload);
-      }
-      if (!normalized) throw new Error("Groq returned invalid game JSON.");
+      const rawAvoid = Array.isArray(avoidTitles) ? avoidTitles : [];
+      const avoidList = Array.from(
+        new Set(rawAvoid.map((t: any) => String(t || "").trim()).filter(Boolean)),
+      ) as string[];
+      const avoidListCapped = avoidList.slice(0, 200);
+      const avoidSet = new Set(avoidListCapped.map((t) => t.toLowerCase()));
 
-      const questionsText = buildQuestionsText(normalized);
-      const embedding = await generateEmbedding(questionsText, 12000);
-      const embeddingLiteral = embedding ? toVectorLiteral(embedding) : null;
+      const maxAttempts = 10;
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        const seed = crypto.randomUUID();
+        const prompt = buildGeneratePromptWithSeed(lang, topic, avoidTitles, seed);
 
-      if (embeddingLiteral) {
-        const { data: vecMatches, error: vecErr } = await supabase.rpc("market_find_similar_embeddings", {
+        let payload: any = null;
+        try {
+          payload = await groqChat(groqKey, model, prompt, { temperature: 0.75, jsonMode: true });
+        } catch {
+          payload = null;
+        }
+
+        let normalized = normalizeGamePayload(payload);
+        if (!normalized) {
+          payload = await groqChat(groqKey, model, prompt, { temperature: 0.2, jsonMode: false });
+          normalized = normalizeGamePayload(payload);
+        }
+        if (!normalized) continue;
+
+        if (avoidSet.has(String(normalized.title || "").toLowerCase())) continue;
+        if (!topic && /\bświat\b/i.test(String(normalized.title || ""))) continue;
+
+        const questionsText = buildQuestionsText(normalized);
+        const embedding = await generateEmbedding(questionsText, 8000);
+        const embeddingLiteral = embedding ? toVectorLiteral(embedding) : null;
+
+        if (embeddingLiteral) {
+          const rejectThreshold = 0.80;
+          const { data: vecMatches, error: vecErr } = await supabase.rpc("market_find_similar_embeddings", {
+            p_lang: lang,
+            p_embedding: embeddingLiteral,
+            p_threshold: rejectThreshold,
+            p_limit: 3,
+          });
+          if (vecErr) throw vecErr;
+          const matches = Array.isArray(vecMatches) ? vecMatches : [];
+          const top = matches[0];
+          if (top && Number(top.similarity) >= rejectThreshold) continue;
+          return new Response(JSON.stringify({
+            candidate: { lang, title: normalized.title, description: normalized.description ?? "", payload: normalized },
+            matches,
+            attempt,
+          }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
+        }
+
+        const rejectThreshold = 0.60;
+        const { data: matchesRaw, error: simError } = await supabase.rpc("market_find_similar_questions", {
           p_lang: lang,
-          p_embedding: embeddingLiteral,
-          p_threshold: 0.78,
-          p_limit: 8,
+          p_questions_text: questionsText,
+          p_threshold: rejectThreshold,
+          p_limit: 3,
         });
-        if (vecErr) throw vecErr;
+        if (simError) throw simError;
+        const matches = Array.isArray(matchesRaw) ? matchesRaw : [];
+        const top = matches[0];
+        if (top && Number(top.similarity) >= rejectThreshold) continue;
+
         return new Response(JSON.stringify({
           candidate: { lang, title: normalized.title, description: normalized.description ?? "", payload: normalized },
-          matches: vecMatches || [],
+          matches,
+          attempt,
         }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
       }
 
-      const { data: matches, error: simError } = await supabase.rpc("market_find_similar_questions", {
-        p_lang: lang,
-        p_questions_text: questionsText,
-        p_threshold: 0.45,
-        p_limit: 8,
-      });
-      if (simError) throw simError;
-
-      return new Response(JSON.stringify({
-        candidate: { lang, title: normalized.title, description: normalized.description ?? "", payload: normalized },
-        matches: matches || [],
-      }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
+      throw new Error("Nie udało się wygenerować wystarczająco unikalnej gry. Spróbuj ponownie.");
     }
 
     if (action === "publish-producer-game") {
