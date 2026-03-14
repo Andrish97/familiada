@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict CLlajLUXKitoixDtS0pTxerSkBUHeK9L3uTuldY9GfhzMop8WW3pmpsSrbPbyZI
+\restrict yzjZpcbvUNsTg8QBJ3LzthOQkrGhdd6h2DI6ngzOQmQMTv3JJXAaHa9dVBG2Gox
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -157,6 +157,16 @@ CREATE TYPE "public"."game_type" AS ENUM (
     'poll_points',
     'prepared',
     'market'
+);
+
+
+--
+-- Name: market_game_origin; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE "public"."market_game_origin" AS ENUM (
+    'community',
+    'producer'
 );
 
 
@@ -3704,7 +3714,7 @@ $$;
 -- Name: market_admin_detail("uuid"); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION "public"."market_admin_detail"("p_id" "uuid") RETURNS TABLE("id" "uuid", "title" "text", "description" "text", "lang" "text", "status" "public"."market_game_status", "moderation_note" "text", "library_count" integer, "author_username" "text", "author_email" "text", "storage_path" "text", "payload" "jsonb", "created_at" timestamp with time zone)
+CREATE FUNCTION "public"."market_admin_detail"("p_id" "uuid") RETURNS TABLE("id" "uuid", "title" "text", "description" "text", "lang" "text", "status" "public"."market_game_status", "moderation_note" "text", "library_count" integer, "author_username" "text", "author_email" "text", "storage_path" "text", "payload" "jsonb", "created_at" timestamp with time zone, "source_game_id" "uuid", "origin" "text")
     LANGUAGE "sql" STABLE SECURITY DEFINER
     SET "search_path" TO 'public'
     AS $$
@@ -3720,7 +3730,9 @@ CREATE FUNCTION "public"."market_admin_detail"("p_id" "uuid") RETURNS TABLE("id"
     COALESCE(pr.email, '') AS author_email,
     mg.storage_path,
     mg.payload,
-    mg.created_at
+    mg.created_at,
+    mg.source_game_id,
+    mg.origin::text AS origin
   FROM public.market_games mg
   LEFT JOIN public.profiles pr ON pr.id = mg.author_user_id
   WHERE mg.id = p_id;
@@ -3731,7 +3743,7 @@ $$;
 -- Name: market_admin_list("text"); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION "public"."market_admin_list"("p_status" "text" DEFAULT 'pending'::"text") RETURNS TABLE("id" "uuid", "title" "text", "description" "text", "lang" "text", "status" "public"."market_game_status", "moderation_note" "text", "library_count" integer, "author_username" "text", "author_email" "text", "storage_path" "text", "created_at" timestamp with time zone)
+CREATE FUNCTION "public"."market_admin_list"("p_status" "text" DEFAULT 'pending'::"text") RETURNS TABLE("id" "uuid", "title" "text", "description" "text", "lang" "text", "status" "public"."market_game_status", "moderation_note" "text", "library_count" integer, "author_username" "text", "author_email" "text", "storage_path" "text", "created_at" timestamp with time zone, "source_game_id" "uuid", "origin" "text")
     LANGUAGE "sql" STABLE SECURITY DEFINER
     SET "search_path" TO 'public'
     AS $$
@@ -3746,7 +3758,9 @@ CREATE FUNCTION "public"."market_admin_list"("p_status" "text" DEFAULT 'pending'
     COALESCE(pr.username, '') AS author_username,
     COALESCE(pr.email, '') AS author_email,
     mg.storage_path,
-    mg.created_at
+    mg.created_at,
+    mg.source_game_id,
+    mg.origin::text AS origin
   FROM public.market_games mg
   LEFT JOIN public.profiles pr ON pr.id = mg.author_user_id
   WHERE mg.status = p_status::public.market_game_status
@@ -3763,29 +3777,30 @@ CREATE FUNCTION "public"."market_admin_review"("p_id" "uuid", "p_action" "text",
     SET "search_path" TO 'public'
     AS $$
 declare
-    v_new_status public.market_game_status;
+  v_new_status public.market_game_status;
 begin
-    if p_action = 'approve' then
-        v_new_status := 'published';
-    elsif p_action = 'reject' then
-        v_new_status := 'rejected';
-    else
-        return query select false, 'invalid_action';
-        return;
-    end if;
+  if p_action = 'approve' then
+    v_new_status := 'published';
+  elsif p_action = 'reject' then
+    v_new_status := 'rejected';
+  else
+    return query select false, 'invalid_action';
+    return;
+  end if;
 
-    update public.market_games
-       set status          = v_new_status,
-           moderation_note = case when p_action = 'reject' then btrim(coalesce(p_note, '')) else null end
-     where id = p_id
-       and status = 'pending';
+  update public.market_games
+     set status          = v_new_status,
+         origin          = case when p_action = 'approve' then 'community' else origin end,
+         moderation_note = case when p_action = 'reject' then btrim(coalesce(p_note, '')) else null end
+   where id = p_id
+     and status = 'pending';
 
-    if not found then
-        return query select false, 'not_found_or_not_pending';
-        return;
-    end if;
+  if not found then
+    return query select false, 'not_found_or_not_pending';
+    return;
+  end if;
 
-    return query select true, '';
+  return query select true, '';
 end;
 $$;
 
@@ -3853,6 +3868,7 @@ begin
            description = p_description,
            lang = p_lang,
            payload = p_payload,
+           origin = 'producer',
            updated_at = now()
      where id = v_existing;
 
@@ -3867,7 +3883,8 @@ begin
     lang,
     payload,
     status,
-    author_user_id
+    author_user_id,
+    origin
   ) values (
     p_storage_path,
     p_title,
@@ -3875,7 +3892,8 @@ begin
     p_lang,
     p_payload,
     'published',
-    auth.uid()
+    auth.uid(),
+    'producer'
   )
   returning id into v_id;
 
@@ -3920,40 +3938,41 @@ $$;
 -- Name: market_browse("text", "text", integer, integer); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION "public"."market_browse"("p_lang" "text" DEFAULT 'pl'::"text", "p_search" "text" DEFAULT ''::"text", "p_limit" integer DEFAULT 20, "p_offset" integer DEFAULT 0) RETURNS TABLE("id" "uuid", "title" "text", "description" "text", "lang" "text", "library_count" integer, "author_username" "text", "created_at" timestamp with time zone, "in_library" boolean)
+CREATE FUNCTION "public"."market_browse"("p_lang" "text" DEFAULT 'pl'::"text", "p_search" "text" DEFAULT ''::"text", "p_limit" integer DEFAULT 20, "p_offset" integer DEFAULT 0) RETURNS TABLE("id" "uuid", "title" "text", "description" "text", "lang" "text", "library_count" integer, "author_username" "text", "created_at" timestamp with time zone, "in_library" boolean, "origin" "text")
     LANGUAGE "sql" STABLE
     SET "search_path" TO 'public'
     AS $$
-    SELECT
-        mg.id,
-        mg.title,
-        mg.description,
-        mg.lang,
-        mg.library_count,
-        COALESCE(pr.username, '') AS author_username,
-        mg.created_at,
-        CASE
-            WHEN auth.uid() IS NULL THEN false
-            ELSE EXISTS (
-                SELECT 1 FROM public.user_market_library uml
-                 WHERE uml.market_game_id = mg.id
-                   AND uml.user_id = auth.uid()
-            )
-        END AS in_library
-    FROM public.market_games mg
-    LEFT JOIN public.profiles pr ON pr.id = mg.author_user_id
-    WHERE mg.status = 'published'
-      AND (
-          p_search = ''
-          OR mg.title ILIKE '%' || p_search || '%'
-          OR mg.description ILIKE '%' || p_search || '%'
+  SELECT
+    mg.id,
+    mg.title,
+    mg.description,
+    mg.lang,
+    mg.library_count,
+    COALESCE(pr.username, '') AS author_username,
+    mg.created_at,
+    CASE
+      WHEN auth.uid() IS NULL THEN false
+      ELSE EXISTS (
+        SELECT 1 FROM public.user_market_library uml
+         WHERE uml.market_game_id = mg.id
+           AND uml.user_id = auth.uid()
       )
-    ORDER BY
-        (mg.lang = p_lang) DESC,
-        mg.library_count DESC,
-        mg.created_at DESC
-    LIMIT  LEAST(p_limit, 100)
-    OFFSET p_offset;
+    END AS in_library,
+    mg.origin::text AS origin
+  FROM public.market_games mg
+  LEFT JOIN public.profiles pr ON pr.id = mg.author_user_id
+  WHERE mg.status = 'published'
+    AND (
+      p_search = ''
+      OR mg.title ILIKE '%' || p_search || '%'
+      OR mg.description ILIKE '%' || p_search || '%'
+    )
+  ORDER BY
+    (mg.lang = p_lang) DESC,
+    mg.library_count DESC,
+    mg.created_at DESC
+  LIMIT  LEAST(p_limit, 100)
+  OFFSET p_offset;
 $$;
 
 
@@ -3979,33 +3998,135 @@ $$;
 
 
 --
--- Name: market_game_detail("uuid"); Type: FUNCTION; Schema: public; Owner: -
+-- Name: market_find_similar_embeddings("text", "public"."vector", double precision, integer); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION "public"."market_game_detail"("p_id" "uuid") RETURNS TABLE("id" "uuid", "title" "text", "description" "text", "lang" "text", "library_count" integer, "author_username" "text", "status" "public"."market_game_status", "payload" "jsonb", "in_library" boolean)
+CREATE FUNCTION "public"."market_find_similar_embeddings"("p_lang" "text", "p_embedding" "public"."vector", "p_threshold" double precision DEFAULT 0.78, "p_limit" integer DEFAULT 8) RETURNS TABLE("id" "uuid", "title" "text", "origin" "text", "status" "public"."market_game_status", "author_username" "text", "similarity" double precision)
     LANGUAGE "sql" STABLE
     SET "search_path" TO 'public'
     AS $$
-    SELECT
-        mg.id,
-        mg.title,
-        mg.description,
-        mg.lang,
-        mg.library_count,
-        COALESCE(pr.username, '') AS author_username,
-        mg.status,
-        mg.payload,
-        CASE
-            WHEN auth.uid() IS NULL THEN false
-            ELSE EXISTS (
-                SELECT 1 FROM public.user_market_library uml
-                 WHERE uml.market_game_id = mg.id
-                   AND uml.user_id = auth.uid()
-            )
-        END AS in_library
-    FROM public.market_games mg
-    LEFT JOIN public.profiles pr ON pr.id = mg.author_user_id
-    WHERE mg.id = p_id;
+  SELECT
+    mg.id,
+    mg.title,
+    mg.origin::text AS origin,
+    mg.status,
+    COALESCE(pr.username, '') AS author_username,
+    (1 - (mg.embedding <=> p_embedding))::double precision AS similarity
+  FROM public.market_games mg
+  LEFT JOIN public.profiles pr ON pr.id = mg.author_user_id
+  WHERE mg.lang = p_lang
+    AND mg.status IN ('published', 'pending')
+    AND mg.embedding IS NOT NULL
+    AND (1 - (mg.embedding <=> p_embedding)) >= p_threshold
+  ORDER BY similarity DESC, mg.created_at DESC
+  LIMIT LEAST(p_limit, 50);
+$$;
+
+
+--
+-- Name: market_find_similar_questions("text", "text", real, integer); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."market_find_similar_questions"("p_lang" "text", "p_questions_text" "text", "p_threshold" real DEFAULT 0.45, "p_limit" integer DEFAULT 5) RETURNS TABLE("id" "uuid", "title" "text", "origin" "text", "status" "public"."market_game_status", "author_username" "text", "similarity" real)
+    LANGUAGE "sql" STABLE
+    SET "search_path" TO 'public'
+    AS $$
+  SELECT
+    mg.id,
+    mg.title,
+    mg.origin::text AS origin,
+    mg.status,
+    COALESCE(pr.username, '') AS author_username,
+    similarity(mg.questions_text, p_questions_text)::real AS similarity
+  FROM public.market_games mg
+  LEFT JOIN public.profiles pr ON pr.id = mg.author_user_id
+  WHERE mg.lang = p_lang
+    AND mg.status IN ('published', 'pending')
+    AND similarity(mg.questions_text, p_questions_text) >= p_threshold
+  ORDER BY similarity DESC, mg.created_at DESC
+  LIMIT LEAST(p_limit, 50);
+$$;
+
+
+--
+-- Name: market_game_detail("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."market_game_detail"("p_id" "uuid") RETURNS TABLE("id" "uuid", "title" "text", "description" "text", "lang" "text", "library_count" integer, "author_username" "text", "status" "public"."market_game_status", "payload" "jsonb", "in_library" boolean, "origin" "text")
+    LANGUAGE "sql" STABLE
+    SET "search_path" TO 'public'
+    AS $$
+  SELECT
+    mg.id,
+    mg.title,
+    mg.description,
+    mg.lang,
+    mg.library_count,
+    COALESCE(pr.username, '') AS author_username,
+    mg.status,
+    mg.payload,
+    CASE
+      WHEN auth.uid() IS NULL THEN false
+      ELSE EXISTS (
+        SELECT 1 FROM public.user_market_library uml
+         WHERE uml.market_game_id = mg.id
+           AND uml.user_id = auth.uid()
+      )
+    END AS in_library,
+    mg.origin::text AS origin
+  FROM public.market_games mg
+  LEFT JOIN public.profiles pr ON pr.id = mg.author_user_id
+  WHERE mg.id = p_id;
+$$;
+
+
+--
+-- Name: market_games_build_questions_text("jsonb"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."market_games_build_questions_text"("p_payload" "jsonb") RETURNS "text"
+    LANGUAGE "sql" IMMUTABLE
+    AS $$
+  SELECT COALESCE((
+    SELECT string_agg(btrim(q.value->>'text'), E'\n' ORDER BY q.ordinality)
+    FROM jsonb_array_elements(COALESCE(p_payload->'questions', '[]'::jsonb)) WITH ORDINALITY AS q(value, ordinality)
+  ), '');
+$$;
+
+
+--
+-- Name: market_games_compute_fingerprint("text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."market_games_compute_fingerprint"("p_questions_text" "text") RETURNS "text"
+    LANGUAGE "sql" IMMUTABLE
+    AS $$
+  SELECT md5(
+    regexp_replace(
+      lower(coalesce(p_questions_text, '')),
+      '\s+',
+      ' ',
+      'g'
+    )
+  );
+$$;
+
+
+--
+-- Name: market_games_set_questions_fields(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."market_games_set_questions_fields"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    AS $$
+DECLARE
+  v_qtext text;
+BEGIN
+  v_qtext := public.market_games_build_questions_text(NEW.payload);
+  NEW.questions_text := v_qtext;
+  NEW.questions_fingerprint := public.market_games_compute_fingerprint(v_qtext);
+  RETURN NEW;
+END;
 $$;
 
 
@@ -9084,6 +9205,10 @@ CREATE TABLE "public"."market_games" (
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "storage_path" "text",
+    "origin" "public"."market_game_origin" DEFAULT 'community'::"public"."market_game_origin" NOT NULL,
+    "questions_text" "text" DEFAULT ''::"text" NOT NULL,
+    "questions_fingerprint" "text",
+    "embedding" "public"."vector"(384),
     CONSTRAINT "market_games_lang_check" CHECK (("lang" = ANY (ARRAY['pl'::"text", 'en'::"text", 'uk'::"text"]))),
     CONSTRAINT "market_games_library_count_nn" CHECK (("library_count" >= 0)),
     CONSTRAINT "market_games_title_len" CHECK ((("char_length"("title") >= 1) AND ("char_length"("title") <= 120)))
@@ -10069,6 +10194,13 @@ CREATE INDEX "market_games_author_idx" ON "public"."market_games" USING "btree" 
 
 
 --
+-- Name: market_games_embedding_ivfflat_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "market_games_embedding_ivfflat_idx" ON "public"."market_games" USING "ivfflat" ("embedding" "public"."vector_cosine_ops") WITH ("lists"='100');
+
+
+--
 -- Name: market_games_lang_idx; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -10080,6 +10212,20 @@ CREATE INDEX "market_games_lang_idx" ON "public"."market_games" USING "btree" ("
 --
 
 CREATE INDEX "market_games_library_cnt_idx" ON "public"."market_games" USING "btree" ("library_count" DESC);
+
+
+--
+-- Name: market_games_questions_fingerprint_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "market_games_questions_fingerprint_idx" ON "public"."market_games" USING "btree" ("lang", "questions_fingerprint") WHERE ("questions_fingerprint" IS NOT NULL);
+
+
+--
+-- Name: market_games_questions_text_trgm_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "market_games_questions_text_trgm_idx" ON "public"."market_games" USING "gin" ("questions_text" "public"."gin_trgm_ops");
 
 
 --
@@ -10493,6 +10639,13 @@ CREATE TRIGGER "trg_games_fill_share_keys" BEFORE INSERT ON "public"."games" FOR
 --
 
 CREATE TRIGGER "trg_games_touch" BEFORE UPDATE ON "public"."games" FOR EACH ROW EXECUTE FUNCTION "public"."touch_updated_at"();
+
+
+--
+-- Name: market_games trg_market_games_questions_fields; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "trg_market_games_questions_fields" BEFORE INSERT OR UPDATE OF "payload" ON "public"."market_games" FOR EACH ROW EXECUTE FUNCTION "public"."market_games_set_questions_fields"();
 
 
 --
@@ -11932,5 +12085,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict CLlajLUXKitoixDtS0pTxerSkBUHeK9L3uTuldY9GfhzMop8WW3pmpsSrbPbyZI
+\unrestrict yzjZpcbvUNsTg8QBJ3LzthOQkrGhdd6h2DI6ngzOQmQMTv3JJXAaHa9dVBG2Gox
 
