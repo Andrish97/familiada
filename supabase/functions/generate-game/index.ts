@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
-import { pipeline } from "https://esm.sh/@xenova/transformers@2.17.1";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -9,7 +8,10 @@ const CORS = {
 
 let extractorPromise: Promise<any> | null = null;
 async function getExtractor() {
-  if (!extractorPromise) extractorPromise = pipeline("feature-extraction", "Xenova/all-MiniLM-L6-v2");
+  if (!extractorPromise) {
+    extractorPromise = import("https://esm.sh/@xenova/transformers@2.17.1")
+      .then((m) => m.pipeline("feature-extraction", "Xenova/all-MiniLM-L6-v2"));
+  }
   return await extractorPromise;
 }
 
