@@ -19,32 +19,52 @@ function l2Normalize(vec: number[]): number[] {
   return vec.map((x) => x / norm);
 }
 
-async function generateEmbedding(text: string): Promise<number[] | null> {
+function truncateForEmbedding(text: string): string {
+  const t = String(text || "").trim();
+  if (!t) return "";
+  const max = 6000;
+  return t.length > max ? t.slice(0, max) : t;
+}
+
+async function generateEmbedding(text: string, timeoutMs = 12000): Promise<number[] | null> {
   const token = Deno.env.get("HUGGINGFACE_API_TOKEN") || "";
   if (!token) return null;
 
-  const res = await fetch(
-    "https://api-inference.huggingface.co/pipeline/feature-extraction/sentence-transformers/all-MiniLM-L6-v2",
-    {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ inputs: text, options: { wait_for_model: true } }),
-    },
-  );
+  const input = truncateForEmbedding(text);
+  if (!input) return null;
 
-  if (!res.ok) throw new Error(`hf_embeddings_${res.status}:${await res.text().catch(() => "")}`);
-  const data = await res.json();
+  const ac = new AbortController();
+  const timer = setTimeout(() => ac.abort(), timeoutMs);
 
-  if (!Array.isArray(data) || !Array.isArray(data[0])) return null;
-  const rows = data as number[][];
-  if (!rows.length || !Array.isArray(rows[0]) || rows[0].length !== 384) return null;
+  try {
+    const res = await fetch(
+      "https://api-inference.huggingface.co/pipeline/feature-extraction/sentence-transformers/all-MiniLM-L6-v2",
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ inputs: input, options: { wait_for_model: true } }),
+        signal: ac.signal,
+      },
+    );
 
-  const sums = new Array<number>(384).fill(0);
-  for (const row of rows) {
-    for (let i = 0; i < 384; i++) sums[i] += row[i] || 0;
+    if (!res.ok) return null;
+    const data = await res.json();
+
+    if (!Array.isArray(data) || !Array.isArray(data[0])) return null;
+    const rows = data as number[][];
+    if (!rows.length || !Array.isArray(rows[0]) || rows[0].length !== 384) return null;
+
+    const sums = new Array<number>(384).fill(0);
+    for (const row of rows) {
+      for (let i = 0; i < 384; i++) sums[i] += row[i] || 0;
+    }
+    const mean = sums.map((x) => x / rows.length);
+    return l2Normalize(mean);
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
   }
-  const mean = sums.map((x) => x / rows.length);
-  return l2Normalize(mean);
 }
 
 async function groqChat(groqKey: string, model: string, prompt: string) {
@@ -103,7 +123,7 @@ serve(async (req: Request) => {
       const payload = await groqChat(groqKey, model, prompt);
 
       const questionsText = buildQuestionsText(payload);
-      const embedding = await generateEmbedding(questionsText);
+      const embedding = await generateEmbedding(questionsText, 12000);
 
       const { data, error } = await supabase.from("market_games").insert({
         source_game_id: null,
@@ -170,7 +190,7 @@ serve(async (req: Request) => {
       let embedding: number[] | null = hasEmbedding ? g.embedding : null;
 
       if (!embedding) {
-        const maybe = await generateEmbedding(questionsText);
+        const maybe = await generateEmbedding(questionsText, 8000);
         if (maybe) {
           embedding = maybe;
           const { error: upErr } = await supabase.from("market_games").update({ embedding }).eq("id", g.id);
@@ -226,10 +246,15 @@ serve(async (req: Request) => {
       if (selErr) throw selErr;
 
       let processed = 0;
+      let attempted = 0;
+      const startedAt = Date.now();
+      const timeBudgetMs = 45000;
       for (const row of rows || []) {
+        if (Date.now() - startedAt > timeBudgetMs) break;
         const text = String(row.questions_text || "") || buildQuestionsText(row.payload);
         if (!text) continue;
-        const emb = await generateEmbedding(text);
+        attempted++;
+        const emb = await generateEmbedding(text, 8000);
         if (emb) {
           const { error: upErr } = await supabase.from("market_games").update({ embedding: emb }).eq("id", row.id);
           if (upErr) throw upErr;
@@ -237,7 +262,13 @@ serve(async (req: Request) => {
         }
       }
 
-      return new Response(JSON.stringify({ ok: true, processed }), { headers: { ...CORS, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({
+        ok: true,
+        processed,
+        attempted,
+        budget_ms: timeBudgetMs,
+        duration_ms: Date.now() - startedAt,
+      }), { headers: { ...CORS, "Content-Type": "application/json" } });
     }
 
     return new Response(JSON.stringify({ error: "Unknown action" }), { status: 400, headers: CORS });

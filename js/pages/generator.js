@@ -98,13 +98,18 @@ async function deleteGame(id) {
   }
 }
 
-function analyzeWeakness(payload) {
+function analyzeWeakness(game) {
   const reasons = [];
-  const qs = payload?.questions || [];
+  const title = String(game?.title || "").trim();
+  const desc = String(game?.description || "").trim();
+  const qs = game?.payload?.questions || [];
 
   if (!Array.isArray(qs) || qs.length === 0) {
     return { level: "weak", reasons: ["Brak pytań w payload."], summary: "Słabe: brak pytań" };
   }
+
+  if (title.length < 6) reasons.push(`Krótki tytuł (${title.length} znaków).`);
+  if (desc.length < 25) reasons.push(`Krótki opis (${desc.length} znaków).`);
 
   if (qs.length < 10) {
     reasons.push(`Za mało pytań (${qs.length}/10).`);
@@ -224,7 +229,7 @@ function renderGameList() {
       ? `Podobne: ${Math.round((top.similarity || 0) * 100)}% · ${top.title} · ${top.origin}`
       : (matches ? 'Podobne: brak (>=45%)' : 'Podobne: nie sprawdzono');
 
-    const weak = weaknessCache.get(game.id) || analyzeWeakness(game.payload);
+    const weak = weaknessCache.get(game.id) || analyzeWeakness(game);
     weaknessCache.set(game.id, weak);
     const qualityLine = weak?.summary || '';
     item.innerHTML = `
