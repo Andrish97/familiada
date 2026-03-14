@@ -70,7 +70,8 @@ async function generateGames() {
   for (let i = 0; i < count; i++) {
     try {
       showStatus('gen-session-status', `Generowanie ${i + 1}/${count}...`, 'info');
-      const res = await callEdgeAction('generate-producer-game', { lang, topic, avoidTitles: games.map(g => g.title) });
+      const avoidTitles = Array.from(new Set(games.map(g => String(g.title || "").trim()).filter(Boolean))).slice(0, 25);
+      const res = await callEdgeAction('generate-producer-game', { lang, topic, avoidTitles });
       const newGame = res?.game;
       if (!newGame) throw new Error('Brak danych gry z serwera');
       games.unshift(newGame);

@@ -101,9 +101,30 @@ async function groqChat(groqKey: string, model: string, prompt: string) {
 function buildGeneratePrompt(lang: string, topic: string, avoidTitles: string[]) {
   const l = lang === 'uk' ? 'Ukrainian' : lang === 'en' ? 'English' : 'Polish';
   const topicClause = topic ? `Theme: "${topic}".` : `Choose a unique, fun theme.`;
-  const avoidClause = avoidTitles.length ? `Avoid these titles: ${avoidTitles.join(", ")}.` : "";
+  const trimmed = Array.from(new Set((avoidTitles || []).map((t) => String(t || "").trim()).filter(Boolean))).slice(0, 25);
+  const avoidClause = trimmed.length ? `Avoid these titles: ${trimmed.join(", ")}.` : "";
   return `Generate a JSON object for a "Familiada" game in ${l}. ${topicClause} ${avoidClause}
-  Format: {"title": "...", "description": "...", "questions": [{"text": "...", "answers": [...]}]}`;
+Return JSON ONLY with this schema:
+{
+  "title": "string (short, unique)",
+  "description": "string (1-2 sentences)",
+  "questions": [
+    {
+      "text": "string",
+      "answers": [
+        { "text": "string", "fixed_points": number },
+        { "text": "string", "fixed_points": number },
+        { "text": "string", "fixed_points": number },
+        { "text": "string", "fixed_points": number }
+      ]
+    }
+  ]
+}
+Rules:
+- Exactly 10 questions.
+- Each question has 4 answers.
+- fixed_points are integers and should sum to ~100 per question.
+- No duplicate questions/answers within the game.`;
 }
 
 serve(async (req: Request) => {
