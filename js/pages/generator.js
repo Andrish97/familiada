@@ -6,6 +6,7 @@ let games = [];
 const uniquenessCache = new Map();
 const weaknessCache = new Map();
 const selectedIds = new Set();
+let generated = [];
 
 // Helpers
 const $ = id => document.getElementById(id);
@@ -28,6 +29,18 @@ function setBusy(busy) {
   if (list) list.style.opacity = busy ? '0.5' : '1';
 }
 
+function setProgress(done, total) {
+  const fill = $('gen-progress-fill');
+  if (!fill) return;
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+  fill.style.width = `${pct}%`;
+}
+
+function makeLocalId() {
+  if (crypto?.randomUUID) return crypto.randomUUID();
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
 // API Call
 async function callEdgeAction(action, body = {}) {
   const { data, error } = await supabase().functions.invoke('generate-game', { body: { action, ...body } });
@@ -45,6 +58,8 @@ async function loadGames() {
     uniquenessCache.clear();
     weaknessCache.clear();
     selectedIds.clear();
+    generated = [];
+    hide('gen-results-section');
     show('gen-manage-card');
     show('gen-input-card');
     show('gen-enqueue-btn');
@@ -66,18 +81,27 @@ async function generateGames() {
   
   setBusy(true);
   showStatus('gen-session-status', `Generowanie ${count} gier...`, 'info');
+  show('gen-results-section');
+  setProgress(0, count);
+  generated = [];
+  renderGeneratedList();
   
   for (let i = 0; i < count; i++) {
     try {
       showStatus('gen-session-status', `Generowanie ${i + 1}/${count}...`, 'info');
       const avoidTitles = Array.from(new Set(games.map(g => String(g.title || "").trim()).filter(Boolean))).slice(0, 25);
       const res = await callEdgeAction('generate-producer-game', { lang, topic, avoidTitles });
-      const newGame = res?.game;
-      if (!newGame) throw new Error('Brak danych gry z serwera');
-      games.unshift(newGame);
-      uniquenessCache.set(newGame.id, Array.isArray(res?.matches) ? res.matches : []);
-      weaknessCache.set(newGame.id, analyzeWeakness(newGame));
-      renderGameList();
+      const candidate = res?.candidate;
+      if (!candidate) throw new Error('Brak danych gry z serwera');
+      const item = {
+        id: makeLocalId(),
+        approved: false,
+        candidate,
+        matches: Array.isArray(res?.matches) ? res.matches : [],
+      };
+      generated.unshift(item);
+      renderGeneratedList();
+      setProgress(i + 1, count);
     } catch (e) {
       showStatus('gen-session-status', `✗ Błąd generowania: ${e.message}`, 'err');
       break;
@@ -116,7 +140,7 @@ function updateBulkBar() {
   const countEl = $('gen-bulk-count');
   if (!bar || !countEl) return;
   const count = selectedIds.size;
-  bar.style.display = count ? '' : 'none';
+  bar.classList.toggle('visible', !!count);
   countEl.textContent = `${count} zaznaczonych`;
 }
 
@@ -373,7 +397,7 @@ function renderGameList() {
     const checked = selectedIds.has(game.id) ? 'checked' : '';
     item.innerHTML = `
       <div class="game-row">
-        <input type="checkbox" class="gen-game-select" data-id="${game.id}" ${checked} />
+        <input type="checkbox" class="game-cb" data-id="${game.id}" ${checked} />
         <span class="game-title">${game.title}</span>
         <span class="game-title" style="color:var(--muted);font-size:12px;flex:1;margin-left:10px">${topLine} · ${qualityLine}</span>
         <button class="btn sm" data-action="uniq" data-id="${game.id}">Unikalność</button>
@@ -387,7 +411,7 @@ function renderGameList() {
       </div>
     `;
     
-    const cb = item.querySelector('.gen-game-select');
+    const cb = item.querySelector('.game-cb');
     if (cb) {
       cb.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -421,6 +445,108 @@ function renderGameList() {
   updateBulkBar();
 }
 
+function renderGeneratedList() {
+  const list = $('gen-results-list');
+  const counter = $('gen-results-counter');
+  const pushBtn = $('gen-push-approved-btn');
+  if (!list) return;
+
+  const approvedCount = generated.filter(g => g.approved).length;
+  if (counter) counter.textContent = `${approvedCount}/${generated.length} zatwierdzonych`;
+  if (pushBtn) pushBtn.disabled = approvedCount === 0;
+
+  list.innerHTML = '';
+  if (!generated.length) {
+    list.innerHTML = '<div style="opacity:.6;font-size:12px;padding:10px 0">Brak wygenerowanych gier.</div>';
+    return;
+  }
+
+  for (const g of generated) {
+    const cand = g.candidate || {};
+    const w = analyzeWeakness({ title: cand.title, description: cand.description, payload: cand.payload });
+    const top = Array.isArray(g.matches) && g.matches.length ? g.matches[0] : null;
+    const dupLine = top ? `Podobne: ${Math.round((top.similarity || 0) * 100)}% · ${top.title} · ${top.origin}` : 'Podobne: brak';
+
+    const item = document.createElement('div');
+    item.className = `game-item ${g.approved ? 'approved' : ''}`;
+    item.innerHTML = `
+      <div class="game-row">
+        <input type="checkbox" class="game-cb" data-id="${g.id}" ${g.approved ? 'checked' : ''} />
+        <span class="game-title">${cand.title || '—'}</span>
+        <span class="game-title" style="color:var(--muted);font-size:12px;flex:1;margin-left:10px">${dupLine} · ${w.summary}</span>
+        <span class="game-chevron">▶</span>
+      </div>
+      <div class="game-preview">
+        <div class="preview-desc">${cand.description || ''}</div>
+        <div class="preview-weak" style="color:var(--muted);font-size:12px;margin:6px 0 10px"></div>
+        <div class="preview-questions"></div>
+      </div>
+    `;
+
+    const cb = item.querySelector('.game-cb');
+    if (cb) {
+      cb.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = cb.dataset.id;
+        const it = generated.find(x => x.id === id);
+        if (it) it.approved = !!cb.checked;
+        renderGeneratedList();
+      });
+    }
+
+    item.querySelector('.game-row').addEventListener('click', () => {
+      const preview = item.querySelector('.game-preview');
+      const chevron = item.querySelector('.game-chevron');
+      const isOpen = preview.classList.toggle('open');
+      chevron.classList.toggle('open', isOpen);
+      if (isOpen) {
+        renderWeakInfo(preview.querySelector('.preview-weak'), w);
+        renderPreviewQuestions(preview.querySelector('.preview-questions'), cand.payload);
+      }
+    });
+
+    list.appendChild(item);
+  }
+}
+
+async function publishApproved() {
+  const items = generated.filter(g => g.approved);
+  if (!items.length) {
+    await alertModal({ title: "Publikacja", text: "Brak zatwierdzonych gier." });
+    return;
+  }
+  const ok = await confirmModal({
+    title: "Publikacja",
+    text: `Opublikować zatwierdzone gry (${items.length})?`,
+    okText: "Opublikuj",
+    cancelText: "Anuluj",
+  });
+  if (!ok) return;
+
+  setBusy(true);
+  showStatus('gen-session-status', `Publikuję ${items.length} gier...`, 'info');
+  let done = 0;
+  try {
+    for (const it of items) {
+      await callEdgeAction('publish-producer-game', { lang: it.candidate.lang, payload: it.candidate.payload, title: it.candidate.title, description: it.candidate.description });
+      done++;
+      generated = generated.filter(x => x.id !== it.id);
+      renderGeneratedList();
+    }
+    showStatus('gen-session-status', `Opublikowano ${done}.`, 'ok');
+    await loadGames();
+  } catch (e) {
+    showStatus('gen-session-status', `✗ Błąd po ${done}/${items.length}: ${e.message}`, 'err');
+  } finally {
+    setBusy(false);
+  }
+}
+
+function approveAllGenerated() {
+  for (const it of generated) it.approved = true;
+  renderGeneratedList();
+}
+
 function renderPreviewQuestions(container, payload) {
   if (!payload || !payload.questions) return;
   container.innerHTML = payload.questions.map(q => `
@@ -446,6 +572,11 @@ document.addEventListener('DOMContentLoaded', () => {
   if (clearBtn) clearBtn.addEventListener('click', (e) => { e.preventDefault(); clearSelection(); });
   const delBtn = $('gen-delete-sel-btn');
   if (delBtn) delBtn.addEventListener('click', (e) => { e.preventDefault(); deleteSelected(); });
+
+  const approveAllBtn = $('gen-approve-all-btn');
+  if (approveAllBtn) approveAllBtn.addEventListener('click', (e) => { e.preventDefault(); approveAllGenerated(); });
+  const pushApprovedBtn = $('gen-push-approved-btn');
+  if (pushApprovedBtn) pushApprovedBtn.addEventListener('click', (e) => { e.preventDefault(); publishApproved(); });
   
   const lastLang = localStorage.getItem('gen_last_lang');
   if (lastLang) {
