@@ -1658,16 +1658,9 @@ async function loadMailFolder({ silent = false } = {}) {
       msgRows = json.rows || [];
     }
     renderMailList(msgRows);
-    updateFolderBadges();
+    refreshMailList();
   } catch (err) {
     if (!silent) showToast(String(err?.message || err), "error");
-  }
-}
-
-function updateFolderBadges() {
-  const badge = document.getElementById("fBadgeInbox");
-  if (badge && msgActiveFolder === "inbox") {
-    badge.textContent = msgRows.length > 0 ? String(msgRows.length) : "";
   }
 }
 
