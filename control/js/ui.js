@@ -151,11 +151,18 @@ export function createUI() {
   }
 
   function showSetupStep(step) {
-    const a = document.querySelector('[data-step="setup_names"]');
-    const b = document.querySelector('[data-step="setup_final"]');
-    if (!a || !b) return;
-    a.classList.toggle("hidden", step !== "setup_names");
-    b.classList.toggle("hidden", step !== "setup_final");
+    const steps = {
+      setup_names: document.querySelector('[data-step="setup_names"]'),
+      setup_game: document.querySelector('[data-step="setup_game"]'),
+      setup_final: document.querySelector('[data-step="setup_final"]'),
+      setup_rounds: document.querySelector('[data-step="setup_rounds"]'),
+      setup_finish: document.querySelector('[data-step="setup_finish"]'),
+    };
+    
+    for (const [stepName, el] of Object.entries(steps)) {
+      if (!el) continue;
+      el.classList.toggle("hidden", step !== stepName);
+    }
   }
 
   function badge(el, status, text) {
