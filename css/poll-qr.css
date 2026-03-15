@@ -22,29 +22,34 @@ body.poll-qr-body {
 }
 
 .qr-wrap {
-    text-align: center;
-    padding: 18px;
-    width: 100%;
-    max-width: 900px
+  text-align: center;
+  padding: 18px;
+  width: 100%;
+  max-width: 900px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .qr-brand {
-    font-weight: 1000;
-    letter-spacing: .18em;
-    color: var(--gold)
+  font-weight: 1000;
+  letter-spacing: .18em;
+  color: var(--gold);
 }
 
 .qr-title {
-    font-weight: 1000;
-    font-size: 18px;
-    margin-top: 10px;
-    letter-spacing: .06em
+  font-weight: 1000;
+  font-size: 18px;
+  margin-top: 10px;
+  letter-spacing: .06em;
 }
 
 .qr-box {
-    margin: 18px auto;
-    width: min(420px,86vw);
-    height: min(420px,86vw)
+  margin: 18px auto;
+  width: min(420px,86vw);
+  height: min(420px,86vw);
+  display: grid;
+  place-items: center;
 }
 
 .qr-box canvas {

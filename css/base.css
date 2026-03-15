@@ -368,6 +368,13 @@ main{
     padding: 18px
 }
 
+@media (max-width: 720px){
+    .wrap{
+        max-width: 100%;
+        padding: 0
+    }
+}
+
 .row,.stack {
     display: flex;
     gap: 10px
