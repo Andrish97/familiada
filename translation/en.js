@@ -516,7 +516,7 @@ const en = {
     summaryFinal: "Final:",
     summaryFinalQuestions: "Final questions:",
     summaryRoundsQuestions: "Round questions:",
-    setupFinishHint: "After clicking "Done" you will proceed to the rounds panel.",
+    setupFinishHint: "After clicking Done you will proceed to the rounds panel.",
     stepFinal: "Final",
     playFinal: "Play the final?",
     finalQuestions: "Questions",

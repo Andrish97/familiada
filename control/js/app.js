@@ -422,6 +422,8 @@ async function sendZeroStatesToDevices() {
     // ===== Wejście/wyjście z kroku "Nazwy drużyn" =====
   let wasInSetupNames = false;
   let wasInSetupGame = false;
+  let wasInSetupFinish = false;
+  let wasInSetupRounds = false;
 
   async function enterSetupNames() {
     if (!devices) return;
@@ -1305,8 +1307,7 @@ async function sendZeroStatesToDevices() {
   }
   
   // ===== SETUP_FINISH - renderowanie podsumowania =====
-  let wasInSetupFinish = false;
-  
+
   function renderSetupFinishSummary() {
     const s = store.state;
     
@@ -1347,7 +1348,6 @@ async function sendZeroStatesToDevices() {
   }
   
   // ===== SETUP_ROUNDS - renderowanie listy pytań z drag-and-drop =====
-  let wasInSetupRounds = false;
   let roundsOrderAll = []; // wszystkie pytania (bez finałowych)
   
   async function renderSetupRoundsOrder() {
