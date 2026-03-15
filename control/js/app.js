@@ -1238,34 +1238,61 @@ async function sendZeroStatesToDevices() {
   
   // Nasłuchiwanie zmian w setup_game
   document.getElementById("finalYes")?.addEventListener("change", (e) => {
-    if (e.target.checked) updateGameSettingsVisibility();
+    if (e.target.checked) {
+      store.setHasFinal(true);
+      updateGameSettingsVisibility();
+    }
   });
   document.getElementById("finalNo")?.addEventListener("change", (e) => {
-    if (e.target.checked) updateGameSettingsVisibility();
+    if (e.target.checked) {
+      store.setHasFinal(false);
+      updateGameSettingsVisibility();
+    }
+  });
+  document.getElementById("finalRandom")?.addEventListener("change", (e) => {
+    if (e.target.checked) {
+      store.setFinalQuestionsMode("random");
+    }
+  });
+  document.getElementById("finalPick")?.addEventListener("change", (e) => {
+    if (e.target.checked) {
+      store.setFinalQuestionsMode("pick");
+    }
+  });
+  document.getElementById("roundsRandom")?.addEventListener("change", (e) => {
+    if (e.target.checked) {
+      store.setRoundsQuestionsMode("random");
+    }
+  });
+  document.getElementById("roundsPick")?.addEventListener("change", (e) => {
+    if (e.target.checked) {
+      store.setRoundsQuestionsMode("pick");
+    }
   });
   
   // ===== Nawigacja w setup_game - decyzja o losowaniu =====
-  async function goToNextSetupStep() {
+  function goToNextSetupStep() {
     saveGameSettings();
-    
+
     const hasFinal = store.state.hasFinal === true;
     const finalMode = store.state.finalQuestionsMode;
     const roundsMode = store.state.roundsQuestionsMode;
-    
-    // Losuj finał w tle jeśli wybrano "random" i gramy finał
+
+    // Losuj finał w tle jeśli wybrano "random" i gramy finał (nie blokuj nawigacji)
     if (hasFinal && finalMode === "random") {
-      await pickRandomFinalQuestions();
+      pickRandomFinalQuestions().catch(console.error);
     }
-    
-    // Losuj rundy w tle jeśli wybrano "random"
+
+    // Losuj rundy w tle jeśli wybrano "random" (nie blokuj nawigacji)
     if (roundsMode === "random") {
-      await pickRandomRoundsQuestions();
+      pickRandomRoundsQuestions().catch(console.error);
     }
-    
+
     // Decyzja: czy przechodzimy do wyboru ręcznego, czy od razu do finish?
     const needsFinalPick = hasFinal && finalMode === "pick";
     const needsRoundsPick = roundsMode === "pick";
-    
+
+    // Nawigacja natychmiastowa (bez czekania na losowanie)
     if (needsFinalPick) {
       // Najpierw wybór finału
       store.setSetupStep("setup_final");

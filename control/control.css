@@ -147,7 +147,7 @@
 }
 
 /* =========================================================
-   iOS-STYLE SWITCH (duży, z tekstem wewnątrz)
+   iOS-STYLE SWITCH (z przesuwanym przyciskiem)
 ========================================================= */
 .ios-switch-wrap{
   margin-top: 8px;
@@ -156,7 +156,7 @@
 .ios-switch{
   position: relative;
   display: inline-block;
-  width: 220px;
+  width: 140px;
   height: 44px;
   cursor: pointer;
   user-select: none;
@@ -174,37 +174,57 @@
   inset: 0;
   border-radius: 22px;
   background: rgba(0,0,0,.24);
-  border: 1px solid rgba(255,255,255,.12);
+  border: 2px solid rgba(255,255,255,.12);
   display: flex;
-  overflow: hidden;
+  align-items: center;
+  overflow: visible;
   transition: background .24s ease, border-color .24s ease;
+}
+
+.ios-switch-knob{
+  position: absolute;
+  left: 4px;
+  top: 4px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,.3);
+  transition: transform .24s cubic-bezier(.4,0,.2,1);
+  z-index: 2;
 }
 
 .ios-switch-on,
 .ios-switch-off{
   flex: 1;
-  display: grid;
-  place-items: center;
+  text-align: center;
   font-weight: 700;
-  font-size: 13px;
+  font-size: 12px;
   letter-spacing: .02em;
   transition: opacity .24s ease, color .24s ease;
+  z-index: 1;
 }
 
 .ios-switch-on{
+  padding-left: 44px;
   opacity: .5;
   color: rgba(255,255,255,.7);
 }
 
 .ios-switch-off{
+  padding-right: 44px;
   opacity: 1;
   color: #fff;
 }
 
-/* Stan: włączone (random) */
+/* Stan: włączone (checked) */
 .ios-switch input:checked ~ .ios-switch-track{
   background: var(--gold);
   border-color: var(--gold);
+}
+
+.ios-switch input:checked ~ .ios-switch-track .ios-switch-knob{
+  transform: translateX(92px);
 }
 
 .ios-switch input:checked ~ .ios-switch-track .ios-switch-on{
@@ -225,6 +245,12 @@
 .ios-switch input:checked:hover ~ .ios-switch-track{
   background: #ffd766;
   border-color: #ffd766;
+}
+
+/* Disabled */
+.ios-switch.is-disabled{
+  opacity: .5;
+  cursor: default;
 }
 
 

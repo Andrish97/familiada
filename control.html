@@ -462,14 +462,17 @@
                     <div class="rowBtns">
                       <div class="field">
                         <div class="lbl2" data-i18n="control.playFinal">Gramy finał?</div>
-                        <label class="radio">
-                          <input type="radio" name="hasFinal" value="yes" id="finalYes" />
-                          <span data-i18n="common.yes">Tak</span>
-                        </label>
-                        <label class="radio">
-                          <input type="radio" name="hasFinal" value="no" id="finalNo" checked />
-                          <span data-i18n="common.no">Nie</span>
-                        </label>
+                        
+                        <div class="ios-switch-wrap">
+                          <label class="ios-switch">
+                            <input type="radio" name="hasFinal" value="yes" id="finalYes" />
+                            <span class="ios-switch-track">
+                              <span class="ios-switch-knob"></span>
+                              <span class="ios-switch-on" data-i18n="common.yes">Tak</span>
+                              <span class="ios-switch-off" data-i18n="common.no">Nie</span>
+                            </span>
+                          </label>
+                        </div>
                       </div>
                     </div>
 
@@ -481,6 +484,7 @@
                           <label class="ios-switch">
                             <input type="radio" name="finalMode" value="random" id="finalRandom" checked />
                             <span class="ios-switch-track">
+                              <span class="ios-switch-knob"></span>
                               <span class="ios-switch-on" data-i18n="control.finalRandom">Losuj</span>
                               <span class="ios-switch-off" data-i18n="control.finalPick">Wybierz</span>
                             </span>
@@ -502,6 +506,7 @@
                           <label class="ios-switch">
                             <input type="radio" name="roundsMode" value="random" id="roundsRandom" checked />
                             <span class="ios-switch-track">
+                              <span class="ios-switch-knob"></span>
                               <span class="ios-switch-on" data-i18n="control.roundsRandom">Losuj</span>
                               <span class="ios-switch-off" data-i18n="control.roundsPick">Wybierz</span>
                             </span>
