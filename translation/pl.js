@@ -751,7 +751,7 @@ const pl = {
     backToGames: "← Moje gry",
     logout: "Wyloguj",
     headerTitle: "Twoje bazy pytań",
-    headerHint: "Kliknij kafelek, żeby go zaznaczyć.",
+    headerHint: "Kliknij kafelek, żeby go zaznaczyć. Podwójne kliknięcie zmienia nazwę.",
     actions: {
       browse: "Przeglądaj",
       browseMobile: "Przegl.",
@@ -3729,7 +3729,7 @@ const pl = {
     },
     list: {
       title: "Twoje logo",
-      hint: "Kliknij kafelek, żeby go zaznaczyć.",
+      hint: "Kliknij kafelek, żeby go zaznaczyć. Podwójne kliknięcie zmienia nazwę.",
       preview: "Podgląd",
       activate: "Aktywuj",
       export: "Export",
