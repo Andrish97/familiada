@@ -93,7 +93,9 @@ const pl = {
       title: "Familiada Online — darmowy generator pytań i gra na żywo",
       p1: "Nasz system pozwala zorganizować własną grę w stylu Familiada od początku do końca. To idealne rozwiązanie jako atrakcja na wesele, urodziny czy integrację. Generator pytań pozwala na tworzenie własnych baz lub korzystanie z gotowych zestawów.",
       p2: "Odpowiedzi uczestników zbierane są przez sondaż online — każdy głosuje przez link lub kod QR ze swojego telefonu. Wyniki są automatycznie normalizowane do 100 punktów, dokładnie jak w prawdziwym teleturnieju.",
-      p3: "Do prowadzenia gry wystarczą urządzenia które już masz — rzutnik lub telewizor jako tablica wyników, tablet dla prowadzącego, telefon jako buzzer do pojedynku. Możesz także skorzystać z <a href=\"marketplace\" class=\"gold\">gotowych pytań do Familiady</a> stworzonych przez naszą społeczność.",
+      p3Start: "Do prowadzenia gry wystarczą urządzenia które już masz — rzutnik lub telewizor jako tablica wyników, tablet dla prowadzącego, telefon jako buzzer do pojedynku. Możesz także skorzystać z",
+      p3Link: "gotowych pytań do Familiady",
+      p3End: "stworzonych przez naszą społeczność.",
     },
     tiles: {
       title: "Jak zorganizować Familiadę? (Krok po kroku)",

@@ -93,7 +93,9 @@ const en = {
       title: "Familiada Online — free question generator and live game",
       p1: "Our system allows you to organize your own Familiada-style game from start to finish. It's an ideal solution as an attraction for weddings, birthdays or team building. The question generator allows you to create your own bases or use ready-made sets.",
       p2: "Participants' answers are collected via an online poll — everyone votes through a link or QR code from their own phone. Results are automatically normalized to 100 points, exactly like on a real game show.",
-      p3: "All you need is equipment you already have — a projector or TV as the scoreboard, a tablet for the host, a phone as the buzzer for face-offs. You can also use <a href=\"marketplace\" class=\"gold\">ready-made Familiada questions</a> created by our community.",
+      p3Start: "All you need is equipment you already have — a projector or TV as the scoreboard, a tablet for the host, a phone as the buzzer for face-offs. You can also use",
+      p3Link: "ready-made Familiada questions",
+      p3End: "created by our community.",
     },
     tiles: {
       title: "How to organize Familiada? (Step by step)",
