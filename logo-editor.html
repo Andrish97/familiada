@@ -414,16 +414,18 @@
     </div>
   </div>
 
-  <!-- Fullscreen preview (ZOSTAJE) -->
+  <!-- Fullscreen preview (MODAL z X) -->
   <div class="overlay" id="previewOverlay" style="display:none;">
-    <div class="modal bigModal">
-      <div class="mTitle" data-i18n="logoEditor.preview.title">Podgląd</div>
-      <div class="mSub" data-i18n="logoEditor.preview.subtitle">Tak będzie wyglądać logo na wyświetlaczu</div>
-      <div class="bigModalCanvas">
-        <canvas id="bigPreviewFull" width="1600" height="700"></canvas>
+    <div class="modal previewModal">
+      <div class="previewModalHeader">
+        <div>
+          <div class="mTitle" data-i18n="logoEditor.preview.title">Podgląd</div>
+          <div class="mSub" data-i18n="logoEditor.preview.subtitle">Tak będzie wyglądać logo na wyświetlaczu</div>
+        </div>
+        <button class="btn sm previewCloseBtn" id="btnPreviewClose" type="button" aria-label="Zamknij">✕</button>
       </div>
-      <div class="importRow" style="margin-top:14px;">
-        <button class="btn sm" id="btnPreviewClose" type="button" data-i18n="logoEditor.common.close">Zamknij</button>
+      <div class="previewModalCanvas">
+        <canvas id="bigPreviewFull" width="1600" height="700"></canvas>
       </div>
     </div>
   </div>
