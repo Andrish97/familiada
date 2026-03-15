@@ -147,110 +147,59 @@
 }
 
 /* =========================================================
-   iOS-STYLE SWITCH (z przesuwanym przyciskiem)
+   TOGGLE SWITCH (obwódka + slider z napisem)
 ========================================================= */
-.ios-switch-wrap{
-  margin-top: 8px;
+.toggle-group{
+  display: inline-flex;
+  gap: 8px;
+  padding: 4px;
+  border-radius: 24px;
+  background: rgba(0,0,0,.24);
+  border: 2px solid rgba(255,255,255,.12);
 }
 
-.ios-switch{
+.toggle-item{
   position: relative;
-  display: inline-block;
-  width: 140px;
-  height: 44px;
   cursor: pointer;
-  user-select: none;
 }
 
-.ios-switch input{
+.toggle-item input{
   position: absolute;
   opacity: 0;
   width: 0;
   height: 0;
 }
 
-.ios-switch-track{
-  position: absolute;
-  inset: 0;
-  border-radius: 22px;
-  background: rgba(0,0,0,.24);
-  border: 2px solid rgba(255,255,255,.12);
-  display: flex;
-  align-items: center;
-  overflow: visible;
-  transition: background .24s ease, border-color .24s ease;
-}
-
-.ios-switch-knob{
-  position: absolute;
-  left: 4px;
-  top: 4px;
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0,0,0,.3);
-  transition: transform .24s cubic-bezier(.4,0,.2,1);
-  z-index: 2;
-}
-
-.ios-switch-on,
-.ios-switch-off{
-  flex: 1;
-  text-align: center;
+.toggle-slider{
+  display: block;
+  padding: 10px 28px;
+  border-radius: 20px;
+  background: transparent;
+  color: var(--gold);
   font-weight: 700;
-  font-size: 12px;
+  font-size: 13px;
   letter-spacing: .02em;
-  transition: opacity .24s ease, color .24s ease;
-  z-index: 1;
+  transition: background .24s ease, color .24s ease;
+  position: relative;
 }
 
-.ios-switch-on{
-  padding-left: 44px;
-  opacity: .5;
-  color: rgba(255,255,255,.7);
+.toggle-slider::before{
+  content: attr(data-text);
 }
 
-.ios-switch-off{
-  padding-right: 44px;
-  opacity: 1;
-  color: #fff;
-}
-
-/* Stan: włączone (checked) */
-.ios-switch input:checked ~ .ios-switch-track{
+/* Stan: checked (wybrane) */
+.toggle-item input:checked + .toggle-slider{
   background: var(--gold);
-  border-color: var(--gold);
-}
-
-.ios-switch input:checked ~ .ios-switch-track .ios-switch-knob{
-  transform: translateX(92px);
-}
-
-.ios-switch input:checked ~ .ios-switch-track .ios-switch-on{
-  opacity: 1;
   color: #000;
 }
 
-.ios-switch input:checked ~ .ios-switch-track .ios-switch-off{
-  opacity: .5;
-  color: rgba(0,0,0,.6);
-}
-
 /* Hover */
-.ios-switch:hover .ios-switch-track{
-  border-color: rgba(255,255,255,.28);
+.toggle-item:hover .toggle-slider{
+  background: rgba(255,255,255,.06);
 }
 
-.ios-switch input:checked:hover ~ .ios-switch-track{
+.toggle-item input:checked:hover + .toggle-slider{
   background: #ffd766;
-  border-color: #ffd766;
-}
-
-/* Disabled */
-.ios-switch.is-disabled{
-  opacity: .5;
-  cursor: default;
 }
 
 
