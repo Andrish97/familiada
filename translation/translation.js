@@ -1,9 +1,7 @@
-const TRANSLATION_VERSION = "20260315-1";
-
 const LANG_LOADERS = {
-  pl: async () => (await import(`./pl.js?v=${TRANSLATION_VERSION}`)).default,
-  en: async () => (await import(`./en.js?v=${TRANSLATION_VERSION}`)).default,
-  uk: async () => (await import(`./uk.js?v=${TRANSLATION_VERSION}`)).default,
+  pl: async () => (await import(`./pl.js`)).default,
+  en: async () => (await import(`./en.js`)).default,
+  uk: async () => (await import(`./uk.js`)).default,
 };
 
 const LANG_ORDER = ["pl", "en", "uk"];

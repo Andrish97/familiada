@@ -1,5 +1,5 @@
 
-import { sb as supabase } from "/js/core/supabase.js?v=20260314-1";
+import { sb as supabase } from "/js/core/supabase.js";
 import { alertModal, confirmModal } from "../core/modal.js";
 
 let games = [];

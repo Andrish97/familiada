@@ -205,6 +205,11 @@ body > main {
     color: var(--gold)
 }
 
+a.gold {
+    color: var(--gold);
+    text-decoration: underline;
+}
+
 .btn.danger {
     border-color: rgba(255,120,120,.35);
     background: rgba(255,120,120,.12)
