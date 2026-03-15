@@ -1069,7 +1069,7 @@
   width: 34px;
   height: 34px;
   min-width: 34px;
-  border-radius: 999px;
+  border-radius: 12px;
   padding: 0;
   display: grid;
   place-items: center;

@@ -414,6 +414,24 @@
     </div>
   </div>
 
+  <!-- Modal: zmiana nazwy logo -->
+  <div class="overlay" id="renameOverlay" style="display:none;">
+    <div class="modal">
+      <div class="mTitle" id="renameTitle" data-i18n="logoEditor.rename.title">Zmień nazwę</div>
+      <div class="mSub" id="renameSub" data-i18n="logoEditor.rename.sub">Wpisz nową nazwę i zapisz.</div>
+
+      <div class="importRow">
+        <input id="renameInput" class="inp" type="text" maxlength="80" placeholder="Nazwa..." data-i18n-placeholder="logoEditor.rename.placeholder"/>
+      </div>
+
+      <div class="importRow">
+        <button class="btn sm gold" id="btnRenameOk" type="button" data-i18n="logoEditor.common.save">Zapisz</button>
+        <button class="btn sm" id="btnRenameCancel" type="button" data-i18n="logoEditor.common.cancel">Anuluj</button>
+        <div class="importMsg" id="renameMsg"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- Fullscreen preview (MODAL z X) -->
   <div class="overlay" id="previewOverlay" style="display:none;">
     <div class="modal previewModal">

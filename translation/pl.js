@@ -3885,6 +3885,15 @@ const pl = {
     },
     common: {
       close: "Zamknij",
+      save: "Zapisz",
+      cancel: "Anuluj",
+    },
+    rename: {
+      title: "Zmień nazwę",
+      sub: "Wpisz nową nazwę i zapisz.",
+      placeholder: "Nazwa...",
+      emptyError: "Nazwa nie może być pusta.",
+      failed: "Nie udało się zmienić nazwy.",
     },
     import: {
       title: "IMPORT…",
