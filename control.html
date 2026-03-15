@@ -405,7 +405,7 @@
               <div class="card">
                 <div class="cardBody">
                  <div class="hint" data-i18n="control.teamHint">
-                    Tutaj należy wprowadzić nazwy drużyn, można również wybrać kolory i zmienić dodatkowe ustawienia.
+                    Tutaj należy wprowadzić nazwy drużyn i wybrać kolory.
                   </div>
                   <div class="rowBtns">
                     <div class="field">
@@ -415,7 +415,7 @@
                       </div>
                       <input class="inp" id="teamA" autocomplete="off"/>
                     </div>
-                  
+
                     <div class="field">
                       <div class="lblRow">
                         <div class="lbl2" data-i18n="control.teamBLabel">Drużyna B</div>
@@ -424,7 +424,7 @@
                       <input class="inp" id="teamB" autocomplete="off"/>
                     </div>
                   </div>
-                  
+
                   <div class="rowBtns">
                     <div class="field">
                       <div class="lblRow">
@@ -437,21 +437,85 @@
                     </div>
                     <button class="btn" type="button" id="btnColorsReset" data-i18n="control.resetColors">Reset kolorów</button>
                   </div>
-  
-                  <div class="rowBtns">
-                    <button class="btn" id="btnTeamMore" type="button" data-i18n="control.extraSettingsToggle">Dodatkowe ustawienia</button>
+                </div>
+
+                <div class="stepFoot">
+                  <div class="stepFootButtons">
+                    <button class="btn" id="btnBackToDevices" type="button" data-i18n="common.back">Wstecz</button>
+                    <button class="btn gold" id="btnSetupNext" type="button" data-i18n="common.next">Dalej</button>
+                  </div>
+                  <div class="msg msg-pill" id="msgSetup"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="step hidden" data-step="setup_game">
+              <div class="stepTitle" data-i18n="control.stepGameSettings">Ustawienia pytań i rozgrywki</div>
+
+              <div class="card">
+                <div class="cardBody">
+                  
+                  <!-- GÓRNA SEKCJA - FINAŁ -->
+                  <div class="sectionBlock">
+                    <div class="sectionTitle" data-i18n="control.sectionFinal">Finał</div>
+                    
+                    <div class="rowBtns">
+                      <div class="field">
+                        <div class="lbl2" data-i18n="control.playFinal">Gramy finał?</div>
+                        <label class="radio">
+                          <input type="radio" name="hasFinal" value="yes" id="finalYes" />
+                          <span data-i18n="common.yes">Tak</span>
+                        </label>
+                        <label class="radio">
+                          <input type="radio" name="hasFinal" value="no" id="finalNo" checked />
+                          <span data-i18n="common.no">Nie</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    <div class="rowBtns" id="finalModeRow">
+                      <div class="field">
+                        <div class="lbl2" data-i18n="control.finalQuestionsMode">Pytania finału</div>
+                        <label class="radio">
+                          <input type="radio" name="finalMode" value="random" id="finalRandom" />
+                          <span data-i18n="control.finalRandom">Losuj 5 pytań</span>
+                        </label>
+                        <label class="radio">
+                          <input type="radio" name="finalMode" value="pick" id="finalPick" />
+                          <span data-i18n="control.finalPick">Wybierz ręcznie</span>
+                        </label>
+                      </div>
+                    </div>
                   </div>
 
-                  <div class="extra hidden" id="teamExtra">
-                    <div class="name" data-i18n="control.extraSettingsTitle">Dodatkowe ustawienia</div>
+                  <!-- ŚRODKOWA SEKCJA - RUNDY -->
+                  <div class="sectionBlock">
+                    <div class="sectionTitle" data-i18n="control.sectionRounds">Rundy</div>
+                    
+                    <div class="rowBtns">
+                      <div class="field">
+                        <div class="lbl2" data-i18n="control.roundsQuestionsMode">Pytania rund</div>
+                        <label class="radio">
+                          <input type="radio" name="roundsMode" value="random" id="roundsRandom" checked />
+                          <span data-i18n="control.roundsRandom">Losuj pytania</span>
+                        </label>
+                        <label class="radio">
+                          <input type="radio" name="roundsMode" value="pick" id="roundsPick" />
+                          <span data-i18n="control.roundsPick">Wybierz ręcznie (kolejność)</span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- DOLNA SEKCJA - DODATKOWE USTAWIENIA -->
+                  <div class="sectionBlock">
+                    <div class="sectionTitle" data-i18n="control.extraSettingsTitle">Dodatkowe ustawienia</div>
 
                     <div class="rowBtns">
                       <div class="field sm">
                         <div class="lbl2" data-i18n="control.roundMultipliers">Mnożniki rund</div>
                         <div class="hint" data-i18n="control.roundMultipliersHint">
                           Podaj po przecinku, np. <b>1,1,1,2,3</b>
-                          jesli rund bedzie więcej ostatnia liczba
-                          bedzie mnoźnikiem kolejnych
                         </div>
                         <input
                           id="roundMultipliers"
@@ -486,7 +550,7 @@
                         />
                       </div>
                     </div>
-                    
+
                     <div class="rowBtns">
                       <div class="field sm">
                         <div class="lbl2" data-i18n="control.gameEndMode">Zakończenie gry</div>
@@ -505,42 +569,30 @@
                       </div>
                     </div>
 
-
                     <div class="rowBtns">
                       <button class="btn" type="button" id="btnAdvancedReset" data-i18n="control.advancedReset">Przywróć domyślne</button>
                       <div class="msg msg-inline" id="msgAdvanced"></div>
                     </div>
                   </div>
+
                 </div>
 
                 <div class="stepFoot">
                   <div class="stepFootButtons">
-                    <button class="btn" id="btnBackToDevices" type="button" data-i18n="common.back">Wstecz</button>
-                    <button class="btn gold" id="btnSetupNext" type="button" disabled data-i18n="common.next">Dalej</button>
+                    <button class="btn" id="btnSetupGameBack" type="button" data-i18n="common.back">Wstecz</button>
+                    <button class="btn gold" id="btnSetupGameNext" type="button" data-i18n="common.next">Dalej</button>
                   </div>
-                  <div class="msg msg-pill" id="msgSetup"></div>
+                  <div class="msg msg-pill" id="msgSetupGame"></div>
                 </div>
               </div>
             </div>
 
             <div class="step hidden" data-step="setup_final">
-              <div class="stepTitle" data-i18n="control.stepFinal">Finał</div>
+              <div class="stepTitle" data-i18n="control.stepFinalPick">Wybierz pytania finału</div>
 
               <div class="card">
                 <div class="cardBody">
-                  <div class="name" data-i18n="control.playFinal">Gramy finał?</div>
-
-                  <div class="rowBtns">
-                    <label class="radio">
-                      <input type="radio" name="hasFinal" value="yes" id="finalYes" />
-                      <span data-i18n="common.yes">Tak</span>
-                    </label>
-                    <label class="radio">
-                      <input type="radio" name="hasFinal" value="no" id="finalNo" checked />
-                      <span data-i18n="common.no">Nie</span>
-                    </label>
-                  </div>
-
+                  
                   <div class="card card-soft" id="finalPickerCard">
                     <div class="head">
                       <div class="name" data-i18n="control.finalQuestions">Pytania</div>
@@ -562,7 +614,7 @@
                         <div class="qList" id="finalFinalList"></div>
 
                         <div class="mini" id="finalOnlyView" style="display:none;">
-                          <div class="hint" data-i18n="control.finalOnlyHint">Pytania zatwierdzone. Kliknij „Edytuj”, aby zmienić.</div>
+                          <div class="hint" data-i18n="control.finalOnlyHint">Pytania zatwierdzone. Kliknij „Edytuj", aby zmienić.</div>
                         </div>
                       </div>
                     </div>
@@ -578,10 +630,77 @@
 
                 <div class="stepFoot">
                   <div class="stepFootButtons">
-                    <button class="btn" id="btnSetupBack" type="button" data-i18n="common.back">Wstecz</button>
-                    <button class="btn gold" id="btnSetupFinish" type="button" disabled data-i18n="control.devicesFinish">Gotowe — przejdź dalej</button>
+                    <button class="btn" id="btnSetupFinalBack" type="button" data-i18n="common.back">Wstecz</button>
+                    <button class="btn gold" id="btnSetupFinish" type="button" data-i18n="control.confirm">Zatwierdź i dalej</button>
                   </div>
                   <div class="msg msg-pill" id="msgSetup2"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- STEP: SETUP_ROUNDS - wybór kolejności pytań rund -->
+            <div class="step hidden" data-step="setup_rounds">
+              <div class="stepTitle" data-i18n="control.stepRoundsPick">Kolejność pytań rund</div>
+
+              <div class="card">
+                <div class="cardBody">
+                  <div class="hint" data-i18n="control.roundsPickHint">
+                    Ustaw kolejność pytań dla kolejnych rund. Pytania z finału zostały wykluczone.
+                  </div>
+                  
+                  <div class="roundsOrderList" id="roundsOrderList">
+                    <!-- Tu będą kafelki pytań z drag handles -->
+                  </div>
+                </div>
+
+                <div class="stepFoot">
+                  <div class="stepFootButtons">
+                    <button class="btn" id="btnSetupRoundsBack" type="button" data-i18n="common.back">Wstecz</button>
+                    <button class="btn gold" id="btnSetupRoundsNext" type="button" data-i18n="control.confirm">Zatwierdź kolejność</button>
+                  </div>
+                  <div class="msg msg-pill" id="msgSetupRounds"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- STEP: SETUP_FINISH - podsumowanie przed startem -->
+            <div class="step hidden" data-step="setup_finish">
+              <div class="stepTitle" data-i18n="control.stepSetupFinish">Podsumowanie</div>
+
+              <div class="card">
+                <div class="cardBody">
+                  <div class="name" data-i18n="control.setupFinishTitle">Gra jest gotowa do rozpoczęcia</div>
+                  
+                  <div class="summaryList">
+                    <div class="summaryItem">
+                      <span class="summaryLabel" data-i18n="control.summaryTeams">Drużyny:</span>
+                      <span class="summaryValue" id="summaryTeams">—</span>
+                    </div>
+                    <div class="summaryItem">
+                      <span class="summaryLabel" data-i18n="control.summaryFinal">Finał:</span>
+                      <span class="summaryValue" id="summaryFinal">—</span>
+                    </div>
+                    <div class="summaryItem">
+                      <span class="summaryLabel" data-i18n="control.summaryFinalQuestions">Pytania finału:</span>
+                      <span class="summaryValue" id="summaryFinalQuestions">—</span>
+                    </div>
+                    <div class="summaryItem">
+                      <span class="summaryLabel" data-i18n="control.summaryRoundsQuestions">Pytania rund:</span>
+                      <span class="summaryValue" id="summaryRoundsQuestions">—</span>
+                    </div>
+                  </div>
+                  
+                  <div class="hint" data-i18n="control.setupFinishHint">
+                    Po kliknięciu „Gotowe" przejdziesz do panelu rund.
+                  </div>
+                </div>
+
+                <div class="stepFoot">
+                  <div class="stepFootButtons">
+                    <button class="btn" id="btnSetupFinishBack" type="button" data-i18n="common.back">Wstecz</button>
+                    <button class="btn gold" id="btnSetupFinish2" type="button" data-i18n="control.devicesFinish">Gotowe — przejdź do rund</button>
+                  </div>
+                  <div class="msg msg-pill" id="msgSetupFinish"></div>
                 </div>
               </div>
             </div>

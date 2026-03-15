@@ -421,6 +421,7 @@ async function sendZeroStatesToDevices() {
 
     // ===== Wejście/wyjście z kroku "Nazwy drużyn" =====
   let wasInSetupNames = false;
+  let wasInSetupGame = false;
 
   async function enterSetupNames() {
     if (!devices) return;
@@ -437,6 +438,72 @@ async function sendZeroStatesToDevices() {
     if (!devices) return;
     await devices.sendDisplayCmd("APP BLACK").catch(() => {});
     await devices.sendBuzzerCmd("OFF").catch(() => {});
+  }
+  
+  async function enterSetupGame() {
+    // synchronizacja stanu z UI przy wejściu
+    syncGameSettingsUI();
+  }
+  
+  async function leaveSetupGame() {
+    // zapisz ustawienia przy wyjściu
+    saveGameSettings();
+  }
+  
+  // ===== Ustawienia gry - synchronizacja UI z store =====
+  function syncGameSettingsUI() {
+    const s = store.state;
+    
+    // Czy gramy finał?
+    const finalYes = document.getElementById("finalYes");
+    const finalNo = document.getElementById("finalNo");
+    if (finalYes && finalNo) {
+      finalYes.checked = (s.hasFinal === true);
+      finalNo.checked = (s.hasFinal !== true);
+    }
+    
+    // Tryb pytań finału
+    const finalRandom = document.getElementById("finalRandom");
+    const finalPick = document.getElementById("finalPick");
+    if (finalRandom && finalPick) {
+      finalRandom.checked = (s.finalQuestionsMode !== "pick");
+      finalPick.checked = (s.finalQuestionsMode === "pick");
+    }
+    
+    // Tryb pytań rund
+    const roundsRandom = document.getElementById("roundsRandom");
+    const roundsPick = document.getElementById("roundsPick");
+    if (roundsRandom && roundsPick) {
+      roundsRandom.checked = (s.roundsQuestionsMode !== "pick");
+      roundsPick.checked = (s.roundsQuestionsMode === "pick");
+    }
+    
+    // Pokaż/ukryj opcje w zależności od wyboru
+    updateGameSettingsVisibility();
+  }
+  
+  function updateGameSettingsVisibility() {
+    // Pokaż/ukryj wybór pytań finału w zależności od czy gramy finał
+    const finalModeRow = document.getElementById("finalModeRow");
+    const hasFinal = document.getElementById("finalYes")?.checked;
+    if (finalModeRow) {
+      finalModeRow.style.display = hasFinal ? "block" : "none";
+    }
+  }
+  
+  function saveGameSettings() {
+    const hasFinal = document.getElementById("finalYes")?.checked;
+    const finalMode = document.getElementById("finalRandom")?.checked ? "random" : "pick";
+    const roundsMode = document.getElementById("roundsRandom")?.checked ? "random" : "pick";
+    
+    store.setHasFinal(hasFinal);
+    store.setFinalQuestionsMode(finalMode);
+    store.setRoundsQuestionsMode(roundsMode);
+    
+    // Jeśli wybrano losowanie, wyczyść potwierdzenie wyboru ręcznego
+    if (finalMode === "random") {
+      store.unconfirmFinalQuestions();
+    }
   }
 
 
@@ -847,6 +914,36 @@ async function sendZeroStatesToDevices() {
       leaveSetupNames().catch(() => {});
     }
     wasInSetupNames = inSetupNames;
+    
+    // ===== detekcja wejścia/wyjścia z setup_game =====
+    const inSetupGame =
+      (state.activeCard === "setup" && state.steps?.setup === "setup_game");
+
+    if (inSetupGame && !wasInSetupGame) {
+      enterSetupGame().catch(() => {});
+    }
+    if (!inSetupGame && wasInSetupGame) {
+      leaveSetupGame().catch(() => {});
+    }
+    wasInSetupGame = inSetupGame;
+
+    // ===== detekcja wejścia/wyjścia z setup_finish =====
+    const inSetupFinish =
+      (state.activeCard === "setup" && state.steps?.setup === "setup_finish");
+
+    if (inSetupFinish && !wasInSetupFinish) {
+      renderSetupFinishSummary();
+    }
+    wasInSetupFinish = inSetupFinish;
+
+    // ===== detekcja wejścia/wyjścia z setup_rounds =====
+    const inSetupRounds =
+      (state.activeCard === "setup" && state.steps?.setup === "setup_rounds");
+
+    if (inSetupRounds && !wasInSetupRounds) {
+      renderSetupRoundsOrder();
+    }
+    wasInSetupRounds = inSetupRounds;
 
   }
 
@@ -1103,8 +1200,291 @@ async function sendZeroStatesToDevices() {
     ui.setMsg?.("msgAdvanced", APP_MSG.ADV_RESET);
   });
 
-  ui.on("setup.next", () => store.setSetupStep("setup_final"));
+  ui.on("setup.next", () => store.setSetupStep("setup_game"));
   ui.on("setup.back", () => store.setSetupStep("setup_names"));
+  ui.on("setup.game.next", () => goToNextSetupStep());
+  ui.on("setup.game.back", () => store.setSetupStep("setup_names"));
+  ui.on("setup.finish.back", () => store.setSetupStep("setup_game"));
+  ui.on("setup.finish", () => {
+    store.completeCard("setup");
+    store.setActiveCard("rounds");
+  });
+  
+  // Przycisk w setup_finish
+  document.getElementById("btnSetupFinish2")?.addEventListener("click", () => {
+    ui.emit("setup.finish");
+  });
+  document.getElementById("btnSetupFinishBack")?.addEventListener("click", () => {
+    ui.emit("setup.finish.back");
+  });
+  
+  // Nasłuchiwanie zmian w setup_game
+  document.getElementById("finalYes")?.addEventListener("change", (e) => {
+    if (e.target.checked) updateGameSettingsVisibility();
+  });
+  document.getElementById("finalNo")?.addEventListener("change", (e) => {
+    if (e.target.checked) updateGameSettingsVisibility();
+  });
+  
+  // ===== Nawigacja w setup_game - decyzja o losowaniu =====
+  async function goToNextSetupStep() {
+    saveGameSettings();
+    
+    const hasFinal = store.state.hasFinal === true;
+    const finalMode = store.state.finalQuestionsMode;
+    const roundsMode = store.state.roundsQuestionsMode;
+    
+    // Losuj finał w tle jeśli wybrano "random" i gramy finał
+    if (hasFinal && finalMode === "random") {
+      await pickRandomFinalQuestions();
+    }
+    
+    // Losuj rundy w tle jeśli wybrano "random"
+    if (roundsMode === "random") {
+      await pickRandomRoundsQuestions();
+    }
+    
+    // Decyzja: czy przechodzimy do wyboru ręcznego, czy od razu do finish?
+    const needsFinalPick = hasFinal && finalMode === "pick";
+    const needsRoundsPick = roundsMode === "pick";
+    
+    if (needsFinalPick) {
+      // Najpierw wybór finału
+      store.setSetupStep("setup_final");
+    } else if (needsRoundsPick) {
+      // Tylko wybór rund - przejdź do stepu wyboru kolejności
+      store.setSetupStep("setup_rounds");
+    } else {
+      // Wszystko wylosowane - przejdź do finish
+      store.setSetupStep("setup_finish");
+    }
+  }
+  
+  // Powrót z setup_final/setup_rounds do setup_game
+  ui.on("setup.final.back", () => store.setSetupStep("setup_game"));
+  ui.on("setup.rounds.back", () => store.setSetupStep("setup_game"));
+  ui.on("setup.rounds.next", () => {
+    // Zatwierź kolejność rund i przejdź do finish
+    store.setSetupStep("setup_finish");
+  });
+  
+  // Przycisk powrotu w setup_final
+  document.getElementById("btnSetupFinalBack")?.addEventListener("click", () => {
+    ui.emit("setup.final.back");
+  });
+  
+  // Przyciski w setup_rounds
+  document.getElementById("btnSetupRoundsBack")?.addEventListener("click", () => {
+    ui.emit("setup.rounds.back");
+  });
+  document.getElementById("btnSetupRoundsNext")?.addEventListener("click", () => {
+    ui.emit("setup.rounds.next");
+  });
+  
+  async function pickRandomFinalQuestions() {
+    // Losuje 5 pytań z puli i zatwierdza
+    const all = await loadQuestions(store.state.gameId || "");
+    if (!all || all.length < 5) {
+      ui.setMsg("msgSetupGame", "Za mało pytań do losowania finału");
+      return;
+    }
+    
+    // Tasowanie Fisher-Yates
+    for (let i = all.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [all[i], all[j]] = [all[j], all[i]];
+    }
+    
+    const picked = all.slice(0, 5).map(q => q.id);
+    store.confirmFinalQuestions(picked);
+  }
+  
+  async function pickRandomRoundsQuestions() {
+    // Losuje pytania rund z pozostałych (po odjęciu finałowych)
+    // Na razie tylko oznaczamy że losowane - właściwe losowanie w gameRounds.js
+  }
+  
+  // ===== SETUP_FINISH - renderowanie podsumowania =====
+  let wasInSetupFinish = false;
+  
+  function renderSetupFinishSummary() {
+    const s = store.state;
+    
+    // Drużyny
+    const teamsEl = document.getElementById("summaryTeams");
+    if (teamsEl) {
+      teamsEl.textContent = `${s.teams.teamA || "—"} vs ${s.teams.teamB || "—"}`;
+    }
+    
+    // Finał
+    const finalEl = document.getElementById("summaryFinal");
+    if (finalEl) {
+      finalEl.textContent = s.hasFinal ? t("common.yes") : t("common.no");
+    }
+    
+    // Pytania finału
+    const finalQEl = document.getElementById("summaryFinalQuestions");
+    if (finalQEl) {
+      if (!s.hasFinal) {
+        finalQEl.textContent = "—";
+      } else if (s.finalQuestionsMode === "random") {
+        finalQEl.textContent = t("control.finalRandom");
+      } else {
+        const count = s.final?.picked?.length || 0;
+        finalQEl.textContent = `${count}/5 ${t("control.selected")}`;
+      }
+    }
+    
+    // Pytania rund
+    const roundsQEl = document.getElementById("summaryRoundsQuestions");
+    if (roundsQEl) {
+      if (s.roundsQuestionsMode === "random") {
+        roundsQEl.textContent = t("control.roundsRandom");
+      } else {
+        roundsQEl.textContent = t("control.roundsPick");
+      }
+    }
+  }
+  
+  // ===== SETUP_ROUNDS - renderowanie listy pytań z drag-and-drop =====
+  let wasInSetupRounds = false;
+  let roundsOrderAll = []; // wszystkie pytania (bez finałowych)
+  
+  async function renderSetupRoundsOrder() {
+    const container = document.getElementById("roundsOrderList");
+    if (!container) return;
+    
+    const s = store.state;
+    const finalPickedIds = new Set(s.final?.picked || []);
+    
+    // Załaduj wszystkie pytania
+    const all = await loadQuestions(s.gameId || "");
+    roundsOrderAll = (all || []).filter(q => !finalPickedIds.has(q.id));
+    
+    // Jeśli już mamy zapisaną kolejność, użyj jej
+    if (s.roundsPicked?.length > 0) {
+      // Przywróć zapisaną kolejność
+      const ordered = s.roundsPicked;
+      renderRoundsOrderList(container, ordered);
+    } else {
+      // Domyślna kolejność (jak w puli)
+      renderRoundsOrderList(container, roundsOrderAll);
+    }
+  }
+  
+  function renderRoundsOrderList(container, questions) {
+    container.innerHTML = questions.map((q, i) => `
+      <div class="roundsOrderItem" draggable="true" data-id="${q.id}">
+        <div class="roundsOrderHandle">⋮⋮</div>
+        <div class="roundsOrderNum">${i + 1}</div>
+        <div class="roundsOrderText">${escapeHtml(q.text || "")}</div>
+        <div class="roundsOrderActions">
+          <button class="roundsOrderBtn" data-dir="up" title="W górę">↑</button>
+          <button class="roundsOrderBtn" data-dir="down" title="W dół">↓</button>
+        </div>
+      </div>
+    `).join("");
+    
+    // Obsługa przycisków góra/dół
+    container.querySelectorAll(".roundsOrderBtn").forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        const item = e.target.closest(".roundsOrderItem");
+        const dir = btn.dataset.dir;
+        const id = item.dataset.id;
+        moveRoundsOrderItem(id, dir);
+      });
+    });
+    
+    // Drag and drop
+    setupRoundsDragAndDrop(container);
+  }
+  
+  function moveRoundsOrderItem(id, dir) {
+    const container = document.getElementById("roundsOrderList");
+    if (!container) return;
+    
+    const items = Array.from(container.querySelectorAll(".roundsOrderItem"));
+    const idx = items.findIndex(item => item.dataset.id === id);
+    if (idx < 0) return;
+    
+    const newIdx = dir === "up" ? idx - 1 : idx + 1;
+    if (newIdx < 0 || newIdx >= items.length) return;
+    
+    // Zamień miejscami
+    if (dir === "up") {
+      container.insertBefore(items[idx], items[newIdx]);
+    } else {
+      container.insertBefore(items[newIdx], items[idx]);
+    }
+    
+    // Aktualizuj numerację
+    updateRoundsOrderNumbers();
+  }
+  
+  function updateRoundsOrderNumbers() {
+    const container = document.getElementById("roundsOrderList");
+    if (!container) return;
+    
+    container.querySelectorAll(".roundsOrderItem").forEach((item, i) => {
+      const numEl = item.querySelector(".roundsOrderNum");
+      if (numEl) numEl.textContent = i + 1;
+    });
+  }
+  
+  function setupRoundsDragAndDrop(container) {
+    let draggedItem = null;
+    
+    container.querySelectorAll(".roundsOrderItem").forEach(item => {
+      item.addEventListener("dragstart", (e) => {
+        draggedItem = item;
+        item.classList.add("dragging");
+        e.dataTransfer.effectAllowed = "move";
+      });
+      
+      item.addEventListener("dragend", () => {
+        draggedItem = null;
+        item.classList.remove("dragging");
+        updateRoundsOrderNumbers();
+        saveRoundsOrder();
+      });
+      
+      item.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+        if (draggedItem && draggedItem !== item) {
+          const rect = item.getBoundingClientRect();
+          const midY = rect.top + rect.height / 2;
+          if (e.clientY < midY) {
+            container.insertBefore(draggedItem, item);
+          } else {
+            container.insertBefore(draggedItem, item.nextSibling);
+          }
+        }
+      });
+    });
+  }
+  
+  function saveRoundsOrder() {
+    const container = document.getElementById("roundsOrderList");
+    if (!container) return;
+    
+    const ordered = [];
+    container.querySelectorAll(".roundsOrderItem").forEach(item => {
+      const id = item.dataset.id;
+      const q = roundsOrderAll.find(x => x.id === id);
+      if (q) ordered.push(q);
+    });
+    
+    store.setRoundsPicked(ordered);
+  }
+  
+  function escapeHtml(s) {
+    return String(s ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;");
+  }
 
   ui.on("final.toggle", (hasFinal) => {
     store.setHasFinal(hasFinal);
@@ -1142,10 +1522,15 @@ async function sendZeroStatesToDevices() {
     ui.setMsg("msgFinalPick", "");
     finalPickerRender();
   });
-
-  ui.on("setup.finish", () => {
-    store.completeCard("setup");
-    store.setActiveCard("rounds");
+  
+  // Przycisk zatwierdzenia w setup_final
+  document.getElementById("btnSetupFinish")?.addEventListener("click", () => {
+    // Zatwierdź wybór pytań finału
+    store.confirmFinalQuestions(finalPickerGetSelectedIds());
+    ui.setFinalConfirmed(true);
+    ui.setMsg("msgFinalPick", APP_MSG.FINAL_CONFIRMED);
+    // Przejdź do setup_finish
+    store.setSetupStep("setup_finish");
   });
 
     // ROUNDS

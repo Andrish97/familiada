@@ -22,7 +22,7 @@ export function createStore(gameId) {
   
       steps: {
         devices: "devices_display",
-        setup: "setup_names",
+        setup: "setup_names", // setup_names → setup_game → setup_final/setup_rounds → setup_finish
       },
   
       completed: {
@@ -39,8 +39,15 @@ export function createStore(gameId) {
         teamA: "",
         teamB: "",
       },
-  
+
       hasFinal: null,
+      
+      // Tryb wyboru pytań: "random" lub "pick"
+      finalQuestionsMode: "random",
+      roundsQuestionsMode: "random",
+      
+      // Wybrane pytania rund w kolejności (dla trybu "pick")
+      roundsPicked: [], // [{id, text, ord}]
   
       final: {
         picked: [],
@@ -138,10 +145,18 @@ export function createStore(gameId) {
 
   function canFinishSetup() {
     if (!teamsOk()) return false;
+    
+    // Jeśli nie gramy finału - OK
     if (state.hasFinal === false) return true;
+    
+    // Jeśli gramy finał:
     if (state.hasFinal === true) {
+      // Tryb losowy - zawsze OK (losowanie w tle)
+      if (state.finalQuestionsMode === "random") return true;
+      // Tryb ręczny - wymaga potwierdzenia 5 pytań
       return state.final.confirmed === true && state.final.picked.length === 5;
     }
+    
     return false;
   }
 
@@ -231,6 +246,21 @@ export function createStore(gameId) {
       state.final.picked = [];
       state.final.confirmed = false;
     }
+    emit();
+  }
+  
+  function setFinalQuestionsMode(mode) {
+    state.finalQuestionsMode = mode;
+    emit();
+  }
+  
+  function setRoundsQuestionsMode(mode) {
+    state.roundsQuestionsMode = mode;
+    emit();
+  }
+  
+  function setRoundsPicked(orderedQuestions) {
+    state.roundsPicked = Array.isArray(orderedQuestions) ? orderedQuestions.slice() : [];
     emit();
   }
 
@@ -349,6 +379,9 @@ export function createStore(gameId) {
     completeCard,
     setTeams,
     setHasFinal,
+    setFinalQuestionsMode,
+    setRoundsQuestionsMode,
+    setRoundsPicked,
     confirmFinalQuestions,
     unconfirmFinalQuestions,
 
