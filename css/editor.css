@@ -8,7 +8,7 @@ body.editor-body {
 }
 
 body.editor-body .wrap {
-    max-width: 1200px;
+    max-width: 90%;
     height: calc(100dvh - 72px);
     overflow: hidden;
     display: flex;
