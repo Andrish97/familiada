@@ -749,7 +749,7 @@ const en = {
     backToGames: "← My games",
     logout: "Log out",
     headerTitle: "Your question bases",
-    headerHint: "Click a tile to select it.",
+    headerHint: "Click a tile to select it. Double-click to rename.",
     actions: {
       browse: "Browse",
       browseMobile: "Browse",
@@ -3732,7 +3732,7 @@ const en = {
     },
     list: {
       title: "Your logos",
-      hint: "Click a tile to select it.",
+      hint: "Click a tile to select it. Double-click to rename.",
       preview: "Preview",
       activate: "Activate",
       export: "Export",
