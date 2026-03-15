@@ -417,12 +417,10 @@
   <!-- Fullscreen preview (MODAL z X) -->
   <div class="overlay" id="previewOverlay" style="display:none;">
     <div class="modal previewModal">
-      <div class="previewModalHeader">
-        <div>
-          <div class="mTitle" data-i18n="logoEditor.preview.title">Podgląd</div>
-          <div class="mSub" data-i18n="logoEditor.preview.subtitle">Tak będzie wyglądać logo na wyświetlaczu</div>
-        </div>
-        <button class="btn sm previewCloseBtn" id="btnPreviewClose" type="button" aria-label="Zamknij">✕</button>
+      <button class="btn sm previewCloseBtn" id="btnPreviewClose" type="button" aria-label="Zamknij">✕</button>
+      <div class="previewModalTitle">
+        <div class="mTitle" data-i18n="logoEditor.preview.title">Podgląd</div>
+        <div class="mSub" data-i18n="logoEditor.preview.subtitle">Tak będzie wyglądać logo na wyświetlaczu</div>
       </div>
       <div class="previewModalCanvas">
         <canvas id="bigPreviewFull" width="1600" height="700"></canvas>
