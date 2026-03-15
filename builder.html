@@ -233,8 +233,14 @@
       <div class="mSub">
         <span data-i18n="builder.exportBase.subtitle">Wybierz bazę pytań. Zostanie utworzony folder w głównym katalogu o nazwie jak gra.</span>
       </div>
-  
-      <div class="basePickList" id="basePickList"></div>
+
+      <div class="ui-select-wrap" id="baseSelectWrap" style="margin-top:12px;">
+        <div class="ui-select-btn" role="combobox" aria-haspopup="listbox" aria-expanded="false" tabindex="0">
+          <span class="ui-select-label">—</span>
+          <span class="ui-select-arrow" aria-hidden="true">▾</span>
+        </div>
+        <div class="ui-select-menu" role="listbox" tabindex="-1"></div>
+      </div>
 
       <!-- PROGRES: export do bazy (ukryty, pokazuje się tylko podczas exportu) -->
       <div id="exportBaseProg" style="display:none;margin-top:12px;display:grid;gap:10px">

@@ -4,6 +4,7 @@ import { requireAuth } from "../core/auth.js";
 import { alertModal, confirmModal } from "../core/modal.js";
 import { hideForGuest, isGuestUser } from "../core/guest-mode.js";
 import { initI18n, t, applyTranslations } from "../../translation/translation.js";
+import { initUiSelect } from "../core/ui-select.js";
 import {
   getUserIosWebappPromptDismissedFlag,
   setUserIosWebappPromptDismissedFlag,
@@ -105,10 +106,12 @@ const btnExportBase = document.getElementById("btnExportBase");
 
 // Modal eksportu do bazy
 const exportBaseOverlay = document.getElementById("exportBaseOverlay");
-const basePickList = document.getElementById("basePickList");
+const baseSelectWrap = document.getElementById("baseSelectWrap");
 const btnExportBaseDo = document.getElementById("btnExportBaseDo");
 const btnExportBaseCancel = document.getElementById("btnExportBaseCancel");
 const exportBaseMsg = document.getElementById("exportBaseMsg");
+
+let baseSelectApi = null; // ui-select API
 
 // Export base progress (w modalu eksportu do bazy)
 const exportBaseProg = document.getElementById("exportBaseProg");
@@ -375,31 +378,43 @@ async function listExportableBases() {
   return out.filter((b) => (seen.has(b.id) ? false : (seen.add(b.id), true)));
 }
 
-function renderBasePickList(bases) {
-  if (!basePickList) return;
-
-  if (!bases.length) {
-    basePickList.innerHTML = `<div style="opacity:.75; padding:6px 8px;">${MSG.exportBaseEmpty()}</div>`;
+function renderBaseSelect(bases) {
+  if (!baseSelectWrap) return;
+  
+  // Zniszcz poprzedni ui-select jeśli istnieje
+  if (baseSelectApi) {
+    baseSelectApi.destroy();
+    baseSelectApi = null;
+  }
+  
+  if (!bases || !bases.length) {
+    // Brak baz - pokaż komunikat
+    baseSelectWrap.style.display = "none";
+    setExportBaseMsg(MSG.exportBaseEmpty());
     return;
   }
-
-  basePickList.innerHTML = bases
-    .map((b, i) => {
-      const meta = b.kind === "owned" ? MSG.exportBaseMetaOwned() : MSG.exportBaseMetaShared();
-      return `
-        <label class="basePickItem">
-          <input type="radio" name="pickBase" value="${escapeHtml(b.id)}" ${i === 0 ? "checked" : ""}>
-          <div class="nm" title="${escapeHtml(b.name || MSG.exportBaseBaseFallback())}">${escapeHtml(b.name || MSG.exportBaseBaseFallback())}</div>
-          <div class="meta">${meta}</div>
-        </label>
-      `;
-    })
-    .join("");
+  
+  baseSelectWrap.style.display = "";
+  
+  // Przygotuj opcje
+  const options = bases.map(b => ({
+    value: b.id,
+    label: b.name || MSG.gameFallback(),
+  }));
+  
+  // Inicjalizuj ui-select
+  baseSelectApi = initUiSelect(baseSelectWrap, {
+    options,
+    value: options[0]?.value || "",
+    placeholder: "Wybierz bazę…",
+    onChange: (value) => {
+      // Można dodać walidację jeśli potrzeba
+    },
+  });
 }
 
-function pickedBaseId() {
-  const el = document.querySelector('input[name="pickBase"]:checked');
-  return el ? el.value : null;
+function getSelectedBaseId() {
+  return baseSelectApi ? baseSelectApi.getValue() : null;
 }
 
 async function pickUniqueRootFolderName(baseId, desiredName) {
@@ -1306,23 +1321,23 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   btnExportBase?.addEventListener("click", async () => {
     if (!selectedId) return;
-  
+
     try {
       setExportBaseMsg("");
       openExportBaseModal();
-  
+
       const bases = await listExportableBases();
-      renderBasePickList(bases);
+      renderBaseSelect(bases);
     } catch (e) {
       console.error(e);
       setExportBaseMsg(MSG.exportBaseLoadFailed());
     }
   });
-  
+
   btnExportBaseCancel?.addEventListener("click", () => closeExportBaseModal());
-  
+
   btnExportBaseDo?.addEventListener("click", async () => {
-    const baseId = pickedBaseId();
+    const baseId = getSelectedBaseId();
     if (!baseId) {
       setExportBaseMsg(MSG.exportBasePick());
       return;
