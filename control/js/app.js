@@ -167,8 +167,10 @@ async function main() {
   await ensureAuthOrRedirect();
   const game = await loadGameOrThrow();
 
-  const qsAll = await loadQuestions(game.id);
-  sessionStorage.setItem("familiada:questionsCache", JSON.stringify(qsAll));
+  // Load questions in background (non-blocking)
+  loadQuestions(game.id).then(qsAll => {
+    sessionStorage.setItem("familiada:questionsCache", JSON.stringify(qsAll));
+  }).catch(console.error);
 
   const ui = createUI();
   ui.setGameHeader(game.name, `${game.type} / ${game.status}`);
@@ -514,8 +516,33 @@ async function sendZeroStatesToDevices() {
   rounds.bootIfNeeded();
   const final = createFinal({ ui, store, devices, display, loadAnswers });
 
-  // start presence (online / offline / OSTATNIO)
-  presence.start();
+  // Generate QR links immediately (synchronous)
+  devices.updateLinksAndQr(getUiLang());
+
+  // Start presence and device init in background (non-blocking)
+  Promise.resolve().then(async () => {
+    try {
+      // start presence (online / offline / OSTATNIO)
+      presence.start();
+      
+      // Initialize device links
+      devices.initLinksAndQr();
+      
+      // Send LANG commands (non-blocking)
+      const initialLang = getUiLang();
+      await Promise.all([
+        devices.sendDisplayCmd(`LANG ${initialLang}`).catch(() => {}),
+        devices.sendHostCmd(`LANG ${initialLang}`).catch(() => {}),
+        devices.sendBuzzerCmd(`LANG ${initialLang}`).catch(() => {}),
+      ]);
+      
+      if (store.state.flags.qrOnDisplay) {
+        await devices.sendQrLinksToDisplay().catch(() => {});
+      }
+    } catch (e) {
+      console.error("Device init error:", e);
+    }
+  });
 
   // ===== Realtime: odbiór kliknięć z przycisku (BUZZER_EVT) =====
   const chControlIn = sb()
@@ -788,11 +815,17 @@ async function sendZeroStatesToDevices() {
   }
 
   async function finalPickerReload() {
-    // Pobierz na świeżo pytania z bazy
-    const qsAll = await loadQuestions(game.id);
-  
-    // Zaktualizuj cache
-    sessionStorage.setItem("familiada:questionsCache", JSON.stringify(qsAll));
+    // Use cached questions if available, otherwise load fresh
+    let qsAll = [];
+    const cached = sessionStorage.getItem("familiada:questionsCache");
+    if (cached) {
+      try { qsAll = JSON.parse(cached); } catch {}
+    }
+    if (!qsAll.length) {
+      qsAll = await loadQuestions(game.id);
+      sessionStorage.setItem("familiada:questionsCache", JSON.stringify(qsAll));
+    }
+    
     finalPickerAll = qsAll;
   
     const confirmed = store.state.final.confirmed === true;
@@ -812,23 +845,17 @@ async function sendZeroStatesToDevices() {
     finalPickerRender();
   }
 
-  devices.initLinksAndQr();
-  const initialLang = getUiLang();
-  devices.updateLinksAndQr(initialLang);
-  await devices.sendDisplayCmd(`LANG ${initialLang}`);
-  await devices.sendHostCmd(`LANG ${initialLang}`);
-  await devices.sendBuzzerCmd(`LANG ${initialLang}`);
-  if (store.state.flags.qrOnDisplay) {
-    await devices.sendQrLinksToDisplay();
-  }
+  // Language change handler
   window.addEventListener("i18n:lang", async (event) => {
     const nextLang = event?.detail?.lang;
     devices.updateLinksAndQr(nextLang);
-    await devices.sendDisplayCmd(`LANG ${nextLang}`);
-    await devices.sendHostCmd(`LANG ${nextLang}`);
-    await devices.sendBuzzerCmd(`LANG ${nextLang}`);
+    await Promise.all([
+      devices.sendDisplayCmd(`LANG ${nextLang}`).catch(() => {}),
+      devices.sendHostCmd(`LANG ${nextLang}`).catch(() => {}),
+      devices.sendBuzzerCmd(`LANG ${nextLang}`).catch(() => {}),
+    ]);
     if (store.state.flags.qrOnDisplay) {
-      await devices.sendQrLinksToDisplay();
+      await devices.sendQrLinksToDisplay().catch(() => {});
     }
   });
 
@@ -1328,18 +1355,27 @@ async function sendZeroStatesToDevices() {
   
   async function pickRandomFinalQuestions() {
     // Losuje 5 pytań z puli i zatwierdza
-    const all = await loadQuestions(store.state.gameId || "");
+    // Use cached questions if available
+    let all = [];
+    const cached = sessionStorage.getItem("familiada:questionsCache");
+    if (cached) {
+      try { all = JSON.parse(cached); } catch {}
+    }
+    if (!all.length) {
+      all = await loadQuestions(store.state.gameId || "");
+    }
+    
     if (!all || all.length < 5) {
       ui.setMsg("msgSetupGame", "Za mało pytań do losowania finału");
       return;
     }
-    
+
     // Tasowanie Fisher-Yates
     for (let i = all.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [all[i], all[j]] = [all[j], all[i]];
     }
-    
+
     const picked = all.slice(0, 5).map(q => q.id);
     store.confirmFinalQuestions(picked);
   }
@@ -1396,14 +1432,22 @@ async function sendZeroStatesToDevices() {
   async function renderSetupRoundsOrder() {
     const container = document.getElementById("roundsOrderList");
     if (!container) return;
-    
+
     const s = store.state;
     const finalPickedIds = new Set(s.final?.picked || []);
-    
-    // Załaduj wszystkie pytania
-    const all = await loadQuestions(s.gameId || "");
+
+    // Use cached questions if available, otherwise load
+    let all = [];
+    const cached = sessionStorage.getItem("familiada:questionsCache");
+    if (cached) {
+      try { all = JSON.parse(cached); } catch {}
+    }
+    if (!all.length) {
+      all = await loadQuestions(s.gameId || "");
+    }
+
     roundsOrderAll = (all || []).filter(q => !finalPickedIds.has(q.id));
-    
+
     // Jeśli już mamy zapisaną kolejność, użyj jej
     if (s.roundsPicked?.length > 0) {
       // Przywróć zapisaną kolejność
