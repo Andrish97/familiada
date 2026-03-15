@@ -1380,17 +1380,6 @@ body.tools-fullscreen .tools-frame-wrap iframe{
 .mail-folder.active { background: rgba(255,234,166,.12); color: #ffeaa6; }
 .mail-folder-icon { font-size: 14px; flex-shrink: 0; }
 .mail-folder-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.mail-folder-badge {
-  background: #ffeaa6;
-  color: #1a1a1a;
-  border-radius: 10px;
-  font-size: 10px;
-  font-weight: 700;
-  padding: 1px 6px;
-  min-width: 16px;
-  text-align: center;
-}
-.mail-folder-badge:empty { display: none; }
 
 .mail-list {
   border-right: 1px solid rgba(255,255,255,.1);
