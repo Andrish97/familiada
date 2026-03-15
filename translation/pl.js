@@ -516,7 +516,7 @@ const pl = {
     summaryFinal: "Finał:",
     summaryFinalQuestions: "Pytania finału:",
     summaryRoundsQuestions: "Pytania rund:",
-    setupFinishHint: "Po kliknięciu „Gotowe" przejdziesz do panelu rund.",
+    setupFinishHint: "Po kliknięciu Gotowe przejdziesz do panelu rund.",
     stepFinal: "Finał",
     playFinal: "Gramy finał?",
     finalQuestions: "Pytania",
