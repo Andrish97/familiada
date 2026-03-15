@@ -450,8 +450,7 @@ async function sendZeroStatesToDevices() {
   }
   
   async function leaveSetupGame() {
-    // zapisz ustawienia przy wyjściu
-    saveGameSettings();
+    // Nic nie robimy - zapis następuje przy kliknięciu "Dalej"
   }
   
   // ===== Ustawienia gry - synchronizacja UI z store =====
