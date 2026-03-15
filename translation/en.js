@@ -3888,6 +3888,15 @@ const en = {
     },
     common: {
       close: "Close",
+      save: "Save",
+      cancel: "Cancel",
+    },
+    rename: {
+      title: "Rename",
+      sub: "Enter new name and save.",
+      placeholder: "Name...",
+      emptyError: "Name cannot be empty.",
+      failed: "Failed to rename.",
     },
     import: {
       title: "IMPORT…",

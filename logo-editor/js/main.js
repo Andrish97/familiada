@@ -105,6 +105,15 @@ const logoExportCount = document.getElementById("logoExportCount");
 const logoExportBar = document.getElementById("logoExportBar");
 const logoExportMsg = document.getElementById("logoExportMsg");
 
+// RENAME modal
+const renameOverlay = document.getElementById("renameOverlay");
+const renameTitle = document.getElementById("renameTitle");
+const renameSub = document.getElementById("renameSub");
+const renameInput = document.getElementById("renameInput");
+const btnRenameOk = document.getElementById("btnRenameOk");
+const btnRenameCancel = document.getElementById("btnRenameCancel");
+const renameMsg = document.getElementById("renameMsg");
+
 /* =========================================================
    STATE
 ========================================================= */
@@ -772,6 +781,46 @@ async function clearActive(){
 }
 
 /* =========================================================
+   RENAME MODAL
+========================================================= */
+let renameMode = "rename";
+let renameLogoId = null;
+
+function openRenameModal(logo){
+  renameMode = "rename";
+  renameLogoId = logo?.id || null;
+  setMsg(renameMsg, "");
+  renameTitle.textContent = t("logoEditor.rename.title");
+  renameSub.textContent = t("logoEditor.rename.sub");
+  renameInput.value = logo?.name || "";
+  show(renameOverlay, true);
+  setTimeout(() => renameInput.select(), 0);
+}
+
+function closeRenameModal(){
+  show(renameOverlay, false);
+}
+
+async function renameOk(){
+  setMsg(renameMsg, "");
+  const val = String(renameInput.value || "").trim();
+  if (!val){
+    setMsg(renameMsg, t("logoEditor.rename.emptyError"));
+    return;
+  }
+  try{
+    if (renameMode === "rename" && renameLogoId){
+      await updateLogo(renameLogoId, { name: val });
+    }
+    await refresh();
+    closeRenameModal();
+  }catch(e){
+    console.error(e);
+    setMsg(renameMsg, t("logoEditor.rename.failed"));
+  }
+}
+
+/* =========================================================
    MINIATURY (prosto: 150x70 b/w)
 ========================================================= */
 function drawThumbFlat150x70(canvas, bits150){
@@ -904,6 +953,15 @@ function renderList(){
     `;
 
     el.addEventListener("click", () => select(key));
+
+    // double-click -> rename (tylko dla logo usera)
+    el.addEventListener("dblclick", (e) => {
+      if (key === "default") return;
+      if (e.target?.classList?.contains("logoX")) return;
+      const l = logos.find(x => x.id === key);
+      if (!l) return;
+      openRenameModal(l);
+    });
 
     // delete
     el.querySelector(".logoX").addEventListener("click", async (ev) => {
@@ -1486,6 +1544,21 @@ async function boot(){
 
   btnPreviewClose?.addEventListener("click", () => show(previewOverlay, false));
   previewOverlay?.addEventListener("click", (ev) => { if (ev.target === previewOverlay) show(previewOverlay, false); });
+
+  // RENAME modal
+  btnRenameCancel?.addEventListener("click", closeRenameModal);
+  renameOverlay?.addEventListener("click", (ev) => { if (ev.target === renameOverlay) closeRenameModal(); });
+  btnRenameOk?.addEventListener("click", renameOk);
+  renameInput?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      btnRenameOk.click();
+    }
+    if (e.key === "Escape") {
+      e.preventDefault();
+      closeRenameModal();
+    }
+  });
 
   await refresh();
 }
