@@ -160,6 +160,10 @@ body.home-body .wrap {
 
 /* MOBILE: Identyczny jak desktop, ale bez kropek i z mniejszym fontem */
 @media (max-width: 640px) {
+  .hero-card h1 {
+    font-size: 22px;
+  }
+
   .pipeline {
     padding: 0 12px;
     height: 42px;
