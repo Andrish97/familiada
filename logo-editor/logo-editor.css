@@ -1037,7 +1037,7 @@
 ========================================================= */
 
 /* =========================================================
-   PREVIEW: modal (prawie pełna szerokość, wysokość jak canvas)
+   PREVIEW: modal (prawie pełna szerokość, canvas widoczny w całości)
 ========================================================= */
 
 /* overlay wyśrodkowuje modal */
@@ -1047,43 +1047,25 @@
   overflow: hidden;
 }
 
-/* modal: prawie 100% szerokości, automatyczna wysokość */
+/* modal: prawie 100% szerokości, wysokość dopasowana do canvasa */
 #previewOverlay .modal.previewModal{
+  position: relative;
   width: min(98vw, 1800px);
   max-width: min(98vw, 1800px);
-  height: auto;
   max-height: min(90vh, 1000px);
   border-radius: var(--radius-lg);
-  padding: 0;
+  padding: 18px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  align-items: center;
 }
 
-/* header z tytułem i X */
-#previewOverlay .previewModalHeader{
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-  padding: 14px 18px;
-  border-bottom: 1px solid rgba(255,255,255,.10);
-  background: rgba(0,0,0,.10);
-}
-
-#previewOverlay .previewModalHeader .mTitle{
-  font-weight: 1000;
-  letter-spacing: .04em;
-  font-size: 16px;
-  margin-bottom: 4px;
-}
-
-#previewOverlay .previewModalHeader .mSub{
-  font-size: 12px;
-  opacity: .75;
-}
-
+/* X przycisk w prawym górnym rogu (absolute) */
 #previewOverlay .previewCloseBtn{
+  position: absolute;
+  top: 10px;
+  right: 10px;
   width: 34px;
   height: 34px;
   min-width: 34px;
@@ -1094,7 +1076,7 @@
   background: rgba(10,16,32,.72);
   border: 1px solid rgba(255,255,255,.28);
   cursor: pointer;
-  flex-shrink: 0;
+  z-index: 10;
 }
 
 #previewOverlay .previewCloseBtn:hover{
@@ -1102,19 +1084,36 @@
   border-color: rgba(255,255,255,.40);
 }
 
-/* kontener canvasa */
+/* tytuł pod przyciskiem X */
+#previewOverlay .previewModalTitle{
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+#previewOverlay .previewModalTitle .mTitle{
+  font-weight: 1000;
+  letter-spacing: .04em;
+  font-size: 16px;
+  margin-bottom: 4px;
+}
+
+#previewOverlay .previewModalTitle .mSub{
+  font-size: 12px;
+  opacity: .75;
+}
+
+/* kontener canvasa - canvas zawsze widoczny w całości */
 #previewOverlay .previewModalCanvas{
   flex: 1;
   min-height: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 18px;
-  background: rgba(0,0,0,.06);
+  width: 100%;
   overflow: hidden;
 }
 
-/* canvas skaluje się do kontenera */
+/* canvas skaluje się do kontenera, zawsze widoczny w całości */
 #previewOverlay .previewModalCanvas canvas{
   display: block;
   width: 100%;
