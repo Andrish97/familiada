@@ -140,7 +140,7 @@ const pl = {
       t9: {
         alt: "Buzzer do pojedynku: osobne urządzenie sygnalizujące kto nacisnął pierwszy.",
         t: "Przycisk do pojedynku (osobne urządzenie)",
-        d: "Osobny „przycisk" daje sygnał kto nacisnął pierwszy w pojedynku. Żadnych sporów — ekran pokazuje zwycięzcę, gra toczy się dalej.",
+        d: "Osobny „przycisk\" daje sygnał kto nacisnął pierwszy w pojedynku. Żadnych sporów — ekran pokazuje zwycięzcę, gra toczy się dalej.",
       },
       t10: {
         alt: "Bazy pytań: wspólna biblioteka z folderami i tagami, udostępniana znajomym.",
