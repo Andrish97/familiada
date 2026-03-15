@@ -153,7 +153,13 @@ function show(el, on){
     el.style.display = "none"; // defensywnie
   }
 }
-function setMsg(t){ if (msg) msg.textContent = t || ""; }
+function setMsg(elOrText, text){
+  // Jeśli pierwszy argument to element, użyj go
+  // Jeśli to string, użyj globalnego msg
+  const el = (typeof elOrText === "string" || !elOrText) ? msg : elOrText;
+  const t = (typeof elOrText === "string" || !elOrText) ? elOrText : text;
+  if (el) el.textContent = t || "";
+}
 function setEditorMsg(t){ if (mMsg) mMsg.textContent = t || ""; }
 function markDirty(){
    if (suppressDirty) return;

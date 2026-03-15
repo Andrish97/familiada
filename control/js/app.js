@@ -1220,6 +1220,22 @@ async function sendZeroStatesToDevices() {
     ui.emit("setup.finish.back");
   });
   
+  // Przyciski w setup_game
+  document.getElementById("btnSetupGameNext")?.addEventListener("click", () => {
+    ui.emit("setup.game.next");
+  });
+  document.getElementById("btnSetupGameBack")?.addEventListener("click", () => {
+    ui.emit("setup.game.back");
+  });
+  
+  // Przyciski w setup_names
+  document.getElementById("btnSetupNext")?.addEventListener("click", () => {
+    ui.emit("setup.next");
+  });
+  document.getElementById("btnBackToDevices")?.addEventListener("click", () => {
+    ui.emit("setup.back");
+  });
+  
   // Nasłuchiwanie zmian w setup_game
   document.getElementById("finalYes")?.addEventListener("change", (e) => {
     if (e.target.checked) updateGameSettingsVisibility();

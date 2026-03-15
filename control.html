@@ -476,14 +476,16 @@
                     <div class="rowBtns" id="finalModeRow">
                       <div class="field">
                         <div class="lbl2" data-i18n="control.finalQuestionsMode">Pytania finału</div>
-                        <label class="radio">
-                          <input type="radio" name="finalMode" value="random" id="finalRandom" />
-                          <span data-i18n="control.finalRandom">Losuj 5 pytań</span>
-                        </label>
-                        <label class="radio">
-                          <input type="radio" name="finalMode" value="pick" id="finalPick" />
-                          <span data-i18n="control.finalPick">Wybierz ręcznie</span>
-                        </label>
+                        
+                        <div class="ios-switch-wrap">
+                          <label class="ios-switch">
+                            <input type="radio" name="finalMode" value="random" id="finalRandom" checked />
+                            <span class="ios-switch-track">
+                              <span class="ios-switch-on" data-i18n="control.finalRandom">Losuj</span>
+                              <span class="ios-switch-off" data-i18n="control.finalPick">Wybierz</span>
+                            </span>
+                          </label>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -491,18 +493,20 @@
                   <!-- ŚRODKOWA SEKCJA - RUNDY -->
                   <div class="sectionBlock">
                     <div class="sectionTitle" data-i18n="control.sectionRounds">Rundy</div>
-                    
+
                     <div class="rowBtns">
                       <div class="field">
                         <div class="lbl2" data-i18n="control.roundsQuestionsMode">Pytania rund</div>
-                        <label class="radio">
-                          <input type="radio" name="roundsMode" value="random" id="roundsRandom" checked />
-                          <span data-i18n="control.roundsRandom">Losuj pytania</span>
-                        </label>
-                        <label class="radio">
-                          <input type="radio" name="roundsMode" value="pick" id="roundsPick" />
-                          <span data-i18n="control.roundsPick">Wybierz ręcznie (kolejność)</span>
-                        </label>
+                        
+                        <div class="ios-switch-wrap">
+                          <label class="ios-switch">
+                            <input type="radio" name="roundsMode" value="random" id="roundsRandom" checked />
+                            <span class="ios-switch-track">
+                              <span class="ios-switch-on" data-i18n="control.roundsRandom">Losuj</span>
+                              <span class="ios-switch-off" data-i18n="control.roundsPick">Wybierz</span>
+                            </span>
+                          </label>
+                        </div>
                       </div>
                     </div>
                   </div>
