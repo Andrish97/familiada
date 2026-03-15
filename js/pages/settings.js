@@ -1658,7 +1658,7 @@ async function loadMailFolder({ silent = false } = {}) {
       msgRows = json.rows || [];
     }
     renderMailList(msgRows);
-    refreshMailList();
+    refreshMailTab();
   } catch (err) {
     if (!silent) showToast(String(err?.message || err), "error");
   }
