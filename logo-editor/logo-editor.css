@@ -1037,39 +1037,90 @@
 ========================================================= */
 
 /* =========================================================
-   PREVIEW: big modal fullscreen, bez scrolla poziomego
+   PREVIEW: modal (prawie pełna szerokość, wysokość jak canvas)
 ========================================================= */
 
-/* overlay nie może generować X-scrolla */
+/* overlay wyśrodkowuje modal */
 #previewOverlay{
+  display: grid;
+  place-items: center;
   overflow: hidden;
 }
 
-/* big modal ma wypełniać ekran */
-#previewOverlay .modal.bigModal{
-  width: 100vw;
-  max-width: 100vw;
-  height: 100vh;
-  max-height: 100vh;
-  border-radius: 0;
+/* modal: prawie 100% szerokości, automatyczna wysokość */
+#previewOverlay .modal.previewModal{
+  width: min(98vw, 1800px);
+  max-width: min(98vw, 1800px);
+  height: auto;
+  max-height: min(90vh, 1000px);
+  border-radius: var(--radius-lg);
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* header z tytułem i X */
+#previewOverlay .previewModalHeader{
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(255,255,255,.10);
+  background: rgba(0,0,0,.10);
+}
+
+#previewOverlay .previewModalHeader .mTitle{
+  font-weight: 1000;
+  letter-spacing: .04em;
+  font-size: 16px;
+  margin-bottom: 4px;
+}
+
+#previewOverlay .previewModalHeader .mSub{
+  font-size: 12px;
+  opacity: .75;
+}
+
+#previewOverlay .previewCloseBtn{
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  border-radius: 999px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(10,16,32,.72);
+  border: 1px solid rgba(255,255,255,.28);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+#previewOverlay .previewCloseBtn:hover{
+  background: rgba(10,16,32,.90);
+  border-color: rgba(255,255,255,.40);
+}
+
+/* kontener canvasa */
+#previewOverlay .previewModalCanvas{
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 18px;
-  overflow-x: hidden;     /* kluczowe */
-  overflow-y: auto;       /* tylko pion */
-  box-sizing: border-box;
+  background: rgba(0,0,0,.06);
+  overflow: hidden;
 }
 
-/* kontener canvasa nie może wypychać */
-#previewOverlay .bigModalCanvas{
-  max-width: 100%;
-  overflow: hidden;       /* kluczowe */
-}
-
-/* canvas skaluje się do szerokości ekranu (bez X-scrolla) */
-#previewOverlay .bigModalCanvas canvas{
+/* canvas skaluje się do kontenera */
+#previewOverlay .previewModalCanvas canvas{
   display: block;
   width: 100%;
-  max-width: 100%;
   height: auto;
+  max-height: 100%;
+  image-rendering: pixelated;
 }
 
 /* =========================================================
