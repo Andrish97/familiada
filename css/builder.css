@@ -67,7 +67,7 @@ body.builder-body > main.wrap{
    ale przywracamy sensowny padding (żeby nie lepiło do krawędzi). */
 .wrap{
   width: 100%;
-  max-width: 1120px;
+  max-width: 90%;
   margin: 0 auto;
   padding: 18px;
   box-sizing: border-box;
