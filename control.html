@@ -463,14 +463,14 @@
                       <div class="field">
                         <div class="lbl2" data-i18n="control.playFinal">Gramy finał?</div>
                         
-                        <div class="ios-switch-wrap">
-                          <label class="ios-switch">
+                        <div class="toggle-group">
+                          <label class="toggle-item">
                             <input type="radio" name="hasFinal" value="yes" id="finalYes" />
-                            <span class="ios-switch-track">
-                              <span class="ios-switch-knob"></span>
-                              <span class="ios-switch-on" data-i18n="common.yes">Tak</span>
-                              <span class="ios-switch-off" data-i18n="common.no">Nie</span>
-                            </span>
+                            <span class="toggle-slider" data-text="Tak"></span>
+                          </label>
+                          <label class="toggle-item">
+                            <input type="radio" name="hasFinal" value="no" id="finalNo" checked />
+                            <span class="toggle-slider" data-text="Nie"></span>
                           </label>
                         </div>
                       </div>
@@ -480,14 +480,14 @@
                       <div class="field">
                         <div class="lbl2" data-i18n="control.finalQuestionsMode">Pytania finału</div>
                         
-                        <div class="ios-switch-wrap">
-                          <label class="ios-switch">
+                        <div class="toggle-group">
+                          <label class="toggle-item">
                             <input type="radio" name="finalMode" value="random" id="finalRandom" checked />
-                            <span class="ios-switch-track">
-                              <span class="ios-switch-knob"></span>
-                              <span class="ios-switch-on" data-i18n="control.finalRandom">Losuj</span>
-                              <span class="ios-switch-off" data-i18n="control.finalPick">Wybierz</span>
-                            </span>
+                            <span class="toggle-slider" data-text="Losuj"></span>
+                          </label>
+                          <label class="toggle-item">
+                            <input type="radio" name="finalMode" value="pick" id="finalPick" />
+                            <span class="toggle-slider" data-text="Wybierz"></span>
                           </label>
                         </div>
                       </div>
@@ -502,14 +502,14 @@
                       <div class="field">
                         <div class="lbl2" data-i18n="control.roundsQuestionsMode">Pytania rund</div>
                         
-                        <div class="ios-switch-wrap">
-                          <label class="ios-switch">
+                        <div class="toggle-group">
+                          <label class="toggle-item">
                             <input type="radio" name="roundsMode" value="random" id="roundsRandom" checked />
-                            <span class="ios-switch-track">
-                              <span class="ios-switch-knob"></span>
-                              <span class="ios-switch-on" data-i18n="control.roundsRandom">Losuj</span>
-                              <span class="ios-switch-off" data-i18n="control.roundsPick">Wybierz</span>
-                            </span>
+                            <span class="toggle-slider" data-text="Losuj"></span>
+                          </label>
+                          <label class="toggle-item">
+                            <input type="radio" name="roundsMode" value="pick" id="roundsPick" />
+                            <span class="toggle-slider" data-text="Wybierz"></span>
                           </label>
                         </div>
                       </div>
