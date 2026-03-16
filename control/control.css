@@ -150,12 +150,14 @@
    TOGGLE SWITCH (obwódka + slider z napisem)
 ========================================================= */
 .toggle-group{
-  display: inline-flex;
-  gap: 4px;
-  padding: 3px;
+  display: inline-grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
   border-radius: 22px;
   background: rgba(0,0,0,.24);
   border: 2px solid rgba(255,255,255,.12);
+  overflow: hidden;
+  width: fit-content;
 }
 
 .toggle-item{
@@ -172,8 +174,7 @@
 
 .toggle-slider{
   display: block;
-  padding: 9px 24px;
-  border-radius: 18px;
+  padding: 10px 20px;
   background: transparent;
   color: var(--gold);
   font-weight: 700;
@@ -182,10 +183,24 @@
   transition: background .24s ease, color .24s ease;
   position: relative;
   white-space: nowrap;
+  text-align: center;
+  border-radius: 0;
 }
 
 .toggle-slider::before{
   content: attr(data-text);
+}
+
+/* Pierwszy element - zaokrąglenie lewe */
+.toggle-item:first-child .toggle-slider{
+  border-top-left-radius: 20px;
+  border-bottom-left-radius: 20px;
+}
+
+/* Ostatni element - zaokrąglenie prawe */
+.toggle-item:last-child .toggle-slider{
+  border-top-right-radius: 20px;
+  border-bottom-right-radius: 20px;
 }
 
 /* Stan: checked (wybrane) */
