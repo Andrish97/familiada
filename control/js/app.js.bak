@@ -1347,11 +1347,7 @@ async function sendZeroStatesToDevices() {
   document.getElementById("btnSetupFinalBack")?.addEventListener("click", () => {
     ui.emit("setup.final.back");
   });
-  // Przycisk dalej w setup_final
-  document.getElementById("btnSetupFinish")?.addEventListener("click", () => {
-    ui.emit("setup.final.next");
-  });
-
+  
   // Przyciski w setup_rounds
   document.getElementById("btnSetupRoundsBack")?.addEventListener("click", () => {
     ui.emit("setup.rounds.back");
