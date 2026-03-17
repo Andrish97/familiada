@@ -108,7 +108,7 @@ function applyControlModalLayout() {
 
 function shouldShowDemoTab() {
   const retPath = getRetPathnameLower();
-  return retPath.endsWith("/builder");
+  return retPath.endsWith("/builder") || retPath.endsWith("/builder.html");
 }
 
 function buildPrivacyUrl() {
