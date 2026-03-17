@@ -1205,8 +1205,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           .filter((x) => x.text);
 
         if (final.length < 3) {
-          await alertModal({ text: t("polls.textClose.minAnswers", { ord: q.ord }) });
-          return;
+          throw new Error(t("polls.textClose.minAnswers", { ord: q.ord }));
         }
 
         payloadItems.push({ question_id: q.question_id, answers: final });
