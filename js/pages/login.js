@@ -543,6 +543,7 @@ const nextTarget = params.get("next");
 const nextTask = params.get("t");
 const nextSub = params.get("s");
 const guestUsername = params.get("guest_username") === "1";
+const setupUsername = params.get("setup") === "username";
 const guestExpired = params.get("guest_expired") === "1";
 const forceAuth = params.get("force_auth") === "1";
 
@@ -828,7 +829,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       setStatus(t("index.statusLoggedOut"));
     } else {
       await syncLanguage();
-      if (!u.username) {
+      if (setupUsername || !u.username) {
         openUsernameSetup();
       } else if (nextTarget === "polls-hub" || nextTarget === "subscriptions") {
         location.href = buildNextUrl();
