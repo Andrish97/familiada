@@ -146,10 +146,10 @@ async function loadBrowse({ reset = false } = {}) {
 
 function makeGameCard(g) {
   const card = document.createElement("div");
-  card.className = "mkt-card";
+  const isProducer = g.origin === "producer" || !g.author_username || g.author_username === "";
+  card.className = "mkt-card" + (isProducer ? " mkt-card-producer" : "");
   card.dataset.id = g.id;
 
-  const isProducer = g.origin === "producer" || !g.author_username || g.author_username === "";
   const authorLabel = isProducer
     ? `<span class="mkt-badge mkt-badge-producer">${esc(t("marketplace.producerBadge"))}</span>`
     : `<span class="mkt-author">${esc(t("marketplace.authorLabel").replace("{author}", g.author_username))}</span>`;
@@ -190,8 +190,11 @@ async function openDetail(id) {
   if (els.detailTitle) els.detailTitle.textContent = g.title;
   if (els.detailMeta) {
     const isProducer = g.origin === "producer" || !g.author_username;
-    const author = isProducer ? t("marketplace.producerBadge") : g.author_username;
-    els.detailMeta.textContent = `${g.lang.toUpperCase()} · ${author}`;
+    if (isProducer) {
+      els.detailMeta.innerHTML = `${esc(g.lang.toUpperCase())} · <span class="mkt-badge mkt-badge-producer">${esc(t("marketplace.producerBadge"))}</span>`;
+    } else {
+      els.detailMeta.textContent = `${g.lang.toUpperCase()} · ${g.author_username}`;
+    }
   }
   if (els.detailDesc) els.detailDesc.textContent = g.description || "";
 

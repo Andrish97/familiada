@@ -94,6 +94,11 @@ body.mkt-body > main.wrap {
   background: rgba(255,255,255,.09);
 }
 
+.mkt-card-producer {
+  border-color: rgba(255,234,166,.15);
+  background: linear-gradient(135deg, var(--card) 0%, rgba(255,234,166,.03) 100%);
+}
+
 .mkt-card-top {
   display: flex;
   align-items: center;

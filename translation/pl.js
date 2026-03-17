@@ -2659,7 +2659,7 @@ const pl = {
     },
     header: {
       title: "Twoje gry",
-      hint: "Kliknij kafelek, żeby go zaznaczyć.",
+      hint: "Kliknij kafelek, żeby go zaznaczyć. Podwójne kliknięcie zmienia nazwę.",
     },
     actions: {
       edit: "Edytuj",
@@ -2752,6 +2752,16 @@ const pl = {
         failed: "Eksport nieudany.",
       },
     },
+    nameModal: {
+      title: "Zmień nazwę",
+      sub: "Podaj nową nazwę gry.",
+      placeholder: "Nazwa...",
+      failed: "Nie udało się zmienić nazwy.",
+    },
+    common: {
+      save: "Zapisz",
+      cancel: "Anuluj",
+    },
     card: {
       delete: "Usuń",
       newGame: "Nowa gra",
@@ -2786,8 +2796,8 @@ const pl = {
       openPollFailed: "Nie udało się otworzyć sondażu.",
     },
     hint: {
-      select: "Zaznacz grę, aby włączyć akcje.",
-      selectPlus: "Zaznacz grę, aby włączyć akcje i eksport.",
+      select: "Zaznacz grę, aby włączyć akcje. Podwójne kliknięcie zmienia nazwę.",
+      selectPlus: "Zaznacz grę, aby włączyć akcje i eksport. Podwójne kliknięcie zmienia nazwę.",
     },
     editAfterPoll: {
       title: "Zresetować sondaż?",
