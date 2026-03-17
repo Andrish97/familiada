@@ -17,6 +17,7 @@ import {
   hasGuestLocalMarker,
   clearGuestLocalMarker,
   initPasswordToggles,
+  resetPasswordToggles,
 } from "../core/auth.js";
 import { isGuestUser } from "../core/guest-mode.js";
 import { alertModal, confirmModal } from "../core/modal.js";
@@ -781,6 +782,9 @@ function applyMode() {
   document.body.classList.toggle("mode-register", mode === "register");
   if (pwdHint && mode !== "register") pwdHint.textContent = "";
   setErr("");
+
+  // Reset password visibility on mode switch
+  resetPasswordToggles();
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
