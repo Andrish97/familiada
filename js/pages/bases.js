@@ -1531,17 +1531,9 @@ function buildManualUrl() {
   const url = new URL("manual", location.href);
   url.searchParams.set("ret", getCurrentRelativeUrl());
   url.searchParams.set("lang", getUiLang() || "pl");
+  url.hash = "bases";
   return url.toString();
 }
-
-/* ================= Events ================= */
-btnBack?.addEventListener("click", () => {
-  location.href = getBackLink();
-});
-
-btnManual?.addEventListener("click", () => {
-  location.href = buildManualUrl();
-});
 
 btnGoAlt?.addEventListener("click", async () => {
   const page = document.body.dataset.altPage || "subscriptions";

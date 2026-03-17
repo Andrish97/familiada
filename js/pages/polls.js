@@ -108,6 +108,7 @@ function buildManualUrl() {
   url.searchParams.set("ret", current);
   const lang = (new URLSearchParams(location.search).get("lang") || localStorage.getItem("uiLang") || "pl");
   url.searchParams.set("lang", lang);
+  url.hash = "polls";
   return url.toString();
 }
 

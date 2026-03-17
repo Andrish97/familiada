@@ -33,6 +33,7 @@ function buildManualUrl() {
   const ret = `${location.pathname.split("/").slice(-2).join("/")}${location.search}${location.hash}`;
   url.searchParams.set("ret", ret);
   url.searchParams.set("lang", getUiLang() || "pl");
+  url.hash = "bases";
   return url.toString();
 }
 

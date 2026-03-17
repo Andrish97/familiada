@@ -43,6 +43,7 @@ function buildManualUrl() {
   const ret = `${location.pathname.split("/").pop() || "account"}${location.search}${location.hash}`;
   url.searchParams.set("ret", ret);
   url.searchParams.set("lang", getUiLang() || "pl");
+  url.hash = "general";
   return url.toString();
 }
 function setErr(m = "") { if (err) err.textContent = m; }
