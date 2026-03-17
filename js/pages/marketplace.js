@@ -492,7 +492,7 @@ function esc(str) {
 function wireEvents() {
   // Nav
   els.btnGoBuilder?.addEventListener("click", () => {
-    window.location.href = withLangParam(!currentUser ? "index.html" : "builder.html");
+    window.location.href = withLangParam(!currentUser ? "/" : "builder");
   });
   els.btnManual?.addEventListener("click", () => {
     const url = new URL("manual", location.href);
@@ -501,11 +501,11 @@ function wireEvents() {
     location.href = url.toString();
   });
   els.btnAccount?.addEventListener("click", () => {
-    window.location.href = withLangParam("account.html");
+    window.location.href = withLangParam("account");
   });
   els.btnLogout?.addEventListener("click", async () => {
     await sb().auth.signOut();
-    window.location.href = withLangParam("login.html");
+    window.location.href = withLangParam("login");
   });
 
   // Browse
@@ -586,7 +586,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (els.btnAccount) els.btnAccount.style.display = "none";
     if (els.whoStatic)  els.whoStatic.style.display = "none";
     if (els.btnLogout)  els.btnLogout.textContent = t("common.authEntry");
-    if (els.btnLogout)  els.btnLogout.onclick = () => { window.location.href = withLangParam("login.html"); };
+    if (els.btnLogout)  els.btnLogout.onclick = () => { window.location.href = withLangParam("login"); };
   } else if (isGuest) {
     if (els.btnAccount) els.btnAccount.style.display = "none";
     if (els.whoStatic)  els.whoStatic.style.display = "";
