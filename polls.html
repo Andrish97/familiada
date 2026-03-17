@@ -71,6 +71,7 @@
 
       <div class="row">
         <button class="btn sm gold" id="btnPollAction" type="button">—</button>
+        <button class="btn sm" id="btnCancelTextCloseTop" type="button" style="display:none;" data-i18n="polls.actions.cancel">Anuluj</button>
         <button class="btn sm" id="btnRefreshResults" type="button">
           <span data-i18n="polls.actions.refresh">⟳ Odśwież wyniki</span>
         </button>
@@ -78,7 +79,13 @@
 
       <!-- panel dla poll_text: edycja/łączenie/usuwanie + finalizacja -->
       <div class="card" id="textCloseCard" style="display:none; margin-top:12px;">
-        <div class="name" data-i18n="polls.textClose.title">Zamykanie — edycja odpowiedzi</div>
+        <div class="name" style="display:flex; justify-content:space-between; align-items:center;">
+          <span data-i18n="polls.textClose.title">Zamykanie — edycja odpowiedzi</span>
+          <div class="tcHistoryTools">
+            <button class="btn sm" id="btnUndo" type="button" title="Cofnij" disabled>↩</button>
+            <button class="btn sm" id="btnRedo" type="button" title="Ponów" disabled>↪</button>
+          </div>
+        </div>
         <div class="meta" id="textCloseMeta">—</div>
         <div id="textCloseList" style="margin-top:10px; display:grid; gap:12px;"></div>
 

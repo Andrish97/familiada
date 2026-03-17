@@ -49,11 +49,46 @@ const textCloseCard = $("textCloseCard");
 const textCloseMeta = $("textCloseMeta");
 const textCloseList = $("textCloseList");
 const btnCancelTextClose = $("btnCancelTextClose");
+const btnCancelTextCloseTop = $("btnCancelTextCloseTop");
 const btnFinishTextClose = $("btnFinishTextClose");
+const btnUndo = $("btnUndo");
+const btnRedo = $("btnRedo");
 
 let game = null;
 let textCloseModel = null;
 let uiTextCloseOpen = false;
+
+let undoStack = [];
+let redoStack = [];
+
+function saveSnapshot() {
+  if (!textCloseModel) return;
+  // głęboka kopia modelu
+  undoStack.push(JSON.parse(JSON.stringify(textCloseModel)));
+  redoStack = []; // nowa akcja czyści redo
+  updateHistoryButtons();
+}
+
+function updateHistoryButtons() {
+  if (btnUndo) btnUndo.disabled = undoStack.length === 0;
+  if (btnRedo) btnRedo.disabled = redoStack.length === 0;
+}
+
+function undoAction() {
+  if (!uiTextCloseOpen || undoStack.length === 0) return;
+  redoStack.push(JSON.parse(JSON.stringify(textCloseModel)));
+  textCloseModel = undoStack.pop();
+  updateHistoryButtons();
+  if (window._textCloseRerenderAll) window._textCloseRerenderAll();
+}
+
+function redoAction() {
+  if (!uiTextCloseOpen || redoStack.length === 0) return;
+  undoStack.push(JSON.parse(JSON.stringify(textCloseModel)));
+  textCloseModel = redoStack.pop();
+  updateHistoryButtons();
+  if (window._textCloseRerenderAll) window._textCloseRerenderAll();
+}
 
 const backTarget = ret || "builder";
 
@@ -108,10 +143,16 @@ function setTextCloseUi(open) {
 
   // ukryj główne przyciski gdy panel textClose otwarty
   if (btnPollAction) btnPollAction.style.display = open ? "none" : "";
+  if (btnCancelTextCloseTop) btnCancelTextCloseTop.style.display = open ? "" : "none";
   if (btnRefreshResults) btnRefreshResults.style.display = open ? "none" : "";
 
   // wyniki: widoczne zawsze, ale nie podczas textClose
   if (resultsCard) resultsCard.style.display = open ? "none" : "";
+
+  // czyść historię
+  undoStack = [];
+  redoStack = [];
+  updateHistoryButtons();
 }
 
 function resetPreviewDomCache() {
@@ -752,6 +793,20 @@ function mergeDuplicatesInPlace(items) {
   return [...map.values()].sort((a, b) => b.count - a.count);
 }
 
+function validateTextCloseModel() {
+  if (!textCloseModel || !btnFinishTextClose) return;
+
+  let allOk = true;
+  for (const q of textCloseModel) {
+    const validCount = q.items.filter((it) => it.text?.trim() && Number(it.count) > 0).length;
+    if (validCount < 3) {
+      allOk = false;
+      break;
+    }
+  }
+  btnFinishTextClose.disabled = !allOk;
+}
+
 async function buildTextClosePanel() {
   setTextCloseUi(true);
   if (textCloseList) textCloseList.innerHTML = "";
@@ -786,9 +841,20 @@ async function buildTextClosePanel() {
     model.push({ question_id: q.id, ord: q.ord, text: q.text, items });
   }
 
+  textCloseModel = model;
+  window._textCloseRerenderAll = renderTextCloseFromModel;
+  renderTextCloseFromModel();
+
+  return textCloseModel;
+}
+
+function renderTextCloseFromModel() {
+  if (!textCloseList) return;
+  textCloseList.innerHTML = "";
+
   if (textCloseMeta) textCloseMeta.textContent = t("polls.textClose.instructions");
 
-  for (const q of model) {
+  for (const q of textCloseModel) {
     const box = document.createElement("div");
     box.className = "tcQ";
     box.innerHTML = `
@@ -808,6 +874,7 @@ async function buildTextClosePanel() {
     const btnDup = box.querySelector(".tcMergeDup");
 
     btnDup?.addEventListener("click", () => {
+      saveSnapshot();
       q.items = mergeDuplicatesInPlace(q.items);
       rerender();
     });
@@ -815,6 +882,7 @@ async function buildTextClosePanel() {
     const rerender = () => {
       list.innerHTML = "";
       q.items.sort((a, b) => b.count - a.count);
+      validateTextCloseModel();
 
       for (let idx = 0; idx < q.items.length; idx++) {
         const it = q.items[idx];
@@ -832,12 +900,55 @@ async function buildTextClosePanel() {
         inp.value = it.text;
 
         inp.addEventListener("input", () => {
+          // edycja tekstu nie wymaga saveSnapshot przy każdym klawiszu, 
+          // ale zrobimy to by historia była dokładna.
+          // Aby nie spamować stosu, zapisujemy tylko przy pierwszym klawiszu w serii lub po stracie focusu.
+          // Dla uproszczenia: saveSnapshot przed każdą ZMIANĄ niszczącą, 
+          // a dla tekstu - przy blur lub gdy faktycznie się zmienił.
+        });
+        
+        inp.addEventListener("focus", () => {
+          inp._lastVal = inp.value;
+        });
+        inp.addEventListener("blur", () => {
+          if (inp.value !== inp._lastVal) {
+            // Tutaj jest problem: model już ma nową wartość z 'input'.
+            // Cofnijmy się: zapisujmy snapshot przy focusie lub użyjmy prostszego podejścia.
+          }
+        });
+        
+        // Prostsz podejście: każda zmiana to snapshot, ale dla inputa damy mały debounce lub save przy zmianie
+        inp.addEventListener("change", () => {
+          // 'change' odpala się po stracie focusu jeśli zaszła zmiana
+          // Ale musimy mieć stan sprzed zmiany.
+        });
+
+        // NAJPROSTSZE I NAJSKUTECZNIEJSZE:
+        // Wszystkie niszczące akcje (del, merge) mają saveSnapshot().
+        // Dla edycji tekstu zrobimy saveSnapshot() przy 'focus'.
+        inp.addEventListener("focus", () => {
+          inp._baseValue = inp.value;
+        });
+        inp.addEventListener("input", () => {
           it.text = inp.value;
+          validateTextCloseModel();
+        });
+        inp.addEventListener("change", () => {
+          if (inp.value !== inp._baseValue) {
+            const currentVal = inp.value;
+            inp.value = inp._baseValue; // przywróć na chwilę
+            it.text = inp._baseValue;
+            saveSnapshot(); // zapisz stary stan
+            inp.value = currentVal; // daj nowy
+            it.text = currentVal;
+            updateHistoryButtons();
+          }
         });
 
         row.querySelector(".tcCnt").textContent = String(it.count || 0);
 
         row.querySelector(".tcDel").addEventListener("click", () => {
+          saveSnapshot();
           q.items.splice(idx, 1);
           rerender();
         });
@@ -859,6 +970,7 @@ async function buildTextClosePanel() {
           const toIt = q.items[toIdx];
           if (!fromIt || !toIt) return;
 
+          saveSnapshot();
           toIt.count += fromIt.count;
           q.items.splice(fromIdx, 1);
           rerender();
@@ -871,8 +983,6 @@ async function buildTextClosePanel() {
     rerender();
     textCloseList?.appendChild(box);
   }
-
-  return model;
 }
 
 /* =======================
@@ -1183,6 +1293,34 @@ document.addEventListener("DOMContentLoaded", async () => {
     setTextCloseUi(false);
     setMsg(t("polls.textClose.cancelled"));
     void refresh();
+  });
+
+  btnCancelTextCloseTop?.addEventListener("click", () => {
+    setTextCloseUi(false);
+    setMsg(t("polls.textClose.cancelled"));
+    void refresh();
+  });
+
+  btnUndo?.addEventListener("click", undoAction);
+  btnRedo?.addEventListener("click", redoAction);
+
+  // Globalne skróty klawiszowe (tylko w trybie zamykania)
+  document.addEventListener("keydown", (e) => {
+    if (!uiTextCloseOpen) return;
+
+    const isZ = e.key.toLowerCase() === "z";
+    const isY = e.key.toLowerCase() === "y";
+    const ctrl = e.ctrlKey || e.metaKey;
+    const shift = e.shiftKey;
+
+    if (ctrl && isZ) {
+      e.preventDefault();
+      if (shift) redoAction();
+      else undoAction();
+    } else if (ctrl && isY) {
+      e.preventDefault();
+      redoAction();
+    }
   });
 
   btnFinishTextClose?.addEventListener("click", async () => {
