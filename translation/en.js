@@ -2662,7 +2662,7 @@ const en = {
     },
     header: {
       title: "Your games",
-      hint: "Click a tile to select it.",
+      hint: "Click a tile to select it. Double-click to rename.",
     },
     actions: {
       edit: "Edit",
@@ -2755,6 +2755,16 @@ const en = {
         failed: "Export failed.",
       },
     },
+    nameModal: {
+      title: "Rename",
+      sub: "Enter a new game name.",
+      placeholder: "Name...",
+      failed: "Rename failed.",
+    },
+    common: {
+      save: "Save",
+      cancel: "Cancel",
+    },
     card: {
       delete: "Delete",
       newGame: "New game",
@@ -2789,8 +2799,8 @@ const en = {
       openPollFailed: "Failed to open poll.",
     },
     hint: {
-      select: "Select a game to enable actions.",
-      selectPlus: "Select a game to enable actions and export options.",
+      select: "Select a game to enable actions. Double-click to rename.",
+      selectPlus: "Select a game to enable actions and export options. Double-click to rename.",
     },
     editAfterPoll: {
       title: "Reset poll?",

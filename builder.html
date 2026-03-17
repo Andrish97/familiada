@@ -69,7 +69,7 @@
     <div class="bar">
       <div>
         <div class="title" data-i18n="builder.header.title">Twoje gry</div>
-        <div class="hint" id="hint" data-i18n="builder.header.hint">Kliknij kafelek, żeby go zaznaczyć.</div>
+        <div class="hint" id="hint" data-i18n="builder.header.hint">Kliknij kafelek, żeby go zaznaczyć. Podwójne kliknięcie zmienia nazwę.</div>
       </div>
 
       <div class="actions">
@@ -282,6 +282,24 @@
         </div>
   
         <div class="importMsg" id="exportJsonMsg" style="min-height:18px"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: zmiana nazwy -->
+  <div class="overlay" id="nameOverlay" style="display:none;">
+    <div class="modal">
+      <div class="mTitle" id="nameTitle" data-i18n="builder.nameModal.title">Zmień nazwę</div>
+      <div class="mSub" id="nameSub" data-i18n="builder.nameModal.sub">Podaj nową nazwę gry.</div>
+
+      <div class="importRow">
+        <input id="nameInp" class="inp" type="text" maxlength="80" placeholder="Nazwa..." data-i18n-placeholder="builder.nameModal.placeholder"/>
+      </div>
+
+      <div class="importRow">
+        <button class="btn sm gold" id="btnNameOk" type="button" data-i18n="builder.common.save">Zapisz</button>
+        <button class="btn sm" id="btnNameCancel" type="button" data-i18n="builder.common.cancel">Anuluj</button>
+        <div class="importMsg" id="nameMsg"></div>
       </div>
     </div>
   </div>

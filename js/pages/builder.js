@@ -151,12 +151,23 @@ const exportJsonCount = document.getElementById("exportJsonCount");
 const exportJsonBar = document.getElementById("exportJsonBar");
 const exportJsonMsg = document.getElementById("exportJsonMsg");
 
+// Modal zmiany nazwy
+const nameOverlay = document.getElementById("nameOverlay");
+const nameTitle = document.getElementById("nameTitle");
+const nameSub = document.getElementById("nameSub");
+const nameInp = document.getElementById("nameInp");
+const btnNameOk = document.getElementById("btnNameOk");
+const btnNameCancel = document.getElementById("btnNameCancel");
+const nameMsg = document.getElementById("nameMsg");
+
 /* ================= STATE ================= */
 let currentUser = null;
 let gamesAll = [];
 let selectedId = null;
 let marketGamesAll = [];
 let selectedMarketId = null;
+
+let renamingGameId = null;
 
 // =======================================================
 // Auto-refresh (jak polls-hub)
@@ -168,7 +179,7 @@ let autoRefreshTimer = null;
 let builderRefreshInFlight = null;
 
 function anyOverlayOpen() {
-  const ovs = [importOverlay, exportBaseOverlay, exportJsonOverlay];
+  const ovs = [importOverlay, exportBaseOverlay, exportJsonOverlay, nameOverlay];
   return ovs.some((ov) => ov && (ov.style.display === "grid" || ov.style.display === "block" || ov.style.display === ""));
 }
 
@@ -314,6 +325,37 @@ function openImportModal() {
   show(importOverlay, true);
 }
 function closeImportModal() { show(importOverlay, false); }
+
+function setNameMsg(t) {
+  if (!nameMsg) return;
+  nameMsg.textContent = t || "";
+}
+
+function openRenameModal(game) {
+  if (!game) return;
+  renamingGameId = game.id;
+  setNameMsg("");
+  if (nameInp) nameInp.value = game.name || "";
+  show(nameOverlay, true);
+  setTimeout(() => nameInp?.select(), 0);
+}
+
+function closeRenameModal() {
+  renamingGameId = null;
+  show(nameOverlay, false);
+}
+
+async function renameGame(gameId, newName) {
+  const val = String(newName || "").trim();
+  if (!val) return;
+
+  const { error } = await sb()
+    .from("games")
+    .update({ name: val })
+    .eq("id", gameId);
+
+  if (error) throw error;
+}
 
 function setExportBaseMsg(t) {
   if (!exportBaseMsg) return;
@@ -735,6 +777,10 @@ function cardGame(g) {
     selectedId = g.id;
     render();
     await updateActionState();
+  });
+
+  el.addEventListener("dblclick", () => {
+    openRenameModal(g);
   });
 
   el.querySelector(".x").addEventListener("click", async (e) => {
@@ -1403,6 +1449,38 @@ document.addEventListener("DOMContentLoaded", async () => {
   // IMPORT (modal)
   btnImport?.addEventListener("click", openImportModal);
   btnCancelImport?.addEventListener("click", closeImportModal);
+
+  // RENAME (modal)
+  btnNameCancel?.addEventListener("click", closeRenameModal);
+  nameOverlay?.addEventListener("click", (ev) => { if (ev.target === nameOverlay) closeRenameModal(); });
+  btnNameOk?.addEventListener("click", async () => {
+    if (!renamingGameId) return;
+    const val = String(nameInp?.value || "").trim();
+    if (!val) return;
+
+    if (btnNameOk) btnNameOk.disabled = true;
+    setNameMsg("");
+
+    try {
+      await renameGame(renamingGameId, val);
+      await refresh();
+      closeRenameModal();
+    } catch (e) {
+      console.error("[builder] rename error:", e);
+      setNameMsg(t("builder.nameModal.failed"));
+    } finally {
+      if (btnNameOk) btnNameOk.disabled = false;
+    }
+  });
+  nameInp?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      btnNameOk?.click();
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      closeRenameModal();
+    }
+  });
 
   btnImportFile?.addEventListener("click", async () => {
     try {
