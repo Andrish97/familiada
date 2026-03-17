@@ -1131,6 +1131,7 @@ function buildManualPageUrl() {
   const ret = `${location.pathname.split("/").slice(-2).join("/")}${location.search}${location.hash}`;
   url.searchParams.set("ret", ret);
   url.searchParams.set("lang", getUiLang() || "pl");
+  url.hash = "logo";
   return url.toString();
 }
 

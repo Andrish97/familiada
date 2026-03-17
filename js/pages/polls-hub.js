@@ -1020,6 +1020,7 @@ function buildManualUrl() {
   const url = new URL("manual", location.href);
   url.searchParams.set("ret", getCurrentRelativeUrl());
   url.searchParams.set("lang", getUiLang() || "pl");
+  url.hash = "polls";
   return url.toString();
 }
 
@@ -1028,8 +1029,6 @@ function updateBackButtonLabel() {
   if (!btnBack) return;
   const retPath = getRetPathnameLower();
   btnBack.textContent = retPath.endsWith("/bases")
-    ? t("baseExplorer.backToBases")
-    : t("pollsHubPolls.backToGames");
 }
 
 function getBackLink() {

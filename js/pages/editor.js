@@ -510,6 +510,7 @@ async function boot() {
     const url = new URL("manual", location.href);
     const ret = `${location.pathname.split("/").pop() || ""}${location.search}${location.hash}`;
     url.searchParams.set("ret", ret);
+    url.hash = "edit";
     location.href = url.toString();
   });
 

@@ -650,6 +650,7 @@ function buildManualUrl() {
   const url = new URL("manual", location.href);
   url.searchParams.set("ret", getCurrentRelativeUrl());
   url.searchParams.set("lang", getUiLang() || "pl");
+  url.hash = "subscriptions";
   return url.toString();
 }
 
