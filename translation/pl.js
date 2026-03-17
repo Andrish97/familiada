@@ -1147,8 +1147,7 @@ const pl = {
       </p>
 
       <p class="m-p">
-        W praktyce oznacza to, że w dniu nagrania
-        operator nie musi edytować danych,
+        W praktyce oznacza to, że operator nie musi edytować danych,
         prowadzący skupia się na rozmowie z uczestnikami,
         a system pilnuje kolejności etapów i logiki rozgrywki.
         Zmniejsza to ryzyko pomyłek i przyspiesza przebieg gry.
@@ -1214,7 +1213,7 @@ const pl = {
           <span class="m-strong">Preparowany</span> —
           odpowiedzi i punkty są ustalane ręcznie,
           bez udziału sondażu.
-        </li>
+        </li><li><span class="m-strong">Gry społeczności</span>&nbsp;— odpowiedzi i punkty są pobrane z biblioteki Gier Społeczności, bez udziału sondażu.</li>
       </ul>
     
       <p class="m-p">
@@ -1306,7 +1305,7 @@ const pl = {
       </p>
     
       <div class="m-note">
-        <b>Dlaczego tak jest?</b><br/>
+        <b>Dlaczego tak jest?</b><br>
         Dzięki temu to, co widzi widz na tablicy,
         zawsze odpowiada rzeczywistym wynikom sondażu
         albo jasno określonej, ręcznej punktacji.
@@ -1365,24 +1364,18 @@ const pl = {
         <li>w folderze zapisywane są wszystkie pytania należące do gry</li>
       </ul>
 
-      <p class="m-note">
-        Eksportować możesz tylko do swojej własnej bazy lub do udostępnionej bazy której jesteś edytorem.
+      <p class="m-note">Eksport do bazy nie usuwa gry — tworzy jedynie jej kopię w postaci struktury pytań.<br><br>Eksportować możesz tylko do swojej własnej bazy lub do udostępnionej bazy której jesteś edytorem.
         Jeśli nie posiadasz aktualnie żadnych baz, nie będziesz mógł eksportować.
       </p>
       
       <p class="m-p">
-        Dzięki temu każda gra może zostać zamieniona w zestaw pytań do dalszej edycji,
+        Dzięki eksportowi do bazy każda gra może zostać zamieniona w zestaw pytań do dalszej edycji,
         organizowania w folderach, oznaczania tagami oraz ponownego wykorzystania
-        w kolejnych grach.
-      </p>
-      
-      <p class="m-note">
-        Eksport do bazy nie usuwa gry — tworzy jedynie jej kopię w postaci struktury pytań.
-      </p>`,
+        w kolejnych grach.</p>`,
       bases: `<h2 class="m-h2">Bazy pytań — organizacja i współpraca</h2>
   
       <p class="m-p">
-        Bazy pytań to centralne miejsce przechowywania wszystkich pytań używanych w grach.
+        Bazy pytań to miejsce do przechowywania pytań używanych w grach.
         Dzięki nim możesz porządkować pytania w folderach, oznaczać je tagami, przypisywać do kategorii
         oraz współdzielić całe bazy z innymi użytkownikami.
       </p>
@@ -1515,7 +1508,7 @@ const pl = {
   
       <p class="m-p">
         Kategorie to specjalne oznaczenia systemowe określające,
-        do jakiego typu gry dane pytanie pasuje. Co odpowiada typom gier w widoku <span class="m-strong">Moje gry</span></li>
+        do jakiego typu gry dane pytanie pasuje. Co odpowiada typom gier w widoku <span class="m-strong">Moje gry</span>
       </p>
   
       <p class="m-p">
@@ -1574,7 +1567,7 @@ const pl = {
       </p>
 
       <p class="m-warn">
-        Po pomyślnym utworzeniu gry zostaniesz przekierowany do widoku <span class="m-strong">Moje gry</span></li>
+        Po pomyślnym utworzeniu gry zostaniesz przekierowany do widoku <span class="m-strong">Moje gry</span>
       </p>
   
       <h2 class="m-h2">⌨️ Skróty klawiszowe — Menadżer bazy</h2>
@@ -1582,52 +1575,52 @@ const pl = {
       <h3 class="m-h3">📁 Tworzenie</h3>
   
       <table class="m-table">
-        <tr><th>Akcja</th><th>Windows / Linux</th><th>macOS</th></tr>
+        <tbody><tr><th>Akcja</th><th>Windows / Linux</th><th>macOS</th></tr>
         <tr><td>Nowe pytanie</td><td>Ctrl + N</td><td>⌘ N</td></tr>
         <tr><td>Nowy folder</td><td>Ctrl + Shift + N</td><td>⌘ ⇧ N</td></tr>
-      </table>
+      </tbody></table>
   
       <h3 class="m-h3">✏️ Edycja</h3>
   
       <table class="m-table">
-        <tr><th>Akcja</th><th>Windows / Linux</th><th>macOS</th></tr>
+        <tbody><tr><th>Akcja</th><th>Windows / Linux</th><th>macOS</th></tr>
         <tr><td>Edytuj pytanie</td><td>Ctrl + E</td><td>⌘ E</td></tr>
         <tr><td>Zmień nazwę</td><td>F2</td><td>F2</td></tr>
         <tr><td>Usuń</td><td>Delete</td><td>Fn + ⌫</td></tr>
-      </table>
+      </tbody></table>
   
       <h3 class="m-h3">📋 Schowek</h3>
   
       <table class="m-table">
-        <tr><th>Akcja</th><th>Windows / Linux</th><th>macOS</th></tr>
+        <tbody><tr><th>Akcja</th><th>Windows / Linux</th><th>macOS</th></tr>
         <tr><td>Kopiuj</td><td>Ctrl + C</td><td>⌘ C</td></tr>
         <tr><td>Wytnij</td><td>Ctrl + X</td><td>⌘ X</td></tr>
         <tr><td>Wklej</td><td>Ctrl + V</td><td>⌘ V</td></tr>
         <tr><td>Duplikuj</td><td>Ctrl + D</td><td>⌘ D</td></tr>
-      </table>
+      </tbody></table>
   
       <h3 class="m-h3">🎮 Gra</h3>
   
       <table class="m-table">
-        <tr><th>Akcja</th><th>Windows / Linux</th><th>macOS</th></tr>
+        <tbody><tr><th>Akcja</th><th>Windows / Linux</th><th>macOS</th></tr>
         <tr><td>Utwórz grę</td><td>Ctrl + G</td><td>⌘ G</td></tr>
-      </table>
+      </tbody></table>
   
       <h3 class="m-h3">🔄 Widok</h3>
   
       <table class="m-table">
-        <tr><th>Akcja</th><th>Windows / Linux</th><th>macOS</th></tr>
+        <tbody><tr><th>Akcja</th><th>Windows / Linux</th><th>macOS</th></tr>
         <tr><td>Odśwież widok</td><td>Ctrl + Alt + R</td><td>⌘ ⌥ R</td></tr>
-      </table>
+      </tbody></table>
   
       <h3 class="m-h3">📌 Nawigacja</h3>
   
       <table class="m-table">
-        <tr><th>Akcja</th><th>Windows / Linux</th><th>macOS</th></tr>
+        <tbody><tr><th>Akcja</th><th>Windows / Linux</th><th>macOS</th></tr>
         <tr><td>Zaznacz wszystko</td><td>Ctrl + A</td><td>⌘ A</td></tr>
         <tr><td>Otwórz folder</td><td>Enter</td><td>⏎</td></tr>
         <tr><td>Folder nadrzędny</td><td>Backspace</td><td>⌫</td></tr>
-      </table>
+      </tbody></table>
   
       <p class="m-note">
         Skróty nie działają podczas wpisywania tekstu w polach edycyjnych.
@@ -1921,11 +1914,11 @@ const pl = {
       <p class="m-p">
         Jeśli wpisujesz nazwę użytkownika podczas zapraszania, system najpierw sprawdza,
         czy taki użytkownik istnieje. Jeśli go nie ma, pojawi się komunikat.
-        Dla adresu e-mail zaproszenie może trafić także do osoby niezarejestrowanej.
+        Dla adresu e-mail zaproszenie może trafić także do osoby niezarejestrowanej jako wiadomość e-mail.
       </p>`,
       logo: `<p class="m-p">
       System pozwala ustawić własne logo, które pojawia się na wyświetlaczu
-      (np. na ekranie startowym lub zakończenia). Do tworzenia logo przechodzisz z górnego paska strony „Moje gry”
+      (podczas startu lub zakończenia gry). Do tworzenia logo przechodzisz z górnego paska strony „Moje gry”
         za pomocą przycisku <span class="m-code">Logo🖥️</span>.
     </p>
 
@@ -1958,7 +1951,7 @@ const pl = {
       </li>
       <li>
         <span class="m-strong">Obraz</span> — importujesz obrazek i dopasowujesz go do tablicy.
-        Dobre, gdy masz gotowe logo firmy.
+        Dobre, gdy masz gotowe logo np. firmy.
       </li>
     </ul>
 
@@ -2013,7 +2006,7 @@ const pl = {
         najpierw podłączasz urządzenia, potem ustawiasz parametry rozgrywki,
         a na końcu przechodzisz przez rundy i (opcjonalnie) finał.
         Kolejne kroki odblokowują się dopiero wtedy, gdy poprzednie są gotowe,
-        co minimalizuje ryzyko pomyłek podczas nagrania.
+        co minimalizuje ryzyko pomyłek podczas rozgrywki.
       </p>
     
       <h3 class="m-h2">Co musi być gotowe, zanim zaczniesz</h3>
@@ -2024,7 +2017,7 @@ const pl = {
           a jeśli jest to gra sondażowa — sondaż powinien być zakończony i zatwierdzony.
         </li>
         <li>
-          Operator powinien mieć komputer z dużym ekranem (panel jest projektowany pod tryb desktopowy).
+          Operator powinien mieć komputer z najlepiej dużym ekranem (panel jest projektowany pod tryb desktopowy).
         </li>
         <li>
           Powinny być przygotowane osobne urządzenia: wyświetlacz (TV/rzutnik), urządzenie prowadzącego,
@@ -2122,9 +2115,6 @@ const pl = {
     
       <p class="m-p">
         Gdy urządzenia są online, przechodzisz do ustawień rozgrywki.
-        Ten etap ma dwa cele:
-        (1) przygotować czytelne nazwy drużyn na tablicy,
-        (2) dopasować parametry rozgrywki do nagrania (dodatkowe ustawienia).
       </p>
     
       <h3 class="m-h3">Nazwy drużyn</h3>
@@ -2134,6 +2124,18 @@ const pl = {
         Są to napisy, które widzą zawodnicy i widownia na wyświetlaczu,
         więc najlepiej ustalić je przed startem rund.
         Panel blokuje przejście dalej, dopóki obie nazwy nie są wpisane.
+      </p>
+
+      <p class="m-p">
+        Tutaj również możesz ustawić kolory drużyn, które będą używane na każdym z urządzeń
+        i zmienią się od razu, oraz kolor tła tablicy.
+      </p>
+
+      <h3 class="m-h3">Ustawienia pytań</h3>
+
+      <p class="m-p">
+        Tutaj wybierasz, czy rozgrywka będzie miała finał oraz czy chcesz
+        wybierać lub wylosować pytania do finału i do rozgrywki.
       </p>
     
       <h3 class="m-h3">Dodatkowe ustawienia (ważne dla operatora)</h3>
@@ -2168,20 +2170,30 @@ const pl = {
         Pytania nie powinny się zmieniać podczas rozgrywki, ale parametry gry czasem tak.
       </div>
     
-      <h3 class="m-h3">Finał: włącz i wybierz 5 pytań</h3>
+      <h3 class="m-h3">Finał: wybierz 5 pytań</h3>
     
       <p class="m-p">
-        Jeśli rozgrywka ma mieć finał, włączasz finał i wybierasz dokładnie <span class="m-strong">5 pytań finału</span>.
+        Jeśli rozgrywka ma mieć finał, i nie włączyliśmy opcji losuj, to rutaj wybierasz dokładnie <span class="m-strong">5 pytań finału</span>.
         Panel pokazuje listę pytań oraz listę „Pytania finału (max 5)”.
-        Po wybraniu piątki używasz przycisku <span class="m-strong">Zatwierdź</span>.
-      </p>
+        Po wybraniu piątki używasz przycisku <span class="m-strong">Zatwierdź</span>.</p>
     
       <div class="m-warn">
         <b>Uwaga:</b><br/>
         Finał wymaga zatwierdzonych 5 pytań przed startem rund.
         To celowa blokada — na żywo nie ma czasu na wybieranie pytań „na szybko”.
         Jeśli chcesz zmienić zestaw, używasz trybu <span class="m-strong">Edytuj</span> przy pytaniach finału.
-      </div>
+
+      <h3 class="m-h3">Rundy: kolejność pytań</h3>
+
+      <p class="m-p">
+        Jeśli nie wybrano losowania, tutaj można ustawić kolejność pytań
+        spośród tych, które pozostały po wybraniu finałowych.
+        W tej kolejności będą podawane podczas rozgrywki rund.
+      </p>
+
+      <h3 class="m-h3">Podsumowanie</h3>
+
+      <p class="m-p">Tutaj zobaczysz podsumowanie wybranych ustawień.</p>
     
       <h3 class="m-h2">3) Rundy — przebieg gry krok po kroku</h3>
     
@@ -2202,7 +2214,7 @@ const pl = {
       <p class="m-p">
         Rozpoczynając rundy, panel najpierw przygotowuje wyświetlacz (czyści tablicę i ustawia stan gry),
         a następnie pozwala uruchomić intro.
-        To porządkuje początek nagrania: widzowie dostają czytelny start,
+        To porządkuje początek gry: widzowie dostają czytelny start,
         a operator ma jasny moment wejścia w pierwsze pytanie.
       </p>
     
@@ -2333,20 +2345,6 @@ const pl = {
       </p>
       
       <p class="m-p">
-        Drugi zawodnik nie powinien znać odpowiedzi pierwszego.
-        W praktyce na czas tury pierwszego zawodnika
-        drugi zawodnik odwraca się albo zakłada słuchawki z muzyką.
-      </p>
-      
-      <h3 class="m-h3">Przygotowanie finału</h3>
-      
-      <p class="m-p">
-        Zanim rozpoczniesz finał, w ustawieniach gry musisz mieć wybrane i zatwierdzone
-        <span class="m-strong">dokładnie 5 pytań finałowych</span>.
-        Dzięki temu finał jest gotowy do poprowadzenia bez szukania pytań w trakcie.
-      </p>
-      
-      <p class="m-p">
         W finale bardzo ważne jest, żeby drugi zawodnik nie znał odpowiedzi pierwszego.
         Dlatego w czasie rundy pierwszego zawodnika drugi zawodnik
         <span class="m-strong">oddala się i zakłada słuchawki z muzyką</span>,
@@ -2390,8 +2388,7 @@ const pl = {
         Jeśli druga osoba poda odpowiedź identyczną jak pierwsza,
         jest to <span class="m-strong">powtórka</span> — zawodnik musi podać inną odpowiedź,
         a operator może oznaczyć tę próbę jako powtórzoną.
-        Odpowiedzi powtórzone nie dają punktów.
-      </p>
+        Odpowiedzi powtórzone nie dają punktów. Zaprezentować dźwiek powtórzenia można przed rozpoczęciem 2 rundy, żeby gracz wiedział jak to będzie brzmiało podczas rozgrywki.</p>
       
       <p class="m-p">
         Po zakończeniu rundy operator przypisuje odpowiedzi drugiego zawodnika do listy punktowanych wyników
@@ -2444,13 +2441,15 @@ const pl = {
         Gry Społeczności to katalog gotowych gier stworzonych przez innych użytkowników
         i zweryfikowanych przez moderatorów. Możesz je przeglądać, dodawać do swojej biblioteki
         i uruchamiać bezpośrednio jako rozgrywkę — bez konieczności tworzenia własnych pytań.
+        Do Gier Społeczności przechodzisz z górnego paska strony „Moje gry”
+        za pomocą przycisku <span class="m-code">Gry Społeczności🎮</span>.
       </p>
 
       <h3 class="m-h2">Przeglądanie i biblioteka</h3>
 
       <p class="m-p">
-        Na stronie Gry Społeczności widzisz wszystkie opublikowane gry.
-        Możesz je filtrować po języku i przeszukiwać po tytule.
+        Na stronie "Gry Społeczności" widzisz wszystkie opublikowane gry.
+        Możesz je przeszukiwać po tytule.
         Każda karta gry pokazuje tytuł, autora, język i liczbę dodań przez innych użytkowników.
       </p>
 
@@ -2458,36 +2457,28 @@ const pl = {
         Kliknij kartę gry, aby zobaczyć szczegóły: pełną listę pytań i odpowiedzi.
         Jeśli gra Ci odpowiada, kliknij <span class="m-strong">Dodaj do biblioteki</span>.
         Gra trafi do zakładki <span class="m-strong">Gry Społeczności</span>
-        w widoku Moje gry (builder).
+        w widoku Moje gry.
       </p>
 
       <h3 class="m-h2">Uruchamianie gry ze Społeczności</h3>
 
       <p class="m-p">
-        W builderze przejdź do zakładki <span class="m-strong">Gry Społeczności</span>,
-        zaznacz wybraną grę i kliknij <span class="m-strong">Graj</span>.
-        System zapyta o potwierdzenie — po zaakceptowaniu zostanie utworzona
-        kopia gry na Twoim koncie i otworzy się panel sterowania.
-        Gra zostanie zapisana w Twoich grach jako samodzielna kopia,
-        którą możesz edytować niezależnie od oryginału.
-      </p>
+        W <b>Moich Grach</b> przejdź do zakładki <span class="m-strong">Gry Społeczności</span>,
+        zaznacz wybraną grę i kliknij <span class="m-strong">Graj</span>. Po chwili otworzy się panel sterowania i możesz prowadzić rozgrywkę.</p>
 
       <div class="m-warn">
-        Granie tworzy kopię — nie modyfikuje oryginału ani cudzych danych.
-      </div>
-
-      <h3 class="m-h2">Wysyłanie własnej gry</h3>
+        Granie nie modyfikuje oryginału ani cudzych danych.
+      </div><h3 class="m-h2">Wysyłanie własnej gry</h3>
 
       <p class="m-p">
-        Jeśli masz grę, którą chcesz podzielić się ze społecznością,
-        kliknij <span class="m-strong">Wyślij grę</span> na stronie Gry Społeczności.
-        Zostaniesz poproszony o wybranie gry, podanie tytułu, opisu i języka.
+        Jeśli masz grę, którą chcesz podzielić się ze społecznością, kliknij
+        <span class="m-strong">Moje wysłane</span> na stronie Gier Społeczności.
+        Tutaj widzisz wszystkie gry wysłane przez Ciebie. Naciśnij
+        <span class="m-strong">Wyślij nową grę do gier społeczności</span>,
+        wybierz grę, podaj tytuł, napisz opis i wybierz język.
       </p>
 
-      <p class="m-p">
-        Wymagania, które musi spełniać gra przed wysłaniem:
-      </p>
-      <ul class="m-ul">
+      <p class="m-p">Wymagania, które musi spełniać gra przed wysłaniem:</p><ul class="m-ul">
         <li>Typ <span class="m-strong">Preparowany</span> — musi mieć co najmniej <span class="m-strong">10 pytań</span></li>
         <li>Każde pytanie musi mieć od 3 do 6 odpowiedzi</li>
         <li>Suma punktów w jednym pytaniu nie może przekraczać 100</li>
@@ -2495,10 +2486,11 @@ const pl = {
         <li>Sondaż zamknięty (status <span class="m-strong">Gotowy</span>) też może być wysłany</li>
       </ul>
 
-      <p class="m-p">
-        Wysłana gra to <span class="m-strong">snapshot</span> — niezmienialny zapis stanu gry
-        w momencie wysłania. Późniejsze zmiany w oryginalnej grze nie wpłyną na wersję w katalogu.
-      </p>
+      <div class="m-warn">
+        <b>Uwaga:</b><br>
+        Wysłana gra to snapshot — niezmienialny zapis stanu gry w momencie wysłania.
+        Późniejsze zmiany w oryginalnej grze nie wpłyną na wersję w katalogu.
+      </div>
 
       <h3 class="m-h2">Moderacja</h3>
 

@@ -1377,7 +1377,7 @@ const en = {
       bases: `<h2 class="m-h2">Question bases — organization and collaboration</h2>
   
       <p class="m-p">
-        Question bases are a central place for storing all questions used in games.
+        Question bases are a place for storing questions used in games.
         They let you organize questions in folders, tag them, assign categories,
         and share entire bases with other users.
       </p>
@@ -1916,11 +1916,11 @@ const en = {
       <p class="m-p">
         If you enter a username while inviting, the system first checks
         whether that user exists. If not, a message is shown.
-        For email, invitations can also be sent to non-registered people.
+        For email, invitations can also be sent to non-registered people as an email message.
       </p>`,
       logo: `<p class="m-p">
       The system lets you set your own logo that appears on the display
-      (e.g., the start or end screen). You can access the logo creator from the top bar of the “My games” page
+      (during the start or end of the game). You can access the logo creator from the top bar of the “My games” page
         using the <span class="m-code">Logo🖥️</span> button.
     </p>
 
@@ -1953,7 +1953,7 @@ const en = {
       </li>
       <li>
         <span class="m-strong">Image</span> — import an image and fit it to the board.
-        Good when you already have a company logo.
+        Good when you already have a ready logo, e.g. a company logo.
       </li>
     </ul>
 
@@ -2008,7 +2008,7 @@ const en = {
         first you connect devices, then set game parameters,
         and finally go through rounds and (optionally) the final.
         Each step unlocks only when the previous one is ready,
-        which minimizes the risk of mistakes during recording.
+        which minimizes the risk of mistakes during gameplay.
       </p>
     
       <h3 class="m-h2">What must be ready before you start</h3>
@@ -2019,7 +2019,7 @@ const en = {
           and if it is a poll-based game — the poll should be closed and approved.
         </li>
         <li>
-          The operator should have a computer with a large screen (the panel is designed for desktop mode).
+          The operator should have a computer with preferably a large screen (the panel is designed for desktop mode).
         </li>
         <li>
           Separate devices should be prepared: a display (TV/projector), the host’s device,
@@ -2117,9 +2117,6 @@ const en = {
     
       <p class="m-p">
         When devices are online, you move on to game settings.
-        This stage has two goals:
-        (1) prepare readable team names on the board,
-        (2) adjust game parameters to the recording (additional settings).
       </p>
     
       <h3 class="m-h3">Team names</h3>
@@ -2129,6 +2126,18 @@ const en = {
         These are the labels seen by players and the audience on the display,
         so it’s best to decide them before the rounds begin.
         The panel blocks moving forward until both names are entered.
+      </p>
+
+      <p class="m-p">
+        Here you can also set team colors, which will be used on all devices
+        and update immediately, as well as the board background color.
+      </p>
+
+      <h3 class="m-h3">Question settings</h3>
+
+      <p class="m-p">
+        Here you choose whether the game will have a final and whether you want
+        to manually select or randomly draw questions for the final and for the rounds.
       </p>
     
       <h3 class="m-h3">Additional settings (important for the operator)</h3>
@@ -2163,20 +2172,30 @@ const en = {
         Questions shouldn’t change during the game, but game parameters sometimes do.
       </div>
     
-      <h3 class="m-h3">Final: enable and choose 5 questions</h3>
+      <h3 class="m-h3">Final: choose 5 questions</h3>
     
       <p class="m-p">
-        If the game should have a final, you enable it and choose exactly <span class="m-strong">5 final questions</span>.
+        If the game should have a final and the random draw option is not enabled, here you choose exactly <span class="m-strong">5 final questions</span>.
         The panel shows a list of questions and a list “Final questions (max 5)”.
-        After selecting five, you use the <span class="m-strong">Confirm</span> button.
-      </p>
+        After selecting five, you use the <span class="m-strong">Confirm</span> button.</p>
     
       <div class="m-warn">
         <b>Warning:</b><br/>
         The final requires 5 confirmed questions before rounds start.
         This is an intentional lock — in live play there’s no time to pick questions “on the fly.”
         If you want to change the set, use the <span class="m-strong">Edit</span> mode for final questions.
-      </div>
+
+      <h3 class="m-h3">Rounds: question order</h3>
+
+      <p class="m-p">
+        If random draw is not selected, here you can set the order of questions
+        from those remaining after selecting the final questions.
+        They will be presented in this order during the rounds.
+      </p>
+
+      <h3 class="m-h3">Summary</h3>
+
+      <p class="m-p">Here you will see a summary of the settings you have chosen.</p>
     
       <h3 class="m-h2">3) Rounds — gameplay step by step</h3>
     
@@ -2197,7 +2216,7 @@ const en = {
       <p class="m-p">
         When starting rounds, the panel first prepares the display (clears the board and sets the game state),
         and then lets you start the intro.
-        This organizes the beginning of the recording: the audience gets a clear start,
+        This organizes the beginning of the game: the audience gets a clear start,
         and the operator has a clear moment to enter the first question.
       </p>
     
@@ -2328,20 +2347,6 @@ const en = {
       </p>
       
       <p class="m-p">
-        The second contestant should not know the first contestant’s answers.
-        In practice, during the first contestant’s turn
-        the second contestant turns away or wears headphones with music.
-      </p>
-      
-      <h3 class="m-h3">Final preparation</h3>
-      
-      <p class="m-p">
-        Before starting the final, in game settings you must have selected and confirmed
-        <span class="m-strong">exactly 5 final questions</span>.
-        This ensures the final is ready to run without searching for questions during play.
-      </p>
-      
-      <p class="m-p">
         In the final it is very important that the second contestant does not know the first contestant’s answers.
         Therefore during the first contestant’s round the second contestant
         <span class="m-strong">moves away and wears headphones with music</span>,
@@ -2385,8 +2390,7 @@ const en = {
         If the second person gives the same answer as the first,
         it is a <span class="m-strong">repeat</span> — the contestant must give another answer,
         and the operator can mark the attempt as repeated.
-        Repeated answers do not score points.
-      </p>
+        Repeated answers do not score points. The repeat sound can be demonstrated before round 2 starts, so the player knows what it will sound like during the game.</p>
       
       <p class="m-p">
         After the round the operator assigns the second contestant’s answers to the list of scored results
@@ -2439,13 +2443,15 @@ const en = {
         Community Games is a catalogue of ready-made games created by other users
         and verified by moderators. You can browse them, add them to your library
         and launch them directly as a game — without creating your own questions.
+        You access Community Games from the top bar of the "My games" page
+        using the <span class="m-code">Community Games🎮</span> button.
       </p>
 
       <h3 class="m-h2">Browsing and library</h3>
 
       <p class="m-p">
         The Community Games page shows all published games.
-        You can filter by language and search by title.
+        You can search by title.
         Each game card shows the title, author, language and how many users have added it.
       </p>
 
@@ -2453,36 +2459,28 @@ const en = {
         Click a game card to see details: the full list of questions and answers.
         If the game suits you, click <span class="m-strong">Add to library</span>.
         The game will appear in the <span class="m-strong">Community Games</span>
-        tab in your My games view (builder).
+        tab in your My games view.
       </p>
 
       <h3 class="m-h2">Playing a Community game</h3>
 
       <p class="m-p">
-        In the builder, go to the <span class="m-strong">Community Games</span> tab,
-        select a game and click <span class="m-strong">Play</span>.
-        The system will ask for confirmation — once accepted, a copy of the game
-        is created on your account and the control panel opens.
-        The game is saved in your games as an independent copy
-        that you can edit without affecting the original.
-      </p>
+        In <b>My Games</b>, go to the <span class="m-strong">Community Games</span> tab,
+        select a game and click <span class="m-strong">Play</span>. The control panel will open shortly and you can start the game.</p>
 
       <div class="m-warn">
-        Playing creates a copy — it does not modify the original or anyone else's data.
-      </div>
-
-      <h3 class="m-h2">Submitting your own game</h3>
+        Playing does not modify the original or anyone else's data.
+      </div><h3 class="m-h2">Submitting your own game</h3>
 
       <p class="m-p">
-        If you have a game you want to share with the community,
-        click <span class="m-strong">Submit a game</span> on the Community Games page.
-        You will be asked to select a game, provide a title, description and language.
+        If you have a game you want to share with the community, click
+        <span class="m-strong">My submitted</span> on the Community Games page.
+        Here you can see all games submitted by you. Press
+        <span class="m-strong">Submit a new game to Community Games</span>,
+        select a game, provide a title, write a description and choose a language.
       </p>
 
-      <p class="m-p">
-        Requirements for submission:
-      </p>
-      <ul class="m-ul">
+      <p class="m-p">Requirements for submission:</p><ul class="m-ul">
         <li>Type <span class="m-strong">Prepared</span> — must have at least <span class="m-strong">10 questions</span></li>
         <li>Each question must have between 3 and 6 answers</li>
         <li>The total points per question must not exceed 100</li>
@@ -2490,10 +2488,11 @@ const en = {
         <li>A closed poll (status <span class="m-strong">Ready</span>) can also be submitted</li>
       </ul>
 
-      <p class="m-p">
-        A submitted game is a <span class="m-strong">snapshot</span> — an immutable record of the game
-        at the time of submission. Later changes to the original will not affect the catalogue version.
-      </p>
+      <div class="m-warn">
+        <b>Warning:</b><br/>
+        A submitted game is a snapshot — an immutable record of the game at the time of submission.
+        Later changes to the original will not affect the catalogue version.
+      </div>
 
       <h3 class="m-h2">Moderation</h3>
 
