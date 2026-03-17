@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict km0vJ4jBwQ22fqWTmejB4H6K8VW7lo4XzwORf5PPr9ULbrerHMqkmDIJRGdq3V8
+\restrict pBrIZ08Qrf3Up9jpgaLAePTJlFTNqapPDM6JSEwYQmf5K6dK5zGCbH6A4JYKpqX
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -2799,11 +2799,9 @@ begin
   v_email    := new.email;
   v_is_guest := coalesce((new.raw_user_meta_data->>'is_guest')::boolean, false);
 
-  -- Auto-generate guest username if missing
   v_username := coalesce(
     new.raw_user_meta_data->>'username',
-    new.raw_user_meta_data->>'full_name',
-    split_part(new.email, '@', 1)
+    new.raw_user_meta_data->>'full_name'
   );
 
   IF v_is_guest THEN
@@ -2823,15 +2821,13 @@ begin
         guest_last_active_at = excluded.guest_last_active_at,
         guest_expires_at     = excluded.guest_expires_at;
 
-  -- Ensure user_flags row exists
   INSERT INTO public.user_flags (user_id)
   VALUES (new.id)
   ON CONFLICT (user_id) DO NOTHING;
 
-  -- Seed demo data for ALL users (including guests)
   v_lang := lower(trim(coalesce(new.raw_user_meta_data->>'language', 'pl')));
   IF v_lang NOT IN ('pl', 'en', 'uk') THEN v_lang := 'pl'; END IF;
-  
+
   BEGIN
     PERFORM public.seed_demo_for_user(new.id, v_lang);
   EXCEPTION WHEN OTHERS THEN
@@ -12130,5 +12126,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict km0vJ4jBwQ22fqWTmejB4H6K8VW7lo4XzwORf5PPr9ULbrerHMqkmDIJRGdq3V8
+\unrestrict pBrIZ08Qrf3Up9jpgaLAePTJlFTNqapPDM6JSEwYQmf5K6dK5zGCbH6A4JYKpqX
 
