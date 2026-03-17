@@ -186,7 +186,13 @@ body.setup-mode .setup-card {
 }
 
 /* Mode-specific fields */
-body.mode-login #pass2 {
+body.mode-login #pass2,
+body.mode-login #pass2 ~ .pass-toggle,
+body.mode-login #pass2:not(.pass-wrap *) {
+  display: none;
+}
+body.mode-login #pass2.pass-wrap,
+body.mode-login .pass-wrap:has(#pass2) {
   display: none;
 }
 
