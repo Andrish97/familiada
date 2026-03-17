@@ -1540,6 +1540,16 @@ btnGoAlt?.addEventListener("click", async () => {
   location.href = `${page}?ret=${encodeURIComponent(getCurrentRelativeUrl())}`;
 });
 
+btnBack?.addEventListener("click", () => {
+  location.href = "builder";
+});
+
+btnManual?.addEventListener("click", () => {
+  const url = new URL("manual", location.href);
+  url.searchParams.set("ret", location.pathname.split("/").pop() + location.search);
+  location.href = url.toString();
+});
+
 
 btnBrowse?.addEventListener("click", () => {
   const b = selectedBase();

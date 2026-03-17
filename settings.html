@@ -44,8 +44,7 @@
   </header>
 
   <main class="wrap">
-    <section class="settings-panel" id="panelScreen" hidden>
-      <div class="maintenance-panel">
+    <section class="settings-panel maintenance-panel" id="panelScreen" hidden>
         <div class="panel-head">
           <div class="panel-title" data-i18n="settings.maintenance.title">Prace techniczne</div>
           <div class="panel-sub" data-i18n="settings.maintenance.subtitle">Ustawienia strony maintenance</div>
@@ -132,15 +131,8 @@
           </div>
           <div class="bypass-desc" data-i18n="settings.bypass.desc">Ustawia cookie admina na 30 dni. Działa tylko w tej przeglądarce.</div>
         </div>
-      </div>
-
-      <div class="mail-panel" id="mailPanel" hidden>
-        <div class="panel-head">
-          <div class="panel-title" data-i18n="settings.mail.title">Maile</div>
-          <div class="panel-sub" data-i18n="settings.mail.subtitle">Kolejka, logi i konfiguracja workera</div>
-        </div>
-
-        <div class="mail-cards">
+      
+      <div id="mailPanel" hidden>
           <section class="mail-card mail-card-settings">
             <div class="mail-card-title" data-i18n="settings.mail.settingsTitle">Ustawienia wysyłki</div>
             <div class="field row">
@@ -307,7 +299,6 @@
             </div>
             <div class="field-hint" id="mailLogsInfo">—</div>
           </section>
-        </div>
       </div>
       <!-- MARKETPLACE PANEL -->
       <div class="market-admin-panel" id="marketplacePanel" hidden>
