@@ -1535,128 +1535,122 @@ function buildManualUrl() {
   return url.toString();
 }
 
-btnGoAlt?.addEventListener("click", async () => {
-  const page = document.body.dataset.altPage || "subscriptions";
-  location.href = `${page}?ret=${encodeURIComponent(getCurrentRelativeUrl())}`;
-});
-
-btnBack?.addEventListener("click", () => {
-  location.href = "builder";
-});
-
-btnManual?.addEventListener("click", () => {
-  const url = new URL("manual", location.href);
-  url.searchParams.set("ret", location.pathname.split("/").pop() + location.search);
-  location.href = url.toString();
-});
-
-
-btnBrowse?.addEventListener("click", () => {
-  const b = selectedBase();
-  if (!b) return;
-  // warstwa 2 będzie później – na razie przekierowanie na placeholder
-  location.href = `base-explorer?base=${encodeURIComponent(b.id)}`;
-});
-
-btnShare?.addEventListener("click", async () => {
-  const b = selectedBase();
-  if (!b || !isOwner(b)) return;
-  await openShareModal();
-});
-
-btnExport?.addEventListener("click", async () => {
-  const b = selectedBase();
-  if (!b) return;
-  if (btnExport?.disabled) return;
-
-  show(exportJsonOverlay, true);
-  if (exportJsonSub) exportJsonSub.textContent = t("bases.exportModal.subtitle");
-
-  setProgUi(exportJsonStep, exportJsonCount, exportJsonBar, exportJsonMsg, {
-    step: t("bases.export.steps.start"),
-    i: 0,
-    n: 6,
-    msg: "",
+document.addEventListener("DOMContentLoaded", () => {
+  btnGoAlt?.addEventListener("click", async () => {
+    const page = document.body.dataset.altPage || "subscriptions";
+    location.href = `${page}?ret=${encodeURIComponent(getCurrentRelativeUrl())}`;
   });
 
-  if (btnExport) btnExport.disabled = true;
+  btnBack?.addEventListener("click", () => {
+    location.href = getBackLink();
+  });
 
-  try {
-    // prosty progres etapowy (query po query)
-    const onProgress = ({ step, i, n, msg } = {}) => {
-      setProgUi(exportJsonStep, exportJsonCount, exportJsonBar, exportJsonMsg, { step, i, n, msg });
-    };
+  btnManual?.addEventListener("click", () => {
+    location.href = buildManualUrl();
+  });
 
-    const out = await exportBase(b.id, onProgress);
-    onProgress({
-      step: t("bases.export.steps.download"),
-      i: 6,
-      n: 6,
-      msg: safeDownloadName(b.name),
-    });
+  btnBrowse?.addEventListener("click", () => {
+    const b = selectedBase();
+    if (!b) return;
+    location.href = `base-explorer?base=${encodeURIComponent(b.id)}`;
+  });
 
-    downloadJson(safeDownloadName(b.name), out);
+  btnShare?.addEventListener("click", async () => {
+    const b = selectedBase();
+    if (!b || !isOwner(b)) return;
+    await openShareModal();
+  });
 
-    setTimeout(() => show(exportJsonOverlay, false), 250);
-  } catch (e) {
-    console.warn("[bases] export error:", e);
+  btnExport?.addEventListener("click", async () => {
+    const b = selectedBase();
+    if (!b) return;
+    if (btnExport?.disabled) return;
+
+    show(exportJsonOverlay, true);
+    if (exportJsonSub) exportJsonSub.textContent = t("bases.exportModal.subtitle");
+
     setProgUi(exportJsonStep, exportJsonCount, exportJsonBar, exportJsonMsg, {
-      step: t("bases.export.errorStep"),
+      step: t("bases.export.steps.start"),
       i: 0,
-      n: 1,
-      msg: e?.message || t("bases.export.failed"),
+      n: 6,
+      msg: "",
     });
-    setTimeout(() => show(exportJsonOverlay, false), 1200);
-  } finally {
-    if (btnExport) btnExport.disabled = false;
-  }
-});
 
-btnImport?.addEventListener("click", () => openImportModal());
+    if (btnExport) btnExport.disabled = true;
 
-btnImportFile?.addEventListener("click", async () => {
-  const file = importFile?.files?.[0];
-  if (!file) {
-    setMsg(importMsg, t("bases.import.pickFile"));
-    return;
-  }
-  const txt = await readFileAsText(file);
-  if (importTa) importTa.value = txt;
-});
+    try {
+      const onProgress = ({ step, i, n, msg } = {}) => {
+        setProgUi(exportJsonStep, exportJsonCount, exportJsonBar, exportJsonMsg, { step, i, n, msg });
+      };
 
-btnImportJson?.addEventListener("click", async () => {
-  const txt = String(importTa?.value || "").trim();
-  if (!txt) {
-    setMsg(importMsg, t("bases.import.pasteJson"));
-    return;
-  }
-  await importFromJsonText(txt);
-});
+      const out = await exportBase(b.id, onProgress);
+      onProgress({
+        step: t("bases.export.steps.download"),
+        i: 6,
+        n: 6,
+        msg: safeDownloadName(b.name),
+      });
 
-btnCancelImport?.addEventListener("click", () => closeImportModal());
+      downloadJson(safeDownloadName(b.name), out);
 
-// modal nazwy
-btnNameCancel?.addEventListener("click", () => closeNameModal());
-btnNameOk?.addEventListener("click", () => nameOk());
-nameInp?.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") nameOk();
-  if (e.key === "Escape") closeNameModal();
-});
+      setTimeout(() => show(exportJsonOverlay, false), 250);
+    } catch (e) {
+      console.warn("[bases] export error:", e);
+      setProgUi(exportJsonStep, exportJsonCount, exportJsonBar, exportJsonMsg, {
+        step: t("bases.export.errorStep"),
+        i: 0,
+        n: 1,
+        msg: e?.message || t("bases.export.failed"),
+      });
+      setTimeout(() => show(exportJsonOverlay, false), 1200);
+    } finally {
+      if (btnExport) btnExport.disabled = false;
+    }
+  });
 
-// modal share
-btnShareClose?.addEventListener("click", () => closeShareModal());
-btnShareAdd?.addEventListener("click", async () => shareAdd());
-shareEmail?.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") shareAdd();
-});
+  btnImport?.addEventListener("click", () => openImportModal());
 
-// overlay click-to-close (import/share/name) – klik poza modalem
-[nameOverlay, importOverlay, shareOverlay].forEach((ov) => {
-  ov?.addEventListener("click", (e) => {
-    if (e.target !== ov) return;
-    if (ov === nameOverlay) closeNameModal();
-    if (ov === importOverlay) closeImportModal();
-    if (ov === shareOverlay) closeShareModal();
+  btnImportFile?.addEventListener("click", async () => {
+    const file = importFile?.files?.[0];
+    if (!file) {
+      setMsg(importMsg, t("bases.import.pickFile"));
+      return;
+    }
+    const txt = await readFileAsText(file);
+    if (importTa) importTa.value = txt;
+  });
+
+  btnImportJson?.addEventListener("click", async () => {
+    const txt = String(importTa?.value || "").trim();
+    if (!txt) {
+      setMsg(importMsg, t("bases.import.pasteJson"));
+      return;
+    }
+    await importFromJsonText(txt);
+  });
+
+  btnCancelImport?.addEventListener("click", () => closeImportModal());
+
+  btnNameCancel?.addEventListener("click", () => closeNameModal());
+  btnNameOk?.addEventListener("click", () => nameOk());
+  nameInp?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") nameOk();
+    if (e.key === "Escape") closeNameModal();
+  });
+
+  btnShareClose?.addEventListener("click", () => closeShareModal());
+  btnShareAdd?.addEventListener("click", async () => shareAdd());
+  shareEmail?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") shareAdd();
+  });
+
+  [nameOverlay, importOverlay, shareOverlay].forEach((ov) => {
+    ov?.addEventListener("click", (e) => {
+      if (e.target !== ov) return;
+      if (ov === nameOverlay) closeNameModal();
+      if (ov === importOverlay) closeImportModal();
+      if (ov === shareOverlay) closeShareModal();
+    });
   });
 });
 
