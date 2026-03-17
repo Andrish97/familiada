@@ -1041,3 +1041,30 @@ body{
     background-color: rgba(255,255,255,.32);
   }
 }
+
+.pass-wrap {
+  position: relative;
+  display: flex;
+}
+.pass-wrap input {
+  flex: 1;
+  padding-right: 42px;
+}
+.pass-wrap .pass-toggle {
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 100%;
+  width: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: rgba(255,255,255,.45);
+  padding: 0;
+  transition: color .15s;
+}
+.pass-wrap .pass-toggle:hover { color: rgba(255,255,255,.85); }
+.pass-wrap .pass-toggle svg { width: 18px; height: 18px; pointer-events: none; }

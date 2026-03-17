@@ -16,6 +16,7 @@ import {
   getPasswordRulesText,
   hasGuestLocalMarker,
   clearGuestLocalMarker,
+  initPasswordToggles,
 } from "../core/auth.js";
 import { isGuestUser } from "../core/guest-mode.js";
 import { alertModal, confirmModal } from "../core/modal.js";
@@ -794,6 +795,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
   const syncLanguage = () => updateUserLanguage(getUiLang());
   applyMode();
+  initPasswordToggles();
   setStatus(t("index.statusChecking"));
   if (guestExpired) {
     void alertModal({ text: t("index.guestExpired") });
