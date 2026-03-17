@@ -12,8 +12,13 @@ body.mkt-body > main.wrap {
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-  padding-top: 24px;
-  padding-bottom: 24px;
+}
+
+@media (max-width: 720px) {
+  body.mkt-body > main.wrap {
+    padding-top: 15px;
+    padding-bottom: 15px;
+  }
 }
 
 /* ===== Section head ===== */
