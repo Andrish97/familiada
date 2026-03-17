@@ -1,5 +1,5 @@
 import { sb } from "../core/supabase.js";
-import { updateUserLanguage, validatePassword, niceAuthError, getPasswordRulesText, discardCurrentGuestAccount } from "../core/auth.js";
+import { updateUserLanguage, validatePassword, niceAuthError, getPasswordRulesText, discardCurrentGuestAccount, initPasswordToggles } from "../core/auth.js";
 import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js";
 import { confirmModal } from "../core/modal.js";
 import { isGuestUser } from "../core/guest-mode.js";
@@ -64,6 +64,7 @@ async function requireNoActiveSessionBeforeAuthFlow() {
 
 document.addEventListener("DOMContentLoaded", async () => {
   await initI18n({ withSwitcher: true });
+  initPasswordToggles();
   if (pwdHint) pwdHint.textContent = getPasswordRulesText();
   setErr("");
   if (back) back.href = withLangParam(back.dataset.baseHref || "login");

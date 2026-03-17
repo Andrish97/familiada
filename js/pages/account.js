@@ -1,6 +1,6 @@
 import { sb } from "../core/supabase.js";
 import { cooldownGet, cooldownReserve, cooldownRelease } from "../core/cooldown.js";
-import { requireAuth, updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError } from "../core/auth.js";
+import { requireAuth, updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles } from "../core/auth.js";
 import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../core/user-flags.js";
 import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js";
 import { confirmModal } from "../core/modal.js";
@@ -591,6 +591,7 @@ async function handleDeleteAccount() {
 
 document.addEventListener("DOMContentLoaded", async () => {
   await initI18n({ withSwitcher: true });
+  initPasswordToggles();
 
   // cooldown: server state (cross-device)
   bindCooldown({ key: CD.username, labelEl: usernameCooldownEl, disableEls: [usernameInput, saveUsername] });
