@@ -33,7 +33,7 @@ import { initQuestionModal } from "./question-modal.js";
 import { sb } from "../../js/core/supabase.js";
 import { alertModal, confirmModal } from "../../js/core/modal.js";
 import { t } from "../../translation/translation.js";
-import { addLongPress } from "./mobile.js";
+import { addLongPress, addDoubleTap } from "./mobile.js";
 
 let exportModal = null;
 
@@ -3188,6 +3188,24 @@ export function wireActions({ state }) {
     }
   });
 
+  addDoubleTap(treeEl, async (target) => {
+    if (isTreeLocked(state)) return;
+    const row = target?.closest?.('.row[data-kind]');
+    if (!row) return;
+    const kind = row.dataset.kind;
+    const id = row.dataset.id || null;
+    if (kind === "root") {
+      setViewAll(state); selectionSetSingle(state, "root");
+      state.selection.anchorKey = "root"; state._rootQuestions = null;
+      await refreshList(state);
+    } else if (kind === "cat" && id) {
+      setViewFolder(state, id);
+      const key = `c:${id}`; selectionSetSingle(state, key);
+      state.selection.anchorKey = key;
+      await refreshList(state);
+    }
+  });
+
   // PPM na drzewie (foldery + puste tło)
   treeEl?.addEventListener("contextmenu", async (e) => {
     e.preventDefault();
@@ -3456,6 +3474,30 @@ export function wireActions({ state }) {
       // jeśli user dwukliknął pytanie, otwieramy edycję zawsze
       await state._api?.openQuestionModal?.(id);
       return;
+    }
+  });
+
+  addDoubleTap(listEl, async (target) => {
+    const row = target?.closest?.(".row[data-kind][data-id]");
+    if (!row) return;
+    const kind = row.dataset.kind;
+    const id = row.dataset.id;
+    if (kind === "cat") {
+      const needExit = isSearchFocus() || hasLeftSelection(state) ||
+        state.view === VIEW.SEARCH || state.view === VIEW.TAG || state.view === VIEW.META;
+      if (needExit) {
+        const inp = document.getElementById("searchText");
+        if (inp) inp.value = "";
+        state.searchTokens = { text: "", tagIds: [] };
+        state.searchQuery = "";
+        leftClear(state);
+        restoreBrowseLocation(state);
+      }
+      setViewFolder(state, id);
+      selectionClear(state);
+      await refreshList(state);
+    } else if (kind === "q" && canWrite(state)) {
+      await state._api?.openQuestionModal?.(id);
     }
   });
 

@@ -1709,21 +1709,7 @@ tr.row:has(.tag-dot[data-tip]:hover) {
   /* Pokaż przycisk drawera w toolbarze */
   .mobile-only { display: inline-flex !important; }
 
-  /* Topbar — odblokuj na mobile (base.css ukrywa przez topbar-mobile-hidden) */
-  .topbar.topbar-mobile-hidden {
-    display: grid !important;
-  }
-
-  /* Topbar layout — dwie kolumny: lewa (brand+back) i prawa (info+logout) */
-  .topbar-layout-4 {
-    grid-template-columns: 1fr auto !important;
-    grid-template-areas: "s1 s3" !important;
-    padding: 8px 10px !important;
-  }
-  .topbar-layout-4 .topbar-section-1 { grid-area: s1; flex-wrap: nowrap; min-width: 0; }
-  .topbar-layout-4 .topbar-section-3 { grid-area: s3; justify-content: flex-end; }
-  .topbar-layout-4 .topbar-section-2,
-  .topbar-layout-4 .topbar-section-4 { display: none !important; }
+  /* Topbar layout — dwie kolumny na mobile (obsługiwane przez topbar-mobile-menu.js) */
 
   /* Layout: jeden panel zamiast dwóch kolumn */
   .explorer {
@@ -1837,16 +1823,16 @@ tr.row:has(.tag-dot[data-tip]:hover) {
     -webkit-overflow-scrolling: touch;
   }
 
-  /* Modale — dopasuj szerokość, zostaw centrowanie z base.css */
+  /* Modale nad drawerem */
+  .overlay { z-index: 1100; }
   .tags-modal,
   .export-modal,
   .question-modal,
   .rename-modal {
-    width: 100% !important;
+    width: calc(100% - 24px) !important;
     max-height: 90vh;
     overflow-y: auto;
     border-radius: 14px;
-    margin: 0 8px;
   }
 
   /* Export modal — jedna kolumna */
