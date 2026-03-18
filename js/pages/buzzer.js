@@ -2,6 +2,8 @@
 import { initI18n, setUiLang, t } from "../../translation/translation.js";
 import { sb } from "../core/supabase.js";
 import { rt } from "../core/realtime.js";
+import { startKeepAlive } from "../core/keep-alive.js";
+startKeepAlive();
 
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
