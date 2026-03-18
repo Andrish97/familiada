@@ -1,6 +1,8 @@
 // familiada/logo-editorjs/main.js
 // Glowna logika strony + lista kafelkow + routing do edytorow.
 
+import { addRenameGesture } from "../../js/core/rename-gesture.js";
+
 import { sb } from "../../js/core/supabase.js";
 import { requireAuth, signOut } from "../../js/core/auth.js";
 import { isGuestUser } from "../../js/core/guest-mode.js";
@@ -960,8 +962,8 @@ function renderList(){
 
     el.addEventListener("click", () => select(key));
 
-    // double-click -> rename (tylko dla logo usera)
-    el.addEventListener("dblclick", (e) => {
+    // double-click / long-press -> rename (tylko dla logo usera)
+    addRenameGesture(el, (e) => {
       if (key === "default") return;
       if (e.target?.classList?.contains("logoX")) return;
       const l = logos.find(x => x.id === key);

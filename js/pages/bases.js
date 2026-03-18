@@ -1,6 +1,8 @@
 // js/pages/bases.js
 // Builder baz pytań (warstwa 1) – styl i ergonomia jak builder gier.
 
+import { addRenameGesture } from "../core/rename-gesture.js";
+
 import { sb, SUPABASE_URL } from "../core/supabase.js";
 import { requireAuth } from "../core/auth.js";
 import { alertModal, confirmModal } from "../core/modal.js";
@@ -1329,7 +1331,7 @@ function render() {
       });
     }
 
-    tile.addEventListener("dblclick", (e) => {
+    addRenameGesture(tile, (e) => {
       if (!isOwner(b)) return;
       if (e.target?.classList?.contains("x")) return;
       selectedId = b.id;

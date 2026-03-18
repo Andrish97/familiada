@@ -780,7 +780,7 @@ const pl = {
     backToGames: "← Moje gry",
     logout: "Wyloguj",
     headerTitle: "Twoje bazy pytań",
-    headerHint: "Kliknij kafelek, żeby go zaznaczyć. Podwójne kliknięcie zmienia nazwę.",
+    headerHint: "Naciśnij kafelek, żeby go zaznaczyć. Podwójne naciśnięcie zmienia nazwę.",
     actions: {
       browse: "Przeglądaj",
       browseMobile: "Przegl.",
@@ -2660,7 +2660,7 @@ const pl = {
     },
     header: {
       title: "Twoje gry",
-      hint: "Kliknij kafelek, żeby go zaznaczyć. Podwójne kliknięcie zmienia nazwę.",
+      hint: "Naciśnij kafelek, żeby go zaznaczyć. Podwójne naciśnięcie zmienia nazwę.",
     },
     actions: {
       edit: "Edytuj",
@@ -2797,8 +2797,8 @@ const pl = {
       openPollFailed: "Nie udało się otworzyć sondażu.",
     },
     hint: {
-      select: "Zaznacz grę, aby włączyć akcje. Podwójne kliknięcie zmienia nazwę.",
-      selectPlus: "Zaznacz grę, aby włączyć akcje i eksport. Podwójne kliknięcie zmienia nazwę.",
+      select: "Zaznacz grę, aby włączyć akcje. Podwójne naciśnięcie zmienia nazwę.",
+      selectPlus: "Zaznacz grę, aby włączyć akcje i eksport. Podwójne naciśnięcie zmienia nazwę.",
     },
     editAfterPoll: {
       title: "Zresetować sondaż?",
@@ -3760,7 +3760,7 @@ const pl = {
     },
     list: {
       title: "Twoje logo",
-      hint: "Kliknij kafelek, żeby go zaznaczyć. Podwójne kliknięcie zmienia nazwę.",
+      hint: "Naciśnij kafelek, żeby go zaznaczyć. Podwójne naciśnięcie zmienia nazwę.",
       preview: "Podgląd",
       activate: "Aktywuj",
       export: "Export",
