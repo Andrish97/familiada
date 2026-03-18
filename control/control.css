@@ -1,7 +1,8 @@
 /* /familiada/control/control.css */
 
 .wrap.wide{
-    max-width: 90%
+    max-width: 90%;
+    width: 100%
 }
 
 /* =========================================================
@@ -32,47 +33,48 @@
    SUMMARY LIST (setup_finish step)
 ========================================================= */
 .summarySection {
-  margin: 10px 0;
-  padding: 12px 14px;
+  margin: 6px 0;
+  padding: 10px 14px;
   border-radius: 10px;
-  background: rgba(0,0,0,.08);
-  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.07);
+  border-left: 3px solid rgba(255,234,166,.4);
 }
 
 .summarySectionTitle {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: .06em;
-  opacity: .55;
-  margin-bottom: 6px;
+  letter-spacing: .08em;
+  color: var(--gold);
+  opacity: .65;
+  margin-bottom: 5px;
 }
 
 .summarySectionValue {
-  font-weight: 900;
+  font-weight: 800;
   font-size: 15px;
-  color: var(--gold);
+  color: #fff;
 }
 
 .summaryQList {
   margin: 0;
-  padding: 0 0 0 18px;
+  padding: 0 0 0 16px;
   display: grid;
-  gap: 4px;
+  gap: 3px;
 }
 
 .summaryQList li {
   font-size: 13px;
-  font-weight: 600;
-  opacity: .9;
+  font-weight: 500;
+  opacity: .85;
   line-height: 1.4;
 }
 
 .summaryQList .summaryQRandom {
   list-style: none;
-  margin-left: -18px;
+  margin-left: -16px;
   font-style: italic;
-  opacity: .6;
+  opacity: .45;
 }
 
 /* =========================================================
@@ -569,6 +571,7 @@
 
 .control-main-card {
     margin-top: 0;
+    width: 100%;
     background: var(--surface);
     border: 1px solid var(--border-color);
     border-radius: var(--radius);
@@ -1697,10 +1700,6 @@
   top:10px;
   right:10px;
   z-index:2;
-}
-    margin-top: 16px;
-    align-items: stretch;
-    margin-bottom: 12px;
 }
 
 .finalRevealBtn {

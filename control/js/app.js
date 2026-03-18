@@ -959,7 +959,7 @@ async function sendZeroStatesToDevices() {
     const inSetupFinish =
       (state.activeCard === "setup" && state.steps?.setup === "setup_finish");
 
-    if (inSetupFinish && !wasInSetupFinish) {
+    if (inSetupFinish) {
       renderSetupFinishSummary();
     }
     wasInSetupFinish = inSetupFinish;
