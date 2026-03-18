@@ -1,6 +1,8 @@
 // /familiada/js/pages/host.js
 import { initI18n, setUiLang, t } from "../../translation/translation.js";
 import { sb } from "../core/supabase.js";
+import { startKeepAlive } from "../core/keep-alive.js";
+startKeepAlive();
 
 /* ========= PARAMS ========= */
 const qs = new URLSearchParams(location.search);

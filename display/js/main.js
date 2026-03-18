@@ -5,6 +5,8 @@ import { createQRController } from "./qr.js";
 import { createScene } from "./scene.js";
 import { createCommandHandler } from "./commands.js";
 import { initI18n } from "../../translation/translation.js";
+import { startKeepAlive } from "../../js/core/keep-alive.js";
+startKeepAlive();
 
 const $ = (id) => document.getElementById(id);
 
