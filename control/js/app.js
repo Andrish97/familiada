@@ -661,8 +661,7 @@ async function sendZeroStatesToDevices() {
     // dodatkowo: chowamy/pokazujemy kartę z listami
     const pickerCard = document.getElementById("finalPickerCard");
     if (pickerCard) {
-      if (hasFinal) pickerCard.classList.remove("hidden");
-      else pickerCard.classList.add("hidden");
+      pickerCard.style.display = hasFinal ? "" : "none";
     }
 
     // ustawienie stanu radio (wizualnie)
@@ -693,10 +692,9 @@ async function sendZeroStatesToDevices() {
       if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
     });
   
-    root.addEventListener("dragleave", () => {
+    root.addEventListener("dragleave", (e) => {
+      if (root.contains(e.relatedTarget)) return;
       root.classList.remove("droptarget");
-  
-      // tylko jeśli to był aktualny hover
       if (finalDnd.overSide === targetSide) finalDnd.overSide = null;
     });
   
@@ -1333,7 +1331,11 @@ async function sendZeroStatesToDevices() {
   }
   
   // Powrót z setup_final/setup_rounds do setup_game
-  ui.on("setup.final.back", () => store.setSetupStep("setup_game"));
+  ui.on("setup.final.back", () => {
+    store.unconfirmFinalQuestions();
+    ui.setFinalConfirmed(false);
+    store.setSetupStep("setup_game");
+  });
   ui.on("setup.rounds.back", () => store.setSetupStep("setup_game"));
   ui.on("setup.rounds.next", () => {
     // Zatwierź kolejność rund i przejdź do finish

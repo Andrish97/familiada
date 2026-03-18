@@ -290,7 +290,7 @@
     background: rgba(0,0,0,.14);
     max-height: none;
     overflow: visible;
-    min-height: 0
+    min-height: 60px
 }
 
 .qList.droptarget {
