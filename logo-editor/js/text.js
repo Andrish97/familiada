@@ -2,7 +2,7 @@
 // Tryb: TEXT (font_3x10) -> zapis GLYPH_30x10
 // Stała 1 kolumna przerwy miedzy glifami.
 
-import { t } from "../../translation/translation.js";
+import { t, getUiLang } from "../../translation/translation.js";
 
 export function initTextEditor(ctx) {
   const paneText = document.getElementById("paneText");
@@ -14,7 +14,19 @@ export function initTextEditor(ctx) {
   const charsList = document.getElementById("charsList");
 
 
-  const TYPE_GLYPH = "GLYPH_30x10";
+  const CYRILLIC_UK = new Set([
+    "А","Б","В","Г","Ґ","Д","Е","Є","Ж","З","И","І","Й","К","Л","М",
+    "Н","О","П","Р","С","Т","У","Ф","Х","Ц","Ч","Ш","Щ","Ь","Ю","Я","Ї"
+  ]);
+
+  const isCyrillicUk = (ch) => CYRILLIC_UK.has(ch);
+
+  const getFont = () => {
+    const FONT_3x10 = ctx.getFont3x10?.() || {};
+    if (getUiLang() === "uk") return FONT_3x10;
+    // filtruj cyrylicę gdy nie uk
+    return Object.fromEntries(Object.entries(FONT_3x10).filter(([k]) => !isCyrillicUk(k)));
+  };
 
   const show = (el, on) => { if (!el) return; el.style.display = on ? "" : "none"; };
 
@@ -119,7 +131,7 @@ export function initTextEditor(ctx) {
   }
 
   function renderAllowedCharsList() {
-    const FONT_3x10 = ctx.getFont3x10?.() || {};
+    const FONT_3x10 = getFont();
     if (!charsList) return;
     const keys = Object.keys(FONT_3x10 || {});
     charsList.textContent = "␠" + keys.join("\u2009");
@@ -178,6 +190,7 @@ export function initTextEditor(ctx) {
   }
 
   window.addEventListener("i18n:lang", () => {
+    renderAllowedCharsList();
     updateCharsToggleLabel(!isHidden(charsInline));
     if (lastCompiled) updateWarnings(lastCompiled);
   });
