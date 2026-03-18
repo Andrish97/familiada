@@ -365,6 +365,20 @@ function hostUpdate() {
       pool = withAnswers.filter((q) => !finalPicked.has(q.id));
     }
 
+    // Jeśli wybrano ręczną kolejność — użyj jej
+    const roundsPicked = store.state.roundsPicked || [];
+    if (store.state.roundsQuestionsMode === "pick" && roundsPicked.length > 0) {
+      const byId = new Map(pool.map(q => [String(q.id), q]));
+      const ordered = roundsPicked
+        .map(p => byId.get(String(p.id)))
+        .filter(Boolean);
+      // dołącz pozostałe (nieujęte w kolejności) na końcu
+      const orderedIds = new Set(ordered.map(q => String(q.id)));
+      const rest = pool.filter(q => !orderedIds.has(String(q.id)));
+      return [...ordered, ...rest];
+    }
+
+    // Losowanie
     for (let i = pool.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [pool[i], pool[j]] = [pool[j], pool[i]];
