@@ -1832,6 +1832,9 @@ async function copyFolderSubtree(state, sourceFolderId, targetParentIdOrNull) {
 async function moveItemsTo(state, targetFolderIdOrNull, { mode = "move" } = {}) {
   if (!canWrite(state)) return;
 
+  // "root" to sentinel UI — w bazie parent_id/category_id = null
+  if (targetFolderIdOrNull === "root") targetFolderIdOrNull = null;
+
   const keys = state._drag?.keys;
   if (!keys || !keys.size) return;
 
@@ -1995,11 +1998,14 @@ async function applyCategoryOrder(state, parentIdOrNull, orderedIds) {
   const ids = uniq(orderedIds);
   if (!ids.length) return;
 
+  // "root" to sentinel UI — w bazie parent_id = null
+  const dbParent = (parentIdOrNull === "root" || !parentIdOrNull) ? null : parentIdOrNull;
+
   // ustawiamy ord 1..N (prosto i stabilnie)
   // + parent_id (bo reorder może też oznaczać przeniesienie między rodzicami)
   const updates = ids.map((id, i) => ({
     id,
-    parent_id: parentIdOrNull,
+    parent_id: dbParent,
     ord: i + 1,
   }));
 
