@@ -2642,6 +2642,8 @@ const uk = {
     nameModal: {
       title: "Змінити назву",
       sub: "Введіть нову назву гри.",
+      titleCreate: "Нова гра",
+      subCreate: "Введіть назву гри.",
       placeholder: "Назва...",
       failed: "Не вдалося змінити назву.",
     },

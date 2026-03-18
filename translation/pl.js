@@ -2756,6 +2756,8 @@ const pl = {
     nameModal: {
       title: "Zmień nazwę",
       sub: "Podaj nową nazwę gry.",
+      titleCreate: "Nowa gra",
+      subCreate: "Podaj nazwę gry.",
       placeholder: "Nazwa...",
       failed: "Nie udało się zmienić nazwy.",
     },

@@ -168,6 +168,8 @@ let marketGamesAll = [];
 let selectedMarketId = null;
 
 let renamingGameId = null;
+let nameMode = "rename"; // "rename" | "create"
+let creatingUiType = null;
 
 // =======================================================
 // Auto-refresh (jak polls-hub)
@@ -333,15 +335,31 @@ function setNameMsg(t) {
 
 function openRenameModal(game) {
   if (!game) return;
+  nameMode = "rename";
   renamingGameId = game.id;
   setNameMsg("");
+  if (nameTitle) nameTitle.textContent = t("builder.nameModal.title");
+  if (nameSub) nameSub.textContent = t("builder.nameModal.sub");
   if (nameInp) nameInp.value = game.name || "";
   show(nameOverlay, true);
   setTimeout(() => nameInp?.select(), 0);
 }
 
+function openCreateModal(uiType) {
+  nameMode = "create";
+  creatingUiType = uiType;
+  setNameMsg("");
+  if (nameTitle) nameTitle.textContent = t("builder.nameModal.titleCreate");
+  if (nameSub) nameSub.textContent = t("builder.nameModal.subCreate");
+  if (nameInp) nameInp.value = "";
+  show(nameOverlay, true);
+  setTimeout(() => nameInp?.focus(), 0);
+}
+
 function closeRenameModal() {
   renamingGameId = null;
+  creatingUiType = null;
+  nameMode = "rename";
   show(nameOverlay, false);
 }
 
@@ -666,14 +684,14 @@ function defaultNameForUiType(uiType) {
  * - jeśli DB ma check fixed/poll (23514), robimy fallback:
  *    prepared -> fixed, polls -> poll
  */
-async function createGame(uiType) {
-  const name = defaultNameForUiType(uiType);
+async function createGame(uiType, name) {
+  const gameName = name || defaultNameForUiType(uiType);
 
   // 1) próbuj nowy schemat (type = poll_text/poll_points/prepared)
   let ins = await sb()
     .from("games")
     .insert({
-      name,
+      name: gameName,
       owner_id: currentUser.id,
       type: uiType,
       status: STATUS.DRAFT,
@@ -699,7 +717,7 @@ async function createGame(uiType) {
     ins = await sb()
       .from("games")
       .insert({
-        name,
+        name: gameName,
         owner_id: currentUser.id,
         type: dbType,
         status: STATUS.DRAFT,
@@ -802,24 +820,8 @@ function cardAdd(uiType) {
     <div class="txt">${t("builder.card.newGame")}</div>
     <div class="sub">${typeLabel(uiType)}</div>
   `;
-    el.addEventListener("click", async () => {
-      if (isCreatingGame) return;
-      isCreatingGame = true;
-      el.style.pointerEvents = "none";
-      el.style.opacity = "0.6";
-  
-      try {
-        const g = await createGame(uiType);
-        selectedId = g.id;
-        await refresh();
-      } catch (e) {
-        console.error("[builder] create error:", e);
-        void alertModal({ text: MSG.alertCreateFailed() });
-      } finally {
-        isCreatingGame = false;
-        el.style.pointerEvents = "";
-        el.style.opacity = "";
-      }
+    el.addEventListener("click", () => {
+      openCreateModal(uiType);
     });
   return el;
 }
@@ -1455,7 +1457,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   btnNameCancel?.addEventListener("click", closeRenameModal);
   nameOverlay?.addEventListener("click", (ev) => { if (ev.target === nameOverlay) closeRenameModal(); });
   btnNameOk?.addEventListener("click", async () => {
-    if (!renamingGameId) return;
     const val = String(nameInp?.value || "").trim();
     if (!val) return;
 
@@ -1463,11 +1464,17 @@ document.addEventListener("DOMContentLoaded", async () => {
     setNameMsg("");
 
     try {
-      await renameGame(renamingGameId, val);
+      if (nameMode === "create") {
+        const g = await createGame(creatingUiType, val);
+        selectedId = g.id;
+      } else {
+        if (!renamingGameId) return;
+        await renameGame(renamingGameId, val);
+      }
       await refresh();
       closeRenameModal();
     } catch (e) {
-      console.error("[builder] rename error:", e);
+      console.error("[builder] name modal error:", e);
       setNameMsg(t("builder.nameModal.failed"));
     } finally {
       if (btnNameOk) btnNameOk.disabled = false;
