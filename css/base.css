@@ -210,6 +210,10 @@ a.gold {
     text-decoration: underline;
 }
 
+a.btn.gold {
+    text-decoration: none;
+}
+
 .btn.danger {
     border-color: rgba(255,120,120,.35);
     background: rgba(255,120,120,.12)
