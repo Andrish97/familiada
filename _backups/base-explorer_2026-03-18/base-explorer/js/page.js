@@ -14,7 +14,6 @@ import {
   listAllQuestions,
 } from "./repo.js";
 import { wireActions } from "./actions.js";
-import { initDrawer, disableDragOnTouch } from "./mobile.js";
 
 /* ================= DOM ================= */
 const btnBack = document.getElementById("btnBack");
@@ -94,10 +93,6 @@ btnLogout?.addEventListener("click", async () => {
     state.questions = qs;
 
     renderAll(state);
-
-    // ===== mobile =====
-    initDrawer();
-    disableDragOnTouch();
 
     // ===== akcje UI (klik folder, search, selekcja) =====
     const api = wireActions({ state });

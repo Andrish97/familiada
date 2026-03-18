@@ -33,7 +33,6 @@ import { initQuestionModal } from "./question-modal.js";
 import { sb } from "../../js/core/supabase.js";
 import { alertModal, confirmModal } from "../../js/core/modal.js";
 import { t } from "../../translation/translation.js";
-import { addLongPress } from "./mobile.js";
 
 let exportModal = null;
 
@@ -4205,46 +4204,6 @@ export function wireActions({ state }) {
 
     // puste tło listy = root (bez specjalnych akcji na razie)
     await showContextMenu({ state, x: e.clientX, y: e.clientY, target: { kind: "root", id: null } });
-  });
-
-  // Long press na liście (mobile — zamiennik PPM)
-  addLongPress(listEl, async (x, y, target) => {
-    const row = target?.closest?.(".row[data-kind][data-id]");
-    if (row) {
-      const kind = row.dataset.kind;
-      const id = row.dataset.id;
-      await showContextMenu({ state, x, y, target: { kind, id } });
-      return;
-    }
-    await showContextMenu({ state, x, y, target: { kind: "root", id: null } });
-  });
-
-  // Long press na drzewie (mobile)
-  addLongPress(treeEl, async (x, y, target) => {
-    if (isTreeLocked(state)) { warnTreeLocked(state); return; }
-    const row = target?.closest?.(".row[data-kind][data-id]");
-    if (row) {
-      const kind = row.dataset.kind;
-      const id = row.dataset.id || null;
-      if (kind === "cat") { await showContextMenu({ state, x, y, target: { kind: "cat", id } }); return; }
-      if (kind === "root") { await showContextMenu({ state, x, y, target: { kind: "root", id: null } }); return; }
-    }
-    await showContextMenu({ state, x, y, target: { kind: "root", id: null, scope: "tree" } });
-  });
-
-  // Long press na tagach (mobile)
-  addLongPress(tagsEl, async (x, y, target) => {
-    if (isLeftPanelLockedBySearch()) { warnLeftLockedBySearch(); return; }
-    const row = target?.closest?.(".row[data-kind][data-id]");
-    if (row) {
-      const key = leftKeyFromRow(row);
-      if (key && !leftIsSelected(state, key)) { leftSelectSingle(state, key); renderAll(state); }
-      const kind = row.dataset.kind;
-      const id = row.dataset.id;
-      await showContextMenu({ state, x, y, target: { kind, id } });
-      return;
-    }
-    await showContextMenu({ state, x, y, target: { kind: "tags-bg", id: null } });
   });
 
   // Klik poza menu zamyka
