@@ -1005,6 +1005,6 @@ document.addEventListener('DOMContentLoaded', () => {
     localStorage.setItem('gen_last_lang', e.target.value);
     loadGames();
   });
-  
-  loadGames();
+
+  window.resetGeneratorSession = loadGames;
 });

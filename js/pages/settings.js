@@ -2955,6 +2955,10 @@ function setActiveTab(tab) {
   if (els.marketplacePanel) els.marketplacePanel.hidden = tab !== "marketplace";
   if (els.generatorPanel) els.generatorPanel.hidden = tab !== "generator";
   if (els.reportsPanel) els.reportsPanel.hidden = tab !== "reports";
+  if (els.mailPanel) els.mailPanel.style.display = tab === "mail" ? "" : "none";
+  if (els.marketplacePanel) els.marketplacePanel.style.display = tab === "marketplace" ? "" : "none";
+  if (els.generatorPanel) els.generatorPanel.style.display = tab === "generator" ? "" : "none";
+  if (els.reportsPanel) els.reportsPanel.style.display = tab === "reports" ? "" : "none";
   
   if (tab === "generator" && window.resetGeneratorSession) {
     window.resetGeneratorSession();
