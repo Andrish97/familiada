@@ -1340,6 +1340,9 @@ async function sendZeroStatesToDevices() {
     store.setSetupStep("setup_finish");
   });
   ui.on("setup.final.next", () => {
+    store.confirmFinalQuestions(finalPickerGetSelectedIds());
+    ui.setFinalConfirmed(true);
+    ui.setMsg("msgFinalPick", APP_MSG.FINAL_CONFIRMED);
     const roundsMode = store.state.roundsQuestionsMode;
     if (roundsMode === "pick") store.setSetupStep("setup_rounds");
     else store.setSetupStep("setup_finish");
@@ -1633,16 +1636,6 @@ async function sendZeroStatesToDevices() {
     ui.setFinalConfirmed(false);
     ui.setMsg("msgFinalPick", "");
     finalPickerRender();
-  });
-  
-  // Przycisk zatwierdzenia w setup_final
-  document.getElementById("btnSetupFinish")?.addEventListener("click", () => {
-    // Zatwierdź wybór pytań finału
-    store.confirmFinalQuestions(finalPickerGetSelectedIds());
-    ui.setFinalConfirmed(true);
-    ui.setMsg("msgFinalPick", APP_MSG.FINAL_CONFIRMED);
-    // Przejdź do setup_finish
-    store.setSetupStep("setup_finish");
   });
 
     // ROUNDS
