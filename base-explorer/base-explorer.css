@@ -1837,13 +1837,7 @@ tr.row:has(.tag-dot[data-tip]:hover) {
     -webkit-overflow-scrolling: touch;
   }
 
-  /* Modale — wysuwane od dołu (nadpisujemy tylko wyrównanie, nie display) */
-  .overlay {
-    place-items: end center;
-    align-items: flex-end;
-    justify-content: center;
-  }
-
+  /* Modale — dopasuj szerokość, zostaw centrowanie z base.css */
   .tags-modal,
   .export-modal,
   .question-modal,
@@ -1851,8 +1845,8 @@ tr.row:has(.tag-dot[data-tip]:hover) {
     width: 100% !important;
     max-height: 90vh;
     overflow-y: auto;
-    border-radius: 18px 18px 0 0;
-    margin: 0;
+    border-radius: 14px;
+    margin: 0 8px;
   }
 
   /* Export modal — jedna kolumna */
