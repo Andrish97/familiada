@@ -366,7 +366,7 @@ main{
 }
 
 .wrap {
-    max-width: 90%;
+    width: 90%;
     margin: 0 auto;
     padding: 18px
 }
@@ -615,7 +615,7 @@ main{
 
 @media (max-width: 900px){
     .wrap{
-        max-width: 100%;
+        width: 100%;
         padding: 15px
     }
 }
