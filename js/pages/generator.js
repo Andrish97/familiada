@@ -506,6 +506,7 @@ function renderGameList() {
         ${isWeak ? `<span class="game-badge badge-weak">SŁABE</span>` : ``}
         <span class="game-title" style="color:var(--muted);font-size:12px;flex:1;margin-left:10px">${topLine} · ${qualityLine}</span>
         <button class="btn sm" data-action="uniq" data-id="${game.id}">Unikalność</button>
+        <button class="btn sm" data-action="edit" data-id="${game.id}">Edytuj</button>
         <button class="btn sm danger" data-id="${game.id}">Usuń</button>
         <span class="game-chevron">▶</span>
       </div>
@@ -530,6 +531,11 @@ function renderGameList() {
         const id = e.target.dataset.id;
         if (action === 'uniq') {
           checkUniqueness(id);
+          return;
+        }
+        if (action === 'edit') {
+          const g = games.find(x => x.id === id);
+          if (g) openGameEditor(g);
           return;
         }
         deleteGame(id);
@@ -743,7 +749,166 @@ function renderPreviewQuestions(container, payload) {
   `).join('');
 }
 
-function importGamesFromData(raw) {
+// Game Editor
+let editorGameId = null;
+
+function openGameEditor(game) {
+  editorGameId = game.id;
+  const overlay = $('gameEditorOverlay');
+  $('ge-title').value = game.title || '';
+  $('ge-description').value = game.description || '';
+  $('ge-lang').value = game.lang || 'pl';
+  renderEditorQuestions(game.payload?.questions || []);
+  showStatus('ge-status', '', '');
+  $('ge-title').addEventListener('input', updateTitleLen);
+  $('ge-description').addEventListener('input', updateDescLen);
+  overlay.style.display = 'flex';
+}
+
+function closeGameEditor() {
+  $('gameEditorOverlay').style.display = 'none';
+  editorGameId = null;
+}
+
+function renderEditorQuestions(questions) {
+  const container = $('ge-questions');
+  container.innerHTML = '';
+  questions.forEach((q, qi) => {
+    const qDiv = document.createElement('div');
+    qDiv.className = 'mail-card';
+    qDiv.style.gap = '8px';
+    qDiv.innerHTML = `
+      <div style="display:flex;gap:8px;align-items:center">
+        <span style="font-size:11px;font-weight:700;opacity:.5;min-width:20px">${qi + 1}.</span>
+        <input class="inp ge-q-text" data-qi="${qi}" value="${escHtml(q.text)}" style="flex:1">
+        <span class="ge-q-len" data-qi="${qi}" style="font-size:11px;opacity:.45;white-space:nowrap"></span>
+      </div>
+      <div class="ge-answers" data-qi="${qi}" style="display:grid;gap:6px">
+        ${(q.answers || []).map((a, ai) => `
+          <div style="display:flex;gap:6px;align-items:center">
+            <span style="font-size:11px;opacity:.4;min-width:14px">${ai + 1}</span>
+            <input class="inp ge-a-text" data-qi="${qi}" data-ai="${ai}" value="${escHtml(a.text)}" style="flex:1">
+            <span class="ge-a-len" data-qi="${qi}" data-ai="${ai}" style="font-size:11px;opacity:.45;white-space:nowrap"></span>
+            <input class="inp ge-a-pts" data-qi="${qi}" data-ai="${ai}" type="number" value="${a.fixed_points ?? ''}" style="width:60px" placeholder="pkt">
+          </div>
+        `).join('')}
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;font-size:11px">
+        <span class="ge-pts-sum" data-qi="${qi}"></span>
+      </div>
+    `;
+    container.appendChild(qDiv);
+  });
+  // attach live validation
+  container.querySelectorAll('.ge-q-text').forEach(el => {
+    updateQLen(el);
+    el.addEventListener('input', () => updateQLen(el));
+  });
+  container.querySelectorAll('.ge-a-text').forEach(el => {
+    updateALen(el);
+    el.addEventListener('input', () => updateALen(el));
+  });
+  container.querySelectorAll('.ge-a-pts').forEach(el => {
+    updatePtsSum(el.dataset.qi);
+    el.addEventListener('input', () => updatePtsSum(el.dataset.qi));
+  });
+  updateDescLen();
+  updateTitleLen();
+}
+
+function updateQLen(el) {
+  const len = el.value.trim().length;
+  const span = document.querySelector(`.ge-q-len[data-qi="${el.dataset.qi}"]`);
+  if (!span) return;
+  span.textContent = `${len} zn.`;
+  span.style.color = len < 10 ? 'var(--red, #f55)' : 'inherit';
+}
+
+function updateALen(el) {
+  const len = el.value.trim().length;
+  const span = document.querySelector(`.ge-a-len[data-qi="${el.dataset.qi}"][data-ai="${el.dataset.ai}"]`);
+  if (!span) return;
+  span.textContent = `${len}`;
+  span.style.color = len === 0 ? 'var(--red, #f55)' : 'inherit';
+}
+
+function updatePtsSum(qi) {
+  const pts = [...document.querySelectorAll(`.ge-a-pts[data-qi="${qi}"]`)]
+    .map(el => Number(el.value) || 0);
+  const sum = pts.reduce((a, b) => a + b, 0);
+  const span = document.querySelector(`.ge-pts-sum[data-qi="${qi}"]`);
+  if (!span) return;
+  const ok = sum >= 80 && sum <= 100;
+  span.textContent = `Suma pkt: ${sum}/100`;
+  span.style.color = ok ? 'var(--green, #4c4)' : 'var(--red, #f55)';
+  span.style.fontWeight = ok ? '' : '700';
+}
+
+function updateDescLen() {
+  const el = $('ge-description');
+  const hint = $('ge-desc-hint');
+  if (!el || !hint) return;
+  const len = el.value.trim().length;
+  hint.textContent = `${len} zn.${len < 30 ? ' (min. 30)' : len < 60 ? ' (krótki)' : ''}`;
+  hint.style.color = len < 30 ? 'var(--red, #f55)' : len < 60 ? 'var(--yellow, #fa0)' : 'inherit';
+}
+
+function updateTitleLen() {
+  const el = $('ge-title');
+  const hint = $('ge-title-hint');
+  if (!el || !hint) return;
+  const len = el.value.trim().length;
+  hint.textContent = `${len} zn.${len < 6 ? ' (min. 6)' : ''}`;
+  hint.style.color = len < 6 ? 'var(--red, #f55)' : 'inherit';
+}
+
+function escHtml(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function collectEditorData() {
+  const title = $('ge-title').value.trim();
+  const description = $('ge-description').value.trim();
+  const lang = $('ge-lang').value;
+  const qTexts = [...document.querySelectorAll('.ge-q-text')];
+  const questions = qTexts.map((qEl) => {
+    const qi = Number(qEl.dataset.qi);
+    const aTexts = [...document.querySelectorAll(`.ge-a-text[data-qi="${qi}"]`)];
+    const aPts = [...document.querySelectorAll(`.ge-a-pts[data-qi="${qi}"]`)];
+    return {
+      text: qEl.value.trim(),
+      answers: aTexts.map((aEl, ai) => ({
+        text: aEl.value.trim(),
+        fixed_points: Number(aPts[ai]?.value) || 0,
+      })),
+    };
+  });
+  return { title, description, lang, payload: { questions } };
+}
+
+async function saveGameEditor() {
+  const { title, description, lang, payload } = collectEditorData();
+  showStatus('ge-status', 'Zapisuję…', 'info');
+  try {
+    const data = await callEdgeAction('update-producer-game', { id: editorGameId, title, description, lang, payload });
+    const updated = data?.game;
+    if (updated) {
+      const idx = games.findIndex(g => g.id === editorGameId);
+      if (idx !== -1) {
+        games[idx] = { ...games[idx], ...updated };
+        weaknessCache.delete(editorGameId);
+        uniquenessCache.delete(editorGameId);
+        renderGameList();
+      }
+    }
+    showStatus('ge-status', '✓ Zapisano', 'ok');
+    setTimeout(closeGameEditor, 800);
+  } catch (e) {
+    showStatus('ge-status', `✗ ${e.message}`, 'err');
+  }
+}
+
+
   let items;
   try {
     const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
@@ -806,6 +971,15 @@ async function handleImport() {
   if (importBtn) importBtn.addEventListener('click', handleImport);
   const importFile = $('gen-import-file');
   if (importFile) importFile.addEventListener('change', () => { if (importFile.files?.length) handleImport(); });
+
+  const editorClose = $('btnGameEditorClose');
+  if (editorClose) editorClose.addEventListener('click', closeGameEditor);
+  const editorCancel = $('btnGameEditorCancel');
+  if (editorCancel) editorCancel.addEventListener('click', closeGameEditor);
+  const editorSave = $('btnGameEditorSave');
+  if (editorSave) editorSave.addEventListener('click', saveGameEditor);
+  const editorOverlay = $('gameEditorOverlay');
+  if (editorOverlay) editorOverlay.addEventListener('click', (e) => { if (e.target === editorOverlay) closeGameEditor(); });
   const selIssuesBtn = $('gen-select-issues-btn');
   if (selIssuesBtn) selIssuesBtn.addEventListener('click', (e) => { e.preventDefault(); selectIssues(); });
   const selAllBtn = $('gen-sel-all-btn');
