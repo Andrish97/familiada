@@ -64,6 +64,7 @@ async function loadGames() {
     hide('gen-results-section');
     show('gen-manage-card');
     show('gen-input-card');
+    show('gen-import-card');
     show('gen-enqueue-btn');
     const scanBtn = $('gen-scan-btn');
     if (scanBtn) scanBtn.disabled = games.length === 0;
@@ -742,11 +743,69 @@ function renderPreviewQuestions(container, payload) {
   `).join('');
 }
 
-// Init
-document.addEventListener('DOMContentLoaded', () => {
+function importGamesFromData(raw) {
+  let items;
+  try {
+    const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    items = Array.isArray(parsed) ? parsed : [parsed];
+  } catch {
+    showStatus('gen-import-status', '✗ Nieprawidłowy JSON', 'err');
+    return 0;
+  }
+  let added = 0;
+  for (const item of items) {
+    if (!item?.title || !item?.payload?.questions) continue;
+    generated.unshift({
+      id: makeLocalId(),
+      approved: false,
+      generating: false,
+      candidate: {
+        title: item.title,
+        description: item.description || '',
+        lang: item.lang || $('gen-manage-lang')?.value || 'pl',
+        payload: item.payload,
+      },
+      matches: [],
+      warnings: [],
+    });
+    added++;
+  }
+  return added;
+}
+
+async function handleImport() {
+  const paste = $('gen-import-paste')?.value?.trim();
+  let added = 0;
+  if (paste) {
+    added += importGamesFromData(paste);
+    if ($('gen-import-paste')) $('gen-import-paste').value = '';
+  }
+  const fileInput = $('gen-import-file');
+  if (fileInput?.files?.length) {
+    for (const file of fileInput.files) {
+      const text = await file.text();
+      added += importGamesFromData(text);
+    }
+    fileInput.value = '';
+  }
+  if (added === 0) {
+    showStatus('gen-import-status', '✗ Brak poprawnych gier', 'err');
+    return;
+  }
+  showStatus('gen-import-status', `✓ Zaimportowano ${added} gier`, 'ok');
+  show('gen-results-section');
+  renderGeneratedList();
+}
+
+
   $('gen-load-btn').addEventListener('click', loadGames);
   $('gen-enqueue-btn').addEventListener('click', generateGames);
   $('gen-scan-btn').addEventListener('click', scanForDuplicates);
+
+  const importBtn = $('gen-import-btn');
+  if (importBtn) importBtn.addEventListener('click', handleImport);
+  const importFile = $('gen-import-file');
+  if (importFile) importFile.addEventListener('change', () => { if (importFile.files?.length) handleImport(); });
   const selIssuesBtn = $('gen-select-issues-btn');
   if (selIssuesBtn) selIssuesBtn.addEventListener('click', (e) => { e.preventDefault(); selectIssues(); });
   const selAllBtn = $('gen-sel-all-btn');
