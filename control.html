@@ -668,27 +668,27 @@
 
               <div class="card">
                 <div class="cardBody">
-                  <div class="name" data-i18n="control.setupFinishTitle">Gra jest gotowa do rozpoczęcia</div>
-                  
-                  <div class="summaryList">
-                    <div class="summaryItem">
-                      <span class="summaryLabel" data-i18n="control.summaryTeams">Drużyny:</span>
-                      <span class="summaryValue" id="summaryTeams">—</span>
-                    </div>
-                    <div class="summaryItem">
-                      <span class="summaryLabel" data-i18n="control.summaryFinal">Finał:</span>
-                      <span class="summaryValue" id="summaryFinal">—</span>
-                    </div>
-                    <div class="summaryItem">
-                      <span class="summaryLabel" data-i18n="control.summaryFinalQuestions">Pytania finału:</span>
-                      <span class="summaryValue" id="summaryFinalQuestions">—</span>
-                    </div>
-                    <div class="summaryItem">
-                      <span class="summaryLabel" data-i18n="control.summaryRoundsQuestions">Pytania rund:</span>
-                      <span class="summaryValue" id="summaryRoundsQuestions">—</span>
-                    </div>
+
+                  <div class="summarySection">
+                    <div class="summarySectionTitle" data-i18n="control.summaryTeams">Drużyny</div>
+                    <div class="summarySectionValue" id="summaryTeams">—</div>
                   </div>
-                  
+
+                  <div class="summarySection">
+                    <div class="summarySectionTitle" data-i18n="control.summaryFinal">Finał</div>
+                    <div class="summarySectionValue" id="summaryFinal">—</div>
+                  </div>
+
+                  <div class="summarySection" id="summaryFinalSection">
+                    <div class="summarySectionTitle" data-i18n="control.summaryFinalQuestions">Pytania finału</div>
+                    <ol class="summaryQList" id="summaryFinalQuestions"></ol>
+                  </div>
+
+                  <div class="summarySection">
+                    <div class="summarySectionTitle" data-i18n="control.summaryRoundsQuestions">Pytania rund</div>
+                    <ol class="summaryQList" id="summaryRoundsQuestions"></ol>
+                  </div>
+
                   <div class="hint" data-i18n="control.setupFinishHint">
                     Po kliknięciu „Gotowe" przejdziesz do panelu rund.
                   </div>
