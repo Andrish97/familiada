@@ -609,11 +609,11 @@ main{
     }
 
     .only-desktop {
-        display: inline-flex
+        display: none
     }
 
     .only-mobile {
-        display: none
+        display: inline-flex
     }
 }
 
