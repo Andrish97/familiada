@@ -1361,10 +1361,10 @@ async function loadMarketplace({ silent = false } = {}) {
     const date = g.created_at ? new Date(g.created_at).toLocaleDateString() : "—";
     const note = g.moderation_note ? ` <span style="opacity:.6;font-size:.85em">(${escSetting(g.moderation_note)})</span>` : "";
 
-    let actions = `<button class="btn sm" data-market-preview="${escSetting(g.id)}">Podgląd</button>`;
+    let actions = `<button class="btn sm" data-market-preview="${escSetting(g.id)}">${t("settings.marketplace.marketPreview") || "Podgląd"}</button>`;
     if (marketActiveStatus === "pending") {
-      actions += ` <button class="btn sm gold" data-market-approve="${escSetting(g.id)}">Zatwierdź</button>`;
-      actions += ` <button class="btn sm" data-market-reject="${escSetting(g.id)}">Odrzuć</button>`;
+      actions += ` <button class="btn sm gold" data-market-approve="${escSetting(g.id)}">${t("settings.marketplace.marketApprove") || "Zatwierdź"}</button>`;
+      actions += ` <button class="btn sm" data-market-reject="${escSetting(g.id)}">${t("settings.marketplace.marketReject") || "Odrzuć"}</button>`;
     }
 
     const authorLabel = g.origin === "producer"
@@ -1583,7 +1583,7 @@ async function syncStorage() {
 
     // Cleanup — usuń z DB gry których nie ma już w Storage
     const allPaths = allResults.map(r => r.path);
-    modal.setStep("Czyszczę usunięte gry…");
+    modal.setStep(t("settings.marketplace.syncCleanup") || "Czyszczę usunięte gry…");
     let deleted = 0;
     try {
       const cleanRes  = await adminFetch("/marketplace/sync-storage-cleanup", { method: "POST", body: JSON.stringify({ paths: allPaths }) });
@@ -1601,10 +1601,10 @@ async function syncStorage() {
     }
 
     const ok  = totalFailed === 0;
-    const deletedPart = deleted > 0 ? `, usunięto ${deleted}` : "";
+    const deletedPart = deleted > 0 ? (t("settings.marketplace.syncDeleted") || ", usunięto {n}").replace("{n}", deleted) : "";
     const msg = ok
-      ? `Sync OK — ${totalSynced}/${grandTotal}${deletedPart}`
-      : `Sync: ${totalSynced}/${grandTotal} OK, ${totalFailed} błędów${deletedPart}`;
+      ? `${t("settings.marketplace.syncOk") || "Sync OK"} — ${totalSynced}/${grandTotal}${deletedPart}`
+      : `Sync: ${totalSynced}/${grandTotal} OK, ${totalFailed} ${t("settings.marketplace.syncErrors") || "błędów"}${deletedPart}`;
     modal.finish(ok, msg);
     if (status) status.textContent = msg;
     showToast(msg, ok ? "success" : "error");
@@ -1625,8 +1625,8 @@ async function testTelegram() {
     const res  = await adminFetch("/config/telegram/test", { method: "POST" });
     const json = await res.json();
     if (!json.ok) throw new Error(json.error || "test_failed");
-    if (status) status.textContent = "Testowe powiadomienie wysłane.";
-    showToast("Testowe powiadomienie Telegram wysłane.", "success");
+    if (status) status.textContent = t("settings.marketplace.telegramTestSent") || "Testowe powiadomienie wysłane.";
+    showToast(t("settings.marketplace.telegramTestToast") || "Testowe powiadomienie Telegram wysłane.", "success");
   } catch (err) {
     showToast(String(err?.message || err), "error");
   }
@@ -1740,7 +1740,7 @@ async function openMessage(id) {
 
   const conv = document.getElementById("mailConv");
   if (!conv) return;
-  conv.innerHTML = `<div style="flex:1;display:flex;align-items:center;justify-content:center;opacity:.35;font-size:12px">Ładowanie…</div>`;
+  conv.innerHTML = `<div style="flex:1;display:flex;align-items:center;justify-content:center;opacity:.35;font-size:12px">${t("settings.marketplace.loadingConv") || "Ładowanie…"}</div>`;
 
   try {
     const res = await adminFetch(`/messages/detail?id=${encodeURIComponent(id)}`);
@@ -1801,13 +1801,13 @@ function renderMessageDetail(msg, attachments = []) {
 
   let ticketBadge = "";
   if (msg.ticket_number) {
-    ticketBadge = `<span class="mail-ticket-badge" data-report-id="${escSetting(msg.report_id)}" style="cursor:pointer;font-size:11px;padding:2px 7px;border-radius:6px;background:rgba(255,234,166,.15);color:#ffeaa6;margin-left:6px" title="Przejdź do zgłoszenia">${escSetting(msg.ticket_number)}</span>`;
+    ticketBadge = `<span class="mail-ticket-badge" data-report-id="${escSetting(msg.report_id)}" style="cursor:pointer;font-size:11px;padding:2px 7px;border-radius:6px;background:rgba(255,234,166,.15);color:#ffeaa6;margin-left:6px" title="${t("settings.marketplace.ticketBadgeTitle") || "Przejdź do zgłoszenia"}">${escSetting(msg.ticket_number)}</span>`;
   }
 
   header.innerHTML = `
     <div class="mail-conv-subject">${escSetting(msg.subject || "—")}</div>
     <div class="mail-conv-meta">
-      ${isInbound ? "Od:" : "Do:"} ${escSetting(from || "—")} · ${new Date(msg.created_at).toLocaleString("pl-PL")} · ${escSetting(sourceLabel)}${ticketBadge}
+      ${isInbound ? (t("settings.marketplace.convFrom") || "Od:") : (t("settings.marketplace.convTo") || "Do:")} ${escSetting(from || "—")} · ${new Date(msg.created_at).toLocaleString("pl-PL")} · ${escSetting(sourceLabel)}${ticketBadge}
     </div>`;
   conv.appendChild(header);
 
@@ -1847,7 +1847,7 @@ function renderMessageDetail(msg, attachments = []) {
 
       if (isExpired) {
         chip.style.cssText = "display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;border:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.3);text-decoration:none;cursor:default;background:rgba(255,255,255,.02);";
-        chip.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>${escSetting(att.filename)} <span style="opacity:.5">— załącznik wygasł</span>`;
+        chip.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>${escSetting(att.filename)} <span style="opacity:.5">${t("settings.marketplace.attachExpired") || "— załącznik wygasł"}</span>`;
       } else {
         chip.style.cssText = "display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;border:1px solid rgba(255,255,255,.15);font-size:11px;color:rgba(255,255,255,.7);text-decoration:none;cursor:pointer;background:rgba(255,255,255,.04);";
         const icon = isImage
@@ -1978,7 +1978,7 @@ async function openReport(id) {
 
   const conv = document.getElementById("mailConv");
   if (!conv) return;
-  conv.innerHTML = `<div style="flex:1;display:flex;align-items:center;justify-content:center;opacity:.35;font-size:12px">Ładowanie…</div>`;
+  conv.innerHTML = `<div style="flex:1;display:flex;align-items:center;justify-content:center;opacity:.35;font-size:12px">${t("settings.marketplace.loadingConv") || "Ładowanie…"}</div>`;
 
   try {
     const res = await adminFetch(`/reports/messages?id=${encodeURIComponent(id)}`);
@@ -2078,7 +2078,7 @@ function renderReportThread(report, messages, attsByMsg = {}) {
         const isPdf   = att.mime_type === "application/pdf";
         if (isExpired) {
           chip.style.cssText = "display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;border:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.3);text-decoration:none;cursor:default;background:rgba(255,255,255,.02);";
-          chip.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>${escSetting(att.filename)} <span style="opacity:.5">— wygasł</span>`;
+          chip.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>${escSetting(att.filename)} <span style="opacity:.5">${t("settings.marketplace.attachExpired") || "— wygasł"}</span>`;
         } else {
           chip.style.cssText = "display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;border:1px solid rgba(255,255,255,.15);font-size:11px;color:rgba(255,255,255,.7);text-decoration:none;cursor:pointer;background:rgba(255,255,255,.04);";
           const icon = isImage

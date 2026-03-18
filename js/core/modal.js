@@ -223,7 +223,7 @@ export function syncProgressModal({ title = "Synchronizacja" } = {}) {
   const progressLabel = document.createElement("div");
   progressLabel.className = "mSub";
   progressLabel.style.margin = "0";
-  progressLabel.textContent = "Przygotowuję…";
+  progressLabel.textContent = t("common.modal.syncPreparing") || "Przygotowuję…";
 
   const barTrack = document.createElement("div");
   barTrack.style.cssText = "background:rgba(255,255,255,.12);border-radius:4px;height:8px;overflow:hidden;";
@@ -235,7 +235,7 @@ export function syncProgressModal({ title = "Synchronizacja" } = {}) {
   logArea.readOnly = true;
   logArea.className = "inp";
   logArea.style.cssText = "width:100%;height:110px;font-size:.72rem;font-family:monospace;resize:none;opacity:.85;";
-  logArea.placeholder = "Brak błędów.";
+  logArea.placeholder = t("common.modal.syncNoErrors") || "Brak błędów.";
 
   bodyWrap.appendChild(progressLabel);
   bodyWrap.appendChild(barTrack);
@@ -276,7 +276,8 @@ export function syncProgressModal({ title = "Synchronizacja" } = {}) {
     update(synced, total, errLine = null) {
       const pct = total > 0 ? Math.round((synced / total) * 100) : 0;
       bar.style.width = pct + "%";
-      progressLabel.textContent = `Synchronizuję… ${synced} / ${total}`;
+      progressLabel.textContent = (t("common.modal.syncProgress") || "Synchronizuję… {synced} / {total}")
+        .replace("{synced}", synced).replace("{total}", total);
       if (errLine) {
         logArea.value += errLine + "\n";
         logArea.scrollTop = logArea.scrollHeight;
