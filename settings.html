@@ -362,24 +362,7 @@
           <div class="panel-sub" data-i18n="settings.generator.subtitle">Generowanie i zarządzanie plikami marketplace</div>
         </div>
 
-        <!-- Import -->
-        <div class="mail-card" id="gen-import-card" style="display:none">
-          <div class="mail-card-title">📥 Import gier z JSON</div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-            <label class="btn sm" style="cursor:pointer">
-              Wybierz pliki JSON
-              <input type="file" id="gen-import-file" accept=".json" multiple style="display:none">
-            </label>
-            <span style="font-size:12px;opacity:.5">lub wklej JSON poniżej</span>
-          </div>
-          <textarea id="gen-import-paste" class="inp" rows="5" placeholder='[{"title":"...","lang":"pl","description":"...","payload":{"questions":[...]}}]  lub pojedynczy obiekt'></textarea>
-          <div style="display:flex;gap:8px;align-items:center">
-            <button class="btn sm gold" id="gen-import-btn">Importuj</button>
-            <span class="status-bar" id="gen-import-status"></span>
-          </div>
-        </div>
-
-
+        <div class="mail-card" id="gen-session-card">
           <div class="mail-card-title">🌐 Sesja</div>
           <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
             <div class="field" style="flex:1;min-width:120px">
@@ -420,6 +403,23 @@
             <div style="color:var(--muted);font-size:12px;padding:10px 0;text-align:center">Wczytaj listę aby zobaczyć gry</div>
           </div>
           <div class="status-bar" id="gen-manage-status"></div>
+        </div>
+
+        <!-- Import -->
+        <div class="mail-card" id="gen-import-card" style="display:none">
+          <div class="mail-card-title">📥 Import gier z JSON</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <label class="btn sm" style="cursor:pointer">
+              Wybierz pliki JSON
+              <input type="file" id="gen-import-file" accept=".json" multiple style="display:none">
+            </label>
+            <span style="font-size:12px;opacity:.5">lub wklej JSON poniżej</span>
+          </div>
+          <textarea id="gen-import-paste" class="inp" rows="5" placeholder='[{"title":"...","lang":"pl","description":"...","payload":{"questions":[...]}}]  lub pojedynczy obiekt'></textarea>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button class="btn sm gold" id="gen-import-btn">Importuj</button>
+            <span class="status-bar" id="gen-import-status"></span>
+          </div>
         </div>
 
         <!-- Generate -->
@@ -550,7 +550,7 @@
         </div>
         <div class="field" style="margin:0">
           <label class="field-label">Opis</label>
-          <input class="inp" id="ge-description" type="text" style="width:100%;box-sizing:border-box">
+          <textarea class="inp" id="ge-description" rows="3" style="width:100%;box-sizing:border-box;resize:vertical"></textarea>
           <span id="ge-desc-hint" style="font-size:11px;opacity:.55"></span>
         </div>
         <div class="field" style="margin:0">
