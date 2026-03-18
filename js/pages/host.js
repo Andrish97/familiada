@@ -593,7 +593,6 @@ function ensureChannel() {
 /* ========= PRESENCE ========= */
 async function ping() {
   if (!gameId || !key) return;
-  if (document.visibilityState !== "visible") return;
   try {
     const { data, error } = await sb().rpc("device_ping", {
       p_game_id: gameId,
