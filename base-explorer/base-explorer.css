@@ -1133,6 +1133,11 @@ tr.row:has(.tag-dot[data-tip]:hover) {
     align-items: center
 }
 
+/* Na desktopie toolbar-btns-row jest przezroczystym wrapperem */
+.toolbar-btns-row {
+    display: contents;
+}
+
 .toolbar {
     gap: 10px;
     padding: 10px 12px
@@ -1712,10 +1717,21 @@ tr.row:has(.tag-dot[data-tip]:hover) {
   /* Pokaż przycisk drawera w toolbarze */
   .mobile-only { display: inline-flex !important; }
 
-  /* Topbar — odblokuj na mobile */
+  /* Topbar — odblokuj na mobile (base.css ukrywa przez topbar-mobile-hidden) */
   .topbar.topbar-mobile-hidden {
-    display: flex !important;
+    display: grid !important;
   }
+
+  /* Topbar layout — dwie kolumny: lewa (brand+back) i prawa (info+logout) */
+  .topbar-layout-4 {
+    grid-template-columns: 1fr auto !important;
+    grid-template-areas: "s1 s3" !important;
+    padding: 8px 10px !important;
+  }
+  .topbar-layout-4 .topbar-section-1 { grid-area: s1; flex-wrap: nowrap; min-width: 0; }
+  .topbar-layout-4 .topbar-section-3 { grid-area: s3; justify-content: flex-end; }
+  .topbar-layout-4 .topbar-section-2,
+  .topbar-layout-4 .topbar-section-4 { display: none !important; }
 
   /* Layout: jeden panel zamiast dwóch kolumn */
   .explorer {
@@ -1761,19 +1777,34 @@ tr.row:has(.tag-dot[data-tip]:hover) {
     min-width: 0;
   }
 
-  /* Toolbar — scroll poziomy zamiast zawijania */
+  /* Toolbar — dwa wiersze na mobile */
   .toolbar {
-    overflow-x: auto;
-    overflow-y: hidden;
-    flex-wrap: nowrap;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    padding: 8px 10px;
+    flex-wrap: wrap;
+    overflow: visible;
+    padding: 6px 10px;
     gap: 6px;
   }
-  .toolbar::-webkit-scrollbar { display: none; }
 
-  /* Separator toolbara — nie zwijaj */
+  /* SearchBox — pełna szerokość, wiersz 1 */
+  .searchBox {
+    width: 100%;
+    min-width: 0;
+    flex-shrink: 0;
+    margin-right: 0;
+  }
+
+  /* Przyciski — wiersz 2, scroll poziomy */
+  .toolbar-btns-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    width: 100%;
+  }
+  .toolbar-btns-row::-webkit-scrollbar { display: none; }
+
   .tbSep { flex-shrink: 0; }
   .tbGroup { flex-shrink: 0; }
 
@@ -1783,12 +1814,16 @@ tr.row:has(.tag-dot[data-tip]:hover) {
     max-height: 48px;
   }
 
-  /* Ukryj kolumny mniej ważne na małym ekranie */
-  .col-num, .col-date { display: none; }
-  .list-head .h-num, .list-head .h-date { display: none; }
+  /* Ukryj kolumny mniej ważne, zostaw tylko nazwę i typ */
+  .col-num, .col-date, .col-meta { display: none; }
+  .list-head .h-num, .list-head .h-date, .list-head .h-meta { display: none; }
 
-  /* Tabela — mniejszy min-width */
-  .list-table { min-width: 0; }
+  /* Kolumna nazwy — zajmuje całą dostępną szerokość */
+  .list-table { min-width: 0; table-layout: auto; }
+  tr.row td.col-main,
+  .list-head th.h-main { width: auto; }
+  tr.row td.col-type,
+  .list-head th.h-type { width: 80px; }
 
   /* Breadcrumbs — scroll poziomy */
   .breadcrumbs {
@@ -1798,24 +1833,32 @@ tr.row:has(.tag-dot[data-tip]:hover) {
   }
   .breadcrumbs::-webkit-scrollbar { display: none; }
 
-  /* Context menu — większe przyciski dotyku */
+  /* Context menu — większe przyciski, bez skrótów, nie wychodź poza ekran */
   .cm-item {
     padding: 14px 12px;
     font-size: 15px;
   }
+  .cm-kbd { display: none; }
 
-  /* Modale — pełna szerokość, wysuwane od dołu */
+  /* Context menu — pozycjonowanie żeby nie wychodziło poza ekran */
+  .context-menu {
+    max-width: calc(100vw - 16px);
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+
+  /* Modale — wysuwane od dołu */
   .overlay {
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
+    display: flex !important;
+    align-items: flex-end !important;
+    justify-content: center !important;
   }
 
   .tags-modal,
   .export-modal,
   .question-modal,
   .rename-modal {
-    width: 100%;
+    width: 100% !important;
     max-height: 90vh;
     overflow-y: auto;
     border-radius: 18px 18px 0 0;
