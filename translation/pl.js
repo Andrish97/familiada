@@ -781,6 +781,7 @@ const pl = {
     logout: "Wyloguj",
     headerTitle: "Twoje bazy pytań",
     headerHint: "Naciśnij kafelek, żeby go zaznaczyć. Podwójne naciśnięcie zmienia nazwę.",
+    headerHintShared: "Naciśnij kafelek, żeby go zaznaczyć.",
     actions: {
       browse: "Przeglądaj",
       browseMobile: "Przegl.",

@@ -1183,9 +1183,9 @@ function setActiveBasesMobileTab(tab) {
   const mineOn = tab !== "shared";
   basesSectionMine?.classList.toggle("active", mineOn);
   basesSectionShared?.classList.toggle("active", !mineOn);
-  // highlight tab slots (parent .tab-slot)
   tabBasesMineMobile?.closest(".tab-slot")?.classList.toggle("active", mineOn);
   tabBasesSharedMobile?.closest(".tab-slot")?.classList.toggle("active", !mineOn);
+  setHint(mineOn ? t("bases.headerHint") : t("bases.headerHintShared"));
 }
 
 function setSharedBasesBadge(n) {
