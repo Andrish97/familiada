@@ -1102,22 +1102,31 @@ tr.row.is-drop-after td:last-child::after {
     z-index: 5;
 }
 
-.meta-dot[data-tip]:hover::after,
-.meta-dot[data-tip]:hover::before,
-.tag-dot[data-tip]:hover::after,
-.tag-dot[data-tip]:hover::before {
-    z-index: 10000;
+/* CSS tooltip wyłączony dla kropek w tabeli — zastąpiony JS tooltip portalem */
+tr.row .meta-dot[data-tip]::after,
+tr.row .meta-dot[data-tip]::before,
+tr.row .tag-dot[data-tip]::after,
+tr.row .tag-dot[data-tip]::before {
+    display: none !important;
 }
 
 [data-tip]:hover::after,[data-tip]:hover::before {
     z-index: 10000;
 }
 
-/* tooltip above sticky header — wymaga position na tr */
-tr.row:has(.meta-dot[data-tip]:hover),
-tr.row:has(.tag-dot[data-tip]:hover) {
-    position: relative;
-    z-index: 100;
+/* JS tooltip portal */
+.dot-tooltip {
+    position: fixed;
+    z-index: 20000;
+    padding: 6px 10px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,.14);
+    background: rgba(10,10,12,.96);
+    box-shadow: 0 14px 34px rgba(0,0,0,.55);
+    color: rgba(255,255,255,.92);
+    font-size: 12px;
+    white-space: nowrap;
+    pointer-events: none;
 }
 
 .tbGroup,.toolbar {

@@ -2198,6 +2198,31 @@ export function wireActions({ state }) {
   const breadcrumbsEl = document.getElementById("breadcrumbs");
   const toolbarEl = document.getElementById("toolbar");
 
+  /* ================= JS tooltip portal (dla kropek w tabeli) ================= */
+  const tipEl = document.createElement("div");
+  tipEl.className = "dot-tooltip";
+  tipEl.hidden = true;
+  document.body.appendChild(tipEl);
+
+  listEl?.addEventListener("mouseover", (e) => {
+    const dot = e.target?.closest?.("[data-tip].tag-dot, [data-tip].meta-dot");
+    if (!dot) return;
+    tipEl.textContent = dot.dataset.tip;
+    tipEl.hidden = false;
+  });
+
+  listEl?.addEventListener("mousemove", (e) => {
+    if (tipEl.hidden) return;
+    tipEl.style.left = `${e.clientX + 12}px`;
+    tipEl.style.top  = `${e.clientY - 28}px`;
+  });
+
+  listEl?.addEventListener("mouseout", (e) => {
+    const dot = e.target?.closest?.("[data-tip].tag-dot, [data-tip].meta-dot");
+    if (!dot) return;
+    tipEl.hidden = true;
+  });
+
   /* ================= Sort (TYLKO 3 kolumny: Nazwa/Typ/Data) ================= */
 
   const SORT_KEYS = new Set(["name", "type", "date"]);
