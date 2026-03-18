@@ -615,6 +615,11 @@ main{
     .only-mobile {
         display: inline-flex
     }
+
+    .topbar-section-1 .only-desktop,
+    .topbar-section-3 .only-desktop { display: inline !important; }
+    .topbar-section-1 .only-mobile,
+    .topbar-section-3 .only-mobile  { display: none !important; }
 }
 
 @media (max-width: 900px){
@@ -985,6 +990,9 @@ html.showA2HS .a2hs {
   .topbar-mobile-group .user-btn .user-name{
     background: rgba(255,255,255,.010);
   }
+
+  .topbar-mobile-panel .only-desktop { display: inline !important; }
+  .topbar-mobile-panel .only-mobile  { display: none !important; }
 }
 
 @media (max-width: 900px){
