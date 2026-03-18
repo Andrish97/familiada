@@ -909,6 +909,7 @@ async function saveGameEditor() {
 }
 
 
+function importGamesFromData(raw) {
   let items;
   try {
     const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
@@ -963,6 +964,7 @@ async function handleImport() {
 }
 
 
+document.addEventListener('DOMContentLoaded', () => {
   $('gen-load-btn').addEventListener('click', loadGames);
   $('gen-enqueue-btn').addEventListener('click', generateGames);
   $('gen-scan-btn').addEventListener('click', scanForDuplicates);
