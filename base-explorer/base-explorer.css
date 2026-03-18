@@ -1735,7 +1735,7 @@ tr.row:has(.tag-dot[data-tip]:hover) {
 
   /* Layout: jeden panel zamiast dwóch kolumn */
   .explorer {
-    grid-template-columns: 1fr;
+    display: block;
     padding: 0 8px 8px;
     min-height: calc(100vh - 110px);
   }
@@ -1775,6 +1775,7 @@ tr.row:has(.tag-dot[data-tip]:hover) {
   .explorer-right {
     padding-left: 0;
     min-width: 0;
+    min-height: 50vh;
   }
 
   /* Toolbar — dwa wiersze na mobile */
@@ -1840,11 +1841,12 @@ tr.row:has(.tag-dot[data-tip]:hover) {
   }
   .cm-kbd { display: none; }
 
-  /* Context menu — pozycjonowanie żeby nie wychodziło poza ekran */
   .context-menu {
     max-width: calc(100vw - 16px);
-    max-height: 70vh;
+    max-height: 60vh;
     overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
   }
 
   /* Modale — wysuwane od dołu (nadpisujemy tylko wyrównanie, nie display) */

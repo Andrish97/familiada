@@ -72,8 +72,6 @@ export function addLongPress(el, callback) {
     timer = setTimeout(() => {
       fired = true;
       timer = null;
-      // wibracja jeśli dostępna
-      try { navigator.vibrate?.(40); } catch {}
       callback(e.clientX, e.clientY, e.target);
     }, LONG_PRESS_MS);
   }, { passive: true });
