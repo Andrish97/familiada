@@ -348,7 +348,7 @@
   }
 
   /* na mobile nagłówki bez dodatkowego tła (niech karta robi swoje) */
-  .bases-title{ background: transparent; padding: 10px 2px 8px; }
+  .bases-title{ display: none; }
 
   /* portrait: domyślnie scroll w grid */
   .bases-grid-mine,

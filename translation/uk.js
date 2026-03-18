@@ -781,6 +781,7 @@ const uk = {
     logout: "Вийти",
     headerTitle: "Твої бази питань",
     headerHint: "Натисни плитку, щоб вибрати. Подвійне натискання змінює назву.",
+    headerHintShared: "Натисни плитку, щоб вибрати.",
     actions: {
       browse: "Переглянути",
       browseMobile: "Перегл.",

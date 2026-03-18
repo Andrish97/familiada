@@ -779,6 +779,7 @@ const en = {
     logout: "Log out",
     headerTitle: "Your question bases",
     headerHint: "Press a tile to select it. Double-tap to rename.",
+    headerHintShared: "Press a tile to select it.",
     actions: {
       browse: "Browse",
       browseMobile: "Browse",
