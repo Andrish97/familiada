@@ -664,6 +664,7 @@ body.polls-hub-body .bar{
 }
 @media (max-width: 900px){
   .hub-details-grid{ grid-template-columns: 1fr; }
+  .hub-col-title{ display: none; }
 }
 
 .hub-details-side{
