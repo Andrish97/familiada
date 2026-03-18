@@ -1304,7 +1304,6 @@ async function goUp(state) {
 }
 
 function clipboardSet(state, mode, keys) {
-  // payload: dane do wklejenia (np. pytania + tagIds)
   state.clipboard = state.clipboard || { mode: null, keys: new Set(), payload: null };
   state.clipboard.mode = mode;
 
@@ -1313,9 +1312,10 @@ function clipboardSet(state, mode, keys) {
   );
 
   state.clipboard.keys = new Set(onlyReal);
-
-  // reset payload – będzie wypełniany przy COPY/CUT
   state.clipboard.payload = null;
+
+  // odśwież toolbar żeby "Wklej" się odblokował
+  renderToolbar(state);
 }
 
 function clipboardClear(state) {
@@ -1323,6 +1323,8 @@ function clipboardClear(state) {
   state.clipboard.mode = null;
   state.clipboard.keys.clear();
   state.clipboard.payload = null;
+
+  renderToolbar(state);
 }
 
 function clipboardHas(state) {
