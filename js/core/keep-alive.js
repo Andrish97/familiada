@@ -14,7 +14,6 @@ let _wakeLock = null;
 
 function startTitleFlicker() {
   if (_titleInterval) return;
-  _originalTitle = document.title;
   _titleInterval = setInterval(() => {
     document.title = (_dot ? "● " : "○ ") + _originalTitle;
     _dot = !_dot;
