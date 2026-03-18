@@ -534,6 +534,45 @@
 
   </main>
 
+  <!-- GAME EDITOR MODAL -->
+  <div class="market-preview-overlay" id="gameEditorOverlay" style="display:none;align-items:flex-start;padding:20px 0;overflow-y:auto">
+    <div class="market-preview-card" style="max-width:780px;width:96vw;margin:auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:10px;flex-wrap:wrap">
+        <div style="font-size:15px;font-weight:700">✏️ Edytuj grę</div>
+        <button class="btn sm" id="btnGameEditorClose" type="button">✕ Zamknij</button>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:10px;margin-bottom:12px;align-items:end">
+        <div class="field" style="margin:0">
+          <label class="field-label">Tytuł</label>
+          <input class="inp" id="ge-title" type="text" style="width:100%;box-sizing:border-box">
+          <span id="ge-title-hint" style="font-size:11px;opacity:.55"></span>
+        </div>
+        <div class="field" style="margin:0">
+          <label class="field-label">Opis</label>
+          <input class="inp" id="ge-description" type="text" style="width:100%;box-sizing:border-box">
+          <span id="ge-desc-hint" style="font-size:11px;opacity:.55"></span>
+        </div>
+        <div class="field" style="margin:0">
+          <label class="field-label">Język</label>
+          <select id="ge-lang" class="inp">
+            <option value="pl">🇵🇱 pl</option>
+            <option value="uk">🇺🇦 uk</option>
+            <option value="en">🇬🇧 en</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="ge-questions" style="display:grid;gap:10px"></div>
+
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;flex-wrap:wrap">
+        <span class="status-bar" id="ge-status" style="flex:1"></span>
+        <button class="btn sm" id="btnGameEditorCancel" type="button">Anuluj</button>
+        <button class="btn sm gold" id="btnGameEditorSave" type="button">💾 Zapisz</button>
+      </div>
+    </div>
+  </div>
+
   <section class="tools-shell" id="toolsShell" hidden>
     <div class="tools-frame-wrap">
       <iframe id="toolsFrame" title="Tools" loading="lazy"></iframe>

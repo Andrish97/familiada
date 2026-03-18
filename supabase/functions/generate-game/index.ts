@@ -623,6 +623,21 @@ serve(async (req: Request) => {
       return new Response(JSON.stringify({ ok: true }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
     }
 
+    if (action === 'update-producer-game') {
+      const { id, title, description, lang, payload } = body;
+      const normalized = normalizeGamePayload({ title, description, questions: payload?.questions });
+      if (!normalized) throw new Error("Invalid payload.");
+      const questionsText = buildQuestionsText(normalized);
+      const embedding = await generateEmbedding(questionsText, 12000);
+      const embeddingLiteral = embedding ? toVectorLiteral(embedding) : null;
+      const { data, error } = await supabase.from("market_games")
+        .update({ title: normalized.title, description: normalized.description, lang, payload: normalized, embedding: embeddingLiteral })
+        .eq("id", id).eq("origin", "producer")
+        .select("id, title, description, lang, payload").single();
+      if (error) throw error;
+      return new Response(JSON.stringify({ ok: true, game: data }), { headers: { ...CORS, "Content-Type": "application/json" } });
+    }
+
     if (action === 'scan-all-duplicates') {
       return new Response(JSON.stringify({ duplicateGroups: [] }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
     }
