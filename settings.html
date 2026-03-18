@@ -440,10 +440,13 @@
           <div id="gen-queue-status" style="margin-top:10px"></div>
         </div>
 
-        <button class="btn gold" id="gen-enqueue-btn" style="display:none">
-          <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
-          Dodaj do kolejki generowania
-        </button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn gold" id="gen-enqueue-btn" style="display:none;flex:1">
+            <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
+            Dodaj do kolejki generowania
+          </button>
+          <button class="btn sm danger" id="gen-cancel-btn" style="display:none">✕ Anuluj generowanie</button>
+        </div>
 
         <!-- Generated results -->
         <div class="mail-card" id="gen-results-section" style="display:none;margin-top:16px">
