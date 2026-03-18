@@ -199,63 +199,71 @@ export function renderToolbar(state) {
         <input id="searchText" class="searchText" placeholder="${t("baseExplorer.search.placeholder")}" />
         <button id="searchClearBtn" class="btn ghost" type="button" title="${t("baseExplorer.search.clear")}">✕</button>
       </div>
-    
-      <div class="tbGroup" role="group" aria-label="${t("baseExplorer.toolbar.groupCreate")}">
-        <button class="tbBtn" type="button" data-act="newFolder" title="${t("baseExplorer.toolbar.newFolder")}">
-          ${svgFolderPlus()}
+
+      <div class="toolbar-btns-row">
+        <button id="btnDrawerToggle" class="tbBtn mobile-only" type="button" aria-label="Otwórz panel" aria-expanded="false" aria-controls="explorerLeft">
+          <svg class="tbIco" viewBox="0 0 18 18"><rect y="3" width="18" height="2" rx="1"/><rect y="8" width="18" height="2" rx="1"/><rect y="13" width="18" height="2" rx="1"/></svg>
         </button>
-        <button class="tbBtn" type="button" data-act="newQuestion" title="${t("baseExplorer.toolbar.newQuestion")}">
-          ${svgFilePlus()}
-        </button>
-      </div>
-      
-      <div class="tbSep" aria-hidden="true"></div>
-      
-      <div class="tbGroup" role="group" aria-label="${t("baseExplorer.toolbar.groupEdit")}">
-        <button class="tbBtn" type="button" data-act="editQuestion" title="${t("baseExplorer.toolbar.editQuestion")}">
-          ${svgEdit()}
-        </button>
-        <button class="tbBtn" type="button" data-act="editTags" title="${t("baseExplorer.toolbar.editTags")}">
-          ${svgTag()}
-        </button>
-        <button class="tbBtn" type="button" data-act="rename" title="${t("baseExplorer.toolbar.rename")}">
-          ${svgPencil()}
-        </button>
-        <button class="tbBtn danger" type="button" data-act="delete" title="${t("baseExplorer.toolbar.delete")}">
-          ${svgTrash()}
-        </button>
-      </div>
-      
-      <div class="tbSep" aria-hidden="true"></div>
-      
-      <div class="tbGroup" role="group" aria-label="${t("baseExplorer.toolbar.groupClipboard")}">
-        <button class="tbBtn" type="button" data-act="copy" title="${t("baseExplorer.toolbar.copy")}">
-          ${svgCopy()}
-        </button>
-        <button class="tbBtn" type="button" data-act="cut" title="${t("baseExplorer.toolbar.cut")}">
-          ${svgCut()}
-        </button>
-        <button class="tbBtn" type="button" data-act="paste" title="${t("baseExplorer.toolbar.paste")}">
-          ${svgPaste()}
-        </button>
-        <button class="tbBtn" type="button" data-act="duplicate" title="${t("baseExplorer.toolbar.duplicate")}">
-          ${svgDuplicate()}
-        </button>
-      </div>
-      
-      <div class="tbSep" aria-hidden="true"></div>
-      
-      <div class="tbGroup" role="group" aria-label="${t("baseExplorer.toolbar.groupGame")}">
-        <button class="tbBtn primary" type="button" data-act="createGame" title="${t("baseExplorer.toolbar.createGame")}">
-          ${svgPlay()}
-        </button>
-      </div>
-      
-      <div class="tbSep" aria-hidden="true"></div>
-      <div class="tbGroup" role="group" aria-label="${t("baseExplorer.toolbar.groupView")}">
-        <button class="tbBtn" type="button" data-act="refreshView" title="${t("baseExplorer.toolbar.refreshView")}">
-          ${svgRefresh()}
-        </button>
+
+        <div class="tbSep mobile-only" aria-hidden="true"></div>
+
+        <div class="tbGroup" role="group" aria-label="${t("baseExplorer.toolbar.groupCreate")}">
+          <button class="tbBtn" type="button" data-act="newFolder" title="${t("baseExplorer.toolbar.newFolder")}">
+            ${svgFolderPlus()}
+          </button>
+          <button class="tbBtn" type="button" data-act="newQuestion" title="${t("baseExplorer.toolbar.newQuestion")}">
+            ${svgFilePlus()}
+          </button>
+        </div>
+        
+        <div class="tbSep" aria-hidden="true"></div>
+        
+        <div class="tbGroup" role="group" aria-label="${t("baseExplorer.toolbar.groupEdit")}">
+          <button class="tbBtn" type="button" data-act="editQuestion" title="${t("baseExplorer.toolbar.editQuestion")}">
+            ${svgEdit()}
+          </button>
+          <button class="tbBtn" type="button" data-act="editTags" title="${t("baseExplorer.toolbar.editTags")}">
+            ${svgTag()}
+          </button>
+          <button class="tbBtn" type="button" data-act="rename" title="${t("baseExplorer.toolbar.rename")}">
+            ${svgPencil()}
+          </button>
+          <button class="tbBtn danger" type="button" data-act="delete" title="${t("baseExplorer.toolbar.delete")}">
+            ${svgTrash()}
+          </button>
+        </div>
+        
+        <div class="tbSep" aria-hidden="true"></div>
+        
+        <div class="tbGroup" role="group" aria-label="${t("baseExplorer.toolbar.groupClipboard")}">
+          <button class="tbBtn" type="button" data-act="copy" title="${t("baseExplorer.toolbar.copy")}">
+            ${svgCopy()}
+          </button>
+          <button class="tbBtn" type="button" data-act="cut" title="${t("baseExplorer.toolbar.cut")}">
+            ${svgCut()}
+          </button>
+          <button class="tbBtn" type="button" data-act="paste" title="${t("baseExplorer.toolbar.paste")}">
+            ${svgPaste()}
+          </button>
+          <button class="tbBtn" type="button" data-act="duplicate" title="${t("baseExplorer.toolbar.duplicate")}">
+            ${svgDuplicate()}
+          </button>
+        </div>
+        
+        <div class="tbSep" aria-hidden="true"></div>
+        
+        <div class="tbGroup" role="group" aria-label="${t("baseExplorer.toolbar.groupGame")}">
+          <button class="tbBtn primary" type="button" data-act="createGame" title="${t("baseExplorer.toolbar.createGame")}">
+            ${svgPlay()}
+          </button>
+        </div>
+        
+        <div class="tbSep" aria-hidden="true"></div>
+        <div class="tbGroup" role="group" aria-label="${t("baseExplorer.toolbar.groupView")}">
+          <button class="tbBtn" type="button" data-act="refreshView" title="${t("baseExplorer.toolbar.refreshView")}">
+            ${svgRefresh()}
+          </button>
+        </div>
       </div>
     `;
     elToolbar.dataset.ready = "1";

@@ -102,26 +102,18 @@ export function addLongPress(el, callback) {
 
 /**
  * Na urządzeniach dotykowych HTML5 DnD nie działa poprawnie.
- * Wyłączamy atrybut draggable na wszystkich wierszach listy/drzewa.
+ * Wyłączamy przez CSS — bez dotykania atrybutu draggable (żeby desktop działał normalnie).
  */
 export function disableDragOnTouch() {
   if (!isTouchDevice()) return;
 
-  // Obserwuj zmiany DOM (render.js dynamicznie buduje wiersze)
-  const observer = new MutationObserver(() => {
-    document.querySelectorAll('[draggable="true"]').forEach(el => {
-      el.setAttribute("draggable", "false");
-    });
-  });
-
-  observer.observe(document.body, { childList: true, subtree: true });
-
-  // Też od razu dla już istniejących
-  document.querySelectorAll('[draggable="true"]').forEach(el => {
-    el.setAttribute("draggable", "false");
-  });
+  const style = document.createElement("style");
+  style.textContent = `[draggable="true"] { -webkit-user-drag: none; }`;
+  document.head.appendChild(style);
 }
 
 export function isTouchDevice() {
-  return window.matchMedia("(pointer: coarse)").matches;
+  // coarse = dotyk/rysik, fine = mysz/touchpad
+  // any-pointer:fine oznacza że jest też mysz — wtedy traktujemy jako desktop
+  return window.matchMedia("(pointer: coarse) and (hover: none)").matches;
 }

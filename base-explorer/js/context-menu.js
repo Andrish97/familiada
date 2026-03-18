@@ -99,6 +99,9 @@ function renderMenu(cm, items) {
 }
 
 function positionMenu(cm, x, y) {
+  // Najpierw pokaż poza ekranem żeby zmierzyć wymiary
+  cm.style.left = "-9999px";
+  cm.style.top = "-9999px";
   cm.hidden = false;
 
   const pad = 8;
@@ -107,10 +110,10 @@ function positionMenu(cm, x, y) {
   const rect = cm.getBoundingClientRect();
 
   const left = clamp(x, pad, vw - rect.width - pad);
-  const top = clamp(y, pad, vh - rect.height - pad);
+  const top  = clamp(y, pad, vh - rect.height - pad);
 
   cm.style.left = `${left}px`;
-  cm.style.top = `${top}px`;
+  cm.style.top  = `${top}px`;
 }
 
 export async function showContextMenu({ state, x, y, target }) {
