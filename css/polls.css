@@ -198,8 +198,13 @@ body.polls-body {
   background: #fff;
   border-radius: 14px;
   box-shadow: 0 6px 18px rgba(0,0,0,.22);
-  display: inline-block;
-  margin: 12px;
+  line-height: 0;
+}
+
+.qrBox.img {
+  display: flex;
+  justify-content: center;
+  margin: 12px 0;
 }
 
 .tcTxtInp{
