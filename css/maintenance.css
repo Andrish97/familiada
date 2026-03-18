@@ -61,7 +61,7 @@
   color: var(--gold);
 }
 
-@media (max-width: 640px) {
+@media (max-width: 600px) {
   .maintenance-card {
     padding: 24px 18px;
   }

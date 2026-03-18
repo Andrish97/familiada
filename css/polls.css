@@ -188,6 +188,39 @@ body.polls-body {
     cursor: pointer
 }
 
+.tcMergeBtn {
+    width: 40px;
+    height: 40px;
+    border-radius: 14px;
+    border: 1px solid rgba(255,234,166,.25);
+    background: rgba(255,234,166,.08);
+    color: rgba(255,234,166,.8);
+    cursor: pointer;
+    font-size: 16px;
+    flex: 0 0 auto;
+}
+
+/* Na desktopie ukryj ⇄ — tam działa DnD */
+@media (hover: hover) and (pointer: fine) {
+    .tcMergeBtn { display: none; }
+}
+
+.tcItem.merge-src {
+    border-color: rgba(255,234,166,.6);
+    background: rgba(255,234,166,.12);
+}
+
+.tcItem.merge-target {
+    border-color: rgba(120,200,255,.45);
+    background: rgba(120,200,255,.08);
+    cursor: pointer;
+}
+
+.tcItem.merge-target:hover {
+    border-color: rgba(120,200,255,.8);
+    background: rgba(120,200,255,.16);
+}
+
 #resultsList {
     display: grid;
     gap: 12px
@@ -221,7 +254,7 @@ body.polls-body {
 }
 
 
-@media (max-width:720px) and (orientation: portrait) {
+@media (max-width: 600px) and (orientation: portrait) {
     .row,
     .stack {
         display: grid;

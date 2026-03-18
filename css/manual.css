@@ -194,6 +194,54 @@
     }
 }
 
+/* ── m-table (tabele skrótów klawiszowych) ── */
+.m-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 0 0 14px;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,.1);
+}
+
+.m-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+.m-table th {
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,.5);
+    background: rgba(0,0,0,.2);
+    border-bottom: 1px solid rgba(255,255,255,.1);
+}
+
+.m-table td {
+    padding: 8px 14px;
+    border-bottom: 1px solid rgba(255,255,255,.06);
+    color: rgba(255,255,255,.88);
+}
+
+.m-table tr:last-child td {
+    border-bottom: none;
+}
+
+.m-table td:not(:first-child) {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 13px;
+    color: var(--gold);
+    opacity: .9;
+}
+
+.m-table tr:hover td {
+    background: rgba(255,255,255,.04);
+}
+
 @media (max-width:600px) {
     .m-p {
         font-size: 15px;
