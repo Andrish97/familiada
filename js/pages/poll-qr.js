@@ -48,14 +48,10 @@ async function render(u){
   if(!u){ qr.textContent = MSG.missingUrl(); return; }
 
   try{
-    const wrap = document.createElement("div");
-    wrap.className = "qrFrame";
-    
-    const canvas = document.createElement("canvas");
-    await QRCode.toCanvas(canvas, u, { width: 420, margin: 1 });
-    
-    wrap.appendChild(canvas);
-    qr.appendChild(wrap);
+    const dataUrl = await QRCode.toDataURL(u, { width: 840, margin: 1 });
+    const img = document.createElement("img");
+    img.src = dataUrl;
+    qr.appendChild(img);
   }catch(e){
     console.error("[poll-qr] QR error:", e);
     qr.textContent = MSG.qrFailed();
