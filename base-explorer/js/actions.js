@@ -2348,27 +2348,22 @@ export function wireActions({ state }) {
   // Blokada fokusa w search, gdy mamy aktywne Tagi/Kategorie (FILTER)
   const searchInput = document.getElementById("searchText");
   if (searchInput) {
-    searchInput.addEventListener("mousedown", (e) => {
+    searchInput.addEventListener("mousedown", () => {
       if (!isSearchLockedByLeftSelection(state)) return;
-      e.preventDefault();
-      e.stopPropagation();
-      warnSearchLockedByLeft(state);
-    });
-    searchInput.addEventListener("focus", () => {
-      if (!isSearchLockedByLeftSelection(state)) return;
-      try { searchInput.blur(); } catch {}
-      warnSearchLockedByLeft(state);
+      leftClear(state);
+      restoreBrowseLocation(state);
+      renderAll(state);
     });
   }
 
   // (opcjonalne, ale przydatne) klik w cały searchBox też ma ostrzec, gdy zablokowane
   const searchBox = document.getElementById("searchBox");
   if (searchBox) {
-    searchBox.addEventListener("mousedown", (e) => {
+    searchBox.addEventListener("mousedown", () => {
       if (!isSearchLockedByLeftSelection(state)) return;
-      e.preventDefault();
-      e.stopPropagation();
-      warnSearchLockedByLeft(state);
+      leftClear(state);
+      restoreBrowseLocation(state);
+      renderAll(state);
     });
   }
 
@@ -2970,8 +2965,11 @@ export function wireActions({ state }) {
 
   tagsEl?.addEventListener("click", async (e) => {
     if (isLeftPanelLockedBySearch()) {
-      warnLeftLockedBySearch();
-      return;
+      const inp = document.getElementById("searchText");
+      if (inp) inp.value = "";
+      state.searchTokens = { text: "", tagIds: [] };
+      state.searchQuery = "";
+      await refreshList(state);
     }
     if (suppressNextTagsClick) return;
     // 0) klik w "Dodaj tag"
@@ -3118,8 +3116,13 @@ export function wireActions({ state }) {
   treeEl?.addEventListener("click", async (e) => {
   
     if (isTreeLocked(state)) {
-      warnTreeLocked(state);
-      return;
+      const inp = document.getElementById("searchText");
+      if (inp) inp.value = "";
+      state.searchTokens = { text: "", tagIds: [] };
+      state.searchQuery = "";
+      leftClear(state);
+      restoreBrowseLocation(state);
+      await refreshList(state);
     }
 
     // 0) klik w puste tło drzewa = czyść selekcję
@@ -3182,8 +3185,13 @@ export function wireActions({ state }) {
   treeEl?.addEventListener("dblclick", async (e) => {
     
     if (isTreeLocked(state)) {
-      warnTreeLocked(state);
-      return;
+      const inp = document.getElementById("searchText");
+      if (inp) inp.value = "";
+      state.searchTokens = { text: "", tagIds: [] };
+      state.searchQuery = "";
+      leftClear(state);
+      restoreBrowseLocation(state);
+      await refreshList(state);
     }
 
     const row = e.target?.closest?.('.row[data-kind]');
