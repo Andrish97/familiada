@@ -1,4 +1,4 @@
-// js/pages/builder.js
+import { addRenameGesture } from "../core/rename-gesture.js";
 import { sb } from "../core/supabase.js";
 import { requireAuth } from "../core/auth.js";
 import { alertModal, confirmModal } from "../core/modal.js";
@@ -779,7 +779,7 @@ function cardGame(g) {
     await updateActionState();
   });
 
-  el.addEventListener("dblclick", () => {
+  addRenameGesture(el, () => {
     openRenameModal(g);
   });
 
