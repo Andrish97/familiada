@@ -593,11 +593,6 @@ main{
 }
 
 @media (max-width:720px) {
-    .wrap {
-        max-width: 100%;
-        padding: 15px
-    }
-
     .topbar {
         padding: 12px 14px
     }

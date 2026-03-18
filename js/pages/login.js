@@ -396,7 +396,11 @@ async function askCaptchaToken() {
         }
       },
       "expired-callback": () => { token = ""; },
-      "error-callback": () => { token = ""; },
+      "error-callback": (code) => {
+        token = "";
+        status.textContent = t("index.captchaError") || `Błąd weryfikacji (${code}). Odśwież stronę.`;
+        if (okBtnRef) { okBtnRef.style.display = ""; okBtnRef.disabled = true; }
+      },
     });
 
   try {
