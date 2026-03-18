@@ -83,11 +83,10 @@ async function generateGames() {
   const topic = $('gen-topic').value.trim();
   lastGenerateParams = { lang, topic };
   cancelGenerate = false;
-  const resetBtn = $('gen-reset-btn');
-  if (resetBtn) {
-    resetBtn.style.display = '';
-    resetBtn.textContent = '✕ Przerwij generowanie';
-    resetBtn.onclick = (e) => {
+  const cancelBtn = $('gen-cancel-btn');
+  if (cancelBtn) {
+    cancelBtn.style.display = '';
+    cancelBtn.onclick = (e) => {
       e.preventDefault();
       cancelGenerate = true;
       showStatus('gen-session-status', 'Przerywam…', 'info');
@@ -163,10 +162,8 @@ async function generateGames() {
     showStatus('gen-session-status', 'Zakończono generowanie.', 'ok');
   }
   setBusy(false);
-  if (resetBtn) {
-    resetBtn.style.display = 'none';
-    resetBtn.onclick = null;
-  }
+  const cancelBtn2 = $('gen-cancel-btn');
+  if (cancelBtn2) { cancelBtn2.style.display = 'none'; cancelBtn2.onclick = null; }
 }
 
 async function deleteGame(id) {
@@ -631,72 +628,11 @@ function renderGeneratedList() {
 
 async function rejectGenerated(id) {
   const it = generated.find(x => x.id === id);
-  if (!it || it.generating) return;
-
-  const ok = await confirmModal({
-    title: "Odrzuć i wygeneruj ponownie",
-    text: "Odrzucić tę grę i wygenerować nową w jej miejsce?",
-    okText: "Odrzuć",
-    cancelText: "Anuluj",
-  });
+  if (!it) return;
+  const ok = await confirmModal({ title: "Odrzuć grę", text: "Usunąć tę grę z listy?", okText: "Odrzuć", cancelText: "Anuluj" });
   if (!ok) return;
-
-  it.generating = true;
-  it.approved = false;
+  generated = generated.filter(x => x.id !== id);
   renderGeneratedList();
-
-  const lang = lastGenerateParams.lang || $('gen-manage-lang')?.value || 'pl';
-  const topic = lastGenerateParams.topic || $('gen-topic')?.value?.trim?.() || '';
-
-  const existingTitles = games.map(g => String(g.title || "").trim()).filter(Boolean);
-  const generatedTitles = generated
-    .filter(g => g.id !== id)
-    .map(g => String(g?.candidate?.title || "").trim())
-    .filter(Boolean);
-  const avoidTitles = Array.from(new Set([...existingTitles, ...generatedTitles])).slice(0, 25);
-
-  try {
-    showStatus('gen-session-status', 'Regeneruję odrzuconą grę...', 'info');
-    const startedAt = Date.now();
-    const maxMs = 90000;
-    let tries = 0;
-
-    while (Date.now() - startedAt < maxMs) {
-      tries++;
-      showStatus('gen-session-status', `Regeneruję… (${Math.round((Date.now() - startedAt) / 1000)}s)`, 'info');
-      const res = await callEdgeAction('generate-producer-game', { lang, topic, avoidTitles });
-      if (res?.retry && !res?.candidate) {
-        const reason = String(res?.reason || '');
-        const waitMs = reason === 'rate_limit' ? (Number(res?.wait_ms) || 6000) : 200;
-        if (reason === 'rate_limit') {
-          showStatus('gen-session-status', `Limit Groq — czekam ${Math.max(1, Math.round(waitMs / 1000))}s…`, 'info');
-        }
-        await new Promise(r => setTimeout(r, waitMs));
-        continue;
-      }
-      const candidate = res?.candidate;
-      if (!candidate) {
-        await new Promise(r => setTimeout(r, 250));
-        continue;
-      }
-      it.candidate = candidate;
-      it.matches = Array.isArray(res?.matches) ? res.matches : [];
-      it.warnings = Array.isArray(res?.warnings) ? res.warnings : [];
-      it.generating = false;
-      renderGeneratedList();
-      showStatus('gen-session-status', 'Gotowe.', 'ok');
-      return;
-    }
-
-    await alertModal({
-      title: "Regenerowanie",
-      text: "Nie udało się szybko wygenerować lepszej gry (limity/filtry jakości). Spróbuj za chwilę.",
-    });
-  } catch (e) {
-    it.generating = false;
-    renderGeneratedList();
-    showStatus('gen-session-status', `✗ Regenerowanie: ${e.message}`, 'err');
-  }
 }
 
 async function publishApproved() {
