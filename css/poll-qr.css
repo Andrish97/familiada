@@ -1,12 +1,9 @@
 /* css/poll-qr.css */
 
-.qr-fs-btn,body.poll-qr-body {
-    display: grid;
-    place-items: center
-}
-
 body.poll-qr-body {
-    min-height: 100vh
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
 }
 
 .qr-fs-btn {
@@ -18,50 +15,46 @@ body.poll-qr-body {
     padding: 0;
     border-radius: 14px;
     font-weight: 1000;
-    z-index: 50
+    z-index: 50;
+    display: grid;
+    place-items: center;
 }
 
 .qr-wrap {
-  text-align: center;
-  padding: 18px;
-  width: 100%;
-  max-width: 900px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+    display: grid;
+    justify-items: center;
+    gap: 10px;
+    padding: 18px;
 }
 
 .qr-brand {
-  font-weight: 1000;
-  letter-spacing: .18em;
-  color: var(--gold);
+    font-weight: 1000;
+    letter-spacing: .18em;
+    color: var(--gold);
 }
 
 .qr-title {
-  font-weight: 1000;
-  font-size: 18px;
-  margin-top: 10px;
-  letter-spacing: .06em;
+    font-weight: 1000;
+    font-size: 18px;
+    letter-spacing: .06em;
 }
 
 .qr-box {
-  margin: 18px auto;
-  width: min(420px,86vw);
-  height: min(420px,86vw);
-  display: grid;
-  place-items: center;
+    display: grid;
+    place-items: center;
 }
 
-.qr-box canvas {
-    width: 100%!important;
-    height: 100%!important
+.qrFrame {
+    padding: 18px;
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 10px 28px rgba(0,0,0,.25);
+    display: grid;
+    place-items: center;
 }
 
-
-.qrFrame{
-  padding: 18px;
-  background: #fff;
-  border-radius: 18px;
-  box-shadow: 0 10px 28px rgba(0,0,0,.25);
-  display: inline-block;
+.qrFrame canvas {
+    display: block;
+    width: min(420px, 80vw) !important;
+    height: min(420px, 80vw) !important;
 }
