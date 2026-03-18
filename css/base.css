@@ -49,7 +49,7 @@ body > main {
     backdrop-filter: blur(10px);
 }
 
-@media (max-width:980px){
+@media (max-width: 900px){
   .spacer{
     display: none !important;
   }
@@ -129,7 +129,7 @@ body > main {
 }
 
 /* ===== MOBILE ===== */
-@media (max-width: 980px){
+@media (max-width: 900px){
 
   /* usuń separator i tekst */
   .user-btn .user-sub{
@@ -276,7 +276,7 @@ main{
 }
 .btn-contact-footer:hover { filter: brightness(1.08); }
 
-@media (max-width: 640px){
+@media (max-width: 600px){
     .footer{
         margin: 12px 0 6px;
         padding-top: 15px;
@@ -599,7 +599,7 @@ main{
     display: none
 }
 
-@media (max-width:720px) {
+@media (max-width: 600px) {
     .topbar {
         padding: 12px 14px
     }

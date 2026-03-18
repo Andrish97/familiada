@@ -1071,6 +1071,7 @@ const pl = {
       hint: "Przeciągnij, żeby połączyć • edytuj literówki • final max 17 znaków",
       mergeTitle: "Scal identyczne",
       mergeLabel: "Scal identyczne",
+      mergeWith: "Połącz z...",
       remove: "Usuń",
       editHint: "Edytuj odpowiedzi, a potem kliknij „Zamknij i przelicz”.",
       cancelled: "Anulowano zamykanie (sondaż dalej otwarty).",
@@ -1584,53 +1585,53 @@ const pl = {
   
       <h3 class="m-h3">📁 Tworzenie</h3>
   
-      <table class="m-table">
+      <div class="m-table-wrap"><table class="m-table">
         <tbody><tr><th>Akcja</th><th>Windows / Linux</th><th>macOS</th></tr>
         <tr><td>Nowe pytanie</td><td>Ctrl + N</td><td>⌘ N</td></tr>
         <tr><td>Nowy folder</td><td>Ctrl + Shift + N</td><td>⌘ ⇧ N</td></tr>
-      </tbody></table>
+      </tbody></table></div>
   
       <h3 class="m-h3">✏️ Edycja</h3>
   
-      <table class="m-table">
+      <div class="m-table-wrap"><table class="m-table">
         <tbody><tr><th>Akcja</th><th>Windows / Linux</th><th>macOS</th></tr>
         <tr><td>Edytuj pytanie</td><td>Ctrl + E</td><td>⌘ E</td></tr>
         <tr><td>Zmień nazwę</td><td>F2</td><td>F2</td></tr>
         <tr><td>Usuń</td><td>Delete</td><td>Fn + ⌫</td></tr>
-      </tbody></table>
+      </tbody></table></div>
   
       <h3 class="m-h3">📋 Schowek</h3>
   
-      <table class="m-table">
+      <div class="m-table-wrap"><table class="m-table">
         <tbody><tr><th>Akcja</th><th>Windows / Linux</th><th>macOS</th></tr>
         <tr><td>Kopiuj</td><td>Ctrl + C</td><td>⌘ C</td></tr>
         <tr><td>Wytnij</td><td>Ctrl + X</td><td>⌘ X</td></tr>
         <tr><td>Wklej</td><td>Ctrl + V</td><td>⌘ V</td></tr>
         <tr><td>Duplikuj</td><td>Ctrl + D</td><td>⌘ D</td></tr>
-      </tbody></table>
+      </tbody></table></div>
   
       <h3 class="m-h3">🎮 Gra</h3>
   
-      <table class="m-table">
+      <div class="m-table-wrap"><table class="m-table">
         <tbody><tr><th>Akcja</th><th>Windows / Linux</th><th>macOS</th></tr>
         <tr><td>Utwórz grę</td><td>Ctrl + G</td><td>⌘ G</td></tr>
-      </tbody></table>
+      </tbody></table></div>
   
       <h3 class="m-h3">🔄 Widok</h3>
   
-      <table class="m-table">
+      <div class="m-table-wrap"><table class="m-table">
         <tbody><tr><th>Akcja</th><th>Windows / Linux</th><th>macOS</th></tr>
         <tr><td>Odśwież widok</td><td>Ctrl + Alt + R</td><td>⌘ ⌥ R</td></tr>
-      </tbody></table>
+      </tbody></table></div>
   
       <h3 class="m-h3">📌 Nawigacja</h3>
   
-      <table class="m-table">
+      <div class="m-table-wrap"><table class="m-table">
         <tbody><tr><th>Akcja</th><th>Windows / Linux</th><th>macOS</th></tr>
         <tr><td>Zaznacz wszystko</td><td>Ctrl + A</td><td>⌘ A</td></tr>
         <tr><td>Otwórz folder</td><td>Enter</td><td>⏎</td></tr>
         <tr><td>Folder nadrzędny</td><td>Backspace</td><td>⌫</td></tr>
-      </tbody></table>
+      </tbody></table></div>
   
       <p class="m-note">
         Skróty nie działają podczas wpisywania tekstu w polach edycyjnych.

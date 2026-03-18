@@ -885,6 +885,8 @@ function renderTextCloseFromModel() {
       q.items.sort((a, b) => b.count - a.count);
       validateTextCloseModel();
 
+      let mergeSrcIdx = null; // tryb merge na touch
+
       for (let idx = 0; idx < q.items.length; idx++) {
         const it = q.items[idx];
 
@@ -894,6 +896,7 @@ function renderTextCloseFromModel() {
         row.innerHTML = `
           <input class="tcTxtInp" type="text" />
           <div class="tcCnt"></div>
+          <button class="tcMergeBtn" type="button" title="${t("polls.textClose.mergeWith")}">⇄</button>
           <button class="tcDel" type="button" title="${t("polls.textClose.remove")}">✕</button>
         `;
 
@@ -975,6 +978,36 @@ function renderTextCloseFromModel() {
           toIt.count += fromIt.count;
           q.items.splice(fromIdx, 1);
           rerender();
+        });
+
+        // Przycisk ⇄ — tryb merge na touch
+        row.querySelector(".tcMergeBtn").addEventListener("click", () => {
+          if (mergeSrcIdx === idx) {
+            // anuluj tryb
+            mergeSrcIdx = null;
+            list.querySelectorAll(".tcItem").forEach(r => r.classList.remove("merge-src", "merge-target"));
+            return;
+          }
+          if (mergeSrcIdx !== null) {
+            // wykonaj merge: mergeSrcIdx → idx
+            const fromIt = q.items[mergeSrcIdx];
+            const toIt = q.items[idx];
+            if (fromIt && toIt) {
+              saveSnapshot();
+              toIt.count += fromIt.count;
+              q.items.splice(mergeSrcIdx, 1);
+            }
+            mergeSrcIdx = null;
+            rerender();
+            return;
+          }
+          // wejdź w tryb wyboru celu
+          mergeSrcIdx = idx;
+          list.querySelectorAll(".tcItem").forEach((r, i) => {
+            r.classList.remove("merge-src", "merge-target");
+            if (i === idx) r.classList.add("merge-src");
+            else r.classList.add("merge-target");
+          });
         });
 
         list.appendChild(row);

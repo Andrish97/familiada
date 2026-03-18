@@ -534,7 +534,7 @@ body.editor-body .wrap {
     padding: 6px 0
 }
 
-@media (max-width:720px) {
+@media (max-width: 600px) {
     .left,.rightPanel {
         padding: 12px;
         border-radius: 18px
@@ -650,7 +650,7 @@ body.editor-body .wrap {
 
 }
 
-@media (max-width:720px) and (orientation: portrait) {
+@media (max-width: 600px) and (orientation: portrait) {
     body.editor-body {
         overflow: hidden;
     }

@@ -1067,6 +1067,7 @@ const en = {
       hint: "Drag to merge • fix typos • final max 17 chars",
       mergeTitle: "Merge duplicates",
       mergeLabel: "Merge duplicates",
+      mergeWith: "Merge with...",
       remove: "Remove",
       editHint: "Edit answers, then click “Close and normalize”.",
       cancelled: "Closing cancelled (poll still open).",
@@ -1586,53 +1587,53 @@ const en = {
   
       <h3 class="m-h3">📁 Create</h3>
   
-      <table class="m-table">
+      <div class="m-table-wrap"><table class="m-table">
         <tr><th>Action</th><th>Windows / Linux</th><th>macOS</th></tr>
         <tr><td>New question</td><td>Ctrl + N</td><td>⌘ N</td></tr>
         <tr><td>New folder</td><td>Ctrl + Shift + N</td><td>⌘ ⇧ N</td></tr>
-      </table>
+      </table></div>
   
       <h3 class="m-h3">✏️ Edit</h3>
   
-      <table class="m-table">
+      <div class="m-table-wrap"><table class="m-table">
         <tr><th>Action</th><th>Windows / Linux</th><th>macOS</th></tr>
         <tr><td>Edit question</td><td>Ctrl + E</td><td>⌘ E</td></tr>
         <tr><td>Rename</td><td>F2</td><td>F2</td></tr>
         <tr><td>Delete</td><td>Delete</td><td>Fn + ⌫</td></tr>
-      </table>
+      </table></div>
   
       <h3 class="m-h3">📋 Clipboard</h3>
   
-      <table class="m-table">
+      <div class="m-table-wrap"><table class="m-table">
         <tr><th>Action</th><th>Windows / Linux</th><th>macOS</th></tr>
         <tr><td>Copy</td><td>Ctrl + C</td><td>⌘ C</td></tr>
         <tr><td>Cut</td><td>Ctrl + X</td><td>⌘ X</td></tr>
         <tr><td>Paste</td><td>Ctrl + V</td><td>⌘ V</td></tr>
         <tr><td>Duplicate</td><td>Ctrl + D</td><td>⌘ D</td></tr>
-      </table>
+      </table></div>
   
       <h3 class="m-h3">🎮 Game</h3>
   
-      <table class="m-table">
+      <div class="m-table-wrap"><table class="m-table">
         <tr><th>Action</th><th>Windows / Linux</th><th>macOS</th></tr>
         <tr><td>Create game</td><td>Ctrl + G</td><td>⌘ G</td></tr>
-      </table>
+      </table></div>
   
       <h3 class="m-h3">🔄 View</h3>
   
-      <table class="m-table">
+      <div class="m-table-wrap"><table class="m-table">
         <tr><th>Action</th><th>Windows / Linux</th><th>macOS</th></tr>
         <tr><td>Refresh view</td><td>Ctrl + Alt + R</td><td>⌘ ⌥ R</td></tr>
-      </table>
+      </table></div>
   
       <h3 class="m-h3">📌 Navigation</h3>
   
-      <table class="m-table">
+      <div class="m-table-wrap"><table class="m-table">
         <tr><th>Action</th><th>Windows / Linux</th><th>macOS</th></tr>
         <tr><td>Select all</td><td>Ctrl + A</td><td>⌘ A</td></tr>
         <tr><td>Open folder</td><td>Enter</td><td>⏎</td></tr>
         <tr><td>Parent folder</td><td>Backspace</td><td>⌫</td></tr>
-      </table>
+      </table></div>
   
       <p class="m-note">
         Shortcuts do not work while typing in edit fields.

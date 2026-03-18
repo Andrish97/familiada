@@ -1591,53 +1591,53 @@ const uk = {
   
       <h3 class="m-h3">📁 Створення</h3>
   
-      <table class="m-table">
+      <div class="m-table-wrap"><table class="m-table">
         <tr><th>Дія</th><th>Windows / Linux</th><th>macOS</th></tr>
         <tr><td>Нове запитання</td><td>Ctrl + N</td><td>⌘ N</td></tr>
         <tr><td>Нова папка</td><td>Ctrl + Shift + N</td><td>⌘ ⇧ N</td></tr>
-      </table>
+      </table></div>
   
       <h3 class="m-h3">✏️ Редагування</h3>
   
-      <table class="m-table">
+      <div class="m-table-wrap"><table class="m-table">
         <tr><th>Дія</th><th>Windows / Linux</th><th>macOS</th></tr>
         <tr><td>Редагувати запитання</td><td>Ctrl + E</td><td>⌘ E</td></tr>
         <tr><td>Перейменувати</td><td>F2</td><td>F2</td></tr>
         <tr><td>Видалити</td><td>Delete</td><td>Fn + ⌫</td></tr>
-      </table>
+      </table></div>
   
       <h3 class="m-h3">📋 Буфер обміну</h3>
   
-      <table class="m-table">
+      <div class="m-table-wrap"><table class="m-table">
         <tr><th>Дія</th><th>Windows / Linux</th><th>macOS</th></tr>
         <tr><td>Копіювати</td><td>Ctrl + C</td><td>⌘ C</td></tr>
         <tr><td>Вирізати</td><td>Ctrl + X</td><td>⌘ X</td></tr>
         <tr><td>Вставити</td><td>Ctrl + V</td><td>⌘ V</td></tr>
         <tr><td>Дублювати</td><td>Ctrl + D</td><td>⌘ D</td></tr>
-      </table>
+      </table></div>
   
       <h3 class="m-h3">🎮 Гра</h3>
   
-      <table class="m-table">
+      <div class="m-table-wrap"><table class="m-table">
         <tr><th>Дія</th><th>Windows / Linux</th><th>macOS</th></tr>
         <tr><td>Створити гру</td><td>Ctrl + G</td><td>⌘ G</td></tr>
-      </table>
+      </table></div>
   
       <h3 class="m-h3">🔄 Перегляд</h3>
   
-      <table class="m-table">
+      <div class="m-table-wrap"><table class="m-table">
         <tr><th>Дія</th><th>Windows / Linux</th><th>macOS</th></tr>
         <tr><td>Оновити перегляд</td><td>Ctrl + Alt + R</td><td>⌘ ⌥ R</td></tr>
-      </table>
+      </table></div>
   
       <h3 class="m-h3">📌 Навігація</h3>
   
-      <table class="m-table">
+      <div class="m-table-wrap"><table class="m-table">
         <tr><th>Дія</th><th>Windows / Linux</th><th>macOS</th></tr>
         <tr><td>Вибрати все</td><td>Ctrl + A</td><td>⌘ A</td></tr>
         <tr><td>Відкрити папку</td><td>Enter</td><td>⏎</td></tr>
         <tr><td>Батьківська папка</td><td>Backspace</td><td>⌫</td></tr>
-      </table>
+      </table></div>
   
       <p class="m-note">
         Гарячі клавіші не працюють під час введення тексту в полях редагування.

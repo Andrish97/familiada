@@ -551,7 +551,7 @@ body.builder-body > main.wrap{
   padding: 6px 0;
 }
 
-@media (max-width: 980px){
+@media (max-width: 900px){
   body.builder-body .user-btn .user-sub{
     padding-left: 10px;
     font-size: 13px;
@@ -570,7 +570,7 @@ body.builder-body > main.wrap{
 /* =========================================================
    MOBILE
 ========================================================= */
-@media (max-width: 720px){
+@media (max-width: 600px){
   :root{
     --tab-height: 56px;
     --tab-extra: 2px;
