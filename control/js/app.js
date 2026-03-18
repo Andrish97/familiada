@@ -1431,7 +1431,7 @@ async function sendZeroStatesToDevices() {
         if (items.length) {
           finalQEl.innerHTML = items.join("");
         } else {
-          finalQEl.innerHTML = `<li class="summaryQRandom">${s.finalQuestionsMode === "random" ? "Losowanie w toku…" : "Brak pytań"}</li>`;
+          finalQEl.innerHTML = `<li class="summaryQRandom">${s.finalQuestionsMode === "random" ? t("control.summaryQRandom") || "Losowanie w toku…" : t("control.summaryQNone") || "Brak pytań"}</li>`;
         }
       }
     }
@@ -1440,11 +1440,11 @@ async function sendZeroStatesToDevices() {
     const roundsQEl = document.getElementById("summaryRoundsQuestions");
     if (roundsQEl) {
       if (s.roundsQuestionsMode === "random") {
-        roundsQEl.innerHTML = `<li class="summaryQRandom">Zostaną wylosowane przy starcie gry</li>`;
+        roundsQEl.innerHTML = `<li class="summaryQRandom">${t("control.summaryQWillRandom") || "Zostaną wylosowane przy starcie gry"}</li>`;
       } else {
         const ordered = s.roundsPicked || [];
         const items = ordered.map(q => `<li>${escapeHtml((q.text || "").slice(0, 60))}</li>`).filter(Boolean);
-        roundsQEl.innerHTML = items.length ? items.join("") : `<li class="summaryQRandom">Brak wybranej kolejności</li>`;
+        roundsQEl.innerHTML = items.length ? items.join("") : `<li class="summaryQRandom">${t("control.summaryQNoOrder") || "Brak wybranej kolejności"}</li>`;
       }
     }
   }
