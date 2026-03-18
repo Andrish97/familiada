@@ -914,7 +914,7 @@ function importGamesFromData(raw) {
   try {
     const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
     items = Array.isArray(parsed) ? parsed : [parsed];
-  } catch {
+  } catch(e) {
     showStatus('gen-import-status', '✗ Nieprawidłowy JSON', 'err');
     return 0;
   }
