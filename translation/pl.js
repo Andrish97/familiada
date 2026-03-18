@@ -56,6 +56,7 @@ const pl = {
       successTitle: "Wysłano!",
       ticketLabel: "Numer zgłoszenia:",
       addedTo: "Dodano do zgłoszenia:",
+      ticketPlaceholder: "np. 2026-0001",
       errEmail: "Podaj poprawny adres e-mail.",
       errMessage: "Wiadomość jest za krótka (min. 5 znaków).",
       errSubject: "Podaj temat.",

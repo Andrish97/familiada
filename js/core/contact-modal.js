@@ -15,7 +15,7 @@ function buildModalHtml() {
           </div>
           <div class="field" style="margin-top:10px">
             <label class="field-label" id="cModalTicketLabel"></label>
-            <input class="inp" id="cModalTicket" type="text" placeholder="np. 2026-0001" style="width:100%;box-sizing:border-box" autocomplete="off"/>
+            <input class="inp" id="cModalTicket" type="text" style="width:100%;box-sizing:border-box" autocomplete="off"/>
           </div>
           <div class="field" style="margin-top:10px" id="cModalSubjectField">
             <label class="field-label" id="cModalSubjectLabel"></label>
@@ -66,6 +66,8 @@ function applyLabels() {
   set("cModalSubmit",       "contact.modal.submit");
   set("cModalSuccessTitle", "contact.modal.successTitle");
   set("cModalDone",         "common.done");
+  const ticketInp = document.getElementById("cModalTicket");
+  if (ticketInp) ticketInp.placeholder = t("contact.modal.ticketPlaceholder") || "2026-0001";
 }
 
 function ensureModal() {

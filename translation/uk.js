@@ -56,6 +56,7 @@ const uk = {
       successTitle: "Надіслано!",
       ticketLabel: "Номер звернення:",
       addedTo: "Додано до звернення:",
+      ticketPlaceholder: "напр. 2026-0001",
       errEmail: "Введіть коректну адресу e-mail.",
       errMessage: "Повідомлення занадто коротке (мін. 5 символів).",
       errSubject: "Вкажіть тему.",
