@@ -1478,14 +1478,33 @@ document.addEventListener("DOMContentLoaded", async () => {
       const obj = JSON.parse(await readFileAsText(f));
       if (!obj?.game || !Array.isArray(obj?.questions)) throw new Error(MSG.importInvalidJson());
       importParsed = obj;
-      const qCount = obj.questions.length;
       const gameName = obj.game.name || "—";
       const gameType = typeLabel(uiTypeFromRow({ type: obj.game.type }));
+      const qs = obj.questions;
+
+      const qRows = qs.map((q, i) => {
+        const answers = Array.isArray(q.answers) ? q.answers : [];
+        const hasPoints = answers.some(a => Number(a.fixed_points) > 0);
+        const aHtml = answers.length
+          ? `<div style="margin-top:3px;display:grid;gap:2px;padding-left:10px">` +
+            answers.map(a =>
+              `<div style="opacity:.8;font-size:.8rem">${escapeHtml(String(a.text || ""))}${hasPoints ? ` <span style="opacity:.55">(${Number(a.fixed_points)||0})</span>` : ""}</div>`
+            ).join("") + `</div>`
+          : "";
+        return `<div style="padding:4px 0;border-bottom:1px solid rgba(255,255,255,.07)">
+          <div style="font-size:.85rem"><span style="opacity:.45">${i+1}.</span> ${escapeHtml(String(q.text||""))}</div>
+          ${aHtml}
+        </div>`;
+      }).join("");
+
       if (importPreview) {
         importPreview.innerHTML = `
-          <div><span style="opacity:.6">${t("builder.import.preview.name")}</span> <strong>${escapeHtml(gameName)}</strong></div>
-          <div><span style="opacity:.6">${t("builder.import.preview.type")}</span> <strong>${escapeHtml(gameType)}</strong></div>
-          <div><span style="opacity:.6">${t("builder.import.preview.questions")}</span> <strong>${qCount}</strong></div>`;
+          <div style="display:flex;gap:16px;flex-wrap:wrap;padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,.12)">
+            <span><span style="opacity:.6">${t("builder.import.preview.name")}</span> <strong>${escapeHtml(gameName)}</strong></span>
+            <span><span style="opacity:.6">${t("builder.import.preview.type")}</span> <strong>${escapeHtml(gameType)}</strong></span>
+            <span><span style="opacity:.6">${t("builder.import.preview.questions")}</span> <strong>${qs.length}</strong></span>
+          </div>
+          <div style="max-height:220px;overflow-y:auto;margin-top:4px">${qRows}</div>`;
         importPreview.style.display = "grid";
       }
       if (btnImportJson) btnImportJson.disabled = false;
