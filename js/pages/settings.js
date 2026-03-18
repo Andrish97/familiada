@@ -222,7 +222,7 @@ async function checkMe() {
   try {
     const res = await apiFetch(`${API_BASE}/me`, { method: "GET" });
     return res.ok;
-  } catch {
+  } catch(e) {
     return false;
   }
 }
@@ -882,7 +882,7 @@ async function startMaintenance() {
     const data = await res.json();
     applyState(data);
     showToast(t("settings.toast.saved"));
-  } catch {
+  } catch(e) {
     if (shouldShowActionError()) showToast(t("settings.toast.error"), "error");
   }
 }
@@ -914,7 +914,7 @@ async function stopMaintenance() {
     setFieldValue("returnAt", now);
     setFieldValue("endAt", now);
     showToast(t("settings.toast.saved"));
-  } catch {
+  } catch(e) {
     if (shouldShowActionError()) showToast(t("settings.toast.error"), "error");
   }
 }
@@ -1824,7 +1824,7 @@ function renderMessageDetail(msg, attachments = []) {
     frame.className = "mail-msg-html-frame";
     frame.sandbox = "allow-scripts allow-popups";
     frame.srcdoc = htmlSrc;
-    frame.onload = () => { try { frame.style.height = (frame.contentDocument.documentElement.scrollHeight + 20) + "px"; } catch {} };
+    frame.onload = () => { try { frame.style.height = (frame.contentDocument.documentElement.scrollHeight + 20) + "px"; } catch(e) {} };
     bodyEl.appendChild(frame);
   } else {
     bodyEl.className = "mail-msg-body";
@@ -1875,7 +1875,7 @@ function renderMessageDetail(msg, attachments = []) {
               a2.href = url; a2.download = att.filename; a2.click();
               setTimeout(() => URL.revokeObjectURL(url), 10000);
             }
-          } catch { chip.style.opacity = ""; showToast("Błąd pobierania.", "error"); }
+          } catch(e) { chip.style.opacity = ""; showToast("Błąd pobierania.", "error"); }
         });
       }
       attList.appendChild(chip);
@@ -2056,7 +2056,7 @@ function renderReportThread(report, messages, attsByMsg = {}) {
       frame.className = "mail-msg-html-frame";
       frame.sandbox = "allow-scripts allow-popups";
       frame.srcdoc = htmlSrc;
-      frame.onload = () => { try { frame.style.height = (frame.contentDocument.documentElement.scrollHeight + 20) + "px"; } catch {} };
+      frame.onload = () => { try { frame.style.height = (frame.contentDocument.documentElement.scrollHeight + 20) + "px"; } catch(e) {} };
       bodyEl.appendChild(frame);
     } else {
       bodyEl.className = "mail-msg-body";
@@ -2104,7 +2104,7 @@ function renderReportThread(report, messages, attsByMsg = {}) {
                 a2.href = url; a2.download = att.filename; a2.click();
                 setTimeout(() => URL.revokeObjectURL(url), 10000);
               }
-            } catch { chip.style.opacity = ""; showToast("Błąd pobierania.", "error"); }
+            } catch(e) { chip.style.opacity = ""; showToast("Błąd pobierania.", "error"); }
           });
         }
         attList.appendChild(chip);
@@ -2186,7 +2186,7 @@ async function assignReport(msgOrId) {
       const json = await res.json();
       msgReports = json.rows || [];
     }
-  } catch {}
+  } catch(e) {}
   openAssignModal(_assignMsgData.id);
 }
 
@@ -2884,7 +2884,7 @@ async function loadToolsManifest() {
       .filter((t) => t && typeof t.title === "string" && typeof t.path === "string")
       .map((t) => ({ value: t.path, label: t.title }));
     if (items.length) return items;
-  } catch {
+  } catch(e) {
     // fall back to static list
   }
   return [
@@ -3178,7 +3178,7 @@ function wireEvents() {
       btn.disabled = true;
       try {
         await runMailWorker({ ids: [id] });
-      } catch {
+      } catch(e) {
         if (shouldShowActionError()) showToast(t("settings.toast.error"), "error");
       } finally {
         btn.disabled = false;
@@ -3191,7 +3191,7 @@ function wireEvents() {
     try {
       await saveMailSettings();
       await refreshMailTab();
-    } catch {
+    } catch(e) {
       if (shouldShowActionError()) showToast(t("settings.toast.error"), "error");
     }
   });
@@ -3219,7 +3219,7 @@ function wireEvents() {
     markUserAction();
     try {
       await runMailWorker();
-    } catch {
+    } catch(e) {
       if (shouldShowActionError()) showToast(t("settings.toast.error"), "error");
     }
   });
@@ -3228,7 +3228,7 @@ function wireEvents() {
     markUserAction();
     try {
       await runMailWorker({ requeueFailed: true });
-    } catch {
+    } catch(e) {
       if (shouldShowActionError()) showToast(t("settings.toast.error"), "error");
     }
   });
@@ -3242,7 +3242,7 @@ function wireEvents() {
     }
     try {
       await runMailWorker({ ids });
-    } catch {
+    } catch(e) {
       if (shouldShowActionError()) showToast(t("settings.toast.error"), "error");
     }
   });
