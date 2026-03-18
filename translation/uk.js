@@ -2596,6 +2596,11 @@ const uk = {
       loadFailed: "Не вдалося завантажити файл.",
       pasteJson: "Вставте JSON або вибери файл.",
       invalidJson: "Некоректний JSON.",
+      preview: {
+        name: "Назва:",
+        type: "Тип:",
+        questions: "Питання:",
+      },
       dbFailed: "Помилка бази під час імпорту.",
       progress: {
         start: "Імпортую…",
@@ -3816,8 +3821,9 @@ const uk = {
       failed: "Не вдалося змінити назву.",
     },
     import: {
-      title: "ІМПОРТ…",
-      subtitle: "Не закривай сторінку. Триває імпорт.",
+      title: "Імпорт лого",
+      confirm: "Імпортувати",
+      cancel: "Закрити",
       steps: {
         readFile: "Читаю файл…",
         validate: "Перевіряю JSON…",

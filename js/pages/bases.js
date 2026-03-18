@@ -51,13 +51,12 @@ const nameMsg = document.getElementById("nameMsg");
 // Modal importu
 const importOverlay = document.getElementById("importOverlay");
 const importFile = document.getElementById("importFile");
-const btnImportFile = document.getElementById("btnImportFile");
 const btnImportJson = document.getElementById("btnImportJson");
 const btnCancelImport = document.getElementById("btnCancelImport");
-const importTa = document.getElementById("importTa");
+const importErr = document.getElementById("importErr");
 const importMsg = document.getElementById("importMsg");
 
-// Import progress (modal importu)
+// Import progress
 const importProg = document.getElementById("importProg");
 const importProgStep = document.getElementById("importProgStep");
 const importProgCount = document.getElementById("importProgCount");
@@ -189,7 +188,7 @@ function safeDownloadName(name) {
     .replace(/[^\w\d\- ]+/g, "")
     .trim()
     .slice(0, 40) || t("bases.defaults.slug");
-  return `${base}.json`;
+  return `${base}.fambase`;
 }
 
 function downloadJson(filename, obj) {
@@ -1430,10 +1429,19 @@ async function nameOk() {
 }
 
 /* ================= Modal import ================= */
+let importParsed = null;
+
+function importResetState() {
+  importParsed = null;
+  if (importErr) { importErr.style.display = "none"; importErr.textContent = ""; }
+  if (btnImportJson) btnImportJson.disabled = true;
+}
+
 function openImportModal() {
-  if (importTa) importTa.value = "";
+  importResetState();
   if (importFile) importFile.value = "";
   setMsg(importMsg, "");
+  showProgBlock(importProg, false);
   show(importOverlay, true);
 }
 
@@ -1449,71 +1457,6 @@ function readFileAsText(file) {
     r.readAsText(file);
   });
 }
-
-async function importFromJsonText(txt) {
-  setMsg(importMsg, "");
-
-  let payload;
-  try {
-    payload = JSON.parse(txt);
-  } catch {
-    setMsg(importMsg, t("bases.import.invalidJson"));
-    return;
-  }
-
-  // UI start
-  showProgBlock(importProg, true);
-  setProgUi(importProgStep, importProgCount, importProgBar, importProgMsg, {
-    step: t("bases.import.steps.start"),
-    i: 0,
-    n: Array.isArray(payload?.questions) ? payload.questions.length : 0,
-    msg: "",
-  });
-
-  // blokady
-  if (btnImportJson) btnImportJson.disabled = true;
-  if (btnCancelImport) btnCancelImport.disabled = true;
-  if (btnImportFile) btnImportFile.disabled = true;
-  if (importFile) importFile.disabled = true;
-  if (importTa) importTa.disabled = true;
-
-  try {
-    const newId = await importBase(payload, ({ step, i, n, msg } = {}) => {
-      setProgUi(importProgStep, importProgCount, importProgBar, importProgMsg, {
-        step: step || t("bases.import.steps.default"),
-        i,
-        n,
-        msg,
-      });
-    });
-
-    selectedId = newId;
-    await refreshBases();
-    render();
-    setButtonsState();
-
-    setMsg(importMsg, t("bases.import.success"));
-    closeImportModal();
-  } catch (e) {
-    console.warn("[bases] import error:", e);
-    setMsg(importMsg, t("bases.import.failed"));
-    setProgUi(importProgStep, importProgCount, importProgBar, importProgMsg, {
-      step: t("bases.import.errorStep"),
-      i: 0,
-      n: 1,
-      msg: e?.message || t("bases.import.errorMsg"),
-    });
-  } finally {
-    showProgBlock(importProg, false);
-
-    if (btnImportJson) btnImportJson.disabled = false;
-    if (btnCancelImport) btnCancelImport.disabled = false;
-    if (btnImportFile) btnImportFile.disabled = false;
-    if (importFile) importFile.disabled = false;
-    if (importTa) importTa.disabled = false;
-  }
-}
-
 
 
 function getRetParam() {
@@ -1565,44 +1508,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
   btnExport?.addEventListener("click", async () => {
     const b = selectedBase();
-    if (!b) return;
-    if (btnExport?.disabled) return;
+    if (!b || btnExport?.disabled) return;
 
     show(exportJsonOverlay, true);
     if (exportJsonSub) exportJsonSub.textContent = t("bases.exportModal.subtitle");
-
     setProgUi(exportJsonStep, exportJsonCount, exportJsonBar, exportJsonMsg, {
-      step: t("bases.export.steps.start"),
-      i: 0,
-      n: 6,
-      msg: "",
+      step: t("bases.export.steps.start"), i: 0, n: 6, msg: "",
     });
-
     if (btnExport) btnExport.disabled = true;
 
     try {
-      const onProgress = ({ step, i, n, msg } = {}) => {
+      const out = await exportBase(b.id, ({ step, i, n, msg } = {}) => {
         setProgUi(exportJsonStep, exportJsonCount, exportJsonBar, exportJsonMsg, { step, i, n, msg });
-      };
-
-      const out = await exportBase(b.id, onProgress);
-      onProgress({
-        step: t("bases.export.steps.download"),
-        i: 6,
-        n: 6,
-        msg: safeDownloadName(b.name),
       });
-
       downloadJson(safeDownloadName(b.name), out);
-
-      setTimeout(() => show(exportJsonOverlay, false), 250);
+      show(exportJsonOverlay, false);
     } catch (e) {
       console.warn("[bases] export error:", e);
       setProgUi(exportJsonStep, exportJsonCount, exportJsonBar, exportJsonMsg, {
-        step: t("bases.export.errorStep"),
-        i: 0,
-        n: 1,
-        msg: e?.message || t("bases.export.failed"),
+        step: t("bases.export.errorStep"), i: 0, n: 1, msg: e?.message || t("bases.export.failed"),
       });
       setTimeout(() => show(exportJsonOverlay, false), 1200);
     } finally {
@@ -1612,23 +1536,58 @@ document.addEventListener("DOMContentLoaded", () => {
 
   btnImport?.addEventListener("click", () => openImportModal());
 
-  btnImportFile?.addEventListener("click", async () => {
-    const file = importFile?.files?.[0];
-    if (!file) {
-      setMsg(importMsg, t("bases.import.pickFile"));
-      return;
+  // Wczytanie pliku → walidacja, bez podglądu
+  importFile?.addEventListener("change", async () => {
+    importResetState();
+    const f = importFile?.files?.[0];
+    if (!f) return;
+    try {
+      const obj = JSON.parse(await readFileAsText(f));
+      if (!isValidImportPayload(obj)) throw new Error(t("bases.import.invalidFormat"));
+      importParsed = obj;
+      if (btnImportJson) btnImportJson.disabled = false;
+    } catch (e) {
+      if (importErr) { importErr.textContent = e?.message || t("bases.import.invalidJson"); importErr.style.display = ""; }
     }
-    const txt = await readFileAsText(file);
-    if (importTa) importTa.value = txt;
   });
 
   btnImportJson?.addEventListener("click", async () => {
-    const txt = String(importTa?.value || "").trim();
-    if (!txt) {
-      setMsg(importMsg, t("bases.import.pasteJson"));
-      return;
+    if (btnImportJson?.disabled || !importParsed) return;
+    const payload = importParsed;
+    const qCount = Array.isArray(payload?.questions) ? payload.questions.length : 0;
+
+    setMsg(importMsg, "");
+    showProgBlock(importProg, true);
+    setProgUi(importProgStep, importProgCount, importProgBar, importProgMsg, {
+      step: t("bases.import.steps.start"), i: 0, n: qCount, msg: "",
+    });
+    if (btnImportJson) btnImportJson.disabled = true;
+    if (btnCancelImport) btnCancelImport.disabled = true;
+    if (importFile) importFile.disabled = true;
+
+    try {
+      const newId = await importBase(payload, ({ step, i, n, msg } = {}) => {
+        setProgUi(importProgStep, importProgCount, importProgBar, importProgMsg, {
+          step: step || t("bases.import.steps.default"), i, n, msg,
+        });
+      });
+      selectedId = newId;
+      await refreshBases();
+      render();
+      setButtonsState();
+      closeImportModal();
+    } catch (e) {
+      console.warn("[bases] import error:", e);
+      setMsg(importMsg, t("bases.import.failed"));
+      setProgUi(importProgStep, importProgCount, importProgBar, importProgMsg, {
+        step: t("bases.import.errorStep"), i: 0, n: 1, msg: e?.message || t("bases.import.errorMsg"),
+      });
+    } finally {
+      showProgBlock(importProg, false);
+      if (btnImportJson) btnImportJson.disabled = !importParsed;
+      if (btnCancelImport) btnCancelImport.disabled = false;
+      if (importFile) importFile.disabled = false;
     }
-    await importFromJsonText(txt);
   });
 
   btnCancelImport?.addEventListener("click", () => closeImportModal());

@@ -145,31 +145,28 @@
   <div class="overlay" id="importOverlay" style="display:none;">
     <div class="modal">
       <div class="mTitle" data-i18n="bases.importModal.title">Import</div>
-      <div class="mSub" data-i18n="bases.importModal.subtitle">Wybierz plik JSON lub wklej JSON poniżej.</div>
 
-      <div class="importRow">
-        <input id="importFile" class="inp" type="file" accept="application/json">
-        <button class="btn sm" id="btnImportFile" type="button" data-i18n="bases.importModal.loadFile">Wczytaj plik</button>
+      <div class="importRow" style="margin-top:8px">
+        <input id="importFile" class="inp" type="file" accept=".fambase,.json,application/json">
       </div>
 
-      <textarea id="importTa" class="importTa" spellcheck="false" placeholder="Wklej JSON tutaj..." data-i18n-placeholder="bases.importModal.placeholder"></textarea>
+      <!-- Błąd walidacji -->
+      <div id="importErr" style="display:none;margin-top:8px;color:#f87171;font-size:.88rem"></div>
 
-      <!-- Progres importu -->
+      <!-- Pasek postępu (podczas importu) -->
       <div id="importProg" style="display:none;margin-top:12px;gap:10px">
         <div class="importRow" style="align-items:center">
-          <div id="importProgStep" style="font-weight:800;letter-spacing:.04em" data-i18n="bases.progress.placeholder">—</div>
+          <div id="importProgStep" style="font-weight:800;letter-spacing:.04em">—</div>
           <div id="importProgCount" style="margin-left:auto;opacity:.8">0/0</div>
         </div>
-
         <div style="height:10px;border-radius:999px;background:rgba(255,255,255,.10);overflow:hidden">
           <div id="importProgBar" style="height:100%;width:0%;background:rgba(255,255,255,.85)"></div>
         </div>
-
         <div class="importMsg" id="importProgMsg" style="min-height:18px"></div>
       </div>
 
-      <div class="importRow">
-        <button class="btn sm gold" id="btnImportJson" type="button" data-i18n="bases.importModal.confirm">Importuj</button>
+      <div class="importRow" style="margin-top:12px">
+        <button class="btn sm gold" id="btnImportJson" type="button" disabled data-i18n="bases.importModal.confirm">Importuj</button>
         <button class="btn sm" id="btnCancelImport" type="button" data-i18n="bases.importModal.cancel">Zamknij</button>
         <div class="importMsg" id="importMsg"></div>
       </div>
