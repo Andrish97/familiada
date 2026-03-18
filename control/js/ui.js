@@ -603,7 +603,6 @@ export function createUI() {
     $("btnBackToDevices")?.addEventListener("click", () => emit("setup.backToDevices"));
     $("btnSetupNext")?.addEventListener("click", () => emit("setup.next"));
     $("btnSetupBack")?.addEventListener("click", () => emit("setup.back"));
-    $("btnSetupFinish")?.addEventListener("click", () => emit("setup.finish"));
 
     $("btnTeamMore")?.addEventListener("click", () => {
       $("teamExtra")?.classList.toggle("hidden");
