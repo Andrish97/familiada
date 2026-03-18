@@ -355,70 +355,52 @@ export function renderToolbar(state) {
   const canMutate = editor && (state.view !== VIEW.SEARCH && state.view !== VIEW.TAG && state.view !== VIEW.META);
   const canDelete = editor && (state.view !== VIEW.META);
   const canCut = editor && (state.view !== VIEW.SEARCH && state.view !== VIEW.TAG && state.view !== VIEW.META);
-  const canCopy = editor; // copy nie było blokowane view’ami, tylko rolą
-  const canEditTags = editor; // view dopuszczasz (w Twoim opisie: "jeśli jest selekcja")
-  const canEditQuestion = editor; // placeholder, ale blokuj viewer
-  const canRename = canMutate; // rename = mutacja
-  
-  const dis = new Map();
-  
-  // === TWORZENIE ===
-  // NOWY WARUNEK: "Nowy folder / Nowe pytanie – zawsze aktywne"
-  // ale tylko jeśli user ma prawo pisać i nie łamiemy wcześniejszych blokad widoków
-  dis.set("newFolder", !canMutate ? true : false);
-  dis.set("newQuestion", !canMutate ? true : false);
-  
-  // === PASTE ===
-  // "Wklej zależne od schowka i dobrze" + wcześniejsze blokady
-  dis.set("paste", !(canMutate && hasClipboard));
+  const canCopy = editor;
+  const canEditTags = editor;
+  const canRename = canMutate;
 
+  const oneSelKey = oneSel ? realKeys[0] : null;
+  const oneSelIsQuestion = oneSelKey?.startsWith("q:");
+  const hasQuestionInSel = realKeys.some(k => k.startsWith("q:"));
+
+  const dis = new Map();
+
+  dis.set("newFolder",   !canMutate);
+  dis.set("newQuestion", !canMutate);
+  dis.set("paste",       !(canMutate && hasClipboard));
   dis.set("refreshView", false);
-  
-  // === SELEKCJA: 0 / 1 / wiele ===
-  
-  // 0 zaznaczenia:
-  // wyszarzone: editQuestion, editTags, rename, delete, copy, cut, duplicate, createGame
+
   if (!hasSel) {
     dis.set("editQuestion", true);
-    dis.set("editTags", true);
-    dis.set("rename", true);
-    dis.set("delete", true);
-  
-    dis.set("copy", true);
-    dis.set("cut", true);
-    dis.set("duplicate", true);
-  
-    dis.set("createGame", true);
+    dis.set("editTags",     true);
+    dis.set("rename",       true);
+    dis.set("delete",       true);
+    dis.set("copy",         true);
+    dis.set("cut",          true);
+    dis.set("duplicate",    true);
+    dis.set("createGame",   true);
   }
-  
-  // 1 zaznaczenie:
-  // "wszystkie aktywne" (z zachowaniem wcześniejszych blokad roli/widoków)
+
   if (oneSel) {
-    dis.set("editQuestion", !canEditQuestion);
-    dis.set("editTags", !canEditTags);
-    dis.set("rename", !canRename);
-    dis.set("delete", !canDelete);
-  
-    dis.set("copy", !canCopy);
-    dis.set("cut", !canCut);
-    dis.set("duplicate", !canMutate);
-  
-    dis.set("createGame", false);
+    dis.set("editQuestion", !(editor && oneSelIsQuestion));
+    dis.set("editTags",     !canEditTags);
+    dis.set("rename",       !canRename);
+    dis.set("delete",       !canDelete);
+    dis.set("copy",         !canCopy);
+    dis.set("cut",          !canCut);
+    dis.set("duplicate",    !canMutate);
+    dis.set("createGame",   !hasQuestionInSel);
   }
-  
-  // >1 zaznaczenie:
-  // wyszarzone: editQuestion, editTags, rename
-  // aktywne: delete, copy, cut, duplicate, createGame (z wcześniejszymi blokadami)
+
   if (manySel) {
     dis.set("editQuestion", true);
-    dis.set("editTags", true);
-    dis.set("rename", true);
-  
-    dis.set("delete", !canDelete);
-    dis.set("copy", !canCopy);
-    dis.set("cut", !canCut);
-    dis.set("duplicate", !canMutate);
-    dis.set("createGame", false);
+    dis.set("editTags",     !canEditTags);
+    dis.set("rename",       true);
+    dis.set("delete",       !canDelete);
+    dis.set("copy",         !canCopy);
+    dis.set("cut",          !canCut);
+    dis.set("duplicate",    !canMutate);
+    dis.set("createGame",   !hasQuestionInSel);
   }
   
   // zastosuj do DOM
