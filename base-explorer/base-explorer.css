@@ -1106,26 +1106,18 @@ tr.row.is-drop-after td:last-child::after {
 .meta-dot[data-tip]:hover::before,
 .tag-dot[data-tip]:hover::after,
 .tag-dot[data-tip]:hover::before {
-    z-index: 9999;
+    z-index: 10000;
 }
 
 [data-tip]:hover::after,[data-tip]:hover::before {
     z-index: 10000;
 }
 
-/* tooltip above sticky header */
+/* tooltip above sticky header — wymaga position na tr */
 tr.row:has(.meta-dot[data-tip]:hover),
 tr.row:has(.tag-dot[data-tip]:hover) {
-    z-index: 10;
-}
-
-/* ── misc ── */
-.list-head,.row {
-    min-width: 0;
-}
-
-.meta-dot::after {
-    z-index: 1000;
+    position: relative;
+    z-index: 100;
 }
 
 .tbGroup,.toolbar {
@@ -1712,7 +1704,7 @@ tr.row:has(.tag-dot[data-tip]:hover) {
 
 .mobile-only { display: none !important; }
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
 
   /* Pokaż przycisk drawera w toolbarze */
   .mobile-only { display: inline-flex !important; }
@@ -1815,16 +1807,12 @@ tr.row:has(.tag-dot[data-tip]:hover) {
     max-height: 48px;
   }
 
-  /* Ukryj kolumny mniej ważne, zostaw tylko nazwę i typ */
-  .col-num, .col-date, .col-meta { display: none; }
-  .list-head .h-num, .list-head .h-date, .list-head .h-meta { display: none; }
-
-  /* Kolumna nazwy — zajmuje całą dostępną szerokość */
-  .list-table { min-width: 0; table-layout: auto; }
-  tr.row td.col-main,
-  .list-head th.h-main { width: auto; }
-  tr.row td.col-type,
-  .list-head th.h-type { width: 80px; }
+  /* Tabela — scroll poziomy zamiast ukrywania kolumn */
+  .list {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .list-table { min-width: 560px; table-layout: fixed; }
 
   /* Breadcrumbs — scroll poziomy */
   .breadcrumbs {
