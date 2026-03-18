@@ -1029,6 +1029,8 @@ function updateBackButtonLabel() {
   if (!btnBack) return;
   const retPath = getRetPathnameLower();
   btnBack.textContent = retPath.endsWith("/bases")
+    ? t("pollsHubPolls.backToBases") || "← Bazy pytań"
+    : t("pollsHubPolls.backToGames");
 }
 
 function getBackLink() {
