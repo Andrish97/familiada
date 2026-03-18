@@ -736,6 +736,16 @@ async function refreshList(state) {
 
     const topFolders = fullFolders.filter(f => !hasFullAncestor(f.id));
     const topFolderIds = new Set(topFolders.map(f => f.id));
+
+    // foldery pasujące po nazwie — dodaj je niezależnie od logiki "100% dzieci"
+    if (textQ) {
+      for (const c of applySearchFilterToFolders(foldersAll, textQ)) {
+        if (!fullFolderIdSet.has(c.id)) {
+          topFolders.push(c);
+          topFolderIds.add(c.id);
+        }
+      }
+    }
     
     function isInsideTopFolder(categoryId) {
       if (!categoryId) return false;
