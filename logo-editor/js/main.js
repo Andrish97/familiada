@@ -1447,10 +1447,10 @@ async function boot(){
      try {
        const parsed = parseImportJson(await f.text());
        importLogoParsed = { file: f, parsed };
-       // Podgląd na canvas — ustaw rozmiar pod modal (nie fullscreen)
        if (logoImportPreviewCanvas && logoImportPreviewWrap) {
-         logoImportPreviewCanvas.width = 600;
-         logoImportPreviewCanvas.height = 200;
+         const w = Math.round(Math.min(600, window.innerWidth * 0.82));
+         logoImportPreviewCanvas.width = w;
+         logoImportPreviewCanvas.height = Math.round(w * 11 / 26);
          if (parsed.kind === "GLYPH") renderRows30x10ToBig(parsed.rows, logoImportPreviewCanvas);
          else {
            const bits = unpackBitsRowMajorMSB(parsed.pixPayload.bits_b64, DOT_W, DOT_H);
