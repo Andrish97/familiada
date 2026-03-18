@@ -446,43 +446,50 @@
     </div>
   </div>
 
-  <!-- PROGRES: IMPORT LOGO (blokujący) -->
+  <!-- Modal: import logo -->
   <div class="overlay" id="logoImportOverlay" style="display:none;">
     <div class="modal" style="width:min(640px,94vw)">
-      <div class="mTitle" data-i18n="logoEditor.import.title">IMPORT…</div>
-      <div class="mSub" id="logoImportSub" data-i18n="logoEditor.import.subtitle">Nie zamykaj strony. Trwa import.</div>
+      <div class="mTitle" data-i18n="logoEditor.import.title">Import logo</div>
 
-      <div style="margin-top:12px;display:grid;gap:10px">
+      <div class="importRow" style="margin-top:8px">
+        <input id="inpImportLogoFile" type="file" accept=".famlogo,.json,application/json" class="inp" style="flex:1;min-width:0">
+      </div>
+
+      <!-- Podgląd canvas -->
+      <div id="logoImportPreviewWrap" style="display:none;margin-top:10px;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,.12)">
+        <canvas id="logoImportPreviewCanvas" style="width:100%;display:block"></canvas>
+      </div>
+      <!-- Błąd -->
+      <div id="logoImportErr" style="display:none;margin-top:8px;color:#f87171;font-size:.88rem"></div>
+
+      <!-- Pasek postępu (podczas zapisu) -->
+      <div id="logoImportProg" style="display:none;margin-top:12px;gap:10px">
         <div class="importRow" style="align-items:center">
           <div id="logoImportStep" style="font-weight:800;letter-spacing:.04em">—</div>
           <div id="logoImportCount" style="margin-left:auto;opacity:.8">0/0</div>
         </div>
-
         <div style="height:10px;border-radius:999px;background:rgba(255,255,255,.10);overflow:hidden">
           <div id="logoImportBar" style="height:100%;width:0%;background:rgba(255,255,255,.85)"></div>
         </div>
-
         <div class="importMsg" id="logoImportMsg" style="min-height:18px"></div>
+      </div>
+
+      <div class="importRow" style="margin-top:12px">
+        <button class="btn sm gold" id="btnLogoImportConfirm" type="button" disabled data-i18n="logoEditor.import.confirm">Importuj</button>
+        <button class="btn sm" id="btnLogoImportCancel" type="button" data-i18n="logoEditor.import.cancel">Zamknij</button>
       </div>
     </div>
   </div>
 
-  <!-- PROGRES: EXPORT LOGO (blokujący) -->
+  <!-- PROGRES: EXPORT LOGO -->
   <div class="overlay" id="logoExportOverlay" style="display:none;">
     <div class="modal" style="width:min(640px,94vw)">
       <div class="mTitle" data-i18n="logoEditor.export.title">EXPORT…</div>
       <div class="mSub" id="logoExportSub" data-i18n="logoEditor.export.subtitle">Nie zamykaj strony. Trwa przygotowanie pliku.</div>
-
       <div style="margin-top:12px;display:grid;gap:10px">
-        <div class="importRow" style="align-items:center">
-          <div id="logoExportStep" style="font-weight:800;letter-spacing:.04em">—</div>
-          <div id="logoExportCount" style="margin-left:auto;opacity:.8">0/0</div>
-        </div>
-
         <div style="height:10px;border-radius:999px;background:rgba(255,255,255,.10);overflow:hidden">
-          <div id="logoExportBar" style="height:100%;width:0%;background:rgba(255,255,255,.85)"></div>
+          <div id="logoExportBar" style="height:100%;width:0%;background:rgba(255,255,255,.85);transition:width .2s"></div>
         </div>
-
         <div class="importMsg" id="logoExportMsg" style="min-height:18px"></div>
       </div>
     </div>

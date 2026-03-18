@@ -130,10 +130,10 @@ const btnMarketplace = document.getElementById("btnMarketplace");
 // Modal importu JSON
 const importOverlay = document.getElementById("importOverlay");
 const importFile = document.getElementById("importFile");
-const btnImportFile = document.getElementById("btnImportFile");
 const btnImportJson = document.getElementById("btnImportJson");
 const btnCancelImport = document.getElementById("btnCancelImport");
-const importTa = document.getElementById("importTa");
+const importPreview = document.getElementById("importPreview");
+const importErr = document.getElementById("importErr");
 const importMsg = document.getElementById("importMsg");
 
 // Import progress (w modalu importu)
@@ -320,10 +320,20 @@ function setImportMsg(t) {
   importMsg.textContent = t || "";
 }
 
+let importParsed = null; // aktualnie sparsowany obiekt gry
+
+function importResetPreview() {
+  importParsed = null;
+  if (importPreview) { importPreview.style.display = "none"; importPreview.innerHTML = ""; }
+  if (importErr) { importErr.style.display = "none"; importErr.textContent = ""; }
+  if (btnImportJson) btnImportJson.disabled = true;
+}
+
 function openImportModal() {
-  if (importTa) importTa.value = "";
+  importResetPreview();
   if (importFile) importFile.value = "";
   setImportMsg("");
+  showProgBlock(importProg, false);
   show(importOverlay, true);
 }
 function closeImportModal() { show(importOverlay, false); }
@@ -593,7 +603,7 @@ function safeDownloadName(name) {
     .replace(/[^\w\d\- ]+/g, "")
     .trim()
     .slice(0, 40) || "familiada";
-  return `${base}.json`;
+  return `${base}.famgame`;
 }
 
 /**
@@ -1311,57 +1321,26 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  // EXPORT
+  // EXPORT — pobierz dane z paskiem, potem instant download
   btnExport?.addEventListener("click", async () => {
-    if (!selectedId) return;
-    if (btnExport?.disabled) return;
-  
-    // UI start
+    if (!selectedId || btnExport?.disabled) return;
+
     if (exportJsonSub) exportJsonSub.textContent = MSG.exportJsonSub();
     show(exportJsonOverlay, true);
-  
-    // na start: nie znamy jeszcze n, ustawi się po pobraniu listy pytań w exportGame()
-    setProgUi(exportJsonStep, exportJsonCount, exportJsonBar, exportJsonMsg, {
-      step: MSG.exportStart(),
-      i: 0,
-      n: 0,
-      msg: "",
-    });
-  
+    setProgUi(exportJsonStep, exportJsonCount, exportJsonBar, exportJsonMsg, { step: MSG.exportStart(), i: 0, n: 0, msg: "" });
     if (btnExport) btnExport.disabled = true;
-  
+
     try {
       const obj = await exportGame(selectedId, ({ step, i, n, msg } = {}) => {
-        setProgUi(exportJsonStep, exportJsonCount, exportJsonBar, exportJsonMsg, {
-          step: step || MSG.exportFetch(),
-          i,
-          n,
-          msg,
-        });
+        setProgUi(exportJsonStep, exportJsonCount, exportJsonBar, exportJsonMsg, { step: step || MSG.exportFetch(), i, n, msg });
       });
-  
-      setProgUi(exportJsonStep, exportJsonCount, exportJsonBar, exportJsonMsg, {
-        step: MSG.exportDone(),
-        i: Array.isArray(obj?.questions) ? obj.questions.length : 1,
-        n: Array.isArray(obj?.questions) ? obj.questions.length : 1,
-        msg: MSG.exportDownload(),
-      });
-  
       downloadJson(safeDownloadName(obj?.game?.name), obj);
-  
-      // krótko pokaż “Gotowe”, potem schowaj
-      setTimeout(() => show(exportJsonOverlay, false), 400);
+      show(exportJsonOverlay, false);
     } catch (e) {
       console.error(e);
       setProgUi(exportJsonStep, exportJsonCount, exportJsonBar, exportJsonMsg, {
-        step: MSG.exportErrorLabel(),
-        i: 0,
-        n: 1,
-        msg: e?.message || MSG.exportFailed(),
-        isError: true,
+        step: MSG.exportErrorLabel(), i: 0, n: 1, msg: e?.message || MSG.exportFailed(), isError: true,
       });
-  
-      // zostaw overlay na chwilę, żeby użytkownik zobaczył błąd
       setTimeout(() => show(exportJsonOverlay, false), 1200);
     } finally {
       if (btnExport) btnExport.disabled = false;
@@ -1490,112 +1469,70 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  btnImportFile?.addEventListener("click", async () => {
+  // Wczytanie pliku → podgląd w modalu
+  importFile?.addEventListener("change", async () => {
+    importResetPreview();
+    const f = importFile?.files?.[0];
+    if (!f) return;
     try {
-      const f = importFile?.files?.[0];
-      if (!f) {
-        setImportMsg(MSG.importPickFile());
-        return;
+      const obj = JSON.parse(await readFileAsText(f));
+      if (!obj?.game || !Array.isArray(obj?.questions)) throw new Error(MSG.importInvalidJson());
+      importParsed = obj;
+      const qCount = obj.questions.length;
+      const gameName = obj.game.name || "—";
+      const gameType = typeLabel(uiTypeFromRow({ type: obj.game.type }));
+      if (importPreview) {
+        importPreview.innerHTML = `
+          <div><span style="opacity:.6">${t("builder.import.preview.name")}</span> <strong>${escapeHtml(gameName)}</strong></div>
+          <div><span style="opacity:.6">${t("builder.import.preview.type")}</span> <strong>${escapeHtml(gameType)}</strong></div>
+          <div><span style="opacity:.6">${t("builder.import.preview.questions")}</span> <strong>${qCount}</strong></div>`;
+        importPreview.style.display = "grid";
       }
-      const txt = await readFileAsText(f);
-      if (importTa) importTa.value = txt;
-      setImportMsg(MSG.importLoaded());
+      if (btnImportJson) btnImportJson.disabled = false;
     } catch (e) {
-      console.error(e);
-      setImportMsg(MSG.importLoadFailed());
+      if (importErr) { importErr.textContent = e?.message || MSG.importInvalidJson(); importErr.style.display = ""; }
     }
   });
 
   btnImportJson?.addEventListener("click", async () => {
-    // blokada równoległych klików
-    if (btnImportJson?.disabled) return;
-  
-    let obj = null;
-  
-    try {
-      const txt = importTa?.value || "";
-      if (!txt.trim()) {
-        setImportMsg(MSG.importPasteJson());
-        return;
-      }
-  
-      // parse najpierw, żeby błędny JSON nie odpalał progresu
-      obj = JSON.parse(txt);
-    } catch (e) {
-      console.error("IMPORT JSON PARSE ERROR:", e);
-      setImportMsg(MSG.importInvalidJson());
-      return;
-    }
-  
-    // UI: start
+    if (btnImportJson?.disabled || !importParsed) return;
+    const obj = importParsed;
+    const qCount = Array.isArray(obj?.questions) ? obj.questions.length : 0;
+
     setImportMsg("");
     showProgBlock(importProg, true);
     setProgUi(importProgStep, importProgCount, importProgBar, importProgMsg, {
-      step: MSG.importStart(),
-      i: 0,
-      n: Array.isArray(obj?.questions) ? obj.questions.length : 0,
-      msg: "",
+      step: MSG.importStart(), i: 0, n: qCount, msg: "",
     });
-  
     if (btnImportJson) btnImportJson.disabled = true;
     if (btnCancelImport) btnCancelImport.disabled = true;
-    if (btnImportFile) btnImportFile.disabled = true;
     if (importFile) importFile.disabled = true;
-    if (importTa) importTa.disabled = true;
-  
+
     try {
       const newId = await importGame(obj, currentUser.id, ({ step, i, n, msg, isError } = {}) => {
-        setProgUi(importProgStep, importProgCount, importProgBar, importProgMsg, {
-          step: step || MSG.importSave(),
-          i,
-          n,
-          msg,
-          isError,
-        });
+        setProgUi(importProgStep, importProgCount, importProgBar, importProgMsg, { step: step || MSG.importSave(), i, n, msg, isError });
       });
-  
-      // końcówka
       setProgUi(importProgStep, importProgCount, importProgBar, importProgMsg, {
-        step: MSG.importDone(),
-        i: Array.isArray(obj?.questions) ? obj.questions.length : 0,
-        n: Array.isArray(obj?.questions) ? obj.questions.length : 0,
-        msg: MSG.importDone(),
+        step: MSG.importDone(), i: qCount, n: qCount, msg: MSG.importDone(),
       });
-  
       selectedId = newId;
-  
-      try {
-        const ng = await loadGameBasic(newId);
-        if (ng?.type) {
-          const ui = uiTypeFromRow(ng);
-          setActiveTab(ui);
-        }
-      } catch {}
-  
+      try { const ng = await loadGameBasic(newId); if (ng?.type) setActiveTab(uiTypeFromRow(ng)); } catch {}
       await refresh();
-  
       closeImportModal();
     } catch (e) {
       console.error("IMPORT ERROR:", e);
       setProgUi(importProgStep, importProgCount, importProgBar, importProgMsg, {
-        step: MSG.importErrorLabel(),
-        i: 0,
-        n: Array.isArray(obj?.questions) ? obj.questions.length : 0,
-        msg: e?.message || MSG.importFailed(),
-        isError: true,
+        step: MSG.importErrorLabel(), i: 0, n: qCount, msg: e?.message || MSG.importFailed(), isError: true,
       });
       setImportMsg(MSG.importDbFailed());
     } finally {
-      // UI: stop
       showProgBlock(importProg, false);
-  
-      if (btnImportJson) btnImportJson.disabled = false;
+      if (btnImportJson) btnImportJson.disabled = !importParsed;
       if (btnCancelImport) btnCancelImport.disabled = false;
-      if (btnImportFile) btnImportFile.disabled = false;
       if (importFile) importFile.disabled = false;
-      if (importTa) importTa.disabled = false;
     }
   });
+
 
   // init — ?tab=market otwiera zakładkę Społeczność od razu
   const initTab = new URLSearchParams(location.search).get("tab");

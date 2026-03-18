@@ -65,8 +65,23 @@ const btnImport = document.getElementById("btnImport");
 const btnExport = document.getElementById("btnExport");
 const inpImportLogoFile = document.getElementById("inpImportLogoFile");
 
+// Modal importu logo
+const logoImportOverlay = document.getElementById("logoImportOverlay");
+const logoImportPreviewWrap = document.getElementById("logoImportPreviewWrap");
+const logoImportPreviewCanvas = document.getElementById("logoImportPreviewCanvas");
+const logoImportErr = document.getElementById("logoImportErr");
+const logoImportProg = document.getElementById("logoImportProg");
+const logoImportStep = document.getElementById("logoImportStep");
+const logoImportCount = document.getElementById("logoImportCount");
+const logoImportBar = document.getElementById("logoImportBar");
+const logoImportMsg = document.getElementById("logoImportMsg");
+const btnLogoImportConfirm = document.getElementById("btnLogoImportConfirm");
+const btnLogoImportCancel = document.getElementById("btnLogoImportCancel");
 
-// modal wyboru trybu
+// Export overlay
+const logoExportOverlay = document.getElementById("logoExportOverlay");
+const logoExportBar = document.getElementById("logoExportBar");
+const logoExportMsg = document.getElementById("logoExportMsg");
 const createOverlay = document.getElementById("createOverlay");
 const pickText = document.getElementById("pickText");
 const pickTextPix = document.getElementById("pickTextPix");
@@ -433,7 +448,7 @@ function exportLogoToFile(l){
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
   const fallbackName = getDefaultLogoFileName();
-  a.download = `${(l.name || fallbackName).replace(/[^\w\d\- ]+/g,"").trim() || fallbackName}.json`;
+  a.download = `${(l.name || fallbackName).replace(/[^\w\d\- ]+/g,"").trim() || fallbackName}.famlogo`;
   document.body.appendChild(a);
   a.click();
   a.remove();
@@ -1419,72 +1434,91 @@ async function boot(){
      location.href = withLangParam("../login");
    });
 
+   // Import logo — modal z podglądem
+   let importLogoParsed = null;
+
+   function logoImportReset() {
+     importLogoParsed = null;
+     if (logoImportPreviewWrap) logoImportPreviewWrap.style.display = "none";
+     if (logoImportErr) { logoImportErr.style.display = "none"; logoImportErr.textContent = ""; }
+     if (logoImportProg) logoImportProg.style.display = "none";
+     if (btnLogoImportConfirm) btnLogoImportConfirm.disabled = true;
+   }
+
+   function openLogoImportModal() {
+     logoImportReset();
+     if (inpImportLogoFile) inpImportLogoFile.value = "";
+     show(logoImportOverlay, true);
+   }
+
+   function closeLogoImportModal() {
+     show(logoImportOverlay, false);
+   }
+
    inpImportLogoFile?.addEventListener("change", async () => {
-     const f = inpImportLogoFile.files?.[0];
-     inpImportLogoFile.value = "";
+     logoImportReset();
+     const f = inpImportLogoFile?.files?.[0];
      if (!f) return;
-   
-     // blokujący progres
-     progOpen("import");
-     progReset("import");
-   
-     const N = 4;
-   
-     try{
-       progSet("import", { step: t("logoEditor.import.steps.readFile"), i: 1, n: N, msg: f.name });
-       await new Promise(requestAnimationFrame);
-   
-       progSet("import", { step: t("logoEditor.import.steps.validate"), i: 2, n: N, msg: t("logoEditor.import.messages.validation") });
-       await new Promise(requestAnimationFrame);
-   
-       progSet("import", { step: t("logoEditor.import.steps.saveDb"), i: 3, n: N, msg: t("logoEditor.import.messages.creatingRecord") });
-       await importLogoFromFile(f);
-   
-       progSet("import", { step: t("logoEditor.import.steps.refresh"), i: 4, n: N, msg: t("logoEditor.import.messages.done") });
-       await refresh();
-   
-       // domknięcie po krótkim ticku, żeby użytkownik widział 100%
-       await new Promise(r => setTimeout(r, 150));
-       progClose("import");
-       setMsg(t("logoEditor.status.imported"));
-     } catch (e){
-       console.error(e);
-       progClose("import");
-       void alertModal({ text: t("logoEditor.errors.importFailedDetailed", { error: e?.message || e }) });
-       setMsg("");
+     try {
+       const parsed = parseImportJson(await f.text());
+       importLogoParsed = { file: f, parsed };
+       // Podgląd na canvas
+       if (logoImportPreviewCanvas && logoImportPreviewWrap) {
+         if (parsed.kind === "GLYPH") renderRows30x10ToBig(parsed.rows, logoImportPreviewCanvas);
+         else {
+           const bits = unpackBitsRowMajorMSB(parsed.pixPayload.bits_b64, DOT_W, DOT_H);
+           renderBits150x70ToBig(bits, logoImportPreviewCanvas);
+         }
+         logoImportPreviewWrap.style.display = "";
+       }
+       if (btnLogoImportConfirm) btnLogoImportConfirm.disabled = false;
+     } catch (e) {
+       if (logoImportErr) { logoImportErr.textContent = e?.message || t("logoEditor.errors.invalidJson"); logoImportErr.style.display = ""; }
      }
    });
 
-   btnImport?.addEventListener("click", () => inpImportLogoFile?.click());
-   
+   btnLogoImportConfirm?.addEventListener("click", async () => {
+     if (!importLogoParsed || btnLogoImportConfirm?.disabled) return;
+     if (logoImportProg) logoImportProg.style.display = "grid";
+     if (btnLogoImportConfirm) btnLogoImportConfirm.disabled = true;
+     if (btnLogoImportCancel) btnLogoImportCancel.disabled = true;
+     try {
+       await importLogoFromFile(importLogoParsed.file);
+       await refresh();
+       closeLogoImportModal();
+       setMsg(t("logoEditor.status.imported"));
+     } catch (e) {
+       console.error(e);
+       if (logoImportErr) { logoImportErr.textContent = t("logoEditor.errors.importFailedDetailed", { error: e?.message || e }); logoImportErr.style.display = ""; }
+       if (logoImportProg) logoImportProg.style.display = "none";
+       if (btnLogoImportConfirm) btnLogoImportConfirm.disabled = false;
+     } finally {
+       if (btnLogoImportCancel) btnLogoImportCancel.disabled = false;
+     }
+   });
+
+   btnLogoImportCancel?.addEventListener("click", () => closeLogoImportModal());
+   logoImportOverlay?.addEventListener("mousedown", (e) => { if (e.target === logoImportOverlay) closeLogoImportModal(); });
+
+   btnImport?.addEventListener("click", () => openLogoImportModal());
+
+   // Eksport logo — instant download
    btnExport?.addEventListener("click", async () => {
      if (!selectedKey || selectedKey === "default") return;
      const l = (logos || []).find(x => x.id === selectedKey);
      if (!l) return;
-   
-     progOpen("export");
-     progReset("export");
-   
-     const N = 3;
-   
-     try{
-       progSet("export", { step: t("logoEditor.export.steps.prepare"), i: 1, n: N, msg: l.name || getDefaultLogoFileName() });
-       await new Promise(requestAnimationFrame);
-   
-       progSet("export", { step: t("logoEditor.export.steps.createFile"), i: 2, n: N, msg: "JSON" });
-       await new Promise(requestAnimationFrame);
-   
-       progSet("export", { step: t("logoEditor.export.steps.download"), i: 3, n: N, msg: t("logoEditor.export.messages.browserPrompt") });
+     try {
+       if (logoExportOverlay) { if (logoExportBar) logoExportBar.style.width = "50%"; show(logoExportOverlay, true); }
        exportLogoToFile(l);
-   
-       await new Promise(r => setTimeout(r, 150));
-       progClose("export");
-     } catch (e){
+       if (logoExportBar) logoExportBar.style.width = "100%";
+       setTimeout(() => show(logoExportOverlay, false), 300);
+     } catch (e) {
        console.error(e);
-       progClose("export");
+       show(logoExportOverlay, false);
        void alertModal({ text: t("logoEditor.errors.exportFailedDetailed", { error: e?.message || e }) });
      }
    });
+
 
    btnPreview?.addEventListener("click", () => {
      if (!selectedKey) return;

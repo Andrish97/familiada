@@ -2721,6 +2721,11 @@ const en = {
       loadFailed: "Failed to load file.",
       pasteJson: "Paste JSON or choose a file.",
       invalidJson: "Invalid JSON.",
+      preview: {
+        name: "Name:",
+        type: "Type:",
+        questions: "Questions:",
+      },
       dbFailed: "Database error during import.",
       progress: {
         start: "Importing…",
@@ -3941,8 +3946,9 @@ const en = {
       failed: "Failed to rename.",
     },
     import: {
-      title: "IMPORT…",
-      subtitle: "Don't close the page. Import in progress.",
+      title: "Import logo",
+      confirm: "Import",
+      cancel: "Close",
       steps: {
         readFile: "Reading file…",
         validate: "Checking JSON…",

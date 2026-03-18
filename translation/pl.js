@@ -2711,6 +2711,11 @@ const pl = {
       loadFailed: "Nie udało się wczytać pliku.",
       pasteJson: "Wklej JSON lub wybierz plik.",
       invalidJson: "Niepoprawny JSON.",
+      preview: {
+        name: "Nazwa:",
+        type: "Typ:",
+        questions: "Pytania:",
+      },
       dbFailed: "Błąd bazy podczas importu.",
       progress: {
         start: "Importuję…",
@@ -3931,8 +3936,9 @@ const pl = {
       failed: "Nie udało się zmienić nazwy.",
     },
     import: {
-      title: "IMPORT…",
-      subtitle: "Nie zamykaj strony. Trwa import.",
+      title: "Import logo",
+      confirm: "Importuj",
+      cancel: "Zamknij",
       steps: {
         readFile: "Czytam plik…",
         validate: "Sprawdzam JSON…",
