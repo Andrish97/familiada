@@ -2766,6 +2766,8 @@ const en = {
     nameModal: {
       title: "Rename",
       sub: "Enter a new game name.",
+      titleCreate: "New game",
+      subCreate: "Enter a game name.",
       placeholder: "Name...",
       failed: "Rename failed.",
     },
