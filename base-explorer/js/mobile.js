@@ -3,6 +3,7 @@
 
 const LONG_PRESS_MS = 500;
 const MOVE_THRESHOLD = 10; // px — anuluj long press jeśli palec się przesunął
+const DOUBLE_TAP_MS = 300; // max ms między tapnięciami
 
 /* ================= Drawer ================= */
 
@@ -96,7 +97,30 @@ export function addLongPress(el, callback) {
   });
 }
 
-/* ================= DnD — wyłącz na touch ================= */
+/* ================= Double tap ================= */
+
+/**
+ * Emuluje dblclick dla urządzeń dotykowych.
+ * Wywołuje callback(target) przy dwóch tapnięciach w DOUBLE_TAP_MS ms.
+ */
+export function addDoubleTap(el, callback) {
+  if (!el) return;
+  let lastTap = 0;
+  let lastTarget = null;
+
+  el.addEventListener("touchend", (e) => {
+    const now = Date.now();
+    const target = e.target;
+    if (now - lastTap < DOUBLE_TAP_MS && lastTarget === target) {
+      e.preventDefault();
+      callback(target);
+      lastTap = 0;
+    } else {
+      lastTap = now;
+      lastTarget = target;
+    }
+  }, { passive: false });
+}
 
 /**
  * Na urządzeniach dotykowych HTML5 DnD nie działa poprawnie.
