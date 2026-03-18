@@ -31,33 +31,48 @@
 /* =========================================================
    SUMMARY LIST (setup_finish step)
 ========================================================= */
-.summaryList{
-  display: grid;
-  gap: 10px;
-  margin: 14px 0;
-  padding: 14px;
-  border-radius: 12px;
-  background: rgba(0,0,0,.06);
+.summarySection {
+  margin: 10px 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(0,0,0,.08);
   border: 1px solid rgba(255,255,255,.08);
 }
 
-.summaryItem{
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 10px;
+.summarySectionTitle {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  opacity: .55;
+  margin-bottom: 6px;
 }
 
-.summaryLabel{
-  font-weight: 600;
-  opacity: .8;
-  font-size: 13px;
-}
-
-.summaryValue{
+.summarySectionValue {
   font-weight: 900;
+  font-size: 15px;
   color: var(--gold);
-  font-size: 14px;
+}
+
+.summaryQList {
+  margin: 0;
+  padding: 0 0 0 18px;
+  display: grid;
+  gap: 4px;
+}
+
+.summaryQList li {
+  font-size: 13px;
+  font-weight: 600;
+  opacity: .9;
+  line-height: 1.4;
+}
+
+.summaryQList .summaryQRandom {
+  list-style: none;
+  margin-left: -18px;
+  font-style: italic;
+  opacity: .6;
 }
 
 /* =========================================================
@@ -617,7 +632,8 @@
     padding-top: 0;
     min-height: 420px;
     display: flex;
-    align-items: center
+    align-items: center;
+    width: 100%
 }
 
 .card {

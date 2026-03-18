@@ -1400,56 +1400,49 @@ async function sendZeroStatesToDevices() {
 
   function renderSetupFinishSummary() {
     const s = store.state;
-    
+
     // Drużyny
     const teamsEl = document.getElementById("summaryTeams");
-    if (teamsEl) {
-      teamsEl.textContent = `${s.teams.teamA || "—"} vs ${s.teams.teamB || "—"}`;
-    }
-    
+    if (teamsEl) teamsEl.textContent = `${s.teams.teamA || "—"} vs ${s.teams.teamB || "—"}`;
+
     // Finał
     const finalEl = document.getElementById("summaryFinal");
-    if (finalEl) {
-      finalEl.textContent = s.hasFinal ? t("common.yes") : t("common.no");
-    }
-    
-    // Pytania finału - pokaż wybrane pytania
+    if (finalEl) finalEl.textContent = s.hasFinal ? t("common.yes") : t("common.no");
+
+    // Sekcja pytań finału — ukryj gdy nie gramy finału
+    const finalSection = document.getElementById("summaryFinalSection");
+    if (finalSection) finalSection.style.display = s.hasFinal ? "" : "none";
+
+    // Pytania finału
     const finalQEl = document.getElementById("summaryFinalQuestions");
     if (finalQEl) {
       if (!s.hasFinal) {
-        finalQEl.textContent = "—";
-      } else if (s.finalQuestionsMode === "random") {
-        finalQEl.textContent = t("control.finalRandom");
+        finalQEl.innerHTML = "";
       } else {
         const pickedIds = s.final?.picked || [];
-        if (pickedIds.length > 0) {
-          // Pobierz nazwy pytań z cache
-          const cached = sessionStorage.getItem("familiada:questionsCache");
-          const all = cached ? JSON.parse(cached) : [];
-          const pickedNames = pickedIds.map(id => {
-            const q = all.find(x => x.id === id);
-            return q ? (q.text || "").slice(0, 40) : "";
-          }).filter(Boolean);
-          finalQEl.textContent = pickedNames.length ? `${pickedNames.length} pytań: ${pickedNames.join(", ")}...` : "Brak pytań";
+        const cached = sessionStorage.getItem("familiada:questionsCache");
+        const all = cached ? JSON.parse(cached) : [];
+        const items = pickedIds.map(id => {
+          const q = all.find(x => x.id === id);
+          return q ? `<li>${escapeHtml((q.text || "").slice(0, 60))}</li>` : "";
+        }).filter(Boolean);
+        if (items.length) {
+          finalQEl.innerHTML = items.join("");
         } else {
-          finalQEl.textContent = "Brak wybranych pytań";
+          finalQEl.innerHTML = `<li class="summaryQRandom">${s.finalQuestionsMode === "random" ? "Losowanie w toku…" : "Brak pytań"}</li>`;
         }
       }
     }
-    
-    // Pytania rund - pokaż kolejność
+
+    // Pytania rund
     const roundsQEl = document.getElementById("summaryRoundsQuestions");
     if (roundsQEl) {
       if (s.roundsQuestionsMode === "random") {
-        roundsQEl.textContent = t("control.roundsRandom");
+        roundsQEl.innerHTML = `<li class="summaryQRandom">Zostaną wylosowane przy starcie gry</li>`;
       } else {
         const ordered = s.roundsPicked || [];
-        if (ordered.length > 0) {
-          const roundNames = ordered.map((q, i) => `${i + 1}. ${(q.text || "").slice(0, 30)}`).filter(Boolean);
-          roundsQEl.textContent = `${ordered.length} pytań: ${roundNames.join(", ")}...`;
-        } else {
-          roundsQEl.textContent = "Brak wybranej kolejności";
-        }
+        const items = ordered.map(q => `<li>${escapeHtml((q.text || "").slice(0, 60))}</li>`).filter(Boolean);
+        roundsQEl.innerHTML = items.length ? items.join("") : `<li class="summaryQRandom">Brak wybranej kolejności</li>`;
       }
     }
   }
