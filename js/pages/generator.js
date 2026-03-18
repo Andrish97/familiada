@@ -992,12 +992,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }))
       }
     }];
-    const blob = new Blob([JSON.stringify(example, null, 2)], { type: 'application/json' });
+    const json = JSON.stringify(example, null, 2);
     const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
+    a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(json);
     a.download = 'przykladowa-gra.json';
+    document.body.appendChild(a);
     a.click();
-    URL.revokeObjectURL(a.href);
+    document.body.removeChild(a);
   });
 
   const editorClose = $('btnGameEditorClose');
