@@ -974,6 +974,32 @@ document.addEventListener('DOMContentLoaded', () => {
   const importFile = $('gen-import-file');
   if (importFile) importFile.addEventListener('change', () => { if (importFile.files?.length) handleImport(); });
 
+  const exampleBtn = $('gen-import-example-btn');
+  if (exampleBtn) exampleBtn.addEventListener('click', () => {
+    const example = [{
+      title: "Przykładowa gra",
+      description: "Opis gry widoczny w marketplace. Powinien mieć minimum 60 znaków i zachęcać do gry.",
+      lang: "pl",
+      payload: {
+        questions: Array.from({ length: 10 }, (_, i) => ({
+          text: `Pytanie ${i + 1}: Co najczęściej kojarzy się z...?`,
+          answers: [
+            { text: "Odpowiedź 1", fixed_points: 42 },
+            { text: "Odpowiedź 2", fixed_points: 26 },
+            { text: "Odpowiedź 3", fixed_points: 18 },
+            { text: "Odpowiedź 4", fixed_points: 13 },
+          ]
+        }))
+      }
+    }];
+    const blob = new Blob([JSON.stringify(example, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'przykladowa-gra.json';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+
   const editorClose = $('btnGameEditorClose');
   if (editorClose) editorClose.addEventListener('click', closeGameEditor);
   const editorCancel = $('btnGameEditorCancel');
