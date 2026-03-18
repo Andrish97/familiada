@@ -442,6 +442,10 @@ main{
     margin-top: 12px
 }
 
+.importRow > .inp:only-child {
+    width: 100%
+}
+
 .importMsg {
     margin-left: auto;
     opacity: .85;

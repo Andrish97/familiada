@@ -56,6 +56,7 @@ const en = {
       successTitle: "Sent!",
       ticketLabel: "Ticket number:",
       addedTo: "Added to ticket:",
+      ticketPlaceholder: "e.g. 2026-0001",
       errEmail: "Please enter a valid e-mail address.",
       errMessage: "Message is too short (min. 5 characters).",
       errSubject: "Please enter a subject.",
