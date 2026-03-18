@@ -45,6 +45,7 @@
 
   <main class="wrap">
     <div class="settings-panel maintenance-panel" id="panelScreen" hidden>
+      <div class="mail-card">
         <div class="panel-head">
           <div class="panel-title" data-i18n="settings.maintenance.title">Prace techniczne</div>
           <div class="panel-sub" data-i18n="settings.maintenance.subtitle">Ustawienia strony maintenance</div>
@@ -132,8 +133,10 @@
           <div class="bypass-desc" data-i18n="settings.bypass.desc">Ustawia cookie admina na 30 dni. Działa tylko w tej przeglądarce.</div>
         </div>
       </div>
+    </div>
 
       <div id="mailPanel" hidden>
+        <div class="mail-cards">
           <section class="mail-card mail-card-settings">
             <div class="mail-card-title" data-i18n="settings.mail.settingsTitle">Ustawienia wysyłki</div>
             <div class="field row">
@@ -300,13 +303,17 @@
             </div>
             <div class="field-hint" id="mailLogsInfo">—</div>
           </section>
+        </div>
       </div>
       <!-- MARKETPLACE PANEL -->
       <div class="market-admin-panel" id="marketplacePanel" hidden>
-        <div class="panel-head">
-          <div class="panel-title" data-i18n="settings.marketplace.title">Marketplace</div>
-          <div class="panel-sub" data-i18n="settings.marketplace.subtitle">Moderacja zgłoszeń i gry producenta</div>
-        </div>
+        <div class="mail-card">
+          <div class="mail-card-head">
+            <div>
+              <div class="panel-title" data-i18n="settings.marketplace.title">Marketplace</div>
+              <div class="panel-sub" data-i18n="settings.marketplace.subtitle">Moderacja zgłoszeń i gry producenta</div>
+            </div>
+          </div>
 
         <div class="panel-actions">
           <button class="btn sm gold" id="btnMarketSyncStorage" type="button" data-i18n="settings.marketplace.syncStorage">Sync ze Storage</button>
@@ -345,6 +352,7 @@
           </table>
         </div>
         <div class="field-hint" id="marketTableInfo">—</div>
+        </div>
       </div>
 
       <!-- GENERATOR PANEL -->

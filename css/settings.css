@@ -101,12 +101,8 @@ body.settings-body > main.wrap{
 
 .maintenance-panel{
   margin-top: 16px;
-  padding: 18px;
-  border: 1px solid var(--line2);
-  border-radius: 18px;
-  background: rgba(8,12,28,.65);
   display: grid;
-  gap: 16px;
+  gap: 14px;
 }
 
 .panel-head{
@@ -913,6 +909,14 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   border-radius: 12px;
   overflow: auto;
   background: rgba(0,0,0,.16);
+  max-height: 420px;
+}
+
+.mail-table thead th{
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: rgba(20,24,44,.95);
 }
 
 .mail-table{
@@ -1296,6 +1300,8 @@ body.tools-fullscreen .tools-frame-wrap iframe{
 
 .market-admin-panel{
   padding: 0 4px;
+  display: grid;
+  gap: 14px;
 }
 
 .market-actions{
