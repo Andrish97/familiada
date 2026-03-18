@@ -300,32 +300,31 @@ export async function showContextMenu({ state, x, y, target }) {
   items.push({
     label: t("baseExplorer.menu.copy"),
     shortcut: { win: "Ctrl+C", mac: "⌘C" },
-    disabled: !editor || target.kind === "root", // root nie jest elementem do kopiowania
+    disabled: !editor || selectedRealCount === 0,
     action: async () => { copySelectedToClipboard(state); }
   });
 
   items.push({
     label: t("baseExplorer.menu.cut"),
     shortcut: { win:"Ctrl+X", mac:"⌘X" },
-    disabled: !editor || readOnlyView || target.kind === "root",
+    disabled: !editor || readOnlyView || selectedRealCount === 0,
     action: async () => { cutSelectedToClipboard(state); }
   });
 
   items.push({
     label: t("baseExplorer.menu.paste"),
     shortcut: { win:"Ctrl+V", mac:"⌘V" },
-    disabled: pasteDisabled || !editor, // na razie tylko editor; jeśli chcesz, viewer może wklejać COPY lokalnie -> zmienimy
+    disabled: pasteDisabled || !editor,
     action: async () => {
       if (readOnlyView) return;
       await pasteClipboardHere(state);
     }
   });
 
-  // placeholder (na przyszłość)
   items.push({
     label: t("baseExplorer.menu.duplicate"),
     shortcut: { win:"Ctrl+D", mac:"⌘D" },
-    disabled: !editor || readOnlyView || target.kind === "root",
+    disabled: !editor || readOnlyView || selectedRealCount === 0,
     action: async () => {
       try {
         await duplicateSelected(state);
@@ -426,13 +425,10 @@ export async function showContextMenu({ state, x, y, target }) {
     items.push({
       label: t("baseExplorer.menu.createGame"),
       shortcut: { win:"Ctrl+G", mac:"⌘G" },
-      disabled: !editor || readOnlyView || !Array.from(state.selection?.keys || []).some(k => String(k).startsWith("q:") || String(k).startsWith("c:")),
+      disabled: !editor || readOnlyView || !Array.from(state.selection?.keys || []).some(k => String(k).startsWith("q:")),
       action: async () => {
-        // najprościej: użyj tego samego API co toolbar
-        // (żeby nie dublować logiki rozwijania folderów w dwóch miejscach)
         const qIds = await state._api?.selectionToQuestionIds?.();
         if (!qIds?.length) return;
-      
         state._api?.openExportModal?.({ preselectIds: qIds });
       }
     });
@@ -446,7 +442,7 @@ export async function showContextMenu({ state, x, y, target }) {
         : t("baseExplorer.menu.delete"),
       shortcut: { win:"Delete", mac:"Fn⌫" },
       danger: true,
-      disabled: !editor,
+      disabled: !editor || selectedRealCount === 0,
       action: async () => {
         const key = (target.kind === "cat") ? `c:${target.id}` : `q:${target.id}`;
         if (!state.selection?.keys?.has?.(key)) {
