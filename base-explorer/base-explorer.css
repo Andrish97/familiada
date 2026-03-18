@@ -1847,11 +1847,11 @@ tr.row:has(.tag-dot[data-tip]:hover) {
     overflow-y: auto;
   }
 
-  /* Modale — wysuwane od dołu */
+  /* Modale — wysuwane od dołu (nadpisujemy tylko wyrównanie, nie display) */
   .overlay {
-    display: flex !important;
-    align-items: flex-end !important;
-    justify-content: center !important;
+    place-items: end center;
+    align-items: flex-end;
+    justify-content: center;
   }
 
   .tags-modal,
