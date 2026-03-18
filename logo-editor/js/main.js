@@ -107,21 +107,6 @@ const previewOverlay = document.getElementById("previewOverlay");
 const bigPreviewFull = document.getElementById("bigPreviewFull");
 const btnPreviewClose = document.getElementById("btnPreviewClose");
 
-// PROGRES overlays (IMPORT / EXPORT)
-const logoImportOverlay = document.getElementById("logoImportOverlay");
-const logoImportSub = document.getElementById("logoImportSub");
-const logoImportStep = document.getElementById("logoImportStep");
-const logoImportCount = document.getElementById("logoImportCount");
-const logoImportBar = document.getElementById("logoImportBar");
-const logoImportMsg = document.getElementById("logoImportMsg");
-
-const logoExportOverlay = document.getElementById("logoExportOverlay");
-const logoExportSub = document.getElementById("logoExportSub");
-const logoExportStep = document.getElementById("logoExportStep");
-const logoExportCount = document.getElementById("logoExportCount");
-const logoExportBar = document.getElementById("logoExportBar");
-const logoExportMsg = document.getElementById("logoExportMsg");
-
 // RENAME modal
 const renameOverlay = document.getElementById("renameOverlay");
 const renameTitle = document.getElementById("renameTitle");
