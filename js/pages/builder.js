@@ -10,6 +10,8 @@ import { initPwa, isStandalone, isMobileDevice } from "../core/pwa.js";
 
 // Zarejestruj listener PWA jak najwcześniej – beforeinstallprompt może odpalić przed requireAuth
 const pwaApi = initPwa();
+// Jeśli beforeinstallprompt już odpalił zanim dodaliśmy listener w IIFE, sprawdzimy po zalogowaniu
+
 
 import { exportGame, importGame, downloadJson } from "./builder-import-export.js";
 
@@ -1058,7 +1060,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   void maybeShowIosWebappPrompt();
 
   // Android/Chrome/Edge/desktop – prompt instalacji PWA
-  window.addEventListener("pwa:installable", async () => {
+  window.addEventListener("pwa:installable", showPwaPrompt, { once: true });
+  // Jeśli event już odpalił przed zalogowaniem
+  if (pwaApi.canInstall()) showPwaPrompt();
+
+  async function showPwaPrompt() {
     if (isStandalone()) return;
     const ok = await confirmModal({
       title: t("builder.pwaInstall.title") || "Zainstaluj aplikację",
@@ -1067,8 +1073,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       cancelText: t("builder.pwaInstall.cancel") || "Nie teraz",
     });
     if (ok) await pwaApi.install();
-    else pwaApi.dismiss(); // zapamiętaj lokalnie – nie pytaj ponownie
-  }, { once: true });
+    else pwaApi.dismiss();
+  }
 
   // Przycisk "Podłącz urządzenie":
   // - desktop/TV: zawsze widoczny
