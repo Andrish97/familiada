@@ -1000,6 +1000,7 @@ export function initTextPixEditor(ctx) {
     // 3) Init inline
     await window.tinymce.init({
       target: rtEditorEl,
+      license_key: 'gpl',
       inline: true,
       menubar: false,
       toolbar: false,
