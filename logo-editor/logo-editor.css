@@ -1192,7 +1192,7 @@ body.builder-body.logo-editor-body > main.logoWrap{
   display:none;
 }
 
-.logo-editor-body.is-editor .topbar-section-4{
+.logo-editor-body.is-editor .topbar-section-4 > :not(#btnCloseEditor){
   display:none;
 }
 
