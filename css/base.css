@@ -968,15 +968,12 @@ html.showA2HS .a2hs {
   }
 
   .topbar-mobile-group{
-    display:grid;
-    gap:8px;
-    border-top:1px solid rgba(255,255,255,.10);
-    padding-top:10px;
+    display: contents;
   }
 
-  .topbar-mobile-group:first-child{
-    border-top:0;
-    padding-top:0;
+  .topbar-mobile-sep{
+    height: 1px;
+    background: rgba(255,255,255,.10);
   }
 
   .topbar-mobile-group .btn,
@@ -1181,11 +1178,18 @@ body{
 }
 
 .topbar-mobile-group .account-menu-item {
-  width: 100%;
+  display: flex;
+  align-items: center;
   justify-content: center;
+  text-align: center;
+  width: 100%;
   background: rgba(255,255,255,.06);
   border: 1px solid var(--line2);
   border-radius: 14px;
+}
+
+.topbar-mobile-group .account-menu--inline {
+  display: contents !important;
 }
 
 .topbar-mobile-group .account-btn--mobile-label {
