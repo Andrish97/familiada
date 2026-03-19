@@ -987,7 +987,7 @@ html.showA2HS .a2hs {
     justify-content: center;
   }
 
-  .topbar-mobile-group .who,
+  .topbar-mobile-group .who:not(.account-btn),
   .topbar-mobile-group .user-btn .user-name{
     background: transparent;
     border: 0;
@@ -1183,11 +1183,17 @@ body{
 .topbar-mobile-group .account-menu-item {
   width: 100%;
   justify-content: center;
+  background: rgba(255,255,255,.06);
+  border: 1px solid var(--line2);
+  border-radius: 14px;
 }
 
 .topbar-mobile-group .account-btn--mobile-label {
   width: 100%;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.04);
-  border-radius: 6px;
+  background: transparent;
+  border: 0;
+  padding: 2px 0;
+  border-radius: 0;
+  opacity: .8;
 }
