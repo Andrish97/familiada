@@ -256,7 +256,7 @@ async function maybeShowIosWebappPrompt() {
   const fallback = {
     title: "Dodaj Familiadę do ekranu głównego",
     text:
-      "Safari nie potrafi wymusić prawdziwego pełnego ekranu. Zrób tak:\n" +
+      "Dla najlepszego komfortu użytkowania zalecamy korzystać z aplikacji webowej. Żeby to zrobić:\n" +
       "1. Otwórz menu Udostępnij.\n" +
       "2. Wybierz \u201eDo ekranu początkowego\u201d.\n" +
       "3. Zatwierdź dodanie.\n" +
@@ -1109,7 +1109,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         const fallback = {
           title: "Dodaj Familiadę do ekranu głównego",
           text:
-            "Safari nie potrafi wymusić prawdziwego pełnego ekranu. Zrób tak:\n" +
+            "Dla najlepszego komfortu użytkowania zalecamy korzystać z aplikacji webowej. Żeby to zrobić:\n" +
             "1. Otwórz menu Udostępnij.\n" +
             "2. Wybierz \u201eDo ekranu początkowego\u201d.\n" +
             "3. Zatwierdź dodanie.\n" +
