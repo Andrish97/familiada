@@ -1062,9 +1062,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Android/Chrome/Edge/desktop – prompt instalacji PWA
   window.addEventListener("pwa:installable", showPwaPrompt, { once: true });
   // Jeśli event już odpalił przed zalogowaniem
+  console.log("[PWA] canInstall:", pwaApi.canInstall());
   if (pwaApi.canInstall()) showPwaPrompt();
 
   async function showPwaPrompt() {
+    console.log("[PWA] showPwaPrompt called, isStandalone:", isStandalone());
     if (isStandalone()) return;
     const ok = await confirmModal({
       title: t("builder.pwaInstall.title") || "Zainstaluj aplikację",
