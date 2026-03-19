@@ -6,7 +6,6 @@ import { addRenameGesture } from "../../js/core/rename-gesture.js";
 import { sb } from "../../js/core/supabase.js";
 import { requireAuth, signOut } from "../../js/core/auth.js";
 import { isGuestUser } from "../../js/core/guest-mode.js";
-import { guardDesktopOnly } from "../../js/core/device-guard.js";
 import { alertModal, confirmModal } from "../../js/core/modal.js";
 import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js";
 
@@ -1340,7 +1339,12 @@ async function handleCreate(){
 ========================================================= */
 async function boot(){
    await initI18n({ withSwitcher: true });
-   guardDesktopOnly({ minWidth: 980 });
+   // guardDesktopOnly usunięty – logo editor działa na mobile (bez tworzenia nowych logo)
+   const _isMobile = window.matchMedia("(max-width:980px)").matches;
+   if (_isMobile && btnCreate) btnCreate.style.display = "none";
+   window.matchMedia("(max-width:980px)").addEventListener("change", (mq) => {
+     if (btnCreate) btnCreate.style.display = mq.matches ? "none" : "";
+   });
    window.addEventListener("i18n:lang", () => {
      if (editorMode) updateEditorHeader();
      renderList();

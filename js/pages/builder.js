@@ -5,10 +5,8 @@ import { alertModal, confirmModal } from "../core/modal.js";
 import { hideForGuest, isGuestUser } from "../core/guest-mode.js";
 import { initI18n, t, applyTranslations } from "../../translation/translation.js";
 import { initUiSelect } from "../core/ui-select.js";
-import {
-  getUserIosWebappPromptDismissedFlag,
-  setUserIosWebappPromptDismissedFlag,
-} from "../core/user-flags.js";
+
+import { initPwa, isStandalone, isMobileDevice } from "../core/pwa.js";
 
 import { exportGame, importGame, downloadJson } from "./builder-import-export.js";
 
@@ -126,6 +124,8 @@ const tabPollPoints = document.getElementById("tabPollPoints");
 const tabPrepared = document.getElementById("tabPrepared");
 const tabMarket = document.getElementById("tabMarket");
 const btnMarketplace = document.getElementById("btnMarketplace");
+const btnConnectDevice = document.getElementById("btnConnectDevice");
+const connectDeviceBadge = document.getElementById("connectDeviceBadge");
 
 // Modal importu JSON
 const importOverlay = document.getElementById("importOverlay");
@@ -239,24 +239,18 @@ function tSafe(key, fallback) {
   return v === key ? fallback : v;
 }
 
-async function maybeShowIosWebappPrompt(userId) {
-  if (!userId) return;
-  if (!isIOSSafari() || window.navigator.standalone) return;
+const IOS_PROMPT_LS_KEY = "pwa:install_dismissed";
 
-  try {
-    const dismissed = await getUserIosWebappPromptDismissedFlag(userId);
-    if (dismissed) return;
-  } catch (e) {
-    console.warn("[builder] ios webapp flag read failed:", e);
-    return;
-  }
+async function maybeShowIosWebappPrompt() {
+  if (!isIOSSafari() || window.navigator.standalone) return;
+  if (localStorage.getItem(IOS_PROMPT_LS_KEY)) return;
 
   const fallback = {
     title: "Dodaj Familiadę do ekranu głównego",
     text:
       "Safari nie potrafi wymusić prawdziwego pełnego ekranu. Zrób tak:\n" +
       "1. Otwórz menu Udostępnij.\n" +
-      "2. Wybierz „Do ekranu początkowego”.\n" +
+      "2. Wybierz \u201eDo ekranu początkowego\u201d.\n" +
       "3. Zatwierdź dodanie.\n" +
       "4. Uruchom Familiadę z nowej ikony na ekranie głównym.",
     ok: "OK",
@@ -264,30 +258,19 @@ async function maybeShowIosWebappPrompt(userId) {
   };
 
   let skipNextTime = false;
-  const ok = await confirmModal({
+  await confirmModal({
     title: tSafe("builder.iosWebapp.title", fallback.title),
     text: tSafe("builder.iosWebapp.text", fallback.text),
     okText: tSafe("builder.iosWebapp.ok", fallback.ok),
     cancelText: tSafe("builder.iosWebapp.never", fallback.never),
     onReady: ({ cancelBtn }) => {
-      cancelBtn?.addEventListener(
-        "click",
-        () => {
-          skipNextTime = true;
-        },
-        { once: true }
-      );
+      cancelBtn?.addEventListener("click", () => { skipNextTime = true; }, { once: true });
     },
   });
 
-  if (!ok && skipNextTime) {
-    try {
-      await setUserIosWebappPromptDismissedFlag(userId, true);
-    } catch (e) {
-      console.warn("[builder] ios webapp flag write failed:", e);
-    }
-  }
+  if (skipNextTime) localStorage.setItem(IOS_PROMPT_LS_KEY, "1");
 }
+
 
 function setProgUi(stepEl, countEl, barEl, msgEl, { step, i, n, msg, isError } = {}) {
   if (stepEl && step != null) stepEl.textContent = String(step);
@@ -1069,7 +1052,45 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (whoStatic) whoStatic.style.display = "none";
   }
 
-  void maybeShowIosWebappPrompt(currentUser?.id);
+  void maybeShowIosWebappPrompt();
+
+  // Android/Chrome/Edge/desktop – prompt instalacji PWA
+  const pwaApi = initPwa();
+  window.addEventListener("pwa:installable", async () => {
+    if (isStandalone()) return;
+    const ok = await confirmModal({
+      title: t("builder.pwaInstall.title") || "Zainstaluj aplikację",
+      text: t("builder.pwaInstall.text") || "Dodaj Familiadę do ekranu głównego, żeby mieć szybki dostęp.",
+      okText: t("builder.pwaInstall.ok") || "Zainstaluj",
+      cancelText: t("builder.pwaInstall.cancel") || "Nie teraz",
+    });
+    if (ok) await pwaApi.install();
+    else pwaApi.dismiss(); // zapamiętaj lokalnie – nie pytaj ponownie
+  }, { once: true });
+
+  // Przycisk "Podłącz urządzenie":
+  // - desktop/TV: zawsze widoczny
+  // - mobile/tablet: tylko w webapp (standalone)
+  const showConnectDevice = !guestMode && (!isMobileDevice() || isStandalone());
+  if (showConnectDevice) {
+    if (btnConnectDevice) btnConnectDevice.style.display = "";
+
+    async function refreshConnectDeviceBadge() {
+      try {
+        const { data } = await sb().rpc("list_shared_devices_for_me");
+        const n = (data || []).length;
+        if (connectDeviceBadge) {
+          connectDeviceBadge.textContent = n > 0 ? (n > 99 ? "99+" : String(n)) : "";
+          btnConnectDevice?.classList.toggle("has-badge", n > 0);
+        }
+      } catch {}
+    }
+    void refreshConnectDeviceBadge();
+
+    btnConnectDevice?.addEventListener("click", () => {
+      location.href = "connect-device";
+    });
+  }
 
   async function refreshPollsHubDot(){
     // dot ma się pokazać, gdy są aktywne zadania / zaproszenia
