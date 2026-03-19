@@ -1724,3 +1724,87 @@
     opacity: .45;
     cursor: not-allowed
 }
+
+/* =========================================================
+   SHARE MODAL (Udostępnianie urządzeń)
+========================================================= */
+.shareModal {
+  max-width: 520px;
+  width: calc(100% - 32px);
+  padding: 20px;
+}
+
+.shareSection {
+  margin-top: 16px;
+}
+
+.shareSectionTitle {
+  font-size: 11px;
+  font-weight: 1000;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  opacity: .6;
+  margin-bottom: 8px;
+}
+
+.shareList {
+  display: grid;
+  gap: 8px;
+  max-height: 240px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+/* Scrollbar dla listy subskrybentów */
+.shareList::-webkit-scrollbar { width: 4px; }
+.shareList::-webkit-scrollbar-track { background: rgba(255,255,255,.05); border-radius: 10px; }
+.shareList::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius: 10px; }
+
+.shareRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.04);
+}
+
+.shareEmail {
+  flex: 1;
+  min-width: 0;
+  font-weight: 700;
+  font-size: 13.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.shareRowActions {
+  display: flex;
+  gap: 6px;
+}
+
+.shareCurrent {
+  margin-bottom: 16px;
+  padding: 12px;
+  border-radius: 16px;
+  background: rgba(255,234,166,.08);
+  border: 1px solid rgba(255,234,166,.25);
+}
+
+.shareCurrentLabel {
+  font-size: 10px;
+  font-weight: 1000;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 6px;
+}
+
+.shareBottom {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255,255,255,.1);
+  justify-content: flex-end;
+}

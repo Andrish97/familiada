@@ -51,11 +51,11 @@ function buildManualUrl() {
 }
 
 async function renderSharedDevices() {
-  sharedDevicesList.innerHTML = `<div style="opacity:.55;font-size:.88rem;">${t("connectDevice.shared.loading") || "Ładowanie…"}</div>`;
+  sharedDevicesList.innerHTML = `<div style="opacity:.55;font-size:.88rem;text-align:center;padding:20px;">${t("connectDevice.shared.loading") || "Ładowanie…"}</div>`;
 
   const { data, error } = await sb().rpc("list_shared_devices_for_me");
   if (error) {
-    sharedDevicesList.innerHTML = `<div style="opacity:.55;font-size:.88rem;">${t("connectDevice.shared.error") || "Błąd ładowania."}</div>`;
+    sharedDevicesList.innerHTML = `<div style="opacity:.55;font-size:.88rem;text-align:center;padding:20px;">${t("connectDevice.shared.error") || "Błąd ładowania."}</div>`;
     return;
   }
 
@@ -65,42 +65,51 @@ async function renderSharedDevices() {
   );
 
   if (!items.length) {
-    sharedDevicesList.innerHTML = `<div style="opacity:.55;font-size:.88rem;">${t("connectDevice.shared.empty") || "Brak udostępnionych urządzeń."}</div>`;
+    sharedDevicesList.innerHTML = `
+      <div style="opacity:.35;font-size:.88rem;text-align:center;padding:30px 20px;border:1px dashed rgba(255,255,255,.12);border-radius:16px;">
+        ${t("connectDevice.shared.empty") || "Brak udostępnionych urządzeń."}
+      </div>`;
     return;
   }
 
   sharedDevicesList.innerHTML = "";
   for (const item of items) {
     const row = document.createElement("div");
-    row.style.cssText = "display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);";
+    row.style.cssText = "display:flex;align-items:center;gap:14px;padding:14px;border-radius:16px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);transition:background .2s,border-color .2s;cursor:pointer;";
+    row.addEventListener("mouseenter", () => { row.style.background = "rgba(255,255,255,.08)"; row.style.borderColor = "rgba(255,255,255,.2)"; });
+    row.addEventListener("mouseleave", () => { row.style.background = "rgba(255,255,255,.05)"; row.style.borderColor = "rgba(255,255,255,.12)"; });
+
     const ownerLabel = escapeHtml(item.owner_username || item.owner_email || "—");
-    const gameName = escapeHtml(item.game_name || "");
+    const gameName = escapeHtml(item.game_name || "Bez nazwy");
+    const typeLabel = deviceTypeLabel(item.device_type);
+    
     row.innerHTML = `
-      <div style="font-size:1.4rem">${deviceTypeEmoji(item.device_type)}</div>
-      <div style="flex:1;min-width:0;">
-        <div style="font-weight:700">${escapeHtml(deviceTypeLabel(item.device_type))}</div>
-        <div style="font-size:.8rem;opacity:.65;">${ownerLabel}${gameName ? ` · ${gameName}` : ""}</div>
+      <div style="width:48px;height:48px;border-radius:12px;background:rgba(255,234,166,.1);display:grid;place-items:center;font-size:1.6rem;color:#ffeaa6;">
+        ${deviceTypeEmoji(item.device_type)}
       </div>
-      <button class="btn sm gold" data-open type="button">${t("connectDevice.shared.open") || "Otwórz"}</button>
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:900;font-size:1.05rem;letter-spacing:.02em;margin-bottom:2px;">${escapeHtml(gameName)}</div>
+        <div style="font-size:.85rem;opacity:.6;display:flex;align-items:center;gap:6px;">
+          <span>${typeLabel}</span>
+          <span style="opacity:.3;">•</span>
+          <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ownerLabel}</span>
+        </div>
+      </div>
+      <div style="font-size:1.2rem;opacity:.4;">→</div>
     `;
 
-    row.querySelector("[data-open]")?.addEventListener("click", async () => {
-      if (!item.game_id) { setMsg(t("connectDevice.shared.gameNotFound") || "Brak gry."); return; }
+    row.addEventListener("click", async () => {
+      if (!item.game_id || !item.share_key) { 
+        setMsg(t("connectDevice.shared.gameNotFound") || "Nie znaleziono gry lub klucza."); 
+        return; 
+      }
       setMsg(t("connectDevice.shared.opening") || "Otwieranie…");
       try {
-        const { data: g, error: gErr } = await sb()
-          .from("games")
-          .select("id,share_key_host,share_key_buzzer,share_key_display")
-          .eq("id", item.game_id)
-          .single();
-        if (gErr || !g) { setMsg(t("connectDevice.shared.gameNotFound") || "Nie znaleziono gry."); return; }
-        const key = item.device_type === "host" ? g.share_key_host
-                  : item.device_type === "buzzer" ? g.share_key_buzzer
-                  : g.share_key_display;
         const page = item.device_type === "display" ? "display" : item.device_type;
-        window.open(`${location.origin}/${page}?id=${g.id}&key=${key}`, "_blank");
-        setMsg("");
-      } catch (e) { setMsg(e?.message || "Błąd."); }
+        window.location.href = `/${page}?id=${item.game_id}&key=${item.share_key}`;
+      } catch (e) { 
+        setMsg(e?.message || "Błąd."); 
+      }
     });
 
     sharedDevicesList.appendChild(row);
