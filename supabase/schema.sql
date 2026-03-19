@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 1gcCLfLGSuxtbGGUedW5EvukabZ5vhJt9qhIHNyrZ38YtR6Ro8r9mKqujSefXOZ
+\restrict 1JtyhQstUNozmbCaT2g7sohtyWtzmXvJpTOuP2flafX8HO0tjKpkivMGJDa9vrz
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -9677,7 +9677,7 @@ CREATE TABLE "public"."shared_devices" (
     "game_id" "uuid",
     "game_name" "text",
     "expires_at" timestamp with time zone,
-    CONSTRAINT "shared_devices_device_type_check" CHECK (("device_type" = ANY (ARRAY['host'::"text", 'buzzer'::"text"])))
+    CONSTRAINT "shared_devices_device_type_check" CHECK (("device_type" = ANY (ARRAY['host'::"text", 'buzzer'::"text", 'display'::"text"])))
 );
 
 
@@ -12295,5 +12295,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 1gcCLfLGSuxtbGGUedW5EvukabZ5vhJt9qhIHNyrZ38YtR6Ro8r9mKqujSefXOZ
+\unrestrict 1JtyhQstUNozmbCaT2g7sohtyWtzmXvJpTOuP2flafX8HO0tjKpkivMGJDa9vrz
 
