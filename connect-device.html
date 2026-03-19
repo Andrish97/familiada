@@ -11,6 +11,7 @@
   <meta name="theme-color" content="#050914"/>
   <link rel="stylesheet" href="css/base.css"/>
   <link rel="stylesheet" href="css/builder.css"/>
+  <link rel="stylesheet" href="css/connect-device.css"/>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script type="module" src="js/pages/connect-device.js" defer></script>
@@ -39,6 +40,7 @@
       <div>
         <div class="title" data-i18n="connectDevice.header.title">Podłącz urządzenie</div>
         <div class="hint" id="pageHint"></div>
+        <div id="msg" class="connect-device-msg"></div>
       </div>
       <div class="actions">
         <!-- tylko na mobile/tablet – skanowanie QR -->
@@ -47,10 +49,9 @@
     </div>
 
     <section class="builder-shell">
-      <div class="card builder-card" style="padding:24px;display:grid;gap:16px;">
-        <div style="font-weight:800;letter-spacing:.06em;text-transform:uppercase;font-size:.85rem;opacity:.7;" data-i18n="connectDevice.shared.title">Urządzenia udostępnione mi</div>
-        <div id="sharedDevicesList" style="display:grid;gap:8px;min-height:40px;"></div>
-        <div id="msg" style="font-size:.88rem;min-height:18px;"></div>
+      <div class="card builder-card">
+        <div class="connect-device-card-header" data-i18n="connectDevice.shared.title">Urządzenia udostępnione mi</div>
+        <div id="sharedDevicesList" class="grid"></div>
       </div>
     </section>
 

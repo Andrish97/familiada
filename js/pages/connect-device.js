@@ -75,27 +75,23 @@ async function renderSharedDevices() {
   sharedDevicesList.innerHTML = "";
   for (const item of items) {
     const row = document.createElement("div");
-    row.style.cssText = "display:flex;align-items:center;gap:14px;padding:14px;border-radius:16px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);transition:background .2s,border-color .2s;cursor:pointer;";
-    row.addEventListener("mouseenter", () => { row.style.background = "rgba(255,255,255,.08)"; row.style.borderColor = "rgba(255,255,255,.2)"; });
-    row.addEventListener("mouseleave", () => { row.style.background = "rgba(255,255,255,.05)"; row.style.borderColor = "rgba(255,255,255,.12)"; });
+    row.className = "connect-device-tile";
 
     const ownerLabel = escapeHtml(item.owner_username || item.owner_email || "—");
     const gameName = escapeHtml(item.game_name || "Bez nazwy");
     const typeLabel = deviceTypeLabel(item.device_type);
-    
+
     row.innerHTML = `
-      <div style="width:48px;height:48px;border-radius:12px;background:rgba(255,234,166,.1);display:grid;place-items:center;font-size:1.6rem;color:#ffeaa6;">
-        ${deviceTypeEmoji(item.device_type)}
-      </div>
-      <div style="flex:1;min-width:0;">
-        <div style="font-weight:900;font-size:1.05rem;letter-spacing:.02em;margin-bottom:2px;">${escapeHtml(gameName)}</div>
-        <div style="font-size:.85rem;opacity:.6;display:flex;align-items:center;gap:6px;">
+      <div class="connect-device-tile-icon">${deviceTypeEmoji(item.device_type)}</div>
+      <div class="connect-device-tile-body">
+        <div class="connect-device-tile-name">${escapeHtml(gameName)}</div>
+        <div class="connect-device-tile-meta">
           <span>${typeLabel}</span>
-          <span style="opacity:.3;">•</span>
-          <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ownerLabel}</span>
+          <span class="connect-device-tile-meta-dot">•</span>
+          <span class="connect-device-tile-meta-owner">${ownerLabel}</span>
         </div>
       </div>
-      <div style="font-size:1.2rem;opacity:.4;">→</div>
+      <div class="connect-device-tile-arrow">→</div>
     `;
 
     row.addEventListener("click", async () => {
@@ -103,12 +99,18 @@ async function renderSharedDevices() {
         setMsg(t("connectDevice.shared.gameNotFound") || "Nie znaleziono gry lub klucza."); 
         return; 
       }
+      const isMobileType = item.device_type === "host" || item.device_type === "buzzer";
+      if (_isMobile && item.device_type === "display") {
+        alert(t("connectDevice.warning.desktopOnly"));
+      } else if (!_isMobile && isMobileType) {
+        alert(t("connectDevice.warning.mobileOnly"));
+      }
       setMsg(t("connectDevice.shared.opening") || "Otwieranie…");
       try {
         const page = item.device_type === "display" ? "display" : item.device_type;
         window.location.href = `/${page}?id=${item.game_id}&key=${item.share_key}`;
-      } catch (e) { 
-        setMsg(e?.message || "Błąd."); 
+      } catch (e) {
+        setMsg(e?.message || "Błąd.");
       }
     });
 
