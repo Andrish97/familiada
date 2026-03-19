@@ -5,7 +5,7 @@ import { requireAuth } from "../core/auth.js";
 import { isGuestUser, showGuestBlockedOverlay } from "../core/guest-mode.js";
 import { isMobileDevice } from "../core/pwa.js";
 import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js";
-import { autoInitTopbarAuthButton } from "../core/topbar-auth.js";
+import { initTopbarAccountDropdown } from "../core/topbar-auth.js";
 import "../core/contact-modal.js";
 
 initI18n({ withSwitcher: true });
@@ -269,10 +269,7 @@ async function startQrScan() {
     return;
   }
 
-  if (who) who.textContent = currentUser?.username || currentUser?.email || "—";
-  if (btnLogout) {
-    autoInitTopbarAuthButton(btnLogout);
-  }
+  initTopbarAccountDropdown(currentUser);
 
   if (pageHint) pageHint.textContent = _isMobile
     ? (t("connectDevice.header.hintMobile") || "Podłącz się jako prowadzący lub buzzer, albo zeskanuj QR z panelu sterowania.")

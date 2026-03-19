@@ -9,6 +9,7 @@ import { alertModal, confirmModal } from "../core/modal.js";
 import { isGuestUser, hideForGuest } from "../core/guest-mode.js";
 import { initUiSelect } from "../core/ui-select.js";
 import { getUiLang, initI18n, t } from "../../translation/translation.js";
+import { initTopbarAccountDropdown } from "../core/topbar-auth.js";
 import "../core/contact-modal.js";
 
 initI18n({ withSwitcher: true });
@@ -1638,7 +1639,7 @@ async function refreshAltBadge() {
     tabBasesSharedMobile?.closest(".tab-slot")?.remove();
     sessionStorage.setItem("basesMobileTab", "mine");
   }
-  if (who) who.textContent = currentUser?.username || currentUser?.email || "—";
+  initTopbarAccountDropdown(currentUser);
 
   // mobile tabs
   if (basesTabsMobile) {

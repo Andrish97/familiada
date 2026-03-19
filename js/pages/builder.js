@@ -90,7 +90,12 @@ const whoStatic = document.getElementById("whoStatic");
 const hint = document.getElementById("hint");
 
 const btnAccount = document.getElementById("btnAccount");
+const accountWrap = document.getElementById("accountWrap");
+const accountMenu = document.getElementById("accountMenu");
+const btnAccountSettings = document.getElementById("btnAccountSettings");
+const btnAccountLogout = document.getElementById("btnAccountLogout");
 const btnLogout = document.getElementById("btnLogout");
+const btnInstall = document.getElementById("btnInstall");
 const btnEdit = document.getElementById("btnEdit");
 const btnPlay = document.getElementById("btnPlay");
 const btnPoll = document.getElementById("btnPoll");
@@ -102,6 +107,9 @@ const btnPollsHub = document.getElementById("btnPollsHub");
 const pollsHubBadge = document.getElementById("pollsHubBadge");
 const btnSubscriptionsHub = document.getElementById("btnSubscriptionsHub");
 const subscriptionsHubBadge = document.getElementById("subscriptionsHubBadge");
+const navMore = document.getElementById("navMore");
+const btnMore = document.getElementById("btnMore");
+const navMoreDropdown = document.getElementById("navMoreDropdown");
 
 const btnExport = document.getElementById("btnExport");
 const btnImport = document.getElementById("btnImport");
@@ -227,6 +235,229 @@ const actionStateCache = new Map();
 function show(el, on) {
   if (!el) return;
   el.style.display = on ? "" : "none";
+}
+
+// Pozycjonuje dropdown portal (fixed overlay) pod zadanym przyciskiem/kontenerem
+function repositionDropdown(anchorEl, dropdownEl) {
+  if (!anchorEl || !dropdownEl) return;
+
+  const wasHidden = dropdownEl.hidden;
+  if (wasHidden) {
+    dropdownEl.hidden = false;
+    dropdownEl.style.visibility = "hidden";
+    dropdownEl.style.pointerEvents = "none";
+  }
+
+  dropdownEl.style.position = "fixed";
+
+  const cRect = anchorEl.getBoundingClientRect();
+  const mRect = dropdownEl.getBoundingClientRect();
+  const padding = 8;
+
+  let left = cRect.right - mRect.width;
+  left = Math.min(left, window.innerWidth - mRect.width - padding);
+  left = Math.max(left, padding);
+
+  let top = cRect.bottom + 8;
+  if (top + mRect.height > window.innerHeight - padding) {
+    top = cRect.top - mRect.height - 8;
+  }
+  top = Math.min(top, window.innerHeight - mRect.height - padding);
+  top = Math.max(top, padding);
+
+  dropdownEl.style.left = `${left}px`;
+  dropdownEl.style.top = `${top}px`;
+  dropdownEl.style.right = "auto";
+  dropdownEl.style.transform = "";
+
+  if (wasHidden) {
+    dropdownEl.style.visibility = "";
+    dropdownEl.style.pointerEvents = "";
+    dropdownEl.hidden = true;
+  }
+}
+
+/* ================= Overflow nav ================= */
+// Kolejność priorytetów (od najważniejszego). Każdy ma data-nav-hidden dla logiki biznesowej.
+const NAV_BUTTONS_PRIORITY = [
+  () => document.getElementById("btnMarketplace"),
+  () => document.getElementById("btnLogoEditor"),
+  () => document.getElementById("btnBases"),
+  () => document.getElementById("btnPollsHub"),
+  () => document.getElementById("btnSubscriptionsHub"),
+  () => document.getElementById("btnConnectDevice"),
+];
+
+let _navRecalc = null; // Referencja do recalc z initOverflowNav
+
+function initOverflowNav() {
+  const section2 = document.querySelector(".topbar-section-2");
+  if (!section2 || !navMore || !btnMore || !navMoreDropdown) return;
+
+  const moreBadge = document.getElementById("moreBadge");
+
+  // Portal dropdown do body (żeby nie ucinało przez overflow)
+  document.body.appendChild(navMoreDropdown);
+  navMoreDropdown.className = "nav-more-dropdown";
+  navMoreDropdown.hidden = true;
+
+  function updateMoreBadge(hiddenBtns) {
+    if (!moreBadge) return;
+    const sum = hiddenBtns.reduce((acc, btn) => {
+      const b = btn.querySelector(".badge");
+      if (!b) return acc;
+      const n = parseInt(b.textContent) || 0;
+      return acc + n;
+    }, 0);
+    moreBadge.textContent = sum > 99 ? "99+" : sum > 0 ? String(sum) : "";
+    btnMore.classList.toggle("has-badge", sum > 0);
+  }
+
+  // MutationObserver — aktualizuj badge "Więcej" gdy zmienia się badge w którymś przycisku
+  let _hiddenBtns = [];
+  const badgeObserver = new MutationObserver(() => updateMoreBadge(_hiddenBtns));
+  NAV_BUTTONS_PRIORITY.forEach(fn => {
+    const btn = fn();
+    if (btn) badgeObserver.observe(btn, { subtree: true, characterData: true, childList: true });
+  });
+
+  function getVisibleNavBtns() {
+    return NAV_BUTTONS_PRIORITY
+      .map(fn => fn())
+      .filter(btn => btn && btn.dataset.navHidden !== "true");
+  }
+
+  function recalc() {
+    const btns = getVisibleNavBtns();
+
+    // 1) Pokaż wszystkie (poza data-nav-hidden)
+    btns.forEach(btn => { btn.style.display = ""; });
+    navMore.style.display = "none";
+    navMoreDropdown.innerHTML = "";
+
+    // 2) Zmierz czy się mieszczą
+    // Pobierz dostępną szerokość section2 bez navMore
+    const section2Width = section2.getBoundingClientRect().width;
+
+    // Oblicz sumę szerokości wszystkich widocznych przycisków + gap
+    // Musimy obliczyć z renderowanym DOM — zapewniamy że navMore jest schowany
+    let totalWidth = 0;
+    const gap = 8; // gap z CSS
+
+    // Zmierz każdy przycisk
+    const btnWidths = btns.map(btn => {
+      const r = btn.getBoundingClientRect();
+      return r.width;
+    });
+
+    // Zmierz navMore (potrzebujemy znać jego szerokość zanim go ukryjemy)
+    let moreWidth = 0;
+    navMore.style.display = "";
+    moreWidth = navMore.getBoundingClientRect().width;
+    navMore.style.display = "none";
+
+    // Zbierz sumę
+    for (let i = 0; i < btnWidths.length; i++) {
+      totalWidth += btnWidths[i] + (i > 0 ? gap : 0);
+    }
+
+    if (totalWidth <= section2Width) {
+      // Wszystkie się mieszczą
+      _hiddenBtns = [];
+      updateMoreBadge([]);
+      return;
+    }
+
+    // 3) Chowaj od prawej (najmniej ważnych) aż się zmieszczą
+    const hidden = [];
+    let remaining = totalWidth;
+
+    for (let i = btns.length - 1; i >= 0; i--) {
+      const needed = remaining + moreWidth + gap;
+      if (needed <= section2Width) break;
+
+      // Chowaj ten przycisk
+      btns[i].style.display = "none";
+      hidden.unshift(btns[i]);
+      remaining -= btnWidths[i] + gap;
+    }
+
+    if (hidden.length === 0) return;
+
+    _hiddenBtns = hidden;
+    updateMoreBadge(hidden);
+
+    // 4) Pokaż "Więcej"
+    navMore.style.display = "";
+
+    // 5) Wypełnij dropdown
+    hidden.forEach(btn => {
+      const clone = btn.cloneNode(true);
+      clone.style.display = "";
+      // Kopiuj eventy przez delegację: klik na clone wywołuje klik na oryginale
+      clone.addEventListener("click", () => { btn.click(); });
+      navMoreDropdown.appendChild(clone);
+    });
+  }
+
+  // Toggle dropdown
+  btnMore.addEventListener("click", (e) => {
+    e.stopPropagation();
+    navMoreDropdown.hidden = !navMoreDropdown.hidden;
+    if (!navMoreDropdown.hidden) repositionDropdown(navMore, navMoreDropdown);
+  });
+
+  // Klik poza: zamknij
+  document.addEventListener("click", (e) => {
+    if (!navMore.contains(e.target) && !navMoreDropdown.contains(e.target)) {
+      navMoreDropdown.hidden = true;
+    }
+  });
+
+  window.addEventListener("resize", () => {
+    if (!navMoreDropdown.hidden) repositionDropdown(navMore, navMoreDropdown);
+    recalc();
+  }, { passive: true });
+
+  // ResizeObserver na section-2
+  if (typeof ResizeObserver !== "undefined") {
+    const ro = new ResizeObserver(() => recalc());
+    ro.observe(section2);
+  }
+
+  // Eksportuj recalc do zewnętrznego użytku (np. po zmianie data-nav-hidden)
+  _navRecalc = recalc;
+
+  // Pierwsze przeliczenie po renderze
+  requestAnimationFrame(() => recalc());
+}
+
+/* ================= Account dropdown ================= */
+function initAccountDropdown() {
+  if (!accountMenu) return;
+
+  // Portal do body
+  document.body.appendChild(accountMenu);
+  accountMenu.className = "account-menu";
+  accountMenu.hidden = true;
+
+  if (btnAccount) {
+    btnAccount.addEventListener("click", (e) => {
+      e.stopPropagation();
+      accountMenu.hidden = !accountMenu.hidden;
+      if (!accountMenu.hidden) repositionDropdown(btnAccount, accountMenu);
+    });
+  }
+
+  document.addEventListener("click", (e) => {
+    if (accountWrap && !accountWrap.contains(e.target) && !accountMenu.contains(e.target)) {
+      accountMenu.hidden = true;
+    }
+  });
+
+  window.addEventListener("resize", () => {
+    if (!accountMenu.hidden) repositionDropdown(btnAccount, accountMenu);
+  }, { passive: true });
 }
 
 function isIOSSafari() {
@@ -1040,7 +1271,11 @@ async function refresh() {
 
 document.addEventListener("DOMContentLoaded", async () => {
   await initI18n({ withSwitcher: true });
-  
+
+  // Inicjalizuj overflow nav i account dropdown (przed requireAuth)
+  initOverflowNav();
+  initAccountDropdown();
+
   currentUser = await requireAuth("login");
   const whoLabel = currentUser?.username || currentUser?.email || t("control.dash");
   if (who) who.textContent = whoLabel;
@@ -1049,19 +1284,40 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   hideForGuest(currentUser, [btnPollsHub, btnSubscriptionsHub]);
 
-  if (guestMode) {
-    if (btnAccount) btnAccount.style.display = "none";
-    if (whoStatic) whoStatic.style.display = "";
+  // Section-4: account wrap / login btn
+  if (!currentUser) {
+    // Niezalogowany
+    show(btnLogout, true);
+    show(accountWrap, false);
+    show(whoStatic, false);
+  } else if (guestMode) {
+    // Gość: pokaż accountWrap z "Gość", ukryj btnAccountSettings
+    show(accountWrap, true);
+    show(btnLogout, false);
+    show(whoStatic, false);
+    if (btnAccountSettings) btnAccountSettings.style.display = "none";
   } else {
-    if (btnAccount) btnAccount.style.display = "";
-    if (whoStatic) whoStatic.style.display = "none";
+    // Zalogowany nie-gość
+    show(accountWrap, true);
+    show(btnLogout, false);
+    show(whoStatic, false);
+    if (btnAccountSettings) btnAccountSettings.style.display = "";
+  }
+
+  // btnInstall: widoczny gdy nie standalone
+  if (btnInstall) {
+    if (!isStandalone()) {
+      btnInstall.style.display = "";
+    } else {
+      btnInstall.style.display = "none";
+    }
   }
 
   void maybeShowIosWebappPrompt();
 
-  // Android/Chrome/Edge/desktop – prompt instalacji PWA
+  // Android/Chrome/Edge/desktop – auto-prompt instalacji PWA (po odrzuceniu LS_KEY jest set → nie odpali)
   window.addEventListener("pwa:installable", showPwaPrompt, { once: true });
-  if (pwaApi.canInstall()) showPwaPrompt();
+  if (pwaApi.canInstall() && !localStorage.getItem("pwa:install_dismissed")) showPwaPrompt();
 
   async function showPwaPrompt() {
     if (isStandalone()) return;
@@ -1075,12 +1331,58 @@ document.addEventListener("DOMContentLoaded", async () => {
     else pwaApi.dismiss();
   }
 
+  // btnInstall — klik
+  btnInstall?.addEventListener("click", async () => {
+    if (!pwaApi.canInstall()) {
+      await alertModal({
+        text: t("builder.pwaInstall.unavailable") || "Przeglądarka nie obsługuje instalacji lub aplikacja jest już zainstalowana.",
+      });
+      return;
+    }
+    const ok = await confirmModal({
+      title: t("builder.pwaInstall.title") || "Zainstaluj aplikację",
+      text: t("builder.pwaInstall.text") || "Dodaj Familiadę do ekranu głównego, żeby mieć szybki dostęp.",
+      okText: t("builder.pwaInstall.ok") || "Zainstaluj",
+      cancelText: t("builder.pwaInstall.cancelBtn") || "Anuluj",
+    });
+    if (ok) await pwaApi.install();
+    // Klik Anuluj nie ustawia LS_KEY — celowo bez pwaApi.dismiss()
+  });
+
+  // btnAccountSettings — otwiera ustawienia konta (jak stary btnAccount)
+  btnAccountSettings?.addEventListener("click", () => {
+    accountMenu.hidden = true;
+    location.href = "account";
+  });
+
+  // btnAccountLogout — wylogowanie
+  btnAccountLogout?.addEventListener("click", async () => {
+    accountMenu.hidden = true;
+    const { signOut } = await import("../core/auth.js");
+    const { withLangParam } = await import("../../translation/translation.js");
+    await signOut();
+    location.href = withLangParam("login");
+  });
+
+  // btnLogout (niezalogowany) — przejście do logowania
+  btnLogout?.addEventListener("click", () => {
+    import("../../translation/translation.js").then(({ withLangParam }) => {
+      location.href = withLangParam("login");
+    });
+  });
+  // Oznacz jako ready żeby autoInitTopbarAuthButton (topbar-mobile-menu.js) nie nadpisał handlera
+  if (btnLogout) btnLogout.dataset.topbarAuthReady = "1";
+
   // Przycisk "Podłącz urządzenie":
   // - desktop/TV: zawsze widoczny
   // - mobile/tablet: tylko w webapp (standalone)
   const showConnectDevice = !guestMode && (!isMobileDevice() || isStandalone());
   if (showConnectDevice) {
-    if (btnConnectDevice) btnConnectDevice.style.display = "";
+    // Usuń data-nav-hidden żeby overflow nav wiedział że ten przycisk jest aktywny
+    if (btnConnectDevice) {
+      delete btnConnectDevice.dataset.navHidden;
+      btnConnectDevice.style.display = "";
+    }
 
     async function refreshConnectDeviceBadge() {
       try {
@@ -1097,7 +1399,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     btnConnectDevice?.addEventListener("click", () => {
       location.href = "connect-device";
     });
+  } else {
+    // Ukryj przez data-nav-hidden (overflow nav ignoruje takie przyciski)
+    if (btnConnectDevice) {
+      btnConnectDevice.dataset.navHidden = "true";
+      btnConnectDevice.style.display = "none";
+    }
   }
+
+  // Po ustaleniu widoczności btnConnectDevice przelicz overflow nav
+  requestAnimationFrame(() => _navRecalc?.());
 
   async function refreshPollsHubDot(){
     // dot ma się pokazać, gdy są aktywne zadania / zaproszenia
@@ -1198,12 +1509,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
 
-  if (!guestMode) {
-    btnAccount?.addEventListener("click", () => {
-      location.href = "account";
-    });
-  }
-
+  // btnManual
   btnManual?.addEventListener("click", async () => {
     const url = new URL("manual", location.href);
     const ret = `${location.pathname.split("/").pop() || ""}${location.search}${location.hash}`;

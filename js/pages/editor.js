@@ -5,6 +5,7 @@ import { alertModal, confirmModal } from "../core/modal.js";
 import { parseQaText, clip as clipN } from "../core/text-import.js";
 import { canEnterEdit, RULES as GV_RULES, TYPES } from "../core/game-validate.js";
 import { initI18n, t } from "../../translation/translation.js";
+import { initTopbarAccountDropdown } from "../core/topbar-auth.js";
 import "../core/contact-modal.js";
 
 initI18n({ withSwitcher: true });
@@ -492,8 +493,7 @@ function setTxtImportProgress({ step, i, n, msg, isError } = {}) {
 async function boot() {
   /* ---------- auth/topbar ---------- */
   const user = await requireAuth("login");
-  const who = $("who");
-  if (who) who.textContent = user?.username || user?.email || t("control.dash");
+  initTopbarAccountDropdown(user);
 
 
   const btnBack = $("btnBack");

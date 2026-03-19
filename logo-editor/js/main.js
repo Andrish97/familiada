@@ -4,10 +4,11 @@
 import { addRenameGesture } from "../../js/core/rename-gesture.js";
 
 import { sb } from "../../js/core/supabase.js";
-import { requireAuth, signOut } from "../../js/core/auth.js";
+import { requireAuth } from "../../js/core/auth.js";
 import { isGuestUser } from "../../js/core/guest-mode.js";
 import { alertModal, confirmModal } from "../../js/core/modal.js";
 import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js";
+import { initTopbarAccountDropdown } from "../../js/core/topbar-auth.js";
 import { isMobileDevice } from "../../js/core/pwa.js";
 
 import { initTextEditor } from "./text.js";
@@ -1359,12 +1360,7 @@ async function boot(){
 
    currentUser = await requireAuth(withLangParam("../login"));
    guestMode = isGuestUser(currentUser);
-   if (who) who.textContent = currentUser?.username || currentUser?.email || "—";
-   if (btnLogout) {
-     const key = guestMode ? "common.authEntry" : "logoEditor.topbar.logout";
-     btnLogout.textContent = t(key);
-     btnLogout.dataset.i18n = key;
-   }
+   initTopbarAccountDropdown(currentUser, { accountHref: "../account", loginHref: "../login" });
 
   try{
     await loadFonts();
@@ -1417,18 +1413,17 @@ async function boot(){
    btnHelpClose?.addEventListener("click", closeHelpModal);
    helpOverlay?.addEventListener("click", (ev) => { if (ev.target === helpOverlay) closeHelpModal(); });
 
-   btnLogout?.addEventListener("click", async () => {
-     if (shouldBlockNav()){
-       const ok = await confirmModal({ text: t("logoEditor.confirm.logoutUnsaved") });
-       if (!ok) return;
-     }
-     if (guestMode) {
-       location.href = withLangParam("../login");
-       return;
-     }
-     await signOut();
-     location.href = withLangParam("../login");
-   });
+   // Guard na niezapisane zmiany przy wylogowaniu przez dropdown
+   const btnLogoutMenu = document.getElementById("topbar-account-logout");
+   btnLogoutMenu?.addEventListener("click", async (e) => {
+     if (!shouldBlockNav()) return;
+     e.preventDefault();
+     e.stopImmediatePropagation();
+     const ok = await confirmModal({ text: t("logoEditor.confirm.logoutUnsaved") });
+     if (!ok) return;
+     // kontynuuj wylogowanie
+     btnLogoutMenu.click();
+   }, true); // capture = true, przed handlerem dropdown
 
    // Import logo — modal z podglądem
    let importLogoParsed = null;

@@ -4,6 +4,7 @@
 
 import { confirmModal } from "../core/modal.js";
 import { initI18n, setUiLang, t, withLangParam } from "../../translation/translation.js";
+import { initTopbarAccountDropdown } from "../core/topbar-auth.js";
 import "../core/contact-modal.js";
 
 function isControlModal() {
@@ -190,8 +191,7 @@ async function wireAuthSoft() {
   const { requireAuth } = await import("../core/auth.js");
   const user = await requireAuth("login");
 
-  const who = byId("who");
-  if (who) who.textContent = user?.username || user?.email || "—";
+  initTopbarAccountDropdown(user);
 
   byId("btnLegal")?.addEventListener("click", () => {
     location.href = buildPrivacyUrl();

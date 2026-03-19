@@ -1082,3 +1082,75 @@ body{
 }
 .pass-wrap .pass-toggle:hover { color: rgba(255,255,255,.85); }
 .pass-wrap .pass-toggle svg { width: 18px; height: 18px; pointer-events: none; }
+
+/* =========================================================
+   ACCOUNT DROPDOWN (duplikat z builder.css dla stron bez builder.css)
+========================================================= */
+.account-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.account-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 900;
+  white-space: nowrap;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.account-btn .account-who {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: inline-block;
+}
+
+.account-chevron {
+  font-size: 11px;
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+.account-menu {
+  position: fixed;
+  z-index: 1000;
+  display: grid;
+  gap: 4px;
+  padding: 8px;
+  min-width: 180px;
+  background: var(--card, #111827);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 14px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.7);
+}
+
+.account-menu[hidden] {
+  display: none;
+}
+
+.account-menu-item {
+  display: block;
+  width: 100%;
+  padding: 10px 14px;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.account-menu-item:hover {
+  background: rgba(255, 255, 255, 0.10);
+}

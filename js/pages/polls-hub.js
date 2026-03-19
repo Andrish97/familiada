@@ -5,6 +5,7 @@ import { validatePollReadyToOpen } from "../core/game-validate.js";
 import { alertModal, confirmModal } from "../core/modal.js";
 import { initUiSelect } from "../core/ui-select.js";
 import { initI18n, t, getUiLang } from "../../translation/translation.js";
+import { initTopbarAccountDropdown } from "../core/topbar-auth.js";
 import "../core/contact-modal.js";
 
 initI18n({ withSwitcher: true });
@@ -1044,7 +1045,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     showGuestBlockedOverlay({ backHref: "builder", loginHref: "login?force_auth=1", showLoginButton: true });
     return;
   }
-  who.textContent = currentUser?.username || currentUser?.email || "—";
+  initTopbarAccountDropdown(currentUser);
 
   renderSelect(sortPollsDesktop, "polls");
   renderSelect(sortPollsMobile, "polls");

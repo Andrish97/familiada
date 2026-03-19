@@ -17,6 +17,7 @@ const pl = {
     copy: "Kopiuj",
     done: "Gotowe",
     authEntry: "Zaloguj / Załóż konto",
+    logout: "Wyloguj",
     cancel: "Anuluj",
     dash: "-",
     modal: {
