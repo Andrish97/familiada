@@ -102,7 +102,6 @@ function applyControlModalLayout() {
   byId("btnBack")?.remove();
   byId("who")?.remove();
   byId("btnLogout")?.remove();
-  byId("topbarAccountWrap")?.remove();
   document.querySelector(".topbar-section-4")?.style.setProperty("display", "none");
   document.querySelector('.simple-tabs .tab[data-tab="demo"]')?.remove();
   pages.demo?.remove();

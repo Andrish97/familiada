@@ -70,10 +70,6 @@ const els = {
   btnGoBuilder:  document.getElementById("btnGoBuilder"),
   btnBackBrowse: document.getElementById("btnBackBrowse"),
   btnManual:     document.getElementById("btnManual"),
-  btnAccount:    document.getElementById("btnAccount"),
-  btnLogout:     document.getElementById("btnLogout"),
-  who:          document.getElementById("who"),
-  whoStatic:    document.getElementById("whoStatic"),
   toast:        document.getElementById("toast"),
 };
 
@@ -501,14 +497,6 @@ function wireEvents() {
     url.hash = "community";
     location.href = url.toString();
   });
-  els.btnAccount?.addEventListener("click", () => {
-    window.location.href = withLangParam("account");
-  });
-  els.btnLogout?.addEventListener("click", async () => {
-    await sb().auth.signOut();
-    window.location.href = withLangParam("login");
-  });
-
   // Browse
   els.btnMySent?.addEventListener("click", async () => {
     if (isGuest || !currentUser) return;
