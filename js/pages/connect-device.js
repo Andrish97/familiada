@@ -97,10 +97,53 @@ async function renderSharedDevices() {
 
 // QR scanner – otwiera zeskanowany URL bezpośrednio
 async function startQrScan() {
+  // iOS Safari – brak BarcodeDetector, używamy input[capture] + jsQR
   if (!("BarcodeDetector" in window)) {
-    setMsg(t("connectDevice.scan.noApi") || "Użyj aparatu systemowego do zeskanowania kodu QR.");
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.capture = "environment";
+    input.style.display = "none";
+    document.body.appendChild(input);
+
+    input.addEventListener("change", async () => {
+      const file = input.files?.[0];
+      input.remove();
+      if (!file) return;
+
+      // Załaduj jsQR jeśli nie ma
+      if (!window.jsQR) {
+        await new Promise((res, rej) => {
+          const s = document.createElement("script");
+          s.src = "https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js";
+          s.onload = res; s.onerror = rej;
+          document.head.appendChild(s);
+        });
+      }
+
+      const img = new Image();
+      img.src = URL.createObjectURL(file);
+      await new Promise(r => { img.onload = r; });
+
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width; canvas.height = img.height;
+      canvas.getContext("2d").drawImage(img, 0, 0);
+      URL.revokeObjectURL(img.src);
+
+      const imageData = canvas.getContext("2d").getImageData(0, 0, canvas.width, canvas.height);
+      const code = window.jsQR(imageData.data, imageData.width, imageData.height);
+      if (code?.data?.startsWith("http")) {
+        window.location.href = code.data;
+      } else {
+        setMsg(t("connectDevice.scan.noQr") || "Nie znaleziono kodu QR.");
+      }
+    });
+
+    input.click();
     return;
   }
+
+  // Chrome/Android – BarcodeDetector + live video
   try {
     const detector = new window.BarcodeDetector({ formats: ["qr_code"] });
     const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });

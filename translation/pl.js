@@ -4702,6 +4702,7 @@ const pl = {
       hint: "Skieruj kamerę na kod QR wyświetlony w panelu sterowania.",
       btn: "📷 Otwórz kamerę",
       cameraError: "Brak dostępu do kamery.",
+      noQr: "Nie znaleziono kodu QR na zdjęciu.",
       noApi: "Użyj aparatu systemowego do zeskanowania kodu QR.",
     },
     shared: {

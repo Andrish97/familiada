@@ -4704,6 +4704,7 @@ const en = {
     scan: {
       btn: "📷 Scan QR",
       cameraError: "Camera access denied.",
+      noQr: "No QR code found in the photo.",
       noApi: "Use your system camera to scan the QR code.",
     },
     shared: {
