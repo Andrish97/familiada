@@ -24,7 +24,9 @@
       <button class="btn" id="btnBack" type="button" data-i18n="connectDevice.topbar.back">← Moje gry</button>
     </div>
     <div class="topbar-section topbar-section-2"></div>
-    <div class="topbar-section topbar-section-3"></div>
+    <div class="topbar-section topbar-section-3">
+      <!-- switcher języka wstrzykiwany przez initI18n -->
+    </div>
     <div class="topbar-section topbar-section-4">
       <div class="who" id="whoStatic">—</div>
       <button class="btn user-btn" id="btnAccount" type="button">
@@ -39,31 +41,18 @@
     <div class="bar">
       <div>
         <div class="title" data-i18n="connectDevice.header.title">Podłącz urządzenie</div>
-        <div class="hint" id="pageHint" data-i18n="connectDevice.header.hint">Zeskanuj kod QR lub otwórz link, żeby podłączyć urządzenie.</div>
+        <div class="hint" id="pageHint"></div>
+      </div>
+      <div class="actions">
+        <!-- tylko na mobile/tablet – skanowanie QR -->
+        <button class="btn sm gold" id="btnScanQr" style="display:none;" type="button" data-i18n="connectDevice.scan.btn">📷 Skanuj QR</button>
       </div>
     </div>
 
     <section class="builder-shell">
-      <div class="card builder-card" style="padding:24px;display:grid;gap:24px;">
-
-        <!-- Sekcja: Zeskanuj QR urządzenia (tylko mobile/tablet) -->
-        <div id="scanSection">
-          <div style="font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px;font-size:.85rem;" data-i18n="connectDevice.scan.title">Zeskanuj kod QR urządzenia</div>
-          <div style="font-size:.88rem;opacity:.7;margin-bottom:12px;" data-i18n="connectDevice.scan.hint">Skieruj kamerę na kod QR wyświetlony w panelu sterowania.</div>
-          <button class="btn sm gold" id="btnScanQr" type="button" data-i18n="connectDevice.scan.btn">📷 Otwórz kamerę</button>
-          <div id="scanMsg" style="margin-top:8px;font-size:.85rem;opacity:.7;"></div>
-        </div>
-
-        <hr style="border:none;border-top:1px solid rgba(255,255,255,.1);margin:0;"/>
-
-        <!-- Sekcja: Urządzenia udostępnione mi -->
-        <div>
-          <div style="font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px;font-size:.85rem;" data-i18n="connectDevice.shared.title">Urządzenia udostępnione mi</div>
-          <div id="sharedDevicesList" style="display:grid;gap:8px;min-height:40px;">
-            <div style="opacity:.55;font-size:.88rem;" data-i18n="connectDevice.shared.loading">Ładowanie…</div>
-          </div>
-        </div>
-
+      <div class="card builder-card" style="padding:24px;display:grid;gap:16px;">
+        <div style="font-weight:800;letter-spacing:.06em;text-transform:uppercase;font-size:.85rem;opacity:.7;" data-i18n="connectDevice.shared.title">Urządzenia udostępnione mi</div>
+        <div id="sharedDevicesList" style="display:grid;gap:8px;min-height:40px;"></div>
         <div id="msg" style="font-size:.88rem;min-height:18px;"></div>
       </div>
     </section>
