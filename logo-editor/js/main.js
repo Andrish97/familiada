@@ -1172,7 +1172,9 @@ function openEditor(mode){
   document.body.classList.add("is-editor");
   if (btnBack) btnBack.style.display = "none";
   if (btnCloseEditor) btnCloseEditor.style.display = "";
-  document.querySelector(".topbar-section-4")?.style.setProperty("display", "none");
+  document.getElementById("who")?.style.setProperty("display", "none");
+  document.getElementById("btnLogout")?.style.setProperty("display", "none");
+  document.getElementById("topbarAccountMenu")?.style.setProperty("display", "none");
 
   // ===== label trybu =====
   const modeLabel = getModeLabel(mode);
@@ -1246,7 +1248,9 @@ async function closeEditor(force = false){
   document.body.classList.remove("is-editor");
   if (btnBack) btnBack.style.display = "";
   if (btnCloseEditor) btnCloseEditor.style.display = "none";
-  document.querySelector(".topbar-section-4")?.style.removeProperty("display");
+  document.getElementById("who")?.style.removeProperty("display");
+  document.getElementById("btnLogout")?.style.removeProperty("display");
+  document.getElementById("topbarAccountMenu")?.style.removeProperty("display");
   brandTitle.textContent = "FAMILIADA";
 }
 
