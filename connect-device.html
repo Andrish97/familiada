@@ -18,21 +18,18 @@
 </head>
 
 <body class="builder-body">
-  <header class="topbar topbar-layout-4 topbar-mobile-keep-brand">
+  <header class="topbar topbar-layout-4">
     <div class="topbar-section topbar-section-1">
       <div class="brand">FAMILIADA</div>
       <button class="btn" id="btnBack" type="button" data-i18n="connectDevice.topbar.back">← Moje gry</button>
     </div>
     <div class="topbar-section topbar-section-2"></div>
     <div class="topbar-section topbar-section-3">
+      <button class="btn" id="btnManual" type="button">ℹ️</button>
       <!-- switcher języka wstrzykiwany przez initI18n -->
     </div>
     <div class="topbar-section topbar-section-4">
-      <div class="who" id="whoStatic">—</div>
-      <button class="btn user-btn" id="btnAccount" type="button">
-        <span class="user-name" id="who">—</span>
-        <span class="user-sub" data-i18n="builder.nav.account">Ustawienia konta</span>
-      </button>
+      <span class="who" id="who">—</span>
       <button class="btn" id="btnLogout" type="button" data-i18n="common.authEntry">Zaloguj / Załóż konto</button>
     </div>
   </header>
