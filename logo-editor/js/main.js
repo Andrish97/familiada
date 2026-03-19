@@ -1065,29 +1065,17 @@ async function refresh(){
 
 let _tinymcePromise = null;
 
+const TINYMCE_BASE = "https://cdn.jsdelivr.net/npm/tinymce@7";
+
 async function loadTinyMceFromSupabase(){
   if (_tinymcePromise) return _tinymcePromise;
 
   _tinymcePromise = (async () => {
     if (window.tinymce) return true;
 
-    // 1) Pobierz klucz z Supabase (tabela/rekord opisane niżej)
-    const { data, error } = await sb()
-      .from("public_kv")
-      .select("value")
-      .eq("key", "tinymce_api_key")
-      .single();
-
-    if (error) throw error;
-
-    const apiKey = String(data?.value || "").trim();
-    if (!apiKey) throw new Error("TinyMCE API key missing.");
-
-    // 2) Dynamicznie doładuj skrypt TinyMCE
     await new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = `https://cdn.tiny.cloud/1/${encodeURIComponent(apiKey)}/tinymce/7/tinymce.min.js`;
-      s.referrerPolicy = "origin";
+      s.src = `${TINYMCE_BASE}/tinymce.min.js`;
       s.async = true;
       s.onload = () => resolve(true);
       s.onerror = () => reject(new Error("Failed to load TinyMCE script."));
@@ -1095,6 +1083,10 @@ async function loadTinyMceFromSupabase(){
     });
 
     if (!window.tinymce) throw new Error("TinyMCE did not initialize.");
+
+    window.tinymce.baseURL = TINYMCE_BASE;
+    window.tinymce.suffix = ".min";
+
     return true;
   })();
 
