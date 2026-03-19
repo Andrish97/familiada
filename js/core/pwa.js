@@ -13,8 +13,8 @@ export function initPwa() {
   let deferredPrompt = null;
 
   window.addEventListener("beforeinstallprompt", (e) => {
-    e.preventDefault();
     if (localStorage.getItem(LS_KEY)) return;
+    e.preventDefault();
     deferredPrompt = e;
     window.dispatchEvent(new CustomEvent("pwa:installable", { detail: { prompt: e } }));
   });
