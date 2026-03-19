@@ -156,6 +156,7 @@ async function startQrScan() {
         await new Promise(r => { img.onload = r; });
         bitmap = img;
       }
+
       let w = bitmap.width;
       let h = bitmap.height;
       const MAX = 1500;
