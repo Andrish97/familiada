@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict rpJkjJC82D3RwImp4n9svroaI4rxYDvicigcQTpghiq7mdf6tbE70boj6IGEpZd
+\restrict ywWnIEQNfEgt0DpQhoAw8SYmriPMH62NeT7DsaTrk596GzhD9FKpFfhZpZrW9Ya
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -3308,7 +3308,8 @@ CREATE FUNCTION "public"."list_shared_devices_for_me"() RETURNS TABLE("share_id"
 BEGIN
   DELETE FROM public.shared_devices WHERE expires_at IS NOT NULL AND expires_at < now();
   RETURN QUERY
-  SELECT sd.id, sd.device_type, sd.owner_id, p.username, p.email, sd.game_id, sd.game_name, sd.expires_at
+  SELECT sd.id, sd.device_type, sd.owner_id, p.username, p.email,
+         sd.game_id, sd.game_name, sd.expires_at
   FROM public.shared_devices sd
   JOIN public.profiles p ON p.id = sd.owner_id
   WHERE sd.recipient_id = auth.uid();
@@ -12292,5 +12293,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict rpJkjJC82D3RwImp4n9svroaI4rxYDvicigcQTpghiq7mdf6tbE70boj6IGEpZd
+\unrestrict ywWnIEQNfEgt0DpQhoAw8SYmriPMH62NeT7DsaTrk596GzhD9FKpFfhZpZrW9Ya
 
