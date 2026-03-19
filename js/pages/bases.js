@@ -1702,7 +1702,21 @@ async function refreshAltBadge() {
       console.warn("[bases] token info failed:", e);
     }
 
-    // dotychczasowy mismatch-check po list_shared_bases_ext (zostaje jako fallback)
+    if ("launchQueue" in window) {
+    window.launchQueue.setConsumer(async (launchParams) => {
+      if (!launchParams.files?.length) return;
+      const file = await launchParams.files[0].getFile();
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      if (importFile) {
+        importFile.files = dt.files;
+        importFile.dispatchEvent(new Event("change"));
+      }
+      openImportModal();
+    });
+  }
+
+  // dotychczasowy mismatch-check po list_shared_bases_ext (zostaje jako fallback)
     await refreshBases();
     const hasInvite = sharedBases.some((b) => b.proposed && String(b.taskId || ""));
     if (!hasInvite) {

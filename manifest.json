@@ -24,7 +24,19 @@
     {
       "action": "/builder",
       "accept": {
-        "application/json": [".famgame", ".json"]
+        "application/json": [".famgame"]
+      }
+    },
+    {
+      "action": "/bases",
+      "accept": {
+        "application/json": [".fambase"]
+      }
+    },
+    {
+      "action": "/logo-editor",
+      "accept": {
+        "application/json": [".famlogo"]
       }
     }
   ],

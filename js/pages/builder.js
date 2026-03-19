@@ -1580,6 +1580,22 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   await refresh();
 
+  // File Handlers API – otwórz modal importu gdy plik został przekazany przez system
+  if ("launchQueue" in window) {
+    window.launchQueue.setConsumer(async (launchParams) => {
+      if (!launchParams.files?.length) return;
+      const file = await launchParams.files[0].getFile();
+      // Wstaw plik do inputu i otwórz modal
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      if (importFile) {
+        importFile.files = dt.files;
+        importFile.dispatchEvent(new Event("change"));
+      }
+      openImportModal();
+    });
+  }
+
   // auto refresh jak w polls-hub
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) stopAutoRefresh();
