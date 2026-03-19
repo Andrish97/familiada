@@ -5,7 +5,7 @@ import { requireAuth } from "../core/auth.js";
 import { isGuestUser, showGuestBlockedOverlay } from "../core/guest-mode.js";
 import { isMobileDevice } from "../core/pwa.js";
 import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js";
-import { initTopbarAccountDropdown } from "../core/topbar-auth.js";
+import { initTopbarAccountDropdown } from "../core/topbar-controller.js";
 import "../core/contact-modal.js";
 
 initI18n({ withSwitcher: true });

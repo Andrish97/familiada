@@ -5,7 +5,7 @@ import { alertModal, confirmModal } from "../core/modal.js";
 import { parseQaText, clip as clipN } from "../core/text-import.js";
 import { canEnterEdit, RULES as GV_RULES, TYPES } from "../core/game-validate.js";
 import { initI18n, t } from "../../translation/translation.js";
-import { initTopbarAccountDropdown } from "../core/topbar-auth.js";
+import { initTopbarAccountDropdown } from "../core/topbar-controller.js";
 import "../core/contact-modal.js";
 
 initI18n({ withSwitcher: true });

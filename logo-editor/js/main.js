@@ -8,7 +8,7 @@ import { requireAuth } from "../../js/core/auth.js";
 import { isGuestUser } from "../../js/core/guest-mode.js";
 import { alertModal, confirmModal } from "../../js/core/modal.js";
 import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js";
-import { initTopbarAccountDropdown } from "../../js/core/topbar-auth.js";
+import { initTopbarAccountDropdown } from "../../js/core/topbar-controller.js";
 import { isMobileDevice } from "../../js/core/pwa.js";
 
 import { initTextEditor } from "./text.js";
@@ -1172,6 +1172,8 @@ function openEditor(mode){
   document.body.classList.add("is-editor");
   if (btnBack) btnBack.style.display = "none";
   if (btnCloseEditor) btnCloseEditor.style.display = "";
+  document.getElementById("topbarAccountWrap")?.style.setProperty("display", "none");
+  document.getElementById("btnLogout")?.style.setProperty("display", "none");
 
   // ===== label trybu =====
   const modeLabel = getModeLabel(mode);
@@ -1245,6 +1247,8 @@ async function closeEditor(force = false){
   document.body.classList.remove("is-editor");
   if (btnBack) btnBack.style.display = "";
   if (btnCloseEditor) btnCloseEditor.style.display = "none";
+  document.getElementById("topbarAccountWrap")?.style.removeProperty("display");
+  document.getElementById("btnLogout")?.style.removeProperty("display");
   brandTitle.textContent = "FAMILIADA";
 }
 

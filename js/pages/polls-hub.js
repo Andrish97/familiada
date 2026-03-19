@@ -5,7 +5,7 @@ import { validatePollReadyToOpen } from "../core/game-validate.js";
 import { alertModal, confirmModal } from "../core/modal.js";
 import { initUiSelect } from "../core/ui-select.js";
 import { initI18n, t, getUiLang } from "../../translation/translation.js";
-import { initTopbarAccountDropdown } from "../core/topbar-auth.js";
+import { initTopbarAccountDropdown } from "../core/topbar-controller.js";
 import "../core/contact-modal.js";
 
 initI18n({ withSwitcher: true });

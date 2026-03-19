@@ -9,7 +9,7 @@ import { alertModal, confirmModal } from "../core/modal.js";
 import { isGuestUser, hideForGuest } from "../core/guest-mode.js";
 import { initUiSelect } from "../core/ui-select.js";
 import { getUiLang, initI18n, t } from "../../translation/translation.js";
-import { initTopbarAccountDropdown } from "../core/topbar-auth.js";
+import { initTopbarAccountDropdown } from "../core/topbar-controller.js";
 import "../core/contact-modal.js";
 
 initI18n({ withSwitcher: true });
