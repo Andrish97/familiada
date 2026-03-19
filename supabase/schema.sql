@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict pBrIZ08Qrf3Up9jpgaLAePTJlFTNqapPDM6JSEwYQmf5K6dK5zGCbH6A4JYKpqX
+\restrict qTi6mbYGfP9KWzwjsE2jDUC548cpyfOyuoUSYdP7EH9iZ0xm9ZJPXOLcRNkE0cq
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -3153,6 +3153,29 @@ $$;
 
 
 --
+-- Name: list_my_device_shares(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."list_my_device_shares"() RETURNS TABLE("share_id" "uuid", "device_type" "text", "recipient_id" "uuid", "recipient_username" "text", "recipient_email" "text")
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    sd.id,
+    sd.device_type,
+    sd.recipient_id,
+    p.username,
+    p.email
+  FROM public.shared_devices sd
+  JOIN public.profiles p ON p.id = sd.recipient_id
+  WHERE sd.owner_id = auth.uid();
+END;
+$$;
+
+
+--
 -- Name: list_reports("text", integer, integer); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -3259,6 +3282,29 @@ begin
   where t.recipient_user_id = auth.uid()
     and t.status in ('pending','opened');
 end;
+$$;
+
+
+--
+-- Name: list_shared_devices_for_me(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."list_shared_devices_for_me"() RETURNS TABLE("share_id" "uuid", "device_type" "text", "owner_id" "uuid", "owner_username" "text", "owner_email" "text")
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    sd.id,
+    sd.device_type,
+    sd.owner_id,
+    p.username,
+    p.email
+  FROM public.shared_devices sd
+  JOIN public.profiles p ON p.id = sd.owner_id
+  WHERE sd.recipient_id = auth.uid();
+END;
 $$;
 
 
@@ -8524,6 +8570,30 @@ $$;
 
 
 --
+-- Name: share_device("uuid", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."share_device"("p_recipient_user_id" "uuid", "p_device_type" "text") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE
+  v_owner uuid := auth.uid();
+BEGIN
+  IF v_owner IS NULL THEN RETURN jsonb_build_object('ok', false, 'err', 'not_authenticated'); END IF;
+  IF v_owner = p_recipient_user_id THEN RETURN jsonb_build_object('ok', false, 'err', 'self_share'); END IF;
+  IF p_device_type NOT IN ('host', 'buzzer') THEN RETURN jsonb_build_object('ok', false, 'err', 'invalid_type'); END IF;
+
+  INSERT INTO public.shared_devices (owner_id, recipient_id, device_type)
+  VALUES (v_owner, p_recipient_user_id, p_device_type)
+  ON CONFLICT (owner_id, recipient_id, device_type) DO NOTHING;
+
+  RETURN jsonb_build_object('ok', true);
+END;
+$$;
+
+
+--
 -- Name: storage_list_objects("text", "text", integer); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -8882,6 +8952,24 @@ CREATE FUNCTION "public"."unassign_message_report"("p_message_id" "uuid") RETURN
     AS $$
 BEGIN
   UPDATE public.messages SET report_id = NULL WHERE id = p_message_id;
+END;
+$$;
+
+
+--
+-- Name: unshare_device("uuid", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."unshare_device"("p_recipient_user_id" "uuid", "p_device_type" "text") RETURNS boolean
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+BEGIN
+  DELETE FROM public.shared_devices
+  WHERE owner_id = auth.uid()
+    AND recipient_id = p_recipient_user_id
+    AND device_type = p_device_type;
+  RETURN true;
 END;
 $$;
 
@@ -9565,6 +9653,20 @@ CREATE TABLE "public"."schema_migrations" (
 
 
 --
+-- Name: shared_devices; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."shared_devices" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "owner_id" "uuid" NOT NULL,
+    "recipient_id" "uuid" NOT NULL,
+    "device_type" "text" NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    CONSTRAINT "shared_devices_device_type_check" CHECK (("device_type" = ANY (ARRAY['host'::"text", 'buzzer'::"text"])))
+);
+
+
+--
 -- Name: user_cooldowns; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -9583,8 +9685,7 @@ CREATE TABLE "public"."user_cooldowns" (
 CREATE TABLE "public"."user_flags" (
     "user_id" "uuid" NOT NULL,
     "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
-    "email_notifications" boolean DEFAULT true NOT NULL,
-    "ios_webapp_prompt_dismissed" boolean DEFAULT false NOT NULL
+    "email_notifications" boolean DEFAULT true NOT NULL
 );
 
 
@@ -9593,13 +9694,6 @@ CREATE TABLE "public"."user_flags" (
 --
 
 COMMENT ON COLUMN "public"."user_flags"."email_notifications" IS 'If true, user receives email notifications (subscription invites, vote tasks, base shares).';
-
-
---
--- Name: COLUMN "user_flags"."ios_webapp_prompt_dismissed"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN "public"."user_flags"."ios_webapp_prompt_dismissed" IS 'If true, user will not see the iOS webapp prompt in builder.';
 
 
 --
@@ -9990,6 +10084,22 @@ ALTER TABLE ONLY "public"."reports"
 
 ALTER TABLE ONLY "public"."schema_migrations"
     ADD CONSTRAINT "schema_migrations_pkey" PRIMARY KEY ("filename");
+
+
+--
+-- Name: shared_devices shared_devices_owner_id_recipient_id_device_type_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."shared_devices"
+    ADD CONSTRAINT "shared_devices_owner_id_recipient_id_device_type_key" UNIQUE ("owner_id", "recipient_id", "device_type");
+
+
+--
+-- Name: shared_devices shared_devices_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."shared_devices"
+    ADD CONSTRAINT "shared_devices_pkey" PRIMARY KEY ("id");
 
 
 --
@@ -11099,6 +11209,22 @@ ALTER TABLE ONLY "public"."questions"
 
 
 --
+-- Name: shared_devices shared_devices_owner_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."shared_devices"
+    ADD CONSTRAINT "shared_devices_owner_id_fkey" FOREIGN KEY ("owner_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+--
+-- Name: shared_devices shared_devices_recipient_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."shared_devices"
+    ADD CONSTRAINT "shared_devices_recipient_id_fkey" FOREIGN KEY ("recipient_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+--
 -- Name: user_market_library uml_market_game_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -11497,6 +11623,13 @@ CREATE POLICY "mg_no_direct_update" ON "public"."market_games" FOR UPDATE USING 
 CREATE POLICY "mg_select" ON "public"."market_games" FOR SELECT USING ((("status" = 'published'::"public"."market_game_status") OR (("status" = 'withdrawn'::"public"."market_game_status") AND (("author_user_id" = "auth"."uid"()) OR (EXISTS ( SELECT 1
    FROM "public"."user_market_library"
   WHERE (("user_market_library"."market_game_id" = "market_games"."id") AND ("user_market_library"."user_id" = "auth"."uid"())))))) OR (("status" = ANY (ARRAY['pending'::"public"."market_game_status", 'rejected'::"public"."market_game_status"])) AND ("author_user_id" = "auth"."uid"()))));
+
+
+--
+-- Name: shared_devices owner can manage; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "owner can manage" ON "public"."shared_devices" USING (("owner_id" = "auth"."uid"()));
 
 
 --
@@ -12016,10 +12149,23 @@ CREATE POLICY "questions_owner_write" ON "public"."questions" TO "authenticated"
 
 
 --
+-- Name: shared_devices recipient can view; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "recipient can view" ON "public"."shared_devices" FOR SELECT USING (("recipient_id" = "auth"."uid"()));
+
+
+--
 -- Name: reports; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE "public"."reports" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: shared_devices; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."shared_devices" ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: user_market_library uml_own; Type: POLICY; Schema: public; Owner: -
@@ -12126,5 +12272,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict pBrIZ08Qrf3Up9jpgaLAePTJlFTNqapPDM6JSEwYQmf5K6dK5zGCbH6A4JYKpqX
+\unrestrict qTi6mbYGfP9KWzwjsE2jDUC548cpyfOyuoUSYdP7EH9iZ0xm9ZJPXOLcRNkE0cq
 
