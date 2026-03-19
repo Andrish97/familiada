@@ -4,7 +4,7 @@
 import { requireAuth } from "../../js/core/auth.js";
 import { alertModal } from "../../js/core/modal.js";
 import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js";
-import { initTopbarAccountDropdown } from "../../js/core/topbar-auth.js";
+import { initTopbarAccountDropdown } from "../../js/core/topbar-controller.js";
 import { createState, setRole } from "./state.js";
 import { renderAll } from "./render.js";
 import {
@@ -16,7 +16,6 @@ import {
 } from "./repo.js";
 import { wireActions } from "./actions.js";
 import { initDrawer, disableDragOnTouch } from "./mobile.js";
-import "../../js/core/topbar-controller.js";
 
 /* ================= DOM ================= */
 const btnBack = document.getElementById("btnBack");

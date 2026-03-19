@@ -189,16 +189,16 @@ export function setTopbarNavPriority(getButtons, { moreEl, moreDropdownEl } = {}
 
 // ── Account slot (section-4) ──────────────────────────────────────────────────
 /**
- * Tworzy slot "Kto? ▾" w section-4.
- * Desktop: dropdown z menu opcji.
- * Mobile: menu opcje widoczne bezpośrednio w panelu (bez dropdown).
+ * Używa istniejącego #who/#whoStatic jako triggera dropdown.
+ * Desktop: klik na #who → dropdown z opcjami.
+ * Mobile: #who jako label + opcje płasko poniżej.
  *
  * @param {object|null} user
  * @param {object}  [opts]
  * @param {string}  [opts.loginHref='login']
  * @param {string}  [opts.accountHref='account']
  * @param {boolean} [opts.withAccountSettings=false]  tylko builder
- * @param {boolean} [opts.showAuthEntry=true]  false → ukryj dla niezalogowanego (np. marketplace)
+ * @param {boolean} [opts.showAuthEntry=true]  false → ukryj dla niezalogowanego
  * @returns {{ guestMode: boolean }}
  */
 export function setTopbarAccount(user, {
@@ -210,15 +210,24 @@ export function setTopbarAccount(user, {
   const section4 = document.querySelector('.topbar-section-4');
   if (!section4) return { guestMode: true };
 
-  // Usuń poprzedni slot (obsługa ponownego wywołania)
-  section4.querySelector('#topbarAccountWrap')?.remove();
+  // Przywróć poprzedni stan (obsługa ponownego wywołania)
+  const prevMenu = section4.querySelector('#topbarAccountMenu');
+  if (prevMenu) prevMenu.remove();
+  const prevWho = section4.querySelector('#who, #whoStatic');
+  if (prevWho) {
+    prevWho.innerHTML = '—';
+    prevWho.className = prevWho.className.replace(/\baccount-btn\b|\baccount-btn--mobile-label\b/g, '').trim();
+    prevWho.style.cursor = '';
+    prevWho.removeAttribute('tabindex');
+    prevWho.onclick = null;
+  }
   _accountState = null;
 
-  const whoStaticEl = section4.querySelector('#whoStatic');
+  const whoEl = section4.querySelector('#who, #whoStatic');
   const btnLoginEl = section4.querySelector('#btnLogout');
 
   if (!user) {
-    if (whoStaticEl) whoStaticEl.style.display = 'none';
+    if (whoEl) whoEl.style.display = 'none';
     if (btnLoginEl) {
       if (showAuthEntry) {
         btnLoginEl.style.display = '';
@@ -235,37 +244,36 @@ export function setTopbarAccount(user, {
   const guestMode = isGuestUser(user);
   const username = user.username || user.email || '—';
 
-  if (whoStaticEl) whoStaticEl.style.display = 'none';
   if (btnLoginEl) btnLoginEl.style.display = 'none';
 
-  // Buduj wrap
-  const wrap = document.createElement('div');
-  wrap.className = 'account-wrap';
-  wrap.id = 'topbarAccountWrap';
+  if (!whoEl) return { guestMode };
 
-  const btnAccount = document.createElement('button');
-  btnAccount.className = 'btn account-btn';
-  btnAccount.type = 'button';
-
+  // Przekształć #who w trigger
+  whoEl.style.display = '';
+  whoEl.innerHTML = '';
   const whoSpan = document.createElement('span');
   whoSpan.className = 'account-who';
   whoSpan.textContent = username;
-
   const chevron = document.createElement('span');
   chevron.className = 'account-chevron';
   chevron.textContent = '▾';
+  whoEl.append(whoSpan, chevron);
+  whoEl.classList.add('account-btn');
+  if (!whoEl.matches('button')) {
+    whoEl.style.cursor = 'pointer';
+    whoEl.tabIndex = 0;
+  }
 
-  btnAccount.append(whoSpan, chevron);
-
-  // Menu (wewnątrz wrap — position:fixed na desktop, static inline na mobile)
+  // Menu — wstawiamy za #who w DOM, position:fixed na desktop
   const menu = document.createElement('div');
   menu.className = 'account-menu';
   menu.id = 'topbarAccountMenu';
   menu.hidden = true;
+  whoEl.after(menu);
 
   if (!guestMode && withAccountSettings) {
     const btnSettings = document.createElement('button');
-    btnSettings.className = 'account-menu-item';
+    btnSettings.className = 'btn account-menu-item';
     btnSettings.type = 'button';
     btnSettings.textContent = t('builder.nav.account') || 'Ustawienia konta';
     btnSettings.addEventListener('click', () => {
@@ -276,7 +284,7 @@ export function setTopbarAccount(user, {
   }
 
   const btnAction = document.createElement('button');
-  btnAction.className = 'account-menu-item';
+  btnAction.className = 'btn account-menu-item';
   btnAction.type = 'button';
   if (guestMode && showAuthEntry) {
     btnAction.textContent = t('common.authEntry') || 'Zaloguj / Załóż konto';
@@ -294,41 +302,33 @@ export function setTopbarAccount(user, {
   }
   menu.appendChild(btnAction);
 
-  wrap.append(btnAccount, menu);
-
-  if (btnLoginEl?.parentNode === section4) {
-    section4.insertBefore(wrap, btnLoginEl);
-  } else {
-    section4.appendChild(wrap);
-  }
-
   // Desktop: dropdown
-  btnAccount.addEventListener('click', (e) => {
+  whoEl.addEventListener('click', (e) => {
     e.stopPropagation();
     if (_mobileActive) return;
     menu.hidden = !menu.hidden;
-    if (!menu.hidden) repositionDropdown(btnAccount, menu);
+    if (!menu.hidden) repositionDropdown(whoEl, menu);
   });
 
   document.addEventListener('click', (e) => {
-    if (!wrap.contains(e.target)) menu.hidden = true;
+    if (!whoEl.contains(e.target) && !menu.contains(e.target)) menu.hidden = true;
   });
 
   window.addEventListener('resize', () => {
-    if (!menu.hidden && !_mobileActive) repositionDropdown(btnAccount, menu);
+    if (!menu.hidden && !_mobileActive) repositionDropdown(whoEl, menu);
   }, { passive: true });
 
   // Mobile API
   function expand() {
     menu.hidden = false;
     menu.classList.add('account-menu--inline');
-    btnAccount.style.display = 'none';
+    whoEl.classList.add('account-btn--mobile-label');
   }
 
   function collapse() {
     menu.classList.remove('account-menu--inline');
     menu.hidden = true;
-    btnAccount.style.display = '';
+    whoEl.classList.remove('account-btn--mobile-label');
   }
 
   _accountState = { expand, collapse };
@@ -345,7 +345,9 @@ export async function autoInitTopbarAuthButton(btn = document.getElementById('bt
   if (!btn) return;
   if (btn.dataset.topbarAuthReady === '1') return;
   const { getUser } = await import('./auth.js');
+  if (btn.dataset.topbarAuthReady === '1') return;
   const user = await getUser();
+  if (btn.dataset.topbarAuthReady === '1') return;
   setTopbarAccount(user);
   btn.dataset.topbarAuthReady = '1';
 }

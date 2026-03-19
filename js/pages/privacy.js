@@ -41,9 +41,7 @@ function isControlModal() {
 function applyControlModalLayout() {
   if (!isControlModal()) return;
   document.body.classList.add("manual-in-control-modal");
-  byId("who")?.remove();
-  byId("btnLogout")?.remove();
-  byId("topbarAccountWrap")?.remove();
+  document.querySelector(".topbar-section-4")?.style.setProperty("display", "none");
 }
 
 function setBackButton({ loggedIn }) {

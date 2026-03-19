@@ -703,6 +703,7 @@ html.showA2HS .a2hs {
 }
 
 .topbar-menu-toggle {
+  order: 999;
   min-width: 38px;
   min-height: 38px;
   display: grid;
@@ -1164,4 +1165,25 @@ body{
   background: transparent;
   padding: 0;
   min-width: 0;
+}
+
+.account-btn--mobile-label {
+  pointer-events: none;
+  cursor: default;
+}
+
+.account-btn--mobile-label .account-chevron {
+  display: none;
+}
+
+.topbar-mobile-group .account-menu-item {
+  width: 100%;
+  justify-content: center;
+}
+
+.topbar-mobile-group .account-btn--mobile-label {
+  width: 100%;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 6px;
 }
