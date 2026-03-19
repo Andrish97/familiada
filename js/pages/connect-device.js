@@ -2,7 +2,7 @@
 
 import { sb } from "../core/supabase.js";
 import { requireAuth } from "../core/auth.js";
-import { isGuestUser } from "../core/guest-mode.js";
+import { isGuestUser, showGuestBlockedOverlay } from "../core/guest-mode.js";
 import { isMobileDevice } from "../core/pwa.js";
 import { initI18n, t, withLangParam } from "../../translation/translation.js";
 import "../core/contact-modal.js";
@@ -144,16 +144,16 @@ async function startQrScan() {
   const currentUser = await requireAuth(withLangParam("../login"));
   const guestMode = isGuestUser(currentUser);
 
+  if (guestMode) {
+    showGuestBlockedOverlay({ backHref: "builder", loginHref: "login?force_auth=1", showLoginButton: true });
+    return;
+  }
+
   const whoLabel = currentUser?.username || currentUser?.email || "—";
   if (who) who.textContent = whoLabel;
   if (whoStatic) whoStatic.textContent = whoLabel;
-  if (guestMode) {
-    if (btnAccount) btnAccount.style.display = "none";
-    if (whoStatic) whoStatic.style.display = "";
-  } else {
-    if (btnAccount) btnAccount.style.display = "";
-    if (whoStatic) whoStatic.style.display = "none";
-  }
+  if (btnAccount) btnAccount.style.display = "";
+  if (whoStatic) whoStatic.style.display = "none";
 
   if (pageHint) pageHint.textContent = _isMobile
     ? (t("connectDevice.header.hintMobile") || "Podłącz się jako prowadzący lub buzzer.")

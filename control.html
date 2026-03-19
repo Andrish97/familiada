@@ -259,12 +259,14 @@
               <div class="panelStep" data-panel-step></div>
             </div>
 
-            <!-- Step 1 -->
+            <!-- Step 1: wszystkie 3 urządzenia -->
             <div class="step" data-step="devices_display">
-              <div class="stepTitle" data-i18n="control.stepDisplay">Wyświetlacz</div>
+              <div class="stepTitle" data-i18n="control.stepDevices">Urządzenia</div>
 
               <div class="card">
                 <div class="cardBody">
+
+                  <!-- Wyświetlacz -->
                   <div class="head headLine">
                     <div class="name" data-i18n="control.deviceDisplay">Wyświetlacz</div>
                     <div class="badge mid" id="pillDisplay">—</div>
@@ -274,11 +276,13 @@
                     <button class="btn" id="btnDispBlack" type="button">
                       <span data-i18n="control.blackScreen">Czarny ekran</span>
                     </button>
+                    <button class="btn" id="btnShareDisplay" type="button" data-i18n="control.shareDevice">
+                      Udostępnij
+                      <span class="badge" id="shareDisplayBadge" aria-hidden="true"></span>
+                    </button>
                   </div>
-
                   <div class="qrBlock">
                     <img id="qrDisplayImg" alt="QR do wyświetlacza" data-i18n-alt="control.qrDisplayAlt"/>
-                  
                     <div class="qrInline">
                       <input class="inp" id="displayLink" readonly />
                       <button class="btn" id="btnCopyDisplay" type="button" data-i18n="common.copy">Kopiuj</button>
@@ -286,36 +290,27 @@
                     </div>
                   </div>
 
-                </div>
+                  <hr style="border:none;border-top:1px solid rgba(255,255,255,.08);margin:12px 0;"/>
 
-                <div class="stepFoot">
-                  <div class="stepFootButtons">
-                    <button class="btn gold" id="btnDevicesNext" type="button" disabled data-i18n="common.next">Dalej</button>
-                  </div>
-                  <div class="msg msg-pill" id="msgDevices"></div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Step 2 -->
-            <div class="step hidden" data-step="devices_hostbuzzer">
-              <div class="stepTitle" data-i18n="control.stepHostBuzzer">Prowadzący i przycisk</div>
-
-              <div class="card">
-                <div class="cardBody">
-                  <!-- QR na wyświetlaczu ma być na górze -->
+                  <!-- QR na wyświetlaczu -->
                   <div class="rowBtns" style="margin-top:0;">
                     <button class="btn" id="btnQrToggle" type="button" disabled data-i18n="control.qrOnDisplay">QR na wyświetlaczu</button>
                   </div>
 
                   <div class="cards2">
+                    <!-- Prowadzący -->
                     <div class="card card-soft">
                       <div class="head headLine">
                         <div class="name" data-i18n="control.deviceHost">Prowadzący</div>
                         <div class="badge mid" id="pillHost">—</div>
                         <div class="badge badge-soft lastSeen"><span data-i18n="control.lastSeen">Ostatnio widziano:</span> <b id="seenHost">—</b></div>
                       </div>
-
+                      <div class="rowBtns rowActionsTop">
+                        <button class="btn" id="btnShareHost" type="button" data-i18n="control.shareDevice">
+                          Udostępnij
+                          <span class="badge" id="shareHostBadge" aria-hidden="true"></span>
+                        </button>
+                      </div>
                       <div class="qrBlock">
                         <img id="qrHostImg" alt="QR prowadzącego" data-i18n-alt="control.qrHostAlt"/>
                         <div class="qrInline">
@@ -326,13 +321,19 @@
                       </div>
                     </div>
 
+                    <!-- Buzzer -->
                     <div class="card card-soft">
                       <div class="head headLine">
                         <div class="name" data-i18n="control.deviceBuzzer">Przycisk</div>
                         <div class="badge mid" id="pillBuzzer">—</div>
                         <div class="badge badge-soft lastSeen"><span data-i18n="control.lastSeen">Ostatnio widziano:</span> <b id="seenBuzzer">—</b></div>
                       </div>
-
+                      <div class="rowBtns rowActionsTop">
+                        <button class="btn" id="btnShareBuzzer" type="button" data-i18n="control.shareDevice">
+                          Udostępnij
+                          <span class="badge" id="shareBuzzerBadge" aria-hidden="true"></span>
+                        </button>
+                      </div>
                       <div class="qrBlock">
                         <img id="qrBuzzerImg" alt="QR przycisku" data-i18n-alt="control.qrBuzzerAlt"/>
                         <div class="qrInline">
@@ -347,19 +348,18 @@
 
                 <div class="stepFoot">
                   <div class="stepFootButtons">
-                    <button class="btn" id="btnDevicesBack" type="button" data-i18n="common.back">Wstecz</button>
-                    <button class="btn gold" id="btnDevicesToAudio" type="button" disabled data-i18n="common.next">Dalej</button>
-                    <button class="btn" id="btnShareDevice" type="button" data-i18n="control.shareDevice">
-                      Udostępnij urządzenie
-                      <span class="badge" id="shareDeviceBadge" aria-hidden="true"></span>
-                    </button>
+                    <button class="btn gold" id="btnDevicesNext" type="button" disabled data-i18n="common.next">Dalej</button>
                   </div>
+                  <div class="msg msg-pill" id="msgDevices"></div>
                   <div class="msg msg-pill" id="msgDevices2"></div>
                 </div>
               </div>
             </div>
 
-            <!-- Step 3 -->
+            <!-- Step 2 (host+buzzer) – usunięty, scalony z step 1 -->
+            <div class="step hidden" data-step="devices_hostbuzzer" aria-hidden="true" style="display:none!important;"></div>
+
+            <!-- Step 3: Dźwięk -->
             <div class="step hidden" data-step="devices_audio">
               <div class="stepTitle" data-i18n="control.stepAudio">Dźwięk</div>
 
@@ -1152,15 +1152,26 @@
   <!-- Modal: Udostępnij urządzenie -->
   <div class="overlay" id="shareDeviceOverlay" style="display:none;">
     <div class="modal shareModal">
-      <div class="mTitle" data-i18n="control.shareDeviceModal.title">Udostępnij urządzenie</div>
-      <div class="mSub" data-i18n="control.shareDeviceModal.subtitle">Wybierz subskrybentów, którym chcesz udostępnić urządzenie (host lub buzzer).</div>
+      <div class="mTitle" id="shareDeviceTitle" data-i18n="control.shareDeviceModal.title">Udostępnij urządzenie</div>
+      <div class="mSub" data-i18n="control.shareDeviceModal.subtitle">Wybierz subskrybenta lub wpisz e-mail / nazwę użytkownika.</div>
 
-      <!-- Lista subskrybentów -->
-      <div id="shareDeviceSubsList" style="margin-top:12px;display:grid;gap:6px;max-height:320px;overflow-y:auto;"></div>
-
-      <div class="importRow" style="margin-top:14px;">
-        <button class="btn sm" id="btnShareDeviceClose" type="button" data-i18n="common.close">Zamknij</button>
+      <div class="shareAddTop" style="margin-top:10px;">
+        <div class="importRow">
+          <input id="shareDeviceEmail" class="inp" type="text"
+                 placeholder="Nazwa użytkownika lub e-mail..."
+                 data-i18n-placeholder="bases.shareModal.placeholder"/>
+          <button class="btn sm gold" id="btnShareDeviceAdd" type="button" data-i18n="bases.shareModal.add">Dodaj</button>
+        </div>
         <div class="importMsg" id="shareDeviceMsg"></div>
+      </div>
+
+      <div class="shareSection" style="margin-top:10px;">
+        <div class="shareSectionTitle" data-i18n="bases.shareModal.sectionSubscribers">Moi subskrybenci</div>
+        <div class="shareList" id="shareDeviceSubsList"></div>
+      </div>
+
+      <div class="importRow shareBottom">
+        <button class="btn sm" id="btnShareDeviceClose" type="button" data-i18n="bases.shareModal.close">Zamknij</button>
       </div>
     </div>
   </div>

@@ -176,9 +176,8 @@ async function main() {
   const ui = createUI();
   ui.setGameHeader(game.name, `${game.type} / ${game.status}`);
 
-  // Share device modal
-  const shareDevice = initShareDevice({ currentUser, game });
-  void shareDevice.refreshBadge();
+  // Share device modal – inicjalizujemy po utworzeniu devices (niżej)
+  let shareDevice = { refreshBadges: async () => {}, expireShares: async () => {} };
 
   
   // ===== Kolory: stan UI (lokalny) =====
@@ -426,6 +425,9 @@ async function sendZeroStatesToDevices() {
 
   const devices = createDevices({ game, ui, store, chDisplay, chHost, chBuzzer });
   const presence = createPresence({ game, ui, store, devices });
+
+  shareDevice = initShareDevice({ currentUser, game, devices });
+  void shareDevice.refreshBadges();
 
     // ===== Wejście/wyjście z kroku "Nazwy drużyn" =====
   let wasInSetupNames = false;
@@ -899,7 +901,7 @@ async function sendZeroStatesToDevices() {
     const hostReady = !!flags.hostOnline;
     const buzzerReady = !!flags.buzzerOnline;
     const allOnline = flags.displayOnline && hostReady && buzzerReady;
-    ui.setEnabled("btnDevicesToAudio", allOnline);
+    ui.setEnabled("btnDevicesNext", allOnline);
 
     // krok 3: „Gotowe — przejdź dalej” po odblokowaniu audio
     ui.setEnabled(
@@ -1056,7 +1058,8 @@ async function sendZeroStatesToDevices() {
   ui.on("auth.qr.open", () => openQrLink());
 
   // DEVICES kroki
-  ui.on("devices.next", () => store.setDevicesStep("devices_hostbuzzer"));
+  ui.on("devices.next", () => store.setDevicesStep("devices_audio"));
+  // devices.back i devices.toAudio zachowane dla kompatybilności ze store
   ui.on("devices.back", () => store.setDevicesStep("devices_display"));
   ui.on("devices.toAudio", () => store.setDevicesStep("devices_audio"));
   ui.on("audio.back", () => store.setDevicesStep("devices_hostbuzzer"));

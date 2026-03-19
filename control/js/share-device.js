@@ -1,18 +1,13 @@
 // control/js/share-device.js
-// Modal udostępniania urządzeń (host/buzzer/display) subskrybentom.
-// Respektuje flagę email_notifications odbiorcy.
 
 import { sb, SUPABASE_URL } from "../../js/core/supabase.js";
 import { t } from "../../translation/translation.js";
 
 const MAIL_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/send-mail`;
-// Czas wygaśnięcia udostępnienia po zamknięciu sesji control (ms)
-const SHARE_TTL_MS = 4 * 60 * 60 * 1000; // 4h
+const SHARE_TTL_MS = 4 * 60 * 60 * 1000;
 
-function escapeHtml(s) {
-  return String(s ?? "")
-    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+function esc(s) {
+  return String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 }
 
 function deviceTypeLabel(type) {
@@ -22,44 +17,57 @@ function deviceTypeLabel(type) {
   return type;
 }
 
-async function getRecipientEmailNotifications(userId) {
-  try {
-    const { data } = await sb()
-      .from("user_flags")
-      .select("email_notifications")
-      .eq("user_id", userId)
-      .maybeSingle();
-    return data?.email_notifications !== false;
-  } catch { return true; }
+async function resolveToUserId(login) {
+  const v = String(login || "").trim();
+  if (!v) return null;
+  const email = v.includes("@") ? v.toLowerCase() : String((await sb().rpc("profile_login_to_email", { p_login: v })).data || "").toLowerCase();
+  if (!email) return null;
+  const { data } = await sb().from("profiles").select("id,email,username").eq("email", email).maybeSingle();
+  return data || null;
 }
 
-async function sendDeviceShareEmail({ to, ownerLabel, deviceType, gameName }) {
+function escapeMail(s) {
+  return String(s ?? "").replace(/[&<>"']/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+function buildMailHtml({ title, body, actionLabel, actionUrl }) {
+  const inner = `
+<div style="margin:0;padding:0;background:#050914;color:#ffffff;">
+  <div style="max-width:560px;margin:0 auto;padding:26px 16px;font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#ffffff;background:#050914;">
+    <div style="padding:14px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.12);border-radius:18px;">
+      <div style="font-weight:1000;letter-spacing:.18em;text-transform:uppercase;color:#ffeaa6;">FAMILIADA</div>
+    </div>
+    <div style="margin-top:14px;padding:18px;border-radius:20px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);box-shadow:0 24px 60px rgba(0,0,0,.45);">
+      <div style="font-weight:1000;font-size:18px;letter-spacing:.06em;color:#ffeaa6;margin:0 0 10px;">${escapeMail(title)}</div>
+      <div style="font-size:14px;opacity:.9;line-height:1.45;margin:0 0 14px;">${escapeMail(body)}</div>
+      <div style="margin:16px 0;">
+        <a href="${escapeMail(actionUrl)}" style="display:block;text-align:center;padding:12px 14px;border-radius:14px;border:1px solid rgba(255,234,166,.35);background:rgba(255,234,166,.10);color:#ffeaa6;text-decoration:none;font-weight:1000;letter-spacing:.06em;text-transform:uppercase;">
+          ${escapeMail(actionLabel)}
+        </a>
+      </div>
+      <div style="margin-top:10px;font-size:12px;opacity:.75;word-break:break-all;">${escapeMail(actionUrl)}</div>
+    </div>
+  </div>
+</div>`.trim();
+  return `<!doctype html><html><head><meta charset="utf-8"><meta name="color-scheme" content="dark"><style>:root{color-scheme:dark;}</style></head><body style="margin:0;padding:0;background:#050914;color:#fff;">${inner}</body></html>`;
+}
+
+async function sendShareEmail({ to, ownerLabel, deviceType, gameName }) {
   const { data } = await sb().auth.getSession();
   const token = data?.session?.access_token;
   if (!token) return;
-
-  const builderUrl = new URL("/connect-device", location.origin).href;
   const typeLabel = deviceTypeLabel(deviceType);
-  const subject = t("control.shareDeviceModal.mailSubject", { type: typeLabel }) ||
-    `Udostępniono urządzenie: ${typeLabel}`;
+  const subject = t("control.shareDeviceModal.mailSubject", { type: typeLabel }) || `Udostępniono urządzenie: ${typeLabel}`;
   const body = t("control.shareDeviceModal.mailBody", { owner: ownerLabel, type: typeLabel, game: gameName || "—" }) ||
-    `${ownerLabel} udostępnił(a) Ci urządzenie: ${typeLabel}${gameName ? ` (gra: ${gameName})` : ""}. Otwórz stronę "Podłącz urządzenie", żeby je zobaczyć.`;
-
-  const html = `<!doctype html><html><body style="background:#050914;color:#fff;font-family:system-ui,sans-serif;padding:24px;">
-<div style="max-width:520px;margin:0 auto;">
-  <div style="font-weight:900;letter-spacing:.12em;color:#ffeaa6;">FAMILIADA</div>
-  <div style="margin-top:16px;padding:18px;border-radius:16px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);">
-    <div style="font-size:18px;font-weight:800;color:#ffeaa6;margin-bottom:10px;">${escapeHtml(subject)}</div>
-    <div style="opacity:.9;line-height:1.5;">${escapeHtml(body)}</div>
-    <div style="margin-top:16px;">
-      <a href="${escapeHtml(builderUrl)}" style="display:block;text-align:center;padding:12px;border-radius:12px;background:rgba(255,234,166,.1);border:1px solid rgba(255,234,166,.3);color:#ffeaa6;text-decoration:none;font-weight:800;">
-        Podłącz urządzenie
-      </a>
-    </div>
-  </div>
-</div>
-</body></html>`;
-
+    `${ownerLabel} udostępnił(a) Ci urządzenie: ${typeLabel}${gameName ? ` (gra: ${gameName})` : ""}.`;
+  const actionUrl = new URL("/connect-device", location.origin).href;
+  const html = buildMailHtml({
+    title: subject,
+    body,
+    actionLabel: t("connectDevice.header.title") || "Podłącz urządzenie",
+    actionUrl,
+  });
   await fetch(MAIL_FUNCTION_URL, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
@@ -68,138 +76,182 @@ async function sendDeviceShareEmail({ to, ownerLabel, deviceType, gameName }) {
 }
 
 export function initShareDevice({ currentUser, game }) {
+  const isGuest = !currentUser || currentUser?.is_guest === true ||
+    currentUser?.user_metadata?.is_guest === true || currentUser?.app_metadata?.is_guest === true;
+
   const overlay = document.getElementById("shareDeviceOverlay");
+  const titleEl = document.getElementById("shareDeviceTitle");
+  const emailInp = document.getElementById("shareDeviceEmail");
   const subsList = document.getElementById("shareDeviceSubsList");
+  const btnAdd = document.getElementById("btnShareDeviceAdd");
   const btnClose = document.getElementById("btnShareDeviceClose");
   const msgEl = document.getElementById("shareDeviceMsg");
-  const btnShare = document.getElementById("btnShareDevice");
-  const badge = document.getElementById("shareDeviceBadge");
 
-  if (!overlay || !btnShare) return { refreshBadge: async () => {}, expireShares: async () => {} };
+  if (!overlay) return { refreshBadges: async () => {}, expireShares: async () => {} };
 
-  function setMsg(text) { if (msgEl) msgEl.textContent = text || ""; }
-
-  async function refreshBadge() {
-    try {
-      const { data } = await sb().rpc("list_my_device_shares");
-      const n = (data || []).length;
-      if (badge) {
-        badge.textContent = n > 0 ? (n > 99 ? "99+" : String(n)) : "";
-        btnShare.classList.toggle("has-badge", n > 0);
-      }
-    } catch {}
+  // Ukryj przyciski udostępniania dla gości
+  if (isGuest) {
+    for (const id of ["btnShareDisplay","btnShareHost","btnShareBuzzer"]) {
+      const el = document.getElementById(id);
+      if (el) el.style.display = "none";
+    }
+    return { refreshBadges: async () => {}, expireShares: async () => {} };
   }
 
-  // Ustaw expires_at na wszystkich aktywnych udostępnieniach tej sesji
-  async function expireShares() {
-    try {
-      await sb().rpc("expire_my_device_shares");
-    } catch {}
-  }
-
-  const DEVICE_TYPES = ["host", "buzzer", "display"];
-
-  async function renderModal() {
-    if (!subsList) return;
-    subsList.innerHTML = `<div style="opacity:.6;font-size:.88rem;">${t("control.shareDeviceModal.loading") || "Ładowanie…"}</div>`;
-
-    const [subsRes, sharesRes] = await Promise.all([
-      sb().rpc("polls_hub_list_my_subscribers"),
-      sb().rpc("list_my_device_shares"),
-    ]);
-
-    const subs = (subsRes.data || []).filter(r => r.status === "active" && r.subscriber_user_id);
-    const shares = sharesRes.data || [];
-
-    // Map: userId -> Set of device_types
-    const sharedByUser = new Map();
-    for (const s of shares) {
-      if (!sharedByUser.has(s.recipient_id)) sharedByUser.set(s.recipient_id, new Set());
-      sharedByUser.get(s.recipient_id).add(s.device_type);
-    }
-
-    if (!subs.length) {
-      subsList.innerHTML = `<div style="opacity:.6;font-size:.88rem;">${t("control.shareDeviceModal.noSubs") || "Brak subskrybentów."}</div>`;
-      return;
-    }
-
-    subsList.innerHTML = "";
-    for (const sub of subs) {
-      const userId = sub.subscriber_user_id;
-      const label = sub.subscriber_label || sub.subscriber_email || "—";
-      const sharedTypes = sharedByUser.get(userId) || new Set();
-
-      const row = document.createElement("div");
-      row.style.cssText = "display:grid;gap:6px;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.1);";
-
-      const checkboxes = DEVICE_TYPES.map(type => `
-        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.85rem;">
-          <input type="checkbox" data-type="${type}" ${sharedTypes.has(type) ? "checked" : ""}/>
-          ${escapeHtml(deviceTypeLabel(type))}
-        </label>
-      `).join("");
-
-      row.innerHTML = `
-        <div style="font-size:.88rem;font-weight:600;">${escapeHtml(label)}</div>
-        <div style="display:flex;gap:12px;flex-wrap:wrap;">${checkboxes}</div>
-      `;
-
-      for (const cb of row.querySelectorAll("input[type=checkbox]")) {
-        cb.addEventListener("change", async () => {
-          const deviceType = cb.dataset.type;
-          setMsg("");
-          try {
-            if (cb.checked) {
-              const expiresAt = new Date(Date.now() + SHARE_TTL_MS).toISOString();
-              const { data, error } = await sb().rpc("share_device", {
-                p_recipient_user_id: userId,
-                p_device_type: deviceType,
-                p_game_id: game?.id || null,
-                p_game_name: game?.name || null,
-                p_expires_at: expiresAt,
-              });
-              const res = Array.isArray(data) ? data[0] : data;
-              if (error || !res?.ok) {
-                cb.checked = false;
-                setMsg(t("control.shareDeviceModal.failed") || "Błąd udostępniania.");
-                return;
-              }
-              // Wyślij email tylko jeśli odbiorca ma włączone powiadomienia
-              const wantsEmail = await getRecipientEmailNotifications(userId);
-              if (wantsEmail && sub.subscriber_email) {
-                await sendDeviceShareEmail({
-                  to: sub.subscriber_email,
-                  ownerLabel: currentUser?.username || currentUser?.email || "—",
-                  deviceType,
-                  gameName: game?.name || null,
-                });
-              }
-            } else {
-              await sb().rpc("unshare_device", {
-                p_recipient_user_id: userId,
-                p_device_type: deviceType,
-              });
-            }
-            await refreshBadge();
-          } catch (e) {
-            cb.checked = !cb.checked;
-            setMsg(e?.message || t("control.shareDeviceModal.failed") || "Błąd.");
-          }
-        });
-      }
-
-      subsList.appendChild(row);
-    }
-  }
-
-  btnShare.addEventListener("click", async () => {
-    setMsg("");
-    overlay.style.display = "";
-    await renderModal();
-  });
+  let _deviceType = null;
 
   btnClose?.addEventListener("click", () => { overlay.style.display = "none"; });
   overlay.addEventListener("click", (e) => { if (e.target === overlay) overlay.style.display = "none"; });
 
-  return { refreshBadge, expireShares };
+  async function renderModal() {
+    if (msgEl) msgEl.textContent = "";
+
+    // Aktualnie udostępnione dla tego urządzenia
+    const { data: shares } = await sb().rpc("list_my_device_shares");
+    const current = (shares || []).find(s => s.device_type === _deviceType);
+
+    if (currentEl) {
+      if (current) {
+        const label = current.recipient_username || current.recipient_email || "—";
+        currentEl.innerHTML = `
+          <div class="shareRow">
+            <div class="shareEmail">${esc(label)}</div>
+            <div class="shareRowActions">
+              <button class="btn xsm" id="btnRevokeDevice" type="button">✕</button>
+            </div>
+          </div>`;
+        document.getElementById("btnRevokeDevice")?.addEventListener("click", async () => {
+          await sb().rpc("unshare_device", { p_recipient_user_id: current.recipient_id, p_device_type: _deviceType });
+          await renderModal();
+          await refreshBadges();
+        });
+        // Zablokuj dodawanie gdy już udostępnione
+        if (emailInp) emailInp.disabled = true;
+        if (btnAdd) btnAdd.disabled = true;
+        if (subsList) subsList.style.pointerEvents = "none";
+      } else {
+        currentEl.innerHTML = `<div style="opacity:.55;font-size:.85rem;">${t("control.shareDeviceModal.noneShared") || "Nie udostępniono."}</div>`;
+        if (emailInp) emailInp.disabled = false;
+        if (btnAdd) btnAdd.disabled = false;
+        if (subsList) subsList.style.pointerEvents = "";
+      }
+    }
+
+    // Subskrybenci
+    if (!subsList) return;
+    const { data: subs } = await sb().rpc("polls_hub_list_my_subscribers");
+    const activeSubs = (subs || []).filter(r => r.status === "active" && r.subscriber_user_id);
+
+    if (!activeSubs.length) {
+      subsList.innerHTML = `<div style="opacity:.55;font-size:.85rem;">${t("control.shareDeviceModal.noSubs") || "Brak subskrybentów."}</div>`;
+      return;
+    }
+
+    subsList.innerHTML = "";
+    for (const sub of activeSubs) {
+      const isShared = current?.recipient_id === sub.subscriber_user_id;
+      const label = sub.subscriber_label || sub.subscriber_email || "—";
+      const row = document.createElement("div");
+      row.className = "shareRow";
+      row.innerHTML = `
+        <div class="shareEmail" title="${esc(sub.subscriber_email || label)}">${esc(label)}</div>
+        <div class="shareRowActions">
+          <button class="btn xsm ${isShared ? "gold" : ""}" data-uid="${esc(sub.subscriber_user_id)}" data-email="${esc(sub.subscriber_email || "")}" type="button" ${current && !isShared ? "disabled" : ""}>
+            ${isShared ? "✓" : t("bases.shareModal.add") || "Dodaj"}
+          </button>
+        </div>`;
+      row.querySelector("button")?.addEventListener("click", async () => {
+        if (msgEl) msgEl.textContent = "";
+        try {
+          await doShare(sub.subscriber_user_id, sub.subscriber_email);
+          await renderModal();
+          await refreshBadges();
+        } catch (e) {
+          if (msgEl) msgEl.textContent = e?.message || "Błąd.";
+        }
+      });
+      subsList.appendChild(row);
+    }
+  }
+
+  async function doShare(userId, email) {
+    const expiresAt = new Date(Date.now() + SHARE_TTL_MS).toISOString();
+    const { data, error } = await sb().rpc("share_device", {
+      p_recipient_user_id: userId,
+      p_device_type: _deviceType,
+      p_game_id: game?.id || null,
+      p_game_name: game?.name || null,
+      p_expires_at: expiresAt,
+    });
+    const res = Array.isArray(data) ? data[0] : data;
+    if (error || !res?.ok) throw new Error(res?.err || "Błąd.");
+
+    // Email jeśli odbiorca ma włączone powiadomienia
+    if (email) {
+      const { data: flags } = await sb().from("user_flags").select("email_notifications").eq("user_id", userId).maybeSingle();
+      if (flags?.email_notifications !== false) {
+        await sendShareEmail({ to: email, ownerLabel: currentUser?.username || currentUser?.email || "—", deviceType: _deviceType, gameName: game?.name });
+      }
+    }
+  }
+
+  // Dodaj przez input
+  btnAdd?.addEventListener("click", async () => {
+    if (msgEl) msgEl.textContent = "";
+    const raw = String(emailInp?.value || "").trim();
+    if (!raw) return;
+    const profile = await resolveToUserId(raw);
+    if (!profile) { if (msgEl) msgEl.textContent = t("bases.share.userNotFound") || "Nie znaleziono użytkownika."; return; }
+    try {
+      await doShare(profile.id, profile.email);
+      if (emailInp) emailInp.value = "";
+      await renderModal();
+      await refreshBadges();
+    } catch (e) {
+      if (msgEl) msgEl.textContent = e?.message || "Błąd.";
+    }
+  });
+  emailInp?.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); btnAdd?.click(); } });
+
+  const deviceConfigs = [
+    { type: "display", btnId: "btnShareDisplay", badgeId: "shareDisplayBadge" },
+    { type: "host",    btnId: "btnShareHost",    badgeId: "shareHostBadge" },
+    { type: "buzzer",  btnId: "btnShareBuzzer",  badgeId: "shareBuzzerBadge" },
+  ];
+
+  for (const cfg of deviceConfigs) {
+    document.getElementById(cfg.btnId)?.addEventListener("click", async () => {
+      _deviceType = cfg.type;
+      if (titleEl) titleEl.textContent = `${t("control.shareDeviceModal.title") || "Udostępnij"} — ${deviceTypeLabel(cfg.type)}`;
+      if (emailInp) emailInp.value = "";
+      overlay.style.display = "";
+      await renderModal();
+    });
+  }
+
+  async function refreshBadges() {
+    try {
+      const { data } = await sb().rpc("list_my_device_shares");
+      const shares = data || [];
+      for (const cfg of deviceConfigs) {
+        const has = shares.some(s => s.device_type === cfg.type);
+        const badge = document.getElementById(cfg.badgeId);
+        const btn = document.getElementById(cfg.btnId);
+        if (badge) badge.textContent = has ? "1" : "";
+        btn?.classList.toggle("has-badge", has);
+      }
+    } catch {}
+  }
+
+  async function expireShares() {
+    // Usuń wszystkie udostępnienia tej sesji (nie czekamy na TTL)
+    try {
+      await sb()
+        .from("shared_devices")
+        .delete()
+        .eq("owner_id", (await sb().auth.getUser()).data.user?.id);
+    } catch {}
+  }
+
+  return { refreshBadges, expireShares };
 }

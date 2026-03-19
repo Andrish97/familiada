@@ -74,7 +74,6 @@ body.builder-body > main.wrap{
   .wrap{
     padding: 15px;
   }
-  #btnLogoEditor,
   #btnPlay{ display: none; }
 }
 
