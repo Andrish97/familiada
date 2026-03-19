@@ -65,10 +65,7 @@ async function renderSharedDevices() {
   );
 
   if (!items.length) {
-    sharedDevicesList.innerHTML = `
-      <div style="opacity:.35;font-size:.88rem;text-align:center;padding:30px 20px;border:1px dashed rgba(255,255,255,.12);border-radius:16px;">
-        ${t("connectDevice.shared.empty") || "Brak udostępnionych urządzeń."}
-      </div>`;
+    sharedDevicesList.innerHTML = `<div class="connect-device-empty">${t("connectDevice.shared.empty") || "Brak udostępnionych urządzeń."}</div>`;
     return;
   }
 

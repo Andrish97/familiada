@@ -1,3 +1,15 @@
+.connect-device-empty {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: .88rem;
+  opacity: .35;
+  border: 1px dashed rgba(255,255,255,.12);
+  border-radius: 16px;
+}
+
 .connect-device-msg {
   font-size: .85rem;
   min-height: 18px;
