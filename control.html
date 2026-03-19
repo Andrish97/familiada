@@ -349,6 +349,10 @@
                   <div class="stepFootButtons">
                     <button class="btn" id="btnDevicesBack" type="button" data-i18n="common.back">Wstecz</button>
                     <button class="btn gold" id="btnDevicesToAudio" type="button" disabled data-i18n="common.next">Dalej</button>
+                    <button class="btn" id="btnShareDevice" type="button" data-i18n="control.shareDevice">
+                      Udostępnij urządzenie
+                      <span class="badge" id="shareDeviceBadge" aria-hidden="true"></span>
+                    </button>
                   </div>
                   <div class="msg msg-pill" id="msgDevices2"></div>
                 </div>
@@ -1144,5 +1148,21 @@
     </div>
   </main>
   <script type="module" src="js/core/contact-modal.js"></script>
+
+  <!-- Modal: Udostępnij urządzenie -->
+  <div class="overlay" id="shareDeviceOverlay" style="display:none;">
+    <div class="modal shareModal">
+      <div class="mTitle" data-i18n="control.shareDeviceModal.title">Udostępnij urządzenie</div>
+      <div class="mSub" data-i18n="control.shareDeviceModal.subtitle">Wybierz subskrybentów, którym chcesz udostępnić urządzenie (host lub buzzer).</div>
+
+      <!-- Lista subskrybentów -->
+      <div id="shareDeviceSubsList" style="margin-top:12px;display:grid;gap:6px;max-height:320px;overflow-y:auto;"></div>
+
+      <div class="importRow" style="margin-top:14px;">
+        <button class="btn sm" id="btnShareDeviceClose" type="button" data-i18n="common.close">Zamknij</button>
+        <div class="importMsg" id="shareDeviceMsg"></div>
+      </div>
+    </div>
+  </div>
 </body>
 </html> 

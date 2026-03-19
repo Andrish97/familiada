@@ -1,0 +1,32 @@
+{
+  "name": "Familiada Online",
+  "short_name": "Familiada",
+  "description": "System do tworzenia i prowadzenia gry Familiada na żywo",
+  "start_url": "/builder",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#050914",
+  "theme_color": "#050914",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/img/icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/img/icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "file_handlers": [
+    {
+      "action": "/builder",
+      "accept": {
+        "application/json": [".famgame", ".json"]
+      }
+    }
+  ],
+  "categories": ["games", "entertainment"]
+}

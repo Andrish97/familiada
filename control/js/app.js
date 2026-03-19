@@ -49,6 +49,7 @@ import { createPresence } from "./presence.js";
 import { createDisplay } from "./display.js";
 import { createRounds } from "./gameRounds.js";
 import { createFinal } from "./gameFinal.js";
+import { initShareDevice } from "./share-device.js";
 
 initI18n({ withSwitcher: true });
 
@@ -164,7 +165,7 @@ async function loadGameOrThrow() {
 }
 
 async function main() {
-  await ensureAuthOrRedirect();
+  const currentUser = await ensureAuthOrRedirect();
   const game = await loadGameOrThrow();
 
   // Load questions in background (non-blocking)
@@ -174,6 +175,10 @@ async function main() {
 
   const ui = createUI();
   ui.setGameHeader(game.name, `${game.type} / ${game.status}`);
+
+  // Share device modal
+  const shareDevice = initShareDevice({ currentUser, game });
+  void shareDevice.refreshBadge();
 
   
   // ===== Kolory: stan UI (lokalny) =====
@@ -406,11 +411,12 @@ async function sendZeroStatesToDevices() {
   });
   window.addEventListener("pagehide", () => {
     suppressUnloadWarn = true;
-  
+
     if (isEndedUiState()) {
-      // bez await – przeglądarka może zabić JS w locie
       sendZeroStatesToDevices().catch(() => {});
     }
+    // Wygaś udostępnienia – fire-and-forget (przeglądarka może zabić JS)
+    shareDevice.expireShares().catch(() => {});
   });
 
   // realtime channels
@@ -1016,12 +1022,12 @@ async function sendZeroStatesToDevices() {
       const ok = await confirmModal({ text: APP_MSG.CONFIRM_BACK });
       if (!ok) return;
     }
-  
-    // jeśli wychodzimy PO zakończeniu – zerujemy urządzenia
+
     if (isEndedUiState()) {
       await sendZeroStatesToDevices().catch(() => {});
     }
-  
+
+    await shareDevice.expireShares();
     suppressUnloadWarn = true;
     location.href = "../builder";
   });
@@ -1031,11 +1037,12 @@ async function sendZeroStatesToDevices() {
   });
 
   ui.on("top.logout", async () => {
-    // jeśli wychodzimy PO zakończeniu – zerujemy urządzenia
     if (isEndedUiState()) {
       await sendZeroStatesToDevices().catch(() => {});
     }
-  
+
+    await shareDevice.expireShares();
+
     if (!guestMode) {
       await signOut().catch(() => {});
     }

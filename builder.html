@@ -7,6 +7,8 @@
   <title data-i18n="builder.title">Familiada — moje gry</title>
 
   <link rel="icon" href="favicon.ico"/>
+  <link rel="manifest" href="/manifest.json"/>
+  <meta name="theme-color" content="#050914"/>
   <link rel="stylesheet" href="css/base.css"/>
   <link rel="stylesheet" href="css/builder.css"/>
 
@@ -47,6 +49,12 @@
       <button class="btn" id="btnMarketplace">
         <span class="only-desktop" data-i18n="builder.nav.marketplace">Gry Społeczności 🎮</span>
         <span class="only-mobile" data-i18n="builder.nav.marketplaceMobile">🛒</span>
+      </button>
+
+      <button class="btn" id="btnConnectDevice" style="display:none;">
+        <span class="only-desktop" data-i18n="builder.nav.connectDevice">Podłącz urządzenie 📱</span>
+        <span class="only-mobile" data-i18n="builder.nav.connectDeviceMobile">📱</span>
+        <span class="badge" id="connectDeviceBadge" aria-hidden="true"></span>
       </button>
     </div>
     <div class="topbar-section topbar-section-3">
