@@ -4696,10 +4696,9 @@ const pl = {
     scan: {
       title: "Zeskanuj kod QR urządzenia",
       hint: "Skieruj kamerę na kod QR wyświetlony w panelu sterowania.",
-      btn: "📷 Otwórz kamerę",
+      btn: "📷 Skanuj QR",
       cameraError: "Brak dostępu do kamery.",
       noQr: "Nie znaleziono kodu QR na zdjęciu.",
-      btn: "📷 Skanuj QR",
       noApi: "Użyj aparatu systemowego do zeskanowania kodu QR.",
     },
     shared: {

@@ -93,7 +93,7 @@ async function renderSharedDevices() {
 
     row.addEventListener("click", async () => {
       if (!item.game_id || !item.share_key) { 
-        setMsg(t("connectDevice.shared.gameNotFound") || "Nie znaleziono gry lub klucza."); 
+        setMsg(t("connectDevice.shared.gameNotFound") || "Nie znaleziono gry.");
         return; 
       }
       const isMobileType = item.device_type === "host" || item.device_type === "buzzer";
@@ -236,8 +236,8 @@ async function startQrScan() {
   }
 
   if (pageHint) pageHint.textContent = _isMobile
-    ? (t("connectDevice.header.hintMobile") || "Podłącz się jako prowadzący lub buzzer.")
-    : (t("connectDevice.header.hintDesktop") || "Podłącz się jako wyświetlacz.");
+    ? (t("connectDevice.header.hintMobile") || "Podłącz się jako prowadzący lub buzzer, albo zeskanuj QR z panelu sterowania.")
+    : (t("connectDevice.header.hintDesktop") || "Podłącz się jako wyświetlacz lub zeskanuj QR z panelu sterowania.");
 
   // Skanowanie QR tylko na mobile
   if (_isMobile && btnScanQr) {
