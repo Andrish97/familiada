@@ -4,7 +4,7 @@ import { sb, buildSiteUrl } from "../core/supabase.js";
 import { getUser } from "../core/auth.js";
 import { isGuestUser } from "../core/guest-mode.js";
 import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../translation/translation.js";
-import { initTopbarAccountDropdown } from "../core/topbar-auth.js";
+import { initTopbarAccountDropdown } from "../core/topbar-controller.js";
 import { exportGame } from "./builder-import-export.js";
 import { initUiSelect } from "../core/ui-select.js";
 import { confirmModal } from "../core/modal.js";
@@ -572,7 +572,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   isGuest = !currentUser || isGuestUser(currentUser);
 
   // Topbar — user info (account dropdown)
-  initTopbarAccountDropdown(currentUser);
+  initTopbarAccountDropdown(currentUser, { showAuthEntry: false });
 
   if (!currentUser) {
     // Anonim: zmień przycisk powrotu na "← Strona główna", ukryj zbędne przyciski

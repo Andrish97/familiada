@@ -14,6 +14,7 @@ const pwaApi = initPwa();
 
 
 import { exportGame, importGame, downloadJson } from "./builder-import-export.js";
+import { setTopbarNavPriority, setTopbarAccount } from '../core/topbar-controller.js';
 
 import "../core/contact-modal.js";
 import {
@@ -85,15 +86,9 @@ const MSG = {
 
 /* ================= DOM ================= */
 const grid = document.getElementById("grid");
-const who = document.getElementById("who");
 const whoStatic = document.getElementById("whoStatic");
 const hint = document.getElementById("hint");
 
-const btnAccount = document.getElementById("btnAccount");
-const accountWrap = document.getElementById("accountWrap");
-const accountMenu = document.getElementById("accountMenu");
-const btnAccountSettings = document.getElementById("btnAccountSettings");
-const btnAccountLogout = document.getElementById("btnAccountLogout");
 const btnLogout = document.getElementById("btnLogout");
 const btnInstall = document.getElementById("btnInstall");
 const btnEdit = document.getElementById("btnEdit");
@@ -235,229 +230,6 @@ const actionStateCache = new Map();
 function show(el, on) {
   if (!el) return;
   el.style.display = on ? "" : "none";
-}
-
-// Pozycjonuje dropdown portal (fixed overlay) pod zadanym przyciskiem/kontenerem
-function repositionDropdown(anchorEl, dropdownEl) {
-  if (!anchorEl || !dropdownEl) return;
-
-  const wasHidden = dropdownEl.hidden;
-  if (wasHidden) {
-    dropdownEl.hidden = false;
-    dropdownEl.style.visibility = "hidden";
-    dropdownEl.style.pointerEvents = "none";
-  }
-
-  dropdownEl.style.position = "fixed";
-
-  const cRect = anchorEl.getBoundingClientRect();
-  const mRect = dropdownEl.getBoundingClientRect();
-  const padding = 8;
-
-  let left = cRect.right - mRect.width;
-  left = Math.min(left, window.innerWidth - mRect.width - padding);
-  left = Math.max(left, padding);
-
-  let top = cRect.bottom + 8;
-  if (top + mRect.height > window.innerHeight - padding) {
-    top = cRect.top - mRect.height - 8;
-  }
-  top = Math.min(top, window.innerHeight - mRect.height - padding);
-  top = Math.max(top, padding);
-
-  dropdownEl.style.left = `${left}px`;
-  dropdownEl.style.top = `${top}px`;
-  dropdownEl.style.right = "auto";
-  dropdownEl.style.transform = "";
-
-  if (wasHidden) {
-    dropdownEl.style.visibility = "";
-    dropdownEl.style.pointerEvents = "";
-    dropdownEl.hidden = true;
-  }
-}
-
-/* ================= Overflow nav ================= */
-// Kolejność priorytetów (od najważniejszego). Każdy ma data-nav-hidden dla logiki biznesowej.
-const NAV_BUTTONS_PRIORITY = [
-  () => document.getElementById("btnMarketplace"),
-  () => document.getElementById("btnLogoEditor"),
-  () => document.getElementById("btnBases"),
-  () => document.getElementById("btnPollsHub"),
-  () => document.getElementById("btnSubscriptionsHub"),
-  () => document.getElementById("btnConnectDevice"),
-];
-
-let _navRecalc = null; // Referencja do recalc z initOverflowNav
-
-function initOverflowNav() {
-  const section2 = document.querySelector(".topbar-section-2");
-  if (!section2 || !navMore || !btnMore || !navMoreDropdown) return;
-
-  const moreBadge = document.getElementById("moreBadge");
-
-  // Portal dropdown do body (żeby nie ucinało przez overflow)
-  document.body.appendChild(navMoreDropdown);
-  navMoreDropdown.className = "nav-more-dropdown";
-  navMoreDropdown.hidden = true;
-
-  function updateMoreBadge(hiddenBtns) {
-    if (!moreBadge) return;
-    const sum = hiddenBtns.reduce((acc, btn) => {
-      const b = btn.querySelector(".badge");
-      if (!b) return acc;
-      const n = parseInt(b.textContent) || 0;
-      return acc + n;
-    }, 0);
-    moreBadge.textContent = sum > 99 ? "99+" : sum > 0 ? String(sum) : "";
-    btnMore.classList.toggle("has-badge", sum > 0);
-  }
-
-  // MutationObserver — aktualizuj badge "Więcej" gdy zmienia się badge w którymś przycisku
-  let _hiddenBtns = [];
-  const badgeObserver = new MutationObserver(() => updateMoreBadge(_hiddenBtns));
-  NAV_BUTTONS_PRIORITY.forEach(fn => {
-    const btn = fn();
-    if (btn) badgeObserver.observe(btn, { subtree: true, characterData: true, childList: true });
-  });
-
-  function getVisibleNavBtns() {
-    return NAV_BUTTONS_PRIORITY
-      .map(fn => fn())
-      .filter(btn => btn && btn.dataset.navHidden !== "true");
-  }
-
-  function recalc() {
-    const btns = getVisibleNavBtns();
-
-    // 1) Pokaż wszystkie (poza data-nav-hidden)
-    btns.forEach(btn => { btn.style.display = ""; });
-    navMore.style.display = "none";
-    navMoreDropdown.innerHTML = "";
-
-    // 2) Zmierz czy się mieszczą
-    // Pobierz dostępną szerokość section2 bez navMore
-    const section2Width = section2.getBoundingClientRect().width;
-
-    // Oblicz sumę szerokości wszystkich widocznych przycisków + gap
-    // Musimy obliczyć z renderowanym DOM — zapewniamy że navMore jest schowany
-    let totalWidth = 0;
-    const gap = 8; // gap z CSS
-
-    // Zmierz każdy przycisk
-    const btnWidths = btns.map(btn => {
-      const r = btn.getBoundingClientRect();
-      return r.width;
-    });
-
-    // Zmierz navMore (potrzebujemy znać jego szerokość zanim go ukryjemy)
-    let moreWidth = 0;
-    navMore.style.display = "";
-    moreWidth = navMore.getBoundingClientRect().width;
-    navMore.style.display = "none";
-
-    // Zbierz sumę
-    for (let i = 0; i < btnWidths.length; i++) {
-      totalWidth += btnWidths[i] + (i > 0 ? gap : 0);
-    }
-
-    if (totalWidth <= section2Width) {
-      // Wszystkie się mieszczą
-      _hiddenBtns = [];
-      updateMoreBadge([]);
-      return;
-    }
-
-    // 3) Chowaj od prawej (najmniej ważnych) aż się zmieszczą
-    const hidden = [];
-    let remaining = totalWidth;
-
-    for (let i = btns.length - 1; i >= 0; i--) {
-      const needed = remaining + moreWidth + gap;
-      if (needed <= section2Width) break;
-
-      // Chowaj ten przycisk
-      btns[i].style.display = "none";
-      hidden.unshift(btns[i]);
-      remaining -= btnWidths[i] + gap;
-    }
-
-    if (hidden.length === 0) return;
-
-    _hiddenBtns = hidden;
-    updateMoreBadge(hidden);
-
-    // 4) Pokaż "Więcej"
-    navMore.style.display = "";
-
-    // 5) Wypełnij dropdown
-    hidden.forEach(btn => {
-      const clone = btn.cloneNode(true);
-      clone.style.display = "";
-      // Kopiuj eventy przez delegację: klik na clone wywołuje klik na oryginale
-      clone.addEventListener("click", () => { btn.click(); });
-      navMoreDropdown.appendChild(clone);
-    });
-  }
-
-  // Toggle dropdown
-  btnMore.addEventListener("click", (e) => {
-    e.stopPropagation();
-    navMoreDropdown.hidden = !navMoreDropdown.hidden;
-    if (!navMoreDropdown.hidden) repositionDropdown(navMore, navMoreDropdown);
-  });
-
-  // Klik poza: zamknij
-  document.addEventListener("click", (e) => {
-    if (!navMore.contains(e.target) && !navMoreDropdown.contains(e.target)) {
-      navMoreDropdown.hidden = true;
-    }
-  });
-
-  window.addEventListener("resize", () => {
-    if (!navMoreDropdown.hidden) repositionDropdown(navMore, navMoreDropdown);
-    recalc();
-  }, { passive: true });
-
-  // ResizeObserver na section-2
-  if (typeof ResizeObserver !== "undefined") {
-    const ro = new ResizeObserver(() => recalc());
-    ro.observe(section2);
-  }
-
-  // Eksportuj recalc do zewnętrznego użytku (np. po zmianie data-nav-hidden)
-  _navRecalc = recalc;
-
-  // Pierwsze przeliczenie po renderze
-  requestAnimationFrame(() => recalc());
-}
-
-/* ================= Account dropdown ================= */
-function initAccountDropdown() {
-  if (!accountMenu) return;
-
-  // Portal do body
-  document.body.appendChild(accountMenu);
-  accountMenu.className = "account-menu";
-  accountMenu.hidden = true;
-
-  if (btnAccount) {
-    btnAccount.addEventListener("click", (e) => {
-      e.stopPropagation();
-      accountMenu.hidden = !accountMenu.hidden;
-      if (!accountMenu.hidden) repositionDropdown(btnAccount, accountMenu);
-    });
-  }
-
-  document.addEventListener("click", (e) => {
-    if (accountWrap && !accountWrap.contains(e.target) && !accountMenu.contains(e.target)) {
-      accountMenu.hidden = true;
-    }
-  });
-
-  window.addEventListener("resize", () => {
-    if (!accountMenu.hidden) repositionDropdown(btnAccount, accountMenu);
-  }, { passive: true });
 }
 
 function isIOSSafari() {
@@ -1272,37 +1044,31 @@ async function refresh() {
 document.addEventListener("DOMContentLoaded", async () => {
   await initI18n({ withSwitcher: true });
 
-  // Inicjalizuj overflow nav i account dropdown (przed requireAuth)
-  initOverflowNav();
-  initAccountDropdown();
+  // Blokuj autoInitTopbarAuthButton — builder wywołuje setTopbarAccount z withAccountSettings:true
+  const _btnLogoutEl = document.getElementById('btnLogout');
+  if (_btnLogoutEl) _btnLogoutEl.dataset.topbarAuthReady = '1';
+
+  const { recalc: _navRecalc } = setTopbarNavPriority(
+    () => [
+      document.getElementById('btnMarketplace'),
+      document.getElementById('btnLogoEditor'),
+      document.getElementById('btnBases'),
+      document.getElementById('btnPollsHub'),
+      document.getElementById('btnSubscriptionsHub'),
+      document.getElementById('btnConnectDevice'),
+    ],
+    {
+      moreEl: document.getElementById('navMore'),
+      moreDropdownEl: document.getElementById('navMoreDropdown'),
+    }
+  );
 
   currentUser = await requireAuth("login");
-  const whoLabel = currentUser?.username || currentUser?.email || t("control.dash");
-  if (who) who.textContent = whoLabel;
-  if (whoStatic) whoStatic.textContent = whoLabel;
   const guestMode = isGuestUser(currentUser);
 
   hideForGuest(currentUser, [btnPollsHub, btnSubscriptionsHub]);
 
-  // Section-4: account wrap / login btn
-  if (!currentUser) {
-    // Niezalogowany
-    show(btnLogout, true);
-    show(accountWrap, false);
-    show(whoStatic, false);
-  } else if (guestMode) {
-    // Gość: pokaż accountWrap z "Gość", ukryj btnAccountSettings
-    show(accountWrap, true);
-    show(btnLogout, false);
-    show(whoStatic, false);
-    if (btnAccountSettings) btnAccountSettings.style.display = "none";
-  } else {
-    // Zalogowany nie-gość
-    show(accountWrap, true);
-    show(btnLogout, false);
-    show(whoStatic, false);
-    if (btnAccountSettings) btnAccountSettings.style.display = "";
-  }
+  setTopbarAccount(currentUser, { withAccountSettings: true });
 
   // btnInstall: widoczny gdy nie standalone
   if (btnInstall) {
@@ -1367,30 +1133,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (ok) await pwaApi.install();
     // Klik Anuluj nie ustawia LS_KEY — celowo bez pwaApi.dismiss()
   });
-
-  // btnAccountSettings — otwiera ustawienia konta (jak stary btnAccount)
-  btnAccountSettings?.addEventListener("click", () => {
-    accountMenu.hidden = true;
-    location.href = "account";
-  });
-
-  // btnAccountLogout — wylogowanie
-  btnAccountLogout?.addEventListener("click", async () => {
-    accountMenu.hidden = true;
-    const { signOut } = await import("../core/auth.js");
-    const { withLangParam } = await import("../../translation/translation.js");
-    await signOut();
-    location.href = withLangParam("login");
-  });
-
-  // btnLogout (niezalogowany) — przejście do logowania
-  btnLogout?.addEventListener("click", () => {
-    import("../../translation/translation.js").then(({ withLangParam }) => {
-      location.href = withLangParam("login");
-    });
-  });
-  // Oznacz jako ready żeby autoInitTopbarAuthButton (topbar-mobile-menu.js) nie nadpisał handlera
-  if (btnLogout) btnLogout.dataset.topbarAuthReady = "1";
 
   // Przycisk "Podłącz urządzenie":
   // - desktop/TV: zawsze widoczny

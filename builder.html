@@ -14,7 +14,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script type="module" src="js/pages/builder.js" defer></script>
-  <script type="module" src="js/core/topbar-mobile-menu.js" defer></script>
+  <script type="module" src="js/core/topbar-controller.js" defer></script>
 </head>
 
 <body class="builder-body">
@@ -63,16 +63,6 @@
     </div>
     <div class="topbar-section topbar-section-4">
       <div class="who" id="whoStatic">—</div>
-      <div class="account-wrap" id="accountWrap" style="display:none;">
-        <button class="btn account-btn" id="btnAccount" type="button">
-          <span id="who">—</span>
-          <span class="account-chevron">▾</span>
-        </button>
-        <div class="account-menu" id="accountMenu" hidden>
-          <button class="account-menu-item" id="btnAccountSettings" type="button" data-i18n="builder.nav.account">Ustawienia konta</button>
-          <button class="account-menu-item" id="btnAccountLogout" type="button" data-i18n="common.logout">Wyloguj</button>
-        </div>
-      </div>
       <button class="btn" id="btnLogout" type="button" data-i18n="common.authEntry">Zaloguj / Załóż konto</button>
     </div>
   </header>

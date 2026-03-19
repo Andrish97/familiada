@@ -6,7 +6,7 @@
 
 import { initI18n, t, withLangParam } from "../../translation/translation.js";
 import { getUser } from "../core/auth.js";
-import { initTopbarAccountDropdown } from "../core/topbar-auth.js";
+import { initTopbarAccountDropdown } from "../core/topbar-controller.js";
 import "../core/contact-modal.js";
 
 function byId(id) { return document.getElementById(id); }
@@ -43,6 +43,7 @@ function applyControlModalLayout() {
   document.body.classList.add("manual-in-control-modal");
   byId("who")?.remove();
   byId("btnLogout")?.remove();
+  byId("topbarAccountWrap")?.remove();
 }
 
 function setBackButton({ loggedIn }) {
@@ -67,7 +68,7 @@ function setBackButton({ loggedIn }) {
 
 function setAuthUi(user) {
   if (!isControlModal()) {
-    initTopbarAccountDropdown(user);
+    initTopbarAccountDropdown(user, { showAuthEntry: false });
   }
   setBackButton({ loggedIn: !!user });
 }

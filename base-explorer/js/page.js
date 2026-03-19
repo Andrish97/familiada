@@ -16,7 +16,7 @@ import {
 } from "./repo.js";
 import { wireActions } from "./actions.js";
 import { initDrawer, disableDragOnTouch } from "./mobile.js";
-import "../../js/core/topbar-mobile-menu.js";
+import "../../js/core/topbar-controller.js";
 
 /* ================= DOM ================= */
 const btnBack = document.getElementById("btnBack");
