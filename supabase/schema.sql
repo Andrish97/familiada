@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict qTi6mbYGfP9KWzwjsE2jDUC548cpyfOyuoUSYdP7EH9iZ0xm9ZJPXOLcRNkE0cq
+\restrict KpcaTYeZm4CGF9XTAJCcC7kIcRnZUDtavi0Fwym8xvnSLneTzdEYgFwdDAXvjJu
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -2114,6 +2114,23 @@ end $$;
 
 
 --
+-- Name: expire_my_device_shares(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."expire_my_device_shares"() RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+BEGIN
+  DELETE FROM public.shared_devices
+  WHERE owner_id = auth.uid()
+    AND expires_at IS NOT NULL
+    AND expires_at < now();
+END;
+$$;
+
+
+--
 -- Name: find_report_and_append_message("text", "text", "text", "text"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -3156,7 +3173,7 @@ $$;
 -- Name: list_my_device_shares(); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION "public"."list_my_device_shares"() RETURNS TABLE("share_id" "uuid", "device_type" "text", "recipient_id" "uuid", "recipient_username" "text", "recipient_email" "text")
+CREATE FUNCTION "public"."list_my_device_shares"() RETURNS TABLE("share_id" "uuid", "device_type" "text", "recipient_id" "uuid", "recipient_username" "text", "recipient_email" "text", "game_id" "uuid", "game_name" "text", "expires_at" timestamp with time zone)
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
     AS $$
@@ -3167,7 +3184,10 @@ BEGIN
     sd.device_type,
     sd.recipient_id,
     p.username,
-    p.email
+    p.email,
+    sd.game_id,
+    sd.game_name,
+    sd.expires_at
   FROM public.shared_devices sd
   JOIN public.profiles p ON p.id = sd.recipient_id
   WHERE sd.owner_id = auth.uid();
@@ -3289,18 +3309,24 @@ $$;
 -- Name: list_shared_devices_for_me(); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION "public"."list_shared_devices_for_me"() RETURNS TABLE("share_id" "uuid", "device_type" "text", "owner_id" "uuid", "owner_username" "text", "owner_email" "text")
+CREATE FUNCTION "public"."list_shared_devices_for_me"() RETURNS TABLE("share_id" "uuid", "device_type" "text", "owner_id" "uuid", "owner_username" "text", "owner_email" "text", "game_id" "uuid", "game_name" "text", "expires_at" timestamp with time zone)
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
     AS $$
 BEGIN
+  DELETE FROM public.shared_devices
+  WHERE expires_at IS NOT NULL AND expires_at < now();
+
   RETURN QUERY
   SELECT
     sd.id,
     sd.device_type,
     sd.owner_id,
     p.username,
-    p.email
+    p.email,
+    sd.game_id,
+    sd.game_name,
+    sd.expires_at
   FROM public.shared_devices sd
   JOIN public.profiles p ON p.id = sd.owner_id
   WHERE sd.recipient_id = auth.uid();
@@ -8570,10 +8596,10 @@ $$;
 
 
 --
--- Name: share_device("uuid", "text"); Type: FUNCTION; Schema: public; Owner: -
+-- Name: share_device("uuid", "text", "uuid", "text", timestamp with time zone); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION "public"."share_device"("p_recipient_user_id" "uuid", "p_device_type" "text") RETURNS "jsonb"
+CREATE FUNCTION "public"."share_device"("p_recipient_user_id" "uuid", "p_device_type" "text", "p_game_id" "uuid" DEFAULT NULL::"uuid", "p_game_name" "text" DEFAULT NULL::"text", "p_expires_at" timestamp with time zone DEFAULT NULL::timestamp with time zone) RETURNS "jsonb"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
     AS $$
@@ -8582,11 +8608,15 @@ DECLARE
 BEGIN
   IF v_owner IS NULL THEN RETURN jsonb_build_object('ok', false, 'err', 'not_authenticated'); END IF;
   IF v_owner = p_recipient_user_id THEN RETURN jsonb_build_object('ok', false, 'err', 'self_share'); END IF;
-  IF p_device_type NOT IN ('host', 'buzzer') THEN RETURN jsonb_build_object('ok', false, 'err', 'invalid_type'); END IF;
+  IF p_device_type NOT IN ('host', 'buzzer', 'display') THEN RETURN jsonb_build_object('ok', false, 'err', 'invalid_type'); END IF;
 
-  INSERT INTO public.shared_devices (owner_id, recipient_id, device_type)
-  VALUES (v_owner, p_recipient_user_id, p_device_type)
-  ON CONFLICT (owner_id, recipient_id, device_type) DO NOTHING;
+  INSERT INTO public.shared_devices (owner_id, recipient_id, device_type, game_id, game_name, expires_at)
+  VALUES (v_owner, p_recipient_user_id, p_device_type, p_game_id, p_game_name, p_expires_at)
+  ON CONFLICT (owner_id, recipient_id, device_type)
+  DO UPDATE SET
+    game_id    = EXCLUDED.game_id,
+    game_name  = EXCLUDED.game_name,
+    expires_at = EXCLUDED.expires_at;
 
   RETURN jsonb_build_object('ok', true);
 END;
@@ -12272,5 +12302,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict qTi6mbYGfP9KWzwjsE2jDUC548cpyfOyuoUSYdP7EH9iZ0xm9ZJPXOLcRNkE0cq
+\unrestrict KpcaTYeZm4CGF9XTAJCcC7kIcRnZUDtavi0Fwym8xvnSLneTzdEYgFwdDAXvjJu
 
