@@ -4350,6 +4350,10 @@ const pl = {
       label: "Podgląd",
       ready: "Powrót już możliwy",
       at: "Powrót {time}",
+      inShort: "Powrót za {time}",
+      inLong: "Powrót za {time}",
+      inDaysHours: "Powrót za {days}d {time}",
+      inDays: "Powrót za {days}d",
     },
     debug: {
       title: "Debug / status",

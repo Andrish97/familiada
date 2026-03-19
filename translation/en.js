@@ -4035,6 +4035,10 @@ const en = {
       label: "Preview",
       ready: "Return is possible now",
       at: "Return {time}",
+      inShort: "Return in {time}",
+      inLong: "Return in {time}",
+      inDaysHours: "Return in {days}d {time}",
+      inDays: "Return in {days}d",
     },
     debug: {
       title: "Debug / status",
@@ -4381,6 +4385,8 @@ const en = {
       hintDesktop: "Connect as display.",
     },
     scan: {
+      title: "Scan device QR code",
+      hint: "Point the camera at the QR code shown in the control panel.",
       btn: "📷 Scan QR",
       cameraError: "Camera access denied.",
       noQr: "No QR code found in the photo.",
@@ -4583,6 +4589,7 @@ const en = {
     shareDeviceModal: {
       title: "Share",
       subtitle: "Pick a subscriber or enter an email.",
+      subtitle2: "Select subscribers and devices to share.",
       currentLabel: "Currently shared with:",
       sectionAdd: "By email / username",
       noneShared: "Not shared.",
