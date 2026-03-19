@@ -144,28 +144,31 @@ async function startQrScan() {
         });
       }
 
-      const img = new Image();
-      img.src = URL.createObjectURL(file);
-      await new Promise(r => { img.onload = r; });
-
-      // Resize do max 1024px, bo jsQR słabo radzi sobie z ogromnymi zdjęciami z iOS
-      let w = img.width;
-      let h = img.height;
-      const MAX = 1024;
+      // createImageBitmap z imageOrientation:"from-image" aplikuje EXIF rotation (fix iOS)
+      // Fallback do <img> dla bardzo starych przeglądarek
+      let bitmap;
+      const objectUrl = URL.createObjectURL(file);
+      try {
+        bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+      } catch {
+        const img = new Image();
+        img.src = objectUrl;
+        await new Promise(r => { img.onload = r; });
+        bitmap = img;
+      }
+      let w = bitmap.width;
+      let h = bitmap.height;
+      const MAX = 1500;
       if (w > MAX || h > MAX) {
-        if (w > h) {
-          h = Math.round((h * MAX) / w);
-          w = MAX;
-        } else {
-          w = Math.round((w * MAX) / h);
-          h = MAX;
-        }
+        if (w > h) { h = Math.round((h * MAX) / w); w = MAX; }
+        else        { w = Math.round((w * MAX) / h); h = MAX; }
       }
 
       const canvas = document.createElement("canvas");
       canvas.width = w; canvas.height = h;
-      canvas.getContext("2d").drawImage(img, 0, 0, w, h);
-      URL.revokeObjectURL(img.src);
+      canvas.getContext("2d").drawImage(bitmap, 0, 0, w, h);
+      URL.revokeObjectURL(objectUrl);
+      if (bitmap.close) bitmap.close();
 
       const imageData = canvas.getContext("2d").getImageData(0, 0, w, h);
       const code = window.jsQR(imageData.data, imageData.width, imageData.height);
