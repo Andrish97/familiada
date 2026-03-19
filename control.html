@@ -1155,7 +1155,14 @@
       <div class="mTitle" id="shareDeviceTitle" data-i18n="control.shareDeviceModal.title">Udostępnij urządzenie</div>
       <div class="mSub" data-i18n="control.shareDeviceModal.subtitle">Wybierz subskrybenta lub wpisz e-mail / nazwę użytkownika.</div>
 
-      <div class="shareAddTop" style="margin-top:10px;">
+      <!-- Kogo aktualnie udostępniono -->
+      <div id="shareDeviceCurrentWrap" class="shareCurrent" style="display:none;">
+        <div class="shareCurrentLabel" data-i18n="control.shareDeviceModal.currentLabel">Aktualnie udostępnione dla:</div>
+        <div id="shareDeviceCurrentContent"></div>
+      </div>
+
+      <div class="shareSection">
+        <div class="shareSectionTitle" data-i18n="control.shareDeviceModal.sectionAdd">Przez e-mail / nazwę</div>
         <div class="importRow">
           <input id="shareDeviceEmail" class="inp" type="text"
                  placeholder="Nazwa użytkownika lub e-mail..."
@@ -1165,7 +1172,7 @@
         <div class="importMsg" id="shareDeviceMsg"></div>
       </div>
 
-      <div class="shareSection" style="margin-top:10px;">
+      <div class="shareSection">
         <div class="shareSectionTitle" data-i18n="bases.shareModal.sectionSubscribers">Moi subskrybenci</div>
         <div class="shareList" id="shareDeviceSubsList"></div>
       </div>
