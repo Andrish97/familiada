@@ -2387,7 +2387,7 @@ const pl = {
       title: "Zainstaluj aplikację",
       text: "Dodaj Familiadę do ekranu głównego, żeby mieć szybki dostęp.",
       ok: "Zainstaluj",
-      cancel: "Nie teraz",
+      cancel: "Nie pokazuj",
     },
     import: {
       title: "Importuj",
