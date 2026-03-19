@@ -8,17 +8,22 @@
   padding-bottom: 28px;
 }
 
+.account-wrap .bar > div {
+  flex: 1;
+  min-width: 0;
+}
+
 .account-status {
-  margin-top: 10px;
+  margin-top: 8px;
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 
 .account-status .status {
-  padding: 12px 14px;
-  border-radius: 16px;
-  border: 1px solid rgba(255,234,166,.2);
-  background: rgba(0,0,0,.22);
+  font-size: 12px;
+  opacity: .5;
+  padding: 2px 0;
+  text-align: right;
 }
 
 .account-status .err {
