@@ -1070,19 +1070,23 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   setTopbarAccount(currentUser, { withAccountSettings: true });
 
-  // btnInstall: widoczny gdy nie standalone
+  // btnInstall: widoczny gdy pwa:installable odpalił (canInstall) lub iOS Safari — nie standalone
   if (btnInstall) {
-    if (!isStandalone()) {
-      btnInstall.style.display = "";
-    } else {
+    if (isStandalone()) {
       btnInstall.style.display = "none";
+    } else if (pwaApi.canInstall() || isIOSSafari()) {
+      btnInstall.style.display = "";
     }
+    // Inaczej zostaje ukryty (Firefox, Safari desktop, lub Chrome zanim odpali beforeinstallprompt)
   }
 
   void maybeShowIosWebappPrompt();
 
   // Android/Chrome/Edge/desktop – auto-prompt instalacji PWA (po odrzuceniu LS_KEY jest set → nie odpali)
-  window.addEventListener("pwa:installable", showPwaPrompt, { once: true });
+  window.addEventListener("pwa:installable", () => {
+    if (btnInstall && !isStandalone()) btnInstall.style.display = "";
+    if (!localStorage.getItem("pwa:install_dismissed")) showPwaPrompt();
+  }, { once: true });
   if (pwaApi.canInstall() && !localStorage.getItem("pwa:install_dismissed")) showPwaPrompt();
 
   async function showPwaPrompt() {
@@ -1118,9 +1122,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           okText: tSafe("builder.iosWebapp.ok", fallback.ok),
         });
       } else {
-        await alertModal({
-          text: t("builder.pwaInstall.unavailable") || "Przeglądarka nie obsługuje instalacji lub aplikacja jest już zainstalowana.",
-        });
+        return; // Chrome: beforeinstallprompt jeszcze nie odpalił lub app już zainstalowana
       }
       return;
     }

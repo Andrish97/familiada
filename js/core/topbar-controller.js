@@ -211,9 +211,10 @@ export function setTopbarAccount(user, {
   if (!section4) return { guestMode: true };
 
   // Przywróć poprzedni stan (obsługa ponownego wywołania)
-  const prevMenu = section4.querySelector('#topbarAccountMenu');
+  // Szukaj w całym dokumencie — elementy mogą być przeniesione do mobile panelu
+  const prevMenu = document.getElementById('topbarAccountMenu');
   if (prevMenu) prevMenu.remove();
-  const prevWho = section4.querySelector('#who, #whoStatic');
+  const prevWho = document.querySelector('#who, #whoStatic');
   if (prevWho) {
     prevWho.innerHTML = '—';
     prevWho.className = prevWho.className.replace(/\baccount-btn\b|\baccount-btn--mobile-label\b/g, '').trim();
@@ -223,8 +224,8 @@ export function setTopbarAccount(user, {
   }
   _accountState = null;
 
-  const whoEl = section4.querySelector('#who, #whoStatic');
-  const btnLoginEl = section4.querySelector('#btnLogout');
+  const whoEl = document.querySelector('#who, #whoStatic');
+  const btnLoginEl = document.getElementById('btnLogout');
 
   if (!user) {
     if (whoEl) whoEl.style.display = 'none';

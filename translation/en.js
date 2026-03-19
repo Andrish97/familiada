@@ -2390,6 +2390,7 @@ const en = {
       text: "Add Familiada to your home screen for quick access.",
       ok: "Install",
       cancel: "Don't show",
+      unavailable: "Your browser doesn't support installation or the app is already installed.",
     },
     iosWebapp: {
       title: "Add Familiada to Home Screen",

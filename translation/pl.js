@@ -2389,6 +2389,7 @@ const pl = {
       text: "Dodaj Familiadę do ekranu głównego, żeby mieć szybki dostęp.",
       ok: "Zainstaluj",
       cancel: "Nie pokazuj",
+      unavailable: "Przeglądarka nie obsługuje instalacji lub aplikacja jest już zainstalowana.",
     },
     import: {
       title: "Importuj",
