@@ -17,6 +17,7 @@ const en = {
     copy: "Copy",
     done: "Done",
     authEntry: "Sign in / Create account",
+    logout: "Log out",
     cancel: "Cancel",
     dash: "-",
     modal: {

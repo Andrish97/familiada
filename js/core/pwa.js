@@ -13,10 +13,14 @@ export function initPwa() {
   let deferredPrompt = null;
 
   window.addEventListener("beforeinstallprompt", (e) => {
-    if (localStorage.getItem(LS_KEY)) return;
+    // Zawsze zapobiegaj domyślnemu zachowaniu przeglądarki
     e.preventDefault();
+    // Zawsze zapisz prompt (dla przycisku instalacji)
     deferredPrompt = e;
-    window.dispatchEvent(new CustomEvent("pwa:installable", { detail: { prompt: e } }));
+    // Dispatchuj zdarzenie auto-modala tylko gdy użytkownik nie odrzucił
+    if (!localStorage.getItem(LS_KEY)) {
+      window.dispatchEvent(new CustomEvent("pwa:installable", { detail: { prompt: e } }));
+    }
   });
 
   window.addEventListener("appinstalled", () => {
@@ -27,6 +31,7 @@ export function initPwa() {
 
   return {
     canInstall: () => !!deferredPrompt,
+    getPrompt: () => deferredPrompt,
     install: async () => {
       if (!deferredPrompt) return false;
       deferredPrompt.prompt();

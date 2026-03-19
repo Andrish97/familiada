@@ -23,52 +23,56 @@
       <div class="brand">FAMILIADA</div>
     </div>
     <div class="topbar-section topbar-section-2">
+      <button class="btn" id="btnMarketplace">
+        <span data-i18n="builder.nav.marketplace">Gry Społeczności 🎮</span>
+        <span class="badge" id="marketplaceBadge" aria-hidden="true"></span>
+      </button>
+
+      <button class="btn" id="btnLogoEditor">
+        <span data-i18n="builder.nav.logo">Logo 🖥️</span>
+      </button>
+
+      <button class="btn" id="btnBases">
+        <span data-i18n="builder.nav.bases">Bazy pytań 🗃️</span>
+        <span class="badge" id="basesBadge" aria-hidden="true"></span>
+      </button>
+
       <button class="btn" id="btnPollsHub">
-        <span class="only-desktop" data-i18n="builder.nav.pollsHubPolls">Sondaże 📊</span>
-        <span class="only-mobile" data-i18n="builder.nav.pollsHubMobilePolls">📊</span>
+        <span data-i18n="builder.nav.pollsHubPolls">Sondaże 📊</span>
         <span class="badge" id="pollsHubBadge" aria-hidden="true"></span>
       </button>
 
       <button class="btn" id="btnSubscriptionsHub">
-        <span class="only-desktop" data-i18n="builder.nav.pollsHubSubs">Subskrypcje 📧</span>
-        <span class="only-mobile" data-i18n="builder.nav.pollsHubMobileSubs">📧</span>
+        <span data-i18n="builder.nav.pollsHubSubs">Subskrypcje 📧</span>
         <span class="badge" id="subscriptionsHubBadge" aria-hidden="true"></span>
       </button>
 
-      <button class="btn" id="btnBases">
-        <span class="only-desktop" data-i18n="builder.nav.bases">Bazy pytań 🗃️</span>
-        <span class="only-mobile" data-i18n="builder.nav.basesMobile">🗃️</span>
-        <span class="badge" id="basesBadge" aria-hidden="true"></span>
-      </button>
-
-      <button class="btn" id="btnLogoEditor">
-        <span class="only-desktop" data-i18n="builder.nav.logo">Logo 🖥️</span>
-        <span class="only-mobile" data-i18n="builder.nav.logoMobile">🖥️</span>
-      </button>
-
-      <button class="btn" id="btnMarketplace">
-        <span class="only-desktop" data-i18n="builder.nav.marketplace">Gry Społeczności 🎮</span>
-        <span class="only-mobile" data-i18n="builder.nav.marketplaceMobile">🛒</span>
-      </button>
-
-      <button class="btn" id="btnConnectDevice" style="display:none;">
-        <span class="only-desktop" data-i18n="builder.nav.connectDevice">Podłącz urządzenie 📱</span>
-        <span class="only-mobile" data-i18n="builder.nav.connectDeviceMobile">📱</span>
+      <button class="btn" id="btnConnectDevice" data-nav-hidden="true" style="display:none;">
+        <span data-i18n="builder.nav.connectDevice">Podłącz urządzenie 📱</span>
         <span class="badge" id="connectDeviceBadge" aria-hidden="true"></span>
       </button>
+
+      <div class="nav-more" id="navMore" style="display:none;">
+        <button class="btn" id="btnMore" type="button">Więcej ▾<span class="badge" id="moreBadge" aria-hidden="true"></span></button>
+        <div class="nav-more-dropdown" id="navMoreDropdown" hidden></div>
+      </div>
     </div>
     <div class="topbar-section topbar-section-3">
-      <button class="btn" id="btnManual">
-        <span class="only-desktop" data-i18n="builder.nav.manual">Wskazówki ℹ️</span>
-        <span class="only-mobile" data-i18n="builder.nav.manualMobile">ℹ️</span>
-      </button>
+      <button class="btn icon-btn" id="btnInstall" type="button" style="display:none;">↓</button>
+      <button class="btn icon-btn" id="btnManual" type="button">ℹ️</button>
     </div>
     <div class="topbar-section topbar-section-4">
       <div class="who" id="whoStatic">—</div>
-      <button class="btn user-btn" id="btnAccount" type="button">
-        <span class="user-name" id="who">—</span>
-        <span class="user-sub" data-i18n="builder.nav.account">Ustawienia konta</span>
-      </button>
+      <div class="account-wrap" id="accountWrap" style="display:none;">
+        <button class="btn account-btn" id="btnAccount" type="button">
+          <span id="who">—</span>
+          <span class="account-chevron">▾</span>
+        </button>
+        <div class="account-menu" id="accountMenu" hidden>
+          <button class="account-menu-item" id="btnAccountSettings" type="button" data-i18n="builder.nav.account">Ustawienia konta</button>
+          <button class="account-menu-item" id="btnAccountLogout" type="button" data-i18n="common.logout">Wyloguj</button>
+        </div>
+      </div>
       <button class="btn" id="btnLogout" type="button" data-i18n="common.authEntry">Zaloguj / Załóż konto</button>
     </div>
   </header>
@@ -254,11 +258,11 @@
           <div id="exportBaseProgStep" style="font-weight:800;letter-spacing:.04em">—</div>
           <div id="exportBaseProgCount" style="margin-left:auto;opacity:.8">0/0</div>
         </div>
-      
+
         <div style="height:10px;border-radius:999px;background:rgba(255,255,255,.10);overflow:hidden">
           <div id="exportBaseProgBar" style="height:100%;width:0%;background:rgba(255,255,255,.85)"></div>
         </div>
-      
+
         <div class="importMsg" id="exportBaseProgMsg" style="min-height:18px"></div>
       </div>
 
@@ -276,17 +280,17 @@
     <div class="modal" style="width:min(640px,94vw)">
       <div class="mTitle" data-i18n="builder.exportFile.title">EXPORT…</div>
       <div class="mSub" id="exportJsonSub" data-i18n="builder.exportFile.subtitle">Nie zamykaj strony. Trwa przygotowanie pliku.</div>
-  
+
       <div style="margin-top:12px;display:grid;gap:10px">
         <div class="importRow" style="align-items:center">
           <div id="exportJsonStep" style="font-weight:800;letter-spacing:.04em">—</div>
           <div id="exportJsonCount" style="margin-left:auto;opacity:.8">0/0</div>
         </div>
-  
+
         <div style="height:10px;border-radius:999px;background:rgba(255,255,255,.10);overflow:hidden">
           <div id="exportJsonBar" style="height:100%;width:0%;background:rgba(255,255,255,.85)"></div>
         </div>
-  
+
         <div class="importMsg" id="exportJsonMsg" style="min-height:18px"></div>
       </div>
     </div>

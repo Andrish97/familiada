@@ -1,9 +1,10 @@
 // base-explorerjs/page.js
 // Init strony menadżera bazy (warstwa 2)
 
-import { requireAuth, signOut } from "../../js/core/auth.js";
+import { requireAuth } from "../../js/core/auth.js";
 import { alertModal } from "../../js/core/modal.js";
 import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js";
+import { initTopbarAccountDropdown } from "../../js/core/topbar-auth.js";
 import { createState, setRole } from "./state.js";
 import { renderAll } from "./render.js";
 import {
@@ -49,17 +50,13 @@ btnBack?.addEventListener("click", () => {
   location.href = withLangParam("../bases");
 });
 
-btnLogout?.addEventListener("click", async () => {
-  await signOut();
-  location.href = withLangParam("../login");
-});
 
 /* ================= Init ================= */
 (async function init() {
   await initI18n({ withSwitcher: true });
   // auth
   const user = await requireAuth(withLangParam("../login"));
-  if (who) who.textContent = user?.username || user?.email || "—";
+  initTopbarAccountDropdown(user, { accountHref: "../account", loginHref: "../login" });
 
   // base id z URL
   const baseId = getBaseIdFromUrl();

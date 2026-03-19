@@ -550,20 +550,131 @@ body.builder-body > main.wrap{
   padding: 6px 0;
 }
 
-@media (max-width: 900px){
-  body.builder-body .user-btn .user-sub{
-    padding-left: 10px;
-    font-size: 13px;
-    font-weight: 800;
-  }
+/* =========================================================
+   ICON BUTTON (btnInstall, btnManual)
+========================================================= */
+.icon-btn {
+  min-width: 38px;
+  min-height: 38px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  font-size: 17px;
+  line-height: 1;
+}
 
-  body.builder-body .user-btn .user-sub::before{
-    display: block;
-  }
+/* =========================================================
+   ACCOUNT DROPDOWN
+========================================================= */
+.account-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
 
-  body.builder-body .user-btn .user-sub::after{
-    content: none;
-  }
+.account-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 900;
+  white-space: nowrap;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.account-btn #who {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: inline-block;
+}
+
+.account-chevron {
+  font-size: 11px;
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+.account-menu {
+  position: fixed;
+  z-index: 1000;
+  display: grid;
+  gap: 4px;
+  padding: 8px;
+  min-width: 180px;
+  background: var(--card, #111827);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 14px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.7);
+}
+
+.account-menu[hidden] {
+  display: none;
+}
+
+.account-menu-item {
+  display: block;
+  width: 100%;
+  padding: 10px 14px;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.account-menu-item:hover {
+  background: rgba(255, 255, 255, 0.10);
+}
+
+/* =========================================================
+   OVERFLOW NAV (nav-more)
+========================================================= */
+.nav-more {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.nav-more-dropdown {
+  position: fixed;
+  z-index: 1000;
+  display: grid;
+  gap: 4px;
+  padding: 8px;
+  min-width: 180px;
+  background: var(--card, #111827);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 14px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.7);
+}
+
+.nav-more-dropdown[hidden] {
+  display: none;
+}
+
+.nav-more-dropdown .btn {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.nav-more-dropdown .btn:hover {
+  background: rgba(255, 255, 255, 0.10);
 }
 
 /* =========================================================

@@ -6,6 +6,7 @@
 
 import { initI18n, t, withLangParam } from "../../translation/translation.js";
 import { getUser } from "../core/auth.js";
+import { initTopbarAccountDropdown } from "../core/topbar-auth.js";
 import "../core/contact-modal.js";
 
 function byId(id) { return document.getElementById(id); }
@@ -65,15 +66,9 @@ function setBackButton({ loggedIn }) {
 }
 
 function setAuthUi(user) {
-  const who = byId("who");
-  const btnLogout = byId("btnLogout");
-
-  if (who) {
-    who.textContent = user?.username || user?.email || "—";
-    who.style.display = user ? "" : "none";
+  if (!isControlModal()) {
+    initTopbarAccountDropdown(user);
   }
-
-
   setBackButton({ loggedIn: !!user });
 }
 

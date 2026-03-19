@@ -17,6 +17,7 @@ const uk = {
     copy: "Копіювати",
     done: "Готово",
     authEntry: "Увійти / Створити акаунт",
+    logout: "Вийти",
     cancel: "Скасувати",
     dash: "-",
     modal: {

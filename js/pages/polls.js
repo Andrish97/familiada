@@ -4,6 +4,7 @@ import { requireAuth } from "../core/auth.js";
 import { alertModal, confirmModal } from "../core/modal.js";
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
 import { initI18n, t, withLangParam } from "../../translation/translation.js";
+import { initTopbarAccountDropdown } from "../core/topbar-auth.js";
 import "../core/contact-modal.js";
 
 initI18n({ withSwitcher: true });
@@ -1144,7 +1145,7 @@ async function refresh() {
 
 document.addEventListener("DOMContentLoaded", async () => {
   const u = await requireAuth("login");
-  if (who) who.textContent = u?.username || u?.email || "—";
+  initTopbarAccountDropdown(u);
 
   if (btnBack) {
     btnBack.textContent = getRetPathnameLower().endsWith("/polls-hub") ? t("polls.backToHub") : t("polls.backToGames");
@@ -1168,7 +1169,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     location.href = backTarget;
   });
 
-  btnLogout?.addEventListener("click", async (e) => {
+  // Guard: jeśli jest otwarty edytor tekstu, potwierdź przed wylogowaniem
+  const btnLogoutMenu = document.getElementById("topbar-account-logout");
+  btnLogoutMenu?.addEventListener("click", async (e) => {
     if (!uiTextCloseOpen) return;
 
     e.preventDefault();
@@ -1183,8 +1186,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!ok) return;
     setTextCloseUi(false);
 
-    btnLogout.click();
-  });
+    btnLogoutMenu.click();
+  }, true); // capture = true, żeby interceptować przed handlerem dropdown
 
   btnCopy?.addEventListener("click", async () => {
     if (!pollLinkEl?.value) return;

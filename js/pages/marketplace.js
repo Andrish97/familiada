@@ -4,6 +4,7 @@ import { sb, buildSiteUrl } from "../core/supabase.js";
 import { getUser } from "../core/auth.js";
 import { isGuestUser } from "../core/guest-mode.js";
 import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../translation/translation.js";
+import { initTopbarAccountDropdown } from "../core/topbar-auth.js";
 import { exportGame } from "./builder-import-export.js";
 import { initUiSelect } from "../core/ui-select.js";
 import { confirmModal } from "../core/modal.js";
@@ -570,10 +571,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   currentUser = await getUser();
   isGuest = !currentUser || isGuestUser(currentUser);
 
-  // Topbar — user info
-  const whoLabel = currentUser?.username || currentUser?.email || "—";
-  if (els.who) els.who.textContent = whoLabel;
-  if (els.whoStatic) els.whoStatic.textContent = whoLabel;
+  // Topbar — user info (account dropdown)
+  initTopbarAccountDropdown(currentUser);
 
   if (!currentUser) {
     // Anonim: zmień przycisk powrotu na "← Strona główna", ukryj zbędne przyciski
@@ -583,16 +582,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         `<span class="only-mobile">🏠</span>`;
     }
     if (els.btnManual)  els.btnManual.hidden = true;
-    if (els.btnAccount) els.btnAccount.style.display = "none";
-    if (els.whoStatic)  els.whoStatic.style.display = "none";
-    if (els.btnLogout)  els.btnLogout.textContent = t("common.authEntry");
-    if (els.btnLogout)  els.btnLogout.onclick = () => { window.location.href = withLangParam("login"); };
-  } else if (isGuest) {
-    if (els.btnAccount) els.btnAccount.style.display = "none";
-    if (els.whoStatic)  els.whoStatic.style.display = "";
-  } else {
-    if (els.btnAccount) els.btnAccount.style.display = "";
-    if (els.whoStatic)  els.whoStatic.style.display = "none";
   }
 
   // "Moje wysłane" button — only for logged-in non-guests
