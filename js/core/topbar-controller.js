@@ -375,7 +375,7 @@ function initTopbarController() {
   const menuContentSelector =
     'button, a, [role="button"], [role="tab"], .btn, .user-btn, .lang-switcher, .top-status';
 
-  let overlay, panel, closeBtn, mount, tabGroup, group2, group4, toggleBtn, toggleBadge, badgeObserver;
+  let overlay, panel, closeBtn, mount, tabGroup, group2, group4, sep, toggleBtn, toggleBadge, badgeObserver;
   let isMobileMounted = false;
 
   const parseBadgeNumber = (raw) => {
@@ -473,7 +473,9 @@ function initTopbarController() {
     _accountState?.expand();
     _mobileActive = true;
 
-    mount.append(group2, group4);
+    sep = document.createElement('div');
+    sep.className = 'topbar-mobile-sep';
+    mount.append(group2, sep, group4);
 
     const visibleItems = (root) => [...root.querySelectorAll(menuContentSelector)].filter(isVisible);
     const hasAnything =
@@ -540,7 +542,7 @@ function initTopbarController() {
 
     try { badgeObserver?.disconnect(); } catch {}
     badgeObserver = toggleBadge = null;
-    overlay = panel = closeBtn = mount = tabGroup = group2 = group4 = toggleBtn = null;
+    overlay = panel = closeBtn = mount = tabGroup = group2 = group4 = sep = toggleBtn = null;
 
     // Przelicz overflow po przywróceniu section-2
     _overflowState?.collapseAll();
