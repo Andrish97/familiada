@@ -1595,6 +1595,20 @@ async function boot(){
   });
 
   await refresh();
+
+  if ("launchQueue" in window) {
+    window.launchQueue.setConsumer(async (launchParams) => {
+      if (!launchParams.files?.length) return;
+      const file = await launchParams.files[0].getFile();
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      if (inpImportLogoFile) {
+        inpImportLogoFile.files = dt.files;
+        inpImportLogoFile.dispatchEvent(new Event("change"));
+      }
+      openLogoImportModal();
+    });
+  }
 }
 
 // kuloodporne uruchomienie (działa też przy dynamicznym import())
