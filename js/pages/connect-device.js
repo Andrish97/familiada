@@ -4,15 +4,15 @@ import { sb } from "../core/supabase.js";
 import { requireAuth } from "../core/auth.js";
 import { isGuestUser, showGuestBlockedOverlay } from "../core/guest-mode.js";
 import { isMobileDevice } from "../core/pwa.js";
-import { initI18n, t, withLangParam } from "../../translation/translation.js";
+import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js";
+import { autoInitTopbarAuthButton } from "../core/topbar-auth.js";
 import "../core/contact-modal.js";
 
 initI18n({ withSwitcher: true });
 
 const who = document.getElementById("who");
-const whoStatic = document.getElementById("whoStatic");
 const btnBack = document.getElementById("btnBack");
-const btnAccount = document.getElementById("btnAccount");
+const btnManual = document.getElementById("btnManual");
 const btnLogout = document.getElementById("btnLogout");
 const btnScanQr = document.getElementById("btnScanQr");
 const sharedDevicesList = document.getElementById("sharedDevicesList");
@@ -37,6 +37,18 @@ function deviceTypeEmoji(type) {
 }
 
 const _isMobile = isMobileDevice();
+
+function getCurrentRelativeUrl() {
+  return `${location.pathname.split("/").pop() || "connect-device"}${location.search}${location.hash}`;
+}
+
+function buildManualUrl() {
+  const url = new URL("manual", location.href);
+  url.searchParams.set("ret", getCurrentRelativeUrl());
+  url.searchParams.set("lang", getUiLang() || "pl");
+  url.hash = "connect-device";
+  return url.toString();
+}
 
 async function renderSharedDevices() {
   sharedDevicesList.innerHTML = `<div style="opacity:.55;font-size:.88rem;">${t("connectDevice.shared.loading") || "Ładowanie…"}</div>`;
@@ -125,12 +137,26 @@ async function startQrScan() {
       img.src = URL.createObjectURL(file);
       await new Promise(r => { img.onload = r; });
 
+      // Resize do max 1024px, bo jsQR słabo radzi sobie z ogromnymi zdjęciami z iOS
+      let w = img.width;
+      let h = img.height;
+      const MAX = 1024;
+      if (w > MAX || h > MAX) {
+        if (w > h) {
+          h = Math.round((h * MAX) / w);
+          w = MAX;
+        } else {
+          w = Math.round((w * MAX) / h);
+          h = MAX;
+        }
+      }
+
       const canvas = document.createElement("canvas");
-      canvas.width = img.width; canvas.height = img.height;
-      canvas.getContext("2d").drawImage(img, 0, 0);
+      canvas.width = w; canvas.height = h;
+      canvas.getContext("2d").drawImage(img, 0, 0, w, h);
       URL.revokeObjectURL(img.src);
 
-      const imageData = canvas.getContext("2d").getImageData(0, 0, canvas.width, canvas.height);
+      const imageData = canvas.getContext("2d").getImageData(0, 0, w, h);
       const code = window.jsQR(imageData.data, imageData.width, imageData.height);
       if (code?.data?.startsWith("http")) {
         window.location.href = code.data;
@@ -192,11 +218,10 @@ async function startQrScan() {
     return;
   }
 
-  const whoLabel = currentUser?.username || currentUser?.email || "—";
-  if (who) who.textContent = whoLabel;
-  if (whoStatic) whoStatic.textContent = whoLabel;
-  if (btnAccount) btnAccount.style.display = "";
-  if (whoStatic) whoStatic.style.display = "none";
+  if (who) who.textContent = currentUser?.username || currentUser?.email || "—";
+  if (btnLogout) {
+    autoInitTopbarAuthButton(btnLogout);
+  }
 
   if (pageHint) pageHint.textContent = _isMobile
     ? (t("connectDevice.header.hintMobile") || "Podłącz się jako prowadzący lub buzzer.")
@@ -209,12 +234,7 @@ async function startQrScan() {
   }
 
   btnBack?.addEventListener("click", () => { location.href = withLangParam("builder"); });
-  btnAccount?.addEventListener("click", () => { location.href = "account"; });
-  btnLogout?.addEventListener("click", async () => {
-    const { signOut } = await import("../core/auth.js");
-    await signOut();
-    location.href = withLangParam("login");
-  });
+  btnManual?.addEventListener("click", () => { location.href = buildManualUrl(); });
 
   await renderSharedDevices();
 })();

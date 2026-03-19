@@ -1102,7 +1102,7 @@
   opacity: .75;
 }
 
-/* kontener canvasa - canvas zawsze widoczny w całości */
+/* kontener canvasa - scrollable on mobile */
 #previewOverlay .previewModalCanvas{
   flex: 1;
   min-height: 0;
@@ -1110,16 +1110,28 @@
   align-items: center;
   justify-content: center;
   width: 100%;
-  overflow: hidden;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  background: rgba(0,0,0,.25);
+  border-radius: 12px;
 }
 
-/* canvas skaluje się do kontenera, zawsze widoczny w całości */
+/* canvas skaluje się do kontenera na desktopie, na touch pozwala na scroll */
 #previewOverlay .previewModalCanvas canvas{
   display: block;
   width: 100%;
   height: auto;
   max-height: 100%;
   image-rendering: pixelated;
+  flex-shrink: 0;
+}
+
+#previewOverlay .modal.previewModal.is-touch .previewModalCanvas canvas {
+  width: auto;
+  max-width: none;
+  max-height: none;
+  height: auto;
+  /* Pozwalamy na natywne przybliżanie palcami jeśli kontener ma overflow:auto */
 }
 
 /* =========================================================

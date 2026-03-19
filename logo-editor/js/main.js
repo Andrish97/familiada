@@ -8,6 +8,7 @@ import { requireAuth, signOut } from "../../js/core/auth.js";
 import { isGuestUser } from "../../js/core/guest-mode.js";
 import { alertModal, confirmModal } from "../../js/core/modal.js";
 import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js";
+import { isMobileDevice } from "../../js/core/pwa.js";
 
 import { initTextEditor } from "./text.js";
 import { initTextPixEditor } from "./text-pix.js";
@@ -689,6 +690,12 @@ function renderBits150x70ToBig(bits150, canvas){
 function openPreviewFullscreen(payload){
   if (payload.kind === "GLYPH") renderRows30x10ToBig(payload.rows, bigPreviewFull);
   else renderBits150x70ToBig(payload.bits, bigPreviewFull);
+  
+  const modal = previewOverlay.querySelector(".modal");
+  if (modal) {
+    modal.classList.toggle("is-touch", isMobileDevice());
+  }
+  
   show(previewOverlay, true);
 }
 
@@ -917,7 +924,7 @@ function renderList(){
     // 0) PLUS (jak w builder)
   {
     const add = document.createElement("div");
-   add.className = "addCard";
+   add.className = "addCard hide-mobile";
    add.innerHTML = `
      <div class="plus">＋</div>
      <div class="txt">${t("logoEditor.create.title")}</div>

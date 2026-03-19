@@ -1061,6 +1061,9 @@ body{
   flex: 1;
   padding-right: 42px;
 }
+@media (max-width: 900px) {
+  .hide-mobile { display: none !important; }
+}
 .pass-wrap .pass-toggle {
   position: absolute;
   right: 0;

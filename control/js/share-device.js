@@ -110,33 +110,6 @@ export function initShareDevice({ currentUser, game }) {
     const { data: shares } = await sb().rpc("list_my_device_shares");
     const current = (shares || []).find(s => s.device_type === _deviceType);
 
-    if (currentEl) {
-      if (current) {
-        const label = current.recipient_username || current.recipient_email || "—";
-        currentEl.innerHTML = `
-          <div class="shareRow">
-            <div class="shareEmail">${esc(label)}</div>
-            <div class="shareRowActions">
-              <button class="btn xsm" id="btnRevokeDevice" type="button">✕</button>
-            </div>
-          </div>`;
-        document.getElementById("btnRevokeDevice")?.addEventListener("click", async () => {
-          await sb().rpc("unshare_device", { p_recipient_user_id: current.recipient_id, p_device_type: _deviceType });
-          await renderModal();
-          await refreshBadges();
-        });
-        // Zablokuj dodawanie gdy już udostępnione
-        if (emailInp) emailInp.disabled = true;
-        if (btnAdd) btnAdd.disabled = true;
-        if (subsList) subsList.style.pointerEvents = "none";
-      } else {
-        currentEl.innerHTML = `<div style="opacity:.55;font-size:.85rem;">${t("control.shareDeviceModal.noneShared") || "Nie udostępniono."}</div>`;
-        if (emailInp) emailInp.disabled = false;
-        if (btnAdd) btnAdd.disabled = false;
-        if (subsList) subsList.style.pointerEvents = "";
-      }
-    }
-
     // Subskrybenci
     if (!subsList) return;
     const { data: subs } = await sb().rpc("polls_hub_list_my_subscribers");
@@ -144,31 +117,70 @@ export function initShareDevice({ currentUser, game }) {
 
     if (!activeSubs.length) {
       subsList.innerHTML = `<div style="opacity:.55;font-size:.85rem;">${t("control.shareDeviceModal.noSubs") || "Brak subskrybentów."}</div>`;
-      return;
-    }
-
-    subsList.innerHTML = "";
-    for (const sub of activeSubs) {
-      const isShared = current?.recipient_id === sub.subscriber_user_id;
-      const label = sub.subscriber_label || sub.subscriber_email || "—";
-      const row = document.createElement("div");
-      row.className = "shareRow";
-      row.innerHTML = `
-        <div class="shareEmail" title="${esc(sub.subscriber_email || label)}">${esc(label)}</div>
-        <div class="shareRowActions">
-          <button class="btn xsm ${isShared ? "gold" : ""}" data-uid="${esc(sub.subscriber_user_id)}" data-email="${esc(sub.subscriber_email || "")}" type="button" ${current && !isShared ? "disabled" : ""}>
-            ${isShared ? "✓" : t("bases.shareModal.add") || "Dodaj"}
-          </button>
-        </div>`;
-      row.querySelector("button")?.addEventListener("click", async () => {
-        if (msgEl) msgEl.textContent = "";
-        try {
-          await doShare(sub.subscriber_user_id, sub.subscriber_email);
-          await renderModal();
-          await refreshBadges();
-        } catch (e) {
-          if (msgEl) msgEl.textContent = e?.message || "Błąd.";
+      // Pozwalamy jednak wpisać e-mail ręcznie jeśli lista subów jest pusta
+      if (emailInp) emailInp.disabled = !!current;
+      if (btnAdd) btnAdd.disabled = !!current;
+    } else {
+      subsList.innerHTML = "";
+      for (const sub of activeSubs) {
+        const isShared = current?.recipient_id === sub.subscriber_user_id;
+        const label = sub.subscriber_label || sub.subscriber_email || "—";
+        const row = document.createElement("div");
+        row.className = "shareRow";
+        row.innerHTML = `
+          <div class="shareEmail" title="${esc(sub.subscriber_email || label)}">${esc(label)}</div>
+          <div class="shareRowActions">
+            ${isShared ? `
+              <button class="btn xsm gold" id="btnRevokeDevice" type="button">✕</button>
+            ` : `
+              <button class="btn xsm" data-uid="${esc(sub.subscriber_user_id)}" data-email="${esc(sub.subscriber_email || "")}" type="button" ${current ? "disabled" : ""}>
+                ${t("bases.shareModal.add") || "Dodaj"}
+              </button>
+            `}
+          </div>`;
+        
+        if (isShared) {
+          row.querySelector("#btnRevokeDevice")?.addEventListener("click", async () => {
+            await sb().rpc("unshare_device", { p_recipient_user_id: sub.subscriber_user_id, p_device_type: _deviceType });
+            await renderModal();
+            await refreshBadges();
+          });
+        } else {
+          row.querySelector("button")?.addEventListener("click", async () => {
+            if (msgEl) msgEl.textContent = "";
+            try {
+              await doShare(sub.subscriber_user_id, sub.subscriber_email);
+              await renderModal();
+              await refreshBadges();
+            } catch (e) {
+              if (msgEl) msgEl.textContent = e?.message || "Błąd.";
+            }
+          });
         }
+        subsList.appendChild(row);
+      }
+      
+      if (emailInp) emailInp.disabled = !!current;
+      if (btnAdd) btnAdd.disabled = !!current;
+    }
+    
+    // Jeśli jest aktualne udostępnienie nie-subskrybentowi (ręczny e-mail)
+    if (current && !activeSubs.some(s => s.subscriber_user_id === current.recipient_id)) {
+      const row = document.createElement("div");
+      row.className = "shareRow manualShare";
+      row.style.borderTop = "1px solid rgba(255,255,255,.1)";
+      row.style.marginTop = "10px";
+      row.style.paddingTop = "10px";
+      const label = current.recipient_username || current.recipient_email || "—";
+      row.innerHTML = `
+        <div class="shareEmail" style="color:var(--gold)">${esc(label)}</div>
+        <div class="shareRowActions">
+          <button class="btn xsm gold" id="btnRevokeManual" type="button">✕</button>
+        </div>`;
+      row.querySelector("#btnRevokeManual")?.addEventListener("click", async () => {
+        await sb().rpc("unshare_device", { p_recipient_user_id: current.recipient_id, p_device_type: _deviceType });
+        await renderModal();
+        await refreshBadges();
       });
       subsList.appendChild(row);
     }
