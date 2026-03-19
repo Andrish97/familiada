@@ -732,6 +732,19 @@ const uk = {
     qrCopyFail: "Не вдалося скопіювати посилання.",
     unloadWarn: "Якщо зараз вийдете, поточний стан гри буде втрачено.",
     confirmBack: "Повернення до списку ігор призведе до втрати поточного стану. Продовжити?",
+    shareDevice: "Поділитися пристроєм",
+    shareDeviceModal: {
+      title: "Поділитися пристроєм",
+      subtitle: "Виберіть підписників і пристрої для надання доступу.",
+      typeHost: "Ведучий",
+      typeBuzzer: "Бузер",
+      typeDisplay: "Дисплей",
+      loading: "Завантаження…",
+      noSubs: "Немає підписників.",
+      failed: "Помилка надання доступу.",
+      mailSubject: "Пристрій надано: {type}",
+      mailBody: "{owner} надав(ла) вам пристрій: {type} (гра: {game}). Відкрийте Підключити пристрій, щоб побачити його.",
+    },
     audioOk: "Звук розблоковано.",
     audioFail: "Не вдалося розблокувати звук.",
     finalConfirmed: "Підтверджено.",
@@ -2542,6 +2555,8 @@ const uk = {
       logoMobile: "🖥️",
       marketplace: "Ігри Спільноти 🎮",
       marketplaceMobile: "🎮",
+      connectDevice: "Підключити пристрій 📱",
+      connectDeviceMobile: "📱",
       account: "Обліковий запис",
       logout: "Вийти",
     },
@@ -2583,6 +2598,12 @@ const uk = {
         "4. Запусти Familiada з нової іконки на екрані.",
       ok: "OK",
       never: "Більше не показувати",
+    pwaInstall: {
+      title: "Встановити додаток",
+      text: "Додайте Familiadę на головний екран для швидкого доступу.",
+      ok: "Встановити",
+      cancel: "Не зараз",
+    },
     },
     import: {
       title: "Імпорт",
@@ -4556,6 +4577,30 @@ const uk = {
     footerLeft: "Familiada",
     footerRight: "Якщо це помилка — <a href=\"mailto:kontakt@familiada.online\">kontakt@familiada.online</a>",
   },
+  connectDevice: {
+    title: "Familiada — Підключити пристрій",
+    topbar: { back: "← Мої ігри" },
+    header: {
+      title: "Підключити пристрій",
+      hint: "Відскануйте QR-код або відкрийте посилання, щоб підключити пристрій.",
+      hintMobile: "Підключіться як ведучий або бузер.",
+      hintDesktop: "Підключіться як дисплей.",
+    },
+    scan: {
+      btn: "📷 Сканувати QR",
+      cameraError: "Немає доступу до камери.",
+      noApi: "Використайте системну камеру для сканування QR-коду.",
+    },
+    shared: {
+      title: "Пристрої, надані мені",
+      empty: "Немає наданих пристроїв.",
+      loading: "Завантаження…",
+      error: "Помилка завантаження.",
+      open: "Відкрити",
+      opening: "Відкриття…",
+      gameNotFound: "Гру не знайдено.",
+    },
+    deviceType: { host: "Ведучий", buzzer: "Бузер", display: "Дисплей" },
+  },
 };
-
 export default uk;

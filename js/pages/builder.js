@@ -8,6 +8,9 @@ import { initUiSelect } from "../core/ui-select.js";
 
 import { initPwa, isStandalone, isMobileDevice } from "../core/pwa.js";
 
+// Zarejestruj listener PWA jak najwcześniej – beforeinstallprompt może odpalić przed requireAuth
+const pwaApi = initPwa();
+
 import { exportGame, importGame, downloadJson } from "./builder-import-export.js";
 
 import "../core/contact-modal.js";
@@ -1055,7 +1058,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   void maybeShowIosWebappPrompt();
 
   // Android/Chrome/Edge/desktop – prompt instalacji PWA
-  const pwaApi = initPwa();
   window.addEventListener("pwa:installable", async () => {
     if (isStandalone()) return;
     const ok = await confirmModal({

@@ -743,7 +743,7 @@ const pl = {
       noSubs: "Brak subskrybentów.",
       failed: "Błąd udostępniania.",
       mailSubject: "Udostępniono urządzenie: {type}",
-      mailBody: "{owner} udostępnił(a) Ci urządzenie: {type} (gra: {game}). Otwórz stronę „Podłącz urządzenie", żeby je zobaczyć.",
+      mailBody: "{owner} udostępnił(a) Ci urządzenie: {type} (gra: {game}). Otwórz stronę Podłącz urządzenie, żeby je zobaczyć.",
     },
     audioOk: "Dźwięk odblokowany.",
     audioFail: "Nie udało się odblokować dźwięku.",
