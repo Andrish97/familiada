@@ -2384,6 +2384,12 @@ const en = {
       market: "Community Games",
       marketMobile: "Community",
     },
+    pwaInstall: {
+      title: "Install app",
+      text: "Add Familiada to your home screen for quick access.",
+      ok: "Install",
+      cancel: "Don't show",
+    },
     iosWebapp: {
       title: "Add Familiada to Home Screen",
       text:

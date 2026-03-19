@@ -13,11 +13,9 @@ export function initPwa() {
   let deferredPrompt = null;
 
   window.addEventListener("beforeinstallprompt", (e) => {
-    console.log("[PWA] beforeinstallprompt fired. LS_KEY set?", !!localStorage.getItem(LS_KEY));
     if (localStorage.getItem(LS_KEY)) return;
     e.preventDefault();
     deferredPrompt = e;
-    console.log("[PWA] deferredPrompt stored, dispatching pwa:installable");
     window.dispatchEvent(new CustomEvent("pwa:installable", { detail: { prompt: e } }));
   });
 

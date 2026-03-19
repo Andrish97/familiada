@@ -1061,18 +1061,15 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Android/Chrome/Edge/desktop – prompt instalacji PWA
   window.addEventListener("pwa:installable", showPwaPrompt, { once: true });
-  // Jeśli event już odpalił przed zalogowaniem
-  console.log("[PWA] canInstall:", pwaApi.canInstall());
   if (pwaApi.canInstall()) showPwaPrompt();
 
   async function showPwaPrompt() {
-    console.log("[PWA] showPwaPrompt called, isStandalone:", isStandalone());
     if (isStandalone()) return;
     const ok = await confirmModal({
       title: t("builder.pwaInstall.title") || "Zainstaluj aplikację",
       text: t("builder.pwaInstall.text") || "Dodaj Familiadę do ekranu głównego, żeby mieć szybki dostęp.",
       okText: t("builder.pwaInstall.ok") || "Zainstaluj",
-      cancelText: t("builder.pwaInstall.cancel") || "Nie teraz",
+      cancelText: t("builder.pwaInstall.cancel") || "Nie pokazuj",
     });
     if (ok) await pwaApi.install();
     else pwaApi.dismiss();
