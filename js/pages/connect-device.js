@@ -65,9 +65,11 @@ async function renderSharedDevices() {
   );
 
   if (!items.length) {
+    sharedDevicesList.classList.add("is-empty");
     sharedDevicesList.innerHTML = `<div class="connect-device-empty">${t("connectDevice.shared.empty") || "Brak udostępnionych urządzeń."}</div>`;
     return;
   }
+  sharedDevicesList.classList.remove("is-empty");
 
   sharedDevicesList.innerHTML = "";
   for (const item of items) {
