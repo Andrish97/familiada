@@ -735,7 +735,8 @@ const pl = {
     shareDevice: "Udostępnij urządzenie",
     shareDeviceModal: {
       title: "Udostępnij urządzenie",
-      subtitle: "Wybierz subskrybentów i urządzenia do udostępnienia.",
+      subtitle: "Wybierz subskrybenta lub wpisz e-mail / nazwę użytkownika.",
+      subtitle2: "Wybierz subskrybentów i urządzenia do udostępnienia.",
       typeHost: "Prowadzący",
       typeBuzzer: "Buzzer",
       typeDisplay: "Wyświetlacz",
@@ -4703,10 +4704,11 @@ const pl = {
       btn: "📷 Otwórz kamerę",
       cameraError: "Brak dostępu do kamery.",
       noQr: "Nie znaleziono kodu QR na zdjęciu.",
+      btn: "📷 Skanuj QR",
       noApi: "Użyj aparatu systemowego do zeskanowania kodu QR.",
     },
     shared: {
-      title: "Urządzenia udostępnione mi",
+      title: "Urządzenia udostępnione dla mnie",
       empty: "Brak udostępnionych urządzeń.",
       loading: "Ładowanie…",
       error: "Błąd ładowania.",

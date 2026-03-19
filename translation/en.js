@@ -733,6 +733,7 @@ const en = {
     shareDevice: "Share device",
     shareDeviceModal: {
       title: "Share device",
+      subtitle: "Select a subscriber or enter email / username.",
       subtitle: "Select subscribers and devices to share.",
       typeHost: "Host",
       typeBuzzer: "Buzzer",
@@ -4705,6 +4706,7 @@ const en = {
       btn: "📷 Scan QR",
       cameraError: "Camera access denied.",
       noQr: "No QR code found in the photo.",
+      btn: "📷 Scan QR",
       noApi: "Use your system camera to scan the QR code.",
     },
     shared: {
