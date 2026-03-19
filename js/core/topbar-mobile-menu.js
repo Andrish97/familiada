@@ -145,6 +145,32 @@ function initMobileTopbarMenu() {
       group4.appendChild(section4Placeholder.nextSibling);
     }
 
+    // Flatten overflow nav: pokaż wszystkie schowane przyciski, ukryj "Więcej"
+    const navMoreEl = group2.querySelector('#navMore');
+    if (navMoreEl) {
+      navMoreEl.style.display = 'none';
+      [...group2.querySelectorAll('.btn, button')].forEach(b => {
+        if (b !== navMoreEl && !navMoreEl.contains(b)) b.style.display = '';
+      });
+    }
+
+    // Flatten account dropdown: przenieś portal menu do wrapa i pokaż inline
+    const accountWrapEl = group4.querySelector('.account-wrap');
+    if (accountWrapEl) {
+      let menuEl = accountWrapEl.querySelector('.account-menu');
+      if (!menuEl && accountWrapEl._portalMenu) {
+        menuEl = accountWrapEl._portalMenu;
+        accountWrapEl.appendChild(menuEl);
+        accountWrapEl._movedPortalMenu = true;
+      }
+      if (menuEl) {
+        menuEl.removeAttribute('hidden');
+        menuEl.classList.add('account-menu--inline');
+      }
+      const btnEl = accountWrapEl.querySelector('.account-btn');
+      if (btnEl) btnEl.style.display = 'none';
+    }
+
     mount.append(group2, group4);
     // jeśli po przeniesieniu nic realnie nie ma, nie pokazuj menu
     const visibleItems = (root) =>
@@ -199,6 +225,22 @@ function initMobileTopbarMenu() {
     if (!isMobileMounted) return;
     isMobileMounted = false;
     close();
+
+    // Restore account dropdown state before moving elements back
+    const accountWrapEl = group4?.querySelector('.account-wrap');
+    if (accountWrapEl) {
+      const menuEl = accountWrapEl.querySelector('.account-menu');
+      if (menuEl) {
+        menuEl.classList.remove('account-menu--inline');
+        menuEl.setAttribute('hidden', '');
+        if (accountWrapEl._movedPortalMenu) {
+          document.body.appendChild(menuEl);
+          delete accountWrapEl._movedPortalMenu;
+        }
+      }
+      const btnEl = accountWrapEl.querySelector('.account-btn');
+      if (btnEl) btnEl.style.display = '';
+    }
 
     while (group2?.firstChild) {
       section2.insertBefore(group2.firstChild, section2Placeholder);

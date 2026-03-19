@@ -1154,3 +1154,14 @@ body{
 .account-menu-item:hover {
   background: rgba(255, 255, 255, 0.10);
 }
+
+.account-menu--inline {
+  position: static !important;
+  display: flex !important;
+  flex-direction: column;
+  box-shadow: none;
+  border: none;
+  background: transparent;
+  padding: 0;
+  min-width: 0;
+}
