@@ -117,110 +117,147 @@ async function renderSharedDevices() {
   }
 }
 
-// QR scanner – otwiera zeskanowany URL bezpośrednio
+async function loadJsQR() {
+  if (window.jsQR) return;
+  await new Promise((res, rej) => {
+    const s = document.createElement("script");
+    s.src = "https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js";
+    s.onload = res; s.onerror = rej;
+    document.head.appendChild(s);
+  });
+}
+
+function buildScanOverlay() {
+  const video = document.createElement("video");
+  video.setAttribute("playsinline", "");
+  video.style.cssText = "position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:9999;background:#000;";
+
+  const closeBtn = document.createElement("button");
+  closeBtn.textContent = "✕";
+  closeBtn.style.cssText = "position:fixed;top:16px;right:16px;z-index:10000;padding:10px 16px;border-radius:12px;border:none;background:rgba(0,0,0,.7);color:#fff;font-size:1.2rem;cursor:pointer;";
+
+  return { video, closeBtn };
+}
+
+// QR scanner – live video (BarcodeDetector lub jsQR), fallback: input[capture]
 async function startQrScan() {
-  // iOS Safari – brak BarcodeDetector, używamy input[capture] + jsQR
-  if (!("BarcodeDetector" in window)) {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "image/*";
-    input.capture = "environment";
-    input.style.display = "none";
-    document.body.appendChild(input);
+  const hasCamera = !!navigator.mediaDevices?.getUserMedia;
 
-    input.addEventListener("change", async () => {
-      const file = input.files?.[0];
-      input.remove();
-      if (!file) return;
+  // --- Live video (iOS Safari 14.5+ i Chrome/Android) ---
+  if (hasCamera) {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+      const { video, closeBtn } = buildScanOverlay();
 
-      // Załaduj jsQR jeśli nie ma
-      if (!window.jsQR) {
-        await new Promise((res, rej) => {
-          const s = document.createElement("script");
-          s.src = "https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js";
-          s.onload = res; s.onerror = rej;
-          document.head.appendChild(s);
-        });
-      }
+      document.body.appendChild(video);
+      document.body.appendChild(closeBtn);
+      video.srcObject = stream;
+      await video.play();
 
-      // createImageBitmap z imageOrientation:"from-image" aplikuje EXIF rotation (fix iOS)
-      // Fallback do <img> dla bardzo starych przeglądarek
-      let bitmap;
-      const objectUrl = URL.createObjectURL(file);
-      try {
-        bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
-      } catch {
-        const img = new Image();
-        img.src = objectUrl;
-        await new Promise(r => { img.onload = r; });
-        bitmap = img;
-      }
+      let scanning = true;
+      const stop = () => {
+        scanning = false;
+        stream.getTracks().forEach(tr => tr.stop());
+        video.remove();
+        closeBtn.remove();
+      };
+      closeBtn.addEventListener("click", stop);
 
-      let w = bitmap.width;
-      let h = bitmap.height;
-      const MAX = 1500;
-      if (w > MAX || h > MAX) {
-        if (w > h) { h = Math.round((h * MAX) / w); w = MAX; }
-        else        { w = Math.round((w * MAX) / h); h = MAX; }
-      }
-
-      const canvas = document.createElement("canvas");
-      canvas.width = w; canvas.height = h;
-      canvas.getContext("2d").drawImage(bitmap, 0, 0, w, h);
-      URL.revokeObjectURL(objectUrl);
-      if (bitmap.close) bitmap.close();
-
-      const imageData = canvas.getContext("2d").getImageData(0, 0, w, h);
-      const code = window.jsQR(imageData.data, imageData.width, imageData.height);
-      if (code?.data?.startsWith("http")) {
-        window.location.href = code.data;
+      if ("BarcodeDetector" in window) {
+        // Chrome / Android – natywny detektor
+        const detector = new window.BarcodeDetector({ formats: ["qr_code"] });
+        const scan = async () => {
+          if (!scanning) return;
+          try {
+            const codes = await detector.detect(video);
+            if (codes.length) {
+              const url = codes[0].rawValue;
+              stop();
+              if (url.startsWith("http")) window.location.href = url;
+              return;
+            }
+          } catch {}
+          if (scanning) requestAnimationFrame(scan);
+        };
+        requestAnimationFrame(scan);
       } else {
-        setMsg(t("connectDevice.scan.noQr") || "Nie znaleziono kodu QR.");
+        // iOS Safari – jsQR na klatkach wideo
+        await loadJsQR();
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        const scan = () => {
+          if (!scanning) return;
+          if (video.readyState === video.HAVE_ENOUGH_DATA) {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            ctx.drawImage(video, 0, 0);
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const code = window.jsQR(imageData.data, imageData.width, imageData.height);
+            if (code?.data?.startsWith("http")) {
+              stop();
+              window.location.href = code.data;
+              return;
+            }
+          }
+          if (scanning) requestAnimationFrame(scan);
+        };
+        requestAnimationFrame(scan);
       }
-    });
-
-    input.click();
-    return;
+      return;
+    } catch {
+      setMsg(t("connectDevice.scan.cameraError") || "Brak dostępu do kamery.");
+      return;
+    }
   }
 
-  // Chrome/Android – BarcodeDetector + live video
-  try {
-    const detector = new window.BarcodeDetector({ formats: ["qr_code"] });
-    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+  // --- Fallback: input[capture] + jsQR (bardzo stare przeglądarki) ---
+  await loadJsQR();
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = "image/*";
+  input.capture = "environment";
+  input.style.display = "none";
+  document.body.appendChild(input);
 
-    const video = document.createElement("video");
-    video.srcObject = stream;
-    video.setAttribute("playsinline", "");
-    video.style.cssText = "position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:9999;background:#000;";
-    document.body.appendChild(video);
-    await video.play();
+  input.addEventListener("change", async () => {
+    const file = input.files?.[0];
+    input.remove();
+    if (!file) return;
 
-    const closeBtn = document.createElement("button");
-    closeBtn.textContent = "✕";
-    closeBtn.style.cssText = "position:fixed;top:16px;right:16px;z-index:10000;padding:10px 16px;border-radius:12px;border:none;background:rgba(0,0,0,.7);color:#fff;font-size:1.2rem;cursor:pointer;";
-    document.body.appendChild(closeBtn);
+    let bitmap;
+    const objectUrl = URL.createObjectURL(file);
+    try {
+      bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+    } catch {
+      const img = new Image();
+      img.src = objectUrl;
+      await new Promise(r => { img.onload = r; });
+      bitmap = img;
+    }
 
-    let scanning = true;
-    const stop = () => { scanning = false; stream.getTracks().forEach(t => t.stop()); video.remove(); closeBtn.remove(); };
-    closeBtn.addEventListener("click", stop);
+    let w = bitmap.width, h = bitmap.height;
+    const MAX = 1500;
+    if (w > MAX || h > MAX) {
+      if (w > h) { h = Math.round((h * MAX) / w); w = MAX; }
+      else        { w = Math.round((w * MAX) / h); h = MAX; }
+    }
 
-    const scan = async () => {
-      if (!scanning) return;
-      try {
-        const codes = await detector.detect(video);
-        if (codes.length) {
-          const url = codes[0].rawValue;
-          stop();
-          if (url.startsWith("http")) window.location.href = url;
-          return;
-        }
-      } catch {}
-      if (scanning) requestAnimationFrame(scan);
-    };
-    requestAnimationFrame(scan);
-  } catch {
-    setMsg(t("connectDevice.scan.cameraError") || "Brak dostępu do kamery.");
-  }
+    const canvas = document.createElement("canvas");
+    canvas.width = w; canvas.height = h;
+    canvas.getContext("2d").drawImage(bitmap, 0, 0, w, h);
+    URL.revokeObjectURL(objectUrl);
+    if (bitmap.close) bitmap.close();
+
+    const imageData = canvas.getContext("2d").getImageData(0, 0, w, h);
+    const code = window.jsQR(imageData.data, imageData.width, imageData.height);
+    if (code?.data?.startsWith("http")) {
+      window.location.href = code.data;
+    } else {
+      setMsg(t("connectDevice.scan.noQr") || "Nie znaleziono kodu QR.");
+    }
+  });
+
+  input.click();
 }
 
 (async () => {
