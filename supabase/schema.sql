@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict FaQ2j4dMZP8s5xS023tjnrxPSEd1pE8Y4lir7TsS8dkpwMN7eCGbcid5A1Dljsu
+\restrict RG2BY7SbnaOJ9qO79zRcdkX9vtEym4vkyty7o8liXG4VAGbTTG7ZybPrrGcz6oA
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -3306,7 +3306,9 @@ CREATE FUNCTION "public"."list_shared_devices_for_me"() RETURNS TABLE("share_id"
     SET "search_path" TO 'public'
     AS $$
 BEGIN
-  DELETE FROM public.shared_devices WHERE expires_at IS NOT NULL AND expires_at < now();
+  -- Używamy aliasu w DELETE, aby uniknąć konfliktu z nazwą kolumny wyjściowej
+  DELETE FROM public.shared_devices sd_del
+  WHERE sd_del.expires_at IS NOT NULL AND sd_del.expires_at < now();
   
   RETURN QUERY
   SELECT 
@@ -12308,5 +12310,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict FaQ2j4dMZP8s5xS023tjnrxPSEd1pE8Y4lir7TsS8dkpwMN7eCGbcid5A1Dljsu
+\unrestrict RG2BY7SbnaOJ9qO79zRcdkX9vtEym4vkyty7o8liXG4VAGbTTG7ZybPrrGcz6oA
 
