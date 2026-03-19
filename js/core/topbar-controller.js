@@ -259,7 +259,7 @@ export function setTopbarAccount(user, {
   chevron.className = 'account-chevron';
   chevron.textContent = '▾';
   whoEl.append(whoSpan, chevron);
-  whoEl.classList.add('account-btn');
+  whoEl.classList.add('account-btn', 'btn');
   if (!whoEl.matches('button')) {
     whoEl.style.cursor = 'pointer';
     whoEl.tabIndex = 0;
