@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict KpcaTYeZm4CGF9XTAJCcC7kIcRnZUDtavi0Fwym8xvnSLneTzdEYgFwdDAXvjJu
+\restrict fqivJ8mRDxrcPorcpx10FcJE9uUNdT6T4L11qzBXTCpCnxNyRIwj90jtBzmRHxP
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -3179,15 +3179,7 @@ CREATE FUNCTION "public"."list_my_device_shares"() RETURNS TABLE("share_id" "uui
     AS $$
 BEGIN
   RETURN QUERY
-  SELECT
-    sd.id,
-    sd.device_type,
-    sd.recipient_id,
-    p.username,
-    p.email,
-    sd.game_id,
-    sd.game_name,
-    sd.expires_at
+  SELECT sd.id, sd.device_type, sd.recipient_id, p.username, p.email, sd.game_id, sd.game_name, sd.expires_at
   FROM public.shared_devices sd
   JOIN public.profiles p ON p.id = sd.recipient_id
   WHERE sd.owner_id = auth.uid();
@@ -3314,19 +3306,9 @@ CREATE FUNCTION "public"."list_shared_devices_for_me"() RETURNS TABLE("share_id"
     SET "search_path" TO 'public'
     AS $$
 BEGIN
-  DELETE FROM public.shared_devices
-  WHERE expires_at IS NOT NULL AND expires_at < now();
-
+  DELETE FROM public.shared_devices WHERE expires_at IS NOT NULL AND expires_at < now();
   RETURN QUERY
-  SELECT
-    sd.id,
-    sd.device_type,
-    sd.owner_id,
-    p.username,
-    p.email,
-    sd.game_id,
-    sd.game_name,
-    sd.expires_at
+  SELECT sd.id, sd.device_type, sd.owner_id, p.username, p.email, sd.game_id, sd.game_name, sd.expires_at
   FROM public.shared_devices sd
   JOIN public.profiles p ON p.id = sd.owner_id
   WHERE sd.recipient_id = auth.uid();
@@ -8613,10 +8595,7 @@ BEGIN
   INSERT INTO public.shared_devices (owner_id, recipient_id, device_type, game_id, game_name, expires_at)
   VALUES (v_owner, p_recipient_user_id, p_device_type, p_game_id, p_game_name, p_expires_at)
   ON CONFLICT (owner_id, recipient_id, device_type)
-  DO UPDATE SET
-    game_id    = EXCLUDED.game_id,
-    game_name  = EXCLUDED.game_name,
-    expires_at = EXCLUDED.expires_at;
+  DO UPDATE SET game_id = EXCLUDED.game_id, game_name = EXCLUDED.game_name, expires_at = EXCLUDED.expires_at;
 
   RETURN jsonb_build_object('ok', true);
 END;
@@ -9692,6 +9671,9 @@ CREATE TABLE "public"."shared_devices" (
     "recipient_id" "uuid" NOT NULL,
     "device_type" "text" NOT NULL,
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "game_id" "uuid",
+    "game_name" "text",
+    "expires_at" timestamp with time zone,
     CONSTRAINT "shared_devices_device_type_check" CHECK (("device_type" = ANY (ARRAY['host'::"text", 'buzzer'::"text"])))
 );
 
@@ -11239,6 +11221,14 @@ ALTER TABLE ONLY "public"."questions"
 
 
 --
+-- Name: shared_devices shared_devices_game_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."shared_devices"
+    ADD CONSTRAINT "shared_devices_game_id_fkey" FOREIGN KEY ("game_id") REFERENCES "public"."games"("id") ON DELETE SET NULL;
+
+
+--
 -- Name: shared_devices shared_devices_owner_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -12302,5 +12292,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict KpcaTYeZm4CGF9XTAJCcC7kIcRnZUDtavi0Fwym8xvnSLneTzdEYgFwdDAXvjJu
+\unrestrict fqivJ8mRDxrcPorcpx10FcJE9uUNdT6T4L11qzBXTCpCnxNyRIwj90jtBzmRHxP
 
