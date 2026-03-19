@@ -2395,7 +2395,7 @@ const en = {
     iosWebapp: {
       title: "Add Familiada to Home Screen",
       text:
-        "Safari can't force true fullscreen. Do this:\n" +
+        "For the best experience, we recommend using the web app. To do this:\n" +
         "1. Open the Share menu.\n" +
         "2. Tap “Add to Home Screen”.\n" +
         "3. Confirm the addition.\n" +

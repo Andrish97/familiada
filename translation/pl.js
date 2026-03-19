@@ -2376,7 +2376,7 @@ const pl = {
     iosWebapp: {
       title: "Dodaj Familiadę do ekranu głównego",
       text:
-        "Safari nie potrafi wymusić prawdziwego pełnego ekranu. Zrób tak:\n" +
+        "Dla najlepszego komfortu użytkowania zalecamy korzystać z aplikacji webowej. Żeby to zrobić:\n" +
         "1. Otwórz menu Udostępnij.\n" +
         "2. Wybierz „Do ekranu początkowego”.\n" +
         "3. Zatwierdź dodanie.\n" +
