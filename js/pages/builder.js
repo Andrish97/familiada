@@ -1334,9 +1334,28 @@ document.addEventListener("DOMContentLoaded", async () => {
   // btnInstall — klik
   btnInstall?.addEventListener("click", async () => {
     if (!pwaApi.canInstall()) {
-      await alertModal({
-        text: t("builder.pwaInstall.unavailable") || "Przeglądarka nie obsługuje instalacji lub aplikacja jest już zainstalowana.",
-      });
+      if (isIOSSafari()) {
+        // iOS: pokaż instrukcję dodania do ekranu głównego
+        const fallback = {
+          title: "Dodaj Familiadę do ekranu głównego",
+          text:
+            "Safari nie potrafi wymusić prawdziwego pełnego ekranu. Zrób tak:\n" +
+            "1. Otwórz menu Udostępnij.\n" +
+            "2. Wybierz \u201eDo ekranu początkowego\u201d.\n" +
+            "3. Zatwierdź dodanie.\n" +
+            "4. Uruchom Familiadę z nowej ikony na ekranie głównym.",
+          ok: "OK",
+        };
+        await alertModal({
+          title: tSafe("builder.iosWebapp.title", fallback.title),
+          text: tSafe("builder.iosWebapp.text", fallback.text),
+          okText: tSafe("builder.iosWebapp.ok", fallback.ok),
+        });
+      } else {
+        await alertModal({
+          text: t("builder.pwaInstall.unavailable") || "Przeglądarka nie obsługuje instalacji lub aplikacja jest już zainstalowana.",
+        });
+      }
       return;
     }
     const ok = await confirmModal({

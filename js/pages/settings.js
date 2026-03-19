@@ -3267,6 +3267,28 @@ function wireEvents() {
 
 (async () => {
   await initI18n({ withSwitcher: true, apply: true });
+
+  // PWA install — osobna apka admin, bez flag
+  const btnInstall = document.getElementById("btnInstall");
+  if (btnInstall && "serviceWorker" in navigator) {
+    let _prompt = null;
+    window.addEventListener("beforeinstallprompt", (e) => {
+      e.preventDefault();
+      _prompt = e;
+      btnInstall.style.display = "";
+    });
+    window.addEventListener("appinstalled", () => {
+      _prompt = null;
+      btnInstall.style.display = "none";
+    });
+    btnInstall.addEventListener("click", async () => {
+      if (!_prompt) return;
+      _prompt.prompt();
+      await _prompt.userChoice;
+      _prompt = null;
+      btnInstall.style.display = "none";
+    });
+  }
   applyDateOrderByLang();
   applyModalLabels();
   setActiveTab("maintenance");

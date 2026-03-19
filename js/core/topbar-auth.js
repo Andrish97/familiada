@@ -90,11 +90,12 @@ function _repositionDropdown(anchorEl, dropdownEl) {
  *
  * @param {object|null} user        — obiekt user (może być null)
  * @param {object}      [opts]
- * @param {string}      [opts.accountHref="account"]  — ścieżka do strony konta (np. "../account" dla podkatalogów)
- * @param {string}      [opts.loginHref="login"]       — ścieżka do logowania
+ * @param {string}      [opts.accountHref="account"]      — ścieżka do strony konta
+ * @param {string}      [opts.loginHref="login"]           — ścieżka do logowania
+ * @param {boolean}     [opts.withAccountSettings=false]   — czy pokazywać "Ustawienia konta" (tylko builder)
  * @returns {{ guestMode: boolean }}
  */
-export function initTopbarAccountDropdown(user, { accountHref = "account", loginHref = "login" } = {}) {
+export function initTopbarAccountDropdown(user, { accountHref = "account", loginHref = "login", withAccountSettings = false } = {}) {
   const section4 = document.querySelector(".topbar-section-4");
   if (!section4) return { guestMode: false };
 
@@ -153,7 +154,7 @@ export function initTopbarAccountDropdown(user, { accountHref = "account", login
   accountMenu.className = "account-menu";
   accountMenu.hidden = true;
 
-  if (!guestMode) {
+  if (!guestMode && withAccountSettings) {
     const btnSettings = document.createElement("button");
     btnSettings.className = "account-menu-item";
     btnSettings.id = "topbar-account-settings";
@@ -180,6 +181,7 @@ export function initTopbarAccountDropdown(user, { accountHref = "account", login
 
   // Portal do body
   document.body.appendChild(accountMenu);
+  accountWrap._portalMenu = accountMenu;
 
   // Toggle dropdown
   btnAccount.addEventListener("click", (e) => {
