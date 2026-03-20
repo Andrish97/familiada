@@ -363,21 +363,22 @@ async function filterByEmailNotifications(items: MailItem[]) {
 
   // 5) filtruj
   let skipped = 0;
+  const skippedItems: Array<{ email: string; reason: "skipped_user_flag" | "skipped_suppression" }> = [];
   const filtered = items.filter((it) => {
     const em = normEmail(it.to);
     if (!em) return true;
     const uid = emailToUid.get(em);
     if (uid) {
       const ok = uidAllowed.get(uid) !== false;
-      if (!ok) skipped++;
+      if (!ok) { skipped++; skippedItems.push({ email: it.to, reason: "skipped_user_flag" }); }
       return ok;
     }
     // niezarejestrowany — sprawdź suppression
-    if (suppressedEmails.has(em)) { skipped++; return false; }
+    if (suppressedEmails.has(em)) { skipped++; skippedItems.push({ email: it.to, reason: "skipped_suppression" }); return false; }
     return true;
   });
 
-  return { filtered, skipped };
+  return { filtered, skipped, skippedItems };
 }
 
 serve(async (req) => {
@@ -499,7 +500,20 @@ serve(async (req) => {
     // ---- EMAIL NOTIFICATIONS FILTER (per recipient account) ----
     const f = await filterByEmailNotifications(sliced);
     const finalItems = f.filtered;
-    
+
+    // log per-skipped email
+    for (const sk of f.skippedItems) {
+      await writeLog({
+        requestId,
+        event: "email_skipped",
+        status: "skipped",
+        level: "info",
+        actorUserId,
+        recipientEmail: sk.email,
+        provider: sk.reason,
+      });
+    }
+
     console.log("[send-mail] filter:email_notifications", {
       in: sliced.length,
       out: finalItems.length,

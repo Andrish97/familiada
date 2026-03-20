@@ -964,6 +964,17 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   background: rgba(255,220,120,.07);
 }
 
+.mail-pill-event-skipped{
+  border-color: rgba(160,210,160,.45);
+  background: rgba(120,200,120,.12);
+  color: #b8f0b8;
+}
+
+.mail-event-skipped td{
+  background: rgba(100,180,100,.06);
+  opacity: .8;
+}
+
 .mail-row-action{
   white-space: nowrap;
 }

@@ -212,6 +212,44 @@ async function sendViaSes(to: string, subject: string, html: string, sesRegion: 
   if (!res.ok) throw new Error(`ses_failed:${await res.text().catch(() => String(res.status))}`);
 }
 
+async function checkSuppressedEmails(emails: string[]): Promise<Map<string, string>> {
+  const result = new Map<string, string>();
+  if (!emails.length) return result;
+  const norm = (e: string) => String(e || "").toLowerCase().trim();
+  const normEmails = [...new Set(emails.map(norm).filter(Boolean))];
+
+  const { data: profs } = await sbAdmin.from("profiles").select("id,email").in("email", normEmails);
+  const emailToUid = new Map<string, string>();
+  for (const p of profs || []) {
+    const em = norm((p as any).email);
+    if (em) emailToUid.set(em, (p as any).id);
+  }
+
+  const uids = [...new Set([...emailToUid.values()])];
+  if (uids.length) {
+    const { data: flags } = await sbAdmin.from("user_flags").select("user_id,email_notifications").in("user_id", uids);
+    for (const r of flags || []) {
+      if ((r as any).email_notifications === false) {
+        for (const [em, uid] of emailToUid.entries()) {
+          if (uid === (r as any).user_id) result.set(em, "skipped_user_flag");
+        }
+      }
+    }
+  }
+
+  const unregistered = normEmails.filter((em) => !emailToUid.has(em));
+  if (unregistered.length) {
+    const { data: suppressed } = await sbAdmin
+      .from("email_unsub_tokens")
+      .select("email")
+      .in("email", unregistered)
+      .not("suppressed_at", "is", null);
+    for (const r of suppressed || []) result.set(norm((r as any).email), "skipped_suppression");
+  }
+
+  return result;
+}
+
 async function sendWithFallbacks(to: string, subject: string, html: string, order: Provider[], fromEmail?: string, attachments?: Attachment[]) {
   const errs: string[] = [];
   for (const p of order) {
@@ -298,13 +336,40 @@ serve(async (req) => {
     meta: { count: (rows || []).length, limit, pickFn, selectedIds: selectedIds.length },
   });
 
+  // batch suppression check for all recipients
+  const batchEmails = (rows || []).map((r: any) => String(r.to_email || "")).filter(Boolean);
+  const suppressedMap = await checkSuppressedEmails(batchEmails).catch((e) => {
+    console.warn("[mail-worker] suppression_check_failed", String(e));
+    return new Map<string, string>();
+  });
+  const normEmail = (e: string) => String(e || "").toLowerCase().trim();
+
   let sent = 0;
   let failed = 0;
+  let skipped = 0;
 
   for (let i = 0; i < (rows || []).length; i++) {
     const r = rows[i];
     try {
       console.log("[mail-worker] queue:item_start", { id: r.id, to: scrubEmail(r.to_email), subjectLen: String(r.subject || "").length });
+
+      // suppression check
+      const skipReason = suppressedMap.get(normEmail(r.to_email));
+      if (skipReason) {
+        await sbAdmin.rpc("mail_queue_mark", { p_id: r.id, p_ok: true, p_provider: skipReason, p_error: "" });
+        console.log("[mail-worker] queue:item_skipped", { id: r.id, to: scrubEmail(r.to_email), reason: skipReason });
+        await writeLog({
+          requestId,
+          event: "email_skipped",
+          status: "skipped",
+          level: "info",
+          queueId: r.id,
+          recipientEmail: r.to_email,
+          provider: skipReason,
+        });
+        skipped++;
+        continue;
+      }
 
       // Load attachments from storage if any
       let emailAttachments: Attachment[] = [];
@@ -381,13 +446,13 @@ serve(async (req) => {
     if (delayMs && i < (rows || []).length - 1) await sleep(delayMs);
   }
 
-  console.log("[mail-worker] request:done", { picked: (rows || []).length, sent, failed });
+  console.log("[mail-worker] request:done", { picked: (rows || []).length, sent, failed, skipped });
   await writeLog({
     requestId,
     level: failed ? "warn" : "info",
     event: "request_done",
     status: failed ? "partial_failed" : "ok",
-    meta: { picked: (rows || []).length, sent, failed },
+    meta: { picked: (rows || []).length, sent, failed, skipped },
   });
-  return json({ ok: true, picked: (rows || []).length, sent, failed });
+  return json({ ok: true, picked: (rows || []).length, sent, failed, skipped });
 });
