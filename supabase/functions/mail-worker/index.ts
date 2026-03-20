@@ -2,7 +2,7 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-type Provider = "sendgrid" | "brevo" | "mailgun";
+type Provider = "sendgrid" | "brevo" | "mailgun" | "ses";
 type LogLevel = "debug" | "info" | "warn" | "error";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -16,6 +16,9 @@ const BREVO_KEY = Deno.env.get("BREVO_API_KEY") || "";
 const MAILGUN_KEY = Deno.env.get("MAILGUN_API_KEY") || "";
 const MAILGUN_DOMAIN = Deno.env.get("MAILGUN_DOMAIN") || "";
 const MAILGUN_REGION = (Deno.env.get("MAILGUN_REGION") || "eu").toLowerCase();
+const SES_ACCESS_KEY = Deno.env.get("AWS_SES_ACCESS_KEY_ID") || "";
+const SES_SECRET_KEY = Deno.env.get("AWS_SES_SECRET_ACCESS_KEY") || "";
+const SES_REGION = Deno.env.get("AWS_SES_REGION") || "us-east-1";
 
 const FROM_EMAIL = Deno.env.get("MAIL_FROM_EMAIL") || "no-reply@familiada.online";
 const FROM_NAME = Deno.env.get("MAIL_FROM_NAME") || "Familiada";
@@ -49,7 +52,7 @@ function parseQueueIds(raw: string | null): string[] {
 }
 
 function parseProviderOrder(raw: string): Provider[] {
-  const allowed: Provider[] = ["sendgrid", "brevo", "mailgun"];
+  const allowed: Provider[] = ["sendgrid", "brevo", "mailgun", "ses"];
   const out = String(raw || "")
     .toLowerCase()
     .split(",")
@@ -163,12 +166,59 @@ async function sendViaMailgun(to: string, subject: string, html: string, fromEma
   if (!res.ok) throw new Error(`mailgun_failed:${await res.text().catch(() => "")}`);
 }
 
+async function sha256Hex(data: string): Promise<string> {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(data));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+async function hmacSha256(key: Uint8Array | ArrayBuffer, data: string): Promise<Uint8Array> {
+  const k = await crypto.subtle.importKey("raw", key, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  return new Uint8Array(await crypto.subtle.sign("HMAC", k, new TextEncoder().encode(data)));
+}
+async function hmacSha256Hex(key: Uint8Array, data: string): Promise<string> {
+  return Array.from(await hmacSha256(key, data)).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function sendViaSes(to: string, subject: string, html: string, sesRegion: string, fromEmail?: string) {
+  if (!SES_ACCESS_KEY || !SES_SECRET_KEY) throw new Error("missing_AWS_SES_credentials");
+  const from = fromEmail || FROM_EMAIL;
+  const region = sesRegion || "us-east-1";
+  const endpoint = `https://email.${region}.amazonaws.com/v2/email/outbound-emails`;
+  const payload = JSON.stringify({
+    FromEmailAddress: `${FROM_NAME} <${from}>`,
+    Destination: { ToAddresses: [to] },
+    Content: { Simple: { Subject: { Data: subject, Charset: "UTF-8" }, Body: { Html: { Data: html, Charset: "UTF-8" } } } },
+  });
+  const now = new Date();
+  const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, "").slice(0, 15) + "Z";
+  const dateStamp = amzDate.slice(0, 8);
+  const host = `email.${region}.amazonaws.com`;
+  const bodyHash = await sha256Hex(payload);
+  const canonicalHeaders = `content-type:application/json\nhost:${host}\nx-amz-date:${amzDate}\n`;
+  const signedHeaders = "content-type;host;x-amz-date";
+  const canonicalRequest = ["POST", "/v2/email/outbound-emails", "", canonicalHeaders, signedHeaders, bodyHash].join("\n");
+  const credentialScope = `${dateStamp}/${region}/ses/aws4_request`;
+  const stringToSign = ["AWS4-HMAC-SHA256", amzDate, credentialScope, await sha256Hex(canonicalRequest)].join("\n");
+  const signingKey = await hmacSha256(
+    await hmacSha256(await hmacSha256(await hmacSha256(new TextEncoder().encode("AWS4" + SES_SECRET_KEY), dateStamp), region), "ses"),
+    "aws4_request"
+  );
+  const signature = await hmacSha256Hex(signingKey, stringToSign);
+  const authHeader = `AWS4-HMAC-SHA256 Credential=${SES_ACCESS_KEY}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
+  const res = await fetch(endpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Amz-Date": amzDate, "Authorization": authHeader },
+    body: payload,
+  });
+  if (!res.ok) throw new Error(`ses_failed:${await res.text().catch(() => String(res.status))}`);
+}
+
 async function sendWithFallbacks(to: string, subject: string, html: string, order: Provider[], fromEmail?: string, attachments?: Attachment[]) {
   const errs: string[] = [];
   for (const p of order) {
     try {
       if (p === "sendgrid") { await sendViaSendgrid(to, subject, html, fromEmail, attachments); return p; }
       if (p === "brevo") { await sendViaBrevo(to, subject, html, fromEmail, attachments); return p; }
+      if (p === "ses") { await sendViaSes(to, subject, html, SES_REGION, fromEmail); return p; }
       await sendViaMailgun(to, subject, html, fromEmail, attachments); return p;
     } catch (e) {
       errs.push(`${p}:${String((e as any)?.message || e)}`);
