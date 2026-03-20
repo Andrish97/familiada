@@ -4274,6 +4274,7 @@ const uk = {
       open: "Відкрити",
       opening: "Відкриття…",
       gameNotFound: "Гру не знайдено.",
+      noName: "Без назви",
     },
     deviceType: { host: "Ведучий", buzzer: "Бузер", display: "Дисплей" },
     warning: {

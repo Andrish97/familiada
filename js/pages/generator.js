@@ -430,7 +430,7 @@ function renderWeakInfo(container, report) {
     container.textContent = report.summary;
     return;
   }
-  const items = report.reasons.slice(0, 6).map(r => `<li>${r}</li>`).join("");
+  const items = report.reasons.slice(0, 6).map(r => `<li>${escHtml(r)}</li>`).join("");
   const more = report.reasons.length > 6 ? `<li>… i ${report.reasons.length - 6} więcej</li>` : "";
   container.innerHTML = `<div>${report.summary}</div><ul style="margin:6px 0 0 16px">${items}${more}</ul>`;
 }

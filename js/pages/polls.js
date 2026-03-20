@@ -177,6 +177,10 @@ const RULES = {
   AN_MAX: 6,
 };
 
+function escapeHtml(s) {
+  return String(s ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
+}
+
 function setMsg(text) {
   if (!msg) return;
   msg.textContent = text || "";
@@ -575,7 +579,7 @@ function buildPollPointsPreviewDom(qsList, ansByQ) {
 
     const box = document.createElement("div");
     box.className = "resultQ";
-    box.innerHTML = `<div class="qTitle">P${q.ord}: ${q.text}</div>`;
+    box.innerHTML = `<div class="qTitle">P${q.ord}: ${escapeHtml(q.text)}</div>`;
 
     for (const a of ans) {
       const row = document.createElement("div");
@@ -636,7 +640,7 @@ async function previewResults() {
 
       const box = document.createElement("div");
       box.className = "resultQ";
-      box.innerHTML = `<div class="qTitle">P${q.ord}: ${q.text}</div>`;
+      box.innerHTML = `<div class="qTitle">P${q.ord}: ${escapeHtml(q.text)}</div>`;
 
       for (const a of ans || []) {
         const row = document.createElement("div");
@@ -734,7 +738,7 @@ async function previewResults() {
 
     const box = document.createElement("div");
     box.className = "resultQ";
-    box.innerHTML = `<div class="qTitle">P${q.ord}: ${q.text}</div>`;
+    box.innerHTML = `<div class="qTitle">P${q.ord}: ${escapeHtml(q.text)}</div>`;
 
     for (const a of rows) {
       const row = document.createElement("div");
@@ -862,7 +866,7 @@ function renderTextCloseFromModel() {
     box.innerHTML = `
       <div class="head">
         <div>
-          <div class="qTitle">P${q.ord}: ${q.text}</div>
+          <div class="qTitle">P${q.ord}: ${escapeHtml(q.text)}</div>
           <div class="qHint">${t("polls.textClose.hint")}</div>
         </div>
         <div class="tcTools">

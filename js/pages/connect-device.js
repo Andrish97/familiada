@@ -77,13 +77,13 @@ async function renderSharedDevices() {
     row.className = "connect-device-tile";
 
     const ownerLabel = escapeHtml(item.owner_username || item.owner_email || "—");
-    const gameName = escapeHtml(item.game_name || "Bez nazwy");
+    const gameName = escapeHtml(item.game_name || t("connectDevice.shared.noName") || "—");
     const typeLabel = deviceTypeLabel(item.device_type);
 
     row.innerHTML = `
       <div class="connect-device-tile-icon">${deviceTypeEmoji(item.device_type)}</div>
       <div class="connect-device-tile-body">
-        <div class="connect-device-tile-name">${escapeHtml(gameName)}</div>
+        <div class="connect-device-tile-name">${gameName}</div>
         <div class="connect-device-tile-meta">
           <span>${typeLabel}</span>
           <span class="connect-device-tile-meta-dot">•</span>

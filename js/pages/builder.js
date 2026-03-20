@@ -467,7 +467,7 @@ function renderBaseSelect(bases) {
   baseSelectApi = initUiSelect(baseSelectWrap, {
     options,
     value: options[0]?.value || "",
-    placeholder: "Wybierz bazę…",
+    placeholder: MSG.exportBasePick(),
     onChange: (value) => {
       // Można dodać walidację jeśli potrzeba
     },

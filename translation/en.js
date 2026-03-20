@@ -4400,6 +4400,7 @@ const en = {
       open: "Open",
       opening: "Opening…",
       gameNotFound: "Game not found.",
+      noName: "Untitled",
     },
     deviceType: { host: "Host", buzzer: "Buzzer", display: "Display" },
     warning: {

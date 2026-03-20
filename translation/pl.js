@@ -4716,6 +4716,7 @@ const pl = {
       open: "Otwórz",
       opening: "Otwieranie…",
       gameNotFound: "Nie znaleziono gry.",
+      noName: "Bez nazwy",
     },
     deviceType: {
       host: "Prowadzący",
