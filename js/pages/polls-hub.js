@@ -11,6 +11,10 @@ import "../core/contact-modal.js";
 initI18n({ withSwitcher: true });
 
 const $ = (id) => document.getElementById(id);
+
+function escapeHtml(s) {
+  return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
 const qs = new URLSearchParams(location.search);
 const focusTaskToken = qs.get("t");
 let focusTaskHandled = false;
@@ -410,7 +414,7 @@ function renderPolls() {
       const badgesHtml = poll.poll_state === "draft"
         ? ""
         : `<div class="hub-item-actions hub-item-actions--poll-badges"><span class="hub-item-badge">${MSG.votesBadgeLabel()}: ${m.left}</span><span class="hub-item-badge hub-item-badge-alt">${MSG.anonBadgeLabel()}: ${m.anon}</span></div>`;
-      item.innerHTML = `<div><div class="hub-item-title">${pollTypeLabel(poll.poll_type)} — ${poll.name || MSG.dash()}</div><div class="hub-item-sub">${poll.poll_state === "open" ? MSG.pollStateOpen() : poll.poll_state === "closed" ? MSG.pollStateClosed() : MSG.pollStateDraft()}</div></div>${badgesHtml}`;
+      item.innerHTML = `<div><div class="hub-item-title">${pollTypeLabel(poll.poll_type)} — ${escapeHtml(poll.name || MSG.dash())}</div><div class="hub-item-sub">${poll.poll_state === "open" ? MSG.pollStateOpen() : poll.poll_state === "closed" ? MSG.pollStateClosed() : MSG.pollStateDraft()}</div></div>${badgesHtml}`;
       item.addEventListener("click", () => selectPoll(poll));
       item.addEventListener("dblclick", () => openPoll(poll));
       listEl.appendChild(item);
@@ -436,7 +440,7 @@ function renderTasks() {
       const statusLabel = task.status === "done" ? MSG.taskStatusDone() : MSG.taskStatusAvailable();
       const item = document.createElement("div");
       item.className = `hub-item ${task.status === "done" ? "task-done" : "task-pending"}`;
-      item.innerHTML = `<div><div class="hub-item-title">${pollTypeLabel(task.poll_type)} — ${task.game_name || MSG.dash()}</div><div class="hub-item-sub">${MSG.taskFrom(ownerLabel)} • ${statusLabel}</div></div><div class="hub-item-actions"></div>`;
+      item.innerHTML = `<div><div class="hub-item-title">${pollTypeLabel(task.poll_type)} — ${escapeHtml(task.game_name || MSG.dash())}</div><div class="hub-item-sub">${MSG.taskFrom(escapeHtml(ownerLabel))} • ${statusLabel}</div></div><div class="hub-item-actions"></div>`;
       if (task.status === "pending") {
         const btn = document.createElement("button");
         btn.className = "btn xs danger";
@@ -833,7 +837,7 @@ function renderDetailsList(container, rows) {
   for (const row of rows) {
     const item = document.createElement("div");
     item.className = "hub-details-item";
-    item.innerHTML = `<span>${row.subscriber_display_label || MSG.dash()}</span><button class="btn xs danger">X</button>`;
+    item.innerHTML = `<span>${escapeHtml(row.subscriber_display_label || MSG.dash())}</span><button class="btn xs danger">X</button>`;
     const removeBtn = item.querySelector("button");
     if (!row.task_id) removeBtn?.setAttribute("disabled", "disabled");
     removeBtn?.addEventListener("click", async () => {

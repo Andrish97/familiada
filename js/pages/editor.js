@@ -86,9 +86,9 @@ const SUM_PREPARED = GV_RULES.SUM_PREPARED ?? 100;
 /* ================= DOM helpers ================= */
 const $ = (id) => document.getElementById(id);
 
-function setMsg(t) {
+function setMsg(msg) {
   const el = $("msg");
-  if (el) el.textContent = t || "";
+  if (el) el.textContent = msg || "";
 }
 
 function openOverlay(id, on) {
@@ -98,10 +98,10 @@ function openOverlay(id, on) {
 }
 
 function debounce(fn, ms = 350) {
-  let t = null;
+  let timer = null;
   return (...args) => {
-    clearTimeout(t);
-    t = setTimeout(() => fn(...args), ms);
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), ms);
   };
 }
 

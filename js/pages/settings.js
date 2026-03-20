@@ -1855,7 +1855,7 @@ function renderMessageDetail(msg, attachments = []) {
           : isPdf
           ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`
           : `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>`;
-        chip.innerHTML = `${icon}${escSetting(att.filename)} <span style="opacity:.45">${att.mime_type.split('/')[1] || ''}</span>`;
+        chip.innerHTML = `${icon}${escSetting(att.filename)} <span style="opacity:.45">${escSetting(att.mime_type.split('/')[1] || '')}</span>`;
         chip.addEventListener("click", async (e) => {
           e.preventDefault();
           try {
@@ -2084,7 +2084,7 @@ function renderReportThread(report, messages, attsByMsg = {}) {
           const icon = isImage
             ? `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`
             : `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>`;
-          chip.innerHTML = `${icon}${escSetting(att.filename)} <span style="opacity:.45">${att.mime_type.split("/")[1] || ""}</span>`;
+          chip.innerHTML = `${icon}${escSetting(att.filename)} <span style="opacity:.45">${escSetting(att.mime_type.split("/")[1] || "")}</span>`;
           chip.addEventListener("click", async (e) => {
             e.preventDefault();
             try {

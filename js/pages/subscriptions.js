@@ -10,6 +10,10 @@ import "../core/contact-modal.js";
 initI18n({ withSwitcher: true });
 
 const $ = (id) => document.getElementById(id);
+
+function escapeHtml(s) {
+  return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
 const qs = new URLSearchParams(location.search);
 const focusInviteToken = qs.get("s");
 let focusInviteHandled = false;
@@ -300,7 +304,7 @@ function renderSubscribers() {
     for (const row of sorted) {
       const item = document.createElement("div");
       item.className = `hub-item ${row.status === "active" ? "sub-active" : row.status === "declined" ? "sub-declined" : "sub-pending"}`;
-      item.innerHTML = `<div><div class="hub-item-title">${row.subscriber_label || MSG.dash()}</div><div class="hub-item-sub">${MSG.statusLabel(row.status)}</div></div><div class="hub-item-actions"></div>`;
+      item.innerHTML = `<div><div class="hub-item-title">${escapeHtml(row.subscriber_label || MSG.dash())}</div><div class="hub-item-sub">${MSG.statusLabel(row.status)}</div></div><div class="hub-item-actions"></div>`;
       const actions = item.querySelector(".hub-item-actions");
 
       if (row.status !== "declined") {
@@ -382,7 +386,7 @@ function renderInvites() {
     for (const row of sorted) {
       const item = document.createElement("div");
       item.className = `hub-item ${row.status === "active" ? "sub-active" : row.status === "declined" ? "sub-declined" : "sub-pending"}`;
-      item.innerHTML = `<div><div class="hub-item-title">${row.owner_label || MSG.dash()}</div><div class="hub-item-sub">${MSG.statusLabel(row.status)}</div></div><div class="hub-item-actions"></div>`;
+      item.innerHTML = `<div><div class="hub-item-title">${escapeHtml(row.owner_label || MSG.dash())}</div><div class="hub-item-sub">${MSG.statusLabel(row.status)}</div></div><div class="hub-item-actions"></div>`;
       const actions = item.querySelector(".hub-item-actions");
 
       if (row.status !== "declined") {
