@@ -4,12 +4,12 @@
   color: #fff;
 }
 
-.account-wrap {
+main.account-wrap {
   display: block;
   padding-bottom: 28px;
 }
 
-.account-wrap .bar > div {
+main.account-wrap .bar > div {
   flex: 1;
   min-width: 0;
 }
