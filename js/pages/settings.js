@@ -21,7 +21,7 @@ const API_BASE = "/_admin_api";
 const TOOLS_MANIFEST = "/settings-tools/tools.json";
 const POLL_MS = 15000;
 const MINUTES_MIN = 10;
-const MAIL_PROVIDERS = ["sendgrid", "brevo", "mailgun"];
+const MAIL_PROVIDERS = ["sendgrid", "brevo", "mailgun", "ses"];
 const CRON_PRESETS = [
   { id: "1m", schedule: "* * * * *", minutes: 1 },
   { id: "2m", schedule: "*/2 * * * *", minutes: 2 },
@@ -1295,7 +1295,10 @@ function renderLogRows(rows) {
 
   rows.forEach((row) => {
     const tr = document.createElement("tr");
-    tr.className = `mail-level-${String(row.level || "").toLowerCase()}`;
+    const isSkipped = String(row.event || "") === "email_skipped";
+    tr.className = isSkipped
+      ? "mail-event-skipped"
+      : `mail-level-${String(row.level || "").toLowerCase()}`;
 
     const tdTime = document.createElement("td");
     tdTime.textContent = formatDateTime(row.created_at);
@@ -1304,7 +1307,11 @@ function renderLogRows(rows) {
     tdFn.appendChild(createPill(String(row.function_name || "—"), logFunctionPillClass(row.function_name)));
 
     const tdLevel = document.createElement("td");
-    tdLevel.appendChild(createPill(String(row.level || "—"), logLevelPillClass(row.level)));
+    tdLevel.appendChild(
+      isSkipped
+        ? createPill(t("settings.mail.skippedPill"), "mail-pill-event-skipped")
+        : createPill(String(row.level || "—"), logLevelPillClass(row.level))
+    );
 
     const tdEvent = document.createElement("td");
     tdEvent.textContent = scrubText(row.event || "—", 80);
@@ -1313,7 +1320,17 @@ function renderLogRows(rows) {
     tdTo.textContent = scrubText(row.recipient_email || "—", 60);
 
     const tdProvider = document.createElement("td");
-    tdProvider.textContent = String(row.provider || "—");
+    if (isSkipped) {
+      const reasonKey = String(row.provider || "");
+      const label = reasonKey === "skipped_user_flag"
+        ? t("settings.mail.skipReasonUserFlag")
+        : reasonKey === "skipped_suppression"
+          ? t("settings.mail.skipReasonSuppression")
+          : reasonKey || "—";
+      tdProvider.textContent = label;
+    } else {
+      tdProvider.textContent = String(row.provider || "—");
+    }
 
     const tdError = document.createElement("td");
     tdError.textContent = scrubText(row.error || "—", 180);
@@ -2824,7 +2841,22 @@ async function loadMailLogs({ silent = false } = {}) {
     const rows = Array.isArray(data?.rows) ? data.rows : [];
     renderLogRows(rows);
     if (els.mailLogsInfo) {
-      els.mailLogsInfo.textContent = t("settings.mail.rows").replace("{count}", String(rows.length));
+      const cntSent = rows.filter((r) => r.event === "provider_success" || r.event === "queue_item_sent").length;
+      const cntFailed = rows.filter((r) => r.event === "queue_item_failed" || r.event === "all_providers_failed").length;
+      const cntSkippedFlag = rows.filter((r) => r.event === "email_skipped" && r.provider === "skipped_user_flag").length;
+      const cntSkippedSup = rows.filter((r) => r.event === "email_skipped" && r.provider === "skipped_suppression").length;
+      const cntSkipped = cntSkippedFlag + cntSkippedSup;
+      const parts = [t("settings.mail.rows").replace("{count}", String(rows.length))];
+      if (cntSent) parts.push(t("settings.mail.statsSent").replace("{count}", String(cntSent)));
+      if (cntFailed) parts.push(t("settings.mail.statsFailed").replace("{count}", String(cntFailed)));
+      if (cntSkipped) {
+        const skipDetail = [
+          cntSkippedFlag ? t("settings.mail.statsSkippedFlag").replace("{count}", String(cntSkippedFlag)) : "",
+          cntSkippedSup ? t("settings.mail.statsSkippedSup").replace("{count}", String(cntSkippedSup)) : "",
+        ].filter(Boolean).join(", ");
+        parts.push(`${t("settings.mail.statsSkipped").replace("{count}", String(cntSkipped))} (${skipDetail})`);
+      }
+      els.mailLogsInfo.textContent = parts.join(" · ");
     }
     return true;
   } catch (err) {
