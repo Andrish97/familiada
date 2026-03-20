@@ -4010,6 +4010,7 @@ const pl = {
     summaryFinalQuestions: "Pytania finału",
     summaryRoundsQuestions: "Pytania rund",
     setupFinishHint: "Kliknij Gotowe, aby przejść dalej.",
+    tooFewFinalQuestions: "Za mało pytań do losowania finału",
     summaryQRandom: "Losowanie w toku…",
     summaryQNone: "Brak pytań",
     summaryQWillRandom: "Zostaną wylosowane przy starcie",

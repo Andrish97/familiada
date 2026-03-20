@@ -133,7 +133,7 @@ export function createUI() {
   }
 
   function setNavEnabled(flags) {
-    if (("navDevices")) $("navDevices").disabled = !flags.devices;
+    if ($("navDevices")) $("navDevices").disabled = !flags.devices;
     if ($("navSetup")) $("navSetup").disabled = !flags.setup;
     if ($("navRounds")) $("navRounds").disabled = !flags.rounds;
     if ($("navFinal")) $("navFinal").disabled = !flags.final;

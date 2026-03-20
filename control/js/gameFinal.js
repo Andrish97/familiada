@@ -66,11 +66,6 @@ function escapeHtml(s) {
     .replaceAll("'", "&#039;");
 }
 
-function clip11(s) {
-  const t = String(s ?? "");
-  return t.length > 11 ? t.slice(0, 11) : t;
-}
-
 function hostTag(style, text) {
   return `[${style}]${String(text ?? "")}[/]`;
 }
@@ -733,7 +728,8 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
   async function loadFinalPicked() {
     const pickedIds = store.state.final.picked || [];
     const raw = sessionStorage.getItem("familiada:questionsCache");
-    const all = raw ? JSON.parse(raw) : [];
+    let all = [];
+    try { all = raw ? JSON.parse(raw) : []; } catch {}
 
     qPicked = pickedIds.map((id) => all.find((q) => q.id === id)).filter(Boolean);
     if (qPicked.length !== 5) throw new Error(FINAL_MSG.ERR_MISSING_5);

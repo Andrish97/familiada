@@ -310,8 +310,6 @@ async function main() {
 
   const store = createStore(game.id);
   store.hydrate();
-  // DEBUG (tymczasowo)
-  window.__fam = { store };
 
   const hasFinalNow = store.state.hasFinal === true;
   const finalYesRadio = document.getElementById("finalYes");
@@ -1387,7 +1385,7 @@ async function sendZeroStatesToDevices() {
     }
     
     if (!all || all.length < 5) {
-      ui.setMsg("msgSetupGame", "Za mało pytań do losowania finału");
+      ui.setMsg("msgSetupGame", t("control.tooFewFinalQuestions"));
       return;
     }
 
@@ -1431,7 +1429,8 @@ async function sendZeroStatesToDevices() {
       } else {
         const pickedIds = s.final?.picked || [];
         const cached = sessionStorage.getItem("familiada:questionsCache");
-        const all = cached ? JSON.parse(cached) : [];
+        let all = [];
+        try { all = cached ? JSON.parse(cached) : []; } catch {}
         const items = pickedIds.map(id => {
           const q = all.find(x => x.id === id);
           return q ? `<li>${escapeHtml((q.text || "").slice(0, 60))}</li>` : "";
@@ -1439,7 +1438,7 @@ async function sendZeroStatesToDevices() {
         if (items.length) {
           finalQEl.innerHTML = items.join("");
         } else {
-          finalQEl.innerHTML = `<li class="summaryQRandom">${s.finalQuestionsMode === "random" ? t("control.summaryQRandom") || "Losowanie w toku…" : t("control.summaryQNone") || "Brak pytań"}</li>`;
+          finalQEl.innerHTML = `<li class="summaryQRandom">${s.finalQuestionsMode === "random" ? t("control.summaryQRandom") : t("control.summaryQNone")}</li>`;
         }
       }
     }
@@ -1448,11 +1447,11 @@ async function sendZeroStatesToDevices() {
     const roundsQEl = document.getElementById("summaryRoundsQuestions");
     if (roundsQEl) {
       if (s.roundsQuestionsMode === "random") {
-        roundsQEl.innerHTML = `<li class="summaryQRandom">${t("control.summaryQWillRandom") || "Zostaną wylosowane przy starcie gry"}</li>`;
+        roundsQEl.innerHTML = `<li class="summaryQRandom">${t("control.summaryQWillRandom")}</li>`;
       } else {
         const ordered = s.roundsPicked || [];
         const items = ordered.map(q => `<li>${escapeHtml((q.text || "").slice(0, 60))}</li>`).filter(Boolean);
-        roundsQEl.innerHTML = items.length ? items.join("") : `<li class="summaryQRandom">${t("control.summaryQNoOrder") || "Brak wybranej kolejności"}</li>`;
+        roundsQEl.innerHTML = items.length ? items.join("") : `<li class="summaryQRandom">${t("control.summaryQNoOrder")}</li>`;
       }
     }
   }
