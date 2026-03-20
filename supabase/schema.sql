@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict OStTQScWZwriSh5wG5LrlgxcsG4LHLu0dmK2qHLls0X4Fr9qSjRGc6hPTDo3sZc
+\restrict Qd3vXsasdcuYXzIIQKnVX3aYQgoBmLFfaUnC2OqG5zKqY1aab7KZOa65ijU7Jj8
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -206,6 +206,29 @@ CREATE FUNCTION "graphql_public"."graphql"("operationName" "text" DEFAULT NULL::
     "operationName" := "operationName",
     extensions := extensions
   );
+$$;
+
+
+--
+-- Name: _ensure_unsub_token("text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_ensure_unsub_token"("p_email" "text") RETURNS "uuid"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+DECLARE v_token uuid;
+BEGIN
+  INSERT INTO public.email_unsub_tokens (email)
+  VALUES (lower(trim(p_email)))
+  ON CONFLICT (email) DO NOTHING;
+
+  SELECT token INTO v_token
+  FROM public.email_unsub_tokens
+  WHERE email = lower(trim(p_email));
+
+  RETURN v_token;
+END;
 $$;
 
 
@@ -2676,6 +2699,33 @@ $$;
 
 
 --
+-- Name: get_unsub_info_for_task_emails("uuid", "text"[]); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."get_unsub_info_for_task_emails"("p_owner_id" "uuid", "p_emails" "text"[]) RETURNS TABLE("email" "text", "sub_token" "uuid", "unsub_token" "uuid")
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    lower(coalesce(ps.subscriber_email, '')) AS email,
+    ps.token AS sub_token,
+    ut.token AS unsub_token
+  FROM public.poll_subscriptions ps
+  LEFT JOIN public.email_unsub_tokens ut
+    ON lower(ut.email) = lower(ps.subscriber_email)
+  WHERE ps.owner_id = p_owner_id
+    AND ps.status = 'active'
+    AND ps.subscriber_email IS NOT NULL
+    AND lower(ps.subscriber_email) = ANY(
+      SELECT lower(e) FROM unnest(p_emails) AS e
+    );
+END;
+$$;
+
+
+--
 -- Name: guest_cleanup_expired(integer); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -4456,6 +4506,34 @@ $$;
 
 
 --
+-- Name: on_profile_created_check_suppression(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."on_profile_created_check_suppression"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+DECLARE v_suppressed boolean;
+BEGIN
+  SELECT suppressed_at IS NOT NULL INTO v_suppressed
+  FROM public.email_unsub_tokens
+  WHERE lower(email) = lower(new.email)
+  LIMIT 1;
+
+  IF v_suppressed THEN
+    INSERT INTO public.user_flags (user_id, email_notifications)
+    VALUES (new.id, false)
+    ON CONFLICT (user_id) DO UPDATE SET email_notifications = false;
+
+    DELETE FROM public.email_unsub_tokens WHERE lower(email) = lower(new.email);
+  END IF;
+
+  RETURN new;
+END;
+$$;
+
+
+--
 -- Name: poll_action("text", "uuid", "text"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -5074,6 +5152,47 @@ $$;
 
 
 --
+-- Name: poll_go_global_unsubscribe("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."poll_go_global_unsubscribe"("p_token" "uuid") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+DECLARE
+  v_email text;
+BEGIN
+  SELECT email INTO v_email
+  FROM public.email_unsub_tokens
+  WHERE token = p_token LIMIT 1;
+
+  IF NOT found THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'invalid_token');
+  END IF;
+
+  -- Oznacz jako suppressed
+  UPDATE public.email_unsub_tokens
+  SET suppressed_at = now()
+  WHERE token = p_token AND suppressed_at IS NULL;
+
+  -- Anuluj wszystkie aktywne subskrypcje dla tego emaila
+  UPDATE public.poll_subscriptions
+  SET status = 'declined', declined_at = now()
+  WHERE lower(subscriber_email) = lower(v_email)
+    AND status IN ('pending', 'active');
+
+  -- Anuluj wszystkie aktywne taski dla tego emaila
+  UPDATE public.poll_tasks
+  SET status = 'cancelled', cancelled_at = now()
+  WHERE lower(recipient_email) = lower(v_email)
+    AND status IN ('pending', 'opened');
+
+  RETURN jsonb_build_object('ok', true);
+END;
+$$;
+
+
+--
 -- Name: poll_go_resolve("uuid"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -5081,92 +5200,78 @@ CREATE FUNCTION "public"."poll_go_resolve"("p_token" "uuid") RETURNS "jsonb"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
     AS $$
-declare
+DECLARE
   s record;
   t record;
-begin
+  u record;
+BEGIN
   -- 1) subscription token?
-  select
-    ps.id,
-    ps.status,
-    ps.owner_id,
-    p.username as owner_label,
-    ps.subscriber_user_id,
-    ps.subscriber_email,
-    ps.opened_at
-  into s
-  from public.poll_subscriptions ps
-  left join public.profiles p on p.id = ps.owner_id
-  where ps.token = p_token
-  limit 1;
+  SELECT
+    ps.id, ps.status, ps.owner_id,
+    p.username AS owner_label,
+    ps.subscriber_user_id, ps.subscriber_email, ps.opened_at
+  INTO s
+  FROM public.poll_subscriptions ps
+  LEFT JOIN public.profiles p ON p.id = ps.owner_id
+  WHERE ps.token = p_token LIMIT 1;
 
-  if found then
-    -- mark opened once
-    if s.opened_at is null then
-      update public.poll_subscriptions
-        set opened_at = now()
-      where id = s.id;
-    end if;
-
-    return jsonb_build_object(
-      'ok', true,
-      'kind', 'sub',
-      'sub_id', s.id,
-      'status', s.status,
-      'owner_id', s.owner_id,
-      'owner_label', s.owner_label,
+  IF found THEN
+    IF s.opened_at IS NULL THEN
+      UPDATE public.poll_subscriptions SET opened_at = now() WHERE id = s.id;
+    END IF;
+    RETURN jsonb_build_object(
+      'ok', true, 'kind', 'sub',
+      'sub_id', s.id, 'status', s.status,
+      'owner_id', s.owner_id, 'owner_label', s.owner_label,
       'subscriber_user_id', s.subscriber_user_id,
       'subscriber_email', s.subscriber_email
     );
-  end if;
+  END IF;
 
   -- 2) task token?
-  select
-    pt.id,
-    pt.status,
-    pt.owner_id,
-    p.username as owner_label,
-    pt.recipient_user_id,
-    pt.recipient_email,
-    pt.game_id,
-    g.name as game_name,
-    pt.poll_type,
-    pt.share_key_poll,
-    pt.opened_at
-  into t
-  from public.poll_tasks pt
-  left join public.games g on g.id = pt.game_id
-  left join public.profiles p on p.id = pt.owner_id
-  where pt.token = p_token
-  limit 1;
+  SELECT
+    pt.id, pt.status, pt.owner_id,
+    p.username AS owner_label,
+    pt.recipient_user_id, pt.recipient_email,
+    pt.game_id, g.name AS game_name,
+    pt.poll_type, pt.share_key_poll, pt.opened_at
+  INTO t
+  FROM public.poll_tasks pt
+  LEFT JOIN public.games g ON g.id = pt.game_id
+  LEFT JOIN public.profiles p ON p.id = pt.owner_id
+  WHERE pt.token = p_token LIMIT 1;
 
-  if found then
-    -- mark opened once (only for pending)
-    if t.opened_at is null and t.status = 'pending' then
-      update public.poll_tasks
-        set status = 'opened',
-            opened_at = now()
-      where id = t.id;
-    end if;
-
-    return jsonb_build_object(
-      'ok', true,
-      'kind', 'task',
-      'task_id', t.id,
-      'status', t.status,
-      'owner_id', t.owner_id,
-      'owner_label', t.owner_label,
+  IF found THEN
+    IF t.opened_at IS NULL AND t.status = 'pending' THEN
+      UPDATE public.poll_tasks
+      SET status = 'opened', opened_at = now()
+      WHERE id = t.id;
+    END IF;
+    RETURN jsonb_build_object(
+      'ok', true, 'kind', 'task',
+      'task_id', t.id, 'status', t.status,
+      'owner_id', t.owner_id, 'owner_label', t.owner_label,
       'recipient_user_id', t.recipient_user_id,
       'recipient_email', t.recipient_email,
-      'game_id', t.game_id,
-      'game_name', t.game_name,
-      'poll_type', t.poll_type,
-      'share_key_poll', t.share_key_poll
+      'game_id', t.game_id, 'game_name', t.game_name,
+      'poll_type', t.poll_type, 'share_key_poll', t.share_key_poll
     );
-  end if;
+  END IF;
 
-  return jsonb_build_object('ok', false, 'error', 'invalid_token');
-end;
+  -- 3) global unsub token?
+  SELECT email, suppressed_at INTO u
+  FROM public.email_unsub_tokens
+  WHERE token = p_token LIMIT 1;
+
+  IF found THEN
+    RETURN jsonb_build_object(
+      'ok', true, 'kind', 'unsub',
+      'already_suppressed', (u.suppressed_at IS NOT NULL)
+    );
+  END IF;
+
+  RETURN jsonb_build_object('ok', false, 'error', 'invalid_token');
+END;
 $$;
 
 
@@ -5853,6 +5958,55 @@ begin
 
   return jsonb_build_object('ok', false, 'error', 'invalid_or_unavailable_token', 'kind', 'sub', 'action', 'decline');
 end;
+$$;
+
+
+--
+-- Name: poll_sub_unsubscribe("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."poll_sub_unsubscribe"("p_token" "uuid") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+DECLARE
+  v_sub        public.poll_subscriptions%rowtype;
+  v_owner_label text;
+BEGIN
+  SELECT ps.*, p.username AS _label INTO v_sub
+  FROM public.poll_subscriptions ps
+  LEFT JOIN public.profiles p ON p.id = ps.owner_id
+  WHERE ps.token = p_token
+  LIMIT 1;
+
+  IF NOT found THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'not_found');
+  END IF;
+
+  IF v_sub.status NOT IN ('pending', 'active') THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'already_inactive');
+  END IF;
+
+  SELECT p.username INTO v_owner_label
+  FROM public.profiles p WHERE p.id = v_sub.owner_id LIMIT 1;
+
+  -- Decline subskrypcji (ten sam efekt co decline → 5-dniowy cooldown)
+  UPDATE public.poll_subscriptions
+  SET status = 'declined', declined_at = now()
+  WHERE id = v_sub.id;
+
+  -- Anuluj wszystkie aktywne taski tego subskrybenta u tego właściciela
+  UPDATE public.poll_tasks
+  SET status = 'cancelled', cancelled_at = now()
+  WHERE owner_id = v_sub.owner_id
+    AND status IN ('pending', 'opened')
+    AND (
+      (v_sub.subscriber_user_id IS NOT NULL AND recipient_user_id = v_sub.subscriber_user_id)
+      OR (v_sub.subscriber_email IS NOT NULL AND lower(recipient_email) = lower(v_sub.subscriber_email))
+    );
+
+  RETURN jsonb_build_object('ok', true, 'owner_label', coalesce(v_owner_label, ''));
+END;
 $$;
 
 
@@ -7458,68 +7612,70 @@ CREATE FUNCTION "public"."polls_hub_subscriber_resend"("p_id" "uuid") RETURNS "j
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'pg_temp'
     AS $$
-declare
-  v_uid uuid := auth.uid();
-  v_sub public.poll_subscriptions%rowtype;
-  v_to text;
-  v_link text;
-  v_until timestamptz;
-begin
-  if v_uid is null then
-    return jsonb_build_object('ok', false, 'error', 'auth required');
-  end if;
+DECLARE
+  v_uid         uuid := auth.uid();
+  v_sub         public.poll_subscriptions%rowtype;
+  v_to          text;
+  v_link        text;
+  v_until       timestamptz;
+  v_unsub_token uuid;
+BEGIN
+  IF v_uid IS NULL THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'auth required');
+  END IF;
 
-  select * into v_sub
-  from public.poll_subscriptions
-  where id = p_id
-    and owner_id = v_uid
-  limit 1;
+  SELECT * INTO v_sub
+  FROM public.poll_subscriptions
+  WHERE id = p_id AND owner_id = v_uid
+  LIMIT 1;
 
-  if not found then
-    return jsonb_build_object('ok', false, 'error', 'not found');
-  end if;
+  IF NOT found THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'not found');
+  END IF;
 
-  if v_sub.status <> 'pending' then
-    return jsonb_build_object('ok', false, 'error', 'only pending can be resent');
-  end if;
+  IF v_sub.status <> 'pending' THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'only pending can be resent');
+  END IF;
 
-  -- cooldown: once per 24h
-  if v_sub.email_sent_at is not null then
+  IF v_sub.email_sent_at IS NOT NULL THEN
     v_until := v_sub.email_sent_at + interval '24 hours';
-    if now() < v_until then
-      return jsonb_build_object('ok', false, 'error', 'cooldown', 'cooldown_until', v_until);
-    end if;
-  end if;
+    IF now() < v_until THEN
+      RETURN jsonb_build_object('ok', false, 'error', 'cooldown', 'cooldown_until', v_until);
+    END IF;
+  END IF;
 
-  -- resolve recipient email
-  if v_sub.subscriber_email is not null then
+  IF v_sub.subscriber_email IS NOT NULL THEN
     v_to := lower(v_sub.subscriber_email);
-  elsif v_sub.subscriber_user_id is not null then
-    select lower(p.email) into v_to
-    from public.profiles p
-    where p.id = v_sub.subscriber_user_id
-    limit 1;
-  end if;
+  ELSIF v_sub.subscriber_user_id IS NOT NULL THEN
+    SELECT lower(p.email) INTO v_to
+    FROM public.profiles p WHERE p.id = v_sub.subscriber_user_id LIMIT 1;
+  END IF;
 
-  if public._norm_email(v_to) is null then
-    return jsonb_build_object('ok', false, 'error', 'no email for this subscriber');
-  end if;
+  IF public._norm_email(v_to) IS NULL THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'no email for this subscriber');
+  END IF;
 
   v_link := ('poll-go?s=' || v_sub.token::text)::text;
 
-  update public.poll_subscriptions
-  set email_sent_at = now(),
-      email_send_count = email_send_count + 1
-  where id = p_id;
+  UPDATE public.poll_subscriptions
+  SET email_sent_at = now(), email_send_count = email_send_count + 1
+  WHERE id = p_id;
 
-  return jsonb_build_object(
+  -- unsub token tylko dla email-only
+  IF v_sub.subscriber_email IS NOT NULL THEN
+    v_unsub_token := public._ensure_unsub_token(v_to);
+  END IF;
+
+  RETURN jsonb_build_object(
     'ok', true,
     'to', v_to,
     'kind', 'sub_invite',
     'link', v_link,
-    'token', v_sub.token
+    'token', v_sub.token,
+    'registered', (v_sub.subscriber_user_id IS NOT NULL),
+    'unsub_token', v_unsub_token
   );
-end;
+END;
 $$;
 
 
@@ -7696,109 +7852,99 @@ CREATE FUNCTION "public"."polls_hub_subscription_invite_a"("p_handle" "text") RE
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'pg_temp'
     AS $$
-declare
-  v_uid uuid := auth.uid();
-  v_h text := trim(coalesce(p_handle,''));
-  v_is_email boolean := position('@' in v_h) > 1;
-  v_profile public.profiles%rowtype;
-  v_existing public.poll_subscriptions%rowtype;
-  v_sub_id uuid;
-  v_token uuid;
-  v_to text;
-  v_go text;
-  v_until timestamptz;
-  v_block_ts timestamptz;
-begin
-  if v_uid is null then
-    return jsonb_build_object('ok', false, 'error', 'auth required');
-  end if;
+DECLARE
+  v_uid        uuid := auth.uid();
+  v_h          text := trim(coalesce(p_handle,''));
+  v_is_email   boolean := position('@' in v_h) > 1;
+  v_profile    public.profiles%rowtype;
+  v_existing   public.poll_subscriptions%rowtype;
+  v_sub_id     uuid;
+  v_token      uuid;
+  v_to         text;
+  v_go         text;
+  v_until      timestamptz;
+  v_block_ts   timestamptz;
+  v_unsub_token uuid;
+BEGIN
+  IF v_uid IS NULL THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'auth required');
+  END IF;
+  IF v_h = '' THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'empty handle');
+  END IF;
 
-  if v_h = '' then
-    return jsonb_build_object('ok', false, 'error', 'empty handle');
-  end if;
+  SELECT * INTO v_profile
+  FROM public.profiles p
+  WHERE lower(p.username) = lower(v_h)
+     OR lower(p.email)    = lower(v_h)
+  LIMIT 1;
 
-  -- resolve by username/email to profile (registered user)
-  select * into v_profile
-  from public.profiles p
-  where lower(p.username) = lower(v_h)
-     or lower(p.email) = lower(v_h)
-  limit 1;
+  IF found THEN
+    SELECT * INTO v_existing
+    FROM public.poll_subscriptions s
+    WHERE s.owner_id = v_uid AND s.subscriber_user_id = v_profile.id
+    ORDER BY s.created_at DESC LIMIT 1;
+  ELSE
+    IF NOT v_is_email THEN
+      RETURN jsonb_build_object('ok', false, 'error', 'unknown username (not registered)');
+    END IF;
+    SELECT * INTO v_existing
+    FROM public.poll_subscriptions s
+    WHERE s.owner_id = v_uid AND lower(s.subscriber_email) = lower(v_h)
+    ORDER BY s.created_at DESC LIMIT 1;
+  END IF;
 
-  -- find existing subscription row (avoid duplicates)
-  if found then
-    select * into v_existing
-    from public.poll_subscriptions s
-    where s.owner_id = v_uid
-      and s.subscriber_user_id = v_profile.id
-    order by s.created_at desc
-    limit 1;
-  else
-    if not v_is_email then
-      return jsonb_build_object('ok', false, 'error', 'unknown username (not registered)');
-    end if;
-
-    select * into v_existing
-    from public.poll_subscriptions s
-    where s.owner_id = v_uid
-      and lower(s.subscriber_email) = lower(v_h)
-    order by s.created_at desc
-    limit 1;
-  end if;
-
-  if v_existing.id is not null and v_existing.status in ('pending','active') then
+  IF v_existing.id IS NOT NULL AND v_existing.status IN ('pending','active') THEN
     v_token := v_existing.token;
-    v_go := ('poll-go?s=' || v_token::text)::text;
-    v_to := coalesce(v_profile.email, v_existing.subscriber_email);
-
-    return jsonb_build_object(
-      'ok', true,
-      'already', true,
-      'sub_id', v_existing.id,
-      'status', v_existing.status,
-      'token', v_token,
-      'go_url', v_go,
-      'to', v_to,
-      'registered', (v_profile.id is not null)
+    v_go    := ('poll-go?s=' || v_token::text)::text;
+    v_to    := coalesce(v_profile.email, v_existing.subscriber_email);
+    -- unsub token tylko dla email-only (niezarejestrowanych)
+    IF v_profile.id IS NULL AND public._norm_email(v_to) IS NOT NULL THEN
+      v_unsub_token := public._ensure_unsub_token(v_to);
+    END IF;
+    RETURN jsonb_build_object(
+      'ok', true, 'already', true,
+      'sub_id', v_existing.id, 'status', v_existing.status,
+      'token', v_token, 'go_url', v_go, 'to', v_to,
+      'registered', (v_profile.id IS NOT NULL),
+      'unsub_token', v_unsub_token
     );
-  end if;
+  END IF;
 
-  -- cooldown 5 dni po cancelled/declined
-  if v_existing.id is not null and v_existing.status in ('cancelled','declined') then
+  IF v_existing.id IS NOT NULL AND v_existing.status IN ('cancelled','declined') THEN
     v_block_ts := coalesce(v_existing.cancelled_at, v_existing.declined_at, v_existing.created_at);
-    v_until := v_block_ts + interval '5 days';
-    if now() < v_until then
-      return jsonb_build_object('ok', false, 'error', 'cooldown', 'cooldown_until', v_until);
-    end if;
-  end if;
+    v_until    := v_block_ts + interval '5 days';
+    IF now() < v_until THEN
+      RETURN jsonb_build_object('ok', false, 'error', 'cooldown', 'cooldown_until', v_until);
+    END IF;
+  END IF;
 
-  -- create new subscription invite
   v_token := gen_random_uuid();
 
-  if v_profile.id is not null then
-    insert into public.poll_subscriptions(owner_id, subscriber_user_id, subscriber_email, token, status, created_at)
-    values (v_uid, v_profile.id, null, v_token, 'pending', now())
-    returning id into v_sub_id;
+  IF v_profile.id IS NOT NULL THEN
+    INSERT INTO public.poll_subscriptions(owner_id, subscriber_user_id, subscriber_email, token, status, created_at)
+    VALUES (v_uid, v_profile.id, null, v_token, 'pending', now())
+    RETURNING id INTO v_sub_id;
     v_to := v_profile.email;
-  else
-    insert into public.poll_subscriptions(owner_id, subscriber_user_id, subscriber_email, token, status, created_at)
-    values (v_uid, null, lower(v_h), v_token, 'pending', now())
-    returning id into v_sub_id;
+  ELSE
+    INSERT INTO public.poll_subscriptions(owner_id, subscriber_user_id, subscriber_email, token, status, created_at)
+    VALUES (v_uid, null, lower(v_h), v_token, 'pending', now())
+    RETURNING id INTO v_sub_id;
     v_to := lower(v_h);
-  end if;
+    -- generuj unsub token przy tworzeniu subskrypcji email-only
+    v_unsub_token := public._ensure_unsub_token(v_to);
+  END IF;
 
   v_go := ('poll-go?s=' || v_token::text)::text;
 
-  return jsonb_build_object(
-    'ok', true,
-    'already', false,
-    'sub_id', v_sub_id,
-    'status', 'pending',
-    'token', v_token,
-    'go_url', v_go,
-    'to', v_to,
-    'registered', (v_profile.id is not null)
+  RETURN jsonb_build_object(
+    'ok', true, 'already', false,
+    'sub_id', v_sub_id, 'status', 'pending',
+    'token', v_token, 'go_url', v_go, 'to', v_to,
+    'registered', (v_profile.id IS NOT NULL),
+    'unsub_token', v_unsub_token
   );
-end;
+END;
 $$;
 
 
@@ -9228,6 +9374,18 @@ CREATE TABLE "public"."email_intents" (
 
 
 --
+-- Name: email_unsub_tokens; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."email_unsub_tokens" (
+    "email" "text" NOT NULL,
+    "token" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "suppressed_at" timestamp with time zone,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL
+);
+
+
+--
 -- Name: example_table; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -9850,6 +10008,22 @@ ALTER TABLE ONLY "public"."email_cooldowns"
 
 ALTER TABLE ONLY "public"."email_intents"
     ADD CONSTRAINT "email_intents_pkey" PRIMARY KEY ("email");
+
+
+--
+-- Name: email_unsub_tokens email_unsub_tokens_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."email_unsub_tokens"
+    ADD CONSTRAINT "email_unsub_tokens_pkey" PRIMARY KEY ("email");
+
+
+--
+-- Name: email_unsub_tokens email_unsub_tokens_token_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."email_unsub_tokens"
+    ADD CONSTRAINT "email_unsub_tokens_token_key" UNIQUE ("token");
 
 
 --
@@ -10844,6 +11018,13 @@ CREATE TRIGGER "trg_poll_tasks_touch_status_ts" BEFORE UPDATE OF "status" ON "pu
 
 
 --
+-- Name: profiles trg_profile_created_suppression; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "trg_profile_created_suppression" AFTER INSERT ON "public"."profiles" FOR EACH ROW EXECUTE FUNCTION "public"."on_profile_created_check_suppression"();
+
+
+--
 -- Name: qb_categories trg_qb_categories_set_updated_at; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -11486,6 +11667,12 @@ ALTER TABLE "public"."email_intents" ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "email_intents_service_only" ON "public"."email_intents" TO "authenticated" USING (false) WITH CHECK (false);
 
+
+--
+-- Name: email_unsub_tokens; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."email_unsub_tokens" ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: game_gen_queue; Type: ROW SECURITY; Schema: public; Owner: -
@@ -12310,5 +12497,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict OStTQScWZwriSh5wG5LrlgxcsG4LHLu0dmK2qHLls0X4Fr9qSjRGc6hPTDo3sZc
+\unrestrict Qd3vXsasdcuYXzIIQKnVX3aYQgoBmLFfaUnC2OqG5zKqY1aab7KZOa65ijU7Jj8
 
