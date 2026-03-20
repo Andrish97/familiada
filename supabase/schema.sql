@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict Qd3vXsasdcuYXzIIQKnVX3aYQgoBmLFfaUnC2OqG5zKqY1aab7KZOa65ijU7Jj8
+\restrict uY4azb4g0gqozObatEA8PXQdr5Tbiqct9f4ceGIPlsyNZPf6VJ7cbLNyDUK824f
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -9502,6 +9502,13 @@ CREATE TABLE "public"."mail_settings" (
 
 
 --
+-- Name: COLUMN "mail_settings"."provider_order"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN "public"."mail_settings"."provider_order" IS 'Kolejność providerów: sendgrid, brevo, mailgun, ses. Oddzielone przecinkami.';
+
+
+--
 -- Name: market_games; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -12497,5 +12504,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict Qd3vXsasdcuYXzIIQKnVX3aYQgoBmLFfaUnC2OqG5zKqY1aab7KZOa65ijU7Jj8
+\unrestrict uY4azb4g0gqozObatEA8PXQdr5Tbiqct9f4ceGIPlsyNZPf6VJ7cbLNyDUK824f
 
