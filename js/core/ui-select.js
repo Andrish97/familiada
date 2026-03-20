@@ -13,12 +13,35 @@ export function initUiSelect(root, { options = [], value = "", placeholder = "â€
     if (destroyed) return;
     root.classList.remove("open");
     btn.setAttribute("aria-expanded", "false");
+    menu.style.cssText = "";
+  };
+
+  const positionMenu = () => {
+    const rect = btn.getBoundingClientRect();
+    const maxMenuHeight = 260;
+    const spaceBelow = window.innerHeight - rect.bottom - 6;
+    const spaceAbove = rect.top - 6;
+    menu.style.position = "fixed";
+    menu.style.left = rect.left + "px";
+    menu.style.width = rect.width + "px";
+    menu.style.right = "auto";
+    menu.style.zIndex = "200";
+    if (spaceBelow >= Math.min(maxMenuHeight, spaceAbove) || spaceBelow >= spaceAbove) {
+      menu.style.top = (rect.bottom + 6) + "px";
+      menu.style.bottom = "auto";
+      menu.style.maxHeight = Math.max(spaceBelow, 80) + "px";
+    } else {
+      menu.style.top = "auto";
+      menu.style.bottom = (window.innerHeight - rect.top + 6) + "px";
+      menu.style.maxHeight = Math.max(spaceAbove, 80) + "px";
+    }
   };
 
   const open = () => {
     if (destroyed || root.classList.contains("is-disabled")) return;
     root.classList.add("open");
     btn.setAttribute("aria-expanded", "true");
+    positionMenu();
   };
 
   const toggle = () => {
