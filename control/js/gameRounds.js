@@ -146,12 +146,6 @@ function hostUpdate() {
   window.addEventListener("i18n:lang", refreshHostTranslations);
 
 
-  function emit() {
-    try {
-      for (const fn of store._roundsListeners || []) fn(store.state.rounds);
-    } catch {}
-  }
-
   function ensureRoundsState() {
     const r = store.state.rounds;
     if (!r.timer3) r.timer3 = { running: false, endsAt: 0, secLeft: 0 };
@@ -393,7 +387,7 @@ function hostUpdate() {
 
     if (!r._questionPool || !r._questionPool.length) {
       const rounds = await pickQuestionsForRounds(
-        store.state.gameId || store.state.id || ""
+        store.state.gameId || ""
       );
       r._questionPool = rounds || [];
       r._usedQuestionIds = [];
@@ -1246,9 +1240,6 @@ function hostUpdate() {
       if (display.roundsSetTotals) {
         await display.roundsSetTotals(r.totals);
       }
-      if (display.setTotalsTriplets) {
-        await display.setTotalsTriplets(r.totals);
-      }
       if (display.setBankTriplet) {
         await display.setBankTriplet(0);
       }
@@ -1303,6 +1294,7 @@ function hostUpdate() {
   
     // jeżeli próg osiągnięty ALBO nie ma pytań -> kończymy flow rund
     if (thresholdHit || !moreQuestions) {
+      r.lockPlayControls = false;
       const canFinal =
         typeof store.canEnterCard === "function" && store.canEnterCard("final");
   

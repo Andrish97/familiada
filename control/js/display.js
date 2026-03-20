@@ -184,7 +184,6 @@ export function createDisplay({ devices, store }) {
   async function roundsSetTotals(totals) {
     const a = String(nInt(totals?.A, 0)).padStart(3, "0");
     const b = String(nInt(totals?.B, 0)).padStart(3, "0");
-    await send(`TOP ${a}`);
     await send(`LEFT ${a}`);
     await send(`RIGHT ${b}`);
   }

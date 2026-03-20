@@ -4264,7 +4264,6 @@ const uk = {
       btn: "📷 Сканувати QR",
       cameraError: "Немає доступу до камери.",
       noQr: "QR-код не знайдено на фото.",
-      btn: "📷 Сканувати QR",
       noApi: "Використайте системну камеру для сканування QR-коду.",
     },
     shared: {
@@ -4370,6 +4369,7 @@ const uk = {
     summaryFinalQuestions: "Питання фіналу",
     summaryRoundsQuestions: "Питання раундів",
     setupFinishHint: "Натисніть Готово, щоб продовжити.",
+    tooFewFinalQuestions: "Недостатньо питань для рандомізації фіналу",
     summaryQRandom: "Рандомізація…",
     summaryQNone: "Немає питань",
     summaryQWillRandom: "Будуть рандомізовані на старті",

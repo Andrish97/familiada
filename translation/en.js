@@ -4390,7 +4390,6 @@ const en = {
       btn: "📷 Scan QR",
       cameraError: "Camera access denied.",
       noQr: "No QR code found in the photo.",
-      btn: "📷 Scan QR",
       noApi: "Use your system camera to scan the QR code.",
     },
     shared: {
@@ -4496,6 +4495,7 @@ const en = {
     summaryFinalQuestions: "Final questions",
     summaryRoundsQuestions: "Round questions",
     setupFinishHint: "Click Finish to proceed.",
+    tooFewFinalQuestions: "Not enough questions to randomize final",
     summaryQRandom: "Randomizing…",
     summaryQNone: "No questions",
     summaryQWillRandom: "Will be randomized at start",
