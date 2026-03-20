@@ -48,13 +48,28 @@ const MSG = {
   openInviteFailed: () => t("pollGo.openInviteFailed"),
   invitationRecipient: () => t("pollGo.invitationRecipient"),
   ownerEmailBlocked: (owner) => t("pollGo.ownerEmailBlocked", { owner }),
+  unsubOwnerHeading: (owner) => t("pollGo.unsubOwnerHeading", { owner }),
+  unsubOwnerText: () => t("pollGo.unsubOwnerText"),
+  unsubOwnerBtn: (owner) => t("pollGo.unsubOwnerBtn", { owner }),
+  unsubOwnerDone: (owner) => t("pollGo.unsubOwnerDone", { owner }),
+  unsubOwnerFailed: () => t("pollGo.unsubOwnerFailed"),
+  unsubGlobalHeading: () => t("pollGo.unsubGlobalHeading"),
+  unsubGlobalText: () => t("pollGo.unsubGlobalText"),
+  unsubGlobalBtn: () => t("pollGo.unsubGlobalBtn"),
+  unsubGlobalDone: () => t("pollGo.unsubGlobalDone"),
+  unsubGlobalAlready: () => t("pollGo.unsubGlobalAlready"),
+  unsubGlobalFailed: () => t("pollGo.unsubGlobalFailed"),
 };
 
 const qs = new URLSearchParams(location.search);
 const taskToken = qs.get("t");
 const subToken = qs.get("s");
-const hasTaskToken = Boolean(taskToken);
-const hasSubToken = Boolean(subToken);
+const unsubToken = qs.get("u");
+const actionParam = qs.get("action");
+const isUnsubOwner = Boolean(subToken && actionParam === "unsub");
+const isUnsubGlobal = Boolean(unsubToken && !taskToken && !subToken);
+const hasTaskToken = Boolean(taskToken) && !isUnsubOwner;
+const hasSubToken = Boolean(subToken) && !isUnsubOwner;
 const goToken = hasTaskToken === hasSubToken ? null : (hasTaskToken ? taskToken : subToken);
 
 const $ = (id) => document.getElementById(id);
@@ -422,7 +437,73 @@ async function handleTaskInvite(data, user) {
   addAction(MSG.declineLabel(), "danger", async () => declineTask());
 }
 
+async function handleUnsubOwner() {
+  try {
+    const { data, error } = await sb().rpc("poll_go_resolve", { p_token: subToken });
+    if (error || !data?.ok) {
+      setView({ head: MSG.error(), text: MSG.invalidLinkText() });
+      return;
+    }
+    const ownerLabel = data.owner_label || "";
+    setView({ head: MSG.unsubOwnerHeading(ownerLabel), text: MSG.unsubOwnerText() });
+    clearActions();
+    showEmailInput(false);
+    addAction(MSG.unsubOwnerBtn(ownerLabel), "danger", async () => {
+      try {
+        const { data: res, error: err } = await sb().rpc("poll_sub_unsubscribe", { p_token: subToken });
+        if (err || !res?.ok) throw new Error(err?.message || res?.error || "fail");
+        setView({ head: MSG.declined(), text: MSG.unsubOwnerDone(res.owner_label || ownerLabel) });
+        clearActions();
+      } catch {
+        setView({ head: MSG.error(), text: MSG.unsubOwnerFailed() });
+      }
+    });
+  } catch {
+    setView({ head: MSG.error(), text: MSG.openInviteFailed() });
+  }
+}
+
+async function handleUnsubGlobal() {
+  try {
+    const { data, error } = await sb().rpc("poll_go_resolve", { p_token: unsubToken });
+    if (error || !data?.ok || data?.kind !== "unsub") {
+      setView({ head: MSG.error(), text: MSG.invalidLinkText() });
+      return;
+    }
+    if (data.already_suppressed) {
+      setView({ head: MSG.unsubGlobalHeading(), text: MSG.unsubGlobalAlready() });
+      clearActions();
+      return;
+    }
+    setView({ head: MSG.unsubGlobalHeading(), text: MSG.unsubGlobalText() });
+    clearActions();
+    showEmailInput(false);
+    addAction(MSG.unsubGlobalBtn(), "danger", async () => {
+      try {
+        const { data: res, error: err } = await sb().rpc("poll_go_global_unsubscribe", { p_token: unsubToken });
+        if (err || !res?.ok) throw new Error(err?.message || res?.error || "fail");
+        setView({ head: MSG.unsubGlobalHeading(), text: MSG.unsubGlobalDone() });
+        clearActions();
+      } catch {
+        setView({ head: MSG.error(), text: MSG.unsubGlobalFailed() });
+      }
+    });
+  } catch {
+    setView({ head: MSG.error(), text: MSG.openInviteFailed() });
+  }
+}
+
 async function init() {
+  if (isUnsubOwner) {
+    await handleUnsubOwner();
+    return;
+  }
+
+  if (isUnsubGlobal) {
+    await handleUnsubGlobal();
+    return;
+  }
+
   if (!goToken) {
     setView({ head: MSG.missingLinkTitle(), text: MSG.missingLinkText() });
     return;
