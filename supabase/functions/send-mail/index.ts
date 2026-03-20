@@ -7,7 +7,7 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-type Provider = "sendgrid" | "brevo" | "mailgun";
+type Provider = "sendgrid" | "brevo" | "mailgun" | "ses";
 type MailItem = { to: string; subject: string; html: string; meta?: Record<string, unknown> };
 type LogLevel = "debug" | "info" | "warn" | "error";
 
@@ -23,6 +23,9 @@ const BREVO_KEY = Deno.env.get("BREVO_API_KEY") || "";
 const MAILGUN_KEY = Deno.env.get("MAILGUN_API_KEY") || "";
 const MAILGUN_DOMAIN = Deno.env.get("MAILGUN_DOMAIN") || "";
 const MAILGUN_REGION = (Deno.env.get("MAILGUN_REGION") || "eu").toLowerCase();
+const SES_ACCESS_KEY = Deno.env.get("AWS_SES_ACCESS_KEY_ID") || "";
+const SES_SECRET_KEY = Deno.env.get("AWS_SES_SECRET_ACCESS_KEY") || "";
+const SES_REGION = Deno.env.get("AWS_SES_REGION") || "us-east-1";
 
 const FROM_EMAIL = Deno.env.get("MAIL_FROM_EMAIL") || "no-reply@familiada.online";
 const FROM_NAME = Deno.env.get("MAIL_FROM_NAME") || "Familiada";
@@ -50,7 +53,7 @@ function sleep(ms: number) {
 }
 
 function parseProviderOrder(raw: string): Provider[] {
-  const allowed: Provider[] = ["sendgrid", "brevo", "mailgun"];
+  const allowed: Provider[] = ["sendgrid", "brevo", "mailgun", "ses"];
   const out = String(raw || "")
     .toLowerCase()
     .split(",")
@@ -159,12 +162,94 @@ async function sendViaMailgun(it: MailItem) {
   }
 }
 
+async function sendViaSes(it: MailItem, region: string) {
+  if (!SES_ACCESS_KEY || !SES_SECRET_KEY) throw new Error("missing_AWS_SES_credentials");
+
+  // AWS SES v2 REST API z Signature V4
+  const sesRegion = region || "us-east-1";
+  const endpoint = `https://email.${sesRegion}.amazonaws.com/v2/email/outbound-emails`;
+
+  const payload = JSON.stringify({
+    FromEmailAddress: `${FROM_NAME} <${FROM_EMAIL}>`,
+    Destination: { ToAddresses: [it.to] },
+    Content: {
+      Simple: {
+        Subject: { Data: it.subject, Charset: "UTF-8" },
+        Body: { Html: { Data: it.html, Charset: "UTF-8" } },
+      },
+    },
+  });
+
+  const now = new Date();
+  const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, "").slice(0, 15) + "Z";
+  const dateStamp = amzDate.slice(0, 8);
+  const service = "ses";
+  const host = `email.${sesRegion}.amazonaws.com`;
+
+  // Canonical request
+  const bodyHash = await sha256Hex(payload);
+  const canonicalHeaders = `content-type:application/json\nhost:${host}\nx-amz-date:${amzDate}\n`;
+  const signedHeaders = "content-type;host;x-amz-date";
+  const canonicalRequest = ["POST", "/v2/email/outbound-emails", "", canonicalHeaders, signedHeaders, bodyHash].join("\n");
+
+  // String to sign
+  const credentialScope = `${dateStamp}/${sesRegion}/${service}/aws4_request`;
+  const stringToSign = ["AWS4-HMAC-SHA256", amzDate, credentialScope, await sha256Hex(canonicalRequest)].join("\n");
+
+  // Signing key
+  const signingKey = await hmacSha256(
+    await hmacSha256(
+      await hmacSha256(
+        await hmacSha256(new TextEncoder().encode("AWS4" + SES_SECRET_KEY), dateStamp),
+        sesRegion
+      ),
+      service
+    ),
+    "aws4_request"
+  );
+  const signature = await hmacSha256Hex(signingKey, stringToSign);
+
+  const authHeader = `AWS4-HMAC-SHA256 Credential=${SES_ACCESS_KEY}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
+
+  const res = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Amz-Date": amzDate,
+      "Authorization": authHeader,
+    },
+    body: payload,
+  });
+
+  if (!res.ok) {
+    const errTxt = await res.text().catch(() => "");
+    throw new Error(`ses_failed:${errTxt || res.status}`);
+  }
+}
+
+async function sha256Hex(data: string): Promise<string> {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(data));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function hmacSha256(key: Uint8Array | ArrayBuffer, data: string): Promise<Uint8Array> {
+  const k = await crypto.subtle.importKey("raw", key, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const sig = await crypto.subtle.sign("HMAC", k, new TextEncoder().encode(data));
+  return new Uint8Array(sig);
+}
+
+async function hmacSha256Hex(key: Uint8Array, data: string): Promise<string> {
+  const buf = await hmacSha256(key, data);
+  return Array.from(buf).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
 async function sendWithFallbacks(it: MailItem, order: Provider[]) {
   const errs: string[] = [];
   for (const p of order) {
     try {
       if (p === "sendgrid") await sendViaSendgrid(it);
       else if (p === "brevo") await sendViaBrevo(it);
+      else if (p === "ses") await sendViaSes(it, SES_REGION);
       else await sendViaMailgun(it);
       return { provider: p as Provider };
     } catch (e) {
