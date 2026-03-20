@@ -5,6 +5,7 @@
 }
 
 .account-wrap {
+  display: block;
   padding-bottom: 28px;
 }
 
