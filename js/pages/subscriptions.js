@@ -192,7 +192,21 @@ ${innerHtml}
 </html>`;
 }
 
-function buildMailHtml({ title, subtitle, body, actionLabel, actionUrl }) {
+function buildMailHtml({ title, subtitle, body, actionLabel, actionUrl, unsubToken, isRegistered }) {
+  let footerExtra = "";
+  if (isRegistered) {
+    const accountUrl = mailLink("account", { withLang: true });
+    footerExtra = `<div style="margin-top:10px;font-size:11px;opacity:.55;text-align:center;">
+      ${t("pollGo.mailAccountSettings")}
+      <a href="${accountUrl}" style="color:#ffeaa6;text-decoration:underline;">${t("pollGo.mailAccountSettingsLink")}</a>
+    </div>`;
+  } else if (unsubToken) {
+    const globalUrl = mailLink(`poll-go?u=${encodeURIComponent(unsubToken)}`);
+    footerExtra = `<div style="margin-top:10px;font-size:11px;opacity:.55;text-align:center;">
+      <a href="${globalUrl}" style="color:#ffeaa6;opacity:.7;text-decoration:underline;">${t("pollGo.mailUnsubGlobal")}</a>
+    </div>`;
+  }
+
   const inner = `
 <div style="margin:0;padding:0;background:#050914;color:#ffffff;">
   <div style="max-width:560px;margin:0 auto;padding:26px 16px;font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#ffffff;background:#050914;">
@@ -218,6 +232,7 @@ function buildMailHtml({ title, subtitle, body, actionLabel, actionUrl }) {
     </div>
 
     <div style="margin-top:14px;font-size:12px;opacity:.7;text-align:center;">${t("pollsHubSubscriptions.mail.autoNote")}</div>
+    ${footerExtra}
   </div>
 </div>
 `.trim();
@@ -243,7 +258,7 @@ async function sendMail({ to, subject, html }) {
   if (!res.ok) throw new Error((await res.text()) || t("pollsHubSubscriptions.errors.mailSend"));
 }
 
-async function sendSubscriptionEmail({ to, link, ownerLabel }) {
+async function sendSubscriptionEmail({ to, link, ownerLabel, unsubToken, isRegistered }) {
   await sendMail({
     to,
     subject: t("pollsHubSubscriptions.mail.subscriptionTitle", { owner: ownerLabel }),
@@ -253,6 +268,8 @@ async function sendSubscriptionEmail({ to, link, ownerLabel }) {
       body: t("pollsHubSubscriptions.mail.subscriptionBody", { owner: ownerLabel }),
       actionLabel: t("pollsHubSubscriptions.mail.subscriptionAction"),
       actionUrl: mailLink(link, { withLang: true }),
+      unsubToken,
+      isRegistered,
     }),
   });
 }
@@ -353,7 +370,7 @@ function renderSubscribers() {
             }
             if (data?.to && data?.link) {
               const ownerLabel = who?.textContent || "Familiada";
-              await sendSubscriptionEmail({ to: data.to, link: data.link, ownerLabel });
+              await sendSubscriptionEmail({ to: data.to, link: data.link, ownerLabel, unsubToken: data.unsub_token || null, isRegistered: !!data.registered });
             }
             await refreshData();
           } catch {
@@ -535,6 +552,8 @@ async function invite(value) {
           to: resendData.to,
           link: resendData.link,
           ownerLabel: who?.textContent || "Familiada",
+          unsubToken: resendData.unsub_token || null,
+          isRegistered: !!resendData.registered,
         });
       }
       const url = new URL(location.href);

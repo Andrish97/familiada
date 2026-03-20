@@ -247,34 +247,49 @@ async function filterByEmailNotifications(items: MailItem[]) {
     if (em) emailToUid.set(em, (p as any).id);
   }
 
+  // 3) user_flags: email_notifications (dla zarejestrowanych)
   const uids = [...new Set([...emailToUid.values()])];
-  if (!uids.length) return { filtered: items, skipped: 0 };
-
-  // 3) user_flags: email_notifications
-  const { data: flags, error: fErr } = await sbAdmin
-    .from("user_flags")
-    .select("user_id,email_notifications")
-    .in("user_id", uids);
-
-  if (fErr) throw fErr;
-
   const uidAllowed = new Map<string, boolean>();
-  // default: true (brak wiersza => true)
-  for (const uid of uids) uidAllowed.set(uid, true);
-  for (const r of flags || []) {
-    uidAllowed.set((r as any).user_id, (r as any).email_notifications !== false);
+  if (uids.length) {
+    const { data: flags, error: fErr } = await sbAdmin
+      .from("user_flags")
+      .select("user_id,email_notifications")
+      .in("user_id", uids);
+    if (fErr) throw fErr;
+    for (const uid of uids) uidAllowed.set(uid, true); // default: true
+    for (const r of flags || []) {
+      uidAllowed.set((r as any).user_id, (r as any).email_notifications !== false);
+    }
   }
 
-  // 4) filtruj items po email->uid->flag
+  // 4) email_unsub_tokens: suppressed_at IS NOT NULL (dla niezarejestrowanych)
+  const unregisteredEmails = emails.filter((em) => !emailToUid.has(em));
+  const suppressedEmails = new Set<string>();
+  if (unregisteredEmails.length) {
+    const { data: suppressed } = await sbAdmin
+      .from("email_unsub_tokens")
+      .select("email")
+      .in("email", unregisteredEmails)
+      .not("suppressed_at", "is", null);
+    for (const r of suppressed || []) {
+      suppressedEmails.add(normEmail((r as any).email));
+    }
+  }
+
+  // 5) filtruj
   let skipped = 0;
   const filtered = items.filter((it) => {
     const em = normEmail(it.to);
-    if (!em) return true; // zostaw (dziwny/niepełny email – i tak parseItems już filtruje)
+    if (!em) return true;
     const uid = emailToUid.get(em);
-    if (!uid) return true; // email-only (nie ma profilu)
-    const ok = uidAllowed.get(uid) !== false;
-    if (!ok) skipped++;
-    return ok;
+    if (uid) {
+      const ok = uidAllowed.get(uid) !== false;
+      if (!ok) skipped++;
+      return ok;
+    }
+    // niezarejestrowany — sprawdź suppression
+    if (suppressedEmails.has(em)) { skipped++; return false; }
+    return true;
   });
 
   return { filtered, skipped };

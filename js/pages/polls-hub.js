@@ -253,7 +253,29 @@ ${innerHtml}
 </html>`;
 }
 
-function buildMailHtml({ title, subtitle, body, actionLabel, actionUrl }) {
+function buildMailHtml({ title, subtitle, body, actionLabel, actionUrl, subToken, unsubToken, ownerLabel: ownerLabelUnsub, isRegistered }) {
+  let footerExtra = "";
+  if (isRegistered) {
+    const accountUrl = new URL("account", location.origin).href;
+    footerExtra = `<div style="margin-top:10px;font-size:11px;opacity:.55;text-align:center;">
+      ${t("pollGo.mailAccountSettings")}
+      <a href="${accountUrl}" style="color:#ffeaa6;text-decoration:underline;">${t("pollGo.mailAccountSettingsLink")}</a>
+    </div>`;
+  } else if (subToken || unsubToken) {
+    const parts = [];
+    if (subToken) {
+      const unsubOwnerUrl = new URL(`poll-go?s=${encodeURIComponent(subToken)}&action=unsub`, location.origin).href;
+      parts.push(`<a href="${unsubOwnerUrl}" style="color:#ffeaa6;opacity:.7;text-decoration:underline;">${t("pollGo.mailUnsubOwner", { owner: ownerLabelUnsub || "" })}</a>`);
+    }
+    if (unsubToken) {
+      const globalUrl = new URL(`poll-go?u=${encodeURIComponent(unsubToken)}`, location.origin).href;
+      parts.push(`<a href="${globalUrl}" style="color:#ffeaa6;opacity:.7;text-decoration:underline;">${t("pollGo.mailUnsubGlobal")}</a>`);
+    }
+    if (parts.length) {
+      footerExtra = `<div style="margin-top:10px;font-size:11px;opacity:.55;text-align:center;">${parts.join(" &nbsp;·&nbsp; ")}</div>`;
+    }
+  }
+
   const inner = `
     <div style="margin:0;padding:0;background:#050914;color:#ffffff;">
       <div style="max-width:560px;margin:0 auto;padding:26px 16px;font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#ffffff;background:#050914;">
@@ -279,6 +301,7 @@ function buildMailHtml({ title, subtitle, body, actionLabel, actionUrl }) {
         </div>
 
         <div style="margin-top:14px;font-size:12px;opacity:.7;text-align:center;">${t("pollsHubPolls.mail.autoNote")}</div>
+        ${footerExtra}
       </div>
     </div>
   `.trim();
@@ -756,6 +779,23 @@ async function saveShareModal() {
 
       setProgress({ show: true, step: MSG.shareStep(), i: 2, n: 4, msg: MSG.mailBatchSending() });
 
+      // Pobierz sub_token + unsub_token dla email-only odbiorców
+      const emailOnlyRecipients = mailItems
+        .map((it) => String(it.to || "").toLowerCase())
+        .filter(Boolean);
+      const unsubInfoByEmail = new Map(); // email → { sub_token, unsub_token }
+      if (emailOnlyRecipients.length) {
+        try {
+          const { data: unsubRows } = await sb().rpc("get_unsub_info_for_task_emails", {
+            p_owner_id: currentUser.id,
+            p_emails: emailOnlyRecipients,
+          });
+          for (const row of unsubRows || []) {
+            if (row.email) unsubInfoByEmail.set(String(row.email).toLowerCase(), row);
+          }
+        } catch { /* nieblokujące — maile wysyłamy bez linków jeśli błąd */ }
+      }
+
       const emailToTaskId = new Map();
       const items = mailItems
         .map((item) => {
@@ -763,12 +803,20 @@ async function saveShareModal() {
 
           const actionUrl = mailLink(item.link);
           const safeName = pollName ? MSG.pollNameLabel(pollName) : MSG.pollFallback();
+          const emailKey = String(item.to || "").toLowerCase();
+          const unsubInfo = unsubInfoByEmail.get(emailKey);
+          // isRegistered: jeśli nie ma unsub info (brak email_only) → zarejestrowany
+          const isRegistered = !unsubInfo;
           const html = buildMailHtml({
             title: MSG.mailTaskTitle(),
             subtitle: MSG.mailSubtitle(),
             body: MSG.mailTaskBody(ownerLabel, safeName),
             actionLabel: MSG.mailTaskAction(),
             actionUrl,
+            subToken: unsubInfo?.sub_token || null,
+            unsubToken: unsubInfo?.unsub_token || null,
+            ownerLabel,
+            isRegistered,
           });
 
           return {
