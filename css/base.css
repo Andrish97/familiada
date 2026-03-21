@@ -44,9 +44,13 @@ body > main {
     flex-wrap: wrap;
 
     padding: 12px 16px;
+    padding-top: max(12px, env(safe-area-inset-top));
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
     background: rgba(0,0,0,.35);
     border-bottom: 1px solid rgba(255,255,255,.12);
     backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
 }
 
 @media (max-width: 900px){
@@ -601,7 +605,10 @@ main{
 
 @media (max-width: 600px) {
     .topbar {
-        padding: 12px 14px
+        padding: 12px 14px;
+        padding-top: max(12px, env(safe-area-inset-top));
+        padding-left: max(14px, env(safe-area-inset-left));
+        padding-right: max(14px, env(safe-area-inset-right));
     }
 
     .brand {
@@ -909,6 +916,9 @@ html.showA2HS .a2hs {
     align-items:center;
     gap:8px;
     padding:8px 10px;
+    padding-top: max(8px, env(safe-area-inset-top));
+    padding-left: max(10px, env(safe-area-inset-left));
+    padding-right: max(10px, env(safe-area-inset-right));
   }
 
   .topbar-layout-4 .topbar-section-1{ grid-area:s1; }
