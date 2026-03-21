@@ -1,11 +1,13 @@
 .login-body {
-    min-height: 100vh;
+    min-height: 100dvh;
     margin: 0;
     font-family: system-ui,-apple-system,Segoe UI,sans-serif;
     background: radial-gradient(circle at 20% 10%,rgba(255,220,120,.18),transparent 55%),radial-gradient(circle at 80% 90%,rgba(70,140,255,.18),transparent 55%),#050914;
     color: #fff;
     display: grid;
-    place-items: center
+    place-items: center;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px)
 }
 
 .login-shell {
