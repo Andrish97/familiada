@@ -10,6 +10,9 @@
 
 html:has(.landing-body){
   background:
+    linear-gradient(to bottom, rgba(255,234,166,.14) 0%, transparent 80px),
+    linear-gradient(to right,  rgba(255,234,166,.08) 0%, transparent var(--safe-left)),
+    linear-gradient(to left,   rgba(90,160,255,.08)  0%, transparent var(--safe-right)),
     radial-gradient(circle at 20% 20%, rgba(255,234,166,.10), transparent 55%),
     radial-gradient(circle at 80% 80%, rgba(90,160,255,.10), transparent 55%),
     var(--bg);

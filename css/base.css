@@ -21,6 +21,17 @@ body,html {
     background: var(--bg);
 }
 
+/* Subtelny gradient na html żeby backdrop-filter topbara miał co pokazać
+   w strefie safe area (notch portret, boki landscape).
+   Gdy safe-left/right/top = 0px gradient ma zerowy zasięg = brak efektu. */
+html:has(body > .topbar) {
+    background:
+        linear-gradient(to bottom, rgba(255,255,255,.07) 0%, transparent var(--topbar-h, 60px)),
+        linear-gradient(to right,  rgba(255,255,255,.07) 0%, transparent var(--safe-left)),
+        linear-gradient(to left,   rgba(255,255,255,.07) 0%, transparent var(--safe-right)),
+        var(--bg);
+}
+
 body {
     margin: 0;
     min-height: 100vh;
@@ -800,7 +811,6 @@ html.showA2HS .a2hs {
 @media (max-width: 900px){
   .topbar{
     transition: transform .22s ease, opacity .22s ease;
-    will-change: transform;
   }
   .topbar.is-hidden-mobile{
     transform: translateY(-110%);
