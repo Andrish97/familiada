@@ -4124,7 +4124,7 @@ const en = {
         events: "`event`: e.g. `queue_picked`, `queue_item_sent`, `queue_item_failed` indicates processing stage.",
         recipient: "`To` and `Provider` show recipient and provider used for the send attempt.",
         error: "`Error` column contains the concrete reason (API key, timeout, provider 4xx/5xx, etc.).",
-        next: “If you see `queue_item_failed`, verify the error, fix config, then use “Send now” or “Send selected”.”,
+        next: “If you see `queue_item_failed`, verify the error, fix config, then use 'Send now' or 'Send selected'.”,
         skipped: “`email_skipped` (green row): email was not sent — the recipient disabled notifications (`notifications off`) or globally unsubscribed (`global unsubscribe`). The stats bar below the table shows a summary.”,
       },
       providers: {
