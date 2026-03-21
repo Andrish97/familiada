@@ -52,17 +52,17 @@ body > main {
     -webkit-backdrop-filter: blur(10px);
 }
 
-/* Rozszerz tło topbara w górę za status bar (iOS safe area) */
-.topbar::before {
-    content: '';
-    position: absolute;
-    top: calc(-1 * env(safe-area-inset-top, 0px));
+/* Safe-area cover: wstrzykiwany przez topbar-controller.js jako position:fixed */
+#topbar-safe-area-cover {
+    position: fixed;
+    top: 0;
     left: 0;
     right: 0;
     height: env(safe-area-inset-top, 0px);
     background: rgba(0,0,0,.35);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
+    z-index: 10;
     pointer-events: none;
 }
 
