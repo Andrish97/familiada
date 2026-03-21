@@ -56,6 +56,7 @@ body:has(> .topbar) {
     padding: calc(12px + var(--safe-top)) calc(16px + var(--safe-right)) 12px calc(16px + var(--safe-left));
     background: rgba(0,0,0,.35);
     border-bottom: 1px solid rgba(255,255,255,.12);
+    -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
 }
 
@@ -671,6 +672,7 @@ html.showA2HS .a2hs {
     border-radius: 18px;
     border: 1px solid rgba(255,255,255,.22);
     background: rgba(0,0,0,.45);
+    -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
     padding: 16px 16px 14px;
     color: #fff
