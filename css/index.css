@@ -6,10 +6,7 @@ body.home-body {
   min-height: 100vh;
   margin: 0;
   color: #fff;
-  background:
-    radial-gradient(circle at 20% 0%, rgba(255,234,166,.09), transparent 50%),
-    radial-gradient(circle at 80% 70%, rgba(90,160,255,.08), transparent 50%),
-    var(--bg);
+  background: var(--bg);
 }
 
 /* =====================
