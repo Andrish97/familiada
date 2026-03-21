@@ -1617,7 +1617,9 @@ function decodeMimePart(part, content) {
 }
 
 function extractMimeParts(raw) {
-  const boundaryMatch = raw.match(/Content-Type:\s*multipart\/[^\r\n]+boundary="?([^"\r\n;]+)"?/i);
+  // Unfold RFC 2822 folded headers (CRLF + whitespace → single space)
+  const unfolded = raw.replace(/\r\n([ \t])/g, " ").replace(/\n([ \t])/g, " ");
+  const boundaryMatch = unfolded.match(/Content-Type:\s*multipart\/[^\r\n]+boundary="?([^"\r\n;]+)"?/i);
   if (boundaryMatch) {
     const boundary = boundaryMatch[1].trim();
     const escaped  = boundary.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -1684,8 +1686,9 @@ function extractMimeParts(raw) {
   // Non-multipart
   const bodyStart = raw.indexOf("\r\n\r\n");
   const content   = bodyStart !== -1 ? raw.slice(bodyStart + 4).trim() : "";
-  const isHtml    = /^\s*<!doctype html|^\s*<html/i.test(content);
-  return { text: isHtml ? "" : content, html: isHtml ? content : "", attachments: [] };
+  const decoded   = decodeMimePart(raw, content);
+  const isHtml    = /^\s*<!doctype html|^\s*<html/i.test(decoded);
+  return { text: isHtml ? "" : decoded, html: isHtml ? decoded : "", attachments: [] };
 }
 
 // ============================================================
