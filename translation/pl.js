@@ -4440,7 +4440,7 @@ const pl = {
         events: "`event`: np. `queue_picked`, `queue_item_sent`, `queue_item_failed` pokazuje etap przetwarzania.",
         recipient: "`Do` i `Provider` mówią dla kogo i przez jakiego dostawcę szła próba wysyłki.",
         error: "Kolumna `Błąd` zawiera konkretny powód niepowodzenia (API key, timeout, 4xx/5xx providerów itp.).",
-        next: “Jeśli widzisz `queue_item_failed`, sprawdź błąd, popraw konfigurację i użyj „Wyślij teraz” lub „Wyślij zaznaczone”.”,
+        next: “Jeśli widzisz `queue_item_failed`, sprawdź błąd, popraw konfigurację i użyj 'Wyślij teraz' lub 'Wyślij zaznaczone'.”,
         skipped: “`email_skipped` (zielony wiersz): mail nie został wysłany — odbiorca wyłączył powiadomienia (`wyłączone powiadomienia`) lub użył globalnego unsubscribe (`globalny unsubscribe`). Pasek statystyk pod tabelą pokazuje podsumowanie.”,
       },
       providers: {

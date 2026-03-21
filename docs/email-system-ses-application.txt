@@ -1,0 +1,125 @@
+===== FAMILIADA.ONLINE — EMAIL USE CASE DESCRIPTION FOR AWS SES PRODUCTION ACCESS =====
+
+
+WHAT IS YOUR WEBSITE OR APPLICATION?
+
+Familiada.online is a web application for creating and running quiz and survey games inspired by the "Family Feud" TV format. Users create games, share polls via link or email invitation, collect responses, and run live quiz sessions. The app is built on Supabase (PostgreSQL + Edge Functions on Deno) with a Cloudflare Worker proxy. Target audience: Polish, English, and Ukrainian speakers. Use cases: education, team building, entertainment.
+
+Website: https://familiada.online
+
+
+WHO ARE YOUR RECIPIENTS AND HOW DID THEY OPT IN?
+
+All recipients fall into one of two categories:
+
+1. Registered users — people who created an account at familiada.online using an email address. They explicitly consented to receive account-related communications (account confirmation, password reset) and optionally notification emails. They can opt out of notification emails at any time in account settings.
+
+2. External email addresses — entered manually by a registered user when sharing a poll or sending a task. These people have not registered but were invited by someone they know (a friend, colleague, or teacher). Every invitation email contains two unsubscribe options: a per-sender unsubscribe and a global unsubscribe that permanently blocks all future emails from our domain.
+
+We do not purchase email lists. We do not scrape addresses. Every address in our system was either registered directly by its owner or entered by a user for a specific invitation.
+
+
+WHAT TYPES OF EMAIL DO YOU SEND?
+
+We send two categories of emails:
+
+--- CATEGORY A: TRANSACTIONAL AUTH EMAILS ---
+
+These are triggered by explicit user actions in the account flow. They are sent immediately via a Supabase Auth webhook, not queued.
+
+1. Account confirmation (signup)
+   Sent when a user registers. Contains a single-use confirmation link. Without clicking it, the account is not activated. One email per registration.
+
+2. Password reset (recovery)
+   Sent when a user clicks "Forgot password." Contains a single-use link that expires in 1 hour. One email per reset request.
+
+3. Email address change confirmation (email_change)
+   Sent when a logged-in user submits a new email address in account settings. Up to 2 emails: one to the old address (to confirm the owner made the request) and one to the new address (to verify ownership). Both must be confirmed for the change to take effect.
+
+4. Guest account migration (guest_migrate)
+   Familiada allows anonymous "guest" sessions. When a guest adds an email address to convert to a full account, we send a confirmation email. Visually similar to the signup email but with migration-specific copy.
+
+None of these emails can be suppressed — they are security-critical and user-initiated.
+
+--- CATEGORY B: NOTIFICATION / INVITATION EMAILS ---
+
+These are triggered by registered users sharing content. They are queued in a PostgreSQL table (mail_queue) and delivered by a background worker (Supabase Edge Function running every 60 seconds).
+
+5. Poll subscription invitation
+   A registered user invites one or more email addresses to subscribe to a poll and receive updates. Each invitation contains an accept/decline button and both unsubscribe links in the footer. Cooldown: after a decline or cancellation, the same address cannot be re-invited to that poll for 5 days. After a resend: 24-hour cooldown.
+
+6. Poll task notification
+   A registered user sends a task (a request to fill out a specific poll) to one or more email addresses. Contains a direct link to the poll and both unsubscribe links in the footer. Cooldown: 24 hours after a decline before the task can be resent.
+
+7. Data share notification
+   A registered user shares their poll response data (export) with specific recipients. Low frequency: 1–10 recipients per share event. Cooldown: 24 hours per recipient per dataset.
+
+8. Contact form message
+   A visitor submits the contact form. The message is forwarded to the site administrator. Rate-limited at 10 messages per IP per 10 hours (enforced at the Cloudflare Worker level before the message reaches the queue).
+
+For categories 5–7: before sending, we check whether the recipient has opted out. Suppressed addresses are silently skipped (no retry, no bounce).
+
+
+WHAT IS YOUR SENDING VOLUME?
+
+Current estimated daily volume:
+- Auth emails (types 1–4): 20–100/day
+- Notification emails (types 5–7): 20–500/day depending on user activity
+- Contact form (type 8): 0–20/day
+
+Total current estimate: under 1,000 emails/day.
+
+Expected peak scenario: A user with 100–200 poll subscribers shares a poll update, generating up to 200 emails in a short burst. Multiple users sharing simultaneously could create spikes of 500–2,000 emails/hour. These bursts are smoothed by the queue (processed in batches with a configurable delay between sends).
+
+Expected monthly volume: 5,000–30,000 emails/month as the user base grows.
+
+
+HOW DO YOU HANDLE BOUNCES, COMPLAINTS, AND UNSUBSCRIBES?
+
+Bounces:
+We monitor bounce notifications from all providers. Hard-bounced addresses are added to a suppression list (email_unsub_tokens table with suppressed_at set) and are never retried.
+
+Complaints:
+Complaint notifications from providers are processed and the complaining address is suppressed immediately. The suppressed_at field in email_unsub_tokens permanently blocks that address from receiving any future emails.
+
+Unsubscribes — registered users:
+Every notification email footer for registered users includes a link to account settings where they can disable all email notifications with one click (user_flags.email_notifications = false). This is checked before every notification send.
+
+Unsubscribes — unregistered (external) recipients:
+Every notification email footer contains two links:
+  a) Per-sender unsubscribe: cancels subscriptions from one specific poll owner and marks all pending tasks from them as declined. A 5-day cooldown is applied.
+  b) Global unsubscribe: permanently suppresses the email address across the entire application. All active subscriptions and pending tasks are cancelled. The suppression persists even if the person later creates an account (it is transferred to user_flags.email_notifications = false on registration).
+
+Unsubscribes are enforced at the database level before any email is dispatched — not just as a list to be checked periodically.
+
+Auth emails (types 1–4) are exempt from suppression checks because they are security-critical and user-initiated.
+
+
+WHAT IS YOUR DNS CONFIGURATION?
+
+Domain: familiada.online
+
+SPF: v=spf1 include:sendgrid.net include:spf.brevo.com include:mailgun.org include:amazonses.com ~all
+DKIM: Records published for each active sending provider (SendGrid, Brevo, Mailgun, SES — separate selectors per provider)
+DMARC: v=DMARC1; p=quarantine; rua=mailto:dmarc@familiada.online
+
+All emails are sent from no-reply@familiada.online with display name "Familiada".
+
+
+WHY DO YOU NEED AWS SES?
+
+Our current provider stack (SendGrid + Brevo + Mailgun) works well for baseline traffic, but the free tiers impose hard daily sending limits (e.g. Brevo: 300/day, Mailgun sandbox: 100/day). When multiple users share polls simultaneously the daily limit can be hit within hours, causing invitation emails to be delayed until the next UTC day.
+
+AWS SES has no daily sending limit (only a rate limit that scales up over time), and its pay-per-use pricing ($0.10 per 1,000 emails) means our costs stay proportional to actual usage. We want to add SES as the fourth provider in our fallback chain so that bursts are absorbed without service degradation.
+
+We are not replacing our existing providers — SES is added as an additional fallback and eventual primary sender once our sending reputation is established on the platform.
+
+
+SUMMARY
+
+- We only send to people who registered themselves or who were personally invited by a user they know.
+- Every notification email contains clear, functional unsubscribe links.
+- Opt-outs are enforced at the database level before sending.
+- We do not send newsletters, marketing campaigns, or bulk promotional content.
+- All email types are either security-critical transactional emails (auth) or direct sharing/notification messages triggered by explicit user actions.
+- We actively monitor and respect bounces and complaints.
