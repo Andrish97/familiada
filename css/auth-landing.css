@@ -8,6 +8,13 @@
   --danger: #ff7a7a;
 }
 
+html:has(.landing-body){
+  background:
+    radial-gradient(circle at 20% 20%, rgba(255,234,166,.10), transparent 55%),
+    radial-gradient(circle at 80% 80%, rgba(90,160,255,.10), transparent 55%),
+    var(--bg);
+}
+
 .landing-body{
   margin:0;
   min-height:100dvh;
