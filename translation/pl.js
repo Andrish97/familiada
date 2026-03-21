@@ -439,7 +439,7 @@ const pl = {
     errDeleteFailed: "Nie udało się usunąć konta.",
   },
   display: {
-    title: "Wyświetlacz jak w klasycznej „Familiada"",
+    title: "Wyświetlacz jak w klasycznej „Familiada”",
     qrHost: "Prowadzący",
     qrBuzzer: "Przyciski",
     qrHostAlt: "QR Prowadzący",
@@ -514,7 +514,7 @@ const pl = {
     shareModal: {
       title: "Udostępnij bazę",
       subtitle:
-        "Dodajesz użytkowników po nazwie lub e-mailu. Jeśli się nie uda, pokażemy „Nie udało się".",
+        "Dodajesz użytkowników po nazwie lub e-mailu. Jeśli się nie uda, pokażemy „Nie udało się”.",
       placeholder: "Nazwa użytkownika lub e-mail...",
       roleEditor: "Edycja",
       roleViewer: "Przeglądanie",
@@ -540,14 +540,14 @@ const pl = {
     },
     delete: {
       title: "Usuń bazę",
-      text: "Na pewno usunąć „{name}"? Tego nie da się cofnąć.",
+      text: "Na pewno usunąć „{name}”? Tego nie da się cofnąć.",
       ok: "Usuń",
       cancel: "Anuluj",
       failed: "Nie udało się usunąć.",
     },
     leaveShared: {
       title: "Usuń udostępnioną bazę",
-      text: "Na pewno usunąć z listy udostępnioną bazę „{name}"? (Rezygnujesz z udostępnienia)",
+      text: "Na pewno usunąć z listy udostępnioną bazę „{name}”? (Rezygnujesz z udostępnienia)",
       ok: "Usuń",
       cancel: "Anuluj",
       failed: "Nie udało się usunąć z listy.",
@@ -638,7 +638,7 @@ const pl = {
       footer: "Jeśli to nie Ty — zignoruj tę wiadomość.",
       linkLabel: "Jeśli przycisk nie działa, skopiuj link:",
       subject: ({ base }) => `Udostępniono Ci bazę: ${base}`,
-      body: ({ owner, base }) => `Użytkownik ${owner} udostępnił Ci bazę pytań „${base}".`,
+      body: ({ owner, base }) => `Użytkownik ${owner} udostępnił Ci bazę pytań „${base}”.`,
       action: "Otwórz w Familiada",
     },
   },
@@ -711,7 +711,7 @@ const pl = {
     modals: {
       open: {
         title: "Uruchomić sondaż?",
-        text: "Uruchomić sondaż dla „{name}"?",
+        text: "Uruchomić sondaż dla „{name}”?",
         ok: "Uruchom",
         cancel: "Anuluj",
       },
@@ -756,7 +756,7 @@ const pl = {
       mergeLabel: "Scal identyczne",
       mergeWith: "Połącz z...",
       remove: "Usuń",
-      editHint: "Edytuj odpowiedzi, a potem kliknij „Zamknij i przelicz".",
+      editHint: "Edytuj odpowiedzi, a potem kliknij „Zamknij i przelicz”.",
       cancelled: "Anulowano zamykanie (sondaż dalej otwarty).",
       minAnswers:
         "Pytanie {ord}: po edycji zostało mniej niż 3 odpowiedzi. Dodaj/połącz inaczej.",
@@ -803,14 +803,14 @@ const pl = {
     content: {
       general: `<p class="m-p">
         Ta strona to wskazówki obsługi systemu do prowadzenia rozgrywki (turnieju)
-        w stylu „Familiada". Jej celem jest wyjaśnienie, jak przygotować grę,
+        w stylu „Familiada”. Jej celem jest wyjaśnienie, jak przygotować grę,
         zebrać wyniki (sondaż) i bez problemu poprowadzić rozgrywkę na żywo
         — nawet jeśli ktoś korzysta z systemu pierwszy raz.
       </p>
       
       <p class="m-p">
         Opis dotyczy narzędzia i sposobu jego użycia,
-        a nie „telewizyjnej produkcji". System sprawdzi się na wydarzeniach,
+        a nie „telewizyjnej produkcji”. System sprawdzi się na wydarzeniach,
         imprezach firmowych, w szkole, na scenie albo po prostu w gronie znajomych
         — wszędzie tam, gdzie chcesz mieć czytelną tablicę, punkty i płynny przebieg gry.
       </p>
@@ -826,7 +826,7 @@ const pl = {
       <p class="m-p">
         Jeśli chcesz zapoznać się z pełnymi zasadami gry,
         <a href="https://s.tvp.pl/repository/attachment/6/8/f/68f09c03ff0781fa510c2fd90c3ba19b1569224834470.pdf" target="_blank" rel="noopener noreferrer">
-          Regulamin teleturnieju „Familiada"
+          Regulamin teleturnieju „Familiada”
         </a>
         opisuje je szczegółowo.
       </p>
@@ -863,7 +863,7 @@ const pl = {
         aż po prowadzenie rozgrywki na żywo.
       </p>`,
       edit: `<p class="m-p">
-        Zakładka „Dodawanie i edycja gry" opisuje etap przygotowania gry
+        Zakładka „Dodawanie i edycja gry” opisuje etap przygotowania gry
         przed rozpoczęciem sondażu lub rozgrywki.
         Na tym etapie tworzysz strukturę gry:
         pytania, możliwe odpowiedzi oraz sposób ich punktowania.
@@ -876,7 +876,7 @@ const pl = {
         od późniejszego zbierania odpowiedzi i prowadzenia rozgrywki.
       </p>
     
-      <h3 class="m-h2">Lista gier („Moje gry")</h3>
+      <h3 class="m-h2">Lista gier („Moje gry”)</h3>
     
       <p class="m-p">
         Lista gier jest miejscem, w którym zarządzasz wszystkimi grami
@@ -911,7 +911,7 @@ const pl = {
       </ul>
     
       <p class="m-p">
-        Nową grę tworzysz klikając kafelek z symbolem „＋".
+        Nową grę tworzysz klikając kafelek z symbolem „＋”.
         Po utworzeniu gra pojawia się na liście
         i może zostać otwarta w edytorze.
       </p>
@@ -919,7 +919,7 @@ const pl = {
       <h3 class="m-h2">Edytor gry – co i kiedy można edytować</h3>
     
      <p class="m-p">
-        Do trybu edycji gry przechodzisz z listy „Moje gry"
+        Do trybu edycji gry przechodzisz z listy „Moje gry”
         za pomocą przycisku <span class="m-code">Edytuj</span>.
         Jest to pierwszy etap pracy z grą,
         w którym przygotowujesz całą jej treść
@@ -1074,7 +1074,7 @@ const pl = {
         oraz współdzielić całe bazy z innymi użytkownikami.
       </p>
       <p class="m-p">
-        Do baz pytań przechodzisz z górnego paska strony „Moje gry"
+        Do baz pytań przechodzisz z górnego paska strony „Moje gry”
         za pomocą przycisku <span class="m-code">Bazy pytań 🗃️</span>.
       </p>
   
@@ -1086,7 +1086,7 @@ const pl = {
       <h3 class="m-h3">➕ Dodawanie nowej bazy</h3>
   
       <p class="m-p">
-        W widoku „Bazy pytań" kliknij kafelek <span class="m-strong">Nowa baza</span>.
+        W widoku „Bazy pytań” kliknij kafelek <span class="m-strong">Nowa baza</span>.
         Otworzy się okno, w którym podajesz nazwę bazy.
       </p>
   
@@ -1124,11 +1124,11 @@ const pl = {
   
       <p class="m-p">
         Base Explorer pozwala zarządzać pytaniami w sposób znany z systemowych menadżerów plików:
-        foldery, przenoszenie metodą „przeciągnij i upuść", kopiowanie, wycinanie i szybka selekcja.
+        foldery, przenoszenie metodą „przeciągnij i upuść”, kopiowanie, wycinanie i szybka selekcja.
       </p>
   
       <p class="m-p">
-        Każdy „plik" w tym menadżerze jest pojedynczym pytaniem.
+        Każdy „plik” w tym menadżerze jest pojedynczym pytaniem.
         Foldery służą do grupowania pytań tematycznie lub logicznie.
       </p>
   
@@ -1155,7 +1155,7 @@ const pl = {
   
       <p class="m-p">
         Każde pytanie może mieć dowolną liczbę tagów.
-        Tagi służą do tematycznego oznaczania pytań — np. „historia", „sport", „łatwe", „dla dzieci".
+        Tagi służą do tematycznego oznaczania pytań — np. „historia”, „sport”, „łatwe”, „dla dzieci”.
       </p>
   
       <p class="m-p">
@@ -1320,7 +1320,7 @@ const pl = {
         Skróty nie działają podczas wpisywania tekstu w polach edycyjnych.
       </p>`,
       polls: `<p class="m-p">
-        Zakładka „Sondaże" opisuje etap zbierania odpowiedzi
+        Zakładka „Sondaże” opisuje etap zbierania odpowiedzi
         od ankietowanych przed właściwą rozgrywką.
         Sondaż jest mostem pomiędzy przygotowaniem gry
         a jej rozegraniem na żywo.
@@ -1334,7 +1334,7 @@ const pl = {
 
 
       <p class="m-p">
-        Do sondaży przechodzisz z górnego paska na stronie „Moje gry"
+        Do sondaży przechodzisz z górnego paska na stronie „Moje gry”
         przyciskiem <span class="m-code">Sondaże 📊</span>.
       </p>
 
@@ -1350,11 +1350,11 @@ const pl = {
       </ul>
 
       <p class="m-p">
-        Złota kropka przy przycisku „Sondaże 📊" pokazuje liczbę aktywnych zadań do wykonania.
+        Złota kropka przy przycisku „Sondaże 📊” pokazuje liczbę aktywnych zadań do wykonania.
       </p>
 
       <p class="m-p">
-        Udostępnianie sondażu odbywa się z listy „Moje sondaże": zaznacz kafelek i kliknij
+        Udostępnianie sondażu odbywa się z listy „Moje sondaże”: zaznacz kafelek i kliknij
         <span class="m-code">Udostępnij</span>, następnie wybierz odbiorców i zapisz.
         Kafelek sondażu pokazuje bieżące głosy, a przycisk <span class="m-code">Szczegóły</span>
         daje podgląd listy oddanych głosów, oczekujących, odrzuconych oraz anonimowych odpowiedzi.
@@ -1551,13 +1551,13 @@ const pl = {
         lub doszło do błędu organizacyjnego.
       </p>`,
       subscriptions: `<p class="m-p">
-        Zakładka „Subskrypcje" opisuje wszystko, co dotyczy relacji między użytkownikami:
+        Zakładka „Subskrypcje” opisuje wszystko, co dotyczy relacji między użytkownikami:
         zapraszanie subskrybentów, akceptowanie zaproszeń, ponowne wysyłki i usuwanie powiązań.
       </p>
 
 
       <p class="m-p">
-        Przechodzisz do niej z górnego paska na stronie „Moje gry",
+        Przechodzisz do niej z górnego paska na stronie „Moje gry”,
         przyciskiem <span class="m-code">Subskrypcje 📧</span>.
       </p>
 
@@ -1569,7 +1569,7 @@ const pl = {
       </ul>
 
       <p class="m-p">
-        Złota kropka przy przycisku „Subskrypcje 📧" pokazuje liczbę zaproszeń do zaakceptowania.
+        Złota kropka przy przycisku „Subskrypcje 📧” pokazuje liczbę zaproszeń do zaakceptowania.
       </p>
 
       <h3 class="m-h3">Moi subskrybenci</h3>
@@ -1612,7 +1612,7 @@ const pl = {
       </p>`,
       logo: `<p class="m-p">
       System pozwala ustawić własne logo, które pojawia się na wyświetlaczu
-      (podczas startu lub zakończenia gry). Do tworzenia logo przechodzisz z górnego paska strony „Moje gry"
+      (podczas startu lub zakończenia gry). Do tworzenia logo przechodzisz z górnego paska strony „Moje gry”
         za pomocą przycisku <span class="m-code">Logo🖥️</span>.
     </p>
 
@@ -1632,12 +1632,12 @@ const pl = {
 
     <ul class="m-ul">
       <li>
-        <span class="m-strong">Napis</span> — klasyczne logo złożone ze znaków (styl „Familiady").
+        <span class="m-strong">Napis</span> — klasyczne logo złożone ze znaków (styl „Familiady”).
         Dobre, gdy chcesz szybko zrobić czytelny tytuł.
       </li>
       <li>
-        <span class="m-strong">Tekst</span> — edycja tekstu i podgląd w „pikselach".
-        Dobre, gdy potrzebujesz innego kroju/układu niż w „Napis".
+        <span class="m-strong">Tekst</span> — edycja tekstu i podgląd w „pikselach”.
+        Dobre, gdy potrzebujesz innego kroju/układu niż w „Napis”.
       </li>
       <li>
         <span class="m-strong">Rysunek</span> — rysujesz ręcznie w siatce (jak w prostym edytorze grafiki).
@@ -1652,7 +1652,7 @@ const pl = {
     <h3 class="m-h2">Podgląd na wyświetlaczu</h3>
 
     <p class="m-p">
-      W edytorze cały czas widzisz podgląd „jak na tablicy".
+      W edytorze cały czas widzisz podgląd „jak na tablicy”.
       To ważne, bo to co wygląda dobrze w dużej rozdzielczości,
       może być nieczytelne po sprowadzeniu do <span class="m-code">150×70</span>.
     </p>
@@ -1689,7 +1689,7 @@ const pl = {
       że import się nie powiedzie albo logo będzie działało nieprawidłowo.
     </div>`,
       control: `<p class="m-p">
-        Do Panelu sterowania przechodzisz z listy „Moje gry"
+        Do Panelu sterowania przechodzisz z listy „Moje gry”
         za pomocą przycisku <span class="m-code">Graj</span>.
         Ten tryb jest przeznaczony wyłącznie do prowadzenia rozgrywki na żywo —
         w tym miejscu nie edytujesz już pytań ani wyników sondażu.
@@ -1723,7 +1723,7 @@ const pl = {
       </ul>
     
       <div class="m-note">
-        <b>Dlaczego tyle „formalności"?</b><br/>
+        <b>Dlaczego tyle „formalności”?</b><br/>
         Rozgrywka jest na żywo i ma telewizyjne tempo. Panel sterowania ma pilnować procedury,
         a nie dokładać operatorowi stresu. Dlatego system wymusza gotowość sprzętu i ustawień przed startem.
       </div>
@@ -1783,7 +1783,7 @@ const pl = {
       </p>
     
       <p class="m-p">
-        W tym kroku jest opcja <span class="m-strong">„QR na wyświetlaczu"</span> —
+        W tym kroku jest opcja <span class="m-strong">„QR na wyświetlaczu”</span> —
         po jej użyciu kody QR mogą zostać pokazane na dużym ekranie,
         żeby ekipa mogła szybko zeskanować je telefonami.
         To przyspiesza start na planie, bo nie trzeba przepisywać linków.
@@ -1800,7 +1800,7 @@ const pl = {
     
       <p class="m-p">
         Przeglądarki blokują automatyczne odtwarzanie dźwięku,
-        dopóki użytkownik nie wykona „gestu" (kliknięcia).
+        dopóki użytkownik nie wykona „gestu” (kliknięcia).
         Dlatego panel ma osobny krok odblokowania dźwięku.
         Bez tego możesz nie usłyszeć sygnałów, które wspierają tempo gry.
       </p>
@@ -1835,7 +1835,7 @@ const pl = {
       <h3 class="m-h3">Dodatkowe ustawienia (ważne dla operatora)</h3>
     
       <p class="m-p">
-        W „Dodatkowych ustawieniach" dopasowujesz rozgrywkę do formatu odcinka.
+        W „Dodatkowych ustawieniach” dopasowujesz rozgrywkę do formatu odcinka.
         Te opcje nie zmieniają sensu zasad, tylko ustawiają tempo i progi gry.
       </p>
     
@@ -1854,7 +1854,7 @@ const pl = {
         </li>
         <li>
           <span class="m-strong">Zakończenie gry</span> — co pokazuje wyświetlacz na końcu
-          (logo / punkty / kwota po finale). To jest ważne produkcyjnie: „ostatni kadr".
+          (logo / punkty / kwota po finale). To jest ważne produkcyjnie: „ostatni kadr”.
         </li>
       </ul>
     
@@ -1868,13 +1868,13 @@ const pl = {
     
       <p class="m-p">
         Jeśli rozgrywka ma mieć finał, i nie włączyliśmy opcji losuj, to rutaj wybierasz dokładnie <span class="m-strong">5 pytań finału</span>.
-        Panel pokazuje listę pytań oraz listę „Pytania finału (max 5)".
+        Panel pokazuje listę pytań oraz listę „Pytania finału (max 5)”.
         Po wybraniu piątki używasz przycisku <span class="m-strong">Zatwierdź</span>.</p>
     
       <div class="m-warn">
         <b>Uwaga:</b><br/>
         Finał wymaga zatwierdzonych 5 pytań przed startem rund.
-        To celowa blokada — na żywo nie ma czasu na wybieranie pytań „na szybko".
+        To celowa blokada — na żywo nie ma czasu na wybieranie pytań „na szybko”.
         Jeśli chcesz zmienić zestaw, używasz trybu <span class="m-strong">Edytuj</span> przy pytaniach finału.
 
       <h3 class="m-h3">Rundy: kolejność pytań</h3>
@@ -1903,7 +1903,7 @@ const pl = {
         a tablica zawsze pokazuje to, co powinno być w danym momencie.
       </p>
     
-      <h3 class="m-h3">Start rundy: „Gra gotowa" i intro</h3>
+      <h3 class="m-h3">Start rundy: „Gra gotowa” i intro</h3>
     
       <p class="m-p">
         Rozpoczynając rundy, panel najpierw przygotowuje wyświetlacz (czyści tablicę i ustawia stan gry),
@@ -1915,7 +1915,7 @@ const pl = {
       <h3 class="m-h3">Pojedynek: kto przejmuje kontrolę</h3>
     
       <p class="m-p">
-        Każde pytanie zaczyna się od pojedynku „głów rodzin" przy pulpicie.
+        Każde pytanie zaczyna się od pojedynku „głów rodzin” przy pulpicie.
         W tym momencie kluczowe jest urządzenie <span class="m-strong">Przycisk</span>:
         sygnał z przycisku informuje panel, że ktoś nacisnął pierwszy.
         Operator zatwierdza, która strona zdobyła pierwszeństwo,
@@ -1924,7 +1924,7 @@ const pl = {
     
       <p class="m-p">
         Zgodnie z regulaminem, jeśli pierwsza odpowiedź nie jest najwyżej punktowana,
-        druga „głowa" ma szansę odpowiedzieć lepiej i przejąć kontrolę.
+        druga „głowa” ma szansę odpowiedzieć lepiej i przejąć kontrolę.
         Panel prowadzi operatora przez decyzję kontroli rundy,
         a wyświetlacz pokazuje, która drużyna aktualnie gra (wskaźnik drużyny).
       </p>
@@ -1934,7 +1934,7 @@ const pl = {
       <p class="m-p">
         Zgodnie z ustaleniami rozgrywki, po uzyskaniu kontroli drużyna może też zdecydować,
         że <span class="m-strong">oddaje pytanie</span> przeciwnikom.
-        Jest to ruch taktyczny: zamiast „dobić" pytanie, drużyna może przekazać szansę rywalom.
+        Jest to ruch taktyczny: zamiast „dobić” pytanie, drużyna może przekazać szansę rywalom.
         Panel udostępnia tę opcję tylko w odpowiednim momencie i pilnuje, żeby nie dało się jej nadużywać.
       </p>
     
@@ -1949,7 +1949,7 @@ const pl = {
       <p class="m-p">
         Rozgrywka trwa do momentu, gdy:
         wszystkie odpowiedzi zostaną odsłonięte,
-        albo drużyna straci trzy „szanse" (trzy X),
+        albo drużyna straci trzy „szanse” (trzy X),
         wtedy operator zakończy etap i przejdzie do kradzieży (gdy są spełnione warunki).
       </p>
     
@@ -1964,14 +1964,14 @@ const pl = {
     
       <div class="m-note">
         <b>Po co timer?</b><br/>
-        To jest „bat na tempo". Timer pozwala operatorowi szybko zamknąć zawahanie
+        To jest „bat na tempo”. Timer pozwala operatorowi szybko zamknąć zawahanie
         bez dyskusji i utrzymać rytm rozgrywki.
       </div>
     
       <h3 class="m-h3">Kradzież banku (jedna odpowiedź)</h3>
     
       <p class="m-p">
-        Gdy drużyna grająca wykorzysta trzy „szanse" zanim odsłoni wszystkie odpowiedzi,
+        Gdy drużyna grająca wykorzysta trzy „szanse” zanim odsłoni wszystkie odpowiedzi,
         pytanie przechodzi do drużyny przeciwnej.
         Przeciwnicy mają prawo do <span class="m-strong">jednej odpowiedzi</span>:
         jeśli trafi — bank przechodzi do nich,
@@ -1982,7 +1982,7 @@ const pl = {
       <h3 class="m-h3">Odsłanianie brakujących odpowiedzi i zakończenie rundy</h3>
     
       <p class="m-p">
-        Po rozstrzygnięciu pytania operator może odsłonić brakujące odpowiedzi „informacyjnie",
+        Po rozstrzygnięciu pytania operator może odsłonić brakujące odpowiedzi „informacyjnie”,
         żeby widzowie zobaczyli pełną tablicę.
         Następnie operator kończy rundę: bank jest dopisywany właściwej drużynie,
         z uwzględnieniem mnożnika rundy.
@@ -1990,16 +1990,16 @@ const pl = {
     
       <div class="m-note">
         <b>Praktyczna uwaga:</b><br/>
-        Panel celowo rozdziela „rozgrywkę pytania" od „zakończenia rundy".
+        Panel celowo rozdziela „rozgrywkę pytania” od „zakończenia rundy”.
         Dzięki temu operator nie skasuje przypadkiem stanu tablicy,
-        zanim prowadzący dopowie puentę lub zanim padnie „dziękujemy".
+        zanim prowadzący dopowie puentę lub zanim padnie „dziękujemy”.
       </div>
 
       <h3 class="m-h3">Zakończenie rund i przejście dalej</h3>
       
       <p class="m-p">
         Po każdej rundzie system aktualizuje wynik drużyn i sprawdza,
-        czy spełniono warunek zakończenia rozgrywki (ustawiony w „Dodatkowych ustawieniach").
+        czy spełniono warunek zakończenia rozgrywki (ustawiony w „Dodatkowych ustawieniach”).
         Najczęściej jest to próg punktów, np. <span class="m-strong">300</span>,
         ale może być inny — zależnie od tego, jak chcesz poprowadzić turniej.
       </p>
@@ -2078,7 +2078,7 @@ const pl = {
       
       <p class="m-p">
         Operator znów najpierw wpisuje wszystkie odpowiedzi drugiego zawodnika,
-        bez odsłaniania i bez oceniania „na bieżąco".
+        bez odsłaniania i bez oceniania „na bieżąco”.
         Jeśli druga osoba poda odpowiedź identyczną jak pierwsza,
         jest to <span class="m-strong">powtórka</span> — zawodnik musi podać inną odpowiedź,
         a operator może oznaczyć tę próbę jako powtórzoną.
@@ -2135,7 +2135,7 @@ const pl = {
         Gry Społeczności to katalog gotowych gier stworzonych przez innych użytkowników
         i zweryfikowanych przez moderatorów. Możesz je przeglądać, dodawać do swojej biblioteki
         i uruchamiać bezpośrednio jako rozgrywkę — bez konieczności tworzenia własnych pytań.
-        Do Gier Społeczności przechodzisz z górnego paska strony „Moje gry"
+        Do Gier Społeczności przechodzisz z górnego paska strony „Moje gry”
         za pomocą przycisku <span class="m-code">Gry Społeczności🎮</span>.
       </p>
 
@@ -2378,7 +2378,7 @@ const pl = {
       text:
         "Dla najlepszego komfortu użytkowania zalecamy korzystać z aplikacji webowej. Żeby to zrobić:\n" +
         "1. Otwórz menu Udostępnij.\n" +
-        "2. Wybierz „Do ekranu początkowego".\n" +
+        "2. Wybierz „Do ekranu początkowego”.\n" +
         "3. Zatwierdź dodanie.\n" +
         "4. Uruchom Familiadę z nowej ikony na ekranie głównym.",
       ok: "OK",
@@ -2486,7 +2486,7 @@ const pl = {
     },
     delete: {
       title: "Usuń grę",
-      text: "Czy na pewno chcesz usunąć „{name}"?",
+      text: "Czy na pewno chcesz usunąć „{name}”?",
       ok: "Usuń",
       cancel: "Anuluj",
     },
@@ -2544,7 +2544,7 @@ const pl = {
       placeholder:
         "@Moja gra\n#Zwierzeta w Afryce\n1 Słoń /29\n2 Lew /19\n3 Małpa /16\n\n#Drugie pytanie\n1 Odpowiedź 1\n2 Odpowiedź 2\n3 Odpowiedź 3",
       formatHint:
-        "Działa też format bez numerów (po prostu linie z odpowiedziami). Import toleruje spacje/taby, „1.", „2)" itp. Jeśli odpowiedź ma więcej niż 17 znaków, zostanie ucięta.",
+        "Działa też format bez numerów (po prostu linie z odpowiedziami). Import toleruje spacje/taby, „1.”, „2)” itp. Jeśli odpowiedź ma więcej niż 17 znaków, zostanie ucięta.",
       confirm: "Importuj",
       cancel: "Zamknij",
     },
@@ -2709,7 +2709,7 @@ const pl = {
     declineInviteFailed: "Nie udało się odrzucić zaproszenia.",
     subHeading: "Zaproszenie do subskrypcji{owner}",
     taskHeading: "Zaproszenie do głosowania w {name}{owner}",
-    taskName: "„{name}"",
+    taskName: "„{name}”",
     pollFallback: "sondażu",
     ownerSuffix: " od użytkownika {owner}",
     mismatch: "Zaproszenie Ciebie nie dotyczy, zaloguj się jako {email} i spróbuj ponownie.",
@@ -2979,7 +2979,7 @@ const pl = {
       focusSub: "Masz zaproszenie do subskrypcji. Chcesz je zaakceptować?",
     },
     pollFallback: "sondażu",
-    pollNameLabel: "„{name}"",
+    pollNameLabel: "„{name}”",
     ownerFallback: "Użytkownik Familiady",
     mail: {
       subtitle: "Centrum sondaży",
@@ -3212,7 +3212,7 @@ const pl = {
       focusSub: "Masz zaproszenie do subskrypcji. Chcesz je zaakceptować?",
     },
     pollFallback: "sondażu",
-    pollNameLabel: "„{name}"",
+    pollNameLabel: "„{name}”",
     ownerFallback: "Użytkownik Familiady",
     mail: {
       subtitle: "Centrum sondaży",
@@ -3446,7 +3446,7 @@ const pl = {
       focusSub: "Masz zaproszenie do subskrypcji. Chcesz je zaakceptować?",
     },
     pollFallback: "sondażu",
-    pollNameLabel: "„{name}"",
+    pollNameLabel: "„{name}”",
     ownerFallback: "Użytkownik Familiady",
     mail: {
       subtitle: "Subskrypcje",
@@ -3707,7 +3707,7 @@ const pl = {
     confirm: {
       closeUnsaved: "Jeśli teraz zamkniesz, zmiany nie zostaną zapisane.",
       backUnsaved: "Masz niezapisane zmiany. Cofnąć i je utracić?",
-      deleteLogo: "Usunąć logo „{name}"?",
+      deleteLogo: "Usunąć logo „{name}“?",
       logoutUnsaved: "Masz niezapisane zmiany. Wylogować i je utracić?",
     },
   },
@@ -4166,7 +4166,7 @@ const pl = {
       playNoMorePass: "Nie możesz już oddać pytania w tej rundzie.",
       playPassed: "Pytanie oddane. Teraz gra drużyna {team}.",
       stealNoControl: "Nie mogę uruchomić kradzieży – brak drużyny grającej.",
-      stealPrompt: "Kradzież: odpowiada drużyna {team}. Kliknij odpowiedź lub „X (pudło)".",
+      stealPrompt: "Kradzież: odpowiada drużyna {team}. Kliknij odpowiedź lub „X (pudło)”.",
       stealChance: "Szansa na kradzież. Odpowiada drużyna {team}.",
       stealSuccess: "Kradzież udana – bank przechodzi do drużyny kradnącej.",
       stealFail: "Kradzież nietrafiona – bank zostaje przy drużynie grającej.",
@@ -4429,7 +4429,7 @@ const pl = {
       runWorker: "Wyślij zaległe teraz",
       retryFailed: "Przywróć failed i wyślij",
       retrySelected: "Wyślij zaznaczone",
-      workerHint: "W tabeli możesz też kliknąć „Wyślij teraz" przy pojedynczym mailu.",
+      workerHint: "W tabeli możesz też kliknąć „Wyślij teraz” przy pojedynczym mailu.",
       queueTitle: "Kolejka wysyłki (mail_queue)",
       logsTitle: "Logi funkcji mailowych",
       logsHelpBtn: "Jak czytać logi",
@@ -4440,8 +4440,8 @@ const pl = {
         events: "`event`: np. `queue_picked`, `queue_item_sent`, `queue_item_failed` pokazuje etap przetwarzania.",
         recipient: "`Do` i `Provider` mówią dla kogo i przez jakiego dostawcę szła próba wysyłki.",
         error: "Kolumna `Błąd` zawiera konkretny powód niepowodzenia (API key, timeout, 4xx/5xx providerów itp.).",
-        next: "Jeśli widzisz `queue_item_failed`, sprawdź błąd, popraw konfigurację i użyj 'Wyślij teraz' lub 'Wyślij zaznaczone'.",
-        skipped: "`email_skipped` (zielony wiersz): mail nie został wysłany — odbiorca wyłączył powiadomienia (`wyłączone powiadomienia`) lub użył globalnego unsubscribe (`globalny unsubscribe`). Pasek statystyk pod tabelą pokazuje podsumowanie.",
+        next: "Jeśli widzisz `queue_item_failed`, sprawdź błąd, popraw konfigurację i użyj „Wyślij teraz” lub „Wyślij zaznaczone”.",
+        skipped: "`email_skipped` (zielony wiersz): mail nie zostal wyslany — odbiorca wylaczyl powiadomienia lub uzyl globalnego unsubscribe. Pasek statystyk pod tabela pokazuje podsumowanie.",
       },
       providers: {
         sendgrid: "SendGrid",
