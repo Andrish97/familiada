@@ -513,7 +513,7 @@ const en = {
     },
     shareModal: {
       title: "Share base",
-      subtitle: "Add users by username or email. If it fails, we'll show “Failed”.",
+      subtitle: "Add users by username or email. If it fails, we'll show "Failed".",
       placeholder: "Username or email...",
       roleEditor: "Edit",
       roleViewer: "View",
@@ -539,14 +539,14 @@ const en = {
     },
     delete: {
       title: "Delete base",
-      text: "Delete “{name}”? This can't be undone.",
+      text: "Delete "{name}"? This can't be undone.",
       ok: "Delete",
       cancel: "Cancel",
       failed: "Failed to delete.",
     },
     leaveShared: {
       title: "Remove shared base",
-      text: "Remove the shared base “{name}” from your list? (You will give up the share)",
+      text: "Remove the shared base "{name}" from your list? (You will give up the share)",
       ok: "Remove",
       cancel: "Cancel",
       failed: "Failed to remove from list.",
@@ -637,7 +637,7 @@ const en = {
       footer: "If this isn't you, please ignore this message.",
       linkLabel: "If the button doesn't work, copy the link:",
       subject: ({ base }) => `A base was shared with you: ${base}`,
-      body: ({ owner, base }) => `${owner} shared the question base “${base}” with you.`,
+      body: ({ owner, base }) => `${owner} shared the question base "${base}" with you.`,
       action: "Open in Familiada",
     },
   },
@@ -709,7 +709,7 @@ const en = {
     modals: {
       open: {
         title: "Start poll?",
-        text: "Start poll for “{name}”?",
+        text: "Start poll for "{name}"?",
         ok: "Start",
         cancel: "Cancel",
       },
@@ -754,7 +754,7 @@ const en = {
       mergeLabel: "Merge duplicates",
       mergeWith: "Merge with...",
       remove: "Remove",
-      editHint: "Edit answers, then click “Close and normalize”.",
+      editHint: "Edit answers, then click "Close and normalize".",
       cancelled: "Closing cancelled (poll still open).",
       minAnswers: "Question {ord}: fewer than 3 answers after editing. Add/merge differently.",
       leaveTitle: "You have merging open",
@@ -800,14 +800,14 @@ const en = {
     content: {
       general: `<p class="m-p">
         This page is a guide to running a game (tournament)
-        in the style of “Familiada.” Its goal is to explain how to prepare a game,
+        in the style of "Familiada." Its goal is to explain how to prepare a game,
         collect results (polls), and smoothly run a live match
         — even if someone uses the system for the first time.
       </p>
       
       <p class="m-p">
         The description focuses on the tool and how to use it,
-        not on “television production.” The system works well for events,
+        not on "television production." The system works well for events,
         company parties, school, stage shows, or just with friends
         — anywhere you want a clear board, points, and a smooth flow of play.
       </p>
@@ -823,7 +823,7 @@ const en = {
       <p class="m-p">
         If you want to read the full rules of the game,
         <a href="https://s.tvp.pl/repository/attachment/6/8/f/68f09c03ff0781fa510c2fd90c3ba19b1569224834470.pdf" target="_blank" rel="noopener noreferrer">
-          The “Familiada” game show rules
+          The "Familiada" game show rules
         </a>
         describe them in detail.
       </p>
@@ -861,7 +861,7 @@ const en = {
         to running the live gameplay.
       </p>`,
       edit: `<p class="m-p">
-        The “Creating and editing a game” tab describes the stage of preparing the game
+        The "Creating and editing a game" tab describes the stage of preparing the game
         before starting the poll or the live match.
         At this stage you create the structure of the game:
         questions, possible answers, and how they are scored.
@@ -874,7 +874,7 @@ const en = {
         from later data collection and live gameplay.
       </p>
     
-      <h3 class="m-h2">Game list (“My games”)</h3>
+      <h3 class="m-h2">Game list ("My games")</h3>
     
       <p class="m-p">
         The game list is the place where you manage all games
@@ -909,7 +909,7 @@ const en = {
       </ul>
     
       <p class="m-p">
-        You create a new game by clicking the tile with the “＋” symbol.
+        You create a new game by clicking the tile with the "＋" symbol.
         After creation the game appears on the list
         and can be opened in the editor.
       </p>
@@ -917,7 +917,7 @@ const en = {
       <h3 class="m-h2">Game editor — what and when can be edited</h3>
     
      <p class="m-p">
-        You enter the game edit mode from the “My games” list
+        You enter the game edit mode from the "My games" list
         using the <span class="m-code">Edit</span> button.
         This is the first stage of working on the game,
         where you prepare its full content
@@ -1078,7 +1078,7 @@ const en = {
         and share entire bases with other users.
       </p>
       <p class="m-p">
-        You access question bases from the top bar of the “My games” page
+        You access question bases from the top bar of the "My games" page
         using the <span class="m-code">Question bases 🗃️</span> button.
       </p>
   
@@ -1090,7 +1090,7 @@ const en = {
       <h3 class="m-h3">➕ Adding a new base</h3>
   
       <p class="m-p">
-        In the “Question bases” view click the <span class="m-strong">New base</span> tile.
+        In the "Question bases" view click the <span class="m-strong">New base</span> tile.
         A window will open where you enter the base name.
       </p>
   
@@ -1132,7 +1132,7 @@ const en = {
       </p>
   
       <p class="m-p">
-        Each “file” in this manager is a single question.
+        Each "file" in this manager is a single question.
         Folders are used to group questions thematically or logically.
       </p>
   
@@ -1159,7 +1159,7 @@ const en = {
   
       <p class="m-p">
         Each question can have any number of tags.
-        Tags are used to label questions by topic — e.g. “history,” “sports,” “easy,” “for kids.”
+        Tags are used to label questions by topic — e.g. "history," "sports," "easy," "for kids."
       </p>
   
       <p class="m-p">
@@ -1324,7 +1324,7 @@ const en = {
         Shortcuts do not work while typing in edit fields.
       </p>`,
       polls: `<p class="m-p">
-        The “Polls” tab describes the stage of collecting responses
+        The "Polls" tab describes the stage of collecting responses
         from respondents before the actual live gameplay.
         A poll is a bridge between game preparation
         and running the game live.
@@ -1338,7 +1338,7 @@ const en = {
 
 
       <p class="m-p">
-        You open polls from the top bar on the “My games” page
+        You open polls from the top bar on the "My games" page
         using the <span class="m-code">Polls 📊</span> button.
       </p>
 
@@ -1359,7 +1359,7 @@ const en = {
       </p>
 
       <p class="m-p">
-        Poll sharing is done from “My polls”: select a tile and click
+        Poll sharing is done from "My polls": select a tile and click
         <span class="m-code">Share</span>, then choose recipients and save.
         The poll tile shows current votes, and the <span class="m-code">Details</span> button
         opens a list of submitted, pending, rejected, and anonymous responses.
@@ -1555,13 +1555,13 @@ const en = {
         or an organizational mistake occurred.
       </p>`,
       subscriptions: `<p class="m-p">
-        The “Subscriptions” tab describes everything related to user relationships:
+        The "Subscriptions" tab describes everything related to user relationships:
         inviting subscribers, accepting invitations, resending, and unlinking.
       </p>
 
 
       <p class="m-p">
-        You open it from the top bar on “My games”
+        You open it from the top bar on "My games"
         with the <span class="m-code">Subscriptions 📧</span> button.
       </p>
 
@@ -1616,7 +1616,7 @@ const en = {
       </p>`,
       logo: `<p class="m-p">
       The system lets you set your own logo that appears on the display
-      (during the start or end of the game). You can access the logo creator from the top bar of the “My games” page
+      (during the start or end of the game). You can access the logo creator from the top bar of the "My games" page
         using the <span class="m-code">Logo🖥️</span> button.
     </p>
 
@@ -1636,12 +1636,12 @@ const en = {
 
     <ul class="m-ul">
       <li>
-        <span class="m-strong">Text art</span> — a classic logo made of characters (the “Familiada” style).
+        <span class="m-strong">Text art</span> — a classic logo made of characters (the "Familiada" style).
         Good when you want a quick, readable title.
       </li>
       <li>
-        <span class="m-strong">Text</span> — text editing and preview in “pixels.”
-        Good when you need a different font/layout than “Text art.”
+        <span class="m-strong">Text</span> — text editing and preview in "pixels."
+        Good when you need a different font/layout than "Text art."
       </li>
       <li>
         <span class="m-strong">Drawing</span> — draw by hand on a grid (like a simple graphics editor).
@@ -1656,7 +1656,7 @@ const en = {
     <h3 class="m-h2">Display preview</h3>
 
     <p class="m-p">
-      In the editor you always see a preview “as on the board.”
+      In the editor you always see a preview "as on the board."
       This is important because what looks good in high resolution
       may be unreadable when reduced to <span class="m-code">150×70</span>.
     </p>
@@ -1693,7 +1693,7 @@ const en = {
       the import to fail or the logo to work incorrectly.
     </div>`,
       control: `<p class="m-p">
-        You reach the Control Panel from the “My games” list
+        You reach the Control Panel from the "My games" list
         using the <span class="m-code">Play</span> button.
         This mode is intended only for running the live game —
         you no longer edit questions or poll results here.
@@ -1727,7 +1727,7 @@ const en = {
       </ul>
     
       <div class="m-note">
-        <b>Why so many “formalities”?</b><br/>
+        <b>Why so many "formalities"?</b><br/>
         The gameplay is live and has a TV pace. The control panel is meant to enforce the procedure,
         not add stress for the operator. That’s why the system requires readiness of equipment and settings before starting.
       </div>
@@ -1787,7 +1787,7 @@ const en = {
       </p>
     
       <p class="m-p">
-        In this step there is an option <span class="m-strong">“QR on display”</span> —
+        In this step there is an option <span class="m-strong">"QR on display"</span> —
         after using it the QR codes can be shown on the large screen,
         so the crew can quickly scan them with phones.
         This speeds up the start on set because there is no need to type links manually.
@@ -1804,7 +1804,7 @@ const en = {
     
       <p class="m-p">
         Browsers block automatic sound playback
-        until the user performs a “gesture” (click).
+        until the user performs a "gesture" (click).
         That’s why the panel has a separate step to unlock sound.
         Without it you may not hear signals that help keep the game pace.
       </p>
@@ -1839,7 +1839,7 @@ const en = {
       <h3 class="m-h3">Additional settings (important for the operator)</h3>
     
       <p class="m-p">
-        In “Additional settings” you tailor the game to the episode format.
+        In "Additional settings" you tailor the game to the episode format.
         These options do not change the rules’ meaning, only the pace and thresholds.
       </p>
     
@@ -1858,7 +1858,7 @@ const en = {
         </li>
         <li>
           <span class="m-strong">Game ending</span> — what the display shows at the end
-          (logo / points / final prize). This is production-important: the “last frame.”
+          (logo / points / final prize). This is production-important: the "last frame."
         </li>
       </ul>
     
@@ -1872,13 +1872,13 @@ const en = {
     
       <p class="m-p">
         If the game should have a final and the random draw option is not enabled, here you choose exactly <span class="m-strong">5 final questions</span>.
-        The panel shows a list of questions and a list “Final questions (max 5)”.
+        The panel shows a list of questions and a list "Final questions (max 5)".
         After selecting five, you use the <span class="m-strong">Confirm</span> button.</p>
     
       <div class="m-warn">
         <b>Warning:</b><br/>
         The final requires 5 confirmed questions before rounds start.
-        This is an intentional lock — in live play there’s no time to pick questions “on the fly.”
+        This is an intentional lock — in live play there’s no time to pick questions "on the fly."
         If you want to change the set, use the <span class="m-strong">Edit</span> mode for final questions.
 
       <h3 class="m-h3">Rounds: question order</h3>
@@ -1907,7 +1907,7 @@ const en = {
         and the board always shows what it should at any moment.
       </p>
     
-      <h3 class="m-h3">Round start: “Game ready” and intro</h3>
+      <h3 class="m-h3">Round start: "Game ready" and intro</h3>
     
       <p class="m-p">
         When starting rounds, the panel first prepares the display (clears the board and sets the game state),
@@ -1919,7 +1919,7 @@ const en = {
       <h3 class="m-h3">Face-off: who takes control</h3>
     
       <p class="m-p">
-        Each question starts with the “family heads” face-off at the podium.
+        Each question starts with the "family heads" face-off at the podium.
         At this moment the <span class="m-strong">Buzzer</span> device is key:
         the signal from the buzzer tells the panel someone pressed first.
         The operator confirms which side gains priority,
@@ -1928,7 +1928,7 @@ const en = {
     
       <p class="m-p">
         According to the rules, if the first answer is not the highest-scoring,
-        the second “head” can answer better and take control.
+        the second "head" can answer better and take control.
         The panel guides the operator through the round control decision,
         and the display shows which team is currently playing (team indicator).
       </p>
@@ -1938,7 +1938,7 @@ const en = {
       <p class="m-p">
         According to game arrangements, after gaining control a team can also decide
         that it <span class="m-strong">gives up the question</span> to the opponents.
-        This is a tactical move: instead of “finishing” the question, the team can pass the chance to rivals.
+        This is a tactical move: instead of "finishing" the question, the team can pass the chance to rivals.
         The panel provides this option only at the right moment and ensures it cannot be abused.
       </p>
     
@@ -1953,7 +1953,7 @@ const en = {
       <p class="m-p">
         Gameplay continues until:
         all answers are revealed,
-        or the team loses three “chances” (three Xs),
+        or the team loses three "chances" (three Xs),
         then the operator ends the stage and moves to the steal (when conditions are met).
       </p>
     
@@ -1968,14 +1968,14 @@ const en = {
     
       <div class="m-note">
         <b>Why a timer?</b><br/>
-        It’s a “whip for pace.” The timer lets the operator close hesitation quickly
+        It’s a "whip for pace." The timer lets the operator close hesitation quickly
         without debate and keep the rhythm of the game.
       </div>
     
       <h3 class="m-h3">Stealing the bank (one answer)</h3>
     
       <p class="m-p">
-        When the playing team uses three “chances” before revealing all answers,
+        When the playing team uses three "chances" before revealing all answers,
         the question passes to the opposing team.
         The opponents get <span class="m-strong">one answer</span>:
         if they hit — the bank goes to them,
@@ -1986,7 +1986,7 @@ const en = {
       <h3 class="m-h3">Revealing missing answers and ending the round</h3>
     
       <p class="m-p">
-        After the question is resolved the operator can reveal missing answers “for information,”
+        After the question is resolved the operator can reveal missing answers "for information,"
         so the audience sees the full board.
         Then the operator ends the round: the bank is added to the correct team,
         taking the round multiplier into account.
@@ -1994,16 +1994,16 @@ const en = {
     
       <div class="m-note">
         <b>Practical note:</b><br/>
-        The panel deliberately separates “playing the question” from “ending the round.”
+        The panel deliberately separates "playing the question" from "ending the round."
         This way the operator doesn’t accidentally clear the board state
-        before the host delivers the punchline or before “thank you” is said.
+        before the host delivers the punchline or before "thank you" is said.
       </div>
 
       <h3 class="m-h3">Ending rounds and moving on</h3>
       
       <p class="m-p">
         After each round the system updates team scores and checks
-        whether the end-of-game condition has been met (set in “Additional settings”).
+        whether the end-of-game condition has been met (set in "Additional settings").
         Most often it’s a points threshold, e.g. <span class="m-strong">300</span>,
         but it can be different — depending on how you want to run the tournament.
       </p>
@@ -2082,7 +2082,7 @@ const en = {
       
       <p class="m-p">
         The operator again first types all answers of the second contestant,
-        without revealing or scoring them “live.”
+        without revealing or scoring them "live."
         If the second person gives the same answer as the first,
         it is a <span class="m-strong">repeat</span> — the contestant must give another answer,
         and the operator can mark the attempt as repeated.
@@ -2397,7 +2397,7 @@ const en = {
       text:
         "For the best experience, we recommend using the web app. To do this:\n" +
         "1. Open the Share menu.\n" +
-        "2. Tap “Add to Home Screen”.\n" +
+        "2. Tap "Add to Home Screen".\n" +
         "3. Confirm the addition.\n" +
         "4. Launch Familiada from the new home screen icon.",
       ok: "OK",
@@ -2498,7 +2498,7 @@ const en = {
     },
     delete: {
       title: "Delete game",
-      text: "Do you really want to delete “{name}”?",
+      text: "Do you really want to delete "{name}"?",
       ok: "Delete",
       cancel: "Cancel",
     },
@@ -2556,7 +2556,7 @@ const en = {
       placeholder:
         "@My game\n#Animals in Africa\n1 Elephant /29\n2 Lion /19\n3 Monkey /16\n\n#Second question\n1 Answer 1\n2 Answer 2\n3 Answer 3",
       formatHint:
-        "The format also works without numbers (just answer lines). Import tolerates spaces/tabs, “1.”, “2)” etc. Answers longer than 17 characters will be trimmed.",
+        "The format also works without numbers (just answer lines). Import tolerates spaces/tabs, "1.", "2)" etc. Answers longer than 17 characters will be trimmed.",
       confirm: "Import",
       cancel: "Close",
     },
@@ -2721,7 +2721,7 @@ const en = {
     declineInviteFailed: "Failed to decline invitation.",
     subHeading: "Subscription invitation{owner}",
     taskHeading: "Voting invitation for {name}{owner}",
-    taskName: "“{name}”",
+    taskName: ""{name}"",
     pollFallback: "poll",
     ownerSuffix: " from user {owner}",
     mismatch: "This invitation is not for you. Log in as {email} and try again.",
@@ -2991,7 +2991,7 @@ const en = {
       focusSub: "You have a subscription invitation. Accept it?",
     },
     pollFallback: "poll",
-    pollNameLabel: "“{name}”",
+    pollNameLabel: ""{name}"",
     ownerFallback: "Familiada user",
     mail: {
       subtitle: "Polls hub",
@@ -3224,7 +3224,7 @@ const en = {
       focusSub: "You have a subscription invitation. Accept it?",
     },
     pollFallback: "poll",
-    pollNameLabel: "“{name}”",
+    pollNameLabel: ""{name}"",
     ownerFallback: "Familiada user",
     mail: {
       subtitle: "Polls hub",
@@ -3458,7 +3458,7 @@ const en = {
       focusSub: "You have a subscription invitation. Accept it?",
     },
     pollFallback: "poll",
-    pollNameLabel: "“{name}”",
+    pollNameLabel: ""{name}"",
     ownerFallback: "Familiada user",
     mail: {
       subtitle: "Subscriptions",
@@ -3719,7 +3719,7 @@ const en = {
     confirm: {
       closeUnsaved: "If you close now, changes won't be saved.",
       backUnsaved: "You have unsaved changes. Go back and lose them?",
-      deleteLogo: "Delete logo “{name}”?",
+      deleteLogo: "Delete logo "{name}"?",
       logoutUnsaved: "You have unsaved changes. Log out and lose them?",
     },
   },
@@ -4113,7 +4113,7 @@ const en = {
       runWorker: "Send pending now",
       retryFailed: "Requeue failed and send",
       retrySelected: "Send selected",
-      workerHint: "You can also click “Send now” in a specific queue row.",
+      workerHint: "You can also click "Send now" in a specific queue row.",
       queueTitle: "Mail queue (mail_queue)",
       logsTitle: "Mail function logs",
       logsHelpBtn: "How to read logs",
@@ -4124,8 +4124,8 @@ const en = {
         events: "`event`: e.g. `queue_picked`, `queue_item_sent`, `queue_item_failed` indicates processing stage.",
         recipient: "`To` and `Provider` show recipient and provider used for the send attempt.",
         error: "`Error` column contains the concrete reason (API key, timeout, provider 4xx/5xx, etc.).",
-        next: “If you see `queue_item_failed`, verify the error, fix config, then use 'Send now' or 'Send selected'.”,
-        skipped: “`email_skipped` (green row): email was not sent — the recipient disabled notifications (`notifications off`) or globally unsubscribed (`global unsubscribe`). The stats bar below the table shows a summary.”,
+        next: "If you see `queue_item_failed`, verify the error, fix config, then use 'Send now' or 'Send selected'.",
+        skipped: "`email_skipped` (green row): email was not sent — the recipient disabled notifications (`notifications off`) or globally unsubscribed (`global unsubscribe`). The stats bar below the table shows a summary.",
       },
       providers: {
         sendgrid: "SendGrid",
@@ -4662,7 +4662,7 @@ const en = {
       playNoMorePass: "You can't pass the question anymore this round.",
       playPassed: "Question passed. Team {team} now plays.",
       stealNoControl: "Can't start steal — no team in control.",
-      stealPrompt: "Steal: team {team} answers. Click an answer or “X (miss)”.",
+      stealPrompt: "Steal: team {team} answers. Click an answer or "X (miss)".",
       stealChance: "Steal chance. Team {team} answers.",
       stealSuccess: "Steal successful — bank goes to the stealing team.",
       stealFail: "Steal failed — bank stays with the playing team.",
