@@ -562,7 +562,15 @@ function initTopbarController() {
   }
 }
 
+function initTopbarSafeAreaCover() {
+  if (document.getElementById('topbar-safe-area-cover')) return;
+  const cover = document.createElement('div');
+  cover.id = 'topbar-safe-area-cover';
+  document.body.insertBefore(cover, document.body.firstChild);
+}
+
 window.addEventListener('DOMContentLoaded', () => {
+  initTopbarSafeAreaCover();
   initTopbarController();
   void autoInitTopbarAuthButton();
 });
