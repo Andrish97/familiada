@@ -562,7 +562,18 @@ function initTopbarController() {
   }
 }
 
+function initTopbarHeight() {
+  const topbar = document.querySelector('.topbar');
+  if (!topbar) return;
+  const update = () => {
+    document.documentElement.style.setProperty('--topbar-h', topbar.offsetHeight + 'px');
+  };
+  update();
+  new ResizeObserver(update).observe(topbar);
+}
+
 window.addEventListener('DOMContentLoaded', () => {
   initTopbarController();
   void autoInitTopbarAuthButton();
+  initTopbarHeight();
 });
