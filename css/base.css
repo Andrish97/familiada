@@ -53,16 +53,6 @@ body > main {
     backdrop-filter: blur(10px);
 }
 
-body:has(.topbar)::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: env(safe-area-inset-top, 0px);
-    background: var(--bg);
-    z-index: 9;
-}
 
 @media (max-width: 900px){
   .spacer{
@@ -616,7 +606,7 @@ main{
 
 @media (max-width: 600px) {
     .topbar {
-        padding: 12px 14px
+        padding: calc(12px + var(--safe-top)) 14px 12px 14px
     }
 
     .brand {
@@ -923,7 +913,7 @@ html.showA2HS .a2hs {
       "s1 s3";
     align-items:center;
     gap:8px;
-    padding:8px 10px;
+    padding: calc(8px + var(--safe-top)) 10px 8px 10px;
   }
 
   .topbar-layout-4 .topbar-section-1{ grid-area:s1; }

@@ -1,3 +1,7 @@
+html:has(.login-body) {
+    background: radial-gradient(circle at 20% 10%,rgba(255,220,120,.18),transparent 55%),radial-gradient(circle at 80% 90%,rgba(70,140,255,.18),transparent 55%),#050914;
+}
+
 .login-body {
     min-height: 100dvh;
     margin: 0;
