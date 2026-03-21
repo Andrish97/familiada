@@ -1,8 +1,9 @@
 html:has(.login-body) {
     background:
         linear-gradient(to bottom, rgba(255,220,120,.14) 0%, transparent 80px),
-        linear-gradient(to right,  rgba(255,220,120,.08) 0%, transparent var(--safe-left)),
-        linear-gradient(to left,   rgba(70,140,255,.08)  0%, transparent var(--safe-right)),
+        linear-gradient(to top,    rgba(70,140,255,.10)  0%, transparent 80px),
+        linear-gradient(to right,  rgba(255,220,120,.10) 0%, transparent 80px),
+        linear-gradient(to left,   rgba(70,140,255,.10)  0%, transparent 80px),
         radial-gradient(circle at 20% 10%,rgba(255,220,120,.18),transparent 55%),
         radial-gradient(circle at 80% 90%,rgba(70,140,255,.18),transparent 55%),
         #050914;
