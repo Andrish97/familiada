@@ -53,6 +53,16 @@ body > main {
     backdrop-filter: blur(10px);
 }
 
+.topbar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: env(safe-area-inset-top, 0px);
+    background: var(--bg);
+}
+
 @media (max-width: 900px){
   .spacer{
     display: none !important;
