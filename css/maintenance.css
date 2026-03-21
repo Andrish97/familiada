@@ -27,6 +27,7 @@
   border-radius: 20px;
   padding: 32px 28px;
   box-shadow: var(--maint-shadow);
+  -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
 }
 
