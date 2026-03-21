@@ -709,8 +709,8 @@ html.showA2HS .a2hs {
 
 .lang-switcher.lang-floating {
     position: fixed;
-    top: 12px;
-    right: 12px;
+    top: max(12px, env(safe-area-inset-top));
+    right: max(12px, env(safe-area-inset-right));
     z-index: 999;
 }
 
