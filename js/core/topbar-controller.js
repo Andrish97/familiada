@@ -562,15 +562,17 @@ function initTopbarController() {
   }
 }
 
-function initTopbarSafeAreaCover() {
-  if (document.getElementById('topbar-safe-area-cover')) return;
-  const cover = document.createElement('div');
-  cover.id = 'topbar-safe-area-cover';
-  document.body.insertBefore(cover, document.body.firstChild);
+function updateTopbarHeight() {
+  const topbar = document.querySelector('.topbar');
+  if (!topbar) return;
+  const h = Math.ceil(topbar.getBoundingClientRect().height);
+  document.documentElement.style.setProperty('--topbar-h', `${h}px`);
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-  initTopbarSafeAreaCover();
   initTopbarController();
   void autoInitTopbarAuthButton();
+  requestAnimationFrame(updateTopbarHeight);
 });
+
+window.addEventListener('resize', updateTopbarHeight);

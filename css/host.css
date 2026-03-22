@@ -309,7 +309,7 @@ html.landscape .cover2.coverOff {
     word-break: break-word
 }
 
-@media (max-height:420px) {
+@media (max-height:280px) {
     .cover2Swipe {
         display: none
     }

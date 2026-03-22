@@ -745,7 +745,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.documentElement.classList.add("webapp");
   }
 
-  // lokalnie też działa UI i gest
+  // swipe działa zawsze (też lokalnie bez parametrów)
+  document.addEventListener("pointerdown", onPointerDown, { passive: true });
+  document.addEventListener("pointerup", onPointerUp, { passive: true });
+  document.addEventListener("pointercancel", () => (swDown = false), { passive: true });
+
   if (!gameId || !key) {
     text1 = "";
     text2 = "";
@@ -753,10 +757,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     render();
     return;
   }
-
-  document.addEventListener("pointerdown", onPointerDown, { passive: true });
-  document.addEventListener("pointerup", onPointerUp, { passive: true });
-  document.addEventListener("pointercancel", () => (swDown = false), { passive: true });
 
   await restoreState();
   ensureChannel();
