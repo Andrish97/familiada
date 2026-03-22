@@ -36,9 +36,9 @@ body > main {
     flex-direction: column;
 }
 
-/* Kompensacja za fixed topbar — tylko na stronach z topbarem */
-body:has(.topbar) > main {
-    padding-top: var(--topbar-h, calc(max(12px, env(safe-area-inset-top)) + 56px));
+/* Kompensacja za fixed topbar — padding na body, .wrap daje naturalny odstęp 18/15px */
+body:has(.topbar) {
+    padding-top: calc(max(12px, env(safe-area-inset-top)) + 56px);
 }
 
 /*

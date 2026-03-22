@@ -85,6 +85,11 @@ function initPipeline() {
     if (!topbar) { wrap.style.top = "0px"; return; }
     const bottom = topbar.getBoundingClientRect().bottom;
     wrap.style.top = Math.max(0, bottom) + "px";
+    // Body padding musi uwzględniać topbar + pipeline żeby treść nie wchodziła pod pipeline
+    requestAnimationFrame(() => {
+      const pipelineBottom = wrap.getBoundingClientRect().bottom;
+      document.body.style.paddingTop = Math.max(0, pipelineBottom) + "px";
+    });
   }
 
   function update() {
