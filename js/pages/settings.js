@@ -97,7 +97,8 @@ const els = {
   mailQueueInfo: document.getElementById("mailQueueInfo"),
   mailLogFnSelect: document.getElementById("mailLogFnSelect"),
   mailLogLevelSelect: document.getElementById("mailLogLevelSelect"),
-  mailLogLimit: document.getElementById("mailLogLimit"),
+  mailLogPerPage: document.getElementById("mailLogPerPage"),
+  mailLogsPagination: document.getElementById("mailLogsPagination"),
   btnMailLogsHelp: document.getElementById("btnMailLogsHelp"),
   btnMailLogsRefresh: document.getElementById("btnMailLogsRefresh"),
   mailLogsHelp: document.getElementById("mailLogsHelp"),
@@ -127,6 +128,8 @@ let mailCronSupported = true;
 let mailQueueStatusValue = "all";
 let mailLogFnValue = "all";
 let mailLogLevelValue = "all";
+let mailLogsPage = 1;
+let mailLogsPerPage = 50;
 let mailCronSelect = null;
 let mailQueueStatusSelect = null;
 let mailLogFnSelect = null;
@@ -1032,6 +1035,7 @@ function initMailSelects() {
       placeholder: "—",
       onChange: (val) => {
         mailLogFnValue = String(val || "all");
+        mailLogsPage = 1;
         updateMailCategoryHighlights();
         void loadMailLogs();
       },
@@ -1045,6 +1049,7 @@ function initMailSelects() {
       placeholder: "—",
       onChange: (val) => {
         mailLogLevelValue = String(val || "all");
+        mailLogsPage = 1;
         updateMailCategoryHighlights();
         void loadMailLogs();
       },
@@ -2822,13 +2827,95 @@ async function loadMailQueue({ silent = false } = {}) {
   }
 }
 
-async function loadMailLogs({ silent = false } = {}) {
+function renderLogsPagination(total, page, perPage, pages) {
+  const el = els.mailLogsPagination;
+  if (!el) return;
+  if (pages <= 1) { el.innerHTML = ""; return; }
+
+  const from = (page - 1) * perPage + 1;
+  const to = Math.min(page * perPage, total);
+
+  const frag = document.createDocumentFragment();
+
+  const info = document.createElement("span");
+  info.className = "logs-page-info";
+  info.textContent = `${from}–${to} / ${total}`;
+  frag.appendChild(info);
+
+  const nav = document.createElement("div");
+  nav.className = "logs-page-nav";
+
+  const prevBtn = document.createElement("button");
+  prevBtn.className = "btn sm";
+  prevBtn.textContent = "‹";
+  prevBtn.disabled = page <= 1;
+  prevBtn.addEventListener("click", () => void loadMailLogs({ page: page - 1 }));
+  nav.appendChild(prevBtn);
+
+  // Page buttons — show up to 7 around current page
+  const windowSize = 7;
+  const half = Math.floor(windowSize / 2);
+  let start = Math.max(1, page - half);
+  let end = Math.min(pages, start + windowSize - 1);
+  if (end - start + 1 < windowSize) start = Math.max(1, end - windowSize + 1);
+
+  if (start > 1) {
+    const btn = document.createElement("button");
+    btn.className = "btn sm";
+    btn.textContent = "1";
+    btn.addEventListener("click", () => void loadMailLogs({ page: 1 }));
+    nav.appendChild(btn);
+    if (start > 2) {
+      const dots = document.createElement("span");
+      dots.className = "logs-page-dots";
+      dots.textContent = "…";
+      nav.appendChild(dots);
+    }
+  }
+
+  for (let i = start; i <= end; i++) {
+    const btn = document.createElement("button");
+    btn.className = "btn sm" + (i === page ? " is-active" : "");
+    btn.textContent = String(i);
+    if (i !== page) btn.addEventListener("click", () => void loadMailLogs({ page: i }));
+    nav.appendChild(btn);
+  }
+
+  if (end < pages) {
+    if (end < pages - 1) {
+      const dots = document.createElement("span");
+      dots.className = "logs-page-dots";
+      dots.textContent = "…";
+      nav.appendChild(dots);
+    }
+    const btn = document.createElement("button");
+    btn.className = "btn sm";
+    btn.textContent = String(pages);
+    btn.addEventListener("click", () => void loadMailLogs({ page: pages }));
+    nav.appendChild(btn);
+  }
+
+  const nextBtn = document.createElement("button");
+  nextBtn.className = "btn sm";
+  nextBtn.textContent = "›";
+  nextBtn.disabled = page >= pages;
+  nextBtn.addEventListener("click", () => void loadMailLogs({ page: page + 1 }));
+  nav.appendChild(nextBtn);
+
+  frag.appendChild(nav);
+  el.innerHTML = "";
+  el.appendChild(frag);
+}
+
+async function loadMailLogs({ silent = false, page } = {}) {
+  if (page !== undefined) mailLogsPage = page;
   try {
     const fn = String(mailLogFnValue || "all");
     const level = String(mailLogLevelValue || "all");
-    const limit = clampInt(els.mailLogLimit?.value, 1, 500, 200);
+    const perPage = clampInt(els.mailLogPerPage?.value, 10, 200, 50);
+    mailLogsPerPage = perPage;
     const res = await apiFetch(
-      `${API_BASE}/mail/logs?fn=${encodeURIComponent(fn)}&level=${encodeURIComponent(level)}&limit=${limit}`,
+      `${API_BASE}/mail/logs?fn=${encodeURIComponent(fn)}&level=${encodeURIComponent(level)}&per_page=${perPage}&page=${mailLogsPage}`,
       { method: "GET" }
     );
     if (res.status === 401) {
@@ -2839,14 +2926,18 @@ async function loadMailLogs({ silent = false } = {}) {
     if (!res.ok) throw new Error(`logs fetch failed: ${res.status}`);
     const data = await res.json();
     const rows = Array.isArray(data?.rows) ? data.rows : [];
+    const total = Number(data?.total ?? 0);
+    const pages = Number(data?.pages ?? 1);
+    mailLogsPage = Number(data?.page ?? mailLogsPage);
     renderLogRows(rows);
+    renderLogsPagination(total, mailLogsPage, perPage, pages);
     if (els.mailLogsInfo) {
       const cntSent = rows.filter((r) => r.event === "provider_success" || r.event === "queue_item_sent").length;
       const cntFailed = rows.filter((r) => r.event === "queue_item_failed" || r.event === "all_providers_failed").length;
       const cntSkippedFlag = rows.filter((r) => r.event === "email_skipped" && r.provider === "skipped_user_flag").length;
       const cntSkippedSup = rows.filter((r) => r.event === "email_skipped" && r.provider === "skipped_suppression").length;
       const cntSkipped = cntSkippedFlag + cntSkippedSup;
-      const parts = [t("settings.mail.rows").replace("{count}", String(rows.length))];
+      const parts = [t("settings.mail.rows").replace("{count}", String(total))];
       if (cntSent) parts.push(t("settings.mail.statsSent").replace("{count}", String(cntSent)));
       if (cntFailed) parts.push(t("settings.mail.statsFailed").replace("{count}", String(cntFailed)));
       if (cntSkipped) {
@@ -3244,7 +3335,13 @@ function wireEvents() {
 
   els.btnMailLogsRefresh?.addEventListener("click", async () => {
     markUserAction();
+    mailLogsPage = 1;
     await loadMailLogs();
+  });
+
+  els.mailLogPerPage?.addEventListener("change", () => {
+    mailLogsPage = 1;
+    void loadMailLogs();
   });
 
   els.btnMailLogsHelp?.addEventListener("click", () => {
