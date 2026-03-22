@@ -1,9 +1,11 @@
-/* Gradient on html — fills entire physical viewport edge-to-edge, no seam */
+/* Gradient na html — widoczny przez transparentne body */
 html:has(.login-body) {
     background:
         radial-gradient(circle at 20% 10%, rgba(255,220,120,.18), transparent 55%),
         radial-gradient(circle at 80% 90%, rgba(70,140,255,.18), transparent 55%),
         #050914;
+    /* Scroll trzymamy w body — html nie scroluję, overscroll na html nie pokazuje się */
+    overflow: hidden;
 }
 
 /* === LOGIN / REGISTER PAGE ===
@@ -21,6 +23,9 @@ html:has(.login-body) {
     display: grid;
     place-items: center;
     background: transparent;
+    /* Scroll w body → overscroll iOS nie ujawnia tła html */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 
     /* keep children below/beside status bar & notch */
     padding: env(safe-area-inset-top) env(safe-area-inset-right)
