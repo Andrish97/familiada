@@ -1730,7 +1730,7 @@ tr.row .tag-dot[data-tip]::before {
   /* Lewy panel jako drawer */
   .explorer-left {
     position: fixed;
-    top: 0;
+    top: var(--topbar-h, 60px);
     left: 0;
     bottom: 0;
     width: min(300px, 85vw);
@@ -1751,7 +1751,10 @@ tr.row .tag-dot[data-tip]::before {
   /* Overlay za drawerem */
   .drawer-overlay {
     position: fixed;
-    inset: 0;
+    top: var(--topbar-h, 60px);
+    left: 0;
+    right: 0;
+    bottom: 0;
     z-index: 999;
     background: rgba(0,0,0,.55);
   }
@@ -1768,7 +1771,7 @@ tr.row .tag-dot[data-tip]::before {
   /* Toolbar — dwa wiersze na mobile */
   .toolbar {
     flex-wrap: wrap;
-    overflow: visible;
+    overflow: hidden;
     padding: 6px 10px;
     gap: 6px;
   }
