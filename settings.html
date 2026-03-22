@@ -203,23 +203,6 @@
             </div>
           </section>
 
-          <section class="mail-card mail-card-worker">
-            <div class="mail-card-title" data-i18n="settings.mail.workerActions">Ręczne akcje workera</div>
-            <div class="mail-inline-grid">
-              <div class="field">
-                <label class="field-label" for="mailRunLimit" data-i18n="settings.mail.runLimit">Limit dla uruchomienia ręcznego</label>
-                <input id="mailRunLimit" type="number" min="1" max="200" step="1" value="25"/>
-                <div class="field-hint" data-i18n="settings.mail.runLimitHint">Maksymalnie tyle rekordów wyśle jedno ręczne uruchomienie.</div>
-              </div>
-            </div>
-            <div class="panel-actions">
-              <button class="btn sm gold" id="btnMailRunWorker" type="button" data-i18n="settings.mail.runWorker">Uruchom worker</button>
-              <button class="btn sm" id="btnMailRetryFailed" type="button" data-i18n="settings.mail.retryFailed">Requeue failed + uruchom</button>
-              <button class="btn sm" id="btnMailRetrySelected" type="button" data-i18n="settings.mail.retrySelected">Requeue zaznaczone + uruchom</button>
-            </div>
-            <div class="field-hint" data-i18n="settings.mail.workerHint">Opcje ręczne działają na `mail_queue` i uruchamiają `invoke_mail_worker(...)`.</div>
-          </section>
-
           <section class="mail-card mail-card-wide mail-card-queue">
             <div class="mail-card-head">
               <div class="mail-card-title" data-i18n="settings.mail.queueTitle">Kolejka wysyłki (mail_queue)</div>
@@ -253,6 +236,23 @@
               </table>
             </div>
             <div class="field-hint" id="mailQueueInfo">—</div>
+          </section>
+
+          <section class="mail-card mail-card-worker">
+            <div class="mail-card-title" data-i18n="settings.mail.workerActions">Ręczne akcje workera</div>
+            <div class="mail-inline-grid">
+              <div class="field">
+                <label class="field-label" for="mailRunLimit" data-i18n="settings.mail.runLimit">Limit dla uruchomienia ręcznego</label>
+                <input id="mailRunLimit" type="number" min="1" max="200" step="1" value="25"/>
+                <div class="field-hint" data-i18n="settings.mail.runLimitHint">Maksymalnie tyle rekordów wyśle jedno ręczne uruchomienie.</div>
+              </div>
+            </div>
+            <div class="panel-actions">
+              <button class="btn sm gold" id="btnMailRunWorker" type="button" data-i18n="settings.mail.runWorker">Uruchom worker</button>
+              <button class="btn sm" id="btnMailRetryFailed" type="button" data-i18n="settings.mail.retryFailed">Requeue failed + uruchom</button>
+              <button class="btn sm" id="btnMailRetrySelected" type="button" data-i18n="settings.mail.retrySelected">Requeue zaznaczone + uruchom</button>
+            </div>
+            <div class="field-hint" data-i18n="settings.mail.workerHint">Opcje ręczne działają na `mail_queue` i uruchamiają `invoke_mail_worker(...)`.</div>
           </section>
 
           <section class="mail-card mail-card-wide mail-card-logs">
