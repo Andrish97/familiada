@@ -69,11 +69,6 @@ body.home-body {
   border-bottom: 1px solid var(--line);
 }
 
-/* Pipeline wypadł z flow (fixed) — przesuwamy treść żeby nie nachodziła */
-body.home-body .wrap {
-  padding-top: 48px;
-}
-
 /* [przycisk] [linia] [przycisk] [linia] [przycisk] ... */
 .pipeline {
   display: flex;
