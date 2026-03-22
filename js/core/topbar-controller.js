@@ -567,6 +567,16 @@ function updateTopbarHeight() {
   if (!topbar) return;
   const h = Math.ceil(topbar.getBoundingClientRect().height);
   document.body.style.setProperty('--topbar-h', `${h}px`);
+  // Pierwszy widoczny element body (nie fixed topbar) dostaje padding-top
+  const firstContent = [...document.body.children].find(
+    el => getComputedStyle(el).position !== 'fixed'
+  );
+  if (!firstContent) return;
+  // Strony z body overflow:hidden mają własny scroll wewnętrzny (builder itp.) — flush
+  // Pozostałe strony: dodaj standardowy padding wrapa żeby treść nie lepiła do topbara
+  const isFlush = getComputedStyle(document.body).overflow === 'hidden';
+  const extra = isFlush ? 0 : (window.innerWidth <= 900 ? 15 : 18);
+  firstContent.style.paddingTop = `${h + extra}px`;
 }
 
 window.addEventListener('DOMContentLoaded', () => {
