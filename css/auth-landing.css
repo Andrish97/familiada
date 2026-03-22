@@ -4,6 +4,7 @@ html:has(.landing-body) {
         radial-gradient(circle at 20% 20%, rgba(255,234,166,.10), transparent 55%),
         radial-gradient(circle at 80% 80%, rgba(90,160,255,.10), transparent 55%),
         #050914;
+    overflow: hidden;
 }
 
 /* === CONFIRM / RESET PAGES ===
@@ -31,6 +32,8 @@ html:has(.landing-body) {
     color: var(--txt);
     font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
     background: transparent;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 
     /* keep children below/beside status bar & notch */
     padding: env(safe-area-inset-top) env(safe-area-inset-right)
