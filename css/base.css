@@ -629,6 +629,7 @@ main{
 @media (max-width: 600px) {
     .topbar {
         padding: 12px 14px;
+        padding-top: env(safe-area-inset-top);
         padding-left: max(14px, env(safe-area-inset-left));
         padding-right: max(14px, env(safe-area-inset-right));
     }
@@ -938,6 +939,7 @@ html.showA2HS .a2hs {
     align-items:center;
     gap:8px;
     padding:8px 10px;
+    padding-top: env(safe-area-inset-top);
     padding-left: max(10px, env(safe-area-inset-left));
     padding-right: max(10px, env(safe-area-inset-right));
   }
@@ -1040,7 +1042,7 @@ html.showA2HS .a2hs {
   color-scheme: dark;
 }
 
-html, body{
+html{
   background: var(--bg);
 }
 
