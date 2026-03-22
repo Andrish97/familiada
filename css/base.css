@@ -58,21 +58,18 @@ body:has(.topbar) > main {
     gap: 10px;
     flex-wrap: wrap;
 
-    padding: env(safe-area-inset-top) max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left));
+    padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left));
     background: rgba(0,0,0,.35);
     border-bottom: 1px solid rgba(255,255,255,.12);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
 }
 
-/* Mobile landscape: nie blokuj ekranu, topbar może przewinąć się razem ze stroną */
+/* Mobile landscape: topbar fixed, ale pomniejszony żeby nie zabierać za dużo miejsca */
 @media (max-height: 500px) and (orientation: landscape) {
     .topbar {
-        position: sticky;
-        top: 0;
-    }
-    body > main {
-        padding-top: 0;
+        padding-top: max(4px, env(safe-area-inset-top));
+        padding-bottom: 4px;
     }
 }
 
@@ -629,7 +626,7 @@ main{
 @media (max-width: 600px) {
     .topbar {
         padding: 12px 14px;
-        padding-top: env(safe-area-inset-top);
+        padding-top: max(12px, env(safe-area-inset-top));
         padding-left: max(14px, env(safe-area-inset-left));
         padding-right: max(14px, env(safe-area-inset-right));
     }
@@ -655,7 +652,9 @@ main{
 @media (max-width: 900px){
     .wrap{
         width: 100%;
-        padding: 15px
+        padding: 15px;
+        padding-left: max(15px, env(safe-area-inset-left));
+        padding-right: max(15px, env(safe-area-inset-right));
     }
 }
 
@@ -845,11 +844,17 @@ html.showA2HS .a2hs {
 
   .topbar-mobile-overlay {
     position: fixed;
-    inset: 0;
+    top: var(--topbar-h, 60px);
+    left: 0;
+    right: 0;
+    bottom: 0;
     z-index: 55;
     background: rgba(0,0,0,.55);
     display: none;
     padding: 10px;
+    padding-left: max(10px, env(safe-area-inset-left));
+    padding-right: max(10px, env(safe-area-inset-right));
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
   }
 
   .topbar-mobile-overlay.is-open {
@@ -868,7 +873,7 @@ html.showA2HS .a2hs {
     gap: 10px;
 
     /* nie wychodź poza ekran (iOS/Android) */
-    max-height: calc(100dvh - 20px);
+    max-height: calc(100dvh - var(--topbar-h, 60px) - 20px);
     overflow: hidden;
   }
 
@@ -939,7 +944,7 @@ html.showA2HS .a2hs {
     align-items:center;
     gap:8px;
     padding:8px 10px;
-    padding-top: env(safe-area-inset-top);
+    padding-top: max(8px, env(safe-area-inset-top));
     padding-left: max(10px, env(safe-area-inset-left));
     padding-right: max(10px, env(safe-area-inset-right));
   }
