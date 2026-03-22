@@ -506,7 +506,8 @@ async function handleAdminMailApi(request, env, url) {
   if (url.pathname === "/_admin_api/mail/logs") {
     if (request.method !== "GET") return new Response("Method Not Allowed", { status: 405 });
 
-    const limit = clampInt(url.searchParams.get("limit"), 1, 500, 200);
+    const perPage = clampInt(url.searchParams.get("per_page"), 10, 200, 50);
+    const page = clampInt(url.searchParams.get("page"), 1, 9999, 1);
     const fn = String(url.searchParams.get("fn") || "all").toLowerCase();
     const level = String(url.searchParams.get("level") || "all").toLowerCase();
     const fnAllowed = new Set(["all", "send-mail", "send-email", "mail-worker"]);
@@ -514,11 +515,22 @@ async function handleAdminMailApi(request, env, url) {
     if (!fnAllowed.has(fn)) return json({ ok: false, error: "Invalid function filter" }, 400);
     if (!levelAllowed.has(level)) return json({ ok: false, error: "Invalid level filter" }, 400);
 
+    let filters = "";
+    if (fn !== "all") filters += `&function_name=eq.${encodeURIComponent(fn)}`;
+    if (level !== "all") filters += `&level=eq.${encodeURIComponent(level)}`;
+
+    // Count query
+    const countResult = await supabaseRequest(env, `/rest/v1/mail_function_logs?select=count${filters}`, { method: "GET" });
+    const total = Array.isArray(countResult.data) && countResult.data[0]?.count != null
+      ? Number(countResult.data[0].count)
+      : 0;
+    const pages = Math.max(1, Math.ceil(total / perPage));
+    const safePage = Math.min(page, pages);
+    const offset = (safePage - 1) * perPage;
+
     let qs =
       "select=id,created_at,function_name,level,event,request_id,queue_id,actor_user_id,recipient_email,provider,status,error,meta";
-    qs += `&order=created_at.desc&limit=${limit}`;
-    if (fn !== "all") qs += `&function_name=eq.${encodeURIComponent(fn)}`;
-    if (level !== "all") qs += `&level=eq.${encodeURIComponent(level)}`;
+    qs += `&order=created_at.desc&limit=${perPage}&offset=${offset}${filters}`;
 
     const list = await supabaseRequest(env, `/rest/v1/mail_function_logs?${qs}`, { method: "GET" });
     if (!list.ok) {
@@ -528,7 +540,11 @@ async function handleAdminMailApi(request, env, url) {
     return json({
       ok: true,
       rows: Array.isArray(list.data) ? list.data : [],
-      filter: { fn, level, limit },
+      total,
+      page: safePage,
+      per_page: perPage,
+      pages,
+      filter: { fn, level },
     });
   }
 

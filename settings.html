@@ -273,7 +273,12 @@
                   </button>
                   <div class="ui-select-menu" role="listbox"></div>
                 </div>
-                <input id="mailLogLimit" type="number" min="1" max="500" step="10" value="200"/>
+                <select id="mailLogPerPage" class="btn sm">
+                  <option value="25">25 / str.</option>
+                  <option value="50" selected>50 / str.</option>
+                  <option value="100">100 / str.</option>
+                  <option value="200">200 / str.</option>
+                </select>
                 <button class="btn sm" id="btnMailLogsHelp" type="button" data-i18n="settings.mail.logsHelpBtn">Jak czytać logi</button>
                 <button class="btn sm" id="btnMailLogsRefresh" type="button" data-i18n="settings.actions.refresh">Odśwież</button>
               </div>
@@ -306,6 +311,7 @@
                 <tbody id="mailLogsBody"></tbody>
               </table>
             </div>
+            <div class="mail-logs-pagination" id="mailLogsPagination"></div>
             <div class="field-hint" id="mailLogsInfo">—</div>
           </section>
         </div>
