@@ -63,6 +63,17 @@ body > main {
     -webkit-backdrop-filter: blur(10px);
 }
 
+/* Mobile landscape: nie blokuj ekranu, topbar może przewinąć się razem ze stroną */
+@media (max-height: 500px) and (orientation: landscape) {
+    .topbar {
+        position: sticky;
+        top: 0;
+    }
+    body > main {
+        padding-top: 0;
+    }
+}
+
 @media (max-width: 900px){
   .spacer{
     display: none !important;
