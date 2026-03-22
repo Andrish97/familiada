@@ -589,4 +589,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   showView("browse");
   await loadBrowse({ reset: true });
+
+  window.addEventListener("i18n:lang", () => loadBrowse({ reset: true }));
 });
