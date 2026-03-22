@@ -70,10 +70,6 @@ body.builder-body > main.wrap{
   box-sizing: border-box;
 }
 
-/* Builder: body już ma padding-top = topbar-h, main.wrap nie może dodawać kolejnego */
-body.builder-body > main.wrap {
-  padding-top: 0;
-}
 
 @media (max-width: 900px){
   .wrap{
