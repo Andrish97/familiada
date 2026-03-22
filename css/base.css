@@ -19,7 +19,7 @@ html, body {
 
 html {
     min-height: 100dvh;
-    background: var(--bg);
+    background: #050914;
 }
 
 body {
@@ -27,7 +27,6 @@ body {
     display: flex;
     flex-direction: column;
     font-family: system-ui, -apple-system, Segoe UI, sans-serif;
-    background: var(--bg);
     color: #fff;
 }
 
