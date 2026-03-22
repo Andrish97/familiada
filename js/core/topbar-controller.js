@@ -575,4 +575,5 @@ window.addEventListener('DOMContentLoaded', () => {
   requestAnimationFrame(updateTopbarHeight);
 });
 
+window.addEventListener('load', updateTopbarHeight);
 window.addEventListener('resize', updateTopbarHeight);
