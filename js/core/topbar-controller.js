@@ -566,7 +566,7 @@ function updateTopbarHeight() {
   const topbar = document.querySelector('.topbar');
   if (!topbar) return;
   const h = Math.ceil(topbar.getBoundingClientRect().height);
-  document.documentElement.style.setProperty('--topbar-h', `${h}px`);
+  document.body.style.setProperty('--topbar-h', `${h}px`);
 }
 
 window.addEventListener('DOMContentLoaded', () => {
