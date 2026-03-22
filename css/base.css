@@ -38,7 +38,8 @@ body > main {
 
 /* Kompensacja za fixed topbar — padding na body, .wrap daje naturalny odstęp 18/15px */
 body:has(.topbar) {
-    padding-top: calc(max(12px, env(safe-area-inset-top)) + 56px);
+    --topbar-h: calc(max(12px, env(safe-area-inset-top)) + 56px);
+    padding-top: var(--topbar-h);
 }
 
 /*
