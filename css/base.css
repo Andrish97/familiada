@@ -35,11 +35,20 @@ body > main {
     flex: 1 0 auto;
     display: flex;
     flex-direction: column;
+    /* Kompensacja za fixed topbar — wartość ustawiana przez topbar-controller.js */
+    padding-top: var(--topbar-h, 0px);
 }
 
-.topbar{
-    position: sticky;
+/*
+  Topbar: position:fixed tak żeby zawsze był widoczny (Safari nie chowa go przy skrollu).
+  padding-top: env(safe-area-inset-top) = wysokość status bara → dzieci są poniżej paska.
+  Tło i blur rozciągają się za status bar automatycznie.
+*/
+.topbar {
+    position: fixed;
     top: 0;
+    left: 0;
+    right: 0;
     z-index: 10;
 
     display: flex;
@@ -47,27 +56,11 @@ body > main {
     gap: 10px;
     flex-wrap: wrap;
 
-    padding: 12px 16px;
-    padding-left: max(16px, env(safe-area-inset-left));
-    padding-right: max(16px, env(safe-area-inset-right));
+    padding: env(safe-area-inset-top) max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left));
     background: rgba(0,0,0,.35);
     border-bottom: 1px solid rgba(255,255,255,.12);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-}
-
-/* Safe-area cover: wstrzykiwany przez topbar-controller.js jako position:fixed */
-#topbar-safe-area-cover {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: env(safe-area-inset-top, 0px);
-    background: rgba(0,0,0,.35);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    z-index: 10;
-    pointer-events: none;
 }
 
 @media (max-width: 900px){

@@ -1,8 +1,16 @@
 /* === LOGIN / REGISTER PAGE ===
-   Background: gradient fills the entire screen (incl. behind status bar)
-   ::before: blur cover for the status-bar safe-area zone
+   html: gradient background fills the ENTIRE physical screen (incl. behind status bar)
+   body: transparent — shows html gradient through it
    Children: stay inside safe area thanks to padding on body
 */
+
+/* Gradient on html — fills entire physical viewport edge-to-edge, no seam */
+html:has(.login-body) {
+    background:
+        radial-gradient(circle at 20% 10%, rgba(255,220,120,.18), transparent 55%),
+        radial-gradient(circle at 80% 90%, rgba(70,140,255,.18), transparent 55%),
+        #050914;
+}
 
 .login-body {
     min-height: 100dvh;
@@ -11,30 +19,11 @@
     color: #fff;
     display: grid;
     place-items: center;
+    background: transparent;
 
-    background:
-        radial-gradient(circle at 20% 10%, rgba(255,220,120,.18), transparent 55%),
-        radial-gradient(circle at 80% 90%, rgba(70,140,255,.18), transparent 55%),
-        #050914;
-
-    /* keep children below status bar */
+    /* keep children below/beside status bar & notch */
     padding: env(safe-area-inset-top) env(safe-area-inset-right)
              env(safe-area-inset-bottom) env(safe-area-inset-left);
-}
-
-/* blur cover that fills behind the status bar */
-.login-body::before {
-    content: '';
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    height: env(safe-area-inset-top, 0px);
-    background:
-        radial-gradient(circle at 20% 10%, rgba(255,220,120,.18), transparent 55%),
-        #050914;
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-    pointer-events: none;
-    z-index: 1;
 }
 
 /* ── card ── */
