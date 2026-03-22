@@ -34,8 +34,11 @@ body > main {
     flex: 1 0 auto;
     display: flex;
     flex-direction: column;
-    /* Kompensacja za fixed topbar — wartość ustawiana przez topbar-controller.js */
-    padding-top: var(--topbar-h, 0px);
+}
+
+/* Kompensacja za fixed topbar — tylko na stronach z topbarem */
+body:has(.topbar) > main {
+    padding-top: var(--topbar-h, calc(env(safe-area-inset-top) + 56px));
 }
 
 /*
