@@ -1,22 +1,47 @@
-html:has(.login-body) {
-    background: radial-gradient(circle at 20% 10%,rgba(255,220,120,.18),transparent 55%),radial-gradient(circle at 80% 90%,rgba(70,140,255,.18),transparent 55%),#050914;
-    min-height: 100dvh;
-}
+/* === LOGIN / REGISTER PAGE ===
+   Background: gradient fills the entire screen (incl. behind status bar)
+   ::before: blur cover for the status-bar safe-area zone
+   Children: stay inside safe area thanks to padding on body
+*/
 
 .login-body {
     min-height: 100dvh;
     margin: 0;
-    font-family: system-ui,-apple-system,Segoe UI,sans-serif;
-    background: transparent;
+    font-family: system-ui, -apple-system, Segoe UI, sans-serif;
     color: #fff;
     display: grid;
     place-items: center;
-    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+
+    background:
+        radial-gradient(circle at 20% 10%, rgba(255,220,120,.18), transparent 55%),
+        radial-gradient(circle at 80% 90%, rgba(70,140,255,.18), transparent 55%),
+        #050914;
+
+    /* keep children below status bar */
+    padding: env(safe-area-inset-top) env(safe-area-inset-right)
+             env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
+/* blur cover that fills behind the status bar */
+.login-body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: env(safe-area-inset-top, 0px);
+    background:
+        radial-gradient(circle at 20% 10%, rgba(255,220,120,.18), transparent 55%),
+        #050914;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* ── card ── */
+
 .login-shell {
-    width: min(520px,92vw);
-    padding: 18px
+    width: min(520px, 92vw);
+    padding: 18px;
 }
 
 .login-card {
@@ -24,22 +49,26 @@ html:has(.login-body) {
     border: 1px solid rgba(255,255,255,.14);
     border-radius: 22px;
     padding: 18px;
-    box-shadow: 0 24px 60px rgba(0,0,0,.55)
+    box-shadow: 0 24px 60px rgba(0,0,0,.55);
 }
+
+/* ── typography ── */
 
 .brand {
     font-weight: 1000;
     letter-spacing: .18em;
     text-transform: uppercase;
     font-size: 18px;
-    color: #ffeaa6
+    color: #ffeaa6;
 }
 
 .sub {
     opacity: .85;
     margin-top: 6px;
-    margin-bottom: 14px
+    margin-bottom: 14px;
 }
+
+/* ── status / error ── */
 
 .status {
     opacity: .75;
@@ -48,10 +77,17 @@ html:has(.login-body) {
     margin-top: 30px;
 }
 
+.err {
+    color: #ff9d9d;
+    font-size: 12px;
+}
+
+/* ── form ── */
+
 .form {
     display: flex;
     flex-direction: column;
-    gap: 10px
+    gap: 10px;
 }
 
 input {
@@ -60,13 +96,15 @@ input {
     border: 1px solid rgba(255,255,255,.18);
     background: rgba(0,0,0,.25);
     color: #fff;
-    outline: 0
+    outline: 0;
 }
 
 input:focus {
     border-color: rgba(255,220,120,.5);
-    box-shadow: 0 0 0 3px rgba(255,220,120,.12)
+    box-shadow: 0 0 0 3px rgba(255,220,120,.12);
 }
+
+/* ── buttons ── */
 
 .row {
     display: flex;
@@ -84,27 +122,24 @@ input:focus {
     cursor: pointer;
     font-weight: 900;
     letter-spacing: .06em;
-    text-transform: uppercase
+    text-transform: uppercase;
 }
 
 .btn.main {
     border-color: rgba(255,220,120,.35);
-    background: rgba(255,220,120,.18)
+    background: rgba(255,220,120,.18);
 }
 
-.btn:hover {
-    filter: brightness(1.08)
-}
+.btn:hover { filter: brightness(1.08); }
+.btn:active { transform: translateY(1px); }
 
-.btn:active {
-    transform: translateY(1px)
-}
+/* ── misc ── */
 
 .meta {
     display: flex;
     gap: 10px;
     align-items: center;
-    flex-wrap: wrap
+    flex-wrap: wrap;
 }
 
 .link {
@@ -113,18 +148,30 @@ input:focus {
     color: #ffeaa6;
     cursor: pointer;
     text-decoration: underline;
-    padding: 0
+    padding: 0;
 }
 
-.err {
-    color: #ff9d9d;
-    font-size: 12px
+.hint {
+    display: block;
+    margin-top: 10px;
+    opacity: .75;
+    font-size: 12px;
+    line-height: 1.35;
 }
+
+.cooldown {
+    display: block;
+    margin-top: 6px;
+    font-size: 12px;
+    opacity: .75;
+}
+
+/* ── setup card (first-run) ── */
 
 .setup-card {
     background: rgba(8,12,28,.6);
     border: 1px solid rgba(255,234,166,.25);
-    box-shadow: 0 30px 80px rgba(0,0,0,.6)
+    box-shadow: 0 30px 80px rgba(0,0,0,.6);
 }
 
 .setup-title {
@@ -132,140 +179,104 @@ input:focus {
     font-weight: 900;
     letter-spacing: .08em;
     text-transform: uppercase;
-    font-size: 14px
+    font-size: 14px;
 }
 
 .setup-sub {
     margin-top: 6px;
     margin-bottom: 12px;
     font-size: 13px;
-    opacity: .8
+    opacity: .8;
 }
 
 .setup-form {
     display: grid;
-    gap: 10px
+    gap: 10px;
 }
 
 .modal-actions {
     display: flex;
     gap: 10px;
     flex-wrap: wrap;
-    margin-top: 4px
+    margin-top: 4px;
 }
 
 .modal-err {
     color: #ff9d9d;
     font-size: 12px;
-    min-height: 16px
+    min-height: 16px;
 }
 
 /* setup mode – mobile safe */
-body.setup-mode .login-card {
-  display: none;
-}
-
-body.setup-mode .setup-card {
-  display: block;
-  pointer-events: auto;
-}
+body.setup-mode .login-card  { display: none; }
+body.setup-mode .setup-card  { display: block; pointer-events: auto; }
 
 .setup-card button,
-.setup-card input {
-  touch-action: manipulation;
-}
+.setup-card input { touch-action: manipulation; }
 
-.cooldown{
-  display: block;
-  margin-top: 6px;
-  font-size: 12px;
-  opacity: .75;
-}
+/* mode-specific fields */
+body.mode-login .pass-wrap:has(#pass2) { display: none; }
+body.mode-login #pwdHint               { display: none; }
 
-
-.hint{
-  display:block;
-  margin-top: 10px;
-  opacity: .75;
-  font-size: 12px;
-  line-height: 1.35;
-}
-
-/* Mode-specific fields */
-body.mode-login .pass-wrap:has(#pass2) {
-  display: none;
-}
-
-body.mode-login #pwdHint {
-  display: none;
-}
-
-/* HEADER W KARCIE LOGIN */
+/* ── login header ── */
 
 .login-header {
-  position: relative;
-  display: flex;
-  align-items: center;
-  height: 56px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    height: 56px;
 }
 
-/* Brand wycentrowany absolutnie */
 .login-brand {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-
-  font-weight: 1000;
-  letter-spacing: .14em;
-  font-size: 18px;
-  color: var(--gold);
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-weight: 1000;
+    letter-spacing: .14em;
+    font-size: 18px;
+    color: var(--gold);
 }
 
+/* ── back button (fixed) ── */
 
-/* ===============================
-   FIXED BACK BUTTON (LOGIN)
-================================ */
+.login-back-fixed {
+    position: fixed;
+    top: max(20px, env(safe-area-inset-top));
+    left: max(20px, env(safe-area-inset-left));
+    z-index: 1000;
 
-.login-back-fixed{
-  position: fixed;
-  top: max(20px, env(safe-area-inset-top));
-  left: max(20px, env(safe-area-inset-left));
-  z-index: 1000;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+    padding: 8px 14px;
+    border-radius: 14px;
 
-  padding: 8px 14px;
-  border-radius: 14px;
-
-  font-size: 14px;
-  font-weight: 800;
-  letter-spacing: .05em;
-
-  color: rgba(255,255,255,.75);
-  text-decoration: none;
-
-  border: 1px solid rgba(255,255,255,.18);
-  background: rgba(255,255,255,.05);
-
-  backdrop-filter: blur(6px);
-
-  transition: all .18s ease;
-}
-
-.login-back-fixed:hover{
-  color: var(--gold);
-  border-color: var(--gold);
-  background: rgba(255,215,0,.08);
-}
-
-/* MOBILE */
-@media (max-width: 600px){
-  .login-back-fixed{
-    top: max(14px, env(safe-area-inset-top));
-    left: max(14px, env(safe-area-inset-left));
-    padding: 8px 12px;
     font-size: 14px;
-  }
+    font-weight: 800;
+    letter-spacing: .05em;
+
+    color: rgba(255,255,255,.75);
+    text-decoration: none;
+
+    border: 1px solid rgba(255,255,255,.18);
+    background: rgba(255,255,255,.05);
+    backdrop-filter: blur(6px);
+
+    transition: all .18s ease;
+}
+
+.login-back-fixed:hover {
+    color: var(--gold);
+    border-color: var(--gold);
+    background: rgba(255,215,0,.08);
+}
+
+@media (max-width: 600px) {
+    .login-back-fixed {
+        top: max(14px, env(safe-area-inset-top));
+        left: max(14px, env(safe-area-inset-left));
+        padding: 8px 12px;
+        font-size: 14px;
+    }
 }
