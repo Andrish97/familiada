@@ -1,127 +1,164 @@
-:root{
-  --bg: #050914;
-  --card: rgba(255,255,255,.06);
-  --stroke: rgba(255,255,255,.14);
-  --led: #ffeaa6;
-  --txt: #ffffff;
-  --muted: rgba(255,255,255,.75);
-  --danger: #ff7a7a;
+/* === CONFIRM / RESET PAGES ===
+   Background: gradient fills the entire screen (incl. behind status bar)
+   ::before: blur cover for the status-bar safe-area zone
+   Children: stay inside safe area thanks to padding on body
+*/
+
+:root {
+    --bg: #050914;
+    --card: rgba(255,255,255,.06);
+    --stroke: rgba(255,255,255,.14);
+    --led: #ffeaa6;
+    --txt: #ffffff;
+    --muted: rgba(255,255,255,.75);
+    --danger: #ff7a7a;
 }
 
-html:has(.landing-body){
-  background:
-    radial-gradient(circle at 20% 20%, rgba(255,234,166,.10), transparent 55%),
-    radial-gradient(circle at 80% 80%, rgba(90,160,255,.10), transparent 55%),
-    var(--bg);
-  min-height: 100dvh;
+.landing-body {
+    margin: 0;
+    min-height: 100dvh;
+    display: grid;
+    place-items: center;
+    color: var(--txt);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+
+    background:
+        radial-gradient(circle at 20% 20%, rgba(255,234,166,.10), transparent 55%),
+        radial-gradient(circle at 80% 80%, rgba(90,160,255,.10), transparent 55%),
+        var(--bg);
+
+    /* keep children below status bar */
+    padding: env(safe-area-inset-top) env(safe-area-inset-right)
+             env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
-.landing-body{
-  margin:0;
-  min-height:100dvh;
-  display:grid;
-  place-items:center;
-  background: transparent;
-  color: var(--txt);
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+/* blur cover that fills behind the status bar */
+.landing-body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: env(safe-area-inset-top, 0px);
+    background:
+        radial-gradient(circle at 20% 20%, rgba(255,234,166,.10), transparent 55%),
+        var(--bg);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    pointer-events: none;
+    z-index: 1;
 }
 
-.landing-shell{ width:min(560px,92vw); padding:18px; }
+/* ── layout ── */
 
-.landing-card{
-  background: var(--card);
-  border: 1px solid var(--stroke);
-  border-radius: 22px;
-  box-shadow: 0 18px 50px rgba(0,0,0,.45);
-  padding: 18px;
+.landing-shell {
+    width: min(560px, 92vw);
+    padding: 18px;
 }
 
-.brand{
-  font-weight: 1000;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  color: var(--led);
-  font-size: 18px;
+.landing-card {
+    background: var(--card);
+    border: 1px solid var(--stroke);
+    border-radius: 22px;
+    box-shadow: 0 18px 50px rgba(0,0,0,.45);
+    padding: 18px;
 }
 
-.sub{
-  margin-top: 6px;
-  opacity: .85;
-  font-weight: 900;
+/* ── typography ── */
+
+.brand {
+    font-weight: 1000;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--led);
+    font-size: 18px;
 }
 
-.status{
-  margin-top: 14px;
-  padding: 12px 14px;
-  border-radius: 16px;
-  border: 1px solid rgba(255,234,166,.20);
-  background: rgba(0,0,0,.18);
-  color: var(--txt);
+.sub {
+    margin-top: 6px;
+    opacity: .85;
+    font-weight: 900;
 }
 
-.err{
-  margin-top: 10px;
-  color: var(--danger);
-  font-size: 13px;
-  min-height: 18px;
+/* ── status / error ── */
+
+.status {
+    margin-top: 14px;
+    padding: 12px 14px;
+    border-radius: 16px;
+    border: 1px solid rgba(255,234,166,.20);
+    background: rgba(0,0,0,.18);
+    color: var(--txt);
 }
 
-.form{
-  margin-top: 12px;
-  display:grid;
-  gap: 10px;
+.err {
+    margin-top: 10px;
+    color: var(--danger);
+    font-size: 13px;
+    min-height: 18px;
 }
 
-.form input{
-  width:100%;
-  box-sizing:border-box;
-  padding: 12px 12px;
-  border-radius: 16px;
-  border: 1px solid rgba(255,255,255,.18);
-  background: rgba(0,0,0,.22);
-  color: var(--txt);
-  outline:none;
-  font-weight: 800;
-}
-.form input:focus{
-  border-color: rgba(255,234,166,.35);
-  box-shadow: 0 0 0 2px rgba(255,234,166,.12);
+/* ── form ── */
+
+.form {
+    margin-top: 12px;
+    display: grid;
+    gap: 10px;
 }
 
-.actions{
-  margin-top: 14px;
-  display:flex;
-  gap: 10px;
-  flex-wrap: wrap;
+.form input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px;
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,.18);
+    background: rgba(0,0,0,.22);
+    color: var(--txt);
+    outline: none;
+    font-weight: 800;
 }
 
-.btn{
-  padding: 12px 12px;
-  border-radius: 16px;
-  border: 1px solid rgba(255,255,255,.18);
-  background: rgba(255,255,255,.06);
-  color: var(--txt);
-  cursor:pointer;
-  font-weight: 1000;
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  text-decoration:none;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-}
-.btn:hover{ filter: brightness(1.08); }
-.btn:active{ transform: translateY(1px); }
-
-.btn.main{
-  border-color: rgba(255,234,166,.35);
-  background: rgba(255,234,166,.18);
+.form input:focus {
+    border-color: rgba(255,234,166,.35);
+    box-shadow: 0 0 0 2px rgba(255,234,166,.12);
 }
 
-.hint{
-  margin-top: 12px;
-  opacity: .75;
-  font-size: 12px;
-  line-height: 1.35;
+/* ── buttons ── */
+
+.actions {
+    margin-top: 14px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.btn {
+    padding: 12px;
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,.18);
+    background: rgba(255,255,255,.06);
+    color: var(--txt);
+    cursor: pointer;
+    font-weight: 1000;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn:hover  { filter: brightness(1.08); }
+.btn:active { transform: translateY(1px); }
+
+.btn.main {
+    border-color: rgba(255,234,166,.35);
+    background: rgba(255,234,166,.18);
+}
+
+/* ── misc ── */
+
+.hint {
+    margin-top: 12px;
+    opacity: .75;
+    font-size: 12px;
+    line-height: 1.35;
 }
