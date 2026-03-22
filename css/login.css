@@ -1,9 +1,3 @@
-/* === LOGIN / REGISTER PAGE ===
-   html: gradient background fills the ENTIRE physical screen (incl. behind status bar)
-   body: transparent — shows html gradient through it
-   Children: stay inside safe area thanks to padding on body
-*/
-
 /* Gradient on html — fills entire physical viewport edge-to-edge, no seam */
 html:has(.login-body) {
     background:
@@ -11,6 +5,13 @@ html:has(.login-body) {
         radial-gradient(circle at 80% 90%, rgba(70,140,255,.18), transparent 55%),
         #050914;
 }
+
+/* === LOGIN / REGISTER PAGE ===
+   html: gradient background fills the ENTIRE physical screen (incl. behind status bar)
+   body: transparent — shows html gradient through it
+   Children: stay inside safe area thanks to padding on body
+*/
+
 
 .login-body {
     min-height: 100dvh;

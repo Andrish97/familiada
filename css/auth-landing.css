@@ -1,3 +1,11 @@
+/* Gradient on html — fills entire physical viewport edge-to-edge, no seam */
+html:has(.landing-body) {
+    background:
+        radial-gradient(circle at 20% 20%, rgba(255,234,166,.10), transparent 55%),
+        radial-gradient(circle at 80% 80%, rgba(90,160,255,.10), transparent 55%),
+        #050914;
+}
+
 /* === CONFIRM / RESET PAGES ===
    html: gradient background fills the ENTIRE physical screen (incl. behind status bar)
    body: transparent — shows html gradient through it
@@ -14,13 +22,6 @@
     --danger: #ff7a7a;
 }
 
-/* Gradient on html — fills entire physical viewport edge-to-edge, no seam */
-html:has(.landing-body) {
-    background:
-        radial-gradient(circle at 20% 20%, rgba(255,234,166,.10), transparent 55%),
-        radial-gradient(circle at 80% 80%, rgba(90,160,255,.10), transparent 55%),
-        var(--bg);
-}
 
 .landing-body {
     margin: 0;
