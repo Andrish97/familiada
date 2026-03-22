@@ -567,9 +567,9 @@ function updateTopbarHeight() {
   if (!topbar) return;
   const h = Math.ceil(topbar.getBoundingClientRect().height);
   document.body.style.setProperty('--topbar-h', `${h}px`);
-  // Body dostaje padding-top = wysokość topbara.
-  // Naturalny padding .wrap (18px desktop / 15px mobile) daje odstęp między topbarem a treścią.
-  document.body.style.paddingTop = `${h}px`;
+  // Ustawiamy --topbar-h na body (inline style bije CSS).
+  // CSS: body:has(.topbar) { padding-top: var(--topbar-h) } aktualizuje się automatycznie.
+  document.body.style.setProperty('--topbar-h', `${h}px`);
 }
 
 window.addEventListener('DOMContentLoaded', () => {
