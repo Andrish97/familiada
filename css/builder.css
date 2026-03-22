@@ -70,6 +70,11 @@ body.builder-body > main.wrap{
   box-sizing: border-box;
 }
 
+/* Nigdy nie nadpisuj padding-top na main.wrap — robi to body:has(.topbar) > main */
+body:has(.topbar) > main.wrap {
+  padding-top: var(--topbar-h, calc(max(12px, env(safe-area-inset-top)) + 56px));
+}
+
 @media (max-width: 900px){
   .wrap{
     padding: 15px;

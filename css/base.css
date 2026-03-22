@@ -37,12 +37,8 @@ body > main {
 }
 
 /* Kompensacja za fixed topbar — tylko na stronach z topbarem */
-body:has(.topbar) {
-    --topbar-h: calc(max(12px, env(safe-area-inset-top)) + 56px);
-}
-
 body:has(.topbar) > main {
-    padding-top: var(--topbar-h);
+    padding-top: var(--topbar-h, calc(max(12px, env(safe-area-inset-top)) + 56px));
 }
 
 /*
