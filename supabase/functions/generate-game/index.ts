@@ -6,11 +6,7 @@ const CORS = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-function buildQuestionsText(payload: any): string {
-  const qs = payload?.questions || [];
-  if (!Array.isArray(qs)) return "";
-  return qs.map((q: any) => String(q?.text || "").trim()).filter(Boolean).join("\n");
-}
+// ─── Embedding ────────────────────────────────────────────────────────────────
 
 function l2Normalize(vec: number[]): number[] {
   let sumSq = 0;
@@ -19,24 +15,21 @@ function l2Normalize(vec: number[]): number[] {
   return vec.map((x) => x / norm);
 }
 
-function truncateForEmbedding(text: string): string {
-  const t = String(text || "").trim();
-  if (!t) return "";
-  const max = 6000;
-  return t.length > max ? t.slice(0, max) : t;
-}
-
 function toVectorLiteral(vec: number[]): string {
   return `[${vec.join(",")}]`;
 }
 
+function buildQuestionsText(payload: any): string {
+  const qs = payload?.questions || [];
+  if (!Array.isArray(qs)) return "";
+  return qs.map((q: any) => String(q?.text || "").trim()).filter(Boolean).join("\n");
+}
+
 async function generateEmbedding(text: string, timeoutMs = 12000): Promise<number[] | null> {
   const token = Deno.env.get("HUGGINGFACE_API_TOKEN") || "";
-  if (!token) return null;
+  if (!token || !text.trim()) return null;
 
-  const input = truncateForEmbedding(text);
-  if (!input) return null;
-
+  const input = text.length > 6000 ? text.slice(0, 6000) : text;
   const ac = new AbortController();
   const timer = setTimeout(() => ac.abort(), timeoutMs);
 
@@ -50,20 +43,14 @@ async function generateEmbedding(text: string, timeoutMs = 12000): Promise<numbe
         signal: ac.signal,
       },
     );
-
     if (!res.ok) return null;
     const data = await res.json();
-
     if (!Array.isArray(data) || !Array.isArray(data[0])) return null;
     const rows = data as number[][];
-    if (!rows.length || !Array.isArray(rows[0]) || rows[0].length !== 384) return null;
-
+    if (!rows.length || rows[0].length !== 384) return null;
     const sums = new Array<number>(384).fill(0);
-    for (const row of rows) {
-      for (let i = 0; i < 384; i++) sums[i] += row[i] || 0;
-    }
-    const mean = sums.map((x) => x / rows.length);
-    return l2Normalize(mean);
+    for (const row of rows) for (let i = 0; i < 384; i++) sums[i] += row[i] || 0;
+    return l2Normalize(sums.map((x) => x / rows.length));
   } catch {
     return null;
   } finally {
@@ -71,25 +58,21 @@ async function generateEmbedding(text: string, timeoutMs = 12000): Promise<numbe
   }
 }
 
+// ─── Groq ─────────────────────────────────────────────────────────────────────
+
 function extractFirstJsonObject(text: string): any {
   const s = String(text || "");
   const start = s.indexOf("{");
   const end = s.lastIndexOf("}");
   if (start === -1 || end === -1 || end <= start) return null;
-  const slice = s.slice(start, end + 1);
-  try {
-    return JSON.parse(slice);
-  } catch {
-    return null;
-  }
+  try { return JSON.parse(s.slice(start, end + 1)); } catch { return null; }
 }
 
 function parseGroqWaitMs(message: string): number | null {
   const m = String(message || "").match(/try again in ([0-9]+(\.[0-9]+)?)s/i);
   if (!m) return null;
   const sec = Number(m[1]);
-  if (!Number.isFinite(sec) || sec <= 0) return null;
-  return Math.ceil(sec * 1000);
+  return Number.isFinite(sec) && sec > 0 ? Math.ceil(sec * 1000) : null;
 }
 
 function isGroqRateLimit(message: string): boolean {
@@ -101,10 +84,10 @@ async function groqChat(
   groqKey: string,
   model: string,
   prompt: string,
-  { temperature = 0.2, jsonMode = true }: { temperature?: number; jsonMode?: boolean } = {},
+  { temperature = 0.7 }: { temperature?: number } = {},
 ) {
   const ac = new AbortController();
-  const timeoutMs = Number(Deno.env.get("GROQ_TIMEOUT_MS") || "15000");
+  const timeoutMs = Number(Deno.env.get("GROQ_TIMEOUT_MS") || "20000");
   const timer = setTimeout(() => ac.abort(), timeoutMs);
   try {
     const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -113,9 +96,9 @@ async function groqChat(
       body: JSON.stringify({
         model,
         temperature,
-        ...(jsonMode ? { response_format: { type: "json_object" } } : {}),
+        response_format: { type: "json_object" },
         messages: [
-          { role: "system", content: "Return ONLY valid JSON. Do not add explanations or markdown." },
+          { role: "system", content: "Zwróć WYŁĄCZNIE poprawny JSON. Bez komentarzy, bez markdown." },
           { role: "user", content: prompt },
         ],
       }),
@@ -124,298 +107,207 @@ async function groqChat(
     if (!res.ok) throw new Error(`Groq ${res.status}: ${await res.text()}`);
     const data = await res.json();
     const content = data?.choices?.[0]?.message?.content || "";
-    if (jsonMode) return JSON.parse(content || "{}");
-    return extractFirstJsonObject(content);
+    return JSON.parse(content || "{}");
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    throw new Error(`Groq timeout/error: ${msg}`);
+    throw new Error(`Groq error: ${msg}`);
   } finally {
     clearTimeout(timer);
   }
 }
 
-function buildGeneratePrompt(lang: string, topic: string, avoidTitles: string[]) {
-  const trimmed = Array.from(new Set((avoidTitles || []).map((t) => String(t || "").trim()).filter(Boolean))).slice(0, 25);
-  const usedList = trimmed.length ? trimmed.join(" / ") : "(brak)";
+// ─── Prompt ───────────────────────────────────────────────────────────────────
 
-  if (lang === "pl" || lang === "uk") {
-    const systemDesc =
-      lang === "uk"
-        ? `Сімейка — телегра у стилі Family Feud. Генеруй гру УКРАЇНСЬКОЮ (не російською). Питання різноманітні, відповіді — короткі конкретні слова.`
-        : `Jesteś ekspertem ankiet teleturnieju Familiada. Twoim zadaniem jest wygenerowanie zestawu 10 pytań ankietowych.
-ZASADA NR 1: To NIE jest quiz wiedzy. To gra skojarzeń i intuicji.
-ZASADA NR 2: Odpowiedzi muszą być konkretnymi rzeczami/rzeczownikami, a nie przymiotnikami czy pojęciami abstrakcyjnymi.
-ZASADA NR 3: Każde pytanie musi być osadzone w kontekście tematu i jego "kąta" (angle).`;
+function buildPrompt(lang: string, topic: string): string {
+  const seed = crypto.randomUUID().slice(0, 8);
+  const hasTopic = topic.trim().length > 0;
 
-    const topicHint =
-      lang === "uk"
-        ? (topic
-          ? `Тема гри: "${topic}". Питання мають охоплювати широкий спектр цієї теми (різні аспекти, ситуації, асоціації).`
-          : `Придумай власну, широку і цікаву тему. Ці теми вже ІСНУЮТЬ:\n[${usedList}]`)
-        : (topic
-          ? `Temat: "${topic}". Gra ma mieć SZEROKI ZAKRES. Nie skupiaj się na jednym detalu. Jeśli temat to "Ubrania", pytaj o zakupy, pranie, ulubione ciuchy, ubrania na różne pory roku itp. Każde pytanie ma dotyczyć innego aspektu tematu "${topic}".`
-          : `Wymyśl własny, SZEROKI i ciekawy temat (np. "Podróże", "Kuchnia", "Sport", "Życie rodzinne").\nWAŻNE: poniższe tematy już ISTNIEJĄ — twój musi być INNY:\n[${usedList}]`);
+  if (lang === "pl") {
+    const topicLine = hasTopic
+      ? `Temat gry: "${topic}". Pytania mają dotyczyć różnych aspektów tego tematu.`
+      : `Temat gry: dowolny — wybierz coś z codziennego życia (dom, praca, jedzenie, relacje, rozrywka itp.).`;
 
-    const fewShot = lang === "pl" ? `
-PRZYKŁAD SZEROKIEJ GRY (Temat: Dom):
-Pytanie 1: Co najczęściej robimy w kuchni?
-Pytanie 2: Wymień urządzenie AGD, bez którego trudno się obejść?
-Pytanie 3: Gdzie w domu zazwyczaj trzymamy stare gazety?
-Pytanie 4: Jakie pomieszczenie w domu jest najbardziej przytulne?
-...itd. (każde o czymś innym w ramach "Domu")
-` : "";
+    return `Jesteś twórcą pytań do polskiego teleturnieju Familiada.
 
-    const descHint = `Opis gry (description): Napisz zachęcający wstęp (2 zdania) w stylu Karola Strasburgera, który uogólnia cały temat "${topic}".`;
+${topicLine}
 
-    return `${systemDesc}
+CZYM JEST FAMILIADA:
+Familiada to teleturniej w którym ankietowano 100 losowych Polaków i zapisano ich odpowiedzi. Drużyny zgadują co odpowiedziała większość. Wygrywa ten kto trafi w najpopularniejsze odpowiedzi — nie ten kto ma rację.
 
-${topicHint}
-${fewShot}
+ZASADY PYTAŃ:
+- Pytanie musi mieć wiele sensownych odpowiedzi, nie jedną właściwą.
+- Odpowiedzi to rzeczy które zwykły człowiek powiedziałby bez zastanowienia.
+- Formaty: "Podaj coś co...", "Wymień...", "Co robisz gdy...", "Gdzie zazwyczaj...", "Jak nazywa się...", "Co masz w...", "Podaj powód dla którego..."
+- Pytania mogą być lekko zabawne lub życiowe — tak jak w prawdziwej Familiadzie.
+- ZAKAZ: pytań z jedną odpowiedzią, faktów, dat, definicji, wiedzy szkolnej.
 
-WYTYCZNE TECHNICZNE:
-- 10 pytań, każde po 4 odpowiedzi. Każde pytanie musi być o czymś innym (różne aspekty tematu).
-- Pytania formy: "Co najczęściej...", "Gdzie zazwyczaj...", "Wymień coś, co...", "Co kojarzy się z...".
-- Tytuł: Krótki (2-4 słowa), ogólny, np. "Domowe Zacisze", "Magia Kuchni", "Świat Sportu".
-- Odpowiedzi: Krótkie rzeczowniki/frazy, MAX 17 znaków.
-- Punkty: Suma 80-100, nieregularne.
-- ZERO faktów szkolnych. TYLKO skojarzenia.
-- ${descHint}
+ZASADY ODPOWIEDZI:
+- 4 do 6 odpowiedzi na pytanie (dobierz tyle ile naturalnie pasuje).
+- Krótkie: 1–4 słowa, potoczne, konkretne rzeczowniki lub frazy.
+- Posortowane od najpopularniejszej do najmniej popularnej.
+- Punkty odzwierciedlają popularność: pierwsza 30–50 pkt, ostatnia 3–8 pkt, suma ok. 100.
 
-Zwróć TYLKO czysty JSON:
-{"title":"Ogólny Tytuł","description":"Opis uogólniający temat.","questions":[{"text":"Pytanie o konkretny aspekt?","answers":[{"text":"Odpowiedź","fixed_points":43},{"text":"Odpowiedź","fixed_points":27},{"text":"Odpowiedź","fixed_points":16},{"text":"Odpowiedź","fixed_points":9}]}]}`;
-  }
+PRZYKŁADY DOBRYCH PYTAŃ:
+- "Wymień coś, co zawsze masz w portfelu." → dowód osobisty (42), karta bankowa (28), gotówka (16), zdjęcie (8), paragon (6)
+- "Podaj powód, dla którego ktoś się spóźnia." → korki (38), zaspał (27), zapomniał (18), nie mógł zaparkować (10), transport (7)
+- "Co robi Polak w deszczowe niedzielne południe?" → ogląda telewizję (44), śpi (25), gotuje (16), czyta (9), gra w gry (6)
+- "Wymień coś, czego szukasz w ciemnym pokoju." → włącznik światła (41), telefon (29), łóżko (17), ściana (8), drzwi (5)
 
-  const avoidClause = trimmed.length ? `Avoid these titles: ${trimmed.join(", ")}.` : "";
-  const topicClause = topic ? `Theme: "${topic}".` : `Choose a unique, fun theme.`;
-  return `Generate a JSON object for a "Familiada" game in English. ${topicClause} ${avoidClause}
-Return JSON ONLY with this schema:
+TYTUŁ I OPIS:
+- Tytuł: 2–5 słów, trafnie streszcza całą grę, nie zaczyna się od "Familiada".
+- Opis: 2–3 zdania. Nie za krótki, nie za długi. Zachęcający, ciepły, może być lekko humorystyczny.
+
+Wygeneruj grę z 10–15 pytaniami. Każde pytanie musi być o czymś innym.
+
+Zwróć TYLKO JSON (bez komentarzy):
 {
-  "title": "string (short, unique, without the word 'Familiada')",
-  "description": "string (1-2 sentences)",
+  "title": "Tytuł",
+  "description": "Opis gry.",
   "questions": [
     {
-      "text": "string",
+      "text": "Pytanie?",
       "answers": [
-        { "text": "string", "fixed_points": number },
-        { "text": "string", "fixed_points": number },
-        { "text": "string", "fixed_points": number },
-        { "text": "string", "fixed_points": number }
+        {"text": "odpowiedź", "fixed_points": 42},
+        {"text": "odpowiedź", "fixed_points": 27}
       ]
     }
   ]
 }
-Rules:
-- Exactly 10 questions.
-- Each question has 4 answers.
-- fixed_points are integers and should sum to ~100 per question.
-- No duplicate questions/answers within the game.
-- Keys must be exactly: title, description, questions, text, answers, fixed_points. Do not translate keys.
-- Title must NOT start with 'Familiada' and must not contain prefixes like 'Familiada -' or 'Familiada:'.
-- Questions must be survey-style (Family Feud), not trivia. Prefer "Podaj/Wymień/Nazwij coś...".
-- Avoid repetitive stems like "Co robią..." or "Co jest często...".
-- Answers must be short phrases (1-4 words), not full sentences and not yes/no.`;
-}
-
-function normalizeTitle(raw: any): string {
-  let t = String(raw || "").trim();
-  t = t.replace(/^\s*familiada\s*[-:–—]\s*/i, "");
-  t = t.replace(/^\s*familiada\s+/i, "");
-  t = t.replace(/\s+/g, " ").trim();
-  if (!t) t = "Bez tytułu";
-  if (t.length > 80) t = t.slice(0, 80).trim();
-  return t;
-}
-
-function improveTitle(title: string, effectiveTopic: string): string {
-  let t = String(title || "").trim();
-  const topic = String(effectiveTopic || "").trim();
-  const [baseRaw, angleRaw] = topic.split("—").map((s) => s.trim());
-  const base = baseRaw || topic;
-  const angle = angleRaw || "";
-
-  const tLower = t.toLowerCase();
-  const baseLower = base.toLowerCase();
-  const topicLower = topic.toLowerCase();
-
-  // Jeśli tytuł jest pusty, generyczny lub identyczny z tematem
-  if (!t || tLower === baseLower || tLower === topicLower || t.split(/\s+/).length <= 1) {
-    if (angle) {
-      // Wyciągnij sensowne słowa z angle
-      const angleWords = angle
-        .replace(/^[\p{P}\p{S}\s]+/gu, "")
-        .replace(/\s+/g, " ")
-        .trim()
-        .split(/\s+/)
-        .filter(Boolean)
-        .slice(0, 3);
-      t = `${base} ${angleWords.join(" ")}`.trim();
-    } else {
-      t = base || t;
-    }
+Seed: ${seed}`;
   }
 
-  // Usuń zbędne znaki i ogranicz długość
-  t = t.replace(/[:\-–—]/g, " ").replace(/\s+/g, " ").trim();
-  const words = t.split(/\s+/).filter(Boolean).slice(0, 5);
-  t = words.join(" ");
-  
-  if (!t || t.length < 3) t = base || "Bez tytułu";
-  return t;
-}
+  if (lang === "uk") {
+    const topicLine = hasTopic
+      ? `Тема гри: "${topic}".`
+      : `Тема гри: на вибір — щось із повсякденного життя (дім, робота, їжа, стосунки, розваги).`;
 
-function improveDescription(description: string, effectiveTopic: string): string {
-  const d = String(description || "").trim();
-  const topic = String(effectiveTopic || "").trim();
-  const baseTopic = topic.split("—")[0].trim().toLowerCase();
+    return `Ти створюєш питання для української телевікторини Сімейка (аналог Family Feud).
 
-  // Jeśli opis jest sensowny (nie za krótki) i nie zawiera rażących ogólników, zostawiamy
-  const isGeneric =
-    d.length < 40 ||
-    /to (niezwykła|świetna|idealna) gra/i.test(d) ||
-    /uczestnicy muszą/i.test(d) ||
-    /prowadzący zadaje/i.test(d);
+${topicLine}
 
-  // Jeśli opis zawiera słowo kluczowe z tematu i nie jest totalnym śmieciem, jest OK
-  const hasKeyword = d.toLowerCase().includes(baseTopic);
-  
-  if (!isGeneric && hasKeyword) return d;
-  if (d.length > 60 && !isGeneric) return d;
+ПРО ГРУ:
+Сімейка — телевікторина де 100 звичайних людей відповіли на питання. Команди вгадують найпопулярніші відповіді. Перемагає той хто вгадав що сказала більшість — не той хто "правий".
 
-  // Fallback, ale nieco bardziej urozmaicony
-  const variants = [
-    `Zestaw 10 pytań o tematyce: ${topic}. Idealna rozrywka na spotkania z rodziną i przyjaciółmi. Sprawdź swoje skojarzenia!`,
-    `Czy wiesz wszystko o: ${topic}? Ta gra sprawdzi Twoją intuicję i szybkość myślenia. Zaproś bliskich do wspólnej zabawy.`,
-    `Emocjonująca Familiada z pytaniami o ${topic}. Krótkie odpowiedzi, zaskakujące wyniki ankiety i mnóstwo śmiechu.`,
-  ];
-  
-  const seed = topic.length % variants.length;
-  return variants[seed];
-}
+ПРАВИЛА ПИТАНЬ:
+- Питання має мати багато природних відповідей, не одну правильну.
+- Формати: "Назви щось що...", "Що робиш коли...", "Де зазвичай...", "Що маєш у...", "Назви причину чому..."
+- Відповіді — те що звичайна людина скаже без роздумів.
+- ЗАБОРОНЕНО: питання з однією відповіддю, факти, дати, шкільні знання.
 
-function randomInt(min: number, max: number): number {
-  const u = new Uint32Array(1);
-  crypto.getRandomValues(u);
-  return min + (u[0] % (max - min + 1));
-}
+ПРАВИЛА ВІДПОВІДЕЙ:
+- 4–6 відповідей на питання.
+- Короткі: 1–4 слова, розмовні, конкретні.
+- Від найпопулярнішої до найменш. Перша 30–50 очок, остання 3–8, сума ~100.
 
-function buildGeneratePromptWithSeed(lang: string, topic: string, avoidTitles: string[], seed: string) {
-  const bannedWords = [
-    "familiada",
-    "quiz",
-    "gra",
-    "pytania",
-    "test",
-  ];
-  return `${buildGeneratePrompt(lang, topic, avoidTitles)}
-Additional rules:
-- Do not start the title with any of: ${bannedWords.join(", ")}.
-${topic ? "" : "- If topic is empty, do NOT pick a \"świat\"/world theme unless explicitly requested."}
-Seed: ${seed}
-Do not include the seed in JSON.`;
+НАЗВА І ОПИС:
+- Назва: 2–5 слів, не починається з "Сімейка".
+- Опис: 2–3 речення, запрошуючі, можна з гумором.
+
+Згенеруй 10–15 питань, кожне про інший аспект теми.
+Поверни ТІЛЬКИ JSON: { "title", "description", "questions": [{ "text", "answers": [{ "text", "fixed_points" }] }] }
+Seed: ${seed}`;
+  }
+
+  // en
+  const topicLine = hasTopic
+    ? `Game topic: "${topic}".`
+    : `Game topic: your choice — pick something from everyday life (home, work, food, relationships, entertainment, etc.).`;
+
+  return `You are creating questions for a Family Feud (Familiada) game show.
+
+${topicLine}
+
+ABOUT THE GAME:
+Family Feud surveyed 100 random people and recorded their answers. Teams guess the most popular responses — not the "correct" ones. The person who matches what most people said wins.
+
+QUESTION RULES:
+- Each question must have many natural answers, not one correct one.
+- Formats: "Name something that...", "What do you do when...", "Where do you usually...", "Name a reason why...", "What do you find in..."
+- Answers are things an ordinary person would say without thinking.
+- FORBIDDEN: single-answer questions, facts, dates, trivia, school knowledge.
+
+ANSWER RULES:
+- 4 to 6 answers per question (use however many fit naturally).
+- Short: 1–4 words, casual, concrete nouns or phrases.
+- Sorted most to least popular. First answer 30–50 pts, last 3–8 pts, sum ~100.
+
+GOOD EXAMPLES:
+- "Name something you always have in your wallet." → credit card (41), cash (28), ID (17), receipts (8), photos (6)
+- "Name a reason someone is late." → traffic (38), slept in (27), forgot (18), couldn't park (10), public transport (7)
+- "Name something you look for in a dark room." → light switch (43), phone (28), bed (16), wall (8), door (5)
+
+TITLE & DESCRIPTION:
+- Title: 2–5 words, summarizes the whole game, does NOT start with "Familiada".
+- Description: 2–3 sentences, warm and inviting, can be lightly humorous.
+
+Generate 10–15 questions, each on a different aspect of the topic.
+Return ONLY JSON: { "title", "description", "questions": [{ "text", "answers": [{ "text", "fixed_points" }] }] }
+Seed: ${seed}`;
 }
 
 function pickDefaultTopic(lang: string): string {
   const u = new Uint32Array(1);
   crypto.getRandomValues(u);
 
-  if (lang === "en") {
-    const base = [
-      "Food & Cooking",
-      "Home Life",
-      "School Memories",
-      "Work & Office",
-      "Summer Vacations",
-      "Popular Sports",
-      "Family Relations",
-      "Pets & Animals",
-      "Shopping Habits",
-      "Travel & Tourism",
-      "Internet & Technology",
-      "Holidays & Traditions",
-      "Health & Fitness",
-      "Fashion & Clothes",
-      "Music & Entertainment",
-      "Movies & TV Shows",
-      "Childhood Games",
-      "Daily Habits",
-      "Transportation",
-      "Weather & Seasons",
-    ];
-    return base[u[0] % base.length];
-  }
+  const topics: Record<string, string[]> = {
+    pl: [
+      "Jedzenie i Kuchnia", "Życie w Domu", "Szkoła i Edukacja", "Praca i Biuro",
+      "Wakacje i Podróże", "Sport i Rekreacja", "Relacje Rodzinne", "Zwierzęta Domowe",
+      "Zakupy i Pieniądze", "Transport i Samochody", "Internet i Technologia",
+      "Święta i Tradycje", "Zdrowie i Uroda", "Moda i Ubrania", "Muzyka i Rozrywka",
+      "Filmy i Seriale", "Dzieciństwo i Zabawki", "Pogoda i Pory Roku",
+      "Hobby i Czas Wolny", "Nawyki Codzienne",
+    ],
+    en: [
+      "Food & Cooking", "Home Life", "School Memories", "Work & Office",
+      "Summer Vacations", "Sports & Games", "Family Relations", "Pets & Animals",
+      "Shopping", "Transportation", "Internet & Technology", "Holidays & Traditions",
+      "Health & Fitness", "Fashion", "Music & Entertainment", "Movies & TV",
+      "Childhood", "Daily Habits", "Weather & Seasons", "Hobbies",
+    ],
+    uk: [
+      "Їжа та Кухня", "Дім і Побут", "Школа та Навчання", "Робота та Офіс",
+      "Відпустка та Подорожі", "Спорт та Дозвілля", "Родинне Життя", "Домашні Тварини",
+      "Покупки та Гроші", "Транспорт", "Інтернет та Технології", "Свята та Традиції",
+      "Здоров'я та Краса", "Мода та Одяг", "Музика та Розваги", "Кіно та Серіали",
+      "Дитинство", "Погода та Пори Року", "Хобі та Вільний Час", "Щоденні Звички",
+    ],
+  };
 
-  const base = [
-    "Jedzenie i Kuchnia",
-    "Życie w Domu",
-    "Szkoła i Edukacja",
-    "Praca i Biuro",
-    "Wakacje i Podróże",
-    "Sport i Rekreacja",
-    "Relacje Rodzinne",
-    "Zwierzęta Domowe",
-    "Zakupy i Pieniądze",
-    "Transport i Samochody",
-    "Internet i Technologia",
-    "Święta i Tradycje",
-    "Zdrowie i Uroda",
-    "Moda i Ubrania",
-    "Muzyka i Koncerty",
-    "Filmy i Seriale",
-    "Dzieciństwo i Zabawki",
-    "Pogoda i Pory Roku",
-    "Hobby i Czas Wolny",
-    "Nawyki i Codzienność",
-  ];
-  return base[u[0] % base.length];
+  const list = topics[lang] ?? topics.pl;
+  return list[u[0] % list.length];
 }
 
-function isLowQualityCandidate(game: any): boolean {
-  const desc = String(game?.description || "").trim();
-  if (desc.length < 30) return true;
-  if (/to (niezwykła|świetna|idealna) gra/i.test(desc)) return true;
-  if (/to miejsce/i.test(desc)) return true;
-  const qs = Array.isArray(game?.questions) ? game.questions : [];
-  if (qs.length !== 10) return true;
+// ─── Normalizacja payload ─────────────────────────────────────────────────────
 
-  const startCounts = new Map<string, number>();
-  const answerCounts = new Map<string, number>();
-  let triviaCount = 0;
+function normalizeTitle(raw: any): string {
+  let t = String(raw || "").trim();
+  t = t.replace(/^\s*familiada\s*[-:–—]\s*/i, "").replace(/^\s*familiada\s+/i, "").trim();
+  if (t.length > 80) t = t.slice(0, 80).trim();
+  return t || "Bez tytułu";
+}
 
-  for (const q of qs) {
-    const qt = String(q?.text || "").trim();
-    if (qt.length < 12) return true; // Too short
+function normalizePoints(answers: any[]): any[] {
+  const pts = answers.map((a) => Math.max(0, Number(a?.fixed_points) || 0));
+  const sum = pts.reduce((s, n) => s + n, 0);
 
-    const lowerQ = qt.toLowerCase();
-    
-    // Catch trivia keywords
-    if (/\b(stolican|stolicą|państwo|rzeka|jezioro|kontynent|rok|wiek|stulecie|naukowiec|odkrył|wynalazł|autor|napisał|stolica)\b/i.test(lowerQ)) {
-       triviaCount++;
-    }
-
-    const start = lowerQ.replace(/[^\p{L}\p{N}\s]/gu, "").trim().split(/\s+/).slice(0, 2).join(" ");
-    if (start) startCounts.set(start, (startCounts.get(start) || 0) + 1);
-    
-    // Repetitive stems
-    if (/^co robi(a|ą)/i.test(qt) || /^co jest często/i.test(qt)) return true;
-    if (/^czy\b/i.test(qt)) return true;
-
-    const ans = Array.isArray(q?.answers) ? q.answers : [];
-    if (ans.length < 4) return true;
-
-    for (const a of ans) {
-      const at = String(a?.text || "").trim().toLowerCase();
-      if (!at) return true;
-      if (/^(tak|nie|nie wiem)$/i.test(at)) return true;
-      if (/\d{4}/.test(at)) return true; // Likely years
-      if (at.length > 45) return true;
-      answerCounts.set(at, (answerCounts.get(at) || 0) + 1);
-    }
+  let normalized: number[];
+  if (sum > 0) {
+    const target = 100;
+    const scaled = pts.map((n) => Math.round(n * target / sum));
+    const diff = target - scaled.reduce((s, n) => s + n, 0);
+    scaled[0] = Math.max(0, scaled[0] + diff);
+    normalized = scaled;
+  } else {
+    // Fallback: rozkład typowy dla Familiady
+    normalized = [42, 26, 16, 9, 5, 2].slice(0, answers.length);
   }
 
-  if (triviaCount >= 2) return true; // Too much trivia
-  for (const [, c] of startCounts) if (c >= 3) return true;
-  for (const [, c] of answerCounts) if (c >= 3) return true;
-  return false;
+  // Upewnij się że każda odpowiedź ma min 1 pkt i są posortowane malejąco
+  normalized = normalized.map((n) => Math.max(1, n));
+  normalized.sort((a, b) => b - a);
+
+  return answers.map((a, i) => ({ ...a, fixed_points: normalized[i] ?? 1 }));
 }
 
 function normalizeGamePayload(payload: any) {
@@ -430,93 +322,25 @@ function normalizeGamePayload(payload: any) {
       const text = String(q?.text || "").trim();
       const answersRaw = Array.isArray(q?.answers) ? q.answers : [];
       const answers = answersRaw
-        .map((a: any) => ({
-          text: String(a?.text || "").trim(),
-          fixed_points: typeof a?.fixed_points === "number" ? a.fixed_points : Number(a?.fixed_points),
-        }))
-        .filter((a: any) => a.text);
-      return { text, answers };
+        .map((a: any) => ({ text: String(a?.text || "").trim(), fixed_points: Number(a?.fixed_points) || 0 }))
+        .filter((a: any) => a.text && a.text.length > 0)
+        .slice(0, 6);
+      if (answers.length < 4) return null;
+      return { text, answers: normalizePoints(answers) };
     })
-    .filter((q: any) => q.text && Array.isArray(q.answers) && q.answers.length >= 4)
-    .slice(0, 10)
-    .map((q: any) => ({ ...q, answers: q.answers.slice(0, 4) }));
+    .filter(Boolean)
+    .slice(0, 15) as any[];
 
-  if (questions.length !== 10) return null;
-
-  for (const q of questions) {
-    const pts = q.answers.map((a: any) => (Number.isFinite(a.fixed_points) ? a.fixed_points : 0));
-    let sum = pts.reduce((acc: number, n: number) => acc + Math.max(0, n), 0);
-    const targetSum =
-      sum >= 80 && sum <= 100 ? (sum >= 95 ? randomInt(85, 100) : Math.round(sum)) :
-      sum < 80 ? randomInt(80, 95) :
-      randomInt(85, 100);
-
-    if (sum <= 0) {
-      const base = [0.42, 0.26, 0.18, 0.14].map((p) => Math.round(p * targetSum));
-      let bsum = base.reduce((a, b) => a + b, 0);
-      base[0] = Math.max(0, base[0] + (targetSum - bsum));
-      for (let i = 0; i < 4; i++) q.answers[i].fixed_points = base[i];
-      q.answers.sort((a: any, b: any) => (Number(b.fixed_points) || 0) - (Number(a.fixed_points) || 0));
-      continue;
-    }
-
-    const scaled = pts.map((n: number) => Math.max(0, n) * (targetSum / sum));
-    const rounded = scaled.map((n: number) => Math.max(0, Math.round(n)));
-    let rsum = rounded.reduce((acc: number, n: number) => acc + n, 0);
-    rounded[0] = Math.max(0, rounded[0] + (targetSum - rsum));
-    rounded.sort((a: number, b: number) => b - a);
-    const minOther = Math.max(3, Math.round(targetSum * 0.06));
-    const minTop = Math.max(25, Math.round(targetSum * 0.40));
-
-    let top = rounded[0];
-    let o1 = rounded[1];
-    let o2 = rounded[2];
-    let o3 = rounded[3];
-
-    if (o1 < minOther || o2 < minOther || o3 < minOther) {
-      const n1 = Math.max(minOther, o1);
-      const n2 = Math.max(minOther, o2);
-      const n3 = Math.max(minOther, o3);
-      const extra = (n1 + n2 + n3) - (o1 + o2 + o3);
-      top = Math.max(100 - (n1 + n2 + n3), top - extra);
-      o1 = n1; o2 = n2; o3 = n3;
-    }
-
-    if (top < minTop) {
-      const need = minTop - top;
-      const take1 = Math.min(need, Math.max(0, o1 - minOther));
-      o1 -= take1; top += take1;
-      const left1 = need - take1;
-      const take2 = Math.min(left1, Math.max(0, o2 - minOther));
-      o2 -= take2; top += take2;
-      const left2 = left1 - take2;
-      const take3 = Math.min(left2, Math.max(0, o3 - minOther));
-      o3 -= take3; top += take3;
-    }
-
-    const total = top + o1 + o2 + o3;
-    if (total !== targetSum) top = Math.max(0, top + (targetSum - total));
-
-    const finalPts = [top, o1, o2, o3].sort((a: number, b: number) => b - a);
-    if (finalPts.every((p) => p % 5 === 0)) {
-      if (finalPts[0] >= minTop + 1) {
-        finalPts[0] -= 1;
-        finalPts[1] += 1;
-      } else if (finalPts[1] >= minOther + 1) {
-        finalPts[1] -= 1;
-        finalPts[0] += 1;
-      }
-      finalPts.sort((a: number, b: number) => b - a);
-    }
-    for (let i = 0; i < 4; i++) q.answers[i].fixed_points = finalPts[i];
-    q.answers.sort((a: any, b: any) => (Number(b.fixed_points) || 0) - (Number(a.fixed_points) || 0));
-  }
+  if (questions.length < 10) return null;
 
   return { title, description, questions };
 }
 
+// ─── Handler ──────────────────────────────────────────────────────────────────
+
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
+
   const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
   const groqKey = Deno.env.get("GROQ_API_KEY")!;
 
@@ -524,7 +348,8 @@ serve(async (req: Request) => {
     const body = await req.json();
     const { action } = body;
 
-    if (action === 'list-producer-games') {
+    // ── Lista gier producenta ──────────────────────────────────────────────────
+    if (action === "list-producer-games") {
       const { lang } = body;
       let query = supabase
         .from("market_games")
@@ -532,28 +357,22 @@ serve(async (req: Request) => {
         .eq("origin", "producer")
         .eq("status", "published")
         .order("created_at", { ascending: false });
-
       if (lang && lang !== "all") query = query.eq("lang", lang);
-
       const { data, error } = await query;
       if (error) throw error;
-      return new Response(JSON.stringify(data), { headers: { ...CORS, 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify(data), { headers: { ...CORS, "Content-Type": "application/json" } });
     }
 
-    if (action === 'generate-producer-game') {
-      const { lang, topic, avoidTitles = [] } = body;
-      const model = "llama-3.3-70b-versatile";
+    // ── Generuj grę ───────────────────────────────────────────────────────────
+    if (action === "generate-producer-game") {
+      const { lang = "pl", topic } = body;
       const effectiveTopic = String(topic || "").trim() || pickDefaultTopic(lang);
-      const rawAvoid = Array.isArray(avoidTitles) ? avoidTitles : [];
-      const avoidList = Array.from(new Set(rawAvoid.map((t: any) => String(t || "").trim()).filter(Boolean))).slice(0, 200);
-      const avoidSet = new Set(avoidList.map((t) => t.toLowerCase()));
-
-      const seed = crypto.randomUUID();
-      const prompt = buildGeneratePromptWithSeed(lang, effectiveTopic, avoidTitles, seed);
+      const model = "llama-3.3-70b-versatile";
+      const prompt = buildPrompt(lang, effectiveTopic);
 
       let payload: any;
       try {
-        payload = await groqChat(groqKey, model, prompt, { temperature: 0.65, jsonMode: true });
+        payload = await groqChat(groqKey, model, prompt, { temperature: 0.75 });
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
         if (isGroqRateLimit(msg)) {
@@ -562,33 +381,31 @@ serve(async (req: Request) => {
             headers: { ...CORS, "Content-Type": "application/json" },
           });
         }
-        return new Response(JSON.stringify({ ok: false, retry: true, reason: "groq_error" }), {
+        return new Response(JSON.stringify({ ok: false, retry: true, reason: "groq_error", detail: msg }), {
           headers: { ...CORS, "Content-Type": "application/json" },
         });
       }
 
       const normalized = normalizeGamePayload(payload);
       if (!normalized) {
-        return new Response(JSON.stringify({ ok: false, retry: true, reason: "invalid_json" }), {
+        return new Response(JSON.stringify({ ok: false, retry: true, reason: "invalid_payload" }), {
           headers: { ...CORS, "Content-Type": "application/json" },
         });
       }
 
-      const warnings: string[] = [];
-      if (avoidSet.has(String(normalized.title || "").toLowerCase())) warnings.push("title_dup");
-      if (!topic && /(świat|world)/i.test(String(normalized.title || ""))) warnings.push("world_default");
-      if (isLowQualityCandidate(normalized)) warnings.push("low_quality");
-
-      normalized.title = improveTitle(normalized.title, effectiveTopic);
-      normalized.description = improveDescription(normalized.description ?? "", effectiveTopic);
-
       return new Response(JSON.stringify({
-        candidate: { lang, title: normalized.title, description: normalized.description ?? "", payload: normalized, topic: effectiveTopic },
-        matches: [],
-        warnings,
-      }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
+        candidate: {
+          lang,
+          title: normalized.title,
+          description: normalized.description,
+          payload: normalized,
+          topic: effectiveTopic,
+        },
+        warnings: [],
+      }), { headers: { ...CORS, "Content-Type": "application/json" } });
     }
 
+    // ── Publikuj grę ──────────────────────────────────────────────────────────
     if (action === "publish-producer-game") {
       const { lang, title, description, payload } = body;
       const normalized = normalizeGamePayload({ title, description, questions: payload?.questions });
@@ -596,7 +413,6 @@ serve(async (req: Request) => {
 
       const questionsText = buildQuestionsText(normalized);
       const embedding = await generateEmbedding(questionsText, 12000);
-      const embeddingLiteral = embedding ? toVectorLiteral(embedding) : null;
 
       const { data, error } = await supabase.from("market_games").insert({
         source_game_id: null,
@@ -606,151 +422,131 @@ serve(async (req: Request) => {
         description: normalized.description ?? "",
         lang,
         payload: normalized,
-        embedding: embeddingLiteral,
+        embedding: embedding ? toVectorLiteral(embedding) : null,
         status: "published",
         moderation_note: null,
         storage_path: null,
       }).select("id, title, description, lang, payload, created_at").single();
-      if (error) throw error;
 
+      if (error) throw error;
       return new Response(JSON.stringify({ ok: true, game: data }), { headers: { ...CORS, "Content-Type": "application/json" } });
     }
 
-    if (action === 'delete-game') {
-      const { id } = body;
-      const { error } = await supabase.from("market_games").delete().eq("id", id).eq("origin", "producer");
-      if (error) throw error;
-      return new Response(JSON.stringify({ ok: true }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
-    }
-
-    if (action === 'update-producer-game') {
+    // ── Aktualizuj grę ────────────────────────────────────────────────────────
+    if (action === "update-producer-game") {
       const { id, title, description, lang, payload } = body;
       const normalized = normalizeGamePayload({ title, description, questions: payload?.questions });
       if (!normalized) throw new Error("Invalid payload.");
+
       const questionsText = buildQuestionsText(normalized);
       const embedding = await generateEmbedding(questionsText, 12000);
-      const embeddingLiteral = embedding ? toVectorLiteral(embedding) : null;
+
       const { data, error } = await supabase.from("market_games")
-        .update({ title: normalized.title, description: normalized.description, lang, payload: normalized, embedding: embeddingLiteral })
+        .update({ title: normalized.title, description: normalized.description, lang, payload: normalized, embedding: embedding ? toVectorLiteral(embedding) : null })
         .eq("id", id).eq("origin", "producer")
         .select("id, title, description, lang, payload").single();
+
       if (error) throw error;
       return new Response(JSON.stringify({ ok: true, game: data }), { headers: { ...CORS, "Content-Type": "application/json" } });
     }
 
-    if (action === 'scan-all-duplicates') {
-      return new Response(JSON.stringify({ duplicateGroups: [] }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
+    // ── Usuń grę ──────────────────────────────────────────────────────────────
+    if (action === "delete-game") {
+      const { id } = body;
+      const { error } = await supabase.from("market_games").delete().eq("id", id).eq("origin", "producer");
+      if (error) throw error;
+      return new Response(JSON.stringify({ ok: true }), { headers: { ...CORS, "Content-Type": "application/json" } });
     }
 
+    // ── Sprawdź unikalność (osobna akcja admina) ──────────────────────────────
     if (action === "check-uniqueness") {
       const { id } = body;
       const { data: g, error: gErr } = await supabase
         .from("market_games")
         .select("id, lang, payload, embedding, questions_text")
-        .eq("id", id)
-        .single();
+        .eq("id", id).single();
       if (gErr) throw gErr;
 
       const questionsText = String(g.questions_text || "") || buildQuestionsText(g.payload);
-
-      let embeddingLiteral: string | null =
-        typeof g.embedding === "string" && g.embedding.length ? g.embedding : null;
+      let embeddingLiteral: string | null = typeof g.embedding === "string" && g.embedding.length ? g.embedding : null;
 
       if (!embeddingLiteral) {
         const maybe = await generateEmbedding(questionsText, 8000);
         if (maybe) {
           embeddingLiteral = toVectorLiteral(maybe);
-          const { error: upErr } = await supabase.from("market_games").update({ embedding: embeddingLiteral }).eq("id", g.id);
-          if (upErr) throw upErr;
+          await supabase.from("market_games").update({ embedding: embeddingLiteral }).eq("id", g.id);
         }
       }
 
       if (embeddingLiteral) {
         const { data: matches, error: simError } = await supabase.rpc("market_find_similar_embeddings", {
-          p_lang: g.lang,
-          p_embedding: embeddingLiteral,
-          p_threshold: 0.78,
-          p_limit: 8,
+          p_lang: g.lang, p_embedding: embeddingLiteral, p_threshold: 0.78, p_limit: 8,
         });
         if (simError) throw simError;
-        const filtered = (matches || []).filter((m: any) => m.id !== g.id);
-        return new Response(JSON.stringify({ ok: true, matches: filtered, mode: "embeddings" }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
-      }
-
-      const { data: matches, error: simError } = await supabase.rpc("market_find_similar_questions", {
-        p_lang: g.lang,
-        p_questions_text: questionsText,
-        p_threshold: 0.45,
-        p_limit: 8,
-      });
-      if (simError) throw simError;
-      const filtered = (matches || []).filter((m: any) => m.id !== g.id);
-      return new Response(JSON.stringify({ ok: true, matches: filtered, mode: "trgm" }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
-    }
-
-    if (action === "embed-missing") {
-      const { lang, limit } = body;
-      const batchSize = Math.max(1, Math.min(50, Number(limit) || 20));
-
-      const token = Deno.env.get("HUGGINGFACE_API_TOKEN") || "";
-      if (!token) {
-        return new Response(JSON.stringify({ ok: false, processed: 0, err: "missing_HUGGINGFACE_API_TOKEN" }), {
+        return new Response(JSON.stringify({ ok: true, matches: (matches || []).filter((m: any) => m.id !== g.id), mode: "embeddings" }), {
           headers: { ...CORS, "Content-Type": "application/json" },
         });
       }
 
-      let query = supabase
-        .from("market_games")
+      const { data: matches, error: simError } = await supabase.rpc("market_find_similar_questions", {
+        p_lang: g.lang, p_questions_text: questionsText, p_threshold: 0.45, p_limit: 8,
+      });
+      if (simError) throw simError;
+      return new Response(JSON.stringify({ ok: true, matches: (matches || []).filter((m: any) => m.id !== g.id), mode: "trgm" }), {
+        headers: { ...CORS, "Content-Type": "application/json" },
+      });
+    }
+
+    // ── Embed brakujących ─────────────────────────────────────────────────────
+    if (action === "embed-missing") {
+      const { lang, limit } = body;
+      const batchSize = Math.max(1, Math.min(50, Number(limit) || 20));
+
+      if (!Deno.env.get("HUGGINGFACE_API_TOKEN")) {
+        return new Response(JSON.stringify({ ok: false, err: "missing_HUGGINGFACE_API_TOKEN" }), {
+          headers: { ...CORS, "Content-Type": "application/json" },
+        });
+      }
+
+      let query = supabase.from("market_games")
         .select("id, lang, questions_text, payload")
         .is("embedding", null)
         .in("status", ["published", "pending"])
         .order("created_at", { ascending: true })
         .limit(batchSize);
-
       if (lang && lang !== "all") query = query.eq("lang", lang);
 
       const { data: rows, error: selErr } = await query;
       if (selErr) throw selErr;
 
       let processed = 0;
-      let attempted = 0;
       const startedAt = Date.now();
-      const timeBudgetMs = 45000;
       for (const row of rows || []) {
-        if (Date.now() - startedAt > timeBudgetMs) break;
+        if (Date.now() - startedAt > 45000) break;
         const text = String(row.questions_text || "") || buildQuestionsText(row.payload);
         if (!text) continue;
-        attempted++;
         const emb = await generateEmbedding(text, 8000);
         if (emb) {
-          const { error: upErr } = await supabase.from("market_games").update({ embedding: toVectorLiteral(emb) }).eq("id", row.id);
-          if (upErr) throw upErr;
+          await supabase.from("market_games").update({ embedding: toVectorLiteral(emb) }).eq("id", row.id);
           processed++;
         }
       }
 
-      return new Response(JSON.stringify({
-        ok: true,
-        processed,
-        attempted,
-        budget_ms: timeBudgetMs,
-        duration_ms: Date.now() - startedAt,
-      }), { headers: { ...CORS, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ ok: true, processed, duration_ms: Date.now() - startedAt }), {
+        headers: { ...CORS, "Content-Type": "application/json" },
+      });
     }
 
     return new Response(JSON.stringify({ error: "Unknown action" }), { status: 400, headers: CORS });
+
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
     if (isGroqRateLimit(message)) {
       const waitMs = parseGroqWaitMs(message) ?? 6000;
       return new Response(JSON.stringify({ ok: false, retry: true, reason: "rate_limit", wait_ms: waitMs }), {
-        status: 200,
         headers: { ...CORS, "Content-Type": "application/json" },
       });
     }
-    return new Response(JSON.stringify({ error: message }), {
-      status: 500,
-      headers: { ...CORS, "Content-Type": "application/json" },
-    });
+    return new Response(JSON.stringify({ error: message }), { status: 500, headers: CORS });
   }
 });
