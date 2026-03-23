@@ -4441,7 +4441,7 @@ const pl = {
         recipient: "`Do` i `Provider` mówią dla kogo i przez jakiego dostawcę szła próba wysyłki.",
         error: "Kolumna `Błąd` zawiera konkretny powód niepowodzenia (API key, timeout, 4xx/5xx providerów itp.).",
         next: "Jeśli widzisz `queue_item_failed`, sprawdź błąd, popraw konfigurację i użyj „Wyślij teraz” lub „Wyślij zaznaczone”.",
-        skipped: "`email_skipped` (zielony wiersz): mail nie zostal wyslany — odbiorca wylaczyl powiadomienia lub uzyl globalnego unsubscribe. Pasek statystyk pod tabela pokazuje podsumowanie.",
+        skipped: "`email_skipped` (zielony wiersz): mail nie został wysłany — odbiorca wyłączył powiadomienia lub użył globalnego unsubscribe. Pasek statystyk pod tabelą pokazuje podsumowanie.",
       },
       providers: {
         sendgrid: "SendGrid",
