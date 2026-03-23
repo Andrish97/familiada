@@ -134,7 +134,7 @@ function buildPrompt(lang: string, topic: string): string {
   if (lang === "pl") {
     const topicLine = hasTopic
       ? `Temat gry: "${topic}". Pytania mają dotyczyć różnych aspektów tego tematu.`
-      : `Wymyśl własny temat gry — coś konkretnego, bliskiego życiu codziennemu Polaków. Może to być sytuacja (np. "wizyta u teściowej", "awaria samochodu"), miejsce (np. "supermarket", "szpital"), albo ludzkie zachowanie (np. "polskie wymówki", "co robimy w weekend"). Unikaj tematów ogólnikowych jak "życie" czy "świat". Zapisz wybrany temat w polu "topic" w JSON.`;
+      : `Wymyśl własny temat gry. Może być z dowolnej dziedziny — życie codzienne, przyroda, historia, sport, kultura, nauka, jedzenie, podróże, zwierzęta, filmy, muzyka, technika i wszystko inne. Ważne żeby dało się ułożyć wiele różnych pytań ankietowych. Unikaj tematów zbyt ogólnych (np. "życie", "świat") i zbyt wąskich (np. "herby miast"). Zapisz wybrany temat w polu "topic" w JSON.`;
 
     return `Jesteś twórcą pytań do polskiego teleturnieju Familiada.
 
@@ -188,7 +188,7 @@ Seed: ${seed}`;
   if (lang === "uk") {
     const topicLine = hasTopic
       ? `Тема гри: "${topic}".`
-      : `Вигадай власну тему — щось конкретне з повсякденного життя українців. Може бути ситуація, місце або поведінка людей. Уникай загальних тем. Запиши обрану тему в поле "topic" у JSON.`;
+      : `Вигадай власну тему — з будь-якої сфери: побут, природа, історія, спорт, культура, наука, їжа, подорожі, тварини, кіно, музика, техніка тощо. Головне щоб можна було скласти багато анкетних питань. Уникай занадто широких або занадто вузьких тем. Запиши тему в поле "topic" у JSON.`;
 
     return `Ти створюєш питання для української телевікторини Сімейка (аналог Family Feud).
 
@@ -220,7 +220,7 @@ Seed: ${seed}`;
   // en
   const topicLine = hasTopic
     ? `Game topic: "${topic}".`
-    : `Come up with your own topic — something specific and close to everyday life. It can be a situation (e.g. "first day at a new job", "car breakdown"), a place (e.g. "supermarket", "hospital waiting room"), or a human behavior (e.g. "excuses people make", "what we do on lazy Sundays"). Avoid vague topics like "life" or "the world". Write your chosen topic in the "topic" field in the JSON.`;
+    : `Come up with your own topic — from any domain: everyday life, nature, history, sports, culture, science, food, travel, animals, movies, music, technology, or anything else. It must allow for many different survey-style questions. Avoid topics that are too broad (e.g. "life", "the world") or too narrow (e.g. "coats of arms of cities"). Write your chosen topic in the "topic" field in the JSON.`;
 
   return `You are creating questions for a Family Feud (Familiada) game show.
 
@@ -447,6 +447,17 @@ serve(async (req: Request) => {
       const embeddingText = buildEmbeddingText(g.payload, g.title, g.description) || questionsText;
       let embeddingLiteral: string | null = typeof g.embedding === "string" && g.embedding.length ? g.embedding : null;
 
+      // Sprawdź identyczne/podobne tytuły
+      const titleNorm = String(g.title || "").trim().toLowerCase();
+      const { data: titleMatches } = await supabase
+        .from("market_games")
+        .select("id, title, lang")
+        .eq("lang", g.lang)
+        .neq("id", g.id)
+        .in("status", ["published", "pending"])
+        .ilike("title", titleNorm);
+      const exactTitleDups = (titleMatches || []).map((m: any) => ({ ...m, similarity: 1.0, match_type: "title_exact" }));
+
       if (!embeddingLiteral) {
         const maybe = await generateEmbedding(embeddingText, 8000);
         if (maybe) {
@@ -460,7 +471,10 @@ serve(async (req: Request) => {
           p_lang: g.lang, p_embedding: embeddingLiteral, p_threshold: 0.78, p_limit: 8,
         });
         if (simError) throw simError;
-        return new Response(JSON.stringify({ ok: true, matches: (matches || []).filter((m: any) => m.id !== g.id), mode: "embeddings" }), {
+        const semMatches = (matches || []).filter((m: any) => m.id !== g.id);
+        const allIds = new Set(semMatches.map((m: any) => m.id));
+        const merged = [...semMatches, ...exactTitleDups.filter((m: any) => !allIds.has(m.id))];
+        return new Response(JSON.stringify({ ok: true, matches: merged, mode: "embeddings" }), {
           headers: { ...CORS, "Content-Type": "application/json" },
         });
       }
@@ -469,7 +483,10 @@ serve(async (req: Request) => {
         p_lang: g.lang, p_questions_text: questionsText, p_threshold: 0.45, p_limit: 8,
       });
       if (simError) throw simError;
-      return new Response(JSON.stringify({ ok: true, matches: (matches || []).filter((m: any) => m.id !== g.id), mode: "trgm" }), {
+      const trgmMatches = (matches || []).filter((m: any) => m.id !== g.id);
+      const allIds = new Set(trgmMatches.map((m: any) => m.id));
+      const merged = [...trgmMatches, ...exactTitleDups.filter((m: any) => !allIds.has(m.id))];
+      return new Response(JSON.stringify({ ok: true, matches: merged, mode: "trgm" }), {
         headers: { ...CORS, "Content-Type": "application/json" },
       });
     }
