@@ -252,6 +252,7 @@ TITLE & DESCRIPTION:
 Generate 12–15 questions — the more the better. Each must cover a different aspect of the topic.
 Return ONLY JSON: { "topic", "title", "description", "questions": [{ "text", "answers": [{ "text", "fixed_points" }] }] }
 Seed: ${seed}`;
+}
 
 // ─── Normalizacja payload ─────────────────────────────────────────────────────
 
