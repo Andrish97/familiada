@@ -105,9 +105,8 @@ async function groqChat(
       body: JSON.stringify({
         model,
         temperature,
-        response_format: { type: "json_object" },
         messages: [
-          { role: "system", content: "Zwróć WYŁĄCZNIE poprawny JSON. Bez komentarzy, bez markdown." },
+          { role: "system", content: "Jesteś kreatywnym autorem pytań do teleturnieju. Piszesz naturalnie, z humorem, po ludzku. Na końcu swojej odpowiedzi zawsze zwracasz poprawny JSON." },
           { role: "user", content: prompt },
         ],
       }),
@@ -116,7 +115,9 @@ async function groqChat(
     if (!res.ok) throw new Error(`Groq ${res.status}: ${await res.text()}`);
     const data = await res.json();
     const content = data?.choices?.[0]?.message?.content || "";
-    return JSON.parse(content || "{}");
+    const parsed = extractFirstJsonObject(content);
+    if (!parsed) throw new Error("No JSON in response");
+    return parsed;
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     throw new Error(`Groq error: ${msg}`);
@@ -133,124 +134,105 @@ function buildPrompt(lang: string, topic: string): string {
 
   if (lang === "pl") {
     const topicLine = hasTopic
-      ? `Temat gry: "${topic}". Pytania mają dotyczyć różnych aspektów tego tematu.`
-      : `Wymyśl własny temat gry. Może być z dowolnej dziedziny — życie codzienne, przyroda, historia, sport, kultura, nauka, jedzenie, podróże, zwierzęta, filmy, muzyka, technika i wszystko inne. Ważne żeby dało się ułożyć wiele różnych pytań ankietowych. Unikaj tematów zbyt ogólnych (np. "życie", "świat") i zbyt wąskich (np. "herby miast"). Zapisz wybrany temat w polu "topic" w JSON.`;
+      ? `Temat: "${topic}".`
+      : `Sam wybierz temat — cokolwiek: codzienność, przyroda, historia, sport, jedzenie, podróże, zwierzęta, filmy, muzyka, technika, praca, szkoła, rodzina, miasto, wakacje... co chcesz. Ważne żeby temat pozwalał zadać wiele różnych pytań. Zapisz go w polu "topic".`;
 
-    return `Jesteś twórcą pytań do polskiego teleturnieju Familiada.
+    return `Piszesz pytania do Familiady — polskiego teleturnieju ankietowego.
 
 ${topicLine}
 
-CZYM JEST FAMILIADA:
-Familiada to teleturniej w którym ankietowano 100 losowych Polaków i zapisano ich odpowiedzi. Drużyny zgadują co odpowiedziała większość. Wygrywa ten kto trafi w najpopularniejsze odpowiedzi — nie ten kto ma rację.
+Jak działa Familiada: ankietowano 100 losowych Polaków. Drużyny zgadują co powiedzieli — wygrywa ten kto trafia w najpopularniejsze odpowiedzi, nie ten kto "ma rację". Pytania brzmią jak rozmowa, nie jak egzamin.
 
-ZASADY PYTAŃ:
-- Pytanie musi mieć wiele sensownych odpowiedzi, nie jedną właściwą.
-- Odpowiedzi to rzeczy które zwykły człowiek powiedziałby bez zastanowienia.
-- Formaty: "Podaj coś co...", "Wymień...", "Co robisz gdy...", "Gdzie zazwyczaj...", "Jak nazywa się...", "Co masz w...", "Podaj powód dla którego..."
-- Pytania mogą być lekko zabawne lub życiowe — tak jak w prawdziwej Familiadzie.
-- ZAKAZ: pytań z jedną odpowiedzią, faktów, dat, definicji, wiedzy szkolnej.
+Złota zasada: gdybyś zapytał 10 przypadkowych osób na ulicy — czy każda miałaby swoją odpowiedź? Jeśli tak, to świetne pytanie. Jeśli tylko jedna odpowiedź jest prawidłowa — złe pytanie.
 
-ZASADY ODPOWIEDZI:
-- Im więcej odpowiedzi tym lepsza gra — celuj w 6 (maksimum). Minimum 4, ale staraj się dawać 5–6.
-- Krótkie: 1–4 słowa, potoczne, konkretne rzeczowniki lub frazy.
-- Posortowane od najpopularniejszej do najmniej popularnej.
-- Punkty odzwierciedlają popularność: pierwsza 30–50 pkt, ostatnia 3–8 pkt, suma ok. 100.
+Dobre pytania:
+- "Wymień coś, co zawsze masz w portfelu." (każdy ma swoje)
+- "Podaj powód dla którego ktoś się spóźnia." (każdy zna kilka)
+- "Co robi Polak w deszczową niedzielę?" (każdy coś innego)
+- "Wymień coś czego szukasz w ciemnym pokoju." (obrazowe, zabawne)
+- "Co jest pierwsze co robisz rano?" (osobiste, życiowe)
+- "Podaj coś co jest w każdym polskim domu." (konkretne, bliskie)
 
-PRZYKŁADY DOBRYCH PYTAŃ (z 6 odpowiedziami):
-- "Wymień coś, co zawsze masz w portfelu." → dowód osobisty (38), karta bankowa (26), gotówka (16), zdjęcie (9), paragon (7), bilety (4)
-- "Podaj powód, dla którego ktoś się spóźnia." → korki (35), zaspał (24), zapomniał (17), nie mógł zaparkować (10), transport (9), lenistwo (5)
-- "Co robi Polak w deszczowe niedzielne południe?" → ogląda telewizję (40), śpi (22), gotuje (16), czyta (10), gra w gry (7), sprząta (5)
-- "Wymień coś, czego szukasz w ciemnym pokoju." → włącznik światła (39), telefon (27), łóżko (15), ściana (9), drzwi (6), pilot (4)
+Złe pytania (nie rób tego):
+- "Wymień stolicę Francji." (jedna odpowiedź = nie familiadowe)
+- "Podaj rok wybuchu II wojny." (trivia, nie ankieta)
+- "Wymień gatunki ssaków." (szkolna wiedza)
 
-TYTUŁ I OPIS:
-- Tytuł: 2–5 słów, trafnie streszcza całą grę, nie zaczyna się od "Familiada".
-- Opis: 2–3 zdania. Nie za krótki, nie za długi. Zachęcający, ciepły, może być lekko humorystyczny.
+Odpowiedzi: krótkie (1–4 słowa), potoczne, od najpopularniejszej. Pierwsza ~35–45 pkt, ostatnia ~3–8 pkt, suma ~100. Dawaj 5–6 odpowiedzi na pytanie — im więcej tym lepsza gra, minimum 4.
 
-Wygeneruj 12–15 pytań — im więcej tym bogatsza gra. Każde musi dotyczyć innego aspektu tematu. Nie powtarzaj wątków.
+Pytania: 12–15, każde o innym aspekcie tematu, żadnych powtórzeń.
 
-Zwróć TYLKO JSON (bez komentarzy):
-{
-  "title": "Tytuł",
-  "description": "Opis gry.",
-  "questions": [
-    {
-      "text": "Pytanie?",
-      "answers": [
-        {"text": "odpowiedź", "fixed_points": 42},
-        {"text": "odpowiedź", "fixed_points": 27}
-      ]
-    }
-  ]
-}
+Tytuł: 2–5 słów, żywy, konkretny, nie zaczyna się od "Familiada".
+Opis: 2–3 zdania zachęcające, mogą być z nutą humoru.
+
+Zwróć JSON:
+{"topic":"...","title":"...","description":"...","questions":[{"text":"...","answers":[{"text":"...","fixed_points":0}]}]}
 Seed: ${seed}`;
   }
 
   if (lang === "uk") {
     const topicLine = hasTopic
-      ? `Тема гри: "${topic}".`
-      : `Вигадай власну тему — з будь-якої сфери: побут, природа, історія, спорт, культура, наука, їжа, подорожі, тварини, кіно, музика, техніка тощо. Головне щоб можна було скласти багато анкетних питань. Уникай занадто широких або занадто вузьких тем. Запиши тему в поле "topic" у JSON.`;
+      ? `Тема: "${topic}".`
+      : `Сам обери тему — будь-що: побут, природа, їжа, спорт, кіно, музика, подорожі, робота, школа, тварини, технології... Головне щоб на тему можна було скласти багато різних анкетних питань. Запиши у поле "topic".`;
 
-    return `Ти створюєш питання для української телевікторини Сімейка (аналог Family Feud).
+    return `Ти пишеш питання для Сімейки — українського аналогу Family Feud.
 
 ${topicLine}
 
-ПРО ГРУ:
-Сімейка — телевікторина де 100 звичайних людей відповіли на питання. Команди вгадують найпопулярніші відповіді. Перемагає той хто вгадав що сказала більшість — не той хто "правий".
+Як працює гра: 100 звичайних людей відповіли на питання. Команди вгадують найпопулярніші відповіді — перемагає той хто вгадав що сказала більшість, не той хто "правий". Питання звучать як жива розмова, не як іспит.
 
-ПРАВИЛА ПИТАНЬ:
-- Питання має мати багато природних відповідей, не одну правильну.
-- Формати: "Назви щось що...", "Що робиш коли...", "Де зазвичай...", "Що маєш у...", "Назви причину чому..."
-- Відповіді — те що звичайна людина скаже без роздумів.
-- ЗАБОРОНЕНО: питання з однією відповіддю, факти, дати, шкільні знання.
+Золоте правило: якщо запитати 10 випадкових людей — чи кожен дасть свою відповідь? Якщо так — чудове питання.
 
-ПРАВИЛА ВІДПОВІДЕЙ:
-- Чим більше відповідей — тим краща гра. Максимум 6, мінімум 4, цілься на 5–6.
-- Короткі: 1–4 слова, розмовні, конкретні.
-- Від найпопулярнішої до найменш. Перша 30–50 очок, остання 3–8, сума ~100.
+Хороші питання:
+- "Назви щось що завжди маєш у гаманці."
+- "Що робиш у дощову неділю?"
+- "Назви причину через яку хтось запізнюється."
+- "Що перше робиш вранці?"
+- "Що є в кожному українському домі?"
 
-НАЗВА І ОПИС:
-- Назва: 2–5 слів, не починається з "Сімейка".
-- Опис: 2–3 речення, запрошуючі, можна з гумором.
+Погані питання (уникай): одна правильна відповідь, факти, дати, шкільні знання.
 
-Згенеруй 12–15 питань — чим більше тим краще. Кожне про інший аспект теми.
-Поверни ТІЛЬКИ JSON: { "title", "description", "questions": [{ "text", "answers": [{ "text", "fixed_points" }] }] }
+Відповіді: короткі (1–4 слова), розмовні, від найпопулярнішої. Перша ~35–45 очок, остання ~3–8, сума ~100. Давай 5–6 відповідей — мінімум 4.
+
+Питань: 12–15, кожне про інший аспект теми.
+Назва: 2–5 слів, жива, конкретна, не починається з "Сімейка".
+Опис: 2–3 речення, запрошуючі, можна з гумором.
+
+Поверни JSON:
+{"topic":"...","title":"...","description":"...","questions":[{"text":"...","answers":[{"text":"...","fixed_points":0}]}]}
 Seed: ${seed}`;
   }
 
   // en
   const topicLine = hasTopic
-    ? `Game topic: "${topic}".`
-    : `Come up with your own topic — from any domain: everyday life, nature, history, sports, culture, science, food, travel, animals, movies, music, technology, or anything else. It must allow for many different survey-style questions. Avoid topics that are too broad (e.g. "life", "the world") or too narrow (e.g. "coats of arms of cities"). Write your chosen topic in the "topic" field in the JSON.`;
+    ? `Topic: "${topic}".`
+    : `Pick any topic you like — daily life, nature, food, sports, travel, animals, movies, music, work, school, technology, history... anything that lets you ask many different survey questions. Write it in the "topic" field.`;
 
-  return `You are creating questions for a Family Feud (Familiada) game show.
+  return `You're writing questions for Family Feud.
 
 ${topicLine}
 
-ABOUT THE GAME:
-Family Feud surveyed 100 random people and recorded their answers. Teams guess the most popular responses — not the "correct" ones. The person who matches what most people said wins.
+How it works: 100 random people were surveyed. Teams guess the most popular answers — the winner matches what most people said, not who is "right". Questions feel like conversation, not a quiz.
 
-QUESTION RULES:
-- Each question must have many natural answers, not one correct one.
-- Formats: "Name something that...", "What do you do when...", "Where do you usually...", "Name a reason why...", "What do you find in..."
-- Answers are things an ordinary person would say without thinking.
-- FORBIDDEN: single-answer questions, facts, dates, trivia, school knowledge.
+Golden rule: if you asked 10 random people on the street — would each one have their own answer? If yes, great question.
 
-ANSWER RULES:
-- More answers = better game. Maximum 6, minimum 4, aim for 5–6.
-- Short: 1–4 words, casual, concrete nouns or phrases.
-- Sorted most to least popular. First answer 30–50 pts, last 3–8 pts, sum ~100.
+Good questions:
+- "Name something you always have in your wallet."
+- "What do you do on a rainy Sunday?"
+- "Name a reason someone is late."
+- "What's the first thing you do in the morning?"
+- "Name something found in every home."
 
-GOOD EXAMPLES (6 answers each):
-- "Name something you always have in your wallet." → credit card (38), cash (26), ID (16), receipts (9), photos (7), loyalty card (4)
-- "Name a reason someone is late." → traffic (35), slept in (24), forgot (17), couldn't park (10), public transport (9), laziness (5)
-- "Name something you look for in a dark room." → light switch (39), phone (27), bed (15), wall (9), door (6), remote (4)
+Bad questions (avoid): one correct answer, facts, dates, trivia, school knowledge.
 
-TITLE & DESCRIPTION:
-- Title: 2–5 words, summarizes the whole game, does NOT start with "Familiada".
-- Description: 2–3 sentences, warm and inviting, can be lightly humorous.
+Answers: short (1–4 words), casual, most to least popular. First ~35–45 pts, last ~3–8 pts, sum ~100. Give 5–6 answers — minimum 4.
 
-Generate 12–15 questions — the more the better. Each must cover a different aspect of the topic.
-Return ONLY JSON: { "topic", "title", "description", "questions": [{ "text", "answers": [{ "text", "fixed_points" }] }] }
+Questions: 12–15, each covering a different aspect of the topic.
+Title: 2–5 words, lively and specific, does NOT start with "Familiada".
+Description: 2–3 sentences, warm, can be lightly humorous.
+
+Return JSON:
+{"topic":"...","title":"...","description":"...","questions":[{"text":"...","answers":[{"text":"...","fixed_points":0}]}]}
 Seed: ${seed}`;
 }
 
@@ -348,7 +330,7 @@ serve(async (req: Request) => {
 
       let payload: any;
       try {
-        payload = await groqChat(groqKey, model, prompt, { temperature: 0.75 });
+        payload = await groqChat(groqKey, model, prompt, { temperature: 0.9 });
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
         if (isGroqRateLimit(msg)) {
