@@ -25,6 +25,15 @@ function buildQuestionsText(payload: any): string {
   return qs.map((q: any) => String(q?.text || "").trim()).filter(Boolean).join("\n");
 }
 
+function buildEmbeddingText(payload: any, title?: string, description?: string): string {
+  const parts: string[] = [];
+  if (title) parts.push(String(title).trim());
+  if (description) parts.push(String(description).trim());
+  const questions = buildQuestionsText(payload);
+  if (questions) parts.push(questions);
+  return parts.join("\n");
+}
+
 async function generateEmbedding(text: string, timeoutMs = 12000): Promise<number[] | null> {
   const token = Deno.env.get("HUGGINGFACE_API_TOKEN") || "";
   if (!token || !text.trim()) return null;
@@ -125,7 +134,7 @@ function buildPrompt(lang: string, topic: string): string {
   if (lang === "pl") {
     const topicLine = hasTopic
       ? `Temat gry: "${topic}". Pytania mają dotyczyć różnych aspektów tego tematu.`
-      : `Temat gry: dowolny — wybierz coś z codziennego życia (dom, praca, jedzenie, relacje, rozrywka itp.).`;
+      : `Wymyśl własny temat gry — coś konkretnego, bliskiego życiu codziennemu Polaków. Może to być sytuacja (np. "wizyta u teściowej", "awaria samochodu"), miejsce (np. "supermarket", "szpital"), albo ludzkie zachowanie (np. "polskie wymówki", "co robimy w weekend"). Unikaj tematów ogólnikowych jak "życie" czy "świat". Zapisz wybrany temat w polu "topic" w JSON.`;
 
     return `Jesteś twórcą pytań do polskiego teleturnieju Familiada.
 
@@ -142,22 +151,22 @@ ZASADY PYTAŃ:
 - ZAKAZ: pytań z jedną odpowiedzią, faktów, dat, definicji, wiedzy szkolnej.
 
 ZASADY ODPOWIEDZI:
-- 4 do 6 odpowiedzi na pytanie (dobierz tyle ile naturalnie pasuje).
+- Im więcej odpowiedzi tym lepsza gra — celuj w 6 (maksimum). Minimum 4, ale staraj się dawać 5–6.
 - Krótkie: 1–4 słowa, potoczne, konkretne rzeczowniki lub frazy.
 - Posortowane od najpopularniejszej do najmniej popularnej.
 - Punkty odzwierciedlają popularność: pierwsza 30–50 pkt, ostatnia 3–8 pkt, suma ok. 100.
 
-PRZYKŁADY DOBRYCH PYTAŃ:
-- "Wymień coś, co zawsze masz w portfelu." → dowód osobisty (42), karta bankowa (28), gotówka (16), zdjęcie (8), paragon (6)
-- "Podaj powód, dla którego ktoś się spóźnia." → korki (38), zaspał (27), zapomniał (18), nie mógł zaparkować (10), transport (7)
-- "Co robi Polak w deszczowe niedzielne południe?" → ogląda telewizję (44), śpi (25), gotuje (16), czyta (9), gra w gry (6)
-- "Wymień coś, czego szukasz w ciemnym pokoju." → włącznik światła (41), telefon (29), łóżko (17), ściana (8), drzwi (5)
+PRZYKŁADY DOBRYCH PYTAŃ (z 6 odpowiedziami):
+- "Wymień coś, co zawsze masz w portfelu." → dowód osobisty (38), karta bankowa (26), gotówka (16), zdjęcie (9), paragon (7), bilety (4)
+- "Podaj powód, dla którego ktoś się spóźnia." → korki (35), zaspał (24), zapomniał (17), nie mógł zaparkować (10), transport (9), lenistwo (5)
+- "Co robi Polak w deszczowe niedzielne południe?" → ogląda telewizję (40), śpi (22), gotuje (16), czyta (10), gra w gry (7), sprząta (5)
+- "Wymień coś, czego szukasz w ciemnym pokoju." → włącznik światła (39), telefon (27), łóżko (15), ściana (9), drzwi (6), pilot (4)
 
 TYTUŁ I OPIS:
 - Tytuł: 2–5 słów, trafnie streszcza całą grę, nie zaczyna się od "Familiada".
 - Opis: 2–3 zdania. Nie za krótki, nie za długi. Zachęcający, ciepły, może być lekko humorystyczny.
 
-Wygeneruj grę z 10–15 pytaniami. Każde pytanie musi być o czymś innym.
+Wygeneruj 12–15 pytań — im więcej tym bogatsza gra. Każde musi dotyczyć innego aspektu tematu. Nie powtarzaj wątków.
 
 Zwróć TYLKO JSON (bez komentarzy):
 {
@@ -179,7 +188,7 @@ Seed: ${seed}`;
   if (lang === "uk") {
     const topicLine = hasTopic
       ? `Тема гри: "${topic}".`
-      : `Тема гри: на вибір — щось із повсякденного життя (дім, робота, їжа, стосунки, розваги).`;
+      : `Вигадай власну тему — щось конкретне з повсякденного життя українців. Може бути ситуація, місце або поведінка людей. Уникай загальних тем. Запиши обрану тему в поле "topic" у JSON.`;
 
     return `Ти створюєш питання для української телевікторини Сімейка (аналог Family Feud).
 
@@ -195,7 +204,7 @@ ${topicLine}
 - ЗАБОРОНЕНО: питання з однією відповіддю, факти, дати, шкільні знання.
 
 ПРАВИЛА ВІДПОВІДЕЙ:
-- 4–6 відповідей на питання.
+- Чим більше відповідей — тим краща гра. Максимум 6, мінімум 4, цілься на 5–6.
 - Короткі: 1–4 слова, розмовні, конкретні.
 - Від найпопулярнішої до найменш. Перша 30–50 очок, остання 3–8, сума ~100.
 
@@ -203,7 +212,7 @@ ${topicLine}
 - Назва: 2–5 слів, не починається з "Сімейка".
 - Опис: 2–3 речення, запрошуючі, можна з гумором.
 
-Згенеруй 10–15 питань, кожне про інший аспект теми.
+Згенеруй 12–15 питань — чим більше тим краще. Кожне про інший аспект теми.
 Поверни ТІЛЬКИ JSON: { "title", "description", "questions": [{ "text", "answers": [{ "text", "fixed_points" }] }] }
 Seed: ${seed}`;
   }
@@ -211,7 +220,7 @@ Seed: ${seed}`;
   // en
   const topicLine = hasTopic
     ? `Game topic: "${topic}".`
-    : `Game topic: your choice — pick something from everyday life (home, work, food, relationships, entertainment, etc.).`;
+    : `Come up with your own topic — something specific and close to everyday life. It can be a situation (e.g. "first day at a new job", "car breakdown"), a place (e.g. "supermarket", "hospital waiting room"), or a human behavior (e.g. "excuses people make", "what we do on lazy Sundays"). Avoid vague topics like "life" or "the world". Write your chosen topic in the "topic" field in the JSON.`;
 
   return `You are creating questions for a Family Feud (Familiada) game show.
 
@@ -227,56 +236,22 @@ QUESTION RULES:
 - FORBIDDEN: single-answer questions, facts, dates, trivia, school knowledge.
 
 ANSWER RULES:
-- 4 to 6 answers per question (use however many fit naturally).
+- More answers = better game. Maximum 6, minimum 4, aim for 5–6.
 - Short: 1–4 words, casual, concrete nouns or phrases.
 - Sorted most to least popular. First answer 30–50 pts, last 3–8 pts, sum ~100.
 
-GOOD EXAMPLES:
-- "Name something you always have in your wallet." → credit card (41), cash (28), ID (17), receipts (8), photos (6)
-- "Name a reason someone is late." → traffic (38), slept in (27), forgot (18), couldn't park (10), public transport (7)
-- "Name something you look for in a dark room." → light switch (43), phone (28), bed (16), wall (8), door (5)
+GOOD EXAMPLES (6 answers each):
+- "Name something you always have in your wallet." → credit card (38), cash (26), ID (16), receipts (9), photos (7), loyalty card (4)
+- "Name a reason someone is late." → traffic (35), slept in (24), forgot (17), couldn't park (10), public transport (9), laziness (5)
+- "Name something you look for in a dark room." → light switch (39), phone (27), bed (15), wall (9), door (6), remote (4)
 
 TITLE & DESCRIPTION:
 - Title: 2–5 words, summarizes the whole game, does NOT start with "Familiada".
 - Description: 2–3 sentences, warm and inviting, can be lightly humorous.
 
-Generate 10–15 questions, each on a different aspect of the topic.
-Return ONLY JSON: { "title", "description", "questions": [{ "text", "answers": [{ "text", "fixed_points" }] }] }
+Generate 12–15 questions — the more the better. Each must cover a different aspect of the topic.
+Return ONLY JSON: { "topic", "title", "description", "questions": [{ "text", "answers": [{ "text", "fixed_points" }] }] }
 Seed: ${seed}`;
-}
-
-function pickDefaultTopic(lang: string): string {
-  const u = new Uint32Array(1);
-  crypto.getRandomValues(u);
-
-  const topics: Record<string, string[]> = {
-    pl: [
-      "Jedzenie i Kuchnia", "Życie w Domu", "Szkoła i Edukacja", "Praca i Biuro",
-      "Wakacje i Podróże", "Sport i Rekreacja", "Relacje Rodzinne", "Zwierzęta Domowe",
-      "Zakupy i Pieniądze", "Transport i Samochody", "Internet i Technologia",
-      "Święta i Tradycje", "Zdrowie i Uroda", "Moda i Ubrania", "Muzyka i Rozrywka",
-      "Filmy i Seriale", "Dzieciństwo i Zabawki", "Pogoda i Pory Roku",
-      "Hobby i Czas Wolny", "Nawyki Codzienne",
-    ],
-    en: [
-      "Food & Cooking", "Home Life", "School Memories", "Work & Office",
-      "Summer Vacations", "Sports & Games", "Family Relations", "Pets & Animals",
-      "Shopping", "Transportation", "Internet & Technology", "Holidays & Traditions",
-      "Health & Fitness", "Fashion", "Music & Entertainment", "Movies & TV",
-      "Childhood", "Daily Habits", "Weather & Seasons", "Hobbies",
-    ],
-    uk: [
-      "Їжа та Кухня", "Дім і Побут", "Школа та Навчання", "Робота та Офіс",
-      "Відпустка та Подорожі", "Спорт та Дозвілля", "Родинне Життя", "Домашні Тварини",
-      "Покупки та Гроші", "Транспорт", "Інтернет та Технології", "Свята та Традиції",
-      "Здоров'я та Краса", "Мода та Одяг", "Музика та Розваги", "Кіно та Серіали",
-      "Дитинство", "Погода та Пори Року", "Хобі та Вільний Час", "Щоденні Звички",
-    ],
-  };
-
-  const list = topics[lang] ?? topics.pl;
-  return list[u[0] % list.length];
-}
 
 // ─── Normalizacja payload ─────────────────────────────────────────────────────
 
@@ -325,7 +300,7 @@ function normalizeGamePayload(payload: any) {
         .map((a: any) => ({ text: String(a?.text || "").trim(), fixed_points: Number(a?.fixed_points) || 0 }))
         .filter((a: any) => a.text && a.text.length > 0)
         .slice(0, 6);
-      if (answers.length < 4) return null;
+      if (answers.length < 3) return null;
       return { text, answers: normalizePoints(answers) };
     })
     .filter(Boolean)
@@ -366,7 +341,7 @@ serve(async (req: Request) => {
     // ── Generuj grę ───────────────────────────────────────────────────────────
     if (action === "generate-producer-game") {
       const { lang = "pl", topic } = body;
-      const effectiveTopic = String(topic || "").trim() || pickDefaultTopic(lang);
+      const effectiveTopic = String(topic || "").trim();
       const model = "llama-3.3-70b-versatile";
       const prompt = buildPrompt(lang, effectiveTopic);
 
@@ -411,8 +386,8 @@ serve(async (req: Request) => {
       const normalized = normalizeGamePayload({ title, description, questions: payload?.questions });
       if (!normalized) throw new Error("Invalid payload.");
 
-      const questionsText = buildQuestionsText(normalized);
-      const embedding = await generateEmbedding(questionsText, 12000);
+      const embeddingText = buildEmbeddingText(normalized, normalized.title, normalized.description);
+      const embedding = await generateEmbedding(embeddingText, 12000);
 
       const { data, error } = await supabase.from("market_games").insert({
         source_game_id: null,
@@ -438,8 +413,8 @@ serve(async (req: Request) => {
       const normalized = normalizeGamePayload({ title, description, questions: payload?.questions });
       if (!normalized) throw new Error("Invalid payload.");
 
-      const questionsText = buildQuestionsText(normalized);
-      const embedding = await generateEmbedding(questionsText, 12000);
+      const embeddingText = buildEmbeddingText(normalized, normalized.title, normalized.description);
+      const embedding = await generateEmbedding(embeddingText, 12000);
 
       const { data, error } = await supabase.from("market_games")
         .update({ title: normalized.title, description: normalized.description, lang, payload: normalized, embedding: embedding ? toVectorLiteral(embedding) : null })
@@ -463,15 +438,16 @@ serve(async (req: Request) => {
       const { id } = body;
       const { data: g, error: gErr } = await supabase
         .from("market_games")
-        .select("id, lang, payload, embedding, questions_text")
+        .select("id, lang, title, description, payload, embedding, questions_text")
         .eq("id", id).single();
       if (gErr) throw gErr;
 
       const questionsText = String(g.questions_text || "") || buildQuestionsText(g.payload);
+      const embeddingText = buildEmbeddingText(g.payload, g.title, g.description) || questionsText;
       let embeddingLiteral: string | null = typeof g.embedding === "string" && g.embedding.length ? g.embedding : null;
 
       if (!embeddingLiteral) {
-        const maybe = await generateEmbedding(questionsText, 8000);
+        const maybe = await generateEmbedding(embeddingText, 8000);
         if (maybe) {
           embeddingLiteral = toVectorLiteral(maybe);
           await supabase.from("market_games").update({ embedding: embeddingLiteral }).eq("id", g.id);
@@ -509,7 +485,7 @@ serve(async (req: Request) => {
       }
 
       let query = supabase.from("market_games")
-        .select("id, lang, questions_text, payload")
+        .select("id, lang, title, description, questions_text, payload")
         .is("embedding", null)
         .in("status", ["published", "pending"])
         .order("created_at", { ascending: true })
@@ -523,7 +499,7 @@ serve(async (req: Request) => {
       const startedAt = Date.now();
       for (const row of rows || []) {
         if (Date.now() - startedAt > 45000) break;
-        const text = String(row.questions_text || "") || buildQuestionsText(row.payload);
+        const text = buildEmbeddingText(row.payload, row.title, row.description) || String(row.questions_text || "") || buildQuestionsText(row.payload);
         if (!text) continue;
         const emb = await generateEmbedding(text, 8000);
         if (emb) {
