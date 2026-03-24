@@ -229,10 +229,9 @@ async function openDetail(id, { fromUrl = false } = {}) {
 
   if (els.gameDetailOverlay) els.gameDetailOverlay.style.display = "";
 
-  // Aktualizuj URL → /marketplace/game/[slug]
-  if (g.slug) {
-    history.pushState({ gameId: id, slug: g.slug }, "", `/marketplace/game/${g.slug}`);
-  }
+  // Aktualizuj URL → /marketplace/game/[slug] (lub UUID jako fallback przed migracją)
+  const urlSegment = g.slug || id;
+  history.pushState({ gameId: id, slug: g.slug || null }, "", `/marketplace/game/${urlSegment}`);
 }
 
 function updateLibraryButtons(inLibrary, withdrawn = false) {
