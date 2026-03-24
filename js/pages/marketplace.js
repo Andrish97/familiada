@@ -172,7 +172,16 @@ function makeGameCard(g) {
 /* =========================================================
    Detail modal
 ========================================================= */
-async function openDetail(id) {
+async function openDetailBySlug(slug) {
+  const { data, error } = await sb().rpc("market_game_by_slug", { p_slug: slug }).single();
+  if (error || !data) {
+    console.error("[marketplace] openDetailBySlug error:", error, slug);
+    return;
+  }
+  await openDetail(data.id, { fromUrl: true });
+}
+
+async function openDetail(id, { fromUrl = false } = {}) {
   console.log("[marketplace] openDetail id:", id);
   detailGameId = id;
 
@@ -219,6 +228,11 @@ async function openDetail(id) {
   updateLibraryButtons(inLibrary, withdrawn);
 
   if (els.gameDetailOverlay) els.gameDetailOverlay.style.display = "";
+
+  // Aktualizuj URL → /marketplace/game/[slug]
+  if (g.slug) {
+    history.pushState({ gameId: id, slug: g.slug }, "", `/marketplace/game/${g.slug}`);
+  }
 }
 
 function updateLibraryButtons(inLibrary, withdrawn = false) {
@@ -240,6 +254,10 @@ function updateLibraryButtons(inLibrary, withdrawn = false) {
 function closeDetail() {
   if (els.gameDetailOverlay) els.gameDetailOverlay.style.display = "none";
   detailGameId = null;
+  // Przywróć URL → /marketplace
+  if (location.pathname.startsWith("/marketplace/game/")) {
+    history.pushState(null, "", "/marketplace");
+  }
 }
 
 /* =========================================================
@@ -548,6 +566,16 @@ function wireEvents() {
       closeSubmitModal();
     }
   });
+
+  // Przycisk wstecz w przeglądarce
+  window.addEventListener("popstate", e => {
+    if (location.pathname.startsWith("/marketplace/game/")) {
+      const slug = location.pathname.split("/")[3];
+      if (slug) openDetailBySlug(slug);
+    } else {
+      closeDetail();
+    }
+  });
 }
 
 /* =========================================================
@@ -589,6 +617,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   showView("browse");
   await loadBrowse({ reset: true });
+
+  // Otwórz modal jeśli URL to /marketplace/game/[slug]
+  const pathParts = location.pathname.split("/");
+  if (pathParts[1] === "marketplace" && pathParts[2] === "game" && pathParts[3]) {
+    await openDetailBySlug(pathParts[3]);
+  }
 
   window.addEventListener("i18n:lang", () => loadBrowse({ reset: true }));
 });

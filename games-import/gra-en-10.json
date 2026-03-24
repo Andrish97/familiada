@@ -1,0 +1,109 @@
+[{
+  "title": "Weather and British obsession",
+  "description": "Four seasons in one day, the barbecue that got rained on and that smug feeling when you predicted the weather correctly — weather chat is the ultimate icebreaker! See how you match up!",
+  "lang": "en",
+  "payload": {
+    "questions": [
+      {
+        "text": "Name something people say when it starts raining unexpectedly.",
+        "answers": [
+          {"text": "I knew I should have brought an umbrella", "fixed_points": 44},
+          {"text": "typical — always rains on weekends", "fixed_points": 26},
+          {"text": "just when I had plans outside", "fixed_points": 16},
+          {"text": "at least the garden needed it", "fixed_points": 9},
+          {"text": "good job I checked the forecast", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name something people do on the first sunny day of the year.",
+        "answers": [
+          {"text": "immediately go outside and sit in it", "fixed_points": 42},
+          {"text": "fire up the barbecue", "fixed_points": 26},
+          {"text": "declare it summer and wear shorts", "fixed_points": 18},
+          {"text": "book a holiday", "fixed_points": 9},
+          {"text": "open every window in the house", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name something people complain about during a heatwave.",
+        "answers": [
+          {"text": "can't sleep because it's too hot", "fixed_points": 42},
+          {"text": "the commute is unbearable", "fixed_points": 26},
+          {"text": "there's no air conditioning anywhere", "fixed_points": 18},
+          {"text": "too hot to eat anything", "fixed_points": 9},
+          {"text": "my flat turns into an oven", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name something people say when it snows.",
+        "answers": [
+          {"text": "everything will grind to a halt", "fixed_points": 40},
+          {"text": "the kids will love this", "fixed_points": 26},
+          {"text": "I'm not going in to work today", "fixed_points": 18},
+          {"text": "it's so pretty until it turns grey", "fixed_points": 11},
+          {"text": "let's make a snowman", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name something people check before leaving the house.",
+        "answers": [
+          {"text": "the weather forecast on their phone", "fixed_points": 44},
+          {"text": "whether to bring an umbrella", "fixed_points": 26},
+          {"text": "what coat to wear", "fixed_points": 16},
+          {"text": "if it looks like rain outside", "fixed_points": 9},
+          {"text": "the temperature so they dress right", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name something that gets ruined by bad weather.",
+        "answers": [
+          {"text": "a garden party or barbecue", "fixed_points": 42},
+          {"text": "a music festival or outdoor event", "fixed_points": 26},
+          {"text": "a wedding with outdoor photos", "fixed_points": 18},
+          {"text": "a day at the beach", "fixed_points": 9},
+          {"text": "a camping trip", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name something people say when the weather forecast is wrong.",
+        "answers": [
+          {"text": "why do I ever trust the forecast", "fixed_points": 42},
+          {"text": "they're always getting it wrong", "fixed_points": 26},
+          {"text": "I looked out the window — that's my forecast now", "fixed_points": 18},
+          {"text": "it said sunny and now it's pouring", "fixed_points": 9},
+          {"text": "I want a refund on my umbrella", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name something people love about autumn.",
+        "answers": [
+          {"text": "the colourful leaves on the trees", "fixed_points": 40},
+          {"text": "cosy jumpers and warm drinks", "fixed_points": 28},
+          {"text": "the crisp fresh air", "fixed_points": 18},
+          {"text": "Halloween and fireworks season", "fixed_points": 9},
+          {"text": "comfort food like stews and soups", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name a way people talk about the weather to start a conversation.",
+        "answers": [
+          {"text": "can you believe this weather?", "fixed_points": 42},
+          {"text": "looks like it might rain later", "fixed_points": 26},
+          {"text": "lovely day isn't it?", "fixed_points": 18},
+          {"text": "freezing today — properly cold", "fixed_points": 9},
+          {"text": "typical British weather this", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name something people do when they're stuck indoors because of the weather.",
+        "answers": [
+          {"text": "binge-watch a series", "fixed_points": 42},
+          {"text": "bake something", "fixed_points": 26},
+          {"text": "tidy or clean the house", "fixed_points": 18},
+          {"text": "finally do something they've been putting off", "fixed_points": 9},
+          {"text": "read a book with a hot drink", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]

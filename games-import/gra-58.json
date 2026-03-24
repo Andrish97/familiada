@@ -1,0 +1,109 @@
+[{
+  "title": "Polskie piwo i pub",
+  "description": "Zimne piwo po pracy, mecz na dużym ekranie i dyskusje o wszystkim — polska kultura piwna to osobny rozdział! Sprawdź czy twoje pubowe zwyczaje są podobne do innych Polaków!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Kiedy Polacy najchętniej piją piwo?",
+        "answers": [
+          {"text": "po pracy w piątek", "fixed_points": 44},
+          {"text": "podczas meczu", "fixed_points": 26},
+          {"text": "w letnie ciepłe wieczory", "fixed_points": 16},
+          {"text": "na grillu", "fixed_points": 9},
+          {"text": "przy każdej okazji", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co zawsze jest w polskim pubie.",
+        "answers": [
+          {"text": "piwo z kranu — Żywiec albo Tyskie", "fixed_points": 40},
+          {"text": "duży ekran z meczem", "fixed_points": 26},
+          {"text": "żarcik lub krakersy do piwa", "fixed_points": 18},
+          {"text": "głośna muzyka z radia", "fixed_points": 11},
+          {"text": "bilard lub dart", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "O czym Polacy rozmawiają przy piwie?",
+        "answers": [
+          {"text": "o piłce nożnej i polityce", "fixed_points": 40},
+          {"text": "o pracy i szefie", "fixed_points": 26},
+          {"text": "o życiu i problemach", "fixed_points": 18},
+          {"text": "o kobietach lub mężczyznach", "fixed_points": 11},
+          {"text": "o wszystkim i o niczym", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co Polak mówi gdy ktoś proponuje \"jeszcze jedno\"?",
+        "answers": [
+          {"text": "no dobra ale ostatnie", "fixed_points": 44},
+          {"text": "dobrze skoro tak nalegasz", "fixed_points": 26},
+          {"text": "ale naprawdę ostatnie!", "fixed_points": 16},
+          {"text": "muszę jutro wstać... no może jedno", "fixed_points": 9},
+          {"text": "nie dzięki naprawdę jadę", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co mówi barman gdy jest ostatnie zamówienie.",
+        "answers": [
+          {"text": "ostatnie zamówienia panowie", "fixed_points": 44},
+          {"text": "za piętnaście minut zamykamy", "fixed_points": 26},
+          {"text": "może coś na drogę?", "fixed_points": 16},
+          {"text": "kasa proszę", "fixed_points": 9},
+          {"text": "może taksówkę zamówić?", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co się dzieje gdy Polska gra mecz a pub jest pełny?",
+        "answers": [
+          {"text": "krzyki i podniecenie przy każdym strzale", "fixed_points": 42},
+          {"text": "piwo leci na sąsiadów przy golu", "fixed_points": 26},
+          {"text": "nie można się przepchnąć do baru", "fixed_points": 18},
+          {"text": "wspólne śpiewanie hymnu", "fixed_points": 9},
+          {"text": "wszyscy znajomi zaproszeni na spontana", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj marka piwa które pije większość Polaków.",
+        "answers": [
+          {"text": "Żywiec", "fixed_points": 38},
+          {"text": "Tyskie", "fixed_points": 28},
+          {"text": "Lech", "fixed_points": 18},
+          {"text": "Okocim", "fixed_points": 11},
+          {"text": "lokalne piwo z kraftowego browaru", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co zamawia Polak który nie pije alkoholu w pubie?",
+        "answers": [
+          {"text": "colę lub pepsi", "fixed_points": 44},
+          {"text": "piwo bezalkoholowe", "fixed_points": 26},
+          {"text": "sok pomarańczowy", "fixed_points": 16},
+          {"text": "wodę mineralną", "fixed_points": 9},
+          {"text": "kawę", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co Polacy jedzą do piwa w pubie?",
+        "answers": [
+          {"text": "frytki", "fixed_points": 42},
+          {"text": "orzeszki i chrupki", "fixed_points": 28},
+          {"text": "skrzydełka kurczaka", "fixed_points": 16},
+          {"text": "zapiekankę lub hot doga", "fixed_points": 9},
+          {"text": "pierogi lub żurek", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co Polacy mówią następnego dnia po imprezie w pubie.",
+        "answers": [
+          {"text": "głowa mnie boli", "fixed_points": 44},
+          {"text": "jak późno wczoraj wróciłem?", "fixed_points": 26},
+          {"text": "ile ja wydałem?!", "fixed_points": 16},
+          {"text": "do końca tygodnia nie piję", "fixed_points": 9},
+          {"text": "kiedy następny raz?", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]

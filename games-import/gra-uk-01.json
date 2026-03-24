@@ -1,0 +1,109 @@
+[{
+  "title": "Українська кухня",
+  "description": "Борщ, вареники та сало — українська кухня відома на весь світ! Перевір, чи твої кулінарні асоціації збігаються з іншими українцями!",
+  "lang": "uk",
+  "payload": {
+    "questions": [
+      {
+        "text": "Назви страву яку їдять в кожній українській родині.",
+        "answers": [
+          {"text": "борщ", "fixed_points": 44},
+          {"text": "вареники", "fixed_points": 26},
+          {"text": "картопля", "fixed_points": 16},
+          {"text": "котлети", "fixed_points": 9},
+          {"text": "салат олів'є", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Що додають у борщ?",
+        "answers": [
+          {"text": "буряк і капуста", "fixed_points": 40},
+          {"text": "сметана при подачі", "fixed_points": 28},
+          {"text": "м'ясо або курка", "fixed_points": 18},
+          {"text": "часник", "fixed_points": 9},
+          {"text": "квасоля", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "З чим їдять вареники?",
+        "answers": [
+          {"text": "зі сметаною", "fixed_points": 44},
+          {"text": "зі смаженою цибулею", "fixed_points": 26},
+          {"text": "з маслом", "fixed_points": 16},
+          {"text": "з шкварками", "fixed_points": 9},
+          {"text": "просто так — дуже смачні", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Яка начинка у варениках найпопулярніша?",
+        "answers": [
+          {"text": "картопля з сиром", "fixed_points": 40},
+          {"text": "вишня або полуниця", "fixed_points": 26},
+          {"text": "м'ясо", "fixed_points": 18},
+          {"text": "капуста", "fixed_points": 11},
+          {"text": "гриби", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Що готує бабуся коли ти приїжджаєш у гості?",
+        "answers": [
+          {"text": "борщ обов'язково", "fixed_points": 42},
+          {"text": "вареники або пироги", "fixed_points": 26},
+          {"text": "смажену картоплю з м'ясом", "fixed_points": 18},
+          {"text": "млинці", "fixed_points": 9},
+          {"text": "холодець", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Що їдять українці на святковому столі?",
+        "answers": [
+          {"text": "олів'є та оселедець під шубою", "fixed_points": 40},
+          {"text": "домашній холодець", "fixed_points": 26},
+          {"text": "запечена курка або м'ясо", "fixed_points": 18},
+          {"text": "пироги та торти", "fixed_points": 11},
+          {"text": "сало з часником і хлібом", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Що їдять українці на сніданок?",
+        "answers": [
+          {"text": "яєчня", "fixed_points": 40},
+          {"text": "каша гречана або вівсяна", "fixed_points": 28},
+          {"text": "сирники", "fixed_points": 18},
+          {"text": "бутерброди з ковбасою", "fixed_points": 9},
+          {"text": "млинці", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Яка ковбаса є символом України?",
+        "answers": [
+          {"text": "домашня ковбаса", "fixed_points": 44},
+          {"text": "докторська", "fixed_points": 26},
+          {"text": "краківська", "fixed_points": 16},
+          {"text": "копчена", "fixed_points": 9},
+          {"text": "сосиски", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Що п'ють українці до обіду?",
+        "answers": [
+          {"text": "компот або узвар", "fixed_points": 42},
+          {"text": "чай", "fixed_points": 26},
+          {"text": "кисіль", "fixed_points": 18},
+          {"text": "воду", "fixed_points": 9},
+          {"text": "сік", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Що кажуть українці коли їжа дуже смачна?",
+        "answers": [
+          {"text": "смачно! пальці оближеш", "fixed_points": 44},
+          {"text": "ще один шматочок", "fixed_points": 26},
+          {"text": "як у бабусі", "fixed_points": 16},
+          {"text": "просто нема слів", "fixed_points": 9},
+          {"text": "дайте рецепт!", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]

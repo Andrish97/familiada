@@ -1,0 +1,109 @@
+[{
+  "title": "U fryzjera",
+  "description": "\"Tylko trochę przyciąć\" i wychodzisz z nową fryzurą — wizyty u fryzjera to osobna polska historia! Sprawdź czy twoje fryzjerskie doświadczenia są typowe!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Co mówisz fryzjerowi gdy nie wiesz czego chcesz?",
+        "answers": [
+          {"text": "tylko trochę przyciąć", "fixed_points": 44},
+          {"text": "coś świeżego i nowoczesnego", "fixed_points": 26},
+          {"text": "pan wie lepiej", "fixed_points": 16},
+          {"text": "tak jak poprzednio", "fixed_points": 9},
+          {"text": "mam zdjęcie z internetu", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj powód dla którego Polacy odkładają wizytę u fryzjera.",
+        "answers": [
+          {"text": "brak czasu", "fixed_points": 40},
+          {"text": "brak pieniędzy", "fixed_points": 28},
+          {"text": "nie ma ulubionego fryzjera wolnego terminu", "fixed_points": 18},
+          {"text": "lenistwo", "fixed_points": 9},
+          {"text": "przyzwyczaili się do długich włosów", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co robisz gdy fryzjer obciął za dużo?",
+        "answers": [
+          {"text": "udajesz że ci się podoba", "fixed_points": 40},
+          {"text": "mówisz że to nie to co chciałeś", "fixed_points": 26},
+          {"text": "płaczesz w domu", "fixed_points": 18},
+          {"text": "nakładasz czapkę i wychodzisz", "fixed_points": 11},
+          {"text": "szukasz innego fryzjera następnym razem", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co fryzjer robi oprócz strzyżenia.",
+        "answers": [
+          {"text": "masaż głowy podczas mycia", "fixed_points": 42},
+          {"text": "farbowanie", "fixed_points": 28},
+          {"text": "opowiada o życiu i pyta o twoje", "fixed_points": 16},
+          {"text": "proponuje odżywki i szampony", "fixed_points": 9},
+          {"text": "stylizacja i czesanie", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co mówi fryzjer podczas strzyżenia?",
+        "answers": [
+          {"text": "pytania o pracę i rodzinę", "fixed_points": 42},
+          {"text": "komentarze o pogodzie", "fixed_points": 26},
+          {"text": "opowiada o innych klientach", "fixed_points": 18},
+          {"text": "komplementuje twoje włosy", "fixed_points": 9},
+          {"text": "milczy skupiony na pracy", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co widzisz w salonie fryzjerskim.",
+        "answers": [
+          {"text": "lustra wszędzie", "fixed_points": 44},
+          {"text": "stosy pism kolorowych", "fixed_points": 26},
+          {"text": "fotele fryzjerskie", "fixed_points": 16},
+          {"text": "suszarki i sprzęt", "fixed_points": 9},
+          {"text": "produkty do włosów do kupienia", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co Polacy robią czekając w poczekalni u fryzjera?",
+        "answers": [
+          {"text": "przeglądają telefon", "fixed_points": 44},
+          {"text": "czytają pisma", "fixed_points": 28},
+          {"text": "obserwują innych klientów", "fixed_points": 16},
+          {"text": "rozmawiają z innymi czekającymi", "fixed_points": 8},
+          {"text": "wychodzą i wracają później", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Podaj powód dla którego Polacy mają stałego fryzjera.",
+        "answers": [
+          {"text": "zna twoje włosy i wie jak strzyc", "fixed_points": 44},
+          {"text": "czujesz się komfortowo", "fixed_points": 26},
+          {"text": "blisko domu lub pracy", "fixed_points": 16},
+          {"text": "dobra cena", "fixed_points": 9},
+          {"text": "zawsze jest wolny termin", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co czujesz po wyjściu od fryzjera?",
+        "answers": [
+          {"text": "świeżo i lekko", "fixed_points": 42},
+          {"text": "niepewność jak ludzie zareagują", "fixed_points": 26},
+          {"text": "ulga że w końcu to zrobiłem", "fixed_points": 18},
+          {"text": "żal że za dużo ucięli", "fixed_points": 9},
+          {"text": "chcę natychmiast zrobić zdjęcie", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Ile razy w roku Polak chodzi do fryzjera?",
+        "answers": [
+          {"text": "raz na 2-3 miesiące", "fixed_points": 42},
+          {"text": "raz w miesiącu", "fixed_points": 28},
+          {"text": "raz na pół roku", "fixed_points": 16},
+          {"text": "raz w roku lub rzadziej", "fixed_points": 9},
+          {"text": "co kilka tygodni", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]

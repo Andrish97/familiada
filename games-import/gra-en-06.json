@@ -1,0 +1,109 @@
+[{
+  "title": "Dating and relationships",
+  "description": "Awkward first dates, texting back too quickly and all those unwritten rules — modern dating is a universal experience! See how your relationship habits stack up!",
+  "lang": "en",
+  "payload": {
+    "questions": [
+      {
+        "text": "Name something people do before a first date.",
+        "answers": [
+          {"text": "spend too long picking an outfit", "fixed_points": 40},
+          {"text": "stalk their social media profiles", "fixed_points": 28},
+          {"text": "ask friends for advice", "fixed_points": 18},
+          {"text": "practice what to say", "fixed_points": 9},
+          {"text": "spray too much perfume or cologne", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name an awkward moment on a first date.",
+        "answers": [
+          {"text": "long silence with nothing to say", "fixed_points": 40},
+          {"text": "the bill arrives and no one knows who pays", "fixed_points": 26},
+          {"text": "you have nothing in common", "fixed_points": 18},
+          {"text": "they look different from their photos", "fixed_points": 11},
+          {"text": "your phone won't stop ringing", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name something people text instead of calling.",
+        "answers": [
+          {"text": "I'm outside or on my way", "fixed_points": 40},
+          {"text": "are you free tonight?", "fixed_points": 26},
+          {"text": "I like you or I miss you", "fixed_points": 18},
+          {"text": "can we talk later?", "fixed_points": 11},
+          {"text": "breaking up with someone", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name a sign someone likes you.",
+        "answers": [
+          {"text": "replies to messages instantly", "fixed_points": 40},
+          {"text": "remembers small details about you", "fixed_points": 26},
+          {"text": "laughs at everything you say", "fixed_points": 18},
+          {"text": "finds excuses to be near you", "fixed_points": 11},
+          {"text": "their friends already know about you", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "What do couples argue about most?",
+        "answers": [
+          {"text": "money and spending", "fixed_points": 38},
+          {"text": "whose turn it is to clean", "fixed_points": 26},
+          {"text": "how much time to spend together vs apart", "fixed_points": 18},
+          {"text": "what to watch on TV", "fixed_points": 12},
+          {"text": "forgetting important dates", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Name something people do on Valentine's Day.",
+        "answers": [
+          {"text": "book a restaurant dinner", "fixed_points": 40},
+          {"text": "buy flowers or chocolates", "fixed_points": 28},
+          {"text": "give a card", "fixed_points": 18},
+          {"text": "stay in and cook together", "fixed_points": 9},
+          {"text": "ignore it — it's just commercial", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name something people say when they're not ready for a relationship.",
+        "answers": [
+          {"text": "I need to focus on myself right now", "fixed_points": 42},
+          {"text": "I just got out of something", "fixed_points": 26},
+          {"text": "it's not you it's me", "fixed_points": 18},
+          {"text": "I'm too busy with work", "fixed_points": 9},
+          {"text": "I'm enjoying being single", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name something long-term couples stop doing that they did at the start.",
+        "answers": [
+          {"text": "leaving surprise notes or messages", "fixed_points": 40},
+          {"text": "dressing up nicely for each other", "fixed_points": 26},
+          {"text": "planning romantic dates", "fixed_points": 18},
+          {"text": "saying I love you constantly", "fixed_points": 11},
+          {"text": "pretending to like everything they like", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name something people do immediately after a breakup.",
+        "answers": [
+          {"text": "eat junk food and cry", "fixed_points": 40},
+          {"text": "vent to a best friend", "fixed_points": 28},
+          {"text": "delete or unfollow on social media", "fixed_points": 18},
+          {"text": "rebound — go out more", "fixed_points": 9},
+          {"text": "change their profile picture", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name a red flag people ignore when they really like someone.",
+        "answers": [
+          {"text": "they take hours to reply to messages", "fixed_points": 40},
+          {"text": "they cancel plans regularly", "fixed_points": 26},
+          {"text": "their ex is still very present in their life", "fixed_points": 18},
+          {"text": "they're rude to waiters or service staff", "fixed_points": 11},
+          {"text": "they never ask about your life", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]

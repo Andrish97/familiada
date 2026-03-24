@@ -1,0 +1,109 @@
+[{
+  "title": "Polskie Andrzejki",
+  "description": "Lanie wosku, wróżby z kart i przepowiednie miłosne — Andrzejki to polska noc wróżb! Sprawdź czy twoje andrzejkowe tradycje pokrywają się z innymi Polakami!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Podaj tradycyjną andrzejkową wróżbę.",
+        "answers": [
+          {"text": "lanie wosku przez klucz", "fixed_points": 44},
+          {"text": "wróżba z butów kto pierwszy do drzwi", "fixed_points": 26},
+          {"text": "wróżenie z kart", "fixed_points": 16},
+          {"text": "skórka jabłka rzucona przez ramię", "fixed_points": 9},
+          {"text": "wyciąganie karteczek z imionami", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co widać w wosku po Andrzejkach?",
+        "answers": [
+          {"text": "serce — bo wszyscy chcą miłości", "fixed_points": 40},
+          {"text": "coś co przypomina czyjąś twarz", "fixed_points": 26},
+          {"text": "dom — rodzina i spokój", "fixed_points": 18},
+          {"text": "pieniądze lub bogactwo", "fixed_points": 11},
+          {"text": "coś czego nikt nie wie co to", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Kto organizuje Andrzejki w Polsce?",
+        "answers": [
+          {"text": "szkoła dla dzieci i młodzieży", "fixed_points": 40},
+          {"text": "znajomi w prywatnym mieszkaniu", "fixed_points": 28},
+          {"text": "klub lub dyskoteka", "fixed_points": 18},
+          {"text": "rodzice dla dzieci w domu", "fixed_points": 9},
+          {"text": "praca — impreza andrzejkowa firmowa", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co jedzą i piją na Andrzejkach?",
+        "answers": [
+          {"text": "ciasta i słodycze", "fixed_points": 40},
+          {"text": "wino i szampan dla dorosłych", "fixed_points": 28},
+          {"text": "gorące napoje — grzaniec lub herbata", "fixed_points": 18},
+          {"text": "przekąski i kanapki", "fixed_points": 9},
+          {"text": "cokolwiek co wpadło w ręce", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co chcą wiedzieć Polacy od andrzejkowych wróżb?",
+        "answers": [
+          {"text": "czy znajdą miłość lub ją utrzymają", "fixed_points": 44},
+          {"text": "jak będzie rok finansowo", "fixed_points": 26},
+          {"text": "czy będą zdrowi", "fixed_points": 16},
+          {"text": "czy wyjdą za mąż lub się ożenią", "fixed_points": 9},
+          {"text": "co przyniesie przyszły rok", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co Polacy mówią gdy wróżba im nie odpowiada.",
+        "answers": [
+          {"text": "to tylko zabawa — nie wierzę w to", "fixed_points": 44},
+          {"text": "ta wróżba jest nieprawdziwa", "fixed_points": 26},
+          {"text": "rzucam ponownie bo się pomyliłam", "fixed_points": 16},
+          {"text": "może ta osoba się myli", "fixed_points": 9},
+          {"text": "sam nie wiem jak to interpretować", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Kiedy dzieci najbardziej lubią Andrzejki?",
+        "answers": [
+          {"text": "gdy wygrają w konkursach", "fixed_points": 42},
+          {"text": "gdy dostają słodycze", "fixed_points": 28},
+          {"text": "gdy bawią się wróżbami", "fixed_points": 16},
+          {"text": "gdy mogą nie iść spać o normalnej porze", "fixed_points": 9},
+          {"text": "gdy śpiewają i tańczą", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj polskie imię które najczęściej pojawia się w andrzejkowych wróżbach.",
+        "answers": [
+          {"text": "Andrzej — bo to imieniny Andrzeja", "fixed_points": 44},
+          {"text": "Anna", "fixed_points": 26},
+          {"text": "Piotr lub Marek", "fixed_points": 16},
+          {"text": "Kasia lub Zosia", "fixed_points": 9},
+          {"text": "cokolwiek co się kojarzy z osobą z sali", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co Polacy robią gdy wróżba okazuje się trafna?",
+        "answers": [
+          {"text": "śmieją się z radości", "fixed_points": 42},
+          {"text": "mówią \"nie może być!\"", "fixed_points": 26},
+          {"text": "wierzą w wróżby jeszcze bardziej", "fixed_points": 18},
+          {"text": "opowiadają wszystkim", "fixed_points": 9},
+          {"text": "chcą kolejne wróżby natychmiast", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś związanego z Andrzejkami czego nie ma już w nowoczesnych imprezach.",
+        "answers": [
+          {"text": "oryginalne lanie wosku z kluczem", "fixed_points": 42},
+          {"text": "wróżba z butów przy drzwiach", "fixed_points": 26},
+          {"text": "przepowiednie z liści herbaty", "fixed_points": 18},
+          {"text": "laleczki ze słomy", "fixed_points": 9},
+          {"text": "tradycyjne śpiewy i przyśpiewki", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]

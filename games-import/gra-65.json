@@ -1,0 +1,109 @@
+[{
+  "title": "Pizza z dowozem",
+  "description": "Trzydzieści minut albo gratis — polskie zamawianie pizzy przez telefon lub aplikację to osobna sztuka! Sprawdź czy twoje pizzowe nawyki są podobne do innych Polaków!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Kiedy Polacy zamawiają pizzę z dowozem?",
+        "answers": [
+          {"text": "gdy nie chce się gotować", "fixed_points": 42},
+          {"text": "w piątek wieczorem", "fixed_points": 26},
+          {"text": "podczas oglądania serialu", "fixed_points": 16},
+          {"text": "gdy mają gości a nic nie ma w domu", "fixed_points": 11},
+          {"text": "gdy jest deszcz i nie chce się wychodzić", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj pizzę którą zamawia większość Polaków.",
+        "answers": [
+          {"text": "Margherita", "fixed_points": 36},
+          {"text": "Pepperoni lub salami", "fixed_points": 28},
+          {"text": "Hawajska", "fixed_points": 18},
+          {"text": "Quattro formaggi", "fixed_points": 12},
+          {"text": "coś z kebabem", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co Polacy mówią gdy pizza przyjeżdża zimna?",
+        "answers": [
+          {"text": "nie zadzwonię do nich więcej", "fixed_points": 42},
+          {"text": "wrzucam do piekarnika", "fixed_points": 28},
+          {"text": "zadzwonię i powiem o tym", "fixed_points": 16},
+          {"text": "no cóż — zjem bo głodny", "fixed_points": 9},
+          {"text": "żądam zniżki lub nowej", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co Polacy zamawiają razem z pizzą.",
+        "answers": [
+          {"text": "coca-cola", "fixed_points": 44},
+          {"text": "sos czosnkowy extra", "fixed_points": 26},
+          {"text": "nuggets lub skrzydełka", "fixed_points": 16},
+          {"text": "sałatka", "fixed_points": 9},
+          {"text": "tiramisu lub deser", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co się dzieje gdy kurier dzwoni że jest pod domem?",
+        "answers": [
+          {"text": "wybiegasz szybko z gotówką lub kartą", "fixed_points": 42},
+          {"text": "pytasz o wejście i kod do klatki", "fixed_points": 26},
+          {"text": "odpinasz psa żeby nie warczał", "fixed_points": 16},
+          {"text": "prosisz żeby poczekał chwilę", "fixed_points": 11},
+          {"text": "dajesz napiwek", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co Polacy robią z opakowanie po pizzy?",
+        "answers": [
+          {"text": "zostawiają na kanapie przez wieczór", "fixed_points": 40},
+          {"text": "od razu wyrzucają do kosza", "fixed_points": 26},
+          {"text": "trzymają resztki na następny dzień", "fixed_points": 18},
+          {"text": "wrzucają do recyklingu", "fixed_points": 11},
+          {"text": "używają jako talerz bo brak naczyń", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj powód dlaczego Polacy zamawiają pizzę zamiast gotować.",
+        "answers": [
+          {"text": "brak czasu i energii po pracy", "fixed_points": 42},
+          {"text": "nie ma ochoty na sprzątanie", "fixed_points": 28},
+          {"text": "smaczniejsza niż domowa", "fixed_points": 16},
+          {"text": "lenistwo — szczerze mówiąc", "fixed_points": 9},
+          {"text": "wygoda i szybkość", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co mówi Polak gdy pizza jest 40 minut po czasie?",
+        "answers": [
+          {"text": "dzwoni zapytać gdzie kurier", "fixed_points": 44},
+          {"text": "sprawdza aplikację co chwilę", "fixed_points": 26},
+          {"text": "głodny i nerwowy chodzi po mieszkaniu", "fixed_points": 16},
+          {"text": "mówi że następnym razem gotuje", "fixed_points": 9},
+          {"text": "spokojnie czeka — i tak nic nie wskóram", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Jaki rozmiar pizzy zamawiają Polacy najczęściej?",
+        "answers": [
+          {"text": "duży — żeby zostało na jutro", "fixed_points": 44},
+          {"text": "średni dla jednej osoby", "fixed_points": 26},
+          {"text": "XL bo wszyscy są głodni", "fixed_points": 16},
+          {"text": "mały gdy nie jest się głodnym", "fixed_points": 9},
+          {"text": "dwie małe różne smaki", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co Polacy piszą w opiniach o pizzerii online.",
+        "answers": [
+          {"text": "pizza zimna po przyjeździe", "fixed_points": 42},
+          {"text": "smaczna i szybka dostawa", "fixed_points": 26},
+          {"text": "za mało sosu lub za mało składników", "fixed_points": 18},
+          {"text": "kurier był bardzo miły", "fixed_points": 9},
+          {"text": "nie ta pizza co zamawiałem", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]

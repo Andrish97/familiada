@@ -1,0 +1,109 @@
+[{
+  "title": "Polski urząd",
+  "description": "Numer kolejkowy, okienko zamknięte i \"proszę przyjść jutro z innym dokumentem\" — polskie urzędy to legenda! Sprawdź czy twoje urzędowe doświadczenia są typowe!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Co mówi urzędnik gdy nie masz jednego dokumentu?",
+        "answers": [
+          {"text": "bez tego dokumentu nie mogę przyjąć", "fixed_points": 44},
+          {"text": "proszę przyjść następnym razem", "fixed_points": 26},
+          {"text": "niestety to jest wymagane przepisami", "fixed_points": 16},
+          {"text": "może pan uzupełnić online", "fixed_points": 9},
+          {"text": "to nie moja sprawa", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co Polak robi czekając na sali w urzędzie?",
+        "answers": [
+          {"text": "patrzy w telefon", "fixed_points": 44},
+          {"text": "obserwuje tablicę z numerkami", "fixed_points": 26},
+          {"text": "przegląda dokumenty jeszcze raz", "fixed_points": 16},
+          {"text": "rozmawia z siedzącym obok", "fixed_points": 9},
+          {"text": "wychodzi pokręcić się i wraca", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj powód dla którego Polacy nie lubią urzędów.",
+        "answers": [
+          {"text": "długie kolejki", "fixed_points": 40},
+          {"text": "bezduszne traktowanie", "fixed_points": 26},
+          {"text": "ciągłe proszenie o kolejne dokumenty", "fixed_points": 18},
+          {"text": "godziny otwarcia niepasujące do pracy", "fixed_points": 11},
+          {"text": "niezrozumiałe przepisy i formularze", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Czego Polacy szukają na rządowych stronach internetowych?",
+        "answers": [
+          {"text": "jak zrobić coś bez wizyty w urzędzie", "fixed_points": 42},
+          {"text": "lista potrzebnych dokumentów", "fixed_points": 28},
+          {"text": "godziny otwarcia i adres", "fixed_points": 16},
+          {"text": "wzory formularzy do wydruku", "fixed_points": 9},
+          {"text": "numer telefonu kontaktowego", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co Polak czuje gdy numer jego kolejki wreszcie się wyświetla?",
+        "answers": [
+          {"text": "ulga — nareszcie!", "fixed_points": 44},
+          {"text": "nerwowe zbieranie dokumentów", "fixed_points": 26},
+          {"text": "stres czy wszystko ma", "fixed_points": 16},
+          {"text": "radość jak w totolotku", "fixed_points": 9},
+          {"text": "spokój — przyzwyczaił się do czekania", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co Polak musi zabrać do każdego urzędu.",
+        "answers": [
+          {"text": "dowód osobisty", "fixed_points": 44},
+          {"text": "cierpliwość", "fixed_points": 28},
+          {"text": "wolne przedpołudnie", "fixed_points": 16},
+          {"text": "potwierdzenie przelewu lub opłaty", "fixed_points": 8},
+          {"text": "zapasowe długopisy", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Co mówi Polak po wyjściu z urzędu?",
+        "answers": [
+          {"text": "nareszcie to za mną", "fixed_points": 42},
+          {"text": "muszę przyjść jeszcze raz z innym papierem", "fixed_points": 28},
+          {"text": "zmarnowałem pół dnia", "fixed_points": 16},
+          {"text": "teraz to rozumiem dlaczego Polacy emigrują", "fixed_points": 9},
+          {"text": "następnym razem wyślę pocztą", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś czego Polacy nie rozumieją w formularzu urzędowym.",
+        "answers": [
+          {"text": "urzędowy język i skróty", "fixed_points": 42},
+          {"text": "co wpisać w dane rubryki", "fixed_points": 28},
+          {"text": "po co tyle pytań osobistych", "fixed_points": 16},
+          {"text": "gdzie dokładnie ma być podpis", "fixed_points": 9},
+          {"text": "dlaczego nie ma opcji online", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Jak Polacy radzą sobie z urzędami?",
+        "answers": [
+          {"text": "pytają kogoś kto już przez to przechodził", "fixed_points": 42},
+          {"text": "szukają na forum i grupach facebook", "fixed_points": 26},
+          {"text": "płacą pośrednikowi żeby to załatwił", "fixed_points": 18},
+          {"text": "czytają poradniki na GOV.pl", "fixed_points": 9},
+          {"text": "idą i liczą że się poradzi", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co Polak mówi gdy system urzędowy jest offline.",
+        "answers": [
+          {"text": "nie może być...", "fixed_points": 44},
+          {"text": "jechałem tyle kilometrów na darmo", "fixed_points": 26},
+          {"text": "typowe dla urzędów", "fixed_points": 16},
+          {"text": "kiedy wróci?", "fixed_points": 9},
+          {"text": "w tym kraju nic nie działa", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]

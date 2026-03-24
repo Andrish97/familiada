@@ -1,0 +1,109 @@
+[{
+  "title": "Polskie majówka",
+  "description": "Długi weekend w maju, wyjazd za miasto i grill który rozpalasz od półtorej godziny — majówka to polskie święto wiosny! Sprawdź czy twoje majowe tradycje są podobne!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Gdzie Polacy spędzają majówkę?",
+        "answers": [
+          {"text": "na działce lub za miastem", "fixed_points": 42},
+          {"text": "w górach lub nad morzem", "fixed_points": 26},
+          {"text": "w domu i odpoczywają", "fixed_points": 16},
+          {"text": "na wycieczce w Polsce", "fixed_points": 11},
+          {"text": "za granicą — taniej w majówkę", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co Polacy robią w majówkę?",
+        "answers": [
+          {"text": "grillują", "fixed_points": 44},
+          {"text": "odpoczywają i śpią do południa", "fixed_points": 26},
+          {"text": "spotykają się z rodziną", "fixed_points": 16},
+          {"text": "wyjeżdżają na wypad", "fixed_points": 9},
+          {"text": "chodzą na spacery gdy piękna pogoda", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co jest obowiązkowe na majówkowym grillu?",
+        "answers": [
+          {"text": "kiełbasa", "fixed_points": 44},
+          {"text": "karkówka lub żeberka", "fixed_points": 26},
+          {"text": "piwo schłodzone", "fixed_points": 16},
+          {"text": "chleb z masłem i ogórek", "fixed_points": 9},
+          {"text": "salsa domowej roboty", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co mówi Polak gdy majówkowa pogoda zawodzi?",
+        "answers": [
+          {"text": "w Polsce to zawsze tak z pogodą", "fixed_points": 44},
+          {"text": "i tak grillujemy pod parasolem", "fixed_points": 26},
+          {"text": "przenosimy imprezę do środka", "fixed_points": 16},
+          {"text": "jestem w tracie urlopu a tu deszcz!", "fixed_points": 9},
+          {"text": "przełożę grilla na czerwiec", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co Polacy planują w majówkę z tygodniowym wyprzedzeniem.",
+        "answers": [
+          {"text": "zakup mięsa i warzyw na grilla", "fixed_points": 42},
+          {"text": "rezerwacja hotelu lub domku", "fixed_points": 28},
+          {"text": "plan trasy wyjazdu", "fixed_points": 16},
+          {"text": "kogo zaprosić", "fixed_points": 9},
+          {"text": "sprawdzanie prognozy pogody co godzinę", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj powód dlaczego Polacy nie mogą wyjechać w majówkę.",
+        "answers": [
+          {"text": "wszystko zarezerwowane i drogie", "fixed_points": 42},
+          {"text": "praca — szef nie dał urlopu", "fixed_points": 26},
+          {"text": "brak pieniędzy", "fixed_points": 18},
+          {"text": "dzieci chore", "fixed_points": 9},
+          {"text": "remont w mieszkaniu trwa", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co robi Polak który zostaje w mieście w majówkę?",
+        "answers": [
+          {"text": "idzie do parku z rodziną", "fixed_points": 40},
+          {"text": "robi porządki w domu", "fixed_points": 26},
+          {"text": "ogląda seriale i odpoczyna", "fixed_points": 18},
+          {"text": "odwiedza muzea bo pusto", "fixed_points": 11},
+          {"text": "jeździ rowerem po wyludnionym mieście", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co Polacy mówią w środę majówkowego tygodnia pracy?",
+        "answers": [
+          {"text": "wezmę urlop na mostek", "fixed_points": 44},
+          {"text": "cztery dni wolnego — rewelacja", "fixed_points": 26},
+          {"text": "kto wymyślił że środa to dzień roboczy", "fixed_points": 16},
+          {"text": "i tak w pracy nikt nie pracuje w tym tygodniu", "fixed_points": 9},
+          {"text": "w tym roku lepiej niż w zeszłym układa", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co psuje majówkę Polakom.",
+        "answers": [
+          {"text": "deszcz i zimno", "fixed_points": 44},
+          {"text": "korki na autostradach", "fixed_points": 26},
+          {"text": "przeludnione miejsca turystyczne", "fixed_points": 16},
+          {"text": "drogie hotele i noclegi", "fixed_points": 9},
+          {"text": "kłótnia w rodzinie", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co Polak mówi pierwszego dnia po majówce w pracy?",
+        "answers": [
+          {"text": "za krótko trwało", "fixed_points": 44},
+          {"text": "byłem tak odprężony a tu znowu to", "fixed_points": 26},
+          {"text": "kto wymyślił że po majówce jest poniedziałek", "fixed_points": 16},
+          {"text": "widziałeś co na grilla wzięłem?", "fixed_points": 9},
+          {"text": "kiedy następna majówka?", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]

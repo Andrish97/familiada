@@ -1,0 +1,109 @@
+[{
+  "title": "Polskie teatr i opera",
+  "description": "Wieczorowy strój, cicha sala i ta jedna osoba co chrząka w najpiękniejszym momencie — polska kultura teatralna ma swoje prawa! Sprawdź czy twoje doświadczenia teatralne są podobne!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Podaj powód dla którego Polacy idą do teatru.",
+        "answers": [
+          {"text": "dostali bilety od kogoś", "fixed_points": 40},
+          {"text": "lubią teatr i kulturę", "fixed_points": 26},
+          {"text": "na romantyczny wieczór z partnerem", "fixed_points": 18},
+          {"text": "spektakl który wszyscy polecają", "fixed_points": 11},
+          {"text": "szkolna wycieczka lub obowiązek", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co robi Polak gdy spektakl go nudzi?",
+        "answers": [
+          {"text": "patrzy dyskretnie w zegarek", "fixed_points": 44},
+          {"text": "walczy z drzemką", "fixed_points": 26},
+          {"text": "liczy ile jeszcze aktów zostało", "fixed_points": 16},
+          {"text": "cieszy się na przerwę", "fixed_points": 9},
+          {"text": "grzecznie siedzi do końca", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co denerwuje w teatrze lub operze?",
+        "answers": [
+          {"text": "osoba która chrząka lub kaszle", "fixed_points": 42},
+          {"text": "wibrujący telefon obok", "fixed_points": 28},
+          {"text": "szeleścenie cukierkami lub papierkami", "fixed_points": 16},
+          {"text": "wysoka osoba przed tobą", "fixed_points": 9},
+          {"text": "komentowanie na głos", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co Polacy robią w przerwie podczas spektaklu?",
+        "answers": [
+          {"text": "idą do baru na szampana lub wino", "fixed_points": 40},
+          {"text": "dyskutują o tym co widzieli", "fixed_points": 26},
+          {"text": "korzystają z toalety", "fixed_points": 18},
+          {"text": "sprawdzają telefon", "fixed_points": 11},
+          {"text": "podziwiają foyer i budynek teatru", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co mówi Polak gdy nie rozumie spektaklu awangardowego?",
+        "answers": [
+          {"text": "co to miało znaczyć?", "fixed_points": 44},
+          {"text": "to jest sztuka i nie muszę rozumieć", "fixed_points": 26},
+          {"text": "może byłem za głupi na to", "fixed_points": 16},
+          {"text": "wolę klasyczny teatr", "fixed_points": 9},
+          {"text": "ciekawe ale dziwne", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "W co ubierają się Polacy idąc do teatru?",
+        "answers": [
+          {"text": "elegancko — sukienka lub koszula", "fixed_points": 42},
+          {"text": "smart casual — trochę elegancko", "fixed_points": 28},
+          {"text": "tak jak w dzień — kurtka i jeansy", "fixed_points": 16},
+          {"text": "garnitur lub wieczorowa suknia", "fixed_points": 9},
+          {"text": "tak jak każdego dnia", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj spektakl który każdy Polak zna ze szkoły.",
+        "answers": [
+          {"text": "Dziady", "fixed_points": 44},
+          {"text": "Pan Tadeusz", "fixed_points": 26},
+          {"text": "Wesele Wyspiańskiego", "fixed_points": 16},
+          {"text": "Hamlet lub Makbet", "fixed_points": 9},
+          {"text": "Romeo i Julia", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co Polacy mówią po spektaklu który im się podobał?",
+        "answers": [
+          {"text": "rewelacyjne — brawo dla aktorów", "fixed_points": 42},
+          {"text": "wzruszający — prawie płakałem", "fixed_points": 26},
+          {"text": "polecam wszystkim znajomym", "fixed_points": 18},
+          {"text": "chętnie zobaczę ponownie", "fixed_points": 9},
+          {"text": "te bilety były warte każdej złotówki", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Ile razy w roku przeciętny Polak chodzi do teatru?",
+        "answers": [
+          {"text": "raz lub dwa razy w roku", "fixed_points": 44},
+          {"text": "rzadziej niż raz — może co dwa lata", "fixed_points": 26},
+          {"text": "kilka razy — jestem bywalcem", "fixed_points": 16},
+          {"text": "nie chodzę wcale", "fixed_points": 9},
+          {"text": "regularnie co miesiąc", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co Polacy mówią przy owacji na stojąco.",
+        "answers": [
+          {"text": "to jest REWELACJA — brawo!", "fixed_points": 44},
+          {"text": "wstajesz gdy inni wstają", "fixed_points": 26},
+          {"text": "wreszcie koniec — klaskam i wychodzę", "fixed_points": 16},
+          {"text": "niesamowite — łzy mi ciekną", "fixed_points": 9},
+          {"text": "wstaję choć trochę zmęczony", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]

@@ -1,0 +1,109 @@
+[{
+  "title": "Supermarket habits",
+  "description": "Going for milk and leaving with a full trolley, the self-checkout that always needs assistance and those loyalty points you'll never use — supermarket life is universal!",
+  "lang": "en",
+  "payload": {
+    "questions": [
+      {
+        "text": "Name something people go in to buy but always leave with more.",
+        "answers": [
+          {"text": "milk and bread — but also a full basket", "fixed_points": 44},
+          {"text": "wine — bought three instead of one", "fixed_points": 26},
+          {"text": "snacks because of the offers", "fixed_points": 16},
+          {"text": "one item from the middle aisle", "fixed_points": 9},
+          {"text": "a dessert that wasn't planned", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "What do people say about the self-checkout machine?",
+        "answers": [
+          {"text": "unexpected item in bagging area — always", "fixed_points": 44},
+          {"text": "why is it never working properly", "fixed_points": 26},
+          {"text": "where is the human checkout when you need it", "fixed_points": 16},
+          {"text": "faster when you know how to use it", "fixed_points": 9},
+          {"text": "I hate having to wait for approval for alcohol", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name something people do to avoid a long queue.",
+        "answers": [
+          {"text": "scan the checkouts and pick the shortest", "fixed_points": 40},
+          {"text": "go at a quieter time of day", "fixed_points": 26},
+          {"text": "use self-checkout even with a big shop", "fixed_points": 18},
+          {"text": "abandon the trolley and come back later", "fixed_points": 11},
+          {"text": "order online instead", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name something always bought on impulse in the supermarket.",
+        "answers": [
+          {"text": "chocolate near the checkout", "fixed_points": 42},
+          {"text": "something on offer that seemed a deal", "fixed_points": 26},
+          {"text": "a magazine or newspaper", "fixed_points": 18},
+          {"text": "a meal deal or deal bundle", "fixed_points": 9},
+          {"text": "something seasonal you don't normally buy", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "What do people say when they forget their shopping list?",
+        "answers": [
+          {"text": "I'll just try to remember — and fail", "fixed_points": 42},
+          {"text": "I'll call someone at home to check", "fixed_points": 26},
+          {"text": "I'll buy what looks right and hope", "fixed_points": 18},
+          {"text": "I definitely forgot something important", "fixed_points": 9},
+          {"text": "I'm coming back tomorrow anyway", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name something people compare prices on in the supermarket.",
+        "answers": [
+          {"text": "branded vs own-brand products", "fixed_points": 42},
+          {"text": "price per 100g to find best value", "fixed_points": 26},
+          {"text": "multibuy offers vs single items", "fixed_points": 18},
+          {"text": "fresh vs frozen vegetables", "fixed_points": 9},
+          {"text": "different sizes of the same product", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "What do people say about loyalty card points?",
+        "answers": [
+          {"text": "I never remember to use them", "fixed_points": 42},
+          {"text": "I've got loads saved up but never spend them", "fixed_points": 26},
+          {"text": "I always scan even for small shops", "fixed_points": 18},
+          {"text": "I don't bother — it's not worth it", "fixed_points": 9},
+          {"text": "finally used mine for a big shop", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name something supermarkets do that people find manipulative but works.",
+        "answers": [
+          {"text": "place essentials at the back of the store", "fixed_points": 40},
+          {"text": "big deals and yellow price tags everywhere", "fixed_points": 28},
+          {"text": "bakery smells pumped near the entrance", "fixed_points": 18},
+          {"text": "checkout sweets at eye level for kids", "fixed_points": 9},
+          {"text": "buy one get one free on things you don't need", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name something people judge in other people's trolleys.",
+        "answers": [
+          {"text": "too much junk food", "fixed_points": 40},
+          {"text": "lots of alcohol", "fixed_points": 26},
+          {"text": "all branded nothing own-brand", "fixed_points": 18},
+          {"text": "only ready meals — can't cook?", "fixed_points": 11},
+          {"text": "no vegetables in sight", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name something that makes supermarket shopping miserable.",
+        "answers": [
+          {"text": "it's packed on a Saturday afternoon", "fixed_points": 42},
+          {"text": "they've rearranged the whole layout again", "fixed_points": 26},
+          {"text": "your favourite thing is out of stock", "fixed_points": 18},
+          {"text": "the bags cost extra and you forgot yours", "fixed_points": 9},
+          {"text": "you're hungry and everything looks good", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]

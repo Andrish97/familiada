@@ -1,0 +1,109 @@
+[{
+  "title": "Pchli targ i targi staroci",
+  "description": "Stare zegarki, PRL-owskie skarby i poczucie że zaraz znajdziesz coś wyjątkowego — polskie targi staroci to osobna kultura! Sprawdź czy twoje pchlotargowe doświadczenia są podobne!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Czego szukasz na pchlim targu?",
+        "answers": [
+          {"text": "starych książek i winyli", "fixed_points": 40},
+          {"text": "antyków i bibelotów", "fixed_points": 26},
+          {"text": "taniego ubrania", "fixed_points": 18},
+          {"text": "starych monet i banknotów", "fixed_points": 11},
+          {"text": "czegoś nieoczekiwanego", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co mówisz gdy coś ci się podoba ale cena jest za wysoka?",
+        "answers": [
+          {"text": "a da pan taniej?", "fixed_points": 44},
+          {"text": "widziałem takie za połowę gdzie indziej", "fixed_points": 26},
+          {"text": "wezmę dwie sztuki — zrobi pan rabat?", "fixed_points": 16},
+          {"text": "za tę cenę to nie dziękuję", "fixed_points": 9},
+          {"text": "muszę się zastanowić", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co Polacy kupują na targu staroci i potem żałują?",
+        "answers": [
+          {"text": "stary gruchot który miał być do naprawienia", "fixed_points": 40},
+          {"text": "obraz do nowego mieszkania", "fixed_points": 26},
+          {"text": "stare naczynia które się nie używa", "fixed_points": 18},
+          {"text": "zbyt wiele książek", "fixed_points": 11},
+          {"text": "coś w stylu PRL bo \"fajne\"", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Kiedy Polacy chodzą na pchli targ?",
+        "answers": [
+          {"text": "w sobotę rano", "fixed_points": 44},
+          {"text": "w niedzielę przed południem", "fixed_points": 28},
+          {"text": "gdy jest wyprzedaż garażowa w okolicy", "fixed_points": 16},
+          {"text": "regularnie co tydzień", "fixed_points": 8},
+          {"text": "gdy szukają konkretnej rzeczy", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Podaj coś co na targu staroci kojarzy się z PRL-em.",
+        "answers": [
+          {"text": "serwis kawowy z emblematem", "fixed_points": 42},
+          {"text": "stare zabawki blaszane", "fixed_points": 26},
+          {"text": "proporczyki i odznaki", "fixed_points": 16},
+          {"text": "stary maluch lub trabant", "fixed_points": 11},
+          {"text": "gazety i kalendarze z dawnych lat", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co sprzedający na pchlim targu mówi o swojej ofercie?",
+        "answers": [
+          {"text": "to jest prawdziwy antyk", "fixed_points": 42},
+          {"text": "z rodzinnych zbiorów — unikat", "fixed_points": 28},
+          {"text": "taniej już nie mogę", "fixed_points": 16},
+          {"text": "to jest warte o wiele więcej", "fixed_points": 9},
+          {"text": "ostatnia sztuka!", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co Polak czuje gdy znajdzie coś za grosze co jest warte dużo?",
+        "answers": [
+          {"text": "niedowierzanie i podekscytowanie", "fixed_points": 42},
+          {"text": "spokojnie płaci żeby nie wzbudzać podejrzeń", "fixed_points": 26},
+          {"text": "biegnie do domu sprawdzić w internecie", "fixed_points": 18},
+          {"text": "opowiada wszystkim znajomym", "fixed_points": 9},
+          {"text": "wraca po więcej takiego samego", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co zawsze jest na polskim pchlim targu.",
+        "answers": [
+          {"text": "stare książki i albumy", "fixed_points": 40},
+          {"text": "używane ubrania i buty", "fixed_points": 28},
+          {"text": "stare meble i krzesła", "fixed_points": 18},
+          {"text": "narzędzia i sprzęt domowy", "fixed_points": 9},
+          {"text": "zdjęcia i pocztówki starych miast", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co robi Polak gdy trafi na targ za późno?",
+        "answers": [
+          {"text": "marudzi że już wszystko dobre wzięte", "fixed_points": 42},
+          {"text": "przechodzi mimo i wychodzi bez zakupu", "fixed_points": 28},
+          {"text": "pyta sprzedawców co mają w zapasie", "fixed_points": 16},
+          {"text": "kupuje cokolwiek żeby nie było na darmo", "fixed_points": 9},
+          {"text": "umawia się na następną sobotę wcześniej", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Dlaczego Polacy lubią targi staroci?",
+        "answers": [
+          {"text": "nostalgia i historia w przedmiotach", "fixed_points": 40},
+          {"text": "okazja na niską cenę", "fixed_points": 28},
+          {"text": "spacer i atmosfera", "fixed_points": 18},
+          {"text": "można pohandlować", "fixed_points": 9},
+          {"text": "można znaleźć coś unikalnego", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]

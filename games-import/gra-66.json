@@ -1,0 +1,109 @@
+[{
+  "title": "Polskie SPA i wellness",
+  "description": "Sauna, masaż i chwila spokoju bez telefonu — polska kultura relaksu i spa dynamicznie rośnie! Sprawdź czy twoje podejście do wellness pokrywa się z innymi Polakami!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Podaj powód dla którego Polacy idą do SPA.",
+        "answers": [
+          {"text": "relaks i odstresowanie", "fixed_points": 44},
+          {"text": "bóle pleców i napięcie mięśni", "fixed_points": 26},
+          {"text": "urodziny lub jubileusz jako prezent", "fixed_points": 16},
+          {"text": "dbanie o urodę i skórę", "fixed_points": 9},
+          {"text": "bo w pakiecie z hotelem", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co mówi Polak po wejściu do sauny po raz pierwszy?",
+        "answers": [
+          {"text": "jak tu gorąco!", "fixed_points": 44},
+          {"text": "ile tu można wytrzymać?", "fixed_points": 26},
+          {"text": "zdrowotne to jest?", "fixed_points": 16},
+          {"text": "ile minut mam tu siedzieć?", "fixed_points": 9},
+          {"text": "wszystko spoko — normalka", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co Polacy lubią w wizycie w SPA.",
+        "answers": [
+          {"text": "masaż całego ciała", "fixed_points": 42},
+          {"text": "jacuzzi i basen", "fixed_points": 26},
+          {"text": "cisza i spokój bez telefonu", "fixed_points": 18},
+          {"text": "zabiegi na twarz i ciało", "fixed_points": 9},
+          {"text": "herbata ziołowa po zabiegu", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co robi Polak gdy w SPA jest zakaz używania telefonu?",
+        "answers": [
+          {"text": "oddycha z ulgą i zostawia go w szafce", "fixed_points": 40},
+          {"text": "zagląda w ukryciu", "fixed_points": 28},
+          {"text": "sprawdza raz i naprawdę odkłada", "fixed_points": 18},
+          {"text": "trudno mu się przyzwyczaić", "fixed_points": 9},
+          {"text": "łamie zasadę bo \"tylko wiadomość\"", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Kto w Polsce chodzi do SPA?",
+        "answers": [
+          {"text": "kobiety znacznie częściej niż mężczyźni", "fixed_points": 40},
+          {"text": "pary na romantyczny weekend", "fixed_points": 26},
+          {"text": "osoby z bólami pleców lub stresem", "fixed_points": 18},
+          {"text": "sportowcy na regenerację", "fixed_points": 11},
+          {"text": "coraz więcej mężczyzn", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj masaż który wybierają Polacy najchętniej.",
+        "answers": [
+          {"text": "masaż pleców i karku", "fixed_points": 44},
+          {"text": "masaż całego ciała", "fixed_points": 26},
+          {"text": "masaż stóp", "fixed_points": 16},
+          {"text": "masaż tajski", "fixed_points": 9},
+          {"text": "masaż gorącymi kamieniami", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co mówi Polak po wyjściu z SPA?",
+        "answers": [
+          {"text": "czuję się jak nowo narodzony", "fixed_points": 44},
+          {"text": "muszę tu wracać częściej", "fixed_points": 26},
+          {"text": "niestety kasa — ale warto", "fixed_points": 16},
+          {"text": "od jutra zadbam o siebie regularnie", "fixed_points": 9},
+          {"text": "chcę już spać", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Ile Polacy wydają na jeden dzień SPA?",
+        "answers": [
+          {"text": "za dużo ale uznaję to za inwestycję", "fixed_points": 42},
+          {"text": "kilkaset złotych za pakiet", "fixed_points": 28},
+          {"text": "tyle na ile mnie stać raz na rok", "fixed_points": 16},
+          {"text": "szukam promocji i voucherów", "fixed_points": 9},
+          {"text": "dostałem bon w prezencie — gratis!", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co denerwuje Polaków w SPA.",
+        "answers": [
+          {"text": "głośni goście którzy przerywają relaks", "fixed_points": 40},
+          {"text": "cena za wszystko extra", "fixed_points": 28},
+          {"text": "zimna sauna lub basen", "fixed_points": 18},
+          {"text": "brak miejsc do zarezerwowania", "fixed_points": 9},
+          {"text": "zbyt krótki czas zabiegu", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co Polacy kupują w SPA sklepiku.",
+        "answers": [
+          {"text": "krem lub olejek do masażu", "fixed_points": 42},
+          {"text": "sól do kąpieli z lawendą", "fixed_points": 26},
+          {"text": "zestaw zabiegowy na prezent", "fixed_points": 18},
+          {"text": "szlafrok lub ręcznik", "fixed_points": 9},
+          {"text": "herbaty relaksacyjne", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]

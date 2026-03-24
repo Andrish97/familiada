@@ -1,0 +1,109 @@
+[{
+  "title": "Polskie siatkówka",
+  "description": "Wilfredo Leon, Biało-Czerwoni i te emocje gdy set wyrównany 24:24 — polska siatkówka to narodowa duma! Sprawdź czy twoje siatkówkowe doświadczenia są podobne do innych Polaków!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Co czuje Polak gdy reprezentacja wygrywa mecz siatkarzy?",
+        "answers": [
+          {"text": "duma i radość — jesteśmy najlepsi!", "fixed_points": 44},
+          {"text": "skacze z radości i krzyczy", "fixed_points": 26},
+          {"text": "dzwoni do kogoś żeby powiedzieć", "fixed_points": 16},
+          {"text": "pisze na social mediach", "fixed_points": 9},
+          {"text": "łzy w oczach — wzruszenie", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Kiedy Polacy oglądają siatkówkę?",
+        "answers": [
+          {"text": "podczas mistrzostw świata lub Ligi Narodów", "fixed_points": 44},
+          {"text": "gdy Polska gra ważny mecz", "fixed_points": 26},
+          {"text": "na żywo gdy jest hala w pobliżu", "fixed_points": 16},
+          {"text": "regularnie — jestem fanem siatkówki", "fixed_points": 9},
+          {"text": "tylko finały na żywo", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj siatkarza którego znają wszyscy Polacy.",
+        "answers": [
+          {"text": "Wilfredo Leon", "fixed_points": 44},
+          {"text": "Bartosz Kurek", "fixed_points": 26},
+          {"text": "Zbigniew Bartman", "fixed_points": 16},
+          {"text": "Piotr Nowakowski", "fixed_points": 9},
+          {"text": "Michał Kubiak", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co mówi Polak gdy Polska przegrywa ważny mecz siatkówki?",
+        "answers": [
+          {"text": "szkoda — następnym razem na pewno", "fixed_points": 40},
+          {"text": "sędzia był stronniczy", "fixed_points": 26},
+          {"text": "dlaczego tak zagrali w tym secie?!", "fixed_points": 18},
+          {"text": "za mało Leona na podaniu", "fixed_points": 11},
+          {"text": "i tak jesteśmy najlepsi — jeden mecz to nie wszystko", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj kraj który Polska najczęściej pokonuje w siatkówce.",
+        "answers": [
+          {"text": "Francję albo Włochy w wielkim finale", "fixed_points": 36},
+          {"text": "Brazylię", "fixed_points": 28},
+          {"text": "USA", "fixed_points": 18},
+          {"text": "Rosję lub Japonię", "fixed_points": 12},
+          {"text": "każdego gdy jesteśmy w formie", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś co fani siatkówki robią na trybunach.",
+        "answers": [
+          {"text": "śpiewają Polska Polska", "fixed_points": 44},
+          {"text": "biją brawo przy każdym asie", "fixed_points": 26},
+          {"text": "krzyczą na sędziego", "fixed_points": 16},
+          {"text": "machają flagami", "fixed_points": 9},
+          {"text": "płaczą z radości przy zwycięstwie", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Jak Polacy uczą się siatkówki?",
+        "answers": [
+          {"text": "w szkole na WF-ie", "fixed_points": 44},
+          {"text": "w amatorskiej lidze między znajomymi", "fixed_points": 26},
+          {"text": "na plaży — siatkówka plażowa", "fixed_points": 16},
+          {"text": "w klubie lub sekcji sportowej", "fixed_points": 9},
+          {"text": "oglądając mecze reprezentacji", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co różni siatkówkę od piłki nożnej zdaniem Polaków?",
+        "answers": [
+          {"text": "Polska w siatkówce wygrywa!", "fixed_points": 44},
+          {"text": "zawodnicy są bardziej kulturalni", "fixed_points": 26},
+          {"text": "mniej polityki i kasy wokół sportu", "fixed_points": 16},
+          {"text": "mecze krótsze i bardziej dynamiczne", "fixed_points": 9},
+          {"text": "gra się rękami nie nogami", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co Polak mówi o polskiej siatkówce z dumą.",
+        "answers": [
+          {"text": "jesteśmy mistrzami świata!", "fixed_points": 44},
+          {"text": "Leon to najlepszy siatkarz na świecie", "fixed_points": 26},
+          {"text": "polska liga jest bardzo dobra", "fixed_points": 16},
+          {"text": "nasz system szkolenia jest wzorowy", "fixed_points": 9},
+          {"text": "każdy kraj nam zazdrości tej drużyny", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co kibice robią gdy Polska wygra mistrzostwa.",
+        "answers": [
+          {"text": "wychodzą na ulice i świętują", "fixed_points": 44},
+          {"text": "trąbią samochodami", "fixed_points": 26},
+          {"text": "otwierają szampana w domu", "fixed_points": 16},
+          {"text": "publikują posty z flagą Polski", "fixed_points": 9},
+          {"text": "całują się z radości z obcymi", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]

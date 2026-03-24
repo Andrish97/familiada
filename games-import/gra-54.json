@@ -1,0 +1,109 @@
+[{
+  "title": "Impreza firmowa",
+  "description": "Poczucie obowiązku, dziwne rozmowy z szefem i budzenie się następnego dnia z mieszanymi uczuciami — polska impreza firmowa to klasyk! Sprawdź czy twoje firmowe wieczory są podobne!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Co czujesz idąc na imprezę firmową?",
+        "answers": [
+          {"text": "przymus — trzeba być", "fixed_points": 40},
+          {"text": "lekka niechęć ale idę", "fixed_points": 26},
+          {"text": "cieszę się że zobaczę kolegów", "fixed_points": 18},
+          {"text": "stres że nie wiem z kim rozmawiać", "fixed_points": 11},
+          {"text": "radość — lubię takie spotkania", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co zawsze jest na polskiej imprezie firmowej.",
+        "answers": [
+          {"text": "alkohol i zimne bufety", "fixed_points": 40},
+          {"text": "niezręczne rozmowy z szefem", "fixed_points": 26},
+          {"text": "plotki o tym kto z kim", "fixed_points": 18},
+          {"text": "ktoś tańczy za dużo", "fixed_points": 11},
+          {"text": "przemówienie kierownictwa", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "O czym rozmawiają pracownicy na imprezie firmowej?",
+        "answers": [
+          {"text": "o pracy — i tak wracacie do tematu", "fixed_points": 40},
+          {"text": "o rodzinie i dzieciach", "fixed_points": 28},
+          {"text": "o plotkach z biura", "fixed_points": 18},
+          {"text": "o wakacjach i podróżach", "fixed_points": 9},
+          {"text": "o niczym ważnym", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co robi pracownik który nie chce pić alkoholu na firmówce?",
+        "answers": [
+          {"text": "mówi że jedzie samochodem", "fixed_points": 44},
+          {"text": "pije wodę i udaje że to coś innego", "fixed_points": 26},
+          {"text": "tłumaczy się zdrowiem", "fixed_points": 16},
+          {"text": "po prostu odmawia bez tłumaczenia", "fixed_points": 9},
+          {"text": "wychodzi wcześnie zanim się zaczyna", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co się dzieje gdy szef zaczyna tańczyć?",
+        "answers": [
+          {"text": "wszyscy patrzą i nie wiedzą jak reagować", "fixed_points": 40},
+          {"text": "śmieją się po kryjomu", "fixed_points": 26},
+          {"text": "dołączają żeby zrobić mu przyjemność", "fixed_points": 18},
+          {"text": "robią zdjęcia na pamiątkę", "fixed_points": 11},
+          {"text": "przenoszą rozmowę na bok", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Kiedy Polacy wychodzą z imprezy firmowej?",
+        "answers": [
+          {"text": "po godzinie — minimum zrealizowane", "fixed_points": 40},
+          {"text": "gdy szef wychodzi", "fixed_points": 28},
+          {"text": "gdy skończy się jedzenie", "fixed_points": 18},
+          {"text": "ostatni kiedy impreza się rozwinie", "fixed_points": 9},
+          {"text": "gdy ostatni autobus odjeżdża", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co Polacy mówią o imprezie firmowej następnego dnia w pracy?",
+        "answers": [
+          {"text": "dobra zabawa, ale ciekawie co szef myśli", "fixed_points": 40},
+          {"text": "widziałeś jak X się zachowywał?", "fixed_points": 26},
+          {"text": "następnym razem nie idę", "fixed_points": 18},
+          {"text": "chyba za dużo wypiłem", "fixed_points": 11},
+          {"text": "kiedy następna impreza?", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co zawstydza Polaków na imprezie firmowej.",
+        "answers": [
+          {"text": "niepamiętanie części wieczoru", "fixed_points": 40},
+          {"text": "zbyt szczera rozmowa z szefem", "fixed_points": 26},
+          {"text": "taniec który wszyscy filmowali", "fixed_points": 18},
+          {"text": "kłótnia ze współpracownikiem", "fixed_points": 11},
+          {"text": "rozlanie napoju na siebie lub kogoś", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj miejsce typowej polskiej imprezy firmowej.",
+        "answers": [
+          {"text": "restauracja lub salka bankietowa", "fixed_points": 40},
+          {"text": "hotel z salą konferencyjną", "fixed_points": 28},
+          {"text": "biuro po godzinach", "fixed_points": 18},
+          {"text": "bar lub klub", "fixed_points": 9},
+          {"text": "ogród lub działka szefa", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co firma robi na imprezę wigilijną?",
+        "answers": [
+          {"text": "organizuje kolację z opłatkiem", "fixed_points": 42},
+          {"text": "zbierka i kupuje wspólnie prezenty", "fixed_points": 26},
+          {"text": "spotkanie przy stole z życzeniami szefa", "fixed_points": 18},
+          {"text": "nic — każdy idzie do domu", "fixed_points": 9},
+          {"text": "tombola lub loteria fantowa", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]

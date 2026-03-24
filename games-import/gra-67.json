@@ -1,0 +1,109 @@
+[{
+  "title": "Polskie zoo",
+  "description": "Dzieci przy wybiegu żyrafy, leniwy miś który śpi i te wszystkie tabliczki \"nie dokarmiać\" — wizyta w polskim zoo to rodzinny rytuał! Sprawdź czy twoje zoo-doświadczenia są typowe!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Podaj zwierzę które ogląda się w zoo najdłużej.",
+        "answers": [
+          {"text": "słoń", "fixed_points": 38},
+          {"text": "żyrafa", "fixed_points": 26},
+          {"text": "lew lub tygrys", "fixed_points": 18},
+          {"text": "małpy", "fixed_points": 12},
+          {"text": "pingwiny", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co mówi dziecko gdy nie może zobaczyć zwierzęcia w zoo?",
+        "answers": [
+          {"text": "gdzie on jest?! chcę zobaczyć!", "fixed_points": 44},
+          {"text": "pewnie śpi — nudne", "fixed_points": 26},
+          {"text": "nie chcę już tu być", "fixed_points": 16},
+          {"text": "podnieś mnie żebym widział!", "fixed_points": 9},
+          {"text": "następnym razem zobaczymy", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co zawsze denerwuje w zoo.",
+        "answers": [
+          {"text": "tłumy i kolejki", "fixed_points": 40},
+          {"text": "śmierdzące wybiegi", "fixed_points": 26},
+          {"text": "zwierzęta śpią i nic nie robią", "fixed_points": 18},
+          {"text": "cena biletów", "fixed_points": 11},
+          {"text": "drogie jedzenie i napoje na miejscu", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co robią dzieci których rodzice mówią \"nie dotykaj\" w zoo?",
+        "answers": [
+          {"text": "dotykają jak rodzic odwróci wzrok", "fixed_points": 44},
+          {"text": "pytają dlaczego nie wolno", "fixed_points": 26},
+          {"text": "proszą żeby rodzic dotknął zamiast", "fixed_points": 16},
+          {"text": "denerwują się i płaczą", "fixed_points": 9},
+          {"text": "akurat słuchają raz", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co kupują Polacy w zoo dla dzieci?",
+        "answers": [
+          {"text": "lody lub watę cukrową", "fixed_points": 42},
+          {"text": "pluszowe zwierzę z zoo", "fixed_points": 26},
+          {"text": "naklejki i magnesy", "fixed_points": 16},
+          {"text": "książkę o zwierzętach", "fixed_points": 11},
+          {"text": "karmę do karmienia zwierząt", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co mówi rodzic dziecku o zwierzęciu w zoo.",
+        "answers": [
+          {"text": "patrz jaki duży!", "fixed_points": 42},
+          {"text": "boisz się? nic ci nie zrobi za szybą", "fixed_points": 26},
+          {"text": "czy wiesz jak on się nazywa?", "fixed_points": 18},
+          {"text": "w naturze byłby wolny widzisz", "fixed_points": 9},
+          {"text": "patrz jak piękny — rób zdjęcie!", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Które zoo polskie jest najsłynniejsze zdaniem Polaków?",
+        "answers": [
+          {"text": "wrocławskie — znane z ochrony nosorożców", "fixed_points": 40},
+          {"text": "warszawskie — ogród zoologiczny", "fixed_points": 30},
+          {"text": "to w swoim mieście bo tam byłem", "fixed_points": 16},
+          {"text": "poznańskie lub gdańskie", "fixed_points": 9},
+          {"text": "nie wiem — nigdy nie byłem", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co Polacy robią przez cały czas w zoo?",
+        "answers": [
+          {"text": "robią zdjęcia telefonem", "fixed_points": 44},
+          {"text": "czytają tabliczki informacyjne", "fixed_points": 26},
+          {"text": "jedzą i piją", "fixed_points": 16},
+          {"text": "szukają następnego ciekawego wybiegu", "fixed_points": 9},
+          {"text": "siedzą na ławeczce bo zmęczenie", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co zwierzęta robią gdy ogląda je dużo ludzi.",
+        "answers": [
+          {"text": "śpią i ignorują wszystkich", "fixed_points": 44},
+          {"text": "chodzą w kółko niespokojnie", "fixed_points": 26},
+          {"text": "zbliżają się do szyby lub ogrodzenia", "fixed_points": 16},
+          {"text": "reagują gdy ktoś krzyczy", "fixed_points": 9},
+          {"text": "uciekają w kąt wybiegu", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co mówią Polacy gdy wychodzą ze zoo?",
+        "answers": [
+          {"text": "nogi mnie bolą — tyle chodzenia", "fixed_points": 42},
+          {"text": "dzieci są zmęczone ale zadowolone", "fixed_points": 26},
+          {"text": "za drogo za tę ilość atrakcji", "fixed_points": 18},
+          {"text": "chętnie przyjdziemy znowu", "fixed_points": 9},
+          {"text": "te pingwiny były najlepsze", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]
