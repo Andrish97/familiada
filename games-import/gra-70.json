@@ -1,0 +1,109 @@
+[{
+  "title": "Polskie góralskie klimaty",
+  "description": "Oscypek, baca i muzyka na fujarce — polskie Podhale i góralska kultura to osobny świat! Sprawdź czy twoje góralskie skojarzenia pokrywają się z innymi Polakami!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Podaj coś czego musisz spróbować na Podhalu.",
+        "answers": [
+          {"text": "oscypek z żurawiną", "fixed_points": 44},
+          {"text": "żurek po góralsku", "fixed_points": 26},
+          {"text": "bigos góralski", "fixed_points": 16},
+          {"text": "grzaniec góralski", "fixed_points": 9},
+          {"text": "kwaśnica", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co Polacy robią w Zakopanem.",
+        "answers": [
+          {"text": "wchodzą na Kasprowy lub Giewont", "fixed_points": 42},
+          {"text": "spacerują po Krupówkach", "fixed_points": 28},
+          {"text": "jedzą oscypka i piją grzaniec", "fixed_points": 16},
+          {"text": "jeżdżą na nartach", "fixed_points": 9},
+          {"text": "kupują pamiątki góralskie", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co kojarzy się z góralską muzyką.",
+        "answers": [
+          {"text": "skrzypce i fujarka", "fixed_points": 42},
+          {"text": "zbójnickie tańce", "fixed_points": 26},
+          {"text": "śpiewy hej hej i łajdy", "fixed_points": 18},
+          {"text": "kapela góralska", "fixed_points": 9},
+          {"text": "Sabała — legendarny gawędziarz", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co mówi Polak stojąc na szczycie góry po długim podejściu?",
+        "answers": [
+          {"text": "widok wynagradza wszystko!", "fixed_points": 44},
+          {"text": "nareszcie — myślałem że nie dam rady", "fixed_points": 26},
+          {"text": "dlaczego nie pojechałem kolejką?", "fixed_points": 16},
+          {"text": "teraz trzeba jeszcze zejść...", "fixed_points": 9},
+          {"text": "robimy zdjęcie obowiązkowo", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co góral odpowiada gdy ktoś pyta o drogę w górach?",
+        "answers": [
+          {"text": "po tamtej stronie jakoś tędy", "fixed_points": 40},
+          {"text": "idźcie ta dróżką pod halą", "fixed_points": 26},
+          {"text": "niedaleko ale trochę", "fixed_points": 18},
+          {"text": "tu prosto aż nie prosto", "fixed_points": 11},
+          {"text": "kupcie mapę to wiecie", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co Polacy kupują jako pamiątkę z Zakopanego.",
+        "answers": [
+          {"text": "oscypek do domu w torbie", "fixed_points": 42},
+          {"text": "drewniana figurka lub magnes", "fixed_points": 26},
+          {"text": "ciupagę lub góralską laskę", "fixed_points": 16},
+          {"text": "wełniany sweter lub skarpety", "fixed_points": 11},
+          {"text": "góralskie zdobione pudełko", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co denerwuje Polaków w Zakopanem?",
+        "answers": [
+          {"text": "tłumy turystów na Krupówkach", "fixed_points": 40},
+          {"text": "drogie noclegi", "fixed_points": 28},
+          {"text": "korki na Zakopiance", "fixed_points": 18},
+          {"text": "natarczywe sprzedawanie pamiątek", "fixed_points": 9},
+          {"text": "zepsuta pogoda i mgła", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co każdy Polak wie o góralach.",
+        "answers": [
+          {"text": "mówią gwarą podhalańską", "fixed_points": 42},
+          {"text": "hospodorze to góralski powitanie", "fixed_points": 26},
+          {"text": "noszą tradycyjne stroje na uroczystości", "fixed_points": 16},
+          {"text": "oscypek to ich specjalność", "fixed_points": 11},
+          {"text": "są twardzi jak Tatry", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co robi Polak gdy jego nogi mdleją ze zmęczenia w połowie szlaku?",
+        "answers": [
+          {"text": "siada na kamieniu i odpoczywa", "fixed_points": 42},
+          {"text": "jeśli wróciłby się wstydził — idzie dalej", "fixed_points": 26},
+          {"text": "je batonik i pije wodę", "fixed_points": 18},
+          {"text": "mówi że to już ostatnia wycieczka górska", "fixed_points": 9},
+          {"text": "zawraca i tłumaczy że pogoda", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co jest obowiązkowe na góralskim weselu.",
+        "answers": [
+          {"text": "kapela góralska", "fixed_points": 44},
+          {"text": "zbójnicki taniec", "fixed_points": 26},
+          {"text": "stroje góralskie dla gości", "fixed_points": 16},
+          {"text": "jedzenie z regionu — oscypek i kwaśnica", "fixed_points": 9},
+          {"text": "grzaniec i nalewki", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]

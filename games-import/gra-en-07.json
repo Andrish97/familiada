@@ -1,0 +1,109 @@
+[{
+  "title": "Food delivery and takeaway",
+  "description": "Tracking the order every 30 seconds, tipping the driver in the rain and that disappointment when the chips are cold — takeaway culture is universal! See if your habits match!",
+  "lang": "en",
+  "payload": {
+    "questions": [
+      {
+        "text": "Name a reason people order food delivery instead of cooking.",
+        "answers": [
+          {"text": "too tired or lazy to cook", "fixed_points": 42},
+          {"text": "nothing in the fridge", "fixed_points": 26},
+          {"text": "it's a treat or reward day", "fixed_points": 16},
+          {"text": "having people over and no time", "fixed_points": 11},
+          {"text": "craving something specific", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name a cuisine people order most for delivery.",
+        "answers": [
+          {"text": "pizza", "fixed_points": 38},
+          {"text": "Chinese", "fixed_points": 26},
+          {"text": "Indian", "fixed_points": 18},
+          {"text": "sushi", "fixed_points": 12},
+          {"text": "burgers", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Name something people do while waiting for a delivery.",
+        "answers": [
+          {"text": "track the order live every few minutes", "fixed_points": 44},
+          {"text": "get hungrier the longer it takes", "fixed_points": 26},
+          {"text": "watch TV or a film", "fixed_points": 16},
+          {"text": "snack on something while waiting", "fixed_points": 9},
+          {"text": "keep looking out the window", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "What do people say when the food arrives cold?",
+        "answers": [
+          {"text": "I'll leave a bad review", "fixed_points": 40},
+          {"text": "I'll microwave it — still edible", "fixed_points": 26},
+          {"text": "never ordering from there again", "fixed_points": 18},
+          {"text": "contact the app for a refund", "fixed_points": 11},
+          {"text": "nothing — eat it anyway because hungry", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name something missing from the order that people notice too late.",
+        "answers": [
+          {"text": "the sauces or dips they paid for", "fixed_points": 42},
+          {"text": "an entire dish was missing", "fixed_points": 26},
+          {"text": "cutlery when they needed it", "fixed_points": 18},
+          {"text": "the chips — worst possible omission", "fixed_points": 9},
+          {"text": "the wrong item was sent", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name something people always regret ordering for delivery.",
+        "answers": [
+          {"text": "salad — never travels well", "fixed_points": 40},
+          {"text": "fish and chips — soggy by arrival", "fixed_points": 26},
+          {"text": "a hot drink or milkshake", "fixed_points": 18},
+          {"text": "fancy food that looks nothing like the photo", "fixed_points": 11},
+          {"text": "ice cream in summer", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "What do people add to the order at the last minute?",
+        "answers": [
+          {"text": "extra sides", "fixed_points": 40},
+          {"text": "a dessert", "fixed_points": 28},
+          {"text": "a drink they forgot", "fixed_points": 18},
+          {"text": "something for tomorrow too", "fixed_points": 9},
+          {"text": "a different sauce option", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name something people feel guilty about after a big takeaway.",
+        "answers": [
+          {"text": "how much they spent", "fixed_points": 40},
+          {"text": "how much they ate", "fixed_points": 28},
+          {"text": "the amount of packaging waste", "fixed_points": 18},
+          {"text": "not cooking the healthy meal they planned", "fixed_points": 9},
+          {"text": "the calories", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "When do people most often order a takeaway?",
+        "answers": [
+          {"text": "Friday or Saturday night", "fixed_points": 44},
+          {"text": "after a long hard day at work", "fixed_points": 26},
+          {"text": "when watching a big game or event", "fixed_points": 16},
+          {"text": "hangover Sunday", "fixed_points": 9},
+          {"text": "when there's literally nothing at home", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name something people say when someone questions the cost of ordering in.",
+        "answers": [
+          {"text": "I work hard and deserve it", "fixed_points": 42},
+          {"text": "it saves time which is valuable", "fixed_points": 26},
+          {"text": "once in a while it's fine", "fixed_points": 18},
+          {"text": "cooking also costs money and time", "fixed_points": 9},
+          {"text": "I'll eat healthy tomorrow", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]

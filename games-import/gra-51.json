@@ -1,0 +1,109 @@
+[{
+  "title": "Komunikacja miejska",
+  "description": "Autobus, tramwaj, metro i wieczne spóźnienia — polska komunikacja miejska to osobny świat! Sprawdź czy twoje doświadczenia z MPK są podobne do innych Polaków!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Podaj powód dla którego autobus się spóźnia.",
+        "answers": [
+          {"text": "korki na drodze", "fixed_points": 44},
+          {"text": "wcześniej odjechał", "fixed_points": 26},
+          {"text": "awaria pojazdu", "fixed_points": 16},
+          {"text": "wypadek na trasie", "fixed_points": 9},
+          {"text": "nie wiadomo dlaczego", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co robisz czekając na przystanku gdy zimno?",
+        "answers": [
+          {"text": "tupiesz nogami i chuchasz w ręce", "fixed_points": 42},
+          {"text": "chowasz się w wiacie", "fixed_points": 28},
+          {"text": "sprawdzasz telefon", "fixed_points": 16},
+          {"text": "chodzisz w kółko", "fixed_points": 9},
+          {"text": "zamawiasz taksówkę zamiast", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co denerwuje w autobusie lub tramwaju.",
+        "answers": [
+          {"text": "tłok w godzinach szczytu", "fixed_points": 40},
+          {"text": "ktoś gra muzykę głośno", "fixed_points": 26},
+          {"text": "nie ustępują miejsca starszym", "fixed_points": 18},
+          {"text": "smród", "fixed_points": 11},
+          {"text": "rozmowy przez telefon", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co mówi pasażer gdy autobus jest pełny?",
+        "answers": [
+          {"text": "już nie wchodzę", "fixed_points": 42},
+          {"text": "poczekam na następny", "fixed_points": 28},
+          {"text": "wciskacie się jeszcze?!", "fixed_points": 16},
+          {"text": "to nieludzkie", "fixed_points": 9},
+          {"text": "jadę taksówką", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co pasażer robi w komunikacji miejskiej.",
+        "answers": [
+          {"text": "patrzy w telefon", "fixed_points": 44},
+          {"text": "słucha muzyki", "fixed_points": 26},
+          {"text": "śpi", "fixed_points": 16},
+          {"text": "czyta książkę lub gazetę", "fixed_points": 9},
+          {"text": "gapi się przez okno", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co robi pasażer gdy nie ma biletu a wchodzi kontroler?",
+        "answers": [
+          {"text": "panikuje i szuka w kieszeniach", "fixed_points": 40},
+          {"text": "udaje że patrzy przez okno", "fixed_points": 26},
+          {"text": "wysiada na następnym przystanku", "fixed_points": 18},
+          {"text": "mówi że zapomniał", "fixed_points": 11},
+          {"text": "przyjmuje mandat bez słowa", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co jest denerwujące na przystanku.",
+        "answers": [
+          {"text": "brak rozkładu jazdy lub nieaktualny", "fixed_points": 42},
+          {"text": "brak wiaty gdy pada", "fixed_points": 26},
+          {"text": "śmieci dookoła", "fixed_points": 18},
+          {"text": "palacze przy wiacie", "fixed_points": 9},
+          {"text": "ktoś głośno rozmawia", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Kiedy Polacy decydują się wziąć komunikację zamiast auta?",
+        "answers": [
+          {"text": "gdy nie ma gdzie zaparkować", "fixed_points": 40},
+          {"text": "gdy nie wolno pić i jechać", "fixed_points": 28},
+          {"text": "gdy korki są za duże", "fixed_points": 18},
+          {"text": "gdy nie ma pieniędzy na benzynę", "fixed_points": 9},
+          {"text": "gdy pada i nie chce się szukać", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co mówi Polak o komunikacji miejskiej w swoim mieście?",
+        "answers": [
+          {"text": "za rzadko jeżdżą wieczorami", "fixed_points": 40},
+          {"text": "kiedyś było lepiej", "fixed_points": 26},
+          {"text": "bilety za drogie", "fixed_points": 18},
+          {"text": "rozkład nie trzyma się godzin", "fixed_points": 11},
+          {"text": "u nas to jeszcze całkiem dobrze", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co widać przez okno autobusu jadąc przez miasto.",
+        "answers": [
+          {"text": "korki i samochody", "fixed_points": 42},
+          {"text": "sklepy i reklamy", "fixed_points": 28},
+          {"text": "ludzi na chodniku", "fixed_points": 16},
+          {"text": "place budowy", "fixed_points": 9},
+          {"text": "inne autobusy", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]

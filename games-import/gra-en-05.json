@@ -1,0 +1,109 @@
+[{
+  "title": "Travel and airports",
+  "description": "Arriving 3 hours early, overpacking and that moment when your bag is 0.5kg overweight — travel has its universal stresses! See if your airport rituals match the crowd!",
+  "lang": "en",
+  "payload": {
+    "questions": [
+      {
+        "text": "Name something people panic about at the airport.",
+        "answers": [
+          {"text": "lost or forgotten passport", "fixed_points": 42},
+          {"text": "luggage over the weight limit", "fixed_points": 26},
+          {"text": "running late for boarding", "fixed_points": 18},
+          {"text": "long security queue", "fixed_points": 9},
+          {"text": "wrong terminal or gate", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name something people do during a long layover.",
+        "answers": [
+          {"text": "browse duty-free shops", "fixed_points": 40},
+          {"text": "eat at the airport restaurant or bar", "fixed_points": 26},
+          {"text": "sleep on chairs or the floor", "fixed_points": 18},
+          {"text": "charge phone and scroll social media", "fixed_points": 11},
+          {"text": "walk laps to kill time", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "What do people overpack in their suitcase?",
+        "answers": [
+          {"text": "clothes they never end up wearing", "fixed_points": 44},
+          {"text": "too many shoes", "fixed_points": 26},
+          {"text": "full-size toiletries", "fixed_points": 16},
+          {"text": "just-in-case items", "fixed_points": 9},
+          {"text": "snacks for the journey", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name something people buy at the airport they didn't plan to.",
+        "answers": [
+          {"text": "overpriced food or coffee", "fixed_points": 40},
+          {"text": "alcohol from duty-free", "fixed_points": 28},
+          {"text": "a book or magazine", "fixed_points": 18},
+          {"text": "a gift or souvenir they don't need", "fixed_points": 9},
+          {"text": "something from a sale rack", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "What do people say when the flight is delayed?",
+        "answers": [
+          {"text": "typical — always happens to me", "fixed_points": 42},
+          {"text": "how long is the delay?", "fixed_points": 26},
+          {"text": "I'm going to miss my connection", "fixed_points": 18},
+          {"text": "at least I'm in the airport bar", "fixed_points": 9},
+          {"text": "will we still arrive on time?", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name something people do on the plane to pass the time.",
+        "answers": [
+          {"text": "watch a film or TV show", "fixed_points": 40},
+          {"text": "sleep", "fixed_points": 28},
+          {"text": "read a book", "fixed_points": 18},
+          {"text": "listen to music", "fixed_points": 9},
+          {"text": "chat to the person next to them", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name something that makes a flight really uncomfortable.",
+        "answers": [
+          {"text": "middle seat with no armrest space", "fixed_points": 40},
+          {"text": "the person reclined in front of you", "fixed_points": 26},
+          {"text": "a crying baby nearby", "fixed_points": 18},
+          {"text": "severe turbulence", "fixed_points": 11},
+          {"text": "someone smelling strongly", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name something tourists do that locals find annoying.",
+        "answers": [
+          {"text": "block the pavement taking photos", "fixed_points": 42},
+          {"text": "speak very loudly in public", "fixed_points": 26},
+          {"text": "go to all the tourist traps and nothing authentic", "fixed_points": 18},
+          {"text": "complain about local food", "fixed_points": 9},
+          {"text": "not know basic local manners", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name something people say when they get home from a holiday.",
+        "answers": [
+          {"text": "I need a holiday to recover from the holiday", "fixed_points": 42},
+          {"text": "the weather was amazing", "fixed_points": 26},
+          {"text": "I want to move there permanently", "fixed_points": 18},
+          {"text": "back to reality — ugh", "fixed_points": 9},
+          {"text": "already planning the next one", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name a travel item people swear by but forget to pack.",
+        "answers": [
+          {"text": "a travel adapter", "fixed_points": 40},
+          {"text": "a neck pillow", "fixed_points": 26},
+          {"text": "painkillers or medicine", "fixed_points": 18},
+          {"text": "a small padlock for luggage", "fixed_points": 11},
+          {"text": "a portable charger", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]

@@ -1,0 +1,109 @@
+[{
+  "title": "Public transport",
+  "description": "The bus that never comes, the seat you hate sitting next to and the art of pretending to sleep — public transport is a shared experience for millions! See if your commute habits match!",
+  "lang": "en",
+  "payload": {
+    "questions": [
+      {
+        "text": "Name something people do while waiting for a bus or train.",
+        "answers": [
+          {"text": "scroll through the phone", "fixed_points": 44},
+          {"text": "check the timetable repeatedly", "fixed_points": 26},
+          {"text": "listen to music or podcasts", "fixed_points": 16},
+          {"text": "pace up and down impatiently", "fixed_points": 9},
+          {"text": "chat to a stranger", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name something annoying about other passengers on public transport.",
+        "answers": [
+          {"text": "loud phone calls in a quiet carriage", "fixed_points": 42},
+          {"text": "taking up two seats with bags", "fixed_points": 26},
+          {"text": "eating smelly food", "fixed_points": 18},
+          {"text": "playing music without headphones", "fixed_points": 9},
+          {"text": "pushing to get on before people exit", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name something people say when the bus or train is late.",
+        "answers": [
+          {"text": "typical — always late", "fixed_points": 42},
+          {"text": "I'm going to be late for work", "fixed_points": 26},
+          {"text": "I should have left earlier", "fixed_points": 18},
+          {"text": "where is the app update?", "fixed_points": 9},
+          {"text": "I'll just call a taxi", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name a type of passenger that makes everyone uncomfortable.",
+        "answers": [
+          {"text": "the one talking loudly on the phone", "fixed_points": 40},
+          {"text": "the one taking up too much space", "fixed_points": 26},
+          {"text": "the one who smells strongly", "fixed_points": 18},
+          {"text": "the one who stares at everyone", "fixed_points": 11},
+          {"text": "the one eating a full meal", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name something people pretend to do to avoid conversation on transport.",
+        "answers": [
+          {"text": "stare at the phone intensely", "fixed_points": 44},
+          {"text": "close their eyes and pretend to sleep", "fixed_points": 26},
+          {"text": "put in headphones immediately", "fixed_points": 18},
+          {"text": "look out the window", "fixed_points": 7},
+          {"text": "suddenly become very busy reading", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name something people do on a long train journey.",
+        "answers": [
+          {"text": "watch films or series", "fixed_points": 40},
+          {"text": "read a book", "fixed_points": 26},
+          {"text": "eat and snack constantly", "fixed_points": 18},
+          {"text": "sleep most of the way", "fixed_points": 11},
+          {"text": "work on a laptop", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name something people complain about on the underground or metro.",
+        "answers": [
+          {"text": "it is too hot and stuffy", "fixed_points": 42},
+          {"text": "it is packed like sardines in rush hour", "fixed_points": 26},
+          {"text": "there is no signal for the phone", "fixed_points": 18},
+          {"text": "the delays and signal failures", "fixed_points": 9},
+          {"text": "the price of a ticket", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name something people forget when using public transport.",
+        "answers": [
+          {"text": "their travel card or ticket", "fixed_points": 40},
+          {"text": "to check the last service time", "fixed_points": 26},
+          {"text": "headphones at home", "fixed_points": 18},
+          {"text": "which stop to get off at", "fixed_points": 11},
+          {"text": "their bag or coat on the seat", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name something people think but never say on a packed bus.",
+        "answers": [
+          {"text": "please don't sit next to me", "fixed_points": 42},
+          {"text": "that music is way too loud", "fixed_points": 26},
+          {"text": "please move down — there's space at the back", "fixed_points": 18},
+          {"text": "how is that smell even legal", "fixed_points": 9},
+          {"text": "someone should give up their seat", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name a reason people prefer driving over public transport.",
+        "answers": [
+          {"text": "door-to-door convenience", "fixed_points": 40},
+          {"text": "no other people to deal with", "fixed_points": 26},
+          {"text": "faster — no waiting or connections", "fixed_points": 18},
+          {"text": "can listen to what you want", "fixed_points": 11},
+          {"text": "can carry as much as you want", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]

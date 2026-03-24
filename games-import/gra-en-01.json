@@ -1,0 +1,109 @@
+[{
+  "title": "At the office",
+  "description": "Monday meetings, the coffee machine queue and that one colleague who microwaves fish — office life has its own universal rules! Find out if your workplace experiences match others!",
+  "lang": "en",
+  "payload": {
+    "questions": [
+      {
+        "text": "Name something people do to look busy when the boss walks by.",
+        "answers": [
+          {"text": "stare intensely at the screen", "fixed_points": 44},
+          {"text": "type furiously on the keyboard", "fixed_points": 26},
+          {"text": "hold papers and walk with purpose", "fixed_points": 16},
+          {"text": "put on headphones", "fixed_points": 9},
+          {"text": "open a spreadsheet", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name something that gets stolen from the office kitchen.",
+        "answers": [
+          {"text": "someone's lunch from the fridge", "fixed_points": 44},
+          {"text": "milk or coffee", "fixed_points": 26},
+          {"text": "mugs and spoons", "fixed_points": 16},
+          {"text": "snacks left on the counter", "fixed_points": 9},
+          {"text": "the last teabag", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name something people complain about in an open-plan office.",
+        "answers": [
+          {"text": "it's too noisy to concentrate", "fixed_points": 40},
+          {"text": "phone calls on speaker", "fixed_points": 26},
+          {"text": "someone eating smelly food", "fixed_points": 18},
+          {"text": "the temperature — always too hot or cold", "fixed_points": 11},
+          {"text": "someone's loud keyboard", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "What do people say when a meeting could have been an email?",
+        "answers": [
+          {"text": "this could have been an email", "fixed_points": 50},
+          {"text": "do we really need everyone here?", "fixed_points": 24},
+          {"text": "we've been over this already", "fixed_points": 14},
+          {"text": "can we wrap this up?", "fixed_points": 8},
+          {"text": "I have another meeting after this", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Name something people do in a boring work meeting.",
+        "answers": [
+          {"text": "scroll their phone under the table", "fixed_points": 40},
+          {"text": "doodle in their notebook", "fixed_points": 26},
+          {"text": "stare out the window", "fixed_points": 18},
+          {"text": "pretend to take notes", "fixed_points": 11},
+          {"text": "fight the urge to fall asleep", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name something colleagues talk about at the coffee machine.",
+        "answers": [
+          {"text": "weekend plans", "fixed_points": 40},
+          {"text": "office gossip", "fixed_points": 28},
+          {"text": "the weather", "fixed_points": 18},
+          {"text": "complaining about workload", "fixed_points": 9},
+          {"text": "last night's TV show", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "What do people write in a work email they don't want to send?",
+        "answers": [
+          {"text": "per my last email...", "fixed_points": 42},
+          {"text": "as discussed...", "fixed_points": 26},
+          {"text": "going forward...", "fixed_points": 18},
+          {"text": "circling back on this", "fixed_points": 9},
+          {"text": "hope this email finds you well", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "What do people do on their last day before vacation?",
+        "answers": [
+          {"text": "set up an out-of-office auto-reply", "fixed_points": 40},
+          {"text": "rush to finish everything", "fixed_points": 28},
+          {"text": "leave early", "fixed_points": 18},
+          {"text": "delegate everything to a colleague", "fixed_points": 9},
+          {"text": "plan to check emails anyway", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name something that makes Monday morning worse.",
+        "answers": [
+          {"text": "a full inbox of emails", "fixed_points": 42},
+          {"text": "a 9am meeting", "fixed_points": 26},
+          {"text": "running out of coffee at home", "fixed_points": 18},
+          {"text": "traffic or delayed commute", "fixed_points": 9},
+          {"text": "remembering a deadline you forgot", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "What do people say on Friday afternoon?",
+        "answers": [
+          {"text": "finally! weekend!", "fixed_points": 44},
+          {"text": "we'll deal with that on Monday", "fixed_points": 26},
+          {"text": "anyone for drinks after work?", "fixed_points": 16},
+          {"text": "I'll just send this one last thing", "fixed_points": 9},
+          {"text": "I'm logging off at exactly 5", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]

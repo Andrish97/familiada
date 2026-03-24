@@ -1,0 +1,109 @@
+[{
+  "title": "W aptece",
+  "description": "Kolejka, recepta i pytanie \"czy to na kaszel suchy czy mokry\" — polska apteka to osobna instytucja! Sprawdź czy twoje apteczne doświadczenia są podobne do innych Polaków!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Co kupujesz w aptece bez recepty?",
+        "answers": [
+          {"text": "leki na przeziębienie i grypę", "fixed_points": 40},
+          {"text": "tabletki przeciwbólowe", "fixed_points": 28},
+          {"text": "witaminy i suplementy", "fixed_points": 18},
+          {"text": "plastry i bandaże", "fixed_points": 9},
+          {"text": "leki na żołądek", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co mówi farmaceuta gdy kupujesz leki bez recepty?",
+        "answers": [
+          {"text": "czy to na kaszel suchy czy mokry?", "fixed_points": 44},
+          {"text": "polecam coś skuteczniejszego", "fixed_points": 26},
+          {"text": "miał pan ostatnio alergię?", "fixed_points": 16},
+          {"text": "czy bierze pan inne leki?", "fixed_points": 9},
+          {"text": "poda pan dowód do recepty?", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj powód dla którego Polacy idą do apteki zamiast do lekarza.",
+        "answers": [
+          {"text": "szybciej i bez kolejki do doktora", "fixed_points": 42},
+          {"text": "farmaceuta doradzi bez recepty", "fixed_points": 28},
+          {"text": "oszczędność czasu", "fixed_points": 16},
+          {"text": "znają już co im pomaga", "fixed_points": 9},
+          {"text": "wstyd iść do lekarza z taką drobnostką", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co Polacy trzymają w domowej apteczce?",
+        "answers": [
+          {"text": "tabletki przeciwbólowe", "fixed_points": 44},
+          {"text": "plastry i bandaże", "fixed_points": 26},
+          {"text": "leki na przeziębienie", "fixed_points": 16},
+          {"text": "maści i kremy", "fixed_points": 9},
+          {"text": "leki po terminie bo szkoda wyrzucić", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co się dzieje gdy przynosisz receptę do apteki?",
+        "answers": [
+          {"text": "kolejka i czekasz", "fixed_points": 42},
+          {"text": "farmaceuta sprawdza czy mają na stanie", "fixed_points": 26},
+          {"text": "mówią że leku nie ma i zamówią", "fixed_points": 18},
+          {"text": "pytają o PESEL", "fixed_points": 9},
+          {"text": "proponują zamiennik", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co mówi Polak gdy lek jest za drogi w aptece?",
+        "answers": [
+          {"text": "a jest coś tańszego?", "fixed_points": 44},
+          {"text": "zamiennik genetyczny proszę", "fixed_points": 26},
+          {"text": "sprawdzę w internecie", "fixed_points": 16},
+          {"text": "mam refundację?", "fixed_points": 9},
+          {"text": "kupię w internecie taniej", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co Polacy kupują w aptece choć nie są chorzy.",
+        "answers": [
+          {"text": "witaminy C i D", "fixed_points": 40},
+          {"text": "kosmetyki i kremy", "fixed_points": 28},
+          {"text": "prezerwatywy", "fixed_points": 18},
+          {"text": "suplementy diety", "fixed_points": 9},
+          {"text": "maski i chusteczki", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co Polacy robią gdy apteka jest zamknięta a potrzebują leku?",
+        "answers": [
+          {"text": "szukają całodobowej apteki", "fixed_points": 44},
+          {"text": "zamawiają przez internet", "fixed_points": 26},
+          {"text": "pytają sąsiadów czy mają coś w domu", "fixed_points": 16},
+          {"text": "jadą do szpitalnego SOR", "fixed_points": 9},
+          {"text": "cierpią i czekają do rana", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co babcia trzyma w apteczce na wszystko.",
+        "answers": [
+          {"text": "spirytus", "fixed_points": 42},
+          {"text": "nalewka ziołowa", "fixed_points": 28},
+          {"text": "maść z mniszkiem lub arniką", "fixed_points": 16},
+          {"text": "wywar z rumianku", "fixed_points": 9},
+          {"text": "aspiryna na wszelki wypadek", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co Polak czuje gdy widzi rachunek za leki?",
+        "answers": [
+          {"text": "szok — tyle za takie małe pudełko?!", "fixed_points": 44},
+          {"text": "wdzięczność za refundację", "fixed_points": 26},
+          {"text": "rezygnację — i tak kupię", "fixed_points": 16},
+          {"text": "motywację żeby dbać o zdrowie", "fixed_points": 9},
+          {"text": "spokój — zdrowie jest bezcenne", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]

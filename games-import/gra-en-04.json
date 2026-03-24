@@ -1,0 +1,109 @@
+[{
+  "title": "Going to the gym",
+  "description": "New Year resolutions, the person who grunts too loud and the mystery of the gym selfie — working out has its own culture! See if your gym habits are more common than you think!",
+  "lang": "en",
+  "payload": {
+    "questions": [
+      {
+        "text": "Name a reason people skip the gym.",
+        "answers": [
+          {"text": "too tired after work", "fixed_points": 40},
+          {"text": "it's raining or cold outside", "fixed_points": 26},
+          {"text": "didn't sleep well", "fixed_points": 18},
+          {"text": "I'll go tomorrow for sure", "fixed_points": 11},
+          {"text": "something came up last minute", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name something annoying at the gym.",
+        "answers": [
+          {"text": "someone who doesn't wipe down the equipment", "fixed_points": 40},
+          {"text": "people hogging machines on their phone", "fixed_points": 26},
+          {"text": "grunting too loudly when lifting", "fixed_points": 18},
+          {"text": "the gym is packed after New Year", "fixed_points": 11},
+          {"text": "unsolicited advice from strangers", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "What do people say when they haven't been to the gym in weeks?",
+        "answers": [
+          {"text": "I need to get back into it", "fixed_points": 42},
+          {"text": "I've been so busy lately", "fixed_points": 26},
+          {"text": "I'll start fresh on Monday", "fixed_points": 18},
+          {"text": "I've been going for walks instead", "fixed_points": 9},
+          {"text": "my membership is basically a donation", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name something people bring to the gym.",
+        "answers": [
+          {"text": "water bottle", "fixed_points": 40},
+          {"text": "earphones and a playlist", "fixed_points": 28},
+          {"text": "a towel", "fixed_points": 18},
+          {"text": "protein shake or snack", "fixed_points": 9},
+          {"text": "gym gloves or belt", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name something people do after a really good workout.",
+        "answers": [
+          {"text": "feel great and energised", "fixed_points": 42},
+          {"text": "eat something immediately", "fixed_points": 26},
+          {"text": "take a selfie or post about it", "fixed_points": 18},
+          {"text": "promise to come back tomorrow", "fixed_points": 9},
+          {"text": "have a long shower", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "What exercise do people say they hate but keep doing?",
+        "answers": [
+          {"text": "leg day — squats and lunges", "fixed_points": 38},
+          {"text": "running on the treadmill", "fixed_points": 26},
+          {"text": "burpees", "fixed_points": 18},
+          {"text": "planks", "fixed_points": 12},
+          {"text": "sit-ups", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Name something people say to justify not exercising.",
+        "answers": [
+          {"text": "I walked a lot today — that counts", "fixed_points": 42},
+          {"text": "rest days are important for recovery", "fixed_points": 26},
+          {"text": "I'll go twice next week", "fixed_points": 18},
+          {"text": "I'm not a gym person — running is my thing", "fixed_points": 9},
+          {"text": "I do yoga at home", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name something people focus on when they first join a gym.",
+        "answers": [
+          {"text": "losing weight quickly", "fixed_points": 40},
+          {"text": "figuring out how the machines work", "fixed_points": 26},
+          {"text": "not looking stupid in front of others", "fixed_points": 18},
+          {"text": "building a consistent routine", "fixed_points": 11},
+          {"text": "copying what fit people are doing", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "When do gyms get most crowded?",
+        "answers": [
+          {"text": "January — New Year resolutions", "fixed_points": 44},
+          {"text": "after work from 5 to 7pm", "fixed_points": 26},
+          {"text": "before summer — beach season prep", "fixed_points": 16},
+          {"text": "Saturday mornings", "fixed_points": 9},
+          {"text": "around lunchtime", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name something people eat after the gym.",
+        "answers": [
+          {"text": "protein shake", "fixed_points": 40},
+          {"text": "chicken and rice", "fixed_points": 26},
+          {"text": "a banana or fruit", "fixed_points": 18},
+          {"text": "whatever they find at home", "fixed_points": 11},
+          {"text": "fast food — earned it", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]

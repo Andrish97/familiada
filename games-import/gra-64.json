@@ -1,0 +1,109 @@
+[{
+  "title": "Spotkanie klasowe",
+  "description": "Kto się postarzał, kto schudł, kto ma dzieci i kto wyjechał za granicę — polskie spotkanie klasowe po latach to wyjątkowe wydarzenie! Sprawdź czy twoje doświadczenia są podobne!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Co pierwsze zauważasz gdy widzisz kolegę ze szkoły po latach?",
+        "answers": [
+          {"text": "jak bardzo się postarzał lub zmienił", "fixed_points": 44},
+          {"text": "czy schudł czy przybrał na wadze", "fixed_points": 26},
+          {"text": "czy ma rodzinę — dzieci i partnera", "fixed_points": 16},
+          {"text": "czy wciąż taki sam jak w szkole", "fixed_points": 9},
+          {"text": "co robi zawodowo teraz", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj temat rozmowy na spotkaniu klasowym.",
+        "answers": [
+          {"text": "co u kogo słychać — praca i rodzina", "fixed_points": 42},
+          {"text": "wspomnienia ze szkoły", "fixed_points": 26},
+          {"text": "kto z kim chodził w szkole", "fixed_points": 18},
+          {"text": "gdzie kto mieszka teraz", "fixed_points": 9},
+          {"text": "kto wyjechał za granicę", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co robi osoba której się w życiu powiodło na spotkaniu klasowym?",
+        "answers": [
+          {"text": "naturalnie wspomina sukcesy", "fixed_points": 40},
+          {"text": "chwali się nowym samochodem lub domem", "fixed_points": 26},
+          {"text": "stara się być skromna", "fixed_points": 18},
+          {"text": "opowiada o podróżach", "fixed_points": 11},
+          {"text": "stawia wszystkim", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Kto na spotkaniu klasowym mówi że wróci i nie wraca?",
+        "answers": [
+          {"text": "każdy kto mieszka daleko", "fixed_points": 40},
+          {"text": "kto szybko się nudzi", "fixed_points": 26},
+          {"text": "osoba której znajomości są już inne", "fixed_points": 18},
+          {"text": "kto przyszedł tylko z obowiązku", "fixed_points": 11},
+          {"text": "prawie połowa sali", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co mówi wychowawca klasy gdy wszystkich widzi po latach?",
+        "answers": [
+          {"text": "wyglądacie świetnie — nie zmieniliście się", "fixed_points": 44},
+          {"text": "pamiętam każdego z was", "fixed_points": 26},
+          {"text": "byłeś taki grzeczny — co się stało!", "fixed_points": 16},
+          {"text": "cieszę się że tak wam poszło", "fixed_points": 9},
+          {"text": "pamiętacie ten incydent z lekcji?", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj powód dla którego niektórzy nie przychodzą na spotkanie klasowe.",
+        "answers": [
+          {"text": "wstydzą się jak im poszło", "fixed_points": 42},
+          {"text": "nie utrzymują kontaktu z klasą", "fixed_points": 26},
+          {"text": "mieszkają za daleko", "fixed_points": 18},
+          {"text": "mają złe wspomnienia ze szkoły", "fixed_points": 9},
+          {"text": "brak czasu i praca", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Ile lat po szkole jest pierwsze spotkanie klasowe?",
+        "answers": [
+          {"text": "10 lat po maturze", "fixed_points": 42},
+          {"text": "5 lat", "fixed_points": 26},
+          {"text": "20 lat", "fixed_points": 18},
+          {"text": "rok po szkole — jeszcze wszyscy w kontakcie", "fixed_points": 9},
+          {"text": "25 lub 30 lat", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co jest zaskakujące na spotkaniu klasowym?",
+        "answers": [
+          {"text": "te osoby które się najbardziej zmieniły", "fixed_points": 40},
+          {"text": "kto z kim teraz jest razem", "fixed_points": 28},
+          {"text": "kto ma już wnuki", "fixed_points": 18},
+          {"text": "kto wyjechał do innego kraju", "fixed_points": 9},
+          {"text": "kto nie zmienił się w ogóle", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co wszyscy wspominają ze szkoły ze śmiechem.",
+        "answers": [
+          {"text": "wpadki i dowcipy na lekcjach", "fixed_points": 42},
+          {"text": "surowego nauczyciela którego się bali", "fixed_points": 26},
+          {"text": "klasowe wycieczki", "fixed_points": 18},
+          {"text": "miłości i zauroczenia z tamtego czasu", "fixed_points": 9},
+          {"text": "szkolne dramaty i kłótnie kto z kim", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co Polacy mówią po spotkaniu klasowym w domu?",
+        "answers": [
+          {"text": "jak ludzie szybko się starzeją", "fixed_points": 42},
+          {"text": "ktoś niesamowicie dobrze wygląda jak na te lata", "fixed_points": 26},
+          {"text": "ciekawe co u X słychać naprawdę", "fixed_points": 18},
+          {"text": "cieszę się że poszłam/poszedłem", "fixed_points": 9},
+          {"text": "już dawno temu — a jakby wczoraj", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]

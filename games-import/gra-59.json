@@ -1,0 +1,109 @@
+[{
+  "title": "Lekcje jazdy",
+  "description": "Instruktor który mówi \"spokojnie\" gdy ręce ci drżą i egzamin który oblałeś przez tę jedną wpadkę — kurs prawa jazdy to polskie rytuały przejścia! Sprawdź czy twoje doświadczenia są typowe!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Co czujesz na pierwszej lekcji jazdy?",
+        "answers": [
+          {"text": "stres i spięcie", "fixed_points": 44},
+          {"text": "podekscytowanie", "fixed_points": 26},
+          {"text": "strach że coś zniszczę", "fixed_points": 16},
+          {"text": "zagubienie w kabinie auta", "fixed_points": 9},
+          {"text": "pewność siebie — ile to może być trudne", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co mówi instruktor jazdy podczas lekcji?",
+        "answers": [
+          {"text": "spokojnie, nie taki diabeł straszny", "fixed_points": 40},
+          {"text": "hamulec! hamulec!", "fixed_points": 28},
+          {"text": "obserwuj lusterka", "fixed_points": 18},
+          {"text": "płynniej — nie szarpać sprzęgłem", "fixed_points": 9},
+          {"text": "kierunek jazdy proszę utrzymać", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj powód dla którego Polacy oblewa egzamin na prawo jazdy.",
+        "answers": [
+          {"text": "nerwy i stres na egzaminie", "fixed_points": 44},
+          {"text": "błędy na placu manewrowym", "fixed_points": 26},
+          {"text": "pytania testowe których nie znali", "fixed_points": 16},
+          {"text": "zły dzień egzaminatora", "fixed_points": 9},
+          {"text": "głupi błąd w ostatniej chwili", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co robi zdający na egzaminie gdy się zdenerwuje?",
+        "answers": [
+          {"text": "blokuje na skrzyżowaniu", "fixed_points": 42},
+          {"text": "jedzie za wolno z wystraszenia", "fixed_points": 26},
+          {"text": "zapomina włączyć kierunkowskaz", "fixed_points": 18},
+          {"text": "myli lewy z prawym", "fixed_points": 9},
+          {"text": "gaśnie silnik na świetle", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co Polak czuje gdy zdał egzamin na prawo jazdy?",
+        "answers": [
+          {"text": "ogromna ulga i radość", "fixed_points": 44},
+          {"text": "niedowierzanie że się udało", "fixed_points": 26},
+          {"text": "chce natychmiast jechać sam", "fixed_points": 16},
+          {"text": "dzwoni do rodziców z radością", "fixed_points": 9},
+          {"text": "świętuje z przyjaciółmi", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Ile Polak musi zdawać egzamin zanim zda?",
+        "answers": [
+          {"text": "za pierwszym — marzy każdy", "fixed_points": 36},
+          {"text": "za drugim podejściem", "fixed_points": 28},
+          {"text": "za trzecim", "fixed_points": 18},
+          {"text": "za czwartym lub piątym", "fixed_points": 12},
+          {"text": "stracił rachubę", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś co jest trudne na kursie prawa jazdy.",
+        "answers": [
+          {"text": "slalom lub cofanie na placu", "fixed_points": 42},
+          {"text": "ruszanie pod górę bez staczania", "fixed_points": 26},
+          {"text": "pytania testowe — 1000 przepisów", "fixed_points": 18},
+          {"text": "parkowanie równoległe", "fixed_points": 9},
+          {"text": "jazda po mieście w godzinach szczytu", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co Polacy mówią o cenie kursu prawa jazdy?",
+        "answers": [
+          {"text": "za drogo za tę jakość szkolenia", "fixed_points": 42},
+          {"text": "i tak trzeba wydać jak nie ma wyjścia", "fixed_points": 26},
+          {"text": "kilka tysięcy to standard niestety", "fixed_points": 18},
+          {"text": "mój ojciec nauczył mnie za darmo kiedyś", "fixed_points": 9},
+          {"text": "niech wzniosą standard szkolenia to zapłacę", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj komentarz egzaminatora po oblanym egzaminie.",
+        "answers": [
+          {"text": "niestety wynik negatywny", "fixed_points": 44},
+          {"text": "popełnił pan błąd krytyczny", "fixed_points": 26},
+          {"text": "zapraszam na kolejny termin", "fixed_points": 16},
+          {"text": "musi pan poćwiczyć jeszcze", "fixed_points": 9},
+          {"text": "proszę nie denerwować się następnym razem", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Jak rodzice pomagają dziecku uczyć się jeździć samochodem?",
+        "answers": [
+          {"text": "pożyczają swoje auto do nauki", "fixed_points": 40},
+          {"text": "krzyczą i denerwują się w trakcie", "fixed_points": 28},
+          {"text": "dodają otuchy i tłumaczą spokojnie", "fixed_points": 18},
+          {"text": "chodzą z nim na dodatkowe lekcje", "fixed_points": 9},
+          {"text": "odmawiają — zbyt nerwowe", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]

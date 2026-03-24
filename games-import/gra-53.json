@@ -1,0 +1,109 @@
+[{
+  "title": "U dentysty",
+  "description": "Wiertło, znieczulenie i rachunek który boli bardziej niż ząb — dentysta to ulubione miejsce każdego Polaka! Sprawdź czy twoje dentystyczne doświadczenia są typowe!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Podaj powód dla którego Polacy odkładają wizytę u dentysty.",
+        "answers": [
+          {"text": "strach przed bólem", "fixed_points": 44},
+          {"text": "drogo", "fixed_points": 26},
+          {"text": "brak czasu", "fixed_points": 16},
+          {"text": "ząb akurat przestał boleć", "fixed_points": 9},
+          {"text": "dentysta jest zajęty na wiele tygodni", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co czujesz siedząc na fotelu dentystycznym?",
+        "answers": [
+          {"text": "strach i stres", "fixed_points": 44},
+          {"text": "dyskomfort i napięcie", "fixed_points": 26},
+          {"text": "zimny pot", "fixed_points": 16},
+          {"text": "ulgę gdy już się skończy", "fixed_points": 9},
+          {"text": "spokój — przyzwyczaiłem się", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co mówi dentysta gdy zaglądasz do ust?",
+        "answers": [
+          {"text": "niestety musimy to usunąć", "fixed_points": 40},
+          {"text": "proszę szeroko otworzyć", "fixed_points": 28},
+          {"text": "trzeba będzie założyć plombę", "fixed_points": 18},
+          {"text": "kiedy ostatnio był pan u dentysty?", "fixed_points": 9},
+          {"text": "zęby są w całkiem dobrym stanie", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co robi Polak gdy ząb zaczyna boleć?",
+        "answers": [
+          {"text": "bierze tabletkę przeciwbólową", "fixed_points": 42},
+          {"text": "czeka aż samo przejdzie", "fixed_points": 28},
+          {"text": "dzwoni do dentysty", "fixed_points": 16},
+          {"text": "płucze goździkowym olejkiem", "fixed_points": 9},
+          {"text": "pyta znajomych co robić", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś czego Polacy boją się u dentysty.",
+        "answers": [
+          {"text": "wiertła i dźwięku wiercenia", "fixed_points": 44},
+          {"text": "zastrzyku ze znieczuleniem", "fixed_points": 26},
+          {"text": "wyrywania zęba", "fixed_points": 16},
+          {"text": "rachunku na końcu", "fixed_points": 9},
+          {"text": "usłyszenia złych wiadomości", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co mówisz po wyjściu od dentysty?",
+        "answers": [
+          {"text": "nareszcie z głowy", "fixed_points": 42},
+          {"text": "byłem głupi że tak długo czekałem", "fixed_points": 26},
+          {"text": "ile to kosztowało...", "fixed_points": 18},
+          {"text": "polecam tego dentystę", "fixed_points": 9},
+          {"text": "następnym razem nie będę czekał", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co dentysta każe ci robić regularnie.",
+        "answers": [
+          {"text": "szczotkować zęby po każdym posiłku", "fixed_points": 44},
+          {"text": "nitkować zęby", "fixed_points": 26},
+          {"text": "używać płukanki", "fixed_points": 16},
+          {"text": "przychodzić co pół roku", "fixed_points": 9},
+          {"text": "ograniczyć słodycze", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co słyszysz w poczekalni u dentysty?",
+        "answers": [
+          {"text": "wiertło z gabinetu", "fixed_points": 42},
+          {"text": "cichą muzykę relaksacyjną", "fixed_points": 26},
+          {"text": "płakanie kogoś za drzwiami", "fixed_points": 18},
+          {"text": "głosy personelu", "fixed_points": 9},
+          {"text": "własne bicie serca", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Ile Polak płaci prywatnie za podstawową wizytę u dentysty?",
+        "answers": [
+          {"text": "za dużo za każdym razem", "fixed_points": 44},
+          {"text": "kilkaset złotych", "fixed_points": 28},
+          {"text": "ponad stówę za wizytę", "fixed_points": 16},
+          {"text": "NFZ jest za długo — płacę prywatnie", "fixed_points": 8},
+          {"text": "jeżdżę za granicę bo taniej", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Podaj coś co dzieci mówią o dentyście.",
+        "answers": [
+          {"text": "nie chcę tam iść!", "fixed_points": 44},
+          {"text": "boli!", "fixed_points": 28},
+          {"text": "czy będzie zastrzyk?", "fixed_points": 16},
+          {"text": "kiedy koniec?", "fixed_points": 8},
+          {"text": "chcę do domu", "fixed_points": 4}
+        ]
+      }
+    ]
+  }
+}]

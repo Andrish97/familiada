@@ -1,0 +1,109 @@
+[{
+  "title": "Sklep całodobowy nocny",
+  "description": "Żabka o północy, kupowanie bułek o 2 w nocy i kasjer który widział już wszystko — polska nocna gastronomia convenience! Sprawdź czy twoje nocne zakupy są typowe!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Co kupujesz w nocnym sklepie po imprezie?",
+        "answers": [
+          {"text": "wodę i napoje izotoniczne", "fixed_points": 42},
+          {"text": "hot doga lub kanapkę", "fixed_points": 26},
+          {"text": "chipsy i przekąski", "fixed_points": 16},
+          {"text": "papierosy", "fixed_points": 11},
+          {"text": "kebab lub frytki z pobliskiego baru", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "O której godzinie Polacy odwiedzają nocny sklep?",
+        "answers": [
+          {"text": "po północy po wyjściu z imprezy", "fixed_points": 42},
+          {"text": "późnym wieczorem gdy brakuje czegoś w domu", "fixed_points": 28},
+          {"text": "rano gdy sklepów jeszcze nie ma otwartych", "fixed_points": 16},
+          {"text": "o każdej porze gdy jest potrzeba", "fixed_points": 9},
+          {"text": "w niedzielę gdy inne sklepy zamknięte", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co zawsze kupuje się w Żabce.",
+        "answers": [
+          {"text": "świeże bułki rano", "fixed_points": 40},
+          {"text": "hot doga przy kasie", "fixed_points": 28},
+          {"text": "piwo lub napoje", "fixed_points": 18},
+          {"text": "batony i słodycze", "fixed_points": 9},
+          {"text": "mleko gdy skończyło się w domu", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co mówi kasjer całodobowego sklepu do klienta o 3 w nocy?",
+        "answers": [
+          {"text": "dobranoc — czyli dzień dobry proszę", "fixed_points": 40},
+          {"text": "karta czy gotówka?", "fixed_points": 28},
+          {"text": "nic — obsługuje milcząco", "fixed_points": 18},
+          {"text": "to wszystko czy coś jeszcze?", "fixed_points": 9},
+          {"text": "paragon?", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj powód dla którego Polacy cenią całodobowy sklep.",
+        "answers": [
+          {"text": "zawsze otwarty gdy wszystko inne zamknięte", "fixed_points": 44},
+          {"text": "blisko domu lub pracy", "fixed_points": 26},
+          {"text": "szybko i bez kolejek nocą", "fixed_points": 16},
+          {"text": "płatność kartą 24/7", "fixed_points": 9},
+          {"text": "mają wszystko na ostatnią chwilę", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co Polacy kupują w całodobowym gdy są chorzy w nocy?",
+        "answers": [
+          {"text": "leki przeciwbólowe dostępne bez recepty", "fixed_points": 44},
+          {"text": "napoje i sok pomarańczowy", "fixed_points": 26},
+          {"text": "herbata i miód na gardło", "fixed_points": 16},
+          {"text": "baton lub coś słodkiego", "fixed_points": 9},
+          {"text": "ktoś z rodziny jedzie po aptece nocnej zamiast", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co zawsze jest zbyt drogie w małym całodobowym.",
+        "answers": [
+          {"text": "wszystko — przepłacasz za wygodę", "fixed_points": 44},
+          {"text": "piwo i alkohol", "fixed_points": 26},
+          {"text": "podstawowe produkty jak mleko i chleb", "fixed_points": 16},
+          {"text": "słodycze i chipsy", "fixed_points": 9},
+          {"text": "napoje energetyczne", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Kto pracuje w nocnym sklepie według stereotypu?",
+        "answers": [
+          {"text": "student dorabiający do stypendium", "fixed_points": 40},
+          {"text": "emeryt szukający zajęcia", "fixed_points": 28},
+          {"text": "osoba która widziała już wszystko", "fixed_points": 18},
+          {"text": "ktoś kto nie chciał pracować w dzień", "fixed_points": 9},
+          {"text": "właściciel sklepu sam", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co Polacy kupują w całodobowym że niby \"tylko to jedno\"?",
+        "answers": [
+          {"text": "przychodzą po jedno i wychodzą z koszyczkiem", "fixed_points": 42},
+          {"text": "słodycze i chipsy extra", "fixed_points": 26},
+          {"text": "piwo lub wino do tego co planowali", "fixed_points": 18},
+          {"text": "coś z promocji przy kasie", "fixed_points": 9},
+          {"text": "hot doga który wyglądał apetycznie", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Jak Polacy reagują na cenę w całodobowym?",
+        "answers": [
+          {"text": "kupują bo nie ma wyjścia", "fixed_points": 44},
+          {"text": "marudzą ale płacą", "fixed_points": 26},
+          {"text": "mówią że ostatni raz tu kupują", "fixed_points": 16},
+          {"text": "porównują z ceną w normalnym sklepie", "fixed_points": 9},
+          {"text": "rezygnują z droższych rzeczy", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]

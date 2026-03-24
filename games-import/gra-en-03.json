@@ -1,0 +1,109 @@
+[{
+  "title": "Social media habits",
+  "description": "Posting the perfect photo, doomscrolling at midnight and that one person who overshares everything — social media is our digital second life! See if your habits are as common as you think!",
+  "lang": "en",
+  "payload": {
+    "questions": [
+      {
+        "text": "Name something people do before posting a photo on Instagram.",
+        "answers": [
+          {"text": "apply a filter or edit the lighting", "fixed_points": 42},
+          {"text": "take 20 shots to get the right one", "fixed_points": 26},
+          {"text": "crop out something embarrassing", "fixed_points": 16},
+          {"text": "write and rewrite the caption", "fixed_points": 11},
+          {"text": "ask a friend if it looks good", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name a reason someone deletes a post after publishing it.",
+        "answers": [
+          {"text": "not enough likes in the first hour", "fixed_points": 40},
+          {"text": "spotted a typo", "fixed_points": 26},
+          {"text": "someone commented something bad", "fixed_points": 18},
+          {"text": "posted too late — no one will see it now", "fixed_points": 11},
+          {"text": "regretted sharing something personal", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "What do people post too much of on social media?",
+        "answers": [
+          {"text": "food photos", "fixed_points": 38},
+          {"text": "their children or pets", "fixed_points": 26},
+          {"text": "motivational quotes", "fixed_points": 18},
+          {"text": "gym selfies", "fixed_points": 12},
+          {"text": "political opinions", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Name something people say they'll stop doing on social media but don't.",
+        "answers": [
+          {"text": "doomscrolling before bed", "fixed_points": 42},
+          {"text": "checking likes every 5 minutes", "fixed_points": 26},
+          {"text": "reading comments section", "fixed_points": 18},
+          {"text": "arguing with strangers online", "fixed_points": 9},
+          {"text": "comparing themselves to others", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name something that makes someone instantly unfollow an account.",
+        "answers": [
+          {"text": "too many ads or sponsored posts", "fixed_points": 44},
+          {"text": "annoying or negative content constantly", "fixed_points": 26},
+          {"text": "political rants every day", "fixed_points": 16},
+          {"text": "posting too much in general", "fixed_points": 9},
+          {"text": "a real-life fallout with that person", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name something people secretly check on an ex's profile.",
+        "answers": [
+          {"text": "who they are with now", "fixed_points": 44},
+          {"text": "if they look happy", "fixed_points": 26},
+          {"text": "if they've gained or lost weight", "fixed_points": 16},
+          {"text": "where they travel now", "fixed_points": 9},
+          {"text": "how many followers they have", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name a platform people spend too much time on.",
+        "answers": [
+          {"text": "Instagram", "fixed_points": 36},
+          {"text": "TikTok", "fixed_points": 28},
+          {"text": "YouTube", "fixed_points": 18},
+          {"text": "Facebook", "fixed_points": 12},
+          {"text": "X / Twitter", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "What do people do when they see a great photo opportunity?",
+        "answers": [
+          {"text": "grab the phone immediately", "fixed_points": 44},
+          {"text": "ask someone to take their photo", "fixed_points": 26},
+          {"text": "take multiple shots from different angles", "fixed_points": 16},
+          {"text": "wait until the light is better", "fixed_points": 9},
+          {"text": "enjoy the moment and don't photograph", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name something people lie about on social media.",
+        "answers": [
+          {"text": "how happy or perfect their life is", "fixed_points": 44},
+          {"text": "how much they exercise", "fixed_points": 26},
+          {"text": "their relationship status or happiness", "fixed_points": 16},
+          {"text": "that they don't care about likes", "fixed_points": 9},
+          {"text": "the restaurant was their idea", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "What do people say when they're caught on their phone at 2am?",
+        "answers": [
+          {"text": "just one more video then I'll sleep", "fixed_points": 44},
+          {"text": "I was just checking something quickly", "fixed_points": 26},
+          {"text": "I have insomnia anyway", "fixed_points": 16},
+          {"text": "I'm putting it down now", "fixed_points": 9},
+          {"text": "I fell asleep with it in my hand", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]

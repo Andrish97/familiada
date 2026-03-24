@@ -1,0 +1,109 @@
+[{
+  "title": "U weterynarza",
+  "description": "Kot który nagle przestaje kulić podczas wizyty i pies który trzęsie się ze strachu — polskie wizyty u weterynarza to emocje dla całej rodziny! Sprawdź czy twoje doświadczenia są typowe!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Podaj powód wizyty u weterynarza.",
+        "answers": [
+          {"text": "szczepienie roczne", "fixed_points": 40},
+          {"text": "zwierzę przestało jeść", "fixed_points": 26},
+          {"text": "wymioty lub biegunka", "fixed_points": 18},
+          {"text": "skaleczenie lub kontuzja", "fixed_points": 11},
+          {"text": "kontrolna po operacji", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co robi pies w poczekalni u weterynarza?",
+        "answers": [
+          {"text": "trzęsie się ze strachu", "fixed_points": 44},
+          {"text": "szarpie smycz i chce uciec", "fixed_points": 26},
+          {"text": "wącha innych zwierząt", "fixed_points": 16},
+          {"text": "szczeka na koty w poczekalni", "fixed_points": 9},
+          {"text": "chowa się za właścicielem", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co robi kot w transporterze u weterynarza?",
+        "answers": [
+          {"text": "miauczy głośno i nieprzerwalnie", "fixed_points": 44},
+          {"text": "siedzi cicho i obserwuje", "fixed_points": 26},
+          {"text": "chce wyskakiwać", "fixed_points": 16},
+          {"text": "drży i się skulił w kącie", "fixed_points": 9},
+          {"text": "dziwnie spokojny — tu zawsze tak robi", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co właściciel mówi o swoim zwierzęciu u weterynarza?",
+        "answers": [
+          {"text": "on jest normalnie bardzo spokojny", "fixed_points": 44},
+          {"text": "nigdy tak nie jadł w domu jak tu nie chce", "fixed_points": 26},
+          {"text": "ona jest trochę nerwowa u obcych", "fixed_points": 16},
+          {"text": "to moje skarbie nie bój się", "fixed_points": 9},
+          {"text": "zazwyczaj to inaczej wygląda", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co czuje właściciel gdy weterynarz podaje diagnozę?",
+        "answers": [
+          {"text": "strach i niepokój o pupila", "fixed_points": 42},
+          {"text": "ulgę gdy nic poważnego", "fixed_points": 28},
+          {"text": "smutek gdy coś złego", "fixed_points": 16},
+          {"text": "przerażenie kosztami leczenia", "fixed_points": 9},
+          {"text": "wdzięczność że weterynarz wie co robi", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co weterynarz mówi właścicielowi po badaniu?",
+        "answers": [
+          {"text": "wszystko w porządku nie ma powodów do obaw", "fixed_points": 40},
+          {"text": "proszę dawać te leki przez tydzień", "fixed_points": 26},
+          {"text": "musimy zrobić badania krwi", "fixed_points": 18},
+          {"text": "należy zmienić dietę zwierzęcia", "fixed_points": 11},
+          {"text": "proszę obserwować i wrócić jeśli gorzej", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Ile kosztuje wizyta u weterynarza według Polaków?",
+        "answers": [
+          {"text": "za dużo — każda wizyta boli portfel", "fixed_points": 44},
+          {"text": "więcej niż u ludzkiego lekarza", "fixed_points": 26},
+          {"text": "kilkaset złotych za badania i leki", "fixed_points": 16},
+          {"text": "drogo ale moje zwierzę tego warte", "fixed_points": 9},
+          {"text": "mam ubezpieczenie zwierzęcia", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co Polacy robią gdy nie mogą pozwolić sobie na weterynarza.",
+        "answers": [
+          {"text": "szukają porad w internecie", "fixed_points": 42},
+          {"text": "pytają znajomych z psem co robić", "fixed_points": 26},
+          {"text": "ratuje się domowymi sposobami babci", "fixed_points": 18},
+          {"text": "odkładają wizytę na kiedy będą pieniądze", "fixed_points": 9},
+          {"text": "szukają tańszego weterynarza w okolicy", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co robi właściciel gdy daje zwierzęciu leki?",
+        "answers": [
+          {"text": "chowa w jedzeniu", "fixed_points": 44},
+          {"text": "otwiera pysk siłą i wkłada tabletę", "fixed_points": 26},
+          {"text": "mieszał z przysmakiem", "fixed_points": 16},
+          {"text": "prosi o pomoc drugą osobę", "fixed_points": 9},
+          {"text": "kupuje syrop zamiast tabletek", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co Polacy mówią o swoich zwierzętach po powrocie od weterynarza?",
+        "answers": [
+          {"text": "biedactwo jak się bało", "fixed_points": 44},
+          {"text": "na szczęście nic poważnego", "fixed_points": 26},
+          {"text": "ile wydaliśmy — nie chcę myśleć", "fixed_points": 16},
+          {"text": "teraz musi wziąć leki przez dwa tygodnie", "fixed_points": 9},
+          {"text": "ten weterynarz jest najlepszy polecam", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]

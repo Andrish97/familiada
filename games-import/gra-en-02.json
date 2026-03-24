@@ -1,0 +1,109 @@
+[{
+  "title": "Movie night at home",
+  "description": "Scrolling Netflix for 40 minutes and ending up rewatching something you've already seen — movie night is an art form! See if your habits match everyone else's!",
+  "lang": "en",
+  "payload": {
+    "questions": [
+      {
+        "text": "Name something people say when they can't decide what to watch.",
+        "answers": [
+          {"text": "you pick — I don't mind", "fixed_points": 42},
+          {"text": "I've already seen everything good", "fixed_points": 26},
+          {"text": "let's just scroll for a bit", "fixed_points": 18},
+          {"text": "what mood are you in?", "fixed_points": 9},
+          {"text": "not another documentary", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name something you must have during a movie night.",
+        "answers": [
+          {"text": "popcorn", "fixed_points": 42},
+          {"text": "a comfortable blanket", "fixed_points": 26},
+          {"text": "something to drink", "fixed_points": 16},
+          {"text": "snacks and crisps", "fixed_points": 11},
+          {"text": "phone to scroll during boring bits", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name something people do that ruins the movie for others.",
+        "answers": [
+          {"text": "talk or comment throughout", "fixed_points": 40},
+          {"text": "look at their phone", "fixed_points": 28},
+          {"text": "ask what just happened every 5 minutes", "fixed_points": 18},
+          {"text": "eat something too loudly", "fixed_points": 9},
+          {"text": "spoil the ending", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name a reason someone falls asleep during a movie.",
+        "answers": [
+          {"text": "it's a slow movie", "fixed_points": 40},
+          {"text": "they're exhausted after work", "fixed_points": 26},
+          {"text": "they ate too much beforehand", "fixed_points": 18},
+          {"text": "it's late at night on the sofa", "fixed_points": 11},
+          {"text": "too warm and comfortable", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "What do people do when they've missed part of the movie?",
+        "answers": [
+          {"text": "rewind and watch again", "fixed_points": 40},
+          {"text": "ask someone what happened", "fixed_points": 28},
+          {"text": "pretend they understood it all", "fixed_points": 18},
+          {"text": "pause and explain to themselves", "fixed_points": 9},
+          {"text": "give up and look it up online", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name a genre people argue about choosing for movie night.",
+        "answers": [
+          {"text": "horror — too scary for some", "fixed_points": 38},
+          {"text": "romantic comedy — too cheesy", "fixed_points": 26},
+          {"text": "action — too loud", "fixed_points": 18},
+          {"text": "foreign film with subtitles", "fixed_points": 12},
+          {"text": "documentary — too boring for some", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Name something people scroll through before picking a film.",
+        "answers": [
+          {"text": "Netflix", "fixed_points": 40},
+          {"text": "ratings on IMDb or Rotten Tomatoes", "fixed_points": 26},
+          {"text": "YouTube trailers", "fixed_points": 18},
+          {"text": "friend recommendations", "fixed_points": 11},
+          {"text": "their watchlist they never use", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "What do people say when a film they chose turns out to be bad?",
+        "answers": [
+          {"text": "it had great reviews — I swear", "fixed_points": 44},
+          {"text": "give it 20 more minutes", "fixed_points": 26},
+          {"text": "I'm sorry — I didn't know", "fixed_points": 16},
+          {"text": "OK you pick next time", "fixed_points": 9},
+          {"text": "the trailer was much better", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Name something people eat that makes a mess during a film.",
+        "answers": [
+          {"text": "popcorn everywhere", "fixed_points": 44},
+          {"text": "crisps — too loud and crumbly", "fixed_points": 26},
+          {"text": "nachos with salsa", "fixed_points": 16},
+          {"text": "ice cream on the sofa", "fixed_points": 9},
+          {"text": "greasy pizza", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "What do people say after an unexpectedly brilliant film?",
+        "answers": [
+          {"text": "why hadn't I watched this sooner?!", "fixed_points": 42},
+          {"text": "I need to recommend this to everyone", "fixed_points": 26},
+          {"text": "let's watch it again sometime", "fixed_points": 18},
+          {"text": "that ending blew my mind", "fixed_points": 9},
+          {"text": "I can't stop thinking about it", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]
