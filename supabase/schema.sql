@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict BO0Ao8r6b4ia2cawzSNs0tAMy2pe8w1sNXfEpKKhHnP5S1oumPGHmKOpebExyrY
+\restrict b11bsuL2P883bJyISvlJuOP1apIvF2SS1okifd7M2P31A2Des5Hnxh3Utc3tAJA
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -3877,25 +3877,17 @@ $$;
 -- Name: market_admin_detail("uuid"); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION "public"."market_admin_detail"("p_id" "uuid") RETURNS TABLE("id" "uuid", "title" "text", "description" "text", "lang" "text", "status" "public"."market_game_status", "moderation_note" "text", "library_count" integer, "author_username" "text", "author_email" "text", "storage_path" "text", "payload" "jsonb", "created_at" timestamp with time zone, "source_game_id" "uuid", "origin" "text")
+CREATE FUNCTION "public"."market_admin_detail"("p_id" "uuid") RETURNS TABLE("id" "uuid", "title" "text", "description" "text", "lang" "text", "status" "public"."market_game_status", "moderation_note" "text", "library_count" integer, "author_username" "text", "author_email" "text", "payload" "jsonb", "created_at" timestamp with time zone, "source_game_id" "uuid", "origin" "text", "slug" "text")
     LANGUAGE "sql" STABLE SECURITY DEFINER
     SET "search_path" TO 'public'
     AS $$
   SELECT
-    mg.id,
-    mg.title,
-    mg.description,
-    mg.lang,
-    mg.status,
-    mg.moderation_note,
-    mg.library_count,
+    mg.id, mg.title, mg.description, mg.lang, mg.status,
+    mg.moderation_note, mg.library_count,
     COALESCE(pr.username, '') AS author_username,
     COALESCE(pr.email, '') AS author_email,
-    mg.storage_path,
-    mg.payload,
-    mg.created_at,
-    mg.source_game_id,
-    mg.origin::text AS origin
+    mg.payload, mg.created_at, mg.source_game_id,
+    mg.origin::text AS origin, mg.slug
   FROM public.market_games mg
   LEFT JOIN public.profiles pr ON pr.id = mg.author_user_id
   WHERE mg.id = p_id;
@@ -3941,6 +3933,8 @@ CREATE FUNCTION "public"."market_admin_review"("p_id" "uuid", "p_action" "text",
     AS $$
 declare
   v_new_status public.market_game_status;
+  v_title      text;
+  v_slug       text;
 begin
   if p_action = 'approve' then
     v_new_status := 'published';
@@ -3951,17 +3945,25 @@ begin
     return;
   end if;
 
-  update public.market_games
-     set status          = v_new_status,
-         origin          = case when p_action = 'approve' then 'community' else origin end,
-         moderation_note = case when p_action = 'reject' then btrim(coalesce(p_note, '')) else null end
-   where id = p_id
-     and status = 'pending';
+  select title, slug into v_title, v_slug
+    from public.market_games
+   where id = p_id and status = 'pending';
 
   if not found then
     return query select false, 'not_found_or_not_pending';
     return;
   end if;
+
+  if p_action = 'approve' and (v_slug is null or v_slug = '') then
+    v_slug := public.unique_market_slug(v_title, p_id);
+  end if;
+
+  update public.market_games
+     set status          = v_new_status,
+         origin          = case when p_action = 'approve' then 'community' else origin end,
+         moderation_note = case when p_action = 'reject' then btrim(coalesce(p_note, '')) else null end,
+         slug            = case when p_action = 'approve' then v_slug else slug end
+   where id = p_id;
 
   return query select true, '';
 end;
@@ -4000,76 +4002,58 @@ $$;
 
 
 --
--- Name: market_admin_upsert("text", "text", "text", "text", "jsonb"); Type: FUNCTION; Schema: public; Owner: -
+-- Name: market_admin_upsert("text", "text", "text", "jsonb"); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION "public"."market_admin_upsert"("p_storage_path" "text", "p_title" "text", "p_description" "text", "p_lang" "text", "p_payload" "jsonb") RETURNS TABLE("ok" boolean, "err" "text", "market_id" "uuid", "existing" boolean)
+CREATE FUNCTION "public"."market_admin_upsert"("p_title" "text", "p_description" "text", "p_lang" "text", "p_payload" "jsonb") RETURNS TABLE("ok" boolean, "err" "text", "market_id" "uuid", "existing" boolean)
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
     AS $$
 declare
-  v_id uuid;
+  v_id       uuid;
   v_existing uuid;
+  v_slug     text;
 begin
-  if p_storage_path is null or p_storage_path = '' then
-    return query select false, 'storage_path_required'::text, null::uuid, false;
-    return;
-  end if;
-
   if p_payload is null then
     return query select false, 'payload_required'::text, null::uuid, false;
     return;
   end if;
 
+  -- generuj slug kandydacyjny, sprawdź czy taka gra już istnieje
+  v_slug := slugify(p_title);
+
   select id into v_existing
     from public.market_games
-   where storage_path = p_storage_path;
+   where slug = v_slug;
 
   if v_existing is not null then
     update public.market_games
-       set title = p_title,
+       set title       = p_title,
            description = p_description,
-           lang = p_lang,
-           payload = p_payload,
-           origin = 'producer',
-           updated_at = now()
+           lang        = p_lang,
+           payload     = p_payload,
+           origin      = 'producer',
+           updated_at  = now()
      where id = v_existing;
 
     return query select true, ''::text, v_existing, true;
     return;
   end if;
 
+  -- nowa gra
+  v_slug := public.unique_market_slug(p_title);
+
   insert into public.market_games (
-    storage_path,
-    title,
-    description,
-    lang,
-    payload,
-    status,
-    author_user_id,
-    origin
+    title, description, lang, payload, status, author_user_id, origin, slug
   ) values (
-    p_storage_path,
-    p_title,
-    p_description,
-    p_lang,
-    p_payload,
-    'published',
-    auth.uid(),
-    'producer'
+    p_title, p_description, p_lang, p_payload,
+    'published', auth.uid(), 'producer', v_slug
   )
   returning id into v_id;
 
   return query select true, ''::text, v_id, false;
 end;
 $$;
-
-
---
--- Name: FUNCTION "market_admin_upsert"("p_storage_path" "text", "p_title" "text", "p_description" "text", "p_lang" "text", "p_payload" "jsonb"); Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON FUNCTION "public"."market_admin_upsert"("p_storage_path" "text", "p_title" "text", "p_description" "text", "p_lang" "text", "p_payload" "jsonb") IS 'Upsertuje grę do market_games - nowe gry są automatycznie published';
 
 
 --
@@ -4212,31 +4196,53 @@ $$;
 
 
 --
--- Name: market_game_detail("uuid"); Type: FUNCTION; Schema: public; Owner: -
+-- Name: market_game_by_slug("text"); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION "public"."market_game_detail"("p_id" "uuid") RETURNS TABLE("id" "uuid", "title" "text", "description" "text", "lang" "text", "library_count" integer, "author_username" "text", "status" "public"."market_game_status", "payload" "jsonb", "in_library" boolean, "origin" "text")
+CREATE FUNCTION "public"."market_game_by_slug"("p_slug" "text") RETURNS TABLE("id" "uuid", "title" "text", "description" "text", "lang" "text", "library_count" integer, "author_username" "text", "status" "public"."market_game_status", "payload" "jsonb", "in_library" boolean, "origin" "text", "slug" "text")
     LANGUAGE "sql" STABLE
     SET "search_path" TO 'public'
     AS $$
   SELECT
-    mg.id,
-    mg.title,
-    mg.description,
-    mg.lang,
-    mg.library_count,
+    mg.id, mg.title, mg.description, mg.lang, mg.library_count,
     COALESCE(pr.username, '') AS author_username,
-    mg.status,
-    mg.payload,
+    mg.status, mg.payload,
     CASE
       WHEN auth.uid() IS NULL THEN false
       ELSE EXISTS (
         SELECT 1 FROM public.user_market_library uml
-         WHERE uml.market_game_id = mg.id
-           AND uml.user_id = auth.uid()
+         WHERE uml.market_game_id = mg.id AND uml.user_id = auth.uid()
       )
     END AS in_library,
-    mg.origin::text AS origin
+    mg.origin::text AS origin,
+    mg.slug
+  FROM public.market_games mg
+  LEFT JOIN public.profiles pr ON pr.id = mg.author_user_id
+  WHERE mg.slug = p_slug AND mg.status = 'published';
+$$;
+
+
+--
+-- Name: market_game_detail("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."market_game_detail"("p_id" "uuid") RETURNS TABLE("id" "uuid", "title" "text", "description" "text", "lang" "text", "library_count" integer, "author_username" "text", "status" "public"."market_game_status", "payload" "jsonb", "in_library" boolean, "origin" "text", "slug" "text")
+    LANGUAGE "sql" STABLE
+    SET "search_path" TO 'public'
+    AS $$
+  SELECT
+    mg.id, mg.title, mg.description, mg.lang, mg.library_count,
+    COALESCE(pr.username, '') AS author_username,
+    mg.status, mg.payload,
+    CASE
+      WHEN auth.uid() IS NULL THEN false
+      ELSE EXISTS (
+        SELECT 1 FROM public.user_market_library uml
+         WHERE uml.market_game_id = mg.id AND uml.user_id = auth.uid()
+      )
+    END AS in_library,
+    mg.origin::text AS origin,
+    mg.slug
   FROM public.market_games mg
   LEFT JOIN public.profiles pr ON pr.id = mg.author_user_id
   WHERE mg.id = p_id;
@@ -8767,6 +8773,50 @@ $$;
 
 
 --
+-- Name: slugify("text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."slugify"("p_text" "text") RETURNS "text"
+    LANGUAGE "plpgsql" IMMUTABLE
+    SET "search_path" TO 'public'
+    AS $$
+declare
+  v text;
+begin
+  v := lower(p_text);
+
+  -- Polskie znaki
+  v := translate(v, 'ąćęłńóśźż', 'acelnoszz');
+
+  -- Ukraińskie/rosyjskie wieloznakowe (najpierw dłuższe sekwencje)
+  v := replace(v, 'щ', 'shch');
+  v := replace(v, 'ж', 'zh');
+  v := replace(v, 'х', 'kh');
+  v := replace(v, 'ц', 'ts');
+  v := replace(v, 'ч', 'ch');
+  v := replace(v, 'ш', 'sh');
+  v := replace(v, 'є', 'ie');
+  v := replace(v, 'ї', 'i');
+  v := replace(v, 'ю', 'iu');
+  v := replace(v, 'я', 'ia');
+  v := replace(v, 'ё', 'e');
+
+  -- Ukraińskie/rosyjskie jednoznakowe
+  -- from (24): а б в г ґ д е з и й і к л м н о п р с т у ф ь ъ
+  -- to   (22): a b v h g d e z y i i k l m n o p r s t u f  (ь i ъ → usunięte)
+  v := translate(v, 'абвгґдезийіклмнопрстуфьъ',
+                    'abvhgdezyiiklmnoprstuf');
+
+  -- Usuń pozostałe znaki spoza ASCII
+  v := regexp_replace(v, '[^a-z0-9\s\-]', '', 'g');
+  v := regexp_replace(trim(v), '[\s\-]+', '-', 'g');
+  v := left(v, 80);
+  return v;
+end;
+$$;
+
+
+--
 -- Name: storage_list_objects("text", "text", integer); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -9126,6 +9176,40 @@ CREATE FUNCTION "public"."unassign_message_report"("p_message_id" "uuid") RETURN
 BEGIN
   UPDATE public.messages SET report_id = NULL WHERE id = p_message_id;
 END;
+$$;
+
+
+--
+-- Name: unique_market_slug("text", "uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."unique_market_slug"("p_base" "text", "p_exclude_id" "uuid" DEFAULT NULL::"uuid") RETURNS "text"
+    LANGUAGE "plpgsql"
+    SET "search_path" TO 'public'
+    AS $$
+declare
+  v_slug text;
+  v_candidate text;
+  v_n integer := 1;
+begin
+  v_slug := slugify(p_base);
+  if v_slug = '' then
+    v_slug := 'game';
+  end if;
+
+  v_candidate := v_slug;
+  loop
+    if not exists (
+      select 1 from public.market_games
+       where slug = v_candidate
+         and (p_exclude_id is null or id <> p_exclude_id)
+    ) then
+      return v_candidate;
+    end if;
+    v_n := v_n + 1;
+    v_candidate := v_slug || '-' || v_n;
+  end loop;
+end;
 $$;
 
 
@@ -9530,6 +9614,7 @@ CREATE TABLE "public"."market_games" (
     "questions_text" "text" DEFAULT ''::"text" NOT NULL,
     "questions_fingerprint" "text",
     "embedding" "public"."vector"(384),
+    "slug" "text",
     CONSTRAINT "market_games_lang_check" CHECK (("lang" = ANY (ARRAY['pl'::"text", 'en'::"text", 'uk'::"text"]))),
     CONSTRAINT "market_games_library_count_nn" CHECK (("library_count" >= 0)),
     CONSTRAINT "market_games_title_len" CHECK ((("char_length"("title") >= 1) AND ("char_length"("title") <= 120)))
@@ -10588,6 +10673,13 @@ CREATE INDEX "market_games_questions_fingerprint_idx" ON "public"."market_games"
 --
 
 CREATE INDEX "market_games_questions_text_trgm_idx" ON "public"."market_games" USING "gin" ("questions_text" "public"."gin_trgm_ops");
+
+
+--
+-- Name: market_games_slug_key; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX "market_games_slug_key" ON "public"."market_games" USING "btree" ("slug");
 
 
 --
@@ -12504,5 +12596,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict BO0Ao8r6b4ia2cawzSNs0tAMy2pe8w1sNXfEpKKhHnP5S1oumPGHmKOpebExyrY
+\unrestrict b11bsuL2P883bJyISvlJuOP1apIvF2SS1okifd7M2P31A2Des5Hnxh3Utc3tAJA
 
