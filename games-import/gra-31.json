@@ -1,0 +1,109 @@
+[{
+  "title": "Dzieci i rodzice",
+  "description": "Odrabianie lekcji, kłótnie o telefon i to wieczne pytanie: kiedy będziesz duży — rodzicielstwo w Polsce to wielka przygoda! Sprawdź czy twoje doświadczenia są typowe!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Podaj coś co mówi polska mama gdy dziecko nie chce jeść.",
+        "answers": [
+          {"text": "jedz bo zima idzie", "fixed_points": 40},
+          {"text": "zjedz jeszcze trzy łyżki", "fixed_points": 26},
+          {"text": "gotowałam cały dzień", "fixed_points": 18},
+          {"text": "afrykańskie dzieci są głodne", "fixed_points": 10},
+          {"text": "nie dostaniesz deseru", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co dziecko robi gdy rodzice mówią czas spać?",
+        "answers": [
+          {"text": "prosi o jeszcze pięć minut", "fixed_points": 44},
+          {"text": "mówi że nie jest śpiące", "fixed_points": 26},
+          {"text": "idzie po wodę", "fixed_points": 16},
+          {"text": "prosi o bajkę na dobranoc", "fixed_points": 9},
+          {"text": "przychodzi po dziesięć minut", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś o co kłócą się dzieci z rodzicami.",
+        "answers": [
+          {"text": "czas na telefon i gry", "fixed_points": 42},
+          {"text": "godzina powrotu do domu", "fixed_points": 28},
+          {"text": "odrabianie lekcji", "fixed_points": 16},
+          {"text": "kieszonkowe", "fixed_points": 9},
+          {"text": "ubrania", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co mówi polskie dziecko gdy jest znudzone?",
+        "answers": [
+          {"text": "nudzę się!", "fixed_points": 46},
+          {"text": "nie ma co robić", "fixed_points": 28},
+          {"text": "mogę na telefon?", "fixed_points": 16},
+          {"text": "pójdziemy gdzieś?", "fixed_points": 6},
+          {"text": "kiedy obiad?", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Podaj coś co dziecko robi gdy rodzice śpią w weekend.",
+        "answers": [
+          {"text": "gra w gry lub oglądа", "fixed_points": 40},
+          {"text": "budzi ich", "fixed_points": 28},
+          {"text": "robi bałagan w kuchni", "fixed_points": 18},
+          {"text": "śpi dalej", "fixed_points": 10},
+          {"text": "je słodycze ukryte", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Co robi rodzic gdy dziecko płacze w sklepie i chce zabawkę?",
+        "answers": [
+          {"text": "odmawia", "fixed_points": 36},
+          {"text": "kupuje żeby był spokój", "fixed_points": 28},
+          {"text": "rozmawia i tłumaczy", "fixed_points": 20},
+          {"text": "udaje że nie widzi", "fixed_points": 10},
+          {"text": "obiecuje coś innym razem", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś co robi babcia gdy wnuki przyjeżdżają.",
+        "answers": [
+          {"text": "gotuje ulubione dania", "fixed_points": 44},
+          {"text": "daje kieszonkowe", "fixed_points": 26},
+          {"text": "ściska i całuje", "fixed_points": 16},
+          {"text": "mówi jak urosły", "fixed_points": 9},
+          {"text": "wyciąga stare zdjęcia", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co mówi rodzic gdy dziecko przyniesie złą ocenę?",
+        "answers": [
+          {"text": "dlaczego dostałeś tę ocenę", "fixed_points": 40},
+          {"text": "powiem tacie", "fixed_points": 26},
+          {"text": "nie możesz grać w gry przez tydzień", "fixed_points": 18},
+          {"text": "trzeba więcej się uczyć", "fixed_points": 10},
+          {"text": "rozmawia spokojnie", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj powód dla którego dzieci nie chcą jeść warzyw.",
+        "answers": [
+          {"text": "zły smak", "fixed_points": 44},
+          {"text": "nieznajomy wygląd", "fixed_points": 26},
+          {"text": "zła tekstura", "fixed_points": 16},
+          {"text": "rówieśnicy też nie jedzą", "fixed_points": 9},
+          {"text": "wolą słodycze", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co robi Polak gdy jego dziecko płacze?",
+        "answers": [
+          {"text": "pyta co się stało", "fixed_points": 40},
+          {"text": "przytula", "fixed_points": 28},
+          {"text": "uspokaja", "fixed_points": 18},
+          {"text": "daje coś słodkiego", "fixed_points": 9},
+          {"text": "pyta czy boli", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]

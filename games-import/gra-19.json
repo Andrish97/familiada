@@ -1,0 +1,109 @@
+[{
+  "title": "W górach",
+  "description": "Tatry, Karkonosze i zmęczone nogi — Polacy uwielbiają wędrówki górskie. Od kolejki na Kasprowy po bigos w schronisku. Sprawdź czy twoje górskie doświadczenia są typowe!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Podaj coś co musisz zabrać w Tatry.",
+        "answers": [
+          {"text": "woda i jedzenie", "fixed_points": 38},
+          {"text": "dobre buty trekkingowe", "fixed_points": 28},
+          {"text": "kurtka przeciwdeszczowa", "fixed_points": 18},
+          {"text": "mapa lub aplikacja", "fixed_points": 10},
+          {"text": "krem do opalania", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co robisz gdy zaczniesz się gubić na szlaku?",
+        "answers": [
+          {"text": "sprawdzasz mapę w telefonie", "fixed_points": 40},
+          {"text": "pytasz napotykanych turystów", "fixed_points": 26},
+          {"text": "wracasz do ostatniego znaku", "fixed_points": 18},
+          {"text": "stoisz w miejscu i myślisz", "fixed_points": 10},
+          {"text": "dzwonisz po TOPR", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co jesz w górskim schronisku?",
+        "answers": [
+          {"text": "bigos", "fixed_points": 40},
+          {"text": "żurek lub rosół", "fixed_points": 26},
+          {"text": "kiełbasę z grilla", "fixed_points": 18},
+          {"text": "oscypek", "fixed_points": 11},
+          {"text": "cokolwiek jest po wysiłku", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj powód dla którego ktoś rezygnuje z dalszej wspinaczki.",
+        "answers": [
+          {"text": "nogi odmawiają posłuszeństwa", "fixed_points": 40},
+          {"text": "pogoda się psuje", "fixed_points": 28},
+          {"text": "brakuje sił", "fixed_points": 18},
+          {"text": "strach przed wysokością", "fixed_points": 9},
+          {"text": "ktoś z grupy nie może iść", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co czujesz gdy wchodzisz na szczyt?",
+        "answers": [
+          {"text": "radość i satysfakcja", "fixed_points": 44},
+          {"text": "zmęczenie ale szczęście", "fixed_points": 28},
+          {"text": "natychmiast robisz zdjęcia", "fixed_points": 16},
+          {"text": "myślisz o zejściu już", "fixed_points": 8},
+          {"text": "nie możesz uwierzyć że dałeś radę", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Podaj coś co denerwuje na tatrzańskim szlaku.",
+        "answers": [
+          {"text": "tłumy turystów", "fixed_points": 40},
+          {"text": "turyści bez odpowiedniego obuwia", "fixed_points": 26},
+          {"text": "blokowanie szlaku", "fixed_points": 18},
+          {"text": "śmieci zostawione przez ludzi", "fixed_points": 10},
+          {"text": "hałas telefonów", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co kupujesz na Krupówkach w Zakopanem?",
+        "answers": [
+          {"text": "oscypek", "fixed_points": 44},
+          {"text": "coś z wełny", "fixed_points": 24},
+          {"text": "figurki z drewna", "fixed_points": 16},
+          {"text": "ciupagę", "fixed_points": 10},
+          {"text": "odzież góralska", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś co słyszysz na szlaku tatrzańskim.",
+        "answers": [
+          {"text": "wiatr", "fixed_points": 40},
+          {"text": "odgłosy potoku", "fixed_points": 28},
+          {"text": "ptaki", "fixed_points": 18},
+          {"text": "rozmowy innych turystów", "fixed_points": 9},
+          {"text": "dzwonki owiec", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co boli po całodziennej wędrówce.",
+        "answers": [
+          {"text": "nogi", "fixed_points": 46},
+          {"text": "kolana", "fixed_points": 26},
+          {"text": "plecy", "fixed_points": 16},
+          {"text": "pęcherze na stopach", "fixed_points": 8},
+          {"text": "ramiona od plecaka", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Co mówi Polak po powrocie z Tatr?",
+        "answers": [
+          {"text": "pięknie ale zmęczony jestem", "fixed_points": 40},
+          {"text": "wracam za rok", "fixed_points": 26},
+          {"text": "nogi do jutra nie działają", "fixed_points": 18},
+          {"text": "zdjęcia wyszły świetnie", "fixed_points": 10},
+          {"text": "trzeba tam pojechać zimą", "fixed_points": 6}
+        ]
+      }
+    ]
+  }
+}]

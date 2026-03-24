@@ -1,0 +1,109 @@
+[{
+  "title": "Smartfon przez cały dzień",
+  "description": "Budzik, nawigacja, aparat, bank — smartfon to wszystko naraz! Polacy spędzają z telefonem prawie każdą chwilę. Sprawdź czy twoje nawyki są typowe!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Co robisz z telefonem zaraz po przebudzeniu?",
+        "answers": [
+          {"text": "sprawdzasz powiadomienia", "fixed_points": 42},
+          {"text": "wyłączasz budzik", "fixed_points": 28},
+          {"text": "scrollujesz media społecznościowe", "fixed_points": 18},
+          {"text": "sprawdzasz która godzina", "fixed_points": 8},
+          {"text": "czytasz wiadomości", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Podaj powód dla którego Polacy nie mogą odłożyć telefonu.",
+        "answers": [
+          {"text": "social media wciągają", "fixed_points": 40},
+          {"text": "czekają na wiadomość", "fixed_points": 26},
+          {"text": "nudzą się", "fixed_points": 18},
+          {"text": "nawyk", "fixed_points": 10},
+          {"text": "pracują zdalnie", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś co panikujesz gdy nie masz telefonu.",
+        "answers": [
+          {"text": "jak ktoś do mnie zadzwoni", "fixed_points": 38},
+          {"text": "omijam ważne wiadomości", "fixed_points": 28},
+          {"text": "nie wiem która godzina", "fixed_points": 18},
+          {"text": "nie mam nawigacji", "fixed_points": 10},
+          {"text": "nie mam czym zapłacić", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Wymień coś co robisz telefonem najczęściej.",
+        "answers": [
+          {"text": "pisanie wiadomości", "fixed_points": 38},
+          {"text": "oglądanie filmów", "fixed_points": 26},
+          {"text": "przeglądanie social mediów", "fixed_points": 20},
+          {"text": "słuchanie muzyki", "fixed_points": 10},
+          {"text": "płacenie", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś co denerwuje w telefonie.",
+        "answers": [
+          {"text": "rozładowany w złym momencie", "fixed_points": 42},
+          {"text": "brak pamięci", "fixed_points": 26},
+          {"text": "za wolny internet", "fixed_points": 18},
+          {"text": "zbyt dużo powiadomień", "fixed_points": 9},
+          {"text": "pęknięte szkło", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co Polacy robią przy stole zamiast rozmawiać.",
+        "answers": [
+          {"text": "scrollują telefon", "fixed_points": 44},
+          {"text": "piszą wiadomości", "fixed_points": 28},
+          {"text": "oglądają filmiki", "fixed_points": 16},
+          {"text": "grają w gry", "fixed_points": 8},
+          {"text": "robią zdjęcia jedzenia", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Co robi Polak gdy telefon spada na podłogę?",
+        "answers": [
+          {"text": "podnosi w panice", "fixed_points": 44},
+          {"text": "zamknął oczy i liczy na cud", "fixed_points": 26},
+          {"text": "sprawdza czy nie ma rys", "fixed_points": 18},
+          {"text": "klnie pod nosem", "fixed_points": 8},
+          {"text": "sprawdza szkło hartowane czy działa", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Podaj coś co każdy ma zapisane w telefonie.",
+        "answers": [
+          {"text": "numer mamy", "fixed_points": 40},
+          {"text": "tysiące zdjęć", "fixed_points": 28},
+          {"text": "kontakty których nie zna", "fixed_points": 18},
+          {"text": "aplikacje których nie używa", "fixed_points": 9},
+          {"text": "hasła", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co robisz gdy kończy ci się bateria i nie masz ładowarki?",
+        "answers": [
+          {"text": "szukasz ładowarki u wszystkich", "fixed_points": 44},
+          {"text": "ściszasz telefon do minimum", "fixed_points": 26},
+          {"text": "wyłączasz zbędne aplikacje", "fixed_points": 16},
+          {"text": "panikujesz", "fixed_points": 9},
+          {"text": "akceptujesz i idziesz dalej", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co Polacy instalują najpierw na nowym telefonie.",
+        "answers": [
+          {"text": "WhatsApp lub Messenger", "fixed_points": 40},
+          {"text": "Facebook lub Instagram", "fixed_points": 28},
+          {"text": "bankowość mobilna", "fixed_points": 18},
+          {"text": "Spotify", "fixed_points": 9},
+          {"text": "Google Maps", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]

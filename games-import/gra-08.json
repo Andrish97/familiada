@@ -1,0 +1,109 @@
+[{
+  "title": "Polskie wesele",
+  "description": "Sto lat, open bar i taniec do wschodu słońca — polskie wesele to legenda! Jeśli byłeś na polskim weselu to wiesz o czym mówimy. Ta gra to czyste wspomnienia!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Co goście robią na weselu po północy?",
+        "answers": [
+          {"text": "tańczą do utraty tchu", "fixed_points": 44},
+          {"text": "piją przy barze", "fixed_points": 28},
+          {"text": "jedzą gorący bigos", "fixed_points": 14},
+          {"text": "śpią w kącie", "fixed_points": 9},
+          {"text": "gadają na świeżym powietrzu", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co jest na każdym polskim weselu.",
+        "answers": [
+          {"text": "wódka w nieograniczonej ilości", "fixed_points": 40},
+          {"text": "tort weselny", "fixed_points": 26},
+          {"text": "bigos o drugiej w nocy", "fixed_points": 18},
+          {"text": "ktoś kto za dużo wypiał", "fixed_points": 10},
+          {"text": "oczepiny", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co gra kapela na polskim weselu?",
+        "answers": [
+          {"text": "disco polo", "fixed_points": 44},
+          {"text": "biesiadne i śpiewki", "fixed_points": 26},
+          {"text": "hity taneczne z radia", "fixed_points": 16},
+          {"text": "walc i cha-cha na początku", "fixed_points": 9},
+          {"text": "cokolwiek zapłacona", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co dają goście weselni jako prezent?",
+        "answers": [
+          {"text": "pieniądze w kopercie", "fixed_points": 54},
+          {"text": "voucher na przeżycia", "fixed_points": 20},
+          {"text": "sprzęt do domu", "fixed_points": 14},
+          {"text": "biżuterię", "fixed_points": 8},
+          {"text": "wycieczkę zagraniczną", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Podaj powód dla którego wesele trwa do rana.",
+        "answers": [
+          {"text": "nikt nie chce być pierwszy do domu", "fixed_points": 38},
+          {"text": "taka tradycja w Polsce", "fixed_points": 28},
+          {"text": "sala opłacona do rana", "fixed_points": 18},
+          {"text": "muzyka gra i wciąga", "fixed_points": 10},
+          {"text": "jedzenie i picie nie znika", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co się dzieje gdy ktoś za dużo wypije na weselu?",
+        "answers": [
+          {"text": "tańczy sam na parkiecie", "fixed_points": 38},
+          {"text": "rodzina go odprowadza", "fixed_points": 26},
+          {"text": "zasypia na krześle", "fixed_points": 20},
+          {"text": "zaczyna śpiewać sam", "fixed_points": 10},
+          {"text": "idzie na świeże powietrze", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Wymień coś co robi fotograf na weselu.",
+        "answers": [
+          {"text": "biega z aparatem po całej sali", "fixed_points": 38},
+          {"text": "fotografuje parę młodą non stop", "fixed_points": 30},
+          {"text": "robi grupowe zdjęcia rodziny", "fixed_points": 18},
+          {"text": "nagrywa wideo", "fixed_points": 9},
+          {"text": "je mało bo ciągle pracuje", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co mówią goście do pary młodej?",
+        "answers": [
+          {"text": "sto lat!", "fixed_points": 46},
+          {"text": "gratulacje i życzenia", "fixed_points": 28},
+          {"text": "gorzko gorzko!", "fixed_points": 14},
+          {"text": "piękna para!", "fixed_points": 8},
+          {"text": "szczęścia i zdrowia", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Podaj coś co jedzą goście weselni.",
+        "answers": [
+          {"text": "mięso z ziemniakami", "fixed_points": 36},
+          {"text": "sałatki różne", "fixed_points": 24},
+          {"text": "tort weselny", "fixed_points": 20},
+          {"text": "bigos lub kapuśniak", "fixed_points": 12},
+          {"text": "ciasto i desery", "fixed_points": 8}
+        ]
+      },
+      {
+        "text": "Podaj coś co psuje nastrój na weselu.",
+        "answers": [
+          {"text": "ktoś się pokłócił", "fixed_points": 36},
+          {"text": "muzyka nagle milknie", "fixed_points": 26},
+          {"text": "ktoś jest za pijany", "fixed_points": 20},
+          {"text": "catering się spóźnia", "fixed_points": 12},
+          {"text": "deszcz pada na plenerze", "fixed_points": 6}
+        ]
+      }
+    ]
+  }
+}]

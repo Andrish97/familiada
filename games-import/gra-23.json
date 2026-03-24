@@ -1,0 +1,109 @@
+[{
+  "title": "Sylwester i Nowy Rok",
+  "description": "Szampan, fajerwerki i postanowienia których nie dotrzymamy — Sylwester to polska tradycja! Sprawdź jak Polacy żegnają stary i witają nowy rok!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Gdzie Polacy spędzają Sylwestra najchętniej?",
+        "answers": [
+          {"text": "w domu z rodziną lub przyjaciółmi", "fixed_points": 38},
+          {"text": "na prywatnej imprezie", "fixed_points": 28},
+          {"text": "w restauracji lub klubie", "fixed_points": 18},
+          {"text": "na miejskim balu lub plenerze", "fixed_points": 10},
+          {"text": "za granicą", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co Polacy piją w noc sylwestrową?",
+        "answers": [
+          {"text": "szampan lub prosecco", "fixed_points": 44},
+          {"text": "wódka", "fixed_points": 26},
+          {"text": "wino", "fixed_points": 16},
+          {"text": "piwo", "fixed_points": 9},
+          {"text": "sok lub woda dla dzieci", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co Polacy robią o północy w Sylwestra.",
+        "answers": [
+          {"text": "wznoszą toast", "fixed_points": 44},
+          {"text": "oglądają fajerwerki", "fixed_points": 28},
+          {"text": "całują się", "fixed_points": 16},
+          {"text": "krzyczą i witają rok", "fixed_points": 8},
+          {"text": "wypalają race", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Wymień najczęstsze sylwestrowe postanowienia.",
+        "answers": [
+          {"text": "schudnę", "fixed_points": 40},
+          {"text": "zacznę ćwiczyć", "fixed_points": 26},
+          {"text": "rzucę palenie", "fixed_points": 18},
+          {"text": "oszczędzę pieniądze", "fixed_points": 10},
+          {"text": "więcej czasu dla rodziny", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Jak długo Polacy dotrzymują sylwestrowych postanowień?",
+        "answers": [
+          {"text": "tydzień", "fixed_points": 36},
+          {"text": "miesiąc", "fixed_points": 28},
+          {"text": "kilka dni", "fixed_points": 20},
+          {"text": "nigdy nie zaczynają", "fixed_points": 10},
+          {"text": "cały rok", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co denerwuje w sylwestrze?",
+        "answers": [
+          {"text": "petardy o każdej porze", "fixed_points": 40},
+          {"text": "fajerwerki straszące psy", "fixed_points": 26},
+          {"text": "tłumy i drożyzna", "fixed_points": 18},
+          {"text": "kac pierwszego stycznia", "fixed_points": 10},
+          {"text": "presja zabawy", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co Polacy jedzą na sylwestrowej imprezie?",
+        "answers": [
+          {"text": "sałatki i przekąski", "fixed_points": 38},
+          {"text": "kanapki", "fixed_points": 26},
+          {"text": "dania gorące", "fixed_points": 18},
+          {"text": "bigos o północy", "fixed_points": 12},
+          {"text": "ciasto i słodycze", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co Polacy robią pierwszego stycznia?",
+        "answers": [
+          {"text": "śpią do południa", "fixed_points": 44},
+          {"text": "odgrzewają resztki", "fixed_points": 26},
+          {"text": "oglądają TV cały dzień", "fixed_points": 18},
+          {"text": "mają kaca", "fixed_points": 8},
+          {"text": "idą na spacer", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Podaj coś co Polacy mówią gdy wita się Nowy Rok.",
+        "answers": [
+          {"text": "szczęśliwego nowego roku!", "fixed_points": 44},
+          {"text": "niech będzie lepszy niż poprzedni", "fixed_points": 26},
+          {"text": "sto lat!", "fixed_points": 16},
+          {"text": "w końcu!", "fixed_points": 9},
+          {"text": "zdrówka!", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj powód dla którego ktoś zostaje w domu w Sylwestra.",
+        "answers": [
+          {"text": "nie ma z kim wyjść", "fixed_points": 36},
+          {"text": "woli spokój", "fixed_points": 28},
+          {"text": "ma małe dzieci", "fixed_points": 20},
+          {"text": "za drogo wszystko", "fixed_points": 10},
+          {"text": "chory", "fixed_points": 6}
+        ]
+      }
+    ]
+  }
+}]

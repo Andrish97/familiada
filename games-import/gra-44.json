@@ -1,0 +1,109 @@
+[{
+  "title": "Rower i jazda",
+  "description": "Kask, kłódka i wiatr we włosach — rower to polska wolność! Od miejskich ścieżek po górskie trasy — Polacy pokochali jazdę na rowerze. Sprawdź czy twoje rowerowe nawyki są typowe!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Podaj coś co musisz sprawdzić przed wyjazdem na rower.",
+        "answers": [
+          {"text": "ciśnienie w oponach", "fixed_points": 40},
+          {"text": "hamulce", "fixed_points": 28},
+          {"text": "łańcuch", "fixed_points": 16},
+          {"text": "czy kłódka jest", "fixed_points": 11},
+          {"text": "czy kask jest", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co Polacy robią na rowerowej wycieczce za miasto?",
+        "answers": [
+          {"text": "robią przerwy i jedzą", "fixed_points": 38},
+          {"text": "podziwiają widoki", "fixed_points": 26},
+          {"text": "robią zdjęcia", "fixed_points": 18},
+          {"text": "ścigają się", "fixed_points": 12},
+          {"text": "narzekają że za daleko", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj powód dla którego rower stoi nieużywany w garażu.",
+        "answers": [
+          {"text": "lenistwo", "fixed_points": 40},
+          {"text": "brak czasu", "fixed_points": 26},
+          {"text": "pogoda", "fixed_points": 18},
+          {"text": "potrzebuje naprawy", "fixed_points": 12},
+          {"text": "nie ma gdzie pojechać", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Co bierzesz na dłuższą wycieczkę rowerową?",
+        "answers": [
+          {"text": "woda", "fixed_points": 42},
+          {"text": "kanapka lub batonik", "fixed_points": 26},
+          {"text": "telefon z trasą", "fixed_points": 16},
+          {"text": "pompka i łatki", "fixed_points": 11},
+          {"text": "kask", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co denerwuje rowerzystę na drodze.",
+        "answers": [
+          {"text": "samochód wyprzedza za blisko", "fixed_points": 40},
+          {"text": "brak ścieżki rowerowej", "fixed_points": 28},
+          {"text": "piesi na ścieżce rowerowej", "fixed_points": 18},
+          {"text": "dziury w ścieżce", "fixed_points": 10},
+          {"text": "czerwone światła co chwila", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Co robi Polak gdy złapie gumę?",
+        "answers": [
+          {"text": "klnie", "fixed_points": 40},
+          {"text": "dzwoni po pomoc", "fixed_points": 26},
+          {"text": "naprawia sam", "fixed_points": 18},
+          {"text": "pcha rower do domu", "fixed_points": 11},
+          {"text": "szuka warsztatu", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co boli po pierwszej dłuższej jeździe na rowerze.",
+        "answers": [
+          {"text": "siedzenie", "fixed_points": 44},
+          {"text": "nogi", "fixed_points": 28},
+          {"text": "plecy", "fixed_points": 16},
+          {"text": "ręce", "fixed_points": 8},
+          {"text": "kark", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Co Polacy lubią w jeździe na rowerze?",
+        "answers": [
+          {"text": "wolność i świeże powietrze", "fixed_points": 44},
+          {"text": "aktywność fizyczna", "fixed_points": 26},
+          {"text": "tanie przemieszczanie się", "fixed_points": 16},
+          {"text": "brak korków", "fixed_points": 9},
+          {"text": "widoki", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Gdzie Polacy jeżdżą na rowerze najchętniej?",
+        "answers": [
+          {"text": "ścieżki rowerowe w parku", "fixed_points": 40},
+          {"text": "po mieście do pracy", "fixed_points": 26},
+          {"text": "za miasto na wycieczkę", "fixed_points": 18},
+          {"text": "nad rzekę lub jezioro", "fixed_points": 11},
+          {"text": "w góry na MTB", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co mówisz gdy wracasz z długiej wycieczki rowerowej?",
+        "answers": [
+          {"text": "nieźle mi poszło", "fixed_points": 40},
+          {"text": "nogi odmawiają", "fixed_points": 26},
+          {"text": "za tydzień znowu", "fixed_points": 18},
+          {"text": "tyle kilometrów!", "fixed_points": 11},
+          {"text": "wrzucam na Stravę", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]

@@ -1,0 +1,109 @@
+[{
+  "title": "Polska zima",
+  "description": "Mróz, śnieg i ciemność o czwartej po południu — zima w Polsce to wyjątkowe doświadczenie! Sprawdź czy twoje zimowe nawyki pokrywają się z milionami rodaków.",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Co Polak robi pierwszego mroźnego zimowego poranka?",
+        "answers": [
+          {"text": "skrobie szybę samochodu", "fixed_points": 40},
+          {"text": "nie chce wstawać z łóżka", "fixed_points": 26},
+          {"text": "zakłada dodatkowe warstwy ubrań", "fixed_points": 18},
+          {"text": "robi gorącą herbatę", "fixed_points": 10},
+          {"text": "narzeka głośno", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś co pijesz zimą żeby się rozgrzać.",
+        "answers": [
+          {"text": "herbata z cytryną i miodem", "fixed_points": 44},
+          {"text": "grzane wino", "fixed_points": 24},
+          {"text": "kakao", "fixed_points": 16},
+          {"text": "kawa", "fixed_points": 10},
+          {"text": "bimber lub wódka", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co Polacy zakładają gdy wychodzą na mróz?",
+        "answers": [
+          {"text": "czapka", "fixed_points": 38},
+          {"text": "szalik", "fixed_points": 28},
+          {"text": "gruba kurtka", "fixed_points": 20},
+          {"text": "rękawiczki", "fixed_points": 10},
+          {"text": "termoaktywna bielizna", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Podaj powód dla którego Polacy nie lubią zimy.",
+        "answers": [
+          {"text": "za zimno", "fixed_points": 40},
+          {"text": "ciemno już o czwartej", "fixed_points": 26},
+          {"text": "ślisko i niebezpiecznie", "fixed_points": 18},
+          {"text": "rachunki za ogrzewanie", "fixed_points": 10},
+          {"text": "brak słońca i depresja", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co robisz w zimowy wolny dzień gdy nie chce ci się wychodzić?",
+        "answers": [
+          {"text": "oglądasz seriale pod kołdrą", "fixed_points": 42},
+          {"text": "śpisz do południa", "fixed_points": 26},
+          {"text": "gotujesz coś gorącego", "fixed_points": 18},
+          {"text": "czytasz książkę", "fixed_points": 9},
+          {"text": "grasz w gry", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Wymień coś co Polacy robią gdy sypie śnieg.",
+        "answers": [
+          {"text": "odśnieżają chodnik i samochód", "fixed_points": 36},
+          {"text": "lepią bałwana", "fixed_points": 26},
+          {"text": "robią zdjęcia", "fixed_points": 18},
+          {"text": "zostają w domu", "fixed_points": 12},
+          {"text": "jadą na sanki", "fixed_points": 8}
+        ]
+      },
+      {
+        "text": "Co jedzą Polacy żeby się rozgrzać zimą?",
+        "answers": [
+          {"text": "gorąca zupa", "fixed_points": 44},
+          {"text": "bigos", "fixed_points": 24},
+          {"text": "grochówka", "fixed_points": 18},
+          {"text": "kiełbasa z grilla na mrozie", "fixed_points": 9},
+          {"text": "gulasz", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co psuje zimową jazdę samochodem.",
+        "answers": [
+          {"text": "lód na szybie", "fixed_points": 40},
+          {"text": "śliska droga", "fixed_points": 30},
+          {"text": "korek z powodu śniegu", "fixed_points": 16},
+          {"text": "rozładowany akumulator", "fixed_points": 9},
+          {"text": "gęsta mgła", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj powód dla którego dzieci kochają zimę.",
+        "answers": [
+          {"text": "sanki i śnieżki", "fixed_points": 42},
+          {"text": "ferie zimowe", "fixed_points": 30},
+          {"text": "lepienie bałwana", "fixed_points": 16},
+          {"text": "odwołane lekcje przez mróz", "fixed_points": 8},
+          {"text": "prezenty pod choinką", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Wymień coś co świadczy o tym że zima się skończyła.",
+        "answers": [
+          {"text": "śnieg topnieje", "fixed_points": 40},
+          {"text": "wracają ptaki", "fixed_points": 26},
+          {"text": "kwitną drzewa", "fixed_points": 18},
+          {"text": "jest cieplej i słonecznie", "fixed_points": 10},
+          {"text": "ludzie zdejmują kurtki", "fixed_points": 6}
+        ]
+      }
+    ]
+  }
+}]

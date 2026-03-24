@@ -1,0 +1,109 @@
+[{
+  "title": "Studenckie życie",
+  "description": "Indeks, stancja i zupa w proszku o północy — student polski to oddzielna kategoria człowieka! Sprawdź czy twoje studenckie wspomnienia pokrywają się z milionami Polaków!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Podaj coś co je student gdy skończyły się pieniądze.",
+        "answers": [
+          {"text": "zupa w proszku", "fixed_points": 44},
+          {"text": "makaron z ketchupem", "fixed_points": 26},
+          {"text": "chleb z masłem", "fixed_points": 16},
+          {"text": "jajka na patelni", "fixed_points": 9},
+          {"text": "dzwoni do rodziców o przelew", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj powód dla którego student nie idzie na wykład.",
+        "answers": [
+          {"text": "za wcześnie", "fixed_points": 40},
+          {"text": "pogoda", "fixed_points": 26},
+          {"text": "materiały są online", "fixed_points": 18},
+          {"text": "noc była długa", "fixed_points": 11},
+          {"text": "nudny wykładowca", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Kiedy student zaczyna uczyć się do egzaminu?",
+        "answers": [
+          {"text": "noc przed egzaminem", "fixed_points": 50},
+          {"text": "tydzień przed", "fixed_points": 24},
+          {"text": "dwa dni przed", "fixed_points": 14},
+          {"text": "dwa tygodnie przed", "fixed_points": 8},
+          {"text": "na bieżąco przez cały rok", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Co student robi gdy obleje egzamin?",
+        "answers": [
+          {"text": "idzie na poprawkę", "fixed_points": 40},
+          {"text": "dzwoni do rodziców z wyznaniem", "fixed_points": 26},
+          {"text": "pocieszasz się z kolegami", "fixed_points": 18},
+          {"text": "obwinia wykładowcę", "fixed_points": 11},
+          {"text": "rezygnuje z kierunku", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co jest na studenckiej stancji.",
+        "answers": [
+          {"text": "bałagan", "fixed_points": 40},
+          {"text": "puste butelki", "fixed_points": 26},
+          {"text": "grający komputer", "fixed_points": 18},
+          {"text": "stos niezjedzonych naczyń", "fixed_points": 11},
+          {"text": "wydruki skryptów", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co studenci robią na Juwenaliach?",
+        "answers": [
+          {"text": "bawią się na całego", "fixed_points": 44},
+          {"text": "piją razem", "fixed_points": 28},
+          {"text": "tańczą", "fixed_points": 16},
+          {"text": "grają w gry i konkursy", "fixed_points": 8},
+          {"text": "chodzą na koncerty", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Podaj coś co mówią rodzice studentowi gdy przyjeżdża do domu.",
+        "answers": [
+          {"text": "schudłeś", "fixed_points": 40},
+          {"text": "jak idzie nauka", "fixed_points": 28},
+          {"text": "co cię tak długo nie było", "fixed_points": 18},
+          {"text": "masz pranie do prania", "fixed_points": 10},
+          {"text": "jadłeś coś porządnego?", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Podaj coś co student zawozi z domu na uczelnię.",
+        "answers": [
+          {"text": "jedzenie od mamy", "fixed_points": 44},
+          {"text": "czyste ubrania", "fixed_points": 26},
+          {"text": "przelew na konto", "fixed_points": 18},
+          {"text": "leki i witaminy", "fixed_points": 8},
+          {"text": "domowe ciasto", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Co student robi gdy ma wolne popołudnie?",
+        "answers": [
+          {"text": "śpi", "fixed_points": 42},
+          {"text": "gra w gry", "fixed_points": 26},
+          {"text": "ogląda coś", "fixed_points": 18},
+          {"text": "idzie z kolegami", "fixed_points": 9},
+          {"text": "uczy się", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co mówi student gdy skończy sesję egzaminacyjną?",
+        "answers": [
+          {"text": "wolny jestem!", "fixed_points": 44},
+          {"text": "nareszcie!", "fixed_points": 26},
+          {"text": "impreza czas!", "fixed_points": 16},
+          {"text": "nie mogę uwierzyć że zdałem", "fixed_points": 9},
+          {"text": "jadę do domu", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]

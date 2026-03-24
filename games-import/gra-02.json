@@ -1,0 +1,109 @@
+[{
+  "title": "Wakacje nad morzem",
+  "description": "Bałtyk wzywa! Od Świnoujścia po Hel — polskie morze jest zimne, wietrzne i kochane przez wszystkich. Sprawdź co każdy z nas robi nad polskim morzem!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Co robisz pierwszego dnia nad morzem?",
+        "answers": [
+          {"text": "idziesz na plażę", "fixed_points": 44},
+          {"text": "rozpakowujesz walizki", "fixed_points": 22},
+          {"text": "szukasz restauracji", "fixed_points": 17},
+          {"text": "idziesz na spacer po promenadzie", "fixed_points": 11},
+          {"text": "śpisz po podróży", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś czego nie może zabraknąć w walizce na plażowe wakacje.",
+        "answers": [
+          {"text": "krem do opalania", "fixed_points": 40},
+          {"text": "kostium kąpielowy", "fixed_points": 30},
+          {"text": "okulary słoneczne", "fixed_points": 17},
+          {"text": "ręcznik plażowy", "fixed_points": 9},
+          {"text": "klapki", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Co jesz na polskiej promenadzie nadmorskiej?",
+        "answers": [
+          {"text": "ryba i frytki", "fixed_points": 38},
+          {"text": "lody", "fixed_points": 28},
+          {"text": "watę cukrową", "fixed_points": 18},
+          {"text": "gofry", "fixed_points": 11},
+          {"text": "obwarzanki", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj powód dla którego ktoś nie wchodzi do zimnego Bałtyku.",
+        "answers": [
+          {"text": "woda za zimna", "fixed_points": 48},
+          {"text": "boi się fal", "fixed_points": 22},
+          {"text": "nie umie pływać", "fixed_points": 16},
+          {"text": "nie chce moczyć włosów", "fixed_points": 9},
+          {"text": "niedawno jadł", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co przeszkadza ci na polskiej plaży?",
+        "answers": [
+          {"text": "tłok i hałas", "fixed_points": 36},
+          {"text": "silny wiatr", "fixed_points": 26},
+          {"text": "piasek wszędzie", "fixed_points": 22},
+          {"text": "zimna woda", "fixed_points": 10},
+          {"text": "meduzy", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś co przywozisz z polskiego morza jako pamiątkę.",
+        "answers": [
+          {"text": "bursztyn", "fixed_points": 42},
+          {"text": "muszelki", "fixed_points": 28},
+          {"text": "magnes na lodówkę", "fixed_points": 17},
+          {"text": "koszulka z nazwą miasta", "fixed_points": 8},
+          {"text": "suszone ryby", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co robisz gdy pogoda nad morzem jest zła?",
+        "answers": [
+          {"text": "siedzisz w pokoju", "fixed_points": 36},
+          {"text": "chodzisz po sklepach", "fixed_points": 28},
+          {"text": "zwiedzasz okolicę", "fixed_points": 20},
+          {"text": "idziesz do kina", "fixed_points": 10},
+          {"text": "grasz w karty z rodziną", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co słyszysz na polskiej plaży w szczycie sezonu?",
+        "answers": [
+          {"text": "krzyki bawiących się dzieci", "fixed_points": 40},
+          {"text": "muzykę z głośników", "fixed_points": 25},
+          {"text": "szum fal i mewy", "fixed_points": 20},
+          {"text": "wołanie sprzedawców", "fixed_points": 9},
+          {"text": "komentarze do meczu", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co robisz wieczorem w nadmorskim kurorcie?",
+        "answers": [
+          {"text": "spacer po promenadzie", "fixed_points": 40},
+          {"text": "kolacja w restauracji", "fixed_points": 26},
+          {"text": "lody i kawiarnia", "fixed_points": 18},
+          {"text": "dyskoteka", "fixed_points": 10},
+          {"text": "oglądasz zachód słońca", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś co robi każde polskie dziecko na plaży.",
+        "answers": [
+          {"text": "buduje zamek z piasku", "fixed_points": 42},
+          {"text": "biega do wody", "fixed_points": 26},
+          {"text": "zbiera muszelki", "fixed_points": 18},
+          {"text": "zakopuje się w piasku", "fixed_points": 9},
+          {"text": "kopie dołek", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]

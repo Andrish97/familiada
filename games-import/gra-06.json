@@ -1,0 +1,109 @@
+[{
+  "title": "Na zakupach",
+  "description": "Wózek, kolejka i czy ma pan/pani kartę stałego klienta? Zakupy to sport narodowy Polaków. Sprawdź czy rozpoznajesz siebie w tych sytuacjach!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Co robisz gdy zapominasz listy zakupów w domu?",
+        "answers": [
+          {"text": "dzwonisz do domu", "fixed_points": 36},
+          {"text": "kupujesz wszystko z pamięci", "fixed_points": 28},
+          {"text": "kupujesz za dużo przypadkowych rzeczy", "fixed_points": 20},
+          {"text": "wracasz po listę", "fixed_points": 10},
+          {"text": "kupujesz tylko to co pamiętasz", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj powód dla którego Polacy robią zakupy w Biedronce.",
+        "answers": [
+          {"text": "najtaniej", "fixed_points": 50},
+          {"text": "blisko domu", "fixed_points": 24},
+          {"text": "jest dosłownie wszędzie", "fixed_points": 14},
+          {"text": "dobre promocje", "fixed_points": 8},
+          {"text": "szybko wchodzę i wychodzę", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Wymień coś co ląduje w koszyku choć tego nie planowałeś.",
+        "answers": [
+          {"text": "słodycze przy kasie", "fixed_points": 40},
+          {"text": "alkohol", "fixed_points": 24},
+          {"text": "coś na promocji", "fixed_points": 18},
+          {"text": "chipsy", "fixed_points": 11},
+          {"text": "nowa gazetka z przepisami", "fixed_points": 7}
+        ]
+      },
+      {
+        "text": "Co robisz gdy stoisz w długiej kolejce do kasy?",
+        "answers": [
+          {"text": "wzdychasz głośno", "fixed_points": 36},
+          {"text": "przeglądasz telefon", "fixed_points": 28},
+          {"text": "podglądasz koszyk sąsiada", "fixed_points": 20},
+          {"text": "szukasz innej kasy", "fixed_points": 10},
+          {"text": "grasz w grę na telefonie", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co denerwuje cię w supermarkecie?",
+        "answers": [
+          {"text": "długie kolejki", "fixed_points": 44},
+          {"text": "brak koszyka przy wejściu", "fixed_points": 22},
+          {"text": "przesunięte towary z miejsca", "fixed_points": 16},
+          {"text": "głośna muzyka", "fixed_points": 10},
+          {"text": "natrętna pani z próbkami", "fixed_points": 8}
+        ]
+      },
+      {
+        "text": "Co kupujesz na piątkowy wieczór w domu?",
+        "answers": [
+          {"text": "wino lub piwo", "fixed_points": 40},
+          {"text": "chipsy i przekąski", "fixed_points": 28},
+          {"text": "pizza lub danie gotowe", "fixed_points": 18},
+          {"text": "słodycze", "fixed_points": 9},
+          {"text": "coś do ugotowania", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co robisz gdy cena na kasie jest inna niż na półce?",
+        "answers": [
+          {"text": "zwracasz uwagę kasjerowi", "fixed_points": 40},
+          {"text": "milczysz i płacisz", "fixed_points": 30},
+          {"text": "rezygnujesz z zakupu", "fixed_points": 16},
+          {"text": "robisz zdjęcie półki", "fixed_points": 9},
+          {"text": "prosisz o kierownika", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj powód dla którego wydajesz więcej niż planowałeś.",
+        "answers": [
+          {"text": "promocje i wyprzedaże", "fixed_points": 40},
+          {"text": "poszedłeś na zakupy głodny", "fixed_points": 26},
+          {"text": "impulsywny zakup", "fixed_points": 18},
+          {"text": "reklamy przy kasie", "fixed_points": 10},
+          {"text": "dzieci coś chciały", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Gdzie Polacy szukają okazji zakupowych?",
+        "answers": [
+          {"text": "Allegro", "fixed_points": 38},
+          {"text": "gazetki promocyjne sklepów", "fixed_points": 26},
+          {"text": "sezonowe wyprzedaże", "fixed_points": 20},
+          {"text": "second hand i lumpeks", "fixed_points": 10},
+          {"text": "OLX i Vinted", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś co kupujesz w sklepie spożywczym zawsze bez planowania.",
+        "answers": [
+          {"text": "czekolada", "fixed_points": 40},
+          {"text": "świeże pieczywo", "fixed_points": 28},
+          {"text": "jakiś napój", "fixed_points": 18},
+          {"text": "jogurt", "fixed_points": 9},
+          {"text": "coś z ladą mięsną", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]

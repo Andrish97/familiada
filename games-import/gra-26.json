@@ -1,0 +1,109 @@
+[{
+  "title": "Kolacja w restauracji",
+  "description": "Menu, kelner i to niekomfortowe czekanie aż ktoś skończy czytać kartę — restauracja to polska rozrywka! Sprawdź czy twoje restauracyjne doświadczenia są typowe!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Podaj coś co robisz zanim zdecydujesz co zamówić.",
+        "answers": [
+          {"text": "czytasz menu dwa razy", "fixed_points": 38},
+          {"text": "pytasz kelnera co poleca", "fixed_points": 26},
+          {"text": "patrzysz co jedzą inni", "fixed_points": 18},
+          {"text": "zamawiasz co zawsze", "fixed_points": 12},
+          {"text": "sprawdzasz co najtańsze", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj powód dla którego Polacy narzekają w restauracji.",
+        "answers": [
+          {"text": "długo czekają na jedzenie", "fixed_points": 40},
+          {"text": "za drogo", "fixed_points": 28},
+          {"text": "za małe porcje", "fixed_points": 18},
+          {"text": "zimne jedzenie", "fixed_points": 9},
+          {"text": "kelner nieuprzejmy", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co robisz gdy kelner pyta czy smakowało?",
+        "answers": [
+          {"text": "mówisz tak nawet gdy słabo", "fixed_points": 44},
+          {"text": "mówisz że pyszne", "fixed_points": 28},
+          {"text": "dajesz szczerą odpowiedź", "fixed_points": 16},
+          {"text": "uśmiechasz się bez słowa", "fixed_points": 8},
+          {"text": "narzekasz grzecznie", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Podaj coś co zamawiasz w polskiej restauracji zawsze.",
+        "answers": [
+          {"text": "wodę niegazowaną", "fixed_points": 38},
+          {"text": "zupę na początek", "fixed_points": 26},
+          {"text": "jedno danie główne", "fixed_points": 18},
+          {"text": "deser na końcu", "fixed_points": 12},
+          {"text": "kawę po posiłku", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Kto płaci rachunek gdy idziesz z rodziną?",
+        "answers": [
+          {"text": "każdy swoje osobno", "fixed_points": 36},
+          {"text": "ojciec lub dziadek", "fixed_points": 28},
+          {"text": "ten kto zaprosił", "fixed_points": 20},
+          {"text": "po równo razem", "fixed_points": 12},
+          {"text": "kłócą się kto zapłaci", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Co denerwuje cię jako gościa w restauracji?",
+        "answers": [
+          {"text": "długie czekanie na kelnera", "fixed_points": 40},
+          {"text": "głośni sąsiedzi przy stole", "fixed_points": 26},
+          {"text": "błędy w rachunku", "fixed_points": 18},
+          {"text": "zimne lub złe jedzenie", "fixed_points": 10},
+          {"text": "brak stolika bez rezerwacji", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś co Polacy robią gdy jedzenie jest za późno.",
+        "answers": [
+          {"text": "wołają kelnera", "fixed_points": 40},
+          {"text": "pytają grzecznie", "fixed_points": 26},
+          {"text": "cierpliwie czekają", "fixed_points": 18},
+          {"text": "mruczą pod nosem", "fixed_points": 10},
+          {"text": "wychodzą", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Wymień coś co zamawiasz jako deser.",
+        "answers": [
+          {"text": "lody", "fixed_points": 40},
+          {"text": "ciasto lub tarta", "fixed_points": 26},
+          {"text": "sernik", "fixed_points": 18},
+          {"text": "tiramisu", "fixed_points": 11},
+          {"text": "czekoladowy fondant", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co robi kelner gdy jest zajęty?",
+        "answers": [
+          {"text": "nie zauważa że machasz", "fixed_points": 40},
+          {"text": "mówi zaraz", "fixed_points": 28},
+          {"text": "przynosi menu zamiast rachunku", "fixed_points": 18},
+          {"text": "biega między stolikami", "fixed_points": 10},
+          {"text": "uśmiecha się i znika", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Co mówisz po wyjściu z restauracji gdy było pyszne?",
+        "answers": [
+          {"text": "wrócimy tu na pewno", "fixed_points": 44},
+          {"text": "pycha, to było najlepsze", "fixed_points": 26},
+          {"text": "polecę wszystkim znajomym", "fixed_points": 16},
+          {"text": "dam 5 gwiazdek w Google", "fixed_points": 9},
+          {"text": "za dużo zjadłem", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]

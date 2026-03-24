@@ -1,0 +1,109 @@
+[{
+  "title": "Wieczór przed telewizorem",
+  "description": "Pilot w ręku, kanapa wciąga i jeszcze jeden odcinek — brzmi znajomo? Polacy spędzają przed ekranem tysiące godzin rocznie. Sprawdź czy twoje nawyki są typowe!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Co robisz gdy film okazuje się nudny po dwudziestu minutach?",
+        "answers": [
+          {"text": "włączasz telefon i patrzysz w oba", "fixed_points": 38},
+          {"text": "zasypiasz", "fixed_points": 28},
+          {"text": "dosłuchujesz do końca z nadzieją", "fixed_points": 18},
+          {"text": "przełączasz coś innego", "fixed_points": 10},
+          {"text": "czytasz recenzję zamiast oglądać", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co Polacy jedzą oglądając wieczorny film?",
+        "answers": [
+          {"text": "chipsy", "fixed_points": 40},
+          {"text": "popcorn", "fixed_points": 26},
+          {"text": "pizza", "fixed_points": 18},
+          {"text": "owoce", "fixed_points": 10},
+          {"text": "orzeszki", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś co denerwuje gdy oglądasz film z kimś.",
+        "answers": [
+          {"text": "ciągle komentuje na głos", "fixed_points": 42},
+          {"text": "pyta co się dzieje co chwilę", "fixed_points": 26},
+          {"text": "patrzy w telefon przez cały czas", "fixed_points": 18},
+          {"text": "za głośno je", "fixed_points": 9},
+          {"text": "wychodzi ciągle po coś", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co robisz gdy zaczyna się reklama w telewizji?",
+        "answers": [
+          {"text": "bierzesz telefon", "fixed_points": 40},
+          {"text": "idziesz do kuchni po coś", "fixed_points": 28},
+          {"text": "przełączasz inny kanał", "fixed_points": 18},
+          {"text": "rozmawiasz z kimś obok", "fixed_points": 9},
+          {"text": "idziesz do toalety", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co Polacy robią gdy nie mogą znaleźć pilota?",
+        "answers": [
+          {"text": "szukają wszędzie nerwowo", "fixed_points": 40},
+          {"text": "wstają do telewizora ręcznie", "fixed_points": 28},
+          {"text": "krzyczą na kogoś z rodziny", "fixed_points": 16},
+          {"text": "używają aplikacji na telefonie", "fixed_points": 10},
+          {"text": "rezygnują i idą spać", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Wymień coś co każdy robi gdy znajdzie świetny serial.",
+        "answers": [
+          {"text": "ogląda kilka odcinków pod rząd", "fixed_points": 46},
+          {"text": "poleca wszystkim znajomym", "fixed_points": 24},
+          {"text": "zarwuje noce", "fixed_points": 16},
+          {"text": "nie odbiera telefonów", "fixed_points": 9},
+          {"text": "szuka kiedy kolejny sezon", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj polskie programy telewizyjne które każdy zna.",
+        "answers": [
+          {"text": "M jak Miłość", "fixed_points": 36},
+          {"text": "Wiadomości TVP", "fixed_points": 28},
+          {"text": "Familiada", "fixed_points": 18},
+          {"text": "Mam Talent", "fixed_points": 10},
+          {"text": "Kuchenne Rewolucje", "fixed_points": 8}
+        ]
+      },
+      {
+        "text": "Co Polacy robią gdy nie mogą wybrać co oglądać?",
+        "answers": [
+          {"text": "scrollują przez pół godziny", "fixed_points": 44},
+          {"text": "włączają coś już raz widzianego", "fixed_points": 26},
+          {"text": "pytają kogoś o polecenie", "fixed_points": 16},
+          {"text": "oglądają YouTube zamiast", "fixed_points": 9},
+          {"text": "idą spać", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj powód dla którego Polacy oglądają telewizję wieczorem.",
+        "answers": [
+          {"text": "relaks po ciężkim dniu", "fixed_points": 44},
+          {"text": "nie mają innego pomysłu", "fixed_points": 24},
+          {"text": "wiadomości i aktualności", "fixed_points": 16},
+          {"text": "ulubiony serial o tej porze", "fixed_points": 10},
+          {"text": "żeby było coś w tle", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co mówi Polak po skończeniu całego serialu na raz?",
+        "answers": [
+          {"text": "co ja teraz ze sobą zrobię", "fixed_points": 40},
+          {"text": "kiedy następny sezon", "fixed_points": 28},
+          {"text": "powinienem był pójść spać", "fixed_points": 18},
+          {"text": "polecę to wszystkim", "fixed_points": 10},
+          {"text": "żałuję że nie ma więcej", "fixed_points": 4}
+        ]
+      }
+    ]
+  }
+}]

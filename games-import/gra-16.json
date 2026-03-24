@@ -1,0 +1,109 @@
+[{
+  "title": "Muzyka i koncerty",
+  "description": "Głośniki, słuchawki i ta jedna piosenka którą nucisz od tygodnia — muzyka jest wszędzie. Sprawdź co Polacy słuchają i jak się zachowują na koncertach!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Kiedy Polacy śpiewają bez wstydu?",
+        "answers": [
+          {"text": "pod prysznicem", "fixed_points": 44},
+          {"text": "w samochodzie", "fixed_points": 30},
+          {"text": "po alkoholu", "fixed_points": 14},
+          {"text": "na karaoke", "fixed_points": 8},
+          {"text": "na weselu", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Co robisz gdy twoja ulubiona piosenka leci w radiu?",
+        "answers": [
+          {"text": "głośniej nastawiasz", "fixed_points": 44},
+          {"text": "śpiewasz razem", "fixed_points": 28},
+          {"text": "kiwasz głową w rytm", "fixed_points": 16},
+          {"text": "uśmiechasz się sam do siebie", "fixed_points": 8},
+          {"text": "mówisz komuś obok", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Wymień coś co denerwuje na koncercie.",
+        "answers": [
+          {"text": "telefony w górze zamiast rąk", "fixed_points": 38},
+          {"text": "wysoka osoba z przodu", "fixed_points": 28},
+          {"text": "tłok i ścisk", "fixed_points": 18},
+          {"text": "zły dźwięk", "fixed_points": 10},
+          {"text": "ceny piwa na terenie", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co Polacy słuchają najczęściej w samochodzie?",
+        "answers": [
+          {"text": "radio", "fixed_points": 44},
+          {"text": "playlist ze Spotify", "fixed_points": 26},
+          {"text": "podcasty", "fixed_points": 14},
+          {"text": "audiobooki", "fixed_points": 10},
+          {"text": "cisza — nic", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co robi Polak gdy usłyszy disco polo?",
+        "answers": [
+          {"text": "narzeka że takie coś leci", "fixed_points": 36},
+          {"text": "tańczy mimo woli", "fixed_points": 26},
+          {"text": "zna każde słowo i śpiewa", "fixed_points": 20},
+          {"text": "wychodzi z sali", "fixed_points": 12},
+          {"text": "podśpiewuje nieświadomie", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś co robisz gdy słuchawki wypadają w autobusie.",
+        "answers": [
+          {"text": "panikujesz że wszyscy słyszeli", "fixed_points": 44},
+          {"text": "szybko zbierasz", "fixed_points": 28},
+          {"text": "ściszasz telefon", "fixed_points": 14},
+          {"text": "czerwienisz się", "fixed_points": 9},
+          {"text": "udajesz że nic się nie stało", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co kupujesz na koncercie?",
+        "answers": [
+          {"text": "piwo", "fixed_points": 40},
+          {"text": "koszulkę z trasy", "fixed_points": 28},
+          {"text": "wodę", "fixed_points": 18},
+          {"text": "coś do jedzenia", "fixed_points": 9},
+          {"text": "plakat", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co mówisz gdy słyszysz muzykę którą nie lubisz.",
+        "answers": [
+          {"text": "to jest okropne", "fixed_points": 40},
+          {"text": "jak oni tego w ogóle słuchają", "fixed_points": 26},
+          {"text": "można coś innego?", "fixed_points": 18},
+          {"text": "ściszasz sami", "fixed_points": 10},
+          {"text": "wychodzisz z pokoju", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Wymień gatunek muzyki który każdy Polak zna.",
+        "answers": [
+          {"text": "disco polo", "fixed_points": 40},
+          {"text": "pop", "fixed_points": 26},
+          {"text": "rock", "fixed_points": 18},
+          {"text": "hip-hop", "fixed_points": 10},
+          {"text": "biesiadna śpiewka", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś co robi ktoś kto zna piosenkę na pamięć.",
+        "answers": [
+          {"text": "śpiewa każde słowo", "fixed_points": 44},
+          {"text": "poprawia innych gdy pomylą tekst", "fixed_points": 26},
+          {"text": "śpiewa przed lustrem", "fixed_points": 16},
+          {"text": "puszcza wszystkim znajomym", "fixed_points": 9},
+          {"text": "nuci w pracy nieświadomie", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]

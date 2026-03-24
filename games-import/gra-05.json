@@ -1,0 +1,109 @@
+[{
+  "title": "Zwierzęta domowe",
+  "description": "Pies, kot, chomik albo coś egzotycznego — Polacy kochają swoje zwierzęta jak rodzinę. Sprawdź czy twój pupil zachowuje się tak samo jak zwierzęta innych uczestników!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Co robi kot gdy wrócisz do domu?",
+        "answers": [
+          {"text": "ignoruje cię całkowicie", "fixed_points": 44},
+          {"text": "mruczy i ociera się o nogi", "fixed_points": 28},
+          {"text": "prosi o jedzenie", "fixed_points": 16},
+          {"text": "śpi dalej jakby nic", "fixed_points": 8},
+          {"text": "ucieka w drugi kąt", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Co robi pies gdy właściciel wychodzi z domu?",
+        "answers": [
+          {"text": "szczeka i wyje", "fixed_points": 38},
+          {"text": "siada smutno przy drzwiach", "fixed_points": 28},
+          {"text": "niszczy rzeczy", "fixed_points": 18},
+          {"text": "śpi przez cały czas", "fixed_points": 10},
+          {"text": "patrzy przez okno", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś co właściciel robi dla swojego psa.",
+        "answers": [
+          {"text": "wyprowadza na spacer", "fixed_points": 42},
+          {"text": "karmi dwa razy dziennie", "fixed_points": 28},
+          {"text": "kąpie", "fixed_points": 16},
+          {"text": "gra razem z nim", "fixed_points": 9},
+          {"text": "ubiera na zimę", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Gdzie kot śpi w twoim domu?",
+        "answers": [
+          {"text": "na łóżku właściciela", "fixed_points": 40},
+          {"text": "na kanapie", "fixed_points": 28},
+          {"text": "na parapecie", "fixed_points": 18},
+          {"text": "w koszu z praniem", "fixed_points": 9},
+          {"text": "na swoim kocyku", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co robi pies gdy widzisz że bierzesz smycz?",
+        "answers": [
+          {"text": "szaleje z radości", "fixed_points": 52},
+          {"text": "biega po całym domu", "fixed_points": 24},
+          {"text": "głośno szczeka", "fixed_points": 14},
+          {"text": "siada grzecznie", "fixed_points": 6},
+          {"text": "przynosi buty", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Podaj coś co denerwuje w posiadaniu kota.",
+        "answers": [
+          {"text": "sierść wszędzie", "fixed_points": 44},
+          {"text": "nocne wycie", "fixed_points": 24},
+          {"text": "drapanie mebli", "fixed_points": 18},
+          {"text": "przynosi myszy lub ptaki", "fixed_points": 9},
+          {"text": "wchodzi na stół", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co mówi właściciel do swojego zwierzaka?",
+        "answers": [
+          {"text": "kto jest najlepszy na świecie", "fixed_points": 40},
+          {"text": "głodny jesteś?", "fixed_points": 28},
+          {"text": "chodź tu do mnie", "fixed_points": 18},
+          {"text": "grzeczny jesteś", "fixed_points": 10},
+          {"text": "nie rób tego!", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Co robi właściciel gdy jego zwierzę jest chore?",
+        "answers": [
+          {"text": "jedzie do weterynarza", "fixed_points": 50},
+          {"text": "martwi się bardzo", "fixed_points": 24},
+          {"text": "szuka objawów w internecie", "fixed_points": 14},
+          {"text": "podaje leki", "fixed_points": 8},
+          {"text": "dzwoni do znajomych z pytaniem", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Podaj coś co robi kot gdy śpisz.",
+        "answers": [
+          {"text": "siada na głowie lub twarzy", "fixed_points": 38},
+          {"text": "chodzi po pokoju w nocy", "fixed_points": 26},
+          {"text": "miauczy głośno", "fixed_points": 20},
+          {"text": "śpi spokojnie obok ciebie", "fixed_points": 11},
+          {"text": "popycha cię łapą", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj powód dla którego ludzie wolą kota od psa.",
+        "answers": [
+          {"text": "jest bardziej samodzielny", "fixed_points": 42},
+          {"text": "nie trzeba go wyprowadzać", "fixed_points": 28},
+          {"text": "jest cichy", "fixed_points": 16},
+          {"text": "mniej pracy", "fixed_points": 9},
+          {"text": "mruczenie uspokaja", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]

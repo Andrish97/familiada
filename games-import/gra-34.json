@@ -1,0 +1,109 @@
+[{
+  "title": "Polskie słodycze i ciasta",
+  "description": "Pączki, makowiec i bałagan na blacie po pieczeniu — słodycze to polska miłość! Sprawdź co Polacy jedzą, pieką i kupują gdy chodzi o słodki ząb!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Podaj coś co jest na każdym polskim stole przy kawie.",
+        "answers": [
+          {"text": "sernik", "fixed_points": 38},
+          {"text": "kruche ciasteczka", "fixed_points": 26},
+          {"text": "drożdżowe lub makowiec", "fixed_points": 18},
+          {"text": "czekoladki", "fixed_points": 12},
+          {"text": "jabłecznik", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Wymień słodycze które każde polskie dziecko zna.",
+        "answers": [
+          {"text": "WW czekolada", "fixed_points": 36},
+          {"text": "Michałki", "fixed_points": 26},
+          {"text": "Krówki", "fixed_points": 18},
+          {"text": "Ptasie Mleczko", "fixed_points": 14},
+          {"text": "Prince Polo", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś co polska babcia piecze na wizytę.",
+        "answers": [
+          {"text": "sernik", "fixed_points": 40},
+          {"text": "szarlotka", "fixed_points": 28},
+          {"text": "makowiec", "fixed_points": 16},
+          {"text": "drożdżówka", "fixed_points": 10},
+          {"text": "piernik", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co Polacy robią gdy mają ochotę na coś słodkiego?",
+        "answers": [
+          {"text": "otwierają czekoladę", "fixed_points": 40},
+          {"text": "idą do cukierni", "fixed_points": 26},
+          {"text": "pieką ciasto", "fixed_points": 18},
+          {"text": "jedzą lody", "fixed_points": 10},
+          {"text": "szukają co jest w szafce", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś co jest w Polsce kupowane na Tłusty Czwartek.",
+        "answers": [
+          {"text": "pączki", "fixed_points": 60},
+          {"text": "faworki", "fixed_points": 26},
+          {"text": "inne ciastka", "fixed_points": 8},
+          {"text": "lody", "fixed_points": 4},
+          {"text": "ciasto kupne", "fixed_points": 2}
+        ]
+      },
+      {
+        "text": "Podaj coś co denerwuje przy pieczeniu ciasta.",
+        "answers": [
+          {"text": "ciasto się opada", "fixed_points": 40},
+          {"text": "przykłada się do dna", "fixed_points": 26},
+          {"text": "składniki się kończą w połowie", "fixed_points": 18},
+          {"text": "brud na całej kuchni", "fixed_points": 10},
+          {"text": "złe proporcje", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co Polacy jedzą gdy jest smutno?",
+        "answers": [
+          {"text": "czekolada", "fixed_points": 44},
+          {"text": "lody", "fixed_points": 26},
+          {"text": "słone chipsy", "fixed_points": 16},
+          {"text": "cokolwiek co jest", "fixed_points": 9},
+          {"text": "nic — tracą apetyt", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Wymień coś co kupujesz w cukierni.",
+        "answers": [
+          {"text": "pączek", "fixed_points": 40},
+          {"text": "ekler", "fixed_points": 26},
+          {"text": "szarlotka na wynos", "fixed_points": 18},
+          {"text": "sernik", "fixed_points": 12},
+          {"text": "lody", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Co mówisz gdy ciasto wyjdzie wyjątkowo dobrze?",
+        "answers": [
+          {"text": "nigdy tak dobrze mi nie wyszło", "fixed_points": 40},
+          {"text": "zdjęcie na Instagram!", "fixed_points": 26},
+          {"text": "przepis od mamy się sprawdził", "fixed_points": 18},
+          {"text": "znoszę do sąsiadów", "fixed_points": 10},
+          {"text": "szybko znika ze stołu", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś co kupujesz w kiosku lub na stacji benzynowej dla słodkiego ząba.",
+        "answers": [
+          {"text": "czekolada", "fixed_points": 42},
+          {"text": "baton", "fixed_points": 28},
+          {"text": "żelki lub cukierki", "fixed_points": 18},
+          {"text": "chipsy", "fixed_points": 8},
+          {"text": "wafelek", "fixed_points": 4}
+        ]
+      }
+    ]
+  }
+}]

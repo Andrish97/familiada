@@ -1,0 +1,109 @@
+[{
+  "title": "Pierwsza randka",
+  "description": "Kolacja przy świecach albo kawa w centrum — randka to stres, ekscytacja i nadzieja w jednym. Sprawdź co naprawdę dzieje się w głowie Polaków przed i w czasie pierwszego spotkania!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Co robisz przed pierwszą randką?",
+        "answers": [
+          {"text": "przeglądasz profil tej osoby w necie", "fixed_points": 38},
+          {"text": "przymierzasz ubrania kilkanaście razy", "fixed_points": 26},
+          {"text": "nerwowo czekasz", "fixed_points": 18},
+          {"text": "pytasz przyjaciół o radę", "fixed_points": 12},
+          {"text": "prawie rezygnujesz w połowie dnia", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj powód dla którego randka poszła źle.",
+        "answers": [
+          {"text": "nie było o czym rozmawiać", "fixed_points": 40},
+          {"text": "zdjęcie z Tindera wyglądało inaczej", "fixed_points": 24},
+          {"text": "ta osoba była nieuprzejma", "fixed_points": 18},
+          {"text": "mówił tylko o sobie", "fixed_points": 12},
+          {"text": "spóźnił się bez przeprosin", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co robisz podczas randki gdy rozmowa się urywa?",
+        "answers": [
+          {"text": "pytasz cokolwiek co wpadnie", "fixed_points": 38},
+          {"text": "patrzysz w telefon", "fixed_points": 28},
+          {"text": "jesz lub pijesz więcej", "fixed_points": 18},
+          {"text": "komentujesz otoczenie", "fixed_points": 10},
+          {"text": "pytasz o ulubiony film", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś co świadczy że randka idzie świetnie.",
+        "answers": [
+          {"text": "rozmowa nie urywa się ani na chwilę", "fixed_points": 44},
+          {"text": "śmiejecie się razem z czegoś", "fixed_points": 28},
+          {"text": "czas leci niepostrzeżenie", "fixed_points": 16},
+          {"text": "ktoś dotknął twojej ręki", "fixed_points": 8},
+          {"text": "macie podobne poglądy", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Gdzie Polacy umawiają się na pierwszą randkę?",
+        "answers": [
+          {"text": "kawiarnia", "fixed_points": 44},
+          {"text": "restauracja", "fixed_points": 26},
+          {"text": "spacer w parku", "fixed_points": 16},
+          {"text": "kino", "fixed_points": 9},
+          {"text": "bar", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Kto płaci rachunek na pierwszej randce według Polaków?",
+        "answers": [
+          {"text": "po równo pół na pół", "fixed_points": 36},
+          {"text": "mężczyzna", "fixed_points": 32},
+          {"text": "ten kto zaprosił", "fixed_points": 18},
+          {"text": "każde swoje osobno", "fixed_points": 10},
+          {"text": "zależy kto chce", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Co mówisz znajomym po udanej pierwszej randce?",
+        "answers": [
+          {"text": "to był super wieczór", "fixed_points": 40},
+          {"text": "spotkamy się znowu na pewno", "fixed_points": 26},
+          {"text": "bardzo mi się podobał/a", "fixed_points": 18},
+          {"text": "poczułem iskrę", "fixed_points": 10},
+          {"text": "nie wiem jeszcze co myślę", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś czego nie robisz na pierwszej randce.",
+        "answers": [
+          {"text": "nie mówisz o byłych partnerach", "fixed_points": 42},
+          {"text": "nie patrzysz ciągle w telefon", "fixed_points": 26},
+          {"text": "nie pytasz o ślub i dzieci", "fixed_points": 16},
+          {"text": "nie upijasz się", "fixed_points": 10},
+          {"text": "nie mówisz ile zarabiasz", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co czujesz gdy ta osoba pisze że chce spotkać się ponownie?",
+        "answers": [
+          {"text": "radość i ekscytację", "fixed_points": 46},
+          {"text": "ulgę", "fixed_points": 26},
+          {"text": "chcesz powiedzieć wszystkim", "fixed_points": 16},
+          {"text": "odpisujesz za szybko z radości", "fixed_points": 8},
+          {"text": "trochę panikujesz", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Podaj coś o czym rozmawia się na każdej randce.",
+        "answers": [
+          {"text": "praca i hobby", "fixed_points": 38},
+          {"text": "podróże i marzenia", "fixed_points": 26},
+          {"text": "filmy i muzyka", "fixed_points": 20},
+          {"text": "rodzina", "fixed_points": 10},
+          {"text": "ulubione jedzenie", "fixed_points": 6}
+        ]
+      }
+    ]
+  }
+}]

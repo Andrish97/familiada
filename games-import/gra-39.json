@@ -1,0 +1,109 @@
+[{
+  "title": "Internet i social media",
+  "description": "Lajki, komentarze i algorytm który wie więcej o tobie niż ty sam — internet to nowa rzeczywistość! Sprawdź czy twoje internetowe nawyki są typowe dla Polaków!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Podaj coś co Polacy robią na Facebooku.",
+        "answers": [
+          {"text": "przeglądają newsfeed", "fixed_points": 38},
+          {"text": "komentują politykę", "fixed_points": 26},
+          {"text": "piszą życzenia urodzinowe", "fixed_points": 18},
+          {"text": "udostępniają filmiki", "fixed_points": 12},
+          {"text": "piszą w grupach", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj powód dla którego ktoś usuwa się z Facebooka.",
+        "answers": [
+          {"text": "za dużo negatywnych treści", "fixed_points": 40},
+          {"text": "chce przerwy od netu", "fixed_points": 26},
+          {"text": "kłótnie w komentarzach", "fixed_points": 18},
+          {"text": "za dużo reklam", "fixed_points": 11},
+          {"text": "przeniósł się na Instagram", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co robi Polak gdy zobaczy kontrowersyjny komentarz?",
+        "answers": [
+          {"text": "odpowiada i kłóci się", "fixed_points": 38},
+          {"text": "przewija dalej", "fixed_points": 28},
+          {"text": "lajkuje lub antylajkuje", "fixed_points": 18},
+          {"text": "udostępnia dalej", "fixed_points": 10},
+          {"text": "zgłasza post", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś co każdy robi na YouTube.",
+        "answers": [
+          {"text": "ogląda filmiki godzinami", "fixed_points": 40},
+          {"text": "szuka tutoriali", "fixed_points": 26},
+          {"text": "słucha muzyki", "fixed_points": 18},
+          {"text": "ogląda recenzje produktów", "fixed_points": 11},
+          {"text": "subskrybuje kanały", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co Polacy robią gdy internet jest wolny?",
+        "answers": [
+          {"text": "resetują router", "fixed_points": 44},
+          {"text": "klną pod nosem", "fixed_points": 26},
+          {"text": "dzwonią do dostawcy", "fixed_points": 16},
+          {"text": "czekają", "fixed_points": 9},
+          {"text": "używają danych mobilnych", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co każdy robi gdy dostanie powiadomienie.",
+        "answers": [
+          {"text": "sprawdza od razu", "fixed_points": 44},
+          {"text": "odkłada na późniejsze", "fixed_points": 26},
+          {"text": "ignoruje", "fixed_points": 16},
+          {"text": "odkłada telefon znowu", "fixed_points": 9},
+          {"text": "wyłącza powiadomienia", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co Polacy robią gdy coś w internecie ich wkurzy?",
+        "answers": [
+          {"text": "piszą komentarz", "fixed_points": 40},
+          {"text": "mówią rodzinie o tym", "fixed_points": 26},
+          {"text": "udostępniają ze złym komentarzem", "fixed_points": 18},
+          {"text": "zamykają i odchodzą", "fixed_points": 11},
+          {"text": "scrollują dalej", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co kupujesz przez internet.",
+        "answers": [
+          {"text": "ubrania", "fixed_points": 36},
+          {"text": "elektronika", "fixed_points": 26},
+          {"text": "książki", "fixed_points": 18},
+          {"text": "kosmetyki", "fixed_points": 14},
+          {"text": "jedzenie", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co robi Polak gdy paczka z internetu nie dociera?",
+        "answers": [
+          {"text": "śledzi przesyłkę co godzinę", "fixed_points": 44},
+          {"text": "pisze do sklepu", "fixed_points": 26},
+          {"text": "dzwoni na infolinię", "fixed_points": 16},
+          {"text": "nerwowo czeka", "fixed_points": 9},
+          {"text": "pisze negatywną opinię", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś na co Polacy tracą czas w internecie.",
+        "answers": [
+          {"text": "scrollowanie social mediów", "fixed_points": 44},
+          {"text": "oglądanie filmików", "fixed_points": 26},
+          {"text": "czytanie komentarzy", "fixed_points": 16},
+          {"text": "oglądanie zdjęć nieruchomości", "fixed_points": 9},
+          {"text": "szukanie rzeczy których nie kupią", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]

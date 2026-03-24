@@ -1,0 +1,109 @@
+[{
+  "title": "Kino i filmy",
+  "description": "Popcorn, fotel i te reklamy które trwają wieczność — kino to coś wyjątkowego. Sprawdź co Polacy oglądają, jak reagują i co mówią po wyjściu z sali!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Podaj coś co irytuje cię w kinie.",
+        "answers": [
+          {"text": "głośno rozmawiający widz", "fixed_points": 40},
+          {"text": "czyiś telefon dzwoni", "fixed_points": 28},
+          {"text": "wysokie ceny biletów", "fixed_points": 16},
+          {"text": "ktoś głośno je", "fixed_points": 11},
+          {"text": "reklamy przed filmem", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co kupujesz w kinie do jedzenia?",
+        "answers": [
+          {"text": "popcorn", "fixed_points": 50},
+          {"text": "duży napój", "fixed_points": 26},
+          {"text": "nachosy", "fixed_points": 14},
+          {"text": "hot dog", "fixed_points": 7},
+          {"text": "słodycze", "fixed_points": 3}
+        ]
+      },
+      {
+        "text": "Podaj coś co robisz gdy płaczesz na filmie.",
+        "answers": [
+          {"text": "udajesz że nie płaczesz", "fixed_points": 40},
+          {"text": "chowasz twarz", "fixed_points": 26},
+          {"text": "bierzesz chusteczkę", "fixed_points": 18},
+          {"text": "mówisz że masz coś w oku", "fixed_points": 12},
+          {"text": "płaczesz bez wstydu", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Podaj gatunek filmowy który Polacy oglądają najchętniej.",
+        "answers": [
+          {"text": "komedie", "fixed_points": 38},
+          {"text": "thriller", "fixed_points": 26},
+          {"text": "horror", "fixed_points": 18},
+          {"text": "filmy akcji", "fixed_points": 12},
+          {"text": "romans", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co mówisz po obejrzeniu bardzo złego filmu?",
+        "answers": [
+          {"text": "zmarnowałem dwie godziny życia", "fixed_points": 40},
+          {"text": "pieniądze wyrzucone w błoto", "fixed_points": 26},
+          {"text": "jak można było to nakręcić", "fixed_points": 18},
+          {"text": "nikomu nie polecam", "fixed_points": 10},
+          {"text": "dałem jedynkę na filmwebie", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co robisz gdy film okazuje się nudny?",
+        "answers": [
+          {"text": "patrzysz w telefon", "fixed_points": 38},
+          {"text": "zasypiasz", "fixed_points": 28},
+          {"text": "czekasz cierpliwie do końca", "fixed_points": 16},
+          {"text": "jedzisz popcorn szybciej", "fixed_points": 12},
+          {"text": "wychodzisz z sali", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co mówisz gdy ktoś robi spoilery?",
+        "answers": [
+          {"text": "nie mów mi!", "fixed_points": 48},
+          {"text": "dlaczego mi to mówisz!", "fixed_points": 24},
+          {"text": "zamknij się", "fixed_points": 16},
+          {"text": "teraz nie mogę tego obejrzeć", "fixed_points": 8},
+          {"text": "złościsz się bardzo", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Podaj coś co Polacy mówią o polskich filmach.",
+        "answers": [
+          {"text": "są słabe i nudne", "fixed_points": 36},
+          {"text": "ciągle te same wątki wojenne", "fixed_points": 28},
+          {"text": "sztuczna gra aktorów", "fixed_points": 18},
+          {"text": "za mało kasy na produkcję", "fixed_points": 12},
+          {"text": "kilka naprawdę dobrych jest", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Wymień coś co robi ktoś uzależniony od serialu Netflix.",
+        "answers": [
+          {"text": "ogląda całą noc", "fixed_points": 44},
+          {"text": "rezygnuje z planów dla kolejnego odcinka", "fixed_points": 26},
+          {"text": "nie wychodzi z domu przez weekend", "fixed_points": 16},
+          {"text": "cytuje postacie", "fixed_points": 9},
+          {"text": "poleca wszystkim obsesyjnie", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co robisz przed filmem na kanapie żeby było komfortowo?",
+        "answers": [
+          {"text": "przynosisz kołdrę", "fixed_points": 40},
+          {"text": "robisz sobie jedzenie", "fixed_points": 26},
+          {"text": "szukasz dobrego miejsca", "fixed_points": 18},
+          {"text": "ściemniasz pokój", "fixed_points": 10},
+          {"text": "wyciągasz tablet lub TV", "fixed_points": 6}
+        ]
+      }
+    ]
+  }
+}]

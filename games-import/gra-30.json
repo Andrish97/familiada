@@ -1,0 +1,109 @@
+[{
+  "title": "Remont mieszkania",
+  "description": "Malowanie, kurz wszędzie i pan Mirek który ma przyjść w poniedziałek — remont to polska tradycja! Sprawdź czy twoje remontowe doświadczenia są podobne do innych Polaków!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Podaj powód dla którego remont trwa dłużej niż planowano.",
+        "answers": [
+          {"text": "fachowiec nie przychodzi na czas", "fixed_points": 40},
+          {"text": "pojawiają się nowe niespodzianki", "fixed_points": 26},
+          {"text": "zmiana planów w trakcie", "fixed_points": 18},
+          {"text": "brak materiałów", "fixed_points": 10},
+          {"text": "brakuje pieniędzy", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co denerwuje podczas remontu?",
+        "answers": [
+          {"text": "kurz dosłownie wszędzie", "fixed_points": 40},
+          {"text": "hałas cały dzień", "fixed_points": 26},
+          {"text": "nierzetelny fachowiec", "fixed_points": 18},
+          {"text": "nie możesz normalnie żyć", "fixed_points": 10},
+          {"text": "koszty wyższe niż plan", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś co każdy robi sam podczas remontu żeby zaoszczędzić.",
+        "answers": [
+          {"text": "maluje ściany", "fixed_points": 40},
+          {"text": "kładzie panele podłogowe", "fixed_points": 26},
+          {"text": "rozkłada tapety", "fixed_points": 18},
+          {"text": "montuje meble IKEA", "fixed_points": 12},
+          {"text": "robi porządki i wywozi gruz", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Co mówi fachowiec gdy pyta go o termin?",
+        "answers": [
+          {"text": "to będzie gotowe do końca tygodnia", "fixed_points": 40},
+          {"text": "dwa tygodnie", "fixed_points": 26},
+          {"text": "zależy od materiałów", "fixed_points": 18},
+          {"text": "mam teraz dużo roboty", "fixed_points": 10},
+          {"text": "zadzwonię do ciebie", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co robi Polak w Castoramie lub Leroy Merlin?",
+        "answers": [
+          {"text": "szuka materiałów", "fixed_points": 38},
+          {"text": "ogląda wszystko bez końca", "fixed_points": 26},
+          {"text": "pyta doradcy o pomoc", "fixed_points": 18},
+          {"text": "kupuje za dużo", "fixed_points": 12},
+          {"text": "spędza tam pół dnia", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś co każdy kupuje w nadmiarze na remont.",
+        "answers": [
+          {"text": "farba", "fixed_points": 40},
+          {"text": "panele podłogowe", "fixed_points": 26},
+          {"text": "płytki", "fixed_points": 18},
+          {"text": "wkręty i śruby", "fixed_points": 10},
+          {"text": "folia ochronna", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co mówisz gdy remont w końcu się skończy?",
+        "answers": [
+          {"text": "nareszcie!", "fixed_points": 44},
+          {"text": "nigdy więcej", "fixed_points": 26},
+          {"text": "ale pięknie wyszło", "fixed_points": 18},
+          {"text": "warto było", "fixed_points": 8},
+          {"text": "już planuje kolejne", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Podaj coś co jest najtrudniejsze w remoncie łazienki.",
+        "answers": [
+          {"text": "układanie płytek", "fixed_points": 38},
+          {"text": "hydraulika", "fixed_points": 28},
+          {"text": "montaż kabiny prysznicowej", "fixed_points": 18},
+          {"text": "gniazdka elektryczne", "fixed_points": 10},
+          {"text": "wybór kolorów i stylu", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Gdzie Polacy mieszkają podczas remontu?",
+        "answers": [
+          {"text": "u rodziców", "fixed_points": 40},
+          {"text": "u teściów", "fixed_points": 26},
+          {"text": "w jednym pokoju bez remontu", "fixed_points": 20},
+          {"text": "u znajomych", "fixed_points": 10},
+          {"text": "w hotelu", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Podaj coś co zawsze idzie nie tak przy malowaniu.",
+        "answers": [
+          {"text": "farba wychodzi inaczej niż na próbce", "fixed_points": 40},
+          {"text": "zacieki i smugi", "fixed_points": 26},
+          {"text": "kurz przykleja się do mokrej farby", "fixed_points": 18},
+          {"text": "trzeba malować trzy razy", "fixed_points": 10},
+          {"text": "farba na podłodze", "fixed_points": 6}
+        ]
+      }
+    ]
+  }
+}]

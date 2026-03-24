@@ -1,0 +1,109 @@
+[{
+  "title": "Na lotnisku",
+  "description": "Odprawy, bramki i ten moment gdy twój bagaż jest ostatni na taśmie — lotnisko to emocje. Sprawdź czy twoje lotnicze przygody są podobne do innych Polaków!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Podaj coś co robisz zanim wyjdziesz na lotnisko.",
+        "answers": [
+          {"text": "sprawdzasz czy masz paszport", "fixed_points": 44},
+          {"text": "sprawdzasz godzinę odlotu", "fixed_points": 26},
+          {"text": "ważysz walizki", "fixed_points": 16},
+          {"text": "robisz online check-in", "fixed_points": 9},
+          {"text": "pakujesz w panice ostatnie rzeczy", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co Polacy robią na lotnisku czekając na lot?",
+        "answers": [
+          {"text": "piją kawę", "fixed_points": 38},
+          {"text": "robią zakupy w duty free", "fixed_points": 26},
+          {"text": "patrzą na tablicę z lotami", "fixed_points": 18},
+          {"text": "jedzą coś drogiego", "fixed_points": 12},
+          {"text": "scrollują telefon", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj powód dla którego Polacy denerwują się na lotnisku.",
+        "answers": [
+          {"text": "opóźniony lot", "fixed_points": 44},
+          {"text": "długa kolejka do odprawy", "fixed_points": 26},
+          {"text": "bagaż nie mieści się", "fixed_points": 16},
+          {"text": "kontrola bezpieczeństwa", "fixed_points": 9},
+          {"text": "zaginął bagaż", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co kupujesz w duty free?",
+        "answers": [
+          {"text": "alkohol", "fixed_points": 40},
+          {"text": "perfumy", "fixed_points": 28},
+          {"text": "czekoladki dla rodziny", "fixed_points": 18},
+          {"text": "papierosy", "fixed_points": 9},
+          {"text": "kosmetyki", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co musisz zdjąć lub wyjąć przy kontroli bezpieczeństwa.",
+        "answers": [
+          {"text": "buty", "fixed_points": 38},
+          {"text": "pasek", "fixed_points": 26},
+          {"text": "kurtka", "fixed_points": 20},
+          {"text": "laptop z torby", "fixed_points": 12},
+          {"text": "metalowe rzeczy z kieszeni", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Co robisz gdy twój lot jest opóźniony o dwie godziny?",
+        "answers": [
+          {"text": "siedzisz przy bramce", "fixed_points": 36},
+          {"text": "idziesz coś zjeść", "fixed_points": 26},
+          {"text": "narzekasz i pytasz o powód", "fixed_points": 20},
+          {"text": "scrollujesz telefon przez cały czas", "fixed_points": 12},
+          {"text": "szukasz odszkodowania", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś co czujesz gdy samolot startuje.",
+        "answers": [
+          {"text": "ekscytację", "fixed_points": 38},
+          {"text": "strach", "fixed_points": 28},
+          {"text": "ucisk w uszach", "fixed_points": 18},
+          {"text": "spokój", "fixed_points": 10},
+          {"text": "chcesz żeby już dotrzeć", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co robisz podczas długiego lotu?",
+        "answers": [
+          {"text": "oglądasz filmy", "fixed_points": 38},
+          {"text": "śpisz", "fixed_points": 28},
+          {"text": "słuchasz muzyki", "fixed_points": 18},
+          {"text": "czytasz", "fixed_points": 10},
+          {"text": "rozmawiasz z sąsiadem", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś co denerwuje gdy siedzisz w samolocie.",
+        "answers": [
+          {"text": "płaczące dziecko obok", "fixed_points": 40},
+          {"text": "za ciasne miejsce", "fixed_points": 26},
+          {"text": "ktoś reclinuje fotel na ciebie", "fixed_points": 18},
+          {"text": "turbulencje", "fixed_points": 10},
+          {"text": "zimno w samolocie", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś co robisz po wylądowaniu.",
+        "answers": [
+          {"text": "włączasz telefon", "fixed_points": 44},
+          {"text": "czekasz na bagaż", "fixed_points": 28},
+          {"text": "szukasz wyjścia na zewnątrz", "fixed_points": 16},
+          {"text": "piszesz że doleciałeś/aś", "fixed_points": 8},
+          {"text": "szukasz taksówki lub transportu", "fixed_points": 4}
+        ]
+      }
+    ]
+  }
+}]

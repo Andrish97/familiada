@@ -1,0 +1,109 @@
+[{
+  "title": "Polskie Boże Narodzenie",
+  "description": "Wigilia, pierwsza gwiazdka i 12 potraw na stole — Boże Narodzenie w Polsce to coś wyjątkowego. Sprawdź czy twoje świąteczne tradycje pokrywają się z resztą Polaków!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Podaj coś co jedzą Polacy na Wigilię.",
+        "answers": [
+          {"text": "barszcz z uszkami", "fixed_points": 38},
+          {"text": "karp smażony", "fixed_points": 28},
+          {"text": "pierogi z kapustą i grzybami", "fixed_points": 18},
+          {"text": "śledzie w różnych postaciach", "fixed_points": 10},
+          {"text": "makowiec", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co Polacy robią zanim usiądą do wigilijnej kolacji?",
+        "answers": [
+          {"text": "czekają na pierwszą gwiazdkę", "fixed_points": 40},
+          {"text": "łamią się opłatkiem", "fixed_points": 26},
+          {"text": "ubierają choinkę", "fixed_points": 20},
+          {"text": "modlą się", "fixed_points": 9},
+          {"text": "przygotowują stół", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś jest na każdej polskiej choince.",
+        "answers": [
+          {"text": "lampki elektryczne", "fixed_points": 44},
+          {"text": "kolorowe bombki", "fixed_points": 28},
+          {"text": "łańcuch", "fixed_points": 16},
+          {"text": "gwiazda lub anioł na czubku", "fixed_points": 8},
+          {"text": "stare ozdoby z dzieciństwa", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Podaj coś co dzieci robią w Wigilię.",
+        "answers": [
+          {"text": "szukają prezentów ukrytych wcześniej", "fixed_points": 40},
+          {"text": "nie mogą zasnąć z emocji", "fixed_points": 28},
+          {"text": "otwierają prezenty wieczorem", "fixed_points": 18},
+          {"text": "śpiewają kolędy", "fixed_points": 9},
+          {"text": "pomagają przy dekoracjach", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Wymień coś o czym kłócą się Polacy przy świątecznym stole.",
+        "answers": [
+          {"text": "polityka", "fixed_points": 40},
+          {"text": "kto rzadko dzwoni do rodziny", "fixed_points": 24},
+          {"text": "stare urazy rodzinne", "fixed_points": 18},
+          {"text": "pieniądze", "fixed_points": 12},
+          {"text": "kiedy ślub", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co Polacy robią na świętach między posiłkami?",
+        "answers": [
+          {"text": "oglądają telewizję", "fixed_points": 40},
+          {"text": "drzemią", "fixed_points": 26},
+          {"text": "rozmawiają z rodziną", "fixed_points": 18},
+          {"text": "grają w gry planszowe", "fixed_points": 10},
+          {"text": "idą na spacer", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś co zawsze psuje się przed Bożym Narodzeniem.",
+        "answers": [
+          {"text": "lampki na choince", "fixed_points": 40},
+          {"text": "piec lub piekarnik", "fixed_points": 26},
+          {"text": "samochód", "fixed_points": 18},
+          {"text": "zmywarka", "fixed_points": 10},
+          {"text": "zdrowie kogoś z rodziny", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co babcia robi przez cały tydzień przed Bożym Narodzeniem?",
+        "answers": [
+          {"text": "gotuje i piecze od rana do nocy", "fixed_points": 44},
+          {"text": "martwi się że nie wystarczy jedzenia", "fixed_points": 26},
+          {"text": "piecze makowiec i piernik", "fixed_points": 16},
+          {"text": "sprząta każdy kąt", "fixed_points": 9},
+          {"text": "kupuje prezenty dla wnuków", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co kupujesz na ostatnią chwilę przed świętami.",
+        "answers": [
+          {"text": "prezenty", "fixed_points": 44},
+          {"text": "jedzenie i alkohol", "fixed_points": 26},
+          {"text": "dekoracje świąteczne", "fixed_points": 16},
+          {"text": "papier do pakowania prezentów", "fixed_points": 9},
+          {"text": "kartki bożonarodzeniowe", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co mówi polska rodzina gdy wszyscy są razem przy stole?",
+        "answers": [
+          {"text": "smacznego!", "fixed_points": 40},
+          {"text": "cieszę się że jesteśmy razem", "fixed_points": 26},
+          {"text": "jak szybko rok minął", "fixed_points": 18},
+          {"text": "wyglądasz lepiej niż rok temu", "fixed_points": 10},
+          {"text": "opowiadaj co u ciebie nowego", "fixed_points": 6}
+        ]
+      }
+    ]
+  }
+}]

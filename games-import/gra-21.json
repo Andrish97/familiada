@@ -1,0 +1,109 @@
+[{
+  "title": "Ogród i działka",
+  "description": "Grządki, konewka i ten sąsiad który zawsze ma lepsze pomidory — ogród to polska pasja! Sprawdź czy twoje ogrodowe doświadczenia pokrywają się z milionami Polaków!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Podaj coś co każdy uprawia w polskim ogródku.",
+        "answers": [
+          {"text": "pomidory", "fixed_points": 40},
+          {"text": "ogórki", "fixed_points": 28},
+          {"text": "ziemniaki", "fixed_points": 18},
+          {"text": "kwiaty", "fixed_points": 9},
+          {"text": "zioła", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co niszczy ogród w środku lata?",
+        "answers": [
+          {"text": "ślimaki", "fixed_points": 36},
+          {"text": "susza i upał", "fixed_points": 28},
+          {"text": "grad", "fixed_points": 18},
+          {"text": "stonka", "fixed_points": 12},
+          {"text": "krety", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co ogrodnik robi jesienią?",
+        "answers": [
+          {"text": "zbiera plony", "fixed_points": 40},
+          {"text": "grabuje liście", "fixed_points": 28},
+          {"text": "kisi ogórki i kapustę", "fixed_points": 16},
+          {"text": "przygotowuje rośliny na zimę", "fixed_points": 10},
+          {"text": "sadzi cebulki kwiatów", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś co każdy Polak z ogródkiem robi z nadmiarem warzyw.",
+        "answers": [
+          {"text": "rozdaje sąsiadom", "fixed_points": 40},
+          {"text": "robi przetwory i dżemy", "fixed_points": 28},
+          {"text": "mrozi", "fixed_points": 18},
+          {"text": "daje rodzinie", "fixed_points": 10},
+          {"text": "stawia przed blokiem do wzięcia", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Podaj coś na co narzeka ogrodnik.",
+        "answers": [
+          {"text": "za mało deszczu", "fixed_points": 38},
+          {"text": "ślimaki zjadają wszystko", "fixed_points": 26},
+          {"text": "za gorąco", "fixed_points": 18},
+          {"text": "sąsiad ukradł warzywa", "fixed_points": 12},
+          {"text": "za wiele pracy a mało czasu", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Wymień coś co jest na polskiej działce poza warzywnikiem.",
+        "answers": [
+          {"text": "altana", "fixed_points": 40},
+          {"text": "grill", "fixed_points": 28},
+          {"text": "ławka i stolik", "fixed_points": 18},
+          {"text": "domek narzędziowy", "fixed_points": 9},
+          {"text": "beczka na wodę deszczową", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co goście mówią gdy zobaczą piękny ogród?",
+        "answers": [
+          {"text": "ale pięknie!", "fixed_points": 44},
+          {"text": "ile tu pracy", "fixed_points": 26},
+          {"text": "skąd takie pomidory", "fixed_points": 18},
+          {"text": "masz zielony kciuk", "fixed_points": 8},
+          {"text": "robimy tu zdjęcia", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Co robi ogrodnik latem codziennie rano?",
+        "answers": [
+          {"text": "podlewa rośliny", "fixed_points": 44},
+          {"text": "piele chwasty", "fixed_points": 26},
+          {"text": "sprawdza czy coś urosło", "fixed_points": 18},
+          {"text": "kosi trawnik", "fixed_points": 8},
+          {"text": "sprawdza prognozę pogody", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Wymień coś co kupisz w sklepie ogrodniczym.",
+        "answers": [
+          {"text": "nasiona i sadzonki", "fixed_points": 36},
+          {"text": "ziemia ogrodnicza", "fixed_points": 26},
+          {"text": "nawozy", "fixed_points": 20},
+          {"text": "doniczki", "fixed_points": 12},
+          {"text": "środki na chwasty", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś co sąsiedzi robią za płotem latem.",
+        "answers": [
+          {"text": "grillują", "fixed_points": 40},
+          {"text": "pracują w ogrodzie", "fixed_points": 26},
+          {"text": "leżą w hamaku", "fixed_points": 18},
+          {"text": "piją zimne piwo", "fixed_points": 10},
+          {"text": "zaglądają przez płot do ciebie", "fixed_points": 6}
+        ]
+      }
+    ]
+  }
+}]

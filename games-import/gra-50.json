@@ -1,0 +1,109 @@
+[{
+  "title": "Polskie sąsiedztwo",
+  "description": "Pan Kowalski zza płotu, pani z naprzeciwka i trąbiący ktoś o szóstej rano — sąsiedzi w Polsce to temat rzeka! Sprawdź czy twoje sąsiedzkie doświadczenia są typowe!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Co robi sąsiad który cię denerwuje?",
+        "answers": [
+          {"text": "hałasuje po nocach", "fixed_points": 44},
+          {"text": "parkuje na twoim miejscu", "fixed_points": 26},
+          {"text": "narzeka na wszystko", "fixed_points": 16},
+          {"text": "pali na klatce", "fixed_points": 9},
+          {"text": "zagaduje za długo", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co sąsiedzi pożyczają od siebie.",
+        "answers": [
+          {"text": "wiertarka lub narzędzia", "fixed_points": 42},
+          {"text": "cukier lub sól", "fixed_points": 28},
+          {"text": "jajka", "fixed_points": 16},
+          {"text": "wózek do supermarketu", "fixed_points": 9},
+          {"text": "drabina", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co sąsiad mówi gdy spotkasz go na klatce.",
+        "answers": [
+          {"text": "dzień dobry", "fixed_points": 44},
+          {"text": "a to znowu deszcz", "fixed_points": 26},
+          {"text": "słyszałeś tamtych wczoraj?", "fixed_points": 16},
+          {"text": "kiedy to zima się skończy", "fixed_points": 9},
+          {"text": "milczące kiwnięcie głową", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj powód dla którego Polacy kłócą się z sąsiadami.",
+        "answers": [
+          {"text": "hałas i głośna muzyka", "fixed_points": 42},
+          {"text": "parkowanie", "fixed_points": 26},
+          {"text": "śmietnik i porządek", "fixed_points": 18},
+          {"text": "pies szczeka", "fixed_points": 9},
+          {"text": "dym z grilla", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co robi dobry sąsiad.",
+        "answers": [
+          {"text": "odbiera paczkę gdy cię nie ma", "fixed_points": 42},
+          {"text": "pomaga w potrzebie", "fixed_points": 26},
+          {"text": "nie hałasuje", "fixed_points": 18},
+          {"text": "daje warzywa z ogrodu", "fixed_points": 10},
+          {"text": "pilnuje mieszkania gdy wyjeżdżasz", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Co sąsiedzi robią gdy ktoś wyprowadza się z bloku?",
+        "answers": [
+          {"text": "plotkują", "fixed_points": 40},
+          {"text": "żegnają się serdecznie", "fixed_points": 26},
+          {"text": "pytają kto przyjedzie", "fixed_points": 18},
+          {"text": "pomagają nieść meble", "fixed_points": 11},
+          {"text": "milczą i obserwują", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś czego nie robisz w bloku żeby nie denerwować sąsiadów.",
+        "answers": [
+          {"text": "głośna muzyka późno", "fixed_points": 40},
+          {"text": "wiercenie w niedzielę", "fixed_points": 28},
+          {"text": "parkowanie na cudzym miejscu", "fixed_points": 18},
+          {"text": "trzaskanie drzwiami", "fixed_points": 10},
+          {"text": "głośne kroki na górnym piętrze", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Co wiesz o swoich sąsiadach?",
+        "answers": [
+          {"text": "jak się nazywają", "fixed_points": 40},
+          {"text": "kiedy wraca i wychodzi", "fixed_points": 26},
+          {"text": "że dużo gotują", "fixed_points": 18},
+          {"text": "mają psa lub kota", "fixed_points": 11},
+          {"text": "nic — nie znam ich", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co słyszysz przez ścianę od sąsiada.",
+        "answers": [
+          {"text": "telewizja", "fixed_points": 40},
+          {"text": "kłótnia", "fixed_points": 26},
+          {"text": "muzyka", "fixed_points": 18},
+          {"text": "krzyki dzieci", "fixed_points": 11},
+          {"text": "wiercenie", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co Polacy myślą gdy nowi sąsiedzi się wprowadzają?",
+        "answers": [
+          {"text": "mam nadzieję że cisi", "fixed_points": 44},
+          {"text": "obserwuję kto to jest", "fixed_points": 26},
+          {"text": "pójdę się przywitać", "fixed_points": 16},
+          {"text": "byle nie z małym dzieckiem", "fixed_points": 9},
+          {"text": "czy mają psa?", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]
