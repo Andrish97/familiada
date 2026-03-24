@@ -1,0 +1,109 @@
+[{
+  "title": "Urlop za granicą",
+  "description": "Biuro podróży, all inclusive i zdjęcia które podbijają Instagram — wyjazd zagraniczny to polskie marzenie! Sprawdź czy twoje wakacyjne przygody pokrywają się z innymi Polakami!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Co Polacy robią na all inclusive?",
+        "answers": [
+          {"text": "jedzą za pięcioro", "fixed_points": 44},
+          {"text": "piją przy barze od rana", "fixed_points": 26},
+          {"text": "rezerwują leżaki o świcie", "fixed_points": 16},
+          {"text": "próbują wszystkiego na bufecie", "fixed_points": 9},
+          {"text": "nie wychodzą z hotelu", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co kupujesz na pamiątkę z zagranicy.",
+        "answers": [
+          {"text": "magnes na lodówkę", "fixed_points": 42},
+          {"text": "alkohol lokalny", "fixed_points": 26},
+          {"text": "coś słodkiego", "fixed_points": 16},
+          {"text": "koszulka z napisem", "fixed_points": 10},
+          {"text": "figurka turystyczna", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj powód dla którego Polacy wybierają Turcję lub Egipt na wakacje.",
+        "answers": [
+          {"text": "ciepło i słońce pewne", "fixed_points": 40},
+          {"text": "cena all inclusive", "fixed_points": 28},
+          {"text": "plaża i morze", "fixed_points": 18},
+          {"text": "egzotyka i kultura", "fixed_points": 9},
+          {"text": "długi sezon", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co Polak robi gdy wraca z wakacji zagranicznych?",
+        "answers": [
+          {"text": "wrzuca zdjęcia na social media", "fixed_points": 38},
+          {"text": "opowiada wszystkim o wyjeździe", "fixed_points": 28},
+          {"text": "płacze że wakacje się skończyły", "fixed_points": 18},
+          {"text": "planuje kolejny wyjazd", "fixed_points": 11},
+          {"text": "rozpakowuje walizki tydzień później", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co denerwuje na zagranicznym urlopie.",
+        "answers": [
+          {"text": "nie umiem mówić po ich języku", "fixed_points": 38},
+          {"text": "inne jedzenie niż polskie", "fixed_points": 26},
+          {"text": "zbyt gorąco", "fixed_points": 18},
+          {"text": "turyści wszędzie", "fixed_points": 12},
+          {"text": "droga wymiana walut", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co robi Polak gdy nie rozumie menu za granicą?",
+        "answers": [
+          {"text": "tłumaczy w Google Translate", "fixed_points": 44},
+          {"text": "zamawia losowo", "fixed_points": 26},
+          {"text": "pyta kelnera gestykulując", "fixed_points": 16},
+          {"text": "pokazuje zdjęcie w telefonie", "fixed_points": 9},
+          {"text": "zamawia to samo co sąsiedni stolik", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co Polak tęskni za Polską będąc za granicą.",
+        "answers": [
+          {"text": "polskie jedzenie", "fixed_points": 44},
+          {"text": "rodzina", "fixed_points": 26},
+          {"text": "chleb żytni", "fixed_points": 16},
+          {"text": "język polski dokoła", "fixed_points": 9},
+          {"text": "Biedronka", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co robi Polak gdy za granicą spotka innego Polaka?",
+        "answers": [
+          {"text": "od razu zaczyna rozmowę po polsku", "fixed_points": 44},
+          {"text": "cieszy się bardzo", "fixed_points": 26},
+          {"text": "udaje że nie słyszy", "fixed_points": 16},
+          {"text": "pyta skąd jest", "fixed_points": 9},
+          {"text": "wymienia kontakt", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co Polacy mówią o zagranicy po powrocie.",
+        "answers": [
+          {"text": "za drogo", "fixed_points": 38},
+          {"text": "pięknie ale wolę Polskę", "fixed_points": 26},
+          {"text": "chciałbym tam mieszkać", "fixed_points": 18},
+          {"text": "jedzenie było inne", "fixed_points": 12},
+          {"text": "wrócimy na pewno", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Gdzie Polacy jadą najchętniej za granicę?",
+        "answers": [
+          {"text": "Grecja", "fixed_points": 36},
+          {"text": "Turcja", "fixed_points": 26},
+          {"text": "Włochy", "fixed_points": 18},
+          {"text": "Egipt", "fixed_points": 14},
+          {"text": "Chorwacja", "fixed_points": 6}
+        ]
+      }
+    ]
+  }
+}]

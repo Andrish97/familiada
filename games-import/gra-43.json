@@ -1,0 +1,109 @@
+[{
+  "title": "Polskie tradycje",
+  "description": "Imieniny, dyngus, andrzejki — Polska jest pełna tradycji które łączą pokolenia! Sprawdź ile polskich zwyczajów znasz i czy twoja rodzina kultywuje je podobnie!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Co Polacy robią w Andrzejki?",
+        "answers": [
+          {"text": "leją wosk przez klucz", "fixed_points": 44},
+          {"text": "wróżą z kart", "fixed_points": 26},
+          {"text": "bawią się na imprezach", "fixed_points": 16},
+          {"text": "pytają o miłość", "fixed_points": 9},
+          {"text": "wróżą z jabłka", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co Polacy robią w Zaduszki.",
+        "answers": [
+          {"text": "idą na cmentarz", "fixed_points": 50},
+          {"text": "zapalają znicze", "fixed_points": 28},
+          {"text": "modlą się za dusze", "fixed_points": 12},
+          {"text": "odwiedzają groby bliskich", "fixed_points": 7},
+          {"text": "kupują kwiaty", "fixed_points": 3}
+        ]
+      },
+      {
+        "text": "Co robi Polak w imieniny?",
+        "answers": [
+          {"text": "dostaje życzenia i kwiaty", "fixed_points": 40},
+          {"text": "zbiera życzenia od rodziny", "fixed_points": 26},
+          {"text": "zaprasza rodzinę lub znajomych", "fixed_points": 18},
+          {"text": "stawia tort lub ciasto", "fixed_points": 12},
+          {"text": "dostaje prezenty", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Podaj coś co jest obowiązkiem na Tłusty Czwartek.",
+        "answers": [
+          {"text": "zjeść pączka", "fixed_points": 62},
+          {"text": "zjeść faworki", "fixed_points": 22},
+          {"text": "odwiedzić cukiernię", "fixed_points": 8},
+          {"text": "kupić mnóstwo słodyczy", "fixed_points": 5},
+          {"text": "zrobić tort na okazję", "fixed_points": 3}
+        ]
+      },
+      {
+        "text": "Co Polacy robią w noc z 30 kwietnia na 1 maja?",
+        "answers": [
+          {"text": "palą czarownice — noc Walpurgii", "fixed_points": 38},
+          {"text": "stawiają maję", "fixed_points": 28},
+          {"text": "bawią się przy ognisku", "fixed_points": 18},
+          {"text": "świętują Święto Pracy", "fixed_points": 11},
+          {"text": "nie wiedzą że coś jest", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co jest polskim zwyczajem przy stole.",
+        "answers": [
+          {"text": "nie zaczynać przed gospodyni", "fixed_points": 40},
+          {"text": "smacznego!", "fixed_points": 26},
+          {"text": "goście dostają więcej", "fixed_points": 18},
+          {"text": "nie wstawać do końca", "fixed_points": 11},
+          {"text": "nakładasz gościom", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co robią Polacy gdy są na polowaniu lub myśliwskim spotkaniu?",
+        "answers": [
+          {"text": "opowiadają historię o wielkim polowaniu", "fixed_points": 38},
+          {"text": "piją myśliwską", "fixed_points": 28},
+          {"text": "piją i śpiewają pieśni", "fixed_points": 18},
+          {"text": "grillują ulowioną zwierzynę", "fixed_points": 10},
+          {"text": "debatują o tradycji", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj polskie powiedzenie które każdy zna.",
+        "answers": [
+          {"text": "Polak potrafi", "fixed_points": 36},
+          {"text": "Co nagle to po diable", "fixed_points": 26},
+          {"text": "Nie mój cyrk, nie moje małpy", "fixed_points": 20},
+          {"text": "Jak sobie pościelesz tak się wyśpisz", "fixed_points": 12},
+          {"text": "Zastaw się a postaw się", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co Polacy robią na Dzień Matki?",
+        "answers": [
+          {"text": "dają kwiaty", "fixed_points": 44},
+          {"text": "przygotowują śniadanie do łóżka", "fixed_points": 26},
+          {"text": "zabierają na obiad", "fixed_points": 16},
+          {"text": "dzwonią lub odwiedzają", "fixed_points": 9},
+          {"text": "dają prezent", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co jest polskim zwyczajem przy składaniu życzeń.",
+        "answers": [
+          {"text": "trzy razy w policzek", "fixed_points": 44},
+          {"text": "ściskasz rękę", "fixed_points": 26},
+          {"text": "łamanie się opłatkiem na Wigilia", "fixed_points": 16},
+          {"text": "kieliszek za zdrowie", "fixed_points": 9},
+          {"text": "śpiewanie Sto Lat", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]

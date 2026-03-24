@@ -1,0 +1,109 @@
+[{
+  "title": "Samochodem po Polsce",
+  "description": "Korek na A1, stacje Orlen co sto kilometrów i radar w każdym tunelu — jazda po Polsce to sport narodowy. Sprawdź czy twoje drogowe doświadczenia są typowe!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Co kierowca robi stojąc w korku?",
+        "answers": [
+          {"text": "klnie na czym świat stoi", "fixed_points": 36},
+          {"text": "słucha radia", "fixed_points": 26},
+          {"text": "sprawdza telefon", "fixed_points": 20},
+          {"text": "trąbi bez skutku", "fixed_points": 10},
+          {"text": "szuka objazdu w mapach", "fixed_points": 8}
+        ]
+      },
+      {
+        "text": "Podaj coś co każdy trzyma w samochodzie.",
+        "answers": [
+          {"text": "kamizelka odblaskowa", "fixed_points": 36},
+          {"text": "trójkąt ostrzegawczy", "fixed_points": 28},
+          {"text": "skrobaczka do lodu", "fixed_points": 18},
+          {"text": "stare paragony", "fixed_points": 12},
+          {"text": "torba z przydatnymi gratami", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co Polak robi na stacji benzynowej?",
+        "answers": [
+          {"text": "tankuje", "fixed_points": 44},
+          {"text": "kupuje kawę z automatu", "fixed_points": 26},
+          {"text": "kupuje coś do jedzenia", "fixed_points": 16},
+          {"text": "sprawdza ciśnienie w oponach", "fixed_points": 9},
+          {"text": "toaleta", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co denerwuje cię w innych kierowcach?",
+        "answers": [
+          {"text": "jazda na lewym pasie bez powodu", "fixed_points": 38},
+          {"text": "nieużywanie kierunkowskazu", "fixed_points": 28},
+          {"text": "agresywna jazda z tyłu", "fixed_points": 18},
+          {"text": "parkowanie na przejściu dla pieszych", "fixed_points": 10},
+          {"text": "trąbienie bez powodu", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co robi Polak gdy widzi fotoradar?",
+        "answers": [
+          {"text": "gwałtownie hamuje", "fixed_points": 52},
+          {"text": "patrzy nerwowo na prędkościomierz", "fixed_points": 24},
+          {"text": "mówi znajomym gdzie stoi", "fixed_points": 14},
+          {"text": "klnie pod nosem", "fixed_points": 7},
+          {"text": "udaje że nie widział", "fixed_points": 3}
+        ]
+      },
+      {
+        "text": "Co mówisz gdy GPS poprowadził cię w złe miejsce?",
+        "answers": [
+          {"text": "ten GPS to kompletny idiota", "fixed_points": 40},
+          {"text": "jak to możliwe", "fixed_points": 26},
+          {"text": "gdzie my w ogóle jesteśmy", "fixed_points": 18},
+          {"text": "powinniśmy skręcić wcześniej", "fixed_points": 10},
+          {"text": "teraz jedziemy z pamięci", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Wymień coś co robisz gdy twój samochód nie chce zapalić.",
+        "answers": [
+          {"text": "przekręcasz kluczem jeszcze raz", "fixed_points": 40},
+          {"text": "klniesz", "fixed_points": 26},
+          {"text": "dzwonisz po pomoc", "fixed_points": 18},
+          {"text": "zaglądasz pod maskę bezradnie", "fixed_points": 10},
+          {"text": "szukasz taksówki", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś co zmienia się na drodze gdy pada deszcz.",
+        "answers": [
+          {"text": "wszyscy zwalniają", "fixed_points": 38},
+          {"text": "droga jest śliska", "fixed_points": 28},
+          {"text": "korki się tworzą", "fixed_points": 18},
+          {"text": "słaba widoczność", "fixed_points": 10},
+          {"text": "więcej kolizji", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś co każdy Polak robi na autostradzie.",
+        "answers": [
+          {"text": "jedzie powyżej 140", "fixed_points": 40},
+          {"text": "narzeka na ceny na myjni", "fixed_points": 24},
+          {"text": "zatrzymuje się na MOP-ie", "fixed_points": 18},
+          {"text": "wyprzedza tirów", "fixed_points": 12},
+          {"text": "słucha muzyki głośno", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co mówi pasażer siedzący obok kierowcy?",
+        "answers": [
+          {"text": "uważaj!", "fixed_points": 44},
+          {"text": "jedź wolniej", "fixed_points": 26},
+          {"text": "tu można skręcić", "fixed_points": 16},
+          {"text": "ja bym inaczej jechał", "fixed_points": 9},
+          {"text": "nie hamuj tak gwałtownie", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]

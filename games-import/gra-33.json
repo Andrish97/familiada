@@ -1,0 +1,109 @@
+[{
+  "title": "Camping i ognisko",
+  "description": "Namiot, śpiwór i kiełbasa na patyku — camping to polskie wakacje w wydaniu klasycznym! Sprawdź czy twoje biwakowe wspomnienia pokrywają się z innymi Polakami!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Podaj coś co musisz zabrać na camping.",
+        "answers": [
+          {"text": "namiot", "fixed_points": 40},
+          {"text": "śpiwór", "fixed_points": 26},
+          {"text": "jedzenie i picie", "fixed_points": 18},
+          {"text": "krem na komary", "fixed_points": 10},
+          {"text": "zapałki lub zapalniczka", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co Polacy robią przy ognisku?",
+        "answers": [
+          {"text": "pieką kiełbasę", "fixed_points": 44},
+          {"text": "śpiewają przy gitarze", "fixed_points": 26},
+          {"text": "opowiadają straszne historie", "fixed_points": 16},
+          {"text": "piją piwo", "fixed_points": 9},
+          {"text": "patrzą w ogień", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co denerwuje na campingu?",
+        "answers": [
+          {"text": "komary", "fixed_points": 44},
+          {"text": "hałas sąsiednich namiotów", "fixed_points": 26},
+          {"text": "deszcz", "fixed_points": 18},
+          {"text": "publiczne prysznice", "fixed_points": 8},
+          {"text": "zimny poranek w namiocie", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Co się psuje podczas campingu?",
+        "answers": [
+          {"text": "namiot przecieka", "fixed_points": 40},
+          {"text": "sprząt nie zapala", "fixed_points": 26},
+          {"text": "zgubili kluczyki", "fixed_points": 18},
+          {"text": "jedzenie się zepsuło", "fixed_points": 10},
+          {"text": "telefon rozładowany", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś co jesz na campingu każdego ranka.",
+        "answers": [
+          {"text": "jajka sadzone na palniku", "fixed_points": 38},
+          {"text": "chleb z masłem", "fixed_points": 28},
+          {"text": "płatki z mlekiem", "fixed_points": 18},
+          {"text": "kanapki z czym jest", "fixed_points": 12},
+          {"text": "resztki z poprzedniego dnia", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Co słyszysz gdy śpisz w namiocie?",
+        "answers": [
+          {"text": "ptaki rano", "fixed_points": 40},
+          {"text": "sąsiedzi z namiotu obok", "fixed_points": 26},
+          {"text": "deszcz na płachcie", "fixed_points": 18},
+          {"text": "własny oddech", "fixed_points": 10},
+          {"text": "różne odgłosy nocne", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co robi ktoś kto pierwszy raz rozbija namiot?",
+        "answers": [
+          {"text": "nie może go złożyć", "fixed_points": 40},
+          {"text": "czyta instrukcję", "fixed_points": 28},
+          {"text": "prosi o pomoc", "fixed_points": 18},
+          {"text": "klnie", "fixed_points": 10},
+          {"text": "ogląda tutorial w YouTube", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Podaj coś co jest niezbędne na polskim ognisku.",
+        "answers": [
+          {"text": "kiełbasa", "fixed_points": 44},
+          {"text": "patyki do pieczenia", "fixed_points": 26},
+          {"text": "bułki do kiełbasy", "fixed_points": 16},
+          {"text": "ketchup lub musztarda", "fixed_points": 9},
+          {"text": "muzyka lub gitara", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co mówisz po tygodniu campingu?",
+        "answers": [
+          {"text": "nie mogę się doczekać prysznica", "fixed_points": 44},
+          {"text": "było super!", "fixed_points": 26},
+          {"text": "tęsknię już za przyrodą", "fixed_points": 16},
+          {"text": "nigdy więcej namiot", "fixed_points": 9},
+          {"text": "wracamy za rok", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co robi Polak gdy pada na campingu.",
+        "answers": [
+          {"text": "siedzi w namiocie", "fixed_points": 40},
+          {"text": "gra w karty pod markizą", "fixed_points": 26},
+          {"text": "ucieka do auta", "fixed_points": 18},
+          {"text": "idzie do miejscowego baru", "fixed_points": 10},
+          {"text": "mimo deszczu chodzi po lesie", "fixed_points": 6}
+        ]
+      }
+    ]
+  }
+}]

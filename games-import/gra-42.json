@@ -1,0 +1,109 @@
+[{
+  "title": "Polskie śniadanie",
+  "description": "Kanapki z masłem, jajka na miękko i poranna kawa — polskie śniadanie to rytuał! Sprawdź czy twój poranek wygląda tak samo jak u milionów innych Polaków!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Co je Polak na śniadanie w tygodniu przed pracą?",
+        "answers": [
+          {"text": "kanapki z tym co jest w lodówce", "fixed_points": 44},
+          {"text": "jogurt lub owsianka", "fixed_points": 24},
+          {"text": "jajka", "fixed_points": 16},
+          {"text": "płatki z mlekiem", "fixed_points": 10},
+          {"text": "nic — nie ma czasu", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co Polak je na śniadanie w leniwe weekendowe południe?",
+        "answers": [
+          {"text": "jajecznicę", "fixed_points": 40},
+          {"text": "tosty z masłem", "fixed_points": 26},
+          {"text": "naleśniki", "fixed_points": 18},
+          {"text": "coś na ciepło", "fixed_points": 11},
+          {"text": "to samo co w tygodniu", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co nakłada na kanapkę.",
+        "answers": [
+          {"text": "masło", "fixed_points": 40},
+          {"text": "ser żółty", "fixed_points": 28},
+          {"text": "wędlina", "fixed_points": 18},
+          {"text": "dżem lub miód", "fixed_points": 9},
+          {"text": "pasta jajeczna", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co Polacy piją rano.",
+        "answers": [
+          {"text": "kawa czarna", "fixed_points": 42},
+          {"text": "kawa z mlekiem", "fixed_points": 28},
+          {"text": "herbata", "fixed_points": 16},
+          {"text": "sok pomarańczowy", "fixed_points": 9},
+          {"text": "woda", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co robi Polak gdy nie ma czasu na śniadanie?",
+        "answers": [
+          {"text": "bierze kanapkę na drogę", "fixed_points": 40},
+          {"text": "wychodzi głodny", "fixed_points": 26},
+          {"text": "kupuje coś po drodze", "fixed_points": 18},
+          {"text": "wypija tylko kawę", "fixed_points": 11},
+          {"text": "zjada cokolwiek na stojąco", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co Polacy myślą gdy nie zjedli śniadania?",
+        "answers": [
+          {"text": "kiedy będzie obiad", "fixed_points": 44},
+          {"text": "piszczy mi w brzuchu", "fixed_points": 26},
+          {"text": "nie skupię się na niczym", "fixed_points": 16},
+          {"text": "jestem głodny i zły", "fixed_points": 9},
+          {"text": "idę po przekąskę", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co je polskie dziecko rano przed szkołą.",
+        "answers": [
+          {"text": "kanapki z szynką lub serem", "fixed_points": 42},
+          {"text": "płatki z mlekiem", "fixed_points": 26},
+          {"text": "jogurt", "fixed_points": 16},
+          {"text": "chleb z masłem i miodem", "fixed_points": 11},
+          {"text": "nic — nie ma czasu", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co denerwuje przy porannym śniadaniu?",
+        "answers": [
+          {"text": "brak chleba", "fixed_points": 38},
+          {"text": "puste opakowanie masła", "fixed_points": 26},
+          {"text": "zimna kawa", "fixed_points": 20},
+          {"text": "pośpiech", "fixed_points": 11},
+          {"text": "ktoś zjadł co planowałeś", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Gdzie Polacy jedzą śniadanie?",
+        "answers": [
+          {"text": "przy kuchennym stole", "fixed_points": 44},
+          {"text": "stojąc przy blacie", "fixed_points": 26},
+          {"text": "przed komputerem lub TV", "fixed_points": 18},
+          {"text": "w samochodzie", "fixed_points": 8},
+          {"text": "w pracy", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Podaj coś co robi Polak gdy wstanie zbyt późno i nie zdąży na śniadanie.",
+        "answers": [
+          {"text": "biegnie bez śniadania", "fixed_points": 40},
+          {"text": "bierze banana lub jabłko", "fixed_points": 26},
+          {"text": "kupuje coś w drodze", "fixed_points": 18},
+          {"text": "liczy że w pracy coś kupi", "fixed_points": 11},
+          {"text": "wychodzi z kawą w ręce", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]

@@ -1,0 +1,109 @@
+[{
+  "title": "Polskie miasto w weekend",
+  "description": "Kawiarnia, centrum handlowe i park pełen dzieci — polskie miasto w weekend tętni życiem! Sprawdź czy twoje weekendowe miejskie zwyczaje są podobne do innych Polaków!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Gdzie Polacy idą w sobotę po południu?",
+        "answers": [
+          {"text": "centrum handlowe", "fixed_points": 40},
+          {"text": "park z rodziną", "fixed_points": 26},
+          {"text": "kawiarnia ze znajomymi", "fixed_points": 18},
+          {"text": "restauracja na obiad", "fixed_points": 11},
+          {"text": "muzeum lub kino", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co Polacy robią w centrum handlowym.",
+        "answers": [
+          {"text": "robią zakupy", "fixed_points": 38},
+          {"text": "jedzą na food court", "fixed_points": 26},
+          {"text": "spacerują bez celu", "fixed_points": 18},
+          {"text": "zabierają dzieci do placu zabaw", "fixed_points": 12},
+          {"text": "oglądają wystawy sklepów", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś co denerwuje w mieście w weekend.",
+        "answers": [
+          {"text": "tłumy wszędzie", "fixed_points": 40},
+          {"text": "brak parkingów", "fixed_points": 28},
+          {"text": "hałas", "fixed_points": 18},
+          {"text": "zamknięte ulubione miejsca", "fixed_points": 9},
+          {"text": "kolejki w restauracjach", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co Polacy robią w parku w ciepły weekend?",
+        "answers": [
+          {"text": "spacerują", "fixed_points": 38},
+          {"text": "biegają", "fixed_points": 26},
+          {"text": "siedzą na trawie", "fixed_points": 18},
+          {"text": "piknikują", "fixed_points": 12},
+          {"text": "grają w frisbee lub piłkę", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś co lubisz w weekendowym mieście.",
+        "answers": [
+          {"text": "kawiarnia i dobra kawa", "fixed_points": 40},
+          {"text": "spacer bez pośpiechu", "fixed_points": 26},
+          {"text": "spotkanie ze znajomymi", "fixed_points": 18},
+          {"text": "dobre jedzenie", "fixed_points": 11},
+          {"text": "mniej ludzi w pracy", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co robi Polak gdy w mieście jest jarmark lub festiwal.",
+        "answers": [
+          {"text": "chodzi i ogląda stoiska", "fixed_points": 40},
+          {"text": "próbuje lokalnego jedzenia", "fixed_points": 26},
+          {"text": "coś kupuje", "fixed_points": 18},
+          {"text": "ogląda koncerty", "fixed_points": 11},
+          {"text": "robi zdjęcia", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co Polacy jedzą na mieście w weekend?",
+        "answers": [
+          {"text": "pizza", "fixed_points": 36},
+          {"text": "kebab", "fixed_points": 28},
+          {"text": "obiad w restauracji", "fixed_points": 18},
+          {"text": "burger", "fixed_points": 12},
+          {"text": "zapiekanka", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś co warto zobaczyć w polskim mieście.",
+        "answers": [
+          {"text": "stary rynek lub zamek", "fixed_points": 40},
+          {"text": "katedra lub kościół", "fixed_points": 26},
+          {"text": "muzeum historyczne", "fixed_points": 18},
+          {"text": "park miejski", "fixed_points": 11},
+          {"text": "galeria sztuki", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co robisz gdy z nudów siedzisz w niedzielę w domu?",
+        "answers": [
+          {"text": "oglądasz telewizję", "fixed_points": 40},
+          {"text": "gotujesz coś", "fixed_points": 26},
+          {"text": "idziesz na spacer", "fixed_points": 18},
+          {"text": "dzwonisz do kogoś", "fixed_points": 11},
+          {"text": "robisz porządki", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co Polacy mówią gdy niedziela się kończy?",
+        "answers": [
+          {"text": "jutro znowu praca", "fixed_points": 44},
+          {"text": "za szybko minęło", "fixed_points": 26},
+          {"text": "nie zrobiłem co planowałem", "fixed_points": 16},
+          {"text": "w przyszłym tygodniu to naprawię", "fixed_points": 9},
+          {"text": "jeszcze chwila", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]

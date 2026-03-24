@@ -1,0 +1,109 @@
+[{
+  "title": "Matura i egzaminy",
+  "description": "Biała koszula, długopis i trzęsące się ręce — matura to jeden z ważniejszych dni w życiu Polaka. Sprawdź czy twoje egzaminacyjne przeżycia są takie jak innych!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Co robisz noc przed ważnym egzaminem?",
+        "answers": [
+          {"text": "uczysz się do późna", "fixed_points": 36},
+          {"text": "nie możesz spać ze stresu", "fixed_points": 28},
+          {"text": "przeglądasz notatki", "fixed_points": 18},
+          {"text": "rezygnujesz i idziesz spać", "fixed_points": 12},
+          {"text": "oglądasz seriale", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj powód dla którego uczniowie oblewają maturę.",
+        "answers": [
+          {"text": "za mało się uczyli", "fixed_points": 40},
+          {"text": "stres i blank mind", "fixed_points": 26},
+          {"text": "zły los pytań", "fixed_points": 18},
+          {"text": "nie spali noc wcześniej", "fixed_points": 10},
+          {"text": "choroba w ważnym momencie", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co każdy uczeń robi rano w dniu matury?",
+        "answers": [
+          {"text": "ubiera białą koszulę", "fixed_points": 40},
+          {"text": "zjada śniadanie", "fixed_points": 26},
+          {"text": "pyta o ostatnie informacje", "fixed_points": 18},
+          {"text": "modli się", "fixed_points": 10},
+          {"text": "idzie wcześniej", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś co maturzysta robi po wyjściu z sali.",
+        "answers": [
+          {"text": "mówi innym jak poszło", "fixed_points": 40},
+          {"text": "dzwoni do rodziców", "fixed_points": 26},
+          {"text": "porównuje odpowiedzi z kolegami", "fixed_points": 18},
+          {"text": "płacze lub skacze z radości", "fixed_points": 11},
+          {"text": "idzie spać", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co Polacy robią gdy zdadzą maturę?",
+        "answers": [
+          {"text": "wielka impreza", "fixed_points": 42},
+          {"text": "zapisują się na studia", "fixed_points": 26},
+          {"text": "wyjazd zagraniczny", "fixed_points": 16},
+          {"text": "szukają pracy", "fixed_points": 11},
+          {"text": "śpią przez tydzień", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Wymień coś co zabierają uczniowie na egzamin.",
+        "answers": [
+          {"text": "długopis lub kilka", "fixed_points": 44},
+          {"text": "dowód osobisty", "fixed_points": 26},
+          {"text": "wodę", "fixed_points": 16},
+          {"text": "kalkulator", "fixed_points": 9},
+          {"text": "szczęśliwy przedmiot", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co czuje uczeń gdy zobaczy pytania których nie przerabiał?",
+        "answers": [
+          {"text": "panika", "fixed_points": 44},
+          {"text": "zimny pot", "fixed_points": 26},
+          {"text": "przeklinanie w myśli", "fixed_points": 18},
+          {"text": "patrzy co wiedzą inni", "fixed_points": 8},
+          {"text": "próbuje zgadnąć", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Podaj coś co wszyscy pamiętają ze swojej matury.",
+        "answers": [
+          {"text": "stres i nerwy", "fixed_points": 40},
+          {"text": "pytanie które ich zaskoczyło", "fixed_points": 26},
+          {"text": "koleżanki i koledzy tego dnia", "fixed_points": 18},
+          {"text": "wynik który dostali", "fixed_points": 11},
+          {"text": "biała koszula", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co mówią rodzice gdy dziecko dostanie dobry wynik z matury?",
+        "answers": [
+          {"text": "wiedziałem że dasz radę", "fixed_points": 40},
+          {"text": "jestem z ciebie dumny", "fixed_points": 28},
+          {"text": "co teraz chcesz studiować", "fixed_points": 18},
+          {"text": "stawiamy obiad w restauracji", "fixed_points": 10},
+          {"text": "dzwonię do dziadków", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Podaj coś czego uczniowie się boją na maturze ustnej.",
+        "answers": [
+          {"text": "straszny egzaminator", "fixed_points": 40},
+          {"text": "blank mind i zapomnisz wszystko", "fixed_points": 26},
+          {"text": "złe pytanie losowe", "fixed_points": 18},
+          {"text": "ciszę gdy nie wiesz nic", "fixed_points": 11},
+          {"text": "poprawiający kolega przede mną", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]

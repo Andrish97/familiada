@@ -1,0 +1,109 @@
+[{
+  "title": "Nad polskim jeziorem",
+  "description": "Mazury, kajaki i komar w namiocie o drugiej w nocy — polskie jeziora to raj dla miłośników natury. Sprawdź czy twoje jeziorne wakacje wyglądają jak u innych Polaków!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Podaj coś co musisz zabrać na wakacje nad jezioro.",
+        "answers": [
+          {"text": "krem na komary", "fixed_points": 42},
+          {"text": "sprzęt do pływania", "fixed_points": 26},
+          {"text": "wędka", "fixed_points": 16},
+          {"text": "grill", "fixed_points": 10},
+          {"text": "namiot lub domek", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co Polacy robią nad jeziorem w wolne popołudnie?",
+        "answers": [
+          {"text": "pływają kajakiem", "fixed_points": 36},
+          {"text": "wędkują", "fixed_points": 28},
+          {"text": "opalają się na pomoście", "fixed_points": 18},
+          {"text": "grillują", "fixed_points": 12},
+          {"text": "wieczorny spacer wokół jeziora", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś co denerwuje nad jeziorem.",
+        "answers": [
+          {"text": "komary w nocy", "fixed_points": 44},
+          {"text": "motorówki głośne", "fixed_points": 24},
+          {"text": "tłumy w szczycie sezonu", "fixed_points": 18},
+          {"text": "algi w wodzie", "fixed_points": 9},
+          {"text": "śmieci zostawione przez innych", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co czujesz rano budząc się w domku nad jeziorem?",
+        "answers": [
+          {"text": "spokój i świeże powietrze", "fixed_points": 44},
+          {"text": "szczęście że tu jesteś", "fixed_points": 26},
+          {"text": "słyszysz ptaki i wodę", "fixed_points": 18},
+          {"text": "chcesz zostać na zawsze", "fixed_points": 8},
+          {"text": "idziesz szybko na pomost", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Podaj coś co robi wędkarz nad jeziorem.",
+        "answers": [
+          {"text": "siedzi cicho z wędką", "fixed_points": 42},
+          {"text": "obserwuje spławik", "fixed_points": 26},
+          {"text": "pije piwo spokojnie", "fixed_points": 18},
+          {"text": "wrzuca przynętę", "fixed_points": 9},
+          {"text": "opowiada o rybach które złapał", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co słyszysz nad jeziorem wieczorem?",
+        "answers": [
+          {"text": "żaby", "fixed_points": 42},
+          {"text": "plusk wody", "fixed_points": 28},
+          {"text": "ptaki nocne", "fixed_points": 18},
+          {"text": "cykady", "fixed_points": 8},
+          {"text": "muzykę z sąsiednich domków", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Podaj coś co Polacy jedzą na biwaku nad jeziorem.",
+        "answers": [
+          {"text": "kiełbasa z ogniska", "fixed_points": 44},
+          {"text": "ryba złowiona tego samego dnia", "fixed_points": 26},
+          {"text": "konserwy i dania z puszki", "fixed_points": 16},
+          {"text": "coś z grilla", "fixed_points": 9},
+          {"text": "chleb z masłem", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co robi Polak gdy złapie dużą rybę?",
+        "answers": [
+          {"text": "robi zdjęcie przed wypuszczeniem", "fixed_points": 42},
+          {"text": "chwali się wszystkim", "fixed_points": 26},
+          {"text": "smaży na obiad", "fixed_points": 18},
+          {"text": "krzyczy z radości", "fixed_points": 9},
+          {"text": "wypuszcza z powrotem", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co Polacy mówią gdy wracają z Mazur?",
+        "answers": [
+          {"text": "najpiękniejsze miejsce w Polsce", "fixed_points": 40},
+          {"text": "wrócimy za rok", "fixed_points": 26},
+          {"text": "komary nieznośne ale warto", "fixed_points": 18},
+          {"text": "za krótko byliśmy", "fixed_points": 10},
+          {"text": "kupujemy tam działkę", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś co robisz gdy komar cię ugryzie?",
+        "answers": [
+          {"text": "drapiesz mimo że nie wolno", "fixed_points": 44},
+          {"text": "smarujesz kremem", "fixed_points": 26},
+          {"text": "klniesz", "fixed_points": 16},
+          {"text": "nakładasz balsam", "fixed_points": 9},
+          {"text": "szukasz sprayem komary", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]

@@ -1,0 +1,109 @@
+[{
+  "title": "Polskie jedzenie fast food",
+  "description": "Kebab, zapiekanka i budka z hot-dogiem — polska uliczna gastronomia to osobny rozdział! Sprawdź czy twoje fast foodowe wybory pokrywają się z innymi Polakami!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Podaj uliczne jedzenie które jest w każdym polskim mieście.",
+        "answers": [
+          {"text": "kebab", "fixed_points": 42},
+          {"text": "zapiekanka", "fixed_points": 26},
+          {"text": "hot dog", "fixed_points": 16},
+          {"text": "pizza na kawałki", "fixed_points": 11},
+          {"text": "lody", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Kiedy Polacy jedzą kebaba?",
+        "answers": [
+          {"text": "po powrocie z imprezy w nocy", "fixed_points": 44},
+          {"text": "na obiad gdy nie ma czasu", "fixed_points": 26},
+          {"text": "gdy głodny a nic innego blisko", "fixed_points": 16},
+          {"text": "w centrum w trakcie zakupów", "fixed_points": 9},
+          {"text": "z kolegami po szkole", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co dodajesz do kebaba.",
+        "answers": [
+          {"text": "ostry sos", "fixed_points": 40},
+          {"text": "biały sos czosnkowy", "fixed_points": 28},
+          {"text": "sałata i warzywa", "fixed_points": 16},
+          {"text": "ser żółty", "fixed_points": 11},
+          {"text": "frytki do środka", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co Polacy zamawiają w McDonald's?",
+        "answers": [
+          {"text": "BigMac", "fixed_points": 40},
+          {"text": "McFlurry", "fixed_points": 24},
+          {"text": "frytki", "fixed_points": 18},
+          {"text": "wrap lub kanapka", "fixed_points": 12},
+          {"text": "happy meal dla dziecka", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj powód dla którego Polacy jedzą fast food.",
+        "answers": [
+          {"text": "szybko i tanio", "fixed_points": 42},
+          {"text": "smakuje im", "fixed_points": 26},
+          {"text": "nie ma czasu gotować", "fixed_points": 18},
+          {"text": "z dziećmi", "fixed_points": 9},
+          {"text": "kac potrzebuje tłuszczu", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co Polacy mówią gdy jedzą fast food.",
+        "answers": [
+          {"text": "to tylko raz w tygodniu", "fixed_points": 40},
+          {"text": "dieta od poniedziałku", "fixed_points": 28},
+          {"text": "pyszne mimo wszystko", "fixed_points": 18},
+          {"text": "nie powinienem", "fixed_points": 10},
+          {"text": "raz można", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Co każde polskie miasto ma przy dworcu?",
+        "answers": [
+          {"text": "budka z hot-dogami", "fixed_points": 40},
+          {"text": "kebab", "fixed_points": 26},
+          {"text": "pizzeria na kawałki", "fixed_points": 18},
+          {"text": "bar mleczny", "fixed_points": 11},
+          {"text": "kiosk z jedzeniem", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co jest wyjątkowego w zapiekance krakowskiej.",
+        "answers": [
+          {"text": "długa i na bagietce", "fixed_points": 44},
+          {"text": "kupujesz na Kazimierzu", "fixed_points": 26},
+          {"text": "pieczarki obowiązkowe", "fixed_points": 16},
+          {"text": "ketchup lub sos", "fixed_points": 9},
+          {"text": "tania jak barszcz", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co mówisz do kucharza przy zamawianiu kebaba?",
+        "answers": [
+          {"text": "duży kurczak na ostro", "fixed_points": 40},
+          {"text": "bez cebuli", "fixed_points": 26},
+          {"text": "wszystkie sosy", "fixed_points": 18},
+          {"text": "bez ognia proszę", "fixed_points": 11},
+          {"text": "jak leci", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co kupujesz w budce z hot-dogami.",
+        "answers": [
+          {"text": "hot dog z ketchupem", "fixed_points": 44},
+          {"text": "zapiekanka", "fixed_points": 26},
+          {"text": "cola", "fixed_points": 16},
+          {"text": "frytki", "fixed_points": 9},
+          {"text": "kukurydzę", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]

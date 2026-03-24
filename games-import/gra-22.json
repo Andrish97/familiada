@@ -1,0 +1,109 @@
+[{
+  "title": "Wielkanoc po polsku",
+  "description": "Pisanki, śmigus-dyngus i żurek w chlebie — Wielkanoc w Polsce to prawdziwe święto! Sprawdź czy twoje wielkanocne tradycje pokrywają się z resztą Polaków!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Podaj coś co jest w polskim koszyczku wielkanocnym.",
+        "answers": [
+          {"text": "jajka", "fixed_points": 38},
+          {"text": "chleb lub babka", "fixed_points": 26},
+          {"text": "kiełbasa", "fixed_points": 18},
+          {"text": "chrzan", "fixed_points": 12},
+          {"text": "sól", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co Polacy jedzą na śniadanie wielkanocne?",
+        "answers": [
+          {"text": "żurek w chlebie", "fixed_points": 40},
+          {"text": "jajka w różnej postaci", "fixed_points": 28},
+          {"text": "biała kiełbasa", "fixed_points": 18},
+          {"text": "mazurek", "fixed_points": 9},
+          {"text": "babka wielkanocna", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co dzieci robią w Wielką Niedzielę.",
+        "answers": [
+          {"text": "szukają jajek ukrytych przez rodziców", "fixed_points": 44},
+          {"text": "malują pisanki", "fixed_points": 28},
+          {"text": "jedzą czekoladowe zajączki", "fixed_points": 16},
+          {"text": "idą do kościoła z rodziną", "fixed_points": 8},
+          {"text": "bawią się w ogrodzie", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Co się dzieje w Polsce w Poniedziałek Wielkanocny?",
+        "answers": [
+          {"text": "śmigus-dyngus — polewanie wodą", "fixed_points": 54},
+          {"text": "odwiedziny rodziny", "fixed_points": 22},
+          {"text": "jedzenie wielkanocnych resztek", "fixed_points": 12},
+          {"text": "chodzenie po dyngusie", "fixed_points": 8},
+          {"text": "dzień wolny i odpoczynek", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Podaj coś co Polacy robią w Wielką Sobotę.",
+        "answers": [
+          {"text": "idą do kościoła z koszyczkiem", "fixed_points": 44},
+          {"text": "malują pisanki", "fixed_points": 26},
+          {"text": "gotują na niedzielę", "fixed_points": 18},
+          {"text": "sprzątają dom", "fixed_points": 8},
+          {"text": "robią zakupy na święta", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Wymień coś co babcia przygotowuje na Wielkanoc.",
+        "answers": [
+          {"text": "mazurek", "fixed_points": 40},
+          {"text": "babkę wielkanocną", "fixed_points": 28},
+          {"text": "żurek", "fixed_points": 18},
+          {"text": "sałatkę jarzynową", "fixed_points": 9},
+          {"text": "chrzan domowy", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś czym Polacy ozdabiają pisanki.",
+        "answers": [
+          {"text": "farbą", "fixed_points": 44},
+          {"text": "naklejkami", "fixed_points": 26},
+          {"text": "woskiem", "fixed_points": 18},
+          {"text": "bibułką", "fixed_points": 8},
+          {"text": "wyklejanką", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Co mówi rodzina przy wielkanocnym stole?",
+        "answers": [
+          {"text": "wesołego alleluja!", "fixed_points": 44},
+          {"text": "smacznego!", "fixed_points": 26},
+          {"text": "cieszę się że jesteśmy razem", "fixed_points": 18},
+          {"text": "ależ tu dużo jedzenia", "fixed_points": 8},
+          {"text": "zaczekajcie na mamę", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Podaj powód dla którego śmigus-dyngus jest nielubiany przez dorosłych.",
+        "answers": [
+          {"text": "mokre ubrania", "fixed_points": 44},
+          {"text": "mokre fryzury", "fixed_points": 26},
+          {"text": "zimna woda", "fixed_points": 18},
+          {"text": "telefon może się zepsuć", "fixed_points": 8},
+          {"text": "zaleją mieszkanie", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Co Polacy robią ze świeconką po powrocie z kościoła?",
+        "answers": [
+          {"text": "jedzą na śniadanie", "fixed_points": 48},
+          {"text": "dzielą się z rodziną", "fixed_points": 26},
+          {"text": "chowają na pamiątkę", "fixed_points": 14},
+          {"text": "kładą w widocznym miejscu", "fixed_points": 8},
+          {"text": "fotografują", "fixed_points": 4}
+        ]
+      }
+    ]
+  }
+}]

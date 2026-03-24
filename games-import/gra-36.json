@@ -1,0 +1,109 @@
+[{
+  "title": "Deszczowy dzień",
+  "description": "Krople na szybie, parasol który nie chce działać i kałuże wszędzie — deszczowy dzień w Polsce to coś co każdy zna. Sprawdź jak Polacy radzą sobie z mokrą pogodą!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Co robisz gdy pada i nie masz parasola?",
+        "answers": [
+          {"text": "biegniesz", "fixed_points": 40},
+          {"text": "chowasz się gdzieś", "fixed_points": 26},
+          {"text": "kładziesz na głowie torbę", "fixed_points": 18},
+          {"text": "idziesz spokojnie — i tak mokry", "fixed_points": 10},
+          {"text": "czekasz aż przestanie", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co Polacy robią w deszczowy dzień wolny?",
+        "answers": [
+          {"text": "oglądają seriale", "fixed_points": 44},
+          {"text": "śpią", "fixed_points": 26},
+          {"text": "czytają książkę", "fixed_points": 16},
+          {"text": "gotują", "fixed_points": 9},
+          {"text": "chodzą po sklepach w centrum", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co denerwuje w deszczowy poranek.",
+        "answers": [
+          {"text": "mokre buty", "fixed_points": 40},
+          {"text": "parasol który nie działa", "fixed_points": 26},
+          {"text": "korki przez deszcz", "fixed_points": 18},
+          {"text": "mokry płaszcz cały dzień", "fixed_points": 10},
+          {"text": "ciemno i szaro", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co jesz i pijesz w deszczowy dzień?",
+        "answers": [
+          {"text": "gorąca zupa", "fixed_points": 40},
+          {"text": "herbata z cytryną", "fixed_points": 28},
+          {"text": "kakao", "fixed_points": 16},
+          {"text": "ciasto domowe", "fixed_points": 11},
+          {"text": "kawa", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co robiłeś w deszczu jako dziecko.",
+        "answers": [
+          {"text": "skakałeś po kałużach", "fixed_points": 44},
+          {"text": "budowałeś mini tamy", "fixed_points": 26},
+          {"text": "stałeś pod rynną", "fixed_points": 18},
+          {"text": "wracałeś mokry do domu", "fixed_points": 8},
+          {"text": "bawiłeś się w domu", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Co mówi Polak gdy pada już trzeci dzień z rzędu?",
+        "answers": [
+          {"text": "kiedy to się skończy", "fixed_points": 44},
+          {"text": "mam dość tej pogody", "fixed_points": 26},
+          {"text": "jadę na południe", "fixed_points": 16},
+          {"text": "przynajmniej woda w ogrodzie", "fixed_points": 9},
+          {"text": "klimat się zmienia", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co widzisz w deszczu z okna.",
+        "answers": [
+          {"text": "kałuże na chodnikach", "fixed_points": 40},
+          {"text": "ludzie z parasolami", "fixed_points": 26},
+          {"text": "deszcz bije o szybę", "fixed_points": 18},
+          {"text": "szare niebo", "fixed_points": 11},
+          {"text": "puste ulice", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co Polak robi gdy wraca do domu cały mokry?",
+        "answers": [
+          {"text": "bierze ciepły prysznic", "fixed_points": 44},
+          {"text": "robi herbatę od razu", "fixed_points": 26},
+          {"text": "wiesza mokre rzeczy", "fixed_points": 16},
+          {"text": "narzeka głośno", "fixed_points": 9},
+          {"text": "idzie spać wcześniej", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co ładnie wygląda gdy pada deszcz.",
+        "answers": [
+          {"text": "krople na szybie", "fixed_points": 40},
+          {"text": "tęcza po deszczu", "fixed_points": 28},
+          {"text": "mokre liście i trawa", "fixed_points": 18},
+          {"text": "miasto wieczorem w deszczu", "fixed_points": 10},
+          {"text": "zapachu deszczu nie widać ale jest", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Podaj coś co robiłeś gdy była burza i byłeś dzieckiem.",
+        "answers": [
+          {"text": "chowałeś się pod kołdrę", "fixed_points": 44},
+          {"text": "liczyłeś sekundy między błyskawicą a grzmotem", "fixed_points": 26},
+          {"text": "szedłeś do rodziców", "fixed_points": 16},
+          {"text": "patrzyłeś z zachwytem przez okno", "fixed_points": 9},
+          {"text": "byłeś wyjątkowo grzeczny", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]

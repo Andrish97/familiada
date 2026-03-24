@@ -1,0 +1,109 @@
+[{
+  "title": "Praca zdalna",
+  "description": "Pidżama do pasa, kawa numer cztery i Zoom o dziewiątej — praca z domu to nowa polska rzeczywistość. Sprawdź czy twoje doświadczenia home office pokrywają się z innymi!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Co robisz przed videokonferencją?",
+        "answers": [
+          {"text": "sprawdzasz czy kamera działa", "fixed_points": 36},
+          {"text": "zakładasz koszulę i zostajesz w dresie od pasa", "fixed_points": 28},
+          {"text": "czeszesz się szybko", "fixed_points": 18},
+          {"text": "sprzątasz tło za sobą", "fixed_points": 12},
+          {"text": "sprawdzasz mikrofon", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś co przeszkadza gdy pracujesz zdalnie.",
+        "answers": [
+          {"text": "dzieci lub zwierzęta wchodzą", "fixed_points": 40},
+          {"text": "domowe rozproszenia", "fixed_points": 26},
+          {"text": "lodówka jest zbyt blisko", "fixed_points": 18},
+          {"text": "hałas sąsiadów", "fixed_points": 10},
+          {"text": "niekomfortowe biurko", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co robi pracownik podczas nudnego call'a przez Teams?",
+        "answers": [
+          {"text": "przeglądasz internet", "fixed_points": 40},
+          {"text": "piszesz na telefonie", "fixed_points": 26},
+          {"text": "jesz coś po cichu", "fixed_points": 18},
+          {"text": "udajesz że słuchasz", "fixed_points": 10},
+          {"text": "drzemiesz", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś w czym praca zdalna jest lepsza od biurowej.",
+        "answers": [
+          {"text": "nie tracisz czasu na dojazdy", "fixed_points": 42},
+          {"text": "jesteś w domu", "fixed_points": 28},
+          {"text": "możesz być w dresie", "fixed_points": 16},
+          {"text": "elastyczne godziny", "fixed_points": 9},
+          {"text": "lepsze jedzenie", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co mówisz gdy twój mikrofon był wyciszony a ty mówiłeś?",
+        "answers": [
+          {"text": "przepraszam byłem wyciszony", "fixed_points": 44},
+          {"text": "nic ważnego", "fixed_points": 26},
+          {"text": "mute, zaraz", "fixed_points": 18},
+          {"text": "mogę powtórzyć", "fixed_points": 8},
+          {"text": "czerwienisz się", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Podaj powód dla którego ktoś włącza kamerę na call'u.",
+        "answers": [
+          {"text": "szef tego wymaga", "fixed_points": 44},
+          {"text": "chce być profesjonalny", "fixed_points": 26},
+          {"text": "chce widzieć innych", "fixed_points": 16},
+          {"text": "mała grupa znajomych", "fixed_points": 9},
+          {"text": "nikt inny nie włącza", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co zrobiłeś pracując zdalnie czego nie zrobiłbyś w biurze.",
+        "answers": [
+          {"text": "jedzenie przy laptopie", "fixed_points": 38},
+          {"text": "praca w pidżamie", "fixed_points": 28},
+          {"text": "call z kanapy", "fixed_points": 18},
+          {"text": "drzemka w przerwie", "fixed_points": 10},
+          {"text": "przyjmowanie paczki od kuriera", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co Polacy mówią o pracy zdalnej?",
+        "answers": [
+          {"text": "nigdy wróce do biura", "fixed_points": 36},
+          {"text": "tęsknię za kolegami", "fixed_points": 26},
+          {"text": "brakuje mi granic pracy", "fixed_points": 20},
+          {"text": "jestem bardziej produktywny", "fixed_points": 12},
+          {"text": "hybrid to ideał", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś co zawsze się psuje na ważnym call'u.",
+        "answers": [
+          {"text": "internet wysiada", "fixed_points": 42},
+          {"text": "mikrofon nie działa", "fixed_points": 26},
+          {"text": "kamera zamraża obraz", "fixed_points": 18},
+          {"text": "dzwoni telefon", "fixed_points": 9},
+          {"text": "wyskakuje aktualizacja systemu", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co robi pracownik zdalny między spotkaniami?",
+        "answers": [
+          {"text": "robi kawę", "fixed_points": 40},
+          {"text": "sprawdza media społecznościowe", "fixed_points": 26},
+          {"text": "idzie do lodówki", "fixed_points": 18},
+          {"text": "odpisuje na maile", "fixed_points": 10},
+          {"text": "wychodzi z psem", "fixed_points": 6}
+        ]
+      }
+    ]
+  }
+}]

@@ -1,0 +1,109 @@
+[{
+  "title": "Sport i aktywność",
+  "description": "Siłownia, bieganie, rower — aktywność fizyczna to nowe hobby Polaków. Ale też wymówki, zepsute postanowienia i kanapowe maratony. Ile z tego znasz z własnego życia?",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Podaj powód dla którego ktoś rezygnuje z ćwiczeń po tygodniu.",
+        "answers": [
+          {"text": "nie ma czasu", "fixed_points": 40},
+          {"text": "wszystko boli po pierwszym razie", "fixed_points": 26},
+          {"text": "lenistwo", "fixed_points": 20},
+          {"text": "zniechęcenie brakiem efektów", "fixed_points": 9},
+          {"text": "zbyt zmęczony po pracy", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co każdy zabiera na siłownię.",
+        "answers": [
+          {"text": "butelka wody", "fixed_points": 42},
+          {"text": "słuchawki", "fixed_points": 30},
+          {"text": "ręcznik", "fixed_points": 16},
+          {"text": "strój sportowy", "fixed_points": 8},
+          {"text": "telefon", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Co robisz po intensywnym treningu?",
+        "answers": [
+          {"text": "bierzesz długi prysznic", "fixed_points": 44},
+          {"text": "leżysz bez życia", "fixed_points": 26},
+          {"text": "jesz dużo", "fixed_points": 16},
+          {"text": "pijesz shake proteinowy", "fixed_points": 9},
+          {"text": "chwalił się na stories", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Wymień sport który Polacy najchętniej oglądają w TV.",
+        "answers": [
+          {"text": "piłka nożna", "fixed_points": 44},
+          {"text": "skoki narciarskie", "fixed_points": 28},
+          {"text": "siatkówka", "fixed_points": 14},
+          {"text": "tenis", "fixed_points": 8},
+          {"text": "lekkoatletyka", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co boli po pierwszym biegu w życiu?",
+        "answers": [
+          {"text": "nogi", "fixed_points": 44},
+          {"text": "kolana", "fixed_points": 26},
+          {"text": "boki podczas biegu", "fixed_points": 16},
+          {"text": "plecy", "fixed_points": 9},
+          {"text": "dosłownie wszystko", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co Polacy robią aktywnego w wolnym czasie.",
+        "answers": [
+          {"text": "biegają w parku", "fixed_points": 34},
+          {"text": "jeżdżą na rowerze", "fixed_points": 28},
+          {"text": "chodzą na siłownię", "fixed_points": 20},
+          {"text": "pływają", "fixed_points": 11},
+          {"text": "spacery z psem", "fixed_points": 7}
+        ]
+      },
+      {
+        "text": "Co kibic robi gdy jego drużyna przegrywa?",
+        "answers": [
+          {"text": "krzyczy i klnie na zawodników", "fixed_points": 40},
+          {"text": "wyłącza telewizor", "fixed_points": 26},
+          {"text": "narzeka i wzdycha", "fixed_points": 18},
+          {"text": "zasłania oczy", "fixed_points": 10},
+          {"text": "wychodzi z pokoju", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Wymień postanowienie dotyczące sportu które Polacy robią w Nowym Roku.",
+        "answers": [
+          {"text": "zaczynam biegać", "fixed_points": 40},
+          {"text": "idę na siłownię", "fixed_points": 30},
+          {"text": "schudnę 10 kg", "fixed_points": 16},
+          {"text": "jeżdżę na rowerze do pracy", "fixed_points": 9},
+          {"text": "codzienne ćwiczenia rano", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co mówi osoba po ukończeniu maratonu?",
+        "answers": [
+          {"text": "nigdy więcej", "fixed_points": 40},
+          {"text": "zapiszę się na następny", "fixed_points": 26},
+          {"text": "to był najlepszy dzień życia", "fixed_points": 18},
+          {"text": "nie czuję nóg", "fixed_points": 10},
+          {"text": "gdzie mój medal", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś co jest w torbie sportowca.",
+        "answers": [
+          {"text": "buty sportowe", "fixed_points": 38},
+          {"text": "strój do ćwiczeń", "fixed_points": 28},
+          {"text": "ręcznik", "fixed_points": 18},
+          {"text": "woda i odżywki", "fixed_points": 10},
+          {"text": "karta na siłownię", "fixed_points": 6}
+        ]
+      }
+    ]
+  }
+}]

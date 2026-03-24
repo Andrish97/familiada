@@ -1,0 +1,109 @@
+[{
+  "title": "Polskie lasy i grzyby",
+  "description": "Koszyk, nóż i to wyjątkowe uczucie gdy znajdziesz prawdziwka — zbieranie grzybów to polska narodowa rozrywka! Sprawdź czy twoje leśne doświadczenia są typowe!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Co bierzesz do lasu na grzyby?",
+        "answers": [
+          {"text": "koszyk wiklinowy", "fixed_points": 44},
+          {"text": "nóż do grzybów", "fixed_points": 26},
+          {"text": "kalosze", "fixed_points": 16},
+          {"text": "moskitiera lub sprej", "fixed_points": 9},
+          {"text": "termos z herbatą", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co czujesz gdy znajdziesz prawdziwka?",
+        "answers": [
+          {"text": "radość i satysfakcja", "fixed_points": 44},
+          {"text": "krzyczysz żeby wszyscy wiedzieli", "fixed_points": 26},
+          {"text": "robisz zdjęcie", "fixed_points": 16},
+          {"text": "szukasz dalej czy jest więcej", "fixed_points": 9},
+          {"text": "ostrożnie podchodzisz", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co denerwuje w zbieraniu grzybów.",
+        "answers": [
+          {"text": "komary i kleszcze", "fixed_points": 40},
+          {"text": "las pełen ludzi już", "fixed_points": 26},
+          {"text": "nie możesz znaleźć nic", "fixed_points": 18},
+          {"text": "mokro i błoto", "fixed_points": 11},
+          {"text": "ktoś zebrał przed tobą", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co Polacy robią ze zebranymi grzybami?",
+        "answers": [
+          {"text": "smażą z cebulą na patelni", "fixed_points": 40},
+          {"text": "suszą na zimę", "fixed_points": 28},
+          {"text": "marynują w słoiku", "fixed_points": 16},
+          {"text": "robią zupę grzybową", "fixed_points": 11},
+          {"text": "dają rodzinie", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co każdy wie o zbieraniu grzybów.",
+        "answers": [
+          {"text": "nie zbierać nieznanych", "fixed_points": 44},
+          {"text": "zostawić nóżkę w ziemi", "fixed_points": 26},
+          {"text": "do wiklinowego koszyka nie foliowej torby", "fixed_points": 16},
+          {"text": "grzybów nie jeść na surowo", "fixed_points": 9},
+          {"text": "sprawdzać atlas grzybów", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co mówi doświadczony grzybiarz.",
+        "answers": [
+          {"text": "wiem gdzie są prawdziwki", "fixed_points": 42},
+          {"text": "miejsce trzymam w tajemnicy", "fixed_points": 28},
+          {"text": "idź tam nie tam", "fixed_points": 16},
+          {"text": "zbierać trzeba o świcie", "fixed_points": 10},
+          {"text": "moje miejsca znam od lat", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Co słyszysz w polskim lesie?",
+        "answers": [
+          {"text": "ptaki śpiewają", "fixed_points": 40},
+          {"text": "wiatr w koronach drzew", "fixed_points": 28},
+          {"text": "szelest liści pod nogami", "fixed_points": 18},
+          {"text": "dzięcioł", "fixed_points": 9},
+          {"text": "inne osoby", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co Polak robi gdy się zgubi w lesie.",
+        "answers": [
+          {"text": "panikuje", "fixed_points": 36},
+          {"text": "szuka sieci w telefonie", "fixed_points": 28},
+          {"text": "idzie za głosami ludzi", "fixed_points": 18},
+          {"text": "szuka drogi słońcem", "fixed_points": 12},
+          {"text": "dzwoni po pomoc", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co robi Polak gdy widzi coś co wygląda jak grzyb ale nie jest pewny?",
+        "answers": [
+          {"text": "nie zbiera żeby nie ryzykować", "fixed_points": 40},
+          {"text": "zbiera i pyta kogoś", "fixed_points": 26},
+          {"text": "sprawdza w aplikacji", "fixed_points": 18},
+          {"text": "zbiera do sprawdzenia w domu", "fixed_points": 11},
+          {"text": "wącha i ocenia", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co każdy mówi po udanym dniu na grzybach.",
+        "answers": [
+          {"text": "ile ich zebrałem!", "fixed_points": 44},
+          {"text": "jutro wracamy po więcej", "fixed_points": 26},
+          {"text": "najlepsza polska tradycja", "fixed_points": 16},
+          {"text": "widziałem sarnę", "fixed_points": 9},
+          {"text": "teraz smażymy", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]

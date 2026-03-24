@@ -1,0 +1,109 @@
+[{
+  "title": "Polska wieś",
+  "description": "Kogut o świcie, świeże mleko i wieczory przy telewizorze — polska wieś to wyjątkowy świat. Sprawdź czy rozumiesz życie wiejskie i czy twoje wspomnienia o wsi są typowe!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Podaj coś co obudzi cię na polskiej wsi o świcie.",
+        "answers": [
+          {"text": "kogut", "fixed_points": 50},
+          {"text": "krowy", "fixed_points": 22},
+          {"text": "ciągnik sąsiada", "fixed_points": 14},
+          {"text": "ptaki", "fixed_points": 9},
+          {"text": "psy", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co robi rolnik rano zanim wyjdzie w pole?",
+        "answers": [
+          {"text": "poi i karmi zwierzęta", "fixed_points": 44},
+          {"text": "je śniadanie", "fixed_points": 26},
+          {"text": "sprawdza pogodę", "fixed_points": 16},
+          {"text": "sprawdza maszyny", "fixed_points": 9},
+          {"text": "pije herbatę", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co jest w każdym polskim wiejskim domu.",
+        "answers": [
+          {"text": "ogród z warzywami", "fixed_points": 40},
+          {"text": "pies przy płocie", "fixed_points": 26},
+          {"text": "drewno opałowe", "fixed_points": 18},
+          {"text": "stodoła", "fixed_points": 11},
+          {"text": "studnia lub beczka", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co lubisz w wakacjach na wsi u dziadków?",
+        "answers": [
+          {"text": "świeże jedzenie", "fixed_points": 40},
+          {"text": "spokój i cisza", "fixed_points": 26},
+          {"text": "zwierzęta", "fixed_points": 18},
+          {"text": "spacery po polach", "fixed_points": 10},
+          {"text": "ognisko wieczorem", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś co różni wieś od miasta.",
+        "answers": [
+          {"text": "cisza i spokój", "fixed_points": 40},
+          {"text": "znajomi znają wszystkich", "fixed_points": 26},
+          {"text": "świeże powietrze", "fixed_points": 18},
+          {"text": "daleko do sklepu", "fixed_points": 10},
+          {"text": "brak komunikacji miejskiej", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś na co narzekają mieszkańcy wsi.",
+        "answers": [
+          {"text": "brak pracy i dojazd", "fixed_points": 40},
+          {"text": "plotki i brak prywatności", "fixed_points": 26},
+          {"text": "słaby internet", "fixed_points": 18},
+          {"text": "daleko do lekarza", "fixed_points": 10},
+          {"text": "drogi w złym stanie", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co smakuje lepiej na wsi niż w mieście?",
+        "answers": [
+          {"text": "mleko prosto od krowy", "fixed_points": 38},
+          {"text": "jajka od kur z podwórka", "fixed_points": 28},
+          {"text": "warzywa z własnego ogrodu", "fixed_points": 18},
+          {"text": "chleb domowy", "fixed_points": 11},
+          {"text": "mięso świeże", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co mówi wieśniak gdy jedzie do miasta na cały dzień?",
+        "answers": [
+          {"text": "za dużo ludzi tam", "fixed_points": 40},
+          {"text": "nie ma gdzie zaparkować", "fixed_points": 26},
+          {"text": "jak tu głośno", "fixed_points": 18},
+          {"text": "wróćmy wcześniej", "fixed_points": 10},
+          {"text": "nie muszę tu mieszkać", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś co jest corocznym wydarzeniem w polskiej wsi.",
+        "answers": [
+          {"text": "dożynki", "fixed_points": 40},
+          {"text": "odpust przy kościele", "fixed_points": 26},
+          {"text": "sąsiedzkie grillowanie", "fixed_points": 18},
+          {"text": "wspólne zbieranie plonów", "fixed_points": 11},
+          {"text": "strażacka zabawa", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co robi dziecko z miasta gdy odwiedza wieś?",
+        "answers": [
+          {"text": "boi się zwierząt z bliska", "fixed_points": 40},
+          {"text": "zachwyca się wszystkim", "fixed_points": 26},
+          {"text": "nie wie co robić bez telefonu", "fixed_points": 18},
+          {"text": "zbiera owoce z drzew", "fixed_points": 11},
+          {"text": "siedzi przy dziadkach", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]

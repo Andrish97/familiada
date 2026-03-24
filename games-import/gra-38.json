@@ -1,0 +1,109 @@
+[{
+  "title": "Kibicowanie w Polsce",
+  "description": "Biało-czerwoni, Lewandowski i ta jedna bramka w ostatniej minucie — kibicowanie w Polsce to emocje na całego! Sprawdź czy twój styl kibicowania jest typowy!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Co robi kibic gdy Polska strzela bramkę?",
+        "answers": [
+          {"text": "krzyczy i wyskakuje", "fixed_points": 44},
+          {"text": "ściska się z innymi", "fixed_points": 26},
+          {"text": "skacze po pokoju", "fixed_points": 16},
+          {"text": "płacze ze szczęścia", "fixed_points": 9},
+          {"text": "krzyczy w telefon do znajomych", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co robi kibic gdy Polska przegrywa?",
+        "answers": [
+          {"text": "krzyczy i klnie", "fixed_points": 40},
+          {"text": "wyłącza telewizor", "fixed_points": 26},
+          {"text": "zasłania oczy", "fixed_points": 18},
+          {"text": "wychodzi z pokoju", "fixed_points": 10},
+          {"text": "płacze", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś co jest na stole gdy kibicujesz meczu.",
+        "answers": [
+          {"text": "piwo", "fixed_points": 44},
+          {"text": "chipsy", "fixed_points": 26},
+          {"text": "pizza", "fixed_points": 16},
+          {"text": "orzeszki", "fixed_points": 9},
+          {"text": "kanapki", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co mówi Polak gdy sędzia podejmuje zły wyrok?",
+        "answers": [
+          {"text": "skandal!", "fixed_points": 44},
+          {"text": "czy ty w ogóle widzisz!", "fixed_points": 26},
+          {"text": "przekupiony", "fixed_points": 16},
+          {"text": "karny to był!", "fixed_points": 9},
+          {"text": "VAR tego nie sprawdził", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co każdy Polak wie o Robercie Lewandowskim.",
+        "answers": [
+          {"text": "gra w Barcelonie", "fixed_points": 36},
+          {"text": "jest najlepszy w Polsce", "fixed_points": 28},
+          {"text": "strzelił 5 goli w 9 minut", "fixed_points": 18},
+          {"text": "grał w Bayernie Monachium", "fixed_points": 13},
+          {"text": "gra w reprezentacji", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Gdzie Polacy oglądają ważne mecze?",
+        "answers": [
+          {"text": "w domu z rodziną", "fixed_points": 38},
+          {"text": "w pubie z kolegami", "fixed_points": 28},
+          {"text": "na stadionie", "fixed_points": 18},
+          {"text": "na fanstrefy w mieście", "fixed_points": 10},
+          {"text": "u sąsiada", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co Polacy robią gdy ich klub przegra mistrzostwa?",
+        "answers": [
+          {"text": "narzekają przez tydzień", "fixed_points": 40},
+          {"text": "obwiniają zawodników", "fixed_points": 26},
+          {"text": "żądają odejścia trenera", "fixed_points": 18},
+          {"text": "mówią że w przyszłym roku będzie lepiej", "fixed_points": 12},
+          {"text": "milczą i smucą się", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Podaj coś co skanduje polska trybuna.",
+        "answers": [
+          {"text": "Polska gooool!", "fixed_points": 44},
+          {"text": "imię zawodnika", "fixed_points": 26},
+          {"text": "sędzia ki..!", "fixed_points": 18},
+          {"text": "ole ole ole", "fixed_points": 8},
+          {"text": "biało-czerwoni", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Podaj coś co dzieje się w Polsce gdy reprezentacja zagra na Euro.",
+        "answers": [
+          {"text": "cały kraj kibicuje", "fixed_points": 44},
+          {"text": "ludzie wychodzą na ulice", "fixed_points": 26},
+          {"text": "biało-czerwone flagi wszędzie", "fixed_points": 16},
+          {"text": "spekulacje przed meczem", "fixed_points": 9},
+          {"text": "puby pełne", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co mówi Polak gdy Polska odpada z turnieju?",
+        "answers": [
+          {"text": "znowu to samo", "fixed_points": 40},
+          {"text": "zawsze tak samo", "fixed_points": 26},
+          {"text": "mamy pechową grupę", "fixed_points": 18},
+          {"text": "za rok się uda", "fixed_points": 11},
+          {"text": "rezygnuję z kibicowania", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]

@@ -1,0 +1,109 @@
+[{
+  "title": "Urodziny i imieniny",
+  "description": "Tort, świeczki i Sto Lat śpiewane przez całą rodzinę — urodziny to wyjątkowy dzień dla każdego! Sprawdź czy twoje zwyczaje urodzinowe są takie jak reszty Polaków!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Co robisz gdy zapomnisz o czyjchś urodzinach?",
+        "answers": [
+          {"text": "dzwonisz z opóźnionym życzeniem", "fixed_points": 40},
+          {"text": "udajesz że nie zapomniałeś", "fixed_points": 26},
+          {"text": "wysyłasz smsa", "fixed_points": 18},
+          {"text": "dajesz prezent z opóźnieniem", "fixed_points": 10},
+          {"text": "przepraszasz szczerze", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś co jest na każdym polskim przyjęciu urodzinowym.",
+        "answers": [
+          {"text": "tort ze świeczkami", "fixed_points": 44},
+          {"text": "śpiewanie Sto Lat", "fixed_points": 28},
+          {"text": "kwiaty lub prezent", "fixed_points": 16},
+          {"text": "jedzenie i picie", "fixed_points": 8},
+          {"text": "dmuchanie świeczek", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Co mówisz solenizantowi?",
+        "answers": [
+          {"text": "wszystkiego najlepszego!", "fixed_points": 44},
+          {"text": "sto lat!", "fixed_points": 28},
+          {"text": "zdrowia i szczęścia", "fixed_points": 16},
+          {"text": "wyglądasz młodo", "fixed_points": 8},
+          {"text": "spełnienia marzeń", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Podaj powód dla którego ktoś nie lubi obchodzić urodzin.",
+        "answers": [
+          {"text": "starzeje się", "fixed_points": 42},
+          {"text": "nie lubi być w centrum uwagi", "fixed_points": 26},
+          {"text": "nie chce organizować imprezy", "fixed_points": 18},
+          {"text": "nikomu nie zależy", "fixed_points": 9},
+          {"text": "złe wspomnienia z poprzednich", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co kupujesz jako prezent urodzinowy gdy nie masz pomysłu?",
+        "answers": [
+          {"text": "kwiaty", "fixed_points": 38},
+          {"text": "gotówka lub voucher", "fixed_points": 28},
+          {"text": "coś słodkiego", "fixed_points": 18},
+          {"text": "wino lub alkohol", "fixed_points": 10},
+          {"text": "perfumy", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś co każdy robi gdy zobaczy czyjeś urodziny w mediach społecznościowych.",
+        "answers": [
+          {"text": "wysyła życzenia przez Facebooka", "fixed_points": 44},
+          {"text": "lajkuje", "fixed_points": 28},
+          {"text": "pisze smsa osobno", "fixed_points": 16},
+          {"text": "dzwoni", "fixed_points": 8},
+          {"text": "ignoruje", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Co robi urodzinowy gość na przyjęciu?",
+        "answers": [
+          {"text": "gratuluje i wręcza prezent", "fixed_points": 40},
+          {"text": "je i pije", "fixed_points": 28},
+          {"text": "rozmawia z innymi gośćmi", "fixed_points": 18},
+          {"text": "robi zdjęcia", "fixed_points": 9},
+          {"text": "pomaga przy organizacji", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co się nie może udać na imprezie urodzinowej.",
+        "answers": [
+          {"text": "tort się nie uda", "fixed_points": 38},
+          {"text": "za mało jedzenia", "fixed_points": 26},
+          {"text": "mniej gości niż zaplanowano", "fixed_points": 18},
+          {"text": "deszcz pada na zewnątrz", "fixed_points": 12},
+          {"text": "muzyka nie gra", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co mówi solenizant gdy gasi świeczki na torcie?",
+        "answers": [
+          {"text": "milczy i życzy sobie po cichu", "fixed_points": 44},
+          {"text": "chce żeby się spełniło", "fixed_points": 26},
+          {"text": "mam już życzenie gotowe", "fixed_points": 18},
+          {"text": "nic nie zdradza co życzył", "fixed_points": 8},
+          {"text": "śmieje się ze stresu", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Podaj coś co Polacy jedzą na torcie urodzinowym.",
+        "answers": [
+          {"text": "śmietana i owoce", "fixed_points": 38},
+          {"text": "czekolada i ganache", "fixed_points": 26},
+          {"text": "krem maślany", "fixed_points": 18},
+          {"text": "galaretka z owocami", "fixed_points": 12},
+          {"text": "tort bezowy", "fixed_points": 6}
+        ]
+      }
+    ]
+  }
+}]

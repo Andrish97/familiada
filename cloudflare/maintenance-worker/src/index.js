@@ -617,108 +617,6 @@ async function handleAdminMarketplaceApi(request, env, url) {
     return json({ ok: true });
   }
 
-  // POST /_admin_api/marketplace/sync-storage
-  // Listuje obiekty w marketplace/marketplace/, upsertuje każdą grę producenta
-  if (url.pathname === "/_admin_api/marketplace/sync-storage") {
-    if (request.method !== "POST") return new Response("Method Not Allowed", { status: 405 });
-
-    const BATCH = 20;
-    let body = {};
-    try { body = await request.json(); } catch { }
-    const offset = Number(body?.offset ?? 0);
-
-    // 1. Listuj obiekty w Storage (RPC)
-    let allFiles;
-    try {
-      const listRes = await supabaseRpc(env, "storage_list_objects", {
-        p_bucket: "marketplace",
-        p_prefix: "marketplace/",
-        p_limit: 5000
-      });
-      if (!listRes.ok) return json({ ok: false, error: "storage_list_failed", details: summarizeSupabaseError(listRes) }, 502);
-      allFiles = (listRes.data || []).filter(f => f.name.endsWith(".json"));
-    } catch (err) {
-      return json({ ok: false, error: `storage_list_error: ${String(err?.message || err)}` }, 502);
-    }
-
-    const total   = allFiles.length;
-    const batch   = allFiles.slice(offset, offset + BATCH);
-    const hasMore = offset + BATCH < total;
-    console.log(`[worker] sync-storage offset:${offset} batch:${batch.length} total:${total}`);
-
-    // 2. Upsert batcha
-    const results = [];
-    for (const file of batch) {
-      const path = `marketplace/${file.name}`;
-      let gameJson;
-      try {
-        const res = await downloadFromStorage(env, path);
-        if (!res.ok) {
-          results.push({ path: file.name, ok: false, error: `download_failed: ${res.status}` });
-          continue;
-        }
-        gameJson = await res.json();
-      } catch (err) {
-        results.push({ path: file.name, ok: false, error: `download_error: ${String(err?.message || err)}` });
-        continue;
-      }
-
-      if (!gameJson?.meta || !gameJson?.game || !Array.isArray(gameJson?.questions)) {
-        results.push({ path: file.name, ok: false, error: "invalid_format" });
-        continue;
-      }
-
-      const upsert = await supabaseRpc(env, "market_admin_upsert", {
-        p_storage_path: file.name,
-        p_title:       String(gameJson.meta.title || gameJson.game.name || ""),
-        p_description: String(gameJson.meta.description || ""),
-        p_lang:        String(gameJson.meta.lang || "pl"),
-        p_payload:     gameJson,
-      });
-
-      if (!upsert.ok) {
-        results.push({ path: file.name, ok: false, error: summarizeSupabaseError(upsert) });
-        continue;
-      }
-      const upsertResult = normalizeRpcValue(upsert.data);
-      results.push({ path: file.name, ok: upsertResult?.ok ?? true, id: upsertResult?.market_id });
-    }
-
-    const failed = results.filter(r => !r.ok);
-    console.log(`[worker] sync-storage batch done synced:${results.filter(r => r.ok).length} failed:${failed.length} hasMore:${hasMore}`);
-    return json({
-      ok: !hasMore && failed.length === 0,
-      total,
-      offset,
-      hasMore,
-      synced: results.filter(r => r.ok).length,
-      failed: failed.length,
-      results,
-    });
-  }
-
-  // POST /_admin_api/marketplace/sync-storage-cleanup { paths: string[] }
-  // Usuwa z DB gry które są w marketplace/ ale nie ma ich już w Storage
-  if (url.pathname === "/_admin_api/marketplace/sync-storage-cleanup") {
-    if (request.method !== "POST") return new Response("Method Not Allowed", { status: 405 });
-    let body = {};
-    try { body = await request.json(); } catch { return json({ ok: false, error: "invalid_json" }, 400); }
-    const paths = body?.paths;
-    if (!Array.isArray(paths)) return json({ ok: false, error: "missing_paths" }, 400);
-
-    console.log("[worker] sync-storage-cleanup valid paths:", paths.length);
-    const result = await supabaseRpc(env, "market_admin_sync_cleanup", { p_storage_paths: paths });
-    if (!result.ok) {
-      console.error("[worker] sync-storage-cleanup failed:", result);
-      return json({ ok: false, error: summarizeSupabaseError(result) }, 502);
-    }
-    const row = normalizeRpcValue(result.data);
-    const deleted = row?.deleted ?? 0;
-    const removedPaths = row?.paths ?? [];
-    console.log("[worker] sync-storage-cleanup deleted:", deleted, removedPaths);
-    return json({ ok: true, deleted, paths: removedPaths });
-  }
-
   // POST /_admin_api/marketplace/withdraw { id }
   // Wymusza status = withdrawn na opublikowanej grze
   if (url.pathname === "/_admin_api/marketplace/withdraw") {
@@ -763,6 +661,42 @@ async function handleAdminMarketplaceApi(request, env, url) {
       }, 422);
     }
     return json({ ok: true });
+  }
+
+  // POST /_admin_api/marketplace/import-bulk
+  // Importuje wiele gier naraz z JSON { games: [{title, description, lang, payload}] }
+  if (url.pathname === "/_admin_api/marketplace/import-bulk") {
+    if (request.method !== "POST") return new Response("Method Not Allowed", { status: 405 });
+    let body = {};
+    try { body = await request.json(); } catch { return json({ ok: false, error: "invalid_json" }, 400); }
+    const games = body?.games;
+    if (!Array.isArray(games) || games.length === 0) return json({ ok: false, error: "missing_games" }, 400);
+
+    const results = [];
+    for (let i = 0; i < games.length; i++) {
+      const g = games[i];
+      const storagePath = g.storage_path || `import/gra-${String(i + 1).padStart(2, "0")}`;
+      if (!g.title || !g.lang || !g.payload) {
+        results.push({ index: i, ok: false, error: "missing_fields" });
+        continue;
+      }
+      const upsert = await supabaseRpc(env, "market_admin_upsert", {
+        p_storage_path: storagePath,
+        p_title:        String(g.title),
+        p_description:  String(g.description || ""),
+        p_lang:         String(g.lang),
+        p_payload:      g.payload,
+      });
+      if (!upsert.ok) {
+        results.push({ index: i, title: g.title, ok: false, error: summarizeSupabaseError(upsert) });
+        continue;
+      }
+      const row = normalizeRpcValue(upsert.data);
+      results.push({ index: i, title: g.title, ok: row?.ok ?? true, id: row?.market_id, existing: row?.existing });
+    }
+
+    const failed = results.filter(r => !r.ok);
+    return json({ ok: failed.length === 0, total: games.length, imported: results.filter(r => r.ok).length, failed: failed.length, results });
   }
 
   // POST /_admin_api/marketplace/notify-test — wyślij testowe powiadomienie

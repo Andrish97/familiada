@@ -1,0 +1,109 @@
+[{
+  "title": "Na siłowni",
+  "description": "Hantle, bieżnia i lustro — siłownia to świat sam w sobie! Polacy coraz chętniej ćwiczą, ale siłownia rządzi się swoimi prawami. Sprawdź czy je znasz!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Podaj coś co widzisz na każdej siłowni.",
+        "answers": [
+          {"text": "lustro na całej ścianie", "fixed_points": 40},
+          {"text": "hantle i sztangi", "fixed_points": 28},
+          {"text": "bieżnie", "fixed_points": 18},
+          {"text": "ktoś kto robi miny przy ćwiczeniach", "fixed_points": 9},
+          {"text": "koktajl bar z białkiem", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co denerwuje na siłowni?",
+        "answers": [
+          {"text": "ktoś nie odkłada ciężarów", "fixed_points": 38},
+          {"text": "zajęte wszystkie maszyny", "fixed_points": 26},
+          {"text": "ktoś sapie zbyt głośno", "fixed_points": 18},
+          {"text": "pot na sprzęcie po kimś", "fixed_points": 12},
+          {"text": "ktoś robi filmiki cały czas", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co każdy robi na siłowni zanim zacznie ćwiczyć?",
+        "answers": [
+          {"text": "podłącza słuchawki", "fixed_points": 44},
+          {"text": "rozgrzewa się", "fixed_points": 26},
+          {"text": "zerka na innych", "fixed_points": 16},
+          {"text": "ustawia playlist", "fixed_points": 9},
+          {"text": "bierze hantle", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj powód dla którego ktoś w sylwestra zapisuje się na siłownię.",
+        "answers": [
+          {"text": "chce schudnąć", "fixed_points": 44},
+          {"text": "nowe postanowienie", "fixed_points": 28},
+          {"text": "za dużo zjadł na święta", "fixed_points": 16},
+          {"text": "zniżka noworoczna", "fixed_points": 8},
+          {"text": "kolega namówił", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Podaj coś co boli po pierwszym treningu na siłowni.",
+        "answers": [
+          {"text": "ręce", "fixed_points": 38},
+          {"text": "nogi", "fixed_points": 28},
+          {"text": "klatka piersiowa", "fixed_points": 18},
+          {"text": "plecy", "fixed_points": 10},
+          {"text": "dosłownie wszystko", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co robi ktoś kto ćwiczy od lat na siłowni?",
+        "answers": [
+          {"text": "radzi innym jak ćwiczyć", "fixed_points": 38},
+          {"text": "podnosi największe ciężary", "fixed_points": 26},
+          {"text": "ma swoje ulubione miejsce", "fixed_points": 18},
+          {"text": "zna wszystkich bywalców", "fixed_points": 12},
+          {"text": "stoi długo przed lustrem", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś co każdy zabiera na siłownię.",
+        "answers": [
+          {"text": "butelka wody", "fixed_points": 42},
+          {"text": "słuchawki", "fixed_points": 30},
+          {"text": "ręcznik", "fixed_points": 16},
+          {"text": "karta lub aplikacja", "fixed_points": 8},
+          {"text": "shake proteinowy", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Co mówi trener personalny?",
+        "answers": [
+          {"text": "jeszcze jedno powtórzenie!", "fixed_points": 44},
+          {"text": "trzymaj plecy prosto", "fixed_points": 26},
+          {"text": "oddychaj prawidłowo", "fixed_points": 16},
+          {"text": "zwiększamy ciężar", "fixed_points": 9},
+          {"text": "dieta to podstawa", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj powód dla którego ktoś przestaje chodzić na siłownię.",
+        "answers": [
+          {"text": "brakuje czasu", "fixed_points": 40},
+          {"text": "boli i zniechęca", "fixed_points": 26},
+          {"text": "lenistwo", "fixed_points": 18},
+          {"text": "brak efektów", "fixed_points": 10},
+          {"text": "za drogo", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co mówisz po bardzo ciężkim treningu?",
+        "answers": [
+          {"text": "już nigdy więcej", "fixed_points": 40},
+          {"text": "jestem martwy", "fixed_points": 26},
+          {"text": "nie czuję nóg", "fixed_points": 18},
+          {"text": "ale dobrze się czuję mimo wszystko", "fixed_points": 10},
+          {"text": "zapisuję postępy", "fixed_points": 6}
+        ]
+      }
+    ]
+  }
+}]

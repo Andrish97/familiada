@@ -1,0 +1,109 @@
+[{
+  "title": "Dom i porządki",
+  "description": "Odkurzacz, ścierka i to pytanie: czy te naczynia są z wczoraj czy z przedwczoraj? Porządki w domu to temat który zna każdy Polak — niezależnie czy sprząta czy nie!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Podaj coś co odkładasz na później zamiast zrobić od razu.",
+        "answers": [
+          {"text": "mycie naczyń", "fixed_points": 40},
+          {"text": "pranie", "fixed_points": 26},
+          {"text": "odkurzanie", "fixed_points": 18},
+          {"text": "rachunki do zapłacenia", "fixed_points": 10},
+          {"text": "odpowiedź na maila", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Wymień coś co zawsze ginie w domu.",
+        "answers": [
+          {"text": "pilot od TV", "fixed_points": 38},
+          {"text": "jedna skarpetka z pary", "fixed_points": 28},
+          {"text": "klucze", "fixed_points": 18},
+          {"text": "długopis", "fixed_points": 10},
+          {"text": "telefon", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj powód dla którego nie chce ci się sprzątać.",
+        "answers": [
+          {"text": "za mało czasu", "fixed_points": 38},
+          {"text": "lenistwo", "fixed_points": 28},
+          {"text": "i tak za chwilę się zabrudzi", "fixed_points": 18},
+          {"text": "zmęczenie po pracy", "fixed_points": 10},
+          {"text": "nikt tego nie doceni", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co robi Polak przed wizytą gości?",
+        "answers": [
+          {"text": "szybko sprząta wszystko", "fixed_points": 44},
+          {"text": "chowa bałagan do szafy", "fixed_points": 28},
+          {"text": "gotuje", "fixed_points": 16},
+          {"text": "robi zakupy", "fixed_points": 8},
+          {"text": "odświeża toaletę", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Co Polacy zawsze mają w lodówce?",
+        "answers": [
+          {"text": "masło", "fixed_points": 38},
+          {"text": "ser żółty", "fixed_points": 28},
+          {"text": "wędlina", "fixed_points": 18},
+          {"text": "jajka", "fixed_points": 10},
+          {"text": "jogurt", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś co robi Polak gdy psuje się coś w domu.",
+        "answers": [
+          {"text": "dzwoni do fachowca", "fixed_points": 36},
+          {"text": "naprawia sam", "fixed_points": 26},
+          {"text": "pyta ojca lub teścia", "fixed_points": 20},
+          {"text": "szuka na YouTube jak to zrobić", "fixed_points": 12},
+          {"text": "odkłada na wieczne później", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Wymień coś co każdy robi podczas generalnych porządków.",
+        "answers": [
+          {"text": "wyrzuca stare niepotrzebne rzeczy", "fixed_points": 36},
+          {"text": "myje okna", "fixed_points": 26},
+          {"text": "odkurza za meblami", "fixed_points": 20},
+          {"text": "czyści lodówkę", "fixed_points": 12},
+          {"text": "segreguje śmieci", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś na co narzekają Polacy we własnym mieszkaniu.",
+        "answers": [
+          {"text": "za małe", "fixed_points": 40},
+          {"text": "głośni sąsiedzi", "fixed_points": 26},
+          {"text": "za drogie", "fixed_points": 18},
+          {"text": "stare instalacje", "fixed_points": 10},
+          {"text": "brak miejsca parkingowego", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co jest w każdej polskiej szafce pod zlewozmywakiem?",
+        "answers": [
+          {"text": "środki czyszczące", "fixed_points": 40},
+          {"text": "reklamówki i foliowe torby", "fixed_points": 28},
+          {"text": "gąbki i ścierki", "fixed_points": 18},
+          {"text": "śmieci które tu wylądowały", "fixed_points": 9},
+          {"text": "zapasowe plastikowe worki", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co mówisz gdy ktoś nieoczekiwanie dzwoni do drzwi?",
+        "answers": [
+          {"text": "kto to może być o tej porze", "fixed_points": 38},
+          {"text": "chwileczkę!", "fixed_points": 28},
+          {"text": "poczekaj muszę się ubrać", "fixed_points": 18},
+          {"text": "zaraz otwieram", "fixed_points": 10},
+          {"text": "otwierasz bez słowa", "fixed_points": 6}
+        ]
+      }
+    ]
+  }
+}]

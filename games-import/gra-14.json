@@ -1,0 +1,109 @@
+[{
+  "title": "Polskie lato",
+  "description": "Upał, grillowanie i wiadro wiśni od sąsiada — polskie lato jest krótkie ale intensywne! Sprawdź ile wspólnego mają twoje letnie zwyczaje z resztą Polaków.",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Co Polacy robią przy grillu?",
+        "answers": [
+          {"text": "smażą kiełbasę", "fixed_points": 42},
+          {"text": "piją piwo", "fixed_points": 28},
+          {"text": "rozmawiają i plotkują", "fixed_points": 16},
+          {"text": "smażą karkówkę", "fixed_points": 9},
+          {"text": "grają w piłkę obok", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co Polacy robią gdy jest upał powyżej 35 stopni.",
+        "answers": [
+          {"text": "narzekają", "fixed_points": 40},
+          {"text": "siedzą w cieniu", "fixed_points": 26},
+          {"text": "jedzą lody", "fixed_points": 18},
+          {"text": "kupują wentylator", "fixed_points": 10},
+          {"text": "szukają klimatyzacji w centrum handlowym", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Wymień coś co musisz mieć na letnim pikniku.",
+        "answers": [
+          {"text": "koc do siedzenia", "fixed_points": 36},
+          {"text": "jedzenie", "fixed_points": 28},
+          {"text": "napoje", "fixed_points": 20},
+          {"text": "krem na komary", "fixed_points": 10},
+          {"text": "frisbee lub piłka", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś co Polacy jadą zbierać latem.",
+        "answers": [
+          {"text": "truskawki", "fixed_points": 38},
+          {"text": "jagody w lesie", "fixed_points": 28},
+          {"text": "maliny", "fixed_points": 18},
+          {"text": "wiśnie", "fixed_points": 10},
+          {"text": "grzyby", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś co denerwuje latem.",
+        "answers": [
+          {"text": "komary", "fixed_points": 42},
+          {"text": "upał w nocy uniemożliwiający spanie", "fixed_points": 26},
+          {"text": "burza w trakcie grilla", "fixed_points": 16},
+          {"text": "tłok wszędzie", "fixed_points": 10},
+          {"text": "piasek w domu po plaży", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co piją Polacy latem żeby się ochłodzić?",
+        "answers": [
+          {"text": "woda z lodem i cytryną", "fixed_points": 40},
+          {"text": "zimne piwo", "fixed_points": 28},
+          {"text": "sok lub lemoniada", "fixed_points": 18},
+          {"text": "mrożona herbata", "fixed_points": 9},
+          {"text": "gazowany napój", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co robi Polak w wolną letnią sobotę.",
+        "answers": [
+          {"text": "griluje z rodziną", "fixed_points": 38},
+          {"text": "wyjeżdża za miasto", "fixed_points": 26},
+          {"text": "idzie na basen", "fixed_points": 18},
+          {"text": "pracuje w ogrodzie", "fixed_points": 12},
+          {"text": "śpi do południa", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Wymień coś co zjadasz latem częściej niż zimą.",
+        "answers": [
+          {"text": "lody", "fixed_points": 44},
+          {"text": "sałatki", "fixed_points": 24},
+          {"text": "świeże owoce", "fixed_points": 18},
+          {"text": "grillowane mięso", "fixed_points": 9},
+          {"text": "warzywa prosto z ogrodu", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co Polacy robią z owocami zebranymi latem.",
+        "answers": [
+          {"text": "robią dżemy i przetwory", "fixed_points": 42},
+          {"text": "jedzą na świeżo", "fixed_points": 26},
+          {"text": "dają sąsiadom i rodzinie", "fixed_points": 18},
+          {"text": "mrożą na zimę", "fixed_points": 9},
+          {"text": "robią ciasto lub kompot", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co mówi Polak gdy skończyło się lato?",
+        "answers": [
+          {"text": "nie! już?", "fixed_points": 40},
+          {"text": "znowu będzie zimno i ciemno", "fixed_points": 26},
+          {"text": "za krótkie to lato", "fixed_points": 20},
+          {"text": "przynajmniej nie ma komarów", "fixed_points": 9},
+          {"text": "cieszę się na jesień", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]

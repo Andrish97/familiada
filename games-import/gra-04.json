@@ -1,0 +1,109 @@
+[{
+  "title": "W pracy",
+  "description": "Osiem godzin dziennie, pięć dni w tygodniu — praca to połowa naszego życia. Sprawdź czy twoje doświadczenia biurowe pokrywają się z resztą Polaków. Poniedziałek nigdy nie był taki śmieszny!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Co pracownicy robią gdy szefa nie ma w biurze?",
+        "answers": [
+          {"text": "rozmawiają i plotkują", "fixed_points": 38},
+          {"text": "przeglądają internet", "fixed_points": 28},
+          {"text": "piją kawę spokojnie", "fixed_points": 18},
+          {"text": "wychodzą wcześniej", "fixed_points": 10},
+          {"text": "pracują spokojniej", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj powód dla którego ktoś bierze zwolnienie lekarskie.",
+        "answers": [
+          {"text": "naprawdę jest chory", "fixed_points": 36},
+          {"text": "zmęczenie i wypalenie", "fixed_points": 28},
+          {"text": "nie chce iść do pracy", "fixed_points": 20},
+          {"text": "chore dziecko", "fixed_points": 11},
+          {"text": "potrzebuje odpoczynku", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co robi pracownik zaraz po przyjściu do biura?",
+        "answers": [
+          {"text": "robi kawę", "fixed_points": 44},
+          {"text": "sprawdza maile", "fixed_points": 28},
+          {"text": "wiesza kurtkę", "fixed_points": 14},
+          {"text": "rozmawia z kolegami", "fixed_points": 9},
+          {"text": "sprawdza plan dnia", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co robisz o 15:59 w pracy?",
+        "answers": [
+          {"text": "pakujesz torbę", "fixed_points": 46},
+          {"text": "patrzysz na zegarek", "fixed_points": 28},
+          {"text": "kończysz kawę", "fixed_points": 14},
+          {"text": "udajesz że jeszcze pracujesz", "fixed_points": 8},
+          {"text": "żegnasz się ze wszystkimi", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Podaj coś co denerwuje w biurze open space.",
+        "answers": [
+          {"text": "hałas i gadanie", "fixed_points": 40},
+          {"text": "głośne rozmowy przez telefon", "fixed_points": 28},
+          {"text": "brak prywatności", "fixed_points": 18},
+          {"text": "czyjaś głośna muzyka", "fixed_points": 9},
+          {"text": "zimno przy oknie", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Wymień o czym marzy pracownik w poniedziałek rano.",
+        "answers": [
+          {"text": "urlop", "fixed_points": 42},
+          {"text": "piątek", "fixed_points": 28},
+          {"text": "podwyżka", "fixed_points": 16},
+          {"text": "praca z domu", "fixed_points": 9},
+          {"text": "emerytura", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co robisz podczas nudnego zebrania w pracy?",
+        "answers": [
+          {"text": "piszesz na telefonie", "fixed_points": 38},
+          {"text": "udajesz że słuchasz", "fixed_points": 28},
+          {"text": "rysujesz po kartce", "fixed_points": 18},
+          {"text": "pijesz kawę", "fixed_points": 10},
+          {"text": "drzemiesz", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co mówią pracownicy o osobie która odchodzi z firmy?",
+        "answers": [
+          {"text": "dobrze mu/jej", "fixed_points": 40},
+          {"text": "nareszcie się zdecydował", "fixed_points": 26},
+          {"text": "co teraz będzie", "fixed_points": 18},
+          {"text": "tęsknić będziemy", "fixed_points": 10},
+          {"text": "dlaczego nie my", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś o czym plotkuje się w pracy.",
+        "answers": [
+          {"text": "kto z kim", "fixed_points": 40},
+          {"text": "kto dostał podwyżkę", "fixed_points": 26},
+          {"text": "kto ma być zwolniony", "fixed_points": 18},
+          {"text": "kto się obija", "fixed_points": 10},
+          {"text": "co szef zrobił", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co robi pracownik gdy dostaje podwyżkę?",
+        "answers": [
+          {"text": "cieszy się", "fixed_points": 42},
+          {"text": "mówi rodzinie", "fixed_points": 26},
+          {"text": "planuje wydatki", "fixed_points": 18},
+          {"text": "idzie na zakupy", "fixed_points": 9},
+          {"text": "stawia kawę kolegom", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]

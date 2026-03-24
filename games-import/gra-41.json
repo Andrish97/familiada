@@ -1,0 +1,109 @@
+[{
+  "title": "Wieczór w barze",
+  "description": "Kufel piwa, głośna muzyka i rozmowy których nie pamiętasz rano — wieczór w polskim barze to klasyka! Sprawdź czy twoje barowe doświadczenia są typowe!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Co zamawiasz w barze jako pierwsze?",
+        "answers": [
+          {"text": "piwo", "fixed_points": 50},
+          {"text": "wódkę z sokiem", "fixed_points": 22},
+          {"text": "wino", "fixed_points": 14},
+          {"text": "drinka mieszanego", "fixed_points": 9},
+          {"text": "colę — nie piję", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj powód dla którego ktoś pije za dużo.",
+        "answers": [
+          {"text": "towarzystwo nalewa", "fixed_points": 38},
+          {"text": "stres i chce odpocząć", "fixed_points": 26},
+          {"text": "każdy pije", "fixed_points": 18},
+          {"text": "za tanie", "fixed_points": 12},
+          {"text": "słabe nogi", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co robi Polak gdy wypije za dużo?",
+        "answers": [
+          {"text": "tańczy sam w kącie", "fixed_points": 38},
+          {"text": "mówi że kocha wszystkich", "fixed_points": 28},
+          {"text": "wychodzi na świeże powietrze", "fixed_points": 18},
+          {"text": "zasypia gdzieś", "fixed_points": 10},
+          {"text": "dzwoni do ex", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś co denerwuje w barze.",
+        "answers": [
+          {"text": "za głośna muzyka", "fixed_points": 40},
+          {"text": "tłok i ścisk", "fixed_points": 26},
+          {"text": "długo czeka na drinka", "fixed_points": 18},
+          {"text": "za drogo", "fixed_points": 11},
+          {"text": "dym papierosowy", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co mówisz rano po wieczorze w barze?",
+        "answers": [
+          {"text": "nigdy więcej", "fixed_points": 40},
+          {"text": "co ja wczoraj robiłem", "fixed_points": 28},
+          {"text": "głowa mnie boli", "fixed_points": 18},
+          {"text": "wracam spać", "fixed_points": 10},
+          {"text": "byłem dzisiaj w robocie tak", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Co jesz żeby złagodzić kaca?",
+        "answers": [
+          {"text": "pizza lub fast food", "fixed_points": 36},
+          {"text": "zupa pomidorowa lub rosół", "fixed_points": 28},
+          {"text": "woda i aspiryna", "fixed_points": 18},
+          {"text": "cokolwiek co jest", "fixed_points": 12},
+          {"text": "klinuj — pijesz dalej", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś co każdy robi gdy muzyka mu się podoba w barze.",
+        "answers": [
+          {"text": "kiwa głową w rytm", "fixed_points": 42},
+          {"text": "idzie tańczyć", "fixed_points": 26},
+          {"text": "śpiewa", "fixed_points": 18},
+          {"text": "prosi DJ-a o głośniej", "fixed_points": 9},
+          {"text": "szuka tytułu w Shazamie", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Kto płaci za rundkę drinków w Polsce?",
+        "answers": [
+          {"text": "każdy po równo", "fixed_points": 36},
+          {"text": "kto zaprosił", "fixed_points": 26},
+          {"text": "naprzemiennie", "fixed_points": 20},
+          {"text": "ten kto ma najwięcej", "fixed_points": 12},
+          {"text": "kłócą się chwilę", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś co mówisz gdy zaproponują kolejkę a nie chcesz pić.",
+        "answers": [
+          {"text": "prowadzę", "fixed_points": 40},
+          {"text": "dziękuję wystarczy", "fixed_points": 26},
+          {"text": "muszę jutro wstać wcześnie", "fixed_points": 18},
+          {"text": "jestem chory", "fixed_points": 10},
+          {"text": "piję tylko wodę dziś", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co robi towarzystwo gdy bar się zamyka?",
+        "answers": [
+          {"text": "szukają innego miejsca", "fixed_points": 40},
+          {"text": "idą do kogoś na dalszą imprezę", "fixed_points": 26},
+          {"text": "zamawiają taksówkę", "fixed_points": 18},
+          {"text": "wychodzą niechętnie", "fixed_points": 11},
+          {"text": "jedni idą drudzy zostają", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]

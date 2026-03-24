@@ -15,7 +15,7 @@ Settings panel (admin)
 import { initI18n, t } from "../../translation/translation.js";
 import { initUiSelect } from "../core/ui-select.js";
 import { guardDesktopOnly } from "../core/device-guard.js";
-import { confirmModal, syncProgressModal } from "../core/modal.js";
+import { confirmModal } from "../core/modal.js";
 
 const API_BASE = "/_admin_api";
 const TOOLS_MANIFEST = "/settings-tools/tools.json";
@@ -1565,81 +1565,6 @@ async function adminHardDelete(id) {
   }
 }
 
-async function syncStorage() {
-  const btn    = document.getElementById("btnMarketSyncStorage");
-  const status = document.getElementById("marketSyncStatus");
-  if (btn) btn.disabled = true;
-
-  const modal = syncProgressModal({ title: "Synchronizacja ze Storage" });
-
-  let totalSynced = 0, totalFailed = 0, grandTotal = 0;
-  const allResults = [];
-
-  try {
-    let offset = 0;
-    let hasMore = true;
-
-    while (hasMore) {
-      modal.update(totalSynced + totalFailed, grandTotal || "?");
-      const res  = await adminFetch("/marketplace/sync-storage", { method: "POST", body: JSON.stringify({ offset }) });
-      const json = await res.json();
-
-      if (json.error) {
-        modal.finish(false, `Błąd: ${json.error}`);
-        if (status) status.textContent = `Błąd: ${json.error}`;
-        return;
-      }
-
-      grandTotal   = json.total ?? grandTotal;
-      totalSynced += json.synced ?? 0;
-      totalFailed += json.failed ?? 0;
-
-      for (const r of (json.results ?? [])) {
-        if (!r.ok) modal.update(totalSynced + totalFailed, grandTotal, `FAIL: ${r.path} — ${r.error}`);
-      }
-      allResults.push(...(json.results ?? []));
-      hasMore  = json.hasMore ?? false;
-      offset  += (json.results?.length ?? 0);
-      modal.update(totalSynced + totalFailed, grandTotal);
-    }
-
-    // Cleanup — usuń z DB gry których nie ma już w Storage
-    const allPaths = allResults.map(r => r.path);
-    modal.setStep(t("settings.marketplace.syncCleanup") || "Czyszczę usunięte gry…");
-    let deleted = 0;
-    try {
-      const cleanRes  = await adminFetch("/marketplace/sync-storage-cleanup", { method: "POST", body: JSON.stringify({ paths: allPaths }) });
-      const cleanJson = await cleanRes.json();
-      if (cleanJson.ok) {
-        deleted = cleanJson.deleted ?? 0;
-        if (deleted > 0) {
-          modal.log(`USUNIĘTO: ${cleanJson.paths?.join(", ") || deleted}`);
-        }
-      } else {
-        modal.log(`WARN cleanup: ${cleanJson.error}`);
-      }
-    } catch (err) {
-      modal.log(`WARN cleanup: ${String(err?.message || err)}`);
-    }
-
-    const ok  = totalFailed === 0;
-    const deletedPart = deleted > 0 ? (t("settings.marketplace.syncDeleted") || ", usunięto {n}").replace("{n}", deleted) : "";
-    const msg = ok
-      ? `${t("settings.marketplace.syncOk") || "Sync OK"} — ${totalSynced}/${grandTotal}${deletedPart}`
-      : `Sync: ${totalSynced}/${grandTotal} OK, ${totalFailed} ${t("settings.marketplace.syncErrors") || "błędów"}${deletedPart}`;
-    modal.finish(ok, msg);
-    if (status) status.textContent = msg;
-    showToast(msg, ok ? "success" : "error");
-    await loadMarketplace({ silent: true });
-  } catch (err) {
-    const msg = String(err?.message || err);
-    modal.finish(false, msg);
-    if (status) status.textContent = msg;
-    showToast(msg, "error");
-  } finally {
-    if (btn) btn.disabled = false;
-  }
-}
 
 async function testTelegram() {
   const status = document.getElementById("telegramStatus");
@@ -2668,8 +2593,6 @@ function wireMarketplaceEvents() {
   document.getElementById("btnMarketRefresh")?.addEventListener("click", () => loadMarketplace());
 
   // Sync Storage
-  document.getElementById("btnMarketSyncStorage")?.addEventListener("click", syncStorage);
-
   // Telegram config
   document.getElementById("btnTelegramTest")?.addEventListener("click", testTelegram);
 

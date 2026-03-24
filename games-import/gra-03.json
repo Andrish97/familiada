@@ -1,0 +1,109 @@
+[{
+  "title": "Szkolne wspomnienia",
+  "description": "Dzwonek, kreda i ten nerwowy moment gdy nauczyciel wywoła cię do tablicy — szkoła to coś czego nie da się zapomnieć. Gra pełna wspomnień które mają wszyscy Polacy!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Co robisz gdy nauczyciel pyta a ty nie znasz odpowiedzi?",
+        "answers": [
+          {"text": "udajesz że nie wiesz", "fixed_points": 38},
+          {"text": "patrzysz intensywnie w zeszyt", "fixed_points": 26},
+          {"text": "chowasz się za plecami kolegi", "fixed_points": 18},
+          {"text": "mówisz że nie słyszałeś pytania", "fixed_points": 12},
+          {"text": "zgadujesz cokolwiek", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj powód dla którego uczeń nie odrobił pracy domowej.",
+        "answers": [
+          {"text": "zapomniał", "fixed_points": 40},
+          {"text": "nie było czasu", "fixed_points": 28},
+          {"text": "był chory", "fixed_points": 16},
+          {"text": "nie rozumiał zadania", "fixed_points": 10},
+          {"text": "zeszyt gdzieś zaginął", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Wymień coś co każdy uczeń ma w swoim plecaku.",
+        "answers": [
+          {"text": "zeszyt", "fixed_points": 38},
+          {"text": "piórnik", "fixed_points": 28},
+          {"text": "podręcznik", "fixed_points": 20},
+          {"text": "drugie śniadanie", "fixed_points": 9},
+          {"text": "telefon", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co uczniowie robią podczas przerwy?",
+        "answers": [
+          {"text": "rozmawiają z kolegami", "fixed_points": 36},
+          {"text": "jedzą drugie śniadanie", "fixed_points": 26},
+          {"text": "biegają po korytarzu", "fixed_points": 20},
+          {"text": "odpisują pracę domową", "fixed_points": 12},
+          {"text": "grają na telefonie", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś czego uczniowie boją się w szkole.",
+        "answers": [
+          {"text": "klasówka", "fixed_points": 44},
+          {"text": "wywołanie do tablicy", "fixed_points": 26},
+          {"text": "ocena niedostateczna", "fixed_points": 16},
+          {"text": "zebranie rodziców z nauczycielem", "fixed_points": 8},
+          {"text": "dyrektor", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Wymień ulubiony przedmiot szkolny wśród uczniów.",
+        "answers": [
+          {"text": "wychowanie fizyczne", "fixed_points": 44},
+          {"text": "informatyka", "fixed_points": 24},
+          {"text": "plastyka", "fixed_points": 16},
+          {"text": "historia", "fixed_points": 10},
+          {"text": "muzyka", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co uczniowie robią na lekcji gdy się nudzą?",
+        "answers": [
+          {"text": "rysują po zeszycie", "fixed_points": 38},
+          {"text": "piszą karteczki do kolegi", "fixed_points": 26},
+          {"text": "patrzą przez okno", "fixed_points": 20},
+          {"text": "piszą smsy pod ławką", "fixed_points": 10},
+          {"text": "drzemią", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co robi nauczyciel gdy klasa jest zbyt głośna?",
+        "answers": [
+          {"text": "krzyczy na uczniów", "fixed_points": 40},
+          {"text": "wpisuje uwagi do dziennika", "fixed_points": 26},
+          {"text": "uderza ręką w biurko", "fixed_points": 18},
+          {"text": "wychodzi z klasy", "fixed_points": 10},
+          {"text": "wzywa dyrektora", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś co uczniowie robią pierwszego dnia po wakacjach.",
+        "answers": [
+          {"text": "opowiadają o wakacjach", "fixed_points": 40},
+          {"text": "narzekają że wakacje minęły", "fixed_points": 26},
+          {"text": "szukają przyjaciół z klasy", "fixed_points": 18},
+          {"text": "dostają plan lekcji", "fixed_points": 10},
+          {"text": "chwalą się nowymi ciuchami", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Wymień coś co każdy pamięta ze szkoły podstawowej.",
+        "answers": [
+          {"text": "pierwsza miłość", "fixed_points": 36},
+          {"text": "najlepszy przyjaciel z klasy", "fixed_points": 26},
+          {"text": "surowy nauczyciel", "fixed_points": 20},
+          {"text": "wycieczka szkolna", "fixed_points": 12},
+          {"text": "mecz w WF", "fixed_points": 6}
+        ]
+      }
+    ]
+  }
+}]

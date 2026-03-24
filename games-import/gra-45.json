@@ -1,0 +1,109 @@
+[{
+  "title": "Emerytura po polsku",
+  "description": "Działka, telewizja i wnuki w weekend — polska emerytura to wyjątkowy etap życia! Sprawdź co Polacy robią gdy w końcu nie muszą już pracować!",
+  "lang": "pl",
+  "payload": {
+    "questions": [
+      {
+        "text": "Co robi emeryt rano zanim wyjdzie z domu?",
+        "answers": [
+          {"text": "ogląda wiadomości", "fixed_points": 40},
+          {"text": "pije kawę spokojnie", "fixed_points": 26},
+          {"text": "czyta gazetę", "fixed_points": 18},
+          {"text": "wychodzi z psem", "fixed_points": 12},
+          {"text": "robi porządki w domu", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Podaj coś co emeryt robi przez cały dzień.",
+        "answers": [
+          {"text": "ogląda telewizję", "fixed_points": 40},
+          {"text": "pracuje w ogrodzie", "fixed_points": 26},
+          {"text": "opiekuje się wnukami", "fixed_points": 18},
+          {"text": "chodzi na spacery", "fixed_points": 11},
+          {"text": "gotuje", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Podaj coś co mówi emeryt o swoich czasach pracy.",
+        "answers": [
+          {"text": "za moich czasów to ciężej pracowali", "fixed_points": 42},
+          {"text": "teraz macie łatwiej", "fixed_points": 26},
+          {"text": "nie ma to jak dawny szef", "fixed_points": 16},
+          {"text": "zakład zamknęli a szkoda", "fixed_points": 11},
+          {"text": "dobrze że skończyłem", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co robi polska emerytka gdy odwiedza ją wnuczek?",
+        "answers": [
+          {"text": "karmi od wejścia", "fixed_points": 44},
+          {"text": "ściska i całuje", "fixed_points": 28},
+          {"text": "mówi jak urósł lub schudł", "fixed_points": 16},
+          {"text": "szykuje ulubione dania", "fixed_points": 8},
+          {"text": "daje kieszonkowe", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Podaj coś co denerwuje emeryta.",
+        "answers": [
+          {"text": "za niska emerytura", "fixed_points": 40},
+          {"text": "politycy w telewizji", "fixed_points": 26},
+          {"text": "hałas za oknem", "fixed_points": 18},
+          {"text": "nie słyszy dobrze", "fixed_points": 11},
+          {"text": "wnuki siedzą tylko w telefonach", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Gdzie emeryt spędza wolny czas?",
+        "answers": [
+          {"text": "ogród lub działka", "fixed_points": 40},
+          {"text": "kościół", "fixed_points": 24},
+          {"text": "spacery", "fixed_points": 18},
+          {"text": "spotkania seniorów", "fixed_points": 12},
+          {"text": "biblioteka", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Co mówi emeryt o młodszym pokoleniu?",
+        "answers": [
+          {"text": "za dużo w telefonach siedzą", "fixed_points": 42},
+          {"text": "nie szanują starszych", "fixed_points": 26},
+          {"text": "za dobrze mają", "fixed_points": 18},
+          {"text": "nie umieją gotować", "fixed_points": 10},
+          {"text": "nie znają historii", "fixed_points": 4}
+        ]
+      },
+      {
+        "text": "Co robi emeryt który jest bardzo aktywny?",
+        "answers": [
+          {"text": "ćwiczy lub spaceruje codziennie", "fixed_points": 38},
+          {"text": "uczy się nowych rzeczy", "fixed_points": 26},
+          {"text": "podróżuje", "fixed_points": 18},
+          {"text": "pomaga sąsiadom", "fixed_points": 12},
+          {"text": "angażuje się w parafię", "fixed_points": 6}
+        ]
+      },
+      {
+        "text": "Podaj coś co emeryt oglądał w telewizji.",
+        "answers": [
+          {"text": "M jak Miłość lub Klan", "fixed_points": 38},
+          {"text": "wiadomości TVP", "fixed_points": 28},
+          {"text": "teleturnieje", "fixed_points": 18},
+          {"text": "seriale obyczajowe", "fixed_points": 11},
+          {"text": "programy przyrodnicze", "fixed_points": 5}
+        ]
+      },
+      {
+        "text": "Co mówi Polak gdy wreszcie przechodzi na emeryturę?",
+        "answers": [
+          {"text": "nareszcie wolny!", "fixed_points": 44},
+          {"text": "co teraz ze sobą zrobię", "fixed_points": 26},
+          {"text": "tyle planów mam", "fixed_points": 16},
+          {"text": "nie wiem jak to będzie bez pracy", "fixed_points": 9},
+          {"text": "czas na działkę", "fixed_points": 5}
+        ]
+      }
+    ]
+  }
+}]
