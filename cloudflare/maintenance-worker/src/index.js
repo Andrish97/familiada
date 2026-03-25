@@ -1982,7 +1982,7 @@ async function serveGameDetailSsr(request, env, url, originBase, originHost, res
 async function serveDynamicSitemap(env) {
   const STATIC_PAGES = [
     { loc: "https://www.familiada.online/",          lastmod: "2026-03-14", changefreq: "monthly",  priority: "1.0" },
-    { loc: "https://www.familiada.online/marketplace", lastmod: "2026-03-14", changefreq: "daily",    priority: "0.9" },
+    { loc: "https://www.familiada.online/marketplace", lastmod: "2026-03-14", changefreq: "weekly",   priority: "0.9" },
     { loc: "https://www.familiada.online/privacy",    lastmod: "2026-03-14", changefreq: "yearly",   priority: "0.2" },
   ];
 
@@ -2006,13 +2006,17 @@ async function serveDynamicSitemap(env) {
     <priority>${p.priority}</priority>
   </url>`).join("");
 
-  const gameUrls = games.filter(g => g.slug).map(g => `
+  const gameUrls = games.filter(g => g.slug).map(g => {
+    const cnt = g.library_count || 0;
+    const priority = cnt >= 50 ? "0.8" : cnt >= 10 ? "0.7" : "0.6";
+    return `
   <url>
     <loc>https://www.familiada.online/marketplace/game/${escapeHtml(g.slug)}</loc>
     <lastmod>${(g.updated_at || g.created_at || today).slice(0, 10)}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>`).join("");
+    <changefreq>yearly</changefreq>
+    <priority>${priority}</priority>
+  </url>`;
+  }).join("");
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
