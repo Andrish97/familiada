@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict b11bsuL2P883bJyISvlJuOP1apIvF2SS1okifd7M2P31A2Des5Hnxh3Utc3tAJA
+\restrict jcdmOWd9bUGGnJdV3dPDzuoduJ59euMoVE6h1q2K8Y3kyoQxalJdJGj4rI1yU8O
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -3898,7 +3898,7 @@ $$;
 -- Name: market_admin_list("text"); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION "public"."market_admin_list"("p_status" "text" DEFAULT 'pending'::"text") RETURNS TABLE("id" "uuid", "title" "text", "description" "text", "lang" "text", "status" "public"."market_game_status", "moderation_note" "text", "library_count" integer, "author_username" "text", "author_email" "text", "storage_path" "text", "created_at" timestamp with time zone, "source_game_id" "uuid", "origin" "text")
+CREATE FUNCTION "public"."market_admin_list"("p_status" "text" DEFAULT 'pending'::"text") RETURNS TABLE("id" "uuid", "title" "text", "description" "text", "lang" "text", "status" "public"."market_game_status", "moderation_note" "text", "library_count" integer, "author_username" "text", "author_email" "text", "storage_path" "text", "created_at" timestamp with time zone, "updated_at" timestamp with time zone, "source_game_id" "uuid", "origin" "text", "slug" "text")
     LANGUAGE "sql" STABLE SECURITY DEFINER
     SET "search_path" TO 'public'
     AS $$
@@ -3911,11 +3911,13 @@ CREATE FUNCTION "public"."market_admin_list"("p_status" "text" DEFAULT 'pending'
     mg.moderation_note,
     mg.library_count,
     COALESCE(pr.username, '') AS author_username,
-    COALESCE(pr.email, '') AS author_email,
-    mg.storage_path,
+    COALESCE(pr.email, '')    AS author_email,
+    NULL::text                AS storage_path,
     mg.created_at,
+    mg.updated_at,
     mg.source_game_id,
-    mg.origin::text AS origin
+    mg.origin::text           AS origin,
+    mg.slug
   FROM public.market_games mg
   LEFT JOIN public.profiles pr ON pr.id = mg.author_user_id
   WHERE mg.status = p_status::public.market_game_status
@@ -12596,5 +12598,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict b11bsuL2P883bJyISvlJuOP1apIvF2SS1okifd7M2P31A2Des5Hnxh3Utc3tAJA
+\unrestrict jcdmOWd9bUGGnJdV3dPDzuoduJ59euMoVE6h1q2K8Y3kyoQxalJdJGj4rI1yU8O
 
