@@ -64,7 +64,11 @@ export async function setUiLang(
 
   if (updateUrl) {
     const url = new URL(location.href);
-    url.searchParams.set("lang", currentLang);
+    if (currentLang === "pl") {
+      url.searchParams.delete("lang");
+    } else {
+      url.searchParams.set("lang", currentLang);
+    }
     history.replaceState({}, "", url);
   }
 
@@ -111,7 +115,11 @@ export function getI18nSection(section) {
 
 export function withLangParam(url) {
   const u = new URL(url, location.href);
-  u.searchParams.set("lang", currentLang);
+  if (currentLang === "pl") {
+    u.searchParams.delete("lang");
+  } else {
+    u.searchParams.set("lang", currentLang);
+  }
   return u.toString();
 }
 

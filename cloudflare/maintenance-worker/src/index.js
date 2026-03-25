@@ -99,6 +99,13 @@ export default {
       return new Response("Unauthorized", { status: 401 });
     }
 
+    // Redirect ?lang=pl → clean URL (pl is default, no param needed)
+    if (request.method === "GET" && url.searchParams.get("lang") === "pl") {
+      const clean = new URL(url);
+      clean.searchParams.delete("lang");
+      return Response.redirect(clean.toString(), 301);
+    }
+
     // Public notification endpoint (rate-limited, no auth required)
     if (url.pathname === "/_api/notify-submission" && request.method === "POST") {
       return handleNotifySubmission(env);
