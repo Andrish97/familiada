@@ -46,6 +46,7 @@ export function getUiLang() {
   const stored = safeGetLocalStorage("uiLang");
   if (stored) return normalizeLang(stored);
 
+  if (navigator?.language) return normalizeLang(navigator.language);
   return "pl";
 }
 
