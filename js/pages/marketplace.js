@@ -567,10 +567,14 @@ function wireEvents() {
   });
 
   // Przycisk wstecz w przeglądarce
+  const UUID_RE_NAV = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   window.addEventListener("popstate", e => {
     if (location.pathname.startsWith("/marketplace/game/")) {
-      const slug = location.pathname.split("/")[3];
-      if (slug) openDetailBySlug(slug);
+      const param = location.pathname.split("/")[3];
+      if (param) {
+        if (UUID_RE_NAV.test(param)) openDetail(param);
+        else openDetailBySlug(param);
+      }
     } else {
       closeDetail();
     }
@@ -617,10 +621,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   showView("browse");
   await loadBrowse({ reset: true });
 
-  // Otwórz modal jeśli URL to /marketplace/game/[slug]
+  // Otwórz modal jeśli URL to /marketplace/game/[slug-or-uuid]
   const pathParts = location.pathname.split("/");
   if (pathParts[1] === "marketplace" && pathParts[2] === "game" && pathParts[3]) {
-    await openDetailBySlug(pathParts[3]);
+    const param = pathParts[3];
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (UUID_RE.test(param)) {
+      await openDetail(param);
+    } else {
+      await openDetailBySlug(param);
+    }
   }
 
   window.addEventListener("i18n:lang", () => loadBrowse({ reset: true }));
