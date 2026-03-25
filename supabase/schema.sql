@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict oWlat9kicQvSGw9MpRenUubcUmZyP653WzIgLSjbUbSS30HAOfPM1KcDOvOPsSf
+\restrict phhDYX4SvfvMI4nsHvTpwXT5fypP1dsgYrwli5kLpP2rYA4HTGMZHnMSHZpHkds
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -9076,6 +9076,24 @@ $$;
 
 
 --
+-- Name: trg_market_games_assign_slug(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."trg_market_games_assign_slug"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    SET "search_path" TO 'public'
+    AS $$
+BEGIN
+  -- Nadaj slug jeśli gra jest/staje się published i slug jest pusty
+  IF NEW.status = 'published' AND (NEW.slug IS NULL OR NEW.slug = '') THEN
+    NEW.slug := public.unique_market_slug(NEW.title, NEW.id);
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+
+--
 -- Name: trg_market_library_count(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -11105,6 +11123,13 @@ CREATE TRIGGER "trg_market_games_questions_fields" BEFORE INSERT OR UPDATE OF "p
 
 
 --
+-- Name: market_games trg_market_games_slug; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "trg_market_games_slug" BEFORE INSERT OR UPDATE OF "status", "slug" ON "public"."market_games" FOR EACH ROW EXECUTE FUNCTION "public"."trg_market_games_assign_slug"();
+
+
+--
 -- Name: market_games trg_market_games_updated_at; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -12598,5 +12623,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict oWlat9kicQvSGw9MpRenUubcUmZyP653WzIgLSjbUbSS30HAOfPM1KcDOvOPsSf
+\unrestrict phhDYX4SvfvMI4nsHvTpwXT5fypP1dsgYrwli5kLpP2rYA4HTGMZHnMSHZpHkds
 
