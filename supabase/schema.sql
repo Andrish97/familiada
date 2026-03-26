@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict nhKCAenfL0jQLLJWw2KpF4qgjyAePV50j4glvpcxnjfBvhShaWmf6zmNYbHJzSt
+\restrict h3Wen31c2DGp4TACGfzhB13CVsIGDQ1BXSEAOGXHIKLlrgg8WGyXfGLzoqTa5uZ
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -2420,6 +2420,20 @@ BEGIN
   END LOOP;
   RETURN v_num;
 END;
+$$;
+
+
+--
+-- Name: get_app_rating_stats(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."get_app_rating_stats"() RETURNS TABLE("avg_stars" numeric, "total_count" bigint)
+    LANGUAGE "sql" STABLE
+    AS $$
+    SELECT 
+        COALESCE(ROUND(AVG(stars), 1), 0.0) as avg_stars,
+        COUNT(*) as total_count
+    FROM public.app_ratings;
 $$;
 
 
@@ -9334,6 +9348,20 @@ CREATE TABLE "public"."app_config" (
 
 
 --
+-- Name: app_ratings; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."app_ratings" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "user_id" "uuid" NOT NULL,
+    "stars" integer NOT NULL,
+    "comment" "text",
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    CONSTRAINT "app_ratings_stars_check" CHECK ((("stars" >= 1) AND ("stars" <= 5)))
+);
+
+
+--
 -- Name: base_share_tasks; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -10048,6 +10076,22 @@ ALTER TABLE ONLY "public"."answers"
 
 ALTER TABLE ONLY "public"."app_config"
     ADD CONSTRAINT "app_config_pkey" PRIMARY KEY ("key");
+
+
+--
+-- Name: app_ratings app_ratings_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."app_ratings"
+    ADD CONSTRAINT "app_ratings_pkey" PRIMARY KEY ("id");
+
+
+--
+-- Name: app_ratings app_ratings_user_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."app_ratings"
+    ADD CONSTRAINT "app_ratings_user_id_key" UNIQUE ("user_id");
 
 
 --
@@ -11194,6 +11238,14 @@ ALTER TABLE ONLY "public"."answers"
 
 
 --
+-- Name: app_ratings app_ratings_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."app_ratings"
+    ADD CONSTRAINT "app_ratings_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."profiles"("id") ON DELETE CASCADE;
+
+
+--
 -- Name: base_share_tasks base_share_tasks_owner_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -11632,6 +11684,13 @@ CREATE POLICY "Allow public read access to queue" ON "public"."game_gen_queue" F
 
 
 --
+-- Name: app_ratings Anyone can view ratings; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Anyone can view ratings" ON "public"."app_ratings" FOR SELECT USING (true);
+
+
+--
 -- Name: message_attachments No public access; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -11650,6 +11709,20 @@ CREATE POLICY "No public access" ON "public"."messages" USING (false);
 --
 
 CREATE POLICY "No public access" ON "public"."reports" USING (false);
+
+
+--
+-- Name: app_ratings Users can insert their own rating; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Users can insert their own rating" ON "public"."app_ratings" FOR INSERT WITH CHECK (("auth"."uid"() = "user_id"));
+
+
+--
+-- Name: app_ratings Users can update their own rating; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Users can update their own rating" ON "public"."app_ratings" FOR UPDATE USING (("auth"."uid"() = "user_id"));
 
 
 --
@@ -11706,6 +11779,12 @@ ALTER TABLE "public"."app_config" ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "app_config_no_access" ON "public"."app_config" USING (false);
 
+
+--
+-- Name: app_ratings; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."app_ratings" ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: base_share_tasks; Type: ROW SECURITY; Schema: public; Owner: -
@@ -12623,5 +12702,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict nhKCAenfL0jQLLJWw2KpF4qgjyAePV50j4glvpcxnjfBvhShaWmf6zmNYbHJzSt
+\unrestrict h3Wen31c2DGp4TACGfzhB13CVsIGDQ1BXSEAOGXHIKLlrgg8WGyXfGLzoqTa5uZ
 
