@@ -4,21 +4,34 @@ import { getUser } from "./auth.js";
 import { t } from "../../translation/translation.js";
 
 const RATING_LS_KEY = "fam:app_rated";
+const RATING_DISMISSED_KEY = "fam:app_rating_dismissed_at";
+const RATING_SUPPRESSED_KEY = "fam:app_rating_suppressed";
 
 export async function initRatingSystem() {
     const user = await getUser();
     if (!user || user.is_guest) return;
 
-    // Check if already rated (local storage optimization)
+    // 1. Jeśli już ocenił (LS lub DB sprawdzane później) - nie pokazuj
     if (localStorage.getItem(RATING_LS_KEY)) return;
 
-    // Check 7 days activity
+    // 2. Jeśli użytkownik kliknął "Nie pytaj więcej" - nie pokazuj
+    if (localStorage.getItem(RATING_SUPPRESSED_KEY)) return;
+
+    // 3. Sprawdź 7 dni od rejestracji
     const createdAt = new Date(user.created_at);
     const now = new Date();
-    const diffDays = (now - createdAt) / (1000 * 60 * 60 * 24);
-    if (diffDays < 7) return;
+    const diffFromCreation = (now - createdAt) / (1000 * 60 * 60 * 24);
+    if (diffFromCreation < 7) return;
 
-    // Check Supabase if already rated
+    // 4. Sprawdź czy modal był niedawno zamknięty (ponowne przypomnienie po 7 dniach)
+    const dismissedAt = localStorage.getItem(RATING_DISMISSED_KEY);
+    if (dismissedAt) {
+        const lastDismissed = new Date(parseInt(dismissedAt));
+        const diffFromDismissal = (now - lastDismissed) / (1000 * 60 * 60 * 24);
+        if (diffFromDismissal < 7) return;
+    }
+
+    // 5. Sprawdź w Supabase (na wypadek wyczyszczonego LS)
     const { data: existingRating, error } = await sb()
         .from("app_ratings")
         .select("id")
@@ -35,7 +48,7 @@ export async function initRatingSystem() {
         return;
     }
 
-    // Show modal
+    // Pokaż modal
     showRatingModal(user.id);
 }
 
@@ -59,9 +72,12 @@ function showRatingModal(userId) {
             
             <textarea class="inp rating-comment" id="ratingComment" rows="3" placeholder="${t("rating.modal.commentPlaceholder")}"></textarea>
             
-            <div class="modal-actions">
-                <button class="btn sm" id="btnRatingLater">${t("rating.modal.later")}</button>
-                <button class="btn sm gold" id="btnRatingSend" disabled>${t("rating.modal.send")}</button>
+            <div class="modal-actions-v">
+                <button class="btn sm gold full" id="btnRatingSend" disabled>${t("rating.modal.send")}</button>
+                <div class="modal-actions-row">
+                    <button class="btn sm" id="btnRatingLater">${t("rating.modal.later")}</button>
+                    <button class="btn sm danger" id="btnRatingNever">${t("rating.modal.never")}</button>
+                </div>
             </div>
         </div>
     `;
@@ -70,8 +86,9 @@ function showRatingModal(userId) {
 
     let selectedStars = 0;
     const stars = overlay.querySelectorAll(".star-btn");
-    const sendBtn = overlay.getElementById("btnRatingSend");
-    const laterBtn = overlay.getElementById("btnRatingLater");
+    const sendBtn = overlay.querySelector("#btnRatingSend");
+    const laterBtn = overlay.querySelector("#btnRatingLater");
+    const neverBtn = overlay.querySelector("#btnRatingNever");
 
     stars.forEach(btn => {
         btn.addEventListener("mouseenter", () => highlightStars(btn.dataset.value, stars));
@@ -84,6 +101,14 @@ function showRatingModal(userId) {
     });
 
     laterBtn.addEventListener("click", () => {
+        // Zapisz datę odrzucenia - wróci za 7 dni
+        localStorage.setItem(RATING_DISMISSED_KEY, Date.now().toString());
+        overlay.remove();
+    });
+
+    neverBtn.addEventListener("click", () => {
+        // Zablokuj na stałe
+        localStorage.setItem(RATING_SUPPRESSED_KEY, "true");
         overlay.remove();
     });
 

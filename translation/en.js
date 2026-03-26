@@ -47,6 +47,7 @@ const en = {
         sub: "Your feedback helps us improve Familiada Online.",
         commentPlaceholder: "Add an optional comment...",
         later: "Later",
+        never: "Don't ask again",
         send: "Send rating",
         error: "An error occurred while sending the rating. Please try again.",
         thanksTitle: "Thank you for the rating!",

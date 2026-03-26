@@ -47,6 +47,7 @@ const pl = {
         sub: "Twoja opinia pomaga nam ulepszać Familiadę Online.",
         commentPlaceholder: "Dodaj opcjonalny komentarz...",
         later: "Później",
+        never: "Nie pytaj więcej",
         send: "Wyślij ocenę",
         error: "Wystąpił błąd podczas wysyłania oceny. Spróbuj ponownie.",
         thanksTitle: "Dziękujemy za ocenę!",
