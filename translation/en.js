@@ -40,7 +40,26 @@ const en = {
     a2hsBuzzer:
       "Safari can't force true fullscreen. Use <b>Share</b> → <b>Add to Home Screen</b>.",
     a2hsOk: "OK",
-    fullscreenUnavailable: "Fullscreen API is not available.",
+    fullscreenUnavailable: "Fullscreen API unavailable.",
+    rating: {
+      modal: {
+        title: "How do you rate the system?",
+        sub: "Your feedback helps us improve Familiada Online.",
+        commentPlaceholder: "Add an optional comment...",
+        later: "Later",
+        send: "Send rating",
+        error: "An error occurred while sending the rating. Please try again.",
+        thanksTitle: "Thank you for the rating!",
+        thanksSub: "It's very important to us. Have a great game!",
+      },
+      account: {
+        title: "Your rating",
+        hint: "Your current rating and comment.",
+        stars: "Stars:",
+        comment: "Comment:",
+        notRated: "No rating submitted yet.",
+      },
+    },
     footer: {
       left: "© {year} Familiada — live game system",
       contactBtn: "Contact",

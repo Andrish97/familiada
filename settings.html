@@ -30,6 +30,7 @@
       <button class="btn sm tab-btn active" id="btnTabMaintenance" type="button" data-i18n="settings.tabs.maintenance">Prace techniczne</button>
       <button class="btn sm tab-btn" id="btnTabMail" type="button" data-i18n="settings.tabs.mail">Maile</button>
       <button class="btn sm tab-btn" id="btnTabMarketplace" type="button" data-i18n="settings.tabs.marketplace">Marketplace</button>
+      <button class="btn sm tab-btn" id="btnTabRatings" type="button">Oceny</button>
       <button class="btn sm tab-btn" id="btnTabGenerator" type="button" data-i18n="settings.tabs.generator">Generator</button>
       <button class="btn sm tab-btn" id="btnTabReports" type="button" data-i18n="settings.tabs.reports">Zgłoszenia</button>
       <div class="ui-select" id="toolsSelect">
@@ -521,6 +522,36 @@
               <div style="opacity:.4;font-size:13px" data-i18n="settings.reports.selectMsg">Wybierz wątek</div>
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- RATINGS PANEL -->
+      <div class="market-admin-panel" id="ratingsPanel" hidden>
+        <div class="mail-card">
+          <div class="panel-head">
+            <div class="panel-title">Oceny aplikacji</div>
+            <div class="panel-sub">Co użytkownicy myślą o systemie</div>
+          </div>
+          
+          <div class="mail-controls" style="margin-bottom:12px">
+            <button class="btn sm" id="btnRatingsRefresh" type="button" data-i18n="settings.actions.refresh">Odśwież</button>
+            <div id="ratingsGlobalStats" style="font-weight: 900; color: var(--gold); margin-left: 12px; display: inline-flex; align-items: center; gap: 10px;"></div>
+          </div>
+
+          <div class="mail-table-wrap">
+            <table class="mail-table">
+              <thead>
+                <tr>
+                  <th style="width: 150px">Data</th>
+                  <th style="width: 180px">Użytkownik</th>
+                  <th style="width: 120px">Gwiazdki</th>
+                  <th>Komentarz</th>
+                </tr>
+              </thead>
+              <tbody id="ratingsTableBody"></tbody>
+            </table>
+          </div>
+          <div class="field-hint" id="ratingsTableInfo">—</div>
         </div>
       </div>
 

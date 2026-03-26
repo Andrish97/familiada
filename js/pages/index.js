@@ -1,6 +1,8 @@
 import { getUser } from "../core/auth.js";
-import { initI18n, withLangParam, applyTranslations, getUiLang } from "../../translation/translation.js";
+import { sb } from "../core/supabase.js";
+import { initI18n, withLangParam, applyTranslations, getUiLang, t } from "../../translation/translation.js";
 import { isGuestUser } from "../core/guest-mode.js";
+import { initRatingSystem } from "../core/rating-system.js";
 
 async function redirectIfSession() {
   try {
@@ -18,6 +20,37 @@ async function redirectIfSession() {
     console.warn("[index] session check failed:", e);
   }
   return false;
+}
+
+async function loadRatingStats() {
+  const wrap = document.getElementById("ratingBadgeWrap");
+  if (!wrap) return;
+
+  try {
+    const { data, error } = await sb().rpc("get_app_rating_stats");
+    if (error) throw error;
+    
+    // Stats is an array if called via RPC sometimes, but with our definition it should be an object or row.
+    const stats = Array.isArray(data) ? data[0] : data;
+    if (!stats || Number(stats.total_count) < 1) return;
+
+    const avg = Number(stats.avg_stars);
+    const count = Number(stats.total_count);
+
+    const fullStars = Math.floor(avg);
+    const halfStar = avg % 1 >= 0.5;
+    const starsStr = "★".repeat(fullStars) + (halfStar ? "½" : "") + "☆".repeat(Math.max(0, 5 - fullStars - (halfStar ? 1 : 0)));
+
+    wrap.innerHTML = `
+      <div class="rating-badge-index">
+        <span class="stars">${starsStr}</span>
+        <span class="score">${avg}/5</span>
+        <span class="count">(${count})</span>
+      </div>
+    `;
+  } catch (e) {
+    console.warn("[index] loadRatingStats failed:", e);
+  }
 }
 
 /* ---------- images (lang) ---------- */
@@ -268,6 +301,7 @@ function initImageViewer() {
 
 document.addEventListener("DOMContentLoaded", async () => {
   await initI18n({ withSwitcher: true });
+  initRatingSystem();
   applyTranslations();
 
   const cta = document.getElementById("ctaStart");
@@ -281,6 +315,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   initImageViewer();
 
   await redirectIfSession();
+  await loadRatingStats();
 
   // Tab Title Animation (Accepted)
   const originalTitle = document.title;

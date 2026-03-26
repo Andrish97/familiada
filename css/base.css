@@ -1242,3 +1242,68 @@ body{
   border-radius: 14px;
   opacity: .8;
 }
+/* css/rating-system.css */
+.rating-overlay .rating-modal {
+    max-width: 400px;
+    text-align: center;
+}
+
+.stars-row {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin: 20px 0;
+}
+
+.star-btn {
+    background: none;
+    border: none;
+    font-size: 40px;
+    color: rgba(255,255,255,0.15);
+    cursor: pointer;
+    transition: transform 0.1s, color 0.1s;
+    padding: 0;
+    line-height: 1;
+}
+
+.star-btn:hover {
+    transform: scale(1.15);
+}
+
+.star-btn.active {
+    color: var(--gold);
+    text-shadow: 0 0 15px rgba(255, 234, 166, 0.4);
+}
+
+.rating-comment {
+    width: 100%;
+    margin-bottom: 20px;
+    resize: vertical;
+    font-family: inherit;
+}
+
+/* Badge on index */
+.rating-badge-index {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 234, 166, 0.1);
+    border: 1px solid rgba(255, 234, 166, 0.2);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 900;
+    color: var(--gold);
+    margin-bottom: 12px;
+}
+
+.rating-badge-index .stars {
+    color: var(--gold);
+    letter-spacing: 1px;
+}
+
+.rating-badge-index .count {
+    opacity: 0.6;
+    font-weight: 700;
+    font-size: 11px;
+}
