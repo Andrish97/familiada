@@ -41,6 +41,25 @@ const pl = {
       "W Safari nie da się wymusić prawdziwego pełnego ekranu. Użyj <b>Udostępnij</b> → <b>Do ekranu początkowego</b>.",
     a2hsOk: "OK",
     fullscreenUnavailable: "Brak dostępnego Fullscreen API.",
+    rating: {
+      modal: {
+        title: "Jak oceniasz system?",
+        sub: "Twoja opinia pomaga nam ulepszać Familiadę Online.",
+        commentPlaceholder: "Dodaj opcjonalny komentarz...",
+        later: "Później",
+        send: "Wyślij ocenę",
+        error: "Wystąpił błąd podczas wysyłania oceny. Spróbuj ponownie.",
+        thanksTitle: "Dziękujemy za ocenę!",
+        thanksSub: "To dla nas bardzo ważne. Miłej gry!",
+      },
+      account: {
+        title: "Twoja ocena systemu",
+        hint: "Twoja dotychczasowa ocena i komentarz.",
+        stars: "Gwiazdki:",
+        comment: "Komentarz:",
+        notRated: "Nie wystawiono jeszcze oceny.",
+      },
+    },
     footer: {
       left: "© {year} Familiada — system do gry na żywo",
       contactBtn: "Kontakt",

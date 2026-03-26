@@ -16,6 +16,7 @@ import { initI18n, t } from "../../translation/translation.js";
 import { initUiSelect } from "../core/ui-select.js";
 import { guardDesktopOnly } from "../core/device-guard.js";
 import { confirmModal } from "../core/modal.js";
+import { sb } from "../core/supabase.js";
 
 const API_BASE = "/_admin_api";
 const TOOLS_MANIFEST = "/settings-tools/tools.json";
@@ -62,6 +63,7 @@ const els = {
   btnTabMaintenance: document.getElementById("btnTabMaintenance"),
   btnTabMail: document.getElementById("btnTabMail"),
   btnTabMarketplace: document.getElementById("btnTabMarketplace"),
+  btnTabRatings: document.getElementById("btnTabRatings"),
   btnTabGenerator: document.getElementById("btnTabGenerator"),
   btnTabReports: document.getElementById("btnTabReports"),
   mainWrap: document.querySelector("main.wrap"),
@@ -69,8 +71,13 @@ const els = {
   maintenancePanel: document.querySelector(".maintenance-panel"),
   mailPanel: document.getElementById("mailPanel"),
   marketplacePanel: document.getElementById("marketplacePanel"),
+  ratingsPanel: document.getElementById("ratingsPanel"),
   generatorPanel: document.getElementById("generatorPanel"),
   reportsPanel: document.getElementById("reportsPanel"),
+  btnRatingsRefresh: document.getElementById("btnRatingsRefresh"),
+  ratingsTableBody: document.getElementById("ratingsTableBody"),
+  ratingsTableInfo: document.getElementById("ratingsTableInfo"),
+  ratingsGlobalStats: document.getElementById("ratingsGlobalStats"),
   maintenanceControls: document.getElementById("maintenanceControls"),
   modeStatus: document.getElementById("modeStatus"),
   modeStatusValue: document.getElementById("modeStatusValue"),
@@ -852,6 +859,57 @@ function startCountdownTimer() {
       updateModeStatus(currentState);
     }
   }, 1000);
+}
+
+async function loadRatings({ silent = false } = {}) {
+  if (!silent) setStatus("Ładowanie ocen…");
+  if (els.ratingsTableBody) els.ratingsTableBody.innerHTML = "";
+  if (els.ratingsTableInfo) els.ratingsTableInfo.textContent = "";
+
+  try {
+    // Load stats
+    const { data: statsData, error: statsError } = await sb().rpc("get_app_rating_stats");
+    if (statsError) throw statsError;
+    const stats = Array.isArray(statsData) ? statsData[0] : statsData;
+    if (els.ratingsGlobalStats && stats) {
+      els.ratingsGlobalStats.innerHTML = `Średnia: ${stats.avg_stars}/5 ⭐ | Łącznie: ${stats.total_count}`;
+    }
+
+    // Load detailed ratings
+    const { data, error } = await sb()
+      .from("app_ratings")
+      .select("*, profiles(username, email)")
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+
+    const rows = Array.isArray(data) ? data : [];
+    if (rows.length === 0) {
+      if (els.ratingsTableBody) els.ratingsTableBody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;opacity:.5">Brak ocen.</td></tr>';
+      return;
+    }
+
+    if (els.ratingsTableBody) {
+      els.ratingsTableBody.innerHTML = rows.map(r => {
+        const date = new Date(r.created_at).toLocaleString();
+        const user = r.profiles?.username || r.profiles?.email || "Nieznany";
+        const stars = "★".repeat(r.stars) + "☆".repeat(5 - r.stars);
+        return `
+          <tr>
+            <td style="font-size:11px;opacity:.7">${date}</td>
+            <td style="font-weight:900">${esc(user)}</td>
+            <td style="color:var(--gold)">${stars}</td>
+            <td style="font-size:13px">${esc(r.comment || "-")}</td>
+          </tr>
+        `;
+      }).join("");
+    }
+  } catch (e) {
+    console.error("[settings] loadRatings error:", e);
+    if (els.ratingsTableInfo) els.ratingsTableInfo.textContent = "Błąd ładowania ocen: " + e.message;
+  } finally {
+    if (!silent) setStatus(t("settings.status.loaded") || "Załadowano");
+  }
 }
 
 async function loadState({ silent = false } = {}) {
@@ -2987,30 +3045,33 @@ function setActiveTab(tab) {
   const btn = document.getElementById("btnTabMaintenance");
   const btnMail = document.getElementById("btnTabMail");
   const btnMarket = document.getElementById("btnTabMarketplace");
+  const btnRatings = document.getElementById("btnTabRatings");
   const btnGen = document.getElementById("btnTabGenerator");
   const btnReports = document.getElementById("btnTabReports");
   const tools = document.getElementById("toolsSelect");
   if (btn) btn.classList.toggle("active", tab === "maintenance");
   if (btnMail) btnMail.classList.toggle("active", tab === "mail");
   if (btnMarket) btnMarket.classList.toggle("active", tab === "marketplace");
+  if (btnRatings) btnRatings.classList.toggle("active", tab === "ratings");
   if (btnGen) btnGen.classList.toggle("active", tab === "generator");
   if (btnReports) btnReports.classList.toggle("active", tab === "reports");
   if (tools) tools.classList.toggle("active", tab === "tools");
   if (els.maintenancePanel) els.maintenancePanel.hidden = tab !== "maintenance";
   if (els.mailPanel) els.mailPanel.hidden = tab !== "mail";
   if (els.marketplacePanel) els.marketplacePanel.hidden = tab !== "marketplace";
+  if (els.ratingsPanel) els.ratingsPanel.hidden = tab !== "ratings";
   if (els.generatorPanel) els.generatorPanel.hidden = tab !== "generator";
   if (els.reportsPanel) els.reportsPanel.hidden = tab !== "reports";
   if (els.mailPanel) els.mailPanel.style.display = tab === "mail" ? "" : "none";
   if (els.marketplacePanel) els.marketplacePanel.style.display = tab === "marketplace" ? "" : "none";
+  if (els.ratingsPanel) els.ratingsPanel.style.display = tab === "ratings" ? "" : "none";
   if (els.generatorPanel) els.generatorPanel.style.display = tab === "generator" ? "" : "none";
   if (els.reportsPanel) els.reportsPanel.style.display = tab === "reports" ? "" : "none";
-  
+
   if (tab === "generator" && window.resetGeneratorSession) {
     window.resetGeneratorSession();
   }
 }
-
 function labelFromPath(pathname) {
   const raw = pathname.split("/").pop() || pathname;
   return raw.replace(/\.html$/i, "");
@@ -3023,10 +3084,32 @@ function syncTopbarHeight() {
   document.body.style.setProperty("--topbar-h", `${h}px`);
 }
 
+function esc(str) {
+  return String(str || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function wireRatingsEvents() {
+  if (els.btnRatingsRefresh) {
+    els.btnRatingsRefresh.addEventListener("click", () => loadRatings());
+  }
+}
+
 function wireEvents() {
   const markDirty = () => {
     formDirty = true;
   };
+
+  if (els.btnTabRatings) {
+    els.btnTabRatings.addEventListener("click", async () => {
+      if (activeTab === "tools") closeTools();
+      setActiveTab("ratings");
+      await loadRatings({ silent: true });
+    });
+  }
 
   if (els.returnAtInput) {
     els.returnAtInput.addEventListener("input", markDirty);
@@ -3202,6 +3285,7 @@ function wireEvents() {
 
   wireMarketplaceEvents();
   wireReportsEvents();
+  wireRatingsEvents();
 
   if (els.toolsShell) {
     els.toolsShell.addEventListener("dblclick", closeTools);

@@ -341,6 +341,41 @@ async function ensureUsernameAvailable(username, userId) {
   if (data?.id) throw new Error(t("index.errUsernameTaken"));
 }
 
+async function loadUserRating(userId) {
+  const container = document.getElementById("userRatingInfo");
+  if (!container) return;
+
+  try {
+    const { data, error } = await sb()
+      .from("app_ratings")
+      .select("stars,comment")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    if (data) {
+      const starsStr = "★".repeat(data.stars) + "☆".repeat(5 - data.stars);
+      container.innerHTML = `
+        <div class="rating-info">
+          <div class="rating-stars">
+            <span class="label">${t("rating.account.stars")}</span>
+            <span class="value gold">${starsStr}</span>
+          </div>
+          ${data.comment ? `
+            <div class="rating-comment-box">
+              <span class="label">${t("rating.account.comment")}</span>
+              <div class="value italic">"${data.comment}"</div>
+            </div>
+          ` : ""}
+        </div>
+      `;
+    }
+  } catch (e) {
+    console.warn("loadUserRating failed", e);
+  }
+}
+
 async function loadProfile() {
   const user = await requireAuth("login?setup=username");
   if (!user) return;
@@ -355,6 +390,7 @@ async function loadProfile() {
     syncLanguage();
     // refresh dynamic texts after language switch
     setEmailPendingUi(pendingEmail);
+    loadUserRating(user.id);
     tickCooldowns();
   });
 
@@ -363,6 +399,7 @@ async function loadProfile() {
   currentEmail = user.email || "";
 
   await initEmailNotificationsUi(user);
+  await loadUserRating(user.id);
 
   setStatus(t("account.statusLoaded"));
   await refreshAuthEmailState();

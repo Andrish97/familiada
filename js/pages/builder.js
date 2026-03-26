@@ -4,6 +4,7 @@ import { requireAuth } from "../core/auth.js";
 import { alertModal, confirmModal } from "../core/modal.js";
 import { hideForGuest, isGuestUser } from "../core/guest-mode.js";
 import { initI18n, t, applyTranslations } from "../../translation/translation.js";
+import { initRatingSystem } from "../core/rating-system.js";
 import { initUiSelect } from "../core/ui-select.js";
 
 import { initPwa, isStandalone, isMobileDevice } from "../core/pwa.js";
@@ -1043,6 +1044,7 @@ async function refresh() {
 
 document.addEventListener("DOMContentLoaded", async () => {
   await initI18n({ withSwitcher: true });
+  initRatingSystem();
 
   // Blokuj autoInitTopbarAuthButton — builder wywołuje setTopbarAccount z withAccountSettings:true
   const _btnLogoutEl = document.getElementById('btnLogout');
