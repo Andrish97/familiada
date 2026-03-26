@@ -1282,6 +1282,21 @@ body{
     font-family: inherit;
 }
 
+.modal-actions-v {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.modal-actions-row {
+    display: flex;
+    gap: 10px;
+}
+
+.modal-actions-row > .btn {
+    flex: 1;
+}
+
 /* Badge on index */
 .rating-badge-index {
     display: inline-flex;
