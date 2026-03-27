@@ -31,6 +31,7 @@
       <button class="btn sm tab-btn" id="btnTabMail" type="button" data-i18n="settings.tabs.mail">Maile</button>
       <button class="btn sm tab-btn" id="btnTabMarketplace" type="button" data-i18n="settings.tabs.marketplace">Marketplace</button>
       <button class="btn sm tab-btn" id="btnTabRatings" type="button">Oceny</button>
+      <button class="btn sm tab-btn" id="btnTabStats" type="button">Statystyki</button>
       <button class="btn sm tab-btn" id="btnTabGenerator" type="button" data-i18n="settings.tabs.generator">Generator</button>
       <button class="btn sm tab-btn" id="btnTabReports" type="button" data-i18n="settings.tabs.reports">Zgłoszenia</button>
       <div class="ui-select" id="toolsSelect">
@@ -552,6 +553,47 @@
             </table>
           </div>
           <div class="field-hint" id="ratingsTableInfo">—</div>
+        </div>
+      </div>
+
+      <!-- STATS PANEL -->
+      <div class="market-admin-panel" id="statsPanel" hidden>
+        <div class="mail-card">
+          <div class="panel-head">
+            <div class="panel-title">Statystyki systemu</div>
+            <div class="panel-sub">Monitoruj aktywność i rozwój platformy</div>
+          </div>
+          
+          <div class="mail-controls" style="margin-bottom:12px">
+            <button class="btn sm" id="btnStatsRefresh" type="button" data-i18n="settings.actions.refresh">Odśwież</button>
+          </div>
+
+          <div class="stats-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;margin-top:10px">
+            <div class="stat-box" style="padding:18px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(255,255,255,.03)">
+              <div class="stat-label" style="font-size:11px;opacity:.7;text-transform:uppercase;font-weight:900;letter-spacing:1px;margin-bottom:8px">Użytkownicy</div>
+              <div class="stat-value" id="statUsersTotal" style="font-size:32px;font-weight:900;color:var(--gold)">0</div>
+              <div class="stat-sub" id="statUsersSub" style="font-size:12px;opacity:.6;margin-top:4px">—</div>
+            </div>
+            
+            <div class="stat-box" style="padding:18px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(255,255,255,.03)">
+              <div class="stat-label" style="font-size:11px;opacity:.7;text-transform:uppercase;font-weight:900;letter-spacing:1px;margin-bottom:8px">Gry (łącznie)</div>
+              <div class="stat-value" id="statGamesTotal" style="font-size:32px;font-weight:900;color:var(--gold)">0</div>
+              <div class="stat-sub" id="statGamesToday" style="font-size:12px;opacity:.6;margin-top:4px">—</div>
+            </div>
+
+            <div class="stat-box" style="padding:18px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(255,255,255,.03)">
+              <div class="stat-label" style="font-size:11px;opacity:.7;text-transform:uppercase;font-weight:900;letter-spacing:1px;margin-bottom:8px">Sondaże i głosy</div>
+              <div class="stat-value" id="statActivity" style="font-size:32px;font-weight:900;color:var(--gold)">0</div>
+              <div class="stat-sub" id="statVotesTotal" style="font-size:12px;opacity:.6;margin-top:4px">—</div>
+            </div>
+
+            <div class="stat-box" style="padding:18px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(255,255,255,.03)">
+              <div class="stat-label" style="font-size:11px;opacity:.7;text-transform:uppercase;font-weight:900;letter-spacing:1px;margin-bottom:8px">Oceny i średnia</div>
+              <div class="stat-value" id="statRating" style="font-size:32px;font-weight:900;color:var(--gold)">0 / 5</div>
+              <div class="stat-sub" id="statRatingsTotal" style="font-size:12px;opacity:.6;margin-top:4px">—</div>
+            </div>
+          </div>
+          <div class="field-hint" id="statsUpdateTs" style="margin-top:20px;text-align:right">Ostatnia aktualizacja: —</div>
         </div>
       </div>
 
