@@ -2293,6 +2293,7 @@ const uk = {
       text: "Додайте Familiadę на головний екран для швидкого доступу.",
       ok: "Встановити",
       cancel: "Не показувати",
+      cancelBtn: "Скасувати",
       unavailable: "Браузер не підтримує встановлення або додаток вже встановлено.",
     },
     import: {
@@ -2906,6 +2907,7 @@ const uk = {
     dash: "-",
     title: "Familiada — центр опитувань",
     backToGames: "← Мої ігри",
+    backToBases: "← Бази питань",
     logout: "Вийти",
     header: {
       title: "Центр опитувань",
@@ -3905,6 +3907,7 @@ const uk = {
       mode_message: "Повідомлення",
       mode_returnAt: "Повернення…",
       mode_countdown: "Відлік",
+      loaded: "Завантажено",
     },
     validation: {
       tooSoonTitle: "Занадто рано",

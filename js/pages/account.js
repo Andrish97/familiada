@@ -359,12 +359,12 @@ async function loadUserRating(userId) {
       container.innerHTML = `
         <div class="rating-info">
           <div class="rating-stars">
-            <span class="label">${t("rating.account.stars")}</span>
+            <span class="label">${t("common.rating.account.stars")}</span>
             <span class="value gold">${starsStr}</span>
           </div>
           ${data.comment ? `
             <div class="rating-comment-box">
-              <span class="label">${t("rating.account.comment")}</span>
+              <span class="label">${t("common.rating.account.comment")}</span>
               <div class="value italic">"${data.comment}"</div>
             </div>
           ` : ""}

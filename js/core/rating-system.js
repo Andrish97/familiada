@@ -59,9 +59,9 @@ function showRatingModal(userId) {
     
     overlay.innerHTML = `
         <div class="modal rating-modal">
-            <div class="mTitle">${t("rating.modal.title")}</div>
-            <div class="mSub">${t("rating.modal.sub")}</div>
-            
+            <div class="mTitle">${t("common.rating.modal.title")}</div>
+            <div class="mSub">${t("common.rating.modal.sub")}</div>
+
             <div class="stars-row" id="starsRow">
                 <button class="star-btn" data-value="1">★</button>
                 <button class="star-btn" data-value="2">★</button>
@@ -69,14 +69,14 @@ function showRatingModal(userId) {
                 <button class="star-btn" data-value="4">★</button>
                 <button class="star-btn" data-value="5">★</button>
             </div>
-            
-            <textarea class="inp rating-comment" id="ratingComment" rows="3" placeholder="${t("rating.modal.commentPlaceholder")}"></textarea>
-            
+
+            <textarea class="inp rating-comment" id="ratingComment" rows="3" placeholder="${t("common.rating.modal.commentPlaceholder")}"></textarea>
+
             <div class="modal-actions-v">
-                <button class="btn sm gold full" id="btnRatingSend" disabled>${t("rating.modal.send")}</button>
+                <button class="btn sm gold full" id="btnRatingSend" disabled>${t("common.rating.modal.send")}</button>
                 <div class="modal-actions-row">
-                    <button class="btn sm" id="btnRatingLater">${t("rating.modal.later")}</button>
-                    <button class="btn sm danger" id="btnRatingNever">${t("rating.modal.never")}</button>
+                    <button class="btn sm" id="btnRatingLater">${t("common.rating.modal.later")}</button>
+                    <button class="btn sm danger" id="btnRatingNever">${t("common.rating.modal.never")}</button>
                 </div>
             </div>
         </div>
@@ -124,14 +124,14 @@ function showRatingModal(userId) {
 
         if (error) {
             console.error("[rating] Error saving rating:", error);
-            alert(t("rating.modal.error"));
+            alert(t("common.rating.modal.error"));
             sendBtn.disabled = false;
         } else {
             localStorage.setItem(RATING_LS_KEY, "true");
             overlay.innerHTML = `
                 <div class="modal rating-modal">
-                    <div class="mTitle">${t("rating.modal.thanksTitle")}</div>
-                    <div class="mSub">${t("rating.modal.thanksSub")}</div>
+                    <div class="mTitle">${t("common.rating.modal.thanksTitle")}</div>
+                    <div class="mSub">${t("common.rating.modal.thanksSub")}</div>
                     <div class="modal-actions">
                         <button class="btn sm gold" id="btnRatingClose">${t("common.done")}</button>
                     </div>
