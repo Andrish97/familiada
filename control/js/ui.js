@@ -402,7 +402,7 @@ export function createUI() {
     if (!b) return;
   
     // Gdy QR są pokazane:
-    // - jeśli host i buzzer są już online, sensowniejsze jest "Czarny ekran"
+    // - jeśli host i buzzer są już online (lub nie są wymagane), sensowniejsze jest "Czarny ekran"
     // - w przeciwnym razie "Schowaj QR"
     if (isOn) {
       b.textContent = hostAndBuzzerOnline ? UI_MSG.QR_BLACK_SCREEN : UI_MSG.QR_HIDE;
