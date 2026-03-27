@@ -4320,6 +4320,7 @@ const uk = {
     backToGames: "← Мої ігри",
     logout: "Вийти",
     statusLabel: "Статус пристроїв",
+    optional: "Опціонально",
     deviceDisplay: "Дисплей",
     deviceHost: "Ведучий",
     deviceBuzzer: "Кнопка",

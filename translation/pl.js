@@ -3959,6 +3959,7 @@ const pl = {
     backToGames: "← Moje gry",
     logout: "Wyloguj",
     statusLabel: "Status urządzeń",
+    optional: "Opcjonalnie",
     deviceDisplay: "Wyświetlacz",
     deviceHost: "Prowadzący",
     deviceBuzzer: "Przycisk",
