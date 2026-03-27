@@ -597,6 +597,40 @@
               <div class="stat-sub" id="statHealthMails" style="font-size:11px;opacity:.5;margin-top:4px">Błędy maili (24h): 0</div>
             </div>
           </div>
+          <!-- Retention & Activity -->
+          <div style="margin-top:24px">
+            <div style="font-size:11px;opacity:.4;text-transform:uppercase;font-weight:900;letter-spacing:1px;margin-bottom:14px">Retencja &amp; Aktywność</div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+
+              <!-- Tabela: aktywacja + D7/D30 -->
+              <div style="padding:16px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(255,255,255,.03)">
+                <div style="font-size:11px;opacity:.5;text-transform:uppercase;font-weight:900;letter-spacing:1px;margin-bottom:12px">Aktywacja &amp; Retencja</div>
+                <table style="width:100%;border-collapse:collapse;font-size:13px">
+                  <tbody id="retentionTable">
+                    <tr><td colspan="3" style="opacity:.4;font-size:12px;padding:8px 0">Ładowanie…</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Segmenty użytkowników z paskami -->
+              <div style="padding:16px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(255,255,255,.03)">
+                <div style="font-size:11px;opacity:.5;text-transform:uppercase;font-weight:900;letter-spacing:1px;margin-bottom:12px">Segmenty użytkowników</div>
+                <div id="segmentBars" style="display:flex;flex-direction:column;gap:10px">
+                  <div style="opacity:.4;font-size:12px">Ładowanie…</div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Mini wykres: nowi użytkownicy 14 dni -->
+            <div style="margin-top:14px;padding:16px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(255,255,255,.03)">
+              <div style="font-size:11px;opacity:.5;text-transform:uppercase;font-weight:900;letter-spacing:1px;margin-bottom:12px">Nowi użytkownicy — ostatnie 14 dni</div>
+              <div id="trendChart" style="display:flex;align-items:flex-end;gap:3px;height:64px"></div>
+              <div id="trendLabels" style="display:flex;gap:3px;margin-top:4px"></div>
+            </div>
+          </div>
+
           <div class="field-hint" id="statsUpdateTs" style="margin-top:20px;text-align:right">Ostatnia aktualizacja: —</div>
         </div>
       </div>

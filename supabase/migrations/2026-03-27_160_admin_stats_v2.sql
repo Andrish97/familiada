@@ -56,27 +56,39 @@ BEGIN
         users_pl := 0; users_en := 0; users_uk := 0;
     END;
 
-    -- Games
-    SELECT COUNT(*) INTO total_games  FROM public.games;
-    SELECT COUNT(*) INTO games_ready  FROM public.games WHERE status = 'ready';
-    SELECT COUNT(*) INTO games_new_7d FROM public.games WHERE created_at >= now() - interval '7 days';
+    -- Games (bez demonstracyjnych)
+    SELECT COUNT(*) INTO total_games  FROM public.games WHERE is_demo = false;
+    SELECT COUNT(*) INTO games_ready  FROM public.games WHERE is_demo = false AND status = 'ready';
+    SELECT COUNT(*) INTO games_new_7d FROM public.games WHERE is_demo = false AND created_at >= now() - interval '7 days';
     SELECT COALESCE(ROUND(AVG(q_count), 1), 0) INTO avg_questions
-        FROM (SELECT COUNT(*) AS q_count FROM public.questions GROUP BY game_id) AS sub;
+        FROM (SELECT COUNT(*) AS q_count FROM public.questions q
+              JOIN public.games g ON g.id = q.game_id WHERE g.is_demo = false
+              GROUP BY q.game_id) AS sub;
 
-    -- Gameplay: display i buzzer są obowiązkowe — display jako proxy "gra otwarta na ekranie"
-    SELECT COUNT(DISTINCT game_id) INTO played_today FROM public.device_presence
-        WHERE device_type = 'display' AND last_seen_at >= CURRENT_DATE;
-    SELECT COUNT(DISTINCT game_id) INTO played_7d FROM public.device_presence
-        WHERE device_type = 'display' AND last_seen_at >= now() - interval '7 days';
-    SELECT COUNT(DISTINCT game_id) INTO played_30d FROM public.device_presence
-        WHERE device_type = 'display' AND last_seen_at >= now() - interval '30 days';
-    SELECT COUNT(DISTINCT game_id) INTO buzzer_7d FROM public.device_presence
-        WHERE device_type = 'buzzer' AND last_seen_at >= now() - interval '7 days';
+    -- Gameplay: display i buzzer są obowiązkowe — display jako proxy "gra otwarta na ekranie" (bez demo)
+    SELECT COUNT(DISTINCT dp.game_id) INTO played_today FROM public.device_presence dp
+        JOIN public.games g ON g.id = dp.game_id
+        WHERE dp.device_type = 'display' AND dp.last_seen_at >= CURRENT_DATE AND g.is_demo = false;
+    SELECT COUNT(DISTINCT dp.game_id) INTO played_7d FROM public.device_presence dp
+        JOIN public.games g ON g.id = dp.game_id
+        WHERE dp.device_type = 'display' AND dp.last_seen_at >= now() - interval '7 days' AND g.is_demo = false;
+    SELECT COUNT(DISTINCT dp.game_id) INTO played_30d FROM public.device_presence dp
+        JOIN public.games g ON g.id = dp.game_id
+        WHERE dp.device_type = 'display' AND dp.last_seen_at >= now() - interval '30 days' AND g.is_demo = false;
+    SELECT COUNT(DISTINCT dp.game_id) INTO buzzer_7d FROM public.device_presence dp
+        JOIN public.games g ON g.id = dp.game_id
+        WHERE dp.device_type = 'buzzer' AND dp.last_seen_at >= now() - interval '7 days' AND g.is_demo = false;
 
-    -- Polls
-    SELECT COUNT(*) INTO poll_sessions_7d FROM public.poll_sessions WHERE created_at >= now() - interval '7 days';
-    SELECT COUNT(*) INTO poll_votes_7d    FROM public.poll_votes    WHERE created_at >= now() - interval '7 days';
-    SELECT COUNT(*) INTO poll_votes_total FROM public.poll_votes;
+    -- Polls (bez demo)
+    SELECT COUNT(*) INTO poll_sessions_7d FROM public.poll_sessions ps
+        JOIN public.games g ON g.id = ps.game_id
+        WHERE ps.created_at >= now() - interval '7 days' AND g.is_demo = false;
+    SELECT COUNT(*) INTO poll_votes_7d FROM public.poll_votes pv
+        JOIN public.games g ON g.id = pv.game_id
+        WHERE pv.created_at >= now() - interval '7 days' AND g.is_demo = false;
+    SELECT COUNT(*) INTO poll_votes_total FROM public.poll_votes pv
+        JOIN public.games g ON g.id = pv.game_id
+        WHERE g.is_demo = false;
 
     -- Health
     BEGIN
