@@ -88,6 +88,7 @@ const els = {
   statGamesQuality: document.getElementById("statGamesQuality"),
   statMarketTop: document.getElementById("statMarketTop"),
   statFunnelEvents: document.getElementById("statFunnelEvents"),
+  statGameplayStarts: document.getElementById("statGameplayStarts"),
   statBuzzerUsage: document.getElementById("statBuzzerUsage"),
   statFunnelDead: document.getElementById("statFunnelDead"),
   statHealthMails: document.getElementById("statHealthMails"),
@@ -892,8 +893,12 @@ async function loadAdminStats({ silent = false } = {}) {
     if (els.statMarketTop) els.statMarketTop.textContent = `Top Market: ${data.games.top_market_game} (${data.games.from_market} kopii)`;
     
     if (els.statFunnelEvents) els.statFunnelEvents.textContent = data.funnel.real_events;
+    if (els.statGameplayStarts) els.statGameplayStarts.textContent = `Rozgrywki (Control): ${data.funnel.control_usage}`;
     if (els.statBuzzerUsage) els.statBuzzerUsage.textContent = `Buzery użyte w ${data.funnel.buzzer_usage} grach`;
-    if (els.statFunnelDead) els.statFunnelDead.textContent = `Brak gier: ${data.users.no_games} | Tylko edytor: ${data.funnel.tire_kickers}`;
+    if (els.statFunnelDead) {
+        // reuse existing element for smaller hint
+        els.statFunnelDead.textContent = `Brak gier: ${data.users.no_games} | Tylko edytor: ${data.funnel.tire_kickers}`;
+    }
     
     if (els.statRating) els.statRating.textContent = `${data.ratings.average} / 5`;
     if (els.statHealthMails) els.statHealthMails.textContent = `Błędy maili (24h): ${data.health.mail_errors}`;
