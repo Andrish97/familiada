@@ -888,21 +888,20 @@ async function sendZeroStatesToDevices() {
 
     // ===== DEVICES =====
 
-    // krok 2: prowadzący + przycisk online
-    const hostReady = !!flags.hostOnline;
-    const buzzerReady = !!flags.buzzerOnline;
-    const allOnline = flags.displayOnline && hostReady && buzzerReady;
+    // krok 2: prowadzący + przycisk online (Opcjonalne, wymagany tylko wyświetlacz)
+    const displayReady = !!flags.displayOnline;
     
     // QR na wyświetlaczu tylko gdy wyświetlacz jest online
-    ui.setEnabled("btnQrToggle", flags.displayOnline);
+    ui.setEnabled("btnQrToggle", displayReady);
     
     // Dalej w kroku 1 (wyświetlacz) i kroku 2 (host/buzzer)
-    ui.setEnabled("btnDevicesNext", allOnline);
+    // UWAGA: uzytkownik może iść dalej nawet bez hosta/buzera
+    ui.setEnabled("btnDevicesNext", displayReady);
 
     // krok 3: „Gotowe — przejdź dalej” po odblokowaniu audio
     ui.setEnabled(
       "btnDevicesFinish",
-      allOnline && !!flags.audioUnlocked
+      displayReady && !!flags.audioUnlocked
     );
 
     // ===== SETUP =====
