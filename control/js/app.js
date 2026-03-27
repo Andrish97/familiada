@@ -888,20 +888,22 @@ async function sendZeroStatesToDevices() {
 
     // ===== DEVICES =====
 
-    // krok 2: prowadzący + przycisk online (Opcjonalne, wymagany tylko wyświetlacz)
+    // krok 2: prowadzący + przycisk online (Tylko host jest opcjonalny)
     const displayReady = !!flags.displayOnline;
+    const buzzerReady = !!flags.buzzerOnline;
+    const requiredOnline = displayReady && buzzerReady;
     
     // QR na wyświetlaczu tylko gdy wyświetlacz jest online
     ui.setEnabled("btnQrToggle", displayReady);
     
     // Dalej w kroku 1 (wyświetlacz) i kroku 2 (host/buzzer)
-    // UWAGA: uzytkownik może iść dalej nawet bez hosta/buzera
-    ui.setEnabled("btnDevicesNext", displayReady);
+    // Wymagamy Display + Buzzer
+    ui.setEnabled("btnDevicesNext", requiredOnline);
 
     // krok 3: „Gotowe — przejdź dalej” po odblokowaniu audio
     ui.setEnabled(
       "btnDevicesFinish",
-      displayReady && !!flags.audioUnlocked
+      requiredOnline && !!flags.audioUnlocked
     );
 
     // ===== SETUP =====
@@ -1082,11 +1084,11 @@ async function sendZeroStatesToDevices() {
     if (!now) {
       await devices.sendQrToDisplay();
       store.setQrOnDisplay(true);
-      ui.setQrToggleLabel(true, store.state.flags.hostOnline && store.state.flags.buzzerOnline);
+      ui.setQrToggleLabel(true, store.state.flags.displayOnline && store.state.flags.buzzerOnline);
     } else {
       await devices.sendDisplayCmd("APP BLACK");
       store.setQrOnDisplay(false);
-      ui.setQrToggleLabel(false, store.state.flags.hostOnline && store.state.flags.buzzerOnline);
+      ui.setQrToggleLabel(false, store.state.flags.displayOnline && store.state.flags.buzzerOnline);
     }
   });
 
@@ -1706,7 +1708,7 @@ async function sendZeroStatesToDevices() {
   // boot view state
   ui.setQrToggleLabel(
     store.state.flags.qrOnDisplay,
-    store.state.flags.hostOnline && store.state.flags.buzzerOnline
+    store.state.flags.displayOnline && store.state.flags.buzzerOnline
   );
 }
 
