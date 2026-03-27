@@ -1070,7 +1070,7 @@ async function loadRetentionStats() {
     const { data, error } = await sb().rpc("get_retention_stats");
     if (error) throw error;
     renderRetentionTable(data);
-    renderSegmentBars(data.segments, data.activation.total);
+    renderSegmentBars(data.segments, data.funnel.registered);
     renderTrendChart(data.trend_users);
   } catch (e) {
     console.error("[settings] loadRetentionStats error:", e);
