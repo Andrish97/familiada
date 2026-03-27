@@ -83,9 +83,12 @@ const els = {
   ratingsGlobalStats: document.getElementById("ratingsGlobalStats"),
   statUsersTotal: document.getElementById("statUsersTotal"),
   statUsersSub: document.getElementById("statUsersSub"),
+  statUsersActive24: document.getElementById("statUsersActive24"),
   statGamesTotal: document.getElementById("statGamesTotal"),
   statGamesToday: document.getElementById("statGamesToday"),
-  statActivity: document.getElementById("statActivity"),
+  statMarketTop: document.getElementById("statMarketTop"),
+  statFunnelEvents: document.getElementById("statFunnelEvents"),
+  statFunnelDead: document.getElementById("statFunnelDead"),
   statVotesTotal: document.getElementById("statVotesTotal"),
   statRating: document.getElementById("statRating"),
   statRatingsTotal: document.getElementById("statRatingsTotal"),
@@ -881,15 +884,18 @@ async function loadAdminStats({ silent = false } = {}) {
 
     if (els.statUsersTotal) els.statUsersTotal.textContent = data.users.total;
     if (els.statUsersSub) els.statUsersSub.textContent = `Zweryfikowani: ${data.users.confirmed} | Goście: ${data.users.guests}`;
+    if (els.statUsersActive24) els.statUsersActive24.textContent = `Aktywni 24h: ${data.users.active_24h}`;
     
     if (els.statGamesTotal) els.statGamesTotal.textContent = data.games.total;
-    if (els.statGamesToday) els.statGamesToday.textContent = `Dzisiaj utworzono: ${data.games.today}`;
+    if (els.statGamesToday) els.statGamesToday.textContent = `Dzisiaj: ${data.games.today} | Z Marketu: ${data.games.from_market}`;
+    if (els.statMarketTop) els.statMarketTop.textContent = `Top Market: ${data.games.top_market_game}`;
     
-    if (els.statActivity) els.statActivity.textContent = data.activity.polls;
-    if (els.statVotesTotal) els.statVotesTotal.textContent = `Łączna liczba głosów: ${data.activity.votes}`;
+    if (els.statFunnelEvents) els.statFunnelEvents.textContent = data.funnel.real_events;
+    if (els.statFunnelDead) els.statFunnelDead.textContent = `Konta bez gier: ${data.users.no_games} | Tylko testerzy: ${data.funnel.tire_kickers}`;
     
     if (els.statRating) els.statRating.textContent = `${data.ratings.average} / 5`;
-    if (els.statRatingsTotal) els.statRatingsTotal.textContent = `Liczba wystawionych ocen: ${data.ratings.total}`;
+    if (els.statRatingsTotal) els.statRatingsTotal.textContent = `Liczba ocen: ${data.ratings.total}`;
+    if (els.statVotesTotal) els.statVotesTotal.textContent = `Łącznie głosów: ${data.activity.votes}`;
     
     if (els.statsUpdateTs) {
       const date = new Date(data.timestamp).toLocaleString();
