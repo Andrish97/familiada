@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 3OggSuVOYOjGoJJjO105x0bPgDk9fQc0TVVo6JSF6Oby5w5oRuat9chdxO11edJ
+\restrict M18VfWGnhSiPEF7yZ20SqtB4J4Bv9qCQwbSmTLqfQh01X0TVmdbXJ1t0PbalpNy
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -2521,14 +2521,14 @@ BEGIN
     JOIN public.games g ON g.id = pv.game_id
     WHERE g.is_demo = false AND NOT (g.owner_id = ANY(excluded_ids));
 
-  -- Question bases
-  SELECT COUNT(*) INTO bases_total  FROM public.question_bases WHERE NOT (owner_id = ANY(excluded_ids));
-  SELECT COUNT(*) INTO bases_new_7d FROM public.question_bases WHERE created_at >= now() - interval '7 days' AND NOT (owner_id = ANY(excluded_ids));
+  -- Question bases (bez demo)
+  SELECT COUNT(*) INTO bases_total  FROM public.question_bases WHERE is_demo = false AND NOT (owner_id = ANY(excluded_ids));
+  SELECT COUNT(*) INTO bases_new_7d FROM public.question_bases WHERE is_demo = false AND created_at >= now() - interval '7 days' AND NOT (owner_id = ANY(excluded_ids));
 
-  -- User logos
-  SELECT COUNT(*) INTO logos_total  FROM public.user_logos WHERE NOT (user_id = ANY(excluded_ids));
-  SELECT COUNT(*) INTO logos_active FROM public.user_logos WHERE is_active = true AND NOT (user_id = ANY(excluded_ids));
-  SELECT COUNT(*) INTO logos_new_7d FROM public.user_logos WHERE created_at >= now() - interval '7 days' AND NOT (user_id = ANY(excluded_ids));
+  -- User logos (bez demo)
+  SELECT COUNT(*) INTO logos_total  FROM public.user_logos WHERE is_demo = false AND NOT (user_id = ANY(excluded_ids));
+  SELECT COUNT(*) INTO logos_active FROM public.user_logos WHERE is_demo = false AND is_active = true AND NOT (user_id = ANY(excluded_ids));
+  SELECT COUNT(*) INTO logos_new_7d FROM public.user_logos WHERE is_demo = false AND created_at >= now() - interval '7 days' AND NOT (user_id = ANY(excluded_ids));
 
   -- Health
   BEGIN
@@ -13065,5 +13065,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 3OggSuVOYOjGoJJjO105x0bPgDk9fQc0TVVo6JSF6Oby5w5oRuat9chdxO11edJ
+\unrestrict M18VfWGnhSiPEF7yZ20SqtB4J4Bv9qCQwbSmTLqfQh01X0TVmdbXJ1t0PbalpNy
 
