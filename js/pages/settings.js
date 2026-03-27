@@ -910,6 +910,108 @@ async function loadAdminStats({ silent = false } = {}) {
   }
 }
 
+function pct(part, total) {
+  if (!total) return "0%";
+  return Math.round((part / total) * 100) + "%";
+}
+
+function renderRetentionTable(data) {
+  const tbody = document.getElementById("retentionTable");
+  if (!tbody) return;
+  const { activation, retention } = data;
+  const total = activation.total || 1;
+  const d7pct  = retention.d7.cohort  ? Math.round(retention.d7.returned  / retention.d7.cohort  * 100) : null;
+  const d30pct = retention.d30.cohort ? Math.round(retention.d30.returned / retention.d30.cohort * 100) : null;
+
+  const row = (label, value, percent, color) => `
+    <tr>
+      <td style="padding:5px 0;opacity:.6;font-size:12px">${label}</td>
+      <td style="padding:5px 0;text-align:right;font-weight:700">${value}</td>
+      <td style="padding:5px 0;text-align:right;padding-left:10px;font-size:12px;color:${color || "inherit"};opacity:.7">${percent}</td>
+    </tr>`;
+
+  tbody.innerHTML = `
+    ${row("Aktywowani (stworz. grę)", activation.activated, pct(activation.activated, total), "#4caf50")}
+    ${row("Nigdy aktywni", activation.never_active, pct(activation.never_active, total), "#ff5722")}
+    <tr><td colspan="3" style="padding:6px 0 2px"><div style="border-top:1px solid rgba(255,255,255,.08)"></div></td></tr>
+    ${row(
+      `Retencja D7 <span style="opacity:.4;font-size:11px">(z ${retention.d7.cohort})</span>`,
+      retention.d7.returned,
+      d7pct !== null ? d7pct + "%" : "—",
+      d7pct >= 30 ? "#4caf50" : d7pct >= 10 ? "#ffc107" : "#ff5722"
+    )}
+    ${row(
+      `Retencja D30 <span style="opacity:.4;font-size:11px">(z ${retention.d30.cohort})</span>`,
+      retention.d30.returned,
+      d30pct !== null ? d30pct + "%" : "—",
+      d30pct >= 20 ? "#4caf50" : d30pct >= 5 ? "#ffc107" : "#ff5722"
+    )}`;
+}
+
+function renderSegmentBars(segments, total) {
+  const el = document.getElementById("segmentBars");
+  if (!el) return;
+  const items = [
+    { label: "Aktywni ≤7d",     count: segments.active_7d,    color: "#4caf50" },
+    { label: "Aktywni 8–30d",   count: segments.active_8_30d, color: "#ffc107" },
+    { label: "Uśpieni 30d+",    count: segments.dormant,      color: "#ff5722" },
+    { label: "Brak aktywności", count: segments.never,        color: "rgba(255,255,255,.25)" },
+  ];
+  el.innerHTML = items.map(({ label, count, color }) => {
+    const p = total > 0 ? Math.round(count / total * 100) : 0;
+    return `<div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">
+        <span style="opacity:.7">${label}</span>
+        <span style="font-weight:700">${count} <span style="opacity:.45;font-weight:400;font-size:11px">${p}%</span></span>
+      </div>
+      <div style="height:6px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden">
+        <div style="height:100%;width:${p}%;background:${color};border-radius:3px;transition:width .5s"></div>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function renderTrendChart(trend) {
+  const chartEl = document.getElementById("trendChart");
+  const labelsEl = document.getElementById("trendLabels");
+  if (!chartEl || !labelsEl) return;
+
+  const days = [];
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    const found = (trend || []).find(t => t.day === key);
+    days.push({ day: key, count: found?.count ?? 0 });
+  }
+
+  const maxCount = Math.max(...days.map(d => d.count), 1);
+
+  chartEl.innerHTML = days.map(({ day, count }) => {
+    const h = count > 0 ? Math.max(Math.round((count / maxCount) * 100), 4) : 0;
+    return `<div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%">
+      <div title="${day}: ${count}" style="width:100%;height:${h}%;background:var(--gold);border-radius:2px 2px 0 0;opacity:.8;min-height:${count > 0 ? "3px" : "0"}"></div>
+    </div>`;
+  }).join("");
+
+  labelsEl.innerHTML = days.map(({ day }, i) => {
+    const show = i === 0 || i === 6 || i === 13;
+    return `<div style="flex:1;font-size:9px;opacity:.4;text-align:center;overflow:hidden;white-space:nowrap">${show ? day.slice(5) : ""}</div>`;
+  }).join("");
+}
+
+async function loadRetentionStats() {
+  try {
+    const { data, error } = await sb().rpc("get_retention_stats");
+    if (error) throw error;
+    renderRetentionTable(data);
+    renderSegmentBars(data.segments, data.activation.total);
+    renderTrendChart(data.trend_users);
+  } catch (e) {
+    console.error("[settings] loadRetentionStats error:", e);
+  }
+}
+
 async function loadRatings({ silent = false } = {}) {
   if (!silent) setStatus("Ładowanie ocen…");
   if (els.ratingsTableBody) els.ratingsTableBody.innerHTML = "";
@@ -3147,7 +3249,10 @@ function esc(str) {
 
 function wireStatsEvents() {
   if (els.btnStatsRefresh) {
-    els.btnStatsRefresh.addEventListener("click", () => loadAdminStats());
+    els.btnStatsRefresh.addEventListener("click", () => {
+      loadAdminStats();
+      loadRetentionStats();
+    });
   }
 }
 
@@ -3166,7 +3271,7 @@ function wireEvents() {
     els.btnTabStats.addEventListener("click", async () => {
       if (activeTab === "tools") closeTools();
       setActiveTab("stats");
-      await loadAdminStats({ silent: true });
+      await Promise.all([loadAdminStats({ silent: true }), loadRetentionStats()]);
     });
   }
 
