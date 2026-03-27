@@ -1,4 +1,6 @@
 -- Migration: Stats exclusion list + funnel level 3 (real gameplay)
+-- SUPERSEDES: 2026-03-27_160_admin_stats_v2.sql
+-- SUPERSEDES: 2026-03-27_161_retention_stats.sql
 
 -- Tabela wykluczonych z statystyk (np. konta admina)
 CREATE TABLE IF NOT EXISTS public.stats_excluded_users (
