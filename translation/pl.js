@@ -1893,6 +1893,7 @@ const pl = {
         Finał wymaga zatwierdzonych 5 pytań przed startem rund.
         To celowa blokada — na żywo nie ma czasu na wybieranie pytań „na szybko”.
         Jeśli chcesz zmienić zestaw, używasz trybu <span class="m-strong">Edytuj</span> przy pytaniach finału.
+      </div>
 
       <h3 class="m-h3">Rundy: kolejność pytań</h3>
 
@@ -3959,7 +3960,7 @@ const pl = {
     backToGames: "← Moje gry",
     logout: "Wyloguj",
     statusLabel: "Status urządzeń",
-    optional: "Opcjonalnie",
+    optional: "(opcjonalnie)",
     deviceDisplay: "Wyświetlacz",
     deviceHost: "Prowadzący",
     deviceBuzzer: "Przycisk",

@@ -1897,6 +1897,7 @@ const en = {
         The final requires 5 confirmed questions before rounds start.
         This is an intentional lock — in live play there’s no time to pick questions “on the fly.”
         If you want to change the set, use the <span class="m-strong">Edit</span> mode for final questions.
+      </div>
 
       <h3 class="m-h3">Rounds: question order</h3>
 
@@ -4446,7 +4447,7 @@ const en = {
     backToGames: "← My games",
     logout: "Logout",
     statusLabel: "Device status",
-    optional: "Optional",
+    optional: "(optional)",
     deviceDisplay: "Display",
     deviceHost: "Host",
     deviceBuzzer: "Buzzer",
