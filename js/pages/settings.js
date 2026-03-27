@@ -90,6 +90,10 @@ const els = {
   statPlayedTotal: document.getElementById("statPlayedTotal"),
   statPlayedPeriods: document.getElementById("statPlayedPeriods"),
   statBuzzerActivity: document.getElementById("statBuzzerActivity"),
+  statBasesTotal: document.getElementById("statBasesTotal"),
+  statBasesSub: document.getElementById("statBasesSub"),
+  statLogosTotal: document.getElementById("statLogosTotal"),
+  statLogosSub: document.getElementById("statLogosSub"),
   statRating: document.getElementById("statRating"),
   statRatingsTotal: document.getElementById("statRatingsTotal"),
   statHealthMails: document.getElementById("statHealthMails"),
@@ -877,6 +881,11 @@ function startCountdownTimer() {
   }, 1000);
 }
 
+function setStatus(msg) {
+  const el = document.getElementById("statusValue");
+  if (el) el.textContent = msg;
+}
+
 async function loadAdminStats({ silent = false } = {}) {
   if (!silent) setStatus("Ładowanie statystyk…");
   try {
@@ -896,6 +905,10 @@ async function loadAdminStats({ silent = false } = {}) {
     if (els.statBuzzerActivity) els.statBuzzerActivity.textContent = `Buzzer 7d: ${data.gameplay.buzzer_7d} | Sesje ankiet 7d: ${data.polls.sessions_7d}`;
 
     if (els.statRating) els.statRating.textContent = `${data.ratings.average} / 5`;
+    if (els.statBasesTotal) els.statBasesTotal.textContent = data.bases.total;
+    if (els.statBasesSub) els.statBasesSub.textContent = `Nowe 7d: ${data.bases.new_7d}`;
+    if (els.statLogosTotal) els.statLogosTotal.textContent = data.logos.total;
+    if (els.statLogosSub) els.statLogosSub.textContent = `Aktywne: ${data.logos.active} | Nowe 7d: ${data.logos.new_7d}`;
     if (els.statRatingsTotal) els.statRatingsTotal.textContent = `Ocen: ${data.ratings.total}`;
     if (els.statHealthMails) els.statHealthMails.textContent = `Błędy maili (24h): ${data.health.mail_errors}`;
     

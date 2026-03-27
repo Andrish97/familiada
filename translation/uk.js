@@ -3878,6 +3878,8 @@ const uk = {
     },
     tabs: {
       maintenance: "Технічні роботи",
+      stats: "Статистика",
+      ratings: "Оцінки",
       mail: "Пошта",
       marketplace: "Ігри спільноти",
       generator: "Ігри Виробника",
