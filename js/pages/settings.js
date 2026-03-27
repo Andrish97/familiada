@@ -1106,10 +1106,7 @@ async function loadRatings({ silent = false } = {}) {
     }
 
     // Load detailed ratings
-    const { data, error } = await sb()
-      .from("app_ratings")
-      .select("*, profiles(username, email)")
-      .order("created_at", { ascending: false });
+    const { data, error } = await sb().rpc("get_ratings_admin");
 
     if (error) throw error;
 
@@ -1122,7 +1119,7 @@ async function loadRatings({ silent = false } = {}) {
     if (els.ratingsTableBody) {
       els.ratingsTableBody.innerHTML = rows.map(r => {
         const date = new Date(r.created_at).toLocaleString();
-        const user = r.profiles?.username || r.profiles?.email || "Nieznany";
+        const user = r.username || r.email || "Nieznany";
         const stars = "★".repeat(r.stars) + "☆".repeat(5 - r.stars);
         return `
           <tr>
