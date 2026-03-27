@@ -44,7 +44,7 @@ const pl = {
     rating: {
       modal: {
         title: "Jak oceniasz system?",
-        sub: "Twoja opinia pomaga nam ulepszać Familiadę Online.",
+        sub: "Twoja opinia pomaga nam ulepszać Familiadę Online. Ocena jest anonimowa, a komentarz widoczny tylko dla administratorów.",
         commentPlaceholder: "Dodaj opcjonalny komentarz...",
         later: "Później",
         never: "Nie pytaj więcej",
