@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict M18VfWGnhSiPEF7yZ20SqtB4J4Bv9qCQwbSmTLqfQh01X0TVmdbXJ1t0PbalpNy
+\restrict jn85WoHZJeeIOd4BHWMWb5c6JhLQchVzy2NQdhQ1iUohuJQZp8Q6Egxs11kTMQ1
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -2832,6 +2832,28 @@ begin
     'devices', to_jsonb(dv)
   );
 end $$;
+
+
+--
+-- Name: get_ratings_admin(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."get_ratings_admin"() RETURNS TABLE("id" "uuid", "user_id" "uuid", "stars" smallint, "comment" "text", "created_at" timestamp with time zone, "username" "text", "email" "text")
+    LANGUAGE "sql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'auth'
+    AS $$
+  SELECT
+    r.id,
+    r.user_id,
+    r.stars,
+    r.comment,
+    r.created_at,
+    p.username,
+    p.email
+  FROM public.app_ratings r
+  LEFT JOIN public.profiles p ON p.id = r.user_id
+  ORDER BY r.created_at DESC;
+$$;
 
 
 --
@@ -13065,5 +13087,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict M18VfWGnhSiPEF7yZ20SqtB4J4Bv9qCQwbSmTLqfQh01X0TVmdbXJ1t0PbalpNy
+\unrestrict jn85WoHZJeeIOd4BHWMWb5c6JhLQchVzy2NQdhQ1iUohuJQZp8Q6Egxs11kTMQ1
 
