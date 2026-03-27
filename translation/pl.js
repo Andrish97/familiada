@@ -4321,6 +4321,8 @@ const pl = {
     },
     tabs: {
       maintenance: "Prace techniczne",
+      stats: "Statystyki",
+      ratings: "Oceny",
       mail: "Maile",
       marketplace: "Gry Społeczności",
       generator: "Gry Producenta",

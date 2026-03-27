@@ -4004,6 +4004,8 @@ const en = {
     },
     tabs: {
       maintenance: "Maintenance",
+      stats: "Statistics",
+      ratings: "Ratings",
       mail: "Emails",
       marketplace: "Community Games",
       generator: "Producer Games",

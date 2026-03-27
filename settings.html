@@ -28,12 +28,12 @@
       <a class="btn sm btn-external" id="btnSupabase" href="https://supabase.familiada.online" target="_blank" rel="noopener" data-i18n="settings.actions.supabase">Supabase</a>
       <a class="btn sm btn-external" id="btnServer" href="https://panel.familiada.online" target="_blank" rel="noopener" data-i18n="settings.actions.server">Serwer</a>
       <button class="btn sm tab-btn active" id="btnTabMaintenance" type="button" data-i18n="settings.tabs.maintenance">Prace techniczne</button>
+      <button class="btn sm tab-btn" id="btnTabStats" type="button" data-i18n="settings.tabs.stats">Statystyki</button>
+      <button class="btn sm tab-btn" id="btnTabRatings" type="button" data-i18n="settings.tabs.ratings">Oceny</button>
       <button class="btn sm tab-btn" id="btnTabMail" type="button" data-i18n="settings.tabs.mail">Maile</button>
-      <button class="btn sm tab-btn" id="btnTabMarketplace" type="button" data-i18n="settings.tabs.marketplace">Marketplace</button>
-      <button class="btn sm tab-btn" id="btnTabRatings" type="button">Oceny</button>
-      <button class="btn sm tab-btn" id="btnTabStats" type="button">Statystyki</button>
-      <button class="btn sm tab-btn" id="btnTabGenerator" type="button" data-i18n="settings.tabs.generator">Generator</button>
       <button class="btn sm tab-btn" id="btnTabReports" type="button" data-i18n="settings.tabs.reports">Zgłoszenia</button>
+      <button class="btn sm tab-btn" id="btnTabMarketplace" type="button" data-i18n="settings.tabs.marketplace">Gry Społeczności</button>
+      <button class="btn sm tab-btn" id="btnTabGenerator" type="button" data-i18n="settings.tabs.generator">Gry Producenta</button>
       <div class="ui-select" id="toolsSelect">
         <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
           <span class="ui-select-label" data-i18n="settings.tabs.tools">Narzędzia</span>
@@ -62,7 +62,7 @@
             <input class="mode-range" id="modeSlider" type="range" min="0" max="2" step="1" value="0" aria-label="Maintenance mode"/>
             <div class="mode-labels" id="modeLabels">
               <span class="mode-label" data-mode="message" data-i18n="settings.modes.message">Wiadomość</span>
-              <span class="mode-label" data-mode="returnAt" data-i18n="settings.modes.returnAt">Do godziny</span>
+              <span class="mode-label" data-mode="returnAt" data-i18n="settings.modes.returnAt">Powrót…</span>
               <span class="mode-label" data-mode="countdown" data-i18n="settings.modes.countdown">Odliczanie</span>
             </div>
           </div>
@@ -136,7 +136,7 @@
               <span class="toggle-label" data-i18n="settings.bypass.label">Włącz bypass</span>
             </label>
           </div>
-          <div class="bypass-desc" data-i18n="settings.bypass.desc">Ustawia cookie admina na 30 dni. Działa tylko w tej przeglądarce.</div>
+          <div class="bypass-desc" data-i18n="settings.bypass.desc">(Strona będzie działać normalnie bez komunikatu prac.) Ustawia cookie admina na 30 dni. Działa tylko w tej przeglądarce.</div>
         </div>
       </div>
     </div>
@@ -168,7 +168,7 @@
                 <input id="mailBatchMax" type="number" min="1" max="500" step="1" value="100"/>
               </div>
               <div class="field">
-                <label class="field-label" for="mailWorkerLimit" data-i18n="settings.mail.workerLimit">Limit workera (domyślny)</label>
+                <label class="field-label" for="mailWorkerLimit" data-i18n="settings.mail.workerLimit">Ile maili na jedno uruchomienie workera</label>
                 <input id="mailWorkerLimit" type="number" min="1" max="200" step="1" value="25"/>
                 <div class="field-hint" data-i18n="settings.mail.workerLimitHint">Ile maili worker wysyła podczas jednego uruchomienia.</div>
               </div>
@@ -251,10 +251,10 @@
             </div>
             <div class="panel-actions">
               <button class="btn sm gold" id="btnMailRunWorker" type="button" data-i18n="settings.mail.runWorker">Uruchom worker</button>
-              <button class="btn sm" id="btnMailRetryFailed" type="button" data-i18n="settings.mail.retryFailed">Requeue failed + uruchom</button>
-              <button class="btn sm" id="btnMailRetrySelected" type="button" data-i18n="settings.mail.retrySelected">Requeue zaznaczone + uruchom</button>
+              <button class="btn sm" id="btnMailRetryFailed" type="button" data-i18n="settings.mail.retryFailed">Przywróć failed i wyślij</button>
+              <button class="btn sm" id="btnMailRetrySelected" type="button" data-i18n="settings.mail.retrySelected">Wyślij zaznaczone</button>
             </div>
-            <div class="field-hint" data-i18n="settings.mail.workerHint">Opcje ręczne działają na `mail_queue` i uruchamiają `invoke_mail_worker(...)`.</div>
+            <div class="field-hint" data-i18n="settings.mail.workerHint">W tabeli możesz też kliknąć „Wyślij teraz" przy pojedynczym mailu.</div>
           </section>
 
           <section class="mail-card mail-card-wide mail-card-logs">
@@ -323,7 +323,7 @@
         <div class="mail-card">
           <div class="mail-card-head">
             <div>
-              <div class="panel-title" data-i18n="settings.marketplace.title">Marketplace</div>
+              <div class="panel-title" data-i18n="settings.marketplace.title">Gry Społeczności</div>
               <div class="panel-sub" data-i18n="settings.marketplace.subtitle">Moderacja zgłoszeń i gry producenta</div>
             </div>
           </div>
@@ -368,7 +368,7 @@
       <div class="market-admin-panel" id="generatorPanel" hidden>
         <div class="panel-head">
           <div class="panel-title" data-i18n="settings.generator.title">Generator gier</div>
-          <div class="panel-sub" data-i18n="settings.generator.subtitle">Generowanie i zarządzanie plikami marketplace</div>
+          <div class="panel-sub" data-i18n="settings.generator.subtitle">Generowanie i zarządzanie grami producenta</div>
         </div>
 
         <div class="mail-card" id="gen-session-card">
@@ -591,6 +591,18 @@
             </div>
 
             <div class="stat-box" style="padding:18px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(255,255,255,.03)">
+              <div class="stat-label" style="font-size:11px;opacity:.7;text-transform:uppercase;font-weight:900;letter-spacing:1px;margin-bottom:8px">Bazy pytań</div>
+              <div class="stat-value" id="statBasesTotal" style="font-size:32px;font-weight:900;color:var(--gold)">0</div>
+              <div class="stat-sub" id="statBasesSub" style="font-size:12px;opacity:.8;margin-top:4px;color:var(--gold)">Nowe 7d: 0</div>
+            </div>
+
+            <div class="stat-box" style="padding:18px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(255,255,255,.03)">
+              <div class="stat-label" style="font-size:11px;opacity:.7;text-transform:uppercase;font-weight:900;letter-spacing:1px;margin-bottom:8px">Logo</div>
+              <div class="stat-value" id="statLogosTotal" style="font-size:32px;font-weight:900;color:var(--gold)">0</div>
+              <div class="stat-sub" id="statLogosSub" style="font-size:12px;opacity:.8;margin-top:4px;color:var(--gold)">Aktywne: 0 | Nowe 7d: 0</div>
+            </div>
+
+            <div class="stat-box" style="padding:18px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(255,255,255,.03)">
               <div class="stat-label" style="font-size:11px;opacity:.7;text-transform:uppercase;font-weight:900;letter-spacing:1px;margin-bottom:8px">Zdrowie & Oceny</div>
               <div class="stat-value" id="statRating" style="font-size:32px;font-weight:900;color:var(--gold)">0 / 5</div>
               <div class="stat-sub" id="statRatingsTotal" style="font-size:12px;opacity:.8;margin-top:4px;color:var(--gold)">Ocen: 0</div>
@@ -745,7 +757,7 @@
       <div class="market-preview-desc" id="marketPreviewDesc"></div>
       <div class="market-preview-questions" id="marketPreviewQuestions"></div>
       <div class="modal-actions">
-        <button class="btn sm" id="btnMarketPreviewClose" type="button" data-i18n="settings.actions.cancel">Zamknij</button>
+        <button class="btn sm" id="btnMarketPreviewClose" type="button" data-i18n="settings.actions.cancel">Anuluj</button>
         <button class="btn sm danger" id="btnMarketPreviewDelete" type="button" data-i18n="settings.marketplace.hardDelete">Usuń na stałe</button>
         <button class="btn sm" id="btnMarketPreviewWithdraw" type="button" data-i18n="settings.marketplace.forceWithdraw">Wycofaj</button>
         <button class="btn sm" id="btnMarketPreviewReject" type="button" data-i18n="settings.marketplace.reject">Odrzuć</button>
