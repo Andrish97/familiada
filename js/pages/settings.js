@@ -64,6 +64,7 @@ const els = {
   btnTabMail: document.getElementById("btnTabMail"),
   btnTabMarketplace: document.getElementById("btnTabMarketplace"),
   btnTabRatings: document.getElementById("btnTabRatings"),
+  btnTabStats: document.getElementById("btnTabStats"),
   btnTabGenerator: document.getElementById("btnTabGenerator"),
   btnTabReports: document.getElementById("btnTabReports"),
   mainWrap: document.querySelector("main.wrap"),
@@ -72,12 +73,23 @@ const els = {
   mailPanel: document.getElementById("mailPanel"),
   marketplacePanel: document.getElementById("marketplacePanel"),
   ratingsPanel: document.getElementById("ratingsPanel"),
+  statsPanel: document.getElementById("statsPanel"),
   generatorPanel: document.getElementById("generatorPanel"),
   reportsPanel: document.getElementById("reportsPanel"),
   btnRatingsRefresh: document.getElementById("btnRatingsRefresh"),
+  btnStatsRefresh: document.getElementById("btnStatsRefresh"),
   ratingsTableBody: document.getElementById("ratingsTableBody"),
   ratingsTableInfo: document.getElementById("ratingsTableInfo"),
   ratingsGlobalStats: document.getElementById("ratingsGlobalStats"),
+  statUsersTotal: document.getElementById("statUsersTotal"),
+  statUsersSub: document.getElementById("statUsersSub"),
+  statGamesTotal: document.getElementById("statGamesTotal"),
+  statGamesToday: document.getElementById("statGamesToday"),
+  statActivity: document.getElementById("statActivity"),
+  statVotesTotal: document.getElementById("statVotesTotal"),
+  statRating: document.getElementById("statRating"),
+  statRatingsTotal: document.getElementById("statRatingsTotal"),
+  statsUpdateTs: document.getElementById("statsUpdateTs"),
   maintenanceControls: document.getElementById("maintenanceControls"),
   modeStatus: document.getElementById("modeStatus"),
   modeStatusValue: document.getElementById("modeStatusValue"),
@@ -859,6 +871,35 @@ function startCountdownTimer() {
       updateModeStatus(currentState);
     }
   }, 1000);
+}
+
+async function loadAdminStats({ silent = false } = {}) {
+  if (!silent) setStatus("Ładowanie statystyk…");
+  try {
+    const { data, error } = await sb().rpc("get_admin_stats");
+    if (error) throw error;
+
+    if (els.statUsersTotal) els.statUsersTotal.textContent = data.users.total;
+    if (els.statUsersSub) els.statUsersSub.textContent = `Zweryfikowani: ${data.users.confirmed} | Goście: ${data.users.guests}`;
+    
+    if (els.statGamesTotal) els.statGamesTotal.textContent = data.games.total;
+    if (els.statGamesToday) els.statGamesToday.textContent = `Dzisiaj utworzono: ${data.games.today}`;
+    
+    if (els.statActivity) els.statActivity.textContent = data.activity.polls;
+    if (els.statVotesTotal) els.statVotesTotal.textContent = `Łączna liczba głosów: ${data.activity.votes}`;
+    
+    if (els.statRating) els.statRating.textContent = `${data.ratings.average} / 5`;
+    if (els.statRatingsTotal) els.statRatingsTotal.textContent = `Liczba wystawionych ocen: ${data.ratings.total}`;
+    
+    if (els.statsUpdateTs) {
+      const date = new Date(data.timestamp).toLocaleString();
+      els.statsUpdateTs.textContent = `Ostatnia aktualizacja: ${date}`;
+    }
+  } catch (e) {
+    console.error("[settings] loadAdminStats error:", e);
+  } finally {
+    if (!silent) setStatus(t("settings.status.loaded") || "Załadowano");
+  }
 }
 
 async function loadRatings({ silent = false } = {}) {
@@ -3046,6 +3087,7 @@ function setActiveTab(tab) {
   const btnMail = document.getElementById("btnTabMail");
   const btnMarket = document.getElementById("btnTabMarketplace");
   const btnRatings = document.getElementById("btnTabRatings");
+  const btnStats = document.getElementById("btnTabStats");
   const btnGen = document.getElementById("btnTabGenerator");
   const btnReports = document.getElementById("btnTabReports");
   const tools = document.getElementById("toolsSelect");
@@ -3053,6 +3095,7 @@ function setActiveTab(tab) {
   if (btnMail) btnMail.classList.toggle("active", tab === "mail");
   if (btnMarket) btnMarket.classList.toggle("active", tab === "marketplace");
   if (btnRatings) btnRatings.classList.toggle("active", tab === "ratings");
+  if (btnStats) btnStats.classList.toggle("active", tab === "stats");
   if (btnGen) btnGen.classList.toggle("active", tab === "generator");
   if (btnReports) btnReports.classList.toggle("active", tab === "reports");
   if (tools) tools.classList.toggle("active", tab === "tools");
@@ -3060,11 +3103,13 @@ function setActiveTab(tab) {
   if (els.mailPanel) els.mailPanel.hidden = tab !== "mail";
   if (els.marketplacePanel) els.marketplacePanel.hidden = tab !== "marketplace";
   if (els.ratingsPanel) els.ratingsPanel.hidden = tab !== "ratings";
+  if (els.statsPanel) els.statsPanel.hidden = tab !== "stats";
   if (els.generatorPanel) els.generatorPanel.hidden = tab !== "generator";
   if (els.reportsPanel) els.reportsPanel.hidden = tab !== "reports";
   if (els.mailPanel) els.mailPanel.style.display = tab === "mail" ? "" : "none";
   if (els.marketplacePanel) els.marketplacePanel.style.display = tab === "marketplace" ? "" : "none";
   if (els.ratingsPanel) els.ratingsPanel.style.display = tab === "ratings" ? "" : "none";
+  if (els.statsPanel) els.statsPanel.style.display = tab === "stats" ? "" : "none";
   if (els.generatorPanel) els.generatorPanel.style.display = tab === "generator" ? "" : "none";
   if (els.reportsPanel) els.reportsPanel.style.display = tab === "reports" ? "" : "none";
 
@@ -3092,6 +3137,12 @@ function esc(str) {
     .replace(/"/g, "&quot;");
 }
 
+function wireStatsEvents() {
+  if (els.btnStatsRefresh) {
+    els.btnStatsRefresh.addEventListener("click", () => loadAdminStats());
+  }
+}
+
 function wireRatingsEvents() {
   if (els.btnRatingsRefresh) {
     els.btnRatingsRefresh.addEventListener("click", () => loadRatings());
@@ -3102,6 +3153,14 @@ function wireEvents() {
   const markDirty = () => {
     formDirty = true;
   };
+
+  if (els.btnTabStats) {
+    els.btnTabStats.addEventListener("click", async () => {
+      if (activeTab === "tools") closeTools();
+      setActiveTab("stats");
+      await loadAdminStats({ silent: true });
+    });
+  }
 
   if (els.btnTabRatings) {
     els.btnTabRatings.addEventListener("click", async () => {
@@ -3286,6 +3345,7 @@ function wireEvents() {
   wireMarketplaceEvents();
   wireReportsEvents();
   wireRatingsEvents();
+  wireStatsEvents();
 
   if (els.toolsShell) {
     els.toolsShell.addEventListener("dblclick", closeTools);
