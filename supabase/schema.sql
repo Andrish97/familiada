@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict goXPN1Lez9sw98L5FyVjM4gxUM10Ef9PS4nFdmG7BBUZBn2v2NVXJRJjiYCOAKD
+\restrict aKPNPyk4iULMUcKI3La9u5OyxFewl5yBBQDT8Jwz8vUvlf2enJaDCciwTwfNtLY
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -2436,7 +2436,6 @@ DECLARE
     total_users bigint;
     confirmed_users bigint;
     guest_users bigint;
-    unconfirmed_users bigint;
     active_24h bigint;
     
     total_games bigint;
@@ -2449,8 +2448,9 @@ DECLARE
     users_with_games_no_polls bigint;
     real_events_count bigint;
     buzzer_users_count bigint;
+    control_starts_count bigint; -- games that had a control device connected
     
-    -- Marketplace & Generator
+    -- Marketplace
     marketplace_copies bigint;
     top_market_game text;
     
@@ -2466,26 +2466,30 @@ DECLARE
     total_ratings bigint;
     avg_rating numeric;
 BEGIN
-    -- Users & Verification
+    -- Basic Users
     SELECT COUNT(*) INTO total_users FROM public.profiles;
     SELECT COUNT(*) INTO confirmed_users FROM public.profiles WHERE is_guest = false;
     SELECT COUNT(*) INTO guest_users FROM public.profiles WHERE is_guest = true;
-    -- For unconfirmed, we check if we can access auth.users indirectly or just trust profiles created_at
-    -- Assuming a system where profiles are created only after confirm OR always. 
-    -- Let's use a simpler proxy for now since auth.users access is restricted.
     
-    -- Active in last 24h
+    -- Active in last 24h (by updates to games)
     SELECT COUNT(DISTINCT owner_id) INTO active_24h 
     FROM public.games 
     WHERE updated_at >= (now() - interval '24 hours');
 
-    -- Games & Content Quality
+    -- Games
     SELECT COUNT(*) INTO total_games FROM public.games;
     SELECT COUNT(*) INTO games_today FROM public.games WHERE created_at >= CURRENT_DATE;
     SELECT COUNT(*) INTO empty_games FROM public.games g WHERE NOT EXISTS (SELECT 1 FROM public.questions q WHERE q.game_id = g.id);
     SELECT COALESCE(ROUND(AVG(q_count), 1), 0) INTO avg_questions FROM (
         SELECT COUNT(*) as q_count FROM public.questions GROUP BY game_id
     ) as sub;
+
+    -- Control Panel Usage (Real Gameplay Starts)
+    -- We check device_presence for 'control' type. 
+    -- Even if transient, it's our best indicator of someone clicking "Play".
+    SELECT COUNT(DISTINCT game_id) INTO control_starts_count 
+    FROM public.device_presence 
+    WHERE device_type = 'control';
 
     -- Funnel Logic
     SELECT COUNT(*) INTO users_no_games 
@@ -2502,7 +2506,7 @@ BEGIN
         SELECT 1 FROM public.poll_votes GROUP BY poll_session_id HAVING COUNT(*) > 5
     ) as sub;
     
-    -- Device/Buzzer usage (Has anyone ever connected a buzzer?)
+    -- Buzzer usage
     SELECT COUNT(DISTINCT game_id) INTO buzzer_users_count 
     FROM public.device_presence 
     WHERE device_type = 'buzzer';
@@ -2511,8 +2515,7 @@ BEGIN
     SELECT COUNT(*) INTO marketplace_copies FROM public.games WHERE source_market_id IS NOT NULL;
     SELECT mg.title INTO top_market_game FROM public.market_games mg JOIN public.games g ON g.source_market_id = mg.id GROUP BY mg.id, mg.title ORDER BY COUNT(*) DESC LIMIT 1;
 
-    -- Languages (Assuming profiles has a language column or we use user_metadata if available)
-    -- If language column doesn't exist, these will be 0
+    -- Languages
     BEGIN
         SELECT COUNT(*) INTO users_pl FROM public.profiles WHERE language = 'pl';
         SELECT COUNT(*) INTO users_en FROM public.profiles WHERE language = 'en';
@@ -2553,7 +2556,8 @@ BEGIN
         'funnel', jsonb_build_object(
             'tire_kickers', users_with_games_no_polls,
             'real_events', real_events_count,
-            'buzzer_usage', buzzer_users_count
+            'buzzer_usage', buzzer_users_count,
+            'control_usage', control_starts_count
         ),
         'health', jsonb_build_object(
             'mail_errors', mail_errors_24h
@@ -12852,5 +12856,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict goXPN1Lez9sw98L5FyVjM4gxUM10Ef9PS4nFdmG7BBUZBn2v2NVXJRJjiYCOAKD
+\unrestrict aKPNPyk4iULMUcKI3La9u5OyxFewl5yBBQDT8Jwz8vUvlf2enJaDCciwTwfNtLY
 
