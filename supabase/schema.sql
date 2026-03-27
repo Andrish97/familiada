@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict Yr1dQFcyYZv51ie6oAhAIa5JztAOd6FWCdHAlmPZeLZPTfk8qJC4gIbbgxVhmnE
+\restrict 3OggSuVOYOjGoJJjO105x0bPgDk9fQc0TVVo6JSF6Oby5w5oRuat9chdxO11edJ
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -2457,18 +2457,26 @@ DECLARE
   poll_votes_7d     bigint;
   poll_votes_total  bigint;
 
+  bases_total   bigint;
+  bases_new_7d  bigint;
+
+  logos_total   bigint;
+  logos_active  bigint;
+  logos_new_7d  bigint;
+
   mail_errors_24h bigint;
   total_ratings   bigint;
   avg_rating      numeric;
 BEGIN
   SELECT ARRAY(SELECT user_id FROM public.stats_excluded_users) INTO excluded_ids;
 
+  -- Users
   SELECT COUNT(*) INTO total_users     FROM public.profiles WHERE NOT (id = ANY(excluded_ids));
   SELECT COUNT(*) INTO confirmed_users FROM public.profiles WHERE is_guest = false AND NOT (id = ANY(excluded_ids));
   SELECT COUNT(*) INTO guest_users     FROM public.profiles WHERE is_guest = true  AND NOT (id = ANY(excluded_ids));
-  SELECT COUNT(*) INTO users_new_today FROM public.profiles WHERE created_at >= CURRENT_DATE                    AND NOT (id = ANY(excluded_ids));
-  SELECT COUNT(*) INTO users_new_7d    FROM public.profiles WHERE created_at >= now() - interval '7 days'      AND NOT (id = ANY(excluded_ids));
-  SELECT COUNT(*) INTO users_new_30d   FROM public.profiles WHERE created_at >= now() - interval '30 days'     AND NOT (id = ANY(excluded_ids));
+  SELECT COUNT(*) INTO users_new_today FROM public.profiles WHERE created_at >= CURRENT_DATE                AND NOT (id = ANY(excluded_ids));
+  SELECT COUNT(*) INTO users_new_7d    FROM public.profiles WHERE created_at >= now() - interval '7 days'  AND NOT (id = ANY(excluded_ids));
+  SELECT COUNT(*) INTO users_new_30d   FROM public.profiles WHERE created_at >= now() - interval '30 days' AND NOT (id = ANY(excluded_ids));
 
   BEGIN
     SELECT COUNT(*) INTO users_pl FROM public.profiles WHERE language = 'pl' AND NOT (id = ANY(excluded_ids));
@@ -2478,6 +2486,7 @@ BEGIN
     users_pl := 0; users_en := 0; users_uk := 0;
   END;
 
+  -- Games
   SELECT COUNT(*) INTO total_games  FROM public.games WHERE is_demo = false AND NOT (owner_id = ANY(excluded_ids));
   SELECT COUNT(*) INTO games_ready  FROM public.games WHERE is_demo = false AND status = 'ready' AND NOT (owner_id = ANY(excluded_ids));
   SELECT COUNT(*) INTO games_new_7d FROM public.games WHERE is_demo = false AND created_at >= now() - interval '7 days' AND NOT (owner_id = ANY(excluded_ids));
@@ -2487,6 +2496,7 @@ BEGIN
           WHERE g.is_demo = false AND NOT (g.owner_id = ANY(excluded_ids))
           GROUP BY q.game_id) AS sub;
 
+  -- Gameplay
   SELECT COUNT(DISTINCT dp.game_id) INTO played_today FROM public.device_presence dp
     JOIN public.games g ON g.id = dp.game_id
     WHERE dp.device_type = 'display' AND dp.last_seen_at >= CURRENT_DATE AND g.is_demo = false AND NOT (g.owner_id = ANY(excluded_ids));
@@ -2500,6 +2510,7 @@ BEGIN
     JOIN public.games g ON g.id = dp.game_id
     WHERE dp.device_type = 'buzzer' AND dp.last_seen_at >= now() - interval '7 days' AND g.is_demo = false AND NOT (g.owner_id = ANY(excluded_ids));
 
+  -- Polls
   SELECT COUNT(*) INTO poll_sessions_7d FROM public.poll_sessions ps
     JOIN public.games g ON g.id = ps.game_id
     WHERE ps.created_at >= now() - interval '7 days' AND g.is_demo = false AND NOT (g.owner_id = ANY(excluded_ids));
@@ -2510,6 +2521,16 @@ BEGIN
     JOIN public.games g ON g.id = pv.game_id
     WHERE g.is_demo = false AND NOT (g.owner_id = ANY(excluded_ids));
 
+  -- Question bases
+  SELECT COUNT(*) INTO bases_total  FROM public.question_bases WHERE NOT (owner_id = ANY(excluded_ids));
+  SELECT COUNT(*) INTO bases_new_7d FROM public.question_bases WHERE created_at >= now() - interval '7 days' AND NOT (owner_id = ANY(excluded_ids));
+
+  -- User logos
+  SELECT COUNT(*) INTO logos_total  FROM public.user_logos WHERE NOT (user_id = ANY(excluded_ids));
+  SELECT COUNT(*) INTO logos_active FROM public.user_logos WHERE is_active = true AND NOT (user_id = ANY(excluded_ids));
+  SELECT COUNT(*) INTO logos_new_7d FROM public.user_logos WHERE created_at >= now() - interval '7 days' AND NOT (user_id = ANY(excluded_ids));
+
+  -- Health
   BEGIN
     SELECT COUNT(*) INTO mail_errors_24h FROM public.mail_queue
       WHERE status = 'failed' AND updated_at >= now() - interval '24 hours';
@@ -2517,6 +2538,7 @@ BEGIN
     mail_errors_24h := 0;
   END;
 
+  -- Ratings
   SELECT COUNT(*) INTO total_ratings FROM public.app_ratings;
   SELECT COALESCE(ROUND(AVG(stars), 1), 0) INTO avg_rating FROM public.app_ratings;
 
@@ -2535,6 +2557,12 @@ BEGIN
     ),
     'polls', jsonb_build_object(
       'sessions_7d', poll_sessions_7d, 'votes_7d', poll_votes_7d, 'votes_total', poll_votes_total
+    ),
+    'bases', jsonb_build_object(
+      'total', bases_total, 'new_7d', bases_new_7d
+    ),
+    'logos', jsonb_build_object(
+      'total', logos_total, 'active', logos_active, 'new_7d', logos_new_7d
     ),
     'health',   jsonb_build_object('mail_errors', mail_errors_24h),
     'ratings',  jsonb_build_object('total', total_ratings, 'average', avg_rating),
@@ -13037,5 +13065,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict Yr1dQFcyYZv51ie6oAhAIa5JztAOd6FWCdHAlmPZeLZPTfk8qJC4gIbbgxVhmnE
+\unrestrict 3OggSuVOYOjGoJJjO105x0bPgDk9fQc0TVVo6JSF6Oby5w5oRuat9chdxO11edJ
 
