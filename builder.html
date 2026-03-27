@@ -74,7 +74,7 @@
     <div class="bar">
       <div>
         <div class="title" data-i18n="builder.header.title">Twoje gry</div>
-        <div class="hint" id="hint" data-i18n="builder.header.hint">Kliknij kafelek, żeby go zaznaczyć. Podwójne kliknięcie zmienia nazwę.</div>
+        <div class="hint" id="hint" data-i18n="builder.header.hint">Naciśnij kafelek, żeby go zaznaczyć. Podwójne naciśnięcie zmienia nazwę.</div>
       </div>
 
       <div class="actions">
@@ -121,12 +121,12 @@
           <div class="tab-slot slot-pollPoints">
             <button class="tab-label" id="tabPollPoints" type="button">
               <span class="only-desktop" data-i18n="builder.tabs.pollPoints">Punktacja</span>
-              <span class="only-mobile" data-i18n="builder.tabs.pollPointsMobile">Pkt.</span>
+              <span class="only-mobile" data-i18n="builder.tabs.pollPointsMobile">Punkty</span>
             </button>
             <div class="tab-wrapper">
               <div class="tab-active">
                 <span class="only-desktop" data-i18n="builder.tabs.pollPoints">Punktacja</span>
-                <span class="only-mobile" data-i18n="builder.tabs.pollPointsMobile">Pkt.</span>
+                <span class="only-mobile" data-i18n="builder.tabs.pollPointsMobile">Punkty</span>
               </div>
               <div class="tab-corner tab-corner-left"></div>
               <div class="tab-corner tab-corner-right"></div>
@@ -137,12 +137,12 @@
           <div class="tab-slot slot-prepared">
             <button class="tab-label" id="tabPrepared" type="button">
               <span class="only-desktop" data-i18n="builder.tabs.prepared">Preparowany</span>
-              <span class="only-mobile" data-i18n="builder.tabs.preparedMobile">Prep.</span>
+              <span class="only-mobile" data-i18n="builder.tabs.preparedMobile">Gotowy</span>
             </button>
             <div class="tab-wrapper">
               <div class="tab-active">
                 <span class="only-desktop" data-i18n="builder.tabs.prepared">Preparowany</span>
-                <span class="only-mobile" data-i18n="builder.tabs.preparedMobile">Prep.</span>
+                <span class="only-mobile" data-i18n="builder.tabs.preparedMobile">Gotowy</span>
               </div>
               <div class="tab-corner tab-corner-left"></div>
               <div class="tab-corner tab-corner-right"></div>
@@ -152,13 +152,13 @@
           <!-- SLOT 4: Z marketu -->
           <div class="tab-slot slot-market">
             <button class="tab-label" id="tabMarket" type="button">
-              <span class="only-desktop" data-i18n="builder.tabs.market">Z marketu</span>
-              <span class="only-mobile" data-i18n="builder.tabs.marketMobile">Market</span>
+              <span class="only-desktop" data-i18n="builder.tabs.market">Gry Społeczności</span>
+              <span class="only-mobile" data-i18n="builder.tabs.marketMobile">Społ.</span>
             </button>
             <div class="tab-wrapper">
               <div class="tab-active">
-                <span class="only-desktop" data-i18n="builder.tabs.market">Z marketu</span>
-                <span class="only-mobile" data-i18n="builder.tabs.marketMobile">Market</span>
+                <span class="only-desktop" data-i18n="builder.tabs.market">Gry Społeczności</span>
+                <span class="only-mobile" data-i18n="builder.tabs.marketMobile">Społ.</span>
               </div>
               <div class="tab-corner tab-corner-left"></div>
               <div class="tab-corner tab-corner-right"></div>
@@ -182,7 +182,7 @@
                 <span class="only-mobile" data-i18n="builder.actions.exportBaseMobile">Exp.bz</span>
               </button>
               <button class="btn sm" id="btnImport" type="button">
-                <span class="only-desktop" data-i18n="builder.actions.import">Import</span>
+                <span class="only-desktop" data-i18n="builder.actions.import">Importuj</span>
                 <span class="only-mobile" data-i18n="builder.actions.importMobile">Imp</span>
               </button>
             </div>
@@ -200,7 +200,7 @@
   <!-- Modal: import JSON -->
   <div class="overlay" id="importOverlay" style="display:none;">
     <div class="modal">
-      <div class="mTitle" data-i18n="builder.import.title">Import</div>
+      <div class="mTitle" data-i18n="builder.import.title">Importuj</div>
 
       <div class="importRow" style="margin-top:8px">
         <input id="importFile" class="inp" type="file" accept=".famgame,.json,application/json">
@@ -271,7 +271,7 @@
   <!-- EXPORT DO PLIKU: PROGRES -->
   <div class="overlay" id="exportJsonOverlay" style="display:none;">
     <div class="modal" style="width:min(640px,94vw)">
-      <div class="mTitle" data-i18n="builder.exportFile.title">EXPORT…</div>
+      <div class="mTitle" data-i18n="builder.exportFile.title">EKSPORT…</div>
       <div class="mSub" id="exportJsonSub" data-i18n="builder.exportFile.subtitle">Nie zamykaj strony. Trwa przygotowanie pliku.</div>
 
       <div style="margin-top:12px;display:grid;gap:10px">

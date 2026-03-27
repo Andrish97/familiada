@@ -2408,6 +2408,7 @@ const en = {
       text: "Add Familiada to your home screen for quick access.",
       ok: "Install",
       cancel: "Don't show",
+      cancelBtn: "Cancel",
       unavailable: "Your browser doesn't support installation or the app is already installed.",
     },
     iosWebapp: {
@@ -3032,6 +3033,7 @@ const en = {
     dash: "-",
     title: "Familiada — polls hub",
     backToGames: "← My games",
+    backToBases: "← Question bases",
     logout: "Log out",
     header: {
       title: "Polls hub",
@@ -4031,6 +4033,7 @@ const en = {
       mode_message: "Message",
       mode_returnAt: "Return…",
       mode_countdown: "Countdown",
+      loaded: "Loaded",
     },
     validation: {
       tooSoonTitle: "Too soon",
