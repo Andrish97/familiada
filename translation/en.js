@@ -44,7 +44,7 @@ const en = {
     rating: {
       modal: {
         title: "How do you rate the system?",
-        sub: "Your feedback helps us improve Familiada Online.",
+        sub: "Your feedback helps us improve Familiada Online. The rating is anonymous and your comment is visible only to Familiada administrators.",
         commentPlaceholder: "Add an optional comment...",
         later: "Later",
         never: "Don't ask again",
