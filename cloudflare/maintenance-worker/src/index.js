@@ -65,6 +65,9 @@ export default {
         if (url.pathname === "/settings.html") {
           return withHeaders(res, { "Cache-Control": "no-store" });
         }
+        if (url.pathname.startsWith("/translation/") || url.pathname.startsWith("/js/")) {
+          return withHeaders(res, { "Cache-Control": "no-store" });
+        }
         return res;
       }
 
