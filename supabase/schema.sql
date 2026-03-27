@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict aKPNPyk4iULMUcKI3La9u5OyxFewl5yBBQDT8Jwz8vUvlf2enJaDCciwTwfNtLY
+\restrict JdvZ92ecGBcKmRRNGf89rBw2UGWsYgKiIiBhsdbX0j191FPUzX1MgRiMcOIjyPu
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -2433,89 +2433,48 @@ CREATE FUNCTION "public"."get_admin_stats"() RETURNS "jsonb"
     AS $$
 DECLARE
     result jsonb;
-    total_users bigint;
-    confirmed_users bigint;
-    guest_users bigint;
-    active_24h bigint;
-    
-    total_games bigint;
-    games_today bigint;
-    empty_games bigint;
-    avg_questions numeric;
-    
-    -- Funnel & Behavior
-    users_no_games bigint;
-    users_with_games_no_polls bigint;
-    real_events_count bigint;
-    buzzer_users_count bigint;
-    control_starts_count bigint; -- games that had a control device connected
-    
-    -- Marketplace
-    marketplace_copies bigint;
-    top_market_game text;
-    
-    -- Technical
-    mail_errors_24h bigint;
-    
-    -- Languages
-    users_pl bigint;
-    users_en bigint;
-    users_uk bigint;
-    
-    total_votes bigint;
-    total_ratings bigint;
-    avg_rating numeric;
-BEGIN
-    -- Basic Users
-    SELECT COUNT(*) INTO total_users FROM public.profiles;
-    SELECT COUNT(*) INTO confirmed_users FROM public.profiles WHERE is_guest = false;
-    SELECT COUNT(*) INTO guest_users FROM public.profiles WHERE is_guest = true;
-    
-    -- Active in last 24h (by updates to games)
-    SELECT COUNT(DISTINCT owner_id) INTO active_24h 
-    FROM public.games 
-    WHERE updated_at >= (now() - interval '24 hours');
+
+    -- Users
+    total_users      bigint;
+    confirmed_users  bigint;
+    guest_users      bigint;
+    users_new_today  bigint;
+    users_new_7d     bigint;
+    users_new_30d    bigint;
+    users_pl bigint; users_en bigint; users_uk bigint;
 
     -- Games
-    SELECT COUNT(*) INTO total_games FROM public.games;
-    SELECT COUNT(*) INTO games_today FROM public.games WHERE created_at >= CURRENT_DATE;
-    SELECT COUNT(*) INTO empty_games FROM public.games g WHERE NOT EXISTS (SELECT 1 FROM public.questions q WHERE q.game_id = g.id);
-    SELECT COALESCE(ROUND(AVG(q_count), 1), 0) INTO avg_questions FROM (
-        SELECT COUNT(*) as q_count FROM public.questions GROUP BY game_id
-    ) as sub;
+    total_games   bigint;
+    games_ready   bigint;
+    games_new_7d  bigint;
+    avg_questions numeric;
 
-    -- Control Panel Usage (Real Gameplay Starts)
-    -- We check device_presence for 'control' type. 
-    -- Even if transient, it's our best indicator of someone clicking "Play".
-    SELECT COUNT(DISTINCT game_id) INTO control_starts_count 
-    FROM public.device_presence 
-    WHERE device_type = 'control';
+    -- Gameplay (display presence = gra otwarta na ekranie)
+    played_today  bigint;
+    played_7d     bigint;
+    played_30d    bigint;
+    buzzer_7d     bigint;
 
-    -- Funnel Logic
-    SELECT COUNT(*) INTO users_no_games 
-    FROM public.profiles p
-    LEFT JOIN public.games g ON g.owner_id = p.id
-    WHERE p.is_guest = false AND g.id IS NULL;
+    -- Polls
+    poll_sessions_7d  bigint;
+    poll_votes_7d     bigint;
+    poll_votes_total  bigint;
 
-    SELECT COUNT(DISTINCT g.owner_id) INTO users_with_games_no_polls
-    FROM public.games g
-    LEFT JOIN public.poll_sessions ps ON ps.game_id = g.id
-    WHERE ps.id IS NULL;
+    -- Health
+    mail_errors_24h bigint;
 
-    SELECT COUNT(*) INTO real_events_count FROM (
-        SELECT 1 FROM public.poll_votes GROUP BY poll_session_id HAVING COUNT(*) > 5
-    ) as sub;
-    
-    -- Buzzer usage
-    SELECT COUNT(DISTINCT game_id) INTO buzzer_users_count 
-    FROM public.device_presence 
-    WHERE device_type = 'buzzer';
+    -- Ratings
+    total_ratings bigint;
+    avg_rating    numeric;
+BEGIN
+    -- Users
+    SELECT COUNT(*) INTO total_users     FROM public.profiles;
+    SELECT COUNT(*) INTO confirmed_users FROM public.profiles WHERE is_guest = false;
+    SELECT COUNT(*) INTO guest_users     FROM public.profiles WHERE is_guest = true;
+    SELECT COUNT(*) INTO users_new_today FROM public.profiles WHERE created_at >= CURRENT_DATE;
+    SELECT COUNT(*) INTO users_new_7d    FROM public.profiles WHERE created_at >= now() - interval '7 days';
+    SELECT COUNT(*) INTO users_new_30d   FROM public.profiles WHERE created_at >= now() - interval '30 days';
 
-    -- Marketplace
-    SELECT COUNT(*) INTO marketplace_copies FROM public.games WHERE source_market_id IS NOT NULL;
-    SELECT mg.title INTO top_market_game FROM public.market_games mg JOIN public.games g ON g.source_market_id = mg.id GROUP BY mg.id, mg.title ORDER BY COUNT(*) DESC LIMIT 1;
-
-    -- Languages
     BEGIN
         SELECT COUNT(*) INTO users_pl FROM public.profiles WHERE language = 'pl';
         SELECT COUNT(*) INTO users_en FROM public.profiles WHERE language = 'en';
@@ -2524,49 +2483,72 @@ BEGIN
         users_pl := 0; users_en := 0; users_uk := 0;
     END;
 
-    -- Technical Health
+    -- Games
+    SELECT COUNT(*) INTO total_games  FROM public.games;
+    SELECT COUNT(*) INTO games_ready  FROM public.games WHERE status = 'ready';
+    SELECT COUNT(*) INTO games_new_7d FROM public.games WHERE created_at >= now() - interval '7 days';
+    SELECT COALESCE(ROUND(AVG(q_count), 1), 0) INTO avg_questions
+        FROM (SELECT COUNT(*) AS q_count FROM public.questions GROUP BY game_id) AS sub;
+
+    -- Gameplay: display i buzzer są obowiązkowe — display jako proxy "gra otwarta na ekranie"
+    SELECT COUNT(DISTINCT game_id) INTO played_today FROM public.device_presence
+        WHERE device_type = 'display' AND last_seen_at >= CURRENT_DATE;
+    SELECT COUNT(DISTINCT game_id) INTO played_7d FROM public.device_presence
+        WHERE device_type = 'display' AND last_seen_at >= now() - interval '7 days';
+    SELECT COUNT(DISTINCT game_id) INTO played_30d FROM public.device_presence
+        WHERE device_type = 'display' AND last_seen_at >= now() - interval '30 days';
+    SELECT COUNT(DISTINCT game_id) INTO buzzer_7d FROM public.device_presence
+        WHERE device_type = 'buzzer' AND last_seen_at >= now() - interval '7 days';
+
+    -- Polls
+    SELECT COUNT(*) INTO poll_sessions_7d FROM public.poll_sessions WHERE created_at >= now() - interval '7 days';
+    SELECT COUNT(*) INTO poll_votes_7d    FROM public.poll_votes    WHERE created_at >= now() - interval '7 days';
+    SELECT COUNT(*) INTO poll_votes_total FROM public.poll_votes;
+
+    -- Health
     BEGIN
-        SELECT COUNT(*) INTO mail_errors_24h FROM public.mail_queue WHERE status = 'failed' AND updated_at >= (now() - interval '24 hours');
+        SELECT COUNT(*) INTO mail_errors_24h FROM public.mail_queue
+            WHERE status = 'failed' AND updated_at >= now() - interval '24 hours';
     EXCEPTION WHEN OTHERS THEN
         mail_errors_24h := 0;
     END;
 
-    -- Ratings & Activity
+    -- Ratings
     SELECT COUNT(*) INTO total_ratings FROM public.app_ratings;
     SELECT COALESCE(ROUND(AVG(stars), 1), 0) INTO avg_rating FROM public.app_ratings;
-    SELECT COUNT(*) INTO total_votes FROM public.poll_votes;
 
     result := jsonb_build_object(
         'users', jsonb_build_object(
-            'total', total_users,
-            'confirmed', confirmed_users,
-            'guests', guest_users,
-            'active_24h', active_24h,
-            'no_games', users_no_games,
-            'langs', jsonb_build_object('pl', users_pl, 'en', users_en, 'uk', users_uk)
+            'total',      total_users,
+            'confirmed',  confirmed_users,
+            'guests',     guest_users,
+            'new_today',  users_new_today,
+            'new_7d',     users_new_7d,
+            'new_30d',    users_new_30d,
+            'langs',      jsonb_build_object('pl', users_pl, 'en', users_en, 'uk', users_uk)
         ),
         'games', jsonb_build_object(
-            'total', total_games,
-            'today', games_today,
-            'empty', empty_games,
-            'avg_q', avg_questions,
-            'from_market', marketplace_copies,
-            'top_market_game', COALESCE(top_market_game, 'Brak')
+            'total',   total_games,
+            'ready',   games_ready,
+            'new_7d',  games_new_7d,
+            'avg_q',   avg_questions
         ),
-        'funnel', jsonb_build_object(
-            'tire_kickers', users_with_games_no_polls,
-            'real_events', real_events_count,
-            'buzzer_usage', buzzer_users_count,
-            'control_usage', control_starts_count
+        'gameplay', jsonb_build_object(
+            'played_today', played_today,
+            'played_7d',    played_7d,
+            'played_30d',   played_30d,
+            'buzzer_7d',    buzzer_7d
+        ),
+        'polls', jsonb_build_object(
+            'sessions_7d',  poll_sessions_7d,
+            'votes_7d',     poll_votes_7d,
+            'votes_total',  poll_votes_total
         ),
         'health', jsonb_build_object(
             'mail_errors', mail_errors_24h
         ),
-        'activity', jsonb_build_object(
-            'votes', total_votes
-        ),
         'ratings', jsonb_build_object(
-            'total', total_ratings,
+            'total',   total_ratings,
             'average', avg_rating
         ),
         'timestamp', now()
@@ -12856,5 +12838,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict aKPNPyk4iULMUcKI3La9u5OyxFewl5yBBQDT8Jwz8vUvlf2enJaDCciwTwfNtLY
+\unrestrict JdvZ92ecGBcKmRRNGf89rBw2UGWsYgKiIiBhsdbX0j191FPUzX1MgRiMcOIjyPu
 
