@@ -1069,6 +1069,7 @@ async function loadRetentionStats() {
   try {
     const { data, error } = await sb().rpc("get_retention_stats");
     if (error) throw error;
+    if (!data?.funnel) throw new Error("get_retention_stats: unexpected response shape: " + JSON.stringify(data));
     renderRetentionTable(data);
     renderSegmentBars(data.segments, data.funnel.registered);
     renderTrendChart(data.trend_users);
