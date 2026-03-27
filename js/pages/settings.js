@@ -82,18 +82,17 @@ const els = {
   ratingsTableInfo: document.getElementById("ratingsTableInfo"),
   ratingsGlobalStats: document.getElementById("ratingsGlobalStats"),
   statUsersTotal: document.getElementById("statUsersTotal"),
-  statUsersSub: document.getElementById("statUsersSub"),
+  statUsersGrowth: document.getElementById("statUsersGrowth"),
   statUsersLangs: document.getElementById("statUsersLangs"),
   statGamesTotal: document.getElementById("statGamesTotal"),
+  statGamesActivity: document.getElementById("statGamesActivity"),
   statGamesQuality: document.getElementById("statGamesQuality"),
-  statMarketTop: document.getElementById("statMarketTop"),
-  statFunnelEvents: document.getElementById("statFunnelEvents"),
-  statGameplayStarts: document.getElementById("statGameplayStarts"),
-  statBuzzerUsage: document.getElementById("statBuzzerUsage"),
-  statFunnelDead: document.getElementById("statFunnelDead"),
-  statHealthMails: document.getElementById("statHealthMails"),
+  statPlayedTotal: document.getElementById("statPlayedTotal"),
+  statPlayedPeriods: document.getElementById("statPlayedPeriods"),
+  statBuzzerActivity: document.getElementById("statBuzzerActivity"),
   statRating: document.getElementById("statRating"),
   statRatingsTotal: document.getElementById("statRatingsTotal"),
+  statHealthMails: document.getElementById("statHealthMails"),
   statsUpdateTs: document.getElementById("statsUpdateTs"),
   maintenanceControls: document.getElementById("maintenanceControls"),
   modeStatus: document.getElementById("modeStatus"),
@@ -885,24 +884,20 @@ async function loadAdminStats({ silent = false } = {}) {
     if (error) throw error;
 
     if (els.statUsersTotal) els.statUsersTotal.textContent = data.users.total;
-    if (els.statUsersSub) els.statUsersSub.textContent = `Zweryfikowani: ${data.users.confirmed} | Goście: ${data.users.guests} | 24h: ${data.users.active_24h}`;
+    if (els.statUsersGrowth) els.statUsersGrowth.textContent = `Dziś: ${data.users.new_today} | 7 dni: ${data.users.new_7d} | 30 dni: ${data.users.new_30d}`;
     if (els.statUsersLangs) els.statUsersLangs.textContent = `PL: ${data.users.langs.pl} | EN: ${data.users.langs.en} | UK: ${data.users.langs.uk}`;
-    
+
     if (els.statGamesTotal) els.statGamesTotal.textContent = data.games.total;
-    if (els.statGamesQuality) els.statGamesQuality.textContent = `Puste: ${data.games.empty} | Śr. pytań: ${data.games.avg_q} | Dzisiaj: ${data.games.today}`;
-    if (els.statMarketTop) els.statMarketTop.textContent = `Top Market: ${data.games.top_market_game} (${data.games.from_market} kopii)`;
-    
-    if (els.statFunnelEvents) els.statFunnelEvents.textContent = data.funnel.real_events;
-    if (els.statGameplayStarts) els.statGameplayStarts.textContent = `Rozgrywki (Control): ${data.funnel.control_usage}`;
-    if (els.statBuzzerUsage) els.statBuzzerUsage.textContent = `Buzery użyte w ${data.funnel.buzzer_usage} grach`;
-    if (els.statFunnelDead) {
-        // reuse existing element for smaller hint
-        els.statFunnelDead.textContent = `Brak gier: ${data.users.no_games} | Tylko edytor: ${data.funnel.tire_kickers}`;
-    }
-    
+    if (els.statGamesActivity) els.statGamesActivity.textContent = `Nowe 7d: ${data.games.new_7d} | Gotowe: ${data.games.ready}`;
+    if (els.statGamesQuality) els.statGamesQuality.textContent = `Śr. pytań: ${data.games.avg_q}`;
+
+    if (els.statPlayedTotal) els.statPlayedTotal.textContent = data.gameplay.played_30d;
+    if (els.statPlayedPeriods) els.statPlayedPeriods.textContent = `Dziś: ${data.gameplay.played_today} | 7d: ${data.gameplay.played_7d} | 30d: ${data.gameplay.played_30d}`;
+    if (els.statBuzzerActivity) els.statBuzzerActivity.textContent = `Buzzer 7d: ${data.gameplay.buzzer_7d} | Sesje ankiet 7d: ${data.polls.sessions_7d}`;
+
     if (els.statRating) els.statRating.textContent = `${data.ratings.average} / 5`;
+    if (els.statRatingsTotal) els.statRatingsTotal.textContent = `Ocen: ${data.ratings.total}`;
     if (els.statHealthMails) els.statHealthMails.textContent = `Błędy maili (24h): ${data.health.mail_errors}`;
-    if (els.statRatingsTotal) els.statRatingsTotal.textContent = `Ocen: ${data.ratings.total} | Głosów: ${data.activity.votes}`;
     
     if (els.statsUpdateTs) {
       const date = new Date(data.timestamp).toLocaleString();
