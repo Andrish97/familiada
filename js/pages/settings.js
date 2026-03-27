@@ -918,22 +918,25 @@ function pct(part, total) {
 function renderRetentionTable(data) {
   const tbody = document.getElementById("retentionTable");
   if (!tbody) return;
-  const { activation, retention } = data;
-  const total = activation.total || 1;
+  const { funnel, retention } = data;
+  const total = funnel.registered || 1;
   const d7pct  = retention.d7.cohort  ? Math.round(retention.d7.returned  / retention.d7.cohort  * 100) : null;
   const d30pct = retention.d30.cohort ? Math.round(retention.d30.returned / retention.d30.cohort * 100) : null;
 
+  const sep = `<tr><td colspan="3" style="padding:4px 0 2px"><div style="border-top:1px solid rgba(255,255,255,.08)"></div></td></tr>`;
   const row = (label, value, percent, color) => `
     <tr>
       <td style="padding:5px 0;opacity:.6;font-size:12px">${label}</td>
       <td style="padding:5px 0;text-align:right;font-weight:700">${value}</td>
-      <td style="padding:5px 0;text-align:right;padding-left:10px;font-size:12px;color:${color || "inherit"};opacity:.7">${percent}</td>
+      <td style="padding:5px 0;text-align:right;padding-left:10px;font-size:12px;color:${color || "inherit"};opacity:.8">${percent}</td>
     </tr>`;
 
   tbody.innerHTML = `
-    ${row("Aktywowani (stworz. grę)", activation.activated, pct(activation.activated, total), "#4caf50")}
-    ${row("Nigdy aktywni", activation.never_active, pct(activation.never_active, total), "#ff5722")}
-    <tr><td colspan="3" style="padding:6px 0 2px"><div style="border-top:1px solid rgba(255,255,255,.08)"></div></td></tr>
+    ${row("1. Zarejestrowani", funnel.registered, "100%", "inherit")}
+    ${row("2. Stworzyli grę", funnel.game_created, pct(funnel.game_created, total), funnel.game_created / total >= 0.3 ? "#4caf50" : "#ffc107")}
+    ${row("3. Uruchomili rozgrywkę", funnel.game_played, pct(funnel.game_played, total), funnel.game_played / total >= 0.1 ? "#4caf50" : funnel.game_played > 0 ? "#ffc107" : "#ff5722")}
+    ${row("Nigdy aktywni", funnel.never_active, pct(funnel.never_active, total), "#ff5722")}
+    ${sep}
     ${row(
       `Retencja D7 <span style="opacity:.4;font-size:11px">(z ${retention.d7.cohort})</span>`,
       retention.d7.returned,
@@ -998,6 +1001,68 @@ function renderTrendChart(trend) {
     const show = i === 0 || i === 6 || i === 13;
     return `<div style="flex:1;font-size:9px;opacity:.4;text-align:center;overflow:hidden;white-space:nowrap">${show ? day.slice(5) : ""}</div>`;
   }).join("");
+}
+
+function renderExcludedList(users) {
+  const el = document.getElementById("excludedList");
+  if (!el) return;
+  if (!users.length) {
+    el.innerHTML = `<div style="opacity:.4;font-size:12px">Brak wykluczonych kont.</div>`;
+    return;
+  }
+  el.innerHTML = users.map(u => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border:1px solid rgba(255,255,255,.08);border-radius:8px;font-size:12px">
+      <span><b>${u.username || "—"}</b> <span style="opacity:.4">${u.email}</span></span>
+      <button class="btn xs" type="button" data-uid="${u.user_id}" style="opacity:.6">Usuń</button>
+    </div>`).join("");
+
+  el.querySelectorAll("[data-uid]").forEach(btn => {
+    btn.addEventListener("click", () => removeExcludedUser(btn.dataset.uid));
+  });
+}
+
+async function loadExcludedUsers() {
+  try {
+    const { data, error } = await sb().rpc("stats_excluded_list");
+    if (error) throw error;
+    renderExcludedList(Array.isArray(data) ? data : []);
+  } catch (e) {
+    console.error("[settings] loadExcludedUsers error:", e);
+  }
+}
+
+async function addExcludedUser() {
+  const input = document.getElementById("excludeUsernameInput");
+  const msg   = document.getElementById("excludeMsg");
+  const username = input?.value?.trim();
+  if (!username || !msg) return;
+  msg.textContent = "";
+  try {
+    const { data, error } = await sb().rpc("stats_exclude_user", { p_username: username });
+    if (error) throw error;
+    if (!data.ok) {
+      msg.style.color = "#ff5722";
+      msg.textContent = data.err === "not_found" ? "Nie znaleziono użytkownika." : data.err;
+      return;
+    }
+    msg.style.color = "#4caf50";
+    msg.textContent = `Wykluczono: ${username}`;
+    input.value = "";
+    await loadExcludedUsers();
+  } catch (e) {
+    msg.style.color = "#ff5722";
+    msg.textContent = "Błąd: " + (e.message || e);
+  }
+}
+
+async function removeExcludedUser(userId) {
+  try {
+    const { error } = await sb().rpc("stats_unexclude_user", { p_user_id: userId });
+    if (error) throw error;
+    await loadExcludedUsers();
+  } catch (e) {
+    console.error("[settings] removeExcludedUser error:", e);
+  }
 }
 
 async function loadRetentionStats() {
@@ -3252,8 +3317,15 @@ function wireStatsEvents() {
     els.btnStatsRefresh.addEventListener("click", () => {
       loadAdminStats();
       loadRetentionStats();
+      loadExcludedUsers();
     });
   }
+
+  const btnAdd = document.getElementById("btnExcludeAdd");
+  if (btnAdd) btnAdd.addEventListener("click", addExcludedUser);
+
+  const input = document.getElementById("excludeUsernameInput");
+  if (input) input.addEventListener("keydown", e => { if (e.key === "Enter") addExcludedUser(); });
 }
 
 function wireRatingsEvents() {
@@ -3271,7 +3343,7 @@ function wireEvents() {
     els.btnTabStats.addEventListener("click", async () => {
       if (activeTab === "tools") closeTools();
       setActiveTab("stats");
-      await Promise.all([loadAdminStats({ silent: true }), loadRetentionStats()]);
+      await Promise.all([loadAdminStats({ silent: true }), loadRetentionStats(), loadExcludedUsers()]);
     });
   }
 

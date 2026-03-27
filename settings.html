@@ -603,9 +603,9 @@
 
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
 
-              <!-- Tabela: aktywacja + D7/D30 -->
+              <!-- Lejek 3-poziomowy + D7/D30 -->
               <div style="padding:16px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(255,255,255,.03)">
-                <div style="font-size:11px;opacity:.5;text-transform:uppercase;font-weight:900;letter-spacing:1px;margin-bottom:12px">Aktywacja &amp; Retencja</div>
+                <div style="font-size:11px;opacity:.5;text-transform:uppercase;font-weight:900;letter-spacing:1px;margin-bottom:12px">Lejek &amp; Retencja</div>
                 <table style="width:100%;border-collapse:collapse;font-size:13px">
                   <tbody id="retentionTable">
                     <tr><td colspan="3" style="opacity:.4;font-size:12px;padding:8px 0">Ładowanie…</td></tr>
@@ -628,6 +628,21 @@
               <div style="font-size:11px;opacity:.5;text-transform:uppercase;font-weight:900;letter-spacing:1px;margin-bottom:12px">Nowi użytkownicy — ostatnie 14 dni</div>
               <div id="trendChart" style="display:flex;align-items:flex-end;gap:3px;height:64px"></div>
               <div id="trendLabels" style="display:flex;gap:3px;margin-top:4px"></div>
+            </div>
+          </div>
+
+          <!-- Wykluczenia ze statystyk -->
+          <div style="margin-top:24px">
+            <div style="font-size:11px;opacity:.4;text-transform:uppercase;font-weight:900;letter-spacing:1px;margin-bottom:14px">Wykluczenia ze statystyk</div>
+            <div style="padding:16px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(255,255,255,.03)">
+              <div style="display:flex;gap:8px;margin-bottom:14px">
+                <input class="inp" id="excludeUsernameInput" type="text" placeholder="Nazwa użytkownika…" style="flex:1"/>
+                <button class="btn sm gold" id="btnExcludeAdd" type="button">Wyklucz</button>
+              </div>
+              <div id="excludeMsg" style="font-size:12px;margin-bottom:10px;min-height:16px"></div>
+              <div id="excludedList" style="display:flex;flex-direction:column;gap:6px">
+                <div style="opacity:.4;font-size:12px">Ładowanie…</div>
+              </div>
             </div>
           </div>
 
