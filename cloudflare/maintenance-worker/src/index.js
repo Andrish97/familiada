@@ -1765,7 +1765,8 @@ async function handleAdminConfigApi(request, env, url) {
 // ============================================================
 
 const BOT_UA_PATTERNS = [
-  "googlebot", "bingbot", "slurp", "duckduckbot", "baiduspider",
+  "googlebot", "google-inspectiontool", "mediapartners-google", "googleweblight",
+  "bingbot", "slurp", "duckduckbot", "baiduspider",
   "yandexbot", "sogou", "exabot", "facebot", "ia_archiver",
   "linkedinbot", "twitterbot", "whatsapp", "telegrambot",
   "applebot", "semrushbot", "ahrefsbot", "mj12bot",
@@ -1883,7 +1884,10 @@ async function serveGameDetailSsr(request, env, url, originBase, originHost, res
     }
   } catch (err) {
     console.error("[worker] game detail SSR error:", err);
-    return fetch(request);
+    // Fallback: serwuj SPA marketplace zamiast 404
+    const mpUrl = new URL(url);
+    mpUrl.pathname = "/marketplace";
+    return fetchFromOrigin(request, mpUrl, originBase, originHost, resolveOverride);
   }
 
   if (!game || game.status !== "published") {
