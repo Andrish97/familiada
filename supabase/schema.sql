@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict jn85WoHZJeeIOd4BHWMWb5c6JhLQchVzy2NQdhQ1iUohuJQZp8Q6Egxs11kTMQ1
+\restrict VfDmrVxtu2e7yRR0C1sruF6EpmDFEDGGupdThWHsUDJo2HiGKof70XD4UqsvQEJ
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -4509,7 +4509,7 @@ $$;
 --
 
 CREATE FUNCTION "public"."market_game_by_slug"("p_slug" "text") RETURNS TABLE("id" "uuid", "title" "text", "description" "text", "lang" "text", "library_count" integer, "author_username" "text", "status" "public"."market_game_status", "payload" "jsonb", "in_library" boolean, "origin" "text", "slug" "text")
-    LANGUAGE "sql" STABLE
+    LANGUAGE "sql" STABLE SECURITY DEFINER
     SET "search_path" TO 'public'
     AS $$
   SELECT
@@ -13087,5 +13087,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict jn85WoHZJeeIOd4BHWMWb5c6JhLQchVzy2NQdhQ1iUohuJQZp8Q6Egxs11kTMQ1
+\unrestrict VfDmrVxtu2e7yRR0C1sruF6EpmDFEDGGupdThWHsUDJo2HiGKof70XD4UqsvQEJ
 
