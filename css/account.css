@@ -191,12 +191,8 @@ main.account-wrap .bar > div {
 
 
 /* ==========================================
-   Email notifications panel (wide)
+   Email notifications panel
 ========================================== */
-
-.account-panel--wide{
-  grid-column: 1 / -1;
-}
 
 .account-panel--email-notif{
   grid-template-rows: auto auto auto auto;
