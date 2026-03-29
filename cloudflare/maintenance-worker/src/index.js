@@ -1877,17 +1877,25 @@ async function serveGameDetailSsr(request, env, url, originBase, originHost, res
 
     // Slug → pobierz po slug
     const res = await supabaseRpc(env, "market_game_by_slug", { p_slug: param });
-    if (res.ok && Array.isArray(res.data) && res.data.length > 0) {
+    if (!res.ok) {
+      // Błąd Supabase — zwróć 503 zamiast 404, żeby Google nie deindeksował URL
+      console.error("[worker] market_game_by_slug failed:", res.status, res.text);
+      return new Response("Service temporarily unavailable", {
+        status: 503,
+        headers: { "Retry-After": "60", "Cache-Control": "no-store" },
+      });
+    }
+    if (Array.isArray(res.data) && res.data.length > 0) {
       game = res.data[0];
-    } else if (res.ok && res.data && !Array.isArray(res.data)) {
+    } else if (res.data && !Array.isArray(res.data)) {
       game = res.data;
     }
   } catch (err) {
     console.error("[worker] game detail SSR error:", err);
-    // Fallback: serwuj SPA marketplace zamiast 404
-    const mpUrl = new URL(url);
-    mpUrl.pathname = "/marketplace";
-    return fetchFromOrigin(request, mpUrl, originBase, originHost, resolveOverride);
+    return new Response("Service temporarily unavailable", {
+      status: 503,
+      headers: { "Retry-After": "60", "Cache-Control": "no-store" },
+    });
   }
 
   if (!game || game.status !== "published") {
