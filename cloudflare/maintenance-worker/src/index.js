@@ -123,7 +123,7 @@ export default {
     }
 
     // Game detail pages — SSR dla botów, marketplace SPA dla ludzi
-    if (request.method === "GET" && url.pathname.startsWith("/marketplace/game/")) {
+    if ((request.method === "GET" || request.method === "HEAD") && url.pathname.startsWith("/marketplace/game/")) {
       if (isBot(request)) {
         return serveGameDetailSsr(request, env, url, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
       }
