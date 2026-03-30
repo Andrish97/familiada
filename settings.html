@@ -32,6 +32,7 @@
       <button class="btn sm tab-btn" id="btnTabRatings" type="button" data-i18n="settings.tabs.ratings">Oceny</button>
       <button class="btn sm tab-btn" id="btnTabMail" type="button" data-i18n="settings.tabs.mail">Maile</button>
       <button class="btn sm tab-btn" id="btnTabReports" type="button" data-i18n="settings.tabs.reports">Zgłoszenia</button>
+      <button class="btn sm tab-btn" id="btnTabMarketing" type="button" data-i18n="settings.tabs.marketing">Marketing</button>
       <button class="btn sm tab-btn" id="btnTabMarketplace" type="button" data-i18n="settings.tabs.marketplace">Gry Społeczności</button>
       <button class="btn sm tab-btn" id="btnTabGenerator" type="button" data-i18n="settings.tabs.generator">Gry Producenta</button>
       <div class="ui-select" id="toolsSelect">
@@ -718,6 +719,83 @@
         <span class="status-bar" id="ge-status" style="flex:1"></span>
         <button class="btn sm" id="btnGameEditorCancel" type="button">Anuluj</button>
         <button class="btn sm gold" id="btnGameEditorSave" type="button">💾 Zapisz</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Marketing panel ── -->
+  <div class="market-admin-panel" id="marketingPanel" hidden>
+    <div class="mail-card" style="max-width:760px">
+      <div class="panel-head">
+        <div class="panel-title" data-i18n="settings.marketing.title">Wysyłka marketingowa</div>
+        <div class="panel-sub" data-i18n="settings.marketing.subtitle">Wyślij wiadomość do wielu adresatów jednocześnie</div>
+      </div>
+
+      <!-- Szablon -->
+      <div class="field">
+        <label class="field-label" data-i18n="settings.marketing.templateLabel">Szablon</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap" id="mktTemplateButtons">
+          <button class="btn sm active" type="button" data-tpl="invitation" data-i18n="settings.marketing.tplInvitation">Zaproszenie do rejestracji</button>
+          <button class="btn sm" type="button" data-tpl="event" data-i18n="settings.marketing.tplEvent">Event / Wesele</button>
+          <button class="btn sm" type="button" data-tpl="newsletter" data-i18n="settings.marketing.tplNewsletter">Newsletter</button>
+          <button class="btn sm" type="button" data-tpl="custom" data-i18n="settings.marketing.tplCustom">Autorska</button>
+        </div>
+      </div>
+
+      <!-- Temat -->
+      <div class="field">
+        <label class="field-label" for="mktSubject" data-i18n="settings.marketing.subjectLabel">Temat wiadomości</label>
+        <input class="inp" id="mktSubject" type="text" autocomplete="off" style="width:100%;box-sizing:border-box" placeholder="Temat…">
+        <span class="field-hint" id="mktSubjectHint" style="font-size:11px;opacity:.5"></span>
+      </div>
+
+      <!-- Treść (widoczna dla newsletter/custom) -->
+      <div class="field" id="mktBodyWrap">
+        <label class="field-label" for="mktBody" data-i18n="settings.marketing.bodyLabel">Treść wiadomości</label>
+        <textarea class="inp" id="mktBody" rows="7" style="width:100%;box-sizing:border-box;resize:vertical" placeholder="Treść…"></textarea>
+      </div>
+
+      <!-- Podgląd HTML -->
+      <div class="field" id="mktPreviewWrap" style="display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <label class="field-label" style="margin:0" data-i18n="settings.marketing.previewLabel">Podgląd e-maila</label>
+          <button class="btn sm" type="button" id="btnMktPreview" data-i18n="settings.marketing.previewBtn">Odśwież podgląd</button>
+        </div>
+        <iframe id="mktPreviewFrame" style="width:100%;min-height:340px;border:1px solid rgba(255,255,255,.1);border-radius:10px;background:#fff" sandbox="allow-same-origin"></iframe>
+      </div>
+      <div style="margin-bottom:12px">
+        <button class="btn sm" type="button" id="btnMktTogglePreview" data-i18n="settings.marketing.showPreview">Pokaż podgląd</button>
+      </div>
+
+      <hr style="border:none;border-top:1px solid rgba(255,255,255,.08);margin:8px 0 16px">
+
+      <!-- Odbiorcy -->
+      <div class="field">
+        <label class="field-label" data-i18n="settings.marketing.recipientsLabel">Odbiorcy</label>
+        <span class="field-hint" data-i18n="settings.marketing.recipientsHint" style="display:block;margin-bottom:6px">Wpisz adresy e-mail oddzielone przecinkami lub nową linią, lub wczytaj z pliku (.txt/.csv).</span>
+        <textarea class="inp" id="mktEmailInput" rows="4" style="width:100%;box-sizing:border-box;resize:vertical" placeholder="jan@example.com, anna@example.com&#10;lub&#10;jeden@mail.pl&#10;drugi@mail.pl"></textarea>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap">
+          <input type="file" id="mktFileInput" accept=".txt,.csv" style="display:none">
+          <label for="mktFileInput" class="btn sm" style="cursor:pointer" data-i18n="settings.marketing.loadFile">Wczytaj z pliku</label>
+          <button class="btn sm" type="button" id="btnMktParseEmails" data-i18n="settings.marketing.parseBtn">Waliduj listę</button>
+          <span id="mktEmailCount" style="font-size:12px;opacity:.5"></span>
+        </div>
+      </div>
+
+      <!-- Lista zwalidowanych adresów -->
+      <div id="mktEmailListWrap" style="display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <label class="field-label" style="margin:0" data-i18n="settings.marketing.validatedList">Zwalidowana lista</label>
+          <button class="btn sm" type="button" id="btnMktClearList" data-i18n="settings.marketing.clearList">Wyczyść</button>
+        </div>
+        <div id="mktEmailList" style="max-height:180px;overflow-y:auto;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.7;word-break:break-all;background:rgba(0,0,0,.2)"></div>
+        <div id="mktEmailStats" style="margin-top:6px;font-size:11px;opacity:.5"></div>
+      </div>
+
+      <!-- Send -->
+      <div style="display:flex;justify-content:flex-end;align-items:center;gap:10px;margin-top:16px;padding-top:12px;border-top:1px solid rgba(255,255,255,.08)">
+        <span id="mktSendStatus" style="font-size:12px;opacity:.6"></span>
+        <button class="btn sm gold" type="button" id="btnMktSend" data-i18n="settings.marketing.sendBtn">Wyślij do odbiorców</button>
       </div>
     </div>
   </div>
