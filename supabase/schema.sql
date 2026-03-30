@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 8MjRM4XoDMDFVyIcRztjUcaYFl9IYekYyr526xBAtb5PqeG3WHLWhkz7P3ovNAL
+\restrict a0K3E9cAGQ03UBpMN3d6qGjYUw5GYqGbranUf5Dp8CBhidWFbb2VorAFZb96dvX
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -3054,7 +3054,6 @@ BEGIN
       SELECT
         p.username,
         p.email,
-        p.language,
         p.is_guest,
         p.created_at
       FROM public.profiles p
@@ -13285,5 +13284,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 8MjRM4XoDMDFVyIcRztjUcaYFl9IYekYyr526xBAtb5PqeG3WHLWhkz7P3ovNAL
+\unrestrict a0K3E9cAGQ03UBpMN3d6qGjYUw5GYqGbranUf5Dp8CBhidWFbb2VorAFZb96dvX
 
