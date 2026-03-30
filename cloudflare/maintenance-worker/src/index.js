@@ -1069,7 +1069,7 @@ function buildMarketingEmail(templateId, opts = {}) {
     ${bodyContent}
     <!-- footer -->
     <div style="margin-top:28px;padding-top:16px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.35);text-align:center;line-height:1.6">
-      Familiada Online &mdash; bezpłatna gra na <a href="https://familiada.online" style="color:rgba(255,234,166,.5);text-decoration:none">familiada.online</a><br>
+      Familiada Online &mdash; bezpłatny system na <a href="https://familiada.online" style="color:rgba(255,234,166,.5);text-decoration:none">familiada.online</a><br>
       Wysłano z no-reply@familiada.online
     </div>
   </td></tr>
@@ -1106,9 +1106,9 @@ function buildMarketingEmail(templateId, opts = {}) {
 
   // ── INVITATION ────────────────────────────────────────────────────────────
   if (templateId === "invitation") {
-    const subject = customSubject || "familiada.online — profesjonalny system do Twoich eventów";
+    const subject = customSubject || "familiada.online — profesjonalny system do Twoich wydarzeń";
     const body = `
-      <p style="margin:0 0 6px;font-size:24px;font-weight:900;color:#ffeaa6;letter-spacing:.02em;line-height:1.2">Profesjonalna Familiada<br>na Twoim evencie.</p>
+      <p style="margin:0 0 6px;font-size:24px;font-weight:900;color:#ffeaa6;letter-spacing:.02em;line-height:1.2">Profesjonalna Familiada<br>na Twoim wydarzeniu.</p>
       <p style="margin:10px 0 18px;font-size:13px;color:rgba(255,255,255,.6)">Kompleksowy system do organizacji i prowadzenia teleturnieju w dowolnym miejscu.</p>
 
       <img src="${IMG_BASE}/landing-display.webp" width="516" alt="System Familiada Online"
@@ -1147,11 +1147,11 @@ function buildMarketingEmail(templateId, opts = {}) {
       <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);padding:14px;border-radius:12px">
         <p style="margin:0 0 8px;font-size:13px;font-weight:700;color:#ffeaa6">Gotowe gry w Marketplace</p>
         <p style="margin:0;font-size:12px;color:rgba(255,255,255,.65);line-height:1.5">
-          Nie musisz tworzyć gier od zera. Skorzystaj z bazy tysięcy pytań lub gotowych zestawów przygotowanych przez naszą społeczność i innych profesjonalnych eventowców.
+          Nie musisz tworzyć gier od zera. Skorzystaj z bazy tysięcy pytań lub gotowych zestawów przygotowanych przez naszą społeczność i innych profesjonalnych organizatorów.
         </p>
       </div>
 
-      <p style="margin:20px 0 0;font-size:13px;color:rgba(255,255,255,.55)">System idealny na wesela, eventy firmowe, urodziny i animacje.</p>
+      <p style="margin:20px 0 0;font-size:13px;color:rgba(255,255,255,.55)">System idealny na wesela, wydarzenia firmowe, urodziny i animacje.</p>
       <p style="margin:4px 0 0;font-size:13px;color:rgba(255,255,255,.55)">Dostęp przez przeglądarkę — brak limitów urządzeń i sesji.</p>
 
       ${cta("https://familiada.online/login", "Załóż darmowe konto i sprawdź system")}`;

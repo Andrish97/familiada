@@ -134,7 +134,7 @@ const pl = {
       t3: {
         alt: "Współpraca przy tworzeniu gry - dodawanie znajomych i udostępnianie sondaży",
         t: "Znajomi i wspólne bazy pytań",
-        d: "Dodawaj znajomych, aby wspólnie pracować nad sondażami i bazami pytań. Idealne przy organizacji dużych eventów firmowych czy wesel.",
+        d: "Dodawaj znajomych, aby wspólnie pracować nad sondażami i bazami pytań. Idealne przy organizacji dużych wydarzeń firmowych czy wesel.",
       },
       t4: {
         alt: "Sondaż online z kodem QR - zbieranie odpowiedzi od gości",
@@ -184,14 +184,14 @@ const pl = {
     },
     forwhom: {
       title: "Dla kogo jest Familiada Online?",
-      t1: { t: "Eventy firmowe i integracje", d: "Familiada to sprawdzony format na integrację zespołu — angażuje wszystkich, rozśmiesza i nie wymaga żadnego doświadczenia od uczestników. Przygotuj grę przed eventem, zbierz odpowiedzi w sondażu i poprowadź rozgrywkę na żywo." },
-      t2: { t: "Animatorzy i wodzirejowie", d: "Prowadzisz eventy zawodowo i potrzebujesz narzędzia które nie zawiedzie przed klientem. Panel operatora, osobny widok prowadzącego i tablica wyników działają niezależnie — każdy skupia się na swojej roli." },
+      t1: { t: "Wydarzenia firmowe i integracje", d: "Familiada to sprawdzony format na integrację zespołu — angażuje wszystkich, rozśmiesza i nie wymaga żadnego doświadczenia od uczestników. Przygotuj grę przed wydarzeniem, zbierz odpowiedzi w sondażu i poprowadź rozgrywkę na żywo." },
+      t2: { t: "Animatorzy i wodzirejowie", d: "Prowadzisz wydarzenia zawodowo i potrzebujesz narzędzia które nie zawiedzie przed klientem. Panel operatora, osobny widok prowadzącego i tablica wyników działają niezależnie — każdy skupia się na swojej roli." },
       t3: { t: "Szkoły i konkursy wiedzy", d: "Nauczyciele i animatorzy używają systemu do prowadzenia konkursów klasowych i szkolnych. Sondaż zbiera odpowiedzi uczniów, a tablica wyników buduje napięcie podczas rozgrywki." },
       t4: { t: "Wesela i urodziny", d: "Familiada jako atrakcja na weselu lub urodzinach — goście odpowiadają w sondażu przed imprezą, a gra na żywo bawi wszystkich przy stole. Wystarczy telefon, zero technikaliów dla gości." },
-      t5: { t: "Konferencje i eventy sceniczne", d: "Panel operatora i osobny widok prowadzącego pozwalają płynnie poprowadzić grę na dużej scenie. Tablica wyników działa na dowolnym ekranie — TV, rzutniku lub monitorze." },
+      t5: { t: "Konferencje i wydarzenia sceniczne", d: "Panel operatora i osobny widok prowadzącego pozwalają płynnie poprowadzić grę na dużej scenie. Tablica wyników działa na dowolnym ekranie — TV, rzutniku lub monitorze." },
       t6: { t: "Domy kultury i świetlice", d: "Cykliczna atrakcja dla społeczności lokalnej — na wieczorze gier, festynie lub spotkaniu integracyjnym. Nie wymaga żadnego specjalistycznego sprzętu ani przygotowania technicznego." },
       t7: { t: "Grupy znajomych", d: "Impreza urodzinowa, spotkanie przy stole, wieczór w większym gronie. Familiada angażuje wszystkich naraz — nawet tych którzy zwykle nie grają. Przygotuj grę preparowaną z gotowymi pytaniami i wszyscy mogą grać nie znając odpowiedzi z góry." },
-      t8: { t: "Organizacje i stowarzyszenia", d: "Zebrania, integracje, eventy dla wolontariuszy. Familiada to dobry sposób na rozluźnienie atmosfery i wciągnięcie wszystkich — niezależnie od wieku i doświadczenia z grami." },
+      t8: { t: "Organizacje i stowarzyszenia", d: "Zebrania, integracje, wydarzenia dla wolontariuszy. Familiada to dobry sposób na rozluźnienie atmosfery i wciągnięcie wszystkich — niezależnie od wieku i doświadczenia z grami." },
     },
     faq: {
       title: "Najczęstsze pytania",
@@ -4514,7 +4514,7 @@ const pl = {
         time: "Czas",
         function: "Funkcja",
         level: "Poziom",
-        event: "Event",
+        event: "Zdarzenie",
         provider: "Provider",
         action: "Akcja",
       },
