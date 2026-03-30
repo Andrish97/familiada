@@ -390,6 +390,9 @@ export function createStore(gameId) {
     emit();
   }
 
+  function notify() {
+    emit();
+  }
 
   return {
     state,
@@ -416,6 +419,7 @@ export function createStore(gameId) {
     setQrBuzzerOnDisplay,
     setFinalActive,
     setGameStarted,
+    notify,
 
     teamsOk,
     canFinishSetup,

@@ -392,6 +392,7 @@ function hostUpdate() {
       r._questionPool = rounds || [];
       r._usedQuestionIds = [];
       r.roundNo = 1;
+      store.notify();
     }
   }
 
@@ -407,6 +408,7 @@ function hostUpdate() {
     }
 
     r.roundNo = r._usedQuestionIds.length || 1;
+    store.notify();
     return obj || null;
   }
 
@@ -608,6 +610,8 @@ function hostUpdate() {
 
     updatePlayControls();
 
+    store.notify();
+
     let dur = 0;
     try {
       dur = await getSfxDuration("round_transition");
@@ -806,6 +810,7 @@ function hostUpdate() {
 
     updatePlayControls();
     hostUpdate();
+    store.notify();
   }
 
   function handleBuzzerClick(team) {
@@ -1283,10 +1288,11 @@ function hostUpdate() {
     r.allowPass = false;
   
     r.phase = "READY";
-  
+
     clearTimer3();
     ui.setRoundsHud(r);
-  
+    store.notify();
+
     const moreQuestions = hasMoreQuestions();
     const thresholdHit = isThresholdHit();
   
