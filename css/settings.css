@@ -671,6 +671,7 @@ body.tools-fullscreen .tools-frame-wrap iframe{
 }
 
 .mail-cards{
+  margin-top: 16px;
   display: grid;
   gap: 14px;
 }
@@ -1310,6 +1311,7 @@ body.tools-fullscreen .tools-frame-wrap iframe{
 ========================================================= */
 
 .market-admin-panel{
+  margin-top: 16px;
   padding: 0 4px;
   display: grid;
   gap: 14px;

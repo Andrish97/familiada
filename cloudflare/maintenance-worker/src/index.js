@@ -1106,17 +1106,17 @@ function buildMarketingEmail(templateId, opts = {}) {
 
   // ── INVITATION ────────────────────────────────────────────────────────────
   if (templateId === "invitation") {
-    const subject = customSubject || "Familiada Online — darmowy teleturniej w przeglądarce";
+    const subject = customSubject || "System do organizacji Familiady — darmowe narzędzie online";
     const body = `
-      <p style="margin:0 0 6px;font-size:22px;font-weight:900;color:#ffeaa6;letter-spacing:.02em;line-height:1.2">Darmowa Familiada<br>w Twojej przeglądarce.</p>
-      <p style="margin:10px 0 18px;font-size:13px;color:rgba(255,255,255,.6)">Prawdziwy teleturniej na Twoim sprzęcie — bez instalacji, bez opłat.</p>
+      <p style="margin:0 0 6px;font-size:22px;font-weight:900;color:#ffeaa6;letter-spacing:.02em;line-height:1.2">System do organizacji Familiady<br>na Twoim evencie.</p>
+      <p style="margin:10px 0 18px;font-size:13px;color:rgba(255,255,255,.6)">Kompletne narzędzie dla prowadzącego i uczestników — bez instalacji, bez opłat.</p>
 
       <img src="${IMG_BASE}/landing-display.webp" width="516" alt="Tablica wyników Familiady Online"
            style="width:100%;max-width:516px;border-radius:12px;display:block;border:0;margin-bottom:20px"/>
 
       <p style="margin:0 0 14px;font-size:14px;line-height:1.7;color:rgba(255,255,255,.88)">
         Cześć!<br><br>
-        <strong style="color:#fff">familiada.online</strong> to kompletna platforma do prowadzenia Familiady — stworzysz grę, zbierzesz sondaż i poprowadzisz rozgrywkę na żywo. <strong style="color:#ffeaa6">Całkowicie bezpłatnie.</strong> Zawsze.
+        <strong style="color:#fff">familiada.online</strong> to kompletna platforma do prowadzenia i organizacji Familiady — stworzysz grę, zbierzesz sondaż i poprowadzisz rozgrywkę na żywo na dowolnym ekranie. <strong style="color:#ffeaa6">Całkowicie bezpłatnie.</strong> Zawsze.
       </p>
 
       ${divider()}
@@ -1128,33 +1128,33 @@ function buildMarketingEmail(templateId, opts = {}) {
       )}
       ${featureTile(
         `${IMG_BASE}/landing-control.webp`,
-        "Panel operatora — pełna kontrola gry na żywo",
+        "Panel operatora — pełna kontrola eventu na żywo",
         "Otwierasz rundy, odkrywasz odpowiedzi, przyznasz punkty i zatwierdzasz błędy X. Panel prowadzi przez kolejne etapy — nawet przy pierwszym razie nie zgubisz się."
       )}
       ${featureTile(
         `${IMG_BASE}/landing-display.webp`,
         "Tablica na TV lub rzutnik",
-        "To co widzą wszyscy na sali — pytanie, zakryte odpowiedzi odsłaniające się jedna po drugiej, bank punktów i błędy X. Podłącz do telewizora i masz prawdziwy teleturniej."
+        "To co widzą wszyscy na sali — pytanie, zakryte odpowiedzi odsłaniające się jedna po drugiej, bank punktów i błędy X. Podłącz do telewizora i masz gotowy teleturniej."
       )}
       ${featureTile(
         `${IMG_BASE}/landing-host.webp`,
         "Widok prowadzącego na tablecie",
-        "Osobny ekran z treścią pytań i podglądem odpowiedzi — bez ryzyka przypadkowego kliknięcia w sterowanie grą."
+        "Osobny ekran z treścią pytań i podglądem odpowiedzi — bez ryzyka przypadkowego kliknięcia w sterowanie i bez podglądania przez gości."
       )}
 
       ${divider()}
 
-      <p style="margin:0 0 4px;font-size:13px;color:rgba(255,255,255,.55)">Idealna na wesele, urodziny i event firmowy.</p>
+      <p style="margin:0 0 4px;font-size:13px;color:rgba(255,255,255,.55)">System idealny na wesele, urodziny i event firmowy.</p>
       <p style="margin:0;font-size:13px;color:rgba(255,255,255,.55)">Tryb gościa — bez zakładania konta. Konto wymaga tylko adresu e-mail.</p>
 
-      ${cta("https://familiada.online/login", "Zacznij tworzyć gry — to nic nie kosztuje")}`;
+      ${cta("https://familiada.online/login", "Załóż konto i zorganizuj swój event")} (bez opłat)`;
 
     return { subject, html: shell(body) };
   }
 
   // ── EVENT (pro organizers) ────────────────────────────────────────────────
   if (templateId === "event") {
-    const subject = customSubject || "familiada.online — narzędzie dla prowadzących";
+    const subject = customSubject || "familiada.online — profesjonalny system dla prowadzących";
     const body = `
       <p style="margin:0 0 18px;font-size:14px;line-height:1.8;color:rgba(255,255,255,.9)">Cześć,</p>
 
@@ -1166,31 +1166,31 @@ function buildMarketingEmail(templateId, opts = {}) {
            style="width:100%;max-width:516px;border-radius:12px;display:block;border:0;margin-bottom:18px"/>
 
       <p style="margin:0 0 14px;font-size:14px;line-height:1.8;color:rgba(255,255,255,.88)">
-        <a href="https://familiada.online" style="color:#ffeaa6;text-decoration:none;font-weight:700">familiada.online</a> to platforma zaprojektowana z myślą o prowadzących: masz panel operatora, osobny widok prowadzącego i tablicę wyników działające całkowicie niezależnie. Każdy skupia się na swojej roli, a gra idzie płynnie.
+        <a href="https://familiada.online" style="color:#ffeaa6;text-decoration:none;font-weight:700">familiada.online</a> to platforma zaprojektowana z myślą o profesjonalistach: masz panel operatora, osobny widok prowadzącego i tablicę wyników działające całkowicie niezależnie.
       </p>
 
       <img src="${IMG_BASE}/landing-host.webp" width="516" alt="Widok prowadzącego — tablet lub telefon"
            style="width:100%;max-width:516px;border-radius:12px;display:block;border:0;margin-bottom:18px"/>
 
       <p style="margin:0 0 14px;font-size:14px;line-height:1.8;color:rgba(255,255,255,.88)">
-        Sondaż zbierasz przed eventem (goście odpowiadają z telefonu), a rozgrywkę prowadzisz na żywo na dowolnym ekranie. Zero instalacji, zero technikaliów dla uczestników.
+        Sondaż zbierasz przed eventem (goście odpowiadają z telefonu), a rozgrywkę prowadzisz na żywo na dowolnym ekranie. To kompletny system, który podnosi prestiż każdej imprezy.
       </p>
 
       <img src="${IMG_BASE}/landing-polls.webp" width="516" alt="Sondaż online z kodem QR"
            style="width:100%;max-width:516px;border-radius:12px;display:block;border:0;margin-bottom:18px"/>
 
       <p style="margin:0 0 14px;font-size:14px;line-height:1.8;color:rgba(255,255,255,.88)">
-        Używają tego animatorzy, wodzirejowie i konferansjerzy&nbsp;— jako gotowe narzędzie, które można wrzucić do swojego repertuaru i mieć pewność, że zadziała.
+        Używają tego animatorzy, wodzirejowie i konferansjerzy&nbsp;— jako gotowe, profesjonalne rozwiązanie, które można wrzucić do swojego repertuaru i mieć pewność, że zadziała.
       </p>
 
       ${divider()}
 
       <p style="margin:0 0 6px;font-size:14px;color:rgba(255,255,255,.88)">
-        Chętnie wyślę dostęp demo — napisz tylko i sprawdź sam.
+        W razie pytań służę pomocą. Sprawdź możliwości systemu i podnieś poziom swoich eventów.
       </p>
       <p style="margin:0 0 18px;font-size:14px;color:rgba(255,255,255,.88)">Pozdrawiam,</p>
 
-      ${cta("https://familiada.online", "familiada.online")}`;
+      ${cta("https://familiada.online", "Sprawdź system familiada.online")}`;
 
     return { subject, html: shell(body) };
   }
