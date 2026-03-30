@@ -4550,6 +4550,7 @@ const en = {
     sectionRounds: "Rounds",
     roundsQuestionsMode: "Round Questions",
     extraSettingsTitle: "Advanced Settings",
+    extraSettingsHint: "Change settings wisely! Too high thresholds may run out of questions, and too high prize amount may not fit on the display.",
     roundMultipliers: "Round multipliers",
     roundMultipliersHint: "e.g., 1,1,1,2,3",
     gameTarget: "Game target",

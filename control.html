@@ -506,6 +506,9 @@
                   <!-- DOLNA SEKCJA - DODATKOWE USTAWIENIA -->
                   <div class="sectionBlock">
                     <div class="sectionTitle" data-i18n="control.extraSettingsTitle">Dodatkowe ustawienia</div>
+                    <div class="hint" data-i18n="control.extraSettingsHint" style="margin-bottom:10px;">
+                      Zmieniaj ustawienia mądrze! Zbyt wysokie progi mogą spowodować brak pytań, a za duża kwota wygranej może nie zmieścić się na wyświetlaczu.
+                    </div>
 
                     <div class="settings-grid settings-grid-2">
                       <div class="setting-item">
@@ -586,8 +589,12 @@
                           class="inp"
                           type="number"
                           min="0"
+                          max="99999"
                           step="100"
                         />
+                        <div class="hint" data-i18n="control.mainPrizeAmountHint">
+                          Maks. 5 cyfr (do 99 999)
+                        </div>
                       </div>
                     </div>
 

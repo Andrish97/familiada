@@ -356,9 +356,9 @@ export function createStore(gameId) {
       next.finalPrizeMultiplier = partial.finalPrizeMultiplier;
     }
 
-    // kwota nagrody głównej
+    // kwota nagrody głównej (max 5 cyfr)
     if (typeof partial.mainPrizeAmount === "number") {
-      next.mainPrizeAmount = partial.mainPrizeAmount;
+      next.mainPrizeAmount = Math.min(partial.mainPrizeAmount, 99999);
     }
 
     // stary klucz (kompatybilność)

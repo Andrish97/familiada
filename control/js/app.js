@@ -1321,7 +1321,9 @@ async function sendZeroStatesToDevices() {
     // kwota nagrody głównej
     if (form.mainPrizeAmountText != null && form.mainPrizeAmountText !== "") {
       const n = Number.parseInt(form.mainPrizeAmountText, 10);
-      if (Number.isFinite(n) && n >= 0) adv.mainPrizeAmount = n;
+      if (Number.isFinite(n) && n >= 0) {
+        adv.mainPrizeAmount = Math.min(n, 99999); // max 5 cyfr
+      }
     }
 
     if (form.winMode === "logo" || form.winMode === "points" || form.winMode === "money") {

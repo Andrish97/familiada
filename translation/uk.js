@@ -4424,6 +4424,7 @@ const uk = {
     sectionRounds: "Раунди",
     roundsQuestionsMode: "Питання раундів",
     extraSettingsTitle: "Додаткові налаштування",
+    extraSettingsHint: "Змінюйте налаштування розумно! Занадто високі пороги можуть призвести до нестачі запитань, а занадто велика сума виграшу може не поміститися на дисплеї.",
     roundMultipliers: "Множники раундів",
     roundMultipliersHint: "напр., 1,1,1,2,3",
     gameTarget: "Мета гри",
