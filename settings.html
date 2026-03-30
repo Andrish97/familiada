@@ -362,6 +362,29 @@
           </table>
         </div>
         <div class="field-hint" id="marketTableInfo">—</div>
+
+        <div class="mail-card" style="margin-top:20px">
+          <div class="panel-head" style="margin-bottom:12px">
+            <div class="panel-title" style="font-size:1em" data-i18n="settings.marketplace.producerRatingsTitle">Oceny gier producenta</div>
+            <button class="btn sm" id="btnProducerRatingsRefresh" type="button" data-i18n="settings.actions.refresh">Odśwież</button>
+          </div>
+          <div class="mail-table-wrap">
+            <table class="mail-table">
+              <thead>
+                <tr>
+                  <th data-i18n="settings.marketplace.col.title">Tytuł</th>
+                  <th data-i18n="settings.marketplace.col.lang">Język</th>
+                  <th>★</th>
+                  <th data-i18n="settings.marketplace.producerRatingsColCount">Ocen</th>
+                  <th data-i18n="settings.marketplace.producerRatingsColAdded">Dodań</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="producerRatingsBody"></tbody>
+            </table>
+          </div>
+          <div class="field-hint" id="producerRatingsInfo"></div>
+        </div>
         </div>
       </div>
 
@@ -840,6 +863,17 @@
         <button class="btn sm" id="dtCancel" type="button" data-i18n="settings.actions.cancel">Anuluj</button>
         <button class="btn sm gold" id="dtOk" type="button" data-i18n="settings.actions.ok">OK</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Raters modal -->
+  <div class="overlay" id="ratersOverlay" style="display:none">
+    <div class="modal" style="max-width:480px;width:94vw">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div class="mTitle" id="ratersTitle">Oceniający</div>
+        <button class="btn sm" id="btnRatersClose" type="button">✕</button>
+      </div>
+      <div id="ratersBody" style="max-height:60vh;overflow-y:auto"></div>
     </div>
   </div>
  </body>

@@ -614,6 +614,24 @@ async function handleAdminMarketplaceApi(request, env, url) {
     return json({ ok: true, rows: Array.isArray(res.data) ? res.data : [] });
   }
 
+  // GET /_admin_api/marketplace/producer-ratings
+  if (url.pathname === "/_admin_api/marketplace/producer-ratings") {
+    if (request.method !== "GET") return new Response("Method Not Allowed", { status: 405 });
+    const res = await supabaseRpc(env, "market_admin_producer_games", {});
+    if (!res.ok) return json({ ok: false, error: "market_admin_producer_games_failed", details: summarizeSupabaseError(res) }, res.status || 500);
+    return json({ ok: true, rows: Array.isArray(res.data) ? res.data : [] });
+  }
+
+  // GET /_admin_api/marketplace/game-raters?id=...
+  if (url.pathname === "/_admin_api/marketplace/game-raters") {
+    if (request.method !== "GET") return new Response("Method Not Allowed", { status: 405 });
+    const id = String(url.searchParams.get("id") || "").trim();
+    if (!id) return json({ ok: false, error: "missing_id" }, 400);
+    const res = await supabaseRpc(env, "market_game_raters", { p_market_game_id: id });
+    if (!res.ok) return json({ ok: false, error: "market_game_raters_failed", details: summarizeSupabaseError(res) }, res.status || 500);
+    return json({ ok: true, rows: Array.isArray(res.data) ? res.data : [] });
+  }
+
   // GET /_admin_api/marketplace/detail?id=...
   if (url.pathname === "/_admin_api/marketplace/detail") {
     if (request.method !== "GET") return new Response("Method Not Allowed", { status: 405 });

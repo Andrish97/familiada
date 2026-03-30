@@ -1859,6 +1859,66 @@ async function adminHardDelete(id) {
 }
 
 
+async function loadProducerRatings() {
+  const tbody = document.getElementById("producerRatingsBody");
+  const info  = document.getElementById("producerRatingsInfo");
+  if (!tbody) return;
+  if (info) info.textContent = t("settings.marketplace.loading") || "Ładowanie…";
+  try {
+    const res = await adminFetch("/_admin_api/marketplace/producer-ratings");
+    if (!res.ok) throw new Error(await res.text());
+    const { rows } = await res.json();
+    if (info) info.textContent = "";
+    if (!rows || !rows.length) {
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;opacity:.6">Brak gier producenta.</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = rows.map(g => `<tr>
+      <td>${escSetting(g.title)}</td>
+      <td>${escSetting(g.lang.toUpperCase())}</td>
+      <td>${g.avg_rating > 0 ? (+(g.avg_rating)).toFixed(1) + " ★" : "—"}</td>
+      <td>${g.rating_count}</td>
+      <td>${g.library_count}</td>
+      <td><button class="btn sm" data-raters-id="${escSetting(g.id)}" data-raters-title="${escSetting(g.title)}" type="button">${t("settings.marketplace.producerRatersBtnView") || "Oceniający"}</button></td>
+    </tr>`).join("");
+    tbody.querySelectorAll("[data-raters-id]").forEach(btn => {
+      btn.addEventListener("click", () => openRatersModal(btn.dataset.ratersId, btn.dataset.ratersTitle));
+    });
+  } catch (err) {
+    if (info) info.textContent = String(err?.message || err);
+  }
+}
+
+async function openRatersModal(gameId, title) {
+  const overlay = document.getElementById("ratersOverlay");
+  const body    = document.getElementById("ratersBody");
+  const titleEl = document.getElementById("ratersTitle");
+  if (!overlay || !body) return;
+  if (titleEl) titleEl.textContent = title || t("settings.marketplace.producerRatersBtnView") || "Oceniający";
+  body.innerHTML = t("settings.marketplace.loading") || "Ładowanie…";
+  overlay.style.display = "";
+  try {
+    const res = await adminFetch(`/_admin_api/marketplace/game-raters?id=${encodeURIComponent(gameId)}`);
+    if (!res.ok) throw new Error(await res.text());
+    const { rows } = await res.json();
+    if (!rows || !rows.length) {
+      body.textContent = "Brak ocen.";
+      return;
+    }
+    body.innerHTML = `<table class="mail-table"><thead><tr>
+      <th>Użytkownik</th><th>Ocena</th><th>Data</th>
+    </tr></thead><tbody>${rows.map(r =>
+      `<tr>
+        <td>${escSetting(r.username || "?")}</td>
+        <td>${"★".repeat(r.stars)}${"☆".repeat(5 - r.stars)} (${r.stars})</td>
+        <td>${new Date(r.rated_at).toLocaleString()}</td>
+      </tr>`
+    ).join("")}</tbody></table>`;
+  } catch (err) {
+    body.textContent = String(err?.message || err);
+  }
+}
+
 async function testTelegram() {
   const status = document.getElementById("telegramStatus");
   try {
@@ -2884,6 +2944,14 @@ function wireMarketplaceEvents() {
 
   // Odśwież
   document.getElementById("btnMarketRefresh")?.addEventListener("click", () => loadMarketplace());
+  document.getElementById("btnProducerRatingsRefresh")?.addEventListener("click", () => loadProducerRatings());
+  document.getElementById("btnRatersClose")?.addEventListener("click", () => {
+    const ov = document.getElementById("ratersOverlay");
+    if (ov) ov.style.display = "none";
+  });
+  document.getElementById("ratersOverlay")?.addEventListener("click", e => {
+    if (e.target === e.currentTarget) e.currentTarget.style.display = "none";
+  });
 
   // Sync Storage
   // Telegram config
@@ -3927,6 +3995,7 @@ function wireEvents() {
       if (activeTab === "tools") closeTools();
       setActiveTab("marketplace");
       await loadMarketplace({ silent: true });
+      loadProducerRatings();
     });
   }
 

@@ -4400,6 +4400,14 @@ const en = {
       questions: "Questions",
       noQuestions: "No questions available.",
     },
+    rating: {
+      none: "No ratings yet",
+      rateThis: "Rate this game:",
+      yourRating: "Your rating: {stars} ★",
+      saved: "Rating saved ✓",
+      ownGameError: "You cannot rate your own game.",
+      ratersTitle: "Who rated",
+    },
     mySent: {
       title: "My submitted games",
       empty: "You haven't submitted any games to Community Games yet.",
@@ -4410,6 +4418,7 @@ const en = {
       statusWithdrawn: "Withdrawn",
       reasonLabel: "Reason: {note}",
       btnWithdraw: "Withdraw",
+      btnPreview: "Preview / Ratings",
       withdrawConfirmTitle: "Withdraw game?",
       withdrawConfirm: "Are you sure you want to withdraw this game from Community Games?",
       withdrawn: "Withdrawn.",

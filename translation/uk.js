@@ -4274,6 +4274,14 @@ const uk = {
       questions: "Питання",
       noQuestions: "Немає питань для перегляду.",
     },
+    rating: {
+      none: "Немає оцінок",
+      rateThis: "Оцініть цю гру:",
+      yourRating: "Ваша оцінка: {stars} ★",
+      saved: "Оцінку збережено ✓",
+      ownGameError: "Не можна оцінювати власну гру.",
+      ratersTitle: "Хто оцінив",
+    },
     mySent: {
       title: "Мої надіслані ігри",
       empty: "Ви ще не надсилали ігри до Ігор Спільноти.",
@@ -4284,6 +4292,7 @@ const uk = {
       statusWithdrawn: "Відкликано",
       reasonLabel: "Причина: {note}",
       btnWithdraw: "Відкликати",
+      btnPreview: "Перегляд / Оцінки",
       withdrawConfirmTitle: "Відкликати гру?",
       withdrawConfirm: "Справді відкликати цю гру з Ігор Спільноти?",
       withdrawn: "Відкликано.",

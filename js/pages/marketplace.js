@@ -163,6 +163,7 @@ function makeGameCard(g) {
     <div class="mkt-card-desc">${esc(g.description)}</div>
     <div class="mkt-card-footer">
       <span class="mkt-count">${esc(t("marketplace.libraryCount").replace("{count}", g.library_count ?? 0))}</span>
+      ${starsDisplay(g.avg_rating, g.rating_count)}
     </div>`;
 
   card.addEventListener("click", () => openDetail(g.id));
@@ -220,6 +221,29 @@ async function openDetail(id, { fromUrl = false } = {}) {
         </div>`;
       }).join("");
     }
+  }
+
+  // Rating display + input
+  const detailRating = document.getElementById("detailRating");
+  if (detailRating) {
+    detailRating.innerHTML = "";
+    const summary = document.createElement("div");
+    summary.className = "mkt-rating-summary";
+    summary.innerHTML = starsDisplay(g.avg_rating, g.rating_count);
+    detailRating.appendChild(summary);
+
+    const canRate = !!currentUser && !isGuest && g.status === "published";
+    if (canRate) {
+      detailRating.appendChild(buildStarInput(id, g.user_stars ?? null));
+    }
+  }
+
+  // Raters list (only visible if current user is the author — RPC returns empty otherwise)
+  const detailRaters = document.getElementById("detailRaters");
+  if (detailRaters) {
+    detailRaters.hidden = true;
+    detailRaters.innerHTML = "";
+    if (currentUser) loadRaters(id, detailRaters);
   }
 
   // Przyciski biblioteki
@@ -348,20 +372,31 @@ async function loadMySent() {
     const withdrawBtn = g.status === "published"
       ? `<button class="btn sm" data-withdraw="${esc(g.id)}" type="button">${esc(t("marketplace.mySent.btnWithdraw"))}</button>`
       : "";
+    const ratingInfo = g.rating_count
+      ? `<span class="mkt-sent-rating">${starsDisplay(g.avg_rating, g.rating_count)}</span>`
+      : "";
+    const libraryInfo = `<span class="mkt-sent-library">${esc(t("marketplace.libraryCount").replace("{count}", g.library_count ?? 0))}</span>`;
     return `<div class="mkt-sent-row">
       <div class="mkt-sent-info">
         <div class="mkt-sent-title">${esc(g.title)}</div>
-        <div class="mkt-sent-meta">${esc(g.lang.toUpperCase())}</div>
+        <div class="mkt-sent-meta">${esc(g.lang.toUpperCase())} · ${libraryInfo} ${ratingInfo}</div>
         <span class="mkt-status-badge ${statusClass}">${esc(statusLabels[g.status] ?? g.status)}</span>
         ${note}
       </div>
-      <div class="mkt-sent-actions">${withdrawBtn}</div>
+      <div class="mkt-sent-actions">
+        <button class="btn sm" data-preview="${esc(g.id)}" type="button">${esc(t("marketplace.mySent.btnPreview"))}</button>
+        ${withdrawBtn}
+      </div>
     </div>`;
   }).join("");
 
   // Wire withdraw buttons
   els.mySentList.querySelectorAll("[data-withdraw]").forEach(btn => {
     btn.addEventListener("click", () => withdrawGame(btn.dataset.withdraw));
+  });
+  // Wire preview buttons
+  els.mySentList.querySelectorAll("[data-preview]").forEach(btn => {
+    btn.addEventListener("click", () => openDetail(btn.dataset.preview));
   });
 }
 
@@ -487,6 +522,90 @@ async function submitGame() {
   closeSubmitModal();
   await loadMySent();
   fetch("/_api/notify-submission", { method: "POST" }).catch(() => {});
+}
+
+/* =========================================================
+   Ratings
+========================================================= */
+function starsDisplay(avg, count) {
+  if (!count) return `<span class="mkt-no-rating">${esc(t("marketplace.rating.none"))}</span>`;
+  const full = Math.round(+avg);
+  const stars = "★".repeat(full) + "☆".repeat(5 - full);
+  return `<span class="mkt-stars">${stars}</span> <span class="mkt-rating-avg">${(+avg).toFixed(1)}</span> <span class="mkt-rating-count">(${count})</span>`;
+}
+
+function buildStarInput(gameId, userStars) {
+  const wrap = document.createElement("div");
+  wrap.className = "mkt-rate-wrap";
+
+  const label = document.createElement("span");
+  label.className = "mkt-rate-label";
+  label.textContent = userStars
+    ? t("marketplace.rating.yourRating").replace("{stars}", userStars)
+    : t("marketplace.rating.rateThis");
+  wrap.appendChild(label);
+
+  const row = document.createElement("div");
+  row.className = "mkt-star-input";
+  for (let i = 1; i <= 5; i++) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "mkt-star-btn" + (userStars && i <= userStars ? " selected" : "");
+    btn.textContent = "★";
+    btn.dataset.stars = i;
+    btn.addEventListener("mouseover", () => {
+      row.querySelectorAll(".mkt-star-btn").forEach((b, j) => b.classList.toggle("hover", j < i));
+    });
+    btn.addEventListener("click", () => submitRating(gameId, i, wrap, label, row));
+    row.appendChild(btn);
+  }
+  row.addEventListener("mouseleave", () => {
+    row.querySelectorAll(".mkt-star-btn").forEach(b => b.classList.remove("hover"));
+  });
+  wrap.appendChild(row);
+  return wrap;
+}
+
+async function submitRating(gameId, stars, wrap, label, row) {
+  row.querySelectorAll(".mkt-star-btn").forEach(b => { b.disabled = true; });
+  const { data, error } = await sb().rpc("market_rate_game", { p_market_game_id: gameId, p_stars: stars });
+  row.querySelectorAll(".mkt-star-btn").forEach(b => { b.disabled = false; });
+
+  if (error) { showToast(t("marketplace.errorLoad"), "error"); return; }
+  const res = Array.isArray(data) ? data[0] : data;
+  if (!res?.ok) {
+    if (res?.err === "cannot_rate_own_game") showToast(t("marketplace.rating.ownGameError"), "error");
+    else showToast(res?.err || "error", "error");
+    return;
+  }
+  showToast(t("marketplace.rating.saved"), "success");
+  label.textContent = t("marketplace.rating.yourRating").replace("{stars}", stars);
+  row.querySelectorAll(".mkt-star-btn").forEach((b, i) => {
+    b.classList.toggle("selected", i < stars);
+  });
+  // Refresh summary counts in detail header
+  const { data: fresh } = await sb().rpc("market_game_detail", { p_id: gameId }).single();
+  if (fresh) {
+    const summary = wrap.closest(".mkt-detail-rating")?.querySelector(".mkt-rating-summary");
+    if (summary) summary.innerHTML = starsDisplay(fresh.avg_rating, fresh.rating_count);
+    // Refresh card on browse grid
+    const card = els.browseGrid?.querySelector(`[data-id="${gameId}"] .mkt-rating-summary`);
+    if (card) card.innerHTML = starsDisplay(fresh.avg_rating, fresh.rating_count);
+  }
+}
+
+async function loadRaters(gameId, container) {
+  const { data, error } = await sb().rpc("market_game_raters", { p_market_game_id: gameId });
+  if (error || !data?.length) return;
+  container.hidden = false;
+  container.innerHTML =
+    `<div class="mkt-raters-title">${esc(t("marketplace.rating.ratersTitle"))}</div>` +
+    data.map(r =>
+      `<div class="mkt-rater-row">
+        <span class="mkt-rater-name">${esc(r.username || "?")}</span>
+        <span class="mkt-rater-stars">${"★".repeat(r.stars)}${"☆".repeat(5 - r.stars)}</span>
+      </div>`
+    ).join("");
 }
 
 /* =========================================================
