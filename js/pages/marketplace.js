@@ -235,8 +235,8 @@ async function openDetail(id, { fromUrl = false } = {}) {
 }
 
 function updateLibraryButtons(inLibrary, withdrawn = false) {
-  const canAdd = !isGuest && !inLibrary;
-  const canRemove = !isGuest && inLibrary;
+  const canAdd = !!currentUser && !inLibrary;
+  const canRemove = !!currentUser && inLibrary;
 
   if (els.btnAddLibrary)    els.btnAddLibrary.hidden    = !canAdd;
   if (els.btnRemoveLibrary) els.btnRemoveLibrary.hidden = !canRemove;
@@ -264,7 +264,7 @@ function closeDetail() {
 ========================================================= */
 async function addToLibrary() {
   console.log("[marketplace] addToLibrary", detailGameId);
-  if (!detailGameId || isGuest) return;
+  if (!detailGameId || !currentUser) return;
   if (els.btnAddLibrary) els.btnAddLibrary.disabled = true;
 
   const { data, error } = await sb().rpc("market_add_to_library", { p_market_game_id: detailGameId });
@@ -282,7 +282,7 @@ async function addToLibrary() {
 
 async function removeFromLibrary() {
   console.log("[marketplace] removeFromLibrary", detailGameId);
-  if (!detailGameId || isGuest) return;
+  if (!detailGameId || !currentUser) return;
   if (els.btnRemoveLibrary) els.btnRemoveLibrary.disabled = true;
 
   const { data, error } = await sb().rpc("market_remove_from_library", { p_market_game_id: detailGameId });

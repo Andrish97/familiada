@@ -282,7 +282,7 @@ async function getSilentCaptchaToken() {
 
     const tokenPromise = new Promise((resolve) => {
       const done = () => resolve(String(token || "").trim());
-    const timer = setTimeout(done, 9000);
+    const timer = setTimeout(done, 4000);
 
       const setToken = (value) => {
         token = String(value || "");
@@ -851,6 +851,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
   
   setStatus(t("index.statusLoggedOut"));
+
+  // Preload captcha in background so token is ready before user clicks
+  if (captchaSiteKey) void getSilentCaptchaToken();
 
   window.addEventListener("i18n:lang", syncLanguage);
 

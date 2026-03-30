@@ -192,38 +192,59 @@ function isPlaceholderUsername(v) {
   return false;
 }
 
-async function fetchUsername(user) {
+// cache ~2 min per user: { userId, username, is_guest, guest_expires_at, ts }
+async function fetchProfileRow(user) {
   if (!user?.id) return null;
 
-  // cache ~2 min (żeby nie pytać DB na każdej stronie/odświeżeniu)
   const now = Date.now();
-  if (_unameCache.userId === user.id && _unameCache.username && (now - _unameCache.ts) < 120_000) {
-    return _unameCache.username;
+  if (
+    _unameCache.userId === user.id &&
+    (now - _unameCache.ts) < 120_000
+  ) {
+    return _unameCache;
   }
 
-  // 1) profiles (źródło prawdy)
   try {
     const { data, error } = await sb()
       .from("profiles")
-      .select("username,is_guest")
+      .select("username,is_guest,guest_expires_at")
       .eq("id", user.id)
       .maybeSingle();
 
     if (!error && data) {
-      const candidate = normalizeUsername(data.username);
-      const allowGuestPlaceholder = data?.is_guest === true || isGuestFromMetadata(user);
-      if (candidate && (!isPlaceholderUsername(candidate) || allowGuestPlaceholder)) {
-        _unameCache = { userId: user.id, username: candidate, ts: now };
-        return candidate;
-      }
+      const cached = {
+        userId: user.id,
+        username: data.username || null,
+        is_guest: !!data.is_guest,
+        guest_expires_at: data.guest_expires_at || null,
+        ts: now,
+      };
+      _unameCache = cached;
+      return cached;
     }
   } catch {}
+
+  return null;
+}
+
+async function fetchUsername(user) {
+  if (!user?.id) return null;
+
+  const row = await fetchProfileRow(user);
+
+  // 1) profiles (źródło prawdy)
+  if (row) {
+    const candidate = normalizeUsername(row.username);
+    const allowGuestPlaceholder = row.is_guest || isGuestFromMetadata(user);
+    if (candidate && (!isPlaceholderUsername(candidate) || allowGuestPlaceholder)) {
+      return candidate;
+    }
+  }
 
   // 2) fallback: user_metadata (np. świeża rejestracja)
   const un = normalizeUsername(user?.user_metadata?.username);
   const allowGuestPlaceholder = isGuestFromMetadata(user);
   if (un && (!isPlaceholderUsername(un) || allowGuestPlaceholder)) {
-    _unameCache = { userId: user.id, username: un, ts: now };
     return un;
   }
 
@@ -232,16 +253,11 @@ async function fetchUsername(user) {
     const mail = String(user?.email || "").trim().toLowerCase();
     if (mail.startsWith("guest_") && mail.endsWith("@guest.local")) {
       const candidate = mail.split("@")[0];
-      if (candidate) {
-        _unameCache = { userId: user.id, username: candidate, ts: now };
-        return candidate;
-      }
+      if (candidate) return candidate;
     }
     if (user?.id) {
       const compact = String(user.id).replace(/-/g, "");
-      const candidate = `guest_${compact.slice(0, 6)}`;
-      _unameCache = { userId: user.id, username: candidate, ts: now };
-      return candidate;
+      return `guest_${compact.slice(0, 6)}`;
     }
   }
 
@@ -250,23 +266,15 @@ async function fetchUsername(user) {
 
 async function enrichUser(u) {
   if (!u) return null;
+
+  const row = await fetchProfileRow(u);
+
   const username = await fetchUsername(u);
 
-  let isGuest = isGuestFromMetadata(u);
-  let guestExpiresAt = null;
-  try {
-    const { data, error } = await sb()
-      .from("profiles")
-      .select("is_guest,guest_expires_at")
-      .eq("id", u.id)
-      .maybeSingle();
-    if (!error && data) {
-      // Prefer DB flag, but keep metadata fallback to avoid transient races
-      // right after anonymous sign-in when profile row may lag.
-      isGuest = !!data.is_guest || isGuest;
-      guestExpiresAt = data.guest_expires_at || null;
-    }
-  } catch {}
+  // Prefer DB flag, but keep metadata fallback to avoid transient races
+  // right after anonymous sign-in when profile row may lag.
+  const isGuest = (row ? row.is_guest : false) || isGuestFromMetadata(u);
+  const guestExpiresAt = row?.guest_expires_at || null;
 
   return { ...u, username, is_guest: isGuest, guest_expires_at: guestExpiresAt };
 }
