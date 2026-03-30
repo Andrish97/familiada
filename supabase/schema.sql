@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict a0K3E9cAGQ03UBpMN3d6qGjYUw5GYqGbranUf5Dp8CBhidWFbb2VorAFZb96dvX
+\restrict 8kPPq4H3vjp6hEgSuMrRLhHB40DZFTiIxIOWXLEEXICXyvWGwqjGjBGpk5WSA1X
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -2488,13 +2488,16 @@ BEGIN
   SELECT COUNT(*) INTO users_new_7d    FROM public.profiles WHERE created_at >= now() - interval '7 days'  AND NOT (id = ANY(excluded_ids));
   SELECT COUNT(*) INTO users_new_30d   FROM public.profiles WHERE created_at >= now() - interval '30 days' AND NOT (id = ANY(excluded_ids));
 
-  BEGIN
-    SELECT COUNT(*) INTO users_pl FROM public.profiles WHERE language = 'pl' AND NOT (id = ANY(excluded_ids));
-    SELECT COUNT(*) INTO users_en FROM public.profiles WHERE language = 'en' AND NOT (id = ANY(excluded_ids));
-    SELECT COUNT(*) INTO users_uk FROM public.profiles WHERE language = 'uk' AND NOT (id = ANY(excluded_ids));
-  EXCEPTION WHEN OTHERS THEN
-    users_pl := 0; users_en := 0; users_uk := 0;
-  END;
+  -- Language counts from auth.users.raw_user_meta_data (the only reliable source)
+  SELECT COUNT(*) INTO users_pl FROM auth.users u
+    JOIN public.profiles p ON p.id = u.id
+    WHERE lower(u.raw_user_meta_data->>'language') = 'pl' AND NOT (u.id = ANY(excluded_ids));
+  SELECT COUNT(*) INTO users_en FROM auth.users u
+    JOIN public.profiles p ON p.id = u.id
+    WHERE lower(u.raw_user_meta_data->>'language') = 'en' AND NOT (u.id = ANY(excluded_ids));
+  SELECT COUNT(*) INTO users_uk FROM auth.users u
+    JOIN public.profiles p ON p.id = u.id
+    WHERE lower(u.raw_user_meta_data->>'language') = 'uk' AND NOT (u.id = ANY(excluded_ids));
 
   -- Games (bez demo, bez kopii z marketu, bez wykluczonych)
   SELECT COUNT(*) INTO total_games      FROM public.games WHERE is_demo = false AND source_market_id IS NULL AND NOT (owner_id = ANY(excluded_ids));
@@ -13284,5 +13287,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict a0K3E9cAGQ03UBpMN3d6qGjYUw5GYqGbranUf5Dp8CBhidWFbb2VorAFZb96dvX
+\unrestrict 8kPPq4H3vjp6hEgSuMrRLhHB40DZFTiIxIOWXLEEXICXyvWGwqjGjBGpk5WSA1X
 
