@@ -773,7 +773,7 @@ async function handleAdminMarketingApi(request, env, url) {
           to_email: email,
           subject: String(mktSubject),
           html: emailHtml,
-          from_email: "no-reply@familiada.online",
+          from_email: "kontakt@familiada.online",
           meta: { type: "marketing", template_id: template_id || "custom" },
         },
       });
