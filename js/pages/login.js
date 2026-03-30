@@ -265,13 +265,12 @@ async function getSilentCaptchaToken() {
     if (!captcha?.render) return null;
 
     const mount = document.createElement("div");
-    // Visually hidden but inside viewport — Turnstile checks element visibility
+    // Needs real dimensions — Turnstile measures container size during execution.
+    // visibility:hidden keeps it invisible but renderable (unlike display:none or 0x0).
     mount.style.position = "fixed";
     mount.style.bottom = "0";
     mount.style.right = "0";
-    mount.style.width = "0";
-    mount.style.height = "0";
-    mount.style.overflow = "hidden";
+    mount.style.visibility = "hidden";
     mount.style.pointerEvents = "none";
     mount.dataset.theme = "dark";
     document.body.appendChild(mount);
