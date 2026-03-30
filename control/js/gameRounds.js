@@ -392,7 +392,6 @@ function hostUpdate() {
       r._questionPool = rounds || [];
       r._usedQuestionIds = [];
       r.roundNo = 1;
-      emit();
     }
   }
 
@@ -408,7 +407,6 @@ function hostUpdate() {
     }
 
     r.roundNo = r._usedQuestionIds.length || 1;
-    emit();
     return obj || null;
   }
 
