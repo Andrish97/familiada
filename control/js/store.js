@@ -12,10 +12,10 @@ export function createStore(gameId) {
     finalTarget: 200,
     // czy na końcu gry wyświetlamy ekran „wygrana" (true) czy samo logo (false)
     endScreenMode: "logo", // "logo" | "points" | "money"
-    // mnożnik nagrody głównej (po finale)
-    finalPrizeMultiplier: 1,
-    // kwota nagrody głównej
-    mainPrizeAmount: 1000,
+    // mnożnik nagrody głównej (po finale) - domyślnie 3
+    finalPrizeMultiplier: 3,
+    // kwota nagrody głównej - domyślnie 25000
+    mainPrizeAmount: 25000,
 
   };
 

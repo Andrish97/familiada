@@ -671,9 +671,13 @@
 
 .stepFoot {
     margin-top: auto;
-    padding-top: 10px;
+    padding-top: 18px;
     border-top: 1px solid rgba(255,255,255,.1);
     align-items: center
+}
+
+.step-foot-spaced {
+    margin-top: 20px;
 }
 
 .stepFoot,.stepFootButtons {

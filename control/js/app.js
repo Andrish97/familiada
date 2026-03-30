@@ -509,31 +509,25 @@ async function sendZeroStatesToDevices() {
       finalModeRow.style.display = hasFinal ? "flex" : "none";
     }
 
-    // Pola związane z finałem (cel rozgrywki, cel finału) - tylko gdy finał włączony
+    // Pola związane z finałem (cel rozgrywki, cel finału) - ZAWSZE widoczne
     const finalSettingsRow = document.getElementById("finalSettingsRow");
     if (finalSettingsRow) {
-      finalSettingsRow.style.display = hasFinal ? "flex" : "none";
+      finalSettingsRow.style.display = "flex";
     }
 
-    // Pola związane z kwotą nagrody - tylko gdy finał włączony I wybrano "Pokaż kwotę"
+    // Zakończenie gry - ZAWSZE widoczne
     const gameEndModeRow = document.getElementById("gameEndModeRow");
-    const winModeMoney = document.getElementById("winModeMoney")?.checked;
-    
     if (gameEndModeRow) {
-      gameEndModeRow.style.display = hasFinal ? "flex" : "none";
+      gameEndModeRow.style.display = "flex";
     }
     
-    // Pokaż/ukryj pola mnożnika i kwoty nagrody tylko gdy wybrano "Pokaż kwotę (po finale)"
-    const finalPrizeMultiplierField = document.getElementById("finalPrizeMultiplier")?.closest(".field");
-    const mainPrizeAmountField = document.getElementById("mainPrizeAmount")?.closest(".field");
-    
+    // Pola nagrody - widoczne tylko gdy finał włączony I wybrano "Pokaż kwotę"
+    const prizeSettingsRow = document.getElementById("prizeSettingsRow");
+    const winModeMoney = document.getElementById("winModeMoney")?.checked;
     const showPrizeFields = hasFinal && winModeMoney;
     
-    if (finalPrizeMultiplierField) {
-      finalPrizeMultiplierField.style.display = showPrizeFields ? "grid" : "none";
-    }
-    if (mainPrizeAmountField) {
-      mainPrizeAmountField.style.display = showPrizeFields ? "grid" : "none";
+    if (prizeSettingsRow) {
+      prizeSettingsRow.style.display = showPrizeFields ? "flex" : "none";
     }
   }
   
@@ -1116,10 +1110,8 @@ async function sendZeroStatesToDevices() {
 
   // DEVICES kroki
   ui.on("devices.next", () => store.setDevicesStep("devices_audio"));
-  // devices.back i devices.toAudio zachowane dla kompatybilności ze store
   ui.on("devices.back", () => store.setDevicesStep("devices_display"));
-  ui.on("devices.toAudio", () => store.setDevicesStep("devices_audio"));
-  ui.on("audio.back", () => store.setDevicesStep("devices_hostbuzzer"));
+  ui.on("audio.back", () => store.setDevicesStep("devices_display"));
 
   ui.on("audio.unlock", () => {
     const ok = unlockAudio();

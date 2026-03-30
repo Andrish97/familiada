@@ -2370,6 +2370,8 @@ const pl = {
     actions: {
       edit: "Edytuj",
       editMobile: "Edyt.",
+      preview: "Podgląd",
+      previewMobile: "Podgl.",
       play: "Graj",
       playMobile: "Graj",
       poll: "Sondaż",
@@ -2380,6 +2382,12 @@ const pl = {
       exportBaseMobile: "Exp.bz",
       import: "Importuj",
       importMobile: "Imp",
+    },
+    preview: {
+      noQuestions: "Brak pytań.",
+      loading: "Ładowanie…",
+      close: "Zamknij",
+      pts: "pkt",
     },
     tabs: {
       pollText: "Typowy sondaż",
@@ -4023,7 +4031,7 @@ const pl = {
     roundsQuestionsMode: "Pytania rund",
     extraSettingsTitle: "Dodatkowe ustawienia",
     roundMultipliers: "Mnożniki rund",
-    roundMultipliersHint: "Podaj po przecinku, np. <code>1,1,1,2,3</code>",
+    roundMultipliersHint: "Podaj po przecinku, np. <b>1,1,1,2,3</b>",
     finalPrizeMultiplier: "Mnożnik nagrody (po finale)",
     finalPrizeMultiplierHint: "Mnożnik decydujący o kwocie nagrody głównej",
     mainPrizeAmount: "Kwota nagrody głównej",

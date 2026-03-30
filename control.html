@@ -375,7 +375,7 @@
                   </div>
                 </div>
 
-                <div class="stepFoot">
+                <div class="stepFoot step-foot-spaced">
                   <div class="stepFootButtons">
                     <button class="btn" id="btnAudioBack" type="button" data-i18n="common.back">Wstecz</button>
                     <button class="btn gold" id="btnDevicesFinish" type="button" disabled data-i18n="control.devicesFinish">Gotowe — przejdź dalej</button>
@@ -517,8 +517,8 @@
                     <div class="rowBtns">
                       <div class="field sm">
                         <div class="lbl2" data-i18n="control.roundMultipliers">Mnożniki rund</div>
-                        <div class="hint" data-i18n="control.roundMultipliersHint">
-                          Podaj po przecinku, np. <code>1,1,1,2,3</code>
+                        <div class="hint" data-i18n-html="control.roundMultipliersHint">
+                          Podaj po przecinku, np. <b>1,1,1,2,3</b>
                         </div>
                         <input
                           id="roundMultipliers"
@@ -526,33 +526,6 @@
                           type="text"
                           autocomplete="off"
                           inputmode="numeric"
-                        />
-                      </div>
-                    </div>
-
-                    <div class="rowBtns">
-                      <div class="field sm">
-                        <div class="lbl2" data-i18n="control.finalPrizeMultiplier">Mnożnik nagrody (po finale)</div>
-                        <div class="hint" data-i18n="control.finalPrizeMultiplierHint">
-                          Mnożnik decydujący o kwocie nagrody głównej
-                        </div>
-                        <input
-                          id="finalPrizeMultiplier"
-                          class="inp"
-                          type="number"
-                          min="1"
-                          step="1"
-                        />
-                      </div>
-
-                      <div class="field sm">
-                        <div class="lbl2" data-i18n="control.mainPrizeAmount">Kwota nagrody głównej</div>
-                        <input
-                          id="mainPrizeAmount"
-                          class="inp"
-                          type="number"
-                          min="0"
-                          step="100"
                         />
                       </div>
                     </div>
@@ -596,6 +569,34 @@
                             <input type="radio" id="winModeMoney" name="endMode" value="money" />
                             <span data-i18n="control.showMoney">Pokaż kwotę (po finale)</span>
                           </label>
+                      </div>
+                    </div>
+
+                    <!-- Pola nagrody - pod sekcją Zakończenie gry -->
+                    <div class="rowBtns" id="prizeSettingsRow">
+                      <div class="field sm">
+                        <div class="lbl2" data-i18n="control.finalPrizeMultiplier">Mnożnik nagrody (po finale)</div>
+                        <div class="hint" data-i18n="control.finalPrizeMultiplierHint">
+                          Mnożnik decydujący o kwocie nagrody głównej
+                        </div>
+                        <input
+                          id="finalPrizeMultiplier"
+                          class="inp"
+                          type="number"
+                          min="1"
+                          step="1"
+                        />
+                      </div>
+
+                      <div class="field sm">
+                        <div class="lbl2" data-i18n="control.mainPrizeAmount">Kwota nagrody głównej</div>
+                        <input
+                          id="mainPrizeAmount"
+                          class="inp"
+                          type="number"
+                          min="0"
+                          step="100"
+                        />
                       </div>
                     </div>
 
