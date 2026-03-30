@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 8kPPq4H3vjp6hEgSuMrRLhHB40DZFTiIxIOWXLEEXICXyvWGwqjGjBGpk5WSA1X
+\restrict fvbi8rOH0OOnyofCYEhTX3mw560qdWLO0uVseUbldUloqi05bw9YWEdmAAqBkeF
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -3057,9 +3057,11 @@ BEGIN
       SELECT
         p.username,
         p.email,
+        lower(u.raw_user_meta_data->>'language') AS language,
         p.is_guest,
         p.created_at
       FROM public.profiles p
+      JOIN auth.users u ON u.id = p.id
       WHERE NOT (p.id = ANY(excluded_ids))
       ORDER BY p.created_at DESC
       LIMIT p_limit
@@ -13287,5 +13289,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 8kPPq4H3vjp6hEgSuMrRLhHB40DZFTiIxIOWXLEEXICXyvWGwqjGjBGpk5WSA1X
+\unrestrict fvbi8rOH0OOnyofCYEhTX3mw560qdWLO0uVseUbldUloqi05bw9YWEdmAAqBkeF
 
