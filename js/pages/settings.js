@@ -76,6 +76,8 @@ const els = {
   statsPanel: document.getElementById("statsPanel"),
   generatorPanel: document.getElementById("generatorPanel"),
   reportsPanel: document.getElementById("reportsPanel"),
+  marketingPanel: document.getElementById("marketingPanel"),
+  btnTabMarketing: document.getElementById("btnTabMarketing"),
   btnRatingsRefresh: document.getElementById("btnRatingsRefresh"),
   btnStatsRefresh: document.getElementById("btnStatsRefresh"),
   ratingsTableBody: document.getElementById("ratingsTableBody"),
@@ -3276,6 +3278,7 @@ function setActiveTab(tab) {
   const btnStats = document.getElementById("btnTabStats");
   const btnGen = document.getElementById("btnTabGenerator");
   const btnReports = document.getElementById("btnTabReports");
+  const btnMarketing = document.getElementById("btnTabMarketing");
   const tools = document.getElementById("toolsSelect");
   if (btn) btn.classList.toggle("active", tab === "maintenance");
   if (btnMail) btnMail.classList.toggle("active", tab === "mail");
@@ -3284,6 +3287,7 @@ function setActiveTab(tab) {
   if (btnStats) btnStats.classList.toggle("active", tab === "stats");
   if (btnGen) btnGen.classList.toggle("active", tab === "generator");
   if (btnReports) btnReports.classList.toggle("active", tab === "reports");
+  if (btnMarketing) btnMarketing.classList.toggle("active", tab === "marketing");
   if (tools) tools.classList.toggle("active", tab === "tools");
   if (els.maintenancePanel) els.maintenancePanel.hidden = tab !== "maintenance";
   if (els.mailPanel) els.mailPanel.hidden = tab !== "mail";
@@ -3292,12 +3296,14 @@ function setActiveTab(tab) {
   if (els.statsPanel) els.statsPanel.hidden = tab !== "stats";
   if (els.generatorPanel) els.generatorPanel.hidden = tab !== "generator";
   if (els.reportsPanel) els.reportsPanel.hidden = tab !== "reports";
+  if (els.marketingPanel) els.marketingPanel.hidden = tab !== "marketing";
   if (els.mailPanel) els.mailPanel.style.display = tab === "mail" ? "" : "none";
   if (els.marketplacePanel) els.marketplacePanel.style.display = tab === "marketplace" ? "" : "none";
   if (els.ratingsPanel) els.ratingsPanel.style.display = tab === "ratings" ? "" : "none";
   if (els.statsPanel) els.statsPanel.style.display = tab === "stats" ? "" : "none";
   if (els.generatorPanel) els.generatorPanel.style.display = tab === "generator" ? "" : "none";
   if (els.reportsPanel) els.reportsPanel.style.display = tab === "reports" ? "" : "none";
+  if (els.marketingPanel) els.marketingPanel.style.display = tab === "marketing" ? "" : "none";
 
   if (tab === "generator" && window.resetGeneratorSession) {
     window.resetGeneratorSession();
@@ -3343,6 +3349,192 @@ function wireRatingsEvents() {
   if (els.btnRatingsRefresh) {
     els.btnRatingsRefresh.addEventListener("click", () => loadRatings());
   }
+}
+
+// ── Marketing ──────────────────────────────────────────────────────────────
+
+const MKT_TEMPLATES = {
+  invitation: {
+    subject: "Dołącz do Familiady — darmowy teleturniej online",
+    hasBody: false,
+  },
+  event: {
+    subject: "Familiada na Twój event — bezpłatnie",
+    hasBody: false,
+  },
+  newsletter: {
+    subject: "Nowości w Familiada Online",
+    hasBody: true,
+  },
+  custom: {
+    subject: "",
+    hasBody: true,
+  },
+};
+
+let mktActiveTpl = "invitation";
+let mktValidEmails = [];
+let mktPreviewVisible = false;
+
+function mktApplyTemplate(tplId) {
+  mktActiveTpl = tplId;
+  document.querySelectorAll("#mktTemplateButtons [data-tpl]").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.tpl === tplId);
+  });
+  const tpl = MKT_TEMPLATES[tplId] || MKT_TEMPLATES.custom;
+  const subjectEl = document.getElementById("mktSubject");
+  const bodyWrap = document.getElementById("mktBodyWrap");
+  const subjectHint = document.getElementById("mktSubjectHint");
+  if (subjectEl && !subjectEl._userEdited) {
+    subjectEl.value = tpl.subject;
+  }
+  if (bodyWrap) bodyWrap.style.display = tpl.hasBody ? "" : "none";
+  if (subjectHint) subjectHint.textContent = tpl.hasBody ? "" : (t("settings.marketing.subjectAutoHint") || "Temat ustawiony automatycznie — możesz go zmienić.");
+  if (mktPreviewVisible) mktRefreshPreview();
+}
+
+async function mktRefreshPreview() {
+  const frame = document.getElementById("mktPreviewFrame");
+  if (!frame) return;
+  const subject = (document.getElementById("mktSubject")?.value || "").trim();
+  const body    = (document.getElementById("mktBody")?.value || "").trim();
+  try {
+    const res = await adminFetch("/marketing/preview", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ template_id: mktActiveTpl, custom_subject: subject, custom_body: body }),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const json = await res.json();
+    if (json.html) {
+      frame.srcdoc = json.html;
+    }
+  } catch (err) {
+    frame.srcdoc = `<p style="font-family:sans-serif;color:#c00;padding:12px">${esc(String(err?.message || err))}</p>`;
+  }
+}
+
+function mktParseEmails() {
+  const raw = (document.getElementById("mktEmailInput")?.value || "");
+  const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const tokens = raw.split(/[\s,;]+/).map(s => s.trim().toLowerCase()).filter(Boolean);
+  const valid = [];
+  const invalid = [];
+  const seen = new Set();
+  for (const tok of tokens) {
+    if (seen.has(tok)) continue;
+    seen.add(tok);
+    if (emailRe.test(tok)) valid.push(tok);
+    else invalid.push(tok);
+  }
+  mktValidEmails = valid;
+  const listWrap = document.getElementById("mktEmailListWrap");
+  const listEl   = document.getElementById("mktEmailList");
+  const statsEl  = document.getElementById("mktEmailStats");
+  const countEl  = document.getElementById("mktEmailCount");
+  if (listWrap) listWrap.style.display = valid.length || invalid.length ? "" : "none";
+  if (listEl) {
+    listEl.innerHTML = valid.map(e =>
+      `<span style="display:inline-block;margin:1px 4px 1px 0;padding:2px 8px;border-radius:4px;background:rgba(255,234,166,.12);color:#ffeaa6;font-size:11px">${esc(e)}</span>`
+    ).join("") + (invalid.length ? `<div style="margin-top:6px;color:rgba(255,80,80,.8);font-size:11px">${t("settings.marketing.invalidEmails") || "Niepoprawne:"} ${invalid.map(esc).join(", ")}</div>` : "");
+  }
+  const statsText = valid.length
+    ? `${valid.length} ${t("settings.marketing.validCount") || "poprawnych"}${invalid.length ? `, ${invalid.length} ${t("settings.marketing.invalidCount") || "niepoprawnych"}` : ""}`
+    : (t("settings.marketing.noValid") || "Brak poprawnych adresów.");
+  if (statsEl) statsEl.textContent = statsText;
+  if (countEl) countEl.textContent = valid.length ? `${valid.length}` : "";
+}
+
+async function sendMarketing() {
+  const subject = (document.getElementById("mktSubject")?.value || "").trim();
+  const body    = (document.getElementById("mktBody")?.value || "").trim();
+  const statusEl = document.getElementById("mktSendStatus");
+  if (!subject) { showToast(t("settings.marketing.errSubject") || "Podaj temat.", "error"); return; }
+  if (!mktValidEmails.length) { showToast(t("settings.marketing.errEmails") || "Waliduj listę adresów.", "error"); return; }
+
+  const confirmed = await confirmModal({
+    text: `${t("settings.marketing.confirmSend") || "Wysłać wiadomość do"} ${mktValidEmails.length} ${t("settings.marketing.confirmRecipients") || "odbiorców"}?`,
+  });
+  if (!confirmed) return;
+
+  if (statusEl) statusEl.textContent = t("settings.marketing.sending") || "Wysyłam…";
+  document.getElementById("btnMktSend")?.setAttribute("disabled", "");
+
+  try {
+    const res = await adminFetch("/marketing/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ emails: mktValidEmails, subject, template_id: mktActiveTpl, custom_body: body }),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const json = await res.json();
+    if (!json.ok) throw new Error(json.error);
+    showToast(`${t("settings.marketing.sent") || "Dodano do kolejki:"} ${json.queued}/${json.total}`, "success");
+    if (statusEl) statusEl.textContent = "";
+  } catch (err) {
+    if (statusEl) statusEl.textContent = "";
+    showToast(String(err?.message || err), "error");
+  } finally {
+    document.getElementById("btnMktSend")?.removeAttribute("disabled");
+  }
+}
+
+function wireMarketingEvents() {
+  // Template buttons
+  document.querySelectorAll("#mktTemplateButtons [data-tpl]").forEach(btn => {
+    btn.addEventListener("click", () => mktApplyTemplate(btn.dataset.tpl));
+  });
+
+  // Subject user-edited flag
+  const subjectEl = document.getElementById("mktSubject");
+  if (subjectEl) {
+    subjectEl.addEventListener("input", () => { subjectEl._userEdited = true; });
+  }
+
+  // Parse on demand
+  document.getElementById("btnMktParseEmails")?.addEventListener("click", mktParseEmails);
+
+  // File input
+  document.getElementById("mktFileInput")?.addEventListener("change", async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const text = await file.text();
+    const area = document.getElementById("mktEmailInput");
+    if (area) area.value = (area.value ? area.value + "\n" : "") + text;
+    mktParseEmails();
+    e.target.value = "";
+  });
+
+  // Clear list
+  document.getElementById("btnMktClearList")?.addEventListener("click", () => {
+    mktValidEmails = [];
+    const area = document.getElementById("mktEmailInput");
+    if (area) area.value = "";
+    const listWrap = document.getElementById("mktEmailListWrap");
+    if (listWrap) listWrap.style.display = "none";
+    const countEl = document.getElementById("mktEmailCount");
+    if (countEl) countEl.textContent = "";
+  });
+
+  // Toggle preview
+  document.getElementById("btnMktTogglePreview")?.addEventListener("click", () => {
+    mktPreviewVisible = !mktPreviewVisible;
+    const wrap = document.getElementById("mktPreviewWrap");
+    const btn  = document.getElementById("btnMktTogglePreview");
+    if (wrap) wrap.style.display = mktPreviewVisible ? "" : "none";
+    if (btn) btn.textContent = mktPreviewVisible
+      ? (t("settings.marketing.hidePreview") || "Ukryj podgląd")
+      : (t("settings.marketing.showPreview") || "Pokaż podgląd");
+    if (mktPreviewVisible) mktRefreshPreview();
+  });
+
+  document.getElementById("btnMktPreview")?.addEventListener("click", mktRefreshPreview);
+
+  // Send
+  document.getElementById("btnMktSend")?.addEventListener("click", sendMarketing);
+
+  // Init default template
+  mktApplyTemplate("invitation");
 }
 
 function wireEvents() {
@@ -3538,8 +3730,16 @@ function wireEvents() {
     });
   }
 
+  if (els.btnTabMarketing) {
+    els.btnTabMarketing.addEventListener("click", () => {
+      if (activeTab === "tools") closeTools();
+      setActiveTab("marketing");
+    });
+  }
+
   wireMarketplaceEvents();
   wireReportsEvents();
+  wireMarketingEvents();
   wireRatingsEvents();
   wireStatsEvents();
 

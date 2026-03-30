@@ -283,6 +283,10 @@ async function handleAdminApi(request, env) {
     return handleAdminMarketplaceApi(request, env, url);
   }
 
+  if (url.pathname.startsWith("/_admin_api/marketing/")) {
+    return handleAdminMarketingApi(request, env, url);
+  }
+
   if (url.pathname.startsWith("/_admin_api/messages") || url.pathname.startsWith("/_admin_api/cleanup/") || url.pathname.startsWith("/_admin_api/attachments")) {
     return handleAdminMessagesApi(request, env, url);
   }
@@ -736,6 +740,56 @@ async function handleAdminMarketplaceApi(request, env, url) {
   return new Response("Not Found", { status: 404 });
 }
 
+async function handleAdminMarketingApi(request, env, url) {
+  // POST /_admin_api/marketing/preview { template_id, custom_subject, custom_body }
+  if (url.pathname === "/_admin_api/marketing/preview" && request.method === "POST") {
+    const body = await readJson(request);
+    const { template_id, custom_subject, custom_body } = body || {};
+    const { html } = buildMarketingEmail(template_id || "custom", { customBody: custom_body, customSubject: custom_subject });
+    return json({ ok: true, html });
+  }
+
+  // POST /_admin_api/marketing/send { emails, subject, template_id, custom_body }
+  if (url.pathname === "/_admin_api/marketing/send" && request.method === "POST") {
+    const body = await readJson(request);
+    const { emails, subject: mktSubject, template_id, custom_body } = body || {};
+    if (!Array.isArray(emails) || !emails.length) return json({ ok: false, error: "missing_emails" }, 400);
+    if (!mktSubject) return json({ ok: false, error: "missing_subject" }, 400);
+
+    const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const validEmails = [...new Set(emails.map(e => String(e).trim().toLowerCase()).filter(e => emailRe.test(e)))];
+    if (!validEmails.length) return json({ ok: false, error: "no_valid_emails" }, 400);
+    if (validEmails.length > 500) return json({ ok: false, error: "too_many_emails", max: 500 }, 400);
+
+    const { html: emailHtml } = buildMarketingEmail(template_id || "custom", { customBody: custom_body, customSubject: mktSubject });
+
+    let queued = 0;
+    const errors = [];
+    for (const email of validEmails) {
+      const qRes = await supabaseRequest(env, "/rest/v1/mail_queue", {
+        method: "POST",
+        headers: { Prefer: "return=minimal" },
+        body: {
+          to_email: email,
+          subject: String(mktSubject),
+          html: emailHtml,
+          from_email: "no-reply@familiada.online",
+          meta: { type: "marketing", template_id: template_id || "custom" },
+        },
+      });
+      if (qRes.ok) {
+        queued++;
+      } else {
+        errors.push({ email, error: summarizeSupabaseError(qRes) });
+      }
+    }
+
+    return json({ ok: true, queued, total: validEmails.length, errors: errors.length ? errors.slice(0, 10) : undefined });
+  }
+
+  return new Response("Not Found", { status: 404 });
+}
+
 
 // ============================================================
 // CONTACT FORM — PUBLIC
@@ -976,6 +1030,84 @@ function buildContactEmail(opts) {
 </html>`;
 
   return { subject: mailSubject, html };
+}
+
+// ============================================================
+// MARKETING EMAIL BUILDER
+// ============================================================
+
+function buildMarketingEmail(templateId, opts = {}) {
+  const { customBody, customSubject } = opts;
+  const esc = (s) => String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const nl2br = (s) => esc(s).replace(/\n/g, "<br>");
+
+  const wrapEmailHtml = (heading, contentHtml, ctaHref, ctaLabel) => `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta name="color-scheme" content="dark"/>
+  <style>:root{color-scheme:dark}</style>
+</head>
+<body style="margin:0;padding:0;background:#050914;color:#ffffff;">
+<div style="max-width:560px;margin:0 auto;padding:26px 16px;font-family:system-ui,-apple-system,'Segoe UI',Arial,sans-serif;font-size:14px;color:#ffffff;">
+  <div style="padding:14px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.12);border-radius:18px;margin-bottom:14px;">
+    <div style="font-weight:1000;letter-spacing:.18em;text-transform:uppercase;color:#ffeaa6;">FAMILIADA</div>
+    <div style="margin-top:4px;font-size:11px;opacity:.7;letter-spacing:.06em;">familiada.online</div>
+  </div>
+  <div style="padding:22px 20px;border-radius:18px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);">
+    ${heading ? `<h2 style="margin:0 0 16px;font-size:18px;font-weight:800;color:#ffeaa6;letter-spacing:.04em;">${esc(heading)}</h2>` : ""}
+    ${contentHtml}
+    ${ctaHref ? `<div style="margin-top:24px;text-align:center"><a href="${esc(ctaHref)}" style="display:inline-block;padding:12px 28px;background:#ffeaa6;color:#050914;font-weight:800;font-size:14px;letter-spacing:.08em;text-transform:uppercase;border-radius:10px;text-decoration:none">${esc(ctaLabel || ctaHref)}</a></div>` : ""}
+    <p style="margin:24px 0 0;font-size:12px;opacity:.45;text-align:center">Familiada Online &mdash; bezpłatna gra dostępna na familiada.online</p>
+  </div>
+</div>
+</body>
+</html>`;
+
+  if (templateId === "invitation") {
+    const subject = customSubject || "Dołącz do Familiady — darmowy teleturniej online";
+    const content = `
+      <p style="margin:0 0 14px;opacity:.9;">Cześć!</p>
+      <p style="margin:0 0 14px;">Chcemy Cię zaprosić do <strong style="color:#ffeaa6">Familiada Online</strong> — w pełni darmowego systemu do grania w Familiadę w przeglądarce. Bez instalacji, bez opłat.</p>
+      <p style="margin:0 0 14px;">Możesz:</p>
+      <ul style="margin:0 0 14px;padding-left:20px;line-height:1.7;opacity:.9;">
+        <li>Tworzyć własne gry i sondaże</li>
+        <li>Prowadzić rozgrywkę na żywo z tablicą wyników</li>
+        <li>Grać na weselu, urodzinach lub imprezie firmowej</li>
+        <li>Korzystać w trybie gościa — bez zakładania konta</li>
+      </ul>
+      <p style="margin:0;opacity:.75;font-size:13px;"><strong style="color:#ffeaa6">Całkowicie bezpłatnie.</strong> Zawsze.</p>`;
+    return { subject, html: wrapEmailHtml("Dołącz do Familiady 🎮", content, "https://familiada.online/login", "Zarejestruj się — to nic nie kosztuje") };
+  }
+
+  if (templateId === "event") {
+    const subject = customSubject || "Familiada na Twój event — bezpłatnie";
+    const content = `
+      <p style="margin:0 0 14px;opacity:.9;">Cześć!</p>
+      <p style="margin:0 0 14px;">Planujesz wesele, urodziny lub event firmowy? <strong style="color:#ffeaa6">Familiada Online</strong> to gotowy system teleturnieju — <strong>w pełni bezpłatny</strong>, działa w przeglądarce, nie wymaga żadnej instalacji.</p>
+      <p style="margin:0 0 8px;font-size:13px;opacity:.75;">Jak to działa?</p>
+      <ol style="margin:0 0 14px;padding-left:20px;line-height:1.8;opacity:.9;font-size:13px;">
+        <li>Zbierasz odpowiedzi w sondażu od uczestników</li>
+        <li>System normalizuje wyniki do 100 punktów — jak w TV</li>
+        <li>Prowadzisz rozgrywkę na żywo z tablicą wyników</li>
+      </ol>
+      <p style="margin:0;opacity:.75;font-size:13px;">Bez opłat. Bez rejestracji uczestników. Cztery urządzenia wystarczą.</p>`;
+    return { subject, html: wrapEmailHtml("Familiada na Twój event 🎉", content, "https://familiada.online", "Sprawdź familiada.online") };
+  }
+
+  if (templateId === "newsletter") {
+    const subject = customSubject || "Nowości w Familiada Online";
+    const rawBody = customBody || "Witaj,\n\nMamy dla Ciebie nowości z Familiada Online.";
+    const content = `<div style="opacity:.9;white-space:pre-wrap;line-height:1.7">${nl2br(rawBody)}</div>`;
+    return { subject, html: wrapEmailHtml("", content, null, null) };
+  }
+
+  // custom / fallback
+  const subject = customSubject || "Wiadomość od Familiada";
+  const rawBody = customBody || "";
+  const content = `<div style="opacity:.9;white-space:pre-wrap;line-height:1.7">${nl2br(rawBody)}</div>`;
+  return { subject, html: wrapEmailHtml("", content, null, null) };
 }
 
 // ============================================================
