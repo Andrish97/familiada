@@ -87,16 +87,18 @@ const els = {
   statUsersGrowth: document.getElementById("statUsersGrowth"),
   statUsersLangs: document.getElementById("statUsersLangs"),
   statGamesTotal: document.getElementById("statGamesTotal"),
-  statGamesActivity: document.getElementById("statGamesActivity"),
+  statGamesGrowth: document.getElementById("statGamesGrowth"),
   statGamesQuality: document.getElementById("statGamesQuality"),
   statPlayedTotal: document.getElementById("statPlayedTotal"),
   statPlayedPeriods: document.getElementById("statPlayedPeriods"),
   statBuzzerActivity: document.getElementById("statBuzzerActivity"),
   statBasesTotal: document.getElementById("statBasesTotal"),
-  statBasesSub: document.getElementById("statBasesSub"),
+  statBasesGrowth: document.getElementById("statBasesGrowth"),
   statLogosTotal: document.getElementById("statLogosTotal"),
+  statLogosGrowth: document.getElementById("statLogosGrowth"),
   statLogosSub: document.getElementById("statLogosSub"),
   statRating: document.getElementById("statRating"),
+  statRatingsGrowth: document.getElementById("statRatingsGrowth"),
   statRatingsTotal: document.getElementById("statRatingsTotal"),
   statHealthMails: document.getElementById("statHealthMails"),
   statsUpdateTs: document.getElementById("statsUpdateTs"),
@@ -899,19 +901,23 @@ async function loadAdminStats({ silent = false } = {}) {
     if (els.statUsersLangs) els.statUsersLangs.textContent = `PL: ${data.users.langs.pl} | EN: ${data.users.langs.en} | UK: ${data.users.langs.uk}`;
 
     if (els.statGamesTotal) els.statGamesTotal.textContent = data.games.total;
-    if (els.statGamesActivity) els.statGamesActivity.textContent = `Nowe 7d: ${data.games.new_7d} | Gotowe: ${data.games.ready}`;
-    if (els.statGamesQuality) els.statGamesQuality.textContent = `Śr. pytań: ${data.games.avg_q}`;
+    if (els.statGamesGrowth) els.statGamesGrowth.textContent = `Dziś: ${data.games.new_today} | 7 dni: ${data.games.new_7d} | 30 dni: ${data.games.new_30d}`;
+    if (els.statGamesQuality) els.statGamesQuality.textContent = `Gotowe: ${data.games.ready} | Śr. pytań: ${data.games.avg_q}`;
 
     if (els.statPlayedTotal) els.statPlayedTotal.textContent = data.gameplay.played_30d;
-    if (els.statPlayedPeriods) els.statPlayedPeriods.textContent = `Dziś: ${data.gameplay.played_today} | 7d: ${data.gameplay.played_7d} | 30d: ${data.gameplay.played_30d}`;
+    if (els.statPlayedPeriods) els.statPlayedPeriods.textContent = `Dziś: ${data.gameplay.played_today} | 7 dni: ${data.gameplay.played_7d} | 30 dni: ${data.gameplay.played_30d}`;
     if (els.statBuzzerActivity) els.statBuzzerActivity.textContent = `Buzzer 7d: ${data.gameplay.buzzer_7d} | Sesje ankiet 7d: ${data.polls.sessions_7d}`;
 
-    if (els.statRating) els.statRating.textContent = `${data.ratings.average} / 5`;
     if (els.statBasesTotal) els.statBasesTotal.textContent = data.bases.total;
-    if (els.statBasesSub) els.statBasesSub.textContent = `Nowe 7d: ${data.bases.new_7d}`;
+    if (els.statBasesGrowth) els.statBasesGrowth.textContent = `Dziś: ${data.bases.new_today} | 7 dni: ${data.bases.new_7d} | 30 dni: ${data.bases.new_30d}`;
+
     if (els.statLogosTotal) els.statLogosTotal.textContent = data.logos.total;
-    if (els.statLogosSub) els.statLogosSub.textContent = `Aktywne: ${data.logos.active} | Nowe 7d: ${data.logos.new_7d}`;
-    if (els.statRatingsTotal) els.statRatingsTotal.textContent = `Ocen: ${data.ratings.total}`;
+    if (els.statLogosGrowth) els.statLogosGrowth.textContent = `Dziś: ${data.logos.new_today} | 7 dni: ${data.logos.new_7d} | 30 dni: ${data.logos.new_30d}`;
+    if (els.statLogosSub) els.statLogosSub.textContent = `Aktywne: ${data.logos.active}`;
+
+    if (els.statRating) els.statRating.textContent = `${data.ratings.average} / 5`;
+    if (els.statRatingsGrowth) els.statRatingsGrowth.textContent = `Dziś: ${data.ratings.new_today} | 7 dni: ${data.ratings.new_7d} | 30 dni: ${data.ratings.new_30d}`;
+    if (els.statRatingsTotal) els.statRatingsTotal.textContent = `Łącznie: ${data.ratings.total}`;
     if (els.statHealthMails) els.statHealthMails.textContent = `Błędy maili (24h): ${data.health.mail_errors}`;
     
     if (els.statsUpdateTs) {
@@ -3329,6 +3335,114 @@ function esc(str) {
     .replace(/"/g, "&quot;");
 }
 
+const STAT_DETAIL_CONFIG = {
+  users: {
+    title: "Użytkownicy",
+    cols: ["Username", "Email", "Język", "Gość?", "Rejestracja"],
+    row: r => [r.username || "—", r.email || "—", r.language || "—", r.is_guest ? "tak" : "nie", fmtDate(r.created_at)],
+  },
+  games: {
+    title: "Gry",
+    cols: ["Nazwa", "Typ", "Status", "Właściciel", "Data"],
+    row: r => [r.name || "—", r.type || "—", r.status || "—", r.owner || "—", fmtDate(r.created_at)],
+  },
+  gameplay: {
+    title: "Rozgrywki",
+    cols: ["Gra", "Właściciel", "Ostatnia rozgrywka"],
+    row: r => [r.game_name || "—", r.owner || "—", fmtDate(r.last_seen_at)],
+  },
+  bases: {
+    title: "Bazy pytań",
+    cols: ["Nazwa", "Właściciel", "Data"],
+    row: r => [r.name || "—", r.owner || "—", fmtDate(r.created_at)],
+  },
+  logos: {
+    title: "Logo",
+    cols: ["Nazwa", "Typ", "Aktywne", "Właściciel", "Data"],
+    row: r => [r.name || "—", r.type || "—", r.is_active ? "tak" : "nie", r.owner || "—", fmtDate(r.created_at)],
+  },
+  ratings: {
+    title: "Oceny",
+    cols: ["Użytkownik", "Ocena", "Komentarz", "Data"],
+    row: r => [r.username || "—", r.stars != null ? `${r.stars}/5` : "—", r.comment || "—", fmtDate(r.created_at)],
+  },
+};
+
+function fmtDate(iso) {
+  if (!iso) return "—";
+  try { return new Date(iso).toLocaleString("pl-PL", { dateStyle: "short", timeStyle: "short" }); }
+  catch { return iso; }
+}
+
+function buildStatsTable(cfg, rows) {
+  const wrap = document.createElement("div");
+  wrap.style.cssText = "overflow:auto;max-height:60vh;margin-top:8px";
+
+  if (!rows.length) {
+    wrap.textContent = "Brak danych.";
+    return wrap;
+  }
+
+  const table = document.createElement("table");
+  table.style.cssText = "width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap";
+
+  const thead = document.createElement("thead");
+  const hr = document.createElement("tr");
+  cfg.cols.forEach(col => {
+    const th = document.createElement("th");
+    th.textContent = col;
+    th.style.cssText = "padding:6px 10px;text-align:left;opacity:.5;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid rgba(255,255,255,.1);position:sticky;top:0;background:#0d1020";
+    hr.appendChild(th);
+  });
+  thead.appendChild(hr);
+  table.appendChild(thead);
+
+  const tbody = document.createElement("tbody");
+  rows.forEach((r, i) => {
+    const tr = document.createElement("tr");
+    tr.style.background = i % 2 === 0 ? "transparent" : "rgba(255,255,255,.02)";
+    cfg.row(r).forEach(cell => {
+      const td = document.createElement("td");
+      td.textContent = cell;
+      td.style.cssText = "padding:6px 10px;border-bottom:1px solid rgba(255,255,255,.05);max-width:220px;overflow:hidden;text-overflow:ellipsis";
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+  wrap.appendChild(table);
+  return wrap;
+}
+
+async function openStatsDetailModal(type) {
+  const cfg = STAT_DETAIL_CONFIG[type];
+  if (!cfg) return;
+
+  const body = document.createElement("div");
+  body.style.cssText = "min-width:min(700px,90vw)";
+  body.textContent = "Ładowanie…";
+
+  confirmModal({
+    title: cfg.title,
+    text: "",
+    okText: "Zamknij",
+    body,
+    onReady: ({ cancelBtn }) => { if (cancelBtn) cancelBtn.style.display = "none"; },
+  });
+
+  try {
+    const res = await apiFetch(`${API_BASE}/stats/detail?type=${encodeURIComponent(type)}&limit=300`, { method: "GET" });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || "błąd");
+    body.textContent = "";
+    body.appendChild(buildStatsTable(cfg, data.rows || []));
+    body.insertAdjacentHTML("afterbegin", `<div style="font-size:11px;opacity:.4;margin-bottom:4px">Wyniki: ${(data.rows || []).length}</div>`);
+  } catch (err) {
+    body.textContent = `Błąd: ${err.message}`;
+  }
+}
+
 function wireStatsEvents() {
   if (els.btnStatsRefresh) {
     els.btnStatsRefresh.addEventListener("click", () => {
@@ -3337,6 +3451,10 @@ function wireStatsEvents() {
       loadExcludedUsers();
     });
   }
+
+  document.querySelectorAll(".stat-box[data-detail]").forEach(box => {
+    box.addEventListener("click", () => openStatsDetailModal(box.dataset.detail));
+  });
 
   const btnAdd = document.getElementById("btnExcludeAdd");
   if (btnAdd) btnAdd.addEventListener("click", addExcludedUser);

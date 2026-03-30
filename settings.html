@@ -570,44 +570,46 @@
           </div>
 
           <div class="stats-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;margin-top:10px">
-            <div class="stat-box" style="padding:18px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(255,255,255,.03)">
+            <div class="stat-box" data-detail="users" style="padding:18px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(255,255,255,.03);cursor:pointer;transition:background .15s" onmouseenter="this.style.background='rgba(255,255,255,.07)'" onmouseleave="this.style.background='rgba(255,255,255,.03)'">
               <div class="stat-label" style="font-size:11px;opacity:.7;text-transform:uppercase;font-weight:900;letter-spacing:1px;margin-bottom:8px">Użytkownicy</div>
               <div class="stat-value" id="statUsersTotal" style="font-size:32px;font-weight:900;color:var(--gold)">0</div>
               <div class="stat-sub" id="statUsersGrowth" style="font-size:12px;opacity:.8;margin-top:4px;color:var(--gold)">Dziś: 0 | 7 dni: 0 | 30 dni: 0</div>
-              <div class="stat-sub" id="statUsersLangs" style="font-size:11px;opacity:.5;margin-top:4px;font-family:monospace">PL:0 EN:0 UK:0</div>
+              <div class="stat-sub" id="statUsersLangs" style="font-size:11px;opacity:.5;margin-top:4px;font-family:monospace">PL: 0 | EN: 0 | UK: 0</div>
             </div>
 
-            <div class="stat-box" style="padding:18px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(255,255,255,.03)">
+            <div class="stat-box" data-detail="games" style="padding:18px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(255,255,255,.03);cursor:pointer;transition:background .15s" onmouseenter="this.style.background='rgba(255,255,255,.07)'" onmouseleave="this.style.background='rgba(255,255,255,.03)'">
               <div class="stat-label" style="font-size:11px;opacity:.7;text-transform:uppercase;font-weight:900;letter-spacing:1px;margin-bottom:8px">Gry</div>
               <div class="stat-value" id="statGamesTotal" style="font-size:32px;font-weight:900;color:var(--gold)">0</div>
-              <div class="stat-sub" id="statGamesActivity" style="font-size:12px;opacity:.8;margin-top:4px;color:var(--gold)">Nowe 7d: 0 | Gotowe: 0</div>
-              <div class="stat-sub" id="statGamesQuality" style="font-size:11px;opacity:.5;margin-top:4px">Śr. pytań: 0</div>
+              <div class="stat-sub" id="statGamesGrowth" style="font-size:12px;opacity:.8;margin-top:4px;color:var(--gold)">Dziś: 0 | 7 dni: 0 | 30 dni: 0</div>
+              <div class="stat-sub" id="statGamesQuality" style="font-size:11px;opacity:.5;margin-top:4px">Gotowe: 0 | Śr. pytań: 0</div>
             </div>
 
-            <div class="stat-box" style="padding:18px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(255,255,255,.03)">
+            <div class="stat-box" data-detail="gameplay" style="padding:18px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(255,255,255,.03);cursor:pointer;transition:background .15s" onmouseenter="this.style.background='rgba(255,255,255,.07)'" onmouseleave="this.style.background='rgba(255,255,255,.03)'">
               <div class="stat-label" style="font-size:11px;opacity:.7;text-transform:uppercase;font-weight:900;letter-spacing:1px;margin-bottom:8px">Rozgrywki & Ankiety</div>
               <div class="stat-value" id="statPlayedTotal" style="font-size:32px;font-weight:900;color:var(--gold)">0</div>
-              <div class="stat-sub" id="statPlayedPeriods" style="font-size:12px;opacity:.8;margin-top:4px;color:var(--gold)">Dziś: 0 | 7d: 0 | 30d: 0</div>
+              <div class="stat-sub" id="statPlayedPeriods" style="font-size:12px;opacity:.8;margin-top:4px;color:var(--gold)">Dziś: 0 | 7 dni: 0 | 30 dni: 0</div>
               <div class="stat-sub" id="statBuzzerActivity" style="font-size:11px;opacity:.5;margin-top:4px">Buzzer 7d: 0 | Sesje ankiet 7d: 0</div>
             </div>
 
-            <div class="stat-box" style="padding:18px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(255,255,255,.03)">
+            <div class="stat-box" data-detail="bases" style="padding:18px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(255,255,255,.03);cursor:pointer;transition:background .15s" onmouseenter="this.style.background='rgba(255,255,255,.07)'" onmouseleave="this.style.background='rgba(255,255,255,.03)'">
               <div class="stat-label" style="font-size:11px;opacity:.7;text-transform:uppercase;font-weight:900;letter-spacing:1px;margin-bottom:8px">Bazy pytań</div>
               <div class="stat-value" id="statBasesTotal" style="font-size:32px;font-weight:900;color:var(--gold)">0</div>
-              <div class="stat-sub" id="statBasesSub" style="font-size:12px;opacity:.8;margin-top:4px;color:var(--gold)">Nowe 7d: 0</div>
+              <div class="stat-sub" id="statBasesGrowth" style="font-size:12px;opacity:.8;margin-top:4px;color:var(--gold)">Dziś: 0 | 7 dni: 0 | 30 dni: 0</div>
             </div>
 
-            <div class="stat-box" style="padding:18px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(255,255,255,.03)">
+            <div class="stat-box" data-detail="logos" style="padding:18px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(255,255,255,.03);cursor:pointer;transition:background .15s" onmouseenter="this.style.background='rgba(255,255,255,.07)'" onmouseleave="this.style.background='rgba(255,255,255,.03)'">
               <div class="stat-label" style="font-size:11px;opacity:.7;text-transform:uppercase;font-weight:900;letter-spacing:1px;margin-bottom:8px">Logo</div>
               <div class="stat-value" id="statLogosTotal" style="font-size:32px;font-weight:900;color:var(--gold)">0</div>
-              <div class="stat-sub" id="statLogosSub" style="font-size:12px;opacity:.8;margin-top:4px;color:var(--gold)">Aktywne: 0 | Nowe 7d: 0</div>
+              <div class="stat-sub" id="statLogosGrowth" style="font-size:12px;opacity:.8;margin-top:4px;color:var(--gold)">Dziś: 0 | 7 dni: 0 | 30 dni: 0</div>
+              <div class="stat-sub" id="statLogosSub" style="font-size:11px;opacity:.5;margin-top:4px">Aktywne: 0</div>
             </div>
 
-            <div class="stat-box" style="padding:18px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(255,255,255,.03)">
-              <div class="stat-label" style="font-size:11px;opacity:.7;text-transform:uppercase;font-weight:900;letter-spacing:1px;margin-bottom:8px">Zdrowie & Oceny</div>
+            <div class="stat-box" data-detail="ratings" style="padding:18px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(255,255,255,.03);cursor:pointer;transition:background .15s" onmouseenter="this.style.background='rgba(255,255,255,.07)'" onmouseleave="this.style.background='rgba(255,255,255,.03)'">
+              <div class="stat-label" style="font-size:11px;opacity:.7;text-transform:uppercase;font-weight:900;letter-spacing:1px;margin-bottom:8px">Oceny</div>
               <div class="stat-value" id="statRating" style="font-size:32px;font-weight:900;color:var(--gold)">0 / 5</div>
-              <div class="stat-sub" id="statRatingsTotal" style="font-size:12px;opacity:.8;margin-top:4px;color:var(--gold)">Ocen: 0</div>
-              <div class="stat-sub" id="statHealthMails" style="font-size:11px;opacity:.5;margin-top:4px">Błędy maili (24h): 0</div>
+              <div class="stat-sub" id="statRatingsGrowth" style="font-size:12px;opacity:.8;margin-top:4px;color:var(--gold)">Dziś: 0 | 7 dni: 0 | 30 dni: 0</div>
+              <div class="stat-sub" id="statRatingsTotal" style="font-size:11px;opacity:.5;margin-top:4px">Łącznie: 0</div>
+              <div class="stat-sub" id="statHealthMails" style="font-size:11px;opacity:.5;margin-top:2px">Błędy maili (24h): 0</div>
             </div>
           </div>
           <!-- Retention & Activity -->
