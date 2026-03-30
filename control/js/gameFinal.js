@@ -66,6 +66,11 @@ function escapeHtml(s) {
     .replaceAll("'", "&#039;");
 }
 
+function clip11(s) {
+  const t = String(s ?? "");
+  return t.length > 11 ? t.slice(0, 11) : t;
+}
+
 function hostTag(style, text) {
   return `[${style}]${String(text ?? "")}[/]`;
 }
@@ -1339,7 +1344,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     ensureDefaultMapping(roundNo, idx);
 
     const txt = resolveShownText(roundNo, idx);
-    const shown = txt === FINAL_BLANK ? FINAL_BLANK : clip1(txt);
+    const shown = txt === FINAL_BLANK ? FINAL_BLANK : clip11(txt);
 
     if (roundNo === 1) await display.finalSetLeft(idx + 1, shown);
     else await display.finalSetRight(idx + 1, shown);
