@@ -3530,7 +3530,11 @@ async function openStatsDetailModal(type) {
 
   try {
     const res = await apiFetch(`${API_BASE}/stats/detail?type=${encodeURIComponent(type)}&limit=500`, { method: "GET" });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (!res.ok) {
+      const errBody = await res.text().catch(() => "");
+      console.error("[stats/detail] HTTP", res.status, errBody);
+      throw new Error(`HTTP ${res.status}: ${errBody}`);
+    }
     const data = await res.json();
     if (!data.ok) throw new Error(data.error || "błąd");
     allRows = data.rows || [];

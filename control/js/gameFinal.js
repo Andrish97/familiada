@@ -1339,7 +1339,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     ensureDefaultMapping(roundNo, idx);
 
     const txt = resolveShownText(roundNo, idx);
-    const shown = txt === FINAL_BLANK ? FINAL_BLANK : clip11(txt);
+    const shown = txt === FINAL_BLANK ? FINAL_BLANK : clip1(txt);
 
     if (roundNo === 1) await display.finalSetLeft(idx + 1, shown);
     else await display.finalSetRight(idx + 1, shown);
