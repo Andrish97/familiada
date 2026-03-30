@@ -1106,12 +1106,12 @@ function buildMarketingEmail(templateId, opts = {}) {
 
   // ── INVITATION ────────────────────────────────────────────────────────────
   if (templateId === "invitation") {
-    const subject = customSubject || "familiada.online — profesjonalny system do Twoich wydarzeń";
+    const subject = customSubject || "familiada.online — profesjonalny system do organizacji wydarzeń";
     const body = `
-      <p style="margin:0 0 18px;font-size:14px;line-height:1.8;color:rgba(255,255,255,.9)">Dzień dobry,</p>
+      <p style="margin:0 0 18px;font-size:14px;line-height:1.8;color:rgba(255,255,255,.9)">Witam,</p>
 
       <p style="margin:0 0 14px;font-size:14px;line-height:1.8;color:rgba(255,255,255,.88)">
-        Piszę do Państwa, ponieważ zajmują się Państwo organizacją wydarzeń i pomyślałem, że nasze narzędzie może realnie wesprzeć Państwa realizacje.
+        Piszę w sprawie narzędzia, które ułatwia organizację wydarzeń i może realnie wesprzeć realizowane projekty.
       </p>
 
       <p style="margin:0 0 14px;font-size:14px;line-height:1.8;color:rgba(255,255,255,.88)">
@@ -1142,7 +1142,7 @@ function buildMarketingEmail(templateId, opts = {}) {
       ${divider()}
 
       <p style="margin:0 0 14px;font-size:14px;line-height:1.8;color:rgba(255,255,255,.88)">
-        System jest dostępny całkowicie bezpłatnie i nie wymaga instalacji żadnych aplikacji. Będę wdzięczny za opinię, czy taki format mógłby wzbogacić Państwa ofertę.
+        System jest dostępny całkowicie bezpłatnie i nie wymaga instalacji żadnych aplikacji. Będę wdzięczny za opinię, czy taki format mógłby wzbogacić dotychczasową ofertę.
       </p>
 
       <p style="margin:0 0 18px;font-size:14px;color:rgba(255,255,255,.88)">Pozdrawiam,<br>Twórca familiada.online</p>
@@ -1151,7 +1151,7 @@ function buildMarketingEmail(templateId, opts = {}) {
 
       <div style="margin-top:32px;padding-top:16px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.4);line-height:1.6">
         Wiadomość ma charakter informacyjny i została wysłana jednorazowo do osób związanych z branżą eventową. 
-        Jeśli nie chcą Państwo otrzymywać więcej takich informacji, proszę o krótką wiadomość zwrotną.
+        W przypadku braku chęci otrzymywania dalszych informacji, proszę o krótką wiadomość zwrotną.
       </div>`;
 
     return { subject, html: shell(body) };
