@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict AUNz32VrUGyBE4e57WCRe2p08o7TZEEJtYKb3iEBs8OWrjilkF8XOUC1X68ouBu
+\restrict oVtucpFZBSMfB51ZDSqSSVfoN8YLYWzlgUgF3b2c8hH8Ue4qpW23lTA77QaM1LV
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -3099,6 +3099,38 @@ begin
          guest_expires_at = null,
          email = v_email
    where id = v_uid;
+
+  return jsonb_build_object('ok', true);
+end;
+$$;
+
+
+--
+-- Name: guest_discard_current(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."guest_discard_current"() RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+declare
+  v_uid uuid := auth.uid();
+  v_is_guest boolean := false;
+begin
+  if v_uid is null then
+    return jsonb_build_object('ok', false, 'error', 'not_authenticated');
+  end if;
+
+  select coalesce(is_guest, false)
+    into v_is_guest
+  from public.profiles
+  where id = v_uid;
+
+  if not v_is_guest then
+    return jsonb_build_object('ok', false, 'error', 'not_guest');
+  end if;
+
+  perform public.delete_user_everything(v_uid);
 
   return jsonb_build_object('ok', true);
 end;
@@ -13099,5 +13131,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict AUNz32VrUGyBE4e57WCRe2p08o7TZEEJtYKb3iEBs8OWrjilkF8XOUC1X68ouBu
+\unrestrict oVtucpFZBSMfB51ZDSqSSVfoN8YLYWzlgUgF3b2c8hH8Ue4qpW23lTA77QaM1LV
 
