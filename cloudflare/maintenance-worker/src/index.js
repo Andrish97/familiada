@@ -763,28 +763,25 @@ async function handleAdminMarketingApi(request, env, url) {
 
     const { html: emailHtml } = buildMarketingEmail(template_id || "custom", { customBody: custom_body, customSubject: mktSubject });
 
-    let queued = 0;
-    const errors = [];
-    for (const email of validEmails) {
-      const qRes = await supabaseRequest(env, "/rest/v1/mail_queue", {
-        method: "POST",
-        headers: { Prefer: "return=minimal" },
-        body: {
-          to_email: email,
-          subject: String(mktSubject),
-          html: emailHtml,
-          from_email: "kontakt@familiada.online",
-          meta: { type: "marketing", template_id: template_id || "custom" },
-        },
-      });
-      if (qRes.ok) {
-        queued++;
-      } else {
-        errors.push({ email, error: summarizeSupabaseError(qRes) });
-      }
+    const rows = validEmails.map(email => ({
+      to_email: email,
+      subject: String(mktSubject),
+      html: emailHtml,
+      from_email: "kontakt@familiada.online",
+      meta: { type: "marketing", template_id: template_id || "custom" },
+    }));
+
+    const qRes = await supabaseRequest(env, "/rest/v1/mail_queue", {
+      method: "POST",
+      headers: { Prefer: "return=minimal" },
+      body: rows,
+    });
+
+    if (!qRes.ok) {
+      return json({ ok: false, error: "queue_insert_failed", details: summarizeSupabaseError(qRes) }, qRes.status || 500);
     }
 
-    return json({ ok: true, queued, total: validEmails.length, errors: errors.length ? errors.slice(0, 10) : undefined });
+    return json({ ok: true, queued: validEmails.length, total: validEmails.length });
   }
 
   return new Response("Not Found", { status: 404 });
