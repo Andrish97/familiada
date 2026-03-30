@@ -3355,11 +3355,11 @@ function wireRatingsEvents() {
 
 const MKT_TEMPLATES = {
   invitation: {
-    subject: "Dołącz do Familiady — darmowy teleturniej online",
+    subject: "Familiada Online — darmowy teleturniej w przeglądarce",
     hasBody: false,
   },
   event: {
-    subject: "Familiada na Twój event — bezpłatnie",
+    subject: "familiada.online — narzędzie dla prowadzących",
     hasBody: false,
   },
   newsletter: {

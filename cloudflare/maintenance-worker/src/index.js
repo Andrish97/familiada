@@ -1036,78 +1036,183 @@ function buildContactEmail(opts) {
 // MARKETING EMAIL BUILDER
 // ============================================================
 
+const IMG_BASE = "https://familiada.online/img/pl";
+
 function buildMarketingEmail(templateId, opts = {}) {
   const { customBody, customSubject } = opts;
   const esc = (s) => String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   const nl2br = (s) => esc(s).replace(/\n/g, "<br>");
 
-  const wrapEmailHtml = (heading, contentHtml, ctaHref, ctaLabel) => `<!DOCTYPE html>
-<html>
+  // ── shared shell ──────────────────────────────────────────────────────────
+  const shell = (bodyContent) => `<!DOCTYPE html>
+<html lang="pl">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <meta name="color-scheme" content="dark"/>
-  <style>:root{color-scheme:dark}</style>
+  <meta name="color-scheme" content="dark light"/>
+  <title>Familiada Online</title>
 </head>
-<body style="margin:0;padding:0;background:#050914;color:#ffffff;">
-<div style="max-width:560px;margin:0 auto;padding:26px 16px;font-family:system-ui,-apple-system,'Segoe UI',Arial,sans-serif;font-size:14px;color:#ffffff;">
-  <div style="padding:14px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.12);border-radius:18px;margin-bottom:14px;">
-    <div style="font-weight:1000;letter-spacing:.18em;text-transform:uppercase;color:#ffeaa6;">FAMILIADA</div>
-    <div style="margin-top:4px;font-size:11px;opacity:.7;letter-spacing:.06em;">familiada.online</div>
-  </div>
-  <div style="padding:22px 20px;border-radius:18px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);">
-    ${heading ? `<h2 style="margin:0 0 16px;font-size:18px;font-weight:800;color:#ffeaa6;letter-spacing:.04em;">${esc(heading)}</h2>` : ""}
-    ${contentHtml}
-    ${ctaHref ? `<div style="margin-top:24px;text-align:center"><a href="${esc(ctaHref)}" style="display:inline-block;padding:12px 28px;background:#ffeaa6;color:#050914;font-weight:800;font-size:14px;letter-spacing:.08em;text-transform:uppercase;border-radius:10px;text-decoration:none">${esc(ctaLabel || ctaHref)}</a></div>` : ""}
-    <p style="margin:24px 0 0;font-size:12px;opacity:.45;text-align:center">Familiada Online &mdash; bezpłatna gra dostępna na familiada.online</p>
-  </div>
-</div>
+<body style="margin:0;padding:0;background:#050914;-webkit-text-size-adjust:100%">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#050914">
+<tr><td align="center" style="padding:24px 12px 32px">
+<table width="560" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;width:100%;font-family:system-ui,-apple-system,'Segoe UI',Arial,sans-serif;font-size:14px;color:#ffffff">
+  <!-- brand bar -->
+  <tr><td style="padding:14px 16px;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.12);border-radius:16px;margin-bottom:14px" bgcolor="#000">
+    <a href="https://familiada.online" style="text-decoration:none">
+      <div style="font-weight:900;font-size:16px;letter-spacing:.18em;text-transform:uppercase;color:#ffeaa6">FAMILIADA</div>
+      <div style="margin-top:3px;font-size:11px;color:rgba(255,255,255,.5);letter-spacing:.05em">familiada.online</div>
+    </a>
+  </td></tr>
+  <tr><td height="12"></td></tr>
+  <!-- main card -->
+  <tr><td style="padding:24px 22px 22px;border-radius:18px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04)">
+    ${bodyContent}
+    <!-- footer -->
+    <div style="margin-top:28px;padding-top:16px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.35);text-align:center;line-height:1.6">
+      Familiada Online &mdash; bezpłatna gra na <a href="https://familiada.online" style="color:rgba(255,234,166,.5);text-decoration:none">familiada.online</a><br>
+      Wysłano z no-reply@familiada.online
+    </div>
+  </td></tr>
+</table>
+</td></tr>
+</table>
 </body>
 </html>`;
 
+  // ── reusable pieces ───────────────────────────────────────────────────────
+  const cta = (href, label) =>
+    `<div style="margin-top:24px;text-align:center">
+      <a href="${esc(href)}" style="display:inline-block;padding:13px 30px;background:#ffeaa6;color:#050914;font-weight:800;font-size:13px;letter-spacing:.09em;text-transform:uppercase;border-radius:10px;text-decoration:none">${esc(label)}</a>
+    </div>`;
+
+  const featureTile = (imgSrc, heading, desc) =>
+    `<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px">
+      <tr>
+        <td style="padding:0 0 8px">
+          <img src="${esc(imgSrc)}" width="516" alt="${esc(heading)}"
+               style="width:100%;max-width:516px;border-radius:10px;display:block;border:0"/>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:0 0 4px;font-size:14px;font-weight:700;color:#ffeaa6">${esc(heading)}</td>
+      </tr>
+      <tr>
+        <td style="font-size:13px;color:rgba(255,255,255,.75);line-height:1.6">${esc(desc)}</td>
+      </tr>
+    </table>`;
+
+  const divider = () =>
+    `<div style="height:1px;background:rgba(255,255,255,.08);margin:20px 0"></div>`;
+
+  // ── INVITATION ────────────────────────────────────────────────────────────
   if (templateId === "invitation") {
-    const subject = customSubject || "Dołącz do Familiady — darmowy teleturniej online";
-    const content = `
-      <p style="margin:0 0 14px;opacity:.9;">Cześć!</p>
-      <p style="margin:0 0 14px;">Chcemy Cię zaprosić do <strong style="color:#ffeaa6">Familiada Online</strong> — w pełni darmowego systemu do grania w Familiadę w przeglądarce. Bez instalacji, bez opłat.</p>
-      <p style="margin:0 0 14px;">Możesz:</p>
-      <ul style="margin:0 0 14px;padding-left:20px;line-height:1.7;opacity:.9;">
-        <li>Tworzyć własne gry i sondaże</li>
-        <li>Prowadzić rozgrywkę na żywo z tablicą wyników</li>
-        <li>Grać na weselu, urodzinach lub imprezie firmowej</li>
-        <li>Korzystać w trybie gościa — bez zakładania konta</li>
-      </ul>
-      <p style="margin:0;opacity:.75;font-size:13px;"><strong style="color:#ffeaa6">Całkowicie bezpłatnie.</strong> Zawsze.</p>`;
-    return { subject, html: wrapEmailHtml("Dołącz do Familiady 🎮", content, "https://familiada.online/login", "Zarejestruj się — to nic nie kosztuje") };
+    const subject = customSubject || "Familiada Online — darmowy teleturniej w przeglądarce";
+    const body = `
+      <p style="margin:0 0 6px;font-size:22px;font-weight:900;color:#ffeaa6;letter-spacing:.02em;line-height:1.2">Darmowa Familiada<br>w Twojej przeglądarce.</p>
+      <p style="margin:10px 0 18px;font-size:13px;color:rgba(255,255,255,.6)">Prawdziwy teleturniej na Twoim sprzęcie — bez instalacji, bez opłat.</p>
+
+      <img src="${IMG_BASE}/landing-display.webp" width="516" alt="Tablica wyników Familiady Online"
+           style="width:100%;max-width:516px;border-radius:12px;display:block;border:0;margin-bottom:20px"/>
+
+      <p style="margin:0 0 14px;font-size:14px;line-height:1.7;color:rgba(255,255,255,.88)">
+        Cześć!<br><br>
+        <strong style="color:#fff">familiada.online</strong> to kompletna platforma do prowadzenia Familiady — stworzysz grę, zbierzesz sondaż i poprowadzisz rozgrywkę na żywo. <strong style="color:#ffeaa6">Całkowicie bezpłatnie.</strong> Zawsze.
+      </p>
+
+      ${divider()}
+
+      ${featureTile(
+        `${IMG_BASE}/landing-polls.webp`,
+        "Sondaż z kodem QR — goście głosują z telefonu",
+        "Pokaż QR, uczestnicy odpowiadają ze swoich telefonów bez instalowania niczego. Wyniki spływają na żywo, system normalizuje punkty do 100 — dokładnie jak w telewizji."
+      )}
+      ${featureTile(
+        `${IMG_BASE}/landing-control.webp`,
+        "Panel operatora — pełna kontrola gry na żywo",
+        "Otwierasz rundy, odkrywasz odpowiedzi, przyznasz punkty i zatwierdzasz błędy X. Panel prowadzi przez kolejne etapy — nawet przy pierwszym razie nie zgubisz się."
+      )}
+      ${featureTile(
+        `${IMG_BASE}/landing-display.webp`,
+        "Tablica na TV lub rzutnik",
+        "To co widzą wszyscy na sali — pytanie, zakryte odpowiedzi odsłaniające się jedna po drugiej, bank punktów i błędy X. Podłącz do telewizora i masz prawdziwy teleturniej."
+      )}
+      ${featureTile(
+        `${IMG_BASE}/landing-host.webp`,
+        "Widok prowadzącego na tablecie",
+        "Osobny ekran z treścią pytań i podglądem odpowiedzi — bez ryzyka przypadkowego kliknięcia w sterowanie grą."
+      )}
+
+      ${divider()}
+
+      <p style="margin:0 0 4px;font-size:13px;color:rgba(255,255,255,.55)">Idealna na wesele, urodziny i event firmowy.</p>
+      <p style="margin:0;font-size:13px;color:rgba(255,255,255,.55)">Tryb gościa — bez zakładania konta. Konto wymaga tylko adresu e-mail.</p>
+
+      ${cta("https://familiada.online/login", "Zacznij tworzyć gry — to nic nie kosztuje")}`;
+
+    return { subject, html: shell(body) };
   }
 
+  // ── EVENT (pro organizers) ────────────────────────────────────────────────
   if (templateId === "event") {
-    const subject = customSubject || "Familiada na Twój event — bezpłatnie";
-    const content = `
-      <p style="margin:0 0 14px;opacity:.9;">Cześć!</p>
-      <p style="margin:0 0 14px;">Planujesz wesele, urodziny lub event firmowy? <strong style="color:#ffeaa6">Familiada Online</strong> to gotowy system teleturnieju — <strong>w pełni bezpłatny</strong>, działa w przeglądarce, nie wymaga żadnej instalacji.</p>
-      <p style="margin:0 0 8px;font-size:13px;opacity:.75;">Jak to działa?</p>
-      <ol style="margin:0 0 14px;padding-left:20px;line-height:1.8;opacity:.9;font-size:13px;">
-        <li>Zbierasz odpowiedzi w sondażu od uczestników</li>
-        <li>System normalizuje wyniki do 100 punktów — jak w TV</li>
-        <li>Prowadzisz rozgrywkę na żywo z tablicą wyników</li>
-      </ol>
-      <p style="margin:0;opacity:.75;font-size:13px;">Bez opłat. Bez rejestracji uczestników. Cztery urządzenia wystarczą.</p>`;
-    return { subject, html: wrapEmailHtml("Familiada na Twój event 🎉", content, "https://familiada.online", "Sprawdź familiada.online") };
+    const subject = customSubject || "familiada.online — narzędzie dla prowadzących";
+    const body = `
+      <p style="margin:0 0 18px;font-size:14px;line-height:1.8;color:rgba(255,255,255,.9)">Cześć,</p>
+
+      <p style="margin:0 0 14px;font-size:14px;line-height:1.8;color:rgba(255,255,255,.88)">
+        prowadzisz eventy zawodowo i wiesz, że narzędzie musi działać bezbłędnie&nbsp;— szczególnie gdy stoisz przed publicznością klienta.
+      </p>
+
+      <img src="${IMG_BASE}/landing-control.webp" width="516" alt="Panel sterowania operatora Familiady"
+           style="width:100%;max-width:516px;border-radius:12px;display:block;border:0;margin-bottom:18px"/>
+
+      <p style="margin:0 0 14px;font-size:14px;line-height:1.8;color:rgba(255,255,255,.88)">
+        <a href="https://familiada.online" style="color:#ffeaa6;text-decoration:none;font-weight:700">familiada.online</a> to platforma zaprojektowana z myślą o prowadzących: masz panel operatora, osobny widok prowadzącego i tablicę wyników działające całkowicie niezależnie. Każdy skupia się na swojej roli, a gra idzie płynnie.
+      </p>
+
+      <img src="${IMG_BASE}/landing-host.webp" width="516" alt="Widok prowadzącego — tablet lub telefon"
+           style="width:100%;max-width:516px;border-radius:12px;display:block;border:0;margin-bottom:18px"/>
+
+      <p style="margin:0 0 14px;font-size:14px;line-height:1.8;color:rgba(255,255,255,.88)">
+        Sondaż zbierasz przed eventem (goście odpowiadają z telefonu), a rozgrywkę prowadzisz na żywo na dowolnym ekranie. Zero instalacji, zero technikaliów dla uczestników.
+      </p>
+
+      <img src="${IMG_BASE}/landing-polls.webp" width="516" alt="Sondaż online z kodem QR"
+           style="width:100%;max-width:516px;border-radius:12px;display:block;border:0;margin-bottom:18px"/>
+
+      <p style="margin:0 0 14px;font-size:14px;line-height:1.8;color:rgba(255,255,255,.88)">
+        Używają tego animatorzy, wodzirejowie i konferansjerzy&nbsp;— jako gotowe narzędzie, które można wrzucić do swojego repertuaru i mieć pewność, że zadziała.
+      </p>
+
+      ${divider()}
+
+      <p style="margin:0 0 6px;font-size:14px;color:rgba(255,255,255,.88)">
+        Chętnie wyślę dostęp demo — napisz tylko i sprawdź sam.
+      </p>
+      <p style="margin:0 0 18px;font-size:14px;color:rgba(255,255,255,.88)">Pozdrawiam,</p>
+
+      ${cta("https://familiada.online", "familiada.online")}`;
+
+    return { subject, html: shell(body) };
   }
 
+  // ── NEWSLETTER ────────────────────────────────────────────────────────────
   if (templateId === "newsletter") {
     const subject = customSubject || "Nowości w Familiada Online";
-    const rawBody = customBody || "Witaj,\n\nMamy dla Ciebie nowości z Familiada Online.";
-    const content = `<div style="opacity:.9;white-space:pre-wrap;line-height:1.7">${nl2br(rawBody)}</div>`;
-    return { subject, html: wrapEmailHtml("", content, null, null) };
+    const rawBody = customBody || "";
+    const body = `
+      <p style="margin:0 0 6px;font-size:20px;font-weight:800;color:#ffeaa6">${esc(subject)}</p>
+      ${divider()}
+      <div style="font-size:14px;line-height:1.8;color:rgba(255,255,255,.88);white-space:pre-wrap">${nl2br(rawBody)}</div>
+      <br>
+      ${cta("https://familiada.online", "familiada.online")}`;
+    return { subject, html: shell(body) };
   }
 
-  // custom / fallback
+  // ── CUSTOM ────────────────────────────────────────────────────────────────
   const subject = customSubject || "Wiadomość od Familiada";
   const rawBody = customBody || "";
-  const content = `<div style="opacity:.9;white-space:pre-wrap;line-height:1.7">${nl2br(rawBody)}</div>`;
-  return { subject, html: wrapEmailHtml("", content, null, null) };
+  const body = `<div style="font-size:14px;line-height:1.8;color:rgba(255,255,255,.88);white-space:pre-wrap">${nl2br(rawBody)}</div>`;
+  return { subject, html: shell(body) };
 }
 
 // ============================================================

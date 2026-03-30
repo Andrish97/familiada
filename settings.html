@@ -725,10 +725,12 @@
 
   <!-- ── Marketing panel ── -->
   <div class="market-admin-panel" id="marketingPanel" hidden>
-    <div class="mail-card" style="max-width:760px">
-      <div class="panel-head">
-        <div class="panel-title" data-i18n="settings.marketing.title">Wysyłka marketingowa</div>
-        <div class="panel-sub" data-i18n="settings.marketing.subtitle">Wyślij wiadomość do wielu adresatów jednocześnie</div>
+    <div class="mail-card">
+      <div class="mail-card-head">
+        <div>
+          <div class="panel-title" data-i18n="settings.marketing.title">Wysyłka marketingowa</div>
+          <div class="panel-sub" data-i18n="settings.marketing.subtitle">Wyślij wiadomość do wielu adresatów jednocześnie</div>
+        </div>
       </div>
 
       <!-- Szablon -->
@@ -761,7 +763,7 @@
           <label class="field-label" style="margin:0" data-i18n="settings.marketing.previewLabel">Podgląd e-maila</label>
           <button class="btn sm" type="button" id="btnMktPreview" data-i18n="settings.marketing.previewBtn">Odśwież podgląd</button>
         </div>
-        <iframe id="mktPreviewFrame" style="width:100%;min-height:340px;border:1px solid rgba(255,255,255,.1);border-radius:10px;background:#fff" sandbox="allow-same-origin"></iframe>
+        <iframe id="mktPreviewFrame" style="width:100%;min-height:420px;border:1px solid rgba(255,255,255,.1);border-radius:10px;background:#050914"></iframe>
       </div>
       <div style="margin-bottom:12px">
         <button class="btn sm" type="button" id="btnMktTogglePreview" data-i18n="settings.marketing.showPreview">Pokaż podgląd</button>
