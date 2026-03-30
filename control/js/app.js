@@ -503,31 +503,31 @@ async function sendZeroStatesToDevices() {
   
   function updateGameSettingsVisibility() {
     // Pokaż/ukryj wybór pytań finału w zależności od czy gramy finał
-    const finalModeRow = document.getElementById("finalModeRow");
+    const finalModeField = document.getElementById("finalModeField");
     const hasFinal = document.getElementById("finalYes")?.checked;
-    if (finalModeRow) {
-      finalModeRow.style.display = hasFinal ? "flex" : "none";
+    if (finalModeField) {
+      finalModeField.style.display = hasFinal ? "flex" : "none";
     }
 
     // "Cel finału" - tylko gdy finał włączony
-    const finalOnlyRow = document.getElementById("finalOnlyRow");
-    if (finalOnlyRow) {
-      finalOnlyRow.style.display = hasFinal ? "flex" : "none";
+    const finalTargetField = document.getElementById("finalTargetField");
+    if (finalTargetField) {
+      finalTargetField.style.display = hasFinal ? "flex" : "none";
     }
 
-    // "Zakończenie gry" - ZAWSZE widoczne
-    const gameEndModeRow = document.getElementById("gameEndModeRow");
-    if (gameEndModeRow) {
-      gameEndModeRow.style.display = "flex";
+    // "Pokaż kwotę (po finale)" - tylko gdy finał włączony
+    const winModeMoneyChk = document.getElementById("winModeMoneyChk");
+    if (winModeMoneyChk) {
+      winModeMoneyChk.style.display = hasFinal ? "flex" : "none";
     }
-    
+
     // Pola nagrody - widoczne tylko gdy finał włączony I wybrano "Pokaż kwotę"
     const prizeSettingsRow = document.getElementById("prizeSettingsRow");
     const winModeMoney = document.getElementById("winModeMoney")?.checked;
     const showPrizeFields = hasFinal && winModeMoney;
-    
+
     if (prizeSettingsRow) {
-      prizeSettingsRow.style.display = showPrizeFields ? "flex" : "none";
+      prizeSettingsRow.style.display = showPrizeFields ? "grid" : "none";
     }
   }
   

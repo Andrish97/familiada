@@ -592,7 +592,13 @@
 
 .cardPanel {
     margin-top: 4px;
-    position: relative
+    position: relative;
+    width: 100%;
+}
+
+.cardPanel .card {
+    width: 100%;
+    max-width: none;
 }
 
 .hidden {
@@ -601,8 +607,8 @@
 
 .panelHead {
     display: flex;
-    align-items: baseline;
-    justify-content: space-between;
+    align-items: center;
+    justify-content: flex-end;
     gap: 10px;
     margin-bottom: 6px
 }
@@ -634,7 +640,7 @@
     padding-top: 0;
     min-height: 420px;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     width: 100%
 }
 
@@ -667,17 +673,30 @@
     display: flex;
     flex-direction: column;
     gap: 10px;
+    flex: 1;
+}
+
+.card {
+    border-radius: 18px;
+    border: 1px solid rgba(255,255,255,.14);
+    background: rgba(0,0,0,.18);
+    padding: 14px;
+    box-shadow: 0 18px 45px rgba(0,0,0,.45);
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    min-height: 320px;
 }
 
 .stepFoot {
     margin-top: auto;
-    padding-top: 18px;
+    padding-top: 10px;
     border-top: 1px solid rgba(255,255,255,.1);
     align-items: center
 }
 
 .step-foot-spaced {
-    margin-top: 20px;
+    margin-top: 0;
 }
 
 .stepFoot,.stepFootButtons {
@@ -775,7 +794,7 @@
     gap: 8px;
     flex-wrap: wrap;
     margin-top: 8px;
-    align-items: center;
+    align-items: flex-end;
 }
 
 .rowBtns .msg {
@@ -1727,6 +1746,39 @@
 .finalRevealBtn:disabled {
     opacity: .45;
     cursor: not-allowed
+}
+
+/* =========================================================
+   SETTINGS GRID (ustawienia w gridzie)
+========================================================= */
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.settings-grid-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+@media (max-width: 768px) {
+  .settings-grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.setting-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.radio-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 4px;
 }
 
 /* =========================================================

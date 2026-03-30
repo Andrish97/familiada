@@ -258,7 +258,6 @@
           <!-- DEVICES -->
           <section class="cardPanel" data-card="devices">
             <div class="panelHead">
-              <div class="panelTitle" data-i18n="control.panelDevices">Urządzenia</div>
               <div class="panelStep" data-panel-step></div>
             </div>
 
@@ -389,7 +388,6 @@
           <!-- SETUP -->
           <section class="cardPanel hidden" data-card="setup">
             <div class="panelHead">
-              <div class="panelTitle" data-i18n="control.panelSetup">Pytania i ustawienia</div>
               <div class="panelStep" data-panel-step></div>
             </div>
 
@@ -452,11 +450,10 @@
                   <!-- GÓRNA SEKCJA - FINAŁ -->
                   <div class="sectionBlock">
                     <div class="sectionTitle" data-i18n="control.sectionFinal">Finał</div>
-                    
-                    <div class="rowBtns">
-                      <div class="field">
+
+                    <div class="settings-grid">
+                      <div class="setting-item">
                         <div class="lbl2" data-i18n="control.playFinal">Gramy finał?</div>
-                        
                         <div class="toggle-group">
                           <label class="toggle-item">
                             <input type="radio" name="hasFinal" value="yes" id="finalYes" />
@@ -468,12 +465,9 @@
                           </label>
                         </div>
                       </div>
-                    </div>
 
-                    <div class="rowBtns" id="finalModeRow">
-                      <div class="field">
+                      <div class="setting-item" id="finalModeField">
                         <div class="lbl2" data-i18n="control.finalQuestionsMode">Pytania finału</div>
-                        
                         <div class="toggle-group">
                           <label class="toggle-item">
                             <input type="radio" name="finalMode" value="random" id="finalRandom" checked />
@@ -492,10 +486,9 @@
                   <div class="sectionBlock">
                     <div class="sectionTitle" data-i18n="control.sectionRounds">Rundy</div>
 
-                    <div class="rowBtns">
-                      <div class="field">
+                    <div class="settings-grid">
+                      <div class="setting-item">
                         <div class="lbl2" data-i18n="control.roundsQuestionsMode">Pytania rund</div>
-                        
                         <div class="toggle-group">
                           <label class="toggle-item">
                             <input type="radio" name="roundsMode" value="random" id="roundsRandom" checked />
@@ -514,8 +507,8 @@
                   <div class="sectionBlock">
                     <div class="sectionTitle" data-i18n="control.extraSettingsTitle">Dodatkowe ustawienia</div>
 
-                    <div class="rowBtns">
-                      <div class="field sm">
+                    <div class="settings-grid settings-grid-2">
+                      <div class="setting-item">
                         <div class="lbl2" data-i18n="control.roundMultipliers">Mnożniki rund</div>
                         <div class="hint" data-i18n-html="control.roundMultipliersHint">
                           Podaj po przecinku, np. <b>1,1,1,2,3</b>
@@ -528,10 +521,8 @@
                           inputmode="numeric"
                         />
                       </div>
-                    </div>
 
-                    <div class="rowBtns">
-                      <div class="field sm">
+                      <div class="setting-item">
                         <div class="lbl2" data-i18n="control.gameTarget">Cel rozgrywki</div>
                         <input
                           id="finalMinPoints"
@@ -541,10 +532,8 @@
                           step="10"
                         />
                       </div>
-                    </div>
 
-                    <div class="rowBtns" id="finalOnlyRow">
-                      <div class="field sm">
+                      <div class="setting-item" id="finalTargetField">
                         <div class="lbl2" data-i18n="control.finalTarget">Cel finału</div>
                         <input
                           id="finalTargetPoints"
@@ -554,11 +543,10 @@
                           step="10"
                         />
                       </div>
-                    </div>
 
-                    <div class="rowBtns" id="gameEndModeRow">
-                      <div class="field sm">
+                      <div class="setting-item">
                         <div class="lbl2" data-i18n="control.gameEndMode">Zakończenie gry</div>
+                        <div class="radio-group">
                           <label class="chk">
                             <input type="radio" id="winModeLogo" name="endMode" value="logo" checked />
                             <span data-i18n="control.showLogo">Pokaż logo</span>
@@ -567,16 +555,17 @@
                             <input type="radio" id="winModePoints" name="endMode" value="points" />
                             <span data-i18n="control.showPoints">Pokaż punkty</span>
                           </label>
-                          <label class="chk">
+                          <label class="chk" id="winModeMoneyChk">
                             <input type="radio" id="winModeMoney" name="endMode" value="money" />
                             <span data-i18n="control.showMoney">Pokaż kwotę (po finale)</span>
                           </label>
+                        </div>
                       </div>
                     </div>
 
-                    <!-- Pola nagrody - pod sekcją Zakończenie gry, tylko gdy finał i "Pokaż kwotę" -->
-                    <div class="rowBtns" id="prizeSettingsRow">
-                      <div class="field sm">
+                    <!-- Pola nagrody - osobny blok, tylko gdy finał i "Pokaż kwotę" -->
+                    <div class="settings-grid settings-grid-2" id="prizeSettingsRow">
+                      <div class="setting-item">
                         <div class="lbl2" data-i18n="control.finalPrizeMultiplier">Mnożnik nagrody (po finale)</div>
                         <div class="hint" data-i18n="control.finalPrizeMultiplierHint">
                           Mnożnik decydujący o kwocie nagrody głównej
@@ -590,7 +579,7 @@
                         />
                       </div>
 
-                      <div class="field sm">
+                      <div class="setting-item">
                         <div class="lbl2" data-i18n="control.mainPrizeAmount">Kwota nagrody głównej</div>
                         <input
                           id="mainPrizeAmount"
@@ -742,7 +731,6 @@
           <!-- ROUNDS -->
           <section class="cardPanel hidden" data-card="rounds">
             <div class="panelHead">
-              <div class="panelTitle" data-i18n="control.panelRounds">Rundy</div>
               <div class="panelStep" data-panel-step></div>
             </div>
 
@@ -901,7 +889,6 @@
           <!-- FINAL -->
           <section class="cardPanel hidden" data-card="final">
             <div class="panelHead">
-              <div class="panelTitle" data-i18n="control.panelFinal">Finał</div>
               <div class="panelStep" data-panel-step></div>
             </div>
 

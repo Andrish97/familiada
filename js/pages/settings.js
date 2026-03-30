@@ -3374,14 +3374,18 @@ function fmtDate(iso) {
   catch { return iso; }
 }
 
-function buildStatsTable(cfg, rows) {
-  const wrap = document.createElement("div");
-  wrap.style.cssText = "overflow:auto;max-height:60vh;margin-top:8px";
+const STATS_DETAIL_PER_PAGE = 25;
 
+function buildStatsTable(cfg, rows) {
   if (!rows.length) {
-    wrap.textContent = "Brak danych.";
-    return wrap;
+    const empty = document.createElement("div");
+    empty.style.cssText = "font-size:13px;opacity:.45;text-align:center;padding:16px 0";
+    empty.textContent = "Brak danych.";
+    return empty;
   }
+
+  const wrap = document.createElement("div");
+  wrap.style.cssText = "overflow-x:auto";
 
   const table = document.createElement("table");
   table.style.cssText = "width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap";
@@ -3391,7 +3395,7 @@ function buildStatsTable(cfg, rows) {
   cfg.cols.forEach(col => {
     const th = document.createElement("th");
     th.textContent = col;
-    th.style.cssText = "padding:6px 10px;text-align:left;opacity:.5;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid rgba(255,255,255,.1);position:sticky;top:0;background:#0d1020";
+    th.style.cssText = "padding:6px 10px;text-align:left;opacity:.5;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid rgba(255,255,255,.1)";
     hr.appendChild(th);
   });
   thead.appendChild(hr);
@@ -3404,7 +3408,7 @@ function buildStatsTable(cfg, rows) {
     cfg.row(r).forEach(cell => {
       const td = document.createElement("td");
       td.textContent = cell;
-      td.style.cssText = "padding:6px 10px;border-bottom:1px solid rgba(255,255,255,.05);max-width:220px;overflow:hidden;text-overflow:ellipsis";
+      td.style.cssText = "padding:6px 10px;border-bottom:1px solid rgba(255,255,255,.05);max-width:240px;overflow:hidden;text-overflow:ellipsis";
       tr.appendChild(td);
     });
     tbody.appendChild(tr);
@@ -3414,13 +3418,91 @@ function buildStatsTable(cfg, rows) {
   return wrap;
 }
 
+function buildStatsPagination(page, pages, onPage) {
+  const nav = document.createElement("div");
+  nav.className = "logs-page-nav";
+  nav.style.cssText = "margin-top:10px";
+
+  const prevBtn = document.createElement("button");
+  prevBtn.className = "btn sm";
+  prevBtn.textContent = "‹";
+  prevBtn.disabled = page <= 1;
+  prevBtn.addEventListener("click", () => onPage(page - 1));
+  nav.appendChild(prevBtn);
+
+  const windowSize = 7;
+  const half = Math.floor(windowSize / 2);
+  let start = Math.max(1, page - half);
+  let end = Math.min(pages, start + windowSize - 1);
+  if (end - start + 1 < windowSize) start = Math.max(1, end - windowSize + 1);
+
+  if (start > 1) {
+    const btn = document.createElement("button");
+    btn.className = "btn sm";
+    btn.textContent = "1";
+    btn.addEventListener("click", () => onPage(1));
+    nav.appendChild(btn);
+    if (start > 2) {
+      const dots = document.createElement("span");
+      dots.style.cssText = "padding:0 4px;opacity:.4;font-size:12px";
+      dots.textContent = "…";
+      nav.appendChild(dots);
+    }
+  }
+
+  for (let i = start; i <= end; i++) {
+    const btn = document.createElement("button");
+    btn.className = "btn sm" + (i === page ? " is-active" : "");
+    btn.textContent = String(i);
+    if (i !== page) btn.addEventListener("click", () => onPage(i));
+    nav.appendChild(btn);
+  }
+
+  if (end < pages) {
+    if (end < pages - 1) {
+      const dots = document.createElement("span");
+      dots.style.cssText = "padding:0 4px;opacity:.4;font-size:12px";
+      dots.textContent = "…";
+      nav.appendChild(dots);
+    }
+    const btn = document.createElement("button");
+    btn.className = "btn sm";
+    btn.textContent = String(pages);
+    btn.addEventListener("click", () => onPage(pages));
+    nav.appendChild(btn);
+  }
+
+  const nextBtn = document.createElement("button");
+  nextBtn.className = "btn sm";
+  nextBtn.textContent = "›";
+  nextBtn.disabled = page >= pages;
+  nextBtn.addEventListener("click", () => onPage(page + 1));
+  nav.appendChild(nextBtn);
+
+  return nav;
+}
+
 async function openStatsDetailModal(type) {
   const cfg = STAT_DETAIL_CONFIG[type];
   if (!cfg) return;
 
+  const perPage = STATS_DETAIL_PER_PAGE;
+  let allRows = [];
+
+  const infoEl = document.createElement("div");
+  infoEl.style.cssText = "font-size:11px;opacity:.4;margin-bottom:6px;min-height:16px";
+
+  const tableWrap = document.createElement("div");
+  tableWrap.style.cssText = "min-height:60px";
+  tableWrap.textContent = "Ładowanie…";
+
+  const pageWrap = document.createElement("div");
+
   const body = document.createElement("div");
-  body.style.cssText = "min-width:min(700px,90vw)";
-  body.textContent = "Ładowanie…";
+  body.style.cssText = "min-width:min(680px,88vw)";
+  body.appendChild(infoEl);
+  body.appendChild(tableWrap);
+  body.appendChild(pageWrap);
 
   confirmModal({
     title: cfg.title,
@@ -3430,16 +3512,31 @@ async function openStatsDetailModal(type) {
     onReady: ({ cancelBtn }) => { if (cancelBtn) cancelBtn.style.display = "none"; },
   });
 
+  function renderPage(page) {
+    const total = allRows.length;
+    const pages = Math.max(1, Math.ceil(total / perPage));
+    const from = (page - 1) * perPage;
+    const to = Math.min(page * perPage, total);
+    const pageRows = allRows.slice(from, to);
+
+    infoEl.textContent = total ? `${from + 1}–${to} / ${total}` : "0 wyników";
+
+    tableWrap.innerHTML = "";
+    tableWrap.appendChild(buildStatsTable(cfg, pageRows));
+
+    pageWrap.innerHTML = "";
+    if (pages > 1) pageWrap.appendChild(buildStatsPagination(page, pages, renderPage));
+  }
+
   try {
-    const res = await apiFetch(`${API_BASE}/stats/detail?type=${encodeURIComponent(type)}&limit=300`, { method: "GET" });
+    const res = await apiFetch(`${API_BASE}/stats/detail?type=${encodeURIComponent(type)}&limit=500`, { method: "GET" });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     if (!data.ok) throw new Error(data.error || "błąd");
-    body.textContent = "";
-    body.appendChild(buildStatsTable(cfg, data.rows || []));
-    body.insertAdjacentHTML("afterbegin", `<div style="font-size:11px;opacity:.4;margin-bottom:4px">Wyniki: ${(data.rows || []).length}</div>`);
+    allRows = data.rows || [];
+    renderPage(1);
   } catch (err) {
-    body.textContent = `Błąd: ${err.message}`;
+    tableWrap.textContent = `Błąd: ${err.message}`;
   }
 }
 
