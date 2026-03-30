@@ -164,7 +164,7 @@ export function createDevices({ game, ui, store, chDisplay, chHost, chBuzzer }) 
       "devices.copyHost",
       async () =>
         ui.setMsg(
-          "msgDevices2",
+          "msgDevices",
           (await copyToClipboard(urls.hostUrl)) ? DEVICES_MSG.COPY_OK : DEVICES_MSG.COPY_FAIL
         )
     );
@@ -173,7 +173,7 @@ export function createDevices({ game, ui, store, chDisplay, chHost, chBuzzer }) 
       "devices.copyBuzzer",
       async () =>
         ui.setMsg(
-          "msgDevices2",
+          "msgDevices",
           (await copyToClipboard(urls.buzzerUrl)) ? DEVICES_MSG.COPY_OK : DEVICES_MSG.COPY_FAIL
         )
     );
