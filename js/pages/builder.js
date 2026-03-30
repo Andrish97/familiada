@@ -1068,7 +1068,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   currentUser = await requireAuth("login");
   const guestMode = isGuestUser(currentUser);
 
-  hideForGuest(currentUser, [btnPollsHub, btnSubscriptionsHub]);
+  if (hideForGuest(currentUser, [btnPollsHub, btnSubscriptionsHub])) {
+    // data-nav-hidden prevents recalc() from resetting display on these buttons
+    if (btnPollsHub) btnPollsHub.dataset.navHidden = "true";
+    if (btnSubscriptionsHub) btnSubscriptionsHub.dataset.navHidden = "true";
+  }
 
   setTopbarAccount(currentUser, { withAccountSettings: true });
 
