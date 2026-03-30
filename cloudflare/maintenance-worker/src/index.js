@@ -1147,14 +1147,14 @@ function buildMarketingEmail(templateId, opts = {}) {
       <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);padding:14px;border-radius:12px">
         <p style="margin:0 0 8px;font-size:13px;font-weight:700;color:#ffeaa6">Gotowe gry w Marketplace</p>
         <p style="margin:0;font-size:12px;color:rgba(255,255,255,.65);line-height:1.5">
-          Nie musisz tworzyć gier od zera. Skorzystaj z bazy tysięcy pytań lub gotowych zestawów przygotowanych przez naszą społeczność i innych profesjonalnych organizatorów.
+          Nie musisz tworzyć gier od zera. Skorzystaj z bazy pytań lub gotowych zestawów przygotowanych przez naszą społeczność i innych profesjonalnych organizatorów.
         </p>
       </div>
 
       <p style="margin:20px 0 0;font-size:13px;color:rgba(255,255,255,.55)">System idealny na wesela, wydarzenia firmowe, urodziny i animacje.</p>
       <p style="margin:4px 0 0;font-size:13px;color:rgba(255,255,255,.55)">Dostęp przez przeglądarkę — brak limitów urządzeń i sesji.</p>
 
-      ${cta("https://familiada.online/login", "Załóż darmowe konto i sprawdź system")}`;
+      ${cta("https://familiada.online", "Sprawdź system familiada.online")}`;
 
     return { subject, html: shell(body) };
   }
