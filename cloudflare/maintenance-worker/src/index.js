@@ -1108,53 +1108,51 @@ function buildMarketingEmail(templateId, opts = {}) {
   if (templateId === "invitation") {
     const subject = customSubject || "familiada.online — profesjonalny system do Twoich wydarzeń";
     const body = `
-      <p style="margin:0 0 6px;font-size:24px;font-weight:900;color:#ffeaa6;letter-spacing:.02em;line-height:1.2">Profesjonalna Familiada<br>na Twoim wydarzeniu.</p>
-      <p style="margin:10px 0 18px;font-size:13px;color:rgba(255,255,255,.6)">Kompleksowy system do organizacji i prowadzenia teleturnieju w dowolnym miejscu.</p>
+      <p style="margin:0 0 18px;font-size:14px;line-height:1.8;color:rgba(255,255,255,.9)">Dzień dobry,</p>
+
+      <p style="margin:0 0 14px;font-size:14px;line-height:1.8;color:rgba(255,255,255,.88)">
+        Piszę do Państwa, ponieważ zajmują się Państwo organizacją wydarzeń i pomyślałem, że nasze narzędzie może realnie wesprzeć Państwa realizacje.
+      </p>
+
+      <p style="margin:0 0 14px;font-size:14px;line-height:1.8;color:rgba(255,255,255,.88)">
+        <strong style="color:#fff">familiada.online</strong> to profesjonalna platforma do prowadzenia teleturnieju na żywo. To kompletny system: od zbierania odpowiedzi od gości (kod QR), przez panel operatora, aż po animowaną tablicę wyników z dźwiękami prosto z telewizyjnego studia.
+      </p>
 
       <img src="${IMG_BASE}/landing-display.webp" width="516" alt="System Familiada Online"
            style="width:100%;max-width:516px;border-radius:12px;display:block;border:0;margin-bottom:20px"/>
-
-      <p style="margin:0 0 14px;font-size:14px;line-height:1.7;color:rgba(255,255,255,.88)">
-        Witaj!<br><br>
-        <strong style="color:#fff">familiada.online</strong> to zaawansowana platforma, która zamienia zwykłą zabawę w profesjonalny teleturniej. Zapomnij o arkuszach i ręcznym liczeniu — nasz system automatyzuje każdy etap: od zbierania odpowiedzi po finałowe punkty. <strong style="color:#ffeaa6">Całość dostępna całkowicie bezpłatnie.</strong>
-      </p>
 
       ${divider()}
 
       ${featureTile(
         `${IMG_BASE}/landing-polls.webp`,
-        "Sondaż z kodem QR — goście głosują na żywo",
-        "Wystarczy wyświetlić kod QR. Twoi goście odpowiadają z własnych telefonów bez instalowania jakichkolwiek aplikacji. System automatycznie normalizuje wyniki do 100 punktów — dokładnie jak w telewizji."
+        "Sondaż QR — goście głosują na żywo",
+        "Uczestnicy odpowiadają z własnych telefonów. System automatycznie normalizuje wyniki do 100 punktów."
       )}
       ${featureTile(
         `${IMG_BASE}/landing-control.webp`,
-        "Panel operatora — pełna kontrola gry",
-        "Intuicyjny panel sterowania pozwala na błyskawiczne odkrywanie odpowiedzi, przyznawanie punktów i zarządzanie błędami (X). Wszystko dzieje się w czasie rzeczywistym na wszystkich połączonych ekranach."
-      )}
-      ${featureTile(
-        `${IMG_BASE}/landing-display.webp`,
-        "Tablica wyników na TV / Rzutnik",
-        "To co widzi publiczność: animowana tablica, zakryte pola, bank punktów i charakterystyczne dźwięki. System obsługuje dźwięki odpowiedzi (poprawne/błędne) oraz muzykę, budując klimat prawdziwego studia."
+        "Panel operatora — pełna kontrola",
+        "Intuicyjne sterowanie rundami, punktami i błędami (X) w czasie rzeczywistym."
       )}
       ${featureTile(
         `${IMG_BASE}/landing-host.webp`,
         "Niezależny widok prowadzącego",
-        "Osobny ekran na tablecie lub telefonie dla prowadzącego. Widzisz wszystkie pytania i odpowiedzi, co pozwala na płynne prowadzenie rozmowy bez patrzenia na ekran operatora."
+        "Osobny podgląd pytań dla prowadzącego na tablecie lub telefonie — dla pełnej swobody na scenie."
       )}
 
       ${divider()}
 
-      <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);padding:14px;border-radius:12px">
-        <p style="margin:0 0 8px;font-size:13px;font-weight:700;color:#ffeaa6">Gotowe gry w Marketplace</p>
-        <p style="margin:0;font-size:12px;color:rgba(255,255,255,.65);line-height:1.5">
-          Nie musisz tworzyć gier od zera. Skorzystaj z bazy pytań lub gotowych zestawów przygotowanych przez naszą społeczność i innych profesjonalnych organizatorów.
-        </p>
-      </div>
+      <p style="margin:0 0 14px;font-size:14px;line-height:1.8;color:rgba(255,255,255,.88)">
+        System jest dostępny całkowicie bezpłatnie i nie wymaga instalacji żadnych aplikacji. Będę wdzięczny za opinię, czy taki format mógłby wzbogacić Państwa ofertę.
+      </p>
 
-      <p style="margin:20px 0 0;font-size:13px;color:rgba(255,255,255,.55)">System idealny na wesela, wydarzenia firmowe, urodziny i animacje.</p>
-      <p style="margin:4px 0 0;font-size:13px;color:rgba(255,255,255,.55)">Dostęp przez przeglądarkę — brak limitów urządzeń i sesji.</p>
+      <p style="margin:0 0 18px;font-size:14px;color:rgba(255,255,255,.88)">Pozdrawiam,<br>Twórca familiada.online</p>
 
-      ${cta("https://familiada.online", "Sprawdź system familiada.online")}`;
+      ${cta("https://familiada.online", "Poznaj system familiada.online")}
+
+      <div style="margin-top:32px;padding-top:16px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.4);line-height:1.6">
+        Wiadomość ma charakter informacyjny i została wysłana jednorazowo do osób związanych z branżą eventową. 
+        Jeśli nie chcą Państwo otrzymywać więcej takich informacji, proszę o krótką wiadomość zwrotną.
+      </div>`;
 
     return { subject, html: shell(body) };
   }
