@@ -237,7 +237,6 @@ function loadCaptchaApi() {
 let _silentCaptchaCache = { token: "", expMs: 0 };
 let _silentCaptchaInFlight = null;
 let _visibleCaptchaInFlight = null;
-let _silentCaptchaUnavailable = false; // set when silent returns empty — skip on next attempt
 
 function getCachedSilentCaptchaToken() {
   const now = Date.now();
@@ -257,8 +256,6 @@ function setCachedSilentCaptchaToken(token) {
 
 async function getSilentCaptchaToken() {
   if (!captchaSiteKey) return null;
-  if (_silentCaptchaUnavailable) return null;
-
   const cached = getCachedSilentCaptchaToken();
   if (cached) return cached;
   if (_silentCaptchaInFlight) return _silentCaptchaInFlight;
@@ -324,10 +321,7 @@ async function getSilentCaptchaToken() {
 
     try {
       const tkn = await tokenPromise;
-      if (!tkn) {
-        console.warn("[captcha] silent token empty — skipping silent on next attempt");
-        _silentCaptchaUnavailable = true;
-      }
+      if (!tkn) console.warn("[captcha] silent token empty");
       if (tkn) setCachedSilentCaptchaToken(tkn);
       return tkn || null;
     } finally {
@@ -855,11 +849,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   
   setStatus(t("index.statusLoggedOut"));
 
-  // Preload captcha API in background — script will be cached by the time user clicks
-  if (captchaSiteKey) void getSilentCaptchaToken().then(() => {
-    // If silent failed, at least the API script is loaded for the visible widget
-    if (_silentCaptchaUnavailable) void loadCaptchaApi();
-  });
+  // Preload captcha API script only — token is fetched on first user interaction
+  if (captchaSiteKey) void loadCaptchaApi();
 
   window.addEventListener("i18n:lang", syncLanguage);
 
