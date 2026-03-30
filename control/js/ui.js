@@ -317,11 +317,15 @@ export function createUI() {
     const winMoney = $("winModeMoney");
     const winLogo = $("winModeLogo");
     const winPoints = $("winModePoints");
+    const fpm = $("finalPrizeMultiplier");
+    const mpa = $("mainPrizeAmount");
 
     return {
       roundMultipliersText: rm ? rm.value : "",
       finalMinPointsText: fm ? fm.value : "",
       finalTargetText: ft ? ft.value : "",
+      finalPrizeMultiplierText: fpm ? fpm.value : "",
+      mainPrizeAmountText: mpa ? mpa.value : "",
       winMode:
         winMoney && winMoney.checked
           ? "money"
@@ -338,7 +342,7 @@ export function createUI() {
     const rms = Array.isArray(adv.roundMultipliers)
       ? adv.roundMultipliers.join(", ")
       : "";
-  
+
     if ($("roundMultipliers")) $("roundMultipliers").value = rms;
     if ($("finalMinPoints"))
       $("finalMinPoints").value =
@@ -346,7 +350,13 @@ export function createUI() {
     if ($("finalTargetPoints"))
       $("finalTargetPoints").value =
         typeof adv.finalTarget === "number" ? String(adv.finalTarget) : "";
-  
+    if ($("finalPrizeMultiplier"))
+      $("finalPrizeMultiplier").value =
+        typeof adv.finalPrizeMultiplier === "number" ? String(adv.finalPrizeMultiplier) : "";
+    if ($("mainPrizeAmount"))
+      $("mainPrizeAmount").value =
+        typeof adv.mainPrizeAmount === "number" ? String(adv.mainPrizeAmount) : "";
+
     // -------- tryb ekranu końcowego --------
     // 1) najpierw próbujemy endScreenMode,
     // 2) jeśli nie ma, robimy fallback z winEnabled (kompatybilność wstecz),
@@ -599,6 +609,15 @@ export function createUI() {
     $("btnDispBlack")?.addEventListener("click", () => emit("display.black"));
     $("btnQrToggle")?.addEventListener("click", () => emit("qr.toggle"));
 
+    // Nowe przyciski QR dla każdego urządzenia (otwierają modal)
+    $("btnQrDisplay")?.addEventListener("click", () => emit("qr.display.show"));
+    $("btnQrHost")?.addEventListener("click", () => emit("qr.host.show"));
+    $("btnQrBuzzer")?.addEventListener("click", () => emit("qr.buzzer.show"));
+
+    // QR na wyświetlaczu - prowadzący i buzzer (sparowane)
+    $("btnQrHostOnDisplay")?.addEventListener("click", () => emit("qr.host.toggle"));
+    $("btnQrBuzzerOnDisplay")?.addEventListener("click", () => emit("qr.buzzer.toggle"));
+
     // setup
     $("btnBackToDevices")?.addEventListener("click", () => emit("setup.backToDevices"));
     $("btnSetupNext")?.addEventListener("click", () => emit("setup.next"));
@@ -652,6 +671,8 @@ export function createUI() {
       "roundMultipliers",
       "finalMinPoints",
       "finalTargetPoints",
+      "finalPrizeMultiplier",
+      "mainPrizeAmount",
     ];
     advInputs.forEach((id) => {
       const el = $(id);

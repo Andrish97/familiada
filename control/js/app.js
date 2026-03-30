@@ -462,7 +462,7 @@ async function sendZeroStatesToDevices() {
   // ===== Ustawienia gry - synchronizacja UI z store =====
   function syncGameSettingsUI() {
     const s = store.state;
-    
+
     // Czy gramy finał?
     const finalYes = document.getElementById("finalYes");
     const finalNo = document.getElementById("finalNo");
@@ -470,7 +470,7 @@ async function sendZeroStatesToDevices() {
       finalYes.checked = (s.hasFinal === true);
       finalNo.checked = (s.hasFinal !== true);
     }
-    
+
     // Tryb pytań finału
     const finalRandom = document.getElementById("finalRandom");
     const finalPick = document.getElementById("finalPick");
@@ -478,7 +478,7 @@ async function sendZeroStatesToDevices() {
       finalRandom.checked = (s.finalQuestionsMode !== "pick");
       finalPick.checked = (s.finalQuestionsMode === "pick");
     }
-    
+
     // Tryb pytań rund
     const roundsRandom = document.getElementById("roundsRandom");
     const roundsPick = document.getElementById("roundsPick");
@@ -486,7 +486,17 @@ async function sendZeroStatesToDevices() {
       roundsRandom.checked = (s.roundsQuestionsMode !== "pick");
       roundsPick.checked = (s.roundsQuestionsMode === "pick");
     }
-    
+
+    // Tryb zakończenia gry
+    const adv = s.advanced || {};
+    const endMode = adv.endScreenMode || "logo";
+    const winModeLogo = document.getElementById("winModeLogo");
+    const winModePoints = document.getElementById("winModePoints");
+    const winModeMoney = document.getElementById("winModeMoney");
+    if (winModeLogo) winModeLogo.checked = (endMode === "logo");
+    if (winModePoints) winModePoints.checked = (endMode === "points");
+    if (winModeMoney) winModeMoney.checked = (endMode === "money");
+
     // Pokaż/ukryj opcje w zależności od wyboru
     updateGameSettingsVisibility();
   }
@@ -496,7 +506,34 @@ async function sendZeroStatesToDevices() {
     const finalModeRow = document.getElementById("finalModeRow");
     const hasFinal = document.getElementById("finalYes")?.checked;
     if (finalModeRow) {
-      finalModeRow.style.display = hasFinal ? "block" : "none";
+      finalModeRow.style.display = hasFinal ? "flex" : "none";
+    }
+
+    // Pola związane z finałem (cel rozgrywki, cel finału) - tylko gdy finał włączony
+    const finalSettingsRow = document.getElementById("finalSettingsRow");
+    if (finalSettingsRow) {
+      finalSettingsRow.style.display = hasFinal ? "flex" : "none";
+    }
+
+    // Pola związane z kwotą nagrody - tylko gdy finał włączony I wybrano "Pokaż kwotę"
+    const gameEndModeRow = document.getElementById("gameEndModeRow");
+    const winModeMoney = document.getElementById("winModeMoney")?.checked;
+    
+    if (gameEndModeRow) {
+      gameEndModeRow.style.display = hasFinal ? "flex" : "none";
+    }
+    
+    // Pokaż/ukryj pola mnożnika i kwoty nagrody tylko gdy wybrano "Pokaż kwotę (po finale)"
+    const finalPrizeMultiplierField = document.getElementById("finalPrizeMultiplier")?.closest(".field");
+    const mainPrizeAmountField = document.getElementById("mainPrizeAmount")?.closest(".field");
+    
+    const showPrizeFields = hasFinal && winModeMoney;
+    
+    if (finalPrizeMultiplierField) {
+      finalPrizeMultiplierField.style.display = showPrizeFields ? "grid" : "none";
+    }
+    if (mainPrizeAmountField) {
+      mainPrizeAmountField.style.display = showPrizeFields ? "grid" : "none";
     }
   }
   
@@ -895,7 +932,10 @@ async function sendZeroStatesToDevices() {
     
     // QR na wyświetlaczu tylko gdy wyświetlacz jest online
     ui.setEnabled("btnQrToggle", displayReady);
-    
+
+    // Aktualizuj przyciski "QR na wyświetlaczu" dla hosta i buzzera
+    updateQrOnDisplayButtons();
+
     // Dalej w kroku 1 (wyświetlacz) i kroku 2 (host/buzzer)
     // Wymagamy Display + Buzzer
     ui.setEnabled("btnDevicesNext", requiredOnline);
@@ -1014,6 +1054,26 @@ async function sendZeroStatesToDevices() {
   btnHelpClose?.addEventListener("click", closeHelpModal);
   helpOverlay?.addEventListener("click", (ev) => { if (ev.target === helpOverlay) closeHelpModal(); });
 
+  // ===== Helper: aktualizacja etykiet przycisków "QR na wyświetlaczu" =====
+  function updateQrOnDisplayButtons() {
+    const hostOn = !!store.state.flags.qrHostOnDisplay;
+    const buzzerOn = !!store.state.flags.qrBuzzerOnDisplay;
+    const displayOnline = !!store.state.flags.displayOnline;
+    const buzzerOnline = !!store.state.flags.buzzerOnline;
+
+    const btnHost = document.getElementById("btnQrHostOnDisplay");
+    const btnBuzzer = document.getElementById("btnQrBuzzerOnDisplay");
+
+    // Aktualizuj etykiety
+    if (btnHost) {
+      btnHost.textContent = hostOn ? t("control.qrHide") : t("control.qrOnDisplay");
+      btnHost.disabled = !displayOnline || !buzzerOnline;
+    }
+    if (btnBuzzer) {
+      btnBuzzer.textContent = buzzerOn ? t("control.qrHide") : t("control.qrOnDisplay");
+      btnBuzzer.disabled = !displayOnline || !buzzerOnline;
+    }
+  }
 
   // === Top bar ===
   ui.on("top.back", async () => {
@@ -1078,6 +1138,7 @@ async function sendZeroStatesToDevices() {
     await devices.sendDisplayCmd("APP BLACK");
   });
 
+  // QR na wyświetlaczu - globalny (stary przycisk)
   ui.on("qr.toggle", async () => {
     const now = store.state.flags.qrOnDisplay;
 
@@ -1091,6 +1152,49 @@ async function sendZeroStatesToDevices() {
       ui.setQrToggleLabel(false, store.state.flags.displayOnline && store.state.flags.buzzerOnline);
     }
   });
+
+  // QR na wyświetlaczu - prowadzący (sparowany z buzzerem)
+  ui.on("qr.host.toggle", async () => {
+    const now = store.state.flags.qrHostOnDisplay || false;
+    const buzzerNow = store.state.flags.qrBuzzerOnDisplay || false;
+
+    // Wysyłamy komendę QR na wyświetlacz (host + buzzer)
+    if (!now) {
+      await devices.sendQrToDisplay();
+      store.setQrHostOnDisplay(true);
+      store.setQrBuzzerOnDisplay(true);
+    } else {
+      // Jeśli wyłączamy, wysyłamy czarny ekran
+      await devices.sendDisplayCmd("APP BLACK");
+      store.setQrHostOnDisplay(false);
+      store.setQrBuzzerOnDisplay(false);
+    }
+
+    // Aktualizuj etykiety przycisków
+    updateQrOnDisplayButtons();
+  });
+
+  ui.on("qr.buzzer.toggle", async () => {
+    // Sparowane z hostem - ta sama logika
+    const now = store.state.flags.qrBuzzerOnDisplay || false;
+
+    if (!now) {
+      await devices.sendQrToDisplay();
+      store.setQrHostOnDisplay(true);
+      store.setQrBuzzerOnDisplay(true);
+    } else {
+      await devices.sendDisplayCmd("APP BLACK");
+      store.setQrHostOnDisplay(false);
+      store.setQrBuzzerOnDisplay(false);
+    }
+
+    updateQrOnDisplayButtons();
+  });
+
+  // Obsługa przycisków QR dla każdego urządzenia (otwierają modal)
+  ui.on("qr.display.show", () => showQrModal("display"));
+  ui.on("qr.host.show", () => showQrModal("host"));
+  ui.on("qr.buzzer.show", () => showQrModal("buzzer"));
 
   // SETUP
   ui.on("setup.backToDevices", () => store.setActiveCard("devices"));
@@ -1215,6 +1319,19 @@ async function sendZeroStatesToDevices() {
       const n = Number.parseInt(form.finalTargetText, 10);
       if (Number.isFinite(n) && n >= 0) adv.finalTarget = n;
     }
+
+    // mnożnik nagrody głównej
+    if (form.finalPrizeMultiplierText != null && form.finalPrizeMultiplierText !== "") {
+      const n = Number.parseInt(form.finalPrizeMultiplierText, 10);
+      if (Number.isFinite(n) && n >= 1) adv.finalPrizeMultiplier = n;
+    }
+
+    // kwota nagrody głównej
+    if (form.mainPrizeAmountText != null && form.mainPrizeAmountText !== "") {
+      const n = Number.parseInt(form.mainPrizeAmountText, 10);
+      if (Number.isFinite(n) && n >= 0) adv.mainPrizeAmount = n;
+    }
+
     if (form.winMode === "logo" || form.winMode === "points" || form.winMode === "money") {
       adv.endScreenMode = form.winMode;
     }
@@ -1301,6 +1418,11 @@ async function sendZeroStatesToDevices() {
       store.setRoundsQuestionsMode("pick");
     }
   });
+
+  // Nasłuchiwanie zmian w trybie zakończenia gry (pokazuj/ukrywaj pola kwoty)
+  document.getElementById("winModeLogo")?.addEventListener("change", updateGameSettingsVisibility);
+  document.getElementById("winModePoints")?.addEventListener("change", updateGameSettingsVisibility);
+  document.getElementById("winModeMoney")?.addEventListener("change", updateGameSettingsVisibility);
   
   // ===== Nawigacja w setup_game - decyzja o losowaniu =====
   function goToNextSetupStep() {

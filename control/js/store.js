@@ -10,9 +10,13 @@ export function createStore(gameId) {
     finalMinPoints: 300,
     // cel w finale (domyślne 200)
     finalTarget: 200,
-    // czy na końcu gry wyświetlamy ekran „wygrana” (true) czy samo logo (false)
+    // czy na końcu gry wyświetlamy ekran „wygrana" (true) czy samo logo (false)
     endScreenMode: "logo", // "logo" | "points" | "money"
-    
+    // mnożnik nagrody głównej (po finale)
+    finalPrizeMultiplier: 1,
+    // kwota nagrody głównej
+    mainPrizeAmount: 1000,
+
   };
 
   function makeDefaultState() {
@@ -297,6 +301,16 @@ export function createStore(gameId) {
     emit();
   }
 
+  function setQrHostOnDisplay(v) {
+    state.flags.qrHostOnDisplay = !!v;
+    emit();
+  }
+
+  function setQrBuzzerOnDisplay(v) {
+    state.flags.qrBuzzerOnDisplay = !!v;
+    emit();
+  }
+
   // ---- obsługa typu wejścia na stronę (odświeżenie vs. nowa nawigacja) ----
 
   function hydrate() {
@@ -336,7 +350,17 @@ export function createStore(gameId) {
         next.endScreenMode = m;
       }
     }
-  
+
+    // mnożnik nagrody głównej
+    if (typeof partial.finalPrizeMultiplier === "number") {
+      next.finalPrizeMultiplier = partial.finalPrizeMultiplier;
+    }
+
+    // kwota nagrody głównej
+    if (typeof partial.mainPrizeAmount === "number") {
+      next.mainPrizeAmount = partial.mainPrizeAmount;
+    }
+
     // stary klucz (kompatybilność)
     if (typeof partial.winEnabled === "boolean") {
       next.winEnabled = partial.winEnabled;
@@ -388,6 +412,8 @@ export function createStore(gameId) {
     setOnlineFlags,
     setAudioUnlocked,
     setQrOnDisplay,
+    setQrHostOnDisplay,
+    setQrBuzzerOnDisplay,
     setFinalActive,
     setGameStarted,
 

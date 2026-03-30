@@ -266,98 +266,96 @@
             <div class="step" data-step="devices_display">
               <div class="stepTitle" data-i18n="control.stepDevices">Urządzenia</div>
 
-              <div class="card">
-                <div class="cardBody">
+              <div class="control-main-card">
+                <div class="card">
+                  <div class="cardBody">
 
-                  <!-- Wyświetlacz -->
-                  <div class="head headLine">
-                    <div class="name" data-i18n="control.deviceDisplay">Wyświetlacz</div>
-                    <div class="badge mid" id="pillDisplay">—</div>
-                    <div class="badge badge-soft lastSeen"><span data-i18n="control.lastSeen">Ostatnio widziano:</span> <b id="seenDisplay">—</b></div>
-                  </div>
-                  <div class="rowBtns rowActionsTop">
-                    <button class="btn" id="btnDispBlack" type="button">
-                      <span data-i18n="control.blackScreen">Czarny ekran</span>
-                    </button>
-                    <button class="btn" id="btnShareDisplay" type="button" data-i18n="control.shareDevice">
-                      Udostępnij
-                      <span class="badge" id="shareDisplayBadge" aria-hidden="true"></span>
-                    </button>
-                  </div>
-                  <div class="qrBlock">
-                    <img id="qrDisplayImg" alt="QR do wyświetlacza" data-i18n-alt="control.qrDisplayAlt"/>
-                    <div class="qrInline">
-                      <input class="inp" id="displayLink" readonly />
-                      <button class="btn" id="btnCopyDisplay" type="button" data-i18n="common.copy">Kopiuj</button>
-                      <button class="btn gold" id="btnOpenDisplay" type="button" data-i18n="common.open">Otwórz</button>
+                    <!-- Wyświetlacz -->
+                    <div class="device-row" data-device="display">
+                      <!-- Rząd 1: nazwa, badge status -->
+                      <div class="device-row-1">
+                        <div class="device-name" data-i18n="control.deviceDisplay">Wyświetlacz</div>
+                        <div class="badge mid" id="pillDisplay">—</div>
+                      </div>
+                      <!-- Rząd 2: input(link), btnCopy, btnOpen -->
+                      <div class="device-row-2">
+                        <input class="inp" id="displayLink" readonly />
+                        <button class="btn" id="btnCopyDisplay" type="button" data-i18n="common.copy">Kopiuj</button>
+                        <button class="btn gold" id="btnOpenDisplay" type="button" data-i18n="common.open">Otwórz</button>
+                      </div>
+                      <!-- Rząd 3: przycisk QR, udostępnij, Czarny ekran -->
+                      <div class="device-row-3">
+                        <button class="btn" id="btnQrDisplay" type="button" data-i18n="control.qrCodeBtn">Kod QR</button>
+                        <button class="btn" id="btnShareDisplay" type="button" data-i18n="control.shareDevice">
+                          Udostępnij
+                          <span class="badge" id="shareDisplayBadge" aria-hidden="true"></span>
+                        </button>
+                        <button class="btn" id="btnDispBlack" type="button">
+                          <span data-i18n="control.blackScreen">Czarny ekran</span>
+                        </button>
+                      </div>
                     </div>
-                  </div>
 
-                  <hr style="border:none;border-top:1px solid rgba(255,255,255,.08);margin:12px 0;"/>
-
-                  <!-- QR na wyświetlaczu -->
-                  <div class="rowBtns" style="margin-top:0;">
-                    <button class="btn" id="btnQrToggle" type="button" disabled data-i18n="control.qrOnDisplay">QR na wyświetlaczu</button>
-                  </div>
-
-                  <div class="cards2">
-                    <!-- Prowadzący -->
-                    <div class="card card-soft">
-                      <div class="head headLine">
-                        <div class="name">
+                    <!-- Prowadzący 1 -->
+                    <div class="device-row" data-device="host">
+                      <!-- Rząd 1: nazwa, badge status, badge opcjonalnie -->
+                      <div class="device-row-1">
+                        <div class="device-name">
                           <span data-i18n="control.deviceHost">Prowadzący</span>
                           <span class="badge badge-soft" style="font-size:10px;margin-left:4px;opacity:.7" data-i18n="control.optional">(opcjonalnie)</span>
                         </div>
                         <div class="badge mid" id="pillHost">—</div>
-                        <div class="badge badge-soft lastSeen"><span data-i18n="control.lastSeen">Ostatnio widziano:</span> <b id="seenHost">—</b></div>
                       </div>
-                      <div class="rowBtns rowActionsTop">
+                      <!-- Rząd 2: input(link), btnCopy, btnOpen -->
+                      <div class="device-row-2">
+                        <input class="inp" id="hostLink" readonly aria-label="Link do prowadzącego" data-i18n-aria-label="control.hostLinkAria"/>
+                        <button class="btn" id="btnCopyHost" type="button" data-i18n="common.copy">Kopiuj</button>
+                        <button class="btn gold" id="btnOpenHost" type="button" data-i18n="common.open">Otwórz</button>
+                      </div>
+                      <!-- Rząd 3: przycisk QR, QR na wyświetlaczu, udostępnij -->
+                      <div class="device-row-3">
+                        <button class="btn" id="btnQrHost" type="button" data-i18n="control.qrCodeBtn">Kod QR</button>
+                        <button class="btn" id="btnQrHostOnDisplay" type="button" data-i18n="control.qrOnDisplay">QR na wyświetlaczu</button>
                         <button class="btn" id="btnShareHost" type="button" data-i18n="control.shareDevice">
                           Udostępnij
                           <span class="badge" id="shareHostBadge" aria-hidden="true"></span>
                         </button>
                       </div>
-                      <div class="qrBlock">
-                        <img id="qrHostImg" alt="QR prowadzącego" data-i18n-alt="control.qrHostAlt"/>
-                        <div class="qrInline">
-                          <input class="inp" id="hostLink" readonly aria-label="Link do prowadzącego" data-i18n-aria-label="control.hostLinkAria"/>
-                          <button class="btn" id="btnCopyHost" type="button" data-i18n="common.copy">Kopiuj</button>
-                          <button class="btn gold" id="btnOpenHost" type="button" data-i18n="common.open">Otwórz</button>
-                        </div>
-                      </div>
                     </div>
 
-                    <!-- Buzzer -->
-                    <div class="card card-soft">
-                      <div class="head headLine">
-                        <div class="name" data-i18n="control.deviceBuzzer">Przycisk</div>
+                    <!-- Prowadzący 2 (Buzzer) -->
+                    <div class="device-row" data-device="buzzer">
+                      <!-- Rząd 1: nazwa, badge status -->
+                      <div class="device-row-1">
+                        <div class="device-name" data-i18n="control.deviceBuzzer">Przycisk</div>
                         <div class="badge mid" id="pillBuzzer">—</div>
-                        <div class="badge badge-soft lastSeen"><span data-i18n="control.lastSeen">Ostatnio widziano:</span> <b id="seenBuzzer">—</b></div>
                       </div>
-                      <div class="rowBtns rowActionsTop">
+                      <!-- Rząd 2: input(link), btnCopy, btnOpen -->
+                      <div class="device-row-2">
+                        <input class="inp" id="buzzerLink" readonly aria-label="Link do przycisku" data-i18n-aria-label="control.buzzerLinkAria"/>
+                        <button class="btn" id="btnCopyBuzzer" type="button" data-i18n="common.copy">Kopiuj</button>
+                        <button class="btn gold" id="btnOpenBuzzer" type="button" data-i18n="common.open">Otwórz</button>
+                      </div>
+                      <!-- Rząd 3: przycisk QR, QR na wyświetlaczu, udostępnij -->
+                      <div class="device-row-3">
+                        <button class="btn" id="btnQrBuzzer" type="button" data-i18n="control.qrCodeBtn">Kod QR</button>
+                        <button class="btn" id="btnQrBuzzerOnDisplay" type="button" data-i18n="control.qrOnDisplay">QR na wyświetlaczu</button>
                         <button class="btn" id="btnShareBuzzer" type="button" data-i18n="control.shareDevice">
                           Udostępnij
                           <span class="badge" id="shareBuzzerBadge" aria-hidden="true"></span>
                         </button>
                       </div>
-                      <div class="qrBlock">
-                        <img id="qrBuzzerImg" alt="QR przycisku" data-i18n-alt="control.qrBuzzerAlt"/>
-                        <div class="qrInline">
-                          <input class="inp" id="buzzerLink" readonly aria-label="Link do przycisku" data-i18n-aria-label="control.buzzerLinkAria"/>
-                          <button class="btn" id="btnCopyBuzzer" type="button" data-i18n="common.copy">Kopiuj</button>
-                          <button class="btn gold" id="btnOpenBuzzer" type="button" data-i18n="common.open">Otwórz</button>
-                        </div>
-                      </div>
                     </div>
-                  </div>
-                </div>
 
-                <div class="stepFoot">
-                  <div class="stepFootButtons">
-                    <button class="btn gold" id="btnDevicesNext" type="button" disabled data-i18n="common.next">Dalej</button>
                   </div>
-                  <div class="msg msg-pill" id="msgDevices"></div>
-                  <div class="msg msg-pill" id="msgDevices2"></div>
+
+                  <div class="stepFoot">
+                    <div class="stepFootButtons">
+                      <button class="btn gold" id="btnDevicesNext" type="button" disabled data-i18n="common.next">Dalej</button>
+                    </div>
+                    <div class="msg msg-pill" id="msgDevices"></div>
+                    <div class="msg msg-pill" id="msgDevices2"></div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -524,7 +522,7 @@
                       <div class="field sm">
                         <div class="lbl2" data-i18n="control.roundMultipliers">Mnożniki rund</div>
                         <div class="hint" data-i18n="control.roundMultipliersHint">
-                          Podaj po przecinku, np. <b>1,1,1,2,3</b>
+                          Podaj po przecinku, np. <code>1,1,1,2,3</code>
                         </div>
                         <input
                           id="roundMultipliers"
@@ -537,6 +535,33 @@
                     </div>
 
                     <div class="rowBtns">
+                      <div class="field sm">
+                        <div class="lbl2" data-i18n="control.finalPrizeMultiplier">Mnożnik nagrody (po finale)</div>
+                        <div class="hint" data-i18n="control.finalPrizeMultiplierHint">
+                          Mnożnik decydujący o kwocie nagrody głównej
+                        </div>
+                        <input
+                          id="finalPrizeMultiplier"
+                          class="inp"
+                          type="number"
+                          min="1"
+                          step="1"
+                        />
+                      </div>
+
+                      <div class="field sm">
+                        <div class="lbl2" data-i18n="control.mainPrizeAmount">Kwota nagrody głównej</div>
+                        <input
+                          id="mainPrizeAmount"
+                          class="inp"
+                          type="number"
+                          min="0"
+                          step="100"
+                        />
+                      </div>
+                    </div>
+
+                    <div class="rowBtns" id="finalSettingsRow">
                       <div class="field sm">
                         <div class="lbl2" data-i18n="control.gameTarget">Cel rozgrywki</div>
                         <input
@@ -560,7 +585,7 @@
                       </div>
                     </div>
 
-                    <div class="rowBtns">
+                    <div class="rowBtns" id="gameEndModeRow">
                       <div class="field sm">
                         <div class="lbl2" data-i18n="control.gameEndMode">Zakończenie gry</div>
                           <label class="chk">
