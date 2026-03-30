@@ -1118,9 +1118,6 @@ function buildMarketingEmail(templateId, opts = {}) {
         <strong style="color:#fff">familiada.online</strong> to profesjonalna platforma do prowadzenia teleturnieju na żywo. To kompletny system: od zbierania odpowiedzi od gości (kod QR), przez panel operatora, aż po animowaną tablicę wyników z dźwiękami prosto z telewizyjnego studia.
       </p>
 
-      <img src="${IMG_BASE}/landing-display.webp" width="516" alt="System Familiada Online"
-           style="width:100%;max-width:516px;border-radius:12px;display:block;border:0;margin-bottom:20px"/>
-
       ${divider()}
 
       ${featureTile(
@@ -1134,10 +1131,24 @@ function buildMarketingEmail(templateId, opts = {}) {
         "Intuicyjne sterowanie rundami, punktami i błędami (X) w czasie rzeczywistym."
       )}
       ${featureTile(
+        `${IMG_BASE}/landing-display.webp`,
+        "Tablica wyników na TV lub rzutnik",
+        "Animowana tablica z zakrytymi odpowiedziami, bankiem punktów i błędami X — z dźwiękami prosto z telewizyjnego studia."
+      )}
+      ${featureTile(
         `${IMG_BASE}/landing-host.webp`,
         "Niezależny widok prowadzącego",
         "Osobny podgląd pytań dla prowadzącego na tablecie lub telefonie — dla pełnej swobody na scenie."
       )}
+
+      ${divider()}
+
+      <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);padding:14px;border-radius:12px">
+        <p style="margin:0 0 8px;font-size:13px;font-weight:700;color:#ffeaa6">Gotowe gry w Grach Społeczności</p>
+        <p style="margin:0;font-size:12px;color:rgba(255,255,255,.65);line-height:1.5">
+          Gotowe zestawy pytań udostępnione przez innych użytkowników — bez konieczności tworzenia gry od zera.
+        </p>
+      </div>
 
       ${divider()}
 
