@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict VfDmrVxtu2e7yRR0C1sruF6EpmDFEDGGupdThWHsUDJo2HiGKof70XD4UqsvQEJ
+\restrict AUNz32VrUGyBE4e57WCRe2p08o7TZEEJtYKb3iEBs8OWrjilkF8XOUC1X68ouBu
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -3173,10 +3173,22 @@ begin
   v_email    := new.email;
   v_is_guest := coalesce((new.raw_user_meta_data->>'is_guest')::boolean, false);
 
+  -- Try to get username from metadata or email
   v_username := coalesce(
     new.raw_user_meta_data->>'username',
-    new.raw_user_meta_data->>'full_name'
+    new.raw_user_meta_data->>'full_name',
+    split_part(new.email, '@', 1)
   );
+
+  -- If still missing (common for anonymous guests), generate a guest_XXX name
+  IF v_username IS NULL OR v_username = '' THEN
+    IF v_is_guest THEN
+      v_username := 'guest_' || substr(replace(new.id::text, '-', ''), 1, 8);
+    ELSE
+      -- For non-guests we really expect a name, but as a fallback use a slice of UUID
+      v_username := 'user_' || substr(replace(new.id::text, '-', ''), 1, 8);
+    END IF;
+  END IF;
 
   IF v_is_guest THEN
     v_last_active := now();
@@ -10181,7 +10193,7 @@ CREATE TABLE "public"."poll_votes" (
 
 CREATE TABLE "public"."profiles" (
     "id" "uuid" NOT NULL,
-    "email" "text" NOT NULL,
+    "email" "text",
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "username" "text",
     "is_guest" boolean DEFAULT false NOT NULL,
@@ -13087,5 +13099,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict VfDmrVxtu2e7yRR0C1sruF6EpmDFEDGGupdThWHsUDJo2HiGKof70XD4UqsvQEJ
+\unrestrict AUNz32VrUGyBE4e57WCRe2p08o7TZEEJtYKb3iEBs8OWrjilkF8XOUC1X68ouBu
 
