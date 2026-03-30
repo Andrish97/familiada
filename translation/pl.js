@@ -4652,7 +4652,6 @@ const pl = {
       subtitle: "Wyślij wiadomość do wielu adresatów jednocześnie",
       templateLabel: "Szablon",
       tplInvitation: "Zaproszenie do systemu",
-      tplEvent: "Oferta dla eventowców",
       tplNewsletter: "Newsletter",
       tplCustom: "Autorska",
       subjectLabel: "Temat wiadomości",
