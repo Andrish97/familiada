@@ -1703,8 +1703,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     const hitTarget = sum >= target;
     const totalPointsAll = winnerRounds + sum;
 
-    // Pobierz ustawienia z store
-    const adv = store.state.advanced || {};
+    // Pobierz mnożnik i kwotę z ustawień
     const multiplier = typeof adv.finalPrizeMultiplier === "number" ? adv.finalPrizeMultiplier : 3;
     const mainPrize = typeof adv.mainPrizeAmount === "number" ? adv.mainPrizeAmount : 25000;
 
