@@ -1,4 +1,4 @@
-// ================== KOMUNIKATY (FINAL) ==================
+// ==================  KOMUNIKATY (FINAL)  ==================
 const finalMsg = (key, vars) => t(`control.finalMsg.${key}`, vars);
 const finalHost = (key, vars) => t(`control.finalHost.${key}`, vars);
 const finalUi = (key, vars) => t(`control.finalUi.${key}`, vars);

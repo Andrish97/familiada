@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 432SjAmOxSWhFtMhLQqBqgtklkaBrNfdrWAVKI4uYyvaMFqwWbdpESCrZMbhlQf
+\restrict lkwFjjUQG1nHafxRBK6wEKbvokJizfxaaantEuTVyX51z9d1FFVkpGkISmEm0sv
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -2496,16 +2496,16 @@ BEGIN
     users_pl := 0; users_en := 0; users_uk := 0;
   END;
 
-  -- Games
-  SELECT COUNT(*) INTO total_games      FROM public.games WHERE is_demo = false AND NOT (owner_id = ANY(excluded_ids));
-  SELECT COUNT(*) INTO games_ready      FROM public.games WHERE is_demo = false AND status = 'ready' AND NOT (owner_id = ANY(excluded_ids));
-  SELECT COUNT(*) INTO games_new_today  FROM public.games WHERE is_demo = false AND created_at >= CURRENT_DATE AND NOT (owner_id = ANY(excluded_ids));
-  SELECT COUNT(*) INTO games_new_7d     FROM public.games WHERE is_demo = false AND created_at >= now() - interval '7 days' AND NOT (owner_id = ANY(excluded_ids));
-  SELECT COUNT(*) INTO games_new_30d    FROM public.games WHERE is_demo = false AND created_at >= now() - interval '30 days' AND NOT (owner_id = ANY(excluded_ids));
+  -- Games (bez demo, bez kopii z marketu, bez wykluczonych)
+  SELECT COUNT(*) INTO total_games      FROM public.games WHERE is_demo = false AND source_market_id IS NULL AND NOT (owner_id = ANY(excluded_ids));
+  SELECT COUNT(*) INTO games_ready      FROM public.games WHERE is_demo = false AND source_market_id IS NULL AND status = 'ready' AND NOT (owner_id = ANY(excluded_ids));
+  SELECT COUNT(*) INTO games_new_today  FROM public.games WHERE is_demo = false AND source_market_id IS NULL AND created_at >= CURRENT_DATE AND NOT (owner_id = ANY(excluded_ids));
+  SELECT COUNT(*) INTO games_new_7d     FROM public.games WHERE is_demo = false AND source_market_id IS NULL AND created_at >= now() - interval '7 days' AND NOT (owner_id = ANY(excluded_ids));
+  SELECT COUNT(*) INTO games_new_30d    FROM public.games WHERE is_demo = false AND source_market_id IS NULL AND created_at >= now() - interval '30 days' AND NOT (owner_id = ANY(excluded_ids));
   SELECT COALESCE(ROUND(AVG(q_count), 1), 0) INTO avg_questions
     FROM (SELECT COUNT(*) AS q_count FROM public.questions q
           JOIN public.games g ON g.id = q.game_id
-          WHERE g.is_demo = false AND NOT (g.owner_id = ANY(excluded_ids))
+          WHERE g.is_demo = false AND g.source_market_id IS NULL AND NOT (g.owner_id = ANY(excluded_ids))
           GROUP BY q.game_id) AS sub;
 
   -- Gameplay
@@ -2533,18 +2533,18 @@ BEGIN
     JOIN public.games g ON g.id = pv.game_id
     WHERE g.is_demo = false AND NOT (g.owner_id = ANY(excluded_ids));
 
-  -- Question bases
-  SELECT COUNT(*) INTO bases_total     FROM public.question_bases WHERE NOT (owner_id = ANY(excluded_ids));
-  SELECT COUNT(*) INTO bases_new_today FROM public.question_bases WHERE created_at >= CURRENT_DATE AND NOT (owner_id = ANY(excluded_ids));
-  SELECT COUNT(*) INTO bases_new_7d    FROM public.question_bases WHERE created_at >= now() - interval '7 days' AND NOT (owner_id = ANY(excluded_ids));
-  SELECT COUNT(*) INTO bases_new_30d   FROM public.question_bases WHERE created_at >= now() - interval '30 days' AND NOT (owner_id = ANY(excluded_ids));
+  -- Question bases (bez demo)
+  SELECT COUNT(*) INTO bases_total     FROM public.question_bases WHERE is_demo = false AND NOT (owner_id = ANY(excluded_ids));
+  SELECT COUNT(*) INTO bases_new_today FROM public.question_bases WHERE is_demo = false AND created_at >= CURRENT_DATE AND NOT (owner_id = ANY(excluded_ids));
+  SELECT COUNT(*) INTO bases_new_7d    FROM public.question_bases WHERE is_demo = false AND created_at >= now() - interval '7 days' AND NOT (owner_id = ANY(excluded_ids));
+  SELECT COUNT(*) INTO bases_new_30d   FROM public.question_bases WHERE is_demo = false AND created_at >= now() - interval '30 days' AND NOT (owner_id = ANY(excluded_ids));
 
-  -- User logos
-  SELECT COUNT(*) INTO logos_total     FROM public.user_logos WHERE NOT (user_id = ANY(excluded_ids));
-  SELECT COUNT(*) INTO logos_active    FROM public.user_logos WHERE is_active = true AND NOT (user_id = ANY(excluded_ids));
-  SELECT COUNT(*) INTO logos_new_today FROM public.user_logos WHERE created_at >= CURRENT_DATE AND NOT (user_id = ANY(excluded_ids));
-  SELECT COUNT(*) INTO logos_new_7d    FROM public.user_logos WHERE created_at >= now() - interval '7 days' AND NOT (user_id = ANY(excluded_ids));
-  SELECT COUNT(*) INTO logos_new_30d   FROM public.user_logos WHERE created_at >= now() - interval '30 days' AND NOT (user_id = ANY(excluded_ids));
+  -- User logos (bez demo)
+  SELECT COUNT(*) INTO logos_total     FROM public.user_logos WHERE is_demo = false AND NOT (user_id = ANY(excluded_ids));
+  SELECT COUNT(*) INTO logos_active    FROM public.user_logos WHERE is_demo = false AND is_active = true AND NOT (user_id = ANY(excluded_ids));
+  SELECT COUNT(*) INTO logos_new_today FROM public.user_logos WHERE is_demo = false AND created_at >= CURRENT_DATE AND NOT (user_id = ANY(excluded_ids));
+  SELECT COUNT(*) INTO logos_new_7d    FROM public.user_logos WHERE is_demo = false AND created_at >= now() - interval '7 days' AND NOT (user_id = ANY(excluded_ids));
+  SELECT COUNT(*) INTO logos_new_30d   FROM public.user_logos WHERE is_demo = false AND created_at >= now() - interval '30 days' AND NOT (user_id = ANY(excluded_ids));
 
   -- Health
   BEGIN
@@ -3040,8 +3040,11 @@ CREATE FUNCTION "public"."get_stats_detail"("p_type" "text", "p_limit" integer D
     SET "search_path" TO 'public', 'auth'
     AS $$
 DECLARE
-  result jsonb;
+  result       jsonb;
+  excluded_ids uuid[];
 BEGIN
+  SELECT ARRAY(SELECT user_id FROM public.stats_excluded_users) INTO excluded_ids;
+
   CASE p_type
 
   WHEN 'users' THEN
@@ -3055,6 +3058,7 @@ BEGIN
         p.is_guest,
         p.created_at
       FROM public.profiles p
+      WHERE NOT (p.id = ANY(excluded_ids))
       ORDER BY p.created_at DESC
       LIMIT p_limit
     ) r;
@@ -3072,6 +3076,8 @@ BEGIN
       FROM public.games g
       LEFT JOIN public.profiles pr ON pr.id = g.owner_id
       WHERE g.is_demo = false
+        AND g.source_market_id IS NULL
+        AND NOT (g.owner_id = ANY(excluded_ids))
       ORDER BY g.created_at DESC
       LIMIT p_limit
     ) r;
@@ -3087,7 +3093,9 @@ BEGIN
       FROM public.device_presence dp
       JOIN public.games g ON g.id = dp.game_id
       LEFT JOIN public.profiles pr ON pr.id = g.owner_id
-      WHERE dp.device_type = 'display' AND g.is_demo = false
+      WHERE dp.device_type = 'display'
+        AND g.is_demo = false
+        AND NOT (g.owner_id = ANY(excluded_ids))
       GROUP BY g.id, g.name, pr.username
       ORDER BY MAX(dp.last_seen_at) DESC
       LIMIT p_limit
@@ -3103,6 +3111,8 @@ BEGIN
         b.created_at
       FROM public.question_bases b
       LEFT JOIN public.profiles pr ON pr.id = b.owner_id
+      WHERE b.is_demo = false
+        AND NOT (b.owner_id = ANY(excluded_ids))
       ORDER BY b.created_at DESC
       LIMIT p_limit
     ) r;
@@ -3119,6 +3129,8 @@ BEGIN
         l.created_at
       FROM public.user_logos l
       LEFT JOIN public.profiles pr ON pr.id = l.user_id
+      WHERE l.is_demo = false
+        AND NOT (l.user_id = ANY(excluded_ids))
       ORDER BY l.created_at DESC
       LIMIT p_limit
     ) r;
@@ -13273,5 +13285,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 432SjAmOxSWhFtMhLQqBqgtklkaBrNfdrWAVKI4uYyvaMFqwWbdpESCrZMbhlQf
+\unrestrict lkwFjjUQG1nHafxRBK6wEKbvokJizfxaaantEuTVyX51z9d1FFVkpGkISmEm0sv
 
