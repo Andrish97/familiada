@@ -237,6 +237,7 @@ function loadCaptchaApi() {
 let _silentCaptchaCache = { token: "", expMs: 0 };
 let _silentCaptchaInFlight = null;
 let _visibleCaptchaInFlight = null;
+let _silentCaptchaUnavailable = false; // set when silent returns empty — skip on next attempt
 
 function getCachedSilentCaptchaToken() {
   const now = Date.now();
@@ -256,6 +257,7 @@ function setCachedSilentCaptchaToken(token) {
 
 async function getSilentCaptchaToken() {
   if (!captchaSiteKey) return null;
+  if (_silentCaptchaUnavailable) return null;
 
   const cached = getCachedSilentCaptchaToken();
   if (cached) return cached;
@@ -266,13 +268,13 @@ async function getSilentCaptchaToken() {
     if (!captcha?.render) return null;
 
     const mount = document.createElement("div");
-    // Must be in DOM for both providers, but fully offscreen.
+    // Visually hidden but inside viewport — Turnstile checks element visibility
     mount.style.position = "fixed";
-    mount.style.left = "-9999px";
-    mount.style.top = "0";
-    mount.style.width = "1px";
-    mount.style.height = "1px";
-    mount.style.opacity = "0";
+    mount.style.bottom = "0";
+    mount.style.right = "0";
+    mount.style.width = "0";
+    mount.style.height = "0";
+    mount.style.overflow = "hidden";
     mount.style.pointerEvents = "none";
     mount.dataset.theme = "dark";
     document.body.appendChild(mount);
@@ -282,7 +284,7 @@ async function getSilentCaptchaToken() {
 
     const tokenPromise = new Promise((resolve) => {
       const done = () => resolve(String(token || "").trim());
-    const timer = setTimeout(done, 4000);
+    const timer = setTimeout(done, 2000);
 
       const setToken = (value) => {
         token = String(value || "");
@@ -305,15 +307,13 @@ async function getSilentCaptchaToken() {
         widgetId = captcha.render(mount, {
           sitekey: captchaSiteKey,
           theme: "auto",
-          size: "normal",
+          size: "flexible",
           appearance: "interaction-only",
-          execution: "execute",
+          execution: "render",
           callback: setToken,
           "expired-callback": () => { token = ""; },
           "error-callback": () => { token = ""; },
         });
-        try { captcha.reset(widgetId); } catch {}
-        try { captcha.execute(widgetId); } catch {}
         }
       } catch {
         clearTimeout(timer);
@@ -324,7 +324,10 @@ async function getSilentCaptchaToken() {
 
     try {
       const tkn = await tokenPromise;
-      if (!tkn) console.warn("[captcha] silent token empty");
+      if (!tkn) {
+        console.warn("[captcha] silent token empty — skipping silent on next attempt");
+        _silentCaptchaUnavailable = true;
+      }
       if (tkn) setCachedSilentCaptchaToken(tkn);
       return tkn || null;
     } finally {
@@ -852,8 +855,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   
   setStatus(t("index.statusLoggedOut"));
 
-  // Preload captcha in background so token is ready before user clicks
-  if (captchaSiteKey) void getSilentCaptchaToken();
+  // Preload captcha API in background — script will be cached by the time user clicks
+  if (captchaSiteKey) void getSilentCaptchaToken().then(() => {
+    // If silent failed, at least the API script is loaded for the visible widget
+    if (_silentCaptchaUnavailable) void loadCaptchaApi();
+  });
 
   window.addEventListener("i18n:lang", syncLanguage);
 
