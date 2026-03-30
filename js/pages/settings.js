@@ -3355,11 +3355,7 @@ function wireRatingsEvents() {
 
 const MKT_TEMPLATES = {
   invitation: {
-    subject: "Familiada Online — darmowy teleturniej w przeglądarce",
-    hasBody: false,
-  },
-  event: {
-    subject: "familiada.online — narzędzie dla prowadzących",
+    subject: "familiada.online — profesjonalny system do Twoich wydarzeń",
     hasBody: false,
   },
   newsletter: {
