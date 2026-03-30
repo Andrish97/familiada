@@ -2256,6 +2256,8 @@ const uk = {
     actions: {
       edit: "Редагувати",
       editMobile: "Редаг.",
+      preview: "Перегляд",
+      previewMobile: "Перегл.",
       play: "Грати",
       playMobile: "Грати",
       poll: "Опитування",
@@ -2266,6 +2268,12 @@ const uk = {
       exportBaseMobile: "Експ.база",
       import: "Імпорт",
       importMobile: "Імп.",
+    },
+    preview: {
+      noQuestions: "Немає питань.",
+      loading: "Завантаження…",
+      close: "Закрити",
+      pts: "бал",
     },
     tabs: {
       pollText: "Звичайне опитування",

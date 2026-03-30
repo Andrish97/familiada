@@ -509,13 +509,13 @@ async function sendZeroStatesToDevices() {
       finalModeRow.style.display = hasFinal ? "flex" : "none";
     }
 
-    // Pola związane z finałem (cel rozgrywki, cel finału) - ZAWSZE widoczne
-    const finalSettingsRow = document.getElementById("finalSettingsRow");
-    if (finalSettingsRow) {
-      finalSettingsRow.style.display = "flex";
+    // "Cel finału" - tylko gdy finał włączony
+    const finalOnlyRow = document.getElementById("finalOnlyRow");
+    if (finalOnlyRow) {
+      finalOnlyRow.style.display = hasFinal ? "flex" : "none";
     }
 
-    // Zakończenie gry - ZAWSZE widoczne
+    // "Zakończenie gry" - ZAWSZE widoczne
     const gameEndModeRow = document.getElementById("gameEndModeRow");
     if (gameEndModeRow) {
       gameEndModeRow.style.display = "flex";

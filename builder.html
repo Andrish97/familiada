@@ -84,6 +84,11 @@
           <span class="only-mobile" data-i18n="builder.actions.editMobile">Edyt.</span>
         </button>
 
+        <button class="btn sm" id="btnPreview" type="button" disabled>
+          <span class="only-desktop" data-i18n="builder.actions.preview">Podgląd</span>
+          <span class="only-mobile" data-i18n="builder.actions.previewMobile">Podgl.</span>
+        </button>
+
         <button class="btn sm gold" id="btnPlay" type="button" disabled>
           <span class="only-desktop" data-i18n="builder.actions.play">Graj</span>
           <span class="only-mobile" data-i18n="builder.actions.playMobile">Graj</span>
@@ -285,6 +290,20 @@
         </div>
 
         <div class="importMsg" id="exportJsonMsg" style="min-height:18px"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: podgląd gry -->
+  <div class="overlay" id="previewOverlay" style="display:none;">
+    <div class="modal bld-preview-modal">
+      <div class="bld-preview-head">
+        <div class="mTitle" id="previewTitle">—</div>
+        <button class="btn sm" id="btnPreviewClose" type="button" aria-label="Zamknij">✕</button>
+      </div>
+      <div class="bld-preview-questions" id="previewQuestions"></div>
+      <div class="importRow" style="margin-top:18px">
+        <button class="btn sm gold" id="btnPreviewCloseBottom" type="button" data-i18n="builder.preview.close">Zamknij</button>
       </div>
     </div>
   </div>

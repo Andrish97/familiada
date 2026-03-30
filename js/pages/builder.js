@@ -93,6 +93,7 @@ const hint = document.getElementById("hint");
 const btnLogout = document.getElementById("btnLogout");
 const btnInstall = document.getElementById("btnInstall");
 const btnEdit = document.getElementById("btnEdit");
+const btnPreview = document.getElementById("btnPreview");
 const btnPlay = document.getElementById("btnPlay");
 const btnPoll = document.getElementById("btnPoll");
 
@@ -634,11 +635,11 @@ function statusLabel(st) {
 
 function setButtonsState({ hasSel, canEdit, canPlay, canPoll, canExport }) {
   if (btnEdit) btnEdit.disabled = !hasSel || !canEdit;
+  if (btnPreview) btnPreview.disabled = !hasSel;
   if (btnPlay) btnPlay.disabled = !hasSel || !canPlay;
   if (btnPoll) btnPoll.disabled = !hasSel || !canPoll;
   if (btnExport) btnExport.disabled = !hasSel || !canExport;
   if (btnExportBase) btnExportBase.disabled = !hasSel || !canExport;
-  
 }
 /* ================= Tabs ================= */
 function setActiveTab(type) {
@@ -1316,6 +1317,70 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   btnMarketplace?.addEventListener("click", () => {
     location.href = "marketplace";
+  });
+
+  // PREVIEW
+  const previewOverlay = document.getElementById("previewOverlay");
+  const previewTitle = document.getElementById("previewTitle");
+  const previewQuestions = document.getElementById("previewQuestions");
+  const closePreview = () => { if (previewOverlay) previewOverlay.style.display = "none"; };
+  document.getElementById("btnPreviewClose")?.addEventListener("click", closePreview);
+  document.getElementById("btnPreviewCloseBottom")?.addEventListener("click", closePreview);
+  previewOverlay?.addEventListener("click", e => { if (e.target === previewOverlay) closePreview(); });
+
+  btnPreview?.addEventListener("click", async () => {
+    let gameName = "—";
+    let questions = null; // null = loading, [] = brak
+
+    // Ustal nazwę i źródło danych
+    if (activeTab === TYPES.MARKET && selectedMarketId) {
+      const mg = marketGamesAll.find(g => g.market_game_id === selectedMarketId);
+      if (!mg) return;
+      gameName = mg.title || mg.payload?.game?.name || "—";
+      questions = mg.payload?.questions ?? [];
+    } else if (selectedId) {
+      const g = gamesAll.find(x => x.id === selectedId);
+      gameName = g?.name || "—";
+    } else {
+      return;
+    }
+
+    // Pokaż modal natychmiast z nazwą i "Ładowanie…"
+    if (previewTitle) previewTitle.textContent = gameName;
+    if (previewQuestions) previewQuestions.innerHTML = `<div class="bld-no-q">${t("builder.preview.loading") || "Ładowanie…"}</div>`;
+    if (previewOverlay) previewOverlay.style.display = "";
+
+    // Pobierz pytania jeśli jeszcze nie mamy
+    if (questions === null) {
+      try {
+        const exported = await exportGame(selectedId);
+        questions = exported?.questions ?? [];
+      } catch (e) {
+        console.error("[builder] preview export failed:", e);
+        questions = [];
+      }
+    }
+
+    // Renderuj pytania
+    if (!previewQuestions) return;
+    if (!questions.length) {
+      previewQuestions.innerHTML = `<div class="bld-no-q">${t("builder.preview.noQuestions") || "Brak pytań."}</div>`;
+      return;
+    }
+
+    const esc = s => String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    const ptsLabel = t("builder.preview.pts") || "pkt";
+    previewQuestions.innerHTML = questions.map((q, i) => {
+      const answers = (q.answers ?? []);
+      const hasPoints = answers.some(a => a.fixed_points != null && a.fixed_points > 0);
+      const answersHtml = answers.map(a =>
+        `<li>${esc(a.text)}${hasPoints ? ` <span class="bld-pts">(${a.fixed_points ?? 0} ${ptsLabel})</span>` : ""}</li>`
+      ).join("");
+      return `<div class="bld-q-block">
+        <div class="bld-q-text">${i + 1}. ${esc(q.text)}</div>
+        ${answersHtml ? `<ul class="bld-q-answers">${answersHtml}</ul>` : ""}
+      </div>`;
+    }).join("");
   });
 
   // EDIT

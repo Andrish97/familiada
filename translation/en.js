@@ -2382,6 +2382,8 @@ const en = {
     actions: {
       edit: "Edit",
       editMobile: "Edit",
+      preview: "Preview",
+      previewMobile: "Preview",
       play: "Play",
       playMobile: "Play",
       poll: "Poll",
@@ -2392,6 +2394,12 @@ const en = {
       exportBaseMobile: "Exp.base",
       import: "Import",
       importMobile: "Import",
+    },
+    preview: {
+      noQuestions: "No questions.",
+      loading: "Loading…",
+      close: "Close",
+      pts: "pts",
     },
     tabs: {
       pollText: "Standard poll",
