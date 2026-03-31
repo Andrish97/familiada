@@ -453,7 +453,6 @@ function hostUpdate() {
     clearAllRoundMsgs();
 
     r.phase = "READY";
-    setStep("r_ready");
     updatePlayControls();
 
     await display.stateGameReady(teamA, teamB);
