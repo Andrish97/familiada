@@ -814,9 +814,11 @@ export function initImageEditor(ctx) {
 
       if (source.imageUrl) {
         // load from storage/URL
+        console.log("[image.open] Loading imageUrl:", source.imageUrl);
         const img = new Image();
         img.crossOrigin = "anonymous";
         img.onload = () => {
+          console.log("[image.open] Image loaded successfully");
           imgObj = img;
           if (imgPreview) {
             imgPreview.style.display = "block";
@@ -824,7 +826,7 @@ export function initImageEditor(ctx) {
             if (cropFrame) cropFrame.style.display = "block";
           }
           applyBestImageLayout();
-          
+
           if (source.crop) {
             crop = { ...source.crop };
           } else {
@@ -832,6 +834,9 @@ export function initImageEditor(ctx) {
           }
           applyCropToDom();
           schedulePreview(150);
+        };
+        img.onerror = (e) => {
+          console.error("[image.open] Failed to load image:", source.imageUrl, e);
         };
         img.src = source.imageUrl;
       } else {
@@ -878,7 +883,9 @@ export function initImageEditor(ctx) {
 
           const ext = imgFileObj.name.split(".").pop() || "png";
           const path = `${user.id}/${Date.now()}.${ext}`;
-          
+
+          console.log("[image.getCreatePayload] Uploading image to path:", path);
+
           const { data, error } = await sb().storage.from("user-logos").upload(path, imgFileObj);
           if (error) {
              // Jeśli bucket nie istnieje, spróbuj stworzyć (może zadziała jeśli user ma uprawnienia)
@@ -887,11 +894,13 @@ export function initImageEditor(ctx) {
                const retry = await sb().storage.from("user-logos").upload(path, imgFileObj);
                if (retry.error) throw retry.error;
                source.imageUrl = sb().storage.from("user-logos").getPublicUrl(path).data.publicUrl;
+               console.log("[image.getCreatePayload] Bucket created, image uploaded, URL:", source.imageUrl);
              } else {
                throw error;
              }
           } else {
             source.imageUrl = sb().storage.from("user-logos").getPublicUrl(path).data.publicUrl;
+            console.log("[image.getCreatePayload] Image uploaded, URL:", source.imageUrl);
           }
           imgFileObj = null; // wrzucone
         } catch (e) {
