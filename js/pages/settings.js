@@ -2787,22 +2787,6 @@ function showCompose(defaults = {}) {
   const hasQuote = !!defaults.quote;
   const quotePosition = els.mailQuotePosition?.value || "before";
   
-  // Get current greeting/farewell settings
-  const greetingCustomEl = document.getElementById("mailGreetingCustom");
-  const farewellCustomEl = document.getElementById("mailFarewellCustom");
-  
-  let signatureText = "";
-  if (mailIncludeSignatureValue) {
-    signatureText = buildEmailSignature({
-      greeting: mailGreetingValue,
-      farewell: mailFarewellValue,
-      greetingCustom: greetingCustomEl?.value || "",
-      farewellCustom: farewellCustomEl?.value || "",
-    });
-  }
-  
-  const bodyWithSignature = signatureText ? `${defaults.body || ""}\n\n${signatureText}` : (defaults.body || "");
-  
   // Build quote block
   let quoteBlockHtml = "";
   if (hasQuote) {
@@ -2811,6 +2795,9 @@ function showCompose(defaults = {}) {
     quoteBlockHtml = `<div id="composeQuoteBlock" style="margin:15px 0;padding:10px 14px;border-left:3px solid rgba(255,234,166,.35);background:rgba(0,0,0,.2);border-radius:0 8px 8px 0;font-size:12px;opacity:.65;white-space:pre-wrap;word-break:break-word">
       <div style="font-size:11px;opacity:.7;margin-bottom:6px">${fromStr}</div>${escSetting(defaults.quote)}</div>`;
   }
+  
+  // Body without signature - signature is added on send/preview
+  const bodyText = defaults.body || "";
 
   conv.innerHTML = `
     <div class="mail-compose-pane" id="composePaneInner" style="display:flex;flex-direction:column;height:100%">
@@ -2852,19 +2839,19 @@ function showCompose(defaults = {}) {
       <div class="field" style="flex:1;display:flex;flex-direction:column;min-height:0">
         <label class="field-label">${t("settings.reports.compose.message") || "Treść wiadomości"}</label>
         ${quotePosition === "before" && hasQuote ? quoteBlockHtml : ""}
-        <textarea class="inp" id="composeMessageArea" rows="10" style="width:100%;box-sizing:border-box;resize:vertical;flex:1;min-height:150px">${escSetting(bodyWithSignature)}</textarea>
+        <textarea class="inp" id="composeMessageArea" rows="10" style="width:100%;box-sizing:border-box;resize:vertical;flex:1;min-height:150px">${escSetting(bodyText)}</textarea>
         ${quotePosition === "after" && hasQuote ? quoteBlockHtml : ""}
       </div>
       
       ${hasQuote ? `
-      <div class="field" style="flex-shrink:0">
-        <label class="field-label" style="font-size:12px">Pozycja cytatu:</label>
-        <div style="display:flex;gap:12px;margin-top:4px">
-          <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer">
+      <div class="field" style="flex-shrink:0;margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.1)">
+        <label class="field-label" style="font-size:12px;margin-bottom:8px;display:block">Pozycja cytatu:</label>
+        <div style="display:flex;gap:16px">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
             <input type="radio" name="composeQuotePosition" value="before" ${quotePosition === "before" ? "checked" : ""} style="accent-color:#ffeaa6">
             Przed treścią
           </label>
-          <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
             <input type="radio" name="composeQuotePosition" value="after" ${quotePosition === "after" ? "checked" : ""} style="accent-color:#ffeaa6">
             Po treści
           </label>
@@ -3112,19 +3099,20 @@ function showComposePreview(greetingSelect, farewellSelect, quotePosition) {
     farewellCustom,
   });
   
+  // Build full body with signature at the end
   const fullBody = signatureText ? `${body}\n\n${signatureText}` : body;
   
   const quoteBlock = quote ? `<div style="margin:15px 0;padding:15px;border-left:4px solid #ffeaa6;background:rgba(255,234,166,.1);border-radius:0 8px 8px 0;font-size:13px;white-space:pre-wrap;line-height:1.5">${escSetting(quote)}</div>` : "";
   
   const previewContent = `
-    <div style="background:rgba(255,255,255,.05);border-radius:8px;padding:20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
+    <div style="background:#1a1a2e;border-radius:8px;padding:20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
       <div style="margin-bottom:15px;padding-bottom:15px;border-bottom:1px solid rgba(255,255,255,.1)">
-        <div style="font-size:18px;font-weight:600;margin-bottom:8px">${escSetting(subject || "(brak tematu)")}</div>
+        <div style="font-size:18px;font-weight:600;margin-bottom:8px;color:#fff">${escSetting(subject || "(brak tematu)")}</div>
       </div>
-      <div style="margin:15px 0;padding:15px;background:rgba(0,0,0,.2);border-radius:8px">
-        ${quotePosition === "before" ? quoteBlock : ""}
-        <div style="white-space:pre-wrap;font-size:14px;line-height:1.6">${escSetting(fullBody || "(brak treści)")}</div>
-        ${quotePosition === "after" ? quoteBlock : ""}
+      <div style="margin:15px 0;padding:15px;background:rgba(255,255,255,.05);border-radius:8px">
+        ${quotePosition === "before" && quote ? quoteBlock : ""}
+        <div style="white-space:pre-wrap;font-size:14px;line-height:1.6;color:#e0e0e0">${escSetting(fullBody || "(brak treści)")}</div>
+        ${quotePosition === "after" && quote ? quoteBlock : ""}
       </div>
     </div>
   `;
