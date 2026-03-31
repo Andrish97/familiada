@@ -1,51 +1,54 @@
 // js/core/logo-preview.js
 // Shared logo preview rendering (used by control and logo-editor)
+// Identyczna logika jak display/js/fonts.js + scene.js
 
 const DOT_W = 150;
 const DOT_H = 70;
 const TILES_X = 30;
 const TILES_Y = 10;
 
-function buildGlyph5x7Map(fontJson) {
-  if (!fontJson || typeof fontJson !== "object") return {};
-  const out = {};
-  for (const [k, v] of Object.entries(fontJson)) {
-    if (k === "meta") continue;
-    if (!v || typeof v !== "object") continue;
-    for (const [ch, pat] of Object.entries(v)) {
-      if (typeof ch !== "string") continue;
-      if (!Array.isArray(pat) || pat.length !== 7) continue;
-      if (!(ch in out)) out[ch] = pat;
+// Identycznie jak display/js/fonts.js buildGlyphMap — zwraca Map
+function buildGlyphMap(fontJson) {
+  const map = new Map();
+  for (const [groupName, groupVal] of Object.entries(fontJson || {})) {
+    if (groupName === "meta") continue;
+    const obj = groupVal || {};
+    for (const [k, v] of Object.entries(obj)) {
+      map.set(k, v);
     }
   }
-  return out;
+  return map;
+}
+
+// Identycznie jak display/js/fonts.js resolveGlyph — obsługuje aliasy "@"
+function resolveGlyph(glyphs, ch) {
+  const v = glyphs.get(ch);
+  if (!v) return glyphs.get(" ") || [0, 0, 0, 0, 0, 0, 0];
+  if (typeof v === "string" && v.startsWith("@")) {
+    return resolveGlyph(glyphs, v.slice(1));
+  }
+  return v;
 }
 
 export async function loadFont5x7(url = "/display/font_5x7.json") {
   const r = await fetch(url, { cache: "force-cache" });
   if (!r.ok) throw new Error(`Font 5x7: HTTP ${r.status}`);
   const json = await r.json();
-  return buildGlyph5x7Map(json);
+  return buildGlyphMap(json);
 }
 
-function resolve5x7(ch, glyph5x7) {
-  const g = glyph5x7?.[ch] ?? glyph5x7?.[String(ch || "").toUpperCase()] ?? null;
-  if (!g) return [0, 0, 0, 0, 0, 0, 0];
-  return g;
-}
-
-function rows30x10ToBits150(rows10, glyph5x7) {
+function rows30x10ToBits150(rows10, glyphs) {
   const out = new Uint8Array(DOT_W * DOT_H);
+  if (!glyphs) return out;
   for (let ty = 0; ty < TILES_Y; ty++) {
     const rowStr = String(rows10?.[ty] ?? "").padEnd(30, " ").slice(0, 30);
     for (let tx = 0; tx < TILES_X; tx++) {
       const ch = rowStr[tx] ?? " ";
-      const glyph = resolve5x7(ch, glyph5x7);
+      const glyph = resolveGlyph(glyphs, ch);
       for (let py = 0; py < 7; py++) {
-        const bits = glyph[py] | 0;
+        const bits = (glyph[py] ?? 0) | 0;
         for (let px = 0; px < 5; px++) {
-          const on = (bits & (1 << (4 - px))) !== 0;
-          if (!on) continue;
+          if (!(bits & (1 << (4 - px)))) continue;
           const x = tx * 5 + px;
           const y = ty * 7 + py;
           out[y * DOT_W + x] = 1;
@@ -58,7 +61,7 @@ function rows30x10ToBits150(rows10, glyph5x7) {
 
 function base64ToBytes(b64) {
   try {
-    const bin = atob(b64 || "");
+    const bin = atob((b64 || "").replace(/\s+/g, ""));
     const out = new Uint8Array(bin.length);
     for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
     return out;
@@ -76,8 +79,7 @@ function unpackBitsRowMajorMSB(bitsB64, w, h) {
     for (let x = 0; x < w; x++) {
       const byteIndex = rowBase + (x >> 3);
       if (byteIndex < 0 || byteIndex >= bytes.length) continue;
-      const bit = 7 - (x & 7);
-      out[y * w + x] = (bytes[byteIndex] >> bit) & 1;
+      out[y * w + x] = (bytes[byteIndex] >> (7 - (x & 7))) & 1;
     }
   }
   return out;
@@ -103,13 +105,13 @@ function drawThumbFlat150x70(canvas, bits150) {
 }
 
 /**
- * Build a preview canvas for a DB logo record.
- * @param {object|null} logo  - DB row with type, payload fields (null = default/empty)
- * @param {object} glyph5x7  - result of loadFont5x7() — required for GLYPH type
- * @param {number} width     - canvas pixel width (default 300)
- * @param {number} height    - canvas pixel height (default 140)
+ * Build a preview canvas for a DB logo record (or a raw logo payload object).
+ * @param {object|null} logo     - { type, payload } — DB row or constructed object
+ * @param {Map|null}    glyphs   - result of loadFont5x7() (Map) — needed for GLYPH type
+ * @param {number}      width    - canvas px width  (default 300)
+ * @param {number}      height   - canvas px height (default 140)
  */
-export function buildLogoPreviewCanvas(logo, glyph5x7, width = 300, height = 140) {
+export function buildLogoPreviewCanvas(logo, glyphs, width = 300, height = 140) {
   const c = document.createElement("canvas");
   c.width = width;
   c.height = height;
@@ -120,14 +122,15 @@ export function buildLogoPreviewCanvas(logo, glyph5x7, width = 300, height = 140
     const rows10 = Array.isArray(rows) && rows.length
       ? rows.map(r => String(r || "").padEnd(30, " ").slice(0, 30)).slice(0, 10)
       : Array.from({ length: 10 }, () => " ".repeat(30));
-    bits150 = rows30x10ToBits150(rows10, glyph5x7);
+    bits150 = rows30x10ToBits150(rows10, glyphs);
   } else if (logo?.type === "PIX_150x70") {
     const p = logo.payload || {};
     const w = Number(p.w) || DOT_W;
     const h = Number(p.h) || DOT_H;
     const raw = p.bits_b64 || p.bits_base64 || p.bitsBase64 || "";
-    bits150 = unpackBitsRowMajorMSB(raw, w, h);
-    if (w !== DOT_W || h !== DOT_H) bits150 = new Uint8Array(DOT_W * DOT_H);
+    bits150 = (w === DOT_W && h === DOT_H)
+      ? unpackBitsRowMajorMSB(raw, w, h)
+      : new Uint8Array(DOT_W * DOT_H);
   } else {
     bits150 = new Uint8Array(DOT_W * DOT_H);
   }
