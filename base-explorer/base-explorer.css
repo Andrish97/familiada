@@ -1776,7 +1776,6 @@ tr.row .tag-dot[data-tip]::before {
   /* Toolbar — dwa wiersze na mobile */
   .toolbar {
     flex-wrap: wrap;
-    overflow: hidden;
     padding: 6px 10px;
     gap: 6px;
   }
