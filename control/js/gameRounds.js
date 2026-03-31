@@ -1530,5 +1530,7 @@ function hostUpdate() {
     revealDone,
 
     gameEndShow,
+    
+    syncTeamLabels,
   };
 }

@@ -43,11 +43,11 @@ import { validateGameReadyToPlay, loadGameBasic, loadQuestions, loadAnswers } fr
 import { unlockAudio, isAudioUnlocked, playSfx } from "../../js/core/sfx.js?v=81309561";
 
 import { createStore } from "./store.js?v=516e0812";
-import { createUI } from "./ui.js?v=e8721c12";
+import { createUI } from "./ui.js?v=2d052046";
 import { createDevices } from "./devices.js?v=c0b93ef6";
 import { createPresence } from "./presence.js?v=c21b2179";
 import { createDisplay } from "./display.js?v=985e696f";
-import { createRounds } from "./gameRounds.js?v=48cda88c";
+import { createRounds } from "./gameRounds.js?v=5a6f0f33";
 import { createFinal } from "./gameFinal.js?v=fafa8721";
 import { initShareDevice } from "./share-device.js?v=41d2d3dd";
 import { loadFont5x7, buildLogoPreviewCanvas } from "../../js/core/logo-preview.js?v=8b4d198b";
@@ -1208,6 +1208,22 @@ async function sendZeroStatesToDevices() {
   // startowy render + subskrypcja
   renderFromState(store.state);
   store.subscribe(renderFromState);
+
+  // Subskrypcja na zmiany nazw drużyn - aktualizacja HUD w rundach
+  let lastTeams = JSON.stringify(store.state.teams);
+  store.subscribe((s) => {
+    const teamsJson = JSON.stringify(s.teams);
+    if (teamsJson !== lastTeams) {
+      lastTeams = teamsJson;
+      // Aktualizuj HUD rund z nowymi nazwami drużyn
+      const r = s.rounds || {};
+      ui.setRoundsHud(r, s.teams);
+      // Aktualizuj przyciski akceptacji buzzera
+      if (rounds && typeof rounds.syncTeamLabels === "function") {
+        rounds.syncTeamLabels();
+      }
+    }
+  });
 
   // === NAWIGACJA GÓRNA ===
   ui.mountNavigation({

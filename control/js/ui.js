@@ -424,17 +424,17 @@ export function createUI() {
   }
 
   function setRoundsHud(r, teams) {
-    const nameA = teams?.teamA || "A";
-    const nameB = teams?.teamB || "B";
+    const nameA = teams?.teamA || t("control.teamALabel");
+    const nameB = teams?.teamB || t("control.teamBLabel");
     setText("roundNo", String(r.roundNo));
     setText(
       "controlTeam",
-      r.controlTeam ? (r.controlTeam === "A" ? nameA : nameB) : UI_MSG.DASH
+      r.controlTeam ? (r.controlTeam === "A" ? nameA : nameB) : t("control.dash")
     );
     setText("bankPts", String(r.bankPts));
     setText("xA", String(r.xA));
     setText("xB", String(r.xB));
-    setText("t3", r.timer3.running ? String(r.timer3.secLeft ?? 3) : UI_MSG.DASH);
+    setText("t3", r.timer3.running ? String(r.timer3.secLeft ?? 3) : t("control.dash"));
   }
 
   function setGameHeader(name, meta) {
