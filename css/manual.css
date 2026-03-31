@@ -138,6 +138,10 @@
     color: rgba(255,255,255,.75)
 }
 
+.m-muted.m-block {
+    margin-top: 10px
+}
+
 .m-note,.m-warn {
     margin: 14px 0;
     padding: 12px 14px;

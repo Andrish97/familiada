@@ -2182,8 +2182,8 @@ const en = {
         <button class="btn" id="demoRestoreBtn">
           ↺ Restore demo files
         </button>
-  
-        <p class="m-p m-muted" style="margin-top:10px">
+
+        <p class="m-p m-muted m-block">
           After clicking you will be taken to the My games view and demo will be loaded automatically.
         </p>
       </div>`,

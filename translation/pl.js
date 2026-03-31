@@ -2187,8 +2187,8 @@ const pl = {
         <button class="btn" id="demoRestoreBtn">
           ↺ Przywróć pliki demo
         </button>
-  
-        <p class="m-p m-muted" style="margin-top:10px">
+
+        <p class="m-p m-muted m-block">
           Po kliknięciu nastąpi przejście do widoku Moje gry i automatyczne wgranie demo.
         </p>
       </div>`,

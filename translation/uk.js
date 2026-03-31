@@ -2060,8 +2060,8 @@ const uk = {
         <button class="btn" id="demoRestoreBtn">
           ↺ Відновити демо-файли
         </button>
-  
-        <p class="m-p m-muted" style="margin-top:10px">
+
+        <p class="m-p m-muted m-block">
           Після натискання ти перейдеш до перегляду «Мої ігри», і демо буде завантажено автоматично.
         </p>
       </div>`,
