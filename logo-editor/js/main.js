@@ -1344,11 +1344,8 @@ async function handleCreate(){
 
     clearDirty();
     await refresh();
-    
-    // Auto-close after save as requested
-    setTimeout(() => {
-      closeEditor(true);
-    }, 800);
+
+    setEditorMsg(t("logoEditor.status.saved"));
   } catch (e){
     console.error(e);
 

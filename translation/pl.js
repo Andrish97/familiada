@@ -3578,7 +3578,6 @@ const pl = {
         fontsInvalid: "fonts.json nie jest tablicą",
         fontsLoadFailed: "Błąd ładowania fontów",
         noMobileEdit: "Edycja logo nie jest dostępna na urządzeniach mobilnych.",
-        cannotEditOldLogo: "To logo nie może być edytowane (zostało utworzone przed wprowadzeniem edytora). Utwórz nowe logo.",
       },
       warnings: {
         clipped: "Wygląda na ucięte — zmniejsz rozmiar albo skróć tekst.",
@@ -3748,6 +3747,7 @@ const pl = {
       deleteFailed: "Nie udało się usunąć.\n\n{error}",
       createFailedDetailed: "Nie udało się utworzyć.\n\n{error}",
       invalidType: "Nieznany typ logo.",
+      cannotEditOldLogo: "To logo nie może być edytowane (zostało utworzone przed wprowadzeniem edytora). Utwórz nowe logo.",
     },
     defaults: {
       logoName: "Domyślne logo",

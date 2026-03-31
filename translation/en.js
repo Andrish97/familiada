@@ -3589,7 +3589,6 @@ const en = {
         fontsInvalid: "fonts.json is not an array",
         fontsLoadFailed: "Font loading error",
         noMobileEdit: "Logo editing is not available on mobile devices.",
-        cannotEditOldLogo: "This logo cannot be edited (it was created before the editor was introduced). Create a new logo.",
       },
       warnings: {
         clipped: "Looks clipped — reduce size or shorten the text.",
@@ -3760,6 +3759,7 @@ const en = {
       deleteFailed: "Couldn't delete.\n\n{error}",
       createFailedDetailed: "Couldn't create.\n\n{error}",
       invalidType: "Unknown logo type.",
+      cannotEditOldLogo: "This logo cannot be edited (it was created before the editor was introduced). Create a new logo.",
     },
     defaults: {
       logoName: "Default logo",
