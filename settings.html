@@ -16,7 +16,7 @@
   <link rel="stylesheet" href="css/settings.css?v=77091899"/>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script type="module" src="js/pages/settings.js?v=74258e04" defer></script>
+  <script type="module" src="js/pages/settings.js?v=141974e2" defer></script>
   <script type="module" src="js/pages/generator.js?v=41218100" defer></script>
 </head>
 <body class="builder-body settings-body settings-locked no-footer-line">
@@ -202,7 +202,44 @@
               <button class="btn sm gold" id="btnMailSaveSettings" type="button" data-i18n="settings.mail.save">Zapisz ustawienia maili</button>
               <button class="btn sm" id="btnMailReloadSettings" type="button" data-i18n="settings.actions.refresh">Odśwież</button>
             </div>
-            <div class="panel-status">
+            
+            <div class="field" style="margin-top:20px;border-top:1px solid rgba(255,255,255,.1);padding-top:16px">
+              <span class="field-label" style="font-size:13px;font-weight:700;color:var(--gold)" data-i18n="settings.mail.emailSignatureTitle">Podpis w odpowiedziach</span>
+              <span class="field-hint" data-i18n="settings.mail.emailSignatureHint">Wybierz domyślne powitanie i pożegnanie dla odpowiedzi na zgłoszenia</span>
+            </div>
+            
+            <div class="mail-inline-grid">
+              <div class="field">
+                <label class="field-label" for="mailGreetingSelect" data-i18n="settings.mail.greetingLabel">Powitanie</label>
+                <div class="ui-select" id="mailGreetingSelect">
+                  <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
+                    <span class="ui-select-label">—</span>
+                    <span class="ui-select-caret" aria-hidden="true">▾</span>
+                  </button>
+                  <div class="ui-select-menu" role="listbox"></div>
+                </div>
+              </div>
+              <div class="field">
+                <label class="field-label" for="mailFarewellSelect" data-i18n="settings.mail.farewellLabel">Pożegnanie</label>
+                <div class="ui-select" id="mailFarewellSelect">
+                  <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
+                    <span class="ui-select-label">—</span>
+                    <span class="ui-select-caret" aria-hidden="true">▾</span>
+                  </button>
+                  <div class="ui-select-menu" role="listbox"></div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="field row" style="margin-top:12px">
+              <label class="toggle" for="mailIncludeSignatureInCompose">
+                <input type="checkbox" id="mailIncludeSignatureInCompose" checked/>
+                <span class="toggle-ui"></span>
+                <span class="toggle-label" data-i18n="settings.mail.includeSignatureInCompose">Automatycznie dodawaj podpis w oknie odpowiedzi</span>
+              </label>
+            </div>
+            
+            <div class="panel-status" style="margin-top:12px">
               <span class="status-label" data-i18n="settings.mail.currentCron">Cron</span>
               <span class="status-value" id="mailSettingsStatus">—</span>
             </div>

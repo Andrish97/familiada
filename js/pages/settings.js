@@ -162,6 +162,11 @@ let mailLogLevelValue = "all";
 let mailLogsPage = 1;
 let mailLogsPerPage = 50;
 let mailCronSelect = null;
+let mailGreetingSelect = null;
+let mailFarewellSelect = null;
+let mailGreetingValue = "none";
+let mailFarewellValue = "none";
+let mailIncludeSignatureValue = true;
 let mailQueueStatusSelect = null;
 let mailLogFnSelect = null;
 let mailLogLevelSelect = null;
@@ -1251,6 +1256,50 @@ function cronPresetLabel(preset) {
   return trOr(`settings.mail.cronPreset.${preset.id}`, `Every ${preset.minutes} min`);
 }
 
+function getGreetingOptions() {
+  return [
+    { value: "none", label: t("settings.mail.greetingOptions.none") || "Brak powitania" },
+    { value: "hello", label: t("settings.mail.greetingOptions.hello") || "Dzień dobry" },
+    { value: "hi", label: t("settings.mail.greetingOptions.hi") || "Cześć" },
+    { value: "dearUser", label: t("settings.mail.greetingOptions.dearUser") || "Szanowny Użytkowniku" },
+    { value: "dearCustomer", label: t("settings.mail.greetingOptions.dearCustomer") || "Szanowny Kliencie" },
+  ];
+}
+
+function getFarewellOptions() {
+  return [
+    { value: "none", label: t("settings.mail.farewellOptions.none") || "Brak pożegnania" },
+    { value: "regards", label: t("settings.mail.farewellOptions.regards") || "Pozdrawiam" },
+    { value: "bestRegards", label: t("settings.mail.farewellOptions.bestRegards") || "Z poważaniem" },
+    { value: "kindRegards", label: t("settings.mail.farewellOptions.kindRegards") || "Łączę wyrazy szacunku" },
+    { value: "team", label: t("settings.mail.farewellOptions.team") || "Zespół Familiada" },
+  ];
+}
+
+function buildEmailSignature({ greeting = "none", farewell = "none" } = {}) {
+  const greetingText = {
+    none: "",
+    hello: t("settings.mail.greetingOptions.hello") || "Dzień dobry",
+    hi: t("settings.mail.greetingOptions.hi") || "Cześć",
+    dearUser: t("settings.mail.greetingOptions.dearUser") || "Szanowny Użytkowniku",
+    dearCustomer: t("settings.mail.greetingOptions.dearCustomer") || "Szanowny Kliencie",
+  }[greeting] || "";
+  
+  const farewellText = {
+    none: "",
+    regards: t("settings.mail.farewellOptions.regards") || "Pozdrawiam",
+    bestRegards: t("settings.mail.farewellOptions.bestRegards") || "Z poważaniem",
+    kindRegards: t("settings.mail.farewellOptions.kindRegards") || "Łączę wyrazy szacunku",
+    team: t("settings.mail.farewellOptions.team") || "Zespół Familiada",
+  }[farewell] || "";
+  
+  const parts = [];
+  if (greetingText) parts.push(greetingText);
+  if (farewellText) parts.push(farewellText);
+  
+  return parts.length ? parts.join("\n\n") : "";
+}
+
 function mailQueueStatusOptions() {
   return [
     { value: "all", label: t("settings.mail.filter.all") },
@@ -1304,6 +1353,28 @@ function initMailSelects() {
         mailCronPresetValue = String(val || mailCronPresetValue);
         updateCronHint();
         updateMailCategoryHighlights();
+      },
+    });
+  }
+
+  if (!mailGreetingSelect && els.mailGreetingSelect) {
+    mailGreetingSelect = initUiSelect(els.mailGreetingSelect, {
+      options: getGreetingOptions(),
+      value: mailGreetingValue,
+      placeholder: "—",
+      onChange: (val) => {
+        mailGreetingValue = String(val || "none");
+      },
+    });
+  }
+
+  if (!mailFarewellSelect && els.mailFarewellSelect) {
+    mailFarewellSelect = initUiSelect(els.mailFarewellSelect, {
+      options: getFarewellOptions(),
+      value: mailFarewellValue,
+      placeholder: "—",
+      onChange: (val) => {
+        mailFarewellValue = String(val || "none");
       },
     });
   }
@@ -2424,8 +2495,16 @@ function renderReportThread(report, messages, attsByMsg = {}) {
   const replySection = document.createElement("div");
   replySection.className = "mail-conv-reply";
   replySection.id = "mailConvReply";
+  
+  // Build signature for reply
+  let replySignatureText = "";
+  if (mailIncludeSignatureValue) {
+    replySignatureText = buildEmailSignature({ greeting: mailGreetingValue, farewell: mailFarewellValue });
+  }
+  const signaturePlaceholder = replySignatureText ? `\n\n---\n${replySignatureText}` : "";
+  
   replySection.innerHTML = `
-    <textarea class="inp" id="mailReplyArea" rows="4" placeholder="${t("settings.reports.replyPlaceholder") || "Treść odpowiedzi…"}" style="width:100%;box-sizing:border-box;resize:vertical;min-height:80px"></textarea>
+    <textarea class="inp" id="mailReplyArea" rows="4" placeholder="${t("settings.reports.replyPlaceholder") || "Treść odpowiedzi…"}${signaturePlaceholder}" style="width:100%;box-sizing:border-box;resize:vertical;min-height:80px"></textarea>
     <div class="mail-conv-reply-actions">
       <span class="field-hint" id="mailReplyStatus"></span>
       <button class="btn sm gold" id="btnReportReply" type="button">${t("settings.reports.replyBtn") || "Odpowiedz"}</button>
@@ -2439,8 +2518,17 @@ function renderReportThread(report, messages, attsByMsg = {}) {
   document.getElementById("btnReportReply")?.addEventListener("click", async () => {
     const btn = document.getElementById("btnReportReply");
     const statusEl = document.getElementById("mailReplyStatus");
-    const body = (document.getElementById("mailReplyArea")?.value || "").trim();
+    let body = (document.getElementById("mailReplyArea")?.value || "").trim();
     if (!body) { showToast("Podaj treść odpowiedzi.", "error"); return; }
+    
+    // Add signature if enabled
+    if (mailIncludeSignatureValue) {
+      const signatureText = buildEmailSignature({ greeting: mailGreetingValue, farewell: mailFarewellValue });
+      if (signatureText) {
+        body = `${body}\n\n${signatureText}`;
+      }
+    }
+    
     const lastInbound = [...messages].reverse().find(m => m.direction === "inbound");
     const to = lastInbound?.from_email;
     if (!to) { showToast("Brak adresu odbiorcy.", "error"); return; }
@@ -2715,6 +2803,14 @@ function showCompose(defaults = {}) {
       <div style="font-size:11px;opacity:.7;margin-bottom:6px">${fromStr}</div>${escSetting(defaults.quote)}</div>`;
   }
 
+  // Build signature if enabled
+  let signatureText = "";
+  if (mailIncludeSignatureValue) {
+    signatureText = buildEmailSignature({ greeting: mailGreetingValue, farewell: mailFarewellValue });
+  }
+  
+  const bodyWithSignature = signatureText ? `${defaults.body || ""}\n\n${signatureText}` : (defaults.body || "");
+
   conv.innerHTML = `
     <div class="mail-compose-pane" id="composePaneInner">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
@@ -2731,7 +2827,7 @@ function showCompose(defaults = {}) {
       </div>
       <div class="field" style="flex:1;display:flex;flex-direction:column">
         <label class="field-label">${t("settings.reports.compose.message") || "Treść"}</label>
-        <textarea class="inp" id="composeMessageArea" rows="6" style="width:100%;box-sizing:border-box;resize:vertical">${escSetting(defaults.body || "")}</textarea>
+        <textarea class="inp" id="composeMessageArea" rows="6" style="width:100%;box-sizing:border-box;resize:vertical">${escSetting(bodyWithSignature)}</textarea>
       </div>
       <div class="field">
         <label class="field-label" style="display:flex;align-items:center;justify-content:space-between">
@@ -3017,6 +3113,15 @@ async function loadMailSettings({ silent = false } = {}) {
     if (els.mailWorkerLimit) els.mailWorkerLimit.value = String(clampInt(settings.worker_limit, 1, 200, 25));
     if (els.mailRunLimit) els.mailRunLimit.value = String(clampInt(settings.worker_limit, 1, 200, 25));
 
+    // Load greeting/farewell settings
+    mailGreetingValue = settings.email_greeting || "none";
+    mailFarewellValue = settings.email_farewell || "none";
+    mailIncludeSignatureValue = settings.email_include_signature !== false;
+    
+    if (mailGreetingSelect) mailGreetingSelect.setValue(mailGreetingValue, { silent: true });
+    if (mailFarewellSelect) mailFarewellSelect.setValue(mailFarewellValue, { silent: true });
+    if (els.mailIncludeSignatureInCompose) els.mailIncludeSignatureInCompose.checked = mailIncludeSignatureValue;
+
     mailCronSupported = cron?.supported !== false;
     const selectedPreset =
       getCronPresetBySchedule(String(cron?.schedule || "")) ||
@@ -3064,6 +3169,9 @@ async function saveMailSettings() {
     delay_ms: delayMs,
     batch_max: batchMax,
     worker_limit: workerLimit,
+    email_greeting: mailGreetingValue,
+    email_farewell: mailFarewellValue,
+    email_include_signature: els.mailIncludeSignatureInCompose?.checked !== false,
   };
 
   if (mailCronSupported && cronSchedule) {
