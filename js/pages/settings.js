@@ -3102,16 +3102,16 @@ function showComposePreview(greetingSelect, farewellSelect, quotePosition) {
   // Build full body with signature at the end
   const fullBody = signatureText ? `${body}\n\n${signatureText}` : body;
   
-  const quoteBlock = quote ? `<div style="margin:15px 0;padding:15px;border-left:4px solid #ffeaa6;background:rgba(255,234,166,.1);border-radius:0 8px 8px 0;font-size:13px;white-space:pre-wrap;line-height:1.5">${escSetting(quote)}</div>` : "";
+  const quoteBlock = quote ? `<div style="margin:20px 0;padding:20px;background:#f5f5f5;border-left:4px solid #ffeaa6;border-radius:0 8px 8px 0;font-size:13px;white-space:pre-wrap;line-height:1.6;color:#333">${escSetting(quote)}</div>` : "";
   
   const previewContent = `
-    <div style="background:#1a1a2e;border-radius:8px;padding:20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
-      <div style="margin-bottom:15px;padding-bottom:15px;border-bottom:1px solid rgba(255,255,255,.1)">
-        <div style="font-size:18px;font-weight:600;margin-bottom:8px;color:#fff">${escSetting(subject || "(brak tematu)")}</div>
+    <div style="background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.1)">
+      <div style="background:#f8f9fa;padding:20px;border-bottom:1px solid #e9ecef">
+        <div style="font-size:20px;font-weight:700;color:#1a1a2e;margin-bottom:4px">${escSetting(subject || "(brak tematu)")}</div>
       </div>
-      <div style="margin:15px 0;padding:15px;background:rgba(255,255,255,.05);border-radius:8px">
+      <div style="padding:24px;background:#fff">
         ${quotePosition === "before" && quote ? quoteBlock : ""}
-        <div style="white-space:pre-wrap;font-size:14px;line-height:1.6;color:#e0e0e0">${escSetting(fullBody || "(brak treści)")}</div>
+        <div style="white-space:pre-wrap;font-size:15px;line-height:1.7;color:#222">${escSetting(fullBody || "(brak treści)")}</div>
         ${quotePosition === "after" && quote ? quoteBlock : ""}
       </div>
     </div>
