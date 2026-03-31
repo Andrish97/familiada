@@ -22,7 +22,8 @@
 }
 
 body,html {
-    height: 100%
+    height: 100dvh;
+    overflow: hidden;
 }
 
 .topbar-title{
@@ -54,7 +55,10 @@ body,html {
     grid-template-columns: 320px 1fr;
     gap: 0;
     padding: 0 12px 12px;
-    min-height: calc(100vh - 120px);
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     align-items: stretch
 }
 
@@ -1142,9 +1146,7 @@ tr.row .tag-dot[data-tip]::before {
 .toolbar {
     gap: 10px;
     padding: 10px 12px;
-    position: sticky;
-    top: var(--topbar-h, 68px);
-    z-index: 100;
+    flex-shrink: 0;
     background: #090d1a;
     border-bottom: 1px solid rgba(255,255,255,.08);
 }
@@ -1729,7 +1731,7 @@ tr.row .tag-dot[data-tip]::before {
   .explorer {
     display: block;
     padding: 0 8px 8px;
-    min-height: calc(100vh - 110px);
+    min-height: 0;
   }
 
   /* Lewy panel jako drawer */
