@@ -2222,6 +2222,7 @@ function renderMessageDetail(msg, attachments = []) {
     frame.className = "mail-msg-html-frame";
     frame.sandbox = "allow-scripts allow-popups";
     frame.srcdoc = htmlSrc;
+    frame.style.pointerEvents = "none"; // Prevent clicks on iframe
     frame.onload = () => { try { frame.style.height = (frame.contentDocument.documentElement.scrollHeight + 20) + "px"; } catch(e) {} };
     bodyEl.appendChild(frame);
   } else {
@@ -2454,6 +2455,7 @@ function renderReportThread(report, messages, attsByMsg = {}) {
       frame.className = "mail-msg-html-frame";
       frame.sandbox = "allow-scripts allow-popups";
       frame.srcdoc = htmlSrc;
+      frame.style.pointerEvents = "none"; // Prevent clicks on iframe
       frame.onload = () => { try { frame.style.height = (frame.contentDocument.documentElement.scrollHeight + 20) + "px"; } catch(e) {} };
       bodyEl.appendChild(frame);
     } else {
@@ -3104,7 +3106,9 @@ function showComposePreview(greetingSelect, farewellSelect, quotePosition) {
   
   const quoteBlock = quote ? `<div style="margin:20px 0;padding:20px;background:#f5f5f5;border-left:4px solid #ffeaa6;border-radius:0 8px 8px 0;font-size:13px;white-space:pre-wrap;line-height:1.6;color:#333">${escSetting(quote)}</div>` : "";
   
-  const previewContent = `
+  // Create body element for modal (not escaped)
+  const bodyEl = document.createElement("div");
+  bodyEl.innerHTML = `
     <div style="background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.1)">
       <div style="background:#f8f9fa;padding:20px;border-bottom:1px solid #e9ecef">
         <div style="font-size:20px;font-weight:700;color:#1a1a2e;margin-bottom:4px">${escSetting(subject || "(brak tematu)")}</div>
@@ -3119,7 +3123,8 @@ function showComposePreview(greetingSelect, farewellSelect, quotePosition) {
   
   void confirmModal({
     title: t("settings.reports.compose.previewTitle") || "Podgląd wiadomości",
-    text: previewContent,
+    text: "",
+    body: bodyEl,
     okText: "OK",
     showCancel: false,
   });
