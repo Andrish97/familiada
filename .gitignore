@@ -9,3 +9,6 @@ Desktop.ini
 
 # Claude Code
 .claude/
+
+# Qwen Code
+.qwen/
