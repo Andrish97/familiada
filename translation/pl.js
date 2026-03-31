@@ -1630,83 +1630,94 @@ const pl = {
         Dla adresu e-mail zaproszenie może trafić także do osoby niezarejestrowanej jako wiadomość e-mail.
       </p>`,
       logo: `<p class="m-p">
-      System pozwala ustawić własne logo, które pojawia się na wyświetlaczu
-      (podczas startu lub zakończenia gry). Do tworzenia logo przechodzisz z górnego paska strony „Moje gry”
-        za pomocą przycisku <span class="m-code">Logo🖥️</span>.
-    </p>
+        System pozwala ustawić własne logo, które pojawia się na wyświetlaczu
+        (podczas startu lub zakończenia gry). Do tworzenia logo przechodzisz z górnego paska strony „Moje gry"
+        za pomocą przycisku <span class="m-code">Logo 🖥️</span>.
+      </p>
 
-    <div class="m-note">
-      <b>Ważne:</b><br/>
-      Logo ma rozmiar techniczny <span class="m-code">30×10</span> (kafelki znaków) albo <span class="m-code">150×70</span> (piksele).
-      To ograniczenie wynika z fizycznego układu tablicy i ma zapewnić czytelność na żywo.
-    </div>
+      <div class="m-note">
+        <b>Ważne:</b><br/>
+        Logo ma rozmiar techniczny <span class="m-code">30×10</span> (kafelki znaków) albo <span class="m-code">150×70</span> (piksele).
+        To ograniczenie wynika z fizycznego układu tablicy i ma zapewnić czytelność na żywo.
+      </div>
 
-    <h3 class="m-h2">Tryby tworzenia logo</h3>
+      <h3 class="m-h2">Tworzenie i edycja logo</h3>
 
-    <p class="m-p">
-      Podczas tworzenia nowego logo wybierasz jeden z trybów.
-      Każdy tryb prowadzi do tego samego efektu (logo na wyświetlaczu),
-      ale różni się sposobem tworzenia.
-    </p>
+      <p class="m-p">
+        Nowe logo tworzysz klikając kafelek z symbolem „＋". Logo możesz zapisać pod własną nazwą. Po utworzeniu logo, żeby przystąpić do edycji, wybierz kafelek i kliknij przycisk <span class="m-code">Edytuj</span>. Otworzy się edytor, właściwy dla danego typu logo. Możesz zapisać pracę i zawsze wrócić do edycji.
+      </p>
 
-    <ul class="m-ul">
-      <li>
-        <span class="m-strong">Napis</span> — klasyczne logo złożone ze znaków (styl „Familiady”).
-        Dobre, gdy chcesz szybko zrobić czytelny tytuł.
-      </li>
-      <li>
-        <span class="m-strong">Tekst</span> — edycja tekstu i podgląd w „pikselach”.
-        Dobre, gdy potrzebujesz innego kroju/układu niż w „Napis”.
-      </li>
-      <li>
-        <span class="m-strong">Rysunek</span> — rysujesz ręcznie w siatce (jak w prostym edytorze grafiki).
-        Dobre do ikon i prostych kształtów.
-      </li>
-      <li>
-        <span class="m-strong">Obraz</span> — importujesz obrazek i dopasowujesz go do tablicy.
-        Dobre, gdy masz gotowe logo np. firmy.
-      </li>
-    </ul>
+      <div class="m-note">
+        <b>Wszystkie stworzone przez Ciebie logo</b><br/>
+        będą dostępne w Panelu sterowania i można będzie wybrać, którego chcesz użyć w danej rozgrywce.
+      </div>
 
-    <h3 class="m-h2">Podgląd na wyświetlaczu</h3>
+      <h3 class="m-h2">Tryby tworzenia logo</h3>
 
-    <p class="m-p">
-      W edytorze cały czas widzisz podgląd „jak na tablicy”.
-      To ważne, bo to co wygląda dobrze w dużej rozdzielczości,
-      może być nieczytelne po sprowadzeniu do <span class="m-code">150×70</span>.
-    </p>
+      <p class="m-p">
+        Podczas tworzenia nowego logo wybierasz jeden z trybów.
+        Każdy tryb prowadzi do tego samego efektu (logo na wyświetlaczu),
+        ale różni się sposobem tworzenia.
+      </p>
 
-    <div class="m-note">
-      <b>Praktyczna rada:</b><br/>
-      Najlepiej sprawdzają się grube kształty, duże litery i wysoki kontrast.
-      Cienkie linie, małe detale i delikatne przejścia zwykle znikają.
-    </div>
+      <ul class="m-ul">
+        <li>
+          <span class="m-strong">Napis</span> — klasyczne logo złożone ze znaków (styl „Familiady").
+          Dobre, gdy chcesz szybko zrobić czytelny tytuł.
+        </li>
+        <li>
+          <span class="m-strong">Tekst</span> — edycja tekstu i podgląd w „pikselach".
+          Dobre, gdy potrzebujesz innego kroju/układu niż w „Napis".
+        </li>
+        <li>
+          <span class="m-strong">Rysunek</span> — rysujesz ręcznie w siatce (jak w prostym edytorze grafiki).
+          Dobre do ikon i prostych kształtów.
+        </li>
+        <li>
+          <span class="m-strong">Obraz</span> — importujesz obrazek i dopasowujesz go do tablicy.
+          Dobre, gdy masz gotowe logo np. firmy.
+        </li>
+      </ul>
 
-    <h3 class="m-h2">Zapis i aktywne logo</h3>
+      <h3 class="m-h2">Podgląd na wyświetlaczu</h3>
 
-    <p class="m-p">
-      Logo możesz zapisać pod własną nazwą. Na liście logotypów możesz też ustawić,
-      które logo jest <span class="m-strong">aktywne</span>.
-      Aktywne logo będzie używane przez wyświetlacz automatycznie.
-    </p>
+      <p class="m-p">
+        W edytorze cały czas widzisz podgląd „jak na tablicy".
+        To ważne, bo to co wygląda dobrze w dużej rozdzielczości,
+        może być nieczytelne po sprowadzeniu do <span class="m-code">150×70</span>.
+      </p>
 
-    <p class="m-p">
-      Jeśli nie ustawisz żadnego aktywnego logo, system użyje
-      <span class="m-strong">domyślnego logo</span>.
-    </p>
+      <div class="m-note">
+        <b>Praktyczna rada:</b><br/>
+        Najlepiej sprawdzają się grube kształty, duże litery i wysoki kontrast.
+        Cienkie linie, małe detale i delikatne przejścia zwykle znikają.
+      </div>
 
-    <h3 class="m-h2">Import i eksport logo</h3>
+      <h3 class="m-h2">Zapis i aktywne logo</h3>
 
-    <p class="m-p">
-      Edytor pozwala eksportować aktywne logo do pliku oraz importować logo z pliku.
-      Dzięki temu możesz przenosić logo pomiędzy kontami lub robić kopie zapasowe.
-    </p>
+      <p class="m-p">
+        Logo możesz zapisać pod własną nazwą. Na liście logotypów możesz też ustawić,
+        które logo jest <span class="m-strong">aktywne</span>.
+        Aktywne logo będzie używane przez wyświetlacz automatycznie.
+      </p>
 
-    <div class="m-warn">
-      <b>Uwaga:</b><br/>
-      Nie edytuj plików logo ręcznie. To format techniczny — ręczna zmiana może spowodować,
-      że import się nie powiedzie albo logo będzie działało nieprawidłowo.
-    </div>`,
+      <p class="m-p">
+        Jeśli nie ustawisz żadnego aktywnego logo, system użyje
+        <span class="m-strong">domyślnego logo</span>.
+      </p>
+
+      <h3 class="m-h2">Import i eksport logo</h3>
+
+      <p class="m-p">
+        Edytor pozwala eksportować aktywne logo do pliku oraz importować logo z pliku.
+        Dzięki temu możesz przenosić logo pomiędzy kontami lub robić kopie zapasowe.
+      </p>
+
+      <div class="m-warn">
+        <b>Uwaga:</b><br/>
+        Nie edytuj plików logo ręcznie. To format techniczny — ręczna zmiana może spowodować,
+        że import się nie powiedzie albo logo będzie działało nieprawidłowo.
+      </div>`,
       connect: `<p class="m-p">
         <span class="m-strong">Podłącz urządzenie</span> to panel, gdzie możesz szybko połączyć się z urządzeniem niezbędnym do rozgrywki:
         <span class="m-strong">Wyświetlaczem</span>, <span class="m-strong">Przyciskiem</span> lub <span class="m-strong">Prowadzącym</span>
