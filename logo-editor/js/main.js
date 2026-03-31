@@ -819,6 +819,44 @@ async function updateLogo(id, patch){
 }
 
 async function deleteLogo(id){
+  // Najpierw pobierz logo, żeby uzyskać dostęp do imageUrl w payload
+  const { data: logo, error: fetchError } = await sb()
+    .from("user_logos")
+    .select("payload")
+    .eq("id", id)
+    .single();
+  
+  if (fetchError) throw fetchError;
+  
+  // Jeśli logo ma imageUrl w payload.source, usuń plik ze storage
+  const imageUrl = logo?.payload?.source?.imageUrl;
+  if (imageUrl) {
+    try {
+      // Wyodrębnij ścieżkę z URL: https://.../user-logos/user-id/filename.ext -> user-id/filename.ext
+      const urlParts = imageUrl.split("/user-logos/");
+      if (urlParts.length === 2) {
+        const storagePath = urlParts[1];
+        console.log("[deleteLogo] Removing file from storage:", storagePath);
+        
+        const { error: storageError } = await sb()
+          .storage
+          .from("user-logos")
+          .remove([storagePath]);
+        
+        if (storageError) {
+          console.warn("[deleteLogo] Storage remove error:", storageError);
+          // Nie rzucamy błędu - kontynuujemy usuwanie z DB
+        } else {
+          console.log("[deleteLogo] File removed from storage");
+        }
+      }
+    } catch (e) {
+      console.warn("[deleteLogo] Failed to remove file from storage:", e);
+      // Nie rzucamy błędu - kontynuujemy usuwanie z DB
+    }
+  }
+  
+  // Usuń rekord z bazy
   const { error } = await sb().from("user_logos").delete().eq("id", id);
   if (error) throw error;
 }
