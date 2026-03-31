@@ -1647,10 +1647,9 @@ const pl = {
         Nowe logo tworzysz klikając kafelek z symbolem „＋". Logo możesz zapisać pod własną nazwą. Po utworzeniu logo, żeby przystąpić do edycji, wybierz kafelek i kliknij przycisk <span class="m-code">Edytuj</span>. Otworzy się edytor, właściwy dla danego typu logo. Możesz zapisać pracę i zawsze wrócić do edycji.
       </p>
 
-      <div class="m-note">
-        <b>Wszystkie stworzone przez Ciebie logo</b><br/>
-        będą dostępne w Panelu sterowania i można będzie wybrać, którego chcesz użyć w danej rozgrywce.
-      </div>
+      <p class="m-p">
+        Wszystkie stworzone przez Ciebie logo będą dostępne w Panelu sterowania i można będzie wybrać, którego chcesz użyć w danej rozgrywce.
+      </p>
 
       <h3 class="m-h3">Tryby tworzenia logo</h3>
 
