@@ -3104,27 +3104,47 @@ function showComposePreview(greetingSelect, farewellSelect, quotePosition) {
   // Build full body with signature at the end
   const fullBody = signatureText ? `${body}\n\n${signatureText}` : body;
   
-  const quoteBlock = quote ? `<div style="margin:20px 0;padding:20px;background:#f5f5f5;border-left:4px solid #ffeaa6;border-radius:0 8px 8px 0;font-size:13px;white-space:pre-wrap;line-height:1.6;color:#333">${escSetting(quote)}</div>` : "";
+  // Generate full email HTML (same as marketing preview)
+  const quoteHtml = quote ? `<div style="margin:20px 0;padding:20px;background:#f5f5f5;border-left:4px solid #ffeaa6;border-radius:0 8px 8px 0;font-size:13px;line-height:1.6;color:#333;white-space:pre-wrap">${escSetting(quote)}</div>` : "";
+  const bodyHtml = quotePosition === "before" ? `${quoteHtml}<div style="white-space:pre-wrap;font-size:15px;line-height:1.7;color:#222">${escSetting(fullBody || "(brak treści)")}</div>` : `<div style="white-space:pre-wrap;font-size:15px;line-height:1.7;color:#222">${escSetting(fullBody || "(brak treści)")}</div>${quoteHtml}`;
   
-  // Create body element for modal (not escaped)
-  const bodyEl = document.createElement("div");
-  bodyEl.innerHTML = `
-    <div style="background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.1)">
-      <div style="background:#f8f9fa;padding:20px;border-bottom:1px solid #e9ecef">
-        <div style="font-size:20px;font-weight:700;color:#1a1a2e;margin-bottom:4px">${escSetting(subject || "(brak tematu)")}</div>
+  const emailHtml = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; background: #fff; }
+        .email-container { max-width: 600px; margin: 0 auto; }
+        .email-header { background: #f8f9fa; padding: 20px; border-bottom: 1px solid #e9ecef; }
+        .email-subject { font-size: 20px; font-weight: 700; color: #1a1a2e; margin: 0; }
+        .email-body { padding: 24px; background: #fff; }
+      </style>
+    </head>
+    <body>
+      <div class="email-container">
+        <div class="email-header">
+          <h1 class="email-subject">${escSetting(subject || "(brak tematu)")}</h1>
+        </div>
+        <div class="email-body">
+          ${bodyHtml}
+        </div>
       </div>
-      <div style="padding:24px;background:#fff">
-        ${quotePosition === "before" && quote ? quoteBlock : ""}
-        <div style="white-space:pre-wrap;font-size:15px;line-height:1.7;color:#222">${escSetting(fullBody || "(brak treści)")}</div>
-        ${quotePosition === "after" && quote ? quoteBlock : ""}
-      </div>
-    </div>
+    </body>
+    </html>
   `;
+  
+  // Create iframe for preview (same as marketing)
+  const frame = document.createElement("iframe");
+  frame.style.cssText = "width:100%;height:500px;border:none;background:#fff;border-radius:8px;";
+  frame.sandbox = "allow-scripts allow-popups";
+  frame.srcdoc = emailHtml;
   
   void confirmModal({
     title: t("settings.reports.compose.previewTitle") || "Podgląd wiadomości",
     text: "",
-    body: bodyEl,
+    body: frame,
     okText: "OK",
     showCancel: false,
   });
