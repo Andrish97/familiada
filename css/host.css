@@ -47,16 +47,24 @@ body,html {
     height: 100dvh;
     width: 100dvw;
     overflow: hidden;
-    background: #fffdf5
+    background: #fffdf5;
+    /* iOS Safari: prevent white bar at bottom */
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0
 }
 
 .host-body {
     margin: 0;
     overflow: hidden;
     user-select: none;
-    min-height: 100dvh;
-    max-height: 100dvh;
-    touch-action: none
+    height: 100dvh;
+    width: 100dvw;
+    touch-action: none;
+    /* Ensure full height including safe areas */
+    padding-bottom: env(safe-area-inset-bottom, 0px)
 }
 
 .fsBtn {
@@ -82,6 +90,11 @@ body,html {
 .paper {
     position: fixed;
     inset: 0;
+    /* iOS Safari: ensure paper covers full area including safe areas */
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     z-index: 10;
     background-color: #fffdf5;
     background-image: linear-gradient(to bottom,#e7e2d3 1px,transparent 1px);
