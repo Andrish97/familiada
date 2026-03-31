@@ -1,5 +1,5 @@
 // js/pages/buzzer.js
-import { initI18n, setUiLang, t } from "../../translation/translation.js?v=435d2210";
+import { initI18n, setUiLang, t, applyTranslations } from "../../translation/translation.js?v=435d2210";
 import { sb } from "../core/supabase.js?v=ece3a0c0";
 import { rt } from "../core/realtime.js?v=096b955e";
 import { startKeepAlive } from "../core/keep-alive.js?v=2c38dcc0";
@@ -9,7 +9,17 @@ const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
 const key = qs.get("key");
 
+// Inicjalizacja i18n i zastosowanie tłumaczeń po załadowaniu DOM
 initI18n({ withSwitcher: false });
+
+// Zastosuj tłumaczenia po załadowaniu DOM (dla dynamicznie dodanych elementów)
+if (typeof document !== "undefined") {
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => applyTranslations(), { once: true });
+  } else {
+    applyTranslations();
+  }
+}
 
 const btnFS = document.getElementById("btnFS");
 const fsIco = document.getElementById("fsIco");
