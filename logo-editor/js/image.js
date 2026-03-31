@@ -899,14 +899,23 @@ export function initImageEditor(ctx) {
           if (!user) throw new Error(t("logoEditor.image.errors.notLogged"));
 
           const ext = imgFileObj.name.split(".").pop() || "png";
-          const safeName = `${Date.now()}.${ext}`;
+          const timestamp = String(Date.now());
+          const safeName = `${timestamp}.${ext}`;
           const path = `${user.id}/${safeName}`;
 
-          console.log("[image.getCreatePayload] Uploading image to path:", path, "file size:", imgFileObj.size, "bytes");
+          console.log("[image.getCreatePayload] Uploading image:", {
+            path,
+            fileName: imgFileObj.name,
+            ext,
+            size: imgFileObj.size,
+            type: imgFileObj.type,
+            userId: user.id
+          });
 
           const { data, error } = await sb().storage.from("user-logos").upload(path, imgFileObj, {
             cacheControl: '3600',
-            upsert: false
+            upsert: false,
+            contentType: imgFileObj.type || 'image/jpeg'
           });
           
           if (error) {
@@ -916,7 +925,8 @@ export function initImageEditor(ctx) {
                await sb().storage.createBucket("user-logos", { public: true });
                const retry = await sb().storage.from("user-logos").upload(path, imgFileObj, {
                  cacheControl: '3600',
-                 upsert: false
+                 upsert: false,
+                 contentType: imgFileObj.type || 'image/jpeg'
                });
                if (retry.error) {
                  console.error("[image.getCreatePayload] Retry upload error:", retry.error);
@@ -929,8 +939,10 @@ export function initImageEditor(ctx) {
              }
           } else {
             source.imageUrl = sb().storage.from("user-logos").getPublicUrl(path).data.publicUrl;
-            console.log("[image.getCreatePayload] Image uploaded, URL:", source.imageUrl);
-            console.log("[image.getCreatePayload] Upload data:", data);
+            console.log("[image.getCreatePayload] Image uploaded successfully:", {
+              URL: source.imageUrl,
+              data
+            });
           }
           imgFileObj = null; // wrzucone
         } catch (e) {

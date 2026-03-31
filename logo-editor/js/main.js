@@ -15,7 +15,7 @@ import { isMobileDevice } from "../../js/core/pwa.js?v=31d73fc2";
 import { initTextEditor } from "./text.js?v=2038d5d5";
 import { initTextPixEditor } from "./text-pix.js?v=6a7f25c7";
 import { initDrawEditor } from "./draw.js?v=5c6eaf07";
-import { initImageEditor } from "./image.js?v=a0c4692c";
+import { initImageEditor } from "./image.js?v=cdca6b56";
 
 window.addEventListener("error", (e) => {
   console.error("window error", e.error || e.message);
@@ -819,6 +819,8 @@ async function updateLogo(id, patch){
 }
 
 async function deleteLogo(id){
+  console.log("[deleteLogo] Starting deletion for id:", id);
+  
   // Najpierw pobierz logo, żeby uzyskać dostęp do imageUrl w payload
   const { data: logo, error: fetchError } = await sb()
     .from("user_logos")
@@ -826,39 +828,72 @@ async function deleteLogo(id){
     .eq("id", id)
     .single();
   
-  if (fetchError) throw fetchError;
+  if (fetchError) {
+    console.error("[deleteLogo] Fetch error:", fetchError);
+    throw fetchError;
+  }
+  
+  console.log("[deleteLogo] Logo payload:", logo?.payload);
   
   // Jeśli logo ma imageUrl w payload.source, usuń plik ze storage
   const imageUrl = logo?.payload?.source?.imageUrl;
   if (imageUrl) {
+    console.log("[deleteLogo] Found imageUrl:", imageUrl);
     try {
-      // Wyodrębnij ścieżkę z URL: https://.../user-logos/user-id/filename.ext -> user-id/filename.ext
+      // Wyodrębnij ścieżkę z URL: https://.../storage/v1/object/public/user-logos/user-id/filename.ext -> user-id/filename.ext
       const urlParts = imageUrl.split("/user-logos/");
       if (urlParts.length === 2) {
         const storagePath = urlParts[1];
         console.log("[deleteLogo] Removing file from storage:", storagePath);
         
-        const { error: storageError } = await sb()
+        const { data: listData, error: listError } = await sb()
+          .storage
+          .from("user-logos")
+          .list(storagePath.split("/")[0], { limit: 100 });
+        
+        if (listError) {
+          console.warn("[deleteLogo] List error:", listError);
+        } else {
+          console.log("[deleteLogo] Files in folder before delete:", listData);
+        }
+        
+        const { data: removeData, error: storageError } = await sb()
           .storage
           .from("user-logos")
           .remove([storagePath]);
         
         if (storageError) {
-          console.warn("[deleteLogo] Storage remove error:", storageError);
+          console.error("[deleteLogo] Storage remove error:", storageError);
           // Nie rzucamy błędu - kontynuujemy usuwanie z DB
         } else {
-          console.log("[deleteLogo] File removed from storage");
+          console.log("[deleteLogo] File removed from storage, response:", removeData);
+          
+          // Sprawdźmy, czy plik na pewno został usunięty
+          const { data: verifyData } = await sb()
+            .storage
+            .from("user-logos")
+            .list(storagePath.split("/")[0], { limit: 100 });
+          console.log("[deleteLogo] Files in folder after delete:", verifyData);
         }
+      } else {
+        console.warn("[deleteLogo] Could not extract path from URL:", urlParts);
       }
     } catch (e) {
-      console.warn("[deleteLogo] Failed to remove file from storage:", e);
+      console.error("[deleteLogo] Failed to remove file from storage:", e);
       // Nie rzucamy błędu - kontynuujemy usuwanie z DB
     }
+  } else {
+    console.log("[deleteLogo] No imageUrl found, skipping storage deletion");
   }
   
   // Usuń rekord z bazy
+  console.log("[deleteLogo] Deleting from database...");
   const { error } = await sb().from("user_logos").delete().eq("id", id);
-  if (error) throw error;
+  if (error) {
+    console.error("[deleteLogo] Database delete error:", error);
+    throw error;
+  }
+  console.log("[deleteLogo] Successfully deleted from database");
 }
 
 /* =========================================================
