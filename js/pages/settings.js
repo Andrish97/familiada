@@ -1865,7 +1865,7 @@ async function loadProducerRatings() {
   if (!tbody) return;
   if (info) info.textContent = t("settings.marketplace.loading") || "Ładowanie…";
   try {
-    const res = await adminFetch("/_admin_api/marketplace/producer-ratings");
+    const res = await adminFetch("/marketplace/producer-ratings");
     if (!res.ok) throw new Error(await res.text());
     const { rows } = await res.json();
     if (info) info.textContent = "";
@@ -1898,7 +1898,7 @@ async function openRatersModal(gameId, title) {
   body.innerHTML = t("settings.marketplace.loading") || "Ładowanie…";
   overlay.style.display = "";
   try {
-    const res = await adminFetch(`/_admin_api/marketplace/game-raters?id=${encodeURIComponent(gameId)}`);
+    const res = await adminFetch(`/marketplace/game-raters?id=${encodeURIComponent(gameId)}`);
     if (!res.ok) throw new Error(await res.text());
     const { rows } = await res.json();
     if (!rows || !rows.length) {
@@ -3838,6 +3838,7 @@ function wireEvents() {
       if (activeTab === "tools") closeTools();
       setActiveTab("ratings");
       await loadRatings({ silent: true });
+      loadProducerRatings();
     });
   }
 
@@ -3995,7 +3996,6 @@ function wireEvents() {
       if (activeTab === "tools") closeTools();
       setActiveTab("marketplace");
       await loadMarketplace({ silent: true });
-      loadProducerRatings();
     });
   }
 

@@ -233,8 +233,8 @@ async function openDetail(id, { fromUrl = false } = {}) {
     detailRating.appendChild(summary);
 
     const canRate = !!currentUser && !isGuest && g.status === "published";
-    if (canRate) {
-      detailRating.appendChild(buildStarInput(id, g.user_stars ?? null));
+    if (canRate && !g.user_stars) {
+      detailRating.appendChild(buildStarInput(id));
     }
   }
 
@@ -431,6 +431,7 @@ async function openSubmitModal() {
     .eq("owner_id", currentUser.id)
     .is("source_market_id", null)
     .eq("is_demo", false)
+    .neq("type", "market")
     .order("updated_at", { ascending: false });
 
   const eligible = (games || []).filter(g => {
@@ -534,15 +535,13 @@ function starsDisplay(avg, count) {
   return `<span class="mkt-stars">${stars}</span> <span class="mkt-rating-avg">${(+avg).toFixed(1)}</span> <span class="mkt-rating-count">(${count})</span>`;
 }
 
-function buildStarInput(gameId, userStars) {
+function buildStarInput(gameId) {
   const wrap = document.createElement("div");
   wrap.className = "mkt-rate-wrap";
 
   const label = document.createElement("span");
   label.className = "mkt-rate-label";
-  label.textContent = userStars
-    ? t("marketplace.rating.yourRating").replace("{stars}", userStars)
-    : t("marketplace.rating.rateThis");
+  label.textContent = t("marketplace.rating.rateThis");
   wrap.appendChild(label);
 
   const row = document.createElement("div");
@@ -550,13 +549,13 @@ function buildStarInput(gameId, userStars) {
   for (let i = 1; i <= 5; i++) {
     const btn = document.createElement("button");
     btn.type = "button";
-    btn.className = "mkt-star-btn" + (userStars && i <= userStars ? " selected" : "");
+    btn.className = "mkt-star-btn";
     btn.textContent = "★";
     btn.dataset.stars = i;
     btn.addEventListener("mouseover", () => {
       row.querySelectorAll(".mkt-star-btn").forEach((b, j) => b.classList.toggle("hover", j < i));
     });
-    btn.addEventListener("click", () => submitRating(gameId, i, wrap, label, row));
+    btn.addEventListener("click", () => submitRating(gameId, i, wrap, row));
     row.appendChild(btn);
   }
   row.addEventListener("mouseleave", () => {
@@ -566,7 +565,7 @@ function buildStarInput(gameId, userStars) {
   return wrap;
 }
 
-async function submitRating(gameId, stars, wrap, label, row) {
+async function submitRating(gameId, stars, wrap, row) {
   row.querySelectorAll(".mkt-star-btn").forEach(b => { b.disabled = true; });
   const { data, error } = await sb().rpc("market_rate_game", { p_market_game_id: gameId, p_stars: stars });
   row.querySelectorAll(".mkt-star-btn").forEach(b => { b.disabled = false; });
@@ -579,14 +578,12 @@ async function submitRating(gameId, stars, wrap, label, row) {
     return;
   }
   showToast(t("marketplace.rating.saved"), "success");
-  label.textContent = t("marketplace.rating.yourRating").replace("{stars}", stars);
-  row.querySelectorAll(".mkt-star-btn").forEach((b, i) => {
-    b.classList.toggle("selected", i < stars);
-  });
   // Refresh summary counts in detail header
   const { data: fresh } = await sb().rpc("market_game_detail", { p_id: gameId }).single();
+  const detailRatingEl = wrap.closest(".mkt-detail-rating");
+  wrap.remove();
   if (fresh) {
-    const summary = wrap.closest(".mkt-detail-rating")?.querySelector(".mkt-rating-summary");
+    const summary = detailRatingEl?.querySelector(".mkt-rating-summary");
     if (summary) summary.innerHTML = starsDisplay(fresh.avg_rating, fresh.rating_count);
     // Refresh card on browse grid
     const card = els.browseGrid?.querySelector(`[data-id="${gameId}"] .mkt-rating-summary`);
