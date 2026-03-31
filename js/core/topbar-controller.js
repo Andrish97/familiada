@@ -5,9 +5,9 @@
 //
 // Eksportuje: setTopbarNavPriority, setTopbarAccount (alias: initTopbarAccountDropdown), autoInitTopbarAuthButton
 
-import { signOut } from './auth.js';
-import { isGuestUser } from './guest-mode.js';
-import { t, withLangParam } from '../../translation/translation.js';
+import { signOut } from './auth.js?v=4721e86e';
+import { isGuestUser } from './guest-mode.js?v=e499bece';
+import { t, withLangParam } from '../../translation/translation.js?v=435d2210';
 
 // ── Narzędzie: pozycjonowanie fixed dropdown ──────────────────────────────────
 function repositionDropdown(anchorEl, dropdownEl) {
@@ -345,7 +345,7 @@ export { setTopbarAccount as initTopbarAccountDropdown };
 export async function autoInitTopbarAuthButton(btn = document.getElementById('btnLogout')) {
   if (!btn) return;
   if (btn.dataset.topbarAuthReady === '1') return;
-  const { getUser } = await import('./auth.js');
+  const { getUser } = await import('./auth.js?v=4721e86e');
   if (btn.dataset.topbarAuthReady === '1') return;
   const user = await getUser();
   if (btn.dataset.topbarAuthReady === '1') return;

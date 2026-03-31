@@ -456,6 +456,15 @@ main{
     color: var(--gold)
 }
 
+.mHead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+.mHead .mTitle { margin: 0; }
+
 .mSub {
     opacity: .8;
     font-size: 13px;

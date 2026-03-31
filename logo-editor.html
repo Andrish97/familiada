@@ -12,7 +12,7 @@
   <link rel="icon" href="favicon.ico"/>
   <link rel="manifest" href="/manifest.json"/>
   <meta name="theme-color" content="#050914"/>
-  <link rel="stylesheet" href="css/base.css?v=6cb55b0a"/>
+  <link rel="stylesheet" href="css/base.css?v=764df218"/>
   <link rel="stylesheet" href="css/builder.css?v=5437092c"/>
   <link rel="stylesheet" href="logo-editor/logo-editor.css?v=96747813"/>
 
@@ -23,7 +23,7 @@
   <!-- Fabric.js (global: window.fabric) -->
   <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
 
-  <script type="module" src="./logo-editor/js/main.js?v=bb432335" defer></script>
+  <script type="module" src="./logo-editor/js/main.js?v=e02c1eff" defer></script>
 </head>
 
 <body class="builder-body logo-editor-body">
@@ -381,7 +381,10 @@
   <!-- Modal: wybór trybu (ZOSTAJE) -->
   <div class="overlay" id="createOverlay" style="display:none;">
     <div class="modal">
-      <div class="mTitle" data-i18n="logoEditor.create.title">Nowe logo</div>
+      <div class="mHead">
+        <div class="mTitle" data-i18n="logoEditor.create.title">Nowe logo</div>
+        <button class="btn sm" id="btnPickCancel" type="button" aria-label="Zamknij">✕</button>
+      </div>
       <div class="mSub" data-i18n="logoEditor.create.subtitle">Wybierz tryb tworzenia.</div>
 
       <div class="mSection" id="modePick">
@@ -408,9 +411,6 @@
         </div>
       </div>
 
-      <div class="importRow" style="margin-top:14px;">
-        <button class="btn sm" id="btnPickCancel" type="button" data-i18n="logoEditor.common.close">Zamknij</button>
-      </div>
     </div>
   </div>
 
@@ -449,7 +449,10 @@
   <!-- Modal: import logo -->
   <div class="overlay" id="logoImportOverlay" style="display:none;">
     <div class="modal" style="width:min(640px,94vw)">
-      <div class="mTitle" data-i18n="logoEditor.import.title">Import logo</div>
+      <div class="mHead">
+        <div class="mTitle" data-i18n="logoEditor.import.title">Import logo</div>
+        <button class="btn sm" id="btnLogoImportCancel" type="button" aria-label="Zamknij">✕</button>
+      </div>
 
       <div class="importRow" style="margin-top:8px">
         <input id="inpImportLogoFile" type="file" accept=".famlogo,.json,application/json" class="inp" style="flex:1;min-width:0">
@@ -476,7 +479,6 @@
 
       <div class="importRow" style="margin-top:12px">
         <button class="btn sm gold" id="btnLogoImportConfirm" type="button" disabled data-i18n="logoEditor.import.confirm">Importuj</button>
-        <button class="btn sm" id="btnLogoImportCancel" type="button" data-i18n="logoEditor.import.cancel">Zamknij</button>
       </div>
     </div>
   </div>

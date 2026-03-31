@@ -12,9 +12,9 @@
 // - kursor: overlay (PS-like): pędzel = kółko, gumka = kwadrat, figury = crosshair
 // - skróty: PS-like + (Space=Pan temp, Ctrl/Cmd=Select temp, Shift idealne kształty, strzałki przesuwają)
 
-import { confirmModal } from "../../js/core/modal.js";
-import { initUiSelect } from "../../js/core/ui-select.js";
-import { t } from "../../translation/translation.js";
+import { confirmModal } from "../../js/core/modal.js?v=ac8dd44a";
+import { initUiSelect } from "../../js/core/ui-select.js?v=73a51737";
+import { t } from "../../translation/translation.js?v=435d2210";
 
 export function initDrawEditor(ctx) {
   const TYPE_PIX = "PIX_150x70";

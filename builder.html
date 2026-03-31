@@ -12,7 +12,7 @@
   <link rel="icon" href="favicon.ico"/>
   <link rel="manifest" href="/manifest.json"/>
   <meta name="theme-color" content="#050914"/>
-  <link rel="stylesheet" href="css/base.css?v=6cb55b0a"/>
+  <link rel="stylesheet" href="css/base.css?v=764df218"/>
   <link rel="stylesheet" href="css/builder.css?v=5437092c"/>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
@@ -205,7 +205,10 @@
   <!-- Modal: import JSON -->
   <div class="overlay" id="importOverlay" style="display:none;">
     <div class="modal">
-      <div class="mTitle" data-i18n="builder.import.title">Importuj</div>
+      <div class="mHead">
+        <div class="mTitle" data-i18n="builder.import.title">Importuj</div>
+        <button class="btn sm" id="btnCancelImport" type="button" aria-label="Zamknij">✕</button>
+      </div>
 
       <div class="importRow" style="margin-top:8px">
         <input id="importFile" class="inp" type="file" accept=".famgame,.json,application/json">
@@ -229,7 +232,6 @@
 
       <div class="importRow" style="margin-top:12px">
         <button class="btn sm gold" id="btnImportJson" type="button" disabled data-i18n="builder.import.confirm">Importuj</button>
-        <button class="btn sm" id="btnCancelImport" type="button" data-i18n="builder.import.cancel">Zamknij</button>
         <div class="importMsg" id="importMsg"></div>
       </div>
     </div>
@@ -237,7 +239,10 @@
   <!-- Modal: eksport do bazy pytań -->
   <div class="overlay" id="exportBaseOverlay" style="display:none;">
     <div class="modal">
-      <div class="mTitle" data-i18n="builder.exportBase.title">Eksport do bazy</div>
+      <div class="mHead">
+        <div class="mTitle" data-i18n="builder.exportBase.title">Eksport do bazy</div>
+        <button class="btn sm" id="btnExportBaseCancel" type="button" aria-label="Zamknij">✕</button>
+      </div>
       <div class="mSub">
         <span data-i18n="builder.exportBase.subtitle">Wybierz bazę pytań. Zostanie utworzony folder w głównym katalogu o nazwie jak gra.</span>
       </div>
@@ -266,7 +271,6 @@
 
       <div class="importRow" style="margin-top:10px;">
         <button class="btn sm gold" id="btnExportBaseDo" type="button" data-i18n="builder.exportBase.confirm">Eksportuj</button>
-        <button class="btn sm" id="btnExportBaseCancel" type="button" data-i18n="builder.exportBase.cancel">Zamknij</button>
         <div class="importMsg" id="exportBaseMsg"></div>
       </div>
     </div>
@@ -302,9 +306,6 @@
         <button class="btn sm" id="btnPreviewClose" type="button" aria-label="Zamknij">✕</button>
       </div>
       <div class="bld-preview-questions" id="previewQuestions"></div>
-      <div class="importRow" style="margin-top:18px">
-        <button class="btn sm gold" id="btnPreviewCloseBottom" type="button" data-i18n="builder.preview.close">Zamknij</button>
-      </div>
     </div>
   </div>
 

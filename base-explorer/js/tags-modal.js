@@ -7,10 +7,10 @@
 //
 // UWAGA: ten plik nie zna nic o SEARCH/TAG view. To jest czysty modal.
 
-import { sb } from "../../js/core/supabase.js";
-import { alertModal } from "../../js/core/modal.js";
-import { t } from "../../translation/translation.js";
-import { listQuestionTags, listAllQuestions } from "./repo.js";
+import { sb } from "../../js/core/supabase.js?v=ece3a0c0";
+import { alertModal } from "../../js/core/modal.js?v=ac8dd44a";
+import { t } from "../../translation/translation.js?v=435d2210";
+import { listQuestionTags, listAllQuestions } from "./repo.js?v=e8a2caa7";
 
 /* ================= Utils ================= */
 

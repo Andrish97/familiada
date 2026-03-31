@@ -10,7 +10,7 @@
   <title data-i18n="bases.title">Familiada — bazy pytań</title>
 
   <link rel="icon" href="favicon.ico"/>
-  <link rel="stylesheet" href="css/base.css?v=6cb55b0a"/>
+  <link rel="stylesheet" href="css/base.css?v=764df218"/>
   <!-- Reużywamy stylu buildera, żeby było spójnie -->
   <link rel="stylesheet" href="css/builder.css?v=5437092c"/>
   <link rel="stylesheet" href="css/bases.css?v=67460e69"/>
@@ -147,7 +147,10 @@
   <!-- Modal: import JSON -->
   <div class="overlay" id="importOverlay" style="display:none;">
     <div class="modal">
-      <div class="mTitle" data-i18n="bases.importModal.title">Import</div>
+      <div class="mHead">
+        <div class="mTitle" data-i18n="bases.importModal.title">Import</div>
+        <button class="btn sm" id="btnCancelImport" type="button" aria-label="Zamknij">✕</button>
+      </div>
 
       <div class="importRow" style="margin-top:8px">
         <input id="importFile" class="inp" type="file" accept=".fambase,.json,application/json">
@@ -170,7 +173,6 @@
 
       <div class="importRow" style="margin-top:12px">
         <button class="btn sm gold" id="btnImportJson" type="button" disabled data-i18n="bases.importModal.confirm">Importuj</button>
-        <button class="btn sm" id="btnCancelImport" type="button" data-i18n="bases.importModal.cancel">Zamknij</button>
         <div class="importMsg" id="importMsg"></div>
       </div>
     </div>
@@ -179,7 +181,10 @@
   <!-- Modal: udostępnienia -->
   <div class="overlay" id="shareOverlay" style="display:none;">
     <div class="modal shareModal">
-      <div class="mTitle" data-i18n="bases.shareModal.title">Udostępnij bazę</div>
+      <div class="mHead">
+        <div class="mTitle" data-i18n="bases.shareModal.title">Udostępnij bazę</div>
+        <button class="btn sm" id="btnShareClose" type="button" aria-label="Zamknij">✕</button>
+      </div>
       <div class="mSub" data-i18n="bases.shareModal.subtitle">
         Dodajesz użytkowników po nazwie lub e-mailu. Jeśli się nie uda, pokażemy „Nie udało się".
       </div>
@@ -231,9 +236,6 @@
 
       </div>
 
-      <div class="importRow shareBottom">
-        <button class="btn sm" id="btnShareClose" type="button" data-i18n="bases.shareModal.close">Zamknij</button>
-      </div>
     </div>
   </div>
 

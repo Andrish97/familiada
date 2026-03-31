@@ -10,7 +10,7 @@
   <title data-i18n="editor.title">Familiada — edytor</title>
 
   <link rel="icon" href="favicon.ico"/>
-  <link rel="stylesheet" href="css/base.css?v=6cb55b0a"/>
+  <link rel="stylesheet" href="css/base.css?v=764df218"/>
   <link rel="stylesheet" href="css/editor.css?v=1a1ef092"/>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
@@ -110,7 +110,10 @@
   <!-- Modal: import TXT -->
   <div class="overlay" id="txtImportOverlay" style="display:none;">
     <div class="modal">
-      <div class="mTitle" data-i18n="editor.importModal.title">Import pytań</div>
+      <div class="mHead">
+        <div class="mTitle" data-i18n="editor.importModal.title">Import pytań</div>
+        <button class="btn sm" id="btnTxtClose" type="button" aria-label="Zamknij">✕</button>
+      </div>
       <div class="mSub">
         <span data-i18n-html="editor.importModal.subtitle">
           Możesz <b>wkleić treść</b> albo <b>wczytać plik TXT</b>.
@@ -146,7 +149,6 @@
 
       <div class="importRow">
         <button class="btn sm gold" id="btnTxtImport" type="button" data-i18n="editor.importModal.confirm">Importuj</button>
-        <button class="btn sm" id="btnTxtClose" type="button" data-i18n="editor.importModal.cancel">Zamknij</button>
         <div class="importMsg" id="txtMsg"></div>
       </div>
     </div>

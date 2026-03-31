@@ -10,8 +10,8 @@
   <title data-i18n="control.title">Familiada — Panel sterowania</title>
 
   <link rel="icon" href="/favicon.ico"/>
-  <link rel="stylesheet" href="/css/base.css?v=6cb55b0a"/>
-  <link rel="stylesheet" href="/control/control.css?v=23474d93"/>
+  <link rel="stylesheet" href="/css/base.css?v=764df218"/>
+  <link rel="stylesheet" href="/control/control.css?v=503cf32f"/>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script type="module">
@@ -1182,7 +1182,10 @@
   <!-- Modal: Udostępnij urządzenie -->
   <div class="overlay" id="shareDeviceOverlay" style="display:none;">
     <div class="modal shareModal">
-      <div class="mTitle" id="shareDeviceTitle" data-i18n="control.shareDeviceModal.title">Udostępnij urządzenie</div>
+      <div class="mHead">
+        <div class="mTitle" id="shareDeviceTitle" data-i18n="control.shareDeviceModal.title">Udostępnij urządzenie</div>
+        <button class="btn sm" id="btnShareDeviceClose" type="button" aria-label="Zamknij">✕</button>
+      </div>
       <div class="mSub" data-i18n="control.shareDeviceModal.subtitle">Wybierz subskrybenta lub wpisz e-mail / nazwę użytkownika.</div>
 
       <!-- Kogo aktualnie udostępniono -->
@@ -1207,9 +1210,6 @@
         <div class="shareList" id="shareDeviceSubsList"></div>
       </div>
 
-      <div class="importRow shareBottom">
-        <button class="btn sm" id="btnShareDeviceClose" type="button" data-i18n="bases.shareModal.close">Zamknij</button>
-      </div>
     </div>
   </div>
 </body>

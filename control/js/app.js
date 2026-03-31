@@ -1,6 +1,6 @@
 // /familiada/js/pages/controlapp.js
-import { confirmModal } from "../../js/core/modal.js";
-import { getUiLang, initI18n, t } from "../../translation/translation.js";
+import { confirmModal } from "../../js/core/modal.js?v=ac8dd44a";
+import { getUiLang, initI18n, t } from "../../translation/translation.js?v=435d2210";
 
 // ================== KOMUNIKATY ==================
 const APP_MSG = {
@@ -35,22 +35,22 @@ const APP_MSG = {
 };
 // ================= KONIEC KOMUNIKATÓW =================
 
-import { requireAuth, signOut } from "../../js/core/auth.js";
-import { isGuestUser } from "../../js/core/guest-mode.js";
-import { sb } from "../../js/core/supabase.js";
-import { rt } from "../../js/core/realtime.js";
-import { validateGameReadyToPlay, loadGameBasic, loadQuestions, loadAnswers } from "../../js/core/game-validate.js";
-import { unlockAudio, isAudioUnlocked, playSfx } from "../../js/core/sfx.js";
+import { requireAuth, signOut } from "../../js/core/auth.js?v=4721e86e";
+import { isGuestUser } from "../../js/core/guest-mode.js?v=e499bece";
+import { sb } from "../../js/core/supabase.js?v=ece3a0c0";
+import { rt } from "../../js/core/realtime.js?v=096b955e";
+import { validateGameReadyToPlay, loadGameBasic, loadQuestions, loadAnswers } from "../../js/core/game-validate.js?v=df97f708";
+import { unlockAudio, isAudioUnlocked, playSfx } from "../../js/core/sfx.js?v=81309561";
 
-import { createStore } from "./store.js";
-import { createUI } from "./ui.js";
-import { createDevices } from "./devices.js";
-import { createPresence } from "./presence.js";
-import { createDisplay } from "./display.js";
-import { createRounds } from "./gameRounds.js";
-import { createFinal } from "./gameFinal.js";
-import { initShareDevice } from "./share-device.js";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../../js/core/logo-preview.js";
+import { createStore } from "./store.js?v=fc0888ab";
+import { createUI } from "./ui.js?v=e8721c12";
+import { createDevices } from "./devices.js?v=c0b93ef6";
+import { createPresence } from "./presence.js?v=c21b2179";
+import { createDisplay } from "./display.js?v=985e696f";
+import { createRounds } from "./gameRounds.js?v=48cda88c";
+import { createFinal } from "./gameFinal.js?v=fafa8721";
+import { initShareDevice } from "./share-device.js?v=41d2d3dd";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../../js/core/logo-preview.js?v=8b4d198b";
 
 initI18n({ withSwitcher: true });
 
