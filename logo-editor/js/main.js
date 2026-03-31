@@ -60,7 +60,6 @@ const listShell = document.getElementById("listShell"); // lista kafelków
 const editorShell = document.getElementById("editorShell"); // edytor (już masz pewnie)
 
 const btnPreview = document.getElementById("btnPreview");
-const btnActivate = document.getElementById("btnActivate");
 
 const btnImport = document.getElementById("btnImport");
 const btnExport = document.getElementById("btnExport");
@@ -919,10 +918,7 @@ function buildCardPreviewCanvas(payload){
 function renderList(){
   grid.innerHTML = "";
 
-  const active = (logos || []).find(l => !!l.is_active) || null;
-  const activeKey = active ? active.id : "default";
-  
-    // 0) PLUS (jak w builder)
+  // 0) PLUS (jak w builder)
   {
     const add = document.createElement("div");
    add.className = "addCard hide-mobile";
@@ -939,7 +935,7 @@ function renderList(){
   // helper: wybierz
   function select(key){
     selectedKey = key;
-    updateListButtons(activeKey);
+    updateListButtons();
     // zaznaczenie wizualne
     for (const el of grid.querySelectorAll(".logoTile")){
       el.classList.toggle("is-selected", el.dataset.key === String(selectedKey || ""));
@@ -947,12 +943,11 @@ function renderList(){
   }
 
   // helper: budowa kafla
-  function makeTile({ key, name, meta, payload, isActive, canDelete }){
+  function makeTile({ key, name, meta, payload, canDelete }){
     const el = document.createElement("div");
     el.className = "logoTile";
     el.dataset.key = String(key);
 
-    if (isActive) el.classList.add("is-active");
     if (String(selectedKey || "") === String(key)) el.classList.add("is-selected");
 
     el.innerHTML = `
@@ -964,14 +959,13 @@ function renderList(){
         <div class="logoX ${canDelete ? "" : "is-disabled"}" title="${canDelete ? t("logoEditor.list.delete") : t("logoEditor.list.deleteDisabled")}">✕</div>
       </div>
       <div class="logoPrev"></div>
-      <div class="logoLamp" aria-label="${t("logoEditor.list.activeLabel")}"></div>
     `;
 
     el.addEventListener("click", () => select(key));
 
     // double-click / long-press -> rename (tylko dla logo usera)
     addRenameGesture(el, (e) => {
-      if (key === "default") return;
+      if (key === "default") return; // safeguard (default tile removed)
       if (e.target?.classList?.contains("logoX")) return;
       const l = logos.find(x => x.id === key);
       if (!l) return;
@@ -1007,21 +1001,7 @@ function renderList(){
     return el;
   }
 
-  // 1) DEFAULT (zawsze)
-  {
-    const payload = { kind: "GLYPH", rows: defaultLogoRows };
-    const el = makeTile({
-      key: "default",
-      name: getDefaultLogoName(),
-      meta: "",
-      payload,
-      isActive: activeKey === "default",
-      canDelete: false
-    });
-    grid.appendChild(el);
-  }
-
-  // 2) LOGA USERA
+  // LOGA USERA
   for (const l of logos){
     const payload = logoToPreviewPayload(l);
     const el = makeTile({
@@ -1029,7 +1009,6 @@ function renderList(){
       name: l.name || t("logoEditor.defaults.unnamed"),
       meta: fmtDate(l.updated_at) || "",
       payload,
-      isActive: activeKey === l.id,
       canDelete: true
     });
     grid.appendChild(el);
@@ -1041,21 +1020,18 @@ function renderList(){
     if (!exists) selectedKey = null;
   }
 
-  updateListButtons(activeKey);
+  updateListButtons();
 }
 
-function updateListButtons(activeKey){
+function updateListButtons(){
   const hasSel = !!selectedKey;
-  const isPlus = selectedKey === "__add__"; // u nas nie używamy, ale zostawiamy defensywnie
+  const isPlus = selectedKey === "__add__";
 
   // PODGLĄD = zaznaczone
   btnPreview.disabled = !hasSel || isPlus;
 
-  // AKTYWUJ = zaznaczone != aktywne
-  btnActivate.disabled = !hasSel || isPlus || (String(selectedKey) === String(activeKey));
-
-  // EXPORT = tylko gdy coś zaznaczone i nie default
-  btnExport.disabled = !hasSel || isPlus || (selectedKey === "default");
+  // EXPORT = tylko gdy coś zaznaczone
+  btnExport.disabled = !hasSel || isPlus;
 }
 
 async function refresh(){
@@ -1526,26 +1502,6 @@ async function boot(){
      openPreviewFullscreen(payload);
    });
    
-   btnActivate?.addEventListener("click", async () => {
-     if (!selectedKey) return;
-   
-     setMsg(t("logoEditor.status.settingActive"));
-     try{
-       if (selectedKey === "default"){
-         await clearActive(); // default = aktywne gdy w DB nic nie jest aktywne
-       } else {
-         await setActive(selectedKey);
-       }
-       await refresh();
-       setMsg(t("logoEditor.status.activeSet"));
-    }catch(e){
-      console.error(e);
-      void alertModal({ text: t("logoEditor.errors.setActiveFailedDetailed", { error: e?.message || e }) });
-      setMsg("");
-    }
-  });
-
-
   // modal wyboru trybu
   pickText?.addEventListener("click", () => { show(createOverlay, false); openEditor("TEXT"); });
   pickTextPix?.addEventListener("click", () => { show(createOverlay, false); openEditor("TEXT_PIX"); });

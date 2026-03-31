@@ -396,38 +396,18 @@
 
               <div class="card">
                 <div class="cardBody">
-                 <div class="hint" data-i18n="control.teamHint">
-                    Tutaj należy wprowadzić nazwy drużyn i wybrać kolory.
+                  <div class="hint" data-i18n="control.teamHint">
+                    Tutaj należy wprowadzić nazwy drużyn.
                   </div>
                   <div class="rowBtns">
                     <div class="field">
-                      <div class="lblRow">
-                        <div class="lbl2" data-i18n="control.teamALabel">Drużyna A</div>
-                        <button class="swatchBtn" id="swatchTeamA" type="button" aria-label="Kolor drużyny A" data-i18n-aria-label="control.teamAColorAria"></button>
-                      </div>
+                      <div class="lbl2" data-i18n="control.teamALabel">Drużyna A</div>
                       <input class="inp" id="teamA" autocomplete="off"/>
                     </div>
-
                     <div class="field">
-                      <div class="lblRow">
-                        <div class="lbl2" data-i18n="control.teamBLabel">Drużyna B</div>
-                        <button class="swatchBtn" id="swatchTeamB" type="button" aria-label="Kolor drużyny B" data-i18n-aria-label="control.teamBColorAria"></button>
-                      </div>
+                      <div class="lbl2" data-i18n="control.teamBLabel">Drużyna B</div>
                       <input class="inp" id="teamB" autocomplete="off"/>
                     </div>
-                  </div>
-
-                  <div class="rowBtns">
-                    <div class="field">
-                      <div class="lblRow">
-                        <div class="lbl2" data-i18n="control.bgColorLabel">Kolor tła wyświetlacza</div>
-                        <button class="swatchBtn" id="swatchBg" type="button" aria-label="Kolor tła wyświetlacza" data-i18n-aria-label="control.bgColorAria"></button>
-                      </div>
-                      <div class="hint" style="max-width:520px;" data-i18n="control.bgColorHint">
-                        Ten kolor dotyczy tylko wyświetlacza.
-                      </div>
-                    </div>
-                    <button class="btn" type="button" id="btnColorsReset" data-i18n="control.resetColors">Reset kolorów</button>
                   </div>
                 </div>
 
@@ -437,6 +417,61 @@
                     <button class="btn gold" id="btnSetupNext" type="button" data-i18n="common.next">Dalej</button>
                   </div>
                   <div class="msg msg-pill" id="msgSetup"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- STEP: SETUP_LOOK - wygląd (kolory drużyn + logo) -->
+            <div class="step hidden" data-step="setup_look">
+              <div class="stepTitle" data-i18n="control.stepLook">Wygląd</div>
+
+              <div class="card">
+                <div class="cardBody">
+
+                  <div class="sectionBlock">
+                    <div class="sectionTitle" data-i18n="control.lookTeamColors">Kolory drużyn</div>
+                    <div class="rowBtns">
+                      <div class="field">
+                        <div class="lblRow">
+                          <span class="lbl2" id="lookTeamAName">Drużyna A</span>
+                          <button class="swatchBtn" id="swatchTeamA" type="button" aria-label="Kolor drużyny A" data-i18n-aria-label="control.teamAColorAria"></button>
+                        </div>
+                      </div>
+                      <div class="field">
+                        <div class="lblRow">
+                          <span class="lbl2" id="lookTeamBName">Drużyna B</span>
+                          <button class="swatchBtn" id="swatchTeamB" type="button" aria-label="Kolor drużyny B" data-i18n-aria-label="control.teamBColorAria"></button>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="rowBtns" style="margin-top:10px;">
+                      <div class="field">
+                        <div class="lblRow">
+                          <div class="lbl2" data-i18n="control.bgColorLabel">Kolor tła wyświetlacza</div>
+                          <button class="swatchBtn" id="swatchBg" type="button" aria-label="Kolor tła wyświetlacza" data-i18n-aria-label="control.bgColorAria"></button>
+                        </div>
+                        <div class="hint" style="max-width:520px;" data-i18n="control.bgColorHint">
+                          Ten kolor dotyczy tylko wyświetlacza.
+                        </div>
+                      </div>
+                      <button class="btn" type="button" id="btnColorsReset" data-i18n="control.resetColors">Reset kolorów</button>
+                    </div>
+                  </div>
+
+                  <div class="sectionBlock">
+                    <div class="sectionTitle" data-i18n="control.lookLogoTitle">Logo</div>
+                    <div class="hint" data-i18n="control.lookLogoHint">Wybierz logo, które pojawi się na wyświetlaczu.</div>
+                    <div id="logoGrid" class="logoGrid"></div>
+                  </div>
+
+                </div>
+
+                <div class="stepFoot">
+                  <div class="stepFootButtons">
+                    <button class="btn" id="btnSetupLookBack" type="button" data-i18n="common.back">Wstecz</button>
+                    <button class="btn gold" id="btnSetupLookNext" type="button" data-i18n="common.next">Dalej</button>
+                  </div>
+                  <div class="msg msg-pill" id="msgSetupLook"></div>
                 </div>
               </div>
             </div>
@@ -790,10 +825,10 @@
 
                   <ul class="hList">
                     <li>
-                      <button class="btn" id="btnBuzzAcceptA" type="button" data-i18n="control.roundsBuzzAcceptA">Zatwierdź drużynę A</button>
+                      <button class="btn" id="btnBuzzAcceptA" type="button">Zatwierdź drużynę A</button>
                     </li>
                     <li>
-                      <button class="btn" id="btnBuzzAcceptB" type="button" data-i18n="control.roundsBuzzAcceptB">Zatwierdź drużynę B</button>
+                      <button class="btn" id="btnBuzzAcceptB" type="button">Zatwierdź drużynę B</button>
                     </li>
                     <li>
                       <button class="btn" id="btnBuzzRetry" type="button" data-i18n="control.roundsBuzzRetry">Ponów naciśnięcie</button>

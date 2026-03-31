@@ -146,6 +146,13 @@ function hostUpdate() {
   window.addEventListener("i18n:lang", refreshHostTranslations);
 
 
+  function teamName(side) {
+    const teams = store.state.teams || {};
+    if (side === "A") return teams.teamA || t("control.teamALabel");
+    if (side === "B") return teams.teamB || t("control.teamBLabel");
+    return String(side ?? "");
+  }
+
   function ensureRoundsState() {
     const r = store.state.rounds;
     if (!r.timer3) r.timer3 = { running: false, endsAt: 0, secLeft: 0 };
@@ -261,7 +268,7 @@ function hostUpdate() {
     r.timer3.resolved = null;
     if (timerRAF) cancelAnimationFrame(timerRAF);
     timerRAF = null;
-    ui.setRoundsHud(r);
+    ui.setRoundsHud(r, store.state.teams);
     updatePlayControls();
   }
 
@@ -279,7 +286,7 @@ function hostUpdate() {
       const left = Math.max(0, r.timer3.endsAt - Date.now());
       const s = Math.ceil(left / 1000);
       r.timer3.secLeft = s;
-      ui.setRoundsHud(r);
+      ui.setRoundsHud(r, store.state.teams);
 
       if (left <= 0) {
       
@@ -288,7 +295,7 @@ function hostUpdate() {
         r.timer3.resolved = "X";
         r.timer3.running = false;
         r.timer3.secLeft = 0;
-        ui.setRoundsHud(r);
+        ui.setRoundsHud(r, store.state.teams);
       
         r.allowPass = false;
       
@@ -458,7 +465,7 @@ function hostUpdate() {
     await display.stateGameReady(teamA, teamB);
 
     ui.setMsg("msgRoundsIntro", ROUNDS_MSG.GAME_READY);
-    ui.setRoundsHud(r);
+    ui.setRoundsHud(r, store.state.teams);
 
     setStep("r_intro");
   }
@@ -477,7 +484,7 @@ function hostUpdate() {
     r._introPlayed = true;
 
     setStep("r_intro");
-    ui.setRoundsHud(r);
+    ui.setRoundsHud(r, store.state.teams);
 
     ui.setEnabled("btnStartShowIntro", false);
 
@@ -523,7 +530,7 @@ function hostUpdate() {
 
     setStep("r_roundStart");
     ui.setMsg("msgRoundsIntro", ROUNDS_MSG.INTRO_DONE);
-    ui.setRoundsHud(r);
+    ui.setRoundsHud(r, store.state.teams);
 
     updatePlayControls();
   }
@@ -605,7 +612,7 @@ function hostUpdate() {
     ui.setRoundQuestion(obj.text || t("control.dash"));
     ui.renderRoundAnswers(r.answers, r.revealed);
     ui.setMsg("msgRoundsRoundStart", roundsMsg("roundStartSfx"));
-    ui.setRoundsHud(r);
+    ui.setRoundsHud(r, store.state.teams);
 
     updatePlayControls();
 
@@ -669,7 +676,7 @@ function hostUpdate() {
       await new Promise((resolve) => setTimeout(resolve, totalMs));
     }
     setStep("r_duel");
-    ui.setRoundsHud(r);
+    ui.setRoundsHud(r, store.state.teams);
 
     enableBuzzerDuel();
   }
@@ -702,7 +709,7 @@ function hostUpdate() {
     duelResetCycle();
 
     setDuelMsg(ROUNDS_MSG.DUEL_WAIT);
-    ui.setRoundsHud(r);
+    ui.setRoundsHud(r, store.state.teams);
 
     ui.setEnabled("btnBuzzAcceptA", false);
     ui.setEnabled("btnBuzzAcceptB", false);
@@ -726,7 +733,7 @@ function hostUpdate() {
     duelResetCycle();
 
     setDuelMsg(ROUNDS_MSG.DUEL_RETRY);
-    ui.setRoundsHud(r);
+    ui.setRoundsHud(r, store.state.teams);
 
     ui.setEnabled("btnBuzzAcceptA", false);
     ui.setEnabled("btnBuzzAcceptB", false);
@@ -799,9 +806,9 @@ function hostUpdate() {
     r.controlTeam = winner;
     r.allowPass = true;
 
-    setDuelMsg(ROUNDS_MSG.DUEL_RESULT_WIN(winner));
-    setPlayMsg(ROUNDS_MSG.PLAY_CONTROL(winner));
-    ui.setRoundsHud(r);
+    setDuelMsg(ROUNDS_MSG.DUEL_RESULT_WIN(teamName(winner)));
+    setPlayMsg(ROUNDS_MSG.PLAY_CONTROL(teamName(winner)));
+    ui.setRoundsHud(r, store.state.teams);
 
     if (display.setIndicator) {
       await display.setIndicator(winner).catch?.(() => {});
@@ -823,8 +830,8 @@ function hostUpdate() {
     if (!r.duel.lastPressed) {
       r.duel.lastPressed = team;
 
-      setDuelMsg(ROUNDS_MSG.DUEL_FIRST_CLICK(team));
-      ui.setRoundsHud(r);
+      setDuelMsg(ROUNDS_MSG.DUEL_FIRST_CLICK(teamName(team)));
+      ui.setRoundsHud(r, store.state.teams);
 
       ui.setEnabled("btnBuzzAcceptA", team === "A");
       ui.setEnabled("btnBuzzAcceptB", team === "B");
@@ -848,9 +855,9 @@ function hostUpdate() {
     setStep("r_play");
     r.phase = "DUEL";
 
-    setDuelMsg(ROUNDS_MSG.DUEL_FIRST_ANSWER(team));
+    setDuelMsg(ROUNDS_MSG.DUEL_FIRST_ANSWER(teamName(team)));
     setPlayMsg("");
-    ui.setRoundsHud(r);
+    ui.setRoundsHud(r, store.state.teams);
 
     if (display.setIndicator) {
       display.setIndicator(team).catch?.(() => {});
@@ -890,8 +897,8 @@ function hostUpdate() {
     r.controlTeam = other;
     r.allowPass = false;
 
-    setPlayMsg(ROUNDS_MSG.PLAY_PASSED(other));
-    ui.setRoundsHud(r);
+    setPlayMsg(ROUNDS_MSG.PLAY_PASSED(teamName(other)));
+    ui.setRoundsHud(r, store.state.teams);
 
     if (display.setIndicator) {
       display.setIndicator(other).catch?.(() => {});
@@ -947,7 +954,7 @@ function hostUpdate() {
   
       const pts = nInt(ans.fixed_points ?? ans.points, 0);
       r.bankPts = nInt(r.bankPts, 0) + pts;
-      ui.setRoundsHud(r);
+      ui.setRoundsHud(r, store.state.teams);
   
       await display.roundsRevealRow(ord, ans.text, pts);
       await display.roundsSetSum(r.bankPts);
@@ -965,14 +972,14 @@ function hostUpdate() {
       if (result.type === "WIN") {
         await beginPlayAfterDuel(result.winner);
       } else if (result.type === "CONTINUE_SECOND") {
-        setDuelMsg(ROUNDS_MSG.DUEL_NEXT_TEAM(result.nextTeam));
-        ui.setRoundsHud(r);
+        setDuelMsg(ROUNDS_MSG.DUEL_NEXT_TEAM(teamName(result.nextTeam)));
+        ui.setRoundsHud(r, store.state.teams);
         if (display.setIndicator) {
           display.setIndicator(result.nextTeam).catch?.(() => {});
         }
       } else if (result.type === "RESET") {
-        setDuelMsg(ROUNDS_MSG.DUEL_RESET(d.firstTeam));
-        ui.setRoundsHud(r);
+        setDuelMsg(ROUNDS_MSG.DUEL_RESET(teamName(d.firstTeam)));
+        ui.setRoundsHud(r, store.state.teams);
         if (display.setIndicator && d.firstTeam) {
           display.setIndicator(d.firstTeam).catch?.(() => {});
         }
@@ -990,7 +997,7 @@ function hostUpdate() {
   
     const pts = nInt(ans.fixed_points ?? ans.points, 0);
     r.bankPts = nInt(r.bankPts, 0) + pts;
-    ui.setRoundsHud(r);
+    ui.setRoundsHud(r, store.state.teams);
   
     await display.roundsRevealRow(ord, ans.text, pts);
     await display.roundsSetSum(r.bankPts);
@@ -1017,7 +1024,7 @@ function hostUpdate() {
       r.steal.active = false;
   
       setStealMsg(ROUNDS_MSG.STEAL_SUCCESS);
-      ui.setRoundsHud(r);
+      ui.setRoundsHud(r, store.state.teams);
   
       r.canEndRound = true;
       updatePlayControls();
@@ -1061,14 +1068,14 @@ function hostUpdate() {
       if (result.type === "WIN") {
         await beginPlayAfterDuel(result.winner);
       } else if (result.type === "CONTINUE_SECOND") {
-        setDuelMsg(ROUNDS_MSG.DUEL_NEXT_TEAM(result.nextTeam));
-        ui.setRoundsHud(r);
+        setDuelMsg(ROUNDS_MSG.DUEL_NEXT_TEAM(teamName(result.nextTeam)));
+        ui.setRoundsHud(r, store.state.teams);
         if (display.setIndicator) {
           display.setIndicator(result.nextTeam).catch?.(() => {});
         }
       } else if (result.type === "RESET") {
-        setDuelMsg(ROUNDS_MSG.DUEL_RESET(d.firstTeam));
-        ui.setRoundsHud(r);
+        setDuelMsg(ROUNDS_MSG.DUEL_RESET(teamName(d.firstTeam)));
+        ui.setRoundsHud(r, store.state.teams);
         if (display.setIndicator && d.firstTeam) {
           display.setIndicator(d.firstTeam).catch?.(() => {});
         }
@@ -1099,7 +1106,7 @@ function hostUpdate() {
     if (r[key] > 3) r[key] = 3;
 
     await display.roundsSetX(r.controlTeam, r[key]);
-    ui.setRoundsHud(r);
+    ui.setRoundsHud(r, store.state.teams);
 
     playSfx("answer_wrong");
 
@@ -1117,8 +1124,8 @@ function hostUpdate() {
       r.phase = "STEAL";
       r.steal = { active: true, used: false, won: false, team: other };
 
-      setStealMsg(ROUNDS_MSG.STEAL_CHANCE(other));
-      ui.setRoundsHud(r);
+      setStealMsg(ROUNDS_MSG.STEAL_CHANCE(teamName(other)));
+      ui.setRoundsHud(r, store.state.teams);
 
       if (display.setIndicator) {
         display.setIndicator(other).catch?.(() => {});
@@ -1149,8 +1156,8 @@ function hostUpdate() {
     r.stealWon = false;
     r.steal.team = stealingTeam;
 
-    setStealMsg(ROUNDS_MSG.STEAL_PROMPT(stealingTeam));
-    ui.setRoundsHud(r);
+    setStealMsg(ROUNDS_MSG.STEAL_PROMPT(teamName(stealingTeam)));
+    ui.setRoundsHud(r, store.state.teams);
 
     if (display.setIndicator) {
       display.setIndicator(stealingTeam).catch?.(() => {});
@@ -1167,7 +1174,7 @@ function hostUpdate() {
     r.steal.active = false;
   
     setStealMsg(ROUNDS_MSG.STEAL_FAIL);
-    ui.setRoundsHud(r);
+    ui.setRoundsHud(r, store.state.teams);
     r.canEndRound = true;
     updatePlayControls();
   
@@ -1227,7 +1234,7 @@ function hostUpdate() {
 
     r.totals[winner] = nInt(r.totals[winner], 0) + awarded;
 
-    ui.setRoundsHud(r);
+    ui.setRoundsHud(r, store.state.teams);
 
     let bellsDur = 0;
     try {
@@ -1257,8 +1264,8 @@ function hostUpdate() {
 
     const msg =
       mult === 1
-        ? ROUNDS_MSG.ROUND_BANK(bank, winner)
-        : ROUNDS_MSG.ROUND_BANK_MULT(bank, winner, mult, awarded);
+        ? ROUNDS_MSG.ROUND_BANK(bank, teamName(winner))
+        : ROUNDS_MSG.ROUND_BANK_MULT(bank, teamName(winner), mult, awarded);
 
     setEndMsg(msg);
 
@@ -1289,7 +1296,7 @@ function hostUpdate() {
     r.phase = "READY";
 
     clearTimer3();
-    ui.setRoundsHud(r);
+    ui.setRoundsHud(r, store.state.teams);
     store.notify();
 
     const moreQuestions = hasMoreQuestions();
@@ -1336,7 +1343,7 @@ function hostUpdate() {
 
     updatePlayControls();
 
-    ui.setRoundsHud(r);
+    ui.setRoundsHud(r, store.state.teams);
     ui.renderRoundAnswers(r.answers, r.revealed);
 
     setRevealMsg(ROUNDS_MSG.REVEAL_INFO);
@@ -1372,7 +1379,7 @@ function hostUpdate() {
       setRevealMsg(ROUNDS_MSG.REVEAL_DONE);
       endRound();
     }
-    ui.setRoundsHud(r);
+    ui.setRoundsHud(r, store.state.teams);
     updatePlayControls();
   }
 
@@ -1403,7 +1410,7 @@ function hostUpdate() {
   
       const msg = isDraw
         ? ROUNDS_MSG.GAME_END_DRAW(a, b)
-        : ROUNDS_MSG.GAME_END_WIN(winnerTeam, winnerPts);
+        : ROUNDS_MSG.GAME_END_WIN(teamName(winnerTeam), winnerPts);
   
       ui.setMsg("msgGameEnd", msg);
   
@@ -1463,11 +1470,23 @@ function hostUpdate() {
 
   // === BOOT / ODTWORZENIE STANU ===
 
+  function syncTeamLabels() {
+    const teams = store.state.teams || {};
+    const nameA = teams.teamA || t("control.teamALabel");
+    const nameB = teams.teamB || t("control.teamBLabel");
+
+    const btnA = document.getElementById("btnBuzzAcceptA");
+    const btnB = document.getElementById("btnBuzzAcceptB");
+    if (btnA) btnA.textContent = t("control.roundsBuzzAcceptTeam", { name: nameA });
+    if (btnB) btnB.textContent = t("control.roundsBuzzAcceptTeam", { name: nameB });
+  }
+
   function bootIfNeeded() {
     ensureRoundsState();
     const r = store.state.rounds;
 
-    ui.setRoundsHud(r);
+    syncTeamLabels();
+    ui.setRoundsHud(r, store.state.teams);
     ui.showRoundsStep(r.step || "r_intro");
 
     if (r.question && Array.isArray(r.answers) && r.answers.length > 0) {
@@ -1481,7 +1500,7 @@ function hostUpdate() {
   // subskrypcja HUD
   store._roundsListeners = store._roundsListeners || [];
   store._roundsListeners.push((r) => {
-    ui.setRoundsHud(r);
+    ui.setRoundsHud(r, store.state.teams);
   });
 
   return {

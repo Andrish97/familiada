@@ -153,6 +153,7 @@ export function createUI() {
   function showSetupStep(step) {
     const steps = {
       setup_names: document.querySelector('[data-step="setup_names"]'),
+      setup_look: document.querySelector('[data-step="setup_look"]'),
       setup_game: document.querySelector('[data-step="setup_game"]'),
       setup_final: document.querySelector('[data-step="setup_final"]'),
       setup_rounds: document.querySelector('[data-step="setup_rounds"]'),
@@ -422,11 +423,13 @@ export function createUI() {
     b.textContent = UI_MSG.QR_ON_DISPLAY;
   }
 
-  function setRoundsHud(r) {
+  function setRoundsHud(r, teams) {
+    const nameA = teams?.teamA || "A";
+    const nameB = teams?.teamB || "B";
     setText("roundNo", String(r.roundNo));
     setText(
       "controlTeam",
-      r.controlTeam ? (r.controlTeam === "A" ? "A" : "B") : UI_MSG.DASH
+      r.controlTeam ? (r.controlTeam === "A" ? nameA : nameB) : UI_MSG.DASH
     );
     setText("bankPts", String(r.bankPts));
     setText("xA", String(r.xA));

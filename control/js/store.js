@@ -26,7 +26,7 @@ export function createStore(gameId) {
   
       steps: {
         devices: "devices_display",
-        setup: "setup_names", // setup_names → setup_game → setup_final/setup_rounds → setup_finish
+        setup: "setup_names", // setup_names → setup_look → setup_game → setup_final/setup_rounds → setup_finish
       },
   
       completed: {

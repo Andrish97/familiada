@@ -2319,6 +2319,22 @@ export async function createScene() {
         console.warn("LOGO LOAD jest wyłączone. Logo ładuje się z bazy (aktywny rekord) albo fallback.");
         return;
       }
+
+      if (op === "RELOAD") {
+        const gid = api.logo._gameId;
+        const key = api.logo._key;
+        if (!gid) return;
+        loadActiveLogoFromDb(gid, key).then(dbLogo => {
+          if (dbLogo && dbLogo.type && dbLogo.payload) {
+            ACTIVE_LOGO = dbLogo;
+            console.log("[logo] RELOAD: załadowano z bazy:", dbLogo.name || dbLogo.type);
+          } else {
+            ACTIVE_LOGO = null;
+            console.log("[logo] RELOAD: brak aktywnego logo -> fallback");
+          }
+        }).catch(e => console.warn("[logo] RELOAD failed:", e));
+        return;
+      }
       
       if (op === "DRAW") {
         api.logo.draw();

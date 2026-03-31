@@ -455,25 +455,124 @@ async function sendZeroStatesToDevices() {
 
     // ===== Wejście/wyjście z kroku "Nazwy drużyn" =====
   let wasInSetupNames = false;
+  let wasInSetupLook = false;
   let wasInSetupGame = false;
   let wasInSetupFinish = false;
   let wasInSetupRounds = false;
+
+  // Logo wybrane w setup_look (null = domyślne)
+  let selectedLogoId = null;
 
   async function enterSetupNames() {
     if (!devices) return;
     await devices.sendDisplayCmd("APP GAME").catch(() => {});
     await devices.sendBuzzerCmd("ON").catch(() => {});
     await devices.sendHostCmd("COVER").catch(() => {});
-    // na wejściu od razu pokaż aktualne kolory (bez spamowania: throttlowane)
-    sendColorA(colors.A);
-    sendColorB(colors.B);
-    sendColorBg(colors.BACKGROUND);
   }
 
   async function leaveSetupNames() {
+    // nic — kolory są wysyłane dopiero w setup_look
+  }
+
+  async function enterSetupLook() {
     if (!devices) return;
-    await devices.sendDisplayCmd("APP BLACK").catch(() => {});
-    await devices.sendBuzzerCmd("OFF").catch(() => {});
+    await devices.sendDisplayCmd("APP GAME").catch(() => {});
+    await devices.sendBuzzerCmd("ON").catch(() => {});
+    // pokaż aktualne kolory na wyświetlaczu
+    sendColorA(colors.A);
+    sendColorB(colors.B);
+    sendColorBg(colors.BACKGROUND);
+
+    // ustaw nazwy drużyn przy swatchach
+    const teamA = store.state.teams?.teamA || t("control.teamALabel");
+    const teamB = store.state.teams?.teamB || t("control.teamBLabel");
+    const elA = document.getElementById("lookTeamAName");
+    const elB = document.getElementById("lookTeamBName");
+    if (elA) elA.textContent = teamA;
+    if (elB) elB.textContent = teamB;
+
+    // załaduj i wyrenderuj logo
+    await renderLogoGrid();
+  }
+
+  async function renderLogoGrid() {
+    const grid = document.getElementById("logoGrid");
+    if (!grid) return;
+
+    grid.innerHTML = `<div class="hint">${t("control.lookLogoLoading")}</div>`;
+
+    try {
+      const { data: logos, error } = await sb()
+        .from("user_logos")
+        .select("id,name,type,is_active")
+        .order("updated_at", { ascending: false });
+
+      if (error) throw error;
+
+      const list = logos || [];
+
+      if (list.length === 0 && selectedLogoId !== null) selectedLogoId = null;
+
+      // ustal które logo jest aktywne (db) jeśli jeszcze nie wybrano
+      if (selectedLogoId === null) {
+        const active = list.find(l => l.is_active);
+        if (active) selectedLogoId = active.id;
+      }
+
+      const tiles = [];
+
+      // kafelek "Domyślne"
+      tiles.push(makeLogo({ id: null, name: t("control.lookLogoDefault"), type: "—" }));
+
+      for (const logo of list) {
+        tiles.push(makeLogo(logo));
+      }
+
+      if (list.length === 0) {
+        tiles.push(`<div class="logoGridEmpty hint">${t("control.lookLogoNone")}</div>`);
+      }
+
+      grid.innerHTML = tiles.join("");
+
+      grid.querySelectorAll(".logoTile").forEach(tile => {
+        tile.addEventListener("click", () => onLogoTileClick(tile.dataset.logoId || null, grid));
+      });
+
+    } catch (e) {
+      grid.innerHTML = `<div class="hint">${e?.message || String(e)}</div>`;
+    }
+  }
+
+  function makeLogo({ id, name, type }) {
+    const key = id ?? "default";
+    const sel = (id === null && selectedLogoId === null) || (id && id === selectedLogoId);
+    return `<div class="logoTile${sel ? " selected" : ""}" data-logo-id="${escapeHtmlAttr(String(key))}">
+      <div class="logoTileName">${escapeHtml(name || type || "—")}</div>
+      <div class="logoTileType">${escapeHtml(type || "")}</div>
+    </div>`;
+  }
+
+  function escapeHtmlAttr(s) {
+    return String(s ?? "").replaceAll("&", "&amp;").replaceAll('"', "&quot;");
+  }
+
+  async function onLogoTileClick(logoId, grid) {
+    selectedLogoId = logoId === "default" ? null : logoId;
+
+    // wizualna selekcja
+    grid.querySelectorAll(".logoTile").forEach(el => el.classList.remove("selected"));
+    const key = selectedLogoId ?? "default";
+    grid.querySelector(`[data-logo-id="${key}"]`)?.classList.add("selected");
+
+    // ustaw aktywne w bazie (fire-and-forget)
+    if (selectedLogoId === null) {
+      sb().rpc("user_logo_clear_active").catch(console.warn);
+    } else {
+      sb().rpc("user_logo_set_active", { p_logo_id: selectedLogoId }).catch(console.warn);
+    }
+
+    // przeładuj logo na wyświetlaczu
+    await devices.sendDisplayCmd("LOGO RELOAD").catch(() => {});
   }
   
   async function enterSetupGame() {
@@ -1005,7 +1104,16 @@ async function sendZeroStatesToDevices() {
       leaveSetupNames().catch(() => {});
     }
     wasInSetupNames = inSetupNames;
-    
+
+    // ===== detekcja wejścia/wyjścia z setup_look =====
+    const inSetupLook =
+      (state.activeCard === "setup" && state.steps?.setup === "setup_look");
+
+    if (inSetupLook && !wasInSetupLook) {
+      enterSetupLook().catch(() => {});
+    }
+    wasInSetupLook = inSetupLook;
+
     // ===== detekcja wejścia/wyjścia z setup_game =====
     const inSetupGame =
       (state.activeCard === "setup" && state.steps?.setup === "setup_game");
@@ -1376,10 +1484,12 @@ async function sendZeroStatesToDevices() {
     ui.setMsg?.("msgAdvanced", APP_MSG.ADV_RESET);
   });
 
-  ui.on("setup.next", () => store.setSetupStep("setup_game"));
+  ui.on("setup.next", () => store.setSetupStep("setup_look"));
   ui.on("setup.back", () => store.setSetupStep("setup_names"));
+  ui.on("setup.look.next", () => store.setSetupStep("setup_game"));
+  ui.on("setup.look.back", () => store.setSetupStep("setup_names"));
   ui.on("setup.game.next", () => goToNextSetupStep());
-  ui.on("setup.game.back", () => store.setSetupStep("setup_names"));
+  ui.on("setup.game.back", () => store.setSetupStep("setup_look"));
   ui.on("setup.finish.back", () => store.setSetupStep("setup_game"));
   ui.on("setup.finish", () => {
     store.completeCard("setup");
@@ -1408,6 +1518,14 @@ async function sendZeroStatesToDevices() {
   });
   document.getElementById("btnBackToDevices")?.addEventListener("click", () => {
     ui.emit("setup.back");
+  });
+
+  // Przyciski w setup_look
+  document.getElementById("btnSetupLookNext")?.addEventListener("click", () => {
+    ui.emit("setup.look.next");
+  });
+  document.getElementById("btnSetupLookBack")?.addEventListener("click", () => {
+    ui.emit("setup.look.back");
   });
   
   // Nasłuchiwanie zmian w setup_game
@@ -1743,14 +1861,6 @@ async function sendZeroStatesToDevices() {
     store.setRoundsPicked(ordered);
   }
   
-  function escapeHtml(s) {
-    return String(s ?? "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;");
-  }
-
   ui.on("final.toggle", (hasFinal) => {
     store.setHasFinal(hasFinal);
     ui.setFinalHasFinal(hasFinal);   // <-- to chowa/pokazuje #finalPickerCard
