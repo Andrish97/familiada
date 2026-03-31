@@ -1,0 +1,137 @@
+// js/core/logo-preview.js
+// Shared logo preview rendering (used by control and logo-editor)
+
+const DOT_W = 150;
+const DOT_H = 70;
+const TILES_X = 30;
+const TILES_Y = 10;
+
+function buildGlyph5x7Map(fontJson) {
+  if (!fontJson || typeof fontJson !== "object") return {};
+  const out = {};
+  for (const [k, v] of Object.entries(fontJson)) {
+    if (k === "meta") continue;
+    if (!v || typeof v !== "object") continue;
+    for (const [ch, pat] of Object.entries(v)) {
+      if (typeof ch !== "string") continue;
+      if (!Array.isArray(pat) || pat.length !== 7) continue;
+      if (!(ch in out)) out[ch] = pat;
+    }
+  }
+  return out;
+}
+
+export async function loadFont5x7(url = "/display/font_5x7.json") {
+  const r = await fetch(url, { cache: "force-cache" });
+  if (!r.ok) throw new Error(`Font 5x7: HTTP ${r.status}`);
+  const json = await r.json();
+  return buildGlyph5x7Map(json);
+}
+
+function resolve5x7(ch, glyph5x7) {
+  const g = glyph5x7?.[ch] ?? glyph5x7?.[String(ch || "").toUpperCase()] ?? null;
+  if (!g) return [0, 0, 0, 0, 0, 0, 0];
+  return g;
+}
+
+function rows30x10ToBits150(rows10, glyph5x7) {
+  const out = new Uint8Array(DOT_W * DOT_H);
+  for (let ty = 0; ty < TILES_Y; ty++) {
+    const rowStr = String(rows10?.[ty] ?? "").padEnd(30, " ").slice(0, 30);
+    for (let tx = 0; tx < TILES_X; tx++) {
+      const ch = rowStr[tx] ?? " ";
+      const glyph = resolve5x7(ch, glyph5x7);
+      for (let py = 0; py < 7; py++) {
+        const bits = glyph[py] | 0;
+        for (let px = 0; px < 5; px++) {
+          const on = (bits & (1 << (4 - px))) !== 0;
+          if (!on) continue;
+          const x = tx * 5 + px;
+          const y = ty * 7 + py;
+          out[y * DOT_W + x] = 1;
+        }
+      }
+    }
+  }
+  return out;
+}
+
+function base64ToBytes(b64) {
+  try {
+    const bin = atob(b64 || "");
+    const out = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out;
+  } catch {
+    return new Uint8Array(0);
+  }
+}
+
+function unpackBitsRowMajorMSB(bitsB64, w, h) {
+  const bytes = base64ToBytes(bitsB64);
+  const bytesPerRow = Math.ceil(w / 8);
+  const out = new Uint8Array(w * h);
+  for (let y = 0; y < h; y++) {
+    const rowBase = y * bytesPerRow;
+    for (let x = 0; x < w; x++) {
+      const byteIndex = rowBase + (x >> 3);
+      if (byteIndex < 0 || byteIndex >= bytes.length) continue;
+      const bit = 7 - (x & 7);
+      out[y * w + x] = (bytes[byteIndex] >> bit) & 1;
+    }
+  }
+  return out;
+}
+
+function drawThumbFlat150x70(canvas, bits150) {
+  const ctx = canvas.getContext("2d");
+  const cw = canvas.width, ch = canvas.height;
+  const scale = Math.min(cw / DOT_W, ch / DOT_H);
+  const ox = Math.floor((cw - DOT_W * scale) / 2);
+  const oy = Math.floor((ch - DOT_H * scale) / 2);
+  ctx.imageSmoothingEnabled = false;
+  ctx.clearRect(0, 0, cw, ch);
+  ctx.fillStyle = "#000";
+  ctx.fillRect(0, 0, cw, ch);
+  ctx.fillStyle = "#fff";
+  for (let y = 0; y < DOT_H; y++) {
+    for (let x = 0; x < DOT_W; x++) {
+      if (!bits150[y * DOT_W + x]) continue;
+      ctx.fillRect(ox + x * scale, oy + y * scale, scale, scale);
+    }
+  }
+}
+
+/**
+ * Build a preview canvas for a DB logo record.
+ * @param {object|null} logo  - DB row with type, payload fields (null = default/empty)
+ * @param {object} glyph5x7  - result of loadFont5x7() — required for GLYPH type
+ * @param {number} width     - canvas pixel width (default 300)
+ * @param {number} height    - canvas pixel height (default 140)
+ */
+export function buildLogoPreviewCanvas(logo, glyph5x7, width = 300, height = 140) {
+  const c = document.createElement("canvas");
+  c.width = width;
+  c.height = height;
+
+  let bits150;
+  if (logo?.type === "GLYPH_30x10") {
+    const rows = logo?.payload?.layers?.[0]?.rows;
+    const rows10 = Array.isArray(rows) && rows.length
+      ? rows.map(r => String(r || "").padEnd(30, " ").slice(0, 30)).slice(0, 10)
+      : Array.from({ length: 10 }, () => " ".repeat(30));
+    bits150 = rows30x10ToBits150(rows10, glyph5x7);
+  } else if (logo?.type === "PIX_150x70") {
+    const p = logo.payload || {};
+    const w = Number(p.w) || DOT_W;
+    const h = Number(p.h) || DOT_H;
+    const raw = p.bits_b64 || p.bits_base64 || p.bitsBase64 || "";
+    bits150 = unpackBitsRowMajorMSB(raw, w, h);
+    if (w !== DOT_W || h !== DOT_H) bits150 = new Uint8Array(DOT_W * DOT_H);
+  } else {
+    bits150 = new Uint8Array(DOT_W * DOT_H);
+  }
+
+  drawThumbFlat150x70(c, bits150);
+  return c;
+}

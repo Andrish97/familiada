@@ -50,6 +50,7 @@ import { createDisplay } from "./display.js";
 import { createRounds } from "./gameRounds.js";
 import { createFinal } from "./gameFinal.js";
 import { initShareDevice } from "./share-device.js";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../../js/core/logo-preview.js";
 
 initI18n({ withSwitcher: true });
 
@@ -462,22 +463,23 @@ async function sendZeroStatesToDevices() {
 
   // Logo wybrane w setup_look (null = domyślne)
   let selectedLogoId = null;
+  // Załadowana czcionka (potrzebna do podglądu GLYPH)
+  let _logoFont = null;
 
   async function enterSetupNames() {
-    if (!devices) return;
-    await devices.sendDisplayCmd("APP GAME").catch(() => {});
-    await devices.sendBuzzerCmd("ON").catch(() => {});
-    await devices.sendHostCmd("COVER").catch(() => {});
+    // urządzenia startują dopiero w setup_look
   }
 
   async function leaveSetupNames() {
-    // nic — kolory są wysyłane dopiero w setup_look
+    // nic
   }
 
   async function enterSetupLook() {
     if (!devices) return;
+    // uruchom urządzenia przy wejściu w ten krok
     await devices.sendDisplayCmd("APP GAME").catch(() => {});
     await devices.sendBuzzerCmd("ON").catch(() => {});
+    await devices.sendHostCmd("COVER").catch(() => {});
     // pokaż aktualne kolory na wyświetlaczu
     sendColorA(colors.A);
     sendColorB(colors.B);
@@ -491,7 +493,10 @@ async function sendZeroStatesToDevices() {
     if (elA) elA.textContent = teamA;
     if (elB) elB.textContent = teamB;
 
-    // załaduj i wyrenderuj logo
+    // załaduj czcionkę (raz) i wyrenderuj grid
+    if (!_logoFont) {
+      try { _logoFont = await loadFont5x7(); } catch (e) { console.warn("[logo] font load failed", e); }
+    }
     await renderLogoGrid();
   }
 
@@ -504,7 +509,7 @@ async function sendZeroStatesToDevices() {
     try {
       const { data: logos, error } = await sb()
         .from("user_logos")
-        .select("id,name,type,is_active")
+        .select("id,name,type,is_active,payload")
         .order("updated_at", { ascending: false });
 
       if (error) throw error;
@@ -519,20 +524,21 @@ async function sendZeroStatesToDevices() {
         if (active) selectedLogoId = active.id;
       }
 
-      const tiles = [];
+      grid.innerHTML = "";
 
       // kafelek "Domyślne"
-      tiles.push(makeLogo({ id: null, name: t("control.lookLogoDefault"), type: "—" }));
+      grid.appendChild(makeLogo(null));
 
       for (const logo of list) {
-        tiles.push(makeLogo(logo));
+        grid.appendChild(makeLogo(logo));
       }
 
       if (list.length === 0) {
-        tiles.push(`<div class="logoGridEmpty hint">${t("control.lookLogoNone")}</div>`);
+        const empty = document.createElement("div");
+        empty.className = "logoGridEmpty hint";
+        empty.textContent = t("control.lookLogoNone");
+        grid.appendChild(empty);
       }
-
-      grid.innerHTML = tiles.join("");
 
       grid.querySelectorAll(".logoTile").forEach(tile => {
         tile.addEventListener("click", () => onLogoTileClick(tile.dataset.logoId || null, grid));
@@ -543,13 +549,30 @@ async function sendZeroStatesToDevices() {
     }
   }
 
-  function makeLogo({ id, name, type }) {
+  // Buduje kafelek logo jako element DOM (z canvasem)
+  function makeLogo(logo) {
+    const id = logo?.id ?? null;
     const key = id ?? "default";
-    const sel = (id === null && selectedLogoId === null) || (id && id === selectedLogoId);
-    return `<div class="logoTile${sel ? " selected" : ""}" data-logo-id="${escapeHtmlAttr(String(key))}">
-      <div class="logoTileName">${escapeHtml(name || type || "—")}</div>
-      <div class="logoTileType">${escapeHtml(type || "")}</div>
-    </div>`;
+    const name = logo?.name || (id === null ? t("control.lookLogoDefault") : "—");
+    const sel = (id === null && selectedLogoId === null) || (id !== null && id === selectedLogoId);
+
+    const el = document.createElement("div");
+    el.className = "logoTile" + (sel ? " selected" : "");
+    el.dataset.logoId = String(key);
+
+    const prev = document.createElement("div");
+    prev.className = "logoTilePrev";
+    const canvas = buildLogoPreviewCanvas(logo, _logoFont);
+    canvas.style.cursor = "default";
+    prev.appendChild(canvas);
+    el.appendChild(prev);
+
+    const label = document.createElement("div");
+    label.className = "logoTileName";
+    label.textContent = name;
+    el.appendChild(label);
+
+    return el;
   }
 
   function escapeHtmlAttr(s) {
@@ -565,11 +588,13 @@ async function sendZeroStatesToDevices() {
     grid.querySelector(`[data-logo-id="${key}"]`)?.classList.add("selected");
 
     // ustaw aktywne w bazie (fire-and-forget)
-    if (selectedLogoId === null) {
-      sb().rpc("user_logo_clear_active").catch(console.warn);
-    } else {
-      sb().rpc("user_logo_set_active", { p_logo_id: selectedLogoId }).catch(console.warn);
-    }
+    try {
+      if (selectedLogoId === null) {
+        await sb().rpc("user_logo_clear_active");
+      } else {
+        await sb().rpc("user_logo_set_active", { p_logo_id: selectedLogoId });
+      }
+    } catch (e) { console.warn("[logo] set active failed", e); }
 
     // przeładuj logo na wyświetlaczu
     await devices.sendDisplayCmd("LOGO RELOAD").catch(() => {});

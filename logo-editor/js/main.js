@@ -2,6 +2,7 @@
 // Glowna logika strony + lista kafelkow + routing do edytorow.
 
 import { addRenameGesture } from "../../js/core/rename-gesture.js";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../../js/core/logo-preview.js";
 
 import { sb } from "../../js/core/supabase.js";
 import { requireAuth } from "../../js/core/auth.js";
@@ -527,25 +528,9 @@ async function fetchJsonRequired(url, label){
   return await r.json();
 }
 
-function buildGlyph5x7Map(fontJson){
-  if (!fontJson || typeof fontJson !== "object") return {};
-  const out = {};
-  for (const [k, v] of Object.entries(fontJson)){
-    if (k === "meta") continue;
-    if (!v || typeof v !== "object") continue;
-    for (const [ch, pat] of Object.entries(v)){
-      if (typeof ch !== "string") continue;
-      if (!Array.isArray(pat) || pat.length !== 7) continue;
-      if (!(ch in out)) out[ch] = pat;
-    }
-  }
-  return out;
-}
-
 async function loadFonts(){
   FONT_3x10 = await fetchJsonRequired(FONT_3x10_URL, "Font 3x10");
-  const f57 = await fetchJsonRequired(FONT_5x7_URL, "Font 5x7");
-  GLYPH_5x7 = buildGlyph5x7Map(f57);
+  GLYPH_5x7 = await loadFont5x7(FONT_5x7_URL);
 }
 
 async function loadDefaultLogo(){
@@ -884,6 +869,8 @@ function rows30x10ToBits150(rows10){
 /* =========================================================
    LIST UI
 ========================================================= */
+
+// Konwertuje rekord DB do formatu payload używanego przez openPreviewFullscreen
 function logoToPreviewPayload(logo){
   if (logo?.type === TYPE_GLYPH){
     const rows = logo?.payload?.layers?.[0]?.rows;
@@ -892,7 +879,6 @@ function logoToPreviewPayload(logo){
     }
     return { kind: "GLYPH", rows: Array.from({ length: 10 }, () => " ".repeat(30)) };
   }
-
   if (logo?.type === TYPE_PIX){
     const p = logo.payload || {};
     const w = Number(p.w) || DOT_W;
@@ -901,18 +887,7 @@ function logoToPreviewPayload(logo){
     if (w !== DOT_W || h !== DOT_H) return { kind: "PIX", bits: new Uint8Array(DOT_W * DOT_H) };
     return { kind: "PIX", bits };
   }
-
   return { kind: "GLYPH", rows: Array.from({ length: 10 }, () => " ".repeat(30)) };
-}
-
-function buildCardPreviewCanvas(payload){
-  const c = document.createElement("canvas");
-  c.width = 520;
-  c.height = 240;
-
-  const bits150 = payload.kind === "GLYPH" ? rows30x10ToBits150(payload.rows) : payload.bits;
-  drawThumbFlat150x70(c, bits150);
-  return c;
 }
 
 function renderList(){
@@ -943,7 +918,7 @@ function renderList(){
   }
 
   // helper: budowa kafla
-  function makeTile({ key, name, meta, payload, canDelete }){
+  function makeTile({ key, name, meta, logo, canDelete }){
     const el = document.createElement("div");
     el.className = "logoTile";
     el.dataset.key = String(key);
@@ -994,7 +969,7 @@ function renderList(){
     });
 
     const prevWrap = el.querySelector(".logoPrev");
-    const prevCanvas = buildCardPreviewCanvas(payload);
+    const prevCanvas = buildLogoPreviewCanvas(logo, GLYPH_5x7, 520, 240);
     prevCanvas.style.cursor = "default";
     prevWrap.appendChild(prevCanvas);
 
@@ -1003,12 +978,11 @@ function renderList(){
 
   // LOGA USERA
   for (const l of logos){
-    const payload = logoToPreviewPayload(l);
     const el = makeTile({
       key: l.id,
       name: l.name || t("logoEditor.defaults.unnamed"),
       meta: fmtDate(l.updated_at) || "",
-      payload,
+      logo: l,
       canDelete: true
     });
     grid.appendChild(el);
