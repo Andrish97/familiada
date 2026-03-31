@@ -1241,7 +1241,7 @@ async function sendZeroStatesToDevices() {
     url.searchParams.set("ret", `${location.pathname.split("/").pop() || "control"}${location.search}${location.hash}`);
     url.searchParams.set("modal", "control");
     url.searchParams.set("lang", getUiLang() || "pl");
-    url.hash = "control";
+    url.hash = "connect"; // Otwieraj zakładkę "Podłącz urządzenie"
     return url.toString();
   }
 
