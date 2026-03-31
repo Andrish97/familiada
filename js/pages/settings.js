@@ -3137,26 +3137,27 @@ function showComposePreview(greetingSelect, farewellSelect, quotePosition) {
   const subject = (document.getElementById("composeSubjectInput")?.value || "").trim();
   const body = (document.getElementById("composeMessageArea")?.value || "").trim();
   const quote = (document.getElementById("composeQuoteBody")?.value || "").trim();
-  
+
   const greetingValue = greetingSelect?.getValue() || "none";
   const farewellValue = farewellSelect?.getValue() || "team";
   const greetingCustom = (document.getElementById("composeGreetingCustom")?.value || "").trim();
   const farewellCustom = (document.getElementById("composeFarewellCustom")?.value || "").trim();
-  
+
   const signatureText = buildEmailSignature({
     greeting: greetingValue,
     farewell: farewellValue,
     greetingCustom,
     farewellCustom,
   });
-  
+
   // Build full body with signature at the end
   const fullBody = signatureText ? `${body}\n\n${signatureText}` : body;
   
-  // Generate full email HTML (same as marketing preview)
+  // Convert plain text to HTML (same as email rendering)
   const quoteHtml = quote ? `<div style="margin:20px 0;padding:20px;background:#f5f5f5;border-left:4px solid #ffeaa6;border-radius:0 8px 8px 0;font-size:13px;line-height:1.6;color:#333;white-space:pre-wrap">${escSetting(quote)}</div>` : "";
   const bodyHtml = quotePosition === "before" ? `${quoteHtml}<div style="white-space:pre-wrap;font-size:15px;line-height:1.7;color:#222">${escSetting(fullBody || "(brak treści)")}</div>` : `<div style="white-space:pre-wrap;font-size:15px;line-height:1.7;color:#222">${escSetting(fullBody || "(brak treści)")}</div>${quoteHtml}`;
   
+  // Generate full HTML email (exact same structure as sent emails)
   const emailHtml = `
     <!DOCTYPE html>
     <html>
@@ -3164,11 +3165,11 @@ function showComposePreview(greetingSelect, farewellSelect, quotePosition) {
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1">
       <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; background: #fff; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; background: #fff; color: #222; }
         .email-container { max-width: 600px; margin: 0 auto; }
         .email-header { background: #f8f9fa; padding: 20px; border-bottom: 1px solid #e9ecef; }
         .email-subject { font-size: 20px; font-weight: 700; color: #1a1a2e; margin: 0; }
-        .email-body { padding: 24px; background: #fff; }
+        .email-body { padding: 24px; background: #fff; line-height: 1.6; }
       </style>
     </head>
     <body>
@@ -3184,7 +3185,7 @@ function showComposePreview(greetingSelect, farewellSelect, quotePosition) {
     </html>
   `;
   
-  // Create iframe for preview (same as marketing)
+  // Create iframe for preview (renders HTML exactly like inbox messages)
   const frame = document.createElement("iframe");
   frame.style.cssText = "width:100%;height:500px;border:none;background:#fff;border-radius:8px;";
   frame.sandbox = "allow-scripts allow-popups";
