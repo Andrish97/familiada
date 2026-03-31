@@ -1651,6 +1651,19 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
   async function toP2Start() {
     await timerStopAndReset();
 
+    // Odtwórz dźwięk przejścia do rundy 2
+    try {
+      let dur = 0;
+      try { dur = await getSfxDuration("round_transition"); } catch {}
+      const trMs = dur > 0 ? dur * 1000 : 2000;
+      
+      playSfx("round_transition");
+      
+      if (trMs > 0) await new Promise((resolve) => setTimeout(resolve, trMs));
+    } catch (e) {
+      console.warn("round_transition audio failed", e);
+    }
+
     (async () => {
       try { await display.finalHalfPlaceholders?.(); } catch (e) {
         console.warn("finalHalfPlaceholders failed", e);
@@ -1662,7 +1675,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
 
   async function startP2Round() {
     ensureRuntime();
-    
+
     display.finalSetSideTimer?.(getWinnerTeam(), "20").catch(() => {});
 
     setStep("f_p2_entry");

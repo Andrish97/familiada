@@ -48,7 +48,7 @@ import { createDevices } from "./devices.js?v=c0b93ef6";
 import { createPresence } from "./presence.js?v=c21b2179";
 import { createDisplay } from "./display.js?v=985e696f";
 import { createRounds } from "./gameRounds.js?v=5a6f0f33";
-import { createFinal } from "./gameFinal.js?v=fafa8721";
+import { createFinal } from "./gameFinal.js?v=0b17f359";
 import { initShareDevice } from "./share-device.js?v=41d2d3dd";
 import { loadFont5x7, buildLogoPreviewCanvas } from "../../js/core/logo-preview.js?v=8b4d198b";
 
