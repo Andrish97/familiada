@@ -220,3 +220,66 @@ body {
 .pseudoFS body {
     min-height: 100dvh
 }
+
+/* A2HS - Add to Home Screen prompt for iOS */
+.a2hs {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.85);
+    z-index: 100000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.a2hsCard {
+    background: #1a1a1a;
+    border-radius: 16px;
+    padding: 24px;
+    max-width: 400px;
+    text-align: center;
+    border: 1px solid rgba(255,255,255,.15);
+}
+
+.a2hsTitle {
+    color: #fff;
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0 0 12px 0;
+}
+
+.a2hsText {
+    color: rgba(255,255,255,.8);
+    font-size: 15px;
+    line-height: 1.5;
+    margin: 0 0 20px 0;
+}
+
+.a2hsText b {
+    color: #fff;
+    font-weight: 600;
+}
+
+.a2hsClose {
+    background: rgba(255,255,255,.1);
+    color: #fff;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.a2hsClose:active {
+    background: rgba(255,255,255,.2)
+}
+
+html.showA2HS .a2hs {
+    display: flex
+}
+
+html.showA2HS .arena {
+    display: none !important
+}
