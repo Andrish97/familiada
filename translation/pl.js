@@ -808,6 +808,7 @@ const pl = {
       polls: "Sondaże",
       subscriptions: "Subskrypcje",
       logo: "Tworzenie logo",
+      connect: "Podłącz urządzenie",
       control: "Panel sterowania",
       demo: "Demo - materiały startowe",
       community: "Gry Społeczności",
@@ -1706,6 +1707,38 @@ const pl = {
       Nie edytuj plików logo ręcznie. To format techniczny — ręczna zmiana może spowodować,
       że import się nie powiedzie albo logo będzie działało nieprawidłowo.
     </div>`,
+      connect: `<p class="m-p">
+        <span class="m-strong">Podłącz urządzenie</span> to panel, gdzie możesz szybko połączyć się z urządzeniem niezbędnym do rozgrywki:
+        <span class="m-strong">Wyświetlaczem</span>, <span class="m-strong">Przyciskiem</span> lub <span class="m-strong">Prowadzącym</span>
+        za pomocą przycisku <span class="m-code">Podłącz urządzenie 🎮</span>.
+      </p>
+
+      <h3 class="m-h2">Urządzenia udostępnione dla mnie</h3>
+
+      <p class="m-p">
+        Tutaj widzisz urządzenia, które tobie udostępnił któryś z użytkowników.
+        Klikając w nie możesz się z nim połączyć — zostaniesz przekierowany na stronę urządzenia.
+      </p>
+
+      <div class="m-note">
+        <b>Ważne:</b><br/>
+        Jeśli jesteś na telefonie lub tablecie, będziesz w stanie połączyć się tylko z <span class="m-strong">Przyciskiem</span> lub <span class="m-strong">Prowadzącym</span>.
+        Jeśli na komputerze lub telewizorze — tylko z <span class="m-strong">Wyświetlaczem</span>.
+      </div>
+
+      <h3 class="m-h2">Skanuj kod QR</h3>
+
+      <p class="m-p">
+        Opcja dostępna tylko na urządzeniach mobilnych w aplikacji webowej.
+        Pozwala szybko połączyć się z urządzeniem używając kamery.
+        Po prostu zeskanuj kod QR wyświetlony przez panel operatora na wyświetlaczu lub w samym panelu.
+      </p>
+
+      <div class="m-note">
+        <b>Wskazówka:</b><br/>
+        Dla najlepszego użytkowania przycisku i prowadzącego sugerowane jest zainstalowanie aplikacji webowej Familiada.online.
+        Na swoim telefonie zaloguj się na konto, na stronie <span class="m-strong">Moje gry</span> kliknij przycisk pobierania — dostaniesz wskazówki, jak ją pobrać.
+      </div>`,
       control: `<p class="m-p">
         Do Panelu sterowania przechodzisz z listy „Moje gry"
         za pomocą przycisku <span class="m-code">Graj</span>.

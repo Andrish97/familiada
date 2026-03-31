@@ -805,6 +805,7 @@ const en = {
       polls: "Polls",
       subscriptions: "Subscriptions",
       logo: "Logo creation",
+      connect: "Connect device",
       control: "Control panel",
       demo: "Demo - starter materials",
       community: "Community Games",
@@ -1710,6 +1711,38 @@ const en = {
       Do not edit logo files manually. This is a technical format — manual changes may cause
       the import to fail or the logo to work incorrectly.
     </div>`,
+      connect: `<p class="m-p">
+        <span class="m-strong">Connect device</span> is a panel where you can quickly connect to a device needed for the game:
+        <span class="m-strong">Display</span>, <span class="m-strong">Buzzer</span>, or <span class="m-strong">Host</span>
+        using the <span class="m-code">Connect device 🎮</span> button.
+      </p>
+
+      <h3 class="m-h2">Devices shared with me</h3>
+
+      <p class="m-p">
+        Here you see devices that have been shared with you by other users.
+        Clicking on one will connect you to it — you'll be redirected to the device page.
+      </p>
+
+      <div class="m-note">
+        <b>Important:</b><br/>
+        If you're on a phone or tablet, you can only connect to <span class="m-strong">Buzzer</span> or <span class="m-strong">Host</span>.
+        If on a computer or TV — only to <span class="m-strong">Display</span>.
+      </div>
+
+      <h3 class="m-h2">Scan QR code</h3>
+
+      <p class="m-p">
+        This option is only available on mobile devices in the web app.
+        It allows you to quickly connect to a device using the camera.
+        Simply scan the QR code displayed by the operator panel on the display or in the panel itself.
+      </p>
+
+      <div class="m-note">
+        <b>Tip:</b><br/>
+        For the best experience with Buzzer and Host, we recommend installing the Familiada.online web app.
+        On your phone, log in to your account, go to <span class="m-strong">My games</span> and click the download button — you'll get instructions on how to download it.
+      </div>`,
       control: `<p class="m-p">
         You reach the Control Panel from the “My games” list
         using the <span class="m-code">Play</span> button.

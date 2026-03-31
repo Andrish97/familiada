@@ -46,7 +46,7 @@ function buildManualUrl() {
   const url = new URL("manual", location.href);
   url.searchParams.set("ret", getCurrentRelativeUrl());
   url.searchParams.set("lang", getUiLang() || "pl");
-  url.hash = "connect-device";
+  url.hash = "connect"; // Otwieraj zakładkę "Podłącz urządzenie"
   return url.toString();
 }
 
