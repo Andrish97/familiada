@@ -1848,7 +1848,10 @@ const pl = {
         <b>Uwaga:</b><br/>
         Jeśli któreś urządzenie rozłączy się w trakcie, panel potrafi pokazać ostrzeżenie.
         Najczęściej pomaga: wyłączyć oszczędzanie baterii, nie minimalizować przeglądarki
-        oraz trzymać urządzenia na jednej stabilnej sieci Wi-Fi.</div><h3 class="m-h3">Krok 3: Dźwięk</h3>
+        oraz trzymać urządzenia na jednej stabilnej sieci Wi-Fi.
+      </div>
+
+      <h3 class="m-h3">Krok 3: Dźwięk</h3>
 
       <p class="m-p">
         Przeglądarki blokują automatyczne odtwarzanie dźwięku,
@@ -1926,9 +1929,10 @@ const pl = {
       <h3 class="m-h3">Finał: wybierz 5 pytań</h3>
 
       <p class="m-p">
-        Jeśli rozgrywka ma mieć finał, i nie włączyliśmy opcji losuj, to rutaj wybierasz dokładnie <span class="m-strong">5 pytań finału</span>.
+        Jeśli rozgrywka ma mieć finał, i nie włączyliśmy opcji losuj, to tutaj wybierasz dokładnie <span class="m-strong">5 pytań finału</span>.
         Panel pokazuje listę pytań oraz listę „Pytania finału (max 5)".
-        Po wybraniu piątki używasz przycisku <span class="m-strong">Zatwierdź</span>.</p>
+        Po wybraniu piątki używasz przycisku <span class="m-strong">Zatwierdź</span>.
+      </p>
 
       <div class="m-warn">
         <b>Uwaga:</b><br/>
