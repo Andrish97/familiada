@@ -87,7 +87,7 @@ export function createStore(gameId) {
         xA: 0,
         xB: 0,
         totals: { A: 0, B: 0 },
-        step: "r_ready",
+        step: "r_intro",
         passUsed: false,
         stealWon: false,
   

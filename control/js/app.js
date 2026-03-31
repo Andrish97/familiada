@@ -42,7 +42,7 @@ import { rt } from "../../js/core/realtime.js?v=096b955e";
 import { validateGameReadyToPlay, loadGameBasic, loadQuestions, loadAnswers } from "../../js/core/game-validate.js?v=df97f708";
 import { unlockAudio, isAudioUnlocked, playSfx } from "../../js/core/sfx.js?v=81309561";
 
-import { createStore } from "./store.js?v=fc0888ab";
+import { createStore } from "./store.js?v=516e0812";
 import { createUI } from "./ui.js?v=e8721c12";
 import { createDevices } from "./devices.js?v=c0b93ef6";
 import { createPresence } from "./presence.js?v=c21b2179";
