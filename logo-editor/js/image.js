@@ -938,11 +938,44 @@ export function initImageEditor(ctx) {
                throw error;
              }
           } else {
+            console.log("[image.getCreatePayload] Upload response data:", data);
+            
+            // Sprawdźmy, czy plik na pewno istnieje po uploadzie
+            const { data: listData, error: listError } = await sb()
+              .storage
+              .from("user-logos")
+              .list(user.id, { limit: 10 });
+            
+            if (listError) {
+              console.error("[image.getCreatePayload] List error after upload:", listError);
+            } else {
+              console.log("[image.getCreatePayload] Files in user folder after upload:", listData);
+              
+              // Sprawdźmy, czy nasz plik jest na liście
+              const fileName = path.split("/")[1];
+              const found = listData?.find(f => f.name === fileName);
+              if (!found) {
+                console.error("[image.getCreatePayload] ERROR: File not found in storage after upload!");
+                console.error("[image.getCreatePayload] Expected file:", fileName);
+                console.error("[image.getCreatePayload] Available files:", listData);
+              } else {
+                console.log("[image.getCreatePayload] File found in storage:", found);
+              }
+            }
+            
             source.imageUrl = sb().storage.from("user-logos").getPublicUrl(path).data.publicUrl;
-            console.log("[image.getCreatePayload] Image uploaded successfully:", {
-              URL: source.imageUrl,
-              data
-            });
+            console.log("[image.getCreatePayload] Image URL generated:", source.imageUrl);
+            
+            // Sprawdźmy, czy URL jest dostępny
+            try {
+              const testResponse = await fetch(source.imageUrl, { method: 'HEAD' });
+              console.log("[image.getCreatePayload] URL test response:", testResponse.status, testResponse.statusText);
+              if (!testResponse.ok) {
+                console.error("[image.getCreatePayload] URL is not accessible! Status:", testResponse.status);
+              }
+            } catch (e) {
+              console.error("[image.getCreatePayload] URL test failed:", e);
+            }
           }
           imgFileObj = null; // wrzucone
         } catch (e) {
