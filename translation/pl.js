@@ -811,7 +811,6 @@ const pl = {
       control: "Panel sterowania",
       demo: "Demo - materiały startowe",
       community: "Gry Społeczności",
-      connect: "Podłącz urządzenie",
     },
     demo: {
       modalTitle: "Przywrócić pliki demo?",
@@ -1707,45 +1706,13 @@ const pl = {
       Nie edytuj plików logo ręcznie. To format techniczny — ręczna zmiana może spowodować,
       że import się nie powiedzie albo logo będzie działało nieprawidłowo.
     </div>`,
-      connect: `<p class="m-p">
-        <span class="m-strong">Podłącz urządzenie</span> to panel, gdzie możesz szybko połączyć się z urządzeniem niezbędnym do rozgrywki:
-        <span class="m-strong">Wyświetlaczem</span>, <span class="m-strong">Przyciskiem</span> lub <span class="m-strong">Prowadzącym</span>
-        za pomocą przycisku <span class="m-code">Podłącz urządzenie 🎮</span>.
-      </p>
-
-      <h3 class="m-h2">Urządzenia udostępnione dla mnie</h3>
-
-      <p class="m-p">
-        Tutaj widzisz urządzenia, które tobie udostępnił któryś z użytkowników.
-        Klikając w nie możesz się z nim połączyć — zostaniesz przekierowany na stronę urządzenia.
-      </p>
-
-      <div class="m-note">
-        <b>Ważne:</b><br/>
-        Jeśli jesteś na telefonie lub tablecie, będziesz w stanie połączyć się tylko z <span class="m-strong">Przyciskiem</span> lub <span class="m-strong">Prowadzącym</span>.
-        Jeśli na komputerze lub telewizorze — tylko z <span class="m-strong">Wyświetlaczem</span>.
-      </div>
-
-      <h3 class="m-h2">Skanuj kod QR</h3>
-
-      <p class="m-p">
-        Opcja dostępna tylko na urządzeniach mobilnych w aplikacji webowej.
-        Pozwala szybko połączyć się z urządzeniem używając kamery.
-        Po prostu zeskanuj kod QR wyświetlony przez panel operatora na wyświetlaczu lub w samym panelu.
-      </p>
-
-      <div class="m-note">
-        <b>Wskazówka:</b><br/>
-        Dla najlepszego użytkowania przycisku i prowadzącego sugerowane jest zainstalowanie aplikacji webowej Familiada.online.
-        Na swoim telefonie zaloguj się na konto, na stronie <span class="m-strong">Moje gry</span> kliknij przycisk pobierania — dostaniesz wskazówki, jak ją pobrać.
-      </div>`,
       control: `<p class="m-p">
-        Do Panelu sterowania przechodzisz z listy „Moje gry”
+        Do Panelu sterowania przechodzisz z listy „Moje gry"
         za pomocą przycisku <span class="m-code">Graj</span>.
         Ten tryb jest przeznaczony wyłącznie do prowadzenia rozgrywki na żywo —
         w tym miejscu nie edytujesz już pytań ani wyników sondażu.
       </p>
-    
+
       <p class="m-p">
         Panel sterowania prowadzi operatora krok po kroku:
         najpierw podłączasz urządzenia, potem ustawiasz parametry rozgrywki,
@@ -1753,9 +1720,9 @@ const pl = {
         Kolejne kroki odblokowują się dopiero wtedy, gdy poprzednie są gotowe,
         co minimalizuje ryzyko pomyłek podczas rozgrywki.
       </p>
-    
+
       <h3 class="m-h2">Co musi być gotowe, zanim zaczniesz</h3>
-    
+
       <ul class="m-ul">
         <li>
           Gra powinna mieć przygotowane pytania i odpowiedzi (z edytora),
@@ -1772,19 +1739,19 @@ const pl = {
           Stabilne Wi-Fi (najczęstsza przyczyna problemów to ubite karty w tle / przełączanie sieci).
         </li>
       </ul>
-    
+
       <div class="m-note">
-        <b>Dlaczego tyle „formalności”?</b><br/>
+        <b>Dlaczego tyle „formalności"?</b><br/>
         Rozgrywka jest na żywo i ma telewizyjne tempo. Panel sterowania ma pilnować procedury,
         a nie dokładać operatorowi stresu. Dlatego system wymusza gotowość sprzętu i ustawień przed startem.
       </div>
-    
+
       <h3 class="m-h2">Kto co widzi</h3>
-    
+
       <p class="m-p">
         System celowo rozdziela ekrany, żeby każdy robił swoje:
       </p>
-    
+
       <ul class="m-ul">
         <li>
           <span class="m-strong">Operator (Panel sterowania)</span> — widzi wszystkie przyciski,
@@ -1804,92 +1771,69 @@ const pl = {
           <span class="m-strong">Przycisk</span> — służy do sygnału w pojedynku (kto pierwszy).
         </li>
       </ul>
-    
+
       <h3 class="m-h2">1) Urządzenia</h3>
-    
+
       <p class="m-p">
         Pierwszy etap w panelu to podłączenie urządzeń.
         W górnym pasku panelu widzisz trzy statusy:
         <span class="m-strong">Wyświetlacz</span>,
         <span class="m-strong">Prowadzący</span>,
         <span class="m-strong">Przycisk</span>.
-        Operator rozpoczyna od tego, żeby wszystkie były online.
+        Operator rozpoczyna od tego, żeby wszystkie były online (prowadzący jest opcjonalny, możesz prowadzić rozgrywkę z panelu operatora, jeśli brakuje osób).
       </p>
-    
-      <h3 class="m-h3">Krok 1: Wyświetlacz</h3>
-    
+
+      <h3 class="m-h3">Krok 1: Urzadzenia</h3>
+
       <p class="m-p">
-        W tym kroku panel pokazuje kod QR i link dla wyświetlacza.
+        W tym kroku panel pokazuje linki i&nbsp;<span style="background-color: initial;">&nbsp;</span><span style="background-color: initial;">kody QR&nbsp;</span><span style="background-color: initial;">dla urzadzeń.
         Najlepiej otworzyć wyświetlacz na telewizorze lub rzutniku,
-        w trybie pełnoekranowym (bez pasków przeglądarki).
-        Dopiero gdy wyświetlacz jest online, panel pozwoli przejść dalej.
-      </p>
-    
-      <h3 class="m-h3">Krok 2: Prowadzący i Przycisk</h3>
-    
+        w trybie pełnoekranowym (bez pasków przeglądarki). Dalej&nbsp;</span><span style="background-color: initial;">podłączasz urządzenie prowadzącego i urządzenie przycisku. W praktyce najlepiej użyć dwóch osobnych telefonów albo telefonu i tabletu.</span></p>
+
       <p class="m-p">
-        W drugim kroku podłączasz urządzenie prowadzącego i urządzenie przycisku.
-        Panel również pokazuje QR/link do podłączenia.
-        W praktyce najlepiej użyć dwóch osobnych telefonów albo telefonu i tabletu.
-      </p>
-    
-      <p class="m-p">
-        W tym kroku jest opcja <span class="m-strong">„QR na wyświetlaczu”</span> —
-        po jej użyciu kody QR mogą zostać pokazane na dużym ekranie,
+        W tym kroku jest opcja <span class="m-strong">„QR na wyświetlaczu"</span> —
+        po jej użyciu kody QR mogą zostać pokazane na dużym ekranie (po podłączeniu wyświetlacza) ,
         żeby ekipa mogła szybko zeskanować je telefonami.
         To przyspiesza start na planie, bo nie trzeba przepisywać linków.
-      </p>
-    
+      </p><p class="m-p"><span class="m-strong">„Czarny ekran"</span>&nbsp;— gdyby się zdarzyło że po załadowaniu ekranu widzisz pozostałości po starej rozgrywce (czasem tak się zdarzy), użyj tego przycisku, żeby przywrócić czarny ekran na czas ustawień.</p><p class="m-p">Poprzez opcję&nbsp;<span class="m-strong">„Udostępnij"</span>&nbsp;— możesz szybko wysłać komuś linka na maila, lub udostępnić swoim subscrybentom. Udostepnione urządzenia będą widoczne na koncie (tylko dla zarejestrowanych) w panelu&nbsp;<span class="m-code" style="border-color: rgba(255, 255, 255, 0.18); border-style: solid; border-width: 1px; border-image: none 100% / 1 / 0 stretch;">Podlącz urządzenie📱</span><span style="background-color: initial;">. Niezarejestrowani dostaną po prostu linka na maila.</span></p><div class="m-note"><b style="color: rgb(255, 234, 166);">Jak wygodnie podlączyć urzadzenie?</b><br>Dla najlepszego uzytkowania przycisku i prowadzącego sugerowane jest zainstalowanie aplikacji webowej Familiada.online. Na swoim telefonie zaloguj się na konto, na stronie&nbsp;<span style="font-size: 16px; font-weight: 1000; background-color: initial; color: rgb(255, 255, 255);">Moje gry</span><span style="color: rgba(255, 255, 255, 0.92); font-size: 16px; background-color: initial;">&nbsp;kliknij przycisk pobierania, dostaniesz wskazówki jak ją pobrać. Po pobraniu przejdź do panelu&nbsp;</span><span class="m-code" style="border-color: rgba(255, 255, 255, 0.18); border-style: solid; border-width: 1px; border-image: none 100% / 1 / 0 stretch; color: rgba(255, 255, 255, 0.92);">Podlącz urządzenie📱</span><span style="color: rgba(255, 255, 255, 0.92); font-size: 16px; background-color: initial;">, naciśnij&nbsp;</span><span style="font-size: 16px; font-weight: 1000; background-color: initial; color: rgb(255, 255, 255);">Skanuj kod QR</span><span style="color: rgba(255, 255, 255, 0.92); font-size: 16px; background-color: initial;">, po zeskanowaniu usuchomi się przycisk lub prowadący.</span></div>
+
       <div class="m-warn">
         <b>Uwaga:</b><br/>
         Jeśli któreś urządzenie rozłączy się w trakcie, panel potrafi pokazać ostrzeżenie.
         Najczęściej pomaga: wyłączyć oszczędzanie baterii, nie minimalizować przeglądarki
-        oraz trzymać urządzenia na jednej stabilnej sieci Wi-Fi.
-      </div>
-    
-      <h3 class="m-h3">Krok 3: Dźwięk</h3>
-    
+        oraz trzymać urządzenia na jednej stabilnej sieci Wi-Fi.</div><h3 class="m-h3">Krok 3: Dźwięk</h3>
+
       <p class="m-p">
         Przeglądarki blokują automatyczne odtwarzanie dźwięku,
-        dopóki użytkownik nie wykona „gestu” (kliknięcia).
+        dopóki użytkownik nie wykona „gestu" (kliknięcia).
         Dlatego panel ma osobny krok odblokowania dźwięku.
         Bez tego możesz nie usłyszeć sygnałów, które wspierają tempo gry.
       </p>
-    
+
       <h3 class="m-h2">2) Ustawienia</h3>
-    
+
       <p class="m-p">
         Gdy urządzenia są online, przechodzisz do ustawień rozgrywki.
       </p>
-    
+
       <h3 class="m-h3">Nazwy drużyn</h3>
-    
+
       <p class="m-p">
         Ustawiasz nazwę drużyny A i B.
-        Są to napisy, które widzą zawodnicy i widownia na wyświetlaczu,
-        więc najlepiej ustalić je przed startem rund.
-        Panel blokuje przejście dalej, dopóki obie nazwy nie są wpisane.
-      </p>
+        Są to napisy, które widzą zawodnicy i widownia na wyświetlaczu, panel blokuje przejście dalej, dopóki obie nazwy nie są wpisane.
+      </p><h3 class="m-h3">Wygląd</h3><ul class="m-ul"><li><span class="m-strong">Kolory</span>&nbsp;— t<span style="font-size: 16px;">utaj ustawiasz kolory drużyn, które będą używane na każdym z urządzeń i zmienią się od razu, oraz kolor tła tablicy.&nbsp;</span></li><li><span style="color: rgb(255, 255, 255); font-weight: 1000;">Logo</span>&nbsp;— jesli masz utworzone jakieś logo to zobaczysz je tutaj, możesz wybrać któreś dla tej rozgrywki lub zostawić domyślne.</li></ul>
 
-      <p class="m-p">
-        Tutaj również możesz ustawić kolory drużyn, które będą używane na każdym z urządzeń
-        i zmienią się od razu, oraz kolor tła tablicy.
-      </p>
-
-      <h3 class="m-h3">Ustawienia pytań</h3>
+      <h3 class="m-h3">Ustawienia pytań i rozgrywki</h3>
 
       <p class="m-p">
         Tutaj wybierasz, czy rozgrywka będzie miała finał oraz czy chcesz
-        wybierać lub wylosować pytania do finału i do rozgrywki.
-      </p>
-    
-      <h3 class="m-h3">Dodatkowe ustawienia (ważne dla operatora)</h3>
-    
+        wybierać lub wylosować pytania do finału i do rozgrywki. Jeśli zaznaczysz&nbsp;<span class="m-strong" style="background-color: initial;">Wybierz</span><span style="background-color: initial;">&nbsp;to w następnych dwóch krokach zostaniesz poproszony o ich wybranie.</span></p>
+
       <p class="m-p">
-        W „Dodatkowych ustawieniach” dopasowujesz rozgrywkę do formatu odcinka.
+        W „Dodatkowych ustawieniach" dopasowujesz rozgrywkę do formatu rozgrywki.
         Te opcje nie zmieniają sensu zasad, tylko ustawiają tempo i progi gry.
       </p>
-    
+
       <ul class="m-ul">
         <li>
           <span class="m-strong">Mnożniki rund</span> — wpisywane po przecinku (np. <span class="m-code">1,1,1,2,3</span>).
@@ -1905,27 +1849,27 @@ const pl = {
         </li>
         <li>
           <span class="m-strong">Zakończenie gry</span> — co pokazuje wyświetlacz na końcu
-          (logo / punkty / kwota po finale). To jest ważne produkcyjnie: „ostatni kadr”.
-        </li>
+          (logo / punkty / kwota po finale). To jest ważne produkcyjnie: „ostatni kadr".
+        </li><li><span style="color: rgb(255, 255, 255); font-weight: 1000;">Mnożnik nagrody (po finale)&nbsp;</span>— domyślnie jeśli chcemy grać o nagrode jak w klasycznej familiadzie po finale nagroda to Punkty uzyskane podczas gry x3.</li><li><span style="color: rgb(255, 255, 255); font-weight: 1000;">Kwota nagrody głównej&nbsp;</span>— jeśli w finale drużyna uzyskała próg (domyślnie 200 punktów) to do nagrody finału jest dodawana kwota nagrody głównej, domyślnie 25000.</li>
       </ul>
-    
+
       <div class="m-note">
         <b>Dlaczego to jest w Panelu sterowania, a nie w edytorze?</b><br/>
         Bo to są ustawienia odcinka (produkcji), a nie treści pytań.
         Pytania nie powinny się zmieniać podczas rozgrywki, ale parametry gry czasem tak.
       </div>
-    
+
       <h3 class="m-h3">Finał: wybierz 5 pytań</h3>
-    
+
       <p class="m-p">
         Jeśli rozgrywka ma mieć finał, i nie włączyliśmy opcji losuj, to rutaj wybierasz dokładnie <span class="m-strong">5 pytań finału</span>.
-        Panel pokazuje listę pytań oraz listę „Pytania finału (max 5)”.
+        Panel pokazuje listę pytań oraz listę „Pytania finału (max 5)".
         Po wybraniu piątki używasz przycisku <span class="m-strong">Zatwierdź</span>.</p>
-    
+
       <div class="m-warn">
         <b>Uwaga:</b><br/>
         Finał wymaga zatwierdzonych 5 pytań przed startem rund.
-        To celowa blokada — na żywo nie ma czasu na wybieranie pytań „na szybko”.
+        To celowa blokada — na żywo nie ma czasu na wybieranie pytań „na szybko".
         Jeśli chcesz zmienić zestaw, używasz trybu <span class="m-strong">Edytuj</span> przy pytaniach finału.
       </div>
 
@@ -1940,129 +1884,129 @@ const pl = {
       <h3 class="m-h3">Podsumowanie</h3>
 
       <p class="m-p">Tutaj zobaczysz podsumowanie wybranych ustawień.</p>
-    
+
       <h3 class="m-h2">3) Rundy — przebieg gry krok po kroku</h3>
-    
+
       <p class="m-p">
         W rundach prowadzisz właściwą rozgrywkę: pytania, odpowiedzi, punkty i bank rundy.
         Gracze widzą tablicę na wyświetlaczu, prowadzący zadaje pytania i pilnuje przebiegu,
         a operator odsłania odpowiedzi, nalicza punkty oraz dodaje błędy (X).
       </p>
-      
+
       <p class="m-p">
         Najważniejsza zasada w praktyce: prowadzący skupia się na uczestnikach,
         a operator na obsłudze systemu. Dzięki temu gra jest płynna,
         a tablica zawsze pokazuje to, co powinno być w danym momencie.
       </p>
-    
-      <h3 class="m-h3">Start rundy: „Gra gotowa” i intro</h3>
-    
+
+      <h3 class="m-h3">Start rundy: „Rozpocznij grę" i intro</h3>
+
       <p class="m-p">
         Rozpoczynając rundy, panel najpierw przygotowuje wyświetlacz (czyści tablicę i ustawia stan gry),
         a następnie pozwala uruchomić intro.
         To porządkuje początek gry: widzowie dostają czytelny start,
         a operator ma jasny moment wejścia w pierwsze pytanie.
       </p>
-    
+
       <h3 class="m-h3">Pojedynek: kto przejmuje kontrolę</h3>
-    
+
       <p class="m-p">
-        Każde pytanie zaczyna się od pojedynku „głów rodzin” przy pulpicie.
+        Każde pytanie zaczyna się od pojedynku „głów rodzin" przy pulpicie.
         W tym momencie kluczowe jest urządzenie <span class="m-strong">Przycisk</span>:
         sygnał z przycisku informuje panel, że ktoś nacisnął pierwszy.
         Operator zatwierdza, która strona zdobyła pierwszeństwo,
         a prowadzący przechodzi do udzielania odpowiedzi.
       </p>
-    
+
       <p class="m-p">
         Zgodnie z regulaminem, jeśli pierwsza odpowiedź nie jest najwyżej punktowana,
-        druga „głowa” ma szansę odpowiedzieć lepiej i przejąć kontrolę.
+        druga „głowa" ma szansę odpowiedzieć lepiej i przejąć kontrolę.
         Panel prowadzi operatora przez decyzję kontroli rundy,
         a wyświetlacz pokazuje, która drużyna aktualnie gra (wskaźnik drużyny).
       </p>
 
       <h3 class="m-h3">Oddanie pytania</h3>
-    
+
       <p class="m-p">
         Zgodnie z ustaleniami rozgrywki, po uzyskaniu kontroli drużyna może też zdecydować,
         że <span class="m-strong">oddaje pytanie</span> przeciwnikom.
-        Jest to ruch taktyczny: zamiast „dobić” pytanie, drużyna może przekazać szansę rywalom.
+        Jest to ruch taktyczny: zamiast „dobić" pytanie, drużyna może przekazać szansę rywalom.
         Panel udostępnia tę opcję tylko w odpowiednim momencie i pilnuje, żeby nie dało się jej nadużywać.
       </p>
-    
+
       <h3 class="m-h3">Rozgrywka pytania: odsłanianie odpowiedzi i bank</h3>
-    
+
       <p class="m-p">
         Po ustaleniu kontroli drużyna odpowiada, a operator odsłania trafione odpowiedzi na tablicy.
         Każde trafienie dodaje punkty do <span class="m-strong">banku rundy</span>.
         Bank jest widoczny na wyświetlaczu i rośnie wraz z kolejnymi trafieniami.
       </p>
-    
+
       <p class="m-p">
         Rozgrywka trwa do momentu, gdy:
         wszystkie odpowiedzi zostaną odsłonięte,
-        albo drużyna straci trzy „szanse” (trzy X),
+        albo drużyna straci trzy „szanse" (trzy X),
         wtedy operator zakończy etap i przejdzie do kradzieży (gdy są spełnione warunki).
       </p>
-    
+
       <h3 class="m-h3">Pudła (X) i limit 3 sekund</h3>
-    
+
       <p class="m-p">
         Błędna odpowiedź jest oznaczana symbolem <span class="m-strong">X</span> na tablicy.
         Trzy błędy oznaczają utratę kontroli i przejście do kradzieży przez przeciwników.
         System ma także mechanikę limitu czasu <span class="m-strong">3 sekund</span> na odpowiedź —
         przekroczenie limitu jest traktowane jak pudło (X).
       </p>
-    
+
       <div class="m-note">
         <b>Po co timer?</b><br/>
-        To jest „bat na tempo”. Timer pozwala operatorowi szybko zamknąć zawahanie
+        To jest „bat na tempo". Timer pozwala operatorowi szybko zamknąć zawahanie
         bez dyskusji i utrzymać rytm rozgrywki.
       </div>
-    
+
       <h3 class="m-h3">Kradzież banku (jedna odpowiedź)</h3>
-    
+
       <p class="m-p">
-        Gdy drużyna grająca wykorzysta trzy „szanse” zanim odsłoni wszystkie odpowiedzi,
+        Gdy drużyna grająca wykorzysta trzy „szanse" zanim odsłoni wszystkie odpowiedzi,
         pytanie przechodzi do drużyny przeciwnej.
         Przeciwnicy mają prawo do <span class="m-strong">jednej odpowiedzi</span>:
         jeśli trafi — bank przechodzi do nich,
         jeśli nie — bank zostaje u drużyny grającej.
         To domyka pytanie i rundę zgodnie z regulaminem.
       </p>
-    
+
       <h3 class="m-h3">Odsłanianie brakujących odpowiedzi i zakończenie rundy</h3>
-    
+
       <p class="m-p">
-        Po rozstrzygnięciu pytania operator może odsłonić brakujące odpowiedzi „informacyjnie”,
+        Po rozstrzygnięciu pytania operator może odsłonić brakujące odpowiedzi „informacyjnie",
         żeby widzowie zobaczyli pełną tablicę.
         Następnie operator kończy rundę: bank jest dopisywany właściwej drużynie,
         z uwzględnieniem mnożnika rundy.
       </p>
-    
+
       <div class="m-note">
         <b>Praktyczna uwaga:</b><br/>
-        Panel celowo rozdziela „rozgrywkę pytania” od „zakończenia rundy”.
+        Panel celowo rozdziela „rozgrywkę pytania" od „zakończenia rundy".
         Dzięki temu operator nie skasuje przypadkiem stanu tablicy,
-        zanim prowadzący dopowie puentę lub zanim padnie „dziękujemy”.
+        zanim prowadzący dopowie puentę lub zanim padnie „dziękujemy".
       </div>
 
       <h3 class="m-h3">Zakończenie rund i przejście dalej</h3>
-      
+
       <p class="m-p">
         Po każdej rundzie system aktualizuje wynik drużyn i sprawdza,
-        czy spełniono warunek zakończenia rozgrywki (ustawiony w „Dodatkowych ustawieniach”).
+        czy spełniono warunek zakończenia rozgrywki (ustawiony w „Dodatkowych ustawieniach").
         Najczęściej jest to próg punktów, np. <span class="m-strong">300</span>,
         ale może być inny — zależnie od tego, jak chcesz poprowadzić turniej.
       </p>
-      
+
       <p class="m-p">
         Jeśli finał jest <span class="m-strong">włączony</span>, a warunek zakończenia rund został spełniony,
         rozgrywka przechodzi do finału.
         Jeśli finał jest <span class="m-strong">wyłączony</span>, rozgrywka kończy się po rundach
         i system przechodzi do ekranu zakończenia (logo/punkty/kwota — zgodnie z ustawieniami).
       </p>
-      
+
       <div class="m-warn">
         <b>Uwaga:</b><br/>
         Jeśli w trakcie rozgrywki skończą się pytania,
@@ -2071,7 +2015,7 @@ const pl = {
         Wtedy rozgrywka przejdzie do finału (jeśli jest włączony)
         albo do zakończenia gry (jeśli finał jest wyłączony).
       </div>
-    
+
     <h3 class="m-h2">4) Finał</h3>
 
       <p class="m-p">
@@ -2081,45 +2025,45 @@ const pl = {
         a ich punkty sumują się. Celem jest osiągnięcie progu finału
         (domyślnie <span class="m-strong">200 punktów</span>, chyba że ustawiono inaczej).
       </p>
-      
+
       <h3 class="m-h3">Przygotowanie finału</h3>
-      
+
       <p class="m-p">
         Zanim rozpoczniesz finał, w ustawieniach gry musisz mieć wybrane i zatwierdzone
         <span class="m-strong">dokładnie 5 pytań finałowych</span>.
         Dzięki temu finał jest gotowy do poprowadzenia bez szukania pytań w trakcie.
       </p>
-      
+
       <p class="m-p">
         W finale bardzo ważne jest, żeby drugi zawodnik nie znał odpowiedzi pierwszego.
         Dlatego w czasie rundy pierwszego zawodnika drugi zawodnik
         <span class="m-strong">oddala się i zakłada słuchawki z muzyką</span>,
         żeby nie słyszeć pytań ani odpowiedzi.
       </p>
-      
+
       <h3 class="m-h3">Runda 1 – pierwszy zawodnik (15 sekund)</h3>
-      
+
       <p class="m-p">
         Prowadzący czyta po kolei pięć pytań, a pierwszy zawodnik odpowiada w limicie
         <span class="m-strong">15 sekund</span>.
         Operator w tym czasie <span class="m-strong">wpisuje odpowiedzi</span> w panelu finału.
         Na tym etapie odpowiedzi nie są jeszcze oceniane ani odsłaniane.
       </p>
-      
+
       <p class="m-p">
         Po zakończeniu rundy operator przypisuje wpisane odpowiedzi do listy punktowanych wyników
         i <span class="m-strong">odsłania je na tablicy</span>.
         Jeśli odpowiedź nie pasuje do żadnej pozycji z listy,
         otrzymuje <span class="m-strong">0 punktów</span>.
       </p>
-      
+
       <p class="m-p">
         Po odsłonięciu odpowiedzi pierwszego zawodnika system ukrywa jego połowę tablicy,
         a prowadzący przygotowuje wejście drugiego zawodnika i przypomina zasady finału.
       </p>
-      
+
       <h3 class="m-h3">Runda 2 – drugi zawodnik (20 sekund) i powtórki</h3>
-      
+
       <p class="m-p">
         Drugi zawodnik wraca do gry i odpowiada na te same pytania w limicie
         <span class="m-strong">20 sekund</span>.
@@ -2127,29 +2071,29 @@ const pl = {
         drugi zawodnik <span class="m-strong">odwraca się</span>,
         żeby ich nie widzieć i nie sugerować się nimi.
       </p>
-      
+
       <p class="m-p">
         Operator znów najpierw wpisuje wszystkie odpowiedzi drugiego zawodnika,
-        bez odsłaniania i bez oceniania „na bieżąco”.
+        bez odsłaniania i bez oceniania „na bieżąco".
         Jeśli druga osoba poda odpowiedź identyczną jak pierwsza,
         jest to <span class="m-strong">powtórka</span> — zawodnik musi podać inną odpowiedź,
         a operator może oznaczyć tę próbę jako powtórzoną.
         Odpowiedzi powtórzone nie dają punktów. Zaprezentować dźwiek powtórzenia można przed rozpoczęciem 2 rundy, żeby gracz wiedział jak to będzie brzmiało podczas rozgrywki.</p>
-      
+
       <p class="m-p">
         Po zakończeniu rundy operator przypisuje odpowiedzi drugiego zawodnika do listy punktowanych wyników
         i <span class="m-strong">odsłania je po kolei</span> na tablicy.
         Punkty obu zawodników sumują się.
       </p>
-      
+
       <h3 class="m-h3">Kiedy finał się kończy</h3>
-      
+
       <p class="m-p">
         Finał kończy się w momencie, gdy łączna liczba punktów osiągnie lub przekroczy
         ustalony próg. Może się zdarzyć, że próg zostanie osiągnięty już po turze pierwszego zawodnika
         — wtedy drugi zawodnik nie musi już grać, a rozgrywka przechodzi od razu do zakończenia.
       </p>
-      
+
       <p class="m-p">
         Po zakończeniu finału system wyświetla ekran końcowy zgodnie z ustawieniami zakończenia gry:
         <span class="m-strong">logo</span>, <span class="m-strong">punkty</span> albo
