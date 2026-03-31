@@ -6,7 +6,7 @@ import { t } from "../../translation/translation.js?v=435d2210";
 import { sb } from "../../js/core/supabase.js?v=ece3a0c0";
 
 export function initImageEditor(ctx) {
-  const TYPE_PIX = "PIX_150x70";
+  const TYPE_PIX = ctx.TYPE_PIX || "PIX_150x70";
 
   // =========================================================
   // DOM (ID muszą pasować do HTML)

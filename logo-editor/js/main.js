@@ -12,10 +12,10 @@ import { getUiLang, initI18n, t, withLangParam } from "../../translation/transla
 import { initTopbarAccountDropdown } from "../../js/core/topbar-controller.js?v=78fbf2a5";
 import { isMobileDevice } from "../../js/core/pwa.js?v=31d73fc2";
 
-import { initTextEditor } from "./text.js?v=50b560c4";
-import { initTextPixEditor } from "./text-pix.js?v=a0253156";
+import { initTextEditor } from "./text.js?v=2038d5d5";
+import { initTextPixEditor } from "./text-pix.js?v=6a7f25c7";
 import { initDrawEditor } from "./draw.js?v=5c6eaf07";
-import { initImageEditor } from "./image.js?v=ac81e2ca";
+import { initImageEditor } from "./image.js?v=fcd8d293";
 
 window.addEventListener("error", (e) => {
   console.error("window error", e.error || e.message);
@@ -1409,6 +1409,8 @@ async function boot(){
     DOT_H,
     getThreshold: () => 128,
     getDither: () => false,
+    TYPE_GLYPH,
+    TYPE_PIX,
   };
 
    textEditor = initTextEditor(editorCtx);

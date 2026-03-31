@@ -13,6 +13,8 @@ export function initTextEditor(ctx) {
   const charsInline = document.getElementById("charsInline");
   const charsList = document.getElementById("charsList");
 
+  const TYPE_GLYPH = ctx.TYPE_GLYPH || "GLYPH_30x10";
+
 
   const CYRILLIC_UK = new Set([
     "А","Б","В","Г","Ґ","Д","Е","Є","Ж","З","И","І","Й","К","Л","М",

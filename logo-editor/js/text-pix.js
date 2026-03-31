@@ -4,7 +4,7 @@
 import { t } from "../../translation/translation.js?v=435d2210";
 
 export function initTextPixEditor(ctx) {
-  const TYPE_PIX = "PIX_150x70";
+  const TYPE_PIX = ctx.TYPE_PIX || "PIX_150x70";
 
   let SYSTEM_FONTS = [];
 
