@@ -599,9 +599,15 @@ function drawDot(ctx, cx, cy, r, on){
 }
 
 function resolve5x7(ch){
-  const g = GLYPH_5x7?.[ch] ?? GLYPH_5x7?.[String(ch||"").toUpperCase()] ?? null;
-  if (!g) return [0,0,0,0,0,0,0];
-  return g;
+  if (!GLYPH_5x7) return [0,0,0,0,0,0,0];
+  let v = GLYPH_5x7.get(ch) ?? GLYPH_5x7.get(String(ch||"").toUpperCase()) ?? null;
+  if (!v) return [0,0,0,0,0,0,0];
+  // obsługa aliasów "@"
+  while (typeof v === "string" && v.startsWith("@")) {
+    v = GLYPH_5x7.get(v.slice(1)) ?? null;
+    if (!v) return [0,0,0,0,0,0,0];
+  }
+  return v;
 }
 
 function renderRows30x10ToBig(rows10, canvas){
