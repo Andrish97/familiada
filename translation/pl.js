@@ -1652,7 +1652,7 @@ const pl = {
         będą dostępne w Panelu sterowania i można będzie wybrać, którego chcesz użyć w danej rozgrywce.
       </div>
 
-      <h3 class="m-h2">Tryby tworzenia logo</h3>
+      <h3 class="m-h3">Tryby tworzenia logo</h3>
 
       <p class="m-p">
         Podczas tworzenia nowego logo wybierasz jeden z trybów.
@@ -1679,7 +1679,7 @@ const pl = {
         </li>
       </ul>
 
-      <h3 class="m-h2">Podgląd na wyświetlaczu</h3>
+      <h3 class="m-h3">Podgląd na wyświetlaczu</h3>
 
       <p class="m-p">
         W edytorze cały czas widzisz podgląd „jak na tablicy".
@@ -1693,7 +1693,7 @@ const pl = {
         Cienkie linie, małe detale i delikatne przejścia zwykle znikają.
       </div>
 
-      <h3 class="m-h2">Zapis i aktywne logo</h3>
+      <h3 class="m-h3">Zapis i aktywne logo</h3>
 
       <p class="m-p">
         Logo możesz zapisać pod własną nazwą. Na liście logotypów możesz też ustawić,
@@ -1706,7 +1706,7 @@ const pl = {
         <span class="m-strong">domyślnego logo</span>.
       </p>
 
-      <h3 class="m-h2">Import i eksport logo</h3>
+      <h3 class="m-h3">Import i eksport logo</h3>
 
       <p class="m-p">
         Edytor pozwala eksportować aktywne logo do pliku oraz importować logo z pliku.
