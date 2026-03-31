@@ -474,6 +474,7 @@ const en = {
     title: "Familiada — buzzer",
     btnA: "Buzzer A",
     btnB: "Buzzer B",
+    rotateHint: "Rotate device to landscape",
   },
   bases: {
     title: "Familiada — question bases",

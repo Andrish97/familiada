@@ -474,6 +474,7 @@ const uk = {
     title: "Familiada — кнопка",
     btnA: "Кнопка A",
     btnB: "Кнопка B",
+    rotateHint: "Поверніть пристрій горизонтально",
   },
   bases: {
     title: "Familiada — бази питань",

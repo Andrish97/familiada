@@ -474,6 +474,7 @@ const pl = {
     title: "Familiada — przycisk",
     btnA: "Przycisk A",
     btnB: "Przycisk B",
+    rotateHint: "Obróć urządzenie do poziomu",
   },
   bases: {
     title: "Familiada — bazy pytań",
