@@ -2332,6 +2332,7 @@ export async function createScene() {
             ACTIVE_LOGO = null;
             console.log("[logo] RELOAD: brak aktywnego logo -> fallback");
           }
+          try { api.logo.draw(); } catch (e) { console.warn("[logo] draw after RELOAD failed:", e); }
         }).catch(e => console.warn("[logo] RELOAD failed:", e));
         return;
       }

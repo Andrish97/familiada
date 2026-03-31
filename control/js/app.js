@@ -493,6 +493,17 @@ async function sendZeroStatesToDevices() {
     if (elA) elA.textContent = teamA;
     if (elB) elB.textContent = teamB;
 
+    // podgląd na urządzeniach: logo + przykładowe wyniki + nazwy drużyn
+    const q = (s) => `"${String(s ?? "").replace(/"/g, "'")}"`;
+    devices.sendDisplayCmd(`LOGO RELOAD`).catch(() => {});
+    devices.sendDisplayCmd(`LEFT 123`).catch(() => {});
+    devices.sendDisplayCmd(`RIGHT 123`).catch(() => {});
+    devices.sendDisplayCmd(`TOP 1`).catch(() => {});
+    devices.sendDisplayCmd(`LONG1 ${q(teamA)}`).catch(() => {});
+    devices.sendDisplayCmd(`LONG2 ${q(teamB)}`).catch(() => {});
+    devices.sendHostCmd(`SET1 ${q(teamA)}`).catch(() => {});
+    devices.sendHostCmd(`SET2 ${q(teamB)}`).catch(() => {});
+
     // załaduj czcionkę (raz) i wyrenderuj grid
     if (!_logoFont) {
       try { _logoFont = await loadFont5x7(); } catch (e) { console.warn("[logo] font load failed", e); }
@@ -600,6 +611,14 @@ async function sendZeroStatesToDevices() {
     await devices.sendDisplayCmd("LOGO RELOAD").catch(() => {});
   }
   
+  async function leaveSetupLook() {
+    if (!devices) return;
+    // zgaś podgląd na urządzeniach (przejście do setup_game)
+    await devices.sendDisplayCmd("APP BLACK").catch(() => {});
+    await devices.sendBuzzerCmd("OFF").catch(() => {});
+    await devices.sendHostCmd("CLEAR").catch(() => {});
+  }
+
   async function enterSetupGame() {
     // synchronizacja stanu z UI przy wejściu
     syncGameSettingsUI();
@@ -1136,6 +1155,9 @@ async function sendZeroStatesToDevices() {
 
     if (inSetupLook && !wasInSetupLook) {
       enterSetupLook().catch(() => {});
+    }
+    if (!inSetupLook && wasInSetupLook) {
+      leaveSetupLook().catch(() => {});
     }
     wasInSetupLook = inSetupLook;
 

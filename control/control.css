@@ -8,6 +8,11 @@
     flex: 1 0 auto;
 }
 
+/* Footer w control: rozciągnij pełną szerokość (base.css ma align-self:end dla kontekstów grid) */
+.wrap.wide > .footer {
+    align-self: stretch;
+}
+
 /* =========================================================
    SECTION BLOCKS (w stepach setup_game)
 ========================================================= */
