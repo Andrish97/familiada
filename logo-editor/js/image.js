@@ -3,7 +3,7 @@
 
 import { alertModal } from "../../js/core/modal.js?v=ac8dd44a";
 import { t } from "../../translation/translation.js?v=435d2210";
-import { sb } from "../../js/core/supabase.js?v=525e648f";
+import { sb } from "../../js/core/supabase.js?v=ece3a0c0";
 
 export function initImageEditor(ctx) {
   const TYPE_PIX = "PIX_150x70";
