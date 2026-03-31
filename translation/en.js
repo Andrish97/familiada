@@ -3673,6 +3673,8 @@ const en = {
     create: {
       title: "New logo",
       subtitle: "Choose creation mode.",
+      nameModalTitle: "New logo",
+      nameModalSub: "Enter logo name.",
       textTitle: "Text art",
       textSubtitle: "Font like the classic Familiada logo",
       textPixTitle: "Text",
@@ -3697,6 +3699,7 @@ const en = {
       placeholder: "Name...",
       emptyError: "Name cannot be empty.",
       failed: "Failed to rename.",
+      createFailed: "Failed to create logo.",
     },
     import: {
       title: "Import logo",
@@ -3736,6 +3739,7 @@ const en = {
       imported: "Logo imported.",
       settingActive: "Setting active…",
       activeSet: "Active set.",
+      created: "New logo created.",
     },
     errors: {
       saveFailed: "Can't save.",
@@ -3754,6 +3758,8 @@ const en = {
       invalidPixFormat: "Invalid PIX format.",
       unknownLogoFormat: "Unknown logo import format.",
       deleteFailed: "Couldn't delete.\n\n{error}",
+      createFailedDetailed: "Couldn't create.\n\n{error}",
+      invalidType: "Unknown logo type.",
     },
     defaults: {
       logoName: "Default logo",

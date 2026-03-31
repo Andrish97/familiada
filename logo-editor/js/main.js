@@ -12,10 +12,10 @@ import { getUiLang, initI18n, t, withLangParam } from "../../translation/transla
 import { initTopbarAccountDropdown } from "../../js/core/topbar-controller.js?v=78fbf2a5";
 import { isMobileDevice } from "../../js/core/pwa.js?v=31d73fc2";
 
-import { initTextEditor } from "./text.js?v=8e6b8023";
-import { initTextPixEditor } from "./text-pix.js?v=3fdb9e2b";
-import { initDrawEditor } from "./draw.js?v=e537832f";
-import { initImageEditor } from "./image.js?v=7bd1cc4d";
+import { initTextEditor } from "./text.js?v=50b560c4";
+import { initTextPixEditor } from "./text-pix.js?v=a0253156";
+import { initDrawEditor } from "./draw.js?v=5c6eaf07";
+import { initImageEditor } from "./image.js?v=ac81e2ca";
 
 window.addEventListener("error", (e) => {
   console.error("window error", e.error || e.message);
@@ -262,6 +262,53 @@ function makeUniqueName(baseName, excludeId = null){
     i++;
   }
   return `${base} (${Date.now()})`;
+}
+
+async function createNewLogoWithType(type, mode, name){
+  try{
+    let payload = null;
+    
+    if (type === TYPE_GLYPH){
+      // Puste logo GLYPH - 10 wierszy po 30 znaków
+      payload = {
+        layers: [{ color: "main", rows: Array.from({ length: 10 }, () => " ".repeat(30)) }],
+        source: { mode }
+      };
+    } else if (type === TYPE_PIX){
+      // Puste logo PIX - 150x70 bitów (same zera)
+      payload = {
+        w: DOT_W,
+        h: DOT_H,
+        format: "BITPACK_MSB_FIRST_ROW_MAJOR",
+        bits_b64: packBitsRowMajorMSB(new Uint8Array(DOT_W * DOT_H), DOT_W, DOT_H),
+        source: { mode }
+      };
+    }
+    
+    if (!payload){
+      throw new Error(t("logoEditor.errors.invalidType"));
+    }
+    
+    const row = {
+      user_id: currentUser.id,
+      name,
+      type,
+      is_active: false,
+      payload
+    };
+    
+    const newId = await createLogo(row);
+    await refresh();
+    
+    // Zaznacz nowo utworzone logo
+    selectedKey = newId;
+    updateListButtons();
+    
+    setMsg(t("logoEditor.status.created"));
+  } catch(e){
+    console.error(e);
+    void alertModal({ text: t("logoEditor.errors.createFailedDetailed", { error: e?.message || e }) });
+  }
 }
 
 function isUniqueViolation(e){
@@ -781,6 +828,8 @@ async function deleteLogo(id){
 ========================================================= */
 let renameMode = "rename";
 let renameLogoId = null;
+let createModeType = null;  // typ logo podczas tworzenia: TYPE_GLYPH lub TYPE_PIX
+let createModeMode = null;  // tryb edytora: "TEXT", "TEXT_PIX", "DRAW", "IMAGE"
 
 function openRenameModal(logo){
   renameMode = "rename";
@@ -793,7 +842,24 @@ function openRenameModal(logo){
   setTimeout(() => renameInput.select(), 0);
 }
 
+function openCreateModal(type, mode){
+  createModeType = type;
+  createModeMode = mode;
+  renameMode = "create";
+  renameLogoId = null;
+  setMsg(renameMsg, "");
+  renameTitle.textContent = t("logoEditor.create.nameModalTitle");
+  renameSub.textContent = t("logoEditor.create.nameModalSub");
+  renameInput.value = "";
+  show(renameOverlay, true);
+  setTimeout(() => renameInput.focus(), 0);
+}
+
 function closeRenameModal(){
+  renameLogoId = null;
+  createModeType = null;
+  createModeMode = null;
+  renameMode = "rename";
   show(renameOverlay, false);
 }
 
@@ -805,14 +871,18 @@ async function renameOk(){
     return;
   }
   try{
-    if (renameMode === "rename" && renameLogoId){
+    if (renameMode === "create"){
+      // Tworzenie nowego logo z podaną nazwą
+      await createNewLogoWithType(createModeType, createModeMode, val);
+    } else if (renameMode === "rename" && renameLogoId){
+      // Zmiana nazwy istniejącego logo
       await updateLogo(renameLogoId, { name: val });
     }
     await refresh();
     closeRenameModal();
   }catch(e){
     console.error(e);
-    setMsg(renameMsg, t("logoEditor.rename.failed"));
+    setMsg(renameMsg, renameMode === "create" ? t("logoEditor.errors.createFailed") : t("logoEditor.rename.failed"));
   }
 }
 
@@ -1498,11 +1568,23 @@ async function boot(){
      openPreviewFullscreen(payload);
    });
    
-  // modal wyboru trybu
-  pickText?.addEventListener("click", () => { show(createOverlay, false); openEditor("TEXT"); });
-  pickTextPix?.addEventListener("click", () => { show(createOverlay, false); openEditor("TEXT_PIX"); });
-  pickDraw?.addEventListener("click", () => { show(createOverlay, false); openEditor("DRAW"); });
-  pickImage?.addEventListener("click", () => { show(createOverlay, false); openEditor("IMAGE"); });
+  // modal wyboru trybu - otwiera modal z nazwą, nie tworzy od razu
+  pickText?.addEventListener("click", () => {
+    show(createOverlay, false);
+    openCreateModal(TYPE_GLYPH, "TEXT");
+  });
+  pickTextPix?.addEventListener("click", () => {
+    show(createOverlay, false);
+    openCreateModal(TYPE_PIX, "TEXT_PIX");
+  });
+  pickDraw?.addEventListener("click", () => {
+    show(createOverlay, false);
+    openCreateModal(TYPE_PIX, "DRAW");
+  });
+  pickImage?.addEventListener("click", () => {
+    show(createOverlay, false);
+    openCreateModal(TYPE_PIX, "IMAGE");
+  });
 
   btnPickCancel?.addEventListener("click", () => show(createOverlay, false));
   createOverlay?.addEventListener("click", (ev) => { if (ev.target === createOverlay) show(createOverlay, false); });

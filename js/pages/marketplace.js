@@ -239,7 +239,6 @@ async function openDetail(id, { fromUrl = false } = {}) {
   }
 
   // Rating display + input
-  const detailRating = document.getElementById("detailRating");
   if (detailRating) {
     detailRating.innerHTML = "";
     const summary = document.createElement("div");

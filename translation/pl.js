@@ -3522,6 +3522,7 @@ const pl = {
       updated: "Zaktualizowano.",
       fixingName: "Naprawianie nazwy...",
       imported: "Zaimportowano.",
+      created: "Utworzono nowe logo.",
     },
     editor: {
       nameLabel: "Nazwa",
@@ -3661,6 +3662,8 @@ const pl = {
     create: {
       title: "Nowe logo",
       subtitle: "Wybierz tryb tworzenia.",
+      nameModalTitle: "Nowe logo",
+      nameModalSub: "Podaj nazwę logo.",
       textTitle: "Napis",
       textSubtitle: "Font jak w klasycznym logo Familiady",
       textPixTitle: "Tekst",
@@ -3685,6 +3688,7 @@ const pl = {
       placeholder: "Nazwa...",
       emptyError: "Nazwa nie może być pusta.",
       failed: "Nie udało się zmienić nazwy.",
+      createFailed: "Nie udało się utworzyć logo.",
     },
     import: {
       title: "Import logo",
@@ -3742,6 +3746,8 @@ const pl = {
       invalidPixFormat: "Niepoprawny format PIX.",
       unknownLogoFormat: "Nieznany format importu logo.",
       deleteFailed: "Nie udało się usunąć.\n\n{error}",
+      createFailedDetailed: "Nie udało się utworzyć.\n\n{error}",
+      invalidType: "Nieznany typ logo.",
     },
     defaults: {
       logoName: "Domyślne logo",

@@ -3547,6 +3547,8 @@ const uk = {
     create: {
       title: "Новий логотип",
       subtitle: "Обери режим створення.",
+      nameModalTitle: "Новий логотип",
+      nameModalSub: "Введи назву логотипу.",
       textTitle: "Напис",
       textSubtitle: "Шрифт як у класичному логотипі Familiady",
       textPixTitle: "Текст",
@@ -3571,6 +3573,7 @@ const uk = {
       placeholder: "Назва...",
       emptyError: "Назва не може бути порожньою.",
       failed: "Не вдалося змінити назву.",
+      createFailed: "Не вдалося створити логотип.",
     },
     import: {
       title: "Імпорт лого",
@@ -3610,6 +3613,7 @@ const uk = {
       imported: "Логотип імпортовано.",
       settingActive: "Встановлюю активний…",
       activeSet: "Активний встановлено.",
+      created: "Нове лого створено.",
     },
     errors: {
       saveFailed: "Не можу зберегти.",
@@ -3628,6 +3632,8 @@ const uk = {
       invalidPixFormat: "Некоректний формат PIX.",
       unknownLogoFormat: "Невідомий формат імпорту логотипу.",
       deleteFailed: "Не вдалося видалити.\n\n{error}",
+      createFailedDetailed: "Не вдалося створити.\n\n{error}",
+      invalidType: "Невідомий тип логотипу.",
     },
     defaults: {
       logoName: "Логотип за замовчуванням",
