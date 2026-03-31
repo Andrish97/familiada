@@ -4,6 +4,10 @@
     width: 90%
 }
 
+.wrap.wide > .shell {
+    flex: 1 0 auto;
+}
+
 /* =========================================================
    SECTION BLOCKS (w stepach setup_game)
 ========================================================= */
@@ -674,6 +678,7 @@
     flex-direction: column;
     gap: 10px;
     flex: 1;
+    padding-bottom: 12px;
 }
 
 .card {

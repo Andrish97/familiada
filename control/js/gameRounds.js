@@ -1469,7 +1469,7 @@ function hostUpdate() {
     const r = store.state.rounds;
 
     ui.setRoundsHud(r);
-    ui.showRoundsStep(r.step || "r_ready");
+    ui.showRoundsStep(r.step || "r_intro");
 
     if (r.question && Array.isArray(r.answers) && r.answers.length > 0) {
       ui.setRoundQuestion(r.question.text || t("control.dash"));

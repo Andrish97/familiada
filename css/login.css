@@ -21,6 +21,7 @@ html:has(.login-body) {
     font-family: system-ui, -apple-system, Segoe UI, sans-serif;
     color: #fff;
     display: grid;
+    grid-template-rows: 1fr auto;
     place-items: center;
     background: transparent;
     /* Scroll w body → overscroll iOS nie ujawnia tła html */

@@ -802,6 +802,10 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
           if (!rt.p1[i].text.trim()) row.outText = "";
         }
 
+        if (rt.timer.running && rt.timer.phase === "P1") {
+          setTimerBtnEnabled("P1", allFilledP1());
+        }
+
         hostUpdate();
       });
 
@@ -826,8 +830,13 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     });
 
     ui.setEnabled("btnFinalToP1MapQ1", !rt.timer.running && rt.timer.usedP1);
-    setTimerBtnEnabled("P1", !rt.timer.usedP1 || (rt.timer.running && rt.timer.phase === "P1"));
-    setTimerBtnLabel("P1", rt.timer.running && rt.timer.phase === "P1" ? "stop" : "start");
+    if (rt.timer.running && rt.timer.phase === "P1") {
+      setTimerBtnEnabled("P1", allFilledP1());
+      setTimerBtnLabel("P1", "stop");
+    } else {
+      setTimerBtnEnabled("P1", !rt.timer.usedP1);
+      setTimerBtnLabel("P1", "start");
+    }
   }
 
   function renderP2Entry() {
@@ -891,6 +900,10 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
           row.kind = null;
           row.matchId = null;
           if (!rt.p2[i].text.trim()) row.outText = "";
+        }
+
+        if (rt.timer.running && rt.timer.phase === "P2") {
+          setTimerBtnEnabled("P2", allFilledP2());
         }
 
         hostUpdate();
@@ -989,8 +1002,13 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     });
 
     ui.setEnabled("btnFinalToP2MapQ1", !rt.timer.running && rt.timer.usedP2);
-    setTimerBtnEnabled("P2", !rt.timer.usedP2 || (rt.timer.running && rt.timer.phase === "P2"));
-    setTimerBtnLabel("P2", rt.timer.running && rt.timer.phase === "P2" ? "stop" : "start");
+    if (rt.timer.running && rt.timer.phase === "P2") {
+      setTimerBtnEnabled("P2", allFilledP2());
+      setTimerBtnLabel("P2", "stop");
+    } else {
+      setTimerBtnEnabled("P2", !rt.timer.usedP2);
+      setTimerBtnLabel("P2", "start");
+    }
   }
 
   // ---------------- RENDER: MAPPING ----------------

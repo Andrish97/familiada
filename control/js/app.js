@@ -401,10 +401,36 @@ async function sendZeroStatesToDevices() {
     return msg;
   });
 
-  // Próba złapania cofania w przeglądarce – ustawiamy flagę, żeby nie
-  // dublować ostrzeżenia (nie zawsze odpali przed beforeunload, ale pomaga).
-  window.addEventListener("popstate", () => {
-    suppressUnloadWarn = true;
+  // Strażnik historii: jeden dodatkowy wpis daje nam szansę na popstate
+  // zanim przeglądarka opuści stronę.
+  history.pushState({ navGuard: true }, "");
+
+  let navGuardBusy = false;
+  window.addEventListener("popstate", async () => {
+    if (navGuardBusy) {
+      // Drugie popstate wywołane przez nasze history.go — ignorujemy.
+      navGuardBusy = false;
+      return;
+    }
+    if (!shouldWarnBeforeUnload()) {
+      // Gra nie zaczęta lub już zakończona — przepuszczamy transparentnie.
+      navGuardBusy = true;
+      history.go(-1);
+      return;
+    }
+    // Blokujemy: przywróć guard i pokaż modal.
+    history.pushState({ navGuard: true }, "");
+    const confirmed = await confirmModal({
+      title: t("control.leaveTitle"),
+      text: t("control.leaveText"),
+      okText: t("control.leaveOk"),
+      cancelText: t("control.leaveCancel"),
+    });
+    if (confirmed) {
+      suppressUnloadWarn = true;
+      navGuardBusy = true;
+      history.go(-2);
+    }
   });
   window.addEventListener("pagehide", () => {
     suppressUnloadWarn = true;
@@ -1072,7 +1098,12 @@ async function sendZeroStatesToDevices() {
   // === Top bar ===
   ui.on("top.back", async () => {
     if (shouldWarnBeforeUnload()) {
-      const ok = await confirmModal({ text: APP_MSG.CONFIRM_BACK });
+      const ok = await confirmModal({
+        title: t("control.leaveTitle"),
+        text: t("control.leaveText"),
+        okText: t("control.leaveOk"),
+        cancelText: t("control.leaveCancel"),
+      });
       if (!ok) return;
     }
 
@@ -1758,13 +1789,11 @@ async function sendZeroStatesToDevices() {
   });
 
     // ROUNDS
-  ui.on("game.ready", async () => {
-    // po "Gra gotowa" blokujemy Urządzenia i Ustawienia
-    store.setGameStarted(true);
-    await rounds.stateGameReady();
-  });
-
   ui.on("game.startIntro", async () => {
+    if (!store.state.locks.gameStarted) {
+      store.setGameStarted(true);
+      await rounds.stateGameReady();
+    }
     await rounds.stateStartGameIntro();
   });
 

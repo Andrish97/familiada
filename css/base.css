@@ -270,6 +270,9 @@ main{
     opacity: .85;
     font-size: 12px;
     margin-top: auto;
+    /* stretch to full width even in grid parents (login, confirm) */
+    justify-self: stretch;
+    align-self: end;
 }
 .footer::before{
     content: "";
