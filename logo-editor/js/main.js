@@ -1473,14 +1473,20 @@ async function boot(){
    });
 
 
-   btnEdit?.addEventListener("click", () => {
+   btnEdit?.addEventListener("click", async () => {
      if (!selectedKey) return;
      const l = (logos || []).find(x => x.id === selectedKey);
      if (!l) return;
-     
-     const mode = l.type === TYPE_GLYPH ? "TEXT" : 
+
+     // Stare logo nie mają payload.source - nie można ich bezpiecznie edytować
+     if (!l.payload?.source) {
+       await alertModal({ text: t("logoEditor.errors.cannotEditOldLogo") || "To logo nie może być edytowane (zostało utworzone przed wprowadzeniem edytora). Utwórz nowe logo." });
+       return;
+     }
+
+     const mode = l.type === TYPE_GLYPH ? "TEXT" :
                   (l.payload?.source?.mode || (l.type === TYPE_PIX ? "TEXT_PIX" : "TEXT"));
-     
+
      openEditor(mode, l);
    });
 

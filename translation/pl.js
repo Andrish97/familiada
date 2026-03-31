@@ -3577,6 +3577,7 @@ const pl = {
         fontsInvalid: "fonts.json nie jest tablicą",
         fontsLoadFailed: "Błąd ładowania fontów",
         noMobileEdit: "Edycja logo nie jest dostępna na urządzeniach mobilnych.",
+        cannotEditOldLogo: "To logo nie może być edytowane (zostało utworzone przed wprowadzeniem edytora). Utwórz nowe logo.",
       },
       warnings: {
         clipped: "Wygląda na ucięte — zmniejsz rozmiar albo skróć tekst.",
