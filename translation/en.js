@@ -1925,7 +1925,7 @@ const en = {
         and the board always shows what it should at any moment.
       </p>
     
-      <h3 class="m-h3">Round start: “Game ready” and intro</h3>
+      <h3 class="m-h3">Round start: "Game ready" and intro</h3>
     
       <p class="m-p">
         When starting rounds, the panel first prepares the display (clears the board and sets the game state),
@@ -4741,8 +4741,8 @@ const en = {
       playNoMorePass: "You can't pass the question anymore this round.",
       playPassed: "Question passed. {team} now plays.",
       stealNoControl: "Can't start steal — no team in control.",
-      stealPrompt: “Steal: {team} answers. Click an answer or “X (miss)”.”,
-      stealChance: “Steal chance. {team} answers.”,
+      stealPrompt: "Steal: {team} answers. Click an answer or X (miss).",
+      stealChance: "Steal chance. {team} answers.",
       stealSuccess: "Steal successful — bank goes to the stealing team.",
       stealFail: "Steal failed — bank stays with the playing team.",
       revealNone: "No answers to reveal.",
