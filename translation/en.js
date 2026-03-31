@@ -4428,6 +4428,15 @@ const en = {
         sent: "Sent.",
         preview: "👁 Preview",
         previewTitle: "Message preview",
+        templateLabel: "Reply template",
+        templatePlaceholder: "Select template…",
+        templates: {
+          custom: "Custom",
+          greeting: "Standard greeting",
+          info: "Information",
+          resolved: "Ticket resolved",
+          pending: "Awaiting response",
+        },
       },
     },
     marketing: {

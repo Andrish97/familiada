@@ -23,6 +23,34 @@ const TOOLS_MANIFEST = "/settings-tools/tools.json";
 const POLL_MS = 15000;
 const MINUTES_MIN = 10;
 const MAIL_PROVIDERS = ["sendgrid", "brevo", "mailgun", "ses"];
+const EMAIL_TEMPLATES = {
+  custom: "",
+  greeting: `Dzień dobry,
+
+Dziękujemy za kontakt. Twoje zgłoszenie zostało przyjęte do realizacji.
+
+Pozdrawiam
+Zespół Familiada`,
+  info: `Dzień dobry,
+
+Dziękujemy za wiadomość. Wracamy z odpowiedzią wkrótce.
+
+Pozdrawiam
+Zespół Familiada`,
+  resolved: `Dzień dobry,
+
+Twoje zgłoszenie zostało rozwiązane. Jeśli masz dodatkowe pytania, odpowiedz na tę wiadomość.
+
+Pozdrawiam
+Zespół Familiada`,
+  pending: `Dzień dobry,
+
+Twoje zgłoszenie jest w trakcie realizacji. Oczekujemy na odpowiedź od zespołu technicznego.
+
+Pozdrawiam
+Zespół Familiada`,
+};
+
 const CRON_PRESETS = [
   { id: "1m", schedule: "* * * * *", minutes: 1 },
   { id: "2m", schedule: "*/2 * * * *", minutes: 2 },
@@ -2838,6 +2866,17 @@ function showCompose(defaults = {}) {
         </div>
       </div>
       
+      <div class="field" style="flex-shrink:0">
+        <label class="field-label" style="font-size:12px">${t("settings.reports.compose.templateLabel") || "Szablon odpowiedzi"}</label>
+        <select class="inp" id="composeTemplateSelect" style="width:100%;box-sizing:border-box">
+          <option value="custom">${t("settings.reports.compose.templates.custom") || "Własny"}</option>
+          <option value="greeting">${t("settings.reports.compose.templates.greeting") || "Standardowe powitanie"}</option>
+          <option value="info">${t("settings.reports.compose.templates.info") || "Informacja"}</option>
+          <option value="resolved">${t("settings.reports.compose.templates.resolved") || "Zgłoszenie rozwiązane"}</option>
+          <option value="pending">${t("settings.reports.compose.templates.pending") || "Oczekiwanie na odpowiedź"}</option>
+        </select>
+      </div>
+      
       <div class="field" style="flex:1;display:flex;flex-direction:column;min-height:0">
         <label class="field-label">${t("settings.reports.compose.message") || "Treść wiadomości"}</label>
         ${quotePosition === "before" && hasQuote ? quoteBlockHtml : ""}
@@ -2989,6 +3028,16 @@ function showCompose(defaults = {}) {
       const newRadio = document.querySelector(`input[name="composeQuotePosition"][value="${newQuotePosition}"]`);
       if (newRadio) newRadio.checked = true;
     });
+  });
+  
+  // Template select - insert template text into body
+  document.getElementById("composeTemplateSelect")?.addEventListener("change", (e) => {
+    const templateKey = e.target.value;
+    const templateText = EMAIL_TEMPLATES[templateKey] || "";
+    const bodyEl = document.getElementById("composeMessageArea");
+    if (bodyEl && templateText) {
+      bodyEl.value = templateText;
+    }
   });
 
   document.getElementById("composeQuoteToggle")?.addEventListener("change", (e) => {

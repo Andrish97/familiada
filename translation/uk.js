@@ -4302,6 +4302,15 @@ const uk = {
         sent: "Надіслано.",
         preview: "👁 Перегляд",
         previewTitle: "Перегляд повідомлення",
+        templateLabel: "Шаблон відповіді",
+        templatePlaceholder: "Обрати шаблон…",
+        templates: {
+          custom: "Власний",
+          greeting: "Стандартне привітання",
+          info: "Інформація",
+          resolved: "Звернення вирішено",
+          pending: "Очікування відповіді",
+        },
       },
     },
     marketing: {

@@ -4769,6 +4769,15 @@ const pl = {
         sent: "Wysłano.",
         preview: "👁 Podgląd",
         previewTitle: "Podgląd wiadomości",
+        templateLabel: "Szablon odpowiedzi",
+        templatePlaceholder: "Wybierz szablon…",
+        templates: {
+          custom: "Własny",
+          greeting: "Standardowe powitanie",
+          info: "Informacja",
+          resolved: "Zgłoszenie rozwiązane",
+          pending: "Oczekiwanie na odpowiedź",
+        },
       },
     },
     marketing: {
