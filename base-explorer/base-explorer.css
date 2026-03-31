@@ -1141,7 +1141,12 @@ tr.row .tag-dot[data-tip]::before {
 
 .toolbar {
     gap: 10px;
-    padding: 10px 12px
+    padding: 10px 12px;
+    position: sticky;
+    top: var(--topbar-h, 68px);
+    z-index: 100;
+    background: #090d1a;
+    border-bottom: 1px solid rgba(255,255,255,.08);
 }
 
 .tbGroup {
