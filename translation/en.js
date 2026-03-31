@@ -4288,6 +4288,9 @@ const en = {
       quotePosition: "Quote position:",
       quoteBefore: "Before reply",
       quoteAfter: "After reply",
+      previewSignatureBtn: "👁 Preview signature",
+      previewSignatureTitle: "Signature preview",
+      previewSignatureEmpty: "Signature is empty (selected 'No greeting' and 'No farewell')",
       greetingOptions: {
         none: "No greeting",
         witaj: "Hello",
@@ -4423,6 +4426,8 @@ const en = {
         replyAs: "Reply as (reply_as)",
         send: "Send",
         sent: "Sent.",
+        preview: "👁 Preview",
+        previewTitle: "Message preview",
       },
     },
     marketing: {

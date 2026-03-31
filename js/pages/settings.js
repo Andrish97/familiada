@@ -2895,11 +2895,40 @@ function showCompose(defaults = {}) {
       <input type="hidden" id="composeReportId" value="${escSetting(defaults.report_id || "")}">
       <input type="hidden" id="composeQuoteBody" value="${escSetting(defaults.quote || "")}">
       <div style="display:flex;justify-content:flex-end;gap:8px;align-items:center;padding-bottom:4px;margin-top:10px">
+        <button class="btn sm" id="btnComposePreview" type="button" data-i18n="settings.reports.compose.preview">👁 Podgląd</button>
         <span class="field-hint" id="composeSendStatus"></span>
         <button class="btn sm gold" id="btnComposeSend" type="button">${t("settings.reports.compose.send") || "Wyślij"}</button>
       </div>
     </div>`;
   document.getElementById("btnComposeSend")?.addEventListener("click", sendCompose);
+  
+  document.getElementById("btnComposePreview")?.addEventListener("click", () => {
+    const to = (document.getElementById("composeToInput")?.value || "").trim();
+    const subject = (document.getElementById("composeSubjectInput")?.value || "").trim();
+    const body = (document.getElementById("composeMessageArea")?.value || "").trim();
+    const quoteToggle = document.getElementById("composeQuoteToggle");
+    const quoteIncluded = !quoteToggle || quoteToggle.checked;
+    const quote = quoteIncluded ? ((document.getElementById("composeQuoteBody")?.value || "").trim() || null) : null;
+    
+    const quoteBlock = quote ? `<div style="margin:15px 0;padding:10px 14px;border-left:3px solid rgba(255,234,166,.35);background:rgba(0,0,0,.2);border-radius:0 8px 8px 0;font-size:12px;opacity:.65;white-space:pre-wrap">${escSetting(quote)}</div>` : "";
+    
+    const previewContent = `
+      <div style="margin-bottom:12px"><strong>Do:</strong> ${escSetting(to || "—")}</div>
+      <div style="margin-bottom:12px"><strong>Temat:</strong> ${escSetting(subject || "—")}</div>
+      <div style="margin:15px 0;padding:15px;border:1px solid rgba(255,255,255,.1);border-radius:8px;background:rgba(0,0,0,.2)">
+        ${quotePosition === "before" ? quoteBlock : ""}
+        <div style="white-space:pre-wrap;font-family:inherit;font-size:13px;line-height:1.5">${escSetting(body || "—")}</div>
+        ${quotePosition === "after" ? quoteBlock : ""}
+      </div>
+    `;
+    
+    void confirmModal({
+      title: t("settings.reports.compose.previewTitle") || "Podgląd wiadomości",
+      text: previewContent,
+      okText: "OK",
+      showCancel: false,
+    });
+  });
 
   document.getElementById("btnComposeClose")?.addEventListener("click", async () => {
     const hasData = (document.getElementById("composeToInput")?.value || "").trim()
@@ -4249,6 +4278,29 @@ function wireEvents() {
   els.btnMailReloadSettings?.addEventListener("click", async () => {
     markUserAction();
     await refreshMailTab();
+  });
+
+  document.getElementById("btnMailPreviewSignature")?.addEventListener("click", () => {
+    const greetingCustomEl = document.getElementById("mailGreetingCustom");
+    const farewellCustomEl = document.getElementById("mailFarewellCustom");
+    
+    const signatureText = buildEmailSignature({
+      greeting: mailGreetingValue,
+      farewell: mailFarewellValue,
+      greetingCustom: greetingCustomEl?.value || "",
+      farewellCustom: farewellCustomEl?.value || "",
+    });
+    
+    const previewContent = signatureText 
+      ? `<div style="white-space:pre-wrap;font-family:inherit;font-size:13px;line-height:1.5">${escSetting(signatureText)}</div>`
+      : `<div style="opacity:.5;font-style:italic">${t("settings.mail.previewSignatureEmpty") || "Podpis jest pusty"}</div>`;
+    
+    void confirmModal({
+      title: t("settings.mail.previewSignatureTitle") || "Podgląd podpisu",
+      text: previewContent,
+      okText: "OK",
+      showCancel: false,
+    });
   });
 
   els.btnMailQueueRefresh?.addEventListener("click", async () => {

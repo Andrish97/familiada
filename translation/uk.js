@@ -4162,6 +4162,9 @@ const uk = {
       quotePosition: "Позиція цитати:",
       quoteBefore: "Перед відповіддю",
       quoteAfter: "Після відповіді",
+      previewSignatureBtn: "👁 Перегляд підпису",
+      previewSignatureTitle: "Перегляд підпису",
+      previewSignatureEmpty: "Підпис порожній (вибрано 'Без привітання' і 'Без прощання')",
       greetingOptions: {
         none: "Без привітання",
         witaj: "Вітаю",
@@ -4297,6 +4300,8 @@ const uk = {
         replyAs: "Відповідь як (reply_as)",
         send: "Надіслати",
         sent: "Надіслано.",
+        preview: "👁 Перегляд",
+        previewTitle: "Перегляд повідомлення",
       },
     },
     marketing: {

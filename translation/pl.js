@@ -4630,6 +4630,9 @@ const pl = {
       quotePosition: "Pozycja cytatu:",
       quoteBefore: "Przed odpowiedzią",
       quoteAfter: "Po odpowiedzi",
+      previewSignatureBtn: "👁 Podgląd podpisu",
+      previewSignatureTitle: "Podgląd podpisu",
+      previewSignatureEmpty: "Podpis jest pusty (wybrano 'Brak powitania' i 'Brak pożegnania')",
       greetingOptions: {
         none: "Brak powitania",
         witaj: "Witaj",
@@ -4765,6 +4768,8 @@ const pl = {
         replyAs: "Odpowiedz jako (reply_as)",
         send: "Wyślij",
         sent: "Wysłano.",
+        preview: "👁 Podgląd",
+        previewTitle: "Podgląd wiadomości",
       },
     },
     marketing: {
