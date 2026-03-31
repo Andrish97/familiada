@@ -186,9 +186,24 @@ async function openDetail(id, { fromUrl = false } = {}) {
   console.log("[marketplace] openDetail id:", id);
   detailGameId = id;
 
+  // Show modal immediately with loading state
+  if (els.detailTitle) els.detailTitle.textContent = "…";
+  if (els.detailMeta) els.detailMeta.textContent = "";
+  if (els.detailDesc) els.detailDesc.textContent = "";
+  if (els.detailQuestions) els.detailQuestions.innerHTML = `<p class="mkt-no-q">${esc(t("marketplace.loading") || "Ładowanie…")}</p>`;
+  const detailRating = document.getElementById("detailRating");
+  if (detailRating) detailRating.innerHTML = "";
+  const detailRaters = document.getElementById("detailRaters");
+  if (detailRaters) { detailRaters.hidden = true; detailRaters.innerHTML = ""; }
+  if (els.btnAddLibrary) els.btnAddLibrary.hidden = true;
+  if (els.btnRemoveLibrary) els.btnRemoveLibrary.hidden = true;
+  if (els.addedBadge) els.addedBadge.hidden = true;
+  if (els.gameDetailOverlay) els.gameDetailOverlay.style.display = "";
+
   const { data, error } = await sb().rpc("market_game_detail", { p_id: id }).single();
   if (error || !data) {
     console.error("[marketplace] openDetail error:", error);
+    if (els.gameDetailOverlay) els.gameDetailOverlay.style.display = "none";
     showToast(t("marketplace.errorLoad"), "error");
     return;
   }
@@ -239,12 +254,7 @@ async function openDetail(id, { fromUrl = false } = {}) {
   }
 
   // Raters list (only visible if current user is the author — RPC returns empty otherwise)
-  const detailRaters = document.getElementById("detailRaters");
-  if (detailRaters) {
-    detailRaters.hidden = true;
-    detailRaters.innerHTML = "";
-    if (currentUser) loadRaters(id, detailRaters);
-  }
+  if (detailRaters && currentUser) loadRaters(id, detailRaters);
 
   // Przyciski biblioteki
   const inLibrary = !!g.in_library;

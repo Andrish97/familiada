@@ -58,12 +58,13 @@ export async function exportGame(gameId, onProgress) {
 
 	const { data: questions, error: qErr } = await sb()
 		.from("questions")
-		.select("id,ord,text")
+		.select("id,ord,text,answers(ord,text,fixed_points)")
 		.eq("game_id", gameId)
 		.order("ord", { ascending: true });
 	if (qErr) throw qErr;
 
 	const qs = questions || [];
+
 	const out = {
 	  game: { name: game?.name ?? t("builderImportExport.defaults.gameName"), type: exportType },
 	  questions: [],
@@ -76,23 +77,17 @@ export async function exportGame(gameId, onProgress) {
 
 	for (let idx = 0; idx < qs.length; idx++) {
 		const q = qs[idx];
-
-		const { data: answers, error: aErr } = await sb()
-			.from("answers")
-			.select("ord,text,fixed_points")
-			.eq("question_id", q.id)
-			.order("ord", { ascending: true });
-		if (aErr) throw aErr;
+		const answers = q.answers || [];
 
 		let outAnswers = [];
 
 		if (exportType === "prepared") {
-			outAnswers = (answers || []).map((a) => ({
+			outAnswers = answers.map((a) => ({
 				text: a.text,
 				fixed_points: Number(a.fixed_points) || 0,
 			}));
 		} else if (exportType === "poll_points") {
-			outAnswers = (answers || []).map((a) => ({
+			outAnswers = answers.map((a) => ({
 				text: a.text,
 				fixed_points: isDraft ? 0 : (Number(a.fixed_points) || 0),
 			}));
