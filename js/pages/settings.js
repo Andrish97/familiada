@@ -164,9 +164,12 @@ let mailLogsPerPage = 50;
 let mailCronSelect = null;
 let mailGreetingSelect = null;
 let mailFarewellSelect = null;
-let mailGreetingValue = "none";
-let mailFarewellValue = "none";
+let mailGreetingValue = "witaj";
+let mailFarewellValue = "team";
+let mailGreetingCustomValue = "";
+let mailFarewellCustomValue = "";
 let mailIncludeSignatureValue = true;
+let mailQuotePositionValue = "before";
 let mailQueueStatusSelect = null;
 let mailLogFnSelect = null;
 let mailLogLevelSelect = null;
@@ -1259,10 +1262,12 @@ function cronPresetLabel(preset) {
 function getGreetingOptions() {
   return [
     { value: "none", label: t("settings.mail.greetingOptions.none") || "Brak powitania" },
+    { value: "witaj", label: t("settings.mail.greetingOptions.witaj") || "Witaj" },
     { value: "hello", label: t("settings.mail.greetingOptions.hello") || "Dzień dobry" },
     { value: "hi", label: t("settings.mail.greetingOptions.hi") || "Cześć" },
     { value: "dearUser", label: t("settings.mail.greetingOptions.dearUser") || "Szanowny Użytkowniku" },
     { value: "dearCustomer", label: t("settings.mail.greetingOptions.dearCustomer") || "Szanowny Kliencie" },
+    { value: "custom", label: t("settings.mail.greetingOptions.custom") || "Własne..." },
   ];
 }
 
@@ -1270,28 +1275,38 @@ function getFarewellOptions() {
   return [
     { value: "none", label: t("settings.mail.farewellOptions.none") || "Brak pożegnania" },
     { value: "regards", label: t("settings.mail.farewellOptions.regards") || "Pozdrawiam" },
+    { value: "team", label: t("settings.mail.farewellOptions.team") || "Pozdrawiam\nZespół Familiada" },
     { value: "bestRegards", label: t("settings.mail.farewellOptions.bestRegards") || "Z poważaniem" },
     { value: "kindRegards", label: t("settings.mail.farewellOptions.kindRegards") || "Łączę wyrazy szacunku" },
-    { value: "team", label: t("settings.mail.farewellOptions.team") || "Zespół Familiada" },
+    { value: "custom", label: t("settings.mail.farewellOptions.custom") || "Własne..." },
   ];
 }
 
-function buildEmailSignature({ greeting = "none", farewell = "none" } = {}) {
-  const greetingText = {
-    none: "",
-    hello: t("settings.mail.greetingOptions.hello") || "Dzień dobry",
-    hi: t("settings.mail.greetingOptions.hi") || "Cześć",
-    dearUser: t("settings.mail.greetingOptions.dearUser") || "Szanowny Użytkowniku",
-    dearCustomer: t("settings.mail.greetingOptions.dearCustomer") || "Szanowny Kliencie",
-  }[greeting] || "";
+function buildEmailSignature({ greeting = "none", farewell = "none", greetingCustom = "", farewellCustom = "" } = {}) {
+  let greetingText = "";
+  if (greeting === "custom" && greetingCustom) {
+    greetingText = greetingCustom.trim();
+  } else if (greeting !== "none" && greeting !== "custom") {
+    greetingText = {
+      witaj: t("settings.mail.greetingOptions.witaj") || "Witaj",
+      hello: t("settings.mail.greetingOptions.hello") || "Dzień dobry",
+      hi: t("settings.mail.greetingOptions.hi") || "Cześć",
+      dearUser: t("settings.mail.greetingOptions.dearUser") || "Szanowny Użytkowniku",
+      dearCustomer: t("settings.mail.greetingOptions.dearCustomer") || "Szanowny Kliencie",
+    }[greeting] || "";
+  }
   
-  const farewellText = {
-    none: "",
-    regards: t("settings.mail.farewellOptions.regards") || "Pozdrawiam",
-    bestRegards: t("settings.mail.farewellOptions.bestRegards") || "Z poważaniem",
-    kindRegards: t("settings.mail.farewellOptions.kindRegards") || "Łączę wyrazy szacunku",
-    team: t("settings.mail.farewellOptions.team") || "Zespół Familiada",
-  }[farewell] || "";
+  let farewellText = "";
+  if (farewell === "custom" && farewellCustom) {
+    farewellText = farewellCustom.trim();
+  } else if (farewell !== "none" && farewell !== "custom") {
+    farewellText = {
+      regards: t("settings.mail.farewellOptions.regards") || "Pozdrawiam",
+      team: t("settings.mail.farewellOptions.team") || "Pozdrawiam\nZespół Familiada",
+      bestRegards: t("settings.mail.farewellOptions.bestRegards") || "Z poważaniem",
+      kindRegards: t("settings.mail.farewellOptions.kindRegards") || "Łączę wyrazy szacunku",
+    }[farewell] || "";
+  }
   
   const parts = [];
   if (greetingText) parts.push(greetingText);
@@ -1363,7 +1378,13 @@ function initMailSelects() {
       value: mailGreetingValue,
       placeholder: "—",
       onChange: (val) => {
-        mailGreetingValue = String(val || "none");
+        mailGreetingValue = String(val || "witaj");
+        // Show/hide custom input
+        const customInput = document.getElementById("mailGreetingCustom");
+        if (customInput) {
+          customInput.style.display = (mailGreetingValue === "custom") ? "" : "none";
+          if (mailGreetingValue === "custom") customInput.focus();
+        }
       },
     });
   }
@@ -1374,7 +1395,13 @@ function initMailSelects() {
       value: mailFarewellValue,
       placeholder: "—",
       onChange: (val) => {
-        mailFarewellValue = String(val || "none");
+        mailFarewellValue = String(val || "team");
+        // Show/hide custom input
+        const customInput = document.getElementById("mailFarewellCustom");
+        if (customInput) {
+          customInput.style.display = (mailFarewellValue === "custom") ? "" : "none";
+          if (mailFarewellValue === "custom") customInput.focus();
+        }
       },
     });
   }
@@ -2499,7 +2526,12 @@ function renderReportThread(report, messages, attsByMsg = {}) {
   // Build signature for reply
   let replySignatureText = "";
   if (mailIncludeSignatureValue) {
-    replySignatureText = buildEmailSignature({ greeting: mailGreetingValue, farewell: mailFarewellValue });
+    replySignatureText = buildEmailSignature({
+      greeting: mailGreetingValue,
+      farewell: mailFarewellValue,
+      greetingCustom: document.getElementById("mailGreetingCustom")?.value || "",
+      farewellCustom: document.getElementById("mailFarewellCustom")?.value || "",
+    });
   }
   const signaturePlaceholder = replySignatureText ? `\n\n---\n${replySignatureText}` : "";
   
@@ -2523,7 +2555,12 @@ function renderReportThread(report, messages, attsByMsg = {}) {
     
     // Add signature if enabled
     if (mailIncludeSignatureValue) {
-      const signatureText = buildEmailSignature({ greeting: mailGreetingValue, farewell: mailFarewellValue });
+      const signatureText = buildEmailSignature({
+        greeting: mailGreetingValue,
+        farewell: mailFarewellValue,
+        greetingCustom: document.getElementById("mailGreetingCustom")?.value || "",
+        farewellCustom: document.getElementById("mailFarewellCustom")?.value || "",
+      });
       if (signatureText) {
         body = `${body}\n\n${signatureText}`;
       }
@@ -2795,6 +2832,8 @@ function showCompose(defaults = {}) {
   document.querySelectorAll(".mail-thread-item").forEach(el => el.classList.remove("active"));
 
   const hasQuote = !!defaults.quote;
+  
+  // Build quote block
   let quoteBlockHtml = "";
   if (hasQuote) {
     const dateStr = defaults.quoteDate ? new Date(defaults.quoteDate).toLocaleString("pl-PL") : "";
@@ -2802,14 +2841,25 @@ function showCompose(defaults = {}) {
     quoteBlockHtml = `<div id="composeQuoteBlock" style="margin-top:10px;padding:10px 14px;border-left:3px solid rgba(255,234,166,.35);background:rgba(0,0,0,.2);border-radius:0 8px 8px 0;font-size:12px;opacity:.65;white-space:pre-wrap;word-break:break-word">
       <div style="font-size:11px;opacity:.7;margin-bottom:6px">${fromStr}</div>${escSetting(defaults.quote)}</div>`;
   }
-
+  
   // Build signature if enabled
   let signatureText = "";
   if (mailIncludeSignatureValue) {
-    signatureText = buildEmailSignature({ greeting: mailGreetingValue, farewell: mailFarewellValue });
+    signatureText = buildEmailSignature({
+      greeting: mailGreetingValue,
+      farewell: mailFarewellValue,
+      greetingCustom: document.getElementById("mailGreetingCustom")?.value || "",
+      farewellCustom: document.getElementById("mailFarewellCustom")?.value || "",
+    });
   }
   
   const bodyWithSignature = signatureText ? `${defaults.body || ""}\n\n${signatureText}` : (defaults.body || "");
+  
+  // Determine quote position
+  const quotePosition = els.mailQuotePosition?.value || "before";
+  const mainContent = quotePosition === "before" 
+    ? `${quoteBlockHtml}<textarea class="inp" id="composeMessageArea" rows="6" style="width:100%;box-sizing:border-box;resize:vertical;margin-top:10px">${escSetting(bodyWithSignature)}</textarea>`
+    : `<textarea class="inp" id="composeMessageArea" rows="6" style="width:100%;box-sizing:border-box;resize:vertical">${escSetting(bodyWithSignature)}</textarea>${quoteBlockHtml}`;
 
   conv.innerHTML = `
     <div class="mail-compose-pane" id="composePaneInner">
@@ -2827,7 +2877,7 @@ function showCompose(defaults = {}) {
       </div>
       <div class="field" style="flex:1;display:flex;flex-direction:column">
         <label class="field-label">${t("settings.reports.compose.message") || "Treść"}</label>
-        <textarea class="inp" id="composeMessageArea" rows="6" style="width:100%;box-sizing:border-box;resize:vertical">${escSetting(bodyWithSignature)}</textarea>
+        ${mainContent}
       </div>
       <div class="field">
         <label class="field-label" style="display:flex;align-items:center;justify-content:space-between">
@@ -2842,7 +2892,6 @@ function showCompose(defaults = {}) {
         <div id="composeAttachmentList" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:6px"></div>
       </div>
       ${hasQuote ? `<label style="display:flex;align-items:center;gap:7px;font-size:12px;opacity:.55;cursor:pointer;margin-top:8px;user-select:none"><input type="checkbox" id="composeQuoteToggle" checked style="accent-color:#ffeaa6"> Dołącz cytat</label>` : ""}
-      ${quoteBlockHtml}
       <input type="hidden" id="composeReportId" value="${escSetting(defaults.report_id || "")}">
       <input type="hidden" id="composeQuoteBody" value="${escSetting(defaults.quote || "")}">
       <div style="display:flex;justify-content:flex-end;gap:8px;align-items:center;padding-bottom:4px;margin-top:10px">
@@ -3114,13 +3163,29 @@ async function loadMailSettings({ silent = false } = {}) {
     if (els.mailRunLimit) els.mailRunLimit.value = String(clampInt(settings.worker_limit, 1, 200, 25));
 
     // Load greeting/farewell settings
-    mailGreetingValue = settings.email_greeting || "none";
-    mailFarewellValue = settings.email_farewell || "none";
+    mailGreetingValue = settings.email_greeting || "witaj";
+    mailFarewellValue = settings.email_farewell || "team";
+    mailGreetingCustomValue = settings.email_greeting_custom || "";
+    mailFarewellCustomValue = settings.email_farewell_custom || "";
     mailIncludeSignatureValue = settings.email_include_signature !== false;
+    mailQuotePositionValue = settings.email_quote_position || "before";
     
     if (mailGreetingSelect) mailGreetingSelect.setValue(mailGreetingValue, { silent: true });
     if (mailFarewellSelect) mailFarewellSelect.setValue(mailFarewellValue, { silent: true });
     if (els.mailIncludeSignatureInCompose) els.mailIncludeSignatureInCompose.checked = mailIncludeSignatureValue;
+    if (els.mailQuotePosition) els.mailQuotePosition.value = mailQuotePositionValue;
+    
+    // Set custom values and show/hide inputs
+    const greetingCustomEl = document.getElementById("mailGreetingCustom");
+    const farewellCustomEl = document.getElementById("mailFarewellCustom");
+    if (greetingCustomEl) {
+      greetingCustomEl.value = mailGreetingCustomValue;
+      greetingCustomEl.style.display = (mailGreetingValue === "custom") ? "" : "none";
+    }
+    if (farewellCustomEl) {
+      farewellCustomEl.value = mailFarewellCustomValue;
+      farewellCustomEl.style.display = (mailFarewellValue === "custom") ? "" : "none";
+    }
 
     mailCronSupported = cron?.supported !== false;
     const selectedPreset =
@@ -3171,7 +3236,10 @@ async function saveMailSettings() {
     worker_limit: workerLimit,
     email_greeting: mailGreetingValue,
     email_farewell: mailFarewellValue,
+    email_greeting_custom: document.getElementById("mailGreetingCustom")?.value || "",
+    email_farewell_custom: document.getElementById("mailFarewellCustom")?.value || "",
     email_include_signature: els.mailIncludeSignatureInCompose?.checked !== false,
+    email_quote_position: els.mailQuotePosition?.value || "before",
   };
 
   if (mailCronSupported && cronSchedule) {

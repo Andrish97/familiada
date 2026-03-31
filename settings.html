@@ -16,7 +16,7 @@
   <link rel="stylesheet" href="css/settings.css?v=77091899"/>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script type="module" src="js/pages/settings.js?v=141974e2" defer></script>
+  <script type="module" src="js/pages/settings.js?v=e5de5d66" defer></script>
   <script type="module" src="js/pages/generator.js?v=41218100" defer></script>
 </head>
 <body class="builder-body settings-body settings-locked no-footer-line">
@@ -218,6 +218,7 @@
                   </button>
                   <div class="ui-select-menu" role="listbox"></div>
                 </div>
+                <input class="inp" id="mailGreetingCustom" type="text" placeholder="Własne powitanie (opcjonalnie)" data-i18n-placeholder="settings.mail.greetingCustomPlaceholder" style="margin-top:6px;display:none">
               </div>
               <div class="field">
                 <label class="field-label" for="mailFarewellSelect" data-i18n="settings.mail.farewellLabel">Pożegnanie</label>
@@ -228,6 +229,7 @@
                   </button>
                   <div class="ui-select-menu" role="listbox"></div>
                 </div>
+                <textarea class="inp" id="mailFarewellCustom" rows="2" placeholder="Własne pożegnanie (opcjonalnie)" data-i18n-placeholder="settings.mail.farewellCustomPlaceholder" style="margin-top:6px;display:none;resize:vertical"></textarea>
               </div>
             </div>
             
@@ -236,6 +238,16 @@
                 <input type="checkbox" id="mailIncludeSignatureInCompose" checked/>
                 <span class="toggle-ui"></span>
                 <span class="toggle-label" data-i18n="settings.mail.includeSignatureInCompose">Automatycznie dodawaj podpis w oknie odpowiedzi</span>
+              </label>
+            </div>
+            
+            <div class="field row" style="margin-top:8px">
+              <label class="field-label" style="display:flex;align-items:center;gap:8px;font-size:12px">
+                <span data-i18n="settings.mail.quotePosition">Pozycja cytatu:</span>
+                <select class="inp" id="mailQuotePosition" style="width:auto;padding:4px 8px;font-size:12px">
+                  <option value="before" data-i18n="settings.mail.quoteBefore">Przed odpowiedzią</option>
+                  <option value="after" data-i18n="settings.mail.quoteAfter">Po odpowiedzi</option>
+                </select>
               </label>
             </div>
             
