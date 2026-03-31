@@ -15,7 +15,7 @@ import { isMobileDevice } from "../../js/core/pwa.js?v=31d73fc2";
 import { initTextEditor } from "./text.js?v=2038d5d5";
 import { initTextPixEditor } from "./text-pix.js?v=6a7f25c7";
 import { initDrawEditor } from "./draw.js?v=5c6eaf07";
-import { initImageEditor } from "./image.js?v=cdca6b56";
+import { initImageEditor } from "./image.js?v=4d219554";
 
 window.addEventListener("error", (e) => {
   console.error("window error", e.error || e.message);

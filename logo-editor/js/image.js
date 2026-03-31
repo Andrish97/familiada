@@ -529,20 +529,20 @@ export function initImageEditor(ctx) {
   function applyBestImageLayout(){
     const grid = paneImage?.querySelector?.(".imgTopGrid");
     if (!grid) return;
-  
+
     // domyślnie: responsywne zachowanie też ma znaczenie
     const vw = window.innerWidth;
-  
-    let mode = "row";
-  
+
+    let mode = "row"; // Domyślnie: lewo-prawo
+
     if (vw < 1120){
-      mode = "col";
+      mode = "col"; // Tylko na małych ekranach
     } else if (imgObj){
       const r = imgObj.naturalHeight / Math.max(1, imgObj.naturalWidth);
-      // “bardzo pionowy” obraz → stack, bo inaczej lewa karta będzie za niska
-      if (r > 1.35) mode = "col";
+      // "Bardzo pionowy" obraz → stack (tylko ekstremalne przypadki)
+      if (r > 2.0) mode = "col"; // Zwiększono próg z 1.35 na 2.0
     }
-  
+
     grid.classList.toggle("is-row", mode === "row");
     grid.classList.toggle("is-col", mode === "col");
   }
