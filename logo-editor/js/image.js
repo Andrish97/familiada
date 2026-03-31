@@ -837,6 +837,23 @@ export function initImageEditor(ctx) {
         };
         img.onerror = (e) => {
           console.error("[image.open] Failed to load image:", source.imageUrl, e);
+          // Spróbuj bez crossOrigin dla lokalnych plików
+          console.log("[image.open] Retrying without crossOrigin...");
+          const img2 = new Image();
+          img2.onload = () => {
+            console.log("[image.open] Retry succeeded");
+            imgObj = img2;
+            if (imgPreview) {
+              imgPreview.style.display = "block";
+              imgPreview.src = source.imageUrl;
+              if (cropFrame) cropFrame.style.display = "block";
+            }
+            applyBestImageLayout();
+          };
+          img2.onerror = (e2) => {
+            console.error("[image.open] Retry also failed", e2);
+          };
+          img2.src = source.imageUrl;
         };
         img.src = source.imageUrl;
       } else {
@@ -882,17 +899,29 @@ export function initImageEditor(ctx) {
           if (!user) throw new Error(t("logoEditor.image.errors.notLogged"));
 
           const ext = imgFileObj.name.split(".").pop() || "png";
-          const path = `${user.id}/${Date.now()}.${ext}`;
+          const safeName = `${Date.now()}.${ext}`;
+          const path = `${user.id}/${safeName}`;
 
-          console.log("[image.getCreatePayload] Uploading image to path:", path);
+          console.log("[image.getCreatePayload] Uploading image to path:", path, "file size:", imgFileObj.size, "bytes");
 
-          const { data, error } = await sb().storage.from("user-logos").upload(path, imgFileObj);
+          const { data, error } = await sb().storage.from("user-logos").upload(path, imgFileObj, {
+            cacheControl: '3600',
+            upsert: false
+          });
+          
           if (error) {
+            console.error("[image.getCreatePayload] Upload error:", error);
              // Jeśli bucket nie istnieje, spróbuj stworzyć (może zadziała jeśli user ma uprawnienia)
              if (error.message?.includes("bucket not found")) {
                await sb().storage.createBucket("user-logos", { public: true });
-               const retry = await sb().storage.from("user-logos").upload(path, imgFileObj);
-               if (retry.error) throw retry.error;
+               const retry = await sb().storage.from("user-logos").upload(path, imgFileObj, {
+                 cacheControl: '3600',
+                 upsert: false
+               });
+               if (retry.error) {
+                 console.error("[image.getCreatePayload] Retry upload error:", retry.error);
+                 throw retry.error;
+               }
                source.imageUrl = sb().storage.from("user-logos").getPublicUrl(path).data.publicUrl;
                console.log("[image.getCreatePayload] Bucket created, image uploaded, URL:", source.imageUrl);
              } else {
@@ -901,6 +930,7 @@ export function initImageEditor(ctx) {
           } else {
             source.imageUrl = sb().storage.from("user-logos").getPublicUrl(path).data.publicUrl;
             console.log("[image.getCreatePayload] Image uploaded, URL:", source.imageUrl);
+            console.log("[image.getCreatePayload] Upload data:", data);
           }
           imgFileObj = null; // wrzucone
         } catch (e) {
