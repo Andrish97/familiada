@@ -4591,6 +4591,10 @@ const pl = {
         date: "Data",
         actions: "Akcje",
       },
+      producerRatingsTitle: "Oceny gier producenta",
+      producerRatingsColCount: "Ocen",
+      producerRatingsColAdded: "Dodań",
+      producerRatersBtnView: "Oceniający",
     },
     reports: {
       title: "Zgłoszenia",

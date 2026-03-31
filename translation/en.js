@@ -4271,6 +4271,10 @@ const en = {
         date: "Date",
         actions: "Actions",
       },
+      producerRatingsTitle: "Producer game ratings",
+      producerRatingsColCount: "Ratings",
+      producerRatingsColAdded: "Added",
+      producerRatersBtnView: "Raters",
     },
     reports: {
       title: "Reports",

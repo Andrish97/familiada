@@ -4145,6 +4145,10 @@ const uk = {
         date: "Дата",
         actions: "Дії",
       },
+      producerRatingsTitle: "Оцінки ігор виробника",
+      producerRatingsColCount: "Оцінок",
+      producerRatingsColAdded: "Додано",
+      producerRatersBtnView: "Оцінювачі",
     },
     reports: {
       title: "Звернення",
