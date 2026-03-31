@@ -2483,7 +2483,7 @@ function isMaintenanceAsset(pathname) {
     if (pathname.startsWith(prefix)) return true;
   }
 
-  const allowedFiles = ["/favicon.ico", "/logo.svg"];
+  const allowedFiles = ["/favicon.ico", "/logo.svg", "/manifest.json"];
   return allowedFiles.includes(pathname);
 }
 
@@ -2576,7 +2576,7 @@ function isSettingsAsset(pathname) {
   for (const prefix of allowedPrefixes) {
     if (pathname.startsWith(prefix)) return true;
   }
-  const allowedFiles = ["/favicon.ico", "/logo.svg"];
+  const allowedFiles = ["/favicon.ico", "/logo.svg", "/manifest.json"];
   return allowedFiles.includes(pathname);
 }
 
