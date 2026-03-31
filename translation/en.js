@@ -3518,12 +3518,22 @@ const en = {
       title: "Your logos",
       hint: "Press a tile to select it. Double-tap to rename.",
       preview: "Preview",
+      edit: "Edit",
       activate: "Activate",
       export: "Export",
       import: "Import",
       delete: "Delete",
       deleteDisabled: "Can't delete",
       activeLabel: "Active",
+    },
+    status: {
+      deleting: "Deleting...",
+      deleted: "Deleted.",
+      saving: "Saving...",
+      saved: "Saved.",
+      updated: "Updated.",
+      fixingName: "Fixing name...",
+      imported: "Imported.",
     },
     editor: {
       nameLabel: "Name",
@@ -3578,6 +3588,7 @@ const en = {
         fontsLoad: "Can't load fonts.json",
         fontsInvalid: "fonts.json is not an array",
         fontsLoadFailed: "Font loading error",
+        noMobileEdit: "Logo editing is not available on mobile devices.",
       },
       warnings: {
         clipped: "Looks clipped — reduce size or shorten the text.",
@@ -3653,6 +3664,10 @@ const en = {
       whiteValue: "White: {value}",
       ditherValue: "Dither: {value}",
       loadError: "Couldn't load the image.",
+      errors: {
+        notLogged: "You must be logged in to save an image.",
+        storageFailed: "Storage save error: {error}",
+      },
     },
     create: {
       title: "New logo",

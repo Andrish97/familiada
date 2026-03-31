@@ -892,26 +892,44 @@ export function initTextPixEditor(ctx) {
   
     // snapshot node (bez TinyMCE)
     const node = buildSnapshotNode(w, h);
+
+    // Fix alignment: html2canvas can be offset if the container has specific styles.
+    // We use a clean wrapper.
+    const wrapper = document.createElement("div");
+    wrapper.style.position = "fixed";
+    wrapper.style.left = "-99999px";
+    wrapper.style.top = "0";
+    wrapper.style.padding = "0";
+    wrapper.style.margin = "0";
+    wrapper.style.border = "none";
+    wrapper.style.background = getTheme().bg;
+    wrapper.appendChild(node);
+    document.body.appendChild(wrapper);
+
+    try {
+      const shot = await window.html2canvas(node, {
+        backgroundColor: getTheme().bg,
+        scale: 1,
+        width: w,
+        height: h,
+        scrollX: 0,
+        scrollY: 0,
+        useCORS: true,
+        logging: false,
+      });
   
-    const shot = await window.html2canvas(node, {
-      backgroundColor: getTheme().bg,
-      scale: 1,
-      width: w,
-      height: h,
-      scrollX: 0,
-      scrollY: 0,
-      useCORS: true
-    });
-  
-    const out = document.createElement("canvas");
-    out.width = BIG_W;
-    out.height = BIG_H;
-    const g = out.getContext("2d", { willReadFrequently: true });
-    g.imageSmoothingEnabled = true;
-    g.fillStyle = getTheme().bg;
-    g.fillRect(0, 0, BIG_W, BIG_H);
-    g.drawImage(shot, 0, 0, BIG_W, BIG_H);
-    return out;
+      const out = document.createElement("canvas");
+      out.width = BIG_W;
+      out.height = BIG_H;
+      const g = out.getContext("2d", { willReadFrequently: true });
+      g.imageSmoothingEnabled = true;
+      g.fillStyle = getTheme().bg;
+      g.fillRect(0, 0, BIG_W, BIG_H);
+      g.drawImage(shot, 0, 0, BIG_W, BIG_H);
+      return out;
+    } finally {
+      wrapper.remove();
+    }
   }
 
   function makeInkBits(bits150) {
@@ -1221,8 +1239,12 @@ window.addEventListener("scroll", () => {
   //  API
   // ==========================================
   return {
-    async open() {
+    async open(payload = null) {
       show(paneTextPix, true);
+      
+      const source = payload?.source || {};
+      invert = !!(source.invert ?? false);
+
       if (chkInvert) chkInvert.checked = invert;
       applyInvertTheme();
 
@@ -1235,44 +1257,39 @@ window.addEventListener("scroll", () => {
       
       await ensureEditor();
 
-      // upewnij się, że edytor ma od razu 50px zanim zrobimy pierwszy screenshot
+      // upewnij się, że edytor ma od razu 130px zanim zrobimy pierwszy screenshot
       rtEditorEl.style.fontSize = "130px";
       rtEditorEl.style.lineHeight = "1";
       
-      // pierwszy preview dopiero po tym, jak przeglądarka przeliczy layout
-      setTimeout(() => schedulePreview(0), 0);
-
       installUiBusyGuards();
 
-      // reset edytora na start sesji
-      editor.setContent("");
-      editor.setContent("<p>\u200b</p>");
-      editor.focus();
-      applyPendingInlineStyle({ fontSize: "130px" });
-      currentAlign = "center";
-      if (btnRtAlignCycle) {
-        btnRtAlignCycle.textContent = "⇆";
-        btnRtAlignCycle.dataset.state = "center";
+      // restore or reset
+      if (source.html) {
+        editor.setContent(source.html);
+      } else {
+        editor.setContent("<p>\u200b</p>");
+        editor.focus();
+        applyPendingInlineStyle({ fontSize: "130px" });
       }
 
-      // wyczyść pola (żeby nie udawały wartości)
-      if (selRtFont) selRtFont.value = "";
-      if (inpRtSize) inpRtSize.value = "";
-      if (inpRtLetter) inpRtLetter.value = "";
-      if (inpRtLine) inpRtLine.value = "1";
-      if (inpRtPadTop) inpRtPadTop.value = String(inpRtPadTop.value || "8");
-      if (inpRtPadBot) inpRtPadBot.value = String(inpRtPadBot.value || "8");
+      currentAlign = source.align || "center";
+      if (btnRtAlignCycle) {
+        btnRtAlignCycle.textContent = currentAlign === "left" ? "⇤" : currentAlign === "right" ? "⇥" : "⇆";
+        btnRtAlignCycle.dataset.state = currentAlign;
+      }
 
-      setBtnOn(btnRtBold, false);
-      setBtnOn(btnRtItalic, false);
-      setBtnOn(btnRtUnderline, false);
+      // sync UI from restored content
+      setTimeout(() => {
+        syncUiFromSelection();
+        schedulePreview(80);
+      }, 50);
 
       ctx.clearDirty?.();
       show(pixWarn, false);
 
       cachedBits150 = new Uint8Array(DOT_W * DOT_H);
       ctx.onPreview?.({ kind: "PIX", bits: cachedBits150 });
-      schedulePreview(80);
+      schedulePreview(150);
     },
 
     close() {
@@ -1282,6 +1299,13 @@ window.addEventListener("scroll", () => {
 
     async getCreatePayload() {
       await updatePreviewAsync();
+      const source = {
+        mode: "TEXT_PIX",
+        html: editor?.getContent() || "",
+        invert: invert,
+        align: currentAlign
+      };
+
       return {
         ok: true,
         type: TYPE_PIX,
@@ -1289,7 +1313,8 @@ window.addEventListener("scroll", () => {
           w: DOT_W,
           h: DOT_H,
           format: "BITPACK_MSB_FIRST_ROW_MAJOR",
-          bits_b64: ctx.packBitsRowMajorMSB(cachedBits150, DOT_W, DOT_H)
+          bits_b64: ctx.packBitsRowMajorMSB(cachedBits150, DOT_W, DOT_H),
+          source
         }
       };
     }

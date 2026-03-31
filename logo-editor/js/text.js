@@ -209,9 +209,11 @@ export function initTextEditor(ctx) {
 
   // API
   return {
-    open() {
+    open(payload = null) {
       show(paneText, true);
-      if (textValue) textValue.value = "";
+      const source = payload?.source || {};
+      if (textValue) textValue.value = source.text || "";
+      
       if (textMeasure) textMeasure.textContent = "—";
       show(textWarn, false);
       renderAllowedCharsList();
@@ -239,7 +241,10 @@ export function initTextEditor(ctx) {
       return {
         ok: true,
         type: TYPE_GLYPH,
-        payload: { layers: [{ color: "main", rows: compiled.rows }] },
+        payload: { 
+          layers: [{ color: "main", rows: compiled.rows }],
+          source: { mode: "TEXT", text: textValue?.value || "" }
+        },
       };
     },
   };

@@ -2190,19 +2190,44 @@ export function initDrawEditor(ctx) {
   // API
   // =========================================================
   return {
-    open() {
+    open(payload = null) {
       show(paneDraw, true);
 
       if (!uiBound) { bindUiOnce(); uiBound = true; }
       installFabricOnce();
+
+      const source = payload?.source || {};
+      const fabricData = source.fabricData || null;
 
       // reset sesji rysunku (ustawienia narzędzi + kolory zostają w pamięci sesji)
       if (fabricCanvas) {
         closeSettingsModal();
         clearPolyDraft();
 
-        fabricCanvas.getObjects().forEach(o => fabricCanvas.remove(o));
-        fabricCanvas.backgroundColor = bgColor();
+        if (fabricData) {
+          undoBusy = true;
+          fabricCanvas.loadFromJSON(fabricData, () => {
+            undoBusy = false;
+            fabricCanvas.backgroundColor = bgColor();
+            fabricCanvas.requestRenderAll();
+            
+            undoStack = [];
+            redoStack = [];
+            pushUndo();
+            updateUndoRedoButtons();
+            
+            schedulePreview(150);
+          });
+        } else {
+          fabricCanvas.getObjects().forEach(o => fabricCanvas.remove(o));
+          fabricCanvas.backgroundColor = bgColor();
+          fabricCanvas.requestRenderAll();
+
+          undoStack = [];
+          redoStack = [];
+          pushUndo();
+          updateUndoRedoButtons();
+        }
 
         resizeScene();
         _needOffsetKick = true;
@@ -2211,13 +2236,6 @@ export function initDrawEditor(ctx) {
           fabricCanvas.calcOffset();
         });
         zoomTo100();
-
-        fabricCanvas.requestRenderAll();
-
-        undoStack = [];
-        redoStack = [];
-        pushUndo();
-        updateUndoRedoButtons();
 
         holdSpace = false;
         holdCtrl = false;
@@ -2249,6 +2267,10 @@ export function initDrawEditor(ctx) {
           h: DOT_H,
           format: "BITPACK_MSB_FIRST_ROW_MAJOR",
           bits_b64: ctx.packBitsRowMajorMSB(bits150, DOT_W, DOT_H),
+          source: {
+            mode: "DRAW",
+            fabricData: snapshotJSON()
+          }
         },
       };
     },

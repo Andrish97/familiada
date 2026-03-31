@@ -3506,12 +3506,22 @@ const pl = {
       title: "Twoje logo",
       hint: "Naciśnij kafelek, żeby go zaznaczyć. Podwójne naciśnięcie zmienia nazwę.",
       preview: "Podgląd",
+      edit: "Edytuj",
       activate: "Aktywuj",
       export: "Export",
       import: "Import",
       delete: "Usuń",
       deleteDisabled: "Nie można usunąć",
       activeLabel: "Aktywne",
+    },
+    status: {
+      deleting: "Usuwanie...",
+      deleted: "Usunięto.",
+      saving: "Zapisywanie...",
+      saved: "Zapisano.",
+      updated: "Zaktualizowano.",
+      fixingName: "Naprawianie nazwy...",
+      imported: "Zaimportowano.",
     },
     editor: {
       nameLabel: "Nazwa",
@@ -3566,6 +3576,7 @@ const pl = {
         fontsLoad: "Nie mogę wczytać fonts.json",
         fontsInvalid: "fonts.json nie jest tablicą",
         fontsLoadFailed: "Błąd ładowania fontów",
+        noMobileEdit: "Edycja logo nie jest dostępna na urządzeniach mobilnych.",
       },
       warnings: {
         clipped: "Wygląda na ucięte — zmniejsz rozmiar albo skróć tekst.",
@@ -3641,6 +3652,10 @@ const pl = {
       whiteValue: "Biel: {value}",
       ditherValue: "Dither: {value}",
       loadError: "Nie udało się wczytać obrazu.",
+      errors: {
+        notLogged: "Musisz być zalogowany, żeby zapisać obraz.",
+        storageFailed: "Błąd zapisu w storage: {error}",
+      },
     },
     create: {
       title: "Nowe logo",

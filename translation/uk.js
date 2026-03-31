@@ -3392,12 +3392,22 @@ const uk = {
       title: "Твої логотипи",
       hint: "Натисни плитку, щоб її вибрати. Подвійне натискання змінює назву.",
       preview: "Перегляд",
+      edit: "Редагувати",
       activate: "Активувати",
       export: "Експорт",
       import: "Імпорт",
       delete: "Видалити",
       deleteDisabled: "Не можна видалити",
       activeLabel: "Активне",
+    },
+    status: {
+      deleting: "Видалення...",
+      deleted: "Видалено.",
+      saving: "Збереження...",
+      saved: "Збережено.",
+      updated: "Оновлено.",
+      fixingName: "Виправлення назви...",
+      imported: "Імпортовано.",
     },
     editor: {
       nameLabel: "Назва",
@@ -3452,6 +3462,7 @@ const uk = {
         fontsLoad: "Не можу завантажити fonts.json",
         fontsInvalid: "fonts.json не є масивом",
         fontsLoadFailed: "Помилка завантаження шрифтів",
+        noMobileEdit: "Редагування логотипу недоступне на мобільних пристроях.",
       },
       warnings: {
         clipped: "Схоже, обрізається — зменште розмір або скороти текст.",
@@ -3527,6 +3538,10 @@ const uk = {
       whiteValue: "Білий: {value}",
       ditherValue: "Дизеринг: {value}",
       loadError: "Не вдалося завантажити зображення.",
+      errors: {
+        notLogged: "Ви повинні бути авторизовані, щоб зберегти зображення.",
+        storageFailed: "Помилка запису в сховище: {error}",
+      },
     },
     create: {
       title: "Новий логотип",

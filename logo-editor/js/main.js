@@ -61,6 +61,7 @@ const listShell = document.getElementById("listShell"); // lista kafelków
 const editorShell = document.getElementById("editorShell"); // edytor (już masz pewnie)
 
 const btnPreview = document.getElementById("btnPreview");
+const btnEdit = document.getElementById("btnEdit");
 
 const btnImport = document.getElementById("btnImport");
 const btnExport = document.getElementById("btnExport");
@@ -775,16 +776,6 @@ async function deleteLogo(id){
   if (error) throw error;
 }
 
-async function setActive(id){
-  const { error } = await sb().rpc("user_logo_set_active", { p_logo_id: id });
-  if (error) throw error;
-}
-
-async function clearActive(){
-  const { error } = await sb().rpc("user_logo_clear_active");
-  if (error) throw error;
-}
-
 /* =========================================================
    RENAME MODAL
 ========================================================= */
@@ -937,7 +928,9 @@ function renderList(){
           <div class="logoName">${esc(name)}</div>
           <div class="logoMeta">${esc(meta || "")}</div>
         </div>
-        <div class="logoX ${canDelete ? "" : "is-disabled"}" title="${canDelete ? t("logoEditor.list.delete") : t("logoEditor.list.deleteDisabled")}">✕</div>
+        <div class="logoActions">
+          <div class="logoX ${canDelete ? "" : "is-disabled"}" title="${canDelete ? t("logoEditor.list.delete") : t("logoEditor.list.deleteDisabled")}">✕</div>
+        </div>
       </div>
       <div class="logoPrev"></div>
     `;
@@ -946,8 +939,7 @@ function renderList(){
 
     // double-click / long-press -> rename (tylko dla logo usera)
     addRenameGesture(el, (e) => {
-      if (key === "default") return; // safeguard (default tile removed)
-      if (e.target?.classList?.contains("logoX")) return;
+      if (e.target?.closest(".logoActions")) return;
       const l = logos.find(x => x.id === key);
       if (!l) return;
       openRenameModal(l);
@@ -995,7 +987,7 @@ function renderList(){
   }
 
   // jeśli zaznaczenie wskazuje na nieistniejące -> czyść
-  if (selectedKey && selectedKey !== "default"){
+  if (selectedKey){
     const exists = logos.some(l => l.id === selectedKey);
     if (!exists) selectedKey = null;
   }
@@ -1008,10 +1000,11 @@ function updateListButtons(){
   const isPlus = selectedKey === "__add__";
 
   // PODGLĄD = zaznaczone
-  btnPreview.disabled = !hasSel || isPlus;
+  if (btnPreview) btnPreview.disabled = !hasSel || isPlus;
+  if (btnEdit) btnEdit.disabled = !hasSel || isPlus;
 
   // EXPORT = tylko gdy coś zaznaczone
-  btnExport.disabled = !hasSel || isPlus;
+  if (btnExport) btnExport.disabled = !hasSel || isPlus;
 }
 
 async function refresh(){
@@ -1110,7 +1103,13 @@ function closeHelpModal() {
   helpOverlay?.classList.add("hidden");
 }
 
-function openEditor(mode){
+function openEditor(mode, logo = null){
+  const _isMobile = window.matchMedia("(max-width:980px)").matches;
+  if (_isMobile) {
+    void alertModal({ text: t("logoEditor.errors.noMobileEdit") || "Edycja logo nie jest dostępna na urządzeniach mobilnych." });
+    return;
+  }
+
   hideAllPanes();
   setEditorShellMode(mode);
   editorMode = mode;
@@ -1118,6 +1117,9 @@ function openEditor(mode){
 
   // ===== tryb edytora UI =====
   document.body.classList.add("is-editor");
+  if (listShell) show(listShell, false);
+  show(editorShell, true);
+
   if (btnBack) btnBack.style.display = "none";
   if (btnCloseEditor) btnCloseEditor.style.display = "";
   document.getElementById("who")?.style.setProperty("display", "none");
@@ -1131,47 +1133,42 @@ function openEditor(mode){
   updateEditorHeader();
 
    suppressDirty = true;
-  // ===== domyślna nazwa nowego logo =====
-  logoName.value = modeLabel;
+  // ===== domyślna nazwa logo =====
+  logoName.value = logo ? (logo.name || modeLabel) : modeLabel;
 
-  // ===== reset sesji zapisu =====
-  sessionSavedLogoId = null;
+  // ===== sesja zapisu =====
+  sessionSavedLogoId = logo ? logo.id : null;
   sessionSavedMode = mode;
 
   clearDirty();
    suppressDirty = false;
   setEditorMsg("");
 
-  // ===== startowy pusty preview =====
-  lastPreviewPayload = {
+  // ===== startowy preview =====
+  lastPreviewPayload = logo ? logoToPreviewPayload(logo) : {
     kind: "GLYPH",
     rows: Array.from({ length: 10 }, () => " ".repeat(30))
   };
   updateBigPreviewFromPayload(lastPreviewPayload);
 
-   // Ukryj listę kafelków, pokaż edytor
-   if (listShell) show(listShell, false);
-   show(editorShell, true);
-
-
   if (mode === "TEXT"){
     show(paneText, true);
-    textEditor.open();
+    textEditor.open(logo ? logo.payload : null);
   }
 
   if (mode === "TEXT_PIX"){
     show(paneTextPix, true);
-    textPixEditor.open();
+    textPixEditor.open(logo ? logo.payload : null);
   }
 
   if (mode === "DRAW"){
     show(paneDraw, true);
-    drawEditor.open();
+    drawEditor.open(logo ? logo.payload : null);
   }
 
   if (mode === "IMAGE"){
     show(paneImage, true);
-    imageEditor.open();
+    imageEditor.open(logo ? logo.payload : null);
   }
 }
 
@@ -1259,6 +1256,10 @@ async function handleCreate(){
       is_active: false,
     };
 
+    // save current mode for future editing
+    if (!patch.payload.source) patch.payload.source = {};
+    patch.payload.source.mode = editorMode;
+
     if (!sessionSavedLogoId) {
       sessionSavedLogoId = await createLogo(patch);
       setEditorMsg(t("logoEditor.status.saved"));
@@ -1273,6 +1274,11 @@ async function handleCreate(){
 
     clearDirty();
     await refresh();
+    
+    // Auto-close after save as requested
+    setTimeout(() => {
+      closeEditor(true);
+    }, 800);
   } catch (e){
     console.error(e);
 
@@ -1467,18 +1473,22 @@ async function boot(){
    });
 
 
+   btnEdit?.addEventListener("click", () => {
+     if (!selectedKey) return;
+     const l = (logos || []).find(x => x.id === selectedKey);
+     if (!l) return;
+     
+     const mode = l.type === TYPE_GLYPH ? "TEXT" : 
+                  (l.payload?.source?.mode || (l.type === TYPE_PIX ? "TEXT_PIX" : "TEXT"));
+     
+     openEditor(mode, l);
+   });
+
    btnPreview?.addEventListener("click", () => {
      if (!selectedKey) return;
-     let payload = null;
-   
-     if (selectedKey === "default"){
-       payload = { kind: "GLYPH", rows: defaultLogoRows };
-     } else {
-       const l = (logos || []).find(x => x.id === selectedKey);
-       if (!l) return;
-       payload = logoToPreviewPayload(l);
-     }
-   
+     const l = (logos || []).find(x => x.id === selectedKey);
+     if (!l) return;
+     const payload = logoToPreviewPayload(l);
      openPreviewFullscreen(payload);
    });
    

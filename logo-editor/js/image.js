@@ -3,6 +3,7 @@
 
 import { alertModal } from "../../js/core/modal.js?v=ac8dd44a";
 import { t } from "../../translation/translation.js?v=435d2210";
+import { sb } from "../../js/core/supabase.js?v=525e648f";
 
 export function initImageEditor(ctx) {
   const TYPE_PIX = "PIX_150x70";
@@ -65,6 +66,7 @@ export function initImageEditor(ctx) {
 
   let imgObj = null;     // Image() z naturalWidth/naturalHeight
   let imgUrl = null;     // objectURL
+  let imgFileObj = null; // File object from input
   let bits = new Uint8Array(DOT_W * DOT_H);
 
   // crop w px w układzie "stage"
@@ -489,6 +491,7 @@ export function initImageEditor(ctx) {
       imgUrl = null;
     }
 
+    imgFileObj = file;
     imgUrl = URL.createObjectURL(file);
 
     const img = new Image();
@@ -787,25 +790,59 @@ export function initImageEditor(ctx) {
   // API
   // =========================================================
   return {
-    open(){
+    async open(payload = null){
       show(paneImage, true);
       applyBestImageLayout();
 
-      resetToDefaults({ resetCrop: false });
-
-      // UI reset
-      imgObj = null;
-
-      if (cropFrame) cropFrame.style.display = "none";
+      const source = payload?.source || {};
       
-      if (imgPreview){
-        imgPreview.removeAttribute("src");
-        imgPreview.style.display = "block"; // żeby “nie znikał”
-      }
+      // Reset / restore
+      if (chkInvert) chkInvert.checked = source.invert ?? DEFAULTS.invert;
+      if (rngBright) rngBright.value = String(source.bright ?? DEFAULTS.bright);
+      if (rngContrast) rngContrast.value = String(source.contrast ?? DEFAULTS.contrast);
+      if (rngGamma) rngGamma.value = (source.gamma ?? DEFAULTS.gamma).toFixed(2);
+      if (rngDitherAmt) rngDitherAmt.value = (source.ditherAmt ?? DEFAULTS.ditherAmt).toFixed(2);
+      if (rngBlack) rngBlack.value = String(source.black ?? DEFAULTS.black);
+      if (rngWhite) rngWhite.value = String(source.white ?? DEFAULTS.white);
 
-      // ramka na start widoczna, ale sens ma dopiero po obrazie
-      crop = { x: 40, y: 40, w: 280, h: Math.round(280 / ASPECT) };
-      applyCropToDom();
+      syncLabels();
+      applyContainMode();
+
+      imgObj = null;
+      imgFileObj = null;
+      if (imgUrl) { try { URL.revokeObjectURL(imgUrl); } catch(e) {} imgUrl = null; }
+
+      if (source.imageUrl) {
+        // load from storage/URL
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => {
+          imgObj = img;
+          if (imgPreview) {
+            imgPreview.style.display = "block";
+            imgPreview.src = source.imageUrl;
+            if (cropFrame) cropFrame.style.display = "block";
+          }
+          applyBestImageLayout();
+          
+          if (source.crop) {
+            crop = { ...source.crop };
+          } else {
+            initCropToCenterBig();
+          }
+          applyCropToDom();
+          schedulePreview(150);
+        };
+        img.src = source.imageUrl;
+      } else {
+        if (cropFrame) cropFrame.style.display = "none";
+        if (imgPreview){
+          imgPreview.removeAttribute("src");
+          imgPreview.style.display = "block";
+        }
+        crop = { x: 40, y: 40, w: 280, h: Math.round(280 / ASPECT) };
+        applyCropToDom();
+      }
 
       // preview reset
       bits = new Uint8Array(DOT_W * DOT_H);
@@ -817,12 +854,52 @@ export function initImageEditor(ctx) {
 
     close(){
       show(paneImage, false);
+      if (imgUrl) { try { URL.revokeObjectURL(imgUrl); } catch(e) {} imgUrl = null; }
     },
 
-    getCreatePayload(){
+    async getCreatePayload(){
       if (imgObj){
         bits = compileBits150();
       }
+      
+      const { bright, contrast, gamma, ditherAmt, black, white, invert } = readSettings();
+      const source = {
+        mode: "IMAGE",
+        bright, contrast, gamma, ditherAmt, black, white, invert,
+        crop: { ...crop },
+        imageUrl: (imgObj && !imgFileObj) ? imgPreview.src : null // zachowaj stary URL jeśli nie ma nowego pliku
+      };
+
+      // Jeśli mamy nowy plik -> wrzuć go do storage
+      if (imgFileObj) {
+        try {
+          const user = (await sb().auth.getUser())?.data?.user;
+          if (!user) throw new Error(t("logoEditor.image.errors.notLogged"));
+
+          const ext = imgFileObj.name.split(".").pop() || "png";
+          const path = `${user.id}/${Date.now()}.${ext}`;
+          
+          const { data, error } = await sb().storage.from("user-logos").upload(path, imgFileObj);
+          if (error) {
+             // Jeśli bucket nie istnieje, spróbuj stworzyć (może zadziała jeśli user ma uprawnienia)
+             if (error.message?.includes("bucket not found")) {
+               await sb().storage.createBucket("user-logos", { public: true });
+               const retry = await sb().storage.from("user-logos").upload(path, imgFileObj);
+               if (retry.error) throw retry.error;
+               source.imageUrl = sb().storage.from("user-logos").getPublicUrl(path).data.publicUrl;
+             } else {
+               throw error;
+             }
+          } else {
+            source.imageUrl = sb().storage.from("user-logos").getPublicUrl(path).data.publicUrl;
+          }
+          imgFileObj = null; // wrzucone
+        } catch (e) {
+          console.error("Storage upload failed:", e);
+          return { ok: false, msg: t("logoEditor.image.errors.storageFailed", { error: e.message || e }) };
+        }
+      }
+
       return {
         ok: true,
         type: TYPE_PIX,
@@ -831,6 +908,7 @@ export function initImageEditor(ctx) {
           h: DOT_H,
           format: "BITPACK_MSB_FIRST_ROW_MAJOR",
           bits_b64: ctx.packBitsRowMajorMSB(bits, DOT_W, DOT_H),
+          source
         },
       };
     },
