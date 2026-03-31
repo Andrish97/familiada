@@ -1,7 +1,8 @@
 /* /familiada/control/control.css */
 
 .wrap.wide{
-    width: 90%
+    width: 90%;
+    min-height: calc(100dvh - var(--topbar-h, 70px));
 }
 
 .wrap.wide > .shell {
@@ -1956,6 +1957,32 @@
   padding-top: 16px;
   border-top: 1px solid rgba(255,255,255,.1);
   justify-content: flex-end;
+}
+
+/* =========================================================
+   COLOR ROW (setup_look)
+========================================================= */
+.colorRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.colorItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.15);
+  background: rgba(255,255,255,.04);
+}
+
+.colorItem .lbl2 {
+  font-size: 14px;
+  white-space: nowrap;
 }
 
 /* =========================================================

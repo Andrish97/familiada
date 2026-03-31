@@ -465,6 +465,8 @@ async function sendZeroStatesToDevices() {
   let selectedLogoId = null;
   // Załadowana czcionka (potrzebna do podglądu GLYPH)
   let _logoFont = null;
+  // Domyślne logo Familiady (payload z pliku JSON)
+  let _defaultLogoPayload = null;
 
   async function enterSetupNames() {
     // urządzenia startują dopiero w setup_look
@@ -504,9 +506,15 @@ async function sendZeroStatesToDevices() {
     devices.sendHostCmd(`SET1 ${q(teamA)}`).catch(() => {});
     devices.sendHostCmd(`SET2 ${q(teamB)}`).catch(() => {});
 
-    // załaduj czcionkę (raz) i wyrenderuj grid
+    // załaduj czcionkę i domyślne logo (raz) i wyrenderuj grid
     if (!_logoFont) {
       try { _logoFont = await loadFont5x7(); } catch (e) { console.warn("[logo] font load failed", e); }
+    }
+    if (!_defaultLogoPayload) {
+      try {
+        const r = await fetch("/display/logo_familiada.json", { cache: "force-cache" });
+        if (r.ok) _defaultLogoPayload = await r.json();
+      } catch (e) { console.warn("[logo] default logo load failed", e); }
     }
     await renderLogoGrid();
   }
@@ -537,8 +545,11 @@ async function sendZeroStatesToDevices() {
 
       grid.innerHTML = "";
 
-      // kafelek "Domyślne"
-      grid.appendChild(makeLogo(null));
+      // kafelek "Domyślne" — ze podglądem domyślnego logo
+      const defaultLogoObj = _defaultLogoPayload
+        ? { type: "GLYPH_30x10", payload: _defaultLogoPayload }
+        : null;
+      grid.appendChild(makeLogo(null, defaultLogoObj));
 
       for (const logo of list) {
         grid.appendChild(makeLogo(logo));
@@ -561,7 +572,8 @@ async function sendZeroStatesToDevices() {
   }
 
   // Buduje kafelek logo jako element DOM (z canvasem)
-  function makeLogo(logo) {
+  // previewLogo: opcjonalny obiekt {type,payload} do renderowania (dla kafelka "Domyślne")
+  function makeLogo(logo, previewLogo) {
     const id = logo?.id ?? null;
     const key = id ?? "default";
     const name = logo?.name || (id === null ? t("control.lookLogoDefault") : "—");
@@ -573,7 +585,7 @@ async function sendZeroStatesToDevices() {
 
     const prev = document.createElement("div");
     prev.className = "logoTilePrev";
-    const canvas = buildLogoPreviewCanvas(logo, _logoFont);
+    const canvas = buildLogoPreviewCanvas(previewLogo ?? logo, _logoFont);
     canvas.style.cursor = "default";
     prev.appendChild(canvas);
     el.appendChild(prev);
