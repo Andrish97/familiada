@@ -2518,85 +2518,38 @@ function renderReportThread(report, messages, attsByMsg = {}) {
   conv.appendChild(msgs);
   setTimeout(() => { msgs.scrollTop = msgs.scrollHeight; }, 50);
 
-  // Reply compose area
-  const replySection = document.createElement("div");
-  replySection.className = "mail-conv-reply";
-  replySection.id = "mailConvReply";
-  
-  // Build signature for reply
-  let replySignatureText = "";
-  if (mailIncludeSignatureValue) {
-    replySignatureText = buildEmailSignature({
-      greeting: mailGreetingValue,
-      farewell: mailFarewellValue,
-      greetingCustom: document.getElementById("mailGreetingCustom")?.value || "",
-      farewellCustom: document.getElementById("mailFarewellCustom")?.value || "",
-    });
-  }
-  const signaturePlaceholder = replySignatureText ? `\n\n---\n${replySignatureText}` : "";
-  
-  replySection.innerHTML = `
-    <textarea class="inp" id="mailReplyArea" rows="4" placeholder="${t("settings.reports.replyPlaceholder") || "Treść odpowiedzi…"}${signaturePlaceholder}" style="width:100%;box-sizing:border-box;resize:vertical;min-height:80px"></textarea>
-    <div class="mail-conv-reply-actions">
-      <span class="field-hint" id="mailReplyStatus"></span>
-      <button class="btn sm gold" id="btnReportReply" type="button">${t("settings.reports.replyBtn") || "Odpowiedz"}</button>
-    </div>`;
-  conv.appendChild(replySection);
+  // Reply button - opens full compose window
+  const replyButtonSection = document.createElement("div");
+  replyButtonSection.style.cssText = "padding:20px;text-align:center;border-top:1px solid rgba(255,255,255,.1);margin-top:20px";
+  replyButtonSection.innerHTML = `
+    <button class="btn gold" id="btnReportReply" type="button" style="padding:10px 24px;font-size:13px">
+      ✏️ ${t("settings.reports.replyBtn") || "Odpowiedz"}
+    </button>
+  `;
+  conv.appendChild(replyButtonSection);
 
   if (report) {
     document.getElementById("btnReportClose")?.addEventListener("click", () => toggleReportStatus(report.id, "open"));
     document.getElementById("btnReportOpen")?.addEventListener("click",  () => toggleReportStatus(report.id, "closed"));
   }
-  document.getElementById("btnReportReply")?.addEventListener("click", async () => {
-    const btn = document.getElementById("btnReportReply");
-    const statusEl = document.getElementById("mailReplyStatus");
-    let body = (document.getElementById("mailReplyArea")?.value || "").trim();
-    if (!body) { showToast("Podaj treść odpowiedzi.", "error"); return; }
-    
-    // Add signature if enabled
-    if (mailIncludeSignatureValue) {
-      const signatureText = buildEmailSignature({
-        greeting: mailGreetingValue,
-        farewell: mailFarewellValue,
-        greetingCustom: document.getElementById("mailGreetingCustom")?.value || "",
-        farewellCustom: document.getElementById("mailFarewellCustom")?.value || "",
-      });
-      if (signatureText) {
-        body = `${body}\n\n${signatureText}`;
-      }
-    }
-    
+  
+  document.getElementById("btnReportReply")?.addEventListener("click", () => {
+    // Open full compose window for reply
     const lastInbound = [...messages].reverse().find(m => m.direction === "inbound");
     const to = lastInbound?.from_email;
-    if (!to) { showToast("Brak adresu odbiorcy.", "error"); return; }
-    if (btn) { btn.disabled = true; btn.textContent = "…"; }
-    if (statusEl) statusEl.textContent = "Wysyłam…";
-    try {
-      const res = await adminFetch("/messages/send", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          to_email: to,
-          subject: `Re: [${ticketNum}] ${report?.subject || ""}`,
-          body,
-          lang: report?.lang || "pl",
-          report_id: report?.id || undefined,
-        }),
-      });
-      if (!res.ok) throw new Error(await res.text());
-      const json = await res.json();
-      if (!json.ok) throw new Error(json.error);
-      const area = document.getElementById("mailReplyArea");
-      if (area) area.value = "";
-      if (statusEl) statusEl.textContent = "";
-      showToast(t("settings.reports.compose.sent") || "Wysłano.", "success");
-      await openReport(report?.id || msgActiveId);
-    } catch (err) {
-      if (statusEl) statusEl.textContent = "";
-      showToast(String(err?.message || err), "error");
-    } finally {
-      if (btn) { btn.disabled = false; btn.textContent = t("settings.reports.replyBtn") || "Odpowiedz"; }
-    }
+    const quote = lastInbound?.body || "";
+    const quoteDate = lastInbound?.created_at;
+    const quoteFrom = lastInbound?.from_email;
+    
+    showCompose({
+      to: to || "",
+      subject: `Re: [${ticketNum}] ${report?.subject || ""}`,
+      body: "",
+      quote,
+      quoteDate,
+      quoteFrom,
+      report_id: report?.id || undefined,
+    });
   });
 }
 
@@ -2832,54 +2785,94 @@ function showCompose(defaults = {}) {
   document.querySelectorAll(".mail-thread-item").forEach(el => el.classList.remove("active"));
 
   const hasQuote = !!defaults.quote;
+  const quotePosition = els.mailQuotePosition?.value || "before";
+  
+  // Get current greeting/farewell settings
+  const greetingCustomEl = document.getElementById("mailGreetingCustom");
+  const farewellCustomEl = document.getElementById("mailFarewellCustom");
+  
+  let signatureText = "";
+  if (mailIncludeSignatureValue) {
+    signatureText = buildEmailSignature({
+      greeting: mailGreetingValue,
+      farewell: mailFarewellValue,
+      greetingCustom: greetingCustomEl?.value || "",
+      farewellCustom: farewellCustomEl?.value || "",
+    });
+  }
+  
+  const bodyWithSignature = signatureText ? `${defaults.body || ""}\n\n${signatureText}` : (defaults.body || "");
   
   // Build quote block
   let quoteBlockHtml = "";
   if (hasQuote) {
     const dateStr = defaults.quoteDate ? new Date(defaults.quoteDate).toLocaleString("pl-PL") : "";
     const fromStr = defaults.quoteFrom ? `${escSetting(defaults.quoteFrom)}, ${dateStr}` : dateStr;
-    quoteBlockHtml = `<div id="composeQuoteBlock" style="margin-top:10px;padding:10px 14px;border-left:3px solid rgba(255,234,166,.35);background:rgba(0,0,0,.2);border-radius:0 8px 8px 0;font-size:12px;opacity:.65;white-space:pre-wrap;word-break:break-word">
+    quoteBlockHtml = `<div id="composeQuoteBlock" style="margin:15px 0;padding:10px 14px;border-left:3px solid rgba(255,234,166,.35);background:rgba(0,0,0,.2);border-radius:0 8px 8px 0;font-size:12px;opacity:.65;white-space:pre-wrap;word-break:break-word">
       <div style="font-size:11px;opacity:.7;margin-bottom:6px">${fromStr}</div>${escSetting(defaults.quote)}</div>`;
   }
-  
-  // Build signature if enabled
-  let signatureText = "";
-  if (mailIncludeSignatureValue) {
-    signatureText = buildEmailSignature({
-      greeting: mailGreetingValue,
-      farewell: mailFarewellValue,
-      greetingCustom: document.getElementById("mailGreetingCustom")?.value || "",
-      farewellCustom: document.getElementById("mailFarewellCustom")?.value || "",
-    });
-  }
-  
-  const bodyWithSignature = signatureText ? `${defaults.body || ""}\n\n${signatureText}` : (defaults.body || "");
-  
-  // Determine quote position
-  const quotePosition = els.mailQuotePosition?.value || "before";
-  const mainContent = quotePosition === "before" 
-    ? `${quoteBlockHtml}<textarea class="inp" id="composeMessageArea" rows="6" style="width:100%;box-sizing:border-box;resize:vertical;margin-top:10px">${escSetting(bodyWithSignature)}</textarea>`
-    : `<textarea class="inp" id="composeMessageArea" rows="6" style="width:100%;box-sizing:border-box;resize:vertical">${escSetting(bodyWithSignature)}</textarea>${quoteBlockHtml}`;
 
   conv.innerHTML = `
-    <div class="mail-compose-pane" id="composePaneInner">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+    <div class="mail-compose-pane" id="composePaneInner" style="display:flex;flex-direction:column;height:100%">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-shrink:0">
         <div style="font-size:14px;font-weight:700">${t("settings.reports.compose.title") || "Napisz nową wiadomość"}</div>
         <button id="btnComposeClose" type="button" title="Zamknij" style="background:none;border:none;cursor:pointer;padding:4px;color:rgba(255,255,255,.4);line-height:1;font-size:18px;border-radius:4px" onmouseover="this.style.color='rgba(255,255,255,.8)'" onmouseout="this.style.color='rgba(255,255,255,.4)'">✕</button>
       </div>
-      <div class="field">
-        <label class="field-label">${t("settings.reports.compose.to") || "Do (e-mail)"}</label>
-        <input class="inp" id="composeToInput" type="email" autocomplete="off" style="width:100%;box-sizing:border-box" value="${escSetting(defaults.to || "")}">
-      </div>
-      <div class="field">
+      
+      <div class="field" style="flex-shrink:0">
         <label class="field-label">${t("settings.reports.compose.subject") || "Temat"}</label>
-        <input class="inp" id="composeSubjectInput" type="text" autocomplete="off" style="width:100%;box-sizing:border-box" value="${escSetting(defaults.subject || "")}">
+        <input class="inp" id="composeSubjectInput" type="text" autocomplete="off" style="width:100%;box-sizing:border-box" value="${escSetting(defaults.subject || "")}" placeholder="Wpisz temat wiadomości">
       </div>
-      <div class="field" style="flex:1;display:flex;flex-direction:column">
-        <label class="field-label">${t("settings.reports.compose.message") || "Treść"}</label>
-        ${mainContent}
+      
+      <div class="mail-inline-grid" style="flex-shrink:0">
+        <div class="field">
+          <label class="field-label" style="font-size:12px">Powitanie</label>
+          <div class="ui-select" id="composeGreetingSelect" style="width:100%">
+            <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
+              <span class="ui-select-label">${t("settings.mail.greetingOptions.none") || "Brak"}</span>
+              <span class="ui-select-caret" aria-hidden="true">▾</span>
+            </button>
+            <div class="ui-select-menu" role="listbox"></div>
+          </div>
+          <input class="inp" id="composeGreetingCustom" type="text" placeholder="Wpisz własne powitanie" style="margin-top:6px;display:none;width:100%;box-sizing:border-box">
+        </div>
+        <div class="field">
+          <label class="field-label" style="font-size:12px">Pożegnanie</label>
+          <div class="ui-select" id="composeFarewellSelect" style="width:100%">
+            <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
+              <span class="ui-select-label">${t("settings.mail.farewellOptions.team") || "Pozdrawiam\\nZespół Familiada"}</span>
+              <span class="ui-select-caret" aria-hidden="true">▾</span>
+            </button>
+            <div class="ui-select-menu" role="listbox"></div>
+          </div>
+          <textarea class="inp" id="composeFarewellCustom" rows="2" placeholder="Wpisz własne pożegnanie" style="margin-top:6px;display:none;width:100%;box-sizing:border-box;resize:vertical"></textarea>
+        </div>
       </div>
-      <div class="field">
+      
+      <div class="field" style="flex:1;display:flex;flex-direction:column;min-height:0">
+        <label class="field-label">${t("settings.reports.compose.message") || "Treść wiadomości"}</label>
+        ${quotePosition === "before" && hasQuote ? quoteBlockHtml : ""}
+        <textarea class="inp" id="composeMessageArea" rows="10" style="width:100%;box-sizing:border-box;resize:vertical;flex:1;min-height:150px">${escSetting(bodyWithSignature)}</textarea>
+        ${quotePosition === "after" && hasQuote ? quoteBlockHtml : ""}
+      </div>
+      
+      ${hasQuote ? `
+      <div class="field" style="flex-shrink:0">
+        <label class="field-label" style="font-size:12px">Pozycja cytatu:</label>
+        <div style="display:flex;gap:12px;margin-top:4px">
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer">
+            <input type="radio" name="composeQuotePosition" value="before" ${quotePosition === "before" ? "checked" : ""} style="accent-color:#ffeaa6">
+            Przed treścią
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer">
+            <input type="radio" name="composeQuotePosition" value="after" ${quotePosition === "after" ? "checked" : ""} style="accent-color:#ffeaa6">
+            Po treści
+          </label>
+        </div>
+      </div>
+      ` : ""}
+      
+      <div class="field" style="flex-shrink:0">
         <label class="field-label" style="display:flex;align-items:center;justify-content:space-between">
           Załączniki
           <span style="opacity:.4;font-size:10px">maks. 10 MB</span>
@@ -2891,49 +2884,74 @@ function showCompose(defaults = {}) {
         </label>
         <div id="composeAttachmentList" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:6px"></div>
       </div>
-      ${hasQuote ? `<label style="display:flex;align-items:center;gap:7px;font-size:12px;opacity:.55;cursor:pointer;margin-top:8px;user-select:none"><input type="checkbox" id="composeQuoteToggle" checked style="accent-color:#ffeaa6"> Dołącz cytat</label>` : ""}
+      
       <input type="hidden" id="composeReportId" value="${escSetting(defaults.report_id || "")}">
       <input type="hidden" id="composeQuoteBody" value="${escSetting(defaults.quote || "")}">
-      <div style="display:flex;justify-content:flex-end;gap:8px;align-items:center;padding-bottom:4px;margin-top:10px">
+      <input type="hidden" id="composeToEmail" value="${escSetting(defaults.to || "")}">
+      
+      <div style="display:flex;justify-content:flex-end;gap:8px;align-items:center;padding-top:12px;margin-top:auto;flex-shrink:0;border-top:1px solid rgba(255,255,255,.1);padding-top:12px">
         <button class="btn sm" id="btnComposePreview" type="button" data-i18n="settings.reports.compose.preview">👁 Podgląd</button>
         <span class="field-hint" id="composeSendStatus"></span>
         <button class="btn sm gold" id="btnComposeSend" type="button">${t("settings.reports.compose.send") || "Wyślij"}</button>
       </div>
     </div>`;
-  document.getElementById("btnComposeSend")?.addEventListener("click", sendCompose);
+  
+  // Initialize greeting select
+  const composeGreetingSelect = initUiSelect(document.getElementById("composeGreetingSelect"), {
+    options: getGreetingOptions(),
+    value: defaults.greetingValue || "none",
+    placeholder: "Brak",
+    onChange: (val) => {
+      const customInput = document.getElementById("composeGreetingCustom");
+      if (customInput) {
+        customInput.style.display = (val === "custom") ? "" : "none";
+        if (val === "custom") customInput.focus();
+      }
+    },
+  });
+  
+  // Initialize farewell select
+  const composeFarewellSelect = initUiSelect(document.getElementById("composeFarewellSelect"), {
+    options: getFarewellOptions(),
+    value: defaults.farewellValue || "team",
+    placeholder: "Pozdrawiam",
+    onChange: (val) => {
+      const customInput = document.getElementById("composeFarewellCustom");
+      if (customInput) {
+        customInput.style.display = (val === "custom") ? "" : "none";
+        if (val === "custom") customInput.focus();
+      }
+    },
+  });
+  
+  // Set custom values if provided
+  if (defaults.greetingCustom) {
+    const customInput = document.getElementById("composeGreetingCustom");
+    if (customInput && defaults.greetingValue === "custom") {
+      customInput.value = defaults.greetingCustom;
+      customInput.style.display = "";
+    }
+  }
+  if (defaults.farewellCustom) {
+    const customInput = document.getElementById("composeFarewellCustom");
+    if (customInput && defaults.farewellValue === "custom") {
+      customInput.value = defaults.farewellCustom;
+      customInput.style.display = "";
+    }
+  }
+  
+  document.getElementById("btnComposeSend")?.addEventListener("click", () => sendComposeWithSignature(composeGreetingSelect, composeFarewellSelect));
   
   document.getElementById("btnComposePreview")?.addEventListener("click", () => {
-    const to = (document.getElementById("composeToInput")?.value || "").trim();
-    const subject = (document.getElementById("composeSubjectInput")?.value || "").trim();
-    const body = (document.getElementById("composeMessageArea")?.value || "").trim();
-    const quoteToggle = document.getElementById("composeQuoteToggle");
-    const quoteIncluded = !quoteToggle || quoteToggle.checked;
-    const quote = quoteIncluded ? ((document.getElementById("composeQuoteBody")?.value || "").trim() || null) : null;
-    
-    const quoteBlock = quote ? `<div style="margin:15px 0;padding:10px 14px;border-left:3px solid rgba(255,234,166,.35);background:rgba(0,0,0,.2);border-radius:0 8px 8px 0;font-size:12px;opacity:.65;white-space:pre-wrap">${escSetting(quote)}</div>` : "";
-    
-    const previewContent = `
-      <div style="margin-bottom:12px"><strong>Do:</strong> ${escSetting(to || "—")}</div>
-      <div style="margin-bottom:12px"><strong>Temat:</strong> ${escSetting(subject || "—")}</div>
-      <div style="margin:15px 0;padding:15px;border:1px solid rgba(255,255,255,.1);border-radius:8px;background:rgba(0,0,0,.2)">
-        ${quotePosition === "before" ? quoteBlock : ""}
-        <div style="white-space:pre-wrap;font-family:inherit;font-size:13px;line-height:1.5">${escSetting(body || "—")}</div>
-        ${quotePosition === "after" ? quoteBlock : ""}
-      </div>
-    `;
-    
-    void confirmModal({
-      title: t("settings.reports.compose.previewTitle") || "Podgląd wiadomości",
-      text: previewContent,
-      okText: "OK",
-      showCancel: false,
-    });
+    const currentQuotePosition = document.querySelector('input[name="composeQuotePosition"]:checked')?.value || quotePosition;
+    showComposePreview(composeGreetingSelect, composeFarewellSelect, currentQuotePosition);
   });
 
   document.getElementById("btnComposeClose")?.addEventListener("click", async () => {
-    const hasData = (document.getElementById("composeToInput")?.value || "").trim()
-      || (document.getElementById("composeSubjectInput")?.value || "").trim()
-      || (document.getElementById("composeMessageArea")?.value || "").trim();
+    const hasData = (document.getElementById("composeSubjectInput")?.value || "").trim()
+      || (document.getElementById("composeMessageArea")?.value || "").trim()
+      || (document.getElementById("composeGreetingCustom")?.value || "").trim()
+      || (document.getElementById("composeFarewellCustom")?.value || "").trim();
     if (hasData) {
       const ok = await confirmModal({ text: "Wprowadzone dane zostaną utracone. Zrezygnować?" });
       if (!ok) return;
@@ -2947,6 +2965,41 @@ function showCompose(defaults = {}) {
     list.innerHTML = Array.from(e.target.files || []).map(f =>
       `<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;border:1px solid rgba(255,255,255,.12);font-size:11px;color:rgba(255,255,255,.6)">${escSetting(f.name)}</span>`
     ).join("");
+  });
+
+  // Quote position radio buttons
+  document.querySelectorAll('input[name="composeQuotePosition"]').forEach(radio => {
+    radio.addEventListener("change", (e) => {
+      // Rebuild compose window with new quote position
+      const newQuotePosition = e.target.value;
+      const reportId = document.getElementById("composeReportId")?.value;
+      const quote = document.getElementById("composeQuoteBody")?.value;
+      const subject = document.getElementById("composeSubjectInput")?.value;
+      const body = document.getElementById("composeMessageArea")?.value;
+      const greetingValue = composeGreetingSelect?.getValue();
+      const farewellValue = composeFarewellSelect?.getValue();
+      const greetingCustom = document.getElementById("composeGreetingCustom")?.value;
+      const farewellCustom = document.getElementById("composeFarewellCustom")?.value;
+      
+      // Save current state
+      const currentState = {
+        subject: subject || "",
+        body: body || "",
+        quote: quote || "",
+        report_id: reportId || undefined,
+        greetingValue,
+        farewellValue,
+        greetingCustom,
+        farewellCustom,
+      };
+      
+      // Reopen compose with new quote position
+      showCompose(currentState);
+      
+      // Set the new quote position
+      const newRadio = document.querySelector(`input[name="composeQuotePosition"][value="${newQuotePosition}"]`);
+      if (newRadio) newRadio.checked = true;
+    });
   });
 
   document.getElementById("composeQuoteToggle")?.addEventListener("change", (e) => {
@@ -2972,20 +3025,32 @@ function closeCompose() {
   _composePrevIsReport = false;
 }
 
-async function sendCompose(defaults) {
-  // Called either as event handler (no args) or directly with defaults
-  const to      = (document.getElementById("composeToInput")?.value || "").trim();
+async function sendComposeWithSignature(greetingSelect, farewellSelect) {
   const subject = (document.getElementById("composeSubjectInput")?.value || "").trim();
-  const body    = (document.getElementById("composeMessageArea")?.value || "").trim();
+  const body = (document.getElementById("composeMessageArea")?.value || "").trim();
   const reportId = (document.getElementById("composeReportId")?.value || "").trim() || null;
-  const quoteToggle = document.getElementById("composeQuoteToggle");
-  const quoteIncluded = !quoteToggle || quoteToggle.checked;
-  const quote   = quoteIncluded ? ((document.getElementById("composeQuoteBody")?.value || "").trim() || null) : null;
-  const status  = document.getElementById("composeSendStatus");
+  const toEmail = (document.getElementById("composeToEmail")?.value || "").trim();
+  const status = document.getElementById("composeSendStatus");
 
-  if (!to || !to.includes("@")) { showToast("Podaj poprawny e-mail.", "error"); return; }
+  if (!subject) { showToast("Podaj temat wiadomości.", "error"); return; }
   if (!body) { showToast("Podaj treść wiadomości.", "error"); return; }
+  if (!toEmail && !reportId) { showToast("Brak odbiorcy.", "error"); return; }
   if (status) status.textContent = "Wysyłam…";
+
+  // Build signature from compose window selections
+  const greetingValue = greetingSelect?.getValue() || "none";
+  const farewellValue = farewellSelect?.getValue() || "team";
+  const greetingCustom = (document.getElementById("composeGreetingCustom")?.value || "").trim();
+  const farewellCustom = (document.getElementById("composeFarewellCustom")?.value || "").trim();
+  
+  const signatureText = buildEmailSignature({
+    greeting: greetingValue,
+    farewell: farewellValue,
+    greetingCustom,
+    farewellCustom,
+  });
+  
+  const fullBody = signatureText ? `${body}\n\n${signatureText}` : body;
 
   // Upload attachments
   const fileInput = document.getElementById("composeAttachmentInput");
@@ -3009,7 +3074,14 @@ async function sendCompose(defaults) {
     const res = await adminFetch("/messages/send", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ to_email: to, subject, body, quote: quote || undefined, report_id: reportId || undefined, attachments: uploadedAttachments.length ? uploadedAttachments : undefined }),
+      body: JSON.stringify({
+        to_email: toEmail || undefined,
+        subject,
+        body: fullBody,
+        quote: undefined,
+        report_id: reportId || undefined,
+        attachments: uploadedAttachments.length ? uploadedAttachments : undefined,
+      }),
     });
     if (!res.ok) throw new Error(await res.text());
     const json = await res.json();
@@ -3021,6 +3093,48 @@ async function sendCompose(defaults) {
     if (status) status.textContent = "";
     showToast(String(err?.message || err), "error");
   }
+}
+
+function showComposePreview(greetingSelect, farewellSelect, quotePosition) {
+  const subject = (document.getElementById("composeSubjectInput")?.value || "").trim();
+  const body = (document.getElementById("composeMessageArea")?.value || "").trim();
+  const quote = (document.getElementById("composeQuoteBody")?.value || "").trim();
+  
+  const greetingValue = greetingSelect?.getValue() || "none";
+  const farewellValue = farewellSelect?.getValue() || "team";
+  const greetingCustom = (document.getElementById("composeGreetingCustom")?.value || "").trim();
+  const farewellCustom = (document.getElementById("composeFarewellCustom")?.value || "").trim();
+  
+  const signatureText = buildEmailSignature({
+    greeting: greetingValue,
+    farewell: farewellValue,
+    greetingCustom,
+    farewellCustom,
+  });
+  
+  const fullBody = signatureText ? `${body}\n\n${signatureText}` : body;
+  
+  const quoteBlock = quote ? `<div style="margin:15px 0;padding:15px;border-left:4px solid #ffeaa6;background:rgba(255,234,166,.1);border-radius:0 8px 8px 0;font-size:13px;white-space:pre-wrap;line-height:1.5">${escSetting(quote)}</div>` : "";
+  
+  const previewContent = `
+    <div style="background:rgba(255,255,255,.05);border-radius:8px;padding:20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
+      <div style="margin-bottom:15px;padding-bottom:15px;border-bottom:1px solid rgba(255,255,255,.1)">
+        <div style="font-size:18px;font-weight:600;margin-bottom:8px">${escSetting(subject || "(brak tematu)")}</div>
+      </div>
+      <div style="margin:15px 0;padding:15px;background:rgba(0,0,0,.2);border-radius:8px">
+        ${quotePosition === "before" ? quoteBlock : ""}
+        <div style="white-space:pre-wrap;font-size:14px;line-height:1.6">${escSetting(fullBody || "(brak treści)")}</div>
+        ${quotePosition === "after" ? quoteBlock : ""}
+      </div>
+    </div>
+  `;
+  
+  void confirmModal({
+    title: t("settings.reports.compose.previewTitle") || "Podgląd wiadomości",
+    text: previewContent,
+    okText: "OK",
+    showCancel: false,
+  });
 }
 
 function wireReportsEvents() {
