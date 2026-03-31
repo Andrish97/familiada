@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict dllhSGnokuVn5EEgMwODrWxTlWgd5gfLBPCXxKNpfTpTmRjCrxYrbiW9lRixcgc
+\restrict rbJHMC7EpNrmVSfhbqt6ZnDZFOgGprGfmfVRcJgdrgm2eLI7RScXflrq37SSACK
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -4435,6 +4435,21 @@ $$;
 
 
 --
+-- Name: market_admin_producer_games(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."market_admin_producer_games"() RETURNS TABLE("id" "uuid", "title" "text", "lang" "text", "status" "text", "avg_rating" numeric, "rating_count" integer, "library_count" integer, "created_at" timestamp with time zone)
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+  SELECT mg.id, mg.title, mg.lang, mg.status::text, mg.avg_rating, mg.rating_count, mg.library_count, mg.created_at
+  FROM public.market_games mg
+  WHERE mg.origin = 'producer'
+  ORDER BY mg.avg_rating DESC NULLS LAST, mg.rating_count DESC, mg.created_at DESC;
+$$;
+
+
+--
 -- Name: market_admin_review("uuid", "text", "text"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -4596,41 +4611,32 @@ $$;
 -- Name: market_browse("text", "text", integer, integer); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION "public"."market_browse"("p_lang" "text" DEFAULT 'pl'::"text", "p_search" "text" DEFAULT ''::"text", "p_limit" integer DEFAULT 20, "p_offset" integer DEFAULT 0) RETURNS TABLE("id" "uuid", "title" "text", "description" "text", "lang" "text", "library_count" integer, "author_username" "text", "created_at" timestamp with time zone, "in_library" boolean, "origin" "text")
+CREATE FUNCTION "public"."market_browse"("p_lang" "text" DEFAULT 'pl'::"text", "p_search" "text" DEFAULT ''::"text", "p_limit" integer DEFAULT 20, "p_offset" integer DEFAULT 0) RETURNS TABLE("id" "uuid", "title" "text", "description" "text", "lang" "text", "library_count" integer, "avg_rating" numeric, "rating_count" integer, "user_stars" smallint, "author_username" "text", "created_at" timestamp with time zone, "in_library" boolean, "origin" "text")
     LANGUAGE "sql" STABLE
     SET "search_path" TO 'public'
     AS $$
   SELECT
-    mg.id,
-    mg.title,
-    mg.description,
-    mg.lang,
-    mg.library_count,
+    mg.id, mg.title, mg.description, mg.lang, mg.library_count,
+    mg.avg_rating, mg.rating_count,
+    (SELECT r.stars FROM public.market_game_ratings r
+      WHERE r.market_game_id = mg.id AND r.user_id = auth.uid()) AS user_stars,
     COALESCE(pr.username, '') AS author_username,
     mg.created_at,
-    CASE
-      WHEN auth.uid() IS NULL THEN false
-      ELSE EXISTS (
-        SELECT 1 FROM public.user_market_library uml
-         WHERE uml.market_game_id = mg.id
-           AND uml.user_id = auth.uid()
-      )
+    CASE WHEN auth.uid() IS NULL THEN false
+         ELSE EXISTS (SELECT 1 FROM public.user_market_library uml
+                       WHERE uml.market_game_id = mg.id AND uml.user_id = auth.uid())
     END AS in_library,
     mg.origin::text AS origin
   FROM public.market_games mg
   LEFT JOIN public.profiles pr ON pr.id = mg.author_user_id
   WHERE mg.status = 'published'
-    AND (
-      p_search = ''
-      OR mg.title ILIKE '%' || p_search || '%'
-      OR mg.description ILIKE '%' || p_search || '%'
-    )
+    AND (p_search = '' OR mg.title ILIKE '%' || p_search || '%' OR mg.description ILIKE '%' || p_search || '%')
   ORDER BY
     (mg.lang = p_lang) DESC,
+    CASE WHEN mg.rating_count >= 3 THEN mg.avg_rating ELSE 0 END DESC,
     mg.library_count DESC,
     mg.created_at DESC
-  LIMIT  LEAST(p_limit, 100)
-  OFFSET p_offset;
+  LIMIT LEAST(p_limit, 100) OFFSET p_offset;
 $$;
 
 
@@ -4737,26 +4743,48 @@ $$;
 -- Name: market_game_detail("uuid"); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION "public"."market_game_detail"("p_id" "uuid") RETURNS TABLE("id" "uuid", "title" "text", "description" "text", "lang" "text", "library_count" integer, "author_username" "text", "status" "public"."market_game_status", "payload" "jsonb", "in_library" boolean, "origin" "text", "slug" "text")
+CREATE FUNCTION "public"."market_game_detail"("p_id" "uuid") RETURNS TABLE("id" "uuid", "title" "text", "description" "text", "lang" "text", "library_count" integer, "avg_rating" numeric, "rating_count" integer, "user_stars" smallint, "author_username" "text", "status" "public"."market_game_status", "payload" "jsonb", "in_library" boolean, "origin" "text", "slug" "text")
     LANGUAGE "sql" STABLE
     SET "search_path" TO 'public'
     AS $$
   SELECT
     mg.id, mg.title, mg.description, mg.lang, mg.library_count,
+    mg.avg_rating, mg.rating_count,
+    (SELECT r.stars FROM public.market_game_ratings r
+      WHERE r.market_game_id = mg.id AND r.user_id = auth.uid()) AS user_stars,
     COALESCE(pr.username, '') AS author_username,
     mg.status, mg.payload,
-    CASE
-      WHEN auth.uid() IS NULL THEN false
-      ELSE EXISTS (
-        SELECT 1 FROM public.user_market_library uml
-         WHERE uml.market_game_id = mg.id AND uml.user_id = auth.uid()
-      )
+    CASE WHEN auth.uid() IS NULL THEN false
+         ELSE EXISTS (SELECT 1 FROM public.user_market_library uml
+                       WHERE uml.market_game_id = mg.id AND uml.user_id = auth.uid())
     END AS in_library,
     mg.origin::text AS origin,
     mg.slug
   FROM public.market_games mg
   LEFT JOIN public.profiles pr ON pr.id = mg.author_user_id
   WHERE mg.id = p_id;
+$$;
+
+
+--
+-- Name: market_game_raters("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."market_game_raters"("p_market_game_id" "uuid") RETURNS TABLE("username" "text", "stars" smallint, "rated_at" timestamp with time zone)
+    LANGUAGE "plpgsql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+BEGIN
+  IF auth.uid() IS NOT NULL AND NOT EXISTS (
+    SELECT 1 FROM public.market_games WHERE id = p_market_game_id AND author_user_id = auth.uid()
+  ) THEN RETURN; END IF;
+  RETURN QUERY
+    SELECT COALESCE(pr.username, '?')::text, r.stars, r.created_at AS rated_at
+    FROM public.market_game_ratings r
+    LEFT JOIN public.profiles pr ON pr.id = r.user_id
+    WHERE r.market_game_id = p_market_game_id
+    ORDER BY r.created_at DESC;
+END;
 $$;
 
 
@@ -4838,24 +4866,41 @@ $$;
 -- Name: market_my_submissions(); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION "public"."market_my_submissions"() RETURNS TABLE("id" "uuid", "source_game_id" "uuid", "title" "text", "description" "text", "lang" "text", "status" "public"."market_game_status", "moderation_note" "text", "library_count" integer, "created_at" timestamp with time zone)
+CREATE FUNCTION "public"."market_my_submissions"() RETURNS TABLE("id" "uuid", "source_game_id" "uuid", "title" "text", "description" "text", "lang" "text", "status" "public"."market_game_status", "moderation_note" "text", "library_count" integer, "avg_rating" numeric, "rating_count" integer, "created_at" timestamp with time zone)
     LANGUAGE "sql" STABLE SECURITY DEFINER
     SET "search_path" TO 'public'
     AS $$
-    SELECT
-        mg.id,
-        mg.source_game_id,
-        mg.title,
-        mg.description,
-        mg.lang,
-        mg.status,
-        mg.moderation_note,
-        mg.library_count,
-        mg.created_at
-    FROM public.market_games mg
-    WHERE mg.author_user_id = auth.uid()
-      AND mg.status <> 'withdrawn'
-    ORDER BY mg.created_at DESC;
+  SELECT mg.id, mg.source_game_id, mg.title, mg.description, mg.lang,
+         mg.status, mg.moderation_note, mg.library_count, mg.avg_rating, mg.rating_count, mg.created_at
+  FROM public.market_games mg
+  WHERE mg.author_user_id = auth.uid() AND mg.status <> 'withdrawn'
+  ORDER BY mg.created_at DESC;
+$$;
+
+
+--
+-- Name: market_rate_game("uuid", integer); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."market_rate_game"("p_market_game_id" "uuid", "p_stars" integer) RETURNS TABLE("ok" boolean, "err" "text")
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE v_uid uuid := auth.uid();
+BEGIN
+  IF v_uid IS NULL THEN RETURN QUERY SELECT false, 'not_authenticated'; RETURN; END IF;
+  IF p_stars < 1 OR p_stars > 5 THEN RETURN QUERY SELECT false, 'invalid_stars'; RETURN; END IF;
+  IF NOT EXISTS (SELECT 1 FROM public.market_games WHERE id = p_market_game_id AND status = 'published') THEN
+    RETURN QUERY SELECT false, 'game_not_found'; RETURN;
+  END IF;
+  IF EXISTS (SELECT 1 FROM public.market_games WHERE id = p_market_game_id AND author_user_id = v_uid) THEN
+    RETURN QUERY SELECT false, 'cannot_rate_own_game'; RETURN;
+  END IF;
+  INSERT INTO public.market_game_ratings (market_game_id, user_id, stars)
+  VALUES (p_market_game_id, v_uid, p_stars)
+  ON CONFLICT (market_game_id, user_id) DO UPDATE SET stars = EXCLUDED.stars;
+  RETURN QUERY SELECT true, ''::text;
+END;
 $$;
 
 
@@ -9556,6 +9601,26 @@ $$;
 
 
 --
+-- Name: sync_market_game_rating_stats(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."sync_market_game_rating_stats"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    AS $$
+DECLARE v_id uuid;
+BEGIN
+  v_id := COALESCE(NEW.market_game_id, OLD.market_game_id);
+  UPDATE public.market_games
+  SET
+    rating_count = (SELECT COUNT(*) FROM public.market_game_ratings WHERE market_game_id = v_id),
+    avg_rating   = COALESCE((SELECT ROUND(AVG(stars::numeric), 2) FROM public.market_game_ratings WHERE market_game_id = v_id), 0)
+  WHERE id = v_id;
+  RETURN NULL;
+END;
+$$;
+
+
+--
 -- Name: touch_game_devices_updated_at(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -10202,6 +10267,19 @@ COMMENT ON COLUMN "public"."mail_settings"."provider_order" IS 'Kolejność prov
 
 
 --
+-- Name: market_game_ratings; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."market_game_ratings" (
+    "market_game_id" "uuid" NOT NULL,
+    "user_id" "uuid" NOT NULL,
+    "stars" smallint NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    CONSTRAINT "market_game_ratings_stars_check" CHECK ((("stars" >= 1) AND ("stars" <= 5)))
+);
+
+
+--
 -- Name: market_games; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -10224,6 +10302,8 @@ CREATE TABLE "public"."market_games" (
     "questions_fingerprint" "text",
     "embedding" "public"."vector"(384),
     "slug" "text",
+    "avg_rating" numeric(3,2) DEFAULT 0 NOT NULL,
+    "rating_count" integer DEFAULT 0 NOT NULL,
     CONSTRAINT "market_games_lang_check" CHECK (("lang" = ANY (ARRAY['pl'::"text", 'en'::"text", 'uk'::"text"]))),
     CONSTRAINT "market_games_library_count_nn" CHECK (("library_count" >= 0)),
     CONSTRAINT "market_games_title_len" CHECK ((("char_length"("title") >= 1) AND ("char_length"("title") <= 120)))
@@ -10807,6 +10887,14 @@ ALTER TABLE ONLY "public"."mail_queue"
 
 ALTER TABLE ONLY "public"."mail_settings"
     ADD CONSTRAINT "mail_settings_pkey" PRIMARY KEY ("id");
+
+
+--
+-- Name: market_game_ratings market_game_ratings_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."market_game_ratings"
+    ADD CONSTRAINT "market_game_ratings_pkey" PRIMARY KEY ("market_game_id", "user_id");
 
 
 --
@@ -11739,6 +11827,13 @@ CREATE TRIGGER "trg_games_touch" BEFORE UPDATE ON "public"."games" FOR EACH ROW 
 
 
 --
+-- Name: market_game_ratings trg_market_game_rating_stats; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "trg_market_game_rating_stats" AFTER INSERT OR DELETE OR UPDATE ON "public"."market_game_ratings" FOR EACH ROW EXECUTE FUNCTION "public"."sync_market_game_rating_stats"();
+
+
+--
 -- Name: market_games trg_market_games_questions_fields; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -11894,6 +11989,22 @@ ALTER TABLE ONLY "public"."games"
 
 ALTER TABLE ONLY "public"."games"
     ADD CONSTRAINT "games_source_market_id_fkey" FOREIGN KEY ("source_market_id") REFERENCES "public"."market_games"("id") ON DELETE SET NULL;
+
+
+--
+-- Name: market_game_ratings market_game_ratings_market_game_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."market_game_ratings"
+    ADD CONSTRAINT "market_game_ratings_market_game_id_fkey" FOREIGN KEY ("market_game_id") REFERENCES "public"."market_games"("id") ON DELETE CASCADE;
+
+
+--
+-- Name: market_game_ratings market_game_ratings_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."market_game_ratings"
+    ADD CONSTRAINT "market_game_ratings_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
 
 
 --
@@ -12595,6 +12706,12 @@ CREATE POLICY "mail_settings_write_none" ON "public"."mail_settings" TO "authent
 
 
 --
+-- Name: market_game_ratings; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."market_game_ratings" ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: market_games; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -12640,6 +12757,34 @@ CREATE POLICY "mg_no_direct_update" ON "public"."market_games" FOR UPDATE USING 
 CREATE POLICY "mg_select" ON "public"."market_games" FOR SELECT USING ((("status" = 'published'::"public"."market_game_status") OR (("status" = 'withdrawn'::"public"."market_game_status") AND (("author_user_id" = "auth"."uid"()) OR (EXISTS ( SELECT 1
    FROM "public"."user_market_library"
   WHERE (("user_market_library"."market_game_id" = "market_games"."id") AND ("user_market_library"."user_id" = "auth"."uid"())))))) OR (("status" = ANY (ARRAY['pending'::"public"."market_game_status", 'rejected'::"public"."market_game_status"])) AND ("author_user_id" = "auth"."uid"()))));
+
+
+--
+-- Name: market_game_ratings mgr_delete; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "mgr_delete" ON "public"."market_game_ratings" FOR DELETE USING (("auth"."uid"() = "user_id"));
+
+
+--
+-- Name: market_game_ratings mgr_insert; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "mgr_insert" ON "public"."market_game_ratings" FOR INSERT WITH CHECK (("auth"."uid"() = "user_id"));
+
+
+--
+-- Name: market_game_ratings mgr_select; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "mgr_select" ON "public"."market_game_ratings" FOR SELECT USING (true);
+
+
+--
+-- Name: market_game_ratings mgr_update; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "mgr_update" ON "public"."market_game_ratings" FOR UPDATE USING (("auth"."uid"() = "user_id"));
 
 
 --
@@ -13289,5 +13434,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict dllhSGnokuVn5EEgMwODrWxTlWgd5gfLBPCXxKNpfTpTmRjCrxYrbiW9lRixcgc
+\unrestrict rbJHMC7EpNrmVSfhbqt6ZnDZFOgGprGfmfVRcJgdrgm2eLI7RScXflrq37SSACK
 
