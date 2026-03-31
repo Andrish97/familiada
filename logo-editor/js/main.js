@@ -844,19 +844,12 @@ async function deleteLogo(id){
       const urlParts = imageUrl.split("/user-logos/");
       if (urlParts.length === 2) {
         const storagePath = urlParts[1];
+        const userId = storagePath.split("/")[0];
+        
         console.log("[deleteLogo] Removing file from storage:", storagePath);
+        console.log("[deleteLogo] User folder:", userId);
         
-        const { data: listData, error: listError } = await sb()
-          .storage
-          .from("user-logos")
-          .list(storagePath.split("/")[0], { limit: 100 });
-        
-        if (listError) {
-          console.warn("[deleteLogo] List error:", listError);
-        } else {
-          console.log("[deleteLogo] Files in folder before delete:", listData);
-        }
-        
+        // Usuń plik
         const { data: removeData, error: storageError } = await sb()
           .storage
           .from("user-logos")
@@ -868,12 +861,19 @@ async function deleteLogo(id){
         } else {
           console.log("[deleteLogo] File removed from storage, response:", removeData);
           
-          // Sprawdźmy, czy plik na pewno został usunięty
-          const { data: verifyData } = await sb()
+          // Sprawdźmy, czy w folderze usera są jeszcze jakieś pliki
+          const { data: remainingFiles } = await sb()
             .storage
             .from("user-logos")
-            .list(storagePath.split("/")[0], { limit: 100 });
-          console.log("[deleteLogo] Files in folder after delete:", verifyData);
+            .list(userId, { limit: 100 });
+          
+          console.log("[deleteLogo] Remaining files in user folder:", remainingFiles);
+          
+          // Jeśli folder jest pusty, usuń go (Supabase nie pozwala usuwać pustych folderów bezpośrednio)
+          // Foldery w Supabase to tylko struktura wirtualna - znikają same gdy nie ma plików
+          if (!remainingFiles || remainingFiles.length === 0) {
+            console.log("[deleteLogo] User folder is now empty (will be auto-cleaned by Supabase)");
+          }
         }
       } else {
         console.warn("[deleteLogo] Could not extract path from URL:", urlParts);
