@@ -1693,19 +1693,6 @@ const pl = {
         Cienkie linie, małe detale i delikatne przejścia zwykle znikają.
       </div>
 
-      <h3 class="m-h3">Zapis i aktywne logo</h3>
-
-      <p class="m-p">
-        Logo możesz zapisać pod własną nazwą. Na liście logotypów możesz też ustawić,
-        które logo jest <span class="m-strong">aktywne</span>.
-        Aktywne logo będzie używane przez wyświetlacz automatycznie.
-      </p>
-
-      <p class="m-p">
-        Jeśli nie ustawisz żadnego aktywnego logo, system użyje
-        <span class="m-strong">domyślnego logo</span>.
-      </p>
-
       <h3 class="m-h3">Import i eksport logo</h3>
 
       <p class="m-p">
