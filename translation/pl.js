@@ -1786,16 +1786,30 @@ const pl = {
       <h3 class="m-h3">Krok 1: Urzadzenia</h3>
 
       <p class="m-p">
-        W tym kroku panel pokazuje linki i&nbsp;<span style="background-color: initial;">&nbsp;</span><span style="background-color: initial;">kody QR&nbsp;</span><span style="background-color: initial;">dla urzadzeń.
+        W tym kroku panel pokazuje linki i kody QR dla urządzeń.
         Najlepiej otworzyć wyświetlacz na telewizorze lub rzutniku,
-        w trybie pełnoekranowym (bez pasków przeglądarki). Dalej&nbsp;</span><span style="background-color: initial;">podłączasz urządzenie prowadzącego i urządzenie przycisku. W praktyce najlepiej użyć dwóch osobnych telefonów albo telefonu i tabletu.</span></p>
+        w trybie pełnoekranowym (bez pasków przeglądarki). Dalej podłączasz urządzenie prowadzącego i urządzenie przycisku. W praktyce najlepiej użyć dwóch osobnych telefonów albo telefonu i tabletu.
+      </p>
 
       <p class="m-p">
         W tym kroku jest opcja <span class="m-strong">„QR na wyświetlaczu"</span> —
-        po jej użyciu kody QR mogą zostać pokazane na dużym ekranie (po podłączeniu wyświetlacza) ,
+        po jej użyciu kody QR mogą zostać pokazane na dużym ekranie (po podłączeniu wyświetlacza),
         żeby ekipa mogła szybko zeskanować je telefonami.
         To przyspiesza start na planie, bo nie trzeba przepisywać linków.
-      </p><p class="m-p"><span class="m-strong">„Czarny ekran"</span>&nbsp;— gdyby się zdarzyło że po załadowaniu ekranu widzisz pozostałości po starej rozgrywce (czasem tak się zdarzy), użyj tego przycisku, żeby przywrócić czarny ekran na czas ustawień.</p><p class="m-p">Poprzez opcję&nbsp;<span class="m-strong">„Udostępnij"</span>&nbsp;— możesz szybko wysłać komuś linka na maila, lub udostępnić swoim subscrybentom. Udostepnione urządzenia będą widoczne na koncie (tylko dla zarejestrowanych) w panelu&nbsp;<span class="m-code" style="border-color: rgba(255, 255, 255, 0.18); border-style: solid; border-width: 1px; border-image: none 100% / 1 / 0 stretch;">Podlącz urządzenie📱</span><span style="background-color: initial;">. Niezarejestrowani dostaną po prostu linka na maila.</span></p><div class="m-note"><b style="color: rgb(255, 234, 166);">Jak wygodnie podlączyć urzadzenie?</b><br>Dla najlepszego uzytkowania przycisku i prowadzącego sugerowane jest zainstalowanie aplikacji webowej Familiada.online. Na swoim telefonie zaloguj się na konto, na stronie&nbsp;<span style="font-size: 16px; font-weight: 1000; background-color: initial; color: rgb(255, 255, 255);">Moje gry</span><span style="color: rgba(255, 255, 255, 0.92); font-size: 16px; background-color: initial;">&nbsp;kliknij przycisk pobierania, dostaniesz wskazówki jak ją pobrać. Po pobraniu przejdź do panelu&nbsp;</span><span class="m-code" style="border-color: rgba(255, 255, 255, 0.18); border-style: solid; border-width: 1px; border-image: none 100% / 1 / 0 stretch; color: rgba(255, 255, 255, 0.92);">Podlącz urządzenie📱</span><span style="color: rgba(255, 255, 255, 0.92); font-size: 16px; background-color: initial;">, naciśnij&nbsp;</span><span style="font-size: 16px; font-weight: 1000; background-color: initial; color: rgb(255, 255, 255);">Skanuj kod QR</span><span style="color: rgba(255, 255, 255, 0.92); font-size: 16px; background-color: initial;">, po zeskanowaniu usuchomi się przycisk lub prowadący.</span></div>
+      </p>
+
+      <p class="m-p">
+        <span class="m-strong">„Czarny ekran"</span> — gdyby się zdarzyło, że po załadowaniu ekranu widzisz pozostałości po starej rozgrywce (czasem tak się zdarzy), użyj tego przycisku, żeby przywrócić czarny ekran na czas ustawień.
+      </p>
+
+      <p class="m-p">
+        Poprzez opcję <span class="m-strong">„Udostępnij"</span> — możesz szybko wysłać komuś linka na maila lub udostępnić swoim subskrybentom. Udostępnione urządzenia będą widoczne na koncie (tylko dla zarejestrowanych) w panelu <span class="m-code">Podłącz urządzenie 📱</span>. Niezarejestrowani dostaną po prostu linka na maila.
+      </p>
+
+      <div class="m-note">
+        <b>Jak wygodnie podłączyć urządzenie?</b><br/>
+        Dla najlepszego użytkowania przycisku i prowadzącego sugerowane jest zainstalowanie aplikacji webowej Familiada.online. Na swoim telefonie zaloguj się na konto, na stronie <span class="m-strong">Moje gry</span> kliknij przycisk pobierania — dostaniesz wskazówki, jak ją pobrać. Po pobraniu przejdź do panelu <span class="m-code">Podłącz urządzenie 📱</span>, naciśnij <span class="m-strong">Skanuj kod QR</span> — po zeskanowaniu uruchomi się przycisk lub prowadzący.
+      </div>
 
       <div class="m-warn">
         <b>Uwaga:</b><br/>
@@ -1820,14 +1834,25 @@ const pl = {
 
       <p class="m-p">
         Ustawiasz nazwę drużyny A i B.
-        Są to napisy, które widzą zawodnicy i widownia na wyświetlaczu, panel blokuje przejście dalej, dopóki obie nazwy nie są wpisane.
-      </p><h3 class="m-h3">Wygląd</h3><ul class="m-ul"><li><span class="m-strong">Kolory</span>&nbsp;— t<span style="font-size: 16px;">utaj ustawiasz kolory drużyn, które będą używane na każdym z urządzeń i zmienią się od razu, oraz kolor tła tablicy.&nbsp;</span></li><li><span style="color: rgb(255, 255, 255); font-weight: 1000;">Logo</span>&nbsp;— jesli masz utworzone jakieś logo to zobaczysz je tutaj, możesz wybrać któreś dla tej rozgrywki lub zostawić domyślne.</li></ul>
+        Są to napisy, które widzą zawodnicy i widownia na wyświetlaczu. Panel blokuje przejście dalej, dopóki obie nazwy nie są wpisane.
+      </p>
+
+      <h3 class="m-h3">Wygląd</h3>
+
+      <ul class="m-ul">
+        <li>
+          <span class="m-strong">Kolory</span> — tutaj ustawiasz kolory drużyn, które będą używane na każdym z urządzeń i zmienią się od razu, oraz kolor tła tablicy.
+        </li>
+        <li>
+          <span class="m-strong">Logo</span> — jeśli masz utworzone jakieś logo, zobaczysz je tutaj. Możesz wybrać któreś dla tej rozgrywki lub zostawić domyślne.
+        </li>
+      </ul>
 
       <h3 class="m-h3">Ustawienia pytań i rozgrywki</h3>
 
       <p class="m-p">
-        Tutaj wybierasz, czy rozgrywka będzie miała finał oraz czy chcesz
-        wybierać lub wylosować pytania do finału i do rozgrywki. Jeśli zaznaczysz&nbsp;<span class="m-strong" style="background-color: initial;">Wybierz</span><span style="background-color: initial;">&nbsp;to w następnych dwóch krokach zostaniesz poproszony o ich wybranie.</span></p>
+        Tutaj wybierasz, czy rozgrywka będzie miała finał oraz czy chcesz wybierać lub wylosować pytania do finału i do rozgrywki. Jeśli zaznaczysz <span class="m-strong">Wybierz</span>, to w następnych dwóch krokach zostaniesz poproszony o ich wybranie.
+      </p>
 
       <p class="m-p">
         W „Dodatkowych ustawieniach" dopasowujesz rozgrywkę do formatu rozgrywki.
@@ -1850,7 +1875,13 @@ const pl = {
         <li>
           <span class="m-strong">Zakończenie gry</span> — co pokazuje wyświetlacz na końcu
           (logo / punkty / kwota po finale). To jest ważne produkcyjnie: „ostatni kadr".
-        </li><li><span style="color: rgb(255, 255, 255); font-weight: 1000;">Mnożnik nagrody (po finale)&nbsp;</span>— domyślnie jeśli chcemy grać o nagrode jak w klasycznej familiadzie po finale nagroda to Punkty uzyskane podczas gry x3.</li><li><span style="color: rgb(255, 255, 255); font-weight: 1000;">Kwota nagrody głównej&nbsp;</span>— jeśli w finale drużyna uzyskała próg (domyślnie 200 punktów) to do nagrody finału jest dodawana kwota nagrody głównej, domyślnie 25000.</li>
+        </li>
+        <li>
+          <span class="m-strong">Mnożnik nagrody (po finale)</span> — domyślnie, jeśli chcemy grać o nagrodę jak w klasycznej Familiadzie, po finale nagroda to punkty uzyskane podczas gry ×3.
+        </li>
+        <li>
+          <span class="m-strong">Kwota nagrody głównej</span> — jeśli w finale drużyna uzyskała próg (domyślnie 200 punktów), to do nagrody finału jest dodawana kwota nagrody głównej, domyślnie 25000.
+        </li>
       </ul>
 
       <div class="m-note">
@@ -2078,7 +2109,8 @@ const pl = {
         Jeśli druga osoba poda odpowiedź identyczną jak pierwsza,
         jest to <span class="m-strong">powtórka</span> — zawodnik musi podać inną odpowiedź,
         a operator może oznaczyć tę próbę jako powtórzoną.
-        Odpowiedzi powtórzone nie dają punktów. Zaprezentować dźwiek powtórzenia można przed rozpoczęciem 2 rundy, żeby gracz wiedział jak to będzie brzmiało podczas rozgrywki.</p>
+        Odpowiedzi powtórzone nie dają punktów. Zaprezentować dźwięk powtórzenia można przed rozpoczęciem 2 rundy, żeby gracz wiedział, jak to będzie brzmiało podczas rozgrywki.
+      </p>
 
       <p class="m-p">
         Po zakończeniu rundy operator przypisuje odpowiedzi drugiego zawodnika do listy punktowanych wyników
