@@ -3229,7 +3229,9 @@ function closeCompose() {
 
 async function sendComposeWithSignature(greetingSelect, farewellSelect) {
   const subject = (document.getElementById("composeSubjectInput")?.value || "").trim();
-  let body = (document.getElementById("composeMessageArea")?.value || "").trim();
+  // Get content from TinyMCE if available, otherwise from textarea
+  const editor = tinymce.get("composeMessageArea");
+  let body = editor ? editor.getContent() : (document.getElementById("composeMessageArea")?.value || "").trim();
   const reportId = (document.getElementById("composeReportId")?.value || "").trim() || null;
   const toEmail = (document.getElementById("composeToEmail")?.value || "").trim();
   const status = document.getElementById("composeSendStatus");
@@ -3322,14 +3324,16 @@ async function sendComposeWithSignature(greetingSelect, farewellSelect) {
 function showComposePreview(greetingSelect, farewellSelect, quotePosition) {
   const subject = (document.getElementById("composeSubjectInput")?.value || "").trim();
   const body = (document.getElementById("composeMessageArea")?.value || "").trim();
-  const quote = (document.getElementById("composeQuoteBody")?.value || "").trim();
-
+  const quoteToggle = document.getElementById("composeQuoteToggle");
+  const quoteIncluded = !quoteToggle || quoteToggle.checked;
+  const quote = quoteIncluded ? ((document.getElementById("composeQuoteBody")?.value || "").trim() || null) : null;
+  
+  // Build greeting and farewell separately
   const greetingValue = greetingSelect?.getValue() || "none";
   const farewellValue = farewellSelect?.getValue() || "team";
   const greetingCustom = (document.getElementById("composeGreetingCustom")?.value || "").trim();
   const farewellCustom = (document.getElementById("composeFarewellCustom")?.value || "").trim();
 
-  // Build greeting and farewell separately
   const greetingText = buildEmailSignature({
     greeting: greetingValue,
     farewell: "none",
@@ -3348,14 +3352,19 @@ function showComposePreview(greetingSelect, farewellSelect, quotePosition) {
   });
 
   // Convert newlines to <br> for HTML email
-  const bodyHtml = body ? body.replace(/\n/g, "<br>") : "";
-  const quoteHtml = quote ? `<div class="email-quote">${quote.replace(/\n/g, "<br>")}</div>` : "";
+  let bodyHtml = body ? body.replace(/\n/g, "<br>") : "";
+  
+  // Replace #quote placeholder with actual quote
+  const quoteHtml = quote ? `<div style="margin:25px 0;padding:20px;background:rgba(255,255,255,.05);border-left:4px solid #ffeaa6;border-radius:4px;font-size:13px;line-height:1.6;color:#ccc;white-space:pre-wrap">${quote.replace(/\n/g, "<br>")}</div>` : "";
+  if (bodyHtml.includes("#quote")) {
+    bodyHtml = bodyHtml.replace(/#quote/g, quoteHtml);
+  }
   
   // Structure: Greeting → Body → Quote → Farewell
   const finalBody = `
     ${greetingWithComma ? `<div style="margin-bottom:20px;line-height:1.6">${greetingWithComma.replace(/\n/g, "<br>")}</div>` : ""}
     <div style="line-height:1.6;color:#fff;margin-bottom:20px">${bodyHtml}</div>
-    ${quoteHtml}
+    ${!body.includes("#quote") && quoteHtml ? quoteHtml : ""}
     ${farewellText ? `<div style="margin-top:20px;line-height:1.6">${farewellText.replace(/\n/g, "<br>")}</div>` : ""}
   `;
 
@@ -4339,7 +4348,9 @@ function mktParseEmails() {
 
 async function sendMarketing() {
   const subject = (document.getElementById("mktSubject")?.value || "").trim();
-  const body    = (document.getElementById("mktBody")?.value || "").trim();
+  // Get content from TinyMCE if available, otherwise from textarea
+  const editor = tinymce.get("mktBody");
+  const body = editor ? editor.getContent() : (document.getElementById("mktBody")?.value || "").trim();
   const statusEl = document.getElementById("mktSendStatus");
   if (!subject) { showToast(t("settings.marketing.errSubject") || "Podaj temat.", "error"); return; }
   if (!mktValidEmails.length) { showToast(t("settings.marketing.errEmails") || "Waliduj listę adresów.", "error"); return; }
@@ -4791,14 +4802,75 @@ function wireEvents() {
     applyDateOrderByLang();
     applyModalLabels();
     renderProviderOrder();
-    syncMailSelectLabels();
-    renderCronPresetOptions();
-    renderCalendar();
-    if (currentState) updateModeStatus(currentState);
   });
   startCountdownTimer();
   await initToolsSelect();
   wireEvents();
+
+  // Initialize TinyMCE for compose message area
+  if (typeof tinymce !== "undefined") {
+    tinymce.init({
+      selector: "#composeMessageArea",
+      height: 300,
+      menubar: false,
+      branding: false,
+      promotion: false,
+      plugins: "lists link image table paste autoresize textcolor",
+      toolbar: "undo redo | bold italic forecolor | bullist numlist | link image | table | removeformat",
+      content_style: "body { background: #1a1a2e; color: #fff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }",
+      skin: false,
+      content_css: false,
+      paste_data_images: true,
+      automatic_uploads: true,
+      images_upload_handler: (blobInfo) => {
+        return new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.readAsDataURL(blobInfo.blob());
+        });
+      },
+      setup: (editor) => {
+        editor.on("change", () => {
+          const quoteToggle = document.getElementById("composeQuoteToggle");
+          if (quoteToggle && !quoteToggle.checked) {
+            const content = editor.getContent();
+            if (content.includes("#quote")) {
+              quoteToggle.checked = true;
+              const quoteBlock = document.getElementById("composeQuoteBlock");
+              const positionSection = document.querySelector('.field:has([name="composeQuotePosition"])');
+              if (quoteBlock) quoteBlock.style.display = "";
+              if (positionSection) positionSection.style.display = "";
+            }
+          }
+        });
+      },
+    });
+  }
+
+  // Initialize TinyMCE for marketing message area
+  if (typeof tinymce !== "undefined") {
+    tinymce.init({
+      selector: "#mktBody",
+      height: 300,
+      menubar: false,
+      branding: false,
+      promotion: false,
+      plugins: "lists link image table paste autoresize textcolor",
+      toolbar: "undo redo | bold italic forecolor | bullist numlist | link image | table | removeformat",
+      content_style: "body { background: #1a1a2e; color: #fff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }",
+      skin: false,
+      content_css: false,
+      paste_data_images: true,
+      automatic_uploads: true,
+      images_upload_handler: (blobInfo) => {
+        return new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.readAsDataURL(blobInfo.blob());
+        });
+      },
+    });
+  }
   showAuth("settings.login.checking");
 
   const ok = await checkMe();
