@@ -4313,6 +4313,7 @@ async function mktRefreshPreview() {
   // Get content from TinyMCE if available, otherwise from textarea
   const mktEditor = tinymce.get("mktBody");
   const body = mktEditor ? mktEditor.getContent() : (document.getElementById("mktBody")?.value || "").trim();
+  console.log("Marketing preview - body length:", body?.length);
   try {
     const res = await adminFetch("/marketing/preview", {
       method: "POST",
@@ -4321,10 +4322,14 @@ async function mktRefreshPreview() {
     });
     if (!res.ok) throw new Error(await res.text());
     const json = await res.json();
+    console.log("Marketing preview response:", json);
     if (json.html) {
       frame.srcdoc = json.html;
+    } else {
+      frame.srcdoc = '<p style="color:#fff;padding:12px">Brak HTML w odpowiedzi</p>';
     }
   } catch (err) {
+    console.error("Marketing preview error:", err);
     frame.srcdoc = `<p style="font-family:sans-serif;color:#c00;padding:12px">${esc(String(err?.message || err))}</p>`;
   }
 }
@@ -4823,11 +4828,24 @@ function wireEvents() {
 
   // Wait for TinyMCE to load then initialize
   function initTinyMCEEditors() {
+    // Wait for tinymce to be available
     if (typeof tinymce === "undefined") {
-      console.warn("TinyMCE not loaded yet, retrying...");
+      console.warn("TinyMCE not loaded yet, retrying in 500ms...");
       setTimeout(initTinyMCEEditors, 500);
       return;
     }
+    
+    // Wait for DOM elements to exist
+    const composeEl = document.getElementById("composeMessageArea");
+    const mktEl = document.getElementById("mktBody");
+    
+    if (!composeEl || !mktEl) {
+      console.warn("TinyMCE target elements not found, retrying in 500ms...");
+      setTimeout(initTinyMCEEditors, 500);
+      return;
+    }
+
+    console.log("Initializing TinyMCE editors...");
 
     // Initialize TinyMCE for compose message area
     tinymce.init({
