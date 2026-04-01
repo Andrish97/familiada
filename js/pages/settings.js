@@ -2249,8 +2249,19 @@ function renderMessageDetail(msg, attachments = []) {
     const frame = document.createElement("iframe");
     frame.className = "mail-msg-html-frame";
     frame.sandbox = "allow-scripts allow-popups";
-    frame.srcdoc = htmlSrc;
-    frame.style.pointerEvents = "none"; // Prevent clicks on iframe
+    // Wrap content in dark theme if it's not already full HTML
+    const isFullHtml = htmlSrc.trim().startsWith("<!DOCTYPE") || htmlSrc.trim().startsWith("<html");
+    const wrappedHtml = isFullHtml ? htmlSrc : `
+      <!DOCTYPE html>
+      <html>
+      <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+      <style>body{margin:0;padding:10px;background:#050914;color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.6;}a{color:#ffeaa6;}</style>
+      </head>
+      <body>${htmlSrc}</body>
+      </html>
+    `;
+    frame.srcdoc = wrappedHtml;
+    frame.style.pointerEvents = "none";
     frame.onload = () => { try { frame.style.height = (frame.contentDocument.documentElement.scrollHeight + 20) + "px"; } catch(e) {} };
     bodyEl.appendChild(frame);
   } else {
@@ -2549,8 +2560,19 @@ function renderReportThread(report, messages, attsByMsg = {}) {
       const frame = document.createElement("iframe");
       frame.className = "mail-msg-html-frame";
       frame.sandbox = "allow-scripts allow-popups";
-      frame.srcdoc = htmlSrc;
-      frame.style.pointerEvents = "none"; // Prevent clicks on iframe
+      // Wrap content in dark theme if it's not already full HTML
+      const isFullHtml = htmlSrc.trim().startsWith("<!DOCTYPE") || htmlSrc.trim().startsWith("<html");
+      const wrappedHtml = isFullHtml ? htmlSrc : `
+        <!DOCTYPE html>
+        <html>
+        <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+        <style>body{margin:0;padding:10px;background:#050914;color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.6;}a{color:#ffeaa6;}</style>
+        </head>
+        <body>${htmlSrc}</body>
+        </html>
+      `;
+      frame.srcdoc = wrappedHtml;
+      frame.style.pointerEvents = "none";
       frame.onload = () => { try { frame.style.height = (frame.contentDocument.documentElement.scrollHeight + 20) + "px"; } catch(e) {} };
       bodyEl.appendChild(frame);
     } else {
