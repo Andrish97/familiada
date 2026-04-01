@@ -4459,6 +4459,12 @@ async function sendMarketing() {
     if (!json.ok) throw new Error(json.error);
     showToast(`${t("settings.marketing.sent") || "Dodano do kolejki:"} ${json.queued}/${json.total}`, "success");
     if (statusEl) statusEl.textContent = "";
+    
+    // Clear email list after successful send
+    const emailInput = document.getElementById("mktEmailInput");
+    if (emailInput) emailInput.value = "";
+    mktValidEmails = [];
+    mktParseEmails();
   } catch (err) {
     if (statusEl) statusEl.textContent = "";
     showToast(String(err?.message || err), "error");
