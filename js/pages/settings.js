@@ -3300,9 +3300,13 @@ function closeCompose() {
 
 async function sendComposeWithSignature(greetingSelect, farewellSelect) {
   const subject = (document.getElementById("composeSubjectInput")?.value || "").trim();
-  // Get content from TinyMCE if available, otherwise from textarea
+  // Get content from TinyMCE - ALWAYS use TinyMCE, no fallback
   const editor = tinymce.get("composeMessageArea");
-  let body = editor ? editor.getContent() : (document.getElementById("composeMessageArea")?.value || "").trim();
+  if (!editor) {
+    showToast("Edytor nie jest gotowy. Spróbuj ponownie.", "error");
+    return;
+  }
+  let body = editor.getContent();
   const reportId = (document.getElementById("composeReportId")?.value || "").trim() || null;
   const toEmail = (document.getElementById("composeToEmail")?.value || "").trim();
   const status = document.getElementById("composeSendStatus");
@@ -3394,7 +3398,13 @@ async function sendComposeWithSignature(greetingSelect, farewellSelect) {
 
 function showComposePreview(greetingSelect, farewellSelect, quotePosition) {
   const subject = (document.getElementById("composeSubjectInput")?.value || "").trim();
-  const body = (document.getElementById("composeMessageArea")?.value || "").trim();
+  // Get content from TinyMCE - ALWAYS use TinyMCE, no fallback
+  const editor = tinymce.get("composeMessageArea");
+  if (!editor) {
+    showToast("Edytor nie jest gotowy.", "error");
+    return;
+  }
+  const body = editor.getContent();
   const quoteToggle = document.getElementById("composeQuoteToggle");
   const quoteIncluded = !quoteToggle || quoteToggle.checked;
   const quote = quoteIncluded ? ((document.getElementById("composeQuoteBody")?.value || "").trim() || null) : null;
@@ -4369,9 +4379,13 @@ async function mktRefreshPreview() {
   const frame = document.getElementById("mktPreviewFrame");
   if (!frame) return;
   const subject = (document.getElementById("mktSubject")?.value || "").trim();
-  // Get content from TinyMCE if available, otherwise from textarea
+  // Get content from TinyMCE - ALWAYS use TinyMCE, no fallback
   const mktEditor = tinymce.get("mktBody");
-  const body = mktEditor ? mktEditor.getContent() : (document.getElementById("mktBody")?.value || "").trim();
+  if (!mktEditor) {
+    frame.srcdoc = '<p style="color:#fff;padding:12px">Edytor nie jest gotowy...</p>';
+    return;
+  }
+  const body = mktEditor.getContent();
   console.log("Marketing preview - body length:", body?.length);
   try {
     const res = await adminFetch("/marketing/preview", {
@@ -4426,9 +4440,13 @@ function mktParseEmails() {
 
 async function sendMarketing() {
   const subject = (document.getElementById("mktSubject")?.value || "").trim();
-  // Get content from TinyMCE if available, otherwise from textarea
+  // Get content from TinyMCE - ALWAYS use TinyMCE, no fallback
   const editor = tinymce.get("mktBody");
-  const body = editor ? editor.getContent() : (document.getElementById("mktBody")?.value || "").trim();
+  if (!editor) {
+    showToast("Edytor nie jest gotowy.", "error");
+    return;
+  }
+  const body = editor.getContent();
   const statusEl = document.getElementById("mktSendStatus");
   if (!subject) { showToast(t("settings.marketing.errSubject") || "Podaj temat.", "error"); return; }
   if (!mktValidEmails.length) { showToast(t("settings.marketing.errEmails") || "Waliduj listę adresów.", "error"); return; }
@@ -5006,19 +5024,8 @@ function wireEvents() {
     
     const editor = tinymce.get("composeMessageArea");
     if (editor) {
-      // Save selection, insert, restore focus
       editor.insertContent("#quote");
       editor.focus();
-    } else {
-      const textarea = document.getElementById("composeMessageArea");
-      if (textarea) {
-        const start = textarea.selectionStart;
-        const end = textarea.selectionEnd;
-        const value = textarea.value;
-        textarea.value = value.substring(0, start) + "#quote" + value.substring(end);
-        textarea.selectionStart = textarea.selectionEnd = start + 6;
-        textarea.focus();
-      }
     }
   });
   showAuth("settings.login.checking");
