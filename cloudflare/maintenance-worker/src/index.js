@@ -790,7 +790,8 @@ async function handleAdminMarketingApi(request, env, url) {
     if (!validEmails.length) return json({ ok: false, error: "no_valid_emails" }, 400);
     if (validEmails.length > 500) return json({ ok: false, error: "too_many_emails", max: 500 }, 400);
 
-    const { html: emailHtml } = buildMarketingEmail(template_id || "custom", { customBody: custom_body, customSubject: mktSubject });
+    // custom_body is already full HTML from client (templates in JS)
+    const emailHtml = custom_body || "";
 
     const rows = validEmails.map(email => ({
       to_email: email,
