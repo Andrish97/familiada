@@ -2162,7 +2162,7 @@ function renderMailList(rows) {
     const ticketPart = r.ticket_number ? ` · <span style="opacity:.5;font-size:10px">${escSetting(r.ticket_number)}</span>` : "";
     // Strip ALL HTML tags (including meta, head, etc.) to get raw text only
     const tmp = document.createElement("div");
-    tmp.innerHTML = r.body_preview || "";
+    tmp.innerHTML = r.body_preview || r.body || "";
     const previewText = tmp.textContent || tmp.innerText || "";
     item.innerHTML = `
       <div class="mail-ti-row">

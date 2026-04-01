@@ -124,3 +124,22 @@ console.log(
   `\nDone — HTML: ${htmlAttrsUpdated} attrs in ${htmlFilesChanged} files` +
   ` | JS: ${jsImportsUpdated} imports in ${jsFilesChanged} files.`
 );
+
+// ─── 3. Update app-version meta tag in settings.html ───────────────────────
+
+const settingsHtml = path.join(ROOT, 'settings.html');
+try {
+  const content = fs.readFileSync(settingsHtml, 'utf8');
+  const date = new Date();
+  const version = `settings-${date.getFullYear()}.${String(date.getMonth()+1).padStart(2,'0')}.${String(date.getDate()).padStart(2,'0')}.${String(Math.floor(date.getTime()/1000)).slice(-4)}`;
+  const updated = content.replace(
+    /(<meta name="app-version" content=")[^"]*("\/>)/g,
+    `$1${version}$2`
+  );
+  if (updated !== content) {
+    fs.writeFileSync(settingsHtml, updated, 'utf8');
+    console.log(`  version: ${version}`);
+  }
+} catch(e) {
+  console.warn('Could not update app-version:', e.message);
+}
