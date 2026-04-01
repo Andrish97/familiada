@@ -3025,8 +3025,10 @@ function showCompose(defaults = {}) {
           <div class="field" style="margin-bottom:12px;min-height:0;display:flex;flex-direction:column">
             <label class="field-label" style="margin-bottom:6px;display:block">
               ${t("settings.reports.compose.message") || "Treść"}
-              <span style="opacity:.5;font-size:11px;margin-left:8px" data-i18n="settings.reports.compose.quoteHint">Użyj #quote aby wstawić cytat</span>
-              <button type="button" class="btn sm" id="btnInsertQuote" style="font-size:11px;padding:4px 8px;margin-left:8px" title="Wstaw #quote w miejscu kursora">#quote</button>
+              ${hasQuote ? `
+                <span style="opacity:.5;font-size:11px;margin-left:8px" data-i18n="settings.reports.compose.quoteHint">Użyj #quote aby wstawić cytat</span>
+                <button type="button" class="btn sm" id="btnInsertQuote" style="font-size:11px;padding:4px 8px;margin-left:8px" title="Wstaw #quote w miejscu kursora">#quote</button>
+              ` : ""}
             </label>
             <div id="composeMessageArea" style="min-height:300px"></div>
           </div>
@@ -3234,7 +3236,7 @@ function showCompose(defaults = {}) {
     }
   });
 
-  // Insert #quote button - MUST wait for TinyMCE and prevent focus loss
+  // Insert #quote button - only works when replying (hasQuote)
   document.getElementById("btnInsertQuote")?.addEventListener("click", async (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -3311,18 +3313,19 @@ async function sendComposeWithSignature(greetingSelect, farewellSelect) {
 
   // body from TinyMCE is already HTML (<p>, <strong>, etc.) - don't replace \n with <br>
   let bodyContent = body;
-  
-  // Replace #quote placeholder with actual quote HTML
-  const quoteHtml = quote ? `<div style="margin:25px 0;padding:20px;background:rgba(255,255,255,.05);border-left:4px solid #ffeaa6;border-radius:4px;font-size:13px;line-height:1.6;color:#ccc">${quote.replace(/\n/g, "<br>")}</div>` : "";
-  if (bodyContent.includes("#quote")) {
-    bodyContent = bodyContent.replace(/#quote/g, quoteHtml);
+
+  // Replace #quote placeholder with actual quote HTML (only when replying)
+  if (quote) {
+    const quoteHtml = `<div style="margin:25px 0;padding:20px;background:rgba(255,255,255,.05);border-left:4px solid #ffeaa6;border-radius:4px;font-size:13px;line-height:1.6;color:#ccc">${quote.replace(/\n/g, "<br>")}</div>`;
+    if (bodyContent.includes("#quote")) {
+      bodyContent = bodyContent.replace(/#quote/g, quoteHtml);
+    }
   }
-  
+
   // Build final email body (inner HTML only, no DOCTYPE/html/body tags)
   const htmlBody = `
     ${greetingText ? `<div style="margin-bottom:20px">${greetingText.replace(/\n/g, "<br>")}</div>` : ""}
     <div style="line-height:1.6;color:#fff;margin-bottom:20px">${bodyContent}</div>
-    ${!body.includes("#quote") && quoteHtml ? quoteHtml : ""}
     ${farewellText ? `<div style="margin-top:20px">${farewellText.replace(/\n/g, "<br>")}</div>` : ""}
   `;
 
@@ -3391,10 +3394,10 @@ function showComposePreview(greetingSelect, farewellSelect) {
     greetingCustom,
     farewellCustom: "",
   });
-  
+
   // Add comma after greeting if present
   const greetingWithComma = greetingText ? `${greetingText},` : "";
-  
+
   const farewellText = buildEmailSignature({
     greeting: "none",
     farewell: farewellValue,
@@ -3405,10 +3408,12 @@ function showComposePreview(greetingSelect, farewellSelect) {
   // body from TinyMCE is already HTML (<p>, <strong>, etc.) - don't replace \n with <br>
   let bodyHtml = body;
 
-  // Replace #quote placeholder with actual quote HTML
-  const quoteHtml = quote ? `<div style="margin:25px 0;padding:20px;background:rgba(255,255,255,.05);border-left:4px solid #ffeaa6;border-radius:4px;font-size:13px;line-height:1.6;color:#ccc">${quote.replace(/\n/g, "<br>")}</div>` : "";
-  if (bodyHtml.includes("#quote")) {
-    bodyHtml = bodyHtml.replace(/#quote/g, quoteHtml);
+  // Replace #quote placeholder with actual quote HTML (only when replying)
+  if (quote) {
+    const quoteHtml = `<div style="margin:25px 0;padding:20px;background:rgba(255,255,255,.05);border-left:4px solid #ffeaa6;border-radius:4px;font-size:13px;line-height:1.6;color:#ccc">${quote.replace(/\n/g, "<br>")}</div>`;
+    if (bodyHtml.includes("#quote")) {
+      bodyHtml = bodyHtml.replace(/#quote/g, quoteHtml);
+    }
   }
 
   // Structure: Greeting → Body (with #quote replaced) → Farewell
