@@ -2160,52 +2160,20 @@ function renderMailList(rows) {
     const sourceBadge = { email: "📧", form: "📝", compose: "✏" }[r.source] || "";
     const from = isInbound ? (r.from_email || "—") : (r.to_email || "—");
     const ticketPart = r.ticket_number ? ` · <span style="opacity:.5;font-size:10px">${escSetting(r.ticket_number)}</span>` : "";
-    // Extract text from message for preview - ROBUST fallback chain
+    // Extract text from message for preview - PANZERNA wersja
     let previewText = "";
 
-    // Strategy 1: Try body_html first (usually has clean HTML)
+    // Strategy 1: Try body_html first
     if (r.body_html) {
       const tmp = document.createElement("div");
       tmp.innerHTML = r.body_html;
-      // Check if it's full HTML email
-      if (r.body_html.includes("FAMILIADA")) {
-        // Extract from content area (div with padding:16px or similar)
-        const allDivs = tmp.querySelectorAll('div');
-        for (const div of allDivs) {
-          const style = div.getAttribute('style') || '';
-          if (style.includes('padding:16px') || style.includes('padding: 16px')) {
-            previewText = (div.textContent || div.innerText || "").trim();
-            break;
-          }
-        }
-      }
-      if (!previewText) {
-        previewText = (tmp.textContent || tmp.innerText || "").trim();
-      }
-      // Remove footer text
-      previewText = previewText.replace("Ta wiadomość została wysłana przez system Familiada.", "").trim();
+      previewText = (tmp.textContent || tmp.innerText || "").trim();
     }
 
     // Strategy 2: Try body (might be plain text or HTML)
     if (!previewText && r.body) {
-      if (r.body.includes("FAMILIADA")) {
-        // Full HTML email - extract content
-        const tmp = document.createElement("div");
-        tmp.innerHTML = r.body;
-        const allDivs = tmp.querySelectorAll('div');
-        for (const div of allDivs) {
-          const style = div.getAttribute('style') || '';
-          if (style.includes('padding:16px') || style.includes('padding: 16px')) {
-            previewText = (div.textContent || div.innerText || "").trim();
-            break;
-          }
-        }
-        if (!previewText) {
-          previewText = (tmp.textContent || tmp.innerText || "").trim();
-        }
-        previewText = previewText.replace("Ta wiadomość została wysłana przez system Familiada.", "").trim();
-      } else if (r.body.trim().startsWith("<")) {
-        // Regular HTML
+      if (r.body.trim().startsWith("<")) {
+        // HTML - strip all tags
         const tmp = document.createElement("div");
         tmp.innerHTML = r.body;
         previewText = (tmp.textContent || tmp.innerText || "").trim();
@@ -2222,10 +2190,13 @@ function renderMailList(rows) {
       previewText = (tmp.textContent || tmp.innerText || "").trim();
     }
 
-    // Clean up preview text
+    // Clean up preview text - pancerny cleanup
     previewText = previewText
-      .replace(/\s+/g, ' ')  // Collapse whitespace
-      .slice(0, 80)           // Limit length
+      .replace(/Ta wiadomość została wysłana przez system Familiada\./g, "")  // Remove footer
+      .replace(/FAMILIADA/g, "")  // Remove header
+      .replace(/familiada\.online/g, "")  // Remove URL
+      .replace(/\s+/g, ' ')  // Collapse all whitespace to single space
+      .slice(0, 80)  // Limit length
       .trim();
 
     item.innerHTML = `
