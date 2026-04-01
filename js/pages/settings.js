@@ -3158,7 +3158,7 @@ function showCompose(defaults = {}) {
       license_key: "gpl",
       plugins: "lists link image table autoresize codesample",
       toolbar: "undo redo | fontsize | formatselect | bold italic forecolor backcolor | bullist numlist | link image | table | codesample | removeformat",
-      fontsize_formats: "10px 11px 12px 13px 14px 16px 18px 20px 24px 28px 32px 36px 48px",
+      fontsize_formats: "Default 10px 11px 12px 13px 14px 16px 18px 20px 24px 28px 32px 36px 48px",
       color_map: [
         "000000", "Czarny",
         "ffffff", "Biały",
@@ -3175,9 +3175,7 @@ function showCompose(defaults = {}) {
       skin: "oxide-dark",
       content_css: "dark",
       content_style: `
-        * { font-size: 16px !important; }
-        body { background: #050914 !important; color: #ffffff !important; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important; font-size: 16px !important; line-height: 1.6; }
-        p, div, span, td, th, li, a { font-size: 16px !important; }
+        body { background: #050914 !important; color: #ffffff !important; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important; line-height: 1.6; }
         a { color: #ffeaa6 !important; }
         table { border-collapse: collapse; width: 100%; }
         table td, table th { border: 1px solid rgba(255,255,255,.2); padding: 8px; }
@@ -3556,9 +3554,9 @@ function showComposePreview(greetingSelect, farewellSelect, senderSelect) {
 
   // Structure: Greeting → Body (with #quote replaced) → Farewell
   const finalBody = `
-    ${greetingWithComma ? `<div style="margin-bottom:20px;line-height:1.6">${greetingWithComma.replace(/\n/g, "<br>")}</div>` : ""}
-    <div style="line-height:1.6;color:#fff;margin-bottom:20px">${bodyHtml}</div>
-    ${farewellText ? `<div style="margin-top:20px;line-height:1.6">${farewellText.replace(/\n/g, "<br>")}</div>` : ""}
+    ${greetingWithComma ? `<div style="margin-bottom:20px;line-height:1.6;font-size:14px">${greetingWithComma.replace(/\n/g, "<br>")}</div>` : ""}
+    <div style="line-height:1.6;color:#fff;margin-bottom:20px;font-size:14px">${bodyHtml}</div>
+    ${farewellText ? `<div style="margin-top:20px;line-height:1.6;font-size:14px">${farewellText.replace(/\n/g, "<br>")}</div>` : ""}
   `;
 
   // Generate full HTML email (dark theme like system emails)
@@ -5043,7 +5041,7 @@ function wireEvents() {
       branding: false, promotion: false, license_key: "gpl",
       plugins: "lists link image table autoresize codesample",
       toolbar: "undo redo | fontsize | formatselect | bold italic forecolor backcolor | bullist numlist | link image | table | codesample | removeformat",
-      fontsize_formats: "10px 11px 12px 13px 14px 16px 18px 20px 24px 28px 32px 36px 48px",
+      fontsize_formats: "Default 10px 11px 12px 13px 14px 16px 18px 20px 24px 28px 32px 36px 48px",
       color_map: [
         "000000", "Czarny",
         "ffffff", "Biały",
@@ -5057,9 +5055,7 @@ function wireEvents() {
         "778ca3", "Szary"
       ],
       content_style: `
-        * { font-size: 16px !important; }
-        body { background: #050914 !important; color: #ffffff !important; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important; font-size: 16px !important; line-height: 1.6; }
-        p, div, span, td, th, li, a { font-size: 16px !important; }
+        body { background: #050914 !important; color: #ffffff !important; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important; line-height: 1.6; }
         a { color: #ffeaa6 !important; }
         table { border-collapse: collapse; width: 100%; }
         table td, table th { border: 1px solid rgba(255,255,255,.2); padding: 8px; }
