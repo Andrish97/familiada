@@ -4413,11 +4413,11 @@ const pl = {
       maintenance: "Prace techniczne",
       stats: "Statystyki",
       ratings: "Oceny",
-      mail: "Maile",
+      mail: "Ustawienia maili",
       marketplace: "Gry Społeczności",
       generator: "Gry Producenta",
       tools: "Narzędzia",
-      reports: "Zgłoszenia",
+      reports: "Poczta Familiada",
       marketing: "Marketing",
     },
     generator: {

@@ -3946,11 +3946,11 @@ const uk = {
       maintenance: "Технічні роботи",
       stats: "Статистика",
       ratings: "Оцінки",
-      mail: "Пошта",
+      mail: "Налаштування пошти",
       marketplace: "Ігри спільноти",
       generator: "Ігри Виробника",
       tools: "Інструменти",
-      reports: "Заявки",
+      reports: "Пошта Familiada",
       marketing: "Маркетинг",
     },
     generator: {

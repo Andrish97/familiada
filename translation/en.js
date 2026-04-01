@@ -4072,11 +4072,11 @@ const en = {
       maintenance: "Maintenance",
       stats: "Statistics",
       ratings: "Ratings",
-      mail: "Emails",
+      mail: "Email Settings",
       marketplace: "Community Games",
       generator: "Producer Games",
       tools: "Tools",
-      reports: "Reports",
+      reports: "Familiada Mail",
       marketing: "Marketing",
     },
     generator: {
