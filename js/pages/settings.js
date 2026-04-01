@@ -3041,13 +3041,13 @@ function showCompose(defaults = {}) {
 
           <div class="field" style="margin-bottom:12px;min-height:0;display:flex;flex-direction:column">
             ${hasQuote && quotePosition === "before" ? quoteBlockHtml : ""}
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-              <label class="field-label" style="margin:0">
-                ${t("settings.reports.compose.message") || "Treść"}
-              </label>
-              <button type="button" class="btn sm" id="btnInsertQuote" style="font-size:11px;padding:4px 8px" title="Wstaw #quote w miejscu kursora">#quote</button>
-            </div>
-            <div style="opacity:.5;font-size:11px;margin-bottom:6px" data-i18n="settings.reports.compose.quoteHint">Użyj #quote aby wstawić cytat w tym miejscu</div>
+            <label class="field-label" style="margin-bottom:6px;display:block">
+              ${t("settings.reports.compose.message") || "Treść"}
+              ${hasQuote ? `
+                <span style="opacity:.5;font-size:11px;margin-left:8px" data-i18n="settings.reports.compose.quoteHint">Użyj #quote aby wstawić cytat w tym miejscu</span>
+                <button type="button" class="btn sm" id="btnInsertQuote" style="font-size:11px;padding:4px 8px;margin-left:8px" title="Wstaw #quote w miejscu kursora">#quote</button>
+              ` : ""}
+            </label>
             <textarea class="inp" id="composeMessageArea" rows="10" style="width:100%;box-sizing:border-box;resize:none;flex:1;min-height:120px;overflow-y:auto">${escSetting(bodyText)}</textarea>
             ${hasQuote && quotePosition === "after" ? quoteBlockHtml : ""}
           </div>
@@ -5006,8 +5006,10 @@ function wireEvents() {
   // Initialize TinyMCE after a short delay to ensure DOM is ready
   setTimeout(initTinyMCEEditors, 100);
 
-  // Insert #quote button
-  document.getElementById("btnInsertQuote")?.addEventListener("click", () => {
+  // Insert #quote button - prevent focus loss
+  document.getElementById("btnInsertQuote")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     const editor = tinymce.get("composeMessageArea");
     if (editor) {
       editor.insertContent("#quote");
