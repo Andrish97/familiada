@@ -3388,7 +3388,8 @@ async function sendComposeWithSignature(greetingSelect, farewellSelect, senderSe
     showToast("Edytor nie jest gotowy.", "error");
     return;
   }
-  let body = editor.getContent();
+  const htmlBody = editor.getContent();
+  const plainBody = editor.getContent({ format: 'text' });
   const reportId = (document.getElementById("composeReportId")?.value || "").trim() || null;
   const status = document.getElementById("composeSendStatus");
   const quote = (document.getElementById("composeQuoteBody")?.value || "").trim() || null;
@@ -3398,7 +3399,7 @@ async function sendComposeWithSignature(greetingSelect, farewellSelect, senderSe
   // Validate email format
   const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRe.test(toEmail)) { showToast("Nieprawidłowy format e-mail.", "error"); return; }
-  if (!body) { showToast("Podaj treść wiadomości.", "error"); return; }
+  if (!htmlBody) { showToast("Podaj treść wiadomości.", "error"); return; }
   if (!reportId) { showToast("Brak zgłoszenia.", "error"); return; }
   if (status) status.textContent = "Wysyłam…";
 
@@ -3491,7 +3492,7 @@ async function sendComposeWithSignature(greetingSelect, farewellSelect, senderSe
       body: JSON.stringify({
         to_email: toEmail || undefined,
         subject,
-        body: htmlBody,
+        body: plainBody,
         body_html: htmlBody,
         report_id: reportId || undefined,
         attachments: uploadedAttachments.length ? uploadedAttachments : undefined,
