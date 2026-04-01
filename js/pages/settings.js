@@ -2160,23 +2160,36 @@ function renderMailList(rows) {
     const sourceBadge = { email: "📧", form: "📝", compose: "✏" }[r.source] || "";
     const from = isInbound ? (r.from_email || "—") : (r.to_email || "—");
     const ticketPart = r.ticket_number ? ` · <span style="opacity:.5;font-size:10px">${escSetting(r.ticket_number)}</span>` : "";
-    // Strip ALL HTML tags to get raw text only
+    // Extract text from message for preview
     let previewText = "";
+    
+    // Try body_preview first (usually plain text)
     if (r.body_preview) {
       const tmp = document.createElement("div");
       tmp.innerHTML = r.body_preview;
-      previewText = tmp.textContent || tmp.innerText || "";
+      previewText = (tmp.textContent || tmp.innerText || "").trim();
     }
-    // If still empty, try to get text from body or body_html
-    if (!previewText) {
+    
+    // If empty, try body_html (full HTML)
+    if (!previewText && r.body_html) {
       const tmp = document.createElement("div");
-      tmp.innerHTML = r.body_html || r.body || "";
-      previewText = tmp.textContent || tmp.innerText || "";
+      tmp.innerHTML = r.body_html;
+      previewText = (tmp.textContent || tmp.innerText || "").trim();
     }
-    // Final fallback: strip HTML manually
+    
+    // If still empty, try body (might be plain text or HTML)
     if (!previewText && r.body) {
-      previewText = r.body.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+      // Check if it's HTML
+      if (r.body.trim().startsWith("<")) {
+        const tmp = document.createElement("div");
+        tmp.innerHTML = r.body;
+        previewText = (tmp.textContent || tmp.innerText || "").trim();
+      } else {
+        // Plain text
+        previewText = r.body.trim();
+      }
     }
+    
     item.innerHTML = `
       <div class="mail-ti-row">
         <span class="mail-ti-from">${sourceBadge} ${escSetting(from)}</span>
@@ -3022,7 +3035,7 @@ function showCompose(defaults = {}) {
         <div style="padding:0 16px">
           <div class="field" style="margin-bottom:12px">
             <label class="field-label">Do (e-mail)</label>
-            <input class="inp" id="composeToInput" type="email" style="width:100%;box-sizing:border-box" value="${escSetting(defaults.to || "")}" placeholder="np. kontakt@firma.pl">
+            <input class="inp" id="composeToInput" type="email" style="width:100%;box-sizing:border-box" value="${escSetting(defaults.to || "")}" placeholder="np. kontakt@firma.pl" ${hasQuote ? 'disabled style="opacity:.5"' : ''}>
           </div>
           <div class="field" style="margin-bottom:12px">
             <label class="field-label">${t("settings.reports.compose.subject") || "Temat"}</label>
@@ -3382,6 +3395,9 @@ async function sendComposeWithSignature(greetingSelect, farewellSelect, senderSe
 
   if (!subject) { showToast("Podaj temat wiadomości.", "error"); return; }
   if (!toEmail) { showToast("Podaj odbiorcę.", "error"); return; }
+  // Validate email format
+  const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRe.test(toEmail)) { showToast("Nieprawidłowy format e-mail.", "error"); return; }
   if (!body) { showToast("Podaj treść wiadomości.", "error"); return; }
   if (!reportId) { showToast("Brak zgłoszenia.", "error"); return; }
   if (status) status.textContent = "Wysyłam…";
