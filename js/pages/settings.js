@@ -2190,18 +2190,30 @@ function renderMailList(rows) {
       previewText = (tmp.textContent || tmp.innerText || "").trim();
     }
 
+    // Debug log
+    console.log('mail-ti-preview:', {
+      has_body_html: !!r.body_html,
+      has_body: !!r.body,
+      has_body_preview: !!r.body_preview,
+      previewText_before: previewText
+    });
+
     // Clean up preview text - pancerny cleanup
     previewText = previewText
       .replace(/Ta wiadomość została wysłana przez system Familiada\./gi, "")  // Remove footer
       .replace(/FAMILIADA/gi, "")  // Remove header
       .replace(/familiada\.online/gi, "")  // Remove URL
-      .replace(/^\s*Witaj[,\s]*/gi, "")  // Remove "Witaj" greeting
-      .replace(/^\s*Cześć[,\s]*/gi, "")  // Remove "Cześć" greeting  
-      .replace(/^\s*Pozdrawiam[,\s]*/gi, "")  // Remove "Pozdrawiam"
-      .replace(/^\s*Dzień dobry[,\s]*/gi, "")  // Remove "Dzień dobry"
+      .replace(/witaj/gi, "")  // Remove "Witaj"
+      .replace(/cześć/gi, "")  // Remove "Cześć"
+      .replace(/pozdrawiam/gi, "")  // Remove "Pozdrawiam"
+      .replace(/dzień dobry/gi, "")  // Remove "Dzień dobry"
+      .replace(/^[,\s]+|[,\s]+$/g, "")  // Remove leading/trailing commas and spaces
       .replace(/\s+/g, ' ')  // Collapse all whitespace to single space
       .slice(0, 80)  // Limit length
       .trim();
+
+    // Debug log after cleanup
+    console.log('mail-ti-preview after cleanup:', previewText);
 
     item.innerHTML = `
       <div class="mail-ti-row">
