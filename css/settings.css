@@ -1646,6 +1646,7 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   flex-direction: column;
   gap: 12px;
   min-height: 0;
+  height: 100%;
 }
 .mail-compose-pane #composePaneInner::-webkit-scrollbar {
   width: 8px;
@@ -1661,9 +1662,21 @@ body.tools-fullscreen .tools-frame-wrap iframe{
 .mail-compose-pane #composePaneInner::-webkit-scrollbar-thumb:hover {
   background: rgba(255,234,166,.5);
 }
-.mail-compose-pane .field { margin: 0; }
-.mail-compose-pane .field-label { font-size: 11px; display: block; }
-.mail-compose-pane textarea { min-height: 140px; resize: vertical; }
+.mail-compose-pane .field { 
+  margin: 0;
+  flex-shrink: 0;
+}
+.mail-compose-pane .field-label { 
+  font-size: 11px; 
+  display: block;
+  margin-bottom: 6px;
+}
+.mail-compose-pane textarea { 
+  min-height: 140px; 
+  resize: vertical;
+  flex: 1;
+  min-width: 0;
+}
 .mail-compose-pane input[type="file"] {
   display: block;
   width: 100%;
