@@ -2170,8 +2170,10 @@ function renderMailList(rows) {
         // Extract content from full HTML email
         const tmp = document.createElement("div");
         tmp.innerHTML = r.body;
-        // Get content div (the actual message body)
-        const contentDiv = tmp.querySelector('div[style*="padding:16px"]');
+        // Get content div (the actual message body) - match div with padding:16px
+        const contentDiv = Array.from(tmp.querySelectorAll('div')).find(div => 
+          div.style.padding === "16px" || div.getAttribute('style')?.includes("padding:16px")
+        );
         if (contentDiv) {
           previewText = (contentDiv.textContent || contentDiv.innerText || "").trim();
           // Remove footer text
@@ -3500,7 +3502,7 @@ async function sendComposeWithSignature(greetingSelect, farewellSelect, senderSe
         to_email: toEmail || undefined,
         subject,
         body: body,
-        body_html: body,
+        body_html: htmlBody,
         report_id: reportId || undefined,
         attachments: uploadedAttachments.length ? uploadedAttachments : undefined,
       }),
