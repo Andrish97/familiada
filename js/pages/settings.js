@@ -2160,30 +2160,52 @@ function renderMailList(rows) {
     const sourceBadge = { email: "📧", form: "📝", compose: "✏" }[r.source] || "";
     const from = isInbound ? (r.from_email || "—") : (r.to_email || "—");
     const ticketPart = r.ticket_number ? ` · <span style="opacity:.5;font-size:10px">${escSetting(r.ticket_number)}</span>` : "";
-    // Extract text from message for preview
+    // Extract text from message for preview - ROBUST fallback chain
     let previewText = "";
 
-    // Try body first
-    if (r.body) {
-      // Check if it's full HTML email (has FAMILIADA header)
-      if (r.body.includes("FAMILIADA") && r.body.includes("familiada.online")) {
-        // Extract content from full HTML email
+    // Strategy 1: Try body_html first (usually has clean HTML)
+    if (r.body_html) {
+      const tmp = document.createElement("div");
+      tmp.innerHTML = r.body_html;
+      // Check if it's full HTML email
+      if (r.body_html.includes("FAMILIADA")) {
+        // Extract from content area (div with padding:16px or similar)
+        const allDivs = tmp.querySelectorAll('div');
+        for (const div of allDivs) {
+          const style = div.getAttribute('style') || '';
+          if (style.includes('padding:16px') || style.includes('padding: 16px')) {
+            previewText = (div.textContent || div.innerText || "").trim();
+            break;
+          }
+        }
+      }
+      if (!previewText) {
+        previewText = (tmp.textContent || tmp.innerText || "").trim();
+      }
+      // Remove footer text
+      previewText = previewText.replace("Ta wiadomość została wysłana przez system Familiada.", "").trim();
+    }
+
+    // Strategy 2: Try body (might be plain text or HTML)
+    if (!previewText && r.body) {
+      if (r.body.includes("FAMILIADA")) {
+        // Full HTML email - extract content
         const tmp = document.createElement("div");
         tmp.innerHTML = r.body;
-        // Get content div (the actual message body) - match div with padding:16px
-        const contentDiv = Array.from(tmp.querySelectorAll('div')).find(div => 
-          div.style.padding === "16px" || div.getAttribute('style')?.includes("padding:16px")
-        );
-        if (contentDiv) {
-          previewText = (contentDiv.textContent || contentDiv.innerText || "").trim();
-          // Remove footer text
-          previewText = previewText.replace("Ta wiadomość została wysłana przez system Familiada.", "").trim();
-        } else {
-          // Fallback: strip all HTML
+        const allDivs = tmp.querySelectorAll('div');
+        for (const div of allDivs) {
+          const style = div.getAttribute('style') || '';
+          if (style.includes('padding:16px') || style.includes('padding: 16px')) {
+            previewText = (div.textContent || div.innerText || "").trim();
+            break;
+          }
+        }
+        if (!previewText) {
           previewText = (tmp.textContent || tmp.innerText || "").trim();
         }
-      } else if (r.body.trim().startsWith("<") || /<[a-z][\s\S]*>/i.test(r.body)) {
-        // Regular HTML, strip tags
+        previewText = previewText.replace("Ta wiadomość została wysłana przez system Familiada.", "").trim();
+      } else if (r.body.trim().startsWith("<")) {
+        // Regular HTML
         const tmp = document.createElement("div");
         tmp.innerHTML = r.body;
         previewText = (tmp.textContent || tmp.innerText || "").trim();
@@ -2193,19 +2215,18 @@ function renderMailList(rows) {
       }
     }
 
-    // If body is empty or didn't yield text, try body_html
-    if (!previewText && r.body_html) {
-      const tmp = document.createElement("div");
-      tmp.innerHTML = r.body_html;
-      previewText = (tmp.textContent || tmp.innerText || "").trim();
-    }
-
-    // Final fallback: body_preview (usually short/trimmed)
+    // Strategy 3: Final fallback - body_preview
     if (!previewText && r.body_preview) {
       const tmp = document.createElement("div");
       tmp.innerHTML = r.body_preview;
       previewText = (tmp.textContent || tmp.innerText || "").trim();
     }
+
+    // Clean up preview text
+    previewText = previewText
+      .replace(/\s+/g, ' ')  // Collapse whitespace
+      .slice(0, 80)           // Limit length
+      .trim();
 
     item.innerHTML = `
       <div class="mail-ti-row">
@@ -2213,7 +2234,7 @@ function renderMailList(rows) {
         <span class="mail-ti-date">${dateStr}</span>
       </div>
       <div class="mail-ti-subject">${escSetting(r.subject || "—")}</div>
-      <div class="mail-ti-preview">${escSetting(previewText.slice(0, 80))}${ticketPart}</div>`;
+      <div class="mail-ti-preview">${escSetting(previewText)}</div>`;
     item.addEventListener("click", () => openMessage(r.id));
     body.appendChild(item);
   }
