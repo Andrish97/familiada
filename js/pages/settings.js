@@ -3125,8 +3125,8 @@ function showCompose(defaults = {}) {
       branding: false,
       promotion: false,
       license_key: "gpl",
-      plugins: "lists link image table autoresize codesample",
-      toolbar: "undo redo | fontselect fontsizeselect | formatselect | bold italic forecolor backcolor | bullist numlist | link image | table | codesample | removeformat",
+      plugins: "lists link image table autoresize codesample fontawesome",
+      toolbar: "undo redo | fontfamily fontsize | formatselect | bold italic forecolor backcolor | bullist numlist | link image | table | codesample | removeformat",
       font_family_formats: "Arial=arial,helvetica,sans-serif;Courier New=courier new,courier,monospace;Georgia=georgia,palatino,serif;Tahoma=tahoma,arial,helvetica,sans-serif;Times New Roman=times new roman,times,serif;Trebuchet MS=trebuchet ms,geneva,sans-serif;Verdana=verdana,geneva,sans-serif",
       fontsize_formats: "10px 11px 12px 14px 16px 18px 20px 24px 28px 32px 36px 48px",
       color_map: [
@@ -5011,8 +5011,8 @@ function wireEvents() {
     tinymce.init({
       selector: "#mktBody", height: 400, menubar: "edit insert view format table tools",
       branding: false, promotion: false, license_key: "gpl",
-      plugins: "lists link image table autoresize codesample",
-      toolbar: "undo redo | fontselect fontsizeselect | formatselect | bold italic forecolor backcolor | bullist numlist | link image | table | codesample | removeformat",
+      plugins: "lists link image table autoresize codesample fontawesome",
+      toolbar: "undo redo | fontfamily fontsize | formatselect | bold italic forecolor backcolor | bullist numlist | link image | table | codesample | removeformat",
       font_family_formats: "Arial=arial,helvetica,sans-serif;Courier New=courier new,courier,monospace;Georgia=georgia,palatino,serif;Tahoma=tahoma,arial,helvetica,sans-serif;Times New Roman=times new roman,times,serif;Trebuchet MS=trebuchet ms,geneva,sans-serif;Verdana=verdana,geneva,sans-serif",
       fontsize_formats: "10px 11px 12px 14px 16px 18px 20px 24px 28px 32px 36px 48px",
       color_map: [
