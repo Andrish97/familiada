@@ -3353,7 +3353,7 @@ async function sendComposeWithSignature(greetingSelect, farewellSelect) {
         to_email: toEmail || undefined,
         subject,
         body: htmlBody,
-        quote: undefined,
+        body_html: htmlBody,
         report_id: reportId || undefined,
         attachments: uploadedAttachments.length ? uploadedAttachments : undefined,
       }),
