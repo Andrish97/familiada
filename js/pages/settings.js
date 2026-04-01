@@ -3158,7 +3158,7 @@ function showCompose(defaults = {}) {
       license_key: "gpl",
       plugins: "lists link image table autoresize codesample",
       toolbar: "undo redo | fontsize | formatselect | bold italic forecolor backcolor | bullist numlist | link image | table | codesample | removeformat",
-      fontsize_formats: "Default 10px 11px 12px 13px 14px 16px 18px 20px 24px 28px 32px 36px 48px",
+      fontsize_formats: "10px 11px 12px 13px 14px 15px 16px 18px 20px 22px 24px 26px 28px 32px 36px 48px",
       color_map: [
         "000000", "Czarny",
         "ffffff", "Biały",
@@ -5041,7 +5041,7 @@ function wireEvents() {
       branding: false, promotion: false, license_key: "gpl",
       plugins: "lists link image table autoresize codesample",
       toolbar: "undo redo | fontsize | formatselect | bold italic forecolor backcolor | bullist numlist | link image | table | codesample | removeformat",
-      fontsize_formats: "Default 10px 11px 12px 13px 14px 16px 18px 20px 24px 28px 32px 36px 48px",
+      fontsize_formats: "10px 11px 12px 13px 14px 15px 16px 18px 20px 22px 24px 26px 28px 32px 36px 48px",
       color_map: [
         "000000", "Czarny",
         "ffffff", "Biały",
