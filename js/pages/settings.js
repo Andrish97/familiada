@@ -2162,12 +2162,26 @@ function renderMailList(rows) {
     const ticketPart = r.ticket_number ? ` · <span style="opacity:.5;font-size:10px">${escSetting(r.ticket_number)}</span>` : "";
     // Extract text from message for preview
     let previewText = "";
-    
-    // Try body first (plain text - NEW emails have this)
+
+    // Try body first
     if (r.body) {
-      // Check if it's HTML (starts with < or contains HTML tags)
-      if (r.body.trim().startsWith("<") || /<[a-z][\s\S]*>/i.test(r.body)) {
-        // It's HTML, strip tags
+      // Check if it's full HTML email (has FAMILIADA header)
+      if (r.body.includes("FAMILIADA") && r.body.includes("familiada.online")) {
+        // Extract content from full HTML email
+        const tmp = document.createElement("div");
+        tmp.innerHTML = r.body;
+        // Get content div (the actual message body)
+        const contentDiv = tmp.querySelector('div[style*="padding:16px"]');
+        if (contentDiv) {
+          previewText = (contentDiv.textContent || contentDiv.innerText || "").trim();
+          // Remove footer text
+          previewText = previewText.replace("Ta wiadomość została wysłana przez system Familiada.", "").trim();
+        } else {
+          // Fallback: strip all HTML
+          previewText = (tmp.textContent || tmp.innerText || "").trim();
+        }
+      } else if (r.body.trim().startsWith("<") || /<[a-z][\s\S]*>/i.test(r.body)) {
+        // Regular HTML, strip tags
         const tmp = document.createElement("div");
         tmp.innerHTML = r.body;
         previewText = (tmp.textContent || tmp.innerText || "").trim();
@@ -2176,21 +2190,21 @@ function renderMailList(rows) {
         previewText = r.body.trim();
       }
     }
-    
+
     // If body is empty or didn't yield text, try body_html
     if (!previewText && r.body_html) {
       const tmp = document.createElement("div");
       tmp.innerHTML = r.body_html;
       previewText = (tmp.textContent || tmp.innerText || "").trim();
     }
-    
+
     // Final fallback: body_preview (usually short/trimmed)
     if (!previewText && r.body_preview) {
       const tmp = document.createElement("div");
       tmp.innerHTML = r.body_preview;
       previewText = (tmp.textContent || tmp.innerText || "").trim();
     }
-    
+
     item.innerHTML = `
       <div class="mail-ti-row">
         <span class="mail-ti-from">${sourceBadge} ${escSetting(from)}</span>
@@ -2331,7 +2345,7 @@ function renderMessageDetail(msg, attachments = []) {
           .email-container { max-width: 600px; margin: 0 auto; padding: 20px; }
           .email-header { background: linear-gradient(135deg, #1a1a2e 0%, #2d2d44 100%); padding: 25px 20px; margin: -20px -20px 25px -20px; border-radius: 8px 8px 0 0; }
           .email-subject { font-size: 22px; font-weight: 700; color: #fff; margin: 0; }
-          .email-body { padding: 24px; background: transparent; line-height: 1.6; }
+          .email-body { padding: 24px; background: transparent; line-height: 1.4; }
         </style>
       </head>
       <body>
@@ -2640,7 +2654,7 @@ function renderReportThread(report, messages, attsByMsg = {}) {
             .email-container { max-width: 600px; margin: 0 auto; padding: 20px; }
             .email-header { background: linear-gradient(135deg, #1a1a2e 0%, #2d2d44 100%); padding: 25px 20px; margin: -20px -20px 25px -20px; border-radius: 8px 8px 0 0; }
             .email-subject { font-size: 22px; font-weight: 700; color: #fff; margin: 0; }
-            .email-body { padding: 24px; background: transparent; line-height: 1.6; }
+            .email-body { padding: 24px; background: transparent; line-height: 1.4; }
           </style>
         </head>
         <body>
@@ -3175,7 +3189,7 @@ function showCompose(defaults = {}) {
       skin: "oxide-dark",
       content_css: "dark",
       content_style: `
-        body { background: #050914 !important; color: #ffffff !important; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important; line-height: 1.6; }
+        body { background: #050914 !important; color: #ffffff !important; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important; line-height: 1.4; }
         a { color: #ffeaa6 !important; }
         table { border-collapse: collapse; width: 100%; }
         table td, table th { border: 1px solid rgba(255,255,255,.2); padding: 8px; }
@@ -3394,7 +3408,6 @@ async function sendComposeWithSignature(greetingSelect, farewellSelect, senderSe
   const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRe.test(toEmail)) { showToast("Nieprawidłowy format e-mail.", "error"); return; }
   if (!body) { showToast("Podaj treść wiadomości.", "error"); return; }
-  if (!reportId) { showToast("Brak zgłoszenia.", "error"); return; }
   if (status) status.textContent = "Wysyłam…";
 
   // Build signature from compose window selections
@@ -3554,9 +3567,9 @@ function showComposePreview(greetingSelect, farewellSelect, senderSelect) {
 
   // Structure: Greeting → Body (with #quote replaced) → Farewell
   const finalBody = `
-    ${greetingWithComma ? `<div style="margin-bottom:20px;line-height:1.6;font-size:14px">${greetingWithComma.replace(/\n/g, "<br>")}</div>` : ""}
-    <div style="line-height:1.6;color:#fff;margin-bottom:20px;font-size:14px">${bodyHtml}</div>
-    ${farewellText ? `<div style="margin-top:20px;line-height:1.6;font-size:14px">${farewellText.replace(/\n/g, "<br>")}</div>` : ""}
+    ${greetingWithComma ? `<div style="margin-bottom:20px;line-height:1.4;font-size:14px">${greetingWithComma.replace(/\n/g, "<br>")}</div>` : ""}
+    <div style="line-height:1.4;color:#fff;margin-bottom:20px;font-size:14px">${bodyHtml}</div>
+    ${farewellText ? `<div style="margin-top:20px;line-height:1.4;font-size:14px">${farewellText.replace(/\n/g, "<br>")}</div>` : ""}
   `;
 
   // Generate full HTML email (dark theme like system emails)
@@ -3567,12 +3580,12 @@ function showComposePreview(greetingSelect, farewellSelect, senderSelect) {
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1">
       <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; background: #050914; color: #ffffff; line-height: 1.6; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; background: #050914; color: #ffffff; line-height: 1.4; }
         .email-container { max-width: 600px; margin: 0 auto; padding: 20px; }
         .email-header { background: linear-gradient(135deg, #1a1a2e 0%, #2d2d44 100%); padding: 25px 20px; margin: -20px -20px 25px -20px; border-radius: 8px 8px 0 0; }
         .email-subject { font-size: 22px; font-weight: 700; color: #fff; margin: 0; }
         .email-body { padding: 0 5px; }
-        .email-quote { margin: 25px 0; padding: 20px; background: rgba(255,255,255,.05); border-left: 4px solid #ffeaa6; border-radius: 4px; font-size: 13px; line-height: 1.6; color: #ccc; }
+        .email-quote { margin: 25px 0; padding: 20px; background: rgba(255,255,255,.05); border-left: 4px solid #ffeaa6; border-radius: 4px; font-size: 13px; line-height: 1.4; color: #ccc; }
         .email-footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,.1); font-size: 12px; color: #888; }
       </style>
     </head>
@@ -5055,7 +5068,7 @@ function wireEvents() {
         "778ca3", "Szary"
       ],
       content_style: `
-        body { background: #050914 !important; color: #ffffff !important; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important; line-height: 1.6; }
+        body { background: #050914 !important; color: #ffffff !important; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important; line-height: 1.4; }
         a { color: #ffeaa6 !important; }
         table { border-collapse: collapse; width: 100%; }
         table td, table th { border: 1px solid rgba(255,255,255,.2); padding: 8px; }
