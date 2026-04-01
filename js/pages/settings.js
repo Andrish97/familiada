@@ -2924,99 +2924,100 @@ function showCompose(defaults = {}) {
   const bodyText = defaults.body || "";
 
   conv.innerHTML = `
-    <div class="mail-compose-pane" id="composePaneOuter">
-      <div class="mail-compose-pane" id="composePaneInner">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-shrink:0">
+    <div class="mail-compose-pane">
+      <div id="composePaneInner">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-shrink:0;padding:16px 16px 0 16px">
           <div style="font-size:14px;font-weight:700">${t("settings.reports.compose.title") || "Napisz nową wiadomość"}</div>
           <button id="btnComposeClose" type="button" title="Zamknij" style="background:none;border:none;cursor:pointer;padding:4px;color:rgba(255,255,255,.4);line-height:1;font-size:18px;border-radius:4px" onmouseover="this.style.color='rgba(255,255,255,.8)'" onmouseout="this.style.color='rgba(255,255,255,.4)'">✕</button>
         </div>
-      
-      <div class="field" style="flex-shrink:0">
-        <label class="field-label">${t("settings.reports.compose.subject") || "Temat"}</label>
-        <input class="inp" id="composeSubjectInput" type="text" autocomplete="off" style="width:100%;box-sizing:border-box" value="${escSetting(defaults.subject || "")}" placeholder="Wpisz temat wiadomości">
-      </div>
-      
-      <div class="mail-inline-grid" style="flex-shrink:0">
-        <div class="field">
-          <label class="field-label" style="font-size:12px">Powitanie</label>
-          <div class="ui-select" id="composeGreetingSelect" style="width:100%">
-            <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
-              <span class="ui-select-label">${t("settings.mail.greetingOptions.none") || "Brak"}</span>
-              <span class="ui-select-caret" aria-hidden="true">▾</span>
-            </button>
-            <div class="ui-select-menu" role="listbox"></div>
+
+        <div style="padding:0 16px">
+          <div class="field" style="margin-bottom:12px">
+            <label class="field-label">${t("settings.reports.compose.subject") || "Temat"}</label>
+            <input class="inp" id="composeSubjectInput" type="text" autocomplete="off" style="width:100%;box-sizing:border-box" value="${escSetting(defaults.subject || "")}" placeholder="Wpisz temat wiadomości">
           </div>
-          <input class="inp" id="composeGreetingCustom" type="text" placeholder="Wpisz własne powitanie" style="margin-top:6px;display:none;width:100%;box-sizing:border-box">
-        </div>
-        <div class="field">
-          <label class="field-label" style="font-size:12px">Pożegnanie</label>
-          <div class="ui-select" id="composeFarewellSelect" style="width:100%">
-            <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
-              <span class="ui-select-label">${t("settings.mail.farewellOptions.team") || "Pozdrawiam\\nZespół Familiada"}</span>
-              <span class="ui-select-caret" aria-hidden="true">▾</span>
-            </button>
-            <div class="ui-select-menu" role="listbox"></div>
+
+          <div class="mail-inline-grid" style="margin-bottom:12px">
+            <div class="field">
+              <label class="field-label" style="font-size:12px">Powitanie</label>
+              <div class="ui-select" id="composeGreetingSelect" style="width:100%">
+                <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
+                  <span class="ui-select-label">${t("settings.mail.greetingOptions.none") || "Brak"}</span>
+                  <span class="ui-select-caret" aria-hidden="true">▾</span>
+                </button>
+                <div class="ui-select-menu" role="listbox"></div>
+              </div>
+              <input class="inp" id="composeGreetingCustom" type="text" placeholder="Wpisz własne powitanie" style="margin-top:6px;display:none;width:100%;box-sizing:border-box">
+            </div>
+            <div class="field">
+              <label class="field-label" style="font-size:12px">Pożegnanie</label>
+              <div class="ui-select" id="composeFarewellSelect" style="width:100%">
+                <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
+                  <span class="ui-select-label">${t("settings.mail.farewellOptions.team") || "Pozdrawiam\\nZespół Familiada"}</span>
+                  <span class="ui-select-caret" aria-hidden="true">▾</span>
+                </button>
+                <div class="ui-select-menu" role="listbox"></div>
+              </div>
+              <textarea class="inp" id="composeFarewellCustom" rows="2" placeholder="Wpisz własne pożegnanie" style="margin-top:6px;display:none;width:100%;box-sizing:border-box;resize:vertical"></textarea>
+            </div>
           </div>
-          <textarea class="inp" id="composeFarewellCustom" rows="2" placeholder="Wpisz własne pożegnanie" style="margin-top:6px;display:none;width:100%;box-sizing:border-box;resize:vertical"></textarea>
+
+          <div class="field" style="margin-bottom:12px">
+            <label class="field-label" style="font-size:12px">${t("settings.reports.compose.templateLabel") || "Szablon odpowiedzi"}</label>
+            <select class="inp" id="composeTemplateSelect" style="width:100%;box-sizing:border-box">
+              <option value="custom">${t("settings.reports.compose.templates.custom") || "Własny"}</option>
+              <option value="greeting">${t("settings.reports.compose.templates.greeting") || "Standardowe powitanie"}</option>
+              <option value="info">${t("settings.reports.compose.templates.info") || "Informacja"}</option>
+              <option value="resolved">${t("settings.reports.compose.templates.resolved") || "Zgłoszenie rozwiązane"}</option>
+              <option value="pending">${t("settings.reports.compose.templates.pending") || "Oczekiwanie na odpowiedź"}</option>
+            </select>
+          </div>
+
+          <div class="field" style="margin-bottom:12px;min-height:0;display:flex;flex-direction:column">
+            <label class="field-label">${t("settings.reports.compose.message") || "Treść wiadomości"}</label>
+            ${quotePosition === "before" && hasQuote ? quoteBlockHtml : ""}
+            <textarea class="inp" id="composeMessageArea" rows="10" style="width:100%;box-sizing:border-box;resize:none;flex:1;min-height:120px;overflow-y:auto"></textarea>
+            ${quotePosition === "after" && hasQuote ? quoteBlockHtml : ""}
+          </div>
+
+          ${hasQuote ? `
+          <div class="field" style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.1)">
+            <label class="field-label" style="font-size:12px;margin-bottom:8px;display:block">Pozycja cytatu:</label>
+            <div class="quote-position-row" style="display:flex;gap:20px;flex-wrap:wrap">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;white-space:nowrap">
+                <input type="radio" name="composeQuotePosition" value="before" ${quotePosition === "before" ? "checked" : ""} style="accent-color:#ffeaa6">
+                <span>Przed treścią</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;white-space:nowrap">
+                <input type="radio" name="composeQuotePosition" value="after" ${quotePosition === "after" ? "checked" : ""} style="accent-color:#ffeaa6">
+                <span>Po treści</span>
+              </label>
+            </div>
+          </div>
+          ` : ""}
+
+          <div class="field attachments-section" style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.1)">
+            <label class="field-label attachments-label" style="margin-bottom:8px;display:block">Załączniki <span style="opacity:.4;font-size:10px">(maks. 10 MB)</span></label>
+            <input type="file" id="composeAttachmentInput" multiple style="display:none">
+            <label for="composeAttachmentInput" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);font-size:12px;color:rgba(255,255,255,.7);cursor:pointer;user-select:none">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+              Wybierz pliki
+            </label>
+            <div id="composeAttachmentList" class="attachments-list" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px"></div>
+          </div>
+
+          <input type="hidden" id="composeReportId" value="${escSetting(defaults.report_id || "")}">
+          <input type="hidden" id="composeQuoteBody" value="${escSetting(defaults.quote || "")}">
+          <input type="hidden" id="composeToEmail" value="${escSetting(defaults.to || "")}">
+
+          <div style="display:flex;justify-content:flex-end;gap:8px;align-items:center;padding-top:12px;margin-top:12px;border-top:1px solid rgba(255,255,255,.1)">
+            <button class="btn sm" id="btnComposePreview" type="button" data-i18n="settings.reports.compose.preview">👁 Podgląd</button>
+            <span class="field-hint" id="composeSendStatus"></span>
+            <button class="btn sm gold" id="btnComposeSend" type="button">${t("settings.reports.compose.send") || "Wyślij"}</button>
+          </div>
         </div>
       </div>
-      
-      <div class="field" style="flex-shrink:0">
-        <label class="field-label" style="font-size:12px">${t("settings.reports.compose.templateLabel") || "Szablon odpowiedzi"}</label>
-        <select class="inp" id="composeTemplateSelect" style="width:100%;box-sizing:border-box">
-          <option value="custom">${t("settings.reports.compose.templates.custom") || "Własny"}</option>
-          <option value="greeting">${t("settings.reports.compose.templates.greeting") || "Standardowe powitanie"}</option>
-          <option value="info">${t("settings.reports.compose.templates.info") || "Informacja"}</option>
-          <option value="resolved">${t("settings.reports.compose.templates.resolved") || "Zgłoszenie rozwiązane"}</option>
-          <option value="pending">${t("settings.reports.compose.templates.pending") || "Oczekiwanie na odpowiedź"}</option>
-        </select>
-      </div>
-      
-      <div class="field" style="flex-shrink:0;min-height:0;display:flex;flex-direction:column">
-        <label class="field-label">${t("settings.reports.compose.message") || "Treść wiadomości"}</label>
-        ${quotePosition === "before" && hasQuote ? quoteBlockHtml : ""}
-        <textarea class="inp" id="composeMessageArea" rows="10" style="width:100%;box-sizing:border-box;resize:none;flex:1;min-height:0;overflow-y:auto"></textarea>
-        ${quotePosition === "after" && hasQuote ? quoteBlockHtml : ""}
-      </div>
-      
-      ${hasQuote ? `
-      <div class="field" style="flex-shrink:0;margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.1)">
-        <label class="field-label" style="font-size:12px;margin-bottom:8px;display:block">Pozycja cytatu:</label>
-        <div class="quote-position-row" style="display:flex;gap:20px;flex-wrap:wrap">
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;white-space:nowrap">
-            <input type="radio" name="composeQuotePosition" value="before" ${quotePosition === "before" ? "checked" : ""} style="accent-color:#ffeaa6">
-            <span>Przed treścią</span>
-          </label>
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;white-space:nowrap">
-            <input type="radio" name="composeQuotePosition" value="after" ${quotePosition === "after" ? "checked" : ""} style="accent-color:#ffeaa6">
-            <span>Po treści</span>
-          </label>
-        </div>
-      </div>
-      ` : ""}
-      
-      <div class="field attachments-section" style="flex-shrink:0;margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.1)">
-        <label class="field-label attachments-label" style="margin-bottom:8px">Załączniki <span style="opacity:.4;font-size:10px">(maks. 10 MB)</span></label>
-        <input type="file" id="composeAttachmentInput" multiple style="display:none">
-        <label for="composeAttachmentInput" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);font-size:12px;color:rgba(255,255,255,.7);cursor:pointer;user-select:none">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
-          Wybierz pliki
-        </label>
-        <div id="composeAttachmentList" class="attachments-list" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px"></div>
-      </div>
-      
-      <input type="hidden" id="composeReportId" value="${escSetting(defaults.report_id || "")}">
-      <input type="hidden" id="composeQuoteBody" value="${escSetting(defaults.quote || "")}">
-      <input type="hidden" id="composeToEmail" value="${escSetting(defaults.to || "")}">
-      
-      <div style="display:flex;justify-content:flex-end;gap:8px;align-items:center;padding-top:12px;margin-top:auto;flex-shrink:0;border-top:1px solid rgba(255,255,255,.1);padding-top:12px">
-        <button class="btn sm" id="btnComposePreview" type="button" data-i18n="settings.reports.compose.preview">👁 Podgląd</button>
-        <span class="field-hint" id="composeSendStatus"></span>
-        <button class="btn sm gold" id="btnComposeSend" type="button">${t("settings.reports.compose.send") || "Wyślij"}</button>
-      </div>
-    </div>
-  </div>
-</div>`;
+    </div>`;
   
   // Initialize greeting select
   const composeGreetingSelect = initUiSelect(document.getElementById("composeGreetingSelect"), {
