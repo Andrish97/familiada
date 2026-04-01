@@ -4907,6 +4907,7 @@ function wireEvents() {
       license_key: "gpl",
       plugins: "lists link image table autoresize codesample",
       toolbar: "undo redo | formatselect | bold italic forecolor backcolor | bullist numlist | link image | table | codesample | removeformat",
+      statusbar: false,
       skin: "oxide-dark",
       content_css: "dark",
       content_style: `
@@ -4948,7 +4949,9 @@ function wireEvents() {
     
     const editor = tinymce.get("composeMessageArea");
     if (editor) {
+      // Save selection, insert, restore focus
       editor.insertContent("#quote");
+      editor.focus();
     } else {
       const textarea = document.getElementById("composeMessageArea");
       if (textarea) {
@@ -4957,6 +4960,7 @@ function wireEvents() {
         const value = textarea.value;
         textarea.value = value.substring(0, start) + "#quote" + value.substring(end);
         textarea.selectionStart = textarea.selectionEnd = start + 6;
+        textarea.focus();
       }
     }
   });
