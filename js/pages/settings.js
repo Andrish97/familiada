@@ -3137,11 +3137,17 @@ function showCompose(defaults = {}) {
   document.getElementById("composeQuoteToggle")?.addEventListener("change", (e) => {
     const quoteBlock = document.getElementById("composeQuoteBlock");
     const positionSection = document.querySelector('.field:has([name="composeQuotePosition"])');
+    const quoteBtn = document.getElementById("btnInsertQuote");
+    
     if (quoteBlock) {
       quoteBlock.style.display = e.target.checked ? "" : "none";
     }
     if (positionSection) {
       positionSection.style.display = e.target.checked ? "" : "none";
+    }
+    // Hide #quote button when quote is attached
+    if (quoteBtn) {
+      quoteBtn.style.display = e.target.checked ? "none" : "";
     }
   });
 
@@ -4912,8 +4918,16 @@ function wireEvents() {
   // Start TinyMCE initialization
   initTinyMCEEditors();
 
-  // Insert #quote button
+  // Insert #quote button - only works when quote is NOT attached
   document.getElementById("btnInsertQuote")?.addEventListener("click", () => {
+    const quoteToggle = document.getElementById("composeQuoteToggle");
+    const isQuoteAttached = quoteToggle && quoteToggle.checked;
+    
+    if (isQuoteAttached) {
+      showToast("Gdy cytat jest dołączony, użyj przełącznika pozycji cytatu na dole", "error");
+      return;
+    }
+    
     const editor = tinymce.get("composeMessageArea");
     if (editor) {
       editor.insertContent("#quote");
