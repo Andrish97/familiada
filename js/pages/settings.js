@@ -2192,9 +2192,13 @@ function renderMailList(rows) {
 
     // Clean up preview text - pancerny cleanup
     previewText = previewText
-      .replace(/Ta wiadomość została wysłana przez system Familiada\./g, "")  // Remove footer
-      .replace(/FAMILIADA/g, "")  // Remove header
-      .replace(/familiada\.online/g, "")  // Remove URL
+      .replace(/Ta wiadomość została wysłana przez system Familiada\./gi, "")  // Remove footer
+      .replace(/FAMILIADA/gi, "")  // Remove header
+      .replace(/familiada\.online/gi, "")  // Remove URL
+      .replace(/^\s*Witaj[,\s]*/gi, "")  // Remove "Witaj" greeting
+      .replace(/^\s*Cześć[,\s]*/gi, "")  // Remove "Cześć" greeting  
+      .replace(/^\s*Pozdrawiam[,\s]*/gi, "")  // Remove "Pozdrawiam"
+      .replace(/^\s*Dzień dobry[,\s]*/gi, "")  // Remove "Dzień dobry"
       .replace(/\s+/g, ' ')  // Collapse all whitespace to single space
       .slice(0, 80)  // Limit length
       .trim();
@@ -3465,7 +3469,7 @@ async function sendComposeWithSignature(greetingSelect, farewellSelect, senderSe
     
     <!-- Content -->
     <div style="padding:16px;">
-      ${greetingText ? `<p style="margin:0 0 20px">${greetingText.replace(/\n/g, "<br>")}</p>` : ""}
+      ${greetingText ? `<p style="margin:0 0 20px">${greetingText.replace(/\n/g, "<br>")}${greetingText.trim().endsWith(',') ? '' : ','}</p>` : ""}
       <div style="line-height:1.6;color:#fff;margin-bottom:20px">${bodyContent}</div>
       ${farewellText ? `<p style="margin:20px 0 0">${farewellText.replace(/\n/g, "<br>")}</p>` : ""}
     </div>
@@ -3548,8 +3552,8 @@ function showComposePreview(greetingSelect, farewellSelect, senderSelect) {
     senderCustom: "",
   });
   
-  // Add comma after greeting if present
-  const greetingWithComma = greetingText ? `${greetingText},` : "";
+  // Add comma after greeting if present (but not if it already ends with comma)
+  const greetingWithComma = greetingText ? `${greetingText}${greetingText.trim().endsWith(',') ? '' : ','}` : "";
   
   const farewellText = buildEmailSignature({
     greeting: "none",
