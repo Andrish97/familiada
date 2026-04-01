@@ -3028,7 +3028,7 @@ function showCompose(defaults = {}) {
               <span style="opacity:.5;font-size:11px;margin-left:8px" data-i18n="settings.reports.compose.quoteHint">Użyj #quote aby wstawić cytat</span>
               <button type="button" class="btn sm" id="btnInsertQuote" style="font-size:11px;padding:4px 8px;margin-left:8px" title="Wstaw #quote w miejscu kursora">#quote</button>
             </label>
-            <textarea class="inp" id="composeMessageArea" rows="10" style="width:100%;box-sizing:border-box;resize:none;flex:1;min-height:120px;overflow-y:auto">${escSetting(bodyText)}</textarea>
+            <div id="composeMessageArea" style="min-height:300px"></div>
           </div>
 
           <div class="field attachments-section" style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.1)">
@@ -3055,7 +3055,6 @@ function showCompose(defaults = {}) {
     </div>`;
 
   // Initialize TinyMCE for composeMessageArea after HTML is inserted
-  // Wait for TinyMCE script AND element to be ready
   const initComposeTinyMCE = () => {
     if (typeof tinymce === "undefined") {
       console.warn("TinyMCE script not loaded yet, retrying...");
@@ -3073,11 +3072,6 @@ function showCompose(defaults = {}) {
       return;
     }
     console.log("Initializing TinyMCE for composeMessageArea...");
-    
-    // Hide textarea until TinyMCE is ready
-    composeEl.style.visibility = "hidden";
-    composeEl.style.height = "0";
-    
     tinymce.init({
       selector: "#composeMessageArea",
       height: 400,
@@ -3114,16 +3108,6 @@ function showCompose(defaults = {}) {
       setup: (editor) => {
         editor.on("init", () => {
           console.log("TinyMCE init event fired");
-          // Show TinyMCE UI when ready
-          composeEl.style.visibility = "";
-          composeEl.style.height = "";
-        });
-        editor.on("change", () => {
-          const content = editor.getContent();
-          if (content.includes("#quote")) {
-            const quoteBlock = document.getElementById("composeQuoteBlock");
-            if (quoteBlock) quoteBlock.style.display = "";
-          }
         });
         composeEl._tinyMCEInitialized = true;
         console.log("TinyMCE initialized successfully");
@@ -4911,7 +4895,6 @@ function wireEvents() {
     const mktEl = document.getElementById("mktBody");
     if (!mktEl) { setTimeout(initMktTinyMCE, 200); return; }
     if (mktEl._tinyMCEInitialized) return;
-    mktEl.style.visibility = "hidden"; mktEl.style.height = "0";
     tinymce.init({
       selector: "#mktBody", height: 400, menubar: "edit insert view format table tools",
       branding: false, promotion: false, license_key: "gpl",
@@ -4921,7 +4904,7 @@ function wireEvents() {
       content_style: "body { background: #050914 !important; color: #ffffff !important; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important; font-size: 14px; line-height: 1.6; } a { color: #ffeaa6 !important; }",
       paste_data_images: true,
       images_upload_handler: (blobInfo) => new Promise((resolve) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.readAsDataURL(blobInfo.blob()); }),
-      setup: (editor) => { editor.on("init", () => { mktEl.style.visibility = ""; mktEl.style.height = ""; }); mktEl._tinyMCEInitialized = true; },
+      setup: (editor) => { editor.on("init", () => { console.log("TinyMCE marketing initialized"); }); mktEl._tinyMCEInitialized = true; },
     });
   };
   setTimeout(initMktTinyMCE, 100);
