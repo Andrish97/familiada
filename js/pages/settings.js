@@ -3175,12 +3175,18 @@ function showCompose(defaults = {}) {
       skin: "oxide-dark",
       content_css: "dark",
       content_style: `
+        * {
+          font-size: 14px !important;
+        }
         body {
           background: #050914 !important;
           color: #ffffff !important;
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
           font-size: 14px !important;
           line-height: 1.6;
+        }
+        p, div, span, td, th, li, a {
+          font-size: 14px !important;
         }
         a { color: #ffeaa6 !important; }
         table { border-collapse: collapse; width: 100%; }
@@ -5060,8 +5066,15 @@ function wireEvents() {
         "f7d794", "Żółty",
         "778ca3", "Szary"
       ],
-      statusbar: false, skin: "oxide-dark", content_css: "dark",
-      content_style: "body { background: #050914 !important; color: #ffffff !important; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important; font-size: 14px; line-height: 1.6; } a { color: #ffeaa6 !important; }",
+      content_style: `
+        * { font-size: 14px !important; }
+        body { background: #050914 !important; color: #ffffff !important; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important; font-size: 14px !important; line-height: 1.6; }
+        p, div, span, td, th, li, a { font-size: 14px !important; }
+        a { color: #ffeaa6 !important; }
+        table { border-collapse: collapse; width: 100%; }
+        table td, table th { border: 1px solid rgba(255,255,255,.2); padding: 8px; }
+        code, pre { background: rgba(255,234,166,.1); color: #ffeaa6; padding: 2px 6px; border-radius: 4px; }
+      `,
       paste_data_images: true,
       images_upload_handler: (blobInfo) => new Promise((resolve) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.readAsDataURL(blobInfo.blob()); }),
       setup: (editor) => { editor.on("init", () => { console.log("TinyMCE marketing initialized"); }); mktEl._tinyMCEInitialized = true; },
