@@ -2160,15 +2160,17 @@ function renderMailList(rows) {
     const sourceBadge = { email: "📧", form: "📝", compose: "✏" }[r.source] || "";
     const from = isInbound ? (r.from_email || "—") : (r.to_email || "—");
     const ticketPart = r.ticket_number ? ` · <span style="opacity:.5;font-size:10px">${escSetting(r.ticket_number)}</span>` : "";
-    // Strip HTML tags from preview to always show raw text
-    const previewText = (r.body_preview || "").replace(/<[^>]*>/g, "").slice(0, 80);
+    // Strip ALL HTML tags (including meta, head, etc.) to get raw text only
+    const tmp = document.createElement("div");
+    tmp.innerHTML = r.body_preview || "";
+    const previewText = tmp.textContent || tmp.innerText || "";
     item.innerHTML = `
       <div class="mail-ti-row">
         <span class="mail-ti-from">${sourceBadge} ${escSetting(from)}</span>
         <span class="mail-ti-date">${dateStr}</span>
       </div>
       <div class="mail-ti-subject">${escSetting(r.subject || "—")}</div>
-      <div class="mail-ti-preview">${escSetting(previewText)}${ticketPart}</div>`;
+      <div class="mail-ti-preview">${escSetting(previewText.slice(0, 80))}${ticketPart}</div>`;
     item.addEventListener("click", () => openMessage(r.id));
     body.appendChild(item);
   }
