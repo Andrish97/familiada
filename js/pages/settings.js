@@ -2163,24 +2163,11 @@ function renderMailList(rows) {
     // Extract text from message for preview
     let previewText = "";
     
-    // Try body_preview first (usually plain text)
-    if (r.body_preview) {
-      const tmp = document.createElement("div");
-      tmp.innerHTML = r.body_preview;
-      previewText = (tmp.textContent || tmp.innerText || "").trim();
-    }
-    
-    // If empty, try body_html (full HTML)
-    if (!previewText && r.body_html) {
-      const tmp = document.createElement("div");
-      tmp.innerHTML = r.body_html;
-      previewText = (tmp.textContent || tmp.innerText || "").trim();
-    }
-    
-    // If still empty, try body (might be plain text or HTML)
-    if (!previewText && r.body) {
-      // Check if it's HTML
-      if (r.body.trim().startsWith("<")) {
+    // Try body first (plain text - NEW emails have this)
+    if (r.body) {
+      // Check if it's HTML (starts with < or contains HTML tags)
+      if (r.body.trim().startsWith("<") || /<[a-z][\s\S]*>/i.test(r.body)) {
+        // It's HTML, strip tags
         const tmp = document.createElement("div");
         tmp.innerHTML = r.body;
         previewText = (tmp.textContent || tmp.innerText || "").trim();
@@ -2188,6 +2175,20 @@ function renderMailList(rows) {
         // Plain text
         previewText = r.body.trim();
       }
+    }
+    
+    // If body is empty or didn't yield text, try body_html
+    if (!previewText && r.body_html) {
+      const tmp = document.createElement("div");
+      tmp.innerHTML = r.body_html;
+      previewText = (tmp.textContent || tmp.innerText || "").trim();
+    }
+    
+    // Final fallback: body_preview (usually short/trimmed)
+    if (!previewText && r.body_preview) {
+      const tmp = document.createElement("div");
+      tmp.innerHTML = r.body_preview;
+      previewText = (tmp.textContent || tmp.innerText || "").trim();
     }
     
     item.innerHTML = `
