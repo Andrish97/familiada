@@ -25,30 +25,14 @@ const MINUTES_MIN = 10;
 const MAIL_PROVIDERS = ["sendgrid", "brevo", "mailgun", "ses"];
 const EMAIL_TEMPLATES = {
   custom: "",
-  greeting: `Dzień dobry,
-
-Dziękujemy za kontakt. Twoje zgłoszenie zostało przyjęte do realizacji.
-
-Pozdrawiam
-Zespół Familiada`,
-  info: `Dzień dobry,
-
-Dziękujemy za wiadomość. Wracamy z odpowiedzią wkrótce.
-
-Pozdrawiam
-Zespół Familiada`,
-  resolved: `Dzień dobry,
-
-Twoje zgłoszenie zostało rozwiązane. Jeśli masz dodatkowe pytania, odpowiedz na tę wiadomość.
-
-Pozdrawiam
-Zespół Familiada`,
-  pending: `Dzień dobry,
-
-Twoje zgłoszenie jest w trakcie realizacji. Oczekujemy na odpowiedź od zespołu technicznego.
-
-Pozdrawiam
-Zespół Familiada`,
+  info: "Dziękujemy za wiadomość. Odpowiemy tak szybko, jak to możliwe.",
+  received: "Twoja wiadomość została odebrana. Zajmiemy się nią wkrótce.",
+  resolved: "Twoje zgłoszenie zostało rozwiązane. Jeśli masz dodatkowe pytania, odpowiedz na tę wiadomość.",
+  pending: "Twoje zgłoszenie jest w trakcie realizacji. Otrzymasz aktualizację, gdy tylko będziemy mieli więcej informacji.",
+  more_info: "Aby lepiej zrozumieć Twój problem, prosimy o dodatkowe informacje:\n- Kiedy wystąpił problem?\n- Jakie kroki podjąłeś/aś przed wystąpieniem problemu?\n- Czy problem występuje nadal?",
+  followup: "Chcielibyśmy się upewnić, że wszystko działa poprawnie. Czy masz jeszcze jakieś pytania lub wątpliwości?",
+  closed: "To zgłoszenie zostało zamknięte. Jeśli potrzebujesz dalszej pomocy, utwórz nowe zgłoszenie.",
+  thanks: "Dziękujemy za kontakt z nami. Miłego dnia!",
 };
 
 const CRON_PRESETS = [
@@ -3028,10 +3012,14 @@ function showCompose(defaults = {}) {
             <label class="field-label" style="font-size:12px">${t("settings.reports.compose.templateLabel") || "Szablon odpowiedzi"}</label>
             <select class="inp" id="composeTemplateSelect" style="width:100%;box-sizing:border-box">
               <option value="custom">${t("settings.reports.compose.templates.custom") || "Własny"}</option>
-              <option value="greeting">${t("settings.reports.compose.templates.greeting") || "Standardowe powitanie"}</option>
-              <option value="info">${t("settings.reports.compose.templates.info") || "Informacja"}</option>
+              <option value="info">${t("settings.reports.compose.templates.info") || "Podziękowanie"}</option>
+              <option value="received">${t("settings.reports.compose.templates.received") || "Potwierdzenie otrzymania"}</option>
               <option value="resolved">${t("settings.reports.compose.templates.resolved") || "Zgłoszenie rozwiązane"}</option>
-              <option value="pending">${t("settings.reports.compose.templates.pending") || "Oczekiwanie na odpowiedź"}</option>
+              <option value="pending">${t("settings.reports.compose.templates.pending") || "W trakcie realizacji"}</option>
+              <option value="more_info">${t("settings.reports.compose.templates.moreInfo") || "Prośba o informacje"}</option>
+              <option value="followup">${t("settings.reports.compose.templates.followup") || "Follow-up"}</option>
+              <option value="closed">${t("settings.reports.compose.templates.closed") || "Zamknięcie zgłoszenia"}</option>
+              <option value="thanks">${t("settings.reports.compose.templates.thanks") || "Podziękowanie"}</option>
             </select>
           </div>
 
@@ -3349,6 +3337,9 @@ function showComposePreview(greetingSelect, farewellSelect, quotePosition) {
     farewellCustom: "",
   });
   
+  // Add comma after greeting if present
+  const greetingWithComma = greetingText ? `${greetingText},` : "";
+  
   const farewellText = buildEmailSignature({
     greeting: "none",
     farewell: farewellValue,
@@ -3362,7 +3353,7 @@ function showComposePreview(greetingSelect, farewellSelect, quotePosition) {
   
   // Structure: Greeting → Body → Quote → Farewell
   const finalBody = `
-    ${greetingText ? `<div style="margin-bottom:20px;line-height:1.6">${greetingText.replace(/\n/g, "<br>")}</div>` : ""}
+    ${greetingWithComma ? `<div style="margin-bottom:20px;line-height:1.6">${greetingWithComma.replace(/\n/g, "<br>")}</div>` : ""}
     <div style="line-height:1.6;color:#fff;margin-bottom:20px">${bodyHtml}</div>
     ${quoteHtml}
     ${farewellText ? `<div style="margin-top:20px;line-height:1.6">${farewellText.replace(/\n/g, "<br>")}</div>` : ""}
