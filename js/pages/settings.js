@@ -2998,7 +2998,7 @@ function showCompose(defaults = {}) {
               <label class="field-label" style="font-size:12px">Pożegnanie</label>
               <div class="ui-select" id="composeFarewellSelect" style="width:100%">
                 <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
-                  <span class="ui-select-label">${t("settings.mail.farewellOptions.team") || "Pozdrawiam\\nZespół Familiada"}</span>
+                  <span class="ui-select-label">${t("settings.mail.farewellOptions.team") || "Pozdrawiamy,\\nZespół Familiada"}</span>
                   <span class="ui-select-caret" aria-hidden="true">▾</span>
                 </button>
                 <div class="ui-select-menu" role="listbox"></div>
@@ -3025,6 +3025,10 @@ function showCompose(defaults = {}) {
           <div class="field" style="margin-bottom:12px;min-height:0;display:flex;flex-direction:column">
             <label class="field-label" style="margin-bottom:6px;display:block">
               ${t("settings.reports.compose.message") || "Treść"}
+              ${hasQuote ? `
+                <span style="opacity:.5;font-size:11px;margin-left:8px" data-i18n="settings.reports.compose.quoteHint">Użyj #quote aby wstawić cytat</span>
+                <button type="button" class="btn sm" id="btnInsertQuote" style="font-size:11px;padding:4px 8px;margin-left:8px" title="Wstaw #quote w miejscu kursora">#quote</button>
+              ` : ""}
             </label>
             <div id="composeMessageArea" style="min-height:300px"></div>
           </div>
@@ -3238,6 +3242,18 @@ function showCompose(defaults = {}) {
     const editor = tinymce.get("composeMessageArea");
     if (editor && templateText) {
       editor.setContent(templateText);
+    }
+  });
+
+  // Insert #quote button - only for replies (when hasQuote is true)
+  document.getElementById("btnInsertQuote")?.addEventListener("click", async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const editor = tinymce.get("composeMessageArea");
+    if (editor) {
+      editor.insertContent("#quote");
+      editor.focus();
     }
   });
 }
