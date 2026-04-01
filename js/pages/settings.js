@@ -2924,11 +2924,12 @@ function showCompose(defaults = {}) {
   const bodyText = defaults.body || "";
 
   conv.innerHTML = `
-    <div class="mail-compose-pane" id="composePaneInner" style="display:flex;flex-direction:column;height:100%;min-height:0;overflow-y:auto;overflow-x:hidden;padding-right:10px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-shrink:0;padding-right:10px">
-        <div style="font-size:14px;font-weight:700">${t("settings.reports.compose.title") || "Napisz nową wiadomość"}</div>
-        <button id="btnComposeClose" type="button" title="Zamknij" style="background:none;border:none;cursor:pointer;padding:4px;color:rgba(255,255,255,.4);line-height:1;font-size:18px;border-radius:4px" onmouseover="this.style.color='rgba(255,255,255,.8)'" onmouseout="this.style.color='rgba(255,255,255,.4)'">✕</button>
-      </div>
+    <div class="mail-compose-pane" id="composePaneOuter">
+      <div class="mail-compose-pane" id="composePaneInner">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-shrink:0">
+          <div style="font-size:14px;font-weight:700">${t("settings.reports.compose.title") || "Napisz nową wiadomość"}</div>
+          <button id="btnComposeClose" type="button" title="Zamknij" style="background:none;border:none;cursor:pointer;padding:4px;color:rgba(255,255,255,.4);line-height:1;font-size:18px;border-radius:4px" onmouseover="this.style.color='rgba(255,255,255,.8)'" onmouseout="this.style.color='rgba(255,255,255,.4)'">✕</button>
+        </div>
       
       <div class="field" style="flex-shrink:0">
         <label class="field-label">${t("settings.reports.compose.subject") || "Temat"}</label>
@@ -3013,7 +3014,9 @@ function showCompose(defaults = {}) {
         <span class="field-hint" id="composeSendStatus"></span>
         <button class="btn sm gold" id="btnComposeSend" type="button">${t("settings.reports.compose.send") || "Wyślij"}</button>
       </div>
-    </div>`;
+    </div>
+  </div>
+</div>`;
   
   // Initialize greeting select
   const composeGreetingSelect = initUiSelect(document.getElementById("composeGreetingSelect"), {

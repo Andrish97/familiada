@@ -1630,6 +1630,15 @@ body.tools-fullscreen .tools-frame-wrap iframe{
 /* Compose pane */
 .mail-compose-pane {
   flex: 1;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+.mail-compose-pane #composePaneInner {
+  flex: 1;
   padding: 16px;
   overflow-y: auto !important;
   overflow-x: hidden !important;
@@ -1638,18 +1647,18 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   gap: 12px;
   min-height: 0;
 }
-.mail-compose-pane::-webkit-scrollbar {
+.mail-compose-pane #composePaneInner::-webkit-scrollbar {
   width: 8px;
 }
-.mail-compose-pane::-webkit-scrollbar-track {
+.mail-compose-pane #composePaneInner::-webkit-scrollbar-track {
   background: rgba(255,255,255,.05);
   border-radius: 4px;
 }
-.mail-compose-pane::-webkit-scrollbar-thumb {
+.mail-compose-pane #composePaneInner::-webkit-scrollbar-thumb {
   background: rgba(255,234,166,.3);
   border-radius: 4px;
 }
-.mail-compose-pane::-webkit-scrollbar-thumb:hover {
+.mail-compose-pane #composePaneInner::-webkit-scrollbar-thumb:hover {
   background: rgba(255,234,166,.5);
 }
 .mail-compose-pane .field { margin: 0; }
