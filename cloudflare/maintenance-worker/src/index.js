@@ -1201,7 +1201,7 @@ function buildMarketingEmail(templateId, opts = {}) {
     const body = `
       <p style="margin:0 0 6px;font-size:20px;font-weight:800;color:#ffeaa6">${esc(subject)}</p>
       ${divider()}
-      <div style="font-size:14px;line-height:1.8;color:rgba(255,255,255,.88);white-space:pre-wrap">${nl2br(rawBody)}</div>
+      <div style="font-size:14px;line-height:1.8;color:rgba(255,255,255,.88)">${rawBody}</div>
       <br>
       ${cta("https://familiada.online", "familiada.online")}`;
     return { subject, html: shell(body) };
@@ -1210,7 +1210,7 @@ function buildMarketingEmail(templateId, opts = {}) {
   // ── CUSTOM ────────────────────────────────────────────────────────────────
   const subject = customSubject || "Wiadomość od Familiada";
   const rawBody = customBody || "";
-  const body = `<div style="font-size:14px;line-height:1.8;color:rgba(255,255,255,.88);white-space:pre-wrap">${nl2br(rawBody)}</div>`;
+  const body = `<div style="font-size:14px;line-height:1.8;color:rgba(255,255,255,.88)">${rawBody}</div>`;
   return { subject, html: shell(body) };
 }
 

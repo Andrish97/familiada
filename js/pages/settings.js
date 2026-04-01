@@ -3305,7 +3305,7 @@ async function sendComposeWithSignature(greetingSelect, farewellSelect) {
     farewellCustom,
   });
 
-  // Build HTML email body (dark theme) - send ONLY inner content, not full HTML document
+  // Build HTML email body with Familiada wrapper (dark theme)
   const greetingText = buildEmailSignature({ greeting: greetingValue, farewell: "none", greetingCustom, farewellCustom: "" });
   const farewellText = buildEmailSignature({ greeting: "none", farewell: farewellValue, greetingCustom: "", farewellCustom });
 
@@ -3320,12 +3320,37 @@ async function sendComposeWithSignature(greetingSelect, farewellSelect) {
     }
   }
 
-  // Build final email body (inner HTML only, no DOCTYPE/html/body tags)
-  const htmlBody = `
-    ${greetingText ? `<div style="margin-bottom:20px">${greetingText.replace(/\n/g, "<br>")}</div>` : ""}
-    <div style="line-height:1.6;color:#fff;margin-bottom:20px">${bodyContent}</div>
-    ${farewellText ? `<div style="margin-top:20px">${farewellText.replace(/\n/g, "<br>")}</div>` : ""}
-  `;
+  // Build full HTML email with Familiada branding
+  const htmlBody = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <style>:root{color-scheme:dark}</style>
+</head>
+<body style="margin:0;padding:0;background:#050914;color:#ffffff;font-family:system-ui,-apple-system,'Segoe UI',Arial,sans-serif;">
+  <div style="max-width:560px;margin:0 auto;padding:26px 16px;">
+    <!-- Header -->
+    <div style="padding:14px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.12);border-radius:18px;margin-bottom:14px;">
+      <div style="font-weight:1000;letter-spacing:.18em;text-transform:uppercase;color:#ffeaa6;">FAMILIADA</div>
+      <div style="margin-top:4px;font-size:11px;opacity:.7;letter-spacing:.06em;">familiada.online</div>
+    </div>
+    
+    <!-- Content -->
+    <div style="padding:16px;">
+      ${greetingText ? `<p style="margin:0 0 20px">${greetingText.replace(/\n/g, "<br>")}</p>` : ""}
+      <div style="line-height:1.6;color:#fff;margin-bottom:20px">${bodyContent}</div>
+      ${farewellText ? `<p style="margin:20px 0 0">${farewellText.replace(/\n/g, "<br>")}</p>` : ""}
+    </div>
+    
+    <!-- Footer -->
+    <div style="margin-top:26px;padding-top:16px;border-top:1px solid rgba(255,255,255,.12);font-size:11px;opacity:.5;text-align:center;">
+      Ta wiadomość została wysłana przez system Familiada.
+    </div>
+  </div>
+</body>
+</html>`;
 
   // Upload attachments
   const fileInput = document.getElementById("composeAttachmentInput");
@@ -4349,46 +4374,63 @@ async function mktRefreshPreview() {
   const frame = document.getElementById("mktPreviewFrame");
   if (!frame) return;
   const subject = (document.getElementById("mktSubject")?.value || "").trim();
-  
+
   // Get HTML content from TinyMCE
   const mktEditor = tinymce.get("mktBody");
-  if (!mktEditor) {
-    frame.srcdoc = '<p style="color:#fff;padding:12px">Edytor nie jest gotowy...</p>';
-    return;
-  }
-  const body = mktEditor.getContent();
-  
-  // Get template subject
+  const body = mktEditor ? mktEditor.getContent() : "";
+
+  // Get template
   const tpl = MKT_TEMPLATES[mktActiveTpl] || MKT_TEMPLATES.custom;
   const finalSubject = subject || tpl?.subject || "";
+
+  // Build preview based on template type
+  let previewHtml = "";
   
-  // Generate full HTML email for preview (dark theme)
-  const previewHtml = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1">
-      <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; background: #050914; color: #ffffff; line-height: 1.6; }
-        .email-container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .email-header { background: linear-gradient(135deg, #1a1a2e 0%, #2d2d44 100%); padding: 25px 20px; margin: -20px -20px 25px -20px; border-radius: 8px 8px 0 0; }
-        .email-subject { font-size: 22px; font-weight: 700; color: #fff; margin: 0; }
-        .email-body { padding: 24px; background: transparent; line-height: 1.6; }
-      </style>
-    </head>
-    <body>
-      <div class="email-container">
-        <div class="email-header">
-          <h1 class="email-subject">${escSetting(finalSubject)}</h1>
+  if (mktActiveTpl === "invitation") {
+    // Invitation - no body, just template
+    previewHtml = `
+      <!DOCTYPE html>
+      <html>
+      <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>:root{color-scheme:dark}</style></head>
+      <body style="margin:0;padding:0;background:#050914;color:#ffffff;font-family:system-ui,-apple-system,'Segoe UI',Arial,sans-serif;">
+        <div style="max-width:560px;margin:0 auto;padding:26px 16px;">
+          <div style="padding:14px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.12);border-radius:18px;margin-bottom:14px;">
+            <div style="font-weight:1000;letter-spacing:.18em;text-transform:uppercase;color:#ffeaa6;">FAMILIADA</div>
+            <div style="margin-top:4px;font-size:11px;opacity:.7;letter-spacing:.06em;">familiada.online</div>
+          </div>
+          <div style="padding:16px;line-height:1.6;">
+            <p style="margin:0 0 20px">Witaj,</p>
+            <p style="margin:0 0 20px">Zapraszamy do korzystania z systemu Familiada Online.</p>
+            <p style="margin:20px 0 0">Pozdrawiamy,<br>Zespół Familiada</p>
+          </div>
+          <div style="margin-top:26px;padding-top:16px;border-top:1px solid rgba(255,255,255,.12);font-size:11px;opacity:.5;text-align:center;">Ta wiadomość została wysłana przez system Familiada.</div>
         </div>
-        <div class="email-body">
-          ${body || '<em>(brak treści)</em>'}
+      </body>
+      </html>
+    `;
+  } else {
+    // Newsletter or Custom - gold header + TinyMCE content
+    previewHtml = `
+      <!DOCTYPE html>
+      <html>
+      <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>:root{color-scheme:dark}</style></head>
+      <body style="margin:0;padding:0;background:#050914;color:#ffffff;font-family:system-ui,-apple-system,'Segoe UI',Arial,sans-serif;">
+        <div style="max-width:560px;margin:0 auto;padding:26px 16px;">
+          <div style="padding:14px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.12);border-radius:18px;margin-bottom:14px;">
+            <div style="font-weight:1000;letter-spacing:.18em;text-transform:uppercase;color:#ffeaa6;">FAMILIADA</div>
+            <div style="margin-top:4px;font-size:11px;opacity:.7;letter-spacing:.06em;">familiada.online</div>
+          </div>
+          <div style="padding:16px;">
+            <p style="margin:0 0 20px">Witaj,</p>
+            <div style="line-height:1.6;color:#fff;margin-bottom:20px">${body || '<em style="opacity:.5">(brak treści - edytuj pole poniżej)</em>'}</div>
+            <p style="margin:20px 0 0">Pozdrawiamy,<br>Zespół Familiada</p>
+          </div>
+          <div style="margin-top:26px;padding-top:16px;border-top:1px solid rgba(255,255,255,.12);font-size:11px;opacity:.5;text-align:center;">Ta wiadomość została wysłana przez system Familiada.</div>
         </div>
-      </div>
-    </body>
-    </html>
-  `;
+      </body>
+      </html>
+    `;
+  }
   
   frame.srcdoc = previewHtml;
 }
@@ -4426,7 +4468,7 @@ function mktParseEmails() {
 
 async function sendMarketing() {
   const subject = (document.getElementById("mktSubject")?.value || "").trim();
-  // Get content from TinyMCE - ALWAYS use TinyMCE, no fallback
+  // Get content from TinyMCE
   const editor = tinymce.get("mktBody");
   if (!editor) {
     showToast("Edytor nie jest gotowy.", "error");
@@ -4436,6 +4478,16 @@ async function sendMarketing() {
   const statusEl = document.getElementById("mktSendStatus");
   if (!subject) { showToast(t("settings.marketing.errSubject") || "Podaj temat.", "error"); return; }
   if (!mktValidEmails.length) { showToast(t("settings.marketing.errEmails") || "Waliduj listę adresów.", "error"); return; }
+
+  // Build HTML email with Familiada wrapper based on template type
+  let htmlBody = "";
+  if (mktActiveTpl === "invitation") {
+    // Invitation - fixed template, no custom body
+    htmlBody = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>:root{color-scheme:dark}</style></head><body style="margin:0;padding:0;background:#050914;color:#ffffff;font-family:system-ui,-apple-system,'Segoe UI',Arial,sans-serif;"><div style="max-width:560px;margin:0 auto;padding:26px 16px;"><div style="padding:14px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.12);border-radius:18px;margin-bottom:14px;"><div style="font-weight:1000;letter-spacing:.18em;text-transform:uppercase;color:#ffeaa6;">FAMILIADA</div><div style="margin-top:4px;font-size:11px;opacity:.7;letter-spacing:.06em;">familiada.online</div></div><div style="padding:16px;line-height:1.6;"><p style="margin:0 0 20px">Witaj,</p><p style="margin:0 0 20px">Zapraszamy do korzystania z systemu Familiada Online.</p><p style="margin:20px 0 0">Pozdrawiamy,<br>Zespół Familiada</p></div><div style="margin-top:26px;padding-top:16px;border-top:1px solid rgba(255,255,255,.12);font-size:11px;opacity:.5;text-align:center;">Ta wiadomość została wysłana przez system Familiada.</div></div></body></html>`;
+  } else {
+    // Newsletter or Custom - gold header + TinyMCE content
+    htmlBody = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>:root{color-scheme:dark}</style></head><body style="margin:0;padding:0;background:#050914;color:#ffffff;font-family:system-ui,-apple-system,'Segoe UI',Arial,sans-serif;"><div style="max-width:560px;margin:0 auto;padding:26px 16px;"><div style="padding:14px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.12);border-radius:18px;margin-bottom:14px;"><div style="font-weight:1000;letter-spacing:.18em;text-transform:uppercase;color:#ffeaa6;">FAMILIADA</div><div style="margin-top:4px;font-size:11px;opacity:.7;letter-spacing:.06em;">familiada.online</div></div><div style="padding:16px;"><p style="margin:0 0 20px">Witaj,</p><div style="line-height:1.6;color:#fff;margin-bottom:20px">${body}</div><p style="margin:20px 0 0">Pozdrawiamy,<br>Zespół Familiada</p></div><div style="margin-top:26px;padding-top:16px;border-top:1px solid rgba(255,255,255,.12);font-size:11px;opacity:.5;text-align:center;">Ta wiadomość została wysłana przez system Familiada.</div></div></body></html>`;
+  }
 
   const confirmed = await confirmModal({
     text: `${t("settings.marketing.confirmSend") || "Wysłać wiadomość do"} ${mktValidEmails.length} ${t("settings.marketing.confirmRecipients") || "odbiorców"}?`,
@@ -4449,7 +4501,7 @@ async function sendMarketing() {
     const res = await adminFetch("/marketing/send", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ emails: mktValidEmails, subject, template_id: mktActiveTpl, custom_body: body }),
+      body: JSON.stringify({ emails: mktValidEmails, subject, template_id: mktActiveTpl, custom_body: htmlBody }),
     });
     if (!res.ok) throw new Error(await res.text());
     const json = await res.json();
