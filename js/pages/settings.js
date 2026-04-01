@@ -3330,25 +3330,25 @@ async function sendComposeWithSignature(greetingSelect, farewellSelect) {
     farewellCustom,
   });
 
-  // Build HTML email body (dark theme)
+  // Build HTML email body (dark theme) - send ONLY inner content, not full HTML document
   const greetingText = buildEmailSignature({ greeting: greetingValue, farewell: "none", greetingCustom, farewellCustom: "" });
   const farewellText = buildEmailSignature({ greeting: "none", farewell: farewellValue, greetingCustom: "", farewellCustom });
+
+  // body from TinyMCE is already HTML (<p>, <strong>, etc.) - don't replace \n with <br>
+  let bodyContent = body;
   
-  const quoteHtml = quote ? `<div style="margin:25px 0;padding:20px;background:rgba(255,255,255,.05);border-left:4px solid #ffeaa6;border-radius:4px;font-size:13px;line-height:1.6;color:#ccc;white-space:pre-wrap">${quote}</div>` : "";
+  // Replace #quote placeholder with actual quote HTML
+  const quoteHtml = quote ? `<div style="margin:25px 0;padding:20px;background:rgba(255,255,255,.05);border-left:4px solid #ffeaa6;border-radius:4px;font-size:13px;line-height:1.6;color:#ccc">${quote.replace(/\n/g, "<br>")}</div>` : "";
+  if (bodyContent.includes("#quote")) {
+    bodyContent = bodyContent.replace(/#quote/g, quoteHtml);
+  }
   
+  // Build final email body (inner HTML only, no DOCTYPE/html/body tags)
   const htmlBody = `
-    <!DOCTYPE html>
-    <html>
-    <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head>
-    <body style="margin:0;padding:0;background:#050914;color:#ffffff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;line-height:1.6;">
-      <div style="max-width:600px;margin:0 auto;padding:20px;">
-        ${greetingText ? `<div style="margin-bottom:20px">${greetingText.replace(/\n/g, "<br>")}</div>` : ""}
-        <div style="line-height:1.6;color:#fff;margin-bottom:20px;white-space:pre-wrap">${body.replace(/\n/g, "<br>")}</div>
-        ${quoteHtml}
-        ${farewellText ? `<div style="margin-top:20px">${farewellText.replace(/\n/g, "<br>")}</div>` : ""}
-      </div>
-    </body>
-    </html>
+    ${greetingText ? `<div style="margin-bottom:20px">${greetingText.replace(/\n/g, "<br>")}</div>` : ""}
+    <div style="line-height:1.6;color:#fff;margin-bottom:20px">${bodyContent}</div>
+    ${!body.includes("#quote") && quoteHtml ? quoteHtml : ""}
+    ${farewellText ? `<div style="margin-top:20px">${farewellText.replace(/\n/g, "<br>")}</div>` : ""}
   `;
 
   // Upload attachments
@@ -3427,11 +3427,11 @@ function showComposePreview(greetingSelect, farewellSelect, quotePosition) {
     farewellCustom,
   });
 
-  // Convert newlines to <br> for HTML email
-  let bodyHtml = body ? body.replace(/\n/g, "<br>") : "";
-  
+  // body from TinyMCE is already HTML (<p>, <strong>, etc.) - don't replace \n with <br>
+  let bodyHtml = body;
+
   // Replace #quote placeholder with actual quote
-  const quoteHtml = quote ? `<div style="margin:25px 0;padding:20px;background:rgba(255,255,255,.05);border-left:4px solid #ffeaa6;border-radius:4px;font-size:13px;line-height:1.6;color:#ccc;white-space:pre-wrap">${quote.replace(/\n/g, "<br>")}</div>` : "";
+  const quoteHtml = quote ? `<div class="email-quote">${quote.replace(/\n/g, "<br>")}</div>` : "";
   if (bodyHtml.includes("#quote")) {
     bodyHtml = bodyHtml.replace(/#quote/g, quoteHtml);
   }
