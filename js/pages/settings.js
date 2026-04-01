@@ -2259,6 +2259,53 @@ function renderMessageDetail(msg, attachments = []) {
     bodyEl.textContent = msg.body || "";
   }
   bubble.appendChild(bodyEl);
+  
+  // Double-click bubble to preview message (shows rendered HTML)
+  bubble.addEventListener("dblclick", () => {
+    const htmlSrc = msg.body_html || msg.body;
+    const subject = msg.subject || "(brak tematu)";
+    
+    // Generate full HTML email for preview
+    const emailHtml = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; background: #fff; color: #222; }
+          .email-container { max-width: 600px; margin: 0 auto; }
+          .email-header { background: #f8f9fa; padding: 20px; border-bottom: 1px solid #e9ecef; }
+          .email-subject { font-size: 20px; font-weight: 700; color: #1a1a2e; margin: 0; }
+          .email-body { padding: 24px; background: #fff; line-height: 1.6; }
+        </style>
+      </head>
+      <body>
+        <div class="email-container">
+          <div class="email-header">
+            <h1 class="email-subject">${escSetting(subject)}</h1>
+          </div>
+          <div class="email-body">
+            ${htmlSrc ? htmlSrc : "<em>(brak treści)</em>"}
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+    
+    const frame = document.createElement("iframe");
+    frame.style.cssText = "width:100%;height:500px;border:none;background:#fff;border-radius:8px;";
+    frame.sandbox = "allow-scripts allow-popups";
+    frame.srcdoc = emailHtml;
+    
+    void confirmModal({
+      title: `Podgląd wiadomości - ${new Date(msg.created_at).toLocaleString("pl-PL")}`,
+      text: "",
+      body: frame,
+      okText: "OK",
+      showCancel: false,
+    });
+  });
 
   // Attachments (non-inline)
   const nonInline = attachments.filter(a => !a.inline);
@@ -2492,6 +2539,53 @@ function renderReportThread(report, messages, attsByMsg = {}) {
       bodyEl.textContent = msg.body || "";
     }
     el.appendChild(bodyEl);
+
+    // Double-click to preview message (shows rendered HTML)
+    el.addEventListener("dblclick", () => {
+      const htmlSrc = msg.body_html || msg.body;
+      const subject = msg.subject || "(brak tematu)";
+      
+      // Generate full HTML email for preview
+      const emailHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; background: #fff; color: #222; }
+            .email-container { max-width: 600px; margin: 0 auto; }
+            .email-header { background: #f8f9fa; padding: 20px; border-bottom: 1px solid #e9ecef; }
+            .email-subject { font-size: 20px; font-weight: 700; color: #1a1a2e; margin: 0; }
+            .email-body { padding: 24px; background: #fff; line-height: 1.6; }
+          </style>
+        </head>
+        <body>
+          <div class="email-container">
+            <div class="email-header">
+              <h1 class="email-subject">${escSetting(subject)}</h1>
+            </div>
+            <div class="email-body">
+              ${htmlSrc ? htmlSrc : "<em>(brak treści)</em>"}
+            </div>
+          </div>
+        </body>
+        </html>
+      `;
+      
+      const frame = document.createElement("iframe");
+      frame.style.cssText = "width:100%;height:500px;border:none;background:#fff;border-radius:8px;";
+      frame.sandbox = "allow-scripts allow-popups";
+      frame.srcdoc = htmlSrc ? emailHtml : emailHtml;
+      
+      void confirmModal({
+        title: `Podgląd wiadomości - ${new Date(msg.created_at).toLocaleString("pl-PL")}`,
+        text: "",
+        body: frame,
+        okText: "OK",
+        showCancel: false,
+      });
+    });
 
     // Attachments for this message
     const msgAtts = (attsByMsg[msg.id] || []).filter(a => !a.inline);
