@@ -4822,7 +4822,7 @@ function wireEvents() {
       branding: false,
       promotion: false,
       license_key: "gpl",
-      plugins: "lists link image table paste autoresize textcolor codesample",
+      plugins: "lists link image table autoresize codesample",
       toolbar: "undo redo | formatselect | bold italic forecolor backcolor | bullist numlist | link image | table | codesample | removeformat",
       skin: "oxide-dark",
       content_css: "dark",
@@ -4840,7 +4840,6 @@ function wireEvents() {
         code, pre { background: rgba(255,234,166,.1); color: #ffeaa6; padding: 2px 6px; border-radius: 4px; }
       `,
       paste_data_images: true,
-      automatic_uploads: true,
       images_upload_handler: (blobInfo) => {
         return new Promise((resolve) => {
           const reader = new FileReader();
@@ -4892,7 +4891,7 @@ function wireEvents() {
       branding: false,
       promotion: false,
       license_key: "gpl",
-      plugins: "lists link image table paste autoresize textcolor codesample",
+      plugins: "lists link image table autoresize codesample",
       toolbar: "undo redo | formatselect | bold italic forecolor backcolor | bullist numlist | link image | table | codesample | removeformat",
       skin: "oxide-dark",
       content_css: "dark",
@@ -4910,7 +4909,6 @@ function wireEvents() {
         code, pre { background: rgba(255,234,166,.1); color: #ffeaa6; padding: 2px 6px; border-radius: 4px; }
       `,
       paste_data_images: true,
-      automatic_uploads: true,
       images_upload_handler: (blobInfo) => {
         return new Promise((resolve) => {
           const reader = new FileReader();
