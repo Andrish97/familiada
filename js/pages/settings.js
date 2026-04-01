@@ -2207,6 +2207,12 @@ function renderMailList(rows) {
       console.log('textContent extracted:', previewText);
     }
 
+    // Strategy 4: Emergency fallback - try to extract from subject or show placeholder
+    if (!previewText) {
+      console.log('Strategy 4: Emergency fallback - using subject as preview');
+      previewText = r.subject ? `(brak treści) ${r.subject}` : `(brak treści)`;
+    }
+
     if (!previewText) {
       console.warn('WARNING: No preview text extracted!');
     }
