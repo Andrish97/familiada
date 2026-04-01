@@ -3311,18 +3311,19 @@ async function sendComposeWithSignature(greetingSelect, farewellSelect) {
 
   // body from TinyMCE is already HTML (<p>, <strong>, etc.) - don't replace \n with <br>
   let bodyContent = body;
-  
-  // Replace #quote placeholder with actual quote HTML
-  const quoteHtml = quote ? `<div style="margin:25px 0;padding:20px;background:rgba(255,255,255,.05);border-left:4px solid #ffeaa6;border-radius:4px;font-size:13px;line-height:1.6;color:#ccc">${quote.replace(/\n/g, "<br>")}</div>` : "";
-  if (bodyContent.includes("#quote")) {
-    bodyContent = bodyContent.replace(/#quote/g, quoteHtml);
+
+  // Replace #quote placeholder with actual quote HTML (only when replying with quote)
+  if (quote) {
+    const quoteHtml = `<div style="margin:25px 0;padding:20px;background:rgba(255,255,255,.05);border-left:4px solid #ffeaa6;border-radius:4px;font-size:13px;line-height:1.6;color:#ccc">${quote.replace(/\n/g, "<br>")}</div>`;
+    if (bodyContent.includes("#quote")) {
+      bodyContent = bodyContent.replace(/#quote/g, quoteHtml);
+    }
   }
-  
+
   // Build final email body (inner HTML only, no DOCTYPE/html/body tags)
   const htmlBody = `
     ${greetingText ? `<div style="margin-bottom:20px">${greetingText.replace(/\n/g, "<br>")}</div>` : ""}
     <div style="line-height:1.6;color:#fff;margin-bottom:20px">${bodyContent}</div>
-    ${!body.includes("#quote") && quoteHtml ? quoteHtml : ""}
     ${farewellText ? `<div style="margin-top:20px">${farewellText.replace(/\n/g, "<br>")}</div>` : ""}
   `;
 
@@ -4860,6 +4861,7 @@ function wireEvents() {
 
   if (els.btnAccessLogin) {
     els.btnAccessLogin.addEventListener("click", () => {
+      // Try standard Cloudflare Access login
       window.location.href = "/cdn-cgi/access/login";
     });
   }
