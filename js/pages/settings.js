@@ -3077,10 +3077,21 @@ function showCompose(defaults = {}) {
 
   // Initialize TinyMCE for composeMessageArea after HTML is inserted
   setTimeout(() => {
-    if (typeof tinymce !== "undefined") {
-      const composeEl = document.getElementById("composeMessageArea");
-      if (composeEl && !composeEl._tinyMCEInitialized) {
-        tinymce.init({
+    if (typeof tinymce === "undefined") {
+      console.warn("TinyMCE script not loaded yet");
+      return;
+    }
+    const composeEl = document.getElementById("composeMessageArea");
+    if (!composeEl) {
+      console.warn("composeMessageArea element not found");
+      return;
+    }
+    if (composeEl._tinyMCEInitialized) {
+      console.log("TinyMCE already initialized for this element");
+      return;
+    }
+    console.log("Initializing TinyMCE for composeMessageArea...");
+    tinymce.init({
           selector: "#composeMessageArea",
           height: 400,
           menubar: "edit insert view format table tools",
@@ -3122,11 +3133,12 @@ function showCompose(defaults = {}) {
               }
             });
             composeEl._tinyMCEInitialized = true;
+            console.log("TinyMCE initialized successfully");
           },
         });
       }
     }
-  }, 200);
+  }, 300);
 
   // Initialize greeting select
   const composeGreetingSelect = initUiSelect(document.getElementById("composeGreetingSelect"), {
