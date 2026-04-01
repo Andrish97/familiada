@@ -2924,7 +2924,7 @@ function showCompose(defaults = {}) {
   const bodyText = defaults.body || "";
 
   conv.innerHTML = `
-    <div class="mail-compose-pane" id="composePaneInner" style="display:flex;flex-direction:column;height:100%">
+    <div class="mail-compose-pane" id="composePaneInner" style="display:flex;flex-direction:column;height:100%;overflow:auto">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-shrink:0">
         <div style="font-size:14px;font-weight:700">${t("settings.reports.compose.title") || "Napisz nową wiadomość"}</div>
         <button id="btnComposeClose" type="button" title="Zamknij" style="background:none;border:none;cursor:pointer;padding:4px;color:rgba(255,255,255,.4);line-height:1;font-size:18px;border-radius:4px" onmouseover="this.style.color='rgba(255,255,255,.8)'" onmouseout="this.style.color='rgba(255,255,255,.4)'">✕</button>
@@ -3247,11 +3247,12 @@ function showComposePreview(greetingSelect, farewellSelect, quotePosition) {
   // Build full body with signature at the end
   const fullBody = signatureText ? `${body}\n\n${signatureText}` : body;
   
-  // Convert plain text to HTML (same as email rendering)
-  const quoteHtml = quote ? `<div style="margin:20px 0;padding:20px;background:#f5f5f5;border-left:4px solid #ffeaa6;border-radius:0 8px 8px 0;font-size:13px;line-height:1.6;color:#333;white-space:pre-wrap">${escSetting(quote)}</div>` : "";
-  const bodyHtml = quotePosition === "before" ? `${quoteHtml}<div style="white-space:pre-wrap;font-size:15px;line-height:1.7;color:#222">${escSetting(fullBody || "(brak treści)")}</div>` : `<div style="white-space:pre-wrap;font-size:15px;line-height:1.7;color:#222">${escSetting(fullBody || "(brak treści)")}</div>${quoteHtml}`;
+  // Convert newlines to <br> for HTML email
+  const bodyHtml = fullBody ? fullBody.replace(/\n/g, "<br>") : "(brak treści)";
+  const quoteHtml = quote ? `<div style="margin:25px 0;padding:20px;background:#f8f9fa;border-left:4px solid #ffeaa6;border-radius:4px;font-size:13px;line-height:1.6;color:#555">${quote.replace(/\n/g, "<br>")}</div>` : "";
+  const finalBody = quotePosition === "before" ? `${quoteHtml}<div style="line-height:1.6;color:#222">${bodyHtml}</div>` : `<div style="line-height:1.6;color:#222">${bodyHtml}</div>${quoteHtml}`;
   
-  // Generate full HTML email (exact same structure as sent emails)
+  // Generate full HTML email (exact same structure as system emails)
   const emailHtml = `
     <!DOCTYPE html>
     <html>
@@ -3259,11 +3260,12 @@ function showComposePreview(greetingSelect, farewellSelect, quotePosition) {
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1">
       <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; background: #fff; color: #222; }
-        .email-container { max-width: 600px; margin: 0 auto; }
-        .email-header { background: #f8f9fa; padding: 20px; border-bottom: 1px solid #e9ecef; }
-        .email-subject { font-size: 20px; font-weight: 700; color: #1a1a2e; margin: 0; }
-        .email-body { padding: 24px; background: #fff; line-height: 1.6; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; background: #fff; color: #222; line-height: 1.6; }
+        .email-container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .email-header { background: linear-gradient(135deg, #1a1a2e 0%, #2d2d44 100%); padding: 25px 20px; margin: -20px -20px 25px -20px; border-radius: 8px 8px 0 0; }
+        .email-subject { font-size: 22px; font-weight: 700; color: #fff; margin: 0; }
+        .email-body { padding: 0 5px; }
+        .email-footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #e9ecef; font-size: 12px; color: #888; }
       </style>
     </head>
     <body>
@@ -3272,14 +3274,17 @@ function showComposePreview(greetingSelect, farewellSelect, quotePosition) {
           <h1 class="email-subject">${escSetting(subject || "(brak tematu)")}</h1>
         </div>
         <div class="email-body">
-          ${bodyHtml}
+          ${finalBody}
+        </div>
+        <div class="email-footer">
+          <p style="margin:0;color:#888;font-size:12px">Ta wiadomość została wysłana przez system Familiada.</p>
         </div>
       </div>
     </body>
     </html>
   `;
   
-  // Create iframe for preview (renders HTML exactly like inbox messages)
+  // Create iframe for preview (renders HTML exactly like system emails)
   const frame = document.createElement("iframe");
   frame.style.cssText = "width:100%;height:500px;border:none;background:#fff;border-radius:8px;";
   frame.sandbox = "allow-scripts allow-popups";
