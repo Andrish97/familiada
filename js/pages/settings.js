@@ -2160,7 +2160,7 @@ function renderMailList(rows) {
     const sourceBadge = { email: "📧", form: "📝", compose: "✏" }[r.source] || "";
     const from = isInbound ? (r.from_email || "—") : (r.to_email || "—");
     const ticketPart = r.ticket_number ? ` · <span style="opacity:.5;font-size:10px">${escSetting(r.ticket_number)}</span>` : "";
-    // Extract text from message for preview - PANZERNA wersja
+    // Extract text from message for preview - SIMPLE version
     let previewText = "";
 
     // Strategy 1: Try body_html first
@@ -2190,30 +2190,11 @@ function renderMailList(rows) {
       previewText = (tmp.textContent || tmp.innerText || "").trim();
     }
 
-    // Debug log
-    console.log('mail-ti-preview:', {
-      has_body_html: !!r.body_html,
-      has_body: !!r.body,
-      has_body_preview: !!r.body_preview,
-      previewText_before: previewText
-    });
-
-    // Clean up preview text - pancerny cleanup
+    // Simple cleanup - just collapse whitespace and limit length
     previewText = previewText
-      .replace(/Ta wiadomość została wysłana przez system Familiada\./gi, "")  // Remove footer
-      .replace(/FAMILIADA/gi, "")  // Remove header
-      .replace(/familiada\.online/gi, "")  // Remove URL
-      .replace(/witaj/gi, "")  // Remove "Witaj"
-      .replace(/cześć/gi, "")  // Remove "Cześć"
-      .replace(/pozdrawiam/gi, "")  // Remove "Pozdrawiam"
-      .replace(/dzień dobry/gi, "")  // Remove "Dzień dobry"
-      .replace(/^[,\s]+|[,\s]+$/g, "")  // Remove leading/trailing commas and spaces
       .replace(/\s+/g, ' ')  // Collapse all whitespace to single space
       .slice(0, 80)  // Limit length
       .trim();
-
-    // Debug log after cleanup
-    console.log('mail-ti-preview after cleanup:', previewText);
 
     item.innerHTML = `
       <div class="mail-ti-row">
