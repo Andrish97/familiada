@@ -1692,6 +1692,22 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   flex: 1;
   min-width: 0;
 }
+
+/* TinyMCE toolbar overflow fix */
+.tox-toolbar__overflow {
+  display: none !important;
+}
+.tox-toolbar__group {
+  flex-wrap: wrap;
+}
+.tox-tinymce {
+  border-radius: 8px !important;
+  overflow: hidden;
+}
+.tox-tinymce-aux {
+  z-index: 10000 !important;
+}
+
 .mail-compose-pane input[type="file"] {
   display: block;
   width: 100%;
