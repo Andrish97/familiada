@@ -2968,7 +2968,6 @@ function showCompose(defaults = {}) {
 
   // Body without signature - signature is added on send/preview
   const bodyText = defaults.body || "";
-  const quotePosition = els.mailQuotePosition?.value || "before";
 
   conv.innerHTML = `
     <div class="mail-compose-pane">
