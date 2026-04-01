@@ -3223,8 +3223,9 @@ function showCompose(defaults = {}) {
   });
 
   document.getElementById("btnComposeClose")?.addEventListener("click", async () => {
+    const editor = tinymce.get("composeMessageArea");
     const hasData = (document.getElementById("composeSubjectInput")?.value || "").trim()
-      || (document.getElementById("composeMessageArea")?.value || "").trim()
+      || (editor ? editor.getContent() : "")
       || (document.getElementById("composeGreetingCustom")?.value || "").trim()
       || (document.getElementById("composeFarewellCustom")?.value || "").trim();
     if (hasData) {
@@ -4392,25 +4393,45 @@ async function mktRefreshPreview() {
     return;
   }
   const body = mktEditor.getContent();
-  console.log("Marketing preview - body length:", body?.length);
-  try {
-    const res = await adminFetch("/marketing/preview", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ template_id: mktActiveTpl, custom_subject: subject, custom_body: body }),
-    });
-    if (!res.ok) throw new Error(await res.text());
-    const json = await res.json();
-    console.log("Marketing preview response:", json);
-    if (json.html) {
-      frame.srcdoc = json.html;
-    } else {
-      frame.srcdoc = '<p style="color:#fff;padding:12px">Brak HTML w odpowiedzi</p>';
-    }
-  } catch (err) {
-    console.error("Marketing preview error:", err);
-    frame.srcdoc = `<p style="font-family:sans-serif;color:#c00;padding:12px">${esc(String(err?.message || err))}</p>`;
-  }
+  
+  // Generate preview HTML client-side (don't rely on server rendering)
+  const tpl = mktTemplates.find(t => t.id === mktActiveTpl);
+  const tplSubject = tpl?.subject || "";
+  const tplBody = tpl?.body || "";
+  
+  // Use custom values if provided, otherwise use template defaults
+  const finalSubject = subject || tplSubject;
+  const finalBody = body || tplBody;
+  
+  // Generate full HTML email for preview (dark theme)
+  const previewHtml = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; background: #050914; color: #ffffff; line-height: 1.6; }
+        .email-container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .email-header { background: linear-gradient(135deg, #1a1a2e 0%, #2d2d44 100%); padding: 25px 20px; margin: -20px -20px 25px -20px; border-radius: 8px 8px 0 0; }
+        .email-subject { font-size: 22px; font-weight: 700; color: #fff; margin: 0; }
+        .email-body { padding: 24px; background: transparent; line-height: 1.6; }
+      </style>
+    </head>
+    <body>
+      <div class="email-container">
+        <div class="email-header">
+          <h1 class="email-subject">${escSetting(finalSubject)}</h1>
+        </div>
+        <div class="email-body">
+          ${finalBody || '<em>(brak treści)</em>'}
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+  
+  frame.srcdoc = previewHtml;
 }
 
 function mktParseEmails() {
