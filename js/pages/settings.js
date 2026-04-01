@@ -3073,6 +3073,11 @@ function showCompose(defaults = {}) {
       return;
     }
     console.log("Initializing TinyMCE for composeMessageArea...");
+    
+    // Hide textarea until TinyMCE is ready
+    composeEl.style.visibility = "hidden";
+    composeEl.style.height = "0";
+    
     tinymce.init({
       selector: "#composeMessageArea",
       height: 400,
@@ -3109,6 +3114,9 @@ function showCompose(defaults = {}) {
       setup: (editor) => {
         editor.on("init", () => {
           console.log("TinyMCE init event fired");
+          // Show TinyMCE UI when ready
+          composeEl.style.visibility = "";
+          composeEl.style.height = "";
         });
         editor.on("change", () => {
           const content = editor.getContent();
@@ -4901,130 +4909,25 @@ function wireEvents() {
   await initToolsSelect();
   wireEvents();
 
-  // Wait for TinyMCE to load then initialize
-  function initTinyMCEEditors() {
-    // Wait for tinymce to be available
-    if (typeof tinymce === "undefined") {
-      setTimeout(initTinyMCEEditors, 300);
-      return;
-    }
 
-    // Initialize TinyMCE for compose message area (reports/mail)
-    const composeEl = document.getElementById("composeMessageArea");
-    if (composeEl && !composeEl._tinyMCEInitialized) {
-      tinymce.init({
-        selector: "#composeMessageArea",
-        height: 400,
-        menubar: "edit insert view format table tools",
-        branding: false,
-        promotion: false,
-        license_key: "gpl",
-        plugins: "lists link image table autoresize codesample",
-        toolbar: "undo redo | formatselect | bold italic forecolor backcolor | bullist numlist | link image | table | codesample | removeformat",
-        statusbar: false,
-        skin: "oxide-dark",
-        content_css: "dark",
-        content_style: `
-          body {
-            background: #050914 !important;
-            color: #ffffff !important;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-            font-size: 14px;
-            line-height: 1.6;
-          }
-          a { color: #ffeaa6 !important; }
-          table { border-collapse: collapse; width: 100%; }
-          table td, table th { border: 1px solid rgba(255,255,255,.2); padding: 8px; }
-          code, pre { background: rgba(255,234,166,.1); color: #ffeaa6; padding: 2px 6px; border-radius: 4px; }
-        `,
-        paste_data_images: true,
-        images_upload_handler: (blobInfo) => {
-          return new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result);
-            reader.readAsDataURL(blobInfo.blob());
-          });
-        },
-        setup: (editor) => {
-          editor.on("change", () => {
-            const quoteToggle = document.getElementById("composeQuoteToggle");
-            if (quoteToggle && !quoteToggle.checked) {
-              const content = editor.getContent();
-              if (content.includes("#quote")) {
-                quoteToggle.checked = true;
-                const quoteBlock = document.getElementById("composeQuoteBlock");
-                const positionSection = document.querySelector('.field:has([name="composeQuotePosition"])');
-                if (quoteBlock) quoteBlock.style.display = "";
-                if (positionSection) positionSection.style.display = "";
-              }
-            }
-          });
-          composeEl._tinyMCEInitialized = true;
-        },
-      });
-    }
-
-    // Initialize TinyMCE for marketing message area
+  // Initialize TinyMCE for marketing message area
+  const initMktTinyMCE = () => {
+    if (typeof tinymce === "undefined") { setTimeout(initMktTinyMCE, 200); return; }
     const mktEl = document.getElementById("mktBody");
-    if (mktEl && !mktEl._tinyMCEInitialized) {
-      tinymce.init({
-        selector: "#mktBody",
-        height: 400,
-        menubar: "edit insert view format table tools",
-        branding: false,
-        promotion: false,
-        license_key: "gpl",
-        plugins: "lists link image table autoresize codesample",
-        toolbar: "undo redo | formatselect | bold italic forecolor backcolor | bullist numlist | link image | table | codesample | removeformat",
-        statusbar: false,
-        skin: "oxide-dark",
-        content_css: "dark",
-        content_style: `
-          body {
-            background: #050914 !important;
-            color: #ffffff !important;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-            font-size: 14px;
-            line-height: 1.6;
-          }
-          a { color: #ffeaa6 !important; }
-          table { border-collapse: collapse; width: 100%; }
-          table td, table th { border: 1px solid rgba(255,255,255,.2); padding: 8px; }
-          code, pre { background: rgba(255,234,166,.1); color: #ffeaa6; padding: 2px 6px; border-radius: 4px; }
-        `,
-        paste_data_images: true,
-        images_upload_handler: (blobInfo) => {
-          return new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result);
-            reader.readAsDataURL(blobInfo.blob());
-          });
-        },
-        setup: (editor) => {
-          mktEl._tinyMCEInitialized = true;
-        },
-      });
-    }
-  }
-
-  // Insert #quote button - prevent focus loss
-  document.getElementById("btnInsertQuote")?.addEventListener("click", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const editor = tinymce.get("composeMessageArea");
-    if (editor) {
-      editor.insertContent("#quote");
-      editor.focus();
-    }
-  });
-  showAuth("settings.login.checking");
-
-  const ok = await checkMe();
-  if (ok) {
-    showPanel();
-    await loadState();
-    if (!pollTimer) pollTimer = setInterval(() => loadState({ silent: true }), POLL_MS);
-  } else {
-    showAuth("settings.login.accessRequired");
-  }
+    if (!mktEl) { setTimeout(initMktTinyMCE, 200); return; }
+    if (mktEl._tinyMCEInitialized) return;
+    mktEl.style.visibility = "hidden"; mktEl.style.height = "0";
+    tinymce.init({
+      selector: "#mktBody", height: 400, menubar: "edit insert view format table tools",
+      branding: false, promotion: false, license_key: "gpl",
+      plugins: "lists link image table autoresize codesample",
+      toolbar: "undo redo | formatselect | bold italic forecolor backcolor | bullist numlist | link image | table | codesample | removeformat",
+      statusbar: false, skin: "oxide-dark", content_css: "dark",
+      content_style: "body { background: #050914 !important; color: #ffffff !important; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important; font-size: 14px; line-height: 1.6; } a { color: #ffeaa6 !important; }",
+      paste_data_images: true,
+      images_upload_handler: (blobInfo) => new Promise((resolve) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.readAsDataURL(blobInfo.blob()); }),
+      setup: (editor) => { editor.on("init", () => { mktEl.style.visibility = ""; mktEl.style.height = ""; }); mktEl._tinyMCEInitialized = true; },
+    });
+  };
+  setTimeout(initMktTinyMCE, 100);
 })();
