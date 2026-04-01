@@ -4908,4 +4908,15 @@ function wireEvents() {
     });
   };
   setTimeout(initMktTinyMCE, 100);
+
+  showAuth("settings.login.checking");
+
+  const ok = await checkMe();
+  if (ok) {
+    showPanel();
+    await loadState();
+    if (!pollTimer) pollTimer = setInterval(() => loadState({ silent: true }), POLL_MS);
+  } else {
+    showAuth("settings.login.accessRequired");
+  }
 })();
