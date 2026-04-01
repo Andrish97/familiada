@@ -3421,17 +3421,16 @@ function showComposePreview(greetingSelect, farewellSelect) {
   // body from TinyMCE is already HTML (<p>, <strong>, etc.) - don't replace \n with <br>
   let bodyHtml = body;
 
-  // Replace #quote placeholder with actual quote
-  const quoteHtml = quote ? `<div class="email-quote">${quote.replace(/\n/g, "<br>")}</div>` : "";
+  // Replace #quote placeholder with actual quote HTML
+  const quoteHtml = quote ? `<div style="margin:25px 0;padding:20px;background:rgba(255,255,255,.05);border-left:4px solid #ffeaa6;border-radius:4px;font-size:13px;line-height:1.6;color:#ccc">${quote.replace(/\n/g, "<br>")}</div>` : "";
   if (bodyHtml.includes("#quote")) {
     bodyHtml = bodyHtml.replace(/#quote/g, quoteHtml);
   }
-  
-  // Structure: Greeting → Body → Quote → Farewell
+
+  // Structure: Greeting → Body (with #quote replaced) → Farewell
   const finalBody = `
     ${greetingWithComma ? `<div style="margin-bottom:20px;line-height:1.6">${greetingWithComma.replace(/\n/g, "<br>")}</div>` : ""}
     <div style="line-height:1.6;color:#fff;margin-bottom:20px">${bodyHtml}</div>
-    ${!body.includes("#quote") && quoteHtml ? quoteHtml : ""}
     ${farewellText ? `<div style="margin-top:20px;line-height:1.6">${farewellText.replace(/\n/g, "<br>")}</div>` : ""}
   `;
 
@@ -4365,7 +4364,8 @@ async function mktRefreshPreview() {
   const frame = document.getElementById("mktPreviewFrame");
   if (!frame) return;
   const subject = (document.getElementById("mktSubject")?.value || "").trim();
-  // Get content from TinyMCE - ALWAYS use TinyMCE, no fallback
+  
+  // Get HTML content from TinyMCE
   const mktEditor = tinymce.get("mktBody");
   if (!mktEditor) {
     frame.srcdoc = '<p style="color:#fff;padding:12px">Edytor nie jest gotowy...</p>';
@@ -4373,14 +4373,9 @@ async function mktRefreshPreview() {
   }
   const body = mktEditor.getContent();
   
-  // Generate preview HTML client-side (don't rely on server rendering)
+  // Get template subject
   const tpl = MKT_TEMPLATES[mktActiveTpl] || MKT_TEMPLATES.custom;
-  const tplSubject = tpl?.subject || "";
-  const tplBody = tpl?.body || "";
-  
-  // Use custom values if provided, otherwise use template defaults
-  const finalSubject = subject || tplSubject;
-  const finalBody = body || tplBody;
+  const finalSubject = subject || tpl?.subject || "";
   
   // Generate full HTML email for preview (dark theme)
   const previewHtml = `
@@ -4403,7 +4398,7 @@ async function mktRefreshPreview() {
           <h1 class="email-subject">${escSetting(finalSubject)}</h1>
         </div>
         <div class="email-body">
-          ${finalBody || '<em>(brak treści)</em>'}
+          ${body || '<em>(brak treści)</em>'}
         </div>
       </div>
     </body>
