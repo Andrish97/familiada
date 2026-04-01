@@ -2297,7 +2297,7 @@ function renderMessageDetail(msg, attachments = []) {
             <h1 class="email-subject">${escSetting(subject)}</h1>
           </div>
           <div class="email-body">
-            ${htmlSrc ? htmlSrc : "<em>(brak treści)</em>"}
+            ${htmlSrc || ""}
           </div>
         </div>
       </body>
@@ -2309,12 +2309,12 @@ function renderMessageDetail(msg, attachments = []) {
     frame.sandbox = "allow-scripts allow-popups";
     frame.srcdoc = emailHtml;
 
-    // Create wrapper with dark background
+    // Create wrapper with dark background (matches email theme #050914)
     const wrapper = document.createElement("div");
     wrapper.className = "compose-preview-wrapper";
-    wrapper.style.cssText = "background:#1a1a2e;border-radius:8px;padding:20px;position:relative;";
+    wrapper.style.cssText = "background:#050914;border-radius:8px;padding:20px;position:relative;";
     
-    // Add close button (X)
+    // Add close button (X) only - no OK/Cancel buttons
     const closeBtn = document.createElement("button");
     closeBtn.type = "button";
     closeBtn.textContent = "✕";
@@ -2333,7 +2333,7 @@ function renderMessageDetail(msg, attachments = []) {
       title: `Podgląd wiadomości - ${new Date(msg.created_at).toLocaleString("pl-PL")}`,
       text: "",
       body: wrapper,
-      okText: "Zamknij",
+      okText: "",
       showCancel: false,
     });
   });
@@ -2608,7 +2608,7 @@ function renderReportThread(report, messages, attsByMsg = {}) {
               <h1 class="email-subject">${escSetting(subject)}</h1>
             </div>
             <div class="email-body">
-              ${htmlSrc ? htmlSrc : "<em>(brak treści)</em>"}
+              ${htmlSrc || ""}
             </div>
           </div>
         </body>
@@ -2620,12 +2620,12 @@ function renderReportThread(report, messages, attsByMsg = {}) {
       frame.sandbox = "allow-scripts allow-popups";
       frame.srcdoc = emailHtml;
 
-      // Create wrapper with dark background
+      // Create wrapper with dark background (matches email theme #050914)
       const wrapper = document.createElement("div");
       wrapper.className = "compose-preview-wrapper";
-      wrapper.style.cssText = "background:#1a1a2e;border-radius:8px;padding:20px;position:relative;";
+      wrapper.style.cssText = "background:#050914;border-radius:8px;padding:20px;position:relative;";
       
-      // Add close button (X)
+      // Add close button (X) only - no OK/Cancel buttons
       const closeBtn = document.createElement("button");
       closeBtn.type = "button";
       closeBtn.textContent = "✕";
@@ -2644,7 +2644,7 @@ function renderReportThread(report, messages, attsByMsg = {}) {
         title: `Podgląd wiadomości - ${new Date(msg.created_at).toLocaleString("pl-PL")}`,
         text: "",
         body: wrapper,
-        okText: "Zamknij",
+        okText: "",
         showCancel: false,
       });
     });
@@ -3059,8 +3059,8 @@ function showCompose(defaults = {}) {
           ` : ""}
 
           <div class="field" style="margin-bottom:12px;min-height:0;display:flex;flex-direction:column">
-            <label class="field-label">${t("settings.reports.compose.message") || "Treść wiadomości"}</label>
             ${hasQuote && quotePosition === "before" ? quoteBlockHtml : ""}
+            <label class="field-label" style="margin-bottom:6px;display:block">${t("settings.reports.compose.message") || "Treść"}</label>
             <textarea class="inp" id="composeMessageArea" rows="10" style="width:100%;box-sizing:border-box;resize:none;flex:1;min-height:120px;overflow-y:auto">${escSetting(bodyText)}</textarea>
             ${hasQuote && quotePosition === "after" ? quoteBlockHtml : ""}
           </div>
@@ -3357,7 +3357,7 @@ function showComposePreview(greetingSelect, farewellSelect, quotePosition) {
   });
 
   // Convert newlines to <br> for HTML email
-  const bodyHtml = body ? body.replace(/\n/g, "<br>") : "(brak treści)";
+  const bodyHtml = body ? body.replace(/\n/g, "<br>") : "";
   const quoteHtml = quote ? `<div class="email-quote">${quote.replace(/\n/g, "<br>")}</div>` : "";
   
   // Structure: Greeting → Body → Quote → Farewell
@@ -3407,12 +3407,12 @@ function showComposePreview(greetingSelect, farewellSelect, quotePosition) {
   frame.sandbox = "allow-scripts allow-popups";
   frame.srcdoc = emailHtml;
   
-  // Create wrapper with dark background (matches UI theme)
+  // Create wrapper with dark background (matches email theme #050914)
   const wrapper = document.createElement("div");
   wrapper.className = "compose-preview-wrapper";
-  wrapper.style.cssText = "background:#1a1a2e;border-radius:8px;padding:20px;position:relative;";
+  wrapper.style.cssText = "background:#050914;border-radius:8px;padding:20px;position:relative;";
   
-  // Add close button (X) only
+  // Add close button (X) only - no OK/Cancel buttons
   const closeBtn = document.createElement("button");
   closeBtn.type = "button";
   closeBtn.textContent = "✕";
@@ -3431,7 +3431,7 @@ function showComposePreview(greetingSelect, farewellSelect, quotePosition) {
     title: t("settings.reports.compose.previewTitle") || "Podgląd wiadomości",
     text: "",
     body: wrapper,
-    okText: "Zamknij",
+    okText: "",
     showCancel: false,
   });
 }
