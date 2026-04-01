@@ -2981,12 +2981,12 @@ function showCompose(defaults = {}) {
       ${hasQuote ? `
       <div class="field" style="flex-shrink:0;margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.1)">
         <label class="field-label" style="font-size:12px;margin-bottom:8px;display:block">Pozycja cytatu:</label>
-        <div style="display:flex;gap:16px">
-          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+        <div style="display:flex;gap:16px;flex-wrap:wrap">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;white-space:nowrap">
             <input type="radio" name="composeQuotePosition" value="before" ${quotePosition === "before" ? "checked" : ""} style="accent-color:#ffeaa6">
             Przed treścią
           </label>
-          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;white-space:nowrap">
             <input type="radio" name="composeQuotePosition" value="after" ${quotePosition === "after" ? "checked" : ""} style="accent-color:#ffeaa6">
             Po treści
           </label>
@@ -2994,17 +2994,17 @@ function showCompose(defaults = {}) {
       </div>
       ` : ""}
       
-      <div class="field" style="flex-shrink:0">
-        <label class="field-label" style="display:flex;align-items:center;justify-content:space-between">
-          Załączniki
-          <span style="opacity:.4;font-size:10px">maks. 10 MB</span>
+      <div class="field" style="flex-shrink:0;margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.1)">
+        <label class="field-label" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+          <span style="font-size:12px">Załączniki</span>
+          <span style="opacity:.4;font-size:10px;white-space:nowrap">maks. 10 MB</span>
         </label>
         <input type="file" id="composeAttachmentInput" multiple style="display:none">
-        <label for="composeAttachmentInput" style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);font-size:12px;color:rgba(255,255,255,.6);cursor:pointer;user-select:none">
+        <label for="composeAttachmentInput" style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);font-size:12px;color:rgba(255,255,255,.6);cursor:pointer;user-select:none;margin-top:6px">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
           Wybierz pliki
         </label>
-        <div id="composeAttachmentList" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:6px"></div>
+        <div id="composeAttachmentList" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;max-width:100%;overflow:hidden"></div>
       </div>
       
       <input type="hidden" id="composeReportId" value="${escSetting(defaults.report_id || "")}">
