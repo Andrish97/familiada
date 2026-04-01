@@ -2924,8 +2924,8 @@ function showCompose(defaults = {}) {
   const bodyText = defaults.body || "";
 
   conv.innerHTML = `
-    <div class="mail-compose-pane" id="composePaneInner" style="display:flex;flex-direction:column;height:100%;overflow:auto">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-shrink:0">
+    <div class="mail-compose-pane" id="composePaneInner" style="display:flex;flex-direction:column;height:100%;min-height:0;overflow-y:auto;overflow-x:hidden;padding-right:10px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-shrink:0;padding-right:10px">
         <div style="font-size:14px;font-weight:700">${t("settings.reports.compose.title") || "Napisz nową wiadomość"}</div>
         <button id="btnComposeClose" type="button" title="Zamknij" style="background:none;border:none;cursor:pointer;padding:4px;color:rgba(255,255,255,.4);line-height:1;font-size:18px;border-radius:4px" onmouseover="this.style.color='rgba(255,255,255,.8)'" onmouseout="this.style.color='rgba(255,255,255,.4)'">✕</button>
       </div>
@@ -2981,30 +2981,27 @@ function showCompose(defaults = {}) {
       ${hasQuote ? `
       <div class="field" style="flex-shrink:0;margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.1)">
         <label class="field-label" style="font-size:12px;margin-bottom:8px;display:block">Pozycja cytatu:</label>
-        <div style="display:flex;gap:16px;flex-wrap:wrap">
-          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;white-space:nowrap">
+        <div style="display:flex;gap:20px;flex-wrap:wrap">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
             <input type="radio" name="composeQuotePosition" value="before" ${quotePosition === "before" ? "checked" : ""} style="accent-color:#ffeaa6">
-            Przed treścią
+            <span style="white-space:nowrap">Przed treścią</span>
           </label>
-          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;white-space:nowrap">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
             <input type="radio" name="composeQuotePosition" value="after" ${quotePosition === "after" ? "checked" : ""} style="accent-color:#ffeaa6">
-            Po treści
+            <span style="white-space:nowrap">Po treści</span>
           </label>
         </div>
       </div>
       ` : ""}
       
       <div class="field" style="flex-shrink:0;margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.1)">
-        <label class="field-label" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-          <span style="font-size:12px">Załączniki</span>
-          <span style="opacity:.4;font-size:10px;white-space:nowrap">maks. 10 MB</span>
-        </label>
+        <label class="field-label" style="display:block;font-size:12px;margin-bottom:8px">Załączniki <span style="opacity:.4;font-size:10px">(maks. 10 MB)</span></label>
         <input type="file" id="composeAttachmentInput" multiple style="display:none">
-        <label for="composeAttachmentInput" style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);font-size:12px;color:rgba(255,255,255,.6);cursor:pointer;user-select:none;margin-top:6px">
+        <label for="composeAttachmentInput" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);font-size:12px;color:rgba(255,255,255,.7);cursor:pointer;user-select:none">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
           Wybierz pliki
         </label>
-        <div id="composeAttachmentList" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;max-width:100%;overflow:hidden"></div>
+        <div id="composeAttachmentList" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;max-width:100%"></div>
       </div>
       
       <input type="hidden" id="composeReportId" value="${escSetting(defaults.report_id || "")}">
@@ -3286,14 +3283,19 @@ function showComposePreview(greetingSelect, farewellSelect, quotePosition) {
   
   // Create iframe for preview (renders HTML exactly like system emails)
   const frame = document.createElement("iframe");
-  frame.style.cssText = "width:100%;height:500px;border:none;background:#fff;border-radius:8px;";
+  frame.style.cssText = "width:100%;height:500px;border:none;background:#fff;border-radius:8px;display:block";
   frame.sandbox = "allow-scripts allow-popups";
   frame.srcdoc = emailHtml;
+  
+  // Create wrapper with dark background (matches UI theme)
+  const wrapper = document.createElement("div");
+  wrapper.style.cssText = "background:#1a1a2e;border-radius:8px;padding:20px;";
+  wrapper.appendChild(frame);
   
   void confirmModal({
     title: t("settings.reports.compose.previewTitle") || "Podgląd wiadomości",
     text: "",
-    body: frame,
+    body: wrapper,
     okText: "OK",
     showCancel: false,
   });
