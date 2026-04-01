@@ -2161,10 +2161,19 @@ function renderMailList(rows) {
     const from = isInbound ? (r.from_email || "—") : (r.to_email || "—");
     const ticketPart = r.ticket_number ? ` · <span style="opacity:.5;font-size:10px">${escSetting(r.ticket_number)}</span>` : "";
     // Strip ALL HTML tags to get raw text only
-    const tmp = document.createElement("div");
-    tmp.innerHTML = r.body_preview || r.body || "";
-    let previewText = tmp.textContent || tmp.innerText || "";
-    // If still empty, try to get first line from body
+    let previewText = "";
+    if (r.body_preview) {
+      const tmp = document.createElement("div");
+      tmp.innerHTML = r.body_preview;
+      previewText = tmp.textContent || tmp.innerText || "";
+    }
+    // If still empty, try to get text from body or body_html
+    if (!previewText) {
+      const tmp = document.createElement("div");
+      tmp.innerHTML = r.body_html || r.body || "";
+      previewText = tmp.textContent || tmp.innerText || "";
+    }
+    // Final fallback: strip HTML manually
     if (!previewText && r.body) {
       previewText = r.body.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
     }
@@ -3012,6 +3021,10 @@ function showCompose(defaults = {}) {
 
         <div style="padding:0 16px">
           <div class="field" style="margin-bottom:12px">
+            <label class="field-label">Do (e-mail)</label>
+            <input class="inp" id="composeToInput" type="email" style="width:100%;box-sizing:border-box" value="${escSetting(defaults.to || "")}" placeholder="np. kontakt@firma.pl">
+          </div>
+          <div class="field" style="margin-bottom:12px">
             <label class="field-label">${t("settings.reports.compose.subject") || "Temat"}</label>
             <input class="inp" id="composeSubjectInput" type="text" autocomplete="off" style="width:100%;box-sizing:border-box" value="${escSetting(defaults.subject || "")}" placeholder="Wpisz temat wiadomości">
           </div>
@@ -3152,7 +3165,7 @@ function showCompose(defaults = {}) {
           background: #050914 !important;
           color: #ffffff !important;
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-          font-size: 14px;
+          font-size: 14px !important;
           line-height: 1.6;
         }
         a { color: #ffeaa6 !important; }
@@ -3356,6 +3369,7 @@ function closeCompose() {
 
 async function sendComposeWithSignature(greetingSelect, farewellSelect, senderSelect) {
   const subject = (document.getElementById("composeSubjectInput")?.value || "").trim();
+  const toEmail = (document.getElementById("composeToInput")?.value || "").trim();
   const editor = tinymce.get("composeMessageArea");
   if (!editor) {
     showToast("Edytor nie jest gotowy.", "error");
@@ -3363,13 +3377,13 @@ async function sendComposeWithSignature(greetingSelect, farewellSelect, senderSe
   }
   let body = editor.getContent();
   const reportId = (document.getElementById("composeReportId")?.value || "").trim() || null;
-  const toEmail = (document.getElementById("composeToEmail")?.value || "").trim();
   const status = document.getElementById("composeSendStatus");
   const quote = (document.getElementById("composeQuoteBody")?.value || "").trim() || null;
 
   if (!subject) { showToast("Podaj temat wiadomości.", "error"); return; }
+  if (!toEmail) { showToast("Podaj odbiorcę.", "error"); return; }
   if (!body) { showToast("Podaj treść wiadomości.", "error"); return; }
-  if (!toEmail && !reportId) { showToast("Brak odbiorcy.", "error"); return; }
+  if (!reportId) { showToast("Brak zgłoszenia.", "error"); return; }
   if (status) status.textContent = "Wysyłam…";
 
   // Build signature from compose window selections
