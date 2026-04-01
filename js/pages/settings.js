@@ -2275,8 +2275,6 @@ function renderMessageDetail(msg, attachments = []) {
       </html>
     `;
     frame.srcdoc = wrappedHtml;
-    frame.style.pointerEvents = "none";
-    frame.onload = () => { try { frame.style.height = (frame.contentDocument.documentElement.scrollHeight + 20) + "px"; } catch(e) {} };
     bodyEl.appendChild(frame);
   } else {
     bodyEl.className = "mail-msg-body";
@@ -2586,8 +2584,6 @@ function renderReportThread(report, messages, attsByMsg = {}) {
         </html>
       `;
       frame.srcdoc = wrappedHtml;
-      frame.style.pointerEvents = "none";
-      frame.onload = () => { try { frame.style.height = (frame.contentDocument.documentElement.scrollHeight + 20) + "px"; } catch(e) {} };
       bodyEl.appendChild(frame);
     } else {
       bodyEl.className = "mail-msg-body";

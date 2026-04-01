@@ -1548,9 +1548,25 @@ body.tools-fullscreen .tools-frame-wrap iframe{
 .mail-msg-html-frame {
   width: 100%;
   border: none;
-  background: #fff;
+  background: #050914;
   border-radius: 6px;
   min-height: 80px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+.mail-msg-html-frame::-webkit-scrollbar {
+  width: 6px;
+}
+.mail-msg-html-frame::-webkit-scrollbar-track {
+  background: rgba(255,255,255,.05);
+  border-radius: 3px;
+}
+.mail-msg-html-frame::-webkit-scrollbar-thumb {
+  background: rgba(255,234,166,.3);
+  border-radius: 3px;
+}
+.mail-msg-html-frame::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,234,166,.5);
 }
 
 /* ── Message action bar ─────────────────────────────────────── */
