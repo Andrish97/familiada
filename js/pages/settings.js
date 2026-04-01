@@ -2160,10 +2160,10 @@ function renderMailList(rows) {
     const sourceBadge = { email: "📧", form: "📝", compose: "✏" }[r.source] || "";
     const from = isInbound ? (r.from_email || "—") : (r.to_email || "—");
     const ticketPart = r.ticket_number ? ` · <span style="opacity:.5;font-size:10px">${escSetting(r.ticket_number)}</span>` : "";
-    // Extract text from message for preview - SIMPLE version
+    // Extract ALL text from message for preview - show EVERYTHING
     let previewText = "";
 
-    // Strategy 1: Try body_html first
+    // Strategy 1: Try body_html first (has full HTML email)
     if (r.body_html) {
       const tmp = document.createElement("div");
       tmp.innerHTML = r.body_html;
@@ -2173,7 +2173,7 @@ function renderMailList(rows) {
     // Strategy 2: Try body (might be plain text or HTML)
     if (!previewText && r.body) {
       if (r.body.trim().startsWith("<")) {
-        // HTML - strip all tags
+        // HTML - extract ALL text
         const tmp = document.createElement("div");
         tmp.innerHTML = r.body;
         previewText = (tmp.textContent || tmp.innerText || "").trim();
@@ -2190,9 +2190,10 @@ function renderMailList(rows) {
       previewText = (tmp.textContent || tmp.innerText || "").trim();
     }
 
-    // Simple cleanup - just collapse whitespace and limit length
+    // Minimal cleanup - just normalize whitespace and limit length
     previewText = previewText
-      .replace(/\s+/g, ' ')  // Collapse all whitespace to single space
+      .replace(/\n\s*\n/g, '\n')  // Remove empty lines
+      .replace(/\s+/g, ' ')  // Collapse whitespace
       .slice(0, 80)  // Limit length
       .trim();
 
