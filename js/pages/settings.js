@@ -2919,7 +2919,7 @@ function showCompose(defaults = {}) {
     quoteBlockHtml = `<div id="composeQuoteBlock" style="margin:15px 0;padding:10px 14px;border-left:3px solid rgba(255,234,166,.35);background:rgba(0,0,0,.2);border-radius:0 8px 8px 0;font-size:12px;opacity:.65;white-space:pre-wrap;word-break:break-word">
       <div style="font-size:11px;opacity:.7;margin-bottom:6px">${fromStr}</div>${escSetting(defaults.quote)}</div>`;
   }
-  
+
   // Body without signature - signature is added on send/preview
   const bodyText = defaults.body || "";
 
@@ -2973,11 +2973,20 @@ function showCompose(defaults = {}) {
             </select>
           </div>
 
+          ${hasQuote ? `
+          <div class="field" style="margin-bottom:12px">
+            <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer">
+              <input type="checkbox" id="composeQuoteToggle" checked style="accent-color:#ffeaa6">
+              <span>Dołącz cytat z oryginalnej wiadomości</span>
+            </label>
+          </div>
+          ` : ""}
+
           <div class="field" style="margin-bottom:12px;min-height:0;display:flex;flex-direction:column">
             <label class="field-label">${t("settings.reports.compose.message") || "Treść wiadomości"}</label>
-            ${quotePosition === "before" && hasQuote ? quoteBlockHtml : ""}
-            <textarea class="inp" id="composeMessageArea" rows="10" style="width:100%;box-sizing:border-box;resize:none;flex:1;min-height:120px;overflow-y:auto"></textarea>
-            ${quotePosition === "after" && hasQuote ? quoteBlockHtml : ""}
+            ${hasQuote && quotePosition === "before" ? quoteBlockHtml : ""}
+            <textarea class="inp" id="composeMessageArea" rows="10" style="width:100%;box-sizing:border-box;resize:none;flex:1;min-height:120px;overflow-y:auto">${escSetting(bodyText)}</textarea>
+            ${hasQuote && quotePosition === "after" ? quoteBlockHtml : ""}
           </div>
 
           ${hasQuote ? `
@@ -3064,10 +3073,18 @@ function showCompose(defaults = {}) {
   }
   
   document.getElementById("btnComposeSend")?.addEventListener("click", () => sendComposeWithSignature(composeGreetingSelect, composeFarewellSelect));
-  
+
   document.getElementById("btnComposePreview")?.addEventListener("click", () => {
     const currentQuotePosition = document.querySelector('input[name="composeQuotePosition"]:checked')?.value || quotePosition;
     showComposePreview(composeGreetingSelect, composeFarewellSelect, currentQuotePosition);
+  });
+
+  // Quote toggle - show/hide quote block
+  document.getElementById("composeQuoteToggle")?.addEventListener("change", (e) => {
+    const quoteBlock = document.getElementById("composeQuoteBlock");
+    if (quoteBlock) {
+      quoteBlock.style.display = e.target.checked ? "" : "none";
+    }
   });
 
   document.getElementById("btnComposeClose")?.addEventListener("click", async () => {
