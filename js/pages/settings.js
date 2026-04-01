@@ -4012,11 +4012,6 @@ function setActiveTab(tab) {
   if (tab === "generator" && window.resetGeneratorSession) {
     window.resetGeneratorSession();
   }
-  
-  // Initialize TinyMCE when switching to mail or marketing tab
-  if ((tab === "mail" || tab === "marketing") && typeof tinymce !== "undefined") {
-    initTinyMCEEditors();
-  }
 }
 function labelFromPath(pathname) {
   const raw = pathname.split("/").pop() || pathname;
@@ -4835,109 +4830,110 @@ function wireEvents() {
   function initTinyMCEEditors() {
     // Wait for tinymce to be available
     if (typeof tinymce === "undefined") {
-      console.warn("TinyMCE not loaded yet, retrying in 500ms...");
-      setTimeout(initTinyMCEEditors, 500);
+      setTimeout(initTinyMCEEditors, 300);
       return;
     }
-    
-    // Wait for DOM elements to exist
+
+    // Initialize TinyMCE for compose message area (reports/mail)
     const composeEl = document.getElementById("composeMessageArea");
-    const mktEl = document.getElementById("mktBody");
-    
-    if (!composeEl || !mktEl) {
-      console.warn("TinyMCE target elements not found, retrying in 500ms...");
-      setTimeout(initTinyMCEEditors, 500);
-      return;
-    }
-
-    console.log("Initializing TinyMCE editors...");
-
-    // Initialize TinyMCE for compose message area
-    tinymce.init({
-      selector: "#composeMessageArea",
-      height: 400,
-      menubar: "edit insert view format table tools",
-      branding: false,
-      promotion: false,
-      license_key: "gpl",
-      plugins: "lists link image table autoresize codesample",
-      toolbar: "undo redo | formatselect | bold italic forecolor backcolor | bullist numlist | link image | table | codesample | removeformat",
-      skin: "oxide-dark",
-      content_css: "dark",
-      content_style: `
-        body {
-          background: #050914 !important;
-          color: #ffffff !important;
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-          font-size: 14px;
-          line-height: 1.6;
-        }
-        a { color: #ffeaa6 !important; }
-        table { border-collapse: collapse; width: 100%; }
-        table td, table th { border: 1px solid rgba(255,255,255,.2); padding: 8px; }
-        code, pre { background: rgba(255,234,166,.1); color: #ffeaa6; padding: 2px 6px; border-radius: 4px; }
-      `,
-      paste_data_images: true,
-      images_upload_handler: (blobInfo) => {
-        return new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result);
-          reader.readAsDataURL(blobInfo.blob());
-        });
-      },
-      setup: (editor) => {
-        editor.on("change", () => {
-          const quoteToggle = document.getElementById("composeQuoteToggle");
-          if (quoteToggle && !quoteToggle.checked) {
-            const content = editor.getContent();
-            if (content.includes("#quote")) {
-              quoteToggle.checked = true;
-              const quoteBlock = document.getElementById("composeQuoteBlock");
-              const positionSection = document.querySelector('.field:has([name="composeQuotePosition"])');
-              if (quoteBlock) quoteBlock.style.display = "";
-              if (positionSection) positionSection.style.display = "";
-            }
+    if (composeEl && !composeEl._tinyMCEInitialized) {
+      tinymce.init({
+        selector: "#composeMessageArea",
+        height: 400,
+        menubar: "edit insert view format table tools",
+        branding: false,
+        promotion: false,
+        license_key: "gpl",
+        plugins: "lists link image table autoresize codesample",
+        toolbar: "undo redo | formatselect | bold italic forecolor backcolor | bullist numlist | link image | table | codesample | removeformat",
+        statusbar: false,
+        skin: "oxide-dark",
+        content_css: "dark",
+        content_style: `
+          body {
+            background: #050914 !important;
+            color: #ffffff !important;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+            font-size: 14px;
+            line-height: 1.6;
           }
-        });
-      },
-    });
+          a { color: #ffeaa6 !important; }
+          table { border-collapse: collapse; width: 100%; }
+          table td, table th { border: 1px solid rgba(255,255,255,.2); padding: 8px; }
+          code, pre { background: rgba(255,234,166,.1); color: #ffeaa6; padding: 2px 6px; border-radius: 4px; }
+        `,
+        paste_data_images: true,
+        images_upload_handler: (blobInfo) => {
+          return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.readAsDataURL(blobInfo.blob());
+          });
+        },
+        setup: (editor) => {
+          editor.on("change", () => {
+            const quoteToggle = document.getElementById("composeQuoteToggle");
+            if (quoteToggle && !quoteToggle.checked) {
+              const content = editor.getContent();
+              if (content.includes("#quote")) {
+                quoteToggle.checked = true;
+                const quoteBlock = document.getElementById("composeQuoteBlock");
+                const positionSection = document.querySelector('.field:has([name="composeQuotePosition"])');
+                if (quoteBlock) quoteBlock.style.display = "";
+                if (positionSection) positionSection.style.display = "";
+              }
+            }
+          });
+          composeEl._tinyMCEInitialized = true;
+        },
+      });
+    }
 
     // Initialize TinyMCE for marketing message area
-    tinymce.init({
-      selector: "#mktBody",
-      height: 400,
-      menubar: "edit insert view format table tools",
-      branding: false,
-      promotion: false,
-      license_key: "gpl",
-      plugins: "lists link image table autoresize codesample",
-      toolbar: "undo redo | formatselect | bold italic forecolor backcolor | bullist numlist | link image | table | codesample | removeformat",
-      statusbar: false,
-      skin: "oxide-dark",
-      content_css: "dark",
-      content_style: `
-        body {
-          background: #050914 !important;
-          color: #ffffff !important;
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-          font-size: 14px;
-          line-height: 1.6;
-        }
-        a { color: #ffeaa6 !important; }
-        table { border-collapse: collapse; width: 100%; }
-        table td, table th { border: 1px solid rgba(255,255,255,.2); padding: 8px; }
-        code, pre { background: rgba(255,234,166,.1); color: #ffeaa6; padding: 2px 6px; border-radius: 4px; }
-      `,
-      paste_data_images: true,
-      images_upload_handler: (blobInfo) => {
-        return new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result);
-          reader.readAsDataURL(blobInfo.blob());
-        });
-      },
-    });
+    const mktEl = document.getElementById("mktBody");
+    if (mktEl && !mktEl._tinyMCEInitialized) {
+      tinymce.init({
+        selector: "#mktBody",
+        height: 400,
+        menubar: "edit insert view format table tools",
+        branding: false,
+        promotion: false,
+        license_key: "gpl",
+        plugins: "lists link image table autoresize codesample",
+        toolbar: "undo redo | formatselect | bold italic forecolor backcolor | bullist numlist | link image | table | codesample | removeformat",
+        statusbar: false,
+        skin: "oxide-dark",
+        content_css: "dark",
+        content_style: `
+          body {
+            background: #050914 !important;
+            color: #ffffff !important;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+            font-size: 14px;
+            line-height: 1.6;
+          }
+          a { color: #ffeaa6 !important; }
+          table { border-collapse: collapse; width: 100%; }
+          table td, table th { border: 1px solid rgba(255,255,255,.2); padding: 8px; }
+          code, pre { background: rgba(255,234,166,.1); color: #ffeaa6; padding: 2px 6px; border-radius: 4px; }
+        `,
+        paste_data_images: true,
+        images_upload_handler: (blobInfo) => {
+          return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.readAsDataURL(blobInfo.blob());
+          });
+        },
+        setup: (editor) => {
+          mktEl._tinyMCEInitialized = true;
+        },
+      });
+    }
   }
+
+  // Initialize TinyMCE after a short delay to ensure DOM is ready
+  setTimeout(initTinyMCEEditors, 100);
 
   // Insert #quote button - only works when quote is NOT attached
   document.getElementById("btnInsertQuote")?.addEventListener("click", () => {
