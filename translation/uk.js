@@ -4177,10 +4177,18 @@ const uk = {
       farewellOptions: {
         none: "Без прощання",
         regards: "З повагою",
-        team: "З повагою\nКоманда Familiada",
+        regardsPl: "Вітаємо",
         bestRegards: "З найкращими побажаннями",
         kindRegards: "Щиро",
         custom: "Власне...",
+      },
+      senderOptions: {
+        none: "Без відправника",
+        team: "Команда Familiada",
+        creator: "Творець Familiada",
+        admin: "Адмін",
+        support: "Технічна підтримка",
+        custom: "Власний...",
       },
     },
     marketplace: {

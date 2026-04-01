@@ -4644,10 +4644,18 @@ const pl = {
       farewellOptions: {
         none: "Brak pożegnania",
         regards: "Pozdrawiam",
-        team: "Pozdrawiam\nZespół Familiada",
+        regardsPl: "Pozdrawiamy",
         bestRegards: "Z poważaniem",
         kindRegards: "Łączę wyrazy szacunku",
         custom: "Własne...",
+      },
+      senderOptions: {
+        none: "Brak nadawcy",
+        team: "Zespół Familiada",
+        creator: "Twórca Familiada",
+        admin: "Admin",
+        support: "Wsparcie techniczne",
+        custom: "Własny...",
       },
     },
     marketplace: {

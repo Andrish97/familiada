@@ -1287,14 +1287,25 @@ function getFarewellOptions() {
   return [
     { value: "none", label: t("settings.mail.farewellOptions.none") || "Brak pożegnania" },
     { value: "regards", label: t("settings.mail.farewellOptions.regards") || "Pozdrawiam" },
-    { value: "team", label: t("settings.mail.farewellOptions.team") || "Pozdrawiamy,\nZespół Familiada" },
+    { value: "regardsPl", label: t("settings.mail.farewellOptions.regardsPl") || "Pozdrawiamy" },
     { value: "bestRegards", label: t("settings.mail.farewellOptions.bestRegards") || "Z poważaniem" },
     { value: "kindRegards", label: t("settings.mail.farewellOptions.kindRegards") || "Łączę wyrazy szacunku" },
     { value: "custom", label: t("settings.mail.farewellOptions.custom") || "Własne..." },
   ];
 }
 
-function buildEmailSignature({ greeting = "none", farewell = "none", greetingCustom = "", farewellCustom = "" } = {}) {
+function getSenderOptions() {
+  return [
+    { value: "none", label: t("settings.mail.senderOptions.none") || "Brak nadawcy" },
+    { value: "team", label: t("settings.mail.senderOptions.team") || "Zespół Familiada" },
+    { value: "creator", label: t("settings.mail.senderOptions.creator") || "Twórca Familiada" },
+    { value: "admin", label: t("settings.mail.senderOptions.admin") || "Admin" },
+    { value: "support", label: t("settings.mail.senderOptions.support") || "Wsparcie techniczne" },
+    { value: "custom", label: t("settings.mail.senderOptions.custom") || "Własny..." },
+  ];
+}
+
+function buildEmailSignature({ greeting = "none", farewell = "none", sender = "none", greetingCustom = "", farewellCustom = "", senderCustom = "" } = {}) {
   let greetingText = "";
   if (greeting === "custom" && greetingCustom) {
     greetingText = greetingCustom.trim();
@@ -1307,23 +1318,42 @@ function buildEmailSignature({ greeting = "none", farewell = "none", greetingCus
       dearCustomer: t("settings.mail.greetingOptions.dearCustomer") || "Szanowny Kliencie",
     }[greeting] || "";
   }
-  
+
   let farewellText = "";
   if (farewell === "custom" && farewellCustom) {
     farewellText = farewellCustom.trim();
   } else if (farewell !== "none" && farewell !== "custom") {
     farewellText = {
       regards: t("settings.mail.farewellOptions.regards") || "Pozdrawiam",
-      team: t("settings.mail.farewellOptions.team") || "Pozdrawiamy,\nZespół Familiada",
+      regardsPl: t("settings.mail.farewellOptions.regardsPl") || "Pozdrawiamy",
       bestRegards: t("settings.mail.farewellOptions.bestRegards") || "Z poważaniem",
       kindRegards: t("settings.mail.farewellOptions.kindRegards") || "Łączę wyrazy szacunku",
     }[farewell] || "";
   }
-  
+
+  let senderText = "";
+  if (sender === "custom" && senderCustom) {
+    senderText = senderCustom.trim();
+  } else if (sender !== "none" && sender !== "custom") {
+    senderText = {
+      team: t("settings.mail.senderOptions.team") || "Zespół Familiada",
+      creator: t("settings.mail.senderOptions.creator") || "Twórca Familiada",
+      admin: t("settings.mail.senderOptions.admin") || "Admin",
+      support: t("settings.mail.senderOptions.support") || "Wsparcie techniczne",
+    }[sender] || "";
+  }
+
+  // Combine farewell and sender
+  if (farewellText && senderText) {
+    farewellText = `${farewellText},\n${senderText}`;
+  } else if (farewellText) {
+    farewellText = `${farewellText},`;
+  }
+
   const parts = [];
   if (greetingText) parts.push(greetingText);
   if (farewellText) parts.push(farewellText);
-  
+
   return parts.length ? parts.join("\n\n") : "";
 }
 
@@ -2998,12 +3028,23 @@ function showCompose(defaults = {}) {
               <label class="field-label" style="font-size:12px">Pożegnanie</label>
               <div class="ui-select" id="composeFarewellSelect" style="width:100%">
                 <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
-                  <span class="ui-select-label">${t("settings.mail.farewellOptions.team") || "Pozdrawiamy,\\nZespół Familiada"}</span>
+                  <span class="ui-select-label">${t("settings.mail.farewellOptions.none") || "Brak pożegnania"}</span>
                   <span class="ui-select-caret" aria-hidden="true">▾</span>
                 </button>
                 <div class="ui-select-menu" role="listbox"></div>
               </div>
               <textarea class="inp" id="composeFarewellCustom" rows="2" placeholder="Wpisz własne pożegnanie" style="margin-top:6px;display:none;width:100%;box-sizing:border-box;resize:vertical"></textarea>
+            </div>
+            <div class="field">
+              <label class="field-label" style="font-size:12px">Nadawca</label>
+              <div class="ui-select" id="composeSenderSelect" style="width:100%">
+                <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
+                  <span class="ui-select-label">${t("settings.mail.senderOptions.none") || "Brak nadawcy"}</span>
+                  <span class="ui-select-caret" aria-hidden="true">▾</span>
+                </button>
+                <div class="ui-select-menu" role="listbox"></div>
+              </div>
+              <input class="inp" id="composeSenderCustom" type="text" placeholder="Wpisz własnego nadawcę" style="margin-top:6px;display:none;width:100%;box-sizing:border-box">
             </div>
           </div>
 
@@ -3146,8 +3187,8 @@ function showCompose(defaults = {}) {
   // Initialize farewell select
   const composeFarewellSelect = initUiSelect(document.getElementById("composeFarewellSelect"), {
     options: getFarewellOptions(),
-    value: defaults.farewellValue || "team",
-    placeholder: "Pozdrawiam",
+    value: defaults.farewellValue || "none",
+    placeholder: "Brak pożegnania",
     onChange: (val) => {
       const customInput = document.getElementById("composeFarewellCustom");
       if (customInput) {
@@ -3156,7 +3197,21 @@ function showCompose(defaults = {}) {
       }
     },
   });
-  
+
+  // Initialize sender select
+  const composeSenderSelect = initUiSelect(document.getElementById("composeSenderSelect"), {
+    options: getSenderOptions(),
+    value: defaults.senderValue || "team",
+    placeholder: "Zespół Familiada",
+    onChange: (val) => {
+      const customInput = document.getElementById("composeSenderCustom");
+      if (customInput) {
+        customInput.style.display = (val === "custom") ? "" : "none";
+        if (val === "custom") customInput.focus();
+      }
+    },
+  });
+
   // Set custom values if provided
   if (defaults.greetingCustom) {
     const customInput = document.getElementById("composeGreetingCustom");
@@ -3172,11 +3227,18 @@ function showCompose(defaults = {}) {
       customInput.style.display = "";
     }
   }
-  
-  document.getElementById("btnComposeSend")?.addEventListener("click", () => sendComposeWithSignature(composeGreetingSelect, composeFarewellSelect));
+  if (defaults.senderCustom) {
+    const customInput = document.getElementById("composeSenderCustom");
+    if (customInput && defaults.senderValue === "custom") {
+      customInput.value = defaults.senderCustom;
+      customInput.style.display = "";
+    }
+  }
+
+  document.getElementById("btnComposeSend")?.addEventListener("click", () => sendComposeWithSignature(composeGreetingSelect, composeFarewellSelect, composeSenderSelect));
 
   document.getElementById("btnComposePreview")?.addEventListener("click", () => {
-    showComposePreview(composeGreetingSelect, composeFarewellSelect);
+    showComposePreview(composeGreetingSelect, composeFarewellSelect, composeSenderSelect);
   });
 
   document.getElementById("btnComposeClose")?.addEventListener("click", async () => {
@@ -3275,7 +3337,7 @@ function closeCompose() {
   _composePrevIsReport = false;
 }
 
-async function sendComposeWithSignature(greetingSelect, farewellSelect) {
+async function sendComposeWithSignature(greetingSelect, farewellSelect, senderSelect) {
   const subject = (document.getElementById("composeSubjectInput")?.value || "").trim();
   const editor = tinymce.get("composeMessageArea");
   if (!editor) {
@@ -3295,15 +3357,19 @@ async function sendComposeWithSignature(greetingSelect, farewellSelect) {
 
   // Build signature from compose window selections
   const greetingValue = greetingSelect?.getValue() || "none";
-  const farewellValue = farewellSelect?.getValue() || "team";
+  const farewellValue = farewellSelect?.getValue() || "none";
+  const senderValue = senderSelect?.getValue() || "team";
   const greetingCustom = (document.getElementById("composeGreetingCustom")?.value || "").trim();
   const farewellCustom = (document.getElementById("composeFarewellCustom")?.value || "").trim();
+  const senderCustom = (document.getElementById("composeSenderCustom")?.value || "").trim();
 
   const signatureText = buildEmailSignature({
     greeting: greetingValue,
     farewell: farewellValue,
+    sender: senderValue,
     greetingCustom,
     farewellCustom,
+    senderCustom,
   });
 
   // Build HTML email body with Familiada wrapper (dark theme)
@@ -3396,7 +3462,7 @@ async function sendComposeWithSignature(greetingSelect, farewellSelect) {
   }
 }
 
-function showComposePreview(greetingSelect, farewellSelect) {
+function showComposePreview(greetingSelect, farewellSelect, senderSelect) {
   const subject = (document.getElementById("composeSubjectInput")?.value || "").trim();
   const editor = tinymce.get("composeMessageArea");
   if (!editor) {
@@ -3405,18 +3471,22 @@ function showComposePreview(greetingSelect, farewellSelect) {
   }
   const body = editor.getContent();
   const quote = (document.getElementById("composeQuoteBody")?.value || "").trim() || null;
-  
+
   // Build greeting and farewell separately
   const greetingValue = greetingSelect?.getValue() || "none";
-  const farewellValue = farewellSelect?.getValue() || "team";
+  const farewellValue = farewellSelect?.getValue() || "none";
+  const senderValue = senderSelect?.getValue() || "team";
   const greetingCustom = (document.getElementById("composeGreetingCustom")?.value || "").trim();
   const farewellCustom = (document.getElementById("composeFarewellCustom")?.value || "").trim();
+  const senderCustom = (document.getElementById("composeSenderCustom")?.value || "").trim();
 
   const greetingText = buildEmailSignature({
     greeting: greetingValue,
     farewell: "none",
+    sender: "none",
     greetingCustom,
     farewellCustom: "",
+    senderCustom: "",
   });
   
   // Add comma after greeting if present
@@ -3425,8 +3495,10 @@ function showComposePreview(greetingSelect, farewellSelect) {
   const farewellText = buildEmailSignature({
     greeting: "none",
     farewell: farewellValue,
+    sender: senderValue,
     greetingCustom: "",
     farewellCustom,
+    senderCustom,
   });
 
   // body from TinyMCE is already HTML (<p>, <strong>, etc.) - don't replace \n with <br>
