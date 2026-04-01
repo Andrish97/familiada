@@ -2968,6 +2968,7 @@ function showCompose(defaults = {}) {
 
   // Body without signature - signature is added on send/preview
   const bodyText = defaults.body || "";
+  const quotePosition = els.mailQuotePosition?.value || "before";
 
   conv.innerHTML = `
     <div class="mail-compose-pane">
@@ -3025,13 +3026,6 @@ function showCompose(defaults = {}) {
 
           ${hasQuote ? `
           <div class="field" style="margin-bottom:12px">
-            <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer">
-              <input type="checkbox" id="composeQuoteToggle" checked style="accent-color:#ffeaa6">
-              <span>Dołącz cytat z oryginalnej wiadomości</span>
-            </label>
-          </div>
-
-          <div class="field" style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.1)">
             <label class="field-label" style="font-size:12px;margin-bottom:8px;display:block">Pozycja cytatu:</label>
             <div class="quote-position-row" style="display:flex;gap:20px;flex-wrap:wrap">
               <label style="display:flex;align-items:center;gap:8px;cursor:pointer;white-space:nowrap">
@@ -3122,16 +3116,10 @@ function showCompose(defaults = {}) {
           },
           setup: (editor) => {
             editor.on("change", () => {
-              const quoteToggle = document.getElementById("composeQuoteToggle");
-              if (quoteToggle && !quoteToggle.checked) {
-                const content = editor.getContent();
-                if (content.includes("#quote")) {
-                  quoteToggle.checked = true;
-                  const quoteBlock = document.getElementById("composeQuoteBlock");
-                  const positionSection = document.querySelector('.field:has([name="composeQuotePosition"])');
-                  if (quoteBlock) quoteBlock.style.display = "";
-                  if (positionSection) positionSection.style.display = "";
-                }
+              const content = editor.getContent();
+              if (content.includes("#quote")) {
+                const quoteBlock = document.getElementById("composeQuoteBlock");
+                if (quoteBlock) quoteBlock.style.display = "";
               }
             });
             composeEl._tinyMCEInitialized = true;
@@ -3192,22 +3180,35 @@ function showCompose(defaults = {}) {
     showComposePreview(composeGreetingSelect, composeFarewellSelect, currentQuotePosition);
   });
 
-  // Quote toggle - show/hide quote block AND position selector
-  document.getElementById("composeQuoteToggle")?.addEventListener("change", (e) => {
-    const quoteBlock = document.getElementById("composeQuoteBlock");
-    const positionSection = document.querySelector('.field:has([name="composeQuotePosition"])');
-    const quoteBtn = document.getElementById("btnInsertQuote");
-    
-    if (quoteBlock) {
-      quoteBlock.style.display = e.target.checked ? "" : "none";
-    }
-    if (positionSection) {
-      positionSection.style.display = e.target.checked ? "" : "none";
-    }
-    // Hide #quote button when quote is attached
-    if (quoteBtn) {
-      quoteBtn.style.display = e.target.checked ? "none" : "";
-    }
+  // Quote position change - rebuild compose with new position
+  document.querySelectorAll('input[name="composeQuotePosition"]').forEach(radio => {
+    radio.addEventListener("change", (e) => {
+      const newQuotePosition = e.target.value;
+      const reportId = document.getElementById("composeReportId")?.value;
+      const quote = document.getElementById("composeQuoteBody")?.value;
+      const subject = document.getElementById("composeSubjectInput")?.value;
+      const body = document.getElementById("composeMessageArea")?.value;
+      const greetingValue = composeGreetingSelect?.getValue();
+      const farewellValue = composeFarewellSelect?.getValue();
+      const greetingCustom = document.getElementById("composeGreetingCustom")?.value;
+      const farewellCustom = document.getElementById("composeFarewellCustom")?.value;
+      
+      const currentState = {
+        subject: subject || "",
+        body: body || "",
+        quote: quote || "",
+        report_id: reportId || undefined,
+        greetingValue,
+        farewellValue,
+        greetingCustom,
+        farewellCustom,
+      };
+      
+      showCompose(currentState);
+      
+      const newRadio = document.querySelector(`input[name="composeQuotePosition"][value="${newQuotePosition}"]`);
+      if (newRadio) newRadio.checked = true;
+    });
   });
 
   document.getElementById("btnComposeClose")?.addEventListener("click", async () => {
@@ -3300,19 +3301,16 @@ function closeCompose() {
 
 async function sendComposeWithSignature(greetingSelect, farewellSelect) {
   const subject = (document.getElementById("composeSubjectInput")?.value || "").trim();
-  // Get content from TinyMCE - ALWAYS use TinyMCE, no fallback
   const editor = tinymce.get("composeMessageArea");
   if (!editor) {
-    showToast("Edytor nie jest gotowy. Spróbuj ponownie.", "error");
+    showToast("Edytor nie jest gotowy.", "error");
     return;
   }
   let body = editor.getContent();
   const reportId = (document.getElementById("composeReportId")?.value || "").trim() || null;
   const toEmail = (document.getElementById("composeToEmail")?.value || "").trim();
   const status = document.getElementById("composeSendStatus");
-  const quoteToggle = document.getElementById("composeQuoteToggle");
-  const quoteIncluded = !quoteToggle || quoteToggle.checked;
-  const quote = quoteIncluded ? ((document.getElementById("composeQuoteBody")?.value || "").trim() || null) : null;
+  const quote = (document.getElementById("composeQuoteBody")?.value || "").trim() || null;
 
   if (!subject) { showToast("Podaj temat wiadomości.", "error"); return; }
   if (!body) { showToast("Podaj treść wiadomości.", "error"); return; }
@@ -3398,16 +3396,13 @@ async function sendComposeWithSignature(greetingSelect, farewellSelect) {
 
 function showComposePreview(greetingSelect, farewellSelect, quotePosition) {
   const subject = (document.getElementById("composeSubjectInput")?.value || "").trim();
-  // Get content from TinyMCE - ALWAYS use TinyMCE, no fallback
   const editor = tinymce.get("composeMessageArea");
   if (!editor) {
     showToast("Edytor nie jest gotowy.", "error");
     return;
   }
   const body = editor.getContent();
-  const quoteToggle = document.getElementById("composeQuoteToggle");
-  const quoteIncluded = !quoteToggle || quoteToggle.checked;
-  const quote = quoteIncluded ? ((document.getElementById("composeQuoteBody")?.value || "").trim() || null) : null;
+  const quote = (document.getElementById("composeQuoteBody")?.value || "").trim() || null;
   
   // Build greeting and farewell separately
   const greetingValue = greetingSelect?.getValue() || "none";
@@ -5012,16 +5007,8 @@ function wireEvents() {
   // Initialize TinyMCE after a short delay to ensure DOM is ready
   setTimeout(initTinyMCEEditors, 100);
 
-  // Insert #quote button - only works when quote is NOT attached
+  // Insert #quote button
   document.getElementById("btnInsertQuote")?.addEventListener("click", () => {
-    const quoteToggle = document.getElementById("composeQuoteToggle");
-    const isQuoteAttached = quoteToggle && quoteToggle.checked;
-    
-    if (isQuoteAttached) {
-      showToast("Gdy cytat jest dołączony, użyj przełącznika pozycji cytatu na dole", "error");
-      return;
-    }
-    
     const editor = tinymce.get("composeMessageArea");
     if (editor) {
       editor.insertContent("#quote");
