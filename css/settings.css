@@ -1743,10 +1743,27 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   background: #1a1a2e !important;
   border-radius: 8px;
   padding: 20px;
+  position: relative;
 }
 .compose-preview-wrapper iframe {
   border-radius: 8px;
   display: block;
+}
+.compose-preview-wrapper .preview-close-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  color: rgba(255,255,255,.5);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 4px;
+  transition: color .15s;
+}
+.compose-preview-wrapper .preview-close-btn:hover {
+  color: rgba(255,255,255,.9);
 }
 
 /* Move section */

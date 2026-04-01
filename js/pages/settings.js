@@ -3294,13 +3294,28 @@ function showComposePreview(greetingSelect, farewellSelect, quotePosition) {
   // Create wrapper with dark background (matches UI theme)
   const wrapper = document.createElement("div");
   wrapper.className = "compose-preview-wrapper";
+  wrapper.style.cssText = "background:#1a1a2e;border-radius:8px;padding:20px;position:relative;";
+  
+  // Add close button (X) only
+  const closeBtn = document.createElement("button");
+  closeBtn.type = "button";
+  closeBtn.textContent = "✕";
+  closeBtn.style.cssText = "position:absolute;top:10px;right:10px;background:none;border:none;color:rgba(255,255,255,.5);font-size:20px;cursor:pointer;padding:5px;border-radius:4px;";
+  closeBtn.onmouseover = () => closeBtn.style.color = "rgba(255,255,255,.9)";
+  closeBtn.onmouseout = () => closeBtn.style.color = "rgba(255,255,255,.5)";
+  closeBtn.onclick = () => {
+    const modal = wrapper.closest(".overlay");
+    if (modal) modal.remove();
+  };
+  
+  wrapper.appendChild(closeBtn);
   wrapper.appendChild(frame);
   
   void confirmModal({
     title: t("settings.reports.compose.previewTitle") || "Podgląd wiadomości",
     text: "",
     body: wrapper,
-    okText: "OK",
+    okText: "Zamknij",
     showCancel: false,
   });
 }
