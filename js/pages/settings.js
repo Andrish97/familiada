@@ -4304,7 +4304,9 @@ async function mktRefreshPreview() {
   const frame = document.getElementById("mktPreviewFrame");
   if (!frame) return;
   const subject = (document.getElementById("mktSubject")?.value || "").trim();
-  const body    = (document.getElementById("mktBody")?.value || "").trim();
+  // Get content from TinyMCE if available, otherwise from textarea
+  const mktEditor = tinymce.get("mktBody");
+  const body = mktEditor ? mktEditor.getContent() : (document.getElementById("mktBody")?.value || "").trim();
   try {
     const res = await adminFetch("/marketing/preview", {
       method: "POST",
@@ -4813,8 +4815,15 @@ function wireEvents() {
   await initToolsSelect();
   wireEvents();
 
-  // Initialize TinyMCE for compose message area
-  if (typeof tinymce !== "undefined") {
+  // Wait for TinyMCE to load then initialize
+  function initTinyMCEEditors() {
+    if (typeof tinymce === "undefined") {
+      console.warn("TinyMCE not loaded yet, retrying...");
+      setTimeout(initTinyMCEEditors, 500);
+      return;
+    }
+
+    // Initialize TinyMCE for compose message area
     tinymce.init({
       selector: "#composeMessageArea",
       height: 400,
@@ -4863,27 +4872,8 @@ function wireEvents() {
         });
       },
     });
-  }
 
-  // Insert #quote button
-  document.getElementById("btnInsertQuote")?.addEventListener("click", () => {
-    const editor = tinymce.get("composeMessageArea");
-    if (editor) {
-      editor.insertContent("#quote");
-    } else {
-      const textarea = document.getElementById("composeMessageArea");
-      if (textarea) {
-        const start = textarea.selectionStart;
-        const end = textarea.selectionEnd;
-        const value = textarea.value;
-        textarea.value = value.substring(0, start) + "#quote" + value.substring(end);
-        textarea.selectionStart = textarea.selectionEnd = start + 6;
-      }
-    }
-  });
-
-  // Initialize TinyMCE for marketing message area
-  if (typeof tinymce !== "undefined") {
+    // Initialize TinyMCE for marketing message area
     tinymce.init({
       selector: "#mktBody",
       height: 400,
@@ -4918,6 +4908,26 @@ function wireEvents() {
       },
     });
   }
+
+  // Start TinyMCE initialization
+  initTinyMCEEditors();
+
+  // Insert #quote button
+  document.getElementById("btnInsertQuote")?.addEventListener("click", () => {
+    const editor = tinymce.get("composeMessageArea");
+    if (editor) {
+      editor.insertContent("#quote");
+    } else {
+      const textarea = document.getElementById("composeMessageArea");
+      if (textarea) {
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const value = textarea.value;
+        textarea.value = value.substring(0, start) + "#quote" + value.substring(end);
+        textarea.selectionStart = textarea.selectionEnd = start + 6;
+      }
+    }
+  });
   showAuth("settings.login.checking");
 
   const ok = await checkMe();
