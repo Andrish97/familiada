@@ -2955,14 +2955,13 @@ function showCompose(defaults = {}) {
   document.querySelectorAll(".mail-thread-item").forEach(el => el.classList.remove("active"));
 
   const hasQuote = !!defaults.quote;
-  const quotePosition = els.mailQuotePosition?.value || "before";
-  
+
   // Build quote block
   let quoteBlockHtml = "";
   if (hasQuote) {
     const dateStr = defaults.quoteDate ? new Date(defaults.quoteDate).toLocaleString("pl-PL") : "";
     const fromStr = defaults.quoteFrom ? `${escSetting(defaults.quoteFrom)}, ${dateStr}` : dateStr;
-    quoteBlockHtml = `<div id="composeQuoteBlock" style="margin:15px 0;padding:10px 14px;border-left:3px solid rgba(255,234,166,.35);background:rgba(0,0,0,.2);border-radius:0 8px 8px 0;font-size:12px;opacity:.65;white-space:pre-wrap;word-break:break-word">
+    quoteBlockHtml = `<div id="composeQuoteBlock" style="display:none;margin:15px 0;padding:10px 14px;border-left:3px solid rgba(255,234,166,.35);background:rgba(0,0,0,.2);border-radius:0 8px 8px 0;font-size:12px;opacity:.65;white-space:pre-wrap;word-break:break-word">
       <div style="font-size:11px;opacity:.7;margin-bottom:6px">${fromStr}</div>${escSetting(defaults.quote)}</div>`;
   }
 
@@ -3023,33 +3022,13 @@ function showCompose(defaults = {}) {
             </select>
           </div>
 
-          ${hasQuote ? `
-          <div class="field" style="margin-bottom:12px">
-            <label class="field-label" style="font-size:12px;margin-bottom:8px;display:block">Pozycja cytatu:</label>
-            <div class="quote-position-row" style="display:flex;gap:20px;flex-wrap:wrap">
-              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;white-space:nowrap">
-                <input type="radio" name="composeQuotePosition" value="before" ${quotePosition === "before" ? "checked" : ""} style="accent-color:#ffeaa6">
-                <span>Przed treścią</span>
-              </label>
-              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;white-space:nowrap">
-                <input type="radio" name="composeQuotePosition" value="after" ${quotePosition === "after" ? "checked" : ""} style="accent-color:#ffeaa6">
-                <span>Po treści</span>
-              </label>
-            </div>
-          </div>
-          ` : ""}
-
           <div class="field" style="margin-bottom:12px;min-height:0;display:flex;flex-direction:column">
-            ${hasQuote && quotePosition === "before" ? quoteBlockHtml : ""}
             <label class="field-label" style="margin-bottom:6px;display:block">
               ${t("settings.reports.compose.message") || "Treść"}
-              ${hasQuote ? `
-                <span style="opacity:.5;font-size:11px;margin-left:8px" data-i18n="settings.reports.compose.quoteHint">Użyj #quote aby wstawić cytat w tym miejscu</span>
-                <button type="button" class="btn sm" id="btnInsertQuote" style="font-size:11px;padding:4px 8px;margin-left:8px" title="Wstaw #quote w miejscu kursora">#quote</button>
-              ` : ""}
+              <span style="opacity:.5;font-size:11px;margin-left:8px" data-i18n="settings.reports.compose.quoteHint">Użyj #quote aby wstawić cytat</span>
+              <button type="button" class="btn sm" id="btnInsertQuote" style="font-size:11px;padding:4px 8px;margin-left:8px" title="Wstaw #quote w miejscu kursora">#quote</button>
             </label>
             <textarea class="inp" id="composeMessageArea" rows="10" style="width:100%;box-sizing:border-box;resize:none;flex:1;min-height:120px;overflow-y:auto">${escSetting(bodyText)}</textarea>
-            ${hasQuote && quotePosition === "after" ? quoteBlockHtml : ""}
           </div>
 
           <div class="field attachments-section" style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.1)">
@@ -3185,39 +3164,7 @@ function showCompose(defaults = {}) {
   document.getElementById("btnComposeSend")?.addEventListener("click", () => sendComposeWithSignature(composeGreetingSelect, composeFarewellSelect));
 
   document.getElementById("btnComposePreview")?.addEventListener("click", () => {
-    const currentQuotePosition = document.querySelector('input[name="composeQuotePosition"]:checked')?.value || quotePosition;
-    showComposePreview(composeGreetingSelect, composeFarewellSelect, currentQuotePosition);
-  });
-
-  // Quote position change - rebuild compose with new position
-  document.querySelectorAll('input[name="composeQuotePosition"]').forEach(radio => {
-    radio.addEventListener("change", (e) => {
-      const newQuotePosition = e.target.value;
-      const reportId = document.getElementById("composeReportId")?.value;
-      const quote = document.getElementById("composeQuoteBody")?.value;
-      const subject = document.getElementById("composeSubjectInput")?.value;
-      const body = document.getElementById("composeMessageArea")?.value;
-      const greetingValue = composeGreetingSelect?.getValue();
-      const farewellValue = composeFarewellSelect?.getValue();
-      const greetingCustom = document.getElementById("composeGreetingCustom")?.value;
-      const farewellCustom = document.getElementById("composeFarewellCustom")?.value;
-      
-      const currentState = {
-        subject: subject || "",
-        body: body || "",
-        quote: quote || "",
-        report_id: reportId || undefined,
-        greetingValue,
-        farewellValue,
-        greetingCustom,
-        farewellCustom,
-      };
-      
-      showCompose(currentState);
-      
-      const newRadio = document.querySelector(`input[name="composeQuotePosition"][value="${newQuotePosition}"]`);
-      if (newRadio) newRadio.checked = true;
-    });
+    showComposePreview(composeGreetingSelect, composeFarewellSelect);
   });
 
   document.getElementById("btnComposeClose")?.addEventListener("click", async () => {
@@ -3404,7 +3351,7 @@ async function sendComposeWithSignature(greetingSelect, farewellSelect) {
   }
 }
 
-function showComposePreview(greetingSelect, farewellSelect, quotePosition) {
+function showComposePreview(greetingSelect, farewellSelect) {
   const subject = (document.getElementById("composeSubjectInput")?.value || "").trim();
   const editor = tinymce.get("composeMessageArea");
   if (!editor) {
@@ -4393,7 +4340,7 @@ async function mktRefreshPreview() {
   const body = mktEditor.getContent();
   
   // Generate preview HTML client-side (don't rely on server rendering)
-  const tpl = mktTemplates.find(t => t.id === mktActiveTpl);
+  const tpl = MKT_TEMPLATES[mktActiveTpl] || MKT_TEMPLATES.custom;
   const tplSubject = tpl?.subject || "";
   const tplBody = tpl?.body || "";
   
@@ -5033,9 +4980,6 @@ function wireEvents() {
       });
     }
   }
-
-  // Initialize TinyMCE after a short delay to ensure DOM is ready
-  setTimeout(initTinyMCEEditors, 100);
 
   // Insert #quote button - prevent focus loss
   document.getElementById("btnInsertQuote")?.addEventListener("click", (e) => {
