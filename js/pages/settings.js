@@ -4893,7 +4893,7 @@ function wireEvents() {
       content_css: "dark",
       content_style: `
         body {
-          background: #1a1a2e !important;
+          background: #050914 !important;
           color: #ffffff !important;
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
           font-size: 14px;
