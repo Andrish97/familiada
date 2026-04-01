@@ -19,6 +19,7 @@ function buildModal({
 
   const overlay = document.createElement("div");
   overlay.className = "overlay";
+  overlay.style.background = "rgba(0,0,0,.75)";
 
   const modal = document.createElement("div");
   modal.className = "modal uni-modal";

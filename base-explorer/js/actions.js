@@ -31,7 +31,7 @@ import { openTagsModal } from "./tags-modal.js?v=db4ffb52";
 import { initExportModal } from "./export-modal.js?v=0a07a6ec";
 import { initQuestionModal } from "./question-modal.js?v=6f6145c3";
 import { sb } from "../../js/core/supabase.js?v=ece3a0c0";
-import { alertModal, confirmModal } from "../../js/core/modal.js?v=ac8dd44a";
+import { alertModal, confirmModal } from "../../js/core/modal.js?v=0c9fe6fd";
 import { t } from "../../translation/translation.js?v=435d2210";
 import { addLongPress, addDoubleTap } from "./mobile.js?v=8d87b81b";
 

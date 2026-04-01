@@ -1,5 +1,5 @@
 // /familiada/js/pages/controlapp.js
-import { confirmModal } from "../../js/core/modal.js?v=ac8dd44a";
+import { confirmModal } from "../../js/core/modal.js?v=0c9fe6fd";
 import { getUiLang, initI18n, t } from "../../translation/translation.js?v=435d2210";
 
 // ================== KOMUNIKATY ==================

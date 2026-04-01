@@ -2,7 +2,7 @@
 // Init strony menadżera bazy (warstwa 2)
 
 import { requireAuth } from "../../js/core/auth.js?v=4721e86e";
-import { alertModal } from "../../js/core/modal.js?v=ac8dd44a";
+import { alertModal } from "../../js/core/modal.js?v=0c9fe6fd";
 import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js?v=435d2210";
 import { initTopbarAccountDropdown } from "../../js/core/topbar-controller.js?v=78fbf2a5";
 import { createState, setRole } from "./state.js?v=c58d730d";

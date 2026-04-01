@@ -1,7 +1,7 @@
 // js/pages/editor.js
 import { sb } from "../core/supabase.js?v=ece3a0c0";
 import { requireAuth } from "../core/auth.js?v=4721e86e";
-import { alertModal, confirmModal } from "../core/modal.js?v=ac8dd44a";
+import { alertModal, confirmModal } from "../core/modal.js?v=0c9fe6fd";
 import { parseQaText, clip as clipN } from "../core/text-import.js?v=a4b6991d";
 import { canEnterEdit, RULES as GV_RULES, TYPES } from "../core/game-validate.js?v=df97f708";
 import { initI18n, t } from "../../translation/translation.js?v=435d2210";

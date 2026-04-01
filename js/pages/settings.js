@@ -15,7 +15,7 @@ Settings panel (admin)
 import { initI18n, t } from "../../translation/translation.js?v=435d2210";
 import { initUiSelect } from "../core/ui-select.js?v=73a51737";
 import { guardDesktopOnly } from "../core/device-guard.js?v=e7f7c5c6";
-import { confirmModal } from "../core/modal.js?v=ac8dd44a";
+import { confirmModal } from "../core/modal.js?v=0c9fe6fd";
 import { sb } from "../core/supabase.js?v=ece3a0c0";
 
 const API_BASE = "/_admin_api";
@@ -3020,16 +3020,7 @@ function showCompose(defaults = {}) {
               <span>Dołącz cytat z oryginalnej wiadomości</span>
             </label>
           </div>
-          ` : ""}
 
-          <div class="field" style="margin-bottom:12px;min-height:0;display:flex;flex-direction:column">
-            <label class="field-label">${t("settings.reports.compose.message") || "Treść wiadomości"}</label>
-            ${hasQuote && quotePosition === "before" ? quoteBlockHtml : ""}
-            <textarea class="inp" id="composeMessageArea" rows="10" style="width:100%;box-sizing:border-box;resize:none;flex:1;min-height:120px;overflow-y:auto">${escSetting(bodyText)}</textarea>
-            ${hasQuote && quotePosition === "after" ? quoteBlockHtml : ""}
-          </div>
-
-          ${hasQuote ? `
           <div class="field" style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.1)">
             <label class="field-label" style="font-size:12px;margin-bottom:8px;display:block">Pozycja cytatu:</label>
             <div class="quote-position-row" style="display:flex;gap:20px;flex-wrap:wrap">
@@ -3044,6 +3035,13 @@ function showCompose(defaults = {}) {
             </div>
           </div>
           ` : ""}
+
+          <div class="field" style="margin-bottom:12px;min-height:0;display:flex;flex-direction:column">
+            <label class="field-label">${t("settings.reports.compose.message") || "Treść wiadomości"}</label>
+            ${hasQuote && quotePosition === "before" ? quoteBlockHtml : ""}
+            <textarea class="inp" id="composeMessageArea" rows="10" style="width:100%;box-sizing:border-box;resize:none;flex:1;min-height:120px;overflow-y:auto">${escSetting(bodyText)}</textarea>
+            ${hasQuote && quotePosition === "after" ? quoteBlockHtml : ""}
+          </div>
 
           <div class="field attachments-section" style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.1)">
             <label class="field-label attachments-label" style="margin-bottom:8px;display:block">Załączniki <span style="opacity:.4;font-size:10px">(maks. 10 MB)</span></label>
@@ -3119,11 +3117,15 @@ function showCompose(defaults = {}) {
     showComposePreview(composeGreetingSelect, composeFarewellSelect, currentQuotePosition);
   });
 
-  // Quote toggle - show/hide quote block
+  // Quote toggle - show/hide quote block AND position selector
   document.getElementById("composeQuoteToggle")?.addEventListener("change", (e) => {
     const quoteBlock = document.getElementById("composeQuoteBlock");
+    const positionSection = document.querySelector('.field:has([name="composeQuotePosition"])');
     if (quoteBlock) {
       quoteBlock.style.display = e.target.checked ? "" : "none";
+    }
+    if (positionSection) {
+      positionSection.style.display = e.target.checked ? "" : "none";
     }
   });
 
@@ -3217,10 +3219,13 @@ function closeCompose() {
 
 async function sendComposeWithSignature(greetingSelect, farewellSelect) {
   const subject = (document.getElementById("composeSubjectInput")?.value || "").trim();
-  const body = (document.getElementById("composeMessageArea")?.value || "").trim();
+  let body = (document.getElementById("composeMessageArea")?.value || "").trim();
   const reportId = (document.getElementById("composeReportId")?.value || "").trim() || null;
   const toEmail = (document.getElementById("composeToEmail")?.value || "").trim();
   const status = document.getElementById("composeSendStatus");
+  const quoteToggle = document.getElementById("composeQuoteToggle");
+  const quoteIncluded = !quoteToggle || quoteToggle.checked;
+  const quote = quoteIncluded ? ((document.getElementById("composeQuoteBody")?.value || "").trim() || null) : null;
 
   if (!subject) { showToast("Podaj temat wiadomości.", "error"); return; }
   if (!body) { showToast("Podaj treść wiadomości.", "error"); return; }
@@ -3232,15 +3237,34 @@ async function sendComposeWithSignature(greetingSelect, farewellSelect) {
   const farewellValue = farewellSelect?.getValue() || "team";
   const greetingCustom = (document.getElementById("composeGreetingCustom")?.value || "").trim();
   const farewellCustom = (document.getElementById("composeFarewellCustom")?.value || "").trim();
-  
+
   const signatureText = buildEmailSignature({
     greeting: greetingValue,
     farewell: farewellValue,
     greetingCustom,
     farewellCustom,
   });
+
+  // Build HTML email body (dark theme)
+  const greetingText = buildEmailSignature({ greeting: greetingValue, farewell: "none", greetingCustom, farewellCustom: "" });
+  const farewellText = buildEmailSignature({ greeting: "none", farewell: farewellValue, greetingCustom: "", farewellCustom });
   
-  const fullBody = signatureText ? `${body}\n\n${signatureText}` : body;
+  const quoteHtml = quote ? `<div style="margin:25px 0;padding:20px;background:rgba(255,255,255,.05);border-left:4px solid #ffeaa6;border-radius:4px;font-size:13px;line-height:1.6;color:#ccc;white-space:pre-wrap">${quote}</div>` : "";
+  
+  const htmlBody = `
+    <!DOCTYPE html>
+    <html>
+    <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head>
+    <body style="margin:0;padding:0;background:#050914;color:#ffffff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;line-height:1.6;">
+      <div style="max-width:600px;margin:0 auto;padding:20px;">
+        ${greetingText ? `<div style="margin-bottom:20px">${greetingText.replace(/\n/g, "<br>")}</div>` : ""}
+        <div style="line-height:1.6;color:#fff;margin-bottom:20px;white-space:pre-wrap">${body.replace(/\n/g, "<br>")}</div>
+        ${quoteHtml}
+        ${farewellText ? `<div style="margin-top:20px">${farewellText.replace(/\n/g, "<br>")}</div>` : ""}
+      </div>
+    </body>
+    </html>
+  `;
 
   // Upload attachments
   const fileInput = document.getElementById("composeAttachmentInput");
@@ -3267,7 +3291,7 @@ async function sendComposeWithSignature(greetingSelect, farewellSelect) {
       body: JSON.stringify({
         to_email: toEmail || undefined,
         subject,
-        body: fullBody,
+        body: htmlBody,
         quote: undefined,
         report_id: reportId || undefined,
         attachments: uploadedAttachments.length ? uploadedAttachments : undefined,

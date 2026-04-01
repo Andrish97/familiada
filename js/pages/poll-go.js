@@ -2,7 +2,7 @@
 import { sb } from "../core/supabase.js?v=ece3a0c0";
 import { getUser } from "../core/auth.js?v=4721e86e";
 import { initI18n, t } from "../../translation/translation.js?v=435d2210";
-import { alertModal } from "../core/modal.js?v=ac8dd44a";
+import { alertModal } from "../core/modal.js?v=0c9fe6fd";
 
 initI18n({ withSwitcher: true });
 

@@ -12,7 +12,7 @@ import {
   deleteTags,
   duplicateSelected,
 } from "./actions.js?v=d86c0392";
-import { alertModal } from "../../js/core/modal.js?v=ac8dd44a";
+import { alertModal } from "../../js/core/modal.js?v=0c9fe6fd";
 import { t } from "../../translation/translation.js?v=435d2210";
 
 

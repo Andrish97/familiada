@@ -1,7 +1,7 @@
 import { sb } from "../core/supabase.js?v=ece3a0c0";
 import { updateUserLanguage, validatePassword, niceAuthError, getPasswordRulesText, discardCurrentGuestAccount, initPasswordToggles } from "../core/auth.js?v=4721e86e";
 import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js?v=435d2210";
-import { confirmModal } from "../core/modal.js?v=ac8dd44a";
+import { confirmModal } from "../core/modal.js?v=0c9fe6fd";
 import { isGuestUser } from "../core/guest-mode.js?v=e499bece";
 import "../core/contact-modal.js?v=773b071f";
 
