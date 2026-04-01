@@ -2264,8 +2264,8 @@ function renderMessageDetail(msg, attachments = []) {
   bubble.addEventListener("dblclick", () => {
     const htmlSrc = msg.body_html || msg.body;
     const subject = msg.subject || "(brak tematu)";
-    
-    // Generate full HTML email for preview
+
+    // Generate full HTML email for preview (dark theme)
     const emailHtml = `
       <!DOCTYPE html>
       <html>
@@ -2273,11 +2273,11 @@ function renderMessageDetail(msg, attachments = []) {
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <style>
-          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; background: #fff; color: #222; }
-          .email-container { max-width: 600px; margin: 0 auto; }
-          .email-header { background: #f8f9fa; padding: 20px; border-bottom: 1px solid #e9ecef; }
-          .email-subject { font-size: 20px; font-weight: 700; color: #1a1a2e; margin: 0; }
-          .email-body { padding: 24px; background: #fff; line-height: 1.6; }
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; background: #050914; color: #ffffff; }
+          .email-container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .email-header { background: linear-gradient(135deg, #1a1a2e 0%, #2d2d44 100%); padding: 25px 20px; margin: -20px -20px 25px -20px; border-radius: 8px 8px 0 0; }
+          .email-subject { font-size: 22px; font-weight: 700; color: #fff; margin: 0; }
+          .email-body { padding: 24px; background: transparent; line-height: 1.6; }
         </style>
       </head>
       <body>
@@ -2292,17 +2292,37 @@ function renderMessageDetail(msg, attachments = []) {
       </body>
       </html>
     `;
-    
+
     const frame = document.createElement("iframe");
-    frame.style.cssText = "width:100%;height:500px;border:none;background:#fff;border-radius:8px;";
+    frame.style.cssText = "width:100%;height:500px;border:none;display:block;";
     frame.sandbox = "allow-scripts allow-popups";
     frame.srcdoc = emailHtml;
+
+    // Create wrapper with dark background
+    const wrapper = document.createElement("div");
+    wrapper.className = "compose-preview-wrapper";
+    wrapper.style.cssText = "background:#1a1a2e;border-radius:8px;padding:20px;position:relative;";
     
+    // Add close button (X)
+    const closeBtn = document.createElement("button");
+    closeBtn.type = "button";
+    closeBtn.textContent = "✕";
+    closeBtn.style.cssText = "position:absolute;top:10px;right:10px;background:none;border:none;color:rgba(255,255,255,.5);font-size:20px;cursor:pointer;padding:5px;border-radius:4px;";
+    closeBtn.onmouseover = () => closeBtn.style.color = "rgba(255,255,255,.9)";
+    closeBtn.onmouseout = () => closeBtn.style.color = "rgba(255,255,255,.5)";
+    closeBtn.onclick = () => {
+      const modal = wrapper.closest(".overlay");
+      if (modal) modal.remove();
+    };
+    
+    wrapper.appendChild(closeBtn);
+    wrapper.appendChild(frame);
+
     void confirmModal({
       title: `Podgląd wiadomości - ${new Date(msg.created_at).toLocaleString("pl-PL")}`,
       text: "",
-      body: frame,
-      okText: "OK",
+      body: wrapper,
+      okText: "Zamknij",
       showCancel: false,
     });
   });
@@ -2540,12 +2560,12 @@ function renderReportThread(report, messages, attsByMsg = {}) {
     }
     el.appendChild(bodyEl);
 
-    // Double-click to preview message (shows rendered HTML)
+    // Double-click to preview message (shows rendered HTML - dark theme)
     el.addEventListener("dblclick", () => {
       const htmlSrc = msg.body_html || msg.body;
       const subject = msg.subject || "(brak tematu)";
-      
-      // Generate full HTML email for preview
+
+      // Generate full HTML email for preview (dark theme)
       const emailHtml = `
         <!DOCTYPE html>
         <html>
@@ -2553,11 +2573,11 @@ function renderReportThread(report, messages, attsByMsg = {}) {
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1">
           <style>
-            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; background: #fff; color: #222; }
-            .email-container { max-width: 600px; margin: 0 auto; }
-            .email-header { background: #f8f9fa; padding: 20px; border-bottom: 1px solid #e9ecef; }
-            .email-subject { font-size: 20px; font-weight: 700; color: #1a1a2e; margin: 0; }
-            .email-body { padding: 24px; background: #fff; line-height: 1.6; }
+            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; background: #050914; color: #ffffff; }
+            .email-container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .email-header { background: linear-gradient(135deg, #1a1a2e 0%, #2d2d44 100%); padding: 25px 20px; margin: -20px -20px 25px -20px; border-radius: 8px 8px 0 0; }
+            .email-subject { font-size: 22px; font-weight: 700; color: #fff; margin: 0; }
+            .email-body { padding: 24px; background: transparent; line-height: 1.6; }
           </style>
         </head>
         <body>
@@ -2572,17 +2592,37 @@ function renderReportThread(report, messages, attsByMsg = {}) {
         </body>
         </html>
       `;
-      
+
       const frame = document.createElement("iframe");
-      frame.style.cssText = "width:100%;height:500px;border:none;background:#fff;border-radius:8px;";
+      frame.style.cssText = "width:100%;height:500px;border:none;display:block;";
       frame.sandbox = "allow-scripts allow-popups";
-      frame.srcdoc = htmlSrc ? emailHtml : emailHtml;
+      frame.srcdoc = emailHtml;
+
+      // Create wrapper with dark background
+      const wrapper = document.createElement("div");
+      wrapper.className = "compose-preview-wrapper";
+      wrapper.style.cssText = "background:#1a1a2e;border-radius:8px;padding:20px;position:relative;";
       
+      // Add close button (X)
+      const closeBtn = document.createElement("button");
+      closeBtn.type = "button";
+      closeBtn.textContent = "✕";
+      closeBtn.style.cssText = "position:absolute;top:10px;right:10px;background:none;border:none;color:rgba(255,255,255,.5);font-size:20px;cursor:pointer;padding:5px;border-radius:4px;";
+      closeBtn.onmouseover = () => closeBtn.style.color = "rgba(255,255,255,.9)";
+      closeBtn.onmouseout = () => closeBtn.style.color = "rgba(255,255,255,.5)";
+      closeBtn.onclick = () => {
+        const modal = wrapper.closest(".overlay");
+        if (modal) modal.remove();
+      };
+      
+      wrapper.appendChild(closeBtn);
+      wrapper.appendChild(frame);
+
       void confirmModal({
         title: `Podgląd wiadomości - ${new Date(msg.created_at).toLocaleString("pl-PL")}`,
         text: "",
-        body: frame,
-        okText: "OK",
+        body: wrapper,
+        okText: "Zamknij",
         showCancel: false,
       });
     });
@@ -3255,22 +3295,34 @@ function showComposePreview(greetingSelect, farewellSelect, quotePosition) {
   const greetingCustom = (document.getElementById("composeGreetingCustom")?.value || "").trim();
   const farewellCustom = (document.getElementById("composeFarewellCustom")?.value || "").trim();
 
-  const signatureText = buildEmailSignature({
+  // Build greeting and farewell separately
+  const greetingText = buildEmailSignature({
     greeting: greetingValue,
-    farewell: farewellValue,
+    farewell: "none",
     greetingCustom,
+    farewellCustom: "",
+  });
+  
+  const farewellText = buildEmailSignature({
+    greeting: "none",
+    farewell: farewellValue,
+    greetingCustom: "",
     farewellCustom,
   });
 
-  // Build full body with signature at the end
-  const fullBody = signatureText ? `${body}\n\n${signatureText}` : body;
-  
   // Convert newlines to <br> for HTML email
-  const bodyHtml = fullBody ? fullBody.replace(/\n/g, "<br>") : "(brak treści)";
-  const quoteHtml = quote ? `<div style="margin:25px 0;padding:20px;background:#f8f9fa;border-left:4px solid #ffeaa6;border-radius:4px;font-size:13px;line-height:1.6;color:#555">${quote.replace(/\n/g, "<br>")}</div>` : "";
-  const finalBody = quotePosition === "before" ? `${quoteHtml}<div style="line-height:1.6;color:#222">${bodyHtml}</div>` : `<div style="line-height:1.6;color:#222">${bodyHtml}</div>${quoteHtml}`;
+  const bodyHtml = body ? body.replace(/\n/g, "<br>") : "(brak treści)";
+  const quoteHtml = quote ? `<div class="email-quote">${quote.replace(/\n/g, "<br>")}</div>` : "";
   
-  // Generate full HTML email (exact same structure as system emails)
+  // Structure: Greeting → Body → Quote → Farewell
+  const finalBody = `
+    ${greetingText ? `<div style="margin-bottom:20px;line-height:1.6">${greetingText.replace(/\n/g, "<br>")}</div>` : ""}
+    <div style="line-height:1.6;color:#fff;margin-bottom:20px">${bodyHtml}</div>
+    ${quoteHtml}
+    ${farewellText ? `<div style="margin-top:20px;line-height:1.6">${farewellText.replace(/\n/g, "<br>")}</div>` : ""}
+  `;
+
+  // Generate full HTML email (dark theme like system emails)
   const emailHtml = `
     <!DOCTYPE html>
     <html>
@@ -3278,12 +3330,13 @@ function showComposePreview(greetingSelect, farewellSelect, quotePosition) {
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1">
       <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; background: #fff; color: #222; line-height: 1.6; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; background: #050914; color: #ffffff; line-height: 1.6; }
         .email-container { max-width: 600px; margin: 0 auto; padding: 20px; }
         .email-header { background: linear-gradient(135deg, #1a1a2e 0%, #2d2d44 100%); padding: 25px 20px; margin: -20px -20px 25px -20px; border-radius: 8px 8px 0 0; }
         .email-subject { font-size: 22px; font-weight: 700; color: #fff; margin: 0; }
         .email-body { padding: 0 5px; }
-        .email-footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #e9ecef; font-size: 12px; color: #888; }
+        .email-quote { margin: 25px 0; padding: 20px; background: rgba(255,255,255,.05); border-left: 4px solid #ffeaa6; border-radius: 4px; font-size: 13px; line-height: 1.6; color: #ccc; }
+        .email-footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,.1); font-size: 12px; color: #888; }
       </style>
     </head>
     <body>
