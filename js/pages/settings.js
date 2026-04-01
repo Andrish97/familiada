@@ -3055,14 +3055,17 @@ function showCompose(defaults = {}) {
     </div>`;
 
   // Initialize TinyMCE for composeMessageArea after HTML is inserted
-  setTimeout(() => {
+  // Wait for TinyMCE script AND element to be ready
+  const initComposeTinyMCE = () => {
     if (typeof tinymce === "undefined") {
-      console.warn("TinyMCE script not loaded yet");
+      console.warn("TinyMCE script not loaded yet, retrying...");
+      setTimeout(initComposeTinyMCE, 200);
       return;
     }
     const composeEl = document.getElementById("composeMessageArea");
     if (!composeEl) {
-      console.warn("composeMessageArea element not found");
+      console.warn("composeMessageArea element not found, retrying...");
+      setTimeout(initComposeTinyMCE, 200);
       return;
     }
     if (composeEl._tinyMCEInitialized) {
@@ -3104,6 +3107,9 @@ function showCompose(defaults = {}) {
         });
       },
       setup: (editor) => {
+        editor.on("init", () => {
+          console.log("TinyMCE init event fired");
+        });
         editor.on("change", () => {
           const content = editor.getContent();
           if (content.includes("#quote")) {
@@ -3115,7 +3121,10 @@ function showCompose(defaults = {}) {
         console.log("TinyMCE initialized successfully");
       },
     });
-  }, 300);
+  };
+  
+  // Start initialization
+  setTimeout(initComposeTinyMCE, 100);
 
   // Initialize greeting select
   const composeGreetingSelect = initUiSelect(document.getElementById("composeGreetingSelect"), {
@@ -3223,19 +3232,36 @@ function showCompose(defaults = {}) {
     });
   });
   
-  // Template select - insert template text into body
+  // Template select - insert template text into TinyMCE body
   document.getElementById("composeTemplateSelect")?.addEventListener("change", (e) => {
     const templateKey = e.target.value;
     const templateText = EMAIL_TEMPLATES[templateKey] || "";
-    const bodyEl = document.getElementById("composeMessageArea");
-    if (bodyEl && templateText) {
-      bodyEl.value = templateText;
+    const editor = tinymce.get("composeMessageArea");
+    if (editor && templateText) {
+      editor.setContent(templateText);
     }
   });
 
-  document.getElementById("composeQuoteToggle")?.addEventListener("change", (e) => {
-    const block = document.getElementById("composeQuoteBlock");
-    if (block) block.style.display = e.target.checked ? "" : "none";
+  // Insert #quote button - MUST wait for TinyMCE and prevent focus loss
+  document.getElementById("btnInsertQuote")?.addEventListener("click", async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Wait for TinyMCE to be ready
+    let editor = tinymce.get("composeMessageArea");
+    let attempts = 0;
+    while (!editor && attempts < 50) {
+      await new Promise(r => setTimeout(r, 100));
+      editor = tinymce.get("composeMessageArea");
+      attempts++;
+    }
+    
+    if (editor) {
+      editor.insertContent("#quote");
+      editor.focus();
+    } else {
+      showToast("Edytor nie gotowy, spróbuj ponownie", "error");
+    }
   });
 }
 
