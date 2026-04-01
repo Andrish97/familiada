@@ -2302,13 +2302,18 @@ function renderMessageDetail(msg, attachments = []) {
     const frame = document.createElement("iframe");
     frame.className = "mail-msg-html-frame";
     frame.sandbox = "allow-scripts allow-popups";
-    // Wrap content in dark theme if it's not already full HTML
-    const isFullHtml = htmlSrc.trim().startsWith("<!DOCTYPE") || htmlSrc.trim().startsWith("<html");
-    const wrappedHtml = isFullHtml ? htmlSrc : `
+    // Wrap content in dark theme - ALWAYS force dark theme
+    const wrappedHtml = `
       <!DOCTYPE html>
       <html>
       <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-      <style>body{margin:0;padding:10px;background:#050914;color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.6;}a{color:#ffeaa6;}</style>
+      <style>
+        * { background: #050914 !important; color: #ffffff !important; }
+        body { margin:0; padding:10px; background: #050914 !important; color: #ffffff !important; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; line-height:1.4; }
+        p, div, span, h1, h2, h3, h4, h5, h6 { background: transparent !important; color: #ffffff !important; }
+        a { color: #ffeaa6 !important; }
+        strong, b { color: #ffffff !important; }
+      </style>
       </head>
       <body>${htmlSrc}</body>
       </html>
@@ -2611,13 +2616,18 @@ function renderReportThread(report, messages, attsByMsg = {}) {
       const frame = document.createElement("iframe");
       frame.className = "mail-msg-html-frame";
       frame.sandbox = "allow-scripts allow-popups";
-      // Wrap content in dark theme if it's not already full HTML
-      const isFullHtml = htmlSrc.trim().startsWith("<!DOCTYPE") || htmlSrc.trim().startsWith("<html");
-      const wrappedHtml = isFullHtml ? htmlSrc : `
+      // Wrap content in dark theme - ALWAYS force dark theme
+      const wrappedHtml = `
         <!DOCTYPE html>
         <html>
         <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-        <style>body{margin:0;padding:10px;background:#050914;color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.6;}a{color:#ffeaa6;}</style>
+        <style>
+          * { background: #050914 !important; color: #ffffff !important; }
+          body { margin:0; padding:10px; background: #050914 !important; color: #ffffff !important; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; line-height:1.4; }
+          p, div, span, h1, h2, h3, h4, h5, h6 { background: transparent !important; color: #ffffff !important; }
+          a { color: #ffeaa6 !important; }
+          strong, b { color: #ffffff !important; }
+        </style>
         </head>
         <body>${htmlSrc}</body>
         </html>
