@@ -3092,52 +3092,50 @@ function showCompose(defaults = {}) {
     }
     console.log("Initializing TinyMCE for composeMessageArea...");
     tinymce.init({
-          selector: "#composeMessageArea",
-          height: 400,
-          menubar: "edit insert view format table tools",
-          branding: false,
-          promotion: false,
-          license_key: "gpl",
-          plugins: "lists link image table autoresize codesample",
-          toolbar: "undo redo | formatselect | bold italic forecolor backcolor | bullist numlist | link image | table | codesample | removeformat",
-          statusbar: false,
-          skin: "oxide-dark",
-          content_css: "dark",
-          content_style: `
-            body {
-              background: #050914 !important;
-              color: #ffffff !important;
-              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-              font-size: 14px;
-              line-height: 1.6;
-            }
-            a { color: #ffeaa6 !important; }
-            table { border-collapse: collapse; width: 100%; }
-            table td, table th { border: 1px solid rgba(255,255,255,.2); padding: 8px; }
-            code, pre { background: rgba(255,234,166,.1); color: #ffeaa6; padding: 2px 6px; border-radius: 4px; }
-          `,
-          paste_data_images: true,
-          images_upload_handler: (blobInfo) => {
-            return new Promise((resolve) => {
-              const reader = new FileReader();
-              reader.onload = () => resolve(reader.result);
-              reader.readAsDataURL(blobInfo.blob());
-            });
-          },
-          setup: (editor) => {
-            editor.on("change", () => {
-              const content = editor.getContent();
-              if (content.includes("#quote")) {
-                const quoteBlock = document.getElementById("composeQuoteBlock");
-                if (quoteBlock) quoteBlock.style.display = "";
-              }
-            });
-            composeEl._tinyMCEInitialized = true;
-            console.log("TinyMCE initialized successfully");
-          },
+      selector: "#composeMessageArea",
+      height: 400,
+      menubar: "edit insert view format table tools",
+      branding: false,
+      promotion: false,
+      license_key: "gpl",
+      plugins: "lists link image table autoresize codesample",
+      toolbar: "undo redo | formatselect | bold italic forecolor backcolor | bullist numlist | link image | table | codesample | removeformat",
+      statusbar: false,
+      skin: "oxide-dark",
+      content_css: "dark",
+      content_style: `
+        body {
+          background: #050914 !important;
+          color: #ffffff !important;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+          font-size: 14px;
+          line-height: 1.6;
+        }
+        a { color: #ffeaa6 !important; }
+        table { border-collapse: collapse; width: 100%; }
+        table td, table th { border: 1px solid rgba(255,255,255,.2); padding: 8px; }
+        code, pre { background: rgba(255,234,166,.1); color: #ffeaa6; padding: 2px 6px; border-radius: 4px; }
+      `,
+      paste_data_images: true,
+      images_upload_handler: (blobInfo) => {
+        return new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.readAsDataURL(blobInfo.blob());
         });
-      }
-    }
+      },
+      setup: (editor) => {
+        editor.on("change", () => {
+          const content = editor.getContent();
+          if (content.includes("#quote")) {
+            const quoteBlock = document.getElementById("composeQuoteBlock");
+            if (quoteBlock) quoteBlock.style.display = "";
+          }
+        });
+        composeEl._tinyMCEInitialized = true;
+        console.log("TinyMCE initialized successfully");
+      },
+    });
   }, 300);
 
   // Initialize greeting select
