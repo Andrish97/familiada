@@ -4769,6 +4769,7 @@ const pl = {
         sent: "Wysłano.",
         preview: "👁 Podgląd",
         previewTitle: "Podgląd wiadomości",
+        quoteHint: "Użyj #quote aby wstawić cytat w tym miejscu",
         templateLabel: "Szablon odpowiedzi",
         templatePlaceholder: "Wybierz szablon…",
         templates: {

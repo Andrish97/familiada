@@ -4302,6 +4302,7 @@ const uk = {
         sent: "Надіслано.",
         preview: "👁 Перегляд",
         previewTitle: "Перегляд повідомлення",
+        quoteHint: "Використай #quote щоб вставити цитату в цьому місці",
         templateLabel: "Шаблон відповіді",
         templatePlaceholder: "Обрати шаблон…",
         templates: {

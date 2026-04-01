@@ -4428,6 +4428,7 @@ const en = {
         sent: "Sent.",
         preview: "👁 Preview",
         previewTitle: "Message preview",
+        quoteHint: "Use #quote to insert quote at this position",
         templateLabel: "Reply template",
         templatePlaceholder: "Select template…",
         templates: {

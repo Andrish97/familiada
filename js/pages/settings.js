@@ -3048,7 +3048,13 @@ function showCompose(defaults = {}) {
 
           <div class="field" style="margin-bottom:12px;min-height:0;display:flex;flex-direction:column">
             ${hasQuote && quotePosition === "before" ? quoteBlockHtml : ""}
-            <label class="field-label" style="margin-bottom:6px;display:block">${t("settings.reports.compose.message") || "Treść"}</label>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+              <label class="field-label" style="margin:0">
+                ${t("settings.reports.compose.message") || "Treść"}
+              </label>
+              <button type="button" class="btn sm" id="btnInsertQuote" style="font-size:11px;padding:4px 8px" title="Wstaw #quote w miejscu kursora">#quote</button>
+            </div>
+            <div style="opacity:.5;font-size:11px;margin-bottom:6px" data-i18n="settings.reports.compose.quoteHint">Użyj #quote aby wstawić cytat w tym miejscu</div>
             <textarea class="inp" id="composeMessageArea" rows="10" style="width:100%;box-sizing:border-box;resize:none;flex:1;min-height:120px;overflow-y:auto">${escSetting(bodyText)}</textarea>
             ${hasQuote && quotePosition === "after" ? quoteBlockHtml : ""}
           </div>
@@ -4811,15 +4817,28 @@ function wireEvents() {
   if (typeof tinymce !== "undefined") {
     tinymce.init({
       selector: "#composeMessageArea",
-      height: 300,
-      menubar: false,
+      height: 400,
+      menubar: "edit insert view format table tools",
       branding: false,
       promotion: false,
-      plugins: "lists link image table paste autoresize textcolor",
-      toolbar: "undo redo | bold italic forecolor | bullist numlist | link image | table | removeformat",
-      content_style: "body { background: #1a1a2e; color: #fff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }",
-      skin: false,
-      content_css: false,
+      license_key: "gpl",
+      plugins: "lists link image table paste autoresize textcolor codesample",
+      toolbar: "undo redo | formatselect | bold italic forecolor backcolor | bullist numlist | link image | table | codesample | removeformat",
+      skin: "oxide-dark",
+      content_css: "dark",
+      content_style: `
+        body {
+          background: #1a1a2e !important;
+          color: #ffffff !important;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+          font-size: 14px;
+          line-height: 1.6;
+        }
+        a { color: #ffeaa6 !important; }
+        table { border-collapse: collapse; width: 100%; }
+        table td, table th { border: 1px solid rgba(255,255,255,.2); padding: 8px; }
+        code, pre { background: rgba(255,234,166,.1); color: #ffeaa6; padding: 2px 6px; border-radius: 4px; }
+      `,
       paste_data_images: true,
       automatic_uploads: true,
       images_upload_handler: (blobInfo) => {
@@ -4847,19 +4866,49 @@ function wireEvents() {
     });
   }
 
+  // Insert #quote button
+  document.getElementById("btnInsertQuote")?.addEventListener("click", () => {
+    const editor = tinymce.get("composeMessageArea");
+    if (editor) {
+      editor.insertContent("#quote");
+    } else {
+      const textarea = document.getElementById("composeMessageArea");
+      if (textarea) {
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const value = textarea.value;
+        textarea.value = value.substring(0, start) + "#quote" + value.substring(end);
+        textarea.selectionStart = textarea.selectionEnd = start + 6;
+      }
+    }
+  });
+
   // Initialize TinyMCE for marketing message area
   if (typeof tinymce !== "undefined") {
     tinymce.init({
       selector: "#mktBody",
-      height: 300,
-      menubar: false,
+      height: 400,
+      menubar: "edit insert view format table tools",
       branding: false,
       promotion: false,
-      plugins: "lists link image table paste autoresize textcolor",
-      toolbar: "undo redo | bold italic forecolor | bullist numlist | link image | table | removeformat",
-      content_style: "body { background: #1a1a2e; color: #fff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }",
-      skin: false,
-      content_css: false,
+      license_key: "gpl",
+      plugins: "lists link image table paste autoresize textcolor codesample",
+      toolbar: "undo redo | formatselect | bold italic forecolor backcolor | bullist numlist | link image | table | codesample | removeformat",
+      skin: "oxide-dark",
+      content_css: "dark",
+      content_style: `
+        body {
+          background: #1a1a2e !important;
+          color: #ffffff !important;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+          font-size: 14px;
+          line-height: 1.6;
+        }
+        a { color: #ffeaa6 !important; }
+        table { border-collapse: collapse; width: 100%; }
+        table td, table th { border: 1px solid rgba(255,255,255,.2); padding: 8px; }
+        code, pre { background: rgba(255,234,166,.1); color: #ffeaa6; padding: 2px 6px; border-radius: 4px; }
+      `,
       paste_data_images: true,
       automatic_uploads: true,
       images_upload_handler: (blobInfo) => {
