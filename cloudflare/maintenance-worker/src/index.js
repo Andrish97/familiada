@@ -835,9 +835,10 @@ async function handleAdminMarketingApi(request, env, url) {
     // Marketing emails are detected by is_marketing flag, not by subject prefix
     const msgSubject = mktSubject;
     let savedCount = 0;
+    let marketingCount = 0;
     for (const email of validEmails.slice(0, 100)) { // Limit to 100 to avoid timeout
       try {
-        await supabaseRpc(env, "save_outbound_message", {
+        const saveRes = await supabaseRpc(env, "save_outbound_message", {
           p_to_email:  email,
           p_subject:   msgSubject,
           p_body:      emailText,
@@ -845,18 +846,27 @@ async function handleAdminMarketingApi(request, env, url) {
           p_report_id: null,
           p_queue_id:  null,
         });
-        // Also set is_marketing flag directly via SQL
-        await supabaseRequest(env, `/rest/v1/messages`, {
-          method: "PATCH",
-          headers: { Prefer: "return=minimal" },
-          body: { is_marketing: true },
-          query: `to_email=eq.${email}`,
-        });
+        
+        // Get the message ID from the RPC result and set is_marketing flag
+        const msgId = saveRes.ok ? saveRes.data : null;
+        if (msgId) {
+          const flagRes = await supabaseRequest(env, `/rest/v1/messages?id=eq.${encodeURIComponent(msgId)}`, {
+            method: "PATCH",
+            headers: { Prefer: "return=minimal" },
+            body: { is_marketing: true },
+          });
+          if (flagRes.ok) marketingCount++;
+          else console.error("[marketing/send] Failed to set is_marketing for", msgId, flagRes);
+        } else {
+          console.error("[marketing/send] No message ID returned for", email);
+        }
         savedCount++;
       } catch (e) {
         console.error("[marketing/send] save_outbound_message failed for", email, e);
       }
     }
+    
+    console.log("[marketing/send] Set is_marketing flag on", marketingCount, "of", savedCount, "messages");
 
     if (savedCount < validEmails.length) {
       console.error(`[marketing/send] Only saved ${savedCount}/${validEmails.length} message records`);
