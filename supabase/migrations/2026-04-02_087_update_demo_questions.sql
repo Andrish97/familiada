@@ -54,6 +54,11 @@ WHERE EXISTS (
   WHERE q->>'text' LIKE 'Sondaż:%'
 );
 
+-- 5. Update shared_devices game_name (user-visible data)
+UPDATE public.shared_devices
+SET game_name = replace(game_name, 'Sondaż tekstowy', 'Typowa ankieta')
+WHERE game_name LIKE '%Sondaż tekstowy%';
+
 -- Log the update
 DO $$
 DECLARE
@@ -61,14 +66,17 @@ DECLARE
   updated_demo_games integer;
   updated_user_games integer;
   updated_questions integer;
+  updated_shared_devices integer;
 BEGIN
   SELECT COUNT(*) INTO updated_bases FROM public.demo_bases WHERE data->>'questions' LIKE '%Ankieta:%';
   SELECT COUNT(*) INTO updated_demo_games FROM public.demo_games WHERE data->>'name' LIKE '%Typowa ankieta%';
   SELECT COUNT(*) INTO updated_user_games FROM public.games WHERE name LIKE '%Typowa ankieta%';
   SELECT COUNT(*) INTO updated_questions FROM public.games g, jsonb_array_elements(g.data->'questions') AS q WHERE q->>'text' LIKE 'Ankieta:%';
+  SELECT COUNT(*) INTO updated_shared_devices FROM public.shared_devices WHERE game_name LIKE '%Typowa ankieta%';
 
   RAISE NOTICE 'Updated demo_bases with "Ankieta:" prefix: %', updated_bases;
   RAISE NOTICE 'Updated demo_games with "Typowa ankieta" name: %', updated_demo_games;
   RAISE NOTICE 'Updated user games (Sondaż tekstowy → Typowa ankieta): %', updated_user_games;
   RAISE NOTICE 'Updated user game questions (Sondaż: → Ankieta:): %', updated_questions;
+  RAISE NOTICE 'Updated shared_devices game_name: %', updated_shared_devices;
 END $$;
