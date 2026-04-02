@@ -4,7 +4,7 @@ import { sb } from "./supabase.js?v=ece3a0c0";
 /**
  * Typy gier:
  * - poll_text    => Typowa ankieta
- * - poll_points  => Punktacja odpowiedzi (głosowanie na odpowiedź)
+ * - poll_points  => Punktacja odpowiedzi (ankieta na odpowiedź)
  * - prepared     => Preparowana (manualne punkty, suma=100)
  */
 export const TYPES = {

@@ -426,7 +426,7 @@ const pl = {
     deletePlaceholder: "Hasło",
     deleteButton: "Usuń konto i dane",
     emailNotifTitle: "Wiadomości e-mail",
-    emailNotifHint: "Otrzymywać wiadomości e-mail o propozycjach subskrypcji, zadaniach do zagłosowania czy udostępnionych bazach pytań. Jeśli zrezygnujesz z wiadomości e-mail będziesz widzieć te propozycje bezpośrednio na stronie.",
+    emailNotifHint: "Otrzymywać wiadomości e-mail o propozycjach subskrypcji, zadaniach do wypełnienia czy udostępnionych bazach pytań. Jeśli zrezygnujesz z wiadomości e-mail będziesz widzieć te propozycje bezpośrednio na stronie.",
     emailNotifCheckbox: "Włącz powiadomienia e-mail",
     emailNotifDisableTitle: "Wyłączyć wiadomości e-mail?",
     emailNotifDisableConfirm: "Nadal zobaczysz wszystkie propozycje i zadania bezpośrednio na stronie.",
