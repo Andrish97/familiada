@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict jOIsDeraeH4N1vnAfeAWAk8Nq0DufXc0dcrWjkNBAHkdx5EJb1TcGg60lVhOYeo
+\restrict ZYrvSnPK5b8zM0EpuaEnkrfatFsY553sPLb6PJHuE7USZKDodNYZVlLxVPycdn6
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -10378,9 +10378,17 @@ CREATE TABLE "public"."messages" (
     "deleted_at" timestamp with time zone,
     "is_read" boolean DEFAULT false NOT NULL,
     "read_at" timestamp with time zone,
+    "is_marketing" boolean DEFAULT false,
     CONSTRAINT "messages_direction_check" CHECK (("direction" = ANY (ARRAY['inbound'::"text", 'outbound'::"text"]))),
     CONSTRAINT "messages_source_check" CHECK (("source" = ANY (ARRAY['email'::"text", 'form'::"text", 'compose'::"text"])))
 );
+
+
+--
+-- Name: COLUMN "messages"."is_marketing"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN "public"."messages"."is_marketing" IS 'True for marketing/bulk emails sent from marketing panel';
 
 
 --
@@ -11319,6 +11327,13 @@ CREATE UNIQUE INDEX "games_owner_market_uniq" ON "public"."games" USING "btree" 
 --
 
 CREATE INDEX "games_source_market_id_idx" ON "public"."games" USING "btree" ("source_market_id") WHERE ("source_market_id" IS NOT NULL);
+
+
+--
+-- Name: idx_messages_marketing; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "idx_messages_marketing" ON "public"."messages" USING "btree" ("direction", "is_marketing", "created_at") WHERE (("deleted_at" IS NULL) AND ("is_marketing" = true));
 
 
 --
@@ -13468,5 +13483,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict jOIsDeraeH4N1vnAfeAWAk8Nq0DufXc0dcrWjkNBAHkdx5EJb1TcGg60lVhOYeo
+\unrestrict ZYrvSnPK5b8zM0EpuaEnkrfatFsY553sPLb6PJHuE7USZKDodNYZVlLxVPycdn6
 
