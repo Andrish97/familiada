@@ -2504,6 +2504,10 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
     </div>`;
   conv.appendChild(header);
 
+  // Container for all messages (scrollable)
+  const msgs = document.createElement("div");
+  msgs.className = "mail-conv-messages";
+
   // Render earlier messages (above the central message)
   const earlierMessages = threadMessages.filter(m => new Date(m.created_at) < new Date(msg.created_at));
   for (const threadMsg of earlierMessages) {
@@ -2511,7 +2515,7 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
     threadBubble.className = `mail-msg ${threadMsg.direction === "inbound" ? "inbound" : "outbound"} mail-msg-thread`;
     threadBubble.style.opacity = "0.6";
     renderSimpleMessageContent(threadBubble, threadMsg);
-    conv.appendChild(threadBubble);
+    msgs.appendChild(threadBubble);
   }
 
   // Render current message (central with gold accent)
@@ -2677,12 +2681,13 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
     threadBubble.className = `mail-msg ${threadMsg.direction === "inbound" ? "inbound" : "outbound"} mail-msg-thread`;
     threadBubble.style.opacity = "0.6";
     renderSimpleMessageContent(threadBubble, threadMsg);
-    conv.appendChild(threadBubble);
+    msgs.appendChild(threadBubble);
   }
 
-  // Action bar — icon buttons
+  // Action bar — icon buttons (at the bottom, fixed position)
   const actions = document.createElement("div");
   actions.className = "mail-msg-actions";
+  actions.style.cssText = "margin-top:auto;padding-top:12px;";
 
   // Left group: assign/unassign + reply
   const leftGroup = document.createElement("div");
@@ -2758,7 +2763,8 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
   }
 
   actions.appendChild(rightGroup);
-  conv.appendChild(actions);
+  msgs.appendChild(actions);
+  conv.appendChild(msgs);
 
   // click on ticket badge → open report
   conv.querySelector(".mail-ticket-badge")?.addEventListener("click", (e) => {
