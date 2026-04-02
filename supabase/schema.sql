@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict gVwUPfTTYuQTIfSp5at5lAp9TAQEDOR0jBCJtvAblMpl9PlZGDAh5Ya1MYvWlyo
+\restrict DReZEzvpf1Wb32sMz0j8BI9nNmyebYfhUpjlmMsoo6TkUdeygMLPwd12Ope9w2X
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -10376,6 +10376,8 @@ CREATE TABLE "public"."messages" (
     "queue_id" "uuid",
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "deleted_at" timestamp with time zone,
+    "is_read" boolean DEFAULT false NOT NULL,
+    "read_at" timestamp with time zone,
     CONSTRAINT "messages_direction_check" CHECK (("direction" = ANY (ARRAY['inbound'::"text", 'outbound'::"text"]))),
     CONSTRAINT "messages_source_check" CHECK (("source" = ANY (ARRAY['email'::"text", 'form'::"text", 'compose'::"text"])))
 );
@@ -11317,6 +11319,13 @@ CREATE UNIQUE INDEX "games_owner_market_uniq" ON "public"."games" USING "btree" 
 --
 
 CREATE INDEX "games_source_market_id_idx" ON "public"."games" USING "btree" ("source_market_id") WHERE ("source_market_id" IS NOT NULL);
+
+
+--
+-- Name: idx_messages_unread; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "idx_messages_unread" ON "public"."messages" USING "btree" ("direction", "is_read", "report_id") WHERE ("deleted_at" IS NULL);
 
 
 --
@@ -13459,5 +13468,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict gVwUPfTTYuQTIfSp5at5lAp9TAQEDOR0jBCJtvAblMpl9PlZGDAh5Ya1MYvWlyo
+\unrestrict DReZEzvpf1Wb32sMz0j8BI9nNmyebYfhUpjlmMsoo6TkUdeygMLPwd12Ope9w2X
 
