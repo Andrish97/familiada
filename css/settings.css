@@ -1510,6 +1510,19 @@ body.tools-fullscreen .tools-frame-wrap iframe{
 .mail-ti-preview { font-size: 11px; opacity: .38; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mail-ti-ticket { font-size: 10px; color: #ffeaa6; opacity: .7; margin-top: 3px; }
 
+/* Ticket number badge - prominent display */
+.mail-ti-ticket-badge {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(255, 234, 166, 0.12);
+  color: #ffeaa6;
+  border: 1px solid rgba(255, 234, 166, 0.25);
+  white-space: nowrap;
+  font-weight: 500;
+  margin-right: 6px;
+}
+
 .mail-conv {
   display: flex;
   flex-direction: column;
