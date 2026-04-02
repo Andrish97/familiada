@@ -2829,10 +2829,10 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
   btnMarketing.className = `msg-icon-btn ${msg.is_marketing ? "msg-icon-btn--active" : ""}`;
   btnMarketing.type = "button";
   btnMarketing.title = msg.is_marketing ? "Oznacz jako zwykłą wiadomość" : "Oznacz jako marketing";
-  // Megaphone icon - rectangle (handle) + trapezoid (horn)
+  // Megaphone icon - rectangle handle (longer) + trapezoid horn (bigger)
   btnMarketing.innerHTML = msg.is_marketing
-    ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="8" width="6" height="8" rx="1"/><path d="M8 10l10-4v12L8 14V10z"/></svg>`
-    : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="8" width="6" height="8" rx="1"/><path d="M8 10l10-4v12L8 14V10z"/></svg>`;
+    ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="7" width="5" height="10" rx="1"/><path d="M7 9l12-5v16L7 15V9z"/></svg>`
+    : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="5" height="10" rx="1"/><path d="M7 9l12-5v16L7 15V9z"/></svg>`;
   btnMarketing.addEventListener("click", () => toggleMarketing(msg.id, !msg.is_marketing));
   leftGroup.appendChild(btnMarketing);
 
