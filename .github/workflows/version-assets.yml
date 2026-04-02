@@ -38,5 +38,6 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add -u
-          git commit -m "chore: update asset version hashes [skip ci]"
+          git commit -m "chore: update asset version hashes [skip ci]" || true
+          git pull --rebase --strategy-option=theirs || true
           git push

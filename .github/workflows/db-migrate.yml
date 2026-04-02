@@ -103,4 +103,5 @@ jobs:
           fi
 
           git commit -m "db: update schema + logs [skip ci]" || true
+          git pull --rebase --strategy-option=theirs || true
           git push
