@@ -1906,6 +1906,22 @@ async function handleInboundEmail(message, env) {
   const ticketMatch = subject.match(/\[(?:TICKET-)?(\d{4}-\d{4})\]/i);
   const ticketArg = ticketMatch ? ticketMatch[1] : null;
 
+  // Check if this is a reply to a marketing email (by subject thread)
+  const cleanSubject = subject.replace(/^(Re|Fwd|FW):\s*/gi, '').trim().toLowerCase();
+  let isReplyToMarketing = false;
+  if (cleanSubject) {
+    try {
+      // Check if any existing marketing email has similar subject
+      const checkRes = await supabaseRequest(env, `/rest/v1/messages?select=id&direction=eq.outbound&is_marketing=eq.true&subject=ilike.%${cleanSubject}%&limit=1`, { method: "GET" });
+      if (checkRes.ok && Array.isArray(checkRes.data) && checkRes.data.length > 0) {
+        isReplyToMarketing = true;
+        console.log("[email] Reply to marketing detected:", subject);
+      }
+    } catch (err) {
+      console.error("[email] marketing check failed:", err);
+    }
+  }
+
   if (!from || (!body && !inboundAttachments.length)) return;
 
   const rpc = await supabaseRpc(env, "save_inbound_message", {
@@ -1915,6 +1931,24 @@ async function handleInboundEmail(message, env) {
     p_body_html:     bodyHtml,
     p_ticket_number: ticketArg,
   });
+
+  // If this is a reply to marketing, mark it as marketing
+  if (rpc.ok && isReplyToMarketing) {
+    const msgRow = Array.isArray(rpc.data) && rpc.data.length ? rpc.data[0] : null;
+    const msgId = msgRow?.id;
+    if (msgId) {
+      try {
+        await supabaseRequest(env, `/rest/v1/messages?id=eq.${encodeURIComponent(msgId)}`, {
+          method: "PATCH",
+          headers: { Prefer: "return=minimal" },
+          body: { is_marketing: true },
+        });
+        console.log("[email] Marked reply as marketing:", msgId);
+      } catch (err) {
+        console.error("[email] marketing mark failed:", err);
+      }
+    }
+  }
 
   if (rpc.ok) {
     const msgRow = Array.isArray(rpc.data) && rpc.data.length ? rpc.data[0] : null;

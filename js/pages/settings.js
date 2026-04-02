@@ -2092,7 +2092,7 @@ async function loadMailFolder({ silent = false } = {}) {
       const json = await res.json();
       msgRows = json.rows || [];
     } else if (msgActiveFolder === "marketing") {
-      // Fetch ALL messages and filter for marketing
+      // Fetch ALL messages and filter for marketing (outbound + inbound replies)
       console.log("[loadMailFolder] Fetching marketing messages...");
       const res = await adminFetch(`/messages?filter=all&limit=500`);
       console.log("[loadMailFolder] Marketing fetch result:", res.status, res.ok);
@@ -2102,10 +2102,9 @@ async function loadMailFolder({ silent = false } = {}) {
         throw new Error(errorText);
       }
       const json = await res.json();
-      // Filter for marketing emails by is_marketing flag
+      // Filter for marketing emails by is_marketing flag (includes replies to marketing)
       msgRows = (json.rows || []).filter(m =>
-        m.direction === "outbound" &&
-        m.is_marketing === true
+        m.is_marketing === true  // Both outbound campaigns AND inbound replies
       );
       console.log("[loadMailFolder] Marketing folder:", msgRows.length, "messages");
     } else {
