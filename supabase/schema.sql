@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict dqmZJfXVgx0e9jeoPD2cIA2hlSB9AWRSmYbRsuUkzhlUdzM6xzwPE6WphQfns3K
+\restrict rECPvAbUjHeICYGTni612uT9GJwtlmb0nYWUEsscIahbObLk50mhxVGybcnV2cV
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -3656,12 +3656,12 @@ BEGIN
         m.id, m.source, m.direction, m.from_email, m.to_email, m.subject,
         m.body, m.body_html,
         left(regexp_replace(COALESCE(m.body_html, m.body), E'<style[^>]*>[\\s\\S]*?</style>', '', 'gi'), 120) AS body_preview,
-        m.report_id, 
-        r.ticket_number,  -- Direct, no COALESCE
+        m.report_id,
+        r.ticket_number,
         r.status AS report_status, m.queue_id,
         m.is_read, m.is_marketing, m.created_at, m.deleted_at
       FROM public.messages m
-      LEFT JOIN public.contact_reports r ON r.id = m.report_id
+      LEFT JOIN public.reports r ON r.id = m.report_id
       WHERE m.direction = 'inbound' AND m.deleted_at IS NULL
       ORDER BY m.created_at DESC
       LIMIT p_limit OFFSET p_offset;
@@ -3673,12 +3673,12 @@ BEGIN
         m.id, m.source, m.direction, m.from_email, m.to_email, m.subject,
         m.body, m.body_html,
         left(regexp_replace(COALESCE(m.body_html, m.body), E'<style[^>]*>[\\s\\S]*?</style>', '', 'gi'), 120) AS body_preview,
-        m.report_id, 
-        r.ticket_number,  -- Direct, no COALESCE
+        m.report_id,
+        r.ticket_number,
         r.status AS report_status, m.queue_id,
         m.is_read, m.is_marketing, m.created_at, m.deleted_at
       FROM public.messages m
-      LEFT JOIN public.contact_reports r ON r.id = m.report_id
+      LEFT JOIN public.reports r ON r.id = m.report_id
       WHERE m.direction = 'outbound' AND m.deleted_at IS NULL
       ORDER BY m.created_at DESC
       LIMIT p_limit OFFSET p_offset;
@@ -3690,17 +3690,17 @@ BEGIN
         m.id, m.source, m.direction, m.from_email, m.to_email, m.subject,
         m.body, m.body_html,
         left(regexp_replace(COALESCE(m.body_html, m.body), E'<style[^>]*>[\\s\\S]*?</style>', '', 'gi'), 120) AS body_preview,
-        m.report_id, 
-        r.ticket_number,  -- Direct, no COALESCE
+        m.report_id,
+        r.ticket_number,
         r.status AS report_status, m.queue_id,
         m.is_read, m.is_marketing, m.created_at, m.deleted_at
       FROM public.messages m
-      LEFT JOIN public.contact_reports r ON r.id = m.report_id
+      LEFT JOIN public.reports r ON r.id = m.report_id
       WHERE m.deleted_at IS NOT NULL
       ORDER BY m.deleted_at DESC
       LIMIT p_limit OFFSET p_offset;
 
-  -- Reports: grouped by ticket
+  -- Reports: grouped by ticket (contact_reports for form submissions)
   ELSIF p_filter = 'reports' THEN
     RETURN QUERY
       SELECT
@@ -3722,12 +3722,12 @@ BEGIN
         m.id, m.source, m.direction, m.from_email, m.to_email, m.subject,
         m.body, m.body_html,
         left(regexp_replace(COALESCE(m.body_html, m.body), E'<style[^>]*>[\\s\\S]*?</style>', '', 'gi'), 120) AS body_preview,
-        m.report_id, 
-        r.ticket_number,  -- Direct, no COALESCE
+        m.report_id,
+        r.ticket_number,
         r.status AS report_status, m.queue_id,
         m.is_read, m.is_marketing, m.created_at, m.deleted_at
       FROM public.messages m
-      LEFT JOIN public.contact_reports r ON r.id = m.report_id
+      LEFT JOIN public.reports r ON r.id = m.report_id
       WHERE m.deleted_at IS NULL
       ORDER BY m.created_at DESC
       LIMIT p_limit OFFSET p_offset;
@@ -13490,5 +13490,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict dqmZJfXVgx0e9jeoPD2cIA2hlSB9AWRSmYbRsuUkzhlUdzM6xzwPE6WphQfns3K
+\unrestrict rECPvAbUjHeICYGTni612uT9GJwtlmb0nYWUEsscIahbObLk50mhxVGybcnV2cV
 
