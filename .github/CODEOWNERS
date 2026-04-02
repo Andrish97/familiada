@@ -1,0 +1,6 @@
+# Prevent accidental version commits
+# This file ensures only authorized changes to version files
+
+*.html filter=prevent-version-commit
+version.txt filter=prevent-version-commit
+sw.js filter=prevent-version-commit
