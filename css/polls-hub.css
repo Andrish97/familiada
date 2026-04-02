@@ -468,7 +468,7 @@ body.polls-hub-body .bar{
   overflow: hidden;
 }
 
-/* ✅ w kafelkach SONDAŻY: badge jeden pod drugim */
+/* ✅ w kafelkach ANKIET: badge jeden pod drugim */
 .hub-item-actions.hub-item-actions--poll-badges{
   flex-direction: column;
   align-items: flex-end;

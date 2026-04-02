@@ -5,10 +5,10 @@ System do tworzenia i prowadzenia rozgrywki w stylu Familiada.
 ## 🎮 Funkcjonalności
 
 - Tworzenie gier w trzech trybach:
-  - sondaż tekstowy
-  - punktowane odpowiedzi
-  - preparowana (bez sondażu)
-- Udostępnianie sondaży przez link i kod QR
+  - typowa ankieta
+  - punktacja
+  - preparowana (bez ankiety)
+- Udostępnianie ankiet przez link i kod QR
 - Zarządzanie bazami pytań (foldery, tagi, kategorie)
 - Panel operatora do prowadzenia gry na żywo
 - Tablica wyników na osobnym wyświetlaczu

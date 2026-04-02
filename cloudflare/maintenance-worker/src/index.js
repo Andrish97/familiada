@@ -1226,7 +1226,7 @@ function buildMarketingEmail(templateId, opts = {}) {
 
       ${featureTile(
         `${IMG_BASE}/landing-polls.webp`,
-        "Sondaż QR — goście głosują na żywo",
+        "Ankieta QR — goście odpowiadają na żywo",
         "Uczestnicy odpowiadają z własnych telefonów. System automatycznie normalizuje wyniki do 100 punktów."
       )}
       ${featureTile(
