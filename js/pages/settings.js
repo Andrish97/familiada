@@ -2824,15 +2824,15 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
     leftGroup.appendChild(btnUnassign);
   }
 
-  // Toggle marketing flag
+  // Toggle marketing flag - megaphone/bullhorn icon
   const btnMarketing = document.createElement("button");
   btnMarketing.className = `msg-icon-btn ${msg.is_marketing ? "msg-icon-btn--active" : ""}`;
   btnMarketing.type = "button";
   btnMarketing.title = msg.is_marketing ? "Oznacz jako zwykłą wiadomość" : "Oznacz jako marketing";
-  // Bullhorn/megaphone icon - cleaner design
+  // Megaphone icon - different from ticket tag
   btnMarketing.innerHTML = msg.is_marketing
-    ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7" stroke="currentColor" stroke-width="3"/></svg>`
-    : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7" stroke-width="3"/></svg>`;
+    ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M3 11v-3l15-6v16l-15-6v-3zm15-6l3 1.5v15L18 20V5z"/></svg>`
+    : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11v-3l15-6v16l-15-6v-3zm15-6l3 1.5v15L18 20V5z"/></svg>`;
   btnMarketing.addEventListener("click", () => toggleMarketing(msg.id, !msg.is_marketing));
   leftGroup.appendChild(btnMarketing);
 
@@ -2888,8 +2888,8 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
   }
 
   actions.appendChild(rightGroup);
-  conv.appendChild(actions);  // Actions outside scrollable area
-  conv.appendChild(msgs);     // Messages container
+  conv.appendChild(msgs);      // Messages container FIRST
+  conv.appendChild(actions);   // Actions at BOTTOM (after msgs)
 
   // click on ticket badge → open report
   conv.querySelector(".mail-ticket-badge")?.addEventListener("click", (e) => {
