@@ -2098,8 +2098,35 @@ async function loadMailFolder({ silent = false } = {}) {
       msgRows = json.rows || [];
     }
     renderMailList(msgRows);
+    updateFolderBadges();
   } catch (err) {
     if (!silent) showToast(String(err?.message || err), "error");
+  }
+}
+
+function updateFolderBadges() {
+  // Count unread in inbox (inbound without report_id)
+  const inboxUnread = (msgRows || []).filter(r => 
+    !r.report_id && r.direction === "inbound"
+  ).length;
+  
+  // Count open reports
+  const reportsOpen = (msgRows || []).filter(r => 
+    r.status === "open"
+  ).length;
+  
+  // Update badge elements
+  const badgeInbox = document.getElementById("badgeInbox");
+  const badgeReports = document.getElementById("badgeReports");
+  
+  if (badgeInbox) {
+    badgeInbox.textContent = inboxUnread;
+    badgeInbox.classList.toggle("visible", inboxUnread > 0);
+  }
+  
+  if (badgeReports) {
+    badgeReports.textContent = reportsOpen;
+    badgeReports.classList.toggle("visible", reportsOpen > 0);
   }
 }
 
