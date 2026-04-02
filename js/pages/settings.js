@@ -2169,6 +2169,8 @@ function renderMailList(rows) {
       has_body_html: !!r.body_html,
       has_body: !!r.body,
       has_body_preview: !!r.body_preview,
+      body_preview_content: r.body_preview,
+      body_content: r.body ? r.body.substring(0, 100) + '...' : null,
     });
 
     // Strategy 1: Try body_html first (has full HTML email)

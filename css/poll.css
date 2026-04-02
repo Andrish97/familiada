@@ -2,20 +2,16 @@
 
 body.pollpub-body {
     margin: 0;
-    min-height: 100vh;
+    min-height: 100dvh;
     background: var(--bg);
     color: #fff;
     display: flex;
-    align-items: center;
-    justify-content: center
-}
-
-body.pollpub-body .wrap {
-    max-width: 720px;
-    padding: 18px
+    flex-direction: column;
 }
 
 body.pollpub-body .card {
+    margin-top: auto;
+    margin-bottom: auto;
     border-radius: 22px;
     border: 1px solid var(--line);
     background: var(--card);

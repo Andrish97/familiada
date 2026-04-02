@@ -1,15 +1,17 @@
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
-import { initI18n, setUiLang, t } from "../../translation/translation.js?v=435d2210";
+import { initI18n, setUiLang, t, getUiLang } from "../../translation/translation.js?v=435d2210";
 
-initI18n({ withSwitcher: false });
-
-const MSG = {
-  missingUrl: () => t("pollQr.missingUrl"),
-  qrFailed: () => t("pollQr.qrFailed"),
-};
+// 1. Inicjalizacja i18n
+await initI18n({ withSwitcher: false });
 
 const qs = new URLSearchParams(location.search);
 let url = qs.get("url");
+
+// Jeśli w URL strony poll-qr jest lang, upewnij się, że link w QR też go ma
+const currentLang = getUiLang();
+if (url && currentLang) {
+  url = withLangInUrl(url, currentLang);
+}
 
 function getScopeFromVoteUrl(u){
   try{
@@ -32,7 +34,7 @@ function withLangInUrl(u, lang){
     x.searchParams.set("lang", lang);
     return x.toString();
   }catch{
-    return u; // jeśli to nie URL, zostaw jak jest
+    return u;
   }
 }
 
@@ -44,8 +46,9 @@ function updateFsIcon(){
 }
 
 async function render(u){
+  if (!qr) return;
   qr.innerHTML = "";
-  if(!u){ qr.textContent = MSG.missingUrl(); return; }
+  if(!u){ qr.textContent = t("pollQr.missingUrl"); return; }
 
   try{
     const dataUrl = await QRCode.toDataURL(u, { width: 840, margin: 1 });
@@ -54,7 +57,7 @@ async function render(u){
     qr.appendChild(img);
   }catch(e){
     console.error("[poll-qr] QR error:", e);
-    qr.textContent = MSG.qrFailed();
+    qr.textContent = t("pollQr.qrFailed");
   }
 }
 
@@ -78,7 +81,7 @@ i18nBc?.addEventListener("message", async (ev) => {
   if (!msg || msg.type !== "polls:qr:i18n" || !msg.lang) return;
   if (msg.scope !== myScope) return;
 
-  // 1) przestaw UI języka w poll-qr (bez zapisywania w localStorage)
+  // 1) przestaw UI języka w poll-qr
   await setUiLang(msg.lang, { persist: false, updateUrl: true, apply: true });
 
   // 2) wymuś, żeby QR kodował link z właściwym lang

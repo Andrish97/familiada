@@ -1,17 +1,47 @@
 /* css/poll-qr.css */
 
 body.poll-qr-body {
-    min-height: 100vh;
+    margin: 0;
+    min-height: 100dvh;
+    background: var(--bg);
+    color: #fff;
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    padding: 20px;
+}
+
+.qr-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    text-align: center;
+}
+
+.qr-container .brand {
+    font-size: 32px;
+    font-weight: 1000;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: var(--gold);
+}
+
+.qr-hint {
+    font-size: 24px;
+    font-weight: 1000;
+    letter-spacing: .04em;
+    color: #fff;
+    opacity: .95;
+    max-width: 600px;
 }
 
 .qr-fs-btn {
     position: fixed;
-    top: 14px;
-    right: 14px;
+    top: max(14px, env(safe-area-inset-top));
+    right: max(14px, env(safe-area-inset-right));
     width: 46px;
     height: 46px;
     padding: 0;
@@ -21,16 +51,31 @@ body.poll-qr-body {
 }
 
 .qr-box {
-    padding: 18px;
+    padding: 22px;
     background: #fff;
-    border-radius: 18px;
-    box-shadow: 0 10px 28px rgba(0,0,0,.25);
+    border-radius: 22px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.45);
     line-height: 0;
 }
 
 .qr-box img {
     display: block;
-    width: min(420px, 80vw);
+    width: min(520px, 70vw);
     height: auto;
     image-rendering: pixelated;
+}
+
+@media (max-width: 600px) {
+    .qr-container .brand { font-size: 24px; }
+    .qr-hint { font-size: 18px; }
+    .qr-box { padding: 14px; }
+}
+
+@media (max-height: 500px) and (orientation: landscape) {
+    .qr-container {
+        flex-direction: row;
+        gap: 30px;
+    }
+    .qr-container .brand, .qr-hint { display: none; }
+    .qr-box img { width: auto; height: 75vh; }
 }

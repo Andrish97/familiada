@@ -1,11 +1,15 @@
 /* css/poll-go.css */
 body.poll-go-body {
-  min-height: 100vh;
+  min-height: 100dvh;
   background: var(--bg);
   color: #fff;
+  display: flex;
+  flex-direction: column;
 }
 
 .poll-go-card {
+  margin-top: auto;
+  margin-bottom: auto;
   border-radius: 22px;
   border: 1px solid var(--line);
   background: var(--card);
