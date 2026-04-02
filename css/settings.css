@@ -1523,6 +1523,19 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   margin-right: 6px;
 }
 
+/* Ticket badge in conversation header */
+.mail-ticket-badge {
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: rgba(255, 234, 166, 0.15);
+  color: #ffeaa6;
+  white-space: nowrap;
+  font-weight: 500;
+  margin-left: 6px;
+  cursor: pointer;
+}
+
 .mail-conv {
   display: flex;
   flex-direction: column;

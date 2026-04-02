@@ -2406,13 +2406,6 @@ async function openMessage(id) {
     if (!json.ok) throw new Error(json.error);
 
     const msg = json.message;
-    console.log("[openMessage] Message detail loaded:", { 
-      id: msg.id, 
-      subject: msg.subject, 
-      ticket_number: msg.ticket_number,
-      report_id: msg.report_id,
-      direction: msg.direction 
-    });
 
     // Fetch conversation thread (Apple Mail style - all messages in the same conversation)
     let threadMessages = [];
