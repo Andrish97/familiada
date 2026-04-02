@@ -44,8 +44,10 @@ BEGIN
 END;
 $$;
 
--- Update list_messages to include is_read (recreate if needed)
-CREATE OR REPLACE FUNCTION public.list_messages(
+-- Update list_messages - DROP first then CREATE (cannot change return type)
+DROP FUNCTION IF EXISTS public.list_messages(text,integer,integer);
+
+CREATE FUNCTION public.list_messages(
   p_filter text DEFAULT 'inbox'::text,
   p_limit integer DEFAULT 50,
   p_offset integer DEFAULT 0
