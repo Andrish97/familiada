@@ -2102,12 +2102,10 @@ async function loadMailFolder({ silent = false } = {}) {
         throw new Error(errorText);
       }
       const json = await res.json();
-      // Filter for marketing emails (outbound with FAMILIADA HTML branding)
-      // Note: We no longer add [Marketing] prefix to subjects
+      // Filter for marketing emails by is_marketing flag
       msgRows = (json.rows || []).filter(m =>
         m.direction === "outbound" &&
-        m.body_html &&
-        (m.body_html.includes("FAMILIADA") || m.body_html.includes("familiada.online"))
+        m.is_marketing === true
       );
       console.log("[loadMailFolder] Marketing folder:", msgRows.length, "messages");
     } else {
@@ -2127,8 +2125,7 @@ async function loadMailFolder({ silent = false } = {}) {
       if (msgActiveFolder === "sent") {
         const marketingEmails = msgRows.filter(m =>
           m.direction === "outbound" &&
-          m.body_html &&
-          (m.body_html.includes("FAMILIADA") || m.body_html.includes("familiada.online"))
+          m.is_marketing === true
         );
         // If we have marketing emails, reload from "all" to get everything
         if (marketingEmails.length > 0) {
@@ -2199,11 +2196,9 @@ async function loadFolderBadges() {
 }
 
 function isMarketingEmail(m) {
-  // Check if message is a marketing email (outbound with FAMILIADA HTML branding)
-  // Note: We no longer add [Marketing] prefix to subjects, so we detect by HTML content only
-  return m.direction === "outbound" && (
-    (m.body_html && (m.body_html.includes("FAMILIADA") || m.body_html.includes("familiada.online")))
-  );
+  // Check if message is a marketing email by is_marketing flag
+  // This flag is set when sending from marketing panel
+  return m.direction === "outbound" && m.is_marketing === true;
 }
 
 function stripMarketingPrefix(subject) {

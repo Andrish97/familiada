@@ -832,7 +832,7 @@ async function handleAdminMarketingApi(request, env, url) {
     }
 
     // Save message record for EACH email (so they appear individually in "Sent" and "Marketing" folders)
-    // Marketing emails are detected by HTML content (FAMILIADA branding), not by subject prefix
+    // Marketing emails are detected by is_marketing flag, not by subject prefix
     const msgSubject = mktSubject;
     let savedCount = 0;
     for (const email of validEmails.slice(0, 100)) { // Limit to 100 to avoid timeout
@@ -844,6 +844,13 @@ async function handleAdminMarketingApi(request, env, url) {
           p_body_html: emailHtml,
           p_report_id: null,
           p_queue_id:  null,
+        });
+        // Also set is_marketing flag directly via SQL
+        await supabaseRequest(env, `/rest/v1/messages`, {
+          method: "PATCH",
+          headers: { Prefer: "return=minimal" },
+          body: { is_marketing: true },
+          query: `to_email=eq.${email}`,
         });
         savedCount++;
       } catch (e) {
