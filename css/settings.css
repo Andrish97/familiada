@@ -1747,6 +1747,9 @@ body.tools-fullscreen .tools-frame-wrap iframe{
 .mail-compose-pane .tox-editor-header {
   position: static !important;
 }
+.tox-statusbar {
+  display: none !important;
+}
 .tox-tinymce {
   border-radius: 8px !important;
   overflow: hidden;

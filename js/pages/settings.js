@@ -2092,39 +2092,41 @@ async function loadMailFolder({ silent = false } = {}) {
       const json = await res.json();
       msgRows = json.rows || [];
     } else if (msgActiveFolder === "marketing") {
-      // Fetch marketing emails from messages table (outbound with marketing flag)
-      const res = await adminFetch(`/messages?filter=sent&limit=500`);
+      // Fetch ALL messages and filter for marketing
+      const res = await adminFetch(`/messages?filter=all&limit=500`);
       if (!res.ok) throw new Error(await res.text());
       const json = await res.json();
-      // Filter for marketing emails (those with full HTML body and Familiada branding)
+      // Filter for marketing emails (outbound with full HTML Familiada branding)
       msgRows = (json.rows || []).filter(m => 
         m.direction === "outbound" && 
         m.body_html && 
-        m.body_html.includes("FAMILIADA")
+        (m.body_html.includes("FAMILIADA") || m.body_html.includes("familiada.online"))
       );
     } else {
-      const res = await adminFetch(`/messages?filter=${encodeURIComponent(msgActiveFolder)}&limit=100`);
+      const res = await adminFetch(`/messages?filter=${encodeURIComponent(msgActiveFolder)}&limit=500`);
       if (!res.ok) throw new Error(await res.text());
       const json = await res.json();
       msgRows = json.rows || [];
       
       // For "sent" folder, also include marketing emails
       if (msgActiveFolder === "sent") {
-        try {
-          const allRes = await adminFetch(`/messages?filter=all&limit=500`);
-          if (allRes.ok) {
-            const allJson = await allRes.json();
-            const marketingEmails = (allJson.rows || []).filter(m => 
-              m.direction === "outbound" && 
-              m.body_html && 
-              m.body_html.includes("FAMILIADA") &&
-              !msgRows.some(existing => existing.id === m.id)
-            );
-            msgRows = [...msgRows, ...marketingEmails];
-            // Sort by date
-            msgRows.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-          }
-        } catch (e) { console.error("[loadMailFolder] marketing merge error:", e); }
+        const marketingEmails = msgRows.filter(m => 
+          m.direction === "outbound" && 
+          m.body_html && 
+          (m.body_html.includes("FAMILIADA") || m.body_html.includes("familiada.online"))
+        );
+        // If we have marketing emails, reload from "all" to get everything
+        if (marketingEmails.length > 0) {
+          try {
+            const allRes = await adminFetch(`/messages?filter=all&limit=500`);
+            if (allRes.ok) {
+              const allJson = await allRes.json();
+              const allOutbound = (allJson.rows || []).filter(m => m.direction === "outbound");
+              msgRows = allOutbound;
+              msgRows.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            }
+          } catch (e) { console.error("[loadMailFolder] sent merge error:", e); }
+        }
       }
     }
     renderMailList(msgRows);
@@ -2333,7 +2335,7 @@ async function openMessage(id) {
     // Refresh badges after marking as read
     loadFolderBadges();
   } catch (e) { 
-    console.log("[openMessage] mark read: endpoint not available yet"); 
+    // Endpoint not available yet - that's OK
   }
 
   const conv = document.getElementById("mailConv");
