@@ -2196,8 +2196,8 @@ async function loadFolderBadges() {
 
 function isMarketingEmail(m) {
   // Check if message is a marketing email by is_marketing flag
-  // This flag is set when sending from marketing panel
-  return m.direction === "outbound" && m.is_marketing === true;
+  // This includes both outbound campaigns AND inbound replies (auto-tagged)
+  return m.is_marketing === true;
 }
 
 function stripMarketingPrefix(subject) {
