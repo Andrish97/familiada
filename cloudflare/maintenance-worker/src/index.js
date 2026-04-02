@@ -799,17 +799,20 @@ async function handleAdminMarketingApi(request, env, url) {
     const emailHtml = custom_body || "";
 
     // Generate plain text from HTML for Apple Mail preview
+    // IMPORTANT: Strip <style> blocks FIRST before removing HTML tags
     const emailText = emailHtml
-      .replace(/<[^>]*>/g, ' ')           // Remove all HTML tags
-      .replace(/&nbsp;/g, ' ')            // Replace &nbsp;
-      .replace(/&amp;/g, '&')             // Replace &amp;
-      .replace(/&lt;/g, '<')              // Replace &lt;
-      .replace(/&gt;/g, '>')              // Replace &gt;
-      .replace(/&quot;/g, '"')            // Replace &quot;
-      .replace(/&#39;/g, "'")             // Replace &#39;
-      .replace(/\s+/g, ' ')               // Collapse whitespace
+      .replace(/<style[^>]*>[\\s\\S]*?<\\/style>/gi, '')  // Remove <style> blocks FIRST
+      .replace(/<[^>]*>/g, ' ')                           // Remove all HTML tags
+      .replace(/:[^;]+;/g, ' ')                           // Remove CSS properties like :root{...}
+      .replace(/&nbsp;/g, ' ')                            // Replace &nbsp;
+      .replace(/&amp;/g, '&')                             // Replace &amp;
+      .replace(/&lt;/g, '<')                              // Replace &lt;
+      .replace(/&gt;/g, '>')                              // Replace &gt;
+      .replace(/&quot;/g, '"')                            // Replace &quot;
+      .replace(/&#39;/g, "'")                             // Replace &#39;
+      .replace(/\\s+/g, ' ')                              // Collapse whitespace
       .trim()
-      .slice(0, 500);                     // Limit length for preview
+      .slice(0, 500);                                     // Limit length for preview
 
     // Insert into mail_queue (batch insert for all recipients)
     const queueRows = validEmails.map(email => ({
@@ -946,13 +949,16 @@ async function handleContactSubmit(request, env) {
     });
     
     // Generate plain text from HTML for Apple Mail preview
+    // IMPORTANT: Strip <style> blocks FIRST before removing HTML tags
     const emailText = html
-      .replace(/<[^>]*>/g, ' ')
-      .replace(/&nbsp;/g, ' ')
-      .replace(/&amp;/g, '&')
-      .replace(/\s+/g, ' ')
+      .replace(/<style[^>]*>[\\s\\S]*?<\\/style>/gi, '')  // Remove <style> blocks FIRST
+      .replace(/<[^>]*>/g, ' ')                           // Remove all HTML tags
+      .replace(/:[^;]+;/g, ' ')                           // Remove CSS properties
+      .replace(/&nbsp;/g, ' ')                            // Replace &nbsp;
+      .replace(/&amp;/g, '&')                             // Replace &amp;
+      .replace(/\\s+/g, ' ')                              // Collapse whitespace
       .trim()
-      .slice(0, 500);
+      .slice(0, 500);                                     // Limit length for preview
 
     await supabaseRequest(env, "/rest/v1/mail_queue", {
       method: "POST",
@@ -1390,15 +1396,18 @@ async function handleAdminMessagesApi(request, env, url) {
 
     // Use body_html from client if provided (TinyMCE HTML), otherwise use plain text
     const emailHtml = body_html || String(msgBody);
-    
+
     // Generate plain text from HTML for Apple Mail preview
+    // IMPORTANT: Strip <style> blocks FIRST before removing HTML tags
     const emailText = emailHtml
-      .replace(/<[^>]*>/g, ' ')
-      .replace(/&nbsp;/g, ' ')
-      .replace(/&amp;/g, '&')
-      .replace(/\s+/g, ' ')
+      .replace(/<style[^>]*>[\\s\\S]*?<\\/style>/gi, '')  // Remove <style> blocks FIRST
+      .replace(/<[^>]*>/g, ' ')                           // Remove all HTML tags
+      .replace(/:[^;]+;/g, ' ')                           // Remove CSS properties
+      .replace(/&nbsp;/g, ' ')                            // Replace &nbsp;
+      .replace(/&amp;/g, '&')                             // Replace &amp;
+      .replace(/\\s+/g, ' ')                              // Collapse whitespace
       .trim()
-      .slice(0, 500);
+      .slice(0, 500);                                     // Limit length for preview
 
     // Insert into mail_queue first
     const queueRes = await supabaseRequest(env, "/rest/v1/mail_queue", {
