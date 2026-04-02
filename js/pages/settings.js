@@ -2102,11 +2102,15 @@ async function loadMailFolder({ silent = false } = {}) {
         throw new Error(errorText);
       }
       const json = await res.json();
-      // Filter for marketing emails (outbound with [Marketing] prefix in subject)
+      // Filter for marketing emails (outbound with FAMILIADA HTML branding OR [Marketing] subject fallback)
       msgRows = (json.rows || []).filter(m =>
         m.direction === "outbound" &&
-        m.subject &&
-        m.subject.startsWith("[Marketing]")
+        (
+          // Primary: HTML with FAMILIADA branding
+          (m.body_html && (m.body_html.includes("FAMILIADA") || m.body_html.includes("familiada.online"))) ||
+          // Fallback: [Marketing] subject prefix
+          (m.subject && m.subject.includes("[Marketing]"))
+        )
       );
       console.log("[loadMailFolder] Marketing folder:", msgRows.length, "messages");
     } else {
@@ -2126,8 +2130,10 @@ async function loadMailFolder({ silent = false } = {}) {
       if (msgActiveFolder === "sent") {
         const marketingEmails = msgRows.filter(m =>
           m.direction === "outbound" &&
-          m.subject &&
-          m.subject.startsWith("[Marketing]")
+          (
+            (m.body_html && (m.body_html.includes("FAMILIADA") || m.body_html.includes("familiada.online"))) ||
+            (m.subject && m.subject.includes("[Marketing]"))
+          )
         );
         // If we have marketing emails, reload from "all" to get everything
         if (marketingEmails.length > 0) {
@@ -2197,6 +2203,19 @@ async function loadFolderBadges() {
   }
 }
 
+function isMarketingEmail(m) {
+  // Check if message is a marketing email (outbound with FAMILIADA branding)
+  return m.direction === "outbound" && (
+    (m.body_html && (m.body_html.includes("FAMILIADA") || m.body_html.includes("familiada.online"))) ||
+    (m.subject && m.subject.includes("[Marketing]"))
+  );
+}
+
+function stripMarketingPrefix(subject) {
+  // Remove [Marketing] prefix from subject for display
+  return (subject || "").replace(/^\[Marketing\]\s*/i, "").trim();
+}
+
 function renderMailList(rows) {
   const body = document.getElementById("mailListBody");
   if (!body) return;
@@ -2252,15 +2271,24 @@ function renderMailList(rows) {
       item.className = "mail-thread-item" + (isInbound ? "" : "") + (r.id === msgActiveId ? " active" : "");
       item.dataset.msgId = r.id;
       const dateStr = new Date(r.created_at).toLocaleDateString("pl-PL", { day:"2-digit", month:"2-digit" });
-      const fromTo = isInbound 
-        ? `↙ ${escSetting(r.from_email || "—")}` 
+      const fromTo = isInbound
+        ? `↙ ${escSetting(r.from_email || "—")}`
         : `📢 ${escSetting(r.to_email || "Kampania")}`;
+      
+      // Marketing badge for outbound emails
+      const marketingBadge = !isInbound && isMarketingEmail(r)
+        ? `<span style="font-size:9px;padding:1px 5px;border-radius:4px;background:rgba(255,234,166,.15);color:#ffeaa6;border:1px solid rgba(255,234,166,.3)">marketing</span>`
+        : "";
+      
+      // Strip [Marketing] prefix from subject
+      const displaySubject = stripMarketingPrefix(r.subject);
+      
       item.innerHTML = `
         <div class="mail-ti-row">
           <span class="mail-ti-from">${fromTo}</span>
           <span class="mail-ti-date">${dateStr}</span>
         </div>
-        <div class="mail-ti-subject">${escSetting(r.subject || "—")}</div>
+        <div class="mail-ti-subject" style="display:flex;gap:4px;align-items:center">${marketingBadge}${escSetting(displaySubject || "—")}</div>
         <div class="mail-ti-preview" style="opacity:.45">${isInbound ? 'Odpowiedź na kampanię' : 'Kampania marketingowa'}</div>`;
       item.addEventListener("click", () => openMessage(r.id));
       body.appendChild(item);
@@ -2277,6 +2305,15 @@ function renderMailList(rows) {
     const sourceBadge = { email: "📧", form: "📝", compose: "✏" }[r.source] || "";
     const from = isInbound ? (r.from_email || "—") : (r.to_email || "—");
     const ticketPart = r.ticket_number ? ` · <span style="opacity:.5;font-size:10px">${escSetting(r.ticket_number)}</span>` : "";
+    
+    // Marketing badge for outbound marketing emails
+    const marketingBadge = !isInbound && isMarketingEmail(r)
+      ? `<span style="font-size:9px;padding:1px 5px;border-radius:4px;background:rgba(255,234,166,.15);color:#ffeaa6;border:1px solid rgba(255,234,166,.3);margin-right:4px">marketing</span>`
+      : "";
+    
+    // Strip [Marketing] prefix from subject
+    const displaySubject = stripMarketingPrefix(r.subject);
+    
     // Extract ALL text from message for preview - show EVERYTHING
     let previewText = "";
 
@@ -2330,7 +2367,7 @@ function renderMailList(rows) {
         <span class="mail-ti-from">${sourceBadge} ${escSetting(from)}</span>
         <span class="mail-ti-date">${dateStr}</span>
       </div>
-      <div class="mail-ti-subject">${escSetting(r.subject || "—")}</div>
+      <div class="mail-ti-subject" style="display:flex;gap:4px;align-items:center">${marketingBadge}${escSetting(displaySubject || "—")}</div>
       <div class="mail-ti-preview">${escSetting(previewText)}</div>`;
     item.addEventListener("click", () => openMessage(r.id));
     body.appendChild(item);
