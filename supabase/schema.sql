@@ -380,7 +380,7 @@ begin
     return new;
   end if;
 
-  -- gra preparowana nie ma sondażu, więc nie blokuj statusów z tej funkcji
+  -- gra preparowana nie ma ankiety, więc nie blokuj statusów z tej funkcji
   if new.type = 'prepared'::game_type then
     return new;
   end if;
@@ -2298,7 +2298,7 @@ select
     else false
   end as can_poll,
 
-  /* eksport: blokuj gdy sondaż otwarty */
+  /* eksport: blokuj gdy ankieta otwarta */
   case
     when g.status = 'poll_open' then false
     else true
@@ -2307,7 +2307,7 @@ select
   /* reason_play (opcjonalnie) */
   case
     when g.type in ('poll_text','poll_points') and g.status <> 'ready'
-      then 'Gra dostępna dopiero po zamknięciu sondażu.'
+      then 'Gra dostępna dopiero po zamknięciu ankiety.'
     when g.type = 'prepared' and (select qn from agg) < 10
       then 'Musi być co najmniej 10 pytań.'
     when g.type = 'prepared' and not ((select an_min from agg) between 3 and 6 and (select an_max from agg) between 3 and 6)
@@ -2324,7 +2324,7 @@ select
   /* reason_poll (opcjonalnie) */
   case
     when g.type = 'prepared'
-      then 'Preparowany nie ma sondażu.'
+      then 'Preparowana nie ma ankiety.'
     when (g.type in ('poll_text','poll_points') and (select qn from agg) < 10)
       then 'Musi być co najmniej 10 pytań.'
     when g.type = 'poll_points' and not ((select an_min from agg) between 3 and 6 and (select an_max from agg) between 3 and 6)
@@ -5220,7 +5220,7 @@ begin
   end if;
 
   if g.status <> 'poll_open'::game_status then
-    return jsonb_build_object('ok', false, 'reason', 'Sondaż nie jest otwarty.');
+    return jsonb_build_object('ok', false, 'reason', 'Ankieta nie jest otwarta.');
   end if;
 
   if g.type = 'poll_text'::game_type then
@@ -5684,7 +5684,7 @@ begin
   end if;
 
   if g.status <> 'poll_open'::game_status then
-    -- uczestnik ma widzieć tylko aktywny sondaż
+    -- uczestnik ma widzieć tylko aktywną ankietę
     raise exception 'poll_get_payload: poll is not open';
   end if;
 
@@ -7553,7 +7553,7 @@ CREATE FUNCTION "public"."polls_hub_can_close"("p_game_id" "uuid", "p_poll_type"
     SET "search_path" TO 'public', 'pg_temp'
     AS $$
 BEGIN
-  -- Nie zamykamy jeśli są jeszcze aktywne taski (niezagłosowane): X != Y
+  -- Nie zamykamy jeśli są jeszcze aktywne taski (niewypełnione): X != Y
   IF EXISTS (
     SELECT 1
     FROM public.poll_tasks t
@@ -7910,7 +7910,7 @@ begin
   select
     t.id,
     t.game_id,
-    coalesce(g.name, ('Sondaż ' || left(t.game_id::text, 8))::text) as game_name,
+    coalesce(g.name, ('Ankieta ' || left(t.game_id::text, 8))::text) as game_name,
     t.poll_type,
     case
       when t.done_at is not null then 'done'
