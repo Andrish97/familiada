@@ -92,7 +92,7 @@ const pl = {
   },
   guestGuard: {
     title: "Niedostępne w koncie gościa",
-    message: "Ta sekcja jest dostępna tylko dla zarejestrowanych użytkowników. Zaloguj się lub załóż konto, aby korzystać z udostępniania, subskrypcji i panelu sondaży.",
+    message: "Ta sekcja jest dostępna tylko dla zarejestrowanych użytkowników. Zaloguj się lub załóż konto, aby korzystać z udostępniania, subskrypcji i panelu ankiet.",
     back: "Wróć do moich gier",
     login: "Zaloguj / Załóż konto",
   },
@@ -124,7 +124,7 @@ const pl = {
       t1: {
         alt: "Tworzenie nowej gry Familiada online - wybór trybu ankiety lub gry preparowanej",
         t: "Własny generator pytań i tryby gry",
-        d: "Wybierz jak chcesz zbierać odpowiedzi. Typowa ankieta i Punktacja zbierają głosy od prawdziwych ludzi, a gra preparowana pozwala na szybkie wpisanie własnych pytań i punktów.",
+        d: "Wybierz jak chcesz zbierać odpowiedzi. Typowa ankieta i Punktacja zbierają wyniki od prawdziwych ludzi, a gra preparowana pozwala na szybkie wpisanie własnych pytań i punktów.",
       },
       t2: {
         alt: "Edytor pytań do Familiady - konfiguracja punktów i odpowiedzi",
@@ -184,10 +184,10 @@ const pl = {
     },
     forwhom: {
       title: "Dla kogo jest Familiada Online?",
-      t1: { t: "Wydarzenia firmowe i integracje", d: "Familiada to sprawdzony format na integrację zespołu — angażuje wszystkich, rozśmiesza i nie wymaga żadnego doświadczenia od uczestników. Przygotuj grę przed wydarzeniem, zbierz odpowiedzi w sondażu i poprowadź rozgrywkę na żywo." },
+      t1: { t: "Wydarzenia firmowe i integracje", d: "Familiada to sprawdzony format na integrację zespołu — angażuje wszystkich, rozśmiesza i nie wymaga żadnego doświadczenia od uczestników. Przygotuj grę przed wydarzeniem, zbierz odpowiedzi w ankiecie i poprowadź rozgrywkę na żywo." },
       t2: { t: "Animatorzy i wodzirejowie", d: "Prowadzisz wydarzenia zawodowo i potrzebujesz narzędzia które nie zawiedzie przed klientem. Panel operatora, osobny widok prowadzącego i tablica wyników działają niezależnie — każdy skupia się na swojej roli." },
-      t3: { t: "Szkoły i konkursy wiedzy", d: "Nauczyciele i animatorzy używają systemu do prowadzenia konkursów klasowych i szkolnych. Sondaż zbiera odpowiedzi uczniów, a tablica wyników buduje napięcie podczas rozgrywki." },
-      t4: { t: "Wesela i urodziny", d: "Familiada jako atrakcja na weselu lub urodzinach — goście odpowiadają w sondażu przed imprezą, a gra na żywo bawi wszystkich przy stole. Wystarczy telefon, zero technikaliów dla gości." },
+      t3: { t: "Szkoły i konkursy wiedzy", d: "Nauczyciele i animatorzy używają systemu do prowadzenia konkursów klasowych i szkolnych. Ankieta zbiera odpowiedzi uczniów, a tablica wyników buduje napięcie podczas rozgrywki." },
+      t4: { t: "Wesela i urodziny", d: "Familiada jako atrakcja na weselu lub urodzinach — goście odpowiadają w ankiecie przed imprezą, a gra na żywo bawi wszystkich przy stole. Wystarczy telefon, zero technikaliów dla gości." },
       t5: { t: "Konferencje i wydarzenia sceniczne", d: "Panel operatora i osobny widok prowadzącego pozwalają płynnie poprowadzić grę na dużej scenie. Tablica wyników działa na dowolnym ekranie — TV, rzutniku lub monitorze." },
       t6: { t: "Domy kultury i świetlice", d: "Cykliczna atrakcja dla społeczności lokalnej — na wieczorze gier, festynie lub spotkaniu integracyjnym. Nie wymaga żadnego specjalistycznego sprzętu ani przygotowania technicznego." },
       t7: { t: "Grupy znajomych", d: "Impreza urodzinowa, spotkanie przy stole, wieczór w większym gronie. Familiada angażuje wszystkich naraz — nawet tych którzy zwykle nie grają. Przygotuj grę preparowaną z gotowymi pytaniami i wszyscy mogą grać nie znając odpowiedzi z góry." },
@@ -196,24 +196,24 @@ const pl = {
     faq: {
       title: "Najczęstsze pytania",
       cat1: "Ogólne",
-      cat2: "Przygotowanie i sondaż",
+      cat2: "Przygotowanie i ankieta",
       cat3: "Sprzęt i wymagania",
       cat4: "Rozgrywka na żywo",
-      q1:  { q: "Czy Familiada Online jest bezpłatna?", a: "Tak, w pełni bezpłatna. Możesz tworzyć gry, zbierać sondaże i prowadzić rozgrywkę bez żadnych opłat." },
+      q1:  { q: "Czy Familiada Online jest bezpłatna?", a: "Tak, w pełni bezpłatna. Możesz tworzyć gry, zbierać ankiety i prowadzić rozgrywkę bez żadnych opłat." },
       q2:  { q: "Czy trzeba instalować aplikację?", a: "Nie. System działa w przeglądarce na każdym urządzeniu — komputerze, tablecie i telefonie. Żadnej instalacji, żadnej konfiguracji." },
       q3:  { q: "W jakich językach działa system?", a: "Interfejs jest dostępny po polsku, angielsku i ukraińsku. Język zmienia się automatycznie na podstawie ustawień przeglądarki lub ręcznego wyboru." },
-      q4:  { q: "Czy trzeba zakładać konto?", a: "Nie. Tryb gościa daje pełną funkcjonalność rozgrywki — możesz tworzyć gry, zbierać sondaże i prowadzić grę na żywo. Jedyne czego nie możesz bez konta to dodawać znajomych i udostępniać im materiały. Konto wymaga tylko adresu e-mail, bez logowania przez Google." },
+      q4:  { q: "Czy trzeba zakładać konto?", a: "Nie. Tryb gościa daje pełną funkcjonalność rozgrywki — możesz tworzyć gry, zbierać ankiety i prowadzić grę na żywo. Jedyne czego nie możesz bez konta to dodawać znajomych i udostępniać im materiały. Konto wymaga tylko adresu e-mail, bez logowania przez Google." },
       q5:  { q: "Co dokładnie znaczy tryb gościa?", a: "Pełna funkcjonalność rozgrywki bez zakładania konta. Dane zapisywane są w przeglądarce — jeśli wyczyścisz historię lub zmienisz urządzenie, przepadną. Uwaga: nieaktywne konto gościa może zostać usunięte po 5 dniach." },
       q6:  { q: "Czy historia gier jest zapisywana?", a: "W trybie gościa historia istnieje dopóki dane są w przeglądarce. Po zalogowaniu na konto gry są synchronizowane i dostępne z każdego urządzenia — możesz do nich wrócić, powtórzyć grę lub edytować pytania." },
-      q7:  { q: "Ile czasu zajmuje przygotowanie gry?", a: "W grze preparowanej — wpisujesz pytania i odpowiedzi, gotowe w kilkanaście minut. W grze sondażowej dochodzi etap zbierania głosów, który trwa tyle ile zdecydujesz — godzinę, dzień, tydzień. Samo prowadzenie rozgrywki na żywo to zwykle od 20 minut wzwyż." },
+      q7:  { q: "Ile czasu zajmuje przygotowanie gry?", a: "W grze preparowanej — wpisujesz pytania i odpowiedzi, gotowe w kilkanaście minut. W grze ankietowej dochodzi etap zbierania głosów, który trwa tyle ile zdecydujesz — godzinę, dzień, tydzień. Samo prowadzenie rozgrywki na żywo to zwykle od 20 minut wzwyż." },
       q8:  { q: "Czy mogę użyć własnych pytań?", a: "Tak — wszystkie pytania tworzysz sam w edytorze. Możesz je organizować w bazy z folderami i tagami, udostępniać znajomym i używać wielokrotnie. Nie ma gotowych zestawów do pobrania." },
       q9:  { q: "Czy jest limit pytań lub gier?", a: "Nie ma limitu gier ani pytań. Jedna przygotowana gra może być używana wielokrotnie — jeśli masz kilka gotowych, możesz rozgrywać je jedną po drugiej bez ograniczeń." },
-      q10: { q: "Ile odpowiedzi może być na tablicy?", a: "W grze preparowanej od 3 do 6 — wybierasz sam przy tworzeniu. W grze sondażowej zależy to od ankietowanych — system bierze najpopularniejsze odpowiedzi po normalizacji do 100 punktów." },
-      q11: { q: "Czy można edytować pytania po zebraniu sondażu?", a: "Możliwości edycji są ograniczone — głosy są przypisane do konkretnych pytań i odpowiedzi. Jeśli potrzebujesz pełnej edycji, możesz wyeksportować wyniki sondażu i wgrać je jako grę preparowaną — wtedy możesz swobodnie modyfikować odpowiedzi i punkty." },
-      q12: { q: "Ile osób może odpowiadać w sondażu?", a: "Nie ma limitu — przez link lub kod QR mogą głosować dziesiątki lub setki osób jednocześnie." },
-      q13: { q: "Czy uczestnicy mogą widzieć wyniki sondażu przed grą?", a: "Nie powinni — to kluczowe dla zabawy. Uczestnicy rozgrywki zgadują odpowiedzi ankietowanych, więc jeśli znają wyniki z góry, gra traci sens. Zadbaj żeby ankietowani i gracze to były różne grupy ludzi." },
+      q10: { q: "Ile odpowiedzi może być na tablicy?", a: "W grze preparowanej od 3 do 6 — wybierasz sam przy tworzeniu. W grze ankietowej zależy to od ankietowanych — system bierze najpopularniejsze odpowiedzi po normalizacji do 100 punktów." },
+      q11: { q: "Czy można edytować pytania po zebraniu ankiety?", a: "Możliwości edycji są ograniczone — głosy są przypisane do konkretnych pytań i odpowiedzi. Jeśli potrzebujesz pełnej edycji, możesz wyeksportować wyniki ankiety i wgrać je jako grę preparowaną — wtedy możesz swobodnie modyfikować odpowiedzi i punkty." },
+      q12: { q: "Ile osób może odpowiadać w ankiecie?", a: "Nie ma limitu — przez link lub kod QR mogą głosować dziesiątki lub setki osób jednocześnie." },
+      q13: { q: "Czy uczestnicy mogą widzieć wyniki ankiety przed grą?", a: "Nie powinni — to kluczowe dla zabawy. Uczestnicy rozgrywki zgadują odpowiedzi ankietowanych, więc jeśli znają wyniki z góry, gra traci sens. Zadbaj żeby ankietowani i gracze to były różne grupy ludzi." },
       q14: { q: "Jak dokładnie działa normalizacja do 100 punktów?", a: "Po zebraniu głosów system przelicza każdą odpowiedź proporcjonalnie tak, żeby suma wynosiła 100. Jeśli 40% ankietowanych odpowiedziało 'pies' — na tablicy pojawia się 40 punktów. Mniej popularne odpowiedzi dostają mniej. Dokładnie jak w telewizji." },
-      q15: { q: "Czy dane z sondażu można zobaczyć przed grą?", a: "Tak. W panelu sondaży widzisz wyniki na bieżąco — które odpowiedzi zbierają najwięcej głosów i jaki jest postęp zbierania. Ty decydujesz kiedy zamknąć głosowanie i przejść do gry." },
+      q15: { q: "Czy dane z ankiety można zobaczyć przed grą?", a: "Tak. W panelu ankiet widzisz wyniki na bieżąco — które odpowiedzi zbierają najwięcej wyników i jaki jest postęp zbierania. Ty decydujesz kiedy zamknąć ankietę i przejść do gry." },
       q16: { q: "Ile urządzeń potrzebuję?", a: "Cztery — i wszystkie są obowiązkowe. Operator (panel sterowania), tablica wyników (TV lub rzutnik), widok prowadzącego (tablet lub telefon) i buzzer do pojedynku. Bez podłączenia każdego z nich rozgrywka nie zadziała." },
       q17: { q: "Czy urządzenia muszą być w tej samej sieci?", a: "Nie. Łączą się przez internet i mogą być w różnych sieciach — wygodniejsze niż rozwiązania oparte na Bluetooth czy lokalnym WiFi." },
       q18: { q: "Ile osób powinno być w drużynie?", a: "Gra zakłada dwie drużyny. Optymalna liczba to 3–6 osób w każdej — najlepiej równa po obu stronach. Poniżej 3 jest smutno, powyżej 6 niekomfortowo. Technicznie możliwe są nawet jednoosobowe drużyny." },
@@ -221,7 +221,7 @@ const pl = {
       q20: { q: "Czy można zagrać kilka gier pod rząd?", a: "Tak, bez ograniczeń. Jedna przygotowana gra może być używana wielokrotnie, a jeśli masz przygotowanych kilka, możesz je rozgrywać jedną po drugiej." },
       q21: { q: "Czy można przerwać grę i wrócić do niej później?", a: "Nie. Jeśli zamkniesz panel operatora, rozgrywkę trzeba zacząć od nowa. Planuj z góry że gra odbywa się w jednym ciągłym bloku." },
       q22: { q: "Jak działają błędy X?", a: "Dokładnie jak w oryginalnej Familiadzie. Grająca drużyna może popełnić łącznie do 3 błędów — czyli odpowiedzi których nie ma na tablicy. Przy trzecim błędzie drużyna przeciwna ma szansę na przejęcie banku punktów jedną odpowiedzią." },
-      q23: { q: "Jak wygląda finał?", a: "Klasyczny finał jak w telewizji. Zwycięska drużyna wybiera dwóch uczestników — jeden wychodzi, drugi szybko odpowiada na 5 pytań. Potem wraca pierwszy uczestnik, nie znając poprzednich odpowiedzi. Porównujemy wyniki z sondażem. Cel to 200 punktów łącznie — lub próg ustawiony przez operatora." },
+      q23: { q: "Jak wygląda finał?", a: "Klasyczny finał jak w telewizji. Zwycięska drużyna wybiera dwóch uczestników — jeden wychodzi, drugi szybko odpowiada na 5 pytań. Potem wraca pierwszy uczestnik, nie znając poprzednich odpowiedzi. Porównujemy wyniki z ankietą. Cel to 200 punktów łącznie — lub próg ustawiony przez operatora." },
       q24: { q: "Czy operator musi znać pytania z góry?", a: "Nie musi — pytania i odpowiedzi są widoczne w panelu operatora podczas rozgrywki. W praktyce operatorem najczęściej zostaje osoba która grę przygotowała. System intuicyjnie prowadzi przez kolejne etapy, więc trudno się zgubić nawet przy pierwszym razie." },
       q25: { q: "Czy operator może jednocześnie być prowadzącym?", a: "Technicznie tak — oba widoki działają na osobnych urządzeniach. Jednak system jest zaprojektowany z myślą o rozdzieleniu tych ról: operator skupia się na sterowaniu, prowadzący na publiczności i graczach. Łączenie ról jest możliwe, ale wpłynie na jakość prowadzenia gry." },
       q26: { q: "Co się dzieje gdy internet przestanie działać w trakcie gry?", a: "System wymaga stałego połączenia z internetem. Przy chwilowej utracie połączenia widoki mogą przestać się aktualizować. Zalecamy stabilne WiFi lub LTE dla wszystkich urządzeń biorących udział w rozgrywce." },
@@ -661,15 +661,15 @@ const pl = {
     },
   },
   polls: {
-    title: "Familiada — sondaż",
+    title: "Familiada — ankieta",
     backToGames: "← Moje gry",
-    backToHub: "← Centrum sondaży",
+    backToHub: "← Centrum ankiet",
     logout: "Wyloguj",
-    pageTitle: "Sondaż",
+    pageTitle: "Ankieta",
     linkPlaceholder: "Link pojawi się po uruchomieniu...",
     qrFailed: "QR nie działa.",
     missingId: "Brak parametru id.",
-    defaultName: "Sondaż",
+    defaultName: "Ankieta",
     actions: {
       copyLink: "Kopiuj link",
       copyShort: "Kopiuj",
@@ -679,13 +679,13 @@ const pl = {
       refresh: "⟳ Odśwież wyniki",
       cancel: "Anuluj",
       closeAndNormalize: "Zamknij i przelicz",
-      noPoll: "Brak sondażu",
-      openPoll: "Uruchomić sondaż",
+      noPoll: "Brak ankiety",
+      openPoll: "Uruchomić ankietę",
       openReady: "Gotowe do uruchomienia.",
-      closePoll: "Zamknąć sondaż",
-      closeReady: "Możesz zamknąć sondaż.",
+      closePoll: "Zamknąć ankietę",
+      closeReady: "Możesz zamknąć ankietę.",
       reopenPoll: "Uruchomić ponownie",
-      reopenHint: "Otworzy nową sesję i usunie poprzednie dane sondażowe.",
+      reopenHint: "Otworzy nową sesję i usunie poprzednie dane ankietowe.",
       unknownStatus: "Nieznany status.",
     },
     results: {
@@ -701,21 +701,21 @@ const pl = {
     },
     meta: {
       pollText:
-        "Tryb: typowy sondaż (tekst). Start: ≥ {min} pytań. Zamknięcie: w każdym pytaniu ≥ 3 różne odpowiedzi.",
+        "Tryb: typowa ankieta. Start: ≥ {min} pytań. Zamknięcie: w każdym pytaniu ≥ 3 różne odpowiedzi.",
       pollPoints:
         "Tryb: punktacja. Start: ≥ {min} pytań i każde pytanie ma {minAns}–{maxAns} odpowiedzi. Zamknięcie: w każdym pytaniu co najmniej 3 odpowiedzi muszą mieć ≥ 3 pkt po przeliczeniu do 100.",
-      prepared: "Gra preparowana nie ma sondażu.",
+      prepared: "Gra preparowana nie ma ankiety.",
     },
     validation: {
-      openOnlyDraft: "Sondaż można uruchomić tylko ze stanu SZKIC.",
+      openOnlyDraft: "Ankietę można uruchomić tylko ze stanu SZKIC.",
       noGame: "Brak gry.",
-      preparedNoPoll: "Gra preparowana nie ma sondażu.",
+      preparedNoPoll: "Gra preparowana nie ma ankiety.",
       minQuestions: "Żeby uruchomić: liczba pytań musi być ≥ {min} (masz {count}).",
       pointsRange: "W trybie PUNKTACJA każde pytanie musi mieć {min}–{max} odpowiedzi.",
-      reopenOnlyClosed: "Ponowne uruchomienie możliwe tylko gdy sondaż jest ZAMKNIĘTY.",
-      closeOnlyOpen: "Sondaż można zamknąć tylko gdy jest OTWARTY.",
+      reopenOnlyClosed: "Ponowne uruchomienie możliwe tylko gdy ankieta jest ZAMKNIĘTY.",
+      closeOnlyOpen: "Ankietę można zamknąć tylko gdy jest OTWARTY.",
       closeWaitForTasks: "Nie można jeszcze zamknąć — ktoś jeszcze nie zagłosował (X≠Y).",
-      noActiveSession: "Brak aktywnej sesji głosowania.",
+      noActiveSession: "Brak aktywnej sesji ankiety.",
       noActiveSessionGeneric: "Brak aktywnej sesji.",
       closeMinPoints:
         "Aby zamknąć: w każdym pytaniu co najmniej 3 odpowiedzi muszą mieć ≥ 3 punkty po przeliczeniu.",
@@ -723,44 +723,44 @@ const pl = {
       unknownType: "Nieznany typ gry.",
     },
     copy: {
-      success: "Skopiowano link sondażu.",
+      success: "Skopiowano link ankiety.",
       failed: "Nie udało się skopiować.",
     },
     modals: {
       open: {
-        title: "Uruchomić sondaż?",
-        text: "Uruchomić sondaż dla „{name}”?",
+        title: "Uruchomić ankietę?",
+        text: "Uruchomić ankietę dla „{name}”?",
         ok: "Uruchom",
         cancel: "Anuluj",
       },
       closePoints: {
-        title: "Zakończyć sondaż?",
-        text: "Zamknąć sondaż i przeliczyć punkty do 100?",
+        title: "Zakończyć ankietę?",
+        text: "Zamknąć ankietę i przeliczyć punkty do 100?",
         ok: "Zakończ",
         cancel: "Anuluj",
       },
       reopen: {
         title: "Uruchomić ponownie?",
-        text: "Otworzyć sondaż ponownie? Poprzednie dane zostaną usunięte.",
+        text: "Otworzyć ankietę ponownie? Poprzednie dane zostaną usunięte.",
         ok: "Otwórz ponownie",
         cancel: "Anuluj",
       },
       closeText: {
-        title: "Zamknąć sondaż?",
-        text: "Zamknąć sondaż, wybrać TOP 6 i zapisać punkty do 100 dla każdego pytania?",
+        title: "Zamknąć ankietę?",
+        text: "Zamknąć ankietę, wybrać TOP 6 i zapisać punkty do 100 dla każdego pytania?",
         ok: "Zamknij",
         cancel: "Anuluj",
       },
     },
     status: {
-      opened: "Sondaż uruchomiony.",
-      closedPoints: "Sondaż zamknięty. Gra gotowa (unikatowe punkty).",
-      reopened: "Sondaż uruchomiony ponownie.",
-      closed: "Sondaż zamknięty. Gra gotowa.",
+      opened: "Ankieta uruchomiona.",
+      closedPoints: "Ankieta zamknięta. Gra gotowa (unikatowe punkty).",
+      reopened: "Ankieta uruchomiona ponownie.",
+      closed: "Ankieta zamknięta. Gra gotowa.",
     },
     errors: {
-      open: "Nie udało się uruchomić sondażu.",
-      close: "Nie udało się zamknąć sondażu.",
+      open: "Nie udało się uruchomić ankiety.",
+      close: "Nie udało się zamknąć ankietęu.",
       reopen: "Nie udało się otworzyć ponownie.",
       loadAnswers: "Nie udało się wczytać odpowiedzi.",
     },
@@ -775,7 +775,7 @@ const pl = {
       mergeWith: "Połącz z...",
       remove: "Usuń",
       editHint: "Edytuj odpowiedzi, a potem kliknij „Zamknij i przelicz”.",
-      cancelled: "Anulowano zamykanie (sondaż dalej otwarty).",
+      cancelled: "Anulowano zamykanie (ankieta dalej otwarta).",
       minAnswers:
         "Pytanie {ord}: po edycji zostało mniej niż 3 odpowiedzi. Dodaj/połącz inaczej.",
       leaveTitle: "Masz otwarte łączenie",
@@ -795,7 +795,7 @@ const pl = {
     backToBaseManager: "← Menadżer bazy",
     backToLogos: "← Moje logo",
     backToEditor: "← Edytor pytań",
-    backToPoll: "← Sondaż",
+    backToPoll: "← Ankieta",
     backToSubscriptions: "← Subskrypcje",
     backToAccount: "← Ustawienia konta",
     backToMarketplace: "← Gry Społeczności",
@@ -805,7 +805,7 @@ const pl = {
       general: "Ogólny opis",
       edit: "Dodawanie i edycja gry",
       bases: "Bazy pytań",
-      polls: "Sondaże",
+      polls: "Ankiety",
       subscriptions: "Subskrypcje",
       logo: "Tworzenie logo",
       connect: "Podłącz urządzenie",
@@ -823,7 +823,7 @@ const pl = {
       general: `<p class="m-p">
         Ta strona to wskazówki obsługi systemu do prowadzenia rozgrywki (turnieju)
         w stylu „Familiada”. Jej celem jest wyjaśnienie, jak przygotować grę,
-        zebrać wyniki (sondaż) i bez problemu poprowadzić rozgrywkę na żywo
+        zebrać wyniki (ankieta) i bez problemu poprowadzić rozgrywkę na żywo
         — nawet jeśli ktoś korzysta z systemu pierwszy raz.
       </p>
       
@@ -854,7 +854,7 @@ const pl = {
         Całość systemu została zaprojektowana tak,
         aby wyraźnie oddzielić przygotowanie treści
         od samej rozgrywki.
-        Pytania, odpowiedzi i sondaże przygotowuje się wcześniej,
+        Pytania, odpowiedzi i ankiety przygotowuje się wcześniej,
         natomiast w trakcie gry operator korzysta wyłącznie
         z panelu sterowania.
       </p>
@@ -878,12 +878,12 @@ const pl = {
         Wskarówki zostały podzielone na kolejne zakładki.
         Każda z nich opisuje inny etap pracy z systemem:
         od przygotowania gry,
-        przez sondaże,
+        przez ankiety,
         aż po prowadzenie rozgrywki na żywo.
       </p>`,
       edit: `<p class="m-p">
         Zakładka „Dodawanie i edycja gry” opisuje etap przygotowania gry
-        przed rozpoczęciem sondażu lub rozgrywki.
+        przed rozpoczęciem ankiety lub rozgrywki.
         Na tym etapie tworzysz strukturę gry:
         pytania, możliwe odpowiedzi oraz sposób ich punktowania.
       </p>
@@ -913,20 +913,20 @@ const pl = {
     
       <ul class="m-ul">
         <li>
-          <span class="m-strong">Typowy sondaż</span> —
+          <span class="m-strong">Typowa ankieta</span> —
           odpowiedzi są wpisywane przez ankietowanych,
           a punkty wynikają z liczby wskazań.
         </li>
         <li>
           <span class="m-strong">Punktacja odpowiedzi</span> —
           ankietowani wybierają spośród przygotowanych odpowiedzi,
-          a system zlicza głosy.
+          a system zlicza wyniki.
         </li>
         <li>
-          <span class="m-strong">Preparowany</span> —
+          <span class="m-strong">Preparowana</span> —
           odpowiedzi i punkty są ustalane ręcznie,
-          bez udziału sondażu.
-        </li><li><span class="m-strong">Gry społeczności</span>&nbsp;— odpowiedzi i punkty są pobrane z biblioteki Gier Społeczności, bez udziału sondażu.</li>
+          bez udziału ankiety.
+        </li><li><span class="m-strong">Gry społeczności</span>&nbsp;— odpowiedzi i punkty są pobrane z biblioteki Gier Społeczności, bez udziału ankiety.</li>
       </ul>
     
       <p class="m-p">
@@ -942,7 +942,7 @@ const pl = {
         za pomocą przycisku <span class="m-code">Edytuj</span>.
         Jest to pierwszy etap pracy z grą,
         w którym przygotowujesz całą jej treść
-        przed wykorzystaniem jej w sondażu lub rozgrywce.
+        przed wykorzystaniem jej w ankiecie lub rozgrywce.
       </p>
       
       <p class="m-p">
@@ -964,7 +964,7 @@ const pl = {
         System ogranicza pewne operacje,
         aby zachować spójność danych
         i zapobiec sytuacjom,
-        w których rozgrywka lub sondaż
+        w których rozgrywka lub ankieta
         przestają odpowiadać przygotowanej treści.
       </p>
     
@@ -979,7 +979,7 @@ const pl = {
       </p>
     
       <p class="m-p">
-        Zmiana pytania po uruchomieniu sondażu
+        Zmiana pytania po uruchomieniu ankiety
         może zostać zablokowana,
         ponieważ nawet drobna modyfikacja treści
         wpływa na sens zebranych odpowiedzi.
@@ -989,13 +989,13 @@ const pl = {
     
       <p class="m-p">
         Możliwość edycji odpowiedzi zależy od typu gry.
-        W grach sondażowych odpowiedzi są efektem ankiety,
-        dlatego przed sondażem możesz jedynie przygotować
+        W grach ankietowych odpowiedzi są efektem ankiety,
+        dlatego przed ankietą możesz jedynie przygotować
         ich ogólną strukturę lub przykłady.
       </p>
     
       <p class="m-p">
-        Po rozpoczęciu sondażu system może ograniczyć
+        Po rozpoczęciu ankiety system może ograniczyć
         dodawanie lub usuwanie odpowiedzi,
         aby nie mieszać odpowiedzi ankietowanych
         z nową treścią.
@@ -1005,7 +1005,7 @@ const pl = {
     
       <p class="m-p">
         Punkty nie zawsze są edytowalne ręcznie.
-        W grach sondażowych punkty wynikają bezpośrednio
+        W grach ankietowych punkty wynikają bezpośrednio
         z liczby udzielonych odpowiedzi,
         dlatego ich ręczna edycja nie ma sensu
         i jest zablokowana.
@@ -1013,14 +1013,14 @@ const pl = {
     
       <p class="m-p">
         Ręczne ustawianie punktów jest możliwe
-        tylko w trybie preparowanym,
+        tylko w trybie preparowanej,
         gdzie system nie korzysta z danych ankietowych.
       </p>
     
       <div class="m-note">
         <b>Dlaczego tak jest?</b><br>
         Dzięki temu to, co widzi widz na tablicy,
-        zawsze odpowiada rzeczywistym wynikom sondażu
+        zawsze odpowiada rzeczywistym wynikom ankiety
         albo jasno określonej, ręcznej punktacji.
       </div>
     
@@ -1339,9 +1339,9 @@ const pl = {
         Skróty nie działają podczas wpisywania tekstu w polach edycyjnych.
       </p>`,
       polls: `<p class="m-p">
-        Zakładka „Sondaże” opisuje etap zbierania odpowiedzi
+        Zakładka „Ankiety” opisuje etap zbierania odpowiedzi
         od ankietowanych przed właściwą rozgrywką.
-        Sondaż jest mostem pomiędzy przygotowaniem gry
+        Ankieta jest mostem pomiędzy przygotowaniem gry
         a jej rozegraniem na żywo.
       </p>
     
@@ -1353,79 +1353,79 @@ const pl = {
 
 
       <p class="m-p">
-        Do sondaży przechodzisz z górnego paska na stronie „Moje gry”
-        przyciskiem <span class="m-code">Sondaże 📊</span>.
+        Do ankiet przechodzisz z górnego paska na stronie „Moje gry”
+        przyciskiem <span class="m-code">Ankiety 📊</span>.
       </p>
 
-      <h3 class="m-h2">Strona sondaży</h3>
+      <h3 class="m-h2">Strona ankiet</h3>
 
       <p class="m-p">
         Na komputerze widzisz dwa obszary:
       </p>
 
       <ul class="m-ul">
-        <li><span class="m-strong">Moje sondaże</span> — lista sondaży, które tworzysz i prowadzisz.</li>
-        <li><span class="m-strong">Zadania</span> — zaproszenia do głosowania od innych użytkowników.</li>
+        <li><span class="m-strong">Moje ankiety</span> — lista ankiet, które tworzysz i prowadzisz.</li>
+        <li><span class="m-strong">Zadania</span> — zaproszenia do ankiety od innych użytkowników.</li>
       </ul>
 
       <p class="m-p">
-        Złota kropka przy przycisku „Sondaże 📊” pokazuje liczbę aktywnych zadań do wykonania.
+        Złota kropka przy przycisku „Ankiety 📊” pokazuje liczbę aktywnych zadań do wykonania.
       </p>
 
       <p class="m-p">
-        Udostępnianie sondażu odbywa się z listy „Moje sondaże”: zaznacz kafelek i kliknij
+        Udostępnianie ankiety odbywa się z listy „Moje ankiety”: zaznacz kafelek i kliknij
         <span class="m-code">Udostępnij</span>, następnie wybierz odbiorców i zapisz.
-        Kafelek sondażu pokazuje bieżące głosy, a przycisk <span class="m-code">Szczegóły</span>
+        Kafelek ankiety pokazuje bieżące wyniki, a przycisk <span class="m-code">Szczegóły</span>
         daje podgląd listy oddanych głosów, oczekujących, odrzuconych oraz anonimowych odpowiedzi.
       </p>
 
-      <h3 class="m-h3">Moje sondaże</h3>
+      <h3 class="m-h3">Moje ankiety</h3>
       <p class="m-p">
-        Każdy kafelek ma kolor, który oznacza stan sondażu:
+        Każdy kafelek ma kolor, który oznacza stan ankiety:
       </p>
       <ul class="m-ul">
         <li><span class="m-strong">Szary</span> — szkic, brakuje wymagań do uruchomienia.</li>
         <li><span class="m-strong">Czerwony</span> — szkic gotowy do uruchomienia.</li>
-        <li><span class="m-strong">Pomarańczowy</span> — sondaż otwarty, brak głosów.</li>
-        <li><span class="m-strong">Żółty</span> — sondaż otwarty, są głosy lub aktywne zadania.</li>
-        <li><span class="m-strong">Zielony</span> — sondaż otwarty, cele zebrane (zadania wykonane lub ≥10 głosów).</li>
-        <li><span class="m-strong">Niebieski</span> — sondaż zamknięty.</li>
+        <li><span class="m-strong">Pomarańczowy</span> — ankieta otwarta, brak głosów.</li>
+        <li><span class="m-strong">Żółty</span> — ankieta otwarta, są wyniki lub aktywne zadania.</li>
+        <li><span class="m-strong">Zielony</span> — ankieta otwarta, cele zebrane (zadania wykonane lub ≥10 głosów).</li>
+        <li><span class="m-strong">Niebieski</span> — ankieta zamknięta.</li>
       </ul>
 
       <h3 class="m-h3">Zadania</h3>
       <p class="m-p">
-        Zadania to zaproszenia do głosowania. Kolory:
+        Zadania to zaproszenia do ankiety. Kolory:
         <span class="m-strong">zielony</span> — dostępne,
         <span class="m-strong">niebieski</span> — wykonane.
-        Dwuklik otwiera głosowanie, a przycisk <span class="m-code">X</span> odrzuca zadanie.
+        Dwuklik otwiera ankietę, a przycisk <span class="m-code">X</span> odrzuca zadanie.
       </p>
 
-      <h3 class="m-h2">Rodzaje sondaży</h3>
+      <h3 class="m-h2">Rodzaje ankiet</h3>
     
       <p class="m-p">
-        W zależności od typu gry sondaż może działać w jednym z dwóch trybów:
+        W zależności od typu gry ankieta może działać w jednym z dwóch trybów:
       </p>
     
       <ul class="m-ul">
         <li>
-          <span class="m-strong">Typowy sondaż (tekstowy)</span> —
+          <span class="m-strong">Typowa ankieta (tekstowy)</span> —
           ankietowani wpisują własne odpowiedzi tekstowe.
         </li>
         <li>
-          <span class="m-strong">Sondaż punktacji</span> —
+          <span class="m-strong">Punktacja</span> —
           ankietowani wybierają jedną z przygotowanych odpowiedzi.
         </li>
       </ul>
     
       <p class="m-p">
-        Gry preparowane nie posiadają sondażu —
+        Gry preparowane nie posiadają ankiety —
         odpowiedzi i punkty są w nich ustalane ręcznie.
       </p>
     
-      <h3 class="m-h2">Uruchamianie sondażu</h3>
+      <h3 class="m-h2">Uruchamianie ankiety</h3>
     
       <p class="m-p">
-        Sondaż można uruchomić wyłącznie dla gry
+        Ankietę można uruchomić wyłącznie dla gry
         znajdującej się w stanie <span class="m-strong">Szkic</span>.
         Przed uruchomieniem system sprawdza,
         czy gra spełnia minimalne wymagania.
@@ -1438,7 +1438,7 @@ const pl = {
     
       <div class="m-note">
         <b>Dlaczego?</b><br/>
-        Dzięki temu nie da się uruchomić sondażu,
+        Dzięki temu nie da się uruchomić ankiety,
         który nie może zostać później poprawnie zamknięty
         i użyty w rozgrywce.
       </div>
@@ -1446,8 +1446,8 @@ const pl = {
       <h3 class="m-h2">Link i kod QR</h3>
     
       <p class="m-p">
-        Po uruchomieniu sondażu system generuje
-        unikalny link do głosowania.
+        Po uruchomieniu ankiety system generuje
+        unikalny link do ankiety.
         Link ten można skopiować,
         otworzyć w nowej karcie
         lub wyświetlić jako kod QR.
@@ -1459,7 +1459,7 @@ const pl = {
         (telewizor, rzutnik, duży monitor).
       </p>
     
-      <h3 class="m-h2">Przebieg sondażu</h3>
+      <h3 class="m-h2">Przebieg ankiety</h3>
     
       <p class="m-p">
         Ankietowani przechodzą przez pytania po kolei.
@@ -1468,7 +1468,7 @@ const pl = {
       </p>
     
       <p class="m-p">
-        W sondażu tekstowym każda odpowiedź:
+        W ankiecie tekstowej każda odpowiedź:
       </p>
     
       <ul class="m-ul">
@@ -1478,26 +1478,26 @@ const pl = {
       </ul>
     
       <p class="m-p">
-        W sondażu punktacji ankietowany
+        W punktacji ankietowany
         wybiera jedną z przygotowanych odpowiedzi,
         a system zapisuje oddany głos.
       </p>
     
-      <h3 class="m-h2">Zamykanie sondażu</h3>
+      <h3 class="m-h2">Zamykanie ankiety</h3>
     
       <p class="m-p">
-        Zamknięcie sondażu jest osobnym,
+        Zamknięcie ankiety jest osobnym,
         świadomym etapem pracy.
-        System nie pozwala zamknąć sondażu,
+        System nie pozwala zamknąć ankietęu,
         jeśli zebrane dane nie spełniają
         minimalnych warunków jakości.
       </p>
     
-      <h3 class="m-h3">Sondaż punktacji</h3>
+      <h3 class="m-h3">Punktacja</h3>
     
       <p class="m-p">
-        Przy zamykaniu sondażu punktacji
-        system przelicza głosy na punkty
+        Przy zamykaniu ankiety punktacji
+        system przelicza wyniki na punkty
         i normalizuje je do skali 0–100
         dla każdego pytania.
       </p>
@@ -1508,11 +1508,11 @@ const pl = {
         bez potrzeby ręcznego liczenia.
       </div>
     
-      <h3 class="m-h3">Sondaż tekstowy</h3>
+      <h3 class="m-h3">Ankieta tekstowa</h3>
     
       <p class="m-p">
-        W sondażu tekstowym (klasycznym) ankietowani wpisują własne odpowiedzi.
-        Po zamknięciu sondażu system przechodzi do etapu porządkowania wyników.
+        W ankiecie tekstowej (klasycznym) ankietowani wpisują własne odpowiedzi.
+        Po zamknięciu ankiety system przechodzi do etapu porządkowania wyników.
         Operator może łączyć oczywiście podobne odpowiedzi
         oraz usuwać literówki lub oczywiste duplikaty.
       </p>
@@ -1551,22 +1551,22 @@ const pl = {
     
       <div class="m-warn">
         <b>Uwaga:</b>
-        po zamknięciu sondażu
+        po zamknięciu ankiety
         nie można już zmieniać jego wyników
-        bez ponownego uruchomienia sondażu.
+        bez ponownego uruchomienia ankiety.
       </div>
     
-      <h3 class="m-h2">Ponowne uruchomienie sondażu</h3>
+      <h3 class="m-h2">Ponowne uruchomienie ankiety</h3>
     
       <p class="m-p">
-        Zamknięty sondaż można uruchomić ponownie,
+        Zamknięta ankieta można uruchomić ponownie,
         co powoduje usunięcie poprzednich wyników
         i rozpoczęcie zbierania odpowiedzi od nowa.
       </p>
     
       <p class="m-p">
         Ta opcja jest przydatna,
-        gdy sondaż został uruchomiony testowo
+        gdy ankieta została uruchomiony testowo
         lub doszło do błędu organizacyjnego.
       </p>`,
       subscriptions: `<p class="m-p">
@@ -1594,7 +1594,7 @@ const pl = {
       <h3 class="m-h3">Moi subskrybenci</h3>
       <p class="m-p">
         Subskrypcja to stałe połączenie między Twoim kontem a zaproszonym użytkownikiem —
-        raz zaakceptowana pozwala udostępniać kolejne sondaże bez wpisywania e-maila od nowa.
+        raz zaakceptowana pozwala udostępniać kolejne ankiety bez wpisywania e-maila od nowa.
         Zaproszenie wysyłasz, wpisując e-mail lub nazwę użytkownika
         i klikając <span class="m-code">Zaproś</span>.
       </p>
@@ -1621,7 +1621,7 @@ const pl = {
 
       <p class="m-p">
         W praktyce subskrypcje przyspieszają pracę — do aktywnych subskrybentów możesz
-        jednym kliknięciem udostępnić sondaż oraz szybko udostępnić bazę pytań,
+        jednym kliknięciem udostępnić ankietę oraz szybko udostępnić bazę pytań,
         bez ręcznego przepisywania danych i linków.
       </p>
       <p class="m-p">
@@ -1740,7 +1740,7 @@ const pl = {
         Do Panelu sterowania przechodzisz z listy „Moje gry"
         za pomocą przycisku <span class="m-code">Graj</span>.
         Ten tryb jest przeznaczony wyłącznie do prowadzenia rozgrywki na żywo —
-        w tym miejscu nie edytujesz już pytań ani wyników sondażu.
+        w tym miejscu nie edytujesz już pytań ani wyników ankiecie.
       </p>
 
       <p class="m-p">
@@ -1756,7 +1756,7 @@ const pl = {
       <ul class="m-ul">
         <li>
           Gra powinna mieć przygotowane pytania i odpowiedzi (z edytora),
-          a jeśli jest to gra sondażowa — sondaż powinien być zakończony i zatwierdzony.
+          a jeśli jest to gra ankietowa — ankieta powinna być zakończony i zatwierdzony.
         </li>
         <li>
           Operator powinien mieć komputer z najlepiej dużym ekranem (panel jest projektowany pod tryb desktopowy).
@@ -2235,11 +2235,11 @@ const pl = {
       </p>
 
       <p class="m-p">Wymagania, które musi spełniać gra przed wysłaniem:</p><ul class="m-ul">
-        <li>Typ <span class="m-strong">Preparowany</span> — musi mieć co najmniej <span class="m-strong">10 pytań</span></li>
+        <li>Typ <span class="m-strong">Preparowana</span> — musi mieć co najmniej <span class="m-strong">10 pytań</span></li>
         <li>Każde pytanie musi mieć od 3 do 6 odpowiedzi</li>
         <li>Suma punktów w jednym pytaniu nie może przekraczać 100</li>
         <li>Żadna odpowiedź nie może mieć więcej niż 100 pkt ani wartości ujemnej</li>
-        <li>Sondaż zamknięty (status <span class="m-strong">Gotowy</span>) też może być wysłany</li>
+        <li>Ankieta zamknięta (status <span class="m-strong">Gotowy</span>) też może być wysłany</li>
       </ul>
 
       <div class="m-warn">
@@ -2390,7 +2390,7 @@ const pl = {
   builder: {
     title: "Familiada — moje gry",
     nav: {
-      pollsHubPolls: "Sondaże 📊",
+      pollsHubPolls: "Ankiety 📊",
       pollsHubMobilePolls: "📊",
       pollsHubSubs: "Subskrypcje 📧",
       pollsHubMobileSubs: "📧",
@@ -2418,7 +2418,7 @@ const pl = {
       previewMobile: "Podgl.",
       play: "Graj",
       playMobile: "Graj",
-      poll: "Sondaż",
+      poll: "Ankieta",
       pollMobile: "Sond.",
       exportFile: "Eksportuj do pliku",
       exportFileMobile: "Exp.plk",
@@ -2434,11 +2434,11 @@ const pl = {
       pts: "pkt",
     },
     tabs: {
-      pollText: "Typowy sondaż",
-      pollTextMobile: "Sondaż",
+      pollText: "Typowa ankieta",
+      pollTextMobile: "Ankieta",
       pollPoints: "Punktacja",
       pollPointsMobile: "Punkty",
-      prepared: "Preparowany",
+      prepared: "Preparowana",
       preparedMobile: "Gotowy",
       market: "Gry Społeczności",
       marketMobile: "Społ.",
@@ -2540,9 +2540,9 @@ const pl = {
       newGame: "Nowa gra",
     },
     types: {
-      pollText: "SONDAŻ",
+      pollText: "ANKIETA",
       pollPoints: "PUNKTACJA",
-      prepared: "PREPAROWANY",
+      prepared: "PREPAROWANA",
       market: "MARKETPLACE",
     },
     status: {
@@ -2551,9 +2551,9 @@ const pl = {
       closed: "ZAMKNIĘTY",
     },
     newGame: {
-      pollText: "Nowy sondaż",
+      pollText: "Nowa ankieta",
       pollPoints: "Nowa punktacja",
-      prepared: "Nowy preparowany",
+      prepared: "Nowa preparowana",
     },
     delete: {
       title: "Usuń grę",
@@ -2564,17 +2564,17 @@ const pl = {
     alert: {
       deleteFailed: "Nie udało się usunąć gry.",
       createFailed: "Nie udało się utworzyć gry.",
-      resetPollFailed: "Nie udało się zresetować statusu sondażu.",
+      resetPollFailed: "Nie udało się zresetować statusu ankiety.",
       checkFailed: "Nie udało się sprawdzić statusu gry.",
-      openPollFailed: "Nie udało się otworzyć sondażu.",
+      openPollFailed: "Nie udało się otworzyć ankiety.",
     },
     hint: {
       select: "Zaznacz grę, aby włączyć akcje. Podwójne naciśnięcie zmienia nazwę.",
       selectPlus: "Zaznacz grę, aby włączyć akcje i eksport. Podwójne naciśnięcie zmienia nazwę.",
     },
     editAfterPoll: {
-      title: "Zresetować sondaż?",
-      text: "Ten sondaż jest już otwarty lub zamknięty. Zresetować, aby edytować?",
+      title: "Zresetować ankietę?",
+      text: "Ta ankieta jest już otwarty lub zamknięty. Zresetować, aby edytować?",
       ok: "Resetuj",
       cancel: "Anuluj",
     },
@@ -2603,14 +2603,14 @@ const pl = {
     importHint: "Import działa z pliku TXT albo z wklejonej treści.",
     importBtn: "Importuj",
     empty: "Wybierz pytanie po lewej lub dodaj nowe.",
-    lockedPoll: "SONDAŻ OTWARTY — EDYCJA ZABLOKOWANA",
+    lockedPoll: "ANKIETA OTWARTA — EDYCJA ZABLOKOWANA",
     questionLabel: "Treść pytania",
     answerLabel: "Odpowiedź",
     pointsLabel: "Pkt",
     importModal: {
       title: "Import pytań",
       subtitle:
-        "Możesz <b>wkleić treść</b> albo <b>wczytać plik TXT</b>. Opcjonalnie na początku dodaj linię <b>@Nazwa gry</b>. Pytania zaczynają się od <b>#</b>. Odpowiedzi mogą mieć numer. Punkty po <b>/</b> są opcjonalne (w sondażach mogą być ignorowane).",
+        "Możesz <b>wkleić treść</b> albo <b>wczytać plik TXT</b>. Opcjonalnie na początku dodaj linię <b>@Nazwa gry</b>. Pytania zaczynają się od <b>#</b>. Odpowiedzi mogą mieć numer. Punkty po <b>/</b> są opcjonalne (w ankietach mogą być ignorowane).",
       loadFile: "Wczytaj plik",
       placeholder:
         "@Moja gra\n#Zwierzeta w Afryce\n1 Słoń /29\n2 Lew /19\n3 Małpa /16\n\n#Drugie pytanie\n1 Odpowiedź 1\n2 Odpowiedź 2\n3 Odpowiedź 3",
@@ -2636,23 +2636,23 @@ const pl = {
       answersCount: "{count}/{max} odpowiedzi",
     },
     type: {
-      pollText: "TYPOWY SONDAŻ",
-      pollPoints: "SONDAŻ PUNKTACJI",
-      prepared: "PREPAROWANY",
+      pollText: "TYPOWA ANKIETA",
+      pollPoints: "PUNKTACJA",
+      prepared: "PREPAROWANA",
     },
     config: {
       pollText: {
-        title: "Typowy sondaż",
+        title: "Typowa ankieta",
         hintTop: "Minimum {min} pytań.",
         hintBottom: "Odpowiedzi i punkty nie są wymagane.",
       },
       pollPoints: {
-        title: "Sondaż punktacji",
+        title: "Punktacja",
         hintTop: "Minimum {min} pytań, każde {answersMin}–{answersMax} odpowiedzi.",
         hintBottom: "Punkty są ignorowane.",
       },
       prepared: {
-        title: "Preparowany",
+        title: "Preparowana",
         hintTop: "Minimum {min} pytań, każde {answersMin}–{answersMax} odpowiedzi.",
         hintBottom: "Suma punktów ≤ {sum}.",
       },
@@ -2680,7 +2680,7 @@ const pl = {
       minQuestionsOk: "Minimum spełnione",
     },
     confirm: {
-      resetPoll: "Zresetować status sondażu do edycji?",
+      resetPoll: "Zresetować status ankiety do edycji?",
       deleteQuestion: "Usunąć to pytanie i wszystkie jego odpowiedzi?",
       deleteAnswer: "Usunąć tę odpowiedź?",
     },
@@ -2716,13 +2716,13 @@ const pl = {
     },
     alert: {
       missingId: "Brak identyfikatora edytora.",
-      cannotEdit: "Nie można edytować w trakcie otwartego sondażu.",
+      cannotEdit: "Nie można edytować w trakcie otwartej ankiety.",
       editorError: "Błąd edytora (konsola).",
     },
   },
   pollText: {
-    title: "Familiada — sondaż",
-    pollTitle: "Sondaż",
+    title: "Familiada — ankieta",
+    pollTitle: "Ankieta",
     loading: "Ładuję…",
     placeholder: "Wpisz odpowiedź...",
     send: "Wyślij",
@@ -2732,40 +2732,40 @@ const pl = {
     loadTimeout: "Nie można pobrać pytań (timeout).",
     enterAnswer: "Wpisz odpowiedź.",
     taskInvalid: "Link jest nieważny lub nieaktywny.",
-    loginToVote: "Zaloguj się, aby przejść do głosowania.",
+    loginToVote: "Zaloguj się, aby przejść do ankiety.",
     emailRequired: "Podaj e-mail w linku z zaproszenia.",
     openTaskFail: "Nie można otworzyć zadania.",
-    pollFallback: "Sondaż",
-    pollClosed: "Sondaż jest zamknięty. Dziękujemy!",
+    pollFallback: "Ankieta",
+    pollClosed: "Ankieta jest zamknięta. Dziękujemy!",
     sending: "Wysyłam…",
     error: "Błąd: {error}",
     questionProgress: "Pytanie {current}/{total}",
     beforeUnloadWarn: "Udzielone odpowiedzi nie zostaną uznane.",
     missingParams: "Brak parametru id lub key.",
-    alreadyVoted: "Już wziąłeś udział w sondażu.",
-    wrongType: "To nie jest typowy sondaż.",
-    openPollFail: "Nie można otworzyć sondażu: {error}",
+    alreadyVoted: "Już wziąłeś udział w ankiecie.",
+    wrongType: "To nie jest typowa ankieta.",
+    openPollFail: "Nie można otworzyć ankiety: {error}",
   },
   pollPoints: {
-    title: "Familiada — sondaż",
-    pollTitle: "Sondaż",
+    title: "Familiada — ankieta",
+    pollTitle: "Ankieta",
     loading: "Ładuję…",
     thanks: "Dziękujemy za udział!",
     loadTimeout: "Nie można pobrać pytań (timeout).",
     taskInvalid: "Link jest nieważny lub nieaktywny.",
-    loginToVote: "Zaloguj się, aby przejść do głosowania.",
+    loginToVote: "Zaloguj się, aby przejść do ankiety.",
     emailRequired: "Podaj e-mail w linku z zaproszenia.",
     openTaskFail: "Nie można otworzyć zadania.",
-    pollFallback: "Sondaż",
-    pollClosed: "Sondaż jest zamknięty. Dziękujemy!",
+    pollFallback: "Ankieta",
+    pollClosed: "Ankieta jest zamknięta. Dziękujemy!",
     sending: "Wysyłam…",
     error: "Błąd: {error}",
     questionProgress: "Pytanie {current}/{total}",
     beforeUnloadWarn: "Udzielone odpowiedzi nie zostaną uznane.",
     missingParams: "Brak parametru id lub key.",
-    alreadyVoted: "Już wziąłeś udział w sondażu.",
-    wrongType: "To nie jest sondaż punktacji.",
-    openPollFail: "Nie można otworzyć sondażu: {error}",
+    alreadyVoted: "Już wziąłeś udział w ankiecie.",
+    wrongType: "To nie jest ankieta punktacji.",
+    openPollFail: "Nie można otworzyć ankiety: {error}",
     answerFallback: "ODP {ord}",
   },
   pollGo: {
@@ -2779,9 +2779,9 @@ const pl = {
     declineTaskFailed: "Nie udało się odrzucić zadania.",
     declineInviteFailed: "Nie udało się odrzucić zaproszenia.",
     subHeading: "Zaproszenie do subskrypcji{owner}",
-    taskHeading: "Zaproszenie do głosowania w {name}{owner}",
+    taskHeading: "Zaproszenie do ankiety w {name}{owner}",
     taskName: "„{name}”",
-    pollFallback: "sondażu",
+    pollFallback: "ankiety",
     ownerSuffix: " od użytkownika {owner}",
     mismatch: "Zaproszenie Ciebie nie dotyczy, zaloguj się jako {email} i spróbuj ponownie.",
     inviteUsed: "Zaproszenie zostało wykorzystane.",
@@ -2796,15 +2796,15 @@ const pl = {
     subscribeAdded: "Subskrypcja została dodana.",
     subscriptionInviteActive: "Zaproszenie do subskrypcji jest aktywne.",
     subscribePrompt: "Jeśli chcesz zasubskrybować podaj adres email.",
-    acceptInHub: "Żeby zaakceptować przejdź do Centrum Sondaży.",
-    hubLabel: "Centrum Sondaży",
+    acceptInHub: "Żeby zaakceptować przejdź do Centrum Ankiet.",
+    hubLabel: "Centrum Ankiet",
     acceptLabel: "Akceptuj",
     declineLabel: "Odrzuć",
     subscribeLabel: "Subskrybuj",
     loginToAccept: "Żeby zaakceptować musisz się zalogować.",
     loginLabel: "Zaloguj",
     loginToVote: "Żeby zagłosować musisz się zalogować.",
-    taskInviteActive: "Zaproszenie do głosowania jest aktywne.",
+    taskInviteActive: "Zaproszenie do ankiety jest aktywne.",
     voteLabel: "Głosuj",
     missingLinkTitle: "Brak linku",
     missingLinkText: "Brakuje tokenu zaproszenia.",
@@ -2815,9 +2815,9 @@ const pl = {
     invitationRecipient: "adresata zaproszenia",
     ownerEmailBlocked: "Ten adres należy do właściciela zaproszenia ({owner}). Już subskrybujesz tego użytkownika.",
     unsubOwnerHeading: "Wypisz się od {owner}",
-    unsubOwnerText: "Kliknij poniżej, aby anulować subskrypcję i przestać otrzymywać sondaże od tego użytkownika.",
+    unsubOwnerText: "Kliknij poniżej, aby anulować subskrypcję i przestać otrzymywać ankiety od tego użytkownika.",
     unsubOwnerBtn: "Wypisz się od {owner}",
-    unsubOwnerDone: "Subskrypcja anulowana. Nie będziesz już otrzymywać sondaży od {owner}.",
+    unsubOwnerDone: "Subskrypcja anulowana. Nie będziesz już otrzymywać ankiet od {owner}.",
     unsubOwnerFailed: "Nie udało się anulować subskrypcji.",
     unsubGlobalHeading: "Wypisz się ze wszystkich maili",
     unsubGlobalText: "Kliknij poniżej, aby zablokować wszystkie powiadomienia mailowe z Familiada.",
@@ -2838,25 +2838,25 @@ const pl = {
     qrFailed: "Nie udało się wygenerować QR",
   },
   pollsHub: {
-    title: "Familiada — centrum sondaży",
+    title: "Familiada — centrum ankiet",
     backToGames: "← Moje gry",
     logout: "Wyloguj",
     header: {
-      title: "Centrum sondaży",
-      hint: "Zarządzaj sondażami oraz zaproszeniami do głosowania.",
+      title: "Centrum ankiet",
+      hint: "Zarządzaj ankietami oraz zaproszeniami do ankiety.",
     },
     tabs: {
-      polls: "Sondaże",
+      polls: "Ankiety",
       subscriptions: "Subskrypcje",
       tasks: "Zadania",
       subscribersMobile: "Subskryb.",
       subscriptionsMobile: "Subskryp.",
     },
     sections: {
-      myPolls: "Moje sondaże",
+      myPolls: "Moje ankiety",
       selectHint: "Kliknij kafelek, aby go zaznaczyć.",
       tasks: "Zadania",
-      tasksHint: "Dwuklik otwiera głosowanie.",
+      tasksHint: "Dwuklik otwiera ankietę.",
       mySubscribers: "Moi subskrybenci",
       subscribersHint: "Zaproś nowych i zarządzaj zaproszeniami.",
       mySubscriptions: "Moje subskrypcje",
@@ -2880,17 +2880,17 @@ const pl = {
       button: "Zaproś",
     },
     share: {
-      title: "Udostępnij sondaż",
+      title: "Udostępnij ankietę",
       subtitle: "Wybierz subskrybentów, którym chcesz wysłać zadanie.",
       save: "Zapisz udostępnienie",
       close: "Zamknij",
     },
     details: {
-      title: "Szczegóły głosowania",
-      titleWithName: "Szczegóły głosowania — {name}",
+      title: "Szczegóły ankiety",
+      titleWithName: "Szczegóły ankiety — {name}",
       subtitle: "Usuń głos powiązany z zadaniem, jeśli to konieczne.",
-      voted: "Zagłosowali",
-      pending: "Nie zagłosowali",
+      voted: "Wypełnili",
+      pending: "Nie wypełnili",
       declined: "Odrzucili",
       cancelled: "Anulowane",
       anon: "Anonimowe",
@@ -2913,7 +2913,7 @@ const pl = {
     ok: "OK",
     errorLabel: "Błąd",
     pollType: {
-      text: "Typowy sondaż",
+      text: "Typowa ankieta",
       points: "Punktacja odpowiedzi",
     },
     pollState: {
@@ -2951,10 +2951,10 @@ const pl = {
     tasksBadgeTitle: "Zadania: {done} z {total} udostępnionych zagłosowało.",
     tasksBadgeNone: "Zadania: brak udostępnień.",
     anonBadgeLabel: "Anon.",
-    anonBadgeTitle: "Anonimowe głosy: {count}.",
+    anonBadgeTitle: "Anonimowe wyniki: {count}.",
     votesBadgeLabel: "Głosy",
     empty: {
-      polls: "Brak sondaży do pokazania.",
+      polls: "Brak ankiet do pokazania.",
       tasks: "Brak zadań do pokazania.",
       subscribers: "Brak subskrybentów.",
       subscriptions: "Brak subskrypcji.",
@@ -2976,7 +2976,7 @@ const pl = {
       cooldown: "Możesz ponowić za {hours} godz.",
       missing: "Brak",
     },
-    shareLockedHint: "Zagłosowane — usuń głos, aby odblokować.",
+    shareLockedHint: "Wypełnione — usuń wpis, aby odblokować.",
     shareStatusLabel: "Status",
     shareStatusMissing: "Brak",
     shareHintMissing: "Brak",
@@ -2997,7 +2997,7 @@ const pl = {
       shareSave: "Nie udało się zapisać udostępnienia.",
       loadDetails: "Nie udało się pobrać szczegółów.",
       deleteVote: "Nie udało się usunąć głosu.",
-      loadHub: "Nie udało się pobrać danych centrum sondaży.",
+      loadHub: "Nie udało się pobrać danych centrum ankiet.",
     },
     statusMsg: {
       inviteSaved: "Zaproszenie zapisane.",
@@ -3046,22 +3046,22 @@ const pl = {
       },
     },
     confirm: {
-      focusTask: "Masz zadanie do wykonania. Chcesz przejść do głosowania?",
+      focusTask: "Masz zadanie do wykonania. Chcesz przejść do ankiety?",
       focusSub: "Masz zaproszenie do subskrypcji. Chcesz je zaakceptować?",
     },
-    pollFallback: "sondażu",
+    pollFallback: "ankiety",
     pollNameLabel: "„{name}”",
     ownerFallback: "Użytkownik Familiady",
     mail: {
-      subtitle: "Centrum sondaży",
+      subtitle: "Centrum ankiet",
       subscriptionTitle: "Zaproszenie do subskrypcji od użytkownika {owner}",
       subscriptionBody:
         "Użytkownik <strong>{owner}</strong> zaprasza Cię do subskrypcji. Kliknij przycisk, aby zobaczyć zaproszenie.",
       subscriptionAction: "Zobacz zaproszenie",
-      taskTitle: "Zaproszenie do głosowania",
-      taskSubject: "Zaproszenie do głosowania — {name}",
+      taskTitle: "Zaproszenie do ankiety",
+      taskSubject: "Zaproszenie do ankiety — {name}",
       taskBody: "Użytkownik <strong>{owner}</strong> zaprasza Cię do udziału w {name}.",
-      taskAction: "Przejdź do głosowania",
+      taskAction: "Przejdź do ankiety",
       ignoreNote: "Jeśli to nie Ty, zignoruj tę wiadomość.",
       linkHint: "Link nie działa? Skopiuj i wklej do przeglądarki:",
       autoNote: "Wiadomość automatyczna — prosimy nie odpowiadać.",
@@ -3071,26 +3071,26 @@ const pl = {
   },
   pollsHubPolls: {
     dash: "-",
-    title: "Familiada — centrum sondaży",
+    title: "Familiada — centrum ankiet",
     backToGames: "← Moje gry",
     backToBases: "← Bazy pytań",
     logout: "Wyloguj",
     header: {
-      title: "Centrum sondaży",
-      hint: "Zarządzaj sondażami oraz zaproszeniami do głosowania.",
+      title: "Centrum ankiet",
+      hint: "Zarządzaj ankietami oraz zaproszeniami do ankiety.",
     },
     tabs: {
-      polls: "Sondaże",
+      polls: "Ankiety",
       subscriptions: "Subskrypcje",
       tasks: "Zadania",
       subscribersMobile: "Subskryb.",
       subscriptionsMobile: "Subskryp.",
     },
     sections: {
-      myPolls: "Moje sondaże",
+      myPolls: "Moje ankiety",
       selectHint: "Kliknij kafelek, aby go zaznaczyć.",
       tasks: "Zadania",
-      tasksHint: "Dwuklik otwiera głosowanie.",
+      tasksHint: "Dwuklik otwiera ankietę.",
       mySubscribers: "Moi subskrybenci",
       subscribersHint: "Zaproś nowych i zarządzaj zaproszeniami.",
       mySubscriptions: "Moje subskrypcje",
@@ -3114,17 +3114,17 @@ const pl = {
       button: "Zaproś",
     },
     share: {
-      title: "Udostępnij sondaż",
+      title: "Udostępnij ankietę",
       subtitle: "Wybierz subskrybentów, którym chcesz wysłać zadanie.",
       save: "Zapisz udostępnienie",
       close: "Zamknij",
     },
     details: {
-      title: "Szczegóły głosowania",
-      titleWithName: "Szczegóły głosowania — {name}",
+      title: "Szczegóły ankiety",
+      titleWithName: "Szczegóły ankiety — {name}",
       subtitle: "Usuń głos powiązany z zadaniem, jeśli to konieczne.",
-      voted: "Zagłosowali",
-      pending: "Nie zagłosowali",
+      voted: "Wypełnili",
+      pending: "Nie wypełnili",
       declined: "Odrzucili",
       cancelled: "Anulowane",
       anon: "Anonimowe",
@@ -3147,7 +3147,7 @@ const pl = {
     ok: "OK",
     errorLabel: "Błąd",
     pollType: {
-      text: "Typowy sondaż",
+      text: "Typowa ankieta",
       points: "Punktacja odpowiedzi",
     },
     pollState: {
@@ -3185,10 +3185,10 @@ const pl = {
     tasksBadgeTitle: "Zadania: {done} z {total} udostępnionych zagłosowało.",
     tasksBadgeNone: "Zadania: brak udostępnień.",
     anonBadgeLabel: "Anon.",
-    anonBadgeTitle: "Anonimowe głosy: {count}.",
+    anonBadgeTitle: "Anonimowe wyniki: {count}.",
     votesBadgeLabel: "Głosy",
     empty: {
-      polls: "Brak sondaży do pokazania.",
+      polls: "Brak ankiet do pokazania.",
       tasks: "Brak zadań do pokazania.",
       subscribers: "Brak subskrybentów.",
       subscriptions: "Brak subskrypcji.",
@@ -3210,7 +3210,7 @@ const pl = {
       cooldown: "Możesz ponowić za {hours} godz.",
       missing: "Brak",
     },
-    shareLockedHint: "Zagłosowane — usuń głos, aby odblokować.",
+    shareLockedHint: "Wypełnione — usuń wpis, aby odblokować.",
     shareStatusLabel: "Status",
     shareStatusMissing: "Brak",
     shareHintMissing: "Brak",
@@ -3231,7 +3231,7 @@ const pl = {
       shareSave: "Nie udało się zapisać udostępnienia.",
       loadDetails: "Nie udało się pobrać szczegółów.",
       deleteVote: "Nie udało się usunąć głosu.",
-      loadHub: "Nie udało się pobrać danych centrum sondaży.",
+      loadHub: "Nie udało się pobrać danych centrum ankiet.",
     },
     statusMsg: {
       inviteSaved: "Zaproszenie zapisane.",
@@ -3280,52 +3280,52 @@ const pl = {
       },
     },
     confirm: {
-      focusTask: "Masz zadanie do wykonania. Chcesz przejść do głosowania?",
+      focusTask: "Masz zadanie do wykonania. Chcesz przejść do ankiety?",
       focusSub: "Masz zaproszenie do subskrypcji. Chcesz je zaakceptować?",
     },
-    pollFallback: "sondażu",
+    pollFallback: "ankiety",
     pollNameLabel: "„{name}”",
     ownerFallback: "Użytkownik Familiady",
     mail: {
-      subtitle: "Centrum sondaży",
+      subtitle: "Centrum ankiet",
       subscriptionTitle: "Zaproszenie do subskrypcji od użytkownika {owner}",
       subscriptionBody:
         "Użytkownik <strong>{owner}</strong> zaprasza Cię do subskrypcji. Kliknij przycisk, aby zobaczyć zaproszenie.",
       subscriptionAction: "Zobacz zaproszenie",
-      taskTitle: "Zaproszenie do głosowania",
-      taskSubject: "Zaproszenie do głosowania — {name}",
+      taskTitle: "Zaproszenie do ankiety",
+      taskSubject: "Zaproszenie do ankiety — {name}",
       taskBody: "Użytkownik <strong>{owner}</strong> zaprasza Cię do udziału w {name}.",
-      taskAction: "Przejdź do głosowania",
+      taskAction: "Przejdź do ankiety",
       ignoreNote: "Jeśli to nie Ty, zignoruj tę wiadomość.",
       linkHint: "Link nie działa? Skopiuj i wklej do przeglądarki:",
       autoNote: "Wiadomość automatyczna — prosimy nie odpowiadać.",
     },
     pollReadyAlert: "Dokończ grę w Moich grach",
     resendCooldownAlert: "Ponowne wysłanie zaproszenia możliwe za {hours} godz.",
-    shareCooldownAlert: "Ponowne zaproszenie do głosowania możliwe za {hours} godz.",
+    shareCooldownAlert: "Ponowne zaproszenie do ankiety możliwe za {hours} godz.",
   },
 
   pollsHubSubscriptions: {
     dash: "-",
-    title: "Familiada — centrum sondaży",
+    title: "Familiada — centrum ankiet",
     backToGames: "← Moje gry",
     logout: "Wyloguj",
     header: {
-      title: "Centrum sondaży",
-      hint: "Zarządzaj sondażami oraz zaproszeniami do głosowania.",
+      title: "Centrum ankiet",
+      hint: "Zarządzaj ankietami oraz zaproszeniami do ankiety.",
     },
     tabs: {
-      polls: "Sondaże",
+      polls: "Ankiety",
       subscriptions: "Subskrypcje",
       tasks: "Zadania",
       subscribersMobile: "Subskryb.",
       subscriptionsMobile: "Subskryp.",
     },
     sections: {
-      myPolls: "Moje sondaże",
+      myPolls: "Moje ankiety",
       selectHint: "Kliknij kafelek, aby go zaznaczyć.",
       tasks: "Zadania",
-      tasksHint: "Dwuklik otwiera głosowanie.",
+      tasksHint: "Dwuklik otwiera ankietę.",
       mySubscribers: "Moi subskrybenci",
       subscribersHint: "Zaproś nowych i zarządzaj zaproszeniami.",
       mySubscriptions: "Moje subskrypcje",
@@ -3349,17 +3349,17 @@ const pl = {
       button: "Zaproś",
     },
     share: {
-      title: "Udostępnij sondaż",
+      title: "Udostępnij ankietę",
       subtitle: "Wybierz subskrybentów, którym chcesz wysłać zadanie.",
       save: "Zapisz udostępnienie",
       close: "Zamknij",
     },
     details: {
-      title: "Szczegóły głosowania",
-      titleWithName: "Szczegóły głosowania — {name}",
+      title: "Szczegóły ankiety",
+      titleWithName: "Szczegóły ankiety — {name}",
       subtitle: "Usuń głos powiązany z zadaniem, jeśli to konieczne.",
-      voted: "Zagłosowali",
-      pending: "Nie zagłosowali",
+      voted: "Wypełnili",
+      pending: "Nie wypełnili",
       declined: "Odrzucili",
       cancelled: "Anulowane",
       anon: "Anonimowe",
@@ -3382,7 +3382,7 @@ const pl = {
     ok: "OK",
     errorLabel: "Błąd",
     pollType: {
-      text: "Typowy sondaż",
+      text: "Typowa ankieta",
       points: "Punktacja odpowiedzi",
     },
     pollState: {
@@ -3419,10 +3419,10 @@ const pl = {
     tasksBadgeTitle: "Zadania: {done} z {total} udostępnionych zagłosowało.",
     tasksBadgeNone: "Zadania: brak udostępnień.",
     anonBadgeLabel: "Anon.",
-    anonBadgeTitle: "Anonimowe głosy: {count}.",
+    anonBadgeTitle: "Anonimowe wyniki: {count}.",
     votesBadgeLabel: "Głosy",
     empty: {
-      polls: "Brak sondaży do pokazania.",
+      polls: "Brak ankiet do pokazania.",
       tasks: "Brak zadań do pokazania.",
       subscribers: "Brak subskrybentów.",
       subscriptions: "Brak subskrypcji.",
@@ -3444,7 +3444,7 @@ const pl = {
       cooldown: "Możesz ponowić za {hours} godz.",
       missing: "Brak",
     },
-    shareLockedHint: "Zagłosowane — usuń głos, aby odblokować.",
+    shareLockedHint: "Wypełnione — usuń wpis, aby odblokować.",
     shareStatusLabel: "Status",
     shareStatusMissing: "Brak",
     shareHintMissing: "Brak",
@@ -3465,7 +3465,7 @@ const pl = {
       shareSave: "Nie udało się zapisać udostępnienia.",
       loadDetails: "Nie udało się pobrać szczegółów.",
       deleteVote: "Nie udało się usunąć głosu.",
-      loadHub: "Nie udało się pobrać danych centrum sondaży.",
+      loadHub: "Nie udało się pobrać danych centrum ankiet.",
     },
     statusMsg: {
       inviteSaved: "Zaproszenie zapisane.",
@@ -3514,10 +3514,10 @@ const pl = {
       },
     },
     confirm: {
-      focusTask: "Masz zadanie do wykonania. Chcesz przejść do głosowania?",
+      focusTask: "Masz zadanie do wykonania. Chcesz przejść do ankiety?",
       focusSub: "Masz zaproszenie do subskrypcji. Chcesz je zaakceptować?",
     },
-    pollFallback: "sondażu",
+    pollFallback: "ankiety",
     pollNameLabel: "„{name}”",
     ownerFallback: "Użytkownik Familiady",
     mail: {
@@ -3526,10 +3526,10 @@ const pl = {
       subscriptionBody:
         "Użytkownik <strong>{owner}</strong> zaprasza Cię do subskrypcji. Kliknij przycisk, aby zobaczyć zaproszenie.",
       subscriptionAction: "Zobacz zaproszenie",
-      taskTitle: "Zaproszenie do głosowania",
-      taskSubject: "Zaproszenie do głosowania — {name}",
+      taskTitle: "Zaproszenie do ankiety",
+      taskSubject: "Zaproszenie do ankiety — {name}",
       taskBody: "Użytkownik <strong>{owner}</strong> zaprasza Cię do udziału w {name}.",
-      taskAction: "Przejdź do głosowania",
+      taskAction: "Przejdź do ankiety",
       ignoreNote: "Jeśli to nie Ty, zignoruj tę wiadomość.",
       linkHint: "Link nie działa? Skopiuj i wklej do przeglądarki:",
       autoNote: "Wiadomość automatyczna — prosimy nie odpowiadać.",
@@ -3538,7 +3538,7 @@ const pl = {
     resendCooldownAlert: "Ponowne wysłanie zaproszenia możliwe za {hours} godz.",
     cooldownLeftDays: "Spróbuj ponownie za {n} dni",
     cooldownLeftHours: "Spróbuj ponownie za {n} godz.",
-    shareCooldownAlert: "Ponowne zaproszenie do głosowania możliwe za {hours} godz.",
+    shareCooldownAlert: "Ponowne zaproszenie do ankiety możliwe za {hours} godz.",
   },
   logoEditor: {
     title: "Familiada — edytor logo",
@@ -3896,9 +3896,9 @@ const pl = {
       gameNameLabel: "Nazwa gry",
       questionsLabel: "Pytania",
       typeTitle: "Typ gry",
-      typePollText: "Typowy sondaż",
+      typePollText: "Typowa ankieta",
       typePollPoints: "Punktacja",
-      typePrepared: "Preparowany",
+      typePrepared: "Preparowana",
       selectedTitle: "Zaznaczone (min 10)",
       selectedLabel: "WYBRANE",
       create: "Utwórz",
