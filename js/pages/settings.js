@@ -2188,10 +2188,13 @@ function renderMailList(rows) {
       const tmp = document.createElement("div");
       tmp.innerHTML = r.body_preview;
       previewText = (tmp.textContent || tmp.innerText || "").trim();
+      console.log('body_preview was:', r.body_preview);
+      console.log('extracted:', previewText);
     }
 
     // Strategy 4: Emergency fallback - use subject if no content
     if (!previewText) {
+      console.log('NO CONTENT - body_html:', !!r.body_html, 'body:', !!r.body, 'body_preview:', r.body_preview);
       previewText = r.subject ? `(brak treści) ${r.subject}` : `(brak treści)`;
     }
 
