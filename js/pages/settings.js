@@ -2096,7 +2096,11 @@ async function loadMailFolder({ silent = false } = {}) {
       console.log("[loadMailFolder] Fetching marketing messages...");
       const res = await adminFetch(`/messages?filter=all&limit=500`);
       console.log("[loadMailFolder] Marketing fetch result:", res.status, res.ok);
-      if (!res.ok) throw new Error(await res.text());
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error("[loadMailFolder] Marketing fetch ERROR:", errorText);
+        throw new Error(errorText);
+      }
       const json = await res.json();
       // Filter for marketing emails (outbound with [Marketing] prefix in subject)
       msgRows = (json.rows || []).filter(m =>
@@ -2109,7 +2113,11 @@ async function loadMailFolder({ silent = false } = {}) {
       console.log("[loadMailFolder] Fetching folder:", msgActiveFolder);
       const res = await adminFetch(`/messages?filter=${encodeURIComponent(msgActiveFolder)}&limit=500`);
       console.log("[loadMailFolder] Folder fetch result:", res.status, res.ok);
-      if (!res.ok) throw new Error(await res.text());
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error("[loadMailFolder] Folder fetch ERROR:", errorText);
+        throw new Error(errorText);
+      }
       const json = await res.json();
       msgRows = json.rows || [];
       console.log("[loadMailFolder] Folder rows:", msgRows.length);
