@@ -2185,39 +2185,19 @@ function renderMailList(rows) {
 
     // Strategy 3: Final fallback - body_preview
     if (!previewText && r.body_preview) {
-      let text = r.body_preview;
-      
-      // If it's full HTML, try to extract just the visible text
-      if (text.trim().startsWith("<!DOCTYPE")) {
-        // Remove head section entirely (includes meta tags)
-        text = text.replace(/<head[^>]*>[\s\S]*?<\/head>/gi, '');
-        // Remove script and style tags
-        text = text.replace(/<(script|style)[^>]*>[\s\S]*?<\/\1>/gi, '');
-        // Remove all remaining tags
-        text = text.replace(/<[^>]*>/g, ' ');
-      } else {
+      // Skip truncated HTML emails (they start with <!DOCTYPE but have no real content)
+      if (!r.body_preview.trim().startsWith("<!DOCTYPE")) {
         // Simple HTML - just strip tags
-        text = text.replace(/<[^>]*>/g, ' ');
+        previewText = r.body_preview
+          .replace(/<[^>]*>/g, ' ')
+          .replace(/&nbsp;/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
       }
-      
-      // Clean up HTML entities and whitespace
-      previewText = text
-        .replace(/&nbsp;/g, ' ')
-        .replace(/&amp;/g, '&')
-        .replace(/&lt;/g, '<')
-        .replace(/&gt;/g, '>')
-        .replace(/&quot;/g, '"')
-        .replace(/&#39;/g, "'")
-        .replace(/\s+/g, ' ')
-        .trim();
-      
-      console.log('body_preview was:', r.body_preview.substring(0, 100) + '...');
-      console.log('extracted:', previewText);
     }
 
     // Strategy 4: Emergency fallback - use subject if no content
     if (!previewText) {
-      console.log('NO CONTENT - body_html:', !!r.body_html, 'body:', !!r.body, 'body_preview:', r.body_preview?.substring(0, 50));
       previewText = r.subject ? `(brak treści) ${r.subject}` : `(brak treści)`;
     }
 
