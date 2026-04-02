@@ -16,6 +16,8 @@ RETURNS TABLE (
   from_email text,
   to_email text,
   subject text,
+  body text,
+  body_html text,
   body_preview text,
   report_id uuid,
   ticket_number text,
@@ -33,6 +35,7 @@ BEGIN
     RETURN QUERY
       SELECT
         m.id, m.source, m.direction, m.from_email, m.to_email, m.subject,
+        m.body, m.body_html,
         left(m.body, 120) AS body_preview,
         m.report_id, r.ticket_number, r.status AS report_status, m.queue_id,
         m.is_read, m.created_at, m.deleted_at
@@ -48,6 +51,7 @@ BEGIN
     RETURN QUERY
       SELECT
         m.id, m.source, m.direction, m.from_email, m.to_email, m.subject,
+        m.body, m.body_html,
         left(m.body, 120) AS body_preview,
         m.report_id, r.ticket_number, r.status AS report_status, m.queue_id,
         m.is_read, m.created_at, m.deleted_at
@@ -63,6 +67,7 @@ BEGIN
     RETURN QUERY
       SELECT
         m.id, m.source, m.direction, m.from_email, m.to_email, m.subject,
+        m.body, m.body_html,
         left(m.body, 120) AS body_preview,
         m.report_id, r.ticket_number, r.status AS report_status, m.queue_id,
         m.is_read, m.created_at, m.deleted_at
@@ -78,6 +83,7 @@ BEGIN
       SELECT
         r.id, 'form'::text AS source, 'inbound'::text AS direction,
         r.email AS from_email, NULL::text AS to_email, r.subject,
+        NULL::text AS body, NULL::text AS body_html,
         left(r.message, 120) AS body_preview,
         r.id AS report_id, r.ticket_number, r.status AS report_status,
         NULL::uuid AS queue_id,
@@ -91,6 +97,7 @@ BEGIN
     RETURN QUERY
       SELECT
         m.id, m.source, m.direction, m.from_email, m.to_email, m.subject,
+        m.body, m.body_html,
         left(m.body, 120) AS body_preview,
         m.report_id, r.ticket_number, r.status AS report_status, m.queue_id,
         m.is_read, m.created_at, m.deleted_at
