@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict RYkcucwaUhx8DyYfOH49n5UpUsvTvYMaZ2JSzxG4z4zU2JbcfR6GmFeNdag1fiO
+\restrict YiQg9aNWSQ1JSHLVGTXAph5llIe2sQycafQsGBIsFMHxxT4mW9B5usgBXl6yMWD
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -4112,8 +4112,16 @@ CREATE TABLE "public"."mail_queue" (
     "meta" "jsonb" DEFAULT '{}'::"jsonb" NOT NULL,
     "picked_at" timestamp with time zone,
     "last_attempt_at" timestamp with time zone,
-    "from_email" "text"
+    "from_email" "text",
+    "text" "text"
 );
+
+
+--
+-- Name: COLUMN "mail_queue"."text"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN "public"."mail_queue"."text" IS 'Plain text alternative for email clients that do not support HTML (Apple Mail preview, etc.)';
 
 
 --
@@ -13434,5 +13442,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict RYkcucwaUhx8DyYfOH49n5UpUsvTvYMaZ2JSzxG4z4zU2JbcfR6GmFeNdag1fiO
+\unrestrict YiQg9aNWSQ1JSHLVGTXAph5llIe2sQycafQsGBIsFMHxxT4mW9B5usgBXl6yMWD
 
