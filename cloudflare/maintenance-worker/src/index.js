@@ -791,7 +791,7 @@ async function handleAdminMarketingApi(request, env, url) {
 
     // custom_body is already full HTML from client (templates in JS)
     const emailHtml = custom_body || "";
-    
+
     // Generate plain text from HTML for Apple Mail preview
     const emailText = emailHtml
       .replace(/<[^>]*>/g, ' ')           // Remove all HTML tags
@@ -805,7 +805,8 @@ async function handleAdminMarketingApi(request, env, url) {
       .trim()
       .slice(0, 500);                     // Limit length for preview
 
-    const rows = validEmails.map(email => ({
+    // Insert into mail_queue (batch insert for all recipients)
+    const queueRows = validEmails.map(email => ({
       to_email: email,
       subject: String(mktSubject),
       html: emailHtml,
@@ -817,11 +818,28 @@ async function handleAdminMarketingApi(request, env, url) {
     const qRes = await supabaseRequest(env, "/rest/v1/mail_queue", {
       method: "POST",
       headers: { Prefer: "return=minimal" },
-      body: rows,
+      body: queueRows,
     });
 
     if (!qRes.ok) {
       return json({ ok: false, error: "queue_insert_failed", details: summarizeSupabaseError(qRes) }, qRes.status || 500);
+    }
+
+    // Save message record for each email (so they appear in "Sent" folder)
+    // We only need one message record per marketing campaign, not per recipient
+    const msgSubject = `[Marketing] ${mktSubject}`;
+    const saveRes = await supabaseRpc(env, "save_outbound_message", {
+      p_to_email:  "marketing@batch",
+      p_subject:   msgSubject,
+      p_body:      emailText,
+      p_body_html: emailHtml,
+      p_report_id: null,
+      p_queue_id:  null,
+    });
+
+    if (!saveRes.ok) {
+      console.error("[marketing/send] save_outbound_message failed:", saveRes);
+      // Don't fail the request - queue is the important part
     }
 
     return json({ ok: true, queued: validEmails.length, total: validEmails.length });

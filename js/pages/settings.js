@@ -2332,9 +2332,10 @@ async function openMessage(id) {
   // Mark message as read (skip if endpoint doesn't exist yet)
   try {
     await adminFetch(`/messages/read?id=${encodeURIComponent(id)}`, { method: "POST" });
-    // Refresh badges after marking as read
+    // Refresh badges and list after marking as read
     loadFolderBadges();
-  } catch (e) { 
+    loadMailFolder({ silent: true });
+  } catch (e) {
     // Endpoint not available yet - that's OK
   }
 

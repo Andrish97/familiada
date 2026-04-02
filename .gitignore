@@ -12,3 +12,7 @@ Desktop.ini
 
 # Qwen Code
 .qwen/
+
+# Node modules
+node_modules/
+package-lock.json
