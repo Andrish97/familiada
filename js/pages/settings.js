@@ -2329,13 +2329,16 @@ function renderMailList(rows) {
 
     // Strategy 3: Final fallback - body_preview
     if (!previewText && r.body_preview) {
-      // Strip <style> tags and HTML tags from preview
+      // Aggressively strip <style> tags, HTML tags, and CSS content
       previewText = r.body_preview
         .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')  // Remove <style> blocks
+        .replace(/:[^;]+;/g, '')  // Remove CSS properties like :root{color-scheme:dark}
+        .replace(/^[^a-zA-Z0-9]*[A-Z]{2,}[^a-zA-Z0-9]*/g, '')  // Remove leading CSS like :root{...}FAMILIADA
         .replace(/<[^>]*>/g, ' ')  // Strip remaining HTML tags
         .replace(/&nbsp;/g, ' ')
         .replace(/\s+/g, ' ')
-        .trim();
+        .trim()
+        .slice(0, 80);  // Limit length
     }
 
     // Strategy 4: Emergency fallback - use subject if no content
@@ -2801,9 +2804,10 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
   btnMarketing.className = `msg-icon-btn ${msg.is_marketing ? "msg-icon-btn--active" : ""}`;
   btnMarketing.type = "button";
   btnMarketing.title = msg.is_marketing ? "Oznacz jako zwykłą wiadomość" : "Oznacz jako marketing";
+  // Megaphone/bullhorn icon
   btnMarketing.innerHTML = msg.is_marketing
-    ? `<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg>`
-    : `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg>`;
+    ? `<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5"><path d="M3 10v4c0 .55.45 1 1 1h3l3 3V6L7 9H4c-.55 0-1 .45-1 1zm13 1.5c0 1.38-1.12 2.5-2.5 2.5s-2.5-1.12-2.5-2.5 1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5z"/></svg>`
+    : `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10v4c0 .55.45 1 1 1h3l3 3V6L7 9H4c-.55 0-1 .45-1 1zm13 1.5c0 1.38-1.12 2.5-2.5 2.5s-2.5-1.12-2.5-2.5 1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5z"/></svg>`;
   btnMarketing.addEventListener("click", () => toggleMarketing(msg.id, !msg.is_marketing));
   leftGroup.appendChild(btnMarketing);
 

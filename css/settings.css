@@ -1535,11 +1535,13 @@ body.tools-fullscreen .tools-frame-wrap iframe{
 .mail-msg-actions {
   display: flex;
   align-items: center;
-  gap: 2px;
-  padding: 6px 12px 8px;
-  border-top: 1px solid rgba(255,255,255,.07);
+  justify-content: space-between;
+  gap: 4px;
+  padding: 10px 16px;
+  border-top: 1px solid rgba(255,255,255,.08);
   flex-shrink: 0;
-  background: rgba(5,9,20,.95);
+  background: rgba(5,9,20,.98);
+  z-index: 10;
 }
 .mail-conv-meta { font-size: 11px; opacity: .5; }
 .mail-conv-actions {
