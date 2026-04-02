@@ -2577,6 +2577,8 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
   const header = document.createElement("div");
   header.className = "mail-conv-header";
 
+  console.log("[mail-conv-header] msg.ticket_number:", msg.ticket_number, "msg.report_id:", msg.report_id);
+  
   let ticketBadge = "";
   if (msg.ticket_number) {
     ticketBadge = `<span class="mail-ticket-badge" data-report-id="${escSetting(msg.report_id)}" style="cursor:pointer;font-size:11px;padding:2px 7px;border-radius:6px;background:rgba(255,234,166,.15);color:#ffeaa6;margin-left:6px" title="${t("settings.marketplace.ticketBadgeTitle") || "Przejdź do zgłoszenia"}">${escSetting(msg.ticket_number)}</span>`;
