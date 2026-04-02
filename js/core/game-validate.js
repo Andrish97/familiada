@@ -17,7 +17,7 @@ export const TYPES = {
 export const STATUS = {
   DRAFT: "draft",
   POLL_OPEN: "poll_open",
-  READY: "ready", // po zamknięciu sondażu / gotowe do gry
+  READY: "ready", // po zamknięciu ankiety / gotowe do gry
 };
 
 export const RULES = {
@@ -92,7 +92,7 @@ export async function validateTextPollClosable(/*gameId*/) {
 /**
  * Dla punktacji (poll_points):
  * - Warunek zamknięcia: w każdym pytaniu co najmniej 2 odpowiedzi mają punkty != 0
- * To też zależy od modelu głosowania. Jeśli w trakcie ankiety zapisujesz punkty do answers.fixed_points
+ * To też zależy od modelu ankiety. Jeśli w trakcie ankiety zapisujesz punkty do answers.fixed_points
  * (albo do osobnej tabeli i potem agregujesz), to tu sprawdzamy agregat.
  *
  * Na start: jeśli jeszcze nie masz zapisów, też zwracamy ok, żeby UI nie blokować na etapie CSS.
