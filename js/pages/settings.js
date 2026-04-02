@@ -2744,7 +2744,8 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
     bubble.appendChild(attList);
   }
 
-  conv.appendChild(bubble);
+  // Add central message to the scrollable container
+  msgs.appendChild(bubble);
 
   // Render later messages (below the central message)
   const laterMessages = threadMessages.filter(m => new Date(m.created_at) > new Date(msg.created_at));
@@ -2766,10 +2767,13 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
     msgs.appendChild(threadBubble);
   }
 
-  // Action bar — icon buttons (at the bottom, fixed position)
+  // Add scrollable messages container to conv
+  conv.appendChild(msgs);
+
+  // Action bar — icon buttons (fixed at bottom, outside scrollable area)
   const actions = document.createElement("div");
   actions.className = "mail-msg-actions";
-  actions.style.cssText = "margin-top:auto;padding-top:12px;";
+  actions.style.cssText = "flex-shrink:0;padding-top:12px;border-top:1px solid rgba(255,255,255,.07);";
 
   // Left group: assign/unassign + marketing toggle + reply
   const leftGroup = document.createElement("div");
