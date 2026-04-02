@@ -2185,17 +2185,32 @@ function renderMailList(rows) {
 
     // Strategy 3: Final fallback - body_preview
     if (!previewText && r.body_preview) {
-      // Strip ALL HTML and clean up text
-      previewText = r.body_preview
-        .replace(/<[^>]*>/g, ' ')           // Remove all HTML tags
-        .replace(/&nbsp;/g, ' ')            // Replace &nbsp; with space
-        .replace(/&amp;/g, '&')             // Replace &amp; with &
-        .replace(/&lt;/g, '<')              // Replace &lt; with <
-        .replace(/&gt;/g, '>')              // Replace &gt; with >
-        .replace(/&quot;/g, '"')            // Replace &quot; with "
-        .replace(/&#39;/g, "'")             // Replace &#39; with '
-        .replace(/\s+/g, ' ')               // Collapse whitespace
+      let text = r.body_preview;
+      
+      // If it's full HTML, try to extract just the visible text
+      if (text.trim().startsWith("<!DOCTYPE")) {
+        // Remove head section entirely (includes meta tags)
+        text = text.replace(/<head[^>]*>[\s\S]*?<\/head>/gi, '');
+        // Remove script and style tags
+        text = text.replace(/<(script|style)[^>]*>[\s\S]*?<\/\1>/gi, '');
+        // Remove all remaining tags
+        text = text.replace(/<[^>]*>/g, ' ');
+      } else {
+        // Simple HTML - just strip tags
+        text = text.replace(/<[^>]*>/g, ' ');
+      }
+      
+      // Clean up HTML entities and whitespace
+      previewText = text
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/\s+/g, ' ')
         .trim();
+      
       console.log('body_preview was:', r.body_preview.substring(0, 100) + '...');
       console.log('extracted:', previewText);
     }
