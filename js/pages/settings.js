@@ -2324,19 +2324,29 @@ function renderMailList(rows) {
 }
 
 async function openMessage(id) {
+  console.log("[openMessage] Opening message:", id);
+  
   msgActiveId = id;
   document.querySelectorAll(".mail-thread-item").forEach(el => {
     el.classList.toggle("active", el.dataset.msgId === id);
   });
 
-  // Mark message as read (skip if endpoint doesn't exist yet)
+  // Mark message as read
   try {
-    await adminFetch(`/messages/read?id=${encodeURIComponent(id)}`, { method: "POST" });
+    console.log("[openMessage] Calling /messages/read...");
+    const readRes = await adminFetch(`/messages/read?id=${encodeURIComponent(id)}`, { method: "POST" });
+    console.log("[openMessage] /messages/read response:", readRes.status, readRes.ok);
+    
+    if (!readRes.ok) {
+      const readText = await readRes.text().catch(() => "N/A");
+      console.error("[openMessage] /messages/read failed:", readRes.status, readText);
+    }
+    
     // Refresh badges and list after marking as read
     loadFolderBadges();
     loadMailFolder({ silent: true });
   } catch (e) {
-    // Endpoint not available yet - that's OK
+    console.error("[openMessage] Error marking as read:", e);
   }
 
   const conv = document.getElementById("mailConv");
@@ -2344,46 +2354,70 @@ async function openMessage(id) {
   conv.innerHTML = `<div style="flex:1;display:flex;align-items:center;justify-content:center;opacity:.35;font-size:12px">${t("settings.marketplace.loadingConv") || "Ładowanie…"}</div>`;
 
   try {
+    console.log("[openMessage] Fetching message detail...");
     const res = await adminFetch(`/messages/detail?id=${encodeURIComponent(id)}`);
     if (!res.ok) throw new Error(await res.text());
     const json = await res.json();
     if (!json.ok) throw new Error(json.error);
 
     const msg = json.message;
+    console.log("[openMessage] Message detail loaded:", { 
+      id: msg.id, 
+      subject: msg.subject, 
+      ticket_number: msg.ticket_number,
+      report_id: msg.report_id,
+      direction: msg.direction 
+    });
 
     // Fetch conversation thread (Apple Mail style - all messages in the same conversation)
     let threadMessages = [];
     try {
+      console.log("[openMessage] Fetching all messages for thread...");
       const threadRes = await adminFetch(`/messages?filter=all&limit=500`);
       if (threadRes.ok) {
         const threadJson = await threadRes.json();
         const allMessages = threadJson.rows || [];
+        console.log("[openMessage] Fetched", allMessages.length, "total messages");
         
         // Find conversation by subject line (strip Re:/Fwd:/etc.)
         const baseSubject = msg.subject?.replace(/^(Re|Fwd|FW):\s*/gi, '').trim().toLowerCase();
+        console.log("[openMessage] Base subject for thread:", baseSubject);
         
         // Find all messages in this conversation
         threadMessages = allMessages.filter(m => {
           if (m.id === id) return false; // Exclude the central message (we render it separately)
           
           // Same ticket/report
-          if (msg.ticket_number && m.ticket_number === msg.ticket_number) return true;
-          if (msg.report_id && m.report_id === msg.report_id) return true;
+          if (msg.ticket_number && m.ticket_number === msg.ticket_number) {
+            console.log("[openMessage] Match by ticket_number:", m.id, m.ticket_number);
+            return true;
+          }
+          if (msg.report_id && m.report_id === msg.report_id) {
+            console.log("[openMessage] Match by report_id:", m.id, m.report_id);
+            return true;
+          }
           
           // Same subject conversation (strip Re:/Fwd: prefixes)
           if (baseSubject && m.subject) {
             const mSubject = m.subject.replace(/^(Re|Fwd|FW):\s*/gi, '').trim().toLowerCase();
-            if (mSubject === baseSubject) return true;
+            if (mSubject === baseSubject) {
+              console.log("[openMessage] Match by subject:", m.id, m.subject);
+              return true;
+            }
           }
           
           return false;
         });
         
+        console.log("[openMessage] Found", threadMessages.length, "messages in thread");
+        
         // Sort by date (oldest first)
         threadMessages.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+      } else {
+        console.error("[openMessage] Thread fetch failed:", threadRes.status);
       }
     } catch (e) { 
-      console.error("[openMessage] thread fetch error:", e); 
+      console.error("[openMessage] Thread fetch error:", e); 
     }
 
     let attachments = [];
@@ -2392,13 +2426,13 @@ async function openMessage(id) {
       if (attRes.ok) {
         const attJson = await attRes.json();
         attachments = attJson.attachments || [];
-      } else {
-        console.error("[openMessage] attachments fetch failed:", attRes.status, await attRes.text().catch(() => ""));
       }
-    } catch (e) { console.error("[openMessage] attachments error:", e); }
+    } catch (e) { console.error("[openMessage] Attachments error:", e); }
 
+    console.log("[openMessage] Rendering message with", threadMessages.length, "thread messages");
     renderMessageDetail(msg, attachments, threadMessages);
   } catch (err) {
+    console.error("[openMessage] Error:", err);
     showToast(String(err?.message || err), "error");
     conv.innerHTML = "";
   }

@@ -1412,22 +1412,49 @@ async function handleAdminMessagesApi(request, env, url) {
   // POST /_admin_api/messages/read  { id } or ?id=xxx — mark message as read
   if (url.pathname === "/_admin_api/messages/read" && request.method === "POST") {
     const messageId = url.searchParams.get("id");
-    if (!messageId) return json({ ok: false, error: "missing_id" }, 400);
+    console.log("[messages/read] Called with id:", messageId);
+    
+    if (!messageId) {
+      console.error("[messages/read] Missing message id");
+      return json({ ok: false, error: "missing_id" }, 400);
+    }
 
     // Use Supabase RPC function instead of REST API to avoid RLS issues
+    console.log("[messages/read] Calling RPC mark_message_read...");
     const rpcRes = await supabaseRpc(env, "mark_message_read", { p_message_id: messageId });
-    console.log("[messages/read] RPC result:", rpcRes);
+    console.log("[messages/read] RPC result:", { 
+      ok: rpcRes.ok, 
+      status: rpcRes.status, 
+      data: rpcRes.data,
+      text: rpcRes.text?.substring(0, 200)
+    });
+    
     if (!rpcRes.ok) {
       console.error("[messages/read] RPC failed, trying REST API fallback:", rpcRes);
       // Fallback to REST API if RPC doesn't exist
-      const updateRes = await supabaseRequest(env, `/rest/v1/messages?id=eq.${encodeURIComponent(messageId)}`, {
+      const updateUrl = `/rest/v1/messages?id=eq.${encodeURIComponent(messageId)}`;
+      console.log("[messages/read] REST URL:", updateUrl);
+      
+      const updateRes = await supabaseRequest(env, updateUrl, {
         method: "PATCH",
         headers: { Prefer: "return=minimal" },
         body: { is_read: true, read_at: new Date().toISOString() },
       });
-      console.log("[messages/read] REST result:", updateRes);
-      if (!updateRes.ok) return json({ ok: false, error: "update_failed", details: summarizeSupabaseError(updateRes) }, updateRes.status || 500);
+      
+      console.log("[messages/read] REST result:", {
+        ok: updateRes.ok,
+        status: updateRes.status,
+        data: updateRes.data,
+        text: updateRes.text?.substring(0, 200)
+      });
+      
+      if (!updateRes.ok) {
+        console.error("[messages/read] REST failed:", updateRes);
+        return json({ ok: false, error: "update_failed", details: summarizeSupabaseError(updateRes) }, updateRes.status || 500);
+      }
     }
+    
+    console.log("[messages/read] Success!");
     return json({ ok: true });
   }
 
