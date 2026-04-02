@@ -30,7 +30,6 @@ RETURNS TABLE (
 LANGUAGE plpgsql
 AS $$
 DECLARE
-  clean_html text;
   clean_text text;
 BEGIN
   -- Inbox: inbound messages not in trash
@@ -39,14 +38,18 @@ BEGIN
       SELECT
         m.id, m.source, m.direction, m.from_email, m.to_email, m.subject,
         m.body, m.body_html,
-        -- Aggressively strip CSS and HTML for clean preview
+        -- Aggressively strip CSS from both HTML and plain text
         left(
           regexp_replace(
             regexp_replace(
-              COALESCE(m.body_html, m.body),
-              E'<style[^>]*>[\\s\\S]*?</style>',
-              '',
-              'gi'
+              regexp_replace(
+                COALESCE(m.body_html, m.body),
+                E'<style[^>]*>[\\s\\S]*?</style>',
+                '',
+                'gi'
+              ),
+              E'<[^>]+>',
+              ' '
             ),
             E':[\\s]*[^;{}]+;',
             '',
@@ -71,10 +74,14 @@ BEGIN
         left(
           regexp_replace(
             regexp_replace(
-              COALESCE(m.body_html, m.body),
-              E'<style[^>]*>[\\s\\S]*?</style>',
-              '',
-              'gi'
+              regexp_replace(
+                COALESCE(m.body_html, m.body),
+                E'<style[^>]*>[\\s\\S]*?</style>',
+                '',
+                'gi'
+              ),
+              E'<[^>]+>',
+              ' '
             ),
             E':[\\s]*[^;{}]+;',
             '',
@@ -99,10 +106,14 @@ BEGIN
         left(
           regexp_replace(
             regexp_replace(
-              COALESCE(m.body_html, m.body),
-              E'<style[^>]*>[\\s\\S]*?</style>',
-              '',
-              'gi'
+              regexp_replace(
+                COALESCE(m.body_html, m.body),
+                E'<style[^>]*>[\\s\\S]*?</style>',
+                '',
+                'gi'
+              ),
+              E'<[^>]+>',
+              ' '
             ),
             E':[\\s]*[^;{}]+;',
             '',
@@ -142,10 +153,14 @@ BEGIN
         left(
           regexp_replace(
             regexp_replace(
-              COALESCE(m.body_html, m.body),
-              E'<style[^>]*>[\\s\\S]*?</style>',
-              '',
-              'gi'
+              regexp_replace(
+                COALESCE(m.body_html, m.body),
+                E'<style[^>]*>[\\s\\S]*?</style>',
+                '',
+                'gi'
+              ),
+              E'<[^>]+>',
+              ' '
             ),
             E':[\\s]*[^;{}]+;',
             '',
