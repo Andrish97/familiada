@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 6fXDetlqK97LwpQnUxbQ38kjz2ML1vod1wMd1QgPKV6nYisyBUZcEptVHxhDHSh
+\restrict dqmZJfXVgx0e9jeoPD2cIA2hlSB9AWRSmYbRsuUkzhlUdzM6xzwPE6WphQfns3K
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -3657,7 +3657,7 @@ BEGIN
         m.body, m.body_html,
         left(regexp_replace(COALESCE(m.body_html, m.body), E'<style[^>]*>[\\s\\S]*?</style>', '', 'gi'), 120) AS body_preview,
         m.report_id, 
-        COALESCE(r.ticket_number, NULL) AS ticket_number,  -- Ensure ticket_number is returned
+        r.ticket_number,  -- Direct, no COALESCE
         r.status AS report_status, m.queue_id,
         m.is_read, m.is_marketing, m.created_at, m.deleted_at
       FROM public.messages m
@@ -3674,7 +3674,7 @@ BEGIN
         m.body, m.body_html,
         left(regexp_replace(COALESCE(m.body_html, m.body), E'<style[^>]*>[\\s\\S]*?</style>', '', 'gi'), 120) AS body_preview,
         m.report_id, 
-        COALESCE(r.ticket_number, NULL) AS ticket_number,
+        r.ticket_number,  -- Direct, no COALESCE
         r.status AS report_status, m.queue_id,
         m.is_read, m.is_marketing, m.created_at, m.deleted_at
       FROM public.messages m
@@ -3691,7 +3691,7 @@ BEGIN
         m.body, m.body_html,
         left(regexp_replace(COALESCE(m.body_html, m.body), E'<style[^>]*>[\\s\\S]*?</style>', '', 'gi'), 120) AS body_preview,
         m.report_id, 
-        COALESCE(r.ticket_number, NULL) AS ticket_number,
+        r.ticket_number,  -- Direct, no COALESCE
         r.status AS report_status, m.queue_id,
         m.is_read, m.is_marketing, m.created_at, m.deleted_at
       FROM public.messages m
@@ -3723,7 +3723,7 @@ BEGIN
         m.body, m.body_html,
         left(regexp_replace(COALESCE(m.body_html, m.body), E'<style[^>]*>[\\s\\S]*?</style>', '', 'gi'), 120) AS body_preview,
         m.report_id, 
-        COALESCE(r.ticket_number, NULL) AS ticket_number,
+        r.ticket_number,  -- Direct, no COALESCE
         r.status AS report_status, m.queue_id,
         m.is_read, m.is_marketing, m.created_at, m.deleted_at
       FROM public.messages m
@@ -13490,5 +13490,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 6fXDetlqK97LwpQnUxbQ38kjz2ML1vod1wMd1QgPKV6nYisyBUZcEptVHxhDHSh
+\unrestrict dqmZJfXVgx0e9jeoPD2cIA2hlSB9AWRSmYbRsuUkzhlUdzM6xzwPE6WphQfns3K
 
