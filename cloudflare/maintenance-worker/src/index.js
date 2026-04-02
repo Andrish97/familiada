@@ -1381,8 +1381,7 @@ async function handleAdminMessagesApi(request, env, url) {
 
   // POST /_admin_api/messages/read  { id } or ?id=xxx — mark message as read
   if (url.pathname === "/_admin_api/messages/read" && request.method === "POST") {
-    const urlObj = new URL(request.url);
-    const messageId = urlObj.searchParams.get("id");
+    const messageId = url.searchParams.get("id");
     if (!messageId) return json({ ok: false, error: "missing_id" }, 400);
 
     const updateRes = await supabaseRequest(env, "/rest/v1/messages", {
