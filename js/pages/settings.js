@@ -2809,7 +2809,7 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
     btnReply.type = "button";
     btnReply.title = t("settings.reports.replyBtn") || "Odpowiedz";
     btnReply.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 00-4-4H4"/></svg>`;
-    btnReply.addEventListener("click", () => showCompose({ to: msg.from_email, subject: `Re: ${msg.subject || ""}`, report_id: msg.report_id, quote: msg.body, quoteFrom: msg.from_email, quoteDate: msg.created_at }));
+    btnReply.addEventListener("click", () => showCompose({ to: msg.from_email, subject: `Re: ${stripMarketingPrefix(msg.subject || "")}`, report_id: msg.report_id, quote: msg.body, quoteFrom: msg.from_email, quoteDate: msg.created_at }));
     leftGroup.appendChild(btnReply);
   } else if (!isInbound && msg.to_email) {
     // Reply button for outbound messages (pencil icon)
@@ -2818,7 +2818,7 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
     btnReply.type = "button";
     btnReply.title = "Napisz odpowiedź";
     btnReply.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
-    btnReply.addEventListener("click", () => showCompose({ to: msg.to_email, subject: `Re: ${msg.subject || ""}`, report_id: msg.report_id, quote: msg.body, quoteFrom: msg.to_email, quoteDate: msg.created_at }));
+    btnReply.addEventListener("click", () => showCompose({ to: msg.to_email, subject: `Re: ${stripMarketingPrefix(msg.subject || "")}`, report_id: msg.report_id, quote: msg.body, quoteFrom: msg.to_email, quoteDate: msg.created_at }));
     leftGroup.appendChild(btnReply);
   }
 
