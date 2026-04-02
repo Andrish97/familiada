@@ -2329,15 +2329,13 @@ function renderMailList(rows) {
 
     // Strategy 3: Final fallback - body_preview
     if (!previewText && r.body_preview) {
-      // Skip truncated HTML emails (they start with <!DOCTYPE but have no real content)
-      if (!r.body_preview.trim().startsWith("<!DOCTYPE")) {
-        // Simple HTML - just strip tags
-        previewText = r.body_preview
-          .replace(/<[^>]*>/g, ' ')
-          .replace(/&nbsp;/g, ' ')
-          .replace(/\s+/g, ' ')
-          .trim();
-      }
+      // Strip <style> tags and HTML tags from preview
+      previewText = r.body_preview
+        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')  // Remove <style> blocks
+        .replace(/<[^>]*>/g, ' ')  // Strip remaining HTML tags
+        .replace(/&nbsp;/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
     }
 
     // Strategy 4: Emergency fallback - use subject if no content
@@ -2804,8 +2802,8 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
   btnMarketing.type = "button";
   btnMarketing.title = msg.is_marketing ? "Oznacz jako zwykłą wiadomość" : "Oznacz jako marketing";
   btnMarketing.innerHTML = msg.is_marketing
-    ? `<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>`
-    : `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>`;
+    ? `<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg>`
+    : `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg>`;
   btnMarketing.addEventListener("click", () => toggleMarketing(msg.id, !msg.is_marketing));
   leftGroup.appendChild(btnMarketing);
 
