@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict rECPvAbUjHeICYGTni612uT9GJwtlmb0nYWUEsscIahbObLk50mhxVGybcnV2cV
+\restrict O6hPKgCwS3EcqVhv9gzjsnSa7LCqsphQhMqFuYJbOyU5DFxUArK75woTgi7nJeU
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -2691,7 +2691,7 @@ BEGIN
       m.queue_id, m.is_marketing,
       m.created_at, m.deleted_at
     FROM public.messages m
-    LEFT JOIN public.contact_reports r ON r.id = m.report_id
+    LEFT JOIN public.reports r ON r.id = m.report_id
     WHERE m.id = p_id;
 END;
 $$;
@@ -13490,5 +13490,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict rECPvAbUjHeICYGTni612uT9GJwtlmb0nYWUEsscIahbObLk50mhxVGybcnV2cV
+\unrestrict O6hPKgCwS3EcqVhv9gzjsnSa7LCqsphQhMqFuYJbOyU5DFxUArK75woTgi7nJeU
 
