@@ -1740,7 +1740,7 @@ const pl = {
         Do Panelu sterowania przechodzisz z listy „Moje gry"
         za pomocą przycisku <span class="m-code">Graj</span>.
         Ten tryb jest przeznaczony wyłącznie do prowadzenia rozgrywki na żywo —
-        w tym miejscu nie edytujesz już pytań ani wyników ankiecie.
+        w tym miejscu nie edytujesz już pytań ani wyników ankiety.
       </p>
 
       <p class="m-p">
