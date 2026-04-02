@@ -36,7 +36,13 @@ BEGIN
       SELECT
         m.id, m.source, m.direction, m.from_email, m.to_email, m.subject,
         m.body, m.body_html,
-        left(m.body, 120) AS body_preview,
+        -- Strip HTML tags and CSS for preview, take first 120 chars of clean text
+        left(regexp_replace(
+          COALESCE(m.body_html, m.body),
+          E'<[^>]+>|\\s+',
+          ' ',
+          'g'
+        ), 120) AS body_preview,
         m.report_id, r.ticket_number, r.status AS report_status, m.queue_id,
         m.is_read, m.created_at, m.deleted_at
       FROM public.messages m
@@ -52,7 +58,12 @@ BEGIN
       SELECT
         m.id, m.source, m.direction, m.from_email, m.to_email, m.subject,
         m.body, m.body_html,
-        left(m.body, 120) AS body_preview,
+        left(regexp_replace(
+          COALESCE(m.body_html, m.body),
+          E'<[^>]+>|\\s+',
+          ' ',
+          'g'
+        ), 120) AS body_preview,
         m.report_id, r.ticket_number, r.status AS report_status, m.queue_id,
         m.is_read, m.created_at, m.deleted_at
       FROM public.messages m
@@ -68,7 +79,12 @@ BEGIN
       SELECT
         m.id, m.source, m.direction, m.from_email, m.to_email, m.subject,
         m.body, m.body_html,
-        left(m.body, 120) AS body_preview,
+        left(regexp_replace(
+          COALESCE(m.body_html, m.body),
+          E'<[^>]+>|\\s+',
+          ' ',
+          'g'
+        ), 120) AS body_preview,
         m.report_id, r.ticket_number, r.status AS report_status, m.queue_id,
         m.is_read, m.created_at, m.deleted_at
       FROM public.messages m
@@ -98,7 +114,12 @@ BEGIN
       SELECT
         m.id, m.source, m.direction, m.from_email, m.to_email, m.subject,
         m.body, m.body_html,
-        left(m.body, 120) AS body_preview,
+        left(regexp_replace(
+          COALESCE(m.body_html, m.body),
+          E'<[^>]+>|\\s+',
+          ' ',
+          'g'
+        ), 120) AS body_preview,
         m.report_id, r.ticket_number, r.status AS report_status, m.queue_id,
         m.is_read, m.created_at, m.deleted_at
       FROM public.messages m
