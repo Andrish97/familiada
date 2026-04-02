@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 1I7hsfA9AXuCJBffrgbB4cFCe3s5xYE0HOjrIJb7FuwDVqmndhy7fB3u2KkeRxY
+\restrict 0SLROIXNEbgmG9924RxhqyIf7bkmXj3XMmvM09zJtsgnktAJUBgJhm8ZMVnK1ze
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -3649,7 +3649,7 @@ $$;
 -- Name: list_messages("text", integer, integer); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION "public"."list_messages"("p_filter" "text" DEFAULT 'inbox'::"text", "p_limit" integer DEFAULT 50, "p_offset" integer DEFAULT 0) RETURNS TABLE("id" "uuid", "source" "text", "direction" "text", "from_email" "text", "to_email" "text", "subject" "text", "body_preview" "text", "report_id" "uuid", "ticket_number" "text", "report_status" "text", "queue_id" "uuid", "is_read" boolean, "created_at" timestamp with time zone, "deleted_at" timestamp with time zone)
+CREATE FUNCTION "public"."list_messages"("p_filter" "text" DEFAULT 'inbox'::"text", "p_limit" integer DEFAULT 50, "p_offset" integer DEFAULT 0) RETURNS TABLE("id" "uuid", "source" "text", "direction" "text", "from_email" "text", "to_email" "text", "subject" "text", "body" "text", "body_html" "text", "body_preview" "text", "report_id" "uuid", "ticket_number" "text", "report_status" "text", "queue_id" "uuid", "is_read" boolean, "is_marketing" boolean, "created_at" timestamp with time zone, "deleted_at" timestamp with time zone)
     LANGUAGE "plpgsql"
     AS $$
 BEGIN
@@ -3658,13 +3658,13 @@ BEGIN
     RETURN QUERY
       SELECT
         m.id, m.source, m.direction, m.from_email, m.to_email, m.subject,
-        left(m.body, 120) AS body_preview,
+        m.body, m.body_html,
+        left(regexp_replace(COALESCE(m.body_html, m.body), E'<style[^>]*>[^<]*</style>', '', 'g'), 120) AS body_preview,
         m.report_id, r.ticket_number, r.status AS report_status, m.queue_id,
-        m.is_read, m.created_at, m.deleted_at
+        m.is_read, m.is_marketing, m.created_at, m.deleted_at
       FROM public.messages m
       LEFT JOIN public.contact_reports r ON r.id = m.report_id
-      WHERE m.direction = 'inbound'
-        AND m.deleted_at IS NULL
+      WHERE m.direction = 'inbound' AND m.deleted_at IS NULL
       ORDER BY m.created_at DESC
       LIMIT p_limit OFFSET p_offset;
 
@@ -3673,13 +3673,13 @@ BEGIN
     RETURN QUERY
       SELECT
         m.id, m.source, m.direction, m.from_email, m.to_email, m.subject,
-        left(m.body, 120) AS body_preview,
+        m.body, m.body_html,
+        left(regexp_replace(COALESCE(m.body_html, m.body), E'<style[^>]*>[^<]*</style>', '', 'g'), 120) AS body_preview,
         m.report_id, r.ticket_number, r.status AS report_status, m.queue_id,
-        m.is_read, m.created_at, m.deleted_at
+        m.is_read, m.is_marketing, m.created_at, m.deleted_at
       FROM public.messages m
       LEFT JOIN public.contact_reports r ON r.id = m.report_id
-      WHERE m.direction = 'outbound'
-        AND m.deleted_at IS NULL
+      WHERE m.direction = 'outbound' AND m.deleted_at IS NULL
       ORDER BY m.created_at DESC
       LIMIT p_limit OFFSET p_offset;
 
@@ -3688,9 +3688,10 @@ BEGIN
     RETURN QUERY
       SELECT
         m.id, m.source, m.direction, m.from_email, m.to_email, m.subject,
-        left(m.body, 120) AS body_preview,
+        m.body, m.body_html,
+        left(regexp_replace(COALESCE(m.body_html, m.body), E'<style[^>]*>[^<]*</style>', '', 'g'), 120) AS body_preview,
         m.report_id, r.ticket_number, r.status AS report_status, m.queue_id,
-        m.is_read, m.created_at, m.deleted_at
+        m.is_read, m.is_marketing, m.created_at, m.deleted_at
       FROM public.messages m
       LEFT JOIN public.contact_reports r ON r.id = m.report_id
       WHERE m.deleted_at IS NOT NULL
@@ -3703,10 +3704,11 @@ BEGIN
       SELECT
         r.id, 'form'::text AS source, 'inbound'::text AS direction,
         r.email AS from_email, NULL::text AS to_email, r.subject,
+        NULL::text AS body, NULL::text AS body_html,
         left(r.message, 120) AS body_preview,
         r.id AS report_id, r.ticket_number, r.status AS report_status,
         NULL::uuid AS queue_id,
-        false AS is_read, r.created_at, NULL::timestamp with time zone AS deleted_at
+        false AS is_read, false AS is_marketing, r.created_at, NULL::timestamp AS deleted_at
       FROM public.contact_reports r
       ORDER BY r.created_at DESC
       LIMIT p_limit OFFSET p_offset;
@@ -3716,9 +3718,10 @@ BEGIN
     RETURN QUERY
       SELECT
         m.id, m.source, m.direction, m.from_email, m.to_email, m.subject,
-        left(m.body, 120) AS body_preview,
+        m.body, m.body_html,
+        left(regexp_replace(COALESCE(m.body_html, m.body), E'<style[^>]*>[^<]*</style>', '', 'g'), 120) AS body_preview,
         m.report_id, r.ticket_number, r.status AS report_status, m.queue_id,
-        m.is_read, m.created_at, m.deleted_at
+        m.is_read, m.is_marketing, m.created_at, m.deleted_at
       FROM public.messages m
       LEFT JOIN public.contact_reports r ON r.id = m.report_id
       WHERE m.deleted_at IS NULL
@@ -13483,5 +13486,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 1I7hsfA9AXuCJBffrgbB4cFCe3s5xYE0HOjrIJb7FuwDVqmndhy7fB3u2KkeRxY
+\unrestrict 0SLROIXNEbgmG9924RxhqyIf7bkmXj3XMmvM09zJtsgnktAJUBgJhm8ZMVnK1ze
 
