@@ -2435,6 +2435,14 @@ async function openMessage(id) {
         console.log("[openMessage] Base subject for thread:", baseSubject);
         console.log("[openMessage] Message has ticket_number:", msg.ticket_number, "report_id:", msg.report_id);
         
+        // Debug: log all subjects for comparison
+        console.log("[openMessage] All messages subjects:", allMessages.map(m => ({
+          id: m.id.substring(0, 8),
+          subject: m.subject,
+          ticket: m.ticket_number,
+          report: m.report_id
+        })));
+        
         // Find all messages in this conversation
         threadMessages = allMessages.filter(m => {
           if (m.id === id) return false; // Exclude the central message (we render it separately)
@@ -2455,6 +2463,8 @@ async function openMessage(id) {
             if (mSubject === baseSubject) {
               console.log("[openMessage] Match by subject:", m.id, "|", m.subject);
               return true;
+            } else {
+              console.log("[openMessage] NO match - comparing:", { base: baseSubject, msg: mSubject });
             }
           }
           
