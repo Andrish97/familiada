@@ -2185,19 +2185,17 @@ function renderMailList(rows) {
 
     // Strategy 3: Final fallback - body_preview
     if (!previewText && r.body_preview) {
-      const tmp = document.createElement("div");
-      // If body_preview is full HTML, extract from body tag
-      if (r.body_preview.trim().startsWith("<!DOCTYPE")) {
-        const bodyMatch = r.body_preview.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
-        if (bodyMatch) {
-          tmp.innerHTML = bodyMatch[1];
-        } else {
-          tmp.innerHTML = r.body_preview;
-        }
-      } else {
-        tmp.innerHTML = r.body_preview;
-      }
-      previewText = (tmp.textContent || tmp.innerText || "").trim();
+      // Strip ALL HTML and clean up text
+      previewText = r.body_preview
+        .replace(/<[^>]*>/g, ' ')           // Remove all HTML tags
+        .replace(/&nbsp;/g, ' ')            // Replace &nbsp; with space
+        .replace(/&amp;/g, '&')             // Replace &amp; with &
+        .replace(/&lt;/g, '<')              // Replace &lt; with <
+        .replace(/&gt;/g, '>')              // Replace &gt; with >
+        .replace(/&quot;/g, '"')            // Replace &quot; with "
+        .replace(/&#39;/g, "'")             // Replace &#39; with '
+        .replace(/\s+/g, ' ')               // Collapse whitespace
+        .trim();
       console.log('body_preview was:', r.body_preview.substring(0, 100) + '...');
       console.log('extracted:', previewText);
     }
