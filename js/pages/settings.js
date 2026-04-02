@@ -2092,32 +2092,40 @@ async function loadMailFolder({ silent = false } = {}) {
       const json = await res.json();
       msgRows = json.rows || [];
     } else if (msgActiveFolder === "marketing") {
-      // Fetch marketing emails from queue with type='marketing' and their replies
-      const res = await adminFetch("/mail-queue?status=sent&type=marketing&limit=100");
+      // Fetch marketing emails from messages table (outbound with marketing flag)
+      const res = await adminFetch(`/messages?filter=sent&limit=500`);
       if (!res.ok) throw new Error(await res.text());
       const json = await res.json();
-      // Get marketing messages and their replies
-      const marketingIds = (json.rows || []).map(m => m.id);
-      msgRows = json.rows || [];
-      
-      // Also fetch replies to marketing messages
-      try {
-        const repliesRes = await adminFetch(`/messages?filter=all&limit=500`);
-        if (repliesRes.ok) {
-          const repliesJson = await repliesRes.json();
-          const replies = (repliesJson.rows || []).filter(m => 
-            m.direction === "inbound" && marketingIds.some(id => 
-              m.subject?.includes(`Re:`) || m.in_reply_to === id
-            )
-          );
-          msgRows = [...msgRows, ...replies];
-        }
-      } catch (e) { console.error("[loadMailFolder] marketing replies fetch error:", e); }
+      // Filter for marketing emails (those with full HTML body and Familiada branding)
+      msgRows = (json.rows || []).filter(m => 
+        m.direction === "outbound" && 
+        m.body_html && 
+        m.body_html.includes("FAMILIADA")
+      );
     } else {
       const res = await adminFetch(`/messages?filter=${encodeURIComponent(msgActiveFolder)}&limit=100`);
       if (!res.ok) throw new Error(await res.text());
       const json = await res.json();
       msgRows = json.rows || [];
+      
+      // For "sent" folder, also include marketing emails
+      if (msgActiveFolder === "sent") {
+        try {
+          const allRes = await adminFetch(`/messages?filter=all&limit=500`);
+          if (allRes.ok) {
+            const allJson = await allRes.json();
+            const marketingEmails = (allJson.rows || []).filter(m => 
+              m.direction === "outbound" && 
+              m.body_html && 
+              m.body_html.includes("FAMILIADA") &&
+              !msgRows.some(existing => existing.id === m.id)
+            );
+            msgRows = [...msgRows, ...marketingEmails];
+            // Sort by date
+            msgRows.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+          }
+        } catch (e) { console.error("[loadMailFolder] marketing merge error:", e); }
+      }
     }
     renderMailList(msgRows);
     // Refresh badge counts after loading folder
@@ -2224,17 +2232,20 @@ function renderMailList(rows) {
   if (msgActiveFolder === "marketing") {
     for (const r of filtered) {
       const item = document.createElement("div");
-      item.className = "mail-thread-item" + (r.id === msgActiveId ? " active" : "");
+      const isInbound = r.direction === "inbound";
+      item.className = "mail-thread-item" + (isInbound ? "" : "") + (r.id === msgActiveId ? " active" : "");
       item.dataset.msgId = r.id;
-      const dateStr = new Date(r.sent_at || r.created_at).toLocaleDateString("pl-PL", { day:"2-digit", month:"2-digit" });
-      const toBadge = r.to_email ? `📧 ${escSetting(r.to_email)}` : `📢 ${escSetting(r.recipients_count || 0)} odbiorców`;
+      const dateStr = new Date(r.created_at).toLocaleDateString("pl-PL", { day:"2-digit", month:"2-digit" });
+      const fromTo = isInbound 
+        ? `↙ ${escSetting(r.from_email || "—")}` 
+        : `📢 ${escSetting(r.to_email || "Kampania")}`;
       item.innerHTML = `
         <div class="mail-ti-row">
-          <span class="mail-ti-from">${toBadge}</span>
+          <span class="mail-ti-from">${fromTo}</span>
           <span class="mail-ti-date">${dateStr}</span>
         </div>
         <div class="mail-ti-subject">${escSetting(r.subject || "—")}</div>
-        <div class="mail-ti-preview" style="opacity:.45">Kampania marketingowa</div>`;
+        <div class="mail-ti-preview" style="opacity:.45">${isInbound ? 'Odpowiedź na kampanię' : 'Kampania marketingowa'}</div>`;
       item.addEventListener("click", () => openMessage(r.id));
       body.appendChild(item);
     }
@@ -2316,12 +2327,14 @@ async function openMessage(id) {
     el.classList.toggle("active", el.dataset.msgId === id);
   });
 
-  // Mark message as read
+  // Mark message as read (skip if endpoint doesn't exist yet)
   try {
     await adminFetch(`/messages/read?id=${encodeURIComponent(id)}`, { method: "POST" });
     // Refresh badges after marking as read
     loadFolderBadges();
-  } catch (e) { console.error("[openMessage] mark read error:", e); }
+  } catch (e) { 
+    console.log("[openMessage] mark read: endpoint not available yet"); 
+  }
 
   const conv = document.getElementById("mailConv");
   if (!conv) return;
@@ -2333,16 +2346,26 @@ async function openMessage(id) {
     const json = await res.json();
     if (!json.ok) throw new Error(json.error);
     
-    // Fetch conversation thread (messages with same ticket/report)
+    // Fetch conversation thread (all messages with same ticket_number OR same subject Re: chain)
     let threadMessages = [];
     if (json.message.ticket_number || json.message.report_id) {
       try {
-        const threadRes = await adminFetch(`/messages?filter=all&limit=100`);
+        const threadRes = await adminFetch(`/messages?filter=all&limit=500`);
         if (threadRes.ok) {
           const threadJson = await threadRes.json();
+          // Find base ticket number or subject
+          const baseTicket = json.message.ticket_number;
+          const baseSubject = json.message.subject?.replace(/^Re:\s*/gi, '').trim();
+          
           threadMessages = (threadJson.rows || []).filter(m => 
-            (m.ticket_number === json.message.ticket_number || m.report_id === json.message.report_id)
-            && m.id !== id
+            m.id !== id &&
+            (
+              // Same ticket/report
+              (baseTicket && m.ticket_number === baseTicket) ||
+              (m.report_id === json.message.report_id) ||
+              // Or same subject chain (Re: Re: Re: ...)
+              (m.subject && m.subject.replace(/^Re:\s*/gi, '').trim() === baseSubject)
+            )
           ).sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
         }
       } catch (e) { console.error("[openMessage] thread fetch error:", e); }
