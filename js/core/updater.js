@@ -1,7 +1,7 @@
 /**
  * js/core/updater.js
  * Automatyczne sprawdzanie nowej wersji aplikacji.
- * Jeśli wersja na serwerze (version.txt) różni się od lokalnej (meta app-version),
+ * Jeśli hash pliku settings.js na serwerze różni się od lokalnego,
  * skrypt odświeża stronę.
  */
 
@@ -9,10 +9,16 @@ const CHECK_INTERVAL = 5 * 60 * 1000; // 5 minut
 let currentVersion = null;
 
 export function initUpdater() {
-  // Pobierz aktualną wersję z meta tagu
+  // Pobierz aktualną wersję z meta tagu (jeśli istnieje)
   const meta = document.querySelector('meta[name="app-version"]');
-  if (!meta) return;
-  currentVersion = meta.getAttribute('content');
+  if (meta) {
+    currentVersion = meta.getAttribute('content');
+  }
+
+  if (!currentVersion) {
+    console.log('[Updater] No version found, skipping auto-update');
+    return;
+  }
 
   // Rozpocznij cykliczne sprawdzanie
   setInterval(checkForUpdates, CHECK_INTERVAL);
@@ -25,41 +31,39 @@ export function initUpdater() {
 
 async function checkForUpdates() {
   try {
-    // Fetch version.txt z cache-busterem
-    const res = await fetch(`/version.txt?cb=${Date.now()}`, { cache: 'no-store' });
-    if (!res.ok) return;
+    // Fetch settings.js HEAD request to check if it changed
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
     
-    const latestVersion = (await res.text()).trim();
-    if (!latestVersion) return;
+    const res = await fetch(`/settings.js`, { 
+      method: 'HEAD',
+      cache: 'no-store',
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+    
+    if (!res.ok) return;
 
-    if (currentVersion && latestVersion !== currentVersion) {
-      console.log(`[Updater] Nowa wersja dostępna: ${latestVersion} (obecna: ${currentVersion})`);
-      
-      // Jeśli strona jest w tle, odświeżamy od razu
-      if (document.hidden) {
-        location.reload();
-        return;
-      }
+    // Get Last-Modified header as version indicator
+    const lastModified = res.headers.get('last-modified');
+    const serverVersion = lastModified;
+    
+    if (!serverVersion) return;
 
-      // Jeśli strona jest na widoku, możemy poczekać aż użytkownik przejdzie w tło
-      // lub odświeżyć jeśli nie jest w trakcie ważnej akcji (np. buzzer, host).
-      // Na razie: odświeżamy po krótkim opóźnieniu, chyba że to panel hosta/sterowania.
-      const isSensitivePage = 
-        location.pathname.includes('host.html') || 
+    if (currentVersion && serverVersion !== currentVersion) {
+      console.log(`[Updater] Nowa wersja wykryta: ${serverVersion} (obecna: ${currentVersion})`);
+
+      const isSensitivePage =
+        location.pathname.includes('host.html') ||
         location.pathname.includes('control.html') ||
         location.pathname.includes('buzzer.html');
 
       if (!isSensitivePage) {
-        // Dla zwykłych stron odświeżamy po 10 sekundach bezczynności lub od razu w tle
         setTimeout(() => {
           if (document.hidden) location.reload();
-          else {
-            // Można tu dodać Toast "Aplikacja została zaktualizowana", ale user chciał "never refresh" (automatycznie)
-            location.reload();
-          }
+          else location.reload();
         }, 5000);
       } else {
-        // Dla wrażliwych stron czekamy aż karta przejdzie w tło
         console.log('[Updater] Strona wrażliwa, czekam na przejście w tło do aktualizacji.');
       }
     }
