@@ -814,11 +814,9 @@ export function initImageEditor(ctx) {
 
       if (source.imageUrl) {
         // load from storage/URL
-        console.log("[image.open] Loading imageUrl:", source.imageUrl);
         const img = new Image();
         img.crossOrigin = "anonymous";
         img.onload = () => {
-          console.log("[image.open] Image loaded successfully");
           imgObj = img;
           if (imgPreview) {
             imgPreview.style.display = "block";
@@ -838,10 +836,8 @@ export function initImageEditor(ctx) {
         img.onerror = (e) => {
           console.error("[image.open] Failed to load image:", source.imageUrl, e);
           // Spróbuj bez crossOrigin dla lokalnych plików
-          console.log("[image.open] Retrying without crossOrigin...");
           const img2 = new Image();
           img2.onload = () => {
-            console.log("[image.open] Retry succeeded");
             imgObj = img2;
             if (imgPreview) {
               imgPreview.style.display = "block";
@@ -903,21 +899,12 @@ export function initImageEditor(ctx) {
           const safeName = `${timestamp}.${ext}`;
           const path = `${user.id}/${safeName}`;
 
-          console.log("[image.getCreatePayload] Uploading image:", {
-            path,
-            fileName: imgFileObj.name,
-            ext,
-            size: imgFileObj.size,
-            type: imgFileObj.type,
-            userId: user.id
-          });
-
           const { data, error } = await sb().storage.from("user-logos").upload(path, imgFileObj, {
             cacheControl: '3600',
             upsert: false,
             contentType: imgFileObj.type || 'image/jpeg'
           });
-          
+
           if (error) {
             console.error("[image.getCreatePayload] Upload error:", error);
              // Jeśli bucket nie istnieje, spróbuj stworzyć (może zadziała jeśli user ma uprawnienia)
@@ -933,24 +920,19 @@ export function initImageEditor(ctx) {
                  throw retry.error;
                }
                source.imageUrl = sb().storage.from("user-logos").getPublicUrl(path).data.publicUrl;
-               console.log("[image.getCreatePayload] Bucket created, image uploaded, URL:", source.imageUrl);
              } else {
                throw error;
              }
           } else {
-            console.log("[image.getCreatePayload] Upload response data:", data);
-            
             // Sprawdźmy, czy plik na pewno istnieje po uploadzie
             const { data: listData, error: listError } = await sb()
               .storage
               .from("user-logos")
               .list(user.id, { limit: 10 });
-            
+
             if (listError) {
               console.error("[image.getCreatePayload] List error after upload:", listError);
             } else {
-              console.log("[image.getCreatePayload] Files in user folder after upload:", listData);
-              
               // Sprawdźmy, czy nasz plik jest na liście
               const fileName = path.split("/")[1];
               const found = listData?.find(f => f.name === fileName);
@@ -958,18 +940,14 @@ export function initImageEditor(ctx) {
                 console.error("[image.getCreatePayload] ERROR: File not found in storage after upload!");
                 console.error("[image.getCreatePayload] Expected file:", fileName);
                 console.error("[image.getCreatePayload] Available files:", listData);
-              } else {
-                console.log("[image.getCreatePayload] File found in storage:", found);
               }
             }
-            
+
             source.imageUrl = sb().storage.from("user-logos").getPublicUrl(path).data.publicUrl;
-            console.log("[image.getCreatePayload] Image URL generated:", source.imageUrl);
-            
+
             // Sprawdźmy, czy URL jest dostępny
             try {
               const testResponse = await fetch(source.imageUrl, { method: 'HEAD' });
-              console.log("[image.getCreatePayload] URL test response:", testResponse.status, testResponse.statusText);
               if (!testResponse.ok) {
                 console.error("[image.getCreatePayload] URL is not accessible! Status:", testResponse.status);
               }

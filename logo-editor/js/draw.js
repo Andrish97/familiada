@@ -1657,16 +1657,9 @@ export function initDrawEditor(ctx) {
         const c = fabricCanvas;
         const up = c.upperCanvasEl;
         const low = c.lowerCanvasEl;
-        console.log("zoom:", c.getZoom(), "vpt:", c.viewportTransform);
-        console.log("canvas size:", c.getWidth(), c.getHeight());
-        console.log("upper attr:", up.width, up.height, "lower attr:", low.width, low.height);
-        console.log("upper rect:", up.getBoundingClientRect());
-        console.log("lower rect:", low.getBoundingClientRect());
-        console.log("offset:", c._offset);
       },
       calcOffset() {
         fabricCanvas.calcOffset();
-        console.log("calcOffset =>", fabricCanvas._offset);
       },
       list() {
         const objs = fabricCanvas.getObjects();

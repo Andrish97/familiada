@@ -16,7 +16,6 @@ export function initUpdater() {
   }
 
   if (!currentVersion) {
-    console.log('[Updater] No version found, skipping auto-update');
     return;
   }
 
@@ -42,8 +41,6 @@ async function checkForUpdates() {
     if (!serverVersion) return;
 
     if (currentVersion && serverVersion !== currentVersion) {
-      console.log(`[Updater] Nowa wersja wykryta: ${serverVersion} (obecna: ${currentVersion})`);
-
       const isSensitivePage =
         location.pathname.includes('host.html') ||
         location.pathname.includes('control.html') ||
@@ -54,7 +51,6 @@ async function checkForUpdates() {
           location.reload();
         }, 5000);
       } else {
-        console.log('[Updater] Strona wrażliwa, czekam na przejście w tło do aktualizacji.');
       }
     }
   } catch (err) {

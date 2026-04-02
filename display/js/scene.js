@@ -1608,10 +1608,10 @@ export async function createScene() {
         const dbLogo = await loadActiveLogoFromDb(gid, key);
         if (dbLogo && dbLogo.type && dbLogo.payload) {
           ACTIVE_LOGO = dbLogo;
-          console.log("[logo] loaded from DB:", dbLogo.name || dbLogo.type);
+
         } else {
           ACTIVE_LOGO = null;
-          console.log("[logo] no active logo in DB -> fallback to default json");
+
         }
       },
     
@@ -2235,13 +2235,13 @@ export async function createScene() {
       const target = (tokens[1] ?? "").toUpperCase();
       if (target === "RESET") {
         resetTheme();
-        console.log("[COLOR] RESET");
+
         return;
       }
       const val = unquote(tokens.slice(2).join(" "))
       try {
         setBaseColor(target, val);
-        console.log(`[COLOR] ${target} = ${val}`);
+
       } catch (e) {
         console.warn(String(e?.message || e));
       }
@@ -2327,10 +2327,10 @@ export async function createScene() {
         loadActiveLogoFromDb(gid, key).then(dbLogo => {
           if (dbLogo && dbLogo.type && dbLogo.payload) {
             ACTIVE_LOGO = dbLogo;
-            console.log("[logo] RELOAD: załadowano z bazy:", dbLogo.name || dbLogo.type);
+
           } else {
             ACTIVE_LOGO = null;
-            console.log("[logo] RELOAD: brak aktywnego logo -> fallback");
+
           }
           try { api.logo.draw(); } catch (e) { console.warn("[logo] draw after RELOAD failed:", e); }
         }).catch(e => console.warn("[logo] RELOAD failed:", e));

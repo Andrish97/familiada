@@ -4269,12 +4269,10 @@ export function wireActions({ state }) {
   
       // === 3) Utwórz grę przez importer (osobna baza "games") ===
       const gameId = await importGame(payload, ownerId);
-  
-      console.log("[createGame] imported gameId:", gameId);
-  
+
       // (opcjonalnie) nawigacja do buildera:
       location.href = `../builder`;
-  
+
       return true;
     } catch (e) {
       console.error(e);

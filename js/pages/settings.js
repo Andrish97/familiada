@@ -1951,7 +1951,6 @@ async function confirmReject() {
 }
 
 async function adminForceWithdraw(id) {
-  console.log("[settings] adminForceWithdraw id:", id);
   const ok = await confirmModal({ text: t("settings.marketplace.forceWithdrawConfirm") || "Wycofać tę grę? Zniknie z browse, ale zostanie w bibliotekach." });
   if (!ok) return;
   try {
@@ -1961,7 +1960,6 @@ async function adminForceWithdraw(id) {
       body: JSON.stringify({ id }),
     });
     const json = await res.json();
-    console.log("[settings] adminForceWithdraw response:", json);
     if (!json.ok) throw new Error(json.error || "withdraw_failed");
     showToast(t("settings.marketplace.forceWithdrawn") || "Wycofano.");
     closeMarketPreview();
@@ -1973,7 +1971,6 @@ async function adminForceWithdraw(id) {
 }
 
 async function adminHardDelete(id) {
-  console.log("[settings] adminHardDelete id:", id);
   const ok = await confirmModal({ text: t("settings.marketplace.hardDeleteConfirm") || "Usunąć grę na stałe? Zniknie u wszystkich użytkowników. Tego nie da się cofnąć." });
   if (!ok) return;
   try {
@@ -1983,7 +1980,6 @@ async function adminHardDelete(id) {
       body: JSON.stringify({ id }),
     });
     const json = await res.json();
-    console.log("[settings] adminHardDelete response:", json);
     if (!json.ok) {
       let msg = json.error || "delete_failed";
       if (json.debug) msg += ` (status: ${json.debug.status}, row_err: ${json.debug.row_err})`;
@@ -2093,9 +2089,7 @@ async function loadMailFolder({ silent = false } = {}) {
       msgRows = json.rows || [];
     } else if (msgActiveFolder === "marketing") {
       // Fetch ALL messages and filter for marketing (outbound + inbound replies)
-      console.log("[loadMailFolder] Fetching marketing messages...");
       const res = await adminFetch(`/messages?filter=all&limit=500`);
-      console.log("[loadMailFolder] Marketing fetch result:", res.status, res.ok);
       if (!res.ok) {
         const errorText = await res.text();
         console.error("[loadMailFolder] Marketing fetch ERROR:", errorText);
@@ -2106,11 +2100,8 @@ async function loadMailFolder({ silent = false } = {}) {
       msgRows = (json.rows || []).filter(m =>
         m.is_marketing === true  // Both outbound campaigns AND inbound replies
       );
-      console.log("[loadMailFolder] Marketing folder:", msgRows.length, "messages");
     } else {
-      console.log("[loadMailFolder] Fetching folder:", msgActiveFolder);
       const res = await adminFetch(`/messages?filter=${encodeURIComponent(msgActiveFolder)}&limit=500`);
-      console.log("[loadMailFolder] Folder fetch result:", res.status, res.ok);
       if (!res.ok) {
         const errorText = await res.text();
         console.error("[loadMailFolder] Folder fetch ERROR:", errorText);
@@ -2118,7 +2109,6 @@ async function loadMailFolder({ silent = false } = {}) {
       }
       const json = await res.json();
       msgRows = json.rows || [];
-      console.log("[loadMailFolder] Folder rows:", msgRows.length);
       
       // For "sent" folder, also include marketing emails
       if (msgActiveFolder === "sent") {
@@ -2369,7 +2359,6 @@ function renderMailList(rows) {
 }
 
 async function openMessage(id) {
-  console.log("[openMessage] Opening message:", id);
   
   msgActiveId = id;
   document.querySelectorAll(".mail-thread-item").forEach(el => {
@@ -2378,9 +2367,7 @@ async function openMessage(id) {
 
   // Mark message as read
   try {
-    console.log("[openMessage] Calling /messages/read...");
     const readRes = await adminFetch(`/messages/read?id=${encodeURIComponent(id)}`, { method: "POST" });
-    console.log("[openMessage] /messages/read response:", readRes.status, readRes.ok);
     
     if (!readRes.ok) {
       const readText = await readRes.text().catch(() => "N/A");
@@ -2399,7 +2386,6 @@ async function openMessage(id) {
   conv.innerHTML = `<div style="flex:1;display:flex;align-items:center;justify-content:center;opacity:.35;font-size:12px">${t("settings.marketplace.loadingConv") || "Ładowanie…"}</div>`;
 
   try {
-    console.log("[openMessage] Fetching message detail...");
     const res = await adminFetch(`/messages/detail?id=${encodeURIComponent(id)}`);
     if (!res.ok) throw new Error(await res.text());
     const json = await res.json();
@@ -2410,25 +2396,16 @@ async function openMessage(id) {
     // Fetch conversation thread (Apple Mail style - all messages in the same conversation)
     let threadMessages = [];
     try {
-      console.log("[openMessage] Fetching all messages for thread...");
       const threadRes = await adminFetch(`/messages?filter=all&limit=500`);
       if (threadRes.ok) {
         const threadJson = await threadRes.json();
         const allMessages = threadJson.rows || [];
-        console.log("[openMessage] Fetched", allMessages.length, "total messages");
         
         // Find conversation by subject line (strip Re:/Fwd:/etc.)
         const baseSubject = msg.subject?.replace(/^(Re|Fwd|FW):\s*/gi, '').trim().toLowerCase();
-        console.log("[openMessage] Base subject for thread:", baseSubject);
-        console.log("[openMessage] Message has ticket_number:", msg.ticket_number, "report_id:", msg.report_id);
         
         // Debug: log all subjects for comparison
-        console.log("[openMessage] All messages subjects:", allMessages.map(m => ({
-          id: m.id.substring(0, 8),
-          subject: m.subject,
-          ticket: m.ticket_number,
-          report: m.report_id
-        })));
+
         
         // Find all messages in this conversation
         threadMessages = allMessages.filter(m => {
@@ -2436,11 +2413,9 @@ async function openMessage(id) {
 
           // Same ticket/report - highest priority
           if (msg.ticket_number && m.ticket_number === msg.ticket_number) {
-            console.log("[openMessage] Match by ticket_number:", m.id, m.ticket_number);
             return true;
           }
           if (msg.report_id && m.report_id === msg.report_id) {
-            console.log("[openMessage] Match by report_id:", m.id, m.report_id);
             return true;
           }
 
@@ -2467,33 +2442,21 @@ async function openMessage(id) {
               );
               
               if (hasCommonParticipant) {
-                console.log("[openMessage] Match by subject+participants:", m.id, "|", m.subject);
                 return true;
               } else {
-                console.log("[openMessage] NO match - different participants:", { 
-                  msg: Array.from(msgParticipants), 
-                  m: Array.from(mParticipants) 
-                });
+
               }
             } else {
-              console.log("[openMessage] NO match - comparing:", { base: baseSubject, msg: mSubject });
             }
           }
 
           return false;
         });
         
-        console.log("[openMessage] Found", threadMessages.length, "messages in thread");
         
         // Debug: show found messages with dates
         if (threadMessages.length > 0) {
-          console.log("[openMessage] Found messages:", threadMessages.map(m => ({
-            id: m.id.substring(0, 8),
-            subject: m.subject?.substring(0, 30),
-            created_at: m.created_at,
-            isEarlier: new Date(m.created_at) < new Date(msg.created_at),
-            isLater: new Date(m.created_at) > new Date(msg.created_at)
-          })));
+
         }
         
         // Sort by date (oldest first)
@@ -2514,7 +2477,6 @@ async function openMessage(id) {
       }
     } catch (e) { console.error("[openMessage] Attachments error:", e); }
 
-    console.log("[openMessage] Rendering message with", threadMessages.length, "thread messages");
     renderMessageDetail(msg, attachments, threadMessages);
   } catch (err) {
     console.error("[openMessage] Error:", err);
@@ -2577,7 +2539,6 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
   const header = document.createElement("div");
   header.className = "mail-conv-header";
 
-  console.log("[mail-conv-header] msg.ticket_number:", msg.ticket_number, "msg.report_id:", msg.report_id);
   
   let ticketBadge = "";
   if (msg.ticket_number) {
@@ -2603,19 +2564,13 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
 
   // Render earlier messages (above the central message)
   const earlierMessages = threadMessages.filter(m => new Date(m.created_at) < new Date(msg.created_at));
-  console.log("[renderMessageDetail] Earlier messages:", earlierMessages.length, "| Thread total:", threadMessages.length);
   if (earlierMessages.length > 0) {
-    console.log("[renderMessageDetail] First earlier message:", { 
-      id: earlierMessages[0].id, 
-      hasBody: !!earlierMessages[0].body, 
-      hasBodyHtml: !!earlierMessages[0].body_html 
-    });
+
   }
   for (const threadMsg of earlierMessages) {
     const threadBubble = document.createElement("div");
     threadBubble.className = `mail-msg ${threadMsg.direction === "inbound" ? "inbound" : "outbound"} mail-msg-thread`;
     threadBubble.style.opacity = "0.6";
-    console.log("[renderMessageDetail] Rendering earlier message:", threadMsg.id, "body:", !!threadMsg.body, "body_html:", !!threadMsg.body_html);
     renderSimpleMessageContent(threadBubble, threadMsg);
     msgs.appendChild(threadBubble);
   }
@@ -2779,20 +2734,13 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
 
   // Render later messages (below the central message)
   const laterMessages = threadMessages.filter(m => new Date(m.created_at) > new Date(msg.created_at));
-  console.log("[renderMessageDetail] Later messages:", laterMessages.length);
   if (laterMessages.length > 0) {
-    console.log("[renderMessageDetail] Later messages details:", laterMessages.map(m => ({
-      id: m.id.substring(0, 8),
-      created_at: m.created_at,
-      hasBody: !!m.body,
-      hasBodyHtml: !!m.body_html
-    })));
+
   }
   for (const threadMsg of laterMessages) {
     const threadBubble = document.createElement("div");
     threadBubble.className = `mail-msg ${threadMsg.direction === "inbound" ? "inbound" : "outbound"} mail-msg-thread`;
     threadBubble.style.opacity = "0.6";
-    console.log("[renderMessageDetail] Rendering later message:", threadMsg.id, "body:", !!threadMsg.body, "body_html:", !!threadMsg.body_html);
     renderSimpleMessageContent(threadBubble, threadMsg);
     msgs.appendChild(threadBubble);
   }
@@ -3561,7 +3509,6 @@ function showCompose(defaults = {}) {
       tinymce.remove(existing);
     }
     
-    console.log("Initializing TinyMCE for composeMessageArea...");
     tinymce.init({
       selector: "#composeMessageArea",
       height: 400,
@@ -3604,7 +3551,6 @@ function showCompose(defaults = {}) {
       },
       setup: (editor) => {
         editor.on("init", () => {
-          console.log("TinyMCE init event fired");
         });
         editor.on("change", () => {
           const content = editor.getContent();
@@ -3613,7 +3559,6 @@ function showCompose(defaults = {}) {
             if (quoteBlock) quoteBlock.style.display = "";
           }
         });
-        console.log("TinyMCE initialized successfully");
       },
     });
   };
@@ -5476,7 +5421,7 @@ function wireEvents() {
       `,
       paste_data_images: true,
       images_upload_handler: (blobInfo) => new Promise((resolve) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.readAsDataURL(blobInfo.blob()); }),
-      setup: (editor) => { editor.on("init", () => { console.log("TinyMCE marketing initialized"); }); mktEl._tinyMCEInitialized = true; },
+      setup: (editor) => { mktEl._tinyMCEInitialized = true; },
     });
   };
   setTimeout(initMktTinyMCE, 100);

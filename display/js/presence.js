@@ -58,7 +58,6 @@ export async function startPresence({
     .on("broadcast", { event: "DISPLAY_CMD" }, (msg) => {
       const line = msg?.payload?.line;
       if (!line) return;
-      if (debug) console.log("[display] cmd:", line);
       try { onCommand?.(String(line)); } catch (e) { if (debug) console.warn(e); }
     })
     .subscribe();

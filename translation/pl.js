@@ -4956,6 +4956,9 @@ const pl = {
       desktopOnly: "Ta strona działa najlepiej na komputerze lub TV. Możesz kontynuować.",
     },
   },
+  security: {
+    selfXssWarning: "Używanie tej konsoli może pozwolić atakującym na podszywanie się pod Ciebie i kradzież informacji przy użyciu ataku zwanego Self-XSS. Nie wprowadzaj ani nie wklejaj kodu, którego nie rozumiesz.",
+  },
 };
 
 export default pl;

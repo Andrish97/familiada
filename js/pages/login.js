@@ -726,12 +726,10 @@ async function ensureUsernameAvailable(username, userId) {
 }
 
 async function saveUsername() {
-  console.log("[saveUsername] START", new Date().toISOString());
   setUsernameErr("");
   try {
     const username = validateUsername(usernameFirst?.value || "");
     const { data: userData, error: userError } = await sb().auth.getUser();
-    console.log("[saveUsername] userId", userData?.user?.id, "usernameInput", username);
 
     if (userError || !userData?.user) throw new Error(t("index.errNoSession"));
 
@@ -744,12 +742,10 @@ async function saveUsername() {
       .select("id, username")
       .single();
 
-    console.log("[saveUsername] DB result", res);
 
     if (res.error) throw res.error;
 
     const meta = await sb().auth.updateUser({ data: { username } });
-    console.log("[saveUsername] META result", meta);
 
     if (meta.error) throw meta.error;
 

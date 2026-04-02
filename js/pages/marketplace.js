@@ -99,7 +99,6 @@ function showView(name) {
    Browse — load + render
 ========================================================= */
 async function loadBrowse({ reset = false } = {}) {
-  console.log("[marketplace] loadBrowse", { reset, offset: currentOffset, search: currentSearch });
 
   if (reset) {
     currentOffset = 0;
@@ -183,7 +182,6 @@ async function openDetailBySlug(slug) {
 }
 
 async function openDetail(id, { fromUrl = false } = {}) {
-  console.log("[marketplace] openDetail id:", id);
   detailGameId = id;
 
   // Show modal immediately with loading state
@@ -296,7 +294,6 @@ function closeDetail() {
    Library — add / remove
 ========================================================= */
 async function addToLibrary() {
-  console.log("[marketplace] addToLibrary", detailGameId);
   if (!detailGameId || !currentUser) return;
   if (els.btnAddLibrary) els.btnAddLibrary.disabled = true;
 
@@ -305,7 +302,6 @@ async function addToLibrary() {
 
   if (error) { console.error("[marketplace] addToLibrary error:", error); showToast(t("marketplace.errorLoad"), "error"); return; }
   const res = Array.isArray(data) ? data[0] : data;
-  console.log("[marketplace] addToLibrary result:", res);
   if (!res?.ok) { showToast(res?.err || "error", "error"); return; }
 
   showToast(t("marketplace.addedBadge"), "success");
@@ -314,7 +310,6 @@ async function addToLibrary() {
 }
 
 async function removeFromLibrary() {
-  console.log("[marketplace] removeFromLibrary", detailGameId);
   if (!detailGameId || !currentUser) return;
   if (els.btnRemoveLibrary) els.btnRemoveLibrary.disabled = true;
 
@@ -323,7 +318,6 @@ async function removeFromLibrary() {
 
   if (error) { console.error("[marketplace] removeFromLibrary error:", error); showToast(t("marketplace.errorLoad"), "error"); return; }
   const res = Array.isArray(data) ? data[0] : data;
-  console.log("[marketplace] removeFromLibrary result:", res);
   if (!res?.ok) { showToast(res?.err || "error", "error"); return; }
 
   updateLibraryButtons(false);
@@ -349,7 +343,6 @@ function refreshCardInLibrary(id, inLibrary) {
    Moje wysłane
 ========================================================= */
 async function loadMySent() {
-  console.log("[marketplace] loadMySent");
   if (!els.mySentList) return;
   els.mySentList.innerHTML = "";
 
@@ -410,7 +403,6 @@ async function loadMySent() {
 }
 
 async function withdrawGame(id) {
-  console.log("[marketplace] withdrawGame id:", id);
   const ok = await confirmModal({
     title: t("marketplace.mySent.withdrawConfirmTitle"),
     text:  t("marketplace.mySent.withdrawConfirm"),
@@ -422,7 +414,6 @@ async function withdrawGame(id) {
   const { data, error } = await sb().rpc("market_withdraw", { p_market_game_id: id });
   if (error) { console.error("[marketplace] withdrawGame error:", error); showToast(t("marketplace.errorLoad"), "error"); return; }
   const res = Array.isArray(data) ? data[0] : data;
-  console.log("[marketplace] withdrawGame result:", res);
   if (!res?.ok) { showToast(res?.err || "error", "error"); return; }
 
   showToast(t("marketplace.mySent.withdrawn"), "success");
@@ -448,7 +439,7 @@ async function openSubmitModal() {
     if (g.type === "prepared") return qCount >= 10;
     return g.status === "ready";
   });
-  console.log("[marketplace] openSubmitModal games fetched:", (games || []).length, "eligible:", eligible.length);
+
 
   const hasEligible = eligible.length > 0;
 
@@ -494,7 +485,6 @@ async function submitGame() {
   if (!title)     return showSubmitError(t("marketplace.submit.errorMissingTitle"));
   if (!confirmed) return showSubmitError(t("marketplace.submit.errorCheckbox"));
 
-  console.log("[marketplace] submitGame", { gameId, title, lang: submitLang });
 
   if (els.btnSubmitConfirm) els.btnSubmitConfirm.disabled = true;
 
@@ -520,7 +510,6 @@ async function submitGame() {
 
   if (error) { console.error("[marketplace] submitGame rpc error:", error); showSubmitError(error.message); return; }
   const res = Array.isArray(data) ? data[0] : data;
-  console.log("[marketplace] submitGame result:", res);
   if (!res?.ok) {
     const errCode = res?.err || "submit_failed";
     const errMsg = t(`marketplace.submit.err.${errCode}`) || errCode;
@@ -741,7 +730,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   wireEvents();
   applyTranslations();
 
-  console.log("[marketplace] init user:", currentUser?.id, "isGuest:", isGuest);
 
   showView("browse");
   await loadBrowse({ reset: true });

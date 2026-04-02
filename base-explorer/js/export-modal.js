@@ -253,8 +253,6 @@ export function initExportModal({ state } = {}) {
   }
 
   function open(opts = {}) {
-    console.log("[EXPORT] openExportModal args:", arguments);
-    
     setErr("");
 
     lastOpts = opts || null;

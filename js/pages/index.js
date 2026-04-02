@@ -359,6 +359,4 @@ document.addEventListener("DOMContentLoaded", async () => {
     "Jak się nazywa ser, który nie jest twój? Nacho cheese.",
     "Co robią policjanci w kinie? Śledzą akcję."
   ];
-  console.log("%cFAMILIADA ONLINE", "color: #ffda7e; font-size: 20px; font-weight: bold;");
-  console.log(`%cSuchar dnia: ${suchary[Math.floor(Math.random() * suchary.length)]}`, "color: #aaa; font-style: italic;");
 });

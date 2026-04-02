@@ -861,7 +861,6 @@ function render() {
 }
 
 function renderMarket() {
-  console.log("[builder] renderMarket selectedMarketId:", selectedMarketId, "games:", marketGamesAll.length);
   if (!grid) return;
   grid.innerHTML = "";
 
@@ -908,7 +907,6 @@ function cardMarket(g) {
   });
   el.querySelector(".x").addEventListener("click", async (e) => {
     e.stopPropagation();
-    console.log("[builder] removeFromLibrary", g.market_game_id);
     const { error } = await sb().rpc("market_remove_from_library", { p_market_game_id: g.market_game_id });
     if (error) { console.error("[builder] removeFromLibrary error:", error); return; }
     if (selectedMarketId === g.market_game_id) selectedMarketId = null;
@@ -919,12 +917,10 @@ function cardMarket(g) {
 }
 
 async function loadMarketGames() {
-  console.log("[builder] loadMarketGames start");
   try {
     const { data, error } = await sb().rpc("market_my_library");
     if (error) throw error;
     marketGamesAll = data || [];
-    console.log("[builder] loadMarketGames loaded:", marketGamesAll.length, "games");
   } catch (e) {
     console.error("[builder] loadMarketGames error:", e);
     marketGamesAll = [];
@@ -962,7 +958,6 @@ async function fetchActionState(gameId, revHint) {
     rev: String(data?.rev || "")
   };
 
-  console.log("[RPC game_action_state]", gameId, data);
 
   actionStateCache.set(gameId, { rev: res.rev, res });
   return res;
@@ -1308,7 +1303,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   tabPollPoints?.addEventListener("click", () => setActiveTab(TYPES.POLL_POINTS));
   tabPrepared?.addEventListener("click", () => setActiveTab(TYPES.PREPARED));
   tabMarket?.addEventListener("click", async () => {
-    console.log("[builder] switching to market tab");
     if (activeTab !== TYPES.MARKET) {
       await loadMarketGames();
     }
