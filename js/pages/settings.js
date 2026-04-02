@@ -2264,8 +2264,8 @@ function renderMailList(rows) {
         ? `↙ ${escSetting(r.from_email || "—")}`
         : `📢 ${escSetting(r.to_email || "Kampania")}`;
       
-      // Marketing badge for outbound emails
-      const marketingBadge = !isInbound && isMarketingEmail(r)
+      // Marketing badge for ALL marketing emails (already filtered by is_marketing flag)
+      const marketingBadge = isMarketingEmail(r)
         ? `<span style="font-size:9px;padding:1px 5px;border-radius:4px;background:rgba(255,234,166,.15);color:#ffeaa6;border:1px solid rgba(255,234,166,.3)">marketing</span>`
         : "";
       
@@ -2298,8 +2298,8 @@ function renderMailList(rows) {
     // Ticket number text for messages with tickets
     const ticketText = r.ticket_number ? ` <span style="opacity:.5;font-size:10px">· ${escSetting(r.ticket_number)}</span>` : "";
 
-    // Marketing badge for outbound marketing emails
-    const marketingBadge = !isInbound && isMarketingEmail(r)
+    // Marketing badge for ALL marketing emails (outbound campaigns + inbound replies)
+    const marketingBadge = isMarketingEmail(r)
       ? `<span style="font-size:9px;padding:1px 5px;border-radius:4px;background:rgba(255,234,166,.15);color:#ffeaa6;border:1px solid rgba(255,234,166,.3);margin-right:4px">marketing</span>`
       : "";
 
