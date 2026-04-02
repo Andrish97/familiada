@@ -831,21 +831,27 @@ async function handleAdminMarketingApi(request, env, url) {
       return json({ ok: false, error: "queue_insert_failed", details: summarizeSupabaseError(qRes) }, qRes.status || 500);
     }
 
-    // Save message record for each email (so they appear in "Sent" folder)
-    // We only need one message record per marketing campaign, not per recipient
+    // Save message record for EACH email (so they appear individually in "Sent" and "Marketing" folders)
     const msgSubject = `[Marketing] ${mktSubject}`;
-    const saveRes = await supabaseRpc(env, "save_outbound_message", {
-      p_to_email:  "marketing@batch",
-      p_subject:   msgSubject,
-      p_body:      emailText,
-      p_body_html: emailHtml,
-      p_report_id: null,
-      p_queue_id:  null,
-    });
+    let savedCount = 0;
+    for (const email of validEmails.slice(0, 100)) { // Limit to 100 to avoid timeout
+      try {
+        await supabaseRpc(env, "save_outbound_message", {
+          p_to_email:  email,
+          p_subject:   msgSubject,
+          p_body:      emailText,
+          p_body_html: emailHtml,
+          p_report_id: null,
+          p_queue_id:  null,
+        });
+        savedCount++;
+      } catch (e) {
+        console.error("[marketing/send] save_outbound_message failed for", email, e);
+      }
+    }
 
-    if (!saveRes.ok) {
-      console.error("[marketing/send] save_outbound_message failed:", saveRes);
-      // Don't fail the request - queue is the important part
+    if (savedCount < validEmails.length) {
+      console.error(`[marketing/send] Only saved ${savedCount}/${validEmails.length} message records`);
     }
 
     return json({ ok: true, queued: validEmails.length, total: validEmails.length });

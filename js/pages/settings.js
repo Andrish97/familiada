@@ -2348,32 +2348,44 @@ async function openMessage(id) {
     if (!res.ok) throw new Error(await res.text());
     const json = await res.json();
     if (!json.ok) throw new Error(json.error);
-    
-    // Fetch conversation thread (all messages with same ticket_number OR same subject Re: chain)
+
+    const msg = json.message;
+
+    // Fetch conversation thread (Apple Mail style - all messages in the same conversation)
     let threadMessages = [];
-    if (json.message.ticket_number || json.message.report_id) {
-      try {
-        const threadRes = await adminFetch(`/messages?filter=all&limit=500`);
-        if (threadRes.ok) {
-          const threadJson = await threadRes.json();
-          // Find base ticket number or subject
-          const baseTicket = json.message.ticket_number;
-          const baseSubject = json.message.subject?.replace(/^Re:\s*/gi, '').trim();
+    try {
+      const threadRes = await adminFetch(`/messages?filter=all&limit=500`);
+      if (threadRes.ok) {
+        const threadJson = await threadRes.json();
+        const allMessages = threadJson.rows || [];
+        
+        // Find conversation by subject line (strip Re:/Fwd:/etc.)
+        const baseSubject = msg.subject?.replace(/^(Re|Fwd|FW):\s*/gi, '').trim().toLowerCase();
+        
+        // Find all messages in this conversation
+        threadMessages = allMessages.filter(m => {
+          if (m.id === id) return false; // Exclude the central message (we render it separately)
           
-          threadMessages = (threadJson.rows || []).filter(m => 
-            m.id !== id &&
-            (
-              // Same ticket/report
-              (baseTicket && m.ticket_number === baseTicket) ||
-              (m.report_id === json.message.report_id) ||
-              // Or same subject chain (Re: Re: Re: ...)
-              (m.subject && m.subject.replace(/^Re:\s*/gi, '').trim() === baseSubject)
-            )
-          ).sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-        }
-      } catch (e) { console.error("[openMessage] thread fetch error:", e); }
+          // Same ticket/report
+          if (msg.ticket_number && m.ticket_number === msg.ticket_number) return true;
+          if (msg.report_id && m.report_id === msg.report_id) return true;
+          
+          // Same subject conversation (strip Re:/Fwd: prefixes)
+          if (baseSubject && m.subject) {
+            const mSubject = m.subject.replace(/^(Re|Fwd|FW):\s*/gi, '').trim().toLowerCase();
+            if (mSubject === baseSubject) return true;
+          }
+          
+          return false;
+        });
+        
+        // Sort by date (oldest first)
+        threadMessages.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+      }
+    } catch (e) { 
+      console.error("[openMessage] thread fetch error:", e); 
     }
-    
+
     let attachments = [];
     try {
       const attRes = await adminFetch(`/attachments?message_id=${encodeURIComponent(id)}`);
@@ -2384,8 +2396,8 @@ async function openMessage(id) {
         console.error("[openMessage] attachments fetch failed:", attRes.status, await attRes.text().catch(() => ""));
       }
     } catch (e) { console.error("[openMessage] attachments error:", e); }
-    
-    renderMessageDetail(json.message, attachments, threadMessages);
+
+    renderMessageDetail(msg, attachments, threadMessages);
   } catch (err) {
     showToast(String(err?.message || err), "error");
     conv.innerHTML = "";
@@ -2458,10 +2470,20 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
     </div>`;
   conv.appendChild(header);
 
-  const msgEl = document.createElement("div");
-  msgEl.className = "mail-conv-messages";
+  // Render earlier messages (above the central message)
+  const earlierMessages = threadMessages.filter(m => new Date(m.created_at) < new Date(msg.created_at));
+  for (const threadMsg of earlierMessages) {
+    const threadBubble = document.createElement("div");
+    threadBubble.className = `mail-msg ${threadMsg.direction === "inbound" ? "inbound" : "outbound"} mail-msg-thread`;
+    threadBubble.style.opacity = "0.6";
+    renderSimpleMessageContent(threadBubble, threadMsg);
+    conv.appendChild(threadBubble);
+  }
+
+  // Render current message (central with gold accent)
   const bubble = document.createElement("div");
   bubble.className = `mail-msg ${isInbound ? "inbound" : "outbound"} mail-msg-central`;
+  bubble.style.cssText = "border:1px solid rgba(255,234,166,.4);box-shadow:0 0 15px rgba(255,234,166,.15);";
 
   const bodyEl = document.createElement("div");
   const htmlSrc = msg.body_html || (/<[a-z][\s\S]*>/i.test(msg.body || "") ? msg.body : null);
@@ -2612,30 +2634,17 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
     bubble.appendChild(attList);
   }
 
-  // Render thread messages (earlier messages above)
-  const earlierMessages = threadMessages.filter(m => new Date(m.created_at) < new Date(msg.created_at));
-  for (const threadMsg of earlierMessages) {
-    const threadBubble = document.createElement("div");
-    threadBubble.className = `mail-msg ${threadMsg.direction === "inbound" ? "inbound" : "outbound"}`;
-    threadBubble.style.opacity = "0.6";
-    renderSimpleMessageContent(threadBubble, threadMsg);
-    msgEl.appendChild(threadBubble);
-  }
-  
-  // Render current message (central with gold accent)
-  msgEl.appendChild(bubble);
-  
-  // Render later messages below
+  conv.appendChild(bubble);
+
+  // Render later messages (below the central message)
   const laterMessages = threadMessages.filter(m => new Date(m.created_at) > new Date(msg.created_at));
   for (const threadMsg of laterMessages) {
     const threadBubble = document.createElement("div");
-    threadBubble.className = `mail-msg ${threadMsg.direction === "inbound" ? "inbound" : "outbound"}`;
+    threadBubble.className = `mail-msg ${threadMsg.direction === "inbound" ? "inbound" : "outbound"} mail-msg-thread`;
     threadBubble.style.opacity = "0.6";
     renderSimpleMessageContent(threadBubble, threadMsg);
-    msgEl.appendChild(threadBubble);
+    conv.appendChild(threadBubble);
   }
-  
-  conv.appendChild(msgEl);
 
   // Action bar — icon buttons
   const actions = document.createElement("div");
