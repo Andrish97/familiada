@@ -1402,11 +1402,10 @@ async function handleAdminMessagesApi(request, env, url) {
     const messageId = url.searchParams.get("id");
     if (!messageId) return json({ ok: false, error: "missing_id" }, 400);
 
-    const updateRes = await supabaseRequest(env, "/rest/v1/messages", {
+    const updateRes = await supabaseRequest(env, `/rest/v1/messages?id=eq.${encodeURIComponent(messageId)}`, {
       method: "PATCH",
       headers: { Prefer: "return=minimal" },
       body: { is_read: true, read_at: new Date().toISOString() },
-      query: `id=eq.${messageId}`,
     });
     if (!updateRes.ok) return json({ ok: false, error: "update_failed", details: summarizeSupabaseError(updateRes) }, updateRes.status || 500);
     return json({ ok: true });
