@@ -92,7 +92,7 @@ const en = {
   },
   guestGuard: {
     title: "Not available for guest account",
-    message: "This section is available only for registered users. Sign in or create an account to use sharing, subscriptions, and the survey hub.",
+    message: "This section is available only for registered users. Sign in or create an account to use sharing, subscriptions, and the polls hub.",
     back: "Back to my games",
     login: "Sign in / Create account",
   },
@@ -106,7 +106,7 @@ const en = {
     },
     hero: {
       title: "Free Familiada Online. A real game show on your own equipment.",
-      lead: "The best system for playing Familiada: collect answers from participants via a survey, then run the live game. Ideal game for weddings, birthdays and corporate parties. Everything in the browser.",
+      lead: "The best system for playing Familiada: collect answers from participants via a poll, then run the live game. Ideal game for weddings, birthdays and corporate parties. Everything in the browser.",
       ctaStart: "Start creating games and running the live show",
       ctaMarketplace: "Browse Community Games 🎮",
       note: "Guest mode available — free Familiada without registration.",
@@ -114,7 +114,7 @@ const en = {
     about: {
       title: "Familiada Online — free question generator and live game",
       p1: "Our system allows you to organize your own Familiada-style game from start to finish. It's an ideal solution as an attraction for weddings, birthdays or team building. The question generator allows you to create your own bases or use ready-made sets.",
-      p2: "Participants' answers are collected via an online survey — everyone responds through a link or QR code from their own phone. Results are automatically normalized to 100 points, exactly like on a real game show.",
+      p2: "Participants' answers are collected via an online poll — everyone votes through a link or QR code from their own phone. Results are automatically normalized to 100 points, exactly like on a real game show.",
       p3Start: "All you need is equipment you already have — a projector or TV as the scoreboard, a tablet for the host, a phone as the buzzer for face-offs. You can also use",
       p3Link: "ready-made Familiada questions",
       p3End: "created by our community.",
@@ -122,9 +122,9 @@ const en = {
     tiles: {
       title: "How to organize Familiada? (Step by step)",
       t1: {
-        alt: "Creating a new Familiada game online - choosing survey mode or prepared game",
+        alt: "Creating a new Familiada game online - choosing poll mode or prepared game",
         t: "Your own question generator and game modes",
-        d: "Choose how you want to collect answers. Text and scored surveys collect responds from real people, while prepared game allows you to quickly enter your own questions and points.",
+        d: "Choose how you want to collect answers. Text and scored polls collect votes from real people, while prepared game allows you to quickly enter your own questions and points.",
       },
       t2: {
         alt: "Familiada question editor - configuring points and answers",
@@ -132,19 +132,19 @@ const en = {
         d: "Add questions, set the number of answers and configure the game structure. The system will make sure your game looks professional on every screen.",
       },
       t3: {
-        alt: "Collaboration in game creation - adding friends and sharing surveys",
+        alt: "Collaboration in game creation - adding friends and sharing polls",
         t: "Friends and shared question bases",
-        d: "Add friends to work together on surveys and question bases. Ideal for organizing large corporate events or weddings.",
+        d: "Add friends to work together on polls and question bases. Ideal for organizing large corporate events or weddings.",
       },
       t4: {
-        alt: "Online survey with QR code - collecting answers from guests",
-        t: "Online survey and respond collection",
-        d: "Show the QR code to guests — they can respond from their phones without installing an app. Results come in live and the system automatically normalizes points to 100.",
+        alt: "Online poll with QR code - collecting answers from guests",
+        t: "Online poll and vote collection",
+        d: "Show the QR code to guests — they can vote from their phones without installing an app. Results come in live and the system automatically normalizes points to 100.",
       },
       t5: {
-        alt: "Survey hub: managing responds, tracking progress, sharing via link or QR.",
-        t: "Survey hub",
-        d: "Start and close responds, track progress and share surveys with friends — all in one place. Everything ready before you enter the room.",
+        alt: "Poll hub: managing votes, tracking progress, sharing via link or QR.",
+        t: "Poll hub",
+        d: "Start and close votes, track progress and share polls with friends — all in one place. Everything ready before you enter the room.",
       },
       t6: {
         alt: "Operator control panel: open rounds, reveal answers, award points and confirm X strikes.",
@@ -184,10 +184,10 @@ const en = {
     },
     forwhom: {
       title: "Who is Familiada Online for?",
-      t1: { t: "Corporate events and team building", d: "Familiada is a proven format for team integration — it engages everyone, gets people laughing and requires no experience from participants. Prepare the game before the event, collect survey answers and run the live show." },
+      t1: { t: "Corporate events and team building", d: "Familiada is a proven format for team integration — it engages everyone, gets people laughing and requires no experience from participants. Prepare the game before the event, collect poll answers and run the live show." },
       t2: { t: "Animators and event hosts", d: "You run events professionally and need a tool that won't let you down in front of a client. The operator panel, separate host view and scoreboard all work independently — everyone focuses on their role." },
-      t3: { t: "Schools and knowledge contests", d: "Teachers and animators use the system to run classroom and school competitions. The survey collects student answers, and the scoreboard builds tension during gameplay." },
-      t4: { t: "Weddings and birthdays", d: "Familiada as entertainment at a wedding or birthday — guests answer the survey before the event and the live game entertains everyone at the table. Just a phone, zero technical knowledge needed for guests." },
+      t3: { t: "Schools and knowledge contests", d: "Teachers and animators use the system to run classroom and school competitions. The poll collects student answers, and the scoreboard builds tension during gameplay." },
+      t4: { t: "Weddings and birthdays", d: "Familiada as entertainment at a wedding or birthday — guests answer the poll before the event and the live game entertains everyone at the table. Just a phone, zero technical knowledge needed for guests." },
       t5: { t: "Conferences and stage events", d: "The operator panel and separate host view let you run the game smoothly on a large stage. The scoreboard works on any screen — TV, projector or monitor." },
       t6: { t: "Community centers and clubs", d: "A recurring attraction for local communities — at a games evening, fair or integration event. No specialized equipment or technical setup required." },
       t7: { t: "Groups of friends", d: "A birthday party, a dinner gathering, an evening with a bigger group. Familiada engages everyone at once — even those who don't usually play games. Prepare a ready-made game and everyone can play without knowing the answers in advance." },
@@ -199,21 +199,21 @@ const en = {
       cat2: "Preparation & survey",
       cat3: "Equipment & requirements",
       cat4: "Live gameplay",
-      q1:  { q: "Is Familiada Online free?", a: "Yes, completely free. You can create games, collect surveys and run gameplay without any fees." },
+      q1:  { q: "Is Familiada Online free?", a: "Yes, completely free. You can create games, collect polls and run gameplay without any fees." },
       q2:  { q: "Do I need to install an app?", a: "No. The system works in the browser on any device — computer, tablet and phone. No installation, no configuration." },
       q3:  { q: "What languages does the system support?", a: "The interface is available in Polish, English and Ukrainian. The language changes automatically based on browser settings or manual selection." },
-      q4:  { q: "Do I need to create an account?", a: "No. Guest mode gives you full gameplay functionality — you can create games, collect surveys and run a live game. The only thing you can't do without an account is add friends and share content with them. An account only requires an email address, no Google login." },
+      q4:  { q: "Do I need to create an account?", a: "No. Guest mode gives you full gameplay functionality — you can create games, collect polls and run a live game. The only thing you can't do without an account is add friends and share content with them. An account only requires an email address, no Google login." },
       q5:  { q: "What exactly does guest mode mean?", a: "Full gameplay functionality without creating an account. Data is saved in the browser — if you clear your history or switch devices, it's gone. Note: an inactive guest account may be deleted after 5 days." },
       q6:  { q: "Is the game history saved?", a: "In guest mode, history exists as long as the data is in the browser. When logged in to an account, games are synced and available from any device — you can return to them, replay a game or edit questions." },
-      q7:  { q: "How long does it take to prepare a game?", a: "For a prepared game — you enter the questions and answers, done in about ten minutes. For a survey-based game, there's the respond collection phase, which lasts as long as you decide — an hour, a day, a week. Running the live game itself usually takes at least 20 minutes." },
+      q7:  { q: "How long does it take to prepare a game?", a: "For a prepared game — you enter the questions and answers, done in about ten minutes. For a poll-based game, there's the vote collection phase, which lasts as long as you decide — an hour, a day, a week. Running the live game itself usually takes at least 20 minutes." },
       q8:  { q: "Can I use my own questions?", a: "Yes — you create all the questions yourself in the editor. You can organize them into bases with folders and tags, share with friends and reuse them. There are no ready-made question sets to download." },
       q9:  { q: "Is there a limit on questions or games?", a: "There is no limit on games or questions. A single prepared game can be used multiple times — if you have several ready, you can play them one after another without limits." },
-      q10: { q: "How many answers can the board show?", a: "In a prepared game, from 3 to 6 — you choose when creating it. In a survey game, it depends on the respondents — the system takes the most popular answers after normalizing to 100 points." },
-      q11: { q: "Can questions be edited after collecting the survey?", a: "Editing options are limited — responds are tied to specific questions and answers. If you need full editing, you can export the survey results and load them as a prepared game — then you can freely modify answers and points." },
-      q12: { q: "How many people can answer the survey?", a: "No limit — dozens or hundreds of people can respond simultaneously via link or QR code." },
-      q13: { q: "Can participants see survey results before the game?", a: "They shouldn't — that's key to the fun. Game participants guess what the survey respondents said, so if they know the results in advance, the game loses its point. Make sure the survey respondents and game players are different groups of people." },
-      q14: { q: "How exactly does normalization to 100 points work?", a: "After responds are collected, the system recalculates each answer proportionally so the total equals 100. If 40% of respondents answered \"dog\" — 40 points appear on the board. Less popular answers get fewer points. Exactly like on TV." },
-      q15: { q: "Can you see survey data before the game?", a: "Yes. In the survey panel you see results in real time — which answers are getting the most responds and how the collection is progressing. You decide when to close the respond and move to the game." },
+      q10: { q: "How many answers can the board show?", a: "In a prepared game, from 3 to 6 — you choose when creating it. In a poll game, it depends on the respondents — the system takes the most popular answers after normalizing to 100 points." },
+      q11: { q: "Can questions be edited after collecting the poll?", a: "Editing options are limited — votes are tied to specific questions and answers. If you need full editing, you can export the poll results and load them as a prepared game — then you can freely modify answers and points." },
+      q12: { q: "How many people can answer the poll?", a: "No limit — dozens or hundreds of people can vote simultaneously via link or QR code." },
+      q13: { q: "Can participants see poll results before the game?", a: "They shouldn't — that's key to the fun. Game participants guess what the survey respondents said, so if they know the results in advance, the game loses its point. Make sure the survey respondents and game players are different groups of people." },
+      q14: { q: "How exactly does normalization to 100 points work?", a: "After votes are collected, the system recalculates each answer proportionally so the total equals 100. If 40% of respondents answered \"dog\" — 40 points appear on the board. Less popular answers get fewer points. Exactly like on TV." },
+      q15: { q: "Can you see poll data before the game?", a: "Yes. In the poll panel you see results in real time — which answers are getting the most votes and how the collection is progressing. You decide when to close the vote and move to the game." },
       q16: { q: "How many devices do I need?", a: "Four — and all are mandatory. The operator (control panel), the scoreboard (TV or projector), the host view (tablet or phone) and the buzzer for face-offs. Without each of them connected, the game won't work." },
       q17: { q: "Do devices need to be on the same network?", a: "No. They connect over the internet and can be on different networks — more convenient than Bluetooth or local WiFi-based solutions." },
       q18: { q: "How many people should be in a team?", a: "The game has two teams. The optimal number is 3–6 per team — ideally equal on both sides. Below 3 is too few, above 6 gets uncomfortable. Single-person teams are technically possible." },
@@ -426,7 +426,7 @@ const en = {
     deletePlaceholder: "Password",
     deleteButton: "Delete account and data",
     emailNotifTitle: "Email notifications",
-    emailNotifHint: "Receive email notifications about subscription invites, respond tasks, or shared question bases. If you disable email, you will still see these items directly on the site.",
+    emailNotifHint: "Receive email notifications about subscription invites, vote tasks, or shared question bases. If you disable email, you will still see these items directly on the site.",
     emailNotifCheckbox: "Enable email notifications",
     emailNotifDisableTitle: "Disable email notifications?",
     emailNotifDisableConfirm: "You will still see all invites and tasks directly on the site.",
@@ -659,16 +659,16 @@ const en = {
       action: "Open in Familiada",
     },
   },
-  surveys: {
-    title: "Familiada — survey",
+  polls: {
+    title: "Familiada — poll",
     backToGames: "← My games",
-    backToHub: "← Survey hub",
+    backToHub: "← Polls hub",
     logout: "Log out",
-    pageTitle: "Survey",
+    pageTitle: "Poll",
     linkPlaceholder: "Link will appear after opening...",
     qrFailed: "QR failed.",
     missingId: "Missing id parameter.",
-    defaultName: "Survey",
+    defaultName: "Poll",
     actions: {
       copyLink: "Copy link",
       copyShort: "Copy",
@@ -678,13 +678,13 @@ const en = {
       qrOnDisplay: "QR on display",
       cancel: "Cancel",
       closeAndNormalize: "Close and normalize",
-      noSurvey: "No survey",
-      openSurvey: "Start survey",
+      noPoll: "No poll",
+      openPoll: "Start poll",
       openReady: "Ready to start.",
-      closeSurvey: "Close survey",
-      closeReady: "You can close the survey.",
-      reopenSurvey: "Reopen survey",
-      reopenHint: "Will start a new session and delete previous survey data.",
+      closePoll: "Close poll",
+      closeReady: "You can close the poll.",
+      reopenPoll: "Reopen poll",
+      reopenHint: "Will start a new session and delete previous poll data.",
       unknownStatus: "Unknown status.",
     },
     results: {
@@ -696,23 +696,23 @@ const en = {
     },
     empty: {
       title: "No game",
-      meta: "Open the page with parameter <b>surveys?id=...</b>.",
+      meta: "Open the page with parameter <b>polls?id=...</b>.",
     },
     meta: {
-      surveyText: "Mode: text survey. Start: ≥ {min} questions. Close: each question needs ≥ 3 distinct answers.",
-      surveyPoints:
+      pollText: "Mode: text poll. Start: ≥ {min} questions. Close: each question needs ≥ 3 distinct answers.",
+      pollPoints:
         "Mode: points. Start: ≥ {min} questions and each question has {minAns}–{maxAns} answers. Close: each question needs at least 3 answers with ≥ 3 points after normalization to 100.",
-      prepared: "Prepared game has no survey stage.",
+      prepared: "Prepared game has no poll.",
     },
     validation: {
-      openOnlyDraft: "You can start a survey only from DRAFT.",
+      openOnlyDraft: "You can start a poll only from DRAFT.",
       noGame: "No game selected.",
-      preparedNoSurvey: "Prepared game has no survey stage.",
+      preparedNoPoll: "Prepared game has no poll.",
       minQuestions: "To start: number of questions must be ≥ {min} (you have {count}).",
       pointsRange: "In POINTS mode each question must have {min}–{max} answers.",
-      reopenOnlyClosed: "Reopen is possible only when the survey is CLOSED.",
-      closeOnlyOpen: "You can close the survey only when it's OPEN.",
-      closeWaitForTasks: "You can't close yet — someone still hasn't respondd (X≠Y).",
+      reopenOnlyClosed: "Reopen is possible only when the poll is CLOSED.",
+      closeOnlyOpen: "You can close the poll only when it's OPEN.",
+      closeWaitForTasks: "You can't close yet — someone still hasn't voted (X≠Y).",
       noActiveSession: "No active voting session.",
       noActiveSessionGeneric: "No active session.",
       closeMinPoints:
@@ -721,44 +721,44 @@ const en = {
       unknownType: "Unknown game type.",
     },
     copy: {
-      success: "Survey link copied.",
+      success: "Poll link copied.",
       failed: "Failed to copy.",
     },
     modals: {
       open: {
-        title: "Start survey?",
-        text: "Start survey for “{name}”?",
+        title: "Start poll?",
+        text: "Start poll for “{name}”?",
         ok: "Start",
         cancel: "Cancel",
       },
       closePoints: {
-        title: "Finish survey?",
-        text: "Close the survey and normalize points to 100?",
+        title: "Finish poll?",
+        text: "Close the poll and normalize points to 100?",
         ok: "Finish",
         cancel: "Cancel",
       },
       reopen: {
-        title: "Reopen survey?",
-        text: "Reopen the survey? Previous data will be deleted.",
+        title: "Reopen poll?",
+        text: "Reopen the poll? Previous data will be deleted.",
         ok: "Reopen",
         cancel: "Cancel",
       },
       closeText: {
-        title: "Close survey?",
-        text: "Close the survey, pick TOP 6 and save points to 100 for each question?",
+        title: "Close poll?",
+        text: "Close the poll, pick TOP 6 and save points to 100 for each question?",
         ok: "Close",
         cancel: "Cancel",
       },
     },
     status: {
-      opened: "Survey opened.",
-      closedPoints: "Survey closed. Game ready (unique points).",
-      reopened: "Survey reopened.",
-      closed: "Survey closed. Game ready.",
+      opened: "Poll opened.",
+      closedPoints: "Poll closed. Game ready (unique points).",
+      reopened: "Poll reopened.",
+      closed: "Poll closed. Game ready.",
     },
     errors: {
-      open: "Failed to open survey.",
-      close: "Failed to close survey.",
+      open: "Failed to open poll.",
+      close: "Failed to close poll.",
       reopen: "Failed to reopen.",
       loadAnswers: "Failed to load answers.",
     },
@@ -773,7 +773,7 @@ const en = {
       mergeWith: "Merge with...",
       remove: "Remove",
       editHint: "Edit answers, then click “Close and normalize”.",
-      cancelled: "Closing cancelled (survey still open).",
+      cancelled: "Closing cancelled (poll still open).",
       minAnswers: "Question {ord}: fewer than 3 answers after editing. Add/merge differently.",
       leaveTitle: "You have merging open",
       leaveText: "If you leave now, you'll lose unsaved changes. Leave anyway?",
@@ -792,7 +792,7 @@ const en = {
     backToBaseManager: "← Base manager",
     backToLogos: "← My logos",
     backToEditor: "← Question editor",
-    backToSurvey: "← Survey",
+    backToPoll: "← Poll",
     backToSubscriptions: "← Subscriptions",
     backToAccount: "← Account settings",
     backToMarketplace: "← Community Games",
@@ -802,7 +802,7 @@ const en = {
       general: "Overview",
       edit: "Creating and editing a game",
       bases: "Question bases",
-      surveys: "Surveys",
+      polls: "Polls",
       subscriptions: "Subscriptions",
       logo: "Logo creation",
       connect: "Connect device",
@@ -820,7 +820,7 @@ const en = {
       general: `<p class="m-p">
         This page is a guide to running a game (tournament)
         in the style of “Familiada.” Its goal is to explain how to prepare a game,
-        collect results (surveys), and smoothly run a live match
+        collect results (polls), and smoothly run a live match
         — even if someone uses the system for the first time.
       </p>
       
@@ -851,7 +851,7 @@ const en = {
         The whole system is designed
         to clearly separate content preparation
         from the actual gameplay.
-        Questions, answers, and surveys are prepared in advance,
+        Questions, answers, and polls are prepared in advance,
         while during the game the operator uses only
         the control panel.
       </p>
@@ -876,12 +876,12 @@ const en = {
         The guide is divided into tabs.
         Each tab describes a different stage of working with the system:
         from preparing the game,
-        through surveys,
+        through polls,
         to running the live gameplay.
       </p>`,
       edit: `<p class="m-p">
         The “Creating and editing a game” tab describes the stage of preparing the game
-        before starting the survey or the live match.
+        before starting the poll or the live match.
         At this stage you create the structure of the game:
         questions, possible answers, and how they are scored.
       </p>
@@ -911,19 +911,19 @@ const en = {
     
       <ul class="m-ul">
         <li>
-          <span class="m-strong">Standard survey</span> —
+          <span class="m-strong">Standard poll</span> —
           answers are typed in by respondents,
           and points are based on the number of mentions.
         </li>
         <li>
           <span class="m-strong">Answer scoring</span> —
           respondents choose from prepared answers,
-          and the system counts responds.
+          and the system counts votes.
         </li>
         <li>
           <span class="m-strong">Prepared</span> —
           answers and points are set manually,
-          without a survey.
+          without a poll.
         </li>
       </ul>
     
@@ -940,7 +940,7 @@ const en = {
         using the <span class="m-code">Edit</span> button.
         This is the first stage of working on the game,
         where you prepare its full content
-        before using it in a survey or live gameplay.
+        before using it in a poll or live gameplay.
       </p>
       
       <p class="m-p">
@@ -962,7 +962,7 @@ const en = {
         The system limits certain operations
         to keep data consistent
         and prevent situations
-        where the gameplay or survey
+        where the gameplay or poll
         no longer matches the prepared content.
       </p>
     
@@ -977,7 +977,7 @@ const en = {
       </p>
     
       <p class="m-p">
-        Changing a question after a survey has started
+        Changing a question after a poll has started
         may be blocked,
         because even a small text change
         affects the meaning of collected answers.
@@ -987,13 +987,13 @@ const en = {
     
       <p class="m-p">
         The ability to edit answers depends on the game type.
-        In survey-based games answers are the result of a survey,
-        so before the survey you can only prepare
+        In poll-based games answers are the result of a poll,
+        so before the poll you can only prepare
         their general structure or examples.
       </p>
     
       <p class="m-p">
-        After the survey starts, the system may limit
+        After the poll starts, the system may limit
         adding or removing answers
         so that responses from respondents
         are not mixed with new content.
@@ -1003,7 +1003,7 @@ const en = {
     
       <p class="m-p">
         Points are not always editable by hand.
-        In survey-based games points result directly
+        In poll-based games points result directly
         from the number of answers given,
         so manual editing makes no sense
         and is blocked.
@@ -1012,13 +1012,13 @@ const en = {
       <p class="m-p">
         Manual point setting is possible
         only in prepared mode,
-        where the system does not use survey data.
+        where the system does not use poll data.
       </p>
     
       <div class="m-note">
         <b>Why is that?</b><br/>
         Thanks to this, what the audience sees on the board
-        always matches the actual survey results
+        always matches the actual poll results
         or a clearly defined, manual scoring.
       </div>
     
@@ -1342,10 +1342,10 @@ const en = {
       <p class="m-note">
         Shortcuts do not work while typing in edit fields.
       </p>`,
-      surveys: `<p class="m-p">
-        The “Surveys” tab describes the stage of collecting responses
+      polls: `<p class="m-p">
+        The “Polls” tab describes the stage of collecting responses
         from respondents before the actual live gameplay.
-        A survey is a bridge between game preparation
+        A poll is a bridge between game preparation
         and running the game live.
       </p>
     
@@ -1357,44 +1357,44 @@ const en = {
 
 
       <p class="m-p">
-        You open surveys from the top bar on the “My games” page
-        using the <span class="m-code">Surveys 📊</span> button.
+        You open polls from the top bar on the “My games” page
+        using the <span class="m-code">Polls 📊</span> button.
       </p>
 
-      <h3 class="m-h2">Surveys page</h3>
+      <h3 class="m-h2">Polls page</h3>
 
       <p class="m-p">
         On desktop, you see two areas:
       </p>
 
       <ul class="m-ul">
-        <li><span class="m-strong">My surveys</span> — the list of surveys you create and run.</li>
-        <li><span class="m-strong">Tasks</span> — invitations to respond from other users.</li>
+        <li><span class="m-strong">My polls</span> — the list of polls you create and run.</li>
+        <li><span class="m-strong">Tasks</span> — invitations to vote from other users.</li>
       </ul>
 
       <p class="m-p">
-        The gold dot next to the <span class="m-code">Surveys 📊</span> button shows
+        The gold dot next to the <span class="m-code">Polls 📊</span> button shows
         how many active tasks are waiting.
       </p>
 
       <p class="m-p">
-        Survey sharing is done from “My surveys”: select a tile and click
+        Poll sharing is done from “My polls”: select a tile and click
         <span class="m-code">Share</span>, then choose recipients and save.
-        The survey tile shows current responds, and the <span class="m-code">Details</span> button
+        The poll tile shows current votes, and the <span class="m-code">Details</span> button
         opens a list of submitted, pending, rejected, and anonymous responses.
       </p>
 
-      <h3 class="m-h3">My surveys</h3>
+      <h3 class="m-h3">My polls</h3>
       <p class="m-p">
-        Each tile has a color that indicates the survey state:
+        Each tile has a color that indicates the poll state:
       </p>
       <ul class="m-ul">
         <li><span class="m-strong">Gray</span> — draft, missing start requirements.</li>
         <li><span class="m-strong">Red</span> — draft, ready to start.</li>
-        <li><span class="m-strong">Orange</span> — survey open, no responds yet.</li>
-        <li><span class="m-strong">Yellow</span> — survey open, responds or active tasks exist.</li>
-        <li><span class="m-strong">Green</span> — survey open, goals reached (tasks done or ≥10 responds).</li>
-        <li><span class="m-strong">Blue</span> — survey closed.</li>
+        <li><span class="m-strong">Orange</span> — poll open, no votes yet.</li>
+        <li><span class="m-strong">Yellow</span> — poll open, votes or active tasks exist.</li>
+        <li><span class="m-strong">Green</span> — poll open, goals reached (tasks done or ≥10 votes).</li>
+        <li><span class="m-strong">Blue</span> — poll closed.</li>
       </ul>
 
       <h3 class="m-h3">Tasks</h3>
@@ -1405,32 +1405,32 @@ const en = {
         Double-click opens voting, and the <span class="m-code">X</span> button rejects a task.
       </p>
 
-      <h3 class="m-h2">Survey types</h3>
+      <h3 class="m-h2">Poll types</h3>
     
       <p class="m-p">
-        Depending on game type, a survey can run in one of two modes:
+        Depending on game type, a poll can run in one of two modes:
       </p>
     
       <ul class="m-ul">
         <li>
-          <span class="m-strong">Standard (text) survey</span> —
+          <span class="m-strong">Standard (text) poll</span> —
           respondents type their own text answers.
         </li>
         <li>
-          <span class="m-strong">Scoring survey</span> —
+          <span class="m-strong">Scoring poll</span> —
           respondents choose one of prepared answers.
         </li>
       </ul>
     
       <p class="m-p">
-        Prepared games do not have a survey stage —
+        Prepared games do not have a poll stage —
         answers and points are configured manually.
       </p>
     
-      <h3 class="m-h2">Starting a survey</h3>
+      <h3 class="m-h2">Starting a poll</h3>
     
       <p class="m-p">
-        A survey can be started only for a game
+        A poll can be started only for a game
         in the <span class="m-strong">Draft</span> state.
         Before start, the system checks
         whether minimum requirements are met.
@@ -1443,7 +1443,7 @@ const en = {
     
       <div class="m-note">
         <b>Why?</b><br/>
-        This prevents starting a survey
+        This prevents starting a poll
         that could not be correctly closed later
         and used in gameplay.
       </div>
@@ -1451,7 +1451,7 @@ const en = {
       <h3 class="m-h2">Link and QR code</h3>
     
       <p class="m-p">
-        After starting a survey, the system generates
+        After starting a poll, the system generates
         a unique voting link.
         You can copy it,
         open it in a new tab,
@@ -1464,7 +1464,7 @@ const en = {
         (TV, projector, large monitor).
       </p>
     
-      <h3 class="m-h2">Survey flow</h3>
+      <h3 class="m-h2">Poll flow</h3>
     
       <p class="m-p">
         Respondents go through questions in order.
@@ -1473,7 +1473,7 @@ const en = {
       </p>
     
       <p class="m-p">
-        In a text survey, each answer:
+        In a text poll, each answer:
       </p>
     
       <ul class="m-ul">
@@ -1483,26 +1483,26 @@ const en = {
       </ul>
     
       <p class="m-p">
-        In a scoring survey, the respondent
+        In a scoring poll, the respondent
         chooses one prepared answer,
-        and the system records that respond.
+        and the system records that vote.
       </p>
     
-      <h3 class="m-h2">Closing a survey</h3>
+      <h3 class="m-h2">Closing a poll</h3>
     
       <p class="m-p">
-        Closing a survey is a separate,
+        Closing a poll is a separate,
         deliberate stage of work.
-        The system does not allow closing a survey
+        The system does not allow closing a poll
         if collected data does not meet
         minimum quality conditions.
       </p>
     
-      <h3 class="m-h3">Scoring survey</h3>
+      <h3 class="m-h3">Scoring poll</h3>
     
       <p class="m-p">
-        When closing a scoring survey,
-        the system converts responds into points
+        When closing a scoring poll,
+        the system converts votes into points
         and normalizes them to a 0–100 scale
         for each question.
       </p>
@@ -1513,10 +1513,10 @@ const en = {
         without manual calculations.
       </div>
     
-      <h3 class="m-h3">Text survey</h3>
+      <h3 class="m-h3">Text poll</h3>
     
       <p class="m-p">
-        In a text (classic) survey, respondents enter their own answers.
+        In a text (classic) poll, respondents enter their own answers.
         After closing, the system moves to result-cleanup stage.
         The operator can merge obviously similar answers
         and remove typos or obvious duplicates.
@@ -1555,22 +1555,22 @@ const en = {
     
       <div class="m-warn">
         <b>Note:</b>
-        after closing a survey,
+        after closing a poll,
         you cannot change its results
-        without restarting surveying.
+        without restarting polling.
       </div>
     
-      <h3 class="m-h2">Restarting a survey</h3>
+      <h3 class="m-h2">Restarting a poll</h3>
     
       <p class="m-p">
-        A closed survey can be restarted,
+        A closed poll can be restarted,
         which removes previous results
         and starts collecting responses again.
       </p>
     
       <p class="m-p">
         This option is useful
-        when a survey was started for testing
+        when a poll was started for testing
         or an organizational mistake occurred.
       </p>`,
       subscriptions: `<p class="m-p">
@@ -1598,7 +1598,7 @@ const en = {
       <h3 class="m-h3">My subscribers</h3>
       <p class="m-p">
         A subscription is a persistent connection between your account and an invited user —
-        once accepted, it lets you share future surveys without entering email again.
+        once accepted, it lets you share future polls without entering email again.
         You send an invitation by entering email or username
         and clicking <span class="m-code">Invite</span>.
       </p>
@@ -1625,7 +1625,7 @@ const en = {
 
       <p class="m-p">
         In practice, subscriptions speed up your workflow — with active subscribers you can
-        share surveys in one click and quickly share question bases,
+        share polls in one click and quickly share question bases,
         without manually copying data and links.
       </p>
       <p class="m-p">
@@ -1747,7 +1747,7 @@ const en = {
         You reach the Control Panel from the “My games” list
         using the <span class="m-code">Play</span> button.
         This mode is intended only for running the live game —
-        you no longer edit questions or survey results here.
+        you no longer edit questions or poll results here.
       </p>
     
       <p class="m-p">
@@ -1763,7 +1763,7 @@ const en = {
       <ul class="m-ul">
         <li>
           The game should have prepared questions and answers (from the editor),
-          and if it is a survey-based game — the survey should be closed and approved.
+          and if it is a poll-based game — the poll should be closed and approved.
         </li>
         <li>
           The operator should have a computer with preferably a large screen (the panel is designed for desktop mode).
@@ -2233,7 +2233,7 @@ const en = {
         <li>Each question must have between 3 and 6 answers</li>
         <li>The total points per question must not exceed 100</li>
         <li>No answer can have more than 100 points or a negative value</li>
-        <li>A closed survey (status <span class="m-strong">Ready</span>) can also be submitted</li>
+        <li>A closed poll (status <span class="m-strong">Ready</span>) can also be submitted</li>
       </ul>
 
       <div class="m-warn">
@@ -2392,10 +2392,10 @@ const en = {
   builder: {
     title: "Familiada — my games",
     nav: {
-      surveysHubSurveys: "Surveys 📊",
-      surveysHubMobileSurveys: "📊",
-      surveysHubSubs: "Subscriptions 📧",
-      surveysHubMobileSubs: "📧",
+      pollsHubPolls: "Polls 📊",
+      pollsHubMobilePolls: "📊",
+      pollsHubSubs: "Subscriptions 📧",
+      pollsHubMobileSubs: "📧",
       bases: "Question bases 🗃️",
       basesMobile: "🗃️",
       manual: "Tips ℹ️",
@@ -2420,8 +2420,8 @@ const en = {
       previewMobile: "Preview",
       play: "Play",
       playMobile: "Play",
-      survey: "Survey",
-      surveyMobile: "Survey",
+      poll: "Poll",
+      pollMobile: "Poll",
       exportFile: "Export to file",
       exportFileMobile: "Exp.file",
       exportBase: "Export to base",
@@ -2436,10 +2436,10 @@ const en = {
       pts: "pts",
     },
     tabs: {
-      surveyText: "Standard survey",
-      surveyTextMobile: "Survey",
-      surveyPoints: "Points",
-      surveyPointsMobile: "Points",
+      pollText: "Standard poll",
+      pollTextMobile: "Poll",
+      pollPoints: "Points",
+      pollPointsMobile: "Points",
       prepared: "Prepared",
       preparedMobile: "Ready",
       market: "Community Games",
@@ -2542,8 +2542,8 @@ const en = {
       newGame: "New game",
     },
     types: {
-      surveyText: "SURVEY",
-      surveyPoints: "POINTS",
+      pollText: "POLL",
+      pollPoints: "POINTS",
       prepared: "PREPARED",
       market: "MARKETPLACE",
     },
@@ -2553,8 +2553,8 @@ const en = {
       closed: "CLOSED",
     },
     newGame: {
-      surveyText: "New survey",
-      surveyPoints: "New points survey",
+      pollText: "New poll",
+      pollPoints: "New points poll",
       prepared: "New prepared",
     },
     delete: {
@@ -2566,17 +2566,17 @@ const en = {
     alert: {
       deleteFailed: "Failed to delete game.",
       createFailed: "Failed to create game.",
-      resetSurveyFailed: "Failed to reset survey status.",
+      resetPollFailed: "Failed to reset poll status.",
       checkFailed: "Failed to check game status.",
-      openSurveyFailed: "Failed to open survey.",
+      openPollFailed: "Failed to open poll.",
     },
     hint: {
       select: "Select a game to enable actions. Double-tap to rename.",
       selectPlus: "Select a game to enable actions and export options. Double-tap to rename.",
     },
-    editAfterSurvey: {
-      title: "Reset survey?",
-      text: "This survey is already open or closed. Reset it to enable editing?",
+    editAfterPoll: {
+      title: "Reset poll?",
+      text: "This poll is already open or closed. Reset it to enable editing?",
       ok: "Reset",
       cancel: "Cancel",
     },
@@ -2605,14 +2605,14 @@ const en = {
     importHint: "Import works from a TXT file or pasted content.",
     importBtn: "Import",
     empty: "Select a question on the left or add a new one.",
-    lockedSurvey: "POLL OPEN — EDITING LOCKED",
+    lockedPoll: "POLL OPEN — EDITING LOCKED",
     questionLabel: "Question text",
     answerLabel: "Answer",
     pointsLabel: "Pts",
     importModal: {
       title: "Import questions",
       subtitle:
-        "You can <b>paste text</b> or <b>load a TXT file</b>. Optionally start with <b>@Game name</b>. Questions start with <b>#</b>. Answers can include numbers. Points after <b>/</b> are optional (surveys may ignore them).",
+        "You can <b>paste text</b> or <b>load a TXT file</b>. Optionally start with <b>@Game name</b>. Questions start with <b>#</b>. Answers can include numbers. Points after <b>/</b> are optional (polls may ignore them).",
       loadFile: "Load file",
       placeholder:
         "@My game\n#Animals in Africa\n1 Elephant /29\n2 Lion /19\n3 Monkey /16\n\n#Second question\n1 Answer 1\n2 Answer 2\n3 Answer 3",
@@ -2638,18 +2638,18 @@ const en = {
       answersCount: "{count}/{max} answers",
     },
     type: {
-      surveyText: "STANDARD SURVEY",
-      surveyPoints: "POINTS SURVEY",
+      pollText: "STANDARD POLL",
+      pollPoints: "POINTS POLL",
       prepared: "PREPARED",
     },
     config: {
-      surveyText: {
-        title: "Standard survey",
+      pollText: {
+        title: "Standard poll",
         hintTop: "Minimum {min} questions.",
         hintBottom: "Answers and points are not required.",
       },
-      surveyPoints: {
-        title: "Points survey",
+      pollPoints: {
+        title: "Points poll",
         hintTop: "Minimum {min} questions, each {answersMin}–{answersMax} answers.",
         hintBottom: "Points are ignored.",
       },
@@ -2682,7 +2682,7 @@ const en = {
       minQuestionsOk: "Minimum met",
     },
     confirm: {
-      resetSurvey: "Reset survey status to edit?",
+      resetPoll: "Reset poll status to edit?",
       deleteQuestion: "Delete this question and all its answers?",
       deleteAnswer: "Delete this answer?",
     },
@@ -2718,13 +2718,13 @@ const en = {
     },
     alert: {
       missingId: "Missing editor id.",
-      cannotEdit: "Cannot edit while survey is open.",
+      cannotEdit: "Cannot edit while poll is open.",
       editorError: "Editor error (console).",
     },
   },
-  surveyText: {
-    title: "Familiada — survey",
-    surveyTitle: "Survey",
+  pollText: {
+    title: "Familiada — poll",
+    pollTitle: "Poll",
     loading: "Loading…",
     placeholder: "Enter an answer...",
     send: "Send",
@@ -2734,43 +2734,43 @@ const en = {
     loadTimeout: "Cannot load questions (timeout).",
     enterAnswer: "Enter an answer.",
     taskInvalid: "Link is invalid or inactive.",
-    loginToRespond: "Log in to proceed to voting.",
+    loginToVote: "Log in to proceed to voting.",
     emailRequired: "Provide the email from the invitation link.",
     openTaskFail: "Unable to open task.",
-    surveyFallback: "Survey",
-    surveyClosed: "The survey is closed. Thank you!",
+    pollFallback: "Poll",
+    pollClosed: "The poll is closed. Thank you!",
     sending: "Sending…",
     error: "Error: {error}",
     questionProgress: "Question {current}/{total}",
     beforeUnloadWarn: "Your answers will not be counted.",
     missingParams: "Missing id or key parameter.",
-    alreadyRespondd: "You have already participated in this survey.",
-    wrongType: "This is not a standard survey.",
-    openSurveyFail: "Unable to open survey: {error}",
+    alreadyVoted: "You have already participated in this poll.",
+    wrongType: "This is not a standard poll.",
+    openPollFail: "Unable to open poll: {error}",
   },
-  surveyPoints: {
-    title: "Familiada — survey",
-    surveyTitle: "Survey",
+  pollPoints: {
+    title: "Familiada — poll",
+    pollTitle: "Poll",
     loading: "Loading…",
     thanks: "Thanks for participating!",
     loadTimeout: "Cannot load questions (timeout).",
     taskInvalid: "Link is invalid or inactive.",
-    loginToRespond: "Log in to proceed to voting.",
+    loginToVote: "Log in to proceed to voting.",
     emailRequired: "Provide the email from the invitation link.",
     openTaskFail: "Unable to open task.",
-    surveyFallback: "Survey",
-    surveyClosed: "The survey is closed. Thank you!",
+    pollFallback: "Poll",
+    pollClosed: "The poll is closed. Thank you!",
     sending: "Sending…",
     error: "Error: {error}",
     questionProgress: "Question {current}/{total}",
     beforeUnloadWarn: "Your answers will not be counted.",
     missingParams: "Missing id or key parameter.",
-    alreadyRespondd: "You have already participated in this survey.",
-    wrongType: "This is not a points survey.",
-    openSurveyFail: "Unable to open survey: {error}",
+    alreadyVoted: "You have already participated in this poll.",
+    wrongType: "This is not a points poll.",
+    openPollFail: "Unable to open poll: {error}",
     answerFallback: "ANS {ord}",
   },
-  surveyGo: {
+  pollGo: {
     title: "Familiada — invitation",
     loadingTitle: "Loading invitation…",
     loadingText: "Please wait.",
@@ -2783,7 +2783,7 @@ const en = {
     subHeading: "Subscription invitation{owner}",
     taskHeading: "Voting invitation for {name}{owner}",
     taskName: "“{name}”",
-    surveyFallback: "survey",
+    pollFallback: "poll",
     ownerSuffix: " from user {owner}",
     mismatch: "This invitation is not for you. Log in as {email} and try again.",
     inviteUsed: "Invitation has been used.",
@@ -2798,16 +2798,16 @@ const en = {
     subscribeAdded: "Subscription added.",
     subscriptionInviteActive: "Subscription invitation is active.",
     subscribePrompt: "Enter email if you want to subscribe.",
-    acceptInHub: "To accept, go to the Survey hub.",
-    hubLabel: "Survey hub",
+    acceptInHub: "To accept, go to the Polls hub.",
+    hubLabel: "Polls hub",
     acceptLabel: "Accept",
     declineLabel: "Decline",
     subscribeLabel: "Subscribe",
     loginToAccept: "Log in to accept.",
     loginLabel: "Log in",
-    loginToRespond: "Log in to respond.",
+    loginToVote: "Log in to vote.",
     taskInviteActive: "Voting invitation is active.",
-    respondLabel: "Respond",
+    voteLabel: "Vote",
     missingLinkTitle: "Missing link",
     missingLinkText: "Invitation token is missing.",
     invalidLinkTitle: "Invalid link",
@@ -2817,9 +2817,9 @@ const en = {
     invitationRecipient: "invitation recipient",
     ownerEmailBlocked: "This email belongs to the invite owner ({owner}). You already subscribe to this user.",
     unsubOwnerHeading: "Unsubscribe from {owner}",
-    unsubOwnerText: "Click below to cancel your subscription and stop receiving surveys from this user.",
+    unsubOwnerText: "Click below to cancel your subscription and stop receiving polls from this user.",
     unsubOwnerBtn: "Unsubscribe from {owner}",
-    unsubOwnerDone: "Subscription cancelled. You will no longer receive surveys from {owner}.",
+    unsubOwnerDone: "Subscription cancelled. You will no longer receive polls from {owner}.",
     unsubOwnerFailed: "Failed to cancel subscription.",
     unsubGlobalHeading: "Unsubscribe from all emails",
     unsubGlobalText: "Click below to block all email notifications from Familiada.",
@@ -2832,30 +2832,30 @@ const en = {
     mailAccountSettings: "Don't want to receive emails? You can disable them in account settings.",
     mailAccountSettingsLink: "Account settings",
   },
-  surveyQr: {
+  pollQr: {
     title: "Familiada — QR",
     fullscreen: "Fullscreen",
-    scan: "Scan the QR code to respond",
+    scan: "Scan the QR code to vote",
     missingUrl: "Missing URL",
     qrFailed: "Failed to generate QR",
   },
-  surveysHub: {
-    title: "Familiada — survey hub",
+  pollsHub: {
+    title: "Familiada — polls hub",
     backToGames: "← My games",
     logout: "Log out",
     header: {
-      title: "Survey hub",
-      hint: "Manage surveys and voting invitations.",
+      title: "Polls hub",
+      hint: "Manage polls and voting invitations.",
     },
     tabs: {
-      surveys: "Surveys",
+      polls: "Polls",
       subscriptions: "Subscriptions",
       tasks: "Tasks",
       subscribersMobile: "Subs.",
       subscriptionsMobile: "Subs.",
     },
     sections: {
-      mySurveys: "My surveys",
+      myPolls: "My polls",
       selectHint: "Click a tile to select it.",
       tasks: "Tasks",
       tasksHint: "Double-click opens voting.",
@@ -2882,7 +2882,7 @@ const en = {
       button: "Invite",
     },
     share: {
-      title: "Share survey",
+      title: "Share poll",
       subtitle: "Choose subscribers you want to send the task to.",
       save: "Save share",
       close: "Close",
@@ -2890,9 +2890,9 @@ const en = {
     details: {
       title: "Voting details",
       titleWithName: "Voting details — {name}",
-      subtitle: "Remove a respond linked to a task if needed.",
-      respondd: "Respondd",
-      pending: "Not respondd",
+      subtitle: "Remove a vote linked to a task if needed.",
+      voted: "Voted",
+      pending: "Not voted",
       declined: "Declined",
       cancelled: "Cancelled",
       anon: "Anonymous",
@@ -2910,15 +2910,15 @@ const en = {
       loadSubscribers: "Loading subscribers…",
       share: "Sharing…",
       loadDetails: "Loading details…",
-      deleteRespond: "Deleting respond…",
+      deleteVote: "Deleting vote…",
     },
     ok: "OK",
     errorLabel: "Error",
-    surveyType: {
-      text: "Standard survey",
-      points: "Points survey",
+    pollType: {
+      text: "Standard poll",
+      points: "Points poll",
     },
-    surveyState: {
+    pollState: {
       open: "Open",
       closed: "Closed",
       draft: "Draft",
@@ -2950,13 +2950,13 @@ const en = {
     },
     taskFrom: "From: {owner}",
     tasksBadgeLabel: "Tasks",
-    tasksBadgeTitle: "Tasks: {done} of {total} shared have respondd.",
+    tasksBadgeTitle: "Tasks: {done} of {total} shared have voted.",
     tasksBadgeNone: "Tasks: no shares.",
     anonBadgeLabel: "Anon",
-    anonBadgeTitle: "Anonymous responds: {count}.",
-    respondsBadgeLabel: "Responds",
+    anonBadgeTitle: "Anonymous votes: {count}.",
+    votesBadgeLabel: "Votes",
     empty: {
-      surveys: "No surveys to show.",
+      polls: "No polls to show.",
       tasks: "No tasks to show.",
       subscribers: "No subscribers.",
       subscriptions: "No subscriptions.",
@@ -2978,7 +2978,7 @@ const en = {
       cooldown: "You can retry in {hours}h.",
       missing: "None",
     },
-    shareLockedHint: "Respondd — remove respond to unlock.",
+    shareLockedHint: "Voted — remove vote to unlock.",
     shareStatusLabel: "Status",
     shareStatusMissing: "None",
     shareHintMissing: "None",
@@ -2998,8 +2998,8 @@ const en = {
       loadSubscribers: "Failed to load subscribers.",
       shareSave: "Failed to save share.",
       loadDetails: "Failed to load details.",
-      deleteRespond: "Failed to delete respond.",
-      loadHub: "Failed to load survey hub data.",
+      deleteVote: "Failed to delete vote.",
+      loadHub: "Failed to load polls hub data.",
     },
     statusMsg: {
       inviteSaved: "Invitation saved.",
@@ -3028,9 +3028,9 @@ const en = {
         okActive: "Cancel subscription",
         cancel: "Close",
       },
-      deleteRespond: {
-        title: "Delete respond",
-        text: "Are you sure you want to delete this person's respond?",
+      deleteVote: {
+        title: "Delete vote",
+        text: "Are you sure you want to delete this person's vote?",
         ok: "Delete",
         cancel: "Cancel",
       },
@@ -3051,11 +3051,11 @@ const en = {
       focusTask: "You have a pending task. Go to voting?",
       focusSub: "You have a subscription invitation. Accept it?",
     },
-    surveyFallback: "survey",
-    surveyNameLabel: "“{name}”",
+    pollFallback: "poll",
+    pollNameLabel: "“{name}”",
     ownerFallback: "Familiada user",
     mail: {
-      subtitle: "Survey hub",
+      subtitle: "Polls hub",
       subscriptionTitle: "Subscription invitation from {owner}",
       subscriptionBody:
         "User <strong>{owner}</strong> invites you to subscribe. Click the button to view the invitation.",
@@ -3068,28 +3068,28 @@ const en = {
       linkHint: "Link not working? Copy and paste into your browser:",
       autoNote: "Automatic message — please do not reply.",
     },
-    surveyReadyAlert: "Finish the game in My games",
+    pollReadyAlert: "Finish the game in My games",
     resendCooldownAlert: "You can resend the invite in {hours}h.",
   },
-  surveysHubSurveys: {
+  pollsHubPolls: {
     dash: "-",
-    title: "Familiada — survey hub",
+    title: "Familiada — polls hub",
     backToGames: "← My games",
     backToBases: "← Question bases",
     logout: "Log out",
     header: {
-      title: "Survey hub",
-      hint: "Manage surveys and voting invitations.",
+      title: "Polls hub",
+      hint: "Manage polls and voting invitations.",
     },
     tabs: {
-      surveys: "Surveys",
+      polls: "Polls",
       subscriptions: "Subscriptions",
       tasks: "Tasks",
       subscribersMobile: "Subs.",
       subscriptionsMobile: "Subs.",
     },
     sections: {
-      mySurveys: "My surveys",
+      myPolls: "My polls",
       selectHint: "Click a tile to select it.",
       tasks: "Tasks",
       tasksHint: "Double-click opens voting.",
@@ -3116,7 +3116,7 @@ const en = {
       button: "Invite",
     },
     share: {
-      title: "Share survey",
+      title: "Share poll",
       subtitle: "Choose subscribers you want to send the task to.",
       save: "Save share",
       close: "Close",
@@ -3124,9 +3124,9 @@ const en = {
     details: {
       title: "Voting details",
       titleWithName: "Voting details — {name}",
-      subtitle: "Remove a respond linked to a task if needed.",
-      respondd: "Respondd",
-      pending: "Not respondd",
+      subtitle: "Remove a vote linked to a task if needed.",
+      voted: "Voted",
+      pending: "Not voted",
       declined: "Declined",
       cancelled: "Cancelled",
       anon: "Anonymous",
@@ -3144,15 +3144,15 @@ const en = {
       loadSubscribers: "Loading subscribers…",
       share: "Sharing…",
       loadDetails: "Loading details…",
-      deleteRespond: "Deleting respond…",
+      deleteVote: "Deleting vote…",
     },
     ok: "OK",
     errorLabel: "Error",
-    surveyType: {
-      text: "Standard survey",
-      points: "Points survey",
+    pollType: {
+      text: "Standard poll",
+      points: "Points poll",
     },
-    surveyState: {
+    pollState: {
       open: "Open",
       closed: "Closed",
       draft: "Draft",
@@ -3184,13 +3184,13 @@ const en = {
     },
     taskFrom: "From: {owner}",
     tasksBadgeLabel: "Tasks",
-    tasksBadgeTitle: "Tasks: {done} of {total} shared have respondd.",
+    tasksBadgeTitle: "Tasks: {done} of {total} shared have voted.",
     tasksBadgeNone: "Tasks: no shares.",
     anonBadgeLabel: "Anon",
-    anonBadgeTitle: "Anonymous responds: {count}.",
-    respondsBadgeLabel: "Responds",
+    anonBadgeTitle: "Anonymous votes: {count}.",
+    votesBadgeLabel: "Votes",
     empty: {
-      surveys: "No surveys to show.",
+      polls: "No polls to show.",
       tasks: "No tasks to show.",
       subscribers: "No subscribers.",
       subscriptions: "No subscriptions.",
@@ -3212,7 +3212,7 @@ const en = {
       cooldown: "You can retry in {hours}h.",
       missing: "None",
     },
-    shareLockedHint: "Respondd — remove respond to unlock.",
+    shareLockedHint: "Voted — remove vote to unlock.",
     shareStatusLabel: "Status",
     shareStatusMissing: "None",
     shareHintMissing: "None",
@@ -3232,8 +3232,8 @@ const en = {
       loadSubscribers: "Failed to load subscribers.",
       shareSave: "Failed to save share.",
       loadDetails: "Failed to load details.",
-      deleteRespond: "Failed to delete respond.",
-      loadHub: "Failed to load survey hub data.",
+      deleteVote: "Failed to delete vote.",
+      loadHub: "Failed to load polls hub data.",
     },
     statusMsg: {
       inviteSaved: "Invitation saved.",
@@ -3262,9 +3262,9 @@ const en = {
         okActive: "Cancel subscription",
         cancel: "Close",
       },
-      deleteRespond: {
-        title: "Delete respond",
-        text: "Are you sure you want to delete this person's respond?",
+      deleteVote: {
+        title: "Delete vote",
+        text: "Are you sure you want to delete this person's vote?",
         ok: "Delete",
         cancel: "Cancel",
       },
@@ -3285,11 +3285,11 @@ const en = {
       focusTask: "You have a pending task. Go to voting?",
       focusSub: "You have a subscription invitation. Accept it?",
     },
-    surveyFallback: "survey",
-    surveyNameLabel: "“{name}”",
+    pollFallback: "poll",
+    pollNameLabel: "“{name}”",
     ownerFallback: "Familiada user",
     mail: {
-      subtitle: "Survey hub",
+      subtitle: "Polls hub",
       subscriptionTitle: "Subscription invitation from {owner}",
       subscriptionBody:
         "User <strong>{owner}</strong> invites you to subscribe. Click the button to view the invitation.",
@@ -3302,29 +3302,29 @@ const en = {
       linkHint: "Link not working? Copy and paste into your browser:",
       autoNote: "Automatic message — please do not reply.",
     },
-    surveyReadyAlert: "Finish the game in My games",
+    pollReadyAlert: "Finish the game in My games",
     resendCooldownAlert: "You can resend the invite in {hours}h.",
     shareCooldownAlert: "You can invite again in {hours}h.",
   },
 
-  surveysHubSubscriptions: {
+  pollsHubSubscriptions: {
     dash: "-",
-    title: "Familiada — survey hub",
+    title: "Familiada — polls hub",
     backToGames: "← My games",
     logout: "Log out",
     header: {
-      title: "Survey hub",
-      hint: "Manage surveys and voting invitations.",
+      title: "Polls hub",
+      hint: "Manage polls and voting invitations.",
     },
     tabs: {
-      surveys: "Surveys",
+      polls: "Polls",
       subscriptions: "Subscriptions",
       tasks: "Tasks",
       subscribersMobile: "Subs.",
       subscriptionsMobile: "Subs.",
     },
     sections: {
-      mySurveys: "My surveys",
+      myPolls: "My polls",
       selectHint: "Click a tile to select it.",
       tasks: "Tasks",
       tasksHint: "Double-click opens voting.",
@@ -3351,7 +3351,7 @@ const en = {
       button: "Invite",
     },
     share: {
-      title: "Share survey",
+      title: "Share poll",
       subtitle: "Choose subscribers you want to send the task to.",
       save: "Save share",
       close: "Close",
@@ -3359,9 +3359,9 @@ const en = {
     details: {
       title: "Voting details",
       titleWithName: "Voting details — {name}",
-      subtitle: "Remove a respond linked to a task if needed.",
-      respondd: "Respondd",
-      pending: "Not respondd",
+      subtitle: "Remove a vote linked to a task if needed.",
+      voted: "Voted",
+      pending: "Not voted",
       declined: "Declined",
       cancelled: "Cancelled",
       anon: "Anonymous",
@@ -3379,15 +3379,15 @@ const en = {
       loadSubscribers: "Loading subscribers…",
       share: "Sharing…",
       loadDetails: "Loading details…",
-      deleteRespond: "Deleting respond…",
+      deleteVote: "Deleting vote…",
     },
     ok: "OK",
     errorLabel: "Error",
-    surveyType: {
-      text: "Standard survey",
-      points: "Points survey",
+    pollType: {
+      text: "Standard poll",
+      points: "Points poll",
     },
-    surveyState: {
+    pollState: {
       open: "Open",
       closed: "Closed",
       draft: "Draft",
@@ -3418,13 +3418,13 @@ const en = {
       available: "Available",
     },
     tasksBadgeLabel: "Tasks",
-    tasksBadgeTitle: "Tasks: {done} of {total} shared have respondd.",
+    tasksBadgeTitle: "Tasks: {done} of {total} shared have voted.",
     tasksBadgeNone: "Tasks: no shares.",
     anonBadgeLabel: "Anon",
-    anonBadgeTitle: "Anonymous responds: {count}.",
-    respondsBadgeLabel: "Responds",
+    anonBadgeTitle: "Anonymous votes: {count}.",
+    votesBadgeLabel: "Votes",
     empty: {
-      surveys: "No surveys to show.",
+      polls: "No polls to show.",
       tasks: "No tasks to show.",
       subscribers: "No subscribers.",
       subscriptions: "No subscriptions.",
@@ -3446,7 +3446,7 @@ const en = {
       cooldown: "You can retry in {hours}h.",
       missing: "None",
     },
-    shareLockedHint: "Respondd — remove respond to unlock.",
+    shareLockedHint: "Voted — remove vote to unlock.",
     shareStatusLabel: "Status",
     shareStatusMissing: "None",
     shareHintMissing: "None",
@@ -3466,8 +3466,8 @@ const en = {
       loadSubscribers: "Failed to load subscribers.",
       shareSave: "Failed to save share.",
       loadDetails: "Failed to load details.",
-      deleteRespond: "Failed to delete respond.",
-      loadHub: "Failed to load survey hub data.",
+      deleteVote: "Failed to delete vote.",
+      loadHub: "Failed to load polls hub data.",
     },
     statusMsg: {
       inviteSaved: "Invitation saved.",
@@ -3496,9 +3496,9 @@ const en = {
         okActive: "Cancel subscription",
         cancel: "Close",
       },
-      deleteRespond: {
-        title: "Delete respond",
-        text: "Are you sure you want to delete this person's respond?",
+      deleteVote: {
+        title: "Delete vote",
+        text: "Are you sure you want to delete this person's vote?",
         ok: "Delete",
         cancel: "Cancel",
       },
@@ -3519,8 +3519,8 @@ const en = {
       focusTask: "You have a pending task. Go to voting?",
       focusSub: "You have a subscription invitation. Accept it?",
     },
-    surveyFallback: "survey",
-    surveyNameLabel: "“{name}”",
+    pollFallback: "poll",
+    pollNameLabel: "“{name}”",
     ownerFallback: "Familiada user",
     mail: {
       subtitle: "Subscriptions",
@@ -3536,7 +3536,7 @@ const en = {
       linkHint: "Link not working? Copy and paste into your browser:",
       autoNote: "Automatic message — please do not reply.",
     },
-    surveyReadyAlert: "Finish the game in My games",
+    pollReadyAlert: "Finish the game in My games",
     resendCooldownAlert: "You can resend the invite in {hours}h.",
     cooldownLeftDays: "Try again in {n} days",
     cooldownLeftHours: "Try again in {n} hours",
@@ -3898,15 +3898,15 @@ const en = {
       gameNameLabel: "Game name",
       questionsLabel: "Questions",
       typeTitle: "Game type",
-      typeSurveyText: "Standard survey",
-      typeSurveyPoints: "Scored",
+      typePollText: "Standard poll",
+      typePollPoints: "Scored",
       typePrepared: "Prepared",
       selectedTitle: "Selected (min 10)",
       selectedLabel: "SELECTED",
       create: "Create",
       defaultGameName: "game",
-      typeHintSurveyText: "10+ questions, no answer requirements.",
-      typeHintSurveyPoints: "10+ questions, each 3–6 answers.",
+      typeHintPollText: "10+ questions, no answer requirements.",
+      typeHintPollPoints: "10+ questions, each 3–6 answers.",
       typeHintPrepared: "10+ questions, 3–6 answers, total points ≤ 100.",
       answersCount: "{count} ans.",
       noAnswers: "no answers",
@@ -3984,8 +3984,8 @@ const en = {
     },
     meta: {
       prepared: "prepared",
-      surveyPoints: "scored",
-      surveyText: "standard",
+      pollPoints: "scored",
+      pollText: "standard",
     },
     errors: {
       missingBaseId: "Missing base identifier.",
