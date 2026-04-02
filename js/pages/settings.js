@@ -2587,11 +2587,17 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
   if (msg.ticket_number) {
     ticketBadge = `<span class="mail-ticket-badge" data-report-id="${escSetting(msg.report_id)}" style="cursor:pointer;font-size:11px;padding:2px 7px;border-radius:6px;background:rgba(255,234,166,.15);color:#ffeaa6;margin-left:6px" title="${t("settings.marketplace.ticketBadgeTitle") || "Przejdź do zgłoszenia"}">${escSetting(msg.ticket_number)}</span>`;
   }
+  
+  // Marketing badge for conversation header
+  let marketingBadge = "";
+  if (msg.is_marketing) {
+    marketingBadge = `<span style="font-size:10px;padding:2px 6px;border-radius:4px;background:rgba(255,234,166,.15);color:#ffeaa6;border:1px solid rgba(255,234,166,.3);margin-left:6px">marketing</span>`;
+  }
 
   header.innerHTML = `
     <div class="mail-conv-subject">${escSetting(msg.subject || "—")}</div>
     <div class="mail-conv-meta">
-      ${isInbound ? (t("settings.marketplace.convFrom") || "Od:") : (t("settings.marketplace.convTo") || "Do:")} ${escSetting(from || "—")} · ${new Date(msg.created_at).toLocaleString("pl-PL")} · ${escSetting(sourceLabel)}${ticketBadge}
+      ${isInbound ? (t("settings.marketplace.convFrom") || "Od:") : (t("settings.marketplace.convTo") || "Do:")} ${escSetting(from || "—")} · ${new Date(msg.created_at).toLocaleString("pl-PL")} · ${escSetting(sourceLabel)}${ticketBadge}${marketingBadge}
     </div>`;
   conv.appendChild(header);
 
