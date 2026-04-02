@@ -315,7 +315,7 @@ function render() {
 window.addEventListener("i18n:lang", () => {
   if (payload) {
     render(); // przywraca pytanie + progres po podmianie języka
-  } else {
+  } else if (!finished && !hasDone()) {
     setSub(MSG.loading()); // zanim payload się załaduje, niech "Loading…" będzie w dobrym języku
   }
 });
@@ -336,6 +336,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       showClosed(true);
       setSub("");
       setClosedMsg(MSG.alreadyVoted());
+      redirectToRoot();
       return;
     }
 
@@ -357,6 +358,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     render();
   } catch (e) {
     console.error("[poll-points] init error:", e);
+    setSub(MSG.openPollFail(e?.message || e));
+    showClosed(true);
+  }
+});
+sole.error("[poll-points] init error:", e);
     setSub(MSG.openPollFail(e?.message || e));
     showClosed(true);
   }

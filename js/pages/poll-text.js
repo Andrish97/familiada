@@ -316,7 +316,7 @@ function render() {
 window.addEventListener("i18n:lang", () => {
   if (payload) {
     render();
-  } else {
+  } else if (!finished && !hasDone()) {
     setSub(MSG.loading());
   }
 });
@@ -411,6 +411,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   } catch (e) {
     console.error("[poll-text] init error:", e);
+    setSub(MSG.openPollFail(e?.message || e));
+    showClosed(true);
+  }
+});
+onsole.error("[poll-text] init error:", e);
     setSub(MSG.openPollFail(e?.message || e));
     showClosed(true);
   }
