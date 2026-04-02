@@ -61,6 +61,12 @@ function markDone() {
   localStorage.setItem(doneKey(), "1");
 }
 
+function redirectToRoot() {
+  setTimeout(() => {
+    location.href = "/";
+  }, 5000);
+}
+
 function showFinished() {
   if (finished) return;
   finished = true;
@@ -74,6 +80,8 @@ function showFinished() {
   if (qbox) qbox.style.display = "none";
   if (closed) closed.style.display = "none";
   if (sub) sub.textContent = MSG.thanks();
+
+  redirectToRoot();
 }
 
 function setSub(t) {

@@ -2163,60 +2163,36 @@ function renderMailList(rows) {
     // Extract ALL text from message for preview - show EVERYTHING
     let previewText = "";
 
-    console.log('=== mail-ti-preview START ===', {
-      id: r.id,
-      subject: r.subject,
-      has_body_html: !!r.body_html,
-      has_body: !!r.body,
-      has_body_preview: !!r.body_preview,
-      body_preview_content: r.body_preview,
-      body_content: r.body ? r.body.substring(0, 100) + '...' : null,
-    });
-
     // Strategy 1: Try body_html first (has full HTML email)
     if (r.body_html) {
-      console.log('Strategy 1: Using body_html');
-      console.log('body_html content:', r.body_html.substring(0, 200) + '...');
       const tmp = document.createElement("div");
       tmp.innerHTML = r.body_html;
       previewText = (tmp.textContent || tmp.innerText || "").trim();
-      console.log('textContent extracted:', previewText);
     }
 
     // Strategy 2: Try body (might be plain text or HTML)
     if (!previewText && r.body) {
-      console.log('Strategy 2: Using body');
-      console.log('body content:', r.body.substring(0, 200) + '...');
       if (r.body.trim().startsWith("<")) {
         // HTML - extract ALL text
         const tmp = document.createElement("div");
         tmp.innerHTML = r.body;
         previewText = (tmp.textContent || tmp.innerText || "").trim();
-        console.log('textContent extracted:', previewText);
       } else {
         // Plain text
         previewText = r.body.trim();
-        console.log('Plain text used:', previewText);
       }
     }
 
     // Strategy 3: Final fallback - body_preview
     if (!previewText && r.body_preview) {
-      console.log('Strategy 3: Using body_preview');
       const tmp = document.createElement("div");
       tmp.innerHTML = r.body_preview;
       previewText = (tmp.textContent || tmp.innerText || "").trim();
-      console.log('textContent extracted:', previewText);
     }
 
-    // Strategy 4: Emergency fallback - try to extract from subject or show placeholder
+    // Strategy 4: Emergency fallback - use subject if no content
     if (!previewText) {
-      console.log('Strategy 4: Emergency fallback - using subject as preview');
       previewText = r.subject ? `(brak treści) ${r.subject}` : `(brak treści)`;
-    }
-
-    if (!previewText) {
-      console.warn('WARNING: No preview text extracted!');
     }
 
     // Minimal cleanup - just normalize whitespace and limit length
@@ -2225,8 +2201,6 @@ function renderMailList(rows) {
       .replace(/\s+/g, ' ')  // Collapse whitespace
       .slice(0, 80)  // Limit length
       .trim();
-
-    console.log('=== mail-ti-preview FINAL ===', previewText);
 
     item.innerHTML = `
       <div class="mail-ti-row">

@@ -64,6 +64,12 @@ function markDone() {
   localStorage.setItem(doneKey(), "1");
 }
 
+function redirectToRoot() {
+  setTimeout(() => {
+    location.href = "/";
+  }, 5000);
+}
+
 function showFinished() {
   if (finished) return;
   finished = true;
@@ -82,6 +88,8 @@ function showFinished() {
 
   // pokazujemy tylko jedno podziękowanie
   if (sub) sub.textContent = MSG.thanks();
+
+  redirectToRoot();
 }
 
 function setClosedMsg(msg) {
@@ -344,6 +352,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (hasDone()) {
       showClosed(true);
       setSub(MSG.alreadyVoted());
+      redirectToRoot();
       return;
     }
 
