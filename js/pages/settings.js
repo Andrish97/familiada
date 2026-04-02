@@ -2093,7 +2093,9 @@ async function loadMailFolder({ silent = false } = {}) {
       msgRows = json.rows || [];
     } else if (msgActiveFolder === "marketing") {
       // Fetch ALL messages and filter for marketing
+      console.log("[loadMailFolder] Fetching marketing messages...");
       const res = await adminFetch(`/messages?filter=all&limit=500`);
+      console.log("[loadMailFolder] Marketing fetch result:", res.status, res.ok);
       if (!res.ok) throw new Error(await res.text());
       const json = await res.json();
       // Filter for marketing emails (outbound with [Marketing] prefix in subject)
@@ -2104,10 +2106,13 @@ async function loadMailFolder({ silent = false } = {}) {
       );
       console.log("[loadMailFolder] Marketing folder:", msgRows.length, "messages");
     } else {
+      console.log("[loadMailFolder] Fetching folder:", msgActiveFolder);
       const res = await adminFetch(`/messages?filter=${encodeURIComponent(msgActiveFolder)}&limit=500`);
+      console.log("[loadMailFolder] Folder fetch result:", res.status, res.ok);
       if (!res.ok) throw new Error(await res.text());
       const json = await res.json();
       msgRows = json.rows || [];
+      console.log("[loadMailFolder] Folder rows:", msgRows.length);
       
       // For "sent" folder, also include marketing emails
       if (msgActiveFolder === "sent") {
