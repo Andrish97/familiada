@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict YiQg9aNWSQ1JSHLVGTXAph5llIe2sQycafQsGBIsFMHxxT4mW9B5usgBXl6yMWD
+\restrict 7VBfVYRycTzOmLcXfaB85aejhU9pveFKIDyfi7xTZhMofxDQWobR9XD02Gk0ClN
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -4219,6 +4219,23 @@ begin
   get diagnostics v_count = row_count;
   return coalesce(v_count, 0);
 end;
+$$;
+
+
+--
+-- Name: mark_message_read("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."mark_message_read"("p_message_id" "uuid") RETURNS boolean
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+BEGIN
+  UPDATE public.messages
+  SET is_read = true, read_at = now()
+  WHERE id = p_message_id;
+
+  RETURN FOUND;
+END;
 $$;
 
 
@@ -13442,5 +13459,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict YiQg9aNWSQ1JSHLVGTXAph5llIe2sQycafQsGBIsFMHxxT4mW9B5usgBXl6yMWD
+\unrestrict 7VBfVYRycTzOmLcXfaB85aejhU9pveFKIDyfi7xTZhMofxDQWobR9XD02Gk0ClN
 
