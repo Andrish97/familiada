@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict j4drgfQ7rKVyhgV9eVWx1pV5FqLE82BXoVoa6jBSC2EBHDyCg5auZ7UaoOLKDuk
+\restrict NPqeV1osMJW7j47dnjY52J8EDHwhFgy8vZ4hia2y69nM0Uaj8R0bCDtQI0H8XMZ
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -2679,24 +2679,20 @@ $$;
 -- Name: get_message("uuid"); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION "public"."get_message"("p_id" "uuid") RETURNS TABLE("id" "uuid", "source" "text", "direction" "text", "from_email" "text", "to_email" "text", "subject" "text", "body" "text", "body_html" "text", "report_id" "uuid", "ticket_number" "text", "report_status" "text", "report_subject" "text", "queue_id" "uuid", "created_at" timestamp with time zone, "deleted_at" timestamp with time zone)
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public'
+CREATE FUNCTION "public"."get_message"("p_id" "uuid") RETURNS TABLE("id" "uuid", "source" "text", "direction" "text", "from_email" "text", "to_email" "text", "subject" "text", "body" "text", "body_html" "text", "report_id" "uuid", "ticket_number" "text", "report_status" "text", "report_subject" "text", "queue_id" "uuid", "is_marketing" boolean, "created_at" timestamp with time zone, "deleted_at" timestamp with time zone)
+    LANGUAGE "plpgsql"
     AS $$
 BEGIN
   RETURN QUERY
     SELECT
       m.id, m.source, m.direction, m.from_email, m.to_email, m.subject,
       m.body, m.body_html,
-      m.report_id,
-      r.ticket_number,
-      r.status       AS report_status,
-      r.subject      AS report_subject,
-      m.queue_id, m.created_at, m.deleted_at
+      m.report_id, r.ticket_number, r.status AS report_status, r.subject AS report_subject,
+      m.queue_id, m.is_marketing,
+      m.created_at, m.deleted_at
     FROM public.messages m
-    LEFT JOIN public.reports r ON r.id = m.report_id
-    WHERE m.id = p_id
-    LIMIT 1;
+    LEFT JOIN public.contact_reports r ON r.id = m.report_id
+    WHERE m.id = p_id;
 END;
 $$;
 
@@ -13486,5 +13482,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict j4drgfQ7rKVyhgV9eVWx1pV5FqLE82BXoVoa6jBSC2EBHDyCg5auZ7UaoOLKDuk
+\unrestrict NPqeV1osMJW7j47dnjY52J8EDHwhFgy8vZ4hia2y69nM0Uaj8R0bCDtQI0H8XMZ
 
