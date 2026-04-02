@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict NPqeV1osMJW7j47dnjY52J8EDHwhFgy8vZ4hia2y69nM0Uaj8R0bCDtQI0H8XMZ
+\restrict OsGH29g9Vbiqj2Pt5GHABozdUajhMt5WlP5kQRHjBtxRoOd0Ju1EjYggsWwdvBp
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -3648,6 +3648,9 @@ $$;
 CREATE FUNCTION "public"."list_messages"("p_filter" "text" DEFAULT 'inbox'::"text", "p_limit" integer DEFAULT 50, "p_offset" integer DEFAULT 0) RETURNS TABLE("id" "uuid", "source" "text", "direction" "text", "from_email" "text", "to_email" "text", "subject" "text", "body" "text", "body_html" "text", "body_preview" "text", "report_id" "uuid", "ticket_number" "text", "report_status" "text", "queue_id" "uuid", "is_read" boolean, "is_marketing" boolean, "created_at" timestamp with time zone, "deleted_at" timestamp with time zone)
     LANGUAGE "plpgsql"
     AS $$
+DECLARE
+  clean_html text;
+  clean_text text;
 BEGIN
   -- Inbox: inbound messages not in trash
   IF p_filter = 'inbox' THEN
@@ -3655,7 +3658,21 @@ BEGIN
       SELECT
         m.id, m.source, m.direction, m.from_email, m.to_email, m.subject,
         m.body, m.body_html,
-        left(regexp_replace(COALESCE(m.body_html, m.body), E'<style[^>]*>[^<]*</style>', '', 'g'), 120) AS body_preview,
+        -- Aggressively strip CSS and HTML for clean preview
+        left(
+          regexp_replace(
+            regexp_replace(
+              COALESCE(m.body_html, m.body),
+              E'<style[^>]*>[\\s\\S]*?</style>',
+              '',
+              'gi'
+            ),
+            E':[\\s]*[^;{}]+;',
+            '',
+            'gi'
+          ),
+          120
+        ) AS body_preview,
         m.report_id, r.ticket_number, r.status AS report_status, m.queue_id,
         m.is_read, m.is_marketing, m.created_at, m.deleted_at
       FROM public.messages m
@@ -3670,7 +3687,20 @@ BEGIN
       SELECT
         m.id, m.source, m.direction, m.from_email, m.to_email, m.subject,
         m.body, m.body_html,
-        left(regexp_replace(COALESCE(m.body_html, m.body), E'<style[^>]*>[^<]*</style>', '', 'g'), 120) AS body_preview,
+        left(
+          regexp_replace(
+            regexp_replace(
+              COALESCE(m.body_html, m.body),
+              E'<style[^>]*>[\\s\\S]*?</style>',
+              '',
+              'gi'
+            ),
+            E':[\\s]*[^;{}]+;',
+            '',
+            'gi'
+          ),
+          120
+        ) AS body_preview,
         m.report_id, r.ticket_number, r.status AS report_status, m.queue_id,
         m.is_read, m.is_marketing, m.created_at, m.deleted_at
       FROM public.messages m
@@ -3685,7 +3715,20 @@ BEGIN
       SELECT
         m.id, m.source, m.direction, m.from_email, m.to_email, m.subject,
         m.body, m.body_html,
-        left(regexp_replace(COALESCE(m.body_html, m.body), E'<style[^>]*>[^<]*</style>', '', 'g'), 120) AS body_preview,
+        left(
+          regexp_replace(
+            regexp_replace(
+              COALESCE(m.body_html, m.body),
+              E'<style[^>]*>[\\s\\S]*?</style>',
+              '',
+              'gi'
+            ),
+            E':[\\s]*[^;{}]+;',
+            '',
+            'gi'
+          ),
+          120
+        ) AS body_preview,
         m.report_id, r.ticket_number, r.status AS report_status, m.queue_id,
         m.is_read, m.is_marketing, m.created_at, m.deleted_at
       FROM public.messages m
@@ -3715,7 +3758,20 @@ BEGIN
       SELECT
         m.id, m.source, m.direction, m.from_email, m.to_email, m.subject,
         m.body, m.body_html,
-        left(regexp_replace(COALESCE(m.body_html, m.body), E'<style[^>]*>[^<]*</style>', '', 'g'), 120) AS body_preview,
+        left(
+          regexp_replace(
+            regexp_replace(
+              COALESCE(m.body_html, m.body),
+              E'<style[^>]*>[\\s\\S]*?</style>',
+              '',
+              'gi'
+            ),
+            E':[\\s]*[^;{}]+;',
+            '',
+            'gi'
+          ),
+          120
+        ) AS body_preview,
         m.report_id, r.ticket_number, r.status AS report_status, m.queue_id,
         m.is_read, m.is_marketing, m.created_at, m.deleted_at
       FROM public.messages m
@@ -13482,5 +13538,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict NPqeV1osMJW7j47dnjY52J8EDHwhFgy8vZ4hia2y69nM0Uaj8R0bCDtQI0H8XMZ
+\unrestrict OsGH29g9Vbiqj2Pt5GHABozdUajhMt5WlP5kQRHjBtxRoOd0Ju1EjYggsWwdvBp
 
