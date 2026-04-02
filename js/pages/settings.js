@@ -2473,6 +2473,17 @@ async function openMessage(id) {
         
         console.log("[openMessage] Found", threadMessages.length, "messages in thread");
         
+        // Debug: show found messages with dates
+        if (threadMessages.length > 0) {
+          console.log("[openMessage] Found messages:", threadMessages.map(m => ({
+            id: m.id.substring(0, 8),
+            subject: m.subject?.substring(0, 30),
+            created_at: m.created_at,
+            isEarlier: new Date(m.created_at) < new Date(msg.created_at),
+            isLater: new Date(m.created_at) > new Date(msg.created_at)
+          })));
+        }
+        
         // Sort by date (oldest first)
         threadMessages.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
       } else {
@@ -2747,10 +2758,20 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
 
   // Render later messages (below the central message)
   const laterMessages = threadMessages.filter(m => new Date(m.created_at) > new Date(msg.created_at));
+  console.log("[renderMessageDetail] Later messages:", laterMessages.length);
+  if (laterMessages.length > 0) {
+    console.log("[renderMessageDetail] Later messages details:", laterMessages.map(m => ({
+      id: m.id.substring(0, 8),
+      created_at: m.created_at,
+      hasBody: !!m.body,
+      hasBodyHtml: !!m.body_html
+    })));
+  }
   for (const threadMsg of laterMessages) {
     const threadBubble = document.createElement("div");
     threadBubble.className = `mail-msg ${threadMsg.direction === "inbound" ? "inbound" : "outbound"} mail-msg-thread`;
     threadBubble.style.opacity = "0.6";
+    console.log("[renderMessageDetail] Rendering later message:", threadMsg.id, "body:", !!threadMsg.body, "body_html:", !!threadMsg.body_html);
     renderSimpleMessageContent(threadBubble, threadMsg);
     msgs.appendChild(threadBubble);
   }

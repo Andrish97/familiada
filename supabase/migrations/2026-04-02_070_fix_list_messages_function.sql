@@ -39,8 +39,8 @@ BEGIN
         -- Strip <style> tags but keep HTML structure for preview
         left(regexp_replace(
           COALESCE(m.body_html, m.body),
-          E'<style[^>]*>[^<]*</style>|\\s+',
-          ' ',
+          E'<style[^>]*>[^<]*</style>',
+          '',
           'g'
         ), 120) AS body_preview,
         m.report_id, r.ticket_number, r.status AS report_status, m.queue_id,
@@ -60,8 +60,8 @@ BEGIN
         m.body, m.body_html,
         left(regexp_replace(
           COALESCE(m.body_html, m.body),
-          E'<style[^>]*>[^<]*</style>|\\s+',
-          ' ',
+          E'<style[^>]*>[^<]*</style>',
+          '',
           'g'
         ), 120) AS body_preview,
         m.report_id, r.ticket_number, r.status AS report_status, m.queue_id,
@@ -81,8 +81,8 @@ BEGIN
         m.body, m.body_html,
         left(regexp_replace(
           COALESCE(m.body_html, m.body),
-          E'<style[^>]*>[^<]*</style>|\\s+',
-          ' ',
+          E'<style[^>]*>[^<]*</style>',
+          '',
           'g'
         ), 120) AS body_preview,
         m.report_id, r.ticket_number, r.status AS report_status, m.queue_id,
@@ -116,8 +116,8 @@ BEGIN
         m.body, m.body_html,
         left(regexp_replace(
           COALESCE(m.body_html, m.body),
-          E'<style[^>]*>[^<]*</style>|\\s+',
-          ' ',
+          E'<style[^>]*>[^<]*</style>',
+          '',
           'g'
         ), 120) AS body_preview,
         m.report_id, r.ticket_number, r.status AS report_status, m.queue_id,
