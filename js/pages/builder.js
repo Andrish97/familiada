@@ -222,7 +222,7 @@ function stopAutoRefresh() {
   autoRefreshTimer = null;
 }
 
-// DOMYŚLNIE: PREPAROWANY
+// DOMYŚLNIE: PREPAROWANA
 let activeTab = TYPES.PREPARED;
 
 const actionStateCache = new Map(); 

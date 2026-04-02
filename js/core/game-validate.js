@@ -3,9 +3,9 @@ import { sb } from "./supabase.js?v=ece3a0c0";
 
 /**
  * Typy gier:
- * - poll_text    => Typowy sondaż (tekstowy)
+ * - poll_text    => Typowa ankieta
  * - poll_points  => Punktacja odpowiedzi (głosowanie na odpowiedź)
- * - prepared     => Preparowany (manualne punkty, suma=100)
+ * - prepared     => Preparowana (manualne punkty, suma=100)
  */
 export const TYPES = {
   POLL_TEXT: "poll_text",
@@ -78,7 +78,7 @@ function clampAnswersCountOk(cnt) {
 }
 
 /**
- * Dla typowego sondażu (tekstowego):
+ * Dla typowej ankiety (tekstowego):
  * - Warunek zamknięcia: w każdym pytaniu >= 3 różne odpowiedzi zebrane
  * UWAGA: to zależy od tabel z głosami. Tutaj zostawiamy hook.
  * Na start możesz zwracać {ok:true} jeśli jeszcze nie masz wyników tekstowych w DB.
@@ -92,7 +92,7 @@ export async function validateTextPollClosable(/*gameId*/) {
 /**
  * Dla punktacji (poll_points):
  * - Warunek zamknięcia: w każdym pytaniu co najmniej 2 odpowiedzi mają punkty != 0
- * To też zależy od modelu głosowania. Jeśli w trakcie sondażu zapisujesz punkty do answers.fixed_points
+ * To też zależy od modelu głosowania. Jeśli w trakcie ankiety zapisujesz punkty do answers.fixed_points
  * (albo do osobnej tabeli i potem agregujesz), to tu sprawdzamy agregat.
  *
  * Na start: jeśli jeszcze nie masz zapisów, też zwracamy ok, żeby UI nie blokować na etapie CSS.
@@ -120,14 +120,14 @@ export function canEnterEdit(game) {
   }
 
   if (game.status === STATUS.POLL_OPEN) {
-    return { ok: false, reason: "Sondaż jest otwarty — edycja zablokowana.", needsResetWarning: false };
+    return { ok: false, reason: "Ankieta jest otwarta — edycja zablokowana.", needsResetWarning: false };
   }
 
   if (game.status === STATUS.READY) {
     return {
       ok: true,
       reason: "",
-      needsResetWarning: true, // pokaż alert: usuniemy dane sondażowe i wracamy do szkicu
+      needsResetWarning: true, // pokaż alert: usuniemy dane ankietowe i wracamy do szkicu
     };
   }
 
@@ -135,8 +135,8 @@ export function canEnterEdit(game) {
 }
 
 /**
- * SONDAŻ:
- * - poll_text/poll_points => zawsze (czyli w sensie „wolno wejść na stronę sondażu”)
+ * ANKIETA:
+ * - poll_text/poll_points => zawsze (czyli w sensie „wolno wejść na stronę ankiety”)
  * - prepared => nigdy
  *
  * Aktywność przycisku w builderze:
@@ -148,7 +148,7 @@ export async function validatePollEntry(gameId) {
   const game = await loadGameBasic(gameId);
 
   if (game.type === TYPES.PREPARED) {
-    return { ok: false, reason: "Preparowany nie ma sondażu." };
+    return { ok: false, reason: "Preparowana nie ma ankiety." };
   }
 
   // wejście do polls dozwolone w każdym stanie (dla tych dwóch typów)
@@ -156,7 +156,7 @@ export async function validatePollEntry(gameId) {
 }
 
 /**
- * Czy wolno URUCHOMIĆ sondaż (stan draft -> poll_open)?
+ * Czy wolno URUCHOMIĆ ankietę (stan draft -> poll_open)?
  *
  * poll_text:
  * - zawsze, ale aktywacja przycisku "Uruchom" dopiero gdy pytań >=10
@@ -168,10 +168,10 @@ export async function validatePollReadyToOpen(gameId) {
   const game = await loadGameBasic(gameId);
 
   if (game.type === TYPES.PREPARED) {
-    return { ok: false, reason: "Preparowany nie ma sondażu." };
+    return { ok: false, reason: "Preparowana nie ma ankiety." };
   }
   if (game.status === STATUS.POLL_OPEN) {
-    return { ok: false, reason: "Sondaż już jest otwarty." };
+    return { ok: false, reason: "Ankieta już jest otwarta." };
   }
 
   const { qs, ansByQ } = await getQA(gameId);
@@ -199,7 +199,7 @@ export async function validatePollReadyToOpen(gameId) {
 /**
  * GRA / PLAY:
  * poll_text/poll_points:
- * - sondaż musi być ZAMKNIĘTY (status ready) => wtedy "wszystko OK"
+ * - ankieta musi być ZAMKNIĘTA (status ready) => wtedy "wszystko OK"
  *
  * prepared:
  * - >=10 pytań
@@ -212,7 +212,7 @@ export async function validateGameReadyToPlay(gameId) {
   // poll_*: tylko po zamknięciu
   if (game.type === TYPES.POLL_TEXT || game.type === TYPES.POLL_POINTS) {
     if (game.status !== STATUS.READY) {
-      return { ok: false, reason: "Gra dostępna dopiero po zamknięciu sondażu." };
+      return { ok: false, reason: "Gra dostępna dopiero po zamknięciu ankiety." };
     }
     return { ok: true, reason: "" };
   }

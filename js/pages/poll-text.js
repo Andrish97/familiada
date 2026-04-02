@@ -83,7 +83,7 @@ function showFinished() {
   // chowamy całe UI pytań (input + hint + liczniki)
   if (qbox) qbox.style.display = "none";
 
-  // chowamy "sondaż zamknięty", bo to inny stan
+  // chowamy "ankieta zamknięta", bo to inny stan
   if (closed) closed.style.display = "none";
 
   // pokazujemy tylko jedno podziękowanie
