@@ -1660,6 +1660,14 @@ body.tools-fullscreen .tools-frame-wrap iframe{
 .msg-icon-btn--tagged:hover {
   background: rgba(255,234,166,.18);
 }
+.msg-icon-btn--active {
+  color: #ffeaa6;
+  background: rgba(255,234,166,.15);
+  border-color: rgba(255,234,166,.4);
+}
+.msg-icon-btn--active:hover {
+  background: rgba(255,234,166,.25);
+}
 .msg-icon-btn--danger:hover {
   background: rgba(220,50,50,.15);
   color: #f88;

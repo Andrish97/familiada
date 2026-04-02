@@ -2771,10 +2771,11 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
   actions.className = "mail-msg-actions";
   actions.style.cssText = "margin-top:auto;padding-top:12px;";
 
-  // Left group: assign/unassign + reply
+  // Left group: assign/unassign + marketing toggle + reply
   const leftGroup = document.createElement("div");
   leftGroup.style.cssText = "display:flex;gap:4px;align-items:center;";
 
+  // Assign/unassign ticket
   if (!msg.report_id) {
     const btnAssign = document.createElement("button");
     btnAssign.className = "msg-icon-btn msg-icon-btn--gold";
@@ -2792,6 +2793,17 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
     btnUnassign.addEventListener("click", () => unassignReport(msg.id));
     leftGroup.appendChild(btnUnassign);
   }
+
+  // Toggle marketing flag
+  const btnMarketing = document.createElement("button");
+  btnMarketing.className = `msg-icon-btn ${msg.is_marketing ? "msg-icon-btn--active" : ""}`;
+  btnMarketing.type = "button";
+  btnMarketing.title = msg.is_marketing ? "Oznacz jako zwykłą wiadomość" : "Oznacz jako marketing";
+  btnMarketing.innerHTML = msg.is_marketing
+    ? `<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>`
+    : `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>`;
+  btnMarketing.addEventListener("click", () => toggleMarketing(msg.id, !msg.is_marketing));
+  leftGroup.appendChild(btnMarketing);
 
   if (isInbound && msg.from_email) {
     const btnReply = document.createElement("button");
@@ -3269,6 +3281,22 @@ async function unassignReport(messageId) {
     });
     if (!res.ok) throw new Error(await res.text());
     showToast("Odepnięto.", "success");
+    await loadMailFolder({ silent: true });
+    if (msgActiveId) await openMessage(msgActiveId);
+  } catch (err) {
+    showToast(String(err?.message || err), "error");
+  }
+}
+
+async function toggleMarketing(messageId, isMarketing) {
+  try {
+    const res = await adminFetch(`/messages/marketing?id=${encodeURIComponent(messageId)}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ is_marketing: isMarketing }),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    showToast(isMarketing ? "Oznaczono jako marketing." : "Oznaczono jako zwykła wiadomość.", "success");
     await loadMailFolder({ silent: true });
     if (msgActiveId) await openMessage(msgActiveId);
   } catch (err) {

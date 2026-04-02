@@ -1325,6 +1325,23 @@ async function handleAdminMessagesApi(request, env, url) {
     return json({ ok: true });
   }
 
+  // POST /_admin_api/messages/marketing  { is_marketing: boolean }
+  if (url.pathname === "/_admin_api/messages/marketing" && request.method === "POST") {
+    const messageId = url.searchParams.get("id");
+    if (!messageId) return json({ ok: false, error: "missing_id" }, 400);
+    const body = await readJson(request);
+    const { is_marketing } = body || {};
+    
+    const updateRes = await supabaseRequest(env, `/rest/v1/messages?id=eq.${encodeURIComponent(messageId)}`, {
+      method: "PATCH",
+      headers: { Prefer: "return=minimal" },
+      body: { is_marketing: is_marketing === true },
+    });
+    
+    if (!updateRes.ok) return json({ ok: false, error: "update_failed", details: summarizeSupabaseError(updateRes) }, updateRes.status || 500);
+    return json({ ok: true });
+  }
+
   // PUT /_admin_api/messages/trash  { message_id }
   if (url.pathname === "/_admin_api/messages/trash" && request.method === "PUT") {
     const body = await readJson(request);

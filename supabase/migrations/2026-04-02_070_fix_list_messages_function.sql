@@ -1,7 +1,7 @@
 -- 070: Fix list_messages and mark_message_read functions
 -- SUPERSEDES: 2026-04-02_069_fix_is_read_column.sql
 
--- Drop and recreate list_messages with correct return type
+-- Drop and recreate list_messages with correct return type (includes body and body_html)
 DROP FUNCTION IF EXISTS public.list_messages(text,integer,integer);
 
 CREATE FUNCTION public.list_messages(
