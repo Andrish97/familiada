@@ -3327,7 +3327,9 @@ async function toggleMarketing(messageId, isMarketing) {
     });
     if (!res.ok) throw new Error(await res.text());
     showToast(isMarketing ? "Oznaczono jako marketing." : "Oznaczono jako zwykła wiadomość.", "success");
+    // Refresh folder and badges to show the change
     await loadMailFolder({ silent: true });
+    await loadFolderBadges();
     if (msgActiveId) await openMessage(msgActiveId);
   } catch (err) {
     showToast(String(err?.message || err), "error");
