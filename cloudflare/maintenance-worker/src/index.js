@@ -1279,8 +1279,13 @@ async function handleAdminMessagesApi(request, env, url) {
     const filter = String(url.searchParams.get("filter") || "inbox");
     const limit  = clampInt(url.searchParams.get("limit"),  1, 200, 50);
     const offset = clampInt(url.searchParams.get("offset"), 0, 100000, 0);
+    console.log("[messages] Calling list_messages RPC with:", { filter, limit, offset });
     const res = await supabaseRpc(env, "list_messages", { p_filter: filter, p_limit: limit, p_offset: offset });
-    if (!res.ok) return json({ ok: false, error: "list_messages_failed", details: summarizeSupabaseError(res) }, res.status || 500);
+    console.log("[messages] RPC result:", { ok: res.ok, status: res.status, dataRows: Array.isArray(res.data) ? res.data.length : 'N/A' });
+    if (!res.ok) {
+      console.error("[messages] RPC failed:", res);
+      return json({ ok: false, error: "list_messages_failed", details: summarizeSupabaseError(res) }, res.status || 500);
+    }
     return json({ ok: true, rows: Array.isArray(res.data) ? res.data : [] });
   }
 
