@@ -2294,13 +2294,15 @@ function renderMailList(rows) {
     const dateStr = new Date(r.created_at).toLocaleDateString("pl-PL", { day:"2-digit", month:"2-digit" });
     const sourceBadge = { email: "📧", form: "📝", compose: "✏" }[r.source] || "";
     const from = isInbound ? (r.from_email || "—") : (r.to_email || "—");
-    const ticketPart = r.ticket_number ? ` · <span style="opacity:.5;font-size:10px">${escSetting(r.ticket_number)}</span>` : "";
     
+    // Ticket number text for messages with tickets
+    const ticketText = r.ticket_number ? ` <span style="opacity:.5;font-size:10px">· ${escSetting(r.ticket_number)}</span>` : "";
+
     // Marketing badge for outbound marketing emails
     const marketingBadge = !isInbound && isMarketingEmail(r)
       ? `<span style="font-size:9px;padding:1px 5px;border-radius:4px;background:rgba(255,234,166,.15);color:#ffeaa6;border:1px solid rgba(255,234,166,.3);margin-right:4px">marketing</span>`
       : "";
-    
+
     // Strip [Marketing] prefix from subject
     const displaySubject = stripMarketingPrefix(r.subject);
     
@@ -2358,7 +2360,7 @@ function renderMailList(rows) {
         <span class="mail-ti-from">${sourceBadge} ${escSetting(from)}</span>
         <span class="mail-ti-date">${dateStr}</span>
       </div>
-      <div class="mail-ti-subject" style="display:flex;gap:4px;align-items:center">${marketingBadge}${escSetting(displaySubject || "—")}${ticketPart}</div>
+      <div class="mail-ti-subject" style="display:flex;gap:4px;align-items:center;flex-wrap:wrap">${marketingBadge}${escSetting(displaySubject || "—")}${ticketText}</div>
       <div class="mail-ti-preview">${escSetting(previewText)}</div>`;
     item.addEventListener("click", () => openMessage(r.id));
     body.appendChild(item);
