@@ -1,16 +1,14 @@
--- 087: Update demo questions - "Sondaż:" → "Ankieta:"
+-- 087: Update demo questions and user games - "Sondaż:" → "Ankieta:"
 
--- Update poll questions in demo base that start with "Sondaż:"
--- These are placeholder questions that indicate a poll type
-
-UPDATE public.demo_bases 
+-- 1. Update poll questions in demo_bases that start with "Sondaż:"
+UPDATE public.demo_bases
 SET data = jsonb_set(
   data,
   '{questions}',
   (
     SELECT jsonb_agg(
-      CASE 
-        WHEN q->>'text' LIKE 'Sondaż:%' 
+      CASE
+        WHEN q->>'text' LIKE 'Sondaż:%'
         THEN jsonb_set(q, '{text}', to_jsonb('Ankieta:' || substring(q->>'text' FROM 8)))
         ELSE q
       END
@@ -20,7 +18,7 @@ SET data = jsonb_set(
 )
 WHERE data->>'questions' LIKE '%Sondaż:%';
 
--- Also update game names in demo_games that reference "Sondaż tekstowy"
+-- 2. Update game names in demo_games that reference "Sondaż tekstowy"
 UPDATE public.demo_games
 SET data = jsonb_set(
   data,
@@ -29,15 +27,48 @@ SET data = jsonb_set(
 )
 WHERE data->>'name' LIKE '%Sondaż tekstowy%';
 
+-- 3. Update user games created from demo templates (games table)
+-- This fixes existing user data with old demo names
+UPDATE public.games
+SET name = replace(name, 'Sondaż tekstowy', 'Typowa ankieta')
+WHERE name LIKE '%Sondaż tekstowy%';
+
+-- 4. Update questions in user games that start with "Sondaż:"
+UPDATE public.games
+SET data = jsonb_set(
+  data,
+  '{questions}',
+  (
+    SELECT jsonb_agg(
+      CASE
+        WHEN q->>'text' LIKE 'Sondaż:%'
+        THEN jsonb_set(q, '{text}', to_jsonb('Ankieta:' || substring(q->>'text' FROM 8)))
+        ELSE q
+      END
+    )
+    FROM jsonb_array_elements(data->'questions') AS q
+  )
+)
+WHERE EXISTS (
+  SELECT 1 FROM jsonb_array_elements(data->'questions') AS q
+  WHERE q->>'text' LIKE 'Sondaż:%'
+);
+
 -- Log the update
 DO $$
 DECLARE
   updated_bases integer;
-  updated_games integer;
+  updated_demo_games integer;
+  updated_user_games integer;
+  updated_questions integer;
 BEGIN
   SELECT COUNT(*) INTO updated_bases FROM public.demo_bases WHERE data->>'questions' LIKE '%Ankieta:%';
-  SELECT COUNT(*) INTO updated_games FROM public.demo_games WHERE data->>'name' LIKE '%Typowa ankieta%';
-  
+  SELECT COUNT(*) INTO updated_demo_games FROM public.demo_games WHERE data->>'name' LIKE '%Typowa ankieta%';
+  SELECT COUNT(*) INTO updated_user_games FROM public.games WHERE name LIKE '%Typowa ankieta%';
+  SELECT COUNT(*) INTO updated_questions FROM public.games g, jsonb_array_elements(g.data->'questions') AS q WHERE q->>'text' LIKE 'Ankieta:%';
+
   RAISE NOTICE 'Updated demo_bases with "Ankieta:" prefix: %', updated_bases;
-  RAISE NOTICE 'Updated demo_games with "Typowa ankieta" name: %', updated_games;
+  RAISE NOTICE 'Updated demo_games with "Typowa ankieta" name: %', updated_demo_games;
+  RAISE NOTICE 'Updated user games (Sondaż tekstowy → Typowa ankieta): %', updated_user_games;
+  RAISE NOTICE 'Updated user game questions (Sondaż: → Ankieta:): %', updated_questions;
 END $$;
