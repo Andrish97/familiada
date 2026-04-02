@@ -712,8 +712,8 @@ const pl = {
       preparedNoPoll: "Gra preparowana nie ma ankiety.",
       minQuestions: "Żeby uruchomić: liczba pytań musi być ≥ {min} (masz {count}).",
       pointsRange: "W trybie PUNKTACJA każde pytanie musi mieć {min}–{max} odpowiedzi.",
-      reopenOnlyClosed: "Ponowne uruchomienie możliwe tylko gdy ankieta jest ZAMKNIĘTY.",
-      closeOnlyOpen: "Ankietę można zamknąć tylko gdy jest OTWARTY.",
+      reopenOnlyClosed: "Ponowne uruchomienie możliwe tylko gdy ankieta jest ZAMKNIĘTA.",
+      closeOnlyOpen: "Ankietę można zamknąć tylko gdy jest OTWARTA.",
       closeWaitForTasks: "Nie można jeszcze zamknąć — ktoś jeszcze nie zagłosował (X≠Y).",
       noActiveSession: "Brak aktywnej sesji ankiety.",
       noActiveSessionGeneric: "Brak aktywnej sesji.",
@@ -2574,7 +2574,7 @@ const pl = {
     },
     editAfterPoll: {
       title: "Zresetować ankietę?",
-      text: "Ta ankieta jest już otwarty lub zamknięty. Zresetować, aby edytować?",
+      text: "Ta ankieta jest już otwarta lub zamknięta. Zresetować, aby edytować?",
       ok: "Resetuj",
       cancel: "Anuluj",
     },
@@ -2917,8 +2917,8 @@ const pl = {
       points: "Punktacja odpowiedzi",
     },
     pollState: {
-      open: "Otwarty",
-      closed: "Zamknięty",
+      open: "Otwarta",
+      closed: "Zamknięta",
       draft: "Szkic",
     },
     sort: {
@@ -3151,8 +3151,8 @@ const pl = {
       points: "Punktacja odpowiedzi",
     },
     pollState: {
-      open: "Otwarty",
-      closed: "Zamknięty",
+      open: "Otwarta",
+      closed: "Zamknięta",
       draft: "Szkic",
     },
     sort: {
@@ -3386,8 +3386,8 @@ const pl = {
       points: "Punktacja odpowiedzi",
     },
     pollState: {
-      open: "Otwarty",
-      closed: "Zamknięty",
+      open: "Otwarta",
+      closed: "Zamknięta",
       draft: "Szkic",
     },
     sort: {
