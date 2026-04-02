@@ -36,10 +36,10 @@ BEGIN
       SELECT
         m.id, m.source, m.direction, m.from_email, m.to_email, m.subject,
         m.body, m.body_html,
-        -- Strip HTML tags and CSS for preview, take first 120 chars of clean text
+        -- Strip <style> tags but keep HTML structure for preview
         left(regexp_replace(
           COALESCE(m.body_html, m.body),
-          E'<[^>]+>|\\s+',
+          E'<style[^>]*>[^<]*</style>|\\s+',
           ' ',
           'g'
         ), 120) AS body_preview,
@@ -60,7 +60,7 @@ BEGIN
         m.body, m.body_html,
         left(regexp_replace(
           COALESCE(m.body_html, m.body),
-          E'<[^>]+>|\\s+',
+          E'<style[^>]*>[^<]*</style>|\\s+',
           ' ',
           'g'
         ), 120) AS body_preview,
@@ -81,7 +81,7 @@ BEGIN
         m.body, m.body_html,
         left(regexp_replace(
           COALESCE(m.body_html, m.body),
-          E'<[^>]+>|\\s+',
+          E'<style[^>]*>[^<]*</style>|\\s+',
           ' ',
           'g'
         ), 120) AS body_preview,
@@ -116,7 +116,7 @@ BEGIN
         m.body, m.body_html,
         left(regexp_replace(
           COALESCE(m.body_html, m.body),
-          E'<[^>]+>|\\s+',
+          E'<style[^>]*>[^<]*</style>|\\s+',
           ' ',
           'g'
         ), 120) AS body_preview,

@@ -2525,10 +2525,19 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
 
   // Render earlier messages (above the central message)
   const earlierMessages = threadMessages.filter(m => new Date(m.created_at) < new Date(msg.created_at));
+  console.log("[renderMessageDetail] Earlier messages:", earlierMessages.length, "| Thread total:", threadMessages.length);
+  if (earlierMessages.length > 0) {
+    console.log("[renderMessageDetail] First earlier message:", { 
+      id: earlierMessages[0].id, 
+      hasBody: !!earlierMessages[0].body, 
+      hasBodyHtml: !!earlierMessages[0].body_html 
+    });
+  }
   for (const threadMsg of earlierMessages) {
     const threadBubble = document.createElement("div");
     threadBubble.className = `mail-msg ${threadMsg.direction === "inbound" ? "inbound" : "outbound"} mail-msg-thread`;
     threadBubble.style.opacity = "0.6";
+    console.log("[renderMessageDetail] Rendering earlier message:", threadMsg.id, "body:", !!threadMsg.body, "body_html:", !!threadMsg.body_html);
     renderSimpleMessageContent(threadBubble, threadMsg);
     msgs.appendChild(threadBubble);
   }
