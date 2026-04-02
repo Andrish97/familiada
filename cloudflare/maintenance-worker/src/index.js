@@ -36,6 +36,12 @@ export default {
 
     // SETTINGS HOST (admin panel, no maintenance gate)
     if (host === "settings.familiada.online") {
+      // Serve version.txt for auto-updater
+      if (url.pathname === "/version.txt") {
+        url.pathname = "/version.txt";
+        return fetchFromOrigin(request, url, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
+      }
+
       if (url.pathname.startsWith("/_admin_api")) {
         return handleAdminApi(request, env);
       }
