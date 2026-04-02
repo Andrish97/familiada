@@ -106,7 +106,7 @@ const pl = {
     },
     hero: {
       title: "Darmowa Familiada Online. Prawdziwy teleturniej na Twoim sprzęcie.",
-      lead: "Najlepszy system do gry w Familiadę: zbierz odpowiedzi od uczestników w sondażu, a potem poprowadź grę na żywo. Idealna gra na wesele, urodziny i imprezę firmową. Wszystko w przeglądarce.",
+      lead: "Najlepszy system do gry w Familiadę: zbierz odpowiedzi od uczestników w ankiecie, a potem poprowadź grę na żywo. Idealna gra na wesele, urodziny i imprezę firmową. Wszystko w przeglądarce.",
       ctaStart: "Zacznij tworzyć gry i prowadzić rozgrywkę",
       ctaMarketplace: "Przeglądaj Gry Społeczności 🎮",
       note: "Dostępny tryb gościa — darmowa Familiada bez rejestracji.",
@@ -114,7 +114,7 @@ const pl = {
     about: {
       title: "Familiada Online — darmowy generator pytań i gra na żywo",
       p1: "Nasz system pozwala zorganizować własną grę w stylu Familiada od początku do końca. To idealne rozwiązanie jako atrakcja na wesele, urodziny czy integrację. Generator pytań pozwala na tworzenie własnych baz lub korzystanie z gotowych zestawów.",
-      p2: "Odpowiedzi uczestników zbierane są przez sondaż online — każdy głosuje przez link lub kod QR ze swojego telefonu. Wyniki są automatycznie normalizowane do 100 punktów, dokładnie jak w prawdziwym teleturnieju.",
+      p2: "Odpowiedzi uczestników zbierane są przez ankietę online — każdy bierze udział w ankiecie przez link lub kod QR ze swojego telefonu. Wyniki są automatycznie normalizowane do 100 punktów, dokładnie jak w prawdziwym teleturnieju.",
       p3Start: "Do prowadzenia gry wystarczą urządzenia które już masz — rzutnik lub telewizor jako tablica wyników, tablet dla prowadzącego, telefon jako buzzer do pojedynku. Możesz także skorzystać z",
       p3Link: "gotowych pytań do Familiady",
       p3End: "stworzonych przez naszą społeczność.",
@@ -122,9 +122,9 @@ const pl = {
     tiles: {
       title: "Jak zorganizować Familiadę? (Krok po kroku)",
       t1: {
-        alt: "Tworzenie nowej gry Familiada online - wybór trybu sondażu lub gry preparowanej",
+        alt: "Tworzenie nowej gry Familiada online - wybór trybu ankiety lub gry preparowanej",
         t: "Własny generator pytań i tryby gry",
-        d: "Wybierz jak chcesz zbierać odpowiedzi. Sondaż tekstowy i punktowany zbierają głosy od prawdziwych ludzi, a gra preparowana pozwala na szybkie wpisanie własnych pytań i punktów.",
+        d: "Wybierz jak chcesz zbierać odpowiedzi. Typowa ankieta i Punktacja zbierają głosy od prawdziwych ludzi, a gra preparowana pozwala na szybkie wpisanie własnych pytań i punktów.",
       },
       t2: {
         alt: "Edytor pytań do Familiady - konfiguracja punktów i odpowiedzi",
@@ -132,19 +132,19 @@ const pl = {
         d: "Dodawaj pytania, ustalaj liczbę odpowiedzi i konfiguruj strukturę gry. System zadba o to, by Twoja gra wyglądała profesjonalnie na każdym ekranie.",
       },
       t3: {
-        alt: "Współpraca przy tworzeniu gry - dodawanie znajomych i udostępnianie sondaży",
+        alt: "Współpraca przy tworzeniu gry - dodawanie znajomych i udostępnianie ankiet",
         t: "Znajomi i wspólne bazy pytań",
-        d: "Dodawaj znajomych, aby wspólnie pracować nad sondażami i bazami pytań. Idealne przy organizacji dużych wydarzeń firmowych czy wesel.",
+        d: "Dodawaj znajomych, aby wspólnie pracować nad ankietami i bazami pytań. Idealne przy organizacji dużych wydarzeń firmowych czy wesel.",
       },
       t4: {
-        alt: "Sondaż online z kodem QR - zbieranie odpowiedzi od gości",
-        t: "Sondaż online i zbieranie głosów",
-        d: "Pokaż kod QR gościom — mogą głosować ze swoich telefonów bez instalacji aplikacji. Wyniki spływają na żywo, a system automatycznie normalizuje punkty do 100.",
+        alt: "Ankieta online z kodem QR - zbieranie odpowiedzi od gości",
+        t: "Ankieta online i zbieranie głosów",
+        d: "Pokaż kod QR gościom — mogą brać udział w ankiecie ze swoich telefonów bez instalacji aplikacji. Wyniki spływają na żywo, a system automatycznie normalizuje punkty do 100.",
       },
       t5: {
-        alt: "Centrum sondaży: zarządzanie głosowaniami, podgląd postępu, udostępnianie linkiem lub QR.",
-        t: "Centrum sondaży",
-        d: "W jednym miejscu uruchamiasz i zamykasz głosowania, śledzisz postęp i udostępniasz sondaże znajomym. Wszystko gotowe zanim wejdziesz na salę.",
+        alt: "Centrum ankiet: zarządzanie ankietami, podgląd postępu, udostępnianie linkiem lub QR.",
+        t: "Centrum ankiet",
+        d: "W jednym miejscu uruchamiasz i zamykasz ankiety, śledzisz postęp i udostępniasz ankiety znajomym. Wszystko gotowe zanim wejdziesz na salę.",
       },
       t6: {
         alt: "Panel sterowania operatora: otwieranie rund, odkrywanie odpowiedzi, punkty i błędy X.",

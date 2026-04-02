@@ -109,15 +109,34 @@ async function writeLog(entry: {
 
 type Attachment = { filename: string; content: string; contentType: string };
 
+// Helper function to strip HTML tags and get plain text
+function htmlToText(html: string): string {
+  return html
+    .replace(/<[^>]*>/g, ' ')           // Remove all HTML tags
+    .replace(/&nbsp;/g, ' ')            // Replace &nbsp; with space
+    .replace(/&amp;/g, '&')             // Replace &amp; with &
+    .replace(/&lt;/g, '<')              // Replace &lt; with <
+    .replace(/&gt;/g, '>')              // Replace &gt; with >
+    .replace(/&quot;/g, '"')            // Replace &quot; with "
+    .replace(/&#39;/g, "'")             // Replace &#39; with '
+    .replace(/\s+/g, ' ')               // Collapse whitespace
+    .trim()
+    .slice(0, 500);                     // Limit length for preview
+}
+
 // Providers (same jak w send-mail, skrócone)
-async function sendViaSendgrid(to: string, subject: string, html: string, fromEmail?: string, attachments?: Attachment[]) {
+async function sendViaSendgrid(to: string, subject: string, html: string, fromEmail?: string, attachments?: Attachment[], plainText?: string) {
   if (!SENDGRID_KEY) throw new Error("missing_SENDGRID_API_KEY");
   const from = fromEmail || FROM_EMAIL;
+  const text = plainText || htmlToText(html);
   const payload: any = {
     personalizations: [{ to: [{ email: to }] }],
     from: { email: from, name: FROM_NAME },
     subject,
-    content: [{ type: "text/html", value: html }],
+    content: [
+      { type: "text/plain", value: text },
+      { type: "text/html", value: html }
+    ],
     tracking_settings: { click_tracking: { enable: false, enable_text: false }, open_tracking: { enable: false } },
   };
   if (attachments?.length) {
@@ -130,10 +149,11 @@ async function sendViaSendgrid(to: string, subject: string, html: string, fromEm
   });
   if (!res.ok) throw new Error(`sendgrid_failed:${await res.text().catch(() => "")}`);
 }
-async function sendViaBrevo(to: string, subject: string, html: string, fromEmail?: string, attachments?: Attachment[]) {
+async function sendViaBrevo(to: string, subject: string, html: string, fromEmail?: string, attachments?: Attachment[], plainText?: string) {
   if (!BREVO_KEY) throw new Error("missing_BREVO_API_KEY");
   const from = fromEmail || FROM_EMAIL;
-  const payload: any = { sender: { email: from, name: FROM_NAME }, to: [{ email: to }], subject, htmlContent: html };
+  const text = plainText || htmlToText(html);
+  const payload: any = { sender: { email: from, name: FROM_NAME }, to: [{ email: to }], subject, htmlContent: html, textContent: text };
   if (attachments?.length) {
     payload.attachment = attachments.map(a => ({ name: a.filename, content: a.content, contentType: a.contentType }));
   }
@@ -144,10 +164,11 @@ async function sendViaBrevo(to: string, subject: string, html: string, fromEmail
   });
   if (!res.ok) throw new Error(`brevo_failed:${await res.text().catch(() => "")}`);
 }
-async function sendViaMailgun(to: string, subject: string, html: string, fromEmail?: string, attachments?: Attachment[]) {
+async function sendViaMailgun(to: string, subject: string, html: string, fromEmail?: string, attachments?: Attachment[], plainText?: string) {
   if (!MAILGUN_KEY) throw new Error("missing_MAILGUN_API_KEY");
   if (!MAILGUN_DOMAIN) throw new Error("missing_MAILGUN_DOMAIN");
   const from = fromEmail || FROM_EMAIL;
+  const text = plainText || htmlToText(html);
   const base = MAILGUN_REGION === "eu" ? "https://api.eu.mailgun.net" : "https://api.mailgun.net";
   const url = `${base}/v3/${MAILGUN_DOMAIN}/messages`;
 
@@ -155,6 +176,7 @@ async function sendViaMailgun(to: string, subject: string, html: string, fromEma
   form.append("from", `${FROM_NAME} <${from}>`);
   form.append("to", to);
   form.append("subject", subject);
+  form.append("text", text);
   form.append("html", html);
   if (attachments?.length) {
     for (const a of attachments) {
@@ -178,15 +200,24 @@ async function hmacSha256Hex(key: Uint8Array, data: string): Promise<string> {
   return Array.from(await hmacSha256(key, data)).map(b => b.toString(16).padStart(2, "0")).join("");
 }
 
-async function sendViaSes(to: string, subject: string, html: string, sesRegion: string, fromEmail?: string) {
+async function sendViaSes(to: string, subject: string, html: string, sesRegion: string, fromEmail?: string, plainText?: string) {
   if (!SES_ACCESS_KEY || !SES_SECRET_KEY) throw new Error("missing_AWS_SES_credentials");
   const from = fromEmail || FROM_EMAIL;
   const region = sesRegion || "us-east-1";
   const endpoint = `https://email.${region}.amazonaws.com/v2/email/outbound-emails`;
+  const text = plainText || htmlToText(html);
   const payload = JSON.stringify({
     FromEmailAddress: `${FROM_NAME} <${from}>`,
     Destination: { ToAddresses: [to] },
-    Content: { Simple: { Subject: { Data: subject, Charset: "UTF-8" }, Body: { Html: { Data: html, Charset: "UTF-8" } } } },
+    Content: { 
+      Simple: { 
+        Subject: { Data: subject, Charset: "UTF-8" }, 
+        Body: { 
+          Html: { Data: html, Charset: "UTF-8" },
+          Text: { Data: text, Charset: "UTF-8" }
+        } 
+      } 
+    },
   });
   const now = new Date();
   const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, "").slice(0, 15) + "Z";
@@ -250,14 +281,15 @@ async function checkSuppressedEmails(emails: string[]): Promise<Map<string, stri
   return result;
 }
 
-async function sendWithFallbacks(to: string, subject: string, html: string, order: Provider[], fromEmail?: string, attachments?: Attachment[]) {
+async function sendWithFallbacks(to: string, subject: string, html: string, order: Provider[], fromEmail?: string, attachments?: Attachment[], plainText?: string) {
   const errs: string[] = [];
+  const text = plainText || htmlToText(html);
   for (const p of order) {
     try {
-      if (p === "sendgrid") { await sendViaSendgrid(to, subject, html, fromEmail, attachments); return p; }
-      if (p === "brevo") { await sendViaBrevo(to, subject, html, fromEmail, attachments); return p; }
-      if (p === "ses") { await sendViaSes(to, subject, html, SES_REGION, fromEmail); return p; }
-      await sendViaMailgun(to, subject, html, fromEmail, attachments); return p;
+      if (p === "sendgrid") { await sendViaSendgrid(to, subject, html, fromEmail, attachments, text); return p; }
+      if (p === "brevo") { await sendViaBrevo(to, subject, html, fromEmail, attachments, text); return p; }
+      if (p === "ses") { await sendViaSes(to, subject, html, SES_REGION, fromEmail, text); return p; }
+      await sendViaMailgun(to, subject, html, fromEmail, attachments, text); return p;
     } catch (e) {
       errs.push(`${p}:${String((e as any)?.message || e)}`);
     }
@@ -390,7 +422,7 @@ serve(async (req) => {
         }
       }
 
-      const provider = await sendWithFallbacks(r.to_email, r.subject, r.html, order, r.from_email || undefined, emailAttachments.length ? emailAttachments : undefined);
+      const provider = await sendWithFallbacks(r.to_email, r.subject, r.html, order, r.from_email || undefined, emailAttachments.length ? emailAttachments : undefined, r.text);
       const { error: markOkError } = await sbAdmin.rpc("mail_queue_mark", { p_id: r.id, p_ok: true, p_provider: provider, p_error: "" });
       if (markOkError) {
         console.error("[mail-worker] queue:mark_sent_failed", { id: r.id, error: markOkError });

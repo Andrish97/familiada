@@ -86,8 +86,24 @@ function parseItems(body: any): { items: MailItem[]; mode: "batch" | "single" } 
 
 // ---- Providers ----
 
+// Helper function to strip HTML tags and get plain text
+function htmlToText(html: string): string {
+  return html
+    .replace(/<[^>]*>/g, ' ')           // Remove all HTML tags
+    .replace(/&nbsp;/g, ' ')            // Replace &nbsp;
+    .replace(/&amp;/g, '&')             // Replace &amp;
+    .replace(/&lt;/g, '<')              // Replace &lt;
+    .replace(/&gt;/g, '>')              // Replace &gt;
+    .replace(/&quot;/g, '"')            // Replace &quot;
+    .replace(/&#39;/g, "'")             // Replace &#39;
+    .replace(/\s+/g, ' ')               // Collapse whitespace
+    .trim()
+    .slice(0, 500);                     // Limit length for preview
+}
+
 async function sendViaSendgrid(it: MailItem) {
   if (!SENDGRID_KEY) throw new Error("missing_SENDGRID_API_KEY");
+  const plainText = htmlToText(it.html);
 
   const sgRes = await fetch("https://api.sendgrid.com/v3/mail/send", {
     method: "POST",
@@ -99,7 +115,10 @@ async function sendViaSendgrid(it: MailItem) {
       personalizations: [{ to: [{ email: it.to }] }],
       from: { email: FROM_EMAIL, name: FROM_NAME },
       subject: it.subject,
-      content: [{ type: "text/html", value: it.html }],
+      content: [
+        { type: "text/plain", value: plainText },
+        { type: "text/html", value: it.html }
+      ],
       tracking_settings: {
         click_tracking: { enable: false, enable_text: false },
         open_tracking: { enable: false },
@@ -115,6 +134,7 @@ async function sendViaSendgrid(it: MailItem) {
 
 async function sendViaBrevo(it: MailItem) {
   if (!BREVO_KEY) throw new Error("missing_BREVO_API_KEY");
+  const plainText = htmlToText(it.html);
 
   const res = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
@@ -128,6 +148,7 @@ async function sendViaBrevo(it: MailItem) {
       to: [{ email: it.to }],
       subject: it.subject,
       htmlContent: it.html,
+      textContent: plainText,
     }),
   });
 
@@ -145,9 +166,11 @@ async function sendViaMailgun(it: MailItem) {
   const url = `${base}/v3/${MAILGUN_DOMAIN}/messages`;
 
   const form = new FormData();
+  const plainText = htmlToText(it.html);
   form.append("from", `${FROM_NAME} <${FROM_EMAIL}>`);
   form.append("to", it.to);
   form.append("subject", it.subject);
+  form.append("text", plainText);
   form.append("html", it.html);
 
   const res = await fetch(url, {
@@ -168,6 +191,7 @@ async function sendViaSes(it: MailItem, region: string) {
   // AWS SES v2 REST API z Signature V4
   const sesRegion = region || "us-east-1";
   const endpoint = `https://email.${sesRegion}.amazonaws.com/v2/email/outbound-emails`;
+  const plainText = htmlToText(it.html);
 
   const payload = JSON.stringify({
     FromEmailAddress: `${FROM_NAME} <${FROM_EMAIL}>`,
@@ -175,7 +199,10 @@ async function sendViaSes(it: MailItem, region: string) {
     Content: {
       Simple: {
         Subject: { Data: it.subject, Charset: "UTF-8" },
-        Body: { Html: { Data: it.html, Charset: "UTF-8" } },
+        Body: { 
+          Html: { Data: it.html, Charset: "UTF-8" },
+          Text: { Data: plainText, Charset: "UTF-8" }
+        },
       },
     },
   });
@@ -566,6 +593,7 @@ serve(async (req) => {
         to_email: it.to,
         subject: it.subject,
         html: it.html,
+        text: htmlToText(it.html),  // Generate plain text for Apple Mail preview
         status: "pending",
         not_before: new Date().toISOString(),
         attempts: 0,

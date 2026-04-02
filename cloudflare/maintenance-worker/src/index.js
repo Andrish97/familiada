@@ -792,11 +792,25 @@ async function handleAdminMarketingApi(request, env, url) {
 
     // custom_body is already full HTML from client (templates in JS)
     const emailHtml = custom_body || "";
+    
+    // Generate plain text from HTML for Apple Mail preview
+    const emailText = emailHtml
+      .replace(/<[^>]*>/g, ' ')           // Remove all HTML tags
+      .replace(/&nbsp;/g, ' ')            // Replace &nbsp;
+      .replace(/&amp;/g, '&')             // Replace &amp;
+      .replace(/&lt;/g, '<')              // Replace &lt;
+      .replace(/&gt;/g, '>')              // Replace &gt;
+      .replace(/&quot;/g, '"')            // Replace &quot;
+      .replace(/&#39;/g, "'")             // Replace &#39;
+      .replace(/\s+/g, ' ')               // Collapse whitespace
+      .trim()
+      .slice(0, 500);                     // Limit length for preview
 
     const rows = validEmails.map(email => ({
       to_email: email,
       subject: String(mktSubject),
       html: emailHtml,
+      text: emailText,
       from_email: "kontakt@familiada.online",
       meta: { type: "marketing", template_id: template_id || "custom" },
     }));
@@ -883,6 +897,15 @@ async function handleContactSubmit(request, env) {
       subject: String(subject || "").trim(),
       message: String(message || "").trim(),
     });
+    
+    // Generate plain text from HTML for Apple Mail preview
+    const emailText = html
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 500);
 
     await supabaseRequest(env, "/rest/v1/mail_queue", {
       method: "POST",
@@ -890,7 +913,8 @@ async function handleContactSubmit(request, env) {
       body: {
         to_email: String(email || "").trim().toLowerCase(),
         subject: confirmSubject,
-        html,
+        html: html,
+        text: emailText,
         from_email: "no-reply@familiada.online",
         meta: { type: "contact_confirmation", ticket },
       },
@@ -1297,6 +1321,15 @@ async function handleAdminMessagesApi(request, env, url) {
 
     // Use body_html from client if provided (TinyMCE HTML), otherwise use plain text
     const emailHtml = body_html || String(msgBody);
+    
+    // Generate plain text from HTML for Apple Mail preview
+    const emailText = emailHtml
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 500);
 
     // Insert into mail_queue first
     const queueRes = await supabaseRequest(env, "/rest/v1/mail_queue", {
@@ -1306,6 +1339,7 @@ async function handleAdminMessagesApi(request, env, url) {
         to_email: String(to_email).trim().toLowerCase(),
         subject:  String(msgSubject || ""),
         html:     emailHtml,
+        text:     emailText,
         from_email: "kontakt@familiada.online",
         meta: { type: "admin_compose", report_id: report_id || null, attachments: sendAttachments?.map(a => ({ filename: a.filename, mime_type: a.mime_type, storage_path: a.storage_path })) || [] },
       },
@@ -1338,12 +1372,28 @@ async function handleAdminMessagesApi(request, env, url) {
           p_inline:      false,
         });
         if (!attSave.ok) {
-          console.error("[worker] send:attachment_save_failed:", att.filename, summarizeSupabaseError(attSave));
+          console.error("[messages/send] save_attachment failed:", attSave);
         }
       }
     }
 
-    return json({ ok: true, message_id: messageId });
+    return json({ ok: true, id: messageId });
+  }
+
+  // POST /_admin_api/messages/read  { id } or ?id=xxx — mark message as read
+  if (url.pathname === "/_admin_api/messages/read" && request.method === "POST") {
+    const urlObj = new URL(request.url);
+    const messageId = urlObj.searchParams.get("id");
+    if (!messageId) return json({ ok: false, error: "missing_id" }, 400);
+
+    const updateRes = await supabaseRequest(env, "/rest/v1/messages", {
+      method: "PATCH",
+      headers: { Prefer: "return=minimal" },
+      body: { is_read: true, read_at: new Date().toISOString() },
+      query: `id=eq.${messageId}`,
+    });
+    if (!updateRes.ok) return json({ ok: false, error: "update_failed", details: summarizeSupabaseError(updateRes) }, updateRes.status || 500);
+    return json({ ok: true });
   }
 
   // GET /_admin_api/reports?status=open|closed|all&limit=50&offset=0
@@ -1548,6 +1598,15 @@ async function handleAdminReportsApi(request, env, url) {
         replyMessage: String(message),
         originalMessage: reportRow.message,
       });
+      
+      // Generate plain text from HTML for Apple Mail preview
+      const emailText = html
+        .replace(/<[^>]*>/g, ' ')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&amp;/g, '&')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 500);
 
       await supabaseRequest(env, "/rest/v1/mail_queue", {
         method: "POST",
@@ -1555,7 +1614,8 @@ async function handleAdminReportsApi(request, env, url) {
         body: {
           to_email: reportRow.email,
           subject: replySubject,
-          html,
+          html: html,
+          text: emailText,
           from_email: "kontakt@familiada.online",
           meta: { type: "contact_reply", ticket: reportRow.ticket_number, report_id: id },
         },
@@ -1622,6 +1682,15 @@ async function handleAdminReportsApi(request, env, url) {
         message: String(message),
         reply_as: reply_as || null,
       });
+      
+      // Generate plain text from HTML for Apple Mail preview
+      const emailText = html
+        .replace(/<[^>]*>/g, ' ')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&amp;/g, '&')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 500);
 
       await supabaseRequest(env, "/rest/v1/mail_queue", {
         method: "POST",
@@ -1629,7 +1698,8 @@ async function handleAdminReportsApi(request, env, url) {
         body: {
           to_email: String(to).trim().toLowerCase(),
           subject: mailSubject,
-          html,
+          html: html,
+          text: emailText,
           from_email: "kontakt@familiada.online",
           meta: { type: "contact_compose" },
         },
