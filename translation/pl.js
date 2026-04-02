@@ -2439,7 +2439,7 @@ const pl = {
       pollPoints: "Punktacja",
       pollPointsMobile: "Punkty",
       prepared: "Preparowana",
-      preparedMobile: "Gotowy",
+      preparedMobile: "Gotowa",
       market: "Gry Społeczności",
       marketMobile: "Społ.",
     },
