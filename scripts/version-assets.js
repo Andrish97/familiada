@@ -132,16 +132,48 @@ const version = `v${date.getFullYear()}.${String(date.getMonth()+1).padStart(2,'
 
 for (const htmlFile of findFiles(ROOT, '.html')) {
   try {
-    const content = fs.readFileSync(htmlFile, 'utf8');
-    const updated = content.replace(
-      /(<meta name="app-version" content=")[^"]*("\/>)/g,
-      `$1${version}$2`
-    );
-    if (updated !== content) {
-      fs.writeFileSync(htmlFile, updated, 'utf8');
-      console.log(`  version: ${path.relative(ROOT, htmlFile)} → ${version}`);
+    let content = fs.readFileSync(htmlFile, 'utf8');
+    
+    // 1. Agresywne czyszczenie: usuń KAŻDY tag meta zawierający "app-version"
+    // Obsługuje różne cudzysłowy, kolejność atrybutów, spacje i brak domknięcia />
+    const versionMetaRegex = /<meta\s+[^>]*?app-version[^>]*?>/gi;
+    content = content.replace(versionMetaRegex, '');
+
+    const metaTag = `<meta name="app-version" content="${version}"/>`;
+    
+    // 2. Wstawienie świeżego tagu na początku <head>
+    if (content.match(/<head>/i)) {
+      content = content.replace(/(<head[^>]*>)/i, `$1\n  ${metaTag}`);
+    } else if (content.match(/<meta/i)) {
+      content = content.replace(/(<meta)/i, `${metaTag}\n  $1`);
+    } else {
+      content = `${metaTag}\n${content}`;
     }
+    
+    // 3. Sprzątanie pustych linii (jeśli powstały przy usuwaniu)
+    content = content.replace(/\n\s*\n\s*\n/g, '\n\n');
+
+    fs.writeFileSync(htmlFile, content, 'utf8');
+    console.log(`  version: ${path.relative(ROOT, htmlFile)} → ${version}`);
   } catch(e) {
     console.warn(`Could not update ${htmlFile}:`, e.message);
   }
+}
+
+// ─── 4. Write version.txt ───────────────────────────────────────────────────
+
+fs.writeFileSync(path.join(ROOT, 'version.txt'), version, 'utf8');
+console.log(`\nVersion file created: version.txt → ${version}`);
+
+// ─── 5. Update sw.js to force update ────────────────────────────────────────
+
+const swPath = path.join(ROOT, 'sw.js');
+if (fs.existsSync(swPath)) {
+  let swContent = fs.readFileSync(swPath, 'utf8');
+  // Strip existing version comment
+  swContent = swContent.replace(/\/\/ Version: .*/, '').trim();
+  // Add new version comment at the top
+  swContent = `// Version: ${version}\n${swContent}`;
+  fs.writeFileSync(swPath, swContent, 'utf8');
+  console.log(`  sw.js updated with new version comment.`);
 }

@@ -1,6 +1,6 @@
 // /familiada/js/pages/controlapp.js
 import { confirmModal } from "../../js/core/modal.js?v=0c9fe6fd";
-import { getUiLang, initI18n, t } from "../../translation/translation.js?v=435d2210";
+import { getUiLang, initI18n, t } from "../../translation/translation.js?v=7222ec9e";
 
 // ================== KOMUNIKATY ==================
 const APP_MSG = {

@@ -12,7 +12,7 @@ Settings panel (admin)
 - GET /_admin_api/mail/logs
 */
 
-import { initI18n, t } from "../../translation/translation.js?v=435d2210";
+import { initI18n, t } from "../../translation/translation.js?v=7222ec9e";
 import { initUiSelect } from "../core/ui-select.js?v=73a51737";
 import { guardDesktopOnly } from "../core/device-guard.js?v=e7f7c5c6";
 import { confirmModal } from "../core/modal.js?v=0c9fe6fd";
@@ -2091,6 +2091,28 @@ async function loadMailFolder({ silent = false } = {}) {
       if (!res.ok) throw new Error(await res.text());
       const json = await res.json();
       msgRows = json.rows || [];
+    } else if (msgActiveFolder === "marketing") {
+      // Fetch marketing emails from queue with type='marketing' and their replies
+      const res = await adminFetch("/mail-queue?status=sent&type=marketing&limit=100");
+      if (!res.ok) throw new Error(await res.text());
+      const json = await res.json();
+      // Get marketing messages and their replies
+      const marketingIds = (json.rows || []).map(m => m.id);
+      msgRows = json.rows || [];
+      
+      // Also fetch replies to marketing messages
+      try {
+        const repliesRes = await adminFetch(`/messages?filter=all&limit=500`);
+        if (repliesRes.ok) {
+          const repliesJson = await repliesRes.json();
+          const replies = (repliesJson.rows || []).filter(m => 
+            m.direction === "inbound" && marketingIds.some(id => 
+              m.subject?.includes(`Re:`) || m.in_reply_to === id
+            )
+          );
+          msgRows = [...msgRows, ...replies];
+        }
+      } catch (e) { console.error("[loadMailFolder] marketing replies fetch error:", e); }
     } else {
       const res = await adminFetch(`/messages?filter=${encodeURIComponent(msgActiveFolder)}&limit=100`);
       if (!res.ok) throw new Error(await res.text());
@@ -2098,24 +2120,15 @@ async function loadMailFolder({ silent = false } = {}) {
       msgRows = json.rows || [];
     }
     renderMailList(msgRows);
-    updateFolderBadges();
+    // Refresh badge counts after loading folder
+    loadFolderBadges();
   } catch (err) {
     if (!silent) showToast(String(err?.message || err), "error");
   }
 }
 
-function updateFolderBadges() {
-  // Count unread in inbox (inbound without report_id)
-  const inboxUnread = (msgRows || []).filter(r => 
-    !r.report_id && r.direction === "inbound"
-  ).length;
-  
-  // Count open reports
-  const reportsOpen = (msgRows || []).filter(r => 
-    r.status === "open"
-  ).length;
-  
-  // Update badge elements
+function updateFolderBadges(inboxUnread, reportsOpen) {
+  // Update badge elements with provided counts
   const badgeInbox = document.getElementById("badgeInbox");
   const badgeReports = document.getElementById("badgeReports");
   
@@ -2127,6 +2140,36 @@ function updateFolderBadges() {
   if (badgeReports) {
     badgeReports.textContent = reportsOpen;
     badgeReports.classList.toggle("visible", reportsOpen > 0);
+  }
+}
+
+// Load unread counts on initial load and after folder changes
+async function loadFolderBadges() {
+  try {
+    // Fetch inbox unread count
+    const inboxRes = await adminFetch("/messages?filter=inbox&limit=100");
+    let inboxUnread = 0;
+    if (inboxRes.ok) {
+      const inboxJson = await inboxRes.json();
+      inboxUnread = (inboxJson.rows || []).filter(r => 
+        !r.report_id && r.direction === "inbound" && !r.is_read
+      ).length;
+    }
+    
+    // Fetch reports open count
+    const reportsRes = await adminFetch("/reports?status=all&limit=100");
+    let reportsOpen = 0;
+    if (reportsRes.ok) {
+      const reportsJson = await reportsRes.json();
+      reportsOpen = (reportsJson.rows || []).filter(r => 
+        r.status === "open"
+      ).length;
+    }
+    
+    // Update badge elements
+    updateFolderBadges(inboxUnread, reportsOpen);
+  } catch (e) {
+    console.error("[loadFolderBadges] error:", e);
   }
 }
 
@@ -2178,10 +2221,30 @@ function renderMailList(rows) {
     return;
   }
 
+  if (msgActiveFolder === "marketing") {
+    for (const r of filtered) {
+      const item = document.createElement("div");
+      item.className = "mail-thread-item" + (r.id === msgActiveId ? " active" : "");
+      item.dataset.msgId = r.id;
+      const dateStr = new Date(r.sent_at || r.created_at).toLocaleDateString("pl-PL", { day:"2-digit", month:"2-digit" });
+      const toBadge = r.to_email ? `📧 ${escSetting(r.to_email)}` : `📢 ${escSetting(r.recipients_count || 0)} odbiorców`;
+      item.innerHTML = `
+        <div class="mail-ti-row">
+          <span class="mail-ti-from">${toBadge}</span>
+          <span class="mail-ti-date">${dateStr}</span>
+        </div>
+        <div class="mail-ti-subject">${escSetting(r.subject || "—")}</div>
+        <div class="mail-ti-preview" style="opacity:.45">Kampania marketingowa</div>`;
+      item.addEventListener("click", () => openMessage(r.id));
+      body.appendChild(item);
+    }
+    return;
+  }
+
   for (const r of filtered) {
     const item = document.createElement("div");
     const isInbound = r.direction === "inbound";
-    item.className = "mail-thread-item" + (!r.report_id && isInbound ? " unread" : "") + (r.id === msgActiveId ? " active" : "");
+    item.className = "mail-thread-item" + (!r.report_id && isInbound && !r.is_read ? " unread" : "") + (r.id === msgActiveId ? " active" : "");
     item.dataset.msgId = r.id;
     const dateStr = new Date(r.created_at).toLocaleDateString("pl-PL", { day:"2-digit", month:"2-digit" });
     const sourceBadge = { email: "📧", form: "📝", compose: "✏" }[r.source] || "";
@@ -2253,6 +2316,13 @@ async function openMessage(id) {
     el.classList.toggle("active", el.dataset.msgId === id);
   });
 
+  // Mark message as read
+  try {
+    await adminFetch(`/messages/read?id=${encodeURIComponent(id)}`, { method: "POST" });
+    // Refresh badges after marking as read
+    loadFolderBadges();
+  } catch (e) { console.error("[openMessage] mark read error:", e); }
+
   const conv = document.getElementById("mailConv");
   if (!conv) return;
   conv.innerHTML = `<div style="flex:1;display:flex;align-items:center;justify-content:center;opacity:.35;font-size:12px">${t("settings.marketplace.loadingConv") || "Ładowanie…"}</div>`;
@@ -2262,6 +2332,22 @@ async function openMessage(id) {
     if (!res.ok) throw new Error(await res.text());
     const json = await res.json();
     if (!json.ok) throw new Error(json.error);
+    
+    // Fetch conversation thread (messages with same ticket/report)
+    let threadMessages = [];
+    if (json.message.ticket_number || json.message.report_id) {
+      try {
+        const threadRes = await adminFetch(`/messages?filter=all&limit=100`);
+        if (threadRes.ok) {
+          const threadJson = await threadRes.json();
+          threadMessages = (threadJson.rows || []).filter(m => 
+            (m.ticket_number === json.message.ticket_number || m.report_id === json.message.report_id)
+            && m.id !== id
+          ).sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+        }
+      } catch (e) { console.error("[openMessage] thread fetch error:", e); }
+    }
+    
     let attachments = [];
     try {
       const attRes = await adminFetch(`/attachments?message_id=${encodeURIComponent(id)}`);
@@ -2272,7 +2358,8 @@ async function openMessage(id) {
         console.error("[openMessage] attachments fetch failed:", attRes.status, await attRes.text().catch(() => ""));
       }
     } catch (e) { console.error("[openMessage] attachments error:", e); }
-    renderMessageDetail(json.message, attachments);
+    
+    renderMessageDetail(json.message, attachments, threadMessages);
   } catch (err) {
     showToast(String(err?.message || err), "error");
     conv.innerHTML = "";
@@ -2297,7 +2384,26 @@ function showAttachmentPreview(url, filename) {
   </div>`;
 }
 
-function renderMessageDetail(msg, attachments = []) {
+function renderSimpleMessageContent(bubble, msg) {
+  const bodyEl = document.createElement("div");
+  const htmlSrc = msg.body_html || (/<[a-z][\s\S]*>/i.test(msg.body || "") ? msg.body : null);
+  if (htmlSrc) {
+    bodyEl.className = "mail-msg-body-html";
+    const frame = document.createElement("iframe");
+    frame.className = "mail-msg-html-frame";
+    frame.sandbox = "allow-scripts allow-popups";
+    const wrappedHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{margin:0;padding:8px;background:#050914;color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.4;}a{color:#ffeaa6;}</style></head><body>${htmlSrc}</body></html>`;
+    frame.srcdoc = wrappedHtml;
+    bodyEl.appendChild(frame);
+  } else {
+    bodyEl.className = "mail-msg-body";
+    bodyEl.style.whiteSpace = "pre-wrap";
+    bodyEl.textContent = msg.body || "";
+  }
+  bubble.appendChild(bodyEl);
+}
+
+function renderMessageDetail(msg, attachments = [], threadMessages = []) {
   const conv = document.getElementById("mailConv");
   if (!conv) return;
   conv.innerHTML = "";
@@ -2329,7 +2435,7 @@ function renderMessageDetail(msg, attachments = []) {
   const msgEl = document.createElement("div");
   msgEl.className = "mail-conv-messages";
   const bubble = document.createElement("div");
-  bubble.className = `mail-msg ${isInbound ? "inbound" : "outbound"}`;
+  bubble.className = `mail-msg ${isInbound ? "inbound" : "outbound"} mail-msg-central`;
 
   const bodyEl = document.createElement("div");
   const htmlSrc = msg.body_html || (/<[a-z][\s\S]*>/i.test(msg.body || "") ? msg.body : null);
@@ -2480,7 +2586,29 @@ function renderMessageDetail(msg, attachments = []) {
     bubble.appendChild(attList);
   }
 
+  // Render thread messages (earlier messages above)
+  const earlierMessages = threadMessages.filter(m => new Date(m.created_at) < new Date(msg.created_at));
+  for (const threadMsg of earlierMessages) {
+    const threadBubble = document.createElement("div");
+    threadBubble.className = `mail-msg ${threadMsg.direction === "inbound" ? "inbound" : "outbound"}`;
+    threadBubble.style.opacity = "0.6";
+    renderSimpleMessageContent(threadBubble, threadMsg);
+    msgEl.appendChild(threadBubble);
+  }
+  
+  // Render current message (central with gold accent)
   msgEl.appendChild(bubble);
+  
+  // Render later messages below
+  const laterMessages = threadMessages.filter(m => new Date(m.created_at) > new Date(msg.created_at));
+  for (const threadMsg of laterMessages) {
+    const threadBubble = document.createElement("div");
+    threadBubble.className = `mail-msg ${threadMsg.direction === "inbound" ? "inbound" : "outbound"}`;
+    threadBubble.style.opacity = "0.6";
+    renderSimpleMessageContent(threadBubble, threadMsg);
+    msgEl.appendChild(threadBubble);
+  }
+  
   conv.appendChild(msgEl);
 
   // Action bar — icon buttons
@@ -4926,6 +5054,7 @@ function wireEvents() {
 
   wireMarketplaceEvents();
   wireReportsEvents();
+  loadFolderBadges();
   wireMarketingEvents();
   wireRatingsEvents();
   wireStatsEvents();

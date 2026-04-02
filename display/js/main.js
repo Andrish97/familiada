@@ -4,7 +4,7 @@ import { startPresence } from "./presence.js?v=fdf12666";
 import { createQRController } from "./qr.js?v=1447b3db";
 import { createScene } from "./scene.js?v=734ef52c";
 import { createCommandHandler } from "./commands.js?v=11ce15a4";
-import { initI18n } from "../../translation/translation.js?v=435d2210";
+import { initI18n } from "../../translation/translation.js?v=7222ec9e";
 import { startKeepAlive } from "../../js/core/keep-alive.js?v=2c38dcc0";
 startKeepAlive();
 

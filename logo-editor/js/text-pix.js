@@ -1,7 +1,7 @@
 // familiada/logo-editorjs/text-pix.js
 // Tryb: TEXT_PIX (TinyMCE inline -> "screen-screenshot" -> 150x70 bits)
 
-import { t } from "../../translation/translation.js?v=435d2210";
+import { t } from "../../translation/translation.js?v=7222ec9e";
 
 export function initTextPixEditor(ctx) {
   const TYPE_PIX = ctx.TYPE_PIX || "PIX_150x70";

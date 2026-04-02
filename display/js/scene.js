@@ -2,7 +2,7 @@
 import { loadJson, buildGlyphMap, resolveGlyph } from "./fonts.js?v=a47b3967";
 import { createAnimator } from "./anim.js?v=745be35d";
 import { sb } from "../../js/core/supabase.js?v=ece3a0c0";
-import { t } from "../../translation/translation.js?v=435d2210";
+import { t } from "../../translation/translation.js?v=7222ec9e";
 
 export async function createScene() {
   const NS = "http://www.w3.org/2000/svg";

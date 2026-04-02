@@ -1554,6 +1554,7 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   border-radius: 10px;
   font-size: 13px;
   max-width: 90%;
+  margin-bottom: 10px;
 }
 .mail-msg.inbound {
   background: rgba(255,255,255,.05);
@@ -1564,6 +1565,10 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   background: rgba(255,234,166,.07);
   border: 1px solid rgba(255,234,166,.18);
   align-self: flex-end;
+}
+.mail-msg-central {
+  border-left: 3px solid #ffeaa6 !important;
+  background: rgba(255,234,166,.1) !important;
 }
 .mail-msg-meta {
   font-size: 10px;

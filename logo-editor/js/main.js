@@ -8,7 +8,7 @@ import { sb } from "../../js/core/supabase.js?v=ece3a0c0";
 import { requireAuth } from "../../js/core/auth.js?v=4721e86e";
 import { isGuestUser } from "../../js/core/guest-mode.js?v=e499bece";
 import { alertModal, confirmModal } from "../../js/core/modal.js?v=0c9fe6fd";
-import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js?v=435d2210";
+import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js?v=7222ec9e";
 import { initTopbarAccountDropdown } from "../../js/core/topbar-controller.js?v=78fbf2a5";
 import { isMobileDevice } from "../../js/core/pwa.js?v=31d73fc2";
 

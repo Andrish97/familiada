@@ -7,7 +7,7 @@
 
 import { signOut } from './auth.js?v=4721e86e';
 import { isGuestUser } from './guest-mode.js?v=e499bece';
-import { t, withLangParam } from '../../translation/translation.js?v=435d2210';
+import { t, withLangParam } from '../../translation/translation.js?v=7222ec9e';
 
 // ── Narzędzie: pozycjonowanie fixed dropdown ──────────────────────────────────
 function repositionDropdown(anchorEl, dropdownEl) {

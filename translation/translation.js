@@ -335,4 +335,7 @@ if (typeof window !== "undefined") {
       console.warn("i18n pageshow sync failed", e);
     }
   });
+
+  // Automatyczne sprawdzanie aktualizacji (updater.js)
+  import('../js/core/updater.js?v=f857745f').then(m => m.initUpdater()).catch(() => {});
 }

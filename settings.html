@@ -1,23 +1,24 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
+  <meta name="app-version" content="v2026.04.02.3349"/>
   <meta charset="UTF-8"/>
   <meta name="robots" content="noindex, nofollow"/>
   <meta name="mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-  <meta name="app-version" content="v2026.04.02.1716"/>
+  
   <title data-i18n="settings.title">Familiada — pulpit admina</title>
 
   <link rel="icon" href="favicon.ico"/>
   <link rel="stylesheet" href="css/base.css?v=764df218"/>
   <link rel="stylesheet" href="css/builder.css?v=5437092c"/>
-  <link rel="stylesheet" href="css/settings.css?v=4e7345b8"/>
+  <link rel="stylesheet" href="css/settings.css?v=b502a1ac"/>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/tinymce@7/tinymce.min.js"></script>
-  <script type="module" src="js/pages/settings.js?v=7659e9ee" defer></script>
+  <script type="module" src="js/pages/settings.js?v=fd987041" defer></script>
   <script type="module" src="js/pages/generator.js?v=41218100" defer></script>
 </head>
 <body class="builder-body settings-body settings-locked no-footer-line">
@@ -383,7 +384,6 @@
           <div class="panel-sub" data-i18n="settings.marketplace.subtitle">Moderacja zgłoszeń i gry producenta</div>
         </div>
 
-
         <div class="field" style="margin:12px 0 16px">
           <label class="field-label">Powiadomienia push — Telegram</label>
           <div style="display:flex;gap:8px;align-items:center">
@@ -549,6 +549,10 @@
               <div class="mail-folder" data-folder="sent" id="mfSent">
                 <span class="mail-folder-icon">📤</span>
                 <span class="mail-folder-name" data-i18n="settings.reports.tabSent">Wysłane</span>
+              </div>
+              <div class="mail-folder" data-folder="marketing" id="mfMarketing">
+                <span class="mail-folder-icon">📢</span>
+                <span class="mail-folder-name">Marketing</span>
               </div>
               <div class="mail-folder" data-folder="reports" id="mfReports">
                 <span class="mail-folder-icon">🏷</span>

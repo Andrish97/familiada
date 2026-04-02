@@ -4,7 +4,7 @@
 // - jeśli user zalogowany -> pokazuj username + Wyloguj
 // - jeśli niezalogowany -> ukryj username + Wyloguj, a Wstecz wraca do /
 
-import { initI18n, t, withLangParam } from "../../translation/translation.js?v=435d2210";
+import { initI18n, t, withLangParam } from "../../translation/translation.js?v=7222ec9e";
 import { getUser } from "../core/auth.js?v=4721e86e";
 import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=78fbf2a5";
 import "../core/contact-modal.js?v=773b071f";

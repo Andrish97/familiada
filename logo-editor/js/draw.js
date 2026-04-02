@@ -14,7 +14,7 @@
 
 import { confirmModal } from "../../js/core/modal.js?v=0c9fe6fd";
 import { initUiSelect } from "../../js/core/ui-select.js?v=73a51737";
-import { t } from "../../translation/translation.js?v=435d2210";
+import { t } from "../../translation/translation.js?v=7222ec9e";
 
 export function initDrawEditor(ctx) {
   const TYPE_PIX = "PIX_150x70";

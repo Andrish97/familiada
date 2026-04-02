@@ -3,7 +3,7 @@
 
 import { requireAuth } from "../../js/core/auth.js?v=4721e86e";
 import { alertModal } from "../../js/core/modal.js?v=0c9fe6fd";
-import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js?v=435d2210";
+import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js?v=7222ec9e";
 import { initTopbarAccountDropdown } from "../../js/core/topbar-controller.js?v=78fbf2a5";
 import { createState, setRole } from "./state.js?v=c58d730d";
 import { renderAll } from "./render.js?v=fb8e975e";

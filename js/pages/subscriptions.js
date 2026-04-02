@@ -3,7 +3,7 @@ import { requireAuth } from "../core/auth.js?v=4721e86e";
 import { isGuestUser, showGuestBlockedOverlay } from "../core/guest-mode.js?v=e499bece";
 import { alertModal, confirmModal } from "../core/modal.js?v=0c9fe6fd";
 import { initUiSelect } from "../core/ui-select.js?v=73a51737";
-import { getUiLang, initI18n, t } from "../../translation/translation.js?v=435d2210";
+import { getUiLang, initI18n, t } from "../../translation/translation.js?v=7222ec9e";
 import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=78fbf2a5";
 import "../core/contact-modal.js?v=773b071f";
 

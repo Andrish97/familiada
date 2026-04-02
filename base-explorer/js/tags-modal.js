@@ -9,7 +9,7 @@
 
 import { sb } from "../../js/core/supabase.js?v=ece3a0c0";
 import { alertModal } from "../../js/core/modal.js?v=0c9fe6fd";
-import { t } from "../../translation/translation.js?v=435d2210";
+import { t } from "../../translation/translation.js?v=7222ec9e";
 import { listQuestionTags, listAllQuestions } from "./repo.js?v=e8a2caa7";
 
 /* ================= Utils ================= */

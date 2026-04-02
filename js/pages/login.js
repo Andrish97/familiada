@@ -24,7 +24,7 @@ import { alertModal, confirmModal } from "../core/modal.js?v=0c9fe6fd";
 
 import { sb } from "../core/supabase.js?v=ece3a0c0";
 import { cooldownEmailGet, cooldownEmailReserve } from "../core/cooldown.js?v=0937b7ec";
-import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../translation/translation.js?v=435d2210";
+import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../translation/translation.js?v=7222ec9e";
 import "../core/contact-modal.js?v=773b071f";
 
 const $ = (s) => document.querySelector(s);

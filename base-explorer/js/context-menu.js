@@ -13,7 +13,7 @@ import {
   duplicateSelected,
 } from "./actions.js?v=d86c0392";
 import { alertModal } from "../../js/core/modal.js?v=0c9fe6fd";
-import { t } from "../../translation/translation.js?v=435d2210";
+import { t } from "../../translation/translation.js?v=7222ec9e";
 
 
 const IS_MAC = navigator.platform.toLowerCase().includes("mac");

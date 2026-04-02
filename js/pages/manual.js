@@ -3,7 +3,7 @@
 // Najpierw UI, potem auth „miękko”.
 
 import { confirmModal } from "../core/modal.js?v=0c9fe6fd";
-import { initI18n, setUiLang, t, withLangParam } from "../../translation/translation.js?v=435d2210";
+import { initI18n, setUiLang, t, withLangParam } from "../../translation/translation.js?v=7222ec9e";
 import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=78fbf2a5";
 import "../core/contact-modal.js?v=773b071f";
 

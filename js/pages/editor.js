@@ -4,7 +4,7 @@ import { requireAuth } from "../core/auth.js?v=4721e86e";
 import { alertModal, confirmModal } from "../core/modal.js?v=0c9fe6fd";
 import { parseQaText, clip as clipN } from "../core/text-import.js?v=a4b6991d";
 import { canEnterEdit, RULES as GV_RULES, TYPES } from "../core/game-validate.js?v=df97f708";
-import { initI18n, t } from "../../translation/translation.js?v=435d2210";
+import { initI18n, t } from "../../translation/translation.js?v=7222ec9e";
 import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=78fbf2a5";
 import "../core/contact-modal.js?v=773b071f";
 
