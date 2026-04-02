@@ -1,7 +1,7 @@
 /**
  * js/core/updater.js
  * Automatyczne sprawdzanie nowej wersji aplikacji.
- * Jeśli hash pliku settings.js na serwerze różni się od lokalnego,
+ * Jeśli wersja z version.txt na serwerze różni się od lokalnej,
  * skrypt odświeża stronę.
  */
 
@@ -9,7 +9,7 @@ const CHECK_INTERVAL = 5 * 60 * 1000; // 5 minut
 let currentVersion = null;
 
 export function initUpdater() {
-  // Pobierz aktualną wersję z meta tagu (jeśli istnieje)
+  // Pobierz aktualną wersję z meta tagu
   const meta = document.querySelector('meta[name="app-version"]');
   if (meta) {
     currentVersion = meta.getAttribute('content');
@@ -31,23 +31,14 @@ export function initUpdater() {
 
 async function checkForUpdates() {
   try {
-    // Fetch settings.js HEAD request to check if it changed
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
-    
-    const res = await fetch(`/settings.js`, { 
-      method: 'HEAD',
-      cache: 'no-store',
-      signal: controller.signal
+    // Fetch version.txt from server
+    const res = await fetch(`/version.txt?t=${Date.now()}`, { 
+      cache: 'no-store'
     });
-    clearTimeout(timeoutId);
     
     if (!res.ok) return;
 
-    // Get Last-Modified header as version indicator
-    const lastModified = res.headers.get('last-modified');
-    const serverVersion = lastModified;
-    
+    const serverVersion = (await res.text()).trim();
     if (!serverVersion) return;
 
     if (currentVersion && serverVersion !== currentVersion) {
@@ -60,8 +51,7 @@ async function checkForUpdates() {
 
       if (!isSensitivePage) {
         setTimeout(() => {
-          if (document.hidden) location.reload();
-          else location.reload();
+          location.reload();
         }, 5000);
       } else {
         console.log('[Updater] Strona wrażliwa, czekam na przejście w tło do aktualizacji.');
