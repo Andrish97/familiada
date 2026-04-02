@@ -103,6 +103,8 @@ function setSub(t) {
 function showClosed(on) {
   if (closed) closed.style.display = on ? "" : "none";
   if (qbox) qbox.style.display = on ? "none" : "";
+  if (on && subEl) subEl.style.display = "none"; // Hide loading sub when showing closed/error msg
+  else if (!on && subEl) subEl.style.display = "";
 }
 
 let taskVoterToken = null;
@@ -411,11 +413,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   } catch (e) {
     console.error("[poll-text] init error:", e);
-    setSub(MSG.openPollFail(e?.message || e));
-    showClosed(true);
-  }
-});
-onsole.error("[poll-text] init error:", e);
     setSub(MSG.openPollFail(e?.message || e));
     showClosed(true);
   }

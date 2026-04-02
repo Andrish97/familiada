@@ -91,6 +91,8 @@ function setSub(t) {
 function showClosed(on) {
   if (closed) closed.style.display = on ? "" : "none";
   if (qbox) qbox.style.display = on ? "none" : "";
+  if (on && subEl) subEl.style.display = "none"; // Hide loading sub when showing closed/error msg
+  else if (!on && subEl) subEl.style.display = "";
 }
 
 function setClosedMsg(msg) {
@@ -358,11 +360,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     render();
   } catch (e) {
     console.error("[poll-points] init error:", e);
-    setSub(MSG.openPollFail(e?.message || e));
-    showClosed(true);
-  }
-});
-sole.error("[poll-points] init error:", e);
     setSub(MSG.openPollFail(e?.message || e));
     showClosed(true);
   }
