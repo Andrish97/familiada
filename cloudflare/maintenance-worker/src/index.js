@@ -832,7 +832,8 @@ async function handleAdminMarketingApi(request, env, url) {
     }
 
     // Save message record for EACH email (so they appear individually in "Sent" and "Marketing" folders)
-    const msgSubject = `[Marketing] ${mktSubject}`;
+    // Marketing emails are detected by HTML content (FAMILIADA branding), not by subject prefix
+    const msgSubject = mktSubject;
     let savedCount = 0;
     for (const email of validEmails.slice(0, 100)) { // Limit to 100 to avoid timeout
       try {
