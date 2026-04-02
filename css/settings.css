@@ -1518,6 +1518,16 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   min-height: 0;
   height: 100%;
 }
+.mail-conv-placeholder {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  opacity: .35;
+  font-size: 12px;
+}
 .mail-conv-header {
   padding: 14px 16px 10px;
   border-bottom: 1px solid rgba(255,255,255,.08);

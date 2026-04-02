@@ -2804,10 +2804,10 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
   btnMarketing.className = `msg-icon-btn ${msg.is_marketing ? "msg-icon-btn--active" : ""}`;
   btnMarketing.type = "button";
   btnMarketing.title = msg.is_marketing ? "Oznacz jako zwykłą wiadomość" : "Oznacz jako marketing";
-  // Megaphone/bullhorn icon
+  // Bullhorn/megaphone icon - cleaner design
   btnMarketing.innerHTML = msg.is_marketing
-    ? `<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5"><path d="M3 10v4c0 .55.45 1 1 1h3l3 3V6L7 9H4c-.55 0-1 .45-1 1zm13 1.5c0 1.38-1.12 2.5-2.5 2.5s-2.5-1.12-2.5-2.5 1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5z"/></svg>`
-    : `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10v4c0 .55.45 1 1 1h3l3 3V6L7 9H4c-.55 0-1 .45-1 1zm13 1.5c0 1.38-1.12 2.5-2.5 2.5s-2.5-1.12-2.5-2.5 1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5z"/></svg>`;
+    ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7" stroke="currentColor" stroke-width="3"/></svg>`
+    : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7" stroke-width="3"/></svg>`;
   btnMarketing.addEventListener("click", () => toggleMarketing(msg.id, !msg.is_marketing));
   leftGroup.appendChild(btnMarketing);
 
@@ -2863,8 +2863,8 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
   }
 
   actions.appendChild(rightGroup);
-  msgs.appendChild(actions);
-  conv.appendChild(msgs);
+  conv.appendChild(actions);  // Actions outside scrollable area
+  conv.appendChild(msgs);     // Messages container
 
   // click on ticket badge → open report
   conv.querySelector(".mail-ticket-badge")?.addEventListener("click", (e) => {
