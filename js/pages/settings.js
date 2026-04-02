@@ -2437,7 +2437,7 @@ async function openMessage(id) {
         // Find all messages in this conversation
         threadMessages = allMessages.filter(m => {
           if (m.id === id) return false; // Exclude the central message (we render it separately)
-          
+
           // Same ticket/report - highest priority
           if (msg.ticket_number && m.ticket_number === msg.ticket_number) {
             console.log("[openMessage] Match by ticket_number:", m.id, m.ticket_number);
@@ -2447,18 +2447,43 @@ async function openMessage(id) {
             console.log("[openMessage] Match by report_id:", m.id, m.report_id);
             return true;
           }
-          
-          // Same subject conversation (strip Re:/Fwd: prefixes) - only if subject is long enough
+
+          // Same subject conversation + same participants (from/to)
+          // This ensures we don't mix emails with same subject but different recipients
           if (baseSubject && baseSubject.length > 5 && m.subject) {
             const mSubject = m.subject.replace(/^(Re|Fwd|FW):\s*/gi, '').trim().toLowerCase();
+            
+            // Check if subjects match
             if (mSubject === baseSubject) {
-              console.log("[openMessage] Match by subject:", m.id, "|", m.subject);
-              return true;
+              // Check if participants match (same conversation thread)
+              const msgParticipants = new Set([
+                (msg.from_email || "").toLowerCase(),
+                (msg.to_email || "").toLowerCase()
+              ]);
+              const mParticipants = new Set([
+                (m.from_email || "").toLowerCase(),
+                (m.to_email || "").toLowerCase()
+              ]);
+              
+              // Check if there's overlap in participants (at least one common email)
+              const hasCommonParticipant = [...msgParticipants].some(p => 
+                p && mParticipants.has(p)
+              );
+              
+              if (hasCommonParticipant) {
+                console.log("[openMessage] Match by subject+participants:", m.id, "|", m.subject);
+                return true;
+              } else {
+                console.log("[openMessage] NO match - different participants:", { 
+                  msg: Array.from(msgParticipants), 
+                  m: Array.from(mParticipants) 
+                });
+              }
             } else {
               console.log("[openMessage] NO match - comparing:", { base: baseSubject, msg: mSubject });
             }
           }
-          
+
           return false;
         });
         
