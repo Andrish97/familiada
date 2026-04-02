@@ -2186,15 +2186,25 @@ function renderMailList(rows) {
     // Strategy 3: Final fallback - body_preview
     if (!previewText && r.body_preview) {
       const tmp = document.createElement("div");
-      tmp.innerHTML = r.body_preview;
+      // If body_preview is full HTML, extract from body tag
+      if (r.body_preview.trim().startsWith("<!DOCTYPE")) {
+        const bodyMatch = r.body_preview.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+        if (bodyMatch) {
+          tmp.innerHTML = bodyMatch[1];
+        } else {
+          tmp.innerHTML = r.body_preview;
+        }
+      } else {
+        tmp.innerHTML = r.body_preview;
+      }
       previewText = (tmp.textContent || tmp.innerText || "").trim();
-      console.log('body_preview was:', r.body_preview);
+      console.log('body_preview was:', r.body_preview.substring(0, 100) + '...');
       console.log('extracted:', previewText);
     }
 
     // Strategy 4: Emergency fallback - use subject if no content
     if (!previewText) {
-      console.log('NO CONTENT - body_html:', !!r.body_html, 'body:', !!r.body, 'body_preview:', r.body_preview);
+      console.log('NO CONTENT - body_html:', !!r.body_html, 'body:', !!r.body, 'body_preview:', r.body_preview?.substring(0, 50));
       previewText = r.subject ? `(brak treści) ${r.subject}` : `(brak treści)`;
     }
 
