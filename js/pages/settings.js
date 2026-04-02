@@ -2096,12 +2096,13 @@ async function loadMailFolder({ silent = false } = {}) {
       const res = await adminFetch(`/messages?filter=all&limit=500`);
       if (!res.ok) throw new Error(await res.text());
       const json = await res.json();
-      // Filter for marketing emails (outbound with full HTML Familiada branding)
-      msgRows = (json.rows || []).filter(m => 
-        m.direction === "outbound" && 
-        m.body_html && 
-        (m.body_html.includes("FAMILIADA") || m.body_html.includes("familiada.online"))
+      // Filter for marketing emails (outbound with [Marketing] prefix in subject)
+      msgRows = (json.rows || []).filter(m =>
+        m.direction === "outbound" &&
+        m.subject &&
+        m.subject.startsWith("[Marketing]")
       );
+      console.log("[loadMailFolder] Marketing folder:", msgRows.length, "messages");
     } else {
       const res = await adminFetch(`/messages?filter=${encodeURIComponent(msgActiveFolder)}&limit=500`);
       if (!res.ok) throw new Error(await res.text());
@@ -2110,10 +2111,10 @@ async function loadMailFolder({ silent = false } = {}) {
       
       // For "sent" folder, also include marketing emails
       if (msgActiveFolder === "sent") {
-        const marketingEmails = msgRows.filter(m => 
-          m.direction === "outbound" && 
-          m.body_html && 
-          (m.body_html.includes("FAMILIADA") || m.body_html.includes("familiada.online"))
+        const marketingEmails = msgRows.filter(m =>
+          m.direction === "outbound" &&
+          m.subject &&
+          m.subject.startsWith("[Marketing]")
         );
         // If we have marketing emails, reload from "all" to get everything
         if (marketingEmails.length > 0) {
@@ -2382,12 +2383,13 @@ async function openMessage(id) {
         // Find conversation by subject line (strip Re:/Fwd:/etc.)
         const baseSubject = msg.subject?.replace(/^(Re|Fwd|FW):\s*/gi, '').trim().toLowerCase();
         console.log("[openMessage] Base subject for thread:", baseSubject);
+        console.log("[openMessage] Message has ticket_number:", msg.ticket_number, "report_id:", msg.report_id);
         
         // Find all messages in this conversation
         threadMessages = allMessages.filter(m => {
           if (m.id === id) return false; // Exclude the central message (we render it separately)
           
-          // Same ticket/report
+          // Same ticket/report - highest priority
           if (msg.ticket_number && m.ticket_number === msg.ticket_number) {
             console.log("[openMessage] Match by ticket_number:", m.id, m.ticket_number);
             return true;
@@ -2397,11 +2399,11 @@ async function openMessage(id) {
             return true;
           }
           
-          // Same subject conversation (strip Re:/Fwd: prefixes)
-          if (baseSubject && m.subject) {
+          // Same subject conversation (strip Re:/Fwd: prefixes) - only if subject is long enough
+          if (baseSubject && baseSubject.length > 5 && m.subject) {
             const mSubject = m.subject.replace(/^(Re|Fwd|FW):\s*/gi, '').trim().toLowerCase();
             if (mSubject === baseSubject) {
-              console.log("[openMessage] Match by subject:", m.id, m.subject);
+              console.log("[openMessage] Match by subject:", m.id, "|", m.subject);
               return true;
             }
           }
