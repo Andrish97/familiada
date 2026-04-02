@@ -2271,13 +2271,14 @@ function renderMailList(rows) {
       
       // Strip [Marketing] prefix from subject
       const displaySubject = stripMarketingPrefix(r.subject);
-      
+      const ticketPart = r.ticket_number ? ` · <span style="opacity:.5;font-size:10px">${escSetting(r.ticket_number)}</span>` : "";
+
       item.innerHTML = `
         <div class="mail-ti-row">
           <span class="mail-ti-from">${fromTo}</span>
           <span class="mail-ti-date">${dateStr}</span>
         </div>
-        <div class="mail-ti-subject" style="display:flex;gap:4px;align-items:center">${marketingBadge}${escSetting(displaySubject || "—")}</div>
+        <div class="mail-ti-subject" style="display:flex;gap:4px;align-items:center">${marketingBadge}${escSetting(displaySubject || "—")}${ticketPart}</div>
         <div class="mail-ti-preview" style="opacity:.45">${isInbound ? 'Odpowiedź na kampanię' : 'Kampania marketingowa'}</div>`;
       item.addEventListener("click", () => openMessage(r.id));
       body.appendChild(item);
@@ -2357,7 +2358,7 @@ function renderMailList(rows) {
         <span class="mail-ti-from">${sourceBadge} ${escSetting(from)}</span>
         <span class="mail-ti-date">${dateStr}</span>
       </div>
-      <div class="mail-ti-subject" style="display:flex;gap:4px;align-items:center">${marketingBadge}${escSetting(displaySubject || "—")}</div>
+      <div class="mail-ti-subject" style="display:flex;gap:4px;align-items:center">${marketingBadge}${escSetting(displaySubject || "—")}${ticketPart}</div>
       <div class="mail-ti-preview">${escSetting(previewText)}</div>`;
     item.addEventListener("click", () => openMessage(r.id));
     body.appendChild(item);
