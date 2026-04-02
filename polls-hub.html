@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-  <title data-i18n="pollsHubPolls.title">Familiada — centrum sondaży</title>
+  <title data-i18n="pollsHubPolls.title">Familiada — centrum ankiet</title>
 
   <link rel="icon" href="favicon.ico"/>
   <link rel="stylesheet" href="css/base.css?v=764df218"/>
@@ -42,8 +42,8 @@
   <main class="wrap">
     <div class="bar">
       <div>
-        <div class="title" data-i18n="pollsHubPolls.header.title">Centrum sondaży</div>
-        <div class="hint" data-i18n="pollsHubPolls.header.hint">Zarządzaj sondażami oraz zaproszeniami do głosowania.</div>
+        <div class="title" data-i18n="pollsHubPolls.header.title">Centrum ankiet</div>
+        <div class="hint" data-i18n="pollsHubPolls.header.hint">Zarządzaj ankietami oraz zaproszeniami.</div>
       </div>
     </div>
 
@@ -54,7 +54,7 @@
             <section class="hub-col">
               <div class="hub-col-head">
                 <div>
-                  <div class="hub-col-title" data-i18n="pollsHubPolls.sections.myPolls">Moje sondaże</div>
+                  <div class="hub-col-title" data-i18n="pollsHubPolls.sections.myPolls">Moje ankiety</div>
                   <div class="hub-col-hint" data-i18n="pollsHubPolls.sections.selectHint">Kliknij kafelek, aby go zaznaczyć.</div>
                 </div>
                 <div class="hub-controls">
@@ -70,7 +70,7 @@
               <div class="hub-col-head">
                 <div>
                   <div class="hub-col-title" data-i18n="pollsHubPolls.sections.tasks">Zadania</div>
-                  <div class="hub-col-hint" data-i18n="pollsHubPolls.sections.tasksHint">Dwuklik otwiera głosowanie.</div>
+                  <div class="hub-col-hint" data-i18n="pollsHubPolls.sections.tasksHint">Dwuklik otwiera ankietę.</div>
                 </div>
                 <div class="hub-controls">
                   <div class="ui-select" id="sortTasksDesktop"><button class="ui-select-btn inp sm" type="button"><span class="ui-select-label">—</span><span class="ui-select-caret">▾</span></button><div class="ui-select-menu" role="listbox"></div></div>
@@ -87,16 +87,16 @@
     <section class="hub-mobile">
       <div class="tabs-card hub-tabs hub-tabs-mobile" id="hubTabsMobile">
         <div class="tabs-strip">
-          <div class="tab-slot slot-mobile-polls"><button class="tab-label" id="tabPollsMobile" type="button" data-i18n="pollsHubPolls.tabs.polls">Sondaże</button><div class="tab-wrapper"><div class="tab-active" data-i18n="pollsHubPolls.tabs.polls">Sondaże</div><div class="tab-corner tab-corner-left"></div><div class="tab-corner tab-corner-right"></div></div></div>
+          <div class="tab-slot slot-mobile-polls"><button class="tab-label" id="tabPollsMobile" type="button" data-i18n="pollsHubPolls.tabs.polls">Ankiety</button><div class="tab-wrapper"><div class="tab-active" data-i18n="pollsHubPolls.tabs.polls">Ankiety</div><div class="tab-corner tab-corner-left"></div><div class="tab-corner tab-corner-right"></div></div></div>
           <div class="tab-slot slot-mobile-tasks"><button class="tab-label" id="tabTasksMobile" type="button"><span data-i18n="pollsHubPolls.tabs.tasks">Zadania</span><span class="hub-tab-badge is-empty" data-badge="tasks"></span></button><div class="tab-wrapper"><div class="tab-active"><span data-i18n="pollsHubPolls.tabs.tasks">Zadania</span></div><div class="tab-corner tab-corner-left"></div><div class="tab-corner tab-corner-right"></div></div></div>
         </div>
         <div class="card hub-card">
           <div class="hub-tab-panel hub-mobile-panel" id="panelPollsMobile">
-            <div class="hub-col-head"><div><div class="hub-col-title" data-i18n="pollsHubPolls.sections.myPolls">Moje sondaże</div><div class="hub-col-hint" data-i18n="pollsHubPolls.sections.selectHint">Kliknij kafelek, aby go zaznaczyć.</div></div><div class="hub-controls"><div class="ui-select" id="sortPollsMobile"><button class="ui-select-btn inp sm" type="button"><span class="ui-select-label">—</span><span class="ui-select-caret">▾</span></button><div class="ui-select-menu" role="listbox"></div></div><div class="hub-toggle" data-kind="polls"><button class="btn xs btn-toggle" data-toggle="current" data-i18n="pollsHubPolls.toggle.current">Aktualne</button><button class="btn xs btn-toggle" data-toggle="archive" data-i18n="pollsHubPolls.toggle.archive">Archiwalne</button></div><button class="btn xs" id="btnShareMobile" type="button" disabled data-i18n="pollsHubPolls.actions.share">Udostępnij</button><button class="btn xs" id="btnDetailsMobile" type="button" disabled data-i18n="pollsHubPolls.actions.details">Szczegóły</button></div></div>
+            <div class="hub-col-head"><div><div class="hub-col-title" data-i18n="pollsHubPolls.sections.myPolls">Moje ankiety</div><div class="hub-col-hint" data-i18n="pollsHubPolls.sections.selectHint">Kliknij kafelek, aby go zaznaczyć.</div></div><div class="hub-controls"><div class="ui-select" id="sortPollsMobile"><button class="ui-select-btn inp sm" type="button"><span class="ui-select-label">—</span><span class="ui-select-caret">▾</span></button><div class="ui-select-menu" role="listbox"></div></div><div class="hub-toggle" data-kind="polls"><button class="btn xs btn-toggle" data-toggle="current" data-i18n="pollsHubPolls.toggle.current">Aktualne</button><button class="btn xs btn-toggle" data-toggle="archive" data-i18n="pollsHubPolls.toggle.archive">Archiwalne</button></div><button class="btn xs" id="btnShareMobile" type="button" disabled data-i18n="pollsHubPolls.actions.share">Udostępnij</button><button class="btn xs" id="btnDetailsMobile" type="button" disabled data-i18n="pollsHubPolls.actions.details">Szczegóły</button></div></div>
             <div class="hub-list" id="pollsListMobile"></div>
           </div>
           <div class="hub-tab-panel hub-mobile-panel" id="panelTasksMobile">
-            <div class="hub-col-head"><div><div class="hub-col-title" data-i18n="pollsHubPolls.sections.tasks">Zadania</div><div class="hub-col-hint" data-i18n="pollsHubPolls.sections.tasksHint">Dwuklik otwiera głosowanie.</div></div><div class="hub-controls"><div class="ui-select" id="sortTasksMobile"><button class="ui-select-btn inp sm" type="button"><span class="ui-select-label">—</span><span class="ui-select-caret">▾</span></button><div class="ui-select-menu" role="listbox"></div></div><div class="hub-toggle" data-kind="tasks"><button class="btn xs btn-toggle" data-toggle="current" data-i18n="pollsHubPolls.toggle.current">Aktualne</button><button class="btn xs btn-toggle" data-toggle="archive" data-i18n="pollsHubPolls.toggle.archive">Archiwalne</button></div></div></div>
+            <div class="hub-col-head"><div><div class="hub-col-title" data-i18n="pollsHubPolls.sections.tasks">Zadania</div><div class="hub-col-hint" data-i18n="pollsHubPolls.sections.tasksHint">Dwuklik otwiera ankietę.</div></div><div class="hub-controls"><div class="ui-select" id="sortTasksMobile"><button class="ui-select-btn inp sm" type="button"><span class="ui-select-label">—</span><span class="ui-select-caret">▾</span></button><div class="ui-select-menu" role="listbox"></div></div><div class="hub-toggle" data-kind="tasks"><button class="btn xs btn-toggle" data-toggle="current" data-i18n="pollsHubPolls.toggle.current">Aktualne</button><button class="btn xs btn-toggle" data-toggle="archive" data-i18n="pollsHubPolls.toggle.archive">Archiwalne</button></div></div></div>
             <div class="hub-list" id="tasksListMobile"></div>
           </div>
         </div>
@@ -109,8 +109,8 @@
     </div>
   </main>
 
-  <div class="overlay" id="shareOverlay" style="display:none;"><div class="modal"><div class="mHead"><div class="mTitle" id="shareTitle" data-i18n="pollsHubPolls.share.title">Udostępnij sondaż</div><button class="btn sm" id="btnShareClose" type="button" aria-label="Zamknij">✕</button></div><div class="mSub" data-i18n="pollsHubPolls.share.subtitle">Wybierz subskrybentów, którym chcesz wysłać zadanie.</div><div class="hub-share-list" id="shareList"></div><div class="hub-modal-actions"><button class="btn sm gold" id="btnShareSave" type="button" data-i18n="pollsHubPolls.share.save">Zapisz udostępnienie</button><div class="hub-modal-msg" id="shareMsg"></div></div></div></div>
-  <div class="overlay" id="detailsOverlay" style="display:none;"><div class="modal"><div class="mHead"><div class="mTitle" id="detailsTitle" data-i18n="pollsHubPolls.details.title">Szczegóły głosowania</div><button class="btn sm" id="btnDetailsClose" type="button" aria-label="Zamknij">✕</button></div><div class="mSub" data-i18n="pollsHubPolls.details.subtitle">Usuń głos powiązany z zadaniem, jeśli to konieczne.</div><div class="hub-details-grid"><div><div class="hub-details-head" data-i18n="pollsHubPolls.details.voted">Zagłosowali</div><div class="hub-details-list" id="detailsVoted"></div></div><div><div class="hub-details-head" data-i18n="pollsHubPolls.details.pending">Nie zagłosowali</div><div class="hub-details-list" id="detailsPending"></div></div><div><div class="hub-details-head" data-i18n="pollsHubPolls.details.declined">Odrzucili</div><div class="hub-details-list" id="detailsDeclined"></div></div><div><div class="hub-details-head" data-i18n="pollsHubPolls.details.cancelled">Anulowane</div><div class="hub-details-list" id="detailsCancelled"></div></div></div><div class="hub-details-side"><div class="hub-details-head" data-i18n="pollsHubPolls.details.anon">Anonimowe</div><div class="hub-anon-count" id="detailsAnon">0</div></div><div class="hub-modal-actions"></div></div></div>
+  <div class="overlay" id="shareOverlay" style="display:none;"><div class="modal"><div class="mHead"><div class="mTitle" id="shareTitle" data-i18n="pollsHubPolls.share.title">Udostępnij ankietę</div><button class="btn sm" id="btnShareClose" type="button" aria-label="Zamknij">✕</button></div><div class="mSub" data-i18n="pollsHubPolls.share.subtitle">Wybierz subskrybentów, którym chcesz wysłać zadanie.</div><div class="hub-share-list" id="shareList"></div><div class="hub-modal-actions"><button class="btn sm gold" id="btnShareSave" type="button" data-i18n="pollsHubPolls.share.save">Zapisz udostępnienie</button><div class="hub-modal-msg" id="shareMsg"></div></div></div></div>
+  <div class="overlay" id="detailsOverlay" style="display:none;"><div class="modal"><div class="mHead"><div class="mTitle" id="detailsTitle" data-i18n="pollsHubPolls.details.title">Szczegóły ankiety</div><button class="btn sm" id="btnDetailsClose" type="button" aria-label="Zamknij">✕</button></div><div class="mSub" data-i18n="pollsHubPolls.details.subtitle">Usuń wynik powiązany z zadaniem, jeśli to konieczne.</div><div class="hub-details-grid"><div><div class="hub-details-head" data-i18n="pollsHubPolls.details.voted">Wypełnili</div><div class="hub-details-list" id="detailsVoted"></div></div><div><div class="hub-details-head" data-i18n="pollsHubPolls.details.pending">Nie wypełnili</div><div class="hub-details-list" id="detailsPending"></div></div><div><div class="hub-details-head" data-i18n="pollsHubPolls.details.declined">Odrzucili</div><div class="hub-details-list" id="detailsDeclined"></div></div><div><div class="hub-details-head" data-i18n="pollsHubPolls.details.cancelled">Anulowane</div><div class="hub-details-list" id="detailsCancelled"></div></div></div><div class="hub-details-side"><div class="hub-details-head" data-i18n="pollsHubPolls.details.anon">Anonimowe</div><div class="hub-anon-count" id="detailsAnon">0</div></div><div class="hub-modal-actions"></div></div></div>
   <div class="overlay" id="progressOverlay" style="display:none;"><div class="modal"><div class="mTitle" data-i18n="pollsHubPolls.progress.title">Przetwarzanie</div><div class="mSub" data-i18n="pollsHubPolls.progress.subtitle">Proszę czekać…</div><div style="margin-top:12px;gap:10px"><div class="importRow" style="align-items:center"><div id="progressStep" style="font-weight:800;letter-spacing:.04em">—</div><div id="progressCount" style="margin-left:auto;opacity:.8">0/0</div></div><div style="height:10px;border-radius:999px;background:rgba(255,255,255,.10);overflow:hidden"><div id="progressBar" style="height:100%;width:0%;background:rgba(255,255,255,.85)"></div></div><div class="importMsg" id="progressMsg" style="min-height:18px"></div></div></div></div>
 </body>
 </html>
