@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict TYc5gmEp7A5T5klJtXhKiKIwLZkelHoskkX5BcuIovtHFOX46jTeIzY9eoi431n
+\restrict Lrz8S04Hzzj5AFL45T1uSTLAtIRSrVkhE7sMw6NJIKdf0pVJqJicGJFW4CSItfV
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -3648,9 +3648,6 @@ $$;
 CREATE FUNCTION "public"."list_messages"("p_filter" "text" DEFAULT 'inbox'::"text", "p_limit" integer DEFAULT 50, "p_offset" integer DEFAULT 0) RETURNS TABLE("id" "uuid", "source" "text", "direction" "text", "from_email" "text", "to_email" "text", "subject" "text", "body" "text", "body_html" "text", "body_preview" "text", "report_id" "uuid", "ticket_number" "text", "report_status" "text", "queue_id" "uuid", "is_read" boolean, "is_marketing" boolean, "created_at" timestamp with time zone, "deleted_at" timestamp with time zone)
     LANGUAGE "plpgsql"
     AS $$
-DECLARE
-  clean_html text;
-  clean_text text;
 BEGIN
   -- Inbox: inbound messages not in trash
   IF p_filter = 'inbox' THEN
@@ -3658,14 +3655,17 @@ BEGIN
       SELECT
         m.id, m.source, m.direction, m.from_email, m.to_email, m.subject,
         m.body, m.body_html,
-        -- Aggressively strip CSS and HTML for clean preview
         left(
           regexp_replace(
             regexp_replace(
-              COALESCE(m.body_html, m.body),
-              E'<style[^>]*>[\\s\\S]*?</style>',
-              '',
-              'gi'
+              regexp_replace(
+                COALESCE(m.body_html, m.body),
+                E'<style[^>]*>[\\s\\S]*?</style>',
+                '',
+                'gi'
+              ),
+              E'<[^>]+>',
+              ' '
             ),
             E':[\\s]*[^;{}]+;',
             '',
@@ -3690,10 +3690,14 @@ BEGIN
         left(
           regexp_replace(
             regexp_replace(
-              COALESCE(m.body_html, m.body),
-              E'<style[^>]*>[\\s\\S]*?</style>',
-              '',
-              'gi'
+              regexp_replace(
+                COALESCE(m.body_html, m.body),
+                E'<style[^>]*>[\\s\\S]*?</style>',
+                '',
+                'gi'
+              ),
+              E'<[^>]+>',
+              ' '
             ),
             E':[\\s]*[^;{}]+;',
             '',
@@ -3718,10 +3722,14 @@ BEGIN
         left(
           regexp_replace(
             regexp_replace(
-              COALESCE(m.body_html, m.body),
-              E'<style[^>]*>[\\s\\S]*?</style>',
-              '',
-              'gi'
+              regexp_replace(
+                COALESCE(m.body_html, m.body),
+                E'<style[^>]*>[\\s\\S]*?</style>',
+                '',
+                'gi'
+              ),
+              E'<[^>]+>',
+              ' '
             ),
             E':[\\s]*[^;{}]+;',
             '',
@@ -3761,10 +3769,14 @@ BEGIN
         left(
           regexp_replace(
             regexp_replace(
-              COALESCE(m.body_html, m.body),
-              E'<style[^>]*>[\\s\\S]*?</style>',
-              '',
-              'gi'
+              regexp_replace(
+                COALESCE(m.body_html, m.body),
+                E'<style[^>]*>[\\s\\S]*?</style>',
+                '',
+                'gi'
+              ),
+              E'<[^>]+>',
+              ' '
             ),
             E':[\\s]*[^;{}]+;',
             '',
@@ -13538,5 +13550,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict TYc5gmEp7A5T5klJtXhKiKIwLZkelHoskkX5BcuIovtHFOX46jTeIzY9eoi431n
+\unrestrict Lrz8S04Hzzj5AFL45T1uSTLAtIRSrVkhE7sMw6NJIKdf0pVJqJicGJFW4CSItfV
 
