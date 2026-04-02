@@ -1,5 +1,4 @@
 // See cloudflare/README.md for full behavior and checklist.
-
 export default {
   async email(message, env) {
     try {
