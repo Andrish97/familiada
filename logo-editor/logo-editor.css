@@ -713,6 +713,7 @@
 
 .draw-tip{
   position: fixed;
+  display: block;
   min-width: 180px;
   max-width: 300px;
   padding: 10px 14px;

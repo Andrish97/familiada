@@ -41,6 +41,18 @@ function isControlModal() {
 function applyControlModalLayout() {
   if (!isControlModal()) return;
   document.body.classList.add("manual-in-control-modal");
+
+  // Force hide topbar/footer
+  const topbar = document.querySelector(".topbar");
+  const footer = document.querySelector(".footer");
+  if (topbar) {
+    topbar.style.display = "none";
+    topbar.style.visibility = "hidden";
+  }
+  if (footer) {
+    footer.style.display = "none";
+    footer.style.visibility = "hidden";
+  }
   document.querySelector(".topbar-section-4")?.style.setProperty("display", "none");
 }
 

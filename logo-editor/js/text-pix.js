@@ -816,124 +816,35 @@ export function initTextPixEditor(ctx) {
     return box.minX <= pad || box.minY <= pad || box.maxX >= (w - 1 - pad) || box.maxY >= (h - 1 - pad);
   }
 
-  let _shotHost = null;
-
-  function ensureShotHost() {
-    if (_shotHost) return _shotHost;
-    _shotHost = document.createElement("div");
-    _shotHost.style.position = "fixed";
-    _shotHost.style.left = "-99999px";
-    _shotHost.style.top = "0";
-    _shotHost.style.width = "1px";
-    _shotHost.style.height = "1px";
-    _shotHost.style.overflow = "hidden";
-    _shotHost.style.pointerEvents = "none";
-    _shotHost.style.opacity = "0";
-    document.body.appendChild(_shotHost);
-    return _shotHost;
-  }
-  
-  function buildSnapshotNode(w, h) {
-    const host = ensureShotHost();
-    host.innerHTML = "";
-    const { bg, fg } = getTheme();
-
-    // Clone the actual TinyMCE editor content for 1:1 match
-    const edEl = rtEditorEl;
-    const edCs = window.getComputedStyle(edEl);
-
-    const box = document.createElement("div");
-    box.style.width = `${w}px`;
-    box.style.height = `${h}px`;
-    box.style.background = bg;
-    box.style.color = fg;
-    box.style.overflow = "hidden";
-    box.style.boxSizing = "border-box";
-
-    // Copy exact padding from editor
-    box.style.paddingTop = edCs.paddingTop;
-    box.style.paddingRight = edCs.paddingRight;
-    box.style.paddingBottom = edCs.paddingBottom;
-    box.style.paddingLeft = edCs.paddingLeft;
-
-    box.style.whiteSpace = "normal";
-    box.style.overflowWrap = "anywhere";
-    box.style.wordBreak = "break-word";
-    box.style.maxWidth = `${w}px`;
-
-    // Copy ALL computed font styles from the actual editor element
-    box.style.fontFamily = edCs.fontFamily;
-    box.style.fontSize = edCs.fontSize;
-    box.style.fontWeight = edCs.fontWeight;
-    box.style.fontStyle = edCs.fontStyle;
-    box.style.letterSpacing = edCs.letterSpacing;
-    box.style.lineHeight = edCs.lineHeight;
-    box.style.textAlign = edCs.textAlign;
-
-    // Clone the inner HTML directly from the editor (not from getContent)
-    box.innerHTML = edEl.innerHTML || "";
-
-    // Minimal CSS reset
-    const style = document.createElement("style");
-    style.textContent = `
-      *{ box-sizing:border-box; }
-      p{ margin:0; }
-      body{ margin:0; }
-      span{ white-space:inherit; }
-    `;
-    box.prepend(style);
-
-    host.appendChild(box);
-    return box;
-  }
-
-
   async function captureTopTo208x88Canvas() {
     if (!window.html2canvas) throw new Error("Brak html2canvas (script nie wczytany).");
-  
+
     const w = Math.max(1, Math.floor(rtEditorEl.clientWidth));
     const h = Math.max(1, Math.floor(w * (BIG_H / BIG_W)));
-  
-    // snapshot node (bez TinyMCE)
-    const node = buildSnapshotNode(w, h);
 
-    // Fix alignment: html2canvas can be offset if the container has specific styles.
-    // We use a clean wrapper.
-    const wrapper = document.createElement("div");
-    wrapper.style.position = "fixed";
-    wrapper.style.left = "-99999px";
-    wrapper.style.top = "0";
-    wrapper.style.padding = "0";
-    wrapper.style.margin = "0";
-    wrapper.style.border = "none";
-    wrapper.style.background = getTheme().bg;
-    wrapper.appendChild(node);
-    document.body.appendChild(wrapper);
+    // Directly screenshot the actual editor element — 1:1 match
+    const shot = await window.html2canvas(rtEditorEl, {
+      backgroundColor: getTheme().bg,
+      scale: 1,
+      width: w,
+      height: h,
+      scrollX: 0,
+      scrollY: 0,
+      x: 0,
+      y: 0,
+      useCORS: true,
+      logging: false,
+    });
 
-    try {
-      const shot = await window.html2canvas(node, {
-        backgroundColor: getTheme().bg,
-        scale: 1,
-        width: w,
-        height: h,
-        scrollX: 0,
-        scrollY: 0,
-        useCORS: true,
-        logging: false,
-      });
-  
-      const out = document.createElement("canvas");
-      out.width = BIG_W;
-      out.height = BIG_H;
-      const g = out.getContext("2d", { willReadFrequently: true });
-      g.imageSmoothingEnabled = true;
-      g.fillStyle = getTheme().bg;
-      g.fillRect(0, 0, BIG_W, BIG_H);
-      g.drawImage(shot, 0, 0, BIG_W, BIG_H);
-      return out;
-    } finally {
-      wrapper.remove();
-    }
+    const out = document.createElement("canvas");
+    out.width = BIG_W;
+    out.height = BIG_H;
+    const g = out.getContext("2d", { willReadFrequently: true });
+    g.imageSmoothingEnabled = true;
+    g.fillStyle = getTheme().bg;
+    g.fillRect(0, 0, BIG_W, BIG_H);
+    g.drawImage(shot, 0, 0, BIG_W, BIG_H);
+    return out;
   }
 
   function makeInkBits(bits150) {

@@ -104,21 +104,33 @@ function applyControlModalLayout() {
   byId("btnBack")?.remove();
   byId("who")?.remove();
   byId("btnLogout")?.remove();
-  
+
   // Remove topbar sections so mobile controller has nothing to move
   document.querySelector(".topbar-section-2")?.remove();
   document.querySelector(".topbar-section-4")?.remove();
-  
+
   // Remove demo tab before cloning
   document.querySelector('.simple-tabs .tab[data-tab="demo"]')?.remove();
   pages.demo?.remove();
   delete pages.demo;
-  
+
   // Replace simple-tabs with modal-tabs so topbar-controller doesn't pick it up
   const tabs = document.querySelector(".simple-tabs");
   if (tabs) {
     tabs.classList.remove("simple-tabs");
     tabs.classList.add("modal-tabs");
+  }
+
+  // Force hide topbar/footer as fallback
+  const topbar = document.querySelector(".topbar");
+  const footer = document.querySelector(".footer");
+  if (topbar) {
+    topbar.style.display = "none";
+    topbar.style.visibility = "hidden";
+  }
+  if (footer) {
+    footer.style.display = "none";
+    footer.style.visibility = "hidden";
   }
 }
 

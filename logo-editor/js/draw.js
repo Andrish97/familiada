@@ -293,8 +293,9 @@ export function initDrawEditor(ctx) {
   // Dynamic tooltip positioning — shows above the hovered element
   let _tipEl = null;
   function showTip(el) {
-    const tipText = el?.getAttribute("data-tip");
-    if (!el || !tipText) return;
+    if (!el) return;
+    const tipText = el.getAttribute("data-tip");
+    if (!tipText) return;
     hideTip();
     const tip = document.createElement("div");
     tip.className = "draw-tip";
@@ -329,13 +330,22 @@ export function initDrawEditor(ctx) {
   function initTooltips() {
     const btns = document.querySelectorAll(".editorToolbar .tbtn");
     btns.forEach(btn => {
-      // Only bind if element has a data-tip attribute (even if empty, it will be filled later)
-      if (btn.hasAttribute("data-tip") || btn.id) {
-        btn.addEventListener("mouseenter", () => showTip(btn));
-        btn.addEventListener("mouseleave", hideTip);
-        btn.addEventListener("focus", () => showTip(btn));
-        btn.addEventListener("blur", hideTip);
-      }
+      // Remove old listeners first
+      btn.removeEventListener("mouseenter", btn._tipEnter);
+      btn.removeEventListener("mouseleave", btn._tipLeave);
+      btn.removeEventListener("focus", btn._tipFocus);
+      btn.removeEventListener("blur", btn._tipBlur);
+
+      // Create bound handlers
+      btn._tipEnter = () => showTip(btn);
+      btn._tipLeave = hideTip;
+      btn._tipFocus = () => showTip(btn);
+      btn._tipBlur = hideTip;
+
+      btn.addEventListener("mouseenter", btn._tipEnter);
+      btn.addEventListener("mouseleave", btn._tipLeave);
+      btn.addEventListener("focus", btn._tipFocus);
+      btn.addEventListener("blur", btn._tipBlur);
     });
   }
 
