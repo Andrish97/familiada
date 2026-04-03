@@ -1253,11 +1253,10 @@ async function sendZeroStatesToDevices() {
   }
 
   function buildLegalUrl() {
-    const url = new URL("../manual", location.href);
+    const url = new URL("../privacy", location.href);
     url.searchParams.set("ret", `${location.pathname.split("/").pop() || "control"}${location.search}${location.hash}`);
     url.searchParams.set("modal", "control");
     url.searchParams.set("lang", getUiLang() || "pl");
-    url.searchParams.set("view", "legal");
     url.hash = "control";
     return url.toString();
   }

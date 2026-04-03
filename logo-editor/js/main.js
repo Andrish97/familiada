@@ -1229,12 +1229,11 @@ function buildHelpUrl() {
 }
 
 function buildLegalUrl() {
-  const url = new URL("../manual", location.href);
+  const url = new URL("../privacy", location.href);
   const ret = `${location.pathname.split("/").slice(-2).join("/")}${location.search}${location.hash}`;
   url.searchParams.set("ret", ret);
   url.searchParams.set("modal", "logo-editor");
   url.searchParams.set("lang", getUiLang() || "pl");
-  url.searchParams.set("view", "legal");
   url.hash = "logo-editor";
   return url.toString();
 }
