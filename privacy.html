@@ -17,17 +17,22 @@
   <link rel="alternate" hreflang="uk" href="https://www.familiada.online/privacy?lang=uk" />
   <link rel="alternate" hreflang="x-default" href="https://www.familiada.online/privacy" />
   <link rel="icon" href="favicon.ico" />
-  <link rel="stylesheet" href="css/base.css?v=764df218" />
-  <link rel="stylesheet" href="css/manual.css?v=19795ec9" />
 
+  <!-- Hide topbar/footer in modal mode — MUST be before base.css -->
+  <style id="modalHideStyle">
+    /* Filled by script if modal mode */
+  </style>
   <script>
-    // Detect modal mode ASAP — before body renders
     try {
       if (new URLSearchParams(location.search).get("modal") === "control") {
+        document.getElementById("modalHideStyle").textContent = ".topbar,.footer{display:none!important;visibility:hidden!important}.wrap{padding-top:0!important}";
         document.documentElement.classList.add("modal-mode");
       }
     } catch(e){}
   </script>
+
+  <link rel="stylesheet" href="css/base.css?v=764df218" />
+  <link rel="stylesheet" href="css/manual.css?v=19795ec9" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script type="module" src="js/pages/privacy.js?v=d845ae9f" defer></script>

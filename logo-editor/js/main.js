@@ -1685,7 +1685,11 @@ async function boot(){
      openPreviewFullscreen(p);
    });
 
-   document.getElementById("btnPixPreview")?.addEventListener("click", () => {
+   document.getElementById("btnPixPreview")?.addEventListener("click", async () => {
+     // Force immediate preview update before opening fullscreen
+     if (textPix && typeof textPix.forcePreview === "function") {
+       await textPix.forcePreview();
+     }
      const p = lastPreviewPayload || null;
      if (!p) return;
      openPreviewFullscreen(p);

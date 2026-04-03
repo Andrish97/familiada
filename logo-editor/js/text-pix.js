@@ -644,7 +644,7 @@ export function initTextPixEditor(ctx) {
     if (isCollapsed()) {
       applyPendingInlineStyle({ fontFamily: v });
       ctx.markDirty?.();
-      schedulePreview(120);
+      schedulePreview(40);
       syncUiFromSelection();
       return;
     }
@@ -659,7 +659,7 @@ export function initTextPixEditor(ctx) {
     editor.formatter.apply("fontfamily_stack");
   
     ctx.markDirty?.();
-    schedulePreview(120);
+    schedulePreview(40);
     syncUiFromSelection();
   }
 
@@ -677,7 +677,7 @@ export function initTextPixEditor(ctx) {
     if (isCollapsed()) {
       applyPendingInlineStyle({ fontSize: v });
       ctx.markDirty?.();
-      schedulePreview(120);
+      schedulePreview(40);
       syncUiFromSelection();
       return;
     }
@@ -693,7 +693,7 @@ export function initTextPixEditor(ctx) {
     editor.formatter.apply("fontsize_px");
   
     ctx.markDirty?.();
-    schedulePreview(120);
+    schedulePreview(40);
     syncUiFromSelection();
   }
 
@@ -712,7 +712,7 @@ export function initTextPixEditor(ctx) {
     if (isCollapsed()) {
       applyPendingInlineStyle({ letterSpacing: v });
       ctx.markDirty?.();
-      schedulePreview(120);
+      schedulePreview(40);
       syncUiFromSelection();
       return;
     }
@@ -727,7 +727,7 @@ export function initTextPixEditor(ctx) {
     editor.formatter.apply("letterspacing_px");
   
     ctx.markDirty?.();
-    schedulePreview(120);
+    schedulePreview(40);
     syncUiFromSelection();
   }
 
@@ -744,7 +744,7 @@ export function initTextPixEditor(ctx) {
     if (align) p.style.textAlign = align;
 
     ctx.markDirty?.();
-    schedulePreview(140);
+    schedulePreview(40);
     syncUiFromSelection();
   }
 
@@ -753,7 +753,7 @@ export function initTextPixEditor(ctx) {
     if (!isUiBusy()) editor.focus();
     editor.execCommand(name);
     ctx.markDirty?.();
-    schedulePreview(80);
+    schedulePreview(40);
     syncUiFromSelection();
   }
 
@@ -905,7 +905,7 @@ export function initTextPixEditor(ctx) {
     }
   }
 
-  function schedulePreview(ms = 120) {
+  function schedulePreview(ms = 40) {
     clearTimeout(_deb);
     _deb = setTimeout(() => updatePreviewAsync(), ms);
   }
@@ -994,7 +994,7 @@ export function initTextPixEditor(ctx) {
           cachedBits150 = new Uint8Array(DOT_W * DOT_H);
           ctx.onPreview?.({ kind: "PIX", bits: cachedBits150 });
           syncUiFromSelection();
-          schedulePreview(60);
+          schedulePreview(40);
         });
   
         ed.on("NodeChange SelectionChange KeyUp MouseUp", () => {
@@ -1004,7 +1004,7 @@ export function initTextPixEditor(ctx) {
   
         ed.on("input Undo Redo SetContent", () => {
           ctx.markDirty?.();
-          schedulePreview(120);
+          schedulePreview(40);
         });
       }
     });
@@ -1154,13 +1154,13 @@ window.addEventListener("scroll", () => {
       invert = !!chkInvert.checked;
       applyInvertTheme();
       ctx.markDirty?.();
-      schedulePreview(80);
+      schedulePreview(40);
     });
 
     // screenshot appearance controls (jeśli zostają)
     inpThresh?.addEventListener("input", () => {
       ctx.markDirty?.();
-      schedulePreview(80);
+      schedulePreview(40);
     });
   }
 
@@ -1170,6 +1170,12 @@ window.addEventListener("scroll", () => {
   //  API
   // ==========================================
   return {
+    async forcePreview() {
+      // Cancel any pending and update immediately
+      clearTimeout(_deb);
+      await updatePreviewAsync();
+    },
+
     async open(payload = null) {
       show(paneTextPix, true);
       
@@ -1214,7 +1220,7 @@ window.addEventListener("scroll", () => {
       // sync UI from restored content
       setTimeout(() => {
         syncUiFromSelection();
-        schedulePreview(80);
+        schedulePreview(40);
       }, 50);
 
       ctx.clearDirty?.();
@@ -1222,7 +1228,7 @@ window.addEventListener("scroll", () => {
 
       cachedBits150 = new Uint8Array(DOT_W * DOT_H);
       ctx.onPreview?.({ kind: "PIX", bits: cachedBits150 });
-      schedulePreview(150);
+      schedulePreview(40);
     },
 
     close() {
