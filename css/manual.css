@@ -36,9 +36,9 @@
 }
 
 .simple-tabs {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
     gap: 10px;
-    flex-wrap: wrap;
     margin: 0 0 18px
 }
 
@@ -51,7 +51,11 @@
     font-weight: 900;
     letter-spacing: .04em;
     cursor: pointer;
-    transition: background .15s ease,color .15s ease,border-color .15s ease,transform .05s ease
+    transition: background .15s ease,color .15s ease,border-color .15s ease,transform .05s ease;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis
 }
 
 .simple-tabs .tab:hover {
@@ -85,7 +89,8 @@
 .tab-panel.active{display:block}
 
 .m-doc {
-    max-width: 82ch
+    width: 100%;
+    max-width: 100%
 }
 
 .m-p {
@@ -258,7 +263,7 @@
    }
 
    .simple-tabs {
-      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
    }
 }
 
