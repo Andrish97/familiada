@@ -310,10 +310,17 @@ export function initDrawEditor(ctx) {
 
       const font = allSame(fonts);
       const fontLabel = font.mixed ? "—" : (DRAW_FONTS.find(f => f.value === font.value)?.label || "Font");
-      const fillColor = allSame(fills).value || "#ffffff";
+      const sz = allSame(sizes);
+      const lh = allSame(lineHs);
+      const sp = allSame(spacings);
+      const w = allSame(weights);
+      const st = allSame(styles);
+      const un = allSame(underlines);
+      const al = allSame(aligns);
+      const fillColor = allSame(fills);
       const hasStroke = strokes.some(s => s && s !== "transparent");
-      const strokeCol = hasStroke ? (allSame(strokes).value || "#ffffff") : "#ffffff";
-      const strokeW = Math.round(allSame(strokeWs).value || 0);
+      const strokeCol = allSame(strokes);
+      const strokeW = allSame(strokeWs.map(Math.round));
 
       showSettings(`
         <div class="rtToolRow">
@@ -326,32 +333,32 @@ export function initDrawEditor(ctx) {
           </div>
           <div class="rtGroup">
             <div class="rtToolLbl">${t("logoEditor.draw.fontSize")}</div>
-            <input id="drawObjTextSize" class="inp" type="number" min="10" max="220" step="1" value="${sizes[0]}"/>
+            <input id="drawObjTextSize" class="inp" type="number" min="10" max="220" step="1" value="${sz.mixed ? '' : sz.value}" placeholder="${sz.mixed ? '—' : ''}"/>
           </div>
           <div class="rtGroup">
             <div class="rtToolLbl">${t("logoEditor.draw.lineHeight")}</div>
-            <input id="drawObjTextLineH" class="inp" type="number" min="0.6" max="3.0" step="0.05" value="${lineHs[0]}"/>
+            <input id="drawObjTextLineH" class="inp" type="number" min="0.6" max="3.0" step="0.05" value="${lh.mixed ? '' : lh.value}" placeholder="${lh.mixed ? '—' : ''}"/>
           </div>
           <div class="rtGroup">
             <div class="rtToolLbl">${t("logoEditor.draw.letterSpacing")}</div>
-            <input id="drawObjTextSpacing" class="inp" type="number" min="0" max="20" step="0.5" value="${spacings[0]}"/>
+            <input id="drawObjTextSpacing" class="inp" type="number" min="0" max="20" step="0.5" value="${sp.mixed ? '' : sp.value}" placeholder="${sp.mixed ? '—' : ''}"/>
           </div>
           <div class="rtGroup rtBtns">
-            <button class="btn sm" id="drawObjTextBold" type="button" ${weights[0] === "bold" ? "on" : ""}>B</button>
-            <button class="btn sm" id="drawObjTextItalic" type="button" ${styles[0] === "italic" ? "on" : ""}>I</button>
-            <button class="btn sm" id="drawObjTextUnderline" type="button" ${underlines[0] ? "on" : ""}>U</button>
+            <button class="btn sm" id="drawObjTextBold" type="button" ${w.mixed ? "" : w.value === "bold" ? "on" : ""}>B</button>
+            <button class="btn sm" id="drawObjTextItalic" type="button" ${st.mixed ? "" : st.value === "italic" ? "on" : ""}>I</button>
+            <button class="btn sm" id="drawObjTextUnderline" type="button" ${un.mixed ? "" : un.value ? "on" : ""}>U</button>
           </div>
           <div class="rtGroup">
-            <button class="btn sm" id="drawObjTextAlign" type="button">${aligns[0] === "center" ? "⇆" : aligns[0] === "right" ? "⇥" : "⇤"}</button>
+            <button class="btn sm" id="drawObjTextAlign" type="button">${al.mixed ? "⇆" : al.value === "center" ? "⇆" : al.value === "right" ? "⇥" : "⇤"}</button>
           </div>
           <div class="rtGroup">
             <div class="rtToolLbl">${t("logoEditor.draw.fillColor")}</div>
-            <input id="drawObjTextColor" class="inp" type="color" value="${fillColor}" style="width:40px;height:30px;padding:2px"/>
+            <input id="drawObjTextColor" class="inp" type="color" value="${fillColor.mixed ? '#ffffff' : fillColor.value}" style="width:40px;height:30px;padding:2px"/>
           </div>
           <div class="rtGroup">
             <label class="chk"><input type="checkbox" id="drawObjTextStrokeCheck" ${hasStroke ? "checked" : ""}/> ${t("logoEditor.draw.stroke")}</label>
-            <input id="drawObjTextStrokeColor" class="inp" type="color" value="${hasStroke ? strokeCol : "#ffffff"}" style="width:40px;height:30px;padding:2px" ${!hasStroke ? "disabled" : ""}/>
-            <input id="drawObjTextStrokeW" class="inp" type="number" min="0" max="20" step="1" value="${strokeW}" style="width:60px" ${!hasStroke ? "disabled" : ""}/>
+            <input id="drawObjTextStrokeColor" class="inp" type="color" value="${hasStroke ? (strokeCol.mixed ? '#ffffff' : strokeCol.value) : '#ffffff'}" style="width:40px;height:30px;padding:2px" ${!hasStroke ? "disabled" : ""}/>
+            <input id="drawObjTextStrokeW" class="inp" type="number" min="0" max="20" step="1" value="${strokeW.mixed ? '' : strokeW.value}" style="width:60px" ${!hasStroke ? "disabled" : ""} placeholder="${strokeW.mixed ? '—' : ''}"/>
           </div>
         </div>
       `);
@@ -379,24 +386,26 @@ export function initDrawEditor(ctx) {
         fabricCanvas.renderAll();
       });
       document.getElementById("drawObjTextBold")?.addEventListener("click", (e) => {
-        const isBold = weights[0] === "bold";
-        objs.forEach(o => o.set("fontWeight", isBold ? "normal" : "bold"));
-        e.target.classList.toggle("on", !isBold);
+        const newBold = w.value !== "bold";
+        objs.forEach(o => o.set("fontWeight", newBold ? "bold" : "normal"));
+        e.target.classList.toggle("on", newBold);
         fabricCanvas.renderAll();
       });
       document.getElementById("drawObjTextItalic")?.addEventListener("click", (e) => {
-        const isItalic = styles[0] === "italic";
-        objs.forEach(o => o.set("fontStyle", isItalic ? "normal" : "italic"));
-        e.target.classList.toggle("on", !isItalic);
+        const newItalic = st.value !== "italic";
+        objs.forEach(o => o.set("fontStyle", newItalic ? "italic" : "normal"));
+        e.target.classList.toggle("on", newItalic);
         fabricCanvas.renderAll();
       });
       document.getElementById("drawObjTextUnderline")?.addEventListener("click", (e) => {
-        objs.forEach(o => o.set("underline", !o.underline));
-        e.target.classList.toggle("on", !underlines[0]);
+        const newUnderline = !un.value;
+        objs.forEach(o => o.set("underline", newUnderline));
+        e.target.classList.toggle("on", newUnderline);
         fabricCanvas.renderAll();
       });
       document.getElementById("drawObjTextAlign")?.addEventListener("click", (e) => {
-        const next = aligns[0] === "left" ? "center" : aligns[0] === "center" ? "right" : "left";
+        const cur = al.value || "left";
+        const next = cur === "left" ? "center" : cur === "center" ? "right" : "left";
         objs.forEach(o => o.set("textAlign", next));
         e.target.textContent = next === "left" ? "⇤" : next === "right" ? "⇥" : "⇆";
         fabricCanvas.renderAll();
@@ -408,7 +417,7 @@ export function initDrawEditor(ctx) {
       document.getElementById("drawObjTextStrokeCheck")?.addEventListener("change", (e) => {
         const on = e.target.checked;
         objs.forEach(o => {
-          o.set("stroke", on ? strokeCol : null);
+          o.set("stroke", on ? (strokeCol.mixed ? '#ffffff' : strokeCol.value) : null);
           o.set("strokeWidth", on ? 1 : 0);
         });
         fabricCanvas.renderAll();
@@ -430,21 +439,22 @@ export function initDrawEditor(ctx) {
       const strokeCols = shapeObjs.map(o => o.stroke || "#ffffff");
       const fills = shapeObjs.map(o => o.fill || "transparent");
 
-      const strokeW = strokeWs[0];
-      const strokeCol = allSame(strokeCols).value || "#ffffff";
+      const strokeW = allSame(strokeWs);
+      const strokeCol = allSame(strokeCols);
       const hasFill = fills.some(f => f && f !== "transparent");
-      const fillCol = hasFill ? (allSame(fills).value || "#000000") : "#000000";
+      const fillCol = allSame(fills.filter(f => f !== "transparent"));
+      const effectiveFill = fillCol.value || "#000000";
 
       showSettings(`
         <div class="rtToolRow">
           <div class="rtGroup">
             <div class="rtToolLbl">${t("logoEditor.draw.stroke")}</div>
-            <input id="drawObjStroke" class="inp" type="number" min="0" max="50" step="1" value="${strokeW}"/>
-            <input id="drawObjStrokeColor" class="inp" type="color" value="${strokeCol}" style="width:40px;height:30px;padding:2px"/>
+            <input id="drawObjStroke" class="inp" type="number" min="0" max="50" step="1" value="${strokeW.mixed ? '' : strokeW.value}" placeholder="${strokeW.mixed ? '—' : ''}"/>
+            <input id="drawObjStrokeColor" class="inp" type="color" value="${strokeCol.mixed ? '#ffffff' : strokeCol.value}" style="width:40px;height:30px;padding:2px"/>
           </div>
           <div class="rtGroup">
             <label class="chk"><input type="checkbox" id="drawObjFillCheck" ${hasFill ? "checked" : ""}/> ${t("logoEditor.draw.fill")}</label>
-            <input id="drawObjFillColor" class="inp" type="color" value="${fillCol}" style="width:40px;height:30px;padding:2px" ${!hasFill ? "disabled" : ""}/>
+            <input id="drawObjFillColor" class="inp" type="color" value="${fillCol.mixed ? '#000000' : effectiveFill}" style="width:40px;height:30px;padding:2px" ${!hasFill ? "disabled" : ""}/>
           </div>
         </div>
       `);
@@ -459,7 +469,7 @@ export function initDrawEditor(ctx) {
       });
       document.getElementById("drawObjFillCheck")?.addEventListener("change", (e) => {
         const on = e.target.checked;
-        objs.forEach(o => o.set("fill", on ? fillCol : "transparent"));
+        objs.forEach(o => o.set("fill", on ? effectiveFill : "transparent"));
         fabricCanvas.renderAll();
         const ci = document.getElementById("drawObjFillColor");
         if (ci) ci.disabled = !on;
