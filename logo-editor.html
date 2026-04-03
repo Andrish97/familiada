@@ -234,6 +234,17 @@
                 <canvas id="drawStage" width="1" height="1"></canvas>
               </div>
             </div>
+            <!-- Font picker popover (shared by text tool settings) -->
+            <div id="drawFontPickPop" class="fontPickPop" hidden style="position:fixed;z-index:99999;display:block;">
+              <div class="fontPickPanel" style="width:min(520px,calc(100vw - 16px));max-height:min(360px,calc(100vh - 24px));overflow:hidden;border-radius:14px;border:1px solid rgba(255,255,255,.16);background:rgba(10,10,14,.96);backdrop-filter:blur(12px);">
+                <div class="fontPickSearch" style="display:flex;gap:6px;padding:10px;border-bottom:1px solid rgba(255,255,255,.10);">
+                  <input id="drawFontSearchInp" class="inp" type="text" placeholder="Szukaj fontu…" style="flex:1;height:30px;font-size:13px;">
+                  <button id="drawFontSearchClear" class="btn sm" type="button" style="min-width:30px;padding:0 8px;">✕</button>
+                </div>
+                <div id="drawFontList" style="overflow-y:auto;max-height:280px;padding:4px 0;"></div>
+                <div id="drawFontEmpty" class="fontPickEmpty" hidden style="padding:16px;text-align:center;opacity:.6;font-size:13px;">Brak wyników</div>
+              </div>
+            </div>
           </div>
 
           <!-- IMAGE: obraz + podgląd -->

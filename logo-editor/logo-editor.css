@@ -440,6 +440,17 @@
 
 .pane{ height: 100%; min-height: 0; }
 
+/* Draw font picker popover (same styling as #fontPickPop) */
+#drawFontPickPop[hidden]{ display:none !important; }
+#drawFontPickPop .fontPickItem{
+  width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:6px 10px;border-radius:8px;cursor:pointer;
+  background:transparent;border:none;color:inherit;font-size:14px;
+}
+#drawFontPickPop .fontPickItem:hover{ background:rgba(255,255,255,.08); }
+#drawFontPickPop .fontPickItem.on{ background:rgba(255,255,255,.12); }
+#drawFontPickPop .fontPickSwatch{ font-size:18px;opacity:.5;flex-shrink:0; }
+
 /* =========================================================
    TEXT: preview
 ========================================================= */

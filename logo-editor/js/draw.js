@@ -28,6 +28,13 @@ export function initDrawEditor(ctx) {
   const drawStageHost = document.getElementById("drawStageHost"); // ratio box
   const drawSettings = document.getElementById("drawSettings"); // contextual settings
 
+  // Font picker elements
+  const drawFontPickPop = document.getElementById("drawFontPickPop");
+  const drawFontSearchInp = document.getElementById("drawFontSearchInp");
+  const drawFontSearchClear = document.getElementById("drawFontSearchClear");
+  const drawFontList = document.getElementById("drawFontList");
+  const drawFontEmpty = document.getElementById("drawFontEmpty");
+
   // Buttons (z HTML)
   const tSelect   = document.getElementById("tSelect");
   const tPan      = document.getElementById("tPan");
@@ -148,13 +155,16 @@ export function initDrawEditor(ctx) {
         updateCursor();
       });
     } else if (toolName === "text") {
-      const fOpts = fontOptionsHtml(textFont);
+      const fontLabel = DRAW_FONTS.find(f => f.value === textFont)?.label || "Font";
       showSettings(`
         <div class="rtToolRow">
-          ${fOpts ? `<div class="rtGroup">
+          <div class="rtGroup">
             <div class="rtToolLbl">${t("logoEditor.draw.fontFamily")}</div>
-            <select id="drawFontSel" class="inp" style="min-width:180px;max-width:280px;height:30px;">${fOpts}</select>
-          </div>` : ""}
+            <button class="btn sm" id="drawFontBtn" type="button" style="min-width:180px;max-width:280px;height:30px;justify-content:space-between;display:flex;align-items:center;">
+              <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${fontLabel}</span>
+              <span style="opacity:.5;">▾</span>
+            </button>
+          </div>
           <div class="rtGroup">
             <div class="rtToolLbl">${t("logoEditor.draw.fontSize")}</div>
             <input id="drawTextSize" class="inp" type="number" min="10" max="220" step="1" value="${textFontSize}"/>
@@ -168,17 +178,21 @@ export function initDrawEditor(ctx) {
             <input id="drawTextSpacing" class="inp" type="number" min="0" max="20" step="0.5" value="${textLetterSpacing}"/>
           </div>
           <div class="rtGroup rtBtns">
-            <button class="btn sm" id="drawTextBold" type="button">B</button>
-            <button class="btn sm" id="drawTextItalic" type="button">I</button>
-            <button class="btn sm" id="drawTextUnderline" type="button">U</button>
+            <button class="btn sm" id="drawTextBold" type="button" ${textBold ? "on" : ""}>B</button>
+            <button class="btn sm" id="drawTextItalic" type="button" ${textItalic ? "on" : ""}>I</button>
+            <button class="btn sm" id="drawTextUnderline" type="button" ${textUnderline ? "on" : ""}>U</button>
           </div>
           <div class="rtGroup">
-            <button class="btn sm" id="drawTextAlign" type="button">⇆</button>
+            <button class="btn sm" id="drawTextAlign" type="button">${textAlign === "center" ? "⇆" : textAlign === "right" ? "⇥" : "⇤"}</button>
           </div>
         </div>
       `);
-      document.getElementById("drawFontSel")?.addEventListener("change", (e) => {
-        textFont = e.target.value;
+      document.getElementById("drawFontBtn")?.addEventListener("click", () => {
+        openDrawFontPicker((val) => {
+          textFont = val;
+          // Re-render to update button label
+          renderToolSettings();
+        }, textFont);
       });
       document.getElementById("drawTextSize")?.addEventListener("input", (e) => {
         textFontSize = clamp(Number(e.target.value) || 130, 10, 220);
@@ -296,13 +310,16 @@ export function initDrawEditor(ctx) {
   function renderTextObjectSettings(obj) {
     if (!obj) { hideSettings(); return; }
     const objFont = obj.fontFamily || "";
-    const fOpts = fontOptionsHtml(objFont);
+    const fontLabel = DRAW_FONTS.find(f => f.value === objFont)?.label || "Font";
     showSettings(`
       <div class="rtToolRow">
-        ${fOpts ? `<div class="rtGroup">
+        <div class="rtGroup">
           <div class="rtToolLbl">${t("logoEditor.draw.fontFamily")}</div>
-          <select id="drawObjFontSel" class="inp" style="min-width:180px;max-width:280px;height:30px;">${fOpts}</select>
-        </div>` : ""}
+          <button class="btn sm" id="drawFontBtn" type="button" style="min-width:180px;max-width:280px;height:30px;justify-content:space-between;display:flex;align-items:center;">
+            <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${fontLabel}</span>
+            <span style="opacity:.5;">▾</span>
+          </button>
+        </div>
         <div class="rtGroup">
           <div class="rtToolLbl">${t("logoEditor.draw.fontSize")}</div>
           <input id="drawObjTextSize" class="inp" type="number" min="10" max="220" step="1" value="${Math.round(obj.fontSize || 40)}"/>
@@ -325,9 +342,13 @@ export function initDrawEditor(ctx) {
         </div>
       </div>
     `);
-    document.getElementById("drawObjFontSel")?.addEventListener("change", (e) => {
-      obj.set("fontFamily", e.target.value);
-      fabricCanvas.renderAll();
+    document.getElementById("drawFontBtn")?.addEventListener("click", () => {
+      openDrawFontPicker((val) => {
+        obj.set("fontFamily", val);
+        fabricCanvas.renderAll();
+        // Re-render to update button label
+        renderTextObjectSettings(obj);
+      }, objFont);
     });
     document.getElementById("drawObjTextSize")?.addEventListener("input", (e) => {
       obj.set("fontSize", clamp(Number(e.target.value) || 40, 10, 220));
@@ -730,7 +751,7 @@ export function initDrawEditor(ctx) {
   let textUnderline = false;
   let textAlign = "center";
 
-  // Font loading
+  // Font loading + picker
   let DRAW_FONTS = [];
   async function loadDrawFonts() {
     if (DRAW_FONTS.length) return DRAW_FONTS;
@@ -743,15 +764,82 @@ export function initDrawEditor(ctx) {
       return DRAW_FONTS;
     } catch { return []; }
   }
-  function fontOptionsHtml(current) {
-    if (!DRAW_FONTS.length) return "";
-    let h = `<option value="">—</option>`;
-    for (const f of DRAW_FONTS) {
-      const sel = f.value === current ? " selected" : "";
-      h += `<option value="${f.value}"${sel} style="font-family:${f.value}">${f.label}</option>`;
-    }
-    return h;
+
+  // Font picker state
+  let drawFontOpen = false;
+  let drawFontFiltered = [];
+  let drawFontOnSelect = null; // callback
+
+  function closeDrawFontPicker() {
+    if (!drawFontPickPop) return;
+    drawFontOpen = false;
+    drawFontPickPop.hidden = true;
+    if (drawFontSearchInp) drawFontSearchInp.value = "";
   }
+
+  function openDrawFontPicker(onSelect, currentValue) {
+    if (!drawFontPickPop || !DRAW_FONTS.length) return;
+    drawFontOpen = true;
+    drawFontOnSelect = onSelect;
+    drawFontPickPop.hidden = false;
+
+    // Position below the toolbar
+    const toolbar = document.getElementById("toolsDraw");
+    if (toolbar) {
+      const r = toolbar.getBoundingClientRect();
+      drawFontPickPop.style.top = `${Math.round(r.bottom + 8)}px`;
+      drawFontPickPop.style.left = `${Math.max(8, Math.round(r.left))}px`;
+    }
+
+    if (drawFontSearchInp) {
+      drawFontSearchInp.value = "";
+      drawFontSearchInp.focus();
+    }
+    renderDrawFontList(currentValue);
+  }
+
+  function renderDrawFontList(currentValue) {
+    if (!drawFontList || !drawFontEmpty) return;
+    const q = (drawFontSearchInp?.value || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    drawFontFiltered = !q ? DRAW_FONTS : DRAW_FONTS.filter(f =>
+      f.label.toLowerCase().includes(q) || f.value.toLowerCase().includes(q)
+    );
+
+    drawFontEmpty.hidden = drawFontFiltered.length > 0;
+    drawFontList.innerHTML = "";
+
+    for (const f of drawFontFiltered) {
+      const item = document.createElement("button");
+      item.type = "button";
+      item.className = "fontPickItem" + (f.value === currentValue ? " on" : "");
+      item.style.fontFamily = f.value;
+      item.innerHTML = `<span style="flex:1;text-align:left;">${f.label}</span><span class="fontPickSwatch" style="font-family:${f.value};">Ag</span>`;
+      item.addEventListener("click", () => {
+        if (drawFontOnSelect) drawFontOnSelect(f.value);
+        closeDrawFontPicker();
+      });
+      drawFontList.appendChild(item);
+    }
+  }
+
+  // Wire up font picker events
+  if (drawFontSearchInp) {
+    drawFontSearchInp.addEventListener("input", () => renderDrawFontList(textFont));
+  }
+  if (drawFontSearchClear) {
+    drawFontSearchClear.addEventListener("click", () => {
+      if (drawFontSearchInp) drawFontSearchInp.value = "";
+      renderDrawFontList(textFont);
+      drawFontSearchInp?.focus();
+    });
+  }
+  // Close on outside click
+  document.addEventListener("pointerdown", (ev) => {
+    if (!drawFontOpen) return;
+    const t = ev.target;
+    if (t === drawFontSearchInp || t === drawFontSearchClear || drawFontPickPop?.contains(t)) return;
+    closeDrawFontPicker();
+  }, true);
 
   function currentTool() {
     return tool;
