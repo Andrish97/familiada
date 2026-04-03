@@ -147,13 +147,8 @@ export function initDrawEditor(ctx) {
         updateCursor();
       });
     } else if (tool === "text") {
-      const fontOpts = buildFontOptionsHtml(textFont);
       showSettings(`
         <div class="rtToolRow">
-          ${fontOpts ? `<div class="rtGroup">
-            <div class="rtToolLbl">${t("logoEditor.draw.fontFamily")}</div>
-            <select id="drawFontSelect" class="inp" style="min-width:180px;max-width:280px;height:30px;">${fontOpts}</select>
-          </div>` : ""}
           <div class="rtGroup">
             <div class="rtToolLbl">${t("logoEditor.draw.fontSize")}</div>
             <input id="drawTextSize" class="inp" type="number" min="10" max="220" step="1" value="${textFontSize}"/>
@@ -176,9 +171,6 @@ export function initDrawEditor(ctx) {
           </div>
         </div>
       `);
-      document.getElementById("drawFontSelect")?.addEventListener("change", (e) => {
-        textFont = e.target.value;
-      });
       document.getElementById("drawTextSize")?.addEventListener("input", (e) => {
         textFontSize = clamp(Number(e.target.value) || 130, 10, 220);
       });
@@ -188,15 +180,15 @@ export function initDrawEditor(ctx) {
       document.getElementById("drawTextSpacing")?.addEventListener("input", (e) => {
         textLetterSpacing = clamp(Number(e.target.value) || 0, 0, 20);
       });
-      document.getElementById("drawTextBold")?.addEventListener("click", (e) => {
+      document.getElementById("drawTextBold")?.addEventListener("click", () => {
         textBold = !textBold;
         e.target.classList.toggle("on", textBold);
       });
-      document.getElementById("drawTextItalic")?.addEventListener("click", (e) => {
+      document.getElementById("drawTextItalic")?.addEventListener("click", () => {
         textItalic = !textItalic;
         e.target.classList.toggle("on", textItalic);
       });
-      document.getElementById("drawTextUnderline")?.addEventListener("click", (e) => {
+      document.getElementById("drawTextUnderline")?.addEventListener("click", () => {
         textUnderline = !textUnderline;
         e.target.classList.toggle("on", textUnderline);
       });
@@ -236,14 +228,8 @@ export function initDrawEditor(ctx) {
     if (!obj) { hideSettings(); return; }
     const type = obj.type;
     if (type === "i-text" || type === "textbox" || type === "text") {
-      const objFont = obj.fontFamily || "";
-      const fontOpts = buildFontOptionsHtml(objFont);
       showSettings(`
         <div class="rtToolRow">
-          ${fontOpts ? `<div class="rtGroup">
-            <div class="rtToolLbl">${t("logoEditor.draw.fontFamily")}</div>
-            <select id="drawObjFontSelect" class="inp" style="min-width:180px;max-width:280px;height:30px;">${fontOpts}</select>
-          </div>` : ""}
           <div class="rtGroup">
             <div class="rtToolLbl">${t("logoEditor.draw.fontSize")}</div>
             <input id="drawObjTextSize" class="inp" type="number" min="10" max="220" step="1" value="${Math.round(obj.fontSize || 40)}"/>
@@ -266,10 +252,6 @@ export function initDrawEditor(ctx) {
           </div>
         </div>
       `);
-      document.getElementById("drawObjFontSelect")?.addEventListener("change", (e) => {
-        obj.set("fontFamily", e.target.value);
-        canvas.renderAll();
-      });
       document.getElementById("drawObjTextSize")?.addEventListener("input", (e) => {
         obj.set("fontSize", clamp(Number(e.target.value) || 40, 10, 220));
         canvas.renderAll();
@@ -377,7 +359,16 @@ export function initDrawEditor(ctx) {
       </svg>
     `,
 
-    // 7) BRUSH
+    // 5) TEXT
+    tText: `
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M5 6h14"></path>
+        <path d="M12 6v12"></path>
+        <path d="M8 18h8"></path>
+      </svg>
+    `,
+
+    // 6) BRUSH
     tBrush: `
       <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
         <path d="M4 20l4-1 11-11-3-3L5 16l-1 4z"></path>
@@ -385,7 +376,7 @@ export function initDrawEditor(ctx) {
       </svg>
     `,
     
-    // 8) ERASER
+    // 7) ERASER
     tEraser: `
       <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
         <path d="M7 16l8.5-8.5a1.8 1.8 0 0 1 2.5 0l1 1a1.8 1.8 0 0 1 0 2.5L11 19H7l-2-2 2-1z"></path>
@@ -394,7 +385,7 @@ export function initDrawEditor(ctx) {
       </svg>
     `,
 
-    // 9) LINE
+    // 8) LINE
     tLine: `
       <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
         <path d="M6 18L18 6"></path>
@@ -403,28 +394,28 @@ export function initDrawEditor(ctx) {
       </svg>
     `,
 
-    // 10) RECT
+    // 9) RECT
     tRect: `
       <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
         <rect x="6" y="7" width="12" height="10" rx="2"></rect>
       </svg>
     `,
 
-    // 11) ELLIPSE
+    // 10) ELLIPSE
     tEllipse: `
       <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
         <ellipse cx="12" cy="12" rx="7" ry="5"></ellipse>
       </svg>
     `,
 
-    // 12) POLY
+    // 11) POLY
     tPoly: `
       <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
         <path d="M12 6l7 14H5L12 6z"></path>
       </svg>
     `,
 
-    // 13) UNDO
+    // 12) UNDO
     tUndo: `
       <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
         <path d="M9 7H5v4"></path>
@@ -432,7 +423,7 @@ export function initDrawEditor(ctx) {
       </svg>
     `,
 
-    // 14) REDO
+    // 13) REDO
     tRedo: `
       <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
         <path d="M15 7h4v4"></path>
@@ -440,14 +431,15 @@ export function initDrawEditor(ctx) {
       </svg>
     `,
 
-    // 15) POLY DONE
+
+    // 14) POLY DONE
     tPolyDone: `
       <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
         <path d="M5 13l4 4L19 7"></path>
       </svg>
     `,
 
-    // 16) CLEAR
+    // 15) CLEAR
     tClear: `
       <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
         <path d="M6 7h12"></path>
@@ -456,7 +448,7 @@ export function initDrawEditor(ctx) {
       </svg>
     `,
 
-    // 17) EYE
+    // 16) EYE
     tEye: `
       <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
         <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"></path>
@@ -680,7 +672,6 @@ export function initDrawEditor(ctx) {
   let fillColor = "#ffffff";
 
   // Text tool settings
-  let textFont = ""; // font-family value from fonts.json
   let textFontSize = 130;
   let textLineHeight = 1;
   let textLetterSpacing = 0;
@@ -688,37 +679,6 @@ export function initDrawEditor(ctx) {
   let textItalic = false;
   let textUnderline = false;
   let textAlign = "center";
-
-  // =========================================================
-  // Font loading (shared with text-pix fonts.json)
-  // =========================================================
-  let DRAW_FONTS = []; // [{value, label}]
-
-  async function loadDrawFonts() {
-    if (DRAW_FONTS.length) return DRAW_FONTS;
-    try {
-      const fontsUrl = new URL("./fonts.json", import.meta.url).href;
-      const res = await fetch(fontsUrl, { cache: "no-store" });
-      if (!res.ok) throw new Error("Failed to load fonts");
-      const data = await res.json();
-      if (!Array.isArray(data)) throw new Error("Invalid fonts format");
-      DRAW_FONTS = data.filter(f => f && f.value && f.label);
-      return DRAW_FONTS;
-    } catch (err) {
-      console.error("Failed to load draw fonts:", err);
-      return [];
-    }
-  }
-
-  function buildFontOptionsHtml(currentValue) {
-    if (!DRAW_FONTS.length) return "";
-    let html = `<option value="">—</option>`;
-    for (const f of DRAW_FONTS) {
-      const sel = f.value === currentValue ? " selected" : "";
-      html += `<option value="${f.value}"${sel} style="font-family:${f.value}">${f.label}</option>`;
-    }
-    return html;
-  }
 
   function currentTool() {
     return tool;
@@ -2051,7 +2011,6 @@ export function initDrawEditor(ctx) {
         const textObj = new fabric.IText("Tekst", {
           left: pointer.x,
           top: pointer.y,
-          fontFamily: textFont || undefined,
           fontSize: textFontSize,
           lineHeight: textLineHeight,
           charSpacing: textLetterSpacing,
@@ -2447,7 +2406,6 @@ export function initDrawEditor(ctx) {
   return {
     open(payload = null) {
       show(paneDraw, true);
-      loadDrawFonts();
 
       if (!uiBound) { bindUiOnce(); uiBound = true; }
       installFabricOnce();
@@ -2457,6 +2415,7 @@ export function initDrawEditor(ctx) {
 
       // reset sesji rysunku (ustawienia narzędzi + kolory zostają w pamięci sesji)
       if (fabricCanvas) {
+        hideSettings();
         clearPolyDraft();
 
         if (fabricData) {
