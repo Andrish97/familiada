@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict NjcClJgHCMnhC0bhH20xx0rKkK4GwPCiMdgaR5uIUPN25SpetyPQHgQddoIhGjS
+\restrict kSLWvkbdeqdG5Sn9WkdmAx9uagIPFHPyHq3YDNmNFobn29AsyBbnnstmtI5DNKs
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -8734,7 +8734,7 @@ BEGIN
         SELECT payload->>'name'
         FROM public.demo_template_data
         WHERE lang = v_lang
-          AND slot IN ('logo_text', 'logo_text_pix', 'logo_draw', 'logo_image')
+          AND slot IN ('logo_text', 'logo_draw', 'logo_image')
       )
     );
 
@@ -9068,7 +9068,7 @@ BEGIN
   END IF;
 
   -- PIX logos
-  FOREACH v_logo_slot IN ARRAY ARRAY['logo_text_pix','logo_draw','logo_image'] LOOP
+  FOREACH v_logo_slot IN ARRAY ARRAY['logo_draw','logo_image'] LOOP
     SELECT payload INTO v_tpl
       FROM demo_template_data WHERE lang = v_lang AND slot = v_logo_slot;
     IF v_tpl IS NOT NULL THEN
@@ -13490,5 +13490,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict NjcClJgHCMnhC0bhH20xx0rKkK4GwPCiMdgaR5uIUPN25SpetyPQHgQddoIhGjS
+\unrestrict kSLWvkbdeqdG5Sn9WkdmAx9uagIPFHPyHq3YDNmNFobn29AsyBbnnstmtI5DNKs
 
