@@ -40,7 +40,7 @@
     <div class="topbar-section topbar-section-4">
       <span class="who" id="who">—</span>
       <button class="btn" id="btnLogout" type="button" data-i18n="logoEditor.topbar.logout">Wyloguj</button>
-      <button class="btn sm" id="btnCloseEditor" type="button" style="display:none;" aria-label="Zamknij">✕</button>
+      <button class="btn" id="btnCloseEditor" type="button" style="display:none;" aria-label="Zamknij">✕</button>
     </div>
   </header>
 
@@ -119,123 +119,43 @@
             <div class="charsListInline" id="charsList" style="display:none;"></div>
           </div>
 
-          <!-- TOOLBAR dla TEXT_PIX -->
-          <div class="toolRow" id="toolsTextPix" style="display:none;">
-            <!-- RZĄD 1 -->
-            <div class="rtToolRow">
-              <div class="rtGroup">
-                <div class="rtToolLbl" data-i18n="logoEditor.textPix.font">Czcionka</div>
+          <!-- TOOLBAR dla DRAW -->
+          <div class="toolRow" id="toolsDraw" style="display:none;">
 
-                <!-- ukryty select (fallback / wsparcie w JS) -->
-                <select id="selRtFont" class="inp" style="display:none;"></select>
+            <div class="toolGrid">
+              <button class="tbtn" id="tSelect"   type="button" data-tip-pos="top" data-tip=""></button>
+              <button class="tbtn" id="tPan"      type="button" data-tip-pos="top" data-tip=""></button>
+              <button class="tbtn" id="tText"     type="button" data-tip-pos="top" data-tip=""></button>
 
-                <div class="fontPick" id="fontPick">
-                  <button type="button" class="inp fontPickBtn" id="fontPickBtn" aria-haspopup="listbox" aria-expanded="false">
-                    <span class="fontPickText" id="fontPickText">—</span>
-                    <span class="fontPickArrow" aria-hidden="true">▾</span>
-                  </button>
+              <button class="tbtn" id="tZoomIn"   type="button" data-tip-pos="top" data-tip=""></button>
+              <button class="tbtn" id="tZoomOut"  type="button" data-tip-pos="top" data-tip=""></button>
 
-                  <div class="fontPickPop" id="fontPickPop" role="listbox" tabindex="-1" hidden>
-                    <div class="fontPickPanel">
-                      <div class="fontPickSearch">
-                        <input class="inp fontPickSearchInp" id="fontPickSearchInp" type="text"
-                               placeholder="Szukaj czcionki…" autocomplete="off" spellcheck="false" data-i18n-placeholder="logoEditor.textPix.searchPlaceholder" />
-                        <button class="btn sm fontPickSearchClear" id="fontPickSearchClear" type="button" title="Wyczyść" data-i18n-title="logoEditor.textPix.searchClear">✕</button>
-                      </div>
-
-                      <div class="fontPickList" id="fontPickList"></div>
-                      <div class="fontPickEmpty" id="fontPickEmpty" hidden data-i18n="logoEditor.textPix.emptyResults">Brak wyników</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="rtGroup">
-                <div class="rtToolLbl" data-i18n="logoEditor.textPix.size">Rozmiar</div>
-                <input id="inpRtSize" class="inp" type="number" min="10" max="220" step="1" value="130"/>
-              </div>
-
-              <div class="rtGroup">
-                <div class="rtToolLbl" data-i18n="logoEditor.textPix.lineHeight">Interlinia</div>
-                <input id="inpRtLine" class="inp" type="number" min="0.6" max="3.0" step="0.05" value="1"/>
-              </div>
-
-              <div class="rtGroup">
-                <div class="rtToolLbl" data-i18n="logoEditor.textPix.letterSpacing">Odstęp</div>
-                <input id="inpRtLetter" class="inp" type="number" min="0" max="20" step="0.5" value="0"/>
-              </div>
-
-              <div class="rtGroup">
-                <div class="rtToolLbl" data-i18n="logoEditor.textPix.paddingTop">Góra</div>
-                <input id="inpRtPadTop" class="inp" type="number" min="0" max="80" step="1" value="0"/>
-              </div>
-
-              <div class="rtGroup">
-                <div class="rtToolLbl" data-i18n="logoEditor.textPix.paddingBottom">Dół</div>
-                <input id="inpRtPadBot" class="inp" type="number" min="0" max="80" step="1" value="0"/>
-              </div>
-
-              <div class="rtGroup rtBtns">
-                <button class="btn sm" id="btnRtBold" type="button" title="Pogrubienie" data-i18n-title="logoEditor.textPix.boldTitle">B</button>
-                <button class="btn sm" id="btnRtItalic" type="button" title="Kursywa" data-i18n-title="logoEditor.textPix.italicTitle">I</button>
-                <button class="btn sm" id="btnRtUnderline" type="button" title="Podkreślenie" data-i18n-title="logoEditor.textPix.underlineTitle">U</button>
-              </div>
-
-              <div class="rtGroup">
-                <button class="btn sm" id="btnRtAlignCycle" type="button" title="Wyrównanie" data-i18n-title="logoEditor.textPix.alignTitle">⇆</button>
-              </div>
-
-              <div class="rtGroup">
-                <label class="chk">
-                  <input type="checkbox" id="chkInvert"/>
-                  <span data-i18n="logoEditor.textPix.invert">Odwróć (białe tło)</span>
-                </label>
-              </div>
-
-              <div class="rtGroup">
-                <button class="btn sm" id="btnPixPreview" type="button" data-i18n="logoEditor.textPix.preview">Podgląd</button>
-              </div>
+              <button class="tbtn" id="tColor"    type="button" data-tip-pos="top" data-tip=""></button>
+              <button class="tbtn" id="tBg"       type="button" data-tip-pos="top" data-tip=""></button>
             </div>
+
+            <div class="toolSep"></div>
+
+            <div class="toolGrid">
+              <button class="tbtn" id="tBrush"    type="button" data-tip-pos="top" data-tip=""></button>
+              <button class="tbtn" id="tEraser"   type="button" data-tip-pos="top" data-tip=""></button>
+              <button class="tbtn" id="tLine"     type="button" data-tip-pos="top" data-tip=""></button>
+              <button class="tbtn" id="tRect"     type="button" data-tip-pos="top" data-tip=""></button>
+              <button class="tbtn" id="tEllipse"  type="button" data-tip-pos="top" data-tip=""></button>
+              <button class="tbtn" id="tPoly"     type="button" data-tip-pos="top" data-tip=""></button>
+              <button class="tbtn" id="tPolyDone" type="button" data-tip-pos="top" data-tip="" disabled></button>
+            </div>
+
+            <div class="toolSep"></div>
+
+            <div class="toolGrid">
+              <button class="tbtn" id="tUndo"     type="button" data-tip-pos="top" data-tip=""></button>
+              <button class="tbtn" id="tRedo"     type="button" data-tip-pos="top" data-tip=""></button>
+              <button class="tbtn danger" id="tClear" type="button" data-tip-pos="top" data-tip=""></button>
+              <button class="tbtn" id="tEye"      type="button" data-tip-pos="top" data-tip=""></button>
+            </div>
+
           </div>
-
-     <div class="toolRow" id="toolsDraw" style="display:none;">
-
-        <div class="toolGrid">
-          <button class="tbtn" id="tSelect"   type="button" data-tip-pos="top" data-tip=""></button>
-          <button class="tbtn" id="tPan"      type="button" data-tip-pos="top" data-tip=""></button>
-      
-          <button class="tbtn" id="tZoomIn"   type="button" data-tip-pos="top" data-tip=""></button>
-          <button class="tbtn" id="tZoomOut"  type="button" data-tip-pos="top" data-tip=""></button>
-      
-          <button class="tbtn" id="tColor"    type="button" data-tip-pos="top" data-tip=""></button>
-          <button class="tbtn" id="tBg"       type="button" data-tip-pos="top" data-tip=""></button>
-        </div>
-      
-        <div class="toolSep"></div>
-      
-        <div class="toolGrid">
-          <button class="tbtn" id="tBrush"    type="button" data-tip-pos="top" data-tip=""></button>
-          <button class="tbtn" id="tEraser"   type="button" data-tip-pos="top" data-tip=""></button>
-          <button class="tbtn" id="tLine"     type="button" data-tip-pos="top" data-tip=""></button>
-          <button class="tbtn" id="tRect"     type="button" data-tip-pos="top" data-tip=""></button>
-          <button class="tbtn" id="tEllipse"  type="button" data-tip-pos="top" data-tip=""></button>
-          <button class="tbtn" id="tPoly"     type="button" data-tip-pos="top" data-tip=""></button>
-          <button class="tbtn" id="tPolyDone" type="button" data-tip-pos="top" data-tip="" disabled></button>
-        </div>
-      
-        <div class="toolSep"></div>
-      
-        <div class="toolGrid">
-          <button class="tbtn" id="tUndo"     type="button" data-tip-pos="top" data-tip=""></button>
-          <button class="tbtn" id="tRedo"     type="button" data-tip-pos="top" data-tip=""></button>
-      
-          <button class="tbtn" id="tSettings" type="button" data-tip-pos="top" data-tip=""></button>
-          <button class="tbtn danger" id="tClear" type="button" data-tip-pos="top" data-tip=""></button>
-      
-          <button class="tbtn" id="tEye"      type="button" data-tip-pos="top" data-tip=""></button>
-        </div>
-      
-      </div>
 
           <!-- IMAGE: toolbar tylko przyciski + folderek -->
           <div class="toolRow" id="toolsImage" style="display:none;">
@@ -295,44 +215,24 @@
         <!-- CONTENT (pełna wysokość, bez scrolla strony) -->
         <div class="editorContent">
 
-          <!-- TEXT: preview full-width, bez modala -->
+          <!-- TEXT: preview canvas -->
           <div class="pane" id="paneText" style="display:none;">
             <div class="prevFull">
               <canvas id="bigPreview" width="900" height="380"></canvas>
             </div>
           </div>
 
-          <!-- TEXT_PIX: pole tekstowe full width + ostrzeżenie; preview z przycisku -->
-          <div class="pane" id="paneTextPix" style="display:none;">
-
-            <!-- STAGE w stałym ratio 26:11 -->
-            <div class="rtStage">
-              <div class="rtRatio">
-                <div id="rtEditor" class="rtEditor" contenteditable="true" spellcheck="false" data-placeholder="Wpisz tekst…" data-i18n-placeholder="logoEditor.textPix.placeholder"></div>
-              </div>
-            </div>
-            
-          </div>
-
-          <!-- DRAW: scena full width -->
+          <!-- DRAW: scena + kontekstowe ustawienia -->
           <div class="pane" id="paneDraw" style="display:none;">
-            <div class="drawStageWrap">
-              <div class="drawStageRatio" id="drawStageHost">
-                <canvas id="drawStage" width="1" height="1"></canvas>
-                      <div class="drawPop" id="drawPop" style="display:none;">
-                      <div class="drawPopHead">
-                        <div class="drawPopTitle" id="drawPopTitle" data-i18n="logoEditor.draw.settingsTitle">Ustawienia</div>
-                        <button class="btn sm" id="drawPopClose" type="button">✕</button>
-                      </div>
-              
-                      <div class="drawPopBody" id="drawPopBody"></div>
-                    </div>
-
-              </div>
+            <!-- Kontekstowe ustawienia narzędzia/obiektu -->
+            <div class="drawSettings" id="drawSettings"></div>
+            <!-- Canvas -->
+            <div class="drawStageHost" id="drawStageHost">
+              <canvas id="drawStage" width="1" height="1"></canvas>
             </div>
           </div>
 
-          <!-- IMAGE: obraz + podgląd (2 kolumny jeśli szeroko, inaczej stack) -->
+          <!-- IMAGE: obraz + podgląd -->
           <div class="pane" id="paneImage" style="display:none;">
             <div class="imgTopGrid">
 
@@ -386,13 +286,8 @@
       <div class="mSection" id="modePick">
         <div class="mGrid">
           <button class="mTile" id="pickText" type="button">
-            <div class="mTileTitle" data-i18n="logoEditor.create.textTitle">Napis</div>
+            <div class="mTileTitle" data-i18n="logoEditor.create.textTitle">Tekst</div>
             <div class="mTileSub" data-i18n="logoEditor.create.textSubtitle">Font jak w klasycznym logo Familiady</div>
-          </button>
-
-          <button class="mTile" id="pickTextPix" type="button">
-            <div class="mTileTitle" data-i18n="logoEditor.create.textPixTitle">Tekst</div>
-            <div class="mTileSub" data-i18n="logoEditor.create.textPixSubtitle">Tekst jak w edytorze tekstu</div>
           </button>
 
           <button class="mTile" id="pickDraw" type="button">

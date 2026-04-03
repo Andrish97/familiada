@@ -13,7 +13,6 @@ import { initTopbarAccountDropdown } from "../../js/core/topbar-controller.js?v=
 import { isMobileDevice } from "../../js/core/pwa.js?v=31d73fc2";
 
 import { initTextEditor } from "./text.js?v=2038d5d5";
-import { initTextPixEditor } from "./text-pix.js?v=6a7f25c7";
 import { initDrawEditor } from "./draw.js?v=5c6eaf07";
 import { initImageEditor } from "./image.js?v=ae9fe438";
 
@@ -92,7 +91,6 @@ const logoExportBar = document.getElementById("logoExportBar");
 const logoExportMsg = document.getElementById("logoExportMsg");
 const createOverlay = document.getElementById("createOverlay");
 const pickText = document.getElementById("pickText");
-const pickTextPix = document.getElementById("pickTextPix");
 const pickDraw = document.getElementById("pickDraw");
 const pickImage = document.getElementById("pickImage");
 const btnPickCancel = document.getElementById("btnPickCancel");
@@ -101,7 +99,6 @@ const logoName = document.getElementById("logoName");
 
 // panes
 const paneText = document.getElementById("paneText");
-const paneTextPix = document.getElementById("paneTextPix");
 const paneDraw = document.getElementById("paneDraw");
 const paneImage = document.getElementById("paneImage");
 
@@ -135,7 +132,7 @@ let defaultLogoRows = Array.from({ length: 10 }, () => " ".repeat(30));
 let suppressDirty = false;
 
 
-let editorMode = null; // TEXT | TEXT_PIX | DRAW | IMAGE
+let editorMode = null; // TEXT | DRAW | IMAGE
 let editorDirty = false;
 
 let FONT_3x10 = null; // char -> [10 strings]
@@ -324,21 +321,18 @@ function isUniqueViolation(e){
 
 function showToolsForMode(mode){
   const tText = document.getElementById("toolsText");
-  const tPix  = document.getElementById("toolsTextPix");
   const tDraw = document.getElementById("toolsDraw");
   const tImg  = document.getElementById("toolsImage");
   const imgPanels = document.getElementById("imgPanels");
 
   // schowaj wszystko
   show(tText, false);
-  show(tPix, false);
   show(tDraw, false);
   show(tImg, false);
   show(imgPanels, false);
 
   // pokaż właściwe
   if (mode === "TEXT") show(tText, true);
-  if (mode === "TEXT_PIX") show(tPix, true);
   if (mode === "DRAW") show(tDraw, true);
   if (mode === "IMAGE") { show(tImg, true); show(imgPanels, true); }
 }
@@ -892,7 +886,7 @@ async function deleteLogo(id){
 let renameMode = "rename";
 let renameLogoId = null;
 let createModeType = null;  // typ logo podczas tworzenia: TYPE_GLYPH lub TYPE_PIX
-let createModeMode = null;  // tryb edytora: "TEXT", "TEXT_PIX", "DRAW", "IMAGE"
+let createModeMode = null;  // tryb edytora: "TEXT", "DRAW", "IMAGE"
 
 function openRenameModal(logo){
   renameMode = "rename";
@@ -1180,13 +1174,11 @@ async function loadTinyMceFromSupabase(){
    EDYTORY (moduly)
 ========================================================= */
 let textEditor = null;
-let textPixEditor = null;
 let drawEditor = null;
 let imageEditor = null;
 
 function hideAllPanes(){
   show(paneText, false);
-  show(paneTextPix, false);
   show(paneDraw, false);
   show(paneImage, false);
 }
@@ -1197,7 +1189,6 @@ function setEditorShellMode(mode){
 
 function getModeLabel(mode) {
   return mode === "TEXT" ? t("logoEditor.modes.text") :
-    mode === "TEXT_PIX" ? t("logoEditor.modes.textPix") :
     mode === "DRAW" ? t("logoEditor.modes.draw") :
     t("logoEditor.modes.image");
 }
@@ -1309,11 +1300,6 @@ function openEditor(mode, logo = null){
     textEditor.open(logo ? logo.payload : null);
   }
 
-  if (mode === "TEXT_PIX"){
-    show(paneTextPix, true);
-    textPixEditor.open(logo ? logo.payload : null);
-  }
-
   if (mode === "DRAW"){
     show(paneDraw, true);
     drawEditor.open(logo ? logo.payload : null);
@@ -1330,7 +1316,6 @@ async function closeEditor(force = false){
   if (!force && !(await confirmCloseIfDirty())) return;
 
   if (editorMode === "TEXT") textEditor.close();
-  if (editorMode === "TEXT_PIX") textPixEditor.close();
   if (editorMode === "DRAW") drawEditor.close();
   if (editorMode === "IMAGE") imageEditor.close();
 
@@ -1375,7 +1360,6 @@ async function handleCreate(){
     let res = null;
 
     if (editorMode === "TEXT") res = await textEditor.getCreatePayload();
-    if (editorMode === "TEXT_PIX") res = await textPixEditor.getCreatePayload();
     if (editorMode === "DRAW") res = await drawEditor.getCreatePayload();
     if (editorMode === "IMAGE") res = await imageEditor.getCreatePayload();
 
@@ -1497,7 +1481,6 @@ async function boot(){
   };
 
    textEditor = initTextEditor(editorCtx);
-   textPixEditor = initTextPixEditor({ ...editorCtx, BIG_W: 208, BIG_H: 88, ensureTinyMCE: loadTinyMceFromSupabase, });
    drawEditor = initDrawEditor(editorCtx);
    imageEditor = initImageEditor(editorCtx);
 
@@ -1642,7 +1625,7 @@ async function boot(){
      }
 
      const mode = l.type === TYPE_GLYPH ? "TEXT" :
-                  (l.payload?.source?.mode || (l.type === TYPE_PIX ? "TEXT_PIX" : "TEXT"));
+                  (l.payload?.source?.mode || "DRAW");
 
      openEditor(mode, l);
    });
@@ -1659,10 +1642,6 @@ async function boot(){
   pickText?.addEventListener("click", () => {
     show(createOverlay, false);
     openCreateModal(TYPE_GLYPH, "TEXT");
-  });
-  pickTextPix?.addEventListener("click", () => {
-    show(createOverlay, false);
-    openCreateModal(TYPE_PIX, "TEXT_PIX");
   });
   pickDraw?.addEventListener("click", () => {
     show(createOverlay, false);
@@ -1682,16 +1661,6 @@ async function boot(){
      // TEXT: brak modala
      if (editorMode === "TEXT") return;
      const p = lastPreviewPayload || { kind: "GLYPH", rows: defaultLogoRows };
-     openPreviewFullscreen(p);
-   });
-
-   document.getElementById("btnPixPreview")?.addEventListener("click", async () => {
-     // Force immediate preview update before opening fullscreen
-     if (textPixEditor && typeof textPixEditor.forcePreview === "function") {
-       await textPixEditor.forcePreview();
-     }
-     const p = lastPreviewPayload || null;
-     if (!p) return;
      openPreviewFullscreen(p);
    });
 
