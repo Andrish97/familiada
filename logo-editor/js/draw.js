@@ -1132,6 +1132,14 @@ export function initDrawEditor(ctx) {
       return;
     }
   
+    // TEXT: kursor tekstowy (I-beam)
+    if (tool === TOOL.TEXT) {
+      setCursorClass("none", false);
+      setFabricCursors("text", "text", "text");
+      hideOverlayCursor();
+      return;
+    }
+
     // SHAPES + POLY: krzyżyk
     setCursorClass("cross", false);
     setFabricCursors("crosshair", "crosshair", "crosshair");
