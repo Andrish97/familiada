@@ -271,17 +271,50 @@ export function initDrawEditor(ctx) {
     }
   }
 
-  function renderObjectSettings(obj) {
-    if (!obj) { hideSettings(); return; }
-    const type = obj.type;
+  function getSelectedObjects() {
+    if (!fabricCanvas) return [];
+    const active = fabricCanvas.getActiveObjects();
+    return Array.isArray(active) ? active.filter(Boolean) : [];
+  }
 
-    // --- TEXT OBJECTS ---
-    if (type === "i-text" || type === "textbox" || type === "text") {
-      const objFont = obj.fontFamily || "";
-      const fontLabel = DRAW_FONTS.find(f => f.value === objFont)?.label || "Font";
-      const textColor = obj.fill || "#ffffff";
-      const strokeCol = obj.stroke || "transparent";
-      const hasStroke = !!obj.stroke && obj.stroke !== "transparent" && obj.strokeWidth > 0;
+  function allSame(arr) {
+    if (!arr.length) return { mixed: false, value: undefined };
+    const v = arr[0];
+    const all = arr.every(x => x === v);
+    return { mixed: !all, value: v };
+  }
+
+  /** Unified multi-selection-aware object settings */
+  function renderObjectSettings() {
+    const objs = getSelectedObjects();
+    if (!objs.length) { hideSettings(); return; }
+
+    const textObjs = objs.filter(o => o.type === "i-text" || o.type === "textbox" || o.type === "text");
+    const shapeObjs = objs.filter(o => o.type === "rect" || o.type === "ellipse" || o.type === "line");
+    const allText = textObjs.length === objs.length;
+    const allShapes = shapeObjs.length === objs.length;
+
+    // --- ALL TEXT ---
+    if (allText) {
+      const fonts = textObjs.map(o => o.fontFamily || "");
+      const sizes = textObjs.map(o => o.fontSize || 40);
+      const lineHs = textObjs.map(o => o.lineHeight || 1);
+      const spacings = textObjs.map(o => o.charSpacing || 0);
+      const weights = textObjs.map(o => o.fontWeight);
+      const styles = textObjs.map(o => o.fontStyle);
+      const underlines = textObjs.map(o => o.underline);
+      const aligns = textObjs.map(o => o.textAlign);
+      const fills = textObjs.map(o => o.fill || "#ffffff");
+      const strokes = textObjs.map(o => o.stroke || "transparent");
+      const strokeWs = textObjs.map(o => o.strokeWidth || 0);
+
+      const font = allSame(fonts);
+      const fontLabel = font.mixed ? "—" : (DRAW_FONTS.find(f => f.value === font.value)?.label || "Font");
+      const fillColor = allSame(fills).value || "#ffffff";
+      const hasStroke = strokes.some(s => s && s !== "transparent");
+      const strokeCol = hasStroke ? (allSame(strokes).value || "#ffffff") : "#ffffff";
+      const strokeW = Math.round(allSame(strokeWs).value || 0);
+
       showSettings(`
         <div class="rtToolRow">
           <div class="rtGroup">
@@ -293,109 +326,120 @@ export function initDrawEditor(ctx) {
           </div>
           <div class="rtGroup">
             <div class="rtToolLbl">${t("logoEditor.draw.fontSize")}</div>
-            <input id="drawObjTextSize" class="inp" type="number" min="10" max="220" step="1" value="${Math.round(obj.fontSize || 40)}"/>
+            <input id="drawObjTextSize" class="inp" type="number" min="10" max="220" step="1" value="${sizes[0]}"/>
           </div>
           <div class="rtGroup">
             <div class="rtToolLbl">${t("logoEditor.draw.lineHeight")}</div>
-            <input id="drawObjTextLineH" class="inp" type="number" min="0.6" max="3.0" step="0.05" value="${obj.lineHeight || 1}"/>
+            <input id="drawObjTextLineH" class="inp" type="number" min="0.6" max="3.0" step="0.05" value="${lineHs[0]}"/>
           </div>
           <div class="rtGroup">
             <div class="rtToolLbl">${t("logoEditor.draw.letterSpacing")}</div>
-            <input id="drawObjTextSpacing" class="inp" type="number" min="0" max="20" step="0.5" value="${obj.charSpacing || 0}"/>
+            <input id="drawObjTextSpacing" class="inp" type="number" min="0" max="20" step="0.5" value="${spacings[0]}"/>
           </div>
           <div class="rtGroup rtBtns">
-            <button class="btn sm" id="drawObjTextBold" type="button" ${obj.fontWeight === "bold" ? "on" : ""}>B</button>
-            <button class="btn sm" id="drawObjTextItalic" type="button" ${obj.fontStyle === "italic" ? "on" : ""}>I</button>
-            <button class="btn sm" id="drawObjTextUnderline" type="button" ${obj.underline ? "on" : ""}>U</button>
+            <button class="btn sm" id="drawObjTextBold" type="button" ${weights[0] === "bold" ? "on" : ""}>B</button>
+            <button class="btn sm" id="drawObjTextItalic" type="button" ${styles[0] === "italic" ? "on" : ""}>I</button>
+            <button class="btn sm" id="drawObjTextUnderline" type="button" ${underlines[0] ? "on" : ""}>U</button>
           </div>
           <div class="rtGroup">
-            <button class="btn sm" id="drawObjTextAlign" type="button">${obj.textAlign === "center" ? "⇆" : obj.textAlign === "right" ? "⇥" : "⇤"}</button>
+            <button class="btn sm" id="drawObjTextAlign" type="button">${aligns[0] === "center" ? "⇆" : aligns[0] === "right" ? "⇥" : "⇤"}</button>
           </div>
           <div class="rtGroup">
             <div class="rtToolLbl">${t("logoEditor.draw.fillColor")}</div>
-            <input id="drawObjTextColor" class="inp" type="color" value="${textColor}" style="width:40px;height:30px;padding:2px"/>
+            <input id="drawObjTextColor" class="inp" type="color" value="${fillColor}" style="width:40px;height:30px;padding:2px"/>
           </div>
           <div class="rtGroup">
             <label class="chk"><input type="checkbox" id="drawObjTextStrokeCheck" ${hasStroke ? "checked" : ""}/> ${t("logoEditor.draw.stroke")}</label>
             <input id="drawObjTextStrokeColor" class="inp" type="color" value="${hasStroke ? strokeCol : "#ffffff"}" style="width:40px;height:30px;padding:2px" ${!hasStroke ? "disabled" : ""}/>
-            <input id="drawObjTextStrokeW" class="inp" type="number" min="0" max="20" step="1" value="${obj.strokeWidth || 0}" style="width:60px" ${!hasStroke ? "disabled" : ""}/>
+            <input id="drawObjTextStrokeW" class="inp" type="number" min="0" max="20" step="1" value="${strokeW}" style="width:60px" ${!hasStroke ? "disabled" : ""}/>
           </div>
         </div>
       `);
 
-      // Font picker
       document.getElementById("drawFontBtn")?.addEventListener("click", () => {
         openDrawFontPicker((val) => {
-          obj.set("fontFamily", val);
+          objs.forEach(o => o.set("fontFamily", val));
           fabricCanvas.renderAll();
-          renderObjectSettings(obj);
-        }, objFont);
+          renderObjectSettings();
+        }, fonts[0]);
       });
       document.getElementById("drawObjTextSize")?.addEventListener("input", (e) => {
-        obj.set("fontSize", clamp(Number(e.target.value) || 40, 10, 220));
+        const v = clamp(Number(e.target.value) || 40, 10, 220);
+        objs.forEach(o => o.set("fontSize", v));
         fabricCanvas.renderAll();
       });
       document.getElementById("drawObjTextLineH")?.addEventListener("input", (e) => {
-        obj.set("lineHeight", clamp(Number(e.target.value) || 1, 0.6, 3.0));
+        const v = clamp(Number(e.target.value) || 1, 0.6, 3.0);
+        objs.forEach(o => o.set("lineHeight", v));
         fabricCanvas.renderAll();
       });
       document.getElementById("drawObjTextSpacing")?.addEventListener("input", (e) => {
-        obj.set("charSpacing", clamp(Number(e.target.value) || 0, 0, 20));
+        const v = clamp(Number(e.target.value) || 0, 0, 20);
+        objs.forEach(o => o.set("charSpacing", v));
         fabricCanvas.renderAll();
       });
       document.getElementById("drawObjTextBold")?.addEventListener("click", (e) => {
-        const isBold = obj.fontWeight === "bold";
-        obj.set("fontWeight", isBold ? "normal" : "bold");
+        const isBold = weights[0] === "bold";
+        objs.forEach(o => o.set("fontWeight", isBold ? "normal" : "bold"));
         e.target.classList.toggle("on", !isBold);
         fabricCanvas.renderAll();
       });
       document.getElementById("drawObjTextItalic")?.addEventListener("click", (e) => {
-        const isItalic = obj.fontStyle === "italic";
-        obj.set("fontStyle", isItalic ? "normal" : "italic");
+        const isItalic = styles[0] === "italic";
+        objs.forEach(o => o.set("fontStyle", isItalic ? "normal" : "italic"));
         e.target.classList.toggle("on", !isItalic);
         fabricCanvas.renderAll();
       });
       document.getElementById("drawObjTextUnderline")?.addEventListener("click", (e) => {
-        obj.set("underline", !obj.underline);
-        e.target.classList.toggle("on", !obj.underline);
+        objs.forEach(o => o.set("underline", !o.underline));
+        e.target.classList.toggle("on", !underlines[0]);
         fabricCanvas.renderAll();
       });
       document.getElementById("drawObjTextAlign")?.addEventListener("click", (e) => {
-        const next = obj.textAlign === "left" ? "center" : obj.textAlign === "center" ? "right" : "left";
-        obj.set("textAlign", next);
+        const next = aligns[0] === "left" ? "center" : aligns[0] === "center" ? "right" : "left";
+        objs.forEach(o => o.set("textAlign", next));
         e.target.textContent = next === "left" ? "⇤" : next === "right" ? "⇥" : "⇆";
         fabricCanvas.renderAll();
       });
       document.getElementById("drawObjTextColor")?.addEventListener("input", (e) => {
-        obj.set("fill", e.target.value);
+        objs.forEach(o => o.set("fill", e.target.value));
         fabricCanvas.renderAll();
       });
       document.getElementById("drawObjTextStrokeCheck")?.addEventListener("change", (e) => {
         const on = e.target.checked;
-        obj.set("stroke", on ? strokeCol : null);
-        obj.set("strokeWidth", on ? 1 : 0);
+        objs.forEach(o => {
+          o.set("stroke", on ? strokeCol : null);
+          o.set("strokeWidth", on ? 1 : 0);
+        });
         fabricCanvas.renderAll();
-        renderObjectSettings(obj);
+        renderObjectSettings();
       });
       document.getElementById("drawObjTextStrokeColor")?.addEventListener("input", (e) => {
-        obj.set("stroke", e.target.value);
+        objs.forEach(o => o.set("stroke", e.target.value));
         fabricCanvas.renderAll();
       });
       document.getElementById("drawObjTextStrokeW")?.addEventListener("input", (e) => {
-        obj.set("strokeWidth", clamp(Number(e.target.value) || 1, 0, 20));
+        const v = clamp(Number(e.target.value) || 1, 0, 20);
+        objs.forEach(o => o.set("strokeWidth", v));
         fabricCanvas.renderAll();
       });
     }
-    // --- SHAPE OBJECTS ---
-    else if (type === "rect" || type === "ellipse" || type === "line") {
-      const strokeCol = obj.stroke || "#ffffff";
-      const hasFill = obj.fill && obj.fill !== "transparent";
-      const fillCol = (hasFill ? obj.fill : "#000000");
+    // --- ALL SHAPES ---
+    else if (allShapes) {
+      const strokeWs = shapeObjs.map(o => o.strokeWidth || 1);
+      const strokeCols = shapeObjs.map(o => o.stroke || "#ffffff");
+      const fills = shapeObjs.map(o => o.fill || "transparent");
+
+      const strokeW = strokeWs[0];
+      const strokeCol = allSame(strokeCols).value || "#ffffff";
+      const hasFill = fills.some(f => f && f !== "transparent");
+      const fillCol = hasFill ? (allSame(fills).value || "#000000") : "#000000";
+
       showSettings(`
         <div class="rtToolRow">
           <div class="rtGroup">
             <div class="rtToolLbl">${t("logoEditor.draw.stroke")}</div>
-            <input id="drawObjStroke" class="inp" type="number" min="0" max="50" step="1" value="${obj.strokeWidth || 1}"/>
+            <input id="drawObjStroke" class="inp" type="number" min="0" max="50" step="1" value="${strokeW}"/>
             <input id="drawObjStrokeColor" class="inp" type="color" value="${strokeCol}" style="width:40px;height:30px;padding:2px"/>
           </div>
           <div class="rtGroup">
@@ -405,108 +449,46 @@ export function initDrawEditor(ctx) {
         </div>
       `);
       document.getElementById("drawObjStroke")?.addEventListener("input", (e) => {
-        obj.set("strokeWidth", clamp(Number(e.target.value) || 1, 0, 50));
+        const v = clamp(Number(e.target.value) || 1, 0, 50);
+        objs.forEach(o => o.set("strokeWidth", v));
         fabricCanvas.renderAll();
       });
       document.getElementById("drawObjStrokeColor")?.addEventListener("input", (e) => {
-        obj.set("stroke", e.target.value);
+        objs.forEach(o => o.set("stroke", e.target.value));
         fabricCanvas.renderAll();
       });
       document.getElementById("drawObjFillCheck")?.addEventListener("change", (e) => {
         const on = e.target.checked;
-        obj.set("fill", on ? fillCol : "transparent");
+        objs.forEach(o => o.set("fill", on ? fillCol : "transparent"));
         fabricCanvas.renderAll();
         const ci = document.getElementById("drawObjFillColor");
         if (ci) ci.disabled = !on;
       });
       document.getElementById("drawObjFillColor")?.addEventListener("input", (e) => {
-        obj.set("fill", e.target.value);
+        objs.forEach(o => o.set("fill", e.target.value));
         fabricCanvas.renderAll();
       });
-    } else {
-      hideSettings();
     }
-  }
+    // --- MIXED (text + shapes) ---
+    else {
+      const textFills = textObjs.map(o => o.fill || "#ffffff");
+      const shapeFills = shapeObjs.map(o => o.fill || "transparent");
+      const allFills = [...textFills, ...shapeFills.filter(f => f !== "transparent")];
+      const fillColor = allFills.length ? (allSame(allFills).value || "#ffffff") : "#ffffff";
 
-  /** Ustawienia zaznaczonego obiektu TEKSTU (font, rozmiar, B/I/U, align) */
-  function renderTextObjectSettings(obj) {
-    if (!obj) { hideSettings(); return; }
-    const objFont = obj.fontFamily || "";
-    const fontLabel = DRAW_FONTS.find(f => f.value === objFont)?.label || "Font";
-    showSettings(`
-      <div class="rtToolRow">
-        <div class="rtGroup">
-          <div class="rtToolLbl">${t("logoEditor.draw.fontFamily")}</div>
-          <button class="btn sm" id="drawFontBtn" type="button" style="min-width:180px;max-width:280px;height:30px;justify-content:space-between;display:flex;align-items:center;">
-            <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${fontLabel}</span>
-            <span style="opacity:.5;">▾</span>
-          </button>
+      showSettings(`
+        <div class="rtToolRow">
+          <div class="rtGroup">
+            <div class="rtToolLbl">${t("logoEditor.draw.fillColor")}</div>
+            <input id="drawObjMixedColor" class="inp" type="color" value="${fillColor}" style="width:40px;height:30px;padding:2px"/>
+          </div>
         </div>
-        <div class="rtGroup">
-          <div class="rtToolLbl">${t("logoEditor.draw.fontSize")}</div>
-          <input id="drawObjTextSize" class="inp" type="number" min="10" max="220" step="1" value="${Math.round(obj.fontSize || 40)}"/>
-        </div>
-        <div class="rtGroup">
-          <div class="rtToolLbl">${t("logoEditor.draw.lineHeight")}</div>
-          <input id="drawObjTextLineH" class="inp" type="number" min="0.6" max="3.0" step="0.05" value="${obj.lineHeight || 1}"/>
-        </div>
-        <div class="rtGroup">
-          <div class="rtToolLbl">${t("logoEditor.draw.letterSpacing")}</div>
-          <input id="drawObjTextSpacing" class="inp" type="number" min="0" max="20" step="0.5" value="${obj.charSpacing || 0}"/>
-        </div>
-        <div class="rtGroup rtBtns">
-          <button class="btn sm" id="drawObjTextBold" type="button" ${obj.fontWeight === "bold" ? "on" : ""}>B</button>
-          <button class="btn sm" id="drawObjTextItalic" type="button" ${obj.fontStyle === "italic" ? "on" : ""}>I</button>
-          <button class="btn sm" id="drawObjTextUnderline" type="button" ${obj.underline ? "on" : ""}>U</button>
-        </div>
-        <div class="rtGroup">
-          <button class="btn sm" id="drawObjTextAlign" type="button">${obj.textAlign === "center" ? "⇆" : obj.textAlign === "right" ? "⇥" : "⇤"}</button>
-        </div>
-      </div>
-    `);
-    document.getElementById("drawFontBtn")?.addEventListener("click", () => {
-      openDrawFontPicker((val) => {
-        obj.set("fontFamily", val);
+      `);
+      document.getElementById("drawObjMixedColor")?.addEventListener("input", (e) => {
+        objs.forEach(o => o.set("fill", e.target.value));
         fabricCanvas.renderAll();
-        // Re-render to update button label
-        renderTextObjectSettings(obj);
-      }, objFont);
-    });
-    document.getElementById("drawObjTextSize")?.addEventListener("input", (e) => {
-      obj.set("fontSize", clamp(Number(e.target.value) || 40, 10, 220));
-      fabricCanvas.renderAll();
-    });
-    document.getElementById("drawObjTextLineH")?.addEventListener("input", (e) => {
-      obj.set("lineHeight", clamp(Number(e.target.value) || 1, 0.6, 3.0));
-      fabricCanvas.renderAll();
-    });
-    document.getElementById("drawObjTextSpacing")?.addEventListener("input", (e) => {
-      obj.set("charSpacing", clamp(Number(e.target.value) || 0, 0, 20));
-      fabricCanvas.renderAll();
-    });
-    document.getElementById("drawObjTextBold")?.addEventListener("click", (e) => {
-      const isBold = obj.fontWeight === "bold";
-      obj.set("fontWeight", isBold ? "normal" : "bold");
-      e.target.classList.toggle("on", !isBold);
-      fabricCanvas.renderAll();
-    });
-    document.getElementById("drawObjTextItalic")?.addEventListener("click", (e) => {
-      const isItalic = obj.fontStyle === "italic";
-      obj.set("fontStyle", isItalic ? "normal" : "italic");
-      e.target.classList.toggle("on", !isItalic);
-      fabricCanvas.renderAll();
-    });
-    document.getElementById("drawObjTextUnderline")?.addEventListener("click", (e) => {
-      obj.set("underline", !obj.underline);
-      e.target.classList.toggle("on", !obj.underline);
-      fabricCanvas.renderAll();
-    });
-    document.getElementById("drawObjTextAlign")?.addEventListener("click", (e) => {
-      const next = obj.textAlign === "left" ? "center" : obj.textAlign === "center" ? "right" : "left";
-      obj.set("textAlign", next);
-      e.target.textContent = next === "left" ? "⇤" : next === "right" ? "⇥" : "⇆";
-      fabricCanvas.renderAll();
-    });
+      });
+    }
   }
 
     // =========================================================
@@ -1509,18 +1491,22 @@ export function initDrawEditor(ctx) {
 
   /** Centralna funkcja: renderuje ustawienia wg aktualnego narzędzia + zaznaczenia */
   function renderCurrentSettings() {
-    const obj = getActiveObj();
-
-    // TEXT tool: jeśli zaznaczony tekst → pokaż ustawienia tekstu (edit mode)
-    if (tool === TOOL.TEXT && isTextObj(obj)) {
-      renderTextObjectSettings(obj);
-      return;
+    // TEXT tool: jeśli zaznaczony tekst → pokaż pełne ustawienia tekstu
+    if (tool === TOOL.TEXT) {
+      const objs = getSelectedObjects().filter(isTextObj);
+      if (objs.length) {
+        renderObjectSettings();
+        return;
+      }
     }
 
-    // SELECT tool: jeśli zaznaczony obiekt → pokaż jego ustawienia
-    if (tool === TOOL.SELECT && obj) {
-      renderObjectSettings(obj);
-      return;
+    // SELECT tool: jeśli coś zaznaczone → pokaż ustawienia obiektów
+    if (tool === TOOL.SELECT) {
+      const objs = getSelectedObjects();
+      if (objs.length) {
+        renderObjectSettings();
+        return;
+      }
     }
 
     // Inne narzędzia → pokaż ustawienia narzędzia
@@ -2234,7 +2220,7 @@ export function initDrawEditor(ctx) {
       pushUndo();
       ctx.markDirty?.();
       schedulePreview(80);
-      renderObjectSettings(fabricCanvas.getActiveObject());
+      renderCurrentSettings();
     });
 
     fabricCanvas.on("object:removed", () => {
