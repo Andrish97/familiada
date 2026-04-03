@@ -3511,6 +3511,7 @@ const uk = {
       stroke: "Товщина",
       fill: "Заповнення",
       fillColor: "Колір заповнення",
+      bgColor: "Фон сцени",
       fontFamily: "Шрифт",
       fontSize: "Розмір",
       lineHeight: "Міжряддя",

@@ -3636,6 +3636,7 @@ const en = {
       stroke: "Stroke width",
       fill: "Fill",
       fillColor: "Fill color",
+      bgColor: "Scene background",
       fontFamily: "Font",
       fontSize: "Size",
       lineHeight: "Line height",

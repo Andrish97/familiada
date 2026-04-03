@@ -3636,6 +3636,7 @@ const pl = {
       stroke: "Grubość",
       fill: "Wypełnij",
       fillColor: "Kolor wypełnienia",
+      bgColor: "Tło sceny",
       fontFamily: "Font",
       fontSize: "Rozmiar",
       lineHeight: "Interlinia",

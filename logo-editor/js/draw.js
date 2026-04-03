@@ -56,9 +56,8 @@ export function initDrawEditor(ctx) {
 
   const tPolyDone = document.getElementById("tPolyDone");
 
-  // NOWE (dopisz w HTML):
-  const tColor    = document.getElementById("tColor");  // ⬛️/⬜️ (kolor obramowania)
-  const tBg       = document.getElementById("tBg");     // 🖼️ (tło)
+  // tColor i tBg zostały usunięte z toolbar — kolory są teraz w ustawieniach narzędzia
+  // (zmienne fg i bg dalej działają jako domyślne kolory)
 
     // =========================================================
   // Ikony dynamiczne: FG (kolor narzędzia) i BG (tło sceny)
@@ -141,6 +140,8 @@ export function initDrawEditor(ctx) {
 
   function renderToolSettings() {
     const toolName = tool.toLowerCase();
+    const strokeHex = fgColor();
+    const bgHex = bgColor();
     if (toolName === "brush") {
       showSettings(`
         <div class="rtToolRow">
@@ -148,14 +149,32 @@ export function initDrawEditor(ctx) {
             <div class="rtToolLbl">${t("logoEditor.draw.stroke")}</div>
             <input id="drawStrokeWidth" class="inp" type="number" min="1" max="50" step="1" value="${strokeWidth}"/>
           </div>
+          <div class="rtGroup">
+            <div class="rtToolLbl">${t("logoEditor.draw.fillColor")}</div>
+            <input id="drawStrokeColor" class="inp" type="color" value="${strokeHex}" style="width:40px;height:30px;padding:2px"/>
+          </div>
+          <div class="rtGroup">
+            <div class="rtToolLbl">${t("logoEditor.draw.bgColor")}</div>
+            <input id="drawBgColor" class="inp" type="color" value="${bgHex}" style="width:40px;height:30px;padding:2px"/>
+          </div>
         </div>
       `);
       document.getElementById("drawStrokeWidth")?.addEventListener("input", (e) => {
         strokeWidth = clamp(Number(e.target.value) || 1, 1, 50);
         updateCursor();
       });
+      document.getElementById("drawStrokeColor")?.addEventListener("input", (e) => {
+        fg = e.target.value === "#000000" ? "BLACK" : "WHITE";
+        syncDynamicIcons();
+      });
+      document.getElementById("drawBgColor")?.addEventListener("input", (e) => {
+        bg = e.target.value === "#ffffff" ? "WHITE" : "BLACK";
+        if (fabricCanvas) { fabricCanvas.backgroundColor = bgColor(); fabricCanvas.requestRenderAll(); }
+        syncDynamicIcons();
+      });
     } else if (toolName === "text") {
       const fontLabel = DRAW_FONTS.find(f => f.value === textFont)?.label || "Font";
+      const textHex = fgColor();
       showSettings(`
         <div class="rtToolRow">
           <div class="rtGroup">
@@ -185,6 +204,14 @@ export function initDrawEditor(ctx) {
           <div class="rtGroup">
             <button class="btn sm" id="drawTextAlign" type="button">${textAlign === "center" ? "⇆" : textAlign === "right" ? "⇥" : "⇤"}</button>
           </div>
+          <div class="rtGroup">
+            <div class="rtToolLbl">${t("logoEditor.draw.fillColor")}</div>
+            <input id="drawTextColor" class="inp" type="color" value="${textHex}" style="width:40px;height:30px;padding:2px"/>
+          </div>
+          <div class="rtGroup">
+            <div class="rtToolLbl">${t("logoEditor.draw.bgColor")}</div>
+            <input id="drawTextBgColor" class="inp" type="color" value="${bgHex}" style="width:40px;height:30px;padding:2px"/>
+          </div>
         </div>
       `);
       document.getElementById("drawFontBtn")?.addEventListener("click", () => {
@@ -193,6 +220,15 @@ export function initDrawEditor(ctx) {
           // Re-render to update button label
           renderToolSettings();
         }, textFont);
+      });
+      document.getElementById("drawTextColor")?.addEventListener("input", (e) => {
+        fg = e.target.value === "#000000" ? "BLACK" : "WHITE";
+        syncDynamicIcons();
+      });
+      document.getElementById("drawTextBgColor")?.addEventListener("input", (e) => {
+        bg = e.target.value === "#ffffff" ? "WHITE" : "BLACK";
+        if (fabricCanvas) { fabricCanvas.backgroundColor = bgColor(); fabricCanvas.requestRenderAll(); }
+        syncDynamicIcons();
       });
       document.getElementById("drawTextSize")?.addEventListener("input", (e) => {
         textFontSize = clamp(Number(e.target.value) || 130, 10, 220);
@@ -225,22 +261,37 @@ export function initDrawEditor(ctx) {
           <div class="rtGroup">
             <div class="rtToolLbl">${t("logoEditor.draw.stroke")}</div>
             <input id="drawStrokeWidth" class="inp" type="number" min="1" max="50" step="1" value="${strokeWidth}"/>
+            <input id="drawStrokeColor" class="inp" type="color" value="${strokeHex}" style="width:40px;height:30px;padding:2px"/>
           </div>
           <div class="rtGroup">
-            <label class="chk"><input type="checkbox" id="drawFillCheck"/> ${t("logoEditor.draw.fill")}</label>
-            <input id="drawFillColor" class="inp" type="color" value="${fillColor}" style="width:40px;height:30px;padding:2px"/>
+            <label class="chk"><input type="checkbox" id="drawFillCheck" ${fillEnabled ? "checked" : ""}/> ${t("logoEditor.draw.fill")}</label>
+            <input id="drawFillColor" class="inp" type="color" value="${fillColor}" style="width:40px;height:30px;padding:2px" ${!fillEnabled ? "disabled" : ""}/>
+          </div>
+          <div class="rtGroup">
+            <div class="rtToolLbl">${t("logoEditor.draw.bgColor")}</div>
+            <input id="drawBgColor" class="inp" type="color" value="${bgHex}" style="width:40px;height:30px;padding:2px"/>
           </div>
         </div>
       `);
       document.getElementById("drawStrokeWidth")?.addEventListener("input", (e) => {
         strokeWidth = clamp(Number(e.target.value) || 1, 1, 50);
       });
+      document.getElementById("drawStrokeColor")?.addEventListener("input", (e) => {
+        fg = e.target.value === "#000000" ? "BLACK" : "WHITE";
+        syncDynamicIcons();
+      });
       document.getElementById("drawFillCheck")?.addEventListener("change", (e) => {
         fillEnabled = e.target.checked;
-        document.getElementById("drawFillColor").disabled = !fillEnabled;
+        const ci = document.getElementById("drawFillColor");
+        if (ci) ci.disabled = !fillEnabled;
       });
       document.getElementById("drawFillColor")?.addEventListener("input", (e) => {
         fillColor = e.target.value;
+      });
+      document.getElementById("drawBgColor")?.addEventListener("input", (e) => {
+        bg = e.target.value === "#ffffff" ? "WHITE" : "BLACK";
+        if (fabricCanvas) { fabricCanvas.backgroundColor = bgColor(); fabricCanvas.requestRenderAll(); }
+        syncDynamicIcons();
       });
     } else {
       hideSettings();
@@ -250,56 +301,154 @@ export function initDrawEditor(ctx) {
   function renderObjectSettings(obj) {
     if (!obj) { hideSettings(); return; }
     const type = obj.type;
+
+    // --- TEXT OBJECTS ---
     if (type === "i-text" || type === "textbox" || type === "text") {
-      // SELECT tool + text → tylko kolor
-      const fillVal = obj.fill || "#ffffff";
+      const objFont = obj.fontFamily || "";
+      const fontLabel = DRAW_FONTS.find(f => f.value === objFont)?.label || "Font";
+      const textColor = obj.fill || "#ffffff";
+      const strokeCol = obj.stroke || "transparent";
+      const hasStroke = !!obj.stroke && obj.stroke !== "transparent" && obj.strokeWidth > 0;
       showSettings(`
         <div class="rtToolRow">
           <div class="rtGroup">
-            <label class="chk" style="display:flex;align-items:center;gap:6px;">
-              <input id="drawObjFillCheck" type="checkbox" ${fillVal && fillVal !== "transparent" ? "checked" : ""}/>
-              ${t("logoEditor.draw.fill")}
-            </label>
-            <input id="drawObjFillColor" class="inp" type="color" value="${fillVal && fillVal !== "transparent" ? fillVal : "#ffffff"}" style="width:40px;height:30px;padding:2px"/>
+            <div class="rtToolLbl">${t("logoEditor.draw.fontFamily")}</div>
+            <button class="btn sm" id="drawFontBtn" type="button" style="min-width:180px;max-width:280px;height:30px;justify-content:space-between;display:flex;align-items:center;">
+              <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${fontLabel}</span>
+              <span style="opacity:.5;">▾</span>
+            </button>
+          </div>
+          <div class="rtGroup">
+            <div class="rtToolLbl">${t("logoEditor.draw.fontSize")}</div>
+            <input id="drawObjTextSize" class="inp" type="number" min="10" max="220" step="1" value="${Math.round(obj.fontSize || 40)}"/>
+          </div>
+          <div class="rtGroup">
+            <div class="rtToolLbl">${t("logoEditor.draw.lineHeight")}</div>
+            <input id="drawObjTextLineH" class="inp" type="number" min="0.6" max="3.0" step="0.05" value="${obj.lineHeight || 1}"/>
+          </div>
+          <div class="rtGroup">
+            <div class="rtToolLbl">${t("logoEditor.draw.letterSpacing")}</div>
+            <input id="drawObjTextSpacing" class="inp" type="number" min="0" max="20" step="0.5" value="${obj.charSpacing || 0}"/>
+          </div>
+          <div class="rtGroup rtBtns">
+            <button class="btn sm" id="drawObjTextBold" type="button" ${obj.fontWeight === "bold" ? "on" : ""}>B</button>
+            <button class="btn sm" id="drawObjTextItalic" type="button" ${obj.fontStyle === "italic" ? "on" : ""}>I</button>
+            <button class="btn sm" id="drawObjTextUnderline" type="button" ${obj.underline ? "on" : ""}>U</button>
+          </div>
+          <div class="rtGroup">
+            <button class="btn sm" id="drawObjTextAlign" type="button">${obj.textAlign === "center" ? "⇆" : obj.textAlign === "right" ? "⇥" : "⇤"}</button>
+          </div>
+          <div class="rtGroup">
+            <div class="rtToolLbl">${t("logoEditor.draw.fillColor")}</div>
+            <input id="drawObjTextColor" class="inp" type="color" value="${textColor}" style="width:40px;height:30px;padding:2px"/>
+          </div>
+          <div class="rtGroup">
+            <label class="chk"><input type="checkbox" id="drawObjTextStrokeCheck" ${hasStroke ? "checked" : ""}/> ${t("logoEditor.draw.stroke")}</label>
+            <input id="drawObjTextStrokeColor" class="inp" type="color" value="${hasStroke ? strokeCol : "#ffffff"}" style="width:40px;height:30px;padding:2px" ${!hasStroke ? "disabled" : ""}/>
+            <input id="drawObjTextStrokeW" class="inp" type="number" min="0" max="20" step="1" value="${obj.strokeWidth || 0}" style="width:60px" ${!hasStroke ? "disabled" : ""}/>
           </div>
         </div>
       `);
-      document.getElementById("drawObjFillCheck")?.addEventListener("change", (e) => {
-        obj.set("fill", e.target.checked ? obj.fill || "#ffffff" : "transparent");
-        fabricCanvas.renderAll();
-        const ci = document.getElementById("drawObjFillColor");
-        if (ci) ci.disabled = !e.target.checked;
+
+      // Font picker
+      document.getElementById("drawFontBtn")?.addEventListener("click", () => {
+        openDrawFontPicker((val) => {
+          obj.set("fontFamily", val);
+          fabricCanvas.renderAll();
+          renderObjectSettings(obj);
+        }, objFont);
       });
-      document.getElementById("drawObjFillColor")?.addEventListener("input", (e) => {
+      document.getElementById("drawObjTextSize")?.addEventListener("input", (e) => {
+        obj.set("fontSize", clamp(Number(e.target.value) || 40, 10, 220));
+        fabricCanvas.renderAll();
+      });
+      document.getElementById("drawObjTextLineH")?.addEventListener("input", (e) => {
+        obj.set("lineHeight", clamp(Number(e.target.value) || 1, 0.6, 3.0));
+        fabricCanvas.renderAll();
+      });
+      document.getElementById("drawObjTextSpacing")?.addEventListener("input", (e) => {
+        obj.set("charSpacing", clamp(Number(e.target.value) || 0, 0, 20));
+        fabricCanvas.renderAll();
+      });
+      document.getElementById("drawObjTextBold")?.addEventListener("click", (e) => {
+        const isBold = obj.fontWeight === "bold";
+        obj.set("fontWeight", isBold ? "normal" : "bold");
+        e.target.classList.toggle("on", !isBold);
+        fabricCanvas.renderAll();
+      });
+      document.getElementById("drawObjTextItalic")?.addEventListener("click", (e) => {
+        const isItalic = obj.fontStyle === "italic";
+        obj.set("fontStyle", isItalic ? "normal" : "italic");
+        e.target.classList.toggle("on", !isItalic);
+        fabricCanvas.renderAll();
+      });
+      document.getElementById("drawObjTextUnderline")?.addEventListener("click", (e) => {
+        obj.set("underline", !obj.underline);
+        e.target.classList.toggle("on", !obj.underline);
+        fabricCanvas.renderAll();
+      });
+      document.getElementById("drawObjTextAlign")?.addEventListener("click", (e) => {
+        const next = obj.textAlign === "left" ? "center" : obj.textAlign === "center" ? "right" : "left";
+        obj.set("textAlign", next);
+        e.target.textContent = next === "left" ? "⇤" : next === "right" ? "⇥" : "⇆";
+        fabricCanvas.renderAll();
+      });
+      document.getElementById("drawObjTextColor")?.addEventListener("input", (e) => {
         obj.set("fill", e.target.value);
         fabricCanvas.renderAll();
       });
-      const ci = document.getElementById("drawObjFillColor");
-      if (ci) ci.disabled = !(fillVal && fillVal !== "transparent");
-    } else if (type === "rect" || type === "ellipse" || type === "line") {
+      document.getElementById("drawObjTextStrokeCheck")?.addEventListener("change", (e) => {
+        const on = e.target.checked;
+        obj.set("stroke", on ? strokeCol : null);
+        obj.set("strokeWidth", on ? 1 : 0);
+        fabricCanvas.renderAll();
+        renderObjectSettings(obj);
+      });
+      document.getElementById("drawObjTextStrokeColor")?.addEventListener("input", (e) => {
+        obj.set("stroke", e.target.value);
+        fabricCanvas.renderAll();
+      });
+      document.getElementById("drawObjTextStrokeW")?.addEventListener("input", (e) => {
+        obj.set("strokeWidth", clamp(Number(e.target.value) || 1, 0, 20));
+        fabricCanvas.renderAll();
+      });
+    }
+    // --- SHAPE OBJECTS ---
+    else if (type === "rect" || type === "ellipse" || type === "line") {
+      const strokeCol = obj.stroke || "#ffffff";
+      const hasFill = obj.fill && obj.fill !== "transparent";
+      const fillCol = (hasFill ? obj.fill : "#000000");
       showSettings(`
         <div class="rtToolRow">
           <div class="rtGroup">
             <div class="rtToolLbl">${t("logoEditor.draw.stroke")}</div>
             <input id="drawObjStroke" class="inp" type="number" min="0" max="50" step="1" value="${obj.strokeWidth || 1}"/>
+            <input id="drawObjStrokeColor" class="inp" type="color" value="${strokeCol}" style="width:40px;height:30px;padding:2px"/>
           </div>
           <div class="rtGroup">
-            <label class="chk"><input type="checkbox" id="drawObjFillCheck" ${obj.fill && obj.fill !== "transparent" ? "checked" : ""}/> ${t("logoEditor.draw.fill")}</label>
-            <input id="drawObjFillColor" class="inp" type="color" value="${obj.fill && obj.fill !== "transparent" ? obj.fill : "#000000"}" style="width:40px;height:30px;padding:2px"/>
+            <label class="chk"><input type="checkbox" id="drawObjFillCheck" ${hasFill ? "checked" : ""}/> ${t("logoEditor.draw.fill")}</label>
+            <input id="drawObjFillColor" class="inp" type="color" value="${fillCol}" style="width:40px;height:30px;padding:2px" ${!hasFill ? "disabled" : ""}/>
           </div>
         </div>
       `);
       document.getElementById("drawObjStroke")?.addEventListener("input", (e) => {
         obj.set("strokeWidth", clamp(Number(e.target.value) || 1, 0, 50));
-        canvas.renderAll();
+        fabricCanvas.renderAll();
+      });
+      document.getElementById("drawObjStrokeColor")?.addEventListener("input", (e) => {
+        obj.set("stroke", e.target.value);
+        fabricCanvas.renderAll();
       });
       document.getElementById("drawObjFillCheck")?.addEventListener("change", (e) => {
-        obj.set("fill", e.target.checked ? fillColor : "transparent");
-        canvas.renderAll();
+        const on = e.target.checked;
+        obj.set("fill", on ? fillCol : "transparent");
+        fabricCanvas.renderAll();
+        const ci = document.getElementById("drawObjFillColor");
+        if (ci) ci.disabled = !on;
       });
       document.getElementById("drawObjFillColor")?.addEventListener("input", (e) => {
         obj.set("fill", e.target.value);
-        canvas.renderAll();
+        fabricCanvas.renderAll();
       });
     } else {
       hideSettings();
@@ -631,9 +780,7 @@ export function initDrawEditor(ctx) {
     setTip(tZoomIn,  tip2(t("logoEditor.draw.tooltips.zoomIn"), `${K.MOD} + +`));
     setTip(tZoomOut, tip2(t("logoEditor.draw.tooltips.zoomOut"), `${K.MOD} + -`));
 
-    // Kolor / tło
-    setTip(tColor, t("logoEditor.draw.tooltips.color"));
-    setTip(tBg,    t("logoEditor.draw.tooltips.background"));
+    // Kolor / tło zostały przeniesione do ustawień narzędzia
 
     // Narzędzia
     setTip(tBrush,   tip2(t("logoEditor.draw.tooltips.brush"), "B"));
@@ -2317,12 +2464,30 @@ export function initDrawEditor(ctx) {
     fabricCanvas.on("mouse:out",  () => updateCursorVisual());
 
 
-    // Dwuklik kończy polygon
+    // Dwuklik kończy polygon LUB edytuje tekst
     drawCanvasEl.addEventListener("dblclick", (ev) => {
       if (ctx.getMode?.() !== "DRAW") return;
-      if (tool !== TOOL.POLY) return;
-      ev.preventDefault();
-      finalizePolygon();
+
+      // Polygon: finalize
+      if (tool === TOOL.POLY) {
+        ev.preventDefault();
+        finalizePolygon();
+        return;
+      }
+
+      // SELECT tool: double-click on text → edit mode
+      if (tool === TOOL.SELECT && fabricCanvas) {
+        const pointer = fabricCanvas.getPointer(ev);
+        const target = fabricCanvas.findTarget(ev);
+        if (target && (target.type === "i-text" || target.type === "textbox" || target.type === "text")) {
+          ev.preventDefault();
+          fabricCanvas.setActiveObject(target);
+          target.enterEditing();
+          target.selectAll();
+          fabricCanvas.renderAll();
+          return;
+        }
+      }
     });
 
     // Wheel zoom (tylko select/pan) + min zoom = 1
@@ -2599,19 +2764,7 @@ export function initDrawEditor(ctx) {
     // Poly done
     tPolyDone?.addEventListener("click", () => finalizePolygon());
 
-    // Color toggle
-    tColor?.addEventListener("click", () => {
-      toggleFg();
-      // jeśli aktualnie pędzel — od razu zmień styl
-      if (tool === TOOL.BRUSH) applyBrushStyle();
-      // jeśli rysujemy figury — nowe obiekty będą miały nowy stroke
-      schedulePreview(80);
-    });
-
-    // Background toggle
-    tBg?.addEventListener("click", () => {
-      toggleBg();
-    });
+    // tColor/tBg przeniesione do ustawień narzędzia — stare handlery usunięte
 
     // Keyboard
     window.addEventListener("keydown", onKeyDown);
