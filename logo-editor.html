@@ -495,11 +495,11 @@
     </div>
   </div>
 
-  <div class="helpOverlay hidden" id="helpOverlay" aria-hidden="true">
+  <div class="helpOverlay hidden" id="helpOverlay">
     <div class="helpModal" role="dialog" aria-modal="true" aria-label="Wskazówki">
       <div class="helpModalToolbar">
-        <button class="btn sm helpCloseBtn" id="btnHelpClose" type="button" aria-label="Zamknij">✕</button>
         <button class="btn btn-sm" id="btnLegal" type="button" data-i18n="manual.legal">🔐 Polityka prywatności</button>
+        <button class="btn sm helpCloseBtn" id="btnHelpClose" type="button" aria-label="Zamknij">✕</button>
       </div>
       <iframe id="helpFrame" class="helpFrame" src="../manual" title="Wskazówki"></iframe>
     </div>
@@ -508,7 +508,8 @@
   <div class="legalOverlay hidden" id="legalOverlay">
     <div class="legalModal" role="dialog" aria-modal="true">
       <div class="legalModalToolbar">
-        <button class="btn btn-sm" id="btnBackToManual" type="button" data-i18n="legal.backToManual">← Powrót do manuala</button>
+        <button class="btn btn-sm" id="btnBackToManual" type="button" data-i18n="privacy.backToManual">← Wskazówki</button>
+        <button class="btn sm legalCloseBtn" id="btnLegalClose" type="button" aria-label="Zamknij">✕</button>
       </div>
       <iframe id="legalFrame" class="legalFrame" src="../manual" title="Polityka prywatności"></iframe>
     </div>

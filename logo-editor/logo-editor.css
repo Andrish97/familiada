@@ -1214,7 +1214,7 @@ body.builder-body.logo-editor-body > main.logoWrap{
 .helpOverlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:grid;place-items:center}
 .helpOverlay.hidden{display:none}
 .helpModal{position:relative;width:min(1500px,92vw);height:min(1050px,90vh);background:var(--surface,#111827);border:1px solid rgba(255,255,255,.16);border-radius:16px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.45);display:flex;flex-direction:column}
-.helpModalToolbar{display:flex;align-items:center;gap:8px;padding:10px 14px;background:rgba(255,234,166,.08);border-bottom:1px solid rgba(255,255,255,.1)}
+.helpModalToolbar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 14px;background:rgba(255,234,166,.08);border-bottom:1px solid rgba(255,255,255,.1)}
 .helpCloseBtn{position:static;min-width:34px;height:34px;border-radius:999px;padding:0 10px;background:rgba(10,16,32,.72);border:1px solid rgba(255,255,255,.28)}
 .helpFrame{width:100%;flex:1;border:0;background:var(--bg);display:block}
 
@@ -1222,5 +1222,6 @@ body.builder-body.logo-editor-body > main.logoWrap{
 .legalOverlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:10000;display:grid;place-items:center}
 .legalOverlay.hidden{display:none}
 .legalModal{position:relative;width:min(1500px,92vw);height:min(1050px,90vh);background:var(--surface,#111827);border:1px solid rgba(255,255,255,.16);border-radius:16px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.45);display:flex;flex-direction:column}
-.legalModalToolbar{display:flex;align-items:center;gap:8px;padding:10px 14px;background:rgba(255,234,166,.08);border-bottom:1px solid rgba(255,255,255,.1)}
+.legalModalToolbar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 14px;background:rgba(255,234,166,.08);border-bottom:1px solid rgba(255,255,255,.1)}
+.legalCloseBtn{position:static;min-width:34px;height:34px;border-radius:999px;padding:0 10px;background:rgba(10,16,32,.72);border:1px solid rgba(255,255,255,.28)}
 .legalFrame{width:100%;flex:1;border:0;background:var(--bg);display:block}

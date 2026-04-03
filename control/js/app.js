@@ -1241,6 +1241,7 @@ async function sendZeroStatesToDevices() {
   const legalOverlay = document.getElementById("legalOverlay");
   const legalFrame = document.getElementById("legalFrame");
   const btnBackToManual = document.getElementById("btnBackToManual");
+  const btnLegalClose = document.getElementById("btnLegalClose");
   
   function buildHelpUrl() {
     const url = new URL("../manual", location.href);
@@ -1309,6 +1310,7 @@ async function sendZeroStatesToDevices() {
     closeLegalModal();
     openHelpModal();
   });
+  btnLegalClose?.addEventListener("click", closeLegalModal);
   legalOverlay?.addEventListener("click", (ev) => { if (ev.target === legalOverlay) closeLegalModal(); });
 
   // ===== Helper: aktualizacja etykiet przycisków "QR na wyświetlaczu" =====

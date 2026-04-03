@@ -803,14 +803,14 @@ const pl = {
     pageTitle: "Wskazówki dla użytkownika",
     tabs: {
       general: "Ogólny opis",
-      edit: "Dodawanie i edycja gry",
+      edit: "Gry",
       bases: "Bazy pytań",
       polls: "Ankiety",
       subscriptions: "Subskrypcje",
       logo: "Tworzenie logo",
       connect: "Podłącz urządzenie",
       control: "Panel sterowania",
-      demo: "Demo - materiały startowe",
+      demo: "Materiały Demo",
       community: "Gry Społeczności",
     },
     demo: {

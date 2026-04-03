@@ -800,14 +800,14 @@ const en = {
     pageTitle: "User guide",
     tabs: {
       general: "Overview",
-      edit: "Creating and editing a game",
+      edit: "Games",
       bases: "Question bases",
       polls: "Polls",
       subscriptions: "Subscriptions",
       logo: "Logo creation",
       connect: "Connect device",
       control: "Control panel",
-      demo: "Demo - starter materials",
+      demo: "Demo Materials",
       community: "Community Games",
     },
     demo: {

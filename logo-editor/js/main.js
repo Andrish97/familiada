@@ -55,6 +55,7 @@ const btnLegal = document.getElementById("btnLegal");
 const legalOverlay = document.getElementById("legalOverlay");
 const legalFrame = document.getElementById("legalFrame");
 const btnBackToManual = document.getElementById("btnBackToManual");
+const btnLegalClose = document.getElementById("btnLegalClose");
 
 const brandTitle = document.getElementById("brandTitle");
 
@@ -1552,6 +1553,7 @@ async function boot(){
      closeLegalModal();
      openHelpModal();
    });
+   btnLegalClose?.addEventListener("click", closeLegalModal);
    legalOverlay?.addEventListener("click", (ev) => { if (ev.target === legalOverlay) closeLegalModal(); });
 
    // Guard na niezapisane zmiany przy wylogowaniu przez dropdown
