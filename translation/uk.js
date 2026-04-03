@@ -3501,7 +3501,7 @@ const uk = {
       },
       warnings: {
         clipped: "Схоже, обрізається — зменште розмір або скороти текст.",
-        screenshotFailed: "Не можу зробити знімок редактора (перевірте TinyMCE/html2canvas в HTML).",
+        screenshotFailed: "Не можу згенерувати попередній перегляд.",
       },
     },
     draw: {

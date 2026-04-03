@@ -816,26 +816,123 @@ export function initTextPixEditor(ctx) {
     return box.minX <= pad || box.minY <= pad || box.maxX >= (w - 1 - pad) || box.maxY >= (h - 1 - pad);
   }
 
-  async function captureTopTo208x88Canvas() {
-    if (!window.html2canvas) throw new Error("Brak html2canvas (script nie wczytany).");
+  // ==========================================
+  //  C) Direct canvas rendering
+  // ==========================================
 
+  function renderEditorToCanvas() {
     const w = Math.max(1, Math.floor(rtEditorEl.clientWidth));
     const h = Math.max(1, Math.floor(w * (BIG_H / BIG_W)));
+    const { bg, fg } = getTheme();
 
-    // Directly screenshot the actual editor element — 1:1 match
-    const shot = await window.html2canvas(rtEditorEl, {
-      backgroundColor: getTheme().bg,
-      scale: 1,
-      width: w,
-      height: h,
-      scrollX: 0,
-      scrollY: 0,
-      x: 0,
-      y: 0,
-      useCORS: true,
-      logging: false,
-      imageTimeout: 0,
-    });
+    const out = document.createElement("canvas");
+    out.width = w;
+    out.height = h;
+    const ctx2d = out.getContext("2d", { willReadFrequently: true });
+
+    // Background
+    ctx2d.fillStyle = bg;
+    ctx2d.fillRect(0, 0, w, h);
+
+    // Get computed styles from the actual editor element
+    const edCs = window.getComputedStyle(rtEditorEl);
+    const padTop = parseFloat(edCs.paddingTop) || 0;
+    const padLeft = parseFloat(edCs.paddingLeft) || 0;
+
+    // Parse TinyMCE content and render text segments
+    const content = editor?.getContent({ format: "html" }) || "";
+    if (!content || content.trim() === "") return out;
+
+    // Create a temporary container to measure text
+    const tmp = document.createElement("div");
+    tmp.style.position = "absolute";
+    tmp.style.visibility = "hidden";
+    tmp.style.whiteSpace = "normal";
+    tmp.style.overflowWrap = "anywhere";
+    tmp.style.wordBreak = "break-word";
+    tmp.style.boxSizing = "border-box";
+    tmp.style.width = `${w - padLeft * 2}px`;
+    tmp.style.fontFamily = edCs.fontFamily;
+    tmp.style.fontSize = edCs.fontSize;
+    tmp.style.fontWeight = edCs.fontWeight;
+    tmp.style.fontStyle = edCs.fontStyle;
+    tmp.style.letterSpacing = edCs.letterSpacing;
+    tmp.style.lineHeight = edCs.lineHeight;
+    tmp.style.textAlign = edCs.textAlign;
+    tmp.innerHTML = content;
+    document.body.appendChild(tmp);
+
+    // Render text to canvas using the measured content
+    ctx2d.fillStyle = fg;
+    ctx2d.font = `${edCs.fontStyle} ${edCs.fontWeight} ${edCs.fontSize} ${edCs.fontFamily}`;
+    ctx2d.textBaseline = "top";
+
+    // Walk through text nodes and render them
+    let y = padTop;
+    const lineHeight = parseFloat(edCs.lineHeight) || 1;
+    const fontSize = parseFloat(edCs.fontSize) || 130;
+    const actualLineH = lineHeight <= 2 ? fontSize * lineHeight : parseFloat(edCs.lineHeight);
+
+    function renderNode(node, offsetX) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        const text = node.textContent;
+        if (text.trim()) {
+          ctx2d.fillText(text, offsetX + padLeft, y);
+        }
+      } else if (node.nodeType === Node.ELEMENT_NODE) {
+        const style = window.getComputedStyle(node);
+        const prevFont = ctx2d.font;
+        const prevFill = ctx2d.fillStyle;
+
+        // Apply styles
+        if (style.fontWeight !== edCs.fontWeight || node.tagName === "STRONG" || node.tagName === "B") {
+          ctx2d.font = `bold ${fontSize}px ${edCs.fontFamily}`;
+        }
+        if (style.fontStyle === "italic" || node.tagName === "EM" || node.tagName === "I") {
+          ctx2d.font = `italic ${ctx2d.font}`;
+        }
+        if (style.textDecoration && style.textDecoration.includes("underline")) {
+          // Underline handled by fillText
+        }
+
+        ctx2d.fillStyle = style.color || fg;
+
+        for (const child of node.childNodes) {
+          renderNode(child, offsetX);
+        }
+
+        ctx2d.font = prevFont;
+        ctx2d.fillStyle = prevFill;
+      }
+    }
+
+    // Render block by block (each <p> is a line)
+    const blocks = tmp.querySelectorAll("p, div");
+    if (blocks.length === 0) {
+      // No blocks, render as single line
+      renderNode(tmp, 0);
+    } else {
+      for (const block of blocks) {
+        const blockStyle = window.getComputedStyle(block);
+        const blockAlign = blockStyle.textAlign || edCs.textAlign;
+        ctx2d.textAlign = blockAlign === "center" ? "center" : blockAlign === "right" ? "right" : "left";
+
+        const textContent = block.textContent.trim();
+        if (textContent) {
+          const x = blockAlign === "center" ? w / 2 : blockAlign === "right" ? w - padLeft : padLeft;
+          ctx2d.fillText(textContent, x, y);
+        }
+        y += actualLineH;
+      }
+    }
+
+    document.body.removeChild(tmp);
+    return out;
+  }
+
+  async function captureTopTo208x88Canvas() {
+    // Direct canvas rendering — sync, fast, pixel-perfect
+    const src = renderEditorToCanvas();
 
     const out = document.createElement("canvas");
     out.width = BIG_W;
@@ -844,7 +941,7 @@ export function initTextPixEditor(ctx) {
     g.imageSmoothingEnabled = true;
     g.fillStyle = getTheme().bg;
     g.fillRect(0, 0, BIG_W, BIG_H);
-    g.drawImage(shot, 0, 0, BIG_W, BIG_H);
+    g.drawImage(src, 0, 0, BIG_W, BIG_H);
     return out;
   }
 

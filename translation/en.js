@@ -3627,7 +3627,7 @@ const en = {
       },
       warnings: {
         clipped: "Looks clipped — reduce size or shorten the text.",
-        screenshotFailed: "Can't capture the editor (check TinyMCE/html2canvas in HTML).",
+        screenshotFailed: "Can't generate preview.",
       },
     },
     draw: {

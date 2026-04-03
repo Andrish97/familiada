@@ -3626,7 +3626,7 @@ const pl = {
       },
       warnings: {
         clipped: "Wygląda na ucięte — zmniejsz rozmiar albo skróć tekst.",
-        screenshotFailed: "Nie mogę zrobić screena edytora (sprawdź TinyMCE/html2canvas w HTML).",
+        screenshotFailed: "Nie mogę wygenerować podglądu.",
       },
     },
     draw: {
