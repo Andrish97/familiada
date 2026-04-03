@@ -2,7 +2,9 @@
 
 /**
  * scripts/version-assets.js
- * Adds version hash to HTML files for cache busting.
+ * Content-based cache busting for HTML assets.
+ * Each JS/CSS file gets its own SHA-256 hash (first 8 chars).
+ * Only changed files get a new ?v= hash — unchanged ones keep theirs.
  * Run ONLY in GitHub Actions (not committed back to repo).
  */
 
@@ -12,7 +14,13 @@ const crypto = require('crypto');
 
 const ROOT = process.cwd();
 
-// Generate version from timestamp
+function contentHash(filePath) {
+  if (!fs.existsSync(filePath)) return 'missing';
+  const buf = fs.readFileSync(filePath);
+  return crypto.createHash('sha256').update(buf).digest('hex').slice(0, 8);
+}
+
+// Generate version from timestamp (for meta + sw.js)
 const version = `v${new Date().toISOString().replace(/[:.]/g, '').slice(0, -5)}`;
 console.log(`\n🔖 Version: ${version}\n`);
 
@@ -57,14 +65,29 @@ for (const file of htmlFiles) {
   if (!fs.existsSync(htmlPath)) continue;
 
   let content = fs.readFileSync(htmlPath, 'utf8');
+  const htmlDir = path.dirname(htmlPath);
 
-  // Update .js?v=xxx
-  content = content.replace(/(\.js)\?v=[a-f0-9]+/g, `$1?v=${version}`);
-  content = content.replace(/(\.js)"/g, `$1?v=${version}"`);
+  // Replace .js?v=xxx with content-based hash
+  content = content.replace(/([a-zA-Z0-9_/.-]+\.js)\?v=[a-f0-9]+/g, (m, rel) => {
+    const abs = path.resolve(htmlDir, rel);
+    return `${rel}?v=${contentHash(abs)}`;
+  });
+  // Add ?v= to .js" without version
+  content = content.replace(/([a-zA-Z0-9_/.-]+\.js)(?=")/g, (m, rel) => {
+    const abs = path.resolve(htmlDir, rel);
+    return `${rel}?v=${contentHash(abs)}`;
+  });
 
-  // Update .css?v=xxx
-  content = content.replace(/(\.css)\?v=[a-f0-9]+/g, `$1?v=${version}`);
-  content = content.replace(/(\.css)"/g, `$1?v=${version}"`);
+  // Replace .css?v=xxx with content-based hash
+  content = content.replace(/([a-zA-Z0-9_/.-]+\.css)\?v=[a-f0-9]+/g, (m, rel) => {
+    const abs = path.resolve(htmlDir, rel);
+    return `${rel}?v=${contentHash(abs)}`;
+  });
+  // Add ?v= to .css" without version
+  content = content.replace(/([a-zA-Z0-9_/.-]+\.css)(?=")/g, (m, rel) => {
+    const abs = path.resolve(htmlDir, rel);
+    return `${rel}?v=${contentHash(abs)}`;
+  });
 
   // Update meta app-version
   content = content.replace(/<meta name="app-version" content="[^"]*"/g, `<meta name="app-version" content="${version}"`);
