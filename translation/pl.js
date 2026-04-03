@@ -1661,12 +1661,8 @@ const pl = {
 
       <ul class="m-ul">
         <li>
-          <span class="m-strong">Napis</span> — klasyczne logo złożone ze znaków (styl „Familiady").
+          <span class="m-strong">Tekst</span> — klasyczne logo złożone ze znaków (styl „Familiady").
           Dobre, gdy chcesz szybko zrobić czytelny tytuł.
-        </li>
-        <li>
-          <span class="m-strong">Tekst</span> — edycja tekstu i podgląd w „pikselach".
-          Dobre, gdy potrzebujesz innego kroju/układu niż w „Napis".
         </li>
         <li>
           <span class="m-strong">Rysunek</span> — rysujesz ręcznie w siatce (jak w prostym edytorze grafiki).
@@ -3640,6 +3636,7 @@ const pl = {
       stroke: "Grubość",
       fill: "Wypełnij",
       fillColor: "Kolor wypełnienia",
+      fontFamily: "Font",
       fontSize: "Rozmiar",
       lineHeight: "Interlinia",
       letterSpacing: "Odstęp",

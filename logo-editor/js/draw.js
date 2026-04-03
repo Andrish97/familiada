@@ -147,8 +147,13 @@ export function initDrawEditor(ctx) {
         updateCursor();
       });
     } else if (tool === "text") {
+      const fontOpts = buildFontOptionsHtml(textFont);
       showSettings(`
         <div class="rtToolRow">
+          ${fontOpts ? `<div class="rtGroup">
+            <div class="rtToolLbl">${t("logoEditor.draw.fontFamily")}</div>
+            <select id="drawFontSelect" class="inp" style="min-width:180px;max-width:280px;height:30px;">${fontOpts}</select>
+          </div>` : ""}
           <div class="rtGroup">
             <div class="rtToolLbl">${t("logoEditor.draw.fontSize")}</div>
             <input id="drawTextSize" class="inp" type="number" min="10" max="220" step="1" value="${textFontSize}"/>
@@ -171,6 +176,9 @@ export function initDrawEditor(ctx) {
           </div>
         </div>
       `);
+      document.getElementById("drawFontSelect")?.addEventListener("change", (e) => {
+        textFont = e.target.value;
+      });
       document.getElementById("drawTextSize")?.addEventListener("input", (e) => {
         textFontSize = clamp(Number(e.target.value) || 130, 10, 220);
       });
@@ -180,15 +188,15 @@ export function initDrawEditor(ctx) {
       document.getElementById("drawTextSpacing")?.addEventListener("input", (e) => {
         textLetterSpacing = clamp(Number(e.target.value) || 0, 0, 20);
       });
-      document.getElementById("drawTextBold")?.addEventListener("click", () => {
+      document.getElementById("drawTextBold")?.addEventListener("click", (e) => {
         textBold = !textBold;
         e.target.classList.toggle("on", textBold);
       });
-      document.getElementById("drawTextItalic")?.addEventListener("click", () => {
+      document.getElementById("drawTextItalic")?.addEventListener("click", (e) => {
         textItalic = !textItalic;
         e.target.classList.toggle("on", textItalic);
       });
-      document.getElementById("drawTextUnderline")?.addEventListener("click", () => {
+      document.getElementById("drawTextUnderline")?.addEventListener("click", (e) => {
         textUnderline = !textUnderline;
         e.target.classList.toggle("on", textUnderline);
       });
@@ -228,8 +236,14 @@ export function initDrawEditor(ctx) {
     if (!obj) { hideSettings(); return; }
     const type = obj.type;
     if (type === "i-text" || type === "textbox" || type === "text") {
+      const objFont = obj.fontFamily || "";
+      const fontOpts = buildFontOptionsHtml(objFont);
       showSettings(`
         <div class="rtToolRow">
+          ${fontOpts ? `<div class="rtGroup">
+            <div class="rtToolLbl">${t("logoEditor.draw.fontFamily")}</div>
+            <select id="drawObjFontSelect" class="inp" style="min-width:180px;max-width:280px;height:30px;">${fontOpts}</select>
+          </div>` : ""}
           <div class="rtGroup">
             <div class="rtToolLbl">${t("logoEditor.draw.fontSize")}</div>
             <input id="drawObjTextSize" class="inp" type="number" min="10" max="220" step="1" value="${Math.round(obj.fontSize || 40)}"/>
@@ -252,6 +266,10 @@ export function initDrawEditor(ctx) {
           </div>
         </div>
       `);
+      document.getElementById("drawObjFontSelect")?.addEventListener("change", (e) => {
+        obj.set("fontFamily", e.target.value);
+        canvas.renderAll();
+      });
       document.getElementById("drawObjTextSize")?.addEventListener("input", (e) => {
         obj.set("fontSize", clamp(Number(e.target.value) || 40, 10, 220));
         canvas.renderAll();
@@ -422,22 +440,14 @@ export function initDrawEditor(ctx) {
       </svg>
     `,
 
-    // 15) SETTINGS
-    tSettings: `
-      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <path d="M12 2.8l1 2.2 2.4.6 1.6-1.6 2 2-1.6 1.6.6 2.4 2.2 1v2.8l-2.2 1-.6 2.4 1.6 1.6-2 2-1.6-1.6-2.4.6-1 2.2H9.2l-1-2.2-2.4-.6-1.6 1.6-2-2 1.6-1.6-.6-2.4-2.2-1V11.2l2.2-1 .6-2.4L2.2 6.2l2-2 1.6 1.6 2.4-.6 1-2.2H12z"></path>
-        <circle cx="12" cy="12" r="2.6"></circle>
-      </svg>
-    `,
-
-    // 16) POLY DONE
+    // 15) POLY DONE
     tPolyDone: `
       <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
         <path d="M5 13l4 4L19 7"></path>
       </svg>
     `,
 
-    // 17) CLEAR
+    // 16) CLEAR
     tClear: `
       <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
         <path d="M6 7h12"></path>
@@ -446,7 +456,7 @@ export function initDrawEditor(ctx) {
       </svg>
     `,
 
-    // 18) EYE
+    // 17) EYE
     tEye: `
       <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
         <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"></path>
@@ -670,6 +680,7 @@ export function initDrawEditor(ctx) {
   let fillColor = "#ffffff";
 
   // Text tool settings
+  let textFont = ""; // font-family value from fonts.json
   let textFontSize = 130;
   let textLineHeight = 1;
   let textLetterSpacing = 0;
@@ -677,6 +688,37 @@ export function initDrawEditor(ctx) {
   let textItalic = false;
   let textUnderline = false;
   let textAlign = "center";
+
+  // =========================================================
+  // Font loading (shared with text-pix fonts.json)
+  // =========================================================
+  let DRAW_FONTS = []; // [{value, label}]
+
+  async function loadDrawFonts() {
+    if (DRAW_FONTS.length) return DRAW_FONTS;
+    try {
+      const fontsUrl = new URL("./fonts.json", import.meta.url).href;
+      const res = await fetch(fontsUrl, { cache: "no-store" });
+      if (!res.ok) throw new Error("Failed to load fonts");
+      const data = await res.json();
+      if (!Array.isArray(data)) throw new Error("Invalid fonts format");
+      DRAW_FONTS = data.filter(f => f && f.value && f.label);
+      return DRAW_FONTS;
+    } catch (err) {
+      console.error("Failed to load draw fonts:", err);
+      return [];
+    }
+  }
+
+  function buildFontOptionsHtml(currentValue) {
+    if (!DRAW_FONTS.length) return "";
+    let html = `<option value="">—</option>`;
+    for (const f of DRAW_FONTS) {
+      const sel = f.value === currentValue ? " selected" : "";
+      html += `<option value="${f.value}"${sel} style="font-family:${f.value}">${f.label}</option>`;
+    }
+    return html;
+  }
 
   function currentTool() {
     return tool;
@@ -1737,113 +1779,6 @@ export function initDrawEditor(ctx) {
            t("logoEditor.draw.tools.select");
   }
 
-  let fillColorSelect = null;
-
-  function renderSettingsModal() {
-    if (!drawPopBody) return;
-    fillColorSelect?.destroy?.();
-    fillColorSelect = null;
-    drawPopBody.innerHTML = "";
-
-    if (!toolHasSettings(tool)) {
-      const p = document.createElement("div");
-      p.style.opacity = ".85";
-      p.style.fontSize = "13px";
-      p.textContent = t("logoEditor.draw.noSettings");
-      drawPopBody.appendChild(p);
-      return;
-    }
-
-    const st = toolSettings[tool] || {};
-
-    // Grubość
-    {
-      const row = document.createElement("label");
-      row.className = "popRow";
-      row.innerHTML = `
-        <span>${t("logoEditor.draw.stroke")}</span>
-        <input class="inp" id="popStroke" type="number" min="1" max="80" step="1" value="${Number(st.stroke || 6)}">
-      `;
-      drawPopBody.appendChild(row);
-    }
-
-    // Fill tylko dla rect/ellipse/poly
-    const fillAllowed = (tool === TOOL.RECT || tool === TOOL.ELLIPSE || tool === TOOL.POLY);
-    if (fillAllowed) {
-      const enabled = !!st.fill;
-      const fc = (st.fillColor === "BLACK") ? "BLACK" : "WHITE";
-
-      const row = document.createElement("label");
-      row.className = "popRow";
-      row.innerHTML = `
-        <span>${t("logoEditor.draw.fill")}</span>
-        <input id="popFill" type="checkbox" ${enabled ? "checked" : ""}>
-      `;
-      drawPopBody.appendChild(row);
-
-      const row2 = document.createElement("div");
-      row2.className = "popRow";
-      row2.innerHTML = `
-        <span>${t("logoEditor.draw.fillColor")}</span>
-        <div class="ui-select" id="popFillColor">
-          <button class="ui-select-btn inp" type="button" aria-haspopup="listbox" aria-expanded="false">
-            <span class="ui-select-label">—</span>
-            <span class="ui-select-caret">▾</span>
-          </button>
-          <div class="ui-select-menu" role="listbox"></div>
-        </div>
-      `;
-      drawPopBody.appendChild(row2);
-    }
-
-    // Bind
-    const popStroke = drawPopBody.querySelector("#popStroke");
-    const popFill = drawPopBody.querySelector("#popFill");
-    const popFillColor = drawPopBody.querySelector("#popFillColor");
-
-    popStroke?.addEventListener("input", () => {
-      toolSettings[tool] = { ...(toolSettings[tool] || {}), stroke: clamp(Number(popStroke.value || 6), 1, 80) };
-      if (tool === TOOL.BRUSH) applyBrushStyle();
-      updateCursorVisual();
-      schedulePreview(80);
-    });
-
-    popFill?.addEventListener("change", () => {
-      toolSettings[tool] = { ...(toolSettings[tool] || {}), fill: !!popFill.checked };
-      renderSettingsModal(); // żeby włączyć/wyłączyć dropdown koloru fill
-      schedulePreview(80);
-    });
-
-    if (popFillColor) {
-      fillColorSelect = initUiSelect(popFillColor, {
-        options: [
-          { value: "WHITE", label: t("logoEditor.draw.colors.white") },
-          { value: "BLACK", label: t("logoEditor.draw.colors.black") },
-        ],
-        value: (toolSettings[tool]?.fillColor === "BLACK") ? "BLACK" : "WHITE",
-        disabled: !popFill?.checked,
-        onChange: (value) => {
-          toolSettings[tool] = {
-            ...(toolSettings[tool] || {}),
-            fillColor: value === "BLACK" ? "BLACK" : "WHITE",
-          };
-          schedulePreview(80);
-        },
-      });
-    }
-  }
-
-  function openSettingsModal() {
-    if (!drawPop) return;
-    drawPopTitle.textContent = t("logoEditor.draw.settingsTitle", { tool: toolLabel(tool) });
-    renderSettingsModal();
-    show(drawPop, true);
-  }
-
-  function closeSettingsModal() {
-    show(drawPop, false);
-  }
-
   // =========================================================
   // Helpers: delete/duplicate/move selection
   // =========================================================
@@ -2116,6 +2051,7 @@ export function initDrawEditor(ctx) {
         const textObj = new fabric.IText("Tekst", {
           left: pointer.x,
           top: pointer.y,
+          fontFamily: textFont || undefined,
           fontSize: textFontSize,
           lineHeight: textLineHeight,
           charSpacing: textLetterSpacing,
@@ -2511,6 +2447,7 @@ export function initDrawEditor(ctx) {
   return {
     open(payload = null) {
       show(paneDraw, true);
+      loadDrawFonts();
 
       if (!uiBound) { bindUiOnce(); uiBound = true; }
       installFabricOnce();
@@ -2520,7 +2457,6 @@ export function initDrawEditor(ctx) {
 
       // reset sesji rysunku (ustawienia narzędzi + kolory zostają w pamięci sesji)
       if (fabricCanvas) {
-        closeSettingsModal();
         clearPolyDraft();
 
         if (fabricData) {
@@ -2570,7 +2506,7 @@ export function initDrawEditor(ctx) {
 
     close() {
       show(paneDraw, false);
-      closeSettingsModal();
+      hideSettings();
       hideOverlayCursor();
     },
 

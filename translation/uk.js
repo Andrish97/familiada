@@ -1533,12 +1533,8 @@ const uk = {
 
     <ul class="m-ul">
       <li>
-        <span class="m-strong">Text art</span> — класичний логотип із символів (стиль «Familiada»).
+        <span class="m-strong">Text</span> — класичний логотип із символів (стиль «Familiada»).
         Підходить, коли потрібен швидкий і читабельний заголовок.
-      </li>
-      <li>
-        <span class="m-strong">Text</span> — редагування тексту і перегляд у «пікселях».
-        Добре, коли потрібен інший шрифт/макет, ніж у «Text art».
       </li>
       <li>
         <span class="m-strong">Drawing</span> — малювання вручну на сітці (як у простому графічному редакторі).
@@ -3515,6 +3511,7 @@ const uk = {
       stroke: "Товщина",
       fill: "Заповнення",
       fillColor: "Колір заповнення",
+      fontFamily: "Шрифт",
       fontSize: "Розмір",
       lineHeight: "Міжряддя",
       letterSpacing: "Інтервал",

@@ -1655,12 +1655,8 @@ const en = {
 
     <ul class="m-ul">
       <li>
-        <span class="m-strong">Text art</span> — a classic logo made of characters (the “Familiada” style).
+        <span class="m-strong">Text</span> — a classic logo made of characters (the "Familiada" style).
         Good when you want a quick, readable title.
-      </li>
-      <li>
-        <span class="m-strong">Text</span> — text editing and preview in “pixels.”
-        Good when you need a different font/layout than “Text art.”
       </li>
       <li>
         <span class="m-strong">Drawing</span> — draw by hand on a grid (like a simple graphics editor).
@@ -3640,6 +3636,10 @@ const en = {
       stroke: "Stroke width",
       fill: "Fill",
       fillColor: "Fill color",
+      fontFamily: "Font",
+      fontSize: "Size",
+      lineHeight: "Line height",
+      letterSpacing: "Letter spacing",
       settingsTitle: "Settings — {tool}",
       confirmClear: "Clear everything?",
     },
