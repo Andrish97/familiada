@@ -1,6 +1,7 @@
 // /familiada/js/pages/controlapp.js
 import { confirmModal } from "../../js/core/modal.js?v=0c9fe6fd";
 import { getUiLang, initI18n, t } from "../../translation/translation.js?v=7222ec9e";
+import { v as cacheBust } from "../../js/core/cache-bust.js?v=8c4e71a2";
 
 // ================== KOMUNIKATY ==================
 const APP_MSG = {
@@ -512,7 +513,7 @@ async function sendZeroStatesToDevices() {
     }
     if (!_defaultLogoPayload) {
       try {
-        const r = await fetch("/display/logo_familiada.json", { cache: "force-cache" });
+        const r = await fetch(await cacheBust("/display/logo_familiada.json"), { cache: "force-cache" });
         if (r.ok) _defaultLogoPayload = await r.json();
       } catch (e) { console.warn("[logo] default logo load failed", e); }
     }

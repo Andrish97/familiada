@@ -15,6 +15,7 @@
 import { confirmModal } from "../../js/core/modal.js?v=0c9fe6fd";
 import { initUiSelect } from "../../js/core/ui-select.js?v=73a51737";
 import { t } from "../../translation/translation.js?v=7222ec9e";
+import { v as cacheBust } from "../../js/core/cache-bust.js?v=8c4e71a2";
 
 export function initDrawEditor(ctx) {
   const TYPE_PIX = "PIX_150x70";
@@ -704,7 +705,8 @@ export function initDrawEditor(ctx) {
   async function loadDrawFonts() {
     if (DRAW_FONTS.length) return DRAW_FONTS;
     try {
-      const res = await fetch(new URL("./fonts.json", import.meta.url).href, { cache: "no-store" });
+      const url = await cacheBust(new URL("./fonts.json", import.meta.url).href);
+      const res = await fetch(url, { cache: "no-store" });
       if (!res.ok) return [];
       const data = await res.json();
       DRAW_FONTS = Array.isArray(data) ? data.filter(f => f && f.value && f.label) : [];

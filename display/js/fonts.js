@@ -1,5 +1,7 @@
+import { v } from '../../js/core/cache-bust.js';
+
 export const loadJson = async (url) => {
-  const res = await fetch(url, { cache: "no-store" });
+  const res = await fetch(await v(url), { cache: "no-store" });
   if (!res.ok) throw new Error(`Nie można wczytać: ${url}`);
   return res.json();
 };

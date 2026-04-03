@@ -11,6 +11,7 @@ import { alertModal, confirmModal } from "../../js/core/modal.js?v=0c9fe6fd";
 import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js?v=7222ec9e";
 import { initTopbarAccountDropdown } from "../../js/core/topbar-controller.js?v=78fbf2a5";
 import { isMobileDevice } from "../../js/core/pwa.js?v=31d73fc2";
+import { v as cacheBust } from "../../js/core/cache-bust.js?v=8c4e71a2";
 
 import { initTextEditor } from "./text.js?v=2038d5d5";
 import { initDrawEditor } from "./draw.js?v=3ed71a16";
@@ -571,14 +572,14 @@ async function importLogoFromFile(file){
    Fetch helpers
 ========================================================= */
 async function fetchJsonRequired(url, label){
-  const r = await fetch(url, { cache: "no-store" });
+  const r = await fetch(await cacheBust(url), { cache: "no-store" });
   if (!r.ok) throw new Error(`${label}: HTTP ${r.status} (${url})`);
   return await r.json();
 }
 
 async function loadFonts(){
   FONT_3x10 = await fetchJsonRequired(FONT_3x10_URL, "Font 3x10");
-  GLYPH_5x7 = await loadFont5x7(FONT_5x7_URL);
+  GLYPH_5x7 = await loadFont5x7(await cacheBust(FONT_5x7_URL));
 }
 
 async function loadDefaultLogo(){

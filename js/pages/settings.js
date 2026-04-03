@@ -17,6 +17,7 @@ import { initUiSelect } from "../core/ui-select.js?v=73a51737";
 import { guardDesktopOnly } from "../core/device-guard.js?v=e3b2bed0";
 import { confirmModal } from "../core/modal.js?v=12944c19";
 import { sb } from "../core/supabase.js?v=ece3a0c0";
+import { v as cacheBust } from "../core/cache-bust.js?v=8c4e71a2";
 
 const API_BASE = "/_admin_api";
 const TOOLS_MANIFEST = "/settings-tools/tools.json";
@@ -4449,7 +4450,7 @@ async function openMailTab() {
 
 async function loadToolsManifest() {
   try {
-    const res = await fetch(TOOLS_MANIFEST, { cache: "no-store" });
+    const res = await fetch(await cacheBust(TOOLS_MANIFEST), { cache: "no-store" });
     if (!res.ok) throw new Error("manifest fetch failed");
     const data = await res.json();
     if (!data || !Array.isArray(data.tools)) throw new Error("invalid manifest");
