@@ -107,16 +107,8 @@ export function initDrawEditor(ctx) {
   }
   
   function syncDynamicIcons() {
-    // fg / tColor
-    if (tColor) {
-      tColor.innerHTML = ICON_FG[fg] || ICON_FG.BLACK;
-      tColor.setAttribute("aria-label", t("logoEditor.draw.aria.strokeColor", { color: getColorLabel(fg) }));
-    }
-    // bg / tBg
-    if (tBg) {
-      tBg.innerHTML = ICON_BG[bg] || ICON_BG.BLACK;
-      tBg.setAttribute("aria-label", t("logoEditor.draw.aria.backgroundColor", { color: getColorLabel(bg) }));
-    }
+    // tColor i tBg zostały usunięte z toolbar — kolory są teraz w ustawieniach narzędzia
+    // Funkcja zostaje jako placeholder (może być potrzebna w przyszłości)
   }
 
   // =========================================================
