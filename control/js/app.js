@@ -1236,6 +1236,12 @@ async function sendZeroStatesToDevices() {
   const helpOverlay = document.getElementById("helpOverlay");
   const helpFrame = document.getElementById("helpFrame");
   const btnHelpClose = document.getElementById("btnHelpClose");
+  const btnLegal = document.getElementById("btnLegal");
+  
+  const legalOverlay = document.getElementById("legalOverlay");
+  const legalFrame = document.getElementById("legalFrame");
+  const btnBackToManual = document.getElementById("btnBackToManual");
+  
   function buildHelpUrl() {
     const url = new URL("../manual", location.href);
     url.searchParams.set("ret", `${location.pathname.split("/").pop() || "control"}${location.search}${location.hash}`);
@@ -1245,8 +1251,37 @@ async function sendZeroStatesToDevices() {
     return url.toString();
   }
 
+  function buildLegalUrl() {
+    const url = new URL("../manual", location.href);
+    url.searchParams.set("ret", `${location.pathname.split("/").pop() || "control"}${location.search}${location.hash}`);
+    url.searchParams.set("modal", "control");
+    url.searchParams.set("lang", getUiLang() || "pl");
+    url.searchParams.set("view", "legal");
+    url.hash = "control";
+    return url.toString();
+  }
+
+  function injectFrameStyles(frame) {
+    try {
+      const doc = frame.contentDocument || frame.contentWindow.document;
+      const style = doc.createElement("style");
+      style.textContent = `
+        .topbar, .footer { display: none !important; }
+        .wrap { padding-top: 0 !important; }
+        body { background: var(--bg, #0f1728) !important; }
+        .simple-tabs, .modal-tabs { display: flex !important; flex-wrap: wrap !important; }
+      `;
+      doc.head.appendChild(style);
+    } catch (e) {
+      console.warn("Could not inject styles into iframe:", e);
+    }
+  }
+
   function openHelpModal() {
-    if (helpFrame) helpFrame.src = buildHelpUrl();
+    if (helpFrame) {
+      helpFrame.src = buildHelpUrl();
+      helpFrame.onload = () => injectFrameStyles(helpFrame);
+    }
     helpOverlay?.classList.remove("hidden");
   }
 
@@ -1254,8 +1289,27 @@ async function sendZeroStatesToDevices() {
     helpOverlay?.classList.add("hidden");
   }
 
+  function openLegalModal() {
+    if (legalFrame) {
+      legalFrame.src = buildLegalUrl();
+      legalFrame.onload = () => injectFrameStyles(legalFrame);
+    }
+    legalOverlay?.classList.remove("hidden");
+  }
+
+  function closeLegalModal() {
+    legalOverlay?.classList.add("hidden");
+  }
+
   btnHelpClose?.addEventListener("click", closeHelpModal);
   helpOverlay?.addEventListener("click", (ev) => { if (ev.target === helpOverlay) closeHelpModal(); });
+  
+  btnLegal?.addEventListener("click", openLegalModal);
+  btnBackToManual?.addEventListener("click", () => {
+    closeLegalModal();
+    openHelpModal();
+  });
+  legalOverlay?.addEventListener("click", (ev) => { if (ev.target === legalOverlay) closeLegalModal(); });
 
   // ===== Helper: aktualizacja etykiet przycisków "QR na wyświetlaczu" =====
   function updateQrOnDisplayButtons() {

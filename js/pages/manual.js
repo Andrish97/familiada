@@ -27,7 +27,9 @@ async function initManualI18n() {
 function qsa(sel) { return Array.from(document.querySelectorAll(sel)); }
 function byId(id) { return document.getElementById(id); }
 
-function getTabs() { return qsa(".simple-tabs .tab"); }
+function getTabs() {
+  return Array.from(document.querySelectorAll(".simple-tabs .tab, .modal-tabs .tab"));
+}
 
 function updateMobileTabSubtitle(name) {
   const subtitle = byId("manualTabSubtitle");
@@ -53,7 +55,7 @@ function setActive(name) {
 
 function wireTabs() {
   if (!shouldShowDemoTab() || isControlModal()) {
-    document.querySelector('.simple-tabs .tab[data-tab="demo"]')?.remove();
+    document.querySelector('.simple-tabs .tab[data-tab="demo"], .modal-tabs .tab[data-tab="demo"]')?.remove();
     pages.demo?.remove();
     delete pages.demo;
   }
@@ -102,10 +104,22 @@ function applyControlModalLayout() {
   byId("btnBack")?.remove();
   byId("who")?.remove();
   byId("btnLogout")?.remove();
-  document.querySelector(".topbar-section-4")?.style.setProperty("display", "none");
+  
+  // Remove topbar sections so mobile controller has nothing to move
+  document.querySelector(".topbar-section-2")?.remove();
+  document.querySelector(".topbar-section-4")?.remove();
+  
+  // Remove demo tab before cloning
   document.querySelector('.simple-tabs .tab[data-tab="demo"]')?.remove();
   pages.demo?.remove();
   delete pages.demo;
+  
+  // Replace simple-tabs with modal-tabs so topbar-controller doesn't pick it up
+  const tabs = document.querySelector(".simple-tabs");
+  if (tabs) {
+    tabs.classList.remove("simple-tabs");
+    tabs.classList.add("modal-tabs");
+  }
 }
 
 function shouldShowDemoTab() {

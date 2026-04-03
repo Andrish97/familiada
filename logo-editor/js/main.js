@@ -50,6 +50,11 @@ const btnCloseEditor = document.getElementById("btnCloseEditor");
 const helpOverlay = document.getElementById("helpOverlay");
 const helpFrame = document.getElementById("helpFrame");
 const btnHelpClose = document.getElementById("btnHelpClose");
+const btnLegal = document.getElementById("btnLegal");
+
+const legalOverlay = document.getElementById("legalOverlay");
+const legalFrame = document.getElementById("legalFrame");
+const btnBackToManual = document.getElementById("btnBackToManual");
 
 const brandTitle = document.getElementById("brandTitle");
 
@@ -1216,18 +1221,61 @@ function buildHelpUrl() {
   const url = new URL("../manual", location.href);
   const ret = `${location.pathname.split("/").slice(-2).join("/")}${location.search}${location.hash}`;
   url.searchParams.set("ret", ret);
-  url.searchParams.set("modal", "control");
+  url.searchParams.set("modal", "logo-editor");
   url.searchParams.set("lang", getUiLang() || "pl");
+  url.hash = "logo-editor";
   return url.toString();
 }
 
+function buildLegalUrl() {
+  const url = new URL("../manual", location.href);
+  const ret = `${location.pathname.split("/").slice(-2).join("/")}${location.search}${location.hash}`;
+  url.searchParams.set("ret", ret);
+  url.searchParams.set("modal", "logo-editor");
+  url.searchParams.set("lang", getUiLang() || "pl");
+  url.searchParams.set("view", "legal");
+  url.hash = "logo-editor";
+  return url.toString();
+}
+
+function injectFrameStyles(frame) {
+  try {
+    const doc = frame.contentDocument || frame.contentWindow.document;
+    const style = doc.createElement("style");
+    style.textContent = `
+      .topbar, .footer { display: none !important; }
+      .wrap { padding-top: 0 !important; }
+      body { background: var(--bg, #0f1728) !important; }
+      .simple-tabs, .modal-tabs { display: flex !important; flex-wrap: wrap !important; }
+    `;
+    doc.head.appendChild(style);
+  } catch (e) {
+    console.warn("Could not inject styles into iframe:", e);
+  }
+}
+
 function openHelpModal() {
-  if (helpFrame) helpFrame.src = buildHelpUrl();
+  if (helpFrame) {
+    helpFrame.src = buildHelpUrl();
+    helpFrame.onload = () => injectFrameStyles(helpFrame);
+  }
   helpOverlay?.classList.remove("hidden");
 }
 
 function closeHelpModal() {
   helpOverlay?.classList.add("hidden");
+}
+
+function openLegalModal() {
+  if (legalFrame) {
+    legalFrame.src = buildLegalUrl();
+    legalFrame.onload = () => injectFrameStyles(legalFrame);
+  }
+  legalOverlay?.classList.remove("hidden");
+}
+
+function closeLegalModal() {
+  legalOverlay?.classList.add("hidden");
 }
 
 function openEditor(mode, logo = null){
@@ -1498,6 +1546,13 @@ async function boot(){
 
    btnHelpClose?.addEventListener("click", closeHelpModal);
    helpOverlay?.addEventListener("click", (ev) => { if (ev.target === helpOverlay) closeHelpModal(); });
+   
+   btnLegal?.addEventListener("click", openLegalModal);
+   btnBackToManual?.addEventListener("click", () => {
+     closeLegalModal();
+     openHelpModal();
+   });
+   legalOverlay?.addEventListener("click", (ev) => { if (ev.target === legalOverlay) closeLegalModal(); });
 
    // Guard na niezapisane zmiany przy wylogowaniu przez dropdown
    const btnLogoutMenu = document.getElementById("topbar-account-logout");

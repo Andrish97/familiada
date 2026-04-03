@@ -35,14 +35,16 @@
     border-radius: 12px;
 }
 
-.simple-tabs {
+.simple-tabs,
+.modal-tabs {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
     gap: 10px;
     margin: 0 0 18px
 }
 
-.simple-tabs .tab {
+.simple-tabs .tab,
+.modal-tabs .tab {
     padding: 10px 16px;
     border-radius: 999px;
     border: 1px solid var(--line);
@@ -262,7 +264,8 @@
       display: block;
    }
 
-   .simple-tabs {
+   .simple-tabs,
+   .modal-tabs {
       display: flex;
       flex-wrap: wrap;
    }

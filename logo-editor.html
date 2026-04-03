@@ -497,8 +497,20 @@
 
   <div class="helpOverlay hidden" id="helpOverlay" aria-hidden="true">
     <div class="helpModal" role="dialog" aria-modal="true" aria-label="Wskazówki">
-      <button class="btn sm helpCloseBtn" id="btnHelpClose" type="button" aria-label="Zamknij">✕</button>
+      <div class="helpModalToolbar">
+        <button class="btn sm helpCloseBtn" id="btnHelpClose" type="button" aria-label="Zamknij">✕</button>
+        <button class="btn btn-sm" id="btnLegal" type="button" data-i18n="manual.legal">🔐 Polityka prywatności</button>
+      </div>
       <iframe id="helpFrame" class="helpFrame" src="../manual" title="Wskazówki"></iframe>
+    </div>
+  </div>
+
+  <div class="legalOverlay hidden" id="legalOverlay">
+    <div class="legalModal" role="dialog" aria-modal="true">
+      <div class="legalModalToolbar">
+        <button class="btn btn-sm" id="btnBackToManual" type="button" data-i18n="legal.backToManual">← Powrót do manuala</button>
+      </div>
+      <iframe id="legalFrame" class="legalFrame" src="../manual" title="Polityka prywatności"></iframe>
     </div>
   </div>
   <script type="module" src="js/core/contact-modal.js?v=773b071f"></script>
