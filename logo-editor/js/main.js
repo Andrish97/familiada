@@ -1687,8 +1687,8 @@ async function boot(){
 
    document.getElementById("btnPixPreview")?.addEventListener("click", async () => {
      // Force immediate preview update before opening fullscreen
-     if (textPix && typeof textPix.forcePreview === "function") {
-       await textPix.forcePreview();
+     if (textPixEditor && typeof textPixEditor.forcePreview === "function") {
+       await textPixEditor.forcePreview();
      }
      const p = lastPreviewPayload || null;
      if (!p) return;
