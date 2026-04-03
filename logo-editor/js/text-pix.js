@@ -834,6 +834,7 @@ export function initTextPixEditor(ctx) {
       y: 0,
       useCORS: true,
       logging: false,
+      imageTimeout: 0,
     });
 
     const out = document.createElement("canvas");

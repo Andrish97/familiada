@@ -40,20 +40,9 @@ function isControlModal() {
 
 function applyControlModalLayout() {
   if (!isControlModal()) return;
+  // Ensure the class is set (fallback if inline script didn't run)
+  document.documentElement.classList.add("modal-mode");
   document.body.classList.add("manual-in-control-modal");
-
-  // Force hide topbar/footer
-  const topbar = document.querySelector(".topbar");
-  const footer = document.querySelector(".footer");
-  if (topbar) {
-    topbar.style.display = "none";
-    topbar.style.visibility = "hidden";
-  }
-  if (footer) {
-    footer.style.display = "none";
-    footer.style.visibility = "hidden";
-  }
-  document.querySelector(".topbar-section-4")?.style.setProperty("display", "none");
 }
 
 function setBackButton({ loggedIn }) {

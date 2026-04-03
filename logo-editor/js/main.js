@@ -1522,12 +1522,12 @@ async function boot(){
      location.href = buildManualPageUrl();
    });
 
-   btnHelpClose?.addEventListener("click", (ev) => { ev.stopPropagation(); closeHelpModal(); });
+   btnHelpClose?.addEventListener("click", (ev) => { ev.stopImmediatePropagation(); closeHelpModal(); });
    helpOverlay?.addEventListener("click", (ev) => { if (ev.target === helpOverlay) closeHelpModal(); });
 
-   btnLegal?.addEventListener("click", openLegalModal);
-   btnBackToManual?.addEventListener("click", (ev) => { ev.stopPropagation(); closeLegalModal(); openHelpModal(); });
-   btnLegalClose?.addEventListener("click", (ev) => { ev.stopPropagation(); closeLegalModal(); });
+   btnLegal?.addEventListener("click", (ev) => { ev.stopImmediatePropagation(); openLegalModal(); });
+   btnBackToManual?.addEventListener("click", (ev) => { ev.stopImmediatePropagation(); closeLegalModal(); openHelpModal(); });
+   btnLegalClose?.addEventListener("click", (ev) => { ev.stopImmediatePropagation(); closeLegalModal(); });
    legalOverlay?.addEventListener("click", (ev) => { if (ev.target === legalOverlay) closeLegalModal(); });
 
    // Guard na niezapisane zmiany przy wylogowaniu przez dropdown

@@ -99,8 +99,9 @@ function getRetPathnameLower() {
 
 function applyControlModalLayout() {
   if (!isControlModal()) return;
+  // Ensure the class is set (fallback if inline script didn't run)
+  document.documentElement.classList.add("modal-mode");
   document.body.classList.add("manual-in-control-modal");
-  document.documentElement.classList.add("manual-in-control-modal");
   byId("btnBack")?.remove();
   byId("who")?.remove();
   byId("btnLogout")?.remove();
@@ -119,18 +120,6 @@ function applyControlModalLayout() {
   if (tabs) {
     tabs.classList.remove("simple-tabs");
     tabs.classList.add("modal-tabs");
-  }
-
-  // Force hide topbar/footer as fallback
-  const topbar = document.querySelector(".topbar");
-  const footer = document.querySelector(".footer");
-  if (topbar) {
-    topbar.style.display = "none";
-    topbar.style.visibility = "hidden";
-  }
-  if (footer) {
-    footer.style.display = "none";
-    footer.style.visibility = "hidden";
   }
 }
 

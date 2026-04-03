@@ -1,7 +1,18 @@
 /* css/manual.css
    Instrukcja (manual) – proste zakładki + czytelna typografia.
-   Cel: brak „ramek jak w aplikacji”, dużo czytelności jak w dokumentacji.
+   Cel: brak „ramek jak w aplikacji", dużo czytelności jak w dokumentacji.
 */
+
+/* Hide topbar/footer when opened in modal (iframe) */
+html.modal-mode .topbar,
+html.modal-mode .footer {
+    display: none !important;
+    visibility: hidden !important;
+}
+html.modal-mode .wrap {
+    padding-top: 0 !important;
+}
+
 .manual-body {
     background: var(--bg);
     color: #fff

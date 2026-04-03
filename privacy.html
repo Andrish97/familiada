@@ -20,29 +20,13 @@
   <link rel="stylesheet" href="css/base.css?v=764df218" />
   <link rel="stylesheet" href="css/manual.css?v=19795ec9" />
 
-  <!-- Hide topbar/footer immediately when opened in modal — prevents flash -->
-  <style>
-    /* Inline critical CSS — always parsed immediately */
-  </style>
   <script>
-    (function(){
-      try {
-        var p = new URLSearchParams(location.search);
-        var isModal = p.get("modal") === "control" || location.hash === "#control";
-        if (isModal) {
-          var s = document.createElement("style");
-          s.setAttribute("data-modal-style", "1");
-          s.textContent = ".topbar,.footer{display:none!important;visibility:hidden!important;opacity:0!important}.wrap{padding-top:0!important}";
-          if (document.head) {
-            document.head.appendChild(s);
-          } else {
-            document.addEventListener("DOMContentLoaded", function(){
-              document.head.appendChild(s);
-            });
-          }
-        }
-      } catch(e){ console.warn("modal style error", e); }
-    })();
+    // Detect modal mode ASAP — before body renders
+    try {
+      if (new URLSearchParams(location.search).get("modal") === "control") {
+        document.documentElement.classList.add("modal-mode");
+      }
+    } catch(e){}
   </script>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>

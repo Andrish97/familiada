@@ -269,7 +269,7 @@ export function initDrawEditor(ctx) {
   }
 
     // =========================================================
-  // Tooltipy (Win/Mac) — z dynamicznym pozycjonowaniem
+  // Tooltipy — z dynamicznym pozycjonowaniem
   // =========================================================
   const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform) || /Mac OS X/.test(navigator.userAgent);
 
@@ -279,8 +279,9 @@ export function initDrawEditor(ctx) {
     SHIFT: isMac ? "⇧" : "Shift",
   };
 
-  function tip2(action, win, mac, extra = "") {
-    const line2 = `Win: ${win} • Mac: ${mac}`;
+  function tip2(action, shortcut, extra = "") {
+    // Show only the shortcut for the current OS
+    const line2 = `Skrót: ${shortcut}`;
     return extra ? `${action}\n${line2}\n${extra}` : `${action}\n${line2}`;
   }
 
@@ -351,32 +352,32 @@ export function initDrawEditor(ctx) {
 
   function updateTooltips() {
     // Select / Pan
-    setTip(tSelect, tip2(t("logoEditor.draw.tooltips.select"), "Ctrl (przytrzymaj)", "⌘ (przytrzymaj)"));
-    setTip(tPan,    tip2(t("logoEditor.draw.tooltips.pan"), "Spacja (przytrzymaj)", "Spacja (przytrzymaj)"));
+    setTip(tSelect, tip2(t("logoEditor.draw.tooltips.select"), `${K.MOD} (przytrzymaj)`));
+    setTip(tPan,    tip2(t("logoEditor.draw.tooltips.pan"), "Spacja (przytrzymaj)"));
 
     // Zoom
-    setTip(tZoomIn,  tip2(t("logoEditor.draw.tooltips.zoomIn"), "Ctrl + +", "⌘ +"));
-    setTip(tZoomOut, tip2(t("logoEditor.draw.tooltips.zoomOut"), "Ctrl + -", "⌘ -"));
+    setTip(tZoomIn,  tip2(t("logoEditor.draw.tooltips.zoomIn"), `${K.MOD} + +`));
+    setTip(tZoomOut, tip2(t("logoEditor.draw.tooltips.zoomOut"), `${K.MOD} + -`));
 
     // Kolor / tło
     setTip(tColor, t("logoEditor.draw.tooltips.color"));
     setTip(tBg,    t("logoEditor.draw.tooltips.background"));
 
     // Narzędzia
-    setTip(tBrush,   tip2(t("logoEditor.draw.tooltips.brush"), "B", "B"));
-    setTip(tEraser,  tip2(t("logoEditor.draw.tooltips.eraser"), "E", "E"));
-    setTip(tLine,    tip2(t("logoEditor.draw.tooltips.line"), "L", "L"));
-    setTip(tRect,    tip2(t("logoEditor.draw.tooltips.rect"), "R", "R"));
-    setTip(tEllipse, tip2(t("logoEditor.draw.tooltips.ellipse"), "O", "O"));
-    setTip(tPoly,    tip2(t("logoEditor.draw.tooltips.poly"), "P", "P"), t("logoEditor.draw.tooltips.polyHint"));
+    setTip(tBrush,   tip2(t("logoEditor.draw.tooltips.brush"), "B"));
+    setTip(tEraser,  tip2(t("logoEditor.draw.tooltips.eraser"), "E"));
+    setTip(tLine,    tip2(t("logoEditor.draw.tooltips.line"), "L"));
+    setTip(tRect,    tip2(t("logoEditor.draw.tooltips.rect"), "R"));
+    setTip(tEllipse, tip2(t("logoEditor.draw.tooltips.ellipse"), "O"));
+    setTip(tPoly,    tip2(t("logoEditor.draw.tooltips.poly"), "P"), t("logoEditor.draw.tooltips.polyHint"));
 
     // Historia
-    setTip(tUndo, tip2(t("logoEditor.draw.tooltips.undo"), "Ctrl+Z", "⌘Z"));
-    setTip(tRedo, tip2(t("logoEditor.draw.tooltips.redo"), "Ctrl+Shift+Z / Ctrl+Y", "⌘⇧Z / ⌘Y"));
+    setTip(tUndo, tip2(t("logoEditor.draw.tooltips.undo"), isMac ? "⌘Z" : "Ctrl+Z"));
+    setTip(tRedo, tip2(t("logoEditor.draw.tooltips.redo"), isMac ? "⌘⇧Z / ⌘Y" : "Ctrl+Shift+Z / Ctrl+Y"));
 
     // Akcje
     setTip(tSettings, t("logoEditor.draw.tooltips.settings"));
-    setTip(tPolyDone, tip2(t("logoEditor.draw.tooltips.polyDone"), "Enter / dwuklik", "Enter / dwuklik"));
+    setTip(tPolyDone, tip2(t("logoEditor.draw.tooltips.polyDone"), "Enter / dwuklik"));
     setTip(tClear,    t("logoEditor.draw.tooltips.clear"));
     setTip(tEye,      t("logoEditor.draw.tooltips.preview"));
   }
