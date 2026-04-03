@@ -13,7 +13,7 @@ import { initTopbarAccountDropdown } from "../../js/core/topbar-controller.js?v=
 import { isMobileDevice } from "../../js/core/pwa.js?v=31d73fc2";
 
 import { initTextEditor } from "./text.js?v=2038d5d5";
-import { initDrawEditor } from "./draw.js?v=3944b919";
+import { initDrawEditor } from "./draw.js?v=1e06feaf";
 import { initImageEditor } from "./image.js?v=ae9fe438";
 
 window.addEventListener("error", (e) => {

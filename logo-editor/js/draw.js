@@ -691,7 +691,7 @@ export function initDrawEditor(ctx) {
 
   // Text tool settings
   let textFont = "";
-  let textFontSize = 130;
+  let textFontSize = 80;
   let textLineHeight = 1;
   let textLetterSpacing = 0;
   let textBold = false;
