@@ -1,4 +1,4 @@
-import { t, getUiLang } from "../../translation/translation.js";
+import { t, getUiLang } from "../../translation/translation.js?v=7222ec9e";
 
 let modalEl = null;
 let isSubmitting = false;

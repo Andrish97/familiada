@@ -1,21 +1,21 @@
-import { addRenameGesture } from "../core/rename-gesture.js";
-import { sb } from "../core/supabase.js";
-import { requireAuth } from "../core/auth.js";
-import { alertModal, confirmModal } from "../core/modal.js";
-import { hideForGuest, isGuestUser } from "../core/guest-mode.js";
-import { initI18n, t, applyTranslations } from "../../translation/translation.js";
-import { initRatingSystem } from "../core/rating-system.js";
-import { initUiSelect } from "../core/ui-select.js";
+import { addRenameGesture } from "../core/rename-gesture.js?v=a9959aa4";
+import { sb } from "../core/supabase.js?v=ece3a0c0";
+import { requireAuth } from "../core/auth.js?v=22103af8";
+import { alertModal, confirmModal } from "../core/modal.js?v=12944c19";
+import { hideForGuest, isGuestUser } from "../core/guest-mode.js?v=57593a4b";
+import { initI18n, t, applyTranslations } from "../../translation/translation.js?v=7222ec9e";
+import { initRatingSystem } from "../core/rating-system.js?v=60dee1c8";
+import { initUiSelect } from "../core/ui-select.js?v=73a51737";
 
-import { initPwa, isStandalone, isMobileDevice } from "../core/pwa.js";
+import { initPwa, isStandalone, isMobileDevice } from "../core/pwa.js?v=31d73fc2";
 
 // Zarejestruj listener PWA jak najwcześniej – beforeinstallprompt może odpalić przed requireAuth
 const pwaApi = initPwa();
 // Jeśli beforeinstallprompt już odpalił zanim dodaliśmy listener w IIFE, sprawdzimy po zalogowaniu
 
 
-import { exportGame, importGame, downloadJson } from "./builder-import-export.js";
-import { setTopbarNavPriority, setTopbarAccount } from '../core/topbar-controller.js';
+import { exportGame, importGame, downloadJson } from "./builder-import-export.js?v=073b80bc";
+import { setTopbarNavPriority, setTopbarAccount } from '../core/topbar-controller.js?v=90030a71';
 
 import "../core/contact-modal.js";
 import {
@@ -26,7 +26,7 @@ import {
   validateGameReadyToPlay,
   validatePollEntry,
   validatePollReadyToOpen,
-} from "../core/game-validate.js";
+} from "../core/game-validate.js?v=e7f3408f";
 
 const MSG = {
   exportBaseEmpty: () => t("builder.exportBase.empty"),

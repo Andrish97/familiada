@@ -113,3 +113,48 @@ if (fs.existsSync(swPath)) {
 }
 
 console.log('\n✅ Version assets complete!\n');
+
+// ─── 4. Update JS imports within JS files ────────────────────────────────────
+
+// Scan all JS files for import/update their ?v= hashes
+const jsDirs = ['js/', 'logo-editor/js/', 'translation/'];
+let jsCount = 0;
+
+for (const jsDir of jsDirs) {
+  const dirPath = path.join(ROOT, jsDir);
+  if (!fs.existsSync(dirPath)) continue;
+
+  function walk(dir) {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) { walk(full); continue; }
+      if (!entry.name.endsWith('.js')) continue;
+
+      let content = fs.readFileSync(full, 'utf8');
+      const fileDir = path.dirname(full);
+      let changed = false;
+
+      content = content.replace(/(from\s+['"])([a-zA-Z0-9_./-]+\.js)\?v=[a-f0-9]+(['"])/g, (m, pre, rel, post) => {
+        const abs = path.resolve(fileDir, rel);
+        if (fs.existsSync(abs)) {
+          changed = true;
+          return `${pre}${rel}?v=${contentHash(abs)}${post}`;
+        }
+        return m;
+      });
+
+      if (changed) {
+        fs.writeFileSync(full, content, 'utf8');
+        jsCount++;
+        console.log(`  ✓ ${full}`);
+      }
+    }
+  }
+  walk(dirPath);
+}
+
+if (jsCount > 0) {
+  console.log(`\n  ✓ ${jsCount} JS files updated with content hashes`);
+} else {
+  console.log(`\n  ✓ No JS import changes needed`);
+}

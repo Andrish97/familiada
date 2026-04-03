@@ -5,9 +5,9 @@
 //
 // Eksportuje: setTopbarNavPriority, setTopbarAccount (alias: initTopbarAccountDropdown), autoInitTopbarAuthButton
 
-import { signOut } from './auth.js';
-import { isGuestUser } from './guest-mode.js';
-import { t, withLangParam } from '../../translation/translation.js';
+import { signOut } from './auth.js?v=22103af8';
+import { isGuestUser } from './guest-mode.js?v=57593a4b';
+import { t, withLangParam } from '../../translation/translation.js?v=7222ec9e';
 
 // ── Narzędzie: pozycjonowanie fixed dropdown ──────────────────────────────────
 function repositionDropdown(anchorEl, dropdownEl) {

@@ -1,9 +1,9 @@
 // familiada/logo-editorjs/image.js
 // Tryb: IMAGE -> duży obraz + kadr 26:11 -> przetwarzanie -> PIX 150x70
 
-import { alertModal } from "../../js/core/modal.js";
-import { t } from "../../translation/translation.js";
-import { sb } from "../../js/core/supabase.js";
+import { alertModal } from "../../js/core/modal.js?v=0c9fe6fd";
+import { t } from "../../translation/translation.js?v=7222ec9e";
+import { sb } from "../../js/core/supabase.js?v=ece3a0c0";
 
 export function initImageEditor(ctx) {
   const TYPE_PIX = ctx.TYPE_PIX || "PIX_150x70";

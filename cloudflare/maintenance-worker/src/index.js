@@ -70,7 +70,7 @@ export default {
         if (url.pathname === "/settings.html") {
           return withHeaders(res, { "Cache-Control": "no-store" });
         }
-        if (url.pathname.startsWith("/translation/") || url.pathname.startsWith("/js/")) {
+        if (url.pathname.startsWith("/translation/")) {
           return withHeaders(res, { "Cache-Control": "no-store" });
         }
         return res;
