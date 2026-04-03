@@ -16,6 +16,20 @@
   <link rel="stylesheet" href="css/base.css?v=764df218" />
   <link rel="stylesheet" href="css/manual.css?v=19795ec9" />
 
+  <!-- Hide topbar/footer immediately when opened in modal — prevents flash -->
+  <script>
+    (function(){
+      try {
+        var p = new URLSearchParams(location.search);
+        if (p.get("modal") === "control") {
+          var s = document.createElement("style");
+          s.textContent = ".topbar,.footer{display:none!important}.wrap{padding-top:0!important}.simple-tabs,.modal-tabs{display:flex!important;flex-wrap:wrap!important}";
+          document.head.appendChild(s);
+        }
+      } catch(e){}
+    })();
+  </script>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script type="module" src="js/pages/manual.js?v=219817b4" defer></script>
   <script type="module" src="js/core/topbar-controller.js?v=78fbf2a5" defer></script>

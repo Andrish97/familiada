@@ -1238,27 +1238,8 @@ function buildLegalUrl() {
   return url.toString();
 }
 
-function injectFrameStyles(frame) {
-  try {
-    const doc = frame.contentDocument || frame.contentWindow.document;
-    const style = doc.createElement("style");
-    style.textContent = `
-      .topbar, .footer { display: none !important; }
-      .wrap { padding-top: 0 !important; }
-      body { background: var(--bg, #0f1728) !important; }
-      .simple-tabs, .modal-tabs { display: flex !important; flex-wrap: wrap !important; }
-    `;
-    doc.head.appendChild(style);
-  } catch (e) {
-    console.warn("Could not inject styles into iframe:", e);
-  }
-}
-
 function openHelpModal() {
-  if (helpFrame) {
-    helpFrame.src = buildHelpUrl();
-    helpFrame.onload = () => injectFrameStyles(helpFrame);
-  }
+  if (helpFrame) helpFrame.src = buildHelpUrl();
   helpOverlay?.classList.remove("hidden");
 }
 
