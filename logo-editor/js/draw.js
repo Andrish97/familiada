@@ -293,24 +293,27 @@ export function initDrawEditor(ctx) {
   // Dynamic tooltip positioning — shows above the hovered element
   let _tipEl = null;
   function showTip(el) {
-    if (!el || !el.getAttribute("data-tip")) return;
+    const tipText = el?.getAttribute("data-tip");
+    if (!el || !tipText) return;
     hideTip();
     const tip = document.createElement("div");
     tip.className = "draw-tip";
-    tip.textContent = el.getAttribute("data-tip");
+    tip.textContent = tipText;
+    tip.style.visibility = "hidden";
     document.body.appendChild(tip);
     _tipEl = tip;
 
-    const rect = el.getBoundingClientRect();
-    const tipRect = tip.getBoundingClientRect();
-    const tw = tipRect.width || 200;
-    const th = tipRect.height || 40;
+    // Force layout so we can measure
+    const tw = tip.offsetWidth;
+    const th = tip.offsetHeight;
 
+    const rect = el.getBoundingClientRect();
     const left = rect.left + rect.width / 2 - tw / 2;
     const top = rect.top - th - 10;
 
     tip.style.left = `${Math.max(8, left)}px`;
     tip.style.top = `${Math.max(8, top)}px`;
+    tip.style.visibility = "visible";
     tip.style.opacity = "1";
     tip.style.transform = "translateY(0)";
   }
@@ -324,12 +327,15 @@ export function initDrawEditor(ctx) {
 
   // Attach hover listeners to all toolbar buttons
   function initTooltips() {
-    const btns = document.querySelectorAll(".editorToolbar .tbtn, .editorToolbar [data-tip]");
+    const btns = document.querySelectorAll(".editorToolbar .tbtn");
     btns.forEach(btn => {
-      btn.addEventListener("mouseenter", () => showTip(btn));
-      btn.addEventListener("mouseleave", hideTip);
-      btn.addEventListener("focus", () => showTip(btn));
-      btn.addEventListener("blur", hideTip);
+      // Only bind if element has a data-tip attribute (even if empty, it will be filled later)
+      if (btn.hasAttribute("data-tip") || btn.id) {
+        btn.addEventListener("mouseenter", () => showTip(btn));
+        btn.addEventListener("mouseleave", hideTip);
+        btn.addEventListener("focus", () => showTip(btn));
+        btn.addEventListener("blur", hideTip);
+      }
     });
   }
 

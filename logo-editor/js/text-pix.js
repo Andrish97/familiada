@@ -670,8 +670,8 @@ export function initTextPixEditor(ctx) {
     if (!Number.isFinite(n)) return;
     const v = `${clamp(n, 10, 250)}px`;
 
-    // Update shared state
-    setEditorFontSize(px);
+    // Update editor style
+    rtEditorEl.style.fontSize = v;
 
     // collapsed => ustaw tylko "następny znak"
     if (isCollapsed()) {
@@ -705,8 +705,8 @@ export function initTextPixEditor(ctx) {
     if (!Number.isFinite(n)) return;
     const v = `${clamp(n, 0, 20)}px`;
 
-    // Update shared state
-    setEditorLetterSpacing(px);
+    // Update editor style
+    rtEditorEl.style.letterSpacing = v;
 
     // collapsed => tylko "następny znak"
     if (isCollapsed()) {
@@ -737,7 +737,7 @@ export function initTextPixEditor(ctx) {
 
     if (lineHeight != null && lineHeight !== "") {
       p.style.lineHeight = String(lineHeight);
-      setEditorLineHeight(lineHeight);
+      rtEditorEl.style.lineHeight = String(lineHeight);
     }
     if (marginTop != null && marginTop !== "") p.style.marginTop = toPx(marginTop);
     if (marginBottom != null && marginBottom !== "") p.style.marginBottom = toPx(marginBottom);
@@ -760,27 +760,6 @@ export function initTextPixEditor(ctx) {
   // ==========================================
   //  C) Screenshot -> bits
   // ==========================================
-  // Shared style state — used by both TinyMCE content_style and buildSnapshotNode
-  let _editorFontSize = "130px";
-  let _editorLineHeight = "1";
-  let _editorLetterSpacing = "normal";
-
-  function setEditorFontSize(px) {
-    _editorFontSize = `${clamp(Number(px), 10, 250)}px`;
-    rtEditorEl.style.fontSize = _editorFontSize;
-    rtEditorEl.style.setProperty("--rt-font-size", _editorFontSize);
-  }
-  function setEditorLineHeight(v) {
-    _editorLineHeight = String(clamp(Number(v), 0.6, 3.0));
-    rtEditorEl.style.lineHeight = _editorLineHeight;
-    rtEditorEl.style.setProperty("--rt-line-height", _editorLineHeight);
-  }
-  function setEditorLetterSpacing(px) {
-    _editorLetterSpacing = Number.isFinite(Number(px)) ? `${clamp(Number(px), 0, 20)}px` : "normal";
-    rtEditorEl.style.letterSpacing = _editorLetterSpacing;
-    rtEditorEl.style.setProperty("--rt-letter-spacing", _editorLetterSpacing);
-  }
-
   function canvasToBits208(canvas, threshold) {
     const g = canvas.getContext("2d", { willReadFrequently: true });
     const { data } = g.getImageData(0, 0, canvas.width, canvas.height);
@@ -855,51 +834,46 @@ export function initTextPixEditor(ctx) {
   }
   
   function buildSnapshotNode(w, h) {
-    // Bierzemy content z TinyMCE (stabilny HTML), bez jego "żywych" elementów
     const host = ensureShotHost();
     host.innerHTML = "";
+    const { bg, fg } = getTheme();
+
+    // Clone the actual TinyMCE editor content for 1:1 match
+    const edEl = rtEditorEl;
+    const edCs = window.getComputedStyle(edEl);
+
     const box = document.createElement("div");
     box.style.width = `${w}px`;
     box.style.height = `${h}px`;
-    const { bg, fg } = getTheme();
     box.style.background = bg;
     box.style.color = fg;
     box.style.overflow = "hidden";
     box.style.boxSizing = "border-box";
 
-    // skopiuj padding z edytora (żeby screenshot był 1:1)
-    const edCs = window.getComputedStyle(rtEditorEl);
+    // Copy exact padding from editor
     box.style.paddingTop = edCs.paddingTop;
     box.style.paddingRight = edCs.paddingRight;
     box.style.paddingBottom = edCs.paddingBottom;
     box.style.paddingLeft = edCs.paddingLeft;
 
-    box.style.boxSizing = "border-box";
     box.style.whiteSpace = "normal";
     box.style.overflowWrap = "anywhere";
     box.style.wordBreak = "break-word";
     box.style.maxWidth = `${w}px`;
 
-    // Użyj TYCH SAMYCH wartości co TinyMCE content_style — nie getComputedStyle
+    // Copy ALL computed font styles from the actual editor element
     box.style.fontFamily = edCs.fontFamily;
-    box.style.fontSize = _editorFontSize;
+    box.style.fontSize = edCs.fontSize;
     box.style.fontWeight = edCs.fontWeight;
     box.style.fontStyle = edCs.fontStyle;
-    box.style.letterSpacing = _editorLetterSpacing;
-    box.style.lineHeight = _editorLineHeight;
+    box.style.letterSpacing = edCs.letterSpacing;
+    box.style.lineHeight = edCs.lineHeight;
     box.style.textAlign = edCs.textAlign;
 
-    let html = String(editor?.getContent?.({ format: "html" }) || "").trim();
-    
-    if (html && !/<(p|div|h1|h2|h3|ul|ol|li|table|blockquote)\b/i.test(html)) {
-      // brak bloków -> traktujemy to jak “linijkę tekstu”
-      html = `<p>${html}</p>`;
-    }
-    
-    box.innerHTML = html || "";
+    // Clone the inner HTML directly from the editor (not from getContent)
+    box.innerHTML = edEl.innerHTML || "";
 
-  
-    // Minimalne CSS, żeby wyglądało jak u Ciebie
+    // Minimal CSS reset
     const style = document.createElement("style");
     style.textContent = `
       *{ box-sizing:border-box; }
@@ -908,7 +882,7 @@ export function initTextPixEditor(ctx) {
       span{ white-space:inherit; }
     `;
     box.prepend(style);
-  
+
     host.appendChild(box);
     return box;
   }
@@ -1068,9 +1042,6 @@ export function initTextPixEditor(ctx) {
           padding:0;
           background:transparent;
           color:inherit;
-          font-size:var(--rt-font-size, 130px);
-          line-height:var(--rt-line-height, 1);
-          letter-spacing:var(--rt-letter-spacing, normal);
           white-space:normal;
           overflow-wrap:anywhere;
           word-break:break-word;
@@ -1078,23 +1049,22 @@ export function initTextPixEditor(ctx) {
 
         #rtEditor.mce-content-body p{
           margin:0;
-          line-height:inherit;
         }
-        
+
         #rtEditor.mce-content-body span{
           white-space:inherit;
         }
-        
+
         #rtEditor.mce-content-body strong,
         #rtEditor.mce-content-body b{
           font-weight:bold;
         }
-        
+
         #rtEditor.mce-content-body em,
         #rtEditor.mce-content-body i{
           font-style:italic;
         }
-        
+
         #rtEditor.mce-content-body u{
           text-decoration:underline;
         }
@@ -1301,15 +1271,16 @@ window.addEventListener("scroll", () => {
 
       await fillFontSelectOnce();
 
-      // Reset shared state
-      setEditorFontSize(130);
-      setEditorLineHeight(1);
+      // Reset editor styles
+      rtEditorEl.style.fontSize = "130px";
+      rtEditorEl.style.lineHeight = "1";
+      rtEditorEl.style.letterSpacing = "normal";
 
       await ensureEditor();
 
       // upewnij się, że edytor ma od razu 130px zanim zrobimy pierwszy screenshot
-      setEditorFontSize(130);
-      setEditorLineHeight(1);
+      rtEditorEl.style.fontSize = "130px";
+      rtEditorEl.style.lineHeight = "1";
       
       installUiBusyGuards();
 

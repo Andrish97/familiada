@@ -1279,15 +1279,12 @@ async function sendZeroStatesToDevices() {
     legalOverlay?.classList.add("hidden");
   }
 
-  btnHelpClose?.addEventListener("click", closeHelpModal);
+  btnHelpClose?.addEventListener("click", (ev) => { ev.stopPropagation(); closeHelpModal(); });
   helpOverlay?.addEventListener("click", (ev) => { if (ev.target === helpOverlay) closeHelpModal(); });
-  
+
   btnLegal?.addEventListener("click", openLegalModal);
-  btnBackToManual?.addEventListener("click", () => {
-    closeLegalModal();
-    openHelpModal();
-  });
-  btnLegalClose?.addEventListener("click", closeLegalModal);
+  btnBackToManual?.addEventListener("click", (ev) => { ev.stopPropagation(); closeLegalModal(); openHelpModal(); });
+  btnLegalClose?.addEventListener("click", (ev) => { ev.stopPropagation(); closeLegalModal(); });
   legalOverlay?.addEventListener("click", (ev) => { if (ev.target === legalOverlay) closeLegalModal(); });
 
   // ===== Helper: aktualizacja etykiet przycisków "QR na wyświetlaczu" =====

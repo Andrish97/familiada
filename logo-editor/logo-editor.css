@@ -731,10 +731,11 @@
   text-align: center;
   letter-spacing: .01em;
 
+  visibility: hidden;
   opacity: 0;
   pointer-events: none;
   transform: translateY(4px);
-  transition: opacity .12s ease, transform .12s ease;
+  transition: opacity .1s ease, transform .1s ease, visibility .1s ease;
   z-index: 100000;
 }
 

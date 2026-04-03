@@ -25,7 +25,8 @@
     (function(){
       try {
         var p = new URLSearchParams(location.search);
-        if (p.get("modal") === "control") {
+        var isModal = p.get("modal") === "control" || location.hash === "#control";
+        if (isModal) {
           var s = document.createElement("style");
           s.textContent = ".topbar,.footer{display:none!important}.wrap{padding-top:0!important}";
           document.head.appendChild(s);
