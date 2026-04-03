@@ -141,7 +141,6 @@ export function initDrawEditor(ctx) {
   function renderToolSettings() {
     const toolName = tool.toLowerCase();
     const strokeHex = fgColor();
-    const bgHex = bgColor();
     if (toolName === "brush") {
       showSettings(`
         <div class="rtToolRow">
@@ -153,10 +152,6 @@ export function initDrawEditor(ctx) {
             <div class="rtToolLbl">${t("logoEditor.draw.fillColor")}</div>
             <input id="drawStrokeColor" class="inp" type="color" value="${strokeHex}" style="width:40px;height:30px;padding:2px"/>
           </div>
-          <div class="rtGroup">
-            <div class="rtToolLbl">${t("logoEditor.draw.bgColor")}</div>
-            <input id="drawBgColor" class="inp" type="color" value="${bgHex}" style="width:40px;height:30px;padding:2px"/>
-          </div>
         </div>
       `);
       document.getElementById("drawStrokeWidth")?.addEventListener("input", (e) => {
@@ -165,11 +160,6 @@ export function initDrawEditor(ctx) {
       });
       document.getElementById("drawStrokeColor")?.addEventListener("input", (e) => {
         fg = e.target.value === "#000000" ? "BLACK" : "WHITE";
-        syncDynamicIcons();
-      });
-      document.getElementById("drawBgColor")?.addEventListener("input", (e) => {
-        bg = e.target.value === "#ffffff" ? "WHITE" : "BLACK";
-        if (fabricCanvas) { fabricCanvas.backgroundColor = bgColor(); fabricCanvas.requestRenderAll(); }
         syncDynamicIcons();
       });
     } else if (toolName === "text") {
@@ -208,10 +198,6 @@ export function initDrawEditor(ctx) {
             <div class="rtToolLbl">${t("logoEditor.draw.fillColor")}</div>
             <input id="drawTextColor" class="inp" type="color" value="${textHex}" style="width:40px;height:30px;padding:2px"/>
           </div>
-          <div class="rtGroup">
-            <div class="rtToolLbl">${t("logoEditor.draw.bgColor")}</div>
-            <input id="drawTextBgColor" class="inp" type="color" value="${bgHex}" style="width:40px;height:30px;padding:2px"/>
-          </div>
         </div>
       `);
       document.getElementById("drawFontBtn")?.addEventListener("click", () => {
@@ -223,11 +209,6 @@ export function initDrawEditor(ctx) {
       });
       document.getElementById("drawTextColor")?.addEventListener("input", (e) => {
         fg = e.target.value === "#000000" ? "BLACK" : "WHITE";
-        syncDynamicIcons();
-      });
-      document.getElementById("drawTextBgColor")?.addEventListener("input", (e) => {
-        bg = e.target.value === "#ffffff" ? "WHITE" : "BLACK";
-        if (fabricCanvas) { fabricCanvas.backgroundColor = bgColor(); fabricCanvas.requestRenderAll(); }
         syncDynamicIcons();
       });
       document.getElementById("drawTextSize")?.addEventListener("input", (e) => {
@@ -256,6 +237,7 @@ export function initDrawEditor(ctx) {
         e.target.textContent = textAlign === "left" ? "⇤" : textAlign === "right" ? "⇥" : "⇆";
       });
     } else if (toolName === "rect" || toolName === "ellipse" || toolName === "line") {
+      const shapeFillHex = fillEnabled ? fillColor : "#ffffff";
       showSettings(`
         <div class="rtToolRow">
           <div class="rtGroup">
@@ -265,11 +247,7 @@ export function initDrawEditor(ctx) {
           </div>
           <div class="rtGroup">
             <label class="chk"><input type="checkbox" id="drawFillCheck" ${fillEnabled ? "checked" : ""}/> ${t("logoEditor.draw.fill")}</label>
-            <input id="drawFillColor" class="inp" type="color" value="${fillColor}" style="width:40px;height:30px;padding:2px" ${!fillEnabled ? "disabled" : ""}/>
-          </div>
-          <div class="rtGroup">
-            <div class="rtToolLbl">${t("logoEditor.draw.bgColor")}</div>
-            <input id="drawBgColor" class="inp" type="color" value="${bgHex}" style="width:40px;height:30px;padding:2px"/>
+            <input id="drawFillColor" class="inp" type="color" value="${shapeFillHex}" style="width:40px;height:30px;padding:2px" ${!fillEnabled ? "disabled" : ""}/>
           </div>
         </div>
       `);
@@ -287,11 +265,6 @@ export function initDrawEditor(ctx) {
       });
       document.getElementById("drawFillColor")?.addEventListener("input", (e) => {
         fillColor = e.target.value;
-      });
-      document.getElementById("drawBgColor")?.addEventListener("input", (e) => {
-        bg = e.target.value === "#ffffff" ? "WHITE" : "BLACK";
-        if (fabricCanvas) { fabricCanvas.backgroundColor = bgColor(); fabricCanvas.requestRenderAll(); }
-        syncDynamicIcons();
       });
     } else {
       hideSettings();
@@ -1367,9 +1340,10 @@ export function initDrawEditor(ctx) {
       return;
     }
   
-    // TEXT: kursor tekstowy (I-beam)
+    // TEXT: pionowa kreska (tekstowy caret)
     if (tool === TOOL.TEXT) {
       setCursorClass("none", false);
+      // Używamy Fabric text cursor
       setFabricCursors("text", "text", "text");
       hideOverlayCursor();
       return;
