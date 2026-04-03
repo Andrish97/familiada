@@ -2461,6 +2461,7 @@ const pl = {
       cancel: "Nie pokazuj",
       cancelBtn: "Anuluj",
       unavailable: "Przeglądarka nie obsługuje instalacji lub aplikacja jest już zainstalowana.",
+      manual: "Przeglądarka nie pozwala obecnie na automatyczną instalację.\n\nMożesz zainstalować ręcznie:\n• Chrome/Edge: kliknij ikonę instalacji w pasku adresu i wybierz \"Zainstaluj\"\n• Lub: Menu → Zainstaluj Familiadę",
     },
     import: {
       title: "Importuj",
@@ -3769,6 +3770,7 @@ const pl = {
       deleting: "Usuwam…",
       deleted: "Usunięto.",
       imported: "Zaimportowano logo.",
+      created: "Utworzono nowe logo.",
       settingActive: "Ustawiam aktywne…",
       activeSet: "Aktywne ustawione.",
     },
@@ -4798,6 +4800,7 @@ const pl = {
       subtitle: "Wyślij wiadomość do wielu adresatów jednocześnie",
       templateLabel: "Szablon",
       tplInvitation: "Zaproszenie do systemu",
+      tplEvent: "Wydarzenie / Wesele",
       tplNewsletter: "Newsletter",
       tplCustom: "Autorska",
       subjectLabel: "Temat wiadomości",

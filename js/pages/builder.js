@@ -1124,7 +1124,23 @@ document.addEventListener("DOMContentLoaded", async () => {
           okText: tSafe("builder.iosWebapp.ok", fallback.ok),
         });
       } else {
-        return; // Chrome: beforeinstallprompt jeszcze nie odpalił lub app już zainstalowana
+        // Chrome/Edge: beforeinstallprompt jeszcze nie odpalił lub app już zainstalowana
+        // Pokaż instrukcję ręcznej instalacji
+        const fallback = {
+          title: "Zainstaluj aplikację",
+          text:
+            "Przeglądarka nie pozwala obecnie na automatyczną instalację.\n\n" +
+            "Możesz zainstalować ręcznie:\n" +
+            "• Chrome/Edge: kliknij ikonę instalacji w pasku adresu i wybierz \"Zainstaluj\"\n" +
+            "• Lub: Menu → Zainstaluj Familiadę",
+          ok: "OK",
+        };
+        await alertModal({
+          title: tSafe("builder.pwaInstall.title", fallback.title),
+          text: tSafe("builder.pwaInstall.manual", fallback.text),
+          okText: tSafe("builder.pwaInstall.ok", fallback.ok),
+        });
+        return;
       }
       return;
     }
