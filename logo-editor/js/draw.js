@@ -133,8 +133,8 @@ export function initDrawEditor(ctx) {
   }
 
   function renderToolSettings() {
-    const tool = currentTool();
-    if (tool === "brush") {
+    const t = tool.toLowerCase();
+    if (t === "brush") {
       showSettings(`
         <div class="rtToolRow">
           <div class="rtGroup">
@@ -147,7 +147,7 @@ export function initDrawEditor(ctx) {
         strokeWidth = clamp(Number(e.target.value) || 1, 1, 50);
         updateCursor();
       });
-    } else if (tool === "text") {
+    } else if (t === "text") {
       const fOpts = fontOptionsHtml(textFont);
       showSettings(`
         <div class="rtToolRow">
@@ -205,7 +205,7 @@ export function initDrawEditor(ctx) {
         textAlign = textAlign === "left" ? "center" : textAlign === "center" ? "right" : "left";
         e.target.textContent = textAlign === "left" ? "⇤" : textAlign === "right" ? "⇥" : "⇆";
       });
-    } else if (tool === "rect" || tool === "ellipse" || tool === "line") {
+    } else if (t === "rect" || t === "ellipse" || t === "line") {
       showSettings(`
         <div class="rtToolRow">
           <div class="rtGroup">
