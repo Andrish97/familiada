@@ -147,8 +147,13 @@ export function initDrawEditor(ctx) {
         updateCursor();
       });
     } else if (tool === "text") {
+      const fOpts = fontOptionsHtml(textFont);
       showSettings(`
         <div class="rtToolRow">
+          ${fOpts ? `<div class="rtGroup">
+            <div class="rtToolLbl">${t("logoEditor.draw.fontFamily")}</div>
+            <select id="drawFontSel" class="inp" style="min-width:180px;max-width:280px;height:30px;">${fOpts}</select>
+          </div>` : ""}
           <div class="rtGroup">
             <div class="rtToolLbl">${t("logoEditor.draw.fontSize")}</div>
             <input id="drawTextSize" class="inp" type="number" min="10" max="220" step="1" value="${textFontSize}"/>
@@ -171,6 +176,9 @@ export function initDrawEditor(ctx) {
           </div>
         </div>
       `);
+      document.getElementById("drawFontSel")?.addEventListener("change", (e) => {
+        textFont = e.target.value;
+      });
       document.getElementById("drawTextSize")?.addEventListener("input", (e) => {
         textFontSize = clamp(Number(e.target.value) || 130, 10, 220);
       });
@@ -180,15 +188,15 @@ export function initDrawEditor(ctx) {
       document.getElementById("drawTextSpacing")?.addEventListener("input", (e) => {
         textLetterSpacing = clamp(Number(e.target.value) || 0, 0, 20);
       });
-      document.getElementById("drawTextBold")?.addEventListener("click", () => {
+      document.getElementById("drawTextBold")?.addEventListener("click", (e) => {
         textBold = !textBold;
         e.target.classList.toggle("on", textBold);
       });
-      document.getElementById("drawTextItalic")?.addEventListener("click", () => {
+      document.getElementById("drawTextItalic")?.addEventListener("click", (e) => {
         textItalic = !textItalic;
         e.target.classList.toggle("on", textItalic);
       });
-      document.getElementById("drawTextUnderline")?.addEventListener("click", () => {
+      document.getElementById("drawTextUnderline")?.addEventListener("click", (e) => {
         textUnderline = !textUnderline;
         e.target.classList.toggle("on", textUnderline);
       });
@@ -228,8 +236,14 @@ export function initDrawEditor(ctx) {
     if (!obj) { hideSettings(); return; }
     const type = obj.type;
     if (type === "i-text" || type === "textbox" || type === "text") {
+      const objFont = obj.fontFamily || "";
+      const fOpts = fontOptionsHtml(objFont);
       showSettings(`
         <div class="rtToolRow">
+          ${fOpts ? `<div class="rtGroup">
+            <div class="rtToolLbl">${t("logoEditor.draw.fontFamily")}</div>
+            <select id="drawObjFontSel" class="inp" style="min-width:180px;max-width:280px;height:30px;">${fOpts}</select>
+          </div>` : ""}
           <div class="rtGroup">
             <div class="rtToolLbl">${t("logoEditor.draw.fontSize")}</div>
             <input id="drawObjTextSize" class="inp" type="number" min="10" max="220" step="1" value="${Math.round(obj.fontSize || 40)}"/>
@@ -252,6 +266,10 @@ export function initDrawEditor(ctx) {
           </div>
         </div>
       `);
+      document.getElementById("drawObjFontSel")?.addEventListener("change", (e) => {
+        obj.set("fontFamily", e.target.value);
+        canvas.renderAll();
+      });
       document.getElementById("drawObjTextSize")?.addEventListener("input", (e) => {
         obj.set("fontSize", clamp(Number(e.target.value) || 40, 10, 220));
         canvas.renderAll();
@@ -672,6 +690,7 @@ export function initDrawEditor(ctx) {
   let fillColor = "#ffffff";
 
   // Text tool settings
+  let textFont = "";
   let textFontSize = 130;
   let textLineHeight = 1;
   let textLetterSpacing = 0;
@@ -679,6 +698,28 @@ export function initDrawEditor(ctx) {
   let textItalic = false;
   let textUnderline = false;
   let textAlign = "center";
+
+  // Font loading
+  let DRAW_FONTS = [];
+  async function loadDrawFonts() {
+    if (DRAW_FONTS.length) return DRAW_FONTS;
+    try {
+      const res = await fetch(new URL("./fonts.json", import.meta.url).href, { cache: "no-store" });
+      if (!res.ok) return [];
+      const data = await res.json();
+      DRAW_FONTS = Array.isArray(data) ? data.filter(f => f && f.value && f.label) : [];
+      return DRAW_FONTS;
+    } catch { return []; }
+  }
+  function fontOptionsHtml(current) {
+    if (!DRAW_FONTS.length) return "";
+    let h = `<option value="">—</option>`;
+    for (const f of DRAW_FONTS) {
+      const sel = f.value === current ? " selected" : "";
+      h += `<option value="${f.value}"${sel} style="font-family:${f.value}">${f.label}</option>`;
+    }
+    return h;
+  }
 
   function currentTool() {
     return tool;
@@ -2011,6 +2052,7 @@ export function initDrawEditor(ctx) {
         const textObj = new fabric.IText("Tekst", {
           left: pointer.x,
           top: pointer.y,
+          fontFamily: textFont || undefined,
           fontSize: textFontSize,
           lineHeight: textLineHeight,
           charSpacing: textLetterSpacing,
@@ -2406,6 +2448,7 @@ export function initDrawEditor(ctx) {
   return {
     open(payload = null) {
       show(paneDraw, true);
+      loadDrawFonts();
 
       if (!uiBound) { bindUiOnce(); uiBound = true; }
       installFabricOnce();
