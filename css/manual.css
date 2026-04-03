@@ -263,7 +263,8 @@
    }
 
    .simple-tabs {
-      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      display: flex;
+      flex-wrap: wrap;
    }
 }
 
