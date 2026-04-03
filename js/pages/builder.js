@@ -1,23 +1,23 @@
-import { addRenameGesture } from "../core/rename-gesture.js?v=a9959aa4";
-import { sb } from "../core/supabase.js?v=ece3a0c0";
-import { requireAuth } from "../core/auth.js?v=4721e86e";
-import { alertModal, confirmModal } from "../core/modal.js?v=0c9fe6fd";
-import { hideForGuest, isGuestUser } from "../core/guest-mode.js?v=e499bece";
-import { initI18n, t, applyTranslations } from "../../translation/translation.js?v=7222ec9e";
-import { initRatingSystem } from "../core/rating-system.js?v=d94f8702";
-import { initUiSelect } from "../core/ui-select.js?v=73a51737";
+import { addRenameGesture } from "../core/rename-gesture.js";
+import { sb } from "../core/supabase.js";
+import { requireAuth } from "../core/auth.js";
+import { alertModal, confirmModal } from "../core/modal.js";
+import { hideForGuest, isGuestUser } from "../core/guest-mode.js";
+import { initI18n, t, applyTranslations } from "../../translation/translation.js";
+import { initRatingSystem } from "../core/rating-system.js";
+import { initUiSelect } from "../core/ui-select.js";
 
-import { initPwa, isStandalone, isMobileDevice } from "../core/pwa.js?v=31d73fc2";
+import { initPwa, isStandalone, isMobileDevice } from "../core/pwa.js";
 
 // Zarejestruj listener PWA jak najwcześniej – beforeinstallprompt może odpalić przed requireAuth
 const pwaApi = initPwa();
 // Jeśli beforeinstallprompt już odpalił zanim dodaliśmy listener w IIFE, sprawdzimy po zalogowaniu
 
 
-import { exportGame, importGame, downloadJson } from "./builder-import-export.js?v=60f1f0df";
-import { setTopbarNavPriority, setTopbarAccount } from '../core/topbar-controller.js?v=78fbf2a5';
+import { exportGame, importGame, downloadJson } from "./builder-import-export.js";
+import { setTopbarNavPriority, setTopbarAccount } from '../core/topbar-controller.js';
 
-import "../core/contact-modal.js?v=773b071f";
+import "../core/contact-modal.js";
 import {
   TYPES,
   STATUS,
@@ -26,7 +26,7 @@ import {
   validateGameReadyToPlay,
   validatePollEntry,
   validatePollReadyToOpen,
-} from "../core/game-validate.js?v=df97f708";
+} from "../core/game-validate.js";
 
 const MSG = {
   exportBaseEmpty: () => t("builder.exportBase.empty"),

@@ -337,5 +337,5 @@ if (typeof window !== "undefined") {
   });
 
   // Automatyczne sprawdzanie aktualizacji (updater.js)
-  import('../js/core/updater.js?v=f857745f').then(m => m.initUpdater()).catch(() => {});
+  import('../js/core/updater.js').then(m => m.initUpdater()).catch(() => {});
 }

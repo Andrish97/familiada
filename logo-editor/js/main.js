@@ -1,20 +1,20 @@
 // familiada/logo-editorjs/main.js
 // Glowna logika strony + lista kafelkow + routing do edytorow.
 
-import { addRenameGesture } from "../../js/core/rename-gesture.js?v=a9959aa4";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../../js/core/logo-preview.js?v=8b4d198b";
+import { addRenameGesture } from "../../js/core/rename-gesture.js";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../../js/core/logo-preview.js";
 
-import { sb } from "../../js/core/supabase.js?v=ece3a0c0";
-import { requireAuth } from "../../js/core/auth.js?v=4721e86e";
-import { isGuestUser } from "../../js/core/guest-mode.js?v=e499bece";
-import { alertModal, confirmModal } from "../../js/core/modal.js?v=0c9fe6fd";
-import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js?v=7222ec9e";
-import { initTopbarAccountDropdown } from "../../js/core/topbar-controller.js?v=78fbf2a5";
-import { isMobileDevice } from "../../js/core/pwa.js?v=31d73fc2";
+import { sb } from "../../js/core/supabase.js";
+import { requireAuth } from "../../js/core/auth.js";
+import { isGuestUser } from "../../js/core/guest-mode.js";
+import { alertModal, confirmModal } from "../../js/core/modal.js";
+import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js";
+import { initTopbarAccountDropdown } from "../../js/core/topbar-controller.js";
+import { isMobileDevice } from "../../js/core/pwa.js";
 
-import { initTextEditor } from "./text.js?v=2038d5d5";
-import { initDrawEditor } from "./draw.js?v=f40c377a";
-import { initImageEditor } from "./image.js?v=ae9fe438";
+import { initTextEditor } from "./text.js";
+import { initDrawEditor } from "./draw.js";
+import { initImageEditor } from "./image.js";
 
 window.addEventListener("error", (e) => {
   console.error("window error", e.error || e.message);
