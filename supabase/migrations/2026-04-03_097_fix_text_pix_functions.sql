@@ -1,6 +1,15 @@
 -- Fix migration 096: use CREATE OR REPLACE FUNCTION (migration 096 failed with "already exists")
 -- Also remove logo_text_pix references that migration 096 didn't apply due to error.
 
+-- 0. Delete existing text-pix logos from user accounts
+--    text-pix stores mode: "TEXT_PIX" in payload->source, same type PIX_150x70 as draw/image
+DELETE FROM user_logos
+WHERE type = 'PIX_150x70'
+  AND payload->'source'->>'mode' = 'TEXT_PIX';
+
+-- 0b. Delete text-pix demo entries from demo_template_data (in case 096 didn't run)
+DELETE FROM demo_template_data WHERE slot = 'logo_text_pix';
+
 -- 1. Update restore_my_demo function (remove logo_text_pix from logo slot list)
 CREATE OR REPLACE FUNCTION "public"."restore_my_demo"("p_lang" "text" DEFAULT 'pl'::"text") RETURNS "void"
     LANGUAGE "plpgsql" SECURITY DEFINER
