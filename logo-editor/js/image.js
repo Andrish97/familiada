@@ -116,7 +116,7 @@ export function initImageEditor(ctx) {
   }
 
   function clearBigCanvas(canvas){
-    const g = canvas.getContext("2d");
+    const g = canvas.getContext("2d", { willReadFrequently: true });
     g.clearRect(0, 0, canvas.width, canvas.height);
     g.fillStyle = BIG_COLORS.bg;
     g.fillRect(0, 0, canvas.width, canvas.height);
@@ -131,7 +131,7 @@ export function initImageEditor(ctx) {
 
   function renderBits150x70ToBig(bits150, canvas){
     if (!canvas) return;
-    const g = canvas.getContext("2d");
+    const g = canvas.getContext("2d", { willReadFrequently: true });
     const L = calcBigLayout(canvas);
     clearBigCanvas(canvas);
 

@@ -348,6 +348,19 @@ export function initDrawEditor(ctx) {
           renderToolSettings();
         });
       }
+    } else if (toolName === "eraser") {
+      showSettings(`
+        <div class="rtToolRow">
+          <div class="rtGroup">
+            <div class="rtToolLbl">${t("logoEditor.draw.eraserSize")}</div>
+            <input id="drawEraserSize" class="inp" type="number" min="1" max="50" step="1" value="${eraserSize}"/>
+          </div>
+        </div>
+      `);
+      document.getElementById("drawEraserSize")?.addEventListener("input", (e) => {
+        eraserSize = clamp(Number(e.target.value) || 10, 1, 50);
+        updateCursor();
+      });
     } else {
       hideSettings();
     }
@@ -1030,6 +1043,7 @@ export function initDrawEditor(ctx) {
 
   // Stroke/fill settings
   let strokeWidth = 2;
+  let eraserSize = 10;
   let fillEnabled = false;
   let fillColor = "#ffffff";
 
@@ -1499,15 +1513,17 @@ export function initDrawEditor(ctx) {
     if (tool === TOOL.ERASER) {
       setCursorClass("none", false);
       setFabricCursors("none", "none", "none");
-  
-      const d = 10;
+
+      const z = fabricCanvas.getZoom();
+      const d = Math.max(6, Math.round(eraserSize * z));
+
       cursorDot.style.width = `${d}px`;
       cursorDot.style.height = `${d}px`;
       cursorDot.style.borderRadius = "2px";
       cursorDot.style.border = "1px solid rgba(255,255,255,.9)";
       cursorDot.style.background = "transparent";
       cursorDot.style.boxShadow = "0 0 0 1px rgba(0,0,0,.35)";
-  
+
       placeOverlayAt(lastPointer.x, lastPointer.y);
       return;
     }
@@ -2934,7 +2950,12 @@ export function initDrawEditor(ctx) {
     tBg?.addEventListener("click", () => {
       bg = bg === "BLACK" ? "WHITE" : "BLACK";
       syncDynamicIcons();
-      if (fabricCanvas) { fabricCanvas.backgroundColor = bgColor(); fabricCanvas.requestRenderAll(); }
+      if (fabricCanvas) {
+        fabricCanvas.backgroundColor = bgColor();
+        fabricCanvas.requestRenderAll();
+        ctx.markDirty?.();
+        schedulePreview(50);
+      }
     });
 
     // Keyboard

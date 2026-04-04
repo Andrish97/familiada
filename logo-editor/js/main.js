@@ -634,7 +634,7 @@ function calcBigLayout(canvas){
 }
 
 function clearBigCanvas(canvas){
-  const ctx = canvas.getContext("2d");
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.fillStyle = BIG_COLORS.bg;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -660,7 +660,7 @@ function resolve5x7(ch){
 }
 
 function renderRows30x10ToBig(rows10, canvas){
-  const ctx = canvas.getContext("2d");
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
   const L = calcBigLayout(canvas);
   clearBigCanvas(canvas);
 
@@ -696,7 +696,7 @@ function renderRows30x10ToBig(rows10, canvas){
 }
 
 function renderBits150x70ToBig(bits150, canvas){
-  const ctx = canvas.getContext("2d");
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
   const L = calcBigLayout(canvas);
   clearBigCanvas(canvas);
 
@@ -948,7 +948,7 @@ async function renameOk(){
    MINIATURY (prosto: 150x70 b/w)
 ========================================================= */
 function drawThumbFlat150x70(canvas, bits150){
-  const ctx = canvas.getContext("2d");
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
   const cw = canvas.width, ch = canvas.height;
 
   const scale = Math.min(cw / DOT_W, ch / DOT_H);
