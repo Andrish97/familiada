@@ -1871,8 +1871,7 @@ export function initDrawEditor(ctx) {
     for (let i = 0; i < out.length; i++) {
       const r = data[i*4+0], gg = data[i*4+1], b = data[i*4+2];
       const lum = 0.2126*r + 0.7152*gg + 0.0722*b;
-      // BLACK (ciemne) = 1 (zapalone), WHITE (jasne) = 0 (zgaszone)
-      out[i] = lum < 128 ? 1 : 0;
+      out[i] = lum >= 128 ? 1 : 0;
     }
     return out;
   }
