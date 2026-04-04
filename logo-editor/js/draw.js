@@ -588,8 +588,8 @@ export function initDrawEditor(ctx) {
       const item = document.createElement("button");
       item.type = "button";
       item.className = "fontPickItem" + (f.value === currentValue ? " on" : "");
-      item.style.fontFamily = f.value;
-      item.innerHTML = `<span style="flex:1;text-align:left;">${f.label}</span><span class="fontPickSwatch" style="font-family:${f.value};">Ag</span>`;
+      // Nazwa czcionki systemowym fontem, sample czcionką docelową
+      item.innerHTML = `<span style="flex:1;text-align:left;font-family:system-ui,-apple-system,sans-serif;">${f.label}</span><span class="fontPickSwatch" style="font-family:${f.value};">Ag</span>`;
       item.addEventListener("click", () => {
         if (drawFontOnSelect) drawFontOnSelect(f.value);
         closeDrawFontPicker();
@@ -1005,19 +1005,40 @@ export function initDrawEditor(ctx) {
       fabricCanvas.hoverCursor = "text";
       fabricCanvas.moveCursor = "text";
 
-      // Overlay: pionowa kreska I-beam (grubsza i dłuższa)
+      // Overlay: kursor I-beam (szeryfowy - pionowa kreska + poziome kreseczki na górze i dole)
       const z = fabricCanvas.getZoom();
       const h = Math.max(28, Math.round(32 * z));
-      const w = Math.max(4, Math.round(4 * z));
+      const stemW = Math.max(3, Math.round(3 * z));
+      const serifW = Math.max(8, Math.round(10 * z));
+      const serifH = Math.max(3, Math.round(3 * z));
 
-      cursorDot.style.width = `${w}px`;
+      // Tworzymy SVG dla kursora I-beam z szeryfami
+      const svgData = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="${serifW}" height="${h}">
+          <!-- Pionowa kreska -->
+          <rect x="${(serifW - stemW) / 2}" y="${serifH}" width="${stemW}" height="${h - serifH * 2}" fill="white" stroke="black" stroke-width="1.5"/>
+          <!-- Górny szeryf -->
+          <rect x="1" y="1" width="${serifW - 2}" height="${serifH}" rx="1" fill="white" stroke="black" stroke-width="1.5"/>
+          <!-- Dolny szeryf -->
+          <rect x="1" y="${h - serifH - 1}" width="${serifW - 2}" height="${serifH}" rx="1" fill="white" stroke="black" stroke-width="1.5"/>
+        </svg>
+      `;
+      const blob = new Blob([svgData], { type: 'image/svg+xml' });
+      const url = URL.createObjectURL(blob);
+
+      cursorDot.style.width = `${serifW}px`;
       cursorDot.style.height = `${h}px`;
-      cursorDot.style.borderRadius = "2px";
-      cursorDot.style.border = "2px solid #000";
-      cursorDot.style.background = "#fff";
-      cursorDot.style.boxShadow = "0 0 0 1px #000, 0 0 0 3px #fff, 0 0 0 4px #000";
-      cursorDot.style.mixBlendMode = "normal";
-      cursorDot.style.opacity = "1";
+      cursorDot.style.border = 'none';
+      cursorDot.style.background = 'none';
+      cursorDot.style.boxShadow = 'none';
+      cursorDot.style.borderRadius = '0';
+      cursorDot.style.mixBlendMode = 'normal';
+      cursorDot.style.opacity = '1';
+      // Używamy SVG jako tła
+      cursorDot.style.backgroundImage = `url('${url}')`;
+      cursorDot.style.backgroundSize = 'contain';
+      cursorDot.style.backgroundRepeat = 'no-repeat';
+      cursorDot.style.backgroundPosition = 'center';
 
       showOverlayCursor();
       if (lastPointer) placeOverlayAt(lastPointer.x, lastPointer.y);
