@@ -2,9 +2,9 @@
 // Zakładki mają działać nawet jeśli auth się nie załaduje.
 // Najpierw UI, potem auth „miękko”.
 
-import { confirmModal } from "../core/modal.js?v=12944c19";
-import { initI18n, setUiLang, t, withLangParam } from "../../translation/translation.js?v=7222ec9e";
-import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=90030a71";
+import { confirmModal } from "../core/modal.js?v=v2026-04-04T01202";
+import { initI18n, setUiLang, t, withLangParam } from "../../translation/translation.js?v=v2026-04-04T01202";
+import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-04-04T01202";
 import "../core/contact-modal.js";
 
 function isControlModal() {

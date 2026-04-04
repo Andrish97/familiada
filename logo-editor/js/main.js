@@ -1,21 +1,21 @@
 // familiada/logo-editorjs/main.js
 // Glowna logika strony + lista kafelkow + routing do edytorow.
 
-import { addRenameGesture } from "../../js/core/rename-gesture.js?v=a9959aa4";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../../js/core/logo-preview.js?v=8b4d198b";
+import { addRenameGesture } from "../../js/core/rename-gesture.js?v=v2026-04-04T01202";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../../js/core/logo-preview.js?v=v2026-04-04T01202";
 
-import { sb } from "../../js/core/supabase.js?v=ece3a0c0";
-import { requireAuth } from "../../js/core/auth.js?v=4721e86e";
-import { isGuestUser } from "../../js/core/guest-mode.js?v=e499bece";
-import { alertModal, confirmModal } from "../../js/core/modal.js?v=0c9fe6fd";
-import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js?v=7222ec9e";
-import { initTopbarAccountDropdown } from "../../js/core/topbar-controller.js?v=78fbf2a5";
-import { isMobileDevice } from "../../js/core/pwa.js?v=31d73fc2";
-import { v as cacheBust } from "../../js/core/cache-bust.js?v=8c4e71a2";
+import { sb } from "../../js/core/supabase.js?v=v2026-04-04T01202";
+import { requireAuth } from "../../js/core/auth.js?v=v2026-04-04T01202";
+import { isGuestUser } from "../../js/core/guest-mode.js?v=v2026-04-04T01202";
+import { alertModal, confirmModal } from "../../js/core/modal.js?v=v2026-04-04T01202";
+import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-04-04T01202";
+import { initTopbarAccountDropdown } from "../../js/core/topbar-controller.js?v=v2026-04-04T01202";
+import { isMobileDevice } from "../../js/core/pwa.js?v=v2026-04-04T01202";
+import { v as cacheBust } from "../../js/core/cache-bust.js?v=v2026-04-04T01202";
 
-import { initTextEditor } from "./text.js?v=2038d5d5";
-import { initDrawEditor } from "./draw.js?v=3ed71a16";
-import { initImageEditor } from "./image.js?v=1535dc37";
+import { initTextEditor } from "./text.js?v=v2026-04-04T01202";
+import { initDrawEditor } from "./draw.js?v=v2026-04-04T01202";
+import { initImageEditor } from "./image.js?v=v2026-04-04T01202";
 
 window.addEventListener("error", (e) => {
   console.error("window error", e.error || e.message);

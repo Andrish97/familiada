@@ -1,21 +1,21 @@
-import { addRenameGesture } from "../core/rename-gesture.js?v=a9959aa4";
-import { sb } from "../core/supabase.js?v=ece3a0c0";
-import { requireAuth } from "../core/auth.js?v=22103af8";
-import { alertModal, confirmModal } from "../core/modal.js?v=12944c19";
-import { hideForGuest, isGuestUser } from "../core/guest-mode.js?v=57593a4b";
-import { initI18n, t, applyTranslations } from "../../translation/translation.js?v=7222ec9e";
-import { initRatingSystem } from "../core/rating-system.js?v=60dee1c8";
-import { initUiSelect } from "../core/ui-select.js?v=73a51737";
+import { addRenameGesture } from "../core/rename-gesture.js?v=v2026-04-04T01202";
+import { sb } from "../core/supabase.js?v=v2026-04-04T01202";
+import { requireAuth } from "../core/auth.js?v=v2026-04-04T01202";
+import { alertModal, confirmModal } from "../core/modal.js?v=v2026-04-04T01202";
+import { hideForGuest, isGuestUser } from "../core/guest-mode.js?v=v2026-04-04T01202";
+import { initI18n, t, applyTranslations } from "../../translation/translation.js?v=v2026-04-04T01202";
+import { initRatingSystem } from "../core/rating-system.js?v=v2026-04-04T01202";
+import { initUiSelect } from "../core/ui-select.js?v=v2026-04-04T01202";
 
-import { initPwa, isStandalone, isMobileDevice } from "../core/pwa.js?v=31d73fc2";
+import { initPwa, isStandalone, isMobileDevice } from "../core/pwa.js?v=v2026-04-04T01202";
 
 // Zarejestruj listener PWA jak najwcześniej – beforeinstallprompt może odpalić przed requireAuth
 const pwaApi = initPwa();
 // Jeśli beforeinstallprompt już odpalił zanim dodaliśmy listener w IIFE, sprawdzimy po zalogowaniu
 
 
-import { exportGame, importGame, downloadJson } from "./builder-import-export.js?v=073b80bc";
-import { setTopbarNavPriority, setTopbarAccount } from '../core/topbar-controller.js?v=90030a71';
+import { exportGame, importGame, downloadJson } from "./builder-import-export.js?v=v2026-04-04T01202";
+import { setTopbarNavPriority, setTopbarAccount } from '../core/topbar-controller.js?v=v2026-04-04T01202';
 
 import "../core/contact-modal.js";
 import {
@@ -26,7 +26,7 @@ import {
   validateGameReadyToPlay,
   validatePollEntry,
   validatePollReadyToOpen,
-} from "../core/game-validate.js?v=e7f3408f";
+} from "../core/game-validate.js?v=v2026-04-04T01202";
 
 const MSG = {
   exportBaseEmpty: () => t("builder.exportBase.empty"),
