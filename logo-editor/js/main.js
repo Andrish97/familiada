@@ -1486,6 +1486,9 @@ async function boot(){
    drawEditor = initDrawEditor(editorCtx);
    imageEditor = initImageEditor(editorCtx);
 
+  // Updater - sprawdzanie nowej wersji (TYLKO RAZ)
+  import('../../js/core/updater.js').then(m => m.initUpdater()).catch(() => {});
+
    armNavGuard();
 
   // topbar

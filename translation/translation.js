@@ -336,9 +336,4 @@ if (typeof window !== "undefined") {
     }
   });
 
-  // Automatyczne sprawdzanie aktualizacji (updater.js) - TYLKO RAZ globalnie
-  if (!window._updaterStarted) {
-    window._updaterStarted = true;
-    import('../js/core/updater.js').then(m => m.initUpdater()).catch(() => {});
-  }
 }
