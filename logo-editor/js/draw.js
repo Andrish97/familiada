@@ -101,14 +101,10 @@ export function initDrawEditor(ctx) {
     `,
   };
 
-  // Wybór koloru: jeden przycisk toggle BLACK ↔ WHITE
+  // Wybór koloru: przycisk wypełniony aktualnym kolorem
   function renderColorToggleHTML(value) {
     const isBlack = value === "BLACK";
-    const bg = isBlack ? '#000' : '#fff';
-    const border = isBlack ? '#333' : '#ccc';
-    const text = isBlack ? '#fff' : '#000';
-    const label = isBlack ? '⬛' : '⬜';
-    return `<button class="btn sm" type="button" data-color-toggle="${isBlack ? 'black' : 'white'}" style="min-width:40px;height:30px;padding:0;background:${bg};color:${text};font-size:16px;font-weight:700;border:1px solid ${border};border-radius:8px;">${label}</button>`;
+    return `<button class="btn sm" type="button" data-color-toggle="${isBlack ? 'black' : 'white'}" style="min-width:38px;height:30px;padding:0;background:${isBlack ? '#000' : '#fff'};${isBlack ? 'border:1px solid #444' : 'border:1px solid #999'};border-radius:8px;"></button>`;
   }
 
   function bindColorToggleEvents(onChange) {
