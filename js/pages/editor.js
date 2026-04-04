@@ -1,11 +1,11 @@
 // js/pages/editor.js
-import { sb } from "../core/supabase.js?v=vtest123";
-import { requireAuth } from "../core/auth.js?v=vtest123";
-import { alertModal, confirmModal } from "../core/modal.js?v=vtest123";
-import { parseQaText, clip as clipN } from "../core/text-import.js?v=vtest123";
-import { canEnterEdit, RULES as GV_RULES, TYPES } from "../core/game-validate.js?v=vtest123";
-import { initI18n, t } from "../../translation/translation.js?v=vtest123";
-import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=vtest123";
+import { sb } from "../core/supabase.js?v=v2026-04-04T18215";
+import { requireAuth } from "../core/auth.js?v=v2026-04-04T18215";
+import { alertModal, confirmModal } from "../core/modal.js?v=v2026-04-04T18215";
+import { parseQaText, clip as clipN } from "../core/text-import.js?v=v2026-04-04T18215";
+import { canEnterEdit, RULES as GV_RULES, TYPES } from "../core/game-validate.js?v=v2026-04-04T18215";
+import { initI18n, t } from "../../translation/translation.js?v=v2026-04-04T18215";
+import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-04-04T18215";
 import "../core/contact-modal.js";
 
 initI18n({ withSwitcher: true });
