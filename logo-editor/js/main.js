@@ -1712,7 +1712,8 @@ async function boot(){
 
 // kuloodporne uruchomienie (działa też przy dynamicznym import())
 if (document.readyState === "loading"){
-  document.addEventListener("DOMContentLoaded", boot, { once: true });
-} else {
+  document.addEventListener("DOMContentLoaded", () => boot(), { once: true });
+} else if (!window._booted) {
+  window._booted = true;
   boot();
 }
