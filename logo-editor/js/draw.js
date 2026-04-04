@@ -101,19 +101,20 @@ export function initDrawEditor(ctx) {
     `,
   };
 
-  // Wybór koloru: 2 przyciski radio BLACK/WHITE
-  function renderColorRadioHTML(value) {
+  // Wybór koloru: jeden przycisk toggle BLACK ↔ WHITE
+  function renderColorToggleHTML(value) {
     const isBlack = value === "BLACK";
-    return `<div style="display:inline-flex;gap:2px;border-radius:8px;overflow:hidden;border:1px solid rgba(255,255,255,.15);">
-      <button class="btn" type="button" data-color-radio="black" style="min-width:38px;height:28px;padding:0 6px;background:#000;color:#fff;font-size:10px;font-weight:700;border:none;border-radius:0;${isBlack ? 'outline:2px solid #4fc3f7;outline-offset:-2px;' : 'opacity:.5;'}">BLACK</button>
-      <button class="btn" type="button" data-color-radio="white" style="min-width:38px;height:28px;padding:0 6px;background:#fff;color:#000;font-size:10px;font-weight:700;border:none;border-radius:0;border-left:1px solid #ccc;${!isBlack ? 'outline:2px solid #4fc3f7;outline-offset:-2px;' : 'opacity:.5;'}">WHITE</button>
-    </div>`;
+    const bg = isBlack ? '#000' : '#fff';
+    const border = isBlack ? '#333' : '#ccc';
+    const text = isBlack ? '#fff' : '#000';
+    const label = isBlack ? '⬛' : '⬜';
+    return `<button class="btn sm" type="button" data-color-toggle="${isBlack ? 'black' : 'white'}" style="min-width:40px;height:30px;padding:0;background:${bg};color:${text};font-size:16px;font-weight:700;border:1px solid ${border};border-radius:8px;">${label}</button>`;
   }
 
-  function bindColorRadioEvents(onChange) {
-    document.querySelectorAll("[data-color-radio]").forEach(btn => {
+  function bindColorToggleEvents(onChange) {
+    document.querySelectorAll("[data-color-toggle]").forEach(btn => {
       btn.addEventListener("click", () => {
-        onChange(btn.dataset.colorRadio);
+        onChange(btn.dataset.colorToggle);
       });
     });
   }
@@ -180,7 +181,7 @@ export function initDrawEditor(ctx) {
           </div>
           <div class="rtGroup">
             <div class="rtToolLbl">${t("logoEditor.draw.fillColor")}</div>
-            ${renderColorRadioHTML(fg)}
+            ${renderColorToggleHTML(fg)}
           </div>
         </div>
       `);
@@ -188,8 +189,8 @@ export function initDrawEditor(ctx) {
         strokeWidth = clamp(Number(e.target.value) || 1, 1, 50);
         updateCursor();
       });
-      bindColorRadioEvents((bw) => {
-        fg = bw === "black" ? "BLACK" : "WHITE";
+      bindColorToggleEvents(() => {
+        fg = fg === "BLACK" ? "WHITE" : "BLACK";
         syncDynamicIcons();
         renderToolSettings();
       });
@@ -231,7 +232,7 @@ export function initDrawEditor(ctx) {
           </div>
           <div class="rtGroup">
             <div class="rtToolLbl">${t("logoEditor.draw.fillColor")}</div>
-            ${renderColorRadioHTML(fg)}
+            ${renderColorToggleHTML(fg)}
           </div>
         </div>
       `);
@@ -241,8 +242,8 @@ export function initDrawEditor(ctx) {
           renderToolSettings();
         }, textFont);
       });
-      bindColorRadioEvents((bw) => {
-        fg = bw === "black" ? "BLACK" : "WHITE";
+      bindColorToggleEvents(() => {
+        fg = fg === "BLACK" ? "WHITE" : "BLACK";
         syncDynamicIcons();
         renderToolSettings();
       });
@@ -307,11 +308,11 @@ export function initDrawEditor(ctx) {
           <div class="rtGroup">
             <div class="rtToolLbl">${t("logoEditor.draw.stroke")}</div>
             <input id="drawStrokeWidth" class="inp" type="number" min="1" max="50" step="1" value="${strokeWidth}"/>
-            ${renderColorRadioHTML(fg)}
+            ${renderColorToggleHTML(fg)}
           </div>
           <div class="rtGroup">
             <label class="chk"><input type="checkbox" id="drawFillCheck" ${fillEnabled ? "checked" : ""}/> ${t("logoEditor.draw.fill")}</label>
-            ${renderColorRadioHTML(fillBW)}
+            ${renderColorToggleHTML(fillBW)}
           </div>
         </div>
       `);
@@ -319,10 +320,10 @@ export function initDrawEditor(ctx) {
         strokeWidth = clamp(Number(e.target.value) || 1, 1, 50);
       });
       // Stroke color
-      const strokeBtn = document.querySelector("[data-color-radio]");
+      const strokeBtn = document.querySelector("[data-color-toggle]");
       if (strokeBtn) {
         strokeBtn.addEventListener("click", () => {
-          fg = strokeBtn.dataset.colorRadio === "black" ? "BLACK" : "WHITE";
+          fg = strokeBtn.dataset.colorToggle === "black" ? "BLACK" : "WHITE";
           syncDynamicIcons();
           renderToolSettings();
         });
@@ -332,11 +333,11 @@ export function initDrawEditor(ctx) {
         renderToolSettings();
       });
       // Fill color
-      const fillBtns = document.querySelectorAll("[data-color-radio]");
+      const fillBtns = document.querySelectorAll("[data-color-toggle]");
       const fillBtn = fillBtns[fillBtns.length - 1];
       if (fillBtn) {
         fillBtn.addEventListener("click", () => {
-          fillColor = fillBtn.dataset.colorRadio === "black" ? "#000000" : "#ffffff";
+          fillColor = fillBtn.dataset.colorToggle === "black" ? "#000000" : "#ffffff";
           renderToolSettings();
         });
       }
@@ -427,11 +428,11 @@ export function initDrawEditor(ctx) {
           </div>
           <div class="rtGroup">
             <div class="rtToolLbl">${t("logoEditor.draw.fillColor")}</div>
-            ${renderColorRadioHTML(fillColor.mixed ? "WHITE" : fabricToBW(fillColor.value))}
+            ${renderColorToggleHTML(fillColor.mixed ? "WHITE" : fabricToBW(fillColor.value))}
           </div>
           <div class="rtGroup">
             <label class="chk"><input type="checkbox" id="drawObjTextStrokeCheck" ${hasStroke ? "checked" : ""}/> ${t("logoEditor.draw.stroke")}</label>
-            ${renderColorRadioHTML(!hasStroke ? "WHITE" : strokeCol.mixed ? "WHITE" : fabricToBW(strokeCol.value))}
+            ${renderColorToggleHTML(!hasStroke ? "WHITE" : strokeCol.mixed ? "WHITE" : fabricToBW(strokeCol.value))}
             <input id="drawObjTextStrokeW" class="inp" type="number" min="0" max="20" step="1" value="${strokeW.mixed ? '' : strokeW.value}" style="width:60px" ${!hasStroke ? "disabled" : ""} placeholder="${strokeW.mixed ? '—' : ''}"/>
           </div>
         </div>
@@ -485,7 +486,7 @@ export function initDrawEditor(ctx) {
         fabricCanvas.renderAll();
       });
       // Text color button
-      const txtColorBtn = document.querySelector("[data-color-radio]");
+      const txtColorBtn = document.querySelector("[data-color-toggle]");
       if (txtColorBtn) {
         txtColorBtn.addEventListener("click", () => {
           const curBW = fabricToBW(objs[0]?.fill);
@@ -496,7 +497,7 @@ export function initDrawEditor(ctx) {
         });
       }
       // Stroke color button
-      const strokeColorBtns = document.querySelectorAll("[data-color-radio]");
+      const strokeColorBtns = document.querySelectorAll("[data-color-toggle]");
       const strokeColorBtn = strokeColorBtns[strokeColorBtns.length - 1];
       if (strokeColorBtn) {
         strokeColorBtn.addEventListener("click", () => {
@@ -540,7 +541,7 @@ export function initDrawEditor(ctx) {
             <div class="rtGroup">
               <div class="rtToolLbl">${t("logoEditor.draw.stroke")}</div>
               <input id="drawObjStroke" class="inp" type="number" min="0" max="50" step="1" value="${strokeW.mixed ? '' : strokeW.value}" placeholder="${strokeW.mixed ? '—' : ''}"/>
-              ${renderColorRadioHTML(strokeCol.mixed ? "WHITE" : fabricToBW(strokeCol.value))}
+              ${renderColorToggleHTML(strokeCol.mixed ? "WHITE" : fabricToBW(strokeCol.value))}
             </div>
           </div>
         `);
@@ -549,7 +550,7 @@ export function initDrawEditor(ctx) {
           objs.forEach(o => o.set("strokeWidth", v));
           fabricCanvas.renderAll();
         });
-        const strokeBtn = document.querySelector("[data-color-radio]");
+        const strokeBtn = document.querySelector("[data-color-toggle]");
         if (strokeBtn) {
           strokeBtn.addEventListener("click", () => {
             const curBW = fabricToBW(objs[0]?.stroke);
@@ -569,7 +570,7 @@ export function initDrawEditor(ctx) {
               <div class="rtGroup">
                 <div class="rtToolLbl">${t("logoEditor.draw.stroke")}</div>
                 <input id="drawObjStroke" class="inp" type="number" min="0" max="50" step="1" value="${strokeW.mixed ? '' : strokeW.value}" placeholder="${strokeW.mixed ? '—' : ''}"/>
-                ${renderColorRadioHTML(strokeCol.mixed ? "WHITE" : fabricToBW(strokeCol.value))}
+                ${renderColorToggleHTML(strokeCol.mixed ? "WHITE" : fabricToBW(strokeCol.value))}
               </div>
             </div>
           `);
@@ -578,7 +579,7 @@ export function initDrawEditor(ctx) {
             objs.forEach(o => o.set("strokeWidth", v));
             fabricCanvas.renderAll();
           });
-          const strokeBtn = document.querySelector("[data-color-radio]");
+          const strokeBtn = document.querySelector("[data-color-toggle]");
           if (strokeBtn) {
             strokeBtn.addEventListener("click", () => {
               const curBW = fabricToBW(objs[0]?.stroke);
@@ -599,11 +600,11 @@ export function initDrawEditor(ctx) {
             <div class="rtGroup">
               <div class="rtToolLbl">${t("logoEditor.draw.stroke")}</div>
               <input id="drawObjStroke" class="inp" type="number" min="0" max="50" step="1" value="${strokeW.mixed ? '' : strokeW.value}" placeholder="${strokeW.mixed ? '—' : ''}"/>
-              ${renderColorRadioHTML(strokeCol.mixed ? "WHITE" : fabricToBW(strokeCol.value))}
+              ${renderColorToggleHTML(strokeCol.mixed ? "WHITE" : fabricToBW(strokeCol.value))}
             </div>
             <div class="rtGroup">
               <label class="chk"><input type="checkbox" id="drawObjFillCheck" ${hasFill ? "checked" : ""}/> ${t("logoEditor.draw.fill")}</label>
-              ${renderColorRadioHTML(fillCol.mixed ? "WHITE" : fabricToBW(fillCol.value))}
+              ${renderColorToggleHTML(fillCol.mixed ? "WHITE" : fabricToBW(fillCol.value))}
             </div>
           </div>
         `);
@@ -613,7 +614,7 @@ export function initDrawEditor(ctx) {
           fabricCanvas.renderAll();
         });
         // Stroke color button — WSZYSTKIE obiekty
-        const strokeColorBtn = document.querySelector("[data-color-radio]");
+        const strokeColorBtn = document.querySelector("[data-color-toggle]");
         if (strokeColorBtn) {
           strokeColorBtn.addEventListener("click", () => {
             const curBW = fabricToBW(objs[0]?.stroke);
@@ -623,7 +624,7 @@ export function initDrawEditor(ctx) {
           });
         }
         // Fill color button — tylko filledObjs
-        const fillBtns = document.querySelectorAll("[data-color-radio]");
+        const fillBtns = document.querySelectorAll("[data-color-toggle]");
         const fillBtn = fillBtns[fillBtns.length - 1];
         if (fillBtn) {
           fillBtn.addEventListener("click", () => {
@@ -653,11 +654,11 @@ export function initDrawEditor(ctx) {
         <div class="rtToolRow">
           <div class="rtGroup">
             <div class="rtToolLbl">${t("logoEditor.draw.fillColor")}</div>
-            ${renderColorRadioHTML(fabricToBW(fillColor))}
+            ${renderColorToggleHTML(fabricToBW(fillColor))}
           </div>
         </div>
       `);
-      const mixedColorBtn = document.querySelector("[data-color-radio]");
+      const mixedColorBtn = document.querySelector("[data-color-toggle]");
       if (mixedColorBtn) {
         mixedColorBtn.addEventListener("click", () => {
           const curBW = fabricToBW(objs[0]?.fill);
