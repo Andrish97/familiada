@@ -1164,50 +1164,14 @@ export function initDrawEditor(ctx) {
   
     // TEXT: kursor I-beam widoczny WSZĘDZIE (również na pustym polu)
     if (tool === TOOL.TEXT) {
-      setCursorClass("none", false);
-      // Ukrywamy domyślny kursor canvasa, używamy tylko overlay
-      fabricCanvas.defaultCursor = "default";
-      fabricCanvas.hoverCursor = "default";
-      fabricCanvas.moveCursor = "default";
-
-      // Overlay I-beam: biały kształt z mix-blend-mode: difference
-      // Dzięki difference: na ciemnym tle będzie biały, na jasnym czarny.
-      const z = fabricCanvas.getZoom();
-      // Minimalne wymiary, żeby kursor nie był zbyt mały przy dużym oddaleniu
-      const h = Math.max(24, Math.round(28 * z));
-      const stemW = Math.max(2, Math.round(2 * z));
-      const serifW = Math.max(12, Math.round(14 * z));
-      const serifH = Math.max(2, Math.round(2 * z));
-
-      // Rysujemy biały kształt I-beam na canvasie
-      const c = document.createElement('canvas');
-      c.width = serifW * 2; // 2x dla ostrości
-      c.height = h * 2;
-      const cx = c.getContext('2d');
-      cx.scale(2, 2);
-
-      // Wypełnienie białe (w trybie difference odwróci kolor tła)
-      cx.fillStyle = 'white';
-      // Pionowa kreska
-      cx.fillRect((serifW - stemW) / 2, serifH, stemW, h - serifH * 2);
-      // Górny szeryf
-      cx.fillRect(1, 1, serifW - 2, serifH);
-      // Dolny szeryf
-      cx.fillRect(1, h - serifH - 1, serifW - 2, serifH);
-
-      const url = c.toDataURL('image/png');
-
-      cursorDot.style.width = `${serifW}px`;
-      cursorDot.style.height = `${h}px`;
-      cursorDot.style.border = 'none';
-      cursorDot.style.background = `url(${url}) center/contain no-repeat`;
-      cursorDot.style.boxShadow = 'none';
-      cursorDot.style.borderRadius = '0';
-      cursorDot.style.mixBlendMode = 'difference'; // Kluczowe: adaptacja do tła
-      cursorDot.style.opacity = '1';
-
-      showOverlayCursor();
-      if (lastPointer) placeOverlayAt(lastPointer.x, lastPointer.y);
+      // NIE używamy setCursorClass("none") - to chowa systemowy kursor!
+      // Pozwalamy Fabric.js obsłużyć kursor
+      fabricCanvas.defaultCursor = "crosshair"; // + na pustym polu
+      fabricCanvas.hoverCursor = "text"; // I na tekście
+      fabricCanvas.moveCursor = "text"; // I podczas przesuwania
+      
+      // Ukrywamy overlay kursora (jeśli był widoczny)
+      hideOverlayCursor(); 
       return;
     }
 
@@ -1380,18 +1344,19 @@ export function initDrawEditor(ctx) {
 
     // SELECT tool:
     if (tool === TOOL.SELECT) {
-      // TEKST: w Select pokazujemy TYLKO ustawienia obiektu (przecięcie)
-      // NIE pokazujemy ustawień edycji tekstu - to jest tylko do przesuwania/skalowania
-      if (isTextObj(obj)) {
-        // Dla tekstu: pokaż tylko kolor wypełnienia
-        renderTextObjectSettings(obj);
-        return;
-      }
-      // Jeśli zaznaczony inny obiekt -> pokaż ustawienia obiektu (przecięcie właściwości)
-      if (obj) {
+      // Kształty: pokaż ustawienia obiektu (przecięcie właściwości)
+      if (obj && !isTextObj(obj)) {
         renderObjectSettings();
         return;
       }
+      // Tekst: W Select NIE pokazujemy ustawień tekstu - Select służy tylko do przesuwania
+      if (isTextObj(obj)) {
+        hideSettings();
+        return;
+      }
+      // Brak zaznaczenia
+      hideSettings();
+      return;
     }
 
     // Inne narzędzia -> pokaż ustawienia narzędzia
@@ -2150,7 +2115,7 @@ export function initDrawEditor(ctx) {
       // w mouse:down
       lastPointer = { x: ev.clientX, y: ev.clientY };
       
-      if (tool === TOOL.BRUSH || tool === TOOL.ERASER || tool === TOOL.TEXT) {
+      if (tool === TOOL.BRUSH || tool === TOOL.ERASER) {
         placeOverlayAt(ev.clientX, ev.clientY);
       } else {
         hideOverlayCursor();
@@ -2251,14 +2216,6 @@ export function initDrawEditor(ctx) {
       
       if (tool === TOOL.BRUSH || tool === TOOL.ERASER) {
         placeOverlayAt(ev.clientX, ev.clientY);
-      } else if (tool === TOOL.TEXT) {
-        // TEXT: pokaż overlay I-beam tylko nad istniejącym tekstem
-        const target = fabricCanvas.findTarget(ev);
-        if (target && (target.type === "i-text" || target.type === "textbox" || target.type === "text")) {
-          placeOverlayAt(ev.clientX, ev.clientY);
-        } else {
-          hideOverlayCursor(); // na pustym polu - systemowy crosshair
-        }
       } else {
         hideOverlayCursor();
       }
@@ -2318,12 +2275,26 @@ export function initDrawEditor(ctx) {
     fabricCanvas.on("mouse:out",  () => updateCursorVisual());
 
 
-    // Dwuklik kończy polygon
+    // Dwuklik kończy polygon LUB włącza edycję tekstu w Select
     drawCanvasEl.addEventListener("dblclick", (ev) => {
       if (ctx.getMode?.() !== "DRAW") return;
-      if (tool !== TOOL.POLY) return;
-      ev.preventDefault();
-      finalizePolygon();
+      
+      if (tool === TOOL.POLY) {
+        ev.preventDefault();
+        finalizePolygon();
+        return;
+      }
+      
+      if (tool === TOOL.SELECT) {
+        const target = fabricCanvas.findTarget(ev);
+        if (target && isTextObj(target)) {
+          ev.preventDefault();
+          setBaseTool(TOOL.TEXT);
+          target.enterEditing();
+          target.selectAll();
+          fabricCanvas.renderAll();
+        }
+      }
     });
 
     // Wheel zoom (tylko select/pan) + min zoom = 1
