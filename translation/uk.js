@@ -3552,7 +3552,7 @@ const uk = {
       textTitle: "Текст",
       textSubtitle: "Шрифт як у класичному логотипі Familiady",
       drawTitle: "Малюнок",
-      drawSubtitle: "Можна малювати довільно",
+      drawSubtitle: "Можна малювати довільно і додавати текст",
       imageTitle: "Зображення",
       imageSubtitle: "Імпорт зображень користувача",
     },
@@ -3632,7 +3632,7 @@ const uk = {
       deleteFailed: "Не вдалося видалити.\n\n{error}",
       createFailedDetailed: "Не вдалося створити.\n\n{error}",
       invalidType: "Невідомий тип логотипу.",
-      cannotEditOldLogo: "Це лого не може бути відредаговане (воно було створено до впровадження редактора). Створіть нове лого.",
+      cannotEditOldLogo: "Це лого не може бути відредаговане.",
     },
     defaults: {
       logoName: "Логотип за замовчуванням",

@@ -3677,7 +3677,7 @@ const en = {
       textTitle: "Text",
       textSubtitle: "Font like the classic Familiada logo",
       drawTitle: "Drawing",
-      drawSubtitle: "You can draw freely",
+      drawSubtitle: "You can draw freely and add text",
       imageTitle: "Image",
       imageSubtitle: "Import user images",
     },
@@ -3757,7 +3757,7 @@ const en = {
       deleteFailed: "Couldn't delete.\n\n{error}",
       createFailedDetailed: "Couldn't create.\n\n{error}",
       invalidType: "Unknown logo type.",
-      cannotEditOldLogo: "This logo cannot be edited (it was created before the editor was introduced). Create a new logo.",
+      cannotEditOldLogo: "This logo cannot be edited.",
     },
     defaults: {
       logoName: "Default logo",

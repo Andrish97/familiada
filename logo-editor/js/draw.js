@@ -589,7 +589,7 @@ export function initDrawEditor(ctx) {
       item.type = "button";
       item.className = "fontPickItem" + (f.value === currentValue ? " on" : "");
       // Nazwa czcionki systemowym fontem, sample czcionką docelową
-      item.innerHTML = `<span style="flex:1;text-align:left;font-family:system-ui,-apple-system,sans-serif;">${f.label}</span><span class="fontPickSwatch" style="font-family:${f.value};">Ag</span>`;
+      item.innerHTML = `<span style="flex:1;text-align:left;font-family:system-ui,-apple-system,sans-serif;">${f.label}</span><span class="fontPickSwatch" style="font-family:${f.value};">ABC abc 123</span>`;
       item.addEventListener("click", () => {
         if (drawFontOnSelect) drawFontOnSelect(f.value);
         closeDrawFontPicker();

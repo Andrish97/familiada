@@ -3677,7 +3677,7 @@ const pl = {
       textTitle: "Tekst",
       textSubtitle: "Font jak w klasycznym logo Familiady",
       drawTitle: "Rysunek",
-      drawSubtitle: "Można rysować dowolnie",
+      drawSubtitle: "Można rysować dowolnie i dodawać tekst",
       imageTitle: "Obraz",
       imageSubtitle: "Import obrazów użytkownika",
     },
@@ -3757,7 +3757,7 @@ const pl = {
       deleteFailed: "Nie udało się usunąć.\n\n{error}",
       createFailedDetailed: "Nie udało się utworzyć.\n\n{error}",
       invalidType: "Nieznany typ logo.",
-      cannotEditOldLogo: "To logo nie może być edytowane (zostało utworzone przed wprowadzeniem edytora). Utwórz nowe logo.",
+      cannotEditOldLogo: "To logo nie może być edytowane.",
     },
     defaults: {
       logoName: "Domyślne logo",
