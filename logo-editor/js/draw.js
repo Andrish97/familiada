@@ -512,7 +512,7 @@ export function initDrawEditor(ctx) {
           });
         }
       } else {
-        // Rect/ellipse — obrys + wypełnienie
+        // Mix linii + kształtów — stroke dotyczy WSZYSTKICH, fill tylko rect/ellipse
         const fills = filledObjs.map(o => o.fill || "transparent");
         const hasFill = fills.some(f => f && f !== "transparent");
         const fillCol = allSame(fills.filter(f => f !== "transparent"));
@@ -533,10 +533,10 @@ export function initDrawEditor(ctx) {
         `);
         document.getElementById("drawObjStroke")?.addEventListener("input", (e) => {
           const v = clamp(Number(e.target.value) || 1, 0, 50);
-          filledObjs.forEach(o => o.set("strokeWidth", v));
+          objs.forEach(o => o.set("strokeWidth", v)); // WSZYSTKIE obiekty
           fabricCanvas.renderAll();
         });
-        // Stroke color button
+        // Stroke color button — WSZYSTKIE obiekty
         const strokeColorBtn = document.querySelector("[data-color-btn='fg']");
         if (strokeColorBtn) {
           strokeColorBtn.addEventListener("click", () => {
@@ -546,7 +546,7 @@ export function initDrawEditor(ctx) {
             renderObjectSettings();
           });
         }
-        // Fill color button
+        // Fill color button — tylko filledObjs
         const fillBtns = document.querySelectorAll("[data-color-btn='fg']");
         const fillBtn = fillBtns[fillBtns.length - 1];
         if (fillBtn) {
