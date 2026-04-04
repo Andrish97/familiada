@@ -44,10 +44,8 @@ export function initDrawEditor(ctx) {
 
   const tBrush    = document.getElementById("tBrush");
   const tEraser   = document.getElementById("tEraser");
-  const tLine     = document.getElementById("tLine");
-  const tRect     = document.getElementById("tRect");
-  const tEllipse  = document.getElementById("tEllipse");
-  const tPoly     = document.getElementById("tPoly");
+  const tShapes   = document.getElementById("tShapes");
+  const shapePicker = document.getElementById("shapePicker");
 
   const tUndo     = document.getElementById("tUndo");
   const tRedo     = document.getElementById("tRedo");
@@ -159,13 +157,20 @@ export function initDrawEditor(ctx) {
     const tn = tool.toLowerCase();
 
     if (tn === "brush") {
+      const ts = toolSettings[TOOL.BRUSH];
       showSettings(`
-        <div class="ctxGroup"><span class="ctxLabel">Grubość</span><input id="cStrokeW" class="ctxInput" type="number" min="1" max="50" step="1" value="${toolSettings[TOOL.BRUSH].stroke}"/></div>
-        <div class="ctxGroup"><span class="ctxLabel">Kolor</span>${ctxColorBtn(toolSettings[TOOL.BRUSH].fg)}</div>
+        <div class="ctxGroup"><span class="ctxLabel">Grubość</span><input id="cStrokeW" class="ctxInput" type="number" min="1" max="50" step="1" value="${ts.stroke}"/></div>
+        <div class="ctxGroup"><span class="ctxLabel">Styl</span>
+          <select id="cLineStyle" class="ctxInput">${LINE_STYLES.map(s => `<option value="${s.id}" ${ts.lineStyle===s.id?"selected":""}>${s.label}</option>`).join('')}</select>
+        </div>
+        <div class="ctxGroup"><span class="ctxLabel">Kolor</span>${ctxColorBtn(ts.fg)}</div>
       `);
       document.getElementById("cStrokeW")?.addEventListener("input", e => {
         toolSettings[TOOL.BRUSH].stroke = clamp(+e.target.value||1,1,50);
         updateCursorVisual();
+      });
+      document.getElementById("cLineStyle")?.addEventListener("change", e => {
+        toolSettings[TOOL.BRUSH].lineStyle = e.target.value;
       });
       const brushBtns = toolCtx?.querySelectorAll("[data-color-toggle]") || [];
       if (brushBtns[0]) brushBtns[0].addEventListener("click", () => {
@@ -175,65 +180,62 @@ export function initDrawEditor(ctx) {
       });
     }
     else if (tn === "eraser") {
-      showSettings(`<div class="ctxGroup"><span class="ctxLabel">Rozmiar</span><input id="cEraser" class="ctxInput" type="number" min="1" max="50" step="1" value="${toolSettings[tool].size}"/></div>`);
+      showSettings(`<div class="ctxGroup"><span class="ctxLabel">Rozmiar</span><input id="cEraser" class="ctxInput" type="number" min="1" max="50" step="1" value="${toolSettings[TOOL.ERASER].size}"/></div>`);
       document.getElementById("cEraser")?.addEventListener("input", e => {
-        toolSettings[tool].size = clamp(+e.target.value||10,1,50);
+        toolSettings[TOOL.ERASER].size = clamp(+e.target.value||10,1,50);
         updateCursorVisual();
       });
     }
-    else if (tn === "line") {
-      showSettings(`
-        <div class="ctxGroup"><span class="ctxLabel">Grubość</span><input id="cStrokeW" class="ctxInput" type="number" min="1" max="50" step="1" value="${toolSettings[TOOL.LINE].stroke}"/></div>
-        <div class="ctxGroup"><span class="ctxLabel">Kolor</span>${ctxColorBtn(toolSettings[TOOL.LINE].fg)}</div>
-      `);
-      document.getElementById("cStrokeW")?.addEventListener("input", e => {
-        toolSettings[TOOL.LINE].stroke = clamp(+e.target.value||1,1,50);
-      });
-      const lineBtns = toolCtx?.querySelectorAll("[data-color-toggle]") || [];
-      if (lineBtns[0]) lineBtns[0].addEventListener("click", () => {
-        toolSettings[TOOL.LINE].fg = toolSettings[TOOL.LINE].fg === "BLACK" ? "WHITE" : "BLACK";
-        syncDynamicIcons();
-        renderToolSettings();
-      });
-    }
-    else if (tn === "rect" || tn === "ellipse" || tn === "poly") {
-      const isPolyDrawing = tn === "poly" && polyPoints.length > 0;
-      const tKey = tool.toUpperCase();
-      // Upewnij się, że klucz istnieje w toolSettings
-      if (!toolSettings[tKey]) {
-        toolSettings[tKey] = { stroke: 6, fill: false, fillColor: "WHITE" };
-      }
-      const shapeOpts = toolSettings[tKey];
+    else if (tn === "shapes") {
+      const ts = toolSettings[TOOL.SHAPES];
+      const shape = SHAPES.find(s => s.id === currentShape) || SHAPES[0];
+      const isPoly = shape.isPoly;
+      const hasFill = shape.hasFill;
       
       let html = `
-        <div class="ctxGroup"><span class="ctxLabel">Obrys</span><input id="cStrokeW" class="ctxInput" type="number" min="0" max="50" step="1" value="${shapeOpts.stroke}"/></div>
-        <div class="ctxGroup"><span class="ctxLabel">Kolor</span>${ctxColorBtn(shapeOpts.fg)}</div>
-        <div class="ctxGroup"><label class="ctxChk"><input type="checkbox" id="cFill" ${shapeOpts.fill?"checked":""}/>Wypeł.</label>${ctxColorBtn(shapeOpts.fillColor)}</div>
+        <div class="ctxGroup"><span class="ctxLabel">Kształt</span>
+          <select id="cShapeType" class="ctxInput">${SHAPES.map(s => `<option value="${s.id}" ${currentShape===s.id?"selected":""}>${s.label}</option>`).join('')}</select>
+        </div>
+        <div class="ctxGroup"><span class="ctxLabel">Grubość</span><input id="cStrokeW" class="ctxInput" type="number" min="0" max="50" step="1" value="${ts.stroke}"/></div>
+        <div class="ctxGroup"><span class="ctxLabel">Styl</span>
+          <select id="cLineStyle" class="ctxInput">${LINE_STYLES.map(s => `<option value="${s.id}" ${ts.lineStyle===s.id?"selected":""}>${s.label}</option>`).join('')}</select>
+        </div>
+        <div class="ctxGroup"><span class="ctxLabel">Kolor</span>${ctxColorBtn(ts.fg)}</div>
       `;
-      if (isPolyDrawing) {
-        html += `<div class="ctxGroup"><button class="ctxBtn on" id="cPolyDone" style="color:#4fc3f7;border-color:rgba(79,195,247,.35);">✓ Zamknij</button></div>`;
+      
+      if (hasFill) {
+        html += `<div class="ctxGroup"><label class="ctxChk"><input type="checkbox" id="cFill" ${ts.fill?"checked":""}/>Wypeł.</label>${ctxColorBtn(ts.fillColor)}</div>`;
       }
+      
+      if (isPoly) {
+        html += `<div class="ctxGroup"><button class="ctxBtn on" id="cPolyDone">✓ Zamknij</button></div>`;
+      }
+      
       showSettings(html);
       
-      document.getElementById("cStrokeW")?.addEventListener("input", e => {
-        toolSettings[tKey].stroke = clamp(+e.target.value||1,0,50);
-      });
-      document.getElementById("cFill")?.addEventListener("change", e => {
-        toolSettings[tKey].fill = e.target.checked;
+      document.getElementById("cShapeType")?.addEventListener("change", e => {
+        currentShape = e.target.value;
         renderToolSettings();
       });
+      document.getElementById("cStrokeW")?.addEventListener("input", e => {
+        toolSettings[TOOL.SHAPES].stroke = clamp(+e.target.value||1,0,50);
+      });
+      document.getElementById("cLineStyle")?.addEventListener("change", e => {
+        toolSettings[TOOL.SHAPES].lineStyle = e.target.value;
+      });
       
-      // Obsługa kolorów (niezależnie dla każdego narzędzia)
       const shapeBtns = toolCtx?.querySelectorAll("[data-color-toggle]") || [];
-      
-      // Pierwszy przycisk to kolor obrysu (fg)
       if (shapeBtns[0]) shapeBtns[0].addEventListener("click", () => {
-        shapeOpts.fg = shapeOpts.fg === "BLACK" ? "WHITE" : "BLACK";
+        toolSettings[TOOL.SHAPES].fg = toolSettings[TOOL.SHAPES].fg === "BLACK" ? "WHITE" : "BLACK";
         syncDynamicIcons();
         renderToolSettings();
       });
-      if (shapeBtns[1]) shapeBtns[1].addEventListener("click", () => {
-        toolSettings[tKey].fillColor = shapeOpts.fillColor === "BLACK" ? "WHITE" : "BLACK";
+      if (shapeBtns[1] && hasFill) shapeBtns[1].addEventListener("click", () => {
+        toolSettings[TOOL.SHAPES].fillColor = ts.fillColor === "BLACK" ? "WHITE" : "BLACK";
+        renderToolSettings();
+      });
+      document.getElementById("cFill")?.addEventListener("change", e => {
+        toolSettings[TOOL.SHAPES].fill = e.target.checked;
         renderToolSettings();
       });
       
@@ -242,7 +244,6 @@ export function initDrawEditor(ctx) {
     else if (tn === "text") {
       const ts = toolSettings[TOOL.TEXT];
       const fntLbl = DRAW_FONTS.find(f=>f.value===textFont)?.label || "Font";
-      const alignIcon = (al) => al === "left" ? "⇤" : al === "right" ? "⇥" : "⇆";
       showSettings(`
         <div class="ctxGroup"><button class="ctxBtn" id="cFont" style="min-width:90px;max-width:140px;justify-content:space-between;display:flex;"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${fntLbl}</span><span style="opacity:.4;">▾</span></button></div>
         <div class="ctxGroup"><span class="ctxLabel">Roz.</span><input id="cSz" class="ctxInput" type="number" min="10" max="220" step="1" value="${textFontSize}"/></div>
@@ -263,10 +264,9 @@ export function initDrawEditor(ctx) {
       document.getElementById("cB")?.addEventListener("click", e => { textBold=!textBold; e.target.classList.toggle("on",textBold); });
       document.getElementById("cI")?.addEventListener("click", e => { textItalic=!textItalic; e.target.classList.toggle("on",textItalic); });
       document.getElementById("cU")?.addEventListener("click", e => { textUnderline=!textUnderline; e.target.classList.toggle("on",textUnderline); });
-      document.getElementById("cAL")?.addEventListener("click", e => {
-        textAlign = textAlign==="left"?"center":textAlign==="center"?"right":"left";
-        e.target.textContent = alignIcon(textAlign);
-      });
+      document.getElementById("cAlignL")?.addEventListener("click", () => { textAlign="left"; renderToolSettings(); });
+      document.getElementById("cAlignC")?.addEventListener("click", () => { textAlign="center"; renderToolSettings(); });
+      document.getElementById("cAlignR")?.addEventListener("click", () => { textAlign="right"; renderToolSettings(); });
       const textBtns = toolCtx?.querySelectorAll("[data-color-toggle]") || [];
       if (textBtns[0]) textBtns[0].addEventListener("click", () => {
         toolSettings[TOOL.TEXT].fg = toolSettings[TOOL.TEXT].fg === "BLACK" ? "WHITE" : "BLACK";
@@ -278,99 +278,6 @@ export function initDrawEditor(ctx) {
       hideSettings();
     }
   }
-
-  /** Ustawienia zaznaczonego obiektu TEKSTU (font, rozmiar, B/I/U, align) */
-  function renderTextObjectSettings(obj) {
-    if (!obj || !isTextObj(obj)) { hideSettings(); return; }
-
-    const objFont = obj.fontFamily || "";
-    const fontLabel = DRAW_FONTS.find(f => f.value === objFont)?.label || "Font";
-
-    // Pobierz wartości z obiektu
-    const objSize = Math.round(obj.fontSize || 40);
-    const objLH = obj.lineHeight || 1;
-    const objSpacing = obj.charSpacing || 0;
-    const objBold = obj.fontWeight === "bold";
-    const objItalic = obj.fontStyle === "italic";
-    const objUnderline = !!obj.underline;
-    const objAlign = obj.textAlign || "left";
-    const objFill = obj.fill || "#ffffff";
-
-    showSettings(`
-      <div class="ctxGroup"><button class="ctxBtn" id="cTFont" style="min-width:90px;max-width:140px;justify-content:space-between;display:flex;"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${fontLabel}</span><span style="opacity:.4;">▾</span></button></div>
-      <div class="ctxGroup"><span class="ctxLabel">Roz.</span><input id="cTSize" class="ctxInput" type="number" min="10" max="220" step="1" value="${objSize}"/></div>
-      <div class="ctxGroup"><span class="ctxLabel">Linia</span><input id="cTLH" class="ctxInput" type="number" min="0.6" max="3.0" step="0.05" value="${objLH}"/></div>
-      <div class="ctxGroup"><span class="ctxLabel">Odst.</span><input id="cTSp" class="ctxInput" type="number" min="0" max="20" step="0.5" value="${objSpacing}"/></div>
-      <div class="ctxGroup"><button class="ctxBtn" id="cTB" ${objBold?"on":""}>B</button><button class="ctxBtn" id="cTI" ${objItalic?"on":""}>I</button><button class="ctxBtn" id="cTU" ${objUnderline?"on":""}>U</button></div>
-      <div class="ctxGroup">
-        <button class="ctxBtn ${objAlign==='left'?'on':''}" id="cAlignL">⇤</button>
-        <button class="ctxBtn ${objAlign==='center'?'on':''}" id="cAlignC">⇆</button>
-        <button class="ctxBtn ${objAlign==='right'?'on':''}" id="cAlignR">⇥</button>
-      </div>
-      <div class="ctxGroup"><span class="ctxLabel">Kolor</span>${ctxColorBtn(fabricToBW(objFill))}</div>
-    `);
-
-    // Event listeners
-    document.getElementById("cTFont")?.addEventListener("click", () => {
-        openDrawFontPicker(v => {
-            obj.set("fontFamily", v);
-            fabricCanvas.renderAll();
-            renderTextObjectSettings(obj);
-        }, objFont);
-    });
-    document.getElementById("cTSize")?.addEventListener("input", e => {
-        obj.set("fontSize", clamp(+e.target.value||40, 10, 220));
-        fabricCanvas.renderAll();
-    });
-    document.getElementById("cTLH")?.addEventListener("input", e => {
-        obj.set("lineHeight", clamp(+e.target.value||1, 0.6, 3));
-        fabricCanvas.renderAll();
-    });
-    document.getElementById("cTSp")?.addEventListener("input", e => {
-        obj.set("charSpacing", clamp(+e.target.value||0, 0, 20));
-        fabricCanvas.renderAll();
-    });
-    document.getElementById("cTB")?.addEventListener("click", e => {
-        obj.set("fontWeight", !objBold ? "bold" : "normal");
-        e.target.classList.toggle("on", !objBold);
-        fabricCanvas.renderAll();
-    });
-    document.getElementById("cTI")?.addEventListener("click", e => {
-        obj.set("fontStyle", !objItalic ? "italic" : "normal");
-        e.target.classList.toggle("on", !objItalic);
-        fabricCanvas.renderAll();
-    });
-    document.getElementById("cTU")?.addEventListener("click", e => {
-        obj.set("underline", !objUnderline);
-        e.target.classList.toggle("on", !objUnderline);
-        fabricCanvas.renderAll();
-    });
-    document.getElementById("cAlignL")?.addEventListener("click", () => {
-        obj.set("textAlign", "left");
-        fabricCanvas.renderAll();
-        renderTextObjectSettings(obj);
-    });
-    document.getElementById("cAlignC")?.addEventListener("click", () => {
-        obj.set("textAlign", "center");
-        fabricCanvas.renderAll();
-        renderTextObjectSettings(obj);
-    });
-    document.getElementById("cAlignR")?.addEventListener("click", () => {
-        obj.set("textAlign", "right");
-        fabricCanvas.renderAll();
-        renderTextObjectSettings(obj);
-    });
-
-    const objTextBtns = toolCtx?.querySelectorAll("[data-color-toggle]") || [];
-    if(objTextBtns[0]) objTextBtns[0].addEventListener("click", () => {
-        const currentBW = fabricToBW(obj.fill);
-        const newColor = currentBW === "BLACK" ? "#ffffff" : "#000000";
-        obj.set("fill", newColor);
-        fabricCanvas.renderAll();
-        renderTextObjectSettings(obj);
-    });
-  }
-
   function getSelectedObjects() {
     if (!fabricCanvas) return [];
     const active = fabricCanvas.getActiveObjects();
@@ -636,12 +543,45 @@ export function initDrawEditor(ctx) {
     PAN: "PAN",
     TEXT: "TEXT",
     BRUSH: "BRUSH",
-    ERASER: "ERASER",   // TYLKO OBJECT erase
-    LINE: "LINE",
-    RECT: "RECT",
-    ELLIPSE: "ELLIPSE",
-    POLY: "POLY",
+    ERASER: "ERASER",
+    SHAPES: "SHAPES",
   };
+
+  // Lista dostępnych kształtów
+  const SHAPES = [
+    { id: "line", label: "Linia", hasFill: false },
+    { id: "rect", label: "Prostokąt", hasFill: true },
+    { id: "roundRect", label: "Zaokr. Prostokąt", hasFill: true },
+    { id: "ellipse", label: "Elipsa", hasFill: true },
+    { id: "triangle", label: "Trójkąt", hasFill: true },
+    { id: "diamond", label: "Romb", hasFill: true },
+    { id: "pentagon", label: "Pięciokąt", hasFill: true },
+    { id: "hexagon", label: "Sześciokąt", hasFill: true },
+    { id: "cross", label: "Krzyż", hasFill: true },
+    { id: "star5", label: "Gwiazda 5", hasFill: true },
+    { id: "star8", label: "Gwiazda 8", hasFill: true },
+    { id: "arrow1", label: "Strzałka →", hasFill: false },
+    { id: "arrow2", label: "Strzałka ↔", hasFill: false },
+    { id: "arrow1Fill", label: "Strzałka ➤", hasFill: true },
+    { id: "arrow2Fill", label: "Strzałka ⇔", hasFill: true },
+    { id: "heart", label: "Serce", hasFill: true },
+    { id: "cloud", label: "Chmurka", hasFill: true },
+    { id: "lightning", label: "Piorun", hasFill: true },
+    { id: "moon", label: "Księżyc", hasFill: true },
+    { id: "polygon", label: "Wielokąt", hasFill: true, isPoly: true },
+  ];
+
+  // Style linii
+  const LINE_STYLES = [
+    { id: "solid", label: "━━━", dash: null },
+    { id: "dashed", label: "- - -", dash: (w) => [w * 2, w] },
+    { id: "dotted", label: "· · ·", dash: (w) => [Math.max(w * 0.5, 1), w * 1.5] },
+    { id: "dashDot", label: "- · -", dash: (w) => [w * 3, w, Math.max(w * 0.5, 1), w] },
+  ];
+
+  // Aktualny kształt i styl linii
+  let currentShape = "rect";
+  let currentLineStyle = "solid";
 
   // baseTool = narzędzie wybrane przez klik / klawisz
   // tool = narzędzie aktualne (może być chwilowo podmienione przez Space/Ctrl)
@@ -653,7 +593,7 @@ export function initDrawEditor(ctx) {
 
   function fgColor() { 
     // Pobierz kolor z ustawień aktualnego narzędzia
-    const tKey = tool.toUpperCase();
+    const tKey = tool === TOOL.SHAPES ? TOOL.SHAPES : tool.toUpperCase();
     const ts = toolSettings[tKey] || {};
     return (ts.fg || "WHITE") === "BLACK" ? "#000" : "#fff"; 
   }
@@ -784,11 +724,8 @@ export function initDrawEditor(ctx) {
   // - line: stroke
   // - rect/ellipse/poly: stroke + fill bool + fillColor (WHITE/BLACK)
   const toolSettings = {
-    [TOOL.BRUSH]:   { stroke: 6, fg: "WHITE" },
-    [TOOL.LINE]:    { stroke: 6, fg: "WHITE" },
-    [TOOL.RECT]:    { stroke: 6, fill: false, fillColor: "WHITE", fg: "WHITE" },
-    [TOOL.ELLIPSE]: { stroke: 6, fill: false, fillColor: "WHITE", fg: "WHITE" },
-    [TOOL.POLY]:    { stroke: 6, fill: false, fillColor: "WHITE", fg: "WHITE" },
+    [TOOL.BRUSH]:   { stroke: 6, fg: "WHITE", lineStyle: "solid" },
+    [TOOL.SHAPES]:  { stroke: 6, fg: "WHITE", lineStyle: "solid", fill: false, fillColor: "WHITE" },
     [TOOL.TEXT]:    { fontSize: 40, fg: "WHITE" },
     [TOOL.ERASER]:  { size: 10 },
   };
@@ -797,6 +734,94 @@ export function initDrawEditor(ctx) {
     const s = toolSettings[tool]?.stroke;
     return clamp(Number(s || 6), 1, 80);
   }
+
+  // =========================================================
+  // Style linii
+  // =========================================================
+  function getDashArray(lineStyle, width) {
+    const style = LINE_STYLES.find(s => s.id === lineStyle);
+    if (!style || !style.dash) return null;
+    return style.dash(width || 6);
+  }
+
+  function applyLineStyle(obj, lineStyle, width) {
+    obj.set("strokeDashArray", getDashArray(lineStyle, width));
+    if (lineStyle === "dotted") {
+      obj.set("strokeLineCap", "round");
+    } else {
+      obj.set("strokeLineCap", "butt");
+    }
+  }
+
+  // =========================================================
+  // Generatory ścieżek dla kształtów
+  // =========================================================
+  function buildShapePath(shapeId, x1, y1, x2, y2, strokeWidth) {
+    const cx = (x1+x2)/2, cy = (y1+y2)/2;
+    const w = Math.abs(x2-x1) || 10, h = Math.abs(y2-y1) || 10;
+    const r = Math.min(w,h)/2;
+    const headL = (strokeWidth||6) * 4, headW = (strokeWidth||6) * 2;
+
+    switch(shapeId) {
+      case "line": return `M ${x1} ${y1} L ${x2} ${y2}`;
+      case "arrow1": return buildArrowPath(x1,y1,x2,y2,1,headL,headW,false);
+      case "arrow2": return buildArrowPath(x1,y1,x2,y2,2,headL,headW,false);
+      case "arrow1Fill": return buildArrowPath(x1,y1,x2,y2,1,headL*1.5,headW*1.5,true);
+      case "arrow2Fill": return buildArrowPath(x1,y1,x2,y2,2,headL*1.5,headW*1.5,true);
+      case "triangle": return `M ${cx} ${y1} L ${x2} ${y2} L ${x1} ${y2} Z`;
+      case "diamond": return `M ${cx} ${y1} L ${x2} ${cy} L ${cx} ${y2} L ${x1} ${cy} Z`;
+      case "pentagon": return buildPolygonPath(cx, cy, r, 5);
+      case "hexagon": return buildPolygonPath(cx, cy, r, 6);
+      case "cross": { const t=Math.min(w,h)*0.3; return `M ${cx-t/2} ${y1} h ${t} v ${h/2-t/2} h ${t} v ${t} h ${-t} v ${h/2-t/2} h ${-t} v ${-h/2+t/2} h ${-t} v ${-t} h ${t} Z`; }
+      case "star5": return buildStarPath(cx, cy, r, r*0.4, 5);
+      case "star8": return buildStarPath(cx, cy, r, r*0.5, 8);
+      case "heart": return buildHeartPath(cx, cy, Math.max(w,h));
+      case "cloud": return buildCloudPath(cx, cy, w, h);
+      case "lightning": return buildLightningPath(cx, cy, w, h);
+      case "moon": return buildMoonPath(cx, cy, r);
+      case "polygon": return `M ${x1} ${y1}`;
+      default: return `M ${x1} ${y1} L ${x2} ${y2}`;
+    }
+  }
+
+  function buildArrowPath(x1,y1,x2,y2,dirCount,headL,headW,isFilled) {
+    const angle = Math.atan2(y2-y1, x2-x1);
+    if (Math.hypot(x2-x1, y2-y1) < 1) return `M ${x1} ${y1}`;
+    let path = `M ${x1} ${y1}`;
+    if (isFilled) { path += ` L ${x2 - headL*0.5*Math.cos(angle)} ${y2 - headL*0.5*Math.sin(angle)}`; }
+    else { path += ` L ${x2} ${y2}`; }
+    const tipX=x2, tipY=y2, baseX=x2-headL*Math.cos(angle), baseY=y2-headL*Math.sin(angle);
+    const perpX=headW*Math.cos(angle+Math.PI/2), perpY=headW*Math.sin(angle+Math.PI/2);
+    if (isFilled) { path += ` L ${tipX} ${tipY} L ${baseX+perpX} ${baseY+perpY} L ${baseX-perpX} ${baseY-perpY} Z`; }
+    else { path += ` M ${baseX+perpX} ${baseY+perpY} L ${tipX} ${tipY} L ${baseX-perpX} ${baseY-perpY}`; }
+    if (dirCount===2) {
+      const a2=angle+Math.PI, bx=x1+headL*Math.cos(a2), by=y1+headL*Math.sin(a2);
+      const px=headW*Math.cos(a2+Math.PI/2), py=headW*Math.sin(a2+Math.PI/2);
+      if (isFilled) { path += ` M ${x1} ${y1} L ${bx+px} ${by+py} L ${x1} ${y1} L ${bx-px} ${by-py} Z`; }
+      else { path += ` M ${bx+px} ${by+py} L ${x1} ${y1} L ${bx-px} ${by-py}`; }
+    }
+    return path;
+  }
+
+  function buildPolygonPath(cx,cy,r,sides) {
+    let p="";
+    for(let i=0;i<sides;i++){const a=(i/sides)*Math.PI*2-Math.PI/2; p+=(i===0?"M ":" L ")+`${cx+r*Math.cos(a)} ${cy+r*Math.sin(a)}`;}
+    return p+" Z";
+  }
+
+  function buildStarPath(cx,cy,oR,iR,pts) {
+    let p="";
+    for(let i=0;i<pts*2;i++){const a=(i/(pts*2))*Math.PI*2-Math.PI/2; const r=i%2===0?oR:iR; p+=(i===0?"M ":" L ")+`${cx+r*Math.cos(a)} ${cy+r*Math.sin(a)}`;}
+    return p+" Z";
+  }
+
+  function buildHeartPath(cx,cy,sz) { const s=sz/2; return `M ${cx} ${cy+s*0.7} C ${cx-s*1.2} ${cy-s*0.2}, ${cx-s*0.5} ${cy-s*1.2}, ${cx} ${cy-s*0.4} C ${cx+s*0.5} ${cy-s*1.2}, ${cx+s*1.2} ${cy-s*0.2}, ${cx} ${cy+s*0.7} Z`; }
+
+  function buildCloudPath(cx,cy,w,h) { const r=Math.min(w,h)*0.3; return `M ${cx-w/2+r} ${cy+h/4} a ${r} ${r} 0 0 1 ${r*0.5} ${-r*1.2} a ${r*0.8} ${r*0.8} 0 0 1 ${r*1.5} ${-r*0.3} a ${r*0.7} ${r*0.7} 0 0 1 ${r*0.8} ${r} a ${r*0.6} ${r*0.6} 0 0 1 ${-r*0.3} ${r*1.2} Z`; }
+
+  function buildLightningPath(cx,cy,w,h) { const dx=w*0.15,dy=h*0.1; return `M ${cx+dx} ${cy-h/2} L ${cx-dx*2} ${cy-dy} L ${cx+dx} ${cy} L ${cx-dx} ${cy+h/2} L ${cx+dx*2} ${cy+dy} L ${cx-dx} ${cy} Z`; }
+
+  function buildMoonPath(cx,cy,r) { return `M ${cx} ${cy-r} A ${r} ${r} 0 1 0 ${cx} ${cy+r} A ${r*0.7} ${r*0.7} 0 1 1 ${cx} ${cy-r} Z`; }
 
   function getFillEnabled() {
     return !!toolSettings[tool]?.fill;
@@ -1009,8 +1034,7 @@ export function initDrawEditor(ctx) {
   // Styles
   // =========================================================
   function makeStrokeFillStyle() {
-    const tKey = tool.toUpperCase();
-    const ts = toolSettings[tKey] || {};
+    const ts = toolSettings[tool] || toolSettings[TOOL.SHAPES] || {};
     
     const w = ts.stroke ?? strokeWidth;
     const strokeHex = fgColor();
@@ -1026,6 +1050,7 @@ export function initDrawEditor(ctx) {
       strokeLineCap: "round",
       strokeLineJoin: "round",
       fill: fillHex,
+      strokeDashArray: getDashArray(ts.lineStyle || "solid", w),
     };
   }
 
@@ -1507,6 +1532,10 @@ export function initDrawEditor(ctx) {
 
     fabricCanvas.requestRenderAll();
     syncToolButtons();
+    // Odśwież ustawienia, żeby pokazać przycisk zamykania jeśli to wielokąt
+    if (tool === TOOL.POLY) {
+      renderCurrentSettings();
+    }
   }
 
   function finalizePolygon() {
@@ -1551,12 +1580,24 @@ export function initDrawEditor(ctx) {
     drawingStart = p0;
     drawingShift = !!shiftKey;
 
+    const ts = toolSettings[TOOL.SHAPES];
     const style = makeStrokeFillStyle();
+    const shape = SHAPES.find(s => s.id === currentShape);
+    
+    // Linie i strzałki nie mają wypełnienia
+    const noFill = !shape?.hasFill;
+    const fillVal = noFill ? "transparent" : (ts.fill ? (ts.fillColor === "BLACK" ? "#000" : "#fff") : "transparent");
 
-    if (tool === TOOL.LINE) {
-      drawingObj = new f.Line([p0.x, p0.y, p0.x, p0.y], {
-        ...style,
-        fill: "rgba(0,0,0,0)",
+    if (currentShape === "line" || currentShape.startsWith("arrow")) {
+      // Strzałki i linie używają Path
+      const pathData = buildShapePath(currentShape, p0.x, p0.y, p0.x, p0.y, ts.stroke);
+      drawingObj = new f.Path(pathData, {
+        stroke: style.stroke,
+        strokeWidth: style.strokeWidth,
+        fill: fillVal,
+        strokeLineCap: style.strokeLineCap,
+        strokeLineJoin: style.strokeLineJoin,
+        strokeDashArray: style.strokeDashArray,
         selectable: false,
         evented: true,
         objectCaching: false,
@@ -1565,38 +1606,28 @@ export function initDrawEditor(ctx) {
       return;
     }
 
-    if (tool === TOOL.RECT) {
+    // Proste kształty jako Rect/Ellipse/Path
+    if (currentShape === "rect" || currentShape === "roundRect") {
       drawingObj = new f.Rect({
-        left: p0.x,
-        top: p0.y,
-        width: 1,
-        height: 1,
-        originX: "left",
-        originY: "top",
-        ...style,
-        selectable: false,
-        evented: true,
-        objectCaching: false,
+        left: p0.x, top: p0.y, width: 1, height: 1,
+        originX: "left", originY: "top", rx: currentShape==="roundRect"?20:0, ry: currentShape==="roundRect"?20:0,
+        ...style, fill: fillVal, selectable: false, evented: true, objectCaching: false,
       });
       fabricCanvas.add(drawingObj);
-      return;
-    }
-
-    if (tool === TOOL.ELLIPSE) {
+    } else if (currentShape === "ellipse") {
       drawingObj = new f.Ellipse({
-        left: p0.x,
-        top: p0.y,
-        rx: 1,
-        ry: 1,
-        originX: "left",
-        originY: "top",
-        ...style,
-        selectable: false,
-        evented: true,
-        objectCaching: false,
+        left: p0.x, top: p0.y, rx: 1, ry: 1,
+        originX: "left", originY: "top",
+        ...style, fill: fillVal, selectable: false, evented: true, objectCaching: false,
       });
       fabricCanvas.add(drawingObj);
-      return;
+    } else {
+      // Wszystkie inne kształty jako Path
+      const pathData = buildShapePath(currentShape, p0.x, p0.y, p0.x + 1, p0.y + 1, ts.stroke);
+      drawingObj = new f.Path(pathData, {
+        ...style, fill: fillVal, selectable: false, evented: true, objectCaching: false,
+      });
+      fabricCanvas.add(drawingObj);
     }
   }
 
@@ -2535,10 +2566,38 @@ export function initDrawEditor(ctx) {
 
     tBrush?.addEventListener("click", () => setBaseTool(TOOL.BRUSH));
     tEraser?.addEventListener("click", () => setBaseTool(TOOL.ERASER));
-    tLine?.addEventListener("click", () => setBaseTool(TOOL.LINE));
-    tRect?.addEventListener("click", () => setBaseTool(TOOL.RECT));
-    tEllipse?.addEventListener("click", () => setBaseTool(TOOL.ELLIPSE));
-    tPoly?.addEventListener("click", () => setBaseTool(TOOL.POLY));
+    
+    // Shapes dropdown
+    tShapes?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      setBaseTool(TOOL.SHAPES);
+      shapePicker.style.display = shapePicker.style.display === "none" ? "block" : "none";
+      updateShapePickerIcon();
+    });
+    shapePicker?.querySelectorAll(".shapeItem").forEach(item => {
+      item.addEventListener("click", (e) => {
+        e.stopPropagation();
+        currentShape = item.dataset.shape;
+        updateShapePickerIcon();
+        renderCurrentSettings();
+        shapePicker.style.display = "none";
+      });
+    });
+    document.addEventListener("click", (e) => {
+      if (shapePicker && !shapePicker.contains(e.target) && e.target !== tShapes) {
+        shapePicker.style.display = "none";
+      }
+    });
+    
+    function updateShapePickerIcon() {
+      if (!tShapes) return;
+      const shape = SHAPES.find(s => s.id === currentShape);
+      if (shape) {
+        tShapes.textContent = shape.label.charAt(0);
+        tShapes.setAttribute("aria-label", `Kształty: ${shape.label}`);
+      }
+    }
+    updateShapePickerIcon();
 
     // Zoom buttons
     tZoomIn?.addEventListener("click", () => { zoomBy(1.15); schedulePreview(120); });
