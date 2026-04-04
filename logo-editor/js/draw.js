@@ -102,10 +102,12 @@ export function initDrawEditor(ctx) {
   };
 
   // Wybór koloru: BLACK lub WHITE (monochromatyczny)
-  /** Prosty przycisk toggle B/W */
+  /** Prosty przycisk wypełniony kolorem */
   function renderBWButtonHTML(value) {
     const isBlack = value === "BLACK";
-    return `<button class="btn sm" type="button" data-color-btn="${isBlack ? 'black' : 'white'}" style="min-width:50px;font-weight:900;font-size:12px;">${isBlack ? 'BLACK' : 'WHITE'}</button>`;
+    const color = isBlack ? '#000' : '#fff';
+    const textColor = isBlack ? '#fff' : '#000';
+    return `<button class="btn sm" type="button" data-color-btn="${isBlack ? 'black' : 'white'}" style="min-width:50px;height:30px;padding:0;background:${color};color:${textColor};font-weight:900;font-size:12px;border-radius:8px;${isBlack ? 'border:1px solid #555' : 'border:1px solid #ccc'};">${isBlack ? 'BLACK' : 'WHITE'}</button>`;
   }
 
   /** Konwertuje kolor Fabric na BLACK/WHITE */
@@ -1480,11 +1482,12 @@ export function initDrawEditor(ctx) {
 
       cursorDot.style.width = `${w}px`;
       cursorDot.style.height = `${h}px`;
-      cursorDot.style.borderRadius = "1px";
-      // Biały border + czarny shadow = widoczny na KAŻDYM tle
-      cursorDot.style.border = "2px solid #ffffff";
-      cursorDot.style.background = "transparent";
-      cursorDot.style.boxShadow = "0 0 0 1px #000000, 0 0 0 1px #000000";
+      cursorDot.style.borderRadius = "0";
+      cursorDot.style.border = "none";
+      // mix-blend-mode: difference — ZAWSZE kontrastuje z tłem
+      cursorDot.style.background = "#ffffff";
+      cursorDot.style.mixBlendMode = "difference";
+      cursorDot.style.boxShadow = "none";
 
       placeOverlayAt(lastPointer.x, lastPointer.y);
       return;
