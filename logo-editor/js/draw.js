@@ -150,7 +150,7 @@ export function initDrawEditor(ctx) {
         <div class="ctxGroup"><span class="ctxLabel">Kolor</span>${ctxColorBtn(fg)}</div>`);
       document.getElementById("cStrokeW")?.addEventListener("input", e => { strokeWidth = clamp(+e.target.value||1,1,50); });
       ctxColorBind(() => { fg = fg==="BLACK"?"WHITE":"BLACK"; syncDynamicIcons(); renderToolSettings(); });
-    } else if (tn === "rect" || tn === "ellipse") {
+    } else if (tn === "rect" || tn === "ellipse" || tn === "poly") {
       ctxHTML(`<div class="ctxGroup"><span class="ctxLabel">Obrys</span><input id="cStrokeW" class="ctxInput" type="number" min="0" max="50" step="1" value="${strokeWidth}"/></div>
         <div class="ctxGroup">${ctxColorBtn(fg)}</div>
         <div class="ctxGroup"><label class="ctxChk"><input type="checkbox" id="cFill" ${fillEnabled?"checked":""}/>Wypeł.</label>${ctxColorBtn(fabricToBW(fillColor))}</div>`);
@@ -191,17 +191,20 @@ export function initDrawEditor(ctx) {
     return { mixed: !all, value: v };
   }
 
-  /** Unified multi-selection-aware object settings (inline toolbar) */
+  /** Multi-selection: pokazujemy TYLKO wspólne właściwości */
   function renderObjectSettings() {
     const objs = getSelectedObjects();
     if (!objs.length) { ctxHide(); return; }
 
     const textObjs = objs.filter(o => o.type === "i-text" || o.type === "textbox" || o.type === "text");
-    const shapeObjs = objs.filter(o => o.type === "rect" || o.type === "ellipse" || o.type === "line" || o.type === "path");
+    const fillShapes = objs.filter(o => o.type === "rect" || o.type === "ellipse" || o.type === "polygon" || o.type === "path");
+    const strokeObjs = objs.filter(o => o.type === "line");
+    const hasText = textObjs.length > 0;
+    const hasFillShapes = fillShapes.length > 0;
+    const hasStrokeObjs = strokeObjs.length > 0;
     const allText = textObjs.length === objs.length;
-    const allShapes = shapeObjs.length === objs.length;
 
-    // --- ALL TEXT ---
+    // --- SAME TEXT ---
     if (allText) {
       const fonts = textObjs.map(o => o.fontFamily || "");
       const sizes = textObjs.map(o => o.fontSize || 40);
@@ -217,115 +220,86 @@ export function initDrawEditor(ctx) {
 
       const font = allSame(fonts);
       const fontLabel = font.mixed ? "—" : (DRAW_FONTS.find(f => f.value === font.value)?.label || "Font");
-      const sz = allSame(sizes);
-      const lh = allSame(lineHs);
-      const sp = allSame(spacings);
-      const w = allSame(weights);
-      const st = allSame(styles);
-      const un = allSame(underlines);
-      const al = allSame(aligns);
+      const sz = allSame(sizes); const lh = allSame(lineHs); const sp = allSame(spacings);
+      const w = allSame(weights); const st = allSame(styles); const un = allSame(underlines); const al = allSame(aligns);
       const fillColor = allSame(fills);
       const hasStroke = strokes.some(s => s && s !== "transparent");
-      const strokeCol = allSame(strokes);
-      const strokeW = allSame(strokeWs.map(Math.round));
+      const strokeCol = allSame(strokes); const strokeW = allSame(strokeWs.map(Math.round));
 
       const alignIcon = al.mixed ? "⇆" : al.value === "center" ? "⇆" : al.value === "right" ? "⇥" : "⇤";
       ctxHTML(`
         <div class="ctxGroup"><button class="ctxBtn" id="cFont" style="min-width:80px;max-width:120px;justify-content:space-between;display:flex;"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${fontLabel}</span><span style="opacity:.4;">▾</span></button></div>
         <div class="ctxGroup"><input id="cSz" class="ctxInput" type="number" min="10" max="220" step="1" value="${sz.mixed?'':sz.value}" placeholder="${sz.mixed?'—':''}" title="Rozmiar"/></div>
-        <div class="ctxGroup"><input id="cLH" class="ctxInput" type="number" min="0.6" max="3.0" step="0.05" value="${lh.mixed?'':lh.value}" placeholder="${lh.mixed?'—':''}" title="Wysokość linii"/></div>
+        <div class="ctxGroup"><input id="cLH" class="ctxInput" type="number" min="0.6" max="3.0" step="0.05" value="${lh.mixed?'':lh.value}" placeholder="${lh.mixed?'—':''}" title="Linia"/></div>
         <div class="ctxGroup"><input id="cSp" class="ctxInput" type="number" min="0" max="20" step="0.5" value="${sp.mixed?'':sp.value}" placeholder="${sp.mixed?'—':''}" title="Odstępy"/></div>
         <div class="ctxGroup"><button class="ctxBtn" id="cB" ${w.mixed||w.value!=="bold"?"":"on"}>B</button><button class="ctxBtn" id="cI" ${st.mixed||st.value!=="italic"?"":"on"}>I</button><button class="ctxBtn" id="cU" ${un.mixed||!un.value?"":"on"}>U</button></div>
         <div class="ctxGroup"><button class="ctxBtn" id="cAlign">${alignIcon}</button></div>
         <div class="ctxGroup">${ctxColorBtn(fillColor.mixed?"MIXED":fabricToBW(fillColor.value))}</div>
         <div class="ctxGroup"><label class="ctxChk"><input type="checkbox" id="cStrokeChk" ${hasStroke?"checked":""}/>S</label>${ctxColorBtn(!hasStroke?"WHITE":strokeCol.mixed?"MIXED":fabricToBW(strokeCol.value))}<input id="cStrokeW" class="ctxInput" type="number" min="0" max="20" step="1" value="${strokeW.mixed?'':strokeW.value}" style="width:40px" ${!hasStroke?"disabled":""} placeholder="${strokeW.mixed?'—':''}"/></div>
       `);
-
-      document.getElementById("cFont")?.addEventListener("click", () => {
-        openDrawFontPicker(v => { objs.forEach(o=>o.set("fontFamily",v)); fabricCanvas.renderAll(); renderObjectSettings(); }, fonts[0]);
-      });
-      document.getElementById("cSz")?.addEventListener("input", e => { const v=clamp(+e.target.value||40,10,220); objs.forEach(o=>o.set("fontSize",v)); fabricCanvas.renderAll(); });
-      document.getElementById("cLH")?.addEventListener("input", e => { const v=clamp(+e.target.value||1,0.6,3); objs.forEach(o=>o.set("lineHeight",v)); fabricCanvas.renderAll(); });
-      document.getElementById("cSp")?.addEventListener("input", e => { const v=clamp(+e.target.value||0,0,20); objs.forEach(o=>o.set("charSpacing",v)); fabricCanvas.renderAll(); });
-      document.getElementById("cB")?.addEventListener("click", e => { const nb = w.value !== "bold"; objs.forEach(o=>o.set("fontWeight",nb?"bold":"normal")); e.target.classList.toggle("on",nb); fabricCanvas.renderAll(); });
-      document.getElementById("cI")?.addEventListener("click", e => { const ni = st.value !== "italic"; objs.forEach(o=>o.set("fontStyle",ni?"italic":"normal")); e.target.classList.toggle("on",ni); fabricCanvas.renderAll(); });
-      document.getElementById("cU")?.addEventListener("click", e => { const nu = !un.value; objs.forEach(o=>o.set("underline",nu)); e.target.classList.toggle("on",nu); fabricCanvas.renderAll(); });
-      document.getElementById("cAlign")?.addEventListener("click", e => {
-        const cur = al.value||"left";
-        const next = cur==="left"?"center":cur==="center"?"right":"left";
-        objs.forEach(o=>o.set("textAlign",next));
-        e.target.textContent = next==="left"?"⇤":next==="right"?"⇥":"⇆";
-        fabricCanvas.renderAll();
-      });
-      // Text fill color - pierwszy przycisk koloru
-      const colorBtns = toolCtx?.querySelectorAll("[data-color-toggle]") || [];
-      if (colorBtns[0]) colorBtns[0].addEventListener("click", () => {
-        const curBW = fabricToBW(objs[0]?.fill);
-        const nc = curBW==="BLACK"?"#ffffff":"#000000";
-        objs.forEach(o=>o.set("fill",nc)); fabricCanvas.renderAll(); renderObjectSettings();
-      });
-      // Stroke color - drugi przycisk koloru
-      if (colorBtns[1]) colorBtns[1].addEventListener("click", () => {
-        const curBW = fabricToBW(objs[0]?.stroke);
-        const nc = curBW==="BLACK"?"#ffffff":"#000000";
-        objs.forEach(o=>o.set("stroke",nc)); fabricCanvas.renderAll(); renderObjectSettings();
-      });
-      document.getElementById("cStrokeChk")?.addEventListener("change", e => {
-        objs.forEach(o=>{ o.set("stroke",e.target.checked?(strokeCol.mixed?'#ffffff':strokeCol.value):null); o.set("strokeWidth",e.target.checked?1:0); });
-        fabricCanvas.renderAll(); renderObjectSettings();
-      });
-      document.getElementById("cStrokeW")?.addEventListener("input", e => { objs.forEach(o=>o.set("strokeWidth",clamp(+e.target.value||1,0,20))); fabricCanvas.renderAll(); });
+      document.getElementById("cFont")?.addEventListener("click", () => { openDrawFontPicker(v=>{objs.forEach(o=>o.set("fontFamily",v));fabricCanvas.renderAll();renderObjectSettings();},fonts[0]); });
+      document.getElementById("cSz")?.addEventListener("input", e => { const v=clamp(+e.target.value||40,10,220);objs.forEach(o=>o.set("fontSize",v));fabricCanvas.renderAll(); });
+      document.getElementById("cLH")?.addEventListener("input", e => { const v=clamp(+e.target.value||1,0.6,3);objs.forEach(o=>o.set("lineHeight",v));fabricCanvas.renderAll(); });
+      document.getElementById("cSp")?.addEventListener("input", e => { const v=clamp(+e.target.value||0,0,20);objs.forEach(o=>o.set("charSpacing",v));fabricCanvas.renderAll(); });
+      document.getElementById("cB")?.addEventListener("click", e => { const nb=w.value!=="bold";objs.forEach(o=>o.set("fontWeight",nb?"bold":"normal"));e.target.classList.toggle("on",nb);fabricCanvas.renderAll(); });
+      document.getElementById("cI")?.addEventListener("click", e => { const ni=st.value!=="italic";objs.forEach(o=>o.set("fontStyle",ni?"italic":"normal"));e.target.classList.toggle("on",ni);fabricCanvas.renderAll(); });
+      document.getElementById("cU")?.addEventListener("click", e => { const nu=!un.value;objs.forEach(o=>o.set("underline",nu));e.target.classList.toggle("on",nu);fabricCanvas.renderAll(); });
+      document.getElementById("cAlign")?.addEventListener("click", e => { const cur=al.value||"left";const next=cur==="left"?"center":cur==="center"?"right":"left";objs.forEach(o=>o.set("textAlign",next));e.target.textContent=next==="left"?"⇤":next==="right"?"⇥":"⇆";fabricCanvas.renderAll(); });
+      const cbs = toolCtx?.querySelectorAll("[data-color-toggle]")||[];
+      if(cbs[0]) cbs[0].addEventListener("click",()=>{const c=fabricToBW(objs[0]?.fill);const n=c==="BLACK"?"#ffffff":"#000000";objs.forEach(o=>o.set("fill",n));fabricCanvas.renderAll();renderObjectSettings();});
+      if(cbs[1]) cbs[1].addEventListener("click",()=>{const c=fabricToBW(objs[0]?.stroke);const n=c==="BLACK"?"#ffffff":"#000000";objs.forEach(o=>o.set("stroke",n));fabricCanvas.renderAll();renderObjectSettings();});
+      document.getElementById("cStrokeChk")?.addEventListener("change",e=>{objs.forEach(o=>{o.set("stroke",e.target.checked?(strokeCol.mixed?'#ffffff':strokeCol.value):null);o.set("strokeWidth",e.target.checked?1:0)});fabricCanvas.renderAll();renderObjectSettings();});
+      document.getElementById("cStrokeW")?.addEventListener("input",e=>{objs.forEach(o=>o.set("strokeWidth",clamp(+e.target.value||1,0,20)));fabricCanvas.renderAll();});
+      return;
     }
-    // --- ALL SHAPES ---
-    else if (allShapes) {
-      const strokeOnlyObjs = shapeObjs.filter(o => o.type === "line" || o.type === "path");
-      const allStrokeOnly = strokeOnlyObjs.length === objs.length;
 
-      const strokeWs = shapeObjs.map(o => o.strokeWidth || 1);
-      const strokeCols = shapeObjs.map(o => o.stroke || "#ffffff");
-      const strokeW = allSame(strokeWs);
+    // --- MIX TYPÓW: pokazujemy TYLKO wspólne ---
+    // fill: wspólne dla fillShapes + text (oba mają fill), ale NIE z liniami
+    // stroke: wspólne dla fillShapes + strokeObjs (oba mają stroke), ale NIE z tekstem
+    const showFill = hasFillShapes && !hasStrokeObjs;  // fillShapes SAME lub z tekstem
+    const showStroke = (hasFillShapes || hasStrokeObjs) && !hasText; // fillShapes+strokeObjs, BEZ tekstu
+
+    // Czy są JAKIEKOLWIEK wspólne?
+    if (!showFill && !showStroke) { ctxHide(); return; }
+
+    let html = "";
+    if (showFill) {
+      const objsWithFill = hasText ? [...textObjs, ...fillShapes] : fillShapes;
+      const fills = objsWithFill.map(o => o.fill || "transparent");
+      const fillCol = allSame(fills);
+      html += `<div class="ctxGroup"><span class="ctxLabel">Wyp.</span>${ctxColorBtn(fillCol.mixed?"MIXED":fabricToBW(fillCol.value))}</div>`;
+    }
+    if (showStroke) {
+      const allWithStroke = [...fillShapes, ...strokeObjs];
+      const strokeWs = allWithStroke.map(o => o.strokeWidth || 1);
+      const strokeCols = allWithStroke.map(o => o.stroke || "#ffffff");
+      const strokeW = allSame(strokeWs.map(Math.round));
       const strokeCol = allSame(strokeCols);
-
-      if (allStrokeOnly) {
-        ctxHTML(`<div class="ctxGroup"><span class="ctxLabel">Obrys</span><input id="cObjStroke" class="ctxInput" type="number" min="0" max="50" step="1" value="${strokeW.mixed?'':strokeW.value}" placeholder="${strokeW.mixed?'—':''}"/></div>
-          <div class="ctxGroup">${ctxColorBtn(strokeCol.mixed?"MIXED":fabricToBW(strokeCol.value))}</div>`);
-        document.getElementById("cObjStroke")?.addEventListener("input", e => { objs.forEach(o=>o.set("strokeWidth",clamp(+e.target.value||1,0,50))); fabricCanvas.renderAll(); });
-        ctxColorBind(() => { const cur=fabricToBW(objs[0]?.stroke); const nc=cur==="BLACK"?"#ffffff":"#000000"; objs.forEach(o=>o.set("stroke",nc)); fabricCanvas.renderAll(); renderObjectSettings(); });
-      } else {
-        const fills = shapeObjs.filter(o=>o.type==="rect"||o.type==="ellipse").map(o => o.fill || "transparent");
-        const fillCol = allSame(fills);
-        ctxHTML(`<div class="ctxGroup"><span class="ctxLabel">Obrys</span><input id="cObjStroke" class="ctxInput" type="number" min="0" max="50" step="1" value="${strokeW.mixed?'':strokeW.value}" placeholder="${strokeW.mixed?'—':''}"/></div>
-          <div class="ctxGroup">${ctxColorBtn(strokeCol.mixed?"MIXED":fabricToBW(strokeCol.value))}</div>
-          <div class="ctxGroup"><label class="ctxChk"><input type="checkbox" id="cObjFill" ${fills.some(f=>f&&f!=="transparent")?"checked":""}/>Wyp.</label>${ctxColorBtn(fillCol.mixed?"MIXED":fabricToBW(fillCol.value))}</div>`);
-        document.getElementById("cObjStroke")?.addEventListener("input", e => { objs.forEach(o=>o.set("strokeWidth",clamp(+e.target.value||1,0,50))); fabricCanvas.renderAll(); });
-        const colorBtns = toolCtx?.querySelectorAll("[data-color-toggle]") || [];
-        if (colorBtns[0]) colorBtns[0].addEventListener("click", () => { const cur=fabricToBW(objs[0]?.stroke); objs.forEach(o=>o.set("stroke",cur==="BLACK"?"#ffffff":"#000000")); fabricCanvas.renderAll(); renderObjectSettings(); });
-        if (colorBtns[1]) colorBtns[1].addEventListener("click", () => { const cur=fabricToBW(objs.find(x=>x.fill&&x.fill!=="transparent")?.fill); objs.forEach(o=>{if(o.fill!==undefined)o.set("fill",cur==="BLACK"?"#ffffff":"#000000")}); fabricCanvas.renderAll(); renderObjectSettings(); });
-        document.getElementById("cObjFill")?.addEventListener("change", e => {
-          const nc = e.target.checked ? "#ffffff" : "transparent";
-          shapeObjs.filter(o=>o.type==="rect"||o.type==="ellipse").forEach(o=>o.set("fill",nc));
-          fabricCanvas.renderAll(); renderObjectSettings();
-        });
-      }
+      html += `<div class="ctxGroup"><span class="ctxLabel">Obrys</span><input id="cObjStroke" class="ctxInput" type="number" min="0" max="50" step="1" value="${strokeW.mixed?'':strokeW.value}" placeholder="${strokeW.mixed?'—':''}"/></div>`;
+      html += `<div class="ctxGroup">${ctxColorBtn(strokeCol.mixed?"MIXED":fabricToBW(strokeCol.value))}</div>`;
     }
-    // --- MIXED (text + shapes) ---
-    else {
-      const fills = objs.map(o => o.fill || "transparent").filter(f => f !== "transparent");
-      const strokes = objs.map(o => o.stroke || "transparent").filter(s => s !== "transparent");
-      const fillCol = fills.length ? allSame(fills) : {mixed:false,value:"#ffffff"};
-      const strokeCol = strokes.length ? allSame(strokes) : {mixed:false,value:"#ffffff"};
-      ctxHTML(`<div class="ctxGroup"><span class="ctxLabel">Wyp.</span>${ctxColorBtn(fillCol.mixed?"MIXED":fabricToBW(fillCol.value))}</div>
-        <div class="ctxGroup"><span class="ctxLabel">Obrys</span>${ctxColorBtn(strokeCol.mixed?"MIXED":fabricToBW(strokeCol.value))}</div>`);
-      const colorBtns = toolCtx?.querySelectorAll("[data-color-toggle]") || [];
-      if (colorBtns[0]) colorBtns[0].addEventListener("click", () => {
-        const cur = fabricToBW(objs.find(x=>x.fill&&x.fill!=="transparent")?.fill);
-        const nc = cur==="BLACK"?"#ffffff":"#000000";
-        objs.forEach(o=>{if(o.fill!==undefined)o.set("fill",nc)}); fabricCanvas.renderAll(); renderObjectSettings();
+
+    ctxHTML(html);
+
+    // Eventy
+    const cbs = toolCtx?.querySelectorAll("[data-color-toggle]")||[];
+    if (showFill) {
+      const objsWithFill = hasText ? [...textObjs, ...fillShapes] : fillShapes;
+      const fillIdx = 0;
+      if(cbs[fillIdx]) cbs[fillIdx].addEventListener("click",()=>{
+        const c=fabricToBW(objsWithFill.find(x=>x.fill&&x.fill!=="transparent")?.fill||"#fff");
+        const n=c==="BLACK"?"#ffffff":"#000000";
+        objsWithFill.forEach(o=>o.set("fill",n)); fabricCanvas.renderAll(); renderObjectSettings();
       });
-      if (colorBtns[1]) colorBtns[1].addEventListener("click", () => {
-        const cur = fabricToBW(objs.find(x=>x.stroke&&x.stroke!=="transparent")?.stroke);
-        const nc = cur==="BLACK"?"#ffffff":"#000000";
-        objs.forEach(o=>{if(o.stroke!==undefined)o.set("stroke",nc)}); fabricCanvas.renderAll(); renderObjectSettings();
+    }
+    if (showStroke) {
+      const allWithStroke = [...fillShapes, ...strokeObjs];
+      const strokeIdx = showFill ? 1 : 0;
+      document.getElementById("cObjStroke")?.addEventListener("input", e => { allWithStroke.forEach(o=>o.set("strokeWidth",clamp(+e.target.value||1,0,50))); fabricCanvas.renderAll(); });
+      if(cbs[strokeIdx]) cbs[strokeIdx].addEventListener("click",()=>{
+        const c=fabricToBW(allWithStroke.find(x=>x.stroke&&x.stroke!=="transparent")?.stroke||"#fff");
+        const n=c==="BLACK"?"#ffffff":"#000000";
+        allWithStroke.forEach(o=>o.set("stroke",n)); fabricCanvas.renderAll(); renderObjectSettings();
       });
     }
   }
