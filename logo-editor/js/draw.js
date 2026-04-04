@@ -161,6 +161,7 @@ export function initDrawEditor(ctx) {
   function renderToolSettings() {
     const toolName = tool.toLowerCase();
     if (toolName === "brush") {
+      const bgBtn = bg === "BLACK" ? ICON_BG.BLACK : ICON_BG.WHITE;
       showSettings(`
         <div class="rtToolRow">
           <div class="rtGroup">
@@ -171,6 +172,10 @@ export function initDrawEditor(ctx) {
             <div class="rtToolLbl">${t("logoEditor.draw.fillColor")}</div>
             ${renderColorButtonHTML(fg)}
           </div>
+          <div class="rtGroup">
+            <div class="rtToolLbl">${t("logoEditor.draw.bgColor")}</div>
+            <button class="btn sm" type="button" id="drawBgToggle">${bgBtn}</button>
+          </div>
         </div>
       `);
       document.getElementById("drawStrokeWidth")?.addEventListener("input", (e) => {
@@ -179,6 +184,11 @@ export function initDrawEditor(ctx) {
       });
       bindColorButtonEvents(() => {
         fg = fg === "BLACK" ? "WHITE" : "BLACK";
+        renderToolSettings();
+      });
+      document.getElementById("drawBgToggle")?.addEventListener("click", () => {
+        bg = bg === "BLACK" ? "WHITE" : "BLACK";
+        if (fabricCanvas) { fabricCanvas.backgroundColor = bgColor(); fabricCanvas.requestRenderAll(); }
         renderToolSettings();
       });
     } else if (toolName === "text") {
@@ -217,6 +227,10 @@ export function initDrawEditor(ctx) {
             <div class="rtToolLbl">${t("logoEditor.draw.fillColor")}</div>
             ${renderColorButtonHTML(fg)}
           </div>
+          <div class="rtGroup">
+            <div class="rtToolLbl">${t("logoEditor.draw.bgColor")}</div>
+            <button class="btn sm" type="button" id="drawBgToggle">${bg === "BLACK" ? ICON_BG.BLACK : ICON_BG.WHITE}</button>
+          </div>
         </div>
       `);
       document.getElementById("drawFontBtn")?.addEventListener("click", () => {
@@ -228,6 +242,11 @@ export function initDrawEditor(ctx) {
       });
       bindColorButtonEvents(() => {
         fg = fg === "BLACK" ? "WHITE" : "BLACK";
+        renderToolSettings();
+      });
+      document.getElementById("drawBgToggle")?.addEventListener("click", () => {
+        bg = bg === "BLACK" ? "WHITE" : "BLACK";
+        if (fabricCanvas) { fabricCanvas.backgroundColor = bgColor(); fabricCanvas.requestRenderAll(); }
         renderToolSettings();
       });
       document.getElementById("drawTextSize")?.addEventListener("input", (e) => {
@@ -267,6 +286,10 @@ export function initDrawEditor(ctx) {
             <label class="chk"><input type="checkbox" id="drawFillCheck" ${fillEnabled ? "checked" : ""}/> ${t("logoEditor.draw.fill")}</label>
             ${renderColorButtonHTML(fillColor === "BLACK" || fillColor === "#000000" ? "BLACK" : "WHITE")}
           </div>
+          <div class="rtGroup">
+            <div class="rtToolLbl">${t("logoEditor.draw.bgColor")}</div>
+            <button class="btn sm" type="button" id="drawBgToggle">${bg === "BLACK" ? ICON_BG.BLACK : ICON_BG.WHITE}</button>
+          </div>
         </div>
       `);
       document.getElementById("drawStrokeWidth")?.addEventListener("input", (e) => {
@@ -293,6 +316,12 @@ export function initDrawEditor(ctx) {
           renderToolSettings();
         });
       }
+      // Background toggle
+      document.getElementById("drawBgToggle")?.addEventListener("click", () => {
+        bg = bg === "BLACK" ? "WHITE" : "BLACK";
+        if (fabricCanvas) { fabricCanvas.backgroundColor = bgColor(); fabricCanvas.requestRenderAll(); }
+        renderToolSettings();
+      });
     } else {
       hideSettings();
     }
