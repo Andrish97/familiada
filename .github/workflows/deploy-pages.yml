@@ -41,23 +41,6 @@ jobs:
       - name: Version assets (cache busting)
         run: node scripts/version-assets.js
 
-      - name: Commit version changes back to repo
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          
-          # Dodaj WSZYSTKIE zmienione pliki
-          git add -A
-          
-          # Commit ZAWSZE (nawet jeśli tylko version.txt się zmienił)
-          if git diff --cached --quiet; then
-            echo "⚠️ No changes to commit"
-          else
-            git commit -m "ci: update version hashes [skip ci]"
-            git push origin HEAD:main
-            echo "✅ Committed and pushed version updates"
-          fi
-
       - name: Setup Pages
         uses: actions/configure-pages@v4
         with:

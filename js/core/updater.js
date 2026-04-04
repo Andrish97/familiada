@@ -11,19 +11,21 @@ let hasReloadedThisSession = false;
 
 export function initUpdater() {
   // Sprawdź czy już przeładowano w tej sesji
-  if (sessionStorage.getItem('versionReloadDone')) {
-    console.info('[updater] Już przeładowano w tej sesji - wyłączam');
-    return;
-  }
-
-  // Pobierz aktualną wersję z meta tagu
-  const meta = document.querySelector('meta[name="app-version"]');
-  if (meta) {
-    currentVersion = meta.getAttribute('content');
+  const syncedVersion = sessionStorage.getItem('syncedVersion');
+  if (syncedVersion) {
+    // Już synchronizowaliśmy - używamy wersji z serwera, nie przeładowujemy
+    currentVersion = syncedVersion;
+    console.info(`[updater] Zsynchronizowano z wersją ${syncedVersion} - sprawdzam tylko zmiany`);
+  } else {
+    // Pobierz aktualną wersję z meta tagu
+    const meta = document.querySelector('meta[name="app-version"]');
+    if (meta) {
+      currentVersion = meta.getAttribute('content');
+    }
   }
 
   if (!currentVersion) {
-    console.warn('[updater] Brak meta app-version, wyłączam');
+    console.warn('[updater] Brak app-version, wyłączam');
     return;
   }
 
@@ -65,9 +67,10 @@ async function checkForUpdates() {
 
       // Zaznacz że przeładowano - TYLKO RAZ na sesję
       hasReloadedThisSession = true;
-      sessionStorage.setItem('versionReloadDone', '1');
 
       setTimeout(() => {
+        // Po przeładowaniu zapamiętaj wersję z serwera
+        sessionStorage.setItem('syncedVersion', serverVersion);
         location.reload();
       }, 3000);
     }
