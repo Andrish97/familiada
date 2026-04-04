@@ -2738,7 +2738,21 @@ function fetchFromOrigin(request, url, originBase, originHost, resolveOverride) 
 async function fetchWith404(request, originBase, originHost, resolveOverride) {
   const url = new URL(request.url);
   const res = await fetchFromOrigin(request, url, originBase, originHost, resolveOverride);
-  if (res.status !== 404) return res;
+  if (res.status !== 404) {
+    // HTML bez no-store = cache w przeglądarce → stale wersje
+    const ct = res.headers.get("Content-Type") || "";
+    if (ct.includes("text/html")) {
+      return new Response(res.body, {
+        status: res.status,
+        headers: {
+          "Content-Type": ct,
+          "Cache-Control": "no-store",
+          "X-GitHub-Request-Id": res.headers.get("X-GitHub-Request-Id") || ""
+        }
+      });
+    }
+    return res;
+  }
 
   const accept = request.headers.get("Accept") || "";
   if (accept.includes("text/html")) {
@@ -2748,7 +2762,7 @@ async function fetchWith404(request, originBase, originHost, resolveOverride) {
   return res;
 }
 
-function fetchWithOrigin(url, request, originHost, resolveOverride) {
+async function fetchWithOrigin(url, request, originHost, resolveOverride) {
   const headers = new Headers(request.headers);
   if (originHost) headers.set("Host", originHost);
 
@@ -2764,7 +2778,22 @@ function fetchWithOrigin(url, request, originHost, resolveOverride) {
     init.body = request.body;
   }
 
-  return fetch(url, init);
+  const res = await fetch(url, init);
+
+  // HTML: nigdy nie cache'uj - updater musi widzieć nową wersję
+  const ct = res.headers.get("Content-Type") || "";
+  const accept = headers.get("Accept") || "";
+  if (ct.includes("text/html") || accept.includes("text/html")) {
+    return new Response(res.body, {
+      status: res.status,
+      headers: {
+        "Content-Type": ct,
+        "Cache-Control": "no-store"
+      }
+    });
+  }
+
+  return res;
 }
 
 function isSettingsAsset(pathname) {
