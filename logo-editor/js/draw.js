@@ -116,6 +116,13 @@ export function initDrawEditor(ctx) {
     return "WHITE";
   }
 
+  /** Czy fill jest widoczny (nie przezroczysty)? */
+  function isFillVisible(fill) {
+    if (!fill) return false;
+    const c = fill.toLowerCase().trim();
+    return c !== "transparent" && c !== "rgba(0,0,0,0)" && c !== "rgba(0, 0, 0, 0)";
+  }
+
   /** Konwertuje BLACK/WHITE na hex dla Fabric */
   function bwToFabric(bw) {
     return bw === "BLACK" ? "#000000" : "#ffffff";
@@ -523,8 +530,8 @@ export function initDrawEditor(ctx) {
       } else {
         // Mix linii + kształtów — stroke dotyczy WSZYSTKICH, fill tylko rect/ellipse
         const fills = filledObjs.map(o => o.fill || "transparent");
-        const hasFill = fills.some(f => f && f !== "transparent");
-        const fillCol = allSame(fills.filter(f => f !== "transparent"));
+        const hasFill = fills.some(isFillVisible);
+        const fillCol = allSame(fills.filter(isFillVisible));
         const effectiveFill = fillCol.value || "#000000";
 
         showSettings(`
