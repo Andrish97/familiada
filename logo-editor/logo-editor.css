@@ -1196,14 +1196,15 @@ body.builder-body.logo-editor-body > main.logoWrap{
 .shapeItem{
   width:44px;height:44px;
   display:grid;place-items:center;
-  font-size:22px;
   background:rgba(255,255,255,.06);
   border:1px solid rgba(255,255,255,.12);
   border-radius:10px;
   color:rgba(255,255,255,.88);
   cursor:pointer;
   transition:background .1s,border-color .1s;
+  padding:0;
 }
+.shapeItem svg{ width:24px; height:24px; }
 .shapeItem:hover{
   background:rgba(255,255,255,.14);
   border-color:rgba(255,234,166,.55);
