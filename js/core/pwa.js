@@ -13,9 +13,8 @@ export function initPwa() {
   let deferredPrompt = null;
 
   window.addEventListener("beforeinstallprompt", (e) => {
-    // Zawsze zapobiegaj domyślnemu zachowaniu przeglądarki
-    e.preventDefault();
-    // Zawsze zapisz prompt (dla przycisku instalacji)
+    // Zapisz prompt (dla przycisku instalacji)
+    // NIE wywołuj preventDefault - przeglądarka sama decyduje kiedy pokazać banner
     deferredPrompt = e;
     // Dispatchuj zdarzenie auto-modala tylko gdy użytkownik nie odrzucił
     if (!localStorage.getItem(LS_KEY)) {

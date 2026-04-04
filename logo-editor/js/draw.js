@@ -292,6 +292,25 @@ export function initDrawEditor(ctx) {
     if (!el.getAttribute("aria-label")) el.setAttribute("aria-label", id);
   }
 
+  const ICONS = {
+    tSelect: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 3l6 14 2-6 6-2L5 3z"></path></svg>`,
+    tPan: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 12V7.2a1.2 1.2 0 0 1 2.4 0V12"></path><path d="M10.4 12V6.4a1.2 1.2 0 0 1 2.4 0V12"></path><path d="M12.8 12V7.8a1.2 1.2 0 0 1 2.4 0V12"></path><path d="M15.2 12V9.2a1.2 1.2 0 0 1 2.4 0V14.2"></path><path d="M8 12c0 6 2.6 8 6.6 8 3.1 0 5.4-2 5.4-5.1v-.7"></path></svg>`,
+    tZoomIn: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="10" cy="10" r="6"></circle><path d="M21 21l-5.2-5.2"></path><path d="M10 7v6"></path><path d="M7 10h6"></path></svg>`,
+    tZoomOut: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="10" cy="10" r="6"></circle><path d="M21 21l-5.2-5.2"></path><path d="M7 10h6"></path></svg>`,
+    tText: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 6h14"></path><path d="M12 6v12"></path><path d="M8 18h8"></path></svg>`,
+    tBrush: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 20l4-1 11-11-3-3L5 16l-1 4z"></path><path d="M14 6l3 3"></path></svg>`,
+    tEraser: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 16l8.5-8.5a1.8 1.8 0 0 1 2.5 0l1 1a1.8 1.8 0 0 1 0 2.5L11 19H7l-2-2 2-1z"></path><path d="M11 19h10"></path><path d="M9.2 14.8l4 4"></path></svg>`,
+    tLine: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 18L18 6"></path><circle class="fill" cx="6" cy="18" r="1.2"></circle><circle class="fill" cx="18" cy="6" r="1.2"></circle></svg>`,
+    tRect: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="6" y="7" width="12" height="10" rx="2"></rect></svg>`,
+    tEllipse: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><ellipse cx="12" cy="12" rx="7" ry="5"></ellipse></svg>`,
+    tPoly: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 6l7 14H5L12 6z"></path></svg>`,
+    tUndo: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 7H5v4"></path><path d="M5 11c2-4 6-6 10-4 2 1 4 3 4 6"></path></svg>`,
+    tRedo: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 7h4v4"></path><path d="M19 11c-2-4-6-6-10-4-2 1-4 3-4 6"></path></svg>`,
+    tPolyDone: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 13l4 4L19 7"></path></svg>`,
+    tClear: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 7h12"></path><path d="M9 7V5h6v2"></path><path d="M8 7l1 14h6l1-14"></path></svg>`,
+    tEye: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"></path><circle class="fill" cx="12" cy="12" r="2"></circle></svg>`,
+  };
+
   // Wstrzyknij wszystkie ikonki
   for (const [id, svg] of Object.entries(ICONS)) {
     injectIcon(id, svg);

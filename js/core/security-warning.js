@@ -1,7 +1,11 @@
 // Self-XSS Security Warning - outputs warning in console in page language
 (function() {
   "use strict";
-  
+
+  // Tylko RAZ na sesję
+  if (window._securityWarned) return;
+  window._securityWarned = true;
+
   function getLang() {
     const params = new URLSearchParams(window.location.search);
     const q = params.get("lang");
