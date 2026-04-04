@@ -1229,8 +1229,13 @@ export function initDrawEditor(ctx) {
     // jeśli nie trzymamy temp-modyfikatorów — zmieniamy od razu
     if (!holdSpace && !holdCtrl) {
       tool = baseTool;
+      // Zdejmij zaznaczenie przy zmianie narzędzia (oprócz Select)
+      if (tool !== TOOL.SELECT && fabricCanvas) {
+        fabricCanvas.discardActiveObject();
+        fabricCanvas.renderAll();
+      }
       applyToolBehavior();
-      renderToolSettings();
+      renderCurrentSettings();
     }
   }
 
@@ -1247,15 +1252,9 @@ export function initDrawEditor(ctx) {
   function renderCurrentSettings() {
     const obj = getActiveObj();
 
-    // TEXT tool: jeśli zaznaczony tekst → pokaż ustawienia tekstu (edit mode)
-    if (tool === TOOL.TEXT && isTextObj(obj)) {
-      renderTextObjectSettings(obj);
-      return;
-    }
-
-    // SELECT tool: jeśli zaznaczony obiekt → pokaż jego ustawienia
+    // SELECT tool: jeśli zaznaczony obiekt → pokaż ustawienia obiektu (TYLKO przecięcie)
     if (tool === TOOL.SELECT && obj) {
-      renderObjectSettings(obj);
+      renderObjectSettings();
       return;
     }
 
