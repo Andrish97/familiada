@@ -12,10 +12,10 @@
 // - kursor: overlay (PS-like): pędzel = kółko, gumka = kwadrat, figury = crosshair
 // - skróty: PS-like + (Space=Pan temp, Ctrl/Cmd=Select temp, Shift idealne kształty, strzałki przesuwają)
 
-import { confirmModal } from "../../js/core/modal.js?v=v2026-04-04T02122";
-import { initUiSelect } from "../../js/core/ui-select.js?v=v2026-04-04T02122";
-import { t } from "../../translation/translation.js?v=v2026-04-04T02122";
-import { v as cacheBust } from "../../js/core/cache-bust.js?v=v2026-04-04T02122";
+import { confirmModal } from "../../js/core/modal.js?v=v2026-04-04T02354";
+import { initUiSelect } from "../../js/core/ui-select.js?v=v2026-04-04T02354";
+import { t } from "../../translation/translation.js?v=v2026-04-04T02354";
+import { v as cacheBust } from "../../js/core/cache-bust.js?v=v2026-04-04T02354";
 
 export function initDrawEditor(ctx) {
   const TYPE_PIX = "PIX_150x70";
@@ -56,8 +56,7 @@ export function initDrawEditor(ctx) {
 
   const tPolyDone = document.getElementById("tPolyDone");
 
-  // Kolory: fg (obramowanie/rysowanie) i bg (tło sceny)
-  const tColor    = document.getElementById("tColor");  // ⬛️/⬜️
+  // Kolory: bg (tło sceny)
   const tBg       = document.getElementById("tBg");     // 🖼️
 
     // =========================================================
@@ -83,28 +82,22 @@ export function initDrawEditor(ctx) {
     `,
   };
 
-  const ICON_FG = {
-  
-    // BIAŁE — puste kółko
-    WHITE: `
-      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <circle class="fill" cx="12" cy="12" r="7"></circle>
-      </svg>
-    `,
-  
-    // CZARNE — pełne kółko
-    BLACK: `
-      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <circle cx="12" cy="12" r="7"
-                stroke-width="2"></circle>
-      </svg>
-    `,
-  };
+  // =========================================================
+  // Kolory
+  // =========================================================
+
+  // fg = kolor kreski/pędzla/tekstu (BLACK/WHITE)
+  // bg = tło sceny (BLACK/WHITE)
+  // W display: BLACK = piksel zapalony (1), WHITE = piksel zgaszony (0)
+  let fg = "BLACK"; // WHITE | BLACK — kolor rysowania
 
   // Wybór koloru: przycisk wypełniony aktualnym kolorem
+  // value = "BLACK" | "WHITE" | "MIXED"
   function renderColorToggleHTML(value) {
+    const isMixed = value === "MIXED";
     const isBlack = value === "BLACK";
-    return `<button class="btn sm" type="button" data-color-toggle="${isBlack ? 'black' : 'white'}" style="min-width:38px;height:30px;padding:0;background:${isBlack ? '#000' : '#fff'};${isBlack ? 'border:1px solid #444' : 'border:1px solid #999'};border-radius:8px;"></button>`;
+    const bg = isMixed ? "linear-gradient(135deg, #000 50%, #fff 50%)" : (isBlack ? '#000' : '#fff');
+    return `<button class="btn sm" type="button" data-color-toggle="${isMixed ? 'mixed' : (isBlack ? 'black' : 'white')}" style="min-width:38px;height:30px;padding:0;background:${bg};${isBlack ? 'border:1px solid #444' : 'border:1px solid #999'};border-radius:8px;"></button>`;
   }
 
   function bindColorToggleEvents(onChange) {
@@ -137,10 +130,6 @@ export function initDrawEditor(ctx) {
   }
 
   function syncDynamicIcons() {
-    if (tColor) {
-      tColor.innerHTML = ICON_FG[fg] || ICON_FG.BLACK;
-      tColor.setAttribute("aria-label", t("logoEditor.draw.aria.strokeColor", { color: getColorLabel(fg) }));
-    }
     if (tBg) {
       tBg.innerHTML = ICON_BG[bg] || ICON_BG.BLACK;
       tBg.setAttribute("aria-label", t("logoEditor.draw.aria.backgroundColor", { color: getColorLabel(bg) }));
@@ -176,7 +165,7 @@ export function initDrawEditor(ctx) {
             <input id="drawStrokeWidth" class="inp" type="number" min="1" max="50" step="1" value="${strokeWidth}"/>
           </div>
           <div class="rtGroup">
-            <div class="rtToolLbl">${t("logoEditor.draw.fillColor")}</div>
+            <div class="rtToolLbl">${t("logoEditor.draw.strokeColor")}</div>
             ${renderColorToggleHTML(fg)}
           </div>
         </div>
@@ -227,7 +216,7 @@ export function initDrawEditor(ctx) {
             </div>
           </div>
           <div class="rtGroup">
-            <div class="rtToolLbl">${t("logoEditor.draw.fillColor")}</div>
+            <div class="rtToolLbl">${t("logoEditor.draw.strokeColor")}</div>
             ${renderColorToggleHTML(fg)}
           </div>
         </div>
@@ -297,7 +286,29 @@ export function initDrawEditor(ctx) {
         updateAlignButtons();
         renderToolSettings();
       });
-    } else if (toolName === "rect" || toolName === "ellipse" || toolName === "line") {
+    } else if (toolName === "line") {
+      // Linia - tylko stroke, bez wypełnienia
+      showSettings(`
+        <div class="rtToolRow">
+          <div class="rtGroup">
+            <div class="rtToolLbl">${t("logoEditor.draw.stroke")}</div>
+            <input id="drawStrokeWidth" class="inp" type="number" min="1" max="50" step="1" value="${strokeWidth}"/>
+          </div>
+          <div class="rtGroup">
+            <div class="rtToolLbl">${t("logoEditor.draw.strokeColor")}</div>
+            ${renderColorToggleHTML(fg)}
+          </div>
+        </div>
+      `);
+      document.getElementById("drawStrokeWidth")?.addEventListener("input", (e) => {
+        strokeWidth = clamp(Number(e.target.value) || 1, 1, 50);
+      });
+      bindColorToggleEvents(() => {
+        fg = fg === "BLACK" ? "WHITE" : "BLACK";
+        syncDynamicIcons();
+        renderToolSettings();
+      });
+    } else if (toolName === "rect" || toolName === "ellipse") {
       const fillBW = fabricToBW(fillColor);
       showSettings(`
         <div class="rtToolRow">
@@ -424,11 +435,11 @@ export function initDrawEditor(ctx) {
           </div>
           <div class="rtGroup">
             <div class="rtToolLbl">${t("logoEditor.draw.fillColor")}</div>
-            ${renderColorToggleHTML(fillColor.mixed ? "WHITE" : fabricToBW(fillColor.value))}
+            ${renderColorToggleHTML(fillColor.mixed ? "MIXED" : fabricToBW(fillColor.value))}
           </div>
           <div class="rtGroup">
             <label class="chk"><input type="checkbox" id="drawObjTextStrokeCheck" ${hasStroke ? "checked" : ""}/> ${t("logoEditor.draw.stroke")}</label>
-            ${renderColorToggleHTML(!hasStroke ? "WHITE" : strokeCol.mixed ? "WHITE" : fabricToBW(strokeCol.value))}
+            ${renderColorToggleHTML(!hasStroke ? "WHITE" : strokeCol.mixed ? "MIXED" : fabricToBW(strokeCol.value))}
             <input id="drawObjTextStrokeW" class="inp" type="number" min="0" max="20" step="1" value="${strokeW.mixed ? '' : strokeW.value}" style="width:60px" ${!hasStroke ? "disabled" : ""} placeholder="${strokeW.mixed ? '—' : ''}"/>
           </div>
         </div>
@@ -537,7 +548,7 @@ export function initDrawEditor(ctx) {
             <div class="rtGroup">
               <div class="rtToolLbl">${t("logoEditor.draw.stroke")}</div>
               <input id="drawObjStroke" class="inp" type="number" min="0" max="50" step="1" value="${strokeW.mixed ? '' : strokeW.value}" placeholder="${strokeW.mixed ? '—' : ''}"/>
-              ${renderColorToggleHTML(strokeCol.mixed ? "WHITE" : fabricToBW(strokeCol.value))}
+              ${renderColorToggleHTML(strokeCol.mixed ? "MIXED" : fabricToBW(strokeCol.value))}
             </div>
           </div>
         `);
@@ -566,7 +577,7 @@ export function initDrawEditor(ctx) {
               <div class="rtGroup">
                 <div class="rtToolLbl">${t("logoEditor.draw.stroke")}</div>
                 <input id="drawObjStroke" class="inp" type="number" min="0" max="50" step="1" value="${strokeW.mixed ? '' : strokeW.value}" placeholder="${strokeW.mixed ? '—' : ''}"/>
-                ${renderColorToggleHTML(strokeCol.mixed ? "WHITE" : fabricToBW(strokeCol.value))}
+                ${renderColorToggleHTML(strokeCol.mixed ? "MIXED" : fabricToBW(strokeCol.value))}
               </div>
             </div>
           `);
@@ -596,11 +607,11 @@ export function initDrawEditor(ctx) {
             <div class="rtGroup">
               <div class="rtToolLbl">${t("logoEditor.draw.stroke")}</div>
               <input id="drawObjStroke" class="inp" type="number" min="0" max="50" step="1" value="${strokeW.mixed ? '' : strokeW.value}" placeholder="${strokeW.mixed ? '—' : ''}"/>
-              ${renderColorToggleHTML(strokeCol.mixed ? "WHITE" : fabricToBW(strokeCol.value))}
+              ${renderColorToggleHTML(strokeCol.mixed ? "MIXED" : fabricToBW(strokeCol.value))}
             </div>
             <div class="rtGroup">
               <label class="chk"><input type="checkbox" id="drawObjFillCheck" ${hasFill ? "checked" : ""}/> ${t("logoEditor.draw.fill")}</label>
-              ${renderColorToggleHTML(fillCol.mixed ? "WHITE" : fabricToBW(fillCol.value))}
+              ${renderColorToggleHTML(fillCol.mixed ? "MIXED" : fabricToBW(fillCol.value))}
             </div>
           </div>
         `);
@@ -657,8 +668,15 @@ export function initDrawEditor(ctx) {
       const mixedColorBtn = document.querySelector("[data-color-toggle]");
       if (mixedColorBtn) {
         mixedColorBtn.addEventListener("click", () => {
-          const curBW = fabricToBW(objs[0]?.fill);
-          objs.forEach(o => o.set("fill", curBW === "BLACK" ? "#ffffff" : "#000000"));
+          // Pobierz aktualny kolor z przycisku (dataset)
+          const btnVal = mixedColorBtn.dataset.colorToggle; // "black" | "white" | "mixed"
+          // Przełącz na przeciwny: black->white, white->black, mixed->black
+          const newColor = (btnVal === "black") ? "#ffffff" : "#000000";
+          objs.forEach(o => {
+            if (o.fill !== undefined && o.fill !== "transparent") {
+              o.set("fill", newColor);
+            }
+          });
           fabricCanvas.renderAll();
           renderObjectSettings();
         });
@@ -1002,9 +1020,6 @@ export function initDrawEditor(ctx) {
   // tool = narzędzie aktualne (może być chwilowo podmienione przez Space/Ctrl)
   let baseTool = TOOL.SELECT;
   let tool = TOOL.SELECT;
-
-  // Kolor domyślny (stroke) — globalny przełącznik ⬛️/⬜️
-  let fg = "WHITE"; // WHITE | BLACK
 
   function fgColor() { return fg === "BLACK" ? "#000000" : "#ffffff"; }
   function fgLabel() { return fg === "BLACK" ? "⬛️" : "⬜️"; }
@@ -2177,7 +2192,8 @@ export function initDrawEditor(ctx) {
     for (let i = 0; i < out.length; i++) {
       const r = data[i*4+0], gg = data[i*4+1], b = data[i*4+2];
       const lum = 0.2126*r + 0.7152*gg + 0.0722*b;
-      out[i] = lum >= 128 ? 1 : 0;
+      // BLACK (ciemne) = 1 (zapalone), WHITE (jasne) = 0 (zgaszone)
+      out[i] = lum < 128 ? 1 : 0;
     }
     return out;
   }
@@ -2553,7 +2569,7 @@ export function initDrawEditor(ctx) {
     fabricCanvas.on("mouse:move", (opt) => {
       const ev = opt.e;
       lastPointer = { x: ev.clientX, y: ev.clientY };
-      if (tool === TOOL.BRUSH || tool === TOOL.ERASER) {
+      if (tool === TOOL.BRUSH || tool === TOOL.ERASER || tool === TOOL.TEXT) {
         placeOverlayAt(ev.clientX, ev.clientY);
       } else {
         hideOverlayCursor();
@@ -2914,11 +2930,7 @@ export function initDrawEditor(ctx) {
     // Poly done
     tPolyDone?.addEventListener("click", () => finalizePolygon());
 
-    // Color / Background toolbar buttons
-    tColor?.addEventListener("click", () => {
-      fg = fg === "BLACK" ? "WHITE" : "BLACK";
-      syncDynamicIcons();
-    });
+    // Background toolbar button
     tBg?.addEventListener("click", () => {
       bg = bg === "BLACK" ? "WHITE" : "BLACK";
       syncDynamicIcons();

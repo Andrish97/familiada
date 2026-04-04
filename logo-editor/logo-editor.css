@@ -524,7 +524,7 @@
 }
 .drawStageRatio{
   width: 100%;
-  aspect-ratio: 11 / 9;
+  aspect-ratio: 11 / 26;
   border-radius: 16px;
   overflow: hidden;
   background: #0b0b0b;
