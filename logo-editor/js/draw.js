@@ -189,7 +189,11 @@ export function initDrawEditor(ctx) {
     else if (tn === "rect" || tn === "ellipse" || tn === "poly") {
       const isPolyDrawing = tn === "poly" && polyPoints.length > 0;
       const tKey = tool.toUpperCase();
-      const ts = toolSettings[tKey] || { stroke: 6, fill: false, fillColor: "WHITE" };
+      // Upewnij się, że klucz istnieje w toolSettings
+      if (!toolSettings[tKey]) {
+        toolSettings[tKey] = { stroke: 6, fill: false, fillColor: "WHITE" };
+      }
+      const ts = toolSettings[tKey];
       
       let html = `
         <div class="ctxGroup"><span class="ctxLabel">Obrys</span><input id="cStrokeW" class="ctxInput" type="number" min="0" max="50" step="1" value="${ts.stroke}"/></div>
