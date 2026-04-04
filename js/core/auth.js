@@ -1,6 +1,6 @@
 // js/core/auth.js
-import { sb, buildSiteUrl } from "./supabase.js?v=v2026-04-04T16041";
-import { t, withLangParam } from "../../translation/translation.js?v=v2026-04-04T16041";
+import { sb, buildSiteUrl } from "./supabase.js?v=v2026-04-04T16291";
+import { t, withLangParam } from "../../translation/translation.js?v=v2026-04-04T16291";
 
 const GUEST_LOCAL_MARKER_KEY = "fam:guest:session_seen";
 const GUEST_DISCARD_RPC_MISSING_KEY = "fam:guest:discard_rpc_missing";
