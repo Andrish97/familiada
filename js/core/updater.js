@@ -13,9 +13,8 @@ export function initUpdater() {
   // Sprawdź czy już przeładowano w tej sesji
   const syncedVersion = sessionStorage.getItem('syncedVersion');
   if (syncedVersion) {
-    // Już synchronizowaliśmy - używamy wersji z serwera, nie przeładowujemy
+    // Już synchronizowaliśmy - używamy wersji z serwera
     currentVersion = syncedVersion;
-    console.info(`[updater] Zsynchronizowano z wersją ${syncedVersion} - sprawdzam tylko zmiany`);
   } else {
     // Pobierz aktualną wersję z meta tagu
     const meta = document.querySelector('meta[name="app-version"]');
@@ -24,10 +23,7 @@ export function initUpdater() {
     }
   }
 
-  if (!currentVersion) {
-    console.warn('[updater] Brak app-version, wyłączam');
-    return;
-  }
+  if (!currentVersion) return;
 
   // Rozpocznij cykliczne sprawdzanie
   setInterval(checkForUpdates, CHECK_INTERVAL);
