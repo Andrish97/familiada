@@ -167,8 +167,8 @@ export function initDrawEditor(ctx) {
         toolSettings[TOOL.BRUSH].stroke = clamp(+e.target.value||1,1,50);
         updateCursorVisual();
       });
-      const cbs = toolCtx?.querySelectorAll("[data-color-toggle]") || [];
-      if (cbs[0]) cbs[0].addEventListener("click", () => {
+      const brushBtns = toolCtx?.querySelectorAll("[data-color-toggle]") || [];
+      if (brushBtns[0]) brushBtns[0].addEventListener("click", () => {
         toolSettings[TOOL.BRUSH].fg = toolSettings[TOOL.BRUSH].fg === "BLACK" ? "WHITE" : "BLACK";
         syncDynamicIcons();
         renderToolSettings();
@@ -189,8 +189,8 @@ export function initDrawEditor(ctx) {
       document.getElementById("cStrokeW")?.addEventListener("input", e => {
         toolSettings[TOOL.LINE].stroke = clamp(+e.target.value||1,1,50);
       });
-      const cbs = toolCtx?.querySelectorAll("[data-color-toggle]") || [];
-      if (cbs[0]) cbs[0].addEventListener("click", () => {
+      const lineBtns = toolCtx?.querySelectorAll("[data-color-toggle]") || [];
+      if (lineBtns[0]) lineBtns[0].addEventListener("click", () => {
         toolSettings[TOOL.LINE].fg = toolSettings[TOOL.LINE].fg === "BLACK" ? "WHITE" : "BLACK";
         syncDynamicIcons();
         renderToolSettings();
@@ -203,12 +203,12 @@ export function initDrawEditor(ctx) {
       if (!toolSettings[tKey]) {
         toolSettings[tKey] = { stroke: 6, fill: false, fillColor: "WHITE" };
       }
-      const ts = toolSettings[tKey];
+      const shapeOpts = toolSettings[tKey];
       
       let html = `
-        <div class="ctxGroup"><span class="ctxLabel">Obrys</span><input id="cStrokeW" class="ctxInput" type="number" min="0" max="50" step="1" value="${ts.stroke}"/></div>
+        <div class="ctxGroup"><span class="ctxLabel">Obrys</span><input id="cStrokeW" class="ctxInput" type="number" min="0" max="50" step="1" value="${shapeOpts.stroke}"/></div>
         <div class="ctxGroup"><span class="ctxLabel">Kolor</span>${ctxColorBtn(fg)}</div>
-        <div class="ctxGroup"><label class="ctxChk"><input type="checkbox" id="cFill" ${ts.fill?"checked":""}/>Wypeł.</label>${ctxColorBtn(ts.fillColor)}</div>
+        <div class="ctxGroup"><label class="ctxChk"><input type="checkbox" id="cFill" ${shapeOpts.fill?"checked":""}/>Wypeł.</label>${ctxColorBtn(shapeOpts.fillColor)}</div>
       `;
       if (isPolyDrawing) {
         html += `<div class="ctxGroup"><button class="ctxBtn on" id="cPolyDone" style="color:#4fc3f7;border-color:rgba(79,195,247,.35);">✓ Zamknij</button></div>`;
@@ -224,17 +224,16 @@ export function initDrawEditor(ctx) {
       });
       
       // Obsługa kolorów (niezależnie dla każdego narzędzia)
-      const cbs = toolCtx?.querySelectorAll("[data-color-toggle]") || [];
-      const ts = toolSettings[tKey]; // Pobierz referencję do ustawień TEGO narzędzia
+      const shapeBtns = toolCtx?.querySelectorAll("[data-color-toggle]") || [];
       
       // Pierwszy przycisk to kolor obrysu (fg)
-      if (cbs[0]) cbs[0].addEventListener("click", () => {
-        ts.fg = ts.fg === "BLACK" ? "WHITE" : "BLACK";
+      if (shapeBtns[0]) shapeBtns[0].addEventListener("click", () => {
+        shapeOpts.fg = shapeOpts.fg === "BLACK" ? "WHITE" : "BLACK";
         syncDynamicIcons();
         renderToolSettings();
       });
-      if (cbs[1]) cbs[1].addEventListener("click", () => {
-        toolSettings[tKey].fillColor = ts.fillColor === "BLACK" ? "WHITE" : "BLACK";
+      if (shapeBtns[1]) shapeBtns[1].addEventListener("click", () => {
+        toolSettings[tKey].fillColor = shapeOpts.fillColor === "BLACK" ? "WHITE" : "BLACK";
         renderToolSettings();
       });
       
@@ -264,8 +263,8 @@ export function initDrawEditor(ctx) {
         textAlign = textAlign==="left"?"center":textAlign==="center"?"right":"left";
         e.target.textContent = alignIcon(textAlign);
       });
-      const cbs = toolCtx?.querySelectorAll("[data-color-toggle]") || [];
-      if (cbs[0]) cbs[0].addEventListener("click", () => {
+      const textBtns = toolCtx?.querySelectorAll("[data-color-toggle]") || [];
+      if (textBtns[0]) textBtns[0].addEventListener("click", () => {
         toolSettings[TOOL.TEXT].fg = toolSettings[TOOL.TEXT].fg === "BLACK" ? "WHITE" : "BLACK";
         syncDynamicIcons();
         renderToolSettings();
@@ -345,8 +344,8 @@ export function initDrawEditor(ctx) {
         fabricCanvas.renderAll();
     });
 
-    const cbs = toolCtx?.querySelectorAll("[data-color-toggle]") || [];
-    if(cbs[0]) cbs[0].addEventListener("click", () => {
+    const objTextBtns = toolCtx?.querySelectorAll("[data-color-toggle]") || [];
+    if(objTextBtns[0]) objTextBtns[0].addEventListener("click", () => {
         const currentBW = fabricToBW(obj.fill);
         const newColor = currentBW === "BLACK" ? "#ffffff" : "#000000";
         obj.set("fill", newColor);
@@ -391,9 +390,9 @@ export function initDrawEditor(ctx) {
         <div class="ctxGroup"><label class="ctxChk"><input type="checkbox" id="cObjFill" ${fills.some(f=>f&&f!=="transparent")?"checked":""}/>Wypeł.</label>${ctxColorBtn(fillCol.mixed?"MIXED":fabricToBW(fillCol.value))}</div>
       `);
       document.getElementById("cObjStroke")?.addEventListener("input", e => { fillShapes.forEach(o=>o.set("strokeWidth",clamp(+e.target.value||1,0,50))); fabricCanvas.renderAll(); });
-      const cbs = toolCtx?.querySelectorAll("[data-color-toggle]")||[];
-      if(cbs[0]) cbs[0].addEventListener("click",()=>{const c=fabricToBW(fillShapes[0]?.stroke);const n=c==="BLACK"?"#ffffff":"#000000";fillShapes.forEach(o=>o.set("stroke",n));fabricCanvas.renderAll();renderObjectSettings();});
-      if(cbs[1]) cbs[1].addEventListener("click",()=>{const c=fabricToBW(fillShapes.find(x=>x.fill&&x.fill!=="transparent")?.fill||"#fff");const n=c==="BLACK"?"#ffffff":"#000000";fillShapes.forEach(o=>{if(o.fill!==undefined)o.set("fill",n)});fabricCanvas.renderAll();renderObjectSettings();});
+      const objShapeBtns = toolCtx?.querySelectorAll("[data-color-toggle]")||[];
+      if(objShapeBtns[0]) objShapeBtns[0].addEventListener("click",()=>{const c=fabricToBW(fillShapes[0]?.stroke);const n=c==="BLACK"?"#ffffff":"#000000";fillShapes.forEach(o=>o.set("stroke",n));fabricCanvas.renderAll();renderObjectSettings();});
+      if(objShapeBtns[1]) objShapeBtns[1].addEventListener("click",()=>{const c=fabricToBW(fillShapes.find(x=>x.fill&&x.fill!=="transparent")?.fill||"#fff");const n=c==="BLACK"?"#ffffff":"#000000";fillShapes.forEach(o=>{if(o.fill!==undefined)o.set("fill",n)});fabricCanvas.renderAll();renderObjectSettings();});
       document.getElementById("cObjFill")?.addEventListener("change",e=>{const nc=e.target.checked?"#ffffff":"transparent";fillShapes.forEach(o=>o.set("fill",nc));fabricCanvas.renderAll();renderObjectSettings();});
       return;
     }
@@ -411,8 +410,8 @@ export function initDrawEditor(ctx) {
         <div class="ctxGroup">${ctxColorBtn(strokeCol.mixed?"MIXED":fabricToBW(strokeCol.value))}</div>
       `);
       document.getElementById("cObjStroke")?.addEventListener("input", e => { allWithStroke.forEach(o=>o.set("strokeWidth",clamp(+e.target.value||1,0,50))); fabricCanvas.renderAll(); });
-      const cbs = toolCtx?.querySelectorAll("[data-color-toggle]")||[];
-      if(cbs[0]) cbs[0].addEventListener("click",()=>{const c=fabricToBW(allWithStroke.find(x=>x.stroke&&x.stroke!=="transparent")?.stroke||"#fff");const n=c==="BLACK"?"#ffffff":"#000000";allWithStroke.forEach(o=>o.set("stroke",n));fabricCanvas.renderAll();renderObjectSettings();});
+      const objMixedBtns = toolCtx?.querySelectorAll("[data-color-toggle]")||[];
+      if(objMixedBtns[0]) objMixedBtns[0].addEventListener("click",()=>{const c=fabricToBW(allWithStroke.find(x=>x.stroke&&x.stroke!=="transparent")?.stroke||"#fff");const n=c==="BLACK"?"#ffffff":"#000000";allWithStroke.forEach(o=>o.set("stroke",n));fabricCanvas.renderAll();renderObjectSettings();});
     }
   }
   function injectIcon(id, html){
