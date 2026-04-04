@@ -1,4 +1,4 @@
-import { initI18n, t } from "../../translation/translation.js?v=v2026-04-04T02354";
+import { initI18n, t } from "../../translation/translation.js?v=v2026-04-04T03010";
 
 const ENDPOINT = "/maintenance-state.json";
 const POLL_MS = 30000;
