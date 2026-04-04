@@ -1469,7 +1469,7 @@ export function initDrawEditor(ctx) {
       return;
     }
   
-    // TEXT: pionowa kreska (tekstowy caret) — overlay, inverted color
+    // TEXT: pionowa kreska (tekstowy caret) — overlay, ZAWSZE widoczny
     if (tool === TOOL.TEXT) {
       setCursorClass("none", false);
       setFabricCursors("none", "none", "none");
@@ -1477,16 +1477,14 @@ export function initDrawEditor(ctx) {
       const z = fabricCanvas.getZoom();
       const h = Math.max(20, Math.round(24 * z));
       const w = Math.max(2, Math.round(2 * z));
-      // Inverted color: white cursor on black bg, black cursor on white bg
-      const borderColor = bg === "BLACK" ? "rgba(255,255,255,.9)" : "rgba(0,0,0,.8)";
-      const shadowColor = bg === "BLACK" ? "rgba(0,0,0,.5)" : "rgba(255,255,255,.5)";
 
       cursorDot.style.width = `${w}px`;
       cursorDot.style.height = `${h}px`;
       cursorDot.style.borderRadius = "1px";
-      cursorDot.style.border = `1px solid ${borderColor}`;
+      // Biały border + czarny shadow = widoczny na KAŻDYM tle
+      cursorDot.style.border = "2px solid #ffffff";
       cursorDot.style.background = "transparent";
-      cursorDot.style.boxShadow = `0 0 0 1px ${shadowColor}`;
+      cursorDot.style.boxShadow = "0 0 0 1px #000000, 0 0 0 1px #000000";
 
       placeOverlayAt(lastPointer.x, lastPointer.y);
       return;
