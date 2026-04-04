@@ -1,7 +1,7 @@
 name: Deploy GitHub Pages
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -32,8 +32,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          persist-credentials: true
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
