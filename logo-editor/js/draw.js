@@ -1584,7 +1584,7 @@ export function initDrawEditor(ctx) {
   // =========================================================
   return {
     open(payload = null) {
-      show(paneDraw, true);
+      ctx.show(paneDraw, true);
       loadDrawFonts();
 
       if (!uiBound) { bindUiOnce(); uiBound = true; }
@@ -1644,7 +1644,7 @@ export function initDrawEditor(ctx) {
     },
 
     close() {
-      show(paneDraw, false);
+      ctx.show(paneDraw, false);
       ctxHide();
       hideOverlayCursor();
     },

@@ -1479,6 +1479,7 @@ async function boot(){
     getDither: () => false,
     TYPE_GLYPH,
     TYPE_PIX,
+    show,
   };
 
    textEditor = initTextEditor(editorCtx);
