@@ -274,7 +274,7 @@
 }
 
 /* =========================================================
-   DRAW SETTINGS (drugi rząd pod toolbarem, z separatorem)
+   DRAW SETTINGS (drugi rząd, POZIOMY z scroll)
 ========================================================= */
 .toolRowSep{
   width: 100%;
@@ -286,21 +286,24 @@
 #toolCtxSettings{
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   flex-wrap: nowrap;
   overflow-x: auto;
-  min-height: 32px;
-  scrollbar-width: none;
-  padding: 4px 6px;
+  overflow-y: hidden;
+  min-height: 34px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,.15) transparent;
+  padding: 4px 8px;
 }
-#toolCtxSettings::-webkit-scrollbar{ display: none; }
-#toolCtxSettings.visible{ /* always flex when has content */ }
+#toolCtxSettings::-webkit-scrollbar{ height: 4px; }
+#toolCtxSettings::-webkit-scrollbar-track{ background: transparent; }
+#toolCtxSettings::-webkit-scrollbar-thumb{ background: rgba(255,255,255,.15); border-radius: 2px; }
 
 /* Grupa w toolbarze */
 .ctxGroup{
   display: inline-flex;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
   padding: 0 6px;
   position: relative;
   flex-shrink: 0;
@@ -325,33 +328,33 @@
   flex-shrink: 0;
 }
 
-/* Suwaki/inputs w toolbarze */
+/* Suwaki/inputs */
 .ctxInput{
-  height: 24px;
-  width: 52px;
+  height: 28px;
+  width: 56px;
   padding: 2px 6px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   background: rgba(255,255,255,.08);
   border: 1px solid rgba(255,255,255,.15);
-  border-radius: 5px;
+  border-radius: 6px;
   color: #fff;
   text-align: center;
 }
 .ctxInput::placeholder{ color: rgba(255,255,255,.3); }
 .ctxInput:focus{ outline: none; border-color: rgba(255,255,255,.35); background: rgba(255,255,255,.12); }
 
-/* Przyciski w ustawieniach */
+/* Przyciski (jak tbtn) */
 .ctxBtn{
-  height: 24px;
-  min-width: 26px;
-  padding: 0 7px;
-  font-size: 11px;
-  font-weight: 900;
+  height: 28px;
+  min-width: 32px;
+  padding: 0 8px;
+  font-size: 12px;
+  font-weight: 700;
   background: rgba(255,255,255,.08);
   border: 1px solid rgba(255,255,255,.15);
-  border-radius: 5px;
-  color: rgba(255,255,255,.7);
+  border-radius: 6px;
+  color: rgba(255,255,255,.75);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -360,32 +363,34 @@
 .ctxBtn:hover{ background: rgba(255,255,255,.14); color: #fff; }
 .ctxBtn.on{ background: rgba(255,255,255,.18); color: #4fc3f7; border-color: rgba(79,195,247,.35); }
 
-/* Przycisk koloru */
+/* Przycisk koloru - CAŁY wypełniony, prostokątny */
 .ctxColorBtn{
-  height: 24px;
-  width: 26px;
-  min-width: 26px;
+  height: 28px;
+  width: 32px;
+  min-width: 32px;
   padding: 0;
-  border-radius: 5px;
-  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,.25);
   cursor: pointer;
+  transition: border-color .15s, box-shadow .15s;
 }
+.ctxColorBtn:hover{ border-color: rgba(255,255,255,.5); box-shadow: 0 0 0 2px rgba(255,255,255,.1); }
+.ctxColorBtn.black{ background: #000000; border-color: #444; }
+.ctxColorBtn.white{ background: #ffffff; border-color: #ccc; }
 
-/* Checkbox w toolbarze */
+/* Checkbox */
 .ctxChk{
   display: inline-flex;
   align-items: center;
-  gap: 3px;
-  font-size: 10px;
+  gap: 4px;
+  font-size: 11px;
   font-weight: 700;
   color: rgba(255,255,255,.75);
   cursor: pointer;
   flex-shrink: 0;
+  white-space: nowrap;
 }
-.ctxChk input{
-  accent-color: var(--accent, #4fc3f7);
-  margin: 0;
-}
+.ctxChk input{ accent-color: var(--accent, #4fc3f7); margin: 0; }
 
 /* =========================================================
    FONT PICKER (FIXED popover)
