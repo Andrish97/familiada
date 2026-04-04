@@ -277,15 +277,11 @@
    DRAW SETTINGS (kontekstowe ustawienia pod toolbarem)
 ========================================================= */
 .drawSettings{
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 20;
+  display: none;
+  width: 100%;
   padding: 8px 10px;
-  background: rgba(10,10,14,.92);
-  backdrop-filter: blur(8px);
   border-bottom: 1px solid rgba(255,255,255,.08);
+  background: rgba(10,10,14,.6);
 }
 .drawSettings.visible{
   display: block;
