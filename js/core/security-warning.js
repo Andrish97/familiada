@@ -2,9 +2,16 @@
 (function() {
   "use strict";
 
-  // Tylko RAZ na sesję
-  if (window._securityWarned) return;
-  window._securityWarned = true;
+  // Podwójne zabezpieczenie przed wielokrotnym uruchomieniem
+  // 1. Zmienna globalna (działa przy wielokrotnym parsowaniu skryptu na stronie)
+  if (window._sw_executed) return;
+  window._sw_executed = true;
+
+  // 2. Session storage (działa przy reloadach i dziwnych stanach przeglądarki)
+  try {
+    if (sessionStorage.getItem('_sw_warned')) return;
+    sessionStorage.setItem('_sw_warned', '1');
+  } catch (e) {}
 
   function getLang() {
     const params = new URLSearchParams(window.location.search);
