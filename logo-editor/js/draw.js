@@ -621,7 +621,6 @@ export function initDrawEditor(ctx) {
     setTip(tZoomOut, tip2(t("logoEditor.draw.tooltips.zoomOut"), `${K.MOD} + -`));
 
     // Kolor / tło
-    setTip(tColor, t("logoEditor.draw.tooltips.color"));
     setTip(tBg,    t("logoEditor.draw.tooltips.background"));
 
     // Narzędzia
