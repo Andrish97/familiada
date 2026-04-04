@@ -67,7 +67,10 @@ async function checkForUpdates() {
       setTimeout(() => {
         // Po przeładowaniu zapamiętaj wersję z serwera
         sessionStorage.setItem('syncedVersion', serverVersion);
-        location.reload();
+        // Wymuś hard reload - cache bust w URL
+        const url = new URL(location.href);
+        url.searchParams.set('_r', Date.now());
+        location.href = url.toString();
       }, 3000);
     }
   } catch (err) {

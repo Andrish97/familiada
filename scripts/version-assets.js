@@ -49,6 +49,11 @@ for (const file of htmlFiles) {
   // Meta version
   content = content.replace(/<meta name="app-version" content="[^"]*"/g, `<meta name="app-version" content="${version}"`);
 
+  // Dodaj Cache-Control no-store (jeśli jeszcze nie ma)
+  if (!content.includes('http-equiv="Cache-Control"')) {
+    content = content.replace(/<head>/i, `<head>\n  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">`);
+  }
+
   if (content !== originalContent) {
     fs.writeFileSync(htmlPath, content, 'utf8');
     console.log(`  ✓ ${file}`);
