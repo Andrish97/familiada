@@ -997,30 +997,27 @@ export function initDrawEditor(ctx) {
       return;
     }
   
-    // TEXT: kursor + (tworzenie) lub I (na tekście)
+    // TEXT: 2 kursory - + (tworzenie) i I-beam (edycja istniejącego tekstu)
     if (tool === TOOL.TEXT) {
       setCursorClass("none", false);
-      // Domyślnie crosshair (+) dla tworzenia nowego tekstu
+      // Fabric.js sam zmieni kursor na text gdy najedzie na obiekt tekstowy
       fabricCanvas.defaultCursor = "crosshair";
       fabricCanvas.hoverCursor = "text";
       fabricCanvas.moveCursor = "text";
 
-      // Overlay: kursor I-beam (szeryfowy - pionowa kreska + poziome kreseczki na górze i dole)
+      // Overlay: cienki kursor I-beam bez obramowania, widoczny na każdym tle
       const z = fabricCanvas.getZoom();
-      const h = Math.max(28, Math.round(32 * z));
-      const stemW = Math.max(3, Math.round(3 * z));
-      const serifW = Math.max(8, Math.round(10 * z));
-      const serifH = Math.max(3, Math.round(3 * z));
+      const h = Math.max(24, Math.round(28 * z));
+      const stemW = Math.max(2, Math.round(2 * z));
+      const serifW = Math.max(12, Math.round(14 * z));
+      const serifH = Math.max(2, Math.round(2 * z));
 
-      // Tworzymy SVG dla kursora I-beam z szeryfami
+      // SVG I-beam - tylko fill, bez stroke, mix-blend-mode: difference
       const svgData = `
         <svg xmlns="http://www.w3.org/2000/svg" width="${serifW}" height="${h}">
-          <!-- Pionowa kreska -->
-          <rect x="${(serifW - stemW) / 2}" y="${serifH}" width="${stemW}" height="${h - serifH * 2}" fill="white" stroke="black" stroke-width="1.5"/>
-          <!-- Górny szeryf -->
-          <rect x="1" y="1" width="${serifW - 2}" height="${serifH}" rx="1" fill="white" stroke="black" stroke-width="1.5"/>
-          <!-- Dolny szeryf -->
-          <rect x="1" y="${h - serifH - 1}" width="${serifW - 2}" height="${serifH}" rx="1" fill="white" stroke="black" stroke-width="1.5"/>
+          <rect x="${(serifW - stemW) / 2}" y="${serifH}" width="${stemW}" height="${h - serifH * 2}" fill="white"/>
+          <rect x="1" y="1" width="${serifW - 2}" height="${serifH}" fill="white"/>
+          <rect x="1" y="${h - serifH - 1}" width="${serifW - 2}" height="${serifH}" fill="white"/>
         </svg>
       `;
       const blob = new Blob([svgData], { type: 'image/svg+xml' });
@@ -1032,9 +1029,8 @@ export function initDrawEditor(ctx) {
       cursorDot.style.background = 'none';
       cursorDot.style.boxShadow = 'none';
       cursorDot.style.borderRadius = '0';
-      cursorDot.style.mixBlendMode = 'normal';
+      cursorDot.style.mixBlendMode = 'difference';
       cursorDot.style.opacity = '1';
-      // Używamy SVG jako tła
       cursorDot.style.backgroundImage = `url('${url}')`;
       cursorDot.style.backgroundSize = 'contain';
       cursorDot.style.backgroundRepeat = 'no-repeat';
@@ -2072,8 +2068,17 @@ export function initDrawEditor(ctx) {
     fabricCanvas.on("mouse:move", (opt) => {
       const ev = opt.e;
       lastPointer = { x: ev.clientX, y: ev.clientY };
-      if (tool === TOOL.BRUSH || tool === TOOL.ERASER || tool === TOOL.TEXT) {
+      
+      if (tool === TOOL.BRUSH || tool === TOOL.ERASER) {
         placeOverlayAt(ev.clientX, ev.clientY);
+      } else if (tool === TOOL.TEXT) {
+        // TEXT: pokaż overlay I-beam tylko nad istniejącym tekstem
+        const target = fabricCanvas.findTarget(ev);
+        if (target && (target.type === "i-text" || target.type === "textbox" || target.type === "text")) {
+          placeOverlayAt(ev.clientX, ev.clientY);
+        } else {
+          hideOverlayCursor(); // na pustym polu - systemowy crosshair
+        }
       } else {
         hideOverlayCursor();
       }
