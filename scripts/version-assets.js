@@ -13,7 +13,7 @@ const path = require('path');
 
 const ROOT = process.cwd();
 
-// Globalny version z timestamp
+// Globalny version z timestamp - UŻYWANY WE WSZYSTKICH PLIKACH
 const version = `v${new Date().toISOString().replace(/[:.]/g, '').slice(0, -5)}`;
 console.log(`\n🔖 Version: ${version}\n`);
 
@@ -30,31 +30,46 @@ const htmlFiles = [
   'settings-tools/kora-builder.html',
 ];
 
+let htmlUpdated = 0;
 for (const file of htmlFiles) {
   const htmlPath = path.join(ROOT, file);
-  if (!fs.existsSync(htmlPath)) continue;
+  if (!fs.existsSync(htmlPath)) {
+    console.log(`  ⚠ ${file} (nie znaleziono, pomijam)`);
+    continue;
+  }
 
   let content = fs.readFileSync(htmlPath, 'utf8');
+  const originalContent = content;
 
-  // Zamień istniejące ?v= na nowy version (tylko relative URLs: /, ./, ../)
-  content = content.replace(/(=["'])([./][a-zA-Z0-9_/.-]*\.(?:js|css|json|png|svg|ico|jpg|jpeg|gif|woff2?|ttf|otf|webp|avif))\?v=[a-zA-Z0-9]+/g, `$1$2?v=${version}`);
-  // Dodaj ?v= tam gdzie go brakuje (tylko relative URLs)
-  content = content.replace(/(=["'])([./][a-zA-Z0-9_/.-]*\.(?:js|css|json|png|svg|ico|jpg|jpeg|gif|woff2?|ttf|otf|webp|avif))(?=['"])/g, `$1$2?v=${version}`);
+  // Zamień istniejące ?v= na nowy version (relative URLs: /, ./, ../, lub bez prefiksu)
+  content = content.replace(/(=["'])([a-zA-Z0-9_/.-]*\.(?:js|css|json|png|svg|ico|jpg|jpeg|gif|woff2?|ttf|otf|webp|avif|xml|webmanifest|eot))\?v=[a-zA-Z0-9T:-]+/g, `$1$2?v=${version}`);
+  // Dodaj ?v= tam gdzie go brakuje (relative URLs)
+  content = content.replace(/(=["'])([a-zA-Z0-9_/.-]*\.(?:js|css|json|png|svg|ico|jpg|jpeg|gif|woff2?|ttf|otf|webp|avif|xml|webmanifest|eot))(?=['"])/g, `$1$2?v=${version}`);
 
   // Meta version
   content = content.replace(/<meta name="app-version" content="[^"]*"/g, `<meta name="app-version" content="${version}"`);
 
-  fs.writeFileSync(htmlPath, content, 'utf8');
-  console.log(`  ✓ ${file}`);
+  if (content !== originalContent) {
+    fs.writeFileSync(htmlPath, content, 'utf8');
+    console.log(`  ✓ ${file}`);
+    htmlUpdated++;
+  } else {
+    console.log(`  ○ ${file} (bez zmian)`);
+  }
 }
+console.log(`\n  📝 Updated ${htmlUpdated} HTML files\n`);
 
 // ─── 2. Update ALL JS files (import ... from "...js?v=xxx") ─────────────────
 
 const jsDirs = ['js/', 'logo-editor/js/', 'translation/', 'display/js/', 'control/js/'];
+let jsUpdated = 0;
 
 for (const jsDir of jsDirs) {
   const dirPath = path.join(ROOT, jsDir);
-  if (!fs.existsSync(dirPath)) continue;
+  if (!fs.existsSync(dirPath)) {
+    console.log(`  ⚠ ${jsDir} (nie znaleziono, pomijam)`);
+    continue;
+  }
 
   function walk(dir) {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -63,10 +78,11 @@ for (const jsDir of jsDirs) {
       if (!entry.name.endsWith('.js')) continue;
 
       let content = fs.readFileSync(full, 'utf8');
+      const originalContent = content;
       let changed = false;
 
-      // import from "...js?v=xxx"
-      content = content.replace(/(from\s+['"])([a-zA-Z0-9_./-]+\.(?:js|json))\?v=[a-zA-Z0-9]+(['"])/g, (m, pre, rel, post) => {
+      // import from "...js?v=xxx" - dopasowuje WSZYSTKIE formaty wersji
+      content = content.replace(/(from\s+['"])([a-zA-Z0-9_./-]+\.(?:js|json))\?v=[a-zA-Z0-9T:-]+(['"])/g, (m, pre, rel, post) => {
         changed = true;
         return `${pre}${rel}?v=${version}${post}`;
       });
@@ -76,14 +92,26 @@ for (const jsDir of jsDirs) {
         return `${pre}${rel}?v=${version}`;
       });
 
-      if (changed) {
+      // import dynamiczne - `import("...")`
+      content = content.replace(/(import\s*\(\s*['"])([a-zA-Z0-9_./-]+\.(?:js|json))\?v=[a-zA-Z0-9T:-]+(['"]\s*\))/g, (m, pre, rel, post) => {
+        changed = true;
+        return `${pre}${rel}?v=${version}${post}`;
+      });
+      content = content.replace(/(import\s*\(\s*['"])([a-zA-Z0-9_./-]+\.(?:js|json))(?=['"]\s*\))/g, (m, pre, rel) => {
+        changed = true;
+        return `${pre}${rel}?v=${version}`;
+      });
+
+      if (changed && content !== originalContent) {
         fs.writeFileSync(full, content, 'utf8');
         console.log(`  ✓ ${full}`);
+        jsUpdated++;
       }
     }
   }
   walk(dirPath);
 }
+console.log(`\n  📝 Updated ${jsUpdated} JS files\n`);
 
 // ─── 3. Write version.txt ───────────────────────────────────────────────────
 
