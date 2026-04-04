@@ -274,14 +274,18 @@
 }
 
 /* =========================================================
-   DRAW SETTINGS (kontekstowe ustawienia pod canvasem)
+   DRAW SETTINGS (kontekstowe ustawienia nad canvasem)
 ========================================================= */
 .drawSettings{
-  width: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
   padding: 6px 8px;
-  background: rgba(10,10,14,.92);
-  border-top: 1px solid var(--bd-weak);
-  border-radius: 0 0 12px 12px;
+  background: rgba(10,10,14,.88);
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid rgba(255,255,255,.08);
 }
 .drawSettings.visible{
   display: block;
@@ -520,19 +524,18 @@
 .drawStageWrap{
   height: 100%;
   min-height: 0;
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  border-radius: var(--radius-lg);
   border: 1px solid var(--bd-weak);
   background: var(--bg-weak);
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 6px;
-  position: relative;
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding: 10px;
 }
 .drawStageRatio{
   width: 100%;
-  aspect-ratio: 11 / 26;
+  aspect-ratio: 26 / 11;
   border-radius: 16px;
   overflow: hidden;
   background: #0b0b0b;

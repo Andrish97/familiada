@@ -223,14 +223,14 @@
 
           <!-- DRAW: scena + kontekstowe ustawienia -->
           <div class="pane" id="paneDraw" style="display:none;">
+            <!-- Kontekstowe ustawienia narzędzia/obiektu -->
+            <div class="drawSettings" id="drawSettings"></div>
             <!-- Canvas -->
             <div class="drawStageWrap">
               <div class="drawStageRatio" id="drawStageHost">
                 <canvas id="drawStage" width="1" height="1"></canvas>
               </div>
             </div>
-            <!-- Kontekstowe ustawienia narzędzia/obiektu (pod canvasem) -->
-            <div class="drawSettings" id="drawSettings"></div>
             <!-- Font picker popover (shared by text tool settings) -->
             <div id="drawFontPickPop" class="fontPickPop" hidden style="position:fixed;z-index:99999;display:block;">
               <div class="fontPickPanel" style="width:min(520px,calc(100vw - 16px));max-height:min(360px,calc(100vh - 24px));overflow:hidden;border-radius:14px;border:1px solid rgba(255,255,255,.16);background:rgba(10,10,14,.96);backdrop-filter:blur(12px);">
