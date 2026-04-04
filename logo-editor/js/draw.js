@@ -52,8 +52,6 @@ export function initDrawEditor(ctx) {
   const tClear    = document.getElementById("tClear");
   const tEye      = document.getElementById("tEye");
 
-  const tPolyDone = document.getElementById("tPolyDone");
-
   // Tło sceny — 🖼️
   const tBg       = document.getElementById("tBg");     // 🖼️ (tło)
 
@@ -354,13 +352,9 @@ export function initDrawEditor(ctx) {
     tText: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 6h14"></path><path d="M12 6v12"></path><path d="M8 18h8"></path></svg>`,
     tBrush: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 20l4-1 11-11-3-3L5 16l-1 4z"></path><path d="M14 6l3 3"></path></svg>`,
     tEraser: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 16l8.5-8.5a1.8 1.8 0 0 1 2.5 0l1 1a1.8 1.8 0 0 1 0 2.5L11 19H7l-2-2 2-1z"></path><path d="M11 19h10"></path><path d="M9.2 14.8l4 4"></path></svg>`,
-    tLine: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 18L18 6"></path><circle class="fill" cx="6" cy="18" r="1.2"></circle><circle class="fill" cx="18" cy="6" r="1.2"></circle></svg>`,
-    tRect: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="6" y="7" width="12" height="10" rx="2"></rect></svg>`,
-    tEllipse: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><ellipse cx="12" cy="12" rx="7" ry="5"></ellipse></svg>`,
-    tPoly: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 6l7 14H5L12 6z"></path></svg>`,
+    tShapes: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="4" y="4" width="6" height="6" rx="1"/><circle cx="17" cy="7" r="3"/><polygon points="12,15 17,21 7,21"/></svg>`,
     tUndo: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 7H5v4"></path><path d="M5 11c2-4 6-6 10-4 2 1 4 3 4 6"></path></svg>`,
     tRedo: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 7h4v4"></path><path d="M19 11c-2-4-6-6-10-4-2 1-4 3-4 6"></path></svg>`,
-    tPolyDone: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 13l4 4L19 7"></path></svg>`,
     tClear: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 7h12"></path><path d="M9 7V5h6v2"></path><path d="M8 7l1 14h6l1-14"></path></svg>`,
     tEye: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"></path><circle class="fill" cx="12" cy="12" r="2"></circle></svg>`,
   };
@@ -467,18 +461,14 @@ export function initDrawEditor(ctx) {
     // Narzędzia
     setTip(tBrush,   tip2(t("logoEditor.draw.tooltips.brush"), "B"));
     setTip(tEraser,  tip2(t("logoEditor.draw.tooltips.eraser"), "E"));
-    setTip(tLine,    tip2(t("logoEditor.draw.tooltips.line"), "L"));
-    setTip(tRect,    tip2(t("logoEditor.draw.tooltips.rect"), "R"));
+    setTip(tShapes,  t("logoEditor.draw.tooltips.shapes"));
     setTip(tText,    tip2(t("logoEditor.draw.tooltips.text"), "T"));
-    setTip(tEllipse, tip2(t("logoEditor.draw.tooltips.ellipse"), "O"));
-    setTip(tPoly,    tip2(t("logoEditor.draw.tooltips.poly"), "P"), t("logoEditor.draw.tooltips.polyHint"));
 
     // Historia
     setTip(tUndo, tip2(t("logoEditor.draw.tooltips.undo"), isMac ? "⌘Z" : "Ctrl+Z"));
     setTip(tRedo, tip2(t("logoEditor.draw.tooltips.redo"), isMac ? "⌘⇧Z / ⌘Y" : "Ctrl+Shift+Z / Ctrl+Y"));
 
     // Akcje
-    setTip(tPolyDone, tip2(t("logoEditor.draw.tooltips.polyDone"), "Enter / dwuklik"));
     setTip(tClear,    t("logoEditor.draw.tooltips.clear"));
     setTip(tEye,      t("logoEditor.draw.tooltips.preview"));
   }
@@ -1237,12 +1227,11 @@ export function initDrawEditor(ctx) {
 
     setBtnOn(tBrush, tool === TOOL.BRUSH);
     setBtnOn(tEraser, tool === TOOL.ERASER);
-    setBtnOn(tLine, tool === TOOL.LINE);
-    setBtnOn(tRect, tool === TOOL.RECT);
-    setBtnOn(tEllipse, tool === TOOL.ELLIPSE);
-    setBtnOn(tPoly, tool === TOOL.POLY);
+    setBtnOn(tShapes, tool === TOOL.SHAPES);
 
-    if (tPolyDone) tPolyDone.disabled = !(tool === TOOL.POLY && polyPoints.length >= 3);
+    if (polyPoints.length >= 3 && tool === TOOL.SHAPES && currentShape === "polygon") {
+      // Show polygon close button in settings if needed
+    }
   }
 
   function applyToolBehavior() {
@@ -2632,7 +2621,6 @@ export function initDrawEditor(ctx) {
     tText?.addEventListener("click", () => setTool(TOOL.TEXT));
 
     // Poly done
-    tPolyDone?.addEventListener("click", () => finalizePolygon());
 
     // Background toggle
     tBg?.addEventListener("click", () => {
