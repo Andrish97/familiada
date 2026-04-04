@@ -102,6 +102,11 @@ export default {
 
     const isBypass = hasAdminBypass(request, env);
 
+    // Bypass → przepuszcza WSZYSTKO (nawet przy włączonym maintenance)
+    if (isBypass) {
+      return fetchWith404(request, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
+    }
+
     // Admin API should not be exposed on public hosts
     if (url.pathname.startsWith("/_admin_api")) {
       return new Response("Unauthorized", { status: 401 });
