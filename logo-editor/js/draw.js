@@ -56,8 +56,9 @@ export function initDrawEditor(ctx) {
 
   const tPolyDone = document.getElementById("tPolyDone");
 
-  // tColor i tBg zostały usunięte z toolbar — kolory są teraz w ustawieniach narzędzia
-  // (zmienne fg i bg dalej działają jako domyślne kolory)
+  // Kolory: fg (obramowanie/rysowanie) i bg (tło sceny)
+  const tColor    = document.getElementById("tColor");  // ⬛️/⬜️
+  const tBg       = document.getElementById("tBg");     // 🖼️
 
     // =========================================================
   // Ikony dynamiczne: FG (kolor narzędzia) i BG (tło sceny)
@@ -101,12 +102,18 @@ export function initDrawEditor(ctx) {
   };
 
   // Wybór koloru: BLACK lub WHITE (monochromatyczny)
+  /** Prosty przycisk toggle B/W */
+  function renderBWButtonHTML(value) {
+    const isBlack = value === "BLACK";
+    return `<button class="btn sm" type="button" data-color-btn="${isBlack ? 'black' : 'white'}" style="min-width:50px;font-weight:900;font-size:12px;">${isBlack ? 'BLACK' : 'WHITE'}</button>`;
+  }
+
   /** Konwertuje kolor Fabric na BLACK/WHITE */
   function fabricToBW(color) {
     if (!color || color === "transparent" || color === "rgba(0,0,0,0)") return "WHITE";
     const c = color.toLowerCase().trim();
     if (c === "#000" || c === "#000000" || c === "rgb(0,0,0)" || c === "rgb(0, 0, 0)" || c === "black") return "BLACK";
-    return "WHITE"; // domyślnie biały
+    return "WHITE";
   }
 
   /** Konwertuje BLACK/WHITE na hex dla Fabric */
@@ -114,16 +121,10 @@ export function initDrawEditor(ctx) {
     return bw === "BLACK" ? "#000000" : "#ffffff";
   }
 
-  function renderColorButtonHTML(value) {
-    const isBlack = value === "BLACK";
-    const icon = isBlack ? ICON_FG.BLACK : ICON_FG.WHITE;
-    return `<button class="btn sm" type="button" data-color-btn="fg" data-color="${value}">${icon}</button>`;
-  }
-
-  function bindColorButtonEvents(onToggle) {
+  function bindColorButtonEvents(onSelect) {
     document.querySelectorAll("[data-color-btn]").forEach(btn => {
       btn.addEventListener("click", () => {
-        onToggle();
+        onSelect(btn.dataset.colorBtn);
       });
     });
   }
@@ -135,8 +136,14 @@ export function initDrawEditor(ctx) {
   }
 
   function syncDynamicIcons() {
-    // tColor i tBg zostały usunięte z toolbar — kolory są teraz w ustawieniach narzędzia
-    // Funkcja zostaje jako placeholder (może być potrzebna w przyszłości)
+    if (tColor) {
+      tColor.innerHTML = ICON_FG[fg] || ICON_FG.BLACK;
+      tColor.setAttribute("aria-label", t("logoEditor.draw.aria.strokeColor", { color: getColorLabel(fg) }));
+    }
+    if (tBg) {
+      tBg.innerHTML = ICON_BG[bg] || ICON_BG.BLACK;
+      tBg.setAttribute("aria-label", t("logoEditor.draw.aria.backgroundColor", { color: getColorLabel(bg) }));
+    }
   }
 
   // =========================================================
@@ -161,7 +168,6 @@ export function initDrawEditor(ctx) {
   function renderToolSettings() {
     const toolName = tool.toLowerCase();
     if (toolName === "brush") {
-      const bgBtn = bg === "BLACK" ? ICON_BG.BLACK : ICON_BG.WHITE;
       showSettings(`
         <div class="rtToolRow">
           <div class="rtGroup">
@@ -170,11 +176,7 @@ export function initDrawEditor(ctx) {
           </div>
           <div class="rtGroup">
             <div class="rtToolLbl">${t("logoEditor.draw.fillColor")}</div>
-            ${renderColorButtonHTML(fg)}
-          </div>
-          <div class="rtGroup">
-            <div class="rtToolLbl">${t("logoEditor.draw.bgColor")}</div>
-            <button class="btn sm" type="button" id="drawBgToggle">${bgBtn}</button>
+            ${renderBWButtonHTML(fg)}
           </div>
         </div>
       `);
@@ -182,18 +184,13 @@ export function initDrawEditor(ctx) {
         strokeWidth = clamp(Number(e.target.value) || 1, 1, 50);
         updateCursor();
       });
-      bindColorButtonEvents(() => {
-        fg = fg === "BLACK" ? "WHITE" : "BLACK";
-        renderToolSettings();
-      });
-      document.getElementById("drawBgToggle")?.addEventListener("click", () => {
-        bg = bg === "BLACK" ? "WHITE" : "BLACK";
-        if (fabricCanvas) { fabricCanvas.backgroundColor = bgColor(); fabricCanvas.requestRenderAll(); }
+      bindColorButtonEvents((v) => {
+        fg = v === "black" ? "BLACK" : "WHITE";
+        syncDynamicIcons();
         renderToolSettings();
       });
     } else if (toolName === "text") {
       const fontLabel = DRAW_FONTS.find(f => f.value === textFont)?.label || "Font";
-      const textHex = fgColor();
       showSettings(`
         <div class="rtToolRow">
           <div class="rtGroup">
@@ -225,28 +222,19 @@ export function initDrawEditor(ctx) {
           </div>
           <div class="rtGroup">
             <div class="rtToolLbl">${t("logoEditor.draw.fillColor")}</div>
-            ${renderColorButtonHTML(fg)}
-          </div>
-          <div class="rtGroup">
-            <div class="rtToolLbl">${t("logoEditor.draw.bgColor")}</div>
-            <button class="btn sm" type="button" id="drawBgToggle">${bg === "BLACK" ? ICON_BG.BLACK : ICON_BG.WHITE}</button>
+            ${renderBWButtonHTML(fg)}
           </div>
         </div>
       `);
       document.getElementById("drawFontBtn")?.addEventListener("click", () => {
         openDrawFontPicker((val) => {
           textFont = val;
-          // Re-render to update button label
           renderToolSettings();
         }, textFont);
       });
-      bindColorButtonEvents(() => {
-        fg = fg === "BLACK" ? "WHITE" : "BLACK";
-        renderToolSettings();
-      });
-      document.getElementById("drawBgToggle")?.addEventListener("click", () => {
-        bg = bg === "BLACK" ? "WHITE" : "BLACK";
-        if (fabricCanvas) { fabricCanvas.backgroundColor = bgColor(); fabricCanvas.requestRenderAll(); }
+      bindColorButtonEvents((v) => {
+        fg = v === "black" ? "BLACK" : "WHITE";
+        syncDynamicIcons();
         renderToolSettings();
       });
       document.getElementById("drawTextSize")?.addEventListener("input", (e) => {
@@ -275,53 +263,45 @@ export function initDrawEditor(ctx) {
         e.target.textContent = textAlign === "left" ? "⇤" : textAlign === "right" ? "⇥" : "⇆";
       });
     } else if (toolName === "rect" || toolName === "ellipse" || toolName === "line") {
+      const fillBW = fabricToBW(fillColor);
       showSettings(`
         <div class="rtToolRow">
           <div class="rtGroup">
             <div class="rtToolLbl">${t("logoEditor.draw.stroke")}</div>
             <input id="drawStrokeWidth" class="inp" type="number" min="1" max="50" step="1" value="${strokeWidth}"/>
-            ${renderColorButtonHTML(fg)}
+            ${renderBWButtonHTML(fg)}
           </div>
           <div class="rtGroup">
             <label class="chk"><input type="checkbox" id="drawFillCheck" ${fillEnabled ? "checked" : ""}/> ${t("logoEditor.draw.fill")}</label>
-            ${renderColorButtonHTML(fillColor === "BLACK" || fillColor === "#000000" ? "BLACK" : "WHITE")}
-          </div>
-          <div class="rtGroup">
-            <div class="rtToolLbl">${t("logoEditor.draw.bgColor")}</div>
-            <button class="btn sm" type="button" id="drawBgToggle">${bg === "BLACK" ? ICON_BG.BLACK : ICON_BG.WHITE}</button>
+            ${renderBWButtonHTML(fillBW)}
           </div>
         </div>
       `);
       document.getElementById("drawStrokeWidth")?.addEventListener("input", (e) => {
         strokeWidth = clamp(Number(e.target.value) || 1, 1, 50);
       });
+      // Stroke color
+      const strokeBtn = document.querySelector("[data-color-btn]");
+      if (strokeBtn) {
+        strokeBtn.addEventListener("click", () => {
+          fg = strokeBtn.dataset.colorBtn === "black" ? "BLACK" : "WHITE";
+          syncDynamicIcons();
+          renderToolSettings();
+        });
+      }
       document.getElementById("drawFillCheck")?.addEventListener("change", (e) => {
         fillEnabled = e.target.checked;
         renderToolSettings();
       });
-      // Stroke color button
-      const strokeBtn = document.querySelector("[data-color-btn='fg']");
-      if (strokeBtn) {
-        strokeBtn.addEventListener("click", () => {
-          fg = fg === "BLACK" ? "WHITE" : "BLACK";
-          renderToolSettings();
-        });
-      }
-      // Fill color button
-      const fillBtns = document.querySelectorAll("[data-color-btn='fg']");
+      // Fill color
+      const fillBtns = document.querySelectorAll("[data-color-btn]");
       const fillBtn = fillBtns[fillBtns.length - 1];
       if (fillBtn) {
         fillBtn.addEventListener("click", () => {
-          fillColor = (fillColor === "BLACK" || fillColor === "#000000") ? "#ffffff" : "#000000";
+          fillColor = fillBtn.dataset.colorBtn === "black" ? "#000000" : "#ffffff";
           renderToolSettings();
         });
       }
-      // Background toggle
-      document.getElementById("drawBgToggle")?.addEventListener("click", () => {
-        bg = bg === "BLACK" ? "WHITE" : "BLACK";
-        if (fabricCanvas) { fabricCanvas.backgroundColor = bgColor(); fabricCanvas.requestRenderAll(); }
-        renderToolSettings();
-      });
     } else {
       hideSettings();
     }
@@ -409,11 +389,11 @@ export function initDrawEditor(ctx) {
           </div>
           <div class="rtGroup">
             <div class="rtToolLbl">${t("logoEditor.draw.fillColor")}</div>
-            ${renderColorButtonHTML(fillColor.mixed ? "WHITE" : fabricToBW(fillColor.value))}
+            ${renderBWButtonHTML(fillColor.mixed ? "WHITE" : fabricToBW(fillColor.value))}
           </div>
           <div class="rtGroup">
             <label class="chk"><input type="checkbox" id="drawObjTextStrokeCheck" ${hasStroke ? "checked" : ""}/> ${t("logoEditor.draw.stroke")}</label>
-            ${renderColorButtonHTML(!hasStroke ? "WHITE" : strokeCol.mixed ? "WHITE" : fabricToBW(strokeCol.value))}
+            ${renderBWButtonHTML(!hasStroke ? "WHITE" : strokeCol.mixed ? "WHITE" : fabricToBW(strokeCol.value))}
             <input id="drawObjTextStrokeW" class="inp" type="number" min="0" max="20" step="1" value="${strokeW.mixed ? '' : strokeW.value}" style="width:60px" ${!hasStroke ? "disabled" : ""} placeholder="${strokeW.mixed ? '—' : ''}"/>
           </div>
         </div>
@@ -467,7 +447,7 @@ export function initDrawEditor(ctx) {
         fabricCanvas.renderAll();
       });
       // Text color button
-      const txtColorBtn = document.querySelector("[data-color-btn='fg']");
+      const txtColorBtn = document.querySelector("[data-color-btn]");
       if (txtColorBtn) {
         txtColorBtn.addEventListener("click", () => {
           const curBW = fabricToBW(objs[0]?.fill);
@@ -478,7 +458,7 @@ export function initDrawEditor(ctx) {
         });
       }
       // Stroke color button
-      const strokeColorBtns = document.querySelectorAll("[data-color-btn='fg']");
+      const strokeColorBtns = document.querySelectorAll("[data-color-btn]");
       const strokeColorBtn = strokeColorBtns[strokeColorBtns.length - 1];
       if (strokeColorBtn) {
         strokeColorBtn.addEventListener("click", () => {
@@ -522,7 +502,7 @@ export function initDrawEditor(ctx) {
             <div class="rtGroup">
               <div class="rtToolLbl">${t("logoEditor.draw.stroke")}</div>
               <input id="drawObjStroke" class="inp" type="number" min="0" max="50" step="1" value="${strokeW.mixed ? '' : strokeW.value}" placeholder="${strokeW.mixed ? '—' : ''}"/>
-              ${renderColorButtonHTML(strokeCol.mixed ? "WHITE" : fabricToBW(strokeCol.value))}
+              ${renderBWButtonHTML(strokeCol.mixed ? "WHITE" : fabricToBW(strokeCol.value))}
             </div>
           </div>
         `);
@@ -531,7 +511,7 @@ export function initDrawEditor(ctx) {
           objs.forEach(o => o.set("strokeWidth", v));
           fabricCanvas.renderAll();
         });
-        const strokeBtn = document.querySelector("[data-color-btn='fg']");
+        const strokeBtn = document.querySelector("[data-color-btn]");
         if (strokeBtn) {
           strokeBtn.addEventListener("click", () => {
             const curBW = fabricToBW(objs[0]?.stroke);
@@ -552,11 +532,11 @@ export function initDrawEditor(ctx) {
             <div class="rtGroup">
               <div class="rtToolLbl">${t("logoEditor.draw.stroke")}</div>
               <input id="drawObjStroke" class="inp" type="number" min="0" max="50" step="1" value="${strokeW.mixed ? '' : strokeW.value}" placeholder="${strokeW.mixed ? '—' : ''}"/>
-              ${renderColorButtonHTML(strokeCol.mixed ? "WHITE" : fabricToBW(strokeCol.value))}
+              ${renderBWButtonHTML(strokeCol.mixed ? "WHITE" : fabricToBW(strokeCol.value))}
             </div>
             <div class="rtGroup">
               <label class="chk"><input type="checkbox" id="drawObjFillCheck" ${hasFill ? "checked" : ""}/> ${t("logoEditor.draw.fill")}</label>
-              ${renderColorButtonHTML(fillCol.mixed ? "WHITE" : fabricToBW(fillCol.value))}
+              ${renderBWButtonHTML(fillCol.mixed ? "WHITE" : fabricToBW(fillCol.value))}
             </div>
           </div>
         `);
@@ -566,7 +546,7 @@ export function initDrawEditor(ctx) {
           fabricCanvas.renderAll();
         });
         // Stroke color button — WSZYSTKIE obiekty
-        const strokeColorBtn = document.querySelector("[data-color-btn='fg']");
+        const strokeColorBtn = document.querySelector("[data-color-btn]");
         if (strokeColorBtn) {
           strokeColorBtn.addEventListener("click", () => {
             const curBW = fabricToBW(objs[0]?.stroke);
@@ -576,7 +556,7 @@ export function initDrawEditor(ctx) {
           });
         }
         // Fill color button — tylko filledObjs
-        const fillBtns = document.querySelectorAll("[data-color-btn='fg']");
+        const fillBtns = document.querySelectorAll("[data-color-btn]");
         const fillBtn = fillBtns[fillBtns.length - 1];
         if (fillBtn) {
           fillBtn.addEventListener("click", () => {
@@ -605,11 +585,11 @@ export function initDrawEditor(ctx) {
         <div class="rtToolRow">
           <div class="rtGroup">
             <div class="rtToolLbl">${t("logoEditor.draw.fillColor")}</div>
-            ${renderColorButtonHTML(fabricToBW(fillColor))}
+            ${renderBWButtonHTML(fabricToBW(fillColor))}
           </div>
         </div>
       `);
-      const mixedColorBtn = document.querySelector("[data-color-btn='fg']");
+      const mixedColorBtn = document.querySelector("[data-color-btn]");
       if (mixedColorBtn) {
         mixedColorBtn.addEventListener("click", () => {
           const curBW = fabricToBW(objs[0]?.fill);
@@ -2854,7 +2834,16 @@ export function initDrawEditor(ctx) {
     // Poly done
     tPolyDone?.addEventListener("click", () => finalizePolygon());
 
-    // tColor/tBg przeniesione do ustawień narzędzia — stare handlery usunięte
+    // Color / Background toolbar buttons
+    tColor?.addEventListener("click", () => {
+      fg = fg === "BLACK" ? "WHITE" : "BLACK";
+      syncDynamicIcons();
+    });
+    tBg?.addEventListener("click", () => {
+      bg = bg === "BLACK" ? "WHITE" : "BLACK";
+      syncDynamicIcons();
+      if (fabricCanvas) { fabricCanvas.backgroundColor = bgColor(); fabricCanvas.requestRenderAll(); }
+    });
 
     // Keyboard
     window.addEventListener("keydown", onKeyDown);
