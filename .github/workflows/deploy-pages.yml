@@ -40,7 +40,18 @@ jobs:
 
       - name: Version assets (cache busting)
         run: node scripts/version-assets.js
-        # ⚠️ DO NOT COMMIT BACK - this is for deploy only!
+
+      - name: Commit version hashes back to repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add *.html js/ logo-editor/ css/ translation/
+          if git diff --cached --quiet; then
+            echo "No version changes to commit"
+          else
+            git commit -m "ci: update version hashes [skip ci]"
+            git push
+          fi
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
