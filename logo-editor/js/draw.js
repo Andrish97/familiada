@@ -978,11 +978,30 @@ export function initDrawEditor(ctx) {
       return;
     }
   
-    // TEXT: kursor tekstowy (I-beam)
+    // TEXT: kursor + (tworzenie) lub I (na tekście)
     if (tool === TOOL.TEXT) {
       setCursorClass("none", false);
-      setFabricCursors("text", "text", "text");
-      hideOverlayCursor();
+      // Domyślnie crosshair (+) dla tworzenia nowego tekstu
+      fabricCanvas.defaultCursor = "crosshair";
+      fabricCanvas.hoverCursor = "text";
+      fabricCanvas.moveCursor = "text";
+
+      // Overlay: pionowa kreska widoczna na każdym tle
+      const z = fabricCanvas.getZoom();
+      const h = Math.max(20, Math.round(24 * z));
+      const w = Math.max(3, Math.round(3 * z));
+
+      cursorDot.style.width = `${w}px`;
+      cursorDot.style.height = `${h}px`;
+      cursorDot.style.borderRadius = "0";
+      cursorDot.style.border = "1px solid #000";
+      cursorDot.style.background = "#fff";
+      cursorDot.style.boxShadow = "0 0 0 1px #000, 0 0 0 2px #fff, 0 0 0 3px #000";
+      cursorDot.style.mixBlendMode = "normal";
+      cursorDot.style.opacity = "1";
+
+      showOverlayCursor();
+      if (lastPointer) placeOverlayAt(lastPointer.x, lastPointer.y);
       return;
     }
 
@@ -2014,7 +2033,7 @@ export function initDrawEditor(ctx) {
     fabricCanvas.on("mouse:move", (opt) => {
       const ev = opt.e;
       lastPointer = { x: ev.clientX, y: ev.clientY };
-      if (tool === TOOL.BRUSH || tool === TOOL.ERASER) {
+      if (tool === TOOL.BRUSH || tool === TOOL.ERASER || tool === TOOL.TEXT) {
         placeOverlayAt(ev.clientX, ev.clientY);
       } else {
         hideOverlayCursor();
