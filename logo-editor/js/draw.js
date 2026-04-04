@@ -317,7 +317,7 @@ export function initDrawEditor(ctx) {
     if (!objs.length) { hideSettings(); return; }
 
     const textObjs = objs.filter(o => o.type === "i-text" || o.type === "textbox" || o.type === "text");
-    const shapeObjs = objs.filter(o => o.type === "rect" || o.type === "ellipse" || o.type === "line");
+    const shapeObjs = objs.filter(o => o.type === "rect" || o.type === "ellipse" || o.type === "line" || o.type === "path");
     const allText = textObjs.length === objs.length;
     const allShapes = shapeObjs.length === objs.length;
 
@@ -476,61 +476,94 @@ export function initDrawEditor(ctx) {
     }
     // --- ALL SHAPES ---
     else if (allShapes) {
+      const filledObjs = shapeObjs.filter(o => o.type === "rect" || o.type === "ellipse");
+      const strokeOnlyObjs = shapeObjs.filter(o => o.type === "line" || o.type === "path");
+      const allStrokeOnly = strokeOnlyObjs.length === objs.length;
+
       const strokeWs = shapeObjs.map(o => o.strokeWidth || 1);
       const strokeCols = shapeObjs.map(o => o.stroke || "#ffffff");
-      const fills = shapeObjs.map(o => o.fill || "transparent");
 
       const strokeW = allSame(strokeWs);
       const strokeCol = allSame(strokeCols);
-      const hasFill = fills.some(f => f && f !== "transparent");
-      const fillCol = allSame(fills.filter(f => f !== "transparent"));
-      const effectiveFill = fillCol.value || "#000000";
 
-      showSettings(`
-        <div class="rtToolRow">
-          <div class="rtGroup">
-            <div class="rtToolLbl">${t("logoEditor.draw.stroke")}</div>
-            <input id="drawObjStroke" class="inp" type="number" min="0" max="50" step="1" value="${strokeW.mixed ? '' : strokeW.value}" placeholder="${strokeW.mixed ? '—' : ''}"/>
-            ${renderColorButtonHTML(strokeCol.mixed ? "WHITE" : fabricToBW(strokeCol.value))}
+      if (allStrokeOnly) {
+        // Linia / path — TYLKO obrys, bez wypełnienia
+        showSettings(`
+          <div class="rtToolRow">
+            <div class="rtGroup">
+              <div class="rtToolLbl">${t("logoEditor.draw.stroke")}</div>
+              <input id="drawObjStroke" class="inp" type="number" min="0" max="50" step="1" value="${strokeW.mixed ? '' : strokeW.value}" placeholder="${strokeW.mixed ? '—' : ''}"/>
+              ${renderColorButtonHTML(strokeCol.mixed ? "WHITE" : fabricToBW(strokeCol.value))}
+            </div>
           </div>
-          <div class="rtGroup">
-            <label class="chk"><input type="checkbox" id="drawObjFillCheck" ${hasFill ? "checked" : ""}/> ${t("logoEditor.draw.fill")}</label>
-            ${renderColorButtonHTML(fillCol.mixed ? "WHITE" : fabricToBW(fillCol.value))}
+        `);
+        document.getElementById("drawObjStroke")?.addEventListener("input", (e) => {
+          const v = clamp(Number(e.target.value) || 1, 0, 50);
+          objs.forEach(o => o.set("strokeWidth", v));
+          fabricCanvas.renderAll();
+        });
+        const strokeBtn = document.querySelector("[data-color-btn='fg']");
+        if (strokeBtn) {
+          strokeBtn.addEventListener("click", () => {
+            const curBW = fabricToBW(objs[0]?.stroke);
+            objs.forEach(o => o.set("stroke", curBW === "BLACK" ? "#ffffff" : "#000000"));
+            fabricCanvas.renderAll();
+            renderObjectSettings();
+          });
+        }
+      } else {
+        // Rect/ellipse — obrys + wypełnienie
+        const fills = filledObjs.map(o => o.fill || "transparent");
+        const hasFill = fills.some(f => f && f !== "transparent");
+        const fillCol = allSame(fills.filter(f => f !== "transparent"));
+        const effectiveFill = fillCol.value || "#000000";
+
+        showSettings(`
+          <div class="rtToolRow">
+            <div class="rtGroup">
+              <div class="rtToolLbl">${t("logoEditor.draw.stroke")}</div>
+              <input id="drawObjStroke" class="inp" type="number" min="0" max="50" step="1" value="${strokeW.mixed ? '' : strokeW.value}" placeholder="${strokeW.mixed ? '—' : ''}"/>
+              ${renderColorButtonHTML(strokeCol.mixed ? "WHITE" : fabricToBW(strokeCol.value))}
+            </div>
+            <div class="rtGroup">
+              <label class="chk"><input type="checkbox" id="drawObjFillCheck" ${hasFill ? "checked" : ""}/> ${t("logoEditor.draw.fill")}</label>
+              ${renderColorButtonHTML(fillCol.mixed ? "WHITE" : fabricToBW(fillCol.value))}
+            </div>
           </div>
-        </div>
-      `);
-      document.getElementById("drawObjStroke")?.addEventListener("input", (e) => {
-        const v = clamp(Number(e.target.value) || 1, 0, 50);
-        objs.forEach(o => o.set("strokeWidth", v));
-        fabricCanvas.renderAll();
-      });
-      // Stroke color button
-      const strokeColorBtn = document.querySelector("[data-color-btn='fg']");
-      if (strokeColorBtn) {
-        strokeColorBtn.addEventListener("click", () => {
-          const curBW = fabricToBW(objs[0]?.stroke);
-          objs.forEach(o => o.set("stroke", curBW === "BLACK" ? "#ffffff" : "#000000"));
+        `);
+        document.getElementById("drawObjStroke")?.addEventListener("input", (e) => {
+          const v = clamp(Number(e.target.value) || 1, 0, 50);
+          filledObjs.forEach(o => o.set("strokeWidth", v));
+          fabricCanvas.renderAll();
+        });
+        // Stroke color button
+        const strokeColorBtn = document.querySelector("[data-color-btn='fg']");
+        if (strokeColorBtn) {
+          strokeColorBtn.addEventListener("click", () => {
+            const curBW = fabricToBW(objs[0]?.stroke);
+            objs.forEach(o => o.set("stroke", curBW === "BLACK" ? "#ffffff" : "#000000"));
+            fabricCanvas.renderAll();
+            renderObjectSettings();
+          });
+        }
+        // Fill color button
+        const fillBtns = document.querySelectorAll("[data-color-btn='fg']");
+        const fillBtn = fillBtns[fillBtns.length - 1];
+        if (fillBtn) {
+          fillBtn.addEventListener("click", () => {
+            const curBW = fabricToBW(filledObjs[0]?.fill);
+            filledObjs.forEach(o => o.set("fill", curBW === "BLACK" ? "#ffffff" : "#000000"));
+            fabricCanvas.renderAll();
+            renderObjectSettings();
+          });
+        }
+        document.getElementById("drawObjFillCheck")?.addEventListener("change", (e) => {
+          const on = e.target.checked;
+          filledObjs.forEach(o => o.set("fill", on ? effectiveFill : "transparent"));
           fabricCanvas.renderAll();
           renderObjectSettings();
         });
       }
-      // Fill color button
-      const fillBtns = document.querySelectorAll("[data-color-btn='fg']");
-      const fillBtn = fillBtns[fillBtns.length - 1];
-      if (fillBtn) {
-        fillBtn.addEventListener("click", () => {
-          const curBW = fabricToBW(objs[0]?.fill);
-          objs.forEach(o => o.set("fill", curBW === "BLACK" ? "#ffffff" : "#000000"));
-          fabricCanvas.renderAll();
-          renderObjectSettings();
-        });
-      }
-      document.getElementById("drawObjFillCheck")?.addEventListener("change", (e) => {
-        const on = e.target.checked;
-        objs.forEach(o => o.set("fill", on ? effectiveFill : "transparent"));
-        fabricCanvas.renderAll();
-        renderObjectSettings();
-      });
     }
     // --- MIXED (text + shapes) ---
     else {
