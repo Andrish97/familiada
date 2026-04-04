@@ -160,49 +160,64 @@ export function initDrawEditor(ctx) {
 
     if (tn === "brush") {
       showSettings(`
-        <div class="ctxGroup"><span class="ctxLabel">Grubość</span><input id="cStrokeW" class="ctxInput" type="number" min="1" max="50" step="1" value="${strokeWidth}"/></div>
+        <div class="ctxGroup"><span class="ctxLabel">Grubość</span><input id="cStrokeW" class="ctxInput" type="number" min="1" max="50" step="1" value="${toolSettings[tool].stroke}"/></div>
         <div class="ctxGroup"><span class="ctxLabel">Kolor</span>${ctxColorBtn(fg)}</div>
       `);
-      document.getElementById("cStrokeW")?.addEventListener("input", e => { strokeWidth = clamp(+e.target.value||1,1,50); updateCursorVisual(); });
+      document.getElementById("cStrokeW")?.addEventListener("input", e => {
+        toolSettings[tool].stroke = clamp(+e.target.value||1,1,50);
+        updateCursorVisual();
+      });
       ctxColorBind(() => { fg = fg==="BLACK"?"WHITE":"BLACK"; syncDynamicIcons(); renderToolSettings(); });
     }
     else if (tn === "eraser") {
-      showSettings(`<div class="ctxGroup"><span class="ctxLabel">Rozmiar</span><input id="cEraser" class="ctxInput" type="number" min="1" max="50" step="1" value="${eraserSize}"/></div>`);
-      document.getElementById("cEraser")?.addEventListener("input", e => { eraserSize = clamp(+e.target.value||10,1,50); updateCursorVisual(); });
+      showSettings(`<div class="ctxGroup"><span class="ctxLabel">Rozmiar</span><input id="cEraser" class="ctxInput" type="number" min="1" max="50" step="1" value="${toolSettings[tool].size}"/></div>`);
+      document.getElementById("cEraser")?.addEventListener("input", e => {
+        toolSettings[tool].size = clamp(+e.target.value||10,1,50);
+        updateCursorVisual();
+      });
     }
     else if (tn === "line") {
       showSettings(`
-        <div class="ctxGroup"><span class="ctxLabel">Grubość</span><input id="cStrokeW" class="ctxInput" type="number" min="1" max="50" step="1" value="${strokeWidth}"/></div>
+        <div class="ctxGroup"><span class="ctxLabel">Grubość</span><input id="cStrokeW" class="ctxInput" type="number" min="1" max="50" step="1" value="${toolSettings[tool].stroke}"/></div>
         <div class="ctxGroup"><span class="ctxLabel">Kolor</span>${ctxColorBtn(fg)}</div>
       `);
-      document.getElementById("cStrokeW")?.addEventListener("input", e => { strokeWidth = clamp(+e.target.value||1,1,50); });
+      document.getElementById("cStrokeW")?.addEventListener("input", e => {
+        toolSettings[tool].stroke = clamp(+e.target.value||1,1,50);
+      });
       ctxColorBind(() => { fg = fg==="BLACK"?"WHITE":"BLACK"; syncDynamicIcons(); renderToolSettings(); });
     }
     else if (tn === "rect" || tn === "ellipse" || tn === "poly") {
       const isPolyDrawing = tn === "poly" && polyPoints.length > 0;
+      const tKey = tool.toUpperCase();
+      const ts = toolSettings[tKey] || { stroke: 6, fill: false, fillColor: "WHITE" };
+      
       let html = `
-        <div class="ctxGroup"><span class="ctxLabel">Obrys</span><input id="cStrokeW" class="ctxInput" type="number" min="0" max="50" step="1" value="${strokeWidth}"/></div>
+        <div class="ctxGroup"><span class="ctxLabel">Obrys</span><input id="cStrokeW" class="ctxInput" type="number" min="0" max="50" step="1" value="${ts.stroke}"/></div>
         <div class="ctxGroup"><span class="ctxLabel">Kolor</span>${ctxColorBtn(fg)}</div>
-        <div class="ctxGroup"><label class="ctxChk"><input type="checkbox" id="cFill" ${fillEnabled?"checked":""}/>Wypeł.</label>${ctxColorBtn(fabricToBW(fillColor))}</div>
+        <div class="ctxGroup"><label class="ctxChk"><input type="checkbox" id="cFill" ${ts.fill?"checked":""}/>Wypeł.</label>${ctxColorBtn(ts.fillColor)}</div>
       `;
       if (isPolyDrawing) {
         html += `<div class="ctxGroup"><button class="ctxBtn on" id="cPolyDone" style="color:#4fc3f7;border-color:rgba(79,195,247,.35);">✓ Zamknij</button></div>`;
       }
       showSettings(html);
-      document.getElementById("cStrokeW")?.addEventListener("input", e => { strokeWidth = clamp(+e.target.value||1,0,50); });
-      document.getElementById("cFill")?.addEventListener("change", e => { fillEnabled = e.target.checked; renderToolSettings(); });
       
-      // Oddzielne nasłuchiwanie dla każdego przycisku koloru (nie jako radio)
+      document.getElementById("cStrokeW")?.addEventListener("input", e => {
+        toolSettings[tKey].stroke = clamp(+e.target.value||1,0,50);
+      });
+      document.getElementById("cFill")?.addEventListener("change", e => {
+        toolSettings[tKey].fill = e.target.checked;
+        renderToolSettings();
+      });
+      
+      // Obsługa kolorów (niezależnie)
       const cbs = toolCtx?.querySelectorAll("[data-color-toggle]") || [];
-      // Pierwszy przycisk to kolor obrysu (fg)
       if (cbs[0]) cbs[0].addEventListener("click", () => {
         fg = fg === "BLACK" ? "WHITE" : "BLACK";
         syncDynamicIcons();
         renderToolSettings();
       });
-      // Drugi przycisk to kolor wypełnienia (fillColor)
       if (cbs[1]) cbs[1].addEventListener("click", () => {
-        fillColor = fillColor === "#000000" ? "#ffffff" : "#000000";
+        toolSettings[tKey].fillColor = ts.fillColor === "BLACK" ? "WHITE" : "BLACK";
         renderToolSettings();
       });
       
@@ -945,9 +960,17 @@ export function initDrawEditor(ctx) {
   // Styles
   // =========================================================
   function makeStrokeFillStyle() {
-    const w = getStroke();
+    const tKey = tool.toUpperCase();
+    const ts = toolSettings[tKey] || {};
+    
+    const w = ts.stroke ?? strokeWidth;
     const strokeHex = fgColor();
-    const fillHex = getFillEnabled() ? getFillColorHex() : "rgba(0,0,0,0)";
+    
+    // Bezpieczne odczytywanie ustawień wypełnienia
+    const fillEnabled = !!ts.fill;
+    const fillColorHex = ts.fillColor === "BLACK" ? "#000" : "#fff";
+    const fillHex = fillEnabled ? fillColorHex : "rgba(0,0,0,0)";
+    
     return {
       stroke: strokeHex,
       strokeWidth: w,
