@@ -207,7 +207,7 @@ export function initDrawEditor(ctx) {
       
       let html = `
         <div class="ctxGroup"><span class="ctxLabel">Obrys</span><input id="cStrokeW" class="ctxInput" type="number" min="0" max="50" step="1" value="${shapeOpts.stroke}"/></div>
-        <div class="ctxGroup"><span class="ctxLabel">Kolor</span>${ctxColorBtn(fg)}</div>
+        <div class="ctxGroup"><span class="ctxLabel">Kolor</span>${ctxColorBtn(shapeOpts.fg)}</div>
         <div class="ctxGroup"><label class="ctxChk"><input type="checkbox" id="cFill" ${shapeOpts.fill?"checked":""}/>Wypeł.</label>${ctxColorBtn(shapeOpts.fillColor)}</div>
       `;
       if (isPolyDrawing) {
@@ -249,7 +249,11 @@ export function initDrawEditor(ctx) {
         <div class="ctxGroup"><span class="ctxLabel">Linia</span><input id="cLH" class="ctxInput" type="number" min="0.6" max="3.0" step="0.05" value="${textLineHeight}"/></div>
         <div class="ctxGroup"><span class="ctxLabel">Odst.</span><input id="cSp" class="ctxInput" type="number" min="0" max="20" step="0.5" value="${textLetterSpacing}"/></div>
         <div class="ctxGroup"><button class="ctxBtn" id="cB" ${textBold?"on":""}>B</button><button class="ctxBtn" id="cI" ${textItalic?"on":""}>I</button><button class="ctxBtn" id="cU" ${textUnderline?"on":""}>U</button></div>
-        <div class="ctxGroup"><button class="ctxBtn" id="cAL">${alignIcon(textAlign)}</button></div>
+        <div class="ctxGroup">
+          <button class="ctxBtn ${textAlign==='left'?'on':''}" id="cAlignL">⇤</button>
+          <button class="ctxBtn ${textAlign==='center'?'on':''}" id="cAlignC">⇆</button>
+          <button class="ctxBtn ${textAlign==='right'?'on':''}" id="cAlignR">⇥</button>
+        </div>
         <div class="ctxGroup"><span class="ctxLabel">Kolor</span>${ctxColorBtn(ts.fg)}</div>
       `);
       document.getElementById("cFont")?.addEventListener("click", () => { openDrawFontPicker(v=>{textFont=v;renderToolSettings();},textFont); });
@@ -277,11 +281,11 @@ export function initDrawEditor(ctx) {
 
   /** Ustawienia zaznaczonego obiektu TEKSTU (font, rozmiar, B/I/U, align) */
   function renderTextObjectSettings(obj) {
-    if (!obj) { hideSettings(); return; }
-    
+    if (!obj || !isTextObj(obj)) { hideSettings(); return; }
+
     const objFont = obj.fontFamily || "";
     const fontLabel = DRAW_FONTS.find(f => f.value === objFont)?.label || "Font";
-    
+
     // Pobierz wartości z obiektu
     const objSize = Math.round(obj.fontSize || 40);
     const objLH = obj.lineHeight || 1;
@@ -298,7 +302,11 @@ export function initDrawEditor(ctx) {
       <div class="ctxGroup"><span class="ctxLabel">Linia</span><input id="cTLH" class="ctxInput" type="number" min="0.6" max="3.0" step="0.05" value="${objLH}"/></div>
       <div class="ctxGroup"><span class="ctxLabel">Odst.</span><input id="cTSp" class="ctxInput" type="number" min="0" max="20" step="0.5" value="${objSpacing}"/></div>
       <div class="ctxGroup"><button class="ctxBtn" id="cTB" ${objBold?"on":""}>B</button><button class="ctxBtn" id="cTI" ${objItalic?"on":""}>I</button><button class="ctxBtn" id="cTU" ${objUnderline?"on":""}>U</button></div>
-      <div class="ctxGroup"><button class="ctxBtn" id="cTAlign">${objAlign === "left" ? "⇤" : objAlign === "center" ? "⇆" : "⇥"}</button></div>
+      <div class="ctxGroup">
+        <button class="ctxBtn ${objAlign==='left'?'on':''}" id="cAlignL">⇤</button>
+        <button class="ctxBtn ${objAlign==='center'?'on':''}" id="cAlignC">⇆</button>
+        <button class="ctxBtn ${objAlign==='right'?'on':''}" id="cAlignR">⇥</button>
+      </div>
       <div class="ctxGroup"><span class="ctxLabel">Kolor</span>${ctxColorBtn(fabricToBW(objFill))}</div>
     `);
 
@@ -337,11 +345,20 @@ export function initDrawEditor(ctx) {
         e.target.classList.toggle("on", !objUnderline);
         fabricCanvas.renderAll();
     });
-    document.getElementById("cTAlign")?.addEventListener("click", e => {
-        const next = objAlign === "left" ? "center" : objAlign === "center" ? "right" : "left";
-        obj.set("textAlign", next);
-        e.target.textContent = next === "left" ? "⇤" : next === "center" ? "⇆" : "⇥";
+    document.getElementById("cAlignL")?.addEventListener("click", () => {
+        obj.set("textAlign", "left");
         fabricCanvas.renderAll();
+        renderTextObjectSettings(obj);
+    });
+    document.getElementById("cAlignC")?.addEventListener("click", () => {
+        obj.set("textAlign", "center");
+        fabricCanvas.renderAll();
+        renderTextObjectSettings(obj);
+    });
+    document.getElementById("cAlignR")?.addEventListener("click", () => {
+        obj.set("textAlign", "right");
+        fabricCanvas.renderAll();
+        renderTextObjectSettings(obj);
     });
 
     const objTextBtns = toolCtx?.querySelectorAll("[data-color-toggle]") || [];
@@ -772,7 +789,8 @@ export function initDrawEditor(ctx) {
     [TOOL.RECT]:    { stroke: 6, fill: false, fillColor: "WHITE", fg: "WHITE" },
     [TOOL.ELLIPSE]: { stroke: 6, fill: false, fillColor: "WHITE", fg: "WHITE" },
     [TOOL.POLY]:    { stroke: 6, fill: false, fillColor: "WHITE", fg: "WHITE" },
-    [TOOL.TEXT]:    { fontSize: 40, fg: "WHITE" }, // Text needs its own color
+    [TOOL.TEXT]:    { fontSize: 40, fg: "WHITE" },
+    [TOOL.ERASER]:  { size: 10 },
   };
 
   function getStroke() {
@@ -1362,8 +1380,10 @@ export function initDrawEditor(ctx) {
 
     // SELECT tool:
     if (tool === TOOL.SELECT) {
-      // Jeśli zaznaczony tekst -> pokaż ustawienia tekstu
+      // TEKST: w Select pokazujemy TYLKO ustawienia obiektu (przecięcie)
+      // NIE pokazujemy ustawień edycji tekstu - to jest tylko do przesuwania/skalowania
       if (isTextObj(obj)) {
+        // Dla tekstu: pokaż tylko kolor wypełnienia
         renderTextObjectSettings(obj);
         return;
       }
