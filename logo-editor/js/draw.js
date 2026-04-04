@@ -160,14 +160,19 @@ export function initDrawEditor(ctx) {
 
     if (tn === "brush") {
       showSettings(`
-        <div class="ctxGroup"><span class="ctxLabel">Grubość</span><input id="cStrokeW" class="ctxInput" type="number" min="1" max="50" step="1" value="${toolSettings[tool].stroke}"/></div>
-        <div class="ctxGroup"><span class="ctxLabel">Kolor</span>${ctxColorBtn(fg)}</div>
+        <div class="ctxGroup"><span class="ctxLabel">Grubość</span><input id="cStrokeW" class="ctxInput" type="number" min="1" max="50" step="1" value="${toolSettings[TOOL.BRUSH].stroke}"/></div>
+        <div class="ctxGroup"><span class="ctxLabel">Kolor</span>${ctxColorBtn(toolSettings[TOOL.BRUSH].fg)}</div>
       `);
       document.getElementById("cStrokeW")?.addEventListener("input", e => {
-        toolSettings[tool].stroke = clamp(+e.target.value||1,1,50);
+        toolSettings[TOOL.BRUSH].stroke = clamp(+e.target.value||1,1,50);
         updateCursorVisual();
       });
-      ctxColorBind(() => { fg = fg==="BLACK"?"WHITE":"BLACK"; syncDynamicIcons(); renderToolSettings(); });
+      const cbs = toolCtx?.querySelectorAll("[data-color-toggle]") || [];
+      if (cbs[0]) cbs[0].addEventListener("click", () => {
+        toolSettings[TOOL.BRUSH].fg = toolSettings[TOOL.BRUSH].fg === "BLACK" ? "WHITE" : "BLACK";
+        syncDynamicIcons();
+        renderToolSettings();
+      });
     }
     else if (tn === "eraser") {
       showSettings(`<div class="ctxGroup"><span class="ctxLabel">Rozmiar</span><input id="cEraser" class="ctxInput" type="number" min="1" max="50" step="1" value="${toolSettings[tool].size}"/></div>`);
@@ -178,13 +183,18 @@ export function initDrawEditor(ctx) {
     }
     else if (tn === "line") {
       showSettings(`
-        <div class="ctxGroup"><span class="ctxLabel">Grubość</span><input id="cStrokeW" class="ctxInput" type="number" min="1" max="50" step="1" value="${toolSettings[tool].stroke}"/></div>
-        <div class="ctxGroup"><span class="ctxLabel">Kolor</span>${ctxColorBtn(fg)}</div>
+        <div class="ctxGroup"><span class="ctxLabel">Grubość</span><input id="cStrokeW" class="ctxInput" type="number" min="1" max="50" step="1" value="${toolSettings[TOOL.LINE].stroke}"/></div>
+        <div class="ctxGroup"><span class="ctxLabel">Kolor</span>${ctxColorBtn(toolSettings[TOOL.LINE].fg)}</div>
       `);
       document.getElementById("cStrokeW")?.addEventListener("input", e => {
-        toolSettings[tool].stroke = clamp(+e.target.value||1,1,50);
+        toolSettings[TOOL.LINE].stroke = clamp(+e.target.value||1,1,50);
       });
-      ctxColorBind(() => { fg = fg==="BLACK"?"WHITE":"BLACK"; syncDynamicIcons(); renderToolSettings(); });
+      const cbs = toolCtx?.querySelectorAll("[data-color-toggle]") || [];
+      if (cbs[0]) cbs[0].addEventListener("click", () => {
+        toolSettings[TOOL.LINE].fg = toolSettings[TOOL.LINE].fg === "BLACK" ? "WHITE" : "BLACK";
+        syncDynamicIcons();
+        renderToolSettings();
+      });
     }
     else if (tn === "rect" || tn === "ellipse" || tn === "poly") {
       const isPolyDrawing = tn === "poly" && polyPoints.length > 0;
@@ -213,10 +223,13 @@ export function initDrawEditor(ctx) {
         renderToolSettings();
       });
       
-      // Obsługa kolorów (niezależnie)
+      // Obsługa kolorów (niezależnie dla każdego narzędzia)
       const cbs = toolCtx?.querySelectorAll("[data-color-toggle]") || [];
+      const ts = toolSettings[tKey]; // Pobierz referencję do ustawień TEGO narzędzia
+      
+      // Pierwszy przycisk to kolor obrysu (fg)
       if (cbs[0]) cbs[0].addEventListener("click", () => {
-        fg = fg === "BLACK" ? "WHITE" : "BLACK";
+        ts.fg = ts.fg === "BLACK" ? "WHITE" : "BLACK";
         syncDynamicIcons();
         renderToolSettings();
       });
@@ -228,6 +241,7 @@ export function initDrawEditor(ctx) {
       document.getElementById("cPolyDone")?.addEventListener("click", () => finalizePolygon());
     }
     else if (tn === "text") {
+      const ts = toolSettings[TOOL.TEXT];
       const fntLbl = DRAW_FONTS.find(f=>f.value===textFont)?.label || "Font";
       const alignIcon = (al) => al === "left" ? "⇤" : al === "right" ? "⇥" : "⇆";
       showSettings(`
@@ -237,7 +251,7 @@ export function initDrawEditor(ctx) {
         <div class="ctxGroup"><span class="ctxLabel">Odst.</span><input id="cSp" class="ctxInput" type="number" min="0" max="20" step="0.5" value="${textLetterSpacing}"/></div>
         <div class="ctxGroup"><button class="ctxBtn" id="cB" ${textBold?"on":""}>B</button><button class="ctxBtn" id="cI" ${textItalic?"on":""}>I</button><button class="ctxBtn" id="cU" ${textUnderline?"on":""}>U</button></div>
         <div class="ctxGroup"><button class="ctxBtn" id="cAL">${alignIcon(textAlign)}</button></div>
-        <div class="ctxGroup"><span class="ctxLabel">Kolor</span>${ctxColorBtn(fg)}</div>
+        <div class="ctxGroup"><span class="ctxLabel">Kolor</span>${ctxColorBtn(ts.fg)}</div>
       `);
       document.getElementById("cFont")?.addEventListener("click", () => { openDrawFontPicker(v=>{textFont=v;renderToolSettings();},textFont); });
       document.getElementById("cSz")?.addEventListener("input", e => { textFontSize = clamp(+e.target.value||130,10,220); });
@@ -250,7 +264,12 @@ export function initDrawEditor(ctx) {
         textAlign = textAlign==="left"?"center":textAlign==="center"?"right":"left";
         e.target.textContent = alignIcon(textAlign);
       });
-      ctxColorBind(() => { fg = fg==="BLACK"?"WHITE":"BLACK"; syncDynamicIcons(); renderToolSettings(); });
+      const cbs = toolCtx?.querySelectorAll("[data-color-toggle]") || [];
+      if (cbs[0]) cbs[0].addEventListener("click", () => {
+        toolSettings[TOOL.TEXT].fg = toolSettings[TOOL.TEXT].fg === "BLACK" ? "WHITE" : "BLACK";
+        syncDynamicIcons();
+        renderToolSettings();
+      });
     }
     else {
       hideSettings();
@@ -613,11 +632,19 @@ export function initDrawEditor(ctx) {
   let baseTool = TOOL.SELECT;
   let tool = TOOL.SELECT;
 
-  // Kolor domyślny (stroke) — globalny przełącznik ⬛️/⬜️
-  let fg = "WHITE"; // WHITE | BLACK
+  // Kolor domyślny (stroke) — USUNIĘTO na rzecz individual tool settings
+  // let fg = "WHITE"; 
 
-  function fgColor() { return fg === "BLACK" ? "#000" : "#fff"; }
-  function fgLabel() { return fg === "BLACK" ? "⬛️" : "⬜️"; }
+  function fgColor() { 
+    // Pobierz kolor z ustawień aktualnego narzędzia
+    const tKey = tool.toUpperCase();
+    const ts = toolSettings[tKey] || {};
+    return (ts.fg || "WHITE") === "BLACK" ? "#000" : "#fff"; 
+  }
+  function fgLabel() { 
+    const c = fgColor();
+    return c === "#000" ? "⬛️" : "⬜️"; 
+  }
 
   // Tło sceny — 🖼️
   let bg = "BLACK"; // BLACK | WHITE
@@ -741,11 +768,12 @@ export function initDrawEditor(ctx) {
   // - line: stroke
   // - rect/ellipse/poly: stroke + fill bool + fillColor (WHITE/BLACK)
   const toolSettings = {
-    [TOOL.BRUSH]:   { stroke: 6 },
-    [TOOL.LINE]:    { stroke: 6 },
-    [TOOL.RECT]:    { stroke: 6, fill: false, fillColor: "WHITE" },
-    [TOOL.ELLIPSE]: { stroke: 6, fill: false, fillColor: "WHITE" },
-    [TOOL.POLY]:    { stroke: 6, fill: false, fillColor: "WHITE" },
+    [TOOL.BRUSH]:   { stroke: 6, fg: "WHITE" },
+    [TOOL.LINE]:    { stroke: 6, fg: "WHITE" },
+    [TOOL.RECT]:    { stroke: 6, fill: false, fillColor: "WHITE", fg: "WHITE" },
+    [TOOL.ELLIPSE]: { stroke: 6, fill: false, fillColor: "WHITE", fg: "WHITE" },
+    [TOOL.POLY]:    { stroke: 6, fill: false, fillColor: "WHITE", fg: "WHITE" },
+    [TOOL.TEXT]:    { fontSize: 40, fg: "WHITE" }, // Text needs its own color
   };
 
   function getStroke() {
