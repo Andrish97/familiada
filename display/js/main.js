@@ -1,11 +1,11 @@
 // displayjs/main.js
-import { initFullscreenButton } from "./fullscreen.js?v=v2026-04-04T19483";
-import { startPresence } from "./presence.js?v=v2026-04-04T19483";
-import { createQRController } from "./qr.js?v=v2026-04-04T19483";
-import { createScene } from "./scene.js?v=v2026-04-04T19483";
-import { createCommandHandler } from "./commands.js?v=v2026-04-04T19483";
-import { initI18n } from "../../translation/translation.js?v=v2026-04-04T19483";
-import { startKeepAlive } from "../../js/core/keep-alive.js?v=v2026-04-04T19483";
+import { initFullscreenButton } from "./fullscreen.js?v=v2026-04-04T19514";
+import { startPresence } from "./presence.js?v=v2026-04-04T19514";
+import { createQRController } from "./qr.js?v=v2026-04-04T19514";
+import { createScene } from "./scene.js?v=v2026-04-04T19514";
+import { createCommandHandler } from "./commands.js?v=v2026-04-04T19514";
+import { initI18n } from "../../translation/translation.js?v=v2026-04-04T19514";
+import { startKeepAlive } from "../../js/core/keep-alive.js?v=v2026-04-04T19514";
 startKeepAlive();
 
 const $ = (id) => document.getElementById(id);
