@@ -39,6 +39,8 @@ jobs:
           node-version: "20"
 
       - name: Version assets (cache busting)
+        env:
+          VERSION_HASH: v${{ github.sha }}
         run: node scripts/version-assets.js
 
       - name: Setup Pages

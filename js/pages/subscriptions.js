@@ -1,10 +1,10 @@
-import { sb, SUPABASE_URL } from "../core/supabase.js?v=v2026-04-04T17104";
-import { requireAuth } from "../core/auth.js?v=v2026-04-04T17104";
-import { isGuestUser, showGuestBlockedOverlay } from "../core/guest-mode.js?v=v2026-04-04T17104";
-import { alertModal, confirmModal } from "../core/modal.js?v=v2026-04-04T17104";
-import { initUiSelect } from "../core/ui-select.js?v=v2026-04-04T17104";
-import { getUiLang, initI18n, t } from "../../translation/translation.js?v=v2026-04-04T17104";
-import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-04-04T17104";
+import { sb, SUPABASE_URL } from "../core/supabase.js?v=vtest123";
+import { requireAuth } from "../core/auth.js?v=vtest123";
+import { isGuestUser, showGuestBlockedOverlay } from "../core/guest-mode.js?v=vtest123";
+import { alertModal, confirmModal } from "../core/modal.js?v=vtest123";
+import { initUiSelect } from "../core/ui-select.js?v=vtest123";
+import { getUiLang, initI18n, t } from "../../translation/translation.js?v=vtest123";
+import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=vtest123";
 import "../core/contact-modal.js";
 
 initI18n({ withSwitcher: true });

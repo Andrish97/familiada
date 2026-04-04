@@ -13,8 +13,8 @@ const path = require('path');
 
 const ROOT = process.cwd();
 
-// Globalny version z timestamp - UŻYWANY WE WSZYSTKICH PLIKACH
-const version = `v${new Date().toISOString().replace(/[:.]/g, '').slice(0, -5)}`;
+// Globalny version - użyj SHA z env albo timestamp
+const version = process.env.VERSION_HASH || `v${new Date().toISOString().replace(/[:.]/g, '').slice(0, -5)}`;
 console.log(`\n🔖 Version: ${version}\n`);
 
 // ─── 1. Update ALL HTML files ───────────────────────────────────────────────
