@@ -15,7 +15,6 @@ const ROOT = process.cwd();
 
 // Globalny version - użyj SHA z env albo timestamp
 const version = process.env.VERSION_HASH || `v${new Date().toISOString().replace(/[:.]/g, '').slice(0, -5)}`;
-console.log(`\n🔖 Version: ${version}\n`);
 
 // ─── 1. Update ALL HTML files ───────────────────────────────────────────────
 
@@ -34,7 +33,6 @@ let htmlUpdated = 0;
 for (const file of htmlFiles) {
   const htmlPath = path.join(ROOT, file);
   if (!fs.existsSync(htmlPath)) {
-    console.log(`  ⚠ ${file} (nie znaleziono, pomijam)`);
     continue;
   }
 
@@ -56,13 +54,9 @@ for (const file of htmlFiles) {
 
   if (content !== originalContent) {
     fs.writeFileSync(htmlPath, content, 'utf8');
-    console.log(`  ✓ ${file}`);
     htmlUpdated++;
-  } else {
-    console.log(`  ○ ${file} (bez zmian)`);
   }
 }
-console.log(`\n  📝 Updated ${htmlUpdated} HTML files\n`);
 
 // ─── 2. Update ALL JS files (import ... from "...js?v=xxx") ─────────────────
 
@@ -72,7 +66,6 @@ let jsUpdated = 0;
 for (const jsDir of jsDirs) {
   const dirPath = path.join(ROOT, jsDir);
   if (!fs.existsSync(dirPath)) {
-    console.log(`  ⚠ ${jsDir} (nie znaleziono, pomijam)`);
     continue;
   }
 
@@ -109,19 +102,16 @@ for (const jsDir of jsDirs) {
 
       if (changed && content !== originalContent) {
         fs.writeFileSync(full, content, 'utf8');
-        console.log(`  ✓ ${full}`);
         jsUpdated++;
       }
     }
   }
   walk(dirPath);
 }
-console.log(`\n  📝 Updated ${jsUpdated} JS files\n`);
 
 // ─── 3. Write version.txt ───────────────────────────────────────────────────
 
 fs.writeFileSync(path.join(ROOT, 'version.txt'), version, 'utf8');
-console.log(`\n  ✓ version.txt → ${version}`);
 
 // ─── 4. Update sw.js ────────────────────────────────────────────────────────
 
@@ -131,7 +121,4 @@ if (fs.existsSync(swPath)) {
   swContent = swContent.replace(/\/\/ Version: .*/, '').trim();
   swContent = `// Version: ${version}\n${swContent}`;
   fs.writeFileSync(swPath, swContent, 'utf8');
-  console.log(`  ✓ sw.js updated`);
 }
-
-console.log('\n✅ Version assets complete!\n');

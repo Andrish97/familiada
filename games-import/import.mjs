@@ -37,8 +37,6 @@ const files = fs.readdirSync(__dirname)
   .filter(f => /^gra-\d+\.json$/.test(f))
   .sort();
 
-console.log(`Znaleziono ${files.length} plików.`);
-
 const games = [];
 for (const file of files) {
   const raw = fs.readFileSync(path.join(__dirname, file), "utf-8");
@@ -65,15 +63,11 @@ for (const file of files) {
   });
 }
 
-console.log(`Poprawnych gier: ${games.length}`);
-
 if (DRY_RUN) {
-  games.forEach((g, i) => console.log(`[${i + 1}] ${g.title} (${g.lang}) — ${g.payload.questions.length} pytań`));
   process.exit(0);
 }
 
 const toImport = games.slice(SKIP);
-console.log(`Importuję ${toImport.length} gier (pomijam ${SKIP})...\n`);
 
 const BATCH = 10;
 let imported = 0;
@@ -103,8 +97,5 @@ for (let i = 0; i < toImport.length; i += BATCH) {
 
   for (const r of (data.results || [])) {
     const status = r.ok ? (r.existing ? "już istnieje" : "zaimportowano") : `BŁĄD: ${r.error}`;
-    console.log(`  [${SKIP + i + r.index + 1}] ${r.title || "?"} — ${status}`);
   }
 }
-
-console.log(`\nGotowe! Zaimportowano: ${imported}, błędów: ${failed}`);

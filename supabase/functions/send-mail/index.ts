@@ -417,12 +417,6 @@ serve(async (req) => {
 
   try {
 
-    console.log("[send-mail] request:start", {
-      requestId,
-      method: req.method,
-      contentType: req.headers.get("content-type") || "",
-      hasAuth: !!req.headers.get("authorization"),
-    });
     await writeLog({
       requestId,
       event: "request_start",
@@ -451,7 +445,6 @@ serve(async (req) => {
     }
     const uid = userData.user.id;
     actorUserId = uid;
-    console.log("[send-mail] auth:ok", { uid });
 
     // ---- BODY ----
     const raw = await req.text();
@@ -492,16 +485,6 @@ serve(async (req) => {
       });
       return json({ ok: false, error: "Missing fields (to, subject, html)" }, 400);
     }
-    console.log("[send-mail] body:parsed", {
-      mode,
-      itemsIn: items.length,
-      preview: items.slice(0, 3).map((x) => ({
-        to: scrubEmail(x.to),
-        subjectLen: x.subject.length,
-        htmlLen: x.html.length,
-        hasMeta: !!x.meta,
-      })),
-    });
 
 
     // ---- SETTINGS (DB) ----
@@ -541,21 +524,6 @@ serve(async (req) => {
       });
     }
 
-    console.log("[send-mail] filter:email_notifications", {
-      in: sliced.length,
-      out: finalItems.length,
-      skipped: f.skipped,
-    });
-
-    console.log("[send-mail] settings", {
-      queue_enabled: settings.queue_enabled,
-      provider_order_raw: settings.provider_order,
-      order,
-      delayMs,
-      batchMax,
-    });
-
-    console.log("[send-mail] batch:slice", { requested: items.length, used: finalItems.length });
     await writeLog({
       requestId,
       event: "request_parsed",
@@ -601,13 +569,6 @@ serve(async (req) => {
         meta: it.meta || {},
       }));
 
-      console.log("[send-mail] mode:queue", {
-        count: rows.length,
-        not_before: rows[0]?.not_before,
-        provider_order: rows[0]?.provider_order,
-      });
-
-
       const { error } = await sbAdmin.from("mail_queue").insert(rows);
       if (error) {
         await writeLog({
@@ -622,7 +583,6 @@ serve(async (req) => {
         return json({ ok: false, error: "queue_insert_failed" }, 500);
       }
 
-      console.log("[send-mail] queue:insert_ok", { count: rows.length });
       await writeLog({
         requestId,
         event: "queue_inserted",
@@ -639,15 +599,12 @@ serve(async (req) => {
     }
 
     // ---- SEND NOW MODE ----
-    console.log("[send-mail] mode:send_now", { count: finalItems.length, delayMs, order });
     const results: any[] = [];
     for (let i = 0; i < finalItems.length; i++) {
       const it = finalItems[i];
-      console.log("[send-mail] send:item_start", { i: i + 1, n: finalItems.length, to: scrubEmail(it.to) });
       try {
         const out = await sendWithFallbacks(it, order);
         results.push({ to: it.to, ok: true, provider: out.provider });
-        console.log("[send-mail] send:item_ok", { to: scrubEmail(it.to), provider: out.provider });
         await writeLog({
           requestId,
           event: "send_item_ok",
@@ -674,7 +631,6 @@ serve(async (req) => {
     }
 
     const failed = results.filter((r) => !r.ok).length;
-    console.log("[send-mail] request:done", { mode, total: results.length, failed });
     await writeLog({
       requestId,
       level: failed ? "warn" : "info",

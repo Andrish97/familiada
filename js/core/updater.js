@@ -54,12 +54,8 @@ async function checkForUpdates() {
         location.pathname.includes('buzzer.html');
 
       if (isSensitivePage) {
-        console.info('[updater] Nowa wersja, ale nie przeładowuję na stronie gry');
         return;
       }
-
-      console.info(`[updater] Wykryto nową wersję: ${serverVersion} (obecna: ${currentVersion})`);
-      console.info('[updater] Przeładowanie za 3 sekundy...');
 
       // Zaznacz że przeładowano - TYLKO RAZ na sesję
       hasReloadedThisSession = true;

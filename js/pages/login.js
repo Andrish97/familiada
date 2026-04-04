@@ -148,7 +148,6 @@ function loadCaptchaApi() {
     const existingLang = existing?.dataset?.captchaLang || "";
 
     if (window.hcaptcha && existing && existingLang === captchaLang) {
-      console.debug("[captcha] hcaptcha already loaded", { lang: captchaLang });
       return Promise.resolve(window.hcaptcha);
     }
     if (existing && existingLang && existingLang !== captchaLang) {
@@ -172,14 +171,12 @@ function loadCaptchaApi() {
           resolve(window.hcaptcha);
           return;
         }
-        console.debug("[captcha] reusing hcaptcha script");
         reuse.addEventListener("load", () => resolve(window.hcaptcha || null), { once: true });
         reuse.addEventListener("error", () => reject(new Error("hCaptcha failed to load")), { once: true });
         return;
       }
       const script = document.createElement("script");
       script.src = `https://js.hcaptcha.com/1/api.js?render=explicit&onload=${encodeURIComponent(onloadCallback)}&hl=${encodeURIComponent(captchaLang)}`;
-      console.debug("[captcha] loading hcaptcha", { src: script.src });
       script.async = true;
       script.defer = true;
       script.dataset.captcha = "hcaptcha";
@@ -201,14 +198,12 @@ function loadCaptchaApi() {
   }
 
   if (window.turnstile) {
-    console.debug("[captcha] turnstile already loaded");
     return Promise.resolve(window.turnstile);
   }
   if (captchaLoadPromise) return captchaLoadPromise;
   captchaLoadPromise = new Promise((resolve, reject) => {
     const existing = document.querySelector('script[data-captcha="turnstile"]');
     if (existing) {
-      console.debug("[captcha] reusing turnstile script");
       existing.addEventListener("load", () => resolve(window.turnstile || null), { once: true });
       existing.addEventListener("error", () => reject(new Error("Turnstile failed to load")), { once: true });
       return;
@@ -216,7 +211,6 @@ function loadCaptchaApi() {
 
     const script = document.createElement("script");
     script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
-    console.debug("[captcha] loading turnstile", { src: script.src });
     script.async = true;
     script.defer = true;
     script.dataset.captcha = "turnstile";
@@ -785,9 +779,7 @@ function applyMode() {
 
 document.addEventListener("DOMContentLoaded", async () => {
   try {
-    console.debug("[i18n] init start");
     await initI18n({ withSwitcher: true });
-    console.debug("[i18n] init done", { lang: getUiLang() });
   } catch (e) {
     console.error("[i18n] init failed", e);
     // Fallback to at least replace data-i18n keys.

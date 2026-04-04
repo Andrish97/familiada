@@ -299,7 +299,6 @@ async function sendWithFallbacks(to: string, subject: string, html: string, orde
 
 serve(async (req) => {
   const requestId = crypto.randomUUID();
-  console.log("[mail-worker] request:start", { requestId, method: req.method, url: req.url });
   if (req.method !== "POST" && req.method !== "GET") return json({ ok: false, error: "Method not allowed" }, 405);
   await writeLog({
     requestId,
@@ -338,7 +337,6 @@ serve(async (req) => {
   const pickPayload = selectedIds.length
     ? { p_ids: selectedIds, p_limit: limit }
     : { p_limit: limit };
-  console.log("[mail-worker] settings", { providerOrder: order, delayMs, limit, selectedIds: selectedIds.length });
   await writeLog({
     requestId,
     event: "request_settings_loaded",
@@ -360,7 +358,6 @@ serve(async (req) => {
     });
     return json({ ok: false, error: "pick_failed" }, 500);
   }
-  console.log("[mail-worker] queue:picked", { count: (rows || []).length });
   await writeLog({
     requestId,
     event: "queue_picked",
@@ -383,13 +380,11 @@ serve(async (req) => {
   for (let i = 0; i < (rows || []).length; i++) {
     const r = rows[i];
     try {
-      console.log("[mail-worker] queue:item_start", { id: r.id, to: scrubEmail(r.to_email), subjectLen: String(r.subject || "").length });
 
       // suppression check
       const skipReason = suppressedMap.get(normEmail(r.to_email));
       if (skipReason) {
         await sbAdmin.rpc("mail_queue_mark", { p_id: r.id, p_ok: true, p_provider: skipReason, p_error: "" });
-        console.log("[mail-worker] queue:item_skipped", { id: r.id, to: scrubEmail(r.to_email), reason: skipReason });
         await writeLog({
           requestId,
           event: "email_skipped",
@@ -437,7 +432,6 @@ serve(async (req) => {
           meta: { provider },
         });
       }
-      console.log("[mail-worker] queue:item_sent", { id: r.id, to: scrubEmail(r.to_email), provider });
       await writeLog({
         requestId,
         event: "queue_item_sent",
@@ -478,7 +472,6 @@ serve(async (req) => {
     if (delayMs && i < (rows || []).length - 1) await sleep(delayMs);
   }
 
-  console.log("[mail-worker] request:done", { picked: (rows || []).length, sent, failed, skipped });
   await writeLog({
     requestId,
     level: failed ? "warn" : "info",

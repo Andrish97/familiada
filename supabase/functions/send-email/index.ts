@@ -68,7 +68,6 @@ async function loadProviderOrder(): Promise<Provider[]> {
     if (error) throw error;
 
     const order = parseProviderOrder(data?.provider_order || "");
-    console.log("[send-email] provider_order from DB:", order);
 
     return order;
   } catch (e) {
@@ -201,22 +200,15 @@ async function sendWithFallbacks(
 ) {
   const order = await loadProviderOrder();
 
-  console.log("[send-email] send start", {
-    to: scrubEmail(to),
-    order,
-  });
-
   const errs: string[] = [];
 
   for (const p of order) {
     try {
-      console.log("[send-email] try provider:", p);
 
       if (p === "sendgrid") await sendViaSendgrid(to, subject, html);
       else if (p === "brevo") await sendViaBrevo(to, subject, html);
       else await sendViaMailgun(to, subject, html);
 
-      console.log("[send-email] success via", p);
       if (opts?.requestId) {
         await writeLog({
           requestId: opts.requestId,
@@ -394,7 +386,6 @@ async function sendEmail(
 
 serve(async (req) => {
   const requestId = crypto.randomUUID();
-  console.log("[send-email] request:start", { requestId, method: req.method, contentType: req.headers.get("content-type") || "" });
   await writeLog({
     requestId,
     event: "request_start",
@@ -472,18 +463,9 @@ serve(async (req) => {
         redirectTo: payload.email_data.redirect_to || "",
       },
     });
-    console.log("[send-email] payload:verified", { actionType: payload.email_data.email_action_type, userEmail: scrubEmail(payload.user.email || ""), userEmailNew: scrubEmail(payload.user.email_new || ""), redirectTo: payload.email_data.redirect_to || "" });
     const baseOrigin = getBaseOrigin(payload, redirectUrl);
     const lang = pickLang(payload, redirectUrl);
     const type = payload.email_data.email_action_type;
-    console.log("ACTION", payload.email_data.email_action_type);
-    console.log("user.email", payload.user.email);
-    console.log("user.email_new", payload.user.email_new);
-    console.log("has token_hash", !!payload.email_data.token_hash);
-    console.log("has token_hash_new", !!payload.email_data.token_hash_new);
-    console.log("email_data.old_email", (payload.email_data as { old_email?: string }).old_email);
-    console.log("email_data.new_email", payload.email_data.new_email);
-    console.log("redirect_to", payload.email_data.redirect_to);
 
     if (type === "email_change" || type === "email_change_current" || type === "email_change_new") {
       const userId = String(payload.user.id || "").trim();
@@ -512,8 +494,6 @@ serve(async (req) => {
       ).trim();
       const targetEmailNormalized = targetEmail.toLowerCase();
 
-      console.log("redirect_to", redirect);
-      console.log("targetEmail", targetEmail);
       const tokenHash = payload.email_data.token_hash || "";
       const tokenHashNew = payload.email_data.token_hash_new || "";
 
@@ -537,7 +517,6 @@ serve(async (req) => {
           ? renderSignupMigrate(lang, linkCurrent)
           : renderEmailChange(lang, linkCurrent);
         await sendEmail(currentEmail, subject, htmlCurrent, { requestId, actorUserId });
-        console.log("[send-email] sent:email_change_current", { to: scrubEmail(currentEmail) });
       }
 
       // ✅ NEW mail tylko jeśli znamy adres z redirect_to?to=
@@ -547,7 +526,6 @@ serve(async (req) => {
           ? renderSignupMigrate(lang, linkTarget)
           : renderEmailChange(lang, linkTarget);
         await sendEmail(targetEmail, subject, htmlTarget, { requestId, actorUserId });
-        console.log("[send-email] sent:email_change_new", { to: scrubEmail(targetEmail) });
       }
 
       await writeLog({
@@ -571,7 +549,6 @@ serve(async (req) => {
         : payload.user.email;
 
     await sendEmail(to, subject, html, { requestId, actorUserId: String(payload.user.id || "").trim() || null });
-    console.log("[send-email] sent", { actionType: type, to: scrubEmail(to) });
     await writeLog({
       requestId,
       event: "request_done",
