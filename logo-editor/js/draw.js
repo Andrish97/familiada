@@ -997,42 +997,37 @@ export function initDrawEditor(ctx) {
       return;
     }
   
-    // TEXT: 2 kursory - + (tworzenie) i I-beam (edycja istniejącego tekstu)
+    // TEXT: kursor I-beam widoczny WSZĘDZIE (również na pustym polu)
     if (tool === TOOL.TEXT) {
       setCursorClass("none", false);
-      fabricCanvas.defaultCursor = "crosshair";
-      fabricCanvas.hoverCursor = "text";
-      fabricCanvas.moveCursor = "text";
+      // Ukrywamy domyślny kursor canvasa, używamy tylko overlay
+      fabricCanvas.defaultCursor = "default";
+      fabricCanvas.hoverCursor = "default";
+      fabricCanvas.moveCursor = "default";
 
-      // Overlay I-beam: biały z czarnym obrysem - widoczny na KAŻDYM tle
+      // Overlay I-beam: biały kształt z mix-blend-mode: difference
+      // Dzięki difference: na ciemnym tle będzie biały, na jasnym czarny.
       const z = fabricCanvas.getZoom();
+      // Minimalne wymiary, żeby kursor nie był zbyt mały przy dużym oddaleniu
       const h = Math.max(24, Math.round(28 * z));
       const stemW = Math.max(2, Math.round(2 * z));
       const serifW = Math.max(12, Math.round(14 * z));
       const serifH = Math.max(2, Math.round(2 * z));
 
-      // Tworzymy canvas, rysujemy I-beam, używamy jako obrazka
+      // Rysujemy biały kształt I-beam na canvasie
       const c = document.createElement('canvas');
       c.width = serifW * 2; // 2x dla ostrości
       c.height = h * 2;
       const cx = c.getContext('2d');
       cx.scale(2, 2);
 
-      // Czarny obrys
-      cx.strokeStyle = 'black';
-      cx.lineWidth = 1.5;
-      cx.lineJoin = 'round';
-      // Pionowa kreska
-      cx.strokeRect((serifW - stemW) / 2, serifH, stemW, h - serifH * 2);
-      // Górny szeryf
-      cx.strokeRect(1, 1, serifW - 2, serifH);
-      // Dolny szeryf
-      cx.strokeRect(1, h - serifH - 1, serifW - 2, serifH);
-
-      // Białe wypełnienie
+      // Wypełnienie białe (w trybie difference odwróci kolor tła)
       cx.fillStyle = 'white';
+      // Pionowa kreska
       cx.fillRect((serifW - stemW) / 2, serifH, stemW, h - serifH * 2);
+      // Górny szeryf
       cx.fillRect(1, 1, serifW - 2, serifH);
+      // Dolny szeryf
       cx.fillRect(1, h - serifH - 1, serifW - 2, serifH);
 
       const url = c.toDataURL('image/png');
@@ -1043,7 +1038,7 @@ export function initDrawEditor(ctx) {
       cursorDot.style.background = `url(${url}) center/contain no-repeat`;
       cursorDot.style.boxShadow = 'none';
       cursorDot.style.borderRadius = '0';
-      cursorDot.style.mixBlendMode = 'normal';
+      cursorDot.style.mixBlendMode = 'difference'; // Kluczowe: adaptacja do tła
       cursorDot.style.opacity = '1';
 
       showOverlayCursor();
@@ -1980,7 +1975,7 @@ export function initDrawEditor(ctx) {
       // w mouse:down
       lastPointer = { x: ev.clientX, y: ev.clientY };
       
-      if (tool === TOOL.BRUSH || tool === TOOL.ERASER) {
+      if (tool === TOOL.BRUSH || tool === TOOL.ERASER || tool === TOOL.TEXT) {
         placeOverlayAt(ev.clientX, ev.clientY);
       } else {
         hideOverlayCursor();
