@@ -12,10 +12,10 @@
 // - kursor: overlay (PS-like): pędzel = kółko, gumka = kwadrat, figury = crosshair
 // - skróty: PS-like + (Space=Pan temp, Ctrl/Cmd=Select temp, Shift idealne kształty, strzałki przesuwają)
 
-import { confirmModal } from "../../js/core/modal.js?v=v2026-04-04T16041";
-import { initUiSelect } from "../../js/core/ui-select.js?v=v2026-04-04T16041";
-import { t } from "../../translation/translation.js?v=v2026-04-04T16041";
-import { v as cacheBust } from "../../js/core/cache-bust.js?v=v2026-04-04T16041";
+import { confirmModal } from "../../js/core/modal.js?v=0c9fe6fd";
+import { initUiSelect } from "../../js/core/ui-select.js?v=73a51737";
+import { t } from "../../translation/translation.js?v=7222ec9e";
+import { v as cacheBust } from "../../js/core/cache-bust.js?v=8c4e71a2";
 
 export function initDrawEditor(ctx) {
   const TYPE_PIX = "PIX_150x70";
@@ -56,8 +56,8 @@ export function initDrawEditor(ctx) {
 
   const tPolyDone = document.getElementById("tPolyDone");
 
-  // Kolory: bg (tło sceny)
-  const tBg       = document.getElementById("tBg");     // 🖼️
+  // Tło sceny — 🖼️
+  const tBg       = document.getElementById("tBg");     // 🖼️ (tło)
 
     // =========================================================
   // Ikony dynamiczne: FG (kolor narzędzia) i BG (tło sceny)
@@ -82,238 +82,1289 @@ export function initDrawEditor(ctx) {
     `,
   };
 
-  // =========================================================
-  // Kolory
-  // =========================================================
+  const ICON_FG = {
+  
+    // BIAŁE — puste kółko
+    WHITE: `
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <circle class="fill" cx="12" cy="12" r="7"></circle>
+      </svg>
+    `,
+  
+    // CZARNE — pełne kółko
+    BLACK: `
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <circle cx="12" cy="12" r="7"
+                stroke-width="2"></circle>
+      </svg>
+    `,
+  };
 
-  // fg = kolor kreski/pędzla/tekstu (BLACK/WHITE)
-  // bg = tło sceny (BLACK/WHITE)
-  // W display: BLACK = piksel zapalony (1), WHITE = piksel zgaszony (0)
-  let fg = "BLACK"; // WHITE | BLACK — kolor rysowania
-
+  function getColorLabel(color) {
+    return color === "BLACK"
+      ? t("logoEditor.draw.colors.black")
+      : t("logoEditor.draw.colors.white");
+  }
+  
   function syncDynamicIcons() {
     if (tBg) {
       tBg.innerHTML = ICON_BG[bg] || ICON_BG.BLACK;
-      tBg.setAttribute("aria-label", t("logoEditor.draw.aria.backgroundColor", { color: bg === "BLACK" ? t("logoEditor.draw.colors.black") : t("logoEditor.draw.colors.white") }));
+      tBg.setAttribute("aria-label", t("logoEditor.draw.aria.backgroundColor", { color: getColorLabel(bg) }));
     }
   }
 
   // =========================================================
-  // Kontekstowe ustawienia W TOOLBARZE (inline)
+  // Kontekstowe ustawienia (w toolbarze, drugi rząd)
   // =========================================================
   const toolCtx = document.getElementById("toolCtxSettings");
 
-  function ctxHTML(html) {
+  function showSettings(html) {
     if (!toolCtx) return;
     toolCtx.innerHTML = html;
   }
-  function ctxHide() {
+
+  function hideSettings() {
     if (!toolCtx) return;
     toolCtx.innerHTML = "";
   }
 
-  // Wybór koloru: przycisk wypełniony aktualnym kolorem
-  // value = "BLACK" | "WHITE" | "MIXED"
-  function ctxColorBtn(value) {
-    const isMixed = value === "MIXED";
-    const isBlack = value === "BLACK";
-    const bg = isMixed ? "linear-gradient(135deg, #000 50%, #fff 50%)" : (isBlack ? '#000' : '#fff');
-    return `<button class="ctxColorBtn" type="button" data-color-toggle="${isMixed ? 'mixed' : (isBlack ? 'black' : 'white')}" style="background:${bg};${isBlack ? 'border-color:#444' : 'border-color:#999'};" title="${isMixed ? 'Mieszany' : (isBlack ? 'Czarny' : 'Biały')}"></button>`;
-  }
-  function ctxColorBind(fn) {
-    toolCtx?.querySelectorAll("[data-color-toggle]").forEach(btn => {
-      btn.addEventListener("click", () => fn(btn.dataset.colorToggle));
-    });
-  }
-  function fabricToBW(color) {
-    if (!color || color === "transparent" || color === "rgba(0,0,0,0)") return "WHITE";
-    const c = color.toLowerCase().trim();
-    if (c === "#000" || c === "#000000" || c === "rgb(0,0,0)" || c === "rgb(0, 0, 0)" || c === "black") return "BLACK";
-    return "WHITE";
-  }
-
-  // =========================================================
-  // Ustawienia narzędzia (gdy nic nie zaznaczone)
-  // =========================================================
   function renderToolSettings() {
-    const tn = tool.toLowerCase();
-    if (tn === "brush") {
-      ctxHTML(`<div class="ctxGroup"><span class="ctxLabel">Grubość</span><input id="cStrokeW" class="ctxInput" type="number" min="1" max="50" step="1" value="${strokeWidth}"/></div>
-        <div class="ctxGroup"><span class="ctxLabel">Kolor</span>${ctxColorBtn(fg)}</div>`);
-      document.getElementById("cStrokeW")?.addEventListener("input", e => { strokeWidth = clamp(+e.target.value||1,1,50); updateCursor(); });
-      ctxColorBind(() => { fg = fg==="BLACK"?"WHITE":"BLACK"; syncDynamicIcons(); renderToolSettings(); });
-    } else if (tn === "eraser") {
-      ctxHTML(`<div class="ctxGroup"><span class="ctxLabel">Rozmiar</span><input id="cEraser" class="ctxInput" type="number" min="1" max="50" step="1" value="${eraserSize}"/></div>`);
-      document.getElementById("cEraser")?.addEventListener("input", e => { eraserSize = clamp(+e.target.value||10,1,50); updateCursor(); });
-    } else if (tn === "line") {
-      ctxHTML(`<div class="ctxGroup"><span class="ctxLabel">Grubość</span><input id="cStrokeW" class="ctxInput" type="number" min="1" max="50" step="1" value="${strokeWidth}"/></div>
-        <div class="ctxGroup"><span class="ctxLabel">Kolor</span>${ctxColorBtn(fg)}</div>`);
-      document.getElementById("cStrokeW")?.addEventListener("input", e => { strokeWidth = clamp(+e.target.value||1,1,50); });
-      ctxColorBind(() => { fg = fg==="BLACK"?"WHITE":"BLACK"; syncDynamicIcons(); renderToolSettings(); });
-    } else if (tn === "rect" || tn === "ellipse") {
-      ctxHTML(`<div class="ctxGroup"><span class="ctxLabel">Obrys</span><input id="cStrokeW" class="ctxInput" type="number" min="0" max="50" step="1" value="${strokeWidth}"/></div>
-        <div class="ctxGroup">${ctxColorBtn(fg)}</div>
-        <div class="ctxGroup"><label class="ctxChk"><input type="checkbox" id="cFill" ${fillEnabled?"checked":""}/>Wypeł.</label>${ctxColorBtn(fabricToBW(fillColor))}</div>`);
-      document.getElementById("cStrokeW")?.addEventListener("input", e => { strokeWidth = clamp(+e.target.value||1,0,50); });
-      document.getElementById("cFill")?.addEventListener("change", e => { fillEnabled = e.target.checked; renderToolSettings(); });
-      ctxColorBind(() => { fg = fg==="BLACK"?"WHITE":"BLACK"; fillColor = fillColor==="#000000"?"#ffffff":"#000000"; renderToolSettings(); });
-    } else if (tn === "poly") {
-      const isDrawing = polyPoints.length > 0;
-      let html = `<div class="ctxGroup"><span class="ctxLabel">Obrys</span><input id="cStrokeW" class="ctxInput" type="number" min="0" max="50" step="1" value="${strokeWidth}"/></div>
-        <div class="ctxGroup">${ctxColorBtn(fg)}</div>
-        <div class="ctxGroup"><label class="ctxChk"><input type="checkbox" id="cFill" ${fillEnabled?"checked":""}/>Wypeł.</label>${ctxColorBtn(fabricToBW(fillColor))}</div>`;
-      if (isDrawing) {
-        html += `<div class="ctxGroup"><button class="ctxBtn on" id="cPolyDone" style="color:#4fc3f7;border-color:rgba(79,195,247,.35);">✓ Zamknij</button></div>`;
-      }
-      ctxHTML(html);
-      document.getElementById("cStrokeW")?.addEventListener("input", e => { strokeWidth = clamp(+e.target.value||1,0,50); });
-      document.getElementById("cFill")?.addEventListener("change", e => { fillEnabled = e.target.checked; renderToolSettings(); });
-      ctxColorBind(() => { fg = fg==="BLACK"?"WHITE":"BLACK"; fillColor = fillColor==="#000000"?"#ffffff":"#000000"; renderToolSettings(); });
-      document.getElementById("cPolyDone")?.addEventListener("click", () => finalizePolygon());
-    } else if (tn === "text") {
-      const fntLbl = DRAW_FONTS.find(f=>f.value===textFont)?.label || "Font";
-      ctxHTML(`<div class="ctxGroup"><button class="ctxBtn" id="cFont" style="min-width:80px;max-width:120px;justify-content:space-between;display:flex;"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${fntLbl}</span><span style="opacity:.4;">▾</span></button></div>
-        <div class="ctxGroup"><span class="ctxLabel">Roz.</span><input id="cSz" class="ctxInput" type="number" min="10" max="220" step="1" value="${textFontSize}"/></div>
-        <div class="ctxGroup"><span class="ctxLabel">Linia</span><input id="cLH" class="ctxInput" type="number" min="0.6" max="3.0" step="0.05" value="${textLineHeight}"/></div>
-        <div class="ctxGroup"><span class="ctxLabel">Odst.</span><input id="cSp" class="ctxInput" type="number" min="0" max="20" step="0.5" value="${textLetterSpacing}"/></div>
-        <div class="ctxGroup"><button class="ctxBtn" id="cB" ${textBold?"on":""}>B</button><button class="ctxBtn" id="cI" ${textItalic?"on":""}>I</button><button class="ctxBtn" id="cU" ${textUnderline?"on":""}>U</button></div>
-        <div class="ctxGroup"><span class="ctxLabel">Kolor</span>${ctxColorBtn(fg)}</div>`);
-      document.getElementById("cFont")?.addEventListener("click", () => { openDrawFontPicker(v=>{textFont=v;renderToolSettings();},textFont); });
-      document.getElementById("cSz")?.addEventListener("input", e => { textFontSize = clamp(+e.target.value||130,10,220); });
-      document.getElementById("cLH")?.addEventListener("input", e => { textLineHeight = clamp(+e.target.value||1,0.6,3); });
-      document.getElementById("cSp")?.addEventListener("input", e => { textLetterSpacing = clamp(+e.target.value||0,0,20); });
-      document.getElementById("cB")?.addEventListener("click", e => { textBold=!textBold; e.target.classList.toggle("on",textBold); });
-      document.getElementById("cI")?.addEventListener("click", e => { textItalic=!textItalic; e.target.classList.toggle("on",textItalic); });
-      document.getElementById("cU")?.addEventListener("click", e => { textUnderline=!textUnderline; e.target.classList.toggle("on",textUnderline); });
-      ctxColorBind(() => { fg = fg==="BLACK"?"WHITE":"BLACK"; syncDynamicIcons(); renderToolSettings(); });
+    const toolName = tool.toLowerCase();
+    if (toolName === "brush") {
+      showSettings(`
+        <div class="rtToolRow">
+          <div class="rtGroup">
+            <div class="rtToolLbl">${t("logoEditor.draw.stroke")}</div>
+            <input id="drawStrokeWidth" class="inp" type="number" min="1" max="50" step="1" value="${strokeWidth}"/>
+          </div>
+        </div>
+      `);
+      document.getElementById("drawStrokeWidth")?.addEventListener("input", (e) => {
+        strokeWidth = clamp(Number(e.target.value) || 1, 1, 50);
+        updateCursor();
+      });
+    } else if (toolName === "text") {
+      const fontLabel = DRAW_FONTS.find(f => f.value === textFont)?.label || "Font";
+      showSettings(`
+        <div class="rtToolRow">
+          <div class="rtGroup">
+            <div class="rtToolLbl">${t("logoEditor.draw.fontFamily")}</div>
+            <button class="btn sm" id="drawFontBtn" type="button" style="min-width:180px;max-width:280px;height:30px;justify-content:space-between;display:flex;align-items:center;">
+              <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${fontLabel}</span>
+              <span style="opacity:.5;">▾</span>
+            </button>
+          </div>
+          <div class="rtGroup">
+            <div class="rtToolLbl">${t("logoEditor.draw.fontSize")}</div>
+            <input id="drawTextSize" class="inp" type="number" min="10" max="220" step="1" value="${textFontSize}"/>
+          </div>
+          <div class="rtGroup">
+            <div class="rtToolLbl">${t("logoEditor.draw.lineHeight")}</div>
+            <input id="drawTextLineH" class="inp" type="number" min="0.6" max="3.0" step="0.05" value="${textLineHeight}"/>
+          </div>
+          <div class="rtGroup">
+            <div class="rtToolLbl">${t("logoEditor.draw.letterSpacing")}</div>
+            <input id="drawTextSpacing" class="inp" type="number" min="0" max="20" step="0.5" value="${textLetterSpacing}"/>
+          </div>
+          <div class="rtGroup rtBtns">
+            <button class="btn sm" id="drawTextBold" type="button" ${textBold ? "on" : ""}>B</button>
+            <button class="btn sm" id="drawTextItalic" type="button" ${textItalic ? "on" : ""}>I</button>
+            <button class="btn sm" id="drawTextUnderline" type="button" ${textUnderline ? "on" : ""}>U</button>
+          </div>
+          <div class="rtGroup">
+            <button class="btn sm" id="drawTextAlign" type="button">${textAlign === "center" ? "⇆" : textAlign === "right" ? "⇥" : "⇤"}</button>
+          </div>
+        </div>
+      `);
+      document.getElementById("drawFontBtn")?.addEventListener("click", () => {
+        openDrawFontPicker((val) => {
+          textFont = val;
+          // Re-render to update button label
+          renderToolSettings();
+        }, textFont);
+      });
+      document.getElementById("drawTextSize")?.addEventListener("input", (e) => {
+        textFontSize = clamp(Number(e.target.value) || 130, 10, 220);
+      });
+      document.getElementById("drawTextLineH")?.addEventListener("input", (e) => {
+        textLineHeight = clamp(Number(e.target.value) || 1, 0.6, 3.0);
+      });
+      document.getElementById("drawTextSpacing")?.addEventListener("input", (e) => {
+        textLetterSpacing = clamp(Number(e.target.value) || 0, 0, 20);
+      });
+      document.getElementById("drawTextBold")?.addEventListener("click", (e) => {
+        textBold = !textBold;
+        e.target.classList.toggle("on", textBold);
+      });
+      document.getElementById("drawTextItalic")?.addEventListener("click", (e) => {
+        textItalic = !textItalic;
+        e.target.classList.toggle("on", textItalic);
+      });
+      document.getElementById("drawTextUnderline")?.addEventListener("click", (e) => {
+        textUnderline = !textUnderline;
+        e.target.classList.toggle("on", textUnderline);
+      });
+      document.getElementById("drawTextAlign")?.addEventListener("click", (e) => {
+        textAlign = textAlign === "left" ? "center" : textAlign === "center" ? "right" : "left";
+        e.target.textContent = textAlign === "left" ? "⇤" : textAlign === "right" ? "⇥" : "⇆";
+      });
+    } else if (toolName === "rect" || toolName === "ellipse" || toolName === "line") {
+      showSettings(`
+        <div class="rtToolRow">
+          <div class="rtGroup">
+            <div class="rtToolLbl">${t("logoEditor.draw.stroke")}</div>
+            <input id="drawStrokeWidth" class="inp" type="number" min="1" max="50" step="1" value="${strokeWidth}"/>
+          </div>
+          <div class="rtGroup">
+            <label class="chk"><input type="checkbox" id="drawFillCheck"/> ${t("logoEditor.draw.fill")}</label>
+            <input id="drawFillColor" class="inp" type="color" value="${fillColor}" style="width:40px;height:30px;padding:2px"/>
+          </div>
+        </div>
+      `);
+      document.getElementById("drawStrokeWidth")?.addEventListener("input", (e) => {
+        strokeWidth = clamp(Number(e.target.value) || 1, 1, 50);
+      });
+      document.getElementById("drawFillCheck")?.addEventListener("change", (e) => {
+        fillEnabled = e.target.checked;
+        document.getElementById("drawFillColor").disabled = !fillEnabled;
+      });
+      document.getElementById("drawFillColor")?.addEventListener("input", (e) => {
+        fillColor = e.target.value;
+      });
     } else {
-      ctxHide();
+      hideSettings();
     }
   }
 
-  function getSelectedObjects() {
-    if (!fabricCanvas) return [];
-    const active = fabricCanvas.getActiveObjects();
-    return Array.isArray(active) ? active.filter(Boolean) : [];
-  }
-
-  function allSame(arr) {
-    if (!arr.length) return { mixed: false, value: undefined };
-    const v = arr[0];
-    const all = arr.every(x => x === v);
-    return { mixed: !all, value: v };
-  }
-
-  /** Multi-selection: pokazujemy TYLKO wspólne właściwości */
-  function renderObjectSettings() {
-    const objs = getSelectedObjects();
-    if (!objs.length) { ctxHide(); return; }
-
-    const textObjs = objs.filter(o => o.type === "i-text" || o.type === "textbox" || o.type === "text");
-    const fillShapes = objs.filter(o => o.type === "rect" || o.type === "ellipse" || o.type === "polygon" || o.type === "path");
-    const strokeObjs = objs.filter(o => o.type === "line");
-    const hasText = textObjs.length > 0;
-    const hasFillShapes = fillShapes.length > 0;
-    const hasStrokeObjs = strokeObjs.length > 0;
-    const allText = textObjs.length === objs.length;
-
-    // --- SAME TEXT ---
-    if (allText) {
-      const fonts = textObjs.map(o => o.fontFamily || "");
-      const sizes = textObjs.map(o => o.fontSize || 40);
-      const lineHs = textObjs.map(o => o.lineHeight || 1);
-      const spacings = textObjs.map(o => o.charSpacing || 0);
-      const weights = textObjs.map(o => o.fontWeight);
-      const styles = textObjs.map(o => o.fontStyle);
-      const underlines = textObjs.map(o => o.underline);
-      const aligns = textObjs.map(o => o.textAlign);
-      const fills = textObjs.map(o => o.fill || "#ffffff");
-      const strokes = textObjs.map(o => o.stroke || "transparent");
-      const strokeWs = textObjs.map(o => o.strokeWidth || 0);
-
-      const font = allSame(fonts);
-      const fontLabel = font.mixed ? "—" : (DRAW_FONTS.find(f => f.value === font.value)?.label || "Font");
-      const sz = allSame(sizes); const lh = allSame(lineHs); const sp = allSame(spacings);
-      const w = allSame(weights); const st = allSame(styles); const un = allSame(underlines); const al = allSame(aligns);
-      const fillColor = allSame(fills);
-      const hasStroke = strokes.some(s => s && s !== "transparent");
-      const strokeCol = allSame(strokes); const strokeW = allSame(strokeWs.map(Math.round));
-
-      const alignIcon = al.mixed ? "⇆" : al.value === "center" ? "⇆" : al.value === "right" ? "⇥" : "⇤";
-      ctxHTML(`
-        <div class="ctxGroup"><button class="ctxBtn" id="cFont" style="min-width:80px;max-width:120px;justify-content:space-between;display:flex;"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${fontLabel}</span><span style="opacity:.4;">▾</span></button></div>
-        <div class="ctxGroup"><input id="cSz" class="ctxInput" type="number" min="10" max="220" step="1" value="${sz.mixed?'':sz.value}" placeholder="${sz.mixed?'—':''}" title="Rozmiar"/></div>
-        <div class="ctxGroup"><input id="cLH" class="ctxInput" type="number" min="0.6" max="3.0" step="0.05" value="${lh.mixed?'':lh.value}" placeholder="${lh.mixed?'—':''}" title="Linia"/></div>
-        <div class="ctxGroup"><input id="cSp" class="ctxInput" type="number" min="0" max="20" step="0.5" value="${sp.mixed?'':sp.value}" placeholder="${sp.mixed?'—':''}" title="Odstępy"/></div>
-        <div class="ctxGroup"><button class="ctxBtn" id="cB" ${w.mixed||w.value!=="bold"?"":"on"}>B</button><button class="ctxBtn" id="cI" ${st.mixed||st.value!=="italic"?"":"on"}>I</button><button class="ctxBtn" id="cU" ${un.mixed||!un.value?"":"on"}>U</button></div>
-        <div class="ctxGroup"><button class="ctxBtn" id="cAlign">${alignIcon}</button></div>
-        <div class="ctxGroup">${ctxColorBtn(fillColor.mixed?"MIXED":fabricToBW(fillColor.value))}</div>
-        <div class="ctxGroup"><label class="ctxChk"><input type="checkbox" id="cStrokeChk" ${hasStroke?"checked":""}/>S</label>${ctxColorBtn(!hasStroke?"WHITE":strokeCol.mixed?"MIXED":fabricToBW(strokeCol.value))}<input id="cStrokeW" class="ctxInput" type="number" min="0" max="20" step="1" value="${strokeW.mixed?'':strokeW.value}" style="width:40px" ${!hasStroke?"disabled":""} placeholder="${strokeW.mixed?'—':''}"/></div>
+  function renderObjectSettings(obj) {
+    if (!obj) { hideSettings(); return; }
+    const type = obj.type;
+    if (type === "i-text" || type === "textbox" || type === "text") {
+      // SELECT tool + text → tylko kolor
+      const fillVal = obj.fill || "#ffffff";
+      showSettings(`
+        <div class="rtToolRow">
+          <div class="rtGroup">
+            <label class="chk" style="display:flex;align-items:center;gap:6px;">
+              <input id="drawObjFillCheck" type="checkbox" ${fillVal && fillVal !== "transparent" ? "checked" : ""}/>
+              ${t("logoEditor.draw.fill")}
+            </label>
+            <input id="drawObjFillColor" class="inp" type="color" value="${fillVal && fillVal !== "transparent" ? fillVal : "#ffffff"}" style="width:40px;height:30px;padding:2px"/>
+          </div>
+        </div>
       `);
-      document.getElementById("cFont")?.addEventListener("click", () => { openDrawFontPicker(v=>{objs.forEach(o=>o.set("fontFamily",v));fabricCanvas.renderAll();renderObjectSettings();},fonts[0]); });
-      document.getElementById("cSz")?.addEventListener("input", e => { const v=clamp(+e.target.value||40,10,220);objs.forEach(o=>o.set("fontSize",v));fabricCanvas.renderAll(); });
-      document.getElementById("cLH")?.addEventListener("input", e => { const v=clamp(+e.target.value||1,0.6,3);objs.forEach(o=>o.set("lineHeight",v));fabricCanvas.renderAll(); });
-      document.getElementById("cSp")?.addEventListener("input", e => { const v=clamp(+e.target.value||0,0,20);objs.forEach(o=>o.set("charSpacing",v));fabricCanvas.renderAll(); });
-      document.getElementById("cB")?.addEventListener("click", e => { const nb=w.value!=="bold";objs.forEach(o=>o.set("fontWeight",nb?"bold":"normal"));e.target.classList.toggle("on",nb);fabricCanvas.renderAll(); });
-      document.getElementById("cI")?.addEventListener("click", e => { const ni=st.value!=="italic";objs.forEach(o=>o.set("fontStyle",ni?"italic":"normal"));e.target.classList.toggle("on",ni);fabricCanvas.renderAll(); });
-      document.getElementById("cU")?.addEventListener("click", e => { const nu=!un.value;objs.forEach(o=>o.set("underline",nu));e.target.classList.toggle("on",nu);fabricCanvas.renderAll(); });
-      document.getElementById("cAlign")?.addEventListener("click", e => { const cur=al.value||"left";const next=cur==="left"?"center":cur==="center"?"right":"left";objs.forEach(o=>o.set("textAlign",next));e.target.textContent=next==="left"?"⇤":next==="right"?"⇥":"⇆";fabricCanvas.renderAll(); });
-      const cbs = toolCtx?.querySelectorAll("[data-color-toggle]")||[];
-      if(cbs[0]) cbs[0].addEventListener("click",()=>{const c=fabricToBW(objs[0]?.fill);const n=c==="BLACK"?"#ffffff":"#000000";objs.forEach(o=>o.set("fill",n));fabricCanvas.renderAll();renderObjectSettings();});
-      if(cbs[1]) cbs[1].addEventListener("click",()=>{const c=fabricToBW(objs[0]?.stroke);const n=c==="BLACK"?"#ffffff":"#000000";objs.forEach(o=>o.set("stroke",n));fabricCanvas.renderAll();renderObjectSettings();});
-      document.getElementById("cStrokeChk")?.addEventListener("change",e=>{objs.forEach(o=>{o.set("stroke",e.target.checked?(strokeCol.mixed?'#ffffff':strokeCol.value):null);o.set("strokeWidth",e.target.checked?1:0)});fabricCanvas.renderAll();renderObjectSettings();});
-      document.getElementById("cStrokeW")?.addEventListener("input",e=>{objs.forEach(o=>o.set("strokeWidth",clamp(+e.target.value||1,0,20)));fabricCanvas.renderAll();});
+      document.getElementById("drawObjFillCheck")?.addEventListener("change", (e) => {
+        obj.set("fill", e.target.checked ? obj.fill || "#ffffff" : "transparent");
+        fabricCanvas.renderAll();
+        const ci = document.getElementById("drawObjFillColor");
+        if (ci) ci.disabled = !e.target.checked;
+      });
+      document.getElementById("drawObjFillColor")?.addEventListener("input", (e) => {
+        obj.set("fill", e.target.value);
+        fabricCanvas.renderAll();
+      });
+      const ci = document.getElementById("drawObjFillColor");
+      if (ci) ci.disabled = !(fillVal && fillVal !== "transparent");
+    } else if (type === "rect" || type === "ellipse" || type === "line") {
+      showSettings(`
+        <div class="rtToolRow">
+          <div class="rtGroup">
+            <div class="rtToolLbl">${t("logoEditor.draw.stroke")}</div>
+            <input id="drawObjStroke" class="inp" type="number" min="0" max="50" step="1" value="${obj.strokeWidth || 1}"/>
+          </div>
+          <div class="rtGroup">
+            <label class="chk"><input type="checkbox" id="drawObjFillCheck" ${obj.fill && obj.fill !== "transparent" ? "checked" : ""}/> ${t("logoEditor.draw.fill")}</label>
+            <input id="drawObjFillColor" class="inp" type="color" value="${obj.fill && obj.fill !== "transparent" ? obj.fill : "#000000"}" style="width:40px;height:30px;padding:2px"/>
+          </div>
+        </div>
+      `);
+      document.getElementById("drawObjStroke")?.addEventListener("input", (e) => {
+        obj.set("strokeWidth", clamp(Number(e.target.value) || 1, 0, 50));
+        canvas.renderAll();
+      });
+      document.getElementById("drawObjFillCheck")?.addEventListener("change", (e) => {
+        obj.set("fill", e.target.checked ? fillColor : "transparent");
+        canvas.renderAll();
+      });
+      document.getElementById("drawObjFillColor")?.addEventListener("input", (e) => {
+        obj.set("fill", e.target.value);
+        canvas.renderAll();
+      });
+    } else {
+      hideSettings();
+    }
+  }
+
+  /** Ustawienia zaznaczonego obiektu TEKSTU (font, rozmiar, B/I/U, align) */
+  function renderTextObjectSettings(obj) {
+    if (!obj) { hideSettings(); return; }
+    const objFont = obj.fontFamily || "";
+    const fontLabel = DRAW_FONTS.find(f => f.value === objFont)?.label || "Font";
+    showSettings(`
+      <div class="rtToolRow">
+        <div class="rtGroup">
+          <div class="rtToolLbl">${t("logoEditor.draw.fontFamily")}</div>
+          <button class="btn sm" id="drawFontBtn" type="button" style="min-width:180px;max-width:280px;height:30px;justify-content:space-between;display:flex;align-items:center;">
+            <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${fontLabel}</span>
+            <span style="opacity:.5;">▾</span>
+          </button>
+        </div>
+        <div class="rtGroup">
+          <div class="rtToolLbl">${t("logoEditor.draw.fontSize")}</div>
+          <input id="drawObjTextSize" class="inp" type="number" min="10" max="220" step="1" value="${Math.round(obj.fontSize || 40)}"/>
+        </div>
+        <div class="rtGroup">
+          <div class="rtToolLbl">${t("logoEditor.draw.lineHeight")}</div>
+          <input id="drawObjTextLineH" class="inp" type="number" min="0.6" max="3.0" step="0.05" value="${obj.lineHeight || 1}"/>
+        </div>
+        <div class="rtGroup">
+          <div class="rtToolLbl">${t("logoEditor.draw.letterSpacing")}</div>
+          <input id="drawObjTextSpacing" class="inp" type="number" min="0" max="20" step="0.5" value="${obj.charSpacing || 0}"/>
+        </div>
+        <div class="rtGroup rtBtns">
+          <button class="btn sm" id="drawObjTextBold" type="button" ${obj.fontWeight === "bold" ? "on" : ""}>B</button>
+          <button class="btn sm" id="drawObjTextItalic" type="button" ${obj.fontStyle === "italic" ? "on" : ""}>I</button>
+          <button class="btn sm" id="drawObjTextUnderline" type="button" ${obj.underline ? "on" : ""}>U</button>
+        </div>
+        <div class="rtGroup">
+          <button class="btn sm" id="drawObjTextAlign" type="button">${obj.textAlign === "center" ? "⇆" : obj.textAlign === "right" ? "⇥" : "⇤"}</button>
+        </div>
+      </div>
+    `);
+    document.getElementById("drawFontBtn")?.addEventListener("click", () => {
+      openDrawFontPicker((val) => {
+        obj.set("fontFamily", val);
+        fabricCanvas.renderAll();
+        // Re-render to update button label
+        renderTextObjectSettings(obj);
+      }, objFont);
+    });
+    document.getElementById("drawObjTextSize")?.addEventListener("input", (e) => {
+      obj.set("fontSize", clamp(Number(e.target.value) || 40, 10, 220));
+      fabricCanvas.renderAll();
+    });
+    document.getElementById("drawObjTextLineH")?.addEventListener("input", (e) => {
+      obj.set("lineHeight", clamp(Number(e.target.value) || 1, 0.6, 3.0));
+      fabricCanvas.renderAll();
+    });
+    document.getElementById("drawObjTextSpacing")?.addEventListener("input", (e) => {
+      obj.set("charSpacing", clamp(Number(e.target.value) || 0, 0, 20));
+      fabricCanvas.renderAll();
+    });
+    document.getElementById("drawObjTextBold")?.addEventListener("click", (e) => {
+      const isBold = obj.fontWeight === "bold";
+      obj.set("fontWeight", isBold ? "normal" : "bold");
+      e.target.classList.toggle("on", !isBold);
+      fabricCanvas.renderAll();
+    });
+    document.getElementById("drawObjTextItalic")?.addEventListener("click", (e) => {
+      const isItalic = obj.fontStyle === "italic";
+      obj.set("fontStyle", isItalic ? "normal" : "italic");
+      e.target.classList.toggle("on", !isItalic);
+      fabricCanvas.renderAll();
+    });
+    document.getElementById("drawObjTextUnderline")?.addEventListener("click", (e) => {
+      obj.set("underline", !obj.underline);
+      e.target.classList.toggle("on", !obj.underline);
+      fabricCanvas.renderAll();
+    });
+    document.getElementById("drawObjTextAlign")?.addEventListener("click", (e) => {
+      const next = obj.textAlign === "left" ? "center" : obj.textAlign === "center" ? "right" : "left";
+      obj.set("textAlign", next);
+      e.target.textContent = next === "left" ? "⇤" : next === "right" ? "⇥" : "⇆";
+      fabricCanvas.renderAll();
+    });
+  }
+
+    // =========================================================
+  // Ikony SVG (jako zmienne) + wstrzyknięcie do przycisków
+  // =========================================================
+
+  const ICONS = {
+    // 1) SELECT — (na razie prosta strzałka; będziemy ją “upiększać” jako pierwszą)
+    tSelect: `
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M5 3l6 14 2-6 6-2L5 3z"></path>
+      </svg>
+    `,
+
+    // 2) PAN
+    tPan: `
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M8 12V7.2a1.2 1.2 0 0 1 2.4 0V12"></path>
+        <path d="M10.4 12V6.4a1.2 1.2 0 0 1 2.4 0V12"></path>
+        <path d="M12.8 12V7.8a1.2 1.2 0 0 1 2.4 0V12"></path>
+        <path d="M15.2 12V9.2a1.2 1.2 0 0 1 2.4 0V14.2"></path>
+        <path d="M8 12c0 6 2.6 8 6.6 8 3.1 0 5.4-2 5.4-5.1v-.7"></path>
+      </svg>
+    `,
+
+    // 3) ZOOM IN
+    tZoomIn: `
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <circle cx="10" cy="10" r="6"></circle>
+        <path d="M21 21l-5.2-5.2"></path>
+        <path d="M10 7v6"></path>
+        <path d="M7 10h6"></path>
+      </svg>
+    `,
+
+    // 4) ZOOM OUT
+    tZoomOut: `
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <circle cx="10" cy="10" r="6"></circle>
+        <path d="M21 21l-5.2-5.2"></path>
+        <path d="M7 10h6"></path>
+      </svg>
+    `,
+
+    // 5) TEXT
+    tText: `
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M5 6h14"></path>
+        <path d="M12 6v12"></path>
+        <path d="M8 18h8"></path>
+      </svg>
+    `,
+
+    // 6) BRUSH
+    tBrush: `
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M4 20l4-1 11-11-3-3L5 16l-1 4z"></path>
+        <path d="M14 6l3 3"></path>
+      </svg>
+    `,
+    
+    // 7) ERASER
+    tEraser: `
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M7 16l8.5-8.5a1.8 1.8 0 0 1 2.5 0l1 1a1.8 1.8 0 0 1 0 2.5L11 19H7l-2-2 2-1z"></path>
+        <path d="M11 19h10"></path>
+        <path d="M9.2 14.8l4 4"></path>
+      </svg>
+    `,
+
+    // 8) LINE
+    tLine: `
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M6 18L18 6"></path>
+        <circle class="fill" cx="6" cy="18" r="1.2"></circle>
+        <circle class="fill" cx="18" cy="6" r="1.2"></circle>
+      </svg>
+    `,
+
+    // 9) RECT
+    tRect: `
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <rect x="6" y="7" width="12" height="10" rx="2"></rect>
+      </svg>
+    `,
+
+    // 10) ELLIPSE
+    tEllipse: `
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <ellipse cx="12" cy="12" rx="7" ry="5"></ellipse>
+      </svg>
+    `,
+
+    // 11) POLY
+    tPoly: `
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M12 6l7 14H5L12 6z"></path>
+      </svg>
+    `,
+
+    // 12) UNDO
+    tUndo: `
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M9 7H5v4"></path>
+        <path d="M5 11c2-4 6-6 10-4 2 1 4 3 4 6"></path>
+      </svg>
+    `,
+
+    // 13) REDO
+    tRedo: `
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M15 7h4v4"></path>
+        <path d="M19 11c-2-4-6-6-10-4-2 1-4 3-4 6"></path>
+      </svg>
+    `,
+
+
+    // 14) POLY DONE
+    tPolyDone: `
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M5 13l4 4L19 7"></path>
+      </svg>
+    `,
+
+    // 15) CLEAR
+    tClear: `
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M6 7h12"></path>
+        <path d="M9 7V5h6v2"></path>
+        <path d="M8 7l1 14h6l1-14"></path>
+      </svg>
+    `,
+
+    // 16) EYE
+    tEye: `
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"></path>
+        <circle class="fill" cx="12" cy="12" r="2"></circle>
+      </svg>
+    `,
+  };
+
+  function injectIcon(id, html){
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = html || "";
+    // a11y: jeśli button nie ma aria-label, dodaj prosty fallback
+    if (!el.getAttribute("aria-label")) el.setAttribute("aria-label", id);
+  }
+
+  // Wstrzyknij wszystkie ikonki
+  for (const [id, svg] of Object.entries(ICONS)) {
+    injectIcon(id, svg);
+  }
+
+    // =========================================================
+  // Tooltipy — z dynamicznym pozycjonowaniem
+  // =========================================================
+  const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform) || /Mac OS X/.test(navigator.userAgent);
+
+  const K = {
+    MOD: isMac ? "⌘" : "Ctrl",
+    ALT: isMac ? "⌥" : "Alt",
+    SHIFT: isMac ? "⇧" : "Shift",
+  };
+
+  function tip2(action, shortcut, extra = "") {
+    // Show only the shortcut for the current OS
+    const line2 = `Skrót: ${shortcut}`;
+    return extra ? `${action}\n${line2}\n${extra}` : `${action}\n${line2}`;
+  }
+
+  function setTip(el, txt) {
+    if (!el) return;
+    // Store tooltip text as data attribute for JS-based tooltip
+    el.setAttribute("data-tip", txt);
+  }
+
+  // Dynamic tooltip positioning — shows above the hovered element
+  let _tipEl = null;
+  function showTip(el) {
+    if (!el) return;
+    const tipText = el.getAttribute("data-tip");
+    if (!tipText) return;
+    hideTip();
+    const tip = document.createElement("div");
+    tip.className = "draw-tip";
+    tip.textContent = tipText;
+    tip.style.visibility = "hidden";
+    document.body.appendChild(tip);
+    _tipEl = tip;
+
+    // Force layout so we can measure
+    const tw = tip.offsetWidth;
+    const th = tip.offsetHeight;
+
+    const rect = el.getBoundingClientRect();
+    const left = rect.left + rect.width / 2 - tw / 2;
+    const top = rect.top - th - 10;
+
+    tip.style.left = `${Math.max(8, left)}px`;
+    tip.style.top = `${Math.max(8, top)}px`;
+    tip.style.visibility = "visible";
+    tip.style.opacity = "1";
+    tip.style.transform = "translateY(0)";
+  }
+
+  function hideTip() {
+    if (_tipEl) {
+      _tipEl.remove();
+      _tipEl = null;
+    }
+  }
+
+  // Attach hover listeners to all toolbar buttons
+  function initTooltips() {
+    const btns = document.querySelectorAll(".editorToolbar .tbtn");
+    btns.forEach(btn => {
+      // Remove old listeners first
+      btn.removeEventListener("mouseenter", btn._tipEnter);
+      btn.removeEventListener("mouseleave", btn._tipLeave);
+      btn.removeEventListener("focus", btn._tipFocus);
+      btn.removeEventListener("blur", btn._tipBlur);
+
+      // Create bound handlers
+      btn._tipEnter = () => showTip(btn);
+      btn._tipLeave = hideTip;
+      btn._tipFocus = () => showTip(btn);
+      btn._tipBlur = hideTip;
+
+      btn.addEventListener("mouseenter", btn._tipEnter);
+      btn.addEventListener("mouseleave", btn._tipLeave);
+      btn.addEventListener("focus", btn._tipFocus);
+      btn.addEventListener("blur", btn._tipBlur);
+    });
+  }
+
+  function updateTooltips() {
+    // Select / Pan
+    setTip(tSelect, tip2(t("logoEditor.draw.tooltips.select"), `${K.MOD} (przytrzymaj)`));
+    setTip(tPan,    tip2(t("logoEditor.draw.tooltips.pan"), "Spacja (przytrzymaj)"));
+
+    // Zoom
+    setTip(tZoomIn,  tip2(t("logoEditor.draw.tooltips.zoomIn"), `${K.MOD} + +`));
+    setTip(tZoomOut, tip2(t("logoEditor.draw.tooltips.zoomOut"), `${K.MOD} + -`));
+
+    // Kolor / tło
+    setTip(tColor, t("logoEditor.draw.tooltips.color"));
+    setTip(tBg,    t("logoEditor.draw.tooltips.background"));
+
+    // Narzędzia
+    setTip(tBrush,   tip2(t("logoEditor.draw.tooltips.brush"), "B"));
+    setTip(tEraser,  tip2(t("logoEditor.draw.tooltips.eraser"), "E"));
+    setTip(tLine,    tip2(t("logoEditor.draw.tooltips.line"), "L"));
+    setTip(tRect,    tip2(t("logoEditor.draw.tooltips.rect"), "R"));
+    setTip(tText,    tip2(t("logoEditor.draw.tooltips.text"), "T"));
+    setTip(tEllipse, tip2(t("logoEditor.draw.tooltips.ellipse"), "O"));
+    setTip(tPoly,    tip2(t("logoEditor.draw.tooltips.poly"), "P"), t("logoEditor.draw.tooltips.polyHint"));
+
+    // Historia
+    setTip(tUndo, tip2(t("logoEditor.draw.tooltips.undo"), isMac ? "⌘Z" : "Ctrl+Z"));
+    setTip(tRedo, tip2(t("logoEditor.draw.tooltips.redo"), isMac ? "⌘⇧Z / ⌘Y" : "Ctrl+Shift+Z / Ctrl+Y"));
+
+    // Akcje
+    setTip(tPolyDone, tip2(t("logoEditor.draw.tooltips.polyDone"), "Enter / dwuklik"));
+    setTip(tClear,    t("logoEditor.draw.tooltips.clear"));
+    setTip(tEye,      t("logoEditor.draw.tooltips.preview"));
+  }
+
+  updateTooltips();
+  initTooltips();
+  window.addEventListener("i18n:lang", () => {
+    updateTooltips();
+    initTooltips(); // re-bind after text update
+    syncDynamicIcons();
+  });
+
+  // =========================================================
+  // Consts / helpers
+  // =========================================================
+  const DOT_W = ctx.DOT_W; // 150
+  const DOT_H = ctx.DOT_H; // 70
+  const ASPECT = 26 / 11;
+
+  const RAST_W = 208;
+  const RAST_H = 88;
+
+  // WORLD = SCENA:
+  let worldW = 1;
+  let worldH = 1;
+
+  const MIN_ZOOM = 1.0;
+  const MAX_ZOOM = 12.0;
+
+  const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+  const show = (el, on) => { if (!el) return; el.style.display = on ? "" : "none"; };
+
+  function requireFabric() {
+    const f = window.fabric;
+    if (!f) throw new Error(t("logoEditor.draw.errors.missingFabric"));
+    return f;
+  }
+
+  function isEditableTarget(t) {
+    if (!t) return false;
+    const tag = (t.tagName || "").toLowerCase();
+    if (tag === "input" || tag === "textarea" || tag === "select") return true;
+    if (t.isContentEditable) return true;
+    return false;
+  }
+
+  function setBtnOn(btn, on) {
+    if (!btn) return;
+    btn.classList.toggle("on", !!on);
+    btn.setAttribute("aria-pressed", on ? "true" : "false");
+  }
+
+  function clampWorldPoint(p) {
+    return { x: clamp(p.x, 0, worldW), y: clamp(p.y, 0, worldH) };
+  }
+
+  // =========================================================
+  // Tool state
+  // =========================================================
+  const TOOL = {
+    SELECT: "SELECT",
+    PAN: "PAN",
+    TEXT: "TEXT",
+    BRUSH: "BRUSH",
+    ERASER: "ERASER",   // TYLKO OBJECT erase
+    LINE: "LINE",
+    RECT: "RECT",
+    ELLIPSE: "ELLIPSE",
+    POLY: "POLY",
+  };
+
+  // baseTool = narzędzie wybrane przez klik / klawisz
+  // tool = narzędzie aktualne (może być chwilowo podmienione przez Space/Ctrl)
+  let baseTool = TOOL.SELECT;
+  let tool = TOOL.SELECT;
+
+  // Kolor domyślny (stroke) — globalny przełącznik ⬛️/⬜️
+  let fg = "BLACK"; // WHITE | BLACK
+
+  function fgColor() { return fg === "BLACK" ? "#000" : "#fff"; }
+  function fgLabel() { return fg === "BLACK" ? "⬛️" : "⬜️"; }
+
+  // Tło sceny — 🖼️
+  let bg = "BLACK"; // BLACK | WHITE
+  function bgColor() { return bg === "WHITE" ? "#fff" : "#000"; }
+
+  // Stroke/fill settings
+  let strokeWidth = 2;
+  let eraserSize = 10;
+  let fillEnabled = false;
+  let fillColor = "#ffffff";
+
+  // Text tool settings
+  let textFont = "";
+  let textFontSize = 80;
+  let textLineHeight = 1;
+  let textLetterSpacing = 0;
+  let textBold = false;
+  let textItalic = false;
+  let textUnderline = false;
+  let textAlign = "center";
+
+  // Font loading + picker
+  let DRAW_FONTS = [];
+  async function loadDrawFonts() {
+    if (DRAW_FONTS.length) return DRAW_FONTS;
+    try {
+      const url = await cacheBust(new URL("./fonts.json", import.meta.url).href);
+      const res = await fetch(url, { cache: "no-store" });
+      if (!res.ok) return [];
+      const data = await res.json();
+      DRAW_FONTS = Array.isArray(data) ? data.filter(f => f && f.value && f.label) : [];
+      return DRAW_FONTS;
+    } catch { return []; }
+  }
+
+  // Font picker state
+  let drawFontOpen = false;
+  let drawFontFiltered = [];
+  let drawFontOnSelect = null; // callback
+
+  function closeDrawFontPicker() {
+    if (!drawFontPickPop) return;
+    drawFontOpen = false;
+    drawFontPickPop.hidden = true;
+    if (drawFontSearchInp) drawFontSearchInp.value = "";
+  }
+
+  function openDrawFontPicker(onSelect, currentValue) {
+    if (!drawFontPickPop || !DRAW_FONTS.length) return;
+    drawFontOpen = true;
+    drawFontOnSelect = onSelect;
+    drawFontPickPop.hidden = false;
+
+    // Position below the toolbar
+    const toolbar = document.getElementById("toolsDraw");
+    if (toolbar) {
+      const r = toolbar.getBoundingClientRect();
+      drawFontPickPop.style.top = `${Math.round(r.bottom + 8)}px`;
+      drawFontPickPop.style.left = `${Math.max(8, Math.round(r.left))}px`;
+    }
+
+    if (drawFontSearchInp) {
+      drawFontSearchInp.value = "";
+      drawFontSearchInp.focus();
+    }
+    renderDrawFontList(currentValue);
+  }
+
+  function renderDrawFontList(currentValue) {
+    if (!drawFontList || !drawFontEmpty) return;
+    const q = (drawFontSearchInp?.value || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    drawFontFiltered = !q ? DRAW_FONTS : DRAW_FONTS.filter(f =>
+      f.label.toLowerCase().includes(q) || f.value.toLowerCase().includes(q)
+    );
+
+    drawFontEmpty.hidden = drawFontFiltered.length > 0;
+    drawFontList.innerHTML = "";
+
+    for (const f of drawFontFiltered) {
+      const item = document.createElement("button");
+      item.type = "button";
+      item.className = "fontPickItem" + (f.value === currentValue ? " on" : "");
+      item.style.fontFamily = f.value;
+      item.innerHTML = `<span style="flex:1;text-align:left;">${f.label}</span><span class="fontPickSwatch" style="font-family:${f.value};">Ag</span>`;
+      item.addEventListener("click", () => {
+        if (drawFontOnSelect) drawFontOnSelect(f.value);
+        closeDrawFontPicker();
+      });
+      drawFontList.appendChild(item);
+    }
+  }
+
+  // Wire up font picker events
+  if (drawFontSearchInp) {
+    drawFontSearchInp.addEventListener("input", () => renderDrawFontList(textFont));
+  }
+  if (drawFontSearchClear) {
+    drawFontSearchClear.addEventListener("click", () => {
+      if (drawFontSearchInp) drawFontSearchInp.value = "";
+      renderDrawFontList(textFont);
+      drawFontSearchInp?.focus();
+    });
+  }
+  // Close on outside click
+  document.addEventListener("pointerdown", (ev) => {
+    if (!drawFontOpen) return;
+    const t = ev.target;
+    if (t === drawFontSearchInp || t === drawFontSearchClear || drawFontPickPop?.contains(t)) return;
+    closeDrawFontPicker();
+  }, true);
+
+  function currentTool() {
+    return tool;
+  }
+
+  syncDynamicIcons();
+
+  // Ustawienia narzędzi:
+  // - brush: stroke
+  // - eraser: brak ustawień
+  // - line: stroke
+  // - rect/ellipse/poly: stroke + fill bool + fillColor (WHITE/BLACK)
+  const toolSettings = {
+    [TOOL.BRUSH]:   { stroke: 6 },
+    [TOOL.LINE]:    { stroke: 6 },
+    [TOOL.RECT]:    { stroke: 6, fill: false, fillColor: "WHITE" },
+    [TOOL.ELLIPSE]: { stroke: 6, fill: false, fillColor: "WHITE" },
+    [TOOL.POLY]:    { stroke: 6, fill: false, fillColor: "WHITE" },
+  };
+
+  function getStroke() {
+    const s = toolSettings[tool]?.stroke;
+    return clamp(Number(s || 6), 1, 80);
+  }
+
+  function getFillEnabled() {
+    return !!toolSettings[tool]?.fill;
+  }
+
+  function getFillColorHex() {
+    const c = toolSettings[tool]?.fillColor === "BLACK" ? "#000" : "#fff";
+    return c;
+  }
+
+  // =========================================================
+  // Fabric
+  // =========================================================
+  let fabricCanvas = null;
+  let initialized = false;
+
+  let _needOffsetKick = true;
+
+  // Pan
+  let panDown = false;
+  let panStart = { x: 0, y: 0 };
+  let vptStart = null;
+
+  // Shapes in progress
+  let drawingObj = null;
+  let drawingStart = null; // world point start (for shift constraints)
+  let drawingShift = false;
+
+  // Polygon
+  let polyPoints = [];
+  let polyPreview = null;
+
+  // Undo/Redo
+  let undoStack = [];
+  let redoStack = [];
+  let undoBusy = false;
+
+  // Preview bits
+  let bits150 = new Uint8Array(DOT_W * DOT_H);
+  let _deb = null;
+  let _previewSeq = 0;
+
+  // Temp modifiers
+  let holdSpace = false;
+  let holdCtrl = false;
+
+  // Cursor overlay
+  let cursorLayer = null;
+  let cursorDot = null;  // div we draw as circle/square via CSS
+  let lastPointer = { x: 0, y: 0 };
+
+  let pointerDown = false;
+
+  // =========================================================
+  // Sizing: WORLD = SCENA
+  // =========================================================
+  function getStageSize() {
+    const host = drawStageHost || drawCanvasEl?.parentElement;
+    const rect = host?.getBoundingClientRect?.() || { width: 800, height: 400 };
+
+    let w = Math.max(320, Math.floor(rect.width));
+    let h = Math.floor(w / ASPECT);
+
+    if (rect.height > 0 && h > rect.height) {
+      h = Math.max(180, Math.floor(rect.height));
+      w = Math.floor(h * ASPECT);
+    }
+    return { w, h };
+  }
+
+  function updateWorldSize(w, h) {
+    worldW = Math.max(1, Math.floor(w));
+    worldH = Math.max(1, Math.floor(h));
+  }
+
+  function updateClipPath() {
+    if (!fabricCanvas) return;
+    const f = requireFabric();
+    // clip w układzie świata (absolutePositioned)
+    fabricCanvas.clipPath = new f.Rect({
+      left: 0,
+      top: 0,
+      width: worldW,
+      height: worldH,
+      absolutePositioned: true,
+    });
+  }
+
+  function resetView() {
+    if (!fabricCanvas) return;
+    // WORLD=SCENA: zoom=1 i brak przesunięcia
+    fabricCanvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
+    fabricCanvas.requestRenderAll();
+  }
+
+  function clampViewport() {
+    if (!fabricCanvas) return;
+
+    const cw = fabricCanvas.getWidth();
+    const ch = fabricCanvas.getHeight();
+    const z = fabricCanvas.getZoom();
+
+    const v = fabricCanvas.viewportTransform ? fabricCanvas.viewportTransform.slice() : [z,0,0,z,0,0];
+
+    // Gdy z==1: minE = 0, maxE=0 -> zawsze 0
+    const minE = cw - worldW * z;
+    const maxE = 0;
+    const minF = ch - worldH * z;
+    const maxF = 0;
+
+    v[4] = clamp(v[4], minE, maxE);
+    v[5] = clamp(v[5], minF, maxF);
+
+    fabricCanvas.setViewportTransform(v);
+  }
+
+  // Skalowanie istniejących obiektów przy resize (WORLD zmienia rozmiar)
+  function scaleAllObjects(oldW, oldH, newW, newH) {
+    if (!fabricCanvas) return;
+    if (oldW <= 0 || oldH <= 0) return;
+    // aspekt stały, więc skala w praktyce ta sama
+    const sx = newW / oldW;
+    const sy = newH / oldH;
+    const s = (Math.abs(sx - sy) < 1e-6) ? sx : Math.min(sx, sy);
+
+    if (!isFinite(s) || s <= 0) return;
+    if (Math.abs(s - 1) < 1e-6) return;
+
+    fabricCanvas.getObjects().forEach(o => {
+      // Fabric ogarnia większość typów przez scale/left/top
+      o.scaleX = (o.scaleX || 1) * s;
+      o.scaleY = (o.scaleY || 1) * s;
+      o.left = (o.left || 0) * s;
+      o.top  = (o.top  || 0) * s;
+
+      // Dla linii/polilinii/poligonów/punktów: skala też działa, ale współrzędne punktów zostają
+      // w "lokalnym" układzie — i tak Fabric to renderuje przez scaleX/scaleY.
+      o.setCoords();
+    });
+
+    fabricCanvas.requestRenderAll();
+  }
+
+  let _resizeRaf = 0;
+  function resizeScene() {
+    if (!fabricCanvas || !drawCanvasEl) return;
+    const { w, h } = getStageSize();
+
+    const oldW = worldW;
+    const oldH = worldH;
+
+    fabricCanvas.setWidth(w);
+    fabricCanvas.setHeight(h);
+    fabricCanvas.calcOffset();
+
+    updateWorldSize(w, h);
+    updateClipPath();
+
+    // dopasuj content do nowej sceny (WORLD=SCENA)
+    if (oldW > 1 && oldH > 1) scaleAllObjects(oldW, oldH, worldW, worldH);
+
+    resetView();
+    clampViewport();
+    updateCursorVisual(); // żeby kursor zgadzał się z zoom
+    schedulePreview(60);
+  }
+
+  // =========================================================
+  // Zoom
+  // =========================================================
+  function setZoomClamped(nextZoom, center = null) {
+    if (!fabricCanvas) return;
+    const f = requireFabric();
+    const z = clamp(nextZoom, MIN_ZOOM, MAX_ZOOM);
+    const pt = center || new f.Point(fabricCanvas.getWidth()/2, fabricCanvas.getHeight()/2);
+    fabricCanvas.zoomToPoint(pt, z);
+
+    // przy min zoom ustawiamy też twardo pan=0
+    if (z <= MIN_ZOOM + 1e-6) {
+      fabricCanvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
+    } else {
+      clampViewport();
+    }
+
+    fabricCanvas.requestRenderAll();
+    updateCursorVisual();
+    updateZoomButtons();
+  }
+
+  function zoomBy(factor, center = null) {
+    if (!fabricCanvas) return;
+    setZoomClamped(fabricCanvas.getZoom() * factor, center);
+  }
+
+  function zoomTo100() {
+    setZoomClamped(1.0, null);
+  }
+
+  function updateZoomButtons() {
+    if (!fabricCanvas) return;
+    const z = fabricCanvas.getZoom();
+    if (tZoomOut) tZoomOut.disabled = z <= MIN_ZOOM + 1e-6;
+    if (tPan) {
+      // ręka w sensie "tryb" nadal można mieć, ale pan fizycznie nic nie zrobi przy zoom=1
+      // nie blokujemy przycisku, tylko w mouse down ignorujemy.
+    }
+  }
+
+  // =========================================================
+  // Styles
+  // =========================================================
+  function makeStrokeFillStyle() {
+    const w = getStroke();
+    const strokeHex = fgColor();
+    const fillHex = getFillEnabled() ? getFillColorHex() : "rgba(0,0,0,0)";
+    return {
+      stroke: strokeHex,
+      strokeWidth: w,
+      strokeLineCap: "round",
+      strokeLineJoin: "round",
+      fill: fillHex,
+    };
+  }
+
+  function applyBrushStyle() {
+    if (!fabricCanvas) return;
+    const f = requireFabric();
+    if (!fabricCanvas.freeDrawingBrush) {
+      fabricCanvas.freeDrawingBrush = new f.PencilBrush(fabricCanvas);
+    }
+    fabricCanvas.freeDrawingBrush.width = getStroke();
+    fabricCanvas.freeDrawingBrush.color = fgColor();
+    fabricCanvas.freeDrawingBrush.decimate = 0;
+  }
+
+  // =========================================================
+  // Cursor overlay (metoda 2)
+  // =========================================================
+
+  function hideOverlayCursor() {
+    if (!cursorDot) return;
+    cursorDot.style.transform = "translate(-9999px, -9999px)";
+  }
+  
+  function showOverlayCursor() {
+    // tu nic nie musimy robić – pokazanie to po prostu ustawienie transform w placeOverlayAt()
+    // ale zostawiamy funkcję, bo czasem chcesz ją wołać dla czytelności
+  }
+  
+  function setCursorClass(mode, isDown = false) {
+    if (!drawStageHost) return;
+  
+    drawStageHost.classList.remove("cur-select","cur-pan","cur-cross","cur-none","down");
+  
+    if (mode === "select") drawStageHost.classList.add("cur-select");
+    else if (mode === "pan") drawStageHost.classList.add("cur-pan");
+    else if (mode === "cross") drawStageHost.classList.add("cur-cross");
+    else if (mode === "none") drawStageHost.classList.add("cur-none");
+  
+    if (isDown) drawStageHost.classList.add("down");
+  }
+  
+  function ensureCursorOverlay() {
+    if (!drawStageHost) return;
+    if (cursorLayer) return;
+
+    cursorLayer = document.createElement("div");
+    cursorLayer.style.position = "absolute";
+    cursorLayer.style.inset = "0";
+    cursorLayer.style.pointerEvents = "none";
+    cursorLayer.style.zIndex = "25"; // nad canvasem, pod popoverem (ten ma z-index 30)
+
+    cursorDot = document.createElement("div");
+    cursorDot.style.position = "absolute";
+    cursorDot.style.left = "0";
+    cursorDot.style.top = "0";
+    cursorDot.style.transform = "translate(-9999px, -9999px)";
+    cursorDot.style.border = "1px solid rgba(255,255,255,.85)";
+    cursorDot.style.boxShadow = "0 0 0 1px rgba(0,0,0,.35)";
+    cursorDot.style.borderRadius = "999px";
+    cursorDot.style.background = "transparent";
+
+    cursorLayer.appendChild(cursorDot);
+    drawStageHost.style.position = "relative";
+    drawStageHost.appendChild(cursorLayer);
+  }
+
+  function updateCursorVisual() {
+    if (!fabricCanvas) return;
+    ensureCursorOverlay();
+  
+    // reset overlay
+    hideOverlayCursor();
+  
+    // Uwaga: Fabric czasem zmienia hoverCursor na "move".
+    // My to wyłączamy wszędzie poza SELECT.
+    const setFabricCursors = (def, hov, mov) => {
+      fabricCanvas.defaultCursor = def;
+      fabricCanvas.hoverCursor = hov;
+      fabricCanvas.moveCursor = mov;
+    };
+  
+    if (tool === TOOL.SELECT) {
+      setCursorClass("select", false);
+      // default: normalna strzałka
+      // hover na obiekcie: move
+      // przeciąganie: move
+      setFabricCursors("default", "move", "move");
+      hideOverlayCursor();
+      return;
+    }
+    
+    // PAN: ręka (zależnie od panDown)
+    if (tool === TOOL.PAN) {
+      setCursorClass("pan", !!panDown);
+      // zablokuj "move" od Fabric
+      setFabricCursors(panDown ? "grabbing" : "grab", panDown ? "grabbing" : "grab", panDown ? "grabbing" : "grab");
+      return;
+    }
+  
+    // BRUSH: tylko kółko overlay, bez strzałki/krzyżyka
+    if (tool === TOOL.BRUSH) {
+      setCursorClass("none", false);
+      setFabricCursors("none", "none", "none");
+  
+      const z = fabricCanvas.getZoom();
+      const d = Math.max(6, Math.round(getStroke() * z));
+  
+      cursorDot.style.width = `${d}px`;
+      cursorDot.style.height = `${d}px`;
+      cursorDot.style.borderRadius = "999px";
+      cursorDot.style.border = "1px solid rgba(255,255,255,.9)";
+      cursorDot.style.background = "transparent";
+      cursorDot.style.boxShadow = "0 0 0 1px rgba(0,0,0,.35)";
+  
+      placeOverlayAt(lastPointer.x, lastPointer.y);
+      return;
+    }
+  
+    // ERASER: kwadrat overlay, bez strzałki
+    if (tool === TOOL.ERASER) {
+      setCursorClass("none", false);
+      setFabricCursors("none", "none", "none");
+
+      const z = fabricCanvas.getZoom();
+      const d = Math.max(6, Math.round(eraserSize * z));
+      cursorDot.style.width = `${d}px`;
+      cursorDot.style.height = `${d}px`;
+      cursorDot.style.borderRadius = "2px";
+      cursorDot.style.border = "1px solid rgba(255,255,255,.9)";
+      cursorDot.style.background = "transparent";
+      cursorDot.style.boxShadow = "0 0 0 1px rgba(0,0,0,.35)";
+  
+      placeOverlayAt(lastPointer.x, lastPointer.y);
+      return;
+    }
+  
+    // TEXT: kursor tekstowy (I-beam)
+    if (tool === TOOL.TEXT) {
+      setCursorClass("none", false);
+      setFabricCursors("text", "text", "text");
+      hideOverlayCursor();
       return;
     }
 
-    // --- MIX TYPÓW: pokazujemy TYLKO wspólne ---
-    // fill: wspólne dla fillShapes + text (oba mają fill), ale NIE z liniami
-    // stroke: wspólne dla fillShapes + strokeObjs (oba mają stroke), ale NIE z tekstem
-    const showFill = hasFillShapes && !hasStrokeObjs;  // fillShapes SAME lub z tekstem
-    const showStroke = (hasFillShapes || hasStrokeObjs) && !hasText; // fillShapes+strokeObjs, BEZ tekstu
+    // SHAPES + POLY: krzyżyk
+    setCursorClass("cross", false);
+    setFabricCursors("crosshair", "crosshair", "crosshair");
+  }
 
-    // Czy są JAKIEKOLWIEK wspólne?
-    if (!showFill && !showStroke) { ctxHide(); return; }
-
-    let html = "";
-    if (showFill) {
-      const objsWithFill = hasText ? [...textObjs, ...fillShapes] : fillShapes;
-      const fills = objsWithFill.map(o => o.fill || "transparent");
-      const fillCol = allSame(fills);
-      html += `<div class="ctxGroup"><span class="ctxLabel">Wyp.</span>${ctxColorBtn(fillCol.mixed?"MIXED":fabricToBW(fillCol.value))}</div>`;
+  function placeOverlayAt(clientX, clientY) {
+    if (!cursorDot || !fabricCanvas) return;
+  
+    // FABRIC: realne eventy/cursor są na upperCanvasEl
+    const el = fabricCanvas.upperCanvasEl || drawCanvasEl;
+    if (!el) return;
+  
+    const rect = el.getBoundingClientRect();
+    const x = Math.round(clientX - rect.left);
+    const y = Math.round(clientY - rect.top);
+  
+    // poza obszarem => chowamy overlay
+    if (x < 0 || y < 0 || x > rect.width || y > rect.height) {
+      hideOverlayCursor();
+      return;
     }
-    if (showStroke) {
-      const allWithStroke = [...fillShapes, ...strokeObjs];
-      const strokeWs = allWithStroke.map(o => o.strokeWidth || 1);
-      const strokeCols = allWithStroke.map(o => o.stroke || "#ffffff");
-      const strokeW = allSame(strokeWs.map(Math.round));
-      const strokeCol = allSame(strokeCols);
-      html += `<div class="ctxGroup"><span class="ctxLabel">Obrys</span><input id="cObjStroke" class="ctxInput" type="number" min="0" max="50" step="1" value="${strokeW.mixed?'':strokeW.value}" placeholder="${strokeW.mixed?'—':''}"/></div>`;
-      html += `<div class="ctxGroup">${ctxColorBtn(strokeCol.mixed?"MIXED":fabricToBW(strokeCol.value))}</div>`;
-    }
+  
+    // center overlay
+    const w = cursorDot.offsetWidth || 0;
+    const h = cursorDot.offsetHeight || 0;
+    cursorDot.style.transform = `translate(${x - w / 2}px, ${y - h / 2}px)`;
+  }
 
-    ctxHTML(html);
+  // =========================================================
+  // UI: tools
+  // =========================================================
+  function syncToolButtons() {
+    setBtnOn(tSelect, tool === TOOL.SELECT);
+    setBtnOn(tPan, tool === TOOL.PAN);
 
-    // Eventy
-    const cbs = toolCtx?.querySelectorAll("[data-color-toggle]")||[];
-    if (showFill) {
-      const objsWithFill = hasText ? [...textObjs, ...fillShapes] : fillShapes;
-      const fillIdx = 0;
-      if(cbs[fillIdx]) cbs[fillIdx].addEventListener("click",()=>{
-        const c=fabricToBW(objsWithFill.find(x=>x.fill&&x.fill!=="transparent")?.fill||"#fff");
-        const n=c==="BLACK"?"#ffffff":"#000000";
-        objsWithFill.forEach(o=>o.set("fill",n)); fabricCanvas.renderAll(); renderObjectSettings();
+    setBtnOn(tBrush, tool === TOOL.BRUSH);
+    setBtnOn(tEraser, tool === TOOL.ERASER);
+    setBtnOn(tLine, tool === TOOL.LINE);
+    setBtnOn(tRect, tool === TOOL.RECT);
+    setBtnOn(tEllipse, tool === TOOL.ELLIPSE);
+    setBtnOn(tPoly, tool === TOOL.POLY);
+
+    if (tPolyDone) tPolyDone.disabled = !(tool === TOOL.POLY && polyPoints.length >= 3);
+  }
+
+  function applyToolBehavior() {
+    if (!fabricCanvas) return;
+
+    const setAll = ({ selectable, evented }) => {
+      fabricCanvas.forEachObject(o => {
+        o.selectable = !!selectable;
+        o.evented = !!evented; // <-- KLUCZ
       });
+    };
+
+    if (tool === TOOL.SELECT) {
+      fabricCanvas.isDrawingMode = false;
+      fabricCanvas.selection = true;
+
+      setAll({ selectable: true, evented: true });
+
+      // lepsze trafianie cienkich obiektów
+      fabricCanvas.perPixelTargetFind = true;
+      fabricCanvas.targetFindTolerance = 10;
+
+      clearPolyDraft();
     }
-    if (showStroke) {
-      const allWithStroke = [...fillShapes, ...strokeObjs];
-      const strokeIdx = showFill ? 1 : 0;
-      document.getElementById("cObjStroke")?.addEventListener("input", e => { allWithStroke.forEach(o=>o.set("strokeWidth",clamp(+e.target.value||1,0,50))); fabricCanvas.renderAll(); });
-      if(cbs[strokeIdx]) cbs[strokeIdx].addEventListener("click",()=>{
-        const c=fabricToBW(allWithStroke.find(x=>x.stroke&&x.stroke!=="transparent")?.stroke||"#fff");
-        const n=c==="BLACK"?"#ffffff":"#000000";
-        allWithStroke.forEach(o=>o.set("stroke",n)); fabricCanvas.renderAll(); renderObjectSettings();
-      });
+    else if (tool === TOOL.PAN) {
+      fabricCanvas.isDrawingMode = false;
+      fabricCanvas.selection = false;
+      fabricCanvas.discardActiveObject();
+
+      // NIE zaznaczamy, ale eventy mają działać (hover/target)
+      setAll({ selectable: false, evented: true });
+
+      fabricCanvas.perPixelTargetFind = false;
+      fabricCanvas.targetFindTolerance = 0;
+
+      clearPolyDraft();
+    }
+    else if (tool === TOOL.TEXT) {
+      fabricCanvas.isDrawingMode = false;
+      fabricCanvas.selection = true;
+      fabricCanvas.discardActiveObject();
+
+      setAll({ selectable: true, evented: true });
+
+      fabricCanvas.perPixelTargetFind = false;
+      fabricCanvas.targetFindTolerance = 0;
+
+      clearPolyDraft();
+    }
+    else if (tool === TOOL.BRUSH) {
+      fabricCanvas.isDrawingMode = true;
+      fabricCanvas.selection = false;
+      fabricCanvas.discardActiveObject();
+  
+      // ważne: evented=true zostaje, selectable=false
+      setAll({ selectable: false, evented: true });
+  
+      fabricCanvas.perPixelTargetFind = false;
+      fabricCanvas.targetFindTolerance = 0;
+  
+      clearPolyDraft();
+      applyBrushStyle();
+    }
+    else if (tool === TOOL.ERASER) {
+      fabricCanvas.isDrawingMode = false;
+      fabricCanvas.selection = false;
+      fabricCanvas.discardActiveObject();
+  
+      // gumka MUSI mieć targetowanie
+      setAll({ selectable: false, evented: true });
+  
+      fabricCanvas.perPixelTargetFind = true;
+      fabricCanvas.targetFindTolerance = 10;
+  
+      clearPolyDraft();
+    }
+    else {
+      // figury + POLY
+      fabricCanvas.isDrawingMode = false;
+      fabricCanvas.selection = false;
+      fabricCanvas.discardActiveObject();
+  
+      // evented=true musi zostać, żeby gumka działała zawsze
+      setAll({ selectable: false, evented: true });
+  
+      fabricCanvas.perPixelTargetFind = false;
+      fabricCanvas.targetFindTolerance = 0;
+  
+      if (tool !== TOOL.POLY) clearPolyDraft();
+    }
+  
+    syncToolButtons();
+    updateCursorVisual();
+    schedulePreview(80);
+  }
+
+  function setBaseTool(next) {
+    baseTool = next;
+    // jeśli nie trzymamy temp-modyfikatorów — zmieniamy od razu
+    if (!holdSpace && !holdCtrl) {
+      tool = baseTool;
+      applyToolBehavior();
+      renderToolSettings();
     }
   }
 
@@ -328,22 +1379,18 @@ export function initDrawEditor(ctx) {
 
   /** Centralna funkcja: renderuje ustawienia wg aktualnego narzędzia + zaznaczenia */
   function renderCurrentSettings() {
-    // TEXT tool: jeśli zaznaczony tekst → pokaż pełne ustawienia tekstu
-    if (tool === TOOL.TEXT) {
-      const objs = getSelectedObjects().filter(isTextObj);
-      if (objs.length) {
-        renderObjectSettings();
-        return;
-      }
+    const obj = getActiveObj();
+
+    // TEXT tool: jeśli zaznaczony tekst → pokaż ustawienia tekstu (edit mode)
+    if (tool === TOOL.TEXT && isTextObj(obj)) {
+      renderTextObjectSettings(obj);
+      return;
     }
 
-    // SELECT tool: jeśli coś zaznaczone → pokaż ustawienia obiektów
-    if (tool === TOOL.SELECT) {
-      const objs = getSelectedObjects();
-      if (objs.length) {
-        renderObjectSettings();
-        return;
-      }
+    // SELECT tool: jeśli zaznaczony obiekt → pokaż jego ustawienia
+    if (tool === TOOL.SELECT && obj) {
+      renderObjectSettings(obj);
+      return;
     }
 
     // Inne narzędzia → pokaż ustawienia narzędzia
@@ -1058,7 +2105,7 @@ export function initDrawEditor(ctx) {
       pushUndo();
       ctx.markDirty?.();
       schedulePreview(80);
-      renderCurrentSettings();
+      renderObjectSettings(fabricCanvas.getActiveObject());
     });
 
     fabricCanvas.on("object:removed", () => {
@@ -1201,7 +2248,7 @@ export function initDrawEditor(ctx) {
     fabricCanvas.on("mouse:move", (opt) => {
       const ev = opt.e;
       lastPointer = { x: ev.clientX, y: ev.clientY };
-      if (tool === TOOL.BRUSH || tool === TOOL.ERASER || tool === TOOL.TEXT) {
+      if (tool === TOOL.BRUSH || tool === TOOL.ERASER) {
         placeOverlayAt(ev.clientX, ev.clientY);
       } else {
         hideOverlayCursor();
@@ -1262,30 +2309,12 @@ export function initDrawEditor(ctx) {
     fabricCanvas.on("mouse:out",  () => updateCursorVisual());
 
 
-    // Dwuklik kończy polygon LUB edytuje tekst
+    // Dwuklik kończy polygon
     drawCanvasEl.addEventListener("dblclick", (ev) => {
       if (ctx.getMode?.() !== "DRAW") return;
-
-      // Polygon: finalize
-      if (tool === TOOL.POLY) {
-        ev.preventDefault();
-        finalizePolygon();
-        return;
-      }
-
-      // SELECT tool: double-click on text → edit mode
-      if (tool === TOOL.SELECT && fabricCanvas) {
-        const pointer = fabricCanvas.getPointer(ev);
-        const target = fabricCanvas.findTarget(ev);
-        if (target && (target.type === "i-text" || target.type === "textbox" || target.type === "text")) {
-          ev.preventDefault();
-          fabricCanvas.setActiveObject(target);
-          target.enterEditing();
-          target.selectAll();
-          fabricCanvas.renderAll();
-          return;
-        }
-      }
+      if (tool !== TOOL.POLY) return;
+      ev.preventDefault();
+      finalizePolygon();
     });
 
     // Wheel zoom (tylko select/pan) + min zoom = 1
@@ -1562,10 +2591,9 @@ export function initDrawEditor(ctx) {
     // Poly done
     tPolyDone?.addEventListener("click", () => finalizePolygon());
 
-    // Background toolbar button
+    // Background toggle
     tBg?.addEventListener("click", () => {
-      bg = bg === "BLACK" ? "WHITE" : "BLACK";
-      syncDynamicIcons();
+      toggleBg();
       if (fabricCanvas) {
         fabricCanvas.backgroundColor = bgColor();
         fabricCanvas.requestRenderAll();
@@ -1584,7 +2612,7 @@ export function initDrawEditor(ctx) {
   // =========================================================
   return {
     open(payload = null) {
-      ctx.show(paneDraw, true);
+      show(paneDraw, true);
       loadDrawFonts();
 
       if (!uiBound) { bindUiOnce(); uiBound = true; }
@@ -1595,7 +2623,7 @@ export function initDrawEditor(ctx) {
 
       // reset sesji rysunku (ustawienia narzędzi + kolory zostają w pamięci sesji)
       if (fabricCanvas) {
-        ctxHide();
+        hideSettings();
         clearPolyDraft();
 
         if (fabricData) {
@@ -1644,8 +2672,8 @@ export function initDrawEditor(ctx) {
     },
 
     close() {
-      ctx.show(paneDraw, false);
-      ctxHide();
+      show(paneDraw, false);
+      hideSettings();
       hideOverlayCursor();
     },
 
