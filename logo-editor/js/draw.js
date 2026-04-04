@@ -150,13 +150,26 @@ export function initDrawEditor(ctx) {
         <div class="ctxGroup"><span class="ctxLabel">Kolor</span>${ctxColorBtn(fg)}</div>`);
       document.getElementById("cStrokeW")?.addEventListener("input", e => { strokeWidth = clamp(+e.target.value||1,1,50); });
       ctxColorBind(() => { fg = fg==="BLACK"?"WHITE":"BLACK"; syncDynamicIcons(); renderToolSettings(); });
-    } else if (tn === "rect" || tn === "ellipse" || tn === "poly") {
+    } else if (tn === "rect" || tn === "ellipse") {
       ctxHTML(`<div class="ctxGroup"><span class="ctxLabel">Obrys</span><input id="cStrokeW" class="ctxInput" type="number" min="0" max="50" step="1" value="${strokeWidth}"/></div>
         <div class="ctxGroup">${ctxColorBtn(fg)}</div>
         <div class="ctxGroup"><label class="ctxChk"><input type="checkbox" id="cFill" ${fillEnabled?"checked":""}/>Wypeł.</label>${ctxColorBtn(fabricToBW(fillColor))}</div>`);
       document.getElementById("cStrokeW")?.addEventListener("input", e => { strokeWidth = clamp(+e.target.value||1,0,50); });
       document.getElementById("cFill")?.addEventListener("change", e => { fillEnabled = e.target.checked; renderToolSettings(); });
       ctxColorBind(() => { fg = fg==="BLACK"?"WHITE":"BLACK"; fillColor = fillColor==="#000000"?"#ffffff":"#000000"; renderToolSettings(); });
+    } else if (tn === "poly") {
+      const isDrawing = polyPoints.length > 0;
+      let html = `<div class="ctxGroup"><span class="ctxLabel">Obrys</span><input id="cStrokeW" class="ctxInput" type="number" min="0" max="50" step="1" value="${strokeWidth}"/></div>
+        <div class="ctxGroup">${ctxColorBtn(fg)}</div>
+        <div class="ctxGroup"><label class="ctxChk"><input type="checkbox" id="cFill" ${fillEnabled?"checked":""}/>Wypeł.</label>${ctxColorBtn(fabricToBW(fillColor))}</div>`;
+      if (isDrawing) {
+        html += `<div class="ctxGroup"><button class="ctxBtn on" id="cPolyDone" style="color:#4fc3f7;border-color:rgba(79,195,247,.35);">✓ Zamknij</button></div>`;
+      }
+      ctxHTML(html);
+      document.getElementById("cStrokeW")?.addEventListener("input", e => { strokeWidth = clamp(+e.target.value||1,0,50); });
+      document.getElementById("cFill")?.addEventListener("change", e => { fillEnabled = e.target.checked; renderToolSettings(); });
+      ctxColorBind(() => { fg = fg==="BLACK"?"WHITE":"BLACK"; fillColor = fillColor==="#000000"?"#ffffff":"#000000"; renderToolSettings(); });
+      document.getElementById("cPolyDone")?.addEventListener("click", () => finalizePolygon());
     } else if (tn === "text") {
       const fntLbl = DRAW_FONTS.find(f=>f.value===textFont)?.label || "Font";
       ctxHTML(`<div class="ctxGroup"><button class="ctxBtn" id="cFont" style="min-width:80px;max-width:120px;justify-content:space-between;display:flex;"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${fntLbl}</span><span style="opacity:.4;">▾</span></button></div>
