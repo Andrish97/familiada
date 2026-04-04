@@ -274,14 +274,18 @@
 }
 
 /* =========================================================
-   DRAW SETTINGS (kontekstowe ustawienia pod toolbarem)
+   DRAW SETTINGS (kontekstowe ustawienia nad canvasem)
 ========================================================= */
 .drawSettings{
-  display: none;
-  width: 100%;
-  padding: 8px 10px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  padding: 6px 8px;
+  background: rgba(10,10,14,.88);
+  backdrop-filter: blur(6px);
   border-bottom: 1px solid rgba(255,255,255,.08);
-  background: rgba(10,10,14,.6);
 }
 .drawSettings.visible{
   display: block;
@@ -515,11 +519,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 10px;
+  padding: 6px;
+  position: relative;
 }
 .drawStageRatio{
   width: 100%;
-  aspect-ratio: 26 / 11;
+  aspect-ratio: 11 / 9;
   border-radius: 16px;
   overflow: hidden;
   background: #0b0b0b;
