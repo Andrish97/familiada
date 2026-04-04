@@ -129,394 +129,161 @@ export function initDrawEditor(ctx) {
     toolCtx.innerHTML = "";
   }
 
-  function renderToolSettings() {
-    const toolName = tool.toLowerCase();
-    if (toolName === "brush") {
-      showSettings(`
-        <div class="rtToolRow">
-          <div class="rtGroup">
-            <div class="rtToolLbl">${t("logoEditor.draw.stroke")}</div>
-            <input id="drawStrokeWidth" class="inp" type="number" min="1" max="50" step="1" value="${strokeWidth}"/>
-          </div>
-        </div>
-      `);
-      document.getElementById("drawStrokeWidth")?.addEventListener("input", (e) => {
-        strokeWidth = clamp(Number(e.target.value) || 1, 1, 50);
-        updateCursor();
-      });
-    } else if (toolName === "text") {
-      const fontLabel = DRAW_FONTS.find(f => f.value === textFont)?.label || "Font";
-      showSettings(`
-        <div class="rtToolRow">
-          <div class="rtGroup">
-            <div class="rtToolLbl">${t("logoEditor.draw.fontFamily")}</div>
-            <button class="btn sm" id="drawFontBtn" type="button" style="min-width:180px;max-width:280px;height:30px;justify-content:space-between;display:flex;align-items:center;">
-              <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${fontLabel}</span>
-              <span style="opacity:.5;">▾</span>
-            </button>
-          </div>
-          <div class="rtGroup">
-            <div class="rtToolLbl">${t("logoEditor.draw.fontSize")}</div>
-            <input id="drawTextSize" class="inp" type="number" min="10" max="220" step="1" value="${textFontSize}"/>
-          </div>
-          <div class="rtGroup">
-            <div class="rtToolLbl">${t("logoEditor.draw.lineHeight")}</div>
-            <input id="drawTextLineH" class="inp" type="number" min="0.6" max="3.0" step="0.05" value="${textLineHeight}"/>
-          </div>
-          <div class="rtGroup">
-            <div class="rtToolLbl">${t("logoEditor.draw.letterSpacing")}</div>
-            <input id="drawTextSpacing" class="inp" type="number" min="0" max="20" step="0.5" value="${textLetterSpacing}"/>
-          </div>
-          <div class="rtGroup rtBtns">
-            <button class="btn sm" id="drawTextBold" type="button" ${textBold ? "on" : ""}>B</button>
-            <button class="btn sm" id="drawTextItalic" type="button" ${textItalic ? "on" : ""}>I</button>
-            <button class="btn sm" id="drawTextUnderline" type="button" ${textUnderline ? "on" : ""}>U</button>
-          </div>
-          <div class="rtGroup">
-            <button class="btn sm" id="drawTextAlign" type="button">${textAlign === "center" ? "⇆" : textAlign === "right" ? "⇥" : "⇤"}</button>
-          </div>
-        </div>
-      `);
-      document.getElementById("drawFontBtn")?.addEventListener("click", () => {
-        openDrawFontPicker((val) => {
-          textFont = val;
-          // Re-render to update button label
-          renderToolSettings();
-        }, textFont);
-      });
-      document.getElementById("drawTextSize")?.addEventListener("input", (e) => {
-        textFontSize = clamp(Number(e.target.value) || 130, 10, 220);
-      });
-      document.getElementById("drawTextLineH")?.addEventListener("input", (e) => {
-        textLineHeight = clamp(Number(e.target.value) || 1, 0.6, 3.0);
-      });
-      document.getElementById("drawTextSpacing")?.addEventListener("input", (e) => {
-        textLetterSpacing = clamp(Number(e.target.value) || 0, 0, 20);
-      });
-      document.getElementById("drawTextBold")?.addEventListener("click", (e) => {
-        textBold = !textBold;
-        e.target.classList.toggle("on", textBold);
-      });
-      document.getElementById("drawTextItalic")?.addEventListener("click", (e) => {
-        textItalic = !textItalic;
-        e.target.classList.toggle("on", textItalic);
-      });
-      document.getElementById("drawTextUnderline")?.addEventListener("click", (e) => {
-        textUnderline = !textUnderline;
-        e.target.classList.toggle("on", textUnderline);
-      });
-      document.getElementById("drawTextAlign")?.addEventListener("click", (e) => {
-        textAlign = textAlign === "left" ? "center" : textAlign === "center" ? "right" : "left";
-        e.target.textContent = textAlign === "left" ? "⇤" : textAlign === "right" ? "⇥" : "⇆";
-      });
-    } else if (toolName === "rect" || toolName === "ellipse" || toolName === "line") {
-      showSettings(`
-        <div class="rtToolRow">
-          <div class="rtGroup">
-            <div class="rtToolLbl">${t("logoEditor.draw.stroke")}</div>
-            <input id="drawStrokeWidth" class="inp" type="number" min="1" max="50" step="1" value="${strokeWidth}"/>
-          </div>
-          <div class="rtGroup">
-            <label class="chk"><input type="checkbox" id="drawFillCheck"/> ${t("logoEditor.draw.fill")}</label>
-            <input id="drawFillColor" class="inp" type="color" value="${fillColor}" style="width:40px;height:30px;padding:2px"/>
-          </div>
-        </div>
-      `);
-      document.getElementById("drawStrokeWidth")?.addEventListener("input", (e) => {
-        strokeWidth = clamp(Number(e.target.value) || 1, 1, 50);
-      });
-      document.getElementById("drawFillCheck")?.addEventListener("change", (e) => {
-        fillEnabled = e.target.checked;
-        document.getElementById("drawFillColor").disabled = !fillEnabled;
-      });
-      document.getElementById("drawFillColor")?.addEventListener("input", (e) => {
-        fillColor = e.target.value;
-      });
-    } else {
-      hideSettings();
-    }
+  // Helper: przycisk koloru (prostokątny, cały wypełniony)
+  function ctxColorBtn(value) {
+    const isBlack = value === "BLACK";
+    return `<button class="ctxColorBtn ${isBlack ? 'black' : 'white'}" type="button" data-color-toggle="${isBlack ? 'black' : 'white'}" title="${isBlack ? 'Czarny' : 'Biały'}"></button>`;
   }
-
-  function renderObjectSettings(obj) {
-    if (!obj) { hideSettings(); return; }
-    const type = obj.type;
-    if (type === "i-text" || type === "textbox" || type === "text") {
-      // SELECT tool + text → tylko kolor
-      const fillVal = obj.fill || "#ffffff";
-      showSettings(`
-        <div class="rtToolRow">
-          <div class="rtGroup">
-            <label class="chk" style="display:flex;align-items:center;gap:6px;">
-              <input id="drawObjFillCheck" type="checkbox" ${fillVal && fillVal !== "transparent" ? "checked" : ""}/>
-              ${t("logoEditor.draw.fill")}
-            </label>
-            <input id="drawObjFillColor" class="inp" type="color" value="${fillVal && fillVal !== "transparent" ? fillVal : "#ffffff"}" style="width:40px;height:30px;padding:2px"/>
-          </div>
-        </div>
-      `);
-      document.getElementById("drawObjFillCheck")?.addEventListener("change", (e) => {
-        obj.set("fill", e.target.checked ? obj.fill || "#ffffff" : "transparent");
-        fabricCanvas.renderAll();
-        const ci = document.getElementById("drawObjFillColor");
-        if (ci) ci.disabled = !e.target.checked;
-      });
-      document.getElementById("drawObjFillColor")?.addEventListener("input", (e) => {
-        obj.set("fill", e.target.value);
-        fabricCanvas.renderAll();
-      });
-      const ci = document.getElementById("drawObjFillColor");
-      if (ci) ci.disabled = !(fillVal && fillVal !== "transparent");
-    } else if (type === "rect" || type === "ellipse" || type === "line") {
-      showSettings(`
-        <div class="rtToolRow">
-          <div class="rtGroup">
-            <div class="rtToolLbl">${t("logoEditor.draw.stroke")}</div>
-            <input id="drawObjStroke" class="inp" type="number" min="0" max="50" step="1" value="${obj.strokeWidth || 1}"/>
-          </div>
-          <div class="rtGroup">
-            <label class="chk"><input type="checkbox" id="drawObjFillCheck" ${obj.fill && obj.fill !== "transparent" ? "checked" : ""}/> ${t("logoEditor.draw.fill")}</label>
-            <input id="drawObjFillColor" class="inp" type="color" value="${obj.fill && obj.fill !== "transparent" ? obj.fill : "#000000"}" style="width:40px;height:30px;padding:2px"/>
-          </div>
-        </div>
-      `);
-      document.getElementById("drawObjStroke")?.addEventListener("input", (e) => {
-        obj.set("strokeWidth", clamp(Number(e.target.value) || 1, 0, 50));
-        canvas.renderAll();
-      });
-      document.getElementById("drawObjFillCheck")?.addEventListener("change", (e) => {
-        obj.set("fill", e.target.checked ? fillColor : "transparent");
-        canvas.renderAll();
-      });
-      document.getElementById("drawObjFillColor")?.addEventListener("input", (e) => {
-        obj.set("fill", e.target.value);
-        canvas.renderAll();
-      });
-    } else {
-      hideSettings();
-    }
-  }
-
-  /** Ustawienia zaznaczonego obiektu TEKSTU (font, rozmiar, B/I/U, align) */
-  function renderTextObjectSettings(obj) {
-    if (!obj) { hideSettings(); return; }
-    const objFont = obj.fontFamily || "";
-    const fontLabel = DRAW_FONTS.find(f => f.value === objFont)?.label || "Font";
-    showSettings(`
-      <div class="rtToolRow">
-        <div class="rtGroup">
-          <div class="rtToolLbl">${t("logoEditor.draw.fontFamily")}</div>
-          <button class="btn sm" id="drawFontBtn" type="button" style="min-width:180px;max-width:280px;height:30px;justify-content:space-between;display:flex;align-items:center;">
-            <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${fontLabel}</span>
-            <span style="opacity:.5;">▾</span>
-          </button>
-        </div>
-        <div class="rtGroup">
-          <div class="rtToolLbl">${t("logoEditor.draw.fontSize")}</div>
-          <input id="drawObjTextSize" class="inp" type="number" min="10" max="220" step="1" value="${Math.round(obj.fontSize || 40)}"/>
-        </div>
-        <div class="rtGroup">
-          <div class="rtToolLbl">${t("logoEditor.draw.lineHeight")}</div>
-          <input id="drawObjTextLineH" class="inp" type="number" min="0.6" max="3.0" step="0.05" value="${obj.lineHeight || 1}"/>
-        </div>
-        <div class="rtGroup">
-          <div class="rtToolLbl">${t("logoEditor.draw.letterSpacing")}</div>
-          <input id="drawObjTextSpacing" class="inp" type="number" min="0" max="20" step="0.5" value="${obj.charSpacing || 0}"/>
-        </div>
-        <div class="rtGroup rtBtns">
-          <button class="btn sm" id="drawObjTextBold" type="button" ${obj.fontWeight === "bold" ? "on" : ""}>B</button>
-          <button class="btn sm" id="drawObjTextItalic" type="button" ${obj.fontStyle === "italic" ? "on" : ""}>I</button>
-          <button class="btn sm" id="drawObjTextUnderline" type="button" ${obj.underline ? "on" : ""}>U</button>
-        </div>
-        <div class="rtGroup">
-          <button class="btn sm" id="drawObjTextAlign" type="button">${obj.textAlign === "center" ? "⇆" : obj.textAlign === "right" ? "⇥" : "⇤"}</button>
-        </div>
-      </div>
-    `);
-    document.getElementById("drawFontBtn")?.addEventListener("click", () => {
-      openDrawFontPicker((val) => {
-        obj.set("fontFamily", val);
-        fabricCanvas.renderAll();
-        // Re-render to update button label
-        renderTextObjectSettings(obj);
-      }, objFont);
-    });
-    document.getElementById("drawObjTextSize")?.addEventListener("input", (e) => {
-      obj.set("fontSize", clamp(Number(e.target.value) || 40, 10, 220));
-      fabricCanvas.renderAll();
-    });
-    document.getElementById("drawObjTextLineH")?.addEventListener("input", (e) => {
-      obj.set("lineHeight", clamp(Number(e.target.value) || 1, 0.6, 3.0));
-      fabricCanvas.renderAll();
-    });
-    document.getElementById("drawObjTextSpacing")?.addEventListener("input", (e) => {
-      obj.set("charSpacing", clamp(Number(e.target.value) || 0, 0, 20));
-      fabricCanvas.renderAll();
-    });
-    document.getElementById("drawObjTextBold")?.addEventListener("click", (e) => {
-      const isBold = obj.fontWeight === "bold";
-      obj.set("fontWeight", isBold ? "normal" : "bold");
-      e.target.classList.toggle("on", !isBold);
-      fabricCanvas.renderAll();
-    });
-    document.getElementById("drawObjTextItalic")?.addEventListener("click", (e) => {
-      const isItalic = obj.fontStyle === "italic";
-      obj.set("fontStyle", isItalic ? "normal" : "italic");
-      e.target.classList.toggle("on", !isItalic);
-      fabricCanvas.renderAll();
-    });
-    document.getElementById("drawObjTextUnderline")?.addEventListener("click", (e) => {
-      obj.set("underline", !obj.underline);
-      e.target.classList.toggle("on", !obj.underline);
-      fabricCanvas.renderAll();
-    });
-    document.getElementById("drawObjTextAlign")?.addEventListener("click", (e) => {
-      const next = obj.textAlign === "left" ? "center" : obj.textAlign === "center" ? "right" : "left";
-      obj.set("textAlign", next);
-      e.target.textContent = next === "left" ? "⇤" : next === "right" ? "⇥" : "⇆";
-      fabricCanvas.renderAll();
+  function ctxColorBind(fn) {
+    toolCtx?.querySelectorAll("[data-color-toggle]").forEach(btn => {
+      btn.addEventListener("click", () => fn(btn.dataset.colorToggle));
     });
   }
+  function fabricToBW(color) {
+    if (!color || color === "transparent" || color === "rgba(0,0,0,0)") return "WHITE";
+    const c = color.toLowerCase().trim();
+    if (c === "#000" || c === "#000000" || c === "rgb(0,0,0)" || c === "rgb(0, 0, 0)" || c === "black") return "BLACK";
+    return "WHITE";
+  }
+  function allSame(arr) {
+    if (!arr.length) return { mixed: false, value: undefined };
+    const v = arr[0];
+    const all = arr.every(x => x === v);
+    return { mixed: !all, value: v };
+  }
 
-    // =========================================================
-  // Ikony SVG (jako zmienne) + wstrzyknięcie do przycisków
   // =========================================================
+  // Ustawienia narzędzia (gdy nic nie zaznaczone)
+  // =========================================================
+  function renderToolSettings() {
+    const tn = tool.toLowerCase();
 
-  const ICONS = {
-    // 1) SELECT — (na razie prosta strzałka; będziemy ją “upiększać” jako pierwszą)
-    tSelect: `
-      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <path d="M5 3l6 14 2-6 6-2L5 3z"></path>
-      </svg>
-    `,
+    if (tn === "brush") {
+      showSettings(`
+        <div class="ctxGroup"><span class="ctxLabel">Grubość</span><input id="cStrokeW" class="ctxInput" type="number" min="1" max="50" step="1" value="${strokeWidth}"/></div>
+        <div class="ctxGroup"><span class="ctxLabel">Kolor</span>${ctxColorBtn(fg)}</div>
+      `);
+      document.getElementById("cStrokeW")?.addEventListener("input", e => { strokeWidth = clamp(+e.target.value||1,1,50); updateCursor(); });
+      ctxColorBind(() => { fg = fg==="BLACK"?"WHITE":"BLACK"; syncDynamicIcons(); renderToolSettings(); });
+    }
+    else if (tn === "eraser") {
+      showSettings(`<div class="ctxGroup"><span class="ctxLabel">Rozmiar</span><input id="cEraser" class="ctxInput" type="number" min="1" max="50" step="1" value="${eraserSize}"/></div>`);
+      document.getElementById("cEraser")?.addEventListener("input", e => { eraserSize = clamp(+e.target.value||10,1,50); updateCursor(); });
+    }
+    else if (tn === "line") {
+      showSettings(`
+        <div class="ctxGroup"><span class="ctxLabel">Grubość</span><input id="cStrokeW" class="ctxInput" type="number" min="1" max="50" step="1" value="${strokeWidth}"/></div>
+        <div class="ctxGroup"><span class="ctxLabel">Kolor</span>${ctxColorBtn(fg)}</div>
+      `);
+      document.getElementById("cStrokeW")?.addEventListener("input", e => { strokeWidth = clamp(+e.target.value||1,1,50); });
+      ctxColorBind(() => { fg = fg==="BLACK"?"WHITE":"BLACK"; syncDynamicIcons(); renderToolSettings(); });
+    }
+    else if (tn === "rect" || tn === "ellipse" || tn === "poly") {
+      const isPolyDrawing = tn === "poly" && polyPoints.length > 0;
+      let html = `
+        <div class="ctxGroup"><span class="ctxLabel">Obrys</span><input id="cStrokeW" class="ctxInput" type="number" min="0" max="50" step="1" value="${strokeWidth}"/></div>
+        <div class="ctxGroup"><span class="ctxLabel">Kolor</span>${ctxColorBtn(fg)}</div>
+        <div class="ctxGroup"><label class="ctxChk"><input type="checkbox" id="cFill" ${fillEnabled?"checked":""}/>Wypeł.</label>${ctxColorBtn(fabricToBW(fillColor))}</div>
+      `;
+      if (isPolyDrawing) {
+        html += `<div class="ctxGroup"><button class="ctxBtn on" id="cPolyDone" style="color:#4fc3f7;border-color:rgba(79,195,247,.35);">✓ Zamknij</button></div>`;
+      }
+      showSettings(html);
+      document.getElementById("cStrokeW")?.addEventListener("input", e => { strokeWidth = clamp(+e.target.value||1,0,50); });
+      document.getElementById("cFill")?.addEventListener("change", e => { fillEnabled = e.target.checked; renderToolSettings(); });
+      ctxColorBind(() => { fg = fg==="BLACK"?"WHITE":"BLACK"; fillColor = fillColor==="#000000"?"#ffffff":"#000000"; renderToolSettings(); });
+      document.getElementById("cPolyDone")?.addEventListener("click", () => finalizePolygon());
+    }
+    else if (tn === "text") {
+      const fntLbl = DRAW_FONTS.find(f=>f.value===textFont)?.label || "Font";
+      const alignIcon = (al) => al === "left" ? "⇤" : al === "right" ? "⇥" : "⇆";
+      showSettings(`
+        <div class="ctxGroup"><button class="ctxBtn" id="cFont" style="min-width:90px;max-width:140px;justify-content:space-between;display:flex;"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${fntLbl}</span><span style="opacity:.4;">▾</span></button></div>
+        <div class="ctxGroup"><span class="ctxLabel">Roz.</span><input id="cSz" class="ctxInput" type="number" min="10" max="220" step="1" value="${textFontSize}"/></div>
+        <div class="ctxGroup"><span class="ctxLabel">Linia</span><input id="cLH" class="ctxInput" type="number" min="0.6" max="3.0" step="0.05" value="${textLineHeight}"/></div>
+        <div class="ctxGroup"><span class="ctxLabel">Odst.</span><input id="cSp" class="ctxInput" type="number" min="0" max="20" step="0.5" value="${textLetterSpacing}"/></div>
+        <div class="ctxGroup"><button class="ctxBtn" id="cB" ${textBold?"on":""}>B</button><button class="ctxBtn" id="cI" ${textItalic?"on":""}>I</button><button class="ctxBtn" id="cU" ${textUnderline?"on":""}>U</button></div>
+        <div class="ctxGroup"><button class="ctxBtn" id="cAL">${alignIcon(textAlign)}</button></div>
+        <div class="ctxGroup"><span class="ctxLabel">Kolor</span>${ctxColorBtn(fg)}</div>
+      `);
+      document.getElementById("cFont")?.addEventListener("click", () => { openDrawFontPicker(v=>{textFont=v;renderToolSettings();},textFont); });
+      document.getElementById("cSz")?.addEventListener("input", e => { textFontSize = clamp(+e.target.value||130,10,220); });
+      document.getElementById("cLH")?.addEventListener("input", e => { textLineHeight = clamp(+e.target.value||1,0.6,3); });
+      document.getElementById("cSp")?.addEventListener("input", e => { textLetterSpacing = clamp(+e.target.value||0,0,20); });
+      document.getElementById("cB")?.addEventListener("click", e => { textBold=!textBold; e.target.classList.toggle("on",textBold); });
+      document.getElementById("cI")?.addEventListener("click", e => { textItalic=!textItalic; e.target.classList.toggle("on",textItalic); });
+      document.getElementById("cU")?.addEventListener("click", e => { textUnderline=!textUnderline; e.target.classList.toggle("on",textUnderline); });
+      document.getElementById("cAL")?.addEventListener("click", e => {
+        textAlign = textAlign==="left"?"center":textAlign==="center"?"right":"left";
+        e.target.textContent = alignIcon(textAlign);
+      });
+      ctxColorBind(() => { fg = fg==="BLACK"?"WHITE":"BLACK"; syncDynamicIcons(); renderToolSettings(); });
+    }
+    else {
+      hideSettings();
+    }
+  }
 
-    // 2) PAN
-    tPan: `
-      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <path d="M8 12V7.2a1.2 1.2 0 0 1 2.4 0V12"></path>
-        <path d="M10.4 12V6.4a1.2 1.2 0 0 1 2.4 0V12"></path>
-        <path d="M12.8 12V7.8a1.2 1.2 0 0 1 2.4 0V12"></path>
-        <path d="M15.2 12V9.2a1.2 1.2 0 0 1 2.4 0V14.2"></path>
-        <path d="M8 12c0 6 2.6 8 6.6 8 3.1 0 5.4-2 5.4-5.1v-.7"></path>
-      </svg>
-    `,
+  function getSelectedObjects() {
+    if (!fabricCanvas) return [];
+    const active = fabricCanvas.getActiveObjects();
+    return Array.isArray(active) ? active.filter(Boolean) : [];
+  }
 
-    // 3) ZOOM IN
-    tZoomIn: `
-      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <circle cx="10" cy="10" r="6"></circle>
-        <path d="M21 21l-5.2-5.2"></path>
-        <path d="M10 7v6"></path>
-        <path d="M7 10h6"></path>
-      </svg>
-    `,
+  /** Multi-selection: TYLKO przecięcie właściwości */
+  function renderObjectSettings() {
+    const objs = getSelectedObjects();
+    if (!objs.length) { hideSettings(); return; }
 
-    // 4) ZOOM OUT
-    tZoomOut: `
-      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <circle cx="10" cy="10" r="6"></circle>
-        <path d="M21 21l-5.2-5.2"></path>
-        <path d="M7 10h6"></path>
-      </svg>
-    `,
+    const textObjs = objs.filter(o => o.type === "i-text" || o.type === "textbox" || o.type === "text");
+    const fillShapes = objs.filter(o => o.type === "rect" || o.type === "ellipse" || o.type === "polygon");
+    const lineObjs = objs.filter(o => o.type === "line" || o.type === "polyline" || o.type === "path");
+    const hasText = textObjs.length > 0;
+    const hasFillShapes = fillShapes.length > 0;
+    const hasLines = lineObjs.length > 0;
 
-    // 5) TEXT
-    tText: `
-      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <path d="M5 6h14"></path>
-        <path d="M12 6v12"></path>
-        <path d="M8 18h8"></path>
-      </svg>
-    `,
+    // Tekst z czymkolwiek → NIC
+    if (hasText) { hideSettings(); return; }
 
-    // 6) BRUSH
-    tBrush: `
-      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <path d="M4 20l4-1 11-11-3-3L5 16l-1 4z"></path>
-        <path d="M14 6l3 3"></path>
-      </svg>
-    `,
-    
-    // 7) ERASER
-    tEraser: `
-      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <path d="M7 16l8.5-8.5a1.8 1.8 0 0 1 2.5 0l1 1a1.8 1.8 0 0 1 0 2.5L11 19H7l-2-2 2-1z"></path>
-        <path d="M11 19h10"></path>
-        <path d="M9.2 14.8l4 4"></path>
-      </svg>
-    `,
+    // Tylko kształty z fill (rect/ellipse/polygon)
+    if (hasFillShapes && !hasLines) {
+      const fills = fillShapes.map(o => o.fill || "transparent");
+      const fillCol = allSame(fills);
+      const strokeWs = fillShapes.map(o => o.strokeWidth || 1);
+      const strokeCols = fillShapes.map(o => o.stroke || "#ffffff");
+      const strokeW = allSame(strokeWs.map(Math.round));
+      const strokeCol = allSame(strokeCols);
 
-    // 8) LINE
-    tLine: `
-      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <path d="M6 18L18 6"></path>
-        <circle class="fill" cx="6" cy="18" r="1.2"></circle>
-        <circle class="fill" cx="18" cy="6" r="1.2"></circle>
-      </svg>
-    `,
+      showSettings(`
+        <div class="ctxGroup"><span class="ctxLabel">Obrys</span><input id="cObjStroke" class="ctxInput" type="number" min="0" max="50" step="1" value="${strokeW.mixed?'':strokeW.value}" placeholder="${strokeW.mixed?'—':''}"/></div>
+        <div class="ctxGroup">${ctxColorBtn(strokeCol.mixed?"MIXED":fabricToBW(strokeCol.value))}</div>
+        <div class="ctxGroup"><label class="ctxChk"><input type="checkbox" id="cObjFill" ${fills.some(f=>f&&f!=="transparent")?"checked":""}/>Wypeł.</label>${ctxColorBtn(fillCol.mixed?"MIXED":fabricToBW(fillCol.value))}</div>
+      `);
+      document.getElementById("cObjStroke")?.addEventListener("input", e => { fillShapes.forEach(o=>o.set("strokeWidth",clamp(+e.target.value||1,0,50))); fabricCanvas.renderAll(); });
+      const cbs = toolCtx?.querySelectorAll("[data-color-toggle]")||[];
+      if(cbs[0]) cbs[0].addEventListener("click",()=>{const c=fabricToBW(fillShapes[0]?.stroke);const n=c==="BLACK"?"#ffffff":"#000000";fillShapes.forEach(o=>o.set("stroke",n));fabricCanvas.renderAll();renderObjectSettings();});
+      if(cbs[1]) cbs[1].addEventListener("click",()=>{const c=fabricToBW(fillShapes.find(x=>x.fill&&x.fill!=="transparent")?.fill||"#fff");const n=c==="BLACK"?"#ffffff":"#000000";fillShapes.forEach(o=>{if(o.fill!==undefined)o.set("fill",n)});fabricCanvas.renderAll();renderObjectSettings();});
+      document.getElementById("cObjFill")?.addEventListener("change",e=>{const nc=e.target.checked?"#ffffff":"transparent";fillShapes.forEach(o=>o.set("fill",nc));fabricCanvas.renderAll();renderObjectSettings();});
+      return;
+    }
 
-    // 9) RECT
-    tRect: `
-      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <rect x="6" y="7" width="12" height="10" rx="2"></rect>
-      </svg>
-    `,
+    // Mixed: fillShapes + lines → stroke tylko
+    if ((hasFillShapes || hasLines) && !hasText) {
+      const allWithStroke = [...fillShapes, ...lineObjs];
+      const strokeWs = allWithStroke.map(o => o.strokeWidth || 1);
+      const strokeCols = allWithStroke.map(o => o.stroke || "#ffffff");
+      const strokeW = allSame(strokeWs.map(Math.round));
+      const strokeCol = allSame(strokeCols);
 
-    // 10) ELLIPSE
-    tEllipse: `
-      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <ellipse cx="12" cy="12" rx="7" ry="5"></ellipse>
-      </svg>
-    `,
-
-    // 11) POLY
-    tPoly: `
-      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <path d="M12 6l7 14H5L12 6z"></path>
-      </svg>
-    `,
-
-    // 12) UNDO
-    tUndo: `
-      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <path d="M9 7H5v4"></path>
-        <path d="M5 11c2-4 6-6 10-4 2 1 4 3 4 6"></path>
-      </svg>
-    `,
-
-    // 13) REDO
-    tRedo: `
-      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <path d="M15 7h4v4"></path>
-        <path d="M19 11c-2-4-6-6-10-4-2 1-4 3-4 6"></path>
-      </svg>
-    `,
-
-
-    // 14) POLY DONE
-    tPolyDone: `
-      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <path d="M5 13l4 4L19 7"></path>
-      </svg>
-    `,
-
-    // 15) CLEAR
-    tClear: `
-      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <path d="M6 7h12"></path>
-        <path d="M9 7V5h6v2"></path>
-        <path d="M8 7l1 14h6l1-14"></path>
-      </svg>
-    `,
-
-    // 16) EYE
-    tEye: `
-      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"></path>
-        <circle class="fill" cx="12" cy="12" r="2"></circle>
-      </svg>
-    `,
-  };
-
+      showSettings(`
+        <div class="ctxGroup"><span class="ctxLabel">Obrys</span><input id="cObjStroke" class="ctxInput" type="number" min="0" max="50" step="1" value="${strokeW.mixed?'':strokeW.value}" placeholder="${strokeW.mixed?'—':''}"/></div>
+        <div class="ctxGroup">${ctxColorBtn(strokeCol.mixed?"MIXED":fabricToBW(strokeCol.value))}</div>
+      `);
+      document.getElementById("cObjStroke")?.addEventListener("input", e => { allWithStroke.forEach(o=>o.set("strokeWidth",clamp(+e.target.value||1,0,50))); fabricCanvas.renderAll(); });
+      const cbs = toolCtx?.querySelectorAll("[data-color-toggle]")||[];
+      if(cbs[0]) cbs[0].addEventListener("click",()=>{const c=fabricToBW(allWithStroke.find(x=>x.stroke&&x.stroke!=="transparent")?.stroke||"#fff");const n=c==="BLACK"?"#ffffff":"#000000";allWithStroke.forEach(o=>o.set("stroke",n));fabricCanvas.renderAll();renderObjectSettings();});
+    }
+  }
   function injectIcon(id, html){
     const el = document.getElementById(id);
     if (!el) return;
