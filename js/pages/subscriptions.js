@@ -1,10 +1,10 @@
-import { sb, SUPABASE_URL } from "../core/supabase.js?v=v2026-04-04T20035";
-import { requireAuth } from "../core/auth.js?v=v2026-04-04T20035";
-import { isGuestUser, showGuestBlockedOverlay } from "../core/guest-mode.js?v=v2026-04-04T20035";
-import { alertModal, confirmModal } from "../core/modal.js?v=v2026-04-04T20035";
-import { initUiSelect } from "../core/ui-select.js?v=v2026-04-04T20035";
-import { getUiLang, initI18n, t } from "../../translation/translation.js?v=v2026-04-04T20035";
-import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-04-04T20035";
+import { sb, SUPABASE_URL } from "../core/supabase.js?v=v2026-04-04T20062";
+import { requireAuth } from "../core/auth.js?v=v2026-04-04T20062";
+import { isGuestUser, showGuestBlockedOverlay } from "../core/guest-mode.js?v=v2026-04-04T20062";
+import { alertModal, confirmModal } from "../core/modal.js?v=v2026-04-04T20062";
+import { initUiSelect } from "../core/ui-select.js?v=v2026-04-04T20062";
+import { getUiLang, initI18n, t } from "../../translation/translation.js?v=v2026-04-04T20062";
+import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-04-04T20062";
 import "../core/contact-modal.js";
 
 initI18n({ withSwitcher: true });
