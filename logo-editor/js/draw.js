@@ -614,7 +614,7 @@ export function initDrawEditor(ctx) {
   let tool = TOOL.SELECT;
 
   // Kolor domyślny (stroke) — globalny przełącznik ⬛️/⬜️
-  let fg = "BLACK"; // WHITE | BLACK
+  let fg = "WHITE"; // WHITE | BLACK
 
   function fgColor() { return fg === "BLACK" ? "#000" : "#fff"; }
   function fgLabel() { return fg === "BLACK" ? "⬛️" : "⬜️"; }
