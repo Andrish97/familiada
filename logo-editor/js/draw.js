@@ -589,7 +589,7 @@ export function initDrawEditor(ctx) {
       item.type = "button";
       item.className = "fontPickItem" + (f.value === currentValue ? " on" : "");
       // Nazwa czcionki systemowym fontem, sample czcionką docelową
-      item.innerHTML = `<span style="flex:1;text-align:left;font-family:system-ui,-apple-system,sans-serif;">${f.label}</span><span class="fontPickSwatch" style="font-family:${f.value};">ABC abc 123</span>`;
+      item.innerHTML = `<span style="flex:1;text-align:left;font-family:system-ui,-apple-system,sans-serif;">${f.label}</span><span class="fontPickSwatch" style="font-family:${f.value};">Sample</span>`;
       item.addEventListener("click", () => {
         if (drawFontOnSelect) drawFontOnSelect(f.value);
         closeDrawFontPicker();
@@ -1012,7 +1012,9 @@ export function initDrawEditor(ctx) {
       const serifW = Math.max(12, Math.round(14 * z));
       const serifH = Math.max(2, Math.round(2 * z));
 
-      // SVG I-beam - tylko fill, bez stroke, mix-blend-mode: difference
+      // SVG I-beam - tylko fill, biały
+      // mix-blend-mode: difference = odwraca kolor względem tła pod spodem
+      // (biały na ciemnym, ciemny na jasnym - zawsze widoczny)
       const svgData = `
         <svg xmlns="http://www.w3.org/2000/svg" width="${serifW}" height="${h}">
           <rect x="${(serifW - stemW) / 2}" y="${serifH}" width="${stemW}" height="${h - serifH * 2}" fill="white"/>
