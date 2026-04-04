@@ -1005,17 +1005,17 @@ export function initDrawEditor(ctx) {
       fabricCanvas.hoverCursor = "text";
       fabricCanvas.moveCursor = "text";
 
-      // Overlay: pionowa kreska widoczna na każdym tle
+      // Overlay: pionowa kreska I-beam (grubsza i dłuższa)
       const z = fabricCanvas.getZoom();
-      const h = Math.max(20, Math.round(24 * z));
-      const w = Math.max(3, Math.round(3 * z));
+      const h = Math.max(28, Math.round(32 * z));
+      const w = Math.max(4, Math.round(4 * z));
 
       cursorDot.style.width = `${w}px`;
       cursorDot.style.height = `${h}px`;
-      cursorDot.style.borderRadius = "0";
-      cursorDot.style.border = "1px solid #000";
+      cursorDot.style.borderRadius = "2px";
+      cursorDot.style.border = "2px solid #000";
       cursorDot.style.background = "#fff";
-      cursorDot.style.boxShadow = "0 0 0 1px #000, 0 0 0 2px #fff, 0 0 0 3px #000";
+      cursorDot.style.boxShadow = "0 0 0 1px #000, 0 0 0 3px #fff, 0 0 0 4px #000";
       cursorDot.style.mixBlendMode = "normal";
       cursorDot.style.opacity = "1";
 
@@ -2183,6 +2183,10 @@ export function initDrawEditor(ctx) {
   function onKeyDown(ev) {
     if (ctx.getMode?.() !== "DRAW") return;
     if (isEditableTarget(ev.target)) return;
+
+    // Zablokuj skróty gdy edytujemy tekst (IText w trybie edycji)
+    const active = fabricCanvas?.getActiveObject();
+    if (active?.isEditing) return; // nie przechwytuj skrótów podczas edycji tekstu
 
     const key = ev.key;
     const k = key.length === 1 ? key.toLowerCase() : key;
