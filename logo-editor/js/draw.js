@@ -163,12 +163,12 @@ export function initDrawEditor(ctx) {
         <div class="ctxGroup"><span class="ctxLabel">Grubość</span><input id="cStrokeW" class="ctxInput" type="number" min="1" max="50" step="1" value="${strokeWidth}"/></div>
         <div class="ctxGroup"><span class="ctxLabel">Kolor</span>${ctxColorBtn(fg)}</div>
       `);
-      document.getElementById("cStrokeW")?.addEventListener("input", e => { strokeWidth = clamp(+e.target.value||1,1,50); updateCursor(); });
+      document.getElementById("cStrokeW")?.addEventListener("input", e => { strokeWidth = clamp(+e.target.value||1,1,50); updateCursorVisual(); });
       ctxColorBind(() => { fg = fg==="BLACK"?"WHITE":"BLACK"; syncDynamicIcons(); renderToolSettings(); });
     }
     else if (tn === "eraser") {
       showSettings(`<div class="ctxGroup"><span class="ctxLabel">Rozmiar</span><input id="cEraser" class="ctxInput" type="number" min="1" max="50" step="1" value="${eraserSize}"/></div>`);
-      document.getElementById("cEraser")?.addEventListener("input", e => { eraserSize = clamp(+e.target.value||10,1,50); updateCursor(); });
+      document.getElementById("cEraser")?.addEventListener("input", e => { eraserSize = clamp(+e.target.value||10,1,50); updateCursorVisual(); });
     }
     else if (tn === "line") {
       showSettings(`
@@ -191,7 +191,21 @@ export function initDrawEditor(ctx) {
       showSettings(html);
       document.getElementById("cStrokeW")?.addEventListener("input", e => { strokeWidth = clamp(+e.target.value||1,0,50); });
       document.getElementById("cFill")?.addEventListener("change", e => { fillEnabled = e.target.checked; renderToolSettings(); });
-      ctxColorBind(() => { fg = fg==="BLACK"?"WHITE":"BLACK"; fillColor = fillColor==="#000000"?"#ffffff":"#000000"; renderToolSettings(); });
+      
+      // Oddzielne nasłuchiwanie dla każdego przycisku koloru (nie jako radio)
+      const cbs = toolCtx?.querySelectorAll("[data-color-toggle]") || [];
+      // Pierwszy przycisk to kolor obrysu (fg)
+      if (cbs[0]) cbs[0].addEventListener("click", () => {
+        fg = fg === "BLACK" ? "WHITE" : "BLACK";
+        syncDynamicIcons();
+        renderToolSettings();
+      });
+      // Drugi przycisk to kolor wypełnienia (fillColor)
+      if (cbs[1]) cbs[1].addEventListener("click", () => {
+        fillColor = fillColor === "#000000" ? "#ffffff" : "#000000";
+        renderToolSettings();
+      });
+      
       document.getElementById("cPolyDone")?.addEventListener("click", () => finalizePolygon());
     }
     else if (tn === "text") {
@@ -222,6 +236,85 @@ export function initDrawEditor(ctx) {
     else {
       hideSettings();
     }
+  }
+
+  /** Ustawienia zaznaczonego obiektu TEKSTU (font, rozmiar, B/I/U, align) */
+  function renderTextObjectSettings(obj) {
+    if (!obj) { hideSettings(); return; }
+    
+    const objFont = obj.fontFamily || "";
+    const fontLabel = DRAW_FONTS.find(f => f.value === objFont)?.label || "Font";
+    
+    // Pobierz wartości z obiektu
+    const objSize = Math.round(obj.fontSize || 40);
+    const objLH = obj.lineHeight || 1;
+    const objSpacing = obj.charSpacing || 0;
+    const objBold = obj.fontWeight === "bold";
+    const objItalic = obj.fontStyle === "italic";
+    const objUnderline = !!obj.underline;
+    const objAlign = obj.textAlign || "left";
+    const objFill = obj.fill || "#ffffff";
+
+    showSettings(`
+      <div class="ctxGroup"><button class="ctxBtn" id="cTFont" style="min-width:90px;max-width:140px;justify-content:space-between;display:flex;"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${fontLabel}</span><span style="opacity:.4;">▾</span></button></div>
+      <div class="ctxGroup"><span class="ctxLabel">Roz.</span><input id="cTSize" class="ctxInput" type="number" min="10" max="220" step="1" value="${objSize}"/></div>
+      <div class="ctxGroup"><span class="ctxLabel">Linia</span><input id="cTLH" class="ctxInput" type="number" min="0.6" max="3.0" step="0.05" value="${objLH}"/></div>
+      <div class="ctxGroup"><span class="ctxLabel">Odst.</span><input id="cTSp" class="ctxInput" type="number" min="0" max="20" step="0.5" value="${objSpacing}"/></div>
+      <div class="ctxGroup"><button class="ctxBtn" id="cTB" ${objBold?"on":""}>B</button><button class="ctxBtn" id="cTI" ${objItalic?"on":""}>I</button><button class="ctxBtn" id="cTU" ${objUnderline?"on":""}>U</button></div>
+      <div class="ctxGroup"><button class="ctxBtn" id="cTAlign">${objAlign === "left" ? "⇤" : objAlign === "center" ? "⇆" : "⇥"}</button></div>
+      <div class="ctxGroup"><span class="ctxLabel">Kolor</span>${ctxColorBtn(fabricToBW(objFill))}</div>
+    `);
+
+    // Event listeners
+    document.getElementById("cTFont")?.addEventListener("click", () => {
+        openDrawFontPicker(v => {
+            obj.set("fontFamily", v);
+            fabricCanvas.renderAll();
+            renderTextObjectSettings(obj);
+        }, objFont);
+    });
+    document.getElementById("cTSize")?.addEventListener("input", e => {
+        obj.set("fontSize", clamp(+e.target.value||40, 10, 220));
+        fabricCanvas.renderAll();
+    });
+    document.getElementById("cTLH")?.addEventListener("input", e => {
+        obj.set("lineHeight", clamp(+e.target.value||1, 0.6, 3));
+        fabricCanvas.renderAll();
+    });
+    document.getElementById("cTSp")?.addEventListener("input", e => {
+        obj.set("charSpacing", clamp(+e.target.value||0, 0, 20));
+        fabricCanvas.renderAll();
+    });
+    document.getElementById("cTB")?.addEventListener("click", e => {
+        obj.set("fontWeight", !objBold ? "bold" : "normal");
+        e.target.classList.toggle("on", !objBold);
+        fabricCanvas.renderAll();
+    });
+    document.getElementById("cTI")?.addEventListener("click", e => {
+        obj.set("fontStyle", !objItalic ? "italic" : "normal");
+        e.target.classList.toggle("on", !objItalic);
+        fabricCanvas.renderAll();
+    });
+    document.getElementById("cTU")?.addEventListener("click", e => {
+        obj.set("underline", !objUnderline);
+        e.target.classList.toggle("on", !objUnderline);
+        fabricCanvas.renderAll();
+    });
+    document.getElementById("cTAlign")?.addEventListener("click", e => {
+        const next = objAlign === "left" ? "center" : objAlign === "center" ? "right" : "left";
+        obj.set("textAlign", next);
+        e.target.textContent = next === "left" ? "⇤" : next === "center" ? "⇆" : "⇥";
+        fabricCanvas.renderAll();
+    });
+
+    const cbs = toolCtx?.querySelectorAll("[data-color-toggle]") || [];
+    if(cbs[0]) cbs[0].addEventListener("click", () => {
+        const currentBW = fabricToBW(obj.fill);
+        const newColor = currentBW === "BLACK" ? "#ffffff" : "#000000";
+        obj.set("fill", newColor);
+        fabricCanvas.renderAll();
+        renderTextObjectSettings(obj);
+    });
   }
 
   function getSelectedObjects() {
@@ -1213,13 +1306,21 @@ export function initDrawEditor(ctx) {
   function renderCurrentSettings() {
     const obj = getActiveObj();
 
-    // SELECT tool: jeśli zaznaczony obiekt → pokaż ustawienia obiektu (TYLKO przecięcie)
-    if (tool === TOOL.SELECT && obj) {
-      renderObjectSettings();
-      return;
+    // SELECT tool:
+    if (tool === TOOL.SELECT) {
+      // Jeśli zaznaczony tekst -> pokaż ustawienia tekstu
+      if (isTextObj(obj)) {
+        renderTextObjectSettings(obj);
+        return;
+      }
+      // Jeśli zaznaczony inny obiekt -> pokaż ustawienia obiektu (przecięcie właściwości)
+      if (obj) {
+        renderObjectSettings();
+        return;
+      }
     }
 
-    // Inne narzędzia → pokaż ustawienia narzędzia
+    // Inne narzędzia -> pokaż ustawienia narzędzia
     renderToolSettings();
   }
 
