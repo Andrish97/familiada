@@ -528,6 +528,35 @@ export function initDrawEditor(ctx) {
           });
         }
       } else {
+        // Mix linii + kształtów lub same kształty z wypełnieniem
+        // Jeśli są obie kategorie (linie + rect/ellipse) — pokaż TYLKO stroke
+        const hasBothCategories = strokeOnlyObjs.length > 0 && filledObjs.length > 0;
+
+        if (hasBothCategories) {
+          showSettings(`
+            <div class="rtToolRow">
+              <div class="rtGroup">
+                <div class="rtToolLbl">${t("logoEditor.draw.stroke")}</div>
+                <input id="drawObjStroke" class="inp" type="number" min="0" max="50" step="1" value="${strokeW.mixed ? '' : strokeW.value}" placeholder="${strokeW.mixed ? '—' : ''}"/>
+                ${renderBWButtonHTML(strokeCol.mixed ? "WHITE" : fabricToBW(strokeCol.value))}
+              </div>
+            </div>
+          `);
+          document.getElementById("drawObjStroke")?.addEventListener("input", (e) => {
+            const v = clamp(Number(e.target.value) || 1, 0, 50);
+            objs.forEach(o => o.set("strokeWidth", v));
+            fabricCanvas.renderAll();
+          });
+          const strokeBtn = document.querySelector("[data-color-btn]");
+          if (strokeBtn) {
+            strokeBtn.addEventListener("click", () => {
+              const curBW = fabricToBW(objs[0]?.stroke);
+              objs.forEach(o => o.set("stroke", curBW === "BLACK" ? "#ffffff" : "#000000"));
+              fabricCanvas.renderAll();
+              renderObjectSettings();
+            });
+          }
+        } else {
         // Mix linii + kształtów — stroke dotyczy WSZYSTKICH, fill tylko rect/ellipse
         const fills = filledObjs.map(o => o.fill || "transparent");
         const hasFill = fills.some(isFillVisible);
@@ -580,6 +609,7 @@ export function initDrawEditor(ctx) {
           renderObjectSettings();
         });
       }
+    }
     }
     // --- MIXED (text + shapes) ---
     else {
@@ -1439,12 +1469,26 @@ export function initDrawEditor(ctx) {
       return;
     }
   
-    // TEXT: pionowa kreska (tekstowy caret)
+    // TEXT: pionowa kreska (tekstowy caret) — overlay, inverted color
     if (tool === TOOL.TEXT) {
       setCursorClass("none", false);
-      // Używamy Fabric text cursor
-      setFabricCursors("text", "text", "text");
-      hideOverlayCursor();
+      setFabricCursors("none", "none", "none");
+
+      const z = fabricCanvas.getZoom();
+      const h = Math.max(20, Math.round(24 * z));
+      const w = Math.max(2, Math.round(2 * z));
+      // Inverted color: white cursor on black bg, black cursor on white bg
+      const borderColor = bg === "BLACK" ? "rgba(255,255,255,.9)" : "rgba(0,0,0,.8)";
+      const shadowColor = bg === "BLACK" ? "rgba(0,0,0,.5)" : "rgba(255,255,255,.5)";
+
+      cursorDot.style.width = `${w}px`;
+      cursorDot.style.height = `${h}px`;
+      cursorDot.style.borderRadius = "1px";
+      cursorDot.style.border = `1px solid ${borderColor}`;
+      cursorDot.style.background = "transparent";
+      cursorDot.style.boxShadow = `0 0 0 1px ${shadowColor}`;
+
+      placeOverlayAt(lastPointer.x, lastPointer.y);
       return;
     }
 
