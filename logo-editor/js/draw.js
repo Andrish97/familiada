@@ -1000,43 +1000,51 @@ export function initDrawEditor(ctx) {
     // TEXT: 2 kursory - + (tworzenie) i I-beam (edycja istniejącego tekstu)
     if (tool === TOOL.TEXT) {
       setCursorClass("none", false);
-      // Fabric.js sam zmieni kursor na text gdy najedzie na obiekt tekstowy
       fabricCanvas.defaultCursor = "crosshair";
       fabricCanvas.hoverCursor = "text";
       fabricCanvas.moveCursor = "text";
 
-      // Overlay: cienki kursor I-beam bez obramowania, widoczny na każdym tle
+      // Overlay I-beam: biały z czarnym obrysem - widoczny na KAŻDYM tle
       const z = fabricCanvas.getZoom();
       const h = Math.max(24, Math.round(28 * z));
       const stemW = Math.max(2, Math.round(2 * z));
       const serifW = Math.max(12, Math.round(14 * z));
       const serifH = Math.max(2, Math.round(2 * z));
 
-      // SVG I-beam - tylko fill, biały
-      // mix-blend-mode: difference = odwraca kolor względem tła pod spodem
-      // (biały na ciemnym, ciemny na jasnym - zawsze widoczny)
-      const svgData = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="${serifW}" height="${h}">
-          <rect x="${(serifW - stemW) / 2}" y="${serifH}" width="${stemW}" height="${h - serifH * 2}" fill="white"/>
-          <rect x="1" y="1" width="${serifW - 2}" height="${serifH}" fill="white"/>
-          <rect x="1" y="${h - serifH - 1}" width="${serifW - 2}" height="${serifH}" fill="white"/>
-        </svg>
-      `;
-      const blob = new Blob([svgData], { type: 'image/svg+xml' });
-      const url = URL.createObjectURL(blob);
+      // Tworzymy canvas, rysujemy I-beam, używamy jako obrazka
+      const c = document.createElement('canvas');
+      c.width = serifW * 2; // 2x dla ostrości
+      c.height = h * 2;
+      const cx = c.getContext('2d');
+      cx.scale(2, 2);
+
+      // Czarny obrys
+      cx.strokeStyle = 'black';
+      cx.lineWidth = 1.5;
+      cx.lineJoin = 'round';
+      // Pionowa kreska
+      cx.strokeRect((serifW - stemW) / 2, serifH, stemW, h - serifH * 2);
+      // Górny szeryf
+      cx.strokeRect(1, 1, serifW - 2, serifH);
+      // Dolny szeryf
+      cx.strokeRect(1, h - serifH - 1, serifW - 2, serifH);
+
+      // Białe wypełnienie
+      cx.fillStyle = 'white';
+      cx.fillRect((serifW - stemW) / 2, serifH, stemW, h - serifH * 2);
+      cx.fillRect(1, 1, serifW - 2, serifH);
+      cx.fillRect(1, h - serifH - 1, serifW - 2, serifH);
+
+      const url = c.toDataURL('image/png');
 
       cursorDot.style.width = `${serifW}px`;
       cursorDot.style.height = `${h}px`;
       cursorDot.style.border = 'none';
-      cursorDot.style.background = 'none';
+      cursorDot.style.background = `url(${url}) center/contain no-repeat`;
       cursorDot.style.boxShadow = 'none';
       cursorDot.style.borderRadius = '0';
-      cursorDot.style.mixBlendMode = 'difference';
+      cursorDot.style.mixBlendMode = 'normal';
       cursorDot.style.opacity = '1';
-      cursorDot.style.backgroundImage = `url('${url}')`;
-      cursorDot.style.backgroundSize = 'contain';
-      cursorDot.style.backgroundRepeat = 'no-repeat';
-      cursorDot.style.backgroundPosition = 'center';
 
       showOverlayCursor();
       if (lastPointer) placeOverlayAt(lastPointer.x, lastPointer.y);
