@@ -3105,6 +3105,14 @@ export function initDrawEditor(ctx) {
           fabricCanvas.loadFromJSON(fabricData, () => {
             undoBusy = false;
             fabricCanvas.backgroundColor = bgColor();
+            // Przywróć selectable/evented dla obiektów
+            fabricCanvas.forEachObject(o => {
+              o.selectable = false;
+              o.evented = true;
+              if (o._canHaveFill !== undefined) {
+                // Kształt z hasFill - może mieć fill
+              }
+            });
             fabricCanvas.requestRenderAll();
 
             // Przywróć historię edycji jeśli jest

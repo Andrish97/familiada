@@ -480,10 +480,10 @@ async function exportLogoToFile(l){
       }
     }
 
+    // Kopiuj CAŁY source + dodaj imageData
     const exportSource = {
-      mode: source.mode || "PIX",
+      ...source,
       ...(imageData ? { imageData } : {}),
-      ...(source.imageUrl ? { imageUrl: source.imageUrl } : {})
     };
 
     out = {
@@ -583,6 +583,7 @@ async function importLogoFromFile(file){
   let row = null;
 
   if (parsed.kind === "GLYPH"){
+    const hasSource = parsed.source && Object.keys(parsed.source).length > 0;
     row = {
       user_id: currentUser.id,
       name,
@@ -593,7 +594,10 @@ async function importLogoFromFile(file){
           { rows: parsed.rows }
         ],
         // Zachowaj source (text dla trybu TEXT, fabricData dla DRAW w GLYPH)
-        ...(parsed.source ? { source: parsed.source } : {})
+        // Jeśli brak source → ustaw domyślny mode TEXT
+        source: hasSource
+          ? parsed.source
+          : { mode: "TEXT" }
       }
     };
   } else {
@@ -1671,8 +1675,9 @@ async function boot(){
        return;
      }
 
-     const mode = l.type === TYPE_GLYPH ? "TEXT" :
-                  (l.payload?.source?.mode || "DRAW");
+     // Ustal tryb edycji
+     const mode = l.payload?.source?.mode ||
+                  (l.type === TYPE_GLYPH ? "TEXT" : "DRAW");
 
      openEditor(mode, l);
    });
