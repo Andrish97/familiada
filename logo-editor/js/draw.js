@@ -1837,7 +1837,7 @@ export function initDrawEditor(ctx) {
       if (shift) { const m = Math.max(Math.abs(w), Math.abs(h)); w = Math.sign(w||1)*m; h = Math.sign(h||1)*m; }
       const ex = drawingStart.x + w, ey = drawingStart.y + h;
       
-      let pathArr, arrowFill;
+      let pathArr;
       if (shape === "line") {
         pathArr = [['M', drawingStart.x, drawingStart.y], ['L', ex, ey]];
         arrowFill = "transparent";
@@ -1845,7 +1845,8 @@ export function initDrawEditor(ctx) {
         const isArrowFill = currentShape.endsWith("Fill");
         const arrowDir = currentShape === "arrow2" || currentShape === "arrow2Fill" ? 2 : 1;
         arrowFill = isArrowFill ? (ts.fill ? (ts.fillColor === "BLACK" ? "#000" : "#fff") : "transparent") : "transparent";
-        pathArr = buildArrowPath(drawingStart.x, drawingStart.y, ex, ey, arrowDir, ts.stroke, isArrowFill);
+        const pathStr = buildArrowPath(drawingStart.x, drawingStart.y, ex, ey, arrowDir, ts.stroke, isArrowFill);
+        pathArr = svgPathToPath(pathStr);
       }
       drawingObj.set({ path: pathArr, fill: arrowFill, stroke: style.stroke, strokeWidth: style.strokeWidth, strokeDashArray: style.strokeDashArray, dirty: true });
       drawingObj.setCoords();
