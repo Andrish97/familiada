@@ -796,7 +796,7 @@ export function initImageEditor(ctx) {
   
   // start zamknięte
   closePanels();
-  syncImgButtonLabels();
+  syncLabels();
   
 
 

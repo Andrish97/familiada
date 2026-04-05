@@ -7,9 +7,10 @@ import { initI18n, setUiLang, t, withLangParam } from "../../translation/transla
 import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-04-05T14240";
 import "../core/contact-modal.js";
 
-function isControlModal() {
+function isModalMode() {
   const p = new URLSearchParams(location.search);
-  return p.get("modal") === "control";
+  const m = p.get("modal");
+  return m && m !== "false";
 }
 
 async function initManualI18n() {
@@ -21,7 +22,7 @@ async function initManualI18n() {
     await setUiLang("pl", { persist: true, updateUrl: true, apply: false });
   }
 
-  await initI18n({ withSwitcher: !isControlModal() });
+  await initI18n({ withSwitcher: !isModalMode() });
 }
 
 function qsa(sel) { return Array.from(document.querySelectorAll(sel)); }
@@ -54,7 +55,7 @@ function setActive(name) {
 }
 
 function wireTabs() {
-  if (!shouldShowDemoTab() || isControlModal()) {
+  if (!shouldShowDemoTab() || isModalMode()) {
     document.querySelector('.simple-tabs .tab[data-tab="demo"], .modal-tabs .tab[data-tab="demo"]')?.remove();
     pages.demo?.remove();
     delete pages.demo;
@@ -98,7 +99,7 @@ function getRetPathnameLower() {
 }
 
 function applyControlModalLayout() {
-  if (!isControlModal()) return;
+  if (!isModalMode()) return;
   // Ensure the class is set (fallback if inline script didn't run)
   document.documentElement.classList.add("modal-mode");
   document.body.classList.add("manual-in-control-modal");
@@ -131,7 +132,8 @@ function shouldShowDemoTab() {
 function buildPrivacyUrl() {
   const url = new URL("privacy", location.href);
   url.searchParams.set("ret", decodeRet());
-  if (isControlModal()) url.searchParams.set("modal", "control");
+  const p = new URLSearchParams(location.search);
+  if (p.get("modal")) url.searchParams.set("modal", p.get("modal"));
   url.searchParams.set("lang", new URLSearchParams(location.search).get("lang") || localStorage.getItem("uiLang") || "pl");
   const manualPath = `${location.pathname.split("/").pop() || "manual"}${location.search}${location.hash}`;
   url.searchParams.set("man", manualPath);

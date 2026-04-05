@@ -21,7 +21,8 @@
   </style>
   <script>
     try {
-      if (new URLSearchParams(location.search).get("modal") === "control") {
+      const modal = new URLSearchParams(location.search).get("modal");
+      if (modal && modal !== "false") {
         document.getElementById("modalHideStyle").textContent = ".topbar,.footer{display:none!important;visibility:hidden!important}.wrap{padding-top:0!important}.simple-tabs,.modal-tabs{display:flex!important;flex-wrap:wrap!important}";
         document.documentElement.classList.add("modal-mode");
       }
