@@ -1,4 +1,4 @@
-import { getUiLang, t } from "../../translation/translation.js?v=v2026-04-05T05540";
+import { getUiLang, t } from "../../translation/translation.js?v=v2026-04-05T05584";
 
 // ================== KOMUNIKATY ==================
 const DEVICES_MSG = {
