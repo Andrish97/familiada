@@ -291,8 +291,8 @@ export function initDrawEditor(ctx) {
     const fontLabel = DRAW_FONTS.find(f => f.value === objFont)?.label || "Font";
     const objSize = Math.round(obj.fontSize || 40);
     const objLH = obj.lineHeight || 1;
-    const objSpacing = obj.charSpacing || 0;
-    const objBold = obj.fontWeight === "bold";
+    const objSpacing = Math.round((obj.charSpacing || 0) / 50);
+    const objBold = obj.fontWeight === "bold" || obj.fontWeight === 700;
     const objItalic = obj.fontStyle === "italic";
     const objUnderline = !!obj.underline;
     const objAlign = obj.textAlign || "left";
@@ -322,16 +322,28 @@ export function initDrawEditor(ctx) {
       obj.set("lineHeight", clamp(+e.target.value||1, 0.6, 3)); fabricCanvas.renderAll();
     });
     document.getElementById("cTSp")?.addEventListener("input", e => {
-      obj.set("charSpacing", clamp(+e.target.value||0, 0, 20)); fabricCanvas.renderAll();
+      // Fabric charSpacing: 0-1000, UI: 0-20
+      const uiVal = clamp(+e.target.value||0, 0, 20);
+      obj.set("charSpacing", uiVal * 50); // scale to Fabric range
+      fabricCanvas.renderAll();
     });
     document.getElementById("cTB")?.addEventListener("click", e => {
-      obj.set("fontWeight", !objBold ? "bold" : "normal"); e.currentTarget.classList.toggle("on", !objBold); fabricCanvas.renderAll();
+      const newBold = !objBold;
+      obj.set("fontWeight", newBold ? "bold" : "normal");
+      fabricCanvas.renderAll();
+      renderTextObjectSettings(obj);
     });
     document.getElementById("cTI")?.addEventListener("click", e => {
-      obj.set("fontStyle", !objItalic ? "italic" : "normal"); e.currentTarget.classList.toggle("on", !objItalic); fabricCanvas.renderAll();
+      const newItalic = !objItalic;
+      obj.set("fontStyle", newItalic ? "italic" : "normal");
+      fabricCanvas.renderAll();
+      renderTextObjectSettings(obj);
     });
     document.getElementById("cTU")?.addEventListener("click", e => {
-      obj.set("underline", !objUnderline); e.currentTarget.classList.toggle("on", !objUnderline); fabricCanvas.renderAll();
+      const newUnderline = !objUnderline;
+      obj.set("underline", newUnderline);
+      fabricCanvas.renderAll();
+      renderTextObjectSettings(obj);
     });
     document.getElementById("cAlignL")?.addEventListener("click", () => {
       obj.set("textAlign", "left"); fabricCanvas.renderAll(); renderTextObjectSettings(obj);
@@ -2153,10 +2165,27 @@ export function initDrawEditor(ctx) {
     });
 
     fabricCanvas.on("selection:created", () => {
-      renderCurrentSettings();
+      const obj = getActiveObj();
+      if (obj && isTextObj(obj) && tool === TOOL.SELECT) {
+        // Auto-switch na TEXT tool gdy zaznaczono tekst
+        setBaseTool(TOOL.TEXT);
+        syncToolButtons();
+        obj.enterEditing();
+        requestAnimationFrame(() => renderTextObjectSettings(obj));
+      } else {
+        renderCurrentSettings();
+      }
     });
     fabricCanvas.on("selection:updated", () => {
-      renderCurrentSettings();
+      const obj = getActiveObj();
+      if (obj && isTextObj(obj) && tool === TOOL.SELECT) {
+        setBaseTool(TOOL.TEXT);
+        syncToolButtons();
+        obj.enterEditing();
+        requestAnimationFrame(() => renderTextObjectSettings(obj));
+      } else {
+        renderCurrentSettings();
+      }
     });
     fabricCanvas.on("selection:cleared", () => {
       renderCurrentSettings();
@@ -2367,29 +2396,13 @@ export function initDrawEditor(ctx) {
     fabricCanvas.on("mouse:out",  () => updateCursorVisual());
 
 
-    // Dwuklik kończy polygon LUB włącza edycję tekstu w Select
+    // Dwuklik kończy polygon
     drawCanvasEl.addEventListener("dblclick", (ev) => {
       if (ctx.getMode?.() !== "DRAW") return;
 
       if (tool === TOOL.SHAPES && currentShape === "polygon" && polyPoints.length >= 2) {
         ev.preventDefault();
         finalizePolygon();
-        return;
-      }
-
-      if (tool === TOOL.SELECT) {
-        const target = fabricCanvas.findTarget(ev);
-        if (target && isTextObj(target)) {
-          ev.preventDefault();
-          setBaseTool(TOOL.TEXT);
-          syncToolButtons();
-          fabricCanvas.setActiveObject(target);
-          target.enterEditing();
-          target.selectAll();
-          fabricCanvas.renderAll();
-          // Wymuszenie ustawień obiektu po uspokojeniu eventów
-          requestAnimationFrame(() => renderTextObjectSettings(target));
-        }
       }
     });
 
