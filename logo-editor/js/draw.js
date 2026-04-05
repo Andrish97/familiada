@@ -933,7 +933,7 @@ export function initDrawEditor(ctx) {
     const baseX = x2 - headL * ux, baseY = y2 - headL * uy;
     
     if (isFilled) {
-      // WYPEŁNIONA: zamknięty wielokąt
+      // WYPEŁNIONA: zamknięty wielokąt (poprawiona kolejność V!)
       let path = `M ${x1 + shaftHW*nx} ${y1 + shaftHW*ny}`;
       path += ` L ${baseX + shaftHW*nx} ${baseY + shaftHW*ny}`;
       path += ` L ${tipX + headW*nx} ${tipY + headW*ny}`;
@@ -944,19 +944,19 @@ export function initDrawEditor(ctx) {
       
       if (dirCount === 2) {
         const baseX2 = x1 + headL * ux, baseY2 = y1 + headL * uy;
-        return `M ${baseX2 - headW*nx} ${baseY2 - headW*ny} L ${x1} ${y1} L ${baseX2 + headW*nx} ${baseY2 + headW*ny} L ${baseX + headW*nx} ${baseY + headW*ny} L ${tipX} ${tipY} L ${baseX - headW*nx} ${baseY - headW*ny} L ${baseX2 - headW*nx} ${baseY2 - headW*ny} Z`;
+        return `M ${baseX2 + headW*nx} ${baseY2 + headW*ny} L ${x1} ${y1} L ${baseX2 - headW*nx} ${baseY2 - headW*ny} L ${baseX - headW*nx} ${baseY - headW*ny} L ${tipX} ${tipY} L ${baseX + headW*nx} ${baseY + headW*ny} L ${baseX2 + headW*nx} ${baseY2 + headW*ny} Z`;
       }
       return path;
     }
     
     // BEZ WYPEŁNIENIA: otwarta linia konturu (V-główka)
     const vW = headW * 0.5;
-    // start -> podstawa -> V góra -> czubek -> V dół -> podstawa
-    const path = `M ${x1} ${y1} L ${baseX} ${baseY} L ${tipX + vW*nx} ${tipY + vW*ny} L ${tipX} ${tipY} L ${tipX - vW*nx} ${tipY - vW*ny} L ${baseX} ${baseY}`;
+    // start -> podstawa -> V dół -> czubek -> V góra -> podstawa (poprawiona kolejność!)
+    const path = `M ${x1} ${y1} L ${baseX} ${baseY} L ${tipX - vW*nx} ${tipY - vW*ny} L ${tipX} ${tipY} L ${tipX + vW*nx} ${tipY + vW*ny} L ${baseX} ${baseY}`;
     
     if (dirCount === 2) {
       const baseX2 = x1 + headL * ux, baseY2 = y1 + headL * uy;
-      return `M ${baseX2} ${baseY2} L ${x1} ${y1} L ${baseX} ${baseY} L ${tipX + vW*nx} ${tipY + vW*ny} L ${tipX} ${tipY} L ${tipX - vW*nx} ${tipY - vW*ny} L ${baseX} ${baseY} L ${baseX2} ${baseY2} L ${x1 - vW*nx} ${y1 - vW*ny} L ${x1} ${y1} L ${x1 + vW*nx} ${y1 + vW*ny} L ${baseX2} ${baseY2}`;
+      return `M ${baseX2} ${baseY2} L ${x1} ${y1} L ${baseX} ${baseY} L ${tipX - vW*nx} ${tipY - vW*ny} L ${tipX} ${tipY} L ${tipX + vW*nx} ${tipY + vW*ny} L ${baseX} ${baseY} L ${baseX2} ${baseY2} L ${x1 + vW*nx} ${y1 + vW*ny} L ${x1} ${y1} L ${x1 - vW*nx} ${y1 - vW*ny} L ${baseX2} ${baseY2}`;
     }
     return path;
   }
