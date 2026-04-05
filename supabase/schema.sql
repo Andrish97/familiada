@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict XJsXOsYXTGGGWiqJTamAp9rjaxORIgWqUxN8FqwVADKo4YU2svHUzyBdexWuRZw
+\restrict tzK5F4lVAQzhpLC9ND4E5krtXq0cMQxgNIqrGlGNX9i8IfVxbBvHVvkRTH9pSNk
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -9048,8 +9048,6 @@ BEGIN
   END LOOP;
 
   /* ── STEP 2: LOGOS ────────────────────────────────────────────────── */
-  -- Demo logos are inserted with is_active=false to avoid violating the
-  -- user_logos_one_active_per_user partial unique index.
   -- GLYPH logo (logo_text)
   SELECT payload INTO v_tpl
     FROM demo_template_data WHERE lang = v_lang AND slot = 'logo_text';
@@ -9061,9 +9059,10 @@ BEGIN
       'GLYPH_30x10',
       false,
       true,
-      jsonb_build_object('layers', jsonb_build_array(
-        jsonb_build_object('rows', v_tpl->'payload'->'rows')
-      ))
+      jsonb_build_object(
+        'layers', jsonb_build_array(jsonb_build_object('rows', v_tpl->'payload'->'rows')),
+        'source', coalesce(v_tpl->'source', '{"mode": "TEXT"}'::jsonb)
+      )
     );
   END IF;
 
@@ -9073,13 +9072,18 @@ BEGIN
       FROM demo_template_data WHERE lang = v_lang AND slot = v_logo_slot;
     IF v_tpl IS NOT NULL THEN
       INSERT INTO user_logos (user_id, name, type, is_active, is_demo, payload)
-      VALUES (p_uid, v_tpl->>'name', 'PIX_150x70', false, true, v_tpl->'payload');
+      VALUES (
+        p_uid, 
+        v_tpl->>'name', 
+        'PIX_150x70', 
+        false, 
+        true, 
+        (v_tpl->'payload') || jsonb_build_object('source', coalesce(v_tpl->'source', jsonb_build_object('mode', upper(replace(v_logo_slot, 'logo_', '')))))
+      );
     END IF;
   END LOOP;
 
   /* ── STEP 3: GAMES ────────────────────────────────────────────────── */
-  -- is_text_open  = poll_text with status poll_open  → answers_raw votes
-  -- is_points_open= poll_points with status poll_open → picks votes
   FOR v_cfg IN
     SELECT * FROM (VALUES
       ('poll_text_open',     'poll_text'::game_type,   'poll_open'::game_status, true,  false),
@@ -9112,7 +9116,7 @@ BEGIN
       RETURNING id INTO v_q_id;
       v_q_ids := array_append(v_q_ids, v_q_id);
 
-      -- Answers (skipped automatically when array is empty / missing)
+      -- Answers
       FOR v_ai IN 1..coalesce(jsonb_array_length(v_q->'answers'), 0) LOOP
         v_a := (v_q->'answers')->(v_ai - 1);
         INSERT INTO answers (question_id, ord, text, fixed_points)
@@ -9144,7 +9148,6 @@ BEGIN
       v_vote := (v_tpl->'votes')->(v_vi - 1);
 
       IF v_cfg.is_text_open THEN
-        -- answers_raw[] → poll_text_entries
         FOR v_qi IN 1..jsonb_array_length(v_vote->'answers_raw') LOOP
           v_raw  := v_vote->'answers_raw'->>(v_qi - 1);
           v_norm := lower(regexp_replace(trim(v_raw), '\s+', ' ', 'g'));
@@ -9161,7 +9164,6 @@ BEGIN
         END LOOP;
 
       ELSIF v_cfg.is_points_open THEN
-        -- picks[] → poll_votes
         FOR v_qi IN 1..jsonb_array_length(v_vote->'picks') LOOP
           v_pick := (v_vote->'picks'->>(v_qi - 1))::int;
           v_a_id := (v_a_map->>((v_qi - 1)::text || ':' || v_pick::text))::uuid;
@@ -13490,5 +13492,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict XJsXOsYXTGGGWiqJTamAp9rjaxORIgWqUxN8FqwVADKo4YU2svHUzyBdexWuRZw
+\unrestrict tzK5F4lVAQzhpLC9ND4E5krtXq0cMQxgNIqrGlGNX9i8IfVxbBvHVvkRTH9pSNk
 
