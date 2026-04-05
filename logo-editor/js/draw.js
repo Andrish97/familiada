@@ -1255,13 +1255,19 @@ export function initDrawEditor(ctx) {
       return;
     }
   
-    // TEXT: kursor krzyżyka (+) widoczny na pustym polu, I-beam na tekście
+    // TEXT: crosshair na pustym polu, I-beam na tekście
     if (tool === TOOL.TEXT) {
-      // Używamy setCursorClass tak jak inne narzędzia - Fabric nie nadpisuje klasy CSS
-      setCursorClass("cross", false);
+      // Nie używamy setCursorClass (nadpisuje wszystko !important)
+      // Ustawiamy Fabric cursors: default=crosshair, hover na tekście=text
+      fabricCanvas.defaultCursor = "crosshair";
+      fabricCanvas.hoverCursor = "text";
+      fabricCanvas.moveCursor = "text";
       
-      // Fabric.js hoverCursor zadziała dla tekstu (I-beam)
-      setFabricCursors("crosshair", "text", "text");
+      // Reset klasy CSS (żeby !important nie nadpisywał)
+      const host = document.getElementById("drawStageHost");
+      if (host) host.className = "";
+      if (fabricCanvas.upperCanvasEl) fabricCanvas.upperCanvasEl.style.cursor = "";
+      if (drawCanvasEl) drawCanvasEl.style.cursor = "";
       
       hideOverlayCursor();
       return;
