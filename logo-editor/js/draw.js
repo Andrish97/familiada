@@ -926,45 +926,42 @@ export function initDrawEditor(ctx) {
   }
 
   function buildArrowPath(x1, y1, x2, y2, dirCount, headL, headW, isFilled) {
-    const shaftWidth = headW * 0.7;
-    const doubleArrow = dirCount === 2;
-
-    const dx = x2 - x1;
-    const dy = y2 - y1;
+    const dx = x2 - x1, dy = y2 - y1;
     const len = Math.hypot(dx, dy) || 1;
-
-    const ux = dx / len;
-    const uy = dy / len;
-    const px = -uy;
-    const py = ux;
-
-    const halfShaft = shaftWidth / 2;
-    const halfHead = headW / 2;
-
-    const startCut = doubleArrow ? headL : 0;
-    const endCut = headL;
-
-    const sx = x1 + ux * startCut;
-    const sy = y1 + uy * startCut;
-    const ex = x2 - ux * endCut;
-    const ey = y2 - uy * endCut;
-
-    // Zwraca BEZPOŚREDNIO tablicę komend dla Fabric.js Path
-    return [
-      ['M', sx + px * halfShaft, sy + py * halfShaft],
-      ['L', ex + px * halfShaft, ey + py * halfShaft],
-      ['L', ex + px * halfHead, ey + py * halfHead],
-      ['L', x2, y2],
-      ['L', ex - px * halfHead, ey - py * halfHead],
-      ['L', ex - px * halfShaft, ey - py * halfShaft],
-      ['L', sx - px * halfShaft, sy - py * halfShaft],
-      ...(doubleArrow ? [
-        ['L', sx - px * halfHead, sy - py * halfHead],
-        ['L', x1, y1],
-        ['L', sx + px * halfHead, sy + py * halfHead],
-      ] : []),
-      ['Z']
-    ];
+    
+    const ux = dx / len, uy = dy / len;
+    const px = -uy, py = ux; // prostopadły
+    
+    const shaftHW = headW * 0.35; // połowa szerokości wałka
+    const tipX = x2, tipY = y2;
+    const baseX = x2 - headL * ux, baseY = y2 - headL * uy;
+    
+    // Zwraca string SVG (parsowany przez svgPathToPath)
+    if (isFilled) {
+      let path = `M ${x1 + shaftHW*px} ${y1 + shaftHW*py}`;
+      path += ` L ${baseX + shaftHW*px} ${baseY + shaftHW*py}`;
+      path += ` L ${tipX + headW*px} ${tipY + headW*py}`;
+      path += ` L ${tipX} ${tipY}`;
+      path += ` L ${tipX - headW*px} ${tipY - headW*py}`;
+      path += ` L ${baseX - shaftHW*px} ${baseY - shaftHW*py}`;
+      path += ` L ${x1 - shaftHW*px} ${y1 - shaftHW*py} Z`;
+      
+      if (dirCount === 2) {
+        const baseX2 = x1 + headL * ux, baseY2 = y1 + headL * uy;
+        return `M ${baseX2 - headW*px} ${baseY2 - headW*py} L ${x1} ${y1} L ${baseX2 + headW*px} ${baseY2 + headW*py} L ${baseX + headW*px} ${baseY + headW*py} L ${tipX} ${tipY} L ${baseX - headW*px} ${baseY - headW*py} L ${baseX2 - headW*px} ${baseY2 - headW*py} Z`;
+      }
+      return path;
+    }
+    
+    // Bez wypełnienia: OTWARTA linia konturu (tylko stroke)
+    // start -> podstawa -> ramię V -> tip -> drugie ramię V -> podstawa (KONIEC, nie wracamy do startu!)
+    const path = `M ${x1} ${y1} L ${baseX} ${baseY} L ${tipX + headW*px} ${tipY + headW*py} L ${tipX} ${tipY} L ${tipX - headW*px} ${tipY - headW*py} L ${baseX} ${baseY}`;
+    
+    if (dirCount === 2) {
+      const baseX2 = x1 + headL * ux, baseY2 = y1 + headL * uy;
+      return `M ${baseX2 + headW*px} ${baseY2 + headW*py} L ${x1} ${y1} L ${baseX} ${baseY} L ${tipX + headW*px} ${tipY + headW*py} L ${tipX} ${tipY} L ${tipX - headW*px} ${tipY - headW*py} L ${baseX} ${baseY} L ${baseX2 - headW*px} ${baseY2 - headW*py}`;
+    }
+    return path;
   }
 
   function buildPolygonPath(cx,cy,r,sides) {
