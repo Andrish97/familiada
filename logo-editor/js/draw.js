@@ -1784,6 +1784,7 @@ export function initDrawEditor(ctx) {
         strokeLineCap: style.strokeLineCap,
         strokeLineJoin: style.strokeLineJoin,
         strokeDashArray: style.strokeDashArray,
+        _canHaveFill: currentShape.startsWith("arrow"), // strzałki mogą mieć fill
         selectable: false,
         evented: true,
         objectCaching: false,
@@ -1825,8 +1826,6 @@ export function initDrawEditor(ctx) {
         strokeLineJoin: style.strokeLineJoin,
         strokeDashArray: style.strokeDashArray,
         _canHaveFill: shape?.hasFill || false,
-        strokeLineCap: style.strokeLineCap,
-        strokeLineJoin: style.strokeLineJoin,
         selectable: false,
         evented: true,
         objectCaching: false,
