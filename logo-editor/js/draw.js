@@ -2211,14 +2211,6 @@ export function initDrawEditor(ctx) {
     fabricCanvas.on("mouse:down", (opt) => {
       pointerDown = true;
       const ev = opt.e;
-      
-      // Exit edit mode jeśli klikamy w TEXT tool i nie klikamy na tekst
-      if (tool === TOOL.TEXT) {
-        const active = fabricCanvas.getActiveObject();
-        if (active && isTextObj(active) && active.isEditing && !opt.target) {
-          active.exitEditing();
-        }
-      }
 
       // aktualizacja overlay kursora
       // w mouse:down
@@ -2395,6 +2387,21 @@ export function initDrawEditor(ctx) {
     fabricCanvas.on("mouse:over", () => updateCursorVisual());
     fabricCanvas.on("mouse:out",  () => updateCursorVisual());
 
+
+    // Kliknięcie POZA canvas → exit edit mode tekstu
+    document.addEventListener("click", (ev) => {
+      if (ctx.getMode?.() !== "DRAW") return;
+      // Ignoruj kliknięcia w inputy/select/button/tooltip
+      const tag = ev.target.tagName.toLowerCase();
+      if (["input","textarea","select","button","option"].includes(tag)) return;
+      if (ev.target.closest("#toolsDraw") || ev.target.closest("#toolCtxSettings")) return;
+      
+      const active = fabricCanvas?.getActiveObject();
+      if (active && isTextObj(active) && active.isEditing) {
+        active.exitEditing();
+        fabricCanvas?.renderAll();
+      }
+    });
 
     // Dwuklik kończy polygon
     drawCanvasEl.addEventListener("dblclick", (ev) => {
