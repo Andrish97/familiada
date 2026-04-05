@@ -379,8 +379,19 @@ export function initDrawEditor(ctx) {
     const shapes = objs.filter(o => !textObjs.includes(o));
     if (shapes.length === 0) return;
 
-    // Sprawdź które MOGĄ mieć wypełnienie (fill !== "transparent")
-    const canHaveFill = shapes.filter(o => o.fill && o.fill !== "transparent");
+    // Sprawdź które MOGĄ mieć wypełnienie - zasada AND
+    // Linia/polyline = NIGDY
+    // Path z fill=transparent (strzałki bez fill, pędzel) = NIGDY
+    // Path z fill!=transparent (kształty) = TAK
+    // Rect/Ellipse/Polygon = ZAWSZE
+    const canHaveFill = shapes.filter(o => {
+      if (o.type === "line" || o.type === "polyline") return false;
+      if (o.type === "rect" || o.type === "ellipse" || o.type === "polygon") return true;
+      if (o.type === "path") {
+        return o.fill && o.fill !== "transparent" && o.fill !== "rgba(0,0,0,0)";
+      }
+      return false;
+    });
     const allCanFill = canHaveFill.length === shapes.length;
 
     const strokeWs = shapes.map(o => o.strokeWidth || 1);
