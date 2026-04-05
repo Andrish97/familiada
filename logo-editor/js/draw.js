@@ -317,43 +317,56 @@ export function initDrawEditor(ctx) {
       openDrawFontPicker(v => { obj.set("fontFamily", v); fabricCanvas.renderAll(); renderTextObjectSettings(obj); }, objFont);
     });
     document.getElementById("cTSize")?.addEventListener("input", e => {
-      obj.set("fontSize", clamp(+e.target.value||40, 10, 220)); fabricCanvas.renderAll();
+      obj.set("fontSize", clamp(+e.target.value||40, 10, 220));
+      fabricCanvas.renderAll();
+      pushUndo();
     });
     document.getElementById("cTLH")?.addEventListener("input", e => {
-      obj.set("lineHeight", clamp(+e.target.value||1, 0.6, 3)); fabricCanvas.renderAll();
+      obj.set("lineHeight", clamp(+e.target.value||1, 0.6, 3));
+      fabricCanvas.renderAll();
+      pushUndo();
     });
     document.getElementById("cTSp")?.addEventListener("input", e => {
-      // Fabric charSpacing: 0-1000, UI: 0-20
       const uiVal = clamp(+e.target.value||0, 0, 20);
-      obj.set("charSpacing", uiVal * 50); // scale to Fabric range
+      obj.set("charSpacing", uiVal * 50);
       fabricCanvas.renderAll();
+      pushUndo();
     });
     document.getElementById("cTB")?.addEventListener("click", e => {
-      const newBold = !objBold;
-      obj.set("fontWeight", newBold ? "bold" : "normal");
+      obj.set("fontWeight", !objBold ? "bold" : "normal");
       fabricCanvas.renderAll();
+      pushUndo();
       renderTextObjectSettings(obj);
     });
     document.getElementById("cTI")?.addEventListener("click", e => {
-      const newItalic = !objItalic;
-      obj.set("fontStyle", newItalic ? "italic" : "normal");
+      obj.set("fontStyle", !objItalic ? "italic" : "normal");
       fabricCanvas.renderAll();
+      pushUndo();
       renderTextObjectSettings(obj);
     });
     document.getElementById("cTU")?.addEventListener("click", e => {
-      const newUnderline = !objUnderline;
-      obj.set("underline", newUnderline);
+      obj.set("underline", !objUnderline);
       fabricCanvas.renderAll();
+      pushUndo();
       renderTextObjectSettings(obj);
     });
     document.getElementById("cAlignL")?.addEventListener("click", () => {
-      obj.set("textAlign", "left"); fabricCanvas.renderAll(); renderTextObjectSettings(obj);
+      obj.set("textAlign", "left");
+      fabricCanvas.renderAll();
+      pushUndo();
+      renderTextObjectSettings(obj);
     });
     document.getElementById("cAlignC")?.addEventListener("click", () => {
-      obj.set("textAlign", "center"); fabricCanvas.renderAll(); renderTextObjectSettings(obj);
+      obj.set("textAlign", "center");
+      fabricCanvas.renderAll();
+      pushUndo();
+      renderTextObjectSettings(obj);
     });
     document.getElementById("cAlignR")?.addEventListener("click", () => {
-      obj.set("textAlign", "right"); fabricCanvas.renderAll(); renderTextObjectSettings(obj);
+      obj.set("textAlign", "right");
+      fabricCanvas.renderAll();
+      pushUndo();
+      renderTextObjectSettings(obj);
     });
 
     const objTextBtns = toolCtx?.querySelectorAll("[data-color-toggle]") || [];
@@ -1596,8 +1609,19 @@ export function initDrawEditor(ctx) {
     if (!fabricCanvas) return null;
     // zapisujemy wszystkie właściwości, które wpływają na wygląd
     return fabricCanvas.toDatalessJSON([
-      "stroke","strokeWidth","strokeLineCap","strokeLineJoin","fill",
-      "opacity","skewX","skewY","angle","_canHaveFill"
+      // Obrys
+      "stroke","strokeWidth","strokeLineCap","strokeLineJoin","strokeDashArray","strokeUniform",
+      // Wypełnienie i przezroczystość
+      "fill","opacity",
+      // Transformacja
+      "skewX","skewY","angle",
+      // Tekst
+      "fontFamily","fontSize","fontWeight","fontStyle","underline",
+      "textAlign","lineHeight","charSpacing","text",
+      // Stan interakcji
+      "selectable","evented",
+      // Nasze flagi
+      "_canHaveFill"
     ]);
   }
 
@@ -1612,7 +1636,7 @@ export function initDrawEditor(ctx) {
     if (sj === sl) return;
 
     undoStack.push(j);
-    if (undoStack.length > 60) undoStack.shift();
+    if (undoStack.length > 200) undoStack.shift();
     redoStack.length = 0;
     updateUndoRedoButtons();
   }
@@ -1621,10 +1645,22 @@ export function initDrawEditor(ctx) {
     if (!fabricCanvas || !json) return;
     undoBusy = true;
     fabricCanvas.loadFromJSON(json, () => {
+      // Przywróć właściwości obiektów (selectable: false itp.)
+      fabricCanvas.forEachObject(o => {
+        if (o._selectable !== undefined) {
+          o.selectable = o._selectable;
+          o.evented = o._evented;
+        } else if (!o._canHaveFill) {
+          // Domyślnie: nowe obiekty są nie-selectable
+          o.selectable = false;
+          o.evented = true;
+        }
+      });
       undoBusy = false;
       fabricCanvas.requestRenderAll();
       ctx.markDirty?.();
       schedulePreview(80);
+      updateUndoRedoButtons();
     });
   }
 
