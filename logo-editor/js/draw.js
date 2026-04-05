@@ -1597,7 +1597,7 @@ export function initDrawEditor(ctx) {
     // zapisujemy wszystkie właściwości, które wpływają na wygląd
     return fabricCanvas.toDatalessJSON([
       "stroke","strokeWidth","strokeLineCap","strokeLineJoin","fill",
-      "opacity","skewX","skewY","angle"
+      "opacity","skewX","skewY","angle","_canHaveFill"
     ]);
   }
 
