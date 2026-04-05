@@ -2262,24 +2262,15 @@ export function initDrawEditor(ctx) {
         if (target && isTextObj(target)) {
           // Select existing text for editing
           fabricCanvas.setActiveObject(target);
+          target.enterEditing();
+          target.selectAll();
           fabricCanvas.renderAll();
-          // Używamy setTimeout zeby selection się ustabilizował
-          setTimeout(() => {
-            target.enterEditing();
-            target.selectAll();
-            fabricCanvas.renderAll();
-            renderTextObjectSettings(target);
-          }, 50);
           pushUndo();
           ctx.markDirty?.();
           schedulePreview(80);
+          renderTextObjectSettings(target);
+          return;
         } else {
-          // Kliknięcie poza tekstem → exit edit mode, exit editing
-          const active = fabricCanvas.getActiveObject();
-          if (active && isTextObj(active) && active.isEditing) {
-            active.exitEditing();
-            fabricCanvas.renderAll();
-          }
           // Create new text
           const textObj = new fabric.IText("Tekst", {
             left: pointer.x,
