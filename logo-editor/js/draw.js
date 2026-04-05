@@ -930,61 +930,56 @@ export function initDrawEditor(ctx) {
     const len = Math.hypot(dx, dy);
     if (len < 1) return `M ${x1} ${y1} L ${x2} ${y2}`;
     
-    const cos = dx / len, sin = dy / len;
-    const nx = -sin, ny = cos; // wektor prostopadły
-    const shaftW = headW * 0.4; // szerokość wałka
+    // Normalizowany kierunek strzałki
+    const ux = dx / len, uy = dy / len;
+    // Wektor prostopadły (obrót 90° w lewo)
+    const nx = -uy, ny = ux;
     
-    // Podstawa główki (gdzie zaczyna się V)
-    const baseX = x2 - headL * cos, baseY = y2 - headL * sin;
-    const tipX = x2, tipY = y2;
-    const pwX = nx * headW, pwY = ny * headW; // połowa szerokości główki
-    const sw = shaftW * 0.5; // połowa szerokości wałka
-    
-    if (!isFilled) {
-      // Kontur: obrys strzałki (fill=transparent, stroke widoczny)
-      // Jeden zamknięty path - wałek + główka = strzałka
-      let path = `M ${x1 + nx*sw} ${y1 + ny*sw}`;
-      path += ` L ${baseX + nx*sw} ${baseY + ny*sw}`;
-      path += ` L ${tipX + pwX} ${tipY + pwY}`;
+    if (isFilled) {
+      // WYPEŁNIONA: gruby wielokąt - wałek + główka
+      const shaftW = headW * 0.35; // połowa szerokości wałka
+      const tipX = x2, tipY = y2;
+      const baseX = x2 - headL * ux, baseY = y2 - headL * uy;
+      const hwX = headW * nx, hwY = headW * ny;
+      const swX = shaftW * nx, swY = shaftW * ny;
+      
+      let path = `M ${x1 + swX} ${y1 + swY}`;
+      path += ` L ${baseX + swX} ${baseY + swY}`;
+      path += ` L ${tipX + hwX} ${tipY + hwY}`;
       path += ` L ${tipX} ${tipY}`;
-      path += ` L ${tipX - pwX} ${tipY - pwY}`;
-      path += ` L ${baseX - nx*sw} ${baseY - ny*sw}`;
-      path += ` L ${x1 - nx*sw} ${y1 - ny*sw} Z`;
+      path += ` L ${tipX - hwX} ${tipY - hwY}`;
+      path += ` L ${baseX - swX} ${baseY - swY}`;
+      path += ` L ${x1 - swX} ${y1 - swY} Z`;
       
       if (dirCount === 2) {
-        const baseX2 = x1 + headL*cos, baseY2 = y1 + headL*sin;
-        const pwX2 = nx * headW, pwY2 = ny * headW;
-        path = `M ${baseX2 - pwX2} ${baseY2 - pwY2}`;
+        const baseX2 = x1 + headL * ux, baseY2 = y1 + headL * uy;
+        const hwX2 = headW * nx, hwY2 = headW * ny;
+        path = `M ${baseX2 - hwX2} ${baseY2 - hwY2}`;
         path += ` L ${x1} ${y1}`;
-        path += ` L ${baseX2 + pwX2} ${baseY2 + pwY2}`;
-        path += ` L ${baseX + pwX} ${baseY + pwY}`;
+        path += ` L ${baseX2 + hwX2} ${baseY2 + hwY2}`;
+        path += ` L ${baseX + hwX} ${baseY + hwY}`;
         path += ` L ${tipX} ${tipY}`;
-        path += ` L ${baseX - pwX} ${baseY - pwY}`;
-        path += ` L ${baseX2 - pwX2} ${baseY2 - pwY2} Z`;
+        path += ` L ${baseX - hwX} ${baseY - hwY}`;
+        path += ` L ${baseX2 - hwX2} ${baseY2 - hwY2} Z`;
       }
       return path;
     }
     
-    // WYPEŁNIENIE: jeden ciągły wielokąt
-    let path = `M ${x1 + nx*sw} ${y1 + ny*sw}`;
-    path += ` L ${baseX + nx*sw} ${baseY + ny*sw}`;
-    path += ` L ${tipX + pwX} ${tipY + pwY}`;
-    path += ` L ${tipX} ${tipY}`;
-    path += ` L ${tipX - pwX} ${tipY - pwY}`;
-    path += ` L ${baseX - nx*sw} ${baseY - ny*sw}`;
-    path += ` L ${x1 - nx*sw} ${y1 - ny*sw} Z`;
+    // BEZ WYPEŁNIENIA: cienka linia z V-główką (stroke-only)
+    const tipX = x2, tipY = y2;
+    const baseX = x2 - headL * ux, baseY = y2 - headL * uy;
+    const hwX = headW * nx, hwY = headW * ny;
+    
+    // Linia od startu do podstawy główki + V-główka
+    let path = `M ${x1} ${y1} L ${baseX} ${baseY}`;
+    path += ` M ${baseX + hwX} ${baseY + hwY} L ${tipX} ${tipY} L ${baseX - hwX} ${baseY - hwY}`;
     
     if (dirCount === 2) {
-      // Dwukierunkowa: dwie główki na zewnątrz, wałek w środku
-      const baseX2 = x1 + headL*cos, baseY2 = y1 + headL*sin;
-      const pwX2 = nx * headW, pwY2 = ny * headW;
-      path = `M ${baseX2 - pwX2} ${baseY2 - pwY2}`;
-      path += ` L ${x1} ${y1}`;
-      path += ` L ${baseX2 + pwX2} ${baseY2 + pwY2}`;
-      path += ` L ${baseX + pwX} ${baseY + pwY}`;
-      path += ` L ${tipX} ${tipY}`;
-      path += ` L ${baseX - pwX} ${baseY - pwY}`;
-      path += ` L ${baseX2 - pwX2} ${baseY2 - pwY2} Z`;
+      const baseX2 = x1 + headL * ux, baseY2 = y1 + headL * uy;
+      const hwX2 = headW * nx, hwY2 = headW * ny;
+      path = `M ${baseX2} ${baseY2} L ${baseX} ${baseY}`;
+      path += ` M ${baseX + hwX} ${baseY + hwY} L ${tipX} ${tipY} L ${baseX - hwX} ${baseY - hwY}`;
+      path += ` M ${baseX2 + hwX2} ${baseY2 + hwY2} L ${x1} ${y1} L ${baseX2 - hwX2} ${baseY2 - hwY2}`;
     }
     return path;
   }
@@ -1783,7 +1778,8 @@ export function initDrawEditor(ctx) {
     const fillVal = noFill ? "transparent" : (ts.fill ? (ts.fillColor === "BLACK" ? "#000" : "#fff") : "transparent");
 
     if (currentShape === "line" || currentShape.startsWith("arrow")) {
-      const pathStr = buildShapePath(currentShape, p0.x, p0.y, p0.x, p0.y, ts.stroke);
+      const isFilled = currentShape.endsWith("Fill");
+      const pathStr = buildShapePath(currentShape, p0.x, p0.y, p0.x, p0.y, ts.stroke, isFilled);
       const pathArr = svgPathToPath(pathStr);
       drawingObj = new f.Path(pathArr, {
         stroke: style.stroke,
@@ -1851,11 +1847,16 @@ export function initDrawEditor(ctx) {
     const noFill = !shapeInfo?.hasFill;
     const fillVal = noFill ? "transparent" : (ts.fill ? (ts.fillColor === "BLACK" ? "#000" : "#fff") : "transparent");
 
-    // Linia i strzałki
+    // Linie i strzałki
     if (shape === "line" || shape.startsWith("arrow")) {
-      const pathStr = buildShapePath(shape, drawingStart.x, drawingStart.y, p.x, p.y, ts.stroke);
+      const isArrowFill = shape.endsWith("Fill");
+      // Strzałki z fill: fill = kolor, stroke = null (lub kolor)
+      // Strzałki bez fill: fill = transparent, stroke = kolor
+      const arrowFill = isArrowFill ? (ts.fill ? (ts.fillColor === "BLACK" ? "#000" : "#fff") : (ts.fillColor === "BLACK" ? "#000" : "#fff")) : "transparent";
+      const arrowStroke = isArrowFill ? (ts.fill ? (ts.fillColor === "BLACK" ? "#000" : "#fff") : (ts.fillColor === "BLACK" ? "#000" : "#fff")) : style.stroke;
+      const pathStr = buildShapePath(currentShape, drawingStart.x, drawingStart.y, p.x, p.y, ts.stroke, isArrowFill);
       const pathArr = svgPathToPath(pathStr);
-      drawingObj.set({ path: pathArr, fill: fillVal, stroke: style.stroke, strokeWidth: style.strokeWidth, strokeDashArray: style.strokeDashArray });
+      drawingObj.set({ path: pathArr, fill: arrowFill, stroke: arrowStroke, strokeWidth: style.strokeWidth, strokeDashArray: style.strokeDashArray });
       fabricCanvas.requestRenderAll();
       return;
     }
