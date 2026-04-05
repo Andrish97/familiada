@@ -933,16 +933,13 @@ export function initDrawEditor(ctx) {
     const ux = dx / len, uy = dy / len;
     const nx = -uy, ny = ux; // prostopadły
     
-    // Szerokość wałka (35% główki)
-    const shaftHW = headW * 0.35;
-    
     // Pozycje
     const tipX = x2, tipY = y2;
     const baseX = x2 - headL * ux, baseY = y2 - headL * uy;
     
-    if (!isFilled) {
-      // KONTUR: JEDEN ciągły zamknięty path (bez przerw!)
-      // start → góra wałka → koniec wałka → tip → koniec wałka dół → start dół → Z
+    if (isFilled) {
+      // WYPEŁNIONA: zamknięty wielokąt (fill + stroke)
+      const shaftHW = headW * 0.35;
       const path = `M ${x1 + shaftHW*nx} ${y1 + shaftHW*ny} L ${baseX + shaftHW*nx} ${baseY + shaftHW*ny} L ${tipX + headW*nx} ${tipY + headW*ny} L ${tipX} ${tipY} L ${tipX - headW*nx} ${tipY - headW*ny} L ${baseX - shaftHW*nx} ${baseY - shaftHW*ny} L ${x1 - shaftHW*nx} ${y1 - shaftHW*ny} Z`;
       
       if (dirCount === 2) {
@@ -952,8 +949,15 @@ export function initDrawEditor(ctx) {
       return path;
     }
     
-    // WYPEŁNIENIE: ten sam path, ale z fill
-    return `M ${x1 + shaftHW*nx} ${y1 + shaftHW*ny} L ${baseX + shaftHW*nx} ${baseY + shaftHW*ny} L ${tipX + headW*nx} ${tipY + headW*ny} L ${tipX} ${tipY} L ${tipX - headW*nx} ${tipY - headW*ny} L ${baseX - shaftHW*nx} ${baseY - shaftHW*ny} L ${x1 - shaftHW*nx} ${y1 - shaftHW*ny} Z`;
+    // BEZ WYPEŁNIENIA: otwarty path (tylko stroke) - linia + V-główka
+    // Ciągła linia: start → podstawa → ramię V → tip → drugie ramię
+    const path = `M ${x1} ${y1} L ${baseX} ${baseY} L ${tipX + headW*nx} ${tipY + headW*ny} L ${tipX} ${tipY} L ${tipX - headW*nx} ${tipY - headW*ny}`;
+    
+    if (dirCount === 2) {
+      const baseX2 = x1 + headL * ux, baseY2 = y1 + headL * uy;
+      return `M ${baseX2 + headW*nx} ${baseY2 + headW*ny} L ${x1} ${y1} L ${baseX} ${baseY} L ${tipX + headW*nx} ${tipY + headW*ny} L ${tipX} ${tipY} L ${tipX - headW*nx} ${tipY - headW*ny} L ${baseX} ${baseY} L ${baseX2 - headW*nx} ${baseY2 - headW*ny}`;
+    }
+    return path;
   }
 
   function buildPolygonPath(cx,cy,r,sides) {
