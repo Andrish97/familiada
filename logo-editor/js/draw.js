@@ -902,18 +902,10 @@ export function initDrawEditor(ctx) {
 
     switch(shapeId) {
       case "line": return `M ${x1} ${y1} L ${x2} ${y2}`;
-      case "arrow1": return buildArrowPath(x1,y1,x2,y2,1,sw*4,sw*2.5,false);
-      case "arrow2": return buildArrowPath(x1,y1,x2,y2,2,sw*4,sw*2.5,false);
-      case "arrow1Fill": {
-        const headL = Math.min(sw*5, len*0.35);
-        const headW = Math.min(sw*3, len*0.2);
-        return buildArrowPath(x1,y1,x2,y2,1,headL,headW,true);
-      }
-      case "arrow2Fill": {
-        const headL = Math.min(sw*5, len*0.35);
-        const headW = Math.min(sw*3, len*0.2);
-        return buildArrowPath(x1,y1,x2,y2,2,headL,headW,true);
-      }
+      case "arrow1": return buildArrowPath(x1,y1,x2,y2,1,sw,false);
+      case "arrow2": return buildArrowPath(x1,y1,x2,y2,2,sw,false);
+      case "arrow1Fill": return buildArrowPath(x1,y1,x2,y2,1,sw,true);
+      case "arrow2Fill": return buildArrowPath(x1,y1,x2,y2,2,sw,true);
       case "triangle": return `M ${cx} ${y1} L ${x2} ${y2} L ${x1} ${y2} Z`;
       case "diamond": return `M ${cx} ${y1} L ${x2} ${cy} L ${cx} ${y2} L ${x1} ${cy} Z`;
       case "pentagon": return buildPolygonPath(cx, cy, r, 5);
@@ -925,26 +917,23 @@ export function initDrawEditor(ctx) {
     }
   }
 
-  function buildArrowPath(x1, y1, x2, y2, dirCount, headL, headW, isFilled) {
+  function buildArrowPath(x1, y1, x2, y2, dirCount, strokeW, isFilled) {
     const dx = x2 - x1, dy = y2 - y1;
     const len = Math.hypot(dx, dy) || 1;
-    
-    // Ogranicz wielkość główki do 60% długości strzałki (żeby nie wychodziła poza start)
-    const maxHead = len * 0.6;
-    if (headL > maxHead) {
-      headL = maxHead;
-      headW = headW * 0.6; // proporcjonalnie zmniejsz szerokość
-    }
     
     const ux = dx / len, uy = dy / len; // kierunek
     const nx = -uy, ny = ux;            // prostopadły (w lewo)
     
+    // Główka proporcjonalna do długości strzałki, ale zależna od grubości
+    const headL = Math.min(strokeW * 4, len * 0.35);
+    const headW = Math.min(strokeW * 2.5, len * 0.25);
+    const shaftHW = headW * 0.4; // połowa szerokości wałka
+    
+    const tipX = x2, tipY = y2;
+    const baseX = x2 - headL * ux, baseY = y2 - headL * uy;
+    
     if (isFilled) {
-      // WYPEŁNIONA: gruby wielokąt
-      const shaftHW = headW * 0.35;
-      const tipX = x2, tipY = y2;
-      const baseX = x2 - headL * ux, baseY = y2 - headL * uy;
-      
+      // WYPEŁNIONA: zamknięty wielokąt
       let path = `M ${x1 + shaftHW*nx} ${y1 + shaftHW*ny}`;
       path += ` L ${baseX + shaftHW*nx} ${baseY + shaftHW*ny}`;
       path += ` L ${tipX + headW*nx} ${tipY + headW*ny}`;
@@ -960,19 +949,14 @@ export function initDrawEditor(ctx) {
       return path;
     }
     
-    // BEZ WYPEŁNIENIA: cienka linia z V-główką
-    // Używamy MAŁEGO headW (tylko do V), nie pełnego headW!
-    const vW = headW * 0.4; // wąskie V (40% szerokości główki)
-    const tipX = x2, tipY = y2;
-    const baseX = x2 - headL * ux, baseY = y2 - headL * uy;
-    
-    // start -> podstawa -> V góra -> czubek -> V dół -> podstawa (koniec)
+    // BEZ WYPEŁNIENIA: otwarta linia konturu (V-główka)
+    const vW = headW * 0.5;
+    // start -> podstawa -> V góra -> czubek -> V dół -> podstawa
     const path = `M ${x1} ${y1} L ${baseX} ${baseY} L ${tipX + vW*nx} ${tipY + vW*ny} L ${tipX} ${tipY} L ${tipX - vW*nx} ${tipY - vW*ny} L ${baseX} ${baseY}`;
     
     if (dirCount === 2) {
       const baseX2 = x1 + headL * ux, baseY2 = y1 + headL * uy;
-      const vW2 = headW * 0.4;
-      return `M ${baseX2} ${baseY2} L ${x1} ${y1} L ${baseX} ${baseY} L ${tipX + vW*nx} ${tipY + vW*ny} L ${tipX} ${tipY} L ${tipX - vW*nx} ${tipY - vW*ny} L ${baseX} ${baseY} L ${baseX2} ${baseY2} L ${x1 - vW2*nx} ${y1 - vW2*ny} L ${x1} ${y1} L ${x1 + vW2*nx} ${y1 + vW2*ny} L ${baseX2} ${baseY2}`;
+      return `M ${baseX2} ${baseY2} L ${x1} ${y1} L ${baseX} ${baseY} L ${tipX + vW*nx} ${tipY + vW*ny} L ${tipX} ${tipY} L ${tipX - vW*nx} ${tipY - vW*ny} L ${baseX} ${baseY} L ${baseX2} ${baseY2} L ${x1 - vW*nx} ${y1 - vW*ny} L ${x1} ${y1} L ${x1 + vW*nx} ${y1 + vW*ny} L ${baseX2} ${baseY2}`;
     }
     return path;
   }
@@ -1777,7 +1761,7 @@ export function initDrawEditor(ctx) {
       } else {
         const isArrowFill = currentShape.endsWith("Fill");
         const arrowDir = currentShape === "arrow2" || currentShape === "arrow2Fill" ? 2 : 1;
-        pathArr = buildArrowPath(p0.x, p0.y, p0.x + 1, p0.y + 1, arrowDir, ts.stroke * 4, ts.stroke * 2.5, isArrowFill);
+        pathArr = buildArrowPath(p0.x, p0.y, p0.x + 1, p0.y + 1, arrowDir, ts.stroke, isArrowFill);
       }
       drawingObj = new f.Path(pathArr, {
         stroke: style.stroke,
@@ -1857,7 +1841,7 @@ export function initDrawEditor(ctx) {
         const isArrowFill = currentShape.endsWith("Fill");
         const arrowDir = currentShape === "arrow2" || currentShape === "arrow2Fill" ? 2 : 1;
         arrowFill = isArrowFill ? (ts.fill ? (ts.fillColor === "BLACK" ? "#000" : "#fff") : "transparent") : "transparent";
-        pathArr = buildArrowPath(drawingStart.x, drawingStart.y, ex, ey, arrowDir, ts.stroke * 4, ts.stroke * 2.5, isArrowFill);
+        pathArr = buildArrowPath(drawingStart.x, drawingStart.y, ex, ey, arrowDir, ts.stroke, isArrowFill);
       }
       // Fabric.js: usun i stworz nowy path zeby bounding box byl poprawny
       fabricCanvas.remove(drawingObj);
