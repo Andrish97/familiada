@@ -2694,16 +2694,11 @@ export function initDrawEditor(ctx) {
         shapePicker.style.display = "none";
       }
     });
-    
-    function updateShapePickerIcon() {
-      if (!tShapes) return;
-      const shape = SHAPES.find(s => s.id === currentShape);
-      if (shape) {
-        tShapes.textContent = shape.label.charAt(0);
-        tShapes.setAttribute("aria-label", `Kształty: ${shape.label}`);
-      }
-    }
-    updateShapePickerIcon();
+
+    // Zaznacz aktywny kształt w dropdownie
+    shapePicker?.querySelectorAll(".shapeItem").forEach(item => {
+      item.classList.toggle("active", item.dataset.shape === currentShape);
+    });
 
     // Zoom buttons
     tZoomIn?.addEventListener("click", () => { zoomBy(1.15); schedulePreview(120); });
