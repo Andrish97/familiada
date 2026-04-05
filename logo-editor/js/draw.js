@@ -178,7 +178,8 @@ export function initDrawEditor(ctx) {
       });
     }
     else if (tn === "eraser") {
-      showSettings(`<div class="ctxGroup"><span class="ctxLabel">Rozmiar</span><input id="cEraser" class="ctxInput" type="number" min="1" max="50" step="1" value="${toolSettings[TOOL.ERASER].size}"/></div>`);
+      const es = toolSettings[TOOL.ERASER];
+      showSettings(`<div class="ctxGroup"><span class="ctxLabel">Rozmiar</span><input id="cEraser" class="ctxInput" type="number" min="1" max="50" step="1" value="${es.size}"/></div>`);
       document.getElementById("cEraser")?.addEventListener("input", e => {
         toolSettings[TOOL.ERASER].size = clamp(+e.target.value||10,1,50);
         updateCursorVisual();
@@ -205,7 +206,7 @@ export function initDrawEditor(ctx) {
         html += `<div class="ctxGroup"><label class="ctxChk"><input type="checkbox" id="cFill" ${ts.fill?"checked":""}/>Wypeł.</label>${ctxColorBtn(ts.fillColor)}</div>`;
       }
       
-      if (isPoly) {
+      if (isPoly && polyPoints.length > 0) {
         html += `<div class="ctxGroup"><button class="ctxBtn on" id="cPolyDone">✓ Zamknij</button></div>`;
       }
       
@@ -308,10 +309,14 @@ export function initDrawEditor(ctx) {
 
       showSettings(`
         <div class="ctxGroup"><span class="ctxLabel">Obrys</span><input id="cObjStroke" class="ctxInput" type="number" min="0" max="50" step="1" value="${strokeW.mixed?'':strokeW.value}" placeholder="${strokeW.mixed?'—':''}"/></div>
+        <div class="ctxGroup"><span class="ctxLabel">Styl</span>
+          <select id="cObjLineStyle" class="ctxInput">${LINE_STYLES.map(s=>`<option value="${s.id}">${s.label}</option>`).join('')}</select>
+        </div>
         <div class="ctxGroup">${ctxColorBtn(strokeCol.mixed?"MIXED":fabricToBW(strokeCol.value))}</div>
         <div class="ctxGroup"><label class="ctxChk"><input type="checkbox" id="cObjFill" ${fills.some(f=>f&&f!=="transparent")?"checked":""}/>Wypeł.</label>${ctxColorBtn(fillCol.mixed?"MIXED":fabricToBW(fillCol.value))}</div>
       `);
       document.getElementById("cObjStroke")?.addEventListener("input", e => { fillShapes.forEach(o=>o.set("strokeWidth",clamp(+e.target.value||1,0,50))); fabricCanvas.renderAll(); });
+      document.getElementById("cObjLineStyle")?.addEventListener("change", e => { fillShapes.forEach(o=>applyLineStyle(o,e.target.value,fillShapes[0]?.strokeWidth)); fabricCanvas.renderAll(); });
       const objShapeBtns = toolCtx?.querySelectorAll("[data-color-toggle]")||[];
       if(objShapeBtns[0]) objShapeBtns[0].addEventListener("click",()=>{const c=fabricToBW(fillShapes[0]?.stroke);const n=c==="BLACK"?"#ffffff":"#000000";fillShapes.forEach(o=>o.set("stroke",n));fabricCanvas.renderAll();renderObjectSettings();});
       if(objShapeBtns[1]) objShapeBtns[1].addEventListener("click",()=>{const c=fabricToBW(fillShapes.find(x=>x.fill&&x.fill!=="transparent")?.fill||"#fff");const n=c==="BLACK"?"#ffffff":"#000000";fillShapes.forEach(o=>{if(o.fill!==undefined)o.set("fill",n)});fabricCanvas.renderAll();renderObjectSettings();});
@@ -329,9 +334,13 @@ export function initDrawEditor(ctx) {
 
       showSettings(`
         <div class="ctxGroup"><span class="ctxLabel">Obrys</span><input id="cObjStroke" class="ctxInput" type="number" min="0" max="50" step="1" value="${strokeW.mixed?'':strokeW.value}" placeholder="${strokeW.mixed?'—':''}"/></div>
+        <div class="ctxGroup"><span class="ctxLabel">Styl</span>
+          <select id="cObjLineStyle" class="ctxInput">${LINE_STYLES.map(s=>`<option value="${s.id}">${s.label}</option>`).join('')}</select>
+        </div>
         <div class="ctxGroup">${ctxColorBtn(strokeCol.mixed?"MIXED":fabricToBW(strokeCol.value))}</div>
       `);
       document.getElementById("cObjStroke")?.addEventListener("input", e => { allWithStroke.forEach(o=>o.set("strokeWidth",clamp(+e.target.value||1,0,50))); fabricCanvas.renderAll(); });
+      document.getElementById("cObjLineStyle")?.addEventListener("change", e => { allWithStroke.forEach(o=>applyLineStyle(o,e.target.value,allWithStroke[0]?.strokeWidth)); fabricCanvas.renderAll(); });
       const objMixedBtns = toolCtx?.querySelectorAll("[data-color-toggle]")||[];
       if(objMixedBtns[0]) objMixedBtns[0].addEventListener("click",()=>{const c=fabricToBW(allWithStroke.find(x=>x.stroke&&x.stroke!=="transparent")?.stroke||"#fff");const n=c==="BLACK"?"#ffffff":"#000000";allWithStroke.forEach(o=>o.set("stroke",n));fabricCanvas.renderAll();renderObjectSettings();});
     }
