@@ -318,8 +318,7 @@ export function initImageEditor(ctx) {
 
   function applyCropToDom(){
     if (!cropFrame) return;
-    crop = clampCropToImg(crop);
-
+    // NIE clampCropToImg tutaj - clamp tylko przy drag/resize
     cropFrame.style.left = `${Math.round(crop.x)}px`;
     cropFrame.style.top  = `${Math.round(crop.y)}px`;
     cropFrame.style.width  = `${Math.round(crop.w)}px`;
@@ -654,9 +653,8 @@ export function initImageEditor(ctx) {
 
     const onAnyChange = () => {
       if (ctx.getMode?.() !== "IMAGE") return;
-      syncLabels();
-      // Nie wywołuj applyContainMode() - obraz już jest poprawnie ustawiony
-      // applyContainMode() powoduje przesuwanie się obrazu przy zmianie suwaków
+      // syncLabels() zmienia rozmiar etykiet co może przesuwać layout
+      // syncLabels(); // <-- usunięte, wywoływane tylko przy open/reset
       if (!imgObj) return;
       ctx.markDirty?.();
       schedulePreview(40);
