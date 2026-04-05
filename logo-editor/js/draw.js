@@ -1763,11 +1763,11 @@ export function initDrawEditor(ctx) {
     if (currentShape === "line" || currentShape.startsWith("arrow")) {
       let pathArr;
       if (currentShape === "line") {
-        pathArr = [['M', 0, 0], ['L', 1, 1]];
+        pathArr = [['M', p0.x, p0.y], ['L', p0.x + 1, p0.y + 1]];
       } else {
         const isArrowFill = currentShape.endsWith("Fill");
         const arrowDir = currentShape === "arrow2" || currentShape === "arrow2Fill" ? 2 : 1;
-        pathArr = buildArrowPath(0, 0, 1, 1, arrowDir, ts.stroke * 4, ts.stroke * 2.5, isArrowFill);
+        pathArr = buildArrowPath(p0.x, p0.y, p0.x + 1, p0.y + 1, arrowDir, ts.stroke * 4, ts.stroke * 2.5, isArrowFill);
       }
       drawingObj = new f.Path(pathArr, {
         stroke: style.stroke,
@@ -1781,8 +1781,6 @@ export function initDrawEditor(ctx) {
         objectCaching: false,
       });
       fabricCanvas.add(drawingObj);
-      // Środek w punkcie kliknięcia
-      drawingObj.set({ left: p0.x + 0.5, top: p0.y + 0.5 });
       drawingObj.setCoords();
       fabricCanvas.requestRenderAll();
       return;
@@ -1803,8 +1801,8 @@ export function initDrawEditor(ctx) {
       });
       fabricCanvas.add(drawingObj);
     } else {
-      // Kształty Path - generuj od (0,0) do (10,10), pozycjonuj przez left/top na ŚRODEK
-      const pathStr = buildShapePath(currentShape, 0, 0, 10, 10, ts.stroke);
+      // Kształty Path - koordynaty świata (jak pędzel)
+      const pathStr = buildShapePath(currentShape, p0.x - 5, p0.y - 5, p0.x + 5, p0.y + 5, ts.stroke);
       const pathArr = svgPathToPath(pathStr);
       drawingObj = new f.Path(pathArr, {
         stroke: style.stroke,
@@ -1818,8 +1816,6 @@ export function initDrawEditor(ctx) {
         objectCaching: false,
       });
       fabricCanvas.add(drawingObj);
-      // Ustaw środek kształtu w punkcie kliknięcia
-      drawingObj.set({ left: p0.x + 5, top: p0.y + 5 });
       drawingObj.setCoords();
       fabricCanvas.requestRenderAll();
     }
@@ -1836,26 +1832,23 @@ export function initDrawEditor(ctx) {
     const noFill = !shapeInfo?.hasFill;
     const fillVal = noFill ? "transparent" : (ts.fill ? (ts.fillColor === "BLACK" ? "#000" : "#fff") : "transparent");
 
-    // Linie i strzałki
+    // Linie i strzałki - koordynaty świata
     if (shape === "line" || shape.startsWith("arrow")) {
       let w = p.x - drawingStart.x, h = p.y - drawingStart.y;
       if (shift) { const m = Math.max(Math.abs(w), Math.abs(h)); w = Math.sign(w||1)*m; h = Math.sign(h||1)*m; }
-      const absW = Math.max(2, Math.abs(w)), absH = Math.max(2, Math.abs(h));
+      const ex = drawingStart.x + w, ey = drawingStart.y + h;
       
       let pathArr, arrowFill;
       if (shape === "line") {
-        pathArr = [['M', 0, 0], ['L', absW, absH]];
+        pathArr = [['M', drawingStart.x, drawingStart.y], ['L', ex, ey]];
         arrowFill = "transparent";
       } else {
         const isArrowFill = currentShape.endsWith("Fill");
         const arrowDir = currentShape === "arrow2" || currentShape === "arrow2Fill" ? 2 : 1;
         arrowFill = isArrowFill ? (ts.fill ? (ts.fillColor === "BLACK" ? "#000" : "#fff") : "transparent") : "transparent";
-        pathArr = buildArrowPath(0, 0, absW, absH, arrowDir, ts.stroke * 4, ts.stroke * 2.5, isArrowFill);
+        pathArr = buildArrowPath(drawingStart.x, drawingStart.y, ex, ey, arrowDir, ts.stroke * 4, ts.stroke * 2.5, isArrowFill);
       }
-      // left/top = środek kształtu (domyślny origin Fabric.js dla Path)
-      const centerX = drawingStart.x + w / 2;
-      const centerY = drawingStart.y + h / 2;
-      drawingObj.set({ path: pathArr, left: centerX, top: centerY, fill: arrowFill, stroke: style.stroke, strokeWidth: style.strokeWidth, strokeDashArray: style.strokeDashArray, dirty: true });
+      drawingObj.set({ path: pathArr, fill: arrowFill, stroke: style.stroke, strokeWidth: style.strokeWidth, strokeDashArray: style.strokeDashArray, dirty: true });
       drawingObj.setCoords();
       fabricCanvas.requestRenderAll();
       return;
@@ -1883,16 +1876,15 @@ export function initDrawEditor(ctx) {
       return;
     }
 
-    // Kształty Path - generuj od (0,0) do (w,h), pozycjonuj przez left/top na ŚRODEK
+    // Kształty Path - koordynaty świata
     let w = p.x - drawingStart.x, h = p.y - drawingStart.y;
     if (shift) { const m = Math.max(Math.abs(w), Math.abs(h)); w = Math.sign(w||1)*m; h = Math.sign(h||1)*m; }
     const absW = Math.max(2, Math.abs(w)), absH = Math.max(2, Math.abs(h));
-    const pathStr = buildShapePath(shape, 0, 0, absW, absH, ts.stroke);
+    const x1 = w >= 0 ? drawingStart.x : drawingStart.x + w;
+    const y1 = h >= 0 ? drawingStart.y : drawingStart.y + h;
+    const pathStr = buildShapePath(shape, x1, y1, x1 + absW, y1 + absH, ts.stroke);
     const pathArr = svgPathToPath(pathStr);
-    // Środek kształtu
-    const centerX = drawingStart.x + w / 2;
-    const centerY = drawingStart.y + h / 2;
-    drawingObj.set({ path: pathArr, left: centerX, top: centerY, fill: fillVal, stroke: style.stroke, strokeWidth: style.strokeWidth, strokeDashArray: style.strokeDashArray, dirty: true });
+    drawingObj.set({ path: pathArr, fill: fillVal, stroke: style.stroke, strokeWidth: style.strokeWidth, strokeDashArray: style.strokeDashArray, dirty: true });
     drawingObj.setCoords();
     fabricCanvas.requestRenderAll();
   }
