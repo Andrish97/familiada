@@ -167,12 +167,12 @@
 
             <div class="toolSep"></div>
 
-            <button class="btn sm imgSetBtn" type="button" data-panel="bright"><span class="imgSetBtnLabel" data-i18n="logoEditor.image.brightness">Jasność:</span> <span class="imgSetBtnVal">0</span></button>
-            <button class="btn sm imgSetBtn" type="button" data-panel="contrast"><span class="imgSetBtnLabel" data-i18n="logoEditor.image.contrast">Kontrast:</span> <span class="imgSetBtnVal">0</span></button>
-            <button class="btn sm imgSetBtn" type="button" data-panel="gamma"><span class="imgSetBtnLabel" data-i18n="logoEditor.image.gamma">Gamma:</span> <span class="imgSetBtnVal">1.00</span></button>
-            <button class="btn sm imgSetBtn" type="button" data-panel="black"><span class="imgSetBtnLabel" data-i18n="logoEditor.image.black">Czerń:</span> <span class="imgSetBtnVal">0</span></button>
-            <button class="btn sm imgSetBtn" type="button" data-panel="white"><span class="imgSetBtnLabel" data-i18n="logoEditor.image.white">Biel:</span> <span class="imgSetBtnVal">100</span></button>
-            <button class="btn sm imgSetBtn" type="button" data-panel="dither"><span class="imgSetBtnLabel" data-i18n="logoEditor.image.dither">Dither:</span> <span class="imgSetBtnVal">0.80</span></button>
+            <button class="btn sm imgSetBtn" type="button" data-panel="bright"><span class="imgSetBtnLabel" data-i18n="logoEditor.image.brightnessLabel">Jasność:</span> <span class="imgSetBtnVal">0</span></button>
+            <button class="btn sm imgSetBtn" type="button" data-panel="contrast"><span class="imgSetBtnLabel" data-i18n="logoEditor.image.contrastLabel">Kontrast:</span> <span class="imgSetBtnVal">0</span></button>
+            <button class="btn sm imgSetBtn" type="button" data-panel="gamma"><span class="imgSetBtnLabel" data-i18n="logoEditor.image.gammaLabel">Gamma:</span> <span class="imgSetBtnVal">1.00</span></button>
+            <button class="btn sm imgSetBtn" type="button" data-panel="black"><span class="imgSetBtnLabel" data-i18n="logoEditor.image.blackLabel">Czerń:</span> <span class="imgSetBtnVal">0</span></button>
+            <button class="btn sm imgSetBtn" type="button" data-panel="white"><span class="imgSetBtnLabel" data-i18n="logoEditor.image.whiteLabel">Biel:</span> <span class="imgSetBtnVal">100</span></button>
+            <button class="btn sm imgSetBtn" type="button" data-panel="dither"><span class="imgSetBtnLabel" data-i18n="logoEditor.image.ditherLabel">Dither:</span> <span class="imgSetBtnVal">0.80</span></button>
 
             <div class="toolSep"></div>
 
@@ -199,17 +199,17 @@
 
             <div class="imgPanel" data-panel="black">
               <div class="imgPanelTitle"><span data-i18n="logoEditor.image.black">Czerń</span> <span class="imgPanelVal" id="valImgBlack">0</span></div>
-              <input class="rng v" id="rngImgBlack" type="range" min="0" max="255" value="0"/>
+              <input class="rng v" id="rngImgBlack" type="range" min="0" max="100" value="0"/>
             </div>
 
             <div class="imgPanel" data-panel="white">
-              <div class="imgPanelTitle"><span data-i18n="logoEditor.image.white">Biel</span> <span class="imgPanelVal" id="valImgWhite">255</span></div>
-              <input class="rng v" id="rngImgWhite" type="range" min="0" max="255" value="255"/>
+              <div class="imgPanelTitle"><span data-i18n="logoEditor.image.white">Biel</span> <span class="imgPanelVal" id="valImgWhite">100</span></div>
+              <input class="rng v" id="rngImgWhite" type="range" min="0" max="100" value="100"/>
             </div>
 
             <div class="imgPanel" data-panel="dither">
-              <div class="imgPanelTitle"><span data-i18n="logoEditor.image.dither">Dither</span> <span class="imgPanelVal" id="valImgDitherAmt">0</span></div>
-              <input class="rng v" id="rngImgDitherAmt" type="range" min="0" max="100" value="0"/>
+              <div class="imgPanelTitle"><span data-i18n="logoEditor.image.dither">Dither</span> <span class="imgPanelVal" id="valImgDitherAmt">0.80</span></div>
+              <input class="rng v" id="rngImgDitherAmt" type="range" min="0" max="1.00" step="0.01" value="0.80"/>
             </div>
           </div>
 

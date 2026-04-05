@@ -166,17 +166,50 @@ export function initImageEditor(ctx) {
   // UI values
   // =========================================================
   function syncLabels(){
-    if (valBright) valBright.textContent = String(rngBright?.value ?? "0");
-    if (valContrast) valContrast.textContent = String(rngContrast?.value ?? "0");
-    if (valGamma) valGamma.textContent = Number(rngGamma?.value ?? "1").toFixed(2);
-    if (valDitherAmt) valDitherAmt.textContent = Number(rngDitherAmt?.value ?? "0.80").toFixed(2);
-    if (valBlack) valBlack.textContent = String(rngBlack?.value ?? "0");
-    if (valWhite) valWhite.textContent = String(rngWhite?.value ?? "100");
-    syncImgButtonLabels();
+    // czytamy bezpośrednio z inputów, żeby było natychmiast
+    const bright = rngBright?.value ?? 0;
+    const contrast = rngContrast?.value ?? 0;
+    const gamma = rngGamma?.value ?? 1;
+    const black = rngBlack?.value ?? 0;
+    const white = rngWhite?.value ?? 100;
+    const ditherAmt = rngDitherAmt?.value ?? 0.8;
+
+    const sBright = fmtSignedInt(bright);
+    const sContrast = fmtSignedInt(contrast);
+    const sGamma = fmtGamma(gamma);
+    const sBlack = String(Math.round(Number(black) || 0));
+    const sWhite = String(Math.round(Number(white) || 0));
+    const sDither = fmtDither(ditherAmt);
+
+    // 1) Małe etykiety w panelach (valImgBright itp.)
+    if (valBright) valBright.textContent = sBright;
+    if (valContrast) valContrast.textContent = sContrast;
+    if (valGamma) valGamma.textContent = sGamma;
+    if (valDitherAmt) valDitherAmt.textContent = sDither;
+    if (valBlack) valBlack.textContent = sBlack;
+    if (valWhite) valWhite.textContent = sWhite;
+
+    // 2) Szukaj span-ów z wartościami w #toolsImage (toolbar)
+    const toolbar = document.getElementById("toolsImage");
+    if (!toolbar) return;
+
+    const btnValBright = toolbar.querySelector("[data-panel='bright'] .imgSetBtnVal");
+    const btnValContrast = toolbar.querySelector("[data-panel='contrast'] .imgSetBtnVal");
+    const btnValGamma = toolbar.querySelector("[data-panel='gamma'] .imgSetBtnVal");
+    const btnValBlack = toolbar.querySelector("[data-panel='black'] .imgSetBtnVal");
+    const btnValWhite = toolbar.querySelector("[data-panel='white'] .imgSetBtnVal");
+    const btnValDither = toolbar.querySelector("[data-panel='dither'] .imgSetBtnVal");
+
+    if (btnValBright) btnValBright.textContent = sBright;
+    if (btnValContrast) btnValContrast.textContent = sContrast;
+    if (btnValGamma) btnValGamma.textContent = sGamma;
+    if (btnValBlack) btnValBlack.textContent = sBlack;
+    if (btnValWhite) btnValWhite.textContent = sWhite;
+    if (btnValDither) btnValDither.textContent = sDither;
   }
 
   window.addEventListener("i18n:lang", () => {
-    syncImgButtonLabels();
+    syncLabels();
   });
 
   function readSettings(){
@@ -204,40 +237,6 @@ export function initImageEditor(ctx) {
   function fmtDither(n){
     const x = Number(n || 0);
     return x.toFixed(2);
-  }
-  
-  function setBtnLabel(panel, text){
-    const b = btns.find(x => x.getAttribute("data-panel") === panel);
-    if (!b) return;
-    b.textContent = text;
-  }
-  
-  function syncImgButtonLabels(){
-    // czytamy bezpośrednio z inputów, żeby było natychmiast
-    const bright = rngBright?.value ?? 0;
-    const contrast = rngContrast?.value ?? 0;
-    const gamma = rngGamma?.value ?? 1;
-    const black = rngBlack?.value ?? 0;
-    const white = rngWhite?.value ?? 100;
-    const ditherAmt = rngDitherAmt?.value ?? 0;
-
-    // Szukaj span-ów z wartościami w #paneImage
-    const pane = document.getElementById("paneImage");
-    if (!pane) return;
-
-    const valBright = pane.querySelector("[data-panel='bright'] .imgSetBtnVal");
-    const valContrast = pane.querySelector("[data-panel='contrast'] .imgSetBtnVal");
-    const valGamma = pane.querySelector("[data-panel='gamma'] .imgSetBtnVal");
-    const valBlack = pane.querySelector("[data-panel='black'] .imgSetBtnVal");
-    const valWhite = pane.querySelector("[data-panel='white'] .imgSetBtnVal");
-    const valDither = pane.querySelector("[data-panel='dither'] .imgSetBtnVal");
-
-    if (valBright) valBright.textContent = fmtSignedInt(bright);
-    if (valContrast) valContrast.textContent = fmtSignedInt(contrast);
-    if (valGamma) valGamma.textContent = fmtGamma(gamma);
-    if (valBlack) valBlack.textContent = Math.round(Number(black) || 0);
-    if (valWhite) valWhite.textContent = Math.round(Number(white) || 0);
-    if (valDither) valDither.textContent = fmtDither(ditherAmt);
   }
 
   function resetToDefaults({ resetCrop = true } = {}) {
@@ -797,6 +796,7 @@ export function initImageEditor(ctx) {
   
   // start zamknięte
   closePanels();
+  syncImgButtonLabels();
   
 
 
@@ -1047,3 +1047,4 @@ export function initImageEditor(ctx) {
     },
   };
 }
+
