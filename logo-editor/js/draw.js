@@ -248,7 +248,7 @@ export function initDrawEditor(ctx) {
         <div class="ctxGroup"><span class="ctxLabel">Roz.</span><input id="cSz" class="ctxInput" type="number" min="10" max="220" step="1" value="${textFontSize}"/></div>
         <div class="ctxGroup"><span class="ctxLabel">Linia</span><input id="cLH" class="ctxInput" type="number" min="0.6" max="3.0" step="0.05" value="${textLineHeight}"/></div>
         <div class="ctxGroup"><span class="ctxLabel">Odst.</span><input id="cSp" class="ctxInput" type="number" min="0" max="20" step="0.5" value="${textLetterSpacing}"/></div>
-        <div class="ctxGroup"><button class="ctxBtn" id="cB" ${textBold?"on":""}>B</button><button class="ctxBtn" id="cI" ${textItalic?"on":""}>I</button><button class="ctxBtn" id="cU" ${textUnderline?"on":""}>U</button></div>
+        <div class="ctxGroup"><button class="ctxBtn ${textBold?'on':''}" id="cB">B</button><button class="ctxBtn ${textItalic?'on':''}" id="cI">I</button><button class="ctxBtn ${textUnderline?'on':''}" id="cU">U</button></div>
         <div class="ctxGroup">
           <button class="ctxBtn ${textAlign==='left'?'on':''}" id="cAlignL">⇤</button>
           <button class="ctxBtn ${textAlign==='center'?'on':''}" id="cAlignC">⇆</button>
@@ -303,7 +303,7 @@ export function initDrawEditor(ctx) {
       <div class="ctxGroup"><span class="ctxLabel">Roz.</span><input id="cTSize" class="ctxInput" type="number" min="10" max="220" step="1" value="${objSize}"/></div>
       <div class="ctxGroup"><span class="ctxLabel">Linia</span><input id="cTLH" class="ctxInput" type="number" min="0.6" max="3.0" step="0.05" value="${objLH}"/></div>
       <div class="ctxGroup"><span class="ctxLabel">Odst.</span><input id="cTSp" class="ctxInput" type="number" min="0" max="20" step="0.5" value="${objSpacing}"/></div>
-      <div class="ctxGroup"><button class="ctxBtn" id="cTB" ${objBold?"on":""}>B</button><button class="ctxBtn" id="cTI" ${objItalic?"on":""}>I</button><button class="ctxBtn" id="cTU" ${objUnderline?"on":""}>U</button></div>
+      <div class="ctxGroup"><button class="ctxBtn ${objBold?'on':''}" id="cTB">B</button><button class="ctxBtn ${objItalic?'on':''}" id="cTI">I</button><button class="ctxBtn ${objUnderline?'on':''}" id="cTU">U</button></div>
       <div class="ctxGroup">
         <button class="ctxBtn ${objAlign==='left'?'on':''}" id="cAlignL">⇤</button>
         <button class="ctxBtn ${objAlign==='center'?'on':''}" id="cAlignC">⇆</button>
