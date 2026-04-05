@@ -1450,12 +1450,6 @@ export function initDrawEditor(ctx) {
   function renderCurrentSettings(optObj) {
     const obj = optObj || getActiveObj();
 
-    // TEXT tool lub SELECT tool + zaznaczony tekst → pokaż ustawienia obiektu TEKSTU
-    if (isTextObj(obj)) {
-      renderTextObjectSettings(obj);
-      return;
-    }
-
     // SELECT tool:
     if (tool === TOOL.SELECT) {
       // Kształty: pokaż ustawienia obiektu (przecięcie właściwości)
@@ -1463,7 +1457,7 @@ export function initDrawEditor(ctx) {
         renderObjectSettings();
         return;
       }
-      // Tekst: W Select NIE pokazujemy ustawień tekstu - Select służy tylko do przesuwania
+      // Tekst w Select: NIE pokazujemy ustawień tekstu - Select służy tylko do przesuwania
       if (isTextObj(obj)) {
         hideSettings();
         return;
@@ -2171,27 +2165,10 @@ export function initDrawEditor(ctx) {
     });
 
     fabricCanvas.on("selection:created", () => {
-      const obj = getActiveObj();
-      if (obj && isTextObj(obj) && tool === TOOL.SELECT) {
-        // Auto-switch na TEXT tool gdy zaznaczono tekst
-        setBaseTool(TOOL.TEXT);
-        syncToolButtons();
-        obj.enterEditing();
-        obj.selectAll();
-        fabricCanvas.renderAll();
-      }
-      renderCurrentSettings(obj);
+      renderCurrentSettings();
     });
     fabricCanvas.on("selection:updated", () => {
-      const obj = getActiveObj();
-      if (obj && isTextObj(obj) && tool === TOOL.SELECT) {
-        setBaseTool(TOOL.TEXT);
-        syncToolButtons();
-        obj.enterEditing();
-        obj.selectAll();
-        fabricCanvas.renderAll();
-      }
-      renderCurrentSettings(obj);
+      renderCurrentSettings();
     });
     fabricCanvas.on("selection:cleared", () => {
       renderCurrentSettings();
@@ -2407,13 +2384,28 @@ export function initDrawEditor(ctx) {
       }
     });
 
-    // Dwuklik kończy polygon
+    // Dwuklik kończy polygon LUB włącza edycję tekstu w Select
     drawCanvasEl.addEventListener("dblclick", (ev) => {
       if (ctx.getMode?.() !== "DRAW") return;
 
       if (tool === TOOL.SHAPES && currentShape === "polygon" && polyPoints.length >= 2) {
         ev.preventDefault();
         finalizePolygon();
+        return;
+      }
+
+      if (tool === TOOL.SELECT) {
+        const target = fabricCanvas.findTarget(ev);
+        if (target && isTextObj(target)) {
+          ev.preventDefault();
+          setBaseTool(TOOL.TEXT);
+          syncToolButtons();
+          fabricCanvas.setActiveObject(target);
+          target.enterEditing();
+          target.selectAll();
+          fabricCanvas.renderAll();
+          renderTextObjectSettings(target);
+        }
       }
     });
 
