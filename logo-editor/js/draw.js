@@ -1799,10 +1799,14 @@ export function initDrawEditor(ctx) {
       });
       fabricCanvas.add(drawingObj);
     } else {
-      // Kształty Path - koordynaty świata (jak pędzel)
-      const pathStr = buildShapePath(currentShape, p0.x - 5, p0.y - 5, p0.x + 5, p0.y + 5, ts.stroke);
+      // Kształty Path - generuj od (0,0) do (10,10), pozycjonuj przez left/top
+      const pathStr = buildShapePath(currentShape, 0, 0, 10, 10, ts.stroke);
       const pathArr = svgPathToPath(pathStr);
       drawingObj = new f.Path(pathArr, {
+        left: p0.x - 5,
+        top: p0.y - 5,
+        originX: "left",
+        originY: "top",
         stroke: style.stroke,
         strokeWidth: style.strokeWidth,
         fill: fillVal,
@@ -1863,6 +1867,7 @@ export function initDrawEditor(ctx) {
         objectCaching: false,
       });
       fabricCanvas.add(drawingObj);
+      drawingObj.setCoords();
       fabricCanvas.requestRenderAll();
       return;
     }
@@ -1889,16 +1894,20 @@ export function initDrawEditor(ctx) {
       return;
     }
 
-    // Kształty Path - recreate (Fabric 5.x bug z set({path}))
+    // Kształty Path - generuj od (0,0) do (w,h), pozycjonuj przez left/top
     let w = p.x - drawingStart.x, h = p.y - drawingStart.y;
     if (shift) { const m = Math.max(Math.abs(w), Math.abs(h)); w = Math.sign(w||1)*m; h = Math.sign(h||1)*m; }
     const absW = Math.max(2, Math.abs(w)), absH = Math.max(2, Math.abs(h));
-    const x1 = w >= 0 ? drawingStart.x : drawingStart.x + w;
-    const y1 = h >= 0 ? drawingStart.y : drawingStart.y + h;
-    const pathStr = buildShapePath(shape, x1, y1, x1 + absW, y1 + absH, ts.stroke);
+    const pathStr = buildShapePath(shape, 0, 0, absW, absH, ts.stroke);
     const pathArr = svgPathToPath(pathStr);
+    const left = w >= 0 ? drawingStart.x : drawingStart.x + w;
+    const top = h >= 0 ? drawingStart.y : drawingStart.y + h;
+    
     fabricCanvas.remove(drawingObj);
     drawingObj = new f.Path(pathArr, {
+      left, top,
+      originX: "left",
+      originY: "top",
       stroke: style.stroke,
       strokeWidth: style.strokeWidth,
       fill: fillVal,
