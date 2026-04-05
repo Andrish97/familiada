@@ -925,39 +925,46 @@ export function initDrawEditor(ctx) {
     }
   }
 
-  function buildArrowPath(x1,y1,x2,y2,dirCount,headL,headW,isFilled) {
-    const dx = x2 - x1, dy = y2 - y1;
-    const len = Math.hypot(dx, dy);
-    if (len < 1) return `M ${x1} ${y1} L ${x2} ${y2}`;
-    
-    const ux = dx / len, uy = dy / len;
-    const nx = -uy, ny = ux; // prostopadły
-    
-    // Pozycje
-    const tipX = x2, tipY = y2;
-    const baseX = x2 - headL * ux, baseY = y2 - headL * uy;
-    
-    if (isFilled) {
-      // WYPEŁNIONA: zamknięty wielokąt (fill + stroke)
-      const shaftHW = headW * 0.35;
-      const path = `M ${x1 + shaftHW*nx} ${y1 + shaftHW*ny} L ${baseX + shaftHW*nx} ${baseY + shaftHW*ny} L ${tipX + headW*nx} ${tipY + headW*ny} L ${tipX} ${tipY} L ${tipX - headW*nx} ${tipY - headW*ny} L ${baseX - shaftHW*nx} ${baseY - shaftHW*ny} L ${x1 - shaftHW*nx} ${y1 - shaftHW*ny} Z`;
-      
-      if (dirCount === 2) {
-        const baseX2 = x1 + headL * ux, baseY2 = y1 + headL * uy;
-        return `M ${baseX2 - headW*nx} ${baseY2 - headW*ny} L ${x1} ${y1} L ${baseX2 + headW*nx} ${baseY2 + headW*ny} L ${baseX + headW*nx} ${baseY + headW*ny} L ${tipX} ${tipY} L ${baseX - headW*nx} ${baseY - headW*ny} L ${baseX2 - headW*nx} ${baseY2 - headW*ny} Z`;
-      }
-      return path;
-    }
-    
-    // BEZ WYPEŁNIENIA: otwarty path (tylko stroke) - linia + V-główka
-    // Ciągła linia: start → podstawa → ramię V → tip → drugie ramię
-    const path = `M ${x1} ${y1} L ${baseX} ${baseY} L ${tipX + headW*nx} ${tipY + headW*ny} L ${tipX} ${tipY} L ${tipX - headW*nx} ${tipY - headW*ny}`;
-    
-    if (dirCount === 2) {
-      const baseX2 = x1 + headL * ux, baseY2 = y1 + headL * uy;
-      return `M ${baseX2 + headW*nx} ${baseY2 + headW*ny} L ${x1} ${y1} L ${baseX} ${baseY} L ${tipX + headW*nx} ${tipY + headW*ny} L ${tipX} ${tipY} L ${tipX - headW*nx} ${tipY - headW*ny} L ${baseX} ${baseY} L ${baseX2 - headW*nx} ${baseY2 - headW*ny}`;
-    }
-    return path;
+  function buildArrowPath(x1, y1, x2, y2, dirCount, headL, headW, isFilled) {
+    const shaftWidth = headW * 0.7;
+    const doubleArrow = dirCount === 2;
+
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const len = Math.hypot(dx, dy) || 1;
+
+    const ux = dx / len;
+    const uy = dy / len;
+    const px = -uy;
+    const py = ux;
+
+    const halfShaft = shaftWidth / 2;
+    const halfHead = headW / 2;
+
+    const startCut = doubleArrow ? headL : 0;
+    const endCut = headL;
+
+    const sx = x1 + ux * startCut;
+    const sy = y1 + uy * startCut;
+    const ex = x2 - ux * endCut;
+    const ey = y2 - uy * endCut;
+
+    // Zwraca BEZPOŚREDNIO tablicę komend dla Fabric.js Path
+    return [
+      ['M', sx + px * halfShaft, sy + py * halfShaft],
+      ['L', ex + px * halfShaft, ey + py * halfShaft],
+      ['L', ex + px * halfHead, ey + py * halfHead],
+      ['L', x2, y2],
+      ['L', ex - px * halfHead, ey - py * halfHead],
+      ['L', ex - px * halfShaft, ey - py * halfShaft],
+      ['L', sx - px * halfShaft, sy - py * halfShaft],
+      ...(doubleArrow ? [
+        ['L', sx - px * halfHead, sy - py * halfHead],
+        ['L', x1, y1],
+        ['L', sx + px * halfHead, sy + py * halfHead],
+      ] : []),
+      ['Z']
+    ];
   }
 
   function buildPolygonPath(cx,cy,r,sides) {
@@ -1760,8 +1767,7 @@ export function initDrawEditor(ctx) {
       } else {
         const isArrowFill = currentShape.endsWith("Fill");
         const arrowDir = currentShape === "arrow2" || currentShape === "arrow2Fill" ? 2 : 1;
-        const pathStr = buildArrowPath(0, 0, 1, 1, arrowDir, ts.stroke * 4, ts.stroke * 2.5, isArrowFill);
-        pathArr = svgPathToPath(pathStr);
+        pathArr = buildArrowPath(0, 0, 1, 1, arrowDir, ts.stroke * 4, ts.stroke * 2.5, isArrowFill);
       }
       drawingObj = new f.Path(pathArr, {
         stroke: style.stroke,
@@ -1848,8 +1854,7 @@ export function initDrawEditor(ctx) {
         const isArrowFill = currentShape.endsWith("Fill");
         const arrowDir = currentShape === "arrow2" || currentShape === "arrow2Fill" ? 2 : 1;
         arrowFill = isArrowFill ? (ts.fill ? (ts.fillColor === "BLACK" ? "#000" : "#fff") : "transparent") : "transparent";
-        const pathStr = buildArrowPath(0, 0, absW, absH, arrowDir, ts.stroke * 4, ts.stroke * 2.5, isArrowFill);
-        pathArr = svgPathToPath(pathStr);
+        pathArr = buildArrowPath(0, 0, absW, absH, arrowDir, ts.stroke * 4, ts.stroke * 2.5, isArrowFill);
       }
       drawingObj.set({ path: pathArr, left, top, fill: arrowFill, stroke: style.stroke, strokeWidth: style.strokeWidth, strokeDashArray: style.strokeDashArray, dirty: true });
       drawingObj.setCoords();
