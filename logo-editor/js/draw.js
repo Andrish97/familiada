@@ -2606,7 +2606,25 @@ export function initDrawEditor(ctx) {
       }
     }
 
-    // Delete/Backspace USUNIĘTE - nie usuwa obiektów w Select
+    // Delete/Backspace usunięte - nie usuwa obiektów w Select
+
+    // Przywrócone: Delete/Backspace usuwa zaznaczone obiekty w Select
+    if ((key === "Backspace" || key === "Delete") && tool === TOOL.SELECT) {
+      const active = fabricCanvas?.getActiveObject();
+      if (active && !active.isEditing) {
+        ev.preventDefault();
+        if (active.type === "activeSelection") {
+          active.getObjects().forEach(o => fabricCanvas?.remove(o));
+        } else {
+          fabricCanvas?.remove(active);
+        }
+        fabricCanvas?.discardActiveObject();
+        fabricCanvas?.requestRenderAll();
+        pushUndo();
+        ctx.markDirty?.();
+        schedulePreview(80);
+      }
+    }
 
     // Duplicuj (Ctrl/Cmd + D)
     if ((ev.ctrlKey || ev.metaKey) && k === "d") {
