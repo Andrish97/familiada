@@ -1848,8 +1848,20 @@ export function initDrawEditor(ctx) {
         arrowFill = isArrowFill ? (ts.fill ? (ts.fillColor === "BLACK" ? "#000" : "#fff") : "transparent") : "transparent";
         pathArr = buildArrowPath(drawingStart.x, drawingStart.y, ex, ey, arrowDir, ts.stroke * 4, ts.stroke * 2.5, isArrowFill);
       }
-      drawingObj.set({ path: pathArr, fill: arrowFill, stroke: style.stroke, strokeWidth: style.strokeWidth, strokeDashArray: style.strokeDashArray, dirty: true });
-      drawingObj.setCoords();
+      // Fabric.js: usun i stworz nowy path zeby bounding box byl poprawny
+      fabricCanvas.remove(drawingObj);
+      drawingObj = new f.Path(pathArr, {
+        stroke: style.stroke,
+        strokeWidth: style.strokeWidth,
+        fill: arrowFill,
+        strokeLineCap: style.strokeLineCap,
+        strokeLineJoin: style.strokeLineJoin,
+        strokeDashArray: style.strokeDashArray,
+        selectable: false,
+        evented: true,
+        objectCaching: false,
+      });
+      fabricCanvas.add(drawingObj);
       fabricCanvas.requestRenderAll();
       return;
     }
@@ -1876,7 +1888,7 @@ export function initDrawEditor(ctx) {
       return;
     }
 
-    // Kształty Path - koordynaty świata
+    // Kształty Path - koordynaty świata - recreate zeby bounding box byl poprawny
     let w = p.x - drawingStart.x, h = p.y - drawingStart.y;
     if (shift) { const m = Math.max(Math.abs(w), Math.abs(h)); w = Math.sign(w||1)*m; h = Math.sign(h||1)*m; }
     const absW = Math.max(2, Math.abs(w)), absH = Math.max(2, Math.abs(h));
@@ -1884,8 +1896,19 @@ export function initDrawEditor(ctx) {
     const y1 = h >= 0 ? drawingStart.y : drawingStart.y + h;
     const pathStr = buildShapePath(shape, x1, y1, x1 + absW, y1 + absH, ts.stroke);
     const pathArr = svgPathToPath(pathStr);
-    drawingObj.set({ path: pathArr, fill: fillVal, stroke: style.stroke, strokeWidth: style.strokeWidth, strokeDashArray: style.strokeDashArray, dirty: true });
-    drawingObj.setCoords();
+    fabricCanvas.remove(drawingObj);
+    drawingObj = new f.Path(pathArr, {
+      stroke: style.stroke,
+      strokeWidth: style.strokeWidth,
+      fill: fillVal,
+      strokeLineCap: style.strokeLineCap,
+      strokeLineJoin: style.strokeLineJoin,
+      strokeDashArray: style.strokeDashArray,
+      selectable: false,
+      evented: true,
+      objectCaching: false,
+    });
+    fabricCanvas.add(drawingObj);
     fabricCanvas.requestRenderAll();
   }
 
