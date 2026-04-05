@@ -232,12 +232,12 @@ export function initImageEditor(ctx) {
     const btnWhite = pane.querySelector("[data-panel='white']");
     const btnDither = pane.querySelector("[data-panel='dither']");
 
-    if (btnBright) btnBright.textContent = t("logoEditor.image.brightnessValue", { value: fmtSignedInt(bright) });
-    if (btnContrast) btnContrast.textContent = t("logoEditor.image.contrastValue", { value: fmtSignedInt(contrast) });
-    if (btnGamma) btnGamma.textContent = t("logoEditor.image.gammaValue", { value: fmtGamma(gamma) });
-    if (btnBlack) btnBlack.textContent = t("logoEditor.image.blackValue", { value: Math.round(Number(black) || 0) });
-    if (btnWhite) btnWhite.textContent = t("logoEditor.image.whiteValue", { value: Math.round(Number(white) || 0) });
-    if (btnDither) btnDither.textContent = t("logoEditor.image.ditherValue", { value: fmtDither(ditherAmt) });
+    if (btnBright) btnBright.textContent = fmtSignedInt(bright);
+    if (btnContrast) btnContrast.textContent = fmtSignedInt(contrast);
+    if (btnGamma) btnGamma.textContent = fmtGamma(gamma);
+    if (btnBlack) btnBlack.textContent = Math.round(Number(black) || 0);
+    if (btnWhite) btnWhite.textContent = Math.round(Number(white) || 0);
+    if (btnDither) btnDither.textContent = fmtDither(ditherAmt);
   }
 
   function resetToDefaults({ resetCrop = true } = {}) {
