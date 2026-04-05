@@ -2362,7 +2362,7 @@ export function initDrawEditor(ctx) {
       pushUndo();
       ctx.markDirty?.();
       schedulePreview(80);
-      renderObjectSettings(fabricCanvas.getActiveObject());
+      renderCurrentSettings();
     });
 
     fabricCanvas.on("object:removed", () => {
@@ -2382,10 +2382,6 @@ export function initDrawEditor(ctx) {
       renderCurrentSettings();
     });
 
-    fabricCanvas.on("object:modified", () => {
-      renderCurrentSettings();
-    });
-
     fabricCanvas.on("object:moving", (e) => {
       if (tool !== TOOL.SELECT) return;
       if (!e?.target) return;
@@ -2393,6 +2389,12 @@ export function initDrawEditor(ctx) {
     });
 
     fabricCanvas.on("object:scaling", (e) => {
+      if (tool !== TOOL.SELECT) return;
+      if (!e?.target) return;
+      clampObjectToWorld(e.target);
+    });
+
+    fabricCanvas.on("object:rotating", (e) => {
       if (tool !== TOOL.SELECT) return;
       if (!e?.target) return;
       clampObjectToWorld(e.target);
