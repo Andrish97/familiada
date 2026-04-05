@@ -1754,8 +1754,9 @@ export function initDrawEditor(ctx) {
     const fillVal = noFill ? "transparent" : (ts.fill ? (ts.fillColor === "BLACK" ? "#000" : "#fff") : "transparent");
 
     if (currentShape === "line" || currentShape.startsWith("arrow")) {
-      const isFilled = currentShape.endsWith("Fill");
-      const pathStr = buildShapePath(currentShape, p0.x, p0.y, p0.x, p0.y, ts.stroke, isFilled);
+      const isArrowFill = currentShape.endsWith("Fill");
+      const arrowDir = currentShape === "arrow2" || currentShape === "arrow2Fill" ? 2 : 1;
+      const pathStr = buildArrowPath(0, 0, 1, 1, arrowDir, ts.stroke * 4, ts.stroke * 2.5, isArrowFill);
       const pathArr = svgPathToPath(pathStr);
       drawingObj = new f.Path(pathArr, {
         stroke: style.stroke,
@@ -1771,6 +1772,9 @@ export function initDrawEditor(ctx) {
         objectCaching: false,
       });
       fabricCanvas.add(drawingObj);
+      drawingObj.set({ left: p0.x, top: p0.y });
+      drawingObj.setCoords();
+      fabricCanvas.requestRenderAll();
       return;
     }
 
@@ -1789,10 +1793,8 @@ export function initDrawEditor(ctx) {
       });
       fabricCanvas.add(drawingObj);
     } else {
-      // Kształty Path - generuj w koordynatach świata (nie używaj left/top)
-      const cx = p0.x, cy = p0.y;
-      const halfSize = 5;
-      const pathStr = buildShapePath(currentShape, cx - halfSize, cy - halfSize, cx + halfSize, cy + halfSize, ts.stroke);
+      // Kształty Path - generuj od (0,0) do (10,10), pozycjonuj przez left/top
+      const pathStr = buildShapePath(currentShape, 0, 0, 10, 10, ts.stroke);
       const pathArr = svgPathToPath(pathStr);
       drawingObj = new f.Path(pathArr, {
         stroke: style.stroke,
@@ -1801,11 +1803,14 @@ export function initDrawEditor(ctx) {
         strokeLineCap: style.strokeLineCap,
         strokeLineJoin: style.strokeLineJoin,
         strokeDashArray: style.strokeDashArray,
+        originX: "left",
+        originY: "top",
         selectable: false,
         evented: true,
         objectCaching: false,
       });
       fabricCanvas.add(drawingObj);
+      drawingObj.set({ left: p0.x, top: p0.y });
       drawingObj.setCoords();
       fabricCanvas.requestRenderAll();
     }
@@ -1826,9 +1831,12 @@ export function initDrawEditor(ctx) {
     if (shape === "line" || shape.startsWith("arrow")) {
       const isArrowFill = currentShape.endsWith("Fill");
       const arrowFill = isArrowFill ? (ts.fill ? (ts.fillColor === "BLACK" ? "#000" : "#fff") : "transparent") : "transparent";
-      const pathStr = buildArrowPath(drawingStart.x, drawingStart.y, p.x, p.y, currentShape === "arrow2" || currentShape === "arrow2Fill" ? 2 : 1, ts.stroke * 4, ts.stroke * 2.5, isArrowFill);
+      const arrowDir = currentShape === "arrow2" || currentShape === "arrow2Fill" ? 2 : 1;
+      const pathStr = buildArrowPath(0, 0, Math.abs(p.x - drawingStart.x), Math.abs(p.y - drawingStart.y), arrowDir, ts.stroke * 4, ts.stroke * 2.5, isArrowFill);
       const pathArr = svgPathToPath(pathStr);
-      drawingObj.set({ path: pathArr, fill: arrowFill, stroke: style.stroke, strokeWidth: style.strokeWidth, strokeDashArray: style.strokeDashArray });
+      const left = Math.min(drawingStart.x, p.x);
+      const top = Math.min(drawingStart.y, p.y);
+      drawingObj.set({ path: pathArr, left, top, fill: arrowFill, stroke: style.stroke, strokeWidth: style.strokeWidth, strokeDashArray: style.strokeDashArray });
       drawingObj.setCoords();
       fabricCanvas.requestRenderAll();
       return;
@@ -1856,21 +1864,22 @@ export function initDrawEditor(ctx) {
       return;
     }
 
-    // Kształty Path - generuj w koordynatach świata
+    // Kształty Path - generuj od (0,0) do (w,h), pozycjonuj przez left/top
     let w = p.x - drawingStart.x, h = p.y - drawingStart.y;
     if (shift) { const m = Math.max(Math.abs(w), Math.abs(h)); w = Math.sign(w||1)*m; h = Math.sign(h||1)*m; }
     const absW = Math.max(2, Math.abs(w)), absH = Math.max(2, Math.abs(h));
-    const x1 = w >= 0 ? drawingStart.x : drawingStart.x + w;
-    const y1 = h >= 0 ? drawingStart.y : drawingStart.y + h;
-    const pathStr = buildShapePath(shape, x1, y1, x1 + absW, y1 + absH, ts.stroke);
+    const pathStr = buildShapePath(shape, 0, 0, absW, absH, ts.stroke);
     const pathArr = svgPathToPath(pathStr);
-    drawingObj.set({ path: pathArr, fill: fillVal, stroke: style.stroke, strokeWidth: style.strokeWidth, strokeDashArray: style.strokeDashArray });
+    const left = w >= 0 ? drawingStart.x : drawingStart.x + w;
+    const top = h >= 0 ? drawingStart.y : drawingStart.y + h;
+    drawingObj.set({ path: pathArr, left, top, fill: fillVal, stroke: style.stroke, strokeWidth: style.strokeWidth, strokeDashArray: style.strokeDashArray });
     drawingObj.setCoords();
     fabricCanvas.requestRenderAll();
   }
 
   function finishFigure() {
     if (!fabricCanvas || !drawingObj) return;
+    drawingObj.set({ selectable: true, evented: true });
     drawingObj.setCoords();
     drawingObj = null;
     drawingStart = null;
