@@ -655,7 +655,8 @@ export function initImageEditor(ctx) {
     const onAnyChange = () => {
       if (ctx.getMode?.() !== "IMAGE") return;
       syncLabels();
-      applyContainMode();
+      // Nie wywołuj applyContainMode() - obraz już jest poprawnie ustawiony
+      // applyContainMode() powoduje przesuwanie się obrazu przy zmianie suwaków
       if (!imgObj) return;
       ctx.markDirty?.();
       schedulePreview(40);
