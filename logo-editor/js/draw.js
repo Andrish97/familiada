@@ -1688,6 +1688,29 @@ export function initDrawEditor(ctx) {
   }
 
   // =========================================================
+  // Export/Import edit history
+  // =========================================================
+  function getEditHistory() {
+    return {
+      undoStack: undoStack.slice(), // kopia
+      redoStack: redoStack.slice()
+    };
+  }
+
+  function setEditHistory(history) {
+    if (!history) return;
+    undoStack = Array.isArray(history.undoStack) ? history.undoStack.slice() : [];
+    redoStack = Array.isArray(history.redoStack) ? history.redoStack.slice() : [];
+    updateUndoRedoButtons();
+  }
+
+  function clearEditHistory() {
+    undoStack = [];
+    redoStack = [];
+    updateUndoRedoButtons();
+  }
+
+  // =========================================================
   // Polygon
   // =========================================================
   function clearPolyDraft() {
@@ -2979,6 +3002,7 @@ export function initDrawEditor(ctx) {
 
       const source = payload?.source || {};
       const fabricData = source.fabricData || null;
+      const editHistory = source.editHistory || null;
 
       // reset sesji rysunku (ustawienia narzędzi + kolory zostają w pamięci sesji)
       if (fabricCanvas) {
@@ -2991,12 +3015,17 @@ export function initDrawEditor(ctx) {
             undoBusy = false;
             fabricCanvas.backgroundColor = bgColor();
             fabricCanvas.requestRenderAll();
-            
-            undoStack = [];
-            redoStack = [];
-            pushUndo();
-            updateUndoRedoButtons();
-            
+
+            // Przywróć historię edycji jeśli jest
+            if (editHistory) {
+              setEditHistory(editHistory);
+            } else {
+              undoStack = [];
+              redoStack = [];
+              pushUndo();
+              updateUndoRedoButtons();
+            }
+
             schedulePreview(150);
           });
         } else {
@@ -3037,7 +3066,6 @@ export function initDrawEditor(ctx) {
     },
 
     async getCreatePayload() {
-      // odśwież bity stabilnie
       await refreshPreviewNow();
 
       return {
@@ -3050,11 +3078,17 @@ export function initDrawEditor(ctx) {
           bits_b64: ctx.packBitsRowMajorMSB(bits150, DOT_W, DOT_H),
           source: {
             mode: "DRAW",
-            fabricData: snapshotJSON()
+            fabricData: snapshotJSON(),
+            editHistory: getEditHistory()
           }
         },
       };
     },
+
+    // Export/Import edit history
+    getEditHistory,
+    setEditHistory,
+    clearEditHistory,
   };
 }
 // version trigger

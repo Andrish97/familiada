@@ -564,7 +564,9 @@ function parseImportJson(text){
     }
     const bits_b64 = String(p.bits_b64 || "");
     if (!bits_b64) throw new Error(t("logoEditor.errors.missingBits"));
-    return { kind: "PIX", name, pixPayload: { w, h, format: "BITPACK_MSB_FIRST_ROW_MAJOR", bits_b64 } };
+    // Zachowaj cały source (editHistory, imageData, fabricData itp.)
+    const source = p.source || {};
+    return { kind: "PIX", name, pixPayload: { w, h, format: "BITPACK_MSB_FIRST_ROW_MAJOR", bits_b64, source } };
   }
 
   throw new Error(t("logoEditor.errors.unknownImportFormat"));
