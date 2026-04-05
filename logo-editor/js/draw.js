@@ -2651,9 +2651,10 @@ export function initDrawEditor(ctx) {
       }
 
       // Poly
-      if (baseTool === TOOL.POLY && key === "Enter") { ev.preventDefault(); finalizePolygon(); return; }
-      if (baseTool === TOOL.POLY && key === "Escape") { ev.preventDefault(); clearPolyDraft(); return; }
-      if (baseTool === TOOL.POLY && (key === "Backspace" || key === "Delete")) { ev.preventDefault(); popPolyPoint(); return; }
+      // Enter zamyka wielokąt
+      if (key === "Enter" && baseTool === TOOL.SHAPES && currentShape === "polygon" && polyPoints.length >= 2) { ev.preventDefault(); finalizePolygon(); return; }
+      if (key === "Escape" && baseTool === TOOL.SHAPES && currentShape === "polygon") { ev.preventDefault(); clearPolyDraft(); return; }
+      if ((key === "Backspace" || key === "Delete") && baseTool === TOOL.SHAPES && currentShape === "polygon" && polyPoints.length > 0) { ev.preventDefault(); popPolyPoint(); return; }
 
       // [ ] grubość
       if (k === "[") {
