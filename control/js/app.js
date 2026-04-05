@@ -1268,8 +1268,15 @@ async function sendZeroStatesToDevices() {
   }
 
   function openHelpModal() {
-    if (helpFrame) helpFrame.src = buildHelpUrl();
+    console.log("[control] openHelpModal called");
+    console.log("[control] helpFrame:", helpFrame);
+    if (helpFrame) {
+      const url = buildHelpUrl();
+      console.log("[control] Setting helpFrame.src to:", url);
+      helpFrame.src = url;
+    }
     helpOverlay?.classList.remove("hidden");
+    console.log("[control] helpOverlay hidden:", helpOverlay?.classList.contains("hidden"));
   }
 
   function closeHelpModal() {
