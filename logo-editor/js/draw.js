@@ -2656,10 +2656,8 @@ export function initDrawEditor(ctx) {
       }
     }
 
-    // Delete/Backspace usunięte - nie usuwa obiektów w Select
-
-    // Przywrócone: Delete/Backspace usuwa zaznaczone obiekty w Select
-    if ((key === "Backspace" || key === "Delete") && tool === TOOL.SELECT) {
+    // Delete/Backspace usuwa zaznaczone obiekty w Select
+    if ((key === "Backspace" || key === "Delete") && baseTool === TOOL.SELECT) {
       const active = fabricCanvas?.getActiveObject();
       if (active && !active.isEditing) {
         ev.preventDefault();
