@@ -1252,9 +1252,7 @@ async function sendZeroStatesToDevices() {
     url.searchParams.set("lang", getUiLang() || "pl");
     url.searchParams.set("tab", "control");
     url.hash = "control";
-    const result = url.toString();
-    console.log("[control] buildHelpUrl:", result);
-    return result;
+    return url.toString();
   }
 
   function buildLegalUrl() {
@@ -1268,15 +1266,8 @@ async function sendZeroStatesToDevices() {
   }
 
   function openHelpModal() {
-    console.log("[control] openHelpModal called");
-    console.log("[control] helpFrame:", helpFrame);
-    if (helpFrame) {
-      const url = buildHelpUrl();
-      console.log("[control] Setting helpFrame.src to:", url);
-      helpFrame.src = url;
-    }
+    if (helpFrame) helpFrame.src = buildHelpUrl();
     helpOverlay?.classList.remove("hidden");
-    console.log("[control] helpOverlay hidden:", helpOverlay?.classList.contains("hidden"));
   }
 
   function closeHelpModal() {
@@ -1343,7 +1334,6 @@ async function sendZeroStatesToDevices() {
   });
   
   ui.on("top.manual", () => {
-    console.log("[app] top.manual event received");
     openHelpModal();
   });
 

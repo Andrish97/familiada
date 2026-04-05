@@ -44,27 +44,17 @@ const pages = Object.fromEntries(
 );
 
 function setActive(name) {
-  console.log("[manual] setActive called with:", name);
-  if (!pages[name]) {
-    console.log("[manual] pages[name] not found, falling back to general");
-    name = "general";
-  }
+  if (!pages[name]) name = "general";
 
   getTabs().forEach(t => t.classList.toggle("active", t.dataset.tab === name));
   Object.entries(pages).forEach(([key, el]) => {
     el?.classList.toggle("active", key === name);
   });
   location.hash = name;
-  console.log("[manual] location.hash set to:", location.hash);
   updateMobileTabSubtitle(name);
 }
 
 function wireTabs() {
-  console.log("[manual] wireTabs start, location.href:", location.href);
-  console.log("[manual] location.hash:", location.hash);
-  console.log("[manual] location.search:", location.search);
-  console.log("[manual] pages keys:", Object.keys(pages));
-
   if (!shouldShowDemoTab() || isModalMode()) {
     document.querySelector('.simple-tabs .tab[data-tab="demo"], .modal-tabs .tab[data-tab="demo"]')?.remove();
     pages.demo?.remove();
@@ -79,15 +69,8 @@ function wireTabs() {
   const p = new URLSearchParams(location.search);
   const paramInitial = p.get("tab") || "";
   const initial = hashInitial || paramInitial;
-  console.log("[manual] hashInitial:", hashInitial, "paramInitial:", paramInitial, "initial:", initial);
-  console.log("[manual] pages[initial] exists:", !!pages[initial]);
-  if (initial && pages[initial]) {
-    console.log("[manual] Calling setActive with:", initial);
-    setActive(initial);
-  } else {
-    console.log("[manual] Calling setActive with: general");
-    setActive("general");
-  }
+  if (initial && pages[initial]) setActive(initial);
+  else setActive("general");
 }
 
 function normalizeRetTarget(rawRet) {
