@@ -832,43 +832,51 @@ export function initDrawEditor(ctx) {
 
   // Dropdown wyboru kształtu
   let shapePickerOpen = false;
-  function openShapePicker() {
+  function openShapePicker(e) {
+    if (e) e.stopPropagation();
     if (shapePickerOpen) { closeShapePicker(); return; }
     shapePickerOpen = true;
-    let html = `<div class="shapePickerPop" id="shapePickerPop" style="position:absolute;top:calc(100% + 4px);left:0;z-index:100;background:rgba(15,18,28,.96);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:6px;box-shadow:0 14px 36px rgba(0,0,0,.55);display:grid;grid-template-columns:repeat(5,38px);gap:4px;">`;
+    let html = `<div class="shapePickerPop" id="shapePickerPop" style="position:fixed;z-index:1000;background:rgba(15,18,28,.98);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.16);border-radius:14px;padding:8px;box-shadow:0 16px 48px rgba(0,0,0,.6);display:grid;grid-template-columns:repeat(5,42px);gap:5px;">`;
     SHAPES.forEach(s => {
-      html += `<button class="spi" data-shape="${s.id}" style="width:38px;height:38px;display:grid;place-items:center;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:8px;color:rgba(255,255,255,.88);cursor:pointer;font-size:18px;">${s.icon}</button>`;
+      html += `<button class="spi" data-shape="${s.id}" style="width:42px;height:42px;display:grid;place-items:center;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.13);border-radius:10px;color:rgba(255,255,255,.9);cursor:pointer;transition:all .1s;">${s.icon}</button>`;
     });
     html += `</div>`;
+    document.body.insertAdjacentHTML("beforeend", html);
+    
+    const pop = document.getElementById("shapePickerPop");
     const btn = document.getElementById("cShapeBtn");
-    if (btn) {
-      btn.style.position = "relative";
-      btn.insertAdjacentHTML("afterend", html);
-      const pop = document.getElementById("shapePickerPop");
-      pop.querySelectorAll(".spi").forEach(item => {
-        item.addEventListener("click", () => {
-          currentShape = item.dataset.shape;
-          closeShapePicker();
-          renderToolSettings();
-        });
-        item.addEventListener("mouseenter", (e) => {
-          const shape = SHAPES.find(s => s.id === item.dataset.shape);
-          if (!shape) return;
-          const tip = document.createElement("div");
-          tip.textContent = shape.label;
-          tip.style.cssText = "position:absolute;bottom:108%;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.88);color:#ffeaa6;padding:3px 7px;border-radius:6px;font-size:11px;white-space:nowrap;pointer-events:none;z-index:200;font-weight:600;";
-          item.appendChild(tip);
-          item._tipEl = tip;
-        });
-        item.addEventListener("mouseleave", (e) => {
-          if (item._tipEl) { item._tipEl.remove(); item._tipEl = null; }
-        });
-      });
+    if (btn && pop) {
+      // Pozycjonuj pod przyciskiem
+      const rect = btn.getBoundingClientRect();
+      pop.style.top = (rect.bottom + 6) + "px";
+      pop.style.left = rect.left + "px";
     }
-    // Zamykanie przy kliknięciu poza
+    
+    pop.querySelectorAll(".spi").forEach(item => {
+      item.addEventListener("click", (e) => {
+        e.stopPropagation();
+        currentShape = item.dataset.shape;
+        closeShapePicker();
+        renderToolSettings();
+      });
+      item.addEventListener("mouseenter", () => {
+        const shape = SHAPES.find(s => s.id === item.dataset.shape);
+        if (!shape) return;
+        const tip = document.createElement("div");
+        tip.textContent = shape.label;
+        tip.style.cssText = "position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:rgba(0,0,0,.9);color:#ffeaa6;padding:4px 8px;border-radius:6px;font-size:11px;white-space:nowrap;pointer-events:none;z-index:1100;font-weight:600;letter-spacing:.3px;";
+        item.appendChild(tip);
+        item._tipEl = tip;
+      });
+      item.addEventListener("mouseleave", () => {
+        if (item._tipEl) { item._tipEl.remove(); item._tipEl = null; }
+      });
+    });
+
+    // Zamykanie przy kliknięciu poza - używamy setTimeout żeby nie zamknąć od razu
     setTimeout(() => {
       document.addEventListener("mousedown", shapePickerOutsideHandler);
-    }, 0);
+    }, 100);
   }
   function shapePickerOutsideHandler(e) {
     const pop = document.getElementById("shapePickerPop");
