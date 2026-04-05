@@ -1,10 +1,10 @@
 // js/pages/polls.js
-import { sb } from "../core/supabase.js?v=v2026-04-05T06182";
-import { requireAuth } from "../core/auth.js?v=v2026-04-05T06182";
-import { alertModal, confirmModal } from "../core/modal.js?v=v2026-04-05T06182";
+import { sb } from "../core/supabase.js?v=v2026-04-05T06411";
+import { requireAuth } from "../core/auth.js?v=v2026-04-05T06411";
+import { alertModal, confirmModal } from "../core/modal.js?v=v2026-04-05T06411";
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
-import { initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-04-05T06182";
-import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-04-05T06182";
+import { initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-04-05T06411";
+import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-04-05T06411";
 import "../core/contact-modal.js";
 
 initI18n({ withSwitcher: true });
