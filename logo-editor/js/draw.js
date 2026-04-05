@@ -952,7 +952,8 @@ export function initDrawEditor(ctx) {
 
   function buildArrowPath(x1,y1,x2,y2,dirCount,headL,headW,isFilled) {
     const angle = Math.atan2(y2-y1, x2-x1);
-    if (Math.hypot(x2-x1, y2-y1) < 1) return `M ${x1} ${y1}`;
+    const len = Math.hypot(x2-x1, y2-y1);
+    if (len < 1) return `M ${x1} ${y1}`;
     let path = `M ${x1} ${y1}`;
     if (isFilled) { path += ` L ${x2 - headL*0.5*Math.cos(angle)} ${y2 - headL*0.5*Math.sin(angle)}`; }
     else { path += ` L ${x2} ${y2}`; }
@@ -960,11 +961,17 @@ export function initDrawEditor(ctx) {
     const perpX=headW*Math.cos(angle+Math.PI/2), perpY=headW*Math.sin(angle+Math.PI/2);
     if (isFilled) { path += ` L ${tipX} ${tipY} L ${baseX+perpX} ${baseY+perpY} L ${baseX-perpX} ${baseY-perpY} Z`; }
     else { path += ` M ${baseX+perpX} ${baseY+perpY} L ${tipX} ${tipY} L ${baseX-perpX} ${baseY-perpY}`; }
+    // Druga główka (strzałka 2-kierunkowa)
     if (dirCount===2) {
-      const a2=angle+Math.PI, bx=x1+headL*Math.cos(a2), by=y1+headL*Math.sin(a2);
-      const px=headW*Math.cos(a2+Math.PI/2), py=headW*Math.sin(a2+Math.PI/2);
-      if (isFilled) { path += ` M ${x1} ${y1} L ${bx+px} ${by+py} L ${x1} ${y1} L ${bx-px} ${by-py} Z`; }
-      else { path += ` M ${bx+px} ${by+py} L ${x1} ${y1} L ${bx-px} ${by-py}`; }
+      const tipX2 = x1 - headL * Math.cos(angle);
+      const tipY2 = y1 - headL * Math.sin(angle);
+      const perpX2 = headW * Math.cos(angle + Math.PI/2);
+      const perpY2 = headW * Math.sin(angle + Math.PI/2);
+      if (isFilled) {
+        path += ` M ${x1+perpX2} ${y1+perpY2} L ${tipX2} ${tipY2} L ${x1-perpX2} ${y1-perpY2} Z`;
+      } else {
+        path += ` M ${x1+perpX2} ${y1+perpY2} L ${tipX2} ${tipY2} L ${x1-perpX2} ${y1-perpY2}`;
+      }
     }
     return path;
   }
@@ -983,11 +990,11 @@ export function initDrawEditor(ctx) {
 
   function buildHeartPath(cx,cy,sz) { const s=sz/2; return `M ${cx} ${cy+s*0.7} C ${cx-s*1.2} ${cy-s*0.2}, ${cx-s*0.5} ${cy-s*1.2}, ${cx} ${cy-s*0.4} C ${cx+s*0.5} ${cy-s*1.2}, ${cx+s*1.2} ${cy-s*0.2}, ${cx} ${cy+s*0.7} Z`; }
 
-  function buildCloudPath(cx,cy,w,h) { const r=Math.min(w,h)*0.3; return `M ${cx-w/2+r} ${cy+h/4} a ${r} ${r} 0 0 1 ${r*0.5} ${-r*1.2} a ${r*0.8} ${r*0.8} 0 0 1 ${r*1.5} ${-r*0.3} a ${r*0.7} ${r*0.7} 0 0 1 ${r*0.8} ${r} a ${r*0.6} ${r*0.6} 0 0 1 ${-r*0.3} ${r*1.2} Z`; }
+  function buildCloudPath(cx,cy,w,h) { const r=Math.min(w,h)*0.35; return `M ${cx-r*1.5} ${cy} a ${r} ${r} 0 0 1 0 ${-r*1.2} a ${r*0.8} ${r*0.8} 0 0 1 ${r*1.2} ${-r*0.5} a ${r*0.6} ${r*0.6} 0 0 1 ${r*1.5} ${r*0.2} a ${r*0.8} ${r*0.8} 0 0 1 ${r*0.3} ${r*1.3} a ${r*0.7} ${r*0.7} 0 0 1 ${-r*0.5} ${r*1.2} a ${r*0.9} ${r*0.9} 0 0 1 ${-r*2.3} ${-r} Z`; }
 
-  function buildLightningPath(cx,cy,w,h) { const dx=w*0.15,dy=h*0.1; return `M ${cx+dx} ${cy-h/2} L ${cx-dx*2} ${cy-dy} L ${cx+dx} ${cy} L ${cx-dx} ${cy+h/2} L ${cx+dx*2} ${cy+dy} L ${cx-dx} ${cy} Z`; }
+  function buildLightningPath(cx,cy,w,h) { const wt=w*0.25; return `M ${cx+wt*0.3} ${cy-h/2} L ${cx-wt} ${cy-h*0.15} L ${cx+wt*0.1} ${cy-h*0.1} L ${cx-wt*0.5} ${cy+h/2} L ${cx+wt} ${cy+h*0.1} L ${cx-wt*0.1} ${cy+h*0.05} Z`; }
 
-  function buildMoonPath(cx,cy,r) { return `M ${cx} ${cy-r} A ${r} ${r} 0 1 0 ${cx} ${cy+r} A ${r*0.7} ${r*0.7} 0 1 1 ${cx} ${cy-r} Z`; }
+  function buildMoonPath(cx,cy,r) { return `M ${cx} ${cy-r} A ${r} ${r} 0 1 1 ${cx} ${cy+r} A ${r*0.7} ${r*0.7} 0 1 0 ${cx} ${cy-r} Z`; }
 
   function getFillEnabled() {
     return !!toolSettings[tool]?.fill;
