@@ -1,4 +1,4 @@
-import { initI18n } from "../../translation/translation.js?v=v2026-04-04T23475";
+import { initI18n } from "../../translation/translation.js?v=v2026-04-05T00172";
 
 (async () => {
   await initI18n({ withSwitcher: true, apply: true });
