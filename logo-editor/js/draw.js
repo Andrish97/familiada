@@ -428,6 +428,8 @@ export function initDrawEditor(ctx) {
   function injectIcon(id, html){
     const el = document.getElementById(id);
     if (!el) return;
+    // Nie nadpisuj jeśli button już ma SVG w HTML (np. tShapes)
+    if (el.innerHTML.trim().startsWith("<svg")) return;
     el.innerHTML = html || "";
     // a11y: jeśli button nie ma aria-label, dodaj prosty fallback
     if (!el.getAttribute("aria-label")) el.setAttribute("aria-label", id);
