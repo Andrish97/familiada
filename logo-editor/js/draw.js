@@ -292,7 +292,7 @@ export function initDrawEditor(ctx) {
     const objSize = Math.round(obj.fontSize || 40);
     const objLH = obj.lineHeight || 1;
     const objSpacing = Math.round((obj.charSpacing || 0) / 50);
-    const objBold = obj.fontWeight === "bold" || obj.fontWeight === 700;
+    const objBold = obj.fontWeight === "bold" || obj.fontWeight == 700 || obj.fontWeight === "700";
     const objItalic = obj.fontStyle === "italic";
     const objUnderline = !!obj.underline;
     const objAlign = obj.textAlign || "left";
@@ -1447,8 +1447,14 @@ export function initDrawEditor(ctx) {
   }
 
   /** Centralna funkcja: renderuje ustawienia wg aktualnego narzędzia + zaznaczenia */
-  function renderCurrentSettings() {
-    const obj = getActiveObj();
+  function renderCurrentSettings(optObj) {
+    const obj = optObj || getActiveObj();
+
+    // TEXT tool lub SELECT tool + zaznaczony tekst → pokaż ustawienia obiektu TEKSTU
+    if (isTextObj(obj)) {
+      renderTextObjectSettings(obj);
+      return;
+    }
 
     // SELECT tool:
     if (tool === TOOL.SELECT) {
@@ -2171,10 +2177,10 @@ export function initDrawEditor(ctx) {
         setBaseTool(TOOL.TEXT);
         syncToolButtons();
         obj.enterEditing();
-        requestAnimationFrame(() => renderTextObjectSettings(obj));
-      } else {
-        renderCurrentSettings();
+        obj.selectAll();
+        fabricCanvas.renderAll();
       }
+      renderCurrentSettings(obj);
     });
     fabricCanvas.on("selection:updated", () => {
       const obj = getActiveObj();
@@ -2182,10 +2188,10 @@ export function initDrawEditor(ctx) {
         setBaseTool(TOOL.TEXT);
         syncToolButtons();
         obj.enterEditing();
-        requestAnimationFrame(() => renderTextObjectSettings(obj));
-      } else {
-        renderCurrentSettings();
+        obj.selectAll();
+        fabricCanvas.renderAll();
       }
+      renderCurrentSettings(obj);
     });
     fabricCanvas.on("selection:cleared", () => {
       renderCurrentSettings();
@@ -2284,8 +2290,6 @@ export function initDrawEditor(ctx) {
           pushUndo();
           ctx.markDirty?.();
           schedulePreview(80);
-          // Wymuszenie ustawień obiektu po tym jak eventy selection się uspokoją
-          requestAnimationFrame(() => renderTextObjectSettings(target));
         } else {
           // Kliknięcie poza tekstem → exit edit mode, exit editing
           const active = fabricCanvas.getActiveObject();
