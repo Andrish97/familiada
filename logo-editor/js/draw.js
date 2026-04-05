@@ -1835,27 +1835,32 @@ export function initDrawEditor(ctx) {
     const noFill = !shapeInfo?.hasFill;
     const fillVal = noFill ? "transparent" : (ts.fill ? (ts.fillColor === "BLACK" ? "#000" : "#fff") : "transparent");
 
-    // Linie i strzałki - koordynaty świata
+    // Linie i strzałki - generuj od (0,0) do (w,h), pozycjonuj przez left/top
     if (shape === "line" || shape.startsWith("arrow")) {
       let w = p.x - drawingStart.x, h = p.y - drawingStart.y;
       if (shift) { const m = Math.max(Math.abs(w), Math.abs(h)); w = Math.sign(w||1)*m; h = Math.sign(h||1)*m; }
-      const ex = drawingStart.x + w, ey = drawingStart.y + h;
+      const absW = Math.max(2, Math.abs(w)), absH = Math.max(2, Math.abs(h));
       
-      let pathArr;
+      let pathArr, arrowFill;
       if (shape === "line") {
-        pathArr = [['M', drawingStart.x, drawingStart.y], ['L', ex, ey]];
+        pathArr = [['M', 0, 0], ['L', absW, absH]];
         arrowFill = "transparent";
       } else {
         const isArrowFill = currentShape.endsWith("Fill");
         const arrowDir = currentShape === "arrow2" || currentShape === "arrow2Fill" ? 2 : 1;
         arrowFill = isArrowFill ? (ts.fill ? (ts.fillColor === "BLACK" ? "#000" : "#fff") : "transparent") : "transparent";
-        const pathStr = buildArrowPath(drawingStart.x, drawingStart.y, ex, ey, arrowDir, ts.stroke, isArrowFill);
+        const pathStr = buildArrowPath(0, 0, absW, absH, arrowDir, ts.stroke, isArrowFill);
         pathArr = svgPathToPath(pathStr);
       }
-      drawingObj.set({ path: pathArr, fill: arrowFill, stroke: style.stroke, strokeWidth: style.strokeWidth, strokeDashArray: style.strokeDashArray });
-      // Fabric 5.x: set({path}) NIE przelicza bounding box - musimy recreate
+      
+      const left = w >= 0 ? drawingStart.x : drawingStart.x + w;
+      const top = h >= 0 ? drawingStart.y : drawingStart.y + h;
+      
       fabricCanvas.remove(drawingObj);
       drawingObj = new f.Path(pathArr, {
+        left, top,
+        originX: "left",
+        originY: "top",
         stroke: style.stroke,
         strokeWidth: style.strokeWidth,
         fill: arrowFill,
