@@ -1343,6 +1343,7 @@ async function sendZeroStatesToDevices() {
   });
   
   ui.on("top.manual", () => {
+    console.log("[app] top.manual event received");
     openHelpModal();
   });
 
