@@ -1252,7 +1252,9 @@ async function sendZeroStatesToDevices() {
     url.searchParams.set("lang", getUiLang() || "pl");
     url.searchParams.set("tab", "control");
     url.hash = "control";
-    return url.toString();
+    const result = url.toString();
+    console.log("[control] buildHelpUrl:", result);
+    return result;
   }
 
   function buildLegalUrl() {
