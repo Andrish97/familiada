@@ -921,44 +921,37 @@ export function initDrawEditor(ctx) {
     const dx = x2 - x1, dy = y2 - y1;
     const len = Math.hypot(dx, dy) || 1;
     
-    const ux = dx / len, uy = dy / len; // kierunek
-    const nx = -uy, ny = ux;            // prostopadły (w lewo)
+    const ux = dx / len, uy = dy / len;
+    const px = -uy, py = ux; // prostopadły
     
-    // Główka proporcjonalna do długości strzałki, ale zależna od grubości
     const headL = Math.min(strokeW * 4, len * 0.35);
     const headW = Math.min(strokeW * 2.5, len * 0.25);
-    const shaftHW = headW * 0.4; // połowa szerokości wałka
+    const shaftHW = strokeW * 0.35;
     
-    const tipX = x2, tipY = y2;
     const baseX = x2 - headL * ux, baseY = y2 - headL * uy;
     
     if (isFilled) {
-      // WYPEŁNIONA: zamknięty wielokąt (poprawiona kolejność V!)
-      let path = `M ${x1 + shaftHW*nx} ${y1 + shaftHW*ny}`;
-      path += ` L ${baseX + shaftHW*nx} ${baseY + shaftHW*ny}`;
-      path += ` L ${tipX + headW*nx} ${tipY + headW*ny}`;
-      path += ` L ${tipX} ${tipY}`;
-      path += ` L ${tipX - headW*nx} ${tipY - headW*ny}`;
-      path += ` L ${baseX - shaftHW*nx} ${baseY - shaftHW*ny}`;
-      path += ` L ${x1 - shaftHW*nx} ${y1 - shaftHW*ny} Z`;
-      
-      if (dirCount === 2) {
-        const baseX2 = x1 + headL * ux, baseY2 = y1 + headL * uy;
-        return `M ${baseX2 + headW*nx} ${baseY2 + headW*ny} L ${x1} ${y1} L ${baseX2 - headW*nx} ${baseY2 - headW*ny} L ${baseX - headW*nx} ${baseY - headW*ny} L ${tipX} ${tipY} L ${baseX + headW*nx} ${baseY + headW*ny} L ${baseX2 + headW*nx} ${baseY2 + headW*ny} Z`;
-      }
-      return path;
+      return [
+        ['M', x1 + shaftHW*px, y1 + shaftHW*py],
+        ['L', baseX + shaftHW*px, baseY + shaftHW*py],
+        ['L', baseX + headW*px, baseY + headW*py],
+        ['L', x2, y2],
+        ['L', baseX - headW*px, baseY - headW*py],
+        ['L', baseX - shaftHW*px, baseY - shaftHW*py],
+        ['L', x1 - shaftHW*px, y1 - shaftHW*py],
+        ['Z']
+      ];
     }
     
-    // BEZ WYPEŁNIENIA: otwarta linia konturu (V-główka)
-    const vW = headW * 0.5;
-    // start -> podstawa -> V dół -> czubek -> V góra -> podstawa (poprawiona kolejność!)
-    const path = `M ${x1} ${y1} L ${baseX} ${baseY} L ${tipX - vW*nx} ${tipY - vW*ny} L ${tipX} ${tipY} L ${tipX + vW*nx} ${tipY + vW*ny} L ${baseX} ${baseY}`;
-    
-    if (dirCount === 2) {
-      const baseX2 = x1 + headL * ux, baseY2 = y1 + headL * uy;
-      return `M ${baseX2} ${baseY2} L ${x1} ${y1} L ${baseX} ${baseY} L ${tipX - vW*nx} ${tipY - vW*ny} L ${tipX} ${tipY} L ${tipX + vW*nx} ${tipY + vW*ny} L ${baseX} ${baseY} L ${baseX2} ${baseY2} L ${x1 + vW*nx} ${y1 + vW*ny} L ${x1} ${y1} L ${x1 - vW*nx} ${y1 - vW*ny} L ${baseX2} ${baseY2}`;
-    }
-    return path;
+    // Bez fill - otwarty kontur
+    return [
+      ['M', x1, y1],
+      ['L', baseX, baseY],
+      ['L', baseX + headW*px, baseY + headW*py],
+      ['L', x2, y2],
+      ['L', baseX - headW*px, baseY - headW*py],
+      ['L', baseX, baseY]
+    ];
   }
 
   function buildPolygonPath(cx,cy,r,sides) {
