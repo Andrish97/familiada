@@ -1,8 +1,8 @@
 // scene.js
-import { loadJson, buildGlyphMap, resolveGlyph } from "./fonts.js?v=v2026-04-05T07001";
-import { createAnimator } from "./anim.js?v=v2026-04-05T07001";
-import { sb } from "../../js/core/supabase.js?v=v2026-04-05T07001";
-import { t } from "../../translation/translation.js?v=v2026-04-05T07001";
+import { loadJson, buildGlyphMap, resolveGlyph } from "./fonts.js?v=v2026-04-05T07071";
+import { createAnimator } from "./anim.js?v=v2026-04-05T07071";
+import { sb } from "../../js/core/supabase.js?v=v2026-04-05T07071";
+import { t } from "../../translation/translation.js?v=v2026-04-05T07071";
 
 export async function createScene() {
   const NS = "http://www.w3.org/2000/svg";
