@@ -221,13 +221,16 @@ export function initImageEditor(ctx) {
     const white = rngWhite?.value ?? 100;
     const ditherAmt = rngDitherAmt?.value ?? 0;
 
-    // Aktualizuj przyciski (tylko przy open/reset, nie przy każdym ruchu suwaka)
-    const btnBright = document.querySelector("[data-panel='bright']");
-    const btnContrast = document.querySelector("[data-panel='contrast']");
-    const btnGamma = document.querySelector("[data-panel='gamma']");
-    const btnBlack = document.querySelector("[data-panel='black']");
-    const btnWhite = document.querySelector("[data-panel='white']");
-    const btnDither = document.querySelector("[data-panel='dither']");
+    // Szukaj przycisków w #paneImage (mogą być ukryte)
+    const pane = document.getElementById("paneImage");
+    if (!pane) return;
+
+    const btnBright = pane.querySelector("[data-panel='bright']");
+    const btnContrast = pane.querySelector("[data-panel='contrast']");
+    const btnGamma = pane.querySelector("[data-panel='gamma']");
+    const btnBlack = pane.querySelector("[data-panel='black']");
+    const btnWhite = pane.querySelector("[data-panel='white']");
+    const btnDither = pane.querySelector("[data-panel='dither']");
 
     if (btnBright) btnBright.textContent = t("logoEditor.image.brightnessValue", { value: fmtSignedInt(bright) });
     if (btnContrast) btnContrast.textContent = t("logoEditor.image.contrastValue", { value: fmtSignedInt(contrast) });
@@ -665,7 +668,8 @@ export function initImageEditor(ctx) {
       if (valDitherAmt) valDitherAmt.textContent = Number(rngDitherAmt?.value ?? "0.80").toFixed(2);
       if (valBlack) valBlack.textContent = String(rngBlack?.value ?? "0");
       if (valWhite) valWhite.textContent = String(rngWhite?.value ?? "100");
-      // NIE wywołuj syncImgButtonLabels() - zmienia innerHTML przycisków i przesuwa layout
+      // Aktualizuj przyciski suwaków - textContent NIE przesuwa layout
+      syncImgButtonLabels();
       if (!imgObj) return;
       ctx.markDirty?.();
       schedulePreview(40);
