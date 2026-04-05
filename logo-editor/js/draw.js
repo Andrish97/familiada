@@ -2707,8 +2707,9 @@ export function initDrawEditor(ctx) {
       if (upperEl && upperEl.contains(ev.target)) return; // klik w canvas - nie exit
       
       const active = fabricCanvas?.getActiveObject();
-      if (active && isTextObj(active) && active.isEditing) {
-        active.exitEditing();
+      if (active && isTextObj(active)) {
+        if (active.isEditing) active.exitEditing();
+        
         // Usuń puste obiekty tekstowe
         if (active.text?.trim() === "") {
           fabricCanvas?.remove(active);
@@ -2716,6 +2717,9 @@ export function initDrawEditor(ctx) {
           pushUndo();
           ctx.markDirty?.();
           schedulePreview(80);
+        } else {
+          // Deselect the object if we clicked outside
+          fabricCanvas?.discardActiveObject();
         }
         fabricCanvas?.renderAll();
       }
