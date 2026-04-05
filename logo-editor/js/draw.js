@@ -1848,13 +1848,21 @@ export function initDrawEditor(ctx) {
         const pathStr = buildArrowPath(drawingStart.x, drawingStart.y, ex, ey, arrowDir, ts.stroke, isArrowFill);
         pathArr = svgPathToPath(pathStr);
       }
-      drawingObj.set({ path: pathArr, fill: arrowFill, stroke: style.stroke, strokeWidth: style.strokeWidth, strokeDashArray: style.strokeDashArray, dirty: true });
-      // Fabric 5.x: set({path}) nie przelicza bounding box poprawnie
-      // Musimy remove/add dla poprawnego zaznaczenia
-      const idx = fabricCanvas._objects.indexOf(drawingObj);
-      if (idx >= 0) fabricCanvas._objects.splice(idx, 1);
-      fabricCanvas._objects.push(drawingObj);
-      drawingObj.setCoords();
+      drawingObj.set({ path: pathArr, fill: arrowFill, stroke: style.stroke, strokeWidth: style.strokeWidth, strokeDashArray: style.strokeDashArray });
+      // Fabric 5.x: set({path}) NIE przelicza bounding box - musimy recreate
+      fabricCanvas.remove(drawingObj);
+      drawingObj = new f.Path(pathArr, {
+        stroke: style.stroke,
+        strokeWidth: style.strokeWidth,
+        fill: arrowFill,
+        strokeLineCap: style.strokeLineCap,
+        strokeLineJoin: style.strokeLineJoin,
+        strokeDashArray: style.strokeDashArray,
+        selectable: false,
+        evented: true,
+        objectCaching: false,
+      });
+      fabricCanvas.add(drawingObj);
       fabricCanvas.requestRenderAll();
       return;
     }
@@ -1881,7 +1889,7 @@ export function initDrawEditor(ctx) {
       return;
     }
 
-    // Kształty Path
+    // Kształty Path - recreate (Fabric 5.x bug z set({path}))
     let w = p.x - drawingStart.x, h = p.y - drawingStart.y;
     if (shift) { const m = Math.max(Math.abs(w), Math.abs(h)); w = Math.sign(w||1)*m; h = Math.sign(h||1)*m; }
     const absW = Math.max(2, Math.abs(w)), absH = Math.max(2, Math.abs(h));
@@ -1889,11 +1897,19 @@ export function initDrawEditor(ctx) {
     const y1 = h >= 0 ? drawingStart.y : drawingStart.y + h;
     const pathStr = buildShapePath(shape, x1, y1, x1 + absW, y1 + absH, ts.stroke);
     const pathArr = svgPathToPath(pathStr);
-    drawingObj.set({ path: pathArr, fill: fillVal, stroke: style.stroke, strokeWidth: style.strokeWidth, strokeDashArray: style.strokeDashArray, dirty: true });
-    // Wymuszamy przeliczenie bounding box - Fabric 5.x bug z set({path})
-    fabricCanvas._objects = fabricCanvas._objects.filter(o => o !== drawingObj);
-    fabricCanvas._objects.push(drawingObj);
-    drawingObj.setCoords();
+    fabricCanvas.remove(drawingObj);
+    drawingObj = new f.Path(pathArr, {
+      stroke: style.stroke,
+      strokeWidth: style.strokeWidth,
+      fill: fillVal,
+      strokeLineCap: style.strokeLineCap,
+      strokeLineJoin: style.strokeLineJoin,
+      strokeDashArray: style.strokeDashArray,
+      selectable: false,
+      evented: true,
+      objectCaching: false,
+    });
+    fabricCanvas.add(drawingObj);
     fabricCanvas.requestRenderAll();
   }
 
