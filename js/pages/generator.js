@@ -1,6 +1,6 @@
 
-import { sb as supabase } from "../core/supabase.js?v=v2026-04-05T00474";
-import { alertModal, confirmModal } from "../core/modal.js?v=v2026-04-05T00474";
+import { sb as supabase } from "../core/supabase.js?v=v2026-04-05T00542";
+import { alertModal, confirmModal } from "../core/modal.js?v=v2026-04-05T00542";
 
 let games = [];
 const uniquenessCache = new Map();

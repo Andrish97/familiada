@@ -4,9 +4,9 @@
 // - jeśli user zalogowany -> pokazuj username + Wyloguj
 // - jeśli niezalogowany -> ukryj username + Wyloguj, a Wstecz wraca do /
 
-import { initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-04-05T00474";
-import { getUser } from "../core/auth.js?v=v2026-04-05T00474";
-import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-04-05T00474";
+import { initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-04-05T00542";
+import { getUser } from "../core/auth.js?v=v2026-04-05T00542";
+import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-04-05T00542";
 import "../core/contact-modal.js";
 
 function byId(id) { return document.getElementById(id); }
