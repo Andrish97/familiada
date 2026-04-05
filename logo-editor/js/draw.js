@@ -1839,13 +1839,14 @@ export function initDrawEditor(ctx) {
     if (drawingObj.type === "path") {
       let w = p.x - drawingStart.x, h = p.y - drawingStart.y;
       if (shift) { const m = Math.max(Math.abs(w), Math.abs(h)); w = Math.sign(w||1)*m; h = Math.sign(h||1)*m; }
-      const minSize = 2;
-      if (Math.abs(w) < minSize) w = minSize * Math.sign(w || 1);
-      if (Math.abs(h) < minSize) h = minSize * Math.sign(h || 1);
-      const newPath = buildShapePath(shape, 0, 0, Math.abs(w), Math.abs(h), ts.stroke);
+      const absW = Math.abs(w), absH = Math.abs(h);
+      const minDim = 2;
+      // Używamy scaleX/scaleY na podstawie początkowego path (10x10)
+      const scaleX = absW < minDim ? minDim : absW / 10;
+      const scaleY = absH < minDim ? minDim : absH / 10;
       const left = w >= 0 ? drawingStart.x : drawingStart.x + w;
       const top = h >= 0 ? drawingStart.y : drawingStart.y + h;
-      drawingObj.set({ path: newPath, left, top });
+      drawingObj.set({ scaleX, scaleY, left, top });
       fabricCanvas.requestRenderAll();
     }
   }
@@ -2786,7 +2787,8 @@ export function initDrawEditor(ctx) {
       if (ctx.getMode?.() !== "DRAW") return;
       if (!fabricCanvas) return;
 
-      const ok = await confirmModal({ text: t("logoEditor.draw.confirmClear") });
+      let ok = false;
+      try { ok = await confirmModal({ text: t("logoEditor.draw.confirmClear") }); } catch(e) { ok = confirm("Wyczyścić scenę?"); }
       if (!ok) return;
 
       clearPolyDraft();
