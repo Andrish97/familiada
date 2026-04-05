@@ -2604,12 +2604,7 @@ export function initDrawEditor(ctx) {
       }
     }
 
-    // Delete selection (w Select)
-    if ((key === "Backspace" || key === "Delete") && baseTool === TOOL.SELECT) {
-      ev.preventDefault();
-      deleteSelection();
-      return;
-    }
+    // Delete/Backspace USUNIĘTE - nie usuwa obiektów w Select
 
     // Duplicuj (Ctrl/Cmd + D)
     if ((ev.ctrlKey || ev.metaKey) && k === "d") {
