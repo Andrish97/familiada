@@ -636,7 +636,7 @@ export function initDrawEditor(ctx) {
     { id: "hexagon", label: "Sześciokąt", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><polygon points="12,3 21,8 21,16 12,21 3,16 3,8" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
     { id: "cross", label: "Krzyż", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M10 4h4v6h6v4h-6v6h-4v-6H4v-4h6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
     { id: "star5", label: "Gwiazda 5", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><polygon points="12,2 15,9 22,9 16,14 18,22 12,17 6,22 8,14 2,9 9,9" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
-    { id: "star8", label: "Gwiazda 8", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><polygon points="12,2 14,8 20,8 15,12 17,18 12,14 7,18 9,12 4,8 10,8" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
+    { id: "star6", label: "Gwiazda 6", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><polygon points="12,2 15,8 22,8 16,13 18,22 12,17 6,22 8,13 2,8 9,8" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
     { id: "arrow1", label: "Strzałka →", hasFill: false, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M5 12h14M14 7l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>` },
     { id: "arrow2", label: "Strzałka ↔", hasFill: false, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M5 12h14M14 7l5 5-5 5M10 7L5 12l5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>` },
     { id: "arrow1Fill", label: "Strzałka ➤", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M12 19L19 12L12 5V9H5V15H12V19Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
@@ -645,7 +645,7 @@ export function initDrawEditor(ctx) {
     { id: "cloud", label: "Chmurka", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M7 18h10a4 4 0 0 0 .7-7.9A5.5 5.5 0 0 0 6.6 12.2 4 4 0 0 0 7 18z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
     { id: "lightning", label: "Piorun", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
     { id: "moon", label: "Księżyc", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" fill="none" stroke="currentColor" stroke-width="2"/></svg>` },
-    { id: "polygon", label: "Wielokąt", hasFill: true, isPoly: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M12 2l9 6-3 13H6L3 8z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="2" r="1.5" fill="currentColor"/></svg>` },
+    { id: "polygon", label: "Wielokąt", hasFill: true, isPoly: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><polygon points="3,5 20,3 22,16 8,21" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
   ];
 
   // Style linii
@@ -909,7 +909,7 @@ export function initDrawEditor(ctx) {
       case "hexagon": return buildPolygonPath(cx, cy, r, 6);
       case "cross": { const t=Math.min(w,h)*0.3; return `M ${cx-t/2} ${y1} h ${t} v ${h/2-t/2} h ${t} v ${t} h ${-t} v ${h/2-t/2} h ${-t} v ${-h/2+t/2} h ${-t} v ${-t} h ${t} Z`; }
       case "star5": return buildStarPath(cx, cy, r, r*0.4, 5);
-      case "star8": return buildStarPath(cx, cy, r, r*0.5, 8);
+      case "star6": return buildStarPath(cx, cy, r, r*0.45, 6);
       case "heart": return buildHeartPath(cx, cy, Math.max(w,h));
       case "cloud": return buildCloudPath(cx, cy, w, h);
       case "lightning": return buildLightningPath(cx, cy, w, h);
