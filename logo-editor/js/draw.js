@@ -1779,8 +1779,6 @@ export function initDrawEditor(ctx) {
     const ts = toolSettings[TOOL.SHAPES];
     const style = makeStrokeFillStyle();
     const shape = SHAPES.find(s => s.id === currentShape);
-    
-    // Linie i strzałki nie mają wypełnienia
     const noFill = !shape?.hasFill;
     const fillVal = noFill ? "transparent" : (ts.fill ? (ts.fillColor === "BLACK" ? "#000" : "#fff") : "transparent");
 
@@ -1804,7 +1802,6 @@ export function initDrawEditor(ctx) {
       return;
     }
 
-    // Proste kształty jako Rect/Ellipse/Path
     if (currentShape === "rect" || currentShape === "roundRect") {
       drawingObj = new f.Rect({
         left: p0.x, top: p0.y, width: 1, height: 1,
@@ -1820,13 +1817,26 @@ export function initDrawEditor(ctx) {
       });
       fabricCanvas.add(drawingObj);
     } else {
-      const pathData = buildShapePath(currentShape, 0, 0, 10, 10, ts.stroke);
-      drawingObj = new f.Path(pathData, {
-        ...style, fill: fillVal, selectable: false, evented: true, objectCaching: false,
+      // Kształty Path (trójkąt, romb, gwiazda, serce)
+      const pathStr = buildShapePath(currentShape, 0, 0, 10, 10, ts.stroke);
+      const pathArr = svgPathToPath(pathStr);
+      drawingObj = new f.Path(pathArr, {
+        stroke: style.stroke,
+        strokeWidth: style.strokeWidth,
+        fill: fillVal,
+        strokeLineCap: style.strokeLineCap,
+        strokeLineJoin: style.strokeLineJoin,
+        strokeDashArray: style.strokeDashArray,
+        originX: "left",
+        originY: "top",
+        selectable: false,
+        evented: true,
+        objectCaching: false,
       });
       fabricCanvas.add(drawingObj);
       drawingObj.set({ left: p0.x, top: p0.y });
       drawingObj.setCoords();
+      fabricCanvas.requestRenderAll();
     }
   }
 
@@ -1841,11 +1851,11 @@ export function initDrawEditor(ctx) {
     const noFill = !shapeInfo?.hasFill;
     const fillVal = noFill ? "transparent" : (ts.fill ? (ts.fillColor === "BLACK" ? "#000" : "#fff") : "transparent");
 
-    // Linia i strzałki - przerysuj path z nowymi koordynatami
+    // Linia i strzałki
     if (shape === "line" || shape.startsWith("arrow")) {
       const pathStr = buildShapePath(shape, drawingStart.x, drawingStart.y, p.x, p.y, ts.stroke);
       const pathArr = svgPathToPath(pathStr);
-      drawingObj.set({ path: pathArr });
+      drawingObj.set({ path: pathArr, fill: fillVal, stroke: style.stroke, strokeWidth: style.strokeWidth, strokeDashArray: style.strokeDashArray });
       fabricCanvas.requestRenderAll();
       return;
     }
@@ -1872,7 +1882,7 @@ export function initDrawEditor(ctx) {
       return;
     }
 
-    // Trójkąt, romb, wielokąty, krzyż, gwiazdy, serce, chmurka, piorun, księżyc
+    // Trójkąt, romb, gwiazdy, serce
     if (drawingObj.type === "path") {
       let w = p.x - drawingStart.x, h = p.y - drawingStart.y;
       if (shift) { const m = Math.max(Math.abs(w), Math.abs(h)); w = Math.sign(w||1)*m; h = Math.sign(h||1)*m; }
@@ -1882,6 +1892,7 @@ export function initDrawEditor(ctx) {
       const left = w >= 0 ? drawingStart.x : drawingStart.x + w;
       const top = h >= 0 ? drawingStart.y : drawingStart.y + h;
       drawingObj.set({ path: pathArr, left, top, fill: fillVal, stroke: style.stroke, strokeWidth: style.strokeWidth, strokeDashArray: style.strokeDashArray });
+      drawingObj.setCoords();
       fabricCanvas.requestRenderAll();
     }
   }
