@@ -1255,7 +1255,8 @@ export function initDrawEditor(ctx) {
       setFabricCursors("none", "none", "none");
 
       const z = fabricCanvas.getZoom();
-      const d = Math.max(6, Math.round(eraserSize * z));
+      const es = toolSettings[TOOL.ERASER];
+      const d = Math.max(6, Math.round(es.size * z));
       cursorDot.style.width = `${d}px`;
       cursorDot.style.height = `${d}px`;
       cursorDot.style.borderRadius = "2px";
@@ -2216,20 +2217,24 @@ export function initDrawEditor(ctx) {
       }
 
       if (tool === TOOL.ERASER) {
-        kickOffsetIfNeeded(); // ważne, żeby nie było przesunięcia
+        kickOffsetIfNeeded();
+
+        // Tolerancja skaluje się z rozmiarem gumki
+        const es = toolSettings[TOOL.ERASER];
+        const eraserTol = Math.max(10, es.size * 2);
         
-        // tymczasowo podbij tolerancję dla pewności
         const oldTol = fabricCanvas.targetFindTolerance;
         const oldPx  = fabricCanvas.perPixelTargetFind;
-        
+
         fabricCanvas.perPixelTargetFind = true;
-        fabricCanvas.targetFindTolerance = 12;
-        
+        fabricCanvas.targetFindTolerance = eraserTol;
+
+        // Sprawdź WSZYSTKIE obiekty pod kursorem
         const target = opt.target || fabricCanvas.findTarget(opt.e);
-        
+
         fabricCanvas.perPixelTargetFind = oldPx;
         fabricCanvas.targetFindTolerance = oldTol;
-        
+
         if (target) {
           fabricCanvas.remove(target);
           fabricCanvas.requestRenderAll();
@@ -2326,18 +2331,21 @@ export function initDrawEditor(ctx) {
       // Gumka: usuwa obiekty, które dotyka (ciągły erase)
       if (tool === TOOL.ERASER && pointerDown) {
         kickOffsetIfNeeded();
-      
+
+        const es = toolSettings[TOOL.ERASER];
+        const eraserTol = Math.max(10, es.size * 2);
+        
         const oldTol = fabricCanvas.targetFindTolerance;
         const oldPx  = fabricCanvas.perPixelTargetFind;
-      
+
         fabricCanvas.perPixelTargetFind = true;
-        fabricCanvas.targetFindTolerance = 12;
-      
+        fabricCanvas.targetFindTolerance = eraserTol;
+
         const target = fabricCanvas.findTarget(opt.e);
-      
+
         fabricCanvas.perPixelTargetFind = oldPx;
         fabricCanvas.targetFindTolerance = oldTol;
-      
+
         if (target) {
           fabricCanvas.remove(target);
           fabricCanvas.requestRenderAll();
