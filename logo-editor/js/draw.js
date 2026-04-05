@@ -3132,6 +3132,26 @@ export function initDrawEditor(ctx) {
         hideSettings();
         clearPolyDraft();
 
+        const finalizeOpen = () => {
+          resizeScene();
+          _needOffsetKick = true;
+          requestAnimationFrame(() => {
+            if (!fabricCanvas) return;
+            fabricCanvas.calcOffset();
+          });
+          zoomTo100();
+
+          holdSpace = false;
+          holdCtrl = false;
+
+          baseTool = TOOL.SELECT;
+          tool = TOOL.SELECT;
+          applyToolBehavior(); // To teraz ustawi selectable dla wszystkich załadowanych obiektów
+
+          ctx.clearDirty?.();
+          schedulePreview(80);
+        };
+
         if (fabricData) {
           undoBusy = true;
           fabricCanvas.loadFromJSON(fabricData, () => {
@@ -3139,13 +3159,11 @@ export function initDrawEditor(ctx) {
             // Upewnij się, że tło canvasu zgadza się z naszą zmienną bg
             fabricCanvas.backgroundColor = bgColor();
             
-            // Przywróć selectable/evented dla obiektów (domyślnie w DRAW obiekty nie są selectable)
+            // Domyślne flagi dla obiektów (zostaną nadpisane przez applyToolBehavior)
             fabricCanvas.forEachObject(o => {
               o.selectable = false;
               o.evented = true;
-              // Zachowaj flagę canHaveFill
             });
-            fabricCanvas.requestRenderAll();
 
             // Przywróć historię edycji jeśli jest
             if (editHistory) {
@@ -3157,7 +3175,8 @@ export function initDrawEditor(ctx) {
               updateUndoRedoButtons();
             }
 
-            schedulePreview(150);
+            fabricCanvas.requestRenderAll();
+            finalizeOpen();
           });
         } else {
           fabricCanvas.getObjects().forEach(o => fabricCanvas.remove(o));
@@ -3168,25 +3187,8 @@ export function initDrawEditor(ctx) {
           redoStack = [];
           pushUndo();
           updateUndoRedoButtons();
+          finalizeOpen();
         }
-
-        resizeScene();
-        _needOffsetKick = true;
-        requestAnimationFrame(() => {
-          if (!fabricCanvas) return;
-          fabricCanvas.calcOffset();
-        });
-        zoomTo100();
-
-        holdSpace = false;
-        holdCtrl = false;
-
-        baseTool = TOOL.SELECT;
-        tool = TOOL.SELECT;
-        applyToolBehavior();
-
-        ctx.clearDirty?.();
-        schedulePreview(80);
       }
     },
 
