@@ -463,8 +463,6 @@ export function initDrawEditor(ctx) {
     setTip(tEraser,  tip2(t("logoEditor.draw.tooltips.eraser"), "E"));
     setTip(tShapes,  t("logoEditor.draw.tooltips.shapes"));
     setTip(tText,    tip2(t("logoEditor.draw.tooltips.text"), "T"));
-
-    // Historia
     setTip(tUndo, tip2(t("logoEditor.draw.tooltips.undo"), isMac ? "⌘Z" : "Ctrl+Z"));
     setTip(tRedo, tip2(t("logoEditor.draw.tooltips.redo"), isMac ? "⌘⇧Z / ⌘Y" : "Ctrl+Shift+Z / Ctrl+Y"));
 
@@ -1228,10 +1226,7 @@ export function initDrawEditor(ctx) {
     setBtnOn(tBrush, tool === TOOL.BRUSH);
     setBtnOn(tEraser, tool === TOOL.ERASER);
     setBtnOn(tShapes, tool === TOOL.SHAPES);
-
-    if (polyPoints.length >= 3 && tool === TOOL.SHAPES && currentShape === "polygon") {
-      // Show polygon close button in settings if needed
-    }
+    setBtnOn(tText, tool === TOOL.TEXT);
   }
 
   function applyToolBehavior() {
@@ -1522,7 +1517,7 @@ export function initDrawEditor(ctx) {
     fabricCanvas.requestRenderAll();
     syncToolButtons();
     // Odśwież ustawienia, żeby pokazać przycisk zamykania jeśli to wielokąt
-    if (tool === TOOL.POLY) {
+    if (tool === TOOL.SHAPES && currentShape === "polygon") {
       renderCurrentSettings();
     }
   }
@@ -1625,88 +1620,50 @@ export function initDrawEditor(ctx) {
     const p = getWorldPointFromMouse(ev);
     const shift = !!shiftKey;
 
-    if (tool === TOOL.LINE && drawingObj.type === "line") {
-      let x2 = p.x, y2 = p.y;
+    const shape = currentShape;
 
-      if (shift) {
-        // 45° snap
-        const dx = p.x - drawingStart.x;
-        const dy = p.y - drawingStart.y;
-        const ang = Math.atan2(dy, dx);
-        const step = Math.PI / 4; // 45deg
-        const snapped = Math.round(ang / step) * step;
-        const len = Math.hypot(dx, dy);
-        x2 = drawingStart.x + Math.cos(snapped) * len;
-        y2 = drawingStart.y + Math.sin(snapped) * len;
-
-        const cl = clampWorldPoint({ x: x2, y: y2 });
-        x2 = cl.x; y2 = cl.y;
-      }
-
-      drawingObj.set({ x2, y2 });
+    // Linia i strzałki - aktualizuj Path
+    if (shape === "line" || shape.startsWith("arrow")) {
+      const ts = toolSettings[TOOL.SHAPES];
+      const newPath = buildShapePath(shape, drawingStart.x, drawingStart.y, p.x, p.y, ts.stroke);
+      drawingObj.set({ path: newPath });
       fabricCanvas.requestRenderAll();
       return;
     }
 
-    if (tool === TOOL.RECT && drawingObj.type === "rect") {
-      const x0 = drawingStart.x;
-      const y0 = drawingStart.y;
-
-      let w = p.x - x0;
-      let h = p.y - y0;
-
-      if (shift) {
-        const m = Math.max(Math.abs(w), Math.abs(h));
-        w = Math.sign(w || 1) * m;
-        h = Math.sign(h || 1) * m;
-      }
-
-      const left = w >= 0 ? x0 : x0 + w;
-      const top  = h >= 0 ? y0 : y0 + h;
-
-      const pLT = clampWorldPoint({ x: left, y: top });
-      const pRB = clampWorldPoint({ x: left + Math.abs(w), y: top + Math.abs(h) });
-
-      drawingObj.set({
-        left: pLT.x,
-        top: pLT.y,
-        width: Math.max(1, pRB.x - pLT.x),
-        height: Math.max(1, pRB.y - pLT.y),
-      });
-
+    // Prostokąt
+    if (shape === "rect" || shape === "roundRect") {
+      const x0 = drawingStart.x, y0 = drawingStart.y;
+      let w = p.x - x0, h = p.y - y0;
+      if (shift) { const m = Math.max(Math.abs(w), Math.abs(h)); w = Math.sign(w||1)*m; h = Math.sign(h||1)*m; }
+      const left = w>=0 ? x0 : x0+w, top = h>=0 ? y0 : y0+h;
+      const pLT = clampWorldPoint({x:left,y:top}), pRB = clampWorldPoint({x:left+Math.abs(w),y:top+Math.abs(h)});
+      drawingObj.set({ left:pLT.x, top:pLT.y, width:Math.max(1,pRB.x-pLT.x), height:Math.max(1,pRB.y-pLT.y) });
       fabricCanvas.requestRenderAll();
       return;
     }
 
-    if (tool === TOOL.ELLIPSE && drawingObj.type === "ellipse") {
-      const x0 = drawingStart.x;
-      const y0 = drawingStart.y;
-
-      let w = p.x - x0;
-      let h = p.y - y0;
-
-      if (shift) {
-        const m = Math.max(Math.abs(w), Math.abs(h));
-        w = Math.sign(w || 1) * m;
-        h = Math.sign(h || 1) * m;
-      }
-
-      const left = w >= 0 ? x0 : x0 + w;
-      const top  = h >= 0 ? y0 : y0 + h;
-
-      const pLT = clampWorldPoint({ x: left, y: top });
-      const pRB = clampWorldPoint({ x: left + Math.abs(w), y: top + Math.abs(h) });
-
-      // Fabric ellipse: rx/ry to promienie
-      drawingObj.set({
-        left: pLT.x,
-        top: pLT.y,
-        rx: Math.max(1, (pRB.x - pLT.x) / 2),
-        ry: Math.max(1, (pRB.y - pLT.y) / 2),
-      });
-
+    // Elipsa
+    if (shape === "ellipse") {
+      const x0 = drawingStart.x, y0 = drawingStart.y;
+      let w = p.x - x0, h = p.y - y0;
+      if (shift) { const m = Math.max(Math.abs(w), Math.abs(h)); w = Math.sign(w||1)*m; h = Math.sign(h||1)*m; }
+      const left = w>=0 ? x0 : x0+w, top = h>=0 ? y0 : y0+h;
+      const pLT = clampWorldPoint({x:left,y:top}), pRB = clampWorldPoint({x:left+Math.abs(w),y:top+Math.abs(h)});
+      drawingObj.set({ left:pLT.x, top:pLT.y, rx:Math.max(1,(pRB.x-pLT.x)/2), ry:Math.max(1,(pRB.y-pLT.y)/2) });
       fabricCanvas.requestRenderAll();
       return;
+    }
+
+    // Wszystkie inne kształty (Path) - skaluj i przesuwaj
+    if (drawingObj.type === "path") {
+      const x0 = drawingStart.x, y0 = drawingStart.y;
+      let w = p.x - x0, h = p.y - y0;
+      if (shift) { const m = Math.max(Math.abs(w), Math.abs(h)); w = Math.sign(w||1)*m; h = Math.sign(h||1)*m; }
+      const scaleX = Math.abs(w) > 1 ? Math.abs(w) : 1;
+      const scaleY = Math.abs(h) > 1 ? Math.abs(h) : 1;
+      drawingObj.set({ scaleX, scaleY, left: Math.min(x0, p.x), top: Math.min(y0, p.y) });
+      fabricCanvas.requestRenderAll();
     }
   }
 
@@ -1909,7 +1866,7 @@ export function initDrawEditor(ctx) {
            tool === TOOL.LINE ? t("logoEditor.draw.tools.line") :
            tool === TOOL.RECT ? t("logoEditor.draw.tools.rect") :
            tool === TOOL.ELLIPSE ? t("logoEditor.draw.tools.ellipse") :
-           tool === TOOL.POLY ? t("logoEditor.draw.tools.poly") :
+           tool === TOOL.SHAPES && currentShape === "polygon" ? t("logoEditor.draw.tools.poly") :
            tool === TOOL.PAN ? t("logoEditor.draw.tools.pan") :
            tool === TOOL.TEXT ? t("logoEditor.draw.tools.text") :
            t("logoEditor.draw.tools.select");
@@ -2175,14 +2132,19 @@ export function initDrawEditor(ctx) {
         return;
       }
 
-      if (tool === TOOL.POLY) {
+      if (tool === TOOL.SHAPES && currentShape === "polygon") {
         const wp = getWorldPointFromMouse(ev);
         addPolyPoint(wp);
         return;
       }
 
-      if (tool === TOOL.LINE || tool === TOOL.RECT || tool === TOOL.ELLIPSE) {
-        startFigure(ev, ev.shiftKey);
+      if (tool === TOOL.SHAPES) {
+        if (currentShape === "polygon") {
+          const wp = getWorldPointFromMouse(ev);
+          addPolyPoint(wp);
+        } else {
+          startFigure(ev, ev.shiftKey);
+        }
         return;
       }
 
@@ -2298,18 +2260,20 @@ export function initDrawEditor(ctx) {
     // Dwuklik kończy polygon LUB włącza edycję tekstu w Select
     drawCanvasEl.addEventListener("dblclick", (ev) => {
       if (ctx.getMode?.() !== "DRAW") return;
-      
-      if (tool === TOOL.POLY) {
+
+      if (tool === TOOL.SHAPES && currentShape === "polygon" && polyPoints.length >= 2) {
         ev.preventDefault();
         finalizePolygon();
         return;
       }
-      
+
       if (tool === TOOL.SELECT) {
         const target = fabricCanvas.findTarget(ev);
         if (target && isTextObj(target)) {
           ev.preventDefault();
           setBaseTool(TOOL.TEXT);
+          syncToolButtons();
+          renderCurrentSettings();
           target.enterEditing();
           target.selectAll();
           fabricCanvas.renderAll();
