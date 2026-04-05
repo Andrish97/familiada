@@ -317,55 +317,55 @@ export function initDrawEditor(ctx) {
       openDrawFontPicker(v => { obj.set("fontFamily", v); fabricCanvas.renderAll(); renderTextObjectSettings(obj); }, objFont);
     });
     document.getElementById("cTSize")?.addEventListener("input", e => {
+      pushUndo();
       obj.set("fontSize", clamp(+e.target.value||40, 10, 220));
       fabricCanvas.renderAll();
-      pushUndo();
     });
     document.getElementById("cTLH")?.addEventListener("input", e => {
+      pushUndo();
       obj.set("lineHeight", clamp(+e.target.value||1, 0.6, 3));
       fabricCanvas.renderAll();
-      pushUndo();
     });
     document.getElementById("cTSp")?.addEventListener("input", e => {
       const uiVal = clamp(+e.target.value||0, 0, 20);
+      pushUndo();
       obj.set("charSpacing", uiVal * 50);
       fabricCanvas.renderAll();
-      pushUndo();
     });
     document.getElementById("cTB")?.addEventListener("click", e => {
+      pushUndo();
       obj.set("fontWeight", !objBold ? "bold" : "normal");
       fabricCanvas.renderAll();
-      pushUndo();
       renderTextObjectSettings(obj);
     });
     document.getElementById("cTI")?.addEventListener("click", e => {
+      pushUndo();
       obj.set("fontStyle", !objItalic ? "italic" : "normal");
       fabricCanvas.renderAll();
-      pushUndo();
       renderTextObjectSettings(obj);
     });
     document.getElementById("cTU")?.addEventListener("click", e => {
+      pushUndo();
       obj.set("underline", !objUnderline);
       fabricCanvas.renderAll();
-      pushUndo();
       renderTextObjectSettings(obj);
     });
     document.getElementById("cAlignL")?.addEventListener("click", () => {
+      pushUndo();
       obj.set("textAlign", "left");
       fabricCanvas.renderAll();
-      pushUndo();
       renderTextObjectSettings(obj);
     });
     document.getElementById("cAlignC")?.addEventListener("click", () => {
+      pushUndo();
       obj.set("textAlign", "center");
       fabricCanvas.renderAll();
-      pushUndo();
       renderTextObjectSettings(obj);
     });
     document.getElementById("cAlignR")?.addEventListener("click", () => {
+      pushUndo();
       obj.set("textAlign", "right");
       fabricCanvas.renderAll();
-      pushUndo();
       renderTextObjectSettings(obj);
     });
 
