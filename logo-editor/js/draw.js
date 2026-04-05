@@ -1127,6 +1127,9 @@ export function initDrawEditor(ctx) {
       fabricCanvas.defaultCursor = def;
       fabricCanvas.hoverCursor = hov;
       fabricCanvas.moveCursor = mov;
+      // Reset CSS cursor na upperCanvasEl
+      if (fabricCanvas.upperCanvasEl) fabricCanvas.upperCanvasEl.style.cursor = "";
+      if (drawCanvasEl) drawCanvasEl.style.cursor = "";
     };
   
     if (tool === TOOL.SELECT) {
@@ -1186,14 +1189,22 @@ export function initDrawEditor(ctx) {
   
     // TEXT: kursor I-beam widoczny WSZĘDZIE (również na pustym polu)
     if (tool === TOOL.TEXT) {
-      // NIE używamy setCursorClass("none") - to chowa systemowy kursor!
-      // Pozwalamy Fabric.js obsłużyć kursor
+      // Ustawiamy kursory Fabric.js
       fabricCanvas.defaultCursor = "crosshair"; // + na pustym polu
       fabricCanvas.hoverCursor = "text"; // I na tekście
       fabricCanvas.moveCursor = "text"; // I podczas przesuwania
-      
+
+      // Dodatkowo wymuszamy przez CSS na upperCanvasEl (Fabric.js może nadpisywać)
+      const upperEl = fabricCanvas.upperCanvasEl;
+      if (upperEl) {
+        upperEl.style.cursor = "crosshair";
+      }
+      if (drawCanvasEl) {
+        drawCanvasEl.style.cursor = "crosshair";
+      }
+
       // Ukrywamy overlay kursora (jeśli był widoczny)
-      hideOverlayCursor(); 
+      hideOverlayCursor();
       return;
     }
 
@@ -1344,6 +1355,8 @@ export function initDrawEditor(ctx) {
       }
       applyToolBehavior();
       renderCurrentSettings();
+      syncToolButtons();
+      updateCursorVisual();
     }
   }
 
@@ -1386,6 +1399,8 @@ export function initDrawEditor(ctx) {
     tool = next;
     applyToolBehavior();
     renderCurrentSettings();
+    syncToolButtons();
+    updateCursorVisual();
   }
 
   function recomputeTempTool() {
