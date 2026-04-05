@@ -929,6 +929,13 @@ export function initDrawEditor(ctx) {
     const dx = x2 - x1, dy = y2 - y1;
     const len = Math.hypot(dx, dy) || 1;
     
+    // Ogranicz wielkość główki do 60% długości strzałki (żeby nie wychodziła poza start)
+    const maxHead = len * 0.6;
+    if (headL > maxHead) {
+      headL = maxHead;
+      headW = headW * 0.6; // proporcjonalnie zmniejsz szerokość
+    }
+    
     const ux = dx / len, uy = dy / len; // kierunek
     const nx = -uy, ny = ux;            // prostopadły (w lewo)
     
