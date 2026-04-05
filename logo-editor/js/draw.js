@@ -919,39 +919,55 @@ export function initDrawEditor(ctx) {
 
   function buildArrowPath(x1, y1, x2, y2, dirCount, strokeW, isFilled) {
     const dx = x2 - x1, dy = y2 - y1;
-    const len = Math.hypot(dx, dy) || 1;
+    const L = Math.hypot(dx, dy) || 1;
+    const ang = Math.atan2(dy, dx);
+    const c = Math.cos(ang), s = Math.sin(ang);
     
-    const ux = dx / len, uy = dy / len;
-    const px = uy, py = -ux; // prostopadły (canvas Y w dół!)
-    
-    const headL = Math.min(strokeW * 4, len * 0.35);
-    const headW = Math.min(strokeW * 2.5, len * 0.25);
-    const shaftHW = strokeW * 0.35;
-    
-    const baseX = x2 - headL * ux, baseY = y2 - headL * uy;
+    // Transformacja punktów: obrót do kierunku strzałki
+    const tf = (pts) => pts.map(([px, py]) => [x1 + px*c - py*s, y1 + px*s + py*c]);
+    const fp = ([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`;
     
     if (isFilled) {
-      return [
-        ['M', x1 + shaftHW*px, y1 + shaftHW*py],
-        ['L', baseX + shaftHW*px, baseY + shaftHW*py],
-        ['L', baseX + headW*px, baseY + headW*py],
-        ['L', x2, y2],
-        ['L', baseX - headW*px, baseY - headW*py],
-        ['L', baseX - shaftHW*px, baseY - shaftHW*py],
-        ['L', x1 - shaftHW*px, y1 - shaftHW*py],
-        ['Z']
-      ];
+      // KSZTAŁT - zamknięty wielokąt
+      const sh = strokeW * 4 + L * 0.018;
+      const hh = sh * 2.2;
+      let hl = sh * 2.5;
+      if (dirCount === 2 && hl * 2 > L * 0.72) hl = L * 0.36;
+      
+      if (dirCount === 2) {
+        // Dwukierunkowa: [hl,-hh]→[0,0]→[hl,hh]→[hl,sh]→[L-hl,sh]→[L-hl,hh]→[L,0]→[L-hl,-hh]→[L-hl,-sh]→[hl,-sh]→Z
+        const pts = tf([
+          [hl, -hh], [0, 0], [hl, hh], [hl, sh],
+          [L-hl, sh], [L-hl, hh], [L, 0],
+          [L-hl, -hh], [L-hl, -sh], [hl, -sh]
+        ]);
+        return `M ${fp(pts[0])} ${pts.slice(1).map(p => `L ${fp(p)}`).join(' ')} Z`;
+      }
+      
+      // Jednokierunkowa: [0,-sh]→[L-hl,-sh]→[L-hl,-hh]→[L,0]→[L-hl,hh]→[L-hl,sh]→[0,sh]→Z
+      const pts = tf([
+        [0, -sh], [L-hl, -sh], [L-hl, -hh], [L, 0], [L-hl, hh], [L-hl, sh], [0, sh]
+      ]);
+      return `M ${fp(pts[0])} ${pts.slice(1).map(p => `L ${fp(p)}`).join(' ')} Z`;
     }
     
-    // Bez fill - otwarty kontur
-    return [
-      ['M', x1, y1],
-      ['L', baseX, baseY],
-      ['L', baseX + headW*px, baseY + headW*py],
-      ['L', x2, y2],
-      ['L', baseX - headW*px, baseY - headW*py],
-      ['L', baseX, baseY]
-    ];
+    // LINIA - otwarty kontur (stroke only)
+    let hl = strokeW * 5;
+    if (hl > L * 0.8) hl = L * 0.8;
+    const hh = strokeW * 2.5;
+    
+    if (dirCount === 2) {
+      if (hl > L * 0.38) hl = L * 0.38;
+      // shaft + head end + head start
+      const shaft = tf([[0,0], [L,0]]);
+      const headE = tf([[L-hl, -hh], [L,0], [L-hl, hh]]);
+      const headS = tf([[hl, -hh], [0,0], [hl, hh]]);
+      return `M ${fp(shaft[0])} L ${fp(shaft[1])} M ${fp(headE[0])} L ${fp(headE[1])} L ${fp(headE[2])} M ${fp(headS[0])} L ${fp(headS[1])} L ${fp(headS[2])}`;
+    }
+    
+    const shaft = tf([[0,0], [L,0]]);
+    const head = tf([[L-hl, -hh], [L,0], [L-hl, hh]]);
+    return `M ${fp(shaft[0])} L ${fp(shaft[1])} M ${fp(head[0])} L ${fp(head[1])} L ${fp(head[2])}`;
   }
 
   function buildPolygonPath(cx,cy,r,sides) {
