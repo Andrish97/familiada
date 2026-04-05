@@ -2480,7 +2480,11 @@ export function initDrawEditor(ctx) {
 
     // Zablokuj skróty gdy edytujemy tekst (IText w trybie edycji)
     const active = fabricCanvas?.getActiveObject();
-    if (active?.isEditing) return; // nie przechwytuj skrótów podczas edycji tekstu
+    if (active && active.isEditing) return; // nie przechwytuj skrótów podczas edycji tekstu
+    
+    // Dodatkowy check: sprawdź czy upperCanvasEl ma child textarea (Fabric edycja)
+    const upperEl = fabricCanvas?.upperCanvasEl;
+    if (upperEl && upperEl.querySelector("textarea")) return;
 
     const key = ev.key;
     const k = key.length === 1 ? key.toLowerCase() : key;
