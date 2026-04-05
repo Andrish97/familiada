@@ -1770,6 +1770,7 @@ export function initDrawEditor(ctx) {
       drawingObj = new f.Path(pathArr, {
         stroke: style.stroke,
         strokeWidth: style.strokeWidth,
+        strokeUniform: true, // strokeWidth niezależne od scale
         fill: fillVal,
         strokeLineCap: style.strokeLineCap,
         strokeLineJoin: style.strokeLineJoin,
@@ -1863,6 +1864,7 @@ export function initDrawEditor(ctx) {
         originY: "top",
         stroke: style.stroke,
         strokeWidth: style.strokeWidth,
+        strokeUniform: true, // strokeWidth niezależne od scale
         fill: arrowFill,
         strokeLineCap: style.strokeLineCap,
         strokeLineJoin: style.strokeLineJoin,
@@ -1915,6 +1917,7 @@ export function initDrawEditor(ctx) {
       originY: "top",
       stroke: style.stroke,
       strokeWidth: style.strokeWidth,
+      strokeUniform: true, // strokeWidth niezależne od scale
       fill: fillVal,
       strokeLineCap: style.strokeLineCap,
       strokeLineJoin: style.strokeLineJoin,
