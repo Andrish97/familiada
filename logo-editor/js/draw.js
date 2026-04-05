@@ -428,8 +428,6 @@ export function initDrawEditor(ctx) {
   function injectIcon(id, html){
     const el = document.getElementById(id);
     if (!el) return;
-    // Nie nadpisuj jeśli button już ma SVG w HTML (np. tShapes)
-    if (el.innerHTML.trim().startsWith("<svg")) return;
     el.innerHTML = html || "";
     // a11y: jeśli button nie ma aria-label, dodaj prosty fallback
     if (!el.getAttribute("aria-label")) el.setAttribute("aria-label", id);
@@ -443,7 +441,7 @@ export function initDrawEditor(ctx) {
     tText: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 6h14"></path><path d="M12 6v12"></path><path d="M8 18h8"></path></svg>`,
     tBrush: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 20l4-1 11-11-3-3L5 16l-1 4z"></path><path d="M14 6l3 3"></path></svg>`,
     tEraser: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 16l8.5-8.5a1.8 1.8 0 0 1 2.5 0l1 1a1.8 1.8 0 0 1 0 2.5L11 19H7l-2-2 2-1z"></path><path d="M11 19h10"></path><path d="M9.2 14.8l4 4"></path></svg>`,
-    tShapes: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="4" y="4" width="6" height="6" rx="1"/><circle cx="17" cy="7" r="3"/><polygon points="12,15 17,21 7,21"/></svg>`,
+    tShapes: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="4" y="4" width="6" height="6" rx="1" fill="currentColor"/><circle cx="17" cy="7" r="3" fill="currentColor"/><polygon points="12,15 17,21 7,21" fill="currentColor"/></svg>`,
     tUndo: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 7H5v4"></path><path d="M5 11c2-4 6-6 10-4 2 1 4 3 4 6"></path></svg>`,
     tRedo: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 7h4v4"></path><path d="M19 11c-2-4-6-6-10-4-2 1-4 3-4 6"></path></svg>`,
     tClear: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 7h12"></path><path d="M9 7V5h6v2"></path><path d="M8 7l1 14h6l1-14"></path></svg>`,
