@@ -2768,11 +2768,10 @@ export function initDrawEditor(ctx) {
     tBrush?.addEventListener("click", () => setBaseTool(TOOL.BRUSH));
     tEraser?.addEventListener("click", () => setBaseTool(TOOL.ERASER));
     
-    // Shapes dropdown
+    // Shapes dropdown - kliknięcie tShapes TYLKO wybiera narzędzie
     tShapes?.addEventListener("click", (e) => {
       e.stopPropagation();
       setBaseTool(TOOL.SHAPES);
-      openShapePicker(e);
     });
 
     // Zaznacz aktywny kształt w dropdownie
