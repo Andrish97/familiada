@@ -1823,6 +1823,7 @@ export function initDrawEditor(ctx) {
 
   function updateFigure(ev, shiftKey) {
     if (!fabricCanvas || !drawingObj || !drawingStart) return;
+    const f = requireFabric();
     const p = getWorldPointFromMouse(ev);
     const shift = !!shiftKey;
     const shape = currentShape;
