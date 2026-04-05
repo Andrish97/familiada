@@ -450,20 +450,42 @@ function cleanRows30x10(rows){
   return out;
 }
 
-function exportLogoToFile(l){
+async function exportLogoToFile(l){
   const type = String(l?.type || "").toUpperCase();
 
   let out = null;
 
   if (type.includes("GLYPH")){
     const rows = l?.payload?.layers?.[0]?.rows || [];
+    const source = l?.payload?.source || {};
     out = {
       kind: "GLYPH",
       name: l.name || getDefaultLogoName(),
-      payload: { rows }
+      payload: {
+        layers: [{ rows }],
+        source: Object.keys(source).length ? source : undefined
+      }
     };
   } else if (type.includes("PIX")){
     const p = l?.payload || {};
+    const source = p.source || {};
+    let imageData = source.imageData || null;
+
+    // Jeśli mamy imageUrl ale nie mamy imageData → pobierz i zakoduj
+    if (source.imageUrl && !imageData) {
+      try {
+        imageData = await fetchImageAsBase64(source.imageUrl);
+      } catch (e) {
+        console.warn("[export] Failed to embed image:", e);
+      }
+    }
+
+    const exportSource = {
+      mode: source.mode || "PIX",
+      ...(imageData ? { imageData } : {}),
+      ...(source.imageUrl ? { imageUrl: source.imageUrl } : {})
+    };
+
     out = {
       kind: "PIX",
       name: l.name || getDefaultLogoName(),
@@ -471,7 +493,8 @@ function exportLogoToFile(l){
         w: Number(p.w) || DOT_W,
         h: Number(p.h) || DOT_H,
         format: "BITPACK_MSB_FIRST_ROW_MAJOR",
-        bits_b64: String(p.bits_b64 || "")
+        bits_b64: String(p.bits_b64 || ""),
+        source: Object.keys(exportSource).length > 1 ? exportSource : undefined
       }
     };
   } else {
@@ -488,6 +511,19 @@ function exportLogoToFile(l){
   a.click();
   a.remove();
   URL.revokeObjectURL(a.href);
+}
+
+/** Pobiera obraz z URL i zwraca data:image/...;base64,... */
+async function fetchImageAsBase64(url) {
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+  const blob = await resp.blob();
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
 }
 
 function parseImportJson(text){

@@ -789,6 +789,60 @@ export function initImageEditor(ctx) {
   // =========================================================
   // API
   // =========================================================
+  // Image loading helpers
+  // =========================================================
+  function loadImageFromUrl(url) {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      imgObj = img;
+      if (imgPreview) {
+        imgPreview.style.display = "block";
+        imgPreview.src = url;
+        if (cropFrame) cropFrame.style.display = "block";
+      }
+      applyBestImageLayout();
+      initCropToCenterBig();
+      applyCropToDom();
+      schedulePreview(150);
+    };
+    img.onerror = () => {
+      const img2 = new Image();
+      img2.onload = () => {
+        imgObj = img2;
+        if (imgPreview) {
+          imgPreview.style.display = "block";
+          imgPreview.src = url;
+          if (cropFrame) cropFrame.style.display = "block";
+        }
+        applyBestImageLayout();
+      };
+      img2.src = url;
+    };
+    img.src = url;
+  }
+
+  function loadImageFromData(dataUri) {
+    const img = new Image();
+    img.onload = () => {
+      imgObj = img;
+      if (imgPreview) {
+        imgPreview.style.display = "block";
+        imgPreview.src = dataUri;
+        if (cropFrame) cropFrame.style.display = "block";
+      }
+      applyBestImageLayout();
+      initCropToCenterBig();
+      applyCropToDom();
+      schedulePreview(150);
+    };
+    img.onerror = (e) => {
+      console.error("[image.loadImageFromData] Failed:", e);
+    };
+    img.src = dataUri;
+  }
+
+  // =========================================================
   return {
     async open(payload = null){
       show(paneImage, true);
@@ -814,44 +868,10 @@ export function initImageEditor(ctx) {
 
       if (source.imageUrl) {
         // load from storage/URL
-        const img = new Image();
-        img.crossOrigin = "anonymous";
-        img.onload = () => {
-          imgObj = img;
-          if (imgPreview) {
-            imgPreview.style.display = "block";
-            imgPreview.src = source.imageUrl;
-            if (cropFrame) cropFrame.style.display = "block";
-          }
-          applyBestImageLayout();
-
-          if (source.crop) {
-            crop = { ...source.crop };
-          } else {
-            initCropToCenterBig();
-          }
-          applyCropToDom();
-          schedulePreview(150);
-        };
-        img.onerror = (e) => {
-          console.error("[image.open] Failed to load image:", source.imageUrl, e);
-          // Spróbuj bez crossOrigin dla lokalnych plików
-          const img2 = new Image();
-          img2.onload = () => {
-            imgObj = img2;
-            if (imgPreview) {
-              imgPreview.style.display = "block";
-              imgPreview.src = source.imageUrl;
-              if (cropFrame) cropFrame.style.display = "block";
-            }
-            applyBestImageLayout();
-          };
-          img2.onerror = (e2) => {
-            console.error("[image.open] Retry also failed", e2);
-          };
-          img2.src = source.imageUrl;
-        };
-        img.src = source.imageUrl;
+        loadImageFromUrl(source.imageUrl);
+      } else if (source.imageData) {
+        // load from base64 (demo / import)
+        loadImageFromData(source.imageData);
       } else {
         if (cropFrame) cropFrame.style.display = "none";
         if (imgPreview){
@@ -885,7 +905,9 @@ export function initImageEditor(ctx) {
         mode: "IMAGE",
         bright, contrast, gamma, ditherAmt, black, white, invert,
         crop: { ...crop },
-        imageUrl: (imgObj && !imgFileObj) ? imgPreview.src : null // zachowaj stary URL jeśli nie ma nowego pliku
+        imageUrl: (imgObj && !imgFileObj) ? imgPreview.src : null,
+        // Zachowaj imageData jeśli już jest (demo/import) - fallback
+        imageData: imgObj?.src?.startsWith("data:") ? imgObj.src : null
       };
 
       // Jeśli mamy nowy plik -> wrzuć go do storage
