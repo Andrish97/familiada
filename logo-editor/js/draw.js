@@ -2253,7 +2253,6 @@ export function initDrawEditor(ctx) {
 
       if (tool === TOOL.TEXT) {
         const pointer = fabricCanvas.getPointer(opt.e);
-        // Check if clicking on existing text
         const target = fabricCanvas.findTarget(ev);
         if (target && isTextObj(target)) {
           // Select existing text for editing
@@ -2264,8 +2263,8 @@ export function initDrawEditor(ctx) {
           pushUndo();
           ctx.markDirty?.();
           schedulePreview(80);
-          // Wymuszenie ustawień obiektu (enterEditing może czyścić selection)
-          renderTextObjectSettings(target);
+          // Wymuszenie ustawień obiektu po tym jak eventy selection się uspokoją
+          requestAnimationFrame(() => renderTextObjectSettings(target));
         } else {
           // Kliknięcie poza tekstem → exit edit mode, exit editing
           const active = fabricCanvas.getActiveObject();
@@ -2388,8 +2387,8 @@ export function initDrawEditor(ctx) {
           target.enterEditing();
           target.selectAll();
           fabricCanvas.renderAll();
-          // Wymuszenie ustawień obiektu
-          renderTextObjectSettings(target);
+          // Wymuszenie ustawień obiektu po uspokojeniu eventów
+          requestAnimationFrame(() => renderTextObjectSettings(target));
         }
       }
     });
