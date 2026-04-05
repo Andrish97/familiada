@@ -926,55 +926,65 @@ export function initDrawEditor(ctx) {
   }
 
   function buildArrowPath(x1,y1,x2,y2,dirCount,headL,headW,isFilled) {
-    const angle = Math.atan2(y2-y1, x2-x1);
-    const len = Math.hypot(x2-x1, y2-y1);
+    const dx = x2 - x1, dy = y2 - y1;
+    const len = Math.hypot(dx, dy);
     if (len < 1) return `M ${x1} ${y1} L ${x2} ${y2}`;
     
+    const cos = dx / len, sin = dy / len;
+    const nx = -sin, ny = cos; // wektor prostopadły
+    const shaftW = headW * 0.4; // szerokość wałka
+    
+    // Podstawa główki (gdzie zaczyna się V)
+    const baseX = x2 - headL * cos, baseY = y2 - headL * sin;
+    const tipX = x2, tipY = y2;
+    const pwX = nx * headW, pwY = ny * headW; // połowa szerokości główki
+    const sw = shaftW * 0.5; // połowa szerokości wałka
+    
     if (!isFilled) {
-      // Strzałka bez wypełnienia: linia + V-kształtna główka na końcu
-      // Linia od (x1,y1) do początku główki
-      const lineEndX = x2 - headL * Math.cos(angle);
-      const lineEndY = y2 - headL * Math.sin(angle);
-      let path = `M ${x1} ${y1} L ${lineEndX} ${lineEndY}`;
-      // Główka V
-      const tipX = x2, tipY = y2;
-      const perpX = headW * Math.cos(angle + Math.PI/2);
-      const perpY = headW * Math.sin(angle + Math.PI/2);
-      path += ` M ${lineEndX + perpX} ${lineEndY + perpY} L ${tipX} ${tipY} L ${lineEndX - perpX} ${lineEndY - perpY}`;
-      // Druga główka
+      // Kontur: obrys strzałki (fill=transparent, stroke widoczny)
+      // Jeden zamknięty path - wałek + główka = strzałka
+      let path = `M ${x1 + nx*sw} ${y1 + ny*sw}`;
+      path += ` L ${baseX + nx*sw} ${baseY + ny*sw}`;
+      path += ` L ${tipX + pwX} ${tipY + pwY}`;
+      path += ` L ${tipX} ${tipY}`;
+      path += ` L ${tipX - pwX} ${tipY - pwY}`;
+      path += ` L ${baseX - nx*sw} ${baseY - ny*sw}`;
+      path += ` L ${x1 - nx*sw} ${y1 - ny*sw} Z`;
+      
       if (dirCount === 2) {
-        const lineStartX = x1 + headL * Math.cos(angle);
-        const lineStartY = y1 + headL * Math.sin(angle);
-        path = `M ${lineStartX} ${lineStartY} L ${lineEndX} ${lineEndY}`;
-        const perpX2 = headW * Math.cos(angle + Math.PI/2);
-        const perpY2 = headW * Math.sin(angle + Math.PI/2);
-        // Główna główka (kierunek x2,y2)
-        path += ` M ${lineEndX + perpX} ${lineEndY + perpY} L ${x2} ${y2} L ${lineEndX - perpX} ${lineEndY - perpY}`;
-        // Druga główka (kierunek x1,y1)
-        path += ` M ${lineStartX + perpX2} ${lineStartY + perpY2} L ${x1} ${y1} L ${lineStartX - perpX2} ${lineStartY - perpY2}`;
+        const baseX2 = x1 + headL*cos, baseY2 = y1 + headL*sin;
+        const pwX2 = nx * headW, pwY2 = ny * headW;
+        path = `M ${baseX2 - pwX2} ${baseY2 - pwY2}`;
+        path += ` L ${x1} ${y1}`;
+        path += ` L ${baseX2 + pwX2} ${baseY2 + pwY2}`;
+        path += ` L ${baseX + pwX} ${baseY + pwY}`;
+        path += ` L ${tipX} ${tipY}`;
+        path += ` L ${baseX - pwX} ${baseY - pwY}`;
+        path += ` L ${baseX2 - pwX2} ${baseY2 - pwY2} Z`;
       }
       return path;
     }
     
-    // Strzałka z wypełnieniem
-    const headEndX = x2 - headL * 0.5 * Math.cos(angle);
-    const headEndY = y2 - headL * 0.5 * Math.sin(angle);
-    const tipX = x2, tipY = y2;
-    const baseX = x2 - headL * Math.cos(angle);
-    const baseY = y2 - headL * Math.sin(angle);
-    const perpX = headW * Math.cos(angle + Math.PI/2);
-    const perpY = headW * Math.sin(angle + Math.PI/2);
+    // WYPEŁNIENIE: jeden ciągły wielokąt
+    let path = `M ${x1 + nx*sw} ${y1 + ny*sw}`;
+    path += ` L ${baseX + nx*sw} ${baseY + ny*sw}`;
+    path += ` L ${tipX + pwX} ${tipY + pwY}`;
+    path += ` L ${tipX} ${tipY}`;
+    path += ` L ${tipX - pwX} ${tipY - pwY}`;
+    path += ` L ${baseX - nx*sw} ${baseY - ny*sw}`;
+    path += ` L ${x1 - nx*sw} ${y1 - ny*sw} Z`;
     
-    let path = `M ${x1} ${y1} L ${headEndX} ${headEndY} L ${tipX} ${tipY} L ${baseX + perpX} ${baseY + perpY} L ${baseX - perpX} ${baseY - perpY} Z`;
-    
-    // Druga główka (strzałka 2-kier. z fill)
     if (dirCount === 2) {
-      const headStartX = x1 + headL * 0.5 * Math.cos(angle);
-      const headStartY = y1 + headL * 0.5 * Math.sin(angle);
-      const tipX2 = x1, tipY2 = y1;
-      const baseX2 = x1 + headL * Math.cos(angle);
-      const baseY2 = y1 + headL * Math.sin(angle);
-      path = `M ${headStartX} ${headStartY} L ${headEndX} ${headEndY} L ${tipX} ${tipY} L ${baseX + perpX} ${baseY + perpY} L ${baseX - perpX} ${baseY - perpY} L ${tipX2} ${tipY2} L ${baseX2 + perpX} ${baseY2 + perpY} L ${headStartX + perpX} ${headStartY + perpY} L ${headStartX - perpX} ${headStartY - perpY} L ${tipX2} ${tipY2} Z`;
+      // Dwukierunkowa: dwie główki na zewnątrz, wałek w środku
+      const baseX2 = x1 + headL*cos, baseY2 = y1 + headL*sin;
+      const pwX2 = nx * headW, pwY2 = ny * headW;
+      path = `M ${baseX2 - pwX2} ${baseY2 - pwY2}`;
+      path += ` L ${x1} ${y1}`;
+      path += ` L ${baseX2 + pwX2} ${baseY2 + pwY2}`;
+      path += ` L ${baseX + pwX} ${baseY + pwY}`;
+      path += ` L ${tipX} ${tipY}`;
+      path += ` L ${baseX - pwX} ${baseY - pwY}`;
+      path += ` L ${baseX2 - pwX2} ${baseY2 - pwY2} Z`;
     }
     return path;
   }
