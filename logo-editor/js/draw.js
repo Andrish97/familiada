@@ -1839,14 +1839,13 @@ export function initDrawEditor(ctx) {
     if (drawingObj.type === "path") {
       let w = p.x - drawingStart.x, h = p.y - drawingStart.y;
       if (shift) { const m = Math.max(Math.abs(w), Math.abs(h)); w = Math.sign(w||1)*m; h = Math.sign(h||1)*m; }
-      const absW = Math.abs(w), absH = Math.abs(h);
-      const minDim = 2;
-      // Używamy scaleX/scaleY na podstawie początkowego path (10x10)
-      const scaleX = absW < minDim ? minDim : absW / 10;
-      const scaleY = absH < minDim ? minDim : absH / 10;
+      const absW = Math.max(2, Math.abs(w)), absH = Math.max(2, Math.abs(h));
+      // Regeneruj path z poprawnymi wymiarami
+      const newPath = buildShapePath(shape, 0, 0, absW, absH, ts.stroke);
       const left = w >= 0 ? drawingStart.x : drawingStart.x + w;
       const top = h >= 0 ? drawingStart.y : drawingStart.y + h;
-      drawingObj.set({ scaleX, scaleY, left, top });
+      // Ustaw fill i stroke zgodnie z ustawieniami
+      drawingObj.set({ path: newPath, left, top, fill: fillVal, stroke: style.stroke, strokeWidth: style.strokeWidth, strokeDashArray: style.strokeDashArray });
       fabricCanvas.requestRenderAll();
     }
   }
