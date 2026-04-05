@@ -166,7 +166,8 @@ export function initImageEditor(ctx) {
   // UI values
   // =========================================================
   function syncLabels(){
-    // czytamy bezpośrednio z inputów, żeby było natychmiast
+    // Aktualizacja textContent NIE przesuwa layoutu (brak reflow)
+    // Czytamy bezpośrednio z inputów, żeby było natychmiast
     const bright = rngBright?.value ?? 0;
     const contrast = rngContrast?.value ?? 0;
     const gamma = rngGamma?.value ?? 1;
@@ -660,15 +661,7 @@ export function initImageEditor(ctx) {
 
     const onAnyChange = () => {
       if (ctx.getMode?.() !== "IMAGE") return;
-      // Aktualizuj MAŁE etykiety (valBright itp.) - NIE przesuwa layoutu
-      if (valBright) valBright.textContent = String(rngBright?.value ?? "0");
-      if (valContrast) valContrast.textContent = String(rngContrast?.value ?? "0");
-      if (valGamma) valGamma.textContent = Number(rngGamma?.value ?? "1").toFixed(2);
-      if (valDitherAmt) valDitherAmt.textContent = Number(rngDitherAmt?.value ?? "0.80").toFixed(2);
-      if (valBlack) valBlack.textContent = String(rngBlack?.value ?? "0");
-      if (valWhite) valWhite.textContent = String(rngWhite?.value ?? "100");
-      // Aktualizuj przyciski suwaków - textContent NIE przesuwa layout
-      syncImgButtonLabels();
+      syncLabels();
       if (!imgObj) return;
       ctx.markDirty?.();
       schedulePreview(40);
