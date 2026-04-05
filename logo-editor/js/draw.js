@@ -381,16 +381,14 @@ export function initDrawEditor(ctx) {
 
     // Sprawdź które MOGĄ mieć wypełnienie - zasada AND
     // Linia/polyline = NIGDY
-    // Path z fill=transparent (strzałki bez fill, pędzel) = NIGDY
-    // Path z fill!=transparent (kształty) = TAK
-    // Rect/Ellipse/Polygon = ZAWSZE
+    // Rect/Ellipse = ZAWSZE
+    // Path z _canHaveFill (flaga ustawiona przy tworzeniu) = MOŻE
+    // Path bez flagi (linie/strzałki) = NIGDY
     const canHaveFill = shapes.filter(o => {
       if (o.type === "line" || o.type === "polyline") return false;
-      if (o.type === "rect" || o.type === "ellipse" || o.type === "polygon") return true;
-      if (o.type === "path") {
-        return o.fill && o.fill !== "transparent" && o.fill !== "rgba(0,0,0,0)";
-      }
-      return false;
+      if (o.type === "rect" || o.type === "ellipse") return true;
+      if (o.type === "path") return !!o._canHaveFill;
+      return !!o._canHaveFill;
     });
     const allCanFill = canHaveFill.length === shapes.length;
 
@@ -1821,10 +1819,14 @@ export function initDrawEditor(ctx) {
         originY: "top",
         stroke: style.stroke,
         strokeWidth: style.strokeWidth,
+        strokeUniform: true,
         fill: fillVal,
         strokeLineCap: style.strokeLineCap,
         strokeLineJoin: style.strokeLineJoin,
         strokeDashArray: style.strokeDashArray,
+        _canHaveFill: shape?.hasFill || false,
+        strokeLineCap: style.strokeLineCap,
+        strokeLineJoin: style.strokeLineJoin,
         selectable: false,
         evented: true,
         objectCaching: false,
@@ -1928,11 +1930,12 @@ export function initDrawEditor(ctx) {
       originY: "top",
       stroke: style.stroke,
       strokeWidth: style.strokeWidth,
-      strokeUniform: true, // strokeWidth niezależne od scale
+      strokeUniform: true,
       fill: fillVal,
       strokeLineCap: style.strokeLineCap,
       strokeLineJoin: style.strokeLineJoin,
       strokeDashArray: style.strokeDashArray,
+      _canHaveFill: shapeInfo?.hasFill || false, // flaga dla renderObjectSettings
       selectable: false,
       evented: true,
       objectCaching: false,
