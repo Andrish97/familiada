@@ -128,7 +128,7 @@ export function initDrawEditor(ctx) {
   // Helper: przycisk koloru (prostokątny, cały wypełniony)
   function ctxColorBtn(value) {
     const isBlack = value === "BLACK";
-    return `<button class="ctxColorBtn ${isBlack ? 'black' : 'white'}" type="button" data-color-toggle="${isBlack ? 'black' : 'white'}" title="${isBlack ? 'Czarny' : 'Biały'}"></button>`;
+    return `<button class="ctxColorBtn ${isBlack ? 'black' : 'white'}" type="button" data-color-toggle="${isBlack ? 'black' : 'white'}" title="${isBlack ? t("logoEditor.draw.ui.colorBlack") : t("logoEditor.draw.ui.colorWhite")}"></button>`;
   }
   function ctxColorBind(fn) {
     toolCtx?.querySelectorAll("[data-color-toggle]").forEach(btn => {
@@ -153,15 +153,18 @@ export function initDrawEditor(ctx) {
   // =========================================================
   function renderToolSettings() {
     const tn = tool.toLowerCase();
+    const T = (k) => t(`logoEditor.draw.ui.${k}`);
+    const TS = (k) => t(`logoEditor.draw.ui.shapes.${k}`);
+    const LS = (k) => t(`logoEditor.draw.ui.lineStyles.${k}`);
 
     if (tn === "brush") {
       const ts = toolSettings[TOOL.BRUSH];
       showSettings(`
-        <div class="ctxGroup"><span class="ctxLabel">Grubość</span><input id="cStrokeW" class="ctxInput" type="number" min="1" max="50" step="1" value="${ts.stroke}"/></div>
-        <div class="ctxGroup"><span class="ctxLabel">Styl</span>
-          <select id="cLineStyle" class="ctxInput">${LINE_STYLES.map(s => `<option value="${s.id}" ${ts.lineStyle===s.id?"selected":""}>${s.label}</option>`).join('')}</select>
+        <div class="ctxGroup"><span class="ctxLabel">${T("strokeLabel")}</span><input id="cStrokeW" class="ctxInput" type="number" min="1" max="50" step="1" value="${ts.stroke}"/></div>
+        <div class="ctxGroup"><span class="ctxLabel">${T("styleLabel")}</span>
+          <select id="cLineStyle" class="ctxInput">${LINE_STYLES.map(s => `<option value="${s.id}" ${ts.lineStyle===s.id?"selected":""}>${LS(s.id)}</option>`).join('')}</select>
         </div>
-        <div class="ctxGroup"><span class="ctxLabel">Kolor</span>${ctxColorBtn(ts.fg)}</div>
+        <div class="ctxGroup"><span class="ctxLabel">${T("colorLabel")}</span>${ctxColorBtn(ts.fg)}</div>
       `);
       document.getElementById("cStrokeW")?.addEventListener("input", e => {
         toolSettings[TOOL.BRUSH].stroke = clamp(+e.target.value||1,1,50);
@@ -179,7 +182,7 @@ export function initDrawEditor(ctx) {
     }
     else if (tn === "eraser") {
       const es = toolSettings[TOOL.ERASER];
-      showSettings(`<div class="ctxGroup"><span class="ctxLabel">Rozmiar</span><input id="cEraser" class="ctxInput" type="number" min="1" max="50" step="1" value="${es.size}"/></div>`);
+      showSettings(`<div class="ctxGroup"><span class="ctxLabel">${T("sizeLabel")}</span><input id="cEraser" class="ctxInput" type="number" min="1" max="50" step="1" value="${es.size}"/></div>`);
       document.getElementById("cEraser")?.addEventListener("input", e => {
         toolSettings[TOOL.ERASER].size = clamp(+e.target.value||10,1,50);
         updateCursorVisual();
@@ -194,24 +197,23 @@ export function initDrawEditor(ctx) {
       let html = `
         <div class="ctxGroup" style="position:relative;">
           <button class="ctxBtn" id="cShapeBtn" style="min-width:90px;max-width:150px;justify-content:space-between;display:flex;align-items:center;gap:4px;">
-            <span style="display:flex;align-items:center;gap:4px;">${shape.icon}<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${shape.label}</span></span>
+            <span style="display:flex;align-items:center;gap:4px;">${shape.icon}<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${t(shape.label)}</span></span>
             <span style="opacity:.4;">▾</span>
           </button>
         </div>
-        <div class="ctxGroup"><span class="ctxLabel">Grubość</span><input id="cStrokeW" class="ctxInput" type="number" min="0" max="50" step="1" value="${ts.stroke}"/></div>
-        <div class="ctxGroup"><span class="ctxLabel">Styl</span>
-          <select id="cLineStyle" class="ctxInput">${LINE_STYLES.map(s => `<option value="${s.id}" ${ts.lineStyle===s.id?"selected":""}>${s.label}</option>`).join('')}</select>
+        <div class="ctxGroup"><span class="ctxLabel">${T("strokeLabel")}</span><input id="cStrokeW" class="ctxInput" type="number" min="0" max="50" step="1" value="${ts.stroke}"/></div>
+        <div class="ctxGroup"><span class="ctxLabel">${T("styleLabel")}</span>
+          <select id="cLineStyle" class="ctxInput">${LINE_STYLES.map(s => `<option value="${s.id}" ${ts.lineStyle===s.id?"selected":""}>${LS(s.id)}</option>`).join('')}</select>
         </div>
-        <div class="ctxGroup"><span class="ctxLabel">Kolor</span>${ctxColorBtn(ts.fg)}</div>
+        <div class="ctxGroup"><span class="ctxLabel">${T("colorLabel")}</span>${ctxColorBtn(ts.fg)}</div>
       `;
 
-      // Tylko kształty z fill mają checkbox wypełnienia
       if (hasFill) {
-        html += `<div class="ctxGroup"><label class="ctxChk"><input type="checkbox" id="cFill" ${ts.fill?"checked":""}/>Wypeł.</label>${ctxColorBtn(ts.fillColor)}</div>`;
+        html += `<div class="ctxGroup"><label class="ctxChk"><input type="checkbox" id="cFill" ${ts.fill?"checked":""}/> ${T("fillCheckbox")}</label>${ctxColorBtn(ts.fillColor)}</div>`;
       }
 
       if (isPoly && polyPoints.length > 0) {
-        html += `<div class="ctxGroup"><button class="ctxBtn on" id="cPolyDone">✓ Zamknij</button></div>`;
+        html += `<div class="ctxGroup"><button class="ctxBtn on" id="cPolyDone">${T("polygonDone")}</button></div>`;
       }
 
       showSettings(html);
@@ -298,19 +300,20 @@ export function initDrawEditor(ctx) {
     const objUnderline = !!obj.underline;
     const objAlign = obj.textAlign || "left";
     const objFill = obj.fill || "#ffffff";
+    const T = (k) => t(`logoEditor.draw.ui.${k}`);
 
     showSettings(`
       <div class="ctxGroup"><button class="ctxBtn" id="cTFont" style="min-width:90px;max-width:140px;justify-content:space-between;display:flex;"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${fontLabel}</span><span style="opacity:.4;">▾</span></button></div>
-      <div class="ctxGroup"><span class="ctxLabel">Roz.</span><input id="cTSize" class="ctxInput" type="number" min="10" max="220" step="1" value="${objSize}"/></div>
-      <div class="ctxGroup"><span class="ctxLabel">Linia</span><input id="cTLH" class="ctxInput" type="number" min="0.6" max="3.0" step="0.05" value="${objLH}"/></div>
-      <div class="ctxGroup"><span class="ctxLabel">Odst.</span><input id="cTSp" class="ctxInput" type="number" min="0" max="20" step="0.5" value="${objSpacing}"/></div>
-      <div class="ctxGroup"><button class="ctxBtn ${objBold?'on':''}" id="cTB">B</button><button class="ctxBtn ${objItalic?'on':''}" id="cTI">I</button><button class="ctxBtn ${objUnderline?'on':''}" id="cTU">U</button></div>
+      <div class="ctxGroup"><span class="ctxLabel">${T("radiusLabel")}</span><input id="cTSize" class="ctxInput" type="number" min="10" max="220" step="1" value="${objSize}"/></div>
+      <div class="ctxGroup"><span class="ctxLabel">${T("lineHeightLabel")}</span><input id="cTLH" class="ctxInput" type="number" min="0.6" max="3.0" step="0.05" value="${objLH}"/></div>
+      <div class="ctxGroup"><span class="ctxLabel">${T("letterSpacingLabel")}</span><input id="cTSp" class="ctxInput" type="number" min="0" max="20" step="0.5" value="${objSpacing}"/></div>
+      <div class="ctxGroup"><button class="ctxBtn ${objBold?'on':''}" id="cTB">${T("bold")}</button><button class="ctxBtn ${objItalic?'on':''}" id="cTI">${T("italic")}</button><button class="ctxBtn ${objUnderline?'on':''}" id="cTU">${T("underline")}</button></div>
       <div class="ctxGroup">
         <button class="ctxBtn ${objAlign==='left'?'on':''}" id="cAlignL">⇤</button>
         <button class="ctxBtn ${objAlign==='center'?'on':''}" id="cAlignC">⇆</button>
         <button class="ctxBtn ${objAlign==='right'?'on':''}" id="cAlignR">⇥</button>
       </div>
-      <div class="ctxGroup"><span class="ctxLabel">Kolor</span>${ctxColorBtn(fabricToBW(objFill))}</div>
+      <div class="ctxGroup"><span class="ctxLabel">${T("colorLabel")}</span>${ctxColorBtn(fabricToBW(objFill))}</div>
     `);
 
     document.getElementById("cTFont")?.addEventListener("click", () => {
@@ -413,9 +416,9 @@ export function initDrawEditor(ctx) {
     const fillCol = allSame(fills);
 
     let html = `
-      <div class="ctxGroup"><span class="ctxLabel">Obrys</span><input id="cObjStroke" class="ctxInput" type="number" min="0" max="50" step="1" value="${strokeW.mixed?'':strokeW.value}" placeholder="${strokeW.mixed?'—':''}"/></div>
-      <div class="ctxGroup"><span class="ctxLabel">Styl</span>
-        <select id="cObjLineStyle" class="ctxInput">${LINE_STYLES.map(s=>`<option value="${s.id}">${s.label}</option>`).join('')}</select>
+      <div class="ctxGroup"><span class="ctxLabel">${t("logoEditor.draw.ui.outlineLabel")}</span><input id="cObjStroke" class="ctxInput" type="number" min="0" max="50" step="1" value="${strokeW.mixed?'':strokeW.value}" placeholder="${strokeW.mixed?'—':''}"/></div>
+      <div class="ctxGroup"><span class="ctxLabel">${t("logoEditor.draw.ui.styleLabel")}</span>
+        <select id="cObjLineStyle" class="ctxInput">${LINE_STYLES.map(s=>`<option value="${s.id}">${s.label()}</option>`).join('')}</select>
       </div>
       <div class="ctxGroup">${ctxColorBtn(strokeCol.mixed?"MIXED":fabricToBW(strokeCol.value))}</div>
     `;
@@ -423,7 +426,7 @@ export function initDrawEditor(ctx) {
     // Tylko jeśli WSZYSTKIE mogą mieć wypełnienie
     if (allCanFill) {
       const allHaveFill = shapes.every(o => o.fill && o.fill !== "transparent");
-      html += `<div class="ctxGroup"><label class="ctxChk"><input type="checkbox" id="cObjFill" ${allHaveFill?"checked":""}/>Wypeł.</label>${ctxColorBtn(fillCol.mixed?"MIXED":fabricToBW(fillCol.value))}</div>`;
+      html += `<div class="ctxGroup"><label class="ctxChk"><input type="checkbox" id="cObjFill" ${allHaveFill?"checked":""}/> ${t("logoEditor.draw.ui.fillCheckbox")}</label>${ctxColorBtn(fillCol.mixed?"MIXED":fabricToBW(fillCol.value))}</div>`;
     }
 
     showSettings(html);
@@ -505,7 +508,7 @@ export function initDrawEditor(ctx) {
 
   function tip2(action, shortcut, extra = "") {
     // Show only the shortcut for the current OS
-    const line2 = `Skrót: ${shortcut}`;
+    const line2 = `${t("logoEditor.draw.ui.shortcutPrefix")}${shortcut}`;
     return extra ? `${action}\n${line2}\n${extra}` : `${action}\n${line2}`;
   }
 
@@ -664,31 +667,31 @@ export function initDrawEditor(ctx) {
     SHAPES: "SHAPES",
   };
 
-  // Lista dostępnych kształtów
+  // Lista dostępnych kształtów - label jako key tłumaczenia
   const SHAPES = [
-    { id: "line", label: "Linia", hasFill: false, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><line x1="4" y1="20" x2="20" y2="4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>` },
-    { id: "rect", label: "Prostokąt", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><rect x="4" y="6" width="16" height="12" rx="1" fill="none" stroke="currentColor" stroke-width="2"/></svg>` },
-    { id: "roundRect", label: "Zaokr. Prost.", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><rect x="4" y="6" width="16" height="12" rx="4" fill="none" stroke="currentColor" stroke-width="2"/></svg>` },
-    { id: "ellipse", label: "Elipsa", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><ellipse cx="12" cy="12" rx="9" ry="6" fill="none" stroke="currentColor" stroke-width="2"/></svg>` },
-    { id: "triangle", label: "Trójkąt", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><polygon points="12,4 20,20 4,20" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
-    { id: "diamond", label: "Romb", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><polygon points="12,3 21,12 12,21 3,12" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
-    { id: "pentagon", label: "Pięciokąt", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><polygon points="12,3 21,9 18,20 6,20 3,9" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
-    { id: "hexagon", label: "Sześciokąt", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><polygon points="12,3 21,8 21,16 12,21 3,16 3,8" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
-    { id: "star5", label: "Gwiazda 5", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><polygon points="12,2 15,9 22,9 16,14 18,22 12,17 6,22 8,14 2,9 9,9" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
-    { id: "arrow1", label: "Strzałka →", hasFill: false, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M5 12h14M14 7l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>` },
-    { id: "arrow2", label: "Strzałka ↔", hasFill: false, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M5 12h14M14 7l5 5-5 5M10 7L5 12l5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>` },
-    { id: "arrow1Fill", label: "Strzałka ➤", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M12 19L19 12L12 5V9H5V15H12V19Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
-    { id: "arrow2Fill", label: "Strzałka ⇔", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M7 8H17V5L22 12L17 19V16H7V19L2 12L7 5V8Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>` },
-    { id: "heart", label: "Serce", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M12 21C12 21 4 15 4 8.5 4 5 7 3 12 7c5-4 8-2 8 1.5 0 6.5-8 12.5-8 12.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
-    { id: "polygon", label: "Wielokąt", hasFill: true, isPoly: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><polygon points="3,5 20,3 22,16 8,21" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
+    { id: "line", label: "logoEditor.draw.ui.shapes.line", hasFill: false, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><line x1="4" y1="20" x2="20" y2="4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>` },
+    { id: "rect", label: "logoEditor.draw.ui.shapes.rect", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><rect x="4" y="6" width="16" height="12" rx="1" fill="none" stroke="currentColor" stroke-width="2"/></svg>` },
+    { id: "roundRect", label: "logoEditor.draw.ui.shapes.roundRect", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><rect x="4" y="6" width="16" height="12" rx="4" fill="none" stroke="currentColor" stroke-width="2"/></svg>` },
+    { id: "ellipse", label: "logoEditor.draw.ui.shapes.ellipse", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><ellipse cx="12" cy="12" rx="9" ry="6" fill="none" stroke="currentColor" stroke-width="2"/></svg>` },
+    { id: "triangle", label: "logoEditor.draw.ui.shapes.triangle", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><polygon points="12,4 20,20 4,20" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
+    { id: "diamond", label: "logoEditor.draw.ui.shapes.diamond", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><polygon points="12,3 21,12 12,21 3,12" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
+    { id: "pentagon", label: "logoEditor.draw.ui.shapes.pentagon", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><polygon points="12,3 21,9 18,20 6,20 3,9" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
+    { id: "hexagon", label: "logoEditor.draw.ui.shapes.hexagon", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><polygon points="12,3 21,8 21,16 12,21 3,16 3,8" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
+    { id: "star5", label: "logoEditor.draw.ui.shapes.star5", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><polygon points="12,2 15,9 22,9 16,14 18,22 12,17 6,22 8,14 2,9 9,9" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
+    { id: "arrow1", label: "logoEditor.draw.ui.shapes.arrow1", hasFill: false, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M5 12h14M14 7l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>` },
+    { id: "arrow2", label: "logoEditor.draw.ui.shapes.arrow2", hasFill: false, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M5 12h14M14 7l5 5-5 5M10 7L5 12l5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>` },
+    { id: "arrow1Fill", label: "logoEditor.draw.ui.shapes.arrow1Fill", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M12 19L19 12L12 5V9H5V15H12V19Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
+    { id: "arrow2Fill", label: "logoEditor.draw.ui.shapes.arrow2Fill", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M7 8H17V5L22 12L17 19V16H7V19L2 12L7 5V8Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>` },
+    { id: "heart", label: "logoEditor.draw.ui.shapes.heart", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M12 21C12 21 4 15 4 8.5 4 5 7 3 12 7c5-4 8-2 8 1.5 0 6.5-8 12.5-8 12.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
+    { id: "polygon", label: "logoEditor.draw.ui.shapes.polygon", hasFill: true, isPoly: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><polygon points="3,5 20,3 22,16 8,21" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
   ];
 
   // Style linii
   const LINE_STYLES = [
-    { id: "solid", label: "━━━", dash: null },
-    { id: "dashed", label: "- - -", dash: (w) => [w * 2, w] },
-    { id: "dotted", label: "· · ·", dash: (w) => [Math.max(w * 0.5, 1), w * 1.5] },
-    { id: "dashDot", label: "- · -", dash: (w) => [w * 3, w, Math.max(w * 0.5, 1), w] },
+    { id: "solid", label: () => t("logoEditor.draw.ui.lineStyles.solid"), dash: null },
+    { id: "dashed", label: () => t("logoEditor.draw.ui.lineStyles.dashed"), dash: (w) => [w * 2, w] },
+    { id: "dotted", label: () => t("logoEditor.draw.ui.lineStyles.dotted"), dash: (w) => [Math.max(w * 0.5, 1), w * 1.5] },
+    { id: "dashDot", label: () => t("logoEditor.draw.ui.lineStyles.dashDot"), dash: (w) => [w * 3, w, Math.max(w * 0.5, 1), w] },
   ];
 
   // Aktualny kształt i styl linii
@@ -796,7 +799,7 @@ export function initDrawEditor(ctx) {
       item.type = "button";
       item.className = "fontPickItem" + (f.value === currentValue ? " on" : "");
       // Nazwa czcionki systemowym fontem, sample czcionką docelową
-      item.innerHTML = `<span style="flex:1;text-align:left;font-family:system-ui,-apple-system,sans-serif;">${f.label}</span><span class="fontPickSwatch" style="font-family:${f.value};">Sample</span>`;
+      item.innerHTML = `<span style="flex:1;text-align:left;font-family:system-ui,-apple-system,sans-serif;">${f.label}</span><span class="fontPickSwatch" style="font-family:${f.value};">${t("logoEditor.draw.ui.sampleText")}</span>`;
       item.addEventListener("click", () => {
         if (drawFontOnSelect) drawFontOnSelect(f.value);
         closeDrawFontPicker();
@@ -905,7 +908,7 @@ export function initDrawEditor(ctx) {
         const shape = SHAPES.find(s => s.id === item.dataset.shape);
         if (!shape) return;
         const tip = document.createElement("div");
-        tip.textContent = shape.label;
+        tip.textContent = t(shape.label);
         tip.style.cssText = "position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:rgba(0,0,0,.9);color:#ffeaa6;padding:4px 8px;border-radius:6px;font-size:11px;white-space:nowrap;pointer-events:none;z-index:1100;font-weight:600;letter-spacing:.3px;";
         item.appendChild(tip);
         item._tipEl = tip;
@@ -2595,7 +2598,7 @@ export function initDrawEditor(ctx) {
           return;
         } else {
           // Create new text
-          const textObj = new fabric.IText("Tekst", {
+          const textObj = new fabric.IText(t("logoEditor.draw.ui.defaultText"), {
             left: pointer.x,
             top: pointer.y,
             fontSize: textFontSize,
@@ -3040,7 +3043,7 @@ export function initDrawEditor(ctx) {
       if (!fabricCanvas) return;
 
       let ok = false;
-      try { ok = await confirmModal({ text: t("logoEditor.draw.confirmClear") }); } catch(e) { ok = confirm("Wyczyścić scenę?"); }
+      try { ok = await confirmModal({ text: t("logoEditor.draw.confirmClear") }); } catch(e) { ok = confirm(t("logoEditor.draw.ui.confirmClearFallback")); }
       if (!ok) return;
 
       clearPolyDraft();
