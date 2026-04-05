@@ -257,12 +257,12 @@ export function initDrawEditor(ctx) {
         <div class="ctxGroup"><span class="ctxLabel">Kolor</span>${ctxColorBtn(ts.fg)}</div>
       `);
       document.getElementById("cFont")?.addEventListener("click", () => { openDrawFontPicker(v=>{textFont=v;renderToolSettings();},textFont); });
-      document.getElementById("cSz")?.addEventListener("input", e => { textFontSize = clamp(+e.target.value||130,10,220); });
+      document.getElementById("cSz")?.addEventListener("input", e => { textFontSize = clamp(+e.target.value||40,10,220); });
       document.getElementById("cLH")?.addEventListener("input", e => { textLineHeight = clamp(+e.target.value||1,0.6,3); });
       document.getElementById("cSp")?.addEventListener("input", e => { textLetterSpacing = clamp(+e.target.value||0,0,20); });
-      document.getElementById("cB")?.addEventListener("click", e => { textBold=!textBold; e.target.classList.toggle("on",textBold); });
-      document.getElementById("cI")?.addEventListener("click", e => { textItalic=!textItalic; e.target.classList.toggle("on",textItalic); });
-      document.getElementById("cU")?.addEventListener("click", e => { textUnderline=!textUnderline; e.target.classList.toggle("on",textUnderline); });
+      document.getElementById("cB")?.addEventListener("click", e => { textBold=!textBold; e.currentTarget.classList.toggle("on",textBold); });
+      document.getElementById("cI")?.addEventListener("click", e => { textItalic=!textItalic; e.currentTarget.classList.toggle("on",textItalic); });
+      document.getElementById("cU")?.addEventListener("click", e => { textUnderline=!textUnderline; e.currentTarget.classList.toggle("on",textUnderline); });
       document.getElementById("cAlignL")?.addEventListener("click", () => { textAlign="left"; renderToolSettings(); });
       document.getElementById("cAlignC")?.addEventListener("click", () => { textAlign="center"; renderToolSettings(); });
       document.getElementById("cAlignR")?.addEventListener("click", () => { textAlign="right"; renderToolSettings(); });
