@@ -922,7 +922,7 @@ export function initDrawEditor(ctx) {
     const len = Math.hypot(dx, dy) || 1;
     
     const ux = dx / len, uy = dy / len;
-    const px = -uy, py = ux; // prostopadły
+    const px = uy, py = -ux; // prostopadły (canvas Y w dół!)
     
     const headL = Math.min(strokeW * 4, len * 0.35);
     const headW = Math.min(strokeW * 2.5, len * 0.25);
