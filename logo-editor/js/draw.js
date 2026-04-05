@@ -929,37 +929,43 @@ export function initDrawEditor(ctx) {
     const dx = x2 - x1, dy = y2 - y1;
     const len = Math.hypot(dx, dy) || 1;
     
-    const ux = dx / len, uy = dy / len;
-    const px = -uy, py = ux; // prostopadły
+    const ux = dx / len, uy = dy / len; // kierunek
+    const nx = -uy, ny = ux;            // prostopadły (w lewo)
     
-    const shaftHW = headW * 0.35; // połowa szerokości wałka
-    const tipX = x2, tipY = y2;
-    const baseX = x2 - headL * ux, baseY = y2 - headL * uy;
-    
-    // Zwraca string SVG (parsowany przez svgPathToPath)
     if (isFilled) {
-      let path = `M ${x1 + shaftHW*px} ${y1 + shaftHW*py}`;
-      path += ` L ${baseX + shaftHW*px} ${baseY + shaftHW*py}`;
-      path += ` L ${tipX + headW*px} ${tipY + headW*py}`;
+      // WYPEŁNIONA: gruby wielokąt
+      const shaftHW = headW * 0.35;
+      const tipX = x2, tipY = y2;
+      const baseX = x2 - headL * ux, baseY = y2 - headL * uy;
+      
+      let path = `M ${x1 + shaftHW*nx} ${y1 + shaftHW*ny}`;
+      path += ` L ${baseX + shaftHW*nx} ${baseY + shaftHW*ny}`;
+      path += ` L ${tipX + headW*nx} ${tipY + headW*ny}`;
       path += ` L ${tipX} ${tipY}`;
-      path += ` L ${tipX - headW*px} ${tipY - headW*py}`;
-      path += ` L ${baseX - shaftHW*px} ${baseY - shaftHW*py}`;
-      path += ` L ${x1 - shaftHW*px} ${y1 - shaftHW*py} Z`;
+      path += ` L ${tipX - headW*nx} ${tipY - headW*ny}`;
+      path += ` L ${baseX - shaftHW*nx} ${baseY - shaftHW*ny}`;
+      path += ` L ${x1 - shaftHW*nx} ${y1 - shaftHW*ny} Z`;
       
       if (dirCount === 2) {
         const baseX2 = x1 + headL * ux, baseY2 = y1 + headL * uy;
-        return `M ${baseX2 - headW*px} ${baseY2 - headW*py} L ${x1} ${y1} L ${baseX2 + headW*px} ${baseY2 + headW*py} L ${baseX + headW*px} ${baseY + headW*py} L ${tipX} ${tipY} L ${baseX - headW*px} ${baseY - headW*py} L ${baseX2 - headW*px} ${baseY2 - headW*py} Z`;
+        return `M ${baseX2 - headW*nx} ${baseY2 - headW*ny} L ${x1} ${y1} L ${baseX2 + headW*nx} ${baseY2 + headW*ny} L ${baseX + headW*nx} ${baseY + headW*ny} L ${tipX} ${tipY} L ${baseX - headW*nx} ${baseY - headW*ny} L ${baseX2 - headW*nx} ${baseY2 - headW*ny} Z`;
       }
       return path;
     }
     
-    // Bez wypełnienia: OTWARTA linia konturu (tylko stroke)
-    // start -> podstawa -> ramię V -> tip -> drugie ramię V -> podstawa (KONIEC, nie wracamy do startu!)
-    const path = `M ${x1} ${y1} L ${baseX} ${baseY} L ${tipX + headW*px} ${tipY + headW*py} L ${tipX} ${tipY} L ${tipX - headW*px} ${tipY - headW*py} L ${baseX} ${baseY}`;
+    // BEZ WYPEŁNIENIA: cienka linia z V-główką
+    // Używamy MAŁEGO headW (tylko do V), nie pełnego headW!
+    const vW = headW * 0.4; // wąskie V (40% szerokości główki)
+    const tipX = x2, tipY = y2;
+    const baseX = x2 - headL * ux, baseY = y2 - headL * uy;
+    
+    // start -> podstawa -> V góra -> czubek -> V dół -> podstawa (koniec)
+    const path = `M ${x1} ${y1} L ${baseX} ${baseY} L ${tipX + vW*nx} ${tipY + vW*ny} L ${tipX} ${tipY} L ${tipX - vW*nx} ${tipY - vW*ny} L ${baseX} ${baseY}`;
     
     if (dirCount === 2) {
       const baseX2 = x1 + headL * ux, baseY2 = y1 + headL * uy;
-      return `M ${baseX2 + headW*px} ${baseY2 + headW*py} L ${x1} ${y1} L ${baseX} ${baseY} L ${tipX + headW*px} ${tipY + headW*py} L ${tipX} ${tipY} L ${tipX - headW*px} ${tipY - headW*py} L ${baseX} ${baseY} L ${baseX2 - headW*px} ${baseY2 - headW*py}`;
+      const vW2 = headW * 0.4;
+      return `M ${baseX2} ${baseY2} L ${x1} ${y1} L ${baseX} ${baseY} L ${tipX + vW*nx} ${tipY + vW*ny} L ${tipX} ${tipY} L ${tipX - vW*nx} ${tipY - vW*ny} L ${baseX} ${baseY} L ${baseX2} ${baseY2} L ${x1 - vW2*nx} ${y1 - vW2*ny} L ${x1} ${y1} L ${x1 + vW2*nx} ${y1 + vW2*ny} L ${baseX2} ${baseY2}`;
     }
     return path;
   }
