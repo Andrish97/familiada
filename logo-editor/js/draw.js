@@ -2597,6 +2597,16 @@ export function initDrawEditor(ctx) {
           renderTextObjectSettings(target);
           return;
         } else {
+          // Jeśli kliknięto w pusty obszar i mamy aktywny obiekt tekstowy - odznacz go
+          const active = fabricCanvas.getActiveObject();
+          if (active && isTextObj(active)) {
+            if (active.isEditing) active.exitEditing();
+            fabricCanvas.discardActiveObject();
+            fabricCanvas.renderAll();
+            renderCurrentSettings();
+            return;
+          }
+
           // Create new text
           const textObj = new fabric.IText(t("logoEditor.draw.ui.defaultText"), {
             left: pointer.x,
