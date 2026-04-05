@@ -1,8 +1,8 @@
 -- Migration: 2026-04-05_099_fix_restore_demo_logos_v2.sql
 -- Purpose: Fix restore_my_demo and seed_demo_for_user to correctly handle logo payload structure (layers + source)
---          and fix undefined p_uid variable in restore_my_demo.
+--          by copying the template payload directly and ensuring source.mode exists.
 
--- 1. Redefine seed_demo_for_user with correct logo payload construction
+-- 1. Redefine seed_demo_for_user with correct logo payload copying
 CREATE OR REPLACE FUNCTION "public"."seed_demo_for_user"("p_uid" "uuid", "p_lang" "text" DEFAULT 'pl'::"text") RETURNS "void"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
@@ -55,7 +55,7 @@ BEGIN
   VALUES (p_uid, v_tpl->'base'->>'name', true)
   RETURNING id INTO v_base_id;
 
-  -- Root categories first
+  -- Root categories
   FOR v_cat IN SELECT value FROM jsonb_array_elements(v_tpl->'categories') LOOP
     IF (v_cat->>'parent_id') IS NULL THEN
       INSERT INTO qb_categories (base_id, parent_id, name, ord)
@@ -123,9 +123,10 @@ BEGIN
       'GLYPH_30x10',
       false,
       true,
-      jsonb_build_object(
-        'layers', jsonb_build_array(jsonb_build_object('rows', v_tpl->'payload'->'rows')),
-        'source', coalesce(v_tpl->'source', '{"mode": "TEXT"}'::jsonb)
+      -- Kopiujemy cały obiekt logo z szablonu. 
+      -- Dodatkowo upewniamy się, że source.mode jest ustawiony (merge z top-level source szablonu jeśli brak w logo)
+      (v_tpl->'payload') || jsonb_build_object('source', 
+        coalesce(v_tpl->'payload'->'source', v_tpl->'source', '{"mode": "TEXT"}'::jsonb)
       )
     );
   END IF;
@@ -142,7 +143,13 @@ BEGIN
         'PIX_150x70', 
         false, 
         true, 
-        (v_tpl->'payload') || jsonb_build_object('source', coalesce(v_tpl->'source', jsonb_build_object('mode', upper(replace(v_logo_slot, 'logo_', '')))))
+        (v_tpl->'payload') || jsonb_build_object('source', 
+          coalesce(
+            v_tpl->'payload'->'source', 
+            v_tpl->'source', 
+            jsonb_build_object('mode', upper(replace(v_logo_slot, 'logo_', '')))
+          )
+        )
       );
     END IF;
   END LOOP;
