@@ -1214,3 +1214,20 @@ body.builder-body.logo-editor-body > main.logoWrap{
   border-color:rgba(255,234,166,.75);
   color:#ffeaa6;
 }
+
+/* =========================================================
+   IMAGE: wartości na przyciskach suwaków
+========================================================= */
+.imgSetBtn{
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center;
+  gap: 6px;
+  min-width: 90px;
+}
+.imgSetBtnVal{
+  font-weight: 700;
+  color: var(--gold);
+  font-size: 12px;
+  letter-spacing: .02em;
+}

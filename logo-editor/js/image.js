@@ -221,23 +221,23 @@ export function initImageEditor(ctx) {
     const white = rngWhite?.value ?? 100;
     const ditherAmt = rngDitherAmt?.value ?? 0;
 
-    // Szukaj przycisków w #paneImage (mogą być ukryte)
+    // Szukaj span-ów z wartościami w #paneImage
     const pane = document.getElementById("paneImage");
     if (!pane) return;
 
-    const btnBright = pane.querySelector("[data-panel='bright']");
-    const btnContrast = pane.querySelector("[data-panel='contrast']");
-    const btnGamma = pane.querySelector("[data-panel='gamma']");
-    const btnBlack = pane.querySelector("[data-panel='black']");
-    const btnWhite = pane.querySelector("[data-panel='white']");
-    const btnDither = pane.querySelector("[data-panel='dither']");
+    const valBright = pane.querySelector("[data-panel='bright'] .imgSetBtnVal");
+    const valContrast = pane.querySelector("[data-panel='contrast'] .imgSetBtnVal");
+    const valGamma = pane.querySelector("[data-panel='gamma'] .imgSetBtnVal");
+    const valBlack = pane.querySelector("[data-panel='black'] .imgSetBtnVal");
+    const valWhite = pane.querySelector("[data-panel='white'] .imgSetBtnVal");
+    const valDither = pane.querySelector("[data-panel='dither'] .imgSetBtnVal");
 
-    if (btnBright) btnBright.textContent = fmtSignedInt(bright);
-    if (btnContrast) btnContrast.textContent = fmtSignedInt(contrast);
-    if (btnGamma) btnGamma.textContent = fmtGamma(gamma);
-    if (btnBlack) btnBlack.textContent = Math.round(Number(black) || 0);
-    if (btnWhite) btnWhite.textContent = Math.round(Number(white) || 0);
-    if (btnDither) btnDither.textContent = fmtDither(ditherAmt);
+    if (valBright) valBright.textContent = fmtSignedInt(bright);
+    if (valContrast) valContrast.textContent = fmtSignedInt(contrast);
+    if (valGamma) valGamma.textContent = fmtGamma(gamma);
+    if (valBlack) valBlack.textContent = Math.round(Number(black) || 0);
+    if (valWhite) valWhite.textContent = Math.round(Number(white) || 0);
+    if (valDither) valDither.textContent = fmtDither(ditherAmt);
   }
 
   function resetToDefaults({ resetCrop = true } = {}) {
