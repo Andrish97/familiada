@@ -65,7 +65,10 @@ function wireTabs() {
     tab.addEventListener("click", () => setActive(tab.dataset.tab));
   });
 
-  const initial = (location.hash || "").replace("#", "");
+  const hashInitial = (location.hash || "").replace("#", "");
+  const p = new URLSearchParams(location.search);
+  const paramInitial = p.get("tab") || "";
+  const initial = hashInitial || paramInitial;
   if (initial && pages[initial]) setActive(initial);
   else setActive("general");
 }

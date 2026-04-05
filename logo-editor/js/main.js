@@ -1262,7 +1262,8 @@ function buildHelpUrl() {
   url.searchParams.set("ret", ret);
   url.searchParams.set("modal", "logo-editor");
   url.searchParams.set("lang", getUiLang() || "pl");
-  url.hash = "logo"; // To otworzy zakładkę "Tworzenie logo"
+  url.searchParams.set("tab", "logo");
+  url.hash = "logo";
   return url.toString();
 }
 
