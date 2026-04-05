@@ -483,6 +483,7 @@ export function initDrawEditor(ctx) {
     tUndo: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 7H5v4"></path><path d="M5 11c2-4 6-6 10-4 2 1 4 3 4 6"></path></svg>`,
     tRedo: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 7h4v4"></path><path d="M19 11c-2-4-6-6-10-4-2 1-4 3-4 6"></path></svg>`,
     tClear: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 7h12"></path><path d="M9 7V5h6v2"></path><path d="M8 7l1 14h6l1-14"></path></svg>`,
+    tDuplicate: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="8" y="8" width="12" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="2"></rect><rect x="4" y="4" width="12" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="2"></rect></svg>`,
     tEye: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"></path><circle class="fill" cx="12" cy="12" r="2"></circle></svg>`,
   };
 
@@ -592,6 +593,7 @@ export function initDrawEditor(ctx) {
     setTip(tText,    tip2(t("logoEditor.draw.tooltips.text"), "T"));
     setTip(tUndo, tip2(t("logoEditor.draw.tooltips.undo"), isMac ? "⌘Z" : "Ctrl+Z"));
     setTip(tRedo, tip2(t("logoEditor.draw.tooltips.redo"), isMac ? "⌘⇧Z / ⌘Y" : "Ctrl+Shift+Z / Ctrl+Y"));
+    setTip(tDuplicate, t("logoEditor.draw.tooltips.duplicate") || "Duplikuj");
 
     // Akcje
     setTip(tClear,    t("logoEditor.draw.tooltips.clear"));
@@ -2252,6 +2254,51 @@ export function initDrawEditor(ctx) {
   // =========================================================
   // Helpers: delete/duplicate/move selection
   // =========================================================
+  function duplicateSelection() {
+    if (!fabricCanvas) return;
+    const active = fabricCanvas.getActiveObject();
+    if (!active) return;
+
+    let clones;
+    if (active.type === "activeSelection") {
+      // Multi-selection: klonujemy każdy obiekt
+      clones = active.getObjects().map(o => {
+        const clone = fabric.util.object.clone(o);
+        clone.left = (o.left || 0) + 10;
+        clone.top = (o.top || 0) + 10;
+        clone.selectable = false;
+        clone.evented = true;
+        return clone;
+      });
+    } else {
+      // Pojedynczy obiekt
+      const clone = fabric.util.object.clone(active);
+      clone.left = (active.left || 0) + 10;
+      clone.top = (active.top || 0) + 10;
+      clone.selectable = false;
+      clone.evented = true;
+      clones = [clone];
+    }
+
+    // Dodaj klony do canvasu
+    clones.forEach(c => fabricCanvas.add(c));
+
+    // Zaznacz wszystkie klony
+    if (clones.length === 1) {
+      fabricCanvas.setActiveObject(clones[0]);
+    } else {
+      const sel = new fabric.ActiveSelection(clones, {
+        canvas: fabricCanvas,
+      });
+      fabricCanvas.setActiveObject(sel);
+    }
+
+    fabricCanvas.requestRenderAll();
+    pushUndo();
+    ctx.markDirty?.();
+    schedulePreview(80);
+  }
+
   function deleteSelection() {
     if (!fabricCanvas) return;
     const active = fabricCanvas.getActiveObject();
@@ -2985,6 +3032,7 @@ export function initDrawEditor(ctx) {
     // History
     tUndo?.addEventListener("click", () => undo());
     tRedo?.addEventListener("click", () => redo());
+    tDuplicate?.addEventListener("click", () => duplicateSelection());
 
     // Clear
     tClear?.addEventListener("click", async () => {
