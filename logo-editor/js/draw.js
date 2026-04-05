@@ -847,21 +847,19 @@ export function initDrawEditor(ctx) {
     if (e) e.stopPropagation();
     if (shapePickerOpen) { closeShapePicker(); return; }
     shapePickerOpen = true;
-    let html = `<div class="shapePickerPop" id="shapePickerPop" style="position:fixed;z-index:1000;background:rgba(15,18,28,.98);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.16);border-radius:14px;padding:8px;box-shadow:0 16px 48px rgba(0,0,0,.6);display:grid;grid-template-columns:repeat(5,42px);gap:5px;">`;
+    const btn = document.getElementById("cShapeBtn");
+    if (!btn) return;
+    const rect = btn.getBoundingClientRect();
+    let html = `<div class="shapePickerPop" id="shapePickerPop" style="position:fixed;z-index:1000;background:rgba(15,18,28,.98);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.16);border-radius:14px;padding:8px;box-shadow:0 16px 48px rgba(0,0,0,.6);display:grid;grid-template-columns:repeat(5,42px);gap:5px;top:${rect.bottom+6}px;left:${rect.left}px;opacity:0;transition:opacity .12s;">`;
     SHAPES.forEach(s => {
       html += `<button class="spi" data-shape="${s.id}" style="width:42px;height:42px;display:grid;place-items:center;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.13);border-radius:10px;color:rgba(255,255,255,.9);cursor:pointer;transition:all .1s;">${s.icon}</button>`;
     });
     html += `</div>`;
     document.body.insertAdjacentHTML("beforeend", html);
-    setTimeout(() => {
-      const pop = document.getElementById("shapePickerPop");
-      const btn = document.getElementById("cShapeBtn");
-      if (!pop || !btn) return;
-      const rect = btn.getBoundingClientRect();
-      pop.style.top = (rect.bottom + 6) + "px";
-      pop.style.left = rect.left + "px";
+    const pop = document.getElementById("shapePickerPop");
+    requestAnimationFrame(() => { pop.style.opacity = "1"; });
     
-      pop.querySelectorAll(".spi").forEach(item => {
+    pop.querySelectorAll(".spi").forEach(item => {
       item.addEventListener("click", (e) => {
         e.stopPropagation();
         currentShape = item.dataset.shape;
@@ -882,11 +880,10 @@ export function initDrawEditor(ctx) {
       });
     });
 
-      // Zamykanie przy kliknięciu poza
-      setTimeout(() => {
-        document.addEventListener("mousedown", shapePickerOutsideHandler);
-      }, 100);
-    }, 0);
+    // Zamykanie przy kliknięciu poza - używamy setTimeout żeby nie zamknąć od razu
+    setTimeout(() => {
+      document.addEventListener("mousedown", shapePickerOutsideHandler);
+    }, 100);
   }
   function shapePickerOutsideHandler(e) {
     const pop = document.getElementById("shapePickerPop");
