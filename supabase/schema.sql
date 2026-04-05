@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict oVYJqSJYJAcIGDshoWZzCPKWK8P1TjWsO9a5Icmg3DzTsCqipsAZluwbwljvu6e
+\restrict uAZlfZbjH5L71gUyFTwzSnmkuYo26oeXiwOgVPO56wfX8SCdHYL67mwAhYr1gA8
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -3192,13 +3192,14 @@ $$;
 
 CREATE FUNCTION "public"."guest_cleanup_expired"("p_limit" integer DEFAULT 500) RETURNS integer
     LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public'
+    SET "search_path" TO 'public', 'auth'
     AS $$
 declare
   v_limit int := greatest(1, least(coalesce(p_limit, 500), 5000));
   v_deleted int := 0;
   v_id uuid;
 begin
+  -- 1. Usuwanie wygasłych gości (zgodnie z istniejącą logiką)
   for v_id in
     select p.id
     from public.profiles p
@@ -3211,6 +3212,24 @@ begin
     perform public.delete_user_everything(v_id);
     v_deleted := v_deleted + 1;
   end loop;
+
+  -- 2. Usuwanie niepotwierdzonych kont (brak username, brak logowania, > 5 dni)
+  -- Robimy to tylko jeśli limit nie został wyczerpany przez gości
+  if v_deleted < v_limit then
+    for v_id in
+      select u.id
+      from auth.users u
+      left join public.profiles p on p.id = u.id
+      where (p.username IS NULL OR p.id IS NULL) -- profil brakujący lub brak username
+        and u.last_sign_in_at IS NULL            -- nigdy się nie zalogował
+        and u.created_at < (now() - interval '5 days')
+        and coalesce(p.is_guest, false) = false  -- nie jest gościem (goście mają osobną logikę)
+      limit (v_limit - v_deleted)
+    loop
+      perform public.delete_user_everything(v_id);
+      v_deleted := v_deleted + 1;
+    end loop;
+  end if;
 
   return v_deleted;
 end;
@@ -13372,5 +13391,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict oVYJqSJYJAcIGDshoWZzCPKWK8P1TjWsO9a5Icmg3DzTsCqipsAZluwbwljvu6e
+\unrestrict uAZlfZbjH5L71gUyFTwzSnmkuYo26oeXiwOgVPO56wfX8SCdHYL67mwAhYr1gA8
 
