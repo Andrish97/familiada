@@ -1754,10 +1754,15 @@ export function initDrawEditor(ctx) {
     const fillVal = noFill ? "transparent" : (ts.fill ? (ts.fillColor === "BLACK" ? "#000" : "#fff") : "transparent");
 
     if (currentShape === "line" || currentShape.startsWith("arrow")) {
-      const isArrowFill = currentShape.endsWith("Fill");
-      const arrowDir = currentShape === "arrow2" || currentShape === "arrow2Fill" ? 2 : 1;
-      const pathStr = buildArrowPath(0, 0, 1, 1, arrowDir, ts.stroke * 4, ts.stroke * 2.5, isArrowFill);
-      const pathArr = svgPathToPath(pathStr);
+      let pathArr;
+      if (currentShape === "line") {
+        pathArr = [['M', 0, 0], ['L', 1, 1]];
+      } else {
+        const isArrowFill = currentShape.endsWith("Fill");
+        const arrowDir = currentShape === "arrow2" || currentShape === "arrow2Fill" ? 2 : 1;
+        const pathStr = buildArrowPath(0, 0, 1, 1, arrowDir, ts.stroke * 4, ts.stroke * 2.5, isArrowFill);
+        pathArr = svgPathToPath(pathStr);
+      }
       drawingObj = new f.Path(pathArr, {
         stroke: style.stroke,
         strokeWidth: style.strokeWidth,
@@ -1829,13 +1834,23 @@ export function initDrawEditor(ctx) {
 
     // Linie i strzałki
     if (shape === "line" || shape.startsWith("arrow")) {
-      const isArrowFill = currentShape.endsWith("Fill");
-      const arrowFill = isArrowFill ? (ts.fill ? (ts.fillColor === "BLACK" ? "#000" : "#fff") : "transparent") : "transparent";
-      const arrowDir = currentShape === "arrow2" || currentShape === "arrow2Fill" ? 2 : 1;
-      const pathStr = buildArrowPath(0, 0, Math.abs(p.x - drawingStart.x), Math.abs(p.y - drawingStart.y), arrowDir, ts.stroke * 4, ts.stroke * 2.5, isArrowFill);
-      const pathArr = svgPathToPath(pathStr);
-      const left = Math.min(drawingStart.x, p.x);
-      const top = Math.min(drawingStart.y, p.y);
+      let w = p.x - drawingStart.x, h = p.y - drawingStart.y;
+      if (shift) { const m = Math.max(Math.abs(w), Math.abs(h)); w = Math.sign(w||1)*m; h = Math.sign(h||1)*m; }
+      const absW = Math.max(2, Math.abs(w)), absH = Math.max(2, Math.abs(h));
+      const left = w >= 0 ? drawingStart.x : drawingStart.x + w;
+      const top = h >= 0 ? drawingStart.y : drawingStart.y + h;
+      
+      let pathArr, arrowFill;
+      if (shape === "line") {
+        pathArr = [['M', 0, 0], ['L', absW, absH]];
+        arrowFill = "transparent";
+      } else {
+        const isArrowFill = currentShape.endsWith("Fill");
+        const arrowDir = currentShape === "arrow2" || currentShape === "arrow2Fill" ? 2 : 1;
+        arrowFill = isArrowFill ? (ts.fill ? (ts.fillColor === "BLACK" ? "#000" : "#fff") : "transparent") : "transparent";
+        const pathStr = buildArrowPath(0, 0, absW, absH, arrowDir, ts.stroke * 4, ts.stroke * 2.5, isArrowFill);
+        pathArr = svgPathToPath(pathStr);
+      }
       drawingObj.set({ path: pathArr, left, top, fill: arrowFill, stroke: style.stroke, strokeWidth: style.strokeWidth, strokeDashArray: style.strokeDashArray, dirty: true });
       drawingObj.setCoords();
       fabricCanvas.requestRenderAll();
