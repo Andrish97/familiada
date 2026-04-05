@@ -220,16 +220,21 @@ export function initImageEditor(ctx) {
     const black = rngBlack?.value ?? 0;
     const white = rngWhite?.value ?? 100;
     const ditherAmt = rngDitherAmt?.value ?? 0;
-  
-    setBtnLabel("bright",   t("logoEditor.image.brightnessValue", { value: fmtSignedInt(bright) }));
-    setBtnLabel("contrast", t("logoEditor.image.contrastValue", { value: fmtSignedInt(contrast) }));
-    setBtnLabel("gamma",    t("logoEditor.image.gammaValue", { value: fmtGamma(gamma) }));
-    setBtnLabel("black",    t("logoEditor.image.blackValue", { value: Math.round(Number(black) || 0) }));
-    setBtnLabel("white",    t("logoEditor.image.whiteValue", { value: Math.round(Number(white) || 0) }));
-    setBtnLabel("dither",   t("logoEditor.image.ditherValue", { value: fmtDither(ditherAmt) }));
-  
-    // opcjonalnie: zmienny label dla invert (ale invert nie jest w btns, tylko checkbox)
-    // tu nic nie robimy
+
+    // Aktualizuj przyciski (tylko przy open/reset, nie przy każdym ruchu suwaka)
+    const btnBright = document.querySelector("[data-panel='bright']");
+    const btnContrast = document.querySelector("[data-panel='contrast']");
+    const btnGamma = document.querySelector("[data-panel='gamma']");
+    const btnBlack = document.querySelector("[data-panel='black']");
+    const btnWhite = document.querySelector("[data-panel='white']");
+    const btnDither = document.querySelector("[data-panel='dither']");
+
+    if (btnBright) btnBright.textContent = t("logoEditor.image.brightnessValue", { value: fmtSignedInt(bright) });
+    if (btnContrast) btnContrast.textContent = t("logoEditor.image.contrastValue", { value: fmtSignedInt(contrast) });
+    if (btnGamma) btnGamma.textContent = t("logoEditor.image.gammaValue", { value: fmtGamma(gamma) });
+    if (btnBlack) btnBlack.textContent = t("logoEditor.image.blackValue", { value: Math.round(Number(black) || 0) });
+    if (btnWhite) btnWhite.textContent = t("logoEditor.image.whiteValue", { value: Math.round(Number(white) || 0) });
+    if (btnDither) btnDither.textContent = t("logoEditor.image.ditherValue", { value: fmtDither(ditherAmt) });
   }
 
   function resetToDefaults({ resetCrop = true } = {}) {
@@ -653,8 +658,14 @@ export function initImageEditor(ctx) {
 
     const onAnyChange = () => {
       if (ctx.getMode?.() !== "IMAGE") return;
-      // syncLabels() zmienia rozmiar etykiet co może przesuwać layout
-      // syncLabels(); // <-- usunięte, wywoływane tylko przy open/reset
+      // Aktualizuj MAŁE etykiety (valBright itp.) - NIE przesuwa layoutu
+      if (valBright) valBright.textContent = String(rngBright?.value ?? "0");
+      if (valContrast) valContrast.textContent = String(rngContrast?.value ?? "0");
+      if (valGamma) valGamma.textContent = Number(rngGamma?.value ?? "1").toFixed(2);
+      if (valDitherAmt) valDitherAmt.textContent = Number(rngDitherAmt?.value ?? "0.80").toFixed(2);
+      if (valBlack) valBlack.textContent = String(rngBlack?.value ?? "0");
+      if (valWhite) valWhite.textContent = String(rngWhite?.value ?? "100");
+      // NIE wywołuj syncImgButtonLabels() - zmienia innerHTML przycisków i przesuwa layout
       if (!imgObj) return;
       ctx.markDirty?.();
       schedulePreview(40);
