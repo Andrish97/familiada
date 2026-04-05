@@ -190,10 +190,13 @@ export function initDrawEditor(ctx) {
       const shape = SHAPES.find(s => s.id === currentShape) || SHAPES[0];
       const isPoly = shape.isPoly;
       const hasFill = shape.hasFill;
-      
+
       let html = `
-        <div class="ctxGroup"><span class="ctxLabel">Kształt</span>
-          <select id="cShapeType" class="ctxInput">${SHAPES.map(s => `<option value="${s.id}" ${currentShape===s.id?"selected":""}>${s.label}</option>`).join('')}</select>
+        <div class="ctxGroup" style="position:relative;">
+          <button class="ctxBtn" id="cShapeBtn" style="min-width:90px;max-width:150px;justify-content:space-between;display:flex;align-items:center;gap:4px;">
+            <span style="display:flex;align-items:center;gap:4px;">${shape.icon}<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${shape.label}</span></span>
+            <span style="opacity:.4;">▾</span>
+          </button>
         </div>
         <div class="ctxGroup"><span class="ctxLabel">Grubość</span><input id="cStrokeW" class="ctxInput" type="number" min="0" max="50" step="1" value="${ts.stroke}"/></div>
         <div class="ctxGroup"><span class="ctxLabel">Styl</span>
@@ -201,21 +204,18 @@ export function initDrawEditor(ctx) {
         </div>
         <div class="ctxGroup"><span class="ctxLabel">Kolor</span>${ctxColorBtn(ts.fg)}</div>
       `;
-      
+
       if (hasFill) {
         html += `<div class="ctxGroup"><label class="ctxChk"><input type="checkbox" id="cFill" ${ts.fill?"checked":""}/>Wypeł.</label>${ctxColorBtn(ts.fillColor)}</div>`;
       }
-      
+
       if (isPoly && polyPoints.length > 0) {
         html += `<div class="ctxGroup"><button class="ctxBtn on" id="cPolyDone">✓ Zamknij</button></div>`;
       }
-      
+
       showSettings(html);
-      
-      document.getElementById("cShapeType")?.addEventListener("change", e => {
-        currentShape = e.target.value;
-        renderToolSettings();
-      });
+
+      document.getElementById("cShapeBtn")?.addEventListener("click", () => { openShapePicker(); });
       document.getElementById("cStrokeW")?.addEventListener("input", e => {
         toolSettings[TOOL.SHAPES].stroke = clamp(+e.target.value||1,0,50);
       });
@@ -626,26 +626,26 @@ export function initDrawEditor(ctx) {
 
   // Lista dostępnych kształtów
   const SHAPES = [
-    { id: "line", label: "Linia", hasFill: false },
-    { id: "rect", label: "Prostokąt", hasFill: true },
-    { id: "roundRect", label: "Zaokr. Prostokąt", hasFill: true },
-    { id: "ellipse", label: "Elipsa", hasFill: true },
-    { id: "triangle", label: "Trójkąt", hasFill: true },
-    { id: "diamond", label: "Romb", hasFill: true },
-    { id: "pentagon", label: "Pięciokąt", hasFill: true },
-    { id: "hexagon", label: "Sześciokąt", hasFill: true },
-    { id: "cross", label: "Krzyż", hasFill: true },
-    { id: "star5", label: "Gwiazda 5", hasFill: true },
-    { id: "star8", label: "Gwiazda 8", hasFill: true },
-    { id: "arrow1", label: "Strzałka →", hasFill: false },
-    { id: "arrow2", label: "Strzałka ↔", hasFill: false },
-    { id: "arrow1Fill", label: "Strzałka ➤", hasFill: true },
-    { id: "arrow2Fill", label: "Strzałka ⇔", hasFill: true },
-    { id: "heart", label: "Serce", hasFill: true },
-    { id: "cloud", label: "Chmurka", hasFill: true },
-    { id: "lightning", label: "Piorun", hasFill: true },
-    { id: "moon", label: "Księżyc", hasFill: true },
-    { id: "polygon", label: "Wielokąt", hasFill: true, isPoly: true },
+    { id: "line", label: "Linia", hasFill: false, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><line x1="4" y1="20" x2="20" y2="4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>` },
+    { id: "rect", label: "Prostokąt", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><rect x="4" y="6" width="16" height="12" rx="1" fill="none" stroke="currentColor" stroke-width="2"/></svg>` },
+    { id: "roundRect", label: "Zaokr. Prost.", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><rect x="4" y="6" width="16" height="12" rx="4" fill="none" stroke="currentColor" stroke-width="2"/></svg>` },
+    { id: "ellipse", label: "Elipsa", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><ellipse cx="12" cy="12" rx="9" ry="6" fill="none" stroke="currentColor" stroke-width="2"/></svg>` },
+    { id: "triangle", label: "Trójkąt", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><polygon points="12,4 20,20 4,20" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
+    { id: "diamond", label: "Romb", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><polygon points="12,3 21,12 12,21 3,12" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
+    { id: "pentagon", label: "Pięciokąt", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><polygon points="12,3 21,9 18,20 6,20 3,9" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
+    { id: "hexagon", label: "Sześciokąt", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><polygon points="12,3 21,8 21,16 12,21 3,16 3,8" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
+    { id: "cross", label: "Krzyż", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M10 4h4v6h6v4h-6v6h-4v-6H4v-4h6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
+    { id: "star5", label: "Gwiazda 5", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><polygon points="12,2 15,9 22,9 16,14 18,22 12,17 6,22 8,14 2,9 9,9" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
+    { id: "star8", label: "Gwiazda 8", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><polygon points="12,2 14,8 20,8 15,12 17,18 12,14 7,18 9,12 4,8 10,8" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
+    { id: "arrow1", label: "Strzałka →", hasFill: false, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M5 12h14M14 7l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>` },
+    { id: "arrow2", label: "Strzałka ↔", hasFill: false, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M5 12h14M14 7l5 5-5 5M10 7L5 12l5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>` },
+    { id: "arrow1Fill", label: "Strzałka ➤", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M12 19L19 12L12 5V9H5V15H12V19Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
+    { id: "arrow2Fill", label: "Strzałka ⇔", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M7 8H17V5L22 12L17 19V16H7V19L2 12L7 5V8Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>` },
+    { id: "heart", label: "Serce", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M12 21C12 21 4 15 4 8.5 4 5 7 3 12 7c5-4 8-2 8 1.5 0 6.5-8 12.5-8 12.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
+    { id: "cloud", label: "Chmurka", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M7 18h10a4 4 0 0 0 .7-7.9A5.5 5.5 0 0 0 6.6 12.2 4 4 0 0 0 7 18z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
+    { id: "lightning", label: "Piorun", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
+    { id: "moon", label: "Księżyc", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" fill="none" stroke="currentColor" stroke-width="2"/></svg>` },
+    { id: "polygon", label: "Wielokąt", hasFill: true, isPoly: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M12 2l9 6-3 13H6L3 8z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="2" r="1.5" fill="currentColor"/></svg>` },
   ];
 
   // Style linii
@@ -830,8 +830,58 @@ export function initDrawEditor(ctx) {
     }
   }
 
-  // =========================================================
-  // Generatory ścieżek dla kształtów
+  // Dropdown wyboru kształtu
+  let shapePickerOpen = false;
+  function openShapePicker() {
+    if (shapePickerOpen) { closeShapePicker(); return; }
+    shapePickerOpen = true;
+    let html = `<div class="shapePickerPop" id="shapePickerPop" style="position:absolute;top:calc(100% + 4px);left:0;z-index:100;background:rgba(15,18,28,.96);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:6px;box-shadow:0 14px 36px rgba(0,0,0,.55);display:grid;grid-template-columns:repeat(5,38px);gap:4px;">`;
+    SHAPES.forEach(s => {
+      html += `<button class="spi" data-shape="${s.id}" style="width:38px;height:38px;display:grid;place-items:center;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:8px;color:rgba(255,255,255,.88);cursor:pointer;font-size:18px;">${s.icon}</button>`;
+    });
+    html += `</div>`;
+    const btn = document.getElementById("cShapeBtn");
+    if (btn) {
+      btn.style.position = "relative";
+      btn.insertAdjacentHTML("afterend", html);
+      const pop = document.getElementById("shapePickerPop");
+      pop.querySelectorAll(".spi").forEach(item => {
+        item.addEventListener("click", () => {
+          currentShape = item.dataset.shape;
+          closeShapePicker();
+          renderToolSettings();
+        });
+        item.addEventListener("mouseenter", (e) => {
+          const shape = SHAPES.find(s => s.id === item.dataset.shape);
+          if (!shape) return;
+          const tip = document.createElement("div");
+          tip.textContent = shape.label;
+          tip.style.cssText = "position:absolute;bottom:108%;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.88);color:#ffeaa6;padding:3px 7px;border-radius:6px;font-size:11px;white-space:nowrap;pointer-events:none;z-index:200;font-weight:600;";
+          item.appendChild(tip);
+          item._tipEl = tip;
+        });
+        item.addEventListener("mouseleave", (e) => {
+          if (item._tipEl) { item._tipEl.remove(); item._tipEl = null; }
+        });
+      });
+    }
+    // Zamykanie przy kliknięciu poza
+    setTimeout(() => {
+      document.addEventListener("mousedown", shapePickerOutsideHandler);
+    }, 0);
+  }
+  function shapePickerOutsideHandler(e) {
+    const pop = document.getElementById("shapePickerPop");
+    const btn = document.getElementById("cShapeBtn");
+    if (pop && !pop.contains(e.target) && btn && !btn.contains(e.target)) {
+      closeShapePicker();
+    }
+  }
+  function closeShapePicker() {
+    shapePickerOpen = false;
+    document.getElementById("shapePickerPop")?.remove();
+    document.removeEventListener("mousedown", shapePickerOutsideHandler);
+  }
   // =========================================================
   function buildShapePath(shapeId, x1, y1, x2, y2, strokeWidth) {
     const cx = (x1+x2)/2, cy = (y1+y2)/2;
