@@ -2375,13 +2375,16 @@ export function initDrawEditor(ctx) {
     fabricCanvas.on("mouse:out",  () => updateCursorVisual());
 
 
-    // Kliknięcie POZA canvas → exit edit mode tekstu
-    document.addEventListener("click", (ev) => {
+    // Kliknięcie POZA canvas → exit edit mode tekstu (tylko gdy nie klikamy na canvas)
+    document.addEventListener("mousedown", (ev) => {
       if (ctx.getMode?.() !== "DRAW") return;
       // Ignoruj kliknięcia w inputy/select/button/tooltip
       const tag = ev.target.tagName.toLowerCase();
       if (["input","textarea","select","button","option"].includes(tag)) return;
       if (ev.target.closest("#toolsDraw") || ev.target.closest("#toolCtxSettings")) return;
+      // Sprawdź czy klikamy w canvas (upperCanvasEl)
+      const upperEl = fabricCanvas?.upperCanvasEl;
+      if (upperEl && upperEl.contains(ev.target)) return; // klik w canvas - nie exit
       
       const active = fabricCanvas?.getActiveObject();
       if (active && isTextObj(active) && active.isEditing) {
