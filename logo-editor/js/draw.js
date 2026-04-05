@@ -1366,6 +1366,7 @@ export function initDrawEditor(ctx) {
       fabricCanvas.selection = true;
       fabricCanvas.discardActiveObject();
 
+      // Tekst musi być selectable i evented
       setAll({ selectable: true, evented: true });
 
       fabricCanvas.perPixelTargetFind = false;
@@ -2257,13 +2258,18 @@ export function initDrawEditor(ctx) {
 
       if (tool === TOOL.TEXT) {
         const pointer = fabricCanvas.getPointer(opt.e);
-        const target = fabricCanvas.findTarget(ev);
+        const target = opt.target || fabricCanvas.findTarget(ev);
         if (target && isTextObj(target)) {
           // Select existing text for editing
           fabricCanvas.setActiveObject(target);
-          target.enterEditing();
-          target.selectAll();
           fabricCanvas.renderAll();
+          // Używamy setTimeout zeby selection się ustabilizował
+          setTimeout(() => {
+            target.enterEditing();
+            target.selectAll();
+            fabricCanvas.renderAll();
+            renderTextObjectSettings(target);
+          }, 50);
           pushUndo();
           ctx.markDirty?.();
           schedulePreview(80);
