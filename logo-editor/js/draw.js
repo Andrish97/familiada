@@ -283,6 +283,74 @@ export function initDrawEditor(ctx) {
     return Array.isArray(active) ? active.filter(Boolean) : [];
   }
 
+  /** Ustawienia zaznaczonego obiektu TEKSTU (font, rozmiar, B/I/U, align) */
+  function renderTextObjectSettings(obj) {
+    if (!obj || !isTextObj(obj)) { hideSettings(); return; }
+
+    const objFont = obj.fontFamily || "";
+    const fontLabel = DRAW_FONTS.find(f => f.value === objFont)?.label || "Font";
+    const objSize = Math.round(obj.fontSize || 40);
+    const objLH = obj.lineHeight || 1;
+    const objSpacing = obj.charSpacing || 0;
+    const objBold = obj.fontWeight === "bold";
+    const objItalic = obj.fontStyle === "italic";
+    const objUnderline = !!obj.underline;
+    const objAlign = obj.textAlign || "left";
+    const objFill = obj.fill || "#ffffff";
+
+    showSettings(`
+      <div class="ctxGroup"><button class="ctxBtn" id="cTFont" style="min-width:90px;max-width:140px;justify-content:space-between;display:flex;"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${fontLabel}</span><span style="opacity:.4;">▾</span></button></div>
+      <div class="ctxGroup"><span class="ctxLabel">Roz.</span><input id="cTSize" class="ctxInput" type="number" min="10" max="220" step="1" value="${objSize}"/></div>
+      <div class="ctxGroup"><span class="ctxLabel">Linia</span><input id="cTLH" class="ctxInput" type="number" min="0.6" max="3.0" step="0.05" value="${objLH}"/></div>
+      <div class="ctxGroup"><span class="ctxLabel">Odst.</span><input id="cTSp" class="ctxInput" type="number" min="0" max="20" step="0.5" value="${objSpacing}"/></div>
+      <div class="ctxGroup"><button class="ctxBtn" id="cTB" ${objBold?"on":""}>B</button><button class="ctxBtn" id="cTI" ${objItalic?"on":""}>I</button><button class="ctxBtn" id="cTU" ${objUnderline?"on":""}>U</button></div>
+      <div class="ctxGroup">
+        <button class="ctxBtn ${objAlign==='left'?'on':''}" id="cAlignL">⇤</button>
+        <button class="ctxBtn ${objAlign==='center'?'on':''}" id="cAlignC">⇆</button>
+        <button class="ctxBtn ${objAlign==='right'?'on':''}" id="cAlignR">⇥</button>
+      </div>
+      <div class="ctxGroup"><span class="ctxLabel">Kolor</span>${ctxColorBtn(fabricToBW(objFill))}</div>
+    `);
+
+    document.getElementById("cTFont")?.addEventListener("click", () => {
+      openDrawFontPicker(v => { obj.set("fontFamily", v); fabricCanvas.renderAll(); renderTextObjectSettings(obj); }, objFont);
+    });
+    document.getElementById("cTSize")?.addEventListener("input", e => {
+      obj.set("fontSize", clamp(+e.target.value||40, 10, 220)); fabricCanvas.renderAll();
+    });
+    document.getElementById("cTLH")?.addEventListener("input", e => {
+      obj.set("lineHeight", clamp(+e.target.value||1, 0.6, 3)); fabricCanvas.renderAll();
+    });
+    document.getElementById("cTSp")?.addEventListener("input", e => {
+      obj.set("charSpacing", clamp(+e.target.value||0, 0, 20)); fabricCanvas.renderAll();
+    });
+    document.getElementById("cTB")?.addEventListener("click", e => {
+      obj.set("fontWeight", !objBold ? "bold" : "normal"); e.currentTarget.classList.toggle("on", !objBold); fabricCanvas.renderAll();
+    });
+    document.getElementById("cTI")?.addEventListener("click", e => {
+      obj.set("fontStyle", !objItalic ? "italic" : "normal"); e.currentTarget.classList.toggle("on", !objItalic); fabricCanvas.renderAll();
+    });
+    document.getElementById("cTU")?.addEventListener("click", e => {
+      obj.set("underline", !objUnderline); e.currentTarget.classList.toggle("on", !objUnderline); fabricCanvas.renderAll();
+    });
+    document.getElementById("cAlignL")?.addEventListener("click", () => {
+      obj.set("textAlign", "left"); fabricCanvas.renderAll(); renderTextObjectSettings(obj);
+    });
+    document.getElementById("cAlignC")?.addEventListener("click", () => {
+      obj.set("textAlign", "center"); fabricCanvas.renderAll(); renderTextObjectSettings(obj);
+    });
+    document.getElementById("cAlignR")?.addEventListener("click", () => {
+      obj.set("textAlign", "right"); fabricCanvas.renderAll(); renderTextObjectSettings(obj);
+    });
+
+    const objTextBtns = toolCtx?.querySelectorAll("[data-color-toggle]") || [];
+    if (objTextBtns[0]) objTextBtns[0].addEventListener("click", () => {
+      const currentBW = fabricToBW(obj.fill);
+      const newColor = currentBW === "BLACK" ? "#ffffff" : "#000000";
+      obj.set("fill", newColor); fabricCanvas.renderAll(); renderTextObjectSettings(obj);
+    });
+  }
+
   /** Multi-selection: TYLKO przecięcie właściwości */
   function renderObjectSettings() {
     const objs = getSelectedObjects();
@@ -1187,23 +1255,14 @@ export function initDrawEditor(ctx) {
       return;
     }
   
-    // TEXT: kursor I-beam widoczny WSZĘDZIE (również na pustym polu)
+    // TEXT: kursor krzyżyka (+) widoczny na pustym polu, I-beam na tekście
     if (tool === TOOL.TEXT) {
-      // Ustawiamy kursory Fabric.js
-      fabricCanvas.defaultCursor = "crosshair"; // + na pustym polu
-      fabricCanvas.hoverCursor = "text"; // I na tekście
-      fabricCanvas.moveCursor = "text"; // I podczas przesuwania
-
-      // Dodatkowo wymuszamy przez CSS na upperCanvasEl (Fabric.js może nadpisywać)
-      const upperEl = fabricCanvas.upperCanvasEl;
-      if (upperEl) {
-        upperEl.style.cursor = "crosshair";
-      }
-      if (drawCanvasEl) {
-        drawCanvasEl.style.cursor = "crosshair";
-      }
-
-      // Ukrywamy overlay kursora (jeśli był widoczny)
+      // Używamy setCursorClass tak jak inne narzędzia - Fabric nie nadpisuje klasy CSS
+      setCursorClass("cross", false);
+      
+      // Fabric.js hoverCursor zadziała dla tekstu (I-beam)
+      setFabricCursors("crosshair", "text", "text");
+      
       hideOverlayCursor();
       return;
     }
@@ -1387,6 +1446,12 @@ export function initDrawEditor(ctx) {
       }
       // Brak zaznaczenia
       hideSettings();
+      return;
+    }
+
+    // TEXT tool + zaznaczony tekst → pokaż ustawienia TEKSTU OBIEKTU
+    if (tool === TOOL.TEXT && isTextObj(obj)) {
+      renderTextObjectSettings(obj);
       return;
     }
 
