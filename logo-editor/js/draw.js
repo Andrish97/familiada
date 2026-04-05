@@ -369,23 +369,26 @@ export function initDrawEditor(ctx) {
     if (!objs.length) { hideSettings(); return; }
 
     const textObjs = objs.filter(o => o.type === "i-text" || o.type === "textbox" || o.type === "text");
-    const fillShapes = objs.filter(o => o.type === "rect" || o.type === "ellipse" || o.type === "polygon");
-    const lineObjs = objs.filter(o => o.type === "line" || o.type === "polyline" || o.type === "path");
+    // Kształty które MOGĄ mieć wypełnienie (sprawdzamy po fill, nie po typie)
+    const shapesWithFill = objs.filter(o => {
+      if (textObjs.includes(o)) return false;
+      return true; // wszystkie nie-tekstowe
+    });
     const hasText = textObjs.length > 0;
-    const hasFillShapes = fillShapes.length > 0;
-    const hasLines = lineObjs.length > 0;
 
     // Tekst z czymkolwiek → NIC
     if (hasText) { hideSettings(); return; }
 
-    // Tylko kształty z fill (rect/ellipse/polygon)
-    if (hasFillShapes && !hasLines) {
-      const fills = fillShapes.map(o => o.fill || "transparent");
+    // Wszystkie zaznaczone kształty
+    if (shapesWithFill.length > 0) {
+      const fills = shapesWithFill.map(o => o.fill || "transparent");
       const fillCol = allSame(fills);
-      const strokeWs = fillShapes.map(o => o.strokeWidth || 1);
-      const strokeCols = fillShapes.map(o => o.stroke || "#ffffff");
+      const strokeWs = shapesWithFill.map(o => o.strokeWidth || 1);
+      const strokeCols = shapesWithFill.map(o => o.stroke || "#ffffff");
       const strokeW = allSame(strokeWs.map(Math.round));
       const strokeCol = allSame(strokeCols);
+      // Sprawdź czy wszystkie mają fill
+      const allHaveFill = shapesWithFill.every(o => o.fill && o.fill !== "transparent");
 
       showSettings(`
         <div class="ctxGroup"><span class="ctxLabel">Obrys</span><input id="cObjStroke" class="ctxInput" type="number" min="0" max="50" step="1" value="${strokeW.mixed?'':strokeW.value}" placeholder="${strokeW.mixed?'—':''}"/></div>
@@ -393,36 +396,15 @@ export function initDrawEditor(ctx) {
           <select id="cObjLineStyle" class="ctxInput">${LINE_STYLES.map(s=>`<option value="${s.id}">${s.label}</option>`).join('')}</select>
         </div>
         <div class="ctxGroup">${ctxColorBtn(strokeCol.mixed?"MIXED":fabricToBW(strokeCol.value))}</div>
-        <div class="ctxGroup"><label class="ctxChk"><input type="checkbox" id="cObjFill" ${fills.some(f=>f&&f!=="transparent")?"checked":""}/>Wypeł.</label>${ctxColorBtn(fillCol.mixed?"MIXED":fabricToBW(fillCol.value))}</div>
+        <div class="ctxGroup"><label class="ctxChk"><input type="checkbox" id="cObjFill" ${allHaveFill?"checked":""}/>Wypeł.</label>${ctxColorBtn(fillCol.mixed?"MIXED":fabricToBW(fillCol.value))}</div>
       `);
-      document.getElementById("cObjStroke")?.addEventListener("input", e => { fillShapes.forEach(o=>o.set("strokeWidth",clamp(+e.target.value||1,0,50))); fabricCanvas.renderAll(); });
-      document.getElementById("cObjLineStyle")?.addEventListener("change", e => { fillShapes.forEach(o=>applyLineStyle(o,e.target.value,fillShapes[0]?.strokeWidth)); fabricCanvas.renderAll(); });
+      document.getElementById("cObjStroke")?.addEventListener("input", e => { shapesWithFill.forEach(o=>o.set("strokeWidth",clamp(+e.target.value||1,0,50))); fabricCanvas.renderAll(); });
+      document.getElementById("cObjLineStyle")?.addEventListener("change", e => { shapesWithFill.forEach(o=>applyLineStyle(o,e.target.value,shapesWithFill[0]?.strokeWidth)); fabricCanvas.renderAll(); });
       const objShapeBtns = toolCtx?.querySelectorAll("[data-color-toggle]")||[];
-      if(objShapeBtns[0]) objShapeBtns[0].addEventListener("click",()=>{const c=fabricToBW(fillShapes[0]?.stroke);const n=c==="BLACK"?"#ffffff":"#000000";fillShapes.forEach(o=>o.set("stroke",n));fabricCanvas.renderAll();renderObjectSettings();});
-      if(objShapeBtns[1]) objShapeBtns[1].addEventListener("click",()=>{const c=fabricToBW(fillShapes.find(x=>x.fill&&x.fill!=="transparent")?.fill||"#fff");const n=c==="BLACK"?"#ffffff":"#000000";fillShapes.forEach(o=>{if(o.fill!==undefined)o.set("fill",n)});fabricCanvas.renderAll();renderObjectSettings();});
-      document.getElementById("cObjFill")?.addEventListener("change",e=>{const nc=e.target.checked?"#ffffff":"transparent";fillShapes.forEach(o=>o.set("fill",nc));fabricCanvas.renderAll();renderObjectSettings();});
+      if(objShapeBtns[0]) objShapeBtns[0].addEventListener("click",()=>{const c=fabricToBW(shapesWithFill[0]?.stroke);const n=c==="BLACK"?"#ffffff":"#000000";shapesWithFill.forEach(o=>o.set("stroke",n));fabricCanvas.renderAll();renderObjectSettings();});
+      if(objShapeBtns[1]) objShapeBtns[1].addEventListener("click",()=>{const c=fabricToBW(shapesWithFill.find(x=>x.fill&&x.fill!=="transparent")?.fill||"#fff");const n=c==="BLACK"?"#ffffff":"#000000";shapesWithFill.forEach(o=>{if(o.fill!==undefined)o.set("fill",n)});fabricCanvas.renderAll();renderObjectSettings();});
+      document.getElementById("cObjFill")?.addEventListener("change",e=>{const nc=e.target.checked?"#ffffff":"transparent";shapesWithFill.forEach(o=>o.set("fill",nc));fabricCanvas.renderAll();renderObjectSettings();});
       return;
-    }
-
-    // Mixed: fillShapes + lines → stroke tylko
-    if ((hasFillShapes || hasLines) && !hasText) {
-      const allWithStroke = [...fillShapes, ...lineObjs];
-      const strokeWs = allWithStroke.map(o => o.strokeWidth || 1);
-      const strokeCols = allWithStroke.map(o => o.stroke || "#ffffff");
-      const strokeW = allSame(strokeWs.map(Math.round));
-      const strokeCol = allSame(strokeCols);
-
-      showSettings(`
-        <div class="ctxGroup"><span class="ctxLabel">Obrys</span><input id="cObjStroke" class="ctxInput" type="number" min="0" max="50" step="1" value="${strokeW.mixed?'':strokeW.value}" placeholder="${strokeW.mixed?'—':''}"/></div>
-        <div class="ctxGroup"><span class="ctxLabel">Styl</span>
-          <select id="cObjLineStyle" class="ctxInput">${LINE_STYLES.map(s=>`<option value="${s.id}">${s.label}</option>`).join('')}</select>
-        </div>
-        <div class="ctxGroup">${ctxColorBtn(strokeCol.mixed?"MIXED":fabricToBW(strokeCol.value))}</div>
-      `);
-      document.getElementById("cObjStroke")?.addEventListener("input", e => { allWithStroke.forEach(o=>o.set("strokeWidth",clamp(+e.target.value||1,0,50))); fabricCanvas.renderAll(); });
-      document.getElementById("cObjLineStyle")?.addEventListener("change", e => { allWithStroke.forEach(o=>applyLineStyle(o,e.target.value,allWithStroke[0]?.strokeWidth)); fabricCanvas.renderAll(); });
-      const objMixedBtns = toolCtx?.querySelectorAll("[data-color-toggle]")||[];
-      if(objMixedBtns[0]) objMixedBtns[0].addEventListener("click",()=>{const c=fabricToBW(allWithStroke.find(x=>x.stroke&&x.stroke!=="transparent")?.stroke||"#fff");const n=c==="BLACK"?"#ffffff":"#000000";allWithStroke.forEach(o=>o.set("stroke",n));fabricCanvas.renderAll();renderObjectSettings();});
     }
   }
   function injectIcon(id, html){
