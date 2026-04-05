@@ -3109,7 +3109,25 @@ export function initDrawEditor(ctx) {
       const fabricData = source.fabricData || null;
       const editHistory = source.editHistory || null;
 
-      // reset sesji rysunku (ustawienia narzędzi + kolory zostają w pamięci sesji)
+      // Przywróć ustawienia narzędzi i tło
+      if (source.bg) {
+        bg = source.bg;
+      } else if (fabricData && fabricData.backgroundColor) {
+        // Fallback: spróbuj wywnioskować z danych Fabric
+        bg = fabricToBW(fabricData.backgroundColor);
+      } else {
+        bg = "BLACK"; // Default
+      }
+
+      if (source.toolSettings) {
+        // Scalamy, żeby nie zgubić nowych kluczy jeśli by doszły
+        Object.assign(toolSettings, source.toolSettings);
+      }
+
+      syncDynamicIcons();
+      renderCurrentSettings();
+
+      // reset sesji rysunku
       if (fabricCanvas) {
         hideSettings();
         clearPolyDraft();
@@ -3118,14 +3136,14 @@ export function initDrawEditor(ctx) {
           undoBusy = true;
           fabricCanvas.loadFromJSON(fabricData, () => {
             undoBusy = false;
+            // Upewnij się, że tło canvasu zgadza się z naszą zmienną bg
             fabricCanvas.backgroundColor = bgColor();
-            // Przywróć selectable/evented dla obiektów
+            
+            // Przywróć selectable/evented dla obiektów (domyślnie w DRAW obiekty nie są selectable)
             fabricCanvas.forEachObject(o => {
               o.selectable = false;
               o.evented = true;
-              if (o._canHaveFill !== undefined) {
-                // Kształt z hasFill - może mieć fill
-              }
+              // Zachowaj flagę canHaveFill
             });
             fabricCanvas.requestRenderAll();
 
@@ -3192,7 +3210,9 @@ export function initDrawEditor(ctx) {
           source: {
             mode: "DRAW",
             fabricData: snapshotJSON(),
-            editHistory: getEditHistory()
+            editHistory: getEditHistory(),
+            bg: bg,
+            toolSettings: toolSettings,
           }
         },
       };
