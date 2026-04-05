@@ -2529,6 +2529,14 @@ export function initDrawEditor(ctx) {
       const active = fabricCanvas?.getActiveObject();
       if (active && isTextObj(active) && active.isEditing) {
         active.exitEditing();
+        // Usuń puste obiekty tekstowe
+        if (active.text?.trim() === "") {
+          fabricCanvas?.remove(active);
+          fabricCanvas?.discardActiveObject();
+          pushUndo();
+          ctx.markDirty?.();
+          schedulePreview(80);
+        }
         fabricCanvas?.renderAll();
       }
     });
