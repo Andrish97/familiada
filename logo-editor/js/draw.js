@@ -832,6 +832,17 @@ export function initDrawEditor(ctx) {
 
   // Dropdown wyboru kształtu
   let shapePickerOpen = false;
+  function svgPathToPath(pathStr) {
+    const commands = [];
+    const tokens = pathStr.match(/[a-zA-Z][^a-zA-Z]*/g) || [];
+    for (const token of tokens) {
+      const cmd = token[0].toUpperCase();
+      const nums = token.slice(1).trim().split(/[\s,]+/).filter(Boolean).map(Number);
+      commands.push([cmd, ...nums]);
+    }
+    return commands;
+  }
+
   function openShapePicker(e) {
     if (e) e.stopPropagation();
     if (shapePickerOpen) { closeShapePicker(); return; }
@@ -842,17 +853,15 @@ export function initDrawEditor(ctx) {
     });
     html += `</div>`;
     document.body.insertAdjacentHTML("beforeend", html);
-    
-    const pop = document.getElementById("shapePickerPop");
-    const btn = document.getElementById("cShapeBtn");
-    if (btn && pop) {
-      // Pozycjonuj pod przyciskiem
+    setTimeout(() => {
+      const pop = document.getElementById("shapePickerPop");
+      const btn = document.getElementById("cShapeBtn");
+      if (!pop || !btn) return;
       const rect = btn.getBoundingClientRect();
       pop.style.top = (rect.bottom + 6) + "px";
       pop.style.left = rect.left + "px";
-    }
     
-    pop.querySelectorAll(".spi").forEach(item => {
+      pop.querySelectorAll(".spi").forEach(item => {
       item.addEventListener("click", (e) => {
         e.stopPropagation();
         currentShape = item.dataset.shape;
@@ -873,10 +882,11 @@ export function initDrawEditor(ctx) {
       });
     });
 
-    // Zamykanie przy kliknięciu poza - używamy setTimeout żeby nie zamknąć od razu
-    setTimeout(() => {
-      document.addEventListener("mousedown", shapePickerOutsideHandler);
-    }, 100);
+      // Zamykanie przy kliknięciu poza
+      setTimeout(() => {
+        document.addEventListener("mousedown", shapePickerOutsideHandler);
+      }, 100);
+    }, 0);
   }
   function shapePickerOutsideHandler(e) {
     const pop = document.getElementById("shapePickerPop");
@@ -890,6 +900,18 @@ export function initDrawEditor(ctx) {
     document.getElementById("shapePickerPop")?.remove();
     document.removeEventListener("mousedown", shapePickerOutsideHandler);
   }
+  function svgPathToArray(pathStr) {
+    // Parsuje SVG path string na array fabric.js: [['M',x,y],['L',x,y],['Z']]
+    const commands = [];
+    const tokens = pathStr.match(/[a-zA-Z][^a-zA-Z]*/g) || [];
+    for (const token of tokens) {
+      const cmd = token[0].toUpperCase();
+      const nums = token.slice(1).trim().split(/[\s,]+/).filter(Boolean).map(Number);
+      commands.push([cmd, ...nums]);
+    }
+    return commands;
+  }
+
   // =========================================================
   function buildShapePath(shapeId, x1, y1, x2, y2, strokeWidth) {
     const cx = (x1+x2)/2, cy = (y1+y2)/2;
@@ -1749,9 +1771,9 @@ export function initDrawEditor(ctx) {
     const fillVal = noFill ? "transparent" : (ts.fill ? (ts.fillColor === "BLACK" ? "#000" : "#fff") : "transparent");
 
     if (currentShape === "line" || currentShape.startsWith("arrow")) {
-      // Strzałki i linie używają Path
-      const pathData = buildShapePath(currentShape, p0.x, p0.y, p0.x, p0.y, ts.stroke);
-      drawingObj = new f.Path(pathData, {
+      const pathStr = buildShapePath(currentShape, p0.x, p0.y, p0.x, p0.y, ts.stroke);
+      const pathArr = svgPathToPath(pathStr);
+      drawingObj = new f.Path(pathArr, {
         stroke: style.stroke,
         strokeWidth: style.strokeWidth,
         fill: fillVal,
@@ -1807,8 +1829,9 @@ export function initDrawEditor(ctx) {
 
     // Linia i strzałki - przerysuj path z nowymi koordynatami
     if (shape === "line" || shape.startsWith("arrow")) {
-      const newPath = buildShapePath(shape, drawingStart.x, drawingStart.y, p.x, p.y, ts.stroke);
-      drawingObj.set({ path: newPath, originX: "left", originY: "top" });
+      const pathStr = buildShapePath(shape, drawingStart.x, drawingStart.y, p.x, p.y, ts.stroke);
+      const pathArr = svgPathToPath(pathStr);
+      drawingObj.set({ path: pathArr });
       fabricCanvas.requestRenderAll();
       return;
     }
@@ -1840,12 +1863,11 @@ export function initDrawEditor(ctx) {
       let w = p.x - drawingStart.x, h = p.y - drawingStart.y;
       if (shift) { const m = Math.max(Math.abs(w), Math.abs(h)); w = Math.sign(w||1)*m; h = Math.sign(h||1)*m; }
       const absW = Math.max(2, Math.abs(w)), absH = Math.max(2, Math.abs(h));
-      // Regeneruj path z poprawnymi wymiarami
-      const newPath = buildShapePath(shape, 0, 0, absW, absH, ts.stroke);
+      const pathStr = buildShapePath(shape, 0, 0, absW, absH, ts.stroke);
+      const pathArr = svgPathToPath(pathStr);
       const left = w >= 0 ? drawingStart.x : drawingStart.x + w;
       const top = h >= 0 ? drawingStart.y : drawingStart.y + h;
-      // Ustaw fill i stroke zgodnie z ustawieniami
-      drawingObj.set({ path: newPath, left, top, fill: fillVal, stroke: style.stroke, strokeWidth: style.strokeWidth, strokeDashArray: style.strokeDashArray });
+      drawingObj.set({ path: pathArr, left, top, fill: fillVal, stroke: style.stroke, strokeWidth: style.strokeWidth, strokeDashArray: style.strokeDashArray });
       fabricCanvas.requestRenderAll();
     }
   }
