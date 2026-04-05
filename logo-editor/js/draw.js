@@ -2300,6 +2300,7 @@ export function initDrawEditor(ctx) {
       if (e?.path) {
         e.path.evented = true;
         e.path.selectable = false; // bo zwykle nie chcesz od razu zaznaczać po narysowaniu
+        e.path.strokeUniform = true; // strokeWidth niezależne od scale
       }
       pushUndo();
       ctx.markDirty?.();
