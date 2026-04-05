@@ -1836,7 +1836,7 @@ export function initDrawEditor(ctx) {
       const pathArr = svgPathToPath(pathStr);
       const left = Math.min(drawingStart.x, p.x);
       const top = Math.min(drawingStart.y, p.y);
-      drawingObj.set({ path: pathArr, left, top, fill: arrowFill, stroke: style.stroke, strokeWidth: style.strokeWidth, strokeDashArray: style.strokeDashArray });
+      drawingObj.set({ path: pathArr, left, top, fill: arrowFill, stroke: style.stroke, strokeWidth: style.strokeWidth, strokeDashArray: style.strokeDashArray, dirty: true });
       drawingObj.setCoords();
       fabricCanvas.requestRenderAll();
       return;
@@ -1872,7 +1872,7 @@ export function initDrawEditor(ctx) {
     const pathArr = svgPathToPath(pathStr);
     const left = w >= 0 ? drawingStart.x : drawingStart.x + w;
     const top = h >= 0 ? drawingStart.y : drawingStart.y + h;
-    drawingObj.set({ path: pathArr, left, top, fill: fillVal, stroke: style.stroke, strokeWidth: style.strokeWidth, strokeDashArray: style.strokeDashArray });
+    drawingObj.set({ path: pathArr, left, top, fill: fillVal, stroke: style.stroke, strokeWidth: style.strokeWidth, strokeDashArray: style.strokeDashArray, dirty: true });
     drawingObj.setCoords();
     fabricCanvas.requestRenderAll();
   }
