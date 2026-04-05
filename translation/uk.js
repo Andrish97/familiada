@@ -3603,12 +3603,6 @@ const uk = {
       displayArea: "Область дисплея",
       previewTitle: "Перегляд як на дисплеї",
       previewHint: "Клікни перегляд, щоб відкрити на весь екран.",
-      brightnessValue: "Яскравість: {value}",
-      contrastValue: "Контраст: {value}",
-      gammaValue: "Гамма: {value}",
-      blackValue: "Чорний: {value}",
-      whiteValue: "Білий: {value}",
-      ditherValue: "Дизеринг: {value}",
       loadError: "Не вдалося завантажити зображення.",
       errors: {
         notLogged: "Ви повинні бути авторизовані, щоб зберегти зображення.",

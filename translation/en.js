@@ -3729,12 +3729,6 @@ const en = {
       displayArea: "Display area",
       previewTitle: "Preview as on the display",
       previewHint: "Click the preview to open fullscreen.",
-      brightnessValue: "Brightness: {value}",
-      contrastValue: "Contrast: {value}",
-      gammaValue: "Gamma: {value}",
-      blackValue: "Black: {value}",
-      whiteValue: "White: {value}",
-      ditherValue: "Dither: {value}",
       loadError: "Couldn't load the image.",
       errors: {
         notLogged: "You must be logged in to save an image.",

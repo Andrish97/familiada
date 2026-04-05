@@ -3728,12 +3728,6 @@ const pl = {
       displayArea: "Obszar wyświetlacza",
       previewTitle: "Podgląd jak na wyświetlaczu",
       previewHint: "Kliknij podgląd, żeby otworzyć pełny ekran.",
-      brightnessValue: "Jasność: {value}",
-      contrastValue: "Kontrast: {value}",
-      gammaValue: "Gamma: {value}",
-      blackValue: "Czerń: {value}",
-      whiteValue: "Biel: {value}",
-      ditherValue: "Dither: {value}",
       loadError: "Nie udało się wczytać obrazu.",
       errors: {
         notLogged: "Musisz być zalogowany, żeby zapisać obraz.",
