@@ -553,7 +553,9 @@ function parseImportJson(text){
       obj?.rows;
 
     const rows = cleanRows30x10(rowsSrc);
-    return { kind: "GLYPH", name, rows };
+    // Zachowaj source (np. text dla trybu TEXT)
+    const source = p?.source || obj?.source || null;
+    return { kind: "GLYPH", name, rows, source };
   }
 
   if (kind === "PIX"){
@@ -589,7 +591,9 @@ async function importLogoFromFile(file){
       payload: {
         layers: [
           { rows: parsed.rows }
-        ]
+        ],
+        // Zachowaj source (text dla trybu TEXT, fabricData dla DRAW w GLYPH)
+        ...(parsed.source ? { source: parsed.source } : {})
       }
     };
   } else {

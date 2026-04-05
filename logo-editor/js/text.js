@@ -214,6 +214,7 @@ export function initTextEditor(ctx) {
     open(payload = null) {
       show(paneText, true);
       const source = payload?.source || {};
+      // Przywróć tekst z source.text (z exportu/importu)
       if (textValue) textValue.value = source.text || "";
       
       if (textMeasure) textMeasure.textContent = "—";
