@@ -550,7 +550,7 @@ export function initDrawEditor(ctx) {
     // Narzędzia
     setTip(tBrush,   tip2(t("logoEditor.draw.tooltips.brush"), "B"));
     setTip(tEraser,  tip2(t("logoEditor.draw.tooltips.eraser"), "E"));
-    setTip(tShapes,  t("logoEditor.draw.tooltips.shapes"));
+    setTip(tShapes,  tip2(t("logoEditor.draw.tooltips.shapes"), "S"));
     setTip(tText,    tip2(t("logoEditor.draw.tooltips.text"), "T"));
     setTip(tUndo, tip2(t("logoEditor.draw.tooltips.undo"), isMac ? "⌘Z" : "Ctrl+Z"));
     setTip(tRedo, tip2(t("logoEditor.draw.tooltips.redo"), isMac ? "⌘⇧Z / ⌘Y" : "Ctrl+Shift+Z / Ctrl+Y"));

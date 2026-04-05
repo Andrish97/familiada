@@ -3608,6 +3608,7 @@ const en = {
         background: "Stage background\nToggle black/white",
         brush: "Brush\nFreehand drawing",
         eraser: "Eraser\nErase parts",
+        shapes: "Shapes\nPick a shape and draw",
         line: "Line\nDraw line segments",
         rect: "Rectangle\nDraw rectangles",
         ellipse: "Ellipse\nDraw ellipses and circles",

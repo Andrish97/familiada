@@ -3607,6 +3607,7 @@ const pl = {
         background: "Tło sceny\nPrzełącz czarne/białe",
         brush: "Pędzel\nRysuj odręcznie",
         eraser: "Gumka\nWymazuj fragmenty",
+        shapes: "Kształty\nWybierz kształt i rysuj",
         line: "Linia\nRysuj odcinki",
         rect: "Prostokąt\nRysuj prostokąty",
         ellipse: "Elipsa\nRysuj elipsy i koła",
