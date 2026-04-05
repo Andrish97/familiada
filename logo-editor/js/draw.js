@@ -2182,6 +2182,14 @@ export function initDrawEditor(ctx) {
     fabricCanvas.on("mouse:down", (opt) => {
       pointerDown = true;
       const ev = opt.e;
+      
+      // Exit edit mode jeśli klikamy w TEXT tool i nie klikamy na tekst
+      if (tool === TOOL.TEXT) {
+        const active = fabricCanvas.getActiveObject();
+        if (active && isTextObj(active) && active.isEditing && !opt.target) {
+          active.exitEditing();
+        }
+      }
 
       // aktualizacja overlay kursora
       // w mouse:down
@@ -2247,7 +2255,7 @@ export function initDrawEditor(ctx) {
         const pointer = fabricCanvas.getPointer(opt.e);
         // Check if clicking on existing text
         const target = fabricCanvas.findTarget(ev);
-        if (target && (target.type === "i-text" || target.type === "textbox" || target.type === "text")) {
+        if (target && isTextObj(target)) {
           // Select existing text for editing
           fabricCanvas.setActiveObject(target);
           target.enterEditing();
@@ -2256,7 +2264,15 @@ export function initDrawEditor(ctx) {
           pushUndo();
           ctx.markDirty?.();
           schedulePreview(80);
+          // Wymuszenie ustawień obiektu (enterEditing może czyścić selection)
+          renderTextObjectSettings(target);
         } else {
+          // Kliknięcie poza tekstem → exit edit mode, exit editing
+          const active = fabricCanvas.getActiveObject();
+          if (active && isTextObj(active) && active.isEditing) {
+            active.exitEditing();
+            fabricCanvas.renderAll();
+          }
           // Create new text
           const textObj = new fabric.IText("Tekst", {
             left: pointer.x,
@@ -2368,10 +2384,12 @@ export function initDrawEditor(ctx) {
           ev.preventDefault();
           setBaseTool(TOOL.TEXT);
           syncToolButtons();
-          renderCurrentSettings();
+          fabricCanvas.setActiveObject(target);
           target.enterEditing();
           target.selectAll();
           fabricCanvas.renderAll();
+          // Wymuszenie ustawień obiektu
+          renderTextObjectSettings(target);
         }
       }
     });
