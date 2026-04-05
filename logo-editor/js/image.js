@@ -791,7 +791,7 @@ export function initImageEditor(ctx) {
   // =========================================================
   // Image loading helpers
   // =========================================================
-  function loadImageFromUrl(url) {
+  function loadImageFromUrl(url, cropRel = null) {
     const img = new Image();
     img.crossOrigin = "anonymous";
     img.onload = () => {
@@ -803,6 +803,18 @@ export function initImageEditor(ctx) {
       }
       applyBestImageLayout();
       initCropToCenterBig();
+      // Przywróć crop z relative (0-1) → piksele
+      if (cropRel) {
+        const stageW = imgStage?.clientWidth || 360;
+        const stageH = imgStage?.clientHeight || Math.round(360 / ASPECT);
+        crop = {
+          x: cropRel.x * stageW,
+          y: cropRel.y * stageH,
+          w: cropRel.w * stageW,
+          h: cropRel.h * stageH,
+        };
+        applyCropToDom();
+      }
       applyCropToDom();
       schedulePreview(150);
     };
@@ -822,7 +834,7 @@ export function initImageEditor(ctx) {
     img.src = url;
   }
 
-  function loadImageFromData(dataUri) {
+  function loadImageFromData(dataUri, cropRel = null) {
     const img = new Image();
     img.onload = () => {
       imgObj = img;
@@ -833,7 +845,18 @@ export function initImageEditor(ctx) {
       }
       applyBestImageLayout();
       initCropToCenterBig();
-      applyCropToDom();
+      // Przywróć crop z relative (0-1) → piksele
+      if (cropRel) {
+        const stageW = imgStage?.clientWidth || 360;
+        const stageH = imgStage?.clientHeight || Math.round(360 / ASPECT);
+        crop = {
+          x: cropRel.x * stageW,
+          y: cropRel.y * stageH,
+          w: cropRel.w * stageW,
+          h: cropRel.h * stageH,
+        };
+        applyCropToDom();
+      }
       schedulePreview(150);
     };
     img.onerror = (e) => {
@@ -868,10 +891,10 @@ export function initImageEditor(ctx) {
 
       if (source.imageUrl) {
         // load from storage/URL
-        loadImageFromUrl(source.imageUrl);
+        loadImageFromUrl(source.imageUrl, source.crop || null);
       } else if (source.imageData) {
         // load from base64 (demo / import)
-        loadImageFromData(source.imageData);
+        loadImageFromData(source.imageData, source.crop || null);
       } else {
         if (cropFrame) cropFrame.style.display = "none";
         if (imgPreview){
@@ -901,10 +924,22 @@ export function initImageEditor(ctx) {
       }
       
       const { bright, contrast, gamma, ditherAmt, black, white, invert } = readSettings();
+
+      // Zapisz crop jako wartości względne (0-1) - niezależne od rozmiaru sceny
+      const stageEl = imgStage;
+      const stageW = stageEl?.clientWidth || 360;
+      const stageH = stageEl?.clientHeight || Math.round(360 / ASPECT);
+      const cropRel = {
+        x: crop.x / stageW,
+        y: crop.y / stageH,
+        w: crop.w / stageW,
+        h: crop.h / stageH,
+      };
+
       const source = {
         mode: "IMAGE",
         bright, contrast, gamma, ditherAmt, black, white, invert,
-        crop: { ...crop },
+        crop: cropRel, // zapisz jako relative (0-1)
         imageUrl: (imgObj && !imgFileObj) ? imgPreview.src : null,
         // Zachowaj imageData jeśli już jest (demo/import) - fallback
         imageData: imgObj?.src?.startsWith("data:") ? imgObj.src : null
