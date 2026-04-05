@@ -634,17 +634,12 @@ export function initDrawEditor(ctx) {
     { id: "diamond", label: "Romb", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><polygon points="12,3 21,12 12,21 3,12" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
     { id: "pentagon", label: "Pięciokąt", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><polygon points="12,3 21,9 18,20 6,20 3,9" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
     { id: "hexagon", label: "Sześciokąt", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><polygon points="12,3 21,8 21,16 12,21 3,16 3,8" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
-    { id: "cross", label: "Krzyż", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M10 4h4v6h6v4h-6v6h-4v-6H4v-4h6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
     { id: "star5", label: "Gwiazda 5", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><polygon points="12,2 15,9 22,9 16,14 18,22 12,17 6,22 8,14 2,9 9,9" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
-    { id: "star6", label: "Gwiazda 6", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><polygon points="12,2 15,8 21,7 17,12 21,17 15,16 12,22 9,16 3,17 7,12 3,7 9,8" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
     { id: "arrow1", label: "Strzałka →", hasFill: false, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M5 12h14M14 7l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>` },
     { id: "arrow2", label: "Strzałka ↔", hasFill: false, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M5 12h14M14 7l5 5-5 5M10 7L5 12l5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>` },
     { id: "arrow1Fill", label: "Strzałka ➤", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M12 19L19 12L12 5V9H5V15H12V19Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
     { id: "arrow2Fill", label: "Strzałka ⇔", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M7 8H17V5L22 12L17 19V16H7V19L2 12L7 5V8Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>` },
     { id: "heart", label: "Serce", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M12 21C12 21 4 15 4 8.5 4 5 7 3 12 7c5-4 8-2 8 1.5 0 6.5-8 12.5-8 12.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
-    { id: "cloud", label: "Chmurka", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M7 18h10a4 4 0 0 0 .7-7.9A5.5 5.5 0 0 0 6.6 12.2 4 4 0 0 0 7 18z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
-    { id: "lightning", label: "Piorun", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
-    { id: "moon", label: "Księżyc", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" fill="none" stroke="currentColor" stroke-width="2"/></svg>` },
     { id: "polygon", label: "Wielokąt", hasFill: true, isPoly: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><polygon points="3,5 20,3 22,16 8,21" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
   ];
 
@@ -935,13 +930,8 @@ export function initDrawEditor(ctx) {
       case "diamond": return `M ${cx} ${y1} L ${x2} ${cy} L ${cx} ${y2} L ${x1} ${cy} Z`;
       case "pentagon": return buildPolygonPath(cx, cy, r, 5);
       case "hexagon": return buildPolygonPath(cx, cy, r, 6);
-      case "cross": { const t=Math.min(w,h)*0.3; return `M ${cx-t/2} ${y1} h ${t} v ${h/2-t/2} h ${t} v ${t} h ${-t} v ${h/2-t/2} h ${-t} v ${-h/2+t/2} h ${-t} v ${-t} h ${t} Z`; }
       case "star5": return buildStarPath(cx, cy, r, r*0.4, 5);
-      case "star6": return buildStarPath(cx, cy, r, r*0.45, 6);
       case "heart": return buildHeartPath(cx, cy, Math.max(w,h));
-      case "cloud": return buildCloudPath(cx, cy, w, h);
-      case "lightning": return buildLightningPath(cx, cy, w, h);
-      case "moon": return buildMoonPath(cx, cy, r);
       case "polygon": return `M ${x1} ${y1}`;
       default: return `M ${x1} ${y1} L ${x2} ${y2}`;
     }
@@ -950,25 +940,53 @@ export function initDrawEditor(ctx) {
   function buildArrowPath(x1,y1,x2,y2,dirCount,headL,headW,isFilled) {
     const angle = Math.atan2(y2-y1, x2-x1);
     const len = Math.hypot(x2-x1, y2-y1);
-    if (len < 1) return `M ${x1} ${y1}`;
-    let path = `M ${x1} ${y1}`;
-    if (isFilled) { path += ` L ${x2 - headL*0.5*Math.cos(angle)} ${y2 - headL*0.5*Math.sin(angle)}`; }
-    else { path += ` L ${x2} ${y2}`; }
-    const tipX=x2, tipY=y2, baseX=x2-headL*Math.cos(angle), baseY=y2-headL*Math.sin(angle);
-    const perpX=headW*Math.cos(angle+Math.PI/2), perpY=headW*Math.sin(angle+Math.PI/2);
-    if (isFilled) { path += ` L ${tipX} ${tipY} L ${baseX+perpX} ${baseY+perpY} L ${baseX-perpX} ${baseY-perpY} Z`; }
-    else { path += ` M ${baseX+perpX} ${baseY+perpY} L ${tipX} ${tipY} L ${baseX-perpX} ${baseY-perpY}`; }
-    // Druga główka (strzałka 2-kierunkowa)
-    if (dirCount===2) {
-      const tipX2 = x1 - headL * Math.cos(angle);
-      const tipY2 = y1 - headL * Math.sin(angle);
-      const perpX2 = headW * Math.cos(angle + Math.PI/2);
-      const perpY2 = headW * Math.sin(angle + Math.PI/2);
-      if (isFilled) {
-        path += ` M ${x1+perpX2} ${y1+perpY2} L ${tipX2} ${tipY2} L ${x1-perpX2} ${y1-perpY2} Z`;
-      } else {
-        path += ` M ${x1+perpX2} ${y1+perpY2} L ${tipX2} ${tipY2} L ${x1-perpX2} ${y1-perpY2}`;
+    if (len < 1) return `M ${x1} ${y1} L ${x2} ${y2}`;
+    
+    if (!isFilled) {
+      // Strzałka bez wypełnienia: linia + V-kształtna główka na końcu
+      // Linia od (x1,y1) do początku główki
+      const lineEndX = x2 - headL * Math.cos(angle);
+      const lineEndY = y2 - headL * Math.sin(angle);
+      let path = `M ${x1} ${y1} L ${lineEndX} ${lineEndY}`;
+      // Główka V
+      const tipX = x2, tipY = y2;
+      const perpX = headW * Math.cos(angle + Math.PI/2);
+      const perpY = headW * Math.sin(angle + Math.PI/2);
+      path += ` M ${lineEndX + perpX} ${lineEndY + perpY} L ${tipX} ${tipY} L ${lineEndX - perpX} ${lineEndY - perpY}`;
+      // Druga główka
+      if (dirCount === 2) {
+        const lineStartX = x1 + headL * Math.cos(angle);
+        const lineStartY = y1 + headL * Math.sin(angle);
+        path = `M ${lineStartX} ${lineStartY} L ${lineEndX} ${lineEndY}`;
+        const perpX2 = headW * Math.cos(angle + Math.PI/2);
+        const perpY2 = headW * Math.sin(angle + Math.PI/2);
+        // Główna główka (kierunek x2,y2)
+        path += ` M ${lineEndX + perpX} ${lineEndY + perpY} L ${x2} ${y2} L ${lineEndX - perpX} ${lineEndY - perpY}`;
+        // Druga główka (kierunek x1,y1)
+        path += ` M ${lineStartX + perpX2} ${lineStartY + perpY2} L ${x1} ${y1} L ${lineStartX - perpX2} ${lineStartY - perpY2}`;
       }
+      return path;
+    }
+    
+    // Strzałka z wypełnieniem
+    const headEndX = x2 - headL * 0.5 * Math.cos(angle);
+    const headEndY = y2 - headL * 0.5 * Math.sin(angle);
+    const tipX = x2, tipY = y2;
+    const baseX = x2 - headL * Math.cos(angle);
+    const baseY = y2 - headL * Math.sin(angle);
+    const perpX = headW * Math.cos(angle + Math.PI/2);
+    const perpY = headW * Math.sin(angle + Math.PI/2);
+    
+    let path = `M ${x1} ${y1} L ${headEndX} ${headEndY} L ${tipX} ${tipY} L ${baseX + perpX} ${baseY + perpY} L ${baseX - perpX} ${baseY - perpY} Z`;
+    
+    // Druga główka (strzałka 2-kier. z fill)
+    if (dirCount === 2) {
+      const headStartX = x1 + headL * 0.5 * Math.cos(angle);
+      const headStartY = y1 + headL * 0.5 * Math.sin(angle);
+      const tipX2 = x1, tipY2 = y1;
+      const baseX2 = x1 + headL * Math.cos(angle);
+      const baseY2 = y1 + headL * Math.sin(angle);
+      path = `M ${headStartX} ${headStartY} L ${headEndX} ${headEndY} L ${tipX} ${tipY} L ${baseX + perpX} ${baseY + perpY} L ${baseX - perpX} ${baseY - perpY} L ${tipX2} ${tipY2} L ${baseX2 + perpX} ${baseY2 + perpY} L ${headStartX + perpX} ${headStartY + perpY} L ${headStartX - perpX} ${headStartY - perpY} L ${tipX2} ${tipY2} Z`;
     }
     return path;
   }
@@ -986,12 +1004,6 @@ export function initDrawEditor(ctx) {
   }
 
   function buildHeartPath(cx,cy,sz) { const s=sz/2; return `M ${cx} ${cy+s*0.7} C ${cx-s*1.2} ${cy-s*0.2}, ${cx-s*0.5} ${cy-s*1.2}, ${cx} ${cy-s*0.4} C ${cx+s*0.5} ${cy-s*1.2}, ${cx+s*1.2} ${cy-s*0.2}, ${cx} ${cy+s*0.7} Z`; }
-
-  function buildCloudPath(cx,cy,w,h) { const r=Math.min(w,h)*0.35; return `M ${cx-r*1.5} ${cy} a ${r} ${r} 0 0 1 0 ${-r*1.2} a ${r*0.8} ${r*0.8} 0 0 1 ${r*1.2} ${-r*0.5} a ${r*0.6} ${r*0.6} 0 0 1 ${r*1.5} ${r*0.2} a ${r*0.8} ${r*0.8} 0 0 1 ${r*0.3} ${r*1.3} a ${r*0.7} ${r*0.7} 0 0 1 ${-r*0.5} ${r*1.2} a ${r*0.9} ${r*0.9} 0 0 1 ${-r*2.3} ${-r} Z`; }
-
-  function buildLightningPath(cx,cy,w,h) { const wt=w*0.25; return `M ${cx+wt*0.3} ${cy-h/2} L ${cx-wt} ${cy-h*0.15} L ${cx+wt*0.1} ${cy-h*0.1} L ${cx-wt*0.5} ${cy+h/2} L ${cx+wt} ${cy+h*0.1} L ${cx-wt*0.1} ${cy+h*0.05} Z`; }
-
-  function buildMoonPath(cx,cy,r) { return `M ${cx} ${cy-r} A ${r} ${r} 0 1 1 ${cx} ${cy+r} A ${r*0.7} ${r*0.7} 0 1 0 ${cx} ${cy-r} Z`; }
 
   function getFillEnabled() {
     return !!toolSettings[tool]?.fill;
