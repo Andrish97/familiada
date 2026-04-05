@@ -923,19 +923,16 @@ export function initDrawEditor(ctx) {
     const ang = Math.atan2(dy, dx);
     const c = Math.cos(ang), s = Math.sin(ang);
     
-    // Transformacja punktów: obrót do kierunku strzałki
     const tf = (pts) => pts.map(([px, py]) => [x1 + px*c - py*s, y1 + px*s + py*c]);
     const fp = ([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`;
     
     if (isFilled) {
-      // KSZTAŁT - zamknięty wielokąt
-      const sh = strokeW * 4 + L * 0.018;
-      const hh = sh * 2.2;
-      let hl = sh * 2.5;
-      if (dirCount === 2 && hl * 2 > L * 0.72) hl = L * 0.36;
+      const sh = Math.min(strokeW * 4 + L * 0.018, L * 0.3);
+      const hh = Math.min(sh * 2.2, L * 0.4);
+      let hl = Math.min(sh * 2.5, L * 0.35);
       
       if (dirCount === 2) {
-        // Dwukierunkowa: [hl,-hh]→[0,0]→[hl,hh]→[hl,sh]→[L-hl,sh]→[L-hl,hh]→[L,0]→[L-hl,-hh]→[L-hl,-sh]→[hl,-sh]→Z
+        if (hl * 2 > L * 0.7) hl = L * 0.35;
         const pts = tf([
           [hl, -hh], [0, 0], [hl, hh], [hl, sh],
           [L-hl, sh], [L-hl, hh], [L, 0],
@@ -944,21 +941,19 @@ export function initDrawEditor(ctx) {
         return `M ${fp(pts[0])} ${pts.slice(1).map(p => `L ${fp(p)}`).join(' ')} Z`;
       }
       
-      // Jednokierunkowa: [0,-sh]→[L-hl,-sh]→[L-hl,-hh]→[L,0]→[L-hl,hh]→[L-hl,sh]→[0,sh]→Z
       const pts = tf([
         [0, -sh], [L-hl, -sh], [L-hl, -hh], [L, 0], [L-hl, hh], [L-hl, sh], [0, sh]
       ]);
       return `M ${fp(pts[0])} ${pts.slice(1).map(p => `L ${fp(p)}`).join(' ')} Z`;
     }
     
-    // LINIA - otwarty kontur (stroke only)
+    // LINIA - otwarty kontur
     let hl = strokeW * 5;
     if (hl > L * 0.8) hl = L * 0.8;
     const hh = strokeW * 2.5;
     
     if (dirCount === 2) {
       if (hl > L * 0.38) hl = L * 0.38;
-      // shaft + head end + head start
       const shaft = tf([[0,0], [L,0]]);
       const headE = tf([[L-hl, -hh], [L,0], [L-hl, hh]]);
       const headS = tf([[hl, -hh], [0,0], [hl, hh]]);
@@ -1852,20 +1847,8 @@ export function initDrawEditor(ctx) {
         arrowFill = isArrowFill ? (ts.fill ? (ts.fillColor === "BLACK" ? "#000" : "#fff") : "transparent") : "transparent";
         pathArr = buildArrowPath(drawingStart.x, drawingStart.y, ex, ey, arrowDir, ts.stroke, isArrowFill);
       }
-      // Fabric.js: usun i stworz nowy path zeby bounding box byl poprawny
-      fabricCanvas.remove(drawingObj);
-      drawingObj = new f.Path(pathArr, {
-        stroke: style.stroke,
-        strokeWidth: style.strokeWidth,
-        fill: arrowFill,
-        strokeLineCap: style.strokeLineCap,
-        strokeLineJoin: style.strokeLineJoin,
-        strokeDashArray: style.strokeDashArray,
-        selectable: false,
-        evented: true,
-        objectCaching: false,
-      });
-      fabricCanvas.add(drawingObj);
+      drawingObj.set({ path: pathArr, fill: arrowFill, stroke: style.stroke, strokeWidth: style.strokeWidth, strokeDashArray: style.strokeDashArray, dirty: true });
+      drawingObj.setCoords();
       fabricCanvas.requestRenderAll();
       return;
     }
@@ -1892,7 +1875,7 @@ export function initDrawEditor(ctx) {
       return;
     }
 
-    // Kształty Path - koordynaty świata - recreate zeby bounding box byl poprawny
+    // Kształty Path - set() zamiast remove/add
     let w = p.x - drawingStart.x, h = p.y - drawingStart.y;
     if (shift) { const m = Math.max(Math.abs(w), Math.abs(h)); w = Math.sign(w||1)*m; h = Math.sign(h||1)*m; }
     const absW = Math.max(2, Math.abs(w)), absH = Math.max(2, Math.abs(h));
@@ -1900,19 +1883,8 @@ export function initDrawEditor(ctx) {
     const y1 = h >= 0 ? drawingStart.y : drawingStart.y + h;
     const pathStr = buildShapePath(shape, x1, y1, x1 + absW, y1 + absH, ts.stroke);
     const pathArr = svgPathToPath(pathStr);
-    fabricCanvas.remove(drawingObj);
-    drawingObj = new f.Path(pathArr, {
-      stroke: style.stroke,
-      strokeWidth: style.strokeWidth,
-      fill: fillVal,
-      strokeLineCap: style.strokeLineCap,
-      strokeLineJoin: style.strokeLineJoin,
-      strokeDashArray: style.strokeDashArray,
-      selectable: false,
-      evented: true,
-      objectCaching: false,
-    });
-    fabricCanvas.add(drawingObj);
+    drawingObj.set({ path: pathArr, fill: fillVal, stroke: style.stroke, strokeWidth: style.strokeWidth, strokeDashArray: style.strokeDashArray, dirty: true });
+    drawingObj.setCoords();
     fabricCanvas.requestRenderAll();
   }
 
