@@ -428,12 +428,40 @@ export function initDrawEditor(ctx) {
 
     showSettings(html);
 
-    document.getElementById("cObjStroke")?.addEventListener("input", e => { shapes.forEach(o=>o.set("strokeWidth",clamp(+e.target.value||1,0,50))); fabricCanvas.renderAll(); });
-    document.getElementById("cObjLineStyle")?.addEventListener("change", e => { shapes.forEach(o=>applyLineStyle(o,e.target.value,shapes[0]?.strokeWidth)); fabricCanvas.renderAll(); });
-    const objShapeBtns = toolCtx?.querySelectorAll("[data-color-toggle]")||[];
-    if(objShapeBtns[0]) objShapeBtns[0].addEventListener("click",()=>{const c=fabricToBW(shapes[0]?.stroke);const n=c==="BLACK"?"#ffffff":"#000000";shapes.forEach(o=>o.set("stroke",n));fabricCanvas.renderAll();renderObjectSettings();});
-    if(objShapeBtns[1] && allCanFill) objShapeBtns[1].addEventListener("click",()=>{const c=fabricToBW(shapes.find(x=>x.fill&&x.fill!=="transparent")?.fill||"#fff");const n=c==="BLACK"?"#ffffff":"#000000";shapes.forEach(o=>{if(o.fill!==undefined)o.set("fill",n)});fabricCanvas.renderAll();renderObjectSettings();});
-    document.getElementById("cObjFill")?.addEventListener("change",e=>{const nc=e.target.checked?"#ffffff":"transparent";shapes.forEach(o=>o.set("fill",nc));fabricCanvas.renderAll();renderObjectSettings();});
+    document.getElementById("cObjStroke")?.addEventListener("input", e => {
+      pushUndo();
+      shapes.forEach(o => o.set("strokeWidth", clamp(+e.target.value || 1, 0, 50)));
+      fabricCanvas.renderAll();
+    });
+    document.getElementById("cObjLineStyle")?.addEventListener("change", e => {
+      pushUndo();
+      shapes.forEach(o => applyLineStyle(o, e.target.value, shapes[0]?.strokeWidth));
+      fabricCanvas.renderAll();
+    });
+    const objShapeBtns = toolCtx?.querySelectorAll("[data-color-toggle]") || [];
+    if (objShapeBtns[0]) objShapeBtns[0].addEventListener("click", () => {
+      pushUndo();
+      const c = fabricToBW(shapes[0]?.stroke);
+      const n = c === "BLACK" ? "#ffffff" : "#000000";
+      shapes.forEach(o => o.set("stroke", n));
+      fabricCanvas.renderAll();
+      renderObjectSettings();
+    });
+    if (objShapeBtns[1] && allCanFill) objShapeBtns[1].addEventListener("click", () => {
+      pushUndo();
+      const c = fabricToBW(shapes.find(x => x.fill && x.fill !== "transparent")?.fill || "#fff");
+      const n = c === "BLACK" ? "#ffffff" : "#000000";
+      shapes.forEach(o => { if (o.fill !== undefined) o.set("fill", n); });
+      fabricCanvas.renderAll();
+      renderObjectSettings();
+    });
+    document.getElementById("cObjFill")?.addEventListener("change", e => {
+      pushUndo();
+      const nc = e.target.checked ? "#ffffff" : "transparent";
+      shapes.forEach(o => o.set("fill", nc));
+      fabricCanvas.renderAll();
+      renderObjectSettings();
+    });
   }
   function injectIcon(id, html){
     const el = document.getElementById(id);
@@ -1608,7 +1636,7 @@ export function initDrawEditor(ctx) {
   function snapshotJSON() {
     if (!fabricCanvas) return null;
     // zapisujemy wszystkie właściwości, które wpływają na wygląd
-    return fabricCanvas.toDatalessJSON([
+    return fabricCanvas.toJSON([
       // Obrys
       "stroke","strokeWidth","strokeLineCap","strokeLineJoin","strokeDashArray","strokeUniform",
       // Wypełnienie i przezroczystość
@@ -1634,6 +1662,18 @@ export function initDrawEditor(ctx) {
     const sj = JSON.stringify(j);
     const sl = last ? JSON.stringify(last) : "";
     if (sj === sl) return;
+
+    undoStack.push(j);
+    if (undoStack.length > 200) undoStack.shift();
+    redoStack.length = 0;
+    updateUndoRedoButtons();
+  }
+
+  /** Wymuszony pushUndo - dodaje snapshot nawet jeśli się nie zmienił */
+  function pushUndoForce() {
+    if (!fabricCanvas || undoBusy) return;
+    const j = snapshotJSON();
+    if (!j) return;
 
     undoStack.push(j);
     if (undoStack.length > 200) undoStack.shift();
