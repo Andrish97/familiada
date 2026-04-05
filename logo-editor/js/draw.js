@@ -2772,9 +2772,10 @@ export function initDrawEditor(ctx) {
     tShapes?.addEventListener("click", (e) => {
       e.stopPropagation();
       setBaseTool(TOOL.SHAPES);
-      shapePicker.style.display = shapePicker.style.display === "none" ? "block" : "none";
-      updateShapePickerIcon();
+      openShapePicker(e);
     });
+
+    // Zaznacz aktywny kształt w dropdownie
     shapePicker?.querySelectorAll(".shapeItem").forEach(item => {
       item.addEventListener("click", (e) => {
         e.stopPropagation();
