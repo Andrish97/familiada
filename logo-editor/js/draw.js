@@ -895,14 +895,23 @@ export function initDrawEditor(ctx) {
     const cx = (x1+x2)/2, cy = (y1+y2)/2;
     const w = Math.abs(x2-x1) || 10, h = Math.abs(y2-y1) || 10;
     const r = Math.min(w,h)/2;
-    const headL = (strokeWidth||6) * 4, headW = (strokeWidth||6) * 2;
+    const sw = strokeWidth || 6;
+    const len = Math.hypot(x2-x1, y2-y1);
 
     switch(shapeId) {
       case "line": return `M ${x1} ${y1} L ${x2} ${y2}`;
-      case "arrow1": return buildArrowPath(x1,y1,x2,y2,1,headL,headW,false);
-      case "arrow2": return buildArrowPath(x1,y1,x2,y2,2,headL,headW,false);
-      case "arrow1Fill": return buildArrowPath(x1,y1,x2,y2,1,headL*1.5,headW*1.5,true);
-      case "arrow2Fill": return buildArrowPath(x1,y1,x2,y2,2,headL*1.5,headW*1.5,true);
+      case "arrow1": return buildArrowPath(x1,y1,x2,y2,1,sw*4,sw*2.5,false);
+      case "arrow2": return buildArrowPath(x1,y1,x2,y2,2,sw*4,sw*2.5,false);
+      case "arrow1Fill": {
+        const headL = Math.min(sw*5, len*0.35);
+        const headW = Math.min(sw*3, len*0.2);
+        return buildArrowPath(x1,y1,x2,y2,1,headL,headW,true);
+      }
+      case "arrow2Fill": {
+        const headL = Math.min(sw*5, len*0.35);
+        const headW = Math.min(sw*3, len*0.2);
+        return buildArrowPath(x1,y1,x2,y2,2,headL,headW,true);
+      }
       case "triangle": return `M ${cx} ${y1} L ${x2} ${y2} L ${x1} ${y2} Z`;
       case "diamond": return `M ${cx} ${y1} L ${x2} ${cy} L ${cx} ${y2} L ${x1} ${cy} Z`;
       case "pentagon": return buildPolygonPath(cx, cy, r, 5);
@@ -1749,6 +1758,8 @@ export function initDrawEditor(ctx) {
         strokeLineCap: style.strokeLineCap,
         strokeLineJoin: style.strokeLineJoin,
         strokeDashArray: style.strokeDashArray,
+        originX: "left",
+        originY: "top",
         selectable: false,
         evented: true,
         objectCaching: false,
@@ -1773,12 +1784,13 @@ export function initDrawEditor(ctx) {
       });
       fabricCanvas.add(drawingObj);
     } else {
-      // Wszystkie inne kształty jako Path
-      const pathData = buildShapePath(currentShape, p0.x, p0.y, p0.x + 1, p0.y + 1, ts.stroke);
+      const pathData = buildShapePath(currentShape, 0, 0, 10, 10, ts.stroke);
       drawingObj = new f.Path(pathData, {
         ...style, fill: fillVal, selectable: false, evented: true, objectCaching: false,
       });
       fabricCanvas.add(drawingObj);
+      drawingObj.set({ left: p0.x, top: p0.y });
+      drawingObj.setCoords();
     }
   }
 
@@ -1786,14 +1798,17 @@ export function initDrawEditor(ctx) {
     if (!fabricCanvas || !drawingObj || !drawingStart) return;
     const p = getWorldPointFromMouse(ev);
     const shift = !!shiftKey;
-
     const shape = currentShape;
+    const ts = toolSettings[TOOL.SHAPES];
+    const style = makeStrokeFillStyle();
+    const shapeInfo = SHAPES.find(s => s.id === currentShape);
+    const noFill = !shapeInfo?.hasFill;
+    const fillVal = noFill ? "transparent" : (ts.fill ? (ts.fillColor === "BLACK" ? "#000" : "#fff") : "transparent");
 
-    // Linia i strzałki - aktualizuj Path
+    // Linia i strzałki - przerysuj path z nowymi koordynatami
     if (shape === "line" || shape.startsWith("arrow")) {
-      const ts = toolSettings[TOOL.SHAPES];
       const newPath = buildShapePath(shape, drawingStart.x, drawingStart.y, p.x, p.y, ts.stroke);
-      drawingObj.set({ path: newPath });
+      drawingObj.set({ path: newPath, originX: "left", originY: "top" });
       fabricCanvas.requestRenderAll();
       return;
     }
@@ -1804,8 +1819,7 @@ export function initDrawEditor(ctx) {
       let w = p.x - x0, h = p.y - y0;
       if (shift) { const m = Math.max(Math.abs(w), Math.abs(h)); w = Math.sign(w||1)*m; h = Math.sign(h||1)*m; }
       const left = w>=0 ? x0 : x0+w, top = h>=0 ? y0 : y0+h;
-      const pLT = clampWorldPoint({x:left,y:top}), pRB = clampWorldPoint({x:left+Math.abs(w),y:top+Math.abs(h)});
-      drawingObj.set({ left:pLT.x, top:pLT.y, width:Math.max(1,pRB.x-pLT.x), height:Math.max(1,pRB.y-pLT.y) });
+      drawingObj.set({ left:clampWorldPoint({x:left,y:top}).x, top:clampWorldPoint({x:left,y:top}).y, width:Math.max(1,Math.abs(w)), height:Math.max(1,Math.abs(h)) });
       fabricCanvas.requestRenderAll();
       return;
     }
@@ -1816,20 +1830,22 @@ export function initDrawEditor(ctx) {
       let w = p.x - x0, h = p.y - y0;
       if (shift) { const m = Math.max(Math.abs(w), Math.abs(h)); w = Math.sign(w||1)*m; h = Math.sign(h||1)*m; }
       const left = w>=0 ? x0 : x0+w, top = h>=0 ? y0 : y0+h;
-      const pLT = clampWorldPoint({x:left,y:top}), pRB = clampWorldPoint({x:left+Math.abs(w),y:top+Math.abs(h)});
-      drawingObj.set({ left:pLT.x, top:pLT.y, rx:Math.max(1,(pRB.x-pLT.x)/2), ry:Math.max(1,(pRB.y-pLT.y)/2) });
+      drawingObj.set({ left:clampWorldPoint({x:left,y:top}).x, top:clampWorldPoint({x:left,y:top}).y, rx:Math.max(0.5,Math.abs(w)/2), ry:Math.max(0.5,Math.abs(h)/2) });
       fabricCanvas.requestRenderAll();
       return;
     }
 
-    // Wszystkie inne kształty (Path) - skaluj i przesuwaj
+    // Trójkąt, romb, wielokąty, krzyż, gwiazdy, serce, chmurka, piorun, księżyc
     if (drawingObj.type === "path") {
-      const x0 = drawingStart.x, y0 = drawingStart.y;
-      let w = p.x - x0, h = p.y - y0;
+      let w = p.x - drawingStart.x, h = p.y - drawingStart.y;
       if (shift) { const m = Math.max(Math.abs(w), Math.abs(h)); w = Math.sign(w||1)*m; h = Math.sign(h||1)*m; }
-      const scaleX = Math.abs(w) > 1 ? Math.abs(w) : 1;
-      const scaleY = Math.abs(h) > 1 ? Math.abs(h) : 1;
-      drawingObj.set({ scaleX, scaleY, left: Math.min(x0, p.x), top: Math.min(y0, p.y) });
+      const minSize = 2;
+      if (Math.abs(w) < minSize) w = minSize * Math.sign(w || 1);
+      if (Math.abs(h) < minSize) h = minSize * Math.sign(h || 1);
+      const newPath = buildShapePath(shape, 0, 0, Math.abs(w), Math.abs(h), ts.stroke);
+      const left = w >= 0 ? drawingStart.x : drawingStart.x + w;
+      const top = h >= 0 ? drawingStart.y : drawingStart.y + h;
+      drawingObj.set({ path: newPath, left, top });
       fabricCanvas.requestRenderAll();
     }
   }
