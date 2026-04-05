@@ -79,7 +79,8 @@ html.modal-mode .wrap {
     transform: translateY(1px)
 }
 
-.simple-tabs .tab.active {
+.simple-tabs .tab.active,
+.modal-tabs .tab.active {
     background: var(--gold);
     color: #000;
     border-color: var(--gold)
