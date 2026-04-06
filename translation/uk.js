@@ -927,7 +927,7 @@ const uk = {
           <span class="m-strong">Підготовлена</span> —
           відповіді та бали задаються вручну,
           без опитування.
-        </li>
+        </li><li><span class="m-strong">Ігри Спільноти</span>&nbsp;— відповіді та бали завантажуються з бібліотеки Ігор Спільноти, без опитування.</li>
       </ul>
     
       <p class="m-p">
@@ -1078,20 +1078,14 @@ const uk = {
         <li>усі запитання, що належать до гри, зберігаються всередині</li>
       </ul>
 
-      <p class="m-note">
-        Експортувати можна лише у власну базу або спільну базу, де ти є редактором.
+      <p class="m-note">Експорт у базу не видаляє гру — він лише створює копію як структуру запитань.<br><br>Експортувати можна лише у власну базу або спільну базу, де ти є редактором.
         Якщо наразі у тебе немає жодної бази, експорт буде недоступний.
       </p>
-      
+
       <p class="m-p">
         Завдяки цьому кожну гру можна перетворити на набір запитань для подальшого редагування,
         упорядкування в папках, тегування та повторного використання
-        у майбутніх іграх.
-      </p>
-      
-      <p class="m-note">
-        Експорт у базу не видаляє гру — він лише створює копію як структуру запитань.
-      </p>`,
+        у майбутніх іграх.</p>`,
       bases: `<h2 class="m-h2">Бази запитань — організація та співпраця</h2>
   
       <p class="m-p">
@@ -1295,52 +1289,52 @@ const uk = {
       <h3 class="m-h3">📁 Створення</h3>
   
       <div class="m-table-wrap"><table class="m-table">
-        <tr><th>Дія</th><th>Windows / Linux</th><th>macOS</th></tr>
+        <tbody><tr><th>Дія</th><th>Windows / Linux</th><th>macOS</th></tr>
         <tr><td>Нове запитання</td><td>Ctrl + N</td><td>⌘ N</td></tr>
         <tr><td>Нова папка</td><td>Ctrl + Shift + N</td><td>⌘ ⇧ N</td></tr>
-      </table></div>
-  
+      </tbody></table></div>
+
       <h3 class="m-h3">✏️ Редагування</h3>
-  
+
       <div class="m-table-wrap"><table class="m-table">
-        <tr><th>Дія</th><th>Windows / Linux</th><th>macOS</th></tr>
+        <tbody><tr><th>Дія</th><th>Windows / Linux</th><th>macOS</th></tr>
         <tr><td>Редагувати запитання</td><td>Ctrl + E</td><td>⌘ E</td></tr>
         <tr><td>Перейменувати</td><td>F2</td><td>F2</td></tr>
         <tr><td>Видалити</td><td>Delete</td><td>Fn + ⌫</td></tr>
-      </table></div>
-  
+      </tbody></table></div>
+
       <h3 class="m-h3">📋 Буфер обміну</h3>
-  
+
       <div class="m-table-wrap"><table class="m-table">
-        <tr><th>Дія</th><th>Windows / Linux</th><th>macOS</th></tr>
+        <tbody><tr><th>Дія</th><th>Windows / Linux</th><th>macOS</th></tr>
         <tr><td>Копіювати</td><td>Ctrl + C</td><td>⌘ C</td></tr>
         <tr><td>Вирізати</td><td>Ctrl + X</td><td>⌘ X</td></tr>
         <tr><td>Вставити</td><td>Ctrl + V</td><td>⌘ V</td></tr>
         <tr><td>Дублювати</td><td>Ctrl + D</td><td>⌘ D</td></tr>
-      </table></div>
-  
+      </tbody></table></div>
+
       <h3 class="m-h3">🎮 Гра</h3>
-  
+
       <div class="m-table-wrap"><table class="m-table">
-        <tr><th>Дія</th><th>Windows / Linux</th><th>macOS</th></tr>
+        <tbody><tr><th>Дія</th><th>Windows / Linux</th><th>macOS</th></tr>
         <tr><td>Створити гру</td><td>Ctrl + G</td><td>⌘ G</td></tr>
-      </table></div>
-  
+      </tbody></table></div>
+
       <h3 class="m-h3">🔄 Перегляд</h3>
-  
+
       <div class="m-table-wrap"><table class="m-table">
-        <tr><th>Дія</th><th>Windows / Linux</th><th>macOS</th></tr>
+        <tbody><tr><th>Дія</th><th>Windows / Linux</th><th>macOS</th></tr>
         <tr><td>Оновити перегляд</td><td>Ctrl + Alt + R</td><td>⌘ ⌥ R</td></tr>
-      </table></div>
-  
+      </tbody></table></div>
+
       <h3 class="m-h3">📌 Навігація</h3>
-  
+
       <div class="m-table-wrap"><table class="m-table">
-        <tr><th>Дія</th><th>Windows / Linux</th><th>macOS</th></tr>
+        <tbody><tr><th>Дія</th><th>Windows / Linux</th><th>macOS</th></tr>
         <tr><td>Вибрати все</td><td>Ctrl + A</td><td>⌘ A</td></tr>
         <tr><td>Відкрити папку</td><td>Enter</td><td>⏎</td></tr>
         <tr><td>Батьківська папка</td><td>Backspace</td><td>⌫</td></tr>
-      </table></div>
+      </tbody></table></div>
   
       <p class="m-note">
         Гарячі клавіші не працюють під час введення тексту в полях редагування.
@@ -2311,7 +2305,7 @@ const uk = {
       pollPoints: "Бали",
       pollPointsMobile: "Бали",
       prepared: "Підготовлене",
-      preparedMobile: "Готове",
+      preparedMobile: "Підготовлене",
       market: "Ігри Спільноти",
       marketMobile: "Спільнота",
     },
@@ -4615,6 +4609,10 @@ const uk = {
     edit: "Редагувати",
     stepRoundsPick: "Черговість раундів",
     roundsPickHint: "Встановіть черговість питань для раундів.",
+    toggleYes: "Так",
+    toggleNo: "Ні",
+    toggleRandom: "Випадково",
+    togglePick: "Вибрати",
     stepSetupFinish: "Підсумок",
     summaryTeams: "Команди",
     summaryFinal: "Фінал",

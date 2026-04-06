@@ -924,7 +924,7 @@ const en = {
           <span class="m-strong">Prepared</span> —
           answers and points are set manually,
           without a poll.
-        </li>
+        </li><li><span class="m-strong">Community Games</span>&nbsp;— answers and points are loaded from the Community Games library, without a poll.</li>
       </ul>
     
       <p class="m-p">
@@ -1075,20 +1075,14 @@ const en = {
         <li>all questions belonging to the game are saved inside</li>
       </ul>
 
-      <p class="m-note">
-        You can export only to your own base or to a shared base where you are an editor.
+      <p class="m-note">Exporting to a base does not remove the game — it only creates a copy as a question structure.<br><br>You can export only to your own base or to a shared base where you are an editor.
         If you do not currently have any bases, you will not be able to export.
       </p>
-      
+
       <p class="m-p">
         Thanks to this each game can be turned into a set of questions for further editing,
         organizing into folders, tagging, and reusing
-        in future games.
-      </p>
-      
-      <p class="m-note">
-        Exporting to a base does not remove the game — it only creates a copy as a question structure.
-      </p>`,
+        in future games.</p>`,
       bases: `<h2 class="m-h2">Question bases — organization and collaboration</h2>
   
       <p class="m-p">
@@ -1292,52 +1286,52 @@ const en = {
       <h3 class="m-h3">📁 Create</h3>
   
       <div class="m-table-wrap"><table class="m-table">
-        <tr><th>Action</th><th>Windows / Linux</th><th>macOS</th></tr>
+        <tbody><tr><th>Action</th><th>Windows / Linux</th><th>macOS</th></tr>
         <tr><td>New question</td><td>Ctrl + N</td><td>⌘ N</td></tr>
         <tr><td>New folder</td><td>Ctrl + Shift + N</td><td>⌘ ⇧ N</td></tr>
-      </table></div>
-  
+      </tbody></table></div>
+
       <h3 class="m-h3">✏️ Edit</h3>
-  
+
       <div class="m-table-wrap"><table class="m-table">
-        <tr><th>Action</th><th>Windows / Linux</th><th>macOS</th></tr>
+        <tbody><tr><th>Action</th><th>Windows / Linux</th><th>macOS</th></tr>
         <tr><td>Edit question</td><td>Ctrl + E</td><td>⌘ E</td></tr>
         <tr><td>Rename</td><td>F2</td><td>F2</td></tr>
         <tr><td>Delete</td><td>Delete</td><td>Fn + ⌫</td></tr>
-      </table></div>
-  
+      </tbody></table></div>
+
       <h3 class="m-h3">📋 Clipboard</h3>
-  
+
       <div class="m-table-wrap"><table class="m-table">
-        <tr><th>Action</th><th>Windows / Linux</th><th>macOS</th></tr>
+        <tbody><tr><th>Action</th><th>Windows / Linux</th><th>macOS</th></tr>
         <tr><td>Copy</td><td>Ctrl + C</td><td>⌘ C</td></tr>
         <tr><td>Cut</td><td>Ctrl + X</td><td>⌘ X</td></tr>
         <tr><td>Paste</td><td>Ctrl + V</td><td>⌘ V</td></tr>
         <tr><td>Duplicate</td><td>Ctrl + D</td><td>⌘ D</td></tr>
-      </table></div>
-  
+      </tbody></table></div>
+
       <h3 class="m-h3">🎮 Game</h3>
-  
+
       <div class="m-table-wrap"><table class="m-table">
-        <tr><th>Action</th><th>Windows / Linux</th><th>macOS</th></tr>
+        <tbody><tr><th>Action</th><th>Windows / Linux</th><th>macOS</th></tr>
         <tr><td>Create game</td><td>Ctrl + G</td><td>⌘ G</td></tr>
-      </table></div>
-  
+      </tbody></table></div>
+
       <h3 class="m-h3">🔄 View</h3>
-  
+
       <div class="m-table-wrap"><table class="m-table">
-        <tr><th>Action</th><th>Windows / Linux</th><th>macOS</th></tr>
+        <tbody><tr><th>Action</th><th>Windows / Linux</th><th>macOS</th></tr>
         <tr><td>Refresh view</td><td>Ctrl + Alt + R</td><td>⌘ ⌥ R</td></tr>
-      </table></div>
-  
+      </tbody></table></div>
+
       <h3 class="m-h3">📌 Navigation</h3>
-  
+
       <div class="m-table-wrap"><table class="m-table">
-        <tr><th>Action</th><th>Windows / Linux</th><th>macOS</th></tr>
+        <tbody><tr><th>Action</th><th>Windows / Linux</th><th>macOS</th></tr>
         <tr><td>Select all</td><td>Ctrl + A</td><td>⌘ A</td></tr>
         <tr><td>Open folder</td><td>Enter</td><td>⏎</td></tr>
         <tr><td>Parent folder</td><td>Backspace</td><td>⌫</td></tr>
-      </table></div>
+      </tbody></table></div>
   
       <p class="m-note">
         Shortcuts do not work while typing in edit fields.
@@ -2437,7 +2431,7 @@ const en = {
       pollPoints: "Points",
       pollPointsMobile: "Points",
       prepared: "Prepared",
-      preparedMobile: "Ready",
+      preparedMobile: "Prepared",
       market: "Community Games",
       marketMobile: "Community",
     },
@@ -4741,6 +4735,10 @@ const en = {
     edit: "Edit",
     stepRoundsPick: "Round Order",
     roundsPickHint: "Set the order of questions for rounds.",
+    toggleYes: "Yes",
+    toggleNo: "No",
+    toggleRandom: "Random",
+    togglePick: "Pick",
     stepSetupFinish: "Summary",
     summaryTeams: "Teams",
     summaryFinal: "Final",

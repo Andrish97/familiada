@@ -147,6 +147,7 @@ export function applyTranslations(root = document) {
     { attr: "value", data: "data-i18n-value" },
     { attr: "alt", data: "data-i18n-alt" },
     { attr: "content", data: "data-i18n-content" },
+    { attr: "data-text", data: "data-i18n-data-text" },
   ];
 
   attrMap.forEach(({ attr, data }) => {
