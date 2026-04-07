@@ -1,5 +1,5 @@
-import { playSfx, createSfxMixer, getSfxDuration } from "../../js/core/sfx.js?v=v2026-04-07T03244";
-import { t } from "../../translation/translation.js?v=v2026-04-07T03244";
+import { playSfx, createSfxMixer, getSfxDuration } from "../../js/core/sfx.js?v=v2026-04-07T03305";
+import { t } from "../../translation/translation.js?v=v2026-04-07T03305";
 
 function nInt(v, d = 0) {
   const x = Number.parseInt(String(v ?? ""), 10);
