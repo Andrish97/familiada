@@ -317,7 +317,22 @@ def run_search(target=50):
     for i, (url, url_id) in enumerate(candidate_urls):
         if found >= target: break
 
-        log(f"🔍 [{i+1}] {url[:60]}...")
+        # Sprawdź pauzę co 3 iteracje
+        if i % 3 == 0:
+            try:
+                stop_flag = sb_req("GET", f"/rest/v1/lead_finder_config?select=value&key=eq.search_stop_requested")
+                if stop_flag and stop_flag.status_code == 200 and stop_flag.json():
+                    if stop_flag.json()[0].get("value") == "true":
+                        log(f"🛑 Pauza po {i}/{len(candidate_urls)} URL-i. Znaleziono: {found}")
+                        sb_mark_urls_processed(processed_ids)
+                        sb_mark_urls_rejected(rejected_ids)
+                        sb_req("PATCH", f"/rest/v1/lead_finder_config?key=eq.search_stop_requested", [{"value": "false"}])
+                        sb_close_run(run_id, reason="paused", found=found)
+                        log(f"💾 Zapisano postęp. URL-e {i+1}+ zostaną przy wznowieniu.")
+                        return
+            except: pass
+
+        log(f"🔍 [{i+1}/{len(candidate_urls)}] {url[:60]}...")
         page = check_page(url)
 
         if not page:
