@@ -308,15 +308,32 @@ async function loadStats() {
               progressBar.style.width = "5%";
               progressBar.style.background = "var(--yellow)";
           } else {
-              // STAN: AKTYWNY
+              // STAN: AKTYWNY + Sprawdzanie zawieszenia
               stopBtn.textContent = "🛑 Zatrzymaj";
               stopBtn.className = "btn btn-red";
-              statusIcon.textContent = "🔄";
-              statusText.textContent = `Aktywne szukanie... (cel: ${run.target})`;
+              
+              const heartbeat = kv.search_heartbeat;
+              const now = Date.now();
+              const beatTime = heartbeat ? new Date(heartbeat).getTime() : 0;
+              const diffSec = Math.floor((now - beatTime) / 1000);
+              
+              // Reset border
+              box.style.border = "1px solid var(--line)";
+
+              if (diffSec > 120 && diffSec < 300000) { // > 2 minuty ciszy = zawieszenie
+                   statusIcon.textContent = "⚠️";
+                   statusText.innerHTML = `<span style="color:var(--red)">BRAK ODPOWIEDZI (${diffSec}s)</span><br>System może być zawieszony.`;
+                   box.style.border = "1px solid var(--red)";
+                   progressBar.style.background = "var(--red)";
+              } else {
+                   statusIcon.textContent = "🔄";
+                   statusText.textContent = `Aktywne szukanie... (cel: ${run.target})`;
+                   progressBar.style.background = "var(--acc)";
+              }
+
               progressText.textContent = `Znalezione: ${run.found||0} | API: ${run.api_calls||0}`;
               const pct = run.target ? Math.min(100, Math.round(((run.found||0) / run.target) * 100)) : 10;
               progressBar.style.width = pct + "%";
-              progressBar.style.background = "var(--acc)";
           }
       } else {
           // Brak zadania aktywnego -> Sprawdź ostatni wynik

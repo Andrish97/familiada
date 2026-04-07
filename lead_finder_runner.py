@@ -365,6 +365,17 @@ def run_search(target=50):
     for i, (url, city, source) in enumerate(candidate_urls):
         if found >= target or api_calls >= BRAVE_DAILY_LIMIT: break
         
+        # Co 10 URL-i zaktualizuj puls (żeby UI wiedziało, że żyjemy) i sprawdź czy nie anulowano
+        if i % 10 == 0:
+            try:
+                sb_upsert("search_heartbeat", datetime.now().isoformat())
+                if sb_get_config("search_stop_requested") == "true":
+                    log("🛑 Otrzymano sygnał STOP. Zatrzymuję...")
+                    sb_upsert("search_stop_requested", "false")
+                    sb_close_run(run_id, status="stopped", reason="manual_stop")
+                    return # Wyjdź z funkcji
+            except: pass
+
         # Logika zależna od typu źródła
         if source in ["portal", "oferteo", "fixly"]:
             log(f"📂 [{i+1}/{len(candidate_urls)}] Portal: {url[:50]}...")
