@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """
 Familiada.online – Lead Finder (Runner)
-Odpalany przez Daemona.
-1. Bierie URL-e z tabeli lead_search_urls (status='pending')
-2. Dorzuca nowe z Brave Search (do tabeli)
-3. Weryfikuje AI + deduplikacja maili PRZED AI
-4. Zapisuje leadów + aktualizuje status URL-i
+Prosty flow:
+1. Generuje listę zapytań Brave (miasto + fraza)
+2. Sprawdza w cache (search_query_cache) które zapytania już były robione
+3. Wysyła TYLKO nowe zapytania do Brave → zapisuje URL-e do cache
+4. Bierze URL-e z cache (status='pending') → weryfikuje AI → zapisuje leady
+5. Oznacza URL-e jako 'processed'
 """
 
-import json, os, re, sys, time, random
+import json, os, re, sys, time, random, hashlib
 from datetime import datetime
 from urllib.parse import urlparse
 
@@ -47,7 +48,7 @@ SKIP_DOMAINS = {"google.","youtube.","facebook.com","pinterest.","twitter.com","
         "tiktok.com","linkedin.com","bing.com","duckduckgo.com","wikipedia.org","reddit.com"}
 BLOCKED_EMAIL_DOMAINS = {'oferteo.pl', 'fixly.pl', 'panoramafirm.pl', 'facebook.com', 'google.com'}
 
-# ─── Logi i DB Helpers ───
+# ─── Helpers ───
 logs = []
 def log(msg):
     ts = datetime.now().strftime("%H:%M:%S")
@@ -75,7 +76,6 @@ def sb_get_config(key):
     return r.json()[0].get("value") if r and r.status_code == 200 and r.json() else None
 
 def sb_get_existing_emails():
-    """Pobiera WSZYSTKIE maile, które już mamy w bazie leadów."""
     emails = set()
     page = 0
     while True:
@@ -96,7 +96,7 @@ def sb_create_search_run(target):
     try:
         r = sb_req("POST", "/rest/v1/lead_search_runs", [{
             "target": target, "found": 0, "api_calls": 0, "status": "running",
-            "cities_done": 0, "cities_list": [], "started_at": datetime.now().isoformat(),
+            "started_at": datetime.now().isoformat(),
         }])
         if r and r.status_code in (200, 201) and r.json(): return r.json()[0]["id"]
     except: pass
@@ -112,23 +112,36 @@ def sb_close_run(run_id, status="completed", reason=""):
         "status": status, "reason": reason, "finished_at": datetime.now().isoformat()
     }])
 
-def sb_update_url_status(url_id, status, ai_valid=None, ai_reason=None, found_emails=None):
-    """Aktualizuje status URL-a w tabeli lead_search_urls."""
-    update = {"status": status, "checked_at": datetime.now().isoformat()}
-    if ai_valid is not None: update["ai_valid"] = ai_valid
-    if ai_reason is not None: update["ai_reason"] = ai_reason
-    if found_emails is not None: update["found_emails"] = found_emails
-    sb_req("PATCH", f"/rest/v1/lead_search_urls?id=eq.{url_id}", [update])
+# ─── Cache Helpers ───
+def hash_query(text):
+    return hashlib.sha256(text.encode()).hexdigest()
 
-def sb_insert_urls(urls):
-    """Dodaje nowe URL-e do tabeli (ON CONFLICT ignoruje duplikaty)."""
-    if not urls: return
-    # Rest API Supabase nie obsługuje ON CONFLICT bezpośrednio, więc dodajemy po jednym
-    # lub używamy batch z obsługą błędów
-    for u in urls:
-        try:
-            sb_req("POST", "/rest/v1/lead_search_urls", [u])
-        except: pass
+def get_cached_urls_for_query(query_hashes):
+    """Pobiera URL-e z cache dla podanych hashy."""
+    if not query_hashes: return []
+    
+    # Budujemy zapytanie SQL: query_hash IN ('hash1', 'hash2', ...)
+    hash_list = ",".join([f"'{h}'" for h in query_hashes])
+    r = sb_req("GET", f"/rest/v1/search_query_cache?select=*&query_hash=in.({hash_list})")
+    if r and r.status_code == 200 and r.json():
+        return r.json()
+    return []
+
+def insert_query_cache(query_hash, query_text, city, urls):
+    """Dodaje nowe zapytanie do cache."""
+    sb_req("POST", "/rest/v1/search_query_cache", [{
+        "query_hash": query_hash,
+        "query_text": query_text,
+        "city": city,
+        "urls": urls,
+        "status": "pending"
+    }])
+
+def mark_cache_processed(query_hashes):
+    """Oznacza cache jako przetworzone."""
+    if not query_hashes: return
+    hash_list = ",".join([f"'{h}'" for h in query_hashes])
+    sb_req("PATCH", f"/rest/v1/search_query_cache?query_hash=in.({hash_list})", [{"status": "processed"}])
 
 # ─── Fetch & Extract ───
 def fetch_page(url, t=10):
@@ -162,14 +175,12 @@ def check_firm_page(url):
     if not domain: return None
     all_emails, title, text = set(), "", ""
 
-    # 1. Główna
     st, html = fetch_page(url, 6)
     if 200 <= st < 400:
         em, ti, tx = parse_emails_from_html(html)
         all_emails.update(em)
         if not title: title, text = ti, tx
 
-    # 2. Kontakt
     if not all_emails:
         for path in ['/kontakt', '/kontakt.html', '/contact', '/contact.html']:
             st2, html2 = fetch_page(f"https://{domain}{path}", 6)
@@ -179,7 +190,6 @@ def check_firm_page(url):
                 if not title: title, text = ti2, tx2
                 if all_emails: break
 
-    # 3. Sitemap
     if not all_emails:
         for sub_url in get_sitemap_urls(f"https://{domain}"):
             if sub_url != url:
@@ -208,17 +218,17 @@ def ask_groq(title, text, emails, source_type="brave"):
 
     if source_type == "portal":
         prompt = (
-            f"Analizuję ogłoszenie na portalu. Czy to oferta DOSTAWCY USŁUG EVENTOWYCH (DJ, Wodzirej, Animator, Agencja)?\n\n"
-            f"✅ TAK: Jeśli to oferta konkretnego wykonawcy.\n"
-            f"❌ NIE: Jeśli to artykuł, poradnik, strona główna portalu, sklep, wypożyczalnia.\n\n"
+            f"Analizuję ogłoszenie na portalu. Czy to oferta DOSTAWCY USŁUG EVENTOWYCH?\n"
+            f"✅ TAK: Konkretne DJ, Wodzirej, Animator, Agencja.\n"
+            f"❌ NIE: Artykuł, poradnik, sklep, wypożyczalnia.\n\n"
             f"TYTUŁ: {title}\nTEKST: {text[:800]}\nMAILE: {email_list}\n\n"
             f'Odpowiedz JSON: {{"valid": true/false, "email": "najlepszy_mail", "reason": "..."}}'
         )
     else:
         prompt = (
-            f"Analizuję stronę firmową. Czy to firma z branży WESELNO-EVENTOWEJ (DJ, Wodzirej, Animator, Agencja, Prezenter)?\n\n"
+            f"Analizuję stronę firmową. Czy to firma WESELNO-EVENTOWA?\n"
             f"✅ TAK: DJ, Wodzirej, Animator, Agencja, Prezenter.\n"
-            f"❌ NIE: Sale, Catering, Foto, Video, Dekoracje, Wypożyczalnie, Sklepy.\n\n"
+            f"❌ NIE: Sale, Catering, Foto, Video, Dekoracje, Sklepy.\n\n"
             f"TYTUŁ: {title}\nTEKST: {text[:800]}\nMAILE: {email_list}\n\n"
             f'Odpowiedz JSON: {{"valid": true/false, "email": "najlepszy_mail", "reason": "..."}}'
         )
@@ -237,7 +247,7 @@ def ask_groq(title, text, emails, source_type="brave"):
             elif r.status_code == 429:
                 time.sleep(5 * (attempt + 1))
             else: return None
-        except Exception as e:
+        except:
             time.sleep(2)
     return None
 
@@ -257,68 +267,92 @@ def run_search(target=50):
     existing = sb_get_existing_emails()
     log(f"📋 Maile w bazie: {len(existing)}")
 
-    # 1. Pobierz URL-e z tabeli lead_search_urls (status='pending')
-    r = sb_req("GET", f"/rest/v1/lead_search_urls?select=*&status=eq.pending&order=created_at.asc&limit=2000")
-    candidate_urls = []
-    if r and r.status_code == 200:
-        candidate_urls = [(row["url"], row.get("city") or "", row.get("source") or "brave", row["id"]) for row in r.json()]
-        log(f"📂 Wczytano {len(candidate_urls)} URL-i z lead_search_urls (pending).")
-
-    # 2. Brave Search (jeśli mało kandydatów)
+    # 1. Generuj zapytania i oblicz hashe
+    all_queries = [(q.format(city=c), c) for c in MAJOR_CITIES for q in SEARCH_QUERIES]
+    random.shuffle(all_queries)
+    
+    query_hashes = [hash_query(q) for q, _ in all_queries]
+    
+    # Sprawdź co jest już w cache
+    cached = get_cached_urls_for_query(query_hashes)
+    cached_hashes = {c["query_hash"] for c in cached}
+    
+    # 2. Brave Search - tylko dla nowych zapytań
     brave_api_calls = 0
-    if len(candidate_urls) < target * 10:
-        log("🔍 Mało kandydatów. Uruchamiam Brave Search...")
-        urls = [(q.format(city=c), c) for c in MAJOR_CITIES for q in SEARCH_QUERIES]
-        random.shuffle(urls)
+    new_urls_for_cache = []
+    
+    for query_text, city in all_queries:
+        q_hash = hash_query(query_text)
+        if q_hash in cached_hashes:
+            continue  # Już mamy to zapytanie w cache
+        
+        if brave_api_calls >= BRAVE_DAILY_LIMIT:
+            log(f"⚠️ Limit Brave wyczerpany ({brave_api_calls}/{BRAVE_DAILY_LIMIT})")
+            break
+            
+        log(f"🔎 Brave: {query_text[:60]}...")
+        try:
+            session = curl_requests.Session(impersonate="chrome124")
+            r = session.get("https://api.search.brave.com/res/v1/web/search",
+                            params={"q": query_text, "count": 15, "cc": "PL"},
+                            headers={"Accept": "application/json", "X-Subscription-Token": BRAVE_KEY}, timeout=10)
+            
+            found_urls = []
+            if r.status_code == 200:
+                for item in r.json().get("web", {}).get("results", []):
+                    u = item.get("url", "")
+                    if u and not any(s in u.lower() for s in SKIP_DOMAINS):
+                        found_urls.append({"url": u, "city": city, "source": "brave"})
+                
+                if found_urls:
+                    log(f"   ✅ +{len(found_urls)} URL-i")
+                    new_urls_for_cache.append({
+                        "query_hash": q_hash,
+                        "query_text": query_text,
+                        "city": city,
+                        "urls": found_urls
+                    })
+            
+            brave_api_calls += 1
+        except Exception as e:
+            log(f"   ❌ Błąd: {e}")
+            brave_api_calls += 1
+        time.sleep(0.5)
 
-        session = curl_requests.Session(impersonate="chrome124")
-        new_urls_for_db = []
+    # Zapisz nowe wyniki do cache
+    if new_urls_for_cache:
+        for entry in new_urls_for_cache:
+            insert_query_cache(entry["query_hash"], entry["query_text"], entry["city"], entry["urls"])
+        log(f"💾 Zapisano {len(new_urls_for_cache)} nowych zapytań w cache.")
 
-        for q, city in urls:
-            if len(candidate_urls) >= target * 20 or brave_api_calls >= BRAVE_DAILY_LIMIT: break
-            log(f"🔎 Brave: {q[:60]}...")
-            try:
-                r = session.get("https://api.search.brave.com/res/v1/web/search",
-                                params={"q": q, "count": 10, "cc": "PL"},
-                                headers={"Accept": "application/json", "X-Subscription-Token": BRAVE_KEY}, timeout=10)
-                if r.status_code == 200:
-                    new_found = 0
-                    for item in r.json().get("web", {}).get("results", []):
-                        u = item.get("url", "")
-                        if u and not any(s in u.lower() for s in SKIP_DOMAINS) and not any(p in u.lower() for p in ['oferteo.pl', 'fixly.pl']):
-                            # Dodaj do kandydatów i do bazy
-                            candidate_urls.append((u, city, "brave", None))
-                            new_urls_for_db.append({"url": u, "city": city, "source": "brave", "status": "pending"})
-                            new_found += 1
-                    if new_found > 0: log(f"   ✅ +{new_found} URL-i")
-                brave_api_calls += 1
-            except:
-                brave_api_calls += 1
-            time.sleep(0.5)
+    # 3. Pobierz WSZYSTKIE URL-e do weryfikacji (z cache)
+    log("🤖 Pobieram URL-e z cache do weryfikacji AI...")
+    
+    # Pobierz wszystkie pending URL-e z cache
+    all_cached = get_cached_urls_for_query(query_hashes)
+    candidate_urls = []
+    for cache_entry in all_cached:
+        for u in cache_entry.get("urls", []):
+            candidate_url = (u["url"], u.get("city", ""), u.get("source", "brave"), cache_entry["query_hash"])
+            if candidate_url[0] not in [c[0] for c in candidate_urls]:  # Deduplikacja URL-i
+                candidate_urls.append(candidate_url)
+    
+    log(f"📦 Znaleziono {len(candidate_urls)} unikalnych URL-i do weryfikacji.")
 
-        # Zapisz nowe URL-e do tabeli
-        if new_urls_for_db:
-            sb_insert_urls(new_urls_for_db)
-            log(f"💾 Dodano {len(new_urls_for_db)} nowych URL-i do lead_search_urls.")
-
-        log(f"📦 Łącznie {len(candidate_urls)} stron do weryfikacji.")
-
-    # 3. Pętla weryfikacji AI
-    log(f"🤖 Rozpoczynam weryfikację AI...")
+    # 4. Pętla weryfikacji AI
     found = 0
+    processed_hashes = set()
 
-    for i, (url, city, source, url_id) in enumerate(candidate_urls):
+    for i, (url, city, source, q_hash) in enumerate(candidate_urls):
         if found >= target: break
 
         # STOP
         if sb_get_config("search_stop_requested") == "true":
-            log("🛑 Otrzymano STOP. Zatrzymuję...")
-            sb_upsert("search_stop_requested", "false")
-            break
+            log("🛑 STOP!"); sb_upsert("search_stop_requested", "false"); break
 
-        # Puls co 10 kroków
+        # Puls
         if i % 10 == 0:
-            try: sb_upsert("search_heartbeat", datetime.now().isoformat())
+            try: sb_upsert("last_search_log", "\n".join(logs[-10:]))
             except: pass
 
         # 1. Pobierz dane
@@ -330,30 +364,26 @@ def run_search(target=50):
             source_type = "brave"
 
         if not page:
-            if url_id: sb_update_url_status(url_id, "rejected", ai_reason="no_data")
+            processed_hashes.add(q_hash)
             continue
 
-        # 2. DEDUPLIKACJA PRZED AI (oszczędność tokenów)
+        # 2. DEDUPLIKACJA PRZED AI
         new_emails = [e for e in page["emails"] if e.lower() not in existing and e.split('@')[-1].lower() not in BLOCKED_EMAIL_DOMAINS]
-
         if not new_emails:
-            log(f"   ⏭️ Pomijam. Brak nowych maili: {url[:50]}")
-            if url_id: sb_update_url_status(url_id, "checked", found_emails=list(page["emails"]))
+            processed_hashes.add(q_hash)
             continue
 
         # 3. AI
-        log(f"🤖 AI weryfikuje: {page['title'][:50]}...")
+        log(f"🤖 AI: {page['title'][:50]}...")
         ai = ask_groq(page["title"], page["text"], new_emails, source_type=source_type)
 
         if not ai or not ai.get("valid"):
-            reason = ai.get("reason", "nie z branży") if ai else "brak odpowiedzi"
-            log(f"   ❌ AI odrzuciło: {reason}")
-            if url_id: sb_update_url_status(url_id, "rejected", ai_valid=False, ai_reason=reason, found_emails=new_emails)
+            processed_hashes.add(q_hash)
             continue
 
         selected = ai.get("email") or new_emails[0]
         if selected.lower() in existing:
-            if url_id: sb_update_url_status(url_id, "checked", found_emails=new_emails)
+            processed_hashes.add(q_hash)
             continue
 
         # 4. Zapis
@@ -362,17 +392,19 @@ def run_search(target=50):
                     "city": city, "email": selected, "url": url, "source": source}])
         found += 1
         log(f"✅ Znaleziono: {selected} – {page['title'][:30]}")
-        if url_id: sb_update_url_status(url_id, "accepted", ai_valid=True, ai_reason=ai.get("reason",""), found_emails=new_emails)
         sb_update_run(run_id, found=found, api_calls=brave_api_calls)
+
+    # Oznacz przetworzone zapytania
+    if processed_hashes:
+        mark_cache_processed(list(processed_hashes))
 
     sb_close_run(run_id, reason="limit" if brave_api_calls >= BRAVE_DAILY_LIMIT else "cel")
     log(f"🏁 Done: {found} leadów.")
-    send_tg(f"Zakończono.\nCel: {target}\nZnaleziono: {found}\nPowód: {'limit' if brave_api_calls >= BRAVE_DAILY_LIMIT else 'cel'}")
+    send_tg(f"Zakończono.\nCel: {target}\nZnaleziono: {found}")
 
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('--target', type=int, default=50)
-    parser.add_argument('--resume', action='store_true')
     args = parser.parse_args()
     run_search(target=args.target)

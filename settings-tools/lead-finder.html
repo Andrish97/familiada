@@ -279,13 +279,14 @@ async function loadStats() {
         document.getElementById("logBox").textContent = kv.last_search_log;
       }
 
-      // SPRAWDZANIE STATUSU ZADAŃ (Mapowanie stanów)
+      // SPRAWDZANIE STATUSU ZADAŃ
       const { data: activeRuns } = await db.from("lead_search_runs").select("*").in("status", ["running", "pending"]).limit(1);
       const isRunning = activeRuns && activeRuns.length > 0;
 
       const startBtn = document.getElementById("startBtn");
       const stopBtn = document.getElementById("stopBtn");
       const resumeBtn = document.getElementById("resumeBtn");
+      const resetBtn = document.getElementById("resetBtn");
       const box = document.getElementById("searchStatusBox");
       const logBox = document.getElementById("liveLogBox");
       const progressBar = document.getElementById("searchProgressBar");
@@ -296,95 +297,50 @@ async function loadStats() {
       if (isRunning) {
           const run = activeRuns[0];
           startBtn.hidden = true;
-          stopBtn.hidden = false;
-          stopBtn.disabled = false;
+          stopBtn.hidden = false; stopBtn.disabled = false;
           resetBtn.hidden = false;
           resumeBtn.hidden = true;
           box.style.display = "block";
 
           if (run.status === 'pending') {
-              // STAN: W TRAKCIE (Oczekiwanie)
-              stopBtn.textContent = "❌ Anuluj";
-              stopBtn.className = "btn btn-yellow";
+              stopBtn.textContent = "❌ Anuluj"; stopBtn.className = "btn btn-yellow";
               statusIcon.textContent = "⏳";
-              statusText.textContent = "Zlecenie w kolejce (oczekiwanie na serwer)...";
+              statusText.textContent = "Zlecenie w kolejce...";
               progressText.textContent = `Cel: ${run.target}`;
-              progressBar.style.width = "5%";
-              progressBar.style.background = "var(--yellow)";
+              progressBar.style.width = "5%"; progressBar.style.background = "var(--yellow)";
           } else {
-              // STAN: AKTYWNY + Sprawdzanie zawieszenia
-              stopBtn.textContent = "🛑 Zatrzymaj";
-              stopBtn.className = "btn btn-red";
-              
-              const heartbeat = kv.search_heartbeat;
-              const now = Date.now();
-              const beatTime = heartbeat ? new Date(heartbeat).getTime() : 0;
-              const diffSec = Math.floor((now - beatTime) / 1000);
-              
-              // Reset border
-              box.style.border = "1px solid var(--line)";
-
-              if (diffSec > 120 && diffSec < 300000) { // > 2 minuty ciszy = zawieszenie
-                   statusIcon.textContent = "⚠️";
-                   statusText.innerHTML = `<span style="color:var(--red)">BRAK ODPOWIEDZI (${diffSec}s)</span><br>System może być zawieszony.`;
-                   box.style.border = "1px solid var(--red)";
-                   progressBar.style.background = "var(--red)";
-              } else {
-                   statusIcon.textContent = "🔄";
-                   statusText.textContent = `Aktywne szukanie... (cel: ${run.target})`;
-                   progressBar.style.background = "var(--acc)";
-              }
-
-              progressText.textContent = `Znalezione: ${run.found||0} | API: ${run.api_calls||0}`;
+              stopBtn.textContent = "🛑 Zatrzymaj"; stopBtn.className = "btn btn-red";
+              statusIcon.textContent = "🔄";
+              statusText.textContent = `Szukanie... (cel: ${run.target})`;
+              progressText.textContent = `Znalezione: ${run.found||0}`;
               const pct = run.target ? Math.min(100, Math.round(((run.found||0) / run.target) * 100)) : 10;
-              progressBar.style.width = pct + "%";
+              progressBar.style.width = pct + "%"; progressBar.style.background = "var(--acc)";
           }
       } else {
-          // Brak zadania aktywnego -> Sprawdź ostatni wynik
           const { data: lastRun } = await db.from("lead_search_runs").select("*").order("started_at", { ascending: false }).limit(1);
           const last = lastRun && lastRun[0];
 
-          startBtn.hidden = false;
-          stopBtn.hidden = true;
+          startBtn.hidden = false; startBtn.disabled = false; startBtn.textContent = "🇵🇱 Szukaj";
+          stopBtn.hidden = true; resetBtn.hidden = true;
 
           if (last && last.status === 'limit_reached') {
-              // STAN: LIMIT
               resumeBtn.hidden = true;
-              startBtn.textContent = "⚠️ Limit dzienny wyczerpany";
-              startBtn.disabled = true;
+              startBtn.textContent = "⚠️ Limit dzienny"; startBtn.disabled = true;
               box.style.display = "block";
-              statusIcon.textContent = "⚠️";
-              statusText.textContent = "Dzienny limit zapytań został osiągnięty.";
-              progressText.textContent = `Znalezione łącznie: ${last.found||0}`;
-              progressBar.style.width = "100%";
-              progressBar.style.background = "var(--red)";
+              statusIcon.textContent = "⚠️"; statusText.textContent = "Limit zapytań osiągnięty.";
+              progressBar.style.width = "100%"; progressBar.style.background = "var(--red)";
           } else if (last && (last.status === 'stopped' || last.status === 'cancelled')) {
-              // STAN: ZATRZYMANY
-              if (last.found > 0) {
-                  resumeBtn.hidden = false;
-                  resumeBtn.textContent = `▶️ Wznów (${last.target - last.found} do celu)`;
-              } else {
-                  resumeBtn.hidden = true;
-              }
-              startBtn.textContent = "🇵🇱 Szukaj";
-              startBtn.disabled = false;
+              resumeBtn.hidden = last.found <= 0;
+              if (resumeBtn.hidden === false) resumeBtn.textContent = `▶️ Wznów (${last.target - last.found})`;
               box.style.display = "none";
           } else if (last && last.status === 'completed') {
-              // STAN: ZAKOŃCZONY
               resumeBtn.hidden = true;
-              startBtn.textContent = "🇵🇱 Szukaj";
-              startBtn.disabled = false;
               box.style.display = "block";
-              statusIcon.textContent = "✅";
-              statusText.textContent = `Zakończono pomyślnie.`;
+              statusIcon.textContent = "✅"; statusText.textContent = "Zakończono.";
               progressText.textContent = `Wynik: ${last.found} leadów`;
-              progressBar.style.width = "100%";
-              progressBar.style.background = "var(--green)";
+              progressBar.style.width = "100%"; progressBar.style.background = "var(--green)";
           } else {
-              // STAN: ZEROWY
               resumeBtn.hidden = true;
-              startBtn.textContent = "🇵🇱 Szukaj";
-              startBtn.disabled = false;
               box.style.display = "none";
           }
       }
