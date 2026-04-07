@@ -44,8 +44,64 @@ def _send_telegram_via_worker(message):
     except Exception as e:
         print(f"⚠️ Telegram error: {e}")
 
-def send_tg(text):
-    _send_telegram_via_worker(f"🎯 Lead Finder\n{text}")
+def _send_tg_start(target):
+    """Powiadomienie o rozpoczęciu wyszukiwania."""
+    msg = (
+        f"🚀 <b>Rozpoczęto wyszukiwanie</b>\n"
+        f"Cel: <b>{target}</b> nowych leadów\n"
+        f"Miasta: losowe 20 z 350\n"
+        f"Status postępu dostępny w panelu settings.familiada.online"
+    )
+    _send_telegram_via_worker(f"🎯 Lead Finder\n{msg}")
+
+def _send_tg_summary(found, target, api_calls, day_count, reason, total_db, cities_done, cities_total):
+    """Wysyła podsumowanie z odpowiednim komunikatem."""
+    
+    if reason == "stopped":
+        icon = "⏹️"
+        title = "Zatrzymano ręcznie"
+        body = (
+            f"Znalazłeś <b>{found}/{target}</b> leadów\n"
+            f"Zużyto: {api_calls} zapytań Brave ({day_count}/33 dzisiaj)\n"
+            f"Baza: {total_db} leadów  •  Miasta: {cities_done}/{cities_total}"
+        )
+        footer = "💡 Aby wznowić: wpisz nowy cel i kliknij 'Szukaj'"
+    
+    elif reason == "target reached":
+        icon = "🎉"
+        title = "Osiągnięto cel!"
+        body = (
+            f"Znaleziono <b>{found}</b> nowych leadów 🎯\n"
+            f"Zużyto: {api_calls} zapytań Brave ({day_count}/33 dzisiaj)\n"
+            f"Baza: {total_db} leadów  •  Miasta: {cities_done}/{cities_total}"
+        )
+        footer = "✅ Sprawdź wyniki w panelu settings.familiada.online"
+    
+    elif "limit" in reason.lower() or "api" in reason.lower():
+        icon = "⚠️"
+        title = "Dzienny limit wyczerpany"
+        body = (
+            f"Znaleziono <b>{found}/{target}</b> leadów\n"
+            f"Limit Brave: {day_count}/33 wykorzystany na dziś\n"
+            f"Baza: {total_db} leadów  •  Miasta: {cities_done}/{cities_total}"
+        )
+        footer = "⏰ Kontynuuj jutro – limit resetuje się o północy"
+    
+    else:
+        icon = "📊"
+        title = "Wyszukiwanie zakończone"
+        body = (
+            f"Znaleziono <b>{found}/{target}</b> leadów\n"
+            f"Powód: {reason}\n"
+            f"Zużyto: {api_calls} zapytań ({day_count}/33 dzisiaj)\n"
+            f"Baza: {total_db} leadów  •  Miasta: {cities_done}/{cities_total}"
+        )
+        footer = ""
+    
+    msg = f"{icon} <b>{title}</b>\n\n{body}"
+    if footer: msg += f"\n\n{footer}"
+    
+    _send_telegram_via_worker(f"🎯 Lead Finder\n{msg}")
 
 # ~350 miast – rotacja po 20/run
 ALL_CITIES = """Warszawa,Krakow,Wroclaw,Poznan,Gdansk,Lodz,Katowice,Szczecin,Bydgoszcz,Lublin,
@@ -246,8 +302,64 @@ def scrape_dir(key, url):
     time.sleep(0.5 + random.random())
     return results
 
-def send_tg(text):
-    _send_telegram_via_worker(f"🎯 Lead Finder\n{text}")
+def _send_tg_start(target):
+    """Powiadomienie o rozpoczęciu wyszukiwania."""
+    msg = (
+        f"🚀 <b>Rozpoczęto wyszukiwanie</b>\n"
+        f"Cel: <b>{target}</b> nowych leadów\n"
+        f"Miasta: losowe 20 z 350\n"
+        f"Status postępu dostępny w panelu settings.familiada.online"
+    )
+    _send_telegram_via_worker(f"🎯 Lead Finder\n{msg}")
+
+def _send_tg_summary(found, target, api_calls, day_count, reason, total_db, cities_done, cities_total):
+    """Wysyła podsumowanie z odpowiednim komunikatem."""
+    
+    if reason == "stopped":
+        icon = "⏹️"
+        title = "Zatrzymano ręcznie"
+        body = (
+            f"Znalazłeś <b>{found}/{target}</b> leadów\n"
+            f"Zużyto: {api_calls} zapytań Brave ({day_count}/33 dzisiaj)\n"
+            f"Baza: {total_db} leadów  •  Miasta: {cities_done}/{cities_total}"
+        )
+        footer = "💡 Aby wznowić: wpisz nowy cel i kliknij 'Szukaj'"
+    
+    elif reason == "target reached":
+        icon = "🎉"
+        title = "Osiągnięto cel!"
+        body = (
+            f"Znaleziono <b>{found}</b> nowych leadów 🎯\n"
+            f"Zużyto: {api_calls} zapytań Brave ({day_count}/33 dzisiaj)\n"
+            f"Baza: {total_db} leadów  •  Miasta: {cities_done}/{cities_total}"
+        )
+        footer = "✅ Sprawdź wyniki w panelu settings.familiada.online"
+    
+    elif "limit" in reason.lower() or "api" in reason.lower():
+        icon = "⚠️"
+        title = "Dzienny limit wyczerpany"
+        body = (
+            f"Znaleziono <b>{found}/{target}</b> leadów\n"
+            f"Limit Brave: {day_count}/33 wykorzystany na dziś\n"
+            f"Baza: {total_db} leadów  •  Miasta: {cities_done}/{cities_total}"
+        )
+        footer = "⏰ Kontynuuj jutro – limit resetuje się o północy"
+    
+    else:
+        icon = "📊"
+        title = "Wyszukiwanie zakończone"
+        body = (
+            f"Znaleziono <b>{found}/{target}</b> leadów\n"
+            f"Powód: {reason}\n"
+            f"Zużyto: {api_calls} zapytań ({day_count}/33 dzisiaj)\n"
+            f"Baza: {total_db} leadów  •  Miasta: {cities_done}/{cities_total}"
+        )
+        footer = ""
+    
+    msg = f"{icon} <b>{title}</b>\n\n{body}"
+    if footer: msg += f"\n\n{footer}"
+    
+    _send_telegram_via_worker(f"🎯 Lead Finder\n{msg}")
 
 # ─── Analyze URLs → extract emails → return new leads ───
 def analyze_urls(urls, existing_emails):
@@ -312,6 +424,9 @@ def run(target=50):
         "running": True, "target": target,
         "started_at": datetime.now().isoformat(), "found": 0, "api_calls": 0,
     }))
+
+    # Powiadom o rozpoczęciu
+    _send_tg_start(target)
 
     # Cities for this run
     r = sb("/rest/v1/lead_finder_config?select=key,value&key=eq.cities_done")
@@ -477,15 +592,13 @@ def run(target=50):
     r = sb("/rest/v1/lead_finder?select=id&limit=1", headers={"Prefer": "count=exact"})
     total = r.headers.get("content-range", "?/?").split("/")[1]
 
-    icon = "⏹️" if reason == "stopped" else "✅"
-    send_tg(
-        f"{icon} <b>Search completed</b>\n"
-        f"📊 Found: {found}/{target} new leads\n"
-        f"🔍 Brave: {api_calls} queries ({day_count}→{day_count+api_calls}/{BRAVE_DAILY_LIMIT}/day)\n"
-        f"📂 Dirs: {len(DIR_URLS)} scraped\n"
-        f"📁 Total DB: {total} leads\n"
-        f"🛑 Status: {reason}"
+    # Wyślij odpowiednie powiadomienie
+    _send_tg_summary(
+        found=found, target=target, api_calls=api_calls,
+        day_count=day_count, reason=reason,
+        total_db=total, cities_done=done + per_run, cities_total=len(ALL_CITIES)
     )
+    
     log(f"🏁 Done: {found} leads | {api_calls} API calls | {reason}")
 
 if __name__ == "__main__":
