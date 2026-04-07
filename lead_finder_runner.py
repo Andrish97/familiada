@@ -179,6 +179,13 @@ def get_page_data(url):
     return {"emails": list(emails), "active": active, "title": title, "text": text_sample}
 
 # ─── Search Config ───
+# Lista domen portali/katalogów, których maili NIE chcemy (bo to kontakt do portalu, nie wykonawcy)
+BLOCKED_EMAIL_DOMAINS = {
+    'weselezklasa.pl', 'oferteo.pl', 'fixly.pl', 'panoramafirm.pl', 'firmo.pl', 'pkt.pl',
+    'firmy.info.pl', 'e-wesele.pl', 'animatorki.pl', 'klubanimatora.pl', 'wodzireje.pl',
+    'facebook.com', 'google.com', 'youtube.com', 'bing.com'
+}
+
 SKIP_DOMAINS = {"google.","youtube.","facebook.com","pinterest.","twitter.com","instagram.com",
         "tiktok.com","linkedin.com","bing.com","duckduckgo.com","wikipedia.org","reddit.com"}
 
@@ -252,11 +259,22 @@ def run_search(target=50):
             log(f"   ❌ Brak danych lub brak maili na stronie.")
             continue
 
+        # Filtrowanie maili portalów (np. bok@weselezklasa.pl)
+        vendor_emails = []
+        for e in page["emails"]:
+            domain = e.split('@')[-1].lower()
+            if domain not in BLOCKED_EMAIL_DOMAINS:
+                vendor_emails.append(e)
+        
+        if not vendor_emails:
+            log(f"   ❌ Brak maili wykonawcy (tylko kontakt do portalu).")
+            continue
+
         # Aktualizacja paska (krok 2: AI)
         sb_update_run(run_id, found=found, api_calls=api_calls)
         log(f"🤖 Pytam AI o weryfikację: {page['title'][:50]}...")
 
-        ai = ask_groq(page["title"], page["text"], page["emails"])
+        ai = ask_groq(page["title"], page["text"], vendor_emails)
         
         if not ai: 
             log(f"   ⚠️ Błąd odpowiedzi AI lub brak klucza.")
