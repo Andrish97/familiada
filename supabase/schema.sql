@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict BufhRnFDn1xC9XDUdTsghpywYSO3vuJp1CgNByXmJcHrUOidusdaDV9X7grYid9
+\restrict NhYJuZQxcoRZs9rjgQA5nMs22v7mb0SEZt4fq9zyXeATbO9TojsDsfPMX79cJe0
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -12663,6 +12663,13 @@ CREATE POLICY "allow_all" ON "public"."lead_search_runs" USING (true) WITH CHECK
 
 
 --
+-- Name: lead_search_urls anon_full_access_search_urls; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "anon_full_access_search_urls" ON "public"."lead_search_urls" TO "anon" USING (true) WITH CHECK (true);
+
+
+--
 -- Name: answers; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -12935,6 +12942,12 @@ ALTER TABLE "public"."lead_search_cache" ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE "public"."lead_search_runs" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: lead_search_urls; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."lead_search_urls" ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: lead_finder_config lf_config_insert; Type: POLICY; Schema: public; Owner: -
@@ -13746,5 +13759,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict BufhRnFDn1xC9XDUdTsghpywYSO3vuJp1CgNByXmJcHrUOidusdaDV9X7grYid9
+\unrestrict NhYJuZQxcoRZs9rjgQA5nMs22v7mb0SEZt4fq9zyXeATbO9TojsDsfPMX79cJe0
 
