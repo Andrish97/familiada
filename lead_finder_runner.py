@@ -258,7 +258,7 @@ def run_search(target=50):
     log(f"📋 Maile w bazie: {len(existing)}")
 
     # 1. Pobierz URL-e z tabeli lead_search_urls (status='pending')
-    r = sb_req("GET", f"/rest/v1/lead_search_urls?select=*&status=eq.pending&order=created_at.asc&limit=500")
+    r = sb_req("GET", f"/rest/v1/lead_search_urls?select=*&status=eq.pending&order=created_at.asc&limit=2000")
     candidate_urls = []
     if r and r.status_code == 200:
         candidate_urls = [(row["url"], row.get("city") or "", row.get("source") or "brave", row["id"]) for row in r.json()]

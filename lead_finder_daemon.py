@@ -16,15 +16,29 @@ SUPABASE_ANON = os.environ.get("SUPABASE_ANON_KEY", "")
 RUNNER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "lead_finder_runner.py")
 PYTHON = "python3"
 
+# Rozbudowana lista kategorii + paginacja w pętli skanowania
 DIR_URLS = [
+    # OFERTEO
     ("oferteo_dj", "https://www.oferteo.pl/dj-na-wesele"),
+    ("oferteo_wodzirej", "https://www.oferteo.pl/wodzirej"),
     ("oferteo_animacje", "https://www.oferteo.pl/animacje-dla-dzieci"),
+    ("oferteo_event", "https://www.oferteo.pl/organizacja-imprez"),
+    ("oferteo_zespol", "https://www.oferteo.pl/zespol-muzyczny"),
+    # FIXLY
     ("fixly_dj", "https://www.fixly.pl/kategoria/dj"),
+    ("fixly_animacje", "https://www.fixly.pl/kategoria/animacje-dla-dzieci"),
     ("fixly_event", "https://www.fixly.pl/kategoria/organizacja-imprez"),
+    ("fixly_wodzirej", "https://www.fixly.pl/kategoria/wodzirej"),
+    ("fixly_zespol", "https://www.fixly.pl/kategoria/zespol-muzyczny"),
+    # PANORAMAFIRM
     ("panoramafirm_dj", "https://www.panoramafirm.pl/szukaj/dj+wesele.html"),
     ("panoramafirm_event", "https://www.panoramafirm.pl/szukaj/agencja+eventowa.html"),
+    # E-WESELE
     ("e-wesele_dj", "https://www.e-wesele.pl/kategoria/dj-na-wesele"),
+    ("e-wesele_zespol", "https://www.e-wesele.pl/kategoria/zespoly-muzyczne"),
+    # INNE
     ("eventy_pl", "https://eventy.pl"),
+    ("konferansjer_pl", "https://konferansjer.pl"),
 ]
 
 def log(msg): print(f"[{datetime.now().strftime('%H:%M:%S')}] {msg}", flush=True)
@@ -51,29 +65,44 @@ def fetch_page(url, t=10):
         return r.status_code, r.text
     except: return 0, ""
 
-# ─── ZADANIE 1: Skanowanie Katalogów (zapisuje do lead_search_urls) ───
+# ─── ZADANIE 1: Skanowanie Katalogów (w tle, wielostronicowe) ───
 def run_catalog_scan():
-    log("📡 [TŁO] Rozpoczynam skanowanie portali...")
+    log("📡 [TŁO] Rozpoczynam skanowanie portali (wielostronicowe)...")
     new_links = []
 
     for key, dir_url in DIR_URLS:
-        log(f"🌐 [TŁO] Skanuję: {key}")
-        st, html = fetch_page(dir_url, 10)
-        if st == 200 and html:
-            soup = BeautifulSoup(html, "lxml")
-            count = 0
-            for a in soup.find_all('a', href=True):
-                if any(x in a['href'] for x in ['/oferta/', '/firma/', '/profil/']):
-                    full = urljoin(dir_url, a['href'])
-                    new_links.append({"url": full, "source": "portal"})
-                    count += 1
-            if count > 0: log(f"   ✅ [TŁO] +{count} linków")
-        time.sleep(1)
+        # Skanuj 3 strony wyników (zamiast tylko 1)
+        for page in range(1, 4):
+            # Prosta paginacja (?page=2) - działa np. dla Oferteo/Fixly
+            sep = "&" if "?" in dir_url else "?"
+            url = f"{dir_url}{sep}page={page}"
+            
+            log(f"🌐 [TŁO] Skanuję: {key} (str. {page})")
+            st, html = fetch_page(url, 10)
+            
+            if st == 200 and html:
+                soup = BeautifulSoup(html, "lxml")
+                count = 0
+                for a in soup.find_all('a', href=True):
+                    if any(x in a['href'] for x in ['/oferta/', '/firma/', '/profil/']):
+                        full = urljoin(dir_url, a['href'])
+                        # Unikamy duplikatów w bieżącej paczce
+                        if not any(link["url"] == full for link in new_links):
+                            new_links.append({"url": full, "source": "portal"})
+                            count += 1
+                
+                if count > 0: log(f"   ✅ [TŁO] +{count} linków")
+                else: 
+                    log(f"   ⛔ Pusta strona {page}, kończę dla {key}")
+                    break # Jeśli strona pusta, nie ma sensu iść dalej
+            time.sleep(1.5) # Odstęp między stronami
 
     if new_links:
         # INSERT do tabeli z ON CONFLICT DO NOTHING (duplikaty są ignorowane)
         sb_req("POST", "/rest/v1/lead_search_urls", new_links)
         log(f"💾 [TŁO] Zapisano {len(new_links)} linków do lead_search_urls.")
+    else:
+        log("ℹ️ [TŁO] Nie znaleziono nowych linków.")
 
     sb_set("scan_request", "idle")
     log("✅ [TŁO] Skanowanie zakończone.")
