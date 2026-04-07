@@ -1,53 +1,18 @@
 #!/usr/bin/env python3
 """
 Lead Finder Daemon
-Obsługuje WSZYSTKO: wyszukiwanie leadów + skanowanie katalogów w tle.
-Używa tabeli lead_search_urls (nie JSON w config).
+Prosty strażnik. Sprawdza bazę co 5s.
+Jeśli widzi zlecenie 'pending' -> odpala runnera.
+Nic więcej.
 """
-import os, sys, time, json, threading, httpx, subprocess
+import os, sys, time, httpx, subprocess
 from datetime import datetime
-from urllib.parse import urljoin
-from bs4 import BeautifulSoup
-from curl_cffi import requests as curl_requests
 
 # ─── Config ───
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://api.familiada.online")
 SUPABASE_ANON = os.environ.get("SUPABASE_ANON_KEY", "")
 RUNNER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "lead_finder_runner.py")
 PYTHON = "python3"
-
-# Kryteria wyszukiwania w portalach (odpowiadają zapytaniom Brave)
-# Format: (klucz_logu, link_wyszukiwania_z_fraza)
-DIR_URLS = [
-    # OFERTEO (szukaj po frazach)
-    ("oferteo_dj", "https://www.oferteo.pl/szukaj/oferta?szukaj=DJ+wesele"),
-    ("oferteo_wodzirej", "https://www.oferteo.pl/szukaj/oferta?szukaj=Wodzirej"),
-    ("oferteo_konferansjer", "https://www.oferteo.pl/szukaj/oferta?szukaj=Konferansjer"),
-    ("oferteo_prezenter", "https://www.oferteo.pl/szukaj/oferta?szukaj=Prezenter+eventowy"),
-    ("oferteo_animacje", "https://www.oferteo.pl/szukaj/oferta?szukaj=Animator+dzieci"),
-    ("oferteo_agencja", "https://www.oferteo.pl/szukaj/oferta?szukaj=Agencja+eventowa"),
-    ("oferteo_organizacja", "https://www.oferteo.pl/szukaj/oferta?szukaj=Organizacja+imprez"),
-    
-    # FIXLY (szukaj po kategoriach/frazach)
-    ("fixly_dj", "https://www.fixly.pl/szukaj?search=DJ+wesele"),
-    ("fixly_wodzirej", "https://www.fixly.pl/szukaj?search=Wodzirej"),
-    ("fixly_konferansjer", "https://www.fixly.pl/szukaj?search=Konferansjer"),
-    ("fixly_animacje", "https://www.fixly.pl/szukaj?search=Animator+dzieci"),
-    ("fixly_agencja", "https://www.fixly.pl/szukaj?search=Agencja+eventowa"),
-    ("fixly_organizacja", "https://www.fixly.pl/szukaj?search=Organizacja+imprez"),
-    ("fixly_team_building", "https://www.fixly.pl/szukaj?search=Team+building"),
-    
-    # PANORAMAFIRM (szukaj w wyszukiwarce)
-    ("panoramafirm_dj", "https://www.panoramafirm.pl/szukaj/DJ+wesele.html"),
-    ("panoramafirm_wodzirej", "https://www.panoramafirm.pl/szukaj/Wodzirej.html"),
-    ("panoramafirm_agencja", "https://www.panoramafirm.pl/szukaj/Agencja+eventowa.html"),
-    ("panoramafirm_organizacja", "https://www.panoramafirm.pl/szukaj/Organizacja+imprez.html"),
-    
-    # INNE KATALOGI
-    ("wodzireje_pl", "https://wodzireje.pl"),
-    ("e-wesele_dj", "https://www.e-wesele.pl/kategoria/dj-na-wesele"),
-    ("e-wesele_wodzirej", "https://www.e-wesele.pl/kategoria/wodzirej"),
-]
 
 def log(msg): print(f"[{datetime.now().strftime('%H:%M:%S')}] {msg}", flush=True)
 
@@ -59,87 +24,35 @@ def sb_req(method, path, json_data=None):
         log(f"⚠️ Błąd DB: {e}")
         return None
 
-def sb_get(key):
-    r = sb_req("GET", f"/rest/v1/lead_finder_config?select=value&key=eq.{key}")
-    return r.json()[0].get("value") if r and r.status_code == 200 and r.json() else None
-
-def sb_set(key, val):
-    sb_req("POST", "/rest/v1/lead_finder_config", [{"key": key, "value": str(val)}])
-
-def fetch_page(url, t=10):
-    try:
-        s = curl_requests.Session(impersonate="chrome124")
-        r = s.get(url, timeout=t, allow_redirects=True)
-        return r.status_code, r.text
-    except: return 0, ""
-
-# ─── ZADANIE 1: Skanowanie Katalogów (w tle, wielostronicowe) ───
-def run_catalog_scan():
-    log("📡 [TŁO] Rozpoczynam skanowanie portali (wielostronicowe)...")
-    new_links = []
-
-    for key, dir_url in DIR_URLS:
-        # Skanuj 3 strony wyników (zamiast tylko 1)
-        for page in range(1, 4):
-            # Prosta paginacja (?page=2) - działa np. dla Oferteo/Fixly
-            sep = "&" if "?" in dir_url else "?"
-            url = f"{dir_url}{sep}page={page}"
-            
-            log(f"🌐 [TŁO] Skanuję: {key} (str. {page})")
-            st, html = fetch_page(url, 10)
-            
-            if st == 200 and html:
-                soup = BeautifulSoup(html, "lxml")
-                count = 0
-                for a in soup.find_all('a', href=True):
-                    if any(x in a['href'] for x in ['/oferta/', '/firma/', '/profil/']):
-                        full = urljoin(dir_url, a['href'])
-                        # Unikamy duplikatów w bieżącej paczce
-                        if not any(link["url"] == full for link in new_links):
-                            new_links.append({"url": full, "source": "portal"})
-                            count += 1
-                
-                if count > 0: log(f"   ✅ [TŁO] +{count} linków")
-                else: 
-                    log(f"   ⛔ Pusta strona {page}, kończę dla {key}")
-                    break # Jeśli strona pusta, nie ma sensu iść dalej
-            time.sleep(1.5) # Odstęp między stronami
-
-    if new_links:
-        # INSERT do tabeli z ON CONFLICT DO NOTHING (duplikaty są ignorowane)
-        sb_req("POST", "/rest/v1/lead_search_urls", new_links)
-        log(f"💾 [TŁO] Zapisano {len(new_links)} linków do lead_search_urls.")
-    else:
-        log("ℹ️ [TŁO] Nie znaleziono nowych linków.")
-
-    sb_set("scan_request", "idle")
-    log("✅ [TŁO] Skanowanie zakończone.")
-
-def check_and_run_scan():
-    status = sb_get("scan_request")
-    if status == "pending":
-        sb_set("scan_request", "running")
-        threading.Thread(target=run_catalog_scan, daemon=True).start()
-
-# ─── ZADANIE 2: Wyszukiwanie Leadów ───
+# ─── ZADANIE: Wyszukiwanie Leadów ───
 def check_and_run_search():
+    # Sprawdź czy jest zlecenie w kolejce
     r = sb_req("GET", "/rest/v1/lead_search_runs?select=*&status=eq.pending&limit=1&order=started_at.asc")
+    
     if r and r.status_code == 200 and r.json():
         job = r.json()[0]
         log(f"▶️ Znaleziono zlecenie #{job['id'][:8]} (cel: {job['target']})")
+        
+        # Zmień status na running
         sb_req("PATCH", f"/rest/v1/lead_search_runs?id=eq.{job['id']}", [{"status": "running"}])
 
+        # Uruchom Runnera
         cmd = [PYTHON, RUNNER, "--target", str(job["target"])]
-        result = subprocess.run(cmd, timeout=3600)
-        status = "completed" if result.returncode == 0 else "failed"
-        sb_req("PATCH", f"/rest/v1/lead_search_runs?id=eq.{job['id']}", [{"status": status}])
+        try:
+            # Timeout 1h na cały proces
+            result = subprocess.run(cmd, timeout=3600)
+            
+            status = "completed" if result.returncode == 0 else "failed"
+            sb_req("PATCH", f"/rest/v1/lead_search_runs?id=eq.{job['id']}", [{"status": status}])
+        except Exception as e:
+            log(f"❌ Błąd uruchamiania runnera: {e}")
+            sb_req("PATCH", f"/rest/v1/lead_search_runs?id=eq.{job['id']}", [{"status": "failed", "reason": str(e)}])
 
 # ─── GŁÓWNA PĘTLA ───
 def main():
-    log("🤖 Start Daemona. Czekam na zadania...")
+    log("🤖 Start Daemona. Czekam na zlecenia...")
     while True:
         try:
-            check_and_run_scan()
             check_and_run_search()
         except KeyboardInterrupt:
             log("\n👋 Zatrzymywanie..."); break
