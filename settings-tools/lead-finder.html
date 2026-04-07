@@ -137,25 +137,152 @@ tr.used{opacity:.35}tr.used:hover{opacity:.7}
 </div>
 
 <script>
-// Czekamy aż cała strona (i CDN Supabase) się załaduje
-window.addEventListener('load', function() {
-  if (typeof window.supabase === 'undefined') {
-    document.body.innerHTML = '<div style="color:red;padding:20px;font-size:18px">⚠️ CDN Supabase się nie załadował.</div>';
-    return;
-  }
-  initApp();
-});
-
-function initApp() {
 const EDGE_FN = "/_admin_api/lead-finder";
 const DAILY_LIMIT = 33;
 
+// Inicjalizacja Supabase
 const SB_URL = "https://api.familiada.online";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsImF1ZCI6ImF1dGhlbnRpY2F0ZWQiLCJpYXQiOjE3NzIyMTEyNTAsImV4cCI6MjA4NzU3MTI1MCwicm9sZSI6ImFub24ifQ.9Hg8RB6iC72o2ommzcYUNQWnPSzsDyUdxwQR9PGcF4U";
 
+// Sprawdzamy czy Supabase CDN się załadował
+if (typeof window.supabase === 'undefined') {
+  document.body.innerHTML = '<div style="color:red;padding:20px">⚠️ CDN Supabase się nie załadował.</div>';
+  throw new Error("Supabase CDN missing");
+}
+
 const db = window.supabase.createClient(SB_URL, SB_KEY);
+
 let currentPage = 1;
 let searchTimeout = null;
+
+// ── SEARCH ──
+async function startSearch() {
+  const target = parseInt(document.getElementById("targetInput").value) || 50;
+  const btn = document.getElementById("startBtn");
+  btn.disabled = true;
+  btn.textContent = "⏳ Uruchamianie...";
+
+  try {
+    const r = await fetch(`${EDGE_FN}/search`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ target }),
+    });
+    const data = await r.json();
+    if (!r.ok) toast("❌ " + (data.error || "Błąd"), true);
+    else toast("🚀 Szukanie rozpoczęte!");
+  } catch(e) { toast("❌ " + e.message, true); }
+
+  btn.disabled = false;
+  btn.textContent = "🇵🇱 Szukaj";
+  loadStats();
+}
+
+// ── STATS ──
+async function loadStats() {
+  try {
+    const { count: total } = await db.from("lead_finder").select("*", { count:"exact", head:true });
+    document.getElementById("statTotal").textContent = total || 0;
+    const { count: used } = await db.from("lead_finder").select("*", { count:"exact", head:true }).eq("used", true);
+    document.getElementById("statUsed").textContent = used || 0;
+    document.getElementById("statUnused").textContent = (total||0) - (used||0);
+    
+    const { data: sources } = await db.from("lead_finder").select("source");
+    if (sources) {
+      const counts = {};
+      sources.forEach(s => counts[s.source] = (counts[s.source]||0)+1);
+      document.getElementById("statSources").textContent = Object.keys(counts).length;
+    }
+  } catch(e) { console.error("loadStats error:", e); }
+}
+
+// ── LEADS ──
+async function loadLeads(page) {
+  currentPage = page || 1;
+  const perPage = 50;
+  let q = db.from("lead_finder").select("*", { count:"exact" });
+
+  const used = document.getElementById("filterUsed").value;
+  if (used === "true") q = q.eq("used", true);
+  else if (used === "false") q = q.eq("used", false);
+  const src = document.getElementById("filterSource").value;
+  if (src) q = q.eq("source", src);
+  const sq = document.getElementById("searchInput").value.trim();
+  if (sq) q = q.or(`name.ilike.%${sq}%,email.ilike.%${sq}%,city.ilike.%${sq}%`);
+
+  q = q.order("added_at", { ascending:false }).range((currentPage-1)*perPage, currentPage*perPage-1);
+  const { data, error, count } = await q;
+  if (error) return console.error(error);
+
+  const body = document.getElementById("leadsBody");
+  if (!data?.length) {
+    body.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--mut);padding:30px">Brak leadów</td></tr>';
+  } else {
+    body.innerHTML = data.map(l => {
+      const urlDisplay = l.url ? l.url.replace(/^https?:\/\//,'').split('/')[0] : '';
+      return `<tr class="${l.used?'used':''}">
+        <td style="text-align:center"><input type="checkbox" ${l.used?'checked':''} onchange="_toggleUsed('${esc(l.id)}',this.checked)" style="accent-color:var(--green)"></td>
+        <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(l.name)}">${esc(l.name)}</td>
+        <td class="city">${esc(l.city||'—')}</td>
+        <td class="email">${esc(l.email)}</td>
+        <td><a href="${esc(l.url)}" target="_blank" class="src" style="color:var(--acc);text-decoration:none">${esc(urlDisplay)}</a></td>
+        <td><span class="src">${esc(l.source)}</span></td>
+        <td style="font-size:10px;color:var(--mut)">${formatDate(l.added_at)}</td>
+        <td style="text-align:center"><button class="btn btn-red" style="padding:3px 6px;font-size:10px" onclick="_delLead('${esc(l.id)}')">✕</button></td>
+      </tr>`;
+    }).join('');
+  }
+  
+  const pbox = document.getElementById("paginationBox");
+  if (count > perPage) {
+    pbox.style.display = "flex";
+    document.getElementById("pageInfo").textContent = `Strona ${currentPage}/${Math.ceil(count/perPage)} (${count})`;
+    document.getElementById("prevBtn").disabled = currentPage <= 1;
+    document.getElementById("nextBtn").disabled = currentPage >= Math.ceil(count/perPage);
+  } else {
+    pbox.style.display = "none";
+  }
+}
+
+// ── ACTIONS ──
+async function _toggleUsed(id, val) { await db.from("lead_finder").update({ used: val }).eq("id", id); loadStats(); }
+async function _delLead(id) { if(confirm("Usunąć?")) { await db.from("lead_finder").delete().eq("id", id); loadLeads(currentPage); loadStats(); } }
+async function bulkToggle() {
+  const usedFilter = document.getElementById("filterUsed").value;
+  const targetUsed = usedFilter === "true" ? false : true;
+  if (!confirm(`Oznacz widoczne jako ${targetUsed?'użyte':'nieużyte'}?`)) return;
+  let q = db.from("lead_finder").update({ used: targetUsed });
+  if (usedFilter !== "") q = q.eq("used", usedFilter === "true");
+  await q; loadLeads(currentPage); loadStats();
+}
+
+// ── EXPORT ──
+async function exportCSV() {
+  const used = document.getElementById("filterUsed").value;
+  let q = db.from("lead_finder").select("*").order("added_at",{ascending:false});
+  if (used === "true") q = q.eq("used", true);
+  else if (used === "false") q = q.eq("used", false);
+  const { data, error } = await q;
+  if (error || !data) return toast("❌ Błąd", true);
+  let csv = "Nazwa,Miasto,Email,Strona,Źródło,Stan,Dodano\n";
+  data.forEach(r => { csv += [r.name, r.city, r.email, r.url, r.source, r.used?'Użyty':'Nowy', r.added_at].map(v => `"${v||''}"`).join(",") + "\n"; });
+  const blob = new Blob(["\ufeff"+csv], {type:"text/csv;charset=utf-8"});
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+  a.download = "familiada_leads_"+new Date().toISOString().slice(0,10)+".csv";
+  a.click(); toast("📥 CSV pobrany");
+}
+
+// ── UTILS ──
+function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML}
+function formatDate(d){if(!d)return'';try{return new Date(d).toLocaleString('pl-PL')}catch{return d}}
+function debounceSearch(){clearTimeout(searchTimeout);searchTimeout=setTimeout(()=>loadLeads(1),400)}
+function toast(msg,err){const t=document.createElement('div');t.className='toast'+(err?' err':'');t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3000)}
+
+// ── INIT ──
+loadStats();
+loadLeads(1);
+setInterval(()=>{loadStats();loadLeads(currentPage)}, 15000);
+</script>
 
 // ── SEARCH ──
 async function startSearch() {
