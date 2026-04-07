@@ -1,23 +1,17 @@
 #!/usr/bin/env python3
 """
-Familiada Lead Finder – Single-run, loop until target or limit.
+Familiada.online – Lead Finder (Groq AI Edition)
+=================================================
+Weryfikuje firmy za pomocą Groq AI.
+Akceptuje maile firmowe, prywatne i z platform ogłoszeniowych.
 
-Usage:
-  python3 lead_finder_runner.py 50
-
-Strategy:
-  1. Katalogi (równolegle, za darmo) → analiza → ile znaleziono
-  2. Pętla Brave: 1 zapytanie → 20 URL-i → analiza → ile znaleziono
-     → Jeśli found >= target → STOP
-     → Jeśli api_calls >= daily_limit → STOP
-     → Inaczej → kolejne zapytanie
-  3. Insert do DB + Telegram
+Uruchomienie:
+  python3 lead_finder_runner.py --target 50
 """
 
 import json, os, random, re, sys, time
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urlparse
 
 import httpx
 from bs4 import BeautifulSoup
@@ -26,223 +20,39 @@ from curl_cffi import requests as curl_requests
 # ─── Config ───
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://api.familiada.online")
 SUPABASE_ANON = os.environ["SUPABASE_ANON_KEY"]
-
-# Klucze z pliku .env na serwerze (systemd EnvironmentFile)
-BRAVE_KEY = os.environ.get("BRAVE_API_KEY")
-BRAVE_DAILY_LIMIT = 33  # Taki sam jak na froncie (DAILY_LIMIT)
-WORKER_URL = os.environ.get("WORKER_URL", "https://settings.familiada.online")
-
-def _send_telegram_via_worker(message):
-    """Wysyła powiadomienie Telegram przez Cloudflare Worker."""
-    try:
-        resp = httpx.post(f"{WORKER_URL}/_admin_api/lead-finder/notify",
-                          json={"message": message}, timeout=10)
-        if resp.status_code == 200:
-            print("📱 Telegram notification sent via Worker")
-        else:
-            print(f"⚠️ Telegram failed: {resp.status_code}")
-    except Exception as e:
-        print(f"⚠️ Telegram error: {e}")
-
-def _send_tg_start(target):
-    """Powiadomienie o rozpoczęciu wyszukiwania."""
-    msg = (
-        f"🚀 <b>Rozpoczęto wyszukiwanie</b>\n"
-        f"Cel: <b>{target}</b> nowych leadów\n"
-        f"Miasta: losowe 20 z 350\n"
-        f"Status postępu dostępny w panelu settings.familiada.online"
-    )
-    _send_telegram_via_worker(f"🎯 Lead Finder\n{msg}")
-
-def _send_tg_summary(found, target, api_calls, day_count, reason, total_db, cities_done, cities_total):
-    """Wysyła podsumowanie z odpowiednim komunikatem."""
-    
-    if reason == "stopped":
-        icon = "⏹️"
-        title = "Zatrzymano ręcznie"
-        body = (
-            f"Znalazłeś <b>{found}/{target}</b> leadów\n"
-            f"Zużyto: {api_calls} zapytań Brave ({day_count}/33 dzisiaj)\n"
-            f"Baza: {total_db} leadów  •  Miasta: {cities_done}/{cities_total}"
-        )
-        footer = "💡 Aby wznowić: wpisz nowy cel i kliknij 'Szukaj'"
-    
-    elif reason == "target reached":
-        icon = "🎉"
-        title = "Osiągnięto cel!"
-        body = (
-            f"Znaleziono <b>{found}</b> nowych leadów 🎯\n"
-            f"Zużyto: {api_calls} zapytań Brave ({day_count}/33 dzisiaj)\n"
-            f"Baza: {total_db} leadów  •  Miasta: {cities_done}/{cities_total}"
-        )
-        footer = "✅ Sprawdź wyniki w panelu settings.familiada.online"
-    
-    elif "limit" in reason.lower() or "api" in reason.lower():
-        icon = "⚠️"
-        title = "Dzienny limit wyczerpany"
-        body = (
-            f"Znaleziono <b>{found}/{target}</b> leadów\n"
-            f"Limit Brave: {day_count}/33 wykorzystany na dziś\n"
-            f"Baza: {total_db} leadów  •  Miasta: {cities_done}/{cities_total}"
-        )
-        footer = "⏰ Kontynuuj jutro – limit resetuje się o północy"
-    
-    else:
-        icon = "📊"
-        title = "Wyszukiwanie zakończone"
-        body = (
-            f"Znaleziono <b>{found}/{target}</b> leadów\n"
-            f"Powód: {reason}\n"
-            f"Zużyto: {api_calls} zapytań ({day_count}/33 dzisiaj)\n"
-            f"Baza: {total_db} leadów  •  Miasta: {cities_done}/{cities_total}"
-        )
-        footer = ""
-    
-    msg = f"{icon} <b>{title}</b>\n\n{body}"
-    if footer: msg += f"\n\n{footer}"
-    
-    _send_telegram_via_worker(f"🎯 Lead Finder\n{msg}")
-
-# ~350 miast – rotacja po 20/run
-ALL_CITIES = """Warszawa,Krakow,Wroclaw,Poznan,Gdansk,Lodz,Katowice,Szczecin,Bydgoszcz,Lublin,
-Bialystok,Gdynia,Czestochowa,Radom,Sosnowiec,Torun,Kielce,Rzeszow,Gliwice,Zabrze,Olsztyn,
-Bielsko-Biala,Rybnik,Tychy,Opole,Gorzow,Elblag,Plock,Walbrzych,Wloclawek,Tarnow,Chorzow,
-Koszalin,Kalisz,Legnica,Grudziadz,Jaworzno,Jastrzebie-Zdroj,Nowy Sacz,Jelenia Gora,Siedlce,
-Myslowice,Konin,Piotrkow Trybunalski,Inowroclaw,Lubin,Ostrow Wielkopolski,Stargard,Gniezno,
-Tczew,Lomza,Mielec,Przemysl,Elk,Ostroleka,Zamosc,Suwalki,Rumia,Slupsk,Tomaszow Mazowiecki,
-Pulawy,Starachowice,Zgierz,Wejherowo,Zawiercie,Pabianice,Kedzierzyn-Kozle,Leszno,Chelm,
-Zielona Gora,Oswiecim,Kutno,Swinoujscie,Minsk Mazowiecki,Nowa Sol,Raciborz,Skierniewice,
-Ostroda,Wadowice,Sandomierz,Klodzko,Gizycko,Augustow,Otwock,Piaseczno,Pruszkow,Legionowo,
-Wolomin,Zary,Zagan,Krosno,Sanok,Jaroslaw,Lubartow,Bilgoraj,Krasnik,Pultusk,Ciechanow,
-Sierpc,Lipno,Brodnica,Swiecie,Tuchola,Chojnice,Czluchow,Bytow,Lebork,Kartuzy,Koscierzyna,
-Starogard Gdanski,Kwidzyn,Malbork,Sztum,Ilawa,Dzialdowo,Nidzica,Szczytno,
-Wegorzewo,Ketrzyn,Bartoszyce,Braniewo,Lidzbark Warminski,Olecko,Goldap,Pisz,Orzysz,
-Biala Podlaska,Miedzyrzec Podlaski,Lukow,Radzyn Podlaski,Parczew,Wlodawa,Hrubieszow,
-Tomaszow Lubelski,Janow Lubelski,Krasnystaw,Leczna,Swidnik,Opole Lubelskie,Krasnik,
-Stalowa Wola,Nisko,Tarnobrzeg,Ropczyce,Debica,Kolbuszowa,Lezajsk,Lancut,Przeworsk,
-Lubaczow,Cieszanow,Narol,Ulanow,Bochnia,Wieliczka,Myslenice,Zakopane,Nowy Targ,Limanowa,
-Gorlice,Jaslo,Brzozow,Ustrzyki Dolne,Lesko,Andrychow,Skawina,Krzeszowice,Slomniki,
-Miechow,Busko-Zdroj,Pinczow,Jedrzejow,Wloszczowa,Suchedniow,Konskie,Przysucha,Szydlowiec,
-Ilza,Zwolen,Garwolin,Laskarow,Zelechow,Ryki,Kozienice,Bialobrzegi,Grojec,Warka,
-Gora Kalwaria,Tarczyn,Nadarzyn,Grodzisk Mazowiecki,Zyrardow,Sochaczew,Lowicz,Blonie,
-Ozarow Mazowiecki,Nowy Dwor Mazowiecki,Zakroczym,Wyszogrod,Czerwinsk,Raciąż,Drobin,
-Strzelce,Lasin,Kisielice,Zalewo,Morąg,Miłakowo,Miłomłyn,Olsztynek,Biskupiec,Reszel,
-Korsze,Srokowo,Barciany,Górowo Iławeckie,Pieniężno,Orneta,Dobre Miasto,Bisztynek,
-Jeziorany,Janowiec Koscielny,Przasnysz,Chorzele,Krasnosielc,Myszyniec,Baranowo""".replace("\n","").split(",")
-
-SEARCH_QUERIES = [
-    '"DJ" "wesele" {city} kontakt email',
-    '"wodzirej" {city} kontakt',
-    '"animator dzieci" {city} kontakt email',
-    '"agencja eventowa" {city} kontakt',
-    '"event firmowy" {city} organizacja',
-    '"team building" {city} firma kontakt',
-    '"gry integracyjne" {city} kontakt',
-    '"fotobudka" {city} wynajem',
-    '"zespół muzyczny" {city} wesele kontakt',
-    '"organizacja pikników" {city} kontakt',
-]
-
-DIR_URLS = [
-    ("oferteo_dj", "https://www.oferteo.pl/dj-na-wesele"),
-    ("oferteo_wodzirej", "https://www.oferteo.pl/wodzirej"),
-    ("oferteo_animacje", "https://www.oferteo.pl/animacje-dla-dzieci"),
-    ("oferteo_event", "https://www.oferteo.pl/organizacja-imprez"),
-    ("oferteo_muzyka", "https://www.oferteo.pl/zespol-muzyczny"),
-    ("fixly_dj", "https://www.fixly.pl/kategoria/dj"),
-    ("fixly_animacje", "https://www.fixly.pl/kategoria/animacje-dla-dzieci"),
-    ("fixly_event", "https://www.fixly.pl/kategoria/organizacja-imprez"),
-    ("fixly_wodzirej", "https://www.fixly.pl/kategoria/wodzirej"),
-    ("panoramafirm_dj", "https://www.panoramafirm.pl/szukaj/dj+wesele.html"),
-    ("panoramafirm_wodzirej", "https://www.panoramafirm.pl/szukaj/wodzirej.html"),
-    ("panoramafirm_animacje", "https://www.panoramafirm.pl/szukaj/animacje+dla+dzieci.html"),
-    ("panoramafirm_event", "https://www.panoramafirm.pl/szukaj/agencja+eventowa.html"),
-    ("pkt_dj", "https://www.pkt.pl/dj-wesele"),
-    ("pkt_wodzirej", "https://www.pkt.pl/wodzirej"),
-    ("pkt_animacje", "https://www.pkt.pl/animacje-dla-dzieci"),
-    ("pkt_event", "https://www.pkt.pl/agencja-eventowa"),
-    ("firmyinfo_dj", "https://firmy.info.pl/dj+wesele"),
-    ("firmyinfo_event", "https://firmy.info.pl/agencja+eventowa"),
-    ("wodzireje", "https://wodzireje.pl"),
-    ("e-wesele_dj", "https://www.e-wesele.pl/kategoria/dj-na-wesele"),
-    ("e-wesele_zespoly", "https://www.e-wesele.pl/kategoria/zespoly-muzyczne"),
-    ("animatorki", "https://animatorki.pl"),
-    ("klubanimatora", "https://klubanimatora.pl"),
-    ("konferansjer", "https://konferansjer.pl"),
-    ("eventy_pl", "https://eventy.pl"),
-    ("enyo_dj", "https://katalog.enyo.pl/dj+wesele"),
-    ("enyo_event", "https://katalog.enyo.pl/agencja+eventowa"),
-    ("firmo_dj", "https://firmo.pl/dj+wesele"),
-    ("firmo_event", "https://firmo.pl/agencja+eventowa"),
-]
-
-EMAIL_RE = re.compile(r'[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}')
-SKIP = {"google.","youtube.","facebook.com","pinterest.","twitter.com","instagram.com",
-        "tiktok.com","linkedin.com","bing.com","duckduckgo.com","onet.","wp.pl",
-        "interia.pl","wikipedia.org","reddit.com","oferteo.pl","fixly.pl",
-        "panoramafirm.pl","pkt.pl","firmy.info.pl","enyo.pl","firmo.pl",
-        "wodzireje.pl","e-wesele.pl","animatorki.pl","klubanimatora.pl",
-        "konferansjer.pl","teambuilding.pl","eventy.pl","pikniki-firmowe.pl"}
+BRAVE_KEY = os.environ.get("BRAVE_API_KEY", "")
+GROQ_KEY = os.environ.get("GROQ_API_KEY", "")
+BRAVE_DAILY_LIMIT = 33
+GROQ_MODEL = "llama-3.3-70b-versatile"
 
 # ─── Logi ───
 logs = []
-
-def log(msg, flush=False):
+def log(msg):
     ts = datetime.now().strftime("%H:%M:%S")
     line = f"[{ts}] {msg}"
     print(line, flush=True)
     logs.append(line)
-    
-    # Zapisuj do bazy co 10 linijek lub na żądanie (żeby UI widziało na żywo)
-    if flush or len(logs) % 10 == 0:
-        try:
-            # Pobierz funkcję sb_upsert jeśli jest już zdefiniowana
-            if 'sb_upsert' in globals():
-                sb_upsert("last_search_log", "\n".join(logs)[-4000:])
+    if len(logs) % 3 == 0:
+        try: sb_upsert("last_search_log", "\n".join(logs)[-4000:])
         except: pass
 
-def sb_upsert(key, val):
-    sb("/rest/v1/lead_finder_config", "POST", [{"key": key, "value": str(val)}],
-       {"Content-Type": "application/json", "Prefer": "resolution=merge-duplicates"})
-
-# ─── Supabase ───
+# ─── Supabase Helpers ───
 def sb(path, method="GET", body=None, headers=None):
     h = {"Authorization": f"Bearer {SUPABASE_ANON}", "apikey": SUPABASE_ANON}
     if headers: h.update(headers)
     return httpx.request(method, f"{SUPABASE_URL}{path}", headers=h, json=body, timeout=30)
 
-def sb_get_cached_urls():
-    """Pobiera wszystkie URL-e z cache (żeby nie powtarzać zapytań)."""
-    urls = set()
-    page = 0
-    while True:
-        r = sb(f"/rest/v1/lead_search_cache?select=url&limit=1000&offset={page*1000}")
-        data = r.json()
-        if not data: break
-        for row in data: urls.add(row["url"])
-        if len(data) < 1000: break
-        page += 1
-    return urls
+def sb_upsert(key, val):
+    sb("/rest/v1/lead_finder_config", "POST", [{"key": key, "value": str(val)}],
+       {"Content-Type": "application/json", "Prefer": "resolution=merge-duplicates"})
 
-def sb_cache_urls(urls, city="", source="brave", title=""):
-    """Zapisuje URL-e w cache."""
-    if not urls: return
-    batch = [{"query": "", "url": u, "title": title[:120], "source": source, "city": city} for u in urls[:100]]
-    try:
-        sb("/rest/v1/lead_search_cache", "POST", batch,
+def sb_insert(leads):
+    if not leads: return 0
+    r = sb("/rest/v1/lead_finder", "POST", leads,
            {"Content-Type": "application/json", "Prefer": "resolution=ignore-duplicates"})
-    except: pass
+    return len(leads) if r.status_code in (200, 201) else 0
 
-def sb_delete_urls(urls):
-    """Usuwa URL-e z cache (gdy lead zostaje usunięty/odrzucony)."""
-    if not urls: return
-    for u in urls[:50]:
-        try:
-            sb(f"/rest/v1/lead_search_cache?url=eq.{u}", "DELETE")
-        except: pass
-
-def sb_get_emails():
-    """Pobiera wszystkie istniejące maile (do deduplikacji)."""
+def sb_get_existing_emails():
     emails = set()
     page = 0
     while True:
@@ -254,27 +64,84 @@ def sb_get_emails():
         page += 1
     return emails
 
-def sb_insert(leads):
-    if not leads: return 0
-    r = sb("/rest/v1/lead_finder", "POST", leads,
-           {"Content-Type": "application/json", "Prefer": "resolution=ignore-duplicates"})
-    if r.status_code in (200, 201): return len(leads)
-    c = 0
-    for l in leads:
-        rr = sb("/rest/v1/lead_finder", "POST", [l],
-                {"Content-Type": "application/json", "Prefer": "resolution=ignore-duplicates"})
-        if rr.status_code in (200, 201): c += 1
-    return c
+def sb_create_search_run(target):
+    try:
+        r = sb("/rest/v1/lead_search_runs", "POST", [{
+            "target": target, "found": 0, "api_calls": 0, "status": "running",
+            "cities_done": 0, "cities_list": [], "started_at": datetime.now().isoformat(),
+        }], {"Content-Type": "application/json", "Prefer": "return=representation"})
+        if r.status_code in (200, 201) and r.json(): return r.json()[0]["id"]
+    except: pass
+    return None
 
-def sb_upsert(key, val):
-    sb("/rest/v1/lead_finder_config", "POST", [{"key": key, "value": str(val)}],
-       {"Content-Type": "application/json", "Prefer": "resolution=merge-duplicates"})
+def sb_update_run(run_id, **kw):
+    if not run_id: return
+    try: sb(f"/rest/v1/lead_search_runs?id=eq.{run_id}", "PATCH", [kw], {"Content-Type": "application/json"})
+    except: pass
 
-# ─── Search helpers ───
-def skip_url(u):
-    l = u.lower()
-    return any(s in l for s in SKIP)
+def sb_close_run(run_id, status="completed", reason=""):
+    if not run_id: return
+    try:
+        sb(f"/rest/v1/lead_search_runs?id=eq.{run_id}", "PATCH", [{
+            "status": status, "reason": reason, "finished_at": datetime.now().isoformat()
+        }], {"Content-Type": "application/json"})
+    except: pass
 
+# ─── AI Verifier (Groq) ───
+def ask_groq(title, text, emails):
+    """Pyta AI o weryfikację firmy i wybór najlepszego maila. Retry na 429."""
+    if not GROQ_KEY: return None
+
+    email_list = ", ".join(emails)
+    prompt = (
+        f"Analizuję stronę pod kątem kontaktu do branży eventowej w Polsce (DJ, Wodzirej, Animator dzieci, "
+        f"Agencja eventowa, Fotobudka, Zespół muzyczny, Team building).\n\n"
+        f"To może być:\n"
+        f"- Oficjalna strona firmy\n"
+        f"- Ogłoszenie na portalu (np. Oferteo, Fixly, Facebook)\n"
+        f"- Wpis na blogu (np. recenzja lub polecenie)\n"
+        f"- Wizytówka firmowa\n\n"
+        f"TYTUŁ: {title}\n"
+        f"TEKST: {text[:800]}\n"
+        f"ZNALEZIONE MAILE: {email_list}\n\n"
+        f"ZADANIE: Czy na tej stronie znajduje się użyteczny kontakt do takiej osoby/firmy?\n"
+        f"Jeśli TAK, wskaż najlepszy adres email z listy.\n"
+        f"Jeśli to spam, gazeta, urząd lub sklep nie związany z branżą – odrzuć.\n\n"
+        f"Odpowiedz TYLKO w formacie JSON:\n"
+        f'{{"valid": true/false, "email": "najlepszy_mail_lub_null", "reason": "krótki powód"}}'
+    )
+
+    for attempt in range(3):
+        try:
+            r = httpx.post("https://api.groq.com/openai/v1/chat/completions", json={
+                "model": GROQ_MODEL,
+                "messages": [{"role": "user", "content": prompt}],
+                "temperature": 0.0,
+                "max_tokens": 100,
+            }, headers={"Authorization": f"Bearer {GROQ_KEY}", "Content-Type": "application/json"}, timeout=12)
+
+            if r.status_code == 200:
+                content = r.json().get("choices", [{}])[0].get("message", {}).get("content", "").strip()
+                start = content.find('{')
+                end = content.rfind('}') + 1
+                if start != -1 and end != 0:
+                    data = json.loads(content[start:end])
+                    return data
+                return {"valid": False, "email": None, "reason": "bad_json"}
+            
+            elif r.status_code == 429:
+                wait = 5 * (attempt + 1)
+                log(f"⏳ Groq Rate Limit. Czekam {wait}s...")
+                time.sleep(wait)
+                continue
+            else:
+                return None
+        except Exception as e:
+            log(f"⚠️ Błąd Groq: {e}")
+            time.sleep(2)
+    return None
+
+# ─── Fetch & Extract ───
 def fetch_page(url, t=8):
     try:
         s = curl_requests.Session(impersonate="chrome124")
@@ -283,519 +150,113 @@ def fetch_page(url, t=8):
         return r.status_code, r.text
     except: return 0, ""
 
-def get_emails_from_url(url):
+def get_page_data(url):
     domain = urlparse(url).hostname or ""
-    if not domain: return [], False, ""
+    if not domain: return None
     scheme = "https" if "https" in url else "http"
-    pages = [url, f"{scheme}://{domain}/kontakt", f"{scheme}://{domain}/kontakt.html", f"{scheme}://{domain}/contact"]
-    emails, active = set(), False
-    full_text = ""
+    pages = [url, f"{scheme}://{domain}/kontakt", f"{scheme}://{domain}/kontakt.html"]
+    emails, active, title, text_sample = set(), False, "", ""
     for p in pages[:3]:
         st, html = fetch_page(p, 6)
         if 200 <= st < 400:
             active = True
-            clean = re.sub(r'<(script|style)[^>]*>.*?</\1>', '', html, flags=re.S|re.I)
-            emails.update(EMAIL_RE.findall(clean))
-            if not full_text: full_text = clean # Zapamiętaj tekst do analizy
-        time.sleep(0.15)
-    return list(emails), active, full_text
-
-def is_junk_email(email):
-    name = email.split('@')[0].lower()
-    # Odrzuć maile zaczynające się od cyfr
-    if re.match(r'^\d+[a-z]', name): return True
-    # Odrzuć systemowe i redakcyjne
-    junk_prefixes = ['admin', 'webmaster', 'hostmaster', 'root', 'postmaster', 'support', 'noreply', 'no-reply', 'redakcja', 'biuro.gazety', 'ogloszenia']
-    if any(name.startswith(p) for p in junk_prefixes): return True
-    return False
-
-def is_trash_domain(domain):
-    """Odrzuca gazety, urzędy, szkoły i wielkie portale."""
-    if not domain: return True
-    d = domain.lower()
-    trash = ['gazeta.pl', 'wyborcza.pl', 'fakt.pl', 'se.pl', 'onetr', 'wp.pl', 'interia.pl', 'gov.pl', 'edu.pl', 'szkola', 'uczelnia', 'facebook.com', 'youtube.com']
-    # Szukaj słów kluczowych "śmieci" w domenie (np. nowinyzabrzanskie.pl -> nowiny)
-    trash_keywords = ['nowiny', 'dziennik', 'prasa', 'gazeta', 'radio', 'telewizja', 'portal', 'urząd', 'miasto']
-    if any(k in d for k in trash_keywords): return True
-    return False
-
-def is_content_relevant(title, text):
-    """Sprawdza czy strona należy do firmy z branży eventowej."""
-    if not text: return False
-    text_sample = (title + " " + text).lower()[:3000]
+            soup = BeautifulSoup(html, "lxml")
+            t = soup.find("title")
+            if t: title = t.get_text(strip=True)
+            for tag in soup(["script", "style"]): tag.decompose()
+            clean = soup.get_text(" ", strip=True)
+            emails.update(re.findall(r'[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}', clean))
+            if not text_sample: text_sample = clean[:1500]
+        time.sleep(0.2)
     
-    # Musi mieć przynajmniej jedno słowo kluczowe branży
-    keywords = ['dj', 'wodzirej', 'animator', 'zespół muzyczny', 'kapela', 'konferansjer', 'event', 'fotobudka', 'foto buska', 'atrakcje', 'muzyka na wesele', 'organizacja imprez', 'oprawa muzyczna', 'show', 'pokaz']
-    has_keyword = any(kw in text_sample for kw in keywords)
-    
-    # Nie może mieć słów typowych dla gazet/sklepów
-    trash_terms = ['cennik paliw', 'wyniki wyborów', 'wypadki', 'kryminalne', 'polityka lokalna', 'sklep internetowy', 'dostawa', 'zamów online']
-    has_trash = any(t in text_sample for t in trash_terms)
+    if not emails: return None
+    return {"emails": list(emails), "active": active, "title": title, "text": text_sample}
 
-    return has_keyword and not has_trash
+# ─── Search Config ───
+SKIP_DOMAINS = {"google.","youtube.","facebook.com","pinterest.","twitter.com","instagram.com",
+        "tiktok.com","linkedin.com","bing.com","duckduckgo.com","wikipedia.org","reddit.com"}
 
-def scrape_dir(key, url):
-    st, html = fetch_page(url, 10)
-    if st != 200 or not html: return []
-    results = []
-    for m in re.finditer(r'href="([^"]+)"', html):
-        href = m.group(1)
-        if not href.startswith("http"):
-            try: href = urljoin(url, href)
-            except: continue
-        if not any(p in href for p in ["/firmy/", "/firma/", "/profil/", "/katalog/"]): continue
-        ctx = html[max(0,m.start()-80):m.end()+80]
-        name = re.sub(r'<[^>]+>', ' ', ctx).strip()
-        name = re.sub(r'\s+', ' ', name)[:120]
-        if len(name) > 5 and not skip_url(href):
-            results.append({"url": href, "title": name, "source": key, "_city": ""})
-    time.sleep(0.5 + random.random())
-    return results
+SEARCH_QUERIES = [
+    '"DJ" "wesele" {city} kontakt', '"wodzirej" {city} kontakt', '"animator dzieci" {city} kontakt',
+    '"agencja eventowa" {city} kontakt', '"event firmowy" {city} organizacja',
+    '"team building" {city} firma', '"gry integracyjne" {city} kontakt',
+    '"fotobudka" {city} wynajem', '"zespół muzyczny" {city} wesele kontakt',
+]
 
-def _send_tg_start(target):
-    """Powiadomienie o rozpoczęciu wyszukiwania."""
-    msg = (
-        f"🚀 <b>Rozpoczęto wyszukiwanie</b>\n"
-        f"Cel: <b>{target}</b> nowych leadów\n"
-        f"Miasta: losowe 20 z 350\n"
-        f"Status postępu dostępny w panelu settings.familiada.online"
-    )
-    _send_telegram_via_worker(f"🎯 Lead Finder\n{msg}")
+MAJOR_CITIES = [
+    "Warszawa","Kraków","Wrocław","Poznań","Gdańsk","Łódź","Katowice","Szczecin","Bydgoszcz",
+    "Lublin","Białystok","Gdynia","Częstochowa","Radom","Sosnowiec","Toruń","Kielce","Rzeszów",
+    "Gliwice","Zabrze","Olsztyn","Bielsko-Biała","Rybnik","Tychy","Opole","Gorzów","Elbląg",
+    "Płock","Wałbrzych","Włocławek","Tarnów","Chorzów","Koszalin","Kalisz","Legnica","Grudziądz"
+]
 
-def _send_tg_summary(found, target, api_calls, day_count, reason, total_db, cities_done, cities_total):
-    """Wysyła podsumowanie z odpowiednim komunikatem."""
-    
-    if reason == "stopped":
-        icon = "⏹️"
-        title = "Zatrzymano ręcznie"
-        body = (
-            f"Znalazłeś <b>{found}/{target}</b> leadów\n"
-            f"Zużyto: {api_calls} zapytań Brave ({day_count}/33 dzisiaj)\n"
-            f"Baza: {total_db} leadów  •  Miasta: {cities_done}/{cities_total}"
-        )
-        footer = "💡 Aby wznowić: wpisz nowy cel i kliknij 'Szukaj'"
-    
-    elif reason == "target reached":
-        icon = "🎉"
-        title = "Osiągnięto cel!"
-        body = (
-            f"Znaleziono <b>{found}</b> nowych leadów 🎯\n"
-            f"Zużyto: {api_calls} zapytań Brave ({day_count}/33 dzisiaj)\n"
-            f"Baza: {total_db} leadów  •  Miasta: {cities_done}/{cities_total}"
-        )
-        footer = "✅ Sprawdź wyniki w panelu settings.familiada.online"
-    
-    elif "limit" in reason.lower() or "api" in reason.lower():
-        icon = "⚠️"
-        title = "Dzienny limit wyczerpany"
-        body = (
-            f"Znaleziono <b>{found}/{target}</b> leadów\n"
-            f"Limit Brave: {day_count}/33 wykorzystany na dziś\n"
-            f"Baza: {total_db} leadów  •  Miasta: {cities_done}/{cities_total}"
-        )
-        footer = "⏰ Kontynuuj jutro – limit resetuje się o północy"
-    
-    else:
-        icon = "📊"
-        title = "Wyszukiwanie zakończone"
-        body = (
-            f"Znaleziono <b>{found}/{target}</b> leadów\n"
-            f"Powód: {reason}\n"
-            f"Zużyto: {api_calls} zapytań ({day_count}/33 dzisiaj)\n"
-            f"Baza: {total_db} leadów  •  Miasta: {cities_done}/{cities_total}"
-        )
-        footer = ""
-    
-    msg = f"{icon} <b>{title}</b>\n\n{body}"
-    if footer: msg += f"\n\n{footer}"
-    
-    _send_telegram_via_worker(f"🎯 Lead Finder\n{msg}")
+def run_search(target=50):
+    log(f"🎯 Cel: {target} leadów | AI: {'ON (Sekwencyjnie)' if GROQ_KEY else 'OFF'}")
+    run_id = sb_create_search_run(target)
+    if run_id: log(f"📝 ID: {run_id[:8]}")
 
-# ─── Analyze URLs → extract emails → return new leads ───
-def analyze_urls(urls, existing_emails):
-    """Batch-process URLs, extract emails, return new leads."""
-    if not urls: return []
-    leads = []
-    batch_size = 10
-
-    for i in range(0, len(urls), batch_size):
-        batch = urls[i:i+batch_size]
-        results = []
-        with ThreadPoolExecutor(max_workers=10) as ex:
-            futs = {ex.submit(get_emails_from_url, item["url"]): item for item in batch}
-            for f in as_completed(futs):
-                item = futs[f]
-                try:
-                    emails, active, text = f.result()
-                except: continue
-                
-                # 1. Sprawdź czy treść pasuje do branży
-                if not is_content_relevant(item.get("title", ""), text): continue
-
-                # 2. Odfiltruj śmieciowe maile
-                valid_emails = [e for e in emails if not is_junk_email(e)]
-                if not valid_emails: continue
-
-                domain = urlparse(item["url"]).hostname.replace("www.", "")
-                # Wybierz najlepszy mail (najpierw ten z domeny, potem inny)
-                primary = next((e for e in valid_emails if e.split("@")[1].lower() == domain), sorted(valid_emails)[0])
-                
-                if primary.lower() in existing_emails: continue
-
-                existing_emails.add(primary.lower())
-                name = re.sub(r'\s*[|–—].*$', '', item.get("title","")).strip()[:120] or domain
-                results.append({
-                    "name": name, "city": item.get("_city",""), "email": primary,
-                    "url": item["url"], "source": item["source"],
-                    "active": "TAK" if active else "NIE",
-                    "extra_emails": "; ".join(e for e in valid_emails if e != primary),
-                })
-
-        if results:
-            leads.extend(results)
-            for l in results:
-                log(f"  ✉️ {l['email']} – {l['name']} [{l['source']}]")
-
-    return leads
-
-def _check_stop_flag():
-    """Checks if user requested stop via UI."""
-    try:
-        r = httpx.get(f"{SUPABASE_URL}/rest/v1/lead_finder_config?select=value&key=eq.search_stop_requested",
-                      headers={"apikey": SUPABASE_ANON, "Authorization": f"Bearer {SUPABASE_ANON}"})
-        if r.status_code == 200 and r.json() and r.json()[0].get("value") == "true":
-            return True
-    except: pass
-    return False
-
-def sb_create_search_run(target, cities, cities_done=0):
-    """Tworzy rekord wyszukiwania (żeby można było wznowić)."""
-    try:
-        r = sb("/rest/v1/lead_search_runs", "POST", [{
-            "target": target,
-            "found": 0,
-            "api_calls": 0,
-            "status": "running",
-            "cities_done": cities_done,
-            "cities_list": cities,
-            "started_at": datetime.now().isoformat(),
-        }], {
-            "Content-Type": "application/json",
-            "Prefer": "return=representation"
-        })
-        if r.status_code in (200, 201) and r.json():
-            return r.json()[0]["id"]
-    except: pass
-    return None
-
-def sb_update_search_run(run_id, **kwargs):
-    """Aktualizuje postęp wyszukiwania."""
-    if not run_id: return
-    try:
-        sb(f"/rest/v1/lead_search_runs?id=eq.{run_id}", "PATCH", [kwargs],
-           {"Content-Type": "application/json"})
-    except: pass
-
-def sb_get_resumable_run():
-    """Szuka wyszukiwania do wznowienia (limit_reached lub stopped)."""
-    try:
-        r = sb("/rest/v1/lead_search_runs?status=in.(limit_reached,stopped)&order=started_at.desc&limit=1")
-        data = r.json()
-        if data and data[0]:
-            return data[0]
-    except: pass
-    return None
-
-def sb_close_search_run(run_id, status="completed", reason=""):
-    """Zamyka wyszukiwanie."""
-    if not run_id: return
-    try:
-        sb(f"/rest/v1/lead_search_runs?id=eq.{run_id}", "PATCH", [{
-            "status": status,
-            "reason": reason,
-            "finished_at": datetime.now().isoformat(),
-        }], {"Content-Type": "application/json"})
-    except: pass
-
-# ─── MAIN: Loop until target or limit ───
-def run(target=50, resume=False):
-    """
-    Uruchamia wyszukiwanie.
-    Jeśli resume=True – wznawia ostatnie zatrzymane wyszukiwanie.
-    """
-    run_id = None
-    found = 0
-    api_calls = 0
-    cities = None
-    done = 0
-    per_run = 20
-    reason = None
-    existing = set()
-    cached_urls = set()
-    day_count = 0
-    today = datetime.now().strftime("%Y-%m-%d")
-    
-    # Sprawdź czy jest wyszukiwanie do wznowienia
-    resumable = sb_get_resumable_run()
-    
-    if resume and resumable:
-        log(f"▶️ Wznawiam wyszukiwanie #{resumable['id'][:8]}...")
-        run_id = resumable["id"]
-        target = resumable["target"]
-        found = resumable.get("found", 0)
-        api_calls = resumable.get("api_calls", 0)
-        done = resumable.get("cities_done", 0)
-        cities = resumable.get("cities_list", [])
-        
-        # Aktualizuj status na running
-        sb_update_search_run(run_id, status="running")
-        log(f"   Kontynuacja: {found}/{target} znalezionych, miasta od #{done}")
-    
-    # Nowe wyszukiwanie – zamknij stare jeśli istnieją
-    if not resume:
-        if resumable:
-            log(f"📝 Jest niezamknięte wyszukiwanie – zamykam jako 'stopped'")
-            sb_close_search_run(resumable["id"], "stopped", "nowe wyszukiwanie")
-    
-    if not cities:
-        # Losuj nowe miasta
-        cities = ALL_CITIES[done:done+per_run]
-        if done >= len(ALL_CITIES):
-            done = 0
-            cities = ALL_CITIES[:per_run]
-            sb_upsert("cities_done", "0")
-        log(f"🏙️ Nowe miasta: {cities}")
-    
-    log(f"🎯 Cel: {target} nowych leadów | Dzienny limit Brave: {BRAVE_DAILY_LIMIT}")
-    if run_id:
-        log(f"📋 ID wyszukiwania: {run_id[:8]}")
-
-    # Reset flagi stopu
-    try:
-        sb_upsert("search_stop_requested", "false")
-    except: pass
-
-    # Utwórz rekord wyszukiwania (tylko przy nowym)
-    if not run_id:
-        run_id = sb_create_search_run(target, cities, done)
-        if run_id:
-            log(f"📝 Utworzono wyszukiwanie: {run_id[:8]}")
-
-    # Oznacz jako uruchomione w starym statusie (dla UI)
-    sb_upsert("search_status", json.dumps({
-        "running": True, "target": target,
-        "started_at": datetime.now().isoformat(), "found": found, "api_calls": api_calls,
-        "run_id": run_id,
-    }))
-
-    # Powiadom o rozpoczęciu (tylko przy nowym)
-    if not resume or found == 0:
-        _send_tg_start(target)
-    else:
-        send_tg(f"▶️ <b>Wznowiono wyszukiwanie</b>\nKontynuacja: {found}/{target} znalezionych")
-
-    # Istniejące maile (deduplikacja)
-    existing = sb_get_emails()
+    existing = sb_get_existing_emails()
     log(f"📋 Maile w bazie: {len(existing)}")
 
-    if not BRAVE_KEY:
-        send_tg("❌ Brak klucza BRAVE_API_KEY")
-        return
-
-    # Sprawdzenie dziennego limitu
-    r = sb("/rest/v1/lead_finder_config?select=key,value&key=in.(brave_daily_date,brave_daily_count)")
-    kv = {x["key"]: x["value"] for x in r.json()} if r.json() else {}
-    today = datetime.now().strftime("%Y-%m-%d")
-    day_count = int(kv.get("brave_daily_count", "0")) if kv.get("brave_daily_date") == today else 0
-    if day_count >= BRAVE_DAILY_LIMIT:
-        send_tg(f"⚠️ Dzienny limit wyczerpany ({day_count}/{BRAVE_DAILY_LIMIT})")
-        if run_id:
-            sb_close_search_run(run_id, "limit_reached", "dzienny limit")
-            sb_update_search_run(run_id, found=found, api_calls=api_calls, cities_done=done, cities_list=cities)
-        return
-
-    # Istniejące maile (deduplikacja)
-    existing = sb_get_emails()
-    log(f"📋 Maile w bazie: {len(existing)}")
-
-    # Pobierz URL-e z cache (żeby nie powtarzać zapytań)
-    cached_urls = sb_get_cached_urls()
-    log(f"💾 URL-e w cache: {len(cached_urls)}")
-
-    found = 0
+    urls = []
+    cities_sample = random.sample(MAJOR_CITIES, 15)
+    for city in cities_sample:
+        for q in SEARCH_QUERIES:
+            urls.append((q.format(city=city), city))
+    random.shuffle(urls)
+    
+    session = curl_requests.Session(impersonate="chrome124")
     api_calls = 0
-    all_leads = []
-    seen_urls = set(cached_urls)  # Załaduj URL-e z cache
+    found = 0
 
-    # ═══════════════════════════════════════════════
-    # FAZA 1: KATALOGI (ZA DARMO, RÓWNOLEGLE)
-    # ═══════════════════════════════════════════════
-    log("📂 Faza 1: Pobieranie katalogów (równolegle)...")
-    with ThreadPoolExecutor(max_workers=10) as ex:
-        futs = {ex.submit(scrape_dir, k, u): k for k, u in DIR_URLS}
-        for f in as_completed(futs):
-            for r in f.result():
-                if r["url"] not in seen_urls:
-                    seen_urls.add(r["url"])
-
-    dir_urls = [{"url": u, "title": "", "source": "dir", "_city": ""} for u in seen_urls]
-    log(f"  ✅ {len(dir_urls)} unikalnych URL-i z katalogów")
-
-    # Zapisz nowe URL-e z katalogów w cache
-    sb_cache_urls([u for u in seen_urls][:200], source="dir")
-
-    new_leads = analyze_urls(dir_urls, existing)
-    found += len(new_leads)
-    if new_leads:
-        inserted = sb_insert(new_leads)
-        all_leads.extend(new_leads)
-        log(f"  ✅ +{inserted} leadów z katalogów (łącznie: {found}/{target})")
-
-    if found >= target:
-        log("✅ Cel osiągnięty samymi katalogami!")
-    else:
-        # ═══════════════════════════════════════════════
-        # FAZA 2: BRAVE SEARCH – pętla 1 zapytanie na raz
-        # Po każdym: analiza → sprawdź czy cel osiągnięty
-        # ═══════════════════════════════════════════════
-        log(f"🔍 Faza 2: Pętla Brave (potrzeba jeszcze {target - found}, {BRAVE_DAILY_LIMIT - day_count} zapytań)")
-
-        # Buduj pulę zapytań
-        queries = []
-        for city in cities:
-            for t in SEARCH_QUERIES:
-                queries.append((t.replace("{city}", city), city))
-        random.shuffle(queries)
-
-        session = curl_requests.Session(impersonate="chrome124")
-        query_idx = 0
-
-        while found < target and api_calls < (BRAVE_DAILY_LIMIT - day_count):
-            # Sprawdź czy nie przekroczono dziennego limitu (w trakcie pętli)
-            if api_calls >= (BRAVE_DAILY_LIMIT - day_count):
-                log(f"⚠️ Osiągnięto dzienny limit ({api_calls} zapytań)")
-                reason = "API limit"
-                if run_id:
-                    sb_close_search_run(run_id, "limit_reached", "dzienny limit")
-                    sb_update_search_run(run_id, found=found, api_calls=api_calls,
-                                        cities_done=done, cities_list=cities)
-                break
-            
-            # Sprawdź flagę stopu co 3 zapytania
-            if api_calls % 3 == 0 and _check_stop_flag():
-                log("🛑 Użytkownik zatrzymał wyszukiwanie!")
-                reason = "stopped"
-                if run_id:
-                    sb_close_search_run(run_id, "stopped", "zatrzymano ręcznie")
-                    sb_update_search_run(run_id, found=found, api_calls=api_calls,
-                                        cities_done=done, cities_list=cities)
-                break
-                
-            query, city = queries[query_idx % len(queries)]
-            query_idx += 1
+    # 1. Brave Search (zbieramy pulę)
+    log("🔍 Pobieram URL-e z Brave...")
+    candidate_urls = []
+    for q, city in urls:
+        if len(candidate_urls) >= target * 15 or api_calls >= BRAVE_DAILY_LIMIT: break
+        try:
+            r = session.get("https://api.search.brave.com/res/v1/web/search",
+                            params={"q": q, "count": 10, "cc": "PL"},
+                            headers={"Accept": "application/json", "X-Subscription-Token": BRAVE_KEY},
+                            timeout=8)
+            if r.status_code == 200:
+                for item in r.json().get("web", {}).get("results", []):
+                    u = item.get("url", "")
+                    if u and not any(s in u.lower() for s in SKIP_DOMAINS): candidate_urls.append((u, city, "brave"))
             api_calls += 1
+        except: api_calls += 1
+        time.sleep(0.3)
 
-            log(f"  [{api_calls}/{BRAVE_DAILY_LIMIT - day_count}] {query[:70]}")
+    log(f"📦 Znaleziono {len(candidate_urls)} kandydatów. Rozpoczynam weryfikację AI...")
 
-            try:
-                r = session.get("https://api.search.brave.com/res/v1/web/search",
-                                params={"q": query, "count": 20, "cc": "PL", "search_lang": "pl"},
-                                headers={"Accept": "application/json", "X-Subscription-Token": BRAVE_KEY},
-                                timeout=10)
-                new_urls = []
-                if r.status_code == 200:
-                    for item in r.json().get("web", {}).get("results", []):
-                        if item.get("url") and not skip_url(item["url"]) and item["url"] not in seen_urls:
-                            seen_urls.add(item["url"])
-                            new_urls.append({"url": item["url"], "title": item.get("title",""), "source": "brave", "_city": city})
+    # 2. Sekwencyjna weryfikacja AI
+    for i, (url, city, source) in enumerate(candidate_urls):
+        if found >= target or api_calls >= BRAVE_DAILY_LIMIT: break
+        
+        log(f"[{i+1}/{len(candidate_urls)}] Sprawdzam: {url[:60]}...")
+        
+        page = get_page_data(url)
+        if not page: continue
 
-                # NATYCHMIASTOWA ANALIZA po każdym zapytaniu
-                if new_urls:
-                    # Zapisz w cache
-                    sb_cache_urls([u["url"] for u in new_urls[:100]], source="brave", city=city)
-                    
-                    new_leads = analyze_urls(new_urls, existing)
-                    if new_leads:
-                        inserted = sb_insert(new_leads)
-                        found += len(new_leads)
-                        all_leads.extend(new_leads)
-                        log(f"  → +{len(new_leads)} leadów (łącznie: {found}/{target})")
+        ai = ask_groq(page["title"], page["text"], page["emails"])
+        if not ai or not ai.get("valid"): continue
 
-                        # Aktualizuj postęp w DB
-                        sb_upsert("search_status", json.dumps({
-                            "running": True, "target": target,
-                            "started_at": datetime.now().isoformat(),
-                            "found": found, "api_calls": api_calls,
-                            "run_id": run_id,
-                        }))
-                        # Aktualizuj rekord wyszukiwania
-                        if run_id:
-                            sb_update_search_run(run_id, found=found, api_calls=api_calls,
-                                                cities_done=done, cities_list=cities)
-                    else:
-                        log(f"  → 0 nowych leadów z {len(new_urls)} URL-i")
+        selected = ai.get("email")
+        if not selected or selected.lower() in existing: continue
+        
+        existing.add(selected.lower())
+        leads = [{"name": page["title"][:100] or urlparse(url).hostname, 
+                  "city": city, "email": selected, "url": url, "source": source}]
+        
+        sb_insert(leads)
+        found += 1
+        log(f"✅ AI Zatwierdził: {selected} – {page['title'][:50]} ({ai.get('reason','')})")
+        sb_update_run(run_id, found=found, api_calls=api_calls)
+        time.sleep(2) # Pauza dla Groq
 
-            except Exception as e:
-                log(f"  ❌ Błąd: {e}")
-
-            time.sleep(0.3)
-
-    # ═══════════════════════════════════════════════
-    # FINALIZACJA
-    # ═══════════════════════════════════════════════
-    sb_upsert("cities_done", str(done + per_run))
-    sb_upsert("brave_daily_date", today)
-    sb_upsert("brave_daily_count", str(day_count + api_calls))
-    month = datetime.now().strftime("%Y-%m")
-    month_count = int(kv.get("brave_monthly_count", "0")) if kv.get("brave_monthly_date") == month else 0
-    sb_upsert("brave_monthly_date", month)
-    sb_upsert("brave_monthly_count", str(month_count + api_calls))
-    sb_upsert("last_search_log", "\n".join(logs)[-5000:])
-    
-    # Determine final reason
-    if 'reason' not in locals() or reason is None:
-        reason = "target reached" if found >= target else f"API limit ({api_calls} queries)"
-
-    # Zamknij wyszukiwanie
-    if run_id:
-        if "limit" in reason.lower() or "api" in reason.lower():
-            sb_close_search_run(run_id, "limit_reached", reason)
-        elif reason == "stopped":
-            sb_close_search_run(run_id, "stopped", reason)
-        else:
-            sb_close_search_run(run_id, "completed", reason)
-        sb_update_search_run(run_id, found=found, api_calls=api_calls,
-                            cities_done=done + per_run, cities_list=cities)
-
-    # Save final status
-    sb_upsert("search_status", json.dumps({
-        "running": False, "done": True,
-        "finished_at": datetime.now().isoformat(),
-        "found": found, "api_calls": api_calls,
-        "reason": reason,
-        "run_id": run_id,
-    }))
-    
-    # Reset stop flag
-    try: sb_upsert("search_stop_requested", "false")
-    except: pass
-
-    r = sb("/rest/v1/lead_finder?select=id&limit=1", headers={"Prefer": "count=exact"})
-    total = r.headers.get("content-range", "?/?").split("/")[1]
-
-    # Wyślij odpowiednie powiadomienie
-    _send_tg_summary(
-        found=found, target=target, api_calls=api_calls,
-        day_count=day_count, reason=reason,
-        total_db=total, cities_done=done + per_run, cities_total=len(ALL_CITIES)
-    )
-    
-    log(f"🏁 Done: {found} leads | {api_calls} API calls | {reason}")
+    sb_close_run(run_id, reason="limit" if api_calls >= BRAVE_DAILY_LIMIT else "cel")
+    log(f"🏁 Done: {found} leadów zapisanych w bazie.")
 
 if __name__ == "__main__":
-    import argparse
-    parser = argparse.ArgumentParser(description="Familiada Lead Finder")
-    parser.add_argument("--target", type=int, default=50, help="Liczba leadów do znalezienia")
-    parser.add_argument("--resume", action="store_true", help="Wznów ostatnie wyszukiwanie")
-    args = parser.parse_args()
-    run(target=args.target, resume=args.resume)
+    target = int(sys.argv[1]) if len(sys.argv) > 1 else 50
+    run_search(target)
