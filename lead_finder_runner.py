@@ -256,6 +256,13 @@ def run_search(target=50):
         seen_urls = set(u[0] for u in candidate_urls)
 
         for query_text, city in all_queries:
+            # Pauza - sprawdź w każdym kroku
+            if sb_get_config("search_stop_requested") == "true":
+                log("🛑 Pauza w trakcie Brave Search!")
+                sb_upsert("search_stop_requested", "false")
+                sb_close_run(run_id, reason="stopped", found=found)
+                return
+
             # Limit Brave
             if sb_get_brave_count() >= BRAVE_DAILY_LIMIT:
                 log(f"⚠️ Limit Brave wyczerpany ({sb_get_brave_count()}/{BRAVE_DAILY_LIMIT})")
