@@ -324,8 +324,7 @@ def run_search(target=50):
                         u = item.get("url", "")
                         if u and not any(s in u.lower() for s in SKIP_DOMAINS) and not any(p in u.lower() for p in ['oferteo.pl', 'fixly.pl']):
                             candidate_urls.append((u, city, "brave"))
-                            new_found += 1
-                    if new_found > 0: log(f"   ✅ +{new_found} URL-i")
+                            log(f"   🔗 {u[:70]}") # Wyświetlaj pojedyncze znalezione URL-e
                 api_calls += 1
             except: api_calls += 1
             time.sleep(0.3)
@@ -349,8 +348,9 @@ def run_search(target=50):
                         full_url = urljoin(dir_url, href)
                         if full_url not in [u[0] for u in candidate_urls]:
                             candidate_urls.append((full_url, "Portal", "portal"))
+                            log(f"   🔗 {full_url[:70]}") # Wyświetlaj pojedyncze znalezione profile
                             new_found += 1
-                if new_found > 0: log(f"   ✅ +{new_found} ogłoszeń/profili")
+                if new_found > 0: log(f"   ✅ Znaleziono {new_found} ogłoszeń/profili")
             except Exception as e:
                 log(f"   ❌ Błąd skanowania: {e}")
         log(f"🚀 Łącznie {len(candidate_urls)} stron gotowych do weryfikacji AI.")
