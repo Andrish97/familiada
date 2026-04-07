@@ -296,7 +296,7 @@ async function loadStats() {
 
       const startBtn = document.getElementById("startBtn");
       const stopBtn = document.getElementById("stopBtn");
-      const resumeBtn = document.getElementById("resumeBtn");
+      const collectBtn = document.getElementById("collectBtn");
       const resetBtn = document.getElementById("resetBtn");
       const box = document.getElementById("searchStatusBox");
       const logBox = document.getElementById("liveLogBox");
@@ -310,7 +310,7 @@ async function loadStats() {
           startBtn.hidden = true;
           stopBtn.hidden = false; stopBtn.disabled = false;
           resetBtn.hidden = false;
-          resumeBtn.hidden = true;
+          if (collectBtn) collectBtn.disabled = true;
           box.style.display = "block";
 
           if (run.status === 'pending') {
