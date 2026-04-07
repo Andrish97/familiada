@@ -12,11 +12,11 @@ Settings panel (admin)
 - GET /_admin_api/mail/logs
 */
 
-import { initI18n, t } from "../../translation/translation.js?v=v2026-04-07T03064";
-import { initUiSelect } from "../core/ui-select.js?v=v2026-04-07T03064";
-import { confirmModal } from "../core/modal.js?v=v2026-04-07T03064";
-import { sb } from "../core/supabase.js?v=v2026-04-07T03064";
-import { v as cacheBust } from "../core/cache-bust.js?v=v2026-04-07T03064";
+import { initI18n, t } from "../../translation/translation.js?v=v2026-04-07T03244";
+import { initUiSelect } from "../core/ui-select.js?v=v2026-04-07T03244";
+import { confirmModal } from "../core/modal.js?v=v2026-04-07T03244";
+import { sb } from "../core/supabase.js?v=v2026-04-07T03244";
+import { v as cacheBust } from "../core/cache-bust.js?v=v2026-04-07T03244";
 
 const API_BASE = "/_admin_api";
 const TOOLS_MANIFEST = "/settings-tools/tools.json";

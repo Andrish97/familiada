@@ -1,4 +1,4 @@
-import { t } from "../../translation/translation.js?v=v2026-04-07T03064";
+import { t } from "../../translation/translation.js?v=v2026-04-07T03244";
 let modalSeq = 0;
 
 function modalText(key, fallback) {
