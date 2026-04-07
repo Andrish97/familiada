@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict Bycu2MEDX4M9gXLBhBotLkevRH8uadKBLIXx6bxkBX7KU4pkwAT32DwgGLMbJ7i
+\restrict nw8QVYsGhQfojN4ZlrITbDM6FOtdJVj6Z0CS6c2yhEqdlAuFoukC0zJD3tWAcsI
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -10156,72 +10156,6 @@ CREATE TABLE "public"."games" (
 
 
 --
--- Name: lead_finder; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE "public"."lead_finder" (
-    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
-    "name" "text" DEFAULT ''::"text" NOT NULL,
-    "city" "text" DEFAULT ''::"text",
-    "email" "text" NOT NULL,
-    "url" "text" DEFAULT ''::"text",
-    "source" "text" DEFAULT ''::"text",
-    "active" "text" DEFAULT ''::"text",
-    "extra_emails" "text" DEFAULT ''::"text",
-    "used" boolean DEFAULT false NOT NULL,
-    "added_by" "uuid",
-    "added_at" timestamp with time zone DEFAULT "now"() NOT NULL,
-    "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL
-);
-
-
---
--- Name: lead_finder_config; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE "public"."lead_finder_config" (
-    "key" "text" NOT NULL,
-    "value" "text" DEFAULT ''::"text" NOT NULL,
-    "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL
-);
-
-
---
--- Name: lead_search_cache; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE "public"."lead_search_cache" (
-    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
-    "query" "text" NOT NULL,
-    "url" "text" NOT NULL,
-    "title" "text" DEFAULT ''::"text",
-    "source" "text" DEFAULT ''::"text",
-    "city" "text" DEFAULT ''::"text",
-    "used" boolean DEFAULT false NOT NULL,
-    "added_at" timestamp with time zone DEFAULT "now"() NOT NULL
-);
-
-
---
--- Name: lead_search_runs; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE "public"."lead_search_runs" (
-    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
-    "target" integer NOT NULL,
-    "found" integer DEFAULT 0 NOT NULL,
-    "api_calls" integer DEFAULT 0 NOT NULL,
-    "status" "text" DEFAULT 'running'::"text" NOT NULL,
-    "cities_done" integer DEFAULT 0 NOT NULL,
-    "cities_list" "jsonb" DEFAULT '[]'::"jsonb",
-    "reason" "text" DEFAULT ''::"text",
-    "started_at" timestamp with time zone DEFAULT "now"() NOT NULL,
-    "finished_at" timestamp with time zone,
-    "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL
-);
-
-
---
 -- Name: mail_function_logs; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -10642,34 +10576,6 @@ CREATE TABLE "public"."schema_migrations" (
 
 
 --
--- Name: search_queries; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE "public"."search_queries" (
-    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
-    "query_text" "text" NOT NULL,
-    "query_hash" "text" NOT NULL,
-    "exhausted" boolean DEFAULT false,
-    "created_at" timestamp with time zone DEFAULT "now"()
-);
-
-
---
--- Name: search_urls; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE "public"."search_urls" (
-    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
-    "url" "text" NOT NULL,
-    "source" "text" DEFAULT 'brave'::"text",
-    "found_emails" "jsonb" DEFAULT '[]'::"jsonb",
-    "title" "text",
-    "status" "text" DEFAULT 'pending'::"text",
-    "created_at" timestamp with time zone DEFAULT "now"()
-);
-
-
---
 -- Name: shared_devices; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -10917,54 +10823,6 @@ ALTER TABLE ONLY "public"."games"
 
 
 --
--- Name: lead_finder_config lead_finder_config_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY "public"."lead_finder_config"
-    ADD CONSTRAINT "lead_finder_config_pkey" PRIMARY KEY ("key");
-
-
---
--- Name: lead_finder lead_finder_email_key; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY "public"."lead_finder"
-    ADD CONSTRAINT "lead_finder_email_key" UNIQUE ("email");
-
-
---
--- Name: lead_finder lead_finder_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY "public"."lead_finder"
-    ADD CONSTRAINT "lead_finder_pkey" PRIMARY KEY ("id");
-
-
---
--- Name: lead_search_cache lead_search_cache_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY "public"."lead_search_cache"
-    ADD CONSTRAINT "lead_search_cache_pkey" PRIMARY KEY ("id");
-
-
---
--- Name: lead_search_cache lead_search_cache_url_key; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY "public"."lead_search_cache"
-    ADD CONSTRAINT "lead_search_cache_url_key" UNIQUE ("url");
-
-
---
--- Name: lead_search_runs lead_search_runs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY "public"."lead_search_runs"
-    ADD CONSTRAINT "lead_search_runs_pkey" PRIMARY KEY ("id");
-
-
---
 -- Name: mail_function_logs mail_function_logs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -11205,38 +11063,6 @@ ALTER TABLE ONLY "public"."schema_migrations"
 
 
 --
--- Name: search_queries search_queries_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY "public"."search_queries"
-    ADD CONSTRAINT "search_queries_pkey" PRIMARY KEY ("id");
-
-
---
--- Name: search_queries search_queries_query_hash_key; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY "public"."search_queries"
-    ADD CONSTRAINT "search_queries_query_hash_key" UNIQUE ("query_hash");
-
-
---
--- Name: search_urls search_urls_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY "public"."search_urls"
-    ADD CONSTRAINT "search_urls_pkey" PRIMARY KEY ("id");
-
-
---
--- Name: search_urls search_urls_url_key; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY "public"."search_urls"
-    ADD CONSTRAINT "search_urls_url_key" UNIQUE ("url");
-
-
---
 -- Name: shared_devices shared_devices_owner_id_recipient_id_device_type_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -11426,48 +11252,6 @@ CREATE INDEX "games_source_market_id_idx" ON "public"."games" USING "btree" ("so
 
 
 --
--- Name: idx_lead_cache_query; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX "idx_lead_cache_query" ON "public"."lead_search_cache" USING "btree" ("query");
-
-
---
--- Name: idx_lead_cache_used; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX "idx_lead_cache_used" ON "public"."lead_search_cache" USING "btree" ("used");
-
-
---
--- Name: idx_lead_finder_added_at; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX "idx_lead_finder_added_at" ON "public"."lead_finder" USING "btree" ("added_at" DESC);
-
-
---
--- Name: idx_lead_finder_email; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX "idx_lead_finder_email" ON "public"."lead_finder" USING "btree" ("email");
-
-
---
--- Name: idx_lead_finder_source; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX "idx_lead_finder_source" ON "public"."lead_finder" USING "btree" ("source");
-
-
---
--- Name: idx_lead_finder_used; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX "idx_lead_finder_used" ON "public"."lead_finder" USING "btree" ("used");
-
-
---
 -- Name: idx_messages_marketing; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -11500,13 +11284,6 @@ CREATE INDEX "idx_poll_votes_game_user_token" ON "public"."poll_votes" USING "bt
 --
 
 CREATE INDEX "idx_questions_game" ON "public"."questions" USING "btree" ("game_id");
-
-
---
--- Name: idx_search_runs_status; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX "idx_search_runs_status" ON "public"."lead_search_runs" USING "btree" ("status");
 
 
 --
@@ -12021,20 +11798,6 @@ CREATE TRIGGER "trg_games_touch" BEFORE UPDATE ON "public"."games" FOR EACH ROW 
 
 
 --
--- Name: lead_finder_config trg_lead_finder_config_updated_at; Type: TRIGGER; Schema: public; Owner: -
---
-
-CREATE TRIGGER "trg_lead_finder_config_updated_at" BEFORE UPDATE ON "public"."lead_finder_config" FOR EACH ROW EXECUTE FUNCTION "public"."update_lead_finder_updated_at"();
-
-
---
--- Name: lead_finder trg_lead_finder_updated_at; Type: TRIGGER; Schema: public; Owner: -
---
-
-CREATE TRIGGER "trg_lead_finder_updated_at" BEFORE UPDATE ON "public"."lead_finder" FOR EACH ROW EXECUTE FUNCTION "public"."update_lead_finder_updated_at"();
-
-
---
 -- Name: market_game_ratings trg_market_game_rating_stats; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -12197,14 +11960,6 @@ ALTER TABLE ONLY "public"."games"
 
 ALTER TABLE ONLY "public"."games"
     ADD CONSTRAINT "games_source_market_id_fkey" FOREIGN KEY ("source_market_id") REFERENCES "public"."market_games"("id") ON DELETE SET NULL;
-
-
---
--- Name: lead_finder lead_finder_added_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY "public"."lead_finder"
-    ADD CONSTRAINT "lead_finder_added_by_fkey" FOREIGN KEY ("added_by") REFERENCES "auth"."users"("id");
 
 
 --
@@ -12640,48 +12395,6 @@ CREATE POLICY "Users can update their own rating" ON "public"."app_ratings" FOR 
 
 
 --
--- Name: lead_finder allow_all; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "allow_all" ON "public"."lead_finder" USING (true) WITH CHECK (true);
-
-
---
--- Name: lead_finder_config allow_all; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "allow_all" ON "public"."lead_finder_config" USING (true) WITH CHECK (true);
-
-
---
--- Name: lead_search_cache allow_all; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "allow_all" ON "public"."lead_search_cache" USING (true) WITH CHECK (true);
-
-
---
--- Name: lead_search_runs allow_all; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "allow_all" ON "public"."lead_search_runs" USING (true) WITH CHECK (true);
-
-
---
--- Name: search_queries anon_all_sq; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "anon_all_sq" ON "public"."search_queries" TO "anon" USING (true) WITH CHECK (true);
-
-
---
--- Name: search_urls anon_all_su; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "anon_all_su" ON "public"."search_urls" TO "anon" USING (true) WITH CHECK (true);
-
-
---
 -- Name: answers; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -12901,79 +12614,6 @@ CREATE POLICY "games_owner_update" ON "public"."games" FOR UPDATE TO "authentica
 --
 
 CREATE POLICY "games_select_by_keys" ON "public"."games" FOR SELECT USING ((("share_key_poll" = (("current_setting"('request.jwt.claims'::"text", true))::json ->> 'share_key'::"text")) OR ("share_key_control" = (("current_setting"('request.jwt.claims'::"text", true))::json ->> 'share_key'::"text")) OR ("share_key_display" = (("current_setting"('request.jwt.claims'::"text", true))::json ->> 'share_key'::"text")) OR ("share_key_host" = (("current_setting"('request.jwt.claims'::"text", true))::json ->> 'share_key'::"text"))));
-
-
---
--- Name: lead_finder; Type: ROW SECURITY; Schema: public; Owner: -
---
-
-ALTER TABLE "public"."lead_finder" ENABLE ROW LEVEL SECURITY;
-
---
--- Name: lead_finder_config; Type: ROW SECURITY; Schema: public; Owner: -
---
-
-ALTER TABLE "public"."lead_finder_config" ENABLE ROW LEVEL SECURITY;
-
---
--- Name: lead_finder lead_finder_delete; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "lead_finder_delete" ON "public"."lead_finder" FOR DELETE TO "authenticated" USING (true);
-
-
---
--- Name: lead_finder lead_finder_insert; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "lead_finder_insert" ON "public"."lead_finder" FOR INSERT TO "authenticated" WITH CHECK (true);
-
-
---
--- Name: lead_finder lead_finder_select; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "lead_finder_select" ON "public"."lead_finder" FOR SELECT TO "authenticated" USING (true);
-
-
---
--- Name: lead_finder lead_finder_update; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "lead_finder_update" ON "public"."lead_finder" FOR UPDATE TO "authenticated" USING (true) WITH CHECK (true);
-
-
---
--- Name: lead_search_cache; Type: ROW SECURITY; Schema: public; Owner: -
---
-
-ALTER TABLE "public"."lead_search_cache" ENABLE ROW LEVEL SECURITY;
-
---
--- Name: lead_search_runs; Type: ROW SECURITY; Schema: public; Owner: -
---
-
-ALTER TABLE "public"."lead_search_runs" ENABLE ROW LEVEL SECURITY;
-
---
--- Name: lead_finder_config lf_config_insert; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "lf_config_insert" ON "public"."lead_finder_config" FOR INSERT TO "authenticated" WITH CHECK (true);
-
-
---
--- Name: lead_finder_config lf_config_select; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "lf_config_select" ON "public"."lead_finder_config" FOR SELECT TO "authenticated" USING (true);
-
-
---
--- Name: lead_finder_config lf_config_update; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "lf_config_update" ON "public"."lead_finder_config" FOR UPDATE TO "authenticated" USING (true) WITH CHECK (true);
 
 
 --
@@ -13655,18 +13295,6 @@ CREATE POLICY "recipient can view" ON "public"."shared_devices" FOR SELECT USING
 ALTER TABLE "public"."reports" ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: search_queries; Type: ROW SECURITY; Schema: public; Owner: -
---
-
-ALTER TABLE "public"."search_queries" ENABLE ROW LEVEL SECURITY;
-
---
--- Name: search_urls; Type: ROW SECURITY; Schema: public; Owner: -
---
-
-ALTER TABLE "public"."search_urls" ENABLE ROW LEVEL SECURITY;
-
---
 -- Name: shared_devices; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -13777,5 +13405,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict Bycu2MEDX4M9gXLBhBotLkevRH8uadKBLIXx6bxkBX7KU4pkwAT32DwgGLMbJ7i
+\unrestrict nw8QVYsGhQfojN4ZlrITbDM6FOtdJVj6Z0CS6c2yhEqdlAuFoukC0zJD3tWAcsI
 
