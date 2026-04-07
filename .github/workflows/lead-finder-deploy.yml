@@ -1,0 +1,44 @@
+name: Sync lead finder runner to server
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "lead_finder_runner.py"
+      - ".github/workflows/lead-finder-deploy.yml"
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install rsync + ssh
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y rsync openssh-client
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "${{ secrets.SERVER_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Sync runner to server
+        run: |
+          DEST="/home/${{ secrets.SERVER_USER }}/familiada"
+          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
+            "mkdir -p \"$DEST\""
+
+          rsync -az --checksum \
+            -e "ssh -i ~/.ssh/id_ed25519" \
+            lead_finder_runner.py \
+            "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:$DEST/lead_finder_runner.py"
+
+          echo "✅ lead_finder_runner.py synced to server"

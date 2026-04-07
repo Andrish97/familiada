@@ -8,7 +8,7 @@ export default {
     }
   },
 
-  async scheduled(_event, env, ctx) {
+  async scheduled(event, env, ctx) {
     ctx.waitUntil(cleanupExpiredAttachments(env));
   },
 
@@ -774,6 +774,59 @@ async function handleAdminMarketplaceApi(request, env, url) {
     if (!tg) return json({ ok: false, error: "telegram_not_configured" }, 422);
 
     return sendTelegram(tg, "Test — Familiada admin\nPowiadomienia push działają poprawnie ✅");
+  }
+
+  // ──────────────────────────────────────────────────────────────
+  // LEAD FINDER API
+  // ──────────────────────────────────────────────────────────────
+
+  // POST /_admin_api/lead-finder/search – triggers runner on server
+  if (url.pathname === "/_admin_api/lead-finder/search" && request.method === "POST") {
+    const body = await readJson(request);
+    const target = Math.min(Math.max(parseInt(body?.target || 50), 5), 200);
+
+    // Call trigger server directly
+    const serverUrl = `http://${env.SERVER_HOST}:8765/search`;
+    try {
+      const resp = await fetch(serverUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ target }),
+      });
+      const data = await resp.json().catch(() => ({}));
+      if (!resp.ok) {
+        return json({ ok: false, error: data.error || "server_error", status: resp.status }, resp.status);
+      }
+      return json({ ok: true, message: `Search started (target: ${target}). Results in ~5-15 min.` });
+    } catch (err) {
+      return json({ ok: false, error: "server_unreachable" }, 502);
+    }
+  }
+
+  // GET /_admin_api/lead-finder/status – check if running
+  if (url.pathname === "/_admin_api/lead-finder/status" && request.method === "GET") {
+    const serverUrl = `http://${env.SERVER_HOST}:8765/status`;
+    try {
+      const resp = await fetch(serverUrl);
+      const data = await resp.json().catch(() => ({}));
+      return json(data);
+    } catch {
+      return json({ running: false, error: "server_unreachable" });
+    }
+  }
+
+  // GET /_admin_api/lead-finder/stats – proxy to Supabase edge function
+  if (url.pathname === "/_admin_api/lead-finder/stats" && request.method === "GET") {
+    const edgeUrl = `${env.SUPABASE_URL || "https://api.familiada.online"}/functions/v1/lead-finder?action=stats`;
+    try {
+      const resp = await fetch(edgeUrl, {
+        headers: { "Authorization": `Bearer ${ANON_KEY}`, "apikey": ANON_KEY },
+      });
+      const data = await resp.json().catch(() => ({}));
+      return json(data);
+    } catch {
+      return json({ error: "stats_fetch_failed" }, 500);
+    }
   }
 
   return new Response("Not Found", { status: 404 });

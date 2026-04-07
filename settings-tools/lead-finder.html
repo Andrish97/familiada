@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>🎯 Lead Finder — Familiada</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script type="module" src="../js/core/supabase.js?v=v2026-04-06T16320"></script>
+<style>
+:root{--bg:#0b0f14;--panel:#121826;--ink:#e8eefc;--mut:#9bb0d0;--line:#24314a;--acc:#6ea8ff;--green:#4ade80;--yellow:#facc15;--red:#f87171}
+*{box-sizing:border-box}
+body{margin:0;padding:14px;background:var(--bg);color:var(--ink);font:13px/1.35 system-ui,sans-serif;min-height:100vh}
+h2{margin:0 0 8px;font-size:16px}
+h3{margin:0;font-size:12px;color:var(--mut);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.btn{background:#1a2234;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:7px 14px;cursor:pointer;font-size:12px;transition:border .15s}
+.btn:hover{border-color:#3b5d93}
+.btn-green{border-color:#2f7b4b}.btn-green:hover{background:#1a3a2a}
+.btn-red{border-color:#7b3434}.btn-red:hover{background:#3a1a1a}
+.btn-blue{border-color:#3b5d93}.btn-blue:hover{background:#1b2a44}
+.btn-yellow{border-color:#7b6b34}.btn-yellow:hover{background:#3a3218}
+input[type=number],select{background:#0d131d;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:12px;outline:none}
+input:focus,select:focus{border-color:var(--acc)}
+.stat{text-align:center;padding:8px 12px}
+.stat-num{font-size:22px;font-weight:700}
+.stat-label{font-size:10px;color:var(--mut);margin-top:2px}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;padding:6px 8px;background:#0d131d;color:var(--mut);font-size:11px;font-weight:500;position:sticky;top:0}
+td{padding:6px 8px;border-bottom:1px solid #111a2a;font-size:12px;vertical-align:middle}
+tr:hover{background:#141f33}
+tr.used{opacity:.35}tr.used:hover{opacity:.7}
+.email{color:var(--green);font-family:ui-monospace,monospace;font-size:11px}
+.city{color:var(--yellow);font-size:11px}
+.src{font-size:10px;background:#0d131d;padding:2px 6px;border-radius:4px;color:var(--mut)}
+.table-wrap{max-height:48vh;overflow-y:auto;border-radius:8px}
+.toast{position:fixed;bottom:20px;right:20px;background:#1a3a2a;border:1px solid #2f7b4b;padding:10px 16px;border-radius:10px;font-size:12px;z-index:999;animation:fadeIn .3s}
+.toast.err{border-color:#7b3434;background:#3a1a1a}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.log-box{background:#0d131d;border:1px solid var(--line);border-radius:8px;padding:8px;font-family:ui-monospace,monospace;font-size:10px;color:var(--mut);max-height:120px;overflow-y:auto;white-space:pre-wrap;display:none}
+</style>
+</head>
+<body>
+
+<div class="row" style="justify-content:space-between;align-items:center;margin-bottom:10px">
+  <div>
+    <h2>🎯 Lead Finder</h2>
+    <p style="margin:0;font-size:11px;color:var(--mut)">Wyszukiwanie kontaktów z branży eventowej w Polsce — wszystko w chmurze</p>
+  </div>
+  <div style="text-align:right;font-size:10px;color:var(--mut)">
+    <div>Dziennie: <b id="dailyInfo" style="color:var(--ink)">–</b></div>
+    <div>Miesiąc: <b id="monthlyInfo" style="color:var(--ink)">–</b></div>
+  </div>
+</div>
+
+<!-- TRIGGER -->
+<div class="card">
+  <h3>🚀 Wyszukiwanie</h3>
+  <div class="row" style="margin-top:8px">
+    <input type="number" id="targetInput" value="50" min="5" max="200" style="width:70px">
+    <span class="small" style="color:var(--mut)">nowych maili</span>
+    <button class="btn btn-green" id="startBtn" onclick="startSearch()">🇵🇱 Szukaj</button>
+    <button class="btn btn-blue" onclick="loadStats()">🔄 Odśwież</button>
+  </div>
+  <p class="small" style="color:var(--mut);margin-top:6px">
+    Wyniki pojawią się automatycznie w tabeli poniżej. Powiadomienie Telegram po zakończeniu.
+  </p>
+  <div class="log-box" id="logBox"></div>
+</div>
+
+<!-- STATS -->
+<div class="row" id="statsRow">
+  <div class="card stat" style="flex:1"><div class="stat-num" id="statTotal">0</div><div class="stat-label">Łącznie</div></div>
+  <div class="card stat" style="flex:1"><div class="stat-num" id="statUnused" style="color:var(--yellow)">0</div><div class="stat-label">Nieużyte</div></div>
+  <div class="card stat" style="flex:1"><div class="stat-num" id="statUsed" style="color:var(--green)">0</div><div class="stat-label">Użyte ✓</div></div>
+  <div class="card stat" style="flex:1"><div class="stat-num" id="statSources" style="color:var(--acc)">0</div><div class="stat-label">Źródeł</div></div>
+</div>
+
+<!-- SEARCH STATUS -->
+<div id="searchStatusBox" class="card" style="display:none">
+  <div class="row" style="justify-content:space-between">
+    <div>
+      <span id="searchStatusIcon" style="font-size:18px"></span>
+      <span id="searchStatusText" class="small" style="margin-left:6px"></span>
+    </div>
+    <div class="small" style="color:var(--mut)">
+      <span id="searchProgress"></span>
+    </div>
+  </div>
+</div>
+
+<!-- FILTERS + TABLE -->
+<div class="card" style="padding:8px">
+  <div class="row" style="padding:4px 8px;justify-content:space-between">
+    <div class="row">
+      <select id="filterUsed" onchange="loadLeads(1)">
+        <option value="">Wszystkie</option>
+        <option value="false">Nieużyte</option>
+        <option value="true">Użyte ✓</option>
+      </select>
+      <select id="filterSource" onchange="loadLeads(1)">
+        <option value="">Wszystkie źródła</option>
+      </select>
+      <input type="text" id="searchInput" placeholder="Szukaj..." style="width:160px" oninput="debounceSearch()">
+    </div>
+    <div class="row">
+      <button class="btn btn-yellow" onclick="bulkToggle()">✓ Bulk</button>
+      <button class="btn btn-blue" onclick="exportCSV()">📥 CSV</button>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr>
+        <th style="width:30px;text-align:center">✓</th>
+        <th>Nazwa</th>
+        <th>Miasto</th>
+        <th>Email</th>
+        <th>Strona</th>
+        <th>Źródło</th>
+        <th>Dodano</th>
+        <th style="width:30px"></th>
+      </tr></thead>
+      <tbody id="leadsBody"><tr><td colspan="8" style="text-align:center;color:var(--mut);padding:30px">Ładowanie...</td></tr></tbody>
+    </table>
+  </div>
+
+  <div id="paginationBox" class="row" style="justify-content:space-between;padding:8px;display:none">
+    <span class="small" id="pageInfo" style="color:var(--mut)"></span>
+    <div class="row">
+      <button class="btn" onclick="loadLeads(currentPage-1)" id="prevBtn">←</button>
+      <button class="btn" onclick="loadLeads(currentPage+1)" id="nextBtn">→</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const EDGE_FN = "/_admin_api/lead-finder";
+const DAILY_LIMIT = 33; // <-- ZMIEŃ TUTAJ LIMIT DZIENNY
+
+let supabase;
+try {
+  supabase = window.supabaseClient || globalThis.__sbClient;
+  if (!supabase) throw new Error("Supabase client not loaded from core/supabase.js");
+} catch(e) {
+  document.body.innerHTML = '<div style="color:var(--red);padding:20px">⚠️ Supabase client nie załadowany</div>';
+  throw e;
+}
+
+let currentPage = 1;
+let searchTimeout = null;
+
+// ── SEARCH TRIGGER ──
+async function startSearch() {
+  const target = parseInt(document.getElementById("targetInput").value) || 50;
+  const btn = document.getElementById("startBtn");
+  btn.disabled = true;
+  btn.textContent = "⏳ Uruchamianie...";
+
+  try {
+    const r = await fetch(`${EDGE_FN}/search`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ target }),
+    });
+    const data = await r.json();
+
+    if (!r.ok) {
+      toast("❌ " + (data.error || "Błąd"), true);
+    } else {
+      toast("🚀 Search started! Wyniki pojawią się za chwilę.");
+      // Show log
+      const logBox = document.getElementById("logBox");
+      logBox.style.display = "block";
+      logBox.textContent = "Search started in background...\nCheck Telegram for completion notification.";
+    }
+  } catch(e) {
+    toast("❌ " + e.message, true);
+  }
+
+  btn.disabled = false;
+  btn.textContent = "🇵🇱 Szukaj";
+  loadStats();
+}
+
+// ── STATS ──
+async function loadStats() {
+  try {
+    // Local stats from Supabase
+    const { count: total } = await supabase.from("lead_finder").select("*", { count:"exact", head:true });
+    document.getElementById("statTotal").textContent = total || 0;
+
+    const { count: used } = await supabase.from("lead_finder").select("*", { count:"exact", head:true }).eq("used", true);
+    document.getElementById("statUsed").textContent = used || 0;
+    document.getElementById("statUnused").textContent = (total||0) - (used||0);
+
+    // Sources
+    const { data: sources } = await supabase.from("lead_finder").select("source");
+    if (sources) {
+      const counts = {};
+      sources.forEach(s => { counts[s.source] = (counts[s.source]||0)+1; });
+      document.getElementById("statSources").textContent = Object.keys(counts).length;
+      const sel = document.getElementById("filterSource");
+      const cur = sel.value;
+      sel.innerHTML = '<option value="">Wszystkie źródła</option>' +
+        Object.entries(counts).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<option value="${k}" ${k===cur?'selected':''}>${k} (${v})</option>`).join('');
+    }
+
+    // Status from trigger server
+    try {
+      const r = await fetch(`${EDGE_FN}/stats`);
+      const stats = await r.json();
+      if (stats.daily_count !== undefined) {
+        document.getElementById("dailyInfo").textContent = `${stats.daily_count}/${stats.daily_limit}`;
+        document.getElementById("monthlyInfo").textContent = `${stats.monthly_count}/${stats.monthly_limit}`;
+      }
+      if (stats.last_log) {
+        const logBox = document.getElementById("logBox");
+        logBox.style.display = "block";
+        logBox.textContent = stats.last_log;
+      }
+
+      // Search status
+      const searchStatus = stats.search || {};
+      const box = document.getElementById("searchStatusBox");
+      if (searchStatus.running) {
+        box.style.display = "block";
+        document.getElementById("searchStatusIcon").textContent = "🔄";
+        const started = searchStatus.started_at ? new Date(searchStatus.started_at).toLocaleTimeString('pl-PL') : '';
+        document.getElementById("searchStatusText").textContent = `Szukanie... (cel: ${searchStatus.target || '?'})`;
+        document.getElementById("searchProgress").textContent = `Znalezione: ${searchStatus.found || 0} | API: ${searchStatus.api_calls || 0}`;
+      } else if (searchStatus.done) {
+        box.style.display = "block";
+        document.getElementById("searchStatusIcon").textContent = "✅";
+        const finished = searchStatus.finished_at ? new Date(searchStatus.finished_at).toLocaleTimeString('pl-PL') : '';
+        document.getElementById("searchStatusText").textContent = `Zakończono o ${finished}`;
+        document.getElementById("searchProgress").textContent = `Wynik: ${searchStatus.found || 0} leadów | ${searchStatus.reason || ''}`;
+      } else {
+        box.style.display = "none";
+      }
+    } catch {}
+  } catch(e) {
+    console.error("loadStats error:", e);
+  }
+}
+
+// ── LEADS ──
+async function loadLeads(page) {
+  currentPage = page || 1;
+  const perPage = 50;
+  let q = supabase.from("lead_finder").select("*", { count:"exact" });
+
+  const used = document.getElementById("filterUsed").value;
+  if (used === "true") q = q.eq("used", true);
+  else if (used === "false") q = q.eq("used", false);
+
+  const src = document.getElementById("filterSource").value;
+  if (src) q = q.eq("source", src);
+
+  const sq = document.getElementById("searchInput").value.trim();
+  if (sq) q = q.or(`name.ilike.%${sq}%,email.ilike.%${sq}%,city.ilike.%${sq}%`);
+
+  q = q.order("added_at", { ascending:false }).range((currentPage-1)*perPage, currentPage*perPage-1);
+  const { data, error, count } = await q;
+  if (error) { console.error(error); return; }
+
+  const body = document.getElementById("leadsBody");
+  if (!data?.length) {
+    body.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--mut);padding:30px">Brak leadów</td></tr>';
+  } else {
+    body.innerHTML = data.map(l => {
+      const urlDisplay = l.url ? l.url.replace(/^https?:\/\//,'').split('/')[0] : '';
+      return `<tr class="${l.used?'used':''}">
+        <td style="text-align:center"><input type="checkbox" ${l.used?'checked':''} onchange="toggleUsed('${esc(l.id)}',this.checked)" style="accent-color:var(--green)"></td>
+        <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(l.name)}">${esc(l.name)}</td>
+        <td class="city">${esc(l.city||'—')}</td>
+        <td class="email">${esc(l.email)}</td>
+        <td><a href="${esc(l.url)}" target="_blank" class="src" style="color:var(--acc);text-decoration:none">${esc(urlDisplay)}</a></td>
+        <td><span class="src">${esc(l.source)}</span></td>
+        <td style="font-size:10px;color:var(--mut)">${formatDate(l.added_at)}</td>
+        <td style="text-align:center"><button class="btn btn-red" style="padding:3px 6px;font-size:10px" onclick="delLead('${esc(l.id)}')">✕</button></td>
+      </tr>`;
+    }).join('');
+  }
+
+  const pbox = document.getElementById("paginationBox");
+  if (count > perPage) {
+    pbox.style.display = "flex";
+    const totalPages = Math.ceil(count/perPage);
+    document.getElementById("pageInfo").textContent = `Strona ${currentPage}/${totalPages} (${count})`;
+    document.getElementById("prevBtn").disabled = currentPage <= 1;
+    document.getElementById("nextBtn").disabled = currentPage >= totalPages;
+  } else {
+    pbox.style.display = "none";
+  }
+}
+
+async function toggleUsed(id, val) {
+  await supabase.from("lead_finder").update({ used: val }).eq("id", id);
+  loadStats();
+}
+
+async function delLead(id) {
+  if (!confirm("Usunąć ten lead?")) return;
+  await supabase.from("lead_finder").delete().eq("id", id);
+  loadLeads(currentPage);
+  loadStats();
+}
+
+async function bulkToggle() {
+  const usedFilter = document.getElementById("filterUsed").value;
+  const targetUsed = usedFilter === "true" ? false : true;
+  const label = targetUsed ? "użyte ✓" : "nieużyte";
+  if (!confirm(`Oznacz wszystkie widoczne jako ${label}?`)) return;
+
+  let q = supabase.from("lead_finder").update({ used: targetUsed });
+  if (usedFilter === "true") q = q.eq("used", true);
+  else if (usedFilter === "false") q = q.eq("used", false);
+  const src = document.getElementById("filterSource").value;
+  if (src) q = q.eq("source", src);
+
+  const { error } = await q;
+  if (error) return toast("❌ "+error.message, true);
+  toast("✅ Zmieniono");
+  loadLeads(currentPage);
+  loadStats();
+}
+
+// ── EXPORT ──
+async function exportCSV() {
+  let q = supabase.from("lead_finder").select("name,city,email,url,source,active,extra_emails,used,added_at").order("added_at",{ascending:false});
+  const used = document.getElementById("filterUsed").value;
+  if (used==="true") q = q.eq("used",true);
+  else if (used==="false") q = q.eq("used",false);
+
+  const { data, error } = await q;
+  if (error || !data) return toast("❌ Błąd",true);
+
+  let csv = "Nazwa,Miasto,Email,Strona,Źródło,Aktywna,Dodatkowe,Użyty,Dodano\n";
+  data.forEach(r => {
+    const f = v => `"${(v||'').replace(/"/g,'""')}"`;
+    csv += [r.name,r.city,r.email,r.url,r.source,r.active,r.extra_emails,r.used?'TAK':'NIE',r.added_at].map(f).join(",")+"\n";
+  });
+
+  const blob = new Blob(["\ufeff"+csv], {type:"text/csv;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "familiada_leads_"+new Date().toISOString().slice(0,10)+".csv";
+  a.click();
+  toast("📥 CSV pobrany");
+}
+
+// ── UTILS ──
+function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML}
+function formatDate(d){if(!d)return'';try{return new Date(d).toLocaleString('pl-PL')}catch{return d}}
+function debounceSearch(){clearTimeout(searchTimeout);searchTimeout=setTimeout(()=>loadLeads(1),400)}
+function toast(msg,err){
+  const t=document.createElement('div');
+  t.className='toast'+(err?' err':'');
+  t.textContent=msg;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(),3000);
+}
+
+// ── INIT ──
+loadStats();
+loadLeads(1);
+
+// Auto-refresh co 15s
+setInterval(()=>{loadStats();loadLeads(currentPage)}, 15000);
+</script>
+</body>
+</html>

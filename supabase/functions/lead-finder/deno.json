@@ -1,0 +1,4 @@
+{
+  "name": "lead-finder",
+  "entrypoint": "index.ts"
+}
