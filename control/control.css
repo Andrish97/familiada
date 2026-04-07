@@ -2102,3 +2102,14 @@
 .logoGridEmpty {
   width: 100%;
 }
+/* Share modal: input stretches, button pushed right */
+#shareDeviceOverlay .importRow {
+  flex-wrap: nowrap;
+}
+#shareDeviceOverlay .importRow .inp {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+#shareDeviceOverlay .importRow .btn {
+  flex: 0 0 auto;
+}
