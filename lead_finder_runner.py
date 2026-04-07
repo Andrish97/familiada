@@ -310,37 +310,50 @@ def run_search(target=50):
 
         # Brave Search
         log("🔍 Faza 1: Brave Search (strony firm)...")
-        for q, city in urls:
+        total_queries = len(urls)
+        for idx, (q, city) in enumerate(urls):
             if len(candidate_urls) >= target * 15 or api_calls >= BRAVE_DAILY_LIMIT: break
+            log(f"🔎 [{idx+1}/{total_queries}] Szukam: {q[:60]}...")
             try:
                 r = session.get("https://api.search.brave.com/res/v1/web/search",
                                 params={"q": q, "count": 10, "cc": "PL"},
                                 headers={"Accept": "application/json", "X-Subscription-Token": BRAVE_KEY}, timeout=8)
                 if r.status_code == 200:
+                    new_found = 0
                     for item in r.json().get("web", {}).get("results", []):
                         u = item.get("url", "")
                         if u and not any(s in u.lower() for s in SKIP_DOMAINS) and not any(p in u.lower() for p in ['oferteo.pl', 'fixly.pl']):
                             candidate_urls.append((u, city, "brave"))
+                            new_found += 1
+                    if new_found > 0: log(f"   ✅ +{new_found} URL-i")
                 api_calls += 1
             except: api_calls += 1
             time.sleep(0.3)
-        log(f"📦 Znaleziono {len(candidate_urls)} stron firm.")
+        log(f"📦 Faza 1 zakończona. Znaleziono {len(candidate_urls)} stron firm.")
 
         # Katalogi
         log("📂 Faza 2: Katalogi i portale ogłoszeniowe...")
-        for key, dir_url in DIR_URLS.items():
+        total_dirs = len(DIR_URLS)
+        for idx, (key, dir_url) in enumerate(DIR_URLS.items()):
+            log(f"🌐 [{idx+1}/{total_dirs}] Skanuję portal: {key}...")
             try:
                 st, html = fetch_page(dir_url, 10)
-                if st != 200 or not html: continue
+                if st != 200 or not html: 
+                    log(f"   ⚠️ Błąd pobierania lub pusta strona.")
+                    continue
                 soup = BeautifulSoup(html, "lxml")
+                new_found = 0
                 for a in soup.find_all('a', href=True):
                     href = a['href']
                     if any(x in href for x in ['/oferta/', '/firma/', '/profil/']):
                         full_url = urljoin(dir_url, href)
                         if full_url not in [u[0] for u in candidate_urls]:
                             candidate_urls.append((full_url, "Portal", "portal"))
-            except: pass
-        log(f"🚀 Łącznie {len(candidate_urls)} stron do weryfikacji AI.")
+                            new_found += 1
+                if new_found > 0: log(f"   ✅ +{new_found} ogłoszeń/profili")
+            except Exception as e:
+                log(f"   ❌ Błąd skanowania: {e}")
+        log(f"🚀 Łącznie {len(candidate_urls)} stron gotowych do weryfikacji AI.")
     
     # 3. Weryfikacja AI (dla Backlogu i Nowych stron)
     log(f"🤖 Rozpoczynam weryfikację AI dla {len(candidate_urls)} stron...")
