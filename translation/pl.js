@@ -531,8 +531,6 @@ const pl = {
     },
     shareModal: {
       title: "Udostępnij bazę",
-      subtitle:
-        "Dodajesz użytkowników po nazwie lub e-mailu. Jeśli się nie uda, pokażemy „Nie udało się”.",
       placeholder: "Nazwa użytkownika lub e-mail...",
       roleEditor: "Edycja",
       roleViewer: "Przeglądanie",
@@ -627,6 +625,8 @@ const pl = {
       cooldown: "Nie można dodać ponownie tego użytkownika przez 24h (anty-spam).",
       alreadyPending: "Zaproszenie już oczekuje na akceptację.",
       emailFailed: "Zaproszenie utworzone, ale nie udało się wysłać maila.",
+      enterEmail: "Wpisz adres email lub nazwę użytkownika",
+      selectSubscriber: "Wybierz subskrybenta",
     },
     badges: {
       from: "Od: {name}",

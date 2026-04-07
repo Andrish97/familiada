@@ -625,6 +625,8 @@ const en = {
       cooldown: "You can't add the same user again for 24h (anti-spam).",
       alreadyPending: "An invite is already pending.",
       emailFailed: "Invite created, but email sending failed.",
+      enterEmail: "Enter email or username",
+      selectSubscriber: "Select subscriber",
     },
     badges: {
       from: "From: {name}",

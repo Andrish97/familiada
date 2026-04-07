@@ -51,14 +51,14 @@
 .share-subs-input .ui-select{ width: 100%; }
 .share-submit-btn{ width: 100%; }
 
-.shareSections{ margin-top: 14px; display: grid; gap: 14px; }
-
 .shareSection{
+  margin-top: 16px;
   padding: 10px;
   border-radius: 14px;
   background: rgba(255,255,255,.06);
   border: 1px solid rgba(255,255,255,.10);
 }
+.shareSection:first-of-type{ margin-top: 0; }
 
 .shareSectionTitle{ font-weight: 800; letter-spacing: .2px; }
 .shareSectionSub{ margin-top: 4px; opacity: .75; font-size: 13px; }
