@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict dSGnOtgCLIEemSF5eBe06ZVnICqh9L4wZXaePemqIr4wqelil3OVy5trLOEcODv
+\restrict Cl5oWOfkFigFAme84VSlxMiMS9VhDhx5XS9ybtSuUnrBnLFJpfbDFth7knX2gC7
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -10187,6 +10187,22 @@ CREATE TABLE "public"."lead_finder_config" (
 
 
 --
+-- Name: lead_search_cache; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."lead_search_cache" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "query" "text" NOT NULL,
+    "url" "text" NOT NULL,
+    "title" "text" DEFAULT ''::"text",
+    "source" "text" DEFAULT ''::"text",
+    "city" "text" DEFAULT ''::"text",
+    "used" boolean DEFAULT false NOT NULL,
+    "added_at" timestamp with time zone DEFAULT "now"() NOT NULL
+);
+
+
+--
 -- Name: mail_function_logs; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -10878,6 +10894,22 @@ ALTER TABLE ONLY "public"."lead_finder"
 
 
 --
+-- Name: lead_search_cache lead_search_cache_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."lead_search_cache"
+    ADD CONSTRAINT "lead_search_cache_pkey" PRIMARY KEY ("id");
+
+
+--
+-- Name: lead_search_cache lead_search_cache_url_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."lead_search_cache"
+    ADD CONSTRAINT "lead_search_cache_url_key" UNIQUE ("url");
+
+
+--
 -- Name: mail_function_logs mail_function_logs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -11304,6 +11336,20 @@ CREATE UNIQUE INDEX "games_owner_market_uniq" ON "public"."games" USING "btree" 
 --
 
 CREATE INDEX "games_source_market_id_idx" ON "public"."games" USING "btree" ("source_market_id") WHERE ("source_market_id" IS NOT NULL);
+
+
+--
+-- Name: idx_lead_cache_query; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "idx_lead_cache_query" ON "public"."lead_search_cache" USING "btree" ("query");
+
+
+--
+-- Name: idx_lead_cache_used; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "idx_lead_cache_used" ON "public"."lead_search_cache" USING "btree" ("used");
 
 
 --
@@ -12514,6 +12560,13 @@ CREATE POLICY "allow_all" ON "public"."lead_finder_config" USING (true) WITH CHE
 
 
 --
+-- Name: lead_search_cache allow_all; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "allow_all" ON "public"."lead_search_cache" USING (true) WITH CHECK (true);
+
+
+--
 -- Name: answers; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -12774,6 +12827,12 @@ CREATE POLICY "lead_finder_select" ON "public"."lead_finder" FOR SELECT TO "auth
 
 CREATE POLICY "lead_finder_update" ON "public"."lead_finder" FOR UPDATE TO "authenticated" USING (true) WITH CHECK (true);
 
+
+--
+-- Name: lead_search_cache; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."lead_search_cache" ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: lead_finder_config lf_config_insert; Type: POLICY; Schema: public; Owner: -
@@ -13585,5 +13644,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict dSGnOtgCLIEemSF5eBe06ZVnICqh9L4wZXaePemqIr4wqelil3OVy5trLOEcODv
+\unrestrict Cl5oWOfkFigFAme84VSlxMiMS9VhDhx5XS9ybtSuUnrBnLFJpfbDFth7knX2gC7
 
