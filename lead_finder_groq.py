@@ -1,24 +1,16 @@
 #!/usr/bin/env python3
 """
-Familiada.online – Lead Finder (Groq AI Edition)
-=================================================
-Weryfikuje firmy za pomocą Groq AI.
-Zapisuje do bazy TYLKO potwierdzone kontakty z branży eventowej.
-
-Wymaga:
-  - SUPABASE_URL, SUPABASE_ANON_KEY
-  - BRAVE_API_KEY
-  - GROQ_API_KEY (w .env na serwerze lub env var)
-
-Uruchomienie:
-  python3 lead_finder_groq.py --target 50
+Familiada.online – Lead Finder (Groq AI Sequential Edition)
+===========================================================
+- Pyta AI o każdy URL osobno (tytuł + treść + znalezione maile)
+- Akceptuje WSZYSTKIE maile (Gmail, WP, portale ogłoszeniowe)
+- Działa sekwencyjnie z przerwami (omija limity Groq)
+- Retry na błędy 429 (Rate Limit)
 """
 
 import json, os, random, re, sys, time
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
-from urllib.parse import urljoin, urlparse
-
+from urllib.parse import urlparse
 import httpx
 from bs4 import BeautifulSoup
 from curl_cffi import requests as curl_requests
@@ -29,6 +21,7 @@ SUPABASE_ANON = os.environ["SUPABASE_ANON_KEY"]
 BRAVE_KEY = os.environ.get("BRAVE_API_KEY", "")
 GROQ_KEY = os.environ.get("GROQ_API_KEY", "")
 BRAVE_DAILY_LIMIT = 33
+GROQ_MODEL = "llama-3.3-70b-versatile"
 
 # ─── Logi ───
 logs = []
@@ -37,7 +30,7 @@ def log(msg):
     line = f"[{ts}] {msg}"
     print(line, flush=True)
     logs.append(line)
-    if len(logs) % 5 == 0:
+    if len(logs) % 3 == 0:
         try: sb_upsert("last_search_log", "\n".join(logs)[-4000:])
         except: pass
 
@@ -93,34 +86,54 @@ def sb_close_run(run_id, status="completed", reason=""):
     except: pass
 
 # ─── AI Verifier (Groq) ───
-def verify_with_groq(title, text):
-    """Pyta AI czy strona należy do firmy z branży eventowej."""
-    if not GROQ_KEY: return True  # Brak klucza = pomijamy weryfikację
+def ask_groq(title, text, emails):
+    """Pyta AI o weryfikację firmy i wybór najlepszego maila. Retry na 429."""
+    if not GROQ_KEY: return None
 
+    email_list = ", ".join(emails)
     prompt = (
-        f"Czy ta strona należy do firmy z branży rozrywkowo-eventowej (DJ, wodzirej, animator dzieci, "
-        f"agencja eventowa, fotobudka, zespół muzyczny, organizacja wesel)?\n\n"
+        f"Jesteś asystentem rekrutacyjnym. Sprawdź, czy poniższa strona należy do FIRMY/FREELANCERA "
+        f"z branży eventowej/rozrywkowej w Polsce (DJ, Wodzirej, Animator dzieci, Agencja eventowa, "
+        f"Fotobudka, Zespół muzyczny, Team building, Organizacja wesel/imprez).\n\n"
         f"TYTUŁ: {title}\n"
-        f"TEKST: {text[:1000]}\n\n"
-        f"Odpowiedz TYLKO jednym słowem: TAK lub NIE."
+        f"TEKST: {text[:800]}\n"
+        f"ZNALEZIONE MAILE: {email_list}\n\n"
+        f"Odpowiedz TYLKO w formacie JSON:\n"
+        f'{{"valid": true/false, "email": "najlepszy_mail_lub_null", "reason": "krótki powód"}}'
     )
 
-    try:
-        r = httpx.post("https://api.groq.com/openai/v1/chat/completions", json={
-            "model": "llama-3.3-70b-versatile",
-            "messages": [{"role": "user", "content": prompt}],
-            "temperature": 0.0,
-            "max_tokens": 10,
-        }, headers={"Authorization": f"Bearer {GROQ_KEY}", "Content-Type": "application/json"}, timeout=10)
+    for attempt in range(3):
+        try:
+            r = httpx.post("https://api.groq.com/openai/v1/chat/completions", json={
+                "model": GROQ_MODEL,
+                "messages": [{"role": "user", "content": prompt}],
+                "temperature": 0.0,
+                "max_tokens": 100,
+            }, headers={"Authorization": f"Bearer {GROQ_KEY}", "Content-Type": "application/json"}, timeout=12)
 
-        if r.status_code == 200:
-            resp = r.json().get("choices", [{}])[0].get("message", {}).get("content", "").strip().upper()
-            return "TAK" in resp
-    except Exception as e:
-        log(f"⚠️ Błąd AI: {e}")
-    return False
+            if r.status_code == 200:
+                content = r.json().get("choices", [{}])[0].get("message", {}).get("content", "").strip()
+                # Wyciągnij JSON z odpowiedzi
+                start = content.find('{')
+                end = content.rfind('}') + 1
+                if start != -1 and end != 0:
+                    data = json.loads(content[start:end])
+                    return data
+                return {"valid": False, "email": None, "reason": "bad_json"}
+            
+            elif r.status_code == 429:
+                wait = 5 * (attempt + 1)
+                log(f"⏳ Groq Rate Limit. Czekam {wait}s...")
+                time.sleep(wait)
+                continue
+            else:
+                return None
+        except Exception as e:
+            log(f"⚠️ Błąd Groq: {e}")
+            time.sleep(2)
+    return None
 
-# ─── Search & Extract Helpers ───
+# ─── Fetch & Extract ───
 def fetch_page(url, t=8):
     try:
         s = curl_requests.Session(impersonate="chrome124")
@@ -129,11 +142,11 @@ def fetch_page(url, t=8):
         return r.status_code, r.text
     except: return 0, ""
 
-def get_emails_from_url(url):
+def get_page_data(url):
     domain = urlparse(url).hostname or ""
-    if not domain: return [], False, ""
+    if not domain: return None
     scheme = "https" if "https" in url else "http"
-    pages = [url, f"{scheme}://{domain}/kontakt", f"{scheme}://{domain}/kontakt.html", f"{scheme}://{domain}/contact"]
+    pages = [url, f"{scheme}://{domain}/kontakt", f"{scheme}://{domain}/kontakt.html"]
     emails, active, title, text_sample = set(), False, "", ""
     for p in pages[:3]:
         st, html = fetch_page(p, 6)
@@ -147,19 +160,13 @@ def get_emails_from_url(url):
             emails.update(re.findall(r'[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}', clean))
             if not text_sample: text_sample = clean[:1500]
         time.sleep(0.2)
-    return list(emails), active, title, text_sample
+    
+    if not emails: return None
+    return {"emails": list(emails), "active": active, "title": title, "text": text_sample}
 
-def is_valid_business_email(email):
-    name = email.split('@')[0].lower()
-    if re.match(r'^\d+[a-z]', name): return False
-    if name in ['admin', 'webmaster', 'root', 'postmaster', 'noreply', 'redakcja', 'info-pl']: return False
-    return True
-
+# ─── Search Config ───
 SKIP_DOMAINS = {"google.","youtube.","facebook.com","pinterest.","twitter.com","instagram.com",
-        "tiktok.com","linkedin.com","bing.com","duckduckgo.com","onet.","wp.pl","interia.pl",
-        "wikipedia.org","reddit.com","oferteo.pl","fixly.pl","panoramafirm.pl","pkt.pl",
-        "firmy.info.pl","enyo.pl","firmo.pl","wodzireje.pl","e-wesele.pl","animatorki.pl",
-        "klubanimatora.pl","konferansjer.pl","teambuilding.pl","eventy.pl","pikniki-firmowe.pl"}
+        "tiktok.com","linkedin.com","bing.com","duckduckgo.com","wikipedia.org","reddit.com"}
 
 SEARCH_QUERIES = [
     '"DJ" "wesele" {city} kontakt', '"wodzirej" {city} kontakt', '"animator dzieci" {city} kontakt',
@@ -176,80 +183,71 @@ MAJOR_CITIES = [
 ]
 
 def run_search(target=50):
-    log(f"🎯 Cel: {target} leadów | AI: {'ON' if GROQ_KEY else 'OFF'}")
+    log(f"🎯 Cel: {target} leadów | AI: {'ON (Sekwencyjnie)' if GROQ_KEY else 'OFF'}")
     run_id = sb_create_search_run(target)
     if run_id: log(f"📝 ID: {run_id[:8]}")
 
     existing = sb_get_existing_emails()
     log(f"📋 Maile w bazie: {len(existing)}")
 
-    # 1. Brave Search
-    urls = set()
-    queries = [(q.format(city=c), c) for c in random.sample(MAJOR_CITIES, 20) for q in SEARCH_QUERIES]
-    random.shuffle(queries)
+    urls = []
+    cities_sample = random.sample(MAJOR_CITIES, 15)
+    for city in cities_sample:
+        for q in SEARCH_QUERIES:
+            urls.append((q.format(city=city), city))
+    random.shuffle(urls)
     
     session = curl_requests.Session(impersonate="chrome124")
     api_calls = 0
     found = 0
 
-    for q, city in queries:
-        if found >= target or api_calls >= BRAVE_DAILY_LIMIT: break
-        
+    # 1. Brave Search (zbieramy pulę)
+    log("🔍 Pobieram URL-e z Brave...")
+    candidate_urls = []
+    for q, city in urls:
+        if len(candidate_urls) >= target * 15 or api_calls >= BRAVE_DAILY_LIMIT: break
         try:
             r = session.get("https://api.search.brave.com/res/v1/web/search",
-                            params={"q": q, "count": 15, "cc": "PL"},
+                            params={"q": q, "count": 10, "cc": "PL"},
                             headers={"Accept": "application/json", "X-Subscription-Token": BRAVE_KEY},
-                            timeout=10)
+                            timeout=8)
             if r.status_code == 200:
                 for item in r.json().get("web", {}).get("results", []):
                     u = item.get("url", "")
-                    if u and not any(s in u.lower() for s in SKIP_DOMAINS): urls.add((u, city, "brave"))
+                    if u and not any(s in u.lower() for s in SKIP_DOMAINS): candidate_urls.append((u, city, "brave"))
             api_calls += 1
-            sb_update_run(run_id, found=found, api_calls=api_calls)
         except: api_calls += 1
         time.sleep(0.3)
 
-    # 2. Weryfikacja i ekstrakcja (Batch po 5)
-    log(f"🤔 Weryfikacja {len(urls)} URL-i przez AI...")
-    leads = []
-    
-    def process_url(url_data):
-        url, city, source = url_data
-        emails, active, title, text = get_emails_from_url(url)
-        if not emails: return None
-        
-        # AI Check
-        if not verify_with_groq(title, text): return None
-        
-        # Clean Emails
-        valid = [e for e in emails if is_valid_business_email(e)]
-        if not valid: return None
-        
-        domain = urlparse(url).hostname.replace("www.", "")
-        primary = next((e for e in valid if e.split("@")[1].lower() == domain), valid[0])
-        
-        if primary.lower() in existing: return None
-        existing.add(primary.lower())
-        
-        return {"name": title[:100] or domain, "city": city, "email": primary, "url": url, "source": source}
+    log(f"📦 Znaleziono {len(candidate_urls)} kandydatów. Rozpoczynam weryfikację AI...")
 
-    with ThreadPoolExecutor(max_workers=5) as ex:
-        futs = {ex.submit(process_url, u): u for u in urls}
-        for f in as_completed(futs):
-            res = f.result()
-            if res:
-                leads.append(res)
-                found += 1
-                log(f"✅ AI Potwierdził: {res['email']} – {res['name']}")
-                sb_update_run(run_id, found=found, api_calls=api_calls)
-                if found >= target: break
+    # 2. Sekwencyjna weryfikacja AI
+    for i, (url, city, source) in enumerate(candidate_urls):
+        if found >= target or api_calls >= BRAVE_DAILY_LIMIT: break
+        
+        log(f"[{i+1}/{len(candidate_urls)}] Sprawdzam: {url[:60]}...")
+        
+        page = get_page_data(url)
+        if not page: continue
 
-    if leads:
+        ai = ask_groq(page["title"], page["text"], page["emails"])
+        if not ai or not ai.get("valid"): continue
+
+        selected = ai.get("email")
+        if not selected or selected.lower() in existing: continue
+        
+        existing.add(selected.lower())
+        leads = [{"name": page["title"][:100] or urlparse(url).hostname, 
+                  "city": city, "email": selected, "url": url, "source": source}]
+        
         sb_insert(leads)
-        log(f"💾 Zapisano {len(leads)} leadów.")
-    
+        found += 1
+        log(f"✅ AI Zatwierdził: {selected} – {page['title'][:50]} ({ai.get('reason','')})")
+        sb_update_run(run_id, found=found, api_calls=api_calls)
+        time.sleep(2) # Pauza dla Groq
+
     sb_close_run(run_id, reason="limit" if api_calls >= BRAVE_DAILY_LIMIT else "cel")
-    log(f"🏁 Done: {found} leadów.")
+    log(f"🏁 Done: {found} leadów zapisanych w bazie.")
 
 if __name__ == "__main__":
     target = int(sys.argv[1]) if len(sys.argv) > 1 else 50
