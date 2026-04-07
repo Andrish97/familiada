@@ -16,29 +16,37 @@ SUPABASE_ANON = os.environ.get("SUPABASE_ANON_KEY", "")
 RUNNER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "lead_finder_runner.py")
 PYTHON = "python3"
 
-# Rozbudowana lista kategorii + paginacja w pętli skanowania
+# Kryteria wyszukiwania w portalach (odpowiadają zapytaniom Brave)
+# Format: (klucz_logu, link_wyszukiwania_z_fraza)
 DIR_URLS = [
-    # OFERTEO
-    ("oferteo_dj", "https://www.oferteo.pl/dj-na-wesele"),
-    ("oferteo_wodzirej", "https://www.oferteo.pl/wodzirej"),
-    ("oferteo_animacje", "https://www.oferteo.pl/animacje-dla-dzieci"),
-    ("oferteo_event", "https://www.oferteo.pl/organizacja-imprez"),
-    ("oferteo_zespol", "https://www.oferteo.pl/zespol-muzyczny"),
-    # FIXLY
-    ("fixly_dj", "https://www.fixly.pl/kategoria/dj"),
-    ("fixly_animacje", "https://www.fixly.pl/kategoria/animacje-dla-dzieci"),
-    ("fixly_event", "https://www.fixly.pl/kategoria/organizacja-imprez"),
-    ("fixly_wodzirej", "https://www.fixly.pl/kategoria/wodzirej"),
-    ("fixly_zespol", "https://www.fixly.pl/kategoria/zespol-muzyczny"),
-    # PANORAMAFIRM
-    ("panoramafirm_dj", "https://www.panoramafirm.pl/szukaj/dj+wesele.html"),
-    ("panoramafirm_event", "https://www.panoramafirm.pl/szukaj/agencja+eventowa.html"),
-    # E-WESELE
+    # OFERTEO (szukaj po frazach)
+    ("oferteo_dj", "https://www.oferteo.pl/szukaj/oferta?szukaj=DJ+wesele"),
+    ("oferteo_wodzirej", "https://www.oferteo.pl/szukaj/oferta?szukaj=Wodzirej"),
+    ("oferteo_konferansjer", "https://www.oferteo.pl/szukaj/oferta?szukaj=Konferansjer"),
+    ("oferteo_prezenter", "https://www.oferteo.pl/szukaj/oferta?szukaj=Prezenter+eventowy"),
+    ("oferteo_animacje", "https://www.oferteo.pl/szukaj/oferta?szukaj=Animator+dzieci"),
+    ("oferteo_agencja", "https://www.oferteo.pl/szukaj/oferta?szukaj=Agencja+eventowa"),
+    ("oferteo_organizacja", "https://www.oferteo.pl/szukaj/oferta?szukaj=Organizacja+imprez"),
+    
+    # FIXLY (szukaj po kategoriach/frazach)
+    ("fixly_dj", "https://www.fixly.pl/szukaj?search=DJ+wesele"),
+    ("fixly_wodzirej", "https://www.fixly.pl/szukaj?search=Wodzirej"),
+    ("fixly_konferansjer", "https://www.fixly.pl/szukaj?search=Konferansjer"),
+    ("fixly_animacje", "https://www.fixly.pl/szukaj?search=Animator+dzieci"),
+    ("fixly_agencja", "https://www.fixly.pl/szukaj?search=Agencja+eventowa"),
+    ("fixly_organizacja", "https://www.fixly.pl/szukaj?search=Organizacja+imprez"),
+    ("fixly_team_building", "https://www.fixly.pl/szukaj?search=Team+building"),
+    
+    # PANORAMAFIRM (szukaj w wyszukiwarce)
+    ("panoramafirm_dj", "https://www.panoramafirm.pl/szukaj/DJ+wesele.html"),
+    ("panoramafirm_wodzirej", "https://www.panoramafirm.pl/szukaj/Wodzirej.html"),
+    ("panoramafirm_agencja", "https://www.panoramafirm.pl/szukaj/Agencja+eventowa.html"),
+    ("panoramafirm_organizacja", "https://www.panoramafirm.pl/szukaj/Organizacja+imprez.html"),
+    
+    # INNE KATALOGI
+    ("wodzireje_pl", "https://wodzireje.pl"),
     ("e-wesele_dj", "https://www.e-wesele.pl/kategoria/dj-na-wesele"),
-    ("e-wesele_zespol", "https://www.e-wesele.pl/kategoria/zespoly-muzyczne"),
-    # INNE
-    ("eventy_pl", "https://eventy.pl"),
-    ("konferansjer_pl", "https://konferansjer.pl"),
+    ("e-wesele_wodzirej", "https://www.e-wesele.pl/kategoria/wodzirej"),
 ]
 
 def log(msg): print(f"[{datetime.now().strftime('%H:%M:%S')}] {msg}", flush=True)
