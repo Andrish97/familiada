@@ -197,6 +197,7 @@ def run_collect(is_boost=False):
                 headers={"Accept": "application/json", "X-Subscription-Token": BRAVE_KEY}, timeout=10
             )
             current_count += 1
+            m_used_this_run += 1
             
             if resp.status_code == 200:
                 # 1. Zbierz wszystkie URL-e z odpowiedzi Brave
@@ -262,10 +263,26 @@ def run_collect(is_boost=False):
     month = datetime.now().strftime("%Y-%m")
     m_count = int(sb_get("brave_monthly_count") or 0)
     if sb_get("brave_monthly_date") != month: m_count = 0
-    m_count += current_count
-    sb_set("brave_monthly_count", str(m_count))
-    sb_set("brave_monthly_date", month)
+    
+    if m_count >= BRAVE_MONTHLY_LIMIT:
+        log(f"⛔ Limit miesięczny wyczerpany ({m_count}/{BRAVE_MONTHLY_LIMIT}).")
+        sb_set("brave_monthly_count", str(m_count))
+        sb_set("brave_monthly_date", month)
+        sb_set("collect_request", "idle")
+        send_tg(f"⛔ Limit miesięczny Brave wyczerpany ({m_count}/{BRAVE_MONTHLY_LIMIT}).")
+        return
 
+    # Pętla zliczająca miesięczne w trakcie działania
+    m_used_this_run = 0
+
+    for q in queries:
+        if count >= limit: break
+        if current_count >= BRAVE_DAILY_LIMIT: break
+        if (m_count + m_used_this_run) >= BRAVE_MONTHLY_LIMIT:
+            log(f"⛔ Osiągnięto limit miesięczny.")
+            break
+
+    sb_set("collect_request", "idle")
     send_tg(f"🚀 Collect Done\nNowe URL: {len(new_urls)}\nLimit dzienny: {current_count}/{BRAVE_DAILY_LIMIT}\nMiesięczny: {m_count}/{BRAVE_MONTHLY_LIMIT}")
 
 # ─── TRYB 2: VERIFY (AI) ───
