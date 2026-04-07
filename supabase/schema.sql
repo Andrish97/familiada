@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict s3i7CtHQfJUuvboeHdjcAg4kAlroULIUGi7dlkGlwbxdRaGeoRLxStl6PDOcttW
+\restrict Ly9h59DoTc7FeoGzVlpRcZWGqNd6ufybb0GOPPnYsAT7MjzjFrBbdsZFbRRXyWK
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -10642,15 +10642,25 @@ CREATE TABLE "public"."schema_migrations" (
 
 
 --
--- Name: search_query_cache; Type: TABLE; Schema: public; Owner: -
+-- Name: search_queries; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE "public"."search_query_cache" (
+CREATE TABLE "public"."search_queries" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
     "query_hash" "text" NOT NULL,
     "query_text" "text" NOT NULL,
-    "city" "text",
-    "urls" "jsonb" DEFAULT '[]'::"jsonb",
+    "created_at" timestamp with time zone DEFAULT "now"()
+);
+
+
+--
+-- Name: search_urls; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."search_urls" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "url" "text" NOT NULL,
+    "source" "text" DEFAULT 'brave'::"text",
     "status" "text" DEFAULT 'pending'::"text",
     "created_at" timestamp with time zone DEFAULT "now"()
 );
@@ -11192,19 +11202,35 @@ ALTER TABLE ONLY "public"."schema_migrations"
 
 
 --
--- Name: search_query_cache search_query_cache_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: search_queries search_queries_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY "public"."search_query_cache"
-    ADD CONSTRAINT "search_query_cache_pkey" PRIMARY KEY ("id");
+ALTER TABLE ONLY "public"."search_queries"
+    ADD CONSTRAINT "search_queries_pkey" PRIMARY KEY ("id");
 
 
 --
--- Name: search_query_cache search_query_cache_query_hash_key; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: search_queries search_queries_query_hash_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY "public"."search_query_cache"
-    ADD CONSTRAINT "search_query_cache_query_hash_key" UNIQUE ("query_hash");
+ALTER TABLE ONLY "public"."search_queries"
+    ADD CONSTRAINT "search_queries_query_hash_key" UNIQUE ("query_hash");
+
+
+--
+-- Name: search_urls search_urls_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."search_urls"
+    ADD CONSTRAINT "search_urls_pkey" PRIMARY KEY ("id");
+
+
+--
+-- Name: search_urls search_urls_url_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."search_urls"
+    ADD CONSTRAINT "search_urls_url_key" UNIQUE ("url");
 
 
 --
@@ -11394,20 +11420,6 @@ CREATE UNIQUE INDEX "games_owner_market_uniq" ON "public"."games" USING "btree" 
 --
 
 CREATE INDEX "games_source_market_id_idx" ON "public"."games" USING "btree" ("source_market_id") WHERE ("source_market_id" IS NOT NULL);
-
-
---
--- Name: idx_cache_hash; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX "idx_cache_hash" ON "public"."search_query_cache" USING "btree" ("query_hash");
-
-
---
--- Name: idx_cache_status; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX "idx_cache_status" ON "public"."search_query_cache" USING "btree" ("status");
 
 
 --
@@ -12653,10 +12665,17 @@ CREATE POLICY "allow_all" ON "public"."lead_search_runs" USING (true) WITH CHECK
 
 
 --
--- Name: search_query_cache anon_full_access_cache; Type: POLICY; Schema: public; Owner: -
+-- Name: search_queries anon_all_q; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "anon_full_access_cache" ON "public"."search_query_cache" TO "anon" USING (true) WITH CHECK (true);
+CREATE POLICY "anon_all_q" ON "public"."search_queries" TO "anon" USING (true) WITH CHECK (true);
+
+
+--
+-- Name: search_urls anon_all_u; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "anon_all_u" ON "public"."search_urls" TO "anon" USING (true) WITH CHECK (true);
 
 
 --
@@ -13633,10 +13652,16 @@ CREATE POLICY "recipient can view" ON "public"."shared_devices" FOR SELECT USING
 ALTER TABLE "public"."reports" ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: search_query_cache; Type: ROW SECURITY; Schema: public; Owner: -
+-- Name: search_queries; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
-ALTER TABLE "public"."search_query_cache" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "public"."search_queries" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: search_urls; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."search_urls" ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: shared_devices; Type: ROW SECURITY; Schema: public; Owner: -
@@ -13749,5 +13774,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict s3i7CtHQfJUuvboeHdjcAg4kAlroULIUGi7dlkGlwbxdRaGeoRLxStl6PDOcttW
+\unrestrict Ly9h59DoTc7FeoGzVlpRcZWGqNd6ufybb0GOPPnYsAT7MjzjFrBbdsZFbRRXyWK
 
