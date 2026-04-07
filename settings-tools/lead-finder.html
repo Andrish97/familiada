@@ -155,19 +155,23 @@ async function startSearch() {
   const target = parseInt(document.getElementById("targetInput").value) || 50;
   const btn = document.getElementById("startBtn");
   const stopBtn = document.getElementById("stopBtn");
-  btn.disabled = true; btn.textContent = "⏳ Uruchamianie...";
+  btn.disabled = true; btn.textContent = "⏳ Wysyłam zlecenie...";
   stopBtn.hidden = false;
   try {
-    const r = await fetch(`${EDGE_FN}/search`, {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ target }),
+    // Wstawiamy zlecenie do bazy (serwer sam je odbierze)
+    const { error } = await db.from("lead_search_runs").insert({
+      target: target,
+      found: 0,
+      api_calls: 0,
+      status: "pending",
+      cities_done: 0,
+      started_at: new Date().toISOString()
     });
-    const data = await r.json().catch(() => ({ error: r.statusText || "Server error" }));
-    if (!r.ok) toast("❌ " + (data.error || "Błąd"), true);
-    else toast("🚀 Szukanie rozpoczęte! Wyniki pojawią się w tabeli.");
-  } catch(e) { toast("❌ " + e.message, true); }
+
+    if (error) throw error;
+    toast("🚀 Zlecenie wysłane! Serwer zacznie szukać wkrótce...");
+  } catch(e) { toast("❌ Błąd wysyłania: " + e.message, true); }
+  
   btn.disabled = false; btn.textContent = "🇵🇱 Szukaj";
   stopBtn.hidden = true;
   loadStats();
@@ -183,17 +187,21 @@ async function stopSearch() {
 
 async function resumeSearch() {
   const btn = document.getElementById("resumeBtn");
-  btn.disabled = true; btn.textContent = "⏳ Wznawianie...";
-  try {
-    const r = await fetch(`${EDGE_FN}/search`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ resume: true }),
-    });
-    const data = await r.json();
-    if (!r.ok) toast("❌ " + (data.error || "Błąd"), true);
-    else toast("▶️ Wznawianie wyszukiwania!");
-  } catch(e) { toast("❌ " + e.message, true); }
+  btn.disabled = true; btn.textContent = "⏳ Wznawiam...";
+  
+  // Znajdź ostatnie zadanie do wznowienia
+  const { data: runs } = await db.from("lead_search_runs").select("*").in("status", ["limit_reached", "stopped"]).order("started_at", { ascending: false }).limit(1);
+  
+  if (runs && runs.length > 0) {
+    const run = runs[0];
+    try {
+      // Zmień status na pending, żeby daemon go podłapał
+      const { error } = await db.from("lead_search_runs").update({ status: "pending" }).eq("id", run.id);
+      if (error) throw error;
+      toast("🚀 Zlecenie wznowienia wysłane!");
+    } catch(e) { toast("❌ Błąd wznawiania: " + e.message, true); }
+  }
+  
   btn.disabled = false; btn.textContent = "▶️ Wznów";
   loadStats();
 }

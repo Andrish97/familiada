@@ -280,68 +280,7 @@ async function handleAdminApi(request, env) {
     });
   }
 
-  // Lead finder routes – publiczne (nie wymagają auth admina)
-  if (url.pathname === "/_admin_api/lead-finder/search" && request.method === "POST") {
-    try {
-      const body = await readJson(request);
-      const target = Math.min(Math.max(parseInt(body?.target || 50), 5), 200);
-      
-      const serverUrl = `http://${env.SERVER_HOST}:8765/search`;
-      const resp = await fetch(serverUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ target }),
-      });
-      const data = await resp.json().catch(() => ({}));
-      if (!resp.ok) return json({ ok: false, error: data.error || "server_error" }, resp.status);
-      return json({ ok: true, message: `Search started (target: ${target})` });
-    } catch (err) {
-      return json({ ok: false, error: "server_unreachable" }, 502);
-    }
-  }
-
-  if (url.pathname === "/_admin_api/lead-finder/notify") {
-    try {
-      const body = await readJson(request);
-      const message = body.message || "Lead Finder: search completed";
-      const resp = await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chat_id: env.TELEGRAM_CHAT_ID, text: `🎯 Lead Finder\n${message}`, parse_mode: "HTML" }),
-      });
-      const data = await resp.json().catch(() => ({}));
-      if (!resp.ok || !data.ok) return json({ ok: false, error: "telegram_failed" }, 500);
-      return json({ ok: true });
-    } catch (e) {
-      return json({ ok: false, error: "telegram_error", details: e.message }, 500);
-    }
-  }
-
-  if (url.pathname === "/_admin_api/lead-finder/stats") {
-    try {
-      const supabaseUrl = env.SUPABASE_URL;
-      const serviceKey = env.SUPABASE_SERVICE_ROLE_KEY;
-      const headers = { "apikey": serviceKey, "Authorization": `Bearer ${serviceKey}` };
-      const [configRes, totalRes, usedRes] = await Promise.all([
-        fetch(`${supabaseUrl}/rest/v1/lead_finder_config?select=*`, { headers }),
-        fetch(`${supabaseUrl}/rest/v1/lead_finder?select=id&limit=0`, { headers: { ...headers, "Prefer": "count=exact" } }),
-        fetch(`${supabaseUrl}/rest/v1/lead_finder?select=id&eq=used.true&limit=0`, { headers: { ...headers, "Prefer": "count=exact" } })
-      ]);
-      const configData = await configRes.json();
-      const kv = {};
-      if (Array.isArray(configData)) configData.forEach(r => kv[r.key] = r.value);
-      const parseCount = (res) => parseInt((res.headers.get("content-range") || "/0").split("/")[1], 10);
-      return json({
-        daily_count: kv.brave_daily_count || 0, daily_limit: kv.brave_daily_limit || 33,
-        monthly_count: kv.brave_monthly_count || 0, monthly_limit: kv.brave_monthly_limit || 1000,
-        total_leads: parseCount(totalRes), used_leads: parseCount(usedRes),
-        last_log: kv.last_search_log || "",
-        search: kv.search_status ? JSON.parse(kv.search_status) : {}
-      });
-    } catch (e) {
-      return json({ error: "stats_failed", details: e.message }, 500);
-    }
-  }
+  // Usunięto endpointy lead-finder (komunikacja przeniesiona do bazy danych)
 
   const authorized = await isAdminAuthorized(request);
   if (!authorized) {
