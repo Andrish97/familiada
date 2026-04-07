@@ -339,6 +339,12 @@ async function loadStats() {
               statusIcon.textContent = "✅"; statusText.textContent = "Zakończono.";
               progressText.textContent = `Wynik: ${last.found} leadów`;
               progressBar.style.width = "100%"; progressBar.style.background = "var(--green)";
+              
+              // Pokaż logi po zakończeniu
+              if (kv.last_search_log) {
+                  logBox.textContent = kv.last_search_log;
+                  logBox.scrollTop = logBox.scrollHeight;
+              }
           } else {
               resumeBtn.hidden = true;
               box.style.display = "none";
