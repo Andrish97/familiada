@@ -232,27 +232,6 @@ async function triggerCollect() {
   loadStats();
 }
 
-async function resumeSearch() {
-  const btn = document.getElementById("resumeBtn");
-  btn.disabled = true; btn.textContent = "⏳ Wznawiam...";
-
-  // Znajdź ostatnie zadanie do wznowienia
-  const { data: runs } = await db.from("lead_search_runs").select("*").in("status", ["limit_reached", "stopped"]).order("started_at", { ascending: false }).limit(1);
-
-  if (runs && runs.length > 0) {
-    const run = runs[0];
-    try {
-      // Zmień status na pending, żeby daemon go podłapał
-      const { error } = await db.from("lead_search_runs").update({ status: "pending" }).eq("id", run.id);
-      if (error) throw error;
-      toast("🚀 Zlecenie wznowienia wysłane!");
-    } catch(e) { toast("❌ Błąd wznawiania: " + e.message, true); }
-  }
-
-  btn.disabled = false; btn.textContent = "▶️ Wznów";
-  loadStats();
-}
-
 // ── STATS ──
 async function loadStats() {
   if (!db) return;
@@ -335,29 +314,25 @@ async function loadStats() {
           stopBtn.hidden = true; resetBtn.hidden = true;
 
           if (last && last.status === 'limit_reached') {
-              resumeBtn.hidden = true;
               startBtn.textContent = "⚠️ Limit dzienny"; startBtn.disabled = true;
               box.style.display = "block";
               statusIcon.textContent = "⚠️"; statusText.textContent = "Limit zapytań osiągnięty.";
               progressBar.style.width = "100%"; progressBar.style.background = "var(--red)";
           } else if (last && (last.status === 'stopped' || last.status === 'cancelled')) {
-              resumeBtn.hidden = last.found <= 0;
-              if (resumeBtn.hidden === false) resumeBtn.textContent = `▶️ Wznów (${last.target - last.found})`;
+              startBtn.textContent = "🇵🇱 Szukaj"; startBtn.disabled = false;
               box.style.display = "none";
           } else if (last && last.status === 'completed') {
-              resumeBtn.hidden = true;
               box.style.display = "block";
               statusIcon.textContent = "✅"; statusText.textContent = "Zakończono.";
               progressText.textContent = `Wynik: ${last.found} leadów`;
               progressBar.style.width = "100%"; progressBar.style.background = "var(--green)";
-              
+
               // Pokaż logi po zakończeniu
               if (kv.last_search_log) {
                   logBox.textContent = kv.last_search_log;
                   logBox.scrollTop = logBox.scrollHeight;
               }
           } else {
-              resumeBtn.hidden = true;
               box.style.display = "none";
           }
       }
