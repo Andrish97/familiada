@@ -58,25 +58,16 @@ tr.used{opacity:.35}tr.used:hover{opacity:.7}
 <div class="card">
   <h3>🚀 Wyszukiwanie</h3>
   <div class="row" style="margin-top:8px">
-    <input type="number" id="targetInput" value="50" min="5" max="200" style="width:70px">
-    <span class="small" style="color:var(--mut)">nowych maili</span>
-    <button class="btn btn-green" id="startBtn" onclick="startSearch()">🇵🇱 Szukaj</button>
-    <button class="btn btn-blue" id="resumeBtn" onclick="resumeSearch()" hidden>▶️ Wznów</button>
-    <button class="btn btn-yellow" id="collectBtn" onclick="triggerCollect()">🌙 Zbierz URL-e</button>
-    <button class="btn btn-red" id="stopBtn" onclick="stopSearch()" hidden>🛑 Stop</button>
-    <button class="btn btn-blue" id="resetBtn" onclick="forceReset()" hidden>🗑️ Reset</button>
+    <input type="number" id="targetInput" value="10" min="5" max="100" style="width:70px">
+    <span class="small" style="color:var(--mut)">leadów</span>
+    <button class="btn btn-green" id="btnVerify" onclick="startSearch()">🤖 Weryfikuj</button>
+    <button class="btn btn-blue" id="btnResume" onclick="resumeSearch()" hidden>▶️ Wznów</button>
+    <button class="btn btn-red" id="btnStop" onclick="stopSearch()" hidden>🛑 Stop</button>
+    <button class="btn btn-yellow" id="btnBoost" onclick="triggerBoost()">🚀 Boost (+10)</button>
     <button class="btn btn-blue" onclick="loadStats()">🔄 Odśwież</button>
   </div>
-  <p class="small" style="color:var(--mut);margin-top:6px">Wyniki pojawią się w tabeli. Powiadomienie Telegram po zakończeniu.</p>
+  <p class="small" style="color:var(--mut);margin-top:6px">Boost dodaje nowe URL-e do puli. Weryfikuj sprawdza je przez AI.</p>
   <div class="log-box" id="logBox"></div>
-</div>
-
-<!-- STATS -->
-<div class="row" id="statsRow">
-  <div class="card stat" style="flex:1"><div class="stat-num" id="statTotal">0</div><div class="stat-label">Łącznie</div></div>
-  <div class="card stat" style="flex:1"><div class="stat-num" id="statUnused" style="color:var(--yellow)">0</div><div class="stat-label">Nieużyte</div></div>
-  <div class="card stat" style="flex:1"><div class="stat-num" id="statUsed" style="color:var(--green)">0</div><div class="stat-label">Użyte ✓</div></div>
-  <div class="card stat" style="flex:1"><div class="stat-num" id="statSources" style="color:var(--acc)">0</div><div class="stat-label">Źródeł</div></div>
 </div>
 
 <!-- SEARCH STATUS BOX -->
@@ -96,6 +87,14 @@ tr.used{opacity:.35}tr.used:hover{opacity:.7}
   </div>
   <!-- Live log -->
   <div id="liveLogBox" style="background:#0d131d;border:1px solid var(--line);border-radius:8px;padding:8px;font-family:ui-monospace,monospace;font-size:10px;color:var(--mut);max-height:150px;overflow-y:auto;white-space:pre-wrap"></div>
+</div>
+
+<!-- STATS -->
+<div class="row" id="statsRow">
+  <div class="card stat" style="flex:1"><div class="stat-num" id="statTotal">0</div><div class="stat-label">Łącznie</div></div>
+  <div class="card stat" style="flex:1"><div class="stat-num" id="statUnused" style="color:var(--yellow)">0</div><div class="stat-label">Nieużyte</div></div>
+  <div class="card stat" style="flex:1"><div class="stat-num" id="statUsed" style="color:var(--green)">0</div><div class="stat-label">Użyte ✓</div></div>
+  <div class="card stat" style="flex:1"><div class="stat-num" id="statSources" style="color:var(--acc)">0</div><div class="stat-label">Źródeł</div></div>
 </div>
 
 <!-- FILTERS + TABLE -->
@@ -151,114 +150,44 @@ function initDB() {
   return true;
 }
 
-// ── SEARCH ──
+// ── ACTIONS ──
 async function startSearch() {
-  const target = parseInt(document.getElementById("targetInput").value) || 50;
-  const startBtn = document.getElementById("startBtn");
-  const stopBtn = document.getElementById("stopBtn");
-
-  // Od razu zmień UI na stan oczekiwania (Anuluj)
-  startBtn.hidden = true;
-  stopBtn.hidden = false;
-  stopBtn.textContent = "❌ Anuluj";
-  stopBtn.disabled = false;
-
-  try {
-    // Wstawiamy zlecenie do bazy (status: pending)
-    const { error } = await db.from("lead_search_runs").insert({
-      target: target,
-      found: 0,
-      api_calls: 0,
-      status: "pending",
-      cities_done: 0,
-      started_at: new Date().toISOString()
-    });
-
-    if (error) throw error;
-    
-    // Pokaż status w pasku
-    const box = document.getElementById("searchStatusBox");
-    box.style.display = "block";
-    document.getElementById("searchStatusIcon").textContent = "⏳";
-    document.getElementById("searchStatusText").textContent = "Zlecenie wysłane, oczekiwanie na serwer...";
-    document.getElementById("searchProgress").textContent = `Cel: ${target}`;
-    document.getElementById("searchProgressBar").style.width = "5%";
-    document.getElementById("searchProgressBar").style.background = "var(--yellow)";
-
-    toast("🚀 Zlecenie wysłane do kolejki!");
-    loadStats(); // Odśwież statusy
-  } catch(e) { 
-    toast("❌ Błąd wysyłania: " + e.message, true); 
-    // W razie błędu przywróć przycisk Szukaj
-    startBtn.hidden = false;
-    stopBtn.hidden = true;
-  }
-}
-
-async function stopSearch() {
-  // 1. Natychmiast zmień status w bazie, żeby UI się odblokowało
-  const { data: activeRuns } = await db.from("lead_search_runs").select("*").in("status", ["running", "pending"]).limit(1);
-
-  if (activeRuns && activeRuns.length > 0) {
-      const run = activeRuns[0];
-      await db.from("lead_search_runs").update({ status: "stopped", reason: "manual_stop" }).eq("id", run.id);
-      
-      // 2. Powiadom runnera (żeby grzecznie się zatrzymał w tle)
-      await db.from("lead_finder_config").update({ value: "true" }).eq("key", "search_stop_requested");
-  }
-
-  toast("🛑 Zatrzymano zadanie.");
-  loadStats();
-}
-
-async function forceReset() {
-  if(!confirm("Wyczyścić wszystkie aktywne zadania? Użyj tylko jeśli system się całkowicie zawiesił.")) return;
+  const target = document.getElementById("targetInput").value;
+  // Ustaw flagę weryfikacji
+  await db.from("lead_finder_config").update({ value: `{"status": "pending", "target": ${target}}` }).eq("key", "verify_request");
   
-  await db.from("lead_search_runs").update({ status: "stopped", reason: "force_reset" }).in("status", ["running", "pending"]);
-  await db.from("lead_finder_config").update({ value: "false" }).eq("key", "search_stop_requested");
-  await db.from("lead_finder_config").update({ value: "" }).eq("key", "search_heartbeat");
+  const btn = document.getElementById("btnVerify");
+  btn.disabled = true;
+  document.getElementById("btnStop").hidden = false;
+  document.getElementById("btnResume").hidden = true;
   
-  toast("🗑️ Stan zresetowany.");
-  loadStats();
-}
-
-async function triggerCollect() {
-  const btn = document.getElementById("collectBtn");
-  btn.disabled = true; btn.textContent = "⏳ Wysyłam żądanie...";
-  try {
-    await db.from("lead_finder_config").update({ value: "pending" }).eq("key", "collect_request");
-    toast("🌙 Żądanie COLLECT wysłane. Daemon zbierze URL-e w tle.");
-  } catch(e) { toast("❌ Błąd: " + e.message, true); }
-  btn.disabled = false; btn.textContent = "🌙 Zbierz URL-e";
+  toast("🚀 Weryfikacja uruchomiona!");
   loadStats();
 }
 
 async function resumeSearch() {
-  const btn = document.getElementById("resumeBtn");
-  btn.disabled = true; btn.textContent = "⏳ Wznawiam...";
+  // Wznawiamy z defaultowym targetem 50 albo ostatnim
+  await db.from("lead_finder_config").update({ value: `{"status": "pending", "target": 50}` }).eq("key", "verify_request");
+  
+  document.getElementById("btnResume").hidden = true;
+  document.getElementById("btnStop").hidden = false;
+  
+  toast("▶️ Wznawiam weryfikację...");
+  loadStats();
+}
 
-  // Pobierz cel z ostatniego zatrzymanego zadania
-  const { data: runs } = await db.from("lead_search_runs")
-    .select("target")
-    .in("status", ["stopped", "paused", "cancelled"])
-    .order("started_at", { ascending: false })
-    .limit(1);
+async function stopSearch() {
+  await db.from("lead_finder_config").update({ value: "true" }).eq("key", "search_stop_requested");
+  toast("🛑 Zatrzymywanie...");
+  // UI zaktualizuje się samo w loadStats
+}
 
-  const target = (runs && runs.length > 0) ? runs[0].target : 50;
-
-  // Utwórz NOWE zadanie (Daemon je podłapie, a Runner użyje zaległych URL-i z backlogu)
-  const { error } = await db.from("lead_search_runs").insert({
-      target: target,
-      found: 0, 
-      api_calls: 0,
-      status: "pending",
-      started_at: new Date().toISOString()
-  });
-
-  if (error) toast("❌ Błąd wznawiania: " + error.message, true);
-  else toast("🚀 Wznawianie wyszukiwania (używam zaległych URL-i)...");
-
-  btn.disabled = false; btn.textContent = "▶️ Wznów";
+async function triggerBoost() {
+  const btn = document.getElementById("btnBoost");
+  btn.disabled = true; btn.textContent = "⏳ Wysyłam...";
+  await db.from("lead_finder_config").update({ value: "boost" }).eq("key", "collect_request");
+  toast("🚀 Boost wysłany! Zbieram nowe URL-e.");
+  btn.disabled = false; btn.textContent = "🚀 Boost (+10)";
   loadStats();
 }
 
@@ -279,13 +208,11 @@ async function loadStats() {
       document.getElementById("statSources").textContent = Object.keys(counts).length;
     }
 
-    // Pobierz konfig bezpośrednio z bazy
     const { data: config } = await db.from("lead_finder_config").select("*");
     if (config) {
       const kv = {};
       config.forEach(r => kv[r.key] = r.value);
 
-      // Limity
       const daily = parseInt(kv.brave_daily_count || 0);
       const dailyLimit = parseInt(kv.brave_daily_limit || 33);
       const monthly = parseInt(kv.brave_monthly_count || 0);
@@ -293,82 +220,65 @@ async function loadStats() {
       document.getElementById("dailyInfo").textContent = `${daily}/${dailyLimit}`;
       document.getElementById("monthlyInfo").textContent = `${monthly}/${monthlyLimit}`;
 
-      // Logi
       if (kv.last_search_log) {
         document.getElementById("logBox").style.display = "block";
         document.getElementById("logBox").textContent = kv.last_search_log;
       }
 
-      // SPRAWDZANIE STATUSU ZADAŃ
-      const { data: activeRuns } = await db.from("lead_search_runs").select("*").in("status", ["running", "pending"]).limit(1);
-      const isRunning = activeRuns && activeRuns.length > 0;
-
-      const startBtn = document.getElementById("startBtn");
-      const stopBtn = document.getElementById("stopBtn");
-      const collectBtn = document.getElementById("collectBtn");
-      const resetBtn = document.getElementById("resetBtn");
+      // Obsługa statusów przycisków
+      const btnVerify = document.getElementById("btnVerify");
+      const btnResume = document.getElementById("btnResume");
+      const btnStop = document.getElementById("btnStop");
       const box = document.getElementById("searchStatusBox");
-      const logBox = document.getElementById("liveLogBox");
-      const progressBar = document.getElementById("searchProgressBar");
-      const statusIcon = document.getElementById("searchStatusIcon");
       const statusText = document.getElementById("searchStatusText");
+      const statusIcon = document.getElementById("searchStatusIcon");
       const progressText = document.getElementById("searchProgress");
+      const progressBar = document.getElementById("searchProgressBar");
+      const logBox = document.getElementById("liveLogBox");
 
-      if (isRunning) {
-          const run = activeRuns[0];
-          startBtn.hidden = true;
-          stopBtn.hidden = false; stopBtn.disabled = false;
-          resetBtn.hidden = false;
-          if (collectBtn) collectBtn.disabled = true;
+      const verifyData = kv.verify_request;
+      const isRunning = verifyData && verifyData.includes('"status": "running"');
+      const isPending = verifyData && verifyData.includes('"status": "pending"');
+      
+      if (isRunning || isPending) {
+          btnVerify.disabled = true;
+          btnResume.hidden = true;
+          btnStop.hidden = false;
           box.style.display = "block";
-
-          if (run.status === 'pending') {
-              stopBtn.textContent = "❌ Anuluj"; stopBtn.className = "btn btn-yellow";
-              statusIcon.textContent = "⏳";
-              statusText.textContent = "Zlecenie w kolejce...";
-              progressText.textContent = `Cel: ${run.target}`;
-              progressBar.style.width = "5%"; progressBar.style.background = "var(--yellow)";
-          } else {
-              stopBtn.textContent = "🛑 Zatrzymaj"; stopBtn.className = "btn btn-red";
-              statusIcon.textContent = "🔄";
-              statusText.textContent = `Szukanie... (cel: ${run.target})`;
-              progressText.textContent = `Znalezione: ${run.found||0}`;
-              const pct = run.target ? Math.min(100, Math.round(((run.found||0) / run.target) * 100)) : 10;
-              progressBar.style.width = pct + "%"; progressBar.style.background = "var(--acc)";
+          statusText.textContent = "Weryfikacja AI...";
+          statusIcon.textContent = "🔄";
+          
+          // Sprawdź logi
+          if (kv.last_search_log) {
+             logBox.textContent = kv.last_search_log;
+             logBox.scrollTop = logBox.scrollHeight;
           }
       } else {
+          btnVerify.disabled = false;
+          btnStop.hidden = true;
+          
+          // Sprawdź czy było ostatnio zakończone (żeby pokazać Wznów jeśli przerwane)
+          // Sprawdzamy ostatni run w tabeli lead_search_runs
           const { data: lastRun } = await db.from("lead_search_runs").select("*").order("started_at", { ascending: false }).limit(1);
-          const last = lastRun && lastRun[0];
-
-          startBtn.hidden = false; startBtn.disabled = false; startBtn.textContent = "🇵🇱 Szukaj";
-          stopBtn.hidden = true; resetBtn.hidden = true;
-
-          if (last && last.status === 'limit_reached') {
-              resumeBtn.hidden = true;
-              startBtn.textContent = "⚠️ Limit dzienny"; startBtn.disabled = true;
-              box.style.display = "block";
-              statusIcon.textContent = "⚠️"; statusText.textContent = "Limit zapytań osiągnięty.";
-              progressBar.style.width = "100%"; progressBar.style.background = "var(--red)";
-          } else if (last && (last.status === 'stopped' || last.status === 'paused' || last.status === 'cancelled')) {
-              resumeBtn.hidden = false;
-              resumeBtn.textContent = `▶️ Wznów (${last.found || 0}/${last.target})`;
+          if (lastRun && lastRun.length > 0) {
+              const r = lastRun[0];
+              if (r.status === 'stopped' || r.status === 'paused') {
+                  btnResume.hidden = false;
+              } else {
+                  btnResume.hidden = true;
+              }
               
-              startBtn.textContent = "🇵🇱 Szukaj"; startBtn.disabled = false;
-              box.style.display = "none";
-          } else if (last && last.status === 'completed') {
-              resumeBtn.hidden = true;
+              // Pokaż status box jeśli coś ostatnio było
               box.style.display = "block";
-              statusIcon.textContent = "✅"; statusText.textContent = "Zakończono.";
-              progressText.textContent = `Wynik: ${last.found} leadów`;
-              progressBar.style.width = "100%"; progressBar.style.background = "var(--green)";
-
-              // Pokaż logi po zakończeniu
-              if (kv.last_search_log) {
-                  logBox.textContent = kv.last_search_log;
-                  logBox.scrollTop = logBox.scrollHeight;
+              if (r.status === 'completed') {
+                  statusIcon.textContent = "✅"; statusText.textContent = "Zakończono.";
+                  progressText.textContent = `Wynik: ${r.found || 0} leadów`;
+                  progressBar.style.width = "100%"; progressBar.style.background = "var(--green)";
+              } else {
+                  statusIcon.textContent = "⏹️"; statusText.textContent = "Zatrzymano.";
+                  progressBar.style.background = "var(--yellow)";
               }
           } else {
-              resumeBtn.hidden = true;
               box.style.display = "none";
           }
       }
@@ -422,7 +332,7 @@ async function loadLeads(page) {
   } else { pbox.style.display = "none"; }
 }
 
-// ── ACTIONS ──
+// ── ACTIONS LEADS ──
 async function _toggleUsed(id, val) { await db.from("lead_finder").update({ used: val }).eq("id", id); loadStats(); }
 async function _delLead(id) { if(confirm("Usunąć?")) { await db.from("lead_finder").delete().eq("id", id); loadLeads(currentPage); loadStats(); } }
 async function bulkToggle() {
