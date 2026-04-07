@@ -1043,23 +1043,6 @@ async function renderShareModal() {
   }
 }
 
-async function sendBaseShareEmail({ to, link, baseName, ownerLabel } = {}) {
-  if (!to || !link) return;
-  const body = {
-    to,
-    subject: t("bases.share.emailSubject", { baseName }) || `Udostępniono bazę: ${baseName}`,
-    baseName,
-    ownerLabel,
-    link,
-  };
-  const res = await fetch(MAIL_FUNCTION_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${(await sb().auth.getSession()).data?.session?.access_token || ""}` },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) throw new Error(`send-mail ${res.status}`);
-}
-
 async function shareAdd() {
   const b = selectedBase();
   if (!b || !isOwner(b)) return;
