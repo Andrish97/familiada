@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict hqwdhWwEVZWr43u5MS9aefhC4Hbeug0cDABBGq6gGSPSKny3tjeRoOvBDFbTYZI
+\restrict Bycu2MEDX4M9gXLBhBotLkevRH8uadKBLIXx6bxkBX7KU4pkwAT32DwgGLMbJ7i
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -10647,8 +10647,9 @@ CREATE TABLE "public"."schema_migrations" (
 
 CREATE TABLE "public"."search_queries" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
-    "query_hash" "text" NOT NULL,
     "query_text" "text" NOT NULL,
+    "query_hash" "text" NOT NULL,
+    "exhausted" boolean DEFAULT false,
     "created_at" timestamp with time zone DEFAULT "now"()
 );
 
@@ -10661,6 +10662,8 @@ CREATE TABLE "public"."search_urls" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
     "url" "text" NOT NULL,
     "source" "text" DEFAULT 'brave'::"text",
+    "found_emails" "jsonb" DEFAULT '[]'::"jsonb",
+    "title" "text",
     "status" "text" DEFAULT 'pending'::"text",
     "created_at" timestamp with time zone DEFAULT "now"()
 );
@@ -12665,17 +12668,17 @@ CREATE POLICY "allow_all" ON "public"."lead_search_runs" USING (true) WITH CHECK
 
 
 --
--- Name: search_queries anon_all_q; Type: POLICY; Schema: public; Owner: -
+-- Name: search_queries anon_all_sq; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "anon_all_q" ON "public"."search_queries" TO "anon" USING (true) WITH CHECK (true);
+CREATE POLICY "anon_all_sq" ON "public"."search_queries" TO "anon" USING (true) WITH CHECK (true);
 
 
 --
--- Name: search_urls anon_all_u; Type: POLICY; Schema: public; Owner: -
+-- Name: search_urls anon_all_su; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "anon_all_u" ON "public"."search_urls" TO "anon" USING (true) WITH CHECK (true);
+CREATE POLICY "anon_all_su" ON "public"."search_urls" TO "anon" USING (true) WITH CHECK (true);
 
 
 --
@@ -13774,5 +13777,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict hqwdhWwEVZWr43u5MS9aefhC4Hbeug0cDABBGq6gGSPSKny3tjeRoOvBDFbTYZI
+\unrestrict Bycu2MEDX4M9gXLBhBotLkevRH8uadKBLIXx6bxkBX7KU4pkwAT32DwgGLMbJ7i
 
