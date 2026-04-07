@@ -816,16 +816,19 @@ async function handleAdminMarketplaceApi(request, env, url) {
   }
 
   // GET /_admin_api/lead-finder/stats – proxy to Supabase edge function
-  if (url.pathname === "/_admin_api/lead-finder/stats" && request.method === "GET") {
-    const edgeUrl = `${env.SUPABASE_URL || "https://api.familiada.online"}/functions/v1/lead-finder?action=stats`;
+  if (url.pathname === "/_admin_api/lead-finder/stats" || url.pathname === "/_admin_api/lead-finder/stats/") {
     try {
+      const supabaseUrl = env.SUPABASE_URL || "https://api.familiada.online";
+      const edgeUrl = `${supabaseUrl}/functions/v1/lead-finder?action=stats`;
+      const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsImF1ZCI6ImF1dGhlbnRpY2F0ZWQiLCJpYXQiOjE3NzIyMTEyNTAsImV4cCI6MjA4NzU3MTI1MCwicm9sZSI6ImFub24ifQ.9Hg8RB6iC72o2ommzcYUNQWnPSzsDyUdxwQR9PGcF4U";
+      
       const resp = await fetch(edgeUrl, {
         headers: { "Authorization": `Bearer ${ANON_KEY}`, "apikey": ANON_KEY },
       });
       const data = await resp.json().catch(() => ({}));
       return json(data);
-    } catch {
-      return json({ error: "stats_fetch_failed" }, 500);
+    } catch (e) {
+      return json({ error: "stats_fetch_failed", details: e.message }, 500);
     }
   }
 
