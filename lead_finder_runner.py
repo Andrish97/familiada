@@ -199,23 +199,48 @@ def run_collect(is_boost=False):
             current_count += 1
             
             if resp.status_code == 200:
-                found_any = False
+                # 1. Zbierz wszystkie URL-e z odpowiedzi Brave
+                candidate_urls = []
                 for item in resp.json().get("web", {}).get("results", []):
-                    url = item.get("url")
-                    if url and not any(s in url.lower() for s in SKIP_DOMAINS):
-                        # Sprawdź stronę lokalnie
+                    u = item.get("url")
+                    if u and not any(s in u.lower() for s in SKIP_DOMAINS):
+                        candidate_urls.append(u)
+                
+                if not candidate_urls:
+                    continue
+
+                # 2. Sprawdź które URL-e JUŻ MAMY w bazie (żeby nie skanować dwa razy tego samego)
+                # Budujemy zapytanie SQL: url IN ('http://a.pl', 'http://b.pl')
+                # Uwaga: Supabase ma limit length URL, więc robimy to partiami lub prościej:
+                # Sprawdzamy pojedynczo lub partiami. Dla szybkości sprawdzimy w pętli (jest OK przy 10 wynikach)
+                
+                urls_to_scrape = []
+                for u in candidate_urls:
+                    # Sprawdź czy URL już istnieje w search_urls
+                    r_check = sb_req("GET", f"/rest/v1/search_urls?select=id&url=eq.{u}&limit=1")
+                    if not (r_check and r_check.json()):
+                        urls_to_scrape.append(u)
+
+                if not urls_to_scrape:
+                    log(f"   ⏭️ Wszystkie {len(candidate_urls)} linków już sprawdzane.")
+                else:
+                    log(f"   🔍 Do skanowania: {len(urls_to_scrape)} nowych linków.")
+                    
+                    # 3. Skanuj tylko te nowe
+                    for url in urls_to_scrape:
                         st, html = fetch_page(url, t=8)
                         if st == 200:
                             emails, title, text = extract_emails(html)
-                            # Filtruj maile
+                            # Filtruj maile względem ZATWIERDZONYCH (lead_finder)
                             new_emails = [e for e in emails if is_valid_new_email(e, existing_emails)]
                             
                             if new_emails:
+                                # Są nowe maile -> pending (czeka na AI)
                                 new_urls.append({"url": url, "source": "brave", "found_emails": new_emails, "title": title[:100], "status": "pending"})
                                 log(f"   ✅ +{len(new_emails)} nowe maile: {title[:40]}")
-                                found_any = True
-                if not found_any:
-                     log(f"   ⛔ Brak nowych maili.")
+                            else:
+                                # Brak nowych maili -> processed (odwiedzone, ale bez wartości)
+                                new_urls.append({"url": url, "source": "brave", "found_emails": [], "title": title[:100], "status": "processed"})
                 
                 # Oznacz zapytanie jako wyczerpane
                 sb_req("PATCH", f"/rest/v1/search_queries?id=eq.{q['id']}", [{"exhausted": True}])
