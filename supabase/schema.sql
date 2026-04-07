@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict nw8QVYsGhQfojN4ZlrITbDM6FOtdJVj6Z0CS6c2yhEqdlAuFoukC0zJD3tWAcsI
+\restrict wynhN5srCscF3QP87ffitJDARdy2HkkxBR6yvpsMGFWpwrU7Jvzja4Ah12Us68R
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -9825,6 +9825,55 @@ $$;
 
 
 --
+-- Name: update_base_share_role("uuid", "uuid", "public"."base_share_role"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."update_base_share_role"("p_base_id" "uuid", "p_user_id" "uuid", "p_role" "public"."base_share_role") RETURNS TABLE("ok" boolean, "err" "text")
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+DECLARE
+  v_owner_id uuid;
+  v_exists boolean;
+BEGIN
+  -- Sprawdź czy baza istnieje
+  SELECT owner_id INTO v_owner_id
+  FROM public.question_bases
+  WHERE id = p_base_id;
+
+  IF NOT FOUND THEN
+    RETURN QUERY SELECT false, 'base_not_found';
+    RETURN;
+  END IF;
+
+  -- Tylko owner może zmienić rolę
+  IF v_owner_id <> auth.uid() THEN
+    RETURN QUERY SELECT false, 'not_owner';
+    RETURN;
+  END IF;
+
+  -- Sprawdź czy share istnieje
+  SELECT EXISTS (
+    SELECT 1 FROM public.base_shares
+    WHERE base_id = p_base_id AND user_id = p_user_id
+  ) INTO v_exists;
+
+  IF NOT v_exists THEN
+    RETURN QUERY SELECT false, 'share_not_found';
+    RETURN;
+  END IF;
+
+  -- Aktualizuj rolę
+  UPDATE public.base_shares
+  SET role = p_role,
+      updated_at = now()
+  WHERE base_id = p_base_id AND user_id = p_user_id;
+
+  RETURN QUERY SELECT true, ''::text;
+END;
+$$;
+
+
+--
 -- Name: update_lead_finder_updated_at(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -13405,5 +13454,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict nw8QVYsGhQfojN4ZlrITbDM6FOtdJVj6Z0CS6c2yhEqdlAuFoukC0zJD3tWAcsI
+\unrestrict wynhN5srCscF3QP87ffitJDARdy2HkkxBR6yvpsMGFWpwrU7Jvzja4Ah12Us68R
 
