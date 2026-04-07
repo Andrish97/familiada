@@ -815,21 +815,39 @@ async function handleAdminMarketplaceApi(request, env, url) {
     }
   }
 
-  // GET /_admin_api/lead-finder/stats – proxy to Supabase edge function
-  if (url.pathname === "/_admin_api/lead-finder/stats" || url.pathname === "/_admin_api/lead-finder/stats/") {
+  // GET /_admin_api/lead-finder/stats
+  if (url.pathname === "/_admin_api/lead-finder/stats") {
     try {
-      const supabaseUrl = env.SUPABASE_URL || "https://api.familiada.online";
-      const edgeUrl = `${supabaseUrl}/functions/v1/lead-finder?action=stats`;
-      // Używamy Service Role Key z Workera (ma pełne uprawnienia)
+      const supabaseUrl = env.SUPABASE_URL;
       const serviceKey = env.SUPABASE_SERVICE_ROLE_KEY;
       
-      const resp = await fetch(edgeUrl, {
-        headers: { "Authorization": `Bearer ${serviceKey}`, "apikey": serviceKey },
+      // Pobierz dane bezpośrednio z bazy
+      const headers = { "apikey": serviceKey, "Authorization": `Bearer ${serviceKey}` };
+      
+      const [configRes, totalRes, usedRes] = await Promise.all([
+        fetch(`${supabaseUrl}/rest/v1/lead_finder_config?select=*`, { headers }),
+        fetch(`${supabaseUrl}/rest/v1/lead_finder?select=id&limit=0`, { headers: { ...headers, "Prefer": "count=exact" } }),
+        fetch(`${supabaseUrl}/rest/v1/lead_finder?select=id&eq=used.true&limit=0`, { headers: { ...headers, "Prefer": "count=exact" } })
+      ]);
+      
+      const configData = await configRes.json();
+      const kv = {};
+      if (Array.isArray(configData)) configData.forEach(r => kv[r.key] = r.value);
+      
+      const parseCount = (res) => parseInt((res.headers.get("content-range") || "/0").split("/")[1], 10);
+
+      return json({
+        daily_count: kv.brave_daily_count || 0,
+        daily_limit: kv.brave_daily_limit || 33,
+        monthly_count: kv.brave_monthly_count || 0,
+        monthly_limit: kv.brave_monthly_limit || 1000,
+        total_leads: parseCount(totalRes),
+        used_leads: parseCount(usedRes),
+        last_log: kv.last_search_log || "",
+        search: kv.search_status ? JSON.parse(kv.search_status) : {}
       });
-      const data = await resp.json().catch(() => ({}));
-      return json(data);
     } catch (e) {
-      return json({ error: "stats_fetch_failed", details: e.message }, 500);
+      return json({ error: "stats_failed", details: e.message }, 500);
     }
   }
 
