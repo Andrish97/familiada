@@ -141,7 +141,38 @@ def sb(path, method="GET", body=None, headers=None):
     if headers: h.update(headers)
     return httpx.request(method, f"{SUPABASE_URL}{path}", headers=h, json=body, timeout=30)
 
+def sb_get_cached_urls():
+    """Pobiera wszystkie URL-e z cache (żeby nie powtarzać zapytań)."""
+    urls = set()
+    page = 0
+    while True:
+        r = sb(f"/rest/v1/lead_search_cache?select=url&limit=1000&offset={page*1000}")
+        data = r.json()
+        if not data: break
+        for row in data: urls.add(row["url"])
+        if len(data) < 1000: break
+        page += 1
+    return urls
+
+def sb_cache_urls(urls, city="", source="brave", title=""):
+    """Zapisuje URL-e w cache."""
+    if not urls: return
+    batch = [{"query": "", "url": u, "title": title[:120], "source": source, "city": city} for u in urls[:100]]
+    try:
+        sb("/rest/v1/lead_search_cache", "POST", batch,
+           {"Content-Type": "application/json", "Prefer": "resolution=ignore-duplicates"})
+    except: pass
+
+def sb_delete_urls(urls):
+    """Usuwa URL-e z cache (gdy lead zostaje usunięty/odrzucony)."""
+    if not urls: return
+    for u in urls[:50]:
+        try:
+            sb(f"/rest/v1/lead_search_cache?url=eq.{u}", "DELETE")
+        except: pass
+
 def sb_get_emails():
+    """Pobiera wszystkie istniejące maile (do deduplikacji)."""
     emails = set()
     page = 0
     while True:
@@ -269,14 +300,14 @@ def _check_stop_flag():
 
 # ─── MAIN: Loop until target or limit ───
 def run(target=50):
-    log(f"🎯 Target: {target} new leads | Brave daily limit: {BRAVE_DAILY_LIMIT}")
+    log(f"🎯 Cel: {target} nowych leadów | Dzienny limit Brave: {BRAVE_DAILY_LIMIT}")
 
-    # Reset stop flag
+    # Reset flagi stopu
     try:
         sb_upsert("search_stop_requested", "false")
     except: pass
 
-    # Mark as running
+    # Oznacz jako uruchomione
     sb_upsert("search_status", json.dumps({
         "running": True, "target": target,
         "started_at": datetime.now().isoformat(), "found": 0, "api_calls": 0,
@@ -293,33 +324,38 @@ def run(target=50):
         cities = ALL_CITIES[:per_run]
         sb_upsert("cities_done", "0")
 
-    log(f"🏙️ Cities: {cities}")
+    log(f"🏙️ Miasta: {cities}")
 
     if not BRAVE_KEY:
-        send_tg("❌ Brak BRAVE_API_KEY")
+        send_tg("❌ Brak klucza BRAVE_API_KEY")
         return
 
-    # Daily limit
+    # Sprawdzenie dziennego limitu
     r = sb("/rest/v1/lead_finder_config?select=key,value&key=in.(brave_daily_date,brave_daily_count)")
     kv = {x["key"]: x["value"] for x in r.json()} if r.json() else {}
     today = datetime.now().strftime("%Y-%m-%d")
     day_count = int(kv.get("brave_daily_count", "0")) if kv.get("brave_daily_date") == today else 0
     if day_count >= BRAVE_DAILY_LIMIT:
-        send_tg(f"⚠️ Limit dzienny wyczerpany ({day_count}/{BRAVE_DAILY_LIMIT})")
+        send_tg(f"⚠️ Dzienny limit wyczerpany ({day_count}/{BRAVE_DAILY_LIMIT})")
         return
 
+    # Istniejące maile (deduplikacja)
     existing = sb_get_emails()
-    log(f"📋 Existing emails: {len(existing)}")
+    log(f"📋 Maile w bazie: {len(existing)}")
+
+    # Pobierz URL-e z cache (żeby nie powtarzać zapytań)
+    cached_urls = sb_get_cached_urls()
+    log(f"💾 URL-e w cache: {len(cached_urls)}")
 
     found = 0
     api_calls = 0
     all_leads = []
-    seen_urls = set()
+    seen_urls = set(cached_urls)  # Załaduj URL-e z cache
 
     # ═══════════════════════════════════════════════
-    # PHASE 1: DIRECTORIES (FREE, PARALLEL)
+    # FAZA 1: KATALOGI (ZA DARMO, RÓWNOLEGLE)
     # ═══════════════════════════════════════════════
-    log("📂 Phase 1: Scraping 29 directories (parallel)...")
+    log("📂 Faza 1: Pobieranie katalogów (równolegle)...")
     with ThreadPoolExecutor(max_workers=10) as ex:
         futs = {ex.submit(scrape_dir, k, u): k for k, u in DIR_URLS}
         for f in as_completed(futs):
@@ -328,25 +364,28 @@ def run(target=50):
                     seen_urls.add(r["url"])
 
     dir_urls = [{"url": u, "title": "", "source": "dir", "_city": ""} for u in seen_urls]
-    log(f"  {len(dir_urls)} unique URLs from directories")
+    log(f"  ✅ {len(dir_urls)} unikalnych URL-i z katalogów")
+
+    # Zapisz nowe URL-e z katalogów w cache
+    sb_cache_urls([u for u in seen_urls][:200], source="dir")
 
     new_leads = analyze_urls(dir_urls, existing)
     found += len(new_leads)
     if new_leads:
         inserted = sb_insert(new_leads)
         all_leads.extend(new_leads)
-        log(f"  ✅ {inserted} leads from directories (total: {found}/{target})")
+        log(f"  ✅ +{inserted} leadów z katalogów (łącznie: {found}/{target})")
 
     if found >= target:
-        log("✅ Target reached from directories alone!")
+        log("✅ Cel osiągnięty samymi katalogami!")
     else:
         # ═══════════════════════════════════════════════
-        # PHASE 2: BRAVE SEARCH – LOOP 1 query at a time
-        # After each query: analyze → check if target reached
+        # FAZA 2: BRAVE SEARCH – pętla 1 zapytanie na raz
+        # Po każdym: analiza → sprawdź czy cel osiągnięty
         # ═══════════════════════════════════════════════
-        log(f"🔍 Phase 2: Brave Search loop (need {target - found} more, {BRAVE_DAILY_LIMIT - day_count} queries left)")
+        log(f"🔍 Faza 2: Pętla Brave (potrzeba jeszcze {target - found}, {BRAVE_DAILY_LIMIT - day_count} zapytań)")
 
-        # Build query pool
+        # Buduj pulę zapytań
         queries = []
         for city in cities:
             for t in SEARCH_QUERIES:
@@ -357,9 +396,9 @@ def run(target=50):
         query_idx = 0
 
         while found < target and api_calls < (BRAVE_DAILY_LIMIT - day_count):
-            # Check stop flag every 3 queries
+            # Sprawdź flagę stopu co 3 zapytania
             if api_calls % 3 == 0 and _check_stop_flag():
-                log("🛑 Stop requested by user!")
+                log("🛑 Użytkownik zatrzymał wyszukiwanie!")
                 reason = "stopped"
                 break
                 
@@ -381,31 +420,34 @@ def run(target=50):
                             seen_urls.add(item["url"])
                             new_urls.append({"url": item["url"], "title": item.get("title",""), "source": "brave", "_city": city})
 
-                # IMMEDIATE ANALYSIS after each query
+                # NATYCHMIASTOWA ANALIZA po każdym zapytaniu
                 if new_urls:
+                    # Zapisz w cache
+                    sb_cache_urls([u["url"] for u in new_urls[:100]], source="brave", city=city)
+                    
                     new_leads = analyze_urls(new_urls, existing)
                     if new_leads:
                         inserted = sb_insert(new_leads)
                         found += len(new_leads)
                         all_leads.extend(new_leads)
-                        log(f"  → +{len(new_leads)} leads (total: {found}/{target})")
+                        log(f"  → +{len(new_leads)} leadów (łącznie: {found}/{target})")
 
-                        # Update progress in DB
+                        # Aktualizuj postęp w DB
                         sb_upsert("search_status", json.dumps({
                             "running": True, "target": target,
                             "started_at": datetime.now().isoformat(),
                             "found": found, "api_calls": api_calls,
                         }))
                     else:
-                        log(f"  → 0 new leads from {len(new_urls)} URLs")
+                        log(f"  → 0 nowych leadów z {len(new_urls)} URL-i")
 
             except Exception as e:
-                log(f"  ❌ Error: {e}")
+                log(f"  ❌ Błąd: {e}")
 
             time.sleep(0.3)
 
     # ═══════════════════════════════════════════════
-    # FINALIZE
+    # FINALIZACJA
     # ═══════════════════════════════════════════════
     sb_upsert("cities_done", str(done + per_run))
     sb_upsert("brave_daily_date", today)
