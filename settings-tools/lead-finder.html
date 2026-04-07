@@ -77,13 +77,21 @@ tr.used{opacity:.35}tr.used:hover{opacity:.7}
 
 <!-- SEARCH STATUS BOX -->
 <div id="searchStatusBox" class="card" style="display:none">
-  <div class="row" style="justify-content:space-between">
+  <div class="row" style="justify-content:space-between;margin-bottom:8px">
     <div>
       <span id="searchStatusIcon" style="font-size:18px"></span>
-      <span id="searchStatusText" class="small" style="margin-left:6px"></span>
+      <span id="searchStatusText" style="margin-left:6px;font-weight:600"></span>
     </div>
-    <div class="small" style="color:var(--mut)"><span id="searchProgress"></span></div>
+    <div style="font-size:11px;color:var(--mut)">
+      <span id="searchProgress"></span>
+    </div>
   </div>
+  <!-- Progress bar -->
+  <div style="background:#0d131d;border-radius:6px;height:8px;overflow:hidden;margin-bottom:6px">
+    <div id="searchProgressBar" style="background:var(--acc);height:8px;border-radius:6px;transition:width .5s;width:0%"></div>
+  </div>
+  <!-- Live log -->
+  <div id="liveLogBox" style="background:#0d131d;border:1px solid var(--line);border-radius:8px;padding:8px;font-family:ui-monospace,monospace;font-size:10px;color:var(--mut);max-height:150px;overflow-y:auto;white-space:pre-wrap"></div>
 </div>
 
 <!-- FILTERS + TABLE -->
@@ -201,21 +209,45 @@ async function loadStats() {
           document.getElementById("logBox").textContent = kv.last_search_log;
         }
 
-        // Status szukania
+        // Status szukania + live log
         const ss = kv.search_status ? JSON.parse(kv.search_status) : {};
         const box = document.getElementById("searchStatusBox");
+        const logBox = document.getElementById("liveLogBox");
+        const progressBar = document.getElementById("searchProgressBar");
+        
         if (ss.running) {
           box.style.display = "block";
           document.getElementById("searchStatusIcon").textContent = "🔄";
           document.getElementById("searchStatusText").textContent = `Szukanie... (cel: ${ss.target||'?'})`;
-          document.getElementById("searchProgress").textContent = `Znalezione: ${ss.found||0} | API: ${ss.api_calls||0}`;
+          document.getElementById("searchProgress").textContent = `Znalezione: ${ss.found||0} | API: ${ss.api_calls||0}/${parseInt(kv.brave_daily_limit||33)}`;
+          
+          // Pasek postępu (% z celu)
+          const target = ss.target || 1;
+          const pct = Math.min(100, Math.round(((ss.found||0) / target) * 100));
+          progressBar.style.width = pct + "%";
+          progressBar.style.background = "var(--acc)";
+          
+          // Live log – auto-scroll
+          if (kv.last_search_log) {
+            logBox.textContent = kv.last_search_log;
+            logBox.scrollTop = logBox.scrollHeight;
+          }
         } else if (ss.done) {
           box.style.display = "block";
           document.getElementById("searchStatusIcon").textContent = "✅";
           const finished = ss.finished_at ? new Date(ss.finished_at).toLocaleTimeString('pl-PL') : '';
           document.getElementById("searchStatusText").textContent = `Zakończono o ${finished}`;
           document.getElementById("searchProgress").textContent = `Wynik: ${ss.found||0} leadów | ${ss.reason||''}`;
-        } else { box.style.display = "none"; }
+          progressBar.style.width = "100%";
+          progressBar.style.background = "var(--green)";
+          
+          if (kv.last_search_log) {
+            logBox.textContent = kv.last_search_log;
+            logBox.scrollTop = logBox.scrollHeight;
+          }
+        } else {
+          box.style.display = "none";
+        }
       }
     } catch (e) { console.error("Config error:", e); }
   } catch(e) { console.error("loadStats error:", e); }
@@ -302,7 +334,7 @@ function debounceSearch(){clearTimeout(searchTimeout);searchTimeout=setTimeout((
 function toast(msg,err){const t=document.createElement('div');t.className='toast'+(err?' err':'');t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3000)}
 
 // ── INIT ──
-if (initDB()) { loadStats(); loadLeads(1); setInterval(()=>{loadStats();loadLeads(currentPage)}, 15000); }
+if (initDB()) { loadStats(); loadLeads(1); setInterval(()=>{loadStats();loadLeads(currentPage)}, 3000); }
 </script>
 </body>
 </html>
