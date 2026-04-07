@@ -61,6 +61,7 @@ tr.used{opacity:.35}tr.used:hover{opacity:.7}
     <input type="number" id="targetInput" value="50" min="5" max="200" style="width:70px">
     <span class="small" style="color:var(--mut)">nowych maili</span>
     <button class="btn btn-green" id="startBtn" onclick="startSearch()">🇵🇱 Szukaj</button>
+    <button class="btn btn-yellow" id="resumeBtn" onclick="resumeSearch()" hidden>▶️ Wznów</button>
     <button class="btn btn-red" id="stopBtn" onclick="stopSearch()" hidden>🛑 Stop</button>
     <button class="btn btn-blue" onclick="loadStats()">🔄 Odśwież</button>
   </div>
@@ -179,6 +180,23 @@ async function stopSearch() {
   } catch(e) { toast("❌ Błąd zatrzymywania", true); }
 }
 
+async function resumeSearch() {
+  const btn = document.getElementById("resumeBtn");
+  btn.disabled = true; btn.textContent = "⏳ Wznawianie...";
+  try {
+    const r = await fetch(`${EDGE_FN}/search`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ resume: true }),
+    });
+    const data = await r.json();
+    if (!r.ok) toast("❌ " + (data.error || "Błąd"), true);
+    else toast("▶️ Wznawianie wyszukiwania!");
+  } catch(e) { toast("❌ " + e.message, true); }
+  btn.disabled = false; btn.textContent = "▶️ Wznów";
+  loadStats();
+}
+
 // ── STATS ──
 async function loadStats() {
   if (!db) return;
@@ -228,9 +246,24 @@ async function loadStats() {
         const progressBar = document.getElementById("searchProgressBar");
         const stopBtn = document.getElementById("stopBtn");
         const startBtn = document.getElementById("startBtn");
+        const resumeBtn = document.getElementById("resumeBtn");
+        
+        // Sprawdź czy jest wyszukiwanie do wznowienia
+        try {
+          const { data: runs } = await db.from("lead_search_runs").select("*").in("status", ["limit_reached", "stopped"]).order("started_at", { ascending: false }).limit(1);
+          if (runs && runs.length > 0) {
+            const r = runs[0];
+            resumeBtn.hidden = false;
+            const remaining = r.target - (r.found || 0);
+            resumeBtn.textContent = `▶️ Wznów (${remaining} do celu)`;
+            resumeBtn.title = `Kontynuuj: ${r.found||0}/${r.target} znalezionych, miasta od #${r.cities_done}`;
+          } else {
+            resumeBtn.hidden = true;
+          }
+        } catch {}
         
         if (ss.running) {
-          box.style.display = "block"; stopBtn.hidden = false; startBtn.disabled = true;
+          box.style.display = "block"; stopBtn.hidden = false; startBtn.disabled = true; resumeBtn.hidden = true;
           document.getElementById("searchStatusIcon").textContent = "🔄";
           document.getElementById("searchStatusText").textContent = `Szukanie... (cel: ${ss.target||'?'})`;
           document.getElementById("searchProgress").textContent = `Znalezione: ${ss.found||0} | API: ${ss.api_calls||0}/${BRAVE_DAILY_LIMIT}`;
@@ -248,7 +281,7 @@ async function loadStats() {
           document.getElementById("searchStatusText").textContent = ss.reason === "stopped" ? `Zatrzymano o ${finished}` : `Zakończono o ${finished}`;
           document.getElementById("searchProgress").textContent = `Wynik: ${ss.found||0} leadów | ${ss.reason||''}`;
           progressBar.style.width = "100%";
-          progressBar.style.background = ss.reason === "stopped" ? "var(--yellow)" : "var(--green)";
+          progressBar.style.background = ss.reason && ss.reason.toLowerCase().includes("limit") ? "var(--yellow)" : "var(--green)";
           
           if (kv.last_search_log) { logBox.textContent = kv.last_search_log; logBox.scrollTop = logBox.scrollHeight; }
         } else {

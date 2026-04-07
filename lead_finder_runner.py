@@ -410,36 +410,135 @@ def _check_stop_flag():
     except: pass
     return False
 
+def sb_create_search_run(target, cities, cities_done=0):
+    """Tworzy rekord wyszukiwania (żeby można było wznowić)."""
+    try:
+        r = sb("/rest/v1/lead_search_runs", "POST", [{
+            "target": target,
+            "found": 0,
+            "api_calls": 0,
+            "status": "running",
+            "cities_done": cities_done,
+            "cities_list": cities,
+            "started_at": datetime.now().isoformat(),
+        }], {
+            "Content-Type": "application/json",
+            "Prefer": "return=representation"
+        })
+        if r.status_code in (200, 201) and r.json():
+            return r.json()[0]["id"]
+    except: pass
+    return None
+
+def sb_update_search_run(run_id, **kwargs):
+    """Aktualizuje postęp wyszukiwania."""
+    if not run_id: return
+    try:
+        sb(f"/rest/v1/lead_search_runs?id=eq.{run_id}", "PATCH", [kwargs],
+           {"Content-Type": "application/json"})
+    except: pass
+
+def sb_get_resumable_run():
+    """Szuka wyszukiwania do wznowienia (limit_reached lub stopped)."""
+    try:
+        r = sb("/rest/v1/lead_search_runs?status=in.(limit_reached,stopped)&order=started_at.desc&limit=1")
+        data = r.json()
+        if data and data[0]:
+            return data[0]
+    except: pass
+    return None
+
+def sb_close_search_run(run_id, status="completed", reason=""):
+    """Zamyka wyszukiwanie."""
+    if not run_id: return
+    try:
+        sb(f"/rest/v1/lead_search_runs?id=eq.{run_id}", "PATCH", [{
+            "status": status,
+            "reason": reason,
+            "finished_at": datetime.now().isoformat(),
+        }], {"Content-Type": "application/json"})
+    except: pass
+
 # ─── MAIN: Loop until target or limit ───
-def run(target=50):
+def run(target=50, resume=False):
+    """
+    Uruchamia wyszukiwanie.
+    Jeśli resume=True – wznawia ostatnie zatrzymane wyszukiwanie.
+    """
+    run_id = None
+    found = 0
+    api_calls = 0
+    cities = None
+    done = 0
+    per_run = 20
+    reason = None
+    existing = set()
+    cached_urls = set()
+    day_count = 0
+    today = datetime.now().strftime("%Y-%m-%d")
+    
+    # Sprawdź czy jest wyszukiwanie do wznowienia
+    resumable = sb_get_resumable_run()
+    
+    if resume and resumable:
+        log(f"▶️ Wznawiam wyszukiwanie #{resumable['id'][:8]}...")
+        run_id = resumable["id"]
+        target = resumable["target"]
+        found = resumable.get("found", 0)
+        api_calls = resumable.get("api_calls", 0)
+        done = resumable.get("cities_done", 0)
+        cities = resumable.get("cities_list", [])
+        
+        # Aktualizuj status na running
+        sb_update_search_run(run_id, status="running")
+        log(f"   Kontynuacja: {found}/{target} znalezionych, miasta od #{done}")
+    
+    # Nowe wyszukiwanie – zamknij stare jeśli istnieją
+    if not resume:
+        if resumable:
+            log(f"📝 Jest niezamknięte wyszukiwanie – zamykam jako 'stopped'")
+            sb_close_search_run(resumable["id"], "stopped", "nowe wyszukiwanie")
+    
+    if not cities:
+        # Losuj nowe miasta
+        cities = ALL_CITIES[done:done+per_run]
+        if done >= len(ALL_CITIES):
+            done = 0
+            cities = ALL_CITIES[:per_run]
+            sb_upsert("cities_done", "0")
+        log(f"🏙️ Nowe miasta: {cities}")
+    
     log(f"🎯 Cel: {target} nowych leadów | Dzienny limit Brave: {BRAVE_DAILY_LIMIT}")
+    if run_id:
+        log(f"📋 ID wyszukiwania: {run_id[:8]}")
 
     # Reset flagi stopu
     try:
         sb_upsert("search_stop_requested", "false")
     except: pass
 
-    # Oznacz jako uruchomione
+    # Utwórz rekord wyszukiwania (tylko przy nowym)
+    if not run_id:
+        run_id = sb_create_search_run(target, cities, done)
+        if run_id:
+            log(f"📝 Utworzono wyszukiwanie: {run_id[:8]}")
+
+    # Oznacz jako uruchomione w starym statusie (dla UI)
     sb_upsert("search_status", json.dumps({
         "running": True, "target": target,
-        "started_at": datetime.now().isoformat(), "found": 0, "api_calls": 0,
+        "started_at": datetime.now().isoformat(), "found": found, "api_calls": api_calls,
+        "run_id": run_id,
     }))
 
-    # Powiadom o rozpoczęciu
-    _send_tg_start(target)
+    # Powiadom o rozpoczęciu (tylko przy nowym)
+    if not resume or found == 0:
+        _send_tg_start(target)
+    else:
+        send_tg(f"▶️ <b>Wznowiono wyszukiwanie</b>\nKontynuacja: {found}/{target} znalezionych")
 
-    # Cities for this run
-    r = sb("/rest/v1/lead_finder_config?select=key,value&key=eq.cities_done")
-    data = r.json()
-    done = int(data[0]["value"]) if data else 0
-    per_run = 20
-    cities = ALL_CITIES[done:done+per_run]
-    if done >= len(ALL_CITIES):
-        done = 0
-        cities = ALL_CITIES[:per_run]
-        sb_upsert("cities_done", "0")
-
-    log(f"🏙️ Miasta: {cities}")
+    # Istniejące maile (deduplikacja)
+    existing = sb_get_emails()
+    log(f"📋 Maile w bazie: {len(existing)}")
 
     if not BRAVE_KEY:
         send_tg("❌ Brak klucza BRAVE_API_KEY")
@@ -452,6 +551,9 @@ def run(target=50):
     day_count = int(kv.get("brave_daily_count", "0")) if kv.get("brave_daily_date") == today else 0
     if day_count >= BRAVE_DAILY_LIMIT:
         send_tg(f"⚠️ Dzienny limit wyczerpany ({day_count}/{BRAVE_DAILY_LIMIT})")
+        if run_id:
+            sb_close_search_run(run_id, "limit_reached", "dzienny limit")
+            sb_update_search_run(run_id, found=found, api_calls=api_calls, cities_done=done, cities_list=cities)
         return
 
     # Istniejące maile (deduplikacja)
@@ -511,10 +613,24 @@ def run(target=50):
         query_idx = 0
 
         while found < target and api_calls < (BRAVE_DAILY_LIMIT - day_count):
+            # Sprawdź czy nie przekroczono dziennego limitu (w trakcie pętli)
+            if api_calls >= (BRAVE_DAILY_LIMIT - day_count):
+                log(f"⚠️ Osiągnięto dzienny limit ({api_calls} zapytań)")
+                reason = "API limit"
+                if run_id:
+                    sb_close_search_run(run_id, "limit_reached", "dzienny limit")
+                    sb_update_search_run(run_id, found=found, api_calls=api_calls,
+                                        cities_done=done, cities_list=cities)
+                break
+            
             # Sprawdź flagę stopu co 3 zapytania
             if api_calls % 3 == 0 and _check_stop_flag():
                 log("🛑 Użytkownik zatrzymał wyszukiwanie!")
                 reason = "stopped"
+                if run_id:
+                    sb_close_search_run(run_id, "stopped", "zatrzymano ręcznie")
+                    sb_update_search_run(run_id, found=found, api_calls=api_calls,
+                                        cities_done=done, cities_list=cities)
                 break
                 
             query, city = queries[query_idx % len(queries)]
@@ -552,7 +668,12 @@ def run(target=50):
                             "running": True, "target": target,
                             "started_at": datetime.now().isoformat(),
                             "found": found, "api_calls": api_calls,
+                            "run_id": run_id,
                         }))
+                        # Aktualizuj rekord wyszukiwania
+                        if run_id:
+                            sb_update_search_run(run_id, found=found, api_calls=api_calls,
+                                                cities_done=done, cities_list=cities)
                     else:
                         log(f"  → 0 nowych leadów z {len(new_urls)} URL-i")
 
@@ -574,15 +695,27 @@ def run(target=50):
     sb_upsert("last_search_log", "\n".join(logs)[-5000:])
     
     # Determine final reason
-    if 'reason' not in locals() or reason == "target reached":
+    if 'reason' not in locals() or reason is None:
         reason = "target reached" if found >= target else f"API limit ({api_calls} queries)"
-    
+
+    # Zamknij wyszukiwanie
+    if run_id:
+        if "limit" in reason.lower() or "api" in reason.lower():
+            sb_close_search_run(run_id, "limit_reached", reason)
+        elif reason == "stopped":
+            sb_close_search_run(run_id, "stopped", reason)
+        else:
+            sb_close_search_run(run_id, "completed", reason)
+        sb_update_search_run(run_id, found=found, api_calls=api_calls,
+                            cities_done=done + per_run, cities_list=cities)
+
     # Save final status
     sb_upsert("search_status", json.dumps({
         "running": False, "done": True,
         "finished_at": datetime.now().isoformat(),
         "found": found, "api_calls": api_calls,
         "reason": reason,
+        "run_id": run_id,
     }))
     
     # Reset stop flag
@@ -602,5 +735,9 @@ def run(target=50):
     log(f"🏁 Done: {found} leads | {api_calls} API calls | {reason}")
 
 if __name__ == "__main__":
-    target = int(sys.argv[1]) if len(sys.argv) > 1 else 50
-    run(target)
+    import argparse
+    parser = argparse.ArgumentParser(description="Familiada Lead Finder")
+    parser.add_argument("--target", type=int, default=50, help="Liczba leadów do znalezienia")
+    parser.add_argument("--resume", action="store_true", help="Wznów ostatnie wyszukiwanie")
+    args = parser.parse_args()
+    run(target=args.target, resume=args.resume)

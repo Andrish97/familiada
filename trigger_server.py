@@ -34,6 +34,7 @@ class Handler(BaseHTTPRequestHandler):
             length = int(self.headers.get("Content-Length", 0))
             body = json.loads(self.rfile.read(length)) if length else {}
             target = int(body.get("target", 50))
+            resume = body.get("resume", False)
 
             with lock:
                 if state["running"]:
@@ -44,11 +45,15 @@ class Handler(BaseHTTPRequestHandler):
                 state["started_at"] = time.time()
                 state["target"] = target
                 state["pid"] = None
+                state["resume"] = resume
 
             # Run in background
             env = os.environ.copy()
+            cmd = [PYTHON, RUNNER, "--target", str(target)]
+            if resume:
+                cmd.append("--resume")
             proc = subprocess.Popen(
-                [PYTHON, RUNNER, str(target)],
+                cmd,
                 env=env,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -63,7 +68,7 @@ class Handler(BaseHTTPRequestHandler):
                     state["pid"] = None
             threading.Thread(target=wait, daemon=True).start()
 
-            self._json({"ok": True, "target": target, "pid": proc.pid})
+            self._json({"ok": True, "target": target, "pid": proc.pid, "resume": resume})
         else:
             self._json({"error": "Not found"}, 404)
 
