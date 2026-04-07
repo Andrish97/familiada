@@ -137,16 +137,20 @@ tr.used{opacity:.35}tr.used:hover{opacity:.7}
 
 <script>
 const EDGE_FN = "/_admin_api/lead-finder";
-const DAILY_LIMIT = 33; // <-- ZMIEŃ TUTAJ LIMIT DZIENNY
+const DAILY_LIMIT = 33;
 
-let supabase;
-try {
-  supabase = window.supabaseClient || globalThis.__sbClient;
-  if (!supabase) throw new Error("Supabase client not loaded from core/supabase.js");
-} catch(e) {
-  document.body.innerHTML = '<div style="color:var(--red);padding:20px">⚠️ Supabase client nie załadowany</div>';
-  throw e;
+// Pobierz instancję klienta z załadowanego modułu core/supabase.js
+// Używamy window._sbClient żeby uniknąć konfliktu z biblioteką CDN
+const _db = window.supabaseClient || globalThis.__sbClient || window.supabase;
+if (!_db || typeof _db.from !== 'function') {
+  document.body.innerHTML = '<div style="color:var(--red);padding:20px">⚠️ Supabase client not loaded from core.</div>';
+  throw new Error("Supabase client not loaded");
 }
+const supabase = _db;
+
+// Fix dla topbara - dodajemy padding żeby treść nie chowała się pod menu
+document.body.style.paddingTop = "70px";
+document.querySelector('.card').style.marginTop = "10px";
 
 let currentPage = 1;
 let searchTimeout = null;
