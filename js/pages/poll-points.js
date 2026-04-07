@@ -1,7 +1,7 @@
 // js/pages/poll-points.js
-import { sb } from "../core/supabase.js?v=v2026-04-07T01080";
-import { getUser } from "../core/auth.js?v=v2026-04-07T01080";
-import { initI18n, t, getUiLang } from "../../translation/translation.js?v=v2026-04-07T01080";
+import { sb } from "../core/supabase.js?v=v2026-04-07T01205";
+import { getUser } from "../core/auth.js?v=v2026-04-07T01205";
+import { initI18n, t, getUiLang } from "../../translation/translation.js?v=v2026-04-07T01205";
 
 initI18n({ withSwitcher: true });
 
