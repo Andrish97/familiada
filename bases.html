@@ -189,16 +189,14 @@
         <div class="mTitle" data-i18n="bases.shareModal.title">Udostępnij bazę</div>
         <button class="btn sm" id="btnShareClose" type="button" aria-label="Zamknij">✕</button>
       </div>
-      <div class="mSub" data-i18n="bases.shareModal.subtitle">
-        Dodajesz użytkowników po nazwie lub e-mailu. Jeśli się nie uda, pokażemy „Nie udało się".
-      </div>
 
-      <!-- Quick add (username/email) -->
-      <div class="shareAddTop">
-        <div class="importRow">
-          <input id="shareEmail" class="inp" type="text"
-                 placeholder="Nazwa użytkownika lub e-mail..."
-                 data-i18n-placeholder="bases.shareModal.placeholder"/>
+      <!-- SEKCJA 1: Udostępnij -->
+      <div class="shareSection shareSection-share">
+        <div class="shareSectionTitle" data-i18n="bases.shareModal.shareSection">Udostępnij</div>
+
+        <!-- Tryb udostępnienia -->
+        <div class="share-mode-select" style="margin-top:10px">
+          <label class="share-mode-label" data-i18n="bases.shareModal.shareModeLabel">Tryb:</label>
           <div class="ui-select" id="shareRole">
             <button class="ui-select-btn inp" type="button" aria-haspopup="listbox" aria-expanded="false">
               <span class="ui-select-label">—</span>
@@ -206,38 +204,59 @@
             </button>
             <div class="ui-select-menu" role="listbox"></div>
           </div>
-          <button class="btn sm gold" id="btnShareAdd" type="button" data-i18n="bases.shareModal.add">Dodaj</button>
         </div>
+
+        <!-- Wybór: subskrybent czy nowy email -->
+        <div class="share-recipient-select" style="margin-top:10px">
+          <div class="ui-select" id="shareRecipientType">
+            <button class="ui-select-btn inp" type="button" aria-haspopup="listbox" aria-expanded="false">
+              <span class="ui-select-label">—</span>
+              <span class="ui-select-caret">▾</span>
+            </button>
+            <div class="ui-select-menu" role="listbox"></div>
+          </div>
+        </div>
+
+        <!-- Pole email/nazwa (pokazuje się gdy wybrano "wpisz email") -->
+        <div class="share-email-input" id="shareEmailWrap" style="display:none;margin-top:10px">
+          <input id="shareEmail" class="inp" type="text"
+                 placeholder="Nazwa użytkownika lub e-mail..."
+                 data-i18n-placeholder="bases.shareModal.placeholder"/>
+          <div class="share-email-error" id="shareEmailError" style="display:none;color:#f87171;font-size:12px;margin-top:4px"></div>
+        </div>
+
+        <!-- Lista subskrybentów (pokazuje się gdy wybrano "wybierz subskrybenta") -->
+        <div class="share-subs-input" id="shareSubsWrap" style="display:none;margin-top:10px">
+          <div class="ui-select" id="shareSubscriberSelect">
+            <button class="ui-select-btn inp" type="button" aria-haspopup="listbox" aria-expanded="false">
+              <span class="ui-select-label">—</span>
+              <span class="ui-select-caret">▾</span>
+            </button>
+            <div class="ui-select-menu" role="listbox"></div>
+          </div>
+        </div>
+
+        <!-- Przycisk udostępnij -->
+        <button class="btn gold share-submit-btn" id="btnShareAdd" type="button" data-i18n="bases.shareModal.add" style="margin-top:12px;width:100%">Udostępnij</button>
         <div class="importMsg" id="shareMsg"></div>
       </div>
 
-      <!-- 3 sections -->
-      <div class="shareSections">
-
-        <div class="shareSection">
-          <div class="shareSectionTitle" data-i18n="bases.shareModal.sectionSubscribers">Moi subskrybenci</div>
-          <div class="shareSectionSub" data-i18n="bases.shareModal.sectionSubscribersSub">
-            Tylko zarejestrowani użytkownicy (z username).
-          </div>
-          <div class="shareList" id="shareSubsList"></div>
+      <!-- SEKCJA 2: Oczekujący -->
+      <div class="shareSection">
+        <div class="shareSectionTitle" data-i18n="bases.shareModal.sectionPending">Oczekujące</div>
+        <div class="shareSectionSub" data-i18n="bases.shareModal.sectionPendingSub">
+          Po 5 dniach bez akceptacji zapytanie znika.
         </div>
+        <div class="shareList" id="sharePendingList"></div>
+      </div>
 
-        <div class="shareSection">
-          <div class="shareSectionTitle" data-i18n="bases.shareModal.sectionPending">Oczekujące</div>
-          <div class="shareSectionSub" data-i18n="bases.shareModal.sectionPendingSub">
-            Po 5 dniach bez akceptacji zapytanie znika.
-          </div>
-          <div class="shareList" id="sharePendingList"></div>
+      <!-- SEKCJA 3: Aktywni -->
+      <div class="shareSection">
+        <div class="shareSectionTitle" data-i18n="bases.shareModal.sectionShared">Aktywni</div>
+        <div class="shareSectionSub" data-i18n="bases.shareModal.sectionSharedSub">
+          Zaakceptowali zaproszenie — zmień tryb lub usuń.
         </div>
-
-        <div class="shareSection">
-          <div class="shareSectionTitle" data-i18n="bases.shareModal.sectionShared">Udostępnione</div>
-          <div class="shareSectionSub" data-i18n="bases.shareModal.sectionSharedSub">
-            Zaakceptowane – usuń przez ✕.
-          </div>
-          <div class="shareList" id="shareSharedList"></div>
-        </div>
-
+        <div class="shareList" id="shareSharedList"></div>
       </div>
 
     </div>

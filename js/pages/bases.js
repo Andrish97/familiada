@@ -74,12 +74,16 @@ const exportJsonMsg = document.getElementById("exportJsonMsg");
 
 // Modal share
 const shareOverlay = document.getElementById("shareOverlay");
-const shareSubsList = document.getElementById("shareSubsList");
 const sharePendingList = document.getElementById("sharePendingList");
 const shareSharedList = document.getElementById("shareSharedList");
 
 const shareEmail = document.getElementById("shareEmail");
+const shareEmailWrap = document.getElementById("shareEmailWrap");
+const shareEmailError = document.getElementById("shareEmailError");
 const shareRole = document.getElementById("shareRole");
+const shareRecipientType = document.getElementById("shareRecipientType");
+const shareSubscriberSelect = document.getElementById("shareSubscriberSelect");
+const shareSubsWrap = document.getElementById("shareSubsWrap");
 const btnShareAdd = document.getElementById("btnShareAdd");
 const btnShareClose = document.getElementById("btnShareClose");
 const shareMsg = document.getElementById("shareMsg");
@@ -138,6 +142,8 @@ function stopAutoRefresh() {
 }
 
 let shareRoleSelect = null;
+let shareRecipientTypeSelect = null;
+let shareSubscriberSelectInst = null;
 const SHARE_MODAL_CACHE_TTL_MS = 20_000;
 const shareModalCache = new Map();
 
@@ -167,6 +173,13 @@ function shareRoleOptions() {
   ];
 }
 
+function shareRecipientTypeOptions() {
+  return [
+    { value: "email", label: t("bases.shareModal.recipientEmail") || "Wpisz adres email / nazwę" },
+    { value: "subscriber", label: t("bases.shareModal.recipientSubscriber") || "Wybierz subskrybenta" },
+  ];
+}
+
 function initShareRoleSelect() {
   if (!shareRole) return;
   if (!shareRoleSelect) {
@@ -178,6 +191,42 @@ function initShareRoleSelect() {
   }
   shareRoleSelect.setOptions(shareRoleOptions());
   shareRoleSelect.setValue("editor", { silent: true });
+}
+
+function initShareRecipientTypeSelect() {
+  if (!shareRecipientType) return;
+  if (!shareRecipientTypeSelect) {
+    shareRecipientTypeSelect = initUiSelect(shareRecipientType, {
+      options: shareRecipientTypeOptions(),
+      value: "email",
+      onChange: (val) => onRecipientTypeChange(val),
+    });
+    return;
+  }
+  shareRecipientTypeSelect.setOptions(shareRecipientTypeOptions());
+  shareRecipientTypeSelect.setValue("email", { silent: true });
+  onRecipientTypeChange("email");
+}
+
+function initShareSubscriberSelect() {
+  if (!shareSubscriberSelect) return;
+  if (!shareSubscriberSelectInst) {
+    shareSubscriberSelectInst = initUiSelect(shareSubscriberSelect, {
+      options: [],
+      value: "",
+      placeholder: t("bases.shareModal.selectSubscriber") || "Wybierz...",
+    });
+    return;
+  }
+  shareSubscriberSelectInst.setOptions([]);
+  shareSubscriberSelectInst.setValue("", { silent: true });
+}
+
+function onRecipientTypeChange(val) {
+  const showEmail = val === "email";
+  const showSubs = val === "subscriber";
+  if (shareEmailWrap) shareEmailWrap.style.display = showEmail ? "" : "none";
+  if (shareSubsWrap) shareSubsWrap.style.display = showSubs ? "" : "none";
 }
 
 function safeName(s) {
@@ -816,11 +865,19 @@ async function getCooldownUntil(baseId, userId) {
 async function renderShareModal() {
   const b = selectedBase();
   if (!b || !isOwner(b)) {
-    if (shareSubsList) shareSubsList.innerHTML = "";
     if (sharePendingList) sharePendingList.innerHTML = "";
     if (shareSharedList) shareSharedList.innerHTML = "";
     return;
   }
+
+  // Reset UI
+  if (shareEmail) shareEmail.value = "";
+  if (shareEmailError) shareEmailError.style.display = "none";
+  setMsg(shareMsg, "");
+  shareRoleSelect?.setValue("editor", { silent: true });
+  shareRecipientTypeSelect?.setValue("email", { silent: true });
+  onRecipientTypeChange("email");
+  shareSubscriberSelectInst?.setValue("", { silent: true });
 
   const cached = getShareModalCache(b.id);
   let registeredSubs = cached?.registeredSubs || [];
@@ -847,6 +904,19 @@ async function renderShareModal() {
     setShareModalCache(b.id, { registeredSubs, pending, shared });
   }
 
+  // Populate subscriber select
+  if (shareSubscriberSelectInst) {
+    const subOptions = registeredSubs.map((r) => ({
+      value: r.subscriber_user_id,
+      label: r.subscriber_username || r.subscriber_email || r.subscriber_label || "—",
+    }));
+    if (!subOptions.length) {
+      subOptions.push({ value: "", label: t("bases.shareModal.noSubscribers") || "Brak subskrybentów" });
+    }
+    shareSubscriberSelectInst.setOptions(subOptions);
+    shareSubscriberSelectInst.setValue("", { silent: true });
+  }
+
   const sharedByUser = new Map((shared || []).map((x) => [x.user_id, x]));
   const pendingByUser = new Map(
     (pending || [])
@@ -854,184 +924,9 @@ async function renderShareModal() {
       .map((x) => [x.recipient_user_id, x])
   );
 
-  // 🔑 Reguła UX: subskrybenci NIGDY nie lądują w Pending ani Shared listach.
-  const subscriberUserIds = new Set(
-    (registeredSubs || [])
-      .map((r) => r.subscriber_user_id)
-      .filter(Boolean)
-  );
- 
-  // helper: cooldown dla subscriber (po cancelled/declined) – bazujemy na danych z "pending" NIE wystarczy,
-  // więc UX-only robimy: jeśli istnieje w DB cancelled/declined, backend i tak blokuje (err=cooldown).
-  // Żeby UX był pełny 1:1 jak polls-hub, można dodać kolejne RPC (opcjonalnie). Tu robimy minimum sensowne.
-
-  // SUBS LIST
-  if (shareSubsList) {
-    if (!registeredSubs.length) {
-      shareSubsList.innerHTML = `<div style="opacity:.75">${t("bases.shareModal.emptySubscribers")}</div>`;
-    } else {
-      const rows = registeredSubs
-        .slice()
-        .sort((a, b) =>
-          String(a.subscriber_username || a.subscriber_email || "").localeCompare(
-            String(b.subscriber_username || b.subscriber_email || "")
-          )
-        );
-
-      shareSubsList.innerHTML = "";
-      for (const r of rows) {
-        const row = document.createElement("div");      // ✅ FIX: wcześniej używałeś "row" bez definicji
-        row.className = "shareRow";
-
-        const userId = r.subscriber_user_id;
-        const label = r.subscriber_label || r.subscriber_email || "—";
-        const title = r.subscriber_email || label;
-
-        const isShared = sharedByUser.has(userId);
-        const isPending = pendingByUser.has(userId);
-        const pendingTask = pendingByUser.get(userId) || null;
-        const email =
-          String(r.subscriber_email || "").trim().toLowerCase() ||
-          null;
-             
-        let cooldownUntilMs = null;
-        let isCooldown = false;
-        let cooldownLabel = "";
-        
-        if (!isShared && !isPending) {
-          cooldownUntilMs = await getCooldownUntil(b.id, userId);
-          if (cooldownUntilMs && cooldownUntilMs > Date.now()) {
-            isCooldown = true;
-            cooldownLabel = msLeftLabel(cooldownUntilMs - Date.now());
-          }
-        }
-        
-        const stateText = isShared
-          ? t("bases.shareModal.subStateShared")
-          : (isPending
-              ? t("bases.shareModal.subStatePending")
-              : (isCooldown
-                  ? t("bases.shareModal.subStateCooldown", { left: cooldownLabel })
-                  : t("bases.shareModal.subStateReady")
-                )
-            );
-        
-        row.innerHTML = `
-          <div class="shareEmail" title="${String(title).replace(/\"/g, "&quot;")}">
-            ${escapeHtml(label)}
-          </div>
-          <div class="shareRowActions">
-            <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;user-select:none">
-              <input type="checkbox"
-                ${isShared || isPending ? "checked" : ""}
-                ${(isShared || isPending || isCooldown) ? "disabled" : ""}/>
-              <span style="opacity:${(isShared || isPending || isCooldown) ? ".75" : "1"}">
-                ${escapeHtml(stateText)}
-              </span>
-            </label>
-            ${
-              (isPending || isShared)
-                ? `<button class="btn xsm" data-x type="button" title="${escapeHtml(isPending ? t("bases.shareModal.cancelPending") : t("bases.share.remove"))}">✕</button>`
-                : ``
-            }
-          </div>
-        `;
-
-        const cb = row.querySelector("input[type=checkbox]");
-        cb?.addEventListener("change", async () => {
-          if (cb.disabled) return;
-          if (!cb.checked) return; // tylko dodawanie
-          setMsg(shareMsg, "");
-
-          const role = shareRoleSelect?.getValue?.() || "viewer";
-          
-          const payload = r.subscriber_user_id
-            ? {
-                p_base_id: b.id,
-                p_recipient_user_id: r.subscriber_user_id,
-                p_role: role,
-              }
-            : {
-                p_base_id: b.id,
-                p_email: email,
-                p_role: role,
-              };
-          
-          const { data, error } = await sb().rpc(
-            r.subscriber_user_id ? "base_share_by_user" : "base_share_by_email",
-            payload
-          );
-
-          const rowRes = Array.isArray(data) ? data[0] : data;
-
-          if (error || !rowRes?.ok) {
-            cb.checked = false;
-            const err = rowRes?.err || "";
-            if (err === "cooldown") setMsg(shareMsg, t("bases.share.cooldown"));
-            else if (err === "already_pending") setMsg(shareMsg, t("bases.share.alreadyPending"));
-            else setMsg(shareMsg, t("bases.share.failed"));
-            return;
-          }
-
-          if (rowRes?.mail_to && rowRes?.mail_link) {
-            try {
-              await sendBaseShareEmail({
-                to: rowRes.mail_to,
-                link: rowRes.mail_link,
-                baseName: rowRes.base_name,
-                ownerLabel: rowRes.owner_label,
-              });
-            } catch (e) {
-              console.warn("[bases] email send failed:", e);
-              setMsg(shareMsg, t("bases.share.emailFailed"));
-            }
-          }
-          invalidateShareModalCache(b.id);
-          await renderShareModal();
-        });
-        
-        // X na subskrybencie: pending -> cancel task, shared -> revoke share
-        row.querySelector("[data-x]")?.addEventListener("click", async (e) => {
-          e.stopPropagation();
-          setMsg(shareMsg, "");
-          if (isPending && pendingTask?.task_id) {
-            const { data: ok, error } = await sb().rpc("base_share_cancel_task", { p_task_id: pendingTask.task_id });
-            if (error || !ok) {
-              await alertModal({ text: t("bases.share.failed") });
-              return;
-            }
-            invalidateShareModalCache(b.id);
-            await renderShareModal();
-            return;
-          }
-          if (isShared) {
-            const ok = await confirmModal({
-              title: t("bases.share.removeTitle"),
-              text: t("bases.share.removeText", { email: (r.subscriber_email || label) }),
-              okText: t("bases.share.removeOk"),
-              cancelText: t("bases.share.removeCancel"),
-            });
-            if (!ok) return;
-            const { data: ok2, error } = await sb().rpc("revoke_base_share", { p_base_id: b.id, p_user_id: userId });
-            if (error || ok2 !== true) {
-              await alertModal({ text: t("bases.share.failed") });
-              return;
-            }
-            invalidateShareModalCache(b.id);
-            await renderShareModal();
-          }
-        });  
-        shareSubsList.appendChild(row);
-      }
-    }
-  }
-
-  // PENDING LIST
+  // ── PENDING LIST (wszyscy oczekujący) ──
   if (sharePendingList) {
-    const rows = (pending || []).filter((r) => {
-      // 🔑 ukryj subskrybentów
-      return !(r.recipient_user_id && subscriberUserIds.has(r.recipient_user_id));
-      });
+    const rows = pending || [];
     if (!rows.length) {
       sharePendingList.innerHTML = `<div style="opacity:.75">${t("bases.shareModal.emptyPending")}</div>`;
     } else {
@@ -1050,34 +945,37 @@ async function renderShareModal() {
             <button class="btn xsm" data-cancel type="button" title="${escapeHtml(t("bases.shareModal.cancelPending"))}">✕</button>
           </div>
         `;
-        row.querySelector("[data-cancel]")?.addEventListener("click", async () => {
-          const ok = await sb().rpc("base_share_cancel_task", { p_task_id: r.task_id });
-          if (!ok?.data) {
-            await alertModal({ text: t("bases.share.failed") });
-            return;
-          }
-          invalidateShareModalCache(b.id);
-          await renderShareModal();
-        });
 
+        row.querySelector("[data-cancel]")?.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          setMsg(shareMsg, "");
+          if (r.task_id) {
+            const { data: ok, error } = await sb().rpc("base_share_cancel_task", { p_task_id: r.task_id });
+            if (error || !ok) {
+              await alertModal({ text: t("bases.share.failed") });
+              return;
+            }
+            invalidateShareModalCache(b.id);
+            await renderShareModal();
+          }
+        });
         sharePendingList.appendChild(row);
       }
     }
   }
 
-  // SHARED LIST
+  // ── SHARED LIST (aktywni - którzy zaakceptowali) ──
   if (shareSharedList) {
-    const rows = (shared || [])
-      .filter((r) => !subscriberUserIds.has(r.user_id)) // 🔑 ukryj subskrybentów
-      .slice()
-      .sort((a, b) => String(a.username || a.email || "").localeCompare(String(b.username || b.email || "")));
+    const rows = shared || [];
     if (!rows.length) {
       shareSharedList.innerHTML = `<div style="opacity:.75">${t("bases.shareModal.emptyShared")}</div>`;
     } else {
       shareSharedList.innerHTML = "";
       for (const r of rows) {
-        const label = r.username || r.email || "—";
+        const userId = r.user_id;
+        const label = r.email || r.username || "—";
         const title = r.email || label;
+        const role = r.role || "viewer";
 
         const row = document.createElement("div");
         row.className = "shareRow";
@@ -1086,23 +984,52 @@ async function renderShareModal() {
             ${escapeHtml(label)}
           </div>
           <div class="shareRowActions">
-            <button class="btn xsm" data-remove type="button" title="${escapeHtml(t("bases.share.remove"))}">✕</button>
+            <select class="share-role-select" data-user-id="${userId}" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:6px;padding:2px 6px;font-size:11px;color:#fff;cursor:pointer" title="${escapeHtml(t("bases.shareModal.changeRole") || "Zmień rolę")}">
+              <option value="editor" ${role === "editor" ? "selected" : ""}>Edycja</option>
+              <option value="viewer" ${role === "viewer" ? "selected" : ""}>Przeglądanie</option>
+            </select>
+            <button class="btn xsm" data-x type="button" title="${escapeHtml(t("bases.share.remove"))}">✕</button>
           </div>
         `;
 
-        row.querySelector("[data-remove]")?.addEventListener("click", async () => {
+        // Zmiana roli
+        row.querySelector(".share-role-select")?.addEventListener("change", async (e) => {
+          const newRole = e.target.value;
+          const selUserId = e.target.dataset.userId;
+          if (!selUserId) return;
+          e.target.disabled = true;
+          setMsg(shareMsg, "");
+
+          const { data, error } = await sb().rpc("update_base_share_role", {
+            p_base_id: b.id,
+            p_user_id: selUserId,
+            p_role: newRole,
+          });
+
+          e.target.disabled = false;
+          const rowRes = Array.isArray(data) ? data[0] : data;
+          if (error || !rowRes?.ok) {
+            setMsg(shareMsg, t("bases.share.failed") || "Nie udało się zmienić roli");
+            invalidateShareModalCache(b.id);
+            await renderShareModal();
+            return;
+          }
+          setMsg(shareMsg, t("bases.share.roleChanged") || "Zmieniono rolę");
+          invalidateShareModalCache(b.id);
+          await renderShareModal();
+        });
+
+        // Usuń
+        row.querySelector("[data-x]")?.addEventListener("click", async (e) => {
+          e.stopPropagation();
           const ok = await confirmModal({
             title: t("bases.share.removeTitle"),
-            text: t("bases.share.removeText", { email: r.email }),
+            text: t("bases.share.removeText", { email: label }),
             okText: t("bases.share.removeOk"),
             cancelText: t("bases.share.removeCancel"),
           });
           if (!ok) return;
-
-          const { data: ok2, error } = await sb().rpc("revoke_base_share", {
-            p_base_id: b.id,
-            p_user_id: r.user_id,
-          });
+          const { data: ok2, error } = await sb().rpc("revoke_base_share", { p_base_id: b.id, p_user_id: userId });
           if (error || ok2 !== true) {
             await alertModal({ text: t("bases.share.failed") });
             return;
@@ -1110,43 +1037,87 @@ async function renderShareModal() {
           invalidateShareModalCache(b.id);
           await renderShareModal();
         });
-
         shareSharedList.appendChild(row);
       }
     }
   }
 }
 
+async function sendBaseShareEmail({ to, link, baseName, ownerLabel } = {}) {
+  if (!to || !link) return;
+  const body = {
+    to,
+    subject: t("bases.share.emailSubject", { baseName }) || `Udostępniono bazę: ${baseName}`,
+    baseName,
+    ownerLabel,
+    link,
+  };
+  const res = await fetch(MAIL_FUNCTION_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${(await sb().auth.getSession()).data?.session?.access_token || ""}` },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`send-mail ${res.status}`);
+}
+
 async function shareAdd() {
   const b = selectedBase();
   if (!b || !isOwner(b)) return;
 
-  const raw = String(shareEmail.value || "").trim();
+  const recipientType = shareRecipientTypeSelect?.getValue?.() || "email";
   const role = shareRoleSelect?.getValue?.() || "editor";
+  let targetEmail = "";
+  let targetUserId = null;
 
-  const email = await resolveLoginToEmail(raw);
-  if (!emailLooksOk(email)) {
-    setMsg(
-      shareMsg,
-      raw.includes("@") ? t("bases.share.invalidEmail") : t("bases.share.unknownUser")
-    );
-    return;
+  if (recipientType === "email") {
+    const raw = String(shareEmail.value || "").trim();
+    if (!raw) {
+      setMsg(shareMsg, t("bases.share.enterEmail") || "Wpisz adres email lub nazwę użytkownika");
+      return;
+    }
+    targetEmail = await resolveLoginToEmail(raw);
+    if (!emailLooksOk(targetEmail)) {
+      if (shareEmailError) {
+        shareEmailError.textContent = raw.includes("@") ? t("bases.share.invalidEmail") : t("bases.share.unknownUser");
+        shareEmailError.style.display = "block";
+      }
+      return;
+    }
+    if (shareEmailError) shareEmailError.style.display = "none";
+  } else {
+    targetUserId = shareSubscriberSelectInst?.getValue?.();
+    if (!targetUserId) {
+      setMsg(shareMsg, t("bases.share.selectSubscriber") || "Wybierz subskrybenta");
+      return;
+    }
   }
 
   // właściciel próbuje udostępnić samemu sobie
   const me = String(currentUser?.email || "").trim().toLowerCase();
-  if (me && email === me) {
+  if (me && targetEmail === me) {
     setMsg(shareMsg, t("bases.share.owner"));
     return;
   }
 
-  const { data, error } = await sb().rpc("base_share_by_email", {
-    p_base_id: b.id,
-    p_email: email,
-    p_role: role,
-  });
+  setMsg(shareMsg, "");
+
+  let data, error;
+  if (targetUserId) {
+    ({ data, error } = await sb().rpc("base_share_by_user", {
+      p_base_id: b.id,
+      p_recipient_user_id: targetUserId,
+      p_role: role,
+    }));
+  } else {
+    ({ data, error } = await sb().rpc("base_share_by_email", {
+      p_base_id: b.id,
+      p_email: targetEmail,
+      p_role: role,
+    }));
+  }
+
   const row = Array.isArray(data) ? data[0] : data;
-  
+
   if (error || !row?.ok) {
     const err = row?.err || "";
     if (err === "cooldown") setMsg(shareMsg, t("bases.share.cooldown"));
@@ -1656,10 +1627,14 @@ async function refreshAltBadge() {
   }
 
   initShareRoleSelect();
+  initShareRecipientTypeSelect();
+  initShareSubscriberSelect();
   window.addEventListener("i18n:lang", () => {
     initShareRoleSelect();
-    render();          // 🔑 odśwież kafelki i nagłówki sekcji
-    setButtonsState(); // (opcjonalnie, ale bezpiecznie)
+    initShareRecipientTypeSelect();
+    initShareSubscriberSelect();
+    render();
+    setButtonsState();
   });
     
   await refreshBases();

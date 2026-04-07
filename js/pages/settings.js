@@ -71,7 +71,7 @@ const els = {
   countdownNow: document.getElementById("countdownNow"),
   toolsShell: document.getElementById("toolsShell"),
   toolsFrame: document.getElementById("toolsFrame"),
-  toolsSelect: document.getElementById("toolsSelect"),
+  toolsSelect: document.getElementById("toolsSelect") || { style: { display: 'none' } },
   btnTabMaintenance: document.getElementById("btnTabMaintenance"),
   btnTabMail: document.getElementById("btnTabMail"),
   btnTabMarketplace: document.getElementById("btnTabMarketplace"),
@@ -174,14 +174,10 @@ let mailLogLevelValue = "all";
 let mailLogsPage = 1;
 let mailLogsPerPage = 50;
 let mailCronSelect = null;
-let mailGreetingSelect = null;
-let mailFarewellSelect = null;
 let mailGreetingValue = "witaj";
 let mailFarewellValue = "team";
 let mailGreetingCustomValue = "";
 let mailFarewellCustomValue = "";
-let mailIncludeSignatureValue = true;
-let mailQuotePositionValue = "before";
 let mailQueueStatusSelect = null;
 let mailLogFnSelect = null;
 let mailLogLevelSelect = null;
@@ -910,6 +906,73 @@ function setStatus(msg) {
   if (el) el.textContent = msg;
 }
 
+async function openMaintenancePreview() {
+  const overlay = document.getElementById("maintenancePreviewOverlay");
+  const frame = document.getElementById("maintenancePreviewFrame");
+  if (!overlay || !frame) return;
+
+  // Build preview HTML
+  const customComment = document.getElementById("maintenanceCustomComment")?.value || "";
+  const state = currentState || {};
+  
+  let messageText = t("maintenance.messageText") || "System jest chwilowo niedostępny. Za moment wszystko wróci do normy.";
+  let titleText = t("maintenance.title") || "TRWA PRZERWA TECHNICZNA";
+  
+  if (state.mode === "returnAt" && state.returnAt) {
+    titleText = t("maintenance.returnAtTitle") || titleText;
+    const date = new Date(state.returnAt);
+    messageText = t("maintenance.returnAtText")?.replace("{returnAt}", formatReturnAtValue(date)) || `Powrót o ${formatReturnAtValue(date)}`;
+  } else if (state.mode === "countdown" && state.returnAt) {
+    titleText = t("maintenance.countdownTitle") || titleText;
+    messageText = t("maintenance.countdownText") || "System wróci za: {countdown}";
+  }
+
+  const commentHtml = customComment 
+    ? `<p style="margin-top:12px;opacity:.85;font-size:14px;line-height:1.5">${escSetting(customComment)}</p>`
+    : "";
+
+  const previewHtml = `<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <link rel="stylesheet" href="/css/base.css"/>
+  <link rel="stylesheet" href="/css/maintenance.css"/>
+  <style>body{margin:0;padding:0}</style>
+</head>
+<body class="maintenance-body">
+  <header class="topbar topbar-layout-4 topbar-mobile-keep-brand">
+    <div class="topbar-section topbar-section-1"><span class="brand">FAMILIADA</span></div>
+    <div class="topbar-section topbar-section-2"></div>
+    <div class="topbar-section topbar-section-3"></div>
+    <div class="topbar-section topbar-section-4"></div>
+  </header>
+  <main class="maintenance-main">
+    <section class="maintenance-card" role="status" aria-live="polite">
+      <div class="card-top">
+        <h1>${escSetting(titleText)}</h1>
+        <p>${escSetting(messageText)}</p>
+        ${commentHtml}
+        <div class="countdown" id="countdown" hidden>00:00:00</div>
+      </div>
+    </section>
+  </main>
+  <footer class="footer wrap">
+    <span>Familiada — tryb konserwacji</span>
+    <span>Masz pilną sprawę? Skontaktuj się z nami.</span>
+  </footer>
+</body>
+</html>`;
+
+  frame.srcdoc = previewHtml;
+  overlay.style.display = "block";
+}
+
+function closeMaintenancePreview() {
+  const overlay = document.getElementById("maintenancePreviewOverlay");
+  if (overlay) overlay.style.display = "none";
+}
+
 async function loadAdminStats({ silent = false } = {}) {
   if (!silent) setStatus("Ładowanie statystyk…");
   try {
@@ -1410,40 +1473,6 @@ function initMailSelects() {
         mailCronPresetValue = String(val || mailCronPresetValue);
         updateCronHint();
         updateMailCategoryHighlights();
-      },
-    });
-  }
-
-  if (!mailGreetingSelect && els.mailGreetingSelect) {
-    mailGreetingSelect = initUiSelect(els.mailGreetingSelect, {
-      options: getGreetingOptions(),
-      value: mailGreetingValue,
-      placeholder: "—",
-      onChange: (val) => {
-        mailGreetingValue = String(val || "witaj");
-        // Show/hide custom input
-        const customInput = document.getElementById("mailGreetingCustom");
-        if (customInput) {
-          customInput.style.display = (mailGreetingValue === "custom") ? "" : "none";
-          if (mailGreetingValue === "custom") customInput.focus();
-        }
-      },
-    });
-  }
-
-  if (!mailFarewellSelect && els.mailFarewellSelect) {
-    mailFarewellSelect = initUiSelect(els.mailFarewellSelect, {
-      options: getFarewellOptions(),
-      value: mailFarewellValue,
-      placeholder: "—",
-      onChange: (val) => {
-        mailFarewellValue = String(val || "team");
-        // Show/hide custom input
-        const customInput = document.getElementById("mailFarewellCustom");
-        if (customInput) {
-          customInput.style.display = (mailFarewellValue === "custom") ? "" : "none";
-          if (mailFarewellValue === "custom") customInput.focus();
-        }
       },
     });
   }
@@ -3984,7 +4013,93 @@ function showComposePreview(greetingSelect, farewellSelect, senderSelect) {
   });
 }
 
+// ── Mobile mail navigation (3-pane → one at a time) ───────────────────
+let mailView = "list"; // list | folders | conv
+
+function setMailView(view) {
+  mailView = view;
+  const client = document.getElementById("mailClient");
+  const toolbar = document.getElementById("mailMobileToolbar");
+  const btnBackFolders = document.getElementById("btnMailBackFolders");
+  const btnBackList = document.getElementById("btnMailBackList");
+  const btnOpenFolders = document.getElementById("btnMailOpenFolders");
+  const title = document.getElementById("mailMobileTitle");
+
+  if (!client) return;
+  client.dataset.mailView = view;
+
+  // Only show toolbar on mobile
+  const isMobile = window.matchMedia("(max-width: 900px)").matches;
+  if (toolbar) toolbar.style.display = isMobile ? "flex" : "none";
+
+  if (!isMobile) return;
+
+  // Show/hide buttons based on view
+  if (btnBackFolders) btnBackFolders.style.display = view === "folders" ? "" : "none";
+  if (btnBackList) btnBackList.style.display = view === "conv" ? "" : "none";
+  if (btnOpenFolders) btnOpenFolders.style.display = view === "folders" ? "none" : "";
+
+  // Update title based on view
+  if (title) {
+    if (view === "folders") {
+      title.textContent = "Foldery";
+    } else if (view === "conv") {
+      // Try to get subject from mailConv header
+      const subjectEl = document.querySelector(".mail-conv-subject");
+      title.textContent = subjectEl?.textContent?.trim() || "Wiadomość";
+    } else {
+      // List view - show folder name
+      const activeFolder = document.querySelector(".mail-folder.active .mail-folder-name");
+      title.textContent = activeFolder?.textContent?.trim() || "Skrzynka";
+    }
+  }
+}
+
+function initMobileMailNav() {
+  // Back buttons
+  document.getElementById("btnMailBackFolders")?.addEventListener("click", () => {
+    setMailView("list");
+  });
+
+  document.getElementById("btnMailBackList")?.addEventListener("click", () => {
+    setMailView("list");
+  });
+
+  document.getElementById("btnMailOpenFolders")?.addEventListener("click", () => {
+    setMailView("folders");
+  });
+
+  // When clicking a folder on mobile, go to list view
+  document.querySelectorAll(".mail-folder").forEach(el => {
+    el.addEventListener("click", () => {
+      if (window.matchMedia("(max-width: 900px)").matches) {
+        setMailView("list");
+      }
+    });
+  });
+
+  // Observe when conversation is opened
+  const convObserver = new MutationObserver(() => {
+    const conv = document.getElementById("mailConv");
+    const hasContent = conv && conv.querySelector(".mail-conv-header");
+    if (hasContent && window.matchMedia("(max-width: 900px)").matches) {
+      setMailView("conv");
+    }
+  });
+
+  const convEl = document.getElementById("mailConv");
+  if (convEl) {
+    convObserver.observe(convEl, { childList: true, subtree: true });
+  }
+
+  // Initial state
+  setMailView("list");
+}
+
 function wireReportsEvents() {
+  // Mobile mail navigation
+  initMobileMailNav();
+
   // Folder nav
   document.querySelectorAll(".mail-folder").forEach(el => {
     el.addEventListener("click", async () => {
@@ -4157,14 +4272,7 @@ async function loadMailSettings({ silent = false } = {}) {
     mailFarewellValue = settings.email_farewell || "team";
     mailGreetingCustomValue = settings.email_greeting_custom || "";
     mailFarewellCustomValue = settings.email_farewell_custom || "";
-    mailIncludeSignatureValue = settings.email_include_signature !== false;
-    mailQuotePositionValue = settings.email_quote_position || "before";
-    
-    if (mailGreetingSelect) mailGreetingSelect.setValue(mailGreetingValue, { silent: true });
-    if (mailFarewellSelect) mailFarewellSelect.setValue(mailFarewellValue, { silent: true });
-    if (els.mailIncludeSignatureInCompose) els.mailIncludeSignatureInCompose.checked = mailIncludeSignatureValue;
-    if (els.mailQuotePosition) els.mailQuotePosition.value = mailQuotePositionValue;
-    
+
     // Set custom values and show/hide inputs
     const greetingCustomEl = document.getElementById("mailGreetingCustom");
     const farewellCustomEl = document.getElementById("mailFarewellCustom");
@@ -4228,8 +4336,6 @@ async function saveMailSettings() {
     email_farewell: mailFarewellValue,
     email_greeting_custom: document.getElementById("mailGreetingCustom")?.value || "",
     email_farewell_custom: document.getElementById("mailFarewellCustom")?.value || "",
-    email_include_signature: els.mailIncludeSignatureInCompose?.checked !== false,
-    email_quote_position: els.mailQuotePosition?.value || "before",
   };
 
   if (mailCronSupported && cronSchedule) {
@@ -5096,6 +5202,18 @@ function wireEvents() {
     });
   }
 
+  // Maintenance preview
+  document.getElementById("btnMaintenancePreview")?.addEventListener("click", () => {
+    markUserAction();
+    openMaintenancePreview();
+  });
+  document.getElementById("btnMaintenancePreviewClose")?.addEventListener("click", () => {
+    closeMaintenancePreview();
+  });
+  document.getElementById("maintenancePreviewOverlay")?.addEventListener("click", (e) => {
+    if (e.target.id === "maintenancePreviewOverlay") closeMaintenancePreview();
+  });
+
   ["returnAtYear","returnAtMonth","returnAtDay","returnAtHour","returnAtMinute","endAtYear","endAtMonth","endAtDay","endAtHour","endAtMinute"].forEach((id) => {
     const el = document.getElementById(id);
     if (!el) return;
@@ -5272,29 +5390,6 @@ function wireEvents() {
   els.btnMailReloadSettings?.addEventListener("click", async () => {
     markUserAction();
     await refreshMailTab();
-  });
-
-  document.getElementById("btnMailPreviewSignature")?.addEventListener("click", () => {
-    const greetingCustomEl = document.getElementById("mailGreetingCustom");
-    const farewellCustomEl = document.getElementById("mailFarewellCustom");
-    
-    const signatureText = buildEmailSignature({
-      greeting: mailGreetingValue,
-      farewell: mailFarewellValue,
-      greetingCustom: greetingCustomEl?.value || "",
-      farewellCustom: farewellCustomEl?.value || "",
-    });
-    
-    const previewContent = signatureText 
-      ? `<div style="white-space:pre-wrap;font-family:inherit;font-size:13px;line-height:1.5">${escSetting(signatureText)}</div>`
-      : `<div style="opacity:.5;font-style:italic">${t("settings.mail.previewSignatureEmpty") || "Podpis jest pusty"}</div>`;
-    
-    void confirmModal({
-      title: t("settings.mail.previewSignatureTitle") || "Podgląd podpisu",
-      text: previewContent,
-      okText: "OK",
-      showCancel: false,
-    });
   });
 
   els.btnMailQueueRefresh?.addEventListener("click", async () => {

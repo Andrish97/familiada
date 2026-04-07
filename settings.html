@@ -39,8 +39,8 @@
       <button class="btn sm tab-btn" id="btnTabReports" type="button" data-i18n="settings.tabs.reports">Zgłoszenia</button>
       <button class="btn sm tab-btn" id="btnTabMarketing" type="button" data-i18n="settings.tabs.marketing">Marketing</button>
       <button class="btn sm tab-btn" id="btnTabMarketplace" type="button" data-i18n="settings.tabs.marketplace">Gry Społeczności</button>
-      <button class="btn sm tab-btn" id="btnTabGenerator" type="button" data-i18n="settings.tabs.generator">Gry Producenta</button>
-      <div class="ui-select" id="toolsSelect">
+      <button class="btn sm tab-btn" id="btnTabGenerator" type="button" data-i18n="settings.tabs.generator" style="display:none">Gry Producenta</button>
+      <div class="ui-select" id="toolsSelect" style="display:none">
         <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
           <span class="ui-select-label" data-i18n="settings.tabs.tools">Narzędzia</span>
           <span class="ui-select-caret" aria-hidden="true">▾</span>
@@ -118,6 +118,16 @@
           <div class="mode-status" id="modeStatus" hidden>
             <span class="mode-status-label" data-i18n="settings.preview.label">Podgląd:</span>
             <span class="mode-status-value" id="modeStatusValue">—</span>
+          </div>
+
+          <div class="field" style="margin-top:16px">
+            <span class="field-label field-title" data-i18n="settings.maintenance.customCommentTitle">Własny komentarz</span>
+            <textarea class="inp" id="maintenanceCustomComment" rows="3" placeholder="Dodatkowa informacja dla użytkowników..." data-i18n-placeholder="settings.maintenance.customCommentPlaceholder" style="resize:vertical"></textarea>
+            <span class="field-hint" data-i18n="settings.maintenance.customCommentHint">Opcjonalny tekst, który pojawi się na stronie maintenance.</span>
+          </div>
+
+          <div class="field" style="margin-top:12px">
+            <button class="btn sm" id="btnMaintenancePreview" type="button" data-i18n="settings.maintenance.previewBtn">👁 Podgląd strony maintenance</button>
           </div>
         </div>
 
@@ -207,59 +217,7 @@
               <button class="btn sm gold" id="btnMailSaveSettings" type="button" data-i18n="settings.mail.save">Zapisz ustawienia maili</button>
               <button class="btn sm" id="btnMailReloadSettings" type="button" data-i18n="settings.actions.refresh">Odśwież</button>
             </div>
-            
-            <div class="field" style="margin-top:20px;border-top:1px solid rgba(255,255,255,.1);padding-top:16px">
-              <span class="field-label" style="font-size:13px;font-weight:700;color:var(--gold)" data-i18n="settings.mail.emailSignatureTitle">Podpis w odpowiedziach</span>
-              <span class="field-hint" data-i18n="settings.mail.emailSignatureHint">Wybierz domyślne powitanie i pożegnanie dla odpowiedzi na zgłoszenia</span>
-            </div>
-            
-            <div class="mail-inline-grid">
-              <div class="field">
-                <label class="field-label" for="mailGreetingSelect" data-i18n="settings.mail.greetingLabel">Powitanie</label>
-                <div class="ui-select" id="mailGreetingSelect">
-                  <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
-                    <span class="ui-select-label">—</span>
-                    <span class="ui-select-caret" aria-hidden="true">▾</span>
-                  </button>
-                  <div class="ui-select-menu" role="listbox"></div>
-                </div>
-                <input class="inp" id="mailGreetingCustom" type="text" placeholder="Własne powitanie (opcjonalnie)" data-i18n-placeholder="settings.mail.greetingCustomPlaceholder" style="margin-top:6px;display:none">
-              </div>
-              <div class="field">
-                <label class="field-label" for="mailFarewellSelect" data-i18n="settings.mail.farewellLabel">Pożegnanie</label>
-                <div class="ui-select" id="mailFarewellSelect">
-                  <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
-                    <span class="ui-select-label">—</span>
-                    <span class="ui-select-caret" aria-hidden="true">▾</span>
-                  </button>
-                  <div class="ui-select-menu" role="listbox"></div>
-                </div>
-                <textarea class="inp" id="mailFarewellCustom" rows="2" placeholder="Własne pożegnanie (opcjonalnie)" data-i18n-placeholder="settings.mail.farewellCustomPlaceholder" style="margin-top:6px;display:none;resize:vertical"></textarea>
-              </div>
-            </div>
-            
-            <div class="field row" style="margin-top:12px">
-              <label class="toggle" for="mailIncludeSignatureInCompose">
-                <input type="checkbox" id="mailIncludeSignatureInCompose" checked/>
-                <span class="toggle-ui"></span>
-                <span class="toggle-label" data-i18n="settings.mail.includeSignatureInCompose">Automatycznie dodawaj podpis w oknie odpowiedzi</span>
-              </label>
-            </div>
-            
-            <div class="field row" style="margin-top:8px">
-              <label class="field-label" style="display:flex;align-items:center;gap:8px;font-size:12px">
-                <span data-i18n="settings.mail.quotePosition">Pozycja cytatu:</span>
-                <select class="inp" id="mailQuotePosition" style="width:auto;padding:4px 8px;font-size:12px">
-                  <option value="before" data-i18n="settings.mail.quoteBefore">Przed odpowiedzią</option>
-                  <option value="after" data-i18n="settings.mail.quoteAfter">Po odpowiedzi</option>
-                </select>
-              </label>
-            </div>
-            
-            <div class="field row" style="margin-top:8px">
-              <button class="btn sm" id="btnMailPreviewSignature" type="button" data-i18n="settings.mail.previewSignatureBtn">👁 Podgląd podpisu</button>
-            </div>
-            
+
             <div class="panel-status" style="margin-top:12px">
               <span class="status-label" data-i18n="settings.mail.currentCron">Cron</span>
               <span class="status-value" id="mailSettingsStatus">—</span>
@@ -539,7 +497,15 @@
 
       <!-- REPORTS PANEL -->
       <div class="market-admin-panel" id="reportsPanel" hidden>
-        <div class="mail-client">
+        <div class="mail-client" id="mailClient" data-mail-view="list">
+          <!-- Mobile toolbar -->
+          <div class="mail-mobile-toolbar" id="mailMobileToolbar" style="display:none">
+            <button class="btn sm" id="btnMailBackFolders" type="button" style="display:none">←</button>
+            <button class="btn sm" id="btnMailBackList" type="button" style="display:none">←</button>
+            <span class="mail-mobile-title" id="mailMobileTitle"></span>
+            <button class="btn sm" id="btnMailOpenFolders" type="button">☰ Foldery</button>
+          </div>
+
           <!-- Sidebar -->
           <div class="mail-sidebar">
             <button class="btn gold sm" id="btnMailCompose" type="button" style="width:100%;margin-bottom:18px">✏ <span data-i18n="settings.reports.compose.title">Napisz nową</span></button>
@@ -938,6 +904,17 @@
         <button class="btn sm" id="btnRatersClose" type="button">✕</button>
       </div>
       <div id="ratersBody" style="max-height:60vh;overflow-y:auto"></div>
+    </div>
+  </div>
+
+  <!-- Maintenance preview modal -->
+  <div class="overlay" id="maintenancePreviewOverlay" style="display:none;">
+    <div class="modal" style="max-width:720px;width:94vw;max-height:90vh;">
+      <div class="mHead">
+        <div class="mTitle" data-i18n="settings.maintenance.previewTitle">Podgląd strony maintenance</div>
+        <button class="btn sm" id="btnMaintenancePreviewClose" type="button" aria-label="Zamknij">✕</button>
+      </div>
+      <iframe id="maintenancePreviewFrame" style="width:100%;height:70vh;border:1px solid rgba(255,255,255,.1);border-radius:10px;background:#050914;margin-top:12px"></iframe>
     </div>
   </div>
  </body>

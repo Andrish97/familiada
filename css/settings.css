@@ -536,6 +536,8 @@ body.settings-body > main.wrap{
   border-radius: 16px;
   background: rgba(8,12,28,.6);
   overflow: hidden;
+  position: relative;
+  z-index: 75; /* Keep below topbar (z-index: 80) but above other content */
 }
 
 .tools-frame-wrap{
@@ -555,6 +557,11 @@ body.tools-fullscreen{
 
 body.settings-body{
   overflow-y: auto;
+}
+
+/* Override base.css body:has(.topbar) padding-top since settings topbar is sticky, not fixed */
+body.settings-body:has(.topbar) {
+  padding-top: 0 !important;
 }
 
 .topbar{
@@ -986,31 +993,91 @@ body.tools-fullscreen .tools-frame-wrap iframe{
     overflow: visible;
   }
 
+  /* Mobile: 3-pane mail client — one pane at a time with back navigation */
   .mail-client {
     grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr;
-    height: auto;
-    min-height: 0;
+    height: calc(100vh - 200px);
+    min-height: 350px;
+    position: relative;
+    overflow: hidden;
   }
 
-  .mail-sidebar {
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 4px;
-    padding: 8px;
+  .mail-client > .mail-sidebar,
+  .mail-client > .mail-list,
+  .mail-client > .mail-conv {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    background: rgba(8,12,28,.96);
+    transition: transform .2s ease;
+    will-change: transform;
+  }
+
+  /* Sidebar — hidden by default, shown when mail-view=folders */
+  .mail-client .mail-sidebar {
+    flex-direction: column;
+    padding: 12px;
     border-right: none;
-    border-bottom: 1px solid rgba(255,255,255,.1);
+    transform: translateX(-100%);
+    z-index: 3;
+  }
+  .mail-client[data-mail-view="folders"] .mail-sidebar {
+    transform: translateX(0);
   }
 
-  .mail-list {
+  /* List — default visible view */
+  .mail-client .mail-list {
     border-right: none;
-    border-bottom: 1px solid rgba(255,255,255,.1);
-    max-height: 40vh;
+    border-bottom: none;
+    max-height: none;
+    transform: translateX(0);
+    z-index: 2;
+  }
+  .mail-client[data-mail-view="folders"] .mail-list,
+  .mail-client[data-mail-view="conv"] .mail-list {
+    transform: translateX(-100%);
   }
 
-  .mail-table-wrap {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+  /* Conversation — hidden by default, shown when mail-view=conv */
+  .mail-client .mail-conv {
+    transform: translateX(100%);
+    z-index: 4;
+  }
+  .mail-client[data-mail-view="conv"] .mail-conv {
+    transform: translateX(0);
+  }
+
+  /* Mobile toolbar for mail navigation */
+  .mail-mobile-toolbar {
+    display: flex !important;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-bottom: 1px solid rgba(255,255,255,.1);
+    flex-shrink: 0;
+    background: rgba(0,0,0,.15);
+  }
+
+  .mail-mobile-toolbar .btn {
+    flex-shrink: 0;
+  }
+
+  .mail-mobile-toolbar .mail-mobile-title {
+    flex: 1;
+    min-width: 0;
+    font-weight: 700;
+    font-size: 13px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+/* Desktop: hide mobile toolbar */
+@media (min-width: 901px){
+  .mail-mobile-toolbar {
+    display: none !important;
   }
 }
 

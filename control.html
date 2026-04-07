@@ -19,12 +19,10 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script src="js/core/security-warning.js?v=v2026-04-07T20432" defer></script>
   <script type="module">
-    import { guardDesktopOnly } from "/js/core/device-guard.js";
     import { initI18n, t } from "/translation/translation.js";
-  
+
     await initI18n({ withSwitcher: false });
-    guardDesktopOnly({ maxWidth: 980 });
-  
+
     import("/control/js/app.js");
   </script>
 </head>
@@ -1211,11 +1209,13 @@
 
       <div class="shareSection">
         <div class="shareSectionTitle" data-i18n="control.shareDeviceModal.sectionAdd">Przez e-mail / nazwę</div>
-        <div class="importRow">
+        <div class="share-add-row">
           <input id="shareDeviceEmail" class="inp" type="text"
                  placeholder="Nazwa użytkownika lub e-mail..."
                  data-i18n-placeholder="bases.shareModal.placeholder"/>
-          <button class="btn sm gold" id="btnShareDeviceAdd" type="button" data-i18n="bases.shareModal.add">Dodaj</button>
+        </div>
+        <div class="share-add-row" style="margin-top:8px">
+          <button class="btn sm gold" id="btnShareDeviceAdd" type="button" data-i18n="bases.shareModal.add" style="width:100%">Dodaj</button>
         </div>
         <div class="importMsg" id="shareDeviceMsg"></div>
       </div>
