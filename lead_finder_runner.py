@@ -222,11 +222,11 @@ def run_search(target=50):
     api_calls = 0
     found = 0
 
-    # 1. Brave Search (zbieramy pulę)
-    log("🔍 Pobieram URL-e z Brave...")
-    candidate_urls = []
+    # 1. Brave Search (Szukanie bezpośrednich stron firm)
+    log("🔍 Faza 1: Brave Search (bezpośrednie strony firm)...")
+    urls_from_brave = []
     for q, city in urls:
-        if len(candidate_urls) >= target * 15 or api_calls >= BRAVE_DAILY_LIMIT: break
+        if len(urls_from_brave) >= target * 10 or api_calls >= BRAVE_DAILY_LIMIT: break
         try:
             r = session.get("https://api.search.brave.com/res/v1/web/search",
                             params={"q": q, "count": 10, "cc": "PL"},
@@ -235,15 +235,39 @@ def run_search(target=50):
             if r.status_code == 200:
                 for item in r.json().get("web", {}).get("results", []):
                     u = item.get("url", "")
-                    if u and not any(s in u.lower() for s in SKIP_DOMAINS): candidate_urls.append((u, city, "brave"))
+                    # Szukamy stron firm, omijamy wielkie portale w wynikach Brave
+                    if u and not any(s in u.lower() for s in SKIP_DOMAINS) and not any(p in u.lower() for p in ['oferteo.pl', 'fixly.pl']):
+                        urls_from_brave.append((u, city, "brave"))
             api_calls += 1
         except: api_calls += 1
         time.sleep(0.3)
 
-    log(f"📦 Znaleziono {len(candidate_urls)} kandydatów. Rozpoczynam weryfikację AI...")
+    candidate_urls = urls_from_brave
+    log(f"📦 Znaleziono {len(candidate_urls)} potencjalnych stron firm.")
 
-    # 2. Sekwencyjna weryfikacja AI
-    log(f"📦 Znaleziono {len(candidate_urls)} kandydatów. Rozpoczynam weryfikację AI...")
+    # 2. Katalogi (Portale ogłoszeniowe)
+    log("📂 Faza 2: Katalogi i portale ogłoszeniowe (Oferteo, Fixly...)...")
+    # Wchodzimy na zdefiniowane portale i zbieramy linki do ogłoszeń/profili
+    # Używamy prostego scrapingu, żeby wyciągnąć linki
+    for key, dir_url in DIR_URLS.items():
+        try:
+            # Pobieramy stronę katalogu
+            st, html = fetch_page(dir_url, 10)
+            if st != 200 or not html: continue
+            
+            soup = BeautifulSoup(html, "lxml")
+            # Szukamy linków, które wyglądają na ogłoszenia (zawierają /oferta/, /firma/, /profil/)
+            for a in soup.find_all('a', href=True):
+                href = a['href']
+                if any(x in href for x in ['/oferta/', '/firma/', '/profil/']):
+                    full_url = urljoin(dir_url, href)
+                    if full_url not in [u[0] for u in candidate_urls]:
+                        candidate_urls.append((full_url, "Portal", "portal"))
+        except: pass
+
+    log(f"🚀 Łącznie mam {len(candidate_urls)} stron do weryfikacji AI.")
+
+    # 3. Sekwencyjna weryfikacja AI (dla Firm i Portali)
 
     for i, (url, city, source) in enumerate(candidate_urls):
         if found >= target or api_calls >= BRAVE_DAILY_LIMIT: break
