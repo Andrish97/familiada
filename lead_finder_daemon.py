@@ -11,7 +11,7 @@ import httpx
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://api.familiada.online")
 SUPABASE_ANON_KEY = os.environ["SUPABASE_ANON_KEY"]
-RUNNER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "lead_finder_groq.py")
+RUNNER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "lead_finder_runner.py")
 PYTHON = "python3"
 
 def check_db():

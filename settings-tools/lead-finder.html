@@ -155,6 +155,14 @@ async function startSearch() {
   const target = parseInt(document.getElementById("targetInput").value) || 50;
   const btn = document.getElementById("startBtn");
   const stopBtn = document.getElementById("stopBtn");
+
+  // Sprawdź czy coś już nie leci
+  const { data: runs } = await db.from("lead_search_runs").select("*").in("status", ["running", "pending"]).limit(1);
+  if (runs && runs.length > 0) {
+    toast("⚠️ Wyszukiwanie już trwa! Poczekaj na zakończenie lub kliknij Stop.", true);
+    return;
+  }
+
   btn.disabled = true; btn.textContent = "⏳ Wysyłam zlecenie...";
   stopBtn.hidden = false;
   try {
@@ -170,11 +178,12 @@ async function startSearch() {
 
     if (error) throw error;
     toast("🚀 Zlecenie wysłane! Serwer zacznie szukać wkrótce...");
+    // Odśwież status od razu
+    loadStats();
   } catch(e) { toast("❌ Błąd wysyłania: " + e.message, true); }
   
   btn.disabled = false; btn.textContent = "🇵🇱 Szukaj";
   stopBtn.hidden = true;
-  loadStats();
 }
 
 async function stopSearch() {
@@ -257,44 +266,50 @@ async function loadStats() {
         const startBtn = document.getElementById("startBtn");
         const resumeBtn = document.getElementById("resumeBtn");
         
-        // Sprawdź czy jest wyszukiwanie do wznowienia
-        try {
-          const { data: runs } = await db.from("lead_search_runs").select("*").in("status", ["limit_reached", "stopped"]).order("started_at", { ascending: false }).limit(1);
-          if (runs && runs.length > 0) {
-            const r = runs[0];
+        // Sprawdź czy jest aktywne szukanie
+        const { data: activeRuns } = await db.from("lead_search_runs").select("*").in("status", ["running", "pending"]).limit(1);
+        const isRunning = activeRuns && activeRuns.length > 0;
+        
+        const startBtn = document.getElementById("startBtn");
+        const stopBtn = document.getElementById("stopBtn");
+        const resumeBtn = document.getElementById("resumeBtn");
+        const box = document.getElementById("searchStatusBox");
+        const logBox = document.getElementById("liveLogBox");
+        const progressBar = document.getElementById("searchProgressBar");
+        
+        if (isRunning) {
+          startBtn.disabled = true; startBtn.textContent = "⏳ Szukanie...";
+          stopBtn.hidden = false; resumeBtn.hidden = true;
+          box.style.display = "block";
+          document.getElementById("searchStatusIcon").textContent = "🔄";
+          document.getElementById("searchStatusText").textContent = `Szukanie... (cel: ${activeRuns[0].target})`;
+          document.getElementById("searchProgress").textContent = `Znalezione: ${activeRuns[0].found||0}`;
+          progressBar.style.width = "20%"; progressBar.style.background = "var(--acc)";
+          if (kv.last_search_log) { logBox.textContent = kv.last_search_log; logBox.scrollTop = logBox.scrollHeight; }
+        } else {
+          startBtn.disabled = false; startBtn.textContent = "🇵🇱 Szukaj";
+          stopBtn.hidden = true;
+          
+          // Sprawdź czy jest co wznawiać
+          const { data: resumeRuns } = await db.from("lead_search_runs").select("*").in("status", ["limit_reached", "stopped"]).order("started_at", { ascending: false }).limit(1);
+          if (resumeRuns && resumeRuns.length > 0) {
             resumeBtn.hidden = false;
-            const remaining = r.target - (r.found || 0);
-            resumeBtn.textContent = `▶️ Wznów (${remaining} do celu)`;
-            resumeBtn.title = `Kontynuuj: ${r.found||0}/${r.target} znalezionych, miasta od #${r.cities_done}`;
+            const r = resumeRuns[0];
+            resumeBtn.textContent = `▶️ Wznów (${r.target - (r.found || 0)} do celu)`;
           } else {
             resumeBtn.hidden = true;
           }
-        } catch {}
-        
-        if (ss.running) {
-          box.style.display = "block"; stopBtn.hidden = false; startBtn.disabled = true; resumeBtn.hidden = true;
-          document.getElementById("searchStatusIcon").textContent = "🔄";
-          document.getElementById("searchStatusText").textContent = `Szukanie... (cel: ${ss.target||'?'})`;
-          document.getElementById("searchProgress").textContent = `Znalezione: ${ss.found||0} | API: ${ss.api_calls||0}/${stats.daily_limit || 33}`;
           
-          const target = ss.target || 1;
-          const pct = Math.min(100, Math.round(((ss.found||0) / target) * 100));
-          progressBar.style.width = pct + "%";
-          progressBar.style.background = "var(--acc)";
-          
-          if (kv.last_search_log) { logBox.textContent = kv.last_search_log; logBox.scrollTop = logBox.scrollHeight; }
-        } else if (ss.done) {
-          box.style.display = "block"; stopBtn.hidden = true; startBtn.disabled = false;
-          document.getElementById("searchStatusIcon").textContent = ss.reason === "stopped" ? "⏹️" : "✅";
-          const finished = ss.finished_at ? new Date(ss.finished_at).toLocaleTimeString('pl-PL') : '';
-          document.getElementById("searchStatusText").textContent = ss.reason === "stopped" ? `Zatrzymano o ${finished}` : `Zakończono o ${finished}`;
-          document.getElementById("searchProgress").textContent = `Wynik: ${ss.found||0} leadów | ${ss.reason||''}`;
-          progressBar.style.width = "100%";
-          progressBar.style.background = ss.reason && ss.reason.toLowerCase().includes("limit") ? "var(--yellow)" : "var(--green)";
-          
-          if (kv.last_search_log) { logBox.textContent = kv.last_search_log; logBox.scrollTop = logBox.scrollHeight; }
-        } else {
-          box.style.display = "none"; stopBtn.hidden = true; startBtn.disabled = false;
+          // Pokaż ostatni status jeśli był
+          if (ss.done) {
+             box.style.display = "block";
+             document.getElementById("searchStatusIcon").textContent = "✅";
+             document.getElementById("searchStatusText").textContent = `Ostatnie: ${ss.found||0} leadów`;
+             progressBar.style.width = "100%"; progressBar.style.background = "var(--green)";
+             if (kv.last_search_log) { logBox.textContent = kv.last_search_log; logBox.scrollTop = logBox.scrollHeight; }
+          } else {
+             box.style.display = "none";
+          }
         }
       }
     } catch (e) { console.error("Config error:", e); }
