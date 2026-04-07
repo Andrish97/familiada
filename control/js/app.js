@@ -37,6 +37,7 @@ const APP_MSG = {
 // ================= KONIEC KOMUNIKATÓW =================
 
 import { requireAuth, signOut } from "../../js/core/auth.js?v=v2026-04-07T23091";
+import { setTopbarAccount } from "../../js/core/topbar-controller.js?v=v2026-04-07T23091";
 import { isGuestUser } from "../../js/core/guest-mode.js?v=v2026-04-07T23091";
 import { sb } from "../../js/core/supabase.js?v=v2026-04-07T23091";
 import { rt } from "../../js/core/realtime.js?v=v2026-04-07T23091";
@@ -115,15 +116,20 @@ let guestMode = false;
 
 async function ensureAuthOrRedirect() {
   const user = await requireAuth("../login");
-  const who = document.getElementById("who");
-  if (who) who.textContent = user?.username || user?.email || user?.id || "—";
   guestMode = isGuestUser(user);
-  const btnLogout = document.getElementById("btnLogout");
-  if (btnLogout) {
-    const key = guestMode ? "common.authEntry" : "control.logout";
-    btnLogout.textContent = t(key);
-    btnLogout.dataset.i18n = key;
-  }
+  setTopbarAccount(user, {
+    showAuthEntry: true,
+    onLogout: async () => {
+      if (isEndedUiState()) {
+        await sendZeroStatesToDevices().catch(() => {});
+      }
+      await shareDevice.expireShares();
+      if (!guestMode) {
+        await signOut().catch(() => {});
+      }
+      suppressUnloadWarn = true;
+    },
+  });
   return user;
 }
 
@@ -1335,20 +1341,6 @@ async function sendZeroStatesToDevices() {
   
   ui.on("top.manual", () => {
     openHelpModal();
-  });
-
-  ui.on("top.logout", async () => {
-    if (isEndedUiState()) {
-      await sendZeroStatesToDevices().catch(() => {});
-    }
-
-    await shareDevice.expireShares();
-
-    if (!guestMode) {
-      await signOut().catch(() => {});
-    }
-    suppressUnloadWarn = true;
-    location.href = "../login";
   });
 
   ui.on("auth.showQr", (kind) => showQrModal(kind));

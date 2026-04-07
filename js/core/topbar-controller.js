@@ -199,6 +199,7 @@ export function setTopbarNavPriority(getButtons, { moreEl, moreDropdownEl } = {}
  * @param {string}  [opts.accountHref='account']
  * @param {boolean} [opts.withAccountSettings=false]  tylko builder
  * @param {boolean} [opts.showAuthEntry=true]  false → ukryj dla niezalogowanego
+ * @param {function} [opts.onLogout]  callback przed wylogowaniem (może zwrócić Promise)
  * @returns {{ guestMode: boolean }}
  */
 export function setTopbarAccount(user, {
@@ -206,6 +207,7 @@ export function setTopbarAccount(user, {
   accountHref = 'account',
   withAccountSettings = false,
   showAuthEntry = true,
+  onLogout = null,
 } = {}) {
   const section4 = document.querySelector('.topbar-section-4');
   if (!section4) return { guestMode: true };
@@ -297,6 +299,9 @@ export function setTopbarAccount(user, {
     btnAction.textContent = t('common.logout') || 'Wyloguj';
     btnAction.addEventListener('click', async () => {
       menu.hidden = true;
+      if (onLogout) {
+        try { await onLogout(); } catch(e) { console.warn('logout callback error:', e); }
+      }
       await signOut();
       location.href = withLangParam(loginHref);
     });
