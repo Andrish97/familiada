@@ -257,6 +257,13 @@ def run_search(target=50):
     sb_close_run(run_id, reason="limit" if api_calls >= BRAVE_DAILY_LIMIT else "cel")
     log(f"🏁 Done: {found} leadów zapisanych w bazie.")
 
+# Na samym dole pliku lead_finder_runner.py
+
 if __name__ == "__main__":
-    target = int(sys.argv[1]) if len(sys.argv) > 1 else 50
-    run_search(target)
+    import argparse
+    parser = argparse.ArgumentParser(description="Lead Finder Runner")
+    parser.add_argument('--target', type=int, default=50)
+    parser.add_argument('--resume', action='store_true') # Obsługa flagi wznawiania
+    args = parser.parse_args()
+    
+    run_search(target=args.target)
