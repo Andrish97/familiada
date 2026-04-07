@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict Cl5oWOfkFigFAme84VSlxMiMS9VhDhx5XS9ybtSuUnrBnLFJpfbDFth7knX2gC7
+\restrict zCXcffO4aiQkC11dzJAKztHbVDNAatnCf19qZgNO5gzQ7jpYJ4kRip5xSjSdNGx
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -10203,6 +10203,25 @@ CREATE TABLE "public"."lead_search_cache" (
 
 
 --
+-- Name: lead_search_runs; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."lead_search_runs" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "target" integer NOT NULL,
+    "found" integer DEFAULT 0 NOT NULL,
+    "api_calls" integer DEFAULT 0 NOT NULL,
+    "status" "text" DEFAULT 'running'::"text" NOT NULL,
+    "cities_done" integer DEFAULT 0 NOT NULL,
+    "cities_list" "jsonb" DEFAULT '[]'::"jsonb",
+    "reason" "text" DEFAULT ''::"text",
+    "started_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "finished_at" timestamp with time zone,
+    "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL
+);
+
+
+--
 -- Name: mail_function_logs; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -10910,6 +10929,14 @@ ALTER TABLE ONLY "public"."lead_search_cache"
 
 
 --
+-- Name: lead_search_runs lead_search_runs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."lead_search_runs"
+    ADD CONSTRAINT "lead_search_runs_pkey" PRIMARY KEY ("id");
+
+
+--
 -- Name: mail_function_logs mail_function_logs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -11413,6 +11440,13 @@ CREATE INDEX "idx_poll_votes_game_user_token" ON "public"."poll_votes" USING "bt
 --
 
 CREATE INDEX "idx_questions_game" ON "public"."questions" USING "btree" ("game_id");
+
+
+--
+-- Name: idx_search_runs_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "idx_search_runs_status" ON "public"."lead_search_runs" USING "btree" ("status");
 
 
 --
@@ -12567,6 +12601,13 @@ CREATE POLICY "allow_all" ON "public"."lead_search_cache" USING (true) WITH CHEC
 
 
 --
+-- Name: lead_search_runs allow_all; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "allow_all" ON "public"."lead_search_runs" USING (true) WITH CHECK (true);
+
+
+--
 -- Name: answers; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -12833,6 +12874,12 @@ CREATE POLICY "lead_finder_update" ON "public"."lead_finder" FOR UPDATE TO "auth
 --
 
 ALTER TABLE "public"."lead_search_cache" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: lead_search_runs; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."lead_search_runs" ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: lead_finder_config lf_config_insert; Type: POLICY; Schema: public; Owner: -
@@ -13644,5 +13691,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict Cl5oWOfkFigFAme84VSlxMiMS9VhDhx5XS9ybtSuUnrBnLFJpfbDFth7knX2gC7
+\unrestrict zCXcffO4aiQkC11dzJAKztHbVDNAatnCf19qZgNO5gzQ7jpYJ4kRip5xSjSdNGx
 
