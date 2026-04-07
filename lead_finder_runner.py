@@ -27,14 +27,18 @@ GROQ_MODEL = "llama-3.3-70b-versatile"
 
 # ─── Logi ───
 logs = []
+log_counter = 0
+
 def log(msg):
+    global log_counter
+    log_counter += 1
     ts = datetime.now().strftime("%H:%M:%S")
     line = f"[{ts}] {msg}"
     print(line, flush=True)
     logs.append(line)
-    if len(logs) % 3 == 0:
-        try: sb_upsert("last_search_log", "\n".join(logs)[-4000:])
-        except: pass
+    # Zapisuj do bazy CO KROK (żeby UI reagowało natychmiast)
+    try: sb_upsert("last_search_log", "\n".join(logs[-20:]))
+    except: pass
 
 # ─── Supabase Helpers ───
 def sb(path, method="GET", body=None, headers=None):
@@ -230,19 +234,39 @@ def run_search(target=50):
     log(f"📦 Znaleziono {len(candidate_urls)} kandydatów. Rozpoczynam weryfikację AI...")
 
     # 2. Sekwencyjna weryfikacja AI
+    log(f"📦 Znaleziono {len(candidate_urls)} kandydatów. Rozpoczynam weryfikację AI...")
+
     for i, (url, city, source) in enumerate(candidate_urls):
         if found >= target or api_calls >= BRAVE_DAILY_LIMIT: break
         
-        log(f"[{i+1}/{len(candidate_urls)}] Sprawdzam: {url[:60]}...")
+        # Aktualizacja paska postępu (krok 1: Pobieranie)
+        pct = int(((i + 1) / len(candidate_urls)) * 100)
+        sb_update_run(run_id, found=found, api_calls=api_calls)
+        
+        log(f"🔍 [{i+1}/{len(candidate_urls)}] Pobieram dane: {url[:50]}...")
         
         page = get_page_data(url)
-        if not page: continue
+        if not page: 
+            log(f"   ❌ Brak danych lub brak maili na stronie.")
+            continue
+
+        # Aktualizacja paska (krok 2: AI)
+        sb_update_run(run_id, found=found, api_calls=api_calls)
+        log(f"🤖 Pytam AI o weryfikację: {page['title'][:50]}...")
 
         ai = ask_groq(page["title"], page["text"], page["emails"])
-        if not ai or not ai.get("valid"): continue
+        
+        if not ai: 
+            log(f"   ⚠️ Błąd odpowiedzi AI lub brak klucza.")
+            continue
+        if not ai.get("valid"): 
+            log(f"   ❌ AI odrzuciło: {ai.get('reason', 'nie z branży')}")
+            continue
 
         selected = ai.get("email")
-        if not selected or selected.lower() in existing: continue
+        if not selected or selected.lower() in existing: 
+            log(f"   ⚠️ Mail '{selected}' już istnieje w bazie.")
+            continue
         
         existing.add(selected.lower())
         leads = [{"name": page["title"][:100] or urlparse(url).hostname, 
