@@ -36,22 +36,13 @@ const APP_MSG = {
 };
 // ================= KONIEC KOMUNIKATÓW =================
 
-<<<<<<< HEAD
-import { requireAuth, signOut } from "../../js/core/auth.js?v=v2026-04-07T23091";
-import { setTopbarAccount } from "../../js/core/topbar-controller.js?v=v2026-04-07T23091";
-import { isGuestUser } from "../../js/core/guest-mode.js?v=v2026-04-07T23091";
-import { sb } from "../../js/core/supabase.js?v=v2026-04-07T23091";
-import { rt } from "../../js/core/realtime.js?v=v2026-04-07T23091";
-import { validateGameReadyToPlay, loadGameBasic, loadQuestions, loadAnswers } from "../../js/core/game-validate.js?v=v2026-04-07T23091";
-import { unlockAudio, isAudioUnlocked, playSfx } from "../../js/core/sfx.js?v=v2026-04-07T23091";
-=======
 import { requireAuth, signOut } from "../../js/core/auth.js?v=v2026-04-07T23184";
+import { setTopbarAccount } from "../../js/core/topbar-controller.js?v=v2026-04-07T23184";
 import { isGuestUser } from "../../js/core/guest-mode.js?v=v2026-04-07T23184";
 import { sb } from "../../js/core/supabase.js?v=v2026-04-07T23184";
 import { rt } from "../../js/core/realtime.js?v=v2026-04-07T23184";
 import { validateGameReadyToPlay, loadGameBasic, loadQuestions, loadAnswers } from "../../js/core/game-validate.js?v=v2026-04-07T23184";
 import { unlockAudio, isAudioUnlocked, playSfx } from "../../js/core/sfx.js?v=v2026-04-07T23184";
->>>>>>> d91b4c372be3e0cb3079c756a86644b3eca5e2bc
 
 import { createStore } from "./store.js?v=v2026-04-07T23184";
 import { createUI } from "./ui.js?v=v2026-04-07T23184";
@@ -133,9 +124,6 @@ async function ensureAuthOrRedirect() {
         await sendZeroStatesToDevices().catch(() => {});
       }
       await shareDevice.expireShares();
-      if (!guestMode) {
-        await signOut().catch(() => {});
-      }
       suppressUnloadWarn = true;
     },
   });

@@ -567,6 +567,7 @@ export function createUI() {
   function wire() {
     $("btnBack")?.addEventListener("click", () => emit("top.back"));
     $("btnManual")?.addEventListener("click", () => emit("top.manual"));
+    $("btnLogout")?.addEventListener("click", () => emit("top.logout"));
     $("btnAlertClose")?.addEventListener("click", () => hideAlert());
 
     // auth bar – kliknięcie w status urządzeń
