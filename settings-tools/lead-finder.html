@@ -61,6 +61,7 @@ tr.used{opacity:.35}tr.used:hover{opacity:.7}
     <input type="number" id="targetInput" value="50" min="5" max="200" style="width:70px">
     <span class="small" style="color:var(--mut)">nowych maili</span>
     <button class="btn btn-green" id="startBtn" onclick="startSearch()">🇵🇱 Szukaj</button>
+    <button class="btn btn-red" id="stopBtn" onclick="stopSearch()" hidden>🛑 Stop</button>
     <button class="btn btn-blue" onclick="loadStats()">🔄 Odśwież</button>
   </div>
   <p class="small" style="color:var(--mut);margin-top:6px">Wyniki pojawią się w tabeli. Powiadomienie Telegram po zakończeniu.</p>
@@ -152,7 +153,9 @@ function initDB() {
 async function startSearch() {
   const target = parseInt(document.getElementById("targetInput").value) || 50;
   const btn = document.getElementById("startBtn");
+  const stopBtn = document.getElementById("stopBtn");
   btn.disabled = true; btn.textContent = "⏳ Uruchamianie...";
+  stopBtn.hidden = false;
   try {
     const r = await fetch(`${EDGE_FN}/search`, {
       method: "POST",
@@ -164,7 +167,16 @@ async function startSearch() {
     else toast("🚀 Szukanie rozpoczęte! Wyniki pojawią się w tabeli.");
   } catch(e) { toast("❌ " + e.message, true); }
   btn.disabled = false; btn.textContent = "🇵🇱 Szukaj";
+  stopBtn.hidden = true;
   loadStats();
+}
+
+async function stopSearch() {
+  if(!confirm("Zatrzymać wyszukiwanie? Runner skończy obecną paczkę i się zatrzyma.")) return;
+  try {
+    await db.from("lead_finder_config").update({ value: "true" }).eq("key", "search_stop_requested");
+    toast("🛑 Wysłano sygnał zatrzymania...");
+  } catch(e) { toast("❌ Błąd zatrzymywania", true); }
 }
 
 // ── STATS ──
@@ -214,39 +226,33 @@ async function loadStats() {
         const box = document.getElementById("searchStatusBox");
         const logBox = document.getElementById("liveLogBox");
         const progressBar = document.getElementById("searchProgressBar");
+        const stopBtn = document.getElementById("stopBtn");
+        const startBtn = document.getElementById("startBtn");
         
         if (ss.running) {
-          box.style.display = "block";
+          box.style.display = "block"; stopBtn.hidden = false; startBtn.disabled = true;
           document.getElementById("searchStatusIcon").textContent = "🔄";
           document.getElementById("searchStatusText").textContent = `Szukanie... (cel: ${ss.target||'?'})`;
-          document.getElementById("searchProgress").textContent = `Znalezione: ${ss.found||0} | API: ${ss.api_calls||0}/${parseInt(kv.brave_daily_limit||33)}`;
+          document.getElementById("searchProgress").textContent = `Znalezione: ${ss.found||0} | API: ${ss.api_calls||0}/${BRAVE_DAILY_LIMIT}`;
           
-          // Pasek postępu (% z celu)
           const target = ss.target || 1;
           const pct = Math.min(100, Math.round(((ss.found||0) / target) * 100));
           progressBar.style.width = pct + "%";
           progressBar.style.background = "var(--acc)";
           
-          // Live log – auto-scroll
-          if (kv.last_search_log) {
-            logBox.textContent = kv.last_search_log;
-            logBox.scrollTop = logBox.scrollHeight;
-          }
+          if (kv.last_search_log) { logBox.textContent = kv.last_search_log; logBox.scrollTop = logBox.scrollHeight; }
         } else if (ss.done) {
-          box.style.display = "block";
-          document.getElementById("searchStatusIcon").textContent = "✅";
+          box.style.display = "block"; stopBtn.hidden = true; startBtn.disabled = false;
+          document.getElementById("searchStatusIcon").textContent = ss.reason === "stopped" ? "⏹️" : "✅";
           const finished = ss.finished_at ? new Date(ss.finished_at).toLocaleTimeString('pl-PL') : '';
-          document.getElementById("searchStatusText").textContent = `Zakończono o ${finished}`;
+          document.getElementById("searchStatusText").textContent = ss.reason === "stopped" ? `Zatrzymano o ${finished}` : `Zakończono o ${finished}`;
           document.getElementById("searchProgress").textContent = `Wynik: ${ss.found||0} leadów | ${ss.reason||''}`;
           progressBar.style.width = "100%";
-          progressBar.style.background = "var(--green)";
+          progressBar.style.background = ss.reason === "stopped" ? "var(--yellow)" : "var(--green)";
           
-          if (kv.last_search_log) {
-            logBox.textContent = kv.last_search_log;
-            logBox.scrollTop = logBox.scrollHeight;
-          }
+          if (kv.last_search_log) { logBox.textContent = kv.last_search_log; logBox.scrollTop = logBox.scrollHeight; }
         } else {
-          box.style.display = "none";
+          box.style.display = "none"; stopBtn.hidden = true; startBtn.disabled = false;
         }
       }
     } catch (e) { console.error("Config error:", e); }

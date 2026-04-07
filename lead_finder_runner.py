@@ -257,9 +257,24 @@ def analyze_urls(urls, existing_emails):
 
     return leads
 
+def _check_stop_flag():
+    """Checks if user requested stop via UI."""
+    try:
+        r = httpx.get(f"{SUPABASE_URL}/rest/v1/lead_finder_config?select=value&key=eq.search_stop_requested",
+                      headers={"apikey": SUPABASE_ANON, "Authorization": f"Bearer {SUPABASE_ANON}"})
+        if r.status_code == 200 and r.json() and r.json()[0].get("value") == "true":
+            return True
+    except: pass
+    return False
+
 # ─── MAIN: Loop until target or limit ───
 def run(target=50):
     log(f"🎯 Target: {target} new leads | Brave daily limit: {BRAVE_DAILY_LIMIT}")
+
+    # Reset stop flag
+    try:
+        sb_upsert("search_stop_requested", "false")
+    except: pass
 
     # Mark as running
     sb_upsert("search_status", json.dumps({
@@ -342,6 +357,12 @@ def run(target=50):
         query_idx = 0
 
         while found < target and api_calls < (BRAVE_DAILY_LIMIT - day_count):
+            # Check stop flag every 3 queries
+            if api_calls % 3 == 0 and _check_stop_flag():
+                log("🛑 Stop requested by user!")
+                reason = "stopped"
+                break
+                
             query, city = queries[query_idx % len(queries)]
             query_idx += 1
             api_calls += 1
@@ -394,25 +415,34 @@ def run(target=50):
     sb_upsert("brave_monthly_date", month)
     sb_upsert("brave_monthly_count", str(month_count + api_calls))
     sb_upsert("last_search_log", "\n".join(logs)[-5000:])
+    
+    # Determine final reason
+    if 'reason' not in locals() or reason == "target reached":
+        reason = "target reached" if found >= target else f"API limit ({api_calls} queries)"
+    
+    # Save final status
     sb_upsert("search_status", json.dumps({
         "running": False, "done": True,
         "finished_at": datetime.now().isoformat(),
         "found": found, "api_calls": api_calls,
         "reason": reason,
     }))
+    
+    # Reset stop flag
+    try: sb_upsert("search_stop_requested", "false")
+    except: pass
 
     r = sb("/rest/v1/lead_finder?select=id&limit=1", headers={"Prefer": "count=exact"})
     total = r.headers.get("content-range", "?/?").split("/")[1]
 
-    reason = "target reached" if found >= target else f"API limit ({api_calls} queries)"
+    icon = "⏹️" if reason == "stopped" else "✅"
     send_tg(
-        f"✅ <b>Search completed</b>\n"
+        f"{icon} <b>Search completed</b>\n"
         f"📊 Found: {found}/{target} new leads\n"
         f"🔍 Brave: {api_calls} queries ({day_count}→{day_count+api_calls}/{BRAVE_DAILY_LIMIT}/day)\n"
         f"📂 Dirs: {len(DIR_URLS)} scraped\n"
         f"📁 Total DB: {total} leads\n"
-        f"🏙️ Cities: {done}→{done+per_run}/{len(ALL_CITIES)}\n"
-        f"🛑 Stopped: {reason}"
+        f"🛑 Status: {reason}"
     )
     log(f"🏁 Done: {found} leads | {api_calls} API calls | {reason}")
 
