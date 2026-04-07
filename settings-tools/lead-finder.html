@@ -63,6 +63,7 @@ tr.used{opacity:.35}tr.used:hover{opacity:.7}
     <button class="btn btn-green" id="startBtn" onclick="startSearch()">🇵🇱 Szukaj</button>
     <button class="btn btn-yellow" id="resumeBtn" onclick="resumeSearch()" hidden>▶️ Wznów</button>
     <button class="btn btn-red" id="stopBtn" onclick="stopSearch()" hidden>🛑 Stop</button>
+    <button class="btn btn-blue" id="resetBtn" onclick="forceReset()" hidden>🗑️ Reset</button>
     <button class="btn btn-blue" onclick="loadStats()">🔄 Odśwież</button>
   </div>
   <p class="small" style="color:var(--mut);margin-top:6px">Wyniki pojawią się w tabeli. Powiadomienie Telegram po zakończeniu.</p>
@@ -194,27 +195,29 @@ async function startSearch() {
 }
 
 async function stopSearch() {
-  const stopBtn = document.getElementById("stopBtn");
-  stopBtn.disabled = true;
-  stopBtn.textContent = "⏳ Anulowanie...";
-
-  // Sprawdź status aktywnego zadania
+  // 1. Natychmiast zmień status w bazie, żeby UI się odblokowało
   const { data: activeRuns } = await db.from("lead_search_runs").select("*").in("status", ["running", "pending"]).limit(1);
-  
+
   if (activeRuns && activeRuns.length > 0) {
       const run = activeRuns[0];
-      if (run.status === 'pending') {
-          // Jeśli czeka w kolejce -> usuń/anuluj
-          await db.from("lead_search_runs").update({ status: "cancelled" }).eq("id", run.id);
-          toast("🛑 Zlecenie anulowane.");
-      } else {
-          // Jeśli działa -> wyślij sygnał stop
-          await db.from("lead_finder_config").update({ value: "true" }).eq("key", "search_stop_requested");
-          toast("🛑 Wysłano sygnał zatrzymania...");
-      }
+      await db.from("lead_search_runs").update({ status: "stopped", reason: "manual_stop" }).eq("id", run.id);
+      
+      // 2. Powiadom runnera (żeby grzecznie się zatrzymał w tle)
+      await db.from("lead_finder_config").update({ value: "true" }).eq("key", "search_stop_requested");
   }
+
+  toast("🛑 Zatrzymano zadanie.");
+  loadStats();
+}
+
+async function forceReset() {
+  if(!confirm("Wyczyścić wszystkie aktywne zadania? Użyj tylko jeśli system się całkowicie zawiesił.")) return;
   
-  // Nie przywracaj przycisków od razu - loadStats to zrobi po odświeżeniu bazy
+  await db.from("lead_search_runs").update({ status: "stopped", reason: "force_reset" }).in("status", ["running", "pending"]);
+  await db.from("lead_finder_config").update({ value: "false" }).eq("key", "search_stop_requested");
+  await db.from("lead_finder_config").update({ value: "" }).eq("key", "search_heartbeat");
+  
+  toast("🗑️ Stan zresetowany.");
   loadStats();
 }
 
@@ -295,6 +298,7 @@ async function loadStats() {
           startBtn.hidden = true;
           stopBtn.hidden = false;
           stopBtn.disabled = false;
+          resetBtn.hidden = false;
           resumeBtn.hidden = true;
           box.style.display = "block";
 
