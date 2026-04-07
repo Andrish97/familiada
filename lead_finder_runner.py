@@ -229,6 +229,10 @@ def ask_groq(title, text, emails, source_type="brave"):
             f"ZADANIE: Czy to firma/freelancer zajmująca się PROWADZENIEM IMPREZ?\n\n"
             f"✅ AKCEPTUJ TYLKO jeśli: To konkretny DJ, Wodzirej/Konferansjer, Animator dzieci, Zespół/Kapeła, Agencja Eventowa/Teambuilding.\n"
             f"🛑 ODRZUCAJ BEZWZGLĘDNIE: Fotobudki, Pokazy Fajerwerków, Pokazy Bańki, Dmuchańce/Zamki, Wypożyczalnie (meble, namioty), Sale weselne, Catering, Dekoracje/Kwiaty, Foto/Video, Poradniki.\n\n"
+            f"📧 OCENA MAILI:\n"
+            f"- ✅ POPRAWNE: prywatne@gmail.com/wp/o2, kontakt@domena-firmy.pl, imie.nazwisko@...\n"
+            f"- ❌ PODEJRZANE/ODRZUĆ: noreply@, admin@, redakcja@, bok@, biuro@portal.pl (to maile portalu, nie wykonawcy).\n\n"
+            f"🌐 PODEJRZANE STRONY: Parkingu domen, Przekierowania na główną portalu, Błędy 404/500.\n\n"
             f"TYTUŁ: {title}\nTEKST: {text[:800]}\nMAILE: {email_list}\n\n"
             f'Odpowiedz JSON: {{"valid": true/false, "email": "najlepszy_mail", "reason": "..."}}'
         )
@@ -238,6 +242,10 @@ def ask_groq(title, text, emails, source_type="brave"):
             f"ZADANIE: Czy to firma/freelancer zajmująca się PROWADZENIEM IMPREZ?\n\n"
             f"✅ AKCEPTUJ TYLKO jeśli: To strona DJ-a, Wodzireja, Animatora dzieci, Zespołu muzycznego, Agencji Eventowej/Teambuilding.\n"
             f"🛑 ODRZUCAJ BEZWZGLĘDNIE: Fotobudki, Pokazy Fajerwerków, Pokazy Bańki, Dmuchańce/Zamki, Wypożyczalnie, Sale weselne, Catering, Dekoratorzy/Florystki, Foto/Video, Blogi.\n\n"
+            f"📧 OCENA MAILI:\n"
+            f"- ✅ POPRAWNE: kontakt@domena.pl, biuro@..., info@..., jan.kowalski@gmail.com.\n"
+            f"- ❌ PODEJRZANE/ODRZUĆ: noreply@, admin@, webmaster@, hosting@, noreply@home.pl (maile techniczne).\n\n"
+            f"🌐 PODEJRZANE STRONY: Strona w budowie, Parking domeny, Sklep z wieloma branżami (nie профильный), Strona po angielsku/chielsku (szukamy PL).\n\n"
             f"TYTUŁ: {title}\nTEKST: {text[:800]}\nMAILE: {email_list}\n\n"
             f'Odpowiedz JSON: {{"valid": true/false, "email": "najlepszy_mail", "reason": "..."}}'
         )
