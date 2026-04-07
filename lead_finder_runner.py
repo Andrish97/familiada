@@ -184,12 +184,26 @@ SKIP = {"google.","youtube.","facebook.com","pinterest.","twitter.com","instagra
         "wodzireje.pl","e-wesele.pl","animatorki.pl","klubanimatora.pl",
         "konferansjer.pl","teambuilding.pl","eventy.pl","pikniki-firmowe.pl"}
 
+# ─── Logi ───
 logs = []
-def log(msg):
+
+def log(msg, flush=False):
     ts = datetime.now().strftime("%H:%M:%S")
     line = f"[{ts}] {msg}"
     print(line, flush=True)
     logs.append(line)
+    
+    # Zapisuj do bazy co 10 linijek lub na żądanie (żeby UI widziało na żywo)
+    if flush or len(logs) % 10 == 0:
+        try:
+            # Pobierz funkcję sb_upsert jeśli jest już zdefiniowana
+            if 'sb_upsert' in globals():
+                sb_upsert("last_search_log", "\n".join(logs)[-4000:])
+        except: pass
+
+def sb_upsert(key, val):
+    sb("/rest/v1/lead_finder_config", "POST", [{"key": key, "value": str(val)}],
+       {"Content-Type": "application/json", "Prefer": "resolution=merge-duplicates"})
 
 # ─── Supabase ───
 def sb(path, method="GET", body=None, headers=None):
