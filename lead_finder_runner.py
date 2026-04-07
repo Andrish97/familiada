@@ -29,7 +29,7 @@ SUPABASE_ANON = os.environ["SUPABASE_ANON_KEY"]
 
 # Klucze z pliku .env na serwerze (systemd EnvironmentFile)
 BRAVE_KEY = os.environ.get("BRAVE_API_KEY")
-BRAVE_DAILY_LIMIT = int(os.environ.get("BRAVE_DAILY_LIMIT", "33"))
+BRAVE_DAILY_LIMIT = 33  # Taki sam jak na froncie (DAILY_LIMIT)
 WORKER_URL = os.environ.get("WORKER_URL", "https://settings.familiada.online")
 
 def _send_telegram_via_worker(message):
