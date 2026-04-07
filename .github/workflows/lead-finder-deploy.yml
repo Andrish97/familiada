@@ -1,10 +1,11 @@
-name: Sync lead finder runner to server
+name: Deploy lead finder to server
 
 on:
   push:
     branches: ["main"]
     paths:
       - "lead_finder_runner.py"
+      - "trigger_server.py"
       - ".github/workflows/lead-finder-deploy.yml"
   workflow_dispatch: {}
 
@@ -30,7 +31,7 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -H "${{ secrets.SERVER_HOST }}" >> ~/.ssh/known_hosts
 
-      - name: Sync runner to server
+      - name: Sync files to server
         run: |
           DEST="/home/${{ secrets.SERVER_USER }}/familiada"
           ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
@@ -38,7 +39,11 @@ jobs:
 
           rsync -az --checksum \
             -e "ssh -i ~/.ssh/id_ed25519" \
-            lead_finder_runner.py \
-            "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:$DEST/lead_finder_runner.py"
+            lead_finder_runner.py trigger_server.py \
+            "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:$DEST/"
 
-          echo "✅ lead_finder_runner.py synced to server"
+          # Restartuj usługę żeby użyła nowych plików
+          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
+            "sudo systemctl restart lead-finder || systemctl restart lead-finder || true"
+
+          echo "✅ Deployed & restarted lead-finder service"

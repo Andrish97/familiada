@@ -20,7 +20,7 @@ import threading
 import time
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
-RUNNER = "/opt/familiada/lead_finder_runner.py"
+RUNNER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "lead_finder_runner.py")
 PYTHON = "python3"
 STATUS_FILE = "/tmp/lead_finder_status.json"
 
