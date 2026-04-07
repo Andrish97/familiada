@@ -302,37 +302,37 @@ def get_emails_from_url(url):
 
 def is_junk_email(email):
     name = email.split('@')[0].lower()
-    # Odrzuć maile zaczynające się od cyfr (np. 12adam194@)
+    # Odrzuć maile zaczynające się od cyfr
     if re.match(r'^\d+[a-z]', name): return True
-    # Odrzuć systemowe
-    if name in ['admin', 'webmaster', 'hostmaster', 'root', 'postmaster', 'support', 'noreply', 'no-reply', 'info-pl']: return True
-    # Odrzuć same cyfry
-    if name.isdigit(): return True
+    # Odrzuć systemowe i redakcyjne
+    junk_prefixes = ['admin', 'webmaster', 'hostmaster', 'root', 'postmaster', 'support', 'noreply', 'no-reply', 'redakcja', 'biuro.gazety', 'ogloszenia']
+    if any(name.startswith(p) for p in junk_prefixes): return True
+    return False
+
+def is_trash_domain(domain):
+    """Odrzuca gazety, urzędy, szkoły i wielkie portale."""
+    if not domain: return True
+    d = domain.lower()
+    trash = ['gazeta.pl', 'wyborcza.pl', 'fakt.pl', 'se.pl', 'onetr', 'wp.pl', 'interia.pl', 'gov.pl', 'edu.pl', 'szkola', 'uczelnia', 'facebook.com', 'youtube.com']
+    # Szukaj słów kluczowych "śmieci" w domenie (np. nowinyzabrzanskie.pl -> nowiny)
+    trash_keywords = ['nowiny', 'dziennik', 'prasa', 'gazeta', 'radio', 'telewizja', 'portal', 'urząd', 'miasto']
+    if any(k in d for k in trash_keywords): return True
     return False
 
 def is_content_relevant(title, text):
-    """Sprawdza czy strona faktycznie oferuje usługi eventowe."""
+    """Sprawdza czy strona należy do firmy z branży eventowej."""
     if not text: return False
-    title_lower = title.lower()
-    text_sample = text.lower()[:2000]
+    text_sample = (title + " " + text).lower()[:3000]
     
-    # Słowa kluczowe branży
-    keywords = ['dj', 'wodzirej', 'animator', 'zespół muzyczny', 'konferansjer', 'event', 'fotobudka', 'atrakcje', 'muzyka na wesele', 'organizacja imprez']
+    # Musi mieć przynajmniej jedno słowo kluczowe branży
+    keywords = ['dj', 'wodzirej', 'animator', 'zespół muzyczny', 'kapela', 'konferansjer', 'event', 'fotobudka', 'foto buska', 'atrakcje', 'muzyka na wesele', 'organizacja imprez', 'oprawa muzyczna', 'show', 'pokaz']
+    has_keyword = any(kw in text_sample for kw in keywords)
     
-    # Słowa dyskwalifikujące
-    junk = ['catering na zamówienie', 'przepis', 'poradnik', 'aktualności', 'polityka prywatności', 'regulamin', 'archiwum', 'sklep internetowy', 'oferta pracy']
+    # Nie może mieć słów typowych dla gazet/sklepów
+    trash_terms = ['cennik paliw', 'wyniki wyborów', 'wypadki', 'kryminalne', 'polityka lokalna', 'sklep internetowy', 'dostawa', 'zamów online']
+    has_trash = any(t in text_sample for t in trash_terms)
 
-    # Jeśli tytuł wygląda na artykuł – odrzuć
-    if any(junk_word in title_lower for junk_word in ['jak ', 'dlaczego ', 'poradnik', 'ranking', 'archiwum', 'co to jest']):
-        return False
-
-    # Sprawdź czy jest słowo kluczowe branży
-    has_keyword = any(kw in text_sample or kw in title_lower for kw in keywords)
-    
-    # Sprawdź czy nie ma słowa dyskwalifikującego w tytule (np. sklep z cateringiem)
-    has_junk = any(j in title_lower for j in ['catering', 'sklep', 'restauracja', 'przepisy'])
-
-    return has_keyword and not has_junk
+    return has_keyword and not has_trash
 
 def scrape_dir(key, url):
     st, html = fetch_page(url, 10)
