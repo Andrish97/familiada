@@ -67,7 +67,6 @@ tr.used{opacity:.35}tr.used:hover{opacity:.7}
     <button class="btn btn-blue" onclick="loadStats()">🔄 Odśwież</button>
   </div>
   <p class="small" style="color:var(--mut);margin-top:6px">Boost dodaje nowe URL-e do puli. Weryfikuj sprawdza je przez AI.</p>
-  <div class="log-box" id="logBox"></div>
 </div>
 
 <!-- SEARCH STATUS BOX -->
@@ -219,11 +218,6 @@ async function loadStats() {
       const monthlyLimit = parseInt(kv.brave_monthly_limit || 1000);
       document.getElementById("dailyInfo").textContent = `${daily}/${dailyLimit}`;
       document.getElementById("monthlyInfo").textContent = `${monthly}/${monthlyLimit}`;
-
-      if (kv.last_search_log) {
-        document.getElementById("logBox").style.display = "block";
-        document.getElementById("logBox").textContent = kv.last_search_log;
-      }
 
       // Obsługa statusów przycisków
       const btnVerify = document.getElementById("btnVerify");
