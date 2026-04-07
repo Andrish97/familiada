@@ -5,7 +5,7 @@ on:
     branches: ["main"]
     paths:
       - "lead_finder_runner.py"
-      - "trigger_server.py"
+      - "lead_finder_daemon.py"
       - ".github/workflows/lead-finder-deploy.yml"
   workflow_dispatch: {}
 
