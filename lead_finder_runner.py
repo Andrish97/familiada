@@ -26,10 +26,40 @@ from curl_cffi import requests as curl_requests
 # ─── Config ───
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://api.familiada.online")
 SUPABASE_ANON = os.environ["SUPABASE_ANON_KEY"]
-BRAVE_KEY = os.environ.get("BRAVE_API_KEY", "")
-TG_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
-TG_CHAT = os.environ.get("TELEGRAM_CHAT_ID", "")
-BRAVE_DAILY_LIMIT = int(os.environ.get("BRAVE_DAILY_LIMIT", "33"))
+WORKER_URL = os.environ.get("WORKER_URL", "https://settings.familiada.online")
+
+# Zmienne globalne (nadpisane przez DB przy starcie)
+BRAVE_KEY = ""
+BRAVE_DAILY_LIMIT = 33
+
+def _load_db_config():
+    """Pobiera klucze z bazy Supabase."""
+    if not SUPABASE_ANON: return
+    try:
+        resp = httpx.get(f"{SUPABASE_URL}/rest/v1/lead_finder_config?select=key,value",
+                         headers={"apikey": SUPABASE_ANON, "Authorization": f"Bearer {SUPABASE_ANON}"})
+        if resp.status_code == 200:
+            config = {r["key"]: r["value"] for r in resp.json()}
+            global BRAVE_KEY, BRAVE_DAILY_LIMIT
+            if config.get("brave_api_key"): BRAVE_KEY = config["brave_api_key"]
+            if config.get("brave_daily_limit"): BRAVE_DAILY_LIMIT = int(config["brave_daily_limit"])
+            print("✅ Config loaded from Supabase DB")
+    except Exception as e:
+        print(f"⚠️ Failed to load config from DB: {e}")
+
+def _send_telegram_via_worker(message):
+    """Wysyła powiadomienie Telegram przez Cloudflare Worker."""
+    try:
+        resp = httpx.post(f"{WORKER_URL}/_admin_api/lead-finder/notify",
+                          json={"message": message}, timeout=10)
+        if resp.status_code == 200:
+            print("📱 Telegram notification sent via Worker")
+        else:
+            print(f"⚠️ Telegram failed: {resp.status_code}")
+    except Exception as e:
+        print(f"⚠️ Telegram error: {e}")
+
+_load_db_config()
 
 # ~350 miast – rotacja po 20/run
 ALL_CITIES = """Warszawa,Krakow,Wroclaw,Poznan,Gdansk,Lodz,Katowice,Szczecin,Bydgoszcz,Lublin,
@@ -200,11 +230,7 @@ def scrape_dir(key, url):
     return results
 
 def send_tg(text):
-    if not TG_TOKEN or not TG_CHAT: return
-    try:
-        httpx.post(f"https://api.telegram.org/bot{TG_TOKEN}/sendMessage",
-                   json={"chat_id": TG_CHAT, "text": f"🎯 Lead Finder\n{text}", "parse_mode": "HTML"}, timeout=10)
-    except: pass
+    _send_telegram_via_worker(f"🎯 Lead Finder\n{text}")
 
 # ─── Analyze URLs → extract emails → return new leads ───
 def analyze_urls(urls, existing_emails):

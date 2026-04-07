@@ -815,6 +815,32 @@ async function handleAdminMarketplaceApi(request, env, url) {
     }
   }
 
+  // POST /_admin_api/lead-finder/notify – wysyła powiadomienie Telegram (używając secretów Workera)
+  if (url.pathname === "/_admin_api/lead-finder/notify") {
+    try {
+      const body = await readJson(request);
+      const message = body.message || "Lead Finder: search completed";
+      
+      const resp = await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: env.TELEGRAM_CHAT_ID,
+          text: `🎯 Lead Finder\n${message}`,
+          parse_mode: "HTML",
+        }),
+      });
+      
+      const data = await resp.json().catch(() => ({}));
+      if (!resp.ok || !data.ok) {
+        return json({ ok: false, error: "telegram_failed", details: data }, 500);
+      }
+      return json({ ok: true });
+    } catch (e) {
+      return json({ ok: false, error: "telegram_error", details: e.message }, 500);
+    }
+  }
+
   // GET /_admin_api/lead-finder/stats
   if (url.pathname === "/_admin_api/lead-finder/stats") {
     try {
