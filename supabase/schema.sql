@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict Qdufmroc4nlUmKmcKX2ZrehKwPKOpaHgNDxT1AfxygnI2J38JuA3f0XMBtwJUFJ
+\restrict BufhRnFDn1xC9XDUdTsghpywYSO3vuJp1CgNByXmJcHrUOidusdaDV9X7grYid9
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -10222,6 +10222,24 @@ CREATE TABLE "public"."lead_search_runs" (
 
 
 --
+-- Name: lead_search_urls; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."lead_search_urls" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "url" "text" NOT NULL,
+    "city" "text",
+    "source" "text" DEFAULT 'brave'::"text",
+    "status" "text" DEFAULT 'pending'::"text",
+    "ai_valid" boolean,
+    "ai_reason" "text",
+    "found_emails" "jsonb" DEFAULT '[]'::"jsonb",
+    "checked_at" timestamp with time zone,
+    "created_at" timestamp with time zone DEFAULT "now"()
+);
+
+
+--
 -- Name: mail_function_logs; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -10937,6 +10955,22 @@ ALTER TABLE ONLY "public"."lead_search_runs"
 
 
 --
+-- Name: lead_search_urls lead_search_urls_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."lead_search_urls"
+    ADD CONSTRAINT "lead_search_urls_pkey" PRIMARY KEY ("id");
+
+
+--
+-- Name: lead_search_urls lead_search_urls_url_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."lead_search_urls"
+    ADD CONSTRAINT "lead_search_urls_url_key" UNIQUE ("url");
+
+
+--
 -- Name: mail_function_logs mail_function_logs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -11447,6 +11481,27 @@ CREATE INDEX "idx_questions_game" ON "public"."questions" USING "btree" ("game_i
 --
 
 CREATE INDEX "idx_search_runs_status" ON "public"."lead_search_runs" USING "btree" ("status");
+
+
+--
+-- Name: idx_search_urls_created; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "idx_search_urls_created" ON "public"."lead_search_urls" USING "btree" ("created_at");
+
+
+--
+-- Name: idx_search_urls_source; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "idx_search_urls_source" ON "public"."lead_search_urls" USING "btree" ("source");
+
+
+--
+-- Name: idx_search_urls_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "idx_search_urls_status" ON "public"."lead_search_urls" USING "btree" ("status");
 
 
 --
@@ -13691,5 +13746,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict Qdufmroc4nlUmKmcKX2ZrehKwPKOpaHgNDxT1AfxygnI2J38JuA3f0XMBtwJUFJ
+\unrestrict BufhRnFDn1xC9XDUdTsghpywYSO3vuJp1CgNByXmJcHrUOidusdaDV9X7grYid9
 
