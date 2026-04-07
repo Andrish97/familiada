@@ -160,10 +160,11 @@ async function startSearch() {
   try {
     const r = await fetch(`${EDGE_FN}/search`, {
       method: "POST",
+      credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ target }),
     });
-    const data = await r.json();
+    const data = await r.json().catch(() => ({ error: r.statusText || "Server error" }));
     if (!r.ok) toast("❌ " + (data.error || "Błąd"), true);
     else toast("🚀 Szukanie rozpoczęte! Wyniki pojawią się w tabeli.");
   } catch(e) { toast("❌ " + e.message, true); }
