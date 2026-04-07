@@ -6,7 +6,6 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>🎯 Lead Finder — Familiada</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script type="module" src="../js/core/supabase.js?v=v2026-04-06T16320"></script>
 <style>
 :root{--bg:#0b0f14;--panel:#121826;--ink:#e8eefc;--mut:#9bb0d0;--line:#24314a;--acc:#6ea8ff;--green:#4ade80;--yellow:#facc15;--red:#f87171}
 *{box-sizing:border-box}
@@ -43,10 +42,11 @@ tr.used{opacity:.35}tr.used:hover{opacity:.7}
 </head>
 <body>
 
+<!-- HEADER -->
 <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:10px">
   <div>
     <h2>🎯 Lead Finder</h2>
-    <p style="margin:0;font-size:11px;color:var(--mut)">Wyszukiwanie kontaktów z branży eventowej w Polsce — wszystko w chmurze</p>
+    <p style="margin:0;font-size:11px;color:var(--mut)">Wyszukiwanie kontaktów z branży eventowej w Polsce</p>
   </div>
   <div style="text-align:right;font-size:10px;color:var(--mut)">
     <div>Dziennie: <b id="dailyInfo" style="color:var(--ink)">–</b></div>
@@ -64,7 +64,7 @@ tr.used{opacity:.35}tr.used:hover{opacity:.7}
     <button class="btn btn-blue" onclick="loadStats()">🔄 Odśwież</button>
   </div>
   <p class="small" style="color:var(--mut);margin-top:6px">
-    Wyniki pojawią się automatycznie w tabeli poniżej. Powiadomienie Telegram po zakończeniu.
+    Wyniki pojawią się w tabeli. Powiadomienie Telegram po zakończeniu.
   </p>
   <div class="log-box" id="logBox"></div>
 </div>
@@ -77,7 +77,7 @@ tr.used{opacity:.35}tr.used:hover{opacity:.7}
   <div class="card stat" style="flex:1"><div class="stat-num" id="statSources" style="color:var(--acc)">0</div><div class="stat-label">Źródeł</div></div>
 </div>
 
-<!-- SEARCH STATUS -->
+<!-- SEARCH STATUS BOX -->
 <div id="searchStatusBox" class="card" style="display:none">
   <div class="row" style="justify-content:space-between">
     <div>
@@ -136,25 +136,27 @@ tr.used{opacity:.35}tr.used:hover{opacity:.7}
 </div>
 
 <script>
+// Czekamy aż cała strona (i CDN Supabase) się załaduje
+window.addEventListener('load', function() {
+  if (typeof window.supabase === 'undefined') {
+    document.body.innerHTML = '<div style="color:red;padding:20px;font-size:18px">⚠️ CDN Supabase się nie załadował.</div>';
+    return;
+  }
+  initApp();
+});
+
+function initApp() {
 const EDGE_FN = "/_admin_api/lead-finder";
 const DAILY_LIMIT = 33;
 
-// Pobieramy instancję klienta Supabase z okna (gdzie załadował go core/supabase.js)
-// Używamy innej nazwy 'db', żeby nie nadpisywać istniejącej zmiennej 'supabase'.
-const db = window.supabaseClient || window.supabase || globalThis.__sbClient;
+const SB_URL = "https://api.familiada.online";
+const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsImF1ZCI6ImF1dGhlbnRpY2F0ZWQiLCJpYXQiOjE3NzIyMTEyNTAsImV4cCI6MjA4NzU3MTI1MCwicm9sZSI6ImFub24ifQ.9Hg8RB6iC72o2ommzcYUNQWnPSzsDyUdxwQR9PGcF4U";
 
-if (!db || typeof db.from !== 'function') {
-  document.body.innerHTML = '<div style="color:var(--red);padding:20px">⚠️ Błąd: Supabase client nie został załadowany poprawnie.</div>';
-  throw new Error("Supabase client not found");
-}
-
-// Poprawka na topbar - dodajemy padding, żeby treść nie wchodziła pod menu
-document.body.style.paddingTop = "80px";
-
+const db = window.supabase.createClient(SB_URL, SB_KEY);
 let currentPage = 1;
 let searchTimeout = null;
 
-// ── SEARCH TRIGGER ──
+// ── SEARCH ──
 async function startSearch() {
   const target = parseInt(document.getElementById("targetInput").value) || 50;
   const btn = document.getElementById("startBtn");
@@ -172,11 +174,10 @@ async function startSearch() {
     if (!r.ok) {
       toast("❌ " + (data.error || "Błąd"), true);
     } else {
-      toast("🚀 Search started! Wyniki pojawią się za chwilę.");
-      // Show log
+      toast("🚀 Szukanie rozpoczęte! Wyniki pojawią się w tabeli.");
       const logBox = document.getElementById("logBox");
       logBox.style.display = "block";
-      logBox.textContent = "Search started in background...\nCheck Telegram for completion notification.";
+      logBox.textContent = "Search started on server. Check Telegram for completion.";
     }
   } catch(e) {
     toast("❌ " + e.message, true);
@@ -190,7 +191,6 @@ async function startSearch() {
 // ── STATS ──
 async function loadStats() {
   try {
-    // Local stats from Supabase
     const { count: total } = await db.from("lead_finder").select("*", { count:"exact", head:true });
     document.getElementById("statTotal").textContent = total || 0;
 
@@ -198,7 +198,6 @@ async function loadStats() {
     document.getElementById("statUsed").textContent = used || 0;
     document.getElementById("statUnused").textContent = (total||0) - (used||0);
 
-    // Sources
     const { data: sources } = await db.from("lead_finder").select("source");
     if (sources) {
       const counts = {};
@@ -210,7 +209,7 @@ async function loadStats() {
         Object.entries(counts).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<option value="${k}" ${k===cur?'selected':''}>${k} (${v})</option>`).join('');
     }
 
-    // Status from trigger server
+    // Remote stats
     try {
       const r = await fetch(`${EDGE_FN}/stats`);
       const stats = await r.json();
@@ -225,20 +224,19 @@ async function loadStats() {
       }
 
       // Search status
-      const searchStatus = stats.search || {};
+      const ss = stats.search || {};
       const box = document.getElementById("searchStatusBox");
-      if (searchStatus.running) {
+      if (ss.running) {
         box.style.display = "block";
         document.getElementById("searchStatusIcon").textContent = "🔄";
-        const started = searchStatus.started_at ? new Date(searchStatus.started_at).toLocaleTimeString('pl-PL') : '';
-        document.getElementById("searchStatusText").textContent = `Szukanie... (cel: ${searchStatus.target || '?'})`;
-        document.getElementById("searchProgress").textContent = `Znalezione: ${searchStatus.found || 0} | API: ${searchStatus.api_calls || 0}`;
-      } else if (searchStatus.done) {
+        document.getElementById("searchStatusText").textContent = `Szukanie... (cel: ${ss.target || '?'})`;
+        document.getElementById("searchProgress").textContent = `Znalezione: ${ss.found || 0} | API: ${ss.api_calls || 0}`;
+      } else if (ss.done) {
         box.style.display = "block";
         document.getElementById("searchStatusIcon").textContent = "✅";
-        const finished = searchStatus.finished_at ? new Date(searchStatus.finished_at).toLocaleTimeString('pl-PL') : '';
+        const finished = ss.finished_at ? new Date(ss.finished_at).toLocaleTimeString('pl-PL') : '';
         document.getElementById("searchStatusText").textContent = `Zakończono o ${finished}`;
-        document.getElementById("searchProgress").textContent = `Wynik: ${searchStatus.found || 0} leadów | ${searchStatus.reason || ''}`;
+        document.getElementById("searchProgress").textContent = `Wynik: ${ss.found || 0} leadów | ${ss.reason || ''}`;
       } else {
         box.style.display = "none";
       }
@@ -252,7 +250,7 @@ async function loadStats() {
 async function loadLeads(page) {
   currentPage = page || 1;
   const perPage = 50;
-  let q = supabase.from("lead_finder").select("*", { count:"exact" });
+  let q = db.from("lead_finder").select("*", { count:"exact" });
 
   const used = document.getElementById("filterUsed").value;
   if (used === "true") q = q.eq("used", true);
@@ -317,7 +315,7 @@ async function bulkToggle() {
   const label = targetUsed ? "użyte ✓" : "nieużyte";
   if (!confirm(`Oznacz wszystkie widoczne jako ${label}?`)) return;
 
-  let q = supabase.from("lead_finder").update({ used: targetUsed });
+  let q = db.from("lead_finder").update({ used: targetUsed });
   if (usedFilter === "true") q = q.eq("used", true);
   else if (usedFilter === "false") q = q.eq("used", false);
   const src = document.getElementById("filterSource").value;
@@ -332,7 +330,7 @@ async function bulkToggle() {
 
 // ── EXPORT ──
 async function exportCSV() {
-  let q = supabase.from("lead_finder").select("name,city,email,url,source,active,extra_emails,used,added_at").order("added_at",{ascending:false});
+  let q = db.from("lead_finder").select("name,city,email,url,source,active,extra_emails,used,added_at").order("added_at",{ascending:false});
   const used = document.getElementById("filterUsed").value;
   if (used==="true") q = q.eq("used",true);
   else if (used==="false") q = q.eq("used",false);
@@ -369,9 +367,9 @@ function toast(msg,err){
 // ── INIT ──
 loadStats();
 loadLeads(1);
-
-// Auto-refresh co 15s
 setInterval(()=>{loadStats();loadLeads(currentPage)}, 15000);
+
+} // end initApp
 </script>
 </body>
 </html>
