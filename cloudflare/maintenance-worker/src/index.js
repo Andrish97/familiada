@@ -820,10 +820,11 @@ async function handleAdminMarketplaceApi(request, env, url) {
     try {
       const supabaseUrl = env.SUPABASE_URL || "https://api.familiada.online";
       const edgeUrl = `${supabaseUrl}/functions/v1/lead-finder?action=stats`;
-      const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsImF1ZCI6ImF1dGhlbnRpY2F0ZWQiLCJpYXQiOjE3NzIyMTEyNTAsImV4cCI6MjA4NzU3MTI1MCwicm9sZSI6ImFub24ifQ.9Hg8RB6iC72o2ommzcYUNQWnPSzsDyUdxwQR9PGcF4U";
+      // Używamy Service Role Key z Workera (ma pełne uprawnienia)
+      const serviceKey = env.SUPABASE_SERVICE_ROLE_KEY;
       
       const resp = await fetch(edgeUrl, {
-        headers: { "Authorization": `Bearer ${ANON_KEY}`, "apikey": ANON_KEY },
+        headers: { "Authorization": `Bearer ${serviceKey}`, "apikey": serviceKey },
       });
       const data = await resp.json().catch(() => ({}));
       return json(data);
