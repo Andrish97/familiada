@@ -180,19 +180,29 @@ async function loadStats() {
         Object.entries(counts).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<option value="${k}" ${k===cur?'selected':''}>${k} (${v})</option>`).join('');
     }
 
+    // Pobierz konfig bezpośrednio z bazy (zamiast wołać Workera)
     try {
-      const r = await fetch(`${EDGE_FN}/stats`);
-      if (r.ok) {
-        const stats = await r.json();
-        if (stats.daily_count !== undefined) {
-          document.getElementById("dailyInfo").textContent = `${stats.daily_count}/${stats.daily_limit}`;
-          document.getElementById("monthlyInfo").textContent = `${stats.monthly_count}/${stats.monthly_limit}`;
-        }
-        if (stats.last_log) {
+      const { data: config } = await db.from("lead_finder_config").select("*");
+      if (config) {
+        const kv = {};
+        config.forEach(r => kv[r.key] = r.value);
+
+        // Limity
+        const daily = parseInt(kv.brave_daily_count || 0);
+        const dailyLimit = parseInt(kv.brave_daily_limit || 33);
+        const monthly = parseInt(kv.brave_monthly_count || 0);
+        const monthlyLimit = parseInt(kv.brave_monthly_limit || 1000);
+        document.getElementById("dailyInfo").textContent = `${daily}/${dailyLimit}`;
+        document.getElementById("monthlyInfo").textContent = `${monthly}/${monthlyLimit}`;
+
+        // Logi
+        if (kv.last_search_log) {
           document.getElementById("logBox").style.display = "block";
-          document.getElementById("logBox").textContent = stats.last_log;
+          document.getElementById("logBox").textContent = kv.last_search_log;
         }
-        const ss = stats.search || {};
+
+        // Status szukania
+        const ss = kv.search_status ? JSON.parse(kv.search_status) : {};
         const box = document.getElementById("searchStatusBox");
         if (ss.running) {
           box.style.display = "block";
@@ -207,7 +217,7 @@ async function loadStats() {
           document.getElementById("searchProgress").textContent = `Wynik: ${ss.found||0} leadów | ${ss.reason||''}`;
         } else { box.style.display = "none"; }
       }
-    } catch {}
+    } catch (e) { console.error("Config error:", e); }
   } catch(e) { console.error("loadStats error:", e); }
 }
 
