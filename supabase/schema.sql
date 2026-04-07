@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict cY4LyczXnnmjM8rX5Sb8YCEzNv5mYqLmHEWarOMNT3jaQhszXGNOY399S0ukZnP
+\restrict ptVdnbnYMHypwo6vupuzv1CyGpL1cv47LT5QyJhLTWKLoXRxc4YerDRGooO84fB
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -12500,6 +12500,20 @@ CREATE POLICY "Users can update their own rating" ON "public"."app_ratings" FOR 
 
 
 --
+-- Name: lead_finder allow_all; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "allow_all" ON "public"."lead_finder" USING (true) WITH CHECK (true);
+
+
+--
+-- Name: lead_finder_config allow_all; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "allow_all" ON "public"."lead_finder_config" USING (true) WITH CHECK (true);
+
+
+--
 -- Name: answers; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -13571,5 +13585,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict cY4LyczXnnmjM8rX5Sb8YCEzNv5mYqLmHEWarOMNT3jaQhszXGNOY399S0ukZnP
+\unrestrict ptVdnbnYMHypwo6vupuzv1CyGpL1cv47LT5QyJhLTWKLoXRxc4YerDRGooO84fB
 
