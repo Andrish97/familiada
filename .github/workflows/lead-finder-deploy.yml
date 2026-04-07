@@ -39,7 +39,7 @@ jobs:
 
           rsync -az --checksum \
             -e "ssh -i ~/.ssh/id_ed25519" \
-            lead_finder_runner.py trigger_server.py \
+            lead_finder_runner.py lead_finder_daemon.py \
             "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:$DEST/"
 
           # Restartuj usługę żeby użyła nowych plików
