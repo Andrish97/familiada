@@ -98,21 +98,23 @@ def ask_groq(title, text, emails):
 
     email_list = ", ".join(emails)
     prompt = (
-        f"Analizuję stronę pod kątem znalezienia kontaktu do KONKRETNEGO DOSTAWCY USŁUG z branży eventowej w Polsce (DJ, Wodzirej, Animator, Zespół, Agencja).\n\n"
-        f"ZADANIE: Sprawdź czy ta strona należy do TAKIEGO WŁAŚNIE wykonawcy.\n\n"
-        f"🛑 KRYTYCZNE ZASADY ODRZUCANIA (Odpowiedz NIE jeśli):\n"
-        f"- To jest portal ogłoszeniowy, katalog firm lub lista (np. Oferteo, Fixly, Wesele z klasą).\n"
-        f"- To jest blog, poradnik, artykuł ('Jak zorganizować...', 'Top 10 DJ-ów').\n"
-        f"- To jest sklep internetowy, gazeta, urząd lub strona miasta.\n"
-        f"- To jest strona 'O nas' lub regulamin jakiegoś portalu.\n\n"
-        f"✅ AKCEPTUJ TYLKO jeśli:\n"
-        f"- To jest strona główna DJ-a, Wodzireja, Zespołu, Agencji Eventowej.\n"
-        f"- To jest wizytówka konkretnego freelancera/firmy oferującej usługi.\n\n"
+        f"Analizuję stronę w celu znalezienia kontaktu do DOSTAWCY USŁUG EVENTOWYCH (DJ, Wodzirej, Animator, Zespół).\n\n"
+        f"ZADANIE: Czy na tej stronie znajduje się użyteczny kontakt do konkretnego wykonawcy?\n\n"
+        f"✅ AKCEPTUJ (valid: true) jeśli:\n"
+        f"- To jest OGŁOSZENIE na portalu (Oferteo, Fixly, OLX, Facebook) zawierające maila wykonawcy.\n"
+        f"- To jest wizytówka firmy lub strona główna.\n"
+        f"- To jest wpis na blogu polecający konkretną firmę z kontaktem.\n\n"
+        f"🛑 ODRZUCAJ (valid: false) jeśli:\n"
+        f"- To jest strona główna portalu (bez konkretnego ogłoszenia).\n"
+        f"- To jest artykuł poradnikowy ('Jak wybrać DJ-a') bez konkretnych danych kontaktowych.\n"
+        f"- To jest sklep, urząd, gazeta lub spam.\n"
+        f"- Jedynym mailem jest kontakt ogólny do portalu (np. `kontakt@oferteo.pl` lub `redakcja@...`).\n\n"
+        f"WAŻNE: Jeśli widzisz maila typu `jan.kowalski@gmail.com` przy ogłoszeniu na Oferteo -> ZAPISZ GO.\n\n"
         f"TYTUŁ: {title}\n"
         f"TEKST: {text[:800]}\n"
         f"ZNALEZIONE MAILE: {email_list}\n\n"
         f"Odpowiedz TYLKO w formacie JSON:\n"
-        f'{{"valid": true/false, "email": "najlepszy_mail_lub_null", "reason": "krótki powód"}}'
+        f'{{"valid": true/false, "email": "najlepszy_mail_wykonawcy_lub_null", "reason": "krótki powód"}}'
     )
 
     for attempt in range(3):
