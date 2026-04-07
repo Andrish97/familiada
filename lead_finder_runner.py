@@ -136,6 +136,13 @@ def sb_update_run(run_id, **kw):
     try: sb(f"/rest/v1/lead_search_runs?id=eq.{run_id}", "PATCH", [kw], {"Content-Type": "application/json"})
     except: pass
 
+def sb_get_config(key):
+    """Pobiera pojedynczą wartość konfiguracyjną z bazy."""
+    r = sb(f"/rest/v1/lead_finder_config?select=value&key=eq.{key}")
+    if r.status_code == 200 and r.json():
+        return r.json()[0].get("value")
+    return None
+
 def sb_close_run(run_id, status="completed", reason=""):
     if not run_id: return
     try:
@@ -268,6 +275,11 @@ def ask_groq(title, text, emails, source_type="brave"):
             log(f"⚠️ Błąd Groq: {e}"); time.sleep(2)
     return None
 
+def sb_get_config(key):
+    r = sb(f"/rest/v1/lead_finder_config?select=value&key=eq.{key}")
+    if r.status_code == 200 and r.json(): return r.json()[0].get("value")
+    return None
+
 # ─── Main Search ───
 def run_search(target=50):
     log(f"🎯 Cel: {target} leadów | AI: {'ON' if GROQ_KEY else 'OFF'}")
@@ -276,51 +288,71 @@ def run_search(target=50):
     existing = sb_get_existing_emails()
     log(f"📋 Maile w bazie: {len(existing)}")
 
-    urls = [(q.format(city=c), c) for c in random.sample(MAJOR_CITIES, 15) for q in SEARCH_QUERIES]
-    random.shuffle(urls)
-    
-    session = curl_requests.Session(impersonate="chrome124")
-    api_calls, found = 0, 0
-
-    # 1. Brave Search
-    log("🔍 Faza 1: Brave Search (strony firm)...")
+    # 1. Sprawdź backlog (niewykorzystane strony z poprzednich razy)
+    backlog_str = sb_get_config("search_backlog")
     candidate_urls = []
-    for q, city in urls:
-        if len(candidate_urls) >= target * 10 or api_calls >= BRAVE_DAILY_LIMIT: break
+    
+    if backlog_str:
         try:
-            r = session.get("https://api.search.brave.com/res/v1/web/search",
-                            params={"q": q, "count": 10, "cc": "PL"},
-                            headers={"Accept": "application/json", "X-Subscription-Token": BRAVE_KEY}, timeout=8)
-            if r.status_code == 200:
-                for item in r.json().get("web", {}).get("results", []):
-                    u = item.get("url", "")
-                    if u and not any(s in u.lower() for s in SKIP_DOMAINS) and not any(p in u.lower() for p in ['oferteo.pl', 'fixly.pl']):
-                        candidate_urls.append((u, city, "brave"))
-            api_calls += 1
-        except: api_calls += 1
-        time.sleep(0.3)
-    log(f"📦 Znaleziono {len(candidate_urls)} stron firm.")
-
-    # 2. Katalogi
-    log("📂 Faza 2: Katalogi i portale ogłoszeniowe...")
-    for key, dir_url in DIR_URLS.items():
-        try:
-            st, html = fetch_page(dir_url, 10)
-            if st != 200 or not html: continue
-            soup = BeautifulSoup(html, "lxml")
-            for a in soup.find_all('a', href=True):
-                href = a['href']
-                if any(x in href for x in ['/oferta/', '/firma/', '/profil/']):
-                    full_url = urljoin(dir_url, href)
-                    if full_url not in [u[0] for u in candidate_urls]:
-                        candidate_urls.append((full_url, "Portal", "portal"))
+            candidate_urls = json.loads(backlog_str)
+            if candidate_urls:
+                log(f"📂 Wczytano {len(candidate_urls)} URL-i z backlogu. Analiza w pierwszej kolejności...")
+                sb_upsert("search_backlog", "[]") # Czyścimy od razu
         except: pass
-    log(f"🚀 Łącznie {len(candidate_urls)} stron do weryfikacji AI.")
+    
+    # 2. Jeśli brak backlogu, szukamy nowych źródeł
+    if not candidate_urls:
+        log("🔍 Brak backlogu. Szukam nowych źródeł...")
+        urls = [(q.format(city=c), c) for c in random.sample(MAJOR_CITIES, 15) for q in SEARCH_QUERIES]
+        random.shuffle(urls)
+        session = curl_requests.Session(impersonate="chrome124")
+        api_calls, found = 0, 0
 
-    # 3. Weryfikacja AI
+        # Brave Search
+        log("🔍 Faza 1: Brave Search (strony firm)...")
+        for q, city in urls:
+            if len(candidate_urls) >= target * 15 or api_calls >= BRAVE_DAILY_LIMIT: break
+            try:
+                r = session.get("https://api.search.brave.com/res/v1/web/search",
+                                params={"q": q, "count": 10, "cc": "PL"},
+                                headers={"Accept": "application/json", "X-Subscription-Token": BRAVE_KEY}, timeout=8)
+                if r.status_code == 200:
+                    for item in r.json().get("web", {}).get("results", []):
+                        u = item.get("url", "")
+                        if u and not any(s in u.lower() for s in SKIP_DOMAINS) and not any(p in u.lower() for p in ['oferteo.pl', 'fixly.pl']):
+                            candidate_urls.append((u, city, "brave"))
+                api_calls += 1
+            except: api_calls += 1
+            time.sleep(0.3)
+        log(f"📦 Znaleziono {len(candidate_urls)} stron firm.")
+
+        # Katalogi
+        log("📂 Faza 2: Katalogi i portale ogłoszeniowe...")
+        for key, dir_url in DIR_URLS.items():
+            try:
+                st, html = fetch_page(dir_url, 10)
+                if st != 200 or not html: continue
+                soup = BeautifulSoup(html, "lxml")
+                for a in soup.find_all('a', href=True):
+                    href = a['href']
+                    if any(x in href for x in ['/oferta/', '/firma/', '/profil/']):
+                        full_url = urljoin(dir_url, href)
+                        if full_url not in [u[0] for u in candidate_urls]:
+                            candidate_urls.append((full_url, "Portal", "portal"))
+            except: pass
+        log(f"🚀 Łącznie {len(candidate_urls)} stron do weryfikacji AI.")
+    
+    # 3. Weryfikacja AI (dla Backlogu i Nowych stron)
+    log(f"🤖 Rozpoczynam weryfikację AI dla {len(candidate_urls)} stron...")
+    
+    last_processed_idx = 0
+    api_calls = 0
+    found = 0
+
     for i, (url, city, source) in enumerate(candidate_urls):
         if found >= target or api_calls >= BRAVE_DAILY_LIMIT: break
         
+        # Logika zależna od typu źródła
         if source in ["portal", "oferteo", "fixly"]:
             log(f"📂 [{i+1}/{len(candidate_urls)}] Portal: {url[:50]}...")
             page = check_portal_page(url)
@@ -330,25 +362,35 @@ def run_search(target=50):
             page = check_firm_page(url)
             source_type = "brave"
         
-        if not page: log(f"   ❌ Brak maili wykonawcy."); continue
+        if not page: 
+            log(f"   ❌ Brak maili wykonawcy."); 
+            last_processed_idx = i + 1
+            continue
 
         sb_update_run(run_id, found=found, api_calls=api_calls)
         log(f"🤖 AI weryfikuje: {page['title'][:50]}...")
         ai = ask_groq(page["title"], page["text"], page["emails"], source_type=source_type)
-        
-        if not ai: log(f"   ⚠️ Błąd AI."); continue
-        if not ai.get("valid"): log(f"   ❌ AI odrzuciło: {ai.get('reason', 'nie z branży')}"); continue
+
+        if not ai: log(f"   ⚠️ Błąd AI."); last_processed_idx = i + 1; continue
+        if not ai.get("valid"): log(f"   ❌ AI odrzuciło: {ai.get('reason', 'nie z branży')}"); last_processed_idx = i + 1; continue
 
         selected = ai.get("email")
-        if not selected or selected.lower() in existing: log(f"   ⚠️ Mail '{selected}' już istnieje."); continue
+        if not selected or selected.lower() in existing: log(f"   ⚠️ Mail '{selected}' już istnieje."); last_processed_idx = i + 1; continue
         
         existing.add(selected.lower())
-        sb_insert([{"name": page["title"][:100] or urlparse(url).hostname, 
+        sb_insert([{"name": page["title"][:100] or urlparse(url).hostname,
                     "city": city, "email": selected, "url": url, "source": source}])
         found += 1
         log(f"✅ AI Zatwierdził: {selected} – {page['title'][:50]} ({ai.get('reason','')})")
-        sb_update_run(run_id, found=found, api_calls=api_calls)
-        time.sleep(2)
+        last_processed_idx = i + 1
+
+    # 4. Zapisz pozostałe URL-e do backlogu
+    remaining_urls = candidate_urls[last_processed_idx:]
+    if remaining_urls:
+        log(f"💾 Zapisano {len(remaining_urls)} URL-i do backlogu na następny raz.")
+        sb_upsert("search_backlog", json.dumps(remaining_urls))
+    else:
+        log("✅ Przetworzono wszystkie dostępne strony.")
 
     sb_close_run(run_id, reason="limit" if api_calls >= BRAVE_DAILY_LIMIT else "cel")
     log(f"🏁 Done: {found} leadów zapisanych.")
