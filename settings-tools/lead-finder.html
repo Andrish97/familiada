@@ -61,6 +61,7 @@ tr.used{opacity:.35}tr.used:hover{opacity:.7}
     <input type="number" id="targetInput" value="50" min="5" max="200" style="width:70px">
     <span class="small" style="color:var(--mut)">nowych maili</span>
     <button class="btn btn-green" id="startBtn" onclick="startSearch()">🇵🇱 Szukaj</button>
+    <button class="btn btn-blue" id="resumeBtn" onclick="resumeSearch()" hidden>▶️ Wznów</button>
     <button class="btn btn-yellow" id="collectBtn" onclick="triggerCollect()">🌙 Zbierz URL-e</button>
     <button class="btn btn-red" id="stopBtn" onclick="stopSearch()" hidden>🛑 Stop</button>
     <button class="btn btn-blue" id="resetBtn" onclick="forceReset()" hidden>🗑️ Reset</button>
@@ -232,6 +233,35 @@ async function triggerCollect() {
   loadStats();
 }
 
+async function resumeSearch() {
+  const btn = document.getElementById("resumeBtn");
+  btn.disabled = true; btn.textContent = "⏳ Wznawiam...";
+
+  // Pobierz cel z ostatniego zatrzymanego zadania
+  const { data: runs } = await db.from("lead_search_runs")
+    .select("target")
+    .in("status", ["stopped", "paused", "cancelled"])
+    .order("started_at", { ascending: false })
+    .limit(1);
+
+  const target = (runs && runs.length > 0) ? runs[0].target : 50;
+
+  // Utwórz NOWE zadanie (Daemon je podłapie, a Runner użyje zaległych URL-i z backlogu)
+  const { error } = await db.from("lead_search_runs").insert({
+      target: target,
+      found: 0, 
+      api_calls: 0,
+      status: "pending",
+      started_at: new Date().toISOString()
+  });
+
+  if (error) toast("❌ Błąd wznawiania: " + error.message, true);
+  else toast("🚀 Wznawianie wyszukiwania (używam zaległych URL-i)...");
+
+  btn.disabled = false; btn.textContent = "▶️ Wznów";
+  loadStats();
+}
+
 // ── STATS ──
 async function loadStats() {
   if (!db) return;
@@ -314,14 +344,19 @@ async function loadStats() {
           stopBtn.hidden = true; resetBtn.hidden = true;
 
           if (last && last.status === 'limit_reached') {
+              resumeBtn.hidden = true;
               startBtn.textContent = "⚠️ Limit dzienny"; startBtn.disabled = true;
               box.style.display = "block";
               statusIcon.textContent = "⚠️"; statusText.textContent = "Limit zapytań osiągnięty.";
               progressBar.style.width = "100%"; progressBar.style.background = "var(--red)";
-          } else if (last && (last.status === 'stopped' || last.status === 'cancelled')) {
+          } else if (last && (last.status === 'stopped' || last.status === 'paused' || last.status === 'cancelled')) {
+              resumeBtn.hidden = false;
+              resumeBtn.textContent = `▶️ Wznów (${last.found || 0}/${last.target})`;
+              
               startBtn.textContent = "🇵🇱 Szukaj"; startBtn.disabled = false;
               box.style.display = "none";
           } else if (last && last.status === 'completed') {
+              resumeBtn.hidden = true;
               box.style.display = "block";
               statusIcon.textContent = "✅"; statusText.textContent = "Zakończono.";
               progressText.textContent = `Wynik: ${last.found} leadów`;
@@ -333,6 +368,7 @@ async function loadStats() {
                   logBox.scrollTop = logBox.scrollHeight;
               }
           } else {
+              resumeBtn.hidden = true;
               box.style.display = "none";
           }
       }
