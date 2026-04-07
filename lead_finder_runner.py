@@ -285,18 +285,54 @@ def fetch_page(url, t=8):
 
 def get_emails_from_url(url):
     domain = urlparse(url).hostname or ""
-    if not domain: return [], False
+    if not domain: return [], False, ""
     scheme = "https" if "https" in url else "http"
     pages = [url, f"{scheme}://{domain}/kontakt", f"{scheme}://{domain}/kontakt.html", f"{scheme}://{domain}/contact"]
     emails, active = set(), False
+    full_text = ""
     for p in pages[:3]:
         st, html = fetch_page(p, 6)
         if 200 <= st < 400:
             active = True
             clean = re.sub(r'<(script|style)[^>]*>.*?</\1>', '', html, flags=re.S|re.I)
             emails.update(EMAIL_RE.findall(clean))
+            if not full_text: full_text = clean # Zapamiętaj tekst do analizy
         time.sleep(0.15)
-    return list(emails), active
+    return list(emails), active, full_text
+
+def is_junk_email(email):
+    name = email.split('@')[0].lower()
+    # Odrzuć maile zaczynające się od cyfr (np. 12adam194@)
+    if re.match(r'^\d+[a-z]', name): return True
+    # Odrzuć systemowe
+    if name in ['admin', 'webmaster', 'hostmaster', 'root', 'postmaster', 'support', 'noreply', 'no-reply', 'info-pl']: return True
+    # Odrzuć same cyfry
+    if name.isdigit(): return True
+    return False
+
+def is_content_relevant(title, text):
+    """Sprawdza czy strona faktycznie oferuje usługi eventowe."""
+    if not text: return False
+    title_lower = title.lower()
+    text_sample = text.lower()[:2000]
+    
+    # Słowa kluczowe branży
+    keywords = ['dj', 'wodzirej', 'animator', 'zespół muzyczny', 'konferansjer', 'event', 'fotobudka', 'atrakcje', 'muzyka na wesele', 'organizacja imprez']
+    
+    # Słowa dyskwalifikujące
+    junk = ['catering na zamówienie', 'przepis', 'poradnik', 'aktualności', 'polityka prywatności', 'regulamin', 'archiwum', 'sklep internetowy', 'oferta pracy']
+
+    # Jeśli tytuł wygląda na artykuł – odrzuć
+    if any(junk_word in title_lower for junk_word in ['jak ', 'dlaczego ', 'poradnik', 'ranking', 'archiwum', 'co to jest']):
+        return False
+
+    # Sprawdź czy jest słowo kluczowe branży
+    has_keyword = any(kw in text_sample or kw in title_lower for kw in keywords)
+    
+    # Sprawdź czy nie ma słowa dyskwalifikującego w tytule (np. sklep z cateringiem)
+    has_junk = any(j in title_lower for j in ['catering', 'sklep', 'restauracja', 'przepisy'])
+
+    return has_keyword and not has_junk
 
 def scrape_dir(key, url):
     st, html = fetch_page(url, 10)
@@ -390,12 +426,20 @@ def analyze_urls(urls, existing_emails):
             for f in as_completed(futs):
                 item = futs[f]
                 try:
-                    emails, active = f.result()
+                    emails, active, text = f.result()
                 except: continue
-                if not emails: continue
+                
+                # 1. Sprawdź czy treść pasuje do branży
+                if not is_content_relevant(item.get("title", ""), text): continue
+
+                # 2. Odfiltruj śmieciowe maile
+                valid_emails = [e for e in emails if not is_junk_email(e)]
+                if not valid_emails: continue
 
                 domain = urlparse(item["url"]).hostname.replace("www.", "")
-                primary = next((e for e in emails if e.split("@")[1].lower() == domain), sorted(emails)[0])
+                # Wybierz najlepszy mail (najpierw ten z domeny, potem inny)
+                primary = next((e for e in valid_emails if e.split("@")[1].lower() == domain), sorted(valid_emails)[0])
+                
                 if primary.lower() in existing_emails: continue
 
                 existing_emails.add(primary.lower())
@@ -404,7 +448,7 @@ def analyze_urls(urls, existing_emails):
                     "name": name, "city": item.get("_city",""), "email": primary,
                     "url": item["url"], "source": item["source"],
                     "active": "TAK" if active else "NIE",
-                    "extra_emails": "; ".join(e for e in emails if e != primary),
+                    "extra_emails": "; ".join(e for e in valid_emails if e != primary),
                 })
 
         if results:
