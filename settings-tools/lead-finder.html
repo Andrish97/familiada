@@ -20,7 +20,8 @@ h3{margin:0;font-size:12px;color:var(--mut);font-weight:600;text-transform:upper
 .btn-red{border-color:#7b3434}.btn-red:hover{background:#3a1a1a}
 .btn-blue{border-color:#3b5d93}.btn-blue:hover{background:#1b2a44}
 .btn-yellow{border-color:#7b6b34}.btn-yellow:hover{background:#3a3218}
-input[type=number],select{background:#0d131d;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:12px;outline:none}
+input[type=text],input[type=number],select{background:#0d131d;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:7px 12px;font-size:12px;outline:none;transition:border .15s}
+input[type=text]:focus,input[type=number]:focus,select:focus{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc)}
 input:focus,select:focus{border-color:var(--acc)}
 .stat{text-align:center;padding:8px 12px}
 .stat-num{font-size:22px;font-weight:700}
