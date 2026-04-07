@@ -22,7 +22,6 @@ h3{margin:0;font-size:12px;color:var(--mut);font-weight:600;text-transform:upper
 .btn-yellow{border-color:#7b6b34}.btn-yellow:hover{background:#3a3218}
 input[type=text],input[type=number],select{background:#0d131d;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:7px 12px;font-size:12px;outline:none;transition:border .15s}
 input[type=text]:focus,input[type=number]:focus,select:focus{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc)}
-input:focus,select:focus{border-color:var(--acc)}
 .stat{text-align:center;padding:8px 12px}
 .stat-num{font-size:22px;font-weight:700}
 .stat-label{font-size:10px;color:var(--mut);margin-top:2px}
@@ -64,9 +63,7 @@ tr.used{opacity:.35}tr.used:hover{opacity:.7}
     <button class="btn btn-green" id="startBtn" onclick="startSearch()">🇵🇱 Szukaj</button>
     <button class="btn btn-blue" onclick="loadStats()">🔄 Odśwież</button>
   </div>
-  <p class="small" style="color:var(--mut);margin-top:6px">
-    Wyniki pojawią się w tabeli. Powiadomienie Telegram po zakończeniu.
-  </p>
+  <p class="small" style="color:var(--mut);margin-top:6px">Wyniki pojawią się w tabeli. Powiadomienie Telegram po zakończeniu.</p>
   <div class="log-box" id="logBox"></div>
 </div>
 
@@ -85,9 +82,7 @@ tr.used{opacity:.35}tr.used:hover{opacity:.7}
       <span id="searchStatusIcon" style="font-size:18px"></span>
       <span id="searchStatusText" class="small" style="margin-left:6px"></span>
     </div>
-    <div class="small" style="color:var(--mut)">
-      <span id="searchProgress"></span>
-    </div>
+    <div class="small" style="color:var(--mut)"><span id="searchProgress"></span></div>
   </div>
 </div>
 
@@ -115,13 +110,7 @@ tr.used{opacity:.35}tr.used:hover{opacity:.7}
     <table>
       <thead><tr>
         <th style="width:30px;text-align:center">✓</th>
-        <th>Nazwa</th>
-        <th>Miasto</th>
-        <th>Email</th>
-        <th>Strona</th>
-        <th>Źródło</th>
-        <th>Dodano</th>
-        <th style="width:30px"></th>
+        <th>Nazwa</th><th>Miasto</th><th>Email</th><th>Strona</th><th>Źródło</th><th>Dodano</th><th style="width:30px"></th>
       </tr></thead>
       <tbody id="leadsBody"><tr><td colspan="8" style="text-align:center;color:var(--mut);padding:30px">Ładowanie...</td></tr></tbody>
     </table>
@@ -139,29 +128,23 @@ tr.used{opacity:.35}tr.used:hover{opacity:.7}
 <script>
 const EDGE_FN = "/_admin_api/lead-finder";
 const DAILY_LIMIT = 33;
+let db, currentPage = 1, searchTimeout = null;
 
-// Inicjalizacja Supabase
-const SB_URL = "https://api.familiada.online";
-const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsImF1ZCI6ImF1dGhlbnRpY2F0ZWQiLCJpYXQiOjE3NzIyMTEyNTAsImV4cCI6MjA4NzU3MTI1MCwicm9sZSI6ImFub24ifQ.9Hg8RB6iC72o2ommzcYUNQWnPSzsDyUdxwQR9PGcF4U";
-
-// Sprawdzamy czy Supabase CDN się załadował
-if (typeof window.supabase === 'undefined') {
-  document.body.innerHTML = '<div style="color:red;padding:20px">⚠️ CDN Supabase się nie załadował.</div>';
-  throw new Error("Supabase CDN missing");
+// Inicjalizacja po załadowaniu Supabase CDN
+function initDB() {
+  if (typeof window.supabase === 'undefined') {
+    document.body.innerHTML = '<div style="color:red;padding:20px">⚠️ Supabase CDN się nie załadował.</div>';
+    return false;
+  }
+  db = window.supabase.createClient("https://api.familiada.online", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsImF1ZCI6ImF1dGhlbnRpY2F0ZWQiLCJpYXQiOjE3NzIyMTEyNTAsImV4cCI6MjA4NzU3MTI1MCwicm9sZSI6ImFub24ifQ.9Hg8RB6iC72o2ommzcYUNQWnPSzsDyUdxwQR9PGcF4U");
+  return true;
 }
-
-const db = window.supabase.createClient(SB_URL, SB_KEY);
-
-let currentPage = 1;
-let searchTimeout = null;
 
 // ── SEARCH ──
 async function startSearch() {
   const target = parseInt(document.getElementById("targetInput").value) || 50;
   const btn = document.getElementById("startBtn");
-  btn.disabled = true;
-  btn.textContent = "⏳ Uruchamianie...";
-
+  btn.disabled = true; btn.textContent = "⏳ Uruchamianie...";
   try {
     const r = await fetch(`${EDGE_FN}/search`, {
       method: "POST",
@@ -170,158 +153,18 @@ async function startSearch() {
     });
     const data = await r.json();
     if (!r.ok) toast("❌ " + (data.error || "Błąd"), true);
-    else toast("🚀 Szukanie rozpoczęte!");
+    else toast("🚀 Szukanie rozpoczęte! Wyniki pojawią się w tabeli.");
   } catch(e) { toast("❌ " + e.message, true); }
-
-  btn.disabled = false;
-  btn.textContent = "🇵🇱 Szukaj";
+  btn.disabled = false; btn.textContent = "🇵🇱 Szukaj";
   loadStats();
 }
 
 // ── STATS ──
 async function loadStats() {
+  if (!db) return;
   try {
     const { count: total } = await db.from("lead_finder").select("*", { count:"exact", head:true });
     document.getElementById("statTotal").textContent = total || 0;
-    const { count: used } = await db.from("lead_finder").select("*", { count:"exact", head:true }).eq("used", true);
-    document.getElementById("statUsed").textContent = used || 0;
-    document.getElementById("statUnused").textContent = (total||0) - (used||0);
-    
-    const { data: sources } = await db.from("lead_finder").select("source");
-    if (sources) {
-      const counts = {};
-      sources.forEach(s => counts[s.source] = (counts[s.source]||0)+1);
-      document.getElementById("statSources").textContent = Object.keys(counts).length;
-    }
-  } catch(e) { console.error("loadStats error:", e); }
-}
-
-// ── LEADS ──
-async function loadLeads(page) {
-  currentPage = page || 1;
-  const perPage = 50;
-  let q = db.from("lead_finder").select("*", { count:"exact" });
-
-  const used = document.getElementById("filterUsed").value;
-  if (used === "true") q = q.eq("used", true);
-  else if (used === "false") q = q.eq("used", false);
-  const src = document.getElementById("filterSource").value;
-  if (src) q = q.eq("source", src);
-  const sq = document.getElementById("searchInput").value.trim();
-  if (sq) q = q.or(`name.ilike.%${sq}%,email.ilike.%${sq}%,city.ilike.%${sq}%`);
-
-  q = q.order("added_at", { ascending:false }).range((currentPage-1)*perPage, currentPage*perPage-1);
-  const { data, error, count } = await q;
-  if (error) return console.error(error);
-
-  const body = document.getElementById("leadsBody");
-  if (!data?.length) {
-    body.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--mut);padding:30px">Brak leadów</td></tr>';
-  } else {
-    body.innerHTML = data.map(l => {
-      const urlDisplay = l.url ? l.url.replace(/^https?:\/\//,'').split('/')[0] : '';
-      return `<tr class="${l.used?'used':''}">
-        <td style="text-align:center"><input type="checkbox" ${l.used?'checked':''} onchange="_toggleUsed('${esc(l.id)}',this.checked)" style="accent-color:var(--green)"></td>
-        <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(l.name)}">${esc(l.name)}</td>
-        <td class="city">${esc(l.city||'—')}</td>
-        <td class="email">${esc(l.email)}</td>
-        <td><a href="${esc(l.url)}" target="_blank" class="src" style="color:var(--acc);text-decoration:none">${esc(urlDisplay)}</a></td>
-        <td><span class="src">${esc(l.source)}</span></td>
-        <td style="font-size:10px;color:var(--mut)">${formatDate(l.added_at)}</td>
-        <td style="text-align:center"><button class="btn btn-red" style="padding:3px 6px;font-size:10px" onclick="_delLead('${esc(l.id)}')">✕</button></td>
-      </tr>`;
-    }).join('');
-  }
-  
-  const pbox = document.getElementById("paginationBox");
-  if (count > perPage) {
-    pbox.style.display = "flex";
-    document.getElementById("pageInfo").textContent = `Strona ${currentPage}/${Math.ceil(count/perPage)} (${count})`;
-    document.getElementById("prevBtn").disabled = currentPage <= 1;
-    document.getElementById("nextBtn").disabled = currentPage >= Math.ceil(count/perPage);
-  } else {
-    pbox.style.display = "none";
-  }
-}
-
-// ── ACTIONS ──
-async function _toggleUsed(id, val) { await db.from("lead_finder").update({ used: val }).eq("id", id); loadStats(); }
-async function _delLead(id) { if(confirm("Usunąć?")) { await db.from("lead_finder").delete().eq("id", id); loadLeads(currentPage); loadStats(); } }
-async function bulkToggle() {
-  const usedFilter = document.getElementById("filterUsed").value;
-  const targetUsed = usedFilter === "true" ? false : true;
-  if (!confirm(`Oznacz widoczne jako ${targetUsed?'użyte':'nieużyte'}?`)) return;
-  let q = db.from("lead_finder").update({ used: targetUsed });
-  if (usedFilter !== "") q = q.eq("used", usedFilter === "true");
-  await q; loadLeads(currentPage); loadStats();
-}
-
-// ── EXPORT ──
-async function exportCSV() {
-  const used = document.getElementById("filterUsed").value;
-  let q = db.from("lead_finder").select("*").order("added_at",{ascending:false});
-  if (used === "true") q = q.eq("used", true);
-  else if (used === "false") q = q.eq("used", false);
-  const { data, error } = await q;
-  if (error || !data) return toast("❌ Błąd", true);
-  let csv = "Nazwa,Miasto,Email,Strona,Źródło,Stan,Dodano\n";
-  data.forEach(r => { csv += [r.name, r.city, r.email, r.url, r.source, r.used?'Użyty':'Nowy', r.added_at].map(v => `"${v||''}"`).join(",") + "\n"; });
-  const blob = new Blob(["\ufeff"+csv], {type:"text/csv;charset=utf-8"});
-  const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
-  a.download = "familiada_leads_"+new Date().toISOString().slice(0,10)+".csv";
-  a.click(); toast("📥 CSV pobrany");
-}
-
-// ── UTILS ──
-function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML}
-function formatDate(d){if(!d)return'';try{return new Date(d).toLocaleString('pl-PL')}catch{return d}}
-function debounceSearch(){clearTimeout(searchTimeout);searchTimeout=setTimeout(()=>loadLeads(1),400)}
-function toast(msg,err){const t=document.createElement('div');t.className='toast'+(err?' err':'');t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3000)}
-
-// ── INIT ──
-loadStats();
-loadLeads(1);
-setInterval(()=>{loadStats();loadLeads(currentPage)}, 15000);
-</script>
-
-// ── SEARCH ──
-async function startSearch() {
-  const target = parseInt(document.getElementById("targetInput").value) || 50;
-  const btn = document.getElementById("startBtn");
-  btn.disabled = true;
-  btn.textContent = "⏳ Uruchamianie...";
-
-  try {
-    const r = await fetch(`${EDGE_FN}/search`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ target }),
-    });
-    const data = await r.json();
-
-    if (!r.ok) {
-      toast("❌ " + (data.error || "Błąd"), true);
-    } else {
-      toast("🚀 Szukanie rozpoczęte! Wyniki pojawią się w tabeli.");
-      const logBox = document.getElementById("logBox");
-      logBox.style.display = "block";
-      logBox.textContent = "Search started on server. Check Telegram for completion.";
-    }
-  } catch(e) {
-    toast("❌ " + e.message, true);
-  }
-
-  btn.disabled = false;
-  btn.textContent = "🇵🇱 Szukaj";
-  loadStats();
-}
-
-// ── STATS ──
-async function loadStats() {
-  try {
-    const { count: total } = await db.from("lead_finder").select("*", { count:"exact", head:true });
-    document.getElementById("statTotal").textContent = total || 0;
-
     const { count: used } = await db.from("lead_finder").select("*", { count:"exact", head:true }).eq("used", true);
     document.getElementById("statUsed").textContent = used || 0;
     document.getElementById("statUnused").textContent = (total||0) - (used||0);
@@ -337,59 +180,50 @@ async function loadStats() {
         Object.entries(counts).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<option value="${k}" ${k===cur?'selected':''}>${k} (${v})</option>`).join('');
     }
 
-    // Remote stats
     try {
       const r = await fetch(`${EDGE_FN}/stats`);
-      const stats = await r.json();
-      if (stats.daily_count !== undefined) {
-        document.getElementById("dailyInfo").textContent = `${stats.daily_count}/${stats.daily_limit}`;
-        document.getElementById("monthlyInfo").textContent = `${stats.monthly_count}/${stats.monthly_limit}`;
-      }
-      if (stats.last_log) {
-        const logBox = document.getElementById("logBox");
-        logBox.style.display = "block";
-        logBox.textContent = stats.last_log;
-      }
-
-      // Search status
-      const ss = stats.search || {};
-      const box = document.getElementById("searchStatusBox");
-      if (ss.running) {
-        box.style.display = "block";
-        document.getElementById("searchStatusIcon").textContent = "🔄";
-        document.getElementById("searchStatusText").textContent = `Szukanie... (cel: ${ss.target || '?'})`;
-        document.getElementById("searchProgress").textContent = `Znalezione: ${ss.found || 0} | API: ${ss.api_calls || 0}`;
-      } else if (ss.done) {
-        box.style.display = "block";
-        document.getElementById("searchStatusIcon").textContent = "✅";
-        const finished = ss.finished_at ? new Date(ss.finished_at).toLocaleTimeString('pl-PL') : '';
-        document.getElementById("searchStatusText").textContent = `Zakończono o ${finished}`;
-        document.getElementById("searchProgress").textContent = `Wynik: ${ss.found || 0} leadów | ${ss.reason || ''}`;
-      } else {
-        box.style.display = "none";
+      if (r.ok) {
+        const stats = await r.json();
+        if (stats.daily_count !== undefined) {
+          document.getElementById("dailyInfo").textContent = `${stats.daily_count}/${stats.daily_limit}`;
+          document.getElementById("monthlyInfo").textContent = `${stats.monthly_count}/${stats.monthly_limit}`;
+        }
+        if (stats.last_log) {
+          document.getElementById("logBox").style.display = "block";
+          document.getElementById("logBox").textContent = stats.last_log;
+        }
+        const ss = stats.search || {};
+        const box = document.getElementById("searchStatusBox");
+        if (ss.running) {
+          box.style.display = "block";
+          document.getElementById("searchStatusIcon").textContent = "🔄";
+          document.getElementById("searchStatusText").textContent = `Szukanie... (cel: ${ss.target||'?'})`;
+          document.getElementById("searchProgress").textContent = `Znalezione: ${ss.found||0} | API: ${ss.api_calls||0}`;
+        } else if (ss.done) {
+          box.style.display = "block";
+          document.getElementById("searchStatusIcon").textContent = "✅";
+          const finished = ss.finished_at ? new Date(ss.finished_at).toLocaleTimeString('pl-PL') : '';
+          document.getElementById("searchStatusText").textContent = `Zakończono o ${finished}`;
+          document.getElementById("searchProgress").textContent = `Wynik: ${ss.found||0} leadów | ${ss.reason||''}`;
+        } else { box.style.display = "none"; }
       }
     } catch {}
-  } catch(e) {
-    console.error("loadStats error:", e);
-  }
+  } catch(e) { console.error("loadStats error:", e); }
 }
 
 // ── LEADS ──
 async function loadLeads(page) {
+  if (!db) return;
   currentPage = page || 1;
   const perPage = 50;
   let q = db.from("lead_finder").select("*", { count:"exact" });
-
   const used = document.getElementById("filterUsed").value;
   if (used === "true") q = q.eq("used", true);
   else if (used === "false") q = q.eq("used", false);
-
   const src = document.getElementById("filterSource").value;
   if (src) q = q.eq("source", src);
-
   const sq = document.getElementById("searchInput").value.trim();
   if (sq) q = q.or(`name.ilike.%${sq}%,email.ilike.%${sq}%,city.ilike.%${sq}%`);
-
   q = q.order("added_at", { ascending:false }).range((currentPage-1)*perPage, currentPage*perPage-1);
   const { data, error, count } = await q;
   if (error) { console.error(error); return; }
@@ -399,16 +233,16 @@ async function loadLeads(page) {
     body.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--mut);padding:30px">Brak leadów</td></tr>';
   } else {
     body.innerHTML = data.map(l => {
-      const urlDisplay = l.url ? l.url.replace(/^https?:\/\//,'').split('/')[0] : '';
+      const u = l.url ? l.url.replace(/^https?:\/\//,'').split('/')[0] : '';
       return `<tr class="${l.used?'used':''}">
-        <td style="text-align:center"><input type="checkbox" ${l.used?'checked':''} onchange="toggleUsed('${esc(l.id)}',this.checked)" style="accent-color:var(--green)"></td>
+        <td style="text-align:center"><input type="checkbox" ${l.used?'checked':''} onchange="_toggleUsed('${esc(l.id)}',this.checked)" style="accent-color:var(--green)"></td>
         <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(l.name)}">${esc(l.name)}</td>
         <td class="city">${esc(l.city||'—')}</td>
         <td class="email">${esc(l.email)}</td>
-        <td><a href="${esc(l.url)}" target="_blank" class="src" style="color:var(--acc);text-decoration:none">${esc(urlDisplay)}</a></td>
+        <td><a href="${esc(l.url)}" target="_blank" class="src" style="color:var(--acc);text-decoration:none">${esc(u)}</a></td>
         <td><span class="src">${esc(l.source)}</span></td>
         <td style="font-size:10px;color:var(--mut)">${formatDate(l.added_at)}</td>
-        <td style="text-align:center"><button class="btn btn-red" style="padding:3px 6px;font-size:10px" onclick="delLead('${esc(l.id)}')">✕</button></td>
+        <td style="text-align:center"><button class="btn btn-red" style="padding:3px 6px;font-size:10px" onclick="_delLead('${esc(l.id)}')">✕</button></td>
       </tr>`;
     }).join('');
   }
@@ -420,84 +254,45 @@ async function loadLeads(page) {
     document.getElementById("pageInfo").textContent = `Strona ${currentPage}/${totalPages} (${count})`;
     document.getElementById("prevBtn").disabled = currentPage <= 1;
     document.getElementById("nextBtn").disabled = currentPage >= totalPages;
-  } else {
-    pbox.style.display = "none";
-  }
+  } else { pbox.style.display = "none"; }
 }
 
-async function toggleUsed(id, val) {
-  await db.from("lead_finder").update({ used: val }).eq("id", id);
-  loadStats();
-}
-
-async function delLead(id) {
-  if (!confirm("Usunąć ten lead?")) return;
-  await db.from("lead_finder").delete().eq("id", id);
-  loadLeads(currentPage);
-  loadStats();
-}
-
+// ── ACTIONS ──
+async function _toggleUsed(id, val) { await db.from("lead_finder").update({ used: val }).eq("id", id); loadStats(); }
+async function _delLead(id) { if(confirm("Usunąć?")) { await db.from("lead_finder").delete().eq("id", id); loadLeads(currentPage); loadStats(); } }
 async function bulkToggle() {
   const usedFilter = document.getElementById("filterUsed").value;
   const targetUsed = usedFilter === "true" ? false : true;
-  const label = targetUsed ? "użyte ✓" : "nieużyte";
-  if (!confirm(`Oznacz wszystkie widoczne jako ${label}?`)) return;
-
+  if (!confirm(`Oznacz widoczne jako ${targetUsed?'użyte ✓':'nieużyte'}?`)) return;
   let q = db.from("lead_finder").update({ used: targetUsed });
-  if (usedFilter === "true") q = q.eq("used", true);
-  else if (usedFilter === "false") q = q.eq("used", false);
-  const src = document.getElementById("filterSource").value;
-  if (src) q = q.eq("source", src);
-
-  const { error } = await q;
-  if (error) return toast("❌ "+error.message, true);
-  toast("✅ Zmieniono");
-  loadLeads(currentPage);
-  loadStats();
+  if (usedFilter !== "") q = q.eq("used", usedFilter === "true");
+  await q; loadLeads(currentPage); loadStats();
 }
 
 // ── EXPORT ──
 async function exportCSV() {
-  let q = db.from("lead_finder").select("name,city,email,url,source,active,extra_emails,used,added_at").order("added_at",{ascending:false});
   const used = document.getElementById("filterUsed").value;
+  let q = db.from("lead_finder").select("*").order("added_at",{ascending:false});
   if (used==="true") q = q.eq("used",true);
   else if (used==="false") q = q.eq("used",false);
-
   const { data, error } = await q;
   if (error || !data) return toast("❌ Błąd",true);
-
-  let csv = "Nazwa,Miasto,Email,Strona,Źródło,Aktywna,Dodatkowe,Użyty,Dodano\n";
-  data.forEach(r => {
-    const f = v => `"${(v||'').replace(/"/g,'""')}"`;
-    csv += [r.name,r.city,r.email,r.url,r.source,r.active,r.extra_emails,r.used?'TAK':'NIE',r.added_at].map(f).join(",")+"\n";
-  });
-
+  let csv = "Nazwa,Miasto,Email,Strona,Źródło,Stan,Dodano\n";
+  data.forEach(r => { csv += [r.name,r.city,r.email,r.url,r.source,r.used?'Użyty':'Nowy',r.added_at].map(v => `"${v||''}"`).join(",") + "\n"; });
   const blob = new Blob(["\ufeff"+csv], {type:"text/csv;charset=utf-8"});
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
   a.download = "familiada_leads_"+new Date().toISOString().slice(0,10)+".csv";
-  a.click();
-  toast("📥 CSV pobrany");
+  a.click(); toast("📥 CSV pobrany");
 }
 
 // ── UTILS ──
 function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML}
 function formatDate(d){if(!d)return'';try{return new Date(d).toLocaleString('pl-PL')}catch{return d}}
 function debounceSearch(){clearTimeout(searchTimeout);searchTimeout=setTimeout(()=>loadLeads(1),400)}
-function toast(msg,err){
-  const t=document.createElement('div');
-  t.className='toast'+(err?' err':'');
-  t.textContent=msg;
-  document.body.appendChild(t);
-  setTimeout(()=>t.remove(),3000);
-}
+function toast(msg,err){const t=document.createElement('div');t.className='toast'+(err?' err':'');t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3000)}
 
 // ── INIT ──
-loadStats();
-loadLeads(1);
-setInterval(()=>{loadStats();loadLeads(currentPage)}, 15000);
-
-} // end initApp
+if (initDB()) { loadStats(); loadLeads(1); setInterval(()=>{loadStats();loadLeads(currentPage)}, 15000); }
 </script>
 </body>
 </html>
