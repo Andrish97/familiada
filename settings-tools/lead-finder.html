@@ -61,7 +61,7 @@ tr.used{opacity:.35}tr.used:hover{opacity:.7}
     <input type="number" id="targetInput" value="50" min="5" max="200" style="width:70px">
     <span class="small" style="color:var(--mut)">nowych maili</span>
     <button class="btn btn-green" id="startBtn" onclick="startSearch()">🇵🇱 Szukaj</button>
-    <button class="btn btn-yellow" id="resumeBtn" onclick="resumeSearch()" hidden>▶️ Wznów</button>
+    <button class="btn btn-yellow" id="collectBtn" onclick="triggerCollect()">🌙 Zbierz URL-e</button>
     <button class="btn btn-red" id="stopBtn" onclick="stopSearch()" hidden>🛑 Stop</button>
     <button class="btn btn-blue" id="resetBtn" onclick="forceReset()" hidden>🗑️ Reset</button>
     <button class="btn btn-blue" onclick="loadStats()">🔄 Odśwież</button>
@@ -218,6 +218,17 @@ async function forceReset() {
   await db.from("lead_finder_config").update({ value: "" }).eq("key", "search_heartbeat");
   
   toast("🗑️ Stan zresetowany.");
+  loadStats();
+}
+
+async function triggerCollect() {
+  const btn = document.getElementById("collectBtn");
+  btn.disabled = true; btn.textContent = "⏳ Wysyłam żądanie...";
+  try {
+    await db.from("lead_finder_config").update({ value: "pending" }).eq("key", "collect_request");
+    toast("🌙 Żądanie COLLECT wysłane. Daemon zbierze URL-e w tle.");
+  } catch(e) { toast("❌ Błąd: " + e.message, true); }
+  btn.disabled = false; btn.textContent = "🌙 Zbierz URL-e";
   loadStats();
 }
 
