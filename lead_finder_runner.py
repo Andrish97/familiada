@@ -226,18 +226,18 @@ def ask_groq(title, text, emails, source_type="brave"):
     if source_type in ["portal", "oferteo", "fixly"]:
         prompt = (
             f"Analizuję ogłoszenie na portalu ogłoszeniowym.\n\n"
-            f"ZADANIE: Czy to firma/freelancer zajmująca się ROZRYWKĄ i PROWADZENIEM IMPREZ?\n\n"
-            f"✅ AKCEPTUJ TYLKO jeśli: To konkretny DJ, Wodzirej/Konferansjer, Animator dzieci, Zespół/Kapeła, Agencja Eventowa/Teambuilding, Organizator atrakcji (fotobudki, fajerwerki, dmuchańce).\n"
-            f"🛑 ODRZUCAJ BEZWZGLĘDNIE: Sale weselne, Catering/Restauracje, Dekoracje/Kwiaty, Fotografia/Wideo, Cukiernie, Wypożyczalnie sprzętu/mebli, Poradniki, Blogi.\n\n"
+            f"ZADANIE: Czy to firma/freelancer zajmująca się PROWADZENIEM IMPREZ?\n\n"
+            f"✅ AKCEPTUJ TYLKO jeśli: To konkretny DJ, Wodzirej/Konferansjer, Animator dzieci, Zespół/Kapeła, Agencja Eventowa/Teambuilding.\n"
+            f"🛑 ODRZUCAJ BEZWZGLĘDNIE: Fotobudki, Pokazy Fajerwerków, Pokazy Bańki, Dmuchańce/Zamki, Wypożyczalnie (meble, namioty), Sale weselne, Catering, Dekoracje/Kwiaty, Foto/Video, Poradniki.\n\n"
             f"TYTUŁ: {title}\nTEKST: {text[:800]}\nMAILE: {email_list}\n\n"
             f'Odpowiedz JSON: {{"valid": true/false, "email": "najlepszy_mail", "reason": "..."}}'
         )
     else:
         prompt = (
             f"Analizuję bezpośrednią stronę firmową.\n\n"
-            f"ZADANIE: Czy to firma/freelancer zajmująca się ROZRYWKĄ i PROWADZENIEM IMPREZ?\n\n"
-            f"✅ AKCEPTUJ TYLKO jeśli: To strona DJ-a, Wodzireja, Animatora dzieci, Zespołu muzycznego, Agencji Eventowej/Teambuilding, Organizatora atrakcji.\n"
-            f"🛑 ODRZUCAJ BEZWZGLĘDNIE: Sale weselne, Catering/Restauracje, Dekoratorzy/Florystki, Foto/Video, Cukiernie, Wypożyczalnie, Sklepy, Blogi.\n\n"
+            f"ZADANIE: Czy to firma/freelancer zajmująca się PROWADZENIEM IMPREZ?\n\n"
+            f"✅ AKCEPTUJ TYLKO jeśli: To strona DJ-a, Wodzireja, Animatora dzieci, Zespołu muzycznego, Agencji Eventowej/Teambuilding.\n"
+            f"🛑 ODRZUCAJ BEZWZGLĘDNIE: Fotobudki, Pokazy Fajerwerków, Pokazy Bańki, Dmuchańce/Zamki, Wypożyczalnie, Sale weselne, Catering, Dekoratorzy/Florystki, Foto/Video, Blogi.\n\n"
             f"TYTUŁ: {title}\nTEKST: {text[:800]}\nMAILE: {email_list}\n\n"
             f'Odpowiedz JSON: {{"valid": true/false, "email": "najlepszy_mail", "reason": "..."}}'
         )
