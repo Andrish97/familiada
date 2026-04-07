@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
 """
 Familiada.online – Lead Finder (Runner)
-Odpalany przez Daemona. Wykonuje: 1. Backlogi 2. Brave Search 3. Weryfikację AI 4. Zapis
+Odpalany przez Daemona.
+1. Bierie URL-e z tabeli lead_search_urls (status='pending')
+2. Dorzuca nowe z Brave Search (do tabeli)
+3. Weryfikuje AI + deduplikacja maili PRZED AI
+4. Zapisuje leadów + aktualizuje status URL-i
 """
 
 import json, os, re, sys, time, random
 from datetime import datetime
-from urllib.parse import urlparse, urljoin
+from urllib.parse import urlparse
 
 import httpx
 from bs4 import BeautifulSoup
@@ -71,6 +75,7 @@ def sb_get_config(key):
     return r.json()[0].get("value") if r and r.status_code == 200 and r.json() else None
 
 def sb_get_existing_emails():
+    """Pobiera WSZYSTKIE maile, które już mamy w bazie leadów."""
     emails = set()
     page = 0
     while True:
@@ -106,6 +111,24 @@ def sb_close_run(run_id, status="completed", reason=""):
     sb_req("PATCH", f"/rest/v1/lead_search_runs?id=eq.{run_id}", [{
         "status": status, "reason": reason, "finished_at": datetime.now().isoformat()
     }])
+
+def sb_update_url_status(url_id, status, ai_valid=None, ai_reason=None, found_emails=None):
+    """Aktualizuje status URL-a w tabeli lead_search_urls."""
+    update = {"status": status, "checked_at": datetime.now().isoformat()}
+    if ai_valid is not None: update["ai_valid"] = ai_valid
+    if ai_reason is not None: update["ai_reason"] = ai_reason
+    if found_emails is not None: update["found_emails"] = found_emails
+    sb_req("PATCH", f"/rest/v1/lead_search_urls?id=eq.{url_id}", [update])
+
+def sb_insert_urls(urls):
+    """Dodaje nowe URL-e do tabeli (ON CONFLICT ignoruje duplikaty)."""
+    if not urls: return
+    # Rest API Supabase nie obsługuje ON CONFLICT bezpośrednio, więc dodajemy po jednym
+    # lub używamy batch z obsługą błędów
+    for u in urls:
+        try:
+            sb_req("POST", "/rest/v1/lead_search_urls", [u])
+        except: pass
 
 # ─── Fetch & Extract ───
 def fetch_page(url, t=10):
@@ -183,7 +206,7 @@ def ask_groq(title, text, emails, source_type="brave"):
     if not GROQ_KEY: return None
     email_list = ", ".join(emails)
 
-    if source_type in ["portal", "oferteo", "fixly"]:
+    if source_type == "portal":
         prompt = (
             f"Analizuję ogłoszenie na portalu. Czy to oferta DOSTAWCY USŁUG EVENTOWYCH (DJ, Wodzirej, Animator, Agencja)?\n\n"
             f"✅ TAK: Jeśli to oferta konkretnego wykonawcy.\n"
@@ -234,31 +257,12 @@ def run_search(target=50):
     existing = sb_get_existing_emails()
     log(f"📋 Maile w bazie: {len(existing)}")
 
-    # 1. Backlogi
+    # 1. Pobierz URL-e z tabeli lead_search_urls (status='pending')
+    r = sb_req("GET", f"/rest/v1/lead_search_urls?select=*&status=eq.pending&order=created_at.asc&limit=500")
     candidate_urls = []
-
-    # A. Search backlog
-    backlog_str = sb_get_config("search_backlog")
-    if backlog_str:
-        try:
-            candidate_urls = json.loads(backlog_str)
-            log(f"📂 Wczytano {len(candidate_urls)} URL-i z search_backlog.")
-        except: pass
-
-    # B. Portal backlog
-    portal_backlog_str = sb_get_config("portal_backlog")
-    if portal_backlog_str:
-        try:
-            portal_links = json.loads(portal_backlog_str)
-            current_urls = {u[0] for u in candidate_urls}
-            added = 0
-            for link in portal_links:
-                if link[0] not in current_urls:
-                    candidate_urls.append(link)
-                    current_urls.add(link[0])
-                    added += 1
-            if added > 0: log(f"📂 Dodano {added} linków z portal_backlog.")
-        except: pass
+    if r and r.status_code == 200:
+        candidate_urls = [(row["url"], row.get("city") or "", row.get("source") or "brave", row["id"]) for row in r.json()]
+        log(f"📂 Wczytano {len(candidate_urls)} URL-i z lead_search_urls (pending).")
 
     # 2. Brave Search (jeśli mało kandydatów)
     brave_api_calls = 0
@@ -268,6 +272,7 @@ def run_search(target=50):
         random.shuffle(urls)
 
         session = curl_requests.Session(impersonate="chrome124")
+        new_urls_for_db = []
 
         for q, city in urls:
             if len(candidate_urls) >= target * 20 or brave_api_calls >= BRAVE_DAILY_LIMIT: break
@@ -281,22 +286,28 @@ def run_search(target=50):
                     for item in r.json().get("web", {}).get("results", []):
                         u = item.get("url", "")
                         if u and not any(s in u.lower() for s in SKIP_DOMAINS) and not any(p in u.lower() for p in ['oferteo.pl', 'fixly.pl']):
-                            candidate_urls.append((u, city, "brave"))
+                            # Dodaj do kandydatów i do bazy
+                            candidate_urls.append((u, city, "brave", None))
+                            new_urls_for_db.append({"url": u, "city": city, "source": "brave", "status": "pending"})
                             new_found += 1
                     if new_found > 0: log(f"   ✅ +{new_found} URL-i")
                 brave_api_calls += 1
             except:
                 brave_api_calls += 1
             time.sleep(0.5)
-        log(f"📦 Brave zakończył. Łącznie {len(candidate_urls)} stron do weryfikacji.")
+
+        # Zapisz nowe URL-e do tabeli
+        if new_urls_for_db:
+            sb_insert_urls(new_urls_for_db)
+            log(f"💾 Dodano {len(new_urls_for_db)} nowych URL-i do lead_search_urls.")
+
+        log(f"📦 Łącznie {len(candidate_urls)} stron do weryfikacji.")
 
     # 3. Pętla weryfikacji AI
-    log(f"🤖 Rozpoczynam weryfikację AI dla {len(candidate_urls)} stron...")
-
+    log(f"🤖 Rozpoczynam weryfikację AI...")
     found = 0
-    last_processed_idx = 0
 
-    for i, (url, city, source) in enumerate(candidate_urls):
+    for i, (url, city, source, url_id) in enumerate(candidate_urls):
         if found >= target: break
 
         # STOP
@@ -311,7 +322,7 @@ def run_search(target=50):
             except: pass
 
         # 1. Pobierz dane
-        if source in ["portal", "oferteo", "fixly"]:
+        if source == "portal":
             page = check_portal_page(url)
             source_type = "portal"
         else:
@@ -319,7 +330,7 @@ def run_search(target=50):
             source_type = "brave"
 
         if not page:
-            last_processed_idx = i + 1
+            if url_id: sb_update_url_status(url_id, "rejected", ai_reason="no_data")
             continue
 
         # 2. DEDUPLIKACJA PRZED AI (oszczędność tokenów)
@@ -327,7 +338,7 @@ def run_search(target=50):
 
         if not new_emails:
             log(f"   ⏭️ Pomijam. Brak nowych maili: {url[:50]}")
-            last_processed_idx = i + 1
+            if url_id: sb_update_url_status(url_id, "checked", found_emails=list(page["emails"]))
             continue
 
         # 3. AI
@@ -335,13 +346,14 @@ def run_search(target=50):
         ai = ask_groq(page["title"], page["text"], new_emails, source_type=source_type)
 
         if not ai or not ai.get("valid"):
-            log(f"   ❌ AI odrzuciło: {ai.get('reason', 'nie z branży') if ai else 'brak odpowiedzi'}")
-            last_processed_idx = i + 1
+            reason = ai.get("reason", "nie z branży") if ai else "brak odpowiedzi"
+            log(f"   ❌ AI odrzuciło: {reason}")
+            if url_id: sb_update_url_status(url_id, "rejected", ai_valid=False, ai_reason=reason, found_emails=new_emails)
             continue
 
         selected = ai.get("email") or new_emails[0]
         if selected.lower() in existing:
-            last_processed_idx = i + 1
+            if url_id: sb_update_url_status(url_id, "checked", found_emails=new_emails)
             continue
 
         # 4. Zapis
@@ -350,14 +362,8 @@ def run_search(target=50):
                     "city": city, "email": selected, "url": url, "source": source}])
         found += 1
         log(f"✅ Znaleziono: {selected} – {page['title'][:30]}")
+        if url_id: sb_update_url_status(url_id, "accepted", ai_valid=True, ai_reason=ai.get("reason",""), found_emails=new_emails)
         sb_update_run(run_id, found=found, api_calls=brave_api_calls)
-        last_processed_idx = i + 1
-
-    # 5. Zapisz resztę do backlogu
-    remaining_urls = candidate_urls[last_processed_idx:]
-    if remaining_urls:
-        log(f"💾 Zapisano {len(remaining_urls)} URL-i do search_backlog na następny raz.")
-        sb_upsert("search_backlog", json.dumps(remaining_urls))
 
     sb_close_run(run_id, reason="limit" if brave_api_calls >= BRAVE_DAILY_LIMIT else "cel")
     log(f"🏁 Done: {found} leadów.")

@@ -2,6 +2,7 @@
 """
 Lead Finder Daemon
 Obsługuje WSZYSTKO: wyszukiwanie leadów + skanowanie katalogów w tle.
+Używa tabeli lead_search_urls (nie JSON w config).
 """
 import os, sys, time, json, threading, httpx, subprocess
 from datetime import datetime
@@ -15,7 +16,6 @@ SUPABASE_ANON = os.environ.get("SUPABASE_ANON_KEY", "")
 RUNNER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "lead_finder_runner.py")
 PYTHON = "python3"
 
-# Katalogi do skanowania
 DIR_URLS = [
     ("oferteo_dj", "https://www.oferteo.pl/dj-na-wesele"),
     ("oferteo_animacje", "https://www.oferteo.pl/animacje-dla-dzieci"),
@@ -51,38 +51,30 @@ def fetch_page(url, t=10):
         return r.status_code, r.text
     except: return 0, ""
 
-# ─── ZADANIE 1: Skanowanie Katalogów (w tle) ───
+# ─── ZADANIE 1: Skanowanie Katalogów (zapisuje do lead_search_urls) ───
 def run_catalog_scan():
     log("📡 [TŁO] Rozpoczynam skanowanie portali...")
-    current = []
-    backlog = sb_get("portal_backlog")
-    if backlog:
-        try: current = json.loads(backlog)
-        except: pass
-    current_urls = {u[0] for u in current}
     new_links = []
 
-    for key, url in DIR_URLS:
+    for key, dir_url in DIR_URLS:
         log(f"🌐 [TŁO] Skanuję: {key}")
-        st, html = fetch_page(url, 10)
+        st, html = fetch_page(dir_url, 10)
         if st == 200 and html:
             soup = BeautifulSoup(html, "lxml")
             count = 0
             for a in soup.find_all('a', href=True):
                 if any(x in a['href'] for x in ['/oferta/', '/firma/', '/profil/']):
-                    full = urljoin(url, a['href'])
-                    if full not in current_urls:
-                        new_links.append((full, "Portal", "portal"))
-                        current_urls.add(full)
-                        count += 1
+                    full = urljoin(dir_url, a['href'])
+                    new_links.append({"url": full, "source": "portal"})
+                    count += 1
             if count > 0: log(f"   ✅ [TŁO] +{count} linków")
         time.sleep(1)
 
     if new_links:
-        final = current + new_links
-        sb_set("portal_backlog", json.dumps(final))
-        log(f"💾 [TŁO] Zapisano łącznie {len(final)} linków w backlogu.")
-    
+        # INSERT do tabeli z ON CONFLICT DO NOTHING (duplikaty są ignorowane)
+        sb_req("POST", "/rest/v1/lead_search_urls", new_links)
+        log(f"💾 [TŁO] Zapisano {len(new_links)} linków do lead_search_urls.")
+
     sb_set("scan_request", "idle")
     log("✅ [TŁO] Skanowanie zakończone.")
 
@@ -101,8 +93,6 @@ def check_and_run_search():
         sb_req("PATCH", f"/rest/v1/lead_search_runs?id=eq.{job['id']}", [{"status": "running"}])
 
         cmd = [PYTHON, RUNNER, "--target", str(job["target"])]
-        # Jeśli to wznowienie (np. po Stop), runner sam to ogarnie przez backlogi
-        
         result = subprocess.run(cmd, timeout=3600)
         status = "completed" if result.returncode == 0 else "failed"
         sb_req("PATCH", f"/rest/v1/lead_search_runs?id=eq.{job['id']}", [{"status": status}])
