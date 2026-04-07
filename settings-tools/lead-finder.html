@@ -275,7 +275,7 @@ async function loadStats() {
           box.style.display = "block"; stopBtn.hidden = false; startBtn.disabled = true; resumeBtn.hidden = true;
           document.getElementById("searchStatusIcon").textContent = "🔄";
           document.getElementById("searchStatusText").textContent = `Szukanie... (cel: ${ss.target||'?'})`;
-          document.getElementById("searchProgress").textContent = `Znalezione: ${ss.found||0} | API: ${ss.api_calls||0}/${BRAVE_DAILY_LIMIT}`;
+          document.getElementById("searchProgress").textContent = `Znalezione: ${ss.found||0} | API: ${ss.api_calls||0}/${stats.daily_limit || 33}`;
           
           const target = ss.target || 1;
           const pct = Math.min(100, Math.round(((ss.found||0) / target) * 100));
