@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict uAZlfZbjH5L71gUyFTwzSnmkuYo26oeXiwOgVPO56wfX8SCdHYL67mwAhYr1gA8
+\restrict cY4LyczXnnmjM8rX5Sb8YCEzNv5mYqLmHEWarOMNT3jaQhszXGNOY399S0ukZnP
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -9825,6 +9825,20 @@ $$;
 
 
 --
+-- Name: update_lead_finder_updated_at(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."update_lead_finder_updated_at"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$;
+
+
+--
 -- Name: user_logo_clear_active(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -10138,6 +10152,37 @@ CREATE TABLE "public"."games" (
     CONSTRAINT "games_poll_status_ok" CHECK (((("type" = ANY (ARRAY['prepared'::"public"."game_type", 'market'::"public"."game_type"])) AND ("status" = ANY (ARRAY['draft'::"public"."game_status", 'ready'::"public"."game_status"]))) OR (("type" <> ALL (ARRAY['prepared'::"public"."game_type", 'market'::"public"."game_type"])) AND ("status" = ANY (ARRAY['draft'::"public"."game_status", 'poll_open'::"public"."game_status", 'ready'::"public"."game_status"]))))),
     CONSTRAINT "games_status_check" CHECK (("status" = ANY (ARRAY['draft'::"public"."game_status", 'poll_open'::"public"."game_status", 'ready'::"public"."game_status"]))),
     CONSTRAINT "games_type_check" CHECK (("type" = ANY (ARRAY['poll_text'::"public"."game_type", 'poll_points'::"public"."game_type", 'prepared'::"public"."game_type", 'market'::"public"."game_type"])))
+);
+
+
+--
+-- Name: lead_finder; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."lead_finder" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "name" "text" DEFAULT ''::"text" NOT NULL,
+    "city" "text" DEFAULT ''::"text",
+    "email" "text" NOT NULL,
+    "url" "text" DEFAULT ''::"text",
+    "source" "text" DEFAULT ''::"text",
+    "active" "text" DEFAULT ''::"text",
+    "extra_emails" "text" DEFAULT ''::"text",
+    "used" boolean DEFAULT false NOT NULL,
+    "added_by" "uuid",
+    "added_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL
+);
+
+
+--
+-- Name: lead_finder_config; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."lead_finder_config" (
+    "key" "text" NOT NULL,
+    "value" "text" DEFAULT ''::"text" NOT NULL,
+    "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL
 );
 
 
@@ -10809,6 +10854,30 @@ ALTER TABLE ONLY "public"."games"
 
 
 --
+-- Name: lead_finder_config lead_finder_config_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."lead_finder_config"
+    ADD CONSTRAINT "lead_finder_config_pkey" PRIMARY KEY ("key");
+
+
+--
+-- Name: lead_finder lead_finder_email_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."lead_finder"
+    ADD CONSTRAINT "lead_finder_email_key" UNIQUE ("email");
+
+
+--
+-- Name: lead_finder lead_finder_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."lead_finder"
+    ADD CONSTRAINT "lead_finder_pkey" PRIMARY KEY ("id");
+
+
+--
 -- Name: mail_function_logs mail_function_logs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -11235,6 +11304,34 @@ CREATE UNIQUE INDEX "games_owner_market_uniq" ON "public"."games" USING "btree" 
 --
 
 CREATE INDEX "games_source_market_id_idx" ON "public"."games" USING "btree" ("source_market_id") WHERE ("source_market_id" IS NOT NULL);
+
+
+--
+-- Name: idx_lead_finder_added_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "idx_lead_finder_added_at" ON "public"."lead_finder" USING "btree" ("added_at" DESC);
+
+
+--
+-- Name: idx_lead_finder_email; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "idx_lead_finder_email" ON "public"."lead_finder" USING "btree" ("email");
+
+
+--
+-- Name: idx_lead_finder_source; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "idx_lead_finder_source" ON "public"."lead_finder" USING "btree" ("source");
+
+
+--
+-- Name: idx_lead_finder_used; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "idx_lead_finder_used" ON "public"."lead_finder" USING "btree" ("used");
 
 
 --
@@ -11784,6 +11881,20 @@ CREATE TRIGGER "trg_games_touch" BEFORE UPDATE ON "public"."games" FOR EACH ROW 
 
 
 --
+-- Name: lead_finder_config trg_lead_finder_config_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "trg_lead_finder_config_updated_at" BEFORE UPDATE ON "public"."lead_finder_config" FOR EACH ROW EXECUTE FUNCTION "public"."update_lead_finder_updated_at"();
+
+
+--
+-- Name: lead_finder trg_lead_finder_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "trg_lead_finder_updated_at" BEFORE UPDATE ON "public"."lead_finder" FOR EACH ROW EXECUTE FUNCTION "public"."update_lead_finder_updated_at"();
+
+
+--
 -- Name: market_game_ratings trg_market_game_rating_stats; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -11946,6 +12057,14 @@ ALTER TABLE ONLY "public"."games"
 
 ALTER TABLE ONLY "public"."games"
     ADD CONSTRAINT "games_source_market_id_fkey" FOREIGN KEY ("source_market_id") REFERENCES "public"."market_games"("id") ON DELETE SET NULL;
+
+
+--
+-- Name: lead_finder lead_finder_added_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."lead_finder"
+    ADD CONSTRAINT "lead_finder_added_by_fkey" FOREIGN KEY ("added_by") REFERENCES "auth"."users"("id");
 
 
 --
@@ -12600,6 +12719,67 @@ CREATE POLICY "games_owner_update" ON "public"."games" FOR UPDATE TO "authentica
 --
 
 CREATE POLICY "games_select_by_keys" ON "public"."games" FOR SELECT USING ((("share_key_poll" = (("current_setting"('request.jwt.claims'::"text", true))::json ->> 'share_key'::"text")) OR ("share_key_control" = (("current_setting"('request.jwt.claims'::"text", true))::json ->> 'share_key'::"text")) OR ("share_key_display" = (("current_setting"('request.jwt.claims'::"text", true))::json ->> 'share_key'::"text")) OR ("share_key_host" = (("current_setting"('request.jwt.claims'::"text", true))::json ->> 'share_key'::"text"))));
+
+
+--
+-- Name: lead_finder; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."lead_finder" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: lead_finder_config; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."lead_finder_config" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: lead_finder lead_finder_delete; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "lead_finder_delete" ON "public"."lead_finder" FOR DELETE TO "authenticated" USING (true);
+
+
+--
+-- Name: lead_finder lead_finder_insert; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "lead_finder_insert" ON "public"."lead_finder" FOR INSERT TO "authenticated" WITH CHECK (true);
+
+
+--
+-- Name: lead_finder lead_finder_select; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "lead_finder_select" ON "public"."lead_finder" FOR SELECT TO "authenticated" USING (true);
+
+
+--
+-- Name: lead_finder lead_finder_update; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "lead_finder_update" ON "public"."lead_finder" FOR UPDATE TO "authenticated" USING (true) WITH CHECK (true);
+
+
+--
+-- Name: lead_finder_config lf_config_insert; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "lf_config_insert" ON "public"."lead_finder_config" FOR INSERT TO "authenticated" WITH CHECK (true);
+
+
+--
+-- Name: lead_finder_config lf_config_select; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "lf_config_select" ON "public"."lead_finder_config" FOR SELECT TO "authenticated" USING (true);
+
+
+--
+-- Name: lead_finder_config lf_config_update; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "lf_config_update" ON "public"."lead_finder_config" FOR UPDATE TO "authenticated" USING (true) WITH CHECK (true);
 
 
 --
@@ -13391,5 +13571,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict uAZlfZbjH5L71gUyFTwzSnmkuYo26oeXiwOgVPO56wfX8SCdHYL67mwAhYr1gA8
+\unrestrict cY4LyczXnnmjM8rX5Sb8YCEzNv5mYqLmHEWarOMNT3jaQhszXGNOY399S0ukZnP
 
