@@ -98,19 +98,19 @@ def ask_groq(title, text, emails):
 
     email_list = ", ".join(emails)
     prompt = (
-        f"Analizuję stronę pod kątem kontaktu do branży eventowej w Polsce (DJ, Wodzirej, Animator dzieci, "
-        f"Agencja eventowa, Fotobudka, Zespół muzyczny, Team building).\n\n"
-        f"To może być:\n"
-        f"- Oficjalna strona firmy\n"
-        f"- Ogłoszenie na portalu (np. Oferteo, Fixly, Facebook)\n"
-        f"- Wpis na blogu (np. recenzja lub polecenie)\n"
-        f"- Wizytówka firmowa\n\n"
+        f"Analizuję stronę pod kątem znalezienia kontaktu do KONKRETNEGO DOSTAWCY USŁUG z branży eventowej w Polsce (DJ, Wodzirej, Animator, Zespół, Agencja).\n\n"
+        f"ZADANIE: Sprawdź czy ta strona należy do TAKIEGO WŁAŚNIE wykonawcy.\n\n"
+        f"🛑 KRYTYCZNE ZASADY ODRZUCANIA (Odpowiedz NIE jeśli):\n"
+        f"- To jest portal ogłoszeniowy, katalog firm lub lista (np. Oferteo, Fixly, Wesele z klasą).\n"
+        f"- To jest blog, poradnik, artykuł ('Jak zorganizować...', 'Top 10 DJ-ów').\n"
+        f"- To jest sklep internetowy, gazeta, urząd lub strona miasta.\n"
+        f"- To jest strona 'O nas' lub regulamin jakiegoś portalu.\n\n"
+        f"✅ AKCEPTUJ TYLKO jeśli:\n"
+        f"- To jest strona główna DJ-a, Wodzireja, Zespołu, Agencji Eventowej.\n"
+        f"- To jest wizytówka konkretnego freelancera/firmy oferującej usługi.\n\n"
         f"TYTUŁ: {title}\n"
         f"TEKST: {text[:800]}\n"
         f"ZNALEZIONE MAILE: {email_list}\n\n"
-        f"ZADANIE: Czy na tej stronie znajduje się użyteczny kontakt do takiej osoby/firmy?\n"
-        f"Jeśli TAK, wskaż najlepszy adres email z listy.\n"
-        f"Jeśli to spam, gazeta, urząd lub sklep nie związany z branżą – odrzuć.\n\n"
         f"Odpowiedz TYLKO w formacie JSON:\n"
         f'{{"valid": true/false, "email": "najlepszy_mail_lub_null", "reason": "krótki powód"}}'
     )
