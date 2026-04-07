@@ -173,27 +173,34 @@ def get_sitemap_urls(base_url):
     return urls[:10]
 
 def check_firm_page(url):
-    """Sprawdza stronę firmową: główna -> /kontakt -> sitemap -> podstrony."""
+    """Sprawdza stronę firmową: główna -> /kontakt -> /contact -> dopiero potem sitemap."""
     domain = urlparse(url).hostname
     if not domain: return None
     all_emails, title, text = set(), "", ""
     
+    # 1. Strona główna
     st, html = fetch_page(url, 6)
     if 200 <= st < 400:
         em, ti, tx = parse_emails_from_html(html)
-        all_emails.update(em); title, text = ti, tx
+        all_emails.update(em)
+        if not title: title, text = ti, tx
     
+    # 2. Podstrony kontaktu (jeśli brak maila na głównej)
     if not all_emails:
-        st2, html2 = fetch_page(f"https://{domain}/kontakt", 6)
-        if 200 <= st2 < 400:
-            em2, ti2, tx2 = parse_emails_from_html(html2)
-            all_emails.update(em2)
-            if not title: title, text = ti2, tx2
+        for path in ['/kontakt', '/kontakt.html', '/contact', '/contact.html']:
+            st2, html2 = fetch_page(f"https://{domain}{path}", 5)
+            if 200 <= st2 < 400:
+                em2, ti2, tx2 = parse_emails_from_html(html2)
+                all_emails.update(em2)
+                if not title: title, text = ti2, tx2
+                if all_emails: break # Znaleźliśmy maila -> koniec
 
+    # 3. Sitemap i podstrony (tylko jeśli NA CIĄGŁE brak maili)
     if not all_emails:
+        log(f"   🗺️ Brak maila na głównej i kontakcie. Szukam w Sitemap...")
         for sub_url in get_sitemap_urls(f"https://{domain}"):
             if sub_url != url:
-                st3, html3 = fetch_page(sub_url, 6)
+                st3, html3 = fetch_page(sub_url, 5)
                 if 200 <= st3 < 400:
                     em3, ti3, tx3 = parse_emails_from_html(html3)
                     all_emails.update(em3)
@@ -219,18 +226,18 @@ def ask_groq(title, text, emails, source_type="brave"):
     if source_type in ["portal", "oferteo", "fixly"]:
         prompt = (
             f"Analizuję STRONĘ OGŁOSZENIA/PROFILU na portalu ogłoszeniowym.\n\n"
-            f"ZADANIE: Czy to jest KONKRETNA OFERTA/WIZYTÓWKA wykonawcy usług eventowych?\n\n"
-            f"✅ AKCEPTUJ jeśli: Widzę opis usługi konkretnego DJ-a, Wodzireja, Animatora, Zespołu, Agencji.\n"
-            f"🛑 ODRZUCAJ jeśli: To jest strona główna portalu, lista wyników, kategoria, artykuł, regulamin.\n\n"
+            f"ZADANIE: Czy to jest oferta firmy/freelancera z BRANŻY WESELNO-EVENTOWEJ?\n\n"
+            f"✅ AKCEPTUJ jeśli: To oferta DJ-a, Wodzireja, Animatora, Zespołu, Agencji, Fotograf, Wideo, Sala Weselna, Catering, Dekoracje, Florysta, Cukiernia (torty), Pokaz Fajerwerków, Wypożyczalnia (krzesła, namioty).\n"
+            f"🛑 ODRZUCAJ jeśli: To jest strona główna portalu, lista wyników, artykuł, poradnik ('Jak wybrać...'), regulamin.\n\n"
             f"TYTUŁ: {title}\nTEKST: {text[:800]}\nMAILE: {email_list}\n\n"
             f'Odpowiedz JSON: {{"valid": true/false, "email": "najlepszy_mail", "reason": "..."}}'
         )
     else:
         prompt = (
             f"Analizuję BEZPOŚREDNIĄ STRONĘ FIRMOWĄ.\n\n"
-            f"ZADANIE: Czy to jest strona DOSTAWCY USŁUG EVENTOWYCH (DJ, Animator, Agencja)?\n\n"
-            f"✅ AKCEPTUJ jeśli: To jest strona firmy/freelancera z branży eventowej.\n"
-            f"🛑 ODRZUCAJ jeśli: To jest portal, katalog, blog, poradnik, sklep, urząd, gazeta.\n\n"
+            f"ZADANIE: Czy to jest firma/freelancer z BRANŻY WESELNO-EVENTOWEJ?\n\n"
+            f"✅ AKCEPTUJ jeśli: Strona należy do: DJ, Wodzirej, Animator, Zespół, Agencja Eventowa, Fotograf ślubny, Wideo, Sala Weselna, Catering, Dekoracje ślubne, Florystyka, Cukiernia (torty weselne), Wypożyczalnia (meble, namioty), Show (fajerwerki, bańki).\n"
+            f"🛑 ODRZUCAJ jeśli: To jest portal, katalog, blog poradnikowy ('Jak zorganizować wesele'), sklep ogólny, urząd, gazeta.\n\n"
             f"TYTUŁ: {title}\nTEKST: {text[:800]}\nMAILE: {email_list}\n\n"
             f'Odpowiedz JSON: {{"valid": true/false, "email": "najlepszy_mail", "reason": "..."}}'
         )
