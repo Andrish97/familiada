@@ -225,19 +225,19 @@ def ask_groq(title, text, emails, source_type="brave"):
     
     if source_type in ["portal", "oferteo", "fixly"]:
         prompt = (
-            f"Analizuję STRONĘ OGŁOSZENIA/PROFILU na portalu ogłoszeniowym.\n\n"
-            f"ZADANIE: Czy to jest oferta firmy/freelancera z BRANŻY WESELNO-EVENTOWEJ?\n\n"
-            f"✅ AKCEPTUJ jeśli: To oferta DJ-a, Wodzireja, Animatora, Zespołu, Agencji, Fotograf, Wideo, Sala Weselna, Catering, Dekoracje, Florysta, Cukiernia (torty), Pokaz Fajerwerków, Wypożyczalnia (krzesła, namioty).\n"
-            f"🛑 ODRZUCAJ jeśli: To jest strona główna portalu, lista wyników, artykuł, poradnik ('Jak wybrać...'), regulamin.\n\n"
+            f"Analizuję ogłoszenie na portalu ogłoszeniowym.\n\n"
+            f"ZADANIE: Czy to firma/freelancer zajmująca się ROZRYWKĄ i PROWADZENIEM IMPREZ?\n\n"
+            f"✅ AKCEPTUJ TYLKO jeśli: To konkretny DJ, Wodzirej/Konferansjer, Animator dzieci, Zespół/Kapeła, Agencja Eventowa/Teambuilding, Organizator atrakcji (fotobudki, fajerwerki, dmuchańce).\n"
+            f"🛑 ODRZUCAJ BEZWZGLĘDNIE: Sale weselne, Catering/Restauracje, Dekoracje/Kwiaty, Fotografia/Wideo, Cukiernie, Wypożyczalnie sprzętu/mebli, Poradniki, Blogi.\n\n"
             f"TYTUŁ: {title}\nTEKST: {text[:800]}\nMAILE: {email_list}\n\n"
             f'Odpowiedz JSON: {{"valid": true/false, "email": "najlepszy_mail", "reason": "..."}}'
         )
     else:
         prompt = (
-            f"Analizuję BEZPOŚREDNIĄ STRONĘ FIRMOWĄ.\n\n"
-            f"ZADANIE: Czy to jest firma/freelancer z BRANŻY WESELNO-EVENTOWEJ?\n\n"
-            f"✅ AKCEPTUJ jeśli: Strona należy do: DJ, Wodzirej, Animator, Zespół, Agencja Eventowa, Fotograf ślubny, Wideo, Sala Weselna, Catering, Dekoracje ślubne, Florystyka, Cukiernia (torty weselne), Wypożyczalnia (meble, namioty), Show (fajerwerki, bańki).\n"
-            f"🛑 ODRZUCAJ jeśli: To jest portal, katalog, blog poradnikowy ('Jak zorganizować wesele'), sklep ogólny, urząd, gazeta.\n\n"
+            f"Analizuję bezpośrednią stronę firmową.\n\n"
+            f"ZADANIE: Czy to firma/freelancer zajmująca się ROZRYWKĄ i PROWADZENIEM IMPREZ?\n\n"
+            f"✅ AKCEPTUJ TYLKO jeśli: To strona DJ-a, Wodzireja, Animatora dzieci, Zespołu muzycznego, Agencji Eventowej/Teambuilding, Organizatora atrakcji.\n"
+            f"🛑 ODRZUCAJ BEZWZGLĘDNIE: Sale weselne, Catering/Restauracje, Dekoratorzy/Florystki, Foto/Video, Cukiernie, Wypożyczalnie, Sklepy, Blogi.\n\n"
             f"TYTUŁ: {title}\nTEKST: {text[:800]}\nMAILE: {email_list}\n\n"
             f'Odpowiedz JSON: {{"valid": true/false, "email": "najlepszy_mail", "reason": "..."}}'
         )
