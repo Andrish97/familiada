@@ -29,7 +29,8 @@ def sb_get(key):
     return r.json()[0].get("value") if r and r.status_code == 200 and r.json() else None
 
 def sb_set(key, val):
-    sb_req("POST", "/rest/v1/lead_finder_config", [{"key": key, "value": str(val)}])
+    # Używamy PATCH (update), żeby uniknąć błędów duplikatów (409 Conflict) przy resetowaniu flag
+    sb_req("PATCH", f"/rest/v1/lead_finder_config?key=eq.{key}", [{"key": key, "value": str(val)}])
 
 def check_and_run():
     # 1. Sprawdź Collect (Boost)
@@ -40,6 +41,8 @@ def check_and_run():
         subprocess.run([PYTHON, RUNNER, "--collect", "--boost"], timeout=3600)
         sb_set("collect_request", "idle")
         log("✅ Collect zakończony.")
+        # Krótka pauza, żeby baza zdążyła zsynchronizować dane przed Verify
+        time.sleep(2)
 
     # 2. Sprawdź Verify (Weryfikacja)
     verify_raw = sb_get("verify_request")
