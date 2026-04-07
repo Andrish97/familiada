@@ -10,7 +10,7 @@
 <style>
 :root{--bg:#0b0f14;--panel:#121826;--ink:#e8eefc;--mut:#9bb0d0;--line:#24314a;--acc:#6ea8ff;--green:#4ade80;--yellow:#facc15;--red:#f87171}
 *{box-sizing:border-box}
-body{margin:0;padding:14px;background:var(--bg);color:var(--ink);font:13px/1.35 system-ui,sans-serif;min-height:100vh}
+body{margin:0;padding:80px 14px 14px;background:var(--bg);color:var(--ink);font:13px/1.35 system-ui,sans-serif;min-height:100vh}
 h2{margin:0 0 8px;font-size:16px}
 h3{margin:0;font-size:12px;color:var(--mut);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px}
@@ -139,18 +139,17 @@ tr.used{opacity:.35}tr.used:hover{opacity:.7}
 const EDGE_FN = "/_admin_api/lead-finder";
 const DAILY_LIMIT = 33;
 
-// Pobierz instancję klienta z załadowanego modułu core/supabase.js
-// Używamy window._sbClient żeby uniknąć konfliktu z biblioteką CDN
-const _db = window.supabaseClient || globalThis.__sbClient || window.supabase;
-if (!_db || typeof _db.from !== 'function') {
-  document.body.innerHTML = '<div style="color:var(--red);padding:20px">⚠️ Supabase client not loaded from core.</div>';
-  throw new Error("Supabase client not loaded");
-}
-const supabase = _db;
+// Pobieramy instancję klienta Supabase z okna (gdzie załadował go core/supabase.js)
+// Używamy innej nazwy 'db', żeby nie nadpisywać istniejącej zmiennej 'supabase'.
+const db = window.supabaseClient || window.supabase || globalThis.__sbClient;
 
-// Fix dla topbara - dodajemy padding żeby treść nie chowała się pod menu
-document.body.style.paddingTop = "70px";
-document.querySelector('.card').style.marginTop = "10px";
+if (!db || typeof db.from !== 'function') {
+  document.body.innerHTML = '<div style="color:var(--red);padding:20px">⚠️ Błąd: Supabase client nie został załadowany poprawnie.</div>';
+  throw new Error("Supabase client not found");
+}
+
+// Poprawka na topbar - dodajemy padding, żeby treść nie wchodziła pod menu
+document.body.style.paddingTop = "80px";
 
 let currentPage = 1;
 let searchTimeout = null;
@@ -192,15 +191,15 @@ async function startSearch() {
 async function loadStats() {
   try {
     // Local stats from Supabase
-    const { count: total } = await supabase.from("lead_finder").select("*", { count:"exact", head:true });
+    const { count: total } = await db.from("lead_finder").select("*", { count:"exact", head:true });
     document.getElementById("statTotal").textContent = total || 0;
 
-    const { count: used } = await supabase.from("lead_finder").select("*", { count:"exact", head:true }).eq("used", true);
+    const { count: used } = await db.from("lead_finder").select("*", { count:"exact", head:true }).eq("used", true);
     document.getElementById("statUsed").textContent = used || 0;
     document.getElementById("statUnused").textContent = (total||0) - (used||0);
 
     // Sources
-    const { data: sources } = await supabase.from("lead_finder").select("source");
+    const { data: sources } = await db.from("lead_finder").select("source");
     if (sources) {
       const counts = {};
       sources.forEach(s => { counts[s.source] = (counts[s.source]||0)+1; });
@@ -301,13 +300,13 @@ async function loadLeads(page) {
 }
 
 async function toggleUsed(id, val) {
-  await supabase.from("lead_finder").update({ used: val }).eq("id", id);
+  await db.from("lead_finder").update({ used: val }).eq("id", id);
   loadStats();
 }
 
 async function delLead(id) {
   if (!confirm("Usunąć ten lead?")) return;
-  await supabase.from("lead_finder").delete().eq("id", id);
+  await db.from("lead_finder").delete().eq("id", id);
   loadLeads(currentPage);
   loadStats();
 }
