@@ -280,6 +280,15 @@ def sb_get_config(key):
     if r.status_code == 200 and r.json(): return r.json()[0].get("value")
     return None
 
+# ─── Telegram Notification (przez Cloudflare Worker) ───
+def send_tg(text):
+    try:
+        # Wysyłamy powiadomienie przez Cloudflare Worker, który ma już skonfigurowane tokeny Telegrama
+        httpx.post("https://settings.familiada.online/_admin_api/lead-finder/notify",
+                   json={"message": text}, timeout=10)
+    except Exception as e:
+        log(f"⚠️ Błąd wysyłania Telegram: {e}")
+
 # ─── Main Search ───
 def run_search(target=50):
     log(f"🎯 Cel: {target} leadów | AI: {'ON' if GROQ_KEY else 'OFF'}")
@@ -405,6 +414,7 @@ def run_search(target=50):
 
     sb_close_run(run_id, reason="limit" if api_calls >= BRAVE_DAILY_LIMIT else "cel")
     log(f"🏁 Done: {found} leadów zapisanych.")
+    send_tg(f"Zakończono szukanie.\nCel: {target}\nZnaleziono: {found}\nPowód: {'limit' if api_calls >= BRAVE_DAILY_LIMIT else 'cel'}")
 
 if __name__ == "__main__":
     import argparse

@@ -2196,6 +2196,20 @@ async function handleAdminConfigApi(request, env, url) {
     return sendTelegram(tg, "✅ Familiada — test powiadomień Telegram\nPowiadomienia push działają poprawnie!");
   }
 
+  // POST /_admin_api/lead-finder/notify — powiadomienie ze skryptu Python
+  if (url.pathname === "/_admin_api/lead-finder/notify" && request.method === "POST") {
+    const tg = getTelegramConfig(env);
+    if (!tg) return json({ ok: false, error: "telegram_not_configured" }, 422);
+    
+    try {
+      const body = await readJson(request);
+      const message = body.message || "Lead Finder update";
+      return sendTelegram(tg, `🎯 Lead Finder\n${message}`);
+    } catch {
+      return json({ ok: false, error: "invalid_body" }, 400);
+    }
+  }
+
   return new Response("Not Found", { status: 404 });
 }
 
