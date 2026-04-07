@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict NhYJuZQxcoRZs9rjgQA5nMs22v7mb0SEZt4fq9zyXeATbO9TojsDsfPMX79cJe0
+\restrict s3i7CtHQfJUuvboeHdjcAg4kAlroULIUGi7dlkGlwbxdRaGeoRLxStl6PDOcttW
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -10222,24 +10222,6 @@ CREATE TABLE "public"."lead_search_runs" (
 
 
 --
--- Name: lead_search_urls; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE "public"."lead_search_urls" (
-    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
-    "url" "text" NOT NULL,
-    "city" "text",
-    "source" "text" DEFAULT 'brave'::"text",
-    "status" "text" DEFAULT 'pending'::"text",
-    "ai_valid" boolean,
-    "ai_reason" "text",
-    "found_emails" "jsonb" DEFAULT '[]'::"jsonb",
-    "checked_at" timestamp with time zone,
-    "created_at" timestamp with time zone DEFAULT "now"()
-);
-
-
---
 -- Name: mail_function_logs; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -10660,6 +10642,21 @@ CREATE TABLE "public"."schema_migrations" (
 
 
 --
+-- Name: search_query_cache; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."search_query_cache" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "query_hash" "text" NOT NULL,
+    "query_text" "text" NOT NULL,
+    "city" "text",
+    "urls" "jsonb" DEFAULT '[]'::"jsonb",
+    "status" "text" DEFAULT 'pending'::"text",
+    "created_at" timestamp with time zone DEFAULT "now"()
+);
+
+
+--
 -- Name: shared_devices; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -10955,22 +10952,6 @@ ALTER TABLE ONLY "public"."lead_search_runs"
 
 
 --
--- Name: lead_search_urls lead_search_urls_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY "public"."lead_search_urls"
-    ADD CONSTRAINT "lead_search_urls_pkey" PRIMARY KEY ("id");
-
-
---
--- Name: lead_search_urls lead_search_urls_url_key; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY "public"."lead_search_urls"
-    ADD CONSTRAINT "lead_search_urls_url_key" UNIQUE ("url");
-
-
---
 -- Name: mail_function_logs mail_function_logs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -11211,6 +11192,22 @@ ALTER TABLE ONLY "public"."schema_migrations"
 
 
 --
+-- Name: search_query_cache search_query_cache_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."search_query_cache"
+    ADD CONSTRAINT "search_query_cache_pkey" PRIMARY KEY ("id");
+
+
+--
+-- Name: search_query_cache search_query_cache_query_hash_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."search_query_cache"
+    ADD CONSTRAINT "search_query_cache_query_hash_key" UNIQUE ("query_hash");
+
+
+--
 -- Name: shared_devices shared_devices_owner_id_recipient_id_device_type_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -11400,6 +11397,20 @@ CREATE INDEX "games_source_market_id_idx" ON "public"."games" USING "btree" ("so
 
 
 --
+-- Name: idx_cache_hash; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "idx_cache_hash" ON "public"."search_query_cache" USING "btree" ("query_hash");
+
+
+--
+-- Name: idx_cache_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "idx_cache_status" ON "public"."search_query_cache" USING "btree" ("status");
+
+
+--
 -- Name: idx_lead_cache_query; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -11481,27 +11492,6 @@ CREATE INDEX "idx_questions_game" ON "public"."questions" USING "btree" ("game_i
 --
 
 CREATE INDEX "idx_search_runs_status" ON "public"."lead_search_runs" USING "btree" ("status");
-
-
---
--- Name: idx_search_urls_created; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX "idx_search_urls_created" ON "public"."lead_search_urls" USING "btree" ("created_at");
-
-
---
--- Name: idx_search_urls_source; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX "idx_search_urls_source" ON "public"."lead_search_urls" USING "btree" ("source");
-
-
---
--- Name: idx_search_urls_status; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX "idx_search_urls_status" ON "public"."lead_search_urls" USING "btree" ("status");
 
 
 --
@@ -12663,10 +12653,10 @@ CREATE POLICY "allow_all" ON "public"."lead_search_runs" USING (true) WITH CHECK
 
 
 --
--- Name: lead_search_urls anon_full_access_search_urls; Type: POLICY; Schema: public; Owner: -
+-- Name: search_query_cache anon_full_access_cache; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "anon_full_access_search_urls" ON "public"."lead_search_urls" TO "anon" USING (true) WITH CHECK (true);
+CREATE POLICY "anon_full_access_cache" ON "public"."search_query_cache" TO "anon" USING (true) WITH CHECK (true);
 
 
 --
@@ -12942,12 +12932,6 @@ ALTER TABLE "public"."lead_search_cache" ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE "public"."lead_search_runs" ENABLE ROW LEVEL SECURITY;
-
---
--- Name: lead_search_urls; Type: ROW SECURITY; Schema: public; Owner: -
---
-
-ALTER TABLE "public"."lead_search_urls" ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: lead_finder_config lf_config_insert; Type: POLICY; Schema: public; Owner: -
@@ -13649,6 +13633,12 @@ CREATE POLICY "recipient can view" ON "public"."shared_devices" FOR SELECT USING
 ALTER TABLE "public"."reports" ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: search_query_cache; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."search_query_cache" ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: shared_devices; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -13759,5 +13749,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict NhYJuZQxcoRZs9rjgQA5nMs22v7mb0SEZt4fq9zyXeATbO9TojsDsfPMX79cJe0
+\unrestrict s3i7CtHQfJUuvboeHdjcAg4kAlroULIUGi7dlkGlwbxdRaGeoRLxStl6PDOcttW
 
