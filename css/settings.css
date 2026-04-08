@@ -1087,6 +1087,19 @@ body.tools-fullscreen .tools-frame-wrap iframe{
 }
 
 @media (max-width: 900px){
+  .market-admin-panel{
+    max-width: 100% !important;
+    overflow: hidden !important;
+  }
+  .mail-card{
+    padding: 14px;
+    max-width: 100% !important;
+    overflow: hidden !important;
+  }
+  .mail-card > *{
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
   .stats-grid{
     grid-template-columns: 1fr !important;
   }
@@ -1104,9 +1117,6 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   }
   .stat-sub{
     font-size: 11px !important;
-  }
-  .mail-card{
-    padding: 14px;
   }
   .mail-controls{
     flex-wrap: wrap;
