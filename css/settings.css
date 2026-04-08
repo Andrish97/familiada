@@ -1061,13 +1061,14 @@ body.tools-fullscreen .tools-frame-wrap iframe{
     top: calc(max(12px, env(safe-area-inset-top)) + 64px) !important;
   }
   
-  /* Reports panel on mobile — remove all padding/margin, let mail-client fill full height */
-  #reportsPanel.market-admin-panel {
-    margin-top: 0 !important;
+  /* Reports panel on mobile — zero everything, let mail-client fill full viewport */
+  #reportsPanel {
+    margin: 0 !important;
+    padding: 0 !important;
+    gap: 0 !important;
+    width: calc(100% + 30px) !important;
     margin-left: -15px !important;
     margin-right: -15px !important;
-    padding: 0 !important;
-    width: calc(100% + 30px) !important;
   }
   
   /* Mail nav in topbar section-1 — hidden in mobile menu panel */
