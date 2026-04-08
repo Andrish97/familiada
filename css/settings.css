@@ -1051,7 +1051,8 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   
   /* Reports panel on mobile — fixed height within viewport */
   #reportsPanel {
-    height: calc(100dvh - var(--topbar-h, 60px) - 100px) !important;
+    height: calc(100dvh - 160px) !important;
+    max-height: calc(100dvh - 160px) !important;
     padding: 0 !important;
     margin: 0 !important;
     overflow: hidden;
@@ -1095,16 +1096,23 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   .mail-card{
     padding: 12px;
     width: auto !important;
-    max-width: 100% !important;
+    max-width: none !important;
   }
   .stats-grid{
     grid-template-columns: 1fr !important;
     overflow-x: hidden !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
   }
   /* Prevent any card/panel from overflowing the wrap on mobile */
   .mail-card-wide{
-    width: 100% !important;
+    width: auto !important;
+    max-width: none !important;
     box-sizing: border-box !important;
+  }
+  .market-admin-panel{
+    overflow: hidden !important;
+    max-width: 100% !important;
   }
 }
 
