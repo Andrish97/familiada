@@ -1116,17 +1116,10 @@ body.tools-fullscreen .tools-frame-wrap iframe{
     overflow: hidden !important;
     box-sizing: border-box !important;
   }
-  /* Safari fix: extra side padding to compensate miscalculation */
   #statsPanel > .mail-card{
     min-width: 0 !important;
-    flex: 0 0 100% !important;
-    position: relative !important;
+    max-width: calc(100vw - 30px) !important;
     padding: 14px 20px !important;
-  }
-  #statsPanel > .mail-card > *:not(.panel-head):not(.mail-controls){
-    width: 100% !important;
-    max-width: 100% !important;
-    box-sizing: border-box !important;
   }
   .mail-card > * + *{
     margin-top: 12px !important;
@@ -1142,12 +1135,12 @@ body.tools-fullscreen .tools-frame-wrap iframe{
     box-sizing: border-box !important;
     min-width: 0 !important;
     display: block !important;
-    width: 100% !important;
     margin-bottom: 8px !important;
     border: 0 !important;
     border-radius: 0 !important;
     outline: 0 !important;
     box-shadow: 0 0 0 1px rgba(255,255,255,.12) !important;
+    contain: layout !important;
   }
   .stat-box:last-child{
     margin-bottom: 0 !important;
@@ -1168,18 +1161,13 @@ body.tools-fullscreen .tools-frame-wrap iframe{
 
   /* Force everything inside stats mail-card to fit */
   #statsPanel > .mail-card > *:not(.panel-head):not(.mail-controls){
-    max-width: 100% !important;
     box-sizing: border-box !important;
   }
   #statsPanel .stats-grid{
     display: block !important;
-    min-width: 0 !important;
-    max-width: 100% !important;
   }
   #statsPanel .stats-grid > .stat-box{
     min-width: 0 !important;
-    width: 100% !important;
-    max-width: 100% !important;
   }
 
   /* Retention/activity section - force single column */
