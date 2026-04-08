@@ -5398,7 +5398,8 @@ function wireEvents() {
     els.tabStatsMobile.addEventListener("click", async () => {
       if (activeTab === "tools") closeTools();
       setActiveTab("stats");
-      await loadStats();
+      await loadAdminStats({ silent: true });
+      await loadRetentionStats();
     });
   }
 
@@ -5406,7 +5407,7 @@ function wireEvents() {
     els.tabRatingsMobile.addEventListener("click", async () => {
       if (activeTab === "tools") closeTools();
       setActiveTab("ratings");
-      await loadRatings();
+      await loadRatings({ silent: true });
     });
   }
 
