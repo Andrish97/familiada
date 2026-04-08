@@ -4030,6 +4030,9 @@ function showComposePreview(greetingSelect, farewellSelect, senderSelect) {
 let mailView = "list"; // list | folders | conv
 
 function setMailView(view) {
+  // Only show mail nav when reports tab is active
+  if (activeTab !== "reports") return;
+
   mailView = view;
   const client = document.getElementById("mailClient");
   const navTopbar = document.getElementById("mailNavTopbar");
