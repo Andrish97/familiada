@@ -564,6 +564,13 @@ body.settings-body:has(.topbar) {
   padding-top: 0 !important;
 }
 
+/* Hidden on mobile only - desktop visible, mobile hidden */
+@media (max-width: 900px){
+  .hidden-on-mobile{
+    display: none !important;
+  }
+}
+
 .topbar{
   position: sticky;
   top: 0;

@@ -71,7 +71,7 @@ const els = {
   countdownNow: document.getElementById("countdownNow"),
   toolsShell: document.getElementById("toolsShell"),
   toolsFrame: document.getElementById("toolsFrame"),
-  toolsSelect: document.getElementById("toolsSelect") || { style: { display: 'none' } },
+  toolsSelect: document.getElementById("toolsSelect"),
   btnTabMaintenance: document.getElementById("btnTabMaintenance"),
   btnTabMail: document.getElementById("btnTabMail"),
   btnTabMarketplace: document.getElementById("btnTabMarketplace"),

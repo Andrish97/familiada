@@ -21,6 +21,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/tinymce@7/tinymce.min.js"></script>
   <script src="js/core/security-warning.js?v=v2026-04-08T00550" defer></script>
+  <script type="module" src="js/core/topbar-controller.js?v=v2026-04-08T00550" defer></script>
   <script type="module" src="js/pages/settings.js?v=v2026-04-08T00550" defer></script>
   <script type="module" src="js/pages/generator.js?v=v2026-04-08T00550" defer></script>
 </head>
@@ -39,8 +40,8 @@
       <button class="btn sm tab-btn" id="btnTabReports" type="button" data-i18n="settings.tabs.reports">Zgłoszenia</button>
       <button class="btn sm tab-btn" id="btnTabMarketing" type="button" data-i18n="settings.tabs.marketing">Marketing</button>
       <button class="btn sm tab-btn" id="btnTabMarketplace" type="button" data-i18n="settings.tabs.marketplace">Gry Społeczności</button>
-      <button class="btn sm tab-btn" id="btnTabGenerator" type="button" data-i18n="settings.tabs.generator" style="display:none">Gry Producenta</button>
-      <div class="ui-select" id="toolsSelect" style="display:none">
+      <button class="btn sm tab-btn hidden-on-mobile" id="btnTabGenerator" type="button" data-i18n="settings.tabs.generator">Gry Producenta</button>
+      <div class="ui-select hidden-on-mobile" id="toolsSelect">
         <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
           <span class="ui-select-label" data-i18n="settings.tabs.tools">Narzędzia</span>
           <span class="ui-select-caret" aria-hidden="true">▾</span>
