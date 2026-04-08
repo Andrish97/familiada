@@ -1210,6 +1210,17 @@ body.tools-fullscreen .tools-frame-wrap iframe{
     min-width: 0 !important;
     overflow: hidden !important;
   }
+
+  /* Force single-column layout for all grids inside stats on mobile */
+  #statsPanel [style*="grid-template-columns"],
+  #statsPanel [style*="1fr 1fr"]{
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Ensure mail-card doesn't overflow */
+  #statsPanel > .mail-card{
+    overflow: hidden !important;
+  }
   .stat-label{
     font-size: 10px !important;
     white-space: nowrap !important;
