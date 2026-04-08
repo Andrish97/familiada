@@ -629,6 +629,13 @@ body.tools-fullscreen .tools-frame-wrap iframe{
 }
 
 @media (max-width: 900px){
+  /* Force hidden panels to be display:none on mobile */
+  .settings-panel[hidden],
+  .mail-panel[hidden],
+  .market-admin-panel[hidden]{
+    display: none !important;
+  }
+
   .settings-mobile-tabs{
     display: block;
     position: sticky;
