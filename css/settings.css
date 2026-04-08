@@ -1107,6 +1107,12 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   .stat-box{
     width: 100% !important;
     box-sizing: border-box !important;
+    padding: 12px !important;
+    overflow-wrap: break-word !important;
+    word-break: break-word !important;
+  }
+  .stat-value{
+    font-size: 28px !important;
   }
   .market-admin-panel{
     overflow-x: hidden !important;
