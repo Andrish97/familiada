@@ -1088,13 +1088,20 @@ body.tools-fullscreen .tools-frame-wrap iframe{
 
 @media (max-width: 900px){
   .market-admin-panel{
+    display: block !important;
     max-width: 100% !important;
     overflow: hidden !important;
   }
   .mail-card{
+    display: block !important;
     padding: 14px;
+    width: 100% !important;
     max-width: 100% !important;
     overflow: hidden !important;
+    box-sizing: border-box !important;
+  }
+  .mail-card > * + *{
+    margin-top: 10px;
   }
   .mail-card > *{
     max-width: 100% !important;
