@@ -1109,12 +1109,14 @@ body.tools-fullscreen .tools-frame-wrap iframe{
     width: 100% !important;
   }
   .stat-box{
-    padding: 10px 8px !important;
+    padding: 10px !important;
     box-sizing: border-box !important;
-    width: calc(100% - 16px) !important;
-    margin: 0 auto !important;
     min-width: 0 !important;
-    overflow: hidden !important;
+  }
+
+  /* Inline style stat-box padding override */
+  #statsPanel .stat-box[style*="padding"]{
+    padding: 10px !important;
   }
 
   /* Force single-column layout for all grids inside stats on mobile */
