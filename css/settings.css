@@ -1116,7 +1116,9 @@ body.tools-fullscreen .tools-frame-wrap iframe{
     padding: 8px 10px !important;
     box-sizing: border-box !important;
     min-width: 0 !important;
-    contain: layout !important;
+    width: calc(100% - 16px) !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
   }
   .stat-sub,
   .stat-label{
@@ -1135,11 +1137,10 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   }
   #statsPanel .stats-grid{
     display: block !important;
-    min-width: 0 !important;
   }
   #statsPanel .stats-grid > .stat-box{
-    width: 100% !important;
-    min-width: 0 !important;
+    width: calc(100% - 16px) !important;
+    margin: 0 auto 10px !important;
   }
 
   /* Trend chart & labels - clip on mobile */
