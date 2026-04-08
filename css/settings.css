@@ -1098,7 +1098,7 @@ body.tools-fullscreen .tools-frame-wrap iframe{
     box-sizing: border-box !important;
   }
   #statsPanel > .mail-card{
-    overflow: clip !important;
+    overflow: hidden !important;
   }
   .mail-card > * + *{
     margin-top: 12px !important;
@@ -1106,19 +1106,16 @@ body.tools-fullscreen .tools-frame-wrap iframe{
 
   .stats-grid{
     display: grid !important;
-    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-columns: 1fr !important;
     gap: 10px !important;
     margin-top: 0 !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    box-sizing: border-box !important;
+    contain: layout !important;
   }
   .stat-box{
-    padding: 10px !important;
+    padding: 8px 10px !important;
     box-sizing: border-box !important;
     min-width: 0 !important;
-    max-width: 100% !important;
-    overflow: hidden !important;
+    contain: layout !important;
   }
   .stat-sub,
   .stat-label{
