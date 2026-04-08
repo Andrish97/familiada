@@ -861,7 +861,7 @@ html.showA2HS .a2hs {
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: 55;
+    z-index: 90;
     background: rgba(0,0,0,.55);
     display: none;
     padding: 10px;
