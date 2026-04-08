@@ -1121,52 +1121,14 @@ body.tools-fullscreen .tools-frame-wrap iframe{
     padding: 14px;
     width: 100% !important;
     max-width: 100% !important;
-    min-width: 0 !important;
-    overflow: hidden !important;
     box-sizing: border-box !important;
   }
-  #statsPanel > .mail-card{
-    min-width: 0 !important;
-  }
-  .mail-card > * + *{
-    margin-top: 12px !important;
-  }
-
-  /* Safari: use block layout for stats */
   .stats-grid{
-    display: block !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
   }
   .stat-box{
-    padding: 8px 10px !important;
-    box-sizing: border-box !important;
-    margin-bottom: 8px !important;
-    border: 0 !important;
-    border-radius: 0 !important;
-    outline: none !important;
-    box-shadow: 0 0 0 1px rgba(255,255,255,.12) !important;
-  }
-  .stat-box:last-child{
-    margin-bottom: 0 !important;
-  }
-  /* Retention/activity section - force single column */
-  #statsPanel [style*="grid-template-columns"]{
-    display: block !important;
-  }
-  #statsPanel [style*="1fr 1fr"] > div{
-    margin-bottom: 10px !important;
-  }
-
-  /* Trend chart & labels - clip on mobile */
-  #trendChart, #trendLabels, #segmentBars, #retentionTable{
-    max-width: 100% !important;
-    overflow: hidden !important;
-  }
-  #trendLabels{
-    flex-wrap: nowrap !important;
-  }
-  #trendLabels > div{
-    font-size: 8px !important;
-    min-width: 0 !important;
+    padding: 12px !important;
   }
   .stat-label{
     font-size: 10px !important;

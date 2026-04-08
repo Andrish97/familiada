@@ -973,32 +973,7 @@ function closeMaintenancePreview() {
   if (overlay) overlay.style.display = "none";
 }
 
-function renderStatBoxes() {
-  const container = document.getElementById("statsGridContainer");
-  if (!container || container.dataset.rendered) return;
-  container.dataset.rendered = "true";
-
-  const boxes = [
-    { id: "users", label: "Użytkownicy", valueId: "statUsersTotal", growthId: "statUsersGrowth", extraId: "statUsersLangs" },
-    { id: "games", label: "Gry", valueId: "statGamesTotal", growthId: "statGamesGrowth", extraId: "statGamesQuality" },
-    { id: "gameplay", label: "Rozgrywki & Ankiety", valueId: "statPlayedTotal", growthId: "statPlayedPeriods", extraId: "statBuzzerActivity" },
-    { id: "bases", label: "Bazy pytań", valueId: "statBasesTotal", growthId: "statBasesGrowth", extraId: null },
-    { id: "logos", label: "Logo", valueId: "statLogosTotal", growthId: "statLogosGrowth", extraId: "statLogosSub" },
-    { id: "ratings", label: "Oceny", valueId: "statRating", growthId: "statRatingsGrowth", extraId: "statHealthMails" },
-  ];
-
-  container.innerHTML = boxes.map(b => `
-    <button class="stat-box" type="button" data-detail="${b.id}">
-      <span class="stat-label">${b.label}</span>
-      <span class="stat-value" id="${b.valueId}">0</span>
-      <span class="stat-sub" id="${b.growthId}">—</span>
-      ${b.extraId ? `<span class="stat-sub" id="${b.extraId}"></span>` : ""}
-    </button>
-  `).join("");
-}
-
 async function loadAdminStats({ silent = false } = {}) {
-  renderStatBoxes();
   if (!silent) showStatLoading();
   if (!silent) setStatus("Ładowanie statystyk…");
   try {
@@ -4939,10 +4914,8 @@ function wireStatsEvents() {
     });
   }
 
-  // Event delegation for stat-box clicks (dynamic elements)
-  document.getElementById("statsGridContainer")?.addEventListener("click", (e) => {
-    const box = e.target.closest(".stat-box[data-detail]");
-    if (box) openStatsDetailModal(box.dataset.detail);
+  document.querySelectorAll(".stat-box[data-detail]").forEach(box => {
+    box.addEventListener("click", () => openStatsDetailModal(box.dataset.detail));
   });
 
   const btnAdd = document.getElementById("btnExcludeAdd");
