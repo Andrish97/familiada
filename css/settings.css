@@ -1064,8 +1064,14 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   /* Reports panel on mobile — zero vertical gap, let mail-client fill full height */
   #reportsPanel {
     margin: 0 !important;
-    padding: 0 !important;
+    padding-top: 16px !important;
+    padding-bottom: 0 !important;
     gap: 0 !important;
+  }
+  
+  /* Other panels on mobile — padding top to avoid topbar overlap */
+  .market-admin-panel:not(#reportsPanel) {
+    padding-top: 16px !important;
   }
   
   /* Mail nav in topbar section-1 — hidden in mobile menu panel */
