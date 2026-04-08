@@ -998,18 +998,6 @@ body.tools-fullscreen .tools-frame-wrap iframe{
     overflow: visible;
   }
 
-  /* Mobile: 3-pane mail client — full height from topbar to footer */
-  .mail-client {
-    grid-template-columns: 1fr;
-    height: calc(100dvh - var(--topbar-h, 60px)); /* topbar to bottom */
-    min-height: 0;
-    position: relative;
-    overflow: hidden;
-    border-radius: 0 !important;
-    border: none !important;
-    margin: 0 !important;
-  }
-
   .mail-client > .mail-sidebar,
   .mail-client > .mail-list,
   .mail-client > .mail-conv {
