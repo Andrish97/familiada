@@ -1093,19 +1093,21 @@ body.tools-fullscreen .tools-frame-wrap iframe{
     max-width: 100% !important;
     overflow: hidden !important;
     box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
   }
   .mail-card > *{
-    min-width: 0 !important;
+    width: 100% !important;
     max-width: 100% !important;
     box-sizing: border-box !important;
-  }
-  .panel-head{
-    min-width: 0 !important;
+    flex-shrink: 0 !important;
   }
   .stats-grid{
     grid-template-columns: 1fr !important;
     overflow-x: hidden !important;
     width: 100% !important;
+    max-width: 100% !important;
     box-sizing: border-box !important;
   }
   .stat-box{
@@ -1114,11 +1116,20 @@ body.tools-fullscreen .tools-frame-wrap iframe{
     box-sizing: border-box !important;
     padding: 12px !important;
     min-width: 0 !important;
+    overflow: hidden !important;
   }
-  .stat-sub, .stat-label{
+  .stat-label{
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+  .stat-sub{
     overflow-wrap: break-word !important;
     word-break: break-word !important;
     max-width: 100% !important;
+    box-sizing: border-box !important;
   }
   .market-admin-panel{
     overflow-x: hidden !important;
@@ -1128,8 +1139,9 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   .mail-controls{
     flex-wrap: wrap !important;
     gap: 6px !important;
-    min-width: 0 !important;
+    width: 100% !important;
     max-width: 100% !important;
+    min-width: 0 !important;
   }
 }
 
