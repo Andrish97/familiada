@@ -4042,17 +4042,28 @@ function setMailView(view) {
 
   const isMobile = window.matchMedia("(max-width: 900px)").matches;
 
-  // Show/hide mail nav — only on mobile
-  if (navTopbar) navTopbar.style.display = isMobile ? "flex" : "none";
-  if (brand) brand.style.display = isMobile ? "none" : "";
+  if (!isMobile) {
+    if (navTopbar) navTopbar.style.display = "none";
+    if (brand) brand.style.display = "";
+    return;
+  }
 
-  if (!isMobile) return;
+  // On mobile: show mail nav, hide brand
+  if (navTopbar) navTopbar.style.display = "flex";
+  if (brand) brand.style.display = "none";
 
   // Show/hide back button based on view
   if (btnBack) btnBack.style.display = (view === "folders") ? "none" : "";
 
   // Show compose in folders and list views, hide in conv
   if (btnCompose) btnCompose.style.display = (view === "folders" || view === "list") ? "" : "none";
+}
+
+function hideMailNav() {
+  const navTopbar = document.getElementById("mailNavTopbar");
+  const brand = document.getElementById("settingsBrand");
+  if (navTopbar) navTopbar.style.display = "none";
+  if (brand) brand.style.display = "";
 }
 
 function mailViewBack() {
@@ -4646,6 +4657,8 @@ function setActiveTab(tab) {
   // When entering reports panel, init mail view
   if (tab === "reports") {
     setMailView("list");
+  } else {
+    hideMailNav();
   }
 
   if (tab === "generator" && window.resetGeneratorSession) {
