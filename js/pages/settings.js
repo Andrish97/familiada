@@ -4020,9 +4020,7 @@ function setMailView(view) {
   mailView = view;
   const client = document.getElementById("mailClient");
   const toolbar = document.getElementById("mailMobileToolbar");
-  const btnBackFolders = document.getElementById("btnMailBackFolders");
-  const btnBackList = document.getElementById("btnMailBackList");
-  const btnOpenFolders = document.getElementById("btnMailOpenFolders");
+  const btnBack = document.getElementById("btnMailBack");
   const title = document.getElementById("mailMobileTitle");
 
   if (!client) return;
@@ -4034,40 +4032,30 @@ function setMailView(view) {
 
   if (!isMobile) return;
 
-  // Show/hide buttons based on view
-  if (btnBackFolders) btnBackFolders.style.display = view === "folders" ? "" : "none";
-  if (btnBackList) btnBackList.style.display = view === "conv" ? "" : "none";
-  if (btnOpenFolders) btnOpenFolders.style.display = view === "folders" ? "none" : "";
+  // Show/hide back button based on view
+  if (btnBack) btnBack.style.display = (view === "folders") ? "none" : "";
 
   // Update title based on view
   if (title) {
     if (view === "folders") {
       title.textContent = "Foldery";
     } else if (view === "conv") {
-      // Try to get subject from mailConv header
       const subjectEl = document.querySelector(".mail-conv-subject");
       title.textContent = subjectEl?.textContent?.trim() || "Wiadomość";
     } else {
-      // List view - show folder name
       const activeFolder = document.querySelector(".mail-folder.active .mail-folder-name");
       title.textContent = activeFolder?.textContent?.trim() || "Skrzynka";
     }
   }
 }
 
+function mailViewBack() {
+  if (mailView === "conv") setMailView("list");
+  else if (mailView === "list") setMailView("folders");
+}
+
 function initMobileMailNav() {
-  // Back buttons
-  document.getElementById("btnMailBackFolders")?.addEventListener("click", () => {
-    setMailView("list");
-  });
-
-  document.getElementById("btnMailBackList")?.addEventListener("click", () => {
-    setMailView("list");
-  });
-
-  document.getElementById("btnMailOpenFolders")?.addEventListener("click", () => {
-    setMailView("folders");
-  });
+  document.getElementById("btnMailBack")?.addEventListener("click", () => mailViewBack());
 
   // When clicking a folder on mobile, go to list view
   document.querySelectorAll(".mail-folder").forEach(el => {
@@ -4088,9 +4076,7 @@ function initMobileMailNav() {
   });
 
   const convEl = document.getElementById("mailConv");
-  if (convEl) {
-    convObserver.observe(convEl, { childList: true, subtree: true });
-  }
+  if (convEl) convObserver.observe(convEl, { childList: true, subtree: true });
 
   // Initial state
   setMailView("list");
