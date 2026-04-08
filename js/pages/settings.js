@@ -4021,6 +4021,7 @@ function setMailView(view) {
   const client = document.getElementById("mailClient");
   const toolbar = document.getElementById("mailMobileToolbar");
   const btnBack = document.getElementById("btnMailBack");
+  const btnCompose = document.getElementById("btnMailComposeMobile");
   const title = document.getElementById("mailMobileTitle");
 
   if (!client) return;
@@ -4034,6 +4035,9 @@ function setMailView(view) {
 
   // Show/hide back button based on view
   if (btnBack) btnBack.style.display = (view === "folders") ? "none" : "";
+
+  // Show compose in folders and list views, hide in conv
+  if (btnCompose) btnCompose.style.display = (view === "folders" || view === "list") ? "" : "none";
 
   // Update title based on view
   if (title) {
@@ -4056,6 +4060,7 @@ function mailViewBack() {
 
 function initMobileMailNav() {
   document.getElementById("btnMailBack")?.addEventListener("click", () => mailViewBack());
+  document.getElementById("btnMailComposeMobile")?.addEventListener("click", () => showCompose());
 
   // When clicking a folder on mobile, go to list view
   document.querySelectorAll(".mail-folder").forEach(el => {
