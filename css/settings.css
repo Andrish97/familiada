@@ -1092,6 +1092,16 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   gap: 14px;
 }
 
+.stat-box{
+  padding: 18px;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 14px;
+  background: rgba(255,255,255,.03);
+  cursor: pointer;
+  transition: background .15s;
+  box-sizing: border-box;
+}
+
 @media (max-width: 900px){
   .market-admin-panel{
     max-width: 100% !important;
