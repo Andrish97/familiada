@@ -1049,15 +1049,20 @@ body.tools-fullscreen .tools-frame-wrap iframe{
     top: calc(max(12px, env(safe-area-inset-top)) + 64px) !important;
   }
   
-  /* Reports panel on mobile — fill full height within wrap */
+  /* Reports panel on mobile — full height, no page scroll */
   #reportsPanel {
-    height: calc(100dvh - var(--topbar-h, 60px) - 48px - 30px) !important; /* topbar + footer + wrap padding */
+    height: calc(100dvh - var(--topbar-h, 60px) - 48px - 30px) !important;
     padding: 0 !important;
     margin: 0 !important;
     overflow: hidden;
   }
-  
-  /* Mail client fills the panel */
+
+  /* Prevent body scroll when in reports on mobile */
+  body:has(#reportsPanel:not([hidden])) {
+    overflow: hidden !important;
+  }
+
+  /* Mail client fills the panel, scrolls internally */
   .mail-client {
     position: relative !important;
     height: 100% !important;
@@ -1065,8 +1070,17 @@ body.tools-fullscreen .tools-frame-wrap iframe{
     bottom: auto !important;
     width: 100% !important;
     margin: 0 !important;
+    overflow: hidden;
   }
-  
+
+  /* Inner panes scroll within mail-client */
+  .mail-client > .mail-sidebar,
+  .mail-client > .mail-list,
+  .mail-client > .mail-conv {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
   /* Other panels on mobile — hard padding to clear sticky topbar */
   .market-admin-panel:not(#reportsPanel),
   .settings-panel {
