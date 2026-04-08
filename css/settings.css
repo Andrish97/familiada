@@ -1091,7 +1091,7 @@ body.tools-fullscreen .tools-frame-wrap iframe{
     padding: 14px;
     width: 100% !important;
     max-width: 100% !important;
-    overflow: hidden !important;
+    overflow: clip !important;
     box-sizing: border-box !important;
     display: flex !important;
     flex-direction: column !important;
