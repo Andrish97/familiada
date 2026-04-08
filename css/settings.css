@@ -1088,17 +1088,19 @@ body.tools-fullscreen .tools-frame-wrap iframe{
 
 @media (max-width: 900px){
   .mail-card{
-    padding: 12px;
-    width: auto !important;
-    max-width: none !important;
+    padding: 14px;
+    width: 100% !important;
+    max-width: 100% !important;
     overflow: hidden !important;
+    box-sizing: border-box !important;
+  }
+  .mail-card > *{
+    min-width: 0 !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
   }
   .panel-head{
-    overflow: hidden !important;
-  }
-  .panel-title, .panel-sub{
-    overflow-wrap: break-word !important;
-    word-break: break-word !important;
+    min-width: 0 !important;
   }
   .stats-grid{
     grid-template-columns: 1fr !important;
@@ -1108,17 +1110,15 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   }
   .stat-box{
     width: 100% !important;
+    max-width: 100% !important;
     box-sizing: border-box !important;
     padding: 12px !important;
-    overflow-wrap: break-word !important;
-    word-break: break-word !important;
-  }
-  .stat-value{
-    font-size: 28px !important;
+    min-width: 0 !important;
   }
   .stat-sub, .stat-label{
     overflow-wrap: break-word !important;
     word-break: break-word !important;
+    max-width: 100% !important;
   }
   .market-admin-panel{
     overflow-x: hidden !important;
@@ -1128,6 +1128,8 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   .mail-controls{
     flex-wrap: wrap !important;
     gap: 6px !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
   }
 }
 
