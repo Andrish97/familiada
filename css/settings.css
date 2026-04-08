@@ -531,13 +531,10 @@ body.settings-body > main.wrap{
 }
 
 .tools-shell{
-  margin-top: 12px;
   border: 1px solid var(--line2);
   border-radius: 16px;
   background: rgba(8,12,28,.6);
   overflow: hidden;
-  position: relative;
-  z-index: 75; /* Keep below topbar (z-index: 80) but above other content */
 }
 
 .tools-frame-wrap{
