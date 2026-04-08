@@ -1107,22 +1107,32 @@ body.tools-fullscreen .tools-frame-wrap iframe{
     gap: 10px !important;
     margin-top: 0 !important;
     width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
   }
   .stat-box{
     padding: 10px !important;
     box-sizing: border-box !important;
     min-width: 0 !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
   }
-
-  /* Inline style stat-box padding override */
-  #statsPanel .stat-box[style*="padding"]{
-    padding: 10px !important;
+  .stat-sub,
+  .stat-label{
+    max-width: 100% !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
   }
 
   /* Force single-column layout for all grids inside stats on mobile */
+  #statsPanel .stats-grid,
   #statsPanel [style*="grid-template-columns"],
-  #statsPanel [style*="1fr 1fr"]{
+  #statsPanel [style*="1fr 1fr"],
+  #statsPanel > .mail-card > [style*="grid-template-columns"]{
     grid-template-columns: 1fr !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
   }
   .stat-label{
     font-size: 10px !important;
