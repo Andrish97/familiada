@@ -1100,6 +1100,15 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   cursor: pointer;
   transition: background .15s;
   box-sizing: border-box;
+  display: block;
+  width: 100%;
+  text-align: left;
+  color: #fff;
+  font-family: inherit;
+}
+
+.stat-box:hover{
+  background: rgba(255,255,255,.07);
 }
 
 @media (max-width: 900px){
@@ -1118,58 +1127,27 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   }
   #statsPanel > .mail-card{
     min-width: 0 !important;
-    max-width: calc(100vw - 30px) !important;
-    padding: 14px 20px !important;
   }
   .mail-card > * + *{
     margin-top: 12px !important;
   }
 
-  /* Safari: use block layout, not flex or grid */
+  /* Safari: use block layout for stats */
   .stats-grid{
     display: block !important;
-    overflow: hidden !important;
   }
   .stat-box{
-    padding: 6px 8px !important;
+    padding: 8px 10px !important;
     box-sizing: border-box !important;
-    min-width: 0 !important;
-    display: block !important;
     margin-bottom: 8px !important;
     border: 0 !important;
     border-radius: 0 !important;
-    outline: 0 !important;
+    outline: none !important;
     box-shadow: 0 0 0 1px rgba(255,255,255,.12) !important;
-    contain: layout !important;
   }
   .stat-box:last-child{
     margin-bottom: 0 !important;
   }
-  .stat-sub,
-  .stat-label{
-    max-width: 100% !important;
-    white-space: normal !important;
-    word-break: break-word !important;
-    overflow-wrap: break-word !important;
-  }
-  .stat-label,
-  .stat-value,
-  .stat-sub{
-    letter-spacing: 0 !important;
-    max-width: 100% !important;
-  }
-
-  /* Force everything inside stats mail-card to fit */
-  #statsPanel > .mail-card > *:not(.panel-head):not(.mail-controls){
-    box-sizing: border-box !important;
-  }
-  #statsPanel .stats-grid{
-    display: block !important;
-  }
-  #statsPanel .stats-grid > .stat-box{
-    min-width: 0 !important;
-  }
-
   /* Retention/activity section - force single column */
   #statsPanel [style*="grid-template-columns"]{
     display: block !important;
