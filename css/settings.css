@@ -1092,6 +1092,16 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   #btnMailCompose { display: none !important; }
 }
 
+@media (max-width: 900px){
+  .mail-card{
+    padding: 12px;
+  }
+  .stats-grid{
+    grid-template-columns: 1fr !important;
+  }
+}
+
+
 .toast{
   position: fixed;
   left: 50%;
