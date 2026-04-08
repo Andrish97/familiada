@@ -1101,20 +1101,26 @@ body.tools-fullscreen .tools-frame-wrap iframe{
     box-sizing: border-box !important;
   }
   .mail-card > * + *{
-    margin-top: 10px;
+    margin-top: 12px !important;
   }
-  .mail-card > *{
-    max-width: 100% !important;
-    min-width: 0 !important;
-  }
+
   .stats-grid{
+    display: grid !important;
     grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    margin-top: 0 !important;
+    width: 100% !important;
+    overflow: hidden !important;
   }
   .stat-box{
     padding: 10px !important;
-    overflow: hidden;
+    box-sizing: border-box !important;
+    width: auto !important; /* let grid track define width */
+    min-width: 0 !important;
+    overflow: hidden !important;
   }
   .stat-label{
+    font-size: 10px !important;
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
