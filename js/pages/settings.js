@@ -4032,17 +4032,17 @@ let mailView = "list"; // list | folders | conv
 function setMailView(view) {
   mailView = view;
   const client = document.getElementById("mailClient");
-  const toolbar = document.getElementById("mailMobileToolbar");
-  const btnBack = document.getElementById("btnMailBack");
-  const btnCompose = document.getElementById("btnMailComposeMobile");
-  const title = document.getElementById("mailMobileTitle");
+  const navTopbar = document.getElementById("mailNavTopbar");
+  const btnBack = document.getElementById("btnMailBackTopbar");
+  const btnCompose = document.getElementById("btnMailComposeTopbar");
 
   if (!client) return;
   client.dataset.mailView = view;
 
-  // Only show toolbar on mobile
   const isMobile = window.matchMedia("(max-width: 900px)").matches;
-  if (toolbar) toolbar.style.display = isMobile ? "flex" : "none";
+
+  // Show/hide topbar nav — only on mobile + reports panel
+  if (navTopbar) navTopbar.style.display = isMobile ? "flex" : "none";
 
   if (!isMobile) return;
 
@@ -4051,19 +4051,6 @@ function setMailView(view) {
 
   // Show compose in folders and list views, hide in conv
   if (btnCompose) btnCompose.style.display = (view === "folders" || view === "list") ? "" : "none";
-
-  // Update title based on view
-  if (title) {
-    if (view === "folders") {
-      title.textContent = "Foldery";
-    } else if (view === "conv") {
-      const subjectEl = document.querySelector(".mail-conv-subject");
-      title.textContent = subjectEl?.textContent?.trim() || "Wiadomość";
-    } else {
-      const activeFolder = document.querySelector(".mail-folder.active .mail-folder-name");
-      title.textContent = activeFolder?.textContent?.trim() || t("settings.reports.tabInbox") || "Przychodzące";
-    }
-  }
 }
 
 function mailViewBack() {
@@ -4072,8 +4059,8 @@ function mailViewBack() {
 }
 
 function initMobileMailNav() {
-  document.getElementById("btnMailBack")?.addEventListener("click", () => mailViewBack());
-  document.getElementById("btnMailComposeMobile")?.addEventListener("click", () => showCompose());
+  document.getElementById("btnMailBackTopbar")?.addEventListener("click", () => mailViewBack());
+  document.getElementById("btnMailComposeTopbar")?.addEventListener("click", () => showCompose());
 
   // When clicking a folder on mobile, go to list view
   document.querySelectorAll(".mail-folder").forEach(el => {

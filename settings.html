@@ -50,6 +50,11 @@
       </div>
     </div>
     <div class="topbar-section topbar-section-3">
+      <!-- Mobile mail navigation — hidden by default, shown only in reports panel -->
+      <div class="mail-nav-topbar" id="mailNavTopbar" style="display:none;gap:4px;align-items:center">
+        <button class="btn sm" id="btnMailBackTopbar" type="button" style="display:none">←</button>
+        <button class="btn sm gold" id="btnMailComposeTopbar" type="button">✏</button>
+      </div>
     </div>
     <div class="topbar-section topbar-section-4">
       <button class="btn sm" id="btnLogout" type="button" data-i18n="settings.actions.logout">Wyloguj Access</button>
@@ -499,12 +504,6 @@
       <!-- REPORTS PANEL -->
       <div class="market-admin-panel" id="reportsPanel" hidden>
         <div class="mail-client" id="mailClient" data-mail-view="list">
-          <!-- Mobile toolbar - floats above all panes -->
-          <div class="mail-mobile-toolbar" id="mailMobileToolbar" style="display:none">
-            <button class="btn sm" id="btnMailBack" type="button" style="display:none">←</button>
-            <span class="mail-mobile-title" id="mailMobileTitle"></span>
-            <button class="btn sm" id="btnMailComposeMobile" type="button" style="display:none">✏</button>
-          </div>
 
           <!-- Sidebar -->
           <div class="mail-sidebar">

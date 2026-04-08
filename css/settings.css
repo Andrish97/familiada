@@ -1014,10 +1014,7 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   .mail-client > .mail-list,
   .mail-client > .mail-conv {
     position: absolute;
-    top: 40px;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    inset: 0;
     display: flex;
     flex-direction: column;
     background: rgba(8,12,28,.96);
@@ -1059,40 +1056,16 @@ body.tools-fullscreen .tools-frame-wrap iframe{
     transform: translateX(0);
   }
 
-  /* Mobile toolbar for mail navigation - floats above all panes */
-  .mail-mobile-toolbar {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 10;
+  /* Mail nav in topbar — only visible on mobile, hidden in mobile menu */
+  .mail-nav-topbar {
     display: flex !important;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 10px;
-    border-bottom: 1px solid rgba(255,255,255,.1);
-    flex-shrink: 0;
-    background: rgba(0,0,0,.35);
   }
-
-  .mail-mobile-toolbar .btn {
-    flex-shrink: 0;
-  }
-
-  .mail-mobile-toolbar .mail-mobile-title {
-    flex: 1;
-    min-width: 0;
-    font-weight: 700;
-    font-size: 13px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
+  .topbar-mobile-panel .mail-nav-topbar { display: none !important; }
 }
 
-/* Desktop: hide mobile toolbar */
+/* Desktop: hide mail nav in topbar */
 @media (min-width: 901px){
-  .mail-mobile-toolbar {
+  .mail-nav-topbar {
     display: none !important;
   }
 }
