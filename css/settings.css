@@ -1106,9 +1106,16 @@ body.tools-fullscreen .tools-frame-wrap iframe{
     overflow: hidden !important;
     box-sizing: border-box !important;
   }
+  /* Safari fix: force strict sizing */
   #statsPanel > .mail-card{
     min-width: 0 !important;
     flex: 0 0 100% !important;
+    position: relative !important;
+  }
+  #statsPanel > .mail-card > *:not(.panel-head):not(.mail-controls){
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
   }
   .mail-card > * + *{
     margin-top: 12px !important;
@@ -1120,6 +1127,7 @@ body.tools-fullscreen .tools-frame-wrap iframe{
     flex-direction: column !important;
     gap: 0 !important;
     margin-top: 0 !important;
+    padding: 0 4px !important;
   }
   .stat-box{
     padding: 10px !important;
@@ -1128,7 +1136,9 @@ body.tools-fullscreen .tools-frame-wrap iframe{
     flex: 0 0 auto !important;
     margin-bottom: 10px !important;
     border: none !important;
-    outline: 1px solid rgba(255,255,255,.12) !important;
+    outline: none !important;
+    box-shadow: 0 0 0 1px rgba(255,255,255,.12) !important;
+    max-width: calc(100% - 2px) !important;
   }
   .stat-box:last-child{
     margin-bottom: 0 !important;
