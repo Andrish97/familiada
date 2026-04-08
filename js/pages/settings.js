@@ -4048,7 +4048,7 @@ function setMailView(view) {
       title.textContent = subjectEl?.textContent?.trim() || "Wiadomość";
     } else {
       const activeFolder = document.querySelector(".mail-folder.active .mail-folder-name");
-      title.textContent = activeFolder?.textContent?.trim() || "Skrzynka";
+      title.textContent = activeFolder?.textContent?.trim() || t("settings.reports.tabInbox") || "Przychodzące";
     }
   }
 }
