@@ -1132,6 +1132,7 @@ body.tools-fullscreen .tools-frame-wrap iframe{
     min-width: 0 !important;
     display: block !important;
     width: 100% !important;
+    width: -webkit-fill-available !important;
     margin-bottom: 10px !important;
     border: 0 !important;
     outline: 0 !important;
