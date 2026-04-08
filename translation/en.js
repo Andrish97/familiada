@@ -539,6 +539,7 @@ const en = {
       cooldown: "You can't add the same user again for 24h (anti-spam).",
       alreadyPending: "An invite is already pending.",
       emailFailed: "Invite created, but email sending failed.",
+      sectionSubscribers: "Subscribers",
       sectionPending: "Pending",
       sectionPendingSub: "If not accepted within 5 days, the request disappears.",
       sectionShared: "Active",

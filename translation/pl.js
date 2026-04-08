@@ -539,6 +539,7 @@ const pl = {
       cooldown: "Nie można dodać ponownie tego użytkownika przez 24h (anty-spam).",
       alreadyPending: "Zaproszenie już oczekuje na akceptację.",
       emailFailed: "Zaproszenie utworzone, ale nie udało się wysłać maila.",
+      sectionSubscribers: "Subskrybenci",
       sectionPending: "Oczekujące",
       sectionPendingSub: "Po 5 dniach bez akceptacji zapytanie znika.",
       sectionShared: "Aktywni",
