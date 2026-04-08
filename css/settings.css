@@ -1106,7 +1106,7 @@ body.tools-fullscreen .tools-frame-wrap iframe{
 
   .stats-grid{
     display: grid !important;
-    grid-template-columns: 1fr !important;
+    grid-template-columns: minmax(0, 1fr) !important; /* 0 prevents content from expanding track */
     gap: 10px !important;
     margin-top: 0 !important;
     width: 100% !important;
