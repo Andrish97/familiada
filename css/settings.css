@@ -1082,11 +1082,6 @@ body.tools-fullscreen .tools-frame-wrap iframe{
     -webkit-overflow-scrolling: touch;
   }
 
-  /* Other panels on mobile — hard padding to clear sticky topbar */
-  .market-admin-panel:not(#reportsPanel) {
-    padding-top: 70px !important;
-  }
-
   /* Hide the compose button inside sidebar on mobile */
   #btnMailCompose { display: none !important; }
 }
