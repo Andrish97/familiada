@@ -1080,7 +1080,7 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   .mail-client {
     grid-template-columns: 1fr;
     position: fixed !important;
-    top: var(--topbar-h, 60px) !important;
+    top: 56px !important; /* hard-coded topbar height on mobile */
     bottom: 48px !important; /* above footer */
     left: 0 !important;
     right: 0 !important;
