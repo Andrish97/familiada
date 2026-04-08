@@ -1143,6 +1143,12 @@ body.tools-fullscreen .tools-frame-wrap iframe{
     margin: 0 auto 10px !important;
   }
 
+  /* Retention/activity section - force single column */
+  #statsPanel > .mail-card > div > div[style*="grid"],
+  #statsPanel [style*="1fr 1fr"]{
+    display: block !important;
+  }
+
   /* Trend chart & labels - clip on mobile */
   #trendChart, #trendLabels, #segmentBars, #retentionTable{
     max-width: 100% !important;
