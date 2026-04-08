@@ -147,6 +147,14 @@ const els = {
   mailLogsHelp: document.getElementById("mailLogsHelp"),
   mailLogsBody: document.getElementById("mailLogsBody"),
   mailLogsInfo: document.getElementById("mailLogsInfo"),
+  // Mobile tabs
+  tabMaintenanceMobile: document.getElementById("tabMaintenanceMobile"),
+  tabStatsMobile: document.getElementById("tabStatsMobile"),
+  tabRatingsMobile: document.getElementById("tabRatingsMobile"),
+  tabMailMobile: document.getElementById("tabMailMobile"),
+  tabReportsMobile: document.getElementById("tabReportsMobile"),
+  tabMarketingMobile: document.getElementById("tabMarketingMobile"),
+  tabMarketplaceMobile: document.getElementById("tabMarketplaceMobile"),
 };
 
 let currentState = null;
@@ -4624,6 +4632,8 @@ function closeTools() {
 function setActiveTab(tab) {
   activeTab = tab;
   window.activeTab = tab; // dla generator.js
+  
+  // Desktop tabs
   const btn = document.getElementById("btnTabMaintenance");
   const btnMail = document.getElementById("btnTabMail");
   const btnMarket = document.getElementById("btnTabMarketplace");
@@ -4633,6 +4643,17 @@ function setActiveTab(tab) {
   const btnReports = document.getElementById("btnTabReports");
   const btnMarketing = document.getElementById("btnTabMarketing");
   const tools = document.getElementById("toolsSelect");
+  
+  // Mobile tabs
+  const tabMaintMobile = document.getElementById("tabMaintenanceMobile");
+  const tabStatsMobile = document.getElementById("tabStatsMobile");
+  const tabRatingsMobile = document.getElementById("tabRatingsMobile");
+  const tabMailMobile = document.getElementById("tabMailMobile");
+  const tabReportsMobile = document.getElementById("tabReportsMobile");
+  const tabMarketingMobile = document.getElementById("tabMarketingMobile");
+  const tabMarketplaceMobile = document.getElementById("tabMarketplaceMobile");
+  
+  // Update desktop tab buttons
   if (btn) btn.classList.toggle("active", tab === "maintenance");
   if (btnMail) btnMail.classList.toggle("active", tab === "mail");
   if (btnMarket) btnMarket.classList.toggle("active", tab === "marketplace");
@@ -4642,6 +4663,17 @@ function setActiveTab(tab) {
   if (btnReports) btnReports.classList.toggle("active", tab === "reports");
   if (btnMarketing) btnMarketing.classList.toggle("active", tab === "marketing");
   if (tools) tools.classList.toggle("active", tab === "tools");
+  
+  // Update mobile tab buttons
+  if (tabMaintMobile) tabMaintMobile.classList.toggle("active", tab === "maintenance");
+  if (tabStatsMobile) tabStatsMobile.classList.toggle("active", tab === "stats");
+  if (tabRatingsMobile) tabRatingsMobile.classList.toggle("active", tab === "ratings");
+  if (tabMailMobile) tabMailMobile.classList.toggle("active", tab === "mail");
+  if (tabReportsMobile) tabReportsMobile.classList.toggle("active", tab === "reports");
+  if (tabMarketingMobile) tabMarketingMobile.classList.toggle("active", tab === "marketing");
+  if (tabMarketplaceMobile) tabMarketplaceMobile.classList.toggle("active", tab === "marketplace");
+  
+  // Hide/show panels
   if (els.maintenancePanel) els.maintenancePanel.hidden = tab !== "maintenance";
   if (els.mailPanel) els.mailPanel.hidden = tab !== "mail";
   if (els.marketplacePanel) els.marketplacePanel.hidden = tab !== "marketplace";
@@ -4650,6 +4682,8 @@ function setActiveTab(tab) {
   if (els.generatorPanel) els.generatorPanel.hidden = tab !== "generator";
   if (els.reportsPanel) els.reportsPanel.hidden = tab !== "reports";
   if (els.marketingPanel) els.marketingPanel.hidden = tab !== "marketing";
+  
+  // Force display style for panels (mobile compatibility)
   if (els.mailPanel) els.mailPanel.style.display = tab === "mail" ? "" : "none";
   if (els.marketplacePanel) els.marketplacePanel.style.display = tab === "marketplace" ? "" : "none";
   if (els.ratingsPanel) els.ratingsPanel.style.display = tab === "ratings" ? "" : "none";
@@ -5348,6 +5382,60 @@ function wireEvents() {
     els.btnTabMarketing.addEventListener("click", () => {
       if (activeTab === "tools") closeTools();
       setActiveTab("marketing");
+    });
+  }
+
+  // Mobile tabs event listeners
+  if (els.tabMaintenanceMobile) {
+    els.tabMaintenanceMobile.addEventListener("click", async () => {
+      if (activeTab === "tools") closeTools();
+      setActiveTab("maintenance");
+      await loadState({ silent: true });
+    });
+  }
+
+  if (els.tabStatsMobile) {
+    els.tabStatsMobile.addEventListener("click", async () => {
+      if (activeTab === "tools") closeTools();
+      setActiveTab("stats");
+      await loadStats();
+    });
+  }
+
+  if (els.tabRatingsMobile) {
+    els.tabRatingsMobile.addEventListener("click", async () => {
+      if (activeTab === "tools") closeTools();
+      setActiveTab("ratings");
+      await loadRatings();
+    });
+  }
+
+  if (els.tabMailMobile) {
+    els.tabMailMobile.addEventListener("click", async () => {
+      await openMailTab();
+    });
+  }
+
+  if (els.tabReportsMobile) {
+    els.tabReportsMobile.addEventListener("click", async () => {
+      if (activeTab === "tools") closeTools();
+      setActiveTab("reports");
+      await loadMailFolder({ silent: true });
+    });
+  }
+
+  if (els.tabMarketingMobile) {
+    els.tabMarketingMobile.addEventListener("click", () => {
+      if (activeTab === "tools") closeTools();
+      setActiveTab("marketing");
+    });
+  }
+
+  if (els.tabMarketplaceMobile) {
+    els.tabMarketplaceMobile.addEventListener("click", async () => {
+      if (activeTab === "tools") closeTools();
+      setActiveTab("marketplace");
+      await loadMarketplace({ silent: true });
     });
   }
 
