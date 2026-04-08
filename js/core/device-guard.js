@@ -1,7 +1,7 @@
 // js/core/device-guard.js
 // Uniwersalna blokada na telefon + i18n (deviceGuard.*) + "Wróć" (history/referrer)
 
-import { applyTranslations, t } from "../../translation/translation.js?v=v2026-04-08T02360";
+import { applyTranslations, t } from "../../translation/translation.js?v=v2026-04-08T02422";
 
 export function guardDesktopOnly({
   // techniczny breakpoint (nie pokazujemy w UI)
