@@ -1094,9 +1094,17 @@ body.tools-fullscreen .tools-frame-wrap iframe{
 @media (max-width: 900px){
   .mail-card{
     padding: 12px;
+    width: auto !important;
+    max-width: 100% !important;
   }
   .stats-grid{
     grid-template-columns: 1fr !important;
+    overflow-x: hidden !important;
+  }
+  /* Prevent any card/panel from overflowing the wrap on mobile */
+  .mail-card-wide{
+    width: 100% !important;
+    box-sizing: border-box !important;
   }
 }
 
