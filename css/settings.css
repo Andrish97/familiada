@@ -695,23 +695,6 @@ body.tools-fullscreen .tools-frame-wrap iframe{
     color: #ffeaa6;
     border-bottom-color: #ffeaa6;
   }
-
-  .settings-mobile-tabs .tab-wrapper{
-    display: none;
-  }
-
-  .settings-mobile-tabs .tab-label.active + .tab-wrapper{
-    display: block;
-  }
-
-  .settings-mobile-tabs .tab-active{
-    height: 0;
-    display: none;
-  }
-
-  .settings-mobile-tabs .tab-corner{
-    display: none;
-  }
 }
 
 .settings-body input:focus,
@@ -1200,7 +1183,6 @@ body.tools-fullscreen .tools-frame-wrap iframe{
     gap: 10px !important;
     margin-top: 0 !important;
     width: 100% !important;
-    overflow: hidden !important; /* clip stat-box if it overflows */
   }
   .stat-box{
     padding: 10px !important;
@@ -1215,11 +1197,6 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   #statsPanel [style*="grid-template-columns"],
   #statsPanel [style*="1fr 1fr"]{
     grid-template-columns: 1fr !important;
-  }
-
-  /* Ensure mail-card doesn't overflow */
-  #statsPanel > .mail-card{
-    overflow: hidden !important;
   }
   .stat-label{
     font-size: 10px !important;
