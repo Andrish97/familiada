@@ -1098,10 +1098,11 @@ body.tools-fullscreen .tools-frame-wrap iframe{
     gap: 10px !important;
   }
   .mail-card > *{
-    width: 100% !important;
-    max-width: 100% !important;
+    width: calc(100% - 28px) !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    max-width: calc(100% - 28px) !important;
     box-sizing: border-box !important;
-    flex-shrink: 0 !important;
   }
   .stats-grid{
     grid-template-columns: 1fr !important;
