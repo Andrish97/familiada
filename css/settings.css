@@ -1089,6 +1089,7 @@ body.tools-fullscreen .tools-frame-wrap iframe{
 /* Stats grid - desktop default */
 .stats-grid{
   grid-template-columns: repeat(auto-fill,minmax(240px,1fr));
+  gap: 14px;
 }
 
 @media (max-width: 900px){
@@ -1117,7 +1118,7 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   .stats-grid{
     display: flex !important;
     flex-direction: column !important;
-    gap: 10px !important;
+    gap: 0 !important;
     margin-top: 0 !important;
   }
   .stat-box{
@@ -1125,6 +1126,12 @@ body.tools-fullscreen .tools-frame-wrap iframe{
     box-sizing: border-box !important;
     min-width: 0 !important;
     flex: 0 0 auto !important;
+    margin-bottom: 10px !important;
+    border: none !important;
+    outline: 1px solid rgba(255,255,255,.12) !important;
+  }
+  .stat-box:last-child{
+    margin-bottom: 0 !important;
   }
   .stat-sub,
   .stat-label{
