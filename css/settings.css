@@ -1056,6 +1056,11 @@ body.tools-fullscreen .tools-frame-wrap iframe{
     transform: translateX(0);
   }
 
+  /* Ensure mobile menu starts strictly below topbar */
+  .topbar-mobile-overlay {
+    top: calc(max(12px, env(safe-area-inset-top)) + 64px) !important;
+  }
+  
   /* Mail nav in topbar section-1 — hidden in mobile menu panel */
   .topbar-mobile-panel .mail-nav-topbar { display: none !important; }
 
