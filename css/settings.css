@@ -1126,13 +1126,14 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   }
 
   /* Force single-column layout for all grids inside stats on mobile */
-  #statsPanel .stats-grid,
-  #statsPanel [style*="grid-template-columns"],
-  #statsPanel [style*="1fr 1fr"],
-  #statsPanel > .mail-card > [style*="grid-template-columns"]{
+  #statsPanel .stats-grid{
     grid-template-columns: 1fr !important;
     min-width: 0 !important;
     max-width: 100% !important;
+  }
+  #statsPanel .stats-grid > .stat-box{
+    width: 100% !important;
+    min-width: 0 !important;
   }
 
   /* Trend chart & labels - clip on mobile */
