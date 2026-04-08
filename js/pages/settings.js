@@ -4643,6 +4643,11 @@ function setActiveTab(tab) {
   if (els.reportsPanel) els.reportsPanel.style.display = tab === "reports" ? "" : "none";
   if (els.marketingPanel) els.marketingPanel.style.display = tab === "marketing" ? "" : "none";
 
+  // When entering reports panel, init mail view
+  if (tab === "reports") {
+    setMailView("list");
+  }
+
   if (tab === "generator" && window.resetGeneratorSession) {
     window.resetGeneratorSession();
   }
