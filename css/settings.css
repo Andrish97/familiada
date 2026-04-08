@@ -1097,6 +1097,9 @@ body.tools-fullscreen .tools-frame-wrap iframe{
     overflow: hidden !important;
     box-sizing: border-box !important;
   }
+  #statsPanel > .mail-card{
+    overflow: clip !important;
+  }
   .mail-card > * + *{
     margin-top: 12px !important;
   }
@@ -1136,7 +1139,7 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   }
 
   /* Trend chart & labels - clip on mobile */
-  #trendChart, #trendLabels{
+  #trendChart, #trendLabels, #segmentBars, #retentionTable{
     max-width: 100% !important;
     overflow: hidden !important;
   }
@@ -1149,6 +1152,7 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   }
   .stat-label{
     font-size: 10px !important;
+    letter-spacing: 0 !important;
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
