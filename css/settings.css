@@ -1056,7 +1056,7 @@ body.tools-fullscreen .tools-frame-wrap iframe{
     transform: translateX(0);
   }
 
-  /* Mail nav in topbar section-1 — hidden in mobile menu */
+  /* Mail nav in topbar section-1 — hidden in mobile menu panel */
   .topbar-mobile-panel .mail-nav-topbar { display: none !important; }
 
   /* Mobile: 3-pane mail client — full height and full width */
