@@ -1049,9 +1049,9 @@ body.tools-fullscreen .tools-frame-wrap iframe{
     top: calc(max(12px, env(safe-area-inset-top)) + 64px) !important;
   }
   
-  /* Reports panel on mobile — full height, no page scroll */
+  /* Reports panel on mobile — fixed height within viewport */
   #reportsPanel {
-    height: calc(100dvh - var(--topbar-h, 60px) - 48px - 30px) !important;
+    height: calc(100dvh - var(--topbar-h, 60px) - 100px) !important;
     padding: 0 !important;
     margin: 0 !important;
     overflow: hidden;
