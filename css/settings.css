@@ -1125,16 +1125,17 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   /* Safari: use block layout, not flex or grid */
   .stats-grid{
     display: block !important;
+    overflow: hidden !important;
   }
   .stat-box{
-    padding: 10px !important;
+    padding: 6px 8px !important;
     box-sizing: border-box !important;
     min-width: 0 !important;
     display: block !important;
     width: 100% !important;
-    width: -webkit-fill-available !important;
-    margin-bottom: 10px !important;
+    margin-bottom: 8px !important;
     border: 0 !important;
+    border-radius: 0 !important;
     outline: 0 !important;
     box-shadow: 0 0 0 1px rgba(255,255,255,.12) !important;
   }
@@ -1156,19 +1157,19 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   }
 
   /* Force everything inside stats mail-card to fit */
-  #statsPanel > .mail-card > *,
-  #statsPanel > .mail-card > div,
-  #statsPanel > .mail-card .stats-grid{
+  #statsPanel > .mail-card > *:not(.panel-head):not(.mail-controls){
     max-width: 100% !important;
     box-sizing: border-box !important;
   }
   #statsPanel .stats-grid{
     display: block !important;
     min-width: 0 !important;
+    max-width: 100% !important;
   }
   #statsPanel .stats-grid > .stat-box{
     min-width: 0 !important;
     width: 100% !important;
+    max-width: 100% !important;
   }
 
   /* Retention/activity section - force single column */
