@@ -1185,10 +1185,10 @@ body.tools-fullscreen .tools-frame-wrap iframe{
     width: 100% !important;
   }
   .stat-box{
-    padding: 10px !important;
+    padding: 10px 8px !important;
     box-sizing: border-box !important;
-    width: 100% !important; /* force fit to track */
-    max-width: 100% !important;
+    width: calc(100% - 16px) !important;
+    margin: 0 auto !important;
     min-width: 0 !important;
     overflow: hidden !important;
   }
