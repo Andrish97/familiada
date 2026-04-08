@@ -1122,24 +1122,20 @@ body.tools-fullscreen .tools-frame-wrap iframe{
     margin-top: 12px !important;
   }
 
-  /* Use flex instead of grid - Safari has overflow bugs with grid */
+  /* Safari: use block layout, not flex or grid */
   .stats-grid{
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 0 !important;
-    margin-top: 0 !important;
-    padding: 0 4px !important;
+    display: block !important;
   }
   .stat-box{
     padding: 10px !important;
     box-sizing: border-box !important;
     min-width: 0 !important;
-    flex: 0 0 auto !important;
+    display: block !important;
+    width: 100% !important;
     margin-bottom: 10px !important;
-    border: none !important;
-    outline: none !important;
+    border: 0 !important;
+    outline: 0 !important;
     box-shadow: 0 0 0 1px rgba(255,255,255,.12) !important;
-    max-width: calc(100% - 2px) !important;
   }
   .stat-box:last-child{
     margin-bottom: 0 !important;
@@ -1166,14 +1162,12 @@ body.tools-fullscreen .tools-frame-wrap iframe{
     box-sizing: border-box !important;
   }
   #statsPanel .stats-grid{
-    display: flex !important;
-    flex-direction: column !important;
+    display: block !important;
     min-width: 0 !important;
   }
   #statsPanel .stats-grid > .stat-box{
     min-width: 0 !important;
     width: 100% !important;
-    flex: 0 0 auto !important;
   }
 
   /* Retention/activity section - force single column */
