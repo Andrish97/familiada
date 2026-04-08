@@ -998,13 +998,16 @@ body.tools-fullscreen .tools-frame-wrap iframe{
     overflow: visible;
   }
 
-  /* Mobile: 3-pane mail client — one pane at a time with back navigation */
+  /* Mobile: 3-pane mail client — full height from topbar to footer */
   .mail-client {
     grid-template-columns: 1fr;
-    height: calc(100vh - 200px);
-    min-height: 350px;
+    height: calc(100dvh - var(--topbar-h, 60px) - 48px); /* topbar + footer */
+    min-height: 0;
     position: relative;
     overflow: hidden;
+    border-radius: 0;
+    border: none;
+    margin: 0 -15px; /* stretch edge to edge */
   }
 
   .mail-client > .mail-sidebar,

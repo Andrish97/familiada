@@ -4767,6 +4767,7 @@ const pl = {
       tabSent: "Wysłane",
       tabReports: "Zgłoszenia",
       tabTrash: "Kosz",
+      cleanupTrash: "Wyczyść kosz (30d)",
       tabAll: "Wszystkie",
       tabOpen: "Otwarte",
       tabReplied: "Odpowiedziane",

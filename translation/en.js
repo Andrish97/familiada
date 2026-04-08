@@ -4416,6 +4416,7 @@ const en = {
       tabSent: "Sent",
       tabReports: "Reports",
       tabTrash: "Trash",
+      cleanupTrash: "Empty trash (30d)",
       tabAll: "All",
       tabOpen: "Open",
       tabReplied: "Replied",

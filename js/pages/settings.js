@@ -2240,8 +2240,21 @@ function renderMailList(rows) {
 
   if (msgActiveFolder === "trash" && !filtered.length) {
     body.innerHTML = `<div style="padding:20px;text-align:center;opacity:.35;font-size:12px">${t("settings.reports.trashEmpty") || "Kosz jest pusty."}</div>
-      <div style="padding:0 20px 16px;text-align:center;opacity:.25;font-size:11px">${t("settings.reports.trashNote") || "Elementy starsze niż 30 dni są usuwane automatycznie"}</div>`;
+      <div style="padding:0 20px 16px;text-align:center;opacity:.25;font-size:11px">${t("settings.reports.trashNote") || "Elementy starsze niż 30 dni są usuwane automatycznie"}</div>
+      <div style="padding:0 20px 16px;text-align:center">
+        <button class="btn sm" id="btnCleanupTrashInList" type="button" style="width:100%;opacity:.55;font-size:11px">${t("settings.reports.cleanupTrash") || "Wyczyść kosz (30d)"}</button>
+      </div>`;
+    document.getElementById("btnCleanupTrashInList")?.addEventListener("click", cleanupTrash);
     return;
+  }
+
+  // Trash with items: add cleanup button at bottom
+  if (msgActiveFolder === "trash" && filtered.length) {
+    const trashFooter = document.createElement("div");
+    trashFooter.style.cssText = "padding:12px 16px;border-top:1px solid rgba(255,255,255,.08);margin-top:auto";
+    trashFooter.innerHTML = `<button class="btn sm" id="btnCleanupTrashInList" type="button" style="width:100%;opacity:.55;font-size:11px">${t("settings.reports.cleanupTrash") || "Wyczyść kosz (30d)"}</button>`;
+    body.parentNode.appendChild(trashFooter);
+    document.getElementById("btnCleanupTrashInList")?.addEventListener("click", cleanupTrash);
   }
 
   if (!filtered.length) {
@@ -4140,19 +4153,18 @@ function wireReportsEvents() {
   document.getElementById("assignReportModal")?.addEventListener("click", (e) => {
     if (e.target === e.currentTarget) closeAssignModal();
   });
+}
 
-  // Cleanup trash
-  document.getElementById("btnCleanupTrash")?.addEventListener("click", async () => {
-    try {
-      const res = await adminFetch("/cleanup/trash", { method: "POST" });
-      if (!res.ok) throw new Error(await res.text());
-      const json = await res.json();
-      showToast(`Usunięto ${json.deleted || 0} elementów.`, "success");
-      if (msgActiveFolder === "trash") await loadMailFolder({ silent: true });
-    } catch (err) {
-      showToast(String(err?.message || err), "error");
-    }
-  });
+async function cleanupTrash() {
+  try {
+    const res = await adminFetch("/cleanup/trash", { method: "POST" });
+    if (!res.ok) throw new Error(await res.text());
+    const json = await res.json();
+    showToast(`Usunięto ${json.deleted || 0} elementów.`, "success");
+    if (msgActiveFolder === "trash") await loadMailFolder({ silent: true });
+  } catch (err) {
+    showToast(String(err?.message || err), "error");
+  }
 }
 
 function adminFetch(path, init = {}) {

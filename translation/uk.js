@@ -4286,6 +4286,7 @@ const uk = {
       tabSent: "Надіслані",
       tabReports: "Звернення",
       tabTrash: "Кошик",
+      cleanupTrash: "Очистити кошик (30д)",
       tabAll: "Всі",
       tabOpen: "Відкриті",
       tabReplied: "З відповіддю",
