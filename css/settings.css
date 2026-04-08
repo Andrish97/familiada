@@ -1049,36 +1049,28 @@ body.tools-fullscreen .tools-frame-wrap iframe{
     top: calc(max(12px, env(safe-area-inset-top)) + 64px) !important;
   }
   
-  /* Reports panel on mobile — no padding, let fixed mail-client fill full height */
+  /* Reports panel on mobile — fill full height within wrap */
   #reportsPanel {
-    margin: 0 !important;
+    height: calc(100dvh - var(--topbar-h, 60px) - 48px - 30px) !important; /* topbar + footer + wrap padding */
     padding: 0 !important;
+    margin: 0 !important;
+    overflow: hidden;
+  }
+  
+  /* Mail client fills the panel */
+  .mail-client {
+    position: relative !important;
+    height: 100% !important;
+    top: auto !important;
+    bottom: auto !important;
+    width: 100% !important;
+    margin: 0 !important;
   }
   
   /* Other panels on mobile — hard padding to clear sticky topbar */
   .market-admin-panel:not(#reportsPanel),
   .settings-panel {
     padding-top: 70px !important;
-  }
-  
-  /* Mail nav in topbar section-1 — hidden in mobile menu panel */
-  .topbar-mobile-panel .mail-nav-topbar { display: none !important; }
-
-  /* Mail client: fixed position from topbar to footer on mobile */
-  .mail-client {
-    grid-template-columns: 1fr;
-    position: fixed !important;
-    top: 56px !important; /* hard-coded topbar height on mobile */
-    bottom: 48px !important; /* above footer */
-    left: 0 !important;
-    right: 0 !important;
-    width: 100% !important;
-    min-height: 0;
-    height: auto !important;
-    border-radius: 0 !important;
-    border: none !important;
-    margin: 0 !important;
-    z-index: 15;
   }
 
   /* Hide the compose button inside sidebar on mobile */
