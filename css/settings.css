@@ -1103,7 +1103,7 @@ body.tools-fullscreen .tools-frame-wrap iframe{
     box-sizing: border-box !important;
   }
   #statsPanel > .mail-card{
-    overflow-x: clip !important;
+    overflow-x: hidden !important;
   }
   .mail-card > * + *{
     margin-top: 12px !important;
@@ -1144,9 +1144,11 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   }
 
   /* Retention/activity section - force single column */
-  #statsPanel > .mail-card > div > div[style*="grid"],
-  #statsPanel [style*="1fr 1fr"]{
+  #statsPanel [style*="grid-template-columns"]{
     display: block !important;
+  }
+  #statsPanel [style*="1fr 1fr"] > div{
+    margin-bottom: 10px !important;
   }
 
   /* Trend chart & labels - clip on mobile */
