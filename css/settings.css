@@ -1094,16 +1094,20 @@ body.tools-fullscreen .tools-frame-wrap iframe{
 @media (max-width: 900px){
   .market-admin-panel{
     max-width: 100% !important;
+    min-width: 0 !important;
+    width: 100% !important;
   }
   .mail-card{
     padding: 14px;
     width: 100% !important;
     max-width: 100% !important;
+    min-width: 0 !important;
     overflow: hidden !important;
     box-sizing: border-box !important;
   }
   #statsPanel > .mail-card{
-    overflow-x: hidden !important;
+    min-width: 0 !important;
+    flex: 0 0 100% !important;
   }
   .mail-card > * + *{
     margin-top: 12px !important;
@@ -1113,12 +1117,9 @@ body.tools-fullscreen .tools-frame-wrap iframe{
     grid-template-columns: 1fr !important;
   }
   .stat-box{
-    padding: 8px 10px !important;
+    padding: 10px !important;
     box-sizing: border-box !important;
     min-width: 0 !important;
-    width: calc(100% - 16px) !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
   }
   .stat-sub,
   .stat-label{
@@ -1136,11 +1137,12 @@ body.tools-fullscreen .tools-frame-wrap iframe{
     box-sizing: border-box !important;
   }
   #statsPanel .stats-grid{
-    display: block !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    min-width: 0 !important;
   }
   #statsPanel .stats-grid > .stat-box{
-    width: calc(100% - 16px) !important;
-    margin: 0 auto 10px !important;
+    min-width: 0 !important;
   }
 
   /* Retention/activity section - force single column */
