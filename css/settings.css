@@ -1056,20 +1056,39 @@ body.tools-fullscreen .tools-frame-wrap iframe{
     transform: translateX(0);
   }
 
-  /* Mail nav in topbar — only visible on mobile, hidden in mobile menu */
-  .mail-nav-topbar {
-    display: flex !important;
-  }
+  /* Mail nav in topbar section-1 — replaces brand on mobile */
   .topbar-mobile-panel .mail-nav-topbar { display: none !important; }
-}
-
-/* Desktop: hide mail nav in topbar */
-@media (min-width: 901px){
   .mail-nav-topbar {
-    display: none !important;
+    display: none !important; /* desktop hidden */
+  }
+
+  /* On mobile, show mail nav instead of brand in section-1 */
+  @media (max-width: 900px){
+    #reportsPanel[hidden] ~ .topbar-layout-4 .mail-nav-topbar,
+    .topbar-mobile-panel .mail-nav-topbar {
+      display: none !important;
+    }
+    /* Mail nav visible only in reports panel on mobile */
+    #reportsPanel:not([hidden]) ~ .topbar-layout-4 .mail-nav-topbar {
+      display: flex !important;
+    }
+    #reportsPanel:not([hidden]) ~ .topbar-layout-4 .brand {
+      display: none !important;
+    }
+  }
+
+  /* Mobile: 3-pane mail client — full height from topbar to footer */
+  .mail-client {
+    grid-template-columns: 1fr;
+    height: calc(100dvh - var(--topbar-h, 60px) - 48px);
+    min-height: 0;
+    position: relative;
+    overflow: hidden;
+    border-radius: 0;
+    border: none;
+    margin: 0 -15px;
   }
 }
-
 
 .toast{
   position: fixed;

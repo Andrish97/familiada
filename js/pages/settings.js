@@ -4035,14 +4035,16 @@ function setMailView(view) {
   const navTopbar = document.getElementById("mailNavTopbar");
   const btnBack = document.getElementById("btnMailBackTopbar");
   const btnCompose = document.getElementById("btnMailComposeTopbar");
+  const brand = document.getElementById("settingsBrand");
 
   if (!client) return;
   client.dataset.mailView = view;
 
   const isMobile = window.matchMedia("(max-width: 900px)").matches;
 
-  // Show/hide topbar nav — only on mobile + reports panel
+  // Show/hide mail nav — only on mobile
   if (navTopbar) navTopbar.style.display = isMobile ? "flex" : "none";
+  if (brand) brand.style.display = isMobile ? "none" : "";
 
   if (!isMobile) return;
 

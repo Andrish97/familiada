@@ -28,7 +28,12 @@
 <body class="builder-body settings-body settings-locked no-footer-line">
   <header class="topbar topbar-layout-4 topbar-mobile-keep-brand">
     <div class="topbar-section topbar-section-1">
-      <div class="brand">FAMILIADA</div>
+      <!-- Mobile mail nav — replaces brand when in reports panel on mobile -->
+      <div class="mail-nav-topbar" id="mailNavTopbar" style="display:none;gap:4px;align-items:center">
+        <button class="btn sm" id="btnMailBackTopbar" type="button" style="display:none">←</button>
+        <button class="btn sm gold" id="btnMailComposeTopbar" type="button">✏</button>
+      </div>
+      <div class="brand" id="settingsBrand">FAMILIADA</div>
     </div>
     <div class="topbar-section topbar-section-2">
       <a class="btn sm btn-external" id="btnSupabase" href="https://supabase.familiada.online" target="_blank" rel="noopener" data-i18n="settings.actions.supabase">Supabase</a>
@@ -50,11 +55,6 @@
       </div>
     </div>
     <div class="topbar-section topbar-section-3">
-      <!-- Mobile mail navigation — hidden by default, shown only in reports panel -->
-      <div class="mail-nav-topbar" id="mailNavTopbar" style="display:none;gap:4px;align-items:center">
-        <button class="btn sm" id="btnMailBackTopbar" type="button" style="display:none">←</button>
-        <button class="btn sm gold" id="btnMailComposeTopbar" type="button">✏</button>
-      </div>
     </div>
     <div class="topbar-section topbar-section-4">
       <button class="btn sm" id="btnLogout" type="button">Wyloguj Access</button>
