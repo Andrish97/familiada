@@ -4084,8 +4084,9 @@ function initMobileMailNav() {
     });
   });
 
-  // Observe when conversation is opened
+  // Observe when conversation is opened — only if reports tab is active
   const convObserver = new MutationObserver(() => {
+    if (activeTab !== "reports") return;
     const conv = document.getElementById("mailConv");
     const hasContent = conv && conv.querySelector(".mail-conv-header");
     if (hasContent && window.matchMedia("(max-width: 900px)").matches) {
