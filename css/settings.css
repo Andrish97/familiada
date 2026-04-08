@@ -1096,6 +1096,7 @@ body.tools-fullscreen .tools-frame-wrap iframe{
     padding: 12px;
     width: auto !important;
     max-width: none !important;
+    overflow: hidden;
   }
   .stats-grid{
     grid-template-columns: 1fr !important;
@@ -1103,15 +1104,14 @@ body.tools-fullscreen .tools-frame-wrap iframe{
     width: 100% !important;
     box-sizing: border-box !important;
   }
-  /* Prevent any card/panel from overflowing the wrap on mobile */
-  .mail-card-wide{
-    width: auto !important;
-    max-width: none !important;
+  .stat-box{
+    width: 100% !important;
     box-sizing: border-box !important;
   }
   .market-admin-panel{
-    overflow: hidden !important;
+    overflow-x: hidden !important;
     max-width: 100% !important;
+    box-sizing: border-box !important;
   }
 }
 
