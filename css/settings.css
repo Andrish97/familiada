@@ -1061,14 +1061,11 @@ body.tools-fullscreen .tools-frame-wrap iframe{
     top: calc(max(12px, env(safe-area-inset-top)) + 64px) !important;
   }
   
-  /* Reports panel on mobile — zero everything, let mail-client fill full viewport */
+  /* Reports panel on mobile — zero vertical gap, let mail-client fill full height */
   #reportsPanel {
     margin: 0 !important;
     padding: 0 !important;
     gap: 0 !important;
-    width: calc(100% + 30px) !important;
-    margin-left: -15px !important;
-    margin-right: -15px !important;
   }
   
   /* Mail nav in topbar section-1 — hidden in mobile menu panel */
@@ -1077,15 +1074,18 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   /* Mobile: 3-pane mail client — full height and full width (breaks out of wrap padding) */
   .mail-client {
     grid-template-columns: 1fr;
-    height: calc(100dvh - var(--topbar-h, 60px));
+    position: fixed !important;
+    top: var(--topbar-h, 60px) !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
     min-height: 0;
-    position: relative;
-    overflow: hidden;
+    height: auto !important;
     border-radius: 0 !important;
     border: none !important;
-    width: calc(100% + 30px) !important;
-    margin-left: -15px !important;
-    margin-right: -15px !important;
+    margin: 0 !important;
+    z-index: 15;
   }
 }
 
