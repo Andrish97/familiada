@@ -1083,8 +1083,7 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   }
 
   /* Other panels on mobile — hard padding to clear sticky topbar */
-  .market-admin-panel:not(#reportsPanel),
-  .settings-panel {
+  .market-admin-panel:not(#reportsPanel) {
     padding-top: 70px !important;
   }
 
