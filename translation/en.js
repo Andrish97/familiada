@@ -4412,7 +4412,7 @@ const en = {
     reports: {
       title: "Reports",
       subtitle: "Messages from users",
-      tabInbox: "Incoming",
+      tabInbox: "Inbox",
       tabSent: "Sent",
       tabReports: "Reports",
       tabTrash: "Trash",

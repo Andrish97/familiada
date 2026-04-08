@@ -4763,7 +4763,7 @@ const pl = {
     reports: {
       title: "Zgłoszenia",
       subtitle: "Wiadomości od użytkowników",
-      tabInbox: "Przychodzące",
+      tabInbox: "Skrzynka",
       tabSent: "Wysłane",
       tabReports: "Zgłoszenia",
       tabTrash: "Kosz",
