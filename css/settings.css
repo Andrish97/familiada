@@ -1091,7 +1091,14 @@ body.tools-fullscreen .tools-frame-wrap iframe{
     padding: 12px;
     width: auto !important;
     max-width: none !important;
-    overflow: hidden;
+    overflow: hidden !important;
+  }
+  .panel-head{
+    overflow: hidden !important;
+  }
+  .panel-title, .panel-sub{
+    overflow-wrap: break-word !important;
+    word-break: break-word !important;
   }
   .stats-grid{
     grid-template-columns: 1fr !important;
@@ -1109,10 +1116,18 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   .stat-value{
     font-size: 28px !important;
   }
+  .stat-sub, .stat-label{
+    overflow-wrap: break-word !important;
+    word-break: break-word !important;
+  }
   .market-admin-panel{
     overflow-x: hidden !important;
     max-width: 100% !important;
     box-sizing: border-box !important;
+  }
+  .mail-controls{
+    flex-wrap: wrap !important;
+    gap: 6px !important;
   }
 }
 
