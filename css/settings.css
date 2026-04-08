@@ -581,6 +581,7 @@ body.settings-body:has(.topbar) {
   border-color: rgba(120,200,255,.35);
   background: rgba(80,130,200,.12);
   color: #cfe7ff;
+  text-align: center;
 }
 
 .tab-btn.active{
