@@ -1106,16 +1106,17 @@ body.tools-fullscreen .tools-frame-wrap iframe{
 
   .stats-grid{
     display: grid !important;
-    grid-template-columns: minmax(0, 1fr) !important; /* 0 prevents content from expanding track */
+    grid-template-columns: minmax(0, 1fr) !important;
     gap: 10px !important;
     margin-top: 0 !important;
     width: 100% !important;
-    overflow: hidden !important;
+    overflow: hidden !important; /* clip stat-box if it overflows */
   }
   .stat-box{
     padding: 10px !important;
     box-sizing: border-box !important;
-    width: auto !important; /* let grid track define width */
+    width: calc(100% - 20px) !important; /* force fit with buffer */
+    max-width: calc(100% - 20px) !important;
     min-width: 0 !important;
     overflow: hidden !important;
   }
