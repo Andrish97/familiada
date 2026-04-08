@@ -1086,6 +1086,11 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   #btnMailCompose { display: none !important; }
 }
 
+/* Stats grid - desktop default */
+.stats-grid{
+  grid-template-columns: repeat(auto-fill,minmax(240px,1fr));
+}
+
 @media (max-width: 900px){
   .market-admin-panel{
     max-width: 100% !important;
@@ -1098,18 +1103,14 @@ body.tools-fullscreen .tools-frame-wrap iframe{
     box-sizing: border-box !important;
   }
   #statsPanel > .mail-card{
-    overflow: hidden !important;
+    overflow-x: clip !important;
   }
   .mail-card > * + *{
     margin-top: 12px !important;
   }
 
   .stats-grid{
-    display: grid !important;
     grid-template-columns: 1fr !important;
-    gap: 10px !important;
-    margin-top: 0 !important;
-    contain: layout !important;
   }
   .stat-box{
     padding: 8px 10px !important;
@@ -1125,11 +1126,16 @@ body.tools-fullscreen .tools-frame-wrap iframe{
     overflow-wrap: break-word !important;
   }
 
-  /* Force single-column layout for all grids inside stats on mobile */
-  #statsPanel .stats-grid{
-    grid-template-columns: 1fr !important;
-    min-width: 0 !important;
+  /* Force everything inside stats mail-card to fit */
+  #statsPanel > .mail-card > *,
+  #statsPanel > .mail-card > div,
+  #statsPanel > .mail-card .stats-grid{
     max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+  #statsPanel .stats-grid{
+    display: block !important;
+    min-width: 0 !important;
   }
   #statsPanel .stats-grid > .stat-box{
     width: 100% !important;
