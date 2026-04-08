@@ -1071,12 +1071,12 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   /* Mail nav in topbar section-1 — hidden in mobile menu panel */
   .topbar-mobile-panel .mail-nav-topbar { display: none !important; }
 
-  /* Mobile: 3-pane mail client — full height and full width (breaks out of wrap padding) */
+  /* Mail client: fixed position from topbar to footer on mobile */
   .mail-client {
     grid-template-columns: 1fr;
     position: fixed !important;
     top: var(--topbar-h, 60px) !important;
-    bottom: 0 !important;
+    bottom: 48px !important; /* above footer */
     left: 0 !important;
     right: 0 !important;
     width: 100% !important;
@@ -1087,6 +1087,9 @@ body.tools-fullscreen .tools-frame-wrap iframe{
     margin: 0 !important;
     z-index: 15;
   }
+
+  /* Hide the compose button inside sidebar on mobile */
+  #btnMailCompose { display: none !important; }
 }
 
 .toast{
