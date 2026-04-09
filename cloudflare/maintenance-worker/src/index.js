@@ -83,7 +83,8 @@ export default {
     if (
       host === "panel.familiada.online" ||
       host === "supabase.familiada.online" ||
-      host === "api.familiada.online"
+      host === "api.familiada.online" ||
+      host === "search.familiada.online"
     ) {
       return fetch(request);
     }
