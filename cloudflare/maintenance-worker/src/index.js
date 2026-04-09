@@ -83,10 +83,21 @@ export default {
     if (
       host === "panel.familiada.online" ||
       host === "supabase.familiada.online" ||
-      host === "api.familiada.online" ||
-      host === "search.familiada.online"
+      host === "api.familiada.online"
     ) {
       return fetch(request);
+    }
+
+    // Search host with hidden API Key check
+    if (host === "search.familiada.online") {
+      const apiKey = url.searchParams.get("key");
+      // Jeśli nie ma klucza -> serwuj firmową stronę 404 Familiady
+      if (apiKey !== "9v0PUYmyIkkrchto197Jx1hNZbvaHjsC") {
+        return serveNotFoundPage(request, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
+      }
+      // Usuń klucz z URL zanim przekażemy do serwera
+      url.searchParams.delete("key");
+      return fetch(new Request(url, request));
     }
 
     // Unknown subdomains: 404 when maintenance OFF, maintenance page when ON
