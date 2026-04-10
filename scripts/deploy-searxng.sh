@@ -10,7 +10,7 @@ LOCAL_DIR="$(cd "$(dirname "$0")/../searxng" && pwd)"
 REMOTE_USER="andrish97"
 REMOTE_HOST="panel.familiada.online"
 
-# Dokładna ścieżka do folderu searxng w Twoim dockerze
+# Dokładna ścieżka do folderu searxng w Twoim dockerze (bezwzględna)
 REMOTE_SEARXNG_DIR="/home/andrish97/supabase-selfhost/supabase/docker/searxng"
 PARENT_DIR="/home/andrish97/supabase-selfhost/supabase/docker"
 
