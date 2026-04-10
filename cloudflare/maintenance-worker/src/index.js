@@ -92,22 +92,22 @@ export default {
     if (host === "search.familiada.online") {
       const apiKey = url.searchParams.get("key");
       
-      // 0. Sprawdzenie czy to plik statyczny (żeby strona 404 miała style/obrazki)
+      // 0. Lista bezpiecznych rozszerzeń (CSS/JS/Obrazki/Manifest)
       const ext = url.pathname.split('.').pop().toLowerCase();
-      const isStaticAsset = ['css', 'js', 'png', 'jpg', 'jpeg', 'gif', 'svg', 'ico', 'woff', 'woff2', 'ttf', 'map', 'webp'].includes(ext);
+      const isStaticAsset = ['css', 'js', 'png', 'jpg', 'jpeg', 'gif', 'svg', 'ico', 'woff', 'woff2', 'ttf', 'map', 'webp', 'json'].includes(ext);
 
-      // 1. Jeśli to plik statyczny -> przepuść (żeby strona 404 działała)
+      // 1. Przepuść pliki statyczne (żeby strona 404 działała i skrypty się ładowały)
       if (isStaticAsset) {
         return fetch(new Request(url, request));
       }
 
-      // 2. Bramka główna: Wszędzie indziej (strony HTML, API) wymagamy klucza
+      // 2. Bramka główna: Wszędzie indziej wymagamy klucza
       if (apiKey !== "9v0PUYmyIkkrchto197Jx1hNZbvaHjsC") {
         return serveNotFoundPage(request, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
       }
 
-      // 3. Pobieramy treść (obsługując przekierowania) - usuwamy klucz przed wysłaniem
-      url.searchParams.delete("key"); 
+      // 3. Pobieramy treść (obsługując przekierowania)
+      url.searchParams.delete("key"); // usuń klucz przed zapytaniem do serwera
       
       const fetchRecursive = async (targetUrl) => {
         const res = await fetch(new Request(targetUrl, request), { redirect: "manual" });
@@ -124,30 +124,44 @@ export default {
 
       let response = await fetchRecursive(url);
 
-      // 4. DODAWANIE: Jeśli to HTML, wstrzykujemy skrypt naprawiający POSTy (dla SearXNG)
+      // 4. DODAWANIE: Wstrzykujemy skrypt naprawiający POSTy (dla SearXNG)
       if (response.headers.get("content-type")?.includes("text/html")) {
         
+        // Ulepszony skrypt, który obsługuje też obiekty URL i Request
         const fixScript = `
         <script>(function(){
           var k="${apiKey}";
-          var origFetch=window.fetch;
-          window.fetch=function(){
-            var args=Array.from(arguments);
-            if(typeof args[0]==='string'&&args[0].startsWith('/search')){
-              var u=new URL(args[0],location.href);
-              u.searchParams.set('key',k);
-              args[0]=u.toString();
+          
+          // Naprawa fetch
+          var _fetch = window.fetch;
+          window.fetch = function(resource, init) {
+            var urlStr = resource;
+            if (resource instanceof URL) urlStr = resource.toString();
+            else if (resource instanceof Request) urlStr = resource.url;
+            else if (typeof resource !== 'string') urlStr = null;
+
+            if (urlStr && urlStr.startsWith('/search') && urlStr.indexOf('key=') === -1) {
+               var u = new URL(urlStr, location.href);
+               u.searchParams.set('key', k);
+               if (resource instanceof Request) {
+                  return _fetch(new Request(u.toString(), resource));
+               }
+               return _fetch(u.toString(), init);
             }
-            return origFetch.apply(this,args);
+            return _fetch(resource, init);
           };
-          var origOpen=XMLHttpRequest.prototype.open;
-          XMLHttpRequest.prototype.open=function(method, url){
-            if(typeof url==='string'&&url.startsWith('/search')){
-              var u=new URL(url,location.href);
-              u.searchParams.set('key',k);
-              return origOpen.call(this, method, u.toString());
-            }
-            return origOpen.apply(this,arguments);
+
+          // Naprawa XHR (dla starszych skryptów)
+          var _open = XMLHttpRequest.prototype.open;
+          XMLHttpRequest.prototype.open = function(method, url) {
+             var urlStr = url;
+             if (url instanceof URL) urlStr = url.toString();
+             if (urlStr && urlStr.startsWith('/search') && urlStr.indexOf('key=') === -1) {
+                var u = new URL(urlStr, location.href);
+                u.searchParams.set('key', k);
+                return _open.call(this, method, u.toString());
+             }
+             return _open.apply(this, arguments);
           };
         })();</script>`;
 
