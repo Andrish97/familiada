@@ -88,29 +88,37 @@ export default {
       return fetch(request);
     }
 
-    // AI Endpoint - protected by Authorization header
+    // AI Endpoint - protected by Authorization header (AI_API_KEY)
     if (host === "ai.familiada.online") {
+      // 1. Zezwól plikom statycznym (CSS/JS) przejść bez klucza, żeby 404 działał
+      const ext = url.pathname.split('.').pop().toLowerCase();
+      const isStatic = ['css', 'js', 'png', 'jpg', 'jpeg', 'gif', 'svg', 'ico', 'woff', 'woff2', 'map'].includes(ext);
+      if (isStatic) {
+        return fetchFromOrigin(request, url, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
+      }
+
+      // 2. Sprawdź klucz AI_API_KEY
       const authHeader = request.headers.get("Authorization") || "";
       const expectedKey = env.AI_API_KEY ? `Bearer ${env.AI_API_KEY}` : "";
 
       if (authHeader === expectedKey && expectedKey !== "") {
-        return fetch(request);
+        return fetch(request); // Przepuść do Ollama
       }
+      // Brak klucza -> 404 Familiady
       return serveNotFoundPage(request, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
     }
 
-    // Search Endpoint (SearXNG) - protected by Authorization header, JSON only
+    // Search Endpoint (SearXNG) - protected by SEARCH_API_KEY, JSON only
     if (host === "search.familiada.online") {
       const authHeader = request.headers.get("Authorization") || "";
-      const expectedKey = env.AI_API_KEY ? `Bearer ${env.AI_API_KEY}` : "";
+      const expectedKey = env.SEARCH_API_KEY ? `Bearer ${env.SEARCH_API_KEY}` : "";
 
       if (authHeader === expectedKey && expectedKey !== "") {
-        // Force JSON mode and pass through
         const url = new URL(request.url);
-        url.searchParams.set('format', 'json');
+        url.searchParams.set('format', 'json'); // Wymuś JSON
         return fetch(new Request(url.toString(), request));
       }
-      // Headless API -> return JSON error, no HTML
+      // Brak klucza -> JSON error (bez HTML)
       return new Response(JSON.stringify({error: "Unauthorized"}), {
         status: 401,
         headers: {"Content-Type": "application/json"}
