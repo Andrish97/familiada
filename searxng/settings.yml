@@ -2,7 +2,7 @@ use_default_settings: true
 
 server:
   limiter: false
-  extra_css: /static/familiada.css
+  extra_css: /themes/simple/css/familiada.css
 
 search:
   formats:
