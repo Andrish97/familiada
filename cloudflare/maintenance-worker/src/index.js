@@ -110,17 +110,22 @@ export default {
 
     // Search Endpoint (SearXNG) - protected by SEARCH_API_KEY
     if (host === "search.familiada.online") {
+      // Zezwól plikom statycznym (CSS/JS/Obrazki) przejść bez klucza, żeby 404 działał poprawnie
+      const ext = url.pathname.split('.').pop().toLowerCase();
+      const isStatic = ['css', 'js', 'png', 'jpg', 'jpeg', 'gif', 'svg', 'ico', 'woff', 'woff2', 'map'].includes(ext);
+      if (isStatic) {
+        return fetchFromOrigin(request, url, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
+      }
+
+      // Sprawdź klucz API
       const authHeader = request.headers.get("Authorization") || "";
       const expectedKey = env.SEARCH_API_KEY ? `Bearer ${env.SEARCH_API_KEY}` : "";
 
       if (authHeader === expectedKey && expectedKey !== "") {
-        return fetch(request); // Przepuść (format wynika z settings.yml na serwerze)
+        return fetch(request); // Przepuść (format wynika z settings.yml)
       }
-      // Brak klucza -> JSON error (bez HTML)
-      return new Response(JSON.stringify({error: "Unauthorized"}), {
-        status: 401,
-        headers: {"Content-Type": "application/json"}
-      });
+      // Brak klucza -> standardowe 404 Familiady
+      return serveNotFoundPage(request, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
     }
 
     // Unknown subdomains: 404 when maintenance OFF, maintenance page when ON
