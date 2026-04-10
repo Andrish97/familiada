@@ -2,9 +2,7 @@ use_default_settings: true
 
 server:
   limiter: false
-  secret_key: "zmien_to_na_dowolny_ciag_32_znakow"
-  # Wczytaj styl Familiady
-  extra_css: /etc/searxng/familiada.css
+  # secret_key jest teraz przekazywany przez zmienną środowiskową SEARXNG_SECRET_KEY
 
 search:
   formats:
