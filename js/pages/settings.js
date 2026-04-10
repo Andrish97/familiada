@@ -117,7 +117,9 @@ const els = {
   maintenanceControls: document.getElementById("maintenanceControls"),
   maintenanceUseStandardText: document.getElementById("maintenanceUseStandardText"),
   maintenanceCustomCommentWrap: document.getElementById("maintenanceCustomCommentWrap"),
-  maintenanceCustomComment: document.getElementById("maintenanceCustomComment"),
+  maintenanceCustomCommentPl: document.getElementById("maintenanceCustomCommentPl"),
+  maintenanceCustomCommentEn: document.getElementById("maintenanceCustomCommentEn"),
+  maintenanceCustomCommentUk: document.getElementById("maintenanceCustomCommentUk"),
   modeStatus: document.getElementById("modeStatus"),
   modeStatusValue: document.getElementById("modeStatusValue"),
   toast: document.getElementById("toast"),
@@ -820,14 +822,15 @@ function applyState(state) {
   setMode(mode === "off" ? "message" : mode);
   
   if (els.maintenanceUseStandardText) {
-    els.maintenanceUseStandardText.checked = state?.useStandardText ?? (state?.customComment ? false : true);
+    els.maintenanceUseStandardText.checked = state?.useStandardText ?? (state?.customComments?.pl || state?.customComments?.en || state?.customComments?.uk ? false : true);
     if (els.maintenanceCustomCommentWrap) {
       els.maintenanceCustomCommentWrap.hidden = els.maintenanceUseStandardText.checked;
     }
   }
-  if (els.maintenanceCustomComment) {
-    els.maintenanceCustomComment.value = state?.customComment || "";
-  }
+  
+  if (els.maintenanceCustomCommentPl) els.maintenanceCustomCommentPl.value = state?.customComments?.pl || "";
+  if (els.maintenanceCustomCommentEn) els.maintenanceCustomCommentEn.value = state?.customComments?.en || "";
+  if (els.maintenanceCustomCommentUk) els.maintenanceCustomCommentUk.value = state?.customComments?.uk || "";
 
   if (state?.returnAt) {
     const date = new Date(state.returnAt);
@@ -842,15 +845,19 @@ function applyState(state) {
   updateModeStatus(state);
   updateReturnPreview();
 }
-
 function buildPayload() {
   const common = {
     enabled: true,
     useStandardText: els.maintenanceUseStandardText?.checked ?? true,
-    customComment: els.maintenanceCustomComment?.value || null
+    customComments: {
+      pl: els.maintenanceCustomCommentPl?.value || null,
+      en: els.maintenanceCustomCommentEn?.value || null,
+      uk: els.maintenanceCustomCommentUk?.value || null
+    }
   };
 
   if (currentMode === "message") {
+...
     return { ...common, mode: "message", returnAt: null };
   }
   if (currentMode === "returnAt") {
@@ -933,10 +940,15 @@ async function openMaintenancePreview() {
 
   // Build preview HTML
   const useStandard = els.maintenanceUseStandardText?.checked ?? true;
-  const customCommentRaw = els.maintenanceCustomComment?.value || "";
-  
-  const state = currentState || {};
-  const mode = currentMode || state.mode || "message";
+
+  // Get language to preview based on current UI language
+  const currentUiLang = (getUiLang() || "pl").toLowerCase();
+  let customCommentRaw = "";
+  if (currentUiLang.startsWith("pl")) customCommentRaw = els.maintenanceCustomCommentPl?.value || "";
+  else if (currentUiLang.startsWith("uk")) customCommentRaw = els.maintenanceCustomCommentUk?.value || "";
+  else customCommentRaw = els.maintenanceCustomCommentEn?.value || "";
+
+  const state = currentState || {};  const mode = currentMode || state.mode || "message";
   const returnAtValue = (mode === "returnAt") ? getFieldValue("returnAt") : (mode === "countdown" ? getFieldValue("endAt") : null);
   
   let titleText = t("maintenance.title") || "TRWA PRZERWA TECHNICZNA";
@@ -5238,9 +5250,9 @@ function wireEvents() {
       }
     });
   }
-  if (els.maintenanceCustomComment) {
-    els.maintenanceCustomComment.addEventListener("input", markDirty);
-  }
+  if (els.maintenanceCustomCommentPl) els.maintenanceCustomCommentPl.addEventListener("input", markDirty);
+  if (els.maintenanceCustomCommentEn) els.maintenanceCustomCommentEn.addEventListener("input", markDirty);
+  if (els.maintenanceCustomCommentUk) els.maintenanceCustomCommentUk.addEventListener("input", markDirty);
 
   if (els.modeSlider) {
     els.modeSlider.addEventListener("input", () => {

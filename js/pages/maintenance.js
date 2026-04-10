@@ -262,8 +262,16 @@ function renderState(state) {
   const mode = typeof state?.mode === "string" ? state.mode : "message";
   const enabled = typeof state?.enabled === "boolean" ? state.enabled : null;
   const returnAt = parseDate(state?.returnAt);
-  const useStandard = state?.useStandardText ?? (state?.customComment ? false : true);
-  const customComment = state?.customComment || "";
+  const useStandard = state?.useStandardText ?? (state?.customComments?.pl || state?.customComments?.en || state?.customComments?.uk ? false : true);
+  
+  // Select comment based on browser language
+  const userLang = (document.documentElement.lang || "pl").toLowerCase();
+  let customComment = "";
+  if (state?.customComments) {
+    if (userLang.startsWith("pl")) customComment = state.customComments.pl || "";
+    else if (userLang.startsWith("uk")) customComment = state.customComments.uk || "";
+    else customComment = state.customComments.en || "";
+  }
 
   if (enabled === false || mode === "off") {
     redirectNow();
