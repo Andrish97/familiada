@@ -14,8 +14,11 @@ on:
     branches: ["main"]
     paths-ignore:
       - "docs/**"
+      - "searxng/**"
       - "supabase/**"
       - "cloudflare/**"
+      - "scripts/deploy-searxng.sh"
+      - ".github/workflows/deploy-searxng.yml"
       - ".github/workflows/**"
       - "README*"
       - "LICENSE*"

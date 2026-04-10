@@ -1,0 +1,37 @@
+services:
+  # Caddy jako reverse proxy (opcjonalnie, jeśli potrzebujesz SSL na serwerze)
+  # Jeśli używasz Cloudflare Tunnel, możesz pominąć tę sekcję
+  # caddy:
+  #   image: caddy:2-alpine
+  #   container_name: searxng-caddy
+  #   restart: always
+  #   ports:
+  #     - "8080:8080"
+  #   volumes:
+  #     - ./Caddyfile:/etc/caddy/Caddyfile
+  #   depends_on:
+  #     - searxng
+
+  searxng:
+    image: searxng/searxng:latest
+    container_name: searxng
+    restart: always
+    ports:
+      - "8080:8080"
+    volumes:
+      # Konfiguracja SearXNG
+      - ./settings.yml:/etc/searxng/settings.yml:ro
+      # Styl Familiady
+      - ./familiada.css:/etc/searxng/familiada.css:ro
+      # Logo Familiady (opcjonalnie - odkomentuj jeśli masz plik logo.svg)
+      # - ./logo.svg:/usr/local/searxng/searx/static/themes/simple/img/searxng-wordmark.svg:ro
+    environment:
+      - SEARXNG_BASE_URL=https://search.familiada.online/
+      - SEARXNG_SECRET=${SEARXNG_SECRET:-zmien_to_na_dowolny_ciag_32_znakow}
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+      - DAC_OVERRIDE

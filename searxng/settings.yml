@@ -1,0 +1,34 @@
+use_default_settings: true
+
+server:
+  limiter: false
+  secret_key: "zmien_to_na_dowolny_ciag_32_znakow"
+  # Wczytaj styl Familiady
+  extra_css: /etc/searxng/familiada.css
+
+search:
+  formats:
+    - html
+    - json
+
+engines:
+  - name: google
+    engine: google
+    shortcut: g
+    disabled: false
+  - name: bing
+    engine: bing
+    shortcut: b
+    disabled: false
+  - name: duckduckgo
+    engine: duckduckgo
+    shortcut: ddg
+    disabled: false
+  - name: brave
+    engine: brave
+    shortcut: br
+    disabled: false
+  - name: wikipedia
+    engine: wikipedia
+    shortcut: wp
+    disabled: false

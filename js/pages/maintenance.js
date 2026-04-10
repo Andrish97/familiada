@@ -22,6 +22,8 @@ const els = {
   title: document.getElementById("title"),
   description: document.getElementById("description"),
   countdown: document.getElementById("countdown"),
+  standardContent: document.getElementById("standardContent"),
+  customContent: document.getElementById("customContent"),
 };
 
 let countdownTimer = null;
@@ -30,6 +32,10 @@ let lastState = null;
 
 function setText(el, text) {
   if (el) el.textContent = text;
+}
+
+function setHtml(el, html) {
+  if (el) el.innerHTML = html;
 }
 
 function tr(key, fallback) {
@@ -117,7 +123,7 @@ function formatCountdownUk(totalSeconds) {
   if (days > 0) return `${days} ${pluralUk(days, "день", "дні", "днів")}`;
   if (hours > 0) return `${hours} ${pluralUk(hours, "година", "години", "годин")}`;
   if (mins > 0) return `${mins} ${pluralUk(mins, "хвилина", "хвилини", "хвилин")}`;
-  return `${totalSeconds} ${pluralUk(totalSeconds, "секунда", "секунди", "секунд")}`;
+  return `${totalSeconds} ${pluralUk(totalSeconds, "секуnda", "секунди", "секунд")}`;
 }
 
 function formatReturnAt(date) {
@@ -189,39 +195,63 @@ function stopCountdown() {
   }
 }
 
-function updateCountdown(targetDate) {
+function updateCountdown(targetDate, isCountdownMode) {
   if (!targetDate) return false;
   const diff = targetDate.getTime() - Date.now();
-  if (diff <= 0) {
-    setText(els.description, tr("maintenance.countdownDone", FALLBACKS.countdownDone));
-    if (els.countdown) els.countdown.hidden = true;
-    scheduleRedirect();
-    return false;
-  }
-  const formatted = formatCountdownDisplay(diff);
+  
+  const formatted = isCountdownMode ? formatCountdownDisplay(diff) : formatReturnAt(targetDate);
+  
+  // Update all standard elements
   if (els.countdown) {
     els.countdown.hidden = false;
     setText(els.countdown, formatted);
   }
-  setText(
-    els.description,
-    tr("maintenance.countdownText", FALLBACKS.countdownText)
-  );
+  
+  // Update all inline timers
+  const inlines = document.querySelectorAll(".countdown-inline");
+  inlines.forEach(el => setText(el, formatted));
+
+  if (diff <= 0) {
+    if (isCountdownMode) {
+      setText(els.description, tr("maintenance.countdownDone", FALLBACKS.countdownDone));
+      if (els.countdown) els.countdown.hidden = true;
+      scheduleRedirect();
+      return false;
+    }
+  }
+
+  if (isCountdownMode) {
+    setText(
+      els.description,
+      tr("maintenance.countdownText", FALLBACKS.countdownText)
+    );
+  }
+  
   return true;
 }
 
-function startCountdown(targetDate) {
+function startCountdown(targetDate, isCountdownMode) {
   stopCountdown();
   if (!targetDate) return;
-  if (!updateCountdown(targetDate)) return;
+  if (!updateCountdown(targetDate, isCountdownMode)) return;
   countdownTimer = setInterval(() => {
-    if (!updateCountdown(targetDate)) {
+    if (!updateCountdown(targetDate, isCountdownMode)) {
       stopCountdown();
     }
   }, 1000);
 }
 
+function esc(str) {
+  return String(str ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 function renderFallback() {
+  if (els.standardContent) els.standardContent.hidden = false;
+  if (els.customContent) els.customContent.hidden = true;
   setText(els.title, tr("maintenance.messageTitle", FALLBACKS.messageTitle));
   setText(els.description, tr("maintenance.messageText", FALLBACKS.messageText));
   if (els.countdown) els.countdown.hidden = true;
@@ -232,52 +262,76 @@ function renderState(state) {
   const mode = typeof state?.mode === "string" ? state.mode : "message";
   const enabled = typeof state?.enabled === "boolean" ? state.enabled : null;
   const returnAt = parseDate(state?.returnAt);
+  const useStandard = state?.useStandardText ?? (state?.customComment ? false : true);
+  const customComment = state?.customComment || "";
 
   if (enabled === false || mode === "off") {
     redirectNow();
     return;
   }
 
-  if (els.countdown) els.countdown.hidden = true;
+  stopCountdown();
 
-  const titleText = tr("maintenance.title", FALLBACKS.messageTitle);
-  if (mode === "message") {
-    setText(els.title, titleText);
-    setText(els.description, tr("maintenance.messageText", FALLBACKS.messageText));
-    stopCountdown();
-    return;
-  }
+  if (useStandard) {
+    if (els.standardContent) els.standardContent.hidden = false;
+    if (els.customContent) els.customContent.hidden = true;
+    
+    if (els.countdown) els.countdown.hidden = true;
 
-  if (mode === "returnAt") {
-    setText(els.title, titleText);
-    setText(els.description, tr("maintenance.returnAtText", FALLBACKS.returnAtText));
-    if (els.countdown) {
-      els.countdown.hidden = false;
-      setText(els.countdown, returnAt ? formatReturnAt(returnAt) : "—");
+    const titleText = tr("maintenance.title", FALLBACKS.messageTitle);
+    if (mode === "message") {
+      setText(els.title, titleText);
+      setText(els.description, tr("maintenance.messageText", FALLBACKS.messageText));
+      return;
     }
-    stopCountdown();
-    return;
-  }
 
-  if (mode === "countdown") {
-    setText(els.title, titleText);
-    if (returnAt && returnAt.getTime() > Date.now()) {
-      startCountdown(returnAt);
-    } else if (returnAt) {
-      setText(els.description, tr("maintenance.countdownDone", FALLBACKS.countdownDone));
-      if (els.countdown) els.countdown.hidden = true;
-      scheduleRedirect();
-      stopCountdown();
-    } else {
-      setText(
-        els.description,
-        tr("maintenance.countdownText", FALLBACKS.countdownText).replace("{countdown}", "00:00:00")
-      );
+    if (mode === "returnAt") {
+      setText(els.title, titleText);
+      setText(els.description, tr("maintenance.returnAtText", FALLBACKS.returnAtText));
       if (els.countdown) {
         els.countdown.hidden = false;
-        setText(els.countdown, "00:00:00");
+        setText(els.countdown, returnAt ? formatReturnAt(returnAt) : "—");
       }
-      stopCountdown();
+      return;
+    }
+
+    if (mode === "countdown") {
+      setText(els.title, titleText);
+      if (returnAt && returnAt.getTime() > Date.now()) {
+        startCountdown(returnAt, true);
+      } else if (returnAt) {
+        setText(els.description, tr("maintenance.countdownDone", FALLBACKS.countdownDone));
+        if (els.countdown) els.countdown.hidden = true;
+        scheduleRedirect();
+      } else {
+        setText(
+          els.description,
+          tr("maintenance.countdownText", FALLBACKS.countdownText).replace("{countdown}", "00:00:00")
+        );
+        if (els.countdown) {
+          els.countdown.hidden = false;
+          setText(els.countdown, "00:00:00");
+        }
+      }
+      return;
+    }
+  } else {
+    // Custom content
+    if (els.standardContent) els.standardContent.hidden = true;
+    if (els.customContent) {
+      els.customContent.hidden = false;
+      
+      let html = esc(customComment).replace(/\n/g, "<br>");
+      if (html.includes("#timer")) {
+        html = html.replace("#timer", '<span class="countdown-inline">—</span>');
+      }
+      els.customContent.innerHTML = `<div class="custom-maintenance-content">${html}</div>`;
+      
+      if (customComment.includes("#timer")) {
+        if (mode === "countdown" || mode === "returnAt") {
+          startCountdown(returnAt, mode === "countdown");
+        }
+      }
     }
   }
 }

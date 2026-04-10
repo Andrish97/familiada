@@ -1,0 +1,46 @@
+name: Deploy SearXNG
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "searxng/**"
+      - ".github/workflows/deploy-searxng.yml"
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup SSH key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SEARXNG_SSH_KEY }}
+
+      - name: Add host to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.SEARXNG_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy SearXNG via SSH
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SEARXNG_USER }}@${{ secrets.SEARXNG_HOST }} "
+            cd ${{ secrets.SEARXNG_DIR }}
+
+            # Pull repo changes if using git, or just restart
+            if [ -d '.git' ]; then
+              git pull origin main || true
+            fi
+
+            # Pull latest images and restart
+            docker compose pull
+            docker compose up -d --remove-orphans
+
+            echo '✅ SearXNG restarted'
+            docker ps --filter name=searxng --format 'table {{.Names}}\t{{.Status}}'
+          "

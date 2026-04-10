@@ -61,6 +61,19 @@
   color: var(--gold);
 }
 
+.custom-maintenance-content {
+  font-size: 18px;
+  line-height: 1.6;
+  opacity: 0.95;
+  white-space: normal;
+}
+
+.countdown-inline {
+  font-weight: 900;
+  color: var(--gold);
+  letter-spacing: 0.05em;
+}
+
 @media (max-width: 600px) {
   .maintenance-card {
     padding: 24px 18px;

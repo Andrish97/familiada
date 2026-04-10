@@ -127,9 +127,16 @@
           </div>
 
           <div class="field" style="margin-top:16px">
+            <label class="cb-label">
+              <input type="checkbox" id="maintenanceUseStandardText" checked />
+              <span class="cb-text" data-i18n="settings.maintenance.useStandardText">Standardowy tekst dla każdego z trybów</span>
+            </label>
+          </div>
+
+          <div class="field" id="maintenanceCustomCommentWrap" style="margin-top:12px" hidden>
             <span class="field-label field-title" data-i18n="settings.maintenance.customCommentTitle">Własny komentarz</span>
             <textarea class="inp" id="maintenanceCustomComment" rows="3" placeholder="Dodatkowa informacja dla użytkowników..." data-i18n-placeholder="settings.maintenance.customCommentPlaceholder" style="resize:vertical"></textarea>
-            <span class="field-hint" data-i18n="settings.maintenance.customCommentHint">Opcjonalny tekst, który pojawi się na stronie maintenance.</span>
+            <span class="field-hint" data-i18n="settings.maintenance.customCommentHint">Użyj #timer, aby wstawić odliczanie/czas powrotu.</span>
           </div>
 
           <div class="field" style="margin-top:12px">

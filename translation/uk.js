@@ -4042,6 +4042,12 @@ const uk = {
       quickMessage: "Message ON",
       quickReturnAt: "ReturnAt",
       quickCountdown: "Countdown",
+      useStandardText: "Стандартний текст для кожного з режимів",
+      customCommentTitle: "Власний коментар",
+      customCommentPlaceholder: "Додаткова інформація для користувачів...",
+      customCommentHint: "Використовуйте #timer, щоб вставити відлік/час повернення.",
+      previewBtn: "👁 Попередній перегляд сторінки maintenance",
+      previewTitleModal: "Попередній перегляд сторінки maintenance",
     },
     preview: {
       label: "Попередній перегляд",

@@ -115,6 +115,9 @@ const els = {
   statHealthMails: document.getElementById("statHealthMails"),
   statsUpdateTs: document.getElementById("statsUpdateTs"),
   maintenanceControls: document.getElementById("maintenanceControls"),
+  maintenanceUseStandardText: document.getElementById("maintenanceUseStandardText"),
+  maintenanceCustomCommentWrap: document.getElementById("maintenanceCustomCommentWrap"),
+  maintenanceCustomComment: document.getElementById("maintenanceCustomComment"),
   modeStatus: document.getElementById("modeStatus"),
   modeStatusValue: document.getElementById("modeStatusValue"),
   toast: document.getElementById("toast"),
@@ -815,6 +818,17 @@ function applyState(state) {
   currentState = state;
   const mode = state?.mode || "message";
   setMode(mode === "off" ? "message" : mode);
+  
+  if (els.maintenanceUseStandardText) {
+    els.maintenanceUseStandardText.checked = state?.useStandardText ?? (state?.customComment ? false : true);
+    if (els.maintenanceCustomCommentWrap) {
+      els.maintenanceCustomCommentWrap.hidden = els.maintenanceUseStandardText.checked;
+    }
+  }
+  if (els.maintenanceCustomComment) {
+    els.maintenanceCustomComment.value = state?.customComment || "";
+  }
+
   if (state?.returnAt) {
     const date = new Date(state.returnAt);
     setFieldValue("returnAt", date);
@@ -830,18 +844,24 @@ function applyState(state) {
 }
 
 function buildPayload() {
+  const common = {
+    enabled: true,
+    useStandardText: els.maintenanceUseStandardText?.checked ?? true,
+    customComment: els.maintenanceCustomComment?.value || null
+  };
+
   if (currentMode === "message") {
-    return { enabled: true, mode: "message", returnAt: null };
+    return { ...common, mode: "message", returnAt: null };
   }
   if (currentMode === "returnAt") {
     const date = getFieldValue("returnAt");
-    return { enabled: true, mode: "returnAt", returnAt: date ? date.toISOString() : null };
+    return { ...common, mode: "returnAt", returnAt: date ? date.toISOString() : null };
   }
   if (currentMode === "countdown") {
     const date = getFieldValue("endAt");
-    return { enabled: true, mode: "countdown", returnAt: date ? date.toISOString() : null };
+    return { ...common, mode: "countdown", returnAt: date ? date.toISOString() : null };
   }
-  return { enabled: true, mode: "message", returnAt: null };
+  return { ...common, mode: "message", returnAt: null };
 }
 
 function formatCountdownDisplay(ms) {
@@ -912,24 +932,56 @@ async function openMaintenancePreview() {
   if (!overlay || !frame) return;
 
   // Build preview HTML
-  const customComment = document.getElementById("maintenanceCustomComment")?.value || "";
+  const useStandard = els.maintenanceUseStandardText?.checked ?? true;
+  const customCommentRaw = els.maintenanceCustomComment?.value || "";
+  
   const state = currentState || {};
+  const mode = currentMode || state.mode || "message";
+  const returnAtValue = (mode === "returnAt") ? getFieldValue("returnAt") : (mode === "countdown" ? getFieldValue("endAt") : null);
   
-  let messageText = t("maintenance.messageText") || "System jest chwilowo niedostępny. Za moment wszystko wróci do normy.";
   let titleText = t("maintenance.title") || "TRWA PRZERWA TECHNICZNA";
+  let messageText = t("maintenance.messageText") || "System jest chwilowo niedostępny. Za moment wszystko wróci do normy.";
   
-  if (state.mode === "returnAt" && state.returnAt) {
+  if (mode === "returnAt" && returnAtValue) {
     titleText = t("maintenance.returnAtTitle") || titleText;
-    const date = new Date(state.returnAt);
-    messageText = t("maintenance.returnAtText")?.replace("{returnAt}", formatReturnAtValue(date)) || `Powrót o ${formatReturnAtValue(date)}`;
-  } else if (state.mode === "countdown" && state.returnAt) {
+    messageText = t("maintenance.returnAtText")?.replace("{returnAt}", formatReturnAtValue(returnAtValue)) || `Powrót o ${formatReturnAtValue(returnAtValue)}`;
+  } else if (mode === "countdown" && returnAtValue) {
     titleText = t("maintenance.countdownTitle") || titleText;
     messageText = t("maintenance.countdownText") || "System wróci za: {countdown}";
   }
 
-  const commentHtml = customComment 
-    ? `<p style="margin-top:12px;opacity:.85;font-size:14px;line-height:1.5">${escSetting(customComment)}</p>`
-    : "";
+  let finalContentHtml = "";
+  if (useStandard) {
+    finalContentHtml = `
+      <h1>${escSetting(titleText)}</h1>
+      <p>${escSetting(messageText)}</p>
+      <div class="countdown" id="countdown" ${mode === "countdown" || mode === "returnAt" ? "" : "hidden"}>
+        ${mode === "countdown" ? "00:00:00" : (returnAtValue ? formatReturnAtValue(returnAtValue) : "—")}
+      </div>
+    `;
+  } else {
+    // Custom text logic
+    let customHtml = escSetting(customCommentRaw).replace(/\n/g, "<br>");
+    
+    // Replace #timer
+    if (customHtml.includes("#timer")) {
+      let timerReplacement = "";
+      if (mode === "countdown") {
+        timerReplacement = '<span class="countdown-inline">00:00:00</span>';
+      } else if (mode === "returnAt" && returnAtValue) {
+        timerReplacement = `<span class="countdown-inline">${formatReturnAtValue(returnAtValue)}</span>`;
+      } else {
+        timerReplacement = ""; // or some placeholder if no time
+      }
+      customHtml = customHtml.replace("#timer", timerReplacement);
+    }
+    
+    finalContentHtml = `
+      <div class="custom-maintenance-content">
+        ${customHtml}
+      </div>
+    `;
+  }
 
   const previewHtml = `<!DOCTYPE html>
 <html lang="pl">
@@ -938,7 +990,11 @@ async function openMaintenancePreview() {
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <link rel="stylesheet" href="/css/base.css"/>
   <link rel="stylesheet" href="/css/maintenance.css"/>
-  <style>body{margin:0;padding:0}</style>
+  <style>
+    body{margin:0;padding:0}
+    .custom-maintenance-content { font-size: 18px; line-height: 1.6; opacity: 0.9; }
+    .countdown-inline { font-weight: bold; color: var(--gold); }
+  </style>
 </head>
 <body class="maintenance-body">
   <header class="topbar topbar-layout-4 topbar-mobile-keep-brand">
@@ -950,10 +1006,7 @@ async function openMaintenancePreview() {
   <main class="maintenance-main">
     <section class="maintenance-card" role="status" aria-live="polite">
       <div class="card-top">
-        <h1>${escSetting(titleText)}</h1>
-        <p>${escSetting(messageText)}</p>
-        ${commentHtml}
-        <div class="countdown" id="countdown" hidden>00:00:00</div>
+        ${finalContentHtml}
       </div>
     </section>
   </main>
@@ -5175,6 +5228,18 @@ function wireEvents() {
   }
   if (els.modeSlider) {
     els.modeSlider.addEventListener("input", markDirty);
+  }
+
+  if (els.maintenanceUseStandardText) {
+    els.maintenanceUseStandardText.addEventListener("change", () => {
+      markDirty();
+      if (els.maintenanceCustomCommentWrap) {
+        els.maintenanceCustomCommentWrap.hidden = els.maintenanceUseStandardText.checked;
+      }
+    });
+  }
+  if (els.maintenanceCustomComment) {
+    els.maintenanceCustomComment.addEventListener("input", markDirty);
   }
 
   if (els.modeSlider) {
