@@ -5,42 +5,38 @@ on:
     branches: ["main"]
     paths:
       - "searxng/**"
-      - ".github/workflows/deploy-searxng.yml"
   workflow_dispatch: {}
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
 
     steps:
-      - name: Checkout
+      - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Setup SSH key
+      - name: Setup SSH
         uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.SEARXNG_SSH_KEY }}
 
-      - name: Add host to known_hosts
+      - name: Add Host to Known Hosts
+        run: ssh-keyscan -H panel.familiada.online >> ~/.ssh/known_hosts
+
+      - name: Sync SearXNG folder
         run: |
-          mkdir -p ~/.ssh
-          ssh-keyscan -H ${{ secrets.SEARXNG_HOST }} >> ~/.ssh/known_hosts
+          rsync -avz \
+            --exclude '.DS_Store' \
+            --exclude 'docker-compose.yml' \
+            --exclude '.env' \
+            searxng/ \
+            andrish97@panel.familiada.online:/home/andrish97/supabase-selfhost/supabase/docker/searxng/
 
-      - name: Deploy SearXNG via SSH
+      - name: Restart Container
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SEARXNG_USER }}@${{ secrets.SEARXNG_HOST }} "
-            cd ${{ secrets.SEARXNG_DIR }}
-
-            # Pull repo changes if using git, or just restart
-            if [ -d '.git' ]; then
-              git pull origin main || true
-            fi
-
-            # Pull latest images and restart
-            docker compose pull
-            docker compose up -d --remove-orphans
-
+          ssh andrish97@panel.familiada.online "
+            cd /home/andrish97/supabase-selfhost/supabase/docker
+            docker compose restart searxng
             echo '✅ SearXNG restarted'
-            docker ps --filter name=searxng --format 'table {{.Names}}\t{{.Status}}'
           "
