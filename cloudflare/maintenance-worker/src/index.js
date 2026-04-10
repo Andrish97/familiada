@@ -90,23 +90,17 @@ export default {
 
     // Search host with hidden API Key check
     if (host === "search.familiada.online") {
-      // 1. Zezwól na pliki statyczne (CSS/JS/obrazki) bez klucza, żeby 404 działała
-      const ext = url.pathname.split('.').pop().toLowerCase();
-      const isStatic = ['css', 'js', 'png', 'jpg', 'jpeg', 'gif', 'svg', 'ico', 'woff', 'woff2', 'ttf', 'map'].includes(ext);
-      if (isStatic) {
-        return fetchFromOrigin(request, url, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
-      }
-
       const apiKey = url.searchParams.get("key");
-      // 2. Jeśli nie ma poprawnego klucza -> zwróć firmową 404
+      
+      // Jeśli nie ma poprawnego klucza -> zwróć firmową 404 Familiady
       if (apiKey !== "9v0PUYmyIkkrchto197Jx1hNZbvaHjsC") {
         return serveNotFoundPage(request, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
       }
 
-      // 3. Obsługa przekierowań - klucz musi podróżować z każdym 301/302
-      url.searchParams.delete("key"); // czyścimy przed wysłaniem
+      // Z kluczem: przekazuj WSZYSTKO (również statyczne) przez Tunel do Caddy/SearXNG
+      url.searchParams.delete("key");
       
-      // Funkcja rekurencyjnie przechodząca przez łańcuch przekierowań
+      // Funkcja przechwytująca przekierowania i doklejająca klucz
       const followWithKey = async (currentUrl, currentKey) => {
         const res = await fetch(new Request(currentUrl, request), { redirect: "manual" });
         
@@ -114,7 +108,6 @@ export default {
           const loc = res.headers.get("Location");
           if (loc) {
             const nextUrl = new URL(loc, currentUrl);
-            // Doklej klucz z powrotem, jeśli to nasza domena
             if (nextUrl.hostname === "search.familiada.online") {
               nextUrl.searchParams.set("key", currentKey);
             }
