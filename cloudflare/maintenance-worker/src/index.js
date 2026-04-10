@@ -88,36 +88,62 @@ export default {
       return fetch(request);
     }
 
-    // Search host with hidden API Key check
+    // Search host - Bramka z kluczem i wstrzykiwaniem go do HTML
     if (host === "search.familiada.online") {
       const apiKey = url.searchParams.get("key");
-      
-      // Jeśli nie ma poprawnego klucza -> zwróć firmową 404 Familiady
-      if (apiKey !== "9v0PUYmyIkkrchto197Jx1hNZbvaHjsC") {
+      const validKey = (apiKey === "9v0PUYmyIkkrchto197Jx1hNZbvaHjsC");
+
+      // 1. Bramka: Wszędzie wymagamy klucza (nawet dla plików .css/.js)
+      if (!validKey) {
         return serveNotFoundPage(request, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
       }
 
-      // Z kluczem: przekazuj WSZYSTKO (również statyczne) przez Tunel do Caddy/SearXNG
+      // 2. USUWANIE: Zanim zapytamy serwer, kasujemy klucz z URL
       url.searchParams.delete("key");
-      
-      // Funkcja przechwytująca przekierowania i doklejająca klucz
-      const followWithKey = async (currentUrl, currentKey) => {
-        const res = await fetch(new Request(currentUrl, request), { redirect: "manual" });
+
+      // 3. Pobieramy treść (obsługując przekierowania)
+      const fetchRecursive = async (targetUrl) => {
+        const res = await fetch(new Request(targetUrl, request), { redirect: "manual" });
         
+        // Jeśli serwer chce przekierować, musimy dokleić klucz do nowego adresu
         if ([301, 302, 303, 307, 308].includes(res.status)) {
           const loc = res.headers.get("Location");
           if (loc) {
-            const nextUrl = new URL(loc, currentUrl);
-            if (nextUrl.hostname === "search.familiada.online") {
-              nextUrl.searchParams.set("key", currentKey);
-            }
-            return followWithKey(nextUrl, currentKey);
+            const nextUrl = new URL(loc, targetUrl);
+            nextUrl.searchParams.set("key", apiKey); 
+            return fetchRecursive(nextUrl);
           }
         }
         return res;
       };
 
-      return followWithKey(url, apiKey);
+      let response = await fetchRecursive(url);
+
+      // 4. DODAWANIE: Jeśli to HTML, Cloudflare edytuje go i dokleja klucz do linków
+      // Dzięki temu przeglądarka, widząc <link href="/style.css">, dostanie
+      // zmodyfikowane <link href="/style.css?key=XXX"> i załaduje styl bez błędów.
+      if (response.headers.get("content-type")?.includes("text/html")) {
+        return new HTMLRewriter()
+          .on("[href]", {
+            element(el) {
+              const val = el.getAttribute("href");
+              if (val && val.startsWith("/")) {
+                el.setAttribute("href", val + (val.includes("?") ? "&" : "?") + "key=" + apiKey);
+              }
+            }
+          })
+          .on("[src]", {
+            element(el) {
+              const val = el.getAttribute("src");
+              if (val && val.startsWith("/")) {
+                el.setAttribute("src", val + (val.includes("?") ? "&" : "?") + "key=" + apiKey);
+              }
+            }
+          })
+          .transform(response);
+      }
+
+      return response;
     }
 
     // Unknown subdomains: 404 when maintenance OFF, maintenance page when ON
