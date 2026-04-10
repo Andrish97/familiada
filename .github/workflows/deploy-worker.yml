@@ -6,9 +6,6 @@ on:
     paths:
       - "cloudflare/**"
       - ".github/workflows/deploy-worker.yml"
-    paths-ignore:
-      - "searxng/**"
-      - "supabase/**"
   workflow_dispatch: {}
 
 jobs:

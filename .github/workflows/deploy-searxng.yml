@@ -13,30 +13,34 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      - name: Checkout repo
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup SSH
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.SEARXNG_SSH_KEY }}
-
-      - name: Add Host to Known Hosts
-        run: ssh-keyscan -H panel.familiada.online >> ~/.ssh/known_hosts
-
-      - name: Sync SearXNG folder
+      - name: Install rsync + ssh
         run: |
-          rsync -avz \
+          sudo apt-get update
+          sudo apt-get install -y rsync openssh-client
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "${{ secrets.SERVER_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Sync SearXNG config to server
+        run: |
+          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
+            "mkdir -p /home/${{ secrets.SERVER_USER }}/.deploy/searxng/${{ github.sha }}"
+
+          rsync -az --delete --checksum \
             --exclude '.DS_Store' \
-            --exclude 'docker-compose.yml' \
-            --exclude '.env' \
+            -e "ssh -i ~/.ssh/id_ed25519" \
             searxng/ \
-            andrish97@panel.familiada.online:/home/andrish97/supabase-selfhost/supabase/docker/searxng/
+            "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/.deploy/searxng/${{ github.sha }}/"
 
-      - name: Restart Container
+      - name: Run deploy script (server-side)
         run: |
-          ssh andrish97@panel.familiada.online "
-            cd /home/andrish97/supabase-selfhost/supabase/docker
-            docker compose restart searxng
-            echo '✅ SearXNG restarted'
-          "
+          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
+            "/home/${{ secrets.SERVER_USER }}/supabase-selfhost/supabase/scripts/deploy-searxng.sh /home/${{ secrets.SERVER_USER }}/.deploy/searxng/${{ github.sha }}"
