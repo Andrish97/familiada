@@ -89,6 +89,18 @@ export default {
       return fetch(request);
     }
 
+    // AI Endpoint - protected by Authorization header
+    if (host === "ai.familiada.online") {
+      const authHeader = request.headers.get("Authorization") || "";
+      const expectedKey = env.AI_API_KEY ? `Bearer ${env.AI_API_KEY}` : "";
+
+      if (authHeader === expectedKey && expectedKey !== "") {
+        return fetch(request); // Klucz OK -> przepuść do Ollama/Caddy
+      }
+      // Brak klucza -> standardowe 404 Familiady
+      return serveNotFoundPage(request, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
+    }
+
     // Unknown subdomains: 404 when maintenance OFF, maintenance page when ON
     if (host.endsWith(".familiada.online") && !isKnownHost(host)) {
       if (isCommonAsset(url.pathname)) {
