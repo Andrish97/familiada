@@ -90,19 +90,41 @@ export default {
 
     // Search host with hidden API Key check
     if (host === "search.familiada.online") {
-      // Przepuszczaj pliki statyczne (CSS/JS/ikony), żeby strona 404 wyglądała poprawnie
-      if (isCommonAsset(url.pathname)) {
+      // 1. Zezwól na pliki statyczne (CSS/JS/obrazki) bez klucza, żeby 404 działała
+      const ext = url.pathname.split('.').pop().toLowerCase();
+      const isStatic = ['css', 'js', 'png', 'jpg', 'jpeg', 'gif', 'svg', 'ico', 'woff', 'woff2', 'ttf', 'map'].includes(ext);
+      if (isStatic) {
         return fetchFromOrigin(request, url, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
       }
 
       const apiKey = url.searchParams.get("key");
-      // Jeśli nie ma klucza -> serwuj firmową stronę 404 Familiady
+      // 2. Jeśli nie ma poprawnego klucza -> zwróć firmową 404
       if (apiKey !== "9v0PUYmyIkkrchto197Jx1hNZbvaHjsC") {
         return serveNotFoundPage(request, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
       }
-      // Usuń klucz z URL zanim przekażemy do serwera
-      url.searchParams.delete("key");
-      return fetch(new Request(url, request));
+
+      // 3. Obsługa przekierowań - klucz musi podróżować z każdym 301/302
+      url.searchParams.delete("key"); // czyścimy przed wysłaniem
+      
+      // Funkcja rekurencyjnie przechodząca przez łańcuch przekierowań
+      const followWithKey = async (currentUrl, currentKey) => {
+        const res = await fetch(new Request(currentUrl, request), { redirect: "manual" });
+        
+        if ([301, 302, 303, 307, 308].includes(res.status)) {
+          const loc = res.headers.get("Location");
+          if (loc) {
+            const nextUrl = new URL(loc, currentUrl);
+            // Doklej klucz z powrotem, jeśli to nasza domena
+            if (nextUrl.hostname === "search.familiada.online") {
+              nextUrl.searchParams.set("key", currentKey);
+            }
+            return followWithKey(nextUrl, currentKey);
+          }
+        }
+        return res;
+      };
+
+      return followWithKey(url, apiKey);
     }
 
     // Unknown subdomains: 404 when maintenance OFF, maintenance page when ON
