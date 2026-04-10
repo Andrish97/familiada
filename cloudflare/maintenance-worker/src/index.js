@@ -90,6 +90,14 @@ export default {
 
     // Search host with hidden API Key check
     if (host === "search.familiada.online") {
+      // Przepuszczaj pliki statyczne (CSS/JS/Obrazki), żeby strona 404 wyglądała poprawnie
+      const ext = url.pathname.split('.').pop().toLowerCase();
+      const isStatic = ['css', 'js', 'png', 'jpg', 'jpeg', 'gif', 'svg', 'ico', 'woff', 'woff2', 'ttf', 'map'].includes(ext);
+      
+      if (isStatic) {
+        return fetch(new Request(url, request));
+      }
+
       const apiKey = url.searchParams.get("key");
       // Jeśli nie ma klucza -> serwuj firmową stronę 404 Familiady
       if (apiKey !== "9v0PUYmyIkkrchto197Jx1hNZbvaHjsC") {
