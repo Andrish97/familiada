@@ -88,29 +88,34 @@ export default {
       return fetch(request);
     }
 
-    // Search host - Bramka z kluczem i wstrzykiwaniem go do HTML
+    // Search host - Bramka z kluczem i naprawą JS
     if (host === "search.familiada.online") {
       const apiKey = url.searchParams.get("key");
-      const validKey = (apiKey === "9v0PUYmyIkkrchto197Jx1hNZbvaHjsC");
+      
+      // 0. Sprawdzenie czy to plik statyczny (żeby strona 404 miała style/obrazki)
+      const ext = url.pathname.split('.').pop().toLowerCase();
+      const isStaticAsset = ['css', 'js', 'png', 'jpg', 'jpeg', 'gif', 'svg', 'ico', 'woff', 'woff2', 'ttf', 'map', 'webp'].includes(ext);
 
-      // 1. Bramka: Wszędzie wymagamy klucza (nawet dla plików .css/.js)
-      if (!validKey) {
+      // 1. Jeśli to plik statyczny -> przepuść (żeby strona 404 działała)
+      if (isStaticAsset) {
+        return fetch(new Request(url, request));
+      }
+
+      // 2. Bramka główna: Wszędzie indziej (strony HTML, API) wymagamy klucza
+      if (apiKey !== "9v0PUYmyIkkrchto197Jx1hNZbvaHjsC") {
         return serveNotFoundPage(request, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
       }
 
-      // 2. USUWANIE: Zanim zapytamy serwer, kasujemy klucz z URL
-      url.searchParams.delete("key");
-
-      // 3. Pobieramy treść (obsługując przekierowania)
+      // 3. Pobieramy treść (obsługując przekierowania) - usuwamy klucz przed wysłaniem
+      url.searchParams.delete("key"); 
+      
       const fetchRecursive = async (targetUrl) => {
         const res = await fetch(new Request(targetUrl, request), { redirect: "manual" });
-        
-        // Jeśli serwer chce przekierować, musimy dokleić klucz do nowego adresu
         if ([301, 302, 303, 307, 308].includes(res.status)) {
           const loc = res.headers.get("Location");
           if (loc) {
             const nextUrl = new URL(loc, targetUrl);
-            nextUrl.searchParams.set("key", apiKey); 
+            nextUrl.searchParams.set("key", apiKey); // doklej klucz do przekierowania
             return fetchRecursive(nextUrl);
           }
         }
@@ -119,26 +124,36 @@ export default {
 
       let response = await fetchRecursive(url);
 
-      // 4. DODAWANIE: Jeśli to HTML, Cloudflare edytuje go i dokleja klucz do linków
-      // Dzięki temu przeglądarka, widząc <link href="/style.css">, dostanie
-      // zmodyfikowane <link href="/style.css?key=XXX"> i załaduje styl bez błędów.
+      // 4. DODAWANIE: Jeśli to HTML, wstrzykujemy skrypt naprawiający POSTy (dla SearXNG)
       if (response.headers.get("content-type")?.includes("text/html")) {
+        
+        const fixScript = `
+        <script>(function(){
+          var k="${apiKey}";
+          var origFetch=window.fetch;
+          window.fetch=function(){
+            var args=Array.from(arguments);
+            if(typeof args[0]==='string'&&args[0].startsWith('/search')){
+              var u=new URL(args[0],location.href);
+              u.searchParams.set('key',k);
+              args[0]=u.toString();
+            }
+            return origFetch.apply(this,args);
+          };
+          var origOpen=XMLHttpRequest.prototype.open;
+          XMLHttpRequest.prototype.open=function(method, url){
+            if(typeof url==='string'&&url.startsWith('/search')){
+              var u=new URL(url,location.href);
+              u.searchParams.set('key',k);
+              return origOpen.call(this, method, u.toString());
+            }
+            return origOpen.apply(this,arguments);
+          };
+        })();</script>`;
+
         return new HTMLRewriter()
-          .on("[href]", {
-            element(el) {
-              const val = el.getAttribute("href");
-              if (val && val.startsWith("/")) {
-                el.setAttribute("href", val + (val.includes("?") ? "&" : "?") + "key=" + apiKey);
-              }
-            }
-          })
-          .on("[src]", {
-            element(el) {
-              const val = el.getAttribute("src");
-              if (val && val.startsWith("/")) {
-                el.setAttribute("src", val + (val.includes("?") ? "&" : "?") + "key=" + apiKey);
-              }
-            }
+          .on("head", {
+            element(el) { el.append(fixScript, { html: true }); }
           })
           .transform(response);
       }
