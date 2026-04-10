@@ -90,12 +90,9 @@ export default {
 
     // Search host with hidden API Key check
     if (host === "search.familiada.online") {
-      // Przepuszczaj pliki statyczne (CSS/JS/Obrazki), żeby strona 404 wyglądała poprawnie
-      const ext = url.pathname.split('.').pop().toLowerCase();
-      const isStatic = ['css', 'js', 'png', 'jpg', 'jpeg', 'gif', 'svg', 'ico', 'woff', 'woff2', 'ttf', 'map'].includes(ext);
-      
-      if (isStatic) {
-        return fetch(new Request(url, request));
+      // Przepuszczaj pliki statyczne (CSS/JS/ikony), żeby strona 404 wyglądała poprawnie
+      if (isCommonAsset(url.pathname)) {
+        return fetchFromOrigin(request, url, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
       }
 
       const apiKey = url.searchParams.get("key");
