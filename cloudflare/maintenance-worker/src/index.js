@@ -92,47 +92,48 @@ export default {
     if (host === "search.familiada.online") {
       const apiKey = url.searchParams.get("key");
       
-      // 0. Lista bezpiecznych rozszerzeń (CSS/JS/Obrazki/Manifest)
-      const ext = url.pathname.split('.').pop().toLowerCase();
-      const isStaticAsset = ['css', 'js', 'png', 'jpg', 'jpeg', 'gif', 'svg', 'ico', 'woff', 'woff2', 'ttf', 'map', 'webp', 'json'].includes(ext);
-
-      // 1. Przepuść pliki statyczne (żeby strona 404 działała i skrypty się ładowały)
-      if (isStaticAsset) {
-        return fetch(new Request(url, request));
-      }
-
-      // 2. Bramka główna: Wszędzie indziej wymagamy klucza
+      // 1. Bramka: Jeśli nie ma klucza -> zwróć firmową 404 Familiady
       if (apiKey !== "9v0PUYmyIkkrchto197Jx1hNZbvaHjsC") {
-        return serveNotFoundPage(request, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
+        // Sprawdź czy to plik statyczny, który jest potrzebny do wyświetlenia 404 (np. css/js)
+        // Ale jeśli to strona HTML bez klucza -> 404
+        const ext = url.pathname.split('.').pop().toLowerCase();
+        const isStaticAsset = ['css', 'js', 'png', 'jpg', 'jpeg', 'gif', 'svg', 'ico', 'woff', 'woff2', 'ttf', 'map', 'webp', 'json'].includes(ext);
+        if (!isStaticAsset) {
+            return serveNotFoundPage(request, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
+        }
       }
 
-      // 3. Pobieramy treść (obsługując przekierowania)
-      url.searchParams.delete("key"); // usuń klucz przed zapytaniem do serwera
+      // 2. Obsługa przekierowań - klucz musi podróżować z każdym 301/302
+      if (apiKey) url.searchParams.delete("key"); // usuń klucz przed wysłaniem do serwera
       
-      const fetchRecursive = async (targetUrl) => {
+      const follow = async (targetUrl) => {
+        // Jeśli mamy klucz, doklej go z powrotem do adresu, jeśli serwer nas przekierowuje
+        if (apiKey) {
+            targetUrl.searchParams.set("key", apiKey);
+        }
+        
         const res = await fetch(new Request(targetUrl, request), { redirect: "manual" });
+        
+        // Obsługa przekierowań
         if ([301, 302, 303, 307, 308].includes(res.status)) {
           const loc = res.headers.get("Location");
           if (loc) {
             const nextUrl = new URL(loc, targetUrl);
-            nextUrl.searchParams.set("key", apiKey); // doklej klucz do przekierowania
-            return fetchRecursive(nextUrl);
+            return follow(nextUrl);
           }
         }
         return res;
       };
 
-      let response = await fetchRecursive(url);
+      let response = await follow(url);
 
-      // 4. DODAWANIE: Wstrzykujemy skrypt naprawiający POSTy (dla SearXNG)
-      if (response.headers.get("content-type")?.includes("text/html")) {
+      // 3. DODAWANIE: Jeśli to HTML, wstrzykujemy skrypt naprawiający POSTy i dodajemy klucz do linków
+      if (apiKey && response.headers.get("content-type")?.includes("text/html")) {
         
-        // Ulepszony skrypt, który obsługuje też obiekty URL i Request
+        // Skrypt, który przechwytuje fetch/XHR i dokleja klucz do /search
         const fixScript = `
         <script>(function(){
           var k="${apiKey}";
-          
-          // Naprawa fetch
           var _fetch = window.fetch;
           window.fetch = function(resource, init) {
             var urlStr = resource;
@@ -143,15 +144,12 @@ export default {
             if (urlStr && urlStr.startsWith('/search') && urlStr.indexOf('key=') === -1) {
                var u = new URL(urlStr, location.href);
                u.searchParams.set('key', k);
-               if (resource instanceof Request) {
-                  return _fetch(new Request(u.toString(), resource));
-               }
+               if (resource instanceof Request) return _fetch(new Request(u.toString(), resource));
                return _fetch(u.toString(), init);
             }
             return _fetch(resource, init);
           };
 
-          // Naprawa XHR (dla starszych skryptów)
           var _open = XMLHttpRequest.prototype.open;
           XMLHttpRequest.prototype.open = function(method, url) {
              var urlStr = url;
@@ -166,8 +164,24 @@ export default {
         })();</script>`;
 
         return new HTMLRewriter()
+          .on("[href]", {
+            element(el) {
+              const val = el.getAttribute("href");
+              if (val && val.startsWith("/")) {
+                el.setAttribute("href", val + (val.includes("?") ? "&" : "?") + "key=" + apiKey);
+              }
+            }
+          })
+          .on("[src]", {
+            element(el) {
+              const val = el.getAttribute("src");
+              if (val && val.startsWith("/")) {
+                el.setAttribute("src", val + (val.includes("?") ? "&" : "?") + "key=" + apiKey);
+              }
+            }
+          })
           .on("head", {
-            element(el) { el.append(fixScript, { html: true }); }
+            element(el) { el.prepend(fixScript, { html: true }); }
           })
           .transform(response);
       }
@@ -270,7 +284,7 @@ export default {
 
 async function getState(env) {
   const raw = await env.MAINT_KV.get("state");
-  if (!raw) return { enabled: false, mode: "off", returnAt: null };
+  if (!raw) return { enabled: false, mode: "off", returnAt: null, customComment: null, useStandardText: true };
   try {
     const s = JSON.parse(raw);
     // minimal sanity
@@ -278,10 +292,12 @@ async function getState(env) {
     return {
       enabled: s.enabled,
       mode: s.mode || "off",
-      returnAt: s.returnAt ?? null
+      returnAt: s.returnAt ?? null,
+      customComment: s.customComment ?? null,
+      useStandardText: s.useStandardText ?? (s.customComment ? false : true)
     };
   } catch {
-    return { enabled: false, mode: "off", returnAt: null };
+    return { enabled: false, mode: "off", returnAt: null, customComment: null, useStandardText: true };
   }
 }
 
@@ -2954,6 +2970,8 @@ function validateState(body) {
   const enabled = body.enabled;
   const mode = body.mode;
   const returnAt = body.returnAt ?? null;
+  const customComment = body.customComment ?? null;
+  const useStandardText = body.useStandardText ?? (customComment ? false : true);
 
   if (typeof enabled !== "boolean") {
     return { ok: false, error: "Invalid enabled" };
@@ -2968,7 +2986,15 @@ function validateState(body) {
     return { ok: false, error: "Invalid returnAt" };
   }
 
-  return { ok: true, value: { enabled, mode, returnAt } };
+  if (customComment !== null && typeof customComment !== "string") {
+    return { ok: false, error: "Invalid customComment" };
+  }
+
+  if (typeof useStandardText !== "boolean") {
+    return { ok: false, error: "Invalid useStandardText" };
+  }
+
+  return { ok: true, value: { enabled, mode, returnAt, customComment, useStandardText } };
 }
 
 function setAdminBypassCookieForAllDomains(env) {
