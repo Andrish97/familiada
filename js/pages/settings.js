@@ -857,7 +857,6 @@ function buildPayload() {
   };
 
   if (currentMode === "message") {
-...
     return { ...common, mode: "message", returnAt: null };
   }
   if (currentMode === "returnAt") {
