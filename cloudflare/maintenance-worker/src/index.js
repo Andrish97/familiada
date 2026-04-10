@@ -184,20 +184,24 @@ export default {
 
 async function getState(env) {
   const raw = await env.MAINT_KV.get("state");
-  if (!raw) return { enabled: false, mode: "off", returnAt: null, customComment: null, useStandardText: true };
+  if (!raw) return { enabled: false, mode: "off", returnAt: null, customComments: { pl: null, en: null, uk: null }, useStandardText: true };
   try {
     const s = JSON.parse(raw);
     // minimal sanity
     if (typeof s.enabled !== "boolean") throw new Error("bad enabled");
+    
+    // Migration from old single field to object
+    let comments = s.customComments || { pl: s.customComment || null, en: null, uk: null };
+    
     return {
       enabled: s.enabled,
       mode: s.mode || "off",
       returnAt: s.returnAt ?? null,
-      customComment: s.customComment ?? null,
-      useStandardText: s.useStandardText ?? (s.customComment ? false : true)
+      customComments: comments,
+      useStandardText: s.useStandardText ?? (comments.pl || comments.en || comments.uk ? false : true)
     };
   } catch {
-    return { enabled: false, mode: "off", returnAt: null, customComment: null, useStandardText: true };
+    return { enabled: false, mode: "off", returnAt: null, customComments: { pl: null, en: null, uk: null }, useStandardText: true };
   }
 }
 
@@ -2870,8 +2874,8 @@ function validateState(body) {
   const enabled = body.enabled;
   const mode = body.mode;
   const returnAt = body.returnAt ?? null;
-  const customComment = body.customComment ?? null;
-  const useStandardText = body.useStandardText ?? (customComment ? false : true);
+  const customComments = body.customComments ?? { pl: null, en: null, uk: null };
+  const useStandardText = body.useStandardText ?? (customComments.pl || customComments.en || customComments.uk ? false : true);
 
   if (typeof enabled !== "boolean") {
     return { ok: false, error: "Invalid enabled" };
@@ -2886,15 +2890,15 @@ function validateState(body) {
     return { ok: false, error: "Invalid returnAt" };
   }
 
-  if (customComment !== null && typeof customComment !== "string") {
-    return { ok: false, error: "Invalid customComment" };
+  if (typeof customComments !== "object") {
+    return { ok: false, error: "Invalid customComments" };
   }
 
   if (typeof useStandardText !== "boolean") {
     return { ok: false, error: "Invalid useStandardText" };
   }
 
-  return { ok: true, value: { enabled, mode, returnAt, customComment, useStandardText } };
+  return { ok: true, value: { enabled, mode, returnAt, customComments, useStandardText } };
 }
 
 function setAdminBypassCookieForAllDomains(env) {

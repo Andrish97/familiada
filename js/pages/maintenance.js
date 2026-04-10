@@ -272,21 +272,22 @@ function renderState(state) {
 
   stopCountdown();
 
+  // Tytuł zawsze widoczny (pobierany z i18n)
+  const titleText = tr("maintenance.title", FALLBACKS.messageTitle);
+  setText(els.title, titleText);
+
   if (useStandard) {
     if (els.standardContent) els.standardContent.hidden = false;
     if (els.customContent) els.customContent.hidden = true;
     
     if (els.countdown) els.countdown.hidden = true;
 
-    const titleText = tr("maintenance.title", FALLBACKS.messageTitle);
     if (mode === "message") {
-      setText(els.title, titleText);
       setText(els.description, tr("maintenance.messageText", FALLBACKS.messageText));
       return;
     }
 
     if (mode === "returnAt") {
-      setText(els.title, titleText);
       setText(els.description, tr("maintenance.returnAtText", FALLBACKS.returnAtText));
       if (els.countdown) {
         els.countdown.hidden = false;
@@ -296,7 +297,6 @@ function renderState(state) {
     }
 
     if (mode === "countdown") {
-      setText(els.title, titleText);
       if (returnAt && returnAt.getTime() > Date.now()) {
         startCountdown(returnAt, true);
       } else if (returnAt) {
@@ -316,7 +316,7 @@ function renderState(state) {
       return;
     }
   } else {
-    // Custom content
+    // Treść własna
     if (els.standardContent) els.standardContent.hidden = true;
     if (els.customContent) {
       els.customContent.hidden = false;

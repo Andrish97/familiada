@@ -27,20 +27,10 @@ jobs:
           chmod 700 ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -H "${{ secrets.SERVER_HOST }}" >> ~/.ssh/known_hosts
+          # Skrypt nie robi ssh-keyscan, więc musimy to zrobić ręcznie przed jego uruchomieniem
+          ssh-keyscan -H panel.familiada.online >> ~/.ssh/known_hosts
 
-      - name: Sync SearXNG config to server
+      - name: Run Deploy Script
         run: |
-          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
-            "mkdir -p /home/${{ secrets.SERVER_USER }}/.deploy/searxng/${{ github.sha }}"
-
-          rsync -az --delete --checksum \
-            --exclude '.DS_Store' \
-            -e "ssh -i ~/.ssh/id_ed25519" \
-            searxng/ \
-            "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/.deploy/searxng/${{ github.sha }}/"
-
-      - name: Run deploy script (server-side)
-        run: |
-          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
-            "/home/${{ secrets.SERVER_USER }}/supabase-selfhost/supabase/scripts/deploy-searxng.sh /home/${{ secrets.SERVER_USER }}/.deploy/searxng/${{ github.sha }}"
+          chmod +x scripts/deploy-searxng.sh
+          bash scripts/deploy-searxng.sh

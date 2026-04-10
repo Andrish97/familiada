@@ -953,7 +953,6 @@ async function openMaintenancePreview() {
   let finalContentHtml = "";
   if (useStandard) {
     finalContentHtml = `
-      <h1>${escSetting(titleText)}</h1>
       <p>${escSetting(messageText)}</p>
       <div class="countdown" id="countdown" ${mode === "countdown" || mode === "returnAt" ? "" : "hidden"}>
         ${mode === "countdown" ? "00:00:00" : (returnAtValue ? formatReturnAtValue(returnAtValue) : "—")}
@@ -1006,6 +1005,7 @@ async function openMaintenancePreview() {
   <main class="maintenance-main">
     <section class="maintenance-card" role="status" aria-live="polite">
       <div class="card-top">
+        <h1>${escSetting(titleText)}</h1>
         ${finalContentHtml}
       </div>
     </section>
