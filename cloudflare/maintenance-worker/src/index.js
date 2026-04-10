@@ -83,8 +83,7 @@ export default {
     if (
       host === "panel.familiada.online" ||
       host === "supabase.familiada.online" ||
-      host === "api.familiada.online" ||
-      host === "search.familiada.online"
+      host === "api.familiada.online"
     ) {
       return fetch(request);
     }
@@ -95,10 +94,27 @@ export default {
       const expectedKey = env.AI_API_KEY ? `Bearer ${env.AI_API_KEY}` : "";
 
       if (authHeader === expectedKey && expectedKey !== "") {
-        return fetch(request); // Klucz OK -> przepuść do Ollama/Caddy
+        return fetch(request);
       }
-      // Brak klucza -> standardowe 404 Familiady
       return serveNotFoundPage(request, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
+    }
+
+    // Search Endpoint (SearXNG) - protected by Authorization header, JSON only
+    if (host === "search.familiada.online") {
+      const authHeader = request.headers.get("Authorization") || "";
+      const expectedKey = env.AI_API_KEY ? `Bearer ${env.AI_API_KEY}` : "";
+
+      if (authHeader === expectedKey && expectedKey !== "") {
+        // Force JSON mode and pass through
+        const url = new URL(request.url);
+        url.searchParams.set('format', 'json');
+        return fetch(new Request(url.toString(), request));
+      }
+      // Headless API -> return JSON error, no HTML
+      return new Response(JSON.stringify({error: "Unauthorized"}), {
+        status: 401,
+        headers: {"Content-Type": "application/json"}
+      });
     }
 
     // Unknown subdomains: 404 when maintenance OFF, maintenance page when ON
