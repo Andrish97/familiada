@@ -108,15 +108,13 @@ export default {
       return serveNotFoundPage(request, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
     }
 
-    // Search Endpoint (SearXNG) - protected by SEARCH_API_KEY, JSON only
+    // Search Endpoint (SearXNG) - protected by SEARCH_API_KEY
     if (host === "search.familiada.online") {
       const authHeader = request.headers.get("Authorization") || "";
       const expectedKey = env.SEARCH_API_KEY ? `Bearer ${env.SEARCH_API_KEY}` : "";
 
       if (authHeader === expectedKey && expectedKey !== "") {
-        const url = new URL(request.url);
-        url.searchParams.set('format', 'json'); // Wymuś JSON
-        return fetch(new Request(url.toString(), request));
+        return fetch(request); // Przepuść (format wynika z settings.yml na serwerze)
       }
       // Brak klucza -> JSON error (bez HTML)
       return new Response(JSON.stringify({error: "Unauthorized"}), {
