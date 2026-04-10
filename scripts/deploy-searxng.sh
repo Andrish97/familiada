@@ -9,30 +9,31 @@ set -euo pipefail
 LOCAL_DIR="$(cd "$(dirname "$0")/../searxng" && pwd)"
 REMOTE_USER="andrish97"
 REMOTE_HOST="panel.familiada.online"
+REMOTE_SCRIPT="/home/andrish97/supabase-selfhost/supabase/scripts/deploy-searxng.sh"
 
-# Dokładna ścieżka do folderu searxng w Twoim dockerze (bezwzględna)
-REMOTE_SEARXNG_DIR="/home/andrish97/supabase-selfhost/supabase/docker/searxng"
-PARENT_DIR="/home/andrish97/supabase-selfhost/supabase/docker"
+# Staging directory on server (identical pattern to edge functions)
+DEPLOY_DIR="/home/andrish97/.deploy/searxng"
+SHA=$(git rev-parse --short HEAD 2>/dev/null || date +%s)
+STAGING="$DEPLOY_DIR/$SHA"
 
-echo "🚀 Deploying SearXNG to $REMOTE_USER@$REMOTE_HOST:$REMOTE_SEARXNG_DIR"
-echo "   Source: $LOCAL_DIR"
+echo "🚀 Deploying SearXNG to $REMOTE_USER@$REMOTE_HOST"
+echo "   Source:  $LOCAL_DIR"
+echo "   Staging: $STAGING"
 
-# ── Sync files ──────────────────────────────────────────────
-rsync -avz --delete \
-  --exclude '.DS_Store' \
+# ── 1. Create staging dir ───────────────────────────────────
+ssh "$REMOTE_USER@$REMOTE_HOST" "mkdir -p '$STAGING'"
+
+# ── 2. Sync files to staging ────────────────────────────────
+rsync -avz --delete --exclude '.DS_Store' \
+  -e "ssh" \
   "$LOCAL_DIR/" \
-  "$REMOTE_USER@$REMOTE_HOST:$REMOTE_SEARXNG_DIR/"
+  "$REMOTE_USER@$REMOTE_HOST:$STAGING/"
 
 echo ""
-echo "📦 Restarting SearXNG container..."
+echo "📦 Running remote deploy script..."
 
-# ── Restart ─────────────────────────────────────────────────
-ssh "$REMOTE_USER@$REMOTE_HOST" "
-  cd $PARENT_DIR
-  docker compose restart searxng
-  echo '✅ SearXNG restarted successfully'
-  docker ps --filter name=searxng --format 'table {{.Names}}\t{{.Status}}'
-"
+# ── 3. Execute remote script ────────────────────────────────
+ssh "$REMOTE_USER@$REMOTE_HOST" "$REMOTE_SCRIPT '$STAGING'"
 
 echo ""
 echo "✅ Deploy complete!"
