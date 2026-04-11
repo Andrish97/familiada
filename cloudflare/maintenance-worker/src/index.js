@@ -88,40 +88,23 @@ export default {
       return fetch(request);
     }
 
-    // AI Endpoint - GET request, Worker konwertuje na POST do Ollama
+    // AI Endpoint - protected by Authorization header (AI_API_KEY)
     if (host === "ai.familiada.online") {
+      // 1. Zezwól plikom statycznym (CSS/JS) przejść bez klucza, żeby 404 działał
       const ext = url.pathname.split('.').pop().toLowerCase();
       const isStatic = ['css', 'js', 'png', 'jpg', 'jpeg', 'gif', 'svg', 'ico', 'woff', 'woff2', 'map'].includes(ext);
       if (isStatic) {
         return fetchFromOrigin(request, url, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
       }
 
+      // 2. Sprawdź klucz AI_API_KEY
       const authHeader = request.headers.get("Authorization") || "";
       const expectedKey = env.AI_API_KEY ? `Bearer ${env.AI_API_KEY}` : "";
 
       if (authHeader === expectedKey && expectedKey !== "") {
-        // GET z query params -> POST do Ollama
-        const model = url.searchParams.get("model") || "qwen2.5:3b-instruct-q4_K_M";
-        const prompt = url.searchParams.get("prompt") || "";
-        const maxTokens = parseInt(url.searchParams.get("max_tokens") || "512");
-        const temp = parseFloat(url.searchParams.get("temperature") || "0.1");
-
-        const ollamaBody = JSON.stringify({
-          model,
-          messages: [{ role: "user", content: prompt }],
-          stream: false,
-          options: { num_predict: maxTokens, temperature: temp }
-        });
-
-        return fetch(new URL("/api/chat", "https://ai.familiada.online"), {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Host": "ai.familiada.online"
-          },
-          body: ollamaBody
-        });
+        return fetch(request); // Przepuść do Ollama
       }
+      // Brak klucza -> 404 Familiady
       return serveNotFoundPage(request, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
     }
 
