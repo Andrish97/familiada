@@ -90,6 +90,11 @@ export default {
 
     // AI and Search endpoints - passthrough, Caddy handles auth
     if (host === "ai.familiada.online" || host === "search.familiada.online") {
+      const ext = url.pathname.split('.').pop().toLowerCase();
+      const isStatic = ['css', 'js', 'png', 'jpg', 'jpeg', 'gif', 'svg', 'ico', 'woff', 'woff2', 'map', 'txt'].includes(ext);
+      if (isStatic) {
+        return fetchFromOrigin(request, url, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
+      }
       const res = await fetch(request);
       if (res.status === 404) {
         return serveNotFoundPage(request, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
