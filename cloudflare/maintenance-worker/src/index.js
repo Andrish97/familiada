@@ -83,11 +83,18 @@ export default {
     if (
       host === "panel.familiada.online" ||
       host === "supabase.familiada.online" ||
-      host === "api.familiada.online" ||
-      host === "ai.familiada.online" ||
-      host === "search.familiada.online"
+      host === "api.familiada.online"
     ) {
       return fetch(request);
+    }
+
+    // AI and Search endpoints - passthrough, Caddy handles auth
+    if (host === "ai.familiada.online" || host === "search.familiada.online") {
+      const res = await fetch(request);
+      if (res.status === 404) {
+        return serveNotFoundPage(request, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
+      }
+      return res;
     }
 
     // Unknown subdomains: 404 when maintenance OFF, maintenance page when ON
