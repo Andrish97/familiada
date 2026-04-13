@@ -5862,15 +5862,16 @@ function wireEvents() {
       if (scrollInterval) return;
       scrollInterval = setInterval(() => {
         if (!isDragging || !startCell) { stopAutoScroll(); return; }
-        const container = document.getElementById("mcContactsTable");
-        if (!container) { stopAutoScroll(); return; }
-        const rect = container.getBoundingClientRect();
-        const threshold = 40;
-        const scrollSpeed = 10;
+        // Find the nearest scrollable container
+        const scrollEl = document.querySelector('.mail-card') || document.querySelector('.market-admin-panel');
+        if (!scrollEl) { stopAutoScroll(); return; }
+        const rect = scrollEl.getBoundingClientRect();
+        const threshold = 60;
+        const scrollSpeed = 15;
         if (mcDragY < rect.top + threshold) {
-          container.parentElement.scrollTop -= scrollSpeed;
+          scrollEl.scrollTop -= scrollSpeed;
         } else if (mcDragY > rect.bottom - threshold) {
-          container.parentElement.scrollTop += scrollSpeed;
+          scrollEl.scrollTop += scrollSpeed;
         }
       }, 20);
     }
