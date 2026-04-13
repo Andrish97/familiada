@@ -5836,19 +5836,20 @@ function wireEvents() {
       const btn = document.getElementById("mcVisitUrlBtn");
       const info = document.getElementById("mcSelectionInfo");
       if (!btn) return;
-      // Find first selected URL cell (col 2)
-      const urlCell = mcState.selectedCells.find(c => c.col === 2);
-      if (urlCell) {
-        const contact = mcState.contacts[urlCell.row];
+
+      // Only show button if exactly ONE cell is selected and it's a URL cell
+      if (mcState.selectedCells.length === 1 && mcState.selectedCells[0].col === 2) {
+        const row = mcState.selectedCells[0].row;
+        const contact = mcState.contacts[row];
         if (contact && contact.url) {
           btn.href = contact.url;
           btn.style.display = '';
-        } else {
-          btn.style.display = 'none';
+          if (info) info.textContent = '';
+          return;
         }
-      } else {
-        btn.style.display = 'none';
       }
+
+      btn.style.display = 'none';
       // Update selection info
       if (info) {
         const rows = new Set(mcState.selectedCells.map(c => c.row));
