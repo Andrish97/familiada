@@ -5728,9 +5728,18 @@ function wireEvents() {
       const tk = await mcGetToken();
       const res = await fetch(`${MC_API}/api/search-runs?target_count=${count}`, {method:"POST", headers:{Authorization:`Bearer ${tk}`}});
       if (!res.ok) throw new Error("Failed");
+      const data = await res.json();
       btn.textContent = "✅ Uruchomiono!";
       setTimeout(()=>{ btn.textContent = "▶ Uruchom"; btn.disabled = false; }, 1500);
       mcLoadRuns();
+      // Auto-select this run in logs
+      setTimeout(() => {
+        mcState.logRun = data.run_id;
+        const sel = document.getElementById("mcLogRunSelect");
+        if (sel) sel.value = data.run_id;
+        mcLoadLogs(data.run_id);
+        mcStartLogAutoRefresh();
+      }, 1000);
     } catch(e) {
       alert("Błąd: " + e.message);
       btn.disabled = false;
@@ -5761,26 +5770,32 @@ function wireEvents() {
   function mcRenderContacts(totalCount) {
     const tbody = document.getElementById("mcTableBody");
     if (!mcState.contacts.length) {
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;opacity:.5;padding:1.5rem">Brak kontaktów</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;opacity:.5;padding:1.5rem">Brak kontaktów</td></tr>';
       mcUpdatePagination(0);
       return;
     }
     tbody.innerHTML = mcState.contacts.map(c => {
-      const addedAt = c.added_at ? new Date(c.added_at).toLocaleString("pl-PL",{month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"}) : "—";
-      const usedAt = c.used_at ? new Date(c.used_at).toLocaleString("pl-PL",{month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"}) : "—";
-      return `<tr class="${c.is_used?'used':''}" data-id="${c.id}">
+      return `<tr class="${c.is_used?'mc-used':''}" data-id="${c.id}">
         <td style="text-align:center"><input type="checkbox" ${mcState.selected.has(c.id)?'checked':''} onchange="mcToggle('${c.id}',this.checked)"></td>
-        <td><input class="mc-cell-edit" value="${mcEsc(c.title||'')}" onblur="mcUpdate('${c.id}','title',this.value)"></td>
-        <td><input class="mc-cell-edit" value="${mcEsc(c.email||'')}" onblur="mcUpdate('${c.id}','email',this.value)"></td>
-        <td><a href="${mcEsc(c.url)}" target="_blank" rel="noopener">${mcEsc(c.url)}</a></td>
-        <td><select class="mc-cell-select" onchange="mcUpdate('${c.id}','contact_type',this.value)">
-          ${["DJ","Wodzirej","Animator","Agencja eventowa","Konferansjer","Inne"].map(t=>`<option value="${t}" ${c.contact_type===t?'selected':''}>${t}</option>`).join("")}
-        </select></td>
-        <td style="font-size:11px;opacity:.6">${addedAt}</td>
-        <td style="font-size:11px;opacity:.6">${c.is_used?usedAt:"—"}</td>
+        <td class="mc-cell" tabindex="0">${mcEsc(c.title||'')}</td>
+        <td class="mc-cell" tabindex="0">${mcEsc(c.email||'')}</td>
+        <td class="mc-cell" tabindex="0"><a href="${mcEsc(c.url)}" target="_blank" rel="noopener">${mcEsc(c.url)}</a></td>
+        <td class="mc-cell" tabindex="0">${mcEsc(c.contact_type||'')}</td>
+        <td style="text-align:center">${c.is_used ? '<span style="color:#55efc4;font-weight:700">✓</span>' : '<span style="opacity:.3">—</span>'}</td>
       </tr>`;
     }).join("");
     mcUpdatePagination(totalCount);
+    // Add cell selection/copy
+    tbody.querySelectorAll('.mc-cell').forEach(cell => {
+      cell.addEventListener('click', function(e) {
+        // Single cell selection
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        const range = document.createRange();
+        range.selectNodeContents(this);
+        sel.addRange(range);
+      });
+    });
   }
 
   function mcEsc(s) { const d=document.createElement("div"); d.textContent=s; return d.innerHTML; }
