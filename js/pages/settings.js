@@ -5776,12 +5776,13 @@ function wireEvents() {
     }
     tbody.innerHTML = mcState.contacts.map((c, i) => {
       const usedClass = c.is_used ? 'mc-used' : '';
+      const usedText = c.is_used ? '✓' : '';
       return `<tr class="${usedClass}" data-row="${i}" data-id="${c.id}">
         <td class="mc-cell mc-selectable" data-row="${i}" data-col="0">${mcEsc(c.title||'')}</td>
         <td class="mc-cell mc-selectable" data-row="${i}" data-col="1">${mcEsc(c.email||'')}</td>
-        <td class="mc-cell" data-row="${i}" data-col="2"><a href="${mcEsc(c.url)}" target="_blank" rel="noopener">${mcEsc(c.url)}</a></td>
+        <td class="mc-cell mc-selectable" data-row="${i}" data-col="2">${mcEsc(c.url||'')}</td>
         <td class="mc-cell mc-selectable" data-row="${i}" data-col="3">${mcEsc(c.contact_type||'')}</td>
-        <td class="mc-cell mc-used-cell" style="text-align:center">${c.is_used ? '<span style="color:#55efc4;font-weight:700;font-size:16px">✓</span>' : ''}</td>
+        <td class="mc-cell mc-selectable" data-row="${i}" data-col="4" style="text-align:center">${usedText}</td>
       </tr>`;
     }).join("");
     mcUpdatePagination(totalCount);
