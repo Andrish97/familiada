@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict FTgh9uSQZ3TGQWIgJYDMDvcwHQfE8YtYNFnxBzZUIQizD1ByaPvF1sJbVs2NfJk
+\restrict CmQHvkzmtB6uUAzTcAlXemPeVFeGE92dqIhZY0yFQitULsfNQUTX7ntuvizYSIQ
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -5119,6 +5119,59 @@ $$;
 
 
 --
+-- Name: marketing_get_run_stats("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."marketing_get_run_stats"("p_run_id" "uuid") RETURNS TABLE("run_status" "text", "target_count" integer, "urls_found" bigint, "urls_processed" bigint, "raw_contacts" bigint, "verified_contacts" bigint, "contacts_used" bigint, "logs_count" bigint)
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        r.status,
+        r.target_count,
+        (SELECT COUNT(*) FROM marketing_search_urls u WHERE u.run_id = p_run_id),
+        (SELECT COUNT(*) FROM marketing_search_urls u WHERE u.run_id = p_run_id AND u.status = 'collected'),
+        (SELECT COUNT(*) FROM marketing_raw_contacts rc WHERE rc.run_id = p_run_id),
+        (SELECT COUNT(*) FROM marketing_verified_contacts vc WHERE vc.run_id = p_run_id),
+        (SELECT COUNT(*) FROM marketing_verified_contacts vc WHERE vc.run_id = p_run_id AND vc.is_used = true),
+        (SELECT COUNT(*) FROM marketing_search_logs sl WHERE sl.run_id = p_run_id)
+    FROM marketing_search_runs r
+    WHERE r.id = p_run_id;
+END;
+$$;
+
+
+--
+-- Name: marketing_get_verified_contacts("uuid", integer, integer, boolean); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."marketing_get_verified_contacts"("p_run_id" "uuid" DEFAULT NULL::"uuid", "p_limit" integer DEFAULT 50, "p_offset" integer DEFAULT 0, "p_only_unused" boolean DEFAULT false) RETURNS TABLE("id" "uuid", "title" "text", "short_description" "text", "email" "text", "url" "text", "contact_type" "text", "is_used" boolean, "added_at" timestamp with time zone, "used_at" timestamp with time zone)
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        vc.id,
+        vc.title,
+        vc.short_description,
+        vc.email,
+        vc.url,
+        vc.contact_type,
+        vc.is_used,
+        vc.added_at,
+        vc.used_at
+    FROM marketing_verified_contacts vc
+    WHERE (p_run_id IS NULL OR vc.run_id = p_run_id)
+      AND (p_only_unused = false OR vc.is_used = false)
+    ORDER BY vc.added_at DESC
+    LIMIT p_limit
+    OFFSET p_offset;
+END;
+$$;
+
+
+--
 -- Name: on_profile_created_check_suppression(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -9888,6 +9941,20 @@ $$;
 
 
 --
+-- Name: update_marketing_updated_at(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."update_marketing_updated_at"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    AS $$
+BEGIN
+    NEW.updated_at = now();
+    RETURN NEW;
+END;
+$$;
+
+
+--
 -- Name: user_logo_clear_active(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -10311,6 +10378,145 @@ CREATE TABLE "public"."market_games" (
 --
 
 COMMENT ON COLUMN "public"."market_games"."storage_path" IS 'Path to JSON in community-games bucket (prefix: marketplace/)';
+
+
+--
+-- Name: marketing_cities; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."marketing_cities" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "name" "text" NOT NULL,
+    "is_active" boolean DEFAULT true,
+    "search_count" integer DEFAULT 0,
+    "last_searched" timestamp with time zone,
+    "created_at" timestamp with time zone DEFAULT "now"()
+);
+
+
+--
+-- Name: marketing_lead_config; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."marketing_lead_config" (
+    "key" "text" NOT NULL,
+    "value" "text" NOT NULL,
+    "updated_at" timestamp with time zone DEFAULT "now"()
+);
+
+
+--
+-- Name: marketing_raw_contacts; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."marketing_raw_contacts" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "run_id" "uuid",
+    "url" "text" NOT NULL,
+    "emails_found" "jsonb" DEFAULT '[]'::"jsonb",
+    "primary_email" "text",
+    "page_title" "text",
+    "page_content_snippet" "text",
+    "status" "text" DEFAULT 'pending'::"text",
+    "processed_at" timestamp with time zone,
+    "created_at" timestamp with time zone DEFAULT "now"(),
+    "updated_at" timestamp with time zone DEFAULT "now"()
+);
+
+
+--
+-- Name: marketing_search_logs; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."marketing_search_logs" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "run_id" "uuid",
+    "level" "text" DEFAULT 'info'::"text" NOT NULL,
+    "message" "text" NOT NULL,
+    "details" "jsonb",
+    "created_at" timestamp with time zone DEFAULT "now"()
+);
+
+
+--
+-- Name: marketing_search_queries_log; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."marketing_search_queries_log" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "run_id" "uuid",
+    "query_text" "text" NOT NULL,
+    "city" "text" NOT NULL,
+    "full_query" "text" NOT NULL,
+    "status" "text" DEFAULT 'pending'::"text",
+    "urls_found" integer DEFAULT 0,
+    "searched_at" timestamp with time zone,
+    "created_at" timestamp with time zone DEFAULT "now"()
+);
+
+
+--
+-- Name: marketing_search_runs; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."marketing_search_runs" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "status" "text" DEFAULT 'pending'::"text" NOT NULL,
+    "target_count" integer DEFAULT 50 NOT NULL,
+    "queries_used" "jsonb" DEFAULT '[]'::"jsonb",
+    "cities_used" "jsonb" DEFAULT '[]'::"jsonb",
+    "started_at" timestamp with time zone,
+    "completed_at" timestamp with time zone,
+    "paused_at" timestamp with time zone,
+    "created_at" timestamp with time zone DEFAULT "now"(),
+    "updated_at" timestamp with time zone DEFAULT "now"(),
+    "created_by" "text",
+    "error_message" "text",
+    "contacts_found" integer DEFAULT 0,
+    "contacts_verified" integer DEFAULT 0
+);
+
+
+--
+-- Name: marketing_search_urls; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."marketing_search_urls" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "run_id" "uuid",
+    "url" "text" NOT NULL,
+    "source_query" "text",
+    "domain" "text",
+    "status" "text" DEFAULT 'pending'::"text",
+    "blocked_reason" "text",
+    "page_title" "text",
+    "page_description" "text",
+    "created_at" timestamp with time zone DEFAULT "now"(),
+    "updated_at" timestamp with time zone DEFAULT "now"()
+);
+
+
+--
+-- Name: marketing_verified_contacts; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."marketing_verified_contacts" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "run_id" "uuid",
+    "title" "text",
+    "short_description" "text",
+    "email" "text" NOT NULL,
+    "url" "text" NOT NULL,
+    "is_event_organizer" boolean,
+    "ai_confidence" "text",
+    "ai_reasoning" "text",
+    "contact_type" "text",
+    "is_used" boolean DEFAULT false,
+    "notes" "text",
+    "added_at" timestamp with time zone DEFAULT "now"(),
+    "used_at" timestamp with time zone,
+    "updated_at" timestamp with time zone DEFAULT "now"()
+);
 
 
 --
@@ -10912,6 +11118,86 @@ ALTER TABLE ONLY "public"."market_games"
 
 
 --
+-- Name: marketing_cities marketing_cities_name_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."marketing_cities"
+    ADD CONSTRAINT "marketing_cities_name_key" UNIQUE ("name");
+
+
+--
+-- Name: marketing_cities marketing_cities_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."marketing_cities"
+    ADD CONSTRAINT "marketing_cities_pkey" PRIMARY KEY ("id");
+
+
+--
+-- Name: marketing_lead_config marketing_lead_config_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."marketing_lead_config"
+    ADD CONSTRAINT "marketing_lead_config_pkey" PRIMARY KEY ("key");
+
+
+--
+-- Name: marketing_raw_contacts marketing_raw_contacts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."marketing_raw_contacts"
+    ADD CONSTRAINT "marketing_raw_contacts_pkey" PRIMARY KEY ("id");
+
+
+--
+-- Name: marketing_search_logs marketing_search_logs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."marketing_search_logs"
+    ADD CONSTRAINT "marketing_search_logs_pkey" PRIMARY KEY ("id");
+
+
+--
+-- Name: marketing_search_queries_log marketing_search_queries_log_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."marketing_search_queries_log"
+    ADD CONSTRAINT "marketing_search_queries_log_pkey" PRIMARY KEY ("id");
+
+
+--
+-- Name: marketing_search_runs marketing_search_runs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."marketing_search_runs"
+    ADD CONSTRAINT "marketing_search_runs_pkey" PRIMARY KEY ("id");
+
+
+--
+-- Name: marketing_search_urls marketing_search_urls_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."marketing_search_urls"
+    ADD CONSTRAINT "marketing_search_urls_pkey" PRIMARY KEY ("id");
+
+
+--
+-- Name: marketing_search_urls marketing_search_urls_url_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."marketing_search_urls"
+    ADD CONSTRAINT "marketing_search_urls_url_key" UNIQUE ("url");
+
+
+--
+-- Name: marketing_verified_contacts marketing_verified_contacts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."marketing_verified_contacts"
+    ADD CONSTRAINT "marketing_verified_contacts_pkey" PRIMARY KEY ("id");
+
+
+--
 -- Name: message_attachments message_attachments_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -11298,6 +11584,118 @@ CREATE UNIQUE INDEX "games_owner_market_uniq" ON "public"."games" USING "btree" 
 --
 
 CREATE INDEX "games_source_market_id_idx" ON "public"."games" USING "btree" ("source_market_id") WHERE ("source_market_id" IS NOT NULL);
+
+
+--
+-- Name: idx_marketing_logs_created; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "idx_marketing_logs_created" ON "public"."marketing_search_logs" USING "btree" ("created_at" DESC);
+
+
+--
+-- Name: idx_marketing_logs_run; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "idx_marketing_logs_run" ON "public"."marketing_search_logs" USING "btree" ("run_id");
+
+
+--
+-- Name: idx_marketing_queries_log_run; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "idx_marketing_queries_log_run" ON "public"."marketing_search_queries_log" USING "btree" ("run_id");
+
+
+--
+-- Name: idx_marketing_queries_log_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "idx_marketing_queries_log_status" ON "public"."marketing_search_queries_log" USING "btree" ("status");
+
+
+--
+-- Name: idx_marketing_raw_email; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "idx_marketing_raw_email" ON "public"."marketing_raw_contacts" USING "gin" ("emails_found");
+
+
+--
+-- Name: idx_marketing_raw_run; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "idx_marketing_raw_run" ON "public"."marketing_raw_contacts" USING "btree" ("run_id");
+
+
+--
+-- Name: idx_marketing_raw_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "idx_marketing_raw_status" ON "public"."marketing_raw_contacts" USING "btree" ("status");
+
+
+--
+-- Name: idx_marketing_runs_created; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "idx_marketing_runs_created" ON "public"."marketing_search_runs" USING "btree" ("created_at" DESC);
+
+
+--
+-- Name: idx_marketing_runs_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "idx_marketing_runs_status" ON "public"."marketing_search_runs" USING "btree" ("status");
+
+
+--
+-- Name: idx_marketing_urls_domain; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "idx_marketing_urls_domain" ON "public"."marketing_search_urls" USING "btree" ("domain");
+
+
+--
+-- Name: idx_marketing_urls_run; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "idx_marketing_urls_run" ON "public"."marketing_search_urls" USING "btree" ("run_id");
+
+
+--
+-- Name: idx_marketing_urls_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "idx_marketing_urls_status" ON "public"."marketing_search_urls" USING "btree" ("status");
+
+
+--
+-- Name: idx_marketing_verified_email; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "idx_marketing_verified_email" ON "public"."marketing_verified_contacts" USING "btree" ("email");
+
+
+--
+-- Name: idx_marketing_verified_run; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "idx_marketing_verified_run" ON "public"."marketing_verified_contacts" USING "btree" ("run_id");
+
+
+--
+-- Name: idx_marketing_verified_type; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "idx_marketing_verified_type" ON "public"."marketing_verified_contacts" USING "btree" ("contact_type");
+
+
+--
+-- Name: idx_marketing_verified_used; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "idx_marketing_verified_used" ON "public"."marketing_verified_contacts" USING "btree" ("is_used");
 
 
 --
@@ -11875,6 +12273,41 @@ CREATE TRIGGER "trg_market_games_updated_at" BEFORE UPDATE ON "public"."market_g
 
 
 --
+-- Name: marketing_lead_config trg_marketing_config_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "trg_marketing_config_updated_at" BEFORE UPDATE ON "public"."marketing_lead_config" FOR EACH ROW EXECUTE FUNCTION "public"."update_marketing_updated_at"();
+
+
+--
+-- Name: marketing_raw_contacts trg_marketing_raw_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "trg_marketing_raw_updated_at" BEFORE UPDATE ON "public"."marketing_raw_contacts" FOR EACH ROW EXECUTE FUNCTION "public"."update_marketing_updated_at"();
+
+
+--
+-- Name: marketing_search_runs trg_marketing_runs_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "trg_marketing_runs_updated_at" BEFORE UPDATE ON "public"."marketing_search_runs" FOR EACH ROW EXECUTE FUNCTION "public"."update_marketing_updated_at"();
+
+
+--
+-- Name: marketing_search_urls trg_marketing_urls_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "trg_marketing_urls_updated_at" BEFORE UPDATE ON "public"."marketing_search_urls" FOR EACH ROW EXECUTE FUNCTION "public"."update_marketing_updated_at"();
+
+
+--
+-- Name: marketing_verified_contacts trg_marketing_verified_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "trg_marketing_verified_updated_at" BEFORE UPDATE ON "public"."marketing_verified_contacts" FOR EACH ROW EXECUTE FUNCTION "public"."update_marketing_updated_at"();
+
+
+--
 -- Name: poll_tasks trg_poll_tasks_touch_status_ts; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -12041,6 +12474,46 @@ ALTER TABLE ONLY "public"."market_games"
 
 ALTER TABLE ONLY "public"."market_games"
     ADD CONSTRAINT "market_games_source_game_fkey" FOREIGN KEY ("source_game_id") REFERENCES "public"."games"("id") ON DELETE SET NULL;
+
+
+--
+-- Name: marketing_raw_contacts marketing_raw_contacts_run_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."marketing_raw_contacts"
+    ADD CONSTRAINT "marketing_raw_contacts_run_id_fkey" FOREIGN KEY ("run_id") REFERENCES "public"."marketing_search_runs"("id") ON DELETE CASCADE;
+
+
+--
+-- Name: marketing_search_logs marketing_search_logs_run_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."marketing_search_logs"
+    ADD CONSTRAINT "marketing_search_logs_run_id_fkey" FOREIGN KEY ("run_id") REFERENCES "public"."marketing_search_runs"("id") ON DELETE CASCADE;
+
+
+--
+-- Name: marketing_search_queries_log marketing_search_queries_log_run_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."marketing_search_queries_log"
+    ADD CONSTRAINT "marketing_search_queries_log_run_id_fkey" FOREIGN KEY ("run_id") REFERENCES "public"."marketing_search_runs"("id") ON DELETE CASCADE;
+
+
+--
+-- Name: marketing_search_urls marketing_search_urls_run_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."marketing_search_urls"
+    ADD CONSTRAINT "marketing_search_urls_run_id_fkey" FOREIGN KEY ("run_id") REFERENCES "public"."marketing_search_runs"("id") ON DELETE CASCADE;
+
+
+--
+-- Name: marketing_verified_contacts marketing_verified_contacts_run_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."marketing_verified_contacts"
+    ADD CONSTRAINT "marketing_verified_contacts_run_id_fkey" FOREIGN KEY ("run_id") REFERENCES "public"."marketing_search_runs"("id") ON DELETE CASCADE;
 
 
 --
@@ -12736,6 +13209,110 @@ ALTER TABLE "public"."market_game_ratings" ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE "public"."market_games" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: marketing_cities; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."marketing_cities" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: marketing_cities marketing_cities_all; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "marketing_cities_all" ON "public"."marketing_cities" USING (true) WITH CHECK (true);
+
+
+--
+-- Name: marketing_lead_config marketing_config_all; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "marketing_config_all" ON "public"."marketing_lead_config" USING (true) WITH CHECK (true);
+
+
+--
+-- Name: marketing_lead_config; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."marketing_lead_config" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: marketing_search_logs marketing_logs_all; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "marketing_logs_all" ON "public"."marketing_search_logs" USING (true) WITH CHECK (true);
+
+
+--
+-- Name: marketing_search_queries_log marketing_queries_log_all; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "marketing_queries_log_all" ON "public"."marketing_search_queries_log" USING (true) WITH CHECK (true);
+
+
+--
+-- Name: marketing_raw_contacts marketing_raw_all; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "marketing_raw_all" ON "public"."marketing_raw_contacts" USING (true) WITH CHECK (true);
+
+
+--
+-- Name: marketing_raw_contacts; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."marketing_raw_contacts" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: marketing_search_runs marketing_runs_all; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "marketing_runs_all" ON "public"."marketing_search_runs" USING (true) WITH CHECK (true);
+
+
+--
+-- Name: marketing_search_logs; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."marketing_search_logs" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: marketing_search_queries_log; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."marketing_search_queries_log" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: marketing_search_runs; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."marketing_search_runs" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: marketing_search_urls; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."marketing_search_urls" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: marketing_search_urls marketing_urls_all; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "marketing_urls_all" ON "public"."marketing_search_urls" USING (true) WITH CHECK (true);
+
+
+--
+-- Name: marketing_verified_contacts marketing_verified_all; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "marketing_verified_all" ON "public"."marketing_verified_contacts" USING (true) WITH CHECK (true);
+
+
+--
+-- Name: marketing_verified_contacts; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."marketing_verified_contacts" ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: message_attachments; Type: ROW SECURITY; Schema: public; Owner: -
@@ -13454,5 +14031,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict FTgh9uSQZ3TGQWIgJYDMDvcwHQfE8YtYNFnxBzZUIQizD1ByaPvF1sJbVs2NfJk
+\unrestrict CmQHvkzmtB6uUAzTcAlXemPeVFeGE92dqIhZY0yFQitULsfNQUTX7ntuvizYSIQ
 
