@@ -88,7 +88,7 @@ export default {
       return fetch(request);
     }
 
-    // Lead Finder - passthrough like ai/search, Worker handles CORS + auth injection
+    // Lead Finder - passthrough like ai/search
     if (host === "leads.familiada.online") {
       if (request.method === "OPTIONS") {
         return new Response(null, {
@@ -100,21 +100,8 @@ export default {
           }
         });
       }
-      const lfToken = String(env.LEAD_FINDER_API_KEY || "").trim();
-      if (lfToken) {
-        const newHeaders = new Headers(request.headers);
-        newHeaders.set("Authorization", `Bearer ${lfToken}`);
-        const fetchOpts = { method: request.method, headers: newHeaders };
-        if (request.method !== "GET" && request.method !== "HEAD") {
-          fetchOpts.body = request.body;
-        }
-        return fetch(request.url, fetchOpts).then(res => {
-          const h = new Headers(res.headers);
-          h.set("Access-Control-Allow-Origin", "https://settings.familiada.online");
-          return new Response(res.body, { status: res.status, headers: h });
-        });
-      }
-      return fetch(request);
+      const res = await fetch(request);
+      return res;
     }
 
     // AI and Search endpoints - passthrough, Caddy handles auth
