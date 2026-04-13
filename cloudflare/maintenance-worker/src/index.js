@@ -83,9 +83,13 @@ export default {
     if (
       host === "panel.familiada.online" ||
       host === "supabase.familiada.online" ||
-      host === "api.familiada.online" ||
-      host === "leads.familiada.online"
+      host === "api.familiada.online"
     ) {
+      return fetch(request);
+    }
+
+    // Lead Finder - passthrough, Caddy handles auth and CORS
+    if (host === "leads.familiada.online") {
       return fetch(request);
     }
 
