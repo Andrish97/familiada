@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict CmQHvkzmtB6uUAzTcAlXemPeVFeGE92dqIhZY0yFQitULsfNQUTX7ntuvizYSIQ
+\restrict by0GEPKd2X4FecoxXRUXMnHdbjEcsDxB35oWplPFMUSYP9ux41kEVreVEONozC7
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -10512,9 +10512,7 @@ CREATE TABLE "public"."marketing_verified_contacts" (
     "ai_reasoning" "text",
     "contact_type" "text",
     "is_used" boolean DEFAULT false,
-    "notes" "text",
     "added_at" timestamp with time zone DEFAULT "now"(),
-    "used_at" timestamp with time zone,
     "updated_at" timestamp with time zone DEFAULT "now"()
 );
 
@@ -14031,5 +14029,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict CmQHvkzmtB6uUAzTcAlXemPeVFeGE92dqIhZY0yFQitULsfNQUTX7ntuvizYSIQ
+\unrestrict by0GEPKd2X4FecoxXRUXMnHdbjEcsDxB35oWplPFMUSYP9ux41kEVreVEONozC7
 
