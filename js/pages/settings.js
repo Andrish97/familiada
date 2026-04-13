@@ -5783,7 +5783,7 @@ function wireEvents() {
         <td class="mc-cell mc-selectable" data-row="${i}" data-col="1">${mcEsc(c.email||'')}</td>
         <td class="mc-cell mc-selectable" data-row="${i}" data-col="2">${mcEsc(c.url||'')}</td>
         <td class="mc-cell mc-selectable" data-row="${i}" data-col="3">${mcEsc(c.contact_type||'')}</td>
-        <td class="mc-cell" style="font-size:11px;opacity:.6;white-space:nowrap">${addedAt}</td>
+        <td class="mc-cell mc-selectable" data-row="${i}" data-col="4">${addedAt}</td>
         <td class="mc-cell mc-selectable" data-row="${i}" data-col="5" style="text-align:center">${usedText}</td>
       </tr>`;
     }).join("");
