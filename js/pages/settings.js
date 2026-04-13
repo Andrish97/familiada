@@ -5664,7 +5664,8 @@ function wireEvents() {
 
   async function mcLoadRuns() {
     try {
-      const res = await fetch(`${MC_API}/api/search-runs?limit=50`);
+      const tk = await mcGetToken();
+      const res = await fetch(`${MC_API}/api/search-runs?limit=50`, {headers:{Authorization:`Bearer ${tk}`}});
       if (!res.ok) throw new Error("Failed");
       mcState.runs = await res.json();
       mcRenderRuns();
@@ -5702,16 +5703,30 @@ function wireEvents() {
     }).join("");
   }
 
-  window.mcPause = async function(id) { await fetch(`${MC_API}/api/search-runs/${id}/pause`,{method:"POST", headers:{Authorization:`Bearer ${(await mcGetToken())}`}}); mcLoadRuns(); };
-  window.mcResume = async function(id) { await fetch(`${MC_API}/api/search-runs/${id}/resume`,{method:"POST", headers:{Authorization:`Bearer ${(await mcGetToken())}`}}); mcLoadRuns(); };
-  window.mcCancel = async function(id) { if(confirm("Anulować zlecenie?")){ await fetch(`${MC_API}/api/search-runs/${id}/cancel`,{method:"POST", headers:{Authorization:`Bearer ${(await mcGetToken())}`}}); mcLoadRuns(); }};
+  window.mcPause = async function(id) {
+    const tk = await mcGetToken();
+    await fetch(`${MC_API}/api/search-runs/${id}/pause`,{method:"POST", headers:{Authorization:`Bearer ${tk}`}});
+    mcLoadRuns();
+  };
+  window.mcResume = async function(id) {
+    const tk = await mcGetToken();
+    await fetch(`${MC_API}/api/search-runs/${id}/resume`,{method:"POST", headers:{Authorization:`Bearer ${tk}`}});
+    mcLoadRuns();
+  };
+  window.mcCancel = async function(id) {
+    if(!confirm("Anulować zlecenie?")) return;
+    const tk = await mcGetToken();
+    await fetch(`${MC_API}/api/search-runs/${id}/cancel`,{method:"POST", headers:{Authorization:`Bearer ${tk}`}});
+    mcLoadRuns();
+  };
 
   async function mcStartRun() {
     const btn = document.getElementById("mcStartBtn");
     const count = parseInt(document.getElementById("mcTargetCount").value) || 50;
     btn.disabled = true;
     try {
-      const res = await fetch(`${MC_API}/api/search-runs?target_count=${count}`, {method:"POST", headers:{Authorization:`Bearer ${(await mcGetToken())}`}});
+      const tk = await mcGetToken();
+      const res = await fetch(`${MC_API}/api/search-runs?target_count=${count}`, {method:"POST", headers:{Authorization:`Bearer ${tk}`}});
       if (!res.ok) throw new Error("Failed");
       btn.textContent = "✅ Uruchomiono!";
       setTimeout(()=>{ btn.textContent = "▶ Uruchom"; btn.disabled = false; }, 1500);
@@ -5778,14 +5793,16 @@ function wireEvents() {
   };
 
   window.mcUpdate = async function(id, field, value) {
+    const tk = await mcGetToken();
     try {
-      await fetch(`${MC_API}/api/contacts/${id}`, {method:"PUT", headers:{"Content-Type":"application/json", Authorization:`Bearer ${(await mcGetToken())}`}, body:JSON.stringify({[field]:value})});
+      await fetch(`${MC_API}/api/contacts/${id}`, {method:"PUT", headers:{"Content-Type":"application/json", Authorization:`Bearer ${tk}`}, body:JSON.stringify({[field]:value})});
     } catch(e) { mcLoadContacts(); }
   };
 
   async function mcMarkUsed() {
     if (!mcState.selected.size) return;
-    await Promise.all([...mcState.selected].map(id => fetch(`${MC_API}/api/contacts/${id}/mark-used?used=true`,{method:"POST", headers:{Authorization:`Bearer ${(await mcGetToken())}`}})));
+    const tk = await mcGetToken();
+    await Promise.all([...mcState.selected].map(id => fetch(`${MC_API}/api/contacts/${id}/mark-used?used=true`,{method:"POST", headers:{Authorization:`Bearer ${tk}`}})));
     mcState.selected.clear();
     mcLoadContacts();
   }
@@ -5793,7 +5810,8 @@ function wireEvents() {
   async function mcDeleteSelected() {
     if (!mcState.selected.size) return;
     if (!confirm(`Usunąć ${mcState.selected.size} kontaktów?`)) return;
-    await Promise.all([...mcState.selected].map(id => fetch(`${MC_API}/api/contacts/${id}`,{method:"DELETE", headers:{Authorization:`Bearer ${(await mcGetToken())}`}})));
+    const tk = await mcGetToken();
+    await Promise.all([...mcState.selected].map(id => fetch(`${MC_API}/api/contacts/${id}`,{method:"DELETE", headers:{Authorization:`Bearer ${tk}`}})));
     mcState.selected.clear();
     mcLoadContacts();
   }
@@ -5821,7 +5839,8 @@ function wireEvents() {
     const el = document.getElementById("mcLogsContainer");
     if (!runId) { el.innerHTML = '<div style="text-align:center;opacity:.5">Wybierz zlecenie</div>'; return; }
     try {
-      const res = await fetch(`${MC_API}/api/search-runs/${runId}/logs?limit=200`);
+      const tk = await mcGetToken();
+      const res = await fetch(`${MC_API}/api/search-runs/${runId}/logs?limit=200`, {headers:{Authorization:`Bearer ${tk}`}});
       if (!res.ok) throw new Error("Failed");
       mcState.logs = await res.json();
       mcRenderLogs();
@@ -5872,17 +5891,20 @@ function wireEvents() {
 
   // Load MC data when entering tab
   const origSetTab = window.setActiveTabMC;
-  const mcObserver = new MutationObserver(() => {
+  const mcObserver = new MutationObserver(async () => {
     if (!document.getElementById("marketingContactsPanel")?.hidden) {
       mcLoadRuns();
       mcLoadContacts();
       // Populate log run select
       const sel = document.getElementById("mcLogRunSelect");
       if (sel && !sel.dataset.populated) {
-        fetch(`${MC_API}/api/search-runs?limit=100`).then(r=>r.json()).then(runs => {
+        const tk = await mcGetToken();
+        const res = await fetch(`${MC_API}/api/search-runs?limit=100`, {headers:{Authorization:`Bearer ${tk}`}});
+        if (res.ok) {
+          const runs = await res.json();
           sel.innerHTML = '<option value="">-- Wybierz zlecenie --</option>' + runs.map(r=>`<option value="${r.id}">#${r.id.slice(0,8)} - ${r.status}</option>`).join("");
           sel.dataset.populated = "1";
-        });
+        }
       }
     }
   });
