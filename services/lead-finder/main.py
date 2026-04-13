@@ -73,8 +73,18 @@ logger = logging.getLogger("lead-finder")
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="Marketing Lead Finder")
+
+# CORS - allow settings.familiada.online
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://settings.familiada.online"],
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
+)
 
 # Global state
 running_tasks = {}
