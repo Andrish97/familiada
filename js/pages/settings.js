@@ -5634,8 +5634,24 @@ function wireEvents() {
   // MARKETING CONTACTS
   // ═══════════════════════════════════════════════════════════
   const MC_API = "https://leads.familiada.online";
-  const MC_TOKEN = ""; // ← ustaw token z Caddy
   const MC_PAGE_SIZE = 50;
+  let mcToken = null;
+
+  // Fetch token from Worker (served from env secret, not in code)
+  async function mcGetToken() {
+    if (mcToken) return mcToken;
+    try {
+      const res = await fetch("/_admin_api/config/lead-finder-token");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.ok && data.token) {
+          mcToken = data.token;
+          return mcToken;
+        }
+      }
+    } catch(e) {}
+    return null;
+  }
   let mcState = {
     runs: [],
     contacts: [],
@@ -5686,16 +5702,16 @@ function wireEvents() {
     }).join("");
   }
 
-  window.mcPause = async function(id) { await fetch(`${MC_API}/api/search-runs/${id}/pause`,{method:"POST", headers:{Authorization:`Bearer ${MC_TOKEN}`}}); mcLoadRuns(); };
-  window.mcResume = async function(id) { await fetch(`${MC_API}/api/search-runs/${id}/resume`,{method:"POST", headers:{Authorization:`Bearer ${MC_TOKEN}`}}); mcLoadRuns(); };
-  window.mcCancel = async function(id) { if(confirm("Anulować zlecenie?")){ await fetch(`${MC_API}/api/search-runs/${id}/cancel`,{method:"POST", headers:{Authorization:`Bearer ${MC_TOKEN}`}}); mcLoadRuns(); }};
+  window.mcPause = async function(id) { await fetch(`${MC_API}/api/search-runs/${id}/pause`,{method:"POST", headers:{Authorization:`Bearer ${(await mcGetToken())}`}}); mcLoadRuns(); };
+  window.mcResume = async function(id) { await fetch(`${MC_API}/api/search-runs/${id}/resume`,{method:"POST", headers:{Authorization:`Bearer ${(await mcGetToken())}`}}); mcLoadRuns(); };
+  window.mcCancel = async function(id) { if(confirm("Anulować zlecenie?")){ await fetch(`${MC_API}/api/search-runs/${id}/cancel`,{method:"POST", headers:{Authorization:`Bearer ${(await mcGetToken())}`}}); mcLoadRuns(); }};
 
   async function mcStartRun() {
     const btn = document.getElementById("mcStartBtn");
     const count = parseInt(document.getElementById("mcTargetCount").value) || 50;
     btn.disabled = true;
     try {
-      const res = await fetch(`${MC_API}/api/search-runs?target_count=${count}`, {method:"POST", headers:{Authorization:`Bearer ${MC_TOKEN}`}});
+      const res = await fetch(`${MC_API}/api/search-runs?target_count=${count}`, {method:"POST", headers:{Authorization:`Bearer ${(await mcGetToken())}`}});
       if (!res.ok) throw new Error("Failed");
       btn.textContent = "✅ Uruchomiono!";
       setTimeout(()=>{ btn.textContent = "▶ Uruchom"; btn.disabled = false; }, 1500);
@@ -5763,13 +5779,13 @@ function wireEvents() {
 
   window.mcUpdate = async function(id, field, value) {
     try {
-      await fetch(`${MC_API}/api/contacts/${id}`, {method:"PUT", headers:{"Content-Type":"application/json", Authorization:`Bearer ${MC_TOKEN}`}, body:JSON.stringify({[field]:value})});
+      await fetch(`${MC_API}/api/contacts/${id}`, {method:"PUT", headers:{"Content-Type":"application/json", Authorization:`Bearer ${(await mcGetToken())}`}, body:JSON.stringify({[field]:value})});
     } catch(e) { mcLoadContacts(); }
   };
 
   async function mcMarkUsed() {
     if (!mcState.selected.size) return;
-    await Promise.all([...mcState.selected].map(id => fetch(`${MC_API}/api/contacts/${id}/mark-used?used=true`,{method:"POST", headers:{Authorization:`Bearer ${MC_TOKEN}`}})));
+    await Promise.all([...mcState.selected].map(id => fetch(`${MC_API}/api/contacts/${id}/mark-used?used=true`,{method:"POST", headers:{Authorization:`Bearer ${(await mcGetToken())}`}})));
     mcState.selected.clear();
     mcLoadContacts();
   }
@@ -5777,7 +5793,7 @@ function wireEvents() {
   async function mcDeleteSelected() {
     if (!mcState.selected.size) return;
     if (!confirm(`Usunąć ${mcState.selected.size} kontaktów?`)) return;
-    await Promise.all([...mcState.selected].map(id => fetch(`${MC_API}/api/contacts/${id}`,{method:"DELETE", headers:{Authorization:`Bearer ${MC_TOKEN}`}})));
+    await Promise.all([...mcState.selected].map(id => fetch(`${MC_API}/api/contacts/${id}`,{method:"DELETE", headers:{Authorization:`Bearer ${(await mcGetToken())}`}})));
     mcState.selected.clear();
     mcLoadContacts();
   }

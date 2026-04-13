@@ -82,8 +82,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=["https://settings.familiada.online"],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type"],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Global state

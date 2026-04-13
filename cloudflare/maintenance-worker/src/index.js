@@ -2244,6 +2244,13 @@ async function handleAdminConfigApi(request, env, url) {
     return sendTelegram(tg, text);
   }
 
+  // GET /_admin_api/config/lead-finder-token — serve API token to settings frontend
+  if (url.pathname === "/_admin_api/config/lead-finder-token" && request.method === "GET") {
+    const token = String(env.LEAD_FINDER_API_TOKEN || "").trim();
+    if (!token) return json({ ok: false, error: "not_configured" }, 422);
+    return json({ ok: true, token });
+  }
+
   return new Response("Not Found", { status: 404 });
 }
 
