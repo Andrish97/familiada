@@ -5794,10 +5794,7 @@ function wireEvents() {
     const tbody = document.getElementById("mcTableBody");
     let isDragging = false;
     let startCell = null;
-
-    // Clear previous
-    tbody.querySelectorAll('.mc-cell-selected').forEach(c => c.classList.remove('mc-cell-selected'));
-    mcState.selectedCells = [];
+    let scrollInterval = null;
 
     function highlightCells() {
       tbody.querySelectorAll('.mc-cell-selected').forEach(c => c.classList.remove('mc-cell-selected'));
@@ -5805,17 +5802,14 @@ function wireEvents() {
         const cellEl = tbody.querySelector(`.mc-selectable[data-row="${row}"][data-col="${col}"]`);
         if (cellEl) cellEl.classList.add('mc-cell-selected');
       });
+      // Show/hide visit URL button
+      mcUpdateUrlButton();
     }
 
     function toggleCell(row, col) {
       const idx = mcState.selectedCells.findIndex(c => c.row === row && c.col === col);
       if (idx >= 0) mcState.selectedCells.splice(idx, 1);
       else mcState.selectedCells.push({row, col});
-      highlightCells();
-    }
-
-    function clearAndSelect(row, col) {
-      mcState.selectedCells = [{row, col}];
       highlightCells();
     }
 
@@ -5838,6 +5832,54 @@ function wireEvents() {
       highlightCells();
     }
 
+    function mcUpdateUrlButton() {
+      const btn = document.getElementById("mcVisitUrlBtn");
+      const info = document.getElementById("mcSelectionInfo");
+      if (!btn) return;
+      // Find first selected URL cell (col 2)
+      const urlCell = mcState.selectedCells.find(c => c.col === 2);
+      if (urlCell) {
+        const contact = mcState.contacts[urlCell.row];
+        if (contact && contact.url) {
+          btn.href = contact.url;
+          btn.style.display = '';
+        } else {
+          btn.style.display = 'none';
+        }
+      } else {
+        btn.style.display = 'none';
+      }
+      // Update selection info
+      if (info) {
+        const rows = new Set(mcState.selectedCells.map(c => c.row));
+        info.textContent = mcState.selectedCells.length > 0 ? `${mcState.selectedCells.length} komórek, ${rows.size} wierszy` : '';
+      }
+    }
+
+    // Auto-scroll during drag
+    function startAutoScroll() {
+      if (scrollInterval) return;
+      scrollInterval = setInterval(() => {
+        if (!isDragging || !startCell) { stopAutoScroll(); return; }
+        const container = document.getElementById("mcContactsTable");
+        if (!container) { stopAutoScroll(); return; }
+        const rect = container.getBoundingClientRect();
+        const threshold = 40;
+        const scrollSpeed = 10;
+        if (mcDragY < rect.top + threshold) {
+          container.parentElement.scrollTop -= scrollSpeed;
+        } else if (mcDragY > rect.bottom - threshold) {
+          container.parentElement.scrollTop += scrollSpeed;
+        }
+      }, 20);
+    }
+
+    function stopAutoScroll() {
+      if (scrollInterval) { clearInterval(scrollInterval); scrollInterval = null; }
+    }
+
+    let mcDragY = 0;
+
     // Mouse down on cell
     tbody.addEventListener('mousedown', (e) => {
       const cell = e.target.closest('.mc-selectable');
@@ -5849,7 +5891,6 @@ function wireEvents() {
       if (e.metaKey || e.ctrlKey) {
         toggleCell(row, col);
       } else if (e.shiftKey && mcState.selectedCells.length > 0) {
-        // Shift+click: range from last selected cell
         const last = mcState.selectedCells[mcState.selectedCells.length - 1];
         selectRange(last.row, last.col, row, col);
       } else {
@@ -5861,23 +5902,28 @@ function wireEvents() {
       }
     });
 
-    // Mouse move - drag select (prevent scrolling)
-    tbody.addEventListener('mousemove', (e) => {
+    // Mouse move - drag select with auto-scroll
+    document.addEventListener('mousemove', (e) => {
       if (!isDragging || !startCell) return;
-      e.preventDefault();
+      mcDragY = e.clientY;
       const cell = e.target.closest('.mc-selectable');
-      if (!cell) return;
+      if (!cell) { startAutoScroll(); return; }
+      stopAutoScroll();
       const endRow = parseInt(cell.dataset.row);
       const endCol = parseInt(cell.dataset.col);
       selectRange(startCell.row, startCell.col, endRow, endCol);
     });
 
     // Mouse up
-    document.addEventListener('mouseup', () => { isDragging = false; startCell = null; });
+    document.addEventListener('mouseup', () => {
+      isDragging = false;
+      startCell = null;
+      stopAutoScroll();
+    });
 
     // Click outside table to deselect
     document.addEventListener('mousedown', (e) => {
-      if (!e.target.closest('#mcContactsTable')) {
+      if (!e.target.closest('#mcContactsTable') && !e.target.closest('#mcVisitUrlBtn')) {
         deselectAll();
       }
     });
