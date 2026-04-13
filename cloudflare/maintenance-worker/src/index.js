@@ -104,11 +104,11 @@ export default {
       if (lfToken) {
         const newHeaders = new Headers(request.headers);
         newHeaders.set("Authorization", `Bearer ${lfToken}`);
-        return fetch(request.url, {
-          method: request.method,
-          headers: newHeaders,
-          body: request.body
-        }).then(res => {
+        const fetchOpts = { method: request.method, headers: newHeaders };
+        if (request.method !== "GET" && request.method !== "HEAD") {
+          fetchOpts.body = request.body;
+        }
+        return fetch(request.url, fetchOpts).then(res => {
           const h = new Headers(res.headers);
           h.set("Access-Control-Allow-Origin", "https://settings.familiada.online");
           return new Response(res.body, { status: res.status, headers: h });
