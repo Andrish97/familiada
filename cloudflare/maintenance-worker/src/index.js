@@ -100,21 +100,21 @@ export default {
           }
         });
       }
-      // Inject Authorization header so Caddy allows the request
       const lfToken = String(env.LEAD_FINDER_API_KEY || "").trim();
-      let modifiedRequest = request;
       if (lfToken) {
-        const headers = new Headers(request.headers);
-        headers.set("Authorization", `Bearer ${lfToken}`);
-        modifiedRequest = new Request(request.url, { method: request.method, headers, body: request.body });
+        const newHeaders = new Headers(request.headers);
+        newHeaders.set("Authorization", `Bearer ${lfToken}`);
+        return fetch(request.url, {
+          method: request.method,
+          headers: newHeaders,
+          body: request.body
+        }).then(res => {
+          const h = new Headers(res.headers);
+          h.set("Access-Control-Allow-Origin", "https://settings.familiada.online");
+          return new Response(res.body, { status: res.status, headers: h });
+        });
       }
-      const res = await fetch(modifiedRequest);
-      // Add CORS headers to response
-      const corsHeaders = new Headers(res.headers);
-      corsHeaders.set("Access-Control-Allow-Origin", "https://settings.familiada.online");
-      corsHeaders.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-      corsHeaders.set("Access-Control-Allow-Headers", "Authorization, Content-Type");
-      return new Response(res.body, { status: res.status, headers: corsHeaders });
+      return fetch(request);
     }
 
     // AI and Search endpoints - passthrough, Caddy handles auth
