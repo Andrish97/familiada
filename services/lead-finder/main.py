@@ -25,7 +25,7 @@ AI_ENDPOINT = os.getenv("AI_ENDPOINT", "https://ai.familiada.online")
 AI_API_KEY = os.getenv("AI_API_KEY", "")
 AI_MODEL = os.getenv("AI_MODEL", "qwen2.5")
 SUPABASE_URL = os.getenv("SUPABASE_URL", "https://api.familiada.online")
-SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
+SUPABASE_SERVICE_KEY = os.getenv("SERVICE_ROLE_KEY", "")
 WORKER_TELEGRAM_ENDPOINT = os.getenv("WORKER_TELEGRAM_ENDPOINT", "https://settings.familiada.online/_admin_api/config/telegram/notify-service")
 SERVICE_TOKEN = os.getenv("LEAD_FINDER_SERVICE_KEY", "")
 
