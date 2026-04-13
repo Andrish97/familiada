@@ -89,7 +89,7 @@ export default {
     }
 
     // Lead Finder - passthrough like ai/search, Caddy handles auth and CORS
-    // Worker injects LEAD_FINDER_API_TOKEN for frontend requests
+    // Worker injects LEAD_FINDER_API_KEY for frontend requests
     if (host === "leads.familiada.online") {
       const ext = url.pathname.split('.').pop().toLowerCase();
       const isStatic = ['css', 'js', 'png', 'jpg', 'jpeg', 'gif', 'svg', 'ico', 'woff', 'woff2', 'map', 'txt'].includes(ext);
@@ -97,7 +97,7 @@ export default {
         return fetchFromOrigin(request, url, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
       }
       // Inject auth header so Caddy allows the request
-      const lfToken = String(env.LEAD_FINDER_API_TOKEN || "").trim();
+      const lfToken = String(env.LEAD_FINDER_API_KEY || "").trim();
       const headers = new Headers(request.headers);
       if (lfToken && !headers.has("Authorization")) {
         headers.set("Authorization", `Bearer ${lfToken}`);
@@ -2254,7 +2254,7 @@ async function handleAdminConfigApi(request, env, url) {
     const tg = getTelegramConfig(env);
     if (!tg) return json({ ok: false, error: "telegram_not_configured" }, 422);
     const authHeader = request.headers.get("Authorization") || "";
-    const expectedToken = String(env.LEAD_FINDER_SERVICE_TOKEN || "").trim();
+    const expectedToken = String(env.LEAD_FINDER_SERVICE_KEY || "").trim();
     if (!expectedToken || !authHeader.startsWith("Bearer ") || authHeader.slice(7) !== expectedToken) {
       return json({ ok: false, error: "unauthorized" }, 401);
     }
@@ -2265,9 +2265,9 @@ async function handleAdminConfigApi(request, env, url) {
     return sendTelegram(tg, text);
   }
 
-  // GET /_admin_api/config/lead-finder-token — serve API token to settings frontend
+  // GET /_admin_api/config/lead-finder-token — serve API key to settings frontend
   if (url.pathname === "/_admin_api/config/lead-finder-token" && request.method === "GET") {
-    const token = String(env.LEAD_FINDER_API_TOKEN || "").trim();
+    const token = String(env.LEAD_FINDER_API_KEY || "").trim();
     if (!token) return json({ ok: false, error: "not_configured" }, 422);
     return json({ ok: true, token });
   }

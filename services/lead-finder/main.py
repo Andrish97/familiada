@@ -27,7 +27,7 @@ AI_MODEL = os.getenv("AI_MODEL", "qwen2.5")
 SUPABASE_URL = os.getenv("SUPABASE_URL", "https://api.familiada.online")
 SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
 WORKER_TELEGRAM_ENDPOINT = os.getenv("WORKER_TELEGRAM_ENDPOINT", "https://settings.familiada.online/_admin_api/config/telegram/notify-service")
-SERVICE_TOKEN = os.getenv("LEAD_FINDER_SERVICE_TOKEN", "")
+SERVICE_TOKEN = os.getenv("LEAD_FINDER_SERVICE_KEY", "")
 
 BLOCKED_DOMAINS = {
     'olx.pl', 'oferteo.pl', 'fixly.pl', 'useme.pl', 'pracuj.pl', 'jooble.pl',
@@ -91,7 +91,7 @@ running_tasks = {}
 shutdown_event = asyncio.Event()
 
 # Auth
-API_TOKEN = os.getenv("LEAD_FINDER_API_TOKEN", "")
+API_TOKEN = os.getenv("LEAD_FINDER_API_KEY", "")
 
 async def verify_token(request: Request):
     if not API_TOKEN:
