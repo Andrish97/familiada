@@ -88,9 +88,19 @@ export default {
       return fetch(request);
     }
 
-    // Lead Finder - passthrough like ai/search, Caddy handles auth and CORS
-    // Worker injects LEAD_FINDER_API_KEY for frontend requests
+    // Lead Finder - passthrough like ai/search, Worker handles CORS + auth injection
     if (host === "leads.familiada.online") {
+      // Handle OPTIONS preflight directly
+      if (request.method === "OPTIONS") {
+        return new Response(null, {
+          headers: {
+            "Access-Control-Allow-Origin": "https://settings.familiada.online",
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type",
+            "Access-Control-Max-Age": "86400"
+          }
+        });
+      }
       const ext = url.pathname.split('.').pop().toLowerCase();
       const isStatic = ['css', 'js', 'png', 'jpg', 'jpeg', 'gif', 'svg', 'ico', 'woff', 'woff2', 'map', 'txt'].includes(ext);
       if (isStatic) {
