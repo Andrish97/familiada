@@ -1,0 +1,30 @@
+# ═══════════════════════════════════════════════════════════
+# Lead Finder Service - Docker Compose Snippet
+# ═══════════════════════════════════════════════════════════
+# Referencyjnie - na serwerze deploy używa "docker run" bezpośrednio
+# Uruchamiany z katalogu: /home/andrish97/supabase-selfhost/supabase/docker/
+#
+# docker compose -f services/lead-finder/docker-compose.lead-finder.yml up -d
+
+services:
+  lead-finder:
+    build:
+      context: ./services/lead-finder
+      dockerfile: Dockerfile
+    container_name: familiada-lead-finder
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    env_file:
+      - .env
+    environment:
+      - TZ=Europe/Warsaw
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - supabase_default
+
+# Sieć supabase_default — taka jak w głównym docker-compose.yml

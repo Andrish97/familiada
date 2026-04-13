@@ -3987,6 +3987,7 @@ const uk = {
       tools: "Інструменти",
       reports: "Пошта Familiada",
       marketing: "Маркетинг",
+      marketingContacts: "Маркетингові Контакти",
     },
     generator: {
       title: "Ігри Виробника",
@@ -4400,6 +4401,26 @@ const uk = {
       errEmails: "Перевірте список адрес перед відправленням.",
       confirmSend: "Надіслати повідомлення",
       confirmRecipients: "одержувачам?",
+    },
+    marketingContacts: {
+      title: "Маркетингові Контакти",
+      subtitle: "Пошук лідів: SearXNG → Email → AI Верифікація",
+      targetCount: "Кількість контактів:",
+      start: "▶ Запустити",
+      refresh: "⟳ Оновити",
+      verifiedTitle: "Верифіковані контакти",
+      markUsed: "✓ Використано",
+      delete: "🗑 Видалити",
+      logsTitle: "Логи",
+      logsEmpty: "Виберіть завдання для перегляду логів",
+      table: {
+        title: "Назва",
+        email: "Email",
+        url: "URL",
+        type: "Тип",
+        added: "Додано",
+        used: "Використано"
+      }
     },
   },
   marketplace: {

@@ -44,6 +44,7 @@
       <button class="btn sm tab-btn" id="btnTabMail" type="button" data-i18n="settings.tabs.mail">Maile</button>
       <button class="btn sm tab-btn" id="btnTabReports" type="button" data-i18n="settings.tabs.reports">Zgłoszenia</button>
       <button class="btn sm tab-btn" id="btnTabMarketing" type="button" data-i18n="settings.tabs.marketing">Marketing</button>
+      <button class="btn sm tab-btn" id="btnTabMarketingContacts" type="button" data-i18n="settings.tabs.marketingContacts">Kontakty Marketingowe</button>
       <button class="btn sm tab-btn" id="btnTabMarketplace" type="button" data-i18n="settings.tabs.marketplace">Gry Społeczności</button>
       <button class="btn sm tab-btn hidden-on-mobile" id="btnTabGenerator" type="button" data-i18n="settings.tabs.generator">Gry Producenta</button>
       <div class="ui-select hidden-on-mobile" id="toolsSelect">
@@ -808,6 +809,104 @@
           <div style="display:flex;justify-content:flex-end;align-items:center;gap:10px;margin-top:16px;padding-top:12px;border-top:1px solid rgba(255,255,255,.08)">
             <span id="mktSendStatus" style="font-size:12px;opacity:.6"></span>
             <button class="btn sm gold" type="button" id="btnMktSend" data-i18n="settings.marketing.sendBtn">Wyślij do odbiorców</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Marketing Contacts panel ── -->
+      <div class="market-admin-panel" id="marketingContactsPanel" hidden>
+        <div class="mail-card">
+          <div class="panel-head">
+            <div class="panel-title" data-i18n="settings.marketingContacts.title">Kontakty Marketingowe</div>
+            <div class="panel-sub" data-i18n="settings.marketingContacts.subtitle">Wyszukiwarka leadów: SearXNG → Email → AI Weryfikacja</div>
+          </div>
+
+          <!-- Run controls -->
+          <div class="mc-controls">
+            <div class="mc-field-inline">
+              <label for="mcTargetCount" data-i18n="settings.marketingContacts.targetCount">Ilość kontaktów:</label>
+              <input class="inp" id="mcTargetCount" type="number" min="1" max="500" value="50" style="width:80px">
+              <button class="btn sm gold" id="mcStartBtn" type="button" data-i18n="settings.marketingContacts.start">▶ Uruchom</button>
+              <button class="btn sm" id="mcRefreshBtn" type="button" data-i18n="settings.marketingContacts.refresh">⟳ Odśwież</button>
+            </div>
+          </div>
+
+          <!-- Runs list -->
+          <div id="mcRunsList" style="margin:1rem 0;max-height:250px;overflow-y:auto">
+            <div style="text-align:center;opacity:.5;padding:1rem" data-i18n="common.loading">Ładowanie...</div>
+          </div>
+
+          <!-- Verified contacts table -->
+          <div style="margin-top:1.5rem">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px">
+              <div class="panel-title" style="font-size:1rem" data-i18n="settings.marketingContacts.verifiedTitle">Zweryfikowane kontakty</div>
+              <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+                <select class="inp" id="mcFilterRun" style="width:auto;min-width:150px;font-size:12px">
+                  <option value="">Wszystkie zlecenia</option>
+                </select>
+                <select class="inp" id="mcFilterType" style="width:auto;min-width:120px;font-size:12px">
+                  <option value="">Wszystkie typy</option>
+                  <option value="DJ">DJ</option>
+                  <option value="Wodzirej">Wodzirej</option>
+                  <option value="Animator">Animator</option>
+                  <option value="Agencja eventowa">Agencja eventowa</option>
+                  <option value="Konferansjer">Konferansjer</option>
+                  <option value="Inne">Inne</option>
+                </select>
+                <select class="inp" id="mcFilterUsed" style="width:auto;min-width:120px;font-size:12px">
+                  <option value="">Wszystkie</option>
+                  <option value="false">Nieużywane</option>
+                  <option value="true">Używane</option>
+                </select>
+                <button class="btn sm" id="mcMarkUsedBtn" type="button" data-i18n="settings.marketingContacts.markUsed">✓ Użyte</button>
+                <button class="btn sm danger" id="mcDeleteBtn" type="button" data-i18n="settings.marketingContacts.delete">🗑 Usuń</button>
+              </div>
+            </div>
+
+            <!-- Excel-like table -->
+            <div style="overflow-x:auto;border-radius:8px;border:1px solid rgba(255,255,255,.08)">
+              <table class="mc-table" id="mcContactsTable" style="width:100%;border-collapse:collapse;font-size:13px">
+                <thead>
+                  <tr style="background:rgba(255,255,255,.05)">
+                    <th style="width:35px;text-align:center"><input type="checkbox" id="mcSelectAll"></th>
+                    <th style="padding:8px;text-align:left" data-i18n="settings.marketingContacts.table.title">Tytuł</th>
+                    <th style="padding:8px;text-align:left" data-i18n="settings.marketingContacts.table.email">Email</th>
+                    <th style="padding:8px;text-align:left" data-i18n="settings.marketingContacts.table.url">URL</th>
+                    <th style="padding:8px;text-align:left;width:130px" data-i18n="settings.marketingContacts.table.type">Typ</th>
+                    <th style="padding:8px;text-align:left;width:120px" data-i18n="settings.marketingContacts.table.added">Dodano</th>
+                    <th style="padding:8px;text-align:left;width:120px" data-i18n="settings.marketingContacts.table.used">Użyto</th>
+                  </tr>
+                </thead>
+                <tbody id="mcTableBody">
+                  <tr><td colspan="7" style="text-align:center;opacity:.5;padding:1.5rem" data-i18n="common.loading">Ładowanie...</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Pagination -->
+            <div style="display:flex;justify-content:center;align-items:center;gap:1rem;margin-top:1rem">
+              <button class="btn sm" id="mcPrevPage" type="button">← Poprzednia</button>
+              <span id="mcPageInfo" style="font-size:12px;opacity:.6">Strona 1 / 1</span>
+              <button class="btn sm" id="mcNextPage" type="button">Następna →</button>
+            </div>
+          </div>
+
+          <!-- Logs -->
+          <div style="margin-top:1.5rem">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+              <div class="panel-title" style="font-size:1rem" data-i18n="settings.marketingContacts.logsTitle">Logi</div>
+              <select class="inp" id="mcLogRunSelect" style="width:auto;min-width:200px;font-size:12px">
+                <option value="">-- Wybierz zlecenie --</option>
+              </select>
+            </div>
+            <div id="mcLogsContainer" style="background:#0d1117;border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:10px;max-height:300px;overflow-y:auto;font-family:monospace;font-size:12px;line-height:1.6">
+              <div style="text-align:center;opacity:.5" data-i18n="settings.marketingContacts.logsEmpty">Wybierz zlecenie aby zobaczyć logi</div>
+            </div>
+            <div style="margin-top:8px">
+              <label style="font-size:12px;opacity:.6;display:flex;align-items:center;gap:6px">
+                <input type="checkbox" id="mcAutoRefreshLogs" checked> Auto-odświeżanie (5s)
+              </label>
+            </div>
           </div>
         </div>
       </div>

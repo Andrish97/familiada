@@ -28,7 +28,7 @@ obiektów które już istnieją.
 Na czystej bazie baseline wykonuje się normalnie.
 
 ## Rozwiązywanie problemów (Checksum Mismatch)
-Jeśli z ważnych powodów (np. błąd w logicie, którego nie da się naprawić nową migracją lub drobna zmiana w komentarzach) zmodyfikowano już zastosowany plik migracji, pipeline zgłosi błąd sumy kontrolnej. 
+Jeśli z ważnych powodów (np. błąd w logicie, którego nie da się naprawić nową migracją lub drobna zmiana w komentarzach) zmodyfikowano już zastosowany plik migracji, pipeline zgłosi błąd sumy kontrolnej.
 
 Aby to naprawić:
 1. Stwórz nową migrację (z wyższym numerem).

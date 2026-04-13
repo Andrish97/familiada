@@ -4463,6 +4463,7 @@ const pl = {
       tools: "Narzędzia",
       reports: "Poczta Familiada",
       marketing: "Marketing",
+      marketingContacts: "Kontakty Marketingowe",
     },
     generator: {
       title: "Gry Producenta",
@@ -4876,6 +4877,26 @@ const pl = {
       errEmails: "Waliduj listę adresów przed wysyłką.",
       confirmSend: "Wysłać wiadomość do",
       confirmRecipients: "odbiorców?",
+    },
+    marketingContacts: {
+      title: "Kontakty Marketingowe",
+      subtitle: "Wyszukiwarka leadów: SearXNG → Email → AI Weryfikacja",
+      targetCount: "Ilość kontaktów:",
+      start: "▶ Uruchom",
+      refresh: "⟳ Odśwież",
+      verifiedTitle: "Zweryfikowane kontakty",
+      markUsed: "✓ Użyte",
+      delete: "🗑 Usuń",
+      logsTitle: "Logi",
+      logsEmpty: "Wybierz zlecenie aby zobaczyć logi",
+      table: {
+        title: "Tytuł",
+        email: "Email",
+        url: "URL",
+        type: "Typ",
+        added: "Dodano",
+        used: "Użyto"
+      }
     },
   },
   marketplace: {

@@ -89,7 +89,9 @@ const els = {
   generatorPanel: document.getElementById("generatorPanel"),
   reportsPanel: document.getElementById("reportsPanel"),
   marketingPanel: document.getElementById("marketingPanel"),
+  marketingContactsPanel: document.getElementById("marketingContactsPanel"),
   btnTabMarketing: document.getElementById("btnTabMarketing"),
+  btnTabMarketingContacts: document.getElementById("btnTabMarketingContacts"),
   btnRatingsRefresh: document.getElementById("btnRatingsRefresh"),
   btnStatsRefresh: document.getElementById("btnStatsRefresh"),
   ratingsTableBody: document.getElementById("ratingsTableBody"),
@@ -4698,8 +4700,9 @@ function setActiveTab(tab) {
   const btnGen = document.getElementById("btnTabGenerator");
   const btnReports = document.getElementById("btnTabReports");
   const btnMarketing = document.getElementById("btnTabMarketing");
+  const btnMarketingContacts = document.getElementById("btnTabMarketingContacts");
   const tools = document.getElementById("toolsSelect");
-  
+
   if (btn) btn.classList.toggle("active", tab === "maintenance");
   if (btnMail) btnMail.classList.toggle("active", tab === "mail");
   if (btnMarket) btnMarket.classList.toggle("active", tab === "marketplace");
@@ -4708,8 +4711,9 @@ function setActiveTab(tab) {
   if (btnGen) btnGen.classList.toggle("active", tab === "generator");
   if (btnReports) btnReports.classList.toggle("active", tab === "reports");
   if (btnMarketing) btnMarketing.classList.toggle("active", tab === "marketing");
+  if (btnMarketingContacts) btnMarketingContacts.classList.toggle("active", tab === "marketingContacts");
   if (tools) tools.classList.toggle("active", tab === "tools");
-  
+
   // Hide/show panels
   if (els.maintenancePanel) els.maintenancePanel.hidden = tab !== "maintenance";
   if (els.mailPanel) els.mailPanel.hidden = tab !== "mail";
@@ -4719,7 +4723,8 @@ function setActiveTab(tab) {
   if (els.generatorPanel) els.generatorPanel.hidden = tab !== "generator";
   if (els.reportsPanel) els.reportsPanel.hidden = tab !== "reports";
   if (els.marketingPanel) els.marketingPanel.hidden = tab !== "marketing";
-  
+  if (els.marketingContactsPanel) els.marketingContactsPanel.hidden = tab !== "marketingContacts";
+
   // Force display style for panels (mobile compatibility)
   if (els.mailPanel) els.mailPanel.style.display = tab === "mail" ? "" : "none";
   if (els.marketplacePanel) els.marketplacePanel.style.display = tab === "marketplace" ? "" : "none";
@@ -4728,6 +4733,7 @@ function setActiveTab(tab) {
   if (els.generatorPanel) els.generatorPanel.style.display = tab === "generator" ? "" : "none";
   if (els.reportsPanel) els.reportsPanel.style.display = tab === "reports" ? "" : "none";
   if (els.marketingPanel) els.marketingPanel.style.display = tab === "marketing" ? "" : "none";
+  if (els.marketingContactsPanel) els.marketingContactsPanel.style.display = tab === "marketingContacts" ? "" : "none";
 
   // When entering reports panel, init mail view
   if (tab === "reports") {
@@ -5434,6 +5440,13 @@ function wireEvents() {
     });
   }
 
+  if (els.btnTabMarketingContacts) {
+    els.btnTabMarketingContacts.addEventListener("click", () => {
+      if (activeTab === "tools") closeTools();
+      setActiveTab("marketingContacts");
+    });
+  }
+
   wireMarketplaceEvents();
   wireReportsEvents();
   loadFolderBadges();
@@ -5616,6 +5629,249 @@ function wireEvents() {
     });
   };
   setTimeout(initMktTinyMCE, 100);
+
+  // ═══════════════════════════════════════════════════════════
+  // MARKETING CONTACTS
+  // ═══════════════════════════════════════════════════════════
+  const MC_API = "https://leads.familiada.online";
+  const MC_TOKEN = ""; // ← ustaw token z Caddy
+  const MC_PAGE_SIZE = 50;
+  let mcState = {
+    runs: [],
+    contacts: [],
+    selected: new Set(),
+    page: 1,
+    logs: [],
+    logRun: null,
+    logTimer: null
+  };
+
+  async function mcLoadRuns() {
+    try {
+      const res = await fetch(`${MC_API}/api/search-runs?limit=50`);
+      if (!res.ok) throw new Error("Failed");
+      mcState.runs = await res.json();
+      mcRenderRuns();
+      mcPopulateRunFilters();
+    } catch(e) {
+      document.getElementById("mcRunsList").innerHTML = `<div style="text-align:center;opacity:.5;padding:1rem">Błąd: ${e.message}</div>`;
+    }
+  }
+
+  function mcRenderRuns() {
+    const el = document.getElementById("mcRunsList");
+    if (!mcState.runs.length) {
+      el.innerHTML = '<div style="text-align:center;opacity:.5;padding:1rem">Brak zleceń. Uruchom nowe wyszukiwanie.</div>';
+      return;
+    }
+    el.innerHTML = mcState.runs.map(r => {
+      const statusText = {pending:"Oczekiwanie",running:"Uruchomione",paused:"Wstrzymane",completed:"Zakończone",cancelled:"Anulowane",error:"Błąd"}[r.status] || r.status;
+      return `<div class="mc-run-card">
+        <div>
+          <span class="mc-run-id">#${r.id.slice(0,8)}</span>
+          <span class="mc-run-status ${r.status}">${statusText}</span>
+        </div>
+        <div class="mc-run-stats">
+          <span>Cel: <span class="mc-run-stat-val">${r.target_count||50}</span></span>
+          <span>Znaleziono: <span class="mc-run-stat-val">${r.contacts_verified||0}</span></span>
+        </div>
+        <div class="mc-run-actions">
+          ${r.status==="running"?`<button class="btn sm" onclick="mcPause('${r.id}')">⏸ Wstrzymaj</button><button class="btn sm danger" onclick="mcCancel('${r.id}')">❌ Anuluj</button>`:""}
+          ${r.status==="paused"?`<button class="btn sm gold" onclick="mcResume('${r.id}')">▶ Wznów</button><button class="btn sm danger" onclick="mcCancel('${r.id}')">❌ Anuluj</button>`:""}
+          ${r.status==="pending"?`<button class="btn sm danger" onclick="mcCancel('${r.id}')">❌ Anuluj</button>`:""}
+          ${r.status==="completed"?`<span style="font-size:12px;color:#55efc4">✅ Zakończone</span>`:""}
+          ${r.status==="error"?`<span style="font-size:11px;color:#ff7675">${(r.error_message||"Błąd").slice(0,60)}</span>`:""}
+        </div>
+      </div>`;
+    }).join("");
+  }
+
+  window.mcPause = async function(id) { await fetch(`${MC_API}/api/search-runs/${id}/pause`,{method:"POST", headers:{Authorization:`Bearer ${MC_TOKEN}`}}); mcLoadRuns(); };
+  window.mcResume = async function(id) { await fetch(`${MC_API}/api/search-runs/${id}/resume`,{method:"POST", headers:{Authorization:`Bearer ${MC_TOKEN}`}}); mcLoadRuns(); };
+  window.mcCancel = async function(id) { if(confirm("Anulować zlecenie?")){ await fetch(`${MC_API}/api/search-runs/${id}/cancel`,{method:"POST", headers:{Authorization:`Bearer ${MC_TOKEN}`}}); mcLoadRuns(); }};
+
+  async function mcStartRun() {
+    const btn = document.getElementById("mcStartBtn");
+    const count = parseInt(document.getElementById("mcTargetCount").value) || 50;
+    btn.disabled = true;
+    try {
+      const res = await fetch(`${MC_API}/api/search-runs?target_count=${count}`, {method:"POST", headers:{Authorization:`Bearer ${MC_TOKEN}`}});
+      if (!res.ok) throw new Error("Failed");
+      btn.textContent = "✅ Uruchomiono!";
+      setTimeout(()=>{ btn.textContent = "▶ Uruchom"; btn.disabled = false; }, 1500);
+      mcLoadRuns();
+    } catch(e) {
+      alert("Błąd: " + e.message);
+      btn.disabled = false;
+    }
+  }
+
+  async function mcLoadContacts() {
+    const tbody = document.getElementById("mcTableBody");
+    try {
+      let query = sb().from("marketing_verified_contacts").select("*");
+      const fRun = document.getElementById("mcFilterRun").value;
+      const fType = document.getElementById("mcFilterType").value;
+      const fUsed = document.getElementById("mcFilterUsed").value;
+      if (fRun) query = query.eq("run_id", fRun);
+      if (fType) query = query.eq("contact_type", fType);
+      if (fUsed !== "") query = query.eq("is_used", fUsed === "true");
+      const from = (mcState.page - 1) * MC_PAGE_SIZE;
+      const to = from + MC_PAGE_SIZE - 1;
+      const { data, error, count } = await query.order("added_at",{ascending:false}).range(from, to);
+      if (error) throw error;
+      mcState.contacts = data || [];
+      mcRenderContacts(count || 0);
+    } catch(e) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;opacity:.5;padding:1.5rem">Błąd: ${e.message}</td></tr>`;
+    }
+  }
+
+  function mcRenderContacts(totalCount) {
+    const tbody = document.getElementById("mcTableBody");
+    if (!mcState.contacts.length) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;opacity:.5;padding:1.5rem">Brak kontaktów</td></tr>';
+      mcUpdatePagination(0);
+      return;
+    }
+    tbody.innerHTML = mcState.contacts.map(c => {
+      const addedAt = c.added_at ? new Date(c.added_at).toLocaleString("pl-PL",{month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"}) : "—";
+      const usedAt = c.used_at ? new Date(c.used_at).toLocaleString("pl-PL",{month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"}) : "—";
+      return `<tr class="${c.is_used?'used':''}" data-id="${c.id}">
+        <td style="text-align:center"><input type="checkbox" ${mcState.selected.has(c.id)?'checked':''} onchange="mcToggle('${c.id}',this.checked)"></td>
+        <td><input class="mc-cell-edit" value="${mcEsc(c.title||'')}" onblur="mcUpdate('${c.id}','title',this.value)"></td>
+        <td><input class="mc-cell-edit" value="${mcEsc(c.email||'')}" onblur="mcUpdate('${c.id}','email',this.value)"></td>
+        <td><a href="${mcEsc(c.url)}" target="_blank" rel="noopener">${mcEsc(c.url)}</a></td>
+        <td><select class="mc-cell-select" onchange="mcUpdate('${c.id}','contact_type',this.value)">
+          ${["DJ","Wodzirej","Animator","Agencja eventowa","Konferansjer","Inne"].map(t=>`<option value="${t}" ${c.contact_type===t?'selected':''}>${t}</option>`).join("")}
+        </select></td>
+        <td style="font-size:11px;opacity:.6">${addedAt}</td>
+        <td style="font-size:11px;opacity:.6">${c.is_used?usedAt:"—"}</td>
+      </tr>`;
+    }).join("");
+    mcUpdatePagination(totalCount);
+  }
+
+  function mcEsc(s) { const d=document.createElement("div"); d.textContent=s; return d.innerHTML; }
+
+  window.mcToggle = function(id, checked) {
+    if (checked) mcState.selected.add(id); else mcState.selected.delete(id);
+    document.querySelectorAll("#mcTableBody tr").forEach(tr => {
+      tr.classList.toggle("selected", mcState.selected.has(tr.dataset.id));
+    });
+  };
+
+  window.mcUpdate = async function(id, field, value) {
+    try {
+      await fetch(`${MC_API}/api/contacts/${id}`, {method:"PUT", headers:{"Content-Type":"application/json", Authorization:`Bearer ${MC_TOKEN}`}, body:JSON.stringify({[field]:value})});
+    } catch(e) { mcLoadContacts(); }
+  };
+
+  async function mcMarkUsed() {
+    if (!mcState.selected.size) return;
+    await Promise.all([...mcState.selected].map(id => fetch(`${MC_API}/api/contacts/${id}/mark-used?used=true`,{method:"POST", headers:{Authorization:`Bearer ${MC_TOKEN}`}})));
+    mcState.selected.clear();
+    mcLoadContacts();
+  }
+
+  async function mcDeleteSelected() {
+    if (!mcState.selected.size) return;
+    if (!confirm(`Usunąć ${mcState.selected.size} kontaktów?`)) return;
+    await Promise.all([...mcState.selected].map(id => fetch(`${MC_API}/api/contacts/${id}`,{method:"DELETE", headers:{Authorization:`Bearer ${MC_TOKEN}`}})));
+    mcState.selected.clear();
+    mcLoadContacts();
+  }
+
+  function mcUpdatePagination(total) {
+    const pages = Math.ceil(total / MC_PAGE_SIZE) || 1;
+    document.getElementById("mcPageInfo").textContent = `Strona ${mcState.page} / ${pages}`;
+    document.getElementById("mcPrevPage").disabled = mcState.page <= 1;
+    document.getElementById("mcNextPage").disabled = mcState.page >= pages;
+  }
+
+  async function mcPopulateRunFilters() {
+    const { data } = await sb().from("marketing_verified_contacts").select("run_id,added_at").order("added_at",{ascending:false});
+    if (!data) return;
+    const seen = new Set();
+    const runs = [];
+    data.forEach(d => { if (!seen.has(d.run_id)) { seen.add(d.run_id); runs.push(d.run_id); }});
+    const sel = document.getElementById("mcFilterRun");
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">Wszystkie zlecenia</option>' + runs.map(id => `<option value="${id}" ${id===cur?'selected':''}>#${id.slice(0,8)}</option>`).join("");
+    sel.value = cur;
+  }
+
+  async function mcLoadLogs(runId) {
+    const el = document.getElementById("mcLogsContainer");
+    if (!runId) { el.innerHTML = '<div style="text-align:center;opacity:.5">Wybierz zlecenie</div>'; return; }
+    try {
+      const res = await fetch(`${MC_API}/api/search-runs/${runId}/logs?limit=200`);
+      if (!res.ok) throw new Error("Failed");
+      mcState.logs = await res.json();
+      mcRenderLogs();
+    } catch(e) { el.innerHTML = `<div style="text-align:center;opacity:.5">Błąd: ${e.message}</div>`; }
+  }
+
+  function mcRenderLogs() {
+    const el = document.getElementById("mcLogsContainer");
+    if (!mcState.logs.length) { el.innerHTML = '<div style="text-align:center;opacity:.5">Brak logów</div>'; return; }
+    el.innerHTML = mcState.logs.slice().reverse().map(l => {
+      const time = new Date(l.created_at).toLocaleString("pl-PL",{month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"});
+      const levelClass = {info:"info",success:"success",warning:"warning",error:"error"}[l.level] || "info";
+      const levelText = {info:"INFO",success:"OK",warning:"WARN",error:"ERR"}[l.level] || l.level;
+      return `<div class="mc-log-entry"><span class="mc-log-time">${time}</span><span class="mc-log-level ${levelClass}">${levelText}</span><span class="mc-log-message">${mcEsc(l.message)}</span></div>`;
+    }).join("");
+    el.scrollTop = el.scrollHeight;
+  }
+
+  function mcStartLogAutoRefresh() {
+    mcStopLogAutoRefresh();
+    mcState.logTimer = setInterval(() => { if (mcState.logRun) mcLoadLogs(mcState.logRun); }, 5000);
+  }
+
+  function mcStopLogAutoRefresh() { if (mcState.logTimer) { clearInterval(mcState.logTimer); mcState.logTimer = null; }}
+
+  // Init MC events
+  document.getElementById("mcStartBtn")?.addEventListener("click", mcStartRun);
+  document.getElementById("mcRefreshBtn")?.addEventListener("click", () => { mcLoadRuns(); mcLoadContacts(); });
+  document.getElementById("mcFilterRun")?.addEventListener("change", () => { mcState.page=1; mcLoadContacts(); });
+  document.getElementById("mcFilterType")?.addEventListener("change", () => { mcState.page=1; mcLoadContacts(); });
+  document.getElementById("mcFilterUsed")?.addEventListener("change", () => { mcState.page=1; mcLoadContacts(); });
+  document.getElementById("mcMarkUsedBtn")?.addEventListener("click", mcMarkUsed);
+  document.getElementById("mcDeleteBtn")?.addEventListener("click", mcDeleteSelected);
+  document.getElementById("mcPrevPage")?.addEventListener("click", () => { if(mcState.page>1){mcState.page--;mcLoadContacts();} });
+  document.getElementById("mcNextPage")?.addEventListener("click", () => { mcState.page++; mcLoadContacts(); });
+  document.getElementById("mcSelectAll")?.addEventListener("change", (e) => {
+    document.querySelectorAll("#mcTableBody input[type=checkbox]").forEach(cb => {
+      cb.checked = e.target.checked;
+      const id = cb.closest("tr")?.dataset.id;
+      if (id) { if(e.target.checked) mcState.selected.add(id); else mcState.selected.delete(id); }
+    });
+  });
+  document.getElementById("mcLogRunSelect")?.addEventListener("change", (e) => {
+    mcState.logRun = e.target.value || null;
+    if (mcState.logRun) { mcLoadLogs(mcState.logRun); mcStartLogAutoRefresh(); } else { mcStopLogAutoRefresh(); }
+  });
+  document.getElementById("mcAutoRefreshLogs")?.addEventListener("change", (e) => { if(e.target.checked) mcStartLogAutoRefresh(); else mcStopLogAutoRefresh(); });
+
+  // Load MC data when entering tab
+  const origSetTab = window.setActiveTabMC;
+  const mcObserver = new MutationObserver(() => {
+    if (!document.getElementById("marketingContactsPanel")?.hidden) {
+      mcLoadRuns();
+      mcLoadContacts();
+      // Populate log run select
+      const sel = document.getElementById("mcLogRunSelect");
+      if (sel && !sel.dataset.populated) {
+        fetch(`${MC_API}/api/search-runs?limit=100`).then(r=>r.json()).then(runs => {
+          sel.innerHTML = '<option value="">-- Wybierz zlecenie --</option>' + runs.map(r=>`<option value="${r.id}">#${r.id.slice(0,8)} - ${r.status}</option>`).join("");
+          sel.dataset.populated = "1";
+        });
+      }
+    }
+  });
+  const mcPanel = document.getElementById("marketingContactsPanel");
+  if (mcPanel) mcObserver.observe(mcPanel, { attributes: true, attributeFilter: ["hidden"] });
 
   showAuth("settings.login.checking");
 

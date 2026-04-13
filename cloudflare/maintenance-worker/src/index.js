@@ -2216,6 +2216,34 @@ async function handleAdminConfigApi(request, env, url) {
     return sendTelegram(tg, "✅ Familiada — test powiadomień Telegram\nPowiadomienia push działają poprawnie!");
   }
 
+  // POST /_admin_api/config/telegram/notify — notify from services (lead-finder etc)
+  if (url.pathname === "/_admin_api/config/telegram/notify" && request.method === "POST") {
+    const tg = getTelegramConfig(env);
+    if (!tg) return json({ ok: false, error: "telegram_not_configured" }, 422);
+    let body;
+    try { body = await request.json(); } catch { return json({ ok: false, error: "invalid_json" }, 400); }
+    const text = String(body.text || "").slice(0, 2000);
+    if (!text) return json({ ok: false, error: "empty_text" }, 400);
+    return sendTelegram(tg, text);
+  }
+
+  // POST /_admin_api/config/telegram/notify-service — notify with service token auth
+  if (url.pathname === "/_admin_api/config/telegram/notify-service" && request.method === "POST") {
+    const tg = getTelegramConfig(env);
+    if (!tg) return json({ ok: false, error: "telegram_not_configured" }, 422);
+    // Auth via service token (shared secret from docker/.env)
+    const authHeader = request.headers.get("Authorization") || "";
+    const expectedToken = String(env.LEAD_FINDER_SERVICE_TOKEN || "").trim();
+    if (!expectedToken || !authHeader.startsWith("Bearer ") || authHeader.slice(7) !== expectedToken) {
+      return json({ ok: false, error: "unauthorized" }, 401);
+    }
+    let body;
+    try { body = await request.json(); } catch { return json({ ok: false, error: "invalid_json" }, 400); }
+    const text = String(body.text || "").slice(0, 2000);
+    if (!text) return json({ ok: false, error: "empty_text" }, 400);
+    return sendTelegram(tg, text);
+  }
+
   return new Response("Not Found", { status: 404 });
 }
 

@@ -4112,6 +4112,7 @@ const en = {
       tools: "Tools",
       reports: "Familiada Mail",
       marketing: "Marketing",
+      marketingContacts: "Marketing Contacts",
     },
     generator: {
       title: "Producer Games",
@@ -4525,6 +4526,26 @@ const en = {
       errEmails: "Validate the email list before sending.",
       confirmSend: "Send message to",
       confirmRecipients: "recipients?",
+    },
+    marketingContacts: {
+      title: "Marketing Contacts",
+      subtitle: "Lead finder: SearXNG → Email → AI Verification",
+      targetCount: "Target count:",
+      start: "▶ Start",
+      refresh: "⟳ Refresh",
+      verifiedTitle: "Verified contacts",
+      markUsed: "✓ Mark used",
+      delete: "🗑 Delete",
+      logsTitle: "Logs",
+      logsEmpty: "Select a run to view logs",
+      table: {
+        title: "Title",
+        email: "Email",
+        url: "URL",
+        type: "Type",
+        added: "Added",
+        used: "Used"
+      }
     },
   },
   marketplace: {

@@ -1,0 +1,47 @@
+name: Deploy Lead Finder Service (Docker)
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "services/lead-finder/**"
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install rsync + ssh
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y rsync openssh-client
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "${{ secrets.SERVER_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Sync to server staging
+        run: |
+          STAGING="/home/${{ secrets.SERVER_USER }}/.deploy/lead-finder/${{ github.sha }}"
+          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" "mkdir -p \"$STAGING\""
+          rsync -az --delete --checksum \
+            --exclude '__pycache__' \
+            --exclude '.git' \
+            -e "ssh -i ~/.ssh/id_ed25519" \
+            services/lead-finder/ \
+            "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:$STAGING/"
+
+      - name: Run deploy script (server-side)
+        run: |
+          STAGING="/home/${{ secrets.SERVER_USER }}/.deploy/lead-finder/${{ github.sha }}"
+          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
+            "/home/${{ secrets.SERVER_USER }}/supabase-selfhost/supabase/scripts/deploy-lead-finder.sh \"$STAGING\""
