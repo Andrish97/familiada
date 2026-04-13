@@ -2273,49 +2273,22 @@ body.tools-fullscreen .tools-frame-wrap iframe{
 }
 
 /* Editable cells */
-.mc-cell-edit {
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: 4px;
-  padding: 3px 6px;
-  width: 100%;
-  box-sizing: border-box;
-  font: inherit;
-  color: inherit;
-  transition: all .15s;
+.mc-cell {
+  padding: 6px 8px;
+  border-bottom: 1px solid rgba(255,255,255,.04);
+  vertical-align: middle;
 }
 
-.mc-cell-edit:hover {
-  background: rgba(255,255,255,.04);
-  border-color: rgba(255,255,255,.1);
+.mc-selectable {
+  cursor: cell;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
-.mc-cell-edit:focus {
-  background: rgba(0,0,0,.3);
-  border-color: #74b9ff;
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(116,185,255,.15);
-}
-
-.mc-cell-select {
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: 4px;
-  padding: 3px 6px;
-  width: 100%;
-  font: inherit;
-  color: inherit;
-  cursor: pointer;
-}
-
-.mc-cell-select:hover {
-  background: rgba(255,255,255,.04);
-  border-color: rgba(255,255,255,.1);
-}
-
-.mc-cell-select:focus {
-  border-color: #74b9ff;
-  outline: none;
+.mc-cell-selected {
+  background: rgba(116,185,255,.25) !important;
+  outline: 2px solid #74b9ff;
+  outline-offset: -2px;
 }
 
 /* Logs */

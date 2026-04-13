@@ -5655,7 +5655,7 @@ function wireEvents() {
   let mcState = {
     runs: [],
     contacts: [],
-    selected: new Set(),
+    selectedRows: new Set(),
     page: 1,
     logs: [],
     logRun: null,
@@ -5770,31 +5770,121 @@ function wireEvents() {
   function mcRenderContacts(totalCount) {
     const tbody = document.getElementById("mcTableBody");
     if (!mcState.contacts.length) {
-      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;opacity:.5;padding:1.5rem">Brak kontaktów</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;opacity:.5;padding:1.5rem">Brak kontaktów</td></tr>';
       mcUpdatePagination(0);
       return;
     }
-    tbody.innerHTML = mcState.contacts.map(c => {
-      return `<tr class="${c.is_used?'mc-used':''}" data-id="${c.id}">
-        <td style="text-align:center"><input type="checkbox" ${mcState.selected.has(c.id)?'checked':''} onchange="mcToggle('${c.id}',this.checked)"></td>
-        <td class="mc-cell" tabindex="0">${mcEsc(c.title||'')}</td>
-        <td class="mc-cell" tabindex="0">${mcEsc(c.email||'')}</td>
-        <td class="mc-cell" tabindex="0"><a href="${mcEsc(c.url)}" target="_blank" rel="noopener">${mcEsc(c.url)}</a></td>
-        <td class="mc-cell" tabindex="0">${mcEsc(c.contact_type||'')}</td>
-        <td style="text-align:center">${c.is_used ? '<span style="color:#55efc4;font-weight:700">✓</span>' : '<span style="opacity:.3">—</span>'}</td>
+    tbody.innerHTML = mcState.contacts.map((c, i) => {
+      const usedClass = c.is_used ? 'mc-used' : '';
+      return `<tr class="${usedClass}" data-row="${i}" data-id="${c.id}">
+        <td class="mc-cell mc-selectable" data-row="${i}" data-col="0">${mcEsc(c.title||'')}</td>
+        <td class="mc-cell mc-selectable" data-row="${i}" data-col="1">${mcEsc(c.email||'')}</td>
+        <td class="mc-cell" data-row="${i}" data-col="2"><a href="${mcEsc(c.url)}" target="_blank" rel="noopener">${mcEsc(c.url)}</a></td>
+        <td class="mc-cell mc-selectable" data-row="${i}" data-col="3">${mcEsc(c.contact_type||'')}</td>
+        <td class="mc-cell mc-used-cell" style="text-align:center">${c.is_used ? '<span style="color:#55efc4;font-weight:700;font-size:16px">✓</span>' : ''}</td>
       </tr>`;
     }).join("");
     mcUpdatePagination(totalCount);
-    // Add cell selection/copy
-    tbody.querySelectorAll('.mc-cell').forEach(cell => {
-      cell.addEventListener('click', function(e) {
-        // Single cell selection
-        const sel = window.getSelection();
-        sel.removeAllRanges();
-        const range = document.createRange();
-        range.selectNodeContents(this);
-        sel.addRange(range);
+    mcSetupTableSelection();
+  }
+
+  function mcSetupTableSelection() {
+    const tbody = document.getElementById("mcTableBody");
+    let isSelecting = false;
+    let startCell = null; // {row, col}
+
+    // Clear previous selection highlight
+    tbody.querySelectorAll('.mc-cell-selected').forEach(c => c.classList.remove('mc-cell-selected'));
+    mcState.selectedCells = [];
+
+    // Mouse down - start selection
+    tbody.addEventListener('mousedown', (e) => {
+      const cell = e.target.closest('.mc-selectable');
+      if (!cell || e.target.tagName === 'A') return;
+      e.preventDefault();
+      isSelecting = true;
+      startCell = { row: parseInt(cell.dataset.row), col: parseInt(cell.dataset.col) };
+      // Clear previous
+      mcState.selectedCells = [];
+      tbody.querySelectorAll('.mc-cell-selected').forEach(c => c.classList.remove('mc-cell-selected'));
+      // Select single cell
+      mcState.selectedCells.push({row: startCell.row, col: startCell.col});
+      cell.classList.add('mc-cell-selected');
+    });
+
+    // Mouse move - drag selection
+    tbody.addEventListener('mousemove', (e) => {
+      if (!isSelecting || !startCell) return;
+      const cell = e.target.closest('.mc-selectable');
+      if (!cell) return;
+      const endRow = parseInt(cell.dataset.row);
+      const endCol = parseInt(cell.dataset.col);
+
+      // Clear previous highlight
+      tbody.querySelectorAll('.mc-cell-selected').forEach(c => c.classList.remove('mc-cell-selected'));
+
+      // Calculate range
+      const minRow = Math.min(startCell.row, endRow);
+      const maxRow = Math.max(startCell.row, endRow);
+      const minCol = Math.min(startCell.col, endCol);
+      const maxCol = Math.max(startCell.col, endCol);
+
+      // Update selected
+      mcState.selectedCells = [];
+      for (let r = minRow; r <= maxRow; r++) {
+        for (let c = minCol; c <= maxCol; c++) {
+          mcState.selectedCells.push({row: r, col: c});
+          const cellEl = tbody.querySelector(`.mc-selectable[data-row="${r}"][data-col="${c}"]`);
+          if (cellEl) cellEl.classList.add('mc-cell-selected');
+        }
+      }
+    });
+
+    // Mouse up - end selection
+    document.addEventListener('mouseup', () => { isSelecting = false; });
+
+    // Click on single cell (no drag)
+    tbody.addEventListener('click', (e) => {
+      const cell = e.target.closest('.mc-selectable');
+      if (!cell || e.target.tagName === 'A') return;
+      if (!isSelecting) {
+        // Single click - clear and select this cell
+        tbody.querySelectorAll('.mc-cell-selected').forEach(c => c.classList.remove('mc-cell-selected'));
+        mcState.selectedCells = [{row: parseInt(cell.dataset.row), col: parseInt(cell.dataset.col)}];
+        cell.classList.add('mc-cell-selected');
+      }
+    });
+
+    // Copy (Cmd+C / Ctrl+C)
+    document.addEventListener('copy', (e) => {
+      if (!mcState.selectedCells || mcState.selectedCells.length === 0) return;
+      if (!document.getElementById("mcContactsTable")) return;
+      
+      // Check if we're on the settings page with MC table
+      const panel = document.getElementById("marketingContactsPanel");
+      if (panel && panel.hidden) return;
+
+      e.preventDefault();
+      // Group by rows and build tab-separated output
+      const rows = {};
+      mcState.selectedCells.forEach(({row, col}) => {
+        if (!rows[row]) rows[row] = [];
+        rows[row].push(col);
       });
+
+      const sortedRows = Object.keys(rows).map(Number).sort((a,b) => a - b);
+      const allCols = new Set();
+      mcState.selectedCells.forEach(({col}) => allCols.add(col));
+      const sortedCols = [...allCols].sort((a,b) => a - b);
+
+      const lines = sortedRows.map(r => {
+        return sortedCols.map(c => {
+          const cell = tbody.querySelector(`.mc-selectable[data-row="${r}"][data-col="${c}"]`);
+          return cell ? cell.textContent.trim() : '';
+        }).join('\t');
+      });
+
+      e.clipboardData.setData('text/plain', lines.join('\n'));
     });
   }
 
@@ -5815,19 +5905,25 @@ function wireEvents() {
   };
 
   async function mcMarkUsed() {
-    if (!mcState.selected.size) return;
+    const rows = new Set(mcState.selectedCells.map(c => c.row));
+    if (!rows.size) return;
     const tk = await mcGetToken();
-    await Promise.all([...mcState.selected].map(id => fetch(`${MC_API}/api/contacts/${id}/mark-used?used=true`,{method:"POST", headers:{Authorization:`Bearer ${tk}`}})));
-    mcState.selected.clear();
+    const ids = [...rows].map(i => mcState.contacts[i]?.id).filter(Boolean);
+    if (!ids.length) return;
+    await Promise.all(ids.map(id => fetch(`${MC_API}/api/contacts/${id}/mark-used?used=true`,{method:"POST", headers:{Authorization:`Bearer ${tk}`}})));
+    mcState.selectedCells = [];
     mcLoadContacts();
   }
 
   async function mcDeleteSelected() {
-    if (!mcState.selected.size) return;
-    if (!confirm(`Usunąć ${mcState.selected.size} kontaktów?`)) return;
+    const rows = new Set(mcState.selectedCells.map(c => c.row));
+    if (!rows.size) return;
+    if (!confirm(`Usunąć ${rows.size} kontaktów?`)) return;
     const tk = await mcGetToken();
-    await Promise.all([...mcState.selected].map(id => fetch(`${MC_API}/api/contacts/${id}`,{method:"DELETE", headers:{Authorization:`Bearer ${tk}`}})));
-    mcState.selected.clear();
+    const ids = [...rows].map(i => mcState.contacts[i]?.id).filter(Boolean);
+    if (!ids.length) return;
+    await Promise.all(ids.map(id => fetch(`${MC_API}/api/contacts/${id}`,{method:"DELETE", headers:{Authorization:`Bearer ${tk}`}})));
+    mcState.selectedCells = [];
     mcLoadContacts();
   }
 
