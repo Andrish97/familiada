@@ -11,3 +11,6 @@ crons = ["0 3 * * *"]
 
 [vars]
 SUPABASE_URL = "https://api.familiada.online"
+
+[observability]
+enabled = false
