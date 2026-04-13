@@ -836,6 +836,24 @@
             <div style="text-align:center;opacity:.5;padding:1rem" data-i18n="common.loading">Ładowanie...</div>
           </div>
 
+          <!-- Logs -->
+          <div style="margin-top:1.5rem">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+              <div class="panel-title" style="font-size:1rem" data-i18n="settings.marketingContacts.logsTitle">Logi</div>
+              <select class="inp" id="mcLogRunSelect" style="width:auto;min-width:200px;font-size:12px">
+                <option value="">-- Wybierz zlecenie --</option>
+              </select>
+            </div>
+            <div id="mcLogsContainer" style="background:#0d1117;border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:10px;max-height:300px;overflow-y:auto;font-family:monospace;font-size:12px;line-height:1.6">
+              <div style="text-align:center;opacity:.5" data-i18n="settings.marketingContacts.logsEmpty">Wybierz zlecenie aby zobaczyć logi</div>
+            </div>
+            <div style="margin-top:8px">
+              <label style="font-size:12px;opacity:.6;display:flex;align-items:center;gap:6px">
+                <input type="checkbox" id="mcAutoRefreshLogs" checked> Auto-odświeżanie (5s)
+              </label>
+            </div>
+          </div>
+
           <!-- Verified contacts table -->
           <div style="margin-top:1.5rem">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px">
@@ -889,23 +907,6 @@
             </div>
           </div>
 
-          <!-- Logs -->
-          <div style="margin-top:1.5rem">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-              <div class="panel-title" style="font-size:1rem" data-i18n="settings.marketingContacts.logsTitle">Logi</div>
-              <select class="inp" id="mcLogRunSelect" style="width:auto;min-width:200px;font-size:12px">
-                <option value="">-- Wybierz zlecenie --</option>
-              </select>
-            </div>
-            <div id="mcLogsContainer" style="background:#0d1117;border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:10px;max-height:300px;overflow-y:auto;font-family:monospace;font-size:12px;line-height:1.6">
-              <div style="text-align:center;opacity:.5" data-i18n="settings.marketingContacts.logsEmpty">Wybierz zlecenie aby zobaczyć logi</div>
-            </div>
-            <div style="margin-top:8px">
-              <label style="font-size:12px;opacity:.6;display:flex;align-items:center;gap:6px">
-                <input type="checkbox" id="mcAutoRefreshLogs" checked> Auto-odświeżanie (5s)
-              </label>
-            </div>
-          </div>
         </div>
       </div>
 
