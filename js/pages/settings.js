@@ -5664,42 +5664,34 @@ function wireEvents() {
   async function mcLoadRuns() {
     try {
       const tk = await mcGetToken();
-      const res = await fetch(`${MC_API}/api/search-runs?limit=50`, {headers:{Authorization:`Bearer ${tk}`}});
-      if (!res.ok) throw new Error("Failed");
+      const res = await fetch(`${MC_API}/api/search-runs?limit=1`, {headers:{Authorization:`Bearer ${tk}`}});
+      if (!res.ok) return;
       mcState.runs = await res.json();
-      mcRenderRuns();
-      mcPopulateRunFilters();
-    } catch(e) {
-      document.getElementById("mcRunsList").innerHTML = `<div style="text-align:center;opacity:.5;padding:1rem">Błąd: ${e.message}</div>`;
-    }
+    } catch(e) {}
   }
 
-  function mcRenderRuns() {
-    const el = document.getElementById("mcRunsList");
-    if (!mcState.runs.length) {
-      el.innerHTML = '<div style="text-align:center;opacity:.5;padding:1rem">Brak zleceń. Uruchom nowe wyszukiwanie.</div>';
-      return;
+  async function mcStartRun() {
+    const btn = document.getElementById("mcStartBtn");
+    const count = parseInt(document.getElementById("mcTargetCount").value) || 50;
+    btn.disabled = true;
+    try {
+      const tk = await mcGetToken();
+      const res = await fetch(`${MC_API}/api/search-runs?target_count=${count}`, {method:"POST", headers:{Authorization:`Bearer ${tk}`}});
+      if (!res.ok) throw new Error("Failed");
+      const data = await res.json();
+      btn.textContent = "✅ Uruchomiono!";
+      setTimeout(()=>{ btn.textContent = "▶ Uruchom"; btn.disabled = false; }, 1500);
+      mcLoadRuns();
+      // Auto-select this run in logs
+      setTimeout(() => {
+        mcState.logRun = data.run_id;
+        mcLoadLogs(data.run_id);
+        mcStartLogAutoRefresh();
+      }, 1000);
+    } catch(e) {
+      alert("Błąd: " + e.message);
+      btn.disabled = false;
     }
-    el.innerHTML = mcState.runs.map(r => {
-      const statusText = {pending:"Oczekiwanie",running:"Uruchomione",paused:"Wstrzymane",completed:"Zakończone",cancelled:"Anulowane",error:"Błąd"}[r.status] || r.status;
-      return `<div class="mc-run-card">
-        <div>
-          <span class="mc-run-id">#${r.id.slice(0,8)}</span>
-          <span class="mc-run-status ${r.status}">${statusText}</span>
-        </div>
-        <div class="mc-run-stats">
-          <span>Cel: <span class="mc-run-stat-val">${r.target_count||50}</span></span>
-          <span>Znaleziono: <span class="mc-run-stat-val">${r.contacts_verified||0}</span></span>
-        </div>
-        <div class="mc-run-actions">
-          ${r.status==="running"?`<button class="btn sm" onclick="mcPause('${r.id}')">⏸ Wstrzymaj</button><button class="btn sm danger" onclick="mcCancel('${r.id}')">❌ Anuluj</button>`:""}
-          ${r.status==="paused"?`<button class="btn sm gold" onclick="mcResume('${r.id}')">▶ Wznów</button><button class="btn sm danger" onclick="mcCancel('${r.id}')">❌ Anuluj</button>`:""}
-          ${r.status==="pending"?`<button class="btn sm danger" onclick="mcCancel('${r.id}')">❌ Anuluj</button>`:""}
-          ${r.status==="completed"?`<span style="font-size:12px;color:#55efc4">✅ Zakończone</span>`:""}
-          ${r.status==="error"?`<span style="font-size:11px;color:#ff7675">${(r.error_message||"Błąd").slice(0,60)}</span>`:""}
-        </div>
-      </div>`;
-    }).join("");
   }
 
   window.mcPause = async function(id) {
@@ -5718,32 +5710,6 @@ function wireEvents() {
     await fetch(`${MC_API}/api/search-runs/${id}/cancel`,{method:"POST", headers:{Authorization:`Bearer ${tk}`}});
     mcLoadRuns();
   };
-
-  async function mcStartRun() {
-    const btn = document.getElementById("mcStartBtn");
-    const count = parseInt(document.getElementById("mcTargetCount").value) || 50;
-    btn.disabled = true;
-    try {
-      const tk = await mcGetToken();
-      const res = await fetch(`${MC_API}/api/search-runs?target_count=${count}`, {method:"POST", headers:{Authorization:`Bearer ${tk}`}});
-      if (!res.ok) throw new Error("Failed");
-      const data = await res.json();
-      btn.textContent = "✅ Uruchomiono!";
-      setTimeout(()=>{ btn.textContent = "▶ Uruchom"; btn.disabled = false; }, 1500);
-      mcLoadRuns();
-      // Auto-select this run in logs
-      setTimeout(() => {
-        mcState.logRun = data.run_id;
-        const sel = document.getElementById("mcLogRunSelect");
-        if (sel) sel.value = data.run_id;
-        mcLoadLogs(data.run_id);
-        mcStartLogAutoRefresh();
-      }, 1000);
-    } catch(e) {
-      alert("Błąd: " + e.message);
-      btn.disabled = false;
-    }
-  }
 
   async function mcLoadContacts() {
     const tbody = document.getElementById("mcTableBody");
