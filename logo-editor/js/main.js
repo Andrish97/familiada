@@ -1,21 +1,21 @@
 // familiada/logo-editorjs/main.js
 // Glowna logika strony + lista kafelkow + routing do edytorow.
 
-import { addRenameGesture } from "../../js/core/rename-gesture.js?v=v2026-04-13T13492";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../../js/core/logo-preview.js?v=v2026-04-13T13492";
+import { addRenameGesture } from "../../js/core/rename-gesture.js?v=v2026-04-13T14433";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../../js/core/logo-preview.js?v=v2026-04-13T14433";
 
-import { sb } from "../../js/core/supabase.js?v=v2026-04-13T13492";
-import { requireAuth } from "../../js/core/auth.js?v=v2026-04-13T13492";
-import { isGuestUser } from "../../js/core/guest-mode.js?v=v2026-04-13T13492";
-import { alertModal, confirmModal } from "../../js/core/modal.js?v=v2026-04-13T13492";
-import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-04-13T13492";
-import { initTopbarAccountDropdown } from "../../js/core/topbar-controller.js?v=v2026-04-13T13492";
-import { isMobileDevice } from "../../js/core/pwa.js?v=v2026-04-13T13492";
-import { v as cacheBust } from "../../js/core/cache-bust.js?v=v2026-04-13T13492";
+import { sb } from "../../js/core/supabase.js?v=v2026-04-13T14433";
+import { requireAuth } from "../../js/core/auth.js?v=v2026-04-13T14433";
+import { isGuestUser } from "../../js/core/guest-mode.js?v=v2026-04-13T14433";
+import { alertModal, confirmModal } from "../../js/core/modal.js?v=v2026-04-13T14433";
+import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-04-13T14433";
+import { initTopbarAccountDropdown } from "../../js/core/topbar-controller.js?v=v2026-04-13T14433";
+import { isMobileDevice } from "../../js/core/pwa.js?v=v2026-04-13T14433";
+import { v as cacheBust } from "../../js/core/cache-bust.js?v=v2026-04-13T14433";
 
-import { initTextEditor } from "./text.js?v=v2026-04-13T13492";
-import { initDrawEditor } from "./draw.js?v=v2026-04-13T13492";
-import { initImageEditor } from "./image.js?v=v2026-04-13T13492";
+import { initTextEditor } from "./text.js?v=v2026-04-13T14433";
+import { initDrawEditor } from "./draw.js?v=v2026-04-13T14433";
+import { initImageEditor } from "./image.js?v=v2026-04-13T14433";
 
 window.addEventListener("error", (e) => {
   console.error("window error", e.error || e.message);
@@ -1534,7 +1534,7 @@ async function boot(){
    imageEditor = initImageEditor(editorCtx);
 
   // Updater - sprawdzanie nowej wersji (TYLKO RAZ)
-  import('../../js/core/updater.js?v=v2026-04-13T13492').then(m => m.initUpdater()).catch(() => {});
+  import('../../js/core/updater.js?v=v2026-04-13T14433').then(m => m.initUpdater()).catch(() => {});
 
    armNavGuard();
 
