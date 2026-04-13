@@ -5770,19 +5770,21 @@ function wireEvents() {
   function mcRenderContacts(totalCount) {
     const tbody = document.getElementById("mcTableBody");
     if (!mcState.contacts.length) {
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;opacity:.5;padding:1.5rem">Brak kontaktów</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;opacity:.5;padding:1.5rem">Brak kontaktów</td></tr>';
       mcUpdatePagination(0);
       return;
     }
     tbody.innerHTML = mcState.contacts.map((c, i) => {
       const usedClass = c.is_used ? 'mc-used' : '';
       const usedText = c.is_used ? '✓' : '';
-      return `<tr class="${usedClass}" data-row="${i}" data-id="${c.id}">
+      const addedAt = c.added_at ? new Date(c.added_at).toLocaleString('pl-PL', {month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit'}) : '—';
+      return `<tr class="${usedClass}" data-id="${c.id}">
         <td class="mc-cell mc-selectable" data-row="${i}" data-col="0">${mcEsc(c.title||'')}</td>
         <td class="mc-cell mc-selectable" data-row="${i}" data-col="1">${mcEsc(c.email||'')}</td>
         <td class="mc-cell mc-selectable" data-row="${i}" data-col="2">${mcEsc(c.url||'')}</td>
         <td class="mc-cell mc-selectable" data-row="${i}" data-col="3">${mcEsc(c.contact_type||'')}</td>
-        <td class="mc-cell mc-selectable" data-row="${i}" data-col="4" style="text-align:center">${usedText}</td>
+        <td class="mc-cell" style="font-size:11px;opacity:.6;white-space:nowrap">${addedAt}</td>
+        <td class="mc-cell mc-selectable" data-row="${i}" data-col="5" style="text-align:center">${usedText}</td>
       </tr>`;
     }).join("");
     mcUpdatePagination(totalCount);
@@ -5909,6 +5911,7 @@ function wireEvents() {
     const rows = new Set(mcState.selectedCells.map(c => c.row));
     if (!rows.size) return;
     const tk = await mcGetToken();
+    // Use contact IDs from current page data
     const ids = [...rows].map(i => mcState.contacts[i]?.id).filter(Boolean);
     if (!ids.length) return;
     await Promise.all(ids.map(id => fetch(`${MC_API}/api/contacts/${id}/mark-used?used=true`,{method:"POST", headers:{Authorization:`Bearer ${tk}`}})));
