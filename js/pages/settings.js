@@ -5793,100 +5793,117 @@ function wireEvents() {
 
   function mcSetupTableSelection() {
     const tbody = document.getElementById("mcTableBody");
-    let isSelecting = false;
-    let startCell = null; // {row, col}
+    let isDragging = false;
+    let startCell = null;
 
-    // Clear previous selection highlight
+    // Clear previous
     tbody.querySelectorAll('.mc-cell-selected').forEach(c => c.classList.remove('mc-cell-selected'));
     mcState.selectedCells = [];
 
-    // Mouse down - start selection
+    function highlightCells() {
+      tbody.querySelectorAll('.mc-cell-selected').forEach(c => c.classList.remove('mc-cell-selected'));
+      mcState.selectedCells.forEach(({row, col}) => {
+        const cellEl = tbody.querySelector(`.mc-selectable[data-row="${row}"][data-col="${col}"]`);
+        if (cellEl) cellEl.classList.add('mc-cell-selected');
+      });
+    }
+
+    function toggleCell(row, col) {
+      const idx = mcState.selectedCells.findIndex(c => c.row === row && c.col === col);
+      if (idx >= 0) mcState.selectedCells.splice(idx, 1);
+      else mcState.selectedCells.push({row, col});
+      highlightCells();
+    }
+
+    function clearAndSelect(row, col) {
+      mcState.selectedCells = [{row, col}];
+      highlightCells();
+    }
+
+    function selectRange(startRow, startCol, endRow, endCol) {
+      mcState.selectedCells = [];
+      const minRow = Math.min(startRow, endRow);
+      const maxRow = Math.max(startRow, endRow);
+      const minCol = Math.min(startCol, endCol);
+      const maxCol = Math.max(startCol, endCol);
+      for (let r = minRow; r <= maxRow; r++) {
+        for (let c = minCol; c <= maxCol; c++) {
+          mcState.selectedCells.push({row: r, col: c});
+        }
+      }
+      highlightCells();
+    }
+
+    function deselectAll() {
+      mcState.selectedCells = [];
+      highlightCells();
+    }
+
+    // Mouse down on cell
     tbody.addEventListener('mousedown', (e) => {
       const cell = e.target.closest('.mc-selectable');
-      if (!cell || e.target.tagName === 'A') return;
+      if (!cell) return;
       e.preventDefault();
-      isSelecting = true;
-      startCell = { row: parseInt(cell.dataset.row), col: parseInt(cell.dataset.col) };
-      // Clear previous
-      mcState.selectedCells = [];
-      tbody.querySelectorAll('.mc-cell-selected').forEach(c => c.classList.remove('mc-cell-selected'));
-      // Select single cell
-      mcState.selectedCells.push({row: startCell.row, col: startCell.col});
-      cell.classList.add('mc-cell-selected');
+      const row = parseInt(cell.dataset.row);
+      const col = parseInt(cell.dataset.col);
+
+      if (e.metaKey || e.ctrlKey) {
+        toggleCell(row, col);
+      } else if (e.shiftKey && mcState.selectedCells.length > 0) {
+        // Shift+click: range from last selected cell
+        const last = mcState.selectedCells[mcState.selectedCells.length - 1];
+        selectRange(last.row, last.col, row, col);
+      } else {
+        isDragging = true;
+        startCell = {row, col};
+        mcState.selectedCells = [];
+        mcState.selectedCells.push({row, col});
+        highlightCells();
+      }
     });
 
-    // Mouse move - drag selection
+    // Mouse move - drag select (prevent scrolling)
     tbody.addEventListener('mousemove', (e) => {
-      if (!isSelecting || !startCell) return;
+      if (!isDragging || !startCell) return;
+      e.preventDefault();
       const cell = e.target.closest('.mc-selectable');
       if (!cell) return;
       const endRow = parseInt(cell.dataset.row);
       const endCol = parseInt(cell.dataset.col);
+      selectRange(startCell.row, startCell.col, endRow, endCol);
+    });
 
-      // Clear previous highlight
-      tbody.querySelectorAll('.mc-cell-selected').forEach(c => c.classList.remove('mc-cell-selected'));
+    // Mouse up
+    document.addEventListener('mouseup', () => { isDragging = false; startCell = null; });
 
-      // Calculate range
-      const minRow = Math.min(startCell.row, endRow);
-      const maxRow = Math.max(startCell.row, endRow);
-      const minCol = Math.min(startCell.col, endCol);
-      const maxCol = Math.max(startCell.col, endCol);
-
-      // Update selected
-      mcState.selectedCells = [];
-      for (let r = minRow; r <= maxRow; r++) {
-        for (let c = minCol; c <= maxCol; c++) {
-          mcState.selectedCells.push({row: r, col: c});
-          const cellEl = tbody.querySelector(`.mc-selectable[data-row="${r}"][data-col="${c}"]`);
-          if (cellEl) cellEl.classList.add('mc-cell-selected');
-        }
+    // Click outside table to deselect
+    document.addEventListener('mousedown', (e) => {
+      if (!e.target.closest('#mcContactsTable')) {
+        deselectAll();
       }
     });
 
-    // Mouse up - end selection
-    document.addEventListener('mouseup', () => { isSelecting = false; });
-
-    // Click on single cell (no drag)
-    tbody.addEventListener('click', (e) => {
-      const cell = e.target.closest('.mc-selectable');
-      if (!cell || e.target.tagName === 'A') return;
-      if (!isSelecting) {
-        // Single click - clear and select this cell
-        tbody.querySelectorAll('.mc-cell-selected').forEach(c => c.classList.remove('mc-cell-selected'));
-        mcState.selectedCells = [{row: parseInt(cell.dataset.row), col: parseInt(cell.dataset.col)}];
-        cell.classList.add('mc-cell-selected');
-      }
-    });
-
-    // Copy (Cmd+C / Ctrl+C)
+    // Copy
     document.addEventListener('copy', (e) => {
       if (!mcState.selectedCells || mcState.selectedCells.length === 0) return;
-      if (!document.getElementById("mcContactsTable")) return;
-      
-      // Check if we're on the settings page with MC table
       const panel = document.getElementById("marketingContactsPanel");
       if (panel && panel.hidden) return;
-
       e.preventDefault();
-      // Group by rows and build tab-separated output
       const rows = {};
       mcState.selectedCells.forEach(({row, col}) => {
         if (!rows[row]) rows[row] = [];
         rows[row].push(col);
       });
-
       const sortedRows = Object.keys(rows).map(Number).sort((a,b) => a - b);
       const allCols = new Set();
       mcState.selectedCells.forEach(({col}) => allCols.add(col));
       const sortedCols = [...allCols].sort((a,b) => a - b);
-
       const lines = sortedRows.map(r => {
         return sortedCols.map(c => {
           const cell = tbody.querySelector(`.mc-selectable[data-row="${r}"][data-col="${c}"]`);
           return cell ? cell.textContent.trim() : '';
         }).join('\t');
       });
-
       e.clipboardData.setData('text/plain', lines.join('\n'));
     });
   }
