@@ -88,9 +88,26 @@ export default {
       return fetch(request);
     }
 
-    // Lead Finder - passthrough, Caddy handles auth and CORS
+    // Lead Finder - passthrough like ai/search, Caddy handles auth and CORS
+    // Worker injects LEAD_FINDER_API_TOKEN for frontend requests
     if (host === "leads.familiada.online") {
-      return fetch(request);
+      const ext = url.pathname.split('.').pop().toLowerCase();
+      const isStatic = ['css', 'js', 'png', 'jpg', 'jpeg', 'gif', 'svg', 'ico', 'woff', 'woff2', 'map', 'txt'].includes(ext);
+      if (isStatic) {
+        return fetchFromOrigin(request, url, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
+      }
+      // Inject auth header so Caddy allows the request
+      const lfToken = String(env.LEAD_FINDER_API_TOKEN || "").trim();
+      const headers = new Headers(request.headers);
+      if (lfToken && !headers.has("Authorization")) {
+        headers.set("Authorization", `Bearer ${lfToken}`);
+      }
+      const modifiedReq = new Request(request, { headers });
+      const res = await fetch(modifiedReq);
+      if (res.status === 404) {
+        return serveNotFoundPage(request, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
+      }
+      return res;
     }
 
     // AI and Search endpoints - passthrough, Caddy handles auth
@@ -2232,11 +2249,10 @@ async function handleAdminConfigApi(request, env, url) {
     return sendTelegram(tg, text);
   }
 
-  // POST /_admin_api/config/telegram/notify-service — notify with service token auth
+  // POST /_admin_api/config/telegram/notify-service — notify with service role key auth
   if (url.pathname === "/_admin_api/config/telegram/notify-service" && request.method === "POST") {
     const tg = getTelegramConfig(env);
     if (!tg) return json({ ok: false, error: "telegram_not_configured" }, 422);
-    // Auth via service token (shared secret from docker/.env)
     const authHeader = request.headers.get("Authorization") || "";
     const expectedToken = String(env.LEAD_FINDER_SERVICE_TOKEN || "").trim();
     if (!expectedToken || !authHeader.startsWith("Bearer ") || authHeader.slice(7) !== expectedToken) {
