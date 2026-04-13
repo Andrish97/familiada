@@ -1040,7 +1040,6 @@ function closeMaintenancePreview() {
 }
 
 async function loadAdminStats({ silent = false } = {}) {
-  if (!silent) showStatLoading();
   if (!silent) setStatus("Ładowanie statystyk…");
   try {
     const { data, error } = await sb().rpc("get_admin_stats");
@@ -6013,13 +6012,6 @@ function wireEvents() {
   document.getElementById("mcDeleteBtn")?.addEventListener("click", mcDeleteSelected);
   document.getElementById("mcPrevPage")?.addEventListener("click", () => { if(mcState.page>1){mcState.page--;mcLoadContacts();} });
   document.getElementById("mcNextPage")?.addEventListener("click", () => { mcState.page++; mcLoadContacts(); });
-  document.getElementById("mcSelectAll")?.addEventListener("change", (e) => {
-    document.querySelectorAll("#mcTableBody input[type=checkbox]").forEach(cb => {
-      cb.checked = e.target.checked;
-      const id = cb.closest("tr")?.dataset.id;
-      if (id) { if(e.target.checked) mcState.selected.add(id); else mcState.selected.delete(id); }
-    });
-  });
   document.getElementById("mcLogRunSelect")?.addEventListener("change", (e) => {
     mcState.logRun = e.target.value || null;
     if (mcState.logRun) { mcLoadLogs(mcState.logRun); mcStartLogAutoRefresh(); } else { mcStopLogAutoRefresh(); }
@@ -6030,17 +6022,21 @@ function wireEvents() {
   const origSetTab = window.setActiveTabMC;
   const mcObserver = new MutationObserver(async () => {
     if (!document.getElementById("marketingContactsPanel")?.hidden) {
-      mcLoadRuns();
       mcLoadContacts();
-      // Populate log run select
-      const sel = document.getElementById("mcLogRunSelect");
-      if (sel && !sel.dataset.populated) {
-        const tk = await mcGetToken();
-        const res = await fetch(`${MC_API}/api/search-runs?limit=100`, {headers:{Authorization:`Bearer ${tk}`}});
-        if (res.ok) {
-          const runs = await res.json();
-          sel.innerHTML = '<option value="">-- Wybierz zlecenie --</option>' + runs.map(r=>`<option value="${r.id}">#${r.id.slice(0,8)} - ${r.status}</option>`).join("");
-          sel.dataset.populated = "1";
+      // Auto-load latest run logs (only current or most recent)
+      const tk = await mcGetToken();
+      const res = await fetch(`${MC_API}/api/search-runs?limit=1`, {headers:{Authorization:`Bearer ${tk}`}});
+      if (res.ok) {
+        const runs = await res.json();
+        if (runs.length > 0) {
+          mcState.logRun = runs[0].id;
+          const sel = document.getElementById("mcLogRunSelect");
+          if (sel) {
+            sel.innerHTML = `<option value="${runs[0].id}">#${runs[0].id.slice(0,8)} - ${runs[0].status}</option>`;
+            sel.value = runs[0].id;
+          }
+          mcLoadLogs(runs[0].id);
+          mcStartLogAutoRefresh();
         }
       }
     }
