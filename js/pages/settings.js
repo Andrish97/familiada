@@ -5749,7 +5749,7 @@ function wireEvents() {
   async function mcLoadContacts() {
     const tbody = document.getElementById("mcTableBody");
     try {
-      let query = sb().from("marketing_verified_contacts").select("*");
+      let query = sb().from("marketing_verified_contacts").select("*", { count: 'exact' });
       const fRun = document.getElementById("mcFilterRun").value;
       const fType = document.getElementById("mcFilterType").value;
       const fUsed = document.getElementById("mcFilterUsed").value;
@@ -5763,7 +5763,7 @@ function wireEvents() {
       mcState.contacts = data || [];
       mcRenderContacts(count || 0);
     } catch(e) {
-      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;opacity:.5;padding:1.5rem">Błąd: ${e.message}</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;opacity:.5;padding:1.5rem">Błąd: ${e.message}</td></tr>`;
     }
   }
 
