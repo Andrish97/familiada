@@ -2774,6 +2774,7 @@ const KNOWN_HOSTS = [
   "panel.familiada.online",
   "supabase.familiada.online",
   "api.familiada.online",
+  "leads.familiada.online",
 ];
 
 const BLOCKED_PATHS = [
