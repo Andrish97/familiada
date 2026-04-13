@@ -90,7 +90,6 @@ export default {
 
     // Lead Finder - passthrough like ai/search, Worker handles CORS + auth injection
     if (host === "leads.familiada.online") {
-      // Handle OPTIONS preflight directly
       if (request.method === "OPTIONS") {
         return new Response(null, {
           headers: {
@@ -101,23 +100,21 @@ export default {
           }
         });
       }
-      const ext = url.pathname.split('.').pop().toLowerCase();
-      const isStatic = ['css', 'js', 'png', 'jpg', 'jpeg', 'gif', 'svg', 'ico', 'woff', 'woff2', 'map', 'txt'].includes(ext);
-      if (isStatic) {
-        return fetchFromOrigin(request, url, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
-      }
-      // Inject auth header so Caddy allows the request
+      // Inject Authorization header so Caddy allows the request
       const lfToken = String(env.LEAD_FINDER_API_KEY || "").trim();
-      const headers = new Headers(request.headers);
-      if (lfToken && !headers.has("Authorization")) {
+      let modifiedRequest = request;
+      if (lfToken) {
+        const headers = new Headers(request.headers);
         headers.set("Authorization", `Bearer ${lfToken}`);
+        modifiedRequest = new Request(request.url, { method: request.method, headers, body: request.body });
       }
-      const modifiedReq = new Request(request, { headers });
-      const res = await fetch(modifiedReq);
-      if (res.status === 404) {
-        return serveNotFoundPage(request, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
-      }
-      return res;
+      const res = await fetch(modifiedRequest);
+      // Add CORS headers to response
+      const corsHeaders = new Headers(res.headers);
+      corsHeaders.set("Access-Control-Allow-Origin", "https://settings.familiada.online");
+      corsHeaders.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+      corsHeaders.set("Access-Control-Allow-Headers", "Authorization, Content-Type");
+      return new Response(res.body, { status: res.status, headers: corsHeaders });
     }
 
     // AI and Search endpoints - passthrough, Caddy handles auth
