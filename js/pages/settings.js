@@ -5828,7 +5828,12 @@ function wireEvents() {
     if (!data) return;
     const seen = new Set();
     const runs = [];
-    data.forEach(d => { if (!seen.has(d.run_id)) { seen.add(d.run_id); runs.push(d.run_id); }});
+    data.forEach(d => {
+      if (d.run_id && !seen.has(d.run_id)) {
+        seen.add(d.run_id);
+        runs.push(d.run_id);
+      }
+    });
     const sel = document.getElementById("mcFilterRun");
     const cur = sel.value;
     sel.innerHTML = '<option value="">Wszystkie zlecenia</option>' + runs.map(id => `<option value="${id}" ${id===cur?'selected':''}>#${id.slice(0,8)}</option>`).join("");
