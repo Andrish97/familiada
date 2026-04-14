@@ -1,7 +1,7 @@
 // js/core/rating-system.js
-import { sb } from "./supabase.js?v=v2026-04-14T21455";
-import { getUser } from "./auth.js?v=v2026-04-14T21455";
-import { t } from "../../translation/translation.js?v=v2026-04-14T21455";
+import { sb } from "./supabase.js?v=v2026-04-14T21501";
+import { getUser } from "./auth.js?v=v2026-04-14T21501";
+import { t } from "../../translation/translation.js?v=v2026-04-14T21501";
 
 const RATING_LS_KEY = "fam:app_rated";
 const RATING_DISMISSED_KEY = "fam:app_rating_dismissed_at";
