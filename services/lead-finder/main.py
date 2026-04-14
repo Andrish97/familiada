@@ -322,20 +322,36 @@ async def start_run(target_count: int = 50):
     active_task = asyncio.create_task(run_worker(task_run_id, target_count))
     return {"ok": True, "run_id": task_run_id}
 
+@app.get("/api/search-runs")
+async def list_runs(limit: int = 10):
+    """Returns the current or last run as a list to satisfy frontend expectations"""
+    if task_run_id:
+        return [{"id": task_run_id, "status": task_status, "created_at": datetime.now().isoformat()}]
+    return []
+
 @app.post("/api/search-runs/{run_id}/pause")
 async def pause_run(run_id: str):
-    task_pause_event.set()
+    global task_status
+    if task_run_id == run_id:
+        task_pause_event.set()
+        task_status = "paused"
     return {"ok": True}
 
 @app.post("/api/search-runs/{run_id}/resume")
 async def resume_run(run_id: str):
-    task_pause_event.clear()
+    global task_status
+    if task_run_id == run_id:
+        task_pause_event.clear()
+        task_status = "running"
     return {"ok": True}
 
 @app.post("/api/search-runs/{run_id}/cancel")
 async def cancel_run(run_id: str):
-    task_stop_event.set()
-    task_pause_event.clear()
+    global task_status
+    if task_run_id == run_id:
+        task_stop_event.set()
+        task_pause_event.clear()
+        task_status = "cancelled"
     return {"ok": True}
 
 @app.get("/api/search-runs/status")
@@ -343,8 +359,28 @@ async def get_status():
     return {"status": task_status, "run_id": task_run_id}
 
 @app.get("/api/search-runs/{run_id}/logs")
-async def get_logs(run_id: str):
-    return await supabase.select('marketing_search_logs', '*', {'run_id': run_id}, order='created_at.desc') or []
+async def get_logs(run_id: str, limit: int = 100):
+    return await supabase.select('marketing_search_logs', '*', {'run_id': run_id}, order='created_at.desc', limit=limit) or []
+
+# --- Contact Management Endpoints ---
+
+@app.put("/api/contacts/{contact_id}")
+async def update_contact(contact_id: str, data: dict):
+    """Updates a contact's field (e.g. title, contact_type)"""
+    ok = await supabase.update('marketing_verified_contacts', data, {'id': contact_id})
+    return {"ok": ok}
+
+@app.post("/api/contacts/{contact_id}/mark-used")
+async def mark_used(contact_id: str, used: bool = True):
+    """Marks a contact as used or unused"""
+    ok = await supabase.update('marketing_verified_contacts', {'is_used': used}, {'id': contact_id})
+    return {"ok": ok}
+
+@app.delete("/api/contacts/{contact_id}")
+async def delete_contact(contact_id: str):
+    """Deletes a contact"""
+    ok = await supabase.delete('marketing_verified_contacts', {'id': contact_id})
+    return {"ok": ok}
 
 @app.get("/health")
 async def health(): return {"status": "ok"}
