@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict fWiWgHbEUB0OFjoXSTHLSx7zcfvhh2VTgNqp0My3PGuoGiZ3oMSNEUogo0Fwoaa
+\restrict UYevUH964TQf2rYWjBVmnODbRodc3pHvH4hDX5G2uxVaFmGAJRpRRcYcS61HLcd
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -13043,6 +13043,19 @@ CREATE POLICY "marketing_queries_log_all" ON "public"."marketing_search_queries_
 
 
 --
+-- Name: marketing_raw_contacts marketing_raw_all; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "marketing_raw_all" ON "public"."marketing_raw_contacts" USING (true) WITH CHECK (true);
+
+
+--
+-- Name: marketing_raw_contacts; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."marketing_raw_contacts" ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: marketing_search_logs; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -13784,5 +13797,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict fWiWgHbEUB0OFjoXSTHLSx7zcfvhh2VTgNqp0My3PGuoGiZ3oMSNEUogo0Fwoaa
+\unrestrict UYevUH964TQf2rYWjBVmnODbRodc3pHvH4hDX5G2uxVaFmGAJRpRRcYcS61HLcd
 
