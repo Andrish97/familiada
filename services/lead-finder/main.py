@@ -229,7 +229,6 @@ async def search_searxng(query: str) -> list:
         async with httpx.AsyncClient(timeout=30) as client:
             response = await client.get(
                 f'{SEARXNG_URL}/search',
-                headers={'Authorization': f'Bearer {SEARXNG_API_KEY}'},
                 params={
                     'q': query,
                     'format': 'json',
