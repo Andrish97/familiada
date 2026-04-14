@@ -5998,17 +5998,12 @@ function wireEvents() {
   // Init MC events
   document.getElementById("mcStartBtn")?.addEventListener("click", mcStartRun);
   document.getElementById("mcRefreshBtn")?.addEventListener("click", () => { mcLoadRuns(); mcLoadContacts(); });
-  document.getElementById("mcFilterRun")?.addEventListener("change", () => { mcState.page=1; mcLoadContacts(); });
   document.getElementById("mcFilterType")?.addEventListener("change", () => { mcState.page=1; mcLoadContacts(); });
   document.getElementById("mcFilterUsed")?.addEventListener("change", () => { mcState.page=1; mcLoadContacts(); });
   document.getElementById("mcMarkUsedBtn")?.addEventListener("click", mcMarkUsed);
   document.getElementById("mcDeleteBtn")?.addEventListener("click", mcDeleteSelected);
   document.getElementById("mcPrevPage")?.addEventListener("click", () => { if(mcState.page>1){mcState.page--;mcLoadContacts();} });
   document.getElementById("mcNextPage")?.addEventListener("click", () => { mcState.page++; mcLoadContacts(); });
-  document.getElementById("mcLogRunSelect")?.addEventListener("change", (e) => {
-    mcState.logRun = e.target.value || null;
-    if (mcState.logRun) { mcLoadLogs(mcState.logRun); mcStartLogAutoRefresh(); } else { mcStopLogAutoRefresh(); }
-  });
   document.getElementById("mcAutoRefreshLogs")?.addEventListener("change", (e) => { if(e.target.checked) mcStartLogAutoRefresh(); else mcStopLogAutoRefresh(); });
 
   // Load MC data when entering tab
@@ -6016,22 +6011,8 @@ function wireEvents() {
   const mcObserver = new MutationObserver(async () => {
     if (!document.getElementById("marketingContactsPanel")?.hidden) {
       mcLoadContacts();
-      // Auto-load latest run logs (only current or most recent)
-      const tk = await mcGetToken();
-      const res = await fetch(`${MC_API}/api/search-runs?limit=1`, {headers:{Authorization:`Bearer ${tk}`}});
-      if (res.ok) {
-        const runs = await res.json();
-        if (runs.length > 0) {
-          mcState.logRun = runs[0].id;
-          const sel = document.getElementById("mcLogRunSelect");
-          if (sel) {
-            sel.innerHTML = `<option value="${runs[0].id}">#${runs[0].id.slice(0,8)} - ${runs[0].status}</option>`;
-            sel.value = runs[0].id;
-          }
-          mcLoadLogs(runs[0].id);
-          mcStartLogAutoRefresh();
-        }
-      }
+      // Check current run status
+      mcLoadRuns();
     }
   });
   const mcPanel = document.getElementById("marketingContactsPanel");
