@@ -75,10 +75,10 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="Marketing Lead Finder")
 
-# CORS - allow settings.familiada.online
+# CORS - allow settings and main site
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://settings.familiada.online"],
+    allow_origins=["https://settings.familiada.online", "https://familiada.online", "https://www.familiada.online"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -369,27 +369,36 @@ async def create_run(target_count: int = 50):
     active_task = asyncio.create_task(process_search_run(task_run_id, target_count))
     return JSONResponse({'ok': True, 'run_id': task_run_id})
 
-@app.post("/api/search-runs/pause")
-async def pause_run():
+@app.get("/api/search-runs")
+async def list_runs(limit: int = 10):
+    """Returns the current or last run as a list to satisfy frontend expectations"""
+    if task_run_id:
+        return JSONResponse([{'id': task_run_id, 'status': task_status}])
+    return JSONResponse([])
+
+@app.post("/api/search-runs/{run_id}/pause")
+async def pause_run(run_id: str):
     global task_status
-    if task_status == "running":
+    if task_status == "running" and task_run_id == run_id:
         task_pause_event.set()
         task_status = "paused"
         return JSONResponse({'ok': True})
-    return JSONResponse({'ok': False, 'error': 'not_running'})
+    return JSONResponse({'ok': False, 'error': 'not_running_or_id_mismatch'})
 
-@app.post("/api/search-runs/resume")
-async def resume_run():
+@app.post("/api/search-runs/{run_id}/resume")
+async def resume_run(run_id: str):
     global task_status
-    if task_status == "paused":
+    if task_status == "paused" and task_run_id == run_id:
         task_pause_event.clear()
         task_status = "running"
         return JSONResponse({'ok': True})
-    return JSONResponse({'ok': False, 'error': 'not_paused'})
+    return JSONResponse({'ok': False, 'error': 'not_paused_or_id_mismatch'})
 
-@app.post("/api/search-runs/cancel")
-async def cancel_run():
+@app.post("/api/search-runs/{run_id}/cancel")
+async def cancel_run(run_id: str):
     global task_status, active_task
+    if task_run_id != run_id:
+        return JSONResponse({'ok': False, 'error': 'id_mismatch'})
     task_stop_event.set()
     task_pause_event.clear()
     if active_task and not active_task.done():
@@ -401,11 +410,25 @@ async def cancel_run():
 async def get_status():
     return JSONResponse({'status': task_status, 'run_id': task_run_id})
 
-@app.get("/api/search-runs/logs")
-async def get_logs(run_id: str = None, limit: int = 100):
-    q = supabase.select('marketing_search_logs', order='created_at.desc', limit=limit)
+@app.get("/api/search-runs/{run_id}/logs")
+async def get_logs(run_id: str, limit: int = 100):
+    # Filter by run_id if provided
+    filters = {'run_id': run_id}
+    q = supabase.select('marketing_search_logs', filters=filters, order='created_at.desc', limit=limit)
     logs = await q
     return JSONResponse(logs or [])
+
+@app.post("/api/contacts/{contact_id}/mark-used")
+async def mark_used(contact_id: str, used: bool = True):
+    """Mark a contact as used or unused in the database"""
+    ok = await supabase.update('marketing_verified_contacts', {'is_used': used}, {'id': contact_id})
+    return JSONResponse({'ok': ok})
+
+@app.delete("/api/contacts/{contact_id}")
+async def delete_contact(contact_id: str):
+    """Delete a contact from the database"""
+    ok = await supabase.delete('marketing_verified_contacts', {'id': contact_id})
+    return JSONResponse({'ok': ok})
 
 @app.get("/health")
 async def health(): return JSONResponse({'status': 'ok'})
