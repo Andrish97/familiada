@@ -199,7 +199,6 @@ async def refill_raw_buffer(run_id: str):
         if emails:
             # Final deduplication by emails
             email_list = list(emails)
-            # (In a large system we'd check DB here, for now URL dedup is primary)
             
             ok = await supabase.insert('marketing_raw_contacts', {
                 'url': url,
@@ -231,7 +230,7 @@ Odpowiedz WYŁĄCZNIE JSONem:
         async with httpx.AsyncClient(timeout=60) as client:
             r = await client.post(f'{AI_ENDPOINT}/api/chat', json={
                 'model': AI_MODEL,
-                'messages': [{'role': 'system', 'content': 'Jesteś asystentem marketingu. Odpowiadasz TYLKO JSONEM.'}, 
+                'messages': [{'role': 'system', 'content': 'Jesteś asystentem marketingu. Odpowiadaj TYLKO JSONEM.'}, 
                              {'role': 'user', 'content': prompt}],
                 'stream': False
             })
@@ -262,6 +261,8 @@ async def run_worker(run_id: str, target_count: int):
     task_status = "running"
     verified_so_far = 0
     
+    # Clear logs for new session
+    await supabase.delete('marketing_search_logs')
     await log_to_db(run_id, "info", f"Rozpoczynam zlecenie na {target_count} leadów.")
 
     while verified_so_far < target_count:
@@ -322,13 +323,6 @@ async def start_run(target_count: int = 50):
     active_task = asyncio.create_task(run_worker(task_run_id, target_count))
     return {"ok": True, "run_id": task_run_id}
 
-@app.get("/api/search-runs")
-async def list_runs(limit: int = 10):
-    """Returns the current or last run as a list to satisfy frontend expectations"""
-    if task_run_id:
-        return [{"id": task_run_id, "status": task_status, "created_at": datetime.now().isoformat()}]
-    return []
-
 @app.post("/api/search-runs/{run_id}/pause")
 async def pause_run(run_id: str):
     global task_status
@@ -357,30 +351,6 @@ async def cancel_run(run_id: str):
 @app.get("/api/search-runs/status")
 async def get_status():
     return {"status": task_status, "run_id": task_run_id}
-
-@app.get("/api/search-runs/{run_id}/logs")
-async def get_logs(run_id: str, limit: int = 100):
-    return await supabase.select('marketing_search_logs', '*', {'run_id': run_id}, order='created_at.desc', limit=limit) or []
-
-# --- Contact Management Endpoints ---
-
-@app.put("/api/contacts/{contact_id}")
-async def update_contact(contact_id: str, data: dict):
-    """Updates a contact's field (e.g. title, contact_type)"""
-    ok = await supabase.update('marketing_verified_contacts', data, {'id': contact_id})
-    return {"ok": ok}
-
-@app.post("/api/contacts/{contact_id}/mark-used")
-async def mark_used(contact_id: str, used: bool = True):
-    """Marks a contact as used or unused"""
-    ok = await supabase.update('marketing_verified_contacts', {'is_used': used}, {'id': contact_id})
-    return {"ok": ok}
-
-@app.delete("/api/contacts/{contact_id}")
-async def delete_contact(contact_id: str):
-    """Deletes a contact"""
-    ok = await supabase.delete('marketing_verified_contacts', {'id': contact_id})
-    return {"ok": ok}
 
 @app.get("/health")
 async def health(): return {"status": "ok"}

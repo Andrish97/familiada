@@ -5664,9 +5664,11 @@ function wireEvents() {
   async function mcLoadRuns() {
     try {
       const tk = await mcGetToken();
-      const res = await fetch(`${MC_API}/api/search-runs?limit=1`, {headers:{Authorization:`Bearer ${tk}`}});
+      const res = await fetch(`${MC_API}/api/search-runs/status`, {headers:{Authorization:`Bearer ${tk}`}});
       if (!res.ok) return;
-      mcState.runs = await res.json();
+      const data = await res.json();
+      mcState.logRun = data.run_id;
+      if (data.status === "running") mcStartLogAutoRefresh();
     } catch(e) {}
   }
 
@@ -5681,13 +5683,8 @@ function wireEvents() {
       const data = await res.json();
       btn.textContent = "✅ Uruchomiono!";
       setTimeout(()=>{ btn.textContent = "▶ Uruchom"; btn.disabled = false; }, 1500);
-      mcLoadRuns();
-      // Auto-select this run in logs
-      setTimeout(() => {
-        mcState.logRun = data.run_id;
-        mcLoadLogs(data.run_id);
-        mcStartLogAutoRefresh();
-      }, 1000);
+      mcState.logRun = data.run_id;
+      mcStartLogAutoRefresh();
     } catch(e) {
       alert("Błąd: " + e.message);
       btn.disabled = false;
@@ -5715,10 +5712,8 @@ function wireEvents() {
     const tbody = document.getElementById("mcTableBody");
     try {
       let query = sb().from("marketing_verified_contacts").select("*", { count: 'exact' });
-      const fRun = document.getElementById("mcFilterRun").value;
       const fType = document.getElementById("mcFilterType").value;
       const fUsed = document.getElementById("mcFilterUsed").value;
-      if (fRun) query = query.eq("run_id", fRun);
       if (fType) query = query.eq("contact_type", fType);
       if (fUsed !== "") query = query.eq("is_used", fUsed === "true");
       const from = (mcState.page - 1) * MC_PAGE_SIZE;
@@ -5931,68 +5926,52 @@ function wireEvents() {
   };
 
   window.mcUpdate = async function(id, field, value) {
-    const tk = await mcGetToken();
     try {
-      await fetch(`${MC_API}/api/contacts/${id}`, {method:"PUT", headers:{"Content-Type":"application/json", Authorization:`Bearer ${tk}`}, body:JSON.stringify({[field]:value})});
+      const { error } = await sb().from("marketing_verified_contacts").update({[field]:value}).eq("id", id);
+      if (error) throw error;
     } catch(e) { mcLoadContacts(); }
   };
 
   async function mcMarkUsed() {
     const rows = new Set(mcState.selectedCells.map(c => c.row));
     if (!rows.size) return;
-    const tk = await mcGetToken();
-    // Use contact IDs from current page data
-    const ids = [...rows].map(i => mcState.contacts[i]?.id).filter(Boolean);
-    if (!ids.length) return;
-    await Promise.all(ids.map(id => fetch(`${MC_API}/api/contacts/${id}/mark-used?used=true`,{method:"POST", headers:{Authorization:`Bearer ${tk}`}})));
-    mcState.selectedCells = [];
-    mcLoadContacts();
+    try {
+      const ids = [...rows].map(i => mcState.contacts[i]?.id).filter(Boolean);
+      if (!ids.length) return;
+      const { error } = await sb().from("marketing_verified_contacts").update({is_used: true, used_at: new Date().toISOString()}).in("id", ids);
+      if (error) throw error;
+      mcState.selectedCells = [];
+      mcLoadContacts();
+    } catch(e) { alert("Błąd: " + e.message); }
   }
 
   async function mcDeleteSelected() {
     const rows = new Set(mcState.selectedCells.map(c => c.row));
     if (!rows.size) return;
     if (!confirm(`Usunąć ${rows.size} kontaktów?`)) return;
-    const tk = await mcGetToken();
-    const ids = [...rows].map(i => mcState.contacts[i]?.id).filter(Boolean);
-    if (!ids.length) return;
-    await Promise.all(ids.map(id => fetch(`${MC_API}/api/contacts/${id}`,{method:"DELETE", headers:{Authorization:`Bearer ${tk}`}})));
-    mcState.selectedCells = [];
-    mcLoadContacts();
+    try {
+      const ids = [...rows].map(i => mcState.contacts[i]?.id).filter(Boolean);
+      if (!ids.length) return;
+      const { error } = await sb().from("marketing_verified_contacts").delete().in("id", ids);
+      if (error) throw error;
+      mcState.selectedCells = [];
+      mcLoadContacts();
+    } catch(e) { alert("Błąd: " + e.message); }
   }
 
   function mcUpdatePagination(total) {
     const pages = Math.ceil(total / MC_PAGE_SIZE) || 1;
-    document.getElementById("mcPageInfo").textContent = `Strona ${mcState.page} / ${pages}`;
+    document.getElementById("mcPageInfo").textContent = `Strona ${mcState.page} / ${pages} (${total})`;
     document.getElementById("mcPrevPage").disabled = mcState.page <= 1;
     document.getElementById("mcNextPage").disabled = mcState.page >= pages;
   }
 
-  async function mcPopulateRunFilters() {
-    const { data } = await sb().from("marketing_verified_contacts").select("run_id,added_at").order("added_at",{ascending:false});
-    if (!data) return;
-    const seen = new Set();
-    const runs = [];
-    data.forEach(d => {
-      if (d.run_id && !seen.has(d.run_id)) {
-        seen.add(d.run_id);
-        runs.push(d.run_id);
-      }
-    });
-    const sel = document.getElementById("mcFilterRun");
-    const cur = sel.value;
-    sel.innerHTML = '<option value="">Wszystkie zlecenia</option>' + runs.map(id => `<option value="${id}" ${id===cur?'selected':''}>#${id.slice(0,8)}</option>`).join("");
-    sel.value = cur;
-  }
-
-  async function mcLoadLogs(runId) {
+  async function mcLoadLogs() {
     const el = document.getElementById("mcLogsContainer");
-    if (!runId) { el.innerHTML = '<div style="text-align:center;opacity:.5">Wybierz zlecenie</div>'; return; }
     try {
-      const tk = await mcGetToken();
-      const res = await fetch(`${MC_API}/api/search-runs/${runId}/logs?limit=200`, {headers:{Authorization:`Bearer ${tk}`}});
-      if (!res.ok) throw new Error("Failed");
-      mcState.logs = await res.json();
+      const { data, error } = await sb().from("marketing_search_logs").select("*").order("created_at", {ascending: false}).limit(200);
+      if (error) throw error;
+      mcState.logs = data || [];
       mcRenderLogs();
     } catch(e) { el.innerHTML = `<div style="text-align:center;opacity:.5">Błąd: ${e.message}</div>`; }
   }
