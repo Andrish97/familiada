@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict ElaLSPbq8GPk3n4cERW4crJaHYEtjtI2R8yVYcqCUrY369LP7SceHzbAUaakbWm
+\restrict fWiWgHbEUB0OFjoXSTHLSx7zcfvhh2VTgNqp0My3PGuoGiZ3oMSNEUogo0Fwoaa
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -10395,6 +10395,21 @@ CREATE TABLE "public"."marketing_cities" (
 
 
 --
+-- Name: marketing_raw_contacts; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."marketing_raw_contacts" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "url" "text" NOT NULL,
+    "emails_found" "jsonb" DEFAULT '[]'::"jsonb",
+    "title" "text",
+    "status" "text" DEFAULT 'pending'::"text",
+    "created_at" timestamp with time zone DEFAULT "now"(),
+    "updated_at" timestamp with time zone DEFAULT "now"()
+);
+
+
+--
 -- Name: marketing_search_logs; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -11057,6 +11072,22 @@ ALTER TABLE ONLY "public"."marketing_cities"
 
 
 --
+-- Name: marketing_raw_contacts marketing_raw_contacts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."marketing_raw_contacts"
+    ADD CONSTRAINT "marketing_raw_contacts_pkey" PRIMARY KEY ("id");
+
+
+--
+-- Name: marketing_raw_contacts marketing_raw_contacts_url_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."marketing_raw_contacts"
+    ADD CONSTRAINT "marketing_raw_contacts_url_key" UNIQUE ("url");
+
+
+--
 -- Name: marketing_search_logs marketing_search_logs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -11492,10 +11523,24 @@ CREATE INDEX "idx_marketing_logs_run" ON "public"."marketing_search_logs" USING 
 
 
 --
+-- Name: idx_marketing_raw_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "idx_marketing_raw_status" ON "public"."marketing_raw_contacts" USING "btree" ("status") WHERE ("status" = 'pending'::"text");
+
+
+--
 -- Name: idx_marketing_verified_email; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX "idx_marketing_verified_email" ON "public"."marketing_verified_contacts" USING "btree" ("email");
+
+
+--
+-- Name: idx_marketing_verified_email_array; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "idx_marketing_verified_email_array" ON "public"."marketing_verified_contacts" USING "btree" ("email");
 
 
 --
@@ -11510,6 +11555,13 @@ CREATE INDEX "idx_marketing_verified_run" ON "public"."marketing_verified_contac
 --
 
 CREATE INDEX "idx_marketing_verified_type" ON "public"."marketing_verified_contacts" USING "btree" ("contact_type");
+
+
+--
+-- Name: idx_marketing_verified_url; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "idx_marketing_verified_url" ON "public"."marketing_verified_contacts" USING "btree" ("url");
 
 
 --
@@ -13732,5 +13784,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict ElaLSPbq8GPk3n4cERW4crJaHYEtjtI2R8yVYcqCUrY369LP7SceHzbAUaakbWm
+\unrestrict fWiWgHbEUB0OFjoXSTHLSx7zcfvhh2VTgNqp0My3PGuoGiZ3oMSNEUogo0Fwoaa
 
