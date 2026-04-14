@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 29oxhsH9AT0WtxYna4FtgqHz5WdugatNGeOT04k2Hg6nTZoA4DmxcttH18Tm0Za
+\restrict ElaLSPbq8GPk3n4cERW4crJaHYEtjtI2R8yVYcqCUrY369LP7SceHzbAUaakbWm
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -10395,17 +10395,6 @@ CREATE TABLE "public"."marketing_cities" (
 
 
 --
--- Name: marketing_lead_config; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE "public"."marketing_lead_config" (
-    "key" "text" NOT NULL,
-    "value" "text" NOT NULL,
-    "updated_at" timestamp with time zone DEFAULT "now"()
-);
-
-
---
 -- Name: marketing_search_logs; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -11065,14 +11054,6 @@ ALTER TABLE ONLY "public"."marketing_cities"
 
 ALTER TABLE ONLY "public"."marketing_cities"
     ADD CONSTRAINT "marketing_cities_pkey" PRIMARY KEY ("id");
-
-
---
--- Name: marketing_lead_config marketing_lead_config_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY "public"."marketing_lead_config"
-    ADD CONSTRAINT "marketing_lead_config_pkey" PRIMARY KEY ("key");
 
 
 --
@@ -12113,13 +12094,6 @@ CREATE TRIGGER "trg_market_games_updated_at" BEFORE UPDATE ON "public"."market_g
 
 
 --
--- Name: marketing_lead_config trg_marketing_config_updated_at; Type: TRIGGER; Schema: public; Owner: -
---
-
-CREATE TRIGGER "trg_marketing_config_updated_at" BEFORE UPDATE ON "public"."marketing_lead_config" FOR EACH ROW EXECUTE FUNCTION "public"."update_marketing_updated_at"();
-
-
---
 -- Name: marketing_verified_contacts trg_marketing_verified_updated_at; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -13003,19 +12977,6 @@ CREATE POLICY "marketing_cities_all" ON "public"."marketing_cities" USING (true)
 
 
 --
--- Name: marketing_lead_config marketing_config_all; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "marketing_config_all" ON "public"."marketing_lead_config" USING (true) WITH CHECK (true);
-
-
---
--- Name: marketing_lead_config; Type: ROW SECURITY; Schema: public; Owner: -
---
-
-ALTER TABLE "public"."marketing_lead_config" ENABLE ROW LEVEL SECURITY;
-
---
 -- Name: marketing_search_logs marketing_logs_all; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -13771,5 +13732,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 29oxhsH9AT0WtxYna4FtgqHz5WdugatNGeOT04k2Hg6nTZoA4DmxcttH18Tm0Za
+\unrestrict ElaLSPbq8GPk3n4cERW4crJaHYEtjtI2R8yVYcqCUrY369LP7SceHzbAUaakbWm
 
