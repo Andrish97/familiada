@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict IcmsI3aXE1McvFR7ETt4R3ZDSXsh39vtr9FK28N0YL4Jg7fqalanosGnakvObni
+\restrict 29oxhsH9AT0WtxYna4FtgqHz5WdugatNGeOT04k2Hg6nTZoA4DmxcttH18Tm0Za
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -10420,6 +10420,19 @@ CREATE TABLE "public"."marketing_search_logs" (
 
 
 --
+-- Name: marketing_search_queries_log; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."marketing_search_queries_log" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "query_text" "text" NOT NULL,
+    "urls_found" integer DEFAULT 0,
+    "status" "text" DEFAULT 'completed'::"text",
+    "created_at" timestamp with time zone DEFAULT "now"()
+);
+
+
+--
 -- Name: marketing_verified_contacts; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -11068,6 +11081,22 @@ ALTER TABLE ONLY "public"."marketing_lead_config"
 
 ALTER TABLE ONLY "public"."marketing_search_logs"
     ADD CONSTRAINT "marketing_search_logs_pkey" PRIMARY KEY ("id");
+
+
+--
+-- Name: marketing_search_queries_log marketing_search_queries_log_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."marketing_search_queries_log"
+    ADD CONSTRAINT "marketing_search_queries_log_pkey" PRIMARY KEY ("id");
+
+
+--
+-- Name: marketing_search_queries_log marketing_search_queries_log_query_text_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."marketing_search_queries_log"
+    ADD CONSTRAINT "marketing_search_queries_log_query_text_key" UNIQUE ("query_text");
 
 
 --
@@ -12994,10 +13023,23 @@ CREATE POLICY "marketing_logs_all" ON "public"."marketing_search_logs" USING (tr
 
 
 --
+-- Name: marketing_search_queries_log marketing_queries_log_all; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "marketing_queries_log_all" ON "public"."marketing_search_queries_log" USING (true) WITH CHECK (true);
+
+
+--
 -- Name: marketing_search_logs; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE "public"."marketing_search_logs" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: marketing_search_queries_log; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."marketing_search_queries_log" ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: marketing_verified_contacts marketing_verified_all; Type: POLICY; Schema: public; Owner: -
@@ -13729,5 +13771,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict IcmsI3aXE1McvFR7ETt4R3ZDSXsh39vtr9FK28N0YL4Jg7fqalanosGnakvObni
+\unrestrict 29oxhsH9AT0WtxYna4FtgqHz5WdugatNGeOT04k2Hg6nTZoA4DmxcttH18Tm0Za
 
