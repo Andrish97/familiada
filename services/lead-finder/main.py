@@ -299,28 +299,28 @@ Musi to być ktoś kto SAM organizuje eventy."""
 
     try:
         async with httpx.AsyncClient(timeout=60) as client:
+            # Ollama native /api/chat endpoint
             response = await client.post(
-                f'{AI_ENDPOINT}/v1/chat/completions',
-                headers={
-                    'Authorization': f'Bearer {AI_API_KEY}',
-                    'Content-Type': 'application/json'
-                },
+                f'{AI_ENDPOINT}/api/chat',
+                headers={'Content-Type': 'application/json'},
                 json={
                     'model': AI_MODEL,
                     'messages': [
                         {'role': 'system', 'content': 'Jesteś asystentem weryfikującym kontakty marketingowe. Odpowiadaj TYLKO w formacie JSON.'},
                         {'role': 'user', 'content': prompt}
                     ],
-                    'temperature': 0.1,
-                    'max_tokens': 500
+                    'stream': False,
+                    'options': {
+                        'temperature': 0.1,
+                        'num_predict': 500
+                    }
                 }
             )
             if response.status_code == 200:
                 data = response.json()
-                content = data['choices'][0]['message']['content']
+                content = data.get('message', {}).get('content', '')
                 # Try to parse JSON from response
                 try:
-                    # Find JSON in response
                     json_match = re.search(r'\{.*\}', content, re.DOTALL)
                     if json_match:
                         return json.loads(json_match.group())
