@@ -115,7 +115,24 @@ class SupabaseClient:
                 result = response.json()
                 return result[0] if result else data
             return None
-    
+
+    async def select(self, table: str, columns: str = '*', filters: dict = None, limit: int = None, order: str = None) -> Optional[list]:
+        async with httpx.AsyncClient() as client:
+            params = {'select': columns}
+            if filters:
+                for k, v in filters.items(): params[k] = f'eq.{v}'
+            if limit: params['limit'] = limit
+            if order: params['order'] = order
+            
+            response = await client.get(
+                f'{self.url}/rest/v1/{table}',
+                headers=self.headers,
+                params=params
+            )
+            if response.status_code == 200:
+                return response.json()
+            return None
+
     async def update(self, table: str, data: dict, filters: dict) -> bool:
         async with httpx.AsyncClient() as client:
             filter_params = {}
@@ -129,6 +146,19 @@ class SupabaseClient:
                 params=filter_params
             )
             return response.status_code == 200
+
+    async def delete(self, table: str, filters: dict = None) -> bool:
+        async with httpx.AsyncClient() as client:
+            filter_params = {}
+            if filters:
+                for key, value in filters.items():
+                    filter_params[key] = f'eq.{value}'
+            response = await client.delete(
+                f'{self.url}/rest/v1/{table}',
+                headers=self.headers,
+                params=filter_params
+            )
+            return response.status_code in [200, 204]
 
 supabase = SupabaseClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
@@ -159,12 +189,28 @@ async def search_searxng(query: str) -> list:
     except Exception: return []
 
 async def extract_emails_from_url(url: str) -> list:
+    """Extract emails from URL and common subpages (/kontakt, /contact)"""
     emails = set()
+    urls_to_check = [url]
+    
+    # Add subpages to check
     try:
-        async with httpx.AsyncClient(timeout=10, follow_redirects=True) as client:
-            r = await client.get(url)
-            if r.status_code == 200: emails.update(EMAIL_REGEX.findall(r.text))
+        parsed = urlparse(url)
+        for path in ['/kontakt', '/contact', '/kontakt.html', '/contact.html']:
+            subpage_url = f"{parsed.scheme}://{parsed.netloc}{path}"
+            if subpage_url not in urls_to_check:
+                urls_to_check.append(subpage_url)
     except: pass
+
+    async with httpx.AsyncClient(timeout=10, follow_redirects=True) as client:
+        for target_url in urls_to_check:
+            try:
+                r = await client.get(target_url)
+                if r.status_code == 200:
+                    found = EMAIL_REGEX.findall(r.text)
+                    emails.update(found)
+            except:
+                continue
     return list(emails)
 
 async def verify_with_ai(title: str, url: str, emails: list) -> dict:
@@ -191,17 +237,21 @@ To nie może być restauracja ani wypożyczalnia sprzętu."""
 async def process_search_run(run_id: str, target_count: int):
     global task_status
     try:
+        # 1. Load existing contacts to avoid duplicates
+        vc = await supabase.select('marketing_verified_contacts', columns='email') or []
+        existing_emails = set(v['email'] for v in vc if v.get('email'))
+
+        # 2. Load used queries from DB to avoid repetition
+        used_queries_rows = await supabase.select('marketing_search_queries_log', columns='query_text')
+        used_queries = {row['query_text'] for row in used_queries_rows} if used_queries_rows else set()
+
+        # 3. Clear old logs
+        await supabase.delete('marketing_search_logs')
+
         cities = await supabase.select('marketing_cities', columns='name', filters={'is_active': True}) or []
         city_names = [c['name'] for c in cities]
         verified_count = 0
-        queries_log = []
-        processed_urls = set()
-        existing_emails = set()
         
-        # Get existing emails from verified contacts
-        vc = await supabase.select('marketing_verified_contacts', columns='email') or []
-        existing_emails.update(v['email'] for v in vc if v.get('email'))
-
         while verified_count < target_count:
             # Check stop
             if task_stop_event.is_set():
@@ -223,49 +273,72 @@ async def process_search_run(run_id: str, target_count: int):
             for qt in SEARCH_QUERIES:
                 for city in city_names:
                     full_q = qt.format(city=city)
-                    if full_q in queries_log: continue
-                    queries_log.append(full_q)
+                    
+                    # Skip if already searched
+                    if full_q in used_queries: continue
+                    
                     query_made = True
                     
+                    # Mark as used immediately
+                    used_queries.add(full_q)
+                    await supabase.insert('marketing_search_queries_log', {
+                        'query_text': full_q,
+                        'urls_found': 0, # Will update later
+                        'status': 'searching'
+                    })
+
                     await log_to_db(run_id, "info", f"Szukam: {full_q}")
                     results = await search_searxng(full_q)
+                    
+                    # Update query status
+                    await supabase.update('marketing_search_queries_log', 
+                        {'urls_found': len(results), 'status': 'completed'}, 
+                        {'query_text': full_q})
+
                     await log_to_db(run_id, "success", f"Znaleziono {len(results)} URL-i")
                     
-                    # Process URLs
                     pending_urls = []
                     for res in results:
                         u = res.get('url', '')
                         domain = urlparse(u).netloc.lower()
-                        if domain not in BLOCKED_DOMAINS and u not in processed_urls and u not in [p['url'] for p in pending_urls]:
+                        if u and domain not in BLOCKED_DOMAINS:
+                            # Simple check if we haven't processed this URL in this run yet
+                            # (We don't store all URLs in DB to avoid bloat, just checking emails is enough mostly)
                             pending_urls.append({'url': u, 'title': res.get('title', '')})
-                            processed_urls.add(u)
 
                     for p_url in pending_urls:
                         if task_stop_event.is_set(): return
+                        
+                        # Extract emails from main page + subpages
                         emails = await extract_emails_from_url(p_url['url'])
-                        if emails and not any(e in existing_emails for e in emails):
-                            existing_emails.update(emails)
-                            await supabase.insert('marketing_search_logs', {
-                                'run_id': run_id, 'level': 'info', 'message': f"Mail z {p_url['url']}: {', '.join(emails[:3])}"
-                            })
-                            
-                            ai_res = await verify_with_ai(p_url['title'], p_url['url'], emails)
-                            if ai_res.get('is_event_organizer') and ai_res.get('best_email'):
-                                await supabase.insert('marketing_verified_contacts', {
-                                    'run_id': run_id,
-                                    'title': p_url['title'],
-                                    'short_description': ai_res.get('reasoning', '')[:200],
-                                    'email': ai_res['best_email'],
-                                    'url': p_url['url'],
-                                    'is_event_organizer': True,
-                                    'ai_confidence': 'high',
-                                    'contact_type': ai_res.get('contact_type', 'Inne')
-                                })
-                                verified_count += 1
-                                await log_to_db(run_id, "success", f"✅ Zweryfikowano: {p_url['title']} ({ai_res['best_email']})")
-                                if verified_count >= target_count: break
+                        
+                        if emails:
+                            # Filter out existing emails
+                            new_emails = [e for e in emails if e.lower() not in existing_emails]
+                            if new_emails:
+                                existing_emails.update([e.lower() for e in new_emails])
+                                await log_to_db(run_id, "info", f"Mail z {p_url['url']}: {', '.join(new_emails[:3])}")
+                                
+                                ai_res = await verify_with_ai(p_url['title'], p_url['url'], new_emails)
+                                if ai_res.get('is_event_organizer') and ai_res.get('best_email'):
+                                    await supabase.insert('marketing_verified_contacts', {
+                                        'run_id': run_id,
+                                        'title': p_url['title'],
+                                        'short_description': ai_res.get('reasoning', '')[:200],
+                                        'email': ai_res['best_email'],
+                                        'url': p_url['url'],
+                                        'is_event_organizer': True,
+                                        'ai_confidence': 'high',
+                                        'contact_type': ai_res.get('contact_type', 'Inne')
+                                    })
+                                    verified_count += 1
+                                    await log_to_db(run_id, "success", f"✅ Zweryfikowano: {p_url['title']} ({ai_res['best_email']})")
+                                    if verified_count >= target_count: break
+                                else:
+                                    await log_to_db(run_id, "info", f"❌ Odrzucono: {p_url['title']}")
                             else:
-                                await log_to_db(run_id, "info", f"❌ Odrzucono: {p_url['title']}")
+                                await log_to_db(run_id, "info", f"Pominięto (stare maile): {p_url['url']}")
+                    
                     if verified_count >= target_count: break
                 if verified_count >= target_count or query_made: break
             
@@ -331,7 +404,6 @@ async def get_status():
 @app.get("/api/search-runs/logs")
 async def get_logs(run_id: str = None, limit: int = 100):
     q = supabase.select('marketing_search_logs', order='created_at.desc', limit=limit)
-    if run_id: q = q.eq('run_id', run_id)
     logs = await q
     return JSONResponse(logs or [])
 
