@@ -12,6 +12,7 @@ import re
 import signal
 import sys
 import time
+import uuid
 from datetime import datetime, timezone
 from typing import Optional
 from urllib.parse import urlparse
@@ -19,10 +20,10 @@ from urllib.parse import urlparse
 import httpx
 
 # Configuration (from docker/.env or internal Docker defaults)
-SEARXNG_URL = os.getenv("SEARXNG_URL", "http://searxng:8080")
-AI_ENDPOINT = os.getenv("AI_ENDPOINT", os.getenv("OLLAMA_URL", "http://ollama:11434"))
+SEARXNG_URL = os.getenv("SEARXNG_URL", "http://searxng:8080").rstrip('/')
+AI_ENDPOINT = os.getenv("AI_ENDPOINT", os.getenv("OLLAMA_URL", "http://ollama:11434")).rstrip('/')
 AI_MODEL = os.getenv("AI_MODEL", "qwen2.5:3b-instruct-q4_K_M")
-SUPABASE_URL = os.getenv("SUPABASE_URL", "http://kong:8000")
+SUPABASE_URL = os.getenv("SUPABASE_URL", "http://kong:8000").rstrip('/')
 SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", os.getenv("SERVICE_ROLE_KEY", ""))
 WORKER_TELEGRAM_ENDPOINT = os.getenv("WORKER_TELEGRAM_ENDPOINT", "https://settings.familiada.online/_admin_api/config/telegram/notify-service")
 SERVICE_TOKEN = os.getenv("LEAD_FINDER_SERVICE_KEY", "")
@@ -133,13 +134,18 @@ class SupabaseClient:
             if limit: params['limit'] = limit
             if order: params['order'] = order
             
-            response = await client.get(
-                f'{self.url}/rest/v1/{table}',
-                headers=self.headers,
-                params=params
-            )
-            if response.status_code == 200:
-                return response.json()
+            try:
+                response = await client.get(
+                    f'{self.url}/rest/v1/{table}',
+                    headers=self.headers,
+                    params=params,
+                    timeout=10
+                )
+                if response.status_code == 200:
+                    return response.json()
+                logger.error(f"Supabase select error: {response.status_code} {response.text}")
+            except Exception as e:
+                logger.error(f"Supabase connection error: {e}")
             return None
 
     async def update(self, table: str, data: dict, filters: dict) -> bool:
@@ -173,12 +179,15 @@ supabase = SupabaseClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
 async def log_to_db(run_id: str, level: str, message: str):
     """Log a message to the database"""
-    await supabase.insert('marketing_search_logs', {
-        'run_id': run_id,
-        'level': level,
-        'message': message,
-        'details': {}
-    })
+    try:
+        await supabase.insert('marketing_search_logs', {
+            'run_id': run_id,
+            'level': level,
+            'message': message,
+            'details': {}
+        })
+    except Exception as e:
+        logger.error(f"Failed to log to DB: {e}")
     logger.info(f"[{run_id[:8] if run_id else '---'}] {level}: {message}")
 
 async def send_telegram_notification(message: str):
@@ -274,22 +283,35 @@ Odpowiedz WYŁĄCZNIE w formacie JSON:
 
 async def process_search_run(run_id: str, target_count: int):
     global task_status, session_used_queries, session_existing_emails, session_processed_urls
+    task_status = "running"
     try:
         await log_to_db(run_id, "info", f"Rozpoczynam zlecenie na {target_count} kontaktów")
+        logger.info(f"Starting run {run_id} with target {target_count}")
         
         # Initial sync of existing emails from DB if session is empty
         if not session_existing_emails:
-            vc = await supabase.select('marketing_verified_contacts', columns='email') or []
-            session_existing_emails = set(v['email'].lower() for v in vc if v.get('email'))
+            logger.info("Syncing existing emails from DB...")
+            vc = await supabase.select('marketing_verified_contacts', columns='email')
+            if vc is not None:
+                session_existing_emails = set(v['email'].lower() for v in vc if v.get('email'))
+                logger.info(f"Synced {len(session_existing_emails)} existing emails")
+            else:
+                logger.warning("Failed to sync emails from DB, starting with empty set")
+                session_existing_emails = set()
 
-        # Clear old logs for this run
-        await supabase.delete('marketing_search_logs')
+        # Only clear logs for THIS run if needed (though it should be empty for a new UUID)
+        # await supabase.delete('marketing_search_logs', filters={'run_id': run_id})
 
-        cities = await supabase.select('marketing_cities', columns='name', filters={'is_active': True}) or []
+        cities = await supabase.select('marketing_cities', columns='name', filters={'is_active': True})
+        if cities is None:
+            await log_to_db(run_id, "error", "Błąd połączenia z bazą danych (tabela miast)")
+            task_status = "error"
+            return
+
         city_names = [c['name'] for c in cities]
-        
         if not city_names:
             await log_to_db(run_id, "error", "Brak aktywnych miast w bazie danych!")
+            task_status = "error"
             return
 
         verified_count = 0
@@ -400,7 +422,7 @@ async def create_run(target_count: int = 50):
     if task_status in ["running", "paused"]:
         raise HTTPException(400, "Zlecenie już działa")
         
-    task_run_id = f"run-{int(time.time())}"
+    task_run_id = str(uuid.uuid4())
     task_stop_event.clear()
     task_pause_event.clear()
     task_status = "running"
