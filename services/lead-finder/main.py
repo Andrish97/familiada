@@ -18,14 +18,18 @@ from urllib.parse import urlparse
 
 import httpx
 
-# Configuration (from docker/.env)
+# Configuration (from docker/.env or internal Docker defaults)
 SEARXNG_URL = os.getenv("SEARXNG_URL", "http://searxng:8080")
-AI_ENDPOINT = os.getenv("AI_ENDPOINT", "http://ollama:11434")
+AI_ENDPOINT = os.getenv("AI_ENDPOINT", os.getenv("OLLAMA_URL", "http://ollama:11434"))
 AI_MODEL = os.getenv("AI_MODEL", "qwen2.5:3b-instruct-q4_K_M")
-SUPABASE_URL = os.getenv("SUPABASE_URL", "https://api.familiada.online")
-SUPABASE_SERVICE_KEY = os.getenv("SERVICE_ROLE_KEY", "")
+SUPABASE_URL = os.getenv("SUPABASE_URL", "http://kong:8000")
+SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", os.getenv("SERVICE_ROLE_KEY", ""))
 WORKER_TELEGRAM_ENDPOINT = os.getenv("WORKER_TELEGRAM_ENDPOINT", "https://settings.familiada.online/_admin_api/config/telegram/notify-service")
 SERVICE_TOKEN = os.getenv("LEAD_FINDER_SERVICE_KEY", "")
+
+# Headers for internal services (usually no auth needed inside Docker)
+SEARXNG_HEADERS = {}
+AI_HEADERS = {"Content-Type": "application/json"}
 
 BLOCKED_DOMAINS = {
     'olx.pl', 'oferteo.pl', 'fixly.pl', 'useme.pl', 'pracuj.pl', 'jooble.pl',
@@ -90,6 +94,11 @@ task_stop_event = asyncio.Event()
 task_pause_event = asyncio.Event()
 task_status = "idle" # idle, running, paused
 task_run_id = None
+
+# Persistence in memory (as requested in Prompt.txt / migration 125)
+session_used_queries = set()
+session_existing_emails = set()
+session_processed_urls = set()
 
 class SupabaseClient:
     """Simple Supabase client using HTTP API"""
@@ -184,11 +193,17 @@ async def send_telegram_notification(message: str):
 async def search_searxng(query: str) -> list:
     try:
         async with httpx.AsyncClient(timeout=30) as client:
-            response = await client.get(f'{SEARXNG_URL}/search', params={'q': query, 'format': 'json'})
+            response = await client.get(
+                f'{SEARXNG_URL}/search', 
+                params={'q': query, 'format': 'json'},
+                headers=SEARXNG_HEADERS
+            )
             return response.json().get('results', []) if response.status_code == 200 else []
-    except Exception: return []
+    except Exception as e:
+        logger.error(f"SearXNG error: {e}")
+        return []
 
-async def extract_emails_from_url(url: str) -> list:
+async def extract_emails_from_url(url: str, run_id: str) -> list:
     """Extract emails from URL and common subpages (/kontakt, /contact)"""
     emails = set()
     urls_to_check = [url]
@@ -205,51 +220,78 @@ async def extract_emails_from_url(url: str) -> list:
     async with httpx.AsyncClient(timeout=10, follow_redirects=True) as client:
         for target_url in urls_to_check:
             try:
+                await log_to_db(run_id, "info", f"Pobieram: {target_url}")
                 r = await client.get(target_url)
                 if r.status_code == 200:
                     found = EMAIL_REGEX.findall(r.text)
+                    if found:
+                        await log_to_db(run_id, "info", f"Znaleziono {len(found)} maili na {target_url}")
                     emails.update(found)
             except:
                 continue
     return list(emails)
 
-async def verify_with_ai(title: str, url: str, emails: list) -> dict:
-    prompt = f"""Czy to organizator eventów?
+async def verify_with_ai(title: str, url: str, emails: list, run_id: str) -> dict:
+    prompt = f"""Czy to rzeczywisty organizator eventów (freelancer lub firma)? 
+Przykłady: DJ, Wodzirej, Konferansjer, Animator, Agencja eventowa.
+To NIE może być tylko restauracja (miejsce) ani wypożyczalnia sprzętu. Muszą sami organizować wydarzenia.
+
+Dane:
 Tytuł: {title}
 URL: {url}
-Maile: {', '.join(emails)}
-Odpowiedz JSON: {{"is_event_organizer": bool, "contact_type": string, "best_email": string}}
-To nie może być restauracja ani wypożyczalnia sprzętu."""
+Maile znalezione na stronie: {', '.join(emails)}
+
+Odpowiedz WYŁĄCZNIE w formacie JSON:
+{{
+  "is_event_organizer": bool, 
+  "contact_type": "string (np. DJ, Agencja, itp.)", 
+  "best_email": "string (najbardziej pasujący mail)", 
+  "title": "string (oficjalna nazwa)",
+  "short_description": "string (krótki opis działalności)",
+  "reasoning": "string (dlaczego tak/nie)"
+}}"""
+    
+    await log_to_db(run_id, "info", f"Weryfikacja AI dla: {title}")
     try:
         async with httpx.AsyncClient(timeout=120) as client:
-            r = await client.post(f'{AI_ENDPOINT}/api/chat', json={
-                'model': AI_MODEL,
-                'messages': [{'role': 'system', 'content': 'Odpowiadaj TYLKO JSON.'}, {'role': 'user', 'content': prompt}],
-                'stream': False
-            })
+            r = await client.post(
+                f'{AI_ENDPOINT}/api/chat', 
+                headers=AI_HEADERS,
+                json={
+                    'model': AI_MODEL,
+                    'messages': [{'role': 'system', 'content': 'Odpowiadaj TYLKO czystym JSON.'}, {'role': 'user', 'content': prompt}],
+                    'stream': False
+                }
+            )
             if r.status_code == 200:
                 content = r.json().get('message', {}).get('content', '')
                 match = re.search(r'\{.*\}', content, re.DOTALL)
                 if match: return json.loads(match.group())
         return {'is_event_organizer': False}
-    except: return {'is_event_organizer': False}
+    except Exception as e:
+        logger.error(f"AI error: {e}")
+        return {'is_event_organizer': False}
 
 async def process_search_run(run_id: str, target_count: int):
-    global task_status
+    global task_status, session_used_queries, session_existing_emails, session_processed_urls
     try:
-        # 1. Load existing contacts to avoid duplicates
-        vc = await supabase.select('marketing_verified_contacts', columns='email') or []
-        existing_emails = set(v['email'] for v in vc if v.get('email'))
+        await log_to_db(run_id, "info", f"Rozpoczynam zlecenie na {target_count} kontaktów")
+        
+        # Initial sync of existing emails from DB if session is empty
+        if not session_existing_emails:
+            vc = await supabase.select('marketing_verified_contacts', columns='email') or []
+            session_existing_emails = set(v['email'].lower() for v in vc if v.get('email'))
 
-        # 2. Load used queries from DB to avoid repetition
-        used_queries_rows = await supabase.select('marketing_search_queries_log', columns='query_text')
-        used_queries = {row['query_text'] for row in used_queries_rows} if used_queries_rows else set()
-
-        # 3. Clear old logs
+        # Clear old logs for this run
         await supabase.delete('marketing_search_logs')
 
         cities = await supabase.select('marketing_cities', columns='name', filters={'is_active': True}) or []
         city_names = [c['name'] for c in cities]
+        
+        if not city_names:
+            await log_to_db(run_id, "error", "Brak aktywnych miast w bazie danych!")
+            return
+
         verified_count = 0
         
         while verified_count < target_count:
@@ -274,86 +316,82 @@ async def process_search_run(run_id: str, target_count: int):
                 for city in city_names:
                     full_q = qt.format(city=city)
                     
-                    # Skip if already searched
-                    if full_q in used_queries: continue
+                    # Skip if already searched in this container session
+                    if full_q in session_used_queries: continue
                     
                     query_made = True
-                    
-                    # Mark as used immediately
-                    used_queries.add(full_q)
-                    await supabase.insert('marketing_search_queries_log', {
-                        'query_text': full_q,
-                        'urls_found': 0, # Will update later
-                        'status': 'searching'
-                    })
+                    session_used_queries.add(full_q)
 
-                    await log_to_db(run_id, "info", f"Szukam: {full_q}")
+                    await log_to_db(run_id, "info", f"Wyszukiwanie SearXNG: {full_q}")
                     results = await search_searxng(full_q)
                     
-                    # Update query status
-                    await supabase.update('marketing_search_queries_log', 
-                        {'urls_found': len(results), 'status': 'completed'}, 
-                        {'query_text': full_q})
+                    if not results:
+                        await log_to_db(run_id, "warning", f"Brak wyników dla: {full_q}")
+                        continue
 
-                    await log_to_db(run_id, "success", f"Znaleziono {len(results)} URL-i")
+                    await log_to_db(run_id, "success", f"Znaleziono {len(results)} potencjalnych stron")
                     
-                    pending_urls = []
                     for res in results:
-                        u = res.get('url', '')
-                        domain = urlparse(u).netloc.lower()
-                        if u and domain not in BLOCKED_DOMAINS:
-                            # Simple check if we haven't processed this URL in this run yet
-                            # (We don't store all URLs in DB to avoid bloat, just checking emails is enough mostly)
-                            pending_urls.append({'url': u, 'title': res.get('title', '')})
-
-                    for p_url in pending_urls:
                         if task_stop_event.is_set(): return
                         
+                        u = res.get('url', '')
+                        if not u or u in session_processed_urls: continue
+                        
+                        session_processed_urls.add(u)
+                        domain = urlparse(u).netloc.lower()
+                        if domain in BLOCKED_DOMAINS:
+                            continue
+
                         # Extract emails from main page + subpages
-                        emails = await extract_emails_from_url(p_url['url'])
+                        emails = await extract_emails_from_url(u, run_id)
                         
                         if emails:
                             # Filter out existing emails
-                            new_emails = [e for e in emails if e.lower() not in existing_emails]
+                            new_emails = [e for e in emails if e.lower() not in session_existing_emails]
                             if new_emails:
-                                existing_emails.update([e.lower() for e in new_emails])
-                                await log_to_db(run_id, "info", f"Mail z {p_url['url']}: {', '.join(new_emails[:3])}")
+                                await log_to_db(run_id, "info", f"Nowe maile ({len(new_emails)}): {', '.join(new_emails[:2])}")
                                 
-                                ai_res = await verify_with_ai(p_url['title'], p_url['url'], new_emails)
+                                ai_res = await verify_with_ai(res.get('title', 'Brak tytułu'), u, new_emails, run_id)
+                                
                                 if ai_res.get('is_event_organizer') and ai_res.get('best_email'):
+                                    session_existing_emails.add(ai_res['best_email'].lower())
+                                    
                                     await supabase.insert('marketing_verified_contacts', {
                                         'run_id': run_id,
-                                        'title': p_url['title'],
-                                        'short_description': ai_res.get('reasoning', '')[:200],
+                                        'title': ai_res.get('title') or res.get('title', 'Brak tytułu'),
+                                        'short_description': (ai_res.get('short_description') or ai_res.get('reasoning', ''))[:200],
                                         'email': ai_res['best_email'],
-                                        'url': p_url['url'],
+                                        'url': u,
                                         'is_event_organizer': True,
                                         'ai_confidence': 'high',
                                         'contact_type': ai_res.get('contact_type', 'Inne')
                                     })
                                     verified_count += 1
-                                    await log_to_db(run_id, "success", f"✅ Zweryfikowano: {p_url['title']} ({ai_res['best_email']})")
+                                    await log_to_db(run_id, "success", f"✅ Zweryfikowano ({verified_count}/{target_count}): {ai_res['best_email']}")
+                                    
                                     if verified_count >= target_count: break
                                 else:
-                                    await log_to_db(run_id, "info", f"❌ Odrzucono: {p_url['title']}")
+                                    reason = ai_res.get('reasoning', 'Nie spełnia kryteriów')
+                                    await log_to_db(run_id, "info", f"Odrzucono przez AI: {domain} ({reason[:50]}...)")
                             else:
-                                await log_to_db(run_id, "info", f"Pominięto (stare maile): {p_url['url']}")
+                                await log_to_db(run_id, "info", f"Pominięto - adresy już są w bazie: {domain}")
                     
                     if verified_count >= target_count: break
                 if verified_count >= target_count or query_made: break
             
             if not query_made:
-                await log_to_db(run_id, "warning", "Koniec puli zapytań")
+                await log_to_db(run_id, "warning", "Wyczerpano pulę zapytań dla tej sesji. Zresetuj kontener aby szukać od nowa.")
                 break
             
             await asyncio.sleep(1)
 
         task_status = "completed"
-        await log_to_db(run_id, "success", f"Zakończono! Znaleziono {verified_count} kontaktów")
-        await send_telegram_notification(f"✅ Lead Finder\nZnaleziono {verified_count} kontaktów")
+        await log_to_db(run_id, "success", f"Zakończono sukcesem! Znaleziono {verified_count} kontaktów")
+        await send_telegram_notification(f"✅ Lead Finder zakończony!\nZlecenie: {run_id[:8]}\nZnaleziono: {verified_count} kontaktów")
     except Exception as e:
         task_status = "error"
-        await log_to_db(run_id, "error", f"Błąd: {str(e)}")
+        logger.exception("Błąd krytyczny process_search_run")
+        await log_to_db(run_id, "error", f"Błąd krytyczny: {str(e)}")
 
 @app.post("/api/search-runs")
 async def create_run(target_count: int = 50):
