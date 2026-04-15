@@ -392,16 +392,21 @@ async def consumer_task(run_id: str, consumer_id: int, target: int):
                     'title': lead.get('title'),
                     'email': result['best_email'],
                     'url': lead_url,
-                    'short_description': result.get('reasoning', '')[:200]
+                    'short_description': result.get('reasoning', '')[:200],
+                    'verify_reason': result.get('reasoning', '')[:500]
                 })
                 global verified_in_run
                 verified_in_run += 1
                 await log_to_db("success", f"[C{consumer_id}] Zweryfikowano ({verified_in_run}/{target}): {lead_url}")
                 await supabase.delete('marketing_raw_contacts', {'id': lead_id})
             else:
-                # Porażka - oznaczamy jako rejected w raw
-                await supabase.update('marketing_raw_contacts', {'status': 'rejected'}, {'id': lead_id})
-                logger.info(f"[C{consumer_id}] Odrzucono: {lead_url}")
+                # Porażka - oznaczamy jako rejected w raw z powodem
+                reject_reason = result.get('reasoning', 'Brak odpowiedzi AI') if result else 'Błąd weryfikacji'
+                await supabase.update('marketing_raw_contacts', {
+                    'status': 'rejected',
+                    'reject_reason': reject_reason[:500]
+                }, {'id': lead_id})
+                logger.info(f"[C{consumer_id}] Odrzucono ({reject_reason[:50]}...): {lead_url}")
         except Exception as e:
             logger.error(f"Consumer {consumer_id} error: {e}")
             await asyncio.sleep(1)
