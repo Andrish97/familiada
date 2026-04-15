@@ -18,13 +18,13 @@ import {
   clearGuestLocalMarker,
   initPasswordToggles,
   resetPasswordToggles,
-} from "../core/auth.js?v=v2026-04-15T00131";
-import { isGuestUser } from "../core/guest-mode.js?v=v2026-04-15T00131";
-import { alertModal, confirmModal } from "../core/modal.js?v=v2026-04-15T00131";
+} from "../core/auth.js?v=v2026-04-15T00372";
+import { isGuestUser } from "../core/guest-mode.js?v=v2026-04-15T00372";
+import { alertModal, confirmModal } from "../core/modal.js?v=v2026-04-15T00372";
 
-import { sb } from "../core/supabase.js?v=v2026-04-15T00131";
-import { cooldownEmailGet, cooldownEmailReserve } from "../core/cooldown.js?v=v2026-04-15T00131";
-import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../translation/translation.js?v=v2026-04-15T00131";
+import { sb } from "../core/supabase.js?v=v2026-04-15T00372";
+import { cooldownEmailGet, cooldownEmailReserve } from "../core/cooldown.js?v=v2026-04-15T00372";
+import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../translation/translation.js?v=v2026-04-15T00372";
 import "../core/contact-modal.js";
 
 const $ = (s) => document.querySelector(s);
