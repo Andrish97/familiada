@@ -127,15 +127,17 @@ async def log_to_db(level, message):
 
 async def send_telegram(message: str):
     if not SERVICE_TOKEN:
-        logger.warning("Telegram: SERVICE_TOKEN not set")
+        logger.warning("Telegram: LEAD_FINDER_SERVICE_KEY not set in env")
         return
     try:
         async with httpx.AsyncClient(timeout=10, follow_redirects=True) as client:
             r = await client.post(WORKER_TELEGRAM_ENDPOINT, headers={'Authorization': f'Bearer {SERVICE_TOKEN}'}, json={'text': message})
-            if r.status_code not in (200, 201, 302):
-                logger.error(f"Telegram error: {r.status_code} {r.text}")
+            if r.status_code in (200, 201):
+                logger.info("Telegram: notification sent")
+            elif r.status_code == 302:
+                logger.warning(f"Telegram: redirected (auth issue) - {r.headers.get('location', '')[:100]}")
             else:
-                logger.info("Telegram notification sent")
+                logger.error(f"Telegram error: {r.status_code}")
     except Exception as e:
         logger.error(f"Telegram exception: {e}")
 
@@ -327,7 +329,6 @@ async def run_worker(run_id: str, target_count: int):
     global task_status
     task_status = "running"
     
-    await supabase.delete('marketing_search_logs')
     await log_to_db("info", f"Rozpoczynam zlecenie na {target_count} leadów.")
 
     producer = asyncio.create_task(producer_task(run_id))
