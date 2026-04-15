@@ -318,7 +318,7 @@ Tytul: {page_content.get('title', '')}
 Maile: {', '.join(emails) if emails else 'brak'}
 
 JSON (tylko jedna z dwóch opcji):
-Jesli OK: {{"ok": 1, "email": "najlepszy prawdziwy email", "powod": "krotki opis"}}
+Jesli OK: {{"ok": 1, "email": "najlepszy prawdziwy email", "title": "krotka nazwa (max 50 znakow)", "powod": "krotki opis"}}
 Jesli NIE: {{"ok": 0, "email": "", "powod": "powod odrzucenia"}}"""
 
     try:
@@ -378,7 +378,7 @@ Jesli NIE: {{"ok": 0, "email": "", "powod": "powod odrzucenia"}}"""
         is_organizer = ok_val in [1, True, '1', 'true', 'True']
         return {
             'is_event_organizer': is_organizer,
-            'title': '',
+            'title': (res.get('title') or '')[:50],
             'best_email': res.get('email', ''),
             'short_description': res.get('powod', '')[:200],
             'url': url
