@@ -4,8 +4,7 @@
 -- 1. Enable replica identity for realtime (needed for INSERT tracking)
 ALTER TABLE marketing_search_logs REPLICA IDENTITY FULL;
 
--- 2. Ensure table is in realtime publication (drop and re-add to be sure)
-ALTER PUBLICATION supabase_realtime DROP TABLE IF EXISTS marketing_search_logs;
+-- 2. Add table to realtime publication (use separate statements)
 ALTER PUBLICATION supabase_realtime ADD TABLE marketing_search_logs;
 
 -- 3. Create function to clear old logs (more reliable than truncate via REST API)
