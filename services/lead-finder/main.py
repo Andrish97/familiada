@@ -209,19 +209,10 @@ async def refill_raw_buffer(run_id: str):
 
     query, city_name = query_data[0], query_data[1]
     
-    # Dynamic limit based on city population
+    # Dynamic limit based on city population: population/10000*10, capped 3-30
     city_pop_data = await supabase.select('marketing_cities', 'population', {'name': city_name})
     population = city_pop_data[0].get('population', 0) if city_pop_data else 0
-    if population >= 500000:
-        max_results = 15
-    elif population >= 200000:
-        max_results = 10
-    elif population >= 100000:
-        max_results = 7
-    elif population >= 50000:
-        max_results = 5
-    else:
-        max_results = 3
+    max_results = max(3, min(int(population / 1000), 30))
 
     await log_to_db("info", f"Wyszukiwanie ({city_name}, {population:,} mieszk., limit: {max_results}): {query}")
     try:
