@@ -151,7 +151,9 @@ class SupabaseClient:
     async def clear_table(self, table):
         """Clear all rows from a table"""
         async with httpx.AsyncClient(timeout=30) as client:
+            logger.info(f"[CLEAR] Deleting all from {table}...")
             r = await client.delete(f'{self.url}/rest/v1/{table}', headers=self.headers)
+            logger.info(f"[CLEAR] {table}: status={r.status_code}, response={r.text[:200] if r.text else 'empty'}")
             if r.status_code not in (200, 204):
                 logger.error(f"Clear {table} error: {r.status_code} {r.text[:200]}")
                 return False
@@ -206,7 +208,7 @@ async def fetch_next_query(run_id: str) -> Optional[tuple]:
     
     if not available:
         await log_to_db("warning", "Pula zapytań wyczerpana. Resetuję historię...")
-        await supabase.clear_table('marketing_search_queries_log')
+        await supabase.call_rpc('clear_marketing_queries_log')
         chosen = random.choice(pool)
         return chosen
     
@@ -271,8 +273,11 @@ async def refill_raw_buffer(run_id: str):
     new_raw_count = 0
     GARBAGE_EMAIL_DOMAINS = {'sentry.io', 'sentry.wixpress.com', 'sentry-next.wixpress.com', 'mailgun.org', 'mandrillapp.com', 'sendgrid.net', 'mailservers.dev'}
     
-    for res in results:
+    logger.info(f"[PRODUCER] [{query}] Processing {len(results)} search results")
+    
+    for i, res in enumerate(results):
         url = res.get('url', '').lower()
+        logger.debug(f"[PRODUCER] [{query}] [{i+1}/{len(results)}] Checking: {url}")
         if not url or any(d in url for d in BLOCKED_DOMAINS): continue
         
         # Deduplicate vs Verified and Raw
@@ -303,16 +308,17 @@ async def refill_raw_buffer(run_id: str):
         
         try:
             async with httpx.AsyncClient(timeout=15, follow_redirects=True) as client:
-                # Fetch main page
                 r_crawl = await client.get(url)
                 if r_crawl.status_code == 200:
                     text = r_crawl.text[:50000]
                     page_title, page_text = extract_content(text, page_title)
                     found_emails = EMAIL_REGEX.findall(text)
+                    logger.debug(f"[SCRAPE] {url}: found {len(found_emails)} emails")
                     for e in found_emails:
                         if not any(g in e.lower() for g in GARBAGE_EMAIL_DOMAINS):
                             emails.add(e)
-                
+                else:
+                    logger.warning(f"[SCRAPE] HTTP {r_crawl.status_code} for {url}")
                 # Try /kontakt, /contact, /contact-us pages
                 parsed = urlparse(url)
                 base = f"{parsed.scheme}://{parsed.netloc}"
@@ -320,51 +326,61 @@ async def refill_raw_buffer(run_id: str):
                 
                 for path in contact_paths:
                     contact_url = base + path
+                    logger.debug(f"[SCRAPE] [{url}] Trying: {contact_url}")
                     try:
                         r_contact = await client.get(contact_url)
                         if r_contact.status_code == 200:
                             contact_text = r_contact.text[:30000]
                             found = EMAIL_REGEX.findall(contact_text)
+                            logger.debug(f"[SCRAPE] [{url}] {path}: found {len(found)} emails")
                             for e in found:
                                 if not any(g in e.lower() for g in GARBAGE_EMAIL_DOMAINS):
                                     emails.add(e)
-                    except: pass
+                    except Exception as ex:
+                        logger.debug(f"[SCRAPE] [{url}] {path} failed: {ex}")
         except: pass
 
-        if emails:
-            email_list = list(emails)
+        if not emails:
+            logger.debug(f"[SCRAPE] No emails found for {url}")
+            continue
             
-            # Get all emails from verified and raw
-            verified_contacts = await supabase.select('marketing_verified_contacts', 'email')
-            raw_contacts = await supabase.select('marketing_raw_contacts', 'emails_found')
+        email_list = list(emails)
+        logger.info(f"[SCRAPE] [{url}] Found emails: {email_list}")
+        
+        # Get all emails from verified and raw
+        verified_contacts = await supabase.select('marketing_verified_contacts', 'email')
+        raw_contacts = await supabase.select('marketing_raw_contacts', 'emails_found')
+        
+        # Build set of all existing emails
+        existing_emails = set()
+        for v in (verified_contacts or []):
+            if v.get('email'):
+                existing_emails.add(v['email'].lower())
+        for r in (raw_contacts or []):
+            raw_emails = r.get('emails_found', [])
+            if isinstance(raw_emails, str):
+                try: raw_emails = json.loads(raw_emails)
+                except: raw_emails = []
+            for e in raw_emails:
+                existing_emails.add(e.lower())
+        
+        # Check if any new email already exists
+        duplicate = any(e.lower() in existing_emails for e in email_list)
+        
+        if duplicate:
+            logger.debug(f"[SCRAPE] Duplicate email for {url}")
+            continue
             
-            # Build set of all existing emails
-            existing_emails = set()
-            for v in (verified_contacts or []):
-                if v.get('email'):
-                    existing_emails.add(v['email'].lower())
-            for r in (raw_contacts or []):
-                raw_emails = r.get('emails_found', [])
-                if isinstance(raw_emails, str):
-                    try: raw_emails = json.loads(raw_emails)
-                    except: raw_emails = []
-                for e in raw_emails:
-                    existing_emails.add(e.lower())
-            
-            # Check if any new email already exists
-            duplicate = any(e.lower() in existing_emails for e in email_list)
-            
-            if duplicate:
-                continue
-            
-            ok = await supabase.insert('marketing_raw_contacts', {
-                'url': url,
-                'title': page_title,
-                'page_text': page_text,
-                'emails_found': email_list,
-                'status': 'pending'
-            })
-            if ok: new_raw_count += 1
+        ok = await supabase.insert('marketing_raw_contacts', {
+            'url': url,
+            'title': page_title,
+            'page_text': page_text,
+            'emails_found': email_list,
+            'status': 'pending'
+        })
+        if ok: 
+            new_raw_count += 1
+            logger.info(f"[PRODUCER] Added to buffer: {url} -> {email_list}")
 
     await log_to_db("success", f"Dodano {new_raw_count} surowych kontaktów do bufora.")
 
@@ -699,9 +715,9 @@ async def run_worker(run_id: str, target_count: int):
     task_status = "running"
     verified_in_run = 0
     
-    logger.info("Czyszczę logi...")
-    clear_ok = await supabase.clear_table('marketing_search_logs')
-    clear_q_ok = await supabase.clear_table('marketing_search_queries_log')
+    logger.info("Czyszczę logi przez RPC...")
+    clear_ok = await supabase.call_rpc('clear_marketing_search_logs')
+    clear_q_ok = await supabase.call_rpc('clear_marketing_queries_log')
     logger.info(f"Logi wyczyszczone: logs={clear_ok}, queries={clear_q_ok}")
     await log_to_db("info", f"Rozpoczynam zlecenie na {target_count} leadów.")
 
