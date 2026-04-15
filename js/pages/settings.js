@@ -6017,6 +6017,18 @@ function wireEvents() {
     } catch(e) { el.innerHTML = `<div style="text-align:center;opacity:.5">Błąd: ${e.message}</div>`; }
   }
 
+  function mcRenderLogs() {
+    const el = document.getElementById("mcLogsContainer");
+    if (!mcState.logs.length) { el.innerHTML = '<div style="text-align:center;opacity:.5">Brak logów</div>'; return; }
+    el.innerHTML = mcState.logs.slice().reverse().map(l => {
+      const time = new Date(l.created_at).toLocaleString("pl-PL",{month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"});
+      const levelClass = {info:"info",success:"success",warning:"warning",error:"error"}[l.level] || "info";
+      const levelText = {info:"INFO",success:"OK",warning:"WARN",error:"ERR"}[l.level] || l.level;
+      return `<div class="mc-log-entry"><span class="mc-log-time">${time}</span><span class="mc-log-level ${levelClass}">${levelText}</span><span class="mc-log-message">${mcEsc(l.message)}</span></div>`;
+    }).join("");
+    el.scrollTop = el.scrollHeight;
+  }
+
   function mcStartLogAutoRefresh() {
     mcStopLogAutoRefresh();
     mcState.logTimer = setInterval(() => mcLoadLogs(), 3000);
