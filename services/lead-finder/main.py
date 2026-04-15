@@ -268,6 +268,7 @@ async def refill_raw_buffer(run_id: str):
 
         # Fetch page content + crawl for emails
         page_content = {'title': res.get('title', ''), 'description': '', 'text': ''}
+        page_texts = []
         emails = set()
         try:
             async with httpx.AsyncClient(timeout=15, follow_redirects=True) as client:
@@ -284,6 +285,11 @@ async def refill_raw_buffer(run_id: str):
                             desc_match = re.search(r'<meta[^>]*name=["\']description["\'][^>]*content=["\']([^"\']+)["\']', text, re.I)
                             if desc_match and not page_content['description']:
                                 page_content['description'] = desc_match.group(1).strip()
+                            # Strip HTML and collect text
+                            text_no_html = re.sub(r'<[^>]+>', ' ', text)
+                            text_no_html = re.sub(r'\s+', ' ', text_no_html).strip()
+                            if text_no_html:
+                                page_texts.append(text_no_html[:2000])
                             # Find emails
                             found_emails = EMAIL_REGEX.findall(text)
                             for e in found_emails:
@@ -294,9 +300,11 @@ async def refill_raw_buffer(run_id: str):
 
         if emails:
             email_list = list(emails)
+            page_text = ' '.join(page_texts)[:5000]
             ok = await supabase.insert('marketing_raw_contacts', {
                 'url': url,
                 'title': page_content['title'],
+                'page_text': page_text,
                 'emails_found': email_list,
                 'status': 'pending'
             })
@@ -328,6 +336,7 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
     """Consumer: Asks AI to verify if the contact is an event organizer."""
     url = lead.get('url')
     title = lead.get('title', '')
+    page_text = lead.get('page_text', '')[:3000]
     emails = lead.get('emails_found', [])
     if isinstance(emails, str):
         try: emails = json.loads(emails)
@@ -340,7 +349,7 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
 KRYTERIUM GLOWNE: Czy to organizator eventow?
 - DJ, wodzirej, konferansjer, animator, agencja eventowa
 - Firma/organizacja zajmujaca sie profesjonalnie eventami
-- Sprawdz czy strona jest o evenetach, weselach, imprezach
+- Sprawdz tresc strony - jesli o eventach/weselach/imprezach = organizator
 
 NIE organizator (odrzuc):
 - Restauracje, karczmy, hotele (tylko lokal)
@@ -353,11 +362,12 @@ KRYTERIUM DRUGORZEDNE: Email - musi byc prawdziwy!
 - Zly email: przyklad@, test@, example@, allegro@, olx@, sentry@
 
 Jesli organizator + dobry email = VERIFIED
-Jesli organizator + brak dobrego emaila = ODRZUCONY (brak_email)
+Jesli organizator + brak dobrego emaila = ODRZUCONY
 Jesli nie organizator = ODRZUCONY
 
 URL: {url}
 TYTUL: {title}
+TRESC STRONY: {page_text[:2000]}
 MAILE: {', '.join(emails) if emails else 'brak'}
 
 JSON:
