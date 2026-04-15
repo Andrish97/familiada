@@ -318,7 +318,7 @@ Tytul: {page_content.get('title', '')}
 Maile: {', '.join(emails) if emails else 'brak'}
 
 JSON (tylko jedna z dwóch opcji):
-Jesli OK: {{"ok": 1, "email": "prawdziwy email", "title": "krotka nazwa (max 50 znakow)", "powod": "dlaczego zweryfikowany"}}
+Jesli OK: {{"ok": 1, "email": "prawdziwy email", "title": "krotka nazwa (max 50 znakow)", "short_description": "krotki opis czym sie zajmuje", "powod": "dlaczego zweryfikowany"}}
 Jesli NIE: {{"ok": 0, "powod": "dlaczego odrzucony"}}"""
 
     try:
@@ -380,7 +380,8 @@ Jesli NIE: {{"ok": 0, "powod": "dlaczego odrzucony"}}"""
             'is_event_organizer': is_organizer,
             'title': (res.get('title') or '')[:50],
             'best_email': res.get('email', ''),
-            'short_description': res.get('powod', '')[:200],
+            'short_description': res.get('short_description', '')[:200],
+            'verify_reason': res.get('powod', '')[:200],
             'url': url
         }
     except Exception as e:
@@ -439,11 +440,11 @@ async def consumer_task(run_id: str, consumer_id: int, target: int):
                     'email': result['best_email'],
                     'url': result.get('url') or lead_url,
                     'short_description': result.get('short_description', '')[:200],
-                    'verify_reason': result.get('short_description', '')[:500]
+                    'verify_reason': result.get('verify_reason', '')[:500]
                 })
                 global verified_in_run
                 verified_in_run += 1
-                verify_reason = result.get('short_description', '')
+                verify_reason = result.get('verify_reason', '')
                 await log_to_db("success", f"[C{consumer_id}] Zweryfikowano ({verified_in_run}/{target}): {result.get('url', lead_url)} | powod: {verify_reason}")
                 await supabase.delete('marketing_raw_contacts', {'id': lead_id})
             elif result.get('is_event_organizer') and not result.get('best_email'):
