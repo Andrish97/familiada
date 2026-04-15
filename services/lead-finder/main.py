@@ -209,17 +209,26 @@ async def refill_raw_buffer(run_id: str):
 
     query, city_name = query_data[0], query_data[1]
     
-    # Linear interpolation: smallest city = 10, Warsaw = 200
+    # Range-based limits based on population
     city_pop_data = await supabase.select('marketing_cities', 'population', {'name': city_name})
     population = city_pop_data[0].get('population', 0) if city_pop_data else 0
-    all_cities = await supabase.select('marketing_cities', 'population')
-    min_pop = min(c.get('population', 0) or 0 for c in all_cities) if all_cities else 0
-    max_pop = max(c.get('population', 0) or 0 for c in all_cities) if all_cities else 1
-    if min_pop == max_pop:
+    
+    if population < 10000:
         max_results = 10
+    elif population < 30000:
+        max_results = 20
+    elif population < 50000:
+        max_results = 30
+    elif population < 100000:
+        max_results = 50
+    elif population < 200000:
+        max_results = 80
+    elif population < 500000:
+        max_results = 120
+    elif population < 750000:
+        max_results = 160
     else:
-        ratio = (population - min_pop) / (max_pop - min_pop)
-        max_results = max(10, min(int(10 + ratio * 190), 200))
+        max_results = 200
 
     await log_to_db("info", f"Wyszukiwanie ({city_name}, {population:,} mieszk., limit: {max_results}): {query}")
     try:
