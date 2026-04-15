@@ -58,7 +58,7 @@ BLOCKED_DOMAINS = {
     'lubimyczytac.pl', 'granice.pl', 'swiatczytnika.pl', 'ebooki.pl',
     'legimi.com', 'virtualo.pl', 'publio.pl', 'wolnelektury.pl', 'polona.pl',
     'weselezklasa.pl', 'gumtree.pl', 'sprzedajemy.pl',
-    'zespoly-weselne.pl'
+    'zespoly-weselne.pl', 'janachowska.pl'
 }
 
 EMAIL_REGEX = re.compile(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}')
@@ -343,7 +343,7 @@ Tytul: {page_content.get('title', '')}
 Maile: {', '.join(emails) if emails else 'brak'}
 
 JSON (tylko jedna z dwóch opcji):
-Jesli OK: {{"ok": 1, "email": "prawdziwy email", "title": "krotka nazwa (max 50 znakow)", "short_description": "krotki opis czym sie zajmuje", "powod": "dlaczego zweryfikowany"}}
+Jesli OK: {{"ok": 1, "email": "prawdziwy email", "title": "krotka nazwa/firma (max 50 znakow, wez z tytulu)", "short_description": "co robi ta firma/osoba, min 50-100 znakow, opisz glowna dzialalnosc", "powod": "dlaczego zweryfikowany"}}
 Jesli NIE: {{"ok": 0, "powod": "dlaczego odrzucony"}}"""
 
     try:
