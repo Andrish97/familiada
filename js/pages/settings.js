@@ -6031,7 +6031,7 @@ function wireEvents() {
   async function mcLoadLogs() {
     const el = document.getElementById("mcLogsContainer");
     try {
-      const { data, error } = await sb().from("marketing_search_logs").select("*").order("created_at", {ascending: false}).limit(200);
+      const { data, error } = await sb().from("marketing_search_logs").select("*").order("created_at", {ascending: true}).limit(200);
       if (error) throw error;
       mcState.logs = data || [];
       mcRenderLogs();

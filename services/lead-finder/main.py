@@ -139,11 +139,13 @@ class SupabaseClient:
     
     async def call_rpc(self, function_name, params=None):
         async with httpx.AsyncClient() as client:
+            logger.info(f"[RPC] Calling {function_name}...")
             r = await client.post(
                 f'{self.url}/rest/v1/rpc/{function_name}',
                 headers=self.headers,
                 json=params or {}
             )
+            logger.info(f"[RPC] {function_name}: status={r.status_code}, body={r.text[:200]}")
             if r.status_code not in (200, 201):
                 logger.error(f"RPC {function_name} error: {r.status_code} {r.text[:200]}")
             return r.status_code in (200, 201)
@@ -310,7 +312,9 @@ async def refill_raw_buffer(run_id: str):
         try:
             async with httpx.AsyncClient(timeout=15, follow_redirects=True) as client:
                 r_crawl = await client.get(url)
-                if r_crawl.status_code == 200:
+                if r_crawl.status_code != 200:
+                    logger.warning(f"[SCRAPE] HTTP {r_crawl.status_code} for {url}")
+                else:
                     text = r_crawl.text[:50000]
                     page_title, page_text = extract_content(text, page_title)
                     found_emails = EMAIL_REGEX.findall(text)
@@ -318,8 +322,6 @@ async def refill_raw_buffer(run_id: str):
                     for e in found_emails:
                         if not any(g in e.lower() for g in GARBAGE_EMAIL_DOMAINS):
                             emails.add(e)
-                else:
-                    logger.warning(f"[SCRAPE] HTTP {r_crawl.status_code} for {url}")
                 # Try /kontakt, /contact, /contact-us pages
                 parsed = urlparse(url)
                 base = f"{parsed.scheme}://{parsed.netloc}"
@@ -343,6 +345,10 @@ async def refill_raw_buffer(run_id: str):
 
         if not emails:
             logger.debug(f"[SCRAPE] No emails found for {url}")
+            continue
+        
+        if not page_text:
+            logger.debug(f"[SCRAPE] No page text for {url}, skipping")
             continue
             
         email_list = list(emails)
