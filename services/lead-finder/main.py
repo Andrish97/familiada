@@ -380,7 +380,7 @@ Jesli NIE: {{"ok": 0, "email": "", "powod": "powod odrzucenia"}}"""
             'is_event_organizer': is_organizer,
             'title': '',
             'best_email': res.get('email', ''),
-            'short_description': res.get('opis', '')[:200],
+            'short_description': res.get('powod', '')[:200],
             'url': url
         }
     except Exception as e:
