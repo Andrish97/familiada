@@ -303,27 +303,25 @@ async def refill_raw_buffer(run_id: str):
         if emails:
             email_list = list(emails)
             
-            # Check each email against verified and raw
-            duplicate = False
-            for email in email_list:
-                # Check verified
-                dup_v = await supabase.select('marketing_verified_contacts', 'id', {'email': email})
-                if dup_v:
-                    duplicate = True
-                    break
-                # Check raw - each email from cell
-                dup_r = await supabase.select('marketing_raw_contacts', 'id')
-                if dup_r:
-                    for row in dup_r:
-                        raw_emails = row.get('emails_found', [])
-                        if isinstance(raw_emails, str):
-                            try: raw_emails = json.loads(raw_emails)
-                            except: raw_emails = []
-                        if email in raw_emails:
-                            duplicate = True
-                            break
-                if duplicate:
-                    break
+            # Get all emails from verified and raw
+            verified_contacts = await supabase.select('marketing_verified_contacts', 'email')
+            raw_contacts = await supabase.select('marketing_raw_contacts', 'emails_found')
+            
+            # Build set of all existing emails
+            existing_emails = set()
+            for v in (verified_contacts or []):
+                if v.get('email'):
+                    existing_emails.add(v['email'].lower())
+            for r in (raw_contacts or []):
+                raw_emails = r.get('emails_found', [])
+                if isinstance(raw_emails, str):
+                    try: raw_emails = json.loads(raw_emails)
+                    except: raw_emails = []
+                for e in raw_emails:
+                    existing_emails.add(e.lower())
+            
+            # Check if any new email already exists
+            duplicate = any(e.lower() in existing_emails for e in email_list)
             
             if duplicate:
                 continue
