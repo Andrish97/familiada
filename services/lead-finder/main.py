@@ -438,74 +438,107 @@ TEXT: {page_text if page_text else 'brak'}
 ----------------------------------------
 KONTEKST (INTENT ZAPYTANIA):
 ----------------------------------------
-Zakładamy, że wynik pochodzi z wyszukiwań typu:
+Zapytania dotyczą usług eventowych:
 - DJ, wodzirej, konferansjer, prezenter eventowy
 - animator dzieci
-- agencja eventowa, organizacja imprez
-- team building, gry integracyjne
+- agencja eventowa
+- organizacja imprez
+- wesela, urodziny, imprezy firmowe
+- team building, integracje, gry
 
 ZASADA:
-- dopasowanie do powyższych fraz zwiększa wiarygodność
+- dopasowanie do powyższych zwiększa wiarygodność
 - brak dopasowania → sygnał negatywny
-- sprzeczność (np. sklep, portal) → odrzuć niezależnie od innych sygnałów
+- sprzeczność (np. sklep, portal, nieruchomości) → odrzucenie
 
 ----------------------------------------
-KROK 1 — ANALIZA EVENTOWA (SCORING)
+KROK 1 — IDENTYFIKACJA EVENTOWA
 ----------------------------------------
 
-PRZYZNAJ PUNKTY:
+UZNAJ ZA EVENTOWE JEŚLI WYSTĘPUJE CO NAJMNIEJ JEDEN Z PONIŻSZYCH BLOKÓW:
 
-+3 (mocny sygnał):
-- DJ, wodzirej, konferansjer, prezenter eventowy
-- animator (także dla dzieci)
-- organizacja imprez, agencja eventowa
-- konkretne usługi: wesela / urodziny / eventy firmowe / animacje
+A) ROLE EVENTOWE:
+- DJ
+- wodzirej
+- konferansjer
+- animator (także dziecięcy)
+- prezenter eventowy
+
+B) DZIAŁALNOŚĆ ORGANIZACYJNA:
+- organizacja imprez
+- agencja eventowa
+- obsługa eventów
+- eventy
+- imprezy okolicznościowe
+- przyjęcia / wesela / konferencje
+
+C) OFERTA EVENTOWA:
+- wesela
+- urodziny
+- imprezy firmowe
+- eventy integracyjne
+- konferencje
+- team building
+- atrakcje dla dzieci
+
+----------------------------------------
+KROK 2 — SCORING
+----------------------------------------
+
++3 (mocny sygnał eventowy):
+- DJ / wodzirej / konferansjer / animator
+- agencja eventowa
+- organizacja imprez / kompleksowa obsługa eventów
 
 +2 (średni sygnał):
-- obsługa wydarzeń, eventy, imprezy
-- prowadzenie imprez, oprawa muzyczna
-- team building, gry integracyjne
+- wesela / imprezy / konferencje / eventy firmowe
+- team building / integracje
+- atrakcje dla dzieci
 
-+2 (intent match):
-- dopasowanie do fraz z kontekstu zapytania
++2 (dopasowanie do intentu zapytania):
+- zgodność z frazami wyszukiwania
 
-+3 (lokal + usługi):
-- hotel/restauracja + WYRAŹNE usługi organizacji (DJ, prowadzenie, animacje)
++3 (lokal + eventy):
+- hotel / restauracja + WYRAŹNA organizacja eventów (nie tylko wynajem sali)
 
 +1 (słaby sygnał):
-- ogólne marketingowe opisy eventów bez konkretów
+- ogólne wzmianki o eventach bez szczegółów
 
--2 (brak intentu):
-- brak dopasowania do fraz eventowych
+-2 (lokal bez usług eventowych):
+- hotel / restauracja / sala oferująca tylko przestrzeń
 
--2 (lokal bez usług):
-- hotel/restauracja/sala oferująca tylko miejsce
+-2 (brak dopasowania do intentu):
+- brak jakichkolwiek odniesień do eventów
 
--3 (negatywne):
-- portal / marketplace / katalog
-- sklep
-- wypożyczalnia sprzętu bez obsługi
-- branża niezwiązana z eventami
-
-AKCEPTOWANE:
-- profile na Facebooku, Instagramie, LinkedIn (jeśli to organizator eventów)
-- strony na Google Maps / wizytówki
-- profile na platformach społecznościowych z emailem kontaktowym
+-3 (negatywne branże):
+- sklepy
+- portale / katalogi / marketplace
+- nieruchomości
+- firmy niezwiązane z eventami
 
 ----------------------------------------
 WYMÓG MINIMALNY (HARD RULE):
 ----------------------------------------
-Musi wystąpić przynajmniej jedna konkretna usługa:
-DJ / animator / konferansjer / organizacja imprez
+Wystarczy JEDEN dowód z poniższych:
 
-Jeśli NIE → automatyczne odrzucenie
+✔ role eventowe (DJ / wodzirej / konferansjer / animator)
+LUB
+✔ działalność eventowa (agencja eventowa / organizacja imprez / obsługa eventów)
+LUB
+✔ oferta eventowa (wesela / imprezy / konferencje / eventy firmowe / integracje)
+
+WAŻNE:
+- brak literalnego „DJ" NIE oznacza odrzucenia
+- „organizacja imprez", „wesela", „eventy" = pełnoprawny dowód
+
+Jeśli brak wszystkich → odrzucenie
 
 ----------------------------------------
-KROK 2 — WALIDACJA EMAIL
+KROK 3 — EMAIL
 ----------------------------------------
 
 DOBRY EMAIL (+1):
-- domenowy (np. kontakt@firma.pl, biuro@, imie@firma.pl, dj@...)
+- domenowy (kontakt@, biuro@, imie@firma.pl, dj@...)
 
 ZŁY EMAIL (-2):
 - test@, example@, przyklad@
@@ -514,17 +547,13 @@ ZŁY EMAIL (-2):
 
 BRAK EMAIL → automatyczne odrzucenie
 
-WYNIK_EMAIL:
-- jeśli ≥1 dobry email → PASS
-- inaczej → FAIL
-
 ----------------------------------------
-KROK 3 — DECYZJA KOŃCOWA:
+KROK 4 — DECYZJA KOŃCOWA
 ----------------------------------------
 
-WARUNKI OK:
-- WYNIK_EVENT ≥ 3
-- ORAZ WYNIK_EMAIL = PASS
+AKCEPTUJ jeśli:
+- score ≥ 3
+- ORAZ email PASS
 - ORAZ spełniony WYMÓG MINIMALNY
 
 INACZEJ → ODRZUCENIE
@@ -532,11 +561,10 @@ INACZEJ → ODRZUCENIE
 ----------------------------------------
 ZASADY OGÓLNE:
 ----------------------------------------
-- opieraj się wyłącznie na URL, TYTUŁ, TEXT, MAILE
-- nie zgaduj i nie dopowiadaj
+- opieraj się tylko na danych wejściowych
+- nie zgaduj brakujących usług
+- preferuj precision > recall (ale bez fałszywego wycinania eventów)
 - jeśli niepewne → odrzuć
-- preferuj precision > recall
-- wybierz jeden najlepszy email
 
 ----------------------------------------
 OUTPUT (JSON):
@@ -549,7 +577,7 @@ Jeśli OK:
   "title": "max 50 znaków",
   "short_description": "100-200 znaków",
   "score_event": liczba,
-  "reason": "konkretne dowody (np. DJ + wesela + animacje)"
+  "reason": "konkretne dowody (np. DJ + wesela + organizacja imprez)"
 }}
 
 Jeśli NIE:
