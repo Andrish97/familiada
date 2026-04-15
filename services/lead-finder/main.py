@@ -313,7 +313,11 @@ async def fetch_page_content(url: str) -> dict:
 async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Optional[dict]:
     """Consumer: Takes one raw lead and asks AI to verify. Returns result dict or None on error."""
     url = lead.get('url')
-    emails = lead.get('emails_found', [])
+    raw_emails = lead.get('emails_found', [])
+    
+    # Filter out garbage/tracking emails
+    GARBAGE_EMAIL_DOMAINS = {'sentry.io', 'sentry.wixpress.com', 'sentry-next.wixpress.com', 'mailgun.org', 'mandrillapp.com', 'sendgrid.net', 'mailservers.dev'}
+    emails = [e for e in raw_emails if not any(d in e.lower() for d in GARBAGE_EMAIL_DOMAINS)]
     
     logger.info(f"[C{consumer_id}] Scrapuję stronę: {url}")
     page_content = await fetch_page_content(url)
