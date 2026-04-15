@@ -267,6 +267,8 @@ Odpowiedz WYŁĄCZNIE JSONem:
                              {'role': 'user', 'content': prompt}],
                 'stream': False
             })
+            logger.info(f"[C{consumer_id}] AI response status: {r.status_code}")
+            logger.info(f"[C{consumer_id}] AI response body: {r.text[:500]}")
             if r.status_code == 200:
                 content = r.json().get('message', {}).get('content', '')
                 match = re.search(r'\{.*\}', content, re.DOTALL)
@@ -317,18 +319,22 @@ async def consumer_task(run_id: str, consumer_id: int, target: int):
         
         try:
             raw_leads = await supabase.select('marketing_raw_contacts', '*', {'status': 'pending'}, limit=1)
-            if not raw_leads:
+            if not raw_leads or len(raw_leads) == 0:
+                await log_to_db("info", f"[C{consumer_id}] Brak pending kontaktów")
                 await asyncio.sleep(2)
                 continue
             
             lead = raw_leads[0]
             lead_id = lead['id']
             lead_url = lead.get('url')
+            logger.info(f"[C{consumer_id}] Pobrano lead: {lead_id} - {lead_url}")
             
-            await supabase.update('marketing_raw_contacts', {'status': 'processing'}, {'id': lead_id})
+            update_ok = await supabase.update('marketing_raw_contacts', {'status': 'processing'}, {'id': lead_id})
+            logger.info(f"[C{consumer_id}] Update processing: {update_ok}")
             
             await log_to_db("info", f"[C{consumer_id}] Weryfikacja AI: {lead_url}")
             success = await verify_raw_lead(run_id, lead, consumer_id)
+            logger.info(f"[C{consumer_id}] Weryfikacja zakończona: {success}")
             
             if task_status not in ("running", "paused"):
                 break
@@ -337,9 +343,11 @@ async def consumer_task(run_id: str, consumer_id: int, target: int):
                 global verified_in_run
                 verified_in_run += 1
                 await log_to_db("success", f"[C{consumer_id}] Zweryfikowano ({verified_in_run}/{target}): {lead_url}")
-                await supabase.delete('marketing_raw_contacts', {'id': lead_id})
+                delete_ok = await supabase.delete('marketing_raw_contacts', {'id': lead_id})
+                logger.info(f"[C{consumer_id}] Delete after success: {delete_ok}")
             else:
-                await supabase.delete('marketing_raw_contacts', {'id': lead_id})
+                delete_ok = await supabase.delete('marketing_raw_contacts', {'id': lead_id})
+                logger.info(f"[C{consumer_id}] Delete after fail: {delete_ok}")
         except Exception as e:
             logger.error(f"Consumer {consumer_id} error: {e}")
             await asyncio.sleep(1)
