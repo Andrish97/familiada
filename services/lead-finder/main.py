@@ -824,12 +824,6 @@ async def start_run(target_count: int = 50):
     active_task = asyncio.create_task(run_worker(task_run_id, target_count))
     return {"ok": True, "run_id": task_run_id}
 
-@app.post("/api/logs/clear")
-async def clear_logs():
-    clear_ok = await supabase.call_rpc('clear_marketing_search_logs')
-    clear_q_ok = await supabase.call_rpc('clear_marketing_queries_log')
-    return {"ok": clear_ok and clear_q_ok, "logs": clear_ok, "queries": clear_q_ok}
-
 @app.post("/api/search-runs/{run_id}/pause")
 async def pause_run(run_id: str):
     global task_status
