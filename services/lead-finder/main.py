@@ -386,7 +386,12 @@ async def consumer_task(run_id: str, consumer_id: int, target: int):
             if task_status not in ("running", "paused"):
                 break
             
-            if result and result.get('is_event_organizer') and result.get('best_email'):
+            if result is None:
+                # AI nie odpowiedziało - zostawiamy jako pending do ponownej próby
+                await supabase.update('marketing_raw_contacts', {'status': 'pending'}, {'id': lead_id})
+                logger.warning(f"[C{consumer_id}] AI timeout - odłożone do ponownej próby: {lead_url}")
+                await asyncio.sleep(5)  # krótka przerwa przed następną próbą
+            elif result.get('is_event_organizer') and result.get('best_email'):
                 # Sukces - wstawiamy do verified, usuwamy z raw
                 await supabase.insert('marketing_verified_contacts', {
                     'title': lead.get('title'),
@@ -401,12 +406,12 @@ async def consumer_task(run_id: str, consumer_id: int, target: int):
                 await supabase.delete('marketing_raw_contacts', {'id': lead_id})
             else:
                 # Porażka - oznaczamy jako rejected w raw z powodem
-                reject_reason = result.get('reasoning', 'Brak odpowiedzi AI') if result else 'Błąd weryfikacji'
+                reject_reason = result.get('reasoning', 'Nie jest organizatorem')
                 await supabase.update('marketing_raw_contacts', {
                     'status': 'rejected',
                     'reject_reason': reject_reason[:500]
                 }, {'id': lead_id})
-                logger.info(f"[C{consumer_id}] Odrzucono ({reject_reason[:50]}...): {lead_url}")
+                logger.info(f"[C{consumer_id}] Odrzucono: {lead_url} - {reject_reason[:50]}")
         except Exception as e:
             logger.error(f"Consumer {consumer_id} error: {e}")
             await asyncio.sleep(1)
