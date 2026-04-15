@@ -19,7 +19,7 @@ import httpx
 # --- Configuration (Internal Docker) ---
 SEARXNG_URL = "http://searxng:8080"
 AI_ENDPOINT = "http://ollama:11434"
-AI_MODEL = "qwen2.5:3b-instruct-q4_K_M"
+AI_MODEL = "phi:latest"
 SUPABASE_URL = "http://kong:8000"
 SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", os.getenv("SERVICE_ROLE_KEY", ""))
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
@@ -292,35 +292,13 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
     logger.info(f"[C{consumer_id}] Scrapuję stronę: {url}")
     page_content = await fetch_page_content(url)
     
-    prompt = f"""Znajdź kontakty do firm i osób oferujących usługi eventowe w Polsce.
-
-AKCEPTUJ te strony (zawsze):
-- DJ / DJ na wesele / DJ eventowy / DJ mobilny
-- Wodzirej / Wodzirej weselny / Wodzirej DJ
-- Konferansjer / Konferansjer weselny / Prowadzący imprezy
-- Animator dla dzieci / Animator eventowy
-- Agencja eventowa / Agencja organizacji imprez
-- Zespół muzyczny / Kapela weselna / Orkiestra
-- Fotograf ślubny / Fotograf eventowy / Kamerzysta
-- Firma eventowa (nagłośnienie, oświetlenie, sceny, catering)
-- Sal weselne / Obiekty na imprezy
-
-ODRZUĆ tylko te:
-- Allegro, Amazon, OLX, Oferteo (sklepy/portale)
-- Pracuj.pl, linkedin (firmy HR)
-- Blogi bez oferty usług
-
-Strona do sprawdzenia:
+    prompt = f"""Czy to organizator eventow w Polsce?
 URL: {url}
-Tytuł: {page_content.get('title', '')}
-Opis: {page_content.get('description', '')}
-Tekst: {page_content.get('text', '')[:2000]}
+Tytul: {page_content.get('title', '')}
 Maile: {', '.join(emails) if emails else 'brak'}
 
-AKCEPTUJ jeśli masz jakikolwiek dowód że to firma/osoba eventowa. Email kontaktowy jest wymagany.
-
-JSON:
-{{"is_event_organizer": true/false, "best_email": "email", "reasoning": "krótkie"}}"""
+Odpowiedz JSON:
+{{"ok": 1 lub 0, "email": "najlepszy email lub pusty", "powod": "krotkie uzasadnienie"}}"""
 
     try:
         async with httpx.AsyncClient(timeout=90) as client:
@@ -344,10 +322,12 @@ JSON:
                 return None
                 
             res = json.loads(match.group().replace("'", '"'))
+            ok_val = res.get('ok', 0)
+            is_organizer = ok_val in [1, True, '1', 'true', 'True']
             return {
-                'is_event_organizer': res.get('is_event_organizer', False),
-                'best_email': res.get('best_email', ''),
-                'reasoning': res.get('reasoning', '')[:200]
+                'is_event_organizer': is_organizer,
+                'best_email': res.get('email', ''),
+                'reasoning': res.get('powod', '')[:200]
             }
     except httpx.TimeoutException:
         logger.error(f"[C{consumer_id}] AI TIMEOUT after 90s")
