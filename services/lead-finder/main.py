@@ -647,6 +647,7 @@ async def producer_task(run_id: str):
 
 async def consumer_task(run_id: str, consumer_id: int, target: int):
     """Consumer: Continuously verifies raw contacts"""
+    global verified_in_run
     while task_status == "running":
         if task_pause_event.is_set():
             await asyncio.sleep(1)
@@ -692,7 +693,6 @@ async def consumer_task(run_id: str, consumer_id: int, target: int):
                     'short_description': result.get('short_description', '')[:200],
                     'verify_reason': result.get('reason', '')[:500]
                 })
-                global verified_in_run
                 verified_in_run += 1
                 reason = result.get('reason', '')
                 await log_to_db("success", f"[C{consumer_id}] Zweryfikowano ({verified_in_run}/{target}): {result.get('url', lead_url)} | ai:{result.get('score_event', '?')} | powod: {reason}")
