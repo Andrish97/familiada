@@ -22,6 +22,8 @@ AI_MODEL = "qwen2.5:3b-instruct-q4_K_M"
 SUPABASE_URL = "http://kong:8000"
 SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", os.getenv("SERVICE_ROLE_KEY", ""))
 WORKER_TELEGRAM_ENDPOINT = "https://settings.familiada.online/_api/notify-submission"
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
+TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
 
 # --- Constants ---
 SEARCH_TEMPLATES = [
@@ -130,11 +132,29 @@ async def send_telegram(message: str):
         async with httpx.AsyncClient(timeout=10) as client:
             r = await client.post(WORKER_TELEGRAM_ENDPOINT, json={'text': message})
             if r.status_code in (200, 201):
-                logger.info("Telegram: notification sent")
+                logger.info("Telegram: notification sent via worker")
             else:
-                logger.warning(f"Telegram rate limited or error: {r.status_code}")
+                logger.warning(f"Telegram worker error: {r.status_code}")
     except Exception as e:
-        logger.error(f"Telegram exception: {e}")
+        logger.error(f"Telegram worker exception: {e}")
+
+async def send_telegram_direct(message: str):
+    if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
+        logger.warning("Telegram: BOT_TOKEN or CHAT_ID not configured")
+        await send_telegram(message)
+        return
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            r = await client.post(
+                f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage",
+                json={'chat_id': TELEGRAM_CHAT_ID, 'text': message, 'parse_mode': 'HTML'}
+            )
+            if r.status_code == 200:
+                logger.info("Telegram: notification sent directly")
+            else:
+                logger.error(f"Telegram direct error: {r.status_code} {r.text[:100]}")
+    except Exception as e:
+        logger.error(f"Telegram direct exception: {e}")
 
 # --- Core Logic: Search Layer (Producer) ---
 async def fetch_next_query(run_id: str) -> Optional[str]:
@@ -342,6 +362,7 @@ async def run_worker(run_id: str, target_count: int):
     task_status = "running"
     verified_in_run = 0
     
+    await supabase.delete('marketing_search_logs')
     await log_to_db("info", f"Rozpoczynam zlecenie na {target_count} leadów.")
 
     producer = asyncio.create_task(producer_task(run_id))
@@ -366,12 +387,14 @@ async def run_worker(run_id: str, target_count: int):
             task_status = "running"
             
             if verified_in_run >= target_count:
-                task_status = "completed"
-                await log_to_db("success", f"Zlecenie zakończone! Pozyskano {verified_in_run} leadów.")
-                await send_telegram(f"✅ Lead Finder zakończył pracę!\nZlecenie: {run_id[:8]}\nZnaleziono: {verified_in_run} kontaktów.")
-                break
+                await asyncio.sleep(1)
+                if verified_in_run >= target_count:
+                    task_status = "completed"
+                    await log_to_db("success", f"Zlecenie zakończone! Pozyskano {verified_in_run} leadów.")
+                    await send_telegram_direct(f"✅ Lead Finder zakończył pracę!\nZlecenie: {run_id[:8]}\nZnaleziono: {verified_in_run} kontaktów.")
+                    break
             
-            await asyncio.sleep(2)
+            await asyncio.sleep(1)
     finally:
         producer.cancel()
         for c in consumers:
