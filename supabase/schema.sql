@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict ZWI7l7OpxKEIWC04e9pLRtpnsQhJa5B6cyRgpaA1P2Q8aN15RGdI0Zb6L0oDax3
+\restrict RR8ExDf0PENFowzZw65doskyw8sU2jn6y8Qeo1AJk5ApCzsLmFsmbR9On5vvgVr
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -10374,7 +10374,8 @@ COMMENT ON COLUMN "public"."market_games"."storage_path" IS 'Path to JSON in com
 CREATE TABLE "public"."marketing_cities" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
     "name" "text" NOT NULL,
-    "is_active" boolean DEFAULT true
+    "is_active" boolean DEFAULT true,
+    "population" integer DEFAULT 0
 );
 
 
@@ -11484,6 +11485,13 @@ CREATE UNIQUE INDEX "games_owner_market_uniq" ON "public"."games" USING "btree" 
 --
 
 CREATE INDEX "games_source_market_id_idx" ON "public"."games" USING "btree" ("source_market_id") WHERE ("source_market_id" IS NOT NULL);
+
+
+--
+-- Name: idx_marketing_cities_population; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "idx_marketing_cities_population" ON "public"."marketing_cities" USING "btree" ("population");
 
 
 --
@@ -13733,5 +13741,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict ZWI7l7OpxKEIWC04e9pLRtpnsQhJa5B6cyRgpaA1P2Q8aN15RGdI0Zb6L0oDax3
+\unrestrict RR8ExDf0PENFowzZw65doskyw8sU2jn6y8Qeo1AJk5ApCzsLmFsmbR9On5vvgVr
 
