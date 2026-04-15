@@ -336,9 +336,6 @@ async def cleanup_on_cancel():
             logger.info(f"Reverted {len(processing)} processing contacts to pending")
     except Exception as e:
         logger.error(f"Cleanup error: {e}")
-        except Exception as e:
-            logger.error(f"Consumer {consumer_id} error: {e}")
-            await asyncio.sleep(1)
 
 async def run_worker(run_id: str, target_count: int):
     global task_status, verified_in_run, target_count as tc
