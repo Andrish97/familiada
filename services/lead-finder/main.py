@@ -107,6 +107,8 @@ class SupabaseClient:
             except Exception as e:
                 logger.error(f"Supabase select error: {e}")
                 return None
+    
+
 
     async def update(self, table, data, filters):
         async with httpx.AsyncClient() as client:
@@ -301,13 +303,26 @@ async def refill_raw_buffer(run_id: str):
         if emails:
             email_list = list(emails)
             
-            # Check for duplicate emails in verified and raw
+            # Check each email against verified and raw
             duplicate = False
             for email in email_list:
+                # Check verified
                 dup_v = await supabase.select('marketing_verified_contacts', 'id', {'email': email})
-                dup_r = await supabase.select('marketing_raw_contacts', 'id', {'emails_found': f'%{email}%'})
-                if dup_v or dup_r:
+                if dup_v:
                     duplicate = True
+                    break
+                # Check raw - each email from cell
+                dup_r = await supabase.select('marketing_raw_contacts', 'id')
+                if dup_r:
+                    for row in dup_r:
+                        raw_emails = row.get('emails_found', [])
+                        if isinstance(raw_emails, str):
+                            try: raw_emails = json.loads(raw_emails)
+                            except: raw_emails = []
+                        if email in raw_emails:
+                            duplicate = True
+                            break
+                if duplicate:
                     break
             
             if duplicate:
