@@ -148,18 +148,14 @@ class SupabaseClient:
                 logger.error(f"RPC {function_name} error: {r.status_code} {r.text[:200]}")
             return r.status_code in (200, 201)
     
-    async def truncate(self, table):
-        if table == 'marketing_search_logs':
-            try:
-                return await self.call_rpc('clear_marketing_logs')
-            except Exception as e:
-                logger.error(f"Truncate {table} error: {e}")
-                return False
-        async with httpx.AsyncClient() as client:
-            r = await client.delete(f'{self.url}/rest/v1/{table}?id=eq.00000000-0000-0000-0000-000000000000', headers=self.headers)
+    async def clear_table(self, table):
+        """Clear all rows from a table"""
+        async with httpx.AsyncClient(timeout=30) as client:
+            r = await client.delete(f'{self.url}/rest/v1/{table}', headers=self.headers)
             if r.status_code not in (200, 204):
-                logger.error(f"Truncate {table} error: {r.status_code} {r.text[:100]}")
-            return r.status_code in (200, 204)
+                logger.error(f"Clear {table} error: {r.status_code} {r.text[:200]}")
+                return False
+            return True
 
 supabase = SupabaseClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
@@ -218,11 +214,16 @@ async def fetch_next_query(run_id: str) -> Optional[tuple]:
 
 async def refill_raw_buffer(run_id: str):
     """Producer: Searches SearXNG and fills marketing_raw_contacts (only pending/processing, not rejected)"""
+    logger.info("[PRODUCER] Sprawdzam bufor...")
+    
     pending = await supabase.select('marketing_raw_contacts', 'id', {'status': 'pending'})
     processing = await supabase.select('marketing_raw_contacts', 'id', {'status': 'processing'})
     count = (len(pending) if pending else 0) + (len(processing) if processing else 0)
     
+    logger.info(f"[PRODUCER] Bufor: pending={len(pending) if pending else 0}, processing={len(processing) if processing else 0}, razem={count}")
+    
     if count >= RAW_BUFFER_THRESHOLD:
+        logger.info(f"[PRODUCER] Bufor pelny ({count} >= {RAW_BUFFER_THRESHOLD}), czekam...")
         return
 
     await log_to_db("info", f"Bufor surowych kontaktów niski ({count}). Uruchamiam nowe wyszukiwanie...")
@@ -231,6 +232,8 @@ async def refill_raw_buffer(run_id: str):
     if not query_data: 
         await log_to_db("error", "Brak dostępnych zapytań!")
         return
+    else:
+        logger.info(f"[PRODUCER] Wybrano query: {query_data[0]}")
 
     query, city_name = query_data[0], query_data[1]
     
@@ -248,13 +251,14 @@ async def refill_raw_buffer(run_id: str):
     except Exception as e:
         search_error = f"Connection Fail: {e}"
     
+    logger.info(f"[PRODUCER] Zapisuję query do logu: {query}")
     log_insert = await supabase.insert('marketing_search_queries_log', {
         'query_text': query,
         'city': city_name,
         'urls_found': len(results),
         'status': 'failed' if search_error else 'completed'
     })
-    logger.info(f"Query log insert: {log_insert}")
+    logger.info(f"[PRODUCER] Query log insert result: {log_insert}")
     
     if search_error:
         await log_to_db("error", search_error)
@@ -697,8 +701,8 @@ async def run_worker(run_id: str, target_count: int):
     verified_in_run = 0
     
     logger.info("Czyszczę logi...")
-    truncate_ok = await supabase.truncate('marketing_search_logs')
-    logger.info(f"Logi wyczyszczone: {truncate_ok}")
+    clear_ok = await supabase.clear_table('marketing_search_logs')
+    logger.info(f"Logi wyczyszczone: {clear_ok}")
     await log_to_db("info", f"Rozpoczynam zlecenie na {target_count} leadów.")
 
     producer = asyncio.create_task(producer_task(run_id))
