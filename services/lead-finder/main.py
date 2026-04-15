@@ -255,6 +255,8 @@ async def refill_raw_buffer(run_id: str):
 
     # Process results into buffer
     new_raw_count = 0
+    GARBAGE_EMAIL_DOMAINS = {'sentry.io', 'sentry.wixpress.com', 'sentry-next.wixpress.com', 'mailgun.org', 'mandrillapp.com', 'sendgrid.net', 'mailservers.dev'}
+    
     for res in results:
         url = res.get('url', '').lower()
         if not url or any(d in url for d in BLOCKED_DOMAINS): continue
@@ -264,25 +266,37 @@ async def refill_raw_buffer(run_id: str):
         exists_r = await supabase.select('marketing_raw_contacts', 'id', {'url': url})
         if exists_v or exists_r: continue
 
-        # Crawl for emails
+        # Fetch page content + crawl for emails
+        page_content = {'title': res.get('title', ''), 'description': '', 'text': ''}
         emails = set()
         try:
-            async with httpx.AsyncClient(timeout=10, follow_redirects=True) as client:
-                for path in [url, url.rstrip('/') + '/kontakt', url.rstrip('/') + '/contact']:
+            async with httpx.AsyncClient(timeout=15, follow_redirects=True) as client:
+                for path in [url, url.rstrip('/') + '/kontakt', url.rstrip('/') + '/contact', url.rstrip('/') + '/o-nas', url.rstrip('/') + '/about']:
                     try:
                         r_crawl = await client.get(path)
                         if r_crawl.status_code == 200:
-                            emails.update(EMAIL_REGEX.findall(r_crawl.text))
+                            text = r_crawl.text[:50000]
+                            # Extract title
+                            title_match = re.search(r'<title[^>]*>([^<]+)</title>', text, re.I)
+                            if title_match and not page_content['title']:
+                                page_content['title'] = title_match.group(1).strip()
+                            # Extract description
+                            desc_match = re.search(r'<meta[^>]*name=["\']description["\'][^>]*content=["\']([^"\']+)["\']', text, re.I)
+                            if desc_match and not page_content['description']:
+                                page_content['description'] = desc_match.group(1).strip()
+                            # Find emails
+                            found_emails = EMAIL_REGEX.findall(text)
+                            for e in found_emails:
+                                if not any(g in e.lower() for g in GARBAGE_EMAIL_DOMAINS):
+                                    emails.add(e)
                     except: continue
         except: pass
 
         if emails:
-            # Final deduplication by emails
             email_list = list(emails)
-            
             ok = await supabase.insert('marketing_raw_contacts', {
                 'url': url,
-                'title': res.get('title'),
+                'title': page_content['title'],
                 'emails_found': email_list,
                 'status': 'pending'
             })
@@ -311,48 +325,44 @@ async def fetch_page_content(url: str) -> dict:
     return content
 
 async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Optional[dict]:
-    """Consumer: Takes one raw lead and asks AI to verify. Returns result dict or None on error."""
+    """Consumer: Asks AI to verify if the contact is an event organizer."""
     url = lead.get('url')
-    raw_emails = lead.get('emails_found', [])
+    title = lead.get('title', '')
+    emails = lead.get('emails_found', [])
+    if isinstance(emails, str):
+        try: emails = json.loads(emails)
+        except: emails = []
     
-    # Filter out garbage/tracking emails
-    GARBAGE_EMAIL_DOMAINS = {'sentry.io', 'sentry.wixpress.com', 'sentry-next.wixpress.com', 'mailgun.org', 'mandrillapp.com', 'sendgrid.net', 'mailservers.dev'}
-    emails = [e for e in raw_emails if not any(d in e.lower() for d in GARBAGE_EMAIL_DOMAINS)]
-    
-    logger.info(f"[C{consumer_id}] Scrapuję stronę: {url}")
-    page_content = await fetch_page_content(url)
+    logger.info(f"[C{consumer_id}] Weryfikuję: {url}")
     
     prompt = f"""Zweryfikuj organizatora eventow w Polsce.
 
 KRYTERIUM GLOWNE: Czy to organizator eventow?
 - DJ, wodzirej, konferansjer, animator, agencja eventowa
 - Firma/organizacja zajmujaca sie profesjonalnie eventami
+- Sprawdz czy strona jest o evenetach, weselach, imprezach
 
-KRYTERIUM DRUGORZEDNE: Email kontaktowy (wazne ale nie blokujace):
-- Prawdziwy mail firmy/freelancera (np. kontakt@firma.pl, info@djnazwa.pl)
-- Odrzuc tylko jesli mail jest przykładowy (przyklad@wp.pl) lub z portalu (allegro@allegro.pl)
-
-TAK (organizator):
-- DJ/wodzirej z wlasna strona
-- Firma eventowa
-- Animator/impresario z wlasna strona
-
-NIE (nie organizator):
+NIE organizator (odrzuc):
 - Restauracje, karczmy, hotele (tylko lokal)
-- Wypozyczalnie sprzetu/lokali
+- Wypozyczalnie sprzetu/lokali bez uslug eventowych
 - Portale ogłoszeniowe, sklepy
+- Firmy budowlane, AGD, itp.
 
-Jesli organizator ale brak emaila lub email zly = OK z ostrzezeniem "brak_email"
+KRYTERIUM DRUGORZEDNE: Email - musi byc prawdziwy!
+- Dobry email: kontakt@, info@, dj@, imie@firmadomena.pl
+- Zly email: przyklad@, test@, example@, allegro@, olx@, sentry@
+
+Jesli organizator + dobry email = VERIFIED
+Jesli organizator + brak dobrego emaila = ODRZUCONY (brak_email)
+Jesli nie organizator = ODRZUCONY
 
 URL: {url}
-Tytul: {page_content.get('title', '')}
-Opis: {page_content.get('description', '')}
-Tresc: {page_content.get('text', '')[:500]}
-Maile znalezione: {', '.join(emails) if emails else 'brak'}
+TYTUL: {title}
+MAILE: {', '.join(emails) if emails else 'brak'}
 
 JSON:
-Jesli organizator: {{"ok": 1, "email": "prawdziwy email lub pusty", "title": "krotka nazwa (max 50 znakow)", "short_description": "50-100 znakow opisujacy dzialalnosc", "powod": "dlaczego organizator"}}
-Jesli nie organizator: {{"ok": 0, "powod": "dlaczego nie organizator"}}"""
+zweryfikowany: {{"ok": 1, "email": "dobry email", "title": "krotka nazwa max 50", "short_description": "50-100 znakow czym sie zajmuje", "reason": "dlaczego organizator"}}
+odrzucony: {{"ok": 0, "reason": "dlaczego odrzucony"}}"""
 
     try:
         if USE_GROQ:
