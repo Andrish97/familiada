@@ -187,9 +187,11 @@ async def fetch_next_query(run_id: str) -> Optional[str]:
     return random.choice(available)
 
 async def refill_raw_buffer(run_id: str):
-    """Producer: Searches SearXNG and fills marketing_raw_contacts"""
-    current_raw = await supabase.select('marketing_raw_contacts', 'id', {'status': 'pending'})
-    count = len(current_raw) if current_raw else 0
+    """Producer: Searches SearXNG and fills marketing_raw_contacts (only pending/processing, not rejected)"""
+    # Count contacts that are NOT rejected (pending + processing)
+    pending = await supabase.select('marketing_raw_contacts', 'id', {'status': 'pending'})
+    processing = await supabase.select('marketing_raw_contacts', 'id', {'status': 'processing'})
+    count = (len(pending) if pending else 0) + (len(processing) if processing else 0)
     
     if count >= RAW_BUFFER_THRESHOLD:
         return # Buffer still full enough
@@ -197,7 +199,9 @@ async def refill_raw_buffer(run_id: str):
     await log_to_db("info", f"Bufor surowych kontaktów niski ({count}). Uruchamiam nowe wyszukiwanie...")
     
     query = await fetch_next_query(run_id)
-    if not query: return
+    if not query: 
+        await log_to_db("error", "Brak dostępnych zapytań!")
+        return
 
     await log_to_db("info", f"Wyszukiwanie: {query}")
     try:
@@ -211,8 +215,11 @@ async def refill_raw_buffer(run_id: str):
         await log_to_db("error", f"SearXNG Connection Fail: {e}")
         return
 
-    # Add query to history
-    await supabase.insert('marketing_search_queries_log', {'query_text': query})
+    # Add query to history (mark as completed)
+    await supabase.insert('marketing_search_queries_log', {
+        'query_text': query,
+        'status': 'completed'
+    })
 
     if not results:
         await log_to_db("warning", f"Brak wyników dla: {query}")
