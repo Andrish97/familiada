@@ -187,14 +187,13 @@ async def send_telegram(message: str):
 
 # --- Core Logic: Search Layer (Producer) ---
 async def fetch_next_query(run_id: str) -> Optional[tuple]:
-    """Finds next available query template + city combo not in history. Returns (query, city_population)"""
-    cities_data = await supabase.select('marketing_cities', 'name,population', {'is_active': 'true'})
+    """Finds next available query template + city combo not in history."""
+    cities_data = await supabase.select('marketing_cities', 'name', {'is_active': 'true'})
     if not cities_data:
         logger.warning("Brak miast w tabeli marketing_cities!")
         return None
     
-    city_pop = {c['name']: c.get('population', 0) or 0 for c in cities_data}
-    cities = list(city_pop.keys())
+    cities = [c['name'] for c in cities_data]
     history_data = await supabase.select('marketing_search_queries_log', 'query_text')
     history = {h['query_text'] for h in history_data} if history_data else set()
     
@@ -235,30 +234,7 @@ async def refill_raw_buffer(run_id: str):
 
     query, city_name = query_data[0], query_data[1]
     
-    # Range-based limits based on population
-    city_pop_data = await supabase.select('marketing_cities', 'population', {'name': city_name})
-    population = city_pop_data[0].get('population', 0) if city_pop_data else 0
-    
-    if population < 10000:
-        max_results = 10
-    elif population < 30000:
-        max_results = 20
-    elif population < 50000:
-        max_results = 30
-    elif population < 100000:
-        max_results = 50
-    elif population < 200000:
-        max_results = 80
-    elif population < 500000:
-        max_results = 120
-    elif population < 750000:
-        max_results = 160
-    else:
-        max_results = 200
-
-    query_log_id = None
-    
-    await log_to_db("info", f"Wyszukiwanie ({city_name}, {population:,} mieszk., limit: {max_results}): {query}")
+    await log_to_db("info", f"Wyszukiwanie ({city_name}): {query}")
     
     search_error = None
     results = []
@@ -268,7 +244,7 @@ async def refill_raw_buffer(run_id: str):
             if r.status_code != 200:
                 search_error = f"SearXNG Error {r.status_code}"
             else:
-                results = r.json().get('results', [])[:max_results]
+                results = r.json().get('results', [])
     except Exception as e:
         search_error = f"Connection Fail: {e}"
     
