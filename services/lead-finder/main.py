@@ -63,6 +63,7 @@ BLOCKED_DOMAINS = {
 
 EMAIL_REGEX = re.compile(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}')
 RAW_BUFFER_THRESHOLD = 20  # Refill raw contacts if below this
+MAX_RESULTS_PER_SEARCH = 10  # Max URLs to process per search query
 
 # --- Global State ---
 active_task = None
@@ -212,7 +213,7 @@ async def refill_raw_buffer(run_id: str):
             if r.status_code != 200:
                 await log_to_db("error", f"SearXNG Error {r.status_code}")
                 return
-            results = r.json().get('results', [])
+            results = r.json().get('results', [])[:MAX_RESULTS_PER_SEARCH]
     except Exception as e:
         await log_to_db("error", f"SearXNG Connection Fail: {e}")
         return
