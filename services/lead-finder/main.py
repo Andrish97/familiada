@@ -443,15 +443,17 @@ async def consumer_task(run_id: str, consumer_id: int, target: int):
                 })
                 global verified_in_run
                 verified_in_run += 1
-                await log_to_db("success", f"[C{consumer_id}] Zweryfikowano ({verified_in_run}/{target}): {result.get('url', lead_url)}")
+                verify_reason = result.get('short_description', '')
+                await log_to_db("success", f"[C{consumer_id}] Zweryfikowano ({verified_in_run}/{target}): {result.get('url', lead_url)} | powod: {verify_reason}")
                 await supabase.delete('marketing_raw_contacts', {'id': lead_id})
             elif result.get('is_event_organizer') and not result.get('best_email'):
                 # Jest organizatorem ale brak dobrego maila - odrzucamy
+                reject_reason = 'Brak prawidlowego emaila kontaktowego'
                 await supabase.update('marketing_raw_contacts', {
                     'status': 'rejected',
-                    'reject_reason': 'Brak prawidlowego emaila kontaktowego'
+                    'reject_reason': reject_reason
                 }, {'id': lead_id})
-                logger.info(f"[C{consumer_id}] Odrzucono (brak maila): {lead_url}")
+                await log_to_db("warning", f"[C{consumer_id}] Odrzucono (brak maila): {lead_url} | powod: {reject_reason}")
             else:
                 # Porażka - oznaczamy jako rejected w raw z powodem
                 reject_reason = result.get('short_description', 'Nie jest organizatorem eventow')
@@ -459,7 +461,7 @@ async def consumer_task(run_id: str, consumer_id: int, target: int):
                     'status': 'rejected',
                     'reject_reason': reject_reason[:500]
                 }, {'id': lead_id})
-                logger.info(f"[C{consumer_id}] Odrzucono: {lead_url} - {reject_reason[:50]}")
+                await log_to_db("warning", f"[C{consumer_id}] Odrzucono: {lead_url} | powod: {reject_reason}")
         except Exception as e:
             logger.error(f"Consumer {consumer_id} error: {e}")
             await asyncio.sleep(1)
