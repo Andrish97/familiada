@@ -126,11 +126,18 @@ async def log_to_db(run_id, level, message):
     logger.info(f"[{level.upper()}] {message}")
 
 async def send_telegram(message: str):
-    if not SERVICE_TOKEN: return
+    if not SERVICE_TOKEN:
+        logger.warning("Telegram: SERVICE_TOKEN not set")
+        return
     try:
         async with httpx.AsyncClient(timeout=10) as client:
-            await client.post(WORKER_TELEGRAM_ENDPOINT, headers={'Authorization': f'Bearer {SERVICE_TOKEN}'}, json={'text': message})
-    except: pass
+            r = await client.post(WORKER_TELEGRAM_ENDPOINT, headers={'Authorization': f'Bearer {SERVICE_TOKEN}'}, json={'text': message})
+            if r.status_code != 200:
+                logger.error(f"Telegram error: {r.status_code} {r.text}")
+            else:
+                logger.info("Telegram notification sent")
+    except Exception as e:
+        logger.error(f"Telegram exception: {e}")
 
 # --- Core Logic: Search Layer (Producer) ---
 async def fetch_next_query(run_id: str) -> Optional[str]:
@@ -273,60 +280,85 @@ Odpowiedz WYŁĄCZNIE JSONem:
         return False
 
 # --- Main Task Loop ---
-async def run_worker(run_id: str, target_count: int):
-    global task_status
-    task_status = "running"
-    verified_so_far = 0
-    
-    # Clear logs for new session
-    await supabase.delete('marketing_search_logs')
-    await log_to_db(run_id, "info", f"Rozpoczynam zlecenie na {target_count} leadów.")
+NUM_CONSUMERS = 3
 
-    while verified_so_far < target_count:
-        if task_stop_event.is_set():
-            task_status = "cancelled"
-            await log_to_db(run_id, "warning", "Zlecenie anulowane.")
-            return
+async def producer_task(run_id: str):
+    """Producer: Continuously searches for new raw contacts (always completes, ignores pause)"""
+    while task_status == "running":
+        try:
+            await refill_raw_buffer(run_id)
+        except Exception as e:
+            logger.error(f"Producer error: {e}")
+        await asyncio.sleep(5)
 
-        while task_pause_event.is_set():
-            task_status = "paused"
+async def consumer_task(run_id: str, consumer_id: int):
+    """Consumer: Continuously verifies raw contacts"""
+    while task_status == "running":
+        if task_pause_event.is_set():
             await asyncio.sleep(1)
-            if task_stop_event.is_set(): return
-        
-        task_status = "running"
-
-        # 1. Ensure we have raw data
-        await refill_raw_buffer(run_id)
-
-        # 2. Get pending raw leads
-        raw_leads = await supabase.select('marketing_raw_contacts', '*', {'status': 'pending'}, limit=5)
-        
-        if not raw_leads:
-            await log_to_db(run_id, "info", "Oczekiwanie na nowe wyniki z wyszukiwarki...")
-            await asyncio.sleep(10)
             continue
-
-        for lead in raw_leads:
-            if verified_so_far >= target_count or task_stop_event.is_set(): break
+        
+        try:
+            raw_leads = await supabase.select('marketing_raw_contacts', '*', {'status': 'pending'}, limit=1)
+            if not raw_leads:
+                await asyncio.sleep(2)
+                continue
             
-            # Mark as processing
+            lead = raw_leads[0]
             await supabase.update('marketing_raw_contacts', {'status': 'processing'}, {'id': lead['id']})
             
-            await log_to_db(run_id, "info", f"Weryfikacja AI: {lead.get('url')}")
+            await log_to_db(run_id, "info", f"[C{consumer_id}] Weryfikacja AI: {lead.get('url')}")
             success = await verify_raw_lead(run_id, lead)
             
             if success:
-                verified_so_far += 1
-                await log_to_db(run_id, "success", f"Zweryfikowano ({verified_so_far}/{target_count}): {lead.get('url')}")
-                await supabase.delete('marketing_raw_contacts', {'id': lead['id']}) # Remove from buffer if success
+                await log_to_db(run_id, "success", f"[C{consumer_id}] Zweryfikowano: {lead.get('url')}")
+                await supabase.delete('marketing_raw_contacts', {'id': lead['id']})
             else:
                 await supabase.update('marketing_raw_contacts', {'status': 'rejected'}, {'id': lead['id']})
+        except Exception as e:
+            logger.error(f"Consumer {consumer_id} error: {e}")
+            await asyncio.sleep(1)
 
-        await asyncio.sleep(1)
+async def run_worker(run_id: str, target_count: int):
+    global task_status
+    task_status = "running"
+    
+    await supabase.delete('marketing_search_logs')
+    await log_to_db(run_id, "info", f"Rozpoczynam zlecenie na {target_count} leadów.")
 
-    task_status = "completed"
-    await log_to_db(run_id, "success", f"Zlecenie zakończone pomyślnie! Pozyskano {verified_so_far} leadów.")
-    await send_telegram(f"✅ Lead Finder zakończył pracę!\nZlecenie: {run_id[:8]}\nZnaleziono: {verified_so_far} kontaktów.")
+    producer = asyncio.create_task(producer_task(run_id))
+    consumers = [asyncio.create_task(consumer_task(run_id, i)) for i in range(NUM_CONSUMERS)]
+    
+    try:
+        while True:
+            if task_stop_event.is_set():
+                task_status = "cancelled"
+                await log_to_db(run_id, "warning", "Zlecenie anulowane.")
+                break
+
+            while task_pause_event.is_set():
+                await asyncio.sleep(1)
+                if task_stop_event.is_set():
+                    task_status = "cancelled"
+                    break
+            
+            task_status = "running"
+            
+            verified = await supabase.select('marketing_verified_contacts', 'id', {})
+            verified_count = len(verified) if verified else 0
+            
+            if verified_count >= target_count:
+                task_status = "completed"
+                await log_to_db(run_id, "success", f"Zlecenie zakończone! Pozyskano {verified_count} leadów.")
+                await send_telegram(f"✅ Lead Finder zakończył pracę!\nZlecenie: {run_id[:8]}\nZnaleziono: {verified_count} kontaktów.")
+                break
+            
+            await asyncio.sleep(2)
+    finally:
+        producer.cancel()
+        for c in consumers:
+            c.cancel()
+        await asyncio.gather(producer, *consumers, return_exceptions=True)
 
 # --- API Endpoints ---
 @app.post("/api/search-runs")
