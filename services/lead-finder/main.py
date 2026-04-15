@@ -119,6 +119,11 @@ class SupabaseClient:
             r = await client.delete(f'{self.url}/rest/v1/{table}', headers=self.headers, params=params)
             return r.status_code in (200, 204, 404)
 
+    async def truncate(self, table):
+        async with httpx.AsyncClient() as client:
+            r = await client.post(f'{self.url}/rest/v1/{table}', headers=self.headers, json={})
+            return r.status_code in (200, 204)
+
 supabase = SupabaseClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
 # --- Helpers ---
@@ -271,9 +276,9 @@ Odpowiedz WYŁĄCZNIE JSONem:
                         url = lead.get('url')
                         exists_v = await supabase.select('marketing_verified_contacts', 'id', {'url': url})
                         exists_r = await supabase.select('marketing_raw_contacts', 'id', {'url': url})
-                        if exists_v or exists_r:
-                            logger.info(f"[C{consumer_id}] URL already exists in verified or raw")
-                            return True
+                        if (exists_v and len(exists_v) > 0) or (exists_r and len(exists_r) > 0):
+                            logger.info(f"[C{consumer_id}] URL already exists in verified or raw - skipping")
+                            return False
                         result = await supabase.insert('marketing_verified_contacts', {
                             'title': lead.get('title'),
                             'email': res['best_email'],
@@ -334,7 +339,7 @@ async def consumer_task(run_id: str, consumer_id: int, target: int):
                 await log_to_db("success", f"[C{consumer_id}] Zweryfikowano ({verified_in_run}/{target}): {lead_url}")
                 await supabase.delete('marketing_raw_contacts', {'id': lead_id})
             else:
-                await supabase.update('marketing_raw_contacts', {'status': 'rejected'}, {'id': lead_id})
+                await supabase.delete('marketing_raw_contacts', {'id': lead_id})
         except Exception as e:
             logger.error(f"Consumer {consumer_id} error: {e}")
             await asyncio.sleep(1)

@@ -6039,7 +6039,7 @@ function wireEvents() {
 
   function mcStartLogAutoRefresh() {
     mcStopLogAutoRefresh();
-    mcState.logTimer = setInterval(() => mcLoadLogs(), 3000);
+    mcState.logTimer = setInterval(() => { mcLoadLogs(); mcLoadRuns(); }, 3000);
   }
 
   function mcStopLogAutoRefresh() { if (mcState.logTimer) { clearInterval(mcState.logTimer); mcState.logTimer = null; }}
