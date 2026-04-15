@@ -256,19 +256,46 @@ async def refill_raw_buffer(run_id: str):
     await log_to_db("success", f"Dodano {new_raw_count} surowych kontaktów do bufora.")
 
 # --- Core Logic: AI Layer (Consumer) ---
+async def fetch_page_content(url: str) -> dict:
+    """Fetch page content for AI verification"""
+    content = {'title': '', 'description': '', 'text': ''}
+    try:
+        async with httpx.AsyncClient(timeout=15, follow_redirects=True) as client:
+            r = await client.get(url)
+            if r.status_code == 200:
+                text = r.text[:50000]
+                title_match = re.search(r'<title[^>]*>([^<]+)</title>', text, re.I)
+                desc_match = re.search(r'<meta[^>]*name=["\']description["\'][^>]*content=["\']([^"\']+)["\']', text, re.I)
+                content['title'] = title_match.group(1).strip() if title_match else ''
+                content['description'] = desc_match.group(1).strip() if desc_match else ''
+                text_no_html = re.sub(r'<[^>]+>', ' ', text)
+                text_no_html = re.sub(r'\s+', ' ', text_no_html).strip()
+                content['text'] = text_no_html[:2000]
+    except Exception as e:
+        logger.info(f"Failed to fetch content from {url}: {e}")
+    return content
+
 async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Optional[dict]:
     """Consumer: Takes one raw lead and asks AI to verify. Returns result dict or None on error."""
+    url = lead.get('url')
     emails = lead.get('emails_found', [])
-    prompt = f"""Czy to organizator eventów (DJ, Agencja, Wodzirej, Animator)?
-Tytuł: {lead.get('title')}
-URL: {lead.get('url')}
-Maile: {', '.join(emails)}
+    
+    logger.info(f"[C{consumer_id}] Scrapuję stronę: {url}")
+    page_content = await fetch_page_content(url)
+    
+    prompt = f"""Przeanalizuj poniższą stronę i zdecyduj czy to organizator eventów (DJ, Wodzirej, Konferansjer, Animator, Agencja eventowa).
+
+URL: {url}
+Tytuł strony: {page_content.get('title', '')}
+Opis: {page_content.get('description', '')}
+Treść strony: {page_content.get('text', '')[:1000]}
+Maile kontaktowe: {', '.join(emails) if emails else 'brak'}
 
 Odpowiedz WYŁĄCZNIE JSONem:
 {{
   "is_event_organizer": bool,
-  "best_email": "string",
-  "reasoning": "krótkie uzasadnienie"
+  "best_email": "string (najlepszy email do kontaktu lub pusty string)",
+  "reasoning": "krótkie uzasadnienie dlaczego to lub nie jest organizatorem"
 }}"""
 
     try:
