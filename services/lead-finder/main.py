@@ -290,20 +290,37 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
     logger.info(f"[C{consumer_id}] Scrapuję stronę: {url}")
     page_content = await fetch_page_content(url)
     
-    prompt = f"""Przeanalizuj poniższą stronę i zdecyduj czy to organizator eventów (DJ, Wodzirej, Konferansjer, Animator, Agencja eventowa).
+    prompt = f"""Jesteś asystentem marketingu. Twoje zadanie to znaleźć kontakty do organizatorów eventów w Polsce.
 
+Zaliczeni jako organizator eventów:
+- DJ / DJ na wesele / DJ eventowy
+- Wodzirej / Wodzirej weselny
+- Konferansjer / Konferansjer weselny
+- Animator dla dzieci /Animator imprez
+- Agencja eventowa / Agencja organizacji imprez
+- Zespół muzyczny / Kapela weselna
+- Fotograf ślubny / Fotograf eventowy
+- Firma oferująca usługi eventowe (nagłośnienie, oświetlenie, catering na eventy)
+
+NIE są organizatorami:
+- Sklepy (Allegro, Amazon)
+- Portale z ogłoszeniami (OLX, Oferteo)
+- Firmy HR / Praca
+- Blogi bez oferty usług
+
+Przeanalizuj stronę:
 URL: {url}
-Tytuł strony: {page_content.get('title', '')}
+Tytuł: {page_content.get('title', '')}
 Opis: {page_content.get('description', '')}
-Treść strony: {page_content.get('text', '')[:1000]}
-Maile kontaktowe: {', '.join(emails) if emails else 'brak'}
+Tekst: {page_content.get('text', '')[:1500]}
+Maile: {', '.join(emails) if emails else 'brak'}
 
-Odpowiedz WYŁĄCZNIE JSONem:
-{{
-  "is_event_organizer": bool,
-  "best_email": "string (najlepszy email do kontaktu lub pusty string)",
-  "reasoning": "krótkie uzasadnienie dlaczego to lub nie jest organizatorem"
-}}"""
+Jeśli strona należy do organizatora eventów z Polski i ma email kontaktowy - odpowiedz TAK.
+
+Odpowiedz TYLKO JSON (bez markdown):
+{{"is_event_organizer": true/false, "best_email": "email lub pusty", "reasoning": "1-2 zdania"}}
+
+WAŻNE: Bądź liberalny - jeśli masz wątpliwości, odpowiedz TAK. Lepiej mieć fałszywy trop niż przegapić realnego klienta."""
 
     try:
         async with httpx.AsyncClient(timeout=60) as client:
