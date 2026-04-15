@@ -5733,6 +5733,11 @@ function wireEvents() {
   }
 
   window.mcAction = async function() {
+    const actionBtn = document.getElementById("mcActionBtn");
+    const cancelBtn = document.getElementById("mcCancelBtn");
+    actionBtn.disabled = true;
+    cancelBtn.disabled = true;
+    
     const tk = await mcGetToken();
     await mcLoadRuns();
     if (mcState.status === "running") {
@@ -5752,6 +5757,11 @@ function wireEvents() {
 
   window.mcCancel = async function() {
     if(!confirm("Anulować zlecenie?")) return;
+    const actionBtn = document.getElementById("mcActionBtn");
+    const cancelBtn = document.getElementById("mcCancelBtn");
+    actionBtn.disabled = true;
+    cancelBtn.disabled = true;
+    
     const tk = await mcGetToken();
     await fetch(`${MC_API}/api/search-runs/${mcState.logRun}/cancel`,{method:"POST", headers:{Authorization:`Bearer ${tk}`}});
     mcState.status = "idle";
