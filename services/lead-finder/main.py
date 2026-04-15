@@ -67,14 +67,6 @@ BLOCKED_DOMAINS = {
 EMAIL_REGEX = re.compile(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}')
 RAW_BUFFER_THRESHOLD = 20
 MAX_RESULTS_PER_SEARCH = 10
-PRE_SCORE_THRESHOLD = 2  # Minimum pre_score to send to AI
-
-EVENT_KEYWORDS = [
-    "dj", "wodzirej", "konferansjer", "prezenter", "animator", "animacje",
-    "wesele", "impreza", "event", "eventy", "eventowa", "team building",
-    "gry integracyjne", "organizacja imprez", "oprawa muzyczna",
-    "prowadzenie imprez", "firmowa", "urodziny", "bankiet", "gala"
-]
 
 GARBAGE_EMAIL_DOMAINS = {'sentry.io', 'sentry.wixpress.com', 'sentry-next.wixpress.com', 'mailgun.org', 'mandrillapp.com', 'sendgrid.net', 'mailservers.dev'}
 
@@ -156,160 +148,6 @@ class SupabaseClient:
 
 supabase = SupabaseClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
-# --- Pre-Scoring System ---
-def score_url(url: str) -> tuple[int, str]:
-    """URL quality scoring. Returns (score, reason)"""
-    score = 0
-    reasons = []
-    parsed = urlparse(url.lower())
-    domain = parsed.netloc
-    
-    if any(d in domain for d in BLOCKED_DOMAINS):
-        return -20, "blocked domain"
-    
-    if "dj" in domain or "dj" in url:
-        score += 3
-        reasons.append("dj in url")
-    if "event" in domain or "event" in url:
-        score += 3
-        reasons.append("event in url")
-    if "animator" in domain or "animator" in url:
-        score += 3
-        reasons.append("animator in url")
-    if "wodzirej" in domain or "wodzirej" in url:
-        score += 3
-        reasons.append("wodzirej in url")
-    if "impreza" in domain or "impreza" in url:
-        score += 2
-        reasons.append("impreza in url")
-    if "wesel" in domain or "wesel" in url:
-        score += 2
-        reasons.append("wesel in url")
-    
-    if ".pl" in domain:
-        score += 1
-        reasons.append(".pl domain")
-    
-    subdomain_count = domain.count('.') - 1
-    if subdomain_count > 2:
-        score -= 1
-        reasons.append(f"many subdomains ({subdomain_count})")
-    
-    if "/ogloszenia/" in url or "/listing/" in url or "/offers/" in url:
-        score -= 3
-        reasons.append("listing page")
-    if "/katalog/" in url or "/directory/" in url:
-        score -= 2
-        reasons.append("directory page")
-    
-    return score, "; ".join(reasons) if reasons else "neutral"
-
-
-def score_email(email: str, website_domain: str) -> tuple[int, str]:
-    """Email quality scoring. Returns (score, reason)"""
-    score = 0
-    reasons = []
-    
-    if not email or "@" not in email:
-        return -5, "no email"
-    
-    email_lower = email.lower()
-    email_domain = email_lower.split("@")[-1] if "@" in email_lower else ""
-    local_part = email_lower.split("@")[0] if "@" in email_lower else ""
-    
-    if any(g in email_domain for g in GARBAGE_EMAIL_DOMAINS):
-        return -10, "garbage email domain"
-    
-    if email_domain == website_domain:
-        score += 3
-        reasons.append("domain match")
-    
-    if local_part.startswith(("kontakt", "biuro", "info", "postmaster")):
-        score += 2
-        reasons.append("professional prefix")
-    if local_part.startswith(("dj", "anim", "event", "wedding")):
-        score += 2
-        reasons.append("relevant prefix")
-    
-    if email_domain.endswith(('.pl', '.com.pl')):
-        score += 1
-        reasons.append("polish domain")
-    
-    if any(bad in email_lower for bad in ['test', 'example', 'przyklad', 'noreply', 'no-reply']):
-        score -= 5
-        reasons.append("test/no-reply pattern")
-    if any(bad in email_domain for bad in ['allegro', 'olx', 'gumtree']):
-        score -= 5
-        reasons.append("marketplace domain")
-    
-    return score, "; ".join(reasons) if reasons else "neutral"
-
-
-def score_keyword_density(text: str) -> tuple[int, str]:
-    """Keyword density scoring. Returns (score, reason)"""
-    if not text:
-        return -1, "no text"
-    
-    text_lower = text.lower()
-    words = re.findall(r'\b\w+\b', text_lower)
-    total_words = len(words)
-    
-    if total_words == 0:
-        return -1, "empty text"
-    
-    matches = 0
-    found_keywords = []
-    for kw in EVENT_KEYWORDS:
-        count = text_lower.count(kw)
-        if count > 0:
-            matches += count
-            found_keywords.append(f"{kw}({count})")
-    
-    density = matches / total_words
-    
-    if density > 0.05:
-        score = 4
-        reasons = "very high density"
-    elif density > 0.03:
-        score = 3
-        reasons = "high density"
-    elif density > 0.015:
-        score = 2
-        reasons = "medium density"
-    elif density > 0.005:
-        score = 1
-        reasons = "low density"
-    else:
-        score = -1
-        reasons = "no keywords"
-    
-    return score, f"{reasons}: {', '.join(found_keywords[:5])}"
-
-
-def calculate_pre_score(url: str, email: str, text: str) -> tuple[int, dict]:
-    """Calculate pre-score before AI. Returns (total_score, breakdown)"""
-    parsed = urlparse(url.lower())
-    website_domain = parsed.netloc.replace('www.', '')
-    
-    url_score, url_reason = score_url(url)
-    email_score, email_reason = score_email(email, website_domain)
-    keyword_score, keyword_reason = score_keyword_density(text)
-    
-    total = url_score + email_score + keyword_score
-    
-    breakdown = {
-        'url_score': url_score,
-        'url_reason': url_reason,
-        'email_score': email_score,
-        'email_reason': email_reason,
-        'keyword_score': keyword_score,
-        'keyword_reason': keyword_reason,
-        'total': total
-    }
-    
-    return total, breakdown
-
-
 # --- Helpers ---
 async def log_to_db(level, message):
     await supabase.insert('marketing_search_logs', {'level': level, 'message': message})
@@ -336,12 +174,16 @@ async def send_telegram(message: str):
 async def fetch_next_query(run_id: str) -> Optional[tuple]:
     """Finds next available query template + city combo not in history. Returns (query, city_population)"""
     cities_data = await supabase.select('marketing_cities', 'name,population', {'is_active': 'true'})
-    if not cities_data: return None
+    if not cities_data:
+        logger.warning("Brak miast w tabeli marketing_cities!")
+        return None
     
     city_pop = {c['name']: c.get('population', 0) or 0 for c in cities_data}
     cities = list(city_pop.keys())
     history_data = await supabase.select('marketing_search_queries_log', 'query_text')
     history = {h['query_text'] for h in history_data} if history_data else set()
+    
+    logger.info(f"Miast: {len(cities)}, Wykonanych query: {len(history)}")
 
     # Generate all possible queries
     pool = []
@@ -399,24 +241,32 @@ async def refill_raw_buffer(run_id: str):
     else:
         max_results = 200
 
+    query_log_id = None
+    
     await log_to_db("info", f"Wyszukiwanie ({city_name}, {population:,} mieszk., limit: {max_results}): {query}")
+    
+    search_error = None
+    results = []
     try:
         async with httpx.AsyncClient(timeout=30) as client:
             r = await client.get(f'{SEARXNG_URL}/search', params={'q': query, 'format': 'json'})
             if r.status_code != 200:
-                await log_to_db("error", f"SearXNG Error {r.status_code}")
-                return
-            results = r.json().get('results', [])[:max_results]
+                search_error = f"SearXNG Error {r.status_code}"
+            else:
+                results = r.json().get('results', [])[:max_results]
     except Exception as e:
-        await log_to_db("error", f"SearXNG Connection Fail: {e}")
-        return
-
+        search_error = f"Connection Fail: {e}"
+    
     await supabase.insert('marketing_search_queries_log', {
         'query_text': query,
         'city': city_name,
         'urls_found': len(results),
-        'status': 'completed'
+        'status': 'failed' if search_error else 'completed'
     })
+    
+    if search_error:
+        await log_to_db("error", search_error)
+        return
 
     if not results:
         await log_to_db("warning", f"Brak wyników dla: {query}")
@@ -439,32 +289,51 @@ async def refill_raw_buffer(run_id: str):
         page_title = res.get('title', '')
         page_text = ''
         emails = set()
+        
+        def extract_content(text: str, title: str) -> tuple[str, str]:
+            """Extract title and clean text from HTML"""
+            title_match = re.search(r'<title[^>]*>([^<]+)</title>', text, re.I)
+            if title_match and not title:
+                title = title_match.group(1).strip()
+            text_no_html = re.sub(r'<script[^>]*>.*?</script>', ' ', text, flags=re.DOTALL | re.I)
+            text_no_html = re.sub(r'<style[^>]*>.*?</style>', ' ', text_no_html, flags=re.DOTALL | re.I)
+            text_no_html = re.sub(r'<noscript[^>]*>.*?</noscript>', ' ', text_no_html, flags=re.DOTALL | re.I)
+            text_no_html = re.sub(r'<[^>]+>', ' ', text_no_html)
+            text_no_html = re.sub(r'\{[^}]*\}', ' ', text_no_html)
+            text_no_html = re.sub(r'\[[^\]]*\]', ' ', text_no_html)
+            text_no_html = re.sub(r'\s+', ' ', text_no_html).strip()
+            words = text_no_html.split()
+            words = [w for w in words if len(w) > 2 and not w.startswith('http')]
+            return title, ' '.join(words)[:1500]
+        
         try:
             async with httpx.AsyncClient(timeout=15, follow_redirects=True) as client:
+                # Fetch main page
                 r_crawl = await client.get(url)
                 if r_crawl.status_code == 200:
                     text = r_crawl.text[:50000]
-                    # Extract title if not from search
-                    title_match = re.search(r'<title[^>]*>([^<]+)</title>', text, re.I)
-                    if title_match and not page_title:
-                        page_title = title_match.group(1).strip()
-                    # Extract meaningful text (skip scripts, styles, meta)
-                    text_no_html = re.sub(r'<script[^>]*>.*?</script>', ' ', text, flags=re.DOTALL | re.I)
-                    text_no_html = re.sub(r'<style[^>]*>.*?</style>', ' ', text_no_html, flags=re.DOTALL | re.I)
-                    text_no_html = re.sub(r'<noscript[^>]*>.*?</noscript>', ' ', text_no_html, flags=re.DOTALL | re.I)
-                    text_no_html = re.sub(r'<[^>]+>', ' ', text_no_html)
-                    text_no_html = re.sub(r'\{[^}]*\}', ' ', text_no_html)
-                    text_no_html = re.sub(r'\[[^\]]*\]', ' ', text_no_html)
-                    text_no_html = re.sub(r'\s+', ' ', text_no_html).strip()
-                    # Remove very short words and common noise
-                    words = text_no_html.split()
-                    words = [w for w in words if len(w) > 2 and not w.startswith('http')]
-                    page_text = ' '.join(words)[:1500]
-                    # Find emails
+                    page_title, page_text = extract_content(text, page_title)
                     found_emails = EMAIL_REGEX.findall(text)
                     for e in found_emails:
                         if not any(g in e.lower() for g in GARBAGE_EMAIL_DOMAINS):
                             emails.add(e)
+                
+                # Try /kontakt, /contact, /contact-us pages
+                parsed = urlparse(url)
+                base = f"{parsed.scheme}://{parsed.netloc}"
+                contact_paths = ['/kontakt', '/contact', '/contact-us', '/o-nas']
+                
+                for path in contact_paths:
+                    contact_url = base + path
+                    try:
+                        r_contact = await client.get(contact_url)
+                        if r_contact.status_code == 200:
+                            contact_text = r_contact.text[:30000]
+                            found = EMAIL_REGEX.findall(contact_text)
+                            for e in found:
+                                if not any(g in e.lower() for g in GARBAGE_EMAIL_DOMAINS):
+                                    emails.add(e)
+                    except: pass
         except: pass
 
         if emails:
@@ -524,7 +393,7 @@ async def fetch_page_content(url: str) -> dict:
         logger.info(f"Failed to fetch content from {url}: {e}")
     return content
 
-async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0, pre_score: int = 0) -> Optional[dict]:
+async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Optional[dict]:
     """Consumer: Asks AI to verify if the contact is an event organizer."""
     url = lead.get('url')
     title = lead.get('title', '')
@@ -733,7 +602,6 @@ Jeśli NIE:
             'short_description': res.get('short_description', '')[:200],
             'reason': res.get('reason', '')[:200],
             'score_event': res.get('score_event', 0),
-            'pre_score': pre_score,
             'url': url
         }
     except Exception as e:
@@ -774,38 +642,17 @@ async def consumer_task(run_id: str, consumer_id: int, target: int):
             update_ok = await supabase.update('marketing_raw_contacts', {'status': 'processing'}, {'id': lead_id})
             logger.info(f"[C{consumer_id}] Update processing: {update_ok}")
             
-            emails = lead.get('emails_found', [])
-            if isinstance(emails, str):
-                try: emails = json.loads(emails)
-                except: emails = []
-            primary_email = emails[0] if emails else ''
-            page_text = lead.get('page_text', '') or ''
-            
-            pre_score, breakdown = calculate_pre_score(lead_url, primary_email, page_text)
-            logger.info(f"[C{consumer_id}] Pre-score: {pre_score} ({breakdown['url_score']} url + {breakdown['email_score']} email + {breakdown['keyword_score']} kw)")
-            
-            if pre_score < PRE_SCORE_THRESHOLD:
-                reject_reason = f"pre_score={pre_score} (url:{breakdown['url_score']} email:{breakdown['email_score']} kw:{breakdown['keyword_score']})"
-                await supabase.update('marketing_raw_contacts', {
-                    'status': 'rejected',
-                    'reject_reason': reject_reason[:500]
-                }, {'id': lead_id})
-                await log_to_db("warning", f"[C{consumer_id}] Odrzucono (pre-score): {lead_url} | {reject_reason}")
-                continue
-            
             await log_to_db("info", f"[C{consumer_id}] Weryfikacja AI: {lead_url}")
-            result = await verify_raw_lead(run_id, lead, consumer_id, pre_score)
+            result = await verify_raw_lead(run_id, lead, consumer_id)
             
             if task_status not in ("running", "paused"):
                 break
             
             if result is None:
-                # AI nie odpowiedziało - zostawiamy jako pending do ponownej próby
                 await supabase.update('marketing_raw_contacts', {'status': 'pending'}, {'id': lead_id})
                 logger.warning(f"[C{consumer_id}] AI timeout - odłożone do ponownej próby: {lead_url}")
-                await asyncio.sleep(5)  # krótka przerwa przed następną próbą
+                await asyncio.sleep(5)
             elif result.get('is_event_organizer') and result.get('best_email'):
-                # Sukces - wstawiamy do verified, usuwamy z raw
                 await supabase.insert('marketing_verified_contacts', {
                     'title': result.get('title') or lead.get('title'),
                     'email': result['best_email'],
@@ -816,10 +663,9 @@ async def consumer_task(run_id: str, consumer_id: int, target: int):
                 global verified_in_run
                 verified_in_run += 1
                 reason = result.get('reason', '')
-                await log_to_db("success", f"[C{consumer_id}] Zweryfikowano ({verified_in_run}/{target}): {result.get('url', lead_url)} | pre:{result.get('pre_score', '?')} ai:{result.get('score_event', '?')} | powod: {reason}")
+                await log_to_db("success", f"[C{consumer_id}] Zweryfikowano ({verified_in_run}/{target}): {result.get('url', lead_url)} | ai:{result.get('score_event', '?')} | powod: {reason}")
                 await supabase.delete('marketing_raw_contacts', {'id': lead_id})
             elif result.get('is_event_organizer') and not result.get('best_email'):
-                # Jest organizatorem ale brak dobrego maila - odrzucamy
                 reject_reason = 'Brak prawidlowego emaila kontaktowego'
                 await supabase.update('marketing_raw_contacts', {
                     'status': 'rejected',
@@ -827,13 +673,12 @@ async def consumer_task(run_id: str, consumer_id: int, target: int):
                 }, {'id': lead_id})
                 await log_to_db("warning", f"[C{consumer_id}] Odrzucono (brak maila): {lead_url} | powod: {reject_reason}")
             else:
-                # Odrzucenie - status rejected + powod w kolumnie reject_reason
                 reject_reason = result.get('reason') or 'Nie jest organizatorem eventow'
                 await supabase.update('marketing_raw_contacts', {
                     'status': 'rejected',
                     'reject_reason': reject_reason[:500]
                 }, {'id': lead_id})
-                await log_to_db("warning", f"[C{consumer_id}] Odrzucono: {lead_url} | pre:{result.get('pre_score', '?')} ai:{result.get('score_event', '?')} | powod: {reject_reason}")
+                await log_to_db("warning", f"[C{consumer_id}] Odrzucono: {lead_url} | ai:{result.get('score_event', '?')} | powod: {reject_reason}")
         except Exception as e:
             logger.error(f"Consumer {consumer_id} error: {e}")
             await asyncio.sleep(1)
