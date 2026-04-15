@@ -5634,10 +5634,21 @@ function wireEvents() {
   // ═══════════════════════════════════════════════════════════
   const MC_API = "https://leads.familiada.online";
   const MC_PAGE_SIZE = 50;
-  const MC_TOKEN = "w9EjXa634DLpSmIlUg3kQxHlSRSvpWuf";
+  let mcToken = null;
 
   async function mcGetToken() {
-    return MC_TOKEN;
+    if (mcToken) return mcToken;
+    try {
+      const res = await fetch("/_admin_api/config/lead-finder-token");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.ok && data.token) {
+          mcToken = data.token;
+          return mcToken;
+        }
+      }
+    } catch(e) {}
+    return null;
   }
   let mcState = {
     runs: [],
