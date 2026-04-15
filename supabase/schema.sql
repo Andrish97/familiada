@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict bGXRKWQfQKpfz6Jt19kMFIIdAd3OywqpYPohEHafxVQy9o1V3GK4HnKJi5stxsr
+\restrict S7w6Yh3oyYwRhL75fI4SsS2Ac0KhA7xObea65A26FdkasSh26RNqwfsJrhgYFhT
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -1183,7 +1183,7 @@ CREATE FUNCTION "public"."clear_marketing_logs"() RETURNS "void"
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
 BEGIN
-    DELETE FROM marketing_search_logs;
+    DELETE FROM marketing_search_logs WHERE true;
 END;
 $$;
 
@@ -13731,5 +13731,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict bGXRKWQfQKpfz6Jt19kMFIIdAd3OywqpYPohEHafxVQy9o1V3GK4HnKJi5stxsr
+\unrestrict S7w6Yh3oyYwRhL75fI4SsS2Ac0KhA7xObea65A26FdkasSh26RNqwfsJrhgYFhT
 
