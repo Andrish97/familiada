@@ -731,9 +731,9 @@ async def run_worker(run_id: str, target_count: int):
     task_status = "running"
     verified_in_run = 0
     
-    logger.info("Czyszczę logi przez RPC...")
-    clear_ok = await supabase.call_rpc('clear_marketing_search_logs')
-    clear_q_ok = await supabase.call_rpc('clear_marketing_queries_log')
+    logger.info("Czyszczę logi...")
+    clear_ok = await supabase.clear_table('marketing_search_logs')
+    clear_q_ok = await supabase.clear_table('marketing_search_queries_log')
     logger.info(f"Logi wyczyszczone: logs={clear_ok}, queries={clear_q_ok}")
     await log_to_db("info", f"Rozpoczynam zlecenie na {target_count} leadów.")
 
