@@ -290,13 +290,25 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
     logger.info(f"[C{consumer_id}] Scrapuję stronę: {url}")
     page_content = await fetch_page_content(url)
     
-    prompt = f"""Czy to organizator eventow w Polsce?
+    prompt = f"""Czy to organizator eventow w Polsce? Sprawdz czy firma/osoba SAMODZIELNIE organizuje eventy.
+
+TAK - akceptuj:
+- DJ, wodzirej, konferansjer, animator (freelancer lub firma)
+- Agencja eventowa organizujaca eventy
+- Firma oferujaca uslugi z obstawianiem eventow
+
+NIE - odrzuc:
+- Restauracje, karczmy, dworki (tylko wynajmuja lokal)
+- Wypozyczalnie sprzetu (naglosnienie, ojeślenie bez organizacji)
+- Sal weselne bez obslugi eventow
+- Sklepy, portale, blogi
+
 URL: {url}
 Tytul: {page_content.get('title', '')}
 Maile: {', '.join(emails) if emails else 'brak'}
 
-Odpowiedz JSON:
-{{"ok": 1 lub 0, "email": "najlepszy email lub pusty", "powod": "krotkie uzasadnienie"}}"""
+JSON:
+{{"ok": 1 lub 0, "email": "email lub pusty", "powod": "krotkie"}}"""
 
     try:
         async with httpx.AsyncClient(timeout=90) as client:
