@@ -414,8 +414,7 @@ Jesli nie organizator: {{"ok": 0, "powod": "dlaczego nie organizator"}}"""
             'title': (res.get('title') or '')[:50],
             'best_email': res.get('email', ''),
             'short_description': res.get('short_description', '')[:200],
-            'powod': res.get('powod', '')[:200],
-            'verify_reason': res.get('powod', '')[:200],
+            'reason': res.get('powod', '')[:200],
             'url': url
         }
     except Exception as e:
@@ -474,12 +473,12 @@ async def consumer_task(run_id: str, consumer_id: int, target: int):
                     'email': result['best_email'],
                     'url': result.get('url') or lead_url,
                     'short_description': result.get('short_description', '')[:200],
-                    'verify_reason': result.get('verify_reason', '')[:500]
+                    'verify_reason': result.get('reason', '')[:500]
                 })
                 global verified_in_run
                 verified_in_run += 1
-                verify_reason = result.get('verify_reason', '')
-                await log_to_db("success", f"[C{consumer_id}] Zweryfikowano ({verified_in_run}/{target}): {result.get('url', lead_url)} | powod: {verify_reason}")
+                reason = result.get('reason', '')
+                await log_to_db("success", f"[C{consumer_id}] Zweryfikowano ({verified_in_run}/{target}): {result.get('url', lead_url)} | powod: {reason}")
                 await supabase.delete('marketing_raw_contacts', {'id': lead_id})
             elif result.get('is_event_organizer') and not result.get('best_email'):
                 # Jest organizatorem ale brak dobrego maila - odrzucamy
@@ -491,7 +490,7 @@ async def consumer_task(run_id: str, consumer_id: int, target: int):
                 await log_to_db("warning", f"[C{consumer_id}] Odrzucono (brak maila): {lead_url} | powod: {reject_reason}")
             else:
                 # Odrzucenie - status rejected + powod w kolumnie reject_reason
-                reject_reason = result.get('verify_reason') or result.get('powod') or 'Nie jest organizatorem eventow'
+                reject_reason = result.get('reason') or 'Nie jest organizatorem eventow'
                 await supabase.update('marketing_raw_contacts', {
                     'status': 'rejected',
                     'reject_reason': reject_reason[:500]
