@@ -323,7 +323,7 @@ JSON:
 {{"is_event_organizer": true/false, "best_email": "email", "reasoning": "krótkie"}}"""
 
     try:
-        async with httpx.AsyncClient(timeout=60) as client:
+        async with httpx.AsyncClient(timeout=90) as client:
             r = await client.post(f'{AI_ENDPOINT}/api/chat', json={
                 'model': AI_MODEL,
                 'messages': [{'role': 'system', 'content': 'Jesteś asystentem marketingu. Odpowiadaj TYLKO JSONEM.'}, 
@@ -331,20 +331,29 @@ JSON:
                 'stream': False
             })
             logger.info(f"[C{consumer_id}] AI response status: {r.status_code}")
-            logger.info(f"[C{consumer_id}] AI response body: {r.text[:500]}")
-            if r.status_code == 200:
-                content = r.json().get('message', {}).get('content', '')
-                match = re.search(r'\{.*\}', content, re.DOTALL)
-                if match:
-                    res = json.loads(match.group().replace("'", '"'))
-                    return {
-                        'is_event_organizer': res.get('is_event_organizer', False),
-                        'best_email': res.get('best_email', ''),
-                        'reasoning': res.get('reasoning', '')[:200]
-                    }
+            logger.info(f"[C{consumer_id}] AI response: {r.text[:1000]}")
+            
+            if r.status_code != 200:
+                logger.error(f"[C{consumer_id}] AI ERROR: status {r.status_code}, body: {r.text[:500]}")
+                return None
+                
+            content = r.json().get('message', {}).get('content', '')
+            match = re.search(r'\{.*\}', content, re.DOTALL)
+            if not match:
+                logger.warning(f"[C{consumer_id}] AI: Brak JSON w odpowiedzi. Content: {content[:500]}")
+                return None
+                
+            res = json.loads(match.group().replace("'", '"'))
+            return {
+                'is_event_organizer': res.get('is_event_organizer', False),
+                'best_email': res.get('best_email', ''),
+                'reasoning': res.get('reasoning', '')[:200]
+            }
+    except httpx.TimeoutException:
+        logger.error(f"[C{consumer_id}] AI TIMEOUT after 90s")
         return None
     except Exception as e:
-        logger.error(f"AI verify error: {e}")
+        logger.error(f"[C{consumer_id}] AI verify error: {e}")
         return None
 
 # --- Main Task Loop ---
