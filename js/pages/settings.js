@@ -5703,14 +5703,13 @@ function wireEvents() {
       const res = await fetch(`${MC_API}/api/search-runs/status`, {headers:{Authorization:`Bearer ${tk}`}});
       if (!res.ok) return;
       const data = await res.json();
-      const oldStatus = mcState.status;
       mcState.status = data.status || "idle";
       mcState.logRun = data.run_id;
       mcUpdateButtons();
       
-      if (data.status === "running" && oldStatus !== "running") {
+      if (data.status === "running") {
         mcStartLogAutoRefresh();
-      } else if (data.status !== "running") {
+      } else {
         mcStopLogAutoRefresh();
       }
     } catch(e) {}
@@ -6127,11 +6126,7 @@ function wireEvents() {
     if (!document.getElementById("marketingContactsPanel")?.hidden) {
       mcLoadContacts();
       await mcLoadRuns();
-      if (mcState.status !== "running") {
-        await mcClearLogs();
-      } else {
-        mcLoadLogs();
-      }
+      mcLoadLogs();
     }
   });
   const mcPanel = document.getElementById("marketingContactsPanel");
