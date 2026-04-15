@@ -121,8 +121,8 @@ class SupabaseClient:
 supabase = SupabaseClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
 # --- Helpers ---
-async def log_to_db(run_id, level, message):
-    await supabase.insert('marketing_search_logs', {'run_id': run_id, 'level': level, 'message': message})
+async def log_to_db(level, message):
+    await supabase.insert('marketing_search_logs', {'level': level, 'message': message})
     logger.info(f"[{level.upper()}] {message}")
 
 async def send_telegram(message: str):
@@ -130,9 +130,9 @@ async def send_telegram(message: str):
         logger.warning("Telegram: SERVICE_TOKEN not set")
         return
     try:
-        async with httpx.AsyncClient(timeout=10) as client:
+        async with httpx.AsyncClient(timeout=10, follow_redirects=True) as client:
             r = await client.post(WORKER_TELEGRAM_ENDPOINT, headers={'Authorization': f'Bearer {SERVICE_TOKEN}'}, json={'text': message})
-            if r.status_code != 200:
+            if r.status_code not in (200, 201, 302):
                 logger.error(f"Telegram error: {r.status_code} {r.text}")
             else:
                 logger.info("Telegram notification sent")
@@ -159,7 +159,7 @@ async def fetch_next_query(run_id: str) -> Optional[str]:
     available = [q for q in pool if q not in history]
     
     if not available:
-        await log_to_db(run_id, "warning", "Pula zapytań wyczerpana. Resetuję historię...")
+        await log_to_db("warning", "Pula zapytań wyczerpana. Resetuję historię...")
         await supabase.delete('marketing_search_queries_log') # Clear history
         return pool[0] # Start from first
     
@@ -173,28 +173,28 @@ async def refill_raw_buffer(run_id: str):
     if count >= RAW_BUFFER_THRESHOLD:
         return # Buffer still full enough
 
-    await log_to_db(run_id, "info", f"Bufor surowych kontaktów niski ({count}). Uruchamiam nowe wyszukiwanie...")
+    await log_to_db("info", f"Bufor surowych kontaktów niski ({count}). Uruchamiam nowe wyszukiwanie...")
     
     query = await fetch_next_query(run_id)
     if not query: return
 
-    await log_to_db(run_id, "info", f"Wyszukiwanie: {query}")
+    await log_to_db("info", f"Wyszukiwanie: {query}")
     try:
         async with httpx.AsyncClient(timeout=30) as client:
             r = await client.get(f'{SEARXNG_URL}/search', params={'q': query, 'format': 'json'})
             if r.status_code != 200:
-                await log_to_db(run_id, "error", f"SearXNG Error {r.status_code}")
+                await log_to_db("error", f"SearXNG Error {r.status_code}")
                 return
             results = r.json().get('results', [])
     except Exception as e:
-        await log_to_db(run_id, "error", f"SearXNG Connection Fail: {e}")
+        await log_to_db("error", f"SearXNG Connection Fail: {e}")
         return
 
     # Add query to history
     await supabase.insert('marketing_search_queries_log', {'query_text': query})
 
     if not results:
-        await log_to_db(run_id, "warning", f"Brak wyników dla: {query}")
+        await log_to_db("warning", f"Brak wyników dla: {query}")
         return
 
     # Process results into buffer
@@ -232,7 +232,7 @@ async def refill_raw_buffer(run_id: str):
             })
             if ok: new_raw_count += 1
 
-    await log_to_db(run_id, "success", f"Dodano {new_raw_count} surowych kontaktów do bufora.")
+    await log_to_db("success", f"Dodano {new_raw_count} surowych kontaktów do bufora.")
 
 # --- Core Logic: AI Layer (Consumer) ---
 async def verify_raw_lead(run_id: str, lead: dict) -> bool:
@@ -264,10 +264,14 @@ Odpowiedz WYŁĄCZNIE JSONem:
                 if match:
                     res = json.loads(match.group().replace("'", '"'))
                     if res.get('is_event_organizer') and res.get('best_email'):
+                        url = lead.get('url')
+                        exists = await supabase.select('marketing_verified_contacts', 'id', {'url': url})
+                        if exists:
+                            return True
                         await supabase.insert('marketing_verified_contacts', {
                             'title': lead.get('title'),
                             'email': res['best_email'],
-                            'url': lead.get('url'),
+                            'url': url,
                             'short_description': res.get('reasoning', '')[:200]
                         })
                         return True
@@ -302,13 +306,15 @@ async def consumer_task(run_id: str, consumer_id: int):
                 continue
             
             lead = raw_leads[0]
-            await supabase.update('marketing_raw_contacts', {'status': 'processing'}, {'id': lead['id']})
+            updated = await supabase.update('marketing_raw_contacts', {'status': 'processing'}, {'id': lead['id'], 'status': 'pending'})
+            if not updated:
+                continue
             
-            await log_to_db(run_id, "info", f"[C{consumer_id}] Weryfikacja AI: {lead.get('url')}")
+            await log_to_db("info", f"[C{consumer_id}] Weryfikacja AI: {lead.get('url')}")
             success = await verify_raw_lead(run_id, lead)
             
             if success:
-                await log_to_db(run_id, "success", f"[C{consumer_id}] Zweryfikowano: {lead.get('url')}")
+                await log_to_db("success", f"[C{consumer_id}] Zweryfikowano: {lead.get('url')}")
                 await supabase.delete('marketing_raw_contacts', {'id': lead['id']})
             else:
                 await supabase.update('marketing_raw_contacts', {'status': 'rejected'}, {'id': lead['id']})
@@ -321,7 +327,7 @@ async def run_worker(run_id: str, target_count: int):
     task_status = "running"
     
     await supabase.delete('marketing_search_logs')
-    await log_to_db(run_id, "info", f"Rozpoczynam zlecenie na {target_count} leadów.")
+    await log_to_db("info", f"Rozpoczynam zlecenie na {target_count} leadów.")
 
     producer = asyncio.create_task(producer_task(run_id))
     consumers = [asyncio.create_task(consumer_task(run_id, i)) for i in range(NUM_CONSUMERS)]
@@ -330,7 +336,7 @@ async def run_worker(run_id: str, target_count: int):
         while True:
             if task_stop_event.is_set():
                 task_status = "cancelled"
-                await log_to_db(run_id, "warning", "Zlecenie anulowane.")
+                await log_to_db("warning", "Zlecenie anulowane.")
                 break
 
             while task_pause_event.is_set():
@@ -346,7 +352,7 @@ async def run_worker(run_id: str, target_count: int):
             
             if verified_count >= target_count:
                 task_status = "completed"
-                await log_to_db(run_id, "success", f"Zlecenie zakończone! Pozyskano {verified_count} leadów.")
+                await log_to_db("success", f"Zlecenie zakończone! Pozyskano {verified_count} leadów.")
                 await send_telegram(f"✅ Lead Finder zakończył pracę!\nZlecenie: {run_id[:8]}\nZnaleziono: {verified_count} kontaktów.")
                 break
             

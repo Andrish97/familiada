@@ -5668,6 +5668,8 @@ function wireEvents() {
     const targetInput = document.getElementById("mcTargetCount");
     if (!actionBtn || !cancelBtn) return;
 
+    actionBtn.disabled = false;
+
     switch (mcState.status) {
       case "running":
         actionBtn.textContent = "⏸ Wstrzymaj";
