@@ -301,8 +301,6 @@ async function handleAdminApi(request, env) {
     });
   }
 
-  // Usunięto endpointy lead-finder (komunikacja przeniesiona do bazy danych)
-
   const authorized = await isAdminAuthorized(request);
   if (!authorized) {
     return new Response("Unauthorized", { status: 401 });
@@ -2222,33 +2220,6 @@ async function handleAdminConfigApi(request, env, url) {
     const tg = getTelegramConfig(env);
     if (!tg) return json({ ok: false, error: "telegram_not_configured" }, 422);
     return sendTelegram(tg, "✅ Familiada — test powiadomień Telegram\nPowiadomienia push działają poprawnie!");
-  }
-
-  // POST /_admin_api/config/telegram/notify — notify from services (lead-finder etc)
-  if (url.pathname === "/_admin_api/config/telegram/notify" && request.method === "POST") {
-    const tg = getTelegramConfig(env);
-    if (!tg) return json({ ok: false, error: "telegram_not_configured" }, 422);
-    let body;
-    try { body = await request.json(); } catch { return json({ ok: false, error: "invalid_json" }, 400); }
-    const text = String(body.text || "").slice(0, 2000);
-    if (!text) return json({ ok: false, error: "empty_text" }, 400);
-    return sendTelegram(tg, text);
-  }
-
-  // POST /_admin_api/config/telegram/notify-service — notify with service role key auth
-  if (url.pathname === "/_admin_api/config/telegram/notify-service" && request.method === "POST") {
-    const tg = getTelegramConfig(env);
-    if (!tg) return json({ ok: false, error: "telegram_not_configured" }, 422);
-    const authHeader = request.headers.get("Authorization") || "";
-    const expectedToken = String(env.LEAD_FINDER_SERVICE_KEY || "").trim();
-    if (!expectedToken || !authHeader.startsWith("Bearer ") || authHeader.slice(7) !== expectedToken) {
-      return json({ ok: false, error: "unauthorized" }, 401);
-    }
-    let body;
-    try { body = await request.json(); } catch { return json({ ok: false, error: "invalid_json" }, 400); }
-    const text = String(body.text || "").slice(0, 2000);
-    if (!text) return json({ ok: false, error: "empty_text" }, 400);
-    return sendTelegram(tg, text);
   }
 
   // GET /_admin_api/config/lead-finder-token — serve API key to settings frontend
