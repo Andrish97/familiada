@@ -67,6 +67,7 @@ task_stop_event = asyncio.Event()
 task_pause_event = asyncio.Event()
 task_status = "idle" # idle, running, paused, cancelled, completed
 task_run_id = None
+verified_in_run = 0
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger("lead-finder")
@@ -320,7 +321,9 @@ async def consumer_task(run_id: str, consumer_id: int):
             success = await verify_raw_lead(run_id, lead)
             
             if success:
-                await log_to_db("success", f"[C{consumer_id}] Zweryfikowano: {lead_url}")
+                global verified_in_run
+                verified_in_run += 1
+                await log_to_db("success", f"[C{consumer_id}] Zweryfikowano ({verified_in_run}/{tc}): {lead_url}")
                 await supabase.delete('marketing_raw_contacts', {'id': lead['id']})
             else:
                 await supabase.update('marketing_raw_contacts', {'status': 'rejected'}, {'id': lead['id']})
@@ -329,8 +332,10 @@ async def consumer_task(run_id: str, consumer_id: int):
             await asyncio.sleep(1)
 
 async def run_worker(run_id: str, target_count: int):
-    global task_status
+    global task_status, verified_in_run, target_count as tc
     task_status = "running"
+    verified_in_run = 0
+    tc = target_count
     
     await log_to_db("info", f"Rozpoczynam zlecenie na {target_count} leadów.")
 
@@ -352,13 +357,10 @@ async def run_worker(run_id: str, target_count: int):
             
             task_status = "running"
             
-            verified = await supabase.select('marketing_verified_contacts', 'id', {})
-            verified_count = len(verified) if verified else 0
-            
-            if verified_count >= target_count:
+            if verified_in_run >= target_count:
                 task_status = "completed"
-                await log_to_db("success", f"Zlecenie zakończone! Pozyskano {verified_count} leadów.")
-                await send_telegram(f"✅ Lead Finder zakończył pracę!\nZlecenie: {run_id[:8]}\nZnaleziono: {verified_count} kontaktów.")
+                await log_to_db("success", f"Zlecenie zakończone! Pozyskano {verified_in_run} leadów.")
+                await send_telegram(f"✅ Lead Finder zakończył pracę!\nZlecenie: {run_id[:8]}\nZnaleziono: {verified_in_run} kontaktów.")
                 break
             
             await asyncio.sleep(2)
