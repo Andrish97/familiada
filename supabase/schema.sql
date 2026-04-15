@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict zXeV3loNhOAofK7ok2liGgEKbAOKz6Pc9iq4PxNntw0rIegjtdFviyb88AoVPot
+\restrict 3kVJC2mPjjI3MXNdxvbruWyUKEjbTTDdz8e4TcdwBiodslsiJKH6Lwux2RynbwS
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -1171,6 +1171,20 @@ BEGIN
   )
   SELECT COUNT(*) INTO v_count FROM deleted;
   RETURN v_count;
+END;
+$$;
+
+
+--
+-- Name: clear_marketing_search_logs(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."clear_marketing_search_logs"() RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+BEGIN
+    DELETE FROM marketing_search_logs;
 END;
 $$;
 
@@ -13749,5 +13763,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict zXeV3loNhOAofK7ok2liGgEKbAOKz6Pc9iq4PxNntw0rIegjtdFviyb88AoVPot
+\unrestrict 3kVJC2mPjjI3MXNdxvbruWyUKEjbTTDdz8e4TcdwBiodslsiJKH6Lwux2RynbwS
 
