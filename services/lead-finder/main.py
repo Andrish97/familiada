@@ -144,13 +144,21 @@ class SupabaseClient:
                 headers=self.headers,
                 json=params or {}
             )
+            if r.status_code not in (200, 201):
+                logger.error(f"RPC {function_name} error: {r.status_code} {r.text[:200]}")
             return r.status_code in (200, 201)
     
     async def truncate(self, table):
         if table == 'marketing_search_logs':
-            return await self.call_rpc('clear_marketing_logs')
+            try:
+                return await self.call_rpc('clear_marketing_logs')
+            except Exception as e:
+                logger.error(f"Truncate {table} error: {e}")
+                return False
         async with httpx.AsyncClient() as client:
             r = await client.delete(f'{self.url}/rest/v1/{table}?id=eq.00000000-0000-0000-0000-000000000000', headers=self.headers)
+            if r.status_code not in (200, 204):
+                logger.error(f"Truncate {table} error: {r.status_code} {r.text[:100]}")
             return r.status_code in (200, 204)
 
 supabase = SupabaseClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
@@ -475,6 +483,11 @@ PRZYZNAJ PUNKTY:
 - wypożyczalnia sprzętu bez obsługi
 - branża niezwiązana z eventami
 
+AKCEPTOWANE:
+- profile na Facebooku, Instagramie, LinkedIn (jeśli to organizator eventów)
+- strony na Google Maps / wizytówki
+- profile na platformach społecznościowych z emailem kontaktowym
+
 ----------------------------------------
 WYMÓG MINIMALNY (HARD RULE):
 ----------------------------------------
@@ -707,7 +720,9 @@ async def run_worker(run_id: str, target_count: int):
     task_status = "running"
     verified_in_run = 0
     
-    await supabase.truncate('marketing_search_logs')
+    logger.info("Czyszczę logi...")
+    truncate_ok = await supabase.truncate('marketing_search_logs')
+    logger.info(f"Logi wyczyszczone: {truncate_ok}")
     await log_to_db("info", f"Rozpoczynam zlecenie na {target_count} leadów.")
 
     producer = asyncio.create_task(producer_task(run_id))
