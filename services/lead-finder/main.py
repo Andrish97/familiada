@@ -138,18 +138,17 @@ class SupabaseClient:
             return r.status_code in (200, 204, 404)
     
     async def call_rpc(self, function_name, params=None):
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=30) as client:
             headers = {**self.headers, 'Prefer': 'return=minimal'}
-            logger.info(f"[RPC] Calling {function_name}...")
             r = await client.post(
                 f'{self.url}/rest/v1/rpc/{function_name}',
                 headers=headers,
                 json=params or {}
             )
-            logger.info(f"[RPC] {function_name}: status={r.status_code}, body={r.text[:200] if r.text else 'empty'}")
-            if r.status_code not in (200, 201):
-                logger.error(f"RPC {function_name} error: {r.status_code} {r.text[:200]}")
-            return r.status_code in (200, 201)
+            if r.status_code not in (200, 201, 204):
+                logger.error(f"RPC {function_name} error: {r.status_code} {r.text[:200] if r.text else 'empty'}")
+                return False
+            return True
     
     async def clear_table(self, table):
         """Clear all rows from a table"""
@@ -759,9 +758,9 @@ async def run_worker(run_id: str, target_count: int):
     task_status = "running"
     verified_in_run = 0
     
-    logger.info("Czyszczę logi...")
-    clear_ok = await supabase.clear_table('marketing_search_logs')
-    clear_q_ok = await supabase.clear_table('marketing_search_queries_log')
+    logger.info("Czyszczę logi przez RPC...")
+    clear_ok = await supabase.call_rpc('clear_marketing_search_logs')
+    clear_q_ok = await supabase.call_rpc('clear_marketing_queries_log')
     logger.info(f"Logi wyczyszczone: logs={clear_ok}, queries={clear_q_ok}")
     await log_to_db("info", f"Rozpoczynam zlecenie na {target_count} leadów.")
 
