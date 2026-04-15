@@ -318,8 +318,8 @@ Tytul: {page_content.get('title', '')}
 Maile: {', '.join(emails) if emails else 'brak'}
 
 JSON (tylko jedna z dwóch opcji):
-Jesli OK: {{"ok": 1, "email": "najlepszy prawdziwy email", "title": "krotka nazwa (max 50 znakow)", "powod": "krotki opis"}}
-Jesli NIE: {{"ok": 0, "email": "", "powod": "powod odrzucenia"}}"""
+Jesli OK: {{"ok": 1, "email": "prawdziwy email", "title": "krotka nazwa (max 50 znakow)", "powod": "dlaczego zweryfikowany"}}
+Jesli NIE: {{"ok": 0, "powod": "dlaczego odrzucony"}}"""
 
     try:
         if USE_GROQ:
