@@ -37,8 +37,25 @@ SEARCH_TEMPLATES = [
 ]
 
 BLOCKED_DOMAINS = {
-    'olx.pl', 'oferteo.pl', 'fixly.pl', 'facebook.com', 'instagram.com', 
-    'linkedin.com', 'gumtree.pl', 'sprzedajemy.pl', 'youtube.com', 'tiktok.com'
+    'olx.pl', 'oferteo.pl', 'fixly.pl', 'useme.pl', 'pracuj.pl', 'jooble.pl',
+    'infopraca.pl', 'praca.pl', 'linkedin.com', 'facebook.com', 'instagram.com',
+    'twitter.com', 'x.com', 'tiktok.com', 'youtube.com', 'wa.link', 't.me',
+    'fb.me', 'm.me', 'discord.gg', 'reddit.com', 'pinterest.com', 'medium.com',
+    'substack.com', 'wordpress.com', 'wix.com', 'squarespace.com', 'shopify.com',
+    'etsy.com', 'ebay.com', 'amazon.com', 'allegro.pl', 'empik.com', 'ceneo.pl',
+    'skapiec.pl', 'nexo.pl', 'mediaexpert.pl', 'x-kom.pl', 'morele.net',
+    'komputronik.pl', 'proline.pl', 'agd.pl', 'euro.com.pl', 'rtv-euroagd.pl',
+    'media-markt.pl', 'saturn.pl', 'expert.pl', 'neonet.pl', 'avs.pl',
+    'tele-poli.pl', 'gsm-online.pl', 'komorkomania.pl', 'benchmark.pl',
+    'pcformat.pl', 'cdaction.pl', 'gry-online.pl', 'gamepressure.com',
+    'igromania.pl', 'gry.pl', 'gram.pl', 'swiatgier.pl', 'stopklatka.pl',
+    'filmweb.pl', 'imdb.com', 'rottentomatoes.com', 'metacritic.com',
+    'letterboxd.com', 'trakt.tv', 'simkl.com', 'justwatch.com',
+    'kino-polska.pl', 'filmoteka.pl', 'ninateka.pl', 'culture.pl',
+    'instytutksiazki.pl', 'biblioteka.pl', 'bookcrossing.com', 'goodreads.com',
+    'lubimyczytac.pl', 'granice.pl', 'swiatczytnika.pl', 'ebooki.pl',
+    'legimi.com', 'virtualo.pl', 'publio.pl', 'wolnelektury.pl', 'polona.pl',
+    'weselezklasa.pl', 'gumtree.pl', 'sprzedajemy.pl'
 }
 
 EMAIL_REGEX = re.compile(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}')

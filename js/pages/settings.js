@@ -5712,9 +5712,7 @@ function wireEvents() {
     const tbody = document.getElementById("mcTableBody");
     try {
       let query = sb().from("marketing_verified_contacts").select("*", { count: 'exact' });
-      const fType = document.getElementById("mcFilterType").value;
       const fUsed = document.getElementById("mcFilterUsed").value;
-      if (fType) query = query.eq("contact_type", fType);
       if (fUsed !== "") query = query.eq("is_used", fUsed === "true");
       const from = (mcState.page - 1) * MC_PAGE_SIZE;
       const to = from + MC_PAGE_SIZE - 1;
@@ -5723,14 +5721,14 @@ function wireEvents() {
       mcState.contacts = data || [];
       mcRenderContacts(count || 0);
     } catch(e) {
-      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;opacity:.5;padding:1.5rem">Błąd: ${e.message}</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;opacity:.5;padding:1.5rem">Błąd: ${e.message}</td></tr>`;
     }
   }
 
   function mcRenderContacts(totalCount) {
     const tbody = document.getElementById("mcTableBody");
     if (!mcState.contacts.length) {
-      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;opacity:.5;padding:1.5rem">Brak kontaktów</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;opacity:.5;padding:1.5rem">Brak kontaktów</td></tr>';
       mcUpdatePagination(0);
       return;
     }
@@ -5742,9 +5740,8 @@ function wireEvents() {
         <td class="mc-cell mc-selectable" data-row="${i}" data-col="0">${mcEsc(c.title||'')}</td>
         <td class="mc-cell mc-selectable" data-row="${i}" data-col="1">${mcEsc(c.email||'')}</td>
         <td class="mc-cell mc-selectable" data-row="${i}" data-col="2">${mcEsc(c.url||'')}</td>
-        <td class="mc-cell mc-selectable" data-row="${i}" data-col="3">${mcEsc(c.contact_type||'')}</td>
-        <td class="mc-cell mc-selectable" data-row="${i}" data-col="4">${addedAt}</td>
-        <td class="mc-cell mc-selectable" data-row="${i}" data-col="5" style="text-align:center">${usedText}</td>
+        <td class="mc-cell mc-selectable" data-row="${i}" data-col="3">${addedAt}</td>
+        <td class="mc-cell mc-selectable" data-row="${i}" data-col="4" style="text-align:center">${usedText}</td>
       </tr>`;
     }).join("");
     mcUpdatePagination(totalCount);
@@ -5998,7 +5995,6 @@ function wireEvents() {
   // Init MC events
   document.getElementById("mcStartBtn")?.addEventListener("click", mcStartRun);
   document.getElementById("mcRefreshBtn")?.addEventListener("click", () => { mcLoadRuns(); mcLoadContacts(); });
-  document.getElementById("mcFilterType")?.addEventListener("change", () => { mcState.page=1; mcLoadContacts(); });
   document.getElementById("mcFilterUsed")?.addEventListener("change", () => { mcState.page=1; mcLoadContacts(); });
   document.getElementById("mcMarkUsedBtn")?.addEventListener("click", mcMarkUsed);
   document.getElementById("mcDeleteBtn")?.addEventListener("click", mcDeleteSelected);

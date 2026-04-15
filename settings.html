@@ -852,16 +852,6 @@
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px">
               <div class="panel-title" style="font-size:1rem" data-i18n="settings.marketingContacts.verifiedTitle">Zweryfikowane kontakty</div>
               <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-                <select class="inp" id="mcFilterType" style="width:auto;min-width:120px;font-size:12px">
-
-                  <option value="">Wszystkie typy</option>
-                  <option value="DJ">DJ</option>
-                  <option value="Wodzirej">Wodzirej</option>
-                  <option value="Animator">Animator</option>
-                  <option value="Agencja eventowa">Agencja eventowa</option>
-                  <option value="Konferansjer">Konferansjer</option>
-                  <option value="Inne">Inne</option>
-                </select>
                 <select class="inp" id="mcFilterUsed" style="width:auto;min-width:120px;font-size:12px">
                   <option value="">Wszystkie</option>
                   <option value="false">Nieużywane</option>
@@ -881,16 +871,15 @@
               <table class="mc-table" id="mcContactsTable" style="width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed">
                 <thead>
                   <tr style="background:rgba(255,255,255,.05)">
-                    <th style="padding:6px;text-align:left;width:22%" data-i18n="settings.marketingContacts.table.title">Tytuł</th>
-                    <th style="padding:6px;text-align:left;width:18%" data-i18n="settings.marketingContacts.table.email">Email</th>
-                    <th style="padding:6px;text-align:left;width:22%" data-i18n="settings.marketingContacts.table.url">URL</th>
-                    <th style="padding:6px;text-align:left;width:12%" data-i18n="settings.marketingContacts.table.type">Typ</th>
-                    <th style="padding:6px;text-align:left;width:12%" data-i18n="settings.marketingContacts.table.added">Dodano</th>
+                    <th style="padding:6px;text-align:left;width:25%" data-i18n="settings.marketingContacts.table.title">Tytuł</th>
+                    <th style="padding:6px;text-align:left;width:20%" data-i18n="settings.marketingContacts.table.email">Email</th>
+                    <th style="padding:6px;text-align:left;width:25%" data-i18n="settings.marketingContacts.table.url">URL</th>
+                    <th style="padding:6px;text-align:left;width:15%" data-i18n="settings.marketingContacts.table.added">Dodano</th>
                     <th style="padding:6px;text-align:center;width:50px" data-i18n="settings.marketingContacts.table.used">Użyte</th>
                   </tr>
                 </thead>
                 <tbody id="mcTableBody">
-                  <tr><td colspan="6" style="text-align:center;opacity:.5;padding:1.5rem" data-i18n="common.loading">Ładowanie...</td></tr>
+                  <tr><td colspan="5" style="text-align:center;opacity:.5;padding:1.5rem" data-i18n="common.loading">Ładowanie...</td></tr>
                 </tbody>
               </table>
             </div>
