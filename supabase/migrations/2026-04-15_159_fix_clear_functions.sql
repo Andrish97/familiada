@@ -7,7 +7,7 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
-    DELETE FROM marketing_search_logs;
+    EXECUTE 'TRUNCATE TABLE marketing_search_logs CASCADE';
 END;
 $$;
 
@@ -18,7 +18,7 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
-    DELETE FROM marketing_search_queries_log;
+    EXECUTE 'TRUNCATE TABLE marketing_search_queries_log CASCADE';
 END;
 $$;
 
