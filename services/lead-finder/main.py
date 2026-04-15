@@ -310,23 +310,38 @@ async def consumer_task(run_id: str, consumer_id: int):
                 continue
             
             lead = raw_leads[0]
+            lead_id = lead['id']
             lead_url = lead.get('url')
             
-            updated = await supabase.update('marketing_raw_contacts', {'status': 'processing'}, {'id': lead['id']})
-            recheck = await supabase.select('marketing_raw_contacts', 'status', {'id': lead['id']})
-            if not recheck or recheck[0].get('status') != 'processing':
-                continue
+            await supabase.update('marketing_raw_contacts', {'status': 'processing'}, {'id': lead_id})
             
             await log_to_db("info", f"[C{consumer_id}] Weryfikacja AI: {lead_url}")
             success = await verify_raw_lead(run_id, lead)
+            
+            if task_status not in ("running", "paused"):
+                break
             
             if success:
                 global verified_in_run
                 verified_in_run += 1
                 await log_to_db("success", f"[C{consumer_id}] Zweryfikowano ({verified_in_run}/{tc}): {lead_url}")
-                await supabase.delete('marketing_raw_contacts', {'id': lead['id']})
+                await supabase.delete('marketing_raw_contacts', {'id': lead_id})
             else:
-                await supabase.update('marketing_raw_contacts', {'status': 'rejected'}, {'id': lead['id']})
+                await supabase.update('marketing_raw_contacts', {'status': 'rejected'}, {'id': lead_id})
+        except Exception as e:
+            logger.error(f"Consumer {consumer_id} error: {e}")
+            await asyncio.sleep(1)
+
+async def cleanup_on_cancel():
+    """Revert all processing contacts back to pending when cancelled"""
+    try:
+        processing = await supabase.select('marketing_raw_contacts', 'id', {'status': 'processing'})
+        if processing:
+            for lead in processing:
+                await supabase.update('marketing_raw_contacts', {'status': 'pending'}, {'id': lead['id']})
+            logger.info(f"Reverted {len(processing)} processing contacts to pending")
+    except Exception as e:
+        logger.error(f"Cleanup error: {e}")
         except Exception as e:
             logger.error(f"Consumer {consumer_id} error: {e}")
             await asyncio.sleep(1)

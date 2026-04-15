@@ -5701,10 +5701,16 @@ function wireEvents() {
       const res = await fetch(`${MC_API}/api/search-runs/status`, {headers:{Authorization:`Bearer ${tk}`}});
       if (!res.ok) return;
       const data = await res.json();
+      const oldStatus = mcState.status;
       mcState.status = data.status || "idle";
       mcState.logRun = data.run_id;
       mcUpdateButtons();
-      if (data.status === "running") mcStartLogAutoRefresh();
+      
+      if (data.status === "running" && oldStatus !== "running") {
+        mcStartLogAutoRefresh();
+      } else if (data.status !== "running") {
+        mcStopLogAutoRefresh();
+      }
     } catch(e) {}
   }
 
@@ -5729,10 +5735,12 @@ function wireEvents() {
 
   window.mcAction = async function() {
     const tk = await mcGetToken();
+    await mcLoadRuns();
     if (mcState.status === "running") {
       await fetch(`${MC_API}/api/search-runs/${mcState.logRun}/pause`,{method:"POST", headers:{Authorization:`Bearer ${tk}`}});
       mcState.status = "paused";
       mcUpdateButtons();
+      mcStopLogAutoRefresh();
     } else if (mcState.status === "paused") {
       await fetch(`${MC_API}/api/search-runs/${mcState.logRun}/resume`,{method:"POST", headers:{Authorization:`Bearer ${tk}`}});
       mcState.status = "running";
@@ -5750,6 +5758,7 @@ function wireEvents() {
     mcState.status = "idle";
     mcUpdateButtons();
     mcStopLogAutoRefresh();
+    mcLoadContacts();
   };
 
   async function mcLoadContacts() {
@@ -6039,7 +6048,7 @@ function wireEvents() {
   // Init MC events
   document.getElementById("mcActionBtn")?.addEventListener("click", mcAction);
   document.getElementById("mcCancelBtn")?.addEventListener("click", mcCancel);
-  document.getElementById("mcRefreshBtn")?.addEventListener("click", () => { mcLoadRuns(); mcLoadContacts(); });
+  document.getElementById("mcRefreshBtn")?.addEventListener("click", () => { mcLoadRuns(); mcLoadContacts(); mcLoadLogs(); });
   document.getElementById("mcFilterUsed")?.addEventListener("change", () => { mcState.page=1; mcLoadContacts(); });
   document.getElementById("mcMarkUsedBtn")?.addEventListener("click", mcMarkUsed);
   document.getElementById("mcDeleteBtn")?.addEventListener("click", mcDeleteSelected);
