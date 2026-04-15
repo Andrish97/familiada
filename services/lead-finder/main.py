@@ -701,7 +701,8 @@ async def run_worker(run_id: str, target_count: int):
     
     logger.info("Czyszczę logi...")
     clear_ok = await supabase.clear_table('marketing_search_logs')
-    logger.info(f"Logi wyczyszczone: {clear_ok}")
+    clear_q_ok = await supabase.clear_table('marketing_search_queries_log')
+    logger.info(f"Logi wyczyszczone: logs={clear_ok}, queries={clear_q_ok}")
     await log_to_db("info", f"Rozpoczynam zlecenie na {target_count} leadów.")
 
     producer = asyncio.create_task(producer_task(run_id))
