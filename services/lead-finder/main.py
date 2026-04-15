@@ -324,31 +324,35 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
     
     prompt = f"""Zweryfikuj organizatora eventow w Polsce.
 
-KRYTERIA:
-1. Organizuje eventy (DJ, wodzirej, konferansjer, animator, agencja)
-2. Ma PRAWIDLOWY email kontaktowy:
-   - Prawdziwy mail firmy/freelancera (np. kontakt@firma.pl, info@djnazwa.pl)
-   - NIE przykładowy mail (przyklad@wp.pl, test@gmail.com)
-   - NIE mail z portalu (allegro@allegro.pl)
-   - Krotki, bez dziwnych znakow
+KRYTERIUM GLOWNE: Czy to organizator eventow?
+- DJ, wodzirej, konferansjer, animator, agencja eventowa
+- Firma/organizacja zajmujaca sie profesjonalnie eventami
 
-TAK (zweryfikowano):
-- DJ/wodzirej z wlasnym mailem (kontakt@, info@, dj@, itp.)
-- Firma eventowa z kontaktem firmowym
+KRYTERIUM DRUGORZEDNE: Email kontaktowy (wazne ale nie blokujace):
+- Prawdziwy mail firmy/freelancera (np. kontakt@firma.pl, info@djnazwa.pl)
+- Odrzuc tylko jesli mail jest przykładowy (przyklad@wp.pl) lub z portalu (allegro@allegro.pl)
 
-NIE (odrzuc):
-- Restauracje, karczmy (tylko lokal)
-- Wypozyczalnie sprzetu
+TAK (organizator):
+- DJ/wodzirej z wlasna strona
+- Firma eventowa
+- Animator/impresario z wlasna strona
+
+NIE (nie organizator):
+- Restauracje, karczmy, hotele (tylko lokal)
+- Wypozyczalnie sprzetu/lokali
 - Portale ogłoszeniowe, sklepy
-- Brak prawidlowego emaila
+
+Jesli organizator ale brak emaila lub email zly = OK z ostrzezeniem "brak_email"
 
 URL: {url}
 Tytul: {page_content.get('title', '')}
-Maile: {', '.join(emails) if emails else 'brak'}
+Opis: {page_content.get('description', '')}
+Tresc: {page_content.get('text', '')[:500]}
+Maile znalezione: {', '.join(emails) if emails else 'brak'}
 
-JSON (tylko jedna z dwóch opcji):
-Jesli OK: {{"ok": 1, "email": "prawdziwy email", "title": "krotka nazwa/firma (max 50 znakow, wez z tytulu)", "short_description": "co robi ta firma/osoba, min 50-100 znakow, opisz glowna dzialalnosc", "powod": "dlaczego zweryfikowany"}}
-Jesli NIE: {{"ok": 0, "powod": "dlaczego odrzucony"}}"""
+JSON:
+Jesli organizator: {{"ok": 1, "email": "prawdziwy email lub pusty", "title": "krotka nazwa (max 50 znakow)", "short_description": "50-100 znakow opisujacy dzialalnosc", "powod": "dlaczego organizator"}}
+Jesli nie organizator: {{"ok": 0, "powod": "dlaczego nie organizator"}}"""
 
     try:
         if USE_GROQ:
@@ -410,6 +414,7 @@ Jesli NIE: {{"ok": 0, "powod": "dlaczego odrzucony"}}"""
             'title': (res.get('title') or '')[:50],
             'best_email': res.get('email', ''),
             'short_description': res.get('short_description', '')[:200],
+            'powod': res.get('powod', '')[:200],
             'verify_reason': res.get('powod', '')[:200],
             'url': url
         }
@@ -486,7 +491,7 @@ async def consumer_task(run_id: str, consumer_id: int, target: int):
                 await log_to_db("warning", f"[C{consumer_id}] Odrzucono (brak maila): {lead_url} | powod: {reject_reason}")
             else:
                 # Odrzucenie - status rejected + powod w kolumnie reject_reason
-                reject_reason = result.get('powod', 'Nie jest organizatorem eventow')
+                reject_reason = result.get('verify_reason') or result.get('powod') or 'Nie jest organizatorem eventow'
                 await supabase.update('marketing_raw_contacts', {
                     'status': 'rejected',
                     'reject_reason': reject_reason[:500]
