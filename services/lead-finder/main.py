@@ -32,9 +32,7 @@ SEARCH_TEMPLATES = [
     'Konferansjer {city} kontakt',
     'Agencja eventowa {city} kontakt',
     'Organizacja imprez {city} kontakt',
-    'Animator dla dzieci {city} kontakt',
-    'Zespół muzyczny wesele {city} kontakt',
-    'Fotograf ślubny {city} kontakt'
+    'Animator dla dzieci {city} kontakt'
 ]
 
 BLOCKED_DOMAINS = {
