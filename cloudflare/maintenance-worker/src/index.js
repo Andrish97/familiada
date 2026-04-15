@@ -134,25 +134,9 @@ export default {
       return Response.redirect(clean.toString(), 301);
     }
 
-    // Public notification endpoint (rate-limited, no auth required)
+    // Public notification endpoint (rate-limited, no auth required) - for marketplace, lead-finder etc
     if (url.pathname === "/_api/notify-submission" && request.method === "POST") {
-      return handleNotifySubmission(env);
-    }
-
-    // Public telegram notify endpoint (secret token auth, for lead-finder service)
-    if (url.pathname === "/_api/telegram/notify" && request.method === "POST") {
-      const authHeader = request.headers.get("Authorization") || "";
-      const expectedToken = String(env.LEAD_FINDER_SERVICE_KEY || "").trim();
-      if (!expectedToken || !authHeader.startsWith("Bearer ") || authHeader.slice(7) !== expectedToken) {
-        return json({ ok: false, error: "unauthorized" }, 401);
-      }
-      const tg = getTelegramConfig(env);
-      if (!tg) return json({ ok: false, error: "telegram_not_configured" }, 422);
-      let body;
-      try { body = await request.json(); } catch { return json({ ok: false, error: "invalid_json" }, 400); }
-      const text = String(body.text || "").slice(0, 2000);
-      if (!text) return json({ ok: false, error: "empty_text" }, 400);
-      return sendTelegram(tg, text);
+      return handleNotifySubmission(request, env);
     }
 
     // Public contact form endpoint
@@ -2203,7 +2187,7 @@ async function sendTelegram({ token, chatId }, text) {
   }
 }
 
-async function handleNotifySubmission(env) {
+async function handleNotifySubmission(request, env) {
   // Rate limit: 1 notification per 5 minutes
   const key = "notify_submission_ts";
   const last = await env.MAINT_KV.get(key);
@@ -2212,11 +2196,18 @@ async function handleNotifySubmission(env) {
     return json({ ok: true });
   }
 
+  let text = null;
+  try {
+    const body = await request.json();
+    text = String(body.text || "").slice(0, 2000);
+  } catch {}
+
   const tg = getTelegramConfig(env);
   if (!tg) return json({ ok: true });
 
   await env.MAINT_KV.put(key, String(now), { expirationTtl: 600 });
-  return sendTelegram(tg, "🎮 Familiada — marketplace\nNowa gra czeka na zatwierdzenie");
+  const message = text || "🎮 Familiada — marketplace\nNowa gra czeka na zatwierdzenie";
+  return sendTelegram(tg, message);
 }
 
 

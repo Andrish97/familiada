@@ -21,8 +21,7 @@ AI_ENDPOINT = "http://ollama:11434"
 AI_MODEL = "qwen2.5:3b-instruct-q4_K_M"
 SUPABASE_URL = "http://kong:8000"
 SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", os.getenv("SERVICE_ROLE_KEY", ""))
-WORKER_TELEGRAM_ENDPOINT = "https://settings.familiada.online/_api/telegram/notify"
-SERVICE_TOKEN = os.getenv("LEAD_FINDER_SERVICE_KEY", "")
+WORKER_TELEGRAM_ENDPOINT = "https://settings.familiada.online/_api/notify-submission"
 
 # --- Constants ---
 SEARCH_TEMPLATES = [
@@ -127,18 +126,13 @@ async def log_to_db(level, message):
     logger.info(f"[{level.upper()}] {message}")
 
 async def send_telegram(message: str):
-    if not SERVICE_TOKEN:
-        logger.warning("Telegram: LEAD_FINDER_SERVICE_KEY not set")
-        return
     try:
         async with httpx.AsyncClient(timeout=10) as client:
-            r = await client.post(WORKER_TELEGRAM_ENDPOINT, 
-                headers={'Authorization': f'Bearer {SERVICE_TOKEN}'}, 
-                json={'text': message})
+            r = await client.post(WORKER_TELEGRAM_ENDPOINT, json={'text': message})
             if r.status_code in (200, 201):
                 logger.info("Telegram: notification sent")
             else:
-                logger.error(f"Telegram error: {r.status_code} {r.text[:100]}")
+                logger.warning(f"Telegram rate limited or error: {r.status_code}")
     except Exception as e:
         logger.error(f"Telegram exception: {e}")
 
