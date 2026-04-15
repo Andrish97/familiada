@@ -293,28 +293,24 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
     logger.info(f"[C{consumer_id}] Scrapuję stronę: {url}")
     page_content = await fetch_page_content(url)
     
-    prompt = f"""Zweryfikuj czy to organizator eventow w Polsce.
+    prompt = f"""Czy to firma/osoba ktora ORGANIZUJE eventy w Polsce? (nie tylko wynajmuje lokal/sprzet/zywnosc)
 
-AKCEPTUJ (organizuja eventy):
-- DJ / Wodzirej / Konferansjer / Animator (firma lub freelancer)
-- Agencja eventowa (organizuja imprezy)
-- Firma z obstawa eventow (catering + obsluga)
+TAK:
+- DJ, wodzirej, konferansjer, animator (firma lub freelancer)
+- Firma/organizator ktory samodzielnie prowadzi eventy
 
-NIE AKCEPTUJ (tylko wynajmuja/uslugi bez organizacji):
+NIE:
 - Restauracje, karczmy, dworki, salony (tylko lokal)
-- Wypozyczalnie sprzetu (naglosnienie, oswietlenie bez organizacji)
-- Sklepy, portale ogłoszeniowe, blogi, firmy HR
+- Wypozyczalnie sprzetu (naglosnienie, oswietlenie)
+- Firmy cateringowe, catering
+- Sklepy, portale, blogi, firmy HR
 
 URL: {url}
-Tytul strony: {page_content.get('title', '')}
-Tresc: {page_content.get('text', '')[:1500]}
+Tytul: {page_content.get('title', '')}
 Maile: {', '.join(emails) if emails else 'brak'}
 
-Jesli to organizator eventow i ma dobry email, odpowiedz:
-{{"ok": 1, "tytul": "poprawiony tytul", "email": "najlepszy email", "opis": "krotki opis", "url": "{url}"}}
-
-Jesli NIE, odpowiedz:
-{{"ok": 0, "tytul": "", "email": "", "opis": "powod odrzucenia", "url": ""}}"""
+JSON:
+{{"ok": 1 lub 0, "email": "naj email lub pusty", "opis": "krotkie uzasadnienie"}}"""
 
     try:
         if USE_GROQ:
@@ -373,10 +369,10 @@ Jesli NIE, odpowiedz:
         is_organizer = ok_val in [1, True, '1', 'true', 'True']
         return {
             'is_event_organizer': is_organizer,
-            'title': res.get('tytul', ''),
+            'title': '',
             'best_email': res.get('email', ''),
             'short_description': res.get('opis', '')[:200],
-            'url': res.get('url', url)
+            'url': url
         }
     except Exception as e:
         logger.error(f"[C{consumer_id}] AI verify error: {e}")
