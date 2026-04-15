@@ -443,6 +443,13 @@ async def consumer_task(run_id: str, consumer_id: int, target: int):
                 verified_in_run += 1
                 await log_to_db("success", f"[C{consumer_id}] Zweryfikowano ({verified_in_run}/{target}): {result.get('url', lead_url)}")
                 await supabase.delete('marketing_raw_contacts', {'id': lead_id})
+            elif result.get('is_event_organizer') and not result.get('best_email'):
+                # Jest organizatorem ale brak dobrego maila - odrzucamy
+                await supabase.update('marketing_raw_contacts', {
+                    'status': 'rejected',
+                    'reject_reason': 'Brak prawidlowego emaila kontaktowego'
+                }, {'id': lead_id})
+                logger.info(f"[C{consumer_id}] Odrzucono (brak maila): {lead_url}")
             else:
                 # Porażka - oznaczamy jako rejected w raw z powodem
                 reject_reason = result.get('short_description', 'Nie jest organizatorem eventow')
