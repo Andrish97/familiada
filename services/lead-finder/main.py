@@ -210,7 +210,7 @@ async def fetch_next_query(run_id: str) -> Optional[tuple]:
     
     if not available:
         await log_to_db("warning", "Pula zapytań wyczerpana. Resetuję historię...")
-        await supabase.call_rpc('clear_marketing_queries_log')
+        await supabase.call_rpc('truncate_marketing_queries_log')
         chosen = random.choice(pool)
         return chosen
     
