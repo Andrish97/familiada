@@ -18,8 +18,11 @@ import httpx
 
 # --- Configuration (Internal Docker) ---
 SEARXNG_URL = "http://searxng:8080"
-AI_ENDPOINT = "http://ollama:11434"
-AI_MODEL = "llama3.2:1b"
+USE_GROQ = bool(os.getenv("GROQ_API_KEY", ""))
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+GROQ_MODEL = "llama-3.1-8b-instant"
+OLLAMA_URL = "http://ollama:11434"
+OLLAMA_MODEL = "phi:latest"
 SUPABASE_URL = "http://kong:8000"
 SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", os.getenv("SERVICE_ROLE_KEY", ""))
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
@@ -314,39 +317,67 @@ Jesli NIE, odpowiedz:
 {{"ok": 0, "tytul": "", "email": "", "opis": "powod odrzucenia", "url": ""}}"""
 
     try:
-        async with httpx.AsyncClient(timeout=90) as client:
-            r = await client.post(f'{AI_ENDPOINT}/api/chat', json={
-                'model': AI_MODEL,
-                'messages': [{'role': 'system', 'content': 'Jesteś asystentem marketingu. Odpowiadaj TYLKO JSONEM.'}, 
-                             {'role': 'user', 'content': prompt}],
-                'stream': False
-            })
-            logger.info(f"[C{consumer_id}] AI response status: {r.status_code}")
-            logger.info(f"[C{consumer_id}] AI response: {r.text[:1000]}")
+        if USE_GROQ:
+            # Groq API (OpenAI-compatible)
+            async with httpx.AsyncClient(timeout=30) as client:
+                r = await client.post(
+                    "https://api.groq.com/openai/v1/chat/completions",
+                    headers={
+                        'Authorization': f'Bearer {GROQ_API_KEY}',
+                        'Content-Type': 'application/json'
+                    },
+                    json={
+                        'model': GROQ_MODEL,
+                        'messages': [
+                            {'role': 'system', 'content': 'Odpowiadaj tylko JSON bez markdown.'},
+                            {'role': 'user', 'content': prompt}
+                        ],
+                        'temperature': 0.1
+                    }
+                )
+                logger.info(f"[C{consumer_id}] Groq response status: {r.status_code}")
+                logger.info(f"[C{consumer_id}] Groq response: {r.text[:1000]}")
+                
+                if r.status_code != 200:
+                    logger.error(f"[C{consumer_id}] Groq ERROR: {r.text[:500]}")
+                    return None
+                    
+                content = r.json()['choices'][0]['message']['content']
+        else:
+            # Ollama fallback
+            async with httpx.AsyncClient(timeout=90) as client:
+                r = await client.post(f'{OLLAMA_URL}/api/chat', json={
+                    'model': OLLAMA_MODEL,
+                    'messages': [
+                        {'role': 'system', 'content': 'Jestes asystentem marketingu. Odpowiadaj TYLKO JSONEM.'},
+                        {'role': 'user', 'content': prompt}
+                    ],
+                    'stream': False
+                })
+                logger.info(f"[C{consumer_id}] Ollama response status: {r.status_code}")
+                logger.info(f"[C{consumer_id}] Ollama response: {r.text[:1000]}")
+                
+                if r.status_code != 200:
+                    logger.error(f"[C{consumer_id}] Ollama ERROR: {r.text[:500]}")
+                    return None
+                    
+                content = r.json().get('message', {}).get('content', '')
+        
+        match = re.search(r'\{.*\}', content, re.DOTALL)
+        if not match:
+            logger.warning(f"[C{consumer_id}] AI: Brak JSON. Content: {content[:500]}")
+            return None
             
-            if r.status_code != 200:
-                logger.error(f"[C{consumer_id}] AI ERROR: status {r.status_code}, body: {r.text[:500]}")
-                return None
-                
-            content = r.json().get('message', {}).get('content', '')
-            match = re.search(r'\{.*\}', content, re.DOTALL)
-            if not match:
-                logger.warning(f"[C{consumer_id}] AI: Brak JSON w odpowiedzi. Content: {content[:500]}")
-                return None
-                
-            res = json.loads(match.group().replace("'", '"'))
-            ok_val = res.get('ok', 0)
-            is_organizer = ok_val in [1, True, '1', 'true', 'True']
-            return {
-                'is_event_organizer': is_organizer,
-                'title': res.get('tytul', ''),
-                'best_email': res.get('email', ''),
-                'short_description': res.get('opis', '')[:200],
-                'url': res.get('url', url)
-            }
-    except httpx.TimeoutException:
-        logger.error(f"[C{consumer_id}] AI TIMEOUT after 90s")
-        return None
+        res = json.loads(match.group().replace("'", '"'))
+        ok_val = res.get('ok', 0)
+        is_organizer = ok_val in [1, True, '1', 'true', 'True']
+        return {
+            'is_event_organizer': is_organizer,
+            'title': res.get('tytul', ''),
+            'best_email': res.get('email', ''),
+            'short_description': res.get('opis', '')[:200],
+            'url': res.get('url', url)
+        }
     except Exception as e:
         logger.error(f"[C{consumer_id}] AI verify error: {e}")
         return None
