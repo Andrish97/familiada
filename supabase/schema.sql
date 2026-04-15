@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict AvFxKBewikGffGEIdKXyszaPXtsSto3HCgQK2vSPqsLkybluobJwwf2zfzjM9Lc
+\restrict zXeV3loNhOAofK7ok2liGgEKbAOKz6Pc9iq4PxNntw0rIegjtdFviyb88AoVPot
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -1171,47 +1171,6 @@ BEGIN
   )
   SELECT COUNT(*) INTO v_count FROM deleted;
   RETURN v_count;
-END;
-$$;
-
-
---
--- Name: clear_marketing_logs(); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."clear_marketing_logs"() RETURNS "void"
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    AS $$
-BEGIN
-    DELETE FROM marketing_search_logs WHERE true;
-END;
-$$;
-
-
---
--- Name: clear_marketing_queries_log(); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."clear_marketing_queries_log"() RETURNS "void"
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public'
-    AS $$
-BEGIN
-    DELETE FROM marketing_search_queries_log;
-END;
-$$;
-
-
---
--- Name: clear_marketing_search_logs(); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."clear_marketing_search_logs"() RETURNS "void"
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public'
-    AS $$
-BEGIN
-    DELETE FROM marketing_search_logs;
 END;
 $$;
 
@@ -9827,6 +9786,34 @@ $$;
 
 
 --
+-- Name: truncate_marketing_queries_log(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."truncate_marketing_queries_log"() RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+BEGIN
+    TRUNCATE marketing_search_queries_log RESTART IDENTITY CASCADE;
+END;
+$$;
+
+
+--
+-- Name: truncate_marketing_search_logs(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."truncate_marketing_search_logs"() RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+BEGIN
+    TRUNCATE marketing_search_logs RESTART IDENTITY CASCADE;
+END;
+$$;
+
+
+--
 -- Name: unassign_message_report("uuid"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -13762,5 +13749,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict AvFxKBewikGffGEIdKXyszaPXtsSto3HCgQK2vSPqsLkybluobJwwf2zfzjM9Lc
+\unrestrict zXeV3loNhOAofK7ok2liGgEKbAOKz6Pc9iq4PxNntw0rIegjtdFviyb88AoVPot
 
