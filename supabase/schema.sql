@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 3kVJC2mPjjI3MXNdxvbruWyUKEjbTTDdz8e4TcdwBiodslsiJKH6Lwux2RynbwS
+\restrict H4xj8RfmjrBOFypAGBaSWBBgE9lTdZ0gVtC58wa1gopbgDNvaTUzkX7wGS8H9ol
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -1184,7 +1184,7 @@ CREATE FUNCTION "public"."clear_marketing_search_logs"() RETURNS "void"
     SET "search_path" TO 'public'
     AS $$
 BEGIN
-    DELETE FROM marketing_search_logs;
+    TRUNCATE marketing_search_logs RESTART IDENTITY CASCADE;
 END;
 $$;
 
@@ -13763,5 +13763,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 3kVJC2mPjjI3MXNdxvbruWyUKEjbTTDdz8e4TcdwBiodslsiJKH6Lwux2RynbwS
+\unrestrict H4xj8RfmjrBOFypAGBaSWBBgE9lTdZ0gVtC58wa1gopbgDNvaTUzkX7wGS8H9ol
 
