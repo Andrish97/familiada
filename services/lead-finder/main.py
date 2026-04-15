@@ -215,9 +215,10 @@ async def refill_raw_buffer(run_id: str):
         await log_to_db("error", f"SearXNG Connection Fail: {e}")
         return
 
-    # Add query to history (mark as completed)
+    # Add query to history (mark as completed with urls count)
     await supabase.insert('marketing_search_queries_log', {
         'query_text': query,
+        'urls_found': len(results),
         'status': 'completed'
     })
 
