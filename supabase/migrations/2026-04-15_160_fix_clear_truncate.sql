@@ -1,4 +1,4 @@
--- Migration: Fix clear functions to use TRUNCATE
+-- Migration: Fix clear functions using DELETE (inside function to bypass PostgREST restriction)
 
 CREATE OR REPLACE FUNCTION public.clear_marketing_search_logs()
 RETURNS void
@@ -7,7 +7,7 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
-    EXECUTE 'TRUNCATE TABLE marketing_search_logs CASCADE';
+    DELETE FROM marketing_search_logs;
 END;
 $$;
 
@@ -18,7 +18,7 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
-    EXECUTE 'TRUNCATE TABLE marketing_search_queries_log CASCADE';
+    DELETE FROM marketing_search_queries_log;
 END;
 $$;
 

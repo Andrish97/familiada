@@ -70,7 +70,7 @@ BLOCKED_DOMAINS = {
 }
 
 EMAIL_REGEX = re.compile(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}')
-RAW_BUFFER_THRESHOLD = 20
+RAW_BUFFER_THRESHOLD = 5
 MAX_RESULTS_PER_SEARCH = 10
 
 GARBAGE_EMAIL_DOMAINS = {'sentry.io', 'sentry.wixpress.com', 'sentry-next.wixpress.com', 'mailgun.org', 'mandrillapp.com', 'sendgrid.net', 'mailservers.dev'}
