@@ -774,12 +774,9 @@ async def run_worker(run_id: str, target_count: int):
     task_status = "running"
     verified_in_run = 0
     
-    logger.info("Czyszczę logi przez RPC...")
-    clear_ok = await supabase.call_rpc('clear_marketing_search_logs')
-    clear_q_ok = await supabase.call_rpc('clear_marketing_queries_log')
-    logger.info(f"Logi wyczyszczone: logs={clear_ok}, queries={clear_q_ok}")
+    logger.info(f"Rozpoczynam zlecenie na {target_count} leadów.")
     await log_to_db("info", f"Rozpoczynam zlecenie na {target_count} leadów.")
-
+    
     producer = asyncio.create_task(producer_task(run_id))
     consumers = [asyncio.create_task(consumer_task(run_id, i, target_count)) for i in range(NUM_CONSUMERS)]
     
@@ -826,6 +823,12 @@ async def start_run(target_count: int = 50):
     task_pause_event.clear()
     active_task = asyncio.create_task(run_worker(task_run_id, target_count))
     return {"ok": True, "run_id": task_run_id}
+
+@app.post("/api/logs/clear")
+async def clear_logs():
+    clear_ok = await supabase.call_rpc('clear_marketing_search_logs')
+    clear_q_ok = await supabase.call_rpc('clear_marketing_queries_log')
+    return {"ok": clear_ok and clear_q_ok, "logs": clear_ok, "queries": clear_q_ok}
 
 @app.post("/api/search-runs/{run_id}/pause")
 async def pause_run(run_id: str):
