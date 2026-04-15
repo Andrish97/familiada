@@ -298,6 +298,7 @@ async def refill_raw_buffer(run_id: str):
             text_no_html = re.sub(r'<script[^>]*>.*?</script>', ' ', text, flags=re.DOTALL | re.I)
             text_no_html = re.sub(r'<style[^>]*>.*?</style>', ' ', text_no_html, flags=re.DOTALL | re.I)
             text_no_html = re.sub(r'<noscript[^>]*>.*?</noscript>', ' ', text_no_html, flags=re.DOTALL | re.I)
+            text_no_html = re.sub(r'data:[^;]+;base64,[A-Za-z0-9+/=]+', ' ', text_no_html)
             text_no_html = re.sub(r'<[^>]+>', ' ', text_no_html)
             text_no_html = re.sub(r'\{[^}]*\}', ' ', text_no_html)
             text_no_html = re.sub(r'\[[^\]]*\]', ' ', text_no_html)
