@@ -266,44 +266,35 @@ async def refill_raw_buffer(run_id: str):
         exists_r = await supabase.select('marketing_raw_contacts', 'id', {'url': url})
         if exists_v or exists_r: continue
 
-        # Fetch page content + crawl for emails
-        page_content = {'title': res.get('title', ''), 'description': '', 'text': ''}
-        page_texts = []
+        # Fetch main page content (from search result)
+        page_title = res.get('title', '')
+        page_text = ''
         emails = set()
         try:
             async with httpx.AsyncClient(timeout=15, follow_redirects=True) as client:
-                for path in [url, url.rstrip('/') + '/kontakt', url.rstrip('/') + '/contact', url.rstrip('/') + '/o-nas', url.rstrip('/') + '/about']:
-                    try:
-                        r_crawl = await client.get(path)
-                        if r_crawl.status_code == 200:
-                            text = r_crawl.text[:50000]
-                            # Extract title
-                            title_match = re.search(r'<title[^>]*>([^<]+)</title>', text, re.I)
-                            if title_match and not page_content['title']:
-                                page_content['title'] = title_match.group(1).strip()
-                            # Extract description
-                            desc_match = re.search(r'<meta[^>]*name=["\']description["\'][^>]*content=["\']([^"\']+)["\']', text, re.I)
-                            if desc_match and not page_content['description']:
-                                page_content['description'] = desc_match.group(1).strip()
-                            # Strip HTML and collect text
-                            text_no_html = re.sub(r'<[^>]+>', ' ', text)
-                            text_no_html = re.sub(r'\s+', ' ', text_no_html).strip()
-                            if text_no_html:
-                                page_texts.append(text_no_html[:2000])
-                            # Find emails
-                            found_emails = EMAIL_REGEX.findall(text)
-                            for e in found_emails:
-                                if not any(g in e.lower() for g in GARBAGE_EMAIL_DOMAINS):
-                                    emails.add(e)
-                    except: continue
+                r_crawl = await client.get(url)
+                if r_crawl.status_code == 200:
+                    text = r_crawl.text[:50000]
+                    # Extract title if not from search
+                    title_match = re.search(r'<title[^>]*>([^<]+)</title>', text, re.I)
+                    if title_match and not page_title:
+                        page_title = title_match.group(1).strip()
+                    # Strip HTML and get text
+                    text_no_html = re.sub(r'<[^>]+>', ' ', text)
+                    text_no_html = re.sub(r'\s+', ' ', text_no_html).strip()
+                    page_text = text_no_html[:3000]
+                    # Find emails
+                    found_emails = EMAIL_REGEX.findall(text)
+                    for e in found_emails:
+                        if not any(g in e.lower() for g in GARBAGE_EMAIL_DOMAINS):
+                            emails.add(e)
         except: pass
 
         if emails:
             email_list = list(emails)
-            page_text = ' '.join(page_texts)[:5000]
             ok = await supabase.insert('marketing_raw_contacts', {
                 'url': url,
-                'title': page_content['title'],
+                'title': page_title,
                 'page_text': page_text,
                 'emails_found': email_list,
                 'status': 'pending'
