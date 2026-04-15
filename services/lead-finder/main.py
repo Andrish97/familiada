@@ -164,12 +164,13 @@ async def send_telegram(message: str):
         logger.error(f"Telegram exception: {e}")
 
 # --- Core Logic: Search Layer (Producer) ---
-async def fetch_next_query(run_id: str) -> Optional[str]:
-    """Finds next available query template + city combo not in history"""
-    cities_data = await supabase.select('marketing_cities', 'name', {'is_active': 'true'})
+async def fetch_next_query(run_id: str) -> Optional[tuple]:
+    """Finds next available query template + city combo not in history. Returns (query, city_population)"""
+    cities_data = await supabase.select('marketing_cities', 'name,population', {'is_active': 'true'})
     if not cities_data: return None
     
-    cities = [c['name'] for c in cities_data]
+    city_pop = {c['name']: c.get('population', 0) or 0 for c in cities_data}
+    cities = list(city_pop.keys())
     history_data = await supabase.select('marketing_search_queries_log', 'query_text')
     history = {h['query_text'] for h in history_data} if history_data else set()
 
@@ -177,50 +178,66 @@ async def fetch_next_query(run_id: str) -> Optional[str]:
     pool = []
     for city in cities:
         for template in SEARCH_TEMPLATES:
-            pool.append(template.format(city=city))
+            pool.append((template.format(city=city), city))
 
     # Check if pool is exhausted
-    available = [q for q in pool if q not in history]
+    available = [q for q in pool if q[0] not in history]
     
     if not available:
         await log_to_db("warning", "Pula zapytań wyczerpana. Resetuję historię...")
-        await supabase.delete('marketing_search_queries_log') # Clear history
-        return random.choice(pool) # Start from random
+        await supabase.delete('marketing_search_queries_log')
+        chosen = random.choice(pool)
+        return chosen
     
     return random.choice(available)
 
 async def refill_raw_buffer(run_id: str):
     """Producer: Searches SearXNG and fills marketing_raw_contacts (only pending/processing, not rejected)"""
-    # Count contacts that are NOT rejected (pending + processing)
     pending = await supabase.select('marketing_raw_contacts', 'id', {'status': 'pending'})
     processing = await supabase.select('marketing_raw_contacts', 'id', {'status': 'processing'})
     count = (len(pending) if pending else 0) + (len(processing) if processing else 0)
     
     if count >= RAW_BUFFER_THRESHOLD:
-        return # Buffer still full enough
+        return
 
     await log_to_db("info", f"Bufor surowych kontaktów niski ({count}). Uruchamiam nowe wyszukiwanie...")
     
-    query = await fetch_next_query(run_id)
-    if not query: 
+    query_data = await fetch_next_query(run_id)
+    if not query_data: 
         await log_to_db("error", "Brak dostępnych zapytań!")
         return
 
-    await log_to_db("info", f"Wyszukiwanie: {query}")
+    query, city_name = query_data[0], query_data[1]
+    
+    # Dynamic limit based on city population
+    city_pop_data = await supabase.select('marketing_cities', 'population', {'name': city_name})
+    population = city_pop_data[0].get('population', 0) if city_pop_data else 0
+    if population >= 500000:
+        max_results = 15
+    elif population >= 200000:
+        max_results = 10
+    elif population >= 100000:
+        max_results = 7
+    elif population >= 50000:
+        max_results = 5
+    else:
+        max_results = 3
+
+    await log_to_db("info", f"Wyszukiwanie ({city_name}, {population:,} mieszk., limit: {max_results}): {query}")
     try:
         async with httpx.AsyncClient(timeout=30) as client:
             r = await client.get(f'{SEARXNG_URL}/search', params={'q': query, 'format': 'json'})
             if r.status_code != 200:
                 await log_to_db("error", f"SearXNG Error {r.status_code}")
                 return
-            results = r.json().get('results', [])[:MAX_RESULTS_PER_SEARCH]
+            results = r.json().get('results', [])[:max_results]
     except Exception as e:
         await log_to_db("error", f"SearXNG Connection Fail: {e}")
         return
 
-    # Add query to history (mark as completed with urls count)
     await supabase.insert('marketing_search_queries_log', {
         'query_text': query,
+        'city': city_name,
         'urls_found': len(results),
         'status': 'completed'
     })
