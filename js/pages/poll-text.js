@@ -1,7 +1,7 @@
 // js/pages/poll-text.js
-import { sb } from "../core/supabase.js?v=v2026-04-15T17051";
-import { getUser } from "../core/auth.js?v=v2026-04-15T17051";
-import { initI18n, t } from "../../translation/translation.js?v=v2026-04-15T17051";
+import { sb } from "../core/supabase.js?v=v2026-04-15T19372";
+import { getUser } from "../core/auth.js?v=v2026-04-15T19372";
+import { initI18n, t } from "../../translation/translation.js?v=v2026-04-15T19372";
 
 initI18n({ withSwitcher: true });
 
