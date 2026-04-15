@@ -293,24 +293,31 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
     logger.info(f"[C{consumer_id}] Scrapuję stronę: {url}")
     page_content = await fetch_page_content(url)
     
-    prompt = f"""Czy to firma/osoba ktora ORGANIZUJE eventy w Polsce? (nie tylko wynajmuje lokal/sprzet/zywnosc)
+    prompt = f"""Zweryfikuj organizatora eventow w Polsce.
+
+KRYTERIA:
+1. Organizuje eventy (DJ, wodzirej, konferansjer, animator, agencja)
+2. Ma PRAWIDLOWY email kontaktowy:
+   - Prawdziwy mail firmy/freelancera (np. kontakt@firma.pl, info@djnazwa.pl)
+   - NIE przykładowy mail (przyklad@wp.pl, test@gmail.com)
+   - NIE mail z portalu (allegro@allegro.pl)
+   - Krotki, bez dziwnych znakow
 
 TAK:
-- DJ, wodzirej, konferansjer, animator (firma lub freelancer)
-- Firma/organizator ktory samodzielnie prowadzi eventy
+- DJ/wodzirej z wlasnym mailem (kontakt@, info@, dj@, itp.)
+- Firma eventowa z kontaktem firmowym
 
 NIE:
-- Restauracje, karczmy, dworki, salony (tylko lokal)
-- Wypozyczalnie sprzetu (naglosnienie, oswietlenie)
-- Firmy cateringowe, catering
-- Sklepy, portale, blogi, firmy HR
+- Restauracje, karczmy (tylko lokal)
+- Wypozyczalnie sprzetu
+- Portale ogłoszeniowe, sklepy
 
 URL: {url}
 Tytul: {page_content.get('title', '')}
 Maile: {', '.join(emails) if emails else 'brak'}
 
 JSON:
-{{"ok": 1 lub 0, "email": "naj email lub pusty", "opis": "krotkie uzasadnienie"}}"""
+{{"ok": 1 lub 0, "email": "najlepszy prawdziwy email lub pusty", "opis": "krotkie uzasadnienie"}}"""
 
     try:
         if USE_GROQ:
