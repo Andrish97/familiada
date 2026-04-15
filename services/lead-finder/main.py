@@ -279,10 +279,18 @@ async def refill_raw_buffer(run_id: str):
                     title_match = re.search(r'<title[^>]*>([^<]+)</title>', text, re.I)
                     if title_match and not page_title:
                         page_title = title_match.group(1).strip()
-                    # Strip HTML and get text
-                    text_no_html = re.sub(r'<[^>]+>', ' ', text)
+                    # Extract meaningful text (skip scripts, styles, meta)
+                    text_no_html = re.sub(r'<script[^>]*>.*?</script>', ' ', text, flags=re.DOTALL | re.I)
+                    text_no_html = re.sub(r'<style[^>]*>.*?</style>', ' ', text_no_html, flags=re.DOTALL | re.I)
+                    text_no_html = re.sub(r'<noscript[^>]*>.*?</noscript>', ' ', text_no_html, flags=re.DOTALL | re.I)
+                    text_no_html = re.sub(r'<[^>]+>', ' ', text_no_html)
+                    text_no_html = re.sub(r'\{[^}]*\}', ' ', text_no_html)
+                    text_no_html = re.sub(r'\[[^\]]*\]', ' ', text_no_html)
                     text_no_html = re.sub(r'\s+', ' ', text_no_html).strip()
-                    page_text = text_no_html[:3000]
+                    # Remove very short words and common noise
+                    words = text_no_html.split()
+                    words = [w for w in words if len(w) > 2 and not w.startswith('http')]
+                    page_text = ' '.join(words)[:2000]
                     # Find emails
                     found_emails = EMAIL_REGEX.findall(text)
                     for e in found_emails:
@@ -292,6 +300,19 @@ async def refill_raw_buffer(run_id: str):
 
         if emails:
             email_list = list(emails)
+            
+            # Check for duplicate emails in verified and raw
+            duplicate = False
+            for email in email_list:
+                dup_v = await supabase.select('marketing_verified_contacts', 'id', {'email': email})
+                dup_r = await supabase.select('marketing_raw_contacts', 'id', {'emails_found': f'%{email}%'})
+                if dup_v or dup_r:
+                    duplicate = True
+                    break
+            
+            if duplicate:
+                continue
+            
             ok = await supabase.insert('marketing_raw_contacts', {
                 'url': url,
                 'title': page_title,
@@ -327,7 +348,6 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
     """Consumer: Asks AI to verify if the contact is an event organizer."""
     url = lead.get('url')
     title = lead.get('title', '')
-    page_text = lead.get('page_text', '')[:3000]
     emails = lead.get('emails_found', [])
     if isinstance(emails, str):
         try: emails = json.loads(emails)
@@ -337,19 +357,20 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
     
     prompt = f"""Zweryfikuj organizatora eventow w Polsce.
 
-KRYTERIUM GLOWNE: Czy to organizator eventow?
-- DJ, wodzirej, konferansjer, animator, agencja eventowa
-- Firma/organizacja zajmujaca sie profesjonalnie eventami
-- Sprawdz tresc strony - jesli o eventach/weselach/imprezach = organizator
+KRYTERIUM GLOWNE: Czy to organizator eventow / imprez?
+- DJ, wodzirej, konferansjer, ANIMATOR (takze dla dzieci!)
+- Agencja eventowa, firma organizujaca imprezy
+- Oferta: wesela, urodziny, imprezy firmowe, animacje dla dzieci
+- Sprawdz TYTUL strony - jesli o eventach/imprezach/animacjach = organizator
 
 NIE organizator (odrzuc):
 - Restauracje, karczmy, hotele (tylko lokal)
 - Wypozyczalnie sprzetu/lokali bez uslug eventowych
 - Portale ogłoszeniowe, sklepy
-- Firmy budowlane, AGD, itp.
+- Firmy budowlane, AGD, szkoly, przedszkola (tylko edukacja)
 
 KRYTERIUM DRUGORZEDNE: Email - musi byc prawdziwy!
-- Dobry email: kontakt@, info@, dj@, imie@firmadomena.pl
+- Dobry email: kontakt@, info@, biuro@, dj@, animacja@, imie@firmadomena.pl
 - Zly email: przyklad@, test@, example@, allegro@, olx@, sentry@
 
 Jesli organizator + dobry email = VERIFIED
@@ -358,7 +379,6 @@ Jesli nie organizator = ODRZUCONY
 
 URL: {url}
 TYTUL: {title}
-TRESC STRONY: {page_text[:2000]}
 MAILE: {', '.join(emails) if emails else 'brak'}
 
 JSON:
