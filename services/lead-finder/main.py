@@ -291,37 +291,35 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
     logger.info(f"[C{consumer_id}] Scrapuję stronę: {url}")
     page_content = await fetch_page_content(url)
     
-    prompt = f"""Jesteś asystentem marketingu. Twoje zadanie to znaleźć kontakty do organizatorów eventów w Polsce.
+    prompt = f"""Znajdź kontakty do firm i osób oferujących usługi eventowe w Polsce.
 
-Zaliczeni jako organizator eventów:
-- DJ / DJ na wesele / DJ eventowy
-- Wodzirej / Wodzirej weselny
-- Konferansjer / Konferansjer weselny
-- Animator dla dzieci /Animator imprez
+AKCEPTUJ te strony (zawsze):
+- DJ / DJ na wesele / DJ eventowy / DJ mobilny
+- Wodzirej / Wodzirej weselny / Wodzirej DJ
+- Konferansjer / Konferansjer weselny / Prowadzący imprezy
+- Animator dla dzieci / Animator eventowy
 - Agencja eventowa / Agencja organizacji imprez
-- Zespół muzyczny / Kapela weselna
-- Fotograf ślubny / Fotograf eventowy
-- Firma oferująca usługi eventowe (nagłośnienie, oświetlenie, catering na eventy)
+- Zespół muzyczny / Kapela weselna / Orkiestra
+- Fotograf ślubny / Fotograf eventowy / Kamerzysta
+- Firma eventowa (nagłośnienie, oświetlenie, sceny, catering)
+- Sal weselne / Obiekty na imprezy
 
-NIE są organizatorami:
-- Sklepy (Allegro, Amazon)
-- Portale z ogłoszeniami (OLX, Oferteo)
-- Firmy HR / Praca
+ODRZUĆ tylko te:
+- Allegro, Amazon, OLX, Oferteo (sklepy/portale)
+- Pracuj.pl, linkedin (firmy HR)
 - Blogi bez oferty usług
 
-Przeanalizuj stronę:
+Strona do sprawdzenia:
 URL: {url}
 Tytuł: {page_content.get('title', '')}
 Opis: {page_content.get('description', '')}
-Tekst: {page_content.get('text', '')[:1500]}
+Tekst: {page_content.get('text', '')[:2000]}
 Maile: {', '.join(emails) if emails else 'brak'}
 
-Jeśli strona należy do organizatora eventów z Polski i ma email kontaktowy - odpowiedz TAK.
+AKCEPTUJ jeśli masz jakikolwiek dowód że to firma/osoba eventowa. Email kontaktowy jest wymagany.
 
-Odpowiedz TYLKO JSON (bez markdown):
-{{"is_event_organizer": true/false, "best_email": "email lub pusty", "reasoning": "1-2 zdania"}}
-
-WAŻNE: Bądź liberalny - jeśli masz wątpliwości, odpowiedz TAK. Lepiej mieć fałszywy trop niż przegapić realnego klienta."""
+JSON:
+{{"is_event_organizer": true/false, "best_email": "email", "reasoning": "krótkie"}}"""
 
     try:
         async with httpx.AsyncClient(timeout=60) as client:
