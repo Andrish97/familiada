@@ -5658,8 +5658,40 @@ function wireEvents() {
     page: 1,
     logs: [],
     logRun: null,
-    logTimer: null
+    logTimer: null,
+    status: "idle"
   };
+
+  function mcUpdateButtons() {
+    const actionBtn = document.getElementById("mcActionBtn");
+    const cancelBtn = document.getElementById("mcCancelBtn");
+    const targetInput = document.getElementById("mcTargetCount");
+    if (!actionBtn || !cancelBtn) return;
+
+    switch (mcState.status) {
+      case "running":
+        actionBtn.textContent = "⏸ Wstrzymaj";
+        actionBtn.className = "btn sm warning";
+        cancelBtn.style.display = "";
+        targetInput.disabled = true;
+        break;
+      case "paused":
+        actionBtn.textContent = "▶ Wznów";
+        actionBtn.className = "btn sm gold";
+        cancelBtn.style.display = "";
+        targetInput.disabled = true;
+        break;
+      case "cancelled":
+      case "completed":
+      case "idle":
+      default:
+        actionBtn.textContent = "▶ Uruchom";
+        actionBtn.className = "btn sm gold";
+        cancelBtn.style.display = "none";
+        targetInput.disabled = false;
+        break;
+    }
+  }
 
   async function mcLoadRuns() {
     try {
@@ -5667,45 +5699,55 @@ function wireEvents() {
       const res = await fetch(`${MC_API}/api/search-runs/status`, {headers:{Authorization:`Bearer ${tk}`}});
       if (!res.ok) return;
       const data = await res.json();
+      mcState.status = data.status || "idle";
       mcState.logRun = data.run_id;
+      mcUpdateButtons();
       if (data.status === "running") mcStartLogAutoRefresh();
     } catch(e) {}
   }
 
   async function mcStartRun() {
-    const btn = document.getElementById("mcStartBtn");
+    const actionBtn = document.getElementById("mcActionBtn");
     const count = parseInt(document.getElementById("mcTargetCount").value) || 50;
-    btn.disabled = true;
+    actionBtn.disabled = true;
     try {
       const tk = await mcGetToken();
       const res = await fetch(`${MC_API}/api/search-runs?target_count=${count}`, {method:"POST", headers:{Authorization:`Bearer ${tk}`}});
       if (!res.ok) throw new Error("Failed");
       const data = await res.json();
-      btn.textContent = "✅ Uruchomiono!";
-      setTimeout(()=>{ btn.textContent = "▶ Uruchom"; btn.disabled = false; }, 1500);
+      actionBtn.textContent = "✅ Uruchomiono!";
+      setTimeout(()=>{ mcState.status = "running"; mcUpdateButtons(); }, 1500);
       mcState.logRun = data.run_id;
       mcStartLogAutoRefresh();
     } catch(e) {
       alert("Błąd: " + e.message);
-      btn.disabled = false;
+      mcUpdateButtons();
     }
   }
 
-  window.mcPause = async function(id) {
+  window.mcAction = async function() {
     const tk = await mcGetToken();
-    await fetch(`${MC_API}/api/search-runs/${id}/pause`,{method:"POST", headers:{Authorization:`Bearer ${tk}`}});
-    mcLoadRuns();
+    if (mcState.status === "running") {
+      await fetch(`${MC_API}/api/search-runs/${mcState.logRun}/pause`,{method:"POST", headers:{Authorization:`Bearer ${tk}`}});
+      mcState.status = "paused";
+      mcUpdateButtons();
+    } else if (mcState.status === "paused") {
+      await fetch(`${MC_API}/api/search-runs/${mcState.logRun}/resume`,{method:"POST", headers:{Authorization:`Bearer ${tk}`}});
+      mcState.status = "running";
+      mcUpdateButtons();
+      mcStartLogAutoRefresh();
+    } else {
+      await mcStartRun();
+    }
   };
-  window.mcResume = async function(id) {
-    const tk = await mcGetToken();
-    await fetch(`${MC_API}/api/search-runs/${id}/resume`,{method:"POST", headers:{Authorization:`Bearer ${tk}`}});
-    mcLoadRuns();
-  };
-  window.mcCancel = async function(id) {
+
+  window.mcCancel = async function() {
     if(!confirm("Anulować zlecenie?")) return;
     const tk = await mcGetToken();
-    await fetch(`${MC_API}/api/search-runs/${id}/cancel`,{method:"POST", headers:{Authorization:`Bearer ${tk}`}});
-    mcLoadRuns();
+    await fetch(`${MC_API}/api/search-runs/${mcState.logRun}/cancel`,{method:"POST", headers:{Authorization:`Bearer ${tk}`}});
+    mcState.status = "idle";
+    mcUpdateButtons();
+    mcStopLogAutoRefresh();
   };
 
   async function mcLoadContacts() {
@@ -5993,7 +6035,8 @@ function wireEvents() {
   function mcStopLogAutoRefresh() { if (mcState.logTimer) { clearInterval(mcState.logTimer); mcState.logTimer = null; }}
 
   // Init MC events
-  document.getElementById("mcStartBtn")?.addEventListener("click", mcStartRun);
+  document.getElementById("mcActionBtn")?.addEventListener("click", mcAction);
+  document.getElementById("mcCancelBtn")?.addEventListener("click", mcCancel);
   document.getElementById("mcRefreshBtn")?.addEventListener("click", () => { mcLoadRuns(); mcLoadContacts(); });
   document.getElementById("mcFilterUsed")?.addEventListener("change", () => { mcState.page=1; mcLoadContacts(); });
   document.getElementById("mcMarkUsedBtn")?.addEventListener("click", mcMarkUsed);
@@ -6007,7 +6050,6 @@ function wireEvents() {
   const mcObserver = new MutationObserver(async () => {
     if (!document.getElementById("marketingContactsPanel")?.hidden) {
       mcLoadContacts();
-      // Check current run status
       mcLoadRuns();
     }
   });
@@ -6015,6 +6057,7 @@ function wireEvents() {
   if (mcPanel) mcObserver.observe(mcPanel, { attributes: true, attributeFilter: ["hidden"] });
 
   showAuth("settings.login.checking");
+  mcUpdateButtons();
 
   const ok = await checkMe();
   if (ok) {
