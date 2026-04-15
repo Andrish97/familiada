@@ -1,4 +1,8 @@
--- Migration: Fix clear functions to use TRUNCATE
+-- SUPERSEDES: 2026-04-15_158_clear_tables_rpc.sql
+-- SUPERSEDES: 2026-04-15_159_fix_clear_functions.sql
+-- SUPERSEDES: 2026-04-15_160_fix_clear_truncate.sql
+
+-- Migration: Final fix - clear functions using DELETE inside plpgsql function
 
 CREATE OR REPLACE FUNCTION public.clear_marketing_search_logs()
 RETURNS void
@@ -7,7 +11,7 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
-    EXECUTE 'TRUNCATE TABLE marketing_search_logs CASCADE';
+    DELETE FROM marketing_search_logs;
 END;
 $$;
 
@@ -18,7 +22,7 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
-    EXECUTE 'TRUNCATE TABLE marketing_search_queries_log CASCADE';
+    DELETE FROM marketing_search_queries_log;
 END;
 $$;
 
