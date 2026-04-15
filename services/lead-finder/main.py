@@ -290,25 +290,28 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
     logger.info(f"[C{consumer_id}] Scrapuję stronę: {url}")
     page_content = await fetch_page_content(url)
     
-    prompt = f"""Czy to organizator eventow w Polsce? Sprawdz czy firma/osoba SAMODZIELNIE organizuje eventy.
+    prompt = f"""Zweryfikuj czy to organizator eventow w Polsce.
 
-TAK - akceptuj:
-- DJ, wodzirej, konferansjer, animator (freelancer lub firma)
-- Agencja eventowa organizujaca eventy
-- Firma oferujaca uslugi z obstawianiem eventow
+AKCEPTUJ (organizuja eventy):
+- DJ / Wodzirej / Konferansjer / Animator (firma lub freelancer)
+- Agencja eventowa (organizuja imprezy)
+- Firma z obstawa eventow (catering + obsluga)
 
-NIE - odrzuc:
-- Restauracje, karczmy, dworki (tylko wynajmuja lokal)
-- Wypozyczalnie sprzetu (naglosnienie, ojeślenie bez organizacji)
-- Sal weselne bez obslugi eventow
-- Sklepy, portale, blogi
+NIE AKCEPTUJ (tylko wynajmuja/uslugi bez organizacji):
+- Restauracje, karczmy, dworki, salony (tylko lokal)
+- Wypozyczalnie sprzetu (naglosnienie, oswietlenie bez organizacji)
+- Sklepy, portale ogłoszeniowe, blogi, firmy HR
 
 URL: {url}
-Tytul: {page_content.get('title', '')}
+Tytul strony: {page_content.get('title', '')}
+Tresc: {page_content.get('text', '')[:1500]}
 Maile: {', '.join(emails) if emails else 'brak'}
 
-JSON:
-{{"ok": 1 lub 0, "email": "email lub pusty", "powod": "krotkie"}}"""
+Jesli to organizator eventow i ma dobry email, odpowiedz:
+{{"ok": 1, "tytul": "poprawiony tytul", "email": "najlepszy email", "opis": "krotki opis", "url": "{url}"}}
+
+Jesli NIE, odpowiedz:
+{{"ok": 0, "tytul": "", "email": "", "opis": "powod odrzucenia", "url": ""}}"""
 
     try:
         async with httpx.AsyncClient(timeout=90) as client:
@@ -336,8 +339,10 @@ JSON:
             is_organizer = ok_val in [1, True, '1', 'true', 'True']
             return {
                 'is_event_organizer': is_organizer,
+                'title': res.get('tytul', ''),
                 'best_email': res.get('email', ''),
-                'reasoning': res.get('powod', '')[:200]
+                'short_description': res.get('opis', '')[:200],
+                'url': res.get('url', url)
             }
     except httpx.TimeoutException:
         logger.error(f"[C{consumer_id}] AI TIMEOUT after 90s")
@@ -394,19 +399,19 @@ async def consumer_task(run_id: str, consumer_id: int, target: int):
             elif result.get('is_event_organizer') and result.get('best_email'):
                 # Sukces - wstawiamy do verified, usuwamy z raw
                 await supabase.insert('marketing_verified_contacts', {
-                    'title': lead.get('title'),
+                    'title': result.get('title') or lead.get('title'),
                     'email': result['best_email'],
-                    'url': lead_url,
-                    'short_description': result.get('reasoning', '')[:200],
-                    'verify_reason': result.get('reasoning', '')[:500]
+                    'url': result.get('url') or lead_url,
+                    'short_description': result.get('short_description', '')[:200],
+                    'verify_reason': result.get('short_description', '')[:500]
                 })
                 global verified_in_run
                 verified_in_run += 1
-                await log_to_db("success", f"[C{consumer_id}] Zweryfikowano ({verified_in_run}/{target}): {lead_url}")
+                await log_to_db("success", f"[C{consumer_id}] Zweryfikowano ({verified_in_run}/{target}): {result.get('url', lead_url)}")
                 await supabase.delete('marketing_raw_contacts', {'id': lead_id})
             else:
                 # Porażka - oznaczamy jako rejected w raw z powodem
-                reject_reason = result.get('reasoning', 'Nie jest organizatorem')
+                reject_reason = result.get('short_description', 'Nie jest organizatorem eventow')
                 await supabase.update('marketing_raw_contacts', {
                     'status': 'rejected',
                     'reject_reason': reject_reason[:500]
