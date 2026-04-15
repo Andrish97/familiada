@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict QMssWDVo2wsfpEIEshtWFGJOblDc1DLyVj527nGr4GCoZXlryAdTtHoJCGydIcH
+\restrict ZWI7l7OpxKEIWC04e9pLRtpnsQhJa5B6cyRgpaA1P2Q8aN15RGdI0Zb6L0oDax3
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -10387,7 +10387,8 @@ CREATE TABLE "public"."marketing_raw_contacts" (
     "url" "text" NOT NULL,
     "emails_found" "jsonb" DEFAULT '[]'::"jsonb",
     "title" "text",
-    "status" "text" DEFAULT 'pending'::"text"
+    "status" "text" DEFAULT 'pending'::"text",
+    "reject_reason" "text"
 );
 
 
@@ -10429,7 +10430,8 @@ CREATE TABLE "public"."marketing_verified_contacts" (
     "email" "text" NOT NULL,
     "url" "text" NOT NULL,
     "is_used" boolean DEFAULT false,
-    "added_at" timestamp with time zone DEFAULT "now"()
+    "added_at" timestamp with time zone DEFAULT "now"(),
+    "verify_reason" "text"
 );
 
 
@@ -13731,5 +13733,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict QMssWDVo2wsfpEIEshtWFGJOblDc1DLyVj527nGr4GCoZXlryAdTtHoJCGydIcH
+\unrestrict ZWI7l7OpxKEIWC04e9pLRtpnsQhJa5B6cyRgpaA1P2Q8aN15RGdI0Zb6L0oDax3
 
