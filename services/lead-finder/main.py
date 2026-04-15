@@ -303,21 +303,23 @@ KRYTERIA:
    - NIE mail z portalu (allegro@allegro.pl)
    - Krotki, bez dziwnych znakow
 
-TAK:
+TAK (zweryfikowano):
 - DJ/wodzirej z wlasnym mailem (kontakt@, info@, dj@, itp.)
 - Firma eventowa z kontaktem firmowym
 
-NIE:
+NIE (odrzuc):
 - Restauracje, karczmy (tylko lokal)
 - Wypozyczalnie sprzetu
 - Portale ogłoszeniowe, sklepy
+- Brak prawidlowego emaila
 
 URL: {url}
 Tytul: {page_content.get('title', '')}
 Maile: {', '.join(emails) if emails else 'brak'}
 
-JSON:
-{{"ok": 1 lub 0, "email": "najlepszy prawdziwy email lub pusty", "opis": "krotkie uzasadnienie"}}"""
+JSON (tylko jedna z dwóch opcji):
+Jesli OK: {{"ok": 1, "email": "najlepszy prawdziwy email", "powod": "krotki opis"}}
+Jesli NIE: {{"ok": 0, "email": "", "powod": "powod odrzucenia"}}"""
 
     try:
         if USE_GROQ:
