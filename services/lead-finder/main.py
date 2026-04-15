@@ -254,7 +254,6 @@ async def refill_raw_buffer(run_id: str):
     logger.info(f"[PRODUCER] Zapisuję query do logu: {query}")
     log_insert = await supabase.insert('marketing_search_queries_log', {
         'query_text': query,
-        'city': city_name,
         'urls_found': len(results),
         'status': 'failed' if search_error else 'completed'
     })
