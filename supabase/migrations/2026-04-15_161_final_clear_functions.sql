@@ -27,4 +27,5 @@ END;
 $$;
 
 GRANT EXECUTE ON FUNCTION public.clear_marketing_search_logs() TO service_role;
+GRANT EXECUTE ON FUNCTION public.clear_marketing_search_logs() TO anon;
 GRANT EXECUTE ON FUNCTION public.clear_marketing_queries_log() TO service_role;
