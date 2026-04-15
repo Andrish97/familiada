@@ -456,8 +456,8 @@ async def consumer_task(run_id: str, consumer_id: int, target: int):
                 }, {'id': lead_id})
                 await log_to_db("warning", f"[C{consumer_id}] Odrzucono (brak maila): {lead_url} | powod: {reject_reason}")
             else:
-                # Porażka - oznaczamy jako rejected w raw z powodem
-                reject_reason = result.get('short_description', 'Nie jest organizatorem eventow')
+                # Odrzucenie - status rejected + powod w kolumnie reject_reason
+                reject_reason = result.get('powod', 'Nie jest organizatorem eventow')
                 await supabase.update('marketing_raw_contacts', {
                     'status': 'rejected',
                     'reject_reason': reject_reason[:500]
