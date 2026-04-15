@@ -6029,12 +6029,42 @@ function wireEvents() {
     el.scrollTop = el.scrollHeight;
   }
 
-  function mcStartLogAutoRefresh() {
-    mcStopLogAutoRefresh();
-    mcState.logTimer = setInterval(() => { if (mcState.logRun) mcLoadLogs(mcState.logRun); }, 5000);
+  function mcAppendLog(log) {
+    mcState.logs.unshift(log);
+    const el = document.getElementById("mcLogsContainer");
+    if (el && el.querySelector('.mc-log-entry')) {
+      const time = new Date(log.created_at).toLocaleString("pl-PL",{month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"});
+      const levelClass = {info:"info",success:"success",warning:"warning",error:"error"}[log.level] || "info";
+      const levelText = {info:"INFO",success:"OK",warning:"WARN",error:"ERR"}[log.level] || log.level;
+      const div = document.createElement("div");
+      div.className = "mc-log-entry";
+      div.innerHTML = `<span class="mc-log-time">${time}</span><span class="mc-log-level ${levelClass}">${levelText}</span><span class="mc-log-message">${mcEsc(log.message)}</span>`;
+      el.insertBefore(div, el.firstChild);
+      if (el.children.length > 200) el.removeChild(el.lastChild);
+      el.scrollTop = el.scrollHeight;
+    }
   }
 
-  function mcStopLogAutoRefresh() { if (mcState.logTimer) { clearInterval(mcState.logTimer); mcState.logTimer = null; }}
+  function mcStartRealtimeLogs() {
+    mcStopRealtimeLogs();
+    mcState.realtimeSub = sb().channel('mc-logs')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'marketing_search_logs' }, 
+        (payload) => { mcAppendLog(payload.new); })
+      .subscribe();
+  }
+
+  function mcStopRealtimeLogs() {
+    if (mcState.realtimeSub) {
+      sb().removeChannel(mcState.realtimeSub);
+      mcState.realtimeSub = null;
+    }
+  }
+
+  function mcStartLogAutoRefresh() {
+    mcStartRealtimeLogs();
+  }
+
+  function mcStopLogAutoRefresh() { mcStopRealtimeLogs(); }
 
   // Init MC events
   document.getElementById("mcActionBtn")?.addEventListener("click", mcAction);
