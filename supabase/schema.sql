@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict UTqN7r3elyHWWjKCCwdwDbmfsQocPDfwXhcJmyWWkKENZIYvveSaPLdqC8KR9Id
+\restrict bGXRKWQfQKpfz6Jt19kMFIIdAd3OywqpYPohEHafxVQy9o1V3GK4HnKJi5stxsr
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -1171,6 +1171,19 @@ BEGIN
   )
   SELECT COUNT(*) INTO v_count FROM deleted;
   RETURN v_count;
+END;
+$$;
+
+
+--
+-- Name: clear_marketing_logs(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."clear_marketing_logs"() RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+BEGIN
+    DELETE FROM marketing_search_logs;
 END;
 $$;
 
@@ -10389,6 +10402,8 @@ CREATE TABLE "public"."marketing_search_logs" (
     "created_at" timestamp with time zone DEFAULT "now"()
 );
 
+ALTER TABLE ONLY "public"."marketing_search_logs" REPLICA IDENTITY FULL;
+
 
 --
 -- Name: marketing_search_queries_log; Type: TABLE; Schema: public; Owner: -
@@ -13716,5 +13731,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict UTqN7r3elyHWWjKCCwdwDbmfsQocPDfwXhcJmyWWkKENZIYvveSaPLdqC8KR9Id
+\unrestrict bGXRKWQfQKpfz6Jt19kMFIIdAd3OywqpYPohEHafxVQy9o1V3GK4HnKJi5stxsr
 
