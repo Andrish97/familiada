@@ -56,7 +56,8 @@ BLOCKED_DOMAINS = {
     'instytutksiazki.pl', 'biblioteka.pl', 'bookcrossing.com', 'goodreads.com',
     'lubimyczytac.pl', 'granice.pl', 'swiatczytnika.pl', 'ebooki.pl',
     'legimi.com', 'virtualo.pl', 'publio.pl', 'wolnelektury.pl', 'polona.pl',
-    'weselezklasa.pl', 'gumtree.pl', 'sprzedajemy.pl'
+    'weselezklasa.pl', 'gumtree.pl', 'sprzedajemy.pl',
+    'zespoly-weselne.pl'
 }
 
 EMAIL_REGEX = re.compile(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}')
