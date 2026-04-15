@@ -311,7 +311,8 @@ async def refill_raw_buffer(run_id: str):
             return title, ' '.join(words)[:1500]
         
         try:
-            async with httpx.AsyncClient(timeout=15, follow_redirects=True) as client:
+            headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'}
+            async with httpx.AsyncClient(timeout=15, follow_redirects=True, headers=headers) as client:
                 r_crawl = await client.get(url)
                 if r_crawl.status_code != 200:
                     logger.warning(f"[SCRAPE] HTTP {r_crawl.status_code} for {url}")
