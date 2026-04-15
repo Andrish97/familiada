@@ -21,7 +21,6 @@ AI_ENDPOINT = "http://ollama:11434"
 AI_MODEL = "qwen2.5:3b-instruct-q4_K_M"
 SUPABASE_URL = "http://kong:8000"
 SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", os.getenv("SERVICE_ROLE_KEY", ""))
-WORKER_TELEGRAM_ENDPOINT = "https://settings.familiada.online/_api/notify-submission"
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
 
@@ -128,20 +127,8 @@ async def log_to_db(level, message):
     logger.info(f"[{level.upper()}] {message}")
 
 async def send_telegram(message: str):
-    try:
-        async with httpx.AsyncClient(timeout=10) as client:
-            r = await client.post(WORKER_TELEGRAM_ENDPOINT, json={'text': message})
-            if r.status_code in (200, 201):
-                logger.info("Telegram: notification sent via worker")
-            else:
-                logger.warning(f"Telegram worker error: {r.status_code}")
-    except Exception as e:
-        logger.error(f"Telegram worker exception: {e}")
-
-async def send_telegram_direct(message: str):
     if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
         logger.warning("Telegram: BOT_TOKEN or CHAT_ID not configured")
-        await send_telegram(message)
         return
     try:
         async with httpx.AsyncClient(timeout=10) as client:
@@ -150,11 +137,11 @@ async def send_telegram_direct(message: str):
                 json={'chat_id': TELEGRAM_CHAT_ID, 'text': message, 'parse_mode': 'HTML'}
             )
             if r.status_code == 200:
-                logger.info("Telegram: notification sent directly")
+                logger.info("Telegram: notification sent")
             else:
-                logger.error(f"Telegram direct error: {r.status_code} {r.text[:100]}")
+                logger.error(f"Telegram error: {r.status_code} {r.text[:100]}")
     except Exception as e:
-        logger.error(f"Telegram direct exception: {e}")
+        logger.error(f"Telegram exception: {e}")
 
 # --- Core Logic: Search Layer (Producer) ---
 async def fetch_next_query(run_id: str) -> Optional[str]:
@@ -391,7 +378,7 @@ async def run_worker(run_id: str, target_count: int):
                 if verified_in_run >= target_count:
                     task_status = "completed"
                     await log_to_db("success", f"Zlecenie zakończone! Pozyskano {verified_in_run} leadów.")
-                    await send_telegram_direct(f"✅ Lead Finder zakończył pracę!\nZlecenie: {run_id[:8]}\nZnaleziono: {verified_in_run} kontaktów.")
+                    await send_telegram(f"✅ Lead Finder zakończył pracę!\nZlecenie: {run_id[:8]}\nZnaleziono: {verified_in_run} kontaktów.")
                     break
             
             await asyncio.sleep(1)
