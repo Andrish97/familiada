@@ -139,6 +139,22 @@ export default {
       return handleNotifySubmission(env);
     }
 
+    // Public telegram notify endpoint (secret token auth, for lead-finder service)
+    if (url.pathname === "/_api/telegram/notify" && request.method === "POST") {
+      const authHeader = request.headers.get("Authorization") || "";
+      const expectedToken = String(env.LEAD_FINDER_SERVICE_KEY || "").trim();
+      if (!expectedToken || !authHeader.startsWith("Bearer ") || authHeader.slice(7) !== expectedToken) {
+        return json({ ok: false, error: "unauthorized" }, 401);
+      }
+      const tg = getTelegramConfig(env);
+      if (!tg) return json({ ok: false, error: "telegram_not_configured" }, 422);
+      let body;
+      try { body = await request.json(); } catch { return json({ ok: false, error: "invalid_json" }, 400); }
+      const text = String(body.text || "").slice(0, 2000);
+      if (!text) return json({ ok: false, error: "empty_text" }, 400);
+      return sendTelegram(tg, text);
+    }
+
     // Public contact form endpoint
     if (url.pathname === "/_api/contact/append") {
       return handleContactAppend(request, env);

@@ -21,7 +21,7 @@ AI_ENDPOINT = "http://ollama:11434"
 AI_MODEL = "qwen2.5:3b-instruct-q4_K_M"
 SUPABASE_URL = "http://kong:8000"
 SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", os.getenv("SERVICE_ROLE_KEY", ""))
-WORKER_TELEGRAM_ENDPOINT = "https://settings.familiada.online/_admin_api/config/telegram/notify-service"
+WORKER_TELEGRAM_ENDPOINT = "https://settings.familiada.online/_api/telegram/notify"
 SERVICE_TOKEN = os.getenv("LEAD_FINDER_SERVICE_KEY", "")
 
 # --- Constants ---
@@ -127,17 +127,17 @@ async def log_to_db(level, message):
 
 async def send_telegram(message: str):
     if not SERVICE_TOKEN:
-        logger.warning("Telegram: LEAD_FINDER_SERVICE_KEY not set in env")
+        logger.warning("Telegram: LEAD_FINDER_SERVICE_KEY not set")
         return
     try:
-        async with httpx.AsyncClient(timeout=10, follow_redirects=True) as client:
-            r = await client.post(WORKER_TELEGRAM_ENDPOINT, headers={'Authorization': f'Bearer {SERVICE_TOKEN}'}, json={'text': message})
+        async with httpx.AsyncClient(timeout=10) as client:
+            r = await client.post(WORKER_TELEGRAM_ENDPOINT, 
+                headers={'Authorization': f'Bearer {SERVICE_TOKEN}'}, 
+                json={'text': message})
             if r.status_code in (200, 201):
                 logger.info("Telegram: notification sent")
-            elif r.status_code == 302:
-                logger.warning(f"Telegram: redirected (auth issue) - {r.headers.get('location', '')[:100]}")
             else:
-                logger.error(f"Telegram error: {r.status_code}")
+                logger.error(f"Telegram error: {r.status_code} {r.text[:100]}")
     except Exception as e:
         logger.error(f"Telegram exception: {e}")
 
@@ -284,7 +284,7 @@ Odpowiedz WYŁĄCZNIE JSONem:
         return False
 
 # --- Main Task Loop ---
-NUM_CONSUMERS = 3
+NUM_CONSUMERS = 1
 
 async def producer_task(run_id: str):
     """Producer: Continuously searches for new raw contacts (always completes, ignores pause)"""
@@ -309,15 +309,18 @@ async def consumer_task(run_id: str, consumer_id: int):
                 continue
             
             lead = raw_leads[0]
-            updated = await supabase.update('marketing_raw_contacts', {'status': 'processing'}, {'id': lead['id'], 'status': 'pending'})
-            if not updated:
+            lead_url = lead.get('url')
+            
+            updated = await supabase.update('marketing_raw_contacts', {'status': 'processing'}, {'id': lead['id']})
+            recheck = await supabase.select('marketing_raw_contacts', 'status', {'id': lead['id']})
+            if not recheck or recheck[0].get('status') != 'processing':
                 continue
             
-            await log_to_db("info", f"[C{consumer_id}] Weryfikacja AI: {lead.get('url')}")
+            await log_to_db("info", f"[C{consumer_id}] Weryfikacja AI: {lead_url}")
             success = await verify_raw_lead(run_id, lead)
             
             if success:
-                await log_to_db("success", f"[C{consumer_id}] Zweryfikowano: {lead.get('url')}")
+                await log_to_db("success", f"[C{consumer_id}] Zweryfikowano: {lead_url}")
                 await supabase.delete('marketing_raw_contacts', {'id': lead['id']})
             else:
                 await supabase.update('marketing_raw_contacts', {'status': 'rejected'}, {'id': lead['id']})
