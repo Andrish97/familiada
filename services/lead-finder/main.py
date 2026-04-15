@@ -139,13 +139,14 @@ class SupabaseClient:
     
     async def call_rpc(self, function_name, params=None):
         async with httpx.AsyncClient() as client:
+            headers = {**self.headers, 'Prefer': 'return=minimal'}
             logger.info(f"[RPC] Calling {function_name}...")
             r = await client.post(
                 f'{self.url}/rest/v1/rpc/{function_name}',
-                headers=self.headers,
+                headers=headers,
                 json=params or {}
             )
-            logger.info(f"[RPC] {function_name}: status={r.status_code}, body={r.text[:200]}")
+            logger.info(f"[RPC] {function_name}: status={r.status_code}, body={r.text[:200] if r.text else 'empty'}")
             if r.status_code not in (200, 201):
                 logger.error(f"RPC {function_name} error: {r.status_code} {r.text[:200]}")
             return r.status_code in (200, 201)
