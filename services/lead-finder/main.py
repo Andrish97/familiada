@@ -652,8 +652,15 @@ async def consumer_task(run_id: str, consumer_id: int, target: int):
             continue
         
         try:
+            if verified_in_run >= target:
+                logger.info(f"[C{consumer_id}] Cel osiągnięty ({verified_in_run}/{target}), czekam na zakończenie...")
+                await asyncio.sleep(3)
+                continue
+            
             raw_leads = await supabase.select('marketing_raw_contacts', '*', {'status': 'pending'}, limit=1)
             if not raw_leads or len(raw_leads) == 0:
+                if verified_in_run >= target:
+                    continue
                 await log_to_db("info", f"[C{consumer_id}] Brak pending kontaktów")
                 await asyncio.sleep(2)
                 continue
