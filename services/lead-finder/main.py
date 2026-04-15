@@ -30,12 +30,15 @@ TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
 
 # --- Constants ---
 SEARCH_TEMPLATES = [
-    'DJ wesele {city} kontakt',
-    'Wodzirej {city} kontakt',
-    'Konferansjer {city} kontakt',
-    'Agencja eventowa {city} kontakt',
-    'Organizacja imprez {city} kontakt',
-    'Animator dla dzieci {city} kontakt'
+    '"DJ" "wesele" {city} kontakt',
+    '"Wodzirej" {city} kontakt',
+    '"Konferansjer" {city} kontakt',
+    '"Prezenter eventowy" {city} kontakt',
+    '"Animator dzieci" {city} kontakt',
+    '"Agencja eventowa" {city} kontakt',
+    '"Organizacja imprez" {city} kontakt',
+    '"Team building" {city} kontakt',
+    '"Gry integracyjne" {city} kontakt'
 ]
 
 BLOCKED_DOMAINS = {
@@ -292,7 +295,7 @@ async def refill_raw_buffer(run_id: str):
                     # Remove very short words and common noise
                     words = text_no_html.split()
                     words = [w for w in words if len(w) > 2 and not w.startswith('http')]
-                    page_text = ' '.join(words)[:2000]
+                    page_text = ' '.join(words)[:1500]
                     # Find emails
                     found_emails = EMAIL_REGEX.findall(text)
                     for e in found_emails:
@@ -361,6 +364,7 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
     """Consumer: Asks AI to verify if the contact is an event organizer."""
     url = lead.get('url')
     title = lead.get('title', '')
+    page_text = lead.get('page_text', '')
     emails = lead.get('emails_found', [])
     if isinstance(emails, str):
         try: emails = json.loads(emails)
@@ -368,35 +372,134 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
     
     logger.info(f"[C{consumer_id}] Weryfikuję: {url}")
     
-    prompt = f"""Zweryfikuj organizatora eventow w Polsce.
+    prompt = f"""Zweryfikuj, czy firma jest organizatorem eventów w Polsce na podstawie danych wejściowych.
 
-KRYTERIUM GLOWNE: Czy to organizator eventow / imprez?
-- DJ, wodzirej, konferansjer, ANIMATOR (takze dla dzieci!)
-- Agencja eventowa, firma organizujaca imprezy
-- Oferta: wesela, urodziny, imprezy firmowe, animacje dla dzieci
-- Sprawdz TYTUL strony - jesli o eventach/imprezach/animacjach = organizator
-
-NIE organizator (odrzuc):
-- Restauracje, karczmy, hotele (tylko lokal)
-- Wypozyczalnie sprzetu/lokali bez uslug eventowych
-- Portale ogłoszeniowe, sklepy
-- Firmy budowlane, AGD, szkoly, przedszkola (tylko edukacja)
-
-KRYTERIUM DRUGORZEDNE: Email - musi byc prawdziwy!
-- Dobry email: kontakt@, info@, biuro@, dj@, animacja@, imie@firmadomena.pl
-- Zly email: przyklad@, test@, example@, allegro@, olx@, sentry@
-
-Jesli organizator + dobry email = VERIFIED
-Jesli organizator + brak dobrego emaila = ODRZUCONY
-Jesli nie organizator = ODRZUCONY
-
+----------------------------------------
+DANE WEJŚCIOWE:
+----------------------------------------
 URL: {url}
-TYTUL: {title}
+TYTUŁ: {title}
 MAILE: {', '.join(emails) if emails else 'brak'}
+TEXT: {page_text if page_text else 'brak'}
 
-JSON:
-zweryfikowany: {{"ok": 1, "email": "dobry email", "title": "krotka nazwa max 50", "short_description": "50-100 znakow czym sie zajmuje", "reason": "dlaczego organizator"}}
-odrzucony: {{"ok": 0, "reason": "dlaczego odrzucony"}}"""
+----------------------------------------
+KONTEKST (INTENT ZAPYTANIA):
+----------------------------------------
+Zakładamy, że wynik pochodzi z wyszukiwań typu:
+- DJ, wodzirej, konferansjer, prezenter eventowy
+- animator dzieci
+- agencja eventowa, organizacja imprez
+- team building, gry integracyjne
+
+ZASADA:
+- dopasowanie do powyższych fraz zwiększa wiarygodność
+- brak dopasowania → sygnał negatywny
+- sprzeczność (np. sklep, portal) → odrzuć niezależnie od innych sygnałów
+
+----------------------------------------
+KROK 1 — ANALIZA EVENTOWA (SCORING)
+----------------------------------------
+
+PRZYZNAJ PUNKTY:
+
++3 (mocny sygnał):
+- DJ, wodzirej, konferansjer, prezenter eventowy
+- animator (także dla dzieci)
+- organizacja imprez, agencja eventowa
+- konkretne usługi: wesela / urodziny / eventy firmowe / animacje
+
++2 (średni sygnał):
+- obsługa wydarzeń, eventy, imprezy
+- prowadzenie imprez, oprawa muzyczna
+- team building, gry integracyjne
+
++2 (intent match):
+- dopasowanie do fraz z kontekstu zapytania
+
++3 (lokal + usługi):
+- hotel/restauracja + WYRAŹNE usługi organizacji (DJ, prowadzenie, animacje)
+
++1 (słaby sygnał):
+- ogólne marketingowe opisy eventów bez konkretów
+
+-2 (brak intentu):
+- brak dopasowania do fraz eventowych
+
+-2 (lokal bez usług):
+- hotel/restauracja/sala oferująca tylko miejsce
+
+-3 (negatywne):
+- portal / marketplace / katalog
+- sklep
+- wypożyczalnia sprzętu bez obsługi
+- branża niezwiązana z eventami
+
+----------------------------------------
+WYMÓG MINIMALNY (HARD RULE):
+----------------------------------------
+Musi wystąpić przynajmniej jedna konkretna usługa:
+DJ / animator / konferansjer / organizacja imprez
+
+Jeśli NIE → automatyczne odrzucenie
+
+----------------------------------------
+KROK 2 — WALIDACJA EMAIL
+----------------------------------------
+
+DOBRY EMAIL (+1):
+- domenowy (np. kontakt@firma.pl, biuro@, imie@firma.pl, dj@...)
+
+ZŁY EMAIL (-2):
+- test@, example@, przyklad@
+- olx@, allegro@
+- noreply@, sentry@
+
+BRAK EMAIL → automatyczne odrzucenie
+
+WYNIK_EMAIL:
+- jeśli ≥1 dobry email → PASS
+- inaczej → FAIL
+
+----------------------------------------
+KROK 3 — DECYZJA KOŃCOWA:
+----------------------------------------
+
+WARUNKI OK:
+- WYNIK_EVENT ≥ 3
+- ORAZ WYNIK_EMAIL = PASS
+- ORAZ spełniony WYMÓG MINIMALNY
+
+INACZEJ → ODRZUCENIE
+
+----------------------------------------
+ZASADY OGÓLNE:
+----------------------------------------
+- opieraj się wyłącznie na URL, TYTUŁ, TEXT, MAILE
+- nie zgaduj i nie dopowiadaj
+- jeśli niepewne → odrzuć
+- preferuj precision > recall
+- wybierz jeden najlepszy email
+
+----------------------------------------
+OUTPUT (JSON):
+----------------------------------------
+
+Jeśli OK:
+{{
+  "ok": 1,
+  "email": "...",
+  "title": "max 50 znaków",
+  "short_description": "100-200 znaków",
+  "score_event": liczba,
+  "reason": "konkretne dowody (np. DJ + wesela + animacje)"
+}}
+
+Jeśli NIE:
+{{
+  "ok": 0,
+  "score_event": liczba,
+  "reason": "konkretny powód odrzucenia"
+}}"""""
 
     try:
         if USE_GROQ:
@@ -453,12 +556,19 @@ odrzucony: {{"ok": 0, "reason": "dlaczego odrzucony"}}"""
         res = json.loads(match.group().replace("'", '"'))
         ok_val = res.get('ok', 0)
         is_organizer = ok_val in [1, True, '1', 'true', 'True']
+        
+        # Validate email - must contain @ and look like real email
+        raw_email = res.get('email', '') or ''
+        email_match = re.match(r'^[^@\s]+@[^@\s]+\.[^@\s]+$', raw_email.lower())
+        best_email = raw_email if email_match else ''
+        
         return {
             'is_event_organizer': is_organizer,
             'title': (res.get('title') or '')[:50],
-            'best_email': res.get('email', ''),
+            'best_email': best_email,
             'short_description': res.get('short_description', '')[:200],
-            'reason': res.get('powod', '')[:200],
+            'reason': res.get('reason', '')[:200],
+            'score_event': res.get('score_event', 0),
             'url': url
         }
     except Exception as e:
@@ -522,7 +632,7 @@ async def consumer_task(run_id: str, consumer_id: int, target: int):
                 global verified_in_run
                 verified_in_run += 1
                 reason = result.get('reason', '')
-                await log_to_db("success", f"[C{consumer_id}] Zweryfikowano ({verified_in_run}/{target}): {result.get('url', lead_url)} | powod: {reason}")
+                await log_to_db("success", f"[C{consumer_id}] Zweryfikowano ({verified_in_run}/{target}): {result.get('url', lead_url)} | score: {result.get('score_event', '?')} | powod: {reason}")
                 await supabase.delete('marketing_raw_contacts', {'id': lead_id})
             elif result.get('is_event_organizer') and not result.get('best_email'):
                 # Jest organizatorem ale brak dobrego maila - odrzucamy
@@ -539,7 +649,7 @@ async def consumer_task(run_id: str, consumer_id: int, target: int):
                     'status': 'rejected',
                     'reject_reason': reject_reason[:500]
                 }, {'id': lead_id})
-                await log_to_db("warning", f"[C{consumer_id}] Odrzucono: {lead_url} | powod: {reject_reason}")
+                await log_to_db("warning", f"[C{consumer_id}] Odrzucono: {lead_url} | score: {result.get('score_event', '?')} | powod: {reject_reason}")
         except Exception as e:
             logger.error(f"Consumer {consumer_id} error: {e}")
             await asyncio.sleep(1)
