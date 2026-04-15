@@ -5722,6 +5722,8 @@ function wireEvents() {
     actionBtn.disabled = true;
     try {
       const tk = await mcGetToken();
+      mcState.logs = [];
+      mcRenderLogs();
       const res = await fetch(`${MC_API}/api/search-runs?target_count=${count}`, {method:"POST", headers:{Authorization:`Bearer ${tk}`}});
       if (!res.ok) throw new Error("Failed");
       const data = await res.json();
