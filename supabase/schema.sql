@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict qH1vn8uvqiVCFc9OgBhUE5wEdbH4Dk6XOQbAjMdB497n6xMQGCatPvpifYkMrtl
+\restrict QuPVS982WPdeKkdntkaaCvi20eUCahghCKiDp1JVpuYqTkTQIL48ZguVn3b63SU
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -10413,10 +10413,6 @@ CREATE TABLE "public"."marketing_verified_contacts" (
     "short_description" "text",
     "email" "text" NOT NULL,
     "url" "text" NOT NULL,
-    "is_event_organizer" boolean,
-    "ai_confidence" "text",
-    "ai_reasoning" "text",
-    "contact_type" "text",
     "is_used" boolean DEFAULT false,
     "added_at" timestamp with time zone DEFAULT "now"()
 );
@@ -11492,13 +11488,6 @@ CREATE INDEX "idx_marketing_raw_status" ON "public"."marketing_raw_contacts" USI
 --
 
 CREATE INDEX "idx_marketing_verified_email" ON "public"."marketing_verified_contacts" USING "btree" ("email");
-
-
---
--- Name: idx_marketing_verified_type; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX "idx_marketing_verified_type" ON "public"."marketing_verified_contacts" USING "btree" ("contact_type");
 
 
 --
@@ -13727,5 +13716,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict qH1vn8uvqiVCFc9OgBhUE5wEdbH4Dk6XOQbAjMdB497n6xMQGCatPvpifYkMrtl
+\unrestrict QuPVS982WPdeKkdntkaaCvi20eUCahghCKiDp1JVpuYqTkTQIL48ZguVn3b63SU
 
