@@ -265,8 +265,9 @@ Odpowiedz WYŁĄCZNIE JSONem:
                     res = json.loads(match.group().replace("'", '"'))
                     if res.get('is_event_organizer') and res.get('best_email'):
                         url = lead.get('url')
-                        exists = await supabase.select('marketing_verified_contacts', 'id', {'url': url})
-                        if exists:
+                        exists_v = await supabase.select('marketing_verified_contacts', 'id', {'url': url})
+                        exists_r = await supabase.select('marketing_raw_contacts', 'id', {'url': url})
+                        if exists_v or exists_r:
                             return True
                         await supabase.insert('marketing_verified_contacts', {
                             'title': lead.get('title'),
