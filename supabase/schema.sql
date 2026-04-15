@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict UYevUH964TQf2rYWjBVmnODbRodc3pHvH4hDX5G2uxVaFmGAJRpRRcYcS61HLcd
+\restrict Oth1ev3hlIQvjUfE1Ps3MXU2rfDD1AgqV62F32aQDgRCAIPebrekfqXWS5nAk6x
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -5115,59 +5115,6 @@ begin
 
     return query select true, '';
 end;
-$$;
-
-
---
--- Name: marketing_get_run_stats("uuid"); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."marketing_get_run_stats"("p_run_id" "uuid") RETURNS TABLE("run_status" "text", "target_count" integer, "urls_found" bigint, "urls_processed" bigint, "raw_contacts" bigint, "verified_contacts" bigint, "contacts_used" bigint, "logs_count" bigint)
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    AS $$
-BEGIN
-    RETURN QUERY
-    SELECT
-        r.status,
-        r.target_count,
-        (SELECT COUNT(*) FROM marketing_search_urls u WHERE u.run_id = p_run_id),
-        (SELECT COUNT(*) FROM marketing_search_urls u WHERE u.run_id = p_run_id AND u.status = 'collected'),
-        (SELECT COUNT(*) FROM marketing_raw_contacts rc WHERE rc.run_id = p_run_id),
-        (SELECT COUNT(*) FROM marketing_verified_contacts vc WHERE vc.run_id = p_run_id),
-        (SELECT COUNT(*) FROM marketing_verified_contacts vc WHERE vc.run_id = p_run_id AND vc.is_used = true),
-        (SELECT COUNT(*) FROM marketing_search_logs sl WHERE sl.run_id = p_run_id)
-    FROM marketing_search_runs r
-    WHERE r.id = p_run_id;
-END;
-$$;
-
-
---
--- Name: marketing_get_verified_contacts("uuid", integer, integer, boolean); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."marketing_get_verified_contacts"("p_run_id" "uuid" DEFAULT NULL::"uuid", "p_limit" integer DEFAULT 50, "p_offset" integer DEFAULT 0, "p_only_unused" boolean DEFAULT false) RETURNS TABLE("id" "uuid", "title" "text", "short_description" "text", "email" "text", "url" "text", "contact_type" "text", "is_used" boolean, "added_at" timestamp with time zone, "used_at" timestamp with time zone)
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    AS $$
-BEGIN
-    RETURN QUERY
-    SELECT
-        vc.id,
-        vc.title,
-        vc.short_description,
-        vc.email,
-        vc.url,
-        vc.contact_type,
-        vc.is_used,
-        vc.added_at,
-        vc.used_at
-    FROM marketing_verified_contacts vc
-    WHERE (p_run_id IS NULL OR vc.run_id = p_run_id)
-      AND (p_only_unused = false OR vc.is_used = false)
-    ORDER BY vc.added_at DESC
-    LIMIT p_limit
-    OFFSET p_offset;
-END;
 $$;
 
 
@@ -10387,10 +10334,7 @@ COMMENT ON COLUMN "public"."market_games"."storage_path" IS 'Path to JSON in com
 CREATE TABLE "public"."marketing_cities" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
     "name" "text" NOT NULL,
-    "is_active" boolean DEFAULT true,
-    "search_count" integer DEFAULT 0,
-    "last_searched" timestamp with time zone,
-    "created_at" timestamp with time zone DEFAULT "now"()
+    "is_active" boolean DEFAULT true
 );
 
 
@@ -10403,9 +10347,7 @@ CREATE TABLE "public"."marketing_raw_contacts" (
     "url" "text" NOT NULL,
     "emails_found" "jsonb" DEFAULT '[]'::"jsonb",
     "title" "text",
-    "status" "text" DEFAULT 'pending'::"text",
-    "created_at" timestamp with time zone DEFAULT "now"(),
-    "updated_at" timestamp with time zone DEFAULT "now"()
+    "status" "text" DEFAULT 'pending'::"text"
 );
 
 
@@ -10415,10 +10357,8 @@ CREATE TABLE "public"."marketing_raw_contacts" (
 
 CREATE TABLE "public"."marketing_search_logs" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
-    "run_id" "uuid",
     "level" "text" DEFAULT 'info'::"text" NOT NULL,
     "message" "text" NOT NULL,
-    "details" "jsonb",
     "created_at" timestamp with time zone DEFAULT "now"()
 );
 
@@ -10442,7 +10382,6 @@ CREATE TABLE "public"."marketing_search_queries_log" (
 
 CREATE TABLE "public"."marketing_verified_contacts" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
-    "run_id" "uuid",
     "title" "text",
     "short_description" "text",
     "email" "text" NOT NULL,
@@ -10452,8 +10391,7 @@ CREATE TABLE "public"."marketing_verified_contacts" (
     "ai_reasoning" "text",
     "contact_type" "text",
     "is_used" boolean DEFAULT false,
-    "added_at" timestamp with time zone DEFAULT "now"(),
-    "updated_at" timestamp with time zone DEFAULT "now"()
+    "added_at" timestamp with time zone DEFAULT "now"()
 );
 
 
@@ -11516,13 +11454,6 @@ CREATE INDEX "idx_marketing_logs_created" ON "public"."marketing_search_logs" US
 
 
 --
--- Name: idx_marketing_logs_run; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX "idx_marketing_logs_run" ON "public"."marketing_search_logs" USING "btree" ("run_id");
-
-
---
 -- Name: idx_marketing_raw_status; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -11537,31 +11468,10 @@ CREATE INDEX "idx_marketing_verified_email" ON "public"."marketing_verified_cont
 
 
 --
--- Name: idx_marketing_verified_email_array; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX "idx_marketing_verified_email_array" ON "public"."marketing_verified_contacts" USING "btree" ("email");
-
-
---
--- Name: idx_marketing_verified_run; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX "idx_marketing_verified_run" ON "public"."marketing_verified_contacts" USING "btree" ("run_id");
-
-
---
 -- Name: idx_marketing_verified_type; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX "idx_marketing_verified_type" ON "public"."marketing_verified_contacts" USING "btree" ("contact_type");
-
-
---
--- Name: idx_marketing_verified_url; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX "idx_marketing_verified_url" ON "public"."marketing_verified_contacts" USING "btree" ("url");
 
 
 --
@@ -12143,13 +12053,6 @@ CREATE TRIGGER "trg_market_games_slug" BEFORE INSERT OR UPDATE OF "status", "slu
 --
 
 CREATE TRIGGER "trg_market_games_updated_at" BEFORE UPDATE ON "public"."market_games" FOR EACH ROW EXECUTE FUNCTION "public"."trg_touch_market_games_updated_at"();
-
-
---
--- Name: marketing_verified_contacts trg_marketing_verified_updated_at; Type: TRIGGER; Schema: public; Owner: -
---
-
-CREATE TRIGGER "trg_marketing_verified_updated_at" BEFORE UPDATE ON "public"."marketing_verified_contacts" FOR EACH ROW EXECUTE FUNCTION "public"."update_marketing_updated_at"();
 
 
 --
@@ -13797,5 +13700,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict UYevUH964TQf2rYWjBVmnODbRodc3pHvH4hDX5G2uxVaFmGAJRpRRcYcS61HLcd
+\unrestrict Oth1ev3hlIQvjUfE1Ps3MXU2rfDD1AgqV62F32aQDgRCAIPebrekfqXWS5nAk6x
 
