@@ -5701,18 +5701,19 @@ function wireEvents() {
     try {
       const tk = await mcGetToken();
       const res = await fetch(`${MC_API}/api/search-runs/status`, {headers:{Authorization:`Bearer ${tk}`}});
-      if (!res.ok) return;
+      if (!res.ok) {
+        mcState.status = "idle";
+        mcUpdateButtons();
+        return;
+      }
       const data = await res.json();
       mcState.status = data.status || "idle";
       mcState.logRun = data.run_id;
       mcUpdateButtons();
-      
-      if (data.status === "running") {
-        mcStartLogAutoRefresh();
-      } else {
-        mcStopLogAutoRefresh();
-      }
-    } catch(e) {}
+    } catch(e) {
+      mcState.status = "idle";
+      mcUpdateButtons();
+    }
   }
 
   async function mcStartRun() {
@@ -6099,9 +6100,25 @@ function wireEvents() {
   }
 
   function mcStartLogAutoRefresh() {
-    mcStopLogAutoRefresh();
+    if (mcState.logTimer) return;
     mcInitRealtime();
-    mcState.logTimer = setInterval(() => { mcLoadRuns(); }, 3000);
+    mcState.logTimer = setInterval(async () => {
+      try {
+        const tk = await mcGetToken();
+        const res = await fetch(`${MC_API}/api/search-runs/status`, {headers:{Authorization:`Bearer ${tk}`}});
+        if (!res.ok) {
+          mcStopLogAutoRefresh();
+          return;
+        }
+        const data = await res.json();
+        mcState.status = data.status || "idle";
+        mcState.logRun = data.run_id;
+        mcUpdateButtons();
+        if (mcState.status !== "running") {
+          mcStopLogAutoRefresh();
+        }
+      } catch(e) {}
+    }, 3000);
   }
 
   function mcStopLogAutoRefresh() {
