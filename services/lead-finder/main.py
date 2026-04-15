@@ -264,14 +264,11 @@ Odpowiedz WYŁĄCZNIE JSONem:
                 if match:
                     res = json.loads(match.group().replace("'", '"'))
                     if res.get('is_event_organizer') and res.get('best_email'):
-                        # Save to verified
                         await supabase.insert('marketing_verified_contacts', {
-                            'run_id': run_id,
                             'title': lead.get('title'),
                             'email': res['best_email'],
                             'url': lead.get('url'),
-                            'short_description': res.get('reasoning', '')[:200],
-                            'is_event_organizer': True
+                            'short_description': res.get('reasoning', '')[:200]
                         })
                         return True
         return False
