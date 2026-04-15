@@ -425,7 +425,7 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
     logger.info(f"[C{consumer_id}] Weryfikuję: {url}")
     
     prompt = f"""ZADANIE:
-Określ, czy firma jest związana z usługami eventowymi (organizacja / prowadzenie / obsługa wydarzeń) na podstawie danych wejściowych.
+Określ, czy strona reprezentuje realnego dostawcę usług eventowych i czy powinna zostać zaakceptowana jako lead.
 
 ----------------------------------------
 DANE WEJŚCIOWE:
@@ -436,114 +436,143 @@ MAILE: {', '.join(emails) if emails else 'brak'}
 TEXT: {page_text if page_text else 'brak'}
 
 ----------------------------------------
-CEL KLASYFIKACJI:
-----------------------------------------
-Wykryć firmy świadczące usługi eventowe, w tym:
-- prowadzenie imprez (DJ, wodzirej, konferansjer)
-- animacje (w tym dziecięce)
-- organizacja imprez i wydarzeń
-- agencje eventowe
-- usługi weselne / urodzinowe / firmowe / integracyjne
-
-----------------------------------------
-KROK 1 — IDENTYFIKACJA EVENTOWA
+KROK 1 — TYPOLOGIA STRONY
 ----------------------------------------
 
-UZNAJ ZA EVENTOWE, JEŚLI WYSTĘPUJE CO NAJMNIEJ JEDEN Z BLOKÓW:
+Przypisz jeden typ:
 
-A) ROLE EVENTOWE (PEŁNY DOWÓD):
+A) DIRECT EVENT PROVIDER (NAJLEPSZY LEAD)
+- DJ, wodzirej, konferansjer, animator
+- agencja eventowa
+- firma organizująca eventy / imprezy
+- bezpośredni wykonawca usług
+
+B) VENUE / OBIEKT EVENTOWY (WARUNKOWY LEAD)
+- hotel, restauracja, centrum konferencyjne
+- oferuje eventy jako usługę (wesela, konferencje, imprezy)
+- nie jest bezpośrednim wykonawcą (np. DJ)
+
+C) DIRECTORY / CATALOG / AGGREGATOR (ODRZUĆ)
+- katalog firm
+- portal listingowy
+- panorama firm, trojmiasto, itp.
+- strony zbierające oferty innych firm
+
+----------------------------------------
+KROK 2 — IDENTYFIKACJA EVENTOWA
+----------------------------------------
+
+UZNAJ ZA EVENTOWE JEŚLI WYSTĘPUJE CO NAJMNIEJ JEDEN ELEMENT:
+
+A) ROLE EVENTOWE:
 - DJ
 - wodzirej
 - konferansjer
-- animator (w tym dziecięcy)
+- animator (dziecięcy)
 - prezenter eventowy
 
 B) DZIAŁALNOŚĆ EVENTOWA:
 - organizacja imprez
 - obsługa eventów
 - agencja eventowa
-- eventy / imprezy / przyjęcia okolicznościowe
+- eventy / imprezy / przyjęcia
 
 C) OFERTA EVENTOWA:
 - wesela
 - imprezy firmowe
 - urodziny
 - konferencje
-- eventy integracyjne / team building
+- integracje / team building
 - atrakcje dla dzieci
 
-WAŻNE:
-- wystąpienie roli eventowej (np. DJ) = wystarczający dowód
-- nie wymagaj dodatkowych słów typu "agencja" lub "organizacja"
-
 ----------------------------------------
-KROK 2 — SCORING
+KROK 3 — ANTI-SEO SPAM DETECTION
 ----------------------------------------
 
-+3 (silny sygnał):
+Oblicz SEO_SPAM_SCORE:
+
+❌ RED FLAGS (-1 do -3 każdy):
+- katalog / lista firm / ranking / directory
+- brak realnej nazwy firmy (tylko frazy ogólne)
+- wiele miast w tytule (np. Gdańsk Gdynia Sopot Warszawa)
+- powtarzalne frazy SEO / doorway pages
+- brak osoby / marki / zespołu
+- URL sugeruje katalog (/katalog, /firmy, /listing, /search)
+- tekst generowany SEO bez konkretnej oferty
+
+🟢 GREEN FLAGS (+2 każdy):
+- konkretna marka / osoba (np. DJ Charlie)
+- telefon + imię/nazwisko lub brand
+- portfolio / realizacje / zdjęcia
+- opis usług w pierwszej osobie lub jako firma
+- jasna oferta usług eventowych
+
+DECYZJA:
+- SEO_SPAM_SCORE <= -3 → AUTOMATYCZNY REJECT
+
+----------------------------------------
+KROK 4 — SCORING EVENTOWY
+----------------------------------------
+
++3 (DIRECT PROVIDER):
 - DJ / wodzirej / konferansjer / animator
 - agencja eventowa
-- organizacja imprez / kompleksowa obsługa eventów
+- organizacja imprez
 
-+2 (średni sygnał):
++2 (EVENT OFFER):
 - wesela / imprezy / konferencje / eventy firmowe
-- team building / integracje
-- atrakcje dla dzieci
+- integracje / team building / atrakcje dla dzieci
 
-+2 (dopasowanie do intencji zapytania):
-- zgodność z frazami eventowymi
++3 (VENUE + REAL EVENT SERVICES):
+- hotel / restauracja + WYRAŹNE usługi eventowe
 
-+3 (lokal + usługi):
-- hotel / restauracja + wyraźna organizacja eventów
+-2 (VENUE bez usług):
+- tylko wynajem przestrzeni
 
-+1 (słaby sygnał):
-- ogólne wzmianki o eventach
-
--2 (lokal bez usług):
-- hotel / restauracja / sala oferująca wyłącznie wynajem przestrzeni
-
--2 (brak eventów w treści):
-- brak jakichkolwiek usług eventowych
-
--3 (branże niepowiązane):
-- sklepy
-- portale / katalogi / marketplace
-- nieruchomości
-- firmy niezwiązane z eventami
+-3 (DIRECTORY / CATALOG):
+- agregatory / katalogi / listingi
 
 ----------------------------------------
-KROK 3 — EMAIL
+KROK 5 — EMAIL
 ----------------------------------------
 
-DOBRY EMAIL (+1):
+DOBRY EMAIL:
 - domenowy (kontakt@, biuro@, imie@firma.pl, dj@...)
 
-ZŁY EMAIL (-2):
-- test@, example@, przyklad@
+ZŁY EMAIL:
+- test@, example@
 - platformy (olx@, allegro@)
 - systemowe (noreply@, sentry@)
 
 BRAK EMAIL → AUTOMATYCZNE ODRZUCENIE
 
 ----------------------------------------
-KROK 4 — DECYZJA KOŃCOWA
+KROK 6 — DECYZJA KOŃCOWA
 ----------------------------------------
 
 AKCEPTUJ jeśli:
-- score ≥ 3
+- TYPE = A (DIRECT PROVIDER)
+  LUB
+- TYPE = B (VENUE + real event services)
 - ORAZ email PASS
-- ORAZ istnieje dowód eventowy (A, B lub C)
+- ORAZ SEO_SPAM_SCORE > -3
+- ORAZ score_event ≥ 3
 
-W PRZECIWNYM RAZIE → ODRZUĆ
+ODRZUĆ jeśli:
+- TYPE = C (DIRECTORY / CATALOG)
+- brak usług eventowych
+- brak poprawnego emaila
+- SEO_SPAM_SCORE <= -3
 
 ----------------------------------------
 ZASADY OGÓLNE:
 ----------------------------------------
 - opieraj się wyłącznie na danych wejściowych
 - nie zgaduj brakujących usług
-- DJ / wodzirej / konferansjer = pełnoprawna usługa eventowa
-- preferuj precyzję nad nadmiernym odrzucaniem
-- jeśli brak pewności → odrzuć
+- DJ / wodzirej = pełnoprawna usługa eventowa
+- katalogi zawsze odrzucaj
+- preferuj precision nad recall
+- jeśli niepewne → odrzuć
 
 ----------------------------------------
 OUTPUT (JSON):
@@ -552,17 +581,21 @@ OUTPUT (JSON):
 Jeśli OK:
 {{
   "ok": 1,
+  "type": "provider | venue",
   "email": "...",
   "title": "max 50 znaków",
   "short_description": "100-200 znaków",
   "score_event": liczba,
-  "reason": "konkretne dowody (np. DJ + wesela + organizacja imprez)"
+  "seo_spam_score": liczba,
+  "reason": "konkretne dowody"
 }}
 
 Jeśli NIE:
 {{
   "ok": 0,
+  "type": "provider | venue | directory",
   "score_event": liczba,
+  "seo_spam_score": liczba,
   "reason": "konkretny powód odrzucenia"
 }}"""""
 
@@ -634,6 +667,8 @@ Jeśli NIE:
             'short_description': res.get('short_description', '')[:200],
             'reason': res.get('reason', '')[:200],
             'score_event': res.get('score_event', 0),
+            'seo_spam_score': res.get('seo_spam_score', 0),
+            'lead_type': res.get('type', ''),
             'url': url
         }
     except Exception as e:
@@ -702,7 +737,8 @@ async def consumer_task(run_id: str, consumer_id: int, target: int):
                 })
                 verified_in_run += 1
                 reason = result.get('reason', '')
-                await log_to_db("success", f"[C{consumer_id}] Zweryfikowano ({verified_in_run}/{target}): {result.get('url', lead_url)} | ai:{result.get('score_event', '?')} | powod: {reason}")
+                lead_type = result.get('lead_type', '')
+                await log_to_db("success", f"[C{consumer_id}] Zweryfikowano ({verified_in_run}/{target}): {result.get('url', lead_url)} | type:{lead_type} | ai:{result.get('score_event', '?')} | spam:{result.get('seo_spam_score', '?')} | powod: {reason}")
                 await supabase.delete('marketing_raw_contacts', {'id': lead_id})
             elif result.get('is_event_organizer') and not result.get('best_email'):
                 reject_reason = 'Brak prawidlowego emaila kontaktowego'
@@ -717,7 +753,7 @@ async def consumer_task(run_id: str, consumer_id: int, target: int):
                     'status': 'rejected',
                     'reject_reason': reject_reason[:500]
                 }, {'id': lead_id})
-                await log_to_db("warning", f"[C{consumer_id}] Odrzucono: {lead_url} | ai:{result.get('score_event', '?')} | powod: {reject_reason}")
+                await log_to_db("warning", f"[C{consumer_id}] Odrzucono: {lead_url} | type:{result.get('lead_type', '?')} | ai:{result.get('score_event', '?')} | spam:{result.get('seo_spam_score', '?')} | powod: {reject_reason}")
         except Exception as e:
             logger.error(f"Consumer {consumer_id} error: {e}")
             await asyncio.sleep(1)
