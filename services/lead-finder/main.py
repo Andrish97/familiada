@@ -7,6 +7,7 @@ import asyncio
 import json
 import logging
 import os
+import random
 import re
 import uuid
 from datetime import datetime
@@ -119,7 +120,18 @@ class SupabaseClient:
             r = await client.delete(f'{self.url}/rest/v1/{table}', headers=self.headers, params=params)
             return r.status_code in (200, 204, 404)
     
+    async def call_rpc(self, function_name, params=None):
+        async with httpx.AsyncClient() as client:
+            r = await client.post(
+                f'{self.url}/rest/v1/rpc/{function_name}',
+                headers=self.headers,
+                json=params or {}
+            )
+            return r.status_code in (200, 201)
+    
     async def truncate(self, table):
+        if table == 'marketing_search_logs':
+            return await self.call_rpc('clear_marketing_logs')
         async with httpx.AsyncClient() as client:
             r = await client.delete(f'{self.url}/rest/v1/{table}?id=eq.00000000-0000-0000-0000-000000000000', headers=self.headers)
             return r.status_code in (200, 204)
@@ -170,9 +182,9 @@ async def fetch_next_query(run_id: str) -> Optional[str]:
     if not available:
         await log_to_db("warning", "Pula zapytań wyczerpana. Resetuję historię...")
         await supabase.delete('marketing_search_queries_log') # Clear history
-        return pool[0] # Start from first
+        return random.choice(pool) # Start from random
     
-    return available[0]
+    return random.choice(available)
 
 async def refill_raw_buffer(run_id: str):
     """Producer: Searches SearXNG and fills marketing_raw_contacts"""
@@ -244,8 +256,8 @@ async def refill_raw_buffer(run_id: str):
     await log_to_db("success", f"Dodano {new_raw_count} surowych kontaktów do bufora.")
 
 # --- Core Logic: AI Layer (Consumer) ---
-async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> bool:
-    """Consumer: Takes one raw lead and asks AI to verify"""
+async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Optional[dict]:
+    """Consumer: Takes one raw lead and asks AI to verify. Returns result dict or None on error."""
     emails = lead.get('emails_found', [])
     prompt = f"""Czy to organizator eventów (DJ, Agencja, Wodzirej, Animator)?
 Tytuł: {lead.get('title')}
@@ -274,29 +286,15 @@ Odpowiedz WYŁĄCZNIE JSONem:
                 match = re.search(r'\{.*\}', content, re.DOTALL)
                 if match:
                     res = json.loads(match.group().replace("'", '"'))
-                    if res.get('is_event_organizer') and res.get('best_email'):
-                        url = lead.get('url')
-                        exists_v = await supabase.select('marketing_verified_contacts', 'id', {'url': url})
-                        exists_r = await supabase.select('marketing_raw_contacts', 'id', {'url': url})
-                        if (exists_v and len(exists_v) > 0) or (exists_r and len(exists_r) > 0):
-                            logger.info(f"[C{consumer_id}] URL already exists in verified or raw - skipping")
-                            return False
-                        result = await supabase.insert('marketing_verified_contacts', {
-                            'title': lead.get('title'),
-                            'email': res['best_email'],
-                            'url': url,
-                            'short_description': res.get('reasoning', '')[:200]
-                        })
-                        if result:
-                            logger.info(f"[C{consumer_id}] Inserted to verified: {url}")
-                            return True
-                        else:
-                            logger.error(f"[C{consumer_id}] Failed to insert to verified: {url}")
-                            return False
-        return False
+                    return {
+                        'is_event_organizer': res.get('is_event_organizer', False),
+                        'best_email': res.get('best_email', ''),
+                        'reasoning': res.get('reasoning', '')[:200]
+                    }
+        return None
     except Exception as e:
         logger.error(f"AI verify error: {e}")
-        return False
+        return None
 
 # --- Main Task Loop ---
 NUM_CONSUMERS = 1
@@ -333,21 +331,27 @@ async def consumer_task(run_id: str, consumer_id: int, target: int):
             logger.info(f"[C{consumer_id}] Update processing: {update_ok}")
             
             await log_to_db("info", f"[C{consumer_id}] Weryfikacja AI: {lead_url}")
-            success = await verify_raw_lead(run_id, lead, consumer_id)
-            logger.info(f"[C{consumer_id}] Weryfikacja zakończona: {success}")
+            result = await verify_raw_lead(run_id, lead, consumer_id)
             
             if task_status not in ("running", "paused"):
                 break
             
-            if success:
+            if result and result.get('is_event_organizer') and result.get('best_email'):
+                # Sukces - wstawiamy do verified, usuwamy z raw
+                await supabase.insert('marketing_verified_contacts', {
+                    'title': lead.get('title'),
+                    'email': result['best_email'],
+                    'url': lead_url,
+                    'short_description': result.get('reasoning', '')[:200]
+                })
                 global verified_in_run
                 verified_in_run += 1
                 await log_to_db("success", f"[C{consumer_id}] Zweryfikowano ({verified_in_run}/{target}): {lead_url}")
-                delete_ok = await supabase.delete('marketing_raw_contacts', {'id': lead_id})
-                logger.info(f"[C{consumer_id}] Delete after success: {delete_ok}")
+                await supabase.delete('marketing_raw_contacts', {'id': lead_id})
             else:
-                delete_ok = await supabase.delete('marketing_raw_contacts', {'id': lead_id})
-                logger.info(f"[C{consumer_id}] Delete after fail: {delete_ok}")
+                # Porażka - oznaczamy jako rejected w raw
+                await supabase.update('marketing_raw_contacts', {'status': 'rejected'}, {'id': lead_id})
+                logger.info(f"[C{consumer_id}] Odrzucono: {lead_url}")
         except Exception as e:
             logger.error(f"Consumer {consumer_id} error: {e}")
             await asyncio.sleep(1)

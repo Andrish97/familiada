@@ -5632,9 +5632,11 @@ function wireEvents() {
   // ═══════════════════════════════════════════════════════════
   // MARKETING CONTACTS
   // ═══════════════════════════════════════════════════════════
+  const { rt } = await import("../core/realtime.js?v=v2026-04-15T02443");
   const MC_API = "https://leads.familiada.online";
   const MC_PAGE_SIZE = 50;
   let mcToken = null;
+  let mcRealtimeChannel = null;
 
   async function mcGetToken() {
     if (mcToken) return mcToken;
@@ -6035,6 +6037,55 @@ function wireEvents() {
       mcRenderLogs();
     } catch(e) { el.innerHTML = `<div style="text-align:center;opacity:.5">Błąd: ${e.message}</div>`; }
   }
+  
+  async function mcClearLogs() {
+    try {
+      const { error } = await sb().rpc('clear_marketing_logs');
+      if (error) throw error;
+      mcState.logs = [];
+      mcRenderLogs();
+    } catch(e) { console.warn('[MC] Clear logs error:', e); }
+  }
+  
+  function mcInitRealtime() {
+    mcDestroyRealtime();
+    try {
+      const channelName = 'marketing-search-logs-changes';
+      mcRealtimeChannel = sb().channel(channelName);
+      mcRealtimeChannel
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'marketing_search_logs'
+          },
+          (payload) => {
+            if (payload.new) {
+              mcState.logs.push(payload.new);
+              if (mcState.logs.length > 200) mcState.logs.shift();
+              mcRenderLogs();
+            }
+          }
+        )
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            console.log('[MC] Realtime subscribed');
+          } else if (status === 'CHANNEL_ERROR') {
+            console.warn('[MC] Realtime channel error');
+          }
+        });
+    } catch(e) {
+      console.warn('[MC] Realtime init error:', e);
+    }
+  }
+  
+  function mcDestroyRealtime() {
+    if (mcRealtimeChannel) {
+      sb().removeChannel(mcRealtimeChannel);
+      mcRealtimeChannel = null;
+    }
+  }
 
   function mcRenderLogs() {
     const el = document.getElementById("mcLogsContainer");
@@ -6050,10 +6101,14 @@ function wireEvents() {
 
   function mcStartLogAutoRefresh() {
     mcStopLogAutoRefresh();
-    mcState.logTimer = setInterval(() => { mcLoadLogs(); mcLoadRuns(); }, 3000);
+    mcInitRealtime();
+    mcState.logTimer = setInterval(() => { mcLoadRuns(); }, 3000);
   }
 
-  function mcStopLogAutoRefresh() { if (mcState.logTimer) { clearInterval(mcState.logTimer); mcState.logTimer = null; }}
+  function mcStopLogAutoRefresh() {
+    if (mcState.logTimer) { clearInterval(mcState.logTimer); mcState.logTimer = null; }
+    mcDestroyRealtime();
+  }
 
   // Init MC events
   document.getElementById("mcActionBtn")?.addEventListener("click", mcAction);
@@ -6071,7 +6126,12 @@ function wireEvents() {
   const mcObserver = new MutationObserver(async () => {
     if (!document.getElementById("marketingContactsPanel")?.hidden) {
       mcLoadContacts();
-      mcLoadRuns();
+      await mcLoadRuns();
+      if (mcState.status !== "running") {
+        await mcClearLogs();
+      } else {
+        mcLoadLogs();
+      }
     }
   });
   const mcPanel = document.getElementById("marketingContactsPanel");
