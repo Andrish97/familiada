@@ -424,7 +424,8 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
     
     logger.info(f"[C{consumer_id}] Weryfikuję: {url}")
     
-    prompt = f"""Zweryfikuj, czy firma jest organizatorem eventów w Polsce na podstawie danych wejściowych.
+    prompt = f"""ZADANIE:
+Określ, czy firma jest związana z usługami eventowymi (organizacja / prowadzenie / obsługa wydarzeń) na podstawie danych wejściowych.
 
 ----------------------------------------
 DANE WEJŚCIOWE:
@@ -435,56 +436,51 @@ MAILE: {', '.join(emails) if emails else 'brak'}
 TEXT: {page_text if page_text else 'brak'}
 
 ----------------------------------------
-KONTEKST (INTENT ZAPYTANIA):
+CEL KLASYFIKACJI:
 ----------------------------------------
-Zapytania dotyczą usług eventowych:
-- DJ, wodzirej, konferansjer, prezenter eventowy
-- animator dzieci
-- agencja eventowa
-- organizacja imprez
-- wesela, urodziny, imprezy firmowe
-- team building, integracje, gry
-
-ZASADA:
-- dopasowanie do powyższych zwiększa wiarygodność
-- brak dopasowania → sygnał negatywny
-- sprzeczność (np. sklep, portal, nieruchomości) → odrzucenie
+Wykryć firmy świadczące usługi eventowe, w tym:
+- prowadzenie imprez (DJ, wodzirej, konferansjer)
+- animacje (w tym dziecięce)
+- organizacja imprez i wydarzeń
+- agencje eventowe
+- usługi weselne / urodzinowe / firmowe / integracyjne
 
 ----------------------------------------
 KROK 1 — IDENTYFIKACJA EVENTOWA
 ----------------------------------------
 
-UZNAJ ZA EVENTOWE JEŚLI WYSTĘPUJE CO NAJMNIEJ JEDEN Z PONIŻSZYCH BLOKÓW:
+UZNAJ ZA EVENTOWE, JEŚLI WYSTĘPUJE CO NAJMNIEJ JEDEN Z BLOKÓW:
 
-A) ROLE EVENTOWE:
+A) ROLE EVENTOWE (PEŁNY DOWÓD):
 - DJ
 - wodzirej
 - konferansjer
-- animator (także dziecięcy)
+- animator (w tym dziecięcy)
 - prezenter eventowy
 
-B) DZIAŁALNOŚĆ ORGANIZACYJNA:
+B) DZIAŁALNOŚĆ EVENTOWA:
 - organizacja imprez
-- agencja eventowa
 - obsługa eventów
-- eventy
-- imprezy okolicznościowe
-- przyjęcia / wesela / konferencje
+- agencja eventowa
+- eventy / imprezy / przyjęcia okolicznościowe
 
 C) OFERTA EVENTOWA:
 - wesela
-- urodziny
 - imprezy firmowe
-- eventy integracyjne
+- urodziny
 - konferencje
-- team building
+- eventy integracyjne / team building
 - atrakcje dla dzieci
+
+WAŻNE:
+- wystąpienie roli eventowej (np. DJ) = wystarczający dowód
+- nie wymagaj dodatkowych słów typu "agencja" lub "organizacja"
 
 ----------------------------------------
 KROK 2 — SCORING
 ----------------------------------------
 
-+3 (mocny sygnał eventowy):
++3 (silny sygnał):
 - DJ / wodzirej / konferansjer / animator
 - agencja eventowa
 - organizacja imprez / kompleksowa obsługa eventów
@@ -494,43 +490,26 @@ KROK 2 — SCORING
 - team building / integracje
 - atrakcje dla dzieci
 
-+2 (dopasowanie do intentu zapytania):
-- zgodność z frazami wyszukiwania
++2 (dopasowanie do intencji zapytania):
+- zgodność z frazami eventowymi
 
-+3 (lokal + eventy):
-- hotel / restauracja + WYRAŹNA organizacja eventów (nie tylko wynajem sali)
++3 (lokal + usługi):
+- hotel / restauracja + wyraźna organizacja eventów
 
 +1 (słaby sygnał):
-- ogólne wzmianki o eventach bez szczegółów
+- ogólne wzmianki o eventach
 
--2 (lokal bez usług eventowych):
-- hotel / restauracja / sala oferująca tylko przestrzeń
+-2 (lokal bez usług):
+- hotel / restauracja / sala oferująca wyłącznie wynajem przestrzeni
 
--2 (brak dopasowania do intentu):
-- brak jakichkolwiek odniesień do eventów
+-2 (brak eventów w treści):
+- brak jakichkolwiek usług eventowych
 
--3 (negatywne branże):
+-3 (branże niepowiązane):
 - sklepy
 - portale / katalogi / marketplace
 - nieruchomości
 - firmy niezwiązane z eventami
-
-----------------------------------------
-WYMÓG MINIMALNY (HARD RULE):
-----------------------------------------
-Wystarczy JEDEN dowód z poniższych:
-
-✔ role eventowe (DJ / wodzirej / konferansjer / animator)
-LUB
-✔ działalność eventowa (agencja eventowa / organizacja imprez / obsługa eventów)
-LUB
-✔ oferta eventowa (wesela / imprezy / konferencje / eventy firmowe / integracje)
-
-WAŻNE:
-- brak literalnego „DJ" NIE oznacza odrzucenia
-- „organizacja imprez", „wesela", „eventy" = pełnoprawny dowód
-
-Jeśli brak wszystkich → odrzucenie
 
 ----------------------------------------
 KROK 3 — EMAIL
@@ -541,10 +520,10 @@ DOBRY EMAIL (+1):
 
 ZŁY EMAIL (-2):
 - test@, example@, przyklad@
-- olx@, allegro@
-- noreply@, sentry@
+- platformy (olx@, allegro@)
+- systemowe (noreply@, sentry@)
 
-BRAK EMAIL → automatyczne odrzucenie
+BRAK EMAIL → AUTOMATYCZNE ODRZUCENIE
 
 ----------------------------------------
 KROK 4 — DECYZJA KOŃCOWA
@@ -553,17 +532,18 @@ KROK 4 — DECYZJA KOŃCOWA
 AKCEPTUJ jeśli:
 - score ≥ 3
 - ORAZ email PASS
-- ORAZ spełniony WYMÓG MINIMALNY
+- ORAZ istnieje dowód eventowy (A, B lub C)
 
-INACZEJ → ODRZUCENIE
+W PRZECIWNYM RAZIE → ODRZUĆ
 
 ----------------------------------------
 ZASADY OGÓLNE:
 ----------------------------------------
-- opieraj się tylko na danych wejściowych
+- opieraj się wyłącznie na danych wejściowych
 - nie zgaduj brakujących usług
-- preferuj precision > recall (ale bez fałszywego wycinania eventów)
-- jeśli niepewne → odrzuć
+- DJ / wodzirej / konferansjer = pełnoprawna usługa eventowa
+- preferuj precyzję nad nadmiernym odrzucaniem
+- jeśli brak pewności → odrzuć
 
 ----------------------------------------
 OUTPUT (JSON):
