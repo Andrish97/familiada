@@ -19,7 +19,7 @@ import httpx
 # --- Configuration (Internal Docker) ---
 SEARXNG_URL = "http://searxng:8080"
 AI_ENDPOINT = "http://ollama:11434"
-AI_MODEL = "phi:latest"
+AI_MODEL = "llama3.2:1b"
 SUPABASE_URL = "http://kong:8000"
 SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", os.getenv("SERVICE_ROLE_KEY", ""))
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
