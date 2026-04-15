@@ -239,7 +239,7 @@ async def refill_raw_buffer(run_id: str):
     await log_to_db("success", f"Dodano {new_raw_count} surowych kontaktów do bufora.")
 
 # --- Core Logic: AI Layer (Consumer) ---
-async def verify_raw_lead(run_id: str, lead: dict) -> bool:
+async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> bool:
     """Consumer: Takes one raw lead and asks AI to verify"""
     emails = lead.get('emails_found', [])
     prompt = f"""Czy to organizator eventów (DJ, Agencja, Wodzirej, Animator)?
@@ -272,14 +272,20 @@ Odpowiedz WYŁĄCZNIE JSONem:
                         exists_v = await supabase.select('marketing_verified_contacts', 'id', {'url': url})
                         exists_r = await supabase.select('marketing_raw_contacts', 'id', {'url': url})
                         if exists_v or exists_r:
+                            logger.info(f"[C{consumer_id}] URL already exists in verified or raw")
                             return True
-                        await supabase.insert('marketing_verified_contacts', {
+                        result = await supabase.insert('marketing_verified_contacts', {
                             'title': lead.get('title'),
                             'email': res['best_email'],
                             'url': url,
                             'short_description': res.get('reasoning', '')[:200]
                         })
-                        return True
+                        if result:
+                            logger.info(f"[C{consumer_id}] Inserted to verified: {url}")
+                            return True
+                        else:
+                            logger.error(f"[C{consumer_id}] Failed to insert to verified: {url}")
+                            return False
         return False
     except Exception as e:
         logger.error(f"AI verify error: {e}")
@@ -317,7 +323,7 @@ async def consumer_task(run_id: str, consumer_id: int, target: int):
             await supabase.update('marketing_raw_contacts', {'status': 'processing'}, {'id': lead_id})
             
             await log_to_db("info", f"[C{consumer_id}] Weryfikacja AI: {lead_url}")
-            success = await verify_raw_lead(run_id, lead)
+            success = await verify_raw_lead(run_id, lead, consumer_id)
             
             if task_status not in ("running", "paused"):
                 break
@@ -349,7 +355,6 @@ async def run_worker(run_id: str, target_count: int):
     task_status = "running"
     verified_in_run = 0
     
-    await supabase.delete('marketing_search_logs')
     await log_to_db("info", f"Rozpoczynam zlecenie na {target_count} leadów.")
 
     producer = asyncio.create_task(producer_task(run_id))
@@ -360,7 +365,6 @@ async def run_worker(run_id: str, target_count: int):
             if task_stop_event.is_set():
                 task_status = "cancelled"
                 await log_to_db("warning", "Zlecenie anulowane.")
-                await cleanup_on_cancel()
                 break
 
             while task_pause_event.is_set():
@@ -368,13 +372,12 @@ async def run_worker(run_id: str, target_count: int):
                 if task_stop_event.is_set():
                     task_status = "cancelled"
                     await log_to_db("warning", "Zlecenie anulowane.")
-                    await cleanup_on_cancel()
                     break
             
             task_status = "running"
             
             if verified_in_run >= target_count:
-                await asyncio.sleep(1)
+                await asyncio.sleep(2)
                 if verified_in_run >= target_count:
                     task_status = "completed"
                     await log_to_db("success", f"Zlecenie zakończone! Pozyskano {verified_in_run} leadów.")
@@ -387,6 +390,7 @@ async def run_worker(run_id: str, target_count: int):
         for c in consumers:
             c.cancel()
         await asyncio.gather(producer, *consumers, return_exceptions=True)
+        await cleanup_on_cancel()
 
 # --- API Endpoints ---
 @app.post("/api/search-runs")
