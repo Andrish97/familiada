@@ -5668,6 +5668,7 @@ function wireEvents() {
     if (!actionBtn || !cancelBtn) return;
 
     actionBtn.disabled = false;
+    cancelBtn.disabled = false;
 
     switch (mcState.status) {
       case "running":

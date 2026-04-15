@@ -118,10 +118,10 @@ class SupabaseClient:
                 for k, v in filters.items(): params[k] = f'eq.{v}'
             r = await client.delete(f'{self.url}/rest/v1/{table}', headers=self.headers, params=params)
             return r.status_code in (200, 204, 404)
-
+    
     async def truncate(self, table):
         async with httpx.AsyncClient() as client:
-            r = await client.post(f'{self.url}/rest/v1/{table}', headers=self.headers, json={})
+            r = await client.delete(f'{self.url}/rest/v1/{table}?id=eq.00000000-0000-0000-0000-000000000000', headers=self.headers)
             return r.status_code in (200, 204)
 
 supabase = SupabaseClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
@@ -360,6 +360,7 @@ async def run_worker(run_id: str, target_count: int):
     task_status = "running"
     verified_in_run = 0
     
+    await supabase.truncate('marketing_search_logs')
     await log_to_db("info", f"Rozpoczynam zlecenie na {target_count} leadów.")
 
     producer = asyncio.create_task(producer_task(run_id))
