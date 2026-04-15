@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict Oth1ev3hlIQvjUfE1Ps3MXU2rfDD1AgqV62F32aQDgRCAIPebrekfqXWS5nAk6x
+\restrict qH1vn8uvqiVCFc9OgBhUE5wEdbH4Dk6XOQbAjMdB497n6xMQGCatPvpifYkMrtl
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -5115,6 +5115,33 @@ begin
 
     return query select true, '';
 end;
+$$;
+
+
+--
+-- Name: marketing_get_verified_contacts("uuid", integer, integer, boolean); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."marketing_get_verified_contacts"("p_run_id" "uuid" DEFAULT NULL::"uuid", "p_limit" integer DEFAULT 50, "p_offset" integer DEFAULT 0, "p_only_unused" boolean DEFAULT false) RETURNS TABLE("id" "uuid", "title" "text", "short_description" "text", "email" "text", "url" "text", "is_used" boolean, "added_at" timestamp with time zone)
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        vc.id,
+        vc.title,
+        vc.short_description,
+        vc.email,
+        vc.url,
+        vc.is_used,
+        vc.added_at
+    FROM marketing_verified_contacts vc
+    WHERE (p_run_id IS NULL OR vc.run_id = p_run_id)
+      AND (p_only_unused = false OR vc.is_used = false)
+    ORDER BY vc.added_at DESC
+    LIMIT p_limit
+    OFFSET p_offset;
+END;
 $$;
 
 
@@ -13700,5 +13727,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict Oth1ev3hlIQvjUfE1Ps3MXU2rfDD1AgqV62F32aQDgRCAIPebrekfqXWS5nAk6x
+\unrestrict qH1vn8uvqiVCFc9OgBhUE5wEdbH4Dk6XOQbAjMdB497n6xMQGCatPvpifYkMrtl
 
