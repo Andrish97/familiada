@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict BRtXQjdpIiXWU5uCOTjmaEWTIcpEhLqoD8VQc1OCyFs5Kt2gpo7yodhy2Fk61l8
+\restrict Kjx1k5rfZenY0hJPx0TrksFwcLEI4fYtk1Xa60j4umKNP1o97j8S1JG0DBWhS1G
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -10389,7 +10389,8 @@ CREATE TABLE "public"."marketing_raw_contacts" (
     "emails_found" "jsonb" DEFAULT '[]'::"jsonb",
     "title" "text",
     "status" "text" DEFAULT 'pending'::"text",
-    "reject_reason" "text"
+    "reject_reason" "text",
+    "page_text" "text"
 );
 
 
@@ -13741,5 +13742,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict BRtXQjdpIiXWU5uCOTjmaEWTIcpEhLqoD8VQc1OCyFs5Kt2gpo7yodhy2Fk61l8
+\unrestrict Kjx1k5rfZenY0hJPx0TrksFwcLEI4fYtk1Xa60j4umKNP1o97j8S1JG0DBWhS1G
 
