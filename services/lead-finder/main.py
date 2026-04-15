@@ -290,7 +290,7 @@ async def producer_task(run_id: str):
             logger.error(f"Producer error: {e}")
         await asyncio.sleep(5)
 
-async def consumer_task(run_id: str, consumer_id: int):
+async def consumer_task(run_id: str, consumer_id: int, target: int):
     """Consumer: Continuously verifies raw contacts"""
     while task_status == "running":
         if task_pause_event.is_set():
@@ -318,7 +318,7 @@ async def consumer_task(run_id: str, consumer_id: int):
             if success:
                 global verified_in_run
                 verified_in_run += 1
-                await log_to_db("success", f"[C{consumer_id}] Zweryfikowano ({verified_in_run}/{tc}): {lead_url}")
+                await log_to_db("success", f"[C{consumer_id}] Zweryfikowano ({verified_in_run}/{target}): {lead_url}")
                 await supabase.delete('marketing_raw_contacts', {'id': lead_id})
             else:
                 await supabase.update('marketing_raw_contacts', {'status': 'rejected'}, {'id': lead_id})
@@ -338,27 +338,29 @@ async def cleanup_on_cancel():
         logger.error(f"Cleanup error: {e}")
 
 async def run_worker(run_id: str, target_count: int):
-    global task_status, verified_in_run, target_count as tc
+    global task_status, verified_in_run
     task_status = "running"
     verified_in_run = 0
-    tc = target_count
     
     await log_to_db("info", f"Rozpoczynam zlecenie na {target_count} leadów.")
 
     producer = asyncio.create_task(producer_task(run_id))
-    consumers = [asyncio.create_task(consumer_task(run_id, i)) for i in range(NUM_CONSUMERS)]
+    consumers = [asyncio.create_task(consumer_task(run_id, i, target_count)) for i in range(NUM_CONSUMERS)]
     
     try:
         while True:
             if task_stop_event.is_set():
                 task_status = "cancelled"
                 await log_to_db("warning", "Zlecenie anulowane.")
+                await cleanup_on_cancel()
                 break
 
             while task_pause_event.is_set():
                 await asyncio.sleep(1)
                 if task_stop_event.is_set():
                     task_status = "cancelled"
+                    await log_to_db("warning", "Zlecenie anulowane.")
+                    await cleanup_on_cancel()
                     break
             
             task_status = "running"
