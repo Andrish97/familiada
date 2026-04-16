@@ -17,7 +17,7 @@ from urllib.parse import urlparse
 import httpx
 
 # --- Configuration (Internal Docker) ---
-SEARXNG_URL = os.getenv("SEARXNG_URL", "http://searxng:8080")
+SEARXNG_URL = "http://searxng:8080"
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "anthropic/claude-3-haiku")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
@@ -35,9 +35,8 @@ SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", os.getenv("SERVICE
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
 
-# --- Constants ---
+# --- Load config from files ---
 def load_lines_set(filename):
-    """Load lines from file as set, ignoring comments and empty lines."""
     path = os.path.join(os.path.dirname(__file__), filename)
     items = set()
     try:
@@ -47,11 +46,10 @@ def load_lines_set(filename):
                 if line and not line.startswith('#'):
                     items.add(line.lower())
     except FileNotFoundError:
-        logging.warning(f"{filename} not found, using empty set")
+        logging.warning(f"{filename} not found")
     return items
 
 def load_lines_list(filename):
-    """Load lines from file as list, ignoring comments and empty lines."""
     path = os.path.join(os.path.dirname(__file__), filename)
     items = []
     try:
@@ -61,7 +59,7 @@ def load_lines_list(filename):
                 if line and not line.startswith('#'):
                     items.append(line)
     except FileNotFoundError:
-        logging.warning(f"{filename} not found, using empty list")
+        logging.warning(f"{filename} not found")
     return items
 
 ROLES = load_lines_list('roles.txt')
@@ -71,14 +69,6 @@ BLOCKED_DOMAINS = load_lines_set('blocked_domains.txt')
 GARBAGE_EMAIL_DOMAINS = load_lines_set('garbage_email_domains.txt')
 SUBPAGE_PATHS = load_lines_list('subpage_paths.txt')
 SOCIAL_PLATFORMS = load_lines_set('social_platforms.txt')
-
-# --- Playwright Support ---
-USE_PLAYWRIGHT = os.getenv('USE_PLAYWRIGHT', 'false').lower() == 'true'
-PLAYWRIGHT_BROWSER = None
-
-EMAIL_REGEX = re.compile(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}')
-RAW_BUFFER_THRESHOLD = 20
-MAX_RESULTS_PER_SEARCH = 50
 
 # --- Global State ---
 active_task = None
@@ -264,8 +254,6 @@ async def fetch_next_target(run_id: str) -> Optional[tuple]:
     if not pool:
         await log_to_db("warning", "Wszystkie miasta i role zostały sprawdzone. Resetuję historię...")
         await supabase.call_rpc('truncate_marketing_queries_log')
-        await log_to_db("info", "Historia zresetowana. Sprawdzam ponownie za chwilę...")
-        await asyncio.sleep(10)  # Pause before retry
         return await fetch_next_target(run_id)
     
     # Pick one target to sweep
@@ -335,51 +323,17 @@ async def is_page_fresh(url: str, max_age_days: int = 730) -> bool:
     except: pass
     return True
 
-async def get_playwright_browser():
-    """Get or create Playwright browser instance."""
-    global PLAYWRIGHT_BROWSER
-    if PLAYWRIGHT_BROWSER is None:
-        try:
-            from playwright.async_api import async_playwright
-            pw = await async_playwright().start()
-            PLAYWRIGHT_BROWSER = await pw.chromium.launch(headless=True)
-        except Exception as e:
-            logger.warning(f"Playwright not available: {e}")
-            return None
     return PLAYWRIGHT_BROWSER
-
-async def playwright_scrape(url: str, timeout: int = 15) -> tuple[str, str]:
-    """Scrape page with Playwright (handles JS). Returns (content, title)."""
-    browser = await get_playwright_browser()
-    if not browser:
-        return '', ''
-    
-    try:
-        page = await browser.new_page()
-        await page.goto(url, wait_until='domcontentloaded', timeout=timeout*1000)
-        await page.wait_for_timeout(2000)  # Wait for dynamic content
-        content = await page.content()
-        title = await page.title()
-        await page.close()
-        return content, title
-    except Exception as e:
-        logger.warning(f"Playwright error for {url}: {e}")
-        return '', ''
-
 async def scrape_and_save_lead(res: dict, query: str, existing_emails: Set[str]):
     """Scrapes a single search result and saves to raw_contacts if valid."""
     url = res.get('url', '').lower()
     if not url: return 0
     
-    fresh = await is_page_fresh(url)
-    if not fresh:
-        logger.debug(f"[SKIP stale] {url}")
+    if not await is_page_fresh(url):
         return 0
     
     # 1. Block by domain keywords
-    if any(d in url for d in BLOCKED_DOMAINS): 
-        logger.debug(f"[SKIP blocked domain] {url}")
-        return 0
+    if any(d in url for d in BLOCKED_DOMAINS): return 0
     
     # 2. Block foreign country TLDs and check domain deduplication
     try:
@@ -390,31 +344,25 @@ async def scrape_and_save_lead(res: dict, query: str, existing_emails: Set[str])
         # Deduplicate exact URL
         exists_v = await supabase.select('marketing_verified_contacts', 'id', {'url': url})
         exists_r = await supabase.select('marketing_raw_contacts', 'id', {'url': url})
-        if exists_v or exists_r: 
-            logger.debug(f"[SKIP duplicate url] {url}")
-            return 0
+        if exists_v or exists_r: return 0
 
         # Domain-level deduplication (check if any URL from this domain exists)
         # Skip this for major social platforms where one domain has many leads
+        social_platforms = ('facebook.com', 'instagram.com', 'youtube.com', 'linkedin.com', 'tiktok.com')
         root_domain = domain
-        if root_domain not in SOCIAL_PLATFORMS:
+        if root_domain not in social_platforms:
             exists_dom_v = await supabase.select('marketing_verified_contacts', 'id', {'url': f'ilike.%{root_domain}%'})
             exists_dom_r = await supabase.select('marketing_raw_contacts', 'id', {'url': f'ilike.%{root_domain}%'})
             if (exists_dom_v and len(exists_dom_v) > 0) or (exists_dom_r and len(exists_dom_r) > 0):
-                logger.debug(f"[SKIP duplicate domain] {domain}")
                 return 0
 
         tld = domain.split('.')[-1]
         allowed_2l = ('pl', 'eu', 'io', 'me', 'co', 'tv')
-        if len(tld) == 2 and tld not in allowed_2l: 
-            logger.debug(f"[SKIP foreign tld] {url}")
-            return 0
+        if len(tld) == 2 and tld not in allowed_2l: return 0
     except: pass
 
     page_title = res.get('title', '')
-    if any(k in page_title.lower() for k in NEGATIVE_KEYWORDS): 
-        logger.debug(f"[SKIP negative keyword in title] {url}")
-        return 0
+    if any(k in page_title.lower() for k in NEGATIVE_KEYWORDS): return 0
 
     page_text = ''
     meta_desc = ''
@@ -461,20 +409,6 @@ async def scrape_and_save_lead(res: dict, query: str, existing_emails: Set[str])
         return title, ' '.join(words)[:1500], m_desc
     
     try:
-        # Try Playwright first if enabled (for dynamic pages like Google Maps)
-        if USE_PLAYWRIGHT and 'maps.google' in url.lower():
-            pw_content, pw_title = await playwright_scrape(url)
-            if pw_content:
-                text = pw_content[:50000]
-                page_title = pw_title or page_title
-                found_emails = EMAIL_REGEX.findall(text)
-                for e in found_emails:
-                    if not any(g in e.lower() for g in GARBAGE_EMAIL_DOMAINS):
-                        emails.add(e)
-                _, page_text, _ = extract_content(text, page_title)
-                if page_title and any(k in page_title.lower() for k in NEGATIVE_KEYWORDS): return 0
-        
-        # Standard httpx scraping
         headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'}
         async with httpx.AsyncClient(timeout=12, follow_redirects=True, headers=headers) as client:
             # 1. Main page
@@ -497,11 +431,12 @@ async def scrape_and_save_lead(res: dict, query: str, existing_emails: Set[str])
             # 2. Contact page sub-crawl (only for non-social domains)
             parsed = urlparse(url)
             base = f"{parsed.scheme}://{parsed.netloc}"
+            social_platforms = ('facebook.com', 'instagram.com', 'youtube.com', 'linkedin.com', 'tiktok.com', 'twitter.com', 'x.com', 'pinterest.com')
             
-            if parsed.netloc.lower().replace('www.', '') not in SOCIAL_PLATFORMS:
-                for path_name in SUBPAGE_PATHS:
-                    contact_url = base + '/' + path_name
-                    if contact_url.rstrip('/') == url.rstrip('/'): continue
+            if parsed.netloc.lower().replace('www.', '') not in social_platforms:
+                for path in ['/kontakt', '/contact', '/o-nas']:
+                    contact_url = base + path
+                    if contact_url.rstrip('/') == url.rstrip('/'): continue # Skip if same as original
                     
                     try:
                         r_contact = await client.get(contact_url)
@@ -635,6 +570,7 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
     
     logger.info(f"[C{consumer_id}] Weryfikuję: {url}")
     
+    # Wczytaj prompt z pliku
     prompt_path = os.path.join(os.path.dirname(__file__), 'ai_prompt.txt')
     with open(prompt_path, 'r', encoding='utf-8') as f:
         prompt_template = f.read()
@@ -653,13 +589,10 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
         emails=emails_str,
         text=text_str
     )
-    
-    logger.info(f"[C{consumer_id}] Prompt length: {len(prompt)} chars, text length: {len(text_str)}")
 
     try:
         content = None
         provider_order = get_provider_order()
-        logger.info(f"[C{consumer_id}] Provider order: {provider_order}")
         
         # Try providers in order from settings
         for provider in provider_order:
@@ -667,7 +600,6 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
                 logger.info(f"[C{consumer_id}] {provider} on cooldown, skipping")
                 continue
             
-            logger.info(f"[C{consumer_id}] Trying provider: {provider}")
             if provider == 'openrouter' and OPENROUTER_API_KEY:
                 try:
                     async with httpx.AsyncClient(timeout=60) as client:
@@ -732,7 +664,6 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
             logger.error(f"[C{consumer_id}] No AI provider available")
             return None
         
-        logger.info(f"[C{consumer_id}] AI got content: {len(content)} chars")
         match = re.search(r'\{[\s\S]*\}', content)
         if not match:
             logger.warning(f"[C{consumer_id}] AI: Brak JSON. Content: {content[:500]}")
@@ -745,14 +676,12 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
             if not isinstance(res, dict):
                 logger.warning(f"[C{consumer_id}] AI response is not a dict: {type(res)}")
                 return None
-        except json.JSONDecodeError as e:
-            logger.warning(f"[C{consumer_id}] JSON parse error: {e}")
-            logger.warning(f"[C{consumer_id}] Trying ast.literal_eval...")
+        except json.JSONDecodeError:
             try:
                 import ast
                 res = ast.literal_eval(json_str)
-            except Exception as e2:
-                logger.warning(f"[C{consumer_id}] ast.literal_eval failed: {e2}")
+            except Exception as e:
+                logger.warning(f"[C{consumer_id}] JSON parse failed: {json_str[:300]}")
                 return None
         ok_val = res.get('ok', 0)
         is_organizer = ok_val in [1, True, '1', 'true', 'True']
@@ -832,16 +761,6 @@ async def consumer_task(run_id: str, consumer_id: int, target: int):
                 break
             
             if result is None:
-                # AI failed - odłóż i spróbuj później (nie odrzucaj)
-                await supabase.update('marketing_raw_contacts', {
-                    'status': 'pending'
-                }, {'id': lead_id})
-                logger.warning(f"[C{consumer_id}] AI failed - odłożone: {lead_url}")
-                await asyncio.sleep(30)
-            elif not isinstance(result, dict):
-                logger.warning(f"[C{consumer_id}] Invalid result type: {type(result)} - {str(result)[:100]}")
-                await supabase.update('marketing_raw_contacts', {'status': 'pending'}, {'id': lead_id})
-                await asyncio.sleep(30)
                 # AI failed - odłóż i spróbuj później (nie odrzucaj)
                 await supabase.update('marketing_raw_contacts', {
                     'status': 'pending'
