@@ -6095,6 +6095,17 @@ function wireEvents() {
             }
           }
         )
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'marketing_verified_contacts'
+          },
+          () => {
+            if (mcState.page === 1) mcLoadContacts();
+          }
+        )
         .subscribe((status) => {
           if (status === 'SUBSCRIBED') {
             console.log('[MC] Realtime subscribed');
@@ -6171,6 +6182,7 @@ function wireEvents() {
       mcLoadContacts();
       await mcLoadRuns();
       mcLoadLogs();
+      if (document.getElementById("mcAutoRefreshLogs")?.checked) mcStartLogAutoRefresh();
     }
   });
   const mcPanel = document.getElementById("marketingContactsPanel");

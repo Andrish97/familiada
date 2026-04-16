@@ -29,45 +29,52 @@ TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
 
 # --- Constants ---
+ROLES = ["DJ wesele", "Wodzirej", "Konferansjer", "Animator dzieci", "Agencja eventowa", "Zespół muzyczny"]
+
 SEARCH_TEMPLATES = [
-    '"DJ" "wesele" {city} kontakt',
-    '"Wodzirej" {city} kontakt',
-    '"Konferansjer" {city} kontakt',
-    '"Prezenter eventowy" {city} kontakt',
-    '"Animator dzieci" {city} kontakt',
-    '"Agencja eventowa" {city} kontakt',
-    '"Organizacja imprez" {city} kontakt',
-    '"Team building" {city} kontakt',
-    '"Gry integracyjne" {city} kontakt'
+    # Klasyczne
+    '"{role}" {city} kontakt',
+    '"{role}" {city} oferta',
+    
+    # Wizytówkowe i lokalne
+    '{role} {city} wizytówka opinie',
+    '{role} {city} mapa kontakt',
+    '{role} {city} google maps',
+    
+    # Social-specific
+    'site:facebook.com "{city}" {role} kontakt',
+    'site:instagram.com "{city}" {role}',
 ]
+
+NEGATIVE_KEYWORDS = {
+    'urząd', 'ministerstwo', 'bip.gov.pl', 'komenda', 'policja', 'sąd', 'prokuratura',
+    'ośrodek pomocy', 'ops', 'parafia', 'kościoła', 'szkoła podstawowa', 'liceum',
+    'przedszkole publiczne', 'żłobek miejski', 'szpital', 'przychodnia', 'apteka'
+}
 
 BLOCKED_DOMAINS = {
     # Ogłoszenia / marketplace
     'olx.pl', 'allegro.pl', 'gumtree.pl', 'sprzedajemy.pl',
-    'oferteo.pl', 'fixly.pl', 'weselezklasa.pl',
-    
-    # Platformy freelance / praca
-    'useme.pl', 'pracuj.pl', 'jooble.pl', 'infopraca.pl', 'praca.pl',
+    'oferteo.pl', 'fixly.pl', 'weselezklasa.pl', 'slubnaglowie.pl',
+    'pracuj.pl', 'jooble.pl', 'infopraca.pl', 'praca.pl',
     
     # Sklepy / RTV AGD
     'amazon.com', 'ebay.com', 'etsy.com', 'empik.com', 'ceneo.pl', 'skapiec.pl',
     'mediaexpert.pl', 'x-kom.pl', 'morele.net', 'komputronik.pl', 'neonet.pl',
     'media-markt.pl', 'saturn.pl', 'expert.pl', 'avs.pl',
     
+    # Katalogi ogólne (te zazwyczaj nie mają maili bezpośrednio)
+    'panoramafirm.pl', 'pkt.pl', 'firmy.net', 'biznesfinder.pl', 'yellowpages.pl',
+    
     # Gry / rozrywka / inne śmieciowe
     'gry-online.pl', 'gamepressure.com', 'igromania.pl', 'gry.pl', 'gram.pl',
     'swiatgier.pl', 'stopklatka.pl', 'filmweb.pl', 'imdb.com',
-    'zhihu.com', 'wikipedia.org', 'facebook.com', 'instagram.com', 'youtube.com',
-    'twitter.com', 'linkedin.com', 'pinterest.com', 'tiktok.com',
+    'zhihu.com', 'wikipedia.org', 'youtube.com',
+    'twitter.com', 'pinterest.com', 'tiktok.com',
     'rottentomatoes.com', 'metacritic.com', 'letterboxd.com',
-    'trakt.tv', 'simkl.com', 'justwatch.com',
+    'trakt.tv', 'simkl.com', 'justwatch.com', 'gov.pl', 'edu.pl', 'bip.gov.pl',
     
-    # Książki / kultura
-    'instytutksiazki.pl', 'biblioteka.pl', 'bookcrossing.com', 'goodreads.com',
-    'lubimyczytac.pl', 'granice.pl', 'swiatczytnika.pl',
-    'legimi.com', 'virtualo.pl', 'publio.pl', 'wolnelektury.pl', 'polona.pl',
-    
-    # Specyficzne polskie katalogi weselne (duplikaty/zduplikowane)
+    # Specyficzne polskie katalogi (blokujemy tylko jeśli to masowe listingi)
     'janachowska.pl'
 }
 
@@ -188,65 +195,118 @@ async def send_telegram(message: str):
         logger.error(f"Telegram exception: {e}")
 
 # --- Core Logic: Search Layer (Producer) ---
-async def fetch_next_query(run_id: str) -> Optional[tuple]:
-    """Finds next available query template + city combo not in history."""
+async def fetch_next_query_batch(run_id: str) -> Optional[tuple]:
+    """Finds a City+Role target and returns ALL unsent template queries for it."""
     cities_data = await supabase.select('marketing_cities', 'name', {'is_active': 'true'})
-    if not cities_data:
-        logger.warning("Brak miast w tabeli marketing_cities!")
-        return None
+    if not cities_data: return None
     
     cities = [c['name'] for c in cities_data]
     history_data = await supabase.select('marketing_search_queries_log', 'query_text')
     history = {h['query_text'] for h in history_data} if history_data else set()
-    
-    logger.info(f"Miast: {len(cities)}, Wykonanych query: {len(history)}")
 
-    # Generate all possible queries
-    pool = []
+    # Find targets (City + Role) that have at least one unused template
+    targets = []
     for city in cities:
-        for template in SEARCH_TEMPLATES:
-            pool.append((template.format(city=city), city))
+        for role in ROLES:
+            available_for_target = []
+            for template in SEARCH_TEMPLATES:
+                q = template.format(city=city, role=role)
+                if q not in history:
+                    available_for_target.append(q)
+            
+            if available_for_target:
+                targets.append((available_for_target, city, role))
 
-    # Check if pool is exhausted
-    available = [q for q in pool if q[0] not in history]
-    
-    if not available:
-        await log_to_db("warning", "Pula zapytań wyczerpana. Resetuję historię...")
+    if not targets:
+        await log_to_db("warning", "Pula zapytań całkowicie wyczerpana. Resetuję historię...")
         await supabase.call_rpc('truncate_marketing_queries_log')
-        chosen = random.choice(pool)
-        return chosen
+        return await fetch_next_query_batch(run_id)
     
-    return random.choice(available)
+    # Pick one target (City + Role) and do a "Deep Sweep"
+    chosen_queries, city_name, role_name = random.choice(targets)
+    logger.info(f"[DEEP SWEEP] Target: {role_name} w {city_name} ({len(chosen_queries)} metod)")
+    return chosen_queries, city_name
 
 async def scrape_and_save_lead(res: dict, query: str, existing_emails: Set[str]):
     """Scrapes a single search result and saves to raw_contacts if valid."""
     url = res.get('url', '').lower()
-    if not url or any(d in url for d in BLOCKED_DOMAINS): return 0
+    if not url: return 0
     
-    # Deduplicate vs Verified and Raw
-    exists_v = await supabase.select('marketing_verified_contacts', 'id', {'url': url})
-    exists_r = await supabase.select('marketing_raw_contacts', 'id', {'url': url})
-    if exists_v or exists_r: return 0
+    # 1. Block by domain keywords
+    if any(d in url for d in BLOCKED_DOMAINS): return 0
+    
+    # 2. Block foreign country TLDs and check domain deduplication
+    try:
+        parsed = urlparse(url)
+        domain = parsed.netloc.lower()
+        if domain.startswith('www.'): domain = domain[4:]
+
+        # Deduplicate exact URL
+        exists_v = await supabase.select('marketing_verified_contacts', 'id', {'url': url})
+        exists_r = await supabase.select('marketing_raw_contacts', 'id', {'url': url})
+        if exists_v or exists_r: return 0
+
+        # Domain-level deduplication (check if any URL from this domain exists)
+        # Skip this for major social platforms where one domain has many leads
+        social_platforms = ('facebook.com', 'instagram.com', 'youtube.com', 'linkedin.com', 'tiktok.com')
+        root_domain = domain
+        if root_domain not in social_platforms:
+            exists_dom_v = await supabase.select('marketing_verified_contacts', 'id', {'url': f'ilike.%{root_domain}%'})
+            exists_dom_r = await supabase.select('marketing_raw_contacts', 'id', {'url': f'ilike.%{root_domain}%'})
+            if (exists_dom_v and len(exists_dom_v) > 0) or (exists_dom_r and len(exists_dom_r) > 0):
+                return 0
+
+        tld = domain.split('.')[-1]
+        allowed_2l = ('pl', 'eu', 'io', 'me', 'co', 'tv')
+        if len(tld) == 2 and tld not in allowed_2l: return 0
+    except: pass
 
     page_title = res.get('title', '')
+    if any(k in page_title.lower() for k in NEGATIVE_KEYWORDS): return 0
+
     page_text = ''
+    meta_desc = ''
     emails = set()
     
-    def extract_content(text: str, title: str) -> tuple[str, str]:
+    def extract_content(text: str, title: str) -> tuple[str, str, str]:
         title_match = re.search(r'<title[^>]*>([^<]+)</title>', text, re.I)
         if title_match and not title:
             title = title_match.group(1).strip()
-        text_no_html = re.sub(r'<script[^>]*>.*?</script>', ' ', text, flags=re.DOTALL | re.I)
-        text_no_html = re.sub(r'<style[^>]*>.*?</style>', ' ', text_no_html, flags=re.DOTALL | re.I)
-        text_no_html = re.sub(r'<noscript[^>]*>.*?</noscript>', ' ', text_no_html, flags=re.DOTALL | re.I)
-        text_no_html = re.sub(r'data:[^;]+;base64,[A-Za-z0-9+/=]+', ' ', text_no_html)
-        text_no_html = re.sub(r'<[^>]+>', ' ', text_no_html)
-        text_no_html = re.sub(r'\{[^}]*\}', ' ', text_no_html)
-        text_no_html = re.sub(r'\[[^\]]*\]', ' ', text_no_html)
-        text_no_html = re.sub(r'\s+', ' ', text_no_html).strip()
-        words = text_no_html.split()
+        
+        # Extract Meta Description
+        m_match = re.search(r'<meta[^>]*name=["\']description["\'][^>]*content=["\']([^"\']+)["\']', text, re.I)
+        if not m_match:
+            m_match = re.search(r'<meta[^>]*content=["\']([^"\']+)["\'] [^>]*name=["\']description["\']', text, re.I)
+        m_desc = m_match.group(1).strip() if m_match else ''
+
+        # Initial clean
+        text = re.sub(r'<script[^>]*>.*?</script>', ' ', text, flags=re.DOTALL | re.I)
+        text = re.sub(r'<style[^>]*>.*?</style>', ' ', text, flags=re.DOTALL | re.I)
+        text = re.sub(r'<nav[^>]*>.*?</nav>', ' ', text, flags=re.DOTALL | re.I)
+        text = re.sub(r'<footer[^>]*>.*?</footer>', ' ', text, flags=re.DOTALL | re.I)
+        text = re.sub(r'<[^>]+>', ' ', text)
+        
+        # Filter junk lines
+        junk_patterns = [
+            r'cookies', r'polityka prywatności', r'wszelkie prawa zastrzeżone',
+            r'zaloguj', r'rejestracja', r'szukaj', r'newsletter', r'sklep',
+            r'koszyk', r'regulamin', r'mapa strony', r'autor projektu',
+            r'ta strona korzysta', r'używamy plików', r'wyrażam zgodę'
+        ]
+        
+        lines = []
+        for line in text.split('\n'):
+            line = line.strip()
+            if not line or len(line) < 20: continue # Skip short fragments (menus)
+            if any(re.search(p, line, re.I) for p in junk_patterns): continue
+            lines.append(line)
+            
+        clean_text = ' '.join(lines)
+        clean_text = re.sub(r'\s+', ' ', clean_text).strip()
+        words = clean_text.split()
         words = [w for w in words if len(w) > 2 and not w.startswith('http')]
-        return title, ' '.join(words)[:1500]
+        
+        return title, ' '.join(words)[:1500], m_desc
     
     try:
         headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'}
@@ -255,24 +315,44 @@ async def scrape_and_save_lead(res: dict, query: str, existing_emails: Set[str])
             r_crawl = await client.get(url)
             if r_crawl.status_code == 200:
                 text = r_crawl.text[:50000]
-                page_title, page_text = extract_content(text, page_title)
+                page_title, page_text, meta_desc = extract_content(text, page_title)
+                
+                # Pre-filter title again (after fetch)
+                if any(k in page_title.lower() for k in NEGATIVE_KEYWORDS): return 0
+
+                # Combine meta with text
+                if meta_desc: page_text = f"DESC: {meta_desc} | TEXT: {page_text}"
+
                 found_emails = EMAIL_REGEX.findall(text)
                 for e in found_emails:
                     if not any(g in e.lower() for g in GARBAGE_EMAIL_DOMAINS):
                         emails.add(e)
             
-            # 2. Contact page sub-crawl
+            # 2. Contact page sub-crawl (only for non-social domains)
             parsed = urlparse(url)
             base = f"{parsed.scheme}://{parsed.netloc}"
-            for path in ['/kontakt', '/contact', '/o-nas']:
-                try:
-                    r_contact = await client.get(base + path)
-                    if r_contact.status_code == 200:
-                        found = EMAIL_REGEX.findall(r_contact.text[:30000])
-                        for e in found:
-                            if not any(g in e.lower() for g in GARBAGE_EMAIL_DOMAINS):
-                                emails.add(e)
-                except: pass
+            social_platforms = ('facebook.com', 'instagram.com', 'youtube.com', 'linkedin.com', 'tiktok.com', 'twitter.com', 'x.com', 'pinterest.com')
+            
+            if parsed.netloc.lower().replace('www.', '') not in social_platforms:
+                for path in ['/kontakt', '/contact', '/o-nas']:
+                    contact_url = base + path
+                    if contact_url.rstrip('/') == url.rstrip('/'): continue # Skip if same as original
+                    
+                    try:
+                        r_contact = await client.get(contact_url)
+                        if r_contact.status_code == 200:
+                            # Extract emails from sub-page
+                            found = EMAIL_REGEX.findall(r_contact.text[:30000])
+                            for e in found:
+                                if not any(g in e.lower() for g in GARBAGE_EMAIL_DOMAINS):
+                                    emails.add(e)
+                            
+                            # NEW: Enrich page_text with contact page content if main page is thin
+                            if len(page_text) < 1000:
+                                _, c_text, _ = extract_content(r_contact.text[:20000], "")
+                                if c_text:
+                                    page_text += f" | CONTACT_PAGE ({path}): {c_text[:800]}"
+                    except: pass
     except: pass
 
     if not emails or not page_text: return 0
@@ -293,35 +373,49 @@ async def scrape_and_save_lead(res: dict, query: str, existing_emails: Set[str])
     return 0
 
 async def refill_raw_buffer(run_id: str):
-    """Producer: Searches SearXNG and fills buffer in parallel."""
+    """Producer: Performs a Deep Sweep for a specific target."""
     pending = await supabase.select('marketing_raw_contacts', 'id', {'status': 'pending'})
     processing = await supabase.select('marketing_raw_contacts', 'id', {'status': 'processing'})
     count = (len(pending) if pending else 0) + (len(processing) if processing else 0)
     
     if count >= RAW_BUFFER_THRESHOLD: return
 
-    query_data = await fetch_next_query(run_id)
+    query_data = await fetch_next_query_batch(run_id)
     if not query_data: return
-    query, city_name = query_data[0], query_data[1]
+    queries, city_name = query_data
     
-    await log_to_db("info", f"Wyszukiwanie ({city_name}): {query}")
-    
-    results = []
-    try:
-        async with httpx.AsyncClient(timeout=20) as client:
-            r = await client.get(f'{SEARXNG_URL}/search', params={'q': query, 'format': 'json'})
-            if r.status_code == 200:
-                results = r.json().get('results', [])[:MAX_RESULTS_PER_SEARCH]
-    except Exception as e:
-        logger.error(f"Search error: {e}")
-    
-    await supabase.insert('marketing_search_queries_log', {
-        'query_text': query,
-        'urls_found': len(results),
-        'status': 'completed' if results else 'failed'
-    })
-    
-    if not results: return
+    all_results = []
+    async with httpx.AsyncClient(timeout=25) as client:
+        for query in queries:
+            try:
+                await log_to_db("info", f"Szukam: {query}")
+                r = await client.get(f'{SEARXNG_URL}/search', params={
+                    'q': query, 'format': 'json', 'language': 'pl-PL', 'region': 'pl-PL'
+                })
+                if r.status_code == 200:
+                    results = r.json().get('results', [])
+                    all_results.extend(results)
+                    
+                    # Log individual query as completed
+                    await supabase.insert('marketing_search_queries_log', {
+                        'query_text': query,
+                        'urls_found': len(results),
+                        'status': 'completed'
+                    })
+                await asyncio.sleep(1) # Small delay
+            except Exception as e:
+                logger.error(f"Batch search error for {query}: {e}")
+
+    if not all_results: return
+
+    # Deduplicate results by URL before parallel scraping
+    unique_results = []
+    seen_urls = set()
+    for res in all_results:
+        u = res.get('url', '').lower()
+        if u and u not in seen_urls:
+            seen_urls.add(u)
+            unique_results.append(res)
 
     # Build set of all existing emails for deduplication
     verified_contacts = await supabase.select('marketing_verified_contacts', 'email')
@@ -334,13 +428,13 @@ async def refill_raw_buffer(run_id: str):
             except: raw_list = []
         for e in raw_list: existing_emails.add(e.lower())
 
-    # Scrape ALL results in parallel
-    tasks = [scrape_and_save_lead(res, query, existing_emails) for res in results]
+    # Scrape unique results from the entire batch
+    tasks = [scrape_and_save_lead(res, "batch", existing_emails) for res in unique_results]
     new_counts = await asyncio.gather(*tasks)
     total_new = sum(new_counts)
 
     if total_new > 0:
-        await log_to_db("success", f"Dodano {total_new} surowych kontaktów do bufora.")
+        await log_to_db("success", f"Deep Sweep ({city_name}) zakończony. Dodano {total_new} kontaktów.")
 
 # --- Core Logic: AI Layer (Consumer) ---
 async def fetch_page_content(url: str) -> dict:
