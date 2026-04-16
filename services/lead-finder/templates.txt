@@ -3,8 +3,9 @@
 
 "{role}" {city} kontakt
 "{role}" {city} oferta
-{role} {city} wizytowka opinie
-{role} {city} mapa kontakt
-{role} {city} google maps
-site:facebook.com "{city}" {role} kontakt
+site:facebook.com "{city}" {role}
 site:instagram.com "{city}" {role}
+site:wix.com "{city}" {role}
+site:wixsite.com "{city}" {role}
+site:webnode.com "{city}" {role}
+site:godaddysites.com "{city}" {role}

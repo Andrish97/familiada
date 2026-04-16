@@ -1,0 +1,9 @@
+# Social platforms - pomijane przy domain dedup i subpage crawl
+facebook.com
+instagram.com
+youtube.com
+linkedin.com
+tiktok.com
+twitter.com
+x.com
+pinterest.com

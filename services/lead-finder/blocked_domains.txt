@@ -66,14 +66,6 @@ letterboxd.com
 simkl.com
 trakt.tv
 
-youtube.com
-youtu.be
-tiktok.com
-twitter.com
-x.com
-pinterest.com
-reddit.com
-
 gov.pl
 bip.gov.pl
 edu.pl
@@ -85,8 +77,6 @@ europa.eu
 who.int
 un.org
 
-wix.com
-wixsite.com
 wixpress.com
 
 squarespace.com

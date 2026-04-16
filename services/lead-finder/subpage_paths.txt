@@ -1,0 +1,10 @@
+# Ścieżki do podstron crawlowanych w poszukiwaniu emaili
+kontakt
+contact
+o-nas
+about
+onas
+uslugi
+oferta
+portfolio
+realizacje

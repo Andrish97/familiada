@@ -69,6 +69,12 @@ SEARCH_TEMPLATES = load_lines_list('templates.txt')
 NEGATIVE_KEYWORDS = load_lines_set('negative_keywords.txt')
 BLOCKED_DOMAINS = load_lines_set('blocked_domains.txt')
 GARBAGE_EMAIL_DOMAINS = load_lines_set('garbage_email_domains.txt')
+SUBPAGE_PATHS = load_lines_list('subpage_paths.txt')
+SOCIAL_PLATFORMS = load_lines_set('social_platforms.txt')
+
+# --- Playwright Support ---
+USE_PLAYWRIGHT = os.getenv('USE_PLAYWRIGHT', 'false').lower() == 'true'
+PLAYWRIGHT_BROWSER = None
 
 EMAIL_REGEX = re.compile(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}')
 RAW_BUFFER_THRESHOLD = 20
@@ -327,6 +333,37 @@ async def is_page_fresh(url: str, max_age_days: int = 730) -> bool:
     except: pass
     return True
 
+async def get_playwright_browser():
+    """Get or create Playwright browser instance."""
+    global PLAYWRIGHT_BROWSER
+    if PLAYWRIGHT_BROWSER is None:
+        try:
+            from playwright.async_api import async_playwright
+            pw = await async_playwright().start()
+            PLAYWRIGHT_BROWSER = await pw.chromium.launch(headless=True)
+        except Exception as e:
+            logger.warning(f"Playwright not available: {e}")
+            return None
+    return PLAYWRIGHT_BROWSER
+
+async def playwright_scrape(url: str, timeout: int = 15) -> tuple[str, str]:
+    """Scrape page with Playwright (handles JS). Returns (content, title)."""
+    browser = await get_playwright_browser()
+    if not browser:
+        return '', ''
+    
+    try:
+        page = await browser.new_page()
+        await page.goto(url, wait_until='domcontentloaded', timeout=timeout*1000)
+        await page.wait_for_timeout(2000)  # Wait for dynamic content
+        content = await page.content()
+        title = await page.title()
+        await page.close()
+        return content, title
+    except Exception as e:
+        logger.warning(f"Playwright error for {url}: {e}")
+        return '', ''
+
 async def scrape_and_save_lead(res: dict, query: str, existing_emails: Set[str]):
     """Scrapes a single search result and saves to raw_contacts if valid."""
     url = res.get('url', '').lower()
@@ -351,9 +388,8 @@ async def scrape_and_save_lead(res: dict, query: str, existing_emails: Set[str])
 
         # Domain-level deduplication (check if any URL from this domain exists)
         # Skip this for major social platforms where one domain has many leads
-        social_platforms = ('facebook.com', 'instagram.com', 'youtube.com', 'linkedin.com', 'tiktok.com')
         root_domain = domain
-        if root_domain not in social_platforms:
+        if root_domain not in SOCIAL_PLATFORMS:
             exists_dom_v = await supabase.select('marketing_verified_contacts', 'id', {'url': f'ilike.%{root_domain}%'})
             exists_dom_r = await supabase.select('marketing_raw_contacts', 'id', {'url': f'ilike.%{root_domain}%'})
             if (exists_dom_v and len(exists_dom_v) > 0) or (exists_dom_r and len(exists_dom_r) > 0):
@@ -412,6 +448,20 @@ async def scrape_and_save_lead(res: dict, query: str, existing_emails: Set[str])
         return title, ' '.join(words)[:1500], m_desc
     
     try:
+        # Try Playwright first if enabled (for dynamic pages like Google Maps)
+        if USE_PLAYWRIGHT and 'maps.google' in url.lower():
+            pw_content, pw_title = await playwright_scrape(url)
+            if pw_content:
+                text = pw_content[:50000]
+                page_title = pw_title or page_title
+                found_emails = EMAIL_REGEX.findall(text)
+                for e in found_emails:
+                    if not any(g in e.lower() for g in GARBAGE_EMAIL_DOMAINS):
+                        emails.add(e)
+                _, page_text, _ = extract_content(text, page_title)
+                if page_title and any(k in page_title.lower() for k in NEGATIVE_KEYWORDS): return 0
+        
+        # Standard httpx scraping
         headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'}
         async with httpx.AsyncClient(timeout=12, follow_redirects=True, headers=headers) as client:
             # 1. Main page
@@ -434,12 +484,11 @@ async def scrape_and_save_lead(res: dict, query: str, existing_emails: Set[str])
             # 2. Contact page sub-crawl (only for non-social domains)
             parsed = urlparse(url)
             base = f"{parsed.scheme}://{parsed.netloc}"
-            social_platforms = ('facebook.com', 'instagram.com', 'youtube.com', 'linkedin.com', 'tiktok.com', 'twitter.com', 'x.com', 'pinterest.com')
             
-            if parsed.netloc.lower().replace('www.', '') not in social_platforms:
-                for path in ['/kontakt', '/contact', '/o-nas']:
-                    contact_url = base + path
-                    if contact_url.rstrip('/') == url.rstrip('/'): continue # Skip if same as original
+            if parsed.netloc.lower().replace('www.', '') not in SOCIAL_PLATFORMS:
+                for path_name in SUBPAGE_PATHS:
+                    contact_url = base + '/' + path_name
+                    if contact_url.rstrip('/') == url.rstrip('/'): continue
                     
                     try:
                         r_contact = await client.get(contact_url)
