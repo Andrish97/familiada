@@ -12,11 +12,11 @@ Settings panel (admin)
 - GET /_admin_api/mail/logs
 */
 
-import { initI18n, t, getUiLang } from "../../translation/translation.js?v=v2026-04-16T19175";
-import { initUiSelect } from "../core/ui-select.js?v=v2026-04-16T19175";
-import { confirmModal } from "../core/modal.js?v=v2026-04-16T19175";
-import { sb } from "../core/supabase.js?v=v2026-04-16T19175";
-import { v as cacheBust } from "../core/cache-bust.js?v=v2026-04-16T19175";
+import { initI18n, t, getUiLang } from "../../translation/translation.js?v=v2026-04-16T19211";
+import { initUiSelect } from "../core/ui-select.js?v=v2026-04-16T19211";
+import { confirmModal } from "../core/modal.js?v=v2026-04-16T19211";
+import { sb } from "../core/supabase.js?v=v2026-04-16T19211";
+import { v as cacheBust } from "../core/cache-bust.js?v=v2026-04-16T19211";
 
 const API_BASE = "/_admin_api";
 const TOOLS_MANIFEST = "/settings-tools/tools.json";
@@ -5703,7 +5703,7 @@ function wireEvents() {
   // ═══════════════════════════════════════════════════════════
   // MARKETING CONTACTS
   // ═══════════════════════════════════════════════════════════
-  const { rt } = await import("../core/realtime.js?v=v2026-04-16T19175");
+  const { rt } = await import("../core/realtime.js?v=v2026-04-16T19211");
   const MC_API = "https://leads.familiada.online";
   const MC_PAGE_SIZE = 50;
   let mcToken = null;
