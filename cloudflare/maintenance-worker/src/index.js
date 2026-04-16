@@ -2820,10 +2820,25 @@ async function fetchWithOrigin(url, request, originHost, resolveOverride) {
 
   const res = await fetch(url, init);
 
-  // HTML: nigdy nie cache'uj - updater musi widzieć nową wersję
   const ct = res.headers.get("Content-Type") || "";
   const accept = headers.get("Accept") || "";
   if (ct.includes("text/html") || accept.includes("text/html")) {
+    return new Response(res.body, {
+      status: res.status,
+      headers: {
+        "Content-Type": ct,
+        "Cache-Control": "no-store"
+      }
+    });
+  }
+
+  const pathname = new URL(url).pathname;
+  if (
+    ct.includes("application/javascript") ||
+    ct.includes("text/css") ||
+    ct.includes("application/json") ||
+    pathname.match(/\.(js|css|json|woff2?|ttf|otf|webp|avif|ico|png|jpg|jpeg|gif|svg)$/i)
+  ) {
     return new Response(res.body, {
       status: res.status,
       headers: {
