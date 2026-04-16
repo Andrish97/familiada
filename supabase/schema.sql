@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict pwXfosuIdDAQAnyPLaKNgT0gZas0WdPheS6aNmiKGBNEo64CvR9sdQaGRBTJpbC
+\restrict 65d3k9QIuitvUP32hgKnxUXdD9YLqUkxABnkabRHcJnRJNwgGGGZLyZVxeDSZAo
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -9986,6 +9986,20 @@ $$;
 
 
 --
+-- Name: update_updated_at_column(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."update_updated_at_column"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$;
+
+
+--
 -- Name: user_logo_clear_active(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -10445,7 +10459,8 @@ CREATE TABLE "public"."marketing_raw_contacts" (
     "status" "text" DEFAULT 'pending'::"text",
     "reject_reason" "text",
     "page_text" "text",
-    "retry_count" integer DEFAULT 0
+    "retry_count" integer DEFAULT 0,
+    "updated_at" timestamp with time zone DEFAULT "now"()
 );
 
 
@@ -12203,6 +12218,13 @@ CREATE TRIGGER "trg_user_logos_touch" BEFORE UPDATE ON "public"."user_logos" FOR
 
 
 --
+-- Name: marketing_raw_contacts update_marketing_raw_contacts_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "update_marketing_raw_contacts_updated_at" BEFORE UPDATE ON "public"."marketing_raw_contacts" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at_column"();
+
+
+--
 -- Name: answers answers_question_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -13811,5 +13833,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict pwXfosuIdDAQAnyPLaKNgT0gZas0WdPheS6aNmiKGBNEo64CvR9sdQaGRBTJpbC
+\unrestrict 65d3k9QIuitvUP32hgKnxUXdD9YLqUkxABnkabRHcJnRJNwgGGGZLyZVxeDSZAo
 
