@@ -36,19 +36,6 @@ export default {
 
     // SETTINGS HOST (admin panel, no maintenance gate)
     if (host === "settings.familiada.online") {
-      // Serve version.txt for auto-updater (bypass Access)
-      if (url.pathname === "/version.txt") {
-        const now = new Date();
-        const version = `v${now.toISOString().slice(0,10)}T${Math.floor(now.getTime() / 1000).toString().slice(-5)}`;
-        return new Response(version, {
-          status: 200,
-          headers: {
-            "Content-Type": "text/plain",
-            "Cache-Control": "no-store"
-          }
-        });
-      }
-
       if (url.pathname.startsWith("/_admin_api")) {
         return handleAdminApi(request, env);
       }
