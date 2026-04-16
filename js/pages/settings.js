@@ -174,12 +174,7 @@ let activeTab = "maintenance";
 let previousTabBeforeTools = "maintenance";
 let mailSettingsLoaded = false;
 let mailProviderOrder = [...MAIL_PROVIDERS];
-let _aiOrder = JSON.parse(localStorage.getItem("aiProviderOrder") || "null");
-if (!_aiOrder || _aiOrder.includes("ollama") || !Array.isArray(_aiOrder)) {
-  _aiOrder = [...AI_PROVIDERS];
-  localStorage.setItem("aiProviderOrder", JSON.stringify(_aiOrder));
-}
-let aiProviderOrder = _aiOrder;
+let aiProviderOrder = JSON.parse(localStorage.getItem("aiProviderOrder") || "null") || [...AI_PROVIDERS];
 let mailCronPresetValue = "5m";
 let mailCronSupported = true;
 let mailQueueStatusValue = "all";
