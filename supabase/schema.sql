@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict sPG5YSDgIbSkFvDtYlYmFATqsnzvYtCma1C3MG9JRZfO2SgPyoF96GU8fjE9ccc
+\restrict pwXfosuIdDAQAnyPLaKNgT0gZas0WdPheS6aNmiKGBNEo64CvR9sdQaGRBTJpbC
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -10045,10 +10045,7 @@ end $$;
 
 CREATE TABLE "public"."ai_settings" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
-    "provider_order" "text" DEFAULT 'ollama,openrouter,groq'::"text" NOT NULL,
-    "ollama_url" "text" DEFAULT 'http://familiada-ollama:11434'::"text",
-    "ollama_model" "text" DEFAULT 'llama3.2:3b'::"text",
-    "created_at" timestamp with time zone DEFAULT "now"(),
+    "provider_order" "text" DEFAULT 'openrouter,groq'::"text" NOT NULL,
     "updated_at" timestamp with time zone DEFAULT "now"()
 );
 
@@ -13814,5 +13811,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict sPG5YSDgIbSkFvDtYlYmFATqsnzvYtCma1C3MG9JRZfO2SgPyoF96GU8fjE9ccc
+\unrestrict pwXfosuIdDAQAnyPLaKNgT0gZas0WdPheS6aNmiKGBNEo64CvR9sdQaGRBTJpbC
 
