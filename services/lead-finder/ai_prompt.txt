@@ -33,7 +33,7 @@ A) EVENT PROVIDER (HIGH VALUE)
 
 B) VENUE
 
-* hotel / restauracja / sala / miejsce eventowe (bez prowadzenia wydarzen)
+* hotel / restauracja / sala / dekoracje/ miejsce eventowe (bez prowadzenia wydarzen)
 
 C) DIRECTORY / SEO
 
@@ -42,6 +42,8 @@ C) DIRECTORY / SEO
 D) NON-EVENT
 
 * inne branze (handel, uslugi bez eventow, edukacja bez eventow itd.)
+
+DODATKOWO: jeśli usługi są kombinowane np. A i B to zaliczaj do A. np. hotel który tez prowadzi imprezy.
 
 ---------------------------------------
 WAZNA UWAGA - DJ (KLUCZOWE ROZROZNIENIE)
