@@ -18,8 +18,6 @@ import httpx
 
 # --- Configuration (Internal Docker) ---
 SEARXNG_URL = "http://searxng:8080"
-OLLAMA_URL = os.getenv("OLLAMA_URL", "http://familiada-ollama:11434")
-OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2:3b")
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "anthropic/claude-3-haiku")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
@@ -194,28 +192,6 @@ async def send_telegram(message: str):
                 logger.error(f"Telegram error: {r.status_code} {r.text[:100]}")
     except Exception as e:
         logger.error(f"Telegram exception: {e}")
-
-# --- AI Config ---
-_ai_config_cache = None
-_ai_config_cache_time = 0
-
-async def get_ai_config() -> dict:
-    """Get AI settings from database with caching (5 min)."""
-    global _ai_config_cache, _ai_config_cache_time
-    import time
-    if _ai_config_cache and (time.time() - _ai_config_cache_time) < 300:
-        return _ai_config_cache
-    try:
-        data = await supabase.select('ai_settings', '*', limit=1)
-        if data:
-            _ai_config_cache = data[0]
-            _ai_config_cache_time = time.time()
-        else:
-            _ai_config_cache = {'provider_order': 'ollama,openrouter,groq'}
-    except Exception as e:
-        logger.warning(f"AI config load error: {e}")
-        _ai_config_cache = {'provider_order': 'ollama,openrouter,groq'}
-    return _ai_config_cache
 
 # --- Core Logic: Search Layer (Producer) ---
 async def fetch_next_target(run_id: str) -> Optional[tuple]:
@@ -732,85 +708,61 @@ Jeśli NIE:
 ODPOWIEDZ TYLKO CZYSTYM JSONEM."""
 
     try:
-        # Get provider order from config
-        ai_config = await get_ai_config()
-        provider_order = [p.strip() for p in ai_config.get('provider_order', 'ollama,openrouter,groq').split(',') if p.strip()]
-        
         content = None
-        for provider in provider_order:
-            if provider == 'ollama' and OLLAMA_URL:
-                try:
-                    async with httpx.AsyncClient(timeout=180) as client:
-                        r = await client.post(f'{OLLAMA_URL}/api/chat', json={
-                            'model': OLLAMA_MODEL,
+        
+        # OpenRouter (priority)
+        if OPENROUTER_API_KEY:
+            try:
+                async with httpx.AsyncClient(timeout=60) as client:
+                    r = await client.post(
+                        "https://openrouter.ai/api/v1/chat/completions",
+                        headers={
+                            'Authorization': f'Bearer {OPENROUTER_API_KEY}',
+                            'Content-Type': 'application/json'
+                        },
+                        json={
+                            'model': OPENROUTER_MODEL,
                             'messages': [
-                                {'role': 'system', 'content': 'Jestes asystentem marketingu. Odpowiadaj TYLKO JSONEM.'},
+                                {'role': 'system', 'content': 'Odpowiadaj tylko JSON bez markdown.'},
                                 {'role': 'user', 'content': prompt}
                             ],
-                            'stream': False
-                        })
-                        logger.info(f"[C{consumer_id}] Ollama response: {r.status_code}")
-                        if r.status_code == 200:
-                            content = r.json().get('message', {}).get('content', '')
-                            break
-                        else:
-                            logger.error(f"[C{consumer_id}] Ollama ERROR: {r.text[:200]}")
-                except Exception as e:
-                    logger.error(f"[C{consumer_id}] Ollama exception: {e}")
-            
-            elif provider == 'openrouter' and OPENROUTER_API_KEY:
-                try:
-                    async with httpx.AsyncClient(timeout=60) as client:
-                        r = await client.post(
-                            "https://openrouter.ai/api/v1/chat/completions",
-                            headers={
-                                'Authorization': f'Bearer {OPENROUTER_API_KEY}',
-                                'Content-Type': 'application/json'
-                            },
-                            json={
-                                'model': OPENROUTER_MODEL,
-                                'messages': [
-                                    {'role': 'system', 'content': 'Odpowiadaj tylko JSON bez markdown.'},
-                                    {'role': 'user', 'content': prompt}
-                                ],
-                                'temperature': 0.1
-                            }
-                        )
-                        logger.info(f"[C{consumer_id}] OpenRouter response: {r.status_code}")
-                        if r.status_code == 200:
-                            content = r.json()['choices'][0]['message']['content']
-                            break
-                        else:
-                            logger.error(f"[C{consumer_id}] OpenRouter ERROR: {r.text[:200]}")
-                except Exception as e:
-                    logger.error(f"[C{consumer_id}] OpenRouter exception: {e}")
-            
-            elif provider == 'groq' and GROQ_API_KEY:
-                try:
-                    async with httpx.AsyncClient(timeout=30) as client:
-                        r = await client.post(
-                            "https://api.groq.com/openai/v1/chat/completions",
-                            headers={
-                                'Authorization': f'Bearer {GROQ_API_KEY}',
-                                'Content-Type': 'application/json'
-                            },
-                            json={
-                                'model': GROQ_MODEL,
-                                'messages': [
-                                    {'role': 'system', 'content': 'Odpowiadaj tylko JSON bez markdown.'},
-                                    {'role': 'user', 'content': prompt}
-                                ],
-                                'temperature': 0.1
-                            }
-                        )
-                        logger.info(f"[C{consumer_id}] Groq response: {r.status_code}")
-                        if r.status_code == 200:
-                            content = r.json()['choices'][0]['message']['content']
-                            break
-                        else:
-                            logger.error(f"[C{consumer_id}] Groq ERROR: {r.text[:200]}")
-                except Exception as e:
-                    logger.error(f"[C{consumer_id}] Groq exception: {e}")
+                            'temperature': 0.1
+                        }
+                    )
+                    logger.info(f"[C{consumer_id}] OpenRouter response: {r.status_code}")
+                    if r.status_code == 200:
+                        content = r.json()['choices'][0]['message']['content']
+                    else:
+                        logger.error(f"[C{consumer_id}] OpenRouter ERROR: {r.text[:200]}")
+            except Exception as e:
+                logger.error(f"[C{consumer_id}] OpenRouter exception: {e}")
+        
+        # Groq (fallback)
+        if not content and GROQ_API_KEY:
+            try:
+                async with httpx.AsyncClient(timeout=30) as client:
+                    r = await client.post(
+                        "https://api.groq.com/openai/v1/chat/completions",
+                        headers={
+                            'Authorization': f'Bearer {GROQ_API_KEY}',
+                            'Content-Type': 'application/json'
+                        },
+                        json={
+                            'model': GROQ_MODEL,
+                            'messages': [
+                                {'role': 'system', 'content': 'Odpowiadaj tylko JSON bez markdown.'},
+                                {'role': 'user', 'content': prompt}
+                            ],
+                            'temperature': 0.1
+                        }
+                    )
+                    logger.info(f"[C{consumer_id}] Groq response: {r.status_code}")
+                    if r.status_code == 200:
+                        content = r.json()['choices'][0]['message']['content']
+                    else:
+                        logger.error(f"[C{consumer_id}] Groq ERROR: {r.text[:200]}")
+            except Exception as e:
+                logger.error(f"[C{consumer_id}] Groq exception: {e}")
         
         if not content:
             logger.error(f"[C{consumer_id}] No AI provider available")
