@@ -6135,7 +6135,7 @@ function wireEvents() {
     const allUsed = selected.every(c => c.is_used);
     const allUnused = selected.every(c => !c.is_used);
     if (allUsed) {
-      btn.textContent = "✗ Użyte";
+      btn.textContent = "✗ NieUżyte";
     } else if (allUnused) {
       btn.textContent = "✓ Użyte";
     } else {
