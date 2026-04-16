@@ -18,11 +18,12 @@ import httpx
 
 # --- Configuration (Internal Docker) ---
 SEARXNG_URL = "http://searxng:8080"
-USE_GROQ = bool(os.getenv("GROQ_API_KEY", ""))
+OLLAMA_URL = os.getenv("OLLAMA_URL", "http://familiada-ollama:11434")
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2:3b")
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
+OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "anthropic/claude-3-haiku")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 GROQ_MODEL = "llama-3.1-8b-instant"
-OLLAMA_URL = "http://ollama:11434"
-OLLAMA_MODEL = "llama3.2:3b"
 SUPABASE_URL = "http://kong:8000"
 SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", os.getenv("SERVICE_ROLE_KEY", ""))
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
@@ -193,6 +194,28 @@ async def send_telegram(message: str):
                 logger.error(f"Telegram error: {r.status_code} {r.text[:100]}")
     except Exception as e:
         logger.error(f"Telegram exception: {e}")
+
+# --- AI Config ---
+_ai_config_cache = None
+_ai_config_cache_time = 0
+
+async def get_ai_config() -> dict:
+    """Get AI settings from database with caching (5 min)."""
+    global _ai_config_cache, _ai_config_cache_time
+    import time
+    if _ai_config_cache and (time.time() - _ai_config_cache_time) < 300:
+        return _ai_config_cache
+    try:
+        data = await supabase.select('ai_settings', '*', limit=1)
+        if data:
+            _ai_config_cache = data[0]
+            _ai_config_cache_time = time.time()
+        else:
+            _ai_config_cache = {'provider_order': 'ollama,openrouter,groq'}
+    except Exception as e:
+        logger.warning(f"AI config load error: {e}")
+        _ai_config_cache = {'provider_order': 'ollama,openrouter,groq'}
+    return _ai_config_cache
 
 # --- Core Logic: Search Layer (Producer) ---
 async def fetch_next_target(run_id: str) -> Optional[tuple]:
@@ -578,39 +601,43 @@ KROK 3 — PRODUCT FIT (KLUCZOWE)
 ----------------------------------------
 
 PYTANIE:
-Czy ta osoba/firma PROWADZI ludzi podczas wydarzeń?
+Czy ta osoba/firma PROWADZI lub MODERUJE ludzi podczas wydarzeń?
 
-AKCEPTUJ jeśli:
-- prowadzi event (scena, publiczność, uczestnicy)
-- DJ / wodzirej / animator
-- konferansjer / MC / prezenter / host (HARD TRUE)
-- zarządza przebiegiem wydarzenia
-- angażuje uczestników (nie tylko „gry")
+INTERAKCJA = także:
+- moderowanie
+- prowadzenie paneli
+- konferencje
+- zapowiadanie
+- koordynacja sceny
+
+→ NIE tylko animacje lub gry
+
+----------------------------------------
+KROK 3.1 — HARD OVERRIDE (NAJWAŻNIEJSZE)
+----------------------------------------
+
+MODERACJA = INTERAKCJA = PRODUCT FIT
+
+ZAWSZE AKCEPTUJ (bez wyjątków, bez dalszej analizy):
+
+- konferansjer
+- MC
+- prezenter
+- moderator debat
+- host wydarzeń
+- wodzirej
+- DJ
+- animator
+
+→ nawet jeśli brak słowa "interakcja"
+→ nawet jeśli opis jest formalny
+→ jeśli występuje któraś rola = PRODUCT FIT = TRUE
 
 ODRZUĆ jeśli:
 - tylko występuje (artysta, show, performance)
 - tylko zapewnia miejsce (hotel, sala)
 - tylko drukuje / sprzedaje / katalog
 - brak jakiegokolwiek elementu prowadzenia eventu
-
-⚠️ WAŻNE:
-INTERAKCJA NIE = tylko gry lub animacje
-INTERAKCJA = także prowadzenie sceny, zapowiedzi, moderacja
-
-----------------------------------------
-KROK 3.1 — HARD OVERRIDE (NAJWAŻNIEJSZE)
-----------------------------------------
-
-ZAWSZE AKCEPTUJ (bez dalszej analizy):
-
-- konferansjer
-- MC
-- prezenter eventowy
-- wodzirej
-- DJ
-- host wydarzeń
-
-→ jeśli występuje któraś rola = PRODUCT FIT = TRUE
 
 ----------------------------------------
 KROK 4 — ANTI-SEO / SPAM
@@ -705,51 +732,89 @@ Jeśli NIE:
 ODPOWIEDZ TYLKO CZYSTYM JSONEM."""
 
     try:
-        if USE_GROQ:
-            # Groq API (OpenAI-compatible)
-            async with httpx.AsyncClient(timeout=30) as client:
-                r = await client.post(
-                    "https://api.groq.com/openai/v1/chat/completions",
-                    headers={
-                        'Authorization': f'Bearer {GROQ_API_KEY}',
-                        'Content-Type': 'application/json'
-                    },
-                    json={
-                        'model': GROQ_MODEL,
-                        'messages': [
-                            {'role': 'system', 'content': 'Odpowiadaj tylko JSON bez markdown.'},
-                            {'role': 'user', 'content': prompt}
-                        ],
-                        'temperature': 0.1
-                    }
-                )
-                logger.info(f"[C{consumer_id}] Groq response status: {r.status_code}")
-                logger.info(f"[C{consumer_id}] Groq response: {r.text[:1000]}")
-                
-                if r.status_code != 200:
-                    logger.error(f"[C{consumer_id}] Groq ERROR: {r.text[:500]}")
-                    return None
-                    
-                content = r.json()['choices'][0]['message']['content']
-        else:
-            # Ollama fallback
-            async with httpx.AsyncClient(timeout=90) as client:
-                r = await client.post(f'{OLLAMA_URL}/api/chat', json={
-                    'model': OLLAMA_MODEL,
-                    'messages': [
-                        {'role': 'system', 'content': 'Jestes asystentem marketingu. Odpowiadaj TYLKO JSONEM.'},
-                        {'role': 'user', 'content': prompt}
-                    ],
-                    'stream': False
-                })
-                logger.info(f"[C{consumer_id}] Ollama response status: {r.status_code}")
-                logger.info(f"[C{consumer_id}] Ollama response: {r.text[:1000]}")
-                
-                if r.status_code != 200:
-                    logger.error(f"[C{consumer_id}] Ollama ERROR: {r.text[:500]}")
-                    return None
-                    
-                content = r.json().get('message', {}).get('content', '')
+        # Get provider order from config
+        ai_config = await get_ai_config()
+        provider_order = [p.strip() for p in ai_config.get('provider_order', 'ollama,openrouter,groq').split(',') if p.strip()]
+        
+        content = None
+        for provider in provider_order:
+            if provider == 'ollama' and OLLAMA_URL:
+                try:
+                    async with httpx.AsyncClient(timeout=180) as client:
+                        r = await client.post(f'{OLLAMA_URL}/api/chat', json={
+                            'model': OLLAMA_MODEL,
+                            'messages': [
+                                {'role': 'system', 'content': 'Jestes asystentem marketingu. Odpowiadaj TYLKO JSONEM.'},
+                                {'role': 'user', 'content': prompt}
+                            ],
+                            'stream': False
+                        })
+                        logger.info(f"[C{consumer_id}] Ollama response: {r.status_code}")
+                        if r.status_code == 200:
+                            content = r.json().get('message', {}).get('content', '')
+                            break
+                        else:
+                            logger.error(f"[C{consumer_id}] Ollama ERROR: {r.text[:200]}")
+                except Exception as e:
+                    logger.error(f"[C{consumer_id}] Ollama exception: {e}")
+            
+            elif provider == 'openrouter' and OPENROUTER_API_KEY:
+                try:
+                    async with httpx.AsyncClient(timeout=60) as client:
+                        r = await client.post(
+                            "https://openrouter.ai/api/v1/chat/completions",
+                            headers={
+                                'Authorization': f'Bearer {OPENROUTER_API_KEY}',
+                                'Content-Type': 'application/json'
+                            },
+                            json={
+                                'model': OPENROUTER_MODEL,
+                                'messages': [
+                                    {'role': 'system', 'content': 'Odpowiadaj tylko JSON bez markdown.'},
+                                    {'role': 'user', 'content': prompt}
+                                ],
+                                'temperature': 0.1
+                            }
+                        )
+                        logger.info(f"[C{consumer_id}] OpenRouter response: {r.status_code}")
+                        if r.status_code == 200:
+                            content = r.json()['choices'][0]['message']['content']
+                            break
+                        else:
+                            logger.error(f"[C{consumer_id}] OpenRouter ERROR: {r.text[:200]}")
+                except Exception as e:
+                    logger.error(f"[C{consumer_id}] OpenRouter exception: {e}")
+            
+            elif provider == 'groq' and GROQ_API_KEY:
+                try:
+                    async with httpx.AsyncClient(timeout=30) as client:
+                        r = await client.post(
+                            "https://api.groq.com/openai/v1/chat/completions",
+                            headers={
+                                'Authorization': f'Bearer {GROQ_API_KEY}',
+                                'Content-Type': 'application/json'
+                            },
+                            json={
+                                'model': GROQ_MODEL,
+                                'messages': [
+                                    {'role': 'system', 'content': 'Odpowiadaj tylko JSON bez markdown.'},
+                                    {'role': 'user', 'content': prompt}
+                                ],
+                                'temperature': 0.1
+                            }
+                        )
+                        logger.info(f"[C{consumer_id}] Groq response: {r.status_code}")
+                        if r.status_code == 200:
+                            content = r.json()['choices'][0]['message']['content']
+                            break
+                        else:
+                            logger.error(f"[C{consumer_id}] Groq ERROR: {r.text[:200]}")
+                except Exception as e:
+                    logger.error(f"[C{consumer_id}] Groq exception: {e}")
+        
+        if not content:
+            logger.error(f"[C{consumer_id}] No AI provider available")
+            return None
         
         match = re.search(r'\{.*\}', content, re.DOTALL)
         if not match:
@@ -835,9 +900,20 @@ async def consumer_task(run_id: str, consumer_id: int, target: int):
                 break
             
             if result is None:
-                await supabase.update('marketing_raw_contacts', {'status': 'pending'}, {'id': lead_id})
-                logger.warning(f"[C{consumer_id}] AI timeout - odłożone do ponownej próby: {lead_url}")
-                await asyncio.sleep(5)
+                retry_count = lead.get('retry_count', 0) + 1
+                if retry_count >= 3:
+                    await supabase.update('marketing_raw_contacts', {
+                        'status': 'rejected',
+                        'reject_reason': 'AI rate limit - max retries exceeded'
+                    }, {'id': lead_id})
+                    logger.warning(f"[C{consumer_id}] Max retries exceeded: {lead_url}")
+                else:
+                    await supabase.update('marketing_raw_contacts', {
+                        'status': 'pending',
+                        'retry_count': retry_count
+                    }, {'id': lead_id})
+                    logger.warning(f"[C{consumer_id}] AI timeout (retry {retry_count}/3) - odłożone: {lead_url}")
+                    await asyncio.sleep(min(30, 5 * retry_count))
             elif result.get('is_event_organizer') and result.get('best_email'):
                 await supabase.insert('marketing_verified_contacts', {
                     'title': result.get('title') or lead.get('title'),

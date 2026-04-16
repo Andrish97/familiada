@@ -23,6 +23,7 @@ const TOOLS_MANIFEST = "/settings-tools/tools.json";
 const POLL_MS = 15000;
 const MINUTES_MIN = 10;
 const MAIL_PROVIDERS = ["sendgrid", "brevo", "mailgun", "ses"];
+const AI_PROVIDERS = ["ollama", "openrouter", "groq"];
 const EMAIL_TEMPLATES = {
   custom: "",
   info: "Dziękujemy za wiadomość. Odpowiemy tak szybko, jak to możliwe.",
@@ -173,6 +174,7 @@ let activeTab = "maintenance";
 let previousTabBeforeTools = "maintenance";
 let mailSettingsLoaded = false;
 let mailProviderOrder = [...MAIL_PROVIDERS];
+let aiProviderOrder = JSON.parse(localStorage.getItem("aiProviderOrder") || "null") || [...AI_PROVIDERS];
 let mailCronPresetValue = "5m";
 let mailCronSupported = true;
 let mailQueueStatusValue = "all";
@@ -1674,6 +1676,70 @@ function renderProviderOrder() {
     row.append(rank, name, actions);
     els.mailProviderOrderList?.appendChild(row);
   });
+}
+
+function aiProviderLabel(provider) {
+  const labels = { ollama: "Ollama (lokalny)", openrouter: "OpenRouter", groq: "Groq" };
+  return labels[provider] || provider;
+}
+
+function renderAiProviderOrder() {
+  const el = document.getElementById("aiProviderOrderList");
+  if (!el) return;
+  el.innerHTML = "";
+  aiProviderOrder.forEach((provider, idx) => {
+    const row = document.createElement("div");
+    row.className = "provider-order-row";
+    row.style.marginBottom = "4px";
+
+    const rank = document.createElement("div");
+    rank.className = "provider-order-rank";
+    rank.textContent = String(idx + 1);
+
+    const name = document.createElement("div");
+    name.className = "provider-order-name";
+    name.textContent = aiProviderLabel(provider);
+
+    const actions = document.createElement("div");
+    actions.className = "provider-order-actions";
+
+    const up = document.createElement("button");
+    up.type = "button";
+    up.className = "btn sm";
+    up.textContent = "↑";
+    up.disabled = idx === 0;
+    up.addEventListener("click", () => moveAiProvider(idx, -1));
+
+    const down = document.createElement("button");
+    down.type = "button";
+    down.className = "btn sm";
+    down.textContent = "↓";
+    down.disabled = idx >= aiProviderOrder.length - 1;
+    down.addEventListener("click", () => moveAiProvider(idx, 1));
+
+    actions.append(up, down);
+    row.append(rank, name, actions);
+    el.appendChild(row);
+  });
+}
+
+async function saveAiProviderOrder() {
+  try {
+    await sb().rpc('update_ai_provider_order', { p_order: aiProviderOrder.join(",") });
+  } catch(e) {
+    console.warn("[AI] save order error:", e);
+  }
+}
+
+function moveAiProvider(idx, dir) {
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= aiProviderOrder.length) return;
+  const next = [...aiProviderOrder];
+  [next[idx], next[newIdx]] = [next[newIdx], next[idx]];
+  aiProviderOrder = next;
+  localStorage.setItem("aiProviderOrder", JSON.stringify(aiProviderOrder));
+  renderAiProviderOrder();
+  saveAiProviderOrder();
 }
 
 function updateMailSettingsStatus(cron) {
@@ -6186,6 +6252,7 @@ function wireEvents() {
       await mcLoadRuns();
       mcLoadLogs();
       if (document.getElementById("mcAutoRefreshLogs")?.checked) mcStartLogAutoRefresh();
+      renderAiProviderOrder();
     }
   });
   const mcPanel = document.getElementById("marketingContactsPanel");
