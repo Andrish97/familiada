@@ -70,6 +70,11 @@ GARBAGE_EMAIL_DOMAINS = load_lines_set('garbage_email_domains.txt')
 SUBPAGE_PATHS = load_lines_list('subpage_paths.txt')
 SOCIAL_PLATFORMS = load_lines_set('social_platforms.txt')
 
+# --- Constants ---
+EMAIL_REGEX = re.compile(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}')
+RAW_BUFFER_THRESHOLD = 20
+MAX_RESULTS_PER_SEARCH = 50
+
 # --- Global State ---
 active_task = None
 task_stop_event = asyncio.Event()
@@ -484,11 +489,8 @@ async def refill_raw_buffer(run_id: str):
     city_name, role_name, target_key = target
     
     all_results = []
-    searches_done = 0
     async with httpx.AsyncClient(timeout=25) as client:
         for template in SEARCH_TEMPLATES:
-            if searches_done >= 10: break
-            searches_done += 1
             query = template.format(city=city_name, role=role_name)
             try:
                 r = await client.get(f'{SEARXNG_URL}/search', params={
