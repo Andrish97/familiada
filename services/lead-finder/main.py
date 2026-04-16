@@ -72,8 +72,6 @@ SOCIAL_PLATFORMS = load_lines_set('social_platforms.txt')
 
 # --- Constants ---
 EMAIL_REGEX = re.compile(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}')
-RAW_BUFFER_THRESHOLD = 20
-MAX_RESULTS_PER_SEARCH = 50
 
 # --- Global State ---
 active_task = None
@@ -478,12 +476,6 @@ async def scrape_and_save_lead(res: dict, query: str, existing_emails: Set[str])
 
 async def refill_raw_buffer(run_id: str):
     """Producer: Performs a Deep Sweep for a specific target (City + Role)."""
-    pending = await supabase.select('marketing_raw_contacts', 'id', {'status': 'pending'})
-    processing = await supabase.select('marketing_raw_contacts', 'id', {'status': 'processing'})
-    count = (len(pending) if pending else 0) + (len(processing) if processing else 0)
-    
-    if count >= RAW_BUFFER_THRESHOLD: return
-
     target = await fetch_next_target(run_id)
     if not target: return
     city_name, role_name, target_key = target

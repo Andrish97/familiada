@@ -5,8 +5,4 @@
 {role} {city} oferta
 site:facebook.com {city} {role}
 site:instagram.com {city} {role}
-site:wix.com {city} {role}
-site:wixsite.com {city} {role}
-site:webnode.com {city} {role}
-site:godaddysites.com {city} {role}
 site:maps.app.goo.gl {city} {role}
