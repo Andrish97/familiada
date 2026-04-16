@@ -857,20 +857,12 @@ async def consumer_task(run_id: str, consumer_id: int, target: int):
                 break
             
             if result is None:
-                retry_count = lead.get('retry_count', 0) + 1
-                if retry_count >= 3:
-                    await supabase.update('marketing_raw_contacts', {
-                        'status': 'rejected',
-                        'reject_reason': 'AI rate limit - max retries exceeded'
-                    }, {'id': lead_id})
-                    logger.warning(f"[C{consumer_id}] Max retries exceeded: {lead_url}")
-                else:
-                    await supabase.update('marketing_raw_contacts', {
-                        'status': 'pending',
-                        'retry_count': retry_count
-                    }, {'id': lead_id})
-                    logger.warning(f"[C{consumer_id}] AI timeout (retry {retry_count}/3) - odłożone: {lead_url}")
-                    await asyncio.sleep(min(30, 5 * retry_count))
+                # AI failed - odłóż i spróbuj później (nie odrzucaj)
+                await supabase.update('marketing_raw_contacts', {
+                    'status': 'pending'
+                }, {'id': lead_id})
+                logger.warning(f"[C{consumer_id}] AI failed - odłożone: {lead_url}")
+                await asyncio.sleep(30)
             elif result.get('is_event_organizer') and result.get('best_email'):
                 await supabase.insert('marketing_verified_contacts', {
                     'title': result.get('title') or lead.get('title'),
