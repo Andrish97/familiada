@@ -564,6 +564,7 @@ async def refill_raw_buffer(run_id: str):
                     results = r.json().get('results', [])[:10]
                     all_results.extend(results)
                     await log_to_db("info", f"[{len(results)}] {query}")
+                    await asyncio.sleep(3)  # Rate limit protection
                 else:
                     await log_to_db("warning", f"[ERR {r.status_code}] {query}")
                 await asyncio.sleep(1)
