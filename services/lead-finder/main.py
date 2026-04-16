@@ -24,7 +24,6 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 GROQ_MODEL = "llama-3.1-8b-instant"
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 GEMINI_MODEL = "gemini-2.0-flash-lite"  # 30 RPM, 1500/day - najlepszy free tier
-GEMINI_DELAY = 4  # sekundy między requestami (30 RPM = 1/3.3s)
 
 # Delays między requestami dla każdego providera (w sekundach)
 # Zapobiegają przekroczeniu RPM limitów
