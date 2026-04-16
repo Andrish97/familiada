@@ -739,8 +739,9 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
             try:
                 import ast
                 res = ast.literal_eval(json_str)
-            except Exception:
-                logger.error(f"[C{consumer_id}] JSON parse failed: {json_str[:200]}")
+            except Exception as e:
+                logger.warning(f"[C{consumer_id}] JSON parse failed: {json_str[:300]}")
+                logger.warning(f"[C{consumer_id}] Raw AI response: {content[:500]}")
                 return None
         ok_val = res.get('ok', 0)
         is_organizer = ok_val in [1, True, '1', 'true', 'True']
