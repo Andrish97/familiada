@@ -6125,9 +6125,12 @@ function wireEvents() {
     const rows = new Set(mcState.selectedCells.map(c => c.row));
     if (!rows.size) return;
     try {
-      const ids = [...rows].map(i => mcState.contacts[i]?.id).filter(Boolean);
-      if (!ids.length) return;
-      const { error } = await sb().from("marketing_verified_contacts").update({is_used: true}).in("id", ids);
+      const selectedContacts = [...rows].map(i => mcState.contacts[i]).filter(Boolean);
+      if (!selectedContacts.length) return;
+      const allUsed = selectedContacts.every(c => c.is_used);
+      const newUsedState = !allUsed;
+      const ids = selectedContacts.map(c => c.id);
+      const { error } = await sb().from("marketing_verified_contacts").update({is_used: newUsedState}).in("id", ids);
       if (error) throw error;
       mcState.selectedCells = [];
       mcLoadContacts();
