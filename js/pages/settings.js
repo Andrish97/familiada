@@ -1686,7 +1686,7 @@ function aiProviderLabel(provider) {
 function renderAiProviderOrder() {
   const el = document.getElementById("aiProviderOrderList");
   if (!el) return;
-  const isRunning = mcState && mcState.status === "running";
+  const isRunning = typeof mcState !== 'undefined' && mcState && mcState.status === "running";
   el.innerHTML = "";
   if (isRunning) {
     el.innerHTML = '<div style="opacity:.5;font-size:12px">Kolejność zablokowana podczas zlecenia</div>';
