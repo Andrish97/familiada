@@ -22,7 +22,7 @@ USE_GROQ = bool(os.getenv("GROQ_API_KEY", ""))
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 GROQ_MODEL = "llama-3.1-8b-instant"
 OLLAMA_URL = "http://ollama:11434"
-OLLAMA_MODEL = "phi:latest"
+OLLAMA_MODEL = "llama3.2:3b"
 SUPABASE_URL = "http://kong:8000"
 SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", os.getenv("SERVICE_ROLE_KEY", ""))
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
@@ -818,9 +818,10 @@ async def run_worker(run_id: str, target_count: int):
 # --- API Endpoints ---
 @app.post("/api/search-runs")
 async def start_run(target_count: int = 50):
-    global active_task, task_run_id, task_stop_event, task_pause_event
+    global active_task, task_run_id, task_stop_event, task_pause_event, task_status
     if task_status == "running": raise HTTPException(400, "Zlecenie już działa")
     
+    task_status = "running"
     task_run_id = str(uuid.uuid4())
     task_stop_event.clear()
     task_pause_event.clear()
