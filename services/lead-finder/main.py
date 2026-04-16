@@ -819,8 +819,14 @@ async def consumer_task(run_id: str, consumer_id: int, target: int):
             lead_url = lead.get('url')
             logger.info(f"[C{consumer_id}] Pobrano lead: {lead_id} - {lead_url}")
             
-            update_ok = await supabase.update('marketing_raw_contacts', {'status': 'processing'}, {'id': lead_id})
-            logger.info(f"[C{consumer_id}] Update processing: {update_ok}")
+            # Atomic lock: only update if still pending
+            update_ok = await supabase.update('marketing_raw_contacts', {'status': 'processing'}, {'id': lead_id, 'status': 'pending'})
+            
+            # Verify we got the lock
+            check = await supabase.select('marketing_raw_contacts', 'status', {'id': lead_id})
+            if not check or check[0].get('status') != 'processing':
+                logger.info(f"[C{consumer_id}] Lead {lead_id} już w processing, pomijam")
+                continue
             
             await log_to_db("info", f"[C{consumer_id}] Weryfikacja AI: {lead_url}")
             result = await verify_raw_lead(run_id, lead, consumer_id)
