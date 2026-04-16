@@ -221,10 +221,76 @@ async def fetch_next_target(run_id: str) -> Optional[tuple]:
     city, role, key = random.choice(pool)
     return city, role, key
 
+async def is_page_fresh(url: str, max_age_days: int = 730) -> bool:
+    """Check if page was updated recently. Returns True if fresh or can't determine."""
+    try:
+        import email.utils
+        async with httpx.AsyncClient(timeout=10, follow_redirects=True) as client:
+            r = await client.get(url, headers={'User-Agent': 'Mozilla/5.0'})
+            if r.status_code != 200: return True
+            
+            # Method 1: Last-Modified header
+            last_modified = r.headers.get('last-modified')
+            if last_modified:
+                date_tuple = email.utils.parsedate_tz(last_modified)
+                if date_tuple:
+                    import time
+                    last_ts = email.utils.mktime_tz(date_tuple)
+                    age_days = (time.time() - last_ts) / 86400
+                    if age_days > max_age_days:
+                        return False
+                    return True
+            
+            # Method 2: Check sitemap for this domain
+            try:
+                parsed = urlparse(url)
+                sitemap_url = f"{parsed.scheme}://{parsed.netloc}/sitemap.xml"
+                sr = await client.get(sitemap_url, timeout=5)
+                if sr.status_code == 200:
+                    sitemap_text = sr.text
+                    url_in_sitemap = parsed.path
+                    import re as re_module
+                    url_match = re_module.search(r'<loc>[^<]*' + re_module.escape(url_in_sitemap) + r'[^<]*</loc>.*?<lastmod>([^<]+)</lastmod>', sitemap_text, re_module.I | re_module.DOTALL)
+                    if url_match:
+                        lastmod = url_match.group(1)
+                        lastmod_parsed = email.utils.parsedate_tz(lastmod)
+                        if lastmod_parsed:
+                            import time
+                            last_ts = email.utils.mktime_tz(lastmod_parsed)
+                            age_days = (time.time() - last_ts) / 86400
+                            if age_days > max_age_days:
+                                return False
+                            return True
+            except: pass
+            
+            # Method 3: Meta tags (og:updated_time, article:modified_time)
+            content = r.text
+            og_updated = re.search(r'<meta[^>]*property=["\']og:updated_time["\'][^>]*content=["\']([^"\']+)["\']', content, re.I)
+            if not og_updated:
+                og_updated = re.search(r'<meta[^>]*content=["\']([^"\']+)["\'][^>]*property=["\']og:updated_time["\']', content, re.I)
+            if og_updated:
+                try:
+                    import time
+                    ts = time.mktime(time.strptime(og_updated.group(1), '%Y-%m-%dT%H:%M:%S'))
+                    age_days = (time.time() - ts) / 86400
+                    if age_days > max_age_days:
+                        return False
+                    return True
+                except: pass
+            
+            # Method 4: If-Modified-Since (conditional request)
+            # Already fetched above, but we could use this for future checks
+            
+    except: pass
+    return True
+
 async def scrape_and_save_lead(res: dict, query: str, existing_emails: Set[str]):
     """Scrapes a single search result and saves to raw_contacts if valid."""
     url = res.get('url', '').lower()
     if not url: return 0
+    
+    if not await is_page_fresh(url):
+        return 0
     
     # 1. Block by domain keywords
     if any(d in url for d in BLOCKED_DOMAINS): return 0
