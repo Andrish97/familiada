@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict mu41g4M596HFQgcZtOwVRHYJ5ae9lX0wk8gK208wOhfzFBBUzr03bxx9zDKe2BO
+\restrict kf40dQCeROEC2sCjQJ8bsiUKvOeEOJ5fSHIiVZFGeAXjdo6F7voolWfTTvASC6H
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -9894,6 +9894,21 @@ $$;
 
 
 --
+-- Name: update_ai_provider_order("text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."update_ai_provider_order"("p_order" "text") RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+BEGIN
+  UPDATE "public"."ai_settings" 
+  SET "provider_order" = p_order, "updated_at" = now()
+  WHERE id IN (SELECT id FROM "public"."ai_settings" LIMIT 1);
+END;
+$$;
+
+
+--
 -- Name: update_base_share_role("uuid", "uuid", "public"."base_share_role"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -13764,5 +13779,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict mu41g4M596HFQgcZtOwVRHYJ5ae9lX0wk8gK208wOhfzFBBUzr03bxx9zDKe2BO
+\unrestrict kf40dQCeROEC2sCjQJ8bsiUKvOeEOJ5fSHIiVZFGeAXjdo6F7voolWfTTvASC6H
 
