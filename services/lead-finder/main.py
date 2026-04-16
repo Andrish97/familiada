@@ -54,9 +54,11 @@ BLOCKED_DOMAINS = {
     'mediaexpert.pl', 'x-kom.pl', 'morele.net', 'komputronik.pl', 'neonet.pl',
     'media-markt.pl', 'saturn.pl', 'expert.pl', 'avs.pl',
     
-    # Gry / rozrywka
+    # Gry / rozrywka / inne śmieciowe
     'gry-online.pl', 'gamepressure.com', 'igromania.pl', 'gry.pl', 'gram.pl',
     'swiatgier.pl', 'stopklatka.pl', 'filmweb.pl', 'imdb.com',
+    'zhihu.com', 'wikipedia.org', 'facebook.com', 'instagram.com', 'youtube.com',
+    'twitter.com', 'linkedin.com', 'pinterest.com', 'tiktok.com',
     'rottentomatoes.com', 'metacritic.com', 'letterboxd.com',
     'trakt.tv', 'simkl.com', 'justwatch.com',
     
@@ -628,8 +630,8 @@ ODPOWIEDZ TYLKO CZYSTYM JSONEM."""
 NUM_CONSUMERS = 1
 
 async def producer_task(run_id: str):
-    """Producer: Continuously searches for new raw contacts (always completes, ignores pause)"""
-    while task_status == "running":
+    """Producer: Continuously searches for new raw contacts"""
+    while task_status == "running" and task_run_id == run_id:
         try:
             await refill_raw_buffer(run_id)
         except Exception as e:
@@ -639,7 +641,7 @@ async def producer_task(run_id: str):
 async def consumer_task(run_id: str, consumer_id: int, target: int):
     """Consumer: Continuously verifies raw contacts"""
     global verified_in_run
-    while task_status == "running":
+    while task_status == "running" and task_run_id == run_id:
         if task_pause_event.is_set():
             await asyncio.sleep(1)
             continue
@@ -669,7 +671,7 @@ async def consumer_task(run_id: str, consumer_id: int, target: int):
             await log_to_db("info", f"[C{consumer_id}] Weryfikacja AI: {lead_url}")
             result = await verify_raw_lead(run_id, lead, consumer_id)
             
-            if task_status not in ("running", "paused"):
+            if task_status not in ("running", "paused") or task_run_id != run_id:
                 break
             
             if result is None:
