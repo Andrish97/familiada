@@ -379,16 +379,19 @@ async def refill_raw_buffer(run_id: str):
     city_name, role_name, target_key = target
     
     all_results = []
+    searches_done = 0
     async with httpx.AsyncClient(timeout=25) as client:
         for template in SEARCH_TEMPLATES:
+            if searches_done >= 10: break
+            searches_done += 1
             query = template.format(city=city_name, role=role_name)
             try:
                 await log_to_db("info", f"Szukam: {query}")
                 r = await client.get(f'{SEARXNG_URL}/search', params={
-                    'q': query, 'format': 'json', 'language': 'pl-PL', 'region': 'pl-PL'
+                    'q': query, 'format': 'json', 'language': 'pl-PL', 'region': 'pl-PL', 'limit': 10
                 })
                 if r.status_code == 200:
-                    results = r.json().get('results', [])
+                    results = r.json().get('results', [])[:10]
                     all_results.extend(results)
                 await asyncio.sleep(1)
             except Exception as e:
