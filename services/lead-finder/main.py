@@ -459,10 +459,9 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
     logger.info(f"[C{consumer_id}] Weryfikuję: {url}")
     
     prompt = f"""ZADANIE:
-Określ, czy dana strona to potencjalny klient systemu do prowadzenia gier/animacji eventowych (np. Familiada Online).
+Określ, czy strona to potencjalny klient systemu do prowadzenia interaktywnych eventów (gry, animacje, integracje, zabawy).
 
-Twoim celem NIE jest znalezienie wszystkich firm eventowych,
-tylko tych, które REALNIE mogą używać narzędzia do prowadzenia zabaw/interakcji.
+Celem jest znalezienie osób/firm, które REALNIE prowadzą ludzi na eventach.
 
 ----------------------------------------
 DANE WEJŚCIOWE:
@@ -476,55 +475,59 @@ TEXT: {page_text[:2000] if page_text else 'brak'}
 KROK 1 — TYPOLOGIA STRONY
 ----------------------------------------
 
-A) DIRECT PROVIDER (preferowany)
-- DJ / wodzirej / konferansjer
-- animator (dzieci lub dorośli)
-- prowadzący eventy
-- agencja eventowa (interaktywna)
+A) DIRECT EVENT PROVIDER
+- DJ, wodzirej
+- konferansjer / MC / prezenter (HARD LEAD)
+- animator (dzieci / dorośli)
+- agencja eventowa (jeśli organizuje i prowadzi eventy)
 
 B) VENUE
-- hotel / restauracja / obiekt
+- hotel / restauracja / sala eventowa
 
 C) DIRECTORY / CATALOG
 - katalog firm / listing / agregator
 
 D) PUBLIC / NON-PROFIT
-- szkoła, urząd, fundacja, dom kultury
+- szkoły, urzędy, fundacje, instytucje publiczne
 
 ----------------------------------------
-KROK 2 — IDENTYFIKACJA EVENTOWA
+KROK 2 — EVENT SIGNALS
 ----------------------------------------
 
-Sygnały eventowe:
+UZNAJ ZA EVENTOWE JEŚLI WYSTĘPUJE:
 
-- DJ / wodzirej / konferansjer
-- animator / animacje
+- prowadzenie eventów / imprez
+- DJ / wodzirej / konferansjer / MC
+- animacje / zabawy / integracje
 - organizacja imprez / eventów
-- wesela / imprezy / integracje
-- prowadzenie zabaw / atrakcji
+- wesela / imprezy firmowe / konferencje
 
 ----------------------------------------
 KROK 3 — PRODUCT FIT (NAJWAŻNIEJSZE)
 ----------------------------------------
 
-Zadaj pytanie:
+PYTANIE:
+Czy ta osoba/firma PROWADZI ludzi podczas wydarzenia?
 
-"Czy ta firma prowadzi interakcję z uczestnikami i mogłaby użyć systemu do gry?"
+AKCEPTUJ jeśli:
+- prowadzi event (scena / publiczność / uczestnicy)
+- jest DJ / wodzirej / animator
+- jest konferansjer / MC / prezenter (ZAWSZE TRUE)
+- zarządza przebiegiem wydarzenia
+- angażuje uczestników (nawet bez gier)
 
-✅ AKCEPTUJ jeśli:
-- prowadzi zabawy / gry / animacje
-- prowadzi imprezy jako DJ / wodzirej / konferansjer
-- organizuje i prowadzi event (aktywnie angażuje ludzi)
-
-❌ ODRZUĆ jeśli:
-- tylko występuje (pokazy, artyści, fire show, akrobaci)
+ODRZUĆ jeśli:
+- tylko występuje (show, artysta, akrobata, fire show)
 - tylko gra muzykę (zespół bez prowadzenia)
-- tylko wynajmuje miejsce (hotel, sala)
+- tylko udostępnia miejsce (hotel, venue)
 - tylko dokumentuje (foto/video)
-- nie ma interakcji z uczestnikami
 
 ZASADA:
-→ musi być PROWADZĄCYM, nie ATRAKCJĄ
+→ „PROWADZĄCY" = TAK
+→ „ATRAKCJA" = NIE
+
+HARD RULE:
+- konferansjer / MC / prezenter → ZAWSZE PRODUCT FIT = TRUE
 
 ----------------------------------------
 KROK 4 — ANTI-SEO SPAM
@@ -533,16 +536,17 @@ KROK 4 — ANTI-SEO SPAM
 SEO_SPAM_SCORE:
 
 ❌ RED FLAGS:
-- katalog / lista firm
-- brak marki
+- katalog / listing / directory
+- brak marki / osoby
 - wiele miast w tytule
-- SEO tekst bez konkretów
-- URL: /katalog /firmy /listing
+- SEO tekst bez konkretnej oferty
+- URL typu /katalog /firmy /listing
 
 🟢 GREEN FLAGS:
 - konkretna osoba / brand
-- telefon + nazwa
+- telefon + firma
 - realna oferta usług
+- portfolio / realizacje
 
 JEŚLI SEO_SPAM_SCORE <= -3 → ODRZUĆ
 
@@ -550,48 +554,47 @@ JEŚLI SEO_SPAM_SCORE <= -3 → ODRZUĆ
 KROK 5 — SCORING
 ----------------------------------------
 
-+4:
-- DJ / wodzirej / konferansjer
++5:
+- konferansjer / MC / prezenter (HARD LEAD)
 
 +4:
-- animator / animacje / gry / zabawy
+- DJ / wodzirej / animator
 
 +3:
-- organizacja eventów + prowadzenie
+- agencja eventowa (prowadząca eventy)
 
 +2:
 - wesela / imprezy / integracje
 
 -5:
-- show / artyści / występy
+- show / artyści / występy (fire show, akrobaci)
 
 -5:
-- hotel / venue bez prowadzenia
+- venue / hotel bez prowadzenia
 
 -5:
 - katalog / agregator
 
 -5:
-- organizacja publiczna
+- organizacje publiczne / non-profit
 
 ----------------------------------------
 KROK 6 — EMAIL
 ----------------------------------------
 
 DOBRY:
-- domenowy (kontakt@firma.pl)
+- domenowy email (kontakt@firma.pl)
 
 ZŁY:
 - test@, example@
 - platformy (olx, allegro)
 - systemowe (noreply)
 
-DODATKOWA WALIDACJA:
+FAKE EMAIL CHECK:
 - odrzuć jeśli wygląda jak placeholder (np. jan@kowalski.pl)
-- odrzuć jeśli domena nie pasuje do strony i brak powiązania w treści
-- odrzuć jeśli zawiera: example, test, przyklad, demo
-
-Jeśli email jest podejrzany → traktuj jako BRAK EMAIL
+- odrzuć jeśli nie pasuje do strony i brak powiązania
+- odrzuć jeśli zawiera: example, test, demo, przyklad
+→ traktuj jako BRAK EMAILA
 
 BRAK EMAIL → ODRZUĆ
 
@@ -601,26 +604,16 @@ KROK 7 — DECYZJA
 
 AKCEPTUJ jeśli:
 - TYPE = A
-- PRODUCT FIT = TAK
+- PRODUCT FIT = TRUE
 - email poprawny
 - SEO_SPAM_SCORE > -3
 - score ≥ 4
 
 ODRZUĆ jeśli:
+- TYPE = C lub D
 - brak product fit
-- katalog / public
-- SEO spam
 - brak emaila
-
-----------------------------------------
-ZASADY:
-----------------------------------------
-- DJ / wodzirej / animator = idealny klient
-- show = NIE klient
-- hotel = NIE klient
-- katalog = NIE klient
-- preferuj precision nad recall
-- jeśli wątpliwe → odrzuć
+- SEO spam
 
 ----------------------------------------
 OUTPUT (JSON):
@@ -634,13 +627,13 @@ Jeśli OK:
   "short_description": "100-200 znaków",
   "score": liczba,
   "seo_spam_score": liczba,
-  "reason": "dlaczego pasuje jako użytkownik systemu"
+  "reason": "dlaczego to jest realny lead"
 }}
 
 Jeśli NIE:
 {{
   "ok": 0,
-  "reason": "dlaczego NIE jest potencjalnym użytkownikiem"
+  "reason": "dlaczego odrzucone"
 }}
 ODPOWIEDZ TYLKO CZYSTYM JSONEM."""
 
