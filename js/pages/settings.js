@@ -5887,16 +5887,28 @@ function wireEvents() {
       if (scrollInterval) return;
       scrollInterval = setInterval(() => {
         if (!isDragging || !startCell) { stopAutoScroll(); return; }
-        // Find the nearest scrollable container
-        const scrollEl = document.querySelector('.mail-card') || document.querySelector('.market-admin-panel');
-        if (!scrollEl) { stopAutoScroll(); return; }
-        const rect = scrollEl.getBoundingClientRect();
-        const threshold = 60;
-        const scrollSpeed = 15;
-        if (mcDragY < rect.top + threshold) {
-          scrollEl.scrollTop -= scrollSpeed;
-        } else if (mcDragY > rect.bottom - threshold) {
-          scrollEl.scrollTop += scrollSpeed;
+        
+        const threshold = 100;
+        const scrollSpeed = 20;
+        const viewportHeight = window.innerHeight;
+        
+        let scrolled = false;
+        if (mcDragY < threshold) {
+          window.scrollBy(0, -scrollSpeed);
+          scrolled = true;
+        } else if (mcDragY > viewportHeight - threshold) {
+          window.scrollBy(0, scrollSpeed);
+          scrolled = true;
+        }
+
+        if (scrolled) {
+          const el = document.elementFromPoint(mcDragX, mcDragY);
+          const cell = el ? el.closest('.mc-selectable') : null;
+          if (cell) {
+            const endRow = parseInt(cell.dataset.row);
+            const endCol = parseInt(cell.dataset.col);
+            selectRange(startCell.row, startCell.col, endRow, endCol);
+          }
         }
       }, 20);
     }
@@ -5905,6 +5917,7 @@ function wireEvents() {
       if (scrollInterval) { clearInterval(scrollInterval); scrollInterval = null; }
     }
 
+    let mcDragX = 0;
     let mcDragY = 0;
 
     // Mouse down on cell
@@ -5923,6 +5936,8 @@ function wireEvents() {
       } else {
         isDragging = true;
         startCell = {row, col};
+        mcDragX = e.clientX;
+        mcDragY = e.clientY;
         mcState.selectedCells = [];
         mcState.selectedCells.push({row, col});
         highlightCells();
@@ -5932,13 +5947,23 @@ function wireEvents() {
     // Mouse move - drag select with auto-scroll
     document.addEventListener('mousemove', (e) => {
       if (!isDragging || !startCell) return;
+      mcDragX = e.clientX;
       mcDragY = e.clientY;
+      
+      const threshold = 100;
+      const vh = window.innerHeight;
+      if (mcDragY < threshold || mcDragY > vh - threshold) {
+        startAutoScroll();
+      } else {
+        stopAutoScroll();
+      }
+
       const cell = e.target.closest('.mc-selectable');
-      if (!cell) { startAutoScroll(); return; }
-      stopAutoScroll();
-      const endRow = parseInt(cell.dataset.row);
-      const endCol = parseInt(cell.dataset.col);
-      selectRange(startCell.row, startCell.col, endRow, endCol);
+      if (cell) {
+        const endRow = parseInt(cell.dataset.row);
+        const endCol = parseInt(cell.dataset.col);
+        selectRange(startCell.row, startCell.col, endRow, endCol);
+      }
     });
 
     // Mouse up
@@ -6092,7 +6117,7 @@ function wireEvents() {
   function mcRenderLogs() {
     const el = document.getElementById("mcLogsContainer");
     if (!mcState.logs.length) { el.innerHTML = '<div style="text-align:center;opacity:.5">Brak logów</div>'; return; }
-    el.innerHTML = mcState.logs.slice().reverse().map(l => {
+    el.innerHTML = mcState.logs.slice().map(l => {
       const time = new Date(l.created_at).toLocaleString("pl-PL",{month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"});
       const levelClass = {info:"info",success:"success",warning:"warning",error:"error"}[l.level] || "info";
       const levelText = {info:"INFO",success:"OK",warning:"WARN",error:"ERR"}[l.level] || l.level;
