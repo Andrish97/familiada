@@ -30,7 +30,7 @@ TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
 
 # --- Constants ---
-ROLES = ["DJ wesele", "Wodzirej", "Konferansjer", "Animator dzieci", "Agencja eventowa", "Zespół muzyczny"]
+ROLES = ["DJ wesele", "Wodzirej", "Konferansjer", "Animator dzieci", "Agencja eventowa"]
 
 SEARCH_TEMPLATES = [
     # Klasyczne
