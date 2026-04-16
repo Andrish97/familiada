@@ -590,7 +590,7 @@ A) EVENT PROVIDER (HIGH VALUE)
 - firmy prowadzace eventy
 
 B) VENUE
-- hotel / restauracja / sala
+- hotel / restauracja / sala / dekoracje
 
 C) DIRECTORY / SEO
 - katalog / listing / panorama / agregator
