@@ -5929,6 +5929,8 @@ function wireEvents() {
       });
       // Show/hide visit URL button
       mcUpdateUrlButton();
+      // Update mark used button
+      mcUpdateMarkUsedBtn();
     }
 
     function toggleCell(row, col) {
@@ -6120,6 +6122,26 @@ function wireEvents() {
       if (error) throw error;
     } catch(e) { mcLoadContacts(); }
   };
+
+  function mcUpdateMarkUsedBtn() {
+    const btn = document.getElementById("mcMarkUsedBtn");
+    if (!btn) return;
+    const rows = new Set(mcState.selectedCells.map(c => c.row));
+    if (!rows.size) {
+      btn.textContent = "✓ Użyte";
+      return;
+    }
+    const selected = [...rows].map(i => mcState.contacts[i]).filter(Boolean);
+    const allUsed = selected.every(c => c.is_used);
+    const allUnused = selected.every(c => !c.is_used);
+    if (allUsed) {
+      btn.textContent = "✗ Użyte";
+    } else if (allUnused) {
+      btn.textContent = "✓ Użyte";
+    } else {
+      btn.textContent = "⇄ Użyte";
+    }
+  }
 
   async function mcMarkUsed() {
     const rows = new Set(mcState.selectedCells.map(c => c.row));
