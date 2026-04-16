@@ -264,6 +264,8 @@ async def fetch_next_target(run_id: str) -> Optional[tuple]:
     if not pool:
         await log_to_db("warning", "Wszystkie miasta i role zostały sprawdzone. Resetuję historię...")
         await supabase.call_rpc('truncate_marketing_queries_log')
+        await log_to_db("info", "Historia zresetowana. Sprawdzam ponownie za chwilę...")
+        await asyncio.sleep(10)  # Pause before retry
         return await fetch_next_target(run_id)
     
     # Pick one target to sweep
