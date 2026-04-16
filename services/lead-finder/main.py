@@ -586,6 +586,13 @@ ZŁY:
 - platformy (olx, allegro)
 - systemowe (noreply)
 
+DODATKOWA WALIDACJA:
+- odrzuć jeśli wygląda jak placeholder (np. jan@kowalski.pl)
+- odrzuć jeśli domena nie pasuje do strony i brak powiązania w treści
+- odrzuć jeśli zawiera: example, test, przyklad, demo
+
+Jeśli email jest podejrzany → traktuj jako BRAK EMAIL
+
 BRAK EMAIL → ODRZUĆ
 
 ----------------------------------------

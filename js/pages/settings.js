@@ -6157,10 +6157,13 @@ function wireEvents() {
         }
       } catch(e) {}
     }, 3000);
+    // Polling fallback for logs (every 2s)
+    mcState.logPollTimer = setInterval(() => mcLoadLogs(), 2000);
   }
 
   function mcStopLogAutoRefresh() {
     if (mcState.logTimer) { clearInterval(mcState.logTimer); mcState.logTimer = null; }
+    if (mcState.logPollTimer) { clearInterval(mcState.logPollTimer); mcState.logPollTimer = null; }
     mcDestroyRealtime();
   }
 
