@@ -51,8 +51,8 @@ export default {
         return fetchFromOrigin(request, url, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
       }
 
-      // allow settings-tools and assets only (cache-busting handled by client-side version.txt)
-      if (url.pathname.startsWith("/settings-tools/") || isSettingsAsset(url.pathname)) {
+      // allow settings-tools and assets only
+      if (url.pathname.startsWith("/settings-tools/") || isSettingsAsset(url.pathname) || url.pathname === "/version.txt") {
         const res = await fetchFromOrigin(request, url, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
         if (url.pathname.startsWith("/settings-tools/")) {
           return withHeaders(res, {
