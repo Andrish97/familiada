@@ -1686,7 +1686,12 @@ function aiProviderLabel(provider) {
 function renderAiProviderOrder() {
   const el = document.getElementById("aiProviderOrderList");
   if (!el) return;
+  const isRunning = mcState && mcState.status === "running";
   el.innerHTML = "";
+  if (isRunning) {
+    el.innerHTML = '<div style="opacity:.5;font-size:12px">Kolejność zablokowana podczas zlecenia</div>';
+    return;
+  }
   aiProviderOrder.forEach((provider, idx) => {
     const row = document.createElement("div");
     row.className = "provider-order-row";
@@ -5761,6 +5766,7 @@ function wireEvents() {
         targetInput.disabled = false;
         break;
     }
+    renderAiProviderOrder();
   }
 
   async function mcLoadRuns() {
