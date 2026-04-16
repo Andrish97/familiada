@@ -544,13 +544,15 @@ async def refill_raw_buffer(run_id: str):
             searches_done += 1
             query = template.format(city=city_name, role=role_name)
             try:
-                await log_to_db("info", f"Szukam: {query}")
                 r = await client.get(f'{SEARXNG_URL}/search', params={
                     'q': query, 'format': 'json', 'language': 'pl-PL', 'region': 'pl-PL', 'limit': 10
                 })
                 if r.status_code == 200:
                     results = r.json().get('results', [])[:10]
                     all_results.extend(results)
+                    await log_to_db("info", f"[{len(results)}] {query}")
+                else:
+                    await log_to_db("warning", f"[ERR {r.status_code}] {query}")
                 await asyncio.sleep(1)
             except Exception as e:
                 logger.error(f"Search error for {query}: {e}")
