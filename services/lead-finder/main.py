@@ -323,7 +323,6 @@ async def is_page_fresh(url: str, max_age_days: int = 730) -> bool:
     except: pass
     return True
 
-    return PLAYWRIGHT_BROWSER
 async def scrape_and_save_lead(res: dict, query: str, existing_emails: Set[str]):
     """Scrapes a single search result and saves to raw_contacts if valid."""
     url = res.get('url', '').lower()
