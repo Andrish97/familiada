@@ -195,8 +195,8 @@ async def send_telegram(message: str):
         logger.error(f"Telegram exception: {e}")
 
 # --- Core Logic: Search Layer (Producer) ---
-async def fetch_next_query_batch(run_id: str) -> Optional[tuple]:
-    """Finds a City+Role target and returns ALL unsent template queries for it."""
+async def fetch_next_target(run_id: str) -> Optional[tuple]:
+    """Finds a City+Role target that hasn't been 'swept' yet."""
     cities_data = await supabase.select('marketing_cities', 'name', {'is_active': 'true'})
     if not cities_data: return None
     
@@ -204,28 +204,22 @@ async def fetch_next_query_batch(run_id: str) -> Optional[tuple]:
     history_data = await supabase.select('marketing_search_queries_log', 'query_text')
     history = {h['query_text'] for h in history_data} if history_data else set()
 
-    # Find targets (City + Role) that have at least one unused template
-    targets = []
+    # Generate all possible targets: "Role | City"
+    pool = []
     for city in cities:
         for role in ROLES:
-            available_for_target = []
-            for template in SEARCH_TEMPLATES:
-                q = template.format(city=city, role=role)
-                if q not in history:
-                    available_for_target.append(q)
-            
-            if available_for_target:
-                targets.append((available_for_target, city, role))
+            target_key = f"{role} | {city}"
+            if target_key not in history:
+                pool.append((city, role, target_key))
 
-    if not targets:
-        await log_to_db("warning", "Pula zapytań całkowicie wyczerpana. Resetuję historię...")
+    if not pool:
+        await log_to_db("warning", "Wszystkie miasta i role zostały sprawdzone. Resetuję historię...")
         await supabase.call_rpc('truncate_marketing_queries_log')
-        return await fetch_next_query_batch(run_id)
+        return await fetch_next_target(run_id)
     
-    # Pick one target (City + Role) and do a "Deep Sweep"
-    chosen_queries, city_name, role_name = random.choice(targets)
-    logger.info(f"[DEEP SWEEP] Target: {role_name} w {city_name} ({len(chosen_queries)} metod)")
-    return chosen_queries, city_name
+    # Pick one target to sweep
+    city, role, key = random.choice(pool)
+    return city, role, key
 
 async def scrape_and_save_lead(res: dict, query: str, existing_emails: Set[str]):
     """Scrapes a single search result and saves to raw_contacts if valid."""
@@ -373,20 +367,21 @@ async def scrape_and_save_lead(res: dict, query: str, existing_emails: Set[str])
     return 0
 
 async def refill_raw_buffer(run_id: str):
-    """Producer: Performs a Deep Sweep for a specific target."""
+    """Producer: Performs a Deep Sweep for a specific target (City + Role)."""
     pending = await supabase.select('marketing_raw_contacts', 'id', {'status': 'pending'})
     processing = await supabase.select('marketing_raw_contacts', 'id', {'status': 'processing'})
     count = (len(pending) if pending else 0) + (len(processing) if processing else 0)
     
     if count >= RAW_BUFFER_THRESHOLD: return
 
-    query_data = await fetch_next_query_batch(run_id)
-    if not query_data: return
-    queries, city_name = query_data
+    target = await fetch_next_target(run_id)
+    if not target: return
+    city_name, role_name, target_key = target
     
     all_results = []
     async with httpx.AsyncClient(timeout=25) as client:
-        for query in queries:
+        for template in SEARCH_TEMPLATES:
+            query = template.format(city=city_name, role=role_name)
             try:
                 await log_to_db("info", f"Szukam: {query}")
                 r = await client.get(f'{SEARXNG_URL}/search', params={
@@ -395,46 +390,41 @@ async def refill_raw_buffer(run_id: str):
                 if r.status_code == 200:
                     results = r.json().get('results', [])
                     all_results.extend(results)
-                    
-                    # Log individual query as completed
-                    await supabase.insert('marketing_search_queries_log', {
-                        'query_text': query,
-                        'urls_found': len(results),
-                        'status': 'completed'
-                    })
-                await asyncio.sleep(1) # Small delay
+                await asyncio.sleep(1)
             except Exception as e:
-                logger.error(f"Batch search error for {query}: {e}")
+                logger.error(f"Search error for {query}: {e}")
 
-    if not all_results: return
+    if all_results:
+        unique_results = []
+        seen_urls = set()
+        for res in all_results:
+            u = res.get('url', '').lower()
+            if u and u not in seen_urls:
+                seen_urls.add(u)
+                unique_results.append(res)
 
-    # Deduplicate results by URL before parallel scraping
-    unique_results = []
-    seen_urls = set()
-    for res in all_results:
-        u = res.get('url', '').lower()
-        if u and u not in seen_urls:
-            seen_urls.add(u)
-            unique_results.append(res)
+        verified_contacts = await supabase.select('marketing_verified_contacts', 'email')
+        raw_contacts = await supabase.select('marketing_raw_contacts', 'emails_found')
+        existing_emails = {v['email'].lower() for v in (verified_contacts or []) if v.get('email')}
+        for r in (raw_contacts or []):
+            raw_list = r.get('emails_found', [])
+            if isinstance(raw_list, str):
+                try: raw_list = json.loads(raw_list)
+                except: raw_list = []
+            for e in raw_list: existing_emails.add(e.lower())
 
-    # Build set of all existing emails for deduplication
-    verified_contacts = await supabase.select('marketing_verified_contacts', 'email')
-    raw_contacts = await supabase.select('marketing_raw_contacts', 'emails_found')
-    existing_emails = {v['email'].lower() for v in (verified_contacts or []) if v.get('email')}
-    for r in (raw_contacts or []):
-        raw_list = r.get('emails_found', [])
-        if isinstance(raw_list, str):
-            try: raw_list = json.loads(raw_list)
-            except: raw_list = []
-        for e in raw_list: existing_emails.add(e.lower())
+        tasks = [scrape_and_save_lead(res, "batch", existing_emails) for res in unique_results]
+        new_counts = await asyncio.gather(*tasks)
+        total_new = sum(new_counts)
+        if total_new > 0:
+            await log_to_db("success", f"Deep Sweep ({role_name} | {city_name}) zakończony. Dodano {total_new} kontaktów.")
 
-    # Scrape unique results from the entire batch
-    tasks = [scrape_and_save_lead(res, "batch", existing_emails) for res in unique_results]
-    new_counts = await asyncio.gather(*tasks)
-    total_new = sum(new_counts)
-
-    if total_new > 0:
-        await log_to_db("success", f"Deep Sweep ({city_name}) zakończony. Dodano {total_new} kontaktów.")
+    await supabase.insert('marketing_search_queries_log', {
+        'query_text': target_key,
+        'urls_found': len(all_results),
+        'status': 'completed'
+    })
+    await log_to_db("info", f"[DONE] {target_key}")
 
 # --- Core Logic: AI Layer (Consumer) ---
 async def fetch_page_content(url: str) -> dict:
