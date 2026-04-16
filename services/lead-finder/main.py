@@ -659,6 +659,7 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
     try:
         content = None
         provider_order = get_provider_order()
+        logger.info(f"[C{consumer_id}] Provider order: {provider_order}")
         
         # Try providers in order from settings
         for provider in provider_order:
@@ -666,6 +667,7 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
                 logger.info(f"[C{consumer_id}] {provider} on cooldown, skipping")
                 continue
             
+            logger.info(f"[C{consumer_id}] Trying provider: {provider}")
             if provider == 'openrouter' and OPENROUTER_API_KEY:
                 try:
                     async with httpx.AsyncClient(timeout=60) as client:
@@ -737,16 +739,20 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
             return None
         
         json_str = match.group()
-        logger.info(f"[C{consumer_id}] AI response preview: {content[:200]}")
+        logger.info(f"[C{consumer_id}] AI response: {json_str[:300]}")
         try:
             res = json.loads(json_str)
-        except json.JSONDecodeError:
+            if not isinstance(res, dict):
+                logger.warning(f"[C{consumer_id}] AI response is not a dict: {type(res)}")
+                return None
+        except json.JSONDecodeError as e:
+            logger.warning(f"[C{consumer_id}] JSON parse error: {e}")
+            logger.warning(f"[C{consumer_id}] Trying ast.literal_eval...")
             try:
                 import ast
                 res = ast.literal_eval(json_str)
-            except Exception as e:
-                logger.warning(f"[C{consumer_id}] JSON parse failed: {json_str[:300]}")
-                logger.warning(f"[C{consumer_id}] Raw AI response: {content[:500]}")
+            except Exception as e2:
+                logger.warning(f"[C{consumer_id}] ast.literal_eval failed: {e2}")
                 return None
         ok_val = res.get('ok', 0)
         is_organizer = ok_val in [1, True, '1', 'true', 'True']
@@ -826,6 +832,16 @@ async def consumer_task(run_id: str, consumer_id: int, target: int):
                 break
             
             if result is None:
+                # AI failed - odłóż i spróbuj później (nie odrzucaj)
+                await supabase.update('marketing_raw_contacts', {
+                    'status': 'pending'
+                }, {'id': lead_id})
+                logger.warning(f"[C{consumer_id}] AI failed - odłożone: {lead_url}")
+                await asyncio.sleep(30)
+            elif not isinstance(result, dict):
+                logger.warning(f"[C{consumer_id}] Invalid result type: {type(result)} - {str(result)[:100]}")
+                await supabase.update('marketing_raw_contacts', {'status': 'pending'}, {'id': lead_id})
+                await asyncio.sleep(30)
                 # AI failed - odłóż i spróbuj później (nie odrzucaj)
                 await supabase.update('marketing_raw_contacts', {
                     'status': 'pending'
