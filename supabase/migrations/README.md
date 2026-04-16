@@ -4,6 +4,7 @@
 - Migracje są **forward-only**.
 - **Nigdy** nie edytuj już zastosowanej migracji (pipeline sprawdza checksum i przerwie).
 - Każdy plik: `YYYY-MM-DD_NNN_opis.sql` i jest wykonywany alfabetycznie.
+- **Nigdy** nie edytuj pliku `schema.sql.`, on się aktualizuje sam!
 
 ## Co jest w repo
 - `supabase/migrations/` — pliki migracji
