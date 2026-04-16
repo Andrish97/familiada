@@ -748,7 +748,11 @@ async def consumer_task(run_id: str, consumer_id: int, target: int):
                 continue
             
             await log_to_db("info", f"[C{consumer_id}] Weryfikacja AI: {lead_url}")
-            result = await verify_raw_lead(run_id, lead, consumer_id)
+            try:
+                result = await verify_raw_lead(run_id, lead, consumer_id)
+            except Exception as e:
+                logger.error(f"[C{consumer_id}] verify_raw_lead exception: {e}")
+                result = None
             
             if task_status not in ("running", "paused") or task_run_id != run_id:
                 break
@@ -787,9 +791,9 @@ async def consumer_task(run_id: str, consumer_id: int, target: int):
                     'reject_reason': reject_reason[:500]
                 }, {'id': lead_id})
                 await log_to_db("warning", f"[C{consumer_id}] Odrzucono: {lead_url} | type:{result.get('lead_type', '?')} | ai:{result.get('score_event', '?')} | spam:{result.get('seo_spam_score', '?')} | powod: {reject_reason}")
-        except Exception as e:
-            logger.error(f"Consumer {consumer_id} error: {e}")
-            await asyncio.sleep(1)
+            except Exception as e:
+                logger.error(f"Consumer {consumer_id} error: {e}")
+                await asyncio.sleep(1)
 
 async def cleanup_on_cancel():
     """Revert all processing contacts back to pending when cancelled"""
