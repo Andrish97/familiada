@@ -878,11 +878,11 @@
               <table class="mc-table" id="mcContactsTable" style="width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed">
                 <thead>
                   <tr style="background:rgba(255,255,255,.05)">
-                    <th style="padding:6px;text-align:left;width:25%" data-i18n="settings.marketingContacts.table.title">Tytuł</th>
-                    <th style="padding:6px;text-align:left;width:20%" data-i18n="settings.marketingContacts.table.email">Email</th>
-                    <th style="padding:6px;text-align:left;width:25%" data-i18n="settings.marketingContacts.table.url">URL</th>
-                    <th style="padding:6px;text-align:left;width:15%" data-i18n="settings.marketingContacts.table.added">Dodano</th>
-                    <th style="padding:6px;text-align:center;width:50px" data-i18n="settings.marketingContacts.table.used">Użyte</th>
+                    <th class="mc-sortable" data-col="title" style="padding:6px;text-align:left;width:25%;cursor:pointer;user-select:none" data-i18n="settings.marketingContacts.table.title">Tytuł</th>
+                    <th class="mc-sortable" data-col="email" style="padding:6px;text-align:left;width:20%;cursor:pointer;user-select:none" data-i18n="settings.marketingContacts.table.email">Email</th>
+                    <th class="mc-sortable" data-col="url" style="padding:6px;text-align:left;width:25%;cursor:pointer;user-select:none" data-i18n="settings.marketingContacts.table.url">URL</th>
+                    <th class="mc-sortable" data-col="added_at" style="padding:6px;text-align:left;width:15%;cursor:pointer;user-select:none" data-i18n="settings.marketingContacts.table.added">Dodano</th>
+                    <th class="mc-sortable" data-col="is_used" style="padding:6px;text-align:center;width:50px;cursor:pointer;user-select:none" data-i18n="settings.marketingContacts.table.used">Użyte</th>
                   </tr>
                 </thead>
                 <tbody id="mcTableBody">

@@ -5728,6 +5728,8 @@ function wireEvents() {
     contacts: [],
     selectedRows: new Set(),
     page: 1,
+    sortCol: 'added_at',
+    sortDir: 'desc',
     logs: [],
     logRun: null,
     logTimer: null,
@@ -5855,13 +5857,39 @@ function wireEvents() {
       if (fUsed !== "") query = query.eq("is_used", fUsed === "true");
       const from = (mcState.page - 1) * MC_PAGE_SIZE;
       const to = from + MC_PAGE_SIZE - 1;
-      const { data, error, count } = await query.order("added_at",{ascending:false}).range(from, to);
+      const { data, error, count } = await query.order(mcState.sortCol, {ascending: mcState.sortDir === 'asc'}).range(from, to);
       if (error) throw error;
       mcState.contacts = data || [];
       mcRenderContacts(count || 0);
+      mcUpdateSortHeaders();
     } catch(e) {
       tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;opacity:.5;padding:1.5rem">Błąd: ${e.message}</td></tr>`;
     }
+  }
+
+  function mcUpdateSortHeaders() {
+    document.querySelectorAll('.mc-sortable').forEach(th => {
+      const col = th.dataset.col;
+      const arrow = col === mcState.sortCol ? (mcState.sortDir === 'asc' ? ' ▲' : ' ▼') : '';
+      th.innerHTML = th.dataset.label + arrow;
+    });
+  }
+
+  function mcInitSorting() {
+    document.querySelectorAll('.mc-sortable').forEach(th => {
+      th.dataset.label = th.textContent.trim().replace(/[▲▼]/g, '');
+      th.addEventListener('click', () => {
+        const col = th.dataset.col;
+        if (mcState.sortCol === col) {
+          mcState.sortDir = mcState.sortDir === 'asc' ? 'desc' : 'asc';
+        } else {
+          mcState.sortCol = col;
+          mcState.sortDir = 'desc';
+        }
+        mcState.page = 1;
+        mcLoadContacts();
+      });
+    });
   }
 
   function mcRenderContacts(totalCount) {
@@ -6099,7 +6127,7 @@ function wireEvents() {
     try {
       const ids = [...rows].map(i => mcState.contacts[i]?.id).filter(Boolean);
       if (!ids.length) return;
-      const { error } = await sb().from("marketing_verified_contacts").update({is_used: true, used_at: new Date().toISOString()}).in("id", ids);
+      const { error } = await sb().from("marketing_verified_contacts").update({is_used: true}).in("id", ids);
       if (error) throw error;
       mcState.selectedCells = [];
       mcLoadContacts();
@@ -6249,6 +6277,7 @@ function wireEvents() {
   document.getElementById("mcPrevPage")?.addEventListener("click", () => { if(mcState.page>1){mcState.page--;mcLoadContacts();} });
   document.getElementById("mcNextPage")?.addEventListener("click", () => { mcState.page++; mcLoadContacts(); });
   document.getElementById("mcAutoRefreshLogs")?.addEventListener("change", (e) => { if(e.target.checked) mcStartLogAutoRefresh(); else mcStopLogAutoRefresh(); });
+  mcInitSorting();
 
   // Load MC data when entering tab
   const origSetTab = window.setActiveTabMC;
