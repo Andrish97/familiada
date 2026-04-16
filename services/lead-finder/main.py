@@ -578,100 +578,138 @@ TYTUL: {title}
 MAILE: {', '.join(emails) if emails else 'brak'}
 TEXT: {page_text[:2000] if page_text else 'brak'}
 
----------------------------------------
-KROK 1 - TYP STRONY
----------------------------------------
+=======================================
+KROK 1 - TYP STRONY (KLASYFIKACJA)
+=======================================
+
 A) EVENT PROVIDER (HIGH VALUE)
 - DJ / wodzirej
 - konferansjer / MC / prezenter / host
-- animator (dzieci lub dorosli)
-- agencja eventowa (organizacja wydarzen)
-- firmy prowadzace eventy / imprezy
+- animator
+- agencja eventowa
+- firmy prowadzace eventy
 
 B) VENUE
-- hotel / restauracja / sala (bez prowadzenia)
+- hotel / restauracja / sala
 
-C) DIRECTORY / SEO LISTING
-- katalog firm / panorama / listing / agregator
+C) DIRECTORY / SEO
+- katalog / listing / panorama / agregator
 
 D) NON-EVENT
-- drukarnie, sklepy, szkoly, urzedy, inne branze
+- inne branze
 
 ---------------------------------------
-KROK 2 - EVENT SIGNALS
+KROK 2 - SYGNALY EVENTOWE
 ---------------------------------------
-UZNAJ ZA EVENTOWE JESLI:
-- prowadzenie wydarzen / imprez
-- DJ / muzyka / oprawa
-- animacje / integracje / zabawy
-- organizacja eventow / konferencji / wesel
-- konferansjer / MC / moderacja / host
-- oferta + kontakt + rezerwacja
+
++3 (MOCNE):
+- prowadzenie eventow
+- DJ / wodzirej / konferansjer
+- animacje / zabawy / interakcja
+- moderacja / hosting
+- "prowadzę imprezy"
+
++2 (SREDNIE):
+- organizacja eventow
+- imprezy firmowe / wesela / integracje
+- konferencje / gale
+
++1 (SLABE):
+- eventy
+- oferta eventowa
+- obsluga wydarzen
 
 ---------------------------------------
-KROK 3 - PRODUCT FIT (KLUCZOWE)
+KROK 3 - ROLE NA WYDARZENIU (KLUCZOWE)
 ---------------------------------------
-PYTANIE:
-Czy ta firma/osoba MA ROLE NA WYDARZENIU?
 
-INTERAKCJA obejmuje:
-- prowadzenie imprezy
-- moderowanie (np. debat, paneli)
-- zapowiadanie / konferansjerka
-- koordynacja sceny / przebiegu wydarzenia
++5:
+- DJ / wodzirej / konferansjer / MC / animator (BEZPOSREDNIA ROLA)
+
++3:
+- agencja eventowa / organizacja wydarzen
+
+0:
+- brak ról
 
 ---------------------------------------
-KROK 3.1 - HARD OVERRIDE (NAJWAZNIEJSZE)
+KROK 3.1 - HARD OVERRIDE
 ---------------------------------------
-JESLI wystepuje jedna z ról:
-- konferansjer / MC / host / prezenter
-- DJ / wodzirej
+
+JESLI WYSTEPUE:
+- DJ
+- konferansjer / MC / host
+- wodzirej
 - animator
 
- AUTOMATYCZNIE:
-PRODUCT FIT = TRUE
-
-(bez dalszej analizy, nawet jesli opis jest marketingowy)
-
----------------------------------------
-ODRZUC PRODUCT FIT jesli:
----------------------------------------
-- tylko miejsce (hotel, sala)
-- tylko katalog / listing
-- tylko sprzedaz / druk / produkt
-- brak jakiejkolwiek roli na wydarzeniu
+-> AUTOMATYCZNIE:
+PRODUCT_FIT = TRUE
+TYPE = A
 
 ---------------------------------------
-KROK 4 - ANTI-SEO / SPAM
+KROK 3.2 - AGENCJE EVENTOWE (SOFT OVERRIDE)
 ---------------------------------------
-SEO_SPAM_SCORE:
 
- RED FLAGS:
-- katalog / agregator
-- brak konkretnej firmy/osoby
-- wiele lokalizacji w title
-- SEO keyword stuffing
-- brak realnej oferty
+JESLI:
+- agencja eventowa
+- organizacja eventow
+ORAZ:
+- opis uslug / portfolio / realizacje
 
- GREEN FLAGS:
-- konkretna marka / osoba
-- oferta uslug
-- kontakt (telefon/email)
-- portfolio / realizacje
+-> PRODUCT_FIT = TRUE
 
-JESLI SEO_SPAM_SCORE <= -3 -> ODRZUC
+JESLI TYLKO:
+- technika (naglosnienie / swiatlo)
+-> PRODUCT_FIT = FALSE
 
 ---------------------------------------
-KROK 5 - EMAIL RANKING (WYBOR NAJLEPSZEGO)
+KROK 4 - BUSINESS SIGNALS
+---------------------------------------
+
++2 oferta uslug
++2 kontakt (email / telefon)
++2 portfolio / realizacje
++1 doswiadczenie / lata / liczba eventow
+
+---------------------------------------
+KROK 5 - ANTI-SEO / SPAM
+---------------------------------------
+
+-5 katalog / listing / panorama
+-3 SEO spam / brak tresci
+-2 keyword stuffing / wiele miast
++1 konkretna marka / osoba
+
+JESLI SEO_SCORE <= -3 -> ODRZUC
+
+---------------------------------------
+KROK 6 - SCORE STRONY
+---------------------------------------
+
+TOTAL_SCORE =
+EVENT_SIGNALS
++ ROLE_SCORE
++ BUSINESS_SIGNALS
++ SEO_SCORE
+
+---------------------------------------
+KROK 7 - PRODUCT FIT (FINAL)
+---------------------------------------
+
+PRODUCT_FIT = TRUE jesli:
+- ROLE_SCORE >= 3
+LUB
+- EVENT_SIGNALS >= 4
+
+---------------------------------------
+KROK 8 - EMAIL RANKING (WYBOR NAJLEPSZEGO)
 ---------------------------------------
 
 ZASADA:
-Nie sprawdzaj czy email jest "idealny".
-Oceń kazdy email punktowo i wybierz NAJLEPSZY.
+NIE odrzucaj przez obecnosc zlych maili.
+Wybierz najlepszy email.
 
----------------------------------------
-1. PRZYPISZ EMAIL_SCORE:
----------------------------------------
+EMAIL_SCORE:
 
 +5:
 - kontakt@domena
@@ -681,120 +719,71 @@ Oceń kazdy email punktowo i wybierz NAJLEPSZY.
 - info@ / office@ / hello@ / sales@
 
 +3:
-- imie@domena (np. jan@firma.pl)
+- imie@domena
 
 +2:
-- dowolny email w domenie strony
+- email w domenie strony (inne)
 
 +1:
-- gmail.com / wp.pl / interia.pl / onet.pl / o2.pl / outlook.com / yahoo.com
+- gmail / wp / onet / o2 / interia / outlook / yahoo
 
----------------------------------------
 -5:
-- test@, example@, demo@
-- noreply@, no-reply@
+- test@ / example@ / demo@
+- noreply@ / no-reply@
 - admin@localhost
-- monitoring / tracking (np. sentry)
 - placeholder (jan@kowalski.pl)
+- monitoring / systemowe
 
 ---------------------------------------
-2. WYBIERZ EMAIL:
+KROK 8.1 - WYBOR EMAILA
 ---------------------------------------
 
 - policz score dla kazdego maila
-- wybierz mail z najwyzszym wynikiem
+- wybierz najwyzszy
+- HAS_EMAIL = TRUE jesli najlepszy >= 1
+- HAS_EMAIL = FALSE jesli <= 0
 
 ---------------------------------------
-3. HAS_EMAIL:
+KROK 9 - FINALNA DECYZJA
 ---------------------------------------
 
-HAS_EMAIL = TRUE jesli:
-najlepszy EMAIL_SCORE >= 1
+IS_LEAD =
 
-HAS_EMAIL = FALSE jesli:
-najlepszy EMAIL_SCORE <= 0
-
----------------------------------------
-4. WAZNE REGULY:
----------------------------------------
-
-- ignoruj slabeb maile jesli sa lepsze
-- jeden dobry email wystarczy
-- NIE odrzucaj przez obecnosc zlych maili
-- gmail = OK jesli nic lepszego nie ma
-
----------------------------------------
-PRZYKLADY:
----------------------------------------
-
-["biuro@firma.pl", "test@test.com"]
--> wybierz biuro@firma.pl (score 5)
-
-["jan@gmail.com"]
--> wybierz jan@gmail.com (score 1) -> OK
-
-["test@test.com", "noreply@firma.pl"]
--> score <= 0 -> ODRZUC
-
-["biuro@firma.pl", "jan@gmail.com"]
--> wybierz biuro@firma.pl
-
--------------------------------------
-KROK 6 - SCORING
----------------------------------------
-+5 konferansjer / MC / host
-+4 DJ / wodzirej / animator
-+3 agencja eventowa
-+2 organizacja eventow
-
--5 venue
--5 katalog / SEO
--5 non-event
-
----------------------------------------
-KROK 7 - FINALNA DECYZJA
----------------------------------------
-
-IS_LEAD = 
 (TYPE = A)
-AND (PRODUCT FIT = TRUE)
-AND (score >= 4)
-AND (SEO_SPAM_SCORE > -3)
+AND (PRODUCT_FIT = TRUE)
+AND (TOTAL_SCORE >= 6)
+AND (SEO_SCORE > -3)
 
----------------------------------------
 AKCEPTUJ jesli:
----------------------------------------
 IS_LEAD = TRUE
 AND HAS_EMAIL = TRUE
 
----------------------------------------
 ODRZUC jesli:
----------------------------------------
 IS_LEAD = FALSE
 LUB HAS_EMAIL = FALSE
 
 ---------------------------------------
-OUTPUT JSON:
+OUTPUT JSON
 ---------------------------------------
 
-Jesli OK:
+JESLI OK:
 {{
   "ok": 1,
   "email": "...",
-  "title": "max 50 znaków",
-  "short_description": "100-200 znaków",
+  "title": "max 50 znakow",
+  "short_description": "100-200 znakow",
   "score": liczba,
   "seo_spam_score": liczba,
   "reason": "dlaczego to realny lead"
 }}
 
-Jesli NIE:
+JESLI NIE:
 {{
   "ok": 0,
-  "reason": "konkretny powod odrzucenia"
+  "reason": "konkretny powod"
 }}
 
-ODPOWIEDZ TYLKO CZYSTYM JSONEM."""
+ODPOWIEDZ TYLKO CZYSTYM JSONEM"""
 
     try:
         content = None
