@@ -1,4 +1,4 @@
-import { sb } from "./supabase.js?v=v2026-04-16T13494";
+import { sb } from "./supabase.js?v=v2026-04-16T13553";
 
 function pickRpcRow(data, fnName) {
   const row = Array.isArray(data) ? data[0] : data;
