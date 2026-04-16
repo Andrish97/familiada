@@ -29,7 +29,8 @@ A) EVENT PROVIDER (HIGH VALUE)
 * konferansjer / MC / prezenter / host
 * animator (dzieci lub dorośli)
 * agencja eventowa
-* firmy prowadzace eventy / imprezy
+* firmy prowadzace eventy / imprezy/ organizacja imprez
+* team building/ gry integracyjne
 
 B) VENUE
 

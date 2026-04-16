@@ -1,0 +1,10 @@
+# Szablony wyszukiwania - podstawiane {role} i {city}
+# Używane do generowania zapytań do SearXNG
+
+"{role}" {city} kontakt
+"{role}" {city} oferta
+{role} {city} wizytowka opinie
+{role} {city} mapa kontakt
+{role} {city} google maps
+site:facebook.com "{city}" {role} kontakt
+site:instagram.com "{city}" {role}

@@ -1,0 +1,21 @@
+# Zakazane slowa kluczowe - strony z tymi slowami sa pomijane
+# Uzywane do filtrowania wynikow wyszukiwania
+
+urząd
+ministerstwo
+bip.gov.pl
+komenda
+policja
+sąd
+prokuratura
+ośrodek pomocy
+ops
+parafia
+kościoła
+szkoła podstawowa
+liceum
+przedszkole publiczne
+żłobek miejski
+szpital
+przychodnia
+apteka

@@ -1,0 +1,11 @@
+# Role do wyszukiwania - podstawiane do {role} w szablonach
+# Lista ról przeszukiwanych przez lead finder
+
+DJ wesele
+Wodzirej
+Konferansjer
+Animator dzieci
+Agencja eventowa
+Organizacja imprez
+Team building
+Gry integracyjne

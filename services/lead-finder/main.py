@@ -36,60 +36,43 @@ TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
 
 # --- Constants ---
-ROLES = ["DJ wesele", "Wodzirej", "Konferansjer", "Animator dzieci", "Agencja eventowa"]
+def load_lines_set(filename):
+    """Load lines from file as set, ignoring comments and empty lines."""
+    path = os.path.join(os.path.dirname(__file__), filename)
+    items = set()
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#'):
+                    items.add(line.lower())
+    except FileNotFoundError:
+        logging.warning(f"{filename} not found, using empty set")
+    return items
 
-SEARCH_TEMPLATES = [
-    # Klasyczne
-    '"{role}" {city} kontakt',
-    '"{role}" {city} oferta',
-    
-    # Wizytówkowe i lokalne
-    '{role} {city} wizytówka opinie',
-    '{role} {city} mapa kontakt',
-    '{role} {city} google maps',
-    
-    # Social-specific
-    'site:facebook.com "{city}" {role} kontakt',
-    'site:instagram.com "{city}" {role}',
-]
+def load_lines_list(filename):
+    """Load lines from file as list, ignoring comments and empty lines."""
+    path = os.path.join(os.path.dirname(__file__), filename)
+    items = []
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#'):
+                    items.append(line)
+    except FileNotFoundError:
+        logging.warning(f"{filename} not found, using empty list")
+    return items
 
-NEGATIVE_KEYWORDS = {
-    'urząd', 'ministerstwo', 'bip.gov.pl', 'komenda', 'policja', 'sąd', 'prokuratura',
-    'ośrodek pomocy', 'ops', 'parafia', 'kościoła', 'szkoła podstawowa', 'liceum',
-    'przedszkole publiczne', 'żłobek miejski', 'szpital', 'przychodnia', 'apteka'
-}
-
-BLOCKED_DOMAINS = {
-    # Ogłoszenia / marketplace
-    'olx.pl', 'allegro.pl', 'gumtree.pl', 'sprzedajemy.pl',
-    'oferteo.pl', 'fixly.pl', 'weselezklasa.pl', 'slubnaglowie.pl',
-    'pracuj.pl', 'jooble.pl', 'infopraca.pl', 'praca.pl',
-    
-    # Sklepy / RTV AGD
-    'amazon.com', 'ebay.com', 'etsy.com', 'empik.com', 'ceneo.pl', 'skapiec.pl',
-    'mediaexpert.pl', 'x-kom.pl', 'morele.net', 'komputronik.pl', 'neonet.pl',
-    'media-markt.pl', 'saturn.pl', 'expert.pl', 'avs.pl',
-    
-    # Katalogi ogólne (te zazwyczaj nie mają maili bezpośrednio)
-    'panoramafirm.pl', 'pkt.pl', 'firmy.net', 'biznesfinder.pl', 'yellowpages.pl',
-    
-    # Gry / rozrywka / inne śmieciowe
-    'gry-online.pl', 'gamepressure.com', 'igromania.pl', 'gry.pl', 'gram.pl',
-    'swiatgier.pl', 'stopklatka.pl', 'filmweb.pl', 'imdb.com',
-    'zhihu.com', 'wikipedia.org', 'youtube.com',
-    'twitter.com', 'pinterest.com', 'tiktok.com',
-    'rottentomatoes.com', 'metacritic.com', 'letterboxd.com',
-    'trakt.tv', 'simkl.com', 'justwatch.com', 'gov.pl', 'edu.pl', 'bip.gov.pl',
-    
-    # Specyficzne polskie katalogi (blokujemy tylko jeśli to masowe listingi)
-    'janachowska.pl'
-}
+ROLES = load_lines_list('roles.txt')
+SEARCH_TEMPLATES = load_lines_list('templates.txt')
+NEGATIVE_KEYWORDS = load_lines_set('negative_keywords.txt')
+BLOCKED_DOMAINS = load_lines_set('blocked_domains.txt')
+GARBAGE_EMAIL_DOMAINS = load_lines_set('garbage_email_domains.txt')
 
 EMAIL_REGEX = re.compile(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}')
 RAW_BUFFER_THRESHOLD = 20
 MAX_RESULTS_PER_SEARCH = 50
-
-GARBAGE_EMAIL_DOMAINS = {'sentry.io', 'sentry.wixpress.com', 'sentry-next.wixpress.com', 'mailgun.org', 'mandrillapp.com', 'sendgrid.net', 'mailservers.dev'}
 
 # --- Global State ---
 active_task = None
@@ -587,7 +570,6 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
     
     logger.info(f"[C{consumer_id}] Weryfikuję: {url}")
     
-    # Wczytaj prompt z pliku
     prompt_path = os.path.join(os.path.dirname(__file__), 'ai_prompt.txt')
     with open(prompt_path, 'r', encoding='utf-8') as f:
         prompt_template = f.read()
