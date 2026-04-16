@@ -459,7 +459,10 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
     logger.info(f"[C{consumer_id}] Weryfikuję: {url}")
     
     prompt = f"""ZADANIE:
-Określ, czy strona reprezentuje realnego dostawcę usług eventowych i czy powinna zostać zaakceptowana jako lead.
+Określ, czy dana strona to potencjalny klient systemu do prowadzenia gier/animacji eventowych (np. Familiada Online).
+
+Twoim celem NIE jest znalezienie wszystkich firm eventowych,
+tylko tych, które REALNIE mogą używać narzędzia do prowadzenia zabaw/interakcji.
 
 ----------------------------------------
 DANE WEJŚCIOWE:
@@ -473,140 +476,144 @@ TEXT: {page_text[:2000] if page_text else 'brak'}
 KROK 1 — TYPOLOGIA STRONY
 ----------------------------------------
 
-Przypisz jeden typ:
+A) DIRECT PROVIDER (preferowany)
+- DJ / wodzirej / konferansjer
+- animator (dzieci lub dorośli)
+- prowadzący eventy
+- agencja eventowa (interaktywna)
 
-A) DIRECT EVENT PROVIDER (NAJLEPSZY LEAD)
-- DJ, wodzirej, konferansjer, animator
-- agencja eventowa
-- firma organizująca eventy / imprezy
-- bezpośredni wykonawca usług
+B) VENUE
+- hotel / restauracja / obiekt
 
-B) VENUE / OBIEKT EVENTOWY (WARUNKOWY LEAD)
-- hotel, restauracja, centrum konferencyjne
-- oferuje eventy jako usługę (wesela, konferencje, imprezy)
-- nie jest bezpośrednim wykonawcą (np. DJ)
+C) DIRECTORY / CATALOG
+- katalog firm / listing / agregator
 
-C) DIRECTORY / CATALOG / AGGREGATOR (ODRZUĆ)
-- katalog firm
-- portal listingowy
-- panorama firm, trojmiasto, itp.
-- strony zbierające oferty innych firm
+D) PUBLIC / NON-PROFIT
+- szkoła, urząd, fundacja, dom kultury
 
 ----------------------------------------
 KROK 2 — IDENTYFIKACJA EVENTOWA
 ----------------------------------------
 
-UZNAJ ZA EVENTOWE JEŚLI WYSTĘPUJE CO NAJMNIEJ JEDEN ELEMENT:
+Sygnały eventowe:
 
-A) ROLE EVENTOWE:
-- DJ
-- wodzirej
-- konferansjer
-- animator (dziecięcy)
-- prezenter eventowy
-
-B) DZIAŁALNOŚĆ EVENTOWA:
-- organizacja imprez
-- obsługa eventów
-- agencja eventowa
-- eventy / imprezy / przyjęcia
-
-C) OFERTA EVENTOWA:
-- wesela
-- imprezy firmowe
-- urodziny
-- konferencje
-- integracje / team building
-- atrakcje dla dzieci
+- DJ / wodzirej / konferansjer
+- animator / animacje
+- organizacja imprez / eventów
+- wesela / imprezy / integracje
+- prowadzenie zabaw / atrakcji
 
 ----------------------------------------
-KROK 3 — ANTI-SEO SPAM DETECTION
+KROK 3 — PRODUCT FIT (NAJWAŻNIEJSZE)
 ----------------------------------------
 
-Oblicz SEO_SPAM_SCORE:
+Zadaj pytanie:
 
-❌ RED FLAGS (-1 do -3 każdy):
-- katalog / lista firm / ranking / directory
-- brak realnej nazwy firmy (tylko frazy ogólne)
-- wiele miast w tytule (np. Gdańsk Gdynia Sopot Warszawa)
-- powtarzalne frazy SEO / doorway pages
-- brak osoby / marki / zespołu
-- URL sugeruje katalog (/katalog, /firmy, /listing, /search)
-- tekst generowany SEO bez konkretnej oferty
+"Czy ta firma prowadzi interakcję z uczestnikami i mogłaby użyć systemu do gry?"
 
-🟢 GREEN FLAGS (+2 każdy):
-- konkretna marka / osoba (np. DJ Charlie)
-- telefon + imię/nazwisko lub brand
-- portfolio / realizacje / zdjęcia
-- opis usług w pierwszej osobie lub jako firma
-- jasna oferta usług eventowych
+✅ AKCEPTUJ jeśli:
+- prowadzi zabawy / gry / animacje
+- prowadzi imprezy jako DJ / wodzirej / konferansjer
+- organizuje i prowadzi event (aktywnie angażuje ludzi)
 
-DECYZJA:
-- SEO_SPAM_SCORE <= -3 → AUTOMATYCZNY REJECT
+❌ ODRZUĆ jeśli:
+- tylko występuje (pokazy, artyści, fire show, akrobaci)
+- tylko gra muzykę (zespół bez prowadzenia)
+- tylko wynajmuje miejsce (hotel, sala)
+- tylko dokumentuje (foto/video)
+- nie ma interakcji z uczestnikami
+
+ZASADA:
+→ musi być PROWADZĄCYM, nie ATRAKCJĄ
 
 ----------------------------------------
-KROK 4 — SCORING EVENTOWY
+KROK 4 — ANTI-SEO SPAM
 ----------------------------------------
 
-+3 (DIRECT PROVIDER):
-- DJ / wodzirej / konferansjer / animator
-- agencja eventowa
-- organizacja imprez
+SEO_SPAM_SCORE:
 
-+2 (EVENT OFFER):
-- wesela / imprezy / konferencje / eventy firmowe
-- integracje / team building / atrakcje dla dzieci
+❌ RED FLAGS:
+- katalog / lista firm
+- brak marki
+- wiele miast w tytule
+- SEO tekst bez konkretów
+- URL: /katalog /firmy /listing
 
-+3 (VENUE + REAL EVENT SERVICES):
-- hotel / restauracja + WYRAŹNE usługi eventowe
+🟢 GREEN FLAGS:
+- konkretna osoba / brand
+- telefon + nazwa
+- realna oferta usług
 
--2 (VENUE bez usług):
-- tylko wynajem przestrzeni
-
--3 (DIRECTORY / CATALOG):
-- agregatory / katalogi / listingi
+JEŚLI SEO_SPAM_SCORE <= -3 → ODRZUĆ
 
 ----------------------------------------
-KROK 5 — EMAIL
+KROK 5 — SCORING
 ----------------------------------------
 
-DOBRY EMAIL:
-- domenowy (kontakt@, biuro@, imie@firma.pl, dj@...)
++4:
+- DJ / wodzirej / konferansjer
 
-ZŁY EMAIL:
++4:
+- animator / animacje / gry / zabawy
+
++3:
+- organizacja eventów + prowadzenie
+
++2:
+- wesela / imprezy / integracje
+
+-5:
+- show / artyści / występy
+
+-5:
+- hotel / venue bez prowadzenia
+
+-5:
+- katalog / agregator
+
+-5:
+- organizacja publiczna
+
+----------------------------------------
+KROK 6 — EMAIL
+----------------------------------------
+
+DOBRY:
+- domenowy (kontakt@firma.pl)
+
+ZŁY:
 - test@, example@
-- platformy (olx@, allegro@)
-- systemowe (noreply@, sentry@)
+- platformy (olx, allegro)
+- systemowe (noreply)
 
-BRAK EMAIL → AUTOMATYCZNE ODRZUCENIE
+BRAK EMAIL → ODRZUĆ
 
 ----------------------------------------
-KROK 6 — DECYZJA KOŃCOWA
+KROK 7 — DECYZJA
 ----------------------------------------
 
 AKCEPTUJ jeśli:
-- TYPE = A (DIRECT PROVIDER)
-  LUB
-- TYPE = B (VENUE + real event services)
-- ORAZ email PASS
-- ORAZ SEO_SPAM_SCORE > -3
-- ORAZ score_event ≥ 3
+- TYPE = A
+- PRODUCT FIT = TAK
+- email poprawny
+- SEO_SPAM_SCORE > -3
+- score ≥ 4
 
 ODRZUĆ jeśli:
-- TYPE = C (DIRECTORY / CATALOG)
-- brak usług eventowych
-- brak poprawnego emaila
-- SEO_SPAM_SCORE <= -3
+- brak product fit
+- katalog / public
+- SEO spam
+- brak emaila
 
 ----------------------------------------
-ZASADY OGÓLNE:
+ZASADY:
 ----------------------------------------
-- opieraj się wyłącznie na danych wejściowych
-- nie zgaduj brakujących usług
-- DJ / wodzirej = pełnoprawna usługa eventowa
-- katalogi zawsze odrzucaj
+- DJ / wodzirej / animator = idealny klient
+- show = NIE klient
+- hotel = NIE klient
+- katalog = NIE klient
 - preferuj precision nad recall
-- jeśli niepewne → odrzuć
+- jeśli wątpliwe → odrzuć
 
 ----------------------------------------
 OUTPUT (JSON):
@@ -615,22 +622,18 @@ OUTPUT (JSON):
 Jeśli OK:
 {{
   "ok": 1,
-  "type": "provider | venue",
   "email": "...",
   "title": "max 50 znaków",
   "short_description": "100-200 znaków",
-  "score_event": liczba,
+  "score": liczba,
   "seo_spam_score": liczba,
-  "reason": "konkretne dowody"
+  "reason": "dlaczego pasuje jako użytkownik systemu"
 }}
 
 Jeśli NIE:
 {{
   "ok": 0,
-  "type": "provider | venue | directory",
-  "score_event": liczba,
-  "seo_spam_score": liczba,
-  "reason": "konkretny powód odrzucenia"
+  "reason": "dlaczego NIE jest potencjalnym użytkownikiem"
 }}
 ODPOWIEDZ TYLKO CZYSTYM JSONEM."""
 
