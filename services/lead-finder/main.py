@@ -646,18 +646,61 @@ NIE ODRZUCAJ:
 - stron marketingowych z SEO tekstem
 
 ---------------------------------------
-KROK 5 - EMAIL VALIDATION
+KROK 5 - EMAIL VALIDATION (SELEKCJA, NIE ODRZUCANIE)
 ---------------------------------------
-AKCEPTUJ:
-- kontakt@ / biuro@ / info@
-- gmail/wp/interia/o2 itd.
 
-ODRZUCAJ:
+ZASADA:
+Najpierw WYBIERZ najlepsze maile, dopiero potem ewentualnie odrzuc rekord.
+
+1. PODZIEL MAILE NA:
+- PRIMARY (kontaktowe, biznesowe)
+- SECONDARY (mniej pewne)
+- INVALID (do ignorowania)
+
+---------------------------------------
+PRIMARY (najlepsze - preferuj):
+- kontakt@...
+- biuro@...
+- office@...
+- hello@...
+- info@...
+- sales@...
+- imie@domena (np. jan@firma.pl)
+- zgodne z domena strony
+
+---------------------------------------
+SECONDARY (akceptowalne jesli brak PRIMARY):
+- gmail.com, wp.pl, interia.pl, onet.pl, o2.pl, yahoo, outlook
+- inne maile osobiste
+
+---------------------------------------
+INVALID (ignoruj, ale NIE odrzucaj od razu):
 - test@, example@, demo@
-- jan@kowalski.pl
-- noreply@
+- noreply@, no-reply@
+- jan@kowalski.pl, example domains
+- admin@localhost
+- tracking / systemowe (np. sentry, monitoring)
 
 ---------------------------------------
+2. WYBOR MAILA:
+
+- jesli sa PRIMARY -> wybierz najlepszy (priorytet: kontakt > biuro > info)
+- jesli brak PRIMARY, ale sa SECONDARY -> wybierz jeden
+- jesli sa tylko INVALID -> wtedy BRAK MAILA
+
+---------------------------------------
+3. DECYZJA:
+
+- jesli po filtracji brak maila -> ODRZUC
+- jesli jest mail -> uzij wybranego
+
+---------------------------------------
+WAZNE:
+- NIE odrzucaj rekordu tylko dlatego, ze jeden z maili jest zly
+- IGNORUJ zle maile, wybieraj dobre
+- w przypadku wielu dobrych -> wybierz najbardziej "kontaktowy"
+
+-------------------------------------
 KROK 6 - SCORING
 ---------------------------------------
 +5 konferansjer / MC / moderator
