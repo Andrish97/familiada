@@ -22,6 +22,15 @@ OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "anthropic/claude-3-haiku")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 GROQ_MODEL = "llama-3.1-8b-instant"
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+GEMINI_MODEL = "gemini-2.0-flash-lite"  # 30 RPM, 1500/day - najlepszy free tier
+GEMINI_DELAY = 4  # sekundy między requestami (30 RPM = 1/3.3s)
+
+# Delays między requestami dla każdego providera (w sekundach)
+# Zapobiegają przekroczeniu RPM limitów
+OPENROUTER_DELAY = 1  # ~50 RPM
+GROQ_DELAY = 2  # 30 RPM
+GEMINI_DELAY = 4  # 30 RPM
 SUPABASE_URL = "http://kong:8000"
 SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", os.getenv("SERVICE_ROLE_KEY", ""))
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
@@ -93,11 +102,11 @@ verified_in_run = 0
 
 # --- AI Provider Rate Limit Tracking ---
 provider_cooldowns = {}  # {provider: timestamp_when_available}
+provider_last_request = {}  # {provider: timestamp_of_last_request}
 PROVIDER_COOLDOWN_SECONDS = 60  # Cooldown after rate limit
 
 def get_provider_order():
     """Get provider order from ai_settings table"""
-    # Synchronous function - use blocking call
     import httpx
     try:
         r = httpx.get(
@@ -108,14 +117,14 @@ def get_provider_order():
         if r.status_code == 200:
             data = r.json()
             if data:
-                order = data[0].get('provider_order', 'openrouter,groq')
+                order = data[0].get('provider_order', 'openrouter,groq,gemini')
                 return [p.strip().lower() for p in order.split(',') if p.strip()]
     except Exception as e:
         logger.error(f"Failed to load provider order: {e}")
-    return ['openrouter', 'groq']  # Default
+    return ['openrouter', 'groq', 'gemini']  # Default
 
 def is_provider_on_cooldown(provider: str) -> bool:
-    """Check if provider is on cooldown"""
+    """Check if provider is on cooldown or needs delay"""
     if provider not in provider_cooldowns:
         return False
     if asyncio.get_event_loop().time() >= provider_cooldowns[provider]:
@@ -123,11 +132,26 @@ def is_provider_on_cooldown(provider: str) -> bool:
         return False
     return True
 
+def needs_request_delay(provider: str) -> float:
+    """Check if provider needs delay between requests (for Gemini)"""
+    if provider == 'gemini':
+        import time
+        now = time.time()
+        last = provider_last_request.get(provider, 0)
+        elapsed = now - last
+        if elapsed < GEMINI_DELAY:
+            return GEMINI_DELAY - elapsed
+    return 0
+
 def set_provider_cooldown(provider: str):
     """Set provider on cooldown after rate limit"""
-    import time
     provider_cooldowns[provider] = asyncio.get_event_loop().time() + PROVIDER_COOLDOWN_SECONDS
     logger.warning(f"[PROVIDER] {provider} on cooldown for {PROVIDER_COOLDOWN_SECONDS}s")
+
+def record_request_time(provider: str):
+    """Record when provider was used"""
+    import time
+    provider_last_request[provider] = time.time()
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger("lead-finder")
