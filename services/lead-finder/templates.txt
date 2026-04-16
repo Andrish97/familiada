@@ -1,12 +1,12 @@
 # Szablony wyszukiwania - podstawiane {role} i {city}
 # Używane do generowania zapytań do SearXNG
 
-"{role}" {city} kontakt
-"{role}" {city} oferta
-site:facebook.com "{city}" {role}
-site:instagram.com "{city}" {role}
-site:wix.com "{city}" {role}
-site:wixsite.com "{city}" {role}
-site:webnode.com "{city}" {role}
-site:godaddysites.com "{city}" {role}
-site:maps.app.goo.gl "{city}", "{role}"
+{role} {city} kontakt
+{role} {city} oferta
+site:facebook.com {city} {role}
+site:instagram.com {city} {role}
+site:wix.com {city} {role}
+site:wixsite.com {city} {role}
+site:webnode.com {city} {role}
+site:godaddysites.com {city} {role}
+site:maps.app.goo.gl {city} {role}
