@@ -17,7 +17,7 @@ from urllib.parse import urlparse
 import httpx
 
 # --- Configuration (Internal Docker) ---
-SEARXNG_URL = "http://searxng:8080"
+SEARXNG_URL = os.getenv("SEARXNG_URL", "http://searxng:8080")
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "anthropic/claude-3-haiku")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
@@ -371,11 +371,15 @@ async def scrape_and_save_lead(res: dict, query: str, existing_emails: Set[str])
     url = res.get('url', '').lower()
     if not url: return 0
     
-    if not await is_page_fresh(url):
+    fresh = await is_page_fresh(url)
+    if not fresh:
+        logger.debug(f"[SKIP stale] {url}")
         return 0
     
     # 1. Block by domain keywords
-    if any(d in url for d in BLOCKED_DOMAINS): return 0
+    if any(d in url for d in BLOCKED_DOMAINS): 
+        logger.debug(f"[SKIP blocked domain] {url}")
+        return 0
     
     # 2. Block foreign country TLDs and check domain deduplication
     try:
@@ -386,7 +390,9 @@ async def scrape_and_save_lead(res: dict, query: str, existing_emails: Set[str])
         # Deduplicate exact URL
         exists_v = await supabase.select('marketing_verified_contacts', 'id', {'url': url})
         exists_r = await supabase.select('marketing_raw_contacts', 'id', {'url': url})
-        if exists_v or exists_r: return 0
+        if exists_v or exists_r: 
+            logger.debug(f"[SKIP duplicate url] {url}")
+            return 0
 
         # Domain-level deduplication (check if any URL from this domain exists)
         # Skip this for major social platforms where one domain has many leads
@@ -395,15 +401,20 @@ async def scrape_and_save_lead(res: dict, query: str, existing_emails: Set[str])
             exists_dom_v = await supabase.select('marketing_verified_contacts', 'id', {'url': f'ilike.%{root_domain}%'})
             exists_dom_r = await supabase.select('marketing_raw_contacts', 'id', {'url': f'ilike.%{root_domain}%'})
             if (exists_dom_v and len(exists_dom_v) > 0) or (exists_dom_r and len(exists_dom_r) > 0):
+                logger.debug(f"[SKIP duplicate domain] {domain}")
                 return 0
 
         tld = domain.split('.')[-1]
         allowed_2l = ('pl', 'eu', 'io', 'me', 'co', 'tv')
-        if len(tld) == 2 and tld not in allowed_2l: return 0
+        if len(tld) == 2 and tld not in allowed_2l: 
+            logger.debug(f"[SKIP foreign tld] {url}")
+            return 0
     except: pass
 
     page_title = res.get('title', '')
-    if any(k in page_title.lower() for k in NEGATIVE_KEYWORDS): return 0
+    if any(k in page_title.lower() for k in NEGATIVE_KEYWORDS): 
+        logger.debug(f"[SKIP negative keyword in title] {url}")
+        return 0
 
     page_text = ''
     meta_desc = ''
@@ -716,12 +727,21 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
             logger.error(f"[C{consumer_id}] No AI provider available")
             return None
         
-        match = re.search(r'\{.*\}', content, re.DOTALL)
+        match = re.search(r'\{[\s\S]*\}', content)
         if not match:
             logger.warning(f"[C{consumer_id}] AI: Brak JSON. Content: {content[:500]}")
             return None
-            
-        res = json.loads(match.group().replace("'", '"'))
+        
+        json_str = match.group()
+        try:
+            res = json.loads(json_str)
+        except json.JSONDecodeError:
+            try:
+                import ast
+                res = ast.literal_eval(json_str)
+            except Exception:
+                logger.error(f"[C{consumer_id}] JSON parse failed: {json_str[:200]}")
+                return None
         ok_val = res.get('ok', 0)
         is_organizer = ok_val in [1, True, '1', 'true', 'True']
         
