@@ -662,47 +662,84 @@ SEO_SPAM_SCORE:
 JESLI SEO_SPAM_SCORE <= -3 -> ODRZUC
 
 ---------------------------------------
-KROK 5 - EMAIL VALIDATION (SELEKCJA)
+KROK 5 - EMAIL RANKING (WYBOR NAJLEPSZEGO)
 ---------------------------------------
 
 ZASADA:
-Email NIE decyduje czy to lead - tylko który kontakt wybrac.
+Nie sprawdzaj czy email jest "idealny".
+Oceń kazdy email punktowo i wybierz NAJLEPSZY.
 
-1. PODZIEL MAILE:
+---------------------------------------
+1. PRZYPISZ EMAIL_SCORE:
+---------------------------------------
 
-PRIMARY (najlepsze):
-- kontakt@, biuro@, info@, hello@, office@
-- imie@domena
-- zgodne z domena strony
++5:
+- kontakt@domena
+- biuro@domena
 
-SECONDARY:
-- gmail, wp, interia, onet, o2, outlook itp.
++4:
+- info@ / office@ / hello@ / sales@
 
-INVALID (ignoruj):
++3:
+- imie@domena (np. jan@firma.pl)
+
++2:
+- dowolny email w domenie strony
+
++1:
+- gmail.com / wp.pl / interia.pl / onet.pl / o2.pl / outlook.com / yahoo.com
+
+---------------------------------------
+-5:
 - test@, example@, demo@
 - noreply@, no-reply@
-- jan@kowalski.pl (placeholder)
 - admin@localhost
-- systemowe / trackingowe
+- monitoring / tracking (np. sentry)
+- placeholder (jan@kowalski.pl)
 
 ---------------------------------------
-2. WYBOR MAILA:
+2. WYBIERZ EMAIL:
+---------------------------------------
 
-- jesli sa PRIMARY -> wybierz najlepszy
-- jesli brak PRIMARY -> wybierz SECONDARY
-- jesli tylko INVALID -> brak maila
+- policz score dla kazdego maila
+- wybierz mail z najwyzszym wynikiem
 
 ---------------------------------------
-3. DECYZJA EMAIL:
+3. HAS_EMAIL:
+---------------------------------------
 
-- jesli brak maila -> HAS_EMAIL = FALSE
-- jesli jest -> HAS_EMAIL = TRUE
+HAS_EMAIL = TRUE jesli:
+najlepszy EMAIL_SCORE >= 1
 
-WAZNE:
-- ignoruj zle maile, NIE odrzucaj przez nie rekordu
-- wybieraj najlepszy dostepny
+HAS_EMAIL = FALSE jesli:
+najlepszy EMAIL_SCORE <= 0
 
 ---------------------------------------
+4. WAZNE REGULY:
+---------------------------------------
+
+- ignoruj slabeb maile jesli sa lepsze
+- jeden dobry email wystarczy
+- NIE odrzucaj przez obecnosc zlych maili
+- gmail = OK jesli nic lepszego nie ma
+
+---------------------------------------
+PRZYKLADY:
+---------------------------------------
+
+["biuro@firma.pl", "test@test.com"]
+-> wybierz biuro@firma.pl (score 5)
+
+["jan@gmail.com"]
+-> wybierz jan@gmail.com (score 1) -> OK
+
+["test@test.com", "noreply@firma.pl"]
+-> score <= 0 -> ODRZUC
+
+["biuro@firma.pl", "jan@gmail.com"]
+-> wybierz biuro@firma.pl
+
+-------------------------------------
 KROK 6 - SCORING
 ---------------------------------------
 +5 konferansjer / MC / host
