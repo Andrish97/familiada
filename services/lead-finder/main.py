@@ -70,8 +70,8 @@ BLOCKED_DOMAINS = {
 }
 
 EMAIL_REGEX = re.compile(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}')
-RAW_BUFFER_THRESHOLD = 5
-MAX_RESULTS_PER_SEARCH = 10
+RAW_BUFFER_THRESHOLD = 20
+MAX_RESULTS_PER_SEARCH = 50
 
 GARBAGE_EMAIL_DOMAINS = {'sentry.io', 'sentry.wixpress.com', 'sentry-next.wixpress.com', 'mailgun.org', 'mandrillapp.com', 'sendgrid.net', 'mailservers.dev'}
 
@@ -216,181 +216,129 @@ async def fetch_next_query(run_id: str) -> Optional[tuple]:
     
     return random.choice(available)
 
-async def refill_raw_buffer(run_id: str):
-    """Producer: Searches SearXNG and fills marketing_raw_contacts (only pending/processing, not rejected)"""
-    logger.info("[PRODUCER] Sprawdzam bufor...")
+async def scrape_and_save_lead(res: dict, query: str, existing_emails: Set[str]):
+    """Scrapes a single search result and saves to raw_contacts if valid."""
+    url = res.get('url', '').lower()
+    if not url or any(d in url for d in BLOCKED_DOMAINS): return 0
     
+    # Deduplicate vs Verified and Raw
+    exists_v = await supabase.select('marketing_verified_contacts', 'id', {'url': url})
+    exists_r = await supabase.select('marketing_raw_contacts', 'id', {'url': url})
+    if exists_v or exists_r: return 0
+
+    page_title = res.get('title', '')
+    page_text = ''
+    emails = set()
+    
+    def extract_content(text: str, title: str) -> tuple[str, str]:
+        title_match = re.search(r'<title[^>]*>([^<]+)</title>', text, re.I)
+        if title_match and not title:
+            title = title_match.group(1).strip()
+        text_no_html = re.sub(r'<script[^>]*>.*?</script>', ' ', text, flags=re.DOTALL | re.I)
+        text_no_html = re.sub(r'<style[^>]*>.*?</style>', ' ', text_no_html, flags=re.DOTALL | re.I)
+        text_no_html = re.sub(r'<noscript[^>]*>.*?</noscript>', ' ', text_no_html, flags=re.DOTALL | re.I)
+        text_no_html = re.sub(r'data:[^;]+;base64,[A-Za-z0-9+/=]+', ' ', text_no_html)
+        text_no_html = re.sub(r'<[^>]+>', ' ', text_no_html)
+        text_no_html = re.sub(r'\{[^}]*\}', ' ', text_no_html)
+        text_no_html = re.sub(r'\[[^\]]*\]', ' ', text_no_html)
+        text_no_html = re.sub(r'\s+', ' ', text_no_html).strip()
+        words = text_no_html.split()
+        words = [w for w in words if len(w) > 2 and not w.startswith('http')]
+        return title, ' '.join(words)[:1500]
+    
+    try:
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'}
+        async with httpx.AsyncClient(timeout=12, follow_redirects=True, headers=headers) as client:
+            # 1. Main page
+            r_crawl = await client.get(url)
+            if r_crawl.status_code == 200:
+                text = r_crawl.text[:50000]
+                page_title, page_text = extract_content(text, page_title)
+                found_emails = EMAIL_REGEX.findall(text)
+                for e in found_emails:
+                    if not any(g in e.lower() for g in GARBAGE_EMAIL_DOMAINS):
+                        emails.add(e)
+            
+            # 2. Contact page sub-crawl
+            parsed = urlparse(url)
+            base = f"{parsed.scheme}://{parsed.netloc}"
+            for path in ['/kontakt', '/contact', '/o-nas']:
+                try:
+                    r_contact = await client.get(base + path)
+                    if r_contact.status_code == 200:
+                        found = EMAIL_REGEX.findall(r_contact.text[:30000])
+                        for e in found:
+                            if not any(g in e.lower() for g in GARBAGE_EMAIL_DOMAINS):
+                                emails.add(e)
+                except: pass
+    except: pass
+
+    if not emails or not page_text: return 0
+    
+    email_list = [e.lower() for e in emails]
+    if any(e in existing_emails for e in email_list): return 0
+            
+    ok = await supabase.insert('marketing_raw_contacts', {
+        'url': url,
+        'title': page_title,
+        'page_text': page_text,
+        'emails_found': email_list,
+        'status': 'pending'
+    })
+    if ok:
+        logger.info(f"[PRODUCER] Added: {url} ({len(email_list)} emails)")
+        return 1
+    return 0
+
+async def refill_raw_buffer(run_id: str):
+    """Producer: Searches SearXNG and fills buffer in parallel."""
     pending = await supabase.select('marketing_raw_contacts', 'id', {'status': 'pending'})
     processing = await supabase.select('marketing_raw_contacts', 'id', {'status': 'processing'})
     count = (len(pending) if pending else 0) + (len(processing) if processing else 0)
     
-    logger.info(f"[PRODUCER] Bufor: pending={len(pending) if pending else 0}, processing={len(processing) if processing else 0}, razem={count}")
-    
-    if count >= RAW_BUFFER_THRESHOLD:
-        logger.info(f"[PRODUCER] Bufor pelny ({count} >= {RAW_BUFFER_THRESHOLD}), czekam...")
-        return
+    if count >= RAW_BUFFER_THRESHOLD: return
 
-    await log_to_db("info", f"Bufor surowych kontaktów niski ({count}). Uruchamiam nowe wyszukiwanie...")
-    
     query_data = await fetch_next_query(run_id)
-    if not query_data: 
-        await log_to_db("error", "Brak dostępnych zapytań!")
-        return
-    else:
-        logger.info(f"[PRODUCER] Wybrano query: {query_data[0]}")
-
+    if not query_data: return
     query, city_name = query_data[0], query_data[1]
     
     await log_to_db("info", f"Wyszukiwanie ({city_name}): {query}")
     
-    search_error = None
     results = []
     try:
-        async with httpx.AsyncClient(timeout=30) as client:
+        async with httpx.AsyncClient(timeout=20) as client:
             r = await client.get(f'{SEARXNG_URL}/search', params={'q': query, 'format': 'json'})
-            if r.status_code != 200:
-                search_error = f"SearXNG Error {r.status_code}"
-            else:
-                results = r.json().get('results', [])
+            if r.status_code == 200:
+                results = r.json().get('results', [])[:MAX_RESULTS_PER_SEARCH]
     except Exception as e:
-        search_error = f"Connection Fail: {e}"
+        logger.error(f"Search error: {e}")
     
-    logger.info(f"[PRODUCER] Zapisuję query do logu: {query}")
-    log_insert = await supabase.insert('marketing_search_queries_log', {
+    await supabase.insert('marketing_search_queries_log', {
         'query_text': query,
         'urls_found': len(results),
-        'status': 'failed' if search_error else 'completed'
+        'status': 'completed' if results else 'failed'
     })
-    logger.info(f"[PRODUCER] Query log insert result: {log_insert}")
     
-    if search_error:
-        await log_to_db("error", search_error)
-        return
+    if not results: return
 
-    if not results:
-        await log_to_db("warning", f"Brak wyników dla: {query}")
-        return
+    # Build set of all existing emails for deduplication
+    verified_contacts = await supabase.select('marketing_verified_contacts', 'email')
+    raw_contacts = await supabase.select('marketing_raw_contacts', 'emails_found')
+    existing_emails = {v['email'].lower() for v in (verified_contacts or []) if v.get('email')}
+    for r in (raw_contacts or []):
+        raw_list = r.get('emails_found', [])
+        if isinstance(raw_list, str):
+            try: raw_list = json.loads(raw_list)
+            except: raw_list = []
+        for e in raw_list: existing_emails.add(e.lower())
 
-    # Process results into buffer
-    new_raw_count = 0
-    GARBAGE_EMAIL_DOMAINS = {'sentry.io', 'sentry.wixpress.com', 'sentry-next.wixpress.com', 'mailgun.org', 'mandrillapp.com', 'sendgrid.net', 'mailservers.dev'}
-    
-    logger.info(f"[PRODUCER] [{query}] Processing {len(results)} search results")
-    
-    for i, res in enumerate(results):
-        url = res.get('url', '').lower()
-        logger.debug(f"[PRODUCER] [{query}] [{i+1}/{len(results)}] Checking: {url}")
-        if not url or any(d in url for d in BLOCKED_DOMAINS): continue
-        
-        # Deduplicate vs Verified and Raw
-        exists_v = await supabase.select('marketing_verified_contacts', 'id', {'url': url})
-        exists_r = await supabase.select('marketing_raw_contacts', 'id', {'url': url})
-        if exists_v or exists_r: continue
+    # Scrape ALL results in parallel
+    tasks = [scrape_and_save_lead(res, query, existing_emails) for res in results]
+    new_counts = await asyncio.gather(*tasks)
+    total_new = sum(new_counts)
 
-        # Fetch main page content (from search result)
-        page_title = res.get('title', '')
-        page_text = ''
-        emails = set()
-        
-        def extract_content(text: str, title: str) -> tuple[str, str]:
-            """Extract title and clean text from HTML"""
-            title_match = re.search(r'<title[^>]*>([^<]+)</title>', text, re.I)
-            if title_match and not title:
-                title = title_match.group(1).strip()
-            text_no_html = re.sub(r'<script[^>]*>.*?</script>', ' ', text, flags=re.DOTALL | re.I)
-            text_no_html = re.sub(r'<style[^>]*>.*?</style>', ' ', text_no_html, flags=re.DOTALL | re.I)
-            text_no_html = re.sub(r'<noscript[^>]*>.*?</noscript>', ' ', text_no_html, flags=re.DOTALL | re.I)
-            text_no_html = re.sub(r'data:[^;]+;base64,[A-Za-z0-9+/=]+', ' ', text_no_html)
-            text_no_html = re.sub(r'<[^>]+>', ' ', text_no_html)
-            text_no_html = re.sub(r'\{[^}]*\}', ' ', text_no_html)
-            text_no_html = re.sub(r'\[[^\]]*\]', ' ', text_no_html)
-            text_no_html = re.sub(r'\s+', ' ', text_no_html).strip()
-            words = text_no_html.split()
-            words = [w for w in words if len(w) > 2 and not w.startswith('http')]
-            return title, ' '.join(words)[:1500]
-        
-        try:
-            headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'}
-            async with httpx.AsyncClient(timeout=15, follow_redirects=True, headers=headers) as client:
-                r_crawl = await client.get(url)
-                if r_crawl.status_code != 200:
-                    logger.warning(f"[SCRAPE] HTTP {r_crawl.status_code} for {url}")
-                else:
-                    text = r_crawl.text[:50000]
-                    page_title, page_text = extract_content(text, page_title)
-                    found_emails = EMAIL_REGEX.findall(text)
-                    logger.debug(f"[SCRAPE] {url}: found {len(found_emails)} emails")
-                    for e in found_emails:
-                        if not any(g in e.lower() for g in GARBAGE_EMAIL_DOMAINS):
-                            emails.add(e)
-                # Try /kontakt, /contact, /contact-us pages
-                parsed = urlparse(url)
-                base = f"{parsed.scheme}://{parsed.netloc}"
-                contact_paths = ['/kontakt', '/contact', '/contact-us', '/o-nas']
-                
-                for path in contact_paths:
-                    contact_url = base + path
-                    logger.debug(f"[SCRAPE] [{url}] Trying: {contact_url}")
-                    try:
-                        r_contact = await client.get(contact_url)
-                        if r_contact.status_code == 200:
-                            contact_text = r_contact.text[:30000]
-                            found = EMAIL_REGEX.findall(contact_text)
-                            logger.debug(f"[SCRAPE] [{url}] {path}: found {len(found)} emails")
-                            for e in found:
-                                if not any(g in e.lower() for g in GARBAGE_EMAIL_DOMAINS):
-                                    emails.add(e)
-                    except Exception as ex:
-                        logger.debug(f"[SCRAPE] [{url}] {path} failed: {ex}")
-        except: pass
-
-        if not emails:
-            logger.debug(f"[SCRAPE] No emails found for {url}")
-            continue
-        
-        if not page_text:
-            logger.debug(f"[SCRAPE] No page text for {url}, skipping")
-            continue
-            
-        email_list = list(emails)
-        logger.info(f"[SCRAPE] [{url}] Found emails: {email_list}")
-        
-        # Get all emails from verified and raw
-        verified_contacts = await supabase.select('marketing_verified_contacts', 'email')
-        raw_contacts = await supabase.select('marketing_raw_contacts', 'emails_found')
-        
-        # Build set of all existing emails
-        existing_emails = set()
-        for v in (verified_contacts or []):
-            if v.get('email'):
-                existing_emails.add(v['email'].lower())
-        for r in (raw_contacts or []):
-            raw_emails = r.get('emails_found', [])
-            if isinstance(raw_emails, str):
-                try: raw_emails = json.loads(raw_emails)
-                except: raw_emails = []
-            for e in raw_emails:
-                existing_emails.add(e.lower())
-        
-        # Check if any new email already exists
-        duplicate = any(e.lower() in existing_emails for e in email_list)
-        
-        if duplicate:
-            logger.debug(f"[SCRAPE] Duplicate email for {url}")
-            continue
-            
-        ok = await supabase.insert('marketing_raw_contacts', {
-            'url': url,
-            'title': page_title,
-            'page_text': page_text,
-            'emails_found': email_list,
-            'status': 'pending'
-        })
-        if ok: 
-            new_raw_count += 1
-            logger.info(f"[PRODUCER] Added to buffer: {url} -> {email_list}")
-
-    await log_to_db("success", f"Dodano {new_raw_count} surowych kontaktów do bufora.")
+    if total_new > 0:
+        await log_to_db("success", f"Dodano {total_new} surowych kontaktów do bufora.")
 
 # --- Core Logic: AI Layer (Consumer) ---
 async def fetch_page_content(url: str) -> dict:
@@ -425,7 +373,7 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
     logger.info(f"[C{consumer_id}] Weryfikuję: {url}")
     
     prompt = f"""ZADANIE:
-Określ, czy strona reprezentuje realnego dostawcę usług eventowych i czy powinna zostać zaakceptowana jako lead.
+Określ, czy strona reprezentuje realnego dostawcę usług eventowych.
 
 ----------------------------------------
 DANE WEJŚCIOWE:
@@ -433,171 +381,45 @@ DANE WEJŚCIOWE:
 URL: {url}
 TYTUŁ: {title}
 MAILE: {', '.join(emails) if emails else 'brak'}
-TEXT: {page_text if page_text else 'brak'}
+TEXT: {page_text[:2000] if page_text else 'brak'}
 
 ----------------------------------------
-KROK 1 — TYPOLOGIA STRONY
+LOGIKA WERYFIKACJI (KROK PO KROKU):
 ----------------------------------------
+1. TYPOLOGIA:
+   - DIRECT PROVIDER (DJ, animator, agencja) -> AKCEPTUJ
+   - VENUE (hotel, sala) z ofertą eventową -> AKCEPTUJ
+   - DIRECTORY/CATALOG (katalog firm, portal ogłoszeniowy) -> ODRZUĆ
 
-Przypisz jeden typ:
+2. ELEMENTY EVENTOWE:
+   - Szukaj: wesela, integracje, konferencje, DJ, wodzirej, nagłośnienie, animator.
 
-A) DIRECT EVENT PROVIDER (NAJLEPSZY LEAD)
-- DJ, wodzirej, konferansjer, animator
-- agencja eventowa
-- firma organizująca eventy / imprezy
-- bezpośredni wykonawca usług
+3. SEO SPAM & CATALOG DETECTION:
+   - RED FLAGS: wiele miast w tytule, brak nazwy marki, URL /katalog/, /firmy/, /szukaj/.
+   - GREEN FLAGS: konkretna osoba/brand, portfolio zdjęć, bezpośredni kontakt.
 
-B) VENUE / OBIEKT EVENTOWY (WARUNKOWY LEAD)
-- hotel, restauracja, centrum konferencyjne
-- oferuje eventy jako usługę (wesela, konferencje, imprezy)
-- nie jest bezpośrednim wykonawcą (np. DJ)
-
-C) DIRECTORY / CATALOG / AGGREGATOR (ODRZUĆ)
-- katalog firm
-- portal listingowy
-- panorama firm, trojmiasto, itp.
-- strony zbierające oferty innych firm
+4. EMAIL:
+   - Musi być poprawny i nie-systemowy. Brak maila = ODRZUĆ.
 
 ----------------------------------------
-KROK 2 — IDENTYFIKACJA EVENTOWA
+WARUNKI AKCEPTACJI:
 ----------------------------------------
+- Musi to być bezpośredni usługodawca lub obiekt z własną ofertą eventową.
+- Nie może to być katalog firm ani portal listingowy.
+- Musi posiadać poprawny adres email.
 
-UZNAJ ZA EVENTOWE JEŚLI WYSTĘPUJE CO NAJMNIEJ JEDEN ELEMENT:
-
-A) ROLE EVENTOWE:
-- DJ
-- wodzirej
-- konferansjer
-- animator (dziecięcy)
-- prezenter eventowy
-
-B) DZIAŁALNOŚĆ EVENTOWA:
-- organizacja imprez
-- obsługa eventów
-- agencja eventowa
-- eventy / imprezy / przyjęcia
-
-C) OFERTA EVENTOWA:
-- wesela
-- imprezy firmowe
-- urodziny
-- konferencje
-- integracje / team building
-- atrakcje dla dzieci
-
-----------------------------------------
-KROK 3 — ANTI-SEO SPAM DETECTION
-----------------------------------------
-
-Oblicz SEO_SPAM_SCORE:
-
-❌ RED FLAGS (-1 do -3 każdy):
-- katalog / lista firm / ranking / directory
-- brak realnej nazwy firmy (tylko frazy ogólne)
-- wiele miast w tytule (np. Gdańsk Gdynia Sopot Warszawa)
-- powtarzalne frazy SEO / doorway pages
-- brak osoby / marki / zespołu
-- URL sugeruje katalog (/katalog, /firmy, /listing, /search)
-- tekst generowany SEO bez konkretnej oferty
-
-🟢 GREEN FLAGS (+2 każdy):
-- konkretna marka / osoba (np. DJ Charlie)
-- telefon + imię/nazwisko lub brand
-- portfolio / realizacje / zdjęcia
-- opis usług w pierwszej osobie lub jako firma
-- jasna oferta usług eventowych
-
-DECYZJA:
-- SEO_SPAM_SCORE <= -3 → AUTOMATYCZNY REJECT
-
-----------------------------------------
-KROK 4 — SCORING EVENTOWY
-----------------------------------------
-
-+3 (DIRECT PROVIDER):
-- DJ / wodzirej / konferansjer / animator
-- agencja eventowa
-- organizacja imprez
-
-+2 (EVENT OFFER):
-- wesela / imprezy / konferencje / eventy firmowe
-- integracje / team building / atrakcje dla dzieci
-
-+3 (VENUE + REAL EVENT SERVICES):
-- hotel / restauracja + WYRAŹNE usługi eventowe
-
--2 (VENUE bez usług):
-- tylko wynajem przestrzeni
-
--3 (DIRECTORY / CATALOG):
-- agregatory / katalogi / listingi
-
-----------------------------------------
-KROK 5 — EMAIL
-----------------------------------------
-
-DOBRY EMAIL:
-- domenowy (kontakt@, biuro@, imie@firma.pl, dj@...)
-
-ZŁY EMAIL:
-- test@, example@
-- platformy (olx@, allegro@)
-- systemowe (noreply@, sentry@)
-
-BRAK EMAIL → AUTOMATYCZNE ODRZUCENIE
-
-----------------------------------------
-KROK 6 — DECYZJA KOŃCOWA
-----------------------------------------
-
-AKCEPTUJ jeśli:
-- TYPE = A (DIRECT PROVIDER)
-  LUB
-- TYPE = B (VENUE + real event services)
-- ORAZ email PASS
-- ORAZ SEO_SPAM_SCORE > -3
-- ORAZ score_event ≥ 3
-
-ODRZUĆ jeśli:
-- TYPE = C (DIRECTORY / CATALOG)
-- brak usług eventowych
-- brak poprawnego emaila
-- SEO_SPAM_SCORE <= -3
-
-----------------------------------------
-ZASADY OGÓLNE:
-----------------------------------------
-- opieraj się wyłącznie na danych wejściowych
-- nie zgaduj brakujących usług
-- DJ / wodzirej = pełnoprawna usługa eventowa
-- katalogi zawsze odrzucaj
-- preferuj precision nad recall
-- jeśli niepewne → odrzuć
-
-----------------------------------------
 OUTPUT (JSON):
-----------------------------------------
-
-Jeśli OK:
 {{
-  "ok": 1,
-  "type": "provider | venue",
-  "email": "...",
-  "title": "max 50 znaków",
-  "short_description": "100-200 znaków",
-  "score_event": liczba,
-  "seo_spam_score": liczba,
-  "reason": "konkretne dowody"
-}}
-
-Jeśli NIE:
-{{
-  "ok": 0,
+  "ok": 1 lub 0,
   "type": "provider | venue | directory",
-  "score_event": liczba,
-  "seo_spam_score": liczba,
-  "reason": "konkretny powód odrzucenia"
-}}"""""
+  "email": "...",
+  "title": "nazwa firmy (max 50 znaków)",
+  "short_description": "100-200 znaków",
+  "score_event": 1-10,
+  "seo_spam_score": (-5 do 5),
+  "reason": "dlaczego tak/nie (konkretny dowód)"
+}}
+ODPOWIEDZ TYLKO CZYSTYM JSONEM."""
 
     try:
         if USE_GROQ:
