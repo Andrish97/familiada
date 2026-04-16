@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict kf40dQCeROEC2sCjQJ8bsiUKvOeEOJ5fSHIiVZFGeAXjdo6F7voolWfTTvASC6H
+\restrict sPG5YSDgIbSkFvDtYlYmFATqsnzvYtCma1C3MG9JRZfO2SgPyoF96GU8fjE9ccc
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -10040,6 +10040,20 @@ end $$;
 
 
 --
+-- Name: ai_settings; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."ai_settings" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "provider_order" "text" DEFAULT 'ollama,openrouter,groq'::"text" NOT NULL,
+    "ollama_url" "text" DEFAULT 'http://familiada-ollama:11434'::"text",
+    "ollama_model" "text" DEFAULT 'llama3.2:3b'::"text",
+    "created_at" timestamp with time zone DEFAULT "now"(),
+    "updated_at" timestamp with time zone DEFAULT "now"()
+);
+
+
+--
 -- Name: answers; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -10877,6 +10891,14 @@ CREATE TABLE "public"."user_market_library" (
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "game_id" "uuid"
 );
+
+
+--
+-- Name: ai_settings ai_settings_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."ai_settings"
+    ADD CONSTRAINT "ai_settings_pkey" PRIMARY KEY ("id");
 
 
 --
@@ -12704,6 +12726,19 @@ CREATE POLICY "Users can update their own rating" ON "public"."app_ratings" FOR 
 
 
 --
+-- Name: ai_settings; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."ai_settings" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: ai_settings ai_settings_all; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "ai_settings_all" ON "public"."ai_settings" USING (true) WITH CHECK (true);
+
+
+--
 -- Name: answers; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -13779,5 +13814,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict kf40dQCeROEC2sCjQJ8bsiUKvOeEOJ5fSHIiVZFGeAXjdo6F7voolWfTTvASC6H
+\unrestrict sPG5YSDgIbSkFvDtYlYmFATqsnzvYtCma1C3MG9JRZfO2SgPyoF96GU8fjE9ccc
 
