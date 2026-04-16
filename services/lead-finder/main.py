@@ -373,7 +373,7 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
     logger.info(f"[C{consumer_id}] Weryfikuję: {url}")
     
     prompt = f"""ZADANIE:
-Określ, czy strona reprezentuje realnego dostawcę usług eventowych.
+Określ, czy strona reprezentuje realnego dostawcę usług eventowych i czy powinna zostać zaakceptowana jako lead.
 
 ----------------------------------------
 DANE WEJŚCIOWE:
@@ -384,40 +384,167 @@ MAILE: {', '.join(emails) if emails else 'brak'}
 TEXT: {page_text[:2000] if page_text else 'brak'}
 
 ----------------------------------------
-LOGIKA WERYFIKACJI (KROK PO KROKU):
+KROK 1 — TYPOLOGIA STRONY
 ----------------------------------------
-1. TYPOLOGIA:
-   - DIRECT PROVIDER (DJ, animator, agencja) -> AKCEPTUJ
-   - VENUE (hotel, sala) z ofertą eventową -> AKCEPTUJ
-   - DIRECTORY/CATALOG (katalog firm, portal ogłoszeniowy) -> ODRZUĆ
 
-2. ELEMENTY EVENTOWE:
-   - Szukaj: wesela, integracje, konferencje, DJ, wodzirej, nagłośnienie, animator.
+Przypisz jeden typ:
 
-3. SEO SPAM & CATALOG DETECTION:
-   - RED FLAGS: wiele miast w tytule, brak nazwy marki, URL /katalog/, /firmy/, /szukaj/.
-   - GREEN FLAGS: konkretna osoba/brand, portfolio zdjęć, bezpośredni kontakt.
+A) DIRECT EVENT PROVIDER (NAJLEPSZY LEAD)
+- DJ, wodzirej, konferansjer, animator
+- agencja eventowa
+- firma organizująca eventy / imprezy
+- bezpośredni wykonawca usług
 
-4. EMAIL:
-   - Musi być poprawny i nie-systemowy. Brak maila = ODRZUĆ.
+B) VENUE / OBIEKT EVENTOWY (WARUNKOWY LEAD)
+- hotel, restauracja, centrum konferencyjne
+- oferuje eventy jako usługę (wesela, konferencje, imprezy)
+- nie jest bezpośrednim wykonawcą (np. DJ)
+
+C) DIRECTORY / CATALOG / AGGREGATOR (ODRZUĆ)
+- katalog firm
+- portal listingowy
+- panorama firm, trojmiasto, itp.
+- strony zbierające oferty innych firm
 
 ----------------------------------------
-WARUNKI AKCEPTACJI:
+KROK 2 — IDENTYFIKACJA EVENTOWA
 ----------------------------------------
-- Musi to być bezpośredni usługodawca lub obiekt z własną ofertą eventową.
-- Nie może to być katalog firm ani portal listingowy.
-- Musi posiadać poprawny adres email.
 
+UZNAJ ZA EVENTOWE JEŚLI WYSTĘPUJE CO NAJMNIEJ JEDEN ELEMENT:
+
+A) ROLE EVENTOWE:
+- DJ
+- wodzirej
+- konferansjer
+- animator (dziecięcy)
+- prezenter eventowy
+
+B) DZIAŁALNOŚĆ EVENTOWA:
+- organizacja imprez
+- obsługa eventów
+- agencja eventowa
+- eventy / imprezy / przyjęcia
+
+C) OFERTA EVENTOWA:
+- wesela
+- imprezy firmowe
+- urodziny
+- konferencje
+- integracje / team building
+- atrakcje dla dzieci
+
+----------------------------------------
+KROK 3 — ANTI-SEO SPAM DETECTION
+----------------------------------------
+
+Oblicz SEO_SPAM_SCORE:
+
+❌ RED FLAGS (-1 do -3 każdy):
+- katalog / lista firm / ranking / directory
+- brak realnej nazwy firmy (tylko frazy ogólne)
+- wiele miast w tytule (np. Gdańsk Gdynia Sopot Warszawa)
+- powtarzalne frazy SEO / doorway pages
+- brak osoby / marki / zespołu
+- URL sugeruje katalog (/katalog, /firmy, /listing, /search)
+- tekst generowany SEO bez konkretnej oferty
+
+🟢 GREEN FLAGS (+2 każdy):
+- konkretna marka / osoba (np. DJ Charlie)
+- telefon + imię/nazwisko lub brand
+- portfolio / realizacje / zdjęcia
+- opis usług w pierwszej osobie lub jako firma
+- jasna oferta usług eventowych
+
+DECYZJA:
+- SEO_SPAM_SCORE <= -3 → AUTOMATYCZNY REJECT
+
+----------------------------------------
+KROK 4 — SCORING EVENTOWY
+----------------------------------------
+
++3 (DIRECT PROVIDER):
+- DJ / wodzirej / konferansjer / animator
+- agencja eventowa
+- organizacja imprez
+
++2 (EVENT OFFER):
+- wesela / imprezy / konferencje / eventy firmowe
+- integracje / team building / atrakcje dla dzieci
+
++3 (VENUE + REAL EVENT SERVICES):
+- hotel / restauracja + WYRAŹNE usługi eventowe
+
+-2 (VENUE bez usług):
+- tylko wynajem przestrzeni
+
+-3 (DIRECTORY / CATALOG):
+- agregatory / katalogi / listingi
+
+----------------------------------------
+KROK 5 — EMAIL
+----------------------------------------
+
+DOBRY EMAIL:
+- domenowy (kontakt@, biuro@, imie@firma.pl, dj@...)
+
+ZŁY EMAIL:
+- test@, example@
+- platformy (olx@, allegro@)
+- systemowe (noreply@, sentry@)
+
+BRAK EMAIL → AUTOMATYCZNE ODRZUCENIE
+
+----------------------------------------
+KROK 6 — DECYZJA KOŃCOWA
+----------------------------------------
+
+AKCEPTUJ jeśli:
+- TYPE = A (DIRECT PROVIDER)
+  LUB
+- TYPE = B (VENUE + real event services)
+- ORAZ email PASS
+- ORAZ SEO_SPAM_SCORE > -3
+- ORAZ score_event ≥ 3
+
+ODRZUĆ jeśli:
+- TYPE = C (DIRECTORY / CATALOG)
+- brak usług eventowych
+- brak poprawnego emaila
+- SEO_SPAM_SCORE <= -3
+
+----------------------------------------
+ZASADY OGÓLNE:
+----------------------------------------
+- opieraj się wyłącznie na danych wejściowych
+- nie zgaduj brakujących usług
+- DJ / wodzirej = pełnoprawna usługa eventowa
+- katalogi zawsze odrzucaj
+- preferuj precision nad recall
+- jeśli niepewne → odrzuć
+
+----------------------------------------
 OUTPUT (JSON):
+----------------------------------------
+
+Jeśli OK:
 {{
-  "ok": 1 lub 0,
-  "type": "provider | venue | directory",
+  "ok": 1,
+  "type": "provider | venue",
   "email": "...",
-  "title": "nazwa firmy (max 50 znaków)",
+  "title": "max 50 znaków",
   "short_description": "100-200 znaków",
-  "score_event": 1-10,
-  "seo_spam_score": (-5 do 5),
-  "reason": "dlaczego tak/nie (konkretny dowód)"
+  "score_event": liczba,
+  "seo_spam_score": liczba,
+  "reason": "konkretne dowody"
+}}
+
+Jeśli NIE:
+{{
+  "ok": 0,
+  "type": "provider | venue | directory",
+  "score_event": liczba,
+  "seo_spam_score": liczba,
+  "reason": "konkretny powód odrzucenia"
 }}
 ODPOWIEDZ TYLKO CZYSTYM JSONEM."""
 
