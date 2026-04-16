@@ -565,164 +565,180 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
     logger.info(f"[C{consumer_id}] Weryfikuję: {url}")
     
     prompt = f"""ZADANIE:
-Klasyfikuj czy strona to potencjalny LEAD do systemu interaktywnych eventow (quizy, integracje, gry dla publicznosci, aktywizacja uczestnikow - np. familiada.online).
+Klasyfikuj czy strona to potencjalny LEAD do systemu interaktywnych eventow
+(DJ, wodzirej, konferansjer, animator, prowadzenie publicznosci).
 
-Celem jest wykrycie osob lub firm, które:
-- prowadzą wydarzenia
-LUB
-- organizują wydarzenia
-LUB
-- dostarczają rozrywkę dla uczestników
+Celem jest wykrycie osob/firm, ktore PROWADZA lub MODERUJA wydarzenia.
+
+---------------------------------------
+DANE WEJSCIOWE:
+---------------------------------------
+URL: {url}
+TYTUL: {title}
+MAILE: {', '.join(emails) if emails else 'brak'}
+TEXT: {page_text[:2000] if page_text else 'brak'}
 
 ---------------------------------------
 KROK 1 - TYP STRONY
 ---------------------------------------
 A) EVENT PROVIDER (HIGH VALUE)
 - DJ / wodzirej
-- konferansjer / MC / prezenter / host / moderator
-- animatorzy (dzieci i dorośli)
-- agencje eventowe
-- firmy organizujące eventy / imprezy / integracje
-- firmy dostarczające atrakcje eventowe
+- konferansjer / MC / prezenter / host
+- animator (dzieci lub dorosli)
+- agencja eventowa (organizacja wydarzen)
+- firmy prowadzace eventy / imprezy
 
 B) VENUE
-- hotel / restauracja / sala
+- hotel / restauracja / sala (bez prowadzenia)
 
 C) DIRECTORY / SEO LISTING
+- katalog firm / panorama / listing / agregator
 
 D) NON-EVENT
+- drukarnie, sklepy, szkoly, urzedy, inne branze
 
 ---------------------------------------
 KROK 2 - EVENT SIGNALS
 ---------------------------------------
 UZNAJ ZA EVENTOWE JESLI:
-- organizacja eventów
-- prowadzenie wydarzen
-- DJ / muzyka / zabawy
-- animacje / integracje / gry
-- konferencje / eventy firmowe
-- oferta dla klientow + kontakt
+- prowadzenie wydarzen / imprez
+- DJ / muzyka / oprawa
+- animacje / integracje / zabawy
+- organizacja eventow / konferencji / wesel
+- konferansjer / MC / moderacja / host
+- oferta + kontakt + rezerwacja
 
 ---------------------------------------
 KROK 3 - PRODUCT FIT (KLUCZOWE)
 ---------------------------------------
 PYTANIE:
-Czy ten podmiot MOZE wykorzystac system do angażowania uczestników?
+Czy ta firma/osoba MA ROLE NA WYDARZENIU?
 
-✅ PRODUCT FIT = TRUE jesli:
-- prowadzi eventy
-- organizuje eventy
-- zapewnia atrakcje / rozrywke
-- pracuje z publicznoscia / uczestnikami
-
-❌ PRODUCT FIT = FALSE jesli:
-- tylko wynajem miejsca
-- tylko druk / sklep / SaaS niezwiazany z eventami
-- katalog firm
+INTERAKCJA obejmuje:
+- prowadzenie imprezy
+- moderowanie (np. debat, paneli)
+- zapowiadanie / konferansjerka
+- koordynacja sceny / przebiegu wydarzenia
 
 ---------------------------------------
 KROK 3.1 - HARD OVERRIDE (NAJWAZNIEJSZE)
 ---------------------------------------
-ZAWSZE AKCEPTUJ jesli wystepuje:
-- DJ
-- wodzirej
-- konferansjer / MC / prezenter / moderator
+JESLI wystepuje jedna z ról:
+- konferansjer / MC / host / prezenter
+- DJ / wodzirej
 - animator
-- agencja eventowa
 
-→ ignoruj inne minusy
-→ ustaw PRODUCT FIT = TRUE
+ AUTOMATYCZNIE:
+PRODUCT FIT = TRUE
+
+(bez dalszej analizy, nawet jesli opis jest marketingowy)
+
+---------------------------------------
+ODRZUC PRODUCT FIT jesli:
+---------------------------------------
+- tylko miejsce (hotel, sala)
+- tylko katalog / listing
+- tylko sprzedaz / druk / produkt
+- brak jakiejkolwiek roli na wydarzeniu
 
 ---------------------------------------
 KROK 4 - ANTI-SEO / SPAM
 ---------------------------------------
-ODRZUCAJ tylko jesli:
-- katalog firm
-- brak realnej firmy/osoby
-- brak usług
+SEO_SPAM_SCORE:
 
-NIE ODRZUCAJ:
-- agencji z wieloma lokalizacjami
-- stron marketingowych z SEO tekstem
+ RED FLAGS:
+- katalog / agregator
+- brak konkretnej firmy/osoby
+- wiele lokalizacji w title
+- SEO keyword stuffing
+- brak realnej oferty
+
+ GREEN FLAGS:
+- konkretna marka / osoba
+- oferta uslug
+- kontakt (telefon/email)
+- portfolio / realizacje
+
+JESLI SEO_SPAM_SCORE <= -3 -> ODRZUC
 
 ---------------------------------------
-KROK 5 - EMAIL VALIDATION (SELEKCJA, NIE ODRZUCANIE)
+KROK 5 - EMAIL VALIDATION (SELEKCJA)
 ---------------------------------------
 
 ZASADA:
-Najpierw WYBIERZ najlepsze maile, dopiero potem ewentualnie odrzuc rekord.
+Email NIE decyduje czy to lead - tylko który kontakt wybrac.
 
-1. PODZIEL MAILE NA:
-- PRIMARY (kontaktowe, biznesowe)
-- SECONDARY (mniej pewne)
-- INVALID (do ignorowania)
+1. PODZIEL MAILE:
 
----------------------------------------
-PRIMARY (najlepsze - preferuj):
-- kontakt@...
-- biuro@...
-- office@...
-- hello@...
-- info@...
-- sales@...
-- imie@domena (np. jan@firma.pl)
+PRIMARY (najlepsze):
+- kontakt@, biuro@, info@, hello@, office@
+- imie@domena
 - zgodne z domena strony
 
----------------------------------------
-SECONDARY (akceptowalne jesli brak PRIMARY):
-- gmail.com, wp.pl, interia.pl, onet.pl, o2.pl, yahoo, outlook
-- inne maile osobiste
+SECONDARY:
+- gmail, wp, interia, onet, o2, outlook itp.
 
----------------------------------------
-INVALID (ignoruj, ale NIE odrzucaj od razu):
+INVALID (ignoruj):
 - test@, example@, demo@
 - noreply@, no-reply@
-- jan@kowalski.pl, example domains
+- jan@kowalski.pl (placeholder)
 - admin@localhost
-- tracking / systemowe (np. sentry, monitoring)
+- systemowe / trackingowe
 
 ---------------------------------------
 2. WYBOR MAILA:
 
-- jesli sa PRIMARY -> wybierz najlepszy (priorytet: kontakt > biuro > info)
-- jesli brak PRIMARY, ale sa SECONDARY -> wybierz jeden
-- jesli sa tylko INVALID -> wtedy BRAK MAILA
+- jesli sa PRIMARY -> wybierz najlepszy
+- jesli brak PRIMARY -> wybierz SECONDARY
+- jesli tylko INVALID -> brak maila
 
 ---------------------------------------
-3. DECYZJA:
+3. DECYZJA EMAIL:
 
-- jesli po filtracji brak maila -> ODRZUC
-- jesli jest mail -> uzij wybranego
+- jesli brak maila -> HAS_EMAIL = FALSE
+- jesli jest -> HAS_EMAIL = TRUE
 
----------------------------------------
 WAZNE:
-- NIE odrzucaj rekordu tylko dlatego, ze jeden z maili jest zly
-- IGNORUJ zle maile, wybieraj dobre
-- w przypadku wielu dobrych -> wybierz najbardziej "kontaktowy"
+- ignoruj zle maile, NIE odrzucaj przez nie rekordu
+- wybieraj najlepszy dostepny
 
--------------------------------------
+---------------------------------------
 KROK 6 - SCORING
 ---------------------------------------
-+5 konferansjer / MC / moderator
++5 konferansjer / MC / host
 +4 DJ / wodzirej / animator
 +3 agencja eventowa
-+2 organizacja eventów
++2 organizacja eventow
 
--5 katalog
+-5 venue
+-5 katalog / SEO
 -5 non-event
 
 ---------------------------------------
-KROK 7 - DECYZJA
+KROK 7 - FINALNA DECYZJA
+---------------------------------------
+
+IS_LEAD = 
+(TYPE = A)
+AND (PRODUCT FIT = TRUE)
+AND (score >= 4)
+AND (SEO_SPAM_SCORE > -3)
+
 ---------------------------------------
 AKCEPTUJ jesli:
-- TYPE = A
-- PRODUCT FIT = TRUE
-- email valid
-
-❗ NIE wymagaj score >= 4 jesli HARD OVERRIDE
+---------------------------------------
+IS_LEAD = TRUE
+AND HAS_EMAIL = TRUE
 
 ---------------------------------------
-OUTPUT JSON
+ODRZUC jesli:
+---------------------------------------
+IS_LEAD = FALSE
+LUB HAS_EMAIL = FALSE
+
+---------------------------------------
+OUTPUT JSON:
+---------------------------------------
 
 Jesli OK:
 {{
@@ -732,14 +748,15 @@ Jesli OK:
   "short_description": "100-200 znaków",
   "score": liczba,
   "seo_spam_score": liczba,
-  "reason": "dlaczego to jest realny lead"
+  "reason": "dlaczego to realny lead"
 }}
 
 Jesli NIE:
 {{
   "ok": 0,
-  "reason": "dlaczego odrzucone"
+  "reason": "konkretny powod odrzucenia"
 }}
+
 ODPOWIEDZ TYLKO CZYSTYM JSONEM."""
 
     try:
