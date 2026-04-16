@@ -65,7 +65,6 @@ def load_lines_list(filename):
     return items
 
 ROLES = load_lines_list('roles.txt')
-logger.info(f"[INIT] Loaded {len(ROLES)} roles: {ROLES}")
 SEARCH_TEMPLATES = load_lines_list('templates.txt')
 NEGATIVE_KEYWORDS = load_lines_set('negative_keywords.txt')
 BLOCKED_DOMAINS = load_lines_set('blocked_domains.txt')
