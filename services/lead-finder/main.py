@@ -594,10 +594,15 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
     
     emails_str = ', '.join(emails) if emails else 'brak'
     text_str = page_text[:2000] if page_text else 'brak'
+    title_str = (title or 'brak')[:200]
+    
+    if not emails:
+        logger.warning(f"[C{consumer_id}] Brak maili - pomijam AI")
+        return None
     
     prompt = prompt_template.format(
         url=url,
-        title=title,
+        title=title_str,
         emails=emails_str,
         text=text_str
     )
