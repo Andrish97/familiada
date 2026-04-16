@@ -641,12 +641,17 @@ KROK 5 — EMAIL VALIDATION
 
 DOBRY EMAIL:
 - kontakt@ / biuro@ / info@ + domena strony
+- darmowe emaile dla osób fizycznych / małych firm: wp.pl, gmail.com, o2.pl, interia.pl, onet.pl, yahoo.com, outlook.com, hotmail.com
 
 ODRZUĆ EMAIL jeśli:
 - test@, example@, demo@
-- systemowe (noreply)
-- placeholder (jan@kowalski.pl)
-- brak powiązania z domeną i stroną
+- systemowe (noreply, no-reply, automat)
+- placeholder (jan@kowalski.pl, admin@localhost)
+- emaile z nieznanych darmowych dostawców
+
+DLA MAŁYCH FIRM / OSÓB FIZYCZNYCH:
+- zaakceptuj email z dowolnej popularnej darmowej domeny
+- nie wymagaj dopasowania do domeny strony
 
 BRAK EMAIL → ODRZUĆ
 
