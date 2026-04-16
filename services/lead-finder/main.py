@@ -91,6 +91,44 @@ task_status = "idle" # idle, running, paused, cancelled, completed
 task_run_id = None
 verified_in_run = 0
 
+# --- AI Provider Rate Limit Tracking ---
+provider_cooldowns = {}  # {provider: timestamp_when_available}
+PROVIDER_COOLDOWN_SECONDS = 60  # Cooldown after rate limit
+
+def get_provider_order():
+    """Get provider order from ai_settings table"""
+    # Synchronous function - use blocking call
+    import httpx
+    try:
+        r = httpx.get(
+            f"{SUPABASE_URL}/rest/v1/ai_settings?select=provider_order,updated_at&id=eq.1&limit=1",
+            headers={'apikey': SUPABASE_SERVICE_KEY, 'Authorization': f'Bearer {SUPABASE_SERVICE_KEY}'},
+            timeout=5
+        )
+        if r.status_code == 200:
+            data = r.json()
+            if data:
+                order = data[0].get('provider_order', 'openrouter,groq')
+                return [p.strip().lower() for p in order.split(',') if p.strip()]
+    except Exception as e:
+        logger.error(f"Failed to load provider order: {e}")
+    return ['openrouter', 'groq']  # Default
+
+def is_provider_on_cooldown(provider: str) -> bool:
+    """Check if provider is on cooldown"""
+    if provider not in provider_cooldowns:
+        return False
+    if asyncio.get_event_loop().time() >= provider_cooldowns[provider]:
+        del provider_cooldowns[provider]
+        return False
+    return True
+
+def set_provider_cooldown(provider: str):
+    """Set provider on cooldown after rate limit"""
+    import time
+    provider_cooldowns[provider] = asyncio.get_event_loop().time() + PROVIDER_COOLDOWN_SECONDS
+    logger.warning(f"[PROVIDER] {provider} on cooldown for {PROVIDER_COOLDOWN_SECONDS}s")
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger("lead-finder")
 
@@ -714,60 +752,73 @@ ODPOWIEDZ TYLKO CZYSTYM JSONEM."""
 
     try:
         content = None
+        provider_order = get_provider_order()
         
-        # OpenRouter (priority)
-        if OPENROUTER_API_KEY:
-            try:
-                async with httpx.AsyncClient(timeout=60) as client:
-                    r = await client.post(
-                        "https://openrouter.ai/api/v1/chat/completions",
-                        headers={
-                            'Authorization': f'Bearer {OPENROUTER_API_KEY}',
-                            'Content-Type': 'application/json'
-                        },
-                        json={
-                            'model': OPENROUTER_MODEL,
-                            'messages': [
-                                {'role': 'system', 'content': 'Odpowiadaj tylko JSON bez markdown.'},
-                                {'role': 'user', 'content': prompt}
-                            ],
-                            'temperature': 0.1
-                        }
-                    )
-                    logger.info(f"[C{consumer_id}] OpenRouter response: {r.status_code}")
-                    if r.status_code == 200:
-                        content = r.json()['choices'][0]['message']['content']
-                    else:
-                        logger.error(f"[C{consumer_id}] OpenRouter ERROR: {r.text[:200]}")
-            except Exception as e:
-                logger.error(f"[C{consumer_id}] OpenRouter exception: {e}")
-        
-        # Groq (fallback)
-        if not content and GROQ_API_KEY:
-            try:
-                async with httpx.AsyncClient(timeout=30) as client:
-                    r = await client.post(
-                        "https://api.groq.com/openai/v1/chat/completions",
-                        headers={
-                            'Authorization': f'Bearer {GROQ_API_KEY}',
-                            'Content-Type': 'application/json'
-                        },
-                        json={
-                            'model': GROQ_MODEL,
-                            'messages': [
-                                {'role': 'system', 'content': 'Odpowiadaj tylko JSON bez markdown.'},
-                                {'role': 'user', 'content': prompt}
-                            ],
-                            'temperature': 0.1
-                        }
-                    )
-                    logger.info(f"[C{consumer_id}] Groq response: {r.status_code}")
-                    if r.status_code == 200:
-                        content = r.json()['choices'][0]['message']['content']
-                    else:
-                        logger.error(f"[C{consumer_id}] Groq ERROR: {r.text[:200]}")
-            except Exception as e:
-                logger.error(f"[C{consumer_id}] Groq exception: {e}")
+        # Try providers in order from settings
+        for provider in provider_order:
+            if is_provider_on_cooldown(provider):
+                logger.info(f"[C{consumer_id}] {provider} on cooldown, skipping")
+                continue
+            
+            if provider == 'openrouter' and OPENROUTER_API_KEY:
+                try:
+                    async with httpx.AsyncClient(timeout=60) as client:
+                        r = await client.post(
+                            "https://openrouter.ai/api/v1/chat/completions",
+                            headers={
+                                'Authorization': f'Bearer {OPENROUTER_API_KEY}',
+                                'Content-Type': 'application/json'
+                            },
+                            json={
+                                'model': OPENROUTER_MODEL,
+                                'messages': [
+                                    {'role': 'system', 'content': 'Odpowiadaj tylko JSON bez markdown.'},
+                                    {'role': 'user', 'content': prompt}
+                                ],
+                                'temperature': 0.1
+                            }
+                        )
+                        logger.info(f"[C{consumer_id}] OpenRouter response: {r.status_code}")
+                        if r.status_code == 200:
+                            content = r.json()['choices'][0]['message']['content']
+                            break  # Success, exit loop
+                        elif r.status_code == 429:
+                            set_provider_cooldown('openrouter')
+                            logger.warning(f"[C{consumer_id}] OpenRouter rate limited")
+                        else:
+                            logger.error(f"[C{consumer_id}] OpenRouter ERROR: {r.text[:200]}")
+                except Exception as e:
+                    logger.error(f"[C{consumer_id}] OpenRouter exception: {e}")
+            
+            elif provider == 'groq' and GROQ_API_KEY:
+                try:
+                    async with httpx.AsyncClient(timeout=30) as client:
+                        r = await client.post(
+                            "https://api.groq.com/openai/v1/chat/completions",
+                            headers={
+                                'Authorization': f'Bearer {GROQ_API_KEY}',
+                                'Content-Type': 'application/json'
+                            },
+                            json={
+                                'model': GROQ_MODEL,
+                                'messages': [
+                                    {'role': 'system', 'content': 'Odpowiadaj tylko JSON bez markdown.'},
+                                    {'role': 'user', 'content': prompt}
+                                ],
+                                'temperature': 0.1
+                            }
+                        )
+                        logger.info(f"[C{consumer_id}] Groq response: {r.status_code}")
+                        if r.status_code == 200:
+                            content = r.json()['choices'][0]['message']['content']
+                            break  # Success, exit loop
+                        elif r.status_code == 429:
+                            set_provider_cooldown('groq')
+                            logger.warning(f"[C{consumer_id}] Groq rate limited")
+                        else:
+                            logger.error(f"[C{consumer_id}] Groq ERROR: {r.text[:200]}")
+                except Exception as e:
+                    logger.error(f"[C{consumer_id}] Groq exception: {e}")
         
         if not content:
             logger.error(f"[C{consumer_id}] No AI provider available")
