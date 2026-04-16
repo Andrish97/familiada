@@ -652,6 +652,8 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
         emails=emails_str,
         text=text_str
     )
+    
+    logger.info(f"[C{consumer_id}] Prompt length: {len(prompt)} chars, text length: {len(text_str)}")
 
     try:
         content = None
@@ -727,12 +729,14 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
             logger.error(f"[C{consumer_id}] No AI provider available")
             return None
         
+        logger.info(f"[C{consumer_id}] AI got content: {len(content)} chars")
         match = re.search(r'\{[\s\S]*\}', content)
         if not match:
             logger.warning(f"[C{consumer_id}] AI: Brak JSON. Content: {content[:500]}")
             return None
         
         json_str = match.group()
+        logger.info(f"[C{consumer_id}] AI response preview: {content[:200]}")
         try:
             res = json.loads(json_str)
         except json.JSONDecodeError:
