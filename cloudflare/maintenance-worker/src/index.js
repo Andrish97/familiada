@@ -51,20 +51,16 @@ export default {
         return fetchFromOrigin(request, url, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
       }
 
-      // allow settings-tools and assets only
+      // allow settings-tools and assets only (cache-busting handled by client-side version.txt)
       if (url.pathname.startsWith("/settings-tools/") || isSettingsAsset(url.pathname)) {
         const res = await fetchFromOrigin(request, url, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
         if (url.pathname.startsWith("/settings-tools/")) {
           return withHeaders(res, {
             "Content-Security-Policy": "frame-ancestors 'self'",
-            "X-Frame-Options": "SAMEORIGIN",
-            "Cache-Control": "no-store"
+            "X-Frame-Options": "SAMEORIGIN"
           });
         }
-        if (url.pathname === "/settings.html") {
-          return withHeaders(res, { "Cache-Control": "no-store" });
-        }
-        if (url.pathname.startsWith("/translation/")) {
+        if (url.pathname === "/version.txt") {
           return withHeaders(res, { "Cache-Control": "no-store" });
         }
         return res;
