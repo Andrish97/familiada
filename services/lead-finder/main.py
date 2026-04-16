@@ -35,43 +35,61 @@ SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", os.getenv("SERVICE
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
 
-# --- Load config from files ---
-def load_lines_set(filename):
-    path = os.path.join(os.path.dirname(__file__), filename)
-    items = set()
-    try:
-        with open(path, 'r', encoding='utf-8') as f:
-            for line in f:
-                line = line.strip()
-                if line and not line.startswith('#'):
-                    items.add(line.lower())
-    except FileNotFoundError:
-        logging.warning(f"{filename} not found")
-    return items
-
-def load_lines_list(filename):
-    path = os.path.join(os.path.dirname(__file__), filename)
-    items = []
-    try:
-        with open(path, 'r', encoding='utf-8') as f:
-            for line in f:
-                line = line.strip()
-                if line and not line.startswith('#'):
-                    items.append(line)
-    except FileNotFoundError:
-        logging.warning(f"{filename} not found")
-    return items
-
-ROLES = load_lines_list('roles.txt')
-SEARCH_TEMPLATES = load_lines_list('templates.txt')
-NEGATIVE_KEYWORDS = load_lines_set('negative_keywords.txt')
-BLOCKED_DOMAINS = load_lines_set('blocked_domains.txt')
-GARBAGE_EMAIL_DOMAINS = load_lines_set('garbage_email_domains.txt')
-SUBPAGE_PATHS = load_lines_list('subpage_paths.txt')
-SOCIAL_PLATFORMS = load_lines_set('social_platforms.txt')
-
 # --- Constants ---
+ROLES = ["DJ wesele", "Wodzirej", "Konferansjer", "Animator dzieci", "Agencja eventowa"]
+
+SEARCH_TEMPLATES = [
+    # Klasyczne
+    '"{role}" {city} kontakt',
+    '"{role}" {city} oferta',
+    
+    # Wizytówkowe i lokalne
+    '{role} {city} wizytówka opinie',
+    '{role} {city} mapa kontakt',
+    '{role} {city} google maps',
+    
+    # Social-specific
+    'site:facebook.com "{city}" {role} kontakt',
+    'site:instagram.com "{city}" {role}',
+]
+
+NEGATIVE_KEYWORDS = {
+    'urząd', 'ministerstwo', 'bip.gov.pl', 'komenda', 'policja', 'sąd', 'prokuratura',
+    'ośrodek pomocy', 'ops', 'parafia', 'kościoła', 'szkoła podstawowa', 'liceum',
+    'przedszkole publiczne', 'żłobek miejski', 'szpital', 'przychodnia', 'apteka'
+}
+
+BLOCKED_DOMAINS = {
+    # Ogłoszenia / marketplace
+    'olx.pl', 'allegro.pl', 'gumtree.pl', 'sprzedajemy.pl',
+    'oferteo.pl', 'fixly.pl', 'weselezklasa.pl', 'slubnaglowie.pl',
+    'pracuj.pl', 'jooble.pl', 'infopraca.pl', 'praca.pl',
+    
+    # Sklepy / RTV AGD
+    'amazon.com', 'ebay.com', 'etsy.com', 'empik.com', 'ceneo.pl', 'skapiec.pl',
+    'mediaexpert.pl', 'x-kom.pl', 'morele.net', 'komputronik.pl', 'neonet.pl',
+    'media-markt.pl', 'saturn.pl', 'expert.pl', 'avs.pl',
+    
+    # Katalogi ogólne (te zazwyczaj nie mają maili bezpośrednio)
+    'panoramafirm.pl', 'pkt.pl', 'firmy.net', 'biznesfinder.pl', 'yellowpages.pl',
+    
+    # Gry / rozrywka / inne śmieciowe
+    'gry-online.pl', 'gamepressure.com', 'igromania.pl', 'gry.pl', 'gram.pl',
+    'swiatgier.pl', 'stopklatka.pl', 'filmweb.pl', 'imdb.com',
+    'zhihu.com', 'wikipedia.org', 'youtube.com',
+    'twitter.com', 'pinterest.com', 'tiktok.com',
+    'rottentomatoes.com', 'metacritic.com', 'letterboxd.com',
+    'trakt.tv', 'simkl.com', 'justwatch.com', 'gov.pl', 'edu.pl', 'bip.gov.pl',
+    
+    # Specyficzne polskie katalogi (blokujemy tylko jeśli to masowe listingi)
+    'janachowska.pl'
+}
+
 EMAIL_REGEX = re.compile(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}')
+RAW_BUFFER_THRESHOLD = 20
+MAX_RESULTS_PER_SEARCH = 50
+
+GARBAGE_EMAIL_DOMAINS = {'sentry.io', 'sentry.wixpress.com', 'sentry-next.wixpress.com', 'mailgun.org', 'mandrillapp.com', 'sendgrid.net', 'mailservers.dev'}
 
 # --- Global State ---
 active_task = None
@@ -476,25 +494,31 @@ async def scrape_and_save_lead(res: dict, query: str, existing_emails: Set[str])
 
 async def refill_raw_buffer(run_id: str):
     """Producer: Performs a Deep Sweep for a specific target (City + Role)."""
+    pending = await supabase.select('marketing_raw_contacts', 'id', {'status': 'pending'})
+    processing = await supabase.select('marketing_raw_contacts', 'id', {'status': 'processing'})
+    count = (len(pending) if pending else 0) + (len(processing) if processing else 0)
+    
+    if count >= RAW_BUFFER_THRESHOLD: return
+
     target = await fetch_next_target(run_id)
     if not target: return
     city_name, role_name, target_key = target
     
     all_results = []
+    searches_done = 0
     async with httpx.AsyncClient(timeout=25) as client:
         for template in SEARCH_TEMPLATES:
+            if searches_done >= 10: break
+            searches_done += 1
             query = template.format(city=city_name, role=role_name)
             try:
+                await log_to_db("info", f"Szukam: {query}")
                 r = await client.get(f'{SEARXNG_URL}/search', params={
                     'q': query, 'format': 'json', 'language': 'pl-PL', 'region': 'pl-PL', 'limit': 10
                 })
                 if r.status_code == 200:
                     results = r.json().get('results', [])[:10]
                     all_results.extend(results)
-                    await log_to_db("info", f"[{len(results)}] {query}")
-                    await asyncio.sleep(3)  # Rate limit protection
-                else:
-                    await log_to_db("warning", f"[ERR {r.status_code}] {query}")
                 await asyncio.sleep(1)
             except Exception as e:
                 logger.error(f"Search error for {query}: {e}")
@@ -657,25 +681,12 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
             logger.error(f"[C{consumer_id}] No AI provider available")
             return None
         
-        match = re.search(r'\{[\s\S]*\}', content)
+        match = re.search(r'\{.*\}', content, re.DOTALL)
         if not match:
             logger.warning(f"[C{consumer_id}] AI: Brak JSON. Content: {content[:500]}")
             return None
-        
-        json_str = match.group()
-        logger.info(f"[C{consumer_id}] AI response: {json_str[:300]}")
-        try:
-            res = json.loads(json_str)
-            if not isinstance(res, dict):
-                logger.warning(f"[C{consumer_id}] AI response is not a dict: {type(res)}")
-                return None
-        except json.JSONDecodeError:
-            try:
-                import ast
-                res = ast.literal_eval(json_str)
-            except Exception as e:
-                logger.warning(f"[C{consumer_id}] JSON parse failed: {json_str[:300]}")
-                return None
+            
+        res = json.loads(match.group().replace("'", '"'))
         ok_val = res.get('ok', 0)
         is_organizer = ok_val in [1, True, '1', 'true', 'True']
         
@@ -748,11 +759,7 @@ async def consumer_task(run_id: str, consumer_id: int, target: int):
                 continue
             
             await log_to_db("info", f"[C{consumer_id}] Weryfikacja AI: {lead_url}")
-            try:
-                result = await verify_raw_lead(run_id, lead, consumer_id)
-            except Exception as e:
-                logger.error(f"[C{consumer_id}] verify_raw_lead exception: {e}")
-                result = None
+            result = await verify_raw_lead(run_id, lead, consumer_id)
             
             if task_status not in ("running", "paused") or task_run_id != run_id:
                 break
@@ -791,9 +798,9 @@ async def consumer_task(run_id: str, consumer_id: int, target: int):
                     'reject_reason': reject_reason[:500]
                 }, {'id': lead_id})
                 await log_to_db("warning", f"[C{consumer_id}] Odrzucono: {lead_url} | type:{result.get('lead_type', '?')} | ai:{result.get('score_event', '?')} | spam:{result.get('seo_spam_score', '?')} | powod: {reject_reason}")
-            except Exception as e:
-                logger.error(f"Consumer {consumer_id} error: {e}")
-                await asyncio.sleep(1)
+        except Exception as e:
+            logger.error(f"Consumer {consumer_id} error: {e}")
+            await asyncio.sleep(1)
 
 async def cleanup_on_cancel():
     """Revert all processing contacts back to pending when cancelled"""
