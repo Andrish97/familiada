@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 65d3k9QIuitvUP32hgKnxUXdD9YLqUkxABnkabRHcJnRJNwgGGGZLyZVxeDSZAo
+\restrict abHdxg1CNkVjSzx5KyfYzfqNNykK0VdrNicOuTVoJwCYpYOyhgmz63O6P9lSp9C
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -10459,7 +10459,6 @@ CREATE TABLE "public"."marketing_raw_contacts" (
     "status" "text" DEFAULT 'pending'::"text",
     "reject_reason" "text",
     "page_text" "text",
-    "retry_count" integer DEFAULT 0,
     "updated_at" timestamp with time zone DEFAULT "now"()
 );
 
@@ -13833,5 +13832,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 65d3k9QIuitvUP32hgKnxUXdD9YLqUkxABnkabRHcJnRJNwgGGGZLyZVxeDSZAo
+\unrestrict abHdxg1CNkVjSzx5KyfYzfqNNykK0VdrNicOuTVoJwCYpYOyhgmz63O6P9lSp9C
 
