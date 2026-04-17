@@ -638,13 +638,13 @@ async def scrape_and_save_lead(res: dict, query: str, existing_emails: Set[str])
     return 0
 
 async def refill_raw_buffer(run_id: str):
-    """Producer: Search for new contacts - no buffer limit"""
+    """Producer: Search for new contacts - maintains RAW_BUFFER_THRESHOLD"""
     logger.info("[PRODUCER] refill_raw_buffer: start")
     
-    # Skip if too many pending already (but allow some)
-    pending = await supabase.select('marketing_raw_contacts', 'id', {'status': 'pending'}, limit=100)
-    if pending and len(pending) >= 100:
-        logger.info(f"[PRODUCER] Bufor pełny (>=100 pending), czekam...")
+    # Check current pending count
+    pending = await supabase.select('marketing_raw_contacts', 'id', {'status': 'pending'}, limit=RAW_BUFFER_THRESHOLD)
+    if pending and len(pending) >= RAW_BUFFER_THRESHOLD:
+        logger.info(f"[PRODUCER] Bufor pełny (>={RAW_BUFFER_THRESHOLD} pending), czekam...")
         return
     
     logger.info("[PRODUCER] Pobieram next target...")
