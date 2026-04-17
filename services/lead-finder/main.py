@@ -114,15 +114,14 @@ def get_provider_order():
     """Get provider order from ai_settings table"""
     import httpx
     try:
-        r = httpx.get(
-            f"{SUPABASE_URL}/rest/v1/ai_settings?select=provider_order,updated_at&id=eq.1&limit=1",
-            headers={'apikey': SUPABASE_SERVICE_KEY, 'Authorization': f'Bearer {SUPABASE_SERVICE_KEY}'},
-timeout=TIMEOUT_GET_PROVIDER
-        )
+        url = f"{SUPABASE_URL}/rest/v1/ai_settings?select=provider_order,updated_at&id=eq.1"
+        r = httpx.get(url, headers={'apikey': SUPABASE_SERVICE_KEY, 'Authorization': f'Bearer {SUPABASE_SERVICE_KEY}'}, timeout=TIMEOUT_GET_PROVIDER)
+        logger.info(f"[AI_PROVIDER] GET ai_settings: {r.status_code} {r.text[:200] if r.text else 'empty'}")
         if r.status_code == 200:
             data = r.json()
             if data:
                 order = data[0].get('provider_order', 'openrouter,groq,gemini')
+                logger.info(f"[AI_PROVIDER] Order from DB: {order}")
                 return [p.strip().lower() for p in order.split(',') if p.strip()]
     except Exception as e:
         logger.error(f"Failed to load provider order: {e}")
