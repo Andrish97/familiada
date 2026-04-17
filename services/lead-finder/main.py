@@ -106,13 +106,14 @@ TIMEOUT_SCRAPE_JS = get_cfg('TIMEOUT_SCRAPE_JS', 15)
 TIMEOUT_SUPABASE_RPC = get_cfg('TIMEOUT_SUPABASE_RPC', 30)
 TIMEOUT_SEARCH = get_cfg('TIMEOUT_SEARCH', 25)
 
+MAX_CONCURRENT_SCRAPES = get_cfg('MAX_CONCURRENT_SCRAPES', 10)
+MAX_CONCURRENT_PLAYWRIGHT = get_cfg('MAX_CONCURRENT_PLAYWRIGHT', 3)
 SEARCH_RESULTS_LIMIT = get_cfg('SEARCH_RESULTS_LIMIT', 50)
 SEARCH_MIN_RESULTS = get_cfg('SEARCH_MIN_RESULTS', 5)
-MAX_CONCURRENT_SCRAPES = get_cfg('MAX_CONCURRENT_SCRAPES', 5)
 
 logger.info(f"[CONFIG] AI: DELAY={AI_DELAY}s COOLDOWN={PROVIDER_COOLDOWN_SECONDS}s")
 logger.info(f"[CONFIG] Search: RESULTS_LIMIT={SEARCH_RESULTS_LIMIT} MIN_RESULTS={SEARCH_MIN_RESULTS}")
-logger.info(f"[CONFIG] Scraping: CONCURRENT={MAX_CONCURRENT_SCRAPES}")
+logger.info(f"[CONFIG] Scraping: CONCURRENT={MAX_CONCURRENT_SCRAPES} PLAYWRIGHT={MAX_CONCURRENT_PLAYWRIGHT}")
 logger.info(f"[CONFIG] Buffer: RAW_BUFFER={RAW_BUFFER_THRESHOLD}")
 
 GARBAGE_EMAIL_DOMAINS = set(load_txt_lines('garbage_email_domains.txt'))
@@ -127,7 +128,8 @@ task_status = "idle" # idle, running, paused, cancelled, completed
 task_run_id = None
 verified_in_run = 0
 provider_order = ['openrouter', 'groq', 'gemini']  # Loaded at startup
-scrape_semaphore = asyncio.Semaphore(MAX_CONCURRENT_SCRAPES)  # Ograniczenie równoległości
+scrape_semaphore = asyncio.Semaphore(MAX_CONCURRENT_SCRAPES)
+playwright_semaphore = asyncio.Semaphore(MAX_CONCURRENT_PLAYWRIGHT)
 
 # --- AI Provider Rate Limit Tracking ---
 provider_cooldowns = {}  # {provider: timestamp_kiedy_dostepny}
@@ -443,8 +445,9 @@ async def scrape_with_playwright(url: str, timeout: int = 15) -> tuple[str, str,
     Scrape page using Playwright (for JS-rendered sites).
     Returns: (title, text, html)
     """
-    try:
-        from playwright.async_api import async_playwright
+    async with playwright_semaphore:
+        try:
+            from playwright.async_api import async_playwright
         
         async with async_playwright() as p:
             browser = await p.chromium.launch(headless=True)
