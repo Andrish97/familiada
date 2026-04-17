@@ -952,7 +952,11 @@ async def consumer_task(run_id: str, consumer_id: int, target: int):
     """Consumer: Continuously verifies raw contacts"""
     global verified_in_run
     logger.info(f"[C{consumer_id}] Consumer started, run_id={run_id}, target={target}")
-    while task_status == "running" and task_run_id == run_id:
+    while True:
+        logger.info(f"[C{consumer_id}] While start - task_status={task_status}, run_id={task_run_id}, target={target}")
+        if task_status != "running" or task_run_id != run_id:
+            logger.info(f"[C{consumer_id}] Warunek break: task_status={task_status}, run_id={task_run_id}")
+            break
         logger.info(f"[C{consumer_id}] Petla - task_status={task_status}, run_id={task_run_id}")
         if task_pause_event.is_set():
             logger.info(f"[C{consumer_id}] Pause, sleep 1s")
