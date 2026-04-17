@@ -13,6 +13,7 @@ import uuid
 from datetime import datetime
 from typing import Optional, List, Set
 from urllib.parse import urlparse
+from contextlib import asynccontextmanager
 
 import httpx
 
@@ -108,13 +109,14 @@ task_pause_event = asyncio.Event()
 task_status = "idle" # idle, running, paused, cancelled, completed
 task_run_id = None
 verified_in_run = 0
+provider_order = ['openrouter', 'groq', 'gemini']  # Loaded at startup
 
 # --- AI Provider Rate Limit Tracking ---
 provider_cooldowns = {}  # {provider: timestamp_when_available}
 provider_last_request = {}  # {provider: timestamp_of_last_request}
 
 def get_provider_order():
-    """Get provider order from ai_settings table"""
+    """Get provider order from ai_settings table (sync version for startup)"""
     import httpx
     try:
         url = f"{SUPABASE_URL}/rest/v1/ai_settings?select=provider_order,updated_at&limit=1"
@@ -175,6 +177,31 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+
+async def warmup_ai_providers():
+    logger.info("[WARMUP] Rozpoczynam rozgrzewanie AI providerów...")
+    providers = ['openrouter', 'groq', 'gemini']
+    for p in providers:
+        try:
+            url = f"{SUPABASE_URL}/rest/v1/ai_settings?select=provider_order,updated_at&limit=1"
+            async with httpx.AsyncClient() as client:
+                await client.get(url, headers={'apikey': SUPABASE_SERVICE_KEY, 'Authorization': f'Bearer {SUPABASE_SERVICE_KEY}'}, timeout=10)
+            logger.info(f"[WARMUP] ✓ {p} - connection established")
+        except Exception as e:
+            logger.warning(f"[WARMUP] ✗ {p} - {e}")
+    logger.info("[WARMUP] Rozgrzewanie zakończone")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    import time
+    time.sleep(0.1)
+    await warmup_ai_providers()
+    global provider_order
+    provider_order = get_provider_order()
+    logger.info(f"[STARTUP] Provider order loaded: {provider_order}")
+    yield
+
+app.router.lifespan_context = lifespan
 
 class SupabaseClient:
     def __init__(self, url, key):
@@ -671,7 +698,6 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
 
     try:
         content = None
-        provider_order = get_provider_order()
         
         # Try providers in order from settings
         for provider in provider_order:
