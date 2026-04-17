@@ -237,7 +237,9 @@ async def verify_raw_lead(lead, c_id):
         
         if status == 200:
             try:
+                logger.info(f"[C{c_id}] AI raw response: {content[:300]}")
                 res = json.loads(re.search(r'\{.*\}', content, re.DOTALL).group().replace("'", '"'))
+                logger.info(f"[C{c_id}] AI parsed: {res}")
                 return res
             except: continue
         elif status == 429: set_provider_cooldown(provider)
@@ -257,6 +259,7 @@ async def consumer_task(run_id, c_id, target):
         if not leads: await asyncio.sleep(3); continue
         
         lead = leads[0]
+        logger.info(f"[C{c_id}] Got lead: {lead['url']} | emails: {lead.get('emails_found',[])}")
         if not await supabase.update('marketing_raw_contacts', {'status': 'processing'}, {'id': lead['id'], 'status': 'pending'}): continue
         
         res = await verify_raw_lead(lead, c_id)
