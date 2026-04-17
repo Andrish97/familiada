@@ -19,7 +19,7 @@ import httpx
 
 # --- Logger ---
 logger = logging.getLogger("lead_finder")
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 _handler = logging.StreamHandler()
 _handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
 logger.addHandler(_handler)
@@ -239,9 +239,12 @@ from fastapi.middleware.cors import CORSMiddleware
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
+# Shared HTTP client for efficiency
+_shared_client = httpx.AsyncClient(timeout=30)
+
 async def warmup_ai_providers():
     logger.info("[WARMUP] Rozgrzewanie AI providerów...")
-    providers = get_provider_order()
+    providers = await get_provider_order_async()
     
     for provider_name in providers:
         if provider_name not in AI_PROVIDERS:
@@ -263,9 +266,10 @@ async def warmup_ai_providers():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global provider_order
-    provider_order = get_provider_order()
+    provider_order = await get_provider_order_async()
     logger.info(f"[STARTUP] Provider order loaded: {provider_order}")
     yield
+    await _shared_client.aclose()
 
 app.router.lifespan_context = lifespan
 
@@ -275,50 +279,61 @@ class SupabaseClient:
         self.headers = {'apikey': key, 'Authorization': f'Bearer {key}', 'Content-Type': 'application/json'}
     
     async def insert(self, table, data):
-        async with httpx.AsyncClient() as client:
-            r = await client.post(f'{self.url}/rest/v1/{table}', headers=self.headers, json=data)
+        try:
+            r = await _shared_client.post(f'{self.url}/rest/v1/{table}', headers=self.headers, json=data)
             if r.status_code not in (200, 201):
                 logger.error(f"Supabase insert error ({table}): {r.status_code} {r.text[:200]}")
             return r.status_code in (200, 201)
+        except Exception as e:
+            logger.error(f"Supabase insert exception ({table}): {e}")
+            return False
 
     async def select(self, table, columns='*', filters=None, order=None, limit=None):
-        async with httpx.AsyncClient() as client:
-            params = {'select': columns}
-            if filters:
-                for k, v in filters.items(): params[k] = f'eq.{v}'
-            if order: params['order'] = order
-            if limit: params['limit'] = limit
-            try:
-                r = await client.get(f'{self.url}/rest/v1/{table}', headers=self.headers, params=params, timeout=TIMEOUT_SUPABASE_RPC)
-                if r.status_code != 200:
-                    logger.error(f"Supabase select error ({table}): {r.status_code} {r.text[:200]}")
-                    return None
-                return r.json()
-            except Exception as e:
-                logger.error(f"Supabase select exception ({table}): {e}")
+        params = {'select': columns}
+        if filters:
+            for k, v in filters.items(): params[k] = f'eq.{v}'
+        if order: params['order'] = order
+        if limit: params['limit'] = limit
+        try:
+            r = await _shared_client.get(
+                f'{self.url}/rest/v1/{table}', 
+                headers=self.headers, 
+                params=params, 
+                timeout=TIMEOUT_SUPABASE_RPC
+            )
+            if r.status_code != 200:
+                logger.error(f"Supabase select error ({table}): {r.status_code} {r.text[:200]}")
                 return None
-    
-
+            return r.json()
+        except Exception as e:
+            logger.error(f"Supabase select exception ({table}): {e}")
+            return None
 
     async def update(self, table, data, filters):
-        async with httpx.AsyncClient() as client:
-            params = {}
-            for k, v in filters.items(): params[k] = f'eq.{v}'
-            r = await client.patch(f'{self.url}/rest/v1/{table}', headers=self.headers, json=data, params=params)
+        params = {}
+        for k, v in filters.items(): params[k] = f'eq.{v}'
+        try:
+            r = await _shared_client.patch(f'{self.url}/rest/v1/{table}', headers=self.headers, json=data, params=params)
             return r.status_code in (200, 204)
+        except Exception as e:
+            logger.error(f"Supabase update exception ({table}): {e}")
+            return False
 
     async def delete(self, table, filters=None):
-        async with httpx.AsyncClient() as client:
-            params = {}
-            if filters:
-                for k, v in filters.items(): params[k] = f'eq.{v}'
-            r = await client.delete(f'{self.url}/rest/v1/{table}', headers=self.headers, params=params)
+        params = {}
+        if filters:
+            for k, v in filters.items(): params[k] = f'eq.{v}'
+        try:
+            r = await _shared_client.delete(f'{self.url}/rest/v1/{table}', headers=self.headers, params=params)
             return r.status_code in (200, 204, 404)
+        except Exception as e:
+            logger.error(f"Supabase delete exception ({table}): {e}")
+            return False
     
     async def call_rpc(self, function_name, params=None):
-        async with httpx.AsyncClient(timeout=TIMEOUT_SUPABASE_RPC) as client:
+        try:
             headers = {**self.headers, 'Prefer': 'return=minimal'}
-            r = await client.post(
+            r = await _shared_client.post(
                 f'{self.url}/rest/v1/rpc/{function_name}',
                 headers=headers,
                 json=params or {}
@@ -327,17 +342,20 @@ class SupabaseClient:
                 logger.error(f"RPC {function_name} error: {r.status_code} {r.text[:200] if r.text else 'empty'}")
                 return False
             return True
+        except Exception as e:
+            logger.error(f"RPC {function_name} exception: {e}")
+            return False
     
     async def clear_table(self, table):
         """Clear all rows from a table"""
-        async with httpx.AsyncClient(timeout=TIMEOUT_SUPABASE_RPC) as client:
+        try:
             logger.info(f"[CLEAR] Deleting all from {table}...")
-            r = await client.delete(f'{self.url}/rest/v1/{table}', headers=self.headers)
-            logger.info(f"[CLEAR] {table}: status={r.status_code}, response={r.text[:200] if r.text else 'empty'}")
-            if r.status_code not in (200, 204):
-                logger.error(f"Clear {table} error: {r.status_code} {r.text[:200]}")
-                return False
-            return True
+            r = await _shared_client.delete(f'{self.url}/rest/v1/{table}', headers=self.headers)
+            logger.info(f"[CLEAR] {table}: status={r.status_code}")
+            return r.status_code in (200, 204)
+        except Exception as e:
+            logger.error(f"Clear table exception ({table}): {e}")
+            return False
 
 supabase = SupabaseClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
@@ -862,31 +880,30 @@ async def consumer_task(run_id: str, consumer_id: int, target: int):
             continue
         
         try:
-            logger.debug(f"[C{consumer_id}] Fetching pending leads...")
-            raw_leads = await supabase.select('marketing_raw_contacts', '*', {'status': 'pending'}, limit=5)
-            logger.debug(f"[C{consumer_id}] Fetch call finished, leads: {len(raw_leads) if raw_leads else 'None'}")
+            logger.info(f"[C{consumer_id}] Sprawdzam czy są nowe leady...")
+            # Fetch only ONE lead and only necessary columns
+            cols = "id,url,title,page_text,emails_found"
+            raw_leads = await supabase.select('marketing_raw_contacts', cols, {'status': 'pending'}, limit=1)
             
             if raw_leads is None:
-                logger.error(f"[C{consumer_id}] Supabase select returned None")
+                logger.error(f"[C{consumer_id}] Błąd pobierania z Supabase")
                 await asyncio.sleep(5)
                 continue
 
             if len(raw_leads) == 0:
-                # Log only every 10 iterations to avoid spam, but keep it visible
-                if random.random() < 0.1:
-                    logger.info(f"[C{consumer_id}] No pending leads, waiting...")
+                # logger.info(f"[C{consumer_id}] Brak oczekujących leadów...")
                 await asyncio.sleep(2)
                 continue
             
-            logger.info(f"[C{consumer_id}] Found {len(raw_leads)} pending leads")
             lead = raw_leads[0]
             lead_id = lead['id']
             lead_url = lead.get('url')
-            logger.info(f"[C{consumer_id}] Processing lead: {lead_url}")
+            logger.info(f"[C{consumer_id}] Pobrałem lead: {lead_url}")
             
+            # Lock the lead for processing
             await supabase.update('marketing_raw_contacts', {'status': 'processing'}, {'id': lead_id, 'status': 'pending'})
             
-            logger.info(f"[C{consumer_id}] Calling AI for: {lead_url}")
+            logger.info(f"[C{consumer_id}] Wysyłam do AI: {lead_url}")
             result = await verify_raw_lead(run_id, lead, consumer_id)
             
             if task_status not in ("running", "paused") or task_run_id != run_id:
