@@ -234,9 +234,6 @@ async def warmup_ai_providers():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    import time
-    time.sleep(0.1)
-    await warmup_ai_providers()
     global provider_order
     provider_order = get_provider_order()
     logger.info(f"[STARTUP] Provider order loaded: {provider_order}")
@@ -713,7 +710,8 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
         try: emails = json.loads(emails)
         except: emails = []
     
-    logger.info(f"[C{consumer_id}] Weryfikuję: {url}")
+    current_order = get_provider_order()
+    logger.info(f"[C{consumer_id}] Weryfikuję: {url} | AI: {current_order}")
     
     prompt_path = os.path.join(os.path.dirname(__file__), 'ai_prompt.txt')
     with open(prompt_path, 'r', encoding='utf-8') as f:
@@ -739,10 +737,10 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
 
     try:
         content = None
-        provider_order = get_provider_order()  # Refresh order before each request
         
         # Try providers in order from settings
         for attempt in range(3):  # Max 3 attempts
+            provider_order = get_provider_order()  # Refresh before each attempt
             # Check if all providers on cooldown
             import time
             now = time.time()
@@ -753,8 +751,7 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
                 wait = min([w for w in wait_times if w > 0]) if any(w > 0 for w in wait_times) else PROVIDER_COOLDOWN_SECONDS
                 logger.info(f"[C{consumer_id}] All AI on cooldown, waiting {wait:.0f}s")
                 await asyncio.sleep(min(wait + 1, 120))
-                provider_order = get_provider_order()  # Refresh
-                continue
+                continue  # Refresh happens at start of next attempt
             
             for provider in provider_order:
                 if is_provider_on_cooldown(provider):
@@ -855,19 +852,18 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
         
 
         if not content:
-            logger.error(f"[C{consumer_id}] No AI provider available - skipping lead")
+            logger.error(f"[C{consumer_id}] No AI provider available")
             return None
         
         match = re.search(r'\{.*\}', content, re.DOTALL)
         if not match:
-            logger.warning(f"[C{consumer_id}] AI: Brak JSON. Content: {content[:500]}")
-            return None
-            
+            logger.warning(f"[C{consumer_id}] AI: Brak JSON w odpowiedzi, próbuję następny provider")
+            continue  # Try next provider
+        
         res = json.loads(match.group().replace("'", '"'))
         ok_val = res.get('ok', 0)
         is_organizer = ok_val in [1, True, '1', 'true', 'True']
         
-        # Validate email - must contain @ and look like real email
         raw_email = res.get('email', '') or ''
         email_match = re.match(r'^[^@\s]+@[^@\s]+\.[^@\s]+$', raw_email.lower())
         best_email = raw_email if email_match else ''
@@ -1055,6 +1051,9 @@ async def run_worker(run_id: str, target_count: int):
 async def start_run(target_count: int = 50):
     global active_task, task_run_id, task_stop_event, task_pause_event, task_status
     if task_status == "running": raise HTTPException(400, "Zlecenie już działa")
+    
+    # Warmup AI before starting job
+    await warmup_ai_providers()
     
     task_status = "running"
     task_run_id = str(uuid.uuid4())

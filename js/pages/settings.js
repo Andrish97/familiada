@@ -1726,6 +1726,7 @@ function renderAiProviderOrder() {
 async function saveAiProviderOrder() {
   try {
     await sb().rpc('update_ai_provider_order', { p_order: aiProviderOrder.join(",") });
+    showToast(`AI: ${aiProviderOrder.join(" → ")}`);
   } catch(e) {
     console.warn("[AI] save order error:", e);
   }
