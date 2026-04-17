@@ -276,9 +276,12 @@ class SupabaseClient:
             if limit: params['limit'] = limit
             try:
                 r = await client.get(f'{self.url}/rest/v1/{table}', headers=self.headers, params=params, timeout=TIMEOUT_SUPABASE_RPC)
-                return r.json() if r.status_code == 200 else None
+                if r.status_code != 200:
+                    logger.error(f"Supabase select error ({table}): {r.status_code} {r.text[:200]}")
+                    return None
+                return r.json()
             except Exception as e:
-                logger.error(f"Supabase select error: {e}")
+                logger.error(f"Supabase select exception ({table}): {e}")
                 return None
     
 
@@ -845,16 +848,17 @@ async def consumer_task(run_id: str, consumer_id: int, target: int):
             continue
         
         try:
-            # logger.info(f"[C{consumer_id}] Querying for pending leads...")
             raw_leads = await supabase.select('marketing_raw_contacts', '*', {'status': 'pending'}, limit=5)
             
             if raw_leads is None:
-                logger.error(f"[C{consumer_id}] Supabase query returned None (error)!")
+                logger.error(f"[C{consumer_id}] Supabase select returned None")
                 await asyncio.sleep(5)
                 continue
 
             if len(raw_leads) == 0:
-                # logger.info(f"[C{consumer_id}] No pending leads, waiting...")
+                # Log only every 10 iterations to avoid spam, but keep it visible
+                if random.random() < 0.1:
+                    logger.info(f"[C{consumer_id}] No pending leads, waiting...")
                 await asyncio.sleep(2)
                 continue
             
