@@ -951,10 +951,15 @@ async def producer_task(run_id: str):
 async def consumer_task(run_id: str, consumer_id: int, target: int):
     """Consumer: Continuously verifies raw contacts"""
     global verified_in_run
+    logger.info(f"[C{consumer_id}] Consumer started, run_id={run_id}, target={target}")
     while task_status == "running" and task_run_id == run_id:
+        logger.info(f"[C{consumer_id}] Petla - task_status={task_status}, run_id={task_run_id}")
         if task_pause_event.is_set():
+            logger.info(f"[C{consumer_id}] Pause, sleep 1s")
             await asyncio.sleep(1)
             continue
+        
+        logger.info(f"[C{consumer_id}] Sprawdzam target: verified={verified_in_run}, target={target}")
         
         try:
             if verified_in_run >= target:
