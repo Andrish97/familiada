@@ -75,7 +75,8 @@ def load_config():
                 line = line.strip()
                 if line and '=' in line and not line.startswith('#'):
                     key, val = line.split('=', 1)
-                    try: config[key.strip()] = int(val.strip())
+                    val = val.strip().split('#')[0].strip()
+                    try: config[key.strip()] = int(val)
                     except: config[key.strip()] = val.strip()
     return config
 
