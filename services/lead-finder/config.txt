@@ -4,7 +4,7 @@
 # === WYSZUKIWANIE ===
 SEARCH_RESULTS_LIMIT=10          # Max wyników per zapytanie SearXNG
 SEARCH_MIN_RESULTS=5            # Min wyników z wyszukiwania żeby uznać je za sensowne
-MAX_CONCURRENT_SCRAPES=5        # Max równoległych scrapowań (oszczędność RAM/CPU)
+MAX_CONCURRENT_SCRAPES=10       # Max równoległych scrapowań (oszczędność RAM/CPU)
 
 # === AI ===
 AI_DELAY=5                      # Opóźnienie MIĘDZY zapytaniami AI (sekundy) - zapobiega rate limitom
