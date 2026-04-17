@@ -260,7 +260,11 @@ async def consumer_task(run_id, c_id, target):
         
         lead = leads[0]
         logger.info(f"[C{c_id}] Got lead: {lead['url']} | emails: {lead.get('emails_found',[])}")
-        if not await supabase.update('marketing_raw_contacts', {'status': 'processing'}, {'id': lead['id'], 'status': 'pending'}): continue
+        
+        updated = await supabase.update('marketing_raw_contacts', {'status': 'processing', 'processing_started_at': 'now()'}, {'id': lead['id'], 'status': 'pending'})
+        if not updated:
+            logger.info(f"[C{c_id}] Lead already taken by another consumer, skipping")
+            continue
         
         res = await verify_raw_lead(lead, c_id)
         if res is None:
