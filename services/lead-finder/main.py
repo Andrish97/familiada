@@ -59,7 +59,11 @@ def load_config():
 CONFIG = load_config()
 
 def get_cfg(key, default):
-    return CONFIG.get(key, default)
+    val = CONFIG.get(key, default)
+    if isinstance(default, int):
+        try: return int(val)
+        except: return default
+    return val
 
 ROLES = load_txt_lines('roles.txt')
 SEARCH_TEMPLATES = load_txt_lines('templates.txt')
