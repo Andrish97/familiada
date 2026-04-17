@@ -1,0 +1,29 @@
+# Konfiguracja lead-finder
+# Format: KLUCZ=WARTOŚĆ (linie z # = komentarz)
+
+# === BUFFER ===
+RAW_BUFFER_THRESHOLD=20           # Ile pending+processing kontaktów trzymać w buforze zanim produkuj więcej
+
+# === WYSZUKIWANIE ===
+SEARCH_RESULTS_LIMIT=50          # Max wyników per zapytanie SearXNG
+SEARCH_MIN_RESULTS=5            # Min wyników z wyszukiwania żeby uznać je za sensowne
+RAW_MIN_THRESHOLD=10             # Min wyników w tabeli raw żeby nie szukać więcej
+
+# === AI PROVIDER DELAYS ===
+# Opóźnienia MIĘDZY requestami (sekundy) - zapobiegają rate limitom
+# Dla Groq/Gemini ~30 RPM = 1 request / 2 sekundy
+# Dla OpenRouter ~50 RPM = 1 request / 1.2 sekundy
+OPENROUTER_DELAY=1              # Sekundy między requestami do OpenRouter
+GROQ_DELAY=2                    # Sekundy między requestami do Groq
+GEMINI_DELAY=4                  # Sekundy między requestami do Gemini
+PROVIDER_COOLDOWN_SECONDS=60    # Cooldown po przekroczeniu rate limit (sekundy)
+
+# === TIMEOUTY (sekundy) ===
+TIMEOUT_GET_PROVIDER=5          # Pobieranie ustawień providerów z Supabase
+TIMEOUT_IS_PAGE_FRESH=10        # Sprawdzanie czy strona jest świeża
+TIMEOUT_SCRAPE=12               # Scrapowanie strony (httpx)
+TIMEOUT_SCRAPE_JS=15            # Scrapowanie strony JS (Playwright)
+TIMEOUT_SUPABASE_RPC=30         # Wywołania RPC Supabase
+TIMEOUT_AI_OPENROUTER=60        # Timeout AI OpenRouter
+TIMEOUT_AI_GROQ=30             # Timeout AI Groq
+TIMEOUT_SEARCH=25               # Timeout wyszukiwania SearXNG

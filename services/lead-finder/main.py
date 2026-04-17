@@ -41,6 +41,26 @@ def load_txt_lines(filename):
     with open(path, 'r', encoding='utf-8') as f:
         return [l.strip() for l in f if l.strip() and not l.startswith('#')]
 
+def load_config():
+    path = os.path.join(os.path.dirname(__file__), 'config.txt')
+    config = {}
+    if os.path.exists(path):
+        with open(path, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if line and '=' in line and not line.startswith('#'):
+                    key, val = line.split('=', 1)
+                    try:
+                        config[key.strip()] = int(val.strip())
+                    except:
+                        config[key.strip()] = val.strip()
+    return config
+
+CONFIG = load_config()
+
+def get_cfg(key, default):
+    return CONFIG.get(key, default)
+
 ROLES = load_txt_lines('roles.txt')
 SEARCH_TEMPLATES = load_txt_lines('templates.txt')
 NEGATIVE_KEYWORDS = set(load_txt_lines('negative_keywords.txt'))
@@ -48,7 +68,25 @@ NEGATIVE_KEYWORDS = set(load_txt_lines('negative_keywords.txt'))
 BLOCKED_DOMAINS = set(load_txt_lines('blocked_domains.txt'))
 
 EMAIL_REGEX = re.compile(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}')
-RAW_BUFFER_THRESHOLD = 20
+RAW_BUFFER_THRESHOLD = get_cfg('RAW_BUFFER_THRESHOLD', 20)
+
+OPENROUTER_DELAY = get_cfg('OPENROUTER_DELAY', 1)
+GROQ_DELAY = get_cfg('GROQ_DELAY', 2)
+GEMINI_DELAY = get_cfg('GEMINI_DELAY', 4)
+PROVIDER_COOLDOWN_SECONDS = get_cfg('PROVIDER_COOLDOWN_SECONDS', 60)
+
+TIMEOUT_GET_PROVIDER = get_cfg('TIMEOUT_GET_PROVIDER', 5)
+TIMEOUT_IS_PAGE_FRESH = get_cfg('TIMEOUT_IS_PAGE_FRESH', 10)
+TIMEOUT_SCRAPE = get_cfg('TIMEOUT_SCRAPE', 12)
+TIMEOUT_SCRAPE_JS = get_cfg('TIMEOUT_SCRAPE_JS', 15)
+TIMEOUT_SUPABASE_RPC = get_cfg('TIMEOUT_SUPABASE_RPC', 30)
+TIMEOUT_AI_OPENROUTER = get_cfg('TIMEOUT_AI_OPENROUTER', 60)
+TIMEOUT_AI_GROQ = get_cfg('TIMEOUT_AI_GROQ', 30)
+TIMEOUT_SEARCH = get_cfg('TIMEOUT_SEARCH', 25)
+
+SEARCH_RESULTS_LIMIT = get_cfg('SEARCH_RESULTS_LIMIT', 50)
+SEARCH_MIN_RESULTS = get_cfg('SEARCH_MIN_RESULTS', 5)
+RAW_MIN_THRESHOLD = get_cfg('RAW_MIN_THRESHOLD', 10)
 
 GARBAGE_EMAIL_DOMAINS = set(load_txt_lines('garbage_email_domains.txt'))
 SOCIAL_PLATFORMS = tuple(load_txt_lines('social_platforms.txt'))
@@ -65,7 +103,6 @@ verified_in_run = 0
 # --- AI Provider Rate Limit Tracking ---
 provider_cooldowns = {}  # {provider: timestamp_when_available}
 provider_last_request = {}  # {provider: timestamp_of_last_request}
-PROVIDER_COOLDOWN_SECONDS = 60  # Cooldown after rate limit
 
 def get_provider_order():
     """Get provider order from ai_settings table"""
@@ -74,7 +111,7 @@ def get_provider_order():
         r = httpx.get(
             f"{SUPABASE_URL}/rest/v1/ai_settings?select=provider_order,updated_at&id=eq.1&limit=1",
             headers={'apikey': SUPABASE_SERVICE_KEY, 'Authorization': f'Bearer {SUPABASE_SERVICE_KEY}'},
-            timeout=5
+timeout=TIMEOUT_GET_PROVIDER
         )
         if r.status_code == 200:
             data = r.json()
@@ -146,7 +183,7 @@ class SupabaseClient:
             if order: params['order'] = order
             if limit: params['limit'] = limit
             try:
-                r = await client.get(f'{self.url}/rest/v1/{table}', headers=self.headers, params=params, timeout=10)
+                r = await client.get(f'{self.url}/rest/v1/{table}', headers=self.headers, params=params, timeout=TIMEOUT_SUPABASE_RPC)
                 return r.json() if r.status_code == 200 else None
             except Exception as e:
                 logger.error(f"Supabase select error: {e}")
@@ -170,7 +207,7 @@ class SupabaseClient:
             return r.status_code in (200, 204, 404)
     
     async def call_rpc(self, function_name, params=None):
-        async with httpx.AsyncClient(timeout=30) as client:
+        async with httpx.AsyncClient(timeout=TIMEOUT_SUPABASE_RPC) as client:
             headers = {**self.headers, 'Prefer': 'return=minimal'}
             r = await client.post(
                 f'{self.url}/rest/v1/rpc/{function_name}',
@@ -184,7 +221,7 @@ class SupabaseClient:
     
     async def clear_table(self, table):
         """Clear all rows from a table"""
-        async with httpx.AsyncClient(timeout=30) as client:
+        async with httpx.AsyncClient(timeout=TIMEOUT_SUPABASE_RPC) as client:
             logger.info(f"[CLEAR] Deleting all from {table}...")
             r = await client.delete(f'{self.url}/rest/v1/{table}', headers=self.headers)
             logger.info(f"[CLEAR] {table}: status={r.status_code}, response={r.text[:200] if r.text else 'empty'}")
@@ -248,7 +285,7 @@ async def is_page_fresh(url: str, max_age_days: int = 730) -> bool:
     """Check if page was updated recently. Returns True if fresh or can't determine."""
     try:
         import email.utils
-        async with httpx.AsyncClient(timeout=10, follow_redirects=True) as client:
+        async with httpx.AsyncClient(timeout=TIMEOUT_IS_PAGE_FRESH, follow_redirects=True) as client:
             r = await client.get(url, headers={'User-Agent': 'Mozilla/5.0'})
             if r.status_code != 200: return True
             
@@ -268,7 +305,7 @@ async def is_page_fresh(url: str, max_age_days: int = 730) -> bool:
             try:
                 parsed = urlparse(url)
                 sitemap_url = f"{parsed.scheme}://{parsed.netloc}/sitemap.xml"
-                sr = await client.get(sitemap_url, timeout=5)
+                sr = await client.get(sitemap_url, timeout=TIMEOUT_IS_PAGE_FRESH)
                 if sr.status_code == 200:
                     sitemap_text = sr.text
                     url_in_sitemap = parsed.path
@@ -431,7 +468,7 @@ async def scrape_and_save_lead(res: dict, query: str, existing_emails: Set[str])
     try:
         parsed = urlparse(url)
         headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'}
-        async with httpx.AsyncClient(timeout=12, follow_redirects=True, headers=headers) as client:
+        async with httpx.AsyncClient(timeout=TIMEOUT_SCRAPE, follow_redirects=True, headers=headers) as client:
             r_crawl = await client.get(url)
             if r_crawl.status_code == 200:
                 text = r_crawl.text[:50000]
@@ -514,16 +551,18 @@ async def refill_raw_buffer(run_id: str):
     city_name, role_name, target_key = target
     
     all_results = []
-    async with httpx.AsyncClient(timeout=25) as client:
+    async with httpx.AsyncClient(timeout=TIMEOUT_SEARCH) as client:
         for template in SEARCH_TEMPLATES:
             query = template.format(city=city_name, role=role_name)
             try:
-                await log_to_db("info", f"Szukam: {query}")
+                await log_to_db("info", f"[{len(all_results)}] Szukam: {query}")
                 r = await client.get(f'{SEARXNG_URL}/search', params={
-                    'q': query, 'format': 'json', 'language': 'pl-PL', 'region': 'pl-PL', 'limit': 50
+                    'q': query, 'format': 'json', 'language': 'pl-PL', 'region': 'pl-PL', 'limit': SEARCH_RESULTS_LIMIT
                 })
                 if r.status_code == 200:
                     results = r.json().get('results', [])
+                    if len(results) < SEARCH_MIN_RESULTS:
+                        logger.warning(f"[SEARCH] Mało wyników ({len(results)}) dla: {query}")
                     all_results.extend(results)
                 await asyncio.sleep(1)
             except Exception as e:
@@ -657,7 +696,7 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
             
             elif provider == 'groq' and GROQ_API_KEY:
                 try:
-                    async with httpx.AsyncClient(timeout=30) as client:
+                    async with httpx.AsyncClient(timeout=TIMEOUT_SUPABASE_RPC) as client:
                         r = await client.post(
                             "https://api.groq.com/openai/v1/chat/completions",
                             headers={
@@ -692,7 +731,7 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
                         logger.info(f"[C{consumer_id}] Gemini: waiting {delay:.1f}s for rate limit")
                         await asyncio.sleep(delay)
                     
-                    async with httpx.AsyncClient(timeout=30) as client:
+                    async with httpx.AsyncClient(timeout=TIMEOUT_SUPABASE_RPC) as client:
                         r = await client.post(
                             f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent?key={GEMINI_API_KEY}",
                             json={
