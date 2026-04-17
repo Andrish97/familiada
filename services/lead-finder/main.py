@@ -798,27 +798,8 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
         
 
         if not content:
-            logger.warning(f"[C{consumer_id}] No AI provider available - using fallback verification")
-            # Fallback: simple heuristic check when all AI providers fail
-            has_email = bool(emails)
-            has_phone = bool(re.search(r'[\+\d]{7,}', page_text or ''))
-            has_contact_keywords = any(k in (page_text or '').lower() for k in ['kontakt', 'contact', 'oferta', 'usługi', 'cennik', 'tel'])
-            is_social = any(p in url.lower() for p in SOCIAL_PLATFORMS)
-            
-            # Score based on heuristics
-            score = (has_email * 2) + has_phone + (has_contact_keywords * 2) - (is_social * 2)
-            
-            return {
-                'is_event_organizer': score >= 3 and not is_social,
-                'title': title[:50] if title else 'brak',
-                'best_email': emails[0] if emails else '',
-                'short_description': 'Weryfikacja heurystyczna (AI niedostępne)',
-                'reason': f'Fallback: email={has_email} phone={has_phone} contact={has_contact_keywords}',
-                'score_event': score * 10,
-                'seo_spam_score': 50 if is_social else 0,
-                'lead_type': 'fallback',
-                'url': url
-            }
+            logger.error(f"[C{consumer_id}] No AI provider available - skipping lead")
+            return None
         
         match = re.search(r'\{.*\}', content, re.DOTALL)
         if not match:
