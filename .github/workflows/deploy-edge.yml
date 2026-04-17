@@ -31,6 +31,11 @@ jobs:
           # host key pinning (recommended). You can also use StrictHostKeyChecking=no, but better pin.
           ssh-keyscan -H "${{ secrets.SERVER_HOST }}" >> ~/.ssh/known_hosts
 
+      - name: Cleanup old deployments
+        run: |
+          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
+            "mkdir -p /home/${{ secrets.SERVER_USER }}/.deploy/edge-functions/ && find /home/${{ secrets.SERVER_USER }}/.deploy/edge-functions/ -maxdepth 1 -mindepth 1 -exec rm -rf {} +"
+
       - name: Sync functions to server staging
         run: |
           # staging dir per run
@@ -48,3 +53,9 @@ jobs:
           STAGING="/home/${{ secrets.SERVER_USER }}/.deploy/edge-functions/${{ github.sha }}"
           ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
             "/home/${{ secrets.SERVER_USER }}/supabase-selfhost/supabase/scripts/deploy-edge.sh \"$STAGING\""
+
+      - name: Cleanup staging
+        if: always()
+        run: |
+          STAGING="/home/${{ secrets.SERVER_USER }}/.deploy/edge-functions/${{ github.sha }}"
+          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" "rm -rf \"$STAGING\""

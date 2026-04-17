@@ -29,6 +29,11 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -H "${{ secrets.SERVER_HOST }}" >> ~/.ssh/known_hosts
 
+      - name: Cleanup old deployments
+        run: |
+          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
+            "mkdir -p /home/${{ secrets.SERVER_USER }}/.deploy/lead-finder/ && find /home/${{ secrets.SERVER_USER }}/.deploy/lead-finder/ -maxdepth 1 -mindepth 1 -exec rm -rf {} +"
+
       - name: Sync to server staging
         run: |
           STAGING="/home/${{ secrets.SERVER_USER }}/.deploy/lead-finder/${{ github.sha }}"
@@ -45,3 +50,9 @@ jobs:
           STAGING="/home/${{ secrets.SERVER_USER }}/.deploy/lead-finder/${{ github.sha }}"
           ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
             "/home/${{ secrets.SERVER_USER }}/supabase-selfhost/supabase/scripts/deploy-lead-finder.sh \"$STAGING\""
+
+      - name: Cleanup staging
+        if: always()
+        run: |
+          STAGING="/home/${{ secrets.SERVER_USER }}/.deploy/lead-finder/${{ github.sha }}"
+          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" "rm -rf \"$STAGING\""

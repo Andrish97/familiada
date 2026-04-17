@@ -643,11 +643,13 @@ async def refill_raw_buffer(run_id: str):
     
     # Check current pending count
     pending = await supabase.select('marketing_raw_contacts', 'id', {'status': 'pending'}, limit=RAW_BUFFER_THRESHOLD)
-    if pending and len(pending) >= RAW_BUFFER_THRESHOLD:
-        logger.info(f"[PRODUCER] Bufor pełny (>={RAW_BUFFER_THRESHOLD} pending), czekam...")
+    pending_count = len(pending) if pending else 0
+    
+    if pending_count >= RAW_BUFFER_THRESHOLD:
+        logger.info(f"[PRODUCER] Bufor wystarczający ({pending_count} pending), czekam...")
         return
     
-    logger.info("[PRODUCER] Pobieram next target...")
+    logger.info(f"[PRODUCER] Bufor niski ({pending_count}/{RAW_BUFFER_THRESHOLD}). Pobieram next target...")
     target = await fetch_next_target(run_id)
     if not target: 
         logger.warning("[PRODUCER] Brak targetu")
@@ -755,22 +757,28 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
 
     # Try providers in order from settings
     for provider_name in current_order:
-        # 1. Sprawdź cooldown
+        # 1. Sprawdź czy mamy klucz
+        if provider_name in AI_PROVIDERS and not AI_PROVIDERS[provider_name]['key']:
+            logger.info(f"[C{consumer_id}] AI: {provider_name} → pomijam, brak API_KEY")
+            continue
+
+        # 2. Sprawdź cooldown
         if is_provider_on_cooldown(provider_name):
             remaining = get_cooldown_remaining(provider_name)
             logger.info(f"[C{consumer_id}] AI: {provider_name} → pomijam, cooldown {remaining:.0f}s")
             continue
         
-        # 2. Wywołaj AI
+        # 3. Wywołaj AI
+        logger.info(f"[C{consumer_id}] AI: {provider_name} → próba zapytania...")
         status_code, content, error = await call_ai_provider(provider_name, prompt)
         
-        # 3. Obsłuż wynik
+        # 4. Obsłuż wynik
         if status_code == 200:
             logger.info(f"[C{consumer_id}] AI: {provider_name} → 200 OK")
             try:
                 match = re.search(r'\{.*\}', content, re.DOTALL)
                 if not match:
-                    logger.warning(f"[C{consumer_id}] AI: {provider_name} → brak JSON w odpowiedzi")
+                    logger.warning(f"[C{consumer_id}] AI: {provider_name} → brak JSON w odpowiedzi: {content[:200]}")
                     await asyncio.sleep(AI_DELAY)
                     continue
                 
@@ -809,7 +817,7 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
     return None
 
 # --- Main Task Loop ---
-NUM_CONSUMERS = 1
+NUM_CONSUMERS = 3
 
 async def producer_task(run_id: str):
     """Producer: Searches for new raw contacts continuously"""
@@ -860,17 +868,19 @@ async def consumer_task(run_id: str, consumer_id: int, target: int):
             
             logger.info(f"[C{consumer_id}] Calling AI for: {lead_url}")
             result = await verify_raw_lead(run_id, lead, consumer_id)
-            logger.info(f"[C{consumer_id}] AI result: {result.get('is_event_organizer') if result else 'None'}")
             
             if task_status not in ("running", "paused") or task_run_id != run_id:
                 break
             
             if result is None:
-                logger.error(f"[C{consumer_id}] AI failed - aborting")
-                task_stop_event.set()
-                task_status = "cancelled"
-                break
-            elif result.get('is_event_organizer') and result.get('best_email'):
+                logger.error(f"[C{consumer_id}] AI failed for {lead_url} - reverting to pending")
+                await supabase.update('marketing_raw_contacts', {'status': 'pending'}, {'id': lead_id})
+                await asyncio.sleep(5) # Wait a bit before next attempt
+                continue
+
+            logger.info(f"[C{consumer_id}] AI result: {result.get('is_event_organizer')}")
+            
+            if result.get('is_event_organizer') and result.get('best_email'):
                 await supabase.insert('marketing_verified_contacts', {
                     'title': result.get('title') or lead.get('title'),
                     'email': result['best_email'],
