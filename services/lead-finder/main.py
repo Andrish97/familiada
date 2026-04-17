@@ -52,6 +52,10 @@ def load_config():
     return config
 
 CONFIG = load_config()
+if CONFIG:
+    logger.info(f"[CONFIG] Loaded {len(CONFIG)} values: {CONFIG}")
+else:
+    logger.warning("[CONFIG] No config.txt found, using defaults")
 
 def get_cfg(key, default):
     val = CONFIG.get(key, default)
@@ -85,6 +89,10 @@ TIMEOUT_SEARCH = get_cfg('TIMEOUT_SEARCH', 25)
 
 SEARCH_RESULTS_LIMIT = get_cfg('SEARCH_RESULTS_LIMIT', 50)
 SEARCH_MIN_RESULTS = get_cfg('SEARCH_MIN_RESULTS', 5)
+
+logger.info(f"[CONFIG] Providers: OPENROUTER_DELAY={OPENROUTER_DELAY}s GROQ_DELAY={GROQ_DELAY}s GEMINI_DELAY={GEMINI_DELAY}s")
+logger.info(f"[CONFIG] Search: RESULTS_LIMIT={SEARCH_RESULTS_LIMIT} MIN_RESULTS={SEARCH_MIN_RESULTS}")
+logger.info(f"[CONFIG] Buffer: RAW_BUFFER={RAW_BUFFER_THRESHOLD}")
 
 GARBAGE_EMAIL_DOMAINS = set(load_txt_lines('garbage_email_domains.txt'))
 SOCIAL_PLATFORMS = tuple(load_txt_lines('social_platforms.txt'))
