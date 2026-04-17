@@ -448,37 +448,37 @@ async def scrape_with_playwright(url: str, timeout: int = 15) -> tuple[str, str,
     async with playwright_semaphore:
         try:
             from playwright.async_api import async_playwright
-        
-        async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True)
-            context = await browser.new_context(
-                user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                viewport={'width': 1280, 'height': 720}
-            )
-            page = await context.new_page()
             
-            try:
-                response = await page.goto(url, wait_until='networkidle', timeout=timeout * 1000)
-                if not response or response.status >= 400:
+            async with async_playwright() as p:
+                browser = await p.chromium.launch(headless=True)
+                context = await browser.new_context(
+                    user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                    viewport={'width': 1280, 'height': 720}
+                )
+                page = await context.new_page()
+                
+                try:
+                    response = await page.goto(url, wait_until='networkidle', timeout=timeout * 1000)
+                    if not response or response.status >= 400:
+                        await browser.close()
+                        return '', '', ''
+                    
+                    await page.wait_for_timeout(2000)
+                    
+                    title = await page.title()
+                    text = await page.inner_text('body')
+                    html = await page.content()
+                    
+                    await browser.close()
+                    return title, text[:50000], html[:100000]
+                    
+                except Exception as e:
+                    logger.debug(f"Playwright error for {url}: {e}")
                     await browser.close()
                     return '', '', ''
-                
-                await page.wait_for_timeout(2000)
-                
-                title = await page.title()
-                text = await page.inner_text('body')
-                html = await page.content()
-                
-                await browser.close()
-                return title, text[:50000], html[:100000]
-                
-            except Exception as e:
-                logger.debug(f"Playwright error for {url}: {e}")
-                await browser.close()
-                return '', '', ''
-    except Exception as e:
-        logger.debug(f"Playwright init error: {e}")
-        return '', '', ''
+        except Exception as e:
+            logger.debug(f"Playwright init error: {e}")
+            return '', '', ''
 
 async def scrape_and_save_lead(res: dict, query: str, existing_emails: Set[str]):
     """Scrapes a single search result and saves to raw_contacts if valid."""
