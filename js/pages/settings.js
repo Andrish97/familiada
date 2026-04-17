@@ -6032,6 +6032,7 @@ function wireEvents() {
 
       if (e.metaKey || e.ctrlKey) {
         toggleCell(row, col);
+        console.log('[MC] Toggle cell:', row, col, 'selected:', mcState.selectedCells.length);
       } else if (e.shiftKey && mcState.selectedCells.length > 0) {
         const last = mcState.selectedCells[mcState.selectedCells.length - 1];
         selectRange(last.row, last.col, row, col);
@@ -6145,7 +6146,8 @@ function wireEvents() {
 
   async function mcMarkUsed() {
     const rows = new Set(mcState.selectedCells.map(c => c.row));
-    if (!rows.size) return;
+    console.log('[MC] mcMarkUsed called, selectedCells:', mcState.selectedCells.length, 'rows:', rows.size);
+    if (!rows.size) { console.log('[MC] No rows selected!'); return; }
     try {
       const selectedContacts = [...rows].map(i => mcState.contacts[i]).filter(Boolean);
       if (!selectedContacts.length) return;
@@ -6161,7 +6163,8 @@ function wireEvents() {
 
   async function mcDeleteSelected() {
     const rows = new Set(mcState.selectedCells.map(c => c.row));
-    if (!rows.size) return;
+    console.log('[MC] mcDeleteSelected called, selectedCells:', mcState.selectedCells.length, 'rows:', rows.size);
+    if (!rows.size) { console.log('[MC] No rows selected!'); return; }
     if (!confirm(`Usunąć ${rows.size} kontaktów?`)) return;
     try {
       const ids = [...rows].map(i => mcState.contacts[i]?.id).filter(Boolean);
