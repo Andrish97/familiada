@@ -1686,13 +1686,7 @@ function aiProviderLabel(provider) {
 function renderAiProviderOrder() {
   const el = document.getElementById("aiProviderOrderList");
   if (!el) return;
-  const status = mcState?.status;
-  const isLocked = status === 'idle' || status === 'completed' || status === 'cancelled';
   el.innerHTML = "";
-  if (isLocked) {
-    el.innerHTML = '<div style="opacity:.5;font-size:12px">Kolejność zablokowana - uruchom zlecenie aby edytować</div>';
-    return;
-  }
   aiProviderOrder.forEach((provider, idx) => {
     const row = document.createElement("div");
     row.className = "provider-order-row";
