@@ -670,7 +670,7 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
                         logger.info(f"[C{consumer_id}] Groq response: {r.status_code}")
                         if r.status_code == 200:
                             content = r.json()['choices'][0]['message']['content']
-                            break  # Success, exit loop
+                            break
                         elif r.status_code == 429:
                             set_provider_cooldown('groq')
                             logger.warning(f"[C{consumer_id}] Groq rate limited")
@@ -678,7 +678,38 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
                             logger.error(f"[C{consumer_id}] Groq ERROR: {r.text[:200]}")
                 except Exception as e:
                     logger.error(f"[C{consumer_id}] Groq exception: {e}")
+            
+            elif provider == 'gemini' and GEMINI_API_KEY:
+                try:
+                    delay = needs_request_delay('gemini')
+                    if delay > 0:
+                        logger.info(f"[C{consumer_id}] Gemini: waiting {delay:.1f}s for rate limit")
+                        await asyncio.sleep(delay)
+                    
+                    async with httpx.AsyncClient(timeout=30) as client:
+                        r = await client.post(
+                            f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent?key={GEMINI_API_KEY}",
+                            json={
+                                'contents': [{'parts': [{'text': prompt}]}],
+                                'generationConfig': {'temperature': 0.1}
+                            }
+                        )
+                        logger.info(f"[C{consumer_id}] Gemini response: {r.status_code}")
+                        if r.status_code == 200:
+                            data = r.json()
+                            content = data.get('candidates', [{}])[0].get('content', {}).get('parts', [{}])[0].get('text', '')
+                            if content:
+                                record_request_time('gemini')
+                                break
+                        elif r.status_code == 429:
+                            set_provider_cooldown('gemini')
+                            logger.warning(f"[C{consumer_id}] Gemini rate limited")
+                        else:
+                            logger.error(f"[C{consumer_id}] Gemini ERROR: {r.text[:200]}")
+                except Exception as e:
+                    logger.error(f"[C{consumer_id}] Gemini exception: {e}")
         
+
         if not content:
             logger.error(f"[C{consumer_id}] No AI provider available")
             return None
