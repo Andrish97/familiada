@@ -52,10 +52,6 @@ def load_config():
     return config
 
 CONFIG = load_config()
-if CONFIG:
-    logger.info(f"[CONFIG] Loaded {len(CONFIG)} values: {CONFIG}")
-else:
-    logger.warning("[CONFIG] No config.txt found, using defaults")
 
 def get_cfg(key, default):
     val = CONFIG.get(key, default)
@@ -159,6 +155,14 @@ def record_request_time(provider: str):
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger("lead-finder")
+
+if CONFIG:
+    logger.info(f"[CONFIG] Loaded {len(CONFIG)} values")
+else:
+    logger.warning("[CONFIG] No config.txt found, using defaults")
+logger.info(f"[CONFIG] Providers: OPENROUTER_DELAY={OPENROUTER_DELAY}s GROQ_DELAY={GROQ_DELAY}s GEMINI_DELAY={GEMINI_DELAY}s")
+logger.info(f"[CONFIG] Search: RESULTS_LIMIT={SEARCH_RESULTS_LIMIT} MIN_RESULTS={SEARCH_MIN_RESULTS}")
+logger.info(f"[CONFIG] Buffer: RAW_BUFFER={RAW_BUFFER_THRESHOLD}")
 
 # --- Clients ---
 from fastapi import FastAPI, HTTPException
