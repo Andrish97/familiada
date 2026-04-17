@@ -1,37 +1,31 @@
-FROM python:3.12-slim
+# Używamy oficjalnego obrazu Playwright, który ma już zainstalowane przeglądarki i pakiety systemowe
+FROM mcr.microsoft.com/playwright/python:v1.52.0-jammy
 
 WORKDIR /app
 
-# Zapobieganie interaktywnym pytaniom podczas instalacji
+# Zapobieganie interaktywnym pytaniom
 ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONUNBUFFERED=1
 
-# 1. System: Podstawowe narzędzia (rzadko się zmieniają)
-RUN apt-get update && apt-get install -y --no-install-recommends \
-        curl ca-certificates \
-    && apt-get upgrade -y \
-    && rm -rf /var/lib/apt/lists/*
-
-# 2. Pip: Narzędzia instalacyjne
+# 1. Pip: Narzędzia instalacyjne
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 
-# 3. Zależności: Kopiujemy requirements.txt
+# 2. Zależności Pythona: Kopiujemy i instalujemy
+# requirements.txt zawiera już playwright==1.52.0, więc pip to sprawdzi
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 4. Playwright: Instalacja przeglądarki i zależności systemowych
-# Musimy wywołać apt-get update, aby install-deps mogło pobrać pakiety
-RUN apt-get update && \
-    playwright install-deps chromium && \
-    playwright install chromium && \
-    rm -rf /var/lib/apt/lists/*
-
-# 5. Pliki pomocnicze
+# 3. Pliki pomocnicze (rzadko się zmieniają)
 COPY *.txt ./
 RUN rm -f requirements.txt
 
-# 6. Kod aplikacji
+# 4. Kod aplikacji (zmienia się najczęściej)
 COPY main.py .
 
 EXPOSE 8001
+
+# W tym obrazie przeglądarki są już w /ms-playwright, więc nie trzeba ich instalować
+# Ale dla pewności sprawdzamy czy są dostępne dla użytkownika
+RUN playwright install chromium
 
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001"]
