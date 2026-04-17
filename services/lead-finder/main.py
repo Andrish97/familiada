@@ -117,7 +117,7 @@ def get_provider_order():
     """Get provider order from ai_settings table"""
     import httpx
     try:
-        url = f"{SUPABASE_URL}/rest/v1/ai_settings?select=provider_order,updated_at&id=eq.1"
+        url = f"{SUPABASE_URL}/rest/v1/ai_settings?select=provider_order,updated_at&limit=1"
         r = httpx.get(url, headers={'apikey': SUPABASE_SERVICE_KEY, 'Authorization': f'Bearer {SUPABASE_SERVICE_KEY}'}, timeout=TIMEOUT_GET_PROVIDER)
         logger.info(f"[AI_PROVIDER] GET ai_settings: {r.status_code} {r.text[:200] if r.text else 'empty'}")
         if r.status_code == 200:
