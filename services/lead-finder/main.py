@@ -701,100 +701,116 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
         provider_order = get_provider_order()  # Refresh order before each request
         
         # Try providers in order from settings
-        for provider in provider_order:
-            if is_provider_on_cooldown(provider):
-                logger.info(f"[C{consumer_id}] {provider} on cooldown, skipping")
+        for attempt in range(3):  # Max 3 attempts
+            # Check if all providers on cooldown
+            import time
+            now = time.time()
+            all_on_cooldown = all(is_provider_on_cooldown(p) for p in provider_order)
+            
+            if all_on_cooldown:
+                wait_times = [provider_cooldowns.get(p, now) - now for p in provider_order]
+                wait = min([w for w in wait_times if w > 0]) if any(w > 0 for w in wait_times) else PROVIDER_COOLDOWN_SECONDS
+                logger.info(f"[C{consumer_id}] All AI on cooldown, waiting {wait:.0f}s")
+                await asyncio.sleep(min(wait + 1, 120))
+                provider_order = get_provider_order()  # Refresh
                 continue
             
-            if provider == 'openrouter' and OPENROUTER_API_KEY:
-                try:
-                    async with httpx.AsyncClient(timeout=60) as client:
-                        r = await client.post(
-                            "https://openrouter.ai/api/v1/chat/completions",
-                            headers={
-                                'Authorization': f'Bearer {OPENROUTER_API_KEY}',
-                                'Content-Type': 'application/json'
-                            },
-                            json={
-                                'model': OPENROUTER_MODEL,
-                                'messages': [
-                                    {'role': 'system', 'content': 'Odpowiadaj tylko JSON bez markdown.'},
-                                    {'role': 'user', 'content': prompt}
-                                ],
-                                'temperature': 0.1
-                            }
-                        )
-                        logger.info(f"[C{consumer_id}] OpenRouter response: {r.status_code}")
-                        if r.status_code == 200:
-                            content = r.json()['choices'][0]['message']['content']
-                            break  # Success, exit loop
-                        elif r.status_code == 429:
-                            set_provider_cooldown('openrouter')
-                            logger.warning(f"[C{consumer_id}] OpenRouter rate limited")
-                        else:
-                            logger.error(f"[C{consumer_id}] OpenRouter ERROR: {r.text[:200]}")
-                except Exception as e:
-                    logger.error(f"[C{consumer_id}] OpenRouter exception: {e}")
-            
-            elif provider == 'groq' and GROQ_API_KEY:
-                try:
-                    async with httpx.AsyncClient(timeout=TIMEOUT_SUPABASE_RPC) as client:
-                        r = await client.post(
-                            "https://api.groq.com/openai/v1/chat/completions",
-                            headers={
-                                'Authorization': f'Bearer {GROQ_API_KEY}',
-                                'Content-Type': 'application/json'
-                            },
-                            json={
-                                'model': GROQ_MODEL,
-                                'messages': [
-                                    {'role': 'system', 'content': 'Odpowiadaj tylko JSON bez markdown.'},
-                                    {'role': 'user', 'content': prompt}
-                                ],
-                                'temperature': 0.1
-                            }
-                        )
-                        logger.info(f"[C{consumer_id}] Groq response: {r.status_code}")
-                        if r.status_code == 200:
-                            content = r.json()['choices'][0]['message']['content']
-                            break
-                        elif r.status_code == 429:
-                            set_provider_cooldown('groq')
-                            logger.warning(f"[C{consumer_id}] Groq rate limited")
-                        else:
-                            logger.error(f"[C{consumer_id}] Groq ERROR: {r.text[:200]}")
-                except Exception as e:
-                    logger.error(f"[C{consumer_id}] Groq exception: {e}")
-            
-            elif provider == 'gemini' and GEMINI_API_KEY:
-                try:
-                    delay = needs_request_delay('gemini')
-                    if delay > 0:
-                        logger.info(f"[C{consumer_id}] Gemini: waiting {delay:.1f}s for rate limit")
-                        await asyncio.sleep(delay)
-                    
-                    async with httpx.AsyncClient(timeout=TIMEOUT_SUPABASE_RPC) as client:
-                        r = await client.post(
-                            f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent?key={GEMINI_API_KEY}",
-                            json={
-                                'contents': [{'parts': [{'text': prompt}]}],
-                                'generationConfig': {'temperature': 0.1}
-                            }
-                        )
-                        logger.info(f"[C{consumer_id}] Gemini response: {r.status_code}")
-                        if r.status_code == 200:
-                            data = r.json()
-                            content = data.get('candidates', [{}])[0].get('content', {}).get('parts', [{}])[0].get('text', '')
-                            if content:
-                                record_request_time('gemini')
+            for provider in provider_order:
+                if is_provider_on_cooldown(provider):
+                    continue
+                
+                if provider == 'openrouter' and OPENROUTER_API_KEY:
+                    try:
+                        async with httpx.AsyncClient(timeout=60) as client:
+                            r = await client.post(
+                                "https://openrouter.ai/api/v1/chat/completions",
+                                headers={
+                                    'Authorization': f'Bearer {OPENROUTER_API_KEY}',
+                                    'Content-Type': 'application/json'
+                                },
+                                json={
+                                    'model': OPENROUTER_MODEL,
+                                    'messages': [
+                                        {'role': 'system', 'content': 'Odpowiadaj tylko JSON bez markdown.'},
+                                        {'role': 'user', 'content': prompt}
+                                    ],
+                                    'temperature': 0.1
+                                }
+                            )
+                            logger.info(f"[C{consumer_id}] OpenRouter response: {r.status_code}")
+                            if r.status_code == 200:
+                                content = r.json()['choices'][0]['message']['content']
                                 break
-                        elif r.status_code == 429:
-                            set_provider_cooldown('gemini')
-                            logger.warning(f"[C{consumer_id}] Gemini rate limited")
-                        else:
-                            logger.error(f"[C{consumer_id}] Gemini ERROR: {r.text[:200]}")
-                except Exception as e:
-                    logger.error(f"[C{consumer_id}] Gemini exception: {e}")
+                            elif r.status_code == 429:
+                                set_provider_cooldown('openrouter')
+                                logger.warning(f"[C{consumer_id}] OpenRouter rate limited")
+                            else:
+                                logger.error(f"[C{consumer_id}] OpenRouter ERROR: {r.text[:200]}")
+                    except Exception as e:
+                        logger.error(f"[C{consumer_id}] OpenRouter exception: {e}")
+                
+                elif provider == 'groq' and GROQ_API_KEY:
+                    try:
+                        async with httpx.AsyncClient(timeout=TIMEOUT_SUPABASE_RPC) as client:
+                            r = await client.post(
+                                "https://api.groq.com/openai/v1/chat/completions",
+                                headers={
+                                    'Authorization': f'Bearer {GROQ_API_KEY}',
+                                    'Content-Type': 'application/json'
+                                },
+                                json={
+                                    'model': GROQ_MODEL,
+                                    'messages': [
+                                        {'role': 'system', 'content': 'Odpowiadaj tylko JSON bez markdown.'},
+                                        {'role': 'user', 'content': prompt}
+                                    ],
+                                    'temperature': 0.1
+                                }
+                            )
+                            logger.info(f"[C{consumer_id}] Groq response: {r.status_code}")
+                            if r.status_code == 200:
+                                content = r.json()['choices'][0]['message']['content']
+                                break
+                            elif r.status_code == 429:
+                                set_provider_cooldown('groq')
+                                logger.warning(f"[C{consumer_id}] Groq rate limited")
+                            else:
+                                logger.error(f"[C{consumer_id}] Groq ERROR: {r.text[:200]}")
+                    except Exception as e:
+                        logger.error(f"[C{consumer_id}] Groq exception: {e}")
+                
+                elif provider == 'gemini' and GEMINI_API_KEY:
+                    try:
+                        delay = needs_request_delay('gemini')
+                        if delay > 0:
+                            logger.info(f"[C{consumer_id}] Gemini: waiting {delay:.1f}s for rate limit")
+                            await asyncio.sleep(delay)
+                        
+                        async with httpx.AsyncClient(timeout=TIMEOUT_SUPABASE_RPC) as client:
+                            r = await client.post(
+                                f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent?key={GEMINI_API_KEY}",
+                                json={
+                                    'contents': [{'parts': [{'text': prompt}]}],
+                                    'generationConfig': {'temperature': 0.1}
+                                }
+                            )
+                            logger.info(f"[C{consumer_id}] Gemini response: {r.status_code}")
+                            if r.status_code == 200:
+                                data = r.json()
+                                content = data.get('candidates', [{}])[0].get('content', {}).get('parts', [{}])[0].get('text', '')
+                                if content:
+                                    record_request_time('gemini')
+                                    break
+                            elif r.status_code == 429:
+                                set_provider_cooldown('gemini')
+                                logger.warning(f"[C{consumer_id}] Gemini rate limited")
+                            else:
+                                logger.error(f"[C{consumer_id}] Gemini ERROR: {r.text[:200]}")
+                    except Exception as e:
+                        logger.error(f"[C{consumer_id}] Gemini exception: {e}")
+            
+            if content:
+                break  # Success, exit attempt loop
         
 
         if not content:
