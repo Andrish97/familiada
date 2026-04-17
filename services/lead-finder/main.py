@@ -951,69 +951,47 @@ async def producer_task(run_id: str):
 async def consumer_task(run_id: str, consumer_id: int, target: int):
     """Consumer: Continuously verifies raw contacts"""
     global verified_in_run
-    logger.info(f"[C{consumer_id}] Consumer started, run_id={run_id}, target={target}")
+    logger.info(f"[C{consumer_id}] Consumer started for run {run_id}")
+    
     while True:
-        logger.info(f"[C{consumer_id}] While start - task_status={task_status}, run_id={task_run_id}, target={target}")
         if task_status != "running" or task_run_id != run_id:
-            logger.info(f"[C{consumer_id}] Warunek break: task_status={task_status}, run_id={task_run_id}")
+            logger.info(f"[C{consumer_id}] Breaking: status={task_status}, run_id={task_run_id}")
             break
-        logger.info(f"[C{consumer_id}] Petla - task_status={task_status}, run_id={task_run_id}")
+        
         if task_pause_event.is_set():
-            logger.info(f"[C{consumer_id}] Pause, sleep 1s")
             await asyncio.sleep(1)
             continue
         
-        logger.info(f"[C{consumer_id}] Sprawdzam target: verified={verified_in_run}, target={target}")
-        
         try:
             if verified_in_run >= target:
-                logger.info(f"[C{consumer_id}] Cel osiągnięty ({verified_in_run}/{target}), czekam na zakończenie...")
+                logger.info(f"[C{consumer_id}] Target reached ({verified_in_run}/{target})")
                 await asyncio.sleep(3)
                 continue
             
             raw_leads = await supabase.select('marketing_raw_contacts', '*', {'status': 'pending'}, limit=1)
-            logger.info(f"[C{consumer_id}] Pobralem raw_leads: {len(raw_leads) if raw_leads else 0}")
             if not raw_leads or len(raw_leads) == 0:
-                if verified_in_run >= target:
-                    continue
-                logger.info(f"[C{consumer_id}] Brak pending kontaktów, czekam 2s...")
+                logger.info(f"[C{consumer_id}] No pending leads, waiting...")
                 await asyncio.sleep(2)
                 continue
             
             lead = raw_leads[0]
             lead_id = lead['id']
             lead_url = lead.get('url')
-            logger.info(f"[C{consumer_id}] Pobrano lead: {lead_id} - {lead_url}")
+            logger.info(f"[C{consumer_id}] Processing lead: {lead_url}")
             
-            # Atomic lock: only update if still pending
-            update_ok = await supabase.update('marketing_raw_contacts', {'status': 'processing'}, {'id': lead_id, 'status': 'pending'})
+            await supabase.update('marketing_raw_contacts', {'status': 'processing'}, {'id': lead_id, 'status': 'pending'})
             
-            # Verify we got the lock
-            check = await supabase.select('marketing_raw_contacts', 'status', {'id': lead_id})
-            if not check or check[0].get('status') != 'processing':
-                logger.info(f"[C{consumer_id}] Lead {lead_id} już w processing, pomijam")
-                continue
-            
-            await log_to_db("info", f"[C{consumer_id}] Weryfikacja AI: {lead_url}")
+            logger.info(f"[C{consumer_id}] Calling AI for: {lead_url}")
             result = await verify_raw_lead(run_id, lead, consumer_id)
+            logger.info(f"[C{consumer_id}] AI result: {result.get('is_event_organizer') if result else 'None'}")
             
             if task_status not in ("running", "paused") or task_run_id != run_id:
                 break
             
             if result is None:
-                # AI failed after all retries - abort the job
-                logger.error(f"[C{consumer_id}] AI failed after retries - aborting job")
+                logger.error(f"[C{consumer_id}] AI failed - aborting")
                 task_stop_event.set()
                 task_status = "cancelled"
-                await log_to_db("error", f"[C{consumer_id}] Zlecenie przerwane - AI nie odpowiadają")
-                if TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID:
-                    import requests
-                    try:
-                        requests.post(f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage", json={
-                            "chat_id": TELEGRAM_CHAT_ID,
-                            "text": f"⚠️ Zlecenie przerwane!\n\nAI nie odpowiadają (wszystkie na cooldown lub błąd)."
-                        }, timeout=10)
-                    except: pass
                 break
             elif result.get('is_event_organizer') and result.get('best_email'):
                 await supabase.insert('marketing_verified_contacts', {
@@ -1024,27 +1002,18 @@ async def consumer_task(run_id: str, consumer_id: int, target: int):
                     'verify_reason': result.get('reason', '')[:500]
                 })
                 verified_in_run += 1
-                reason = result.get('reason', '')
-                lead_type = result.get('lead_type', '')
-                await log_to_db("success", f"[C{consumer_id}] Zweryfikowano ({verified_in_run}/{target}): {result.get('url', lead_url)} | type:{lead_type} | ai:{result.get('score_event', '?')} | spam:{result.get('seo_spam_score', '?')} | powod: {reason}")
+                logger.info(f"[C{consumer_id}] Verified! ({verified_in_run}/{target})")
                 await supabase.delete('marketing_raw_contacts', {'id': lead_id})
-            elif result.get('is_event_organizer') and not result.get('best_email'):
-                reject_reason = 'Brak prawidlowego emaila kontaktowego'
-                await supabase.update('marketing_raw_contacts', {
-                    'status': 'rejected',
-                    'reject_reason': reject_reason
-                }, {'id': lead_id})
-                await log_to_db("warning", f"[C{consumer_id}] Odrzucono (brak maila): {lead_url} | powod: {reject_reason}")
             else:
-                reject_reason = result.get('reason') or 'Nie jest organizatorem eventow'
-                await supabase.update('marketing_raw_contacts', {
-                    'status': 'rejected',
-                    'reject_reason': reject_reason[:500]
-                }, {'id': lead_id})
-                await log_to_db("warning", f"[C{consumer_id}] Odrzucono: {lead_url} | type:{result.get('lead_type', '?')} | ai:{result.get('score_event', '?')} | spam:{result.get('seo_spam_score', '?')} | powod: {reject_reason}")
+                reason = result.get('reason') or 'Not organizer'
+                await supabase.update('marketing_raw_contacts', {'status': 'rejected', 'reject_reason': reason[:500]}, {'id': lead_id})
+                logger.info(f"[C{consumer_id}] Rejected: {reason[:50]}")
+                
         except Exception as e:
-            logger.error(f"Consumer {consumer_id} error: {e}")
+            logger.error(f"[C{consumer_id}] Error: {e}")
             await asyncio.sleep(1)
+    
+    logger.info(f"[C{consumer_id}] Consumer finished")
 
 async def cleanup_on_cancel():
     """Revert all processing contacts back to pending when cancelled"""
