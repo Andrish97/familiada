@@ -602,12 +602,18 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
     text_str = page_text[:2000] if page_text else 'brak'
     title_str = (title or 'brak')[:200]
     
-    prompt = prompt_template.format(
-        url=url,
-        title=title_str,
-        emails=emails_str,
-        text=text_str
-    )
+    try:
+        prompt = prompt_template.format(
+            url=url,
+            title=title_str,
+            emails=emails_str,
+            text=text_str
+        )
+    except Exception as e:
+        logger.error(f"[C{consumer_id}] Prompt format error: {e}")
+        return None
+    
+    logger.info(f"[C{consumer_id}] Prompt length: {len(prompt)}")
 
     try:
         content = None
