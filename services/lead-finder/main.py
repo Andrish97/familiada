@@ -125,6 +125,7 @@ task_status = "idle" # idle, running, paused, cancelled, completed
 task_run_id = None
 verified_in_run = 0
 provider_order = ['openrouter', 'groq', 'gemini']  # Loaded at startup
+scrape_semaphore = asyncio.Semaphore(5)  # Max 5 równoległych scrapowań
 
 # --- AI Provider Rate Limit Tracking ---
 provider_cooldowns = {}  # {provider: timestamp_kiedy_dostepny}
@@ -636,9 +637,9 @@ async def refill_raw_buffer(run_id: str):
     logger.info("[PRODUCER] refill_raw_buffer: start")
     
     # Skip if too many pending already (but allow some)
-    pending = await supabase.select('marketing_raw_contacts', 'id', {'status': 'pending'})
-    if pending and len(pending) > 100:
-        logger.info(f"[PRODUCER] Too many pending ({len(pending)}), waiting...")
+    pending = await supabase.select('marketing_raw_contacts', 'id', {'status': 'pending'}, limit=100)
+    if pending and len(pending) >= 100:
+        logger.info(f"[PRODUCER] Bufor pełny (>=100 pending), czekam...")
         return
     
     logger.info("[PRODUCER] Pobieram next target...")
@@ -650,21 +651,15 @@ async def refill_raw_buffer(run_id: str):
     logger.info(f"[PRODUCER] Target: {target_key}")
     
     all_results = []
-    logger.info(f"[PRODUCER] Szukam z {len(SEARCH_TEMPLATES)} szablonami...")
     async with httpx.AsyncClient(timeout=TIMEOUT_SEARCH) as client:
         for template in SEARCH_TEMPLATES:
             query = template.format(city=city_name, role=role_name)
             try:
-                logger.info(f"[PRODUCER] SearXNG query: {query}")
                 r = await client.get(f'{SEARXNG_URL}/search', params={
                     'q': query, 'format': 'json', 'language': 'pl-PL', 'region': 'pl-PL', 'limit': SEARCH_RESULTS_LIMIT
                 })
-                logger.info(f"[PRODUCER] SearXNG response: {r.status_code}")
                 if r.status_code == 200:
                     results = r.json().get('results', [])
-                    logger.info(f"[PRODUCER] Wyników: {len(results)}")
-                    if len(results) < SEARCH_MIN_RESULTS:
-                        logger.warning(f"[SEARCH] Mało wyników ({len(results)}) dla: {query}")
                     all_results.extend(results)
                 await asyncio.sleep(1)
             except Exception as e:
@@ -679,17 +674,15 @@ async def refill_raw_buffer(run_id: str):
                 seen_urls.add(u)
                 unique_results.append(res)
 
-        verified_contacts = await supabase.select('marketing_verified_contacts', 'email')
-        raw_contacts = await supabase.select('marketing_raw_contacts', 'emails_found')
-        existing_emails = {v['email'].lower() for v in (verified_contacts or []) if v.get('email')}
-        for r in (raw_contacts or []):
-            raw_list = r.get('emails_found', [])
-            if isinstance(raw_list, str):
-                try: raw_list = json.loads(raw_list)
-                except: raw_list = []
-            for e in raw_list: existing_emails.add(e.lower())
+        # Skip huge memory usage - deduplicate via DB in scrape_and_save_lead
+        existing_emails = set() 
 
-        tasks = [scrape_and_save_lead(res, "batch", existing_emails) for res in unique_results]
+        async def sem_scrape(res):
+            async with scrape_semaphore:
+                return await scrape_and_save_lead(res, "batch", existing_emails)
+
+        logger.info(f"[PRODUCER] Scrapowanie {len(unique_results)} wyników...")
+        tasks = [sem_scrape(res) for res in unique_results]
         new_counts = await asyncio.gather(*tasks)
         total_new = sum(new_counts)
         if total_new > 0:
