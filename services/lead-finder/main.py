@@ -778,7 +778,27 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
                             logger.info(f"[C{consumer_id}] OpenRouter response: {r.status_code}")
                             if r.status_code == 200:
                                 content = r.json()['choices'][0]['message']['content']
-                                break
+                                match = re.search(r'\{.*\}', content, re.DOTALL)
+                                if not match:
+                                    logger.warning(f"[C{consumer_id}] {provider}: Brak JSON, następny provider")
+                                    continue
+                                res = json.loads(match.group().replace("'", '"'))
+                                ok_val = res.get('ok', 0)
+                                is_organizer = ok_val in [1, True, '1', 'true', 'True']
+                                raw_email = res.get('email', '') or ''
+                                email_match = re.match(r'^[^@\s]+@[^@\s]+\.[^@\s]+$', raw_email.lower())
+                                best_email = raw_email if email_match else ''
+                                return {
+                                    'is_event_organizer': is_organizer,
+                                    'title': (res.get('title') or '')[:50],
+                                    'best_email': best_email,
+                                    'short_description': res.get('short_description', '')[:200],
+                                    'reason': res.get('reason', '')[:200],
+                                    'score_event': res.get('score_event', 0),
+                                    'seo_spam_score': res.get('seo_spam_score', 0),
+                                    'lead_type': res.get('type', ''),
+                                    'url': url
+                                }
                             elif r.status_code == 429:
                                 set_provider_cooldown('openrouter')
                                 logger.warning(f"[C{consumer_id}] OpenRouter rate limited")
@@ -808,7 +828,27 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
                             logger.info(f"[C{consumer_id}] Groq response: {r.status_code}")
                             if r.status_code == 200:
                                 content = r.json()['choices'][0]['message']['content']
-                                break
+                                match = re.search(r'\{.*\}', content, re.DOTALL)
+                                if not match:
+                                    logger.warning(f"[C{consumer_id}] {provider}: Brak JSON, następny provider")
+                                    continue
+                                res = json.loads(match.group().replace("'", '"'))
+                                ok_val = res.get('ok', 0)
+                                is_organizer = ok_val in [1, True, '1', 'true', 'True']
+                                raw_email = res.get('email', '') or ''
+                                email_match = re.match(r'^[^@\s]+@[^@\s]+\.[^@\s]+$', raw_email.lower())
+                                best_email = raw_email if email_match else ''
+                                return {
+                                    'is_event_organizer': is_organizer,
+                                    'title': (res.get('title') or '')[:50],
+                                    'best_email': best_email,
+                                    'short_description': res.get('short_description', '')[:200],
+                                    'reason': res.get('reason', '')[:200],
+                                    'score_event': res.get('score_event', 0),
+                                    'seo_spam_score': res.get('seo_spam_score', 0),
+                                    'lead_type': res.get('type', ''),
+                                    'url': url
+                                }
                             elif r.status_code == 429:
                                 set_provider_cooldown('groq')
                                 logger.warning(f"[C{consumer_id}] Groq rate limited")
@@ -838,7 +878,29 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
                                 content = data.get('candidates', [{}])[0].get('content', {}).get('parts', [{}])[0].get('text', '')
                                 if content:
                                     record_request_time('gemini')
-                                    break
+                                    # Check JSON
+                                    match = re.search(r'\{.*\}', content, re.DOTALL)
+                                    if not match:
+                                        logger.warning(f"[C{consumer_id}] {provider}: Brak JSON, następny provider")
+                                        content = None
+                                        continue
+                                    res = json.loads(match.group().replace("'", '"'))
+                                    ok_val = res.get('ok', 0)
+                                    is_organizer = ok_val in [1, True, '1', 'true', 'True']
+                                    raw_email = res.get('email', '') or ''
+                                    email_match = re.match(r'^[^@\s]+@[^@\s]+\.[^@\s]+$', raw_email.lower())
+                                    best_email = raw_email if email_match else ''
+                                    return {
+                                        'is_event_organizer': is_organizer,
+                                        'title': (res.get('title') or '')[:50],
+                                        'best_email': best_email,
+                                        'short_description': res.get('short_description', '')[:200],
+                                        'reason': res.get('reason', '')[:200],
+                                        'score_event': res.get('score_event', 0),
+                                        'seo_spam_score': res.get('seo_spam_score', 0),
+                                        'lead_type': res.get('type', ''),
+                                        'url': url
+                                    }
                             elif r.status_code == 429:
                                 set_provider_cooldown('gemini')
                                 logger.warning(f"[C{consumer_id}] Gemini rate limited")
@@ -847,38 +909,12 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
                     except Exception as e:
                         logger.error(f"[C{consumer_id}] Gemini exception: {e}")
             
-            if content:
-                break  # Success, exit attempt loop
+            # If we reach here, all providers failed this attempt
+            # Next attempt (if any left) will refresh provider_order
         
-
-        if not content:
-            logger.error(f"[C{consumer_id}] No AI provider available")
-            return None
-        
-        match = re.search(r'\{.*\}', content, re.DOTALL)
-        if not match:
-            logger.warning(f"[C{consumer_id}] AI: Brak JSON w odpowiedzi, próbuję następny provider")
-            continue  # Try next provider
-        
-        res = json.loads(match.group().replace("'", '"'))
-        ok_val = res.get('ok', 0)
-        is_organizer = ok_val in [1, True, '1', 'true', 'True']
-        
-        raw_email = res.get('email', '') or ''
-        email_match = re.match(r'^[^@\s]+@[^@\s]+\.[^@\s]+$', raw_email.lower())
-        best_email = raw_email if email_match else ''
-        
-        return {
-            'is_event_organizer': is_organizer,
-            'title': (res.get('title') or '')[:50],
-            'best_email': best_email,
-            'short_description': res.get('short_description', '')[:200],
-            'reason': res.get('reason', '')[:200],
-            'score_event': res.get('score_event', 0),
-            'seo_spam_score': res.get('seo_spam_score', 0),
-            'lead_type': res.get('type', ''),
-            'url': url
-        }
+        # After 3 attempts, all failed
+        logger.error(f"[C{consumer_id}] No AI provider available after 3 attempts")
+        return None
     except Exception as e:
         logger.error(f"[C{consumer_id}] AI verify error: {e}")
         return None
