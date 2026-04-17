@@ -1,5 +1,5 @@
 // displayjs/presence.js
-import { sb } from "../../js/core/supabase.js?v=v2026-04-17T06294";
+import { sb } from "../../js/core/supabase.js?v=v2026-04-17T12372";
 
 export async function startPresence({
   channel = null,
