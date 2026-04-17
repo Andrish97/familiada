@@ -520,10 +520,10 @@ async def refill_raw_buffer(run_id: str):
             try:
                 await log_to_db("info", f"Szukam: {query}")
                 r = await client.get(f'{SEARXNG_URL}/search', params={
-                    'q': query, 'format': 'json', 'language': 'pl-PL', 'region': 'pl-PL', 'limit': 10
+                    'q': query, 'format': 'json', 'language': 'pl-PL', 'region': 'pl-PL', 'limit': 50
                 })
                 if r.status_code == 200:
-                    results = r.json().get('results', [])[:10]
+                    results = r.json().get('results', [])
                     all_results.extend(results)
                 await asyncio.sleep(1)
             except Exception as e:
