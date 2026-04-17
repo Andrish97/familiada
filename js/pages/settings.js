@@ -6078,7 +6078,10 @@ function wireEvents() {
 
     // Click outside table to deselect
     document.addEventListener('mousedown', (e) => {
-      if (!e.target.closest('#mcContactsTable') && !e.target.closest('#mcVisitUrlBtn')) {
+      if (!e.target.closest('#mcContactsTable') && 
+          !e.target.closest('#mcVisitUrlBtn') &&
+          !e.target.closest('#mcMarkUsedBtn') &&
+          !e.target.closest('#mcDeleteBtn')) {
         deselectAll();
       }
     });
