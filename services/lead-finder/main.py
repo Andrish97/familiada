@@ -151,6 +151,8 @@ class SupabaseClient:
     async def insert(self, table, data):
         async with httpx.AsyncClient(timeout=30) as client:
             r = await client.post(f'{self.url}/rest/v1/{table}', headers=self.headers, json=data)
+            if r.status_code not in (200, 201):
+                logger.error(f"[SUPABASE INSERT ERROR] {table}: {r.status_code} - {r.text[:200]}")
             return r.status_code in (200, 201)
 
     async def select(self, table, columns='*', filters=None, limit=None):
@@ -172,6 +174,8 @@ class SupabaseClient:
         async with httpx.AsyncClient(timeout=30) as client:
             params = {k: f'eq.{v}' for k, v in filters.items()} if filters else {}
             r = await client.delete(f'{self.url}/rest/v1/{table}', headers=self.headers, params=params)
+            if r.status_code not in (200, 204, 404):
+                logger.error(f"[SUPABASE DELETE ERROR] {table}: {r.status_code} - {r.text[:200]}")
             return r.status_code in (200, 204, 404)
     
     async def call_rpc(self, fn, params=None):
@@ -266,6 +270,7 @@ async def consumer_task(run_id, c_id, target):
         consecutive_errors = 0
         if res.get('ok') and res.get('email'):
             await supabase.insert('marketing_verified_contacts', {'email': res['email'], 'url': lead['url'], 'verify_reason': res.get('reason','')})
+            logger.info(f"[C{c_id}] INSERTED to DB: {res['email']}")
             verified_in_run += 1
             logger.info(f"[C{c_id}] VERIFIED! ({verified_in_run}/{target})")
             await supabase.delete('marketing_raw_contacts', {'id': lead['id']})
