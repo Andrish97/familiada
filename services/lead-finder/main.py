@@ -623,15 +623,13 @@ async def scrape_and_save_lead(res: dict, query: str, existing_emails: Set[str])
     return 0
 
 async def refill_raw_buffer(run_id: str):
-    """Producer: Performs a Deep Sweep for a specific target (City + Role)."""
+    """Producer: Search for new contacts - no buffer limit"""
     logger.info("[PRODUCER] refill_raw_buffer: start")
-    pending = await supabase.select('marketing_raw_contacts', 'id', {'status': 'pending'})
-    processing = await supabase.select('marketing_raw_contacts', 'id', {'status': 'processing'})
-    count = (len(pending) if pending else 0) + (len(processing) if processing else 0)
-    logger.info(f"[PRODUCER] Bufor: {count}/{RAW_BUFFER_THRESHOLD}")
     
-    if count >= RAW_BUFFER_THRESHOLD: 
-        logger.info("[PRODUCER] Bufor pełny, wychodzę")
+    # Skip if too many pending already (but allow some)
+    pending = await supabase.select('marketing_raw_contacts', 'id', {'status': 'pending'})
+    if pending and len(pending) > 100:
+        logger.info(f"[PRODUCER] Too many pending ({len(pending)}), waiting...")
         return
     
     logger.info("[PRODUCER] Pobieram next target...")
@@ -938,12 +936,12 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
 NUM_CONSUMERS = 1
 
 async def producer_task(run_id: str):
-    """Producer: Continuously searches for new raw contacts"""
+    """Producer: Searches for new raw contacts continuously"""
     while task_status == "running" and task_run_id == run_id:
         try:
-            logger.info(f"[PRODUCER] Sprawdzam bufor...")
+            # No buffer limit - just keep searching
+            logger.info(f"[PRODUCER] Searching for new leads...")
             await refill_raw_buffer(run_id)
-            logger.info(f"[PRODUCER] Zakończyłem refill_raw_buffer")
         except Exception as e:
             logger.error(f"Producer error: {e}")
         await asyncio.sleep(5)
@@ -963,12 +961,10 @@ async def consumer_task(run_id: str, consumer_id: int, target: int):
             continue
         
         try:
-            if verified_in_run >= target:
-                logger.info(f"[C{consumer_id}] Target reached ({verified_in_run}/{target})")
-                await asyncio.sleep(3)
-                continue
+            logger.info(f"[C{consumer_id}] Querying for pending leads...")
+            raw_leads = await supabase.select('marketing_raw_contacts', '*', {'status': 'pending'}, limit=5)
+            logger.info(f"[C{consumer_id}] Found {len(raw_leads) if raw_leads else 0} pending leads")
             
-            raw_leads = await supabase.select('marketing_raw_contacts', '*', {'status': 'pending'}, limit=1)
             if not raw_leads or len(raw_leads) == 0:
                 logger.info(f"[C{consumer_id}] No pending leads, waiting...")
                 await asyncio.sleep(2)
@@ -1004,6 +1000,11 @@ async def consumer_task(run_id: str, consumer_id: int, target: int):
                 verified_in_run += 1
                 logger.info(f"[C{consumer_id}] Verified! ({verified_in_run}/{target})")
                 await supabase.delete('marketing_raw_contacts', {'id': lead_id})
+                
+                if verified_in_run >= target:
+                    logger.info(f"[C{consumer_id}] TARGET REACHED! Stopping...")
+                    task_stop_event.set()
+                    task_status = "completed"
             else:
                 reason = result.get('reason') or 'Not organizer'
                 await supabase.update('marketing_raw_contacts', {'status': 'rejected', 'reject_reason': reason[:500]}, {'id': lead_id})
