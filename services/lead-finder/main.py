@@ -138,8 +138,8 @@ async def get_provider_order_async():
     """Get provider order from ai_settings table (async version)"""
     try:
         url = f"{SUPABASE_URL}/rest/v1/ai_settings?select=provider_order,updated_at&limit=1"
-        async with httpx.AsyncClient() as client:
-            r = await client.get(url, headers={'apikey': SUPABASE_SERVICE_KEY, 'Authorization': f'Bearer {SUPABASE_SERVICE_KEY}'}, timeout=TIMEOUT_GET_PROVIDER)
+        async with httpx.AsyncClient(timeout=TIMEOUT_GET_PROVIDER) as client:
+            r = await client.get(url, headers={'apikey': SUPABASE_SERVICE_KEY, 'Authorization': f'Bearer {SUPABASE_SERVICE_KEY}'})
             if r.status_code == 200:
                 data = r.json()
                 if data:
@@ -239,9 +239,6 @@ from fastapi.middleware.cors import CORSMiddleware
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
-# Shared HTTP client for efficiency
-_shared_client = httpx.AsyncClient(timeout=30)
-
 async def warmup_ai_providers():
     logger.info("[WARMUP] Rozgrzewanie AI providerów...")
     providers = await get_provider_order_async()
@@ -269,7 +266,6 @@ async def lifespan(app: FastAPI):
     provider_order = await get_provider_order_async()
     logger.info(f"[STARTUP] Provider order loaded: {provider_order}")
     yield
-    await _shared_client.aclose()
 
 app.router.lifespan_context = lifespan
 
@@ -279,83 +275,84 @@ class SupabaseClient:
         self.headers = {'apikey': key, 'Authorization': f'Bearer {key}', 'Content-Type': 'application/json'}
     
     async def insert(self, table, data):
-        try:
-            r = await _shared_client.post(f'{self.url}/rest/v1/{table}', headers=self.headers, json=data)
-            if r.status_code not in (200, 201):
-                logger.error(f"Supabase insert error ({table}): {r.status_code} {r.text[:200]}")
-            return r.status_code in (200, 201)
-        except Exception as e:
-            logger.error(f"Supabase insert exception ({table}): {e}")
-            return False
+        async with httpx.AsyncClient(timeout=30) as client:
+            try:
+                r = await client.post(f'{self.url}/rest/v1/{table}', headers=self.headers, json=data)
+                if r.status_code not in (200, 201):
+                    logger.error(f"Supabase insert error ({table}): {r.status_code} {r.text[:200]}")
+                return r.status_code in (200, 201)
+            except Exception as e:
+                logger.error(f"Supabase insert exception ({table}): {e}")
+                return False
 
     async def select(self, table, columns='*', filters=None, order=None, limit=None):
-        params = {'select': columns}
-        if filters:
-            for k, v in filters.items(): params[k] = f'eq.{v}'
-        if order: params['order'] = order
-        if limit: params['limit'] = limit
-        try:
-            r = await _shared_client.get(
-                f'{self.url}/rest/v1/{table}', 
-                headers=self.headers, 
-                params=params, 
-                timeout=TIMEOUT_SUPABASE_RPC
-            )
-            if r.status_code != 200:
-                logger.error(f"Supabase select error ({table}): {r.status_code} {r.text[:200]}")
+        async with httpx.AsyncClient(timeout=TIMEOUT_SUPABASE_RPC) as client:
+            params = {'select': columns}
+            if filters:
+                for k, v in filters.items(): params[k] = f'eq.{v}'
+            if order: params['order'] = order
+            if limit: params['limit'] = limit
+            try:
+                r = await client.get(f'{self.url}/rest/v1/{table}', headers=self.headers, params=params)
+                if r.status_code != 200:
+                    logger.error(f"Supabase select error ({table}): {r.status_code} {r.text[:200]}")
+                    return None
+                return r.json()
+            except Exception as e:
+                logger.error(f"Supabase select exception ({table}): {e}")
                 return None
-            return r.json()
-        except Exception as e:
-            logger.error(f"Supabase select exception ({table}): {e}")
-            return None
 
     async def update(self, table, data, filters):
-        params = {}
-        for k, v in filters.items(): params[k] = f'eq.{v}'
-        try:
-            r = await _shared_client.patch(f'{self.url}/rest/v1/{table}', headers=self.headers, json=data, params=params)
-            return r.status_code in (200, 204)
-        except Exception as e:
-            logger.error(f"Supabase update exception ({table}): {e}")
-            return False
+        async with httpx.AsyncClient(timeout=30) as client:
+            params = {}
+            for k, v in filters.items(): params[k] = f'eq.{v}'
+            try:
+                r = await client.patch(f'{self.url}/rest/v1/{table}', headers=self.headers, json=data, params=params)
+                return r.status_code in (200, 204)
+            except Exception as e:
+                logger.error(f"Supabase update exception ({table}): {e}")
+                return False
 
     async def delete(self, table, filters=None):
-        params = {}
-        if filters:
-            for k, v in filters.items(): params[k] = f'eq.{v}'
-        try:
-            r = await _shared_client.delete(f'{self.url}/rest/v1/{table}', headers=self.headers, params=params)
-            return r.status_code in (200, 204, 404)
-        except Exception as e:
-            logger.error(f"Supabase delete exception ({table}): {e}")
-            return False
+        async with httpx.AsyncClient(timeout=30) as client:
+            params = {}
+            if filters:
+                for k, v in filters.items(): params[k] = f'eq.{v}'
+            try:
+                r = await client.delete(f'{self.url}/rest/v1/{table}', headers=self.headers, params=params)
+                return r.status_code in (200, 204, 404)
+            except Exception as e:
+                logger.error(f"Supabase delete exception ({table}): {e}")
+                return False
     
     async def call_rpc(self, function_name, params=None):
-        try:
+        async with httpx.AsyncClient(timeout=TIMEOUT_SUPABASE_RPC) as client:
             headers = {**self.headers, 'Prefer': 'return=minimal'}
-            r = await _shared_client.post(
-                f'{self.url}/rest/v1/rpc/{function_name}',
-                headers=headers,
-                json=params or {}
-            )
-            if r.status_code not in (200, 201, 204):
-                logger.error(f"RPC {function_name} error: {r.status_code} {r.text[:200] if r.text else 'empty'}")
+            try:
+                r = await client.post(
+                    f'{self.url}/rest/v1/rpc/{function_name}',
+                    headers=headers,
+                    json=params or {}
+                )
+                if r.status_code not in (200, 201, 204):
+                    logger.error(f"RPC {function_name} error: {r.status_code} {r.text[:200] if r.text else 'empty'}")
+                    return False
+                return True
+            except Exception as e:
+                logger.error(f"RPC {function_name} exception: {e}")
                 return False
-            return True
-        except Exception as e:
-            logger.error(f"RPC {function_name} exception: {e}")
-            return False
     
     async def clear_table(self, table):
         """Clear all rows from a table"""
-        try:
+        async with httpx.AsyncClient(timeout=TIMEOUT_SUPABASE_RPC) as client:
             logger.info(f"[CLEAR] Deleting all from {table}...")
-            r = await _shared_client.delete(f'{self.url}/rest/v1/{table}', headers=self.headers)
-            logger.info(f"[CLEAR] {table}: status={r.status_code}")
-            return r.status_code in (200, 204)
-        except Exception as e:
-            logger.error(f"Clear table exception ({table}): {e}")
-            return False
+            try:
+                r = await client.delete(f'{self.url}/rest/v1/{table}', headers=self.headers)
+                logger.info(f"[CLEAR] {table}: status={r.status_code}")
+                return r.status_code in (200, 204)
+            except Exception as e:
+                logger.error(f"Clear table exception ({table}): {e}")
+                return False
 
 supabase = SupabaseClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
@@ -868,12 +865,16 @@ async def producer_task(run_id: str):
 async def consumer_task(run_id: str, consumer_id: int, target: int):
     """Consumer: Continuously verifies raw contacts"""
     global verified_in_run
-    logger.info(f"[C{consumer_id}] Consumer started for run {run_id}")
+    logger.info(f"[C{consumer_id}] Consumer thread started for run {run_id}")
     
     while True:
+        # 1. Wait until status is running and run_id matches
         if task_status != "running" or task_run_id != run_id:
-            logger.info(f"[C{consumer_id}] Breaking: status={task_status}, run_id={task_run_id}")
-            break
+            if task_status in ("completed", "cancelled"):
+                logger.info(f"[C{consumer_id}] Task finished/cancelled. Exiting loop.")
+                break
+            await asyncio.sleep(1)
+            continue
         
         if task_pause_event.is_set():
             await asyncio.sleep(1)
@@ -901,8 +902,11 @@ async def consumer_task(run_id: str, consumer_id: int, target: int):
             logger.info(f"[C{consumer_id}] Pobrałem lead: {lead_url}")
             
             # Lock the lead for processing
-            await supabase.update('marketing_raw_contacts', {'status': 'processing'}, {'id': lead_id, 'status': 'pending'})
-            
+            ok = await supabase.update('marketing_raw_contacts', {'status': 'processing'}, {'id': lead_id, 'status': 'pending'})
+            if not ok:
+                # Someone else picked it up
+                continue
+                
             logger.info(f"[C{consumer_id}] Wysyłam do AI: {lead_url}")
             result = await verify_raw_lead(run_id, lead, consumer_id)
             
@@ -939,7 +943,7 @@ async def consumer_task(run_id: str, consumer_id: int, target: int):
                 logger.info(f"[C{consumer_id}] Rejected: {reason[:50]}")
                 
         except Exception as e:
-            logger.error(f"[C{consumer_id}] Error: {e}")
+            logger.error(f"[C{consumer_id}] Fatal error in loop: {e}")
             await asyncio.sleep(1)
     
     logger.info(f"[C{consumer_id}] Consumer finished")
@@ -972,8 +976,9 @@ async def run_worker(run_id: str, target_count: int):
     try:
         while True:
             if task_stop_event.is_set():
-                task_status = "cancelled"
-                await log_to_db("warning", "Zlecenie anulowane.")
+                if task_status != "completed":
+                    task_status = "cancelled"
+                    await log_to_db("warning", "Zlecenie anulowane.")
                 break
 
             while task_pause_event.is_set():
@@ -982,8 +987,6 @@ async def run_worker(run_id: str, target_count: int):
                     task_status = "cancelled"
                     await log_to_db("warning", "Zlecenie anulowane.")
                     break
-            
-            task_status = "running"
             
             if verified_in_run >= target_count:
                 await asyncio.sleep(2)
