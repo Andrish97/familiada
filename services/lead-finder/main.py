@@ -19,7 +19,7 @@ import httpx
 
 # --- Logger ---
 logger = logging.getLogger("lead_finder")
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 _handler = logging.StreamHandler()
 _handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
 logger.addHandler(_handler)
@@ -134,8 +134,23 @@ playwright_semaphore = asyncio.Semaphore(MAX_CONCURRENT_PLAYWRIGHT)
 # --- AI Provider Rate Limit Tracking ---
 provider_cooldowns = {}  # {provider: timestamp_kiedy_dostepny}
 
+async def get_provider_order_async():
+    """Get provider order from ai_settings table (async version)"""
+    try:
+        url = f"{SUPABASE_URL}/rest/v1/ai_settings?select=provider_order,updated_at&limit=1"
+        async with httpx.AsyncClient() as client:
+            r = await client.get(url, headers={'apikey': SUPABASE_SERVICE_KEY, 'Authorization': f'Bearer {SUPABASE_SERVICE_KEY}'}, timeout=TIMEOUT_GET_PROVIDER)
+            if r.status_code == 200:
+                data = r.json()
+                if data:
+                    order = data[0].get('provider_order', 'openrouter,groq,gemini')
+                    return [p.strip().lower() for p in order.split(',') if p.strip()]
+    except Exception as e:
+        logger.error(f"Failed to load provider order: {e}")
+    return ['openrouter', 'groq', 'gemini']
+
 def get_provider_order():
-    """Get provider order from ai_settings table (sync version for startup)"""
+    """Sync version for startup only"""
     import httpx
     try:
         url = f"{SUPABASE_URL}/rest/v1/ai_settings?select=provider_order,updated_at&limit=1"
@@ -145,9 +160,8 @@ def get_provider_order():
             if data:
                 order = data[0].get('provider_order', 'openrouter,groq,gemini')
                 return [p.strip().lower() for p in order.split(',') if p.strip()]
-    except Exception as e:
-        logger.error(f"Failed to load provider order: {e}")
-    return ['openrouter', 'groq', 'gemini']  # Default
+    except: pass
+    return ['openrouter', 'groq', 'gemini']
 
 def is_provider_on_cooldown(provider: str) -> bool:
     """Check if provider is on cooldown"""
@@ -735,7 +749,7 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
         try: emails = json.loads(emails)
         except: emails = []
     
-    current_order = get_provider_order()
+    current_order = await get_provider_order_async()
     logger.info(f"[C{consumer_id}] Weryfikuję: {url}")
     
     prompt_path = os.path.join(os.path.dirname(__file__), 'ai_prompt.txt')
@@ -848,7 +862,9 @@ async def consumer_task(run_id: str, consumer_id: int, target: int):
             continue
         
         try:
+            logger.debug(f"[C{consumer_id}] Fetching pending leads...")
             raw_leads = await supabase.select('marketing_raw_contacts', '*', {'status': 'pending'}, limit=5)
+            logger.debug(f"[C{consumer_id}] Fetch call finished, leads: {len(raw_leads) if raw_leads else 'None'}")
             
             if raw_leads is None:
                 logger.error(f"[C{consumer_id}] Supabase select returned None")
