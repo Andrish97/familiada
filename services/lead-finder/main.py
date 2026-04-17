@@ -26,12 +26,30 @@ logger.addHandler(_handler)
 
 # --- Configuration (Internal Docker) ---
 SEARXNG_URL = "http://searxng:8080"
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
-OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "anthropic/claude-3-haiku")
-GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
-GROQ_MODEL = "llama-3.1-8b-instant"
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-GEMINI_MODEL = "gemini-2.0-flash-lite"  # 30 RPM, 1500/day - najlepszy free tier
+# --- AI Providers Configuration ---
+AI_PROVIDERS = {
+    'openrouter': {
+        'key': os.getenv("OPENROUTER_API_KEY", ""),
+        'model': os.getenv("OPENROUTER_MODEL", "anthropic/claude-3-haiku"),
+        'endpoint': "https://openrouter.ai/api/v1/chat/completions",
+        'headers': {'Content-Type': 'application/json'},
+        'timeout': 60,
+    },
+    'groq': {
+        'key': os.getenv("GROQ_API_KEY", ""),
+        'model': os.getenv("GROQ_MODEL", "llama-3.1-8b-instant"),
+        'endpoint': "https://api.groq.com/openai/v1/chat/completions",
+        'headers': {'Content-Type': 'application/json'},
+        'timeout': 30,
+    },
+    'gemini': {
+        'key': os.getenv("GEMINI_API_KEY", ""),
+        'model': os.getenv("GEMINI_MODEL", "gemini-2.0-flash-lite"),
+        'endpoint': "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
+        'headers': {'Content-Type': 'application/json'},
+        'timeout': 30,
+    },
+}
 
 SUPABASE_URL = "http://kong:8000"
 SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", os.getenv("SERVICE_ROLE_KEY", ""))
@@ -41,6 +59,7 @@ TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
 # --- Constants ---
 def load_txt_lines(filename):
     path = os.path.join(os.path.dirname(__file__), filename)
+    if not os.path.exists(path): return []
     with open(path, 'r', encoding='utf-8') as f:
         return [l.strip() for l in f if l.strip() and not l.startswith('#')]
 
@@ -77,9 +96,7 @@ BLOCKED_DOMAINS = set(load_txt_lines('blocked_domains.txt'))
 EMAIL_REGEX = re.compile(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}')
 RAW_BUFFER_THRESHOLD = get_cfg('RAW_BUFFER_THRESHOLD', 20)
 
-OPENROUTER_DELAY = get_cfg('OPENROUTER_DELAY', 1)
-GROQ_DELAY = get_cfg('GROQ_DELAY', 2)
-GEMINI_DELAY = get_cfg('GEMINI_DELAY', 4)
+AI_DELAY = get_cfg('AI_DELAY', 5)  # Wspólna zwłoka
 PROVIDER_COOLDOWN_SECONDS = get_cfg('PROVIDER_COOLDOWN_SECONDS', 60)
 
 TIMEOUT_GET_PROVIDER = get_cfg('TIMEOUT_GET_PROVIDER', 5)
@@ -87,14 +104,12 @@ TIMEOUT_IS_PAGE_FRESH = get_cfg('TIMEOUT_IS_PAGE_FRESH', 10)
 TIMEOUT_SCRAPE = get_cfg('TIMEOUT_SCRAPE', 12)
 TIMEOUT_SCRAPE_JS = get_cfg('TIMEOUT_SCRAPE_JS', 15)
 TIMEOUT_SUPABASE_RPC = get_cfg('TIMEOUT_SUPABASE_RPC', 30)
-TIMEOUT_AI_OPENROUTER = get_cfg('TIMEOUT_AI_OPENROUTER', 60)
-TIMEOUT_AI_GROQ = get_cfg('TIMEOUT_AI_GROQ', 30)
 TIMEOUT_SEARCH = get_cfg('TIMEOUT_SEARCH', 25)
 
 SEARCH_RESULTS_LIMIT = get_cfg('SEARCH_RESULTS_LIMIT', 50)
 SEARCH_MIN_RESULTS = get_cfg('SEARCH_MIN_RESULTS', 5)
 
-logger.info(f"[CONFIG] Providers: OPENROUTER_DELAY={OPENROUTER_DELAY}s GROQ_DELAY={GROQ_DELAY}s GEMINI_DELAY={GEMINI_DELAY}s")
+logger.info(f"[CONFIG] AI: DELAY={AI_DELAY}s COOLDOWN={PROVIDER_COOLDOWN_SECONDS}s")
 logger.info(f"[CONFIG] Search: RESULTS_LIMIT={SEARCH_RESULTS_LIMIT} MIN_RESULTS={SEARCH_MIN_RESULTS}")
 logger.info(f"[CONFIG] Buffer: RAW_BUFFER={RAW_BUFFER_THRESHOLD}")
 
@@ -112,8 +127,7 @@ verified_in_run = 0
 provider_order = ['openrouter', 'groq', 'gemini']  # Loaded at startup
 
 # --- AI Provider Rate Limit Tracking ---
-provider_cooldowns = {}  # {provider: timestamp_when_available}
-provider_last_request = {}  # {provider: timestamp_of_last_request}
+provider_cooldowns = {}  # {provider: timestamp_kiedy_dostepny}
 
 def get_provider_order():
     """Get provider order from ai_settings table (sync version for startup)"""
@@ -121,54 +135,82 @@ def get_provider_order():
     try:
         url = f"{SUPABASE_URL}/rest/v1/ai_settings?select=provider_order,updated_at&limit=1"
         r = httpx.get(url, headers={'apikey': SUPABASE_SERVICE_KEY, 'Authorization': f'Bearer {SUPABASE_SERVICE_KEY}'}, timeout=TIMEOUT_GET_PROVIDER)
-        logger.info(f"[AI_PROVIDER] GET ai_settings: {r.status_code} {r.text[:200] if r.text else 'empty'}")
         if r.status_code == 200:
             data = r.json()
             if data:
                 order = data[0].get('provider_order', 'openrouter,groq,gemini')
-                logger.info(f"[AI_PROVIDER] Order from DB: {order}")
                 return [p.strip().lower() for p in order.split(',') if p.strip()]
     except Exception as e:
         logger.error(f"Failed to load provider order: {e}")
     return ['openrouter', 'groq', 'gemini']  # Default
 
 def is_provider_on_cooldown(provider: str) -> bool:
-    """Check if provider is on cooldown or needs delay"""
+    """Check if provider is on cooldown"""
+    import time
     if provider not in provider_cooldowns:
         return False
-    if asyncio.get_event_loop().time() >= provider_cooldowns[provider]:
+    if time.time() >= provider_cooldowns[provider]:
         del provider_cooldowns[provider]
         return False
     return True
 
-def needs_request_delay(provider: str) -> float:
-    """Check if provider needs delay between requests (for Gemini)"""
-    if provider == 'gemini':
-        import time
-        now = time.time()
-        last = provider_last_request.get(provider, 0)
-        elapsed = now - last
-        if elapsed < GEMINI_DELAY:
-            return GEMINI_DELAY - elapsed
-    return 0
+def get_cooldown_remaining(provider: str) -> float:
+    """Return seconds remaining until cooldown expires"""
+    import time
+    if provider not in provider_cooldowns:
+        return 0
+    remaining = provider_cooldowns[provider] - time.time()
+    return max(0, remaining)
 
 def set_provider_cooldown(provider: str):
-    """Set provider on cooldown after rate limit"""
-    provider_cooldowns[provider] = asyncio.get_event_loop().time() + PROVIDER_COOLDOWN_SECONDS
-    logger.warning(f"[PROVIDER] {provider} on cooldown for {PROVIDER_COOLDOWN_SECONDS}s")
-
-def record_request_time(provider: str):
-    """Record when provider was used"""
+    """Set provider on cooldown after 429"""
     import time
-    provider_last_request[provider] = time.time()
+    provider_cooldowns[provider] = time.time() + PROVIDER_COOLDOWN_SECONDS
+    logger.warning(f"[COOLDOWN] {provider} na {PROVIDER_COOLDOWN_SECONDS}s")
 
-if CONFIG:
-    logger.info(f"[CONFIG] Loaded {len(CONFIG)} values")
-else:
-    logger.warning("[CONFIG] No config.txt found, using defaults")
-logger.info(f"[CONFIG] Providers: OPENROUTER_DELAY={OPENROUTER_DELAY}s GROQ_DELAY={GROQ_DELAY}s GEMINI_DELAY={GEMINI_DELAY}s")
-logger.info(f"[CONFIG] Search: RESULTS_LIMIT={SEARCH_RESULTS_LIMIT} MIN_RESULTS={SEARCH_MIN_RESULTS}")
-logger.info(f"[CONFIG] Buffer: RAW_BUFFER={RAW_BUFFER_THRESHOLD}")
+async def call_ai_provider(provider_name, prompt):
+    """Wrapper for calling AI providers"""
+    if provider_name not in AI_PROVIDERS:
+        return 500, None, f"Unknown provider: {provider_name}"
+    
+    config = AI_PROVIDERS[provider_name]
+    if not config['key']:
+        return 500, None, f"Missing API key for {provider_name}"
+    
+    try:
+        async with httpx.AsyncClient(timeout=config['timeout']) as client:
+            if provider_name == 'gemini':
+                url = config['endpoint'].format(model=config['model']) + f"?key={config['key']}"
+                r = await client.post(url, json={
+                    'contents': [{'parts': [{'text': prompt}]}],
+                    'generationConfig': {'temperature': 0.1}
+                })
+                if r.status_code == 200:
+                    data = r.json()
+                    content = data.get('candidates', [{}])[0].get('content', {}).get('parts', [{}])[0].get('text', '')
+                    return 200, content, None
+                return r.status_code, None, r.text[:200]
+            else:
+                # OpenAI-style (OpenRouter, Groq)
+                r = await client.post(
+                    config['endpoint'],
+                    headers={'Authorization': f'Bearer {config["key"]}', **config['headers']},
+                    json={
+                        'model': config['model'],
+                        'messages': [
+                            {'role': 'system', 'content': 'Odpowiadaj tylko JSON bez markdown.'},
+                            {'role': 'user', 'content': prompt}
+                        ],
+                        'temperature': 0.1
+                    }
+                )
+                if r.status_code == 200:
+                    content = r.json()['choices'][0]['message']['content']
+                    return 200, content, None
+                return r.status_code, None, r.text[:200]
+    except Exception as e:
+        return 500, None, str(e)
+
 
 # --- Clients ---
 from fastapi import FastAPI, HTTPException
@@ -182,53 +224,20 @@ async def warmup_ai_providers():
     logger.info("[WARMUP] Rozgrzewanie AI providerów...")
     providers = get_provider_order()
     
-    for provider in providers:
-        try:
-            if provider == 'openrouter' and OPENROUTER_API_KEY:
-                async with httpx.AsyncClient(timeout=30) as client:
-                    r = await client.post(
-                        "https://openrouter.ai/api/v1/chat/completions",
-                        headers={'Authorization': f'Bearer {OPENROUTER_API_KEY}', 'Content-Type': 'application/json'},
-                        json={'model': OPENROUTER_MODEL, 'messages': [{'role': 'user', 'content': 'yes'}], 'max_tokens': 10}
-                    )
-                if r.status_code == 200:
-                    logger.info(f"[WARMUP] ✓ OpenRouter - OK")
-                elif r.status_code == 429:
-                    set_provider_cooldown('openrouter')
-                    logger.warning(f"[WARMUP] ✗ OpenRouter - rate limited, cooldown {PROVIDER_COOLDOWN_SECONDS}s")
-                else:
-                    logger.warning(f"[WARMUP] ✗ OpenRouter - error {r.status_code}")
-                    
-            elif provider == 'groq' and GROQ_API_KEY:
-                async with httpx.AsyncClient(timeout=30) as client:
-                    r = await client.post(
-                        "https://api.groq.com/openai/v1/chat/completions",
-                        headers={'Authorization': f'Bearer {GROQ_API_KEY}', 'Content-Type': 'application/json'},
-                        json={'model': GROQ_MODEL, 'messages': [{'role': 'user', 'content': 'yes'}], 'max_tokens': 10}
-                    )
-                if r.status_code == 200:
-                    logger.info(f"[WARMUP] ✓ Groq - OK")
-                elif r.status_code == 429:
-                    set_provider_cooldown('groq')
-                    logger.warning(f"[WARMUP] ✗ Groq - rate limited, cooldown {PROVIDER_COOLDOWN_SECONDS}s")
-                else:
-                    logger.warning(f"[WARMUP] ✗ Groq - error {r.status_code}")
-                    
-            elif provider == 'gemini' and GEMINI_API_KEY:
-                async with httpx.AsyncClient(timeout=30) as client:
-                    r = await client.post(
-                        f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent?key={GEMINI_API_KEY}",
-                        json={'contents': [{'parts': [{'text': 'yes'}]}], 'generationConfig': {'maxOutputTokens': 10}}
-                    )
-                if r.status_code == 200:
-                    logger.info(f"[WARMUP] ✓ Gemini - OK")
-                elif r.status_code == 429:
-                    set_provider_cooldown('gemini')
-                    logger.warning(f"[WARMUP] ✗ Gemini - rate limited, cooldown {PROVIDER_COOLDOWN_SECONDS}s")
-                else:
-                    logger.warning(f"[WARMUP] ✗ Gemini - error {r.status_code}")
-        except Exception as e:
-            logger.warning(f"[WARMUP] ✗ {provider} - exception: {e}")
+    for provider_name in providers:
+        if provider_name not in AI_PROVIDERS:
+            logger.warning(f"[WARMUP] ✗ {provider_name} - nieznany provider")
+            continue
+            
+        status_code, _, error = await call_ai_provider(provider_name, "say 'yes'")
+        
+        if status_code == 200:
+            logger.info(f"[WARMUP] ✓ {provider_name} - OK")
+        elif status_code == 429:
+            set_provider_cooldown(provider_name)
+            logger.warning(f"[WARMUP] ✗ {provider_name} - rate limited, cooldown {PROVIDER_COOLDOWN_SECONDS}s")
+        else:
+            logger.warning(f"[WARMUP] ✗ {provider_name} - error {status_code} {error}")
     
     logger.info("[WARMUP] Rozgrzewanie zakończone")
 
@@ -724,7 +733,7 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
         except: emails = []
     
     current_order = get_provider_order()
-    logger.info(f"[C{consumer_id}] Weryfikuję: {url} | AI: {current_order}")
+    logger.info(f"[C{consumer_id}] Weryfikuję: {url}")
     
     prompt_path = os.path.join(os.path.dirname(__file__), 'ai_prompt.txt')
     with open(prompt_path, 'r', encoding='utf-8') as f:
@@ -745,192 +754,61 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
     except Exception as e:
         logger.error(f"[C{consumer_id}] Prompt format error: {e}")
         return None
-    
-    logger.info(f"[C{consumer_id}] Prompt length: {len(prompt)}")
 
-    try:
-        content = None
+    # Try providers in order from settings
+    for provider_name in current_order:
+        # 1. Sprawdź cooldown
+        if is_provider_on_cooldown(provider_name):
+            remaining = get_cooldown_remaining(provider_name)
+            logger.info(f"[C{consumer_id}] AI: {provider_name} → pomijam, cooldown {remaining:.0f}s")
+            continue
         
-        # Try providers in order from settings
-        for attempt in range(3):  # Max 3 attempts
-            provider_order = get_provider_order()  # Refresh before each attempt
-            # Check if all providers on cooldown
-            import time
-            now = time.time()
-            all_on_cooldown = all(is_provider_on_cooldown(p) for p in provider_order)
-            
-            if all_on_cooldown:
-                wait_times = [provider_cooldowns.get(p, now) - now for p in provider_order]
-                wait = min([w for w in wait_times if w > 0]) if any(w > 0 for w in wait_times) else PROVIDER_COOLDOWN_SECONDS
-                logger.info(f"[C{consumer_id}] All AI on cooldown, waiting {wait:.0f}s")
-                await asyncio.sleep(min(wait + 1, 120))
-                continue  # Refresh happens at start of next attempt
-            
-            for provider in provider_order:
-                if is_provider_on_cooldown(provider):
+        # 2. Wywołaj AI
+        status_code, content, error = await call_ai_provider(provider_name, prompt)
+        
+        # 3. Obsłuż wynik
+        if status_code == 200:
+            logger.info(f"[C{consumer_id}] AI: {provider_name} → 200 OK")
+            try:
+                match = re.search(r'\{.*\}', content, re.DOTALL)
+                if not match:
+                    logger.warning(f"[C{consumer_id}] AI: {provider_name} → brak JSON w odpowiedzi")
+                    await asyncio.sleep(AI_DELAY)
                     continue
                 
-                if provider == 'openrouter' and OPENROUTER_API_KEY:
-                    try:
-                        async with httpx.AsyncClient(timeout=60) as client:
-                            r = await client.post(
-                                "https://openrouter.ai/api/v1/chat/completions",
-                                headers={
-                                    'Authorization': f'Bearer {OPENROUTER_API_KEY}',
-                                    'Content-Type': 'application/json'
-                                },
-                                json={
-                                    'model': OPENROUTER_MODEL,
-                                    'messages': [
-                                        {'role': 'system', 'content': 'Odpowiadaj tylko JSON bez markdown.'},
-                                        {'role': 'user', 'content': prompt}
-                                    ],
-                                    'temperature': 0.1
-                                }
-                            )
-                            logger.info(f"[C{consumer_id}] OpenRouter response: {r.status_code}")
-                            if r.status_code == 200:
-                                content = r.json()['choices'][0]['message']['content']
-                                match = re.search(r'\{.*\}', content, re.DOTALL)
-                                if not match:
-                                    logger.warning(f"[C{consumer_id}] {provider}: Brak JSON, następny provider")
-                                    continue
-                                res = json.loads(match.group().replace("'", '"'))
-                                ok_val = res.get('ok', 0)
-                                is_organizer = ok_val in [1, True, '1', 'true', 'True']
-                                raw_email = res.get('email', '') or ''
-                                email_match = re.match(r'^[^@\s]+@[^@\s]+\.[^@\s]+$', raw_email.lower())
-                                best_email = raw_email if email_match else ''
-                                return {
-                                    'is_event_organizer': is_organizer,
-                                    'title': (res.get('title') or '')[:50],
-                                    'best_email': best_email,
-                                    'short_description': res.get('short_description', '')[:200],
-                                    'reason': res.get('reason', '')[:200],
-                                    'score_event': res.get('score_event', 0),
-                                    'seo_spam_score': res.get('seo_spam_score', 0),
-                                    'lead_type': res.get('type', ''),
-                                    'url': url
-                                }
-                            elif r.status_code == 429:
-                                set_provider_cooldown('openrouter')
-                                logger.warning(f"[C{consumer_id}] OpenRouter rate limited")
-                            else:
-                                logger.error(f"[C{consumer_id}] OpenRouter ERROR: {r.text[:200]}")
-                    except Exception as e:
-                        logger.error(f"[C{consumer_id}] OpenRouter exception: {e}")
+                res = json.loads(match.group().replace("'", '"'))
+                ok_val = res.get('ok', 0)
+                is_organizer = ok_val in [1, True, '1', 'true', 'True']
+                raw_email = res.get('email', '') or ''
+                email_match = re.match(r'^[^@\s]+@[^@\s]+\.[^@\s]+$', raw_email.lower())
+                best_email = raw_email if email_match else ''
                 
-                elif provider == 'groq' and GROQ_API_KEY:
-                    try:
-                        async with httpx.AsyncClient(timeout=TIMEOUT_SUPABASE_RPC) as client:
-                            r = await client.post(
-                                "https://api.groq.com/openai/v1/chat/completions",
-                                headers={
-                                    'Authorization': f'Bearer {GROQ_API_KEY}',
-                                    'Content-Type': 'application/json'
-                                },
-                                json={
-                                    'model': GROQ_MODEL,
-                                    'messages': [
-                                        {'role': 'system', 'content': 'Odpowiadaj tylko JSON bez markdown.'},
-                                        {'role': 'user', 'content': prompt}
-                                    ],
-                                    'temperature': 0.1
-                                }
-                            )
-                            logger.info(f"[C{consumer_id}] Groq response: {r.status_code}")
-                            if r.status_code == 200:
-                                content = r.json()['choices'][0]['message']['content']
-                                match = re.search(r'\{.*\}', content, re.DOTALL)
-                                if not match:
-                                    logger.warning(f"[C{consumer_id}] {provider}: Brak JSON, następny provider")
-                                    continue
-                                res = json.loads(match.group().replace("'", '"'))
-                                ok_val = res.get('ok', 0)
-                                is_organizer = ok_val in [1, True, '1', 'true', 'True']
-                                raw_email = res.get('email', '') or ''
-                                email_match = re.match(r'^[^@\s]+@[^@\s]+\.[^@\s]+$', raw_email.lower())
-                                best_email = raw_email if email_match else ''
-                                return {
-                                    'is_event_organizer': is_organizer,
-                                    'title': (res.get('title') or '')[:50],
-                                    'best_email': best_email,
-                                    'short_description': res.get('short_description', '')[:200],
-                                    'reason': res.get('reason', '')[:200],
-                                    'score_event': res.get('score_event', 0),
-                                    'seo_spam_score': res.get('seo_spam_score', 0),
-                                    'lead_type': res.get('type', ''),
-                                    'url': url
-                                }
-                            elif r.status_code == 429:
-                                set_provider_cooldown('groq')
-                                logger.warning(f"[C{consumer_id}] Groq rate limited")
-                            else:
-                                logger.error(f"[C{consumer_id}] Groq ERROR: {r.text[:200]}")
-                    except Exception as e:
-                        logger.error(f"[C{consumer_id}] Groq exception: {e}")
-                
-                elif provider == 'gemini' and GEMINI_API_KEY:
-                    try:
-                        delay = needs_request_delay('gemini')
-                        if delay > 0:
-                            logger.info(f"[C{consumer_id}] Gemini: waiting {delay:.1f}s for rate limit")
-                            await asyncio.sleep(delay)
-                        
-                        async with httpx.AsyncClient(timeout=TIMEOUT_SUPABASE_RPC) as client:
-                            r = await client.post(
-                                f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent?key={GEMINI_API_KEY}",
-                                json={
-                                    'contents': [{'parts': [{'text': prompt}]}],
-                                    'generationConfig': {'temperature': 0.1}
-                                }
-                            )
-                            logger.info(f"[C{consumer_id}] Gemini response: {r.status_code}")
-                            if r.status_code == 200:
-                                data = r.json()
-                                content = data.get('candidates', [{}])[0].get('content', {}).get('parts', [{}])[0].get('text', '')
-                                if content:
-                                    record_request_time('gemini')
-                                    # Check JSON
-                                    match = re.search(r'\{.*\}', content, re.DOTALL)
-                                    if not match:
-                                        logger.warning(f"[C{consumer_id}] {provider}: Brak JSON, następny provider")
-                                        content = None
-                                        continue
-                                    res = json.loads(match.group().replace("'", '"'))
-                                    ok_val = res.get('ok', 0)
-                                    is_organizer = ok_val in [1, True, '1', 'true', 'True']
-                                    raw_email = res.get('email', '') or ''
-                                    email_match = re.match(r'^[^@\s]+@[^@\s]+\.[^@\s]+$', raw_email.lower())
-                                    best_email = raw_email if email_match else ''
-                                    return {
-                                        'is_event_organizer': is_organizer,
-                                        'title': (res.get('title') or '')[:50],
-                                        'best_email': best_email,
-                                        'short_description': res.get('short_description', '')[:200],
-                                        'reason': res.get('reason', '')[:200],
-                                        'score_event': res.get('score_event', 0),
-                                        'seo_spam_score': res.get('seo_spam_score', 0),
-                                        'lead_type': res.get('type', ''),
-                                        'url': url
-                                    }
-                            elif r.status_code == 429:
-                                set_provider_cooldown('gemini')
-                                logger.warning(f"[C{consumer_id}] Gemini rate limited")
-                            else:
-                                logger.error(f"[C{consumer_id}] Gemini ERROR: {r.text[:200]}")
-                    except Exception as e:
-                        logger.error(f"[C{consumer_id}] Gemini exception: {e}")
-            
-            # If we reach here, all providers failed this attempt
-            # Next attempt (if any left) will refresh provider_order
+                return {
+                    'is_event_organizer': is_organizer,
+                    'title': (res.get('title') or '')[:50],
+                    'best_email': best_email,
+                    'short_description': res.get('short_description', '')[:200],
+                    'reason': res.get('reason', '')[:200],
+                    'score_event': res.get('score_event', 0),
+                    'seo_spam_score': res.get('seo_spam_score', 0),
+                    'lead_type': res.get('type', ''),
+                    'url': url
+                }
+            except Exception as e:
+                logger.error(f"[C{consumer_id}] AI: {provider_name} → parse error: {e}")
         
-        # After 3 attempts, all failed
-        logger.error(f"[C{consumer_id}] No AI provider available after 3 attempts")
-        return None
-    except Exception as e:
-        logger.error(f"[C{consumer_id}] AI verify error: {e}")
-        return None
+        elif status_code == 429:
+            set_provider_cooldown(provider_name)
+            remaining = get_cooldown_remaining(provider_name)
+            logger.warning(f"[C{consumer_id}] AI: {provider_name} → 429 cooldown {remaining:.0f}s, próbuję następny")
+        else:
+            logger.error(f"[C{consumer_id}] AI: {provider_name} → {status_code} {error}")
+        
+        # 4. Po każdym zapytaniu czekaj AI_DELAY
+        await asyncio.sleep(AI_DELAY)
+    
+    logger.error(f"[C{consumer_id}] Żaden AI nie zadziałał dla {url}")
+    return None
 
 # --- Main Task Loop ---
 NUM_CONSUMERS = 1
