@@ -839,15 +839,15 @@ async def consumer_task(run_id: str, consumer_id: int, target: int):
             continue
         
         try:
-            logger.info(f"[C{consumer_id}] Querying for pending leads...")
+            # logger.info(f"[C{consumer_id}] Querying for pending leads...") # usuwam ten log, będzie za dużo
             raw_leads = await supabase.select('marketing_raw_contacts', '*', {'status': 'pending'}, limit=5)
-            logger.info(f"[C{consumer_id}] Found {len(raw_leads) if raw_leads else 0} pending leads")
             
             if not raw_leads or len(raw_leads) == 0:
-                logger.info(f"[C{consumer_id}] No pending leads, waiting...")
+                # logger.info(f"[C{consumer_id}] No pending leads, waiting...") # usuwam ten log, będzie za dużo
                 await asyncio.sleep(2)
                 continue
             
+            logger.info(f"[C{consumer_id}] Found {len(raw_leads)} pending leads")
             lead = raw_leads[0]
             lead_id = lead['id']
             lead_url = lead.get('url')
