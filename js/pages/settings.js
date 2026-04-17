@@ -5851,6 +5851,7 @@ function wireEvents() {
 
   async function mcLoadContacts() {
     const tbody = document.getElementById("mcTableBody");
+    console.log('[MC] mcLoadContacts called, page:', mcState.page, 'panel hidden:', document.getElementById("marketingContactsPanel")?.hidden);
     try {
       let query = sb().from("marketing_verified_contacts").select("*", { count: 'exact' });
       const fUsed = document.getElementById("mcFilterUsed").value;
