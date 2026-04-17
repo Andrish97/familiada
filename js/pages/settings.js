@@ -1686,10 +1686,11 @@ function aiProviderLabel(provider) {
 function renderAiProviderOrder() {
   const el = document.getElementById("aiProviderOrderList");
   if (!el) return;
-  const isRunning = typeof mcState !== 'undefined' && mcState && mcState.status === "running";
+  const status = mcState?.status;
+  const isLocked = status === 'idle' || status === 'completed' || status === 'cancelled';
   el.innerHTML = "";
-  if (isRunning) {
-    el.innerHTML = '<div style="opacity:.5;font-size:12px">Kolejność zablokowana podczas zlecenia</div>';
+  if (isLocked) {
+    el.innerHTML = '<div style="opacity:.5;font-size:12px">Kolejność zablokowana - uruchom zlecenie aby edytować</div>';
     return;
   }
   aiProviderOrder.forEach((provider, idx) => {
