@@ -335,12 +335,16 @@ async def send_telegram(message: str):
 # --- Core Logic: Search Layer (Producer) ---
 async def fetch_next_target(run_id: str) -> Optional[tuple]:
     """Finds a City+Role target that hasn't been 'swept' yet."""
+    logger.info("[PRODUCER] fetch_next_target: start")
     cities_data = await supabase.select('marketing_cities', 'name', {'is_active': 'true'})
-    if not cities_data: return None
+    if not cities_data: 
+        logger.warning("[PRODUCER] fetch_next_target: brak miast w bazie")
+        return None
     
     cities = [c['name'] for c in cities_data]
     history_data = await supabase.select('marketing_search_queries_log', 'query_text')
     history = {h['query_text'] for h in history_data} if history_data else set()
+    logger.info(f"[PRODUCER] Miasta: {len(cities)}, Historia: {len(history)}")
 
     # Generate all possible targets: "Role | City"
     pool = []
@@ -620,27 +624,38 @@ async def scrape_and_save_lead(res: dict, query: str, existing_emails: Set[str])
 
 async def refill_raw_buffer(run_id: str):
     """Producer: Performs a Deep Sweep for a specific target (City + Role)."""
+    logger.info("[PRODUCER] refill_raw_buffer: start")
     pending = await supabase.select('marketing_raw_contacts', 'id', {'status': 'pending'})
     processing = await supabase.select('marketing_raw_contacts', 'id', {'status': 'processing'})
     count = (len(pending) if pending else 0) + (len(processing) if processing else 0)
+    logger.info(f"[PRODUCER] Bufor: {count}/{RAW_BUFFER_THRESHOLD}")
     
-    if count >= RAW_BUFFER_THRESHOLD: return
-
+    if count >= RAW_BUFFER_THRESHOLD: 
+        logger.info("[PRODUCER] Bufor pełny, wychodzę")
+        return
+    
+    logger.info("[PRODUCER] Pobieram next target...")
     target = await fetch_next_target(run_id)
-    if not target: return
+    if not target: 
+        logger.warning("[PRODUCER] Brak targetu")
+        return
     city_name, role_name, target_key = target
+    logger.info(f"[PRODUCER] Target: {target_key}")
     
     all_results = []
+    logger.info(f"[PRODUCER] Szukam z {len(SEARCH_TEMPLATES)} szablonami...")
     async with httpx.AsyncClient(timeout=TIMEOUT_SEARCH) as client:
         for template in SEARCH_TEMPLATES:
             query = template.format(city=city_name, role=role_name)
             try:
-                await log_to_db("info", f"[{len(all_results)}] Szukam: {query}")
+                logger.info(f"[PRODUCER] SearXNG query: {query}")
                 r = await client.get(f'{SEARXNG_URL}/search', params={
                     'q': query, 'format': 'json', 'language': 'pl-PL', 'region': 'pl-PL', 'limit': SEARCH_RESULTS_LIMIT
                 })
+                logger.info(f"[PRODUCER] SearXNG response: {r.status_code}")
                 if r.status_code == 200:
                     results = r.json().get('results', [])
+                    logger.info(f"[PRODUCER] Wyników: {len(results)}")
                     if len(results) < SEARCH_MIN_RESULTS:
                         logger.warning(f"[SEARCH] Mało wyników ({len(results)}) dla: {query}")
                     all_results.extend(results)
@@ -926,7 +941,9 @@ async def producer_task(run_id: str):
     """Producer: Continuously searches for new raw contacts"""
     while task_status == "running" and task_run_id == run_id:
         try:
+            logger.info(f"[PRODUCER] Sprawdzam bufor...")
             await refill_raw_buffer(run_id)
+            logger.info(f"[PRODUCER] Zakończyłem refill_raw_buffer")
         except Exception as e:
             logger.error(f"Producer error: {e}")
         await asyncio.sleep(5)
@@ -946,16 +963,11 @@ async def consumer_task(run_id: str, consumer_id: int, target: int):
                 continue
             
             raw_leads = await supabase.select('marketing_raw_contacts', '*', {'status': 'pending'}, limit=1)
+            logger.info(f"[C{consumer_id}] Pobralem raw_leads: {len(raw_leads) if raw_leads else 0}")
             if not raw_leads or len(raw_leads) == 0:
                 if verified_in_run >= target:
                     continue
-                await log_to_db("info", f"[C{consumer_id}] Brak pending kontaktów")
-                await asyncio.sleep(2)
-                continue
-            if not raw_leads or len(raw_leads) == 0:
-                if verified_in_run >= target:
-                    continue
-                await log_to_db("info", f"[C{consumer_id}] Brak pending kontaktów")
+                logger.info(f"[C{consumer_id}] Brak pending kontaktów, czekam 2s...")
                 await asyncio.sleep(2)
                 continue
             
