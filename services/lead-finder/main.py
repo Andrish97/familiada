@@ -25,11 +25,6 @@ GROQ_MODEL = "llama-3.1-8b-instant"
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 GEMINI_MODEL = "gemini-2.0-flash-lite"  # 30 RPM, 1500/day - najlepszy free tier
 
-# Delays między requestami dla każdego providera (w sekundach)
-# Zapobiegają przekroczeniu RPM limitów
-OPENROUTER_DELAY = 1  # ~50 RPM
-GROQ_DELAY = 2  # 30 RPM
-GEMINI_DELAY = 4  # 30 RPM
 SUPABASE_URL = "http://kong:8000"
 SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", os.getenv("SERVICE_ROLE_KEY", ""))
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
@@ -90,7 +85,6 @@ TIMEOUT_SEARCH = get_cfg('TIMEOUT_SEARCH', 25)
 
 SEARCH_RESULTS_LIMIT = get_cfg('SEARCH_RESULTS_LIMIT', 50)
 SEARCH_MIN_RESULTS = get_cfg('SEARCH_MIN_RESULTS', 5)
-RAW_MIN_THRESHOLD = get_cfg('RAW_MIN_THRESHOLD', 10)
 
 GARBAGE_EMAIL_DOMAINS = set(load_txt_lines('garbage_email_domains.txt'))
 SOCIAL_PLATFORMS = tuple(load_txt_lines('social_platforms.txt'))
