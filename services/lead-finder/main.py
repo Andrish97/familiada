@@ -36,60 +36,23 @@ TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
 
 # --- Constants ---
-ROLES = ["DJ wesele", "Wodzirej", "Konferansjer", "Animator dzieci", "Agencja eventowa"]
+def load_txt_lines(filename):
+    path = os.path.join(os.path.dirname(__file__), filename)
+    with open(path, 'r', encoding='utf-8') as f:
+        return [l.strip() for l in f if l.strip() and not l.startswith('#')]
 
-SEARCH_TEMPLATES = [
-    # Klasyczne
-    '"{role}" {city} kontakt',
-    '"{role}" {city} oferta',
-    
-    # Wizytówkowe i lokalne
-    '{role} {city} wizytówka opinie',
-    '{role} {city} mapa kontakt',
-    '{role} {city} google maps',
-    
-    # Social-specific
-    'site:facebook.com "{city}" {role} kontakt',
-    'site:instagram.com "{city}" {role}',
-]
+ROLES = load_txt_lines('roles.txt')
+SEARCH_TEMPLATES = load_txt_lines('templates.txt')
+NEGATIVE_KEYWORDS = set(load_txt_lines('negative_keywords.txt'))
 
-NEGATIVE_KEYWORDS = {
-    'urząd', 'ministerstwo', 'bip.gov.pl', 'komenda', 'policja', 'sąd', 'prokuratura',
-    'ośrodek pomocy', 'ops', 'parafia', 'kościoła', 'szkoła podstawowa', 'liceum',
-    'przedszkole publiczne', 'żłobek miejski', 'szpital', 'przychodnia', 'apteka'
-}
-
-BLOCKED_DOMAINS = {
-    # Ogłoszenia / marketplace
-    'olx.pl', 'allegro.pl', 'gumtree.pl', 'sprzedajemy.pl',
-    'oferteo.pl', 'fixly.pl', 'weselezklasa.pl', 'slubnaglowie.pl',
-    'pracuj.pl', 'jooble.pl', 'infopraca.pl', 'praca.pl',
-    
-    # Sklepy / RTV AGD
-    'amazon.com', 'ebay.com', 'etsy.com', 'empik.com', 'ceneo.pl', 'skapiec.pl',
-    'mediaexpert.pl', 'x-kom.pl', 'morele.net', 'komputronik.pl', 'neonet.pl',
-    'media-markt.pl', 'saturn.pl', 'expert.pl', 'avs.pl',
-    
-    # Katalogi ogólne (te zazwyczaj nie mają maili bezpośrednio)
-    'panoramafirm.pl', 'pkt.pl', 'firmy.net', 'biznesfinder.pl', 'yellowpages.pl',
-    
-    # Gry / rozrywka / inne śmieciowe
-    'gry-online.pl', 'gamepressure.com', 'igromania.pl', 'gry.pl', 'gram.pl',
-    'swiatgier.pl', 'stopklatka.pl', 'filmweb.pl', 'imdb.com',
-    'zhihu.com', 'wikipedia.org', 'youtube.com',
-    'twitter.com', 'pinterest.com', 'tiktok.com',
-    'rottentomatoes.com', 'metacritic.com', 'letterboxd.com',
-    'trakt.tv', 'simkl.com', 'justwatch.com', 'gov.pl', 'edu.pl', 'bip.gov.pl',
-    
-    # Specyficzne polskie katalogi (blokujemy tylko jeśli to masowe listingi)
-    'janachowska.pl'
-}
+BLOCKED_DOMAINS = set(load_txt_lines('blocked_domains.txt'))
 
 EMAIL_REGEX = re.compile(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}')
 RAW_BUFFER_THRESHOLD = 20
-MAX_RESULTS_PER_SEARCH = 50
 
-GARBAGE_EMAIL_DOMAINS = {'sentry.io', 'sentry.wixpress.com', 'sentry-next.wixpress.com', 'mailgun.org', 'mandrillapp.com', 'sendgrid.net', 'mailservers.dev'}
+GARBAGE_EMAIL_DOMAINS = set(load_txt_lines('garbage_email_domains.txt'))
+SOCIAL_PLATFORMS = tuple(load_txt_lines('social_platforms.txt'))
+SUBPAGE_PATHS = ['/' + p for p in load_txt_lines('subpage_paths.txt')]
 
 # --- Global State ---
 active_task = None
@@ -344,6 +307,45 @@ async def is_page_fresh(url: str, max_age_days: int = 730) -> bool:
     except: pass
     return True
 
+async def scrape_with_playwright(url: str, timeout: int = 15) -> tuple[str, str, str]:
+    """
+    Scrape page using Playwright (for JS-rendered sites).
+    Returns: (title, text, html)
+    """
+    try:
+        from playwright.async_api import async_playwright
+        
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(headless=True)
+            context = await browser.new_context(
+                user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                viewport={'width': 1280, 'height': 720}
+            )
+            page = await context.new_page()
+            
+            try:
+                response = await page.goto(url, wait_until='networkidle', timeout=timeout * 1000)
+                if not response or response.status >= 400:
+                    await browser.close()
+                    return '', '', ''
+                
+                await page.wait_for_timeout(2000)
+                
+                title = await page.title()
+                text = await page.inner_text('body')
+                html = await page.content()
+                
+                await browser.close()
+                return title, text[:50000], html[:100000]
+                
+            except Exception as e:
+                logger.debug(f"Playwright error for {url}: {e}")
+                await browser.close()
+                return '', '', ''
+    except Exception as e:
+        logger.debug(f"Playwright init error: {e}")
+        return '', '', ''
+
 async def scrape_and_save_lead(res: dict, query: str, existing_emails: Set[str]):
     """Scrapes a single search result and saves to raw_contacts if valid."""
     url = res.get('url', '').lower()
@@ -367,10 +369,8 @@ async def scrape_and_save_lead(res: dict, query: str, existing_emails: Set[str])
         if exists_v or exists_r: return 0
 
         # Domain-level deduplication (check if any URL from this domain exists)
-        # Skip this for major social platforms where one domain has many leads
-        social_platforms = ('facebook.com', 'instagram.com', 'youtube.com', 'linkedin.com', 'tiktok.com')
         root_domain = domain
-        if root_domain not in social_platforms:
+        if root_domain not in SOCIAL_PLATFORMS:
             exists_dom_v = await supabase.select('marketing_verified_contacts', 'id', {'url': f'ilike.%{root_domain}%'})
             exists_dom_r = await supabase.select('marketing_raw_contacts', 'id', {'url': f'ilike.%{root_domain}%'})
             if (exists_dom_v and len(exists_dom_v) > 0) or (exists_dom_r and len(exists_dom_r) > 0):
@@ -429,18 +429,16 @@ async def scrape_and_save_lead(res: dict, query: str, existing_emails: Set[str])
         return title, ' '.join(words)[:1500], m_desc
     
     try:
+        parsed = urlparse(url)
         headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'}
         async with httpx.AsyncClient(timeout=12, follow_redirects=True, headers=headers) as client:
-            # 1. Main page
             r_crawl = await client.get(url)
             if r_crawl.status_code == 200:
                 text = r_crawl.text[:50000]
                 page_title, page_text, meta_desc = extract_content(text, page_title)
                 
-                # Pre-filter title again (after fetch)
                 if any(k in page_title.lower() for k in NEGATIVE_KEYWORDS): return 0
 
-                # Combine meta with text
                 if meta_desc: page_text = f"DESC: {meta_desc} | TEXT: {page_text}"
 
                 found_emails = EMAIL_REGEX.findall(text)
@@ -448,31 +446,42 @@ async def scrape_and_save_lead(res: dict, query: str, existing_emails: Set[str])
                     if not any(g in e.lower() for g in GARBAGE_EMAIL_DOMAINS):
                         emails.add(e)
             
-            # 2. Contact page sub-crawl (only for non-social domains)
-            parsed = urlparse(url)
             base = f"{parsed.scheme}://{parsed.netloc}"
-            social_platforms = ('facebook.com', 'instagram.com', 'youtube.com', 'linkedin.com', 'tiktok.com', 'twitter.com', 'x.com', 'pinterest.com')
-            
-            if parsed.netloc.lower().replace('www.', '') not in social_platforms:
-                for path in ['/kontakt', '/contact', '/o-nas']:
+            if parsed.netloc.lower().replace('www.', '') not in SOCIAL_PLATFORMS:
+                for path in SUBPAGE_PATHS:
                     contact_url = base + path
-                    if contact_url.rstrip('/') == url.rstrip('/'): continue # Skip if same as original
+                    if contact_url.rstrip('/') == url.rstrip('/'): continue
                     
                     try:
                         r_contact = await client.get(contact_url)
                         if r_contact.status_code == 200:
-                            # Extract emails from sub-page
                             found = EMAIL_REGEX.findall(r_contact.text[:30000])
                             for e in found:
                                 if not any(g in e.lower() for g in GARBAGE_EMAIL_DOMAINS):
                                     emails.add(e)
                             
-                            # NEW: Enrich page_text with contact page content if main page is thin
                             if len(page_text) < 1000:
                                 _, c_text, _ = extract_content(r_contact.text[:20000], "")
                                 if c_text:
                                     page_text += f" | CONTACT_PAGE ({path}): {c_text[:800]}"
                     except: pass
+        
+        thin_content = len(page_text) < 500 or not found_emails
+        js_indicators = ['__NEXT_DATA__', '__NUXT__', '__nuxt', '__wp__', 'gatsby-', 'gatsby-', 'react-root', 'data-reactroot', 'ng-app', 'ng-version', 'ng-version', 'v-app', 'data-v-', 'wp-footer', 'div id="app"']
+        has_js_framework = any(ind in text for ind in js_indicators)
+        
+        if (thin_content or has_js_framework) and not emails:
+            pw_title, pw_text, pw_html = await scrape_with_playwright(url)
+            if pw_title:
+                page_title = pw_title
+                if any(k in page_title.lower() for k in NEGATIVE_KEYWORDS): return 0
+            if pw_text:
+                page_text = pw_text[:1500]
+            if pw_html:
+                pw_emails = EMAIL_REGEX.findall(pw_html)
+                for e in pw_emails:
+                    if not any(g in e.lower() for g in GARBAGE_EMAIL_DOMAINS):
+                        emails.add(e)
     except: pass
 
     if not emails or not page_text: return 0
@@ -505,11 +514,8 @@ async def refill_raw_buffer(run_id: str):
     city_name, role_name, target_key = target
     
     all_results = []
-    searches_done = 0
     async with httpx.AsyncClient(timeout=25) as client:
         for template in SEARCH_TEMPLATES:
-            if searches_done >= 10: break
-            searches_done += 1
             query = template.format(city=city_name, role=role_name)
             try:
                 await log_to_db("info", f"Szukam: {query}")
@@ -587,226 +593,21 @@ async def verify_raw_lead(run_id: str, lead: dict, consumer_id: int = 0) -> Opti
     
     logger.info(f"[C{consumer_id}] Weryfikuję: {url}")
     
-    prompt = f"""ZADANIE:
-Klasyfikuj czy strona to potencjalny LEAD do systemu interaktywnych eventow
-(DJ, wodzirej, konferansjer, animator, prowadzenie publicznosci).
-
-Celem jest wykrycie osob/firm, ktore PROWADZA lub MODERUJA wydarzenia.
-
----------------------------------------
-DANE WEJSCIOWE:
----------------------------------------
-URL: {url}
-TYTUL: {title}
-MAILE: {', '.join(emails) if emails else 'brak'}
-TEXT: {page_text[:2000] if page_text else 'brak'}
-
-=======================================
-KROK 1 - TYP STRONY (KLASYFIKACJA)
-=======================================
-
-A) EVENT PROVIDER (HIGH VALUE)
-- DJ / wodzirej
-- konferansjer / MC / prezenter / host
-- animator
-- agencja eventowa
-- firmy prowadzace eventy
-
-B) VENUE
-- hotel / restauracja / sala / dekoracje
-
-C) DIRECTORY / SEO
-- katalog / listing / panorama / agregator
-
-D) NON-EVENT
-- inne branze
-
----------------------------------------
-KROK 2 - SYGNALY EVENTOWE
----------------------------------------
-
-+3 (MOCNE):
-- prowadzenie eventow
-- DJ / wodzirej / konferansjer
-- animacje / zabawy / interakcja
-- moderacja / hosting
-- "prowadzę imprezy"
-
-+2 (SREDNIE):
-- organizacja eventow
-- imprezy firmowe / wesela / integracje
-- konferencje / gale
-
-+1 (SLABE):
-- eventy
-- oferta eventowa
-- obsluga wydarzen
-
----------------------------------------
-KROK 3 - ROLE NA WYDARZENIU (KLUCZOWE)
----------------------------------------
-
-+5:
-- DJ / wodzirej / konferansjer / MC / animator (BEZPOSREDNIA ROLA)
-
-+3:
-- agencja eventowa / organizacja wydarzen
-
-0:
-- brak ról
-
----------------------------------------
-KROK 3.1 - HARD OVERRIDE
----------------------------------------
-
-JESLI WYSTEPUE:
-- DJ
-- konferansjer / MC / host
-- wodzirej
-- animator
-
--> AUTOMATYCZNIE:
-PRODUCT_FIT = TRUE
-TYPE = A
-
----------------------------------------
-KROK 3.2 - AGENCJE EVENTOWE (SOFT OVERRIDE)
----------------------------------------
-
-JESLI:
-- agencja eventowa
-- organizacja eventow
-ORAZ:
-- opis uslug / portfolio / realizacje
-
--> PRODUCT_FIT = TRUE
-
-JESLI TYLKO:
-- technika (naglosnienie / swiatlo)
--> PRODUCT_FIT = FALSE
-
----------------------------------------
-KROK 4 - BUSINESS SIGNALS
----------------------------------------
-
-+2 oferta uslug
-+2 kontakt (email / telefon)
-+2 portfolio / realizacje
-+1 doswiadczenie / lata / liczba eventow
-
----------------------------------------
-KROK 5 - ANTI-SEO / SPAM
----------------------------------------
-
--5 katalog / listing / panorama
--3 SEO spam / brak tresci
--2 keyword stuffing / wiele miast
-+1 konkretna marka / osoba
-
-JESLI SEO_SCORE <= -3 -> ODRZUC
-
----------------------------------------
-KROK 6 - SCORE STRONY
----------------------------------------
-
-TOTAL_SCORE =
-EVENT_SIGNALS
-+ ROLE_SCORE
-+ BUSINESS_SIGNALS
-+ SEO_SCORE
-
----------------------------------------
-KROK 7 - PRODUCT FIT (FINAL)
----------------------------------------
-
-PRODUCT_FIT = TRUE jesli:
-- ROLE_SCORE >= 3
-LUB
-- EVENT_SIGNALS >= 4
-
----------------------------------------
-KROK 8 - EMAIL RANKING (WYBOR NAJLEPSZEGO)
----------------------------------------
-
-ZASADA:
-NIE odrzucaj przez obecnosc zlych maili.
-Wybierz najlepszy email.
-
-EMAIL_SCORE:
-
-+5:
-- kontakt@domena
-- biuro@domena
-
-+4:
-- info@ / office@ / hello@ / sales@
-
-+3:
-- imie@domena
-
-+2:
-- email w domenie strony (inne)
-
-+1:
-- gmail / wp / onet / o2 / interia / outlook / yahoo
-
--5:
-- test@ / example@ / demo@
-- noreply@ / no-reply@
-- admin@localhost
-- placeholder (jan@kowalski.pl)
-- monitoring / systemowe
-
----------------------------------------
-KROK 8.1 - WYBOR EMAILA
----------------------------------------
-
-- policz score dla kazdego maila
-- wybierz najwyzszy
-- HAS_EMAIL = TRUE jesli najlepszy >= 1
-- HAS_EMAIL = FALSE jesli <= 0
-
----------------------------------------
-KROK 9 - FINALNA DECYZJA
----------------------------------------
-
-IS_LEAD =
-
-(TYPE = A)
-AND (PRODUCT_FIT = TRUE)
-AND (TOTAL_SCORE >= 6)
-AND (SEO_SCORE > -3)
-
-AKCEPTUJ jesli:
-IS_LEAD = TRUE
-AND HAS_EMAIL = TRUE
-
-ODRZUC jesli:
-IS_LEAD = FALSE
-LUB HAS_EMAIL = FALSE
-
----------------------------------------
-OUTPUT JSON
----------------------------------------
-
-JESLI OK:
-{{
-  "ok": 1,
-  "email": "...",
-  "title": "max 50 znakow",
-  "short_description": "100-200 znakow",
-  "score": liczba,
-  "seo_spam_score": liczba,
-  "reason": "dlaczego to realny lead"
-}}
-
-JESLI NIE:
-{{
-  "ok": 0,
-  "reason": "konkretny powod"
-}}
-
-ODPOWIEDZ TYLKO CZYSTYM JSONEM"""
+    prompt_path = os.path.join(os.path.dirname(__file__), 'ai_prompt.txt')
+    with open(prompt_path, 'r', encoding='utf-8') as f:
+        lines = [l for l in f.readlines() if not l.startswith('#')]
+        prompt_template = ''.join(lines)
+    
+    emails_str = ', '.join(emails) if emails else 'brak'
+    text_str = page_text[:2000] if page_text else 'brak'
+    title_str = (title or 'brak')[:200]
+    
+    prompt = prompt_template.format(
+        url=url,
+        title=title_str,
+        emails=emails_str,
+        text=text_str
+    )
 
     try:
         content = None
