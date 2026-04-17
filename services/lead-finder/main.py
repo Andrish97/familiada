@@ -387,6 +387,7 @@ async def scrape_and_save_lead(res: dict, query: str, existing_emails: Set[str])
     if not url: return 0
     
     if not await is_page_fresh(url):
+        logger.info(f"[PRODUCER] Za stara: {url}")
         return 0
     
     # 1. Block by domain keywords
@@ -506,6 +507,7 @@ async def scrape_and_save_lead(res: dict, query: str, existing_emails: Set[str])
         has_js_framework = any(ind in text for ind in js_indicators)
         
         if (thin_content or has_js_framework) and not emails:
+            logger.info(f"[PRODUCER] Playwright: {url} (thin={thin_content}, js_framework={has_js_framework})")
             pw_title, pw_text, pw_html = await scrape_with_playwright(url)
             if pw_title:
                 page_title = pw_title
