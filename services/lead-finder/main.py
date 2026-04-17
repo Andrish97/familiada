@@ -879,6 +879,12 @@ async def consumer_task(run_id: str, consumer_id: int, target: int):
                 await log_to_db("info", f"[C{consumer_id}] Brak pending kontaktów")
                 await asyncio.sleep(2)
                 continue
+            if not raw_leads or len(raw_leads) == 0:
+                if verified_in_run >= target:
+                    continue
+                await log_to_db("info", f"[C{consumer_id}] Brak pending kontaktów")
+                await asyncio.sleep(2)
+                continue
             
             lead = raw_leads[0]
             lead_id = lead['id']
@@ -901,12 +907,20 @@ async def consumer_task(run_id: str, consumer_id: int, target: int):
                 break
             
             if result is None:
-                # AI failed - odłóż i spróbuj później (nie odrzucaj)
-                await supabase.update('marketing_raw_contacts', {
-                    'status': 'pending'
-                }, {'id': lead_id})
-                logger.warning(f"[C{consumer_id}] AI failed - odłożone: {lead_url}")
-                await asyncio.sleep(30)
+                # AI failed after all retries - abort the job
+                logger.error(f"[C{consumer_id}] AI failed after retries - aborting job")
+                task_stop_event.set()
+                task_status = "cancelled"
+                await log_to_db("error", f"[C{consumer_id}] Zlecenie przerwane - AI nie odpowiadają")
+                if TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID:
+                    import requests
+                    try:
+                        requests.post(f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage", json={
+                            "chat_id": TELEGRAM_CHAT_ID,
+                            "text": f"⚠️ Zlecenie przerwane!\n\nAI nie odpowiadają (wszystkie na cooldown lub błąd)."
+                        }, timeout=10)
+                    except: pass
+                break
             elif result.get('is_event_organizer') and result.get('best_email'):
                 await supabase.insert('marketing_verified_contacts', {
                     'title': result.get('title') or lead.get('title'),
