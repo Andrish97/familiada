@@ -47,9 +47,9 @@ rsync -az --delete --checksum \
   --exclude '.git' \
   "$STAGING_DIR/" "$TARGET_DIR/"
 
-# Build Docker image (always fresh, no cache)
-echo "🐳 Building Docker image (no cache)..."
-docker build --no-cache -t familiada-lead-finder:latest "$TARGET_DIR/"
+# Build Docker image
+echo "🐳 Building Docker image..."
+docker build -t familiada-lead-finder:latest "$TARGET_DIR/"
 
 # Remove old image to prevent stale layers
 echo "🧹 Cleaning old image..."
