@@ -16,6 +16,13 @@ from urllib.parse import urlparse
 
 import httpx
 
+# --- Logger ---
+logger = logging.getLogger("lead_finder")
+logger.setLevel(logging.INFO)
+_handler = logging.StreamHandler()
+_handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
+logger.addHandler(_handler)
+
 # --- Configuration (Internal Docker) ---
 SEARXNG_URL = "http://searxng:8080"
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
@@ -152,9 +159,6 @@ def record_request_time(provider: str):
     """Record when provider was used"""
     import time
     provider_last_request[provider] = time.time()
-
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger("lead-finder")
 
 if CONFIG:
     logger.info(f"[CONFIG] Loaded {len(CONFIG)} values")
