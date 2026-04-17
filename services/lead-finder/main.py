@@ -179,16 +179,57 @@ app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 async def warmup_ai_providers():
-    logger.info("[WARMUP] Rozpoczynam rozgrzewanie AI providerów...")
-    providers = ['openrouter', 'groq', 'gemini']
-    for p in providers:
+    logger.info("[WARMUP] Rozgrzewanie AI providerów...")
+    providers = get_provider_order()
+    
+    for provider in providers:
         try:
-            url = f"{SUPABASE_URL}/rest/v1/ai_settings?select=provider_order,updated_at&limit=1"
-            async with httpx.AsyncClient() as client:
-                await client.get(url, headers={'apikey': SUPABASE_SERVICE_KEY, 'Authorization': f'Bearer {SUPABASE_SERVICE_KEY}'}, timeout=10)
-            logger.info(f"[WARMUP] ✓ {p} - connection established")
+            if provider == 'openrouter' and OPENROUTER_API_KEY:
+                async with httpx.AsyncClient(timeout=30) as client:
+                    r = await client.post(
+                        "https://openrouter.ai/api/v1/chat/completions",
+                        headers={'Authorization': f'Bearer {OPENROUTER_API_KEY}', 'Content-Type': 'application/json'},
+                        json={'model': OPENROUTER_MODEL, 'messages': [{'role': 'user', 'content': 'yes'}], 'max_tokens': 10}
+                    )
+                if r.status_code == 200:
+                    logger.info(f"[WARMUP] ✓ OpenRouter - OK")
+                elif r.status_code == 429:
+                    set_provider_cooldown('openrouter')
+                    logger.warning(f"[WARMUP] ✗ OpenRouter - rate limited, cooldown {PROVIDER_COOLDOWN_SECONDS}s")
+                else:
+                    logger.warning(f"[WARMUP] ✗ OpenRouter - error {r.status_code}")
+                    
+            elif provider == 'groq' and GROQ_API_KEY:
+                async with httpx.AsyncClient(timeout=30) as client:
+                    r = await client.post(
+                        "https://api.groq.com/openai/v1/chat/completions",
+                        headers={'Authorization': f'Bearer {GROQ_API_KEY}', 'Content-Type': 'application/json'},
+                        json={'model': GROQ_MODEL, 'messages': [{'role': 'user', 'content': 'yes'}], 'max_tokens': 10}
+                    )
+                if r.status_code == 200:
+                    logger.info(f"[WARMUP] ✓ Groq - OK")
+                elif r.status_code == 429:
+                    set_provider_cooldown('groq')
+                    logger.warning(f"[WARMUP] ✗ Groq - rate limited, cooldown {PROVIDER_COOLDOWN_SECONDS}s")
+                else:
+                    logger.warning(f"[WARMUP] ✗ Groq - error {r.status_code}")
+                    
+            elif provider == 'gemini' and GEMINI_API_KEY:
+                async with httpx.AsyncClient(timeout=30) as client:
+                    r = await client.post(
+                        f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent?key={GEMINI_API_KEY}",
+                        json={'contents': [{'parts': [{'text': 'yes'}]}], 'generationConfig': {'maxOutputTokens': 10}}
+                    )
+                if r.status_code == 200:
+                    logger.info(f"[WARMUP] ✓ Gemini - OK")
+                elif r.status_code == 429:
+                    set_provider_cooldown('gemini')
+                    logger.warning(f"[WARMUP] ✗ Gemini - rate limited, cooldown {PROVIDER_COOLDOWN_SECONDS}s")
+                else:
+                    logger.warning(f"[WARMUP] ✗ Gemini - error {r.status_code}")
         except Exception as e:
-            logger.warning(f"[WARMUP] ✗ {p} - {e}")
+            logger.warning(f"[WARMUP] ✗ {provider} - exception: {e}")
+    
     logger.info("[WARMUP] Rozgrzewanie zakończone")
 
 @asynccontextmanager
