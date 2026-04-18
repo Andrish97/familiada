@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 3t8sWUV9a11sgvLHhS5wKAJwIHOp9YIxQrsRbxsmrqTS8kjr9JZHuet87yYNQbC
+\restrict iBTfXTXVfgxaL3KQhj4O9xsGw4jfepkXcilmjZD9Kluao2PqIkSLAOk64NmtqqB
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -1148,6 +1148,58 @@ BEGIN
   END IF;
 
   RETURN true;
+END;
+$$;
+
+
+SET default_tablespace = '';
+
+SET default_table_access_method = "heap";
+
+--
+-- Name: marketing_raw_contacts; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."marketing_raw_contacts" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "url" "text" NOT NULL,
+    "emails_found" "jsonb" DEFAULT '[]'::"jsonb",
+    "title" "text",
+    "status" "text" DEFAULT 'pending'::"text",
+    "reject_reason" "text",
+    "page_text" "text",
+    "updated_at" timestamp with time zone DEFAULT "now"(),
+    "processing_started_at" timestamp with time zone
+);
+
+
+--
+-- Name: claim_next_pending_lead(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."claim_next_pending_lead"() RETURNS SETOF "public"."marketing_raw_contacts"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+DECLARE
+  target_id uuid;
+BEGIN
+  -- FOR UPDATE SKIP LOCKED is exactly what we need for concurrency
+  SELECT id INTO target_id
+  FROM "public"."marketing_raw_contacts"
+  WHERE "status" = 'pending'
+  ORDER BY "id" ASC  -- process oldest first
+  LIMIT 1
+  FOR UPDATE SKIP LOCKED;
+
+  IF target_id IS NOT NULL THEN
+    UPDATE "public"."marketing_raw_contacts"
+    SET "status" = 'processing', "processing_started_at" = now()
+    WHERE "id" = target_id;
+    
+    RETURN QUERY SELECT * FROM "public"."marketing_raw_contacts" WHERE "id" = target_id;
+  END IF;
+
+  RETURN;
 END;
 $$;
 
@@ -4128,10 +4180,6 @@ begin
 end;
 $$;
 
-
-SET default_tablespace = '';
-
-SET default_table_access_method = "heap";
 
 --
 -- Name: mail_queue; Type: TABLE; Schema: public; Owner: -
@@ -10448,22 +10496,6 @@ CREATE TABLE "public"."marketing_cities" (
 
 
 --
--- Name: marketing_raw_contacts; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE "public"."marketing_raw_contacts" (
-    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
-    "url" "text" NOT NULL,
-    "emails_found" "jsonb" DEFAULT '[]'::"jsonb",
-    "title" "text",
-    "status" "text" DEFAULT 'pending'::"text",
-    "reject_reason" "text",
-    "page_text" "text",
-    "updated_at" timestamp with time zone DEFAULT "now"()
-);
-
-
---
 -- Name: marketing_search_logs; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -13832,5 +13864,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 3t8sWUV9a11sgvLHhS5wKAJwIHOp9YIxQrsRbxsmrqTS8kjr9JZHuet87yYNQbC
+\unrestrict iBTfXTXVfgxaL3KQhj4O9xsGw4jfepkXcilmjZD9Kluao2PqIkSLAOk64NmtqqB
 
