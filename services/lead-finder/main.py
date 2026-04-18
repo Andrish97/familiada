@@ -20,6 +20,7 @@ import httpx
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from playwright.async_api import async_playwright
 
 # --- Logger ---
 logger = logging.getLogger("lead_finder")
@@ -91,11 +92,12 @@ SUBPAGE_PATHS = ['/' + p for p in load_txt_lines('subpage_paths.txt')]
 
 EMAIL_REGEX = re.compile(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}')
 RAW_BUFFER_THRESHOLD = CONFIG.get('RAW_BUFFER_THRESHOLD', 20)
-AI_DELAY = CONFIG.get('AI_DELAY', 12)
+AI_DELAY = CONFIG.get('AI_DELAY', 5) # Default 5 as per config.txt
 PROVIDER_COOLDOWN_SECONDS = int(CONFIG.get('PROVIDER_COOLDOWN_SECONDS', 60))
 TIMEOUT_SUPABASE_RPC = 30
 TIMEOUT_SEARCH = 25
 TIMEOUT_SCRAPE = 12
+TIMEOUT_SCRAPE_JS = 15
 
 # --- Global State ---
 task_status = "idle" 
@@ -135,7 +137,8 @@ async def call_ai_provider(name, prompt):
                 url = cfg['endpoint'].format(model=cfg['model']) + f"?key={cfg['key']}"
                 r = await client.post(url, json={'contents': [{'parts': [{'text': prompt}]}], 'generationConfig': {'temperature': 0.1}})
                 if r.status_code == 200:
-                    return 200, r.json().get('candidates', [{}])[0].get('content', {}).get('parts', [{}])[0].get('text', ''), None
+                    text = r.json().get('candidates', [{}])[0].get('content', {}).get('parts', [{}])[0].get('text', '')
+                    return 200, text, None
             else:
                 r = await client.post(cfg['endpoint'], headers={'Authorization': f'Bearer {cfg["key"]}', **cfg['headers']},
                     json={'model': cfg['model'], 'messages': [{'role': 'system', 'content': 'Odpowiadaj tylko JSON.'}, {'role': 'user', 'content': prompt}], 'temperature': 0.1})
@@ -180,34 +183,105 @@ class SupabaseClient:
     
     async def call_rpc(self, fn, params=None):
         async with httpx.AsyncClient(timeout=30) as client:
-            r = await client.post(f'{self.url}/rest/v1/rpc/{fn}', headers={**self.headers, 'Prefer': 'return=minimal'}, json=params or {})
-            return r.status_code in (200, 201, 204)
+            r = await client.post(f'{self.url}/rest/v1/rpc/{fn}', headers=self.headers, json=params or {})
+            if r.status_code in (200, 201):
+                return r.json()
+            elif r.status_code == 204:
+                return True
+            return None
 
 supabase = SupabaseClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
 # --- Core Logic ---
 
+def extract_emails(html):
+    found = set()
+    # Basic filter for common non-email matches (like SVG paths or images)
+    EXCLUDED_EXT = ('.png', '.jpg', '.jpeg', '.gif', '.svg', '.pdf', '.zip', '.js', '.css', '.webp', '.woff', '.woff2')
+    for e in EMAIL_REGEX.findall(html):
+        e_low = e.lower()
+        if any(e_low.endswith(ext) for ext in EXCLUDED_EXT):
+            continue
+        if not any(g in e_low for g in GARBAGE_EMAIL_DOMAINS):
+            found.add(e)
+    return found
+
+async def scrape_with_playwright(url):
+    async with playwright_semaphore:
+        logger.info(f"[SCRAPE JS] {url}")
+        try:
+            async with async_playwright() as p:
+                browser = await p.chromium.launch(headless=True)
+                context = await browser.new_context(user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+                page = await context.new_page()
+                try:
+                    await page.goto(url, timeout=TIMEOUT_SCRAPE_JS * 1000, wait_until="networkidle")
+                except: pass # Continue even if timeout
+                
+                content = await page.content()
+                text = await page.evaluate("() => document.body.innerText")
+                await browser.close()
+                return text[:5000], extract_emails(content)
+        except Exception as e:
+            logger.error(f"[PLAYWRIGHT ERROR] {url}: {e}")
+            return None, None
+
 async def scrape_and_save_lead(res):
     url = res.get('url', '').lower()
-    if not url: return 0
+    if not url or any(b in url for b in BLOCKED_DOMAINS): return 0
+    
     try:
         domain = urlparse(url).netloc.lower().replace('www.', '')
-        if await supabase.select('marketing_verified_contacts', 'id', {'url': url}) or await supabase.select('marketing_raw_contacts', 'id', {'url': url}): return 0
+        # Deduplication
+        if await supabase.select('marketing_verified_contacts', 'id', {'url': url}) or \
+           await supabase.select('marketing_raw_contacts', 'id', {'url': url}): return 0
     except: return 0
     
     page_text, emails = '', set()
-    try:
-        async with httpx.AsyncClient(timeout=10, follow_redirects=True, headers={'User-Agent': 'Mozilla/5.0'}) as client:
-            r = await client.get(url)
-            if r.status_code == 200:
-                page_text = re.sub(r'<[^>]+>', ' ', r.text)[:2000]
-                for e in EMAIL_REGEX.findall(r.text):
-                    if not any(g in e.lower() for g in GARBAGE_EMAIL_DOMAINS): emails.add(e)
-    except: pass
+    async with scrape_semaphore:
+        try:
+            async with httpx.AsyncClient(timeout=TIMEOUT_SCRAPE, follow_redirects=True, headers={'User-Agent': 'Mozilla/5.0'}) as client:
+                r = await client.get(url)
+                if r.status_code == 200:
+                    page_text = re.sub(r'<[^>]+>', ' ', r.text)[:2000]
+                    emails = extract_emails(r.text)
+                    
+                    # If not social and no emails, try subpages
+                    if not any(s in url for s in SOCIAL_PLATFORMS) and not emails:
+                        for path in SUBPAGE_PATHS:
+                            sub_url = url.rstrip('/') + path
+                            try:
+                                r_sub = await client.get(sub_url, timeout=5)
+                                if r_sub.status_code == 200:
+                                    emails.update(extract_emails(r_sub.text))
+                                    if emails: break
+                            except: continue
+        except: pass
+
+    # Heavy Scraping (Playwright) if needed
+    if (not emails or not page_text) and not any(s in url for s in SOCIAL_PLATFORMS):
+        pw_text, pw_emails = await scrape_with_playwright(url)
+        if pw_text: page_text = pw_text[:2000]
+        if pw_emails: emails.update(pw_emails)
 
     if not emails or not page_text: return 0
-    ok = await supabase.insert('marketing_raw_contacts', {'url': url, 'title': res.get('title',''), 'page_text': page_text, 'emails_found': list(emails), 'status': 'pending'})
-    if ok: logger.info(f"[PRODUCER] Added: {url}"); return 1
+    
+    # Negative keywords filter
+    text_low = page_text.lower()
+    if any(k in text_low for k in NEGATIVE_KEYWORDS):
+        logger.info(f"[PRODUCER] Rejected by keyword: {url}")
+        return 0
+
+    ok = await supabase.insert('marketing_raw_contacts', {
+        'url': url, 
+        'title': res.get('title',''), 
+        'page_text': page_text, 
+        'emails_found': list(emails), 
+        'status': 'pending'
+    })
+    if ok: 
+        logger.info(f"[PRODUCER] Added: {url}")
+        return 1
     return 0
 
 async def producer_task(run_id):
@@ -218,31 +292,44 @@ async def producer_task(run_id):
             if cities:
                 city, role = random.choice(cities)['name'], random.choice(ROLES)
                 logger.info(f"[PRODUCER] Target: {role} | {city}")
-                async with httpx.AsyncClient(timeout=TIMEOUT_SEARCH) as client:
-                    r = await client.get(f'{SEARXNG_URL}/search', params={'q': f'{role} {city}', 'format': 'json', 'language': 'pl-PL'})
-                    if r.status_code == 200:
-                        for res in r.json().get('results', []): await scrape_and_save_lead(res)
+                try:
+                    async with httpx.AsyncClient(timeout=TIMEOUT_SEARCH) as client:
+                        r = await client.get(f'{SEARXNG_URL}/search', params={'q': f'{role} {city}', 'format': 'json', 'language': 'pl-PL'})
+                        if r.status_code == 200:
+                            results = r.json().get('results', [])
+                            for res in results: await scrape_and_save_lead(res)
+                except Exception as e:
+                    logger.error(f"[PRODUCER ERROR] Search failed: {e}")
         await asyncio.sleep(15)
 
 async def verify_raw_lead(lead, c_id):
     url, page_text, emails = lead['url'], lead['page_text'], lead['emails_found']
     order = await get_provider_order_async()
-    prompt = f"URL: {url}\nEmails: {emails}\nContent: {page_text[:2000]}\nVerify if event organizer. Reply ONLY JSON: {{'ok': 1/0, 'email': '...', 'reason': '...'}}"
+    prompt = f"URL: {url}\nEmails: {emails}\nContent: {page_text[:2000]}\nVerify if event organizer (Wodzirej/DJ/Event Company). Reply ONLY JSON: {{'ok': 1/0, 'email': '...', 'reason': '...'}}"
 
     for provider in order:
         if is_provider_on_cooldown(provider): continue
         logger.info(f"[C{c_id}] AI: {provider} → {url}")
         status, content, err = await call_ai_provider(provider, prompt)
-        await asyncio.sleep(AI_DELAY)
         
         if status == 200:
             try:
-                logger.info(f"[C{c_id}] AI raw response: {content[:300]}")
-                res = json.loads(re.search(r'\{.*\}', content, re.DOTALL).group().replace("'", '"'))
-                logger.info(f"[C{c_id}] AI parsed: {res}")
+                # Robust JSON extraction
+                match = re.search(r'\{.*\}', content, re.DOTALL)
+                if not match: continue
+                res = json.loads(match.group().replace("'", '"'))
+                logger.info(f"[C{c_id}] AI response: {res}")
+                await asyncio.sleep(AI_DELAY)
                 return res
-            except: continue
-        elif status == 429: set_provider_cooldown(provider)
+            except Exception as e:
+                logger.error(f"[C{c_id}] AI parsing error: {e}")
+                continue
+        elif status == 429: 
+            logger.warning(f"[C{c_id}] AI: {provider} → Rate Limit (429)")
+            set_provider_cooldown(provider)
+        else:
+            logger.warning(f"[C{c_id}] AI: {provider} → Error {status}: {err}")
+    
     return None
 
 async def consumer_task(run_id, c_id, target):
@@ -255,20 +342,19 @@ async def consumer_task(run_id, c_id, target):
             if task_status in ("completed", "cancelled"): break
             await asyncio.sleep(1); continue
         
-        leads = await supabase.select('marketing_raw_contacts', 'id,url,page_text,emails_found', {'status': 'pending'}, limit=1)
-        if not leads: await asyncio.sleep(3); continue
+        # ATOMIC CLAIM via RPC
+        result = await supabase.call_rpc('claim_next_pending_lead')
+        if not result or not isinstance(result, list) or len(result) == 0:
+            await asyncio.sleep(5); continue
         
-        lead = leads[0]
+        lead = result[0]
         logger.info(f"[C{c_id}] Got lead: {lead['url']} | emails: {lead.get('emails_found',[])}")
-        
-        updated = await supabase.update('marketing_raw_contacts', {'status': 'processing', 'processing_started_at': 'now()'}, {'id': lead['id'], 'status': 'pending'})
-        if not updated:
-            logger.info(f"[C{c_id}] Lead already taken by another consumer, skipping")
-            continue
         
         res = await verify_raw_lead(lead, c_id)
         if res is None:
             consecutive_errors += 1
+            logger.error(f"[C{c_id}] AI failed for {lead['url']}. Errors: {consecutive_errors}/3")
+            # Return to pending for retry later
             await supabase.update('marketing_raw_contacts', {'status': 'pending'}, {'id': lead['id']})
             if consecutive_errors >= 3:
                 logger.critical(f"[C{c_id}] KILL SWITCH! 3 consecutive AI failures."); task_status = "cancelled"; break
@@ -276,15 +362,28 @@ async def consumer_task(run_id, c_id, target):
         
         consecutive_errors = 0
         if res.get('ok') and res.get('email'):
-            await supabase.insert('marketing_verified_contacts', {'email': res['email'], 'url': lead['url'], 'verify_reason': res.get('reason','')})
-            logger.info(f"[C{c_id}] INSERTED to DB: {res['email']}")
-            verified_in_run += 1
-            logger.info(f"[C{c_id}] VERIFIED! ({verified_in_run}/{target})")
+            email = res['email'].strip().lower()
+            # Final deduplication before insert
+            if not await supabase.select('marketing_verified_contacts', 'id', {'email': email}):
+                await supabase.insert('marketing_verified_contacts', {
+                    'email': email, 
+                    'url': lead['url'], 
+                    'verify_reason': res.get('reason','')[:500]
+                })
+                verified_in_run += 1
+                logger.info(f"[C{c_id}] VERIFIED! ({verified_in_run}/{target}) - {email}")
+            
             await supabase.delete('marketing_raw_contacts', {'id': lead['id']})
-            if verified_in_run >= target: task_status = "completed"; break
+            if verified_in_run >= target: 
+                task_status = "completed"
+                logger.info("[CONSUMER] Target reached, stopping.")
+                break
         else:
-            await supabase.update('marketing_raw_contacts', {'status': 'rejected', 'reject_reason': res.get('reason','')[:500]}, {'id': lead['id']})
-            logger.info(f"[C{c_id}] REJECTED.")
+            await supabase.update('marketing_raw_contacts', {
+                'status': 'rejected', 
+                'reject_reason': res.get('reason','')[:500]
+            }, {'id': lead['id']})
+            logger.info(f"[C{c_id}] REJECTED: {res.get('reason','')[:100]}")
 
 async def warmup_ai_providers():
     logger.info("[WARMUP] Checking AI providers (Hey)...")
@@ -292,19 +391,28 @@ async def warmup_ai_providers():
     for p in order:
         status, content, err = await call_ai_provider(p, "Hey, reply only OK")
         if status == 200: logger.info(f"[WARMUP] ✓ {p} - OK")
-        elif status == 429: set_provider_cooldown(p); logger.warning(f"[WARMUP] ✗ {p} - Rate limited")
-        else: logger.warning(f"[WARMUP] ✗ {p} - Error {status}")
+        elif status == 429: 
+            set_provider_cooldown(p)
+            logger.warning(f"[WARMUP] ✗ {p} - Rate limited")
+        else: 
+            set_provider_cooldown(p) # Also cooldown on errors during warmup
+            logger.warning(f"[WARMUP] ✗ {p} - Error {status}")
 
 async def run_worker(run_id, target):
     global task_status, verified_in_run
     task_status = "running"
     verified_in_run = 0
     await warmup_ai_providers()
+    
     p_task = asyncio.create_task(producer_task(run_id))
     c_tasks = [asyncio.create_task(consumer_task(run_id, i, target)) for i in range(3)]
-    while task_status == "running" and verified_in_run < target: await asyncio.sleep(1)
+    
+    while task_status == "running" and verified_in_run < target:
+        await asyncio.sleep(2)
+    
     p_task.cancel()
     for c in c_tasks: c.cancel()
+    if task_status == "running": task_status = "completed"
 
 # --- API ---
 app = FastAPI()
