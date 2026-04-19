@@ -289,7 +289,6 @@ async def verify_raw_lead(lead, target):
 
     any_available = False
     for provider in [p.strip().lower() for p in order if p.strip()]:
-        if provider == 'gemini': continue # Permanentnie pomijamy
         if provider in provider_blacklist: continue
         if provider in provider_cooldowns:
             if time.time() < provider_cooldowns[provider]: continue
@@ -366,7 +365,6 @@ async def warmup_ai_providers():
         order = order_data[0].get('provider_order','').split(',') if isinstance(order_data[0], dict) else order_data
     else: order = ['openrouter', 'groq']
     for p in [x.strip().lower() for x in order if x.strip()]:
-        if p == 'gemini': continue
         status, _, _ = await call_ai_provider(p, "Hey")
         if status == 200:
             logger.info(f"Model {p} jest gotowy.")

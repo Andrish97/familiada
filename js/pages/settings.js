@@ -23,7 +23,7 @@ const TOOLS_MANIFEST = "/settings-tools/tools.json";
 const POLL_MS = 15000;
 const MINUTES_MIN = 10;
 const MAIL_PROVIDERS = ["sendgrid", "brevo", "mailgun", "ses"];
-const AI_PROVIDERS = ["openrouter", "groq", "gemini"];
+const AI_PROVIDERS = ["openrouter", "groq"];
 const EMAIL_TEMPLATES = {
   custom: "",
   info: "Dziękujemy za wiadomość. Odpowiemy tak szybko, jak to możliwe.",
@@ -1679,7 +1679,7 @@ function renderProviderOrder() {
 }
 
 function aiProviderLabel(provider) {
-  const labels = { openrouter: "OpenRouter", groq: "Groq", gemini: "Gemini" };
+  const labels = { openrouter: "OpenRouter", groq: "Groq" };
   return labels[provider] || provider;
 }
 
