@@ -267,20 +267,30 @@ async def call_ai_provider(name, prompt):
             url = cfg['endpoint'].format(model=cfg['model']) + f"?key={cfg['key']}"
             r = await global_client.post(url, json={'contents': [{'parts': [{'text': prompt}]}], 'generationConfig': {'temperature': 0.1}}, timeout=cfg['timeout'])
             if r.status_code == 200: return 200, r.json().get('candidates', [{}])[0].get('content', {}).get('parts', [{}])[0].get('text', ''), None
+            else:
+                print(f"[SERVER] Gemini Error {r.status_code}: {r.text}")
         else:
             r = await global_client.post(cfg['endpoint'], headers={'Authorization': f'Bearer {cfg["key"]}', 'Content-Type': 'application/json'},
                 json={'model': cfg['model'], 'messages': [{'role': 'system', 'content': 'Odpowiadaj tylko JSON.'}, {'role': 'user', 'content': prompt}], 'temperature': 0.1}, timeout=cfg['timeout'])
             if r.status_code == 200: return 200, r.json()['choices'][0]['message']['content'], None
+            else:
+                print(f"[SERVER] {name.capitalize()} Error {r.status_code}: {r.text}")
         return r.status_code, None, r.text[:100]
     except Exception as e: return 500, None, str(e)
 
 async def verify_raw_lead(lead, target):
     global verified_in_run
     url, txt, emails, title = lead['url'], lead['page_text'], lead['emails_found'], lead.get('title', '')
+
     order_data = await supabase.call_rpc('get_provider_order')
     if order_data and isinstance(order_data, list) and len(order_data) > 0:
         order = order_data[0].get('provider_order','').split(',') if isinstance(order_data[0], dict) else order_data
     else: order = ['openrouter', 'groq', 'gemini']
+
+    # Log order only once per run or when changed
+    current_order = [p.strip().lower() for p in order if p.strip()]
+    print(f"[SERVER] Aktualna kolejność AI: {current_order}")
+
     
     prompt_path = os.path.join(os.path.dirname(__file__), 'ai_prompt.txt')
     with open(prompt_path, 'r', encoding='utf-8') as f:
