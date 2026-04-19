@@ -1,21 +1,22 @@
 # Konfiguracja lead-finder
 # Format: KLUCZ=WARTOŚĆ (linie z # = komentarz)
 
-# === WYSZUKIWANIE ===
-SEARCH_RESULTS_LIMIT=10          # Max wyników per zapytanie SearXNG
-SEARCH_MIN_RESULTS=5            # Min wyników z wyszukiwania żeby uznać je za sensowne
-MAX_CONCURRENT_SCRAPES=10       # Max równoległych scrapowań ogółem (lekkie)
-MAX_CONCURRENT_PLAYWRIGHT=3     # Max równoległych instancji przeglądarki (ciężkie)
+# === BUFOR I LIMITI ===
+RAW_BUFFER_THRESHOLD=20          # Ile leadów 'pending' trzymać w bazie (bufor dla AI)
+SEARCH_RESULTS_LIMIT=20          # Max wyników z jednego zapytania do SearXNG
 
 # === AI ===
-AI_DELAY=5                      # Opóźnienie MIĘDZY zapytaniami AI (sekundy) - zapobiega rate limitom
-PROVIDER_COOLDOWN_SECONDS=60    # Cooldown po przekroczeniu rate limit (sekundy)
+AI_DELAY=12                      # Opóźnienie po UDANEJ weryfikacji (sekundy)
+PROVIDER_COOLDOWN_SECONDS=60     # Cooldown dla Typ 2 - Rate Limit 429 (sekundy)
+PROVIDER_COOLDOWN_LONG=300       # Cooldown dla Typ 2 - Błędy 500/Timeout (sekundy)
+
+# === RÓWNOLEGŁOŚĆ ===
+MAX_CONCURRENT_SCRAPES=10        # Max równoległych lekkich scrapowań
+MAX_CONCURRENT_PLAYWRIGHT=3      # Max instancji Chromium
 
 # === TIMEOUTY (sekundy) ===
-TIMEOUT_GET_PROVIDER=5          # Pobieranie ustawień providerów z Supabase
-TIMEOUT_IS_PAGE_FRESH=10        # Sprawdzanie czy strona jest świeża
-TIMEOUT_SCRAPE=12               # Scrapowanie strony (httpx)
-TIMEOUT_SCRAPE_JS=15            # Scrapowanie strony JS (Playwright)
-TIMEOUT_SUPABASE_RPC=30         # Wywołania RPC Supabase
-TIMEOUT_AI=30                   # Timeout dla wszystkich AI
-TIMEOUT_SEARCH=25               # Timeout wyszukiwania SearXNG
+TIMEOUT_SCRAPE=12                # Scrapowanie strony (httpx)
+TIMEOUT_SCRAPE_JS=15             # Scrapowanie strony JS (Playwright)
+TIMEOUT_SUPABASE_RPC=30          # Wywołania RPC Supabase
+TIMEOUT_AI=30                    # Domyślny timeout dla zapytań do modeli AI
+TIMEOUT_SEARCH=25                # Timeout wyszukiwania SearXNG

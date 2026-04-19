@@ -92,14 +92,6 @@ _db_handler = SupabaseLoggingHandler()
 _db_handler.setLevel(logging.INFO)
 logger.addHandler(_db_handler)
 
-# --- Configuration ---
-SEARXNG_URL = "http://searxng:8080"
-AI_PROVIDERS = {
-    'openrouter': {'key': os.getenv("OPENROUTER_API_KEY", ""), 'model': os.getenv("OPENROUTER_MODEL", "anthropic/claude-3-haiku"), 'endpoint': "https://openrouter.ai/api/v1/chat/completions", 'timeout': 60},
-    'groq': {'key': os.getenv("GROQ_API_KEY", ""), 'model': os.getenv("GROQ_MODEL", "llama-3.1-8b-instant"), 'endpoint': "https://api.groq.com/openai/v1/chat/completions", 'timeout': 30},
-    'gemini': {'key': os.getenv("GEMINI_API_KEY", ""), 'model': os.getenv("GEMINI_MODEL", "gemini-2.0-flash-lite"), 'endpoint': "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent", 'timeout': 30},
-}
-
 def load_txt_lines(filename):
     path = os.path.join(os.path.dirname(__file__), filename)
     if not os.path.exists(path): return []
@@ -119,6 +111,28 @@ def load_config():
     return config
 
 CONFIG = load_config()
+
+# --- Configuration Mapping ---
+AI_DELAY = CONFIG.get('AI_DELAY', 12)
+PROVIDER_COOLDOWN_SECONDS = CONFIG.get('PROVIDER_COOLDOWN_SECONDS', 60)
+PROVIDER_COOLDOWN_LONG = CONFIG.get('PROVIDER_COOLDOWN_LONG', 300)
+RAW_BUFFER_THRESHOLD = CONFIG.get('RAW_BUFFER_THRESHOLD', 20)
+SEARCH_RESULTS_LIMIT = CONFIG.get('SEARCH_RESULTS_LIMIT', 20)
+
+TIMEOUT_SEARCH = CONFIG.get('TIMEOUT_SEARCH', 25)
+TIMEOUT_SCRAPE = CONFIG.get('TIMEOUT_SCRAPE', 12)
+TIMEOUT_SCRAPE_JS = CONFIG.get('TIMEOUT_SCRAPE_JS', 15)
+TIMEOUT_AI = CONFIG.get('TIMEOUT_AI', 30)
+
+MAX_CONCURRENT_SCRAPES = CONFIG.get('MAX_CONCURRENT_SCRAPES', 10)
+MAX_CONCURRENT_PLAYWRIGHT = CONFIG.get('MAX_CONCURRENT_PLAYWRIGHT', 3)
+
+AI_PROVIDERS = {
+    'openrouter': {'key': os.getenv("OPENROUTER_API_KEY", ""), 'model': os.getenv("OPENROUTER_MODEL", "anthropic/claude-3-haiku"), 'endpoint': "https://openrouter.ai/api/v1/chat/completions", 'timeout': 60},
+    'groq': {'key': os.getenv("GROQ_API_KEY", ""), 'model': os.getenv("GROQ_MODEL", "llama-3.1-8b-instant"), 'endpoint': "https://api.groq.com/openai/v1/chat/completions", 'timeout': TIMEOUT_AI},
+    'gemini': {'key': os.getenv("GEMINI_API_KEY", ""), 'model': os.getenv("GEMINI_MODEL", "gemini-2.0-flash-lite"), 'endpoint': "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent", 'timeout': TIMEOUT_AI},
+}
+
 ROLES = load_txt_lines('roles.txt')
 SEARCH_TEMPLATES = load_txt_lines('templates.txt')
 NEGATIVE_KEYWORDS = [k.lower() for k in load_txt_lines('negative_keywords.txt')]
@@ -128,12 +142,6 @@ SOCIAL_PLATFORMS = tuple(load_txt_lines('social_platforms.txt'))
 SUBPAGE_PATHS = ['/' + p for p in load_txt_lines('subpage_paths.txt')]
 
 EMAIL_REGEX = re.compile(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}')
-RAW_BUFFER_THRESHOLD = CONFIG.get('RAW_BUFFER_THRESHOLD', 20)
-AI_DELAY = 12
-PROVIDER_COOLDOWN_SECONDS = 60
-TIMEOUT_SEARCH = 25
-TIMEOUT_SCRAPE = 12
-TIMEOUT_SCRAPE_JS = 15
 
 # --- Global State ---
 task_status = "idle" 
@@ -141,8 +149,9 @@ task_run_id = None
 verified_in_run = 0
 critical_errors_in_run = 0
 provider_cooldowns = {} 
-provider_blacklist = set() # Typ 3 - Wykluczeni w tej sesji
-playwright_semaphore = asyncio.Semaphore(3)
+provider_blacklist = set() 
+scrape_semaphore = asyncio.Semaphore(MAX_CONCURRENT_SCRAPES)
+playwright_semaphore = asyncio.Semaphore(MAX_CONCURRENT_PLAYWRIGHT)
 
 # --- Logic ---
 
@@ -174,22 +183,23 @@ async def scrape_and_save_lead(res):
     if await supabase.select('marketing_verified_contacts', 'id', {'url': url}) or await supabase.select('marketing_raw_contacts', 'id', {'url': url}): return 0
     
     txt, emails = '', set()
-    try:
-        async with httpx.AsyncClient(timeout=TIMEOUT_SCRAPE, follow_redirects=True, headers={'User-Agent': 'Mozilla/5.0'}) as client:
-            r = await client.get(url)
-            if r.status_code == 200:
-                txt = re.sub(r'<[^>]+>', ' ', r.text)[:2000]
-                emails = extract_emails(r.text)
-                if not any(s in url for s in SOCIAL_PLATFORMS) and not emails:
-                    for path in SUBPAGE_PATHS:
-                        try:
-                            r_sub = await client.get(url.rstrip('/') + path, timeout=5)
-                            if r_sub.status_code == 200:
-                                emails.update(extract_emails(r_sub.text))
-                                if len(txt) < 1500: txt += " " + re.sub(r'<[^>]+>', ' ', r_sub.text)[:1000]
-                                if emails: break
-                        except: continue
-    except: pass
+    async with scrape_semaphore:
+        try:
+            async with httpx.AsyncClient(timeout=TIMEOUT_SCRAPE, follow_redirects=True, headers={'User-Agent': 'Mozilla/5.0'}) as client:
+                r = await client.get(url)
+                if r.status_code == 200:
+                    txt = re.sub(r'<[^>]+>', ' ', r.text)[:2000]
+                    emails = extract_emails(r.text)
+                    if not any(s in url for s in SOCIAL_PLATFORMS) and not emails:
+                        for path in SUBPAGE_PATHS:
+                            try:
+                                r_sub = await client.get(url.rstrip('/') + path, timeout=5)
+                                if r_sub.status_code == 200:
+                                    emails.update(extract_emails(r_sub.text))
+                                    if len(txt) < 1500: txt += " " + re.sub(r'<[^>]+>', ' ', r_sub.text)[:1000]
+                                    if emails: break
+                            except: continue
+        except: pass
 
     is_social = any(s in url for s in SOCIAL_PLATFORMS)
     if (not emails or len(txt) < 200) and not is_social:
@@ -221,7 +231,7 @@ async def producer_task(run_id):
                     if task_status != "running": break
                     query = template.replace('{role}', role).replace('{city}', city)
                     try:
-                        r = await supabase.client.get(f'{SEARXNG_URL}/search', params={'q': query, 'format': 'json', 'language': 'pl-PL'}, timeout=TIMEOUT_SEARCH)
+                        r = await supabase.client.get(f'{SEARXNG_URL}/search', params={'q': query, 'format': 'json', 'language': 'pl-PL', 'limit': SEARCH_RESULTS_LIMIT}, timeout=TIMEOUT_SEARCH)
                         if r.status_code == 200:
                             for res in r.json().get('results', []): total_added += await scrape_and_save_lead(res)
                     except: pass
@@ -235,11 +245,11 @@ async def call_ai_provider(name, prompt):
     try:
         if name == 'gemini':
             url = cfg['endpoint'].format(model=cfg['model']) + f"?key={cfg['key']}"
-            r = await supabase.client.post(url, json={'contents': [{'parts': [{'text': prompt}]}], 'generationConfig': {'temperature': 0.1}})
+            r = await supabase.client.post(url, json={'contents': [{'parts': [{'text': prompt}]}], 'generationConfig': {'temperature': 0.1}}, timeout=cfg['timeout'])
             if r.status_code == 200: return 200, r.json().get('candidates', [{}])[0].get('content', {}).get('parts', [{}])[0].get('text', ''), None
         else:
             r = await supabase.client.post(cfg['endpoint'], headers={'Authorization': f'Bearer {cfg["key"]}', **cfg['headers']},
-                json={'model': cfg['model'], 'messages': [{'role': 'system', 'content': 'Odpowiadaj tylko JSON.'}, {'role': 'user', 'content': prompt}], 'temperature': 0.1})
+                json={'model': cfg['model'], 'messages': [{'role': 'system', 'content': 'Odpowiadaj tylko JSON.'}, {'role': 'user', 'content': prompt}], 'temperature': 0.1}, timeout=cfg['timeout'])
             if r.status_code == 200: return 200, r.json()['choices'][0]['message']['content'], None
         return r.status_code, None, r.text[:100]
     except Exception as e: return 500, None, str(e)
@@ -269,7 +279,7 @@ async def verify_raw_lead(lead, target):
         logger.info(f"Weryfikuję przez {provider}")
         status, content, err = await call_ai_provider(provider, prompt)
         
-        elif status == 200:
+        if status == 200:
             try:
                 res = json.loads(re.search(r'\{.*\}', content, re.DOTALL).group().replace("'", '"'))
                 await asyncio.sleep(AI_DELAY)
@@ -283,13 +293,12 @@ async def verify_raw_lead(lead, target):
             provider_blacklist.add(provider)
             continue
         elif status == 429:
-            logger.info(f"Dostawca {provider} przeciążony (429). Cooldown 60s.")
+            logger.info(f"Dostawca {provider} przeciążony (429). Cooldown {PROVIDER_COOLDOWN_SECONDS}s.")
             provider_cooldowns[provider] = time.time() + PROVIDER_COOLDOWN_SECONDS
             continue
         else:
-            # Błędy 500, 503, Timeout itp. - długa kara
-            logger.info(f"Nie udało się przez {provider} (Błąd {status}). Cooldown 5 min.")
-            provider_cooldowns[provider] = time.time() + 300 # 5 minut kary
+            logger.info(f"Nie udało się przez {provider} (Błąd {status}). Cooldown {PROVIDER_COOLDOWN_LONG}s.")
+            provider_cooldowns[provider] = time.time() + PROVIDER_COOLDOWN_LONG
             continue
             
     if not any_available:
@@ -344,11 +353,11 @@ async def warmup_ai_providers():
             print(f"[SERVER] Model {p} wykluczony permanentnie (Błąd {status}).")
             provider_blacklist.add(p)
         elif status == 429:
-            print(f"[SERVER] Model {p} na cooldownie 60s (Błąd {status}).")
+            print(f"[SERVER] Model {p} na cooldownie {PROVIDER_COOLDOWN_SECONDS}s (Błąd {status}).")
             provider_cooldowns[p] = time.time() + PROVIDER_COOLDOWN_SECONDS
         else:
-            print(f"[SERVER] Model {p} na cooldownie 5 min (Błąd {status}).")
-            provider_cooldowns[p] = time.time() + 300
+            print(f"[SERVER] Model {p} na cooldownie {PROVIDER_COOLDOWN_LONG}s (Błąd {status}).")
+            provider_cooldowns[p] = time.time() + PROVIDER_COOLDOWN_LONG
 
 async def run_worker(run_id, target):
     global task_status, verified_in_run, critical_errors_in_run, provider_blacklist, provider_cooldowns
