@@ -36,7 +36,6 @@ class SupabaseClient:
     def __init__(self, url, key):
         self.url = url
         self.headers = {'apikey': key, 'Authorization': f'Bearer {key}', 'Content-Type': 'application/json'}
-        # 2. Osobny klient TYLKO do Supabase z dedykowanymi nagłówkami
         self.client = httpx.AsyncClient(timeout=30, headers=self.headers)
     
     async def insert(self, table, data):
@@ -131,8 +130,7 @@ MAX_CONCURRENT_PLAYWRIGHT = CONFIG.get('MAX_CONCURRENT_PLAYWRIGHT', 3)
 
 AI_PROVIDERS = {
     'openrouter': {'key': os.getenv("OPENROUTER_API_KEY", ""), 'model': os.getenv("OPENROUTER_MODEL", "anthropic/claude-3-haiku"), 'endpoint': "https://openrouter.ai/api/v1/chat/completions", 'timeout': 60},
-    'groq': {'key': os.getenv("GROQ_API_KEY", ""), 'model': os.getenv("GROQ_MODEL", "llama-3.1-8b-instant"), 'endpoint': "https://api.groq.com/openai/v1/chat/completions", 'timeout': TIMEOUT_AI},
-    'gemini': {'key': os.getenv("GEMINI_API_KEY", ""), 'model': os.getenv("GEMINI_MODEL", "gemini-2.0-flash-lite"), 'endpoint': "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent", 'timeout': TIMEOUT_AI},
+    'groq': {'key': os.getenv("GROQ_API_KEY", ""), 'model': os.getenv("GROQ_MODEL", "llama-3.1-8b-instant"), 'endpoint': "https://api.groq.com/openai/v1/chat/completions", 'timeout': TIMEOUT_AI}
 }
 
 ROLES = load_txt_lines('roles.txt')
@@ -220,7 +218,8 @@ async def scrape_and_save_lead(res):
         if p_emails: emails.update(p_emails)
 
     if not emails or len(txt) < 100: return 0
-    if any(k in txt.lower() for k in NEGATIVE_KEYWORDS): return 0
+    txt_low = txt.lower()
+    if any(k in txt_low for k in NEGATIVE_KEYWORDS): return 0
 
     return 1 if await supabase.insert('marketing_raw_contacts', {
         'url': url, 'title': res.get('title',''), 'page_text': txt[:2000], 
@@ -238,6 +237,7 @@ async def producer_task(run_id):
                 pool = [f"{r}:{c['name']}" for r in ROLES for c in cities]
                 available = [p for p in pool if p not in done]
                 if not available:
+                    print("[SERVER] Pula wyszukiwania wyczerpana. Czyszczę historię.")
                     await supabase.delete('marketing_search_queries_log')
                     available = pool
                 picked = random.choice(available)
@@ -263,34 +263,22 @@ async def call_ai_provider(name, prompt):
     cfg = AI_PROVIDERS.get(name)
     if not cfg or not cfg['key']: return 500, None, "Missing config"
     try:
-        if name == 'gemini':
-            url = cfg['endpoint'].format(model=cfg['model']) + f"?key={cfg['key']}"
-            r = await global_client.post(url, json={'contents': [{'parts': [{'text': prompt}]}], 'generationConfig': {'temperature': 0.1}}, timeout=cfg['timeout'])
-            if r.status_code == 200: return 200, r.json().get('candidates', [{}])[0].get('content', {}).get('parts', [{}])[0].get('text', ''), None
-            else:
-                print(f"[SERVER] Gemini Error {r.status_code}: {r.text}")
+        r = await global_client.post(cfg['endpoint'], headers={'Authorization': f'Bearer {cfg["key"]}', 'Content-Type': 'application/json'},
+            json={'model': cfg['model'], 'messages': [{'role': 'system', 'content': 'Odpowiadaj tylko JSON.'}, {'role': 'user', 'content': prompt}], 'temperature': 0.1}, timeout=cfg['timeout'])
+        if r.status_code == 200: return 200, r.json()['choices'][0]['message']['content'], None
         else:
-            r = await global_client.post(cfg['endpoint'], headers={'Authorization': f'Bearer {cfg["key"]}', 'Content-Type': 'application/json'},
-                json={'model': cfg['model'], 'messages': [{'role': 'system', 'content': 'Odpowiadaj tylko JSON.'}, {'role': 'user', 'content': prompt}], 'temperature': 0.1}, timeout=cfg['timeout'])
-            if r.status_code == 200: return 200, r.json()['choices'][0]['message']['content'], None
-            else:
-                print(f"[SERVER] {name.capitalize()} Error {r.status_code}: {r.text}")
-        return r.status_code, None, r.text[:100]
+            print(f"[SERVER] {name.capitalize()} Error {r.status_code}: {r.text}")
+            return r.status_code, None, r.text[:100]
     except Exception as e: return 500, None, str(e)
 
 async def verify_raw_lead(lead, target):
     global verified_in_run
     url, txt, emails, title = lead['url'], lead['page_text'], lead['emails_found'], lead.get('title', '')
-
+    
     order_data = await supabase.call_rpc('get_provider_order')
     if order_data and isinstance(order_data, list) and len(order_data) > 0:
         order = order_data[0].get('provider_order','').split(',') if isinstance(order_data[0], dict) else order_data
-    else: order = ['openrouter', 'groq', 'gemini']
-
-    # Log order only once per run or when changed
-    current_order = [p.strip().lower() for p in order if p.strip()]
-    print(f"[SERVER] Aktualna kolejność AI: {current_order}")
-
+    else: order = ['openrouter', 'groq']
     
     prompt_path = os.path.join(os.path.dirname(__file__), 'ai_prompt.txt')
     with open(prompt_path, 'r', encoding='utf-8') as f:
@@ -301,6 +289,7 @@ async def verify_raw_lead(lead, target):
 
     any_available = False
     for provider in [p.strip().lower() for p in order if p.strip()]:
+        if provider == 'gemini': continue # Permanentnie pomijamy
         if provider in provider_blacklist: continue
         if provider in provider_cooldowns:
             if time.time() < provider_cooldowns[provider]: continue
@@ -375,8 +364,9 @@ async def warmup_ai_providers():
     order_data = await supabase.call_rpc('get_provider_order')
     if order_data and isinstance(order_data, list) and len(order_data) > 0:
         order = order_data[0].get('provider_order','').split(',') if isinstance(order_data[0], dict) else order_data
-    else: order = ['openrouter', 'groq', 'gemini']
+    else: order = ['openrouter', 'groq']
     for p in [x.strip().lower() for x in order if x.strip()]:
+        if p == 'gemini': continue
         status, _, _ = await call_ai_provider(p, "Hey")
         if status == 200:
             logger.info(f"Model {p} jest gotowy.")
@@ -395,10 +385,7 @@ async def run_worker(run_id, target):
     try:
         task_status, verified_in_run, critical_errors_in_run = "running", 0, 0
         provider_blacklist, provider_cooldowns = set(), {}
-        
-        # CZYŚCIMY STARE LOGI PRZED STARTEM NOWEGO ZLECENIA
         await supabase.delete('marketing_search_logs')
-        
         logger.info(f"Zlecono {target} kontaktów.")
         await warmup_ai_providers()
         p_task = asyncio.create_task(producer_task(run_id))
