@@ -330,20 +330,22 @@ async def consumer_task(run_id, c_id, target):
         if res.get('ok') and res.get('email'):
             email = str(res['email']).strip().lower()
             if not await supabase.select('marketing_verified_contacts', 'id', {'email': email}):
-                reason_full = f"{res.get('reason','')}. [Score: {res.get('score', 0)}, SEO: {res.get('seo_spam_score', 0)}]"
+                # Zapisujemy do zweryfikowanych - dane punktowe (score) idą tylko do logów (już są w logger.info wyżej)
                 await supabase.insert('marketing_verified_contacts', {
                     'email': email, 
                     'url': lead['url'], 
                     'title': res.get('title') or lead.get('title'),
                     'short_description': res.get('short_description'),
-                    'verify_reason': reason_full[:500]
+                    'verify_reason': str(res.get('reason',''))[:500]
                 })
                 verified_in_run += 1
                 logger.info(f"[C{c_id}] VERIFIED! ({verified_in_run}/{target}) - {email}")
             await supabase.delete('marketing_raw_contacts', {'id': lead['id']})
         else:
+            # Rezygnacja/Odrzucenie - zapisujemy powód w marketing_raw_contacts zgodnie z Twoim schematem
             await supabase.update('marketing_raw_contacts', {
-                'status': 'rejected', 'reject_reason': str(res.get('reason',''))[:500]
+                'status': 'rejected', 
+                'reject_reason': str(res.get('reason',''))[:500]
             }, {'id': lead['id']})
             logger.info(f"[C{c_id}] REJECTED.")
 
