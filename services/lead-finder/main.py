@@ -186,7 +186,11 @@ async def scrape_and_save_lead(res):
                         except: continue
     except: pass
 
-    if (not emails or not txt) and not any(s in url for s in SOCIAL_PLATFORMS):
+    # 4. Ciężkie Scrapowanie (Playwright) - jeśli strona pusta lub brak maili
+    # Omijamy tylko Social Media (FB/IG), które i tak blokują boty JS
+    is_social = any(s in url for s in SOCIAL_PLATFORMS)
+    
+    if (not emails or len(txt) < 200) and not is_social:
         p_txt, p_emails = await scrape_with_playwright(url)
         if p_txt: txt = p_txt[:2000]
         if p_emails: emails.update(p_emails)
