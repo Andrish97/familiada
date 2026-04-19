@@ -29,10 +29,14 @@ _handler = logging.StreamHandler()
 _handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
 logger.addHandler(_handler)
 
+# 1. Czysty klient do zapytań zewnętrznych (AI, SearXNG)
+global_client = httpx.AsyncClient(timeout=60)
+
 class SupabaseClient:
     def __init__(self, url, key):
         self.url = url
         self.headers = {'apikey': key, 'Authorization': f'Bearer {key}', 'Content-Type': 'application/json'}
+        # 2. Osobny klient TYLKO do Supabase z dedykowanymi nagłówkami
         self.client = httpx.AsyncClient(timeout=30, headers=self.headers)
     
     async def insert(self, table, data):
@@ -154,11 +158,8 @@ playwright_semaphore = asyncio.Semaphore(MAX_CONCURRENT_PLAYWRIGHT)
 
 def clean_text(text):
     if not text: return ""
-    # Remove large blocks of whitespace
     text = re.sub(r'\s+', ' ', text).strip()
-    # Basic filter for code blocks if they leaked into text
     if "function(" in text or "var " in text or "window." in text:
-        # Try to strip obvious JS
         text = re.sub(r'\{[^\}]+\}', '', text)
     return text[:2000]
 
@@ -218,8 +219,7 @@ async def scrape_and_save_lead(res):
         if p_emails: emails.update(p_emails)
 
     if not emails or len(txt) < 100: return 0
-    txt_low = txt.lower()
-    if any(k in txt_low for k in NEGATIVE_KEYWORDS): return 0
+    if any(k in txt.lower() for k in NEGATIVE_KEYWORDS): return 0
 
     return 1 if await supabase.insert('marketing_raw_contacts', {
         'url': url, 'title': res.get('title',''), 'page_text': txt[:2000], 
@@ -247,10 +247,13 @@ async def producer_task(run_id):
                     if task_status != "running": break
                     query = template.replace('{role}', role).replace('{city}', city)
                     try:
-                        r = await supabase.client.get(f'{SEARXNG_URL}/search', params={'q': query, 'format': 'json', 'language': 'pl-PL', 'limit': SEARCH_RESULTS_LIMIT}, timeout=TIMEOUT_SEARCH)
+                        r = await global_client.get(f'{SEARXNG_URL}/search', params={'q': query, 'format': 'json', 'language': 'pl-PL', 'limit': SEARCH_RESULTS_LIMIT}, timeout=TIMEOUT_SEARCH)
                         if r.status_code == 200:
                             for res in r.json().get('results', []): total_added += await scrape_and_save_lead(res)
-                    except: pass
+                        else:
+                            print(f"[SERVER] SearXNG Error {r.status_code}: {r.text[:100]}")
+                    except Exception as e:
+                        print(f"[SERVER] SearXNG Connection Error: {e}")
                 logger.info(f"Zakończono wyszukiwanie {role} {city}, dodano {total_added} surowych kontaktów.")
                 await supabase.insert('marketing_search_queries_log', {'query_text': picked})
         await asyncio.sleep(15)
@@ -261,10 +264,10 @@ async def call_ai_provider(name, prompt):
     try:
         if name == 'gemini':
             url = cfg['endpoint'].format(model=cfg['model']) + f"?key={cfg['key']}"
-            r = await supabase.client.post(url, json={'contents': [{'parts': [{'text': prompt}]}], 'generationConfig': {'temperature': 0.1}}, timeout=cfg['timeout'])
+            r = await global_client.post(url, json={'contents': [{'parts': [{'text': prompt}]}], 'generationConfig': {'temperature': 0.1}}, timeout=cfg['timeout'])
             if r.status_code == 200: return 200, r.json().get('candidates', [{}])[0].get('content', {}).get('parts', [{}])[0].get('text', ''), None
         else:
-            r = await supabase.client.post(cfg['endpoint'], headers={'Authorization': f'Bearer {cfg["key"]}', **cfg['headers']},
+            r = await global_client.post(cfg['endpoint'], headers={'Authorization': f'Bearer {cfg["key"]}', 'Content-Type': 'application/json'},
                 json={'model': cfg['model'], 'messages': [{'role': 'system', 'content': 'Odpowiadaj tylko JSON.'}, {'role': 'user', 'content': prompt}], 'temperature': 0.1}, timeout=cfg['timeout'])
             if r.status_code == 200: return 200, r.json()['choices'][0]['message']['content'], None
         return r.status_code, None, r.text[:100]
@@ -399,7 +402,9 @@ app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 @app.on_event("shutdown")
-async def shutdown_event(): await supabase.client.aclose()
+async def shutdown_event(): 
+    await supabase.client.aclose()
+    await global_client.aclose()
 
 @app.post("/api/search-runs")
 async def start(target_count: int = 50):
