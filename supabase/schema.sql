@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict VZgNeXPoC1q7zSfRiR73SO1mqJLnc9Qunvud8cMCSDLdwTkhxFtiBdzgLAFILrk
+\restrict EBoPcPK7GPxdcOui1T7F7JP0fr9bZyD2jkLxcr0Da2e0PAN5uSkGCHG5CH1E16a
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -10534,9 +10534,7 @@ CREATE TABLE "public"."marketing_verified_contacts" (
     "url" "text" NOT NULL,
     "is_used" boolean DEFAULT false,
     "added_at" timestamp with time zone DEFAULT "now"(),
-    "verify_reason" "text",
-    "ai_score" integer,
-    "seo_score" integer
+    "verify_reason" "text"
 );
 
 
@@ -13866,5 +13864,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict VZgNeXPoC1q7zSfRiR73SO1mqJLnc9Qunvud8cMCSDLdwTkhxFtiBdzgLAFILrk
+\unrestrict EBoPcPK7GPxdcOui1T7F7JP0fr9bZyD2jkLxcr0Da2e0PAN5uSkGCHG5CH1E16a
 
