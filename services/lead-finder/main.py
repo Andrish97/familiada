@@ -29,7 +29,6 @@ _handler = logging.StreamHandler()
 _handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
 logger.addHandler(_handler)
 
-# Global client for Supabase to avoid connection overhead
 class SupabaseClient:
     def __init__(self, url, key):
         self.url = url
@@ -40,10 +39,7 @@ class SupabaseClient:
         try:
             r = await self.client.post(f'{self.url}/rest/v1/{table}', json=data)
             return r.status_code in (200, 201)
-        except Exception as e:
-            # We don't use logger here to avoid infinite recursion
-            print(f"[DB ERROR] Insert failed: {e}")
-            return False
+        except: return False
 
     async def select(self, table, columns='*', filters=None, limit=None):
         try:
@@ -75,7 +71,6 @@ class SupabaseClient:
             return r.json() if r.status_code in (200, 201) else (True if r.status_code == 204 else None)
         except: return None
 
-# Initialize Supabase first
 SUPABASE_URL = "http://kong:8000"
 SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", os.getenv("SERVICE_ROLE_KEY", ""))
 supabase = SupabaseClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
@@ -84,13 +79,9 @@ class SupabaseLoggingHandler(logging.Handler):
     def emit(self, record):
         try:
             msg = self.format(record)
-            # Create background task for log insertion
             loop = asyncio.get_event_loop()
             if loop.is_running():
-                loop.create_task(supabase.insert('marketing_search_logs', {
-                    'level': record.levelname.lower(),
-                    'message': msg
-                }))
+                loop.create_task(supabase.insert('marketing_search_logs', {'level': record.levelname.lower(), 'message': msg}))
         except: pass
 
 _db_handler = SupabaseLoggingHandler()
@@ -100,27 +91,9 @@ logger.addHandler(_db_handler)
 # --- Configuration ---
 SEARXNG_URL = "http://searxng:8080"
 AI_PROVIDERS = {
-    'openrouter': {
-        'key': os.getenv("OPENROUTER_API_KEY", ""),
-        'model': os.getenv("OPENROUTER_MODEL", "anthropic/claude-3-haiku"),
-        'endpoint': "https://openrouter.ai/api/v1/chat/completions",
-        'headers': {'Content-Type': 'application/json'},
-        'timeout': 60,
-    },
-    'groq': {
-        'key': os.getenv("GROQ_API_KEY", ""),
-        'model': os.getenv("GROQ_MODEL", "llama-3.1-8b-instant"),
-        'endpoint': "https://api.groq.com/openai/v1/chat/completions",
-        'headers': {'Content-Type': 'application/json'},
-        'timeout': 30,
-    },
-    'gemini': {
-        'key': os.getenv("GEMINI_API_KEY", ""),
-        'model': os.getenv("GEMINI_MODEL", "gemini-2.0-flash-lite"),
-        'endpoint': "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
-        'headers': {'Content-Type': 'application/json'},
-        'timeout': 30,
-    },
+    'openrouter': {'key': os.getenv("OPENROUTER_API_KEY", ""), 'model': os.getenv("OPENROUTER_MODEL", "anthropic/claude-3-haiku"), 'endpoint': "https://openrouter.ai/api/v1/chat/completions", 'timeout': 60},
+    'groq': {'key': os.getenv("GROQ_API_KEY", ""), 'model': os.getenv("GROQ_MODEL", "llama-3.1-8b-instant"), 'endpoint': "https://api.groq.com/openai/v1/chat/completions", 'timeout': 30},
+    'gemini': {'key': os.getenv("GEMINI_API_KEY", ""), 'model': os.getenv("GEMINI_MODEL", "gemini-2.0-flash-lite"), 'endpoint': "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent", 'timeout': 30},
 }
 
 def load_txt_lines(filename):
@@ -135,12 +108,10 @@ def load_config():
     if os.path.exists(path):
         with open(path, 'r', encoding='utf-8') as f:
             for line in f:
-                line = line.strip()
-                if line and '=' in line and not line.startswith('#'):
-                    key, val = line.split('=', 1)
-                    val = val.strip().split('#')[0].strip()
-                    try: config[key.strip()] = int(val)
-                    except: config[key.strip()] = val.strip()
+                if line.strip() and '=' in line and not line.startswith('#'):
+                    k, v = line.split('=', 1)
+                    try: config[k.strip()] = int(v.split('#')[0].strip())
+                    except: config[k.strip()] = v.split('#')[0].strip()
     return config
 
 CONFIG = load_config()
@@ -166,56 +137,16 @@ task_run_id = None
 verified_in_run = 0
 critical_errors_in_run = 0
 provider_cooldowns = {} 
-scrape_semaphore = asyncio.Semaphore(10)
 playwright_semaphore = asyncio.Semaphore(3)
 
-# --- AI Helpers ---
-
-async def get_provider_order_async():
-    try:
-        url = f"{SUPABASE_URL}/rest/v1/ai_settings?select=provider_order&limit=1"
-        r = await supabase.client.get(url)
-        if r.status_code == 200 and r.json():
-            return [p.strip().lower() for p in r.json()[0]['provider_order'].split(',') if p.strip()]
-    except: pass
-    return ['openrouter', 'groq', 'gemini']
-
-def is_provider_on_cooldown(provider):
-    if provider in provider_cooldowns and time.time() < provider_cooldowns[provider]:
-        return True
-    if provider in provider_cooldowns: del provider_cooldowns[provider]
-    return False
-
-def set_provider_cooldown(provider):
-    provider_cooldowns[provider] = time.time() + PROVIDER_COOLDOWN_SECONDS
-
-async def call_ai_provider(name, prompt):
-    cfg = AI_PROVIDERS.get(name)
-    if not cfg or not cfg['key']: return 500, None, "Missing config"
-    try:
-        if name == 'gemini':
-            url = cfg['endpoint'].format(model=cfg['model']) + f"?key={cfg['key']}"
-            r = await supabase.client.post(url, json={'contents': [{'parts': [{'text': prompt}]}], 'generationConfig': {'temperature': 0.1}})
-            if r.status_code == 200:
-                text = r.json().get('candidates', [{}])[0].get('content', {}).get('parts', [{}])[0].get('text', '')
-                return 200, text, None
-        else:
-            r = await supabase.client.post(cfg['endpoint'], headers={'Authorization': f'Bearer {cfg["key"]}', **cfg['headers']},
-                json={'model': cfg['model'], 'messages': [{'role': 'system', 'content': 'Odpowiadaj tylko JSON.'}, {'role': 'user', 'content': prompt}], 'temperature': 0.1})
-            if r.status_code == 200:
-                return 200, r.json()['choices'][0]['message']['content'], None
-        return r.status_code, None, r.text[:100]
-    except Exception as e: return 500, None, str(e)
-
-# --- Core Logic ---
+# --- Logic ---
 
 def extract_emails(html):
     found = set()
-    EXCLUDED_EXT = ('.png', '.jpg', '.jpeg', '.gif', '.svg', '.pdf', '.zip', '.js', '.css', '.webp', '.woff', '.woff2')
+    EXT = ('.png', '.jpg', '.jpeg', '.gif', '.svg', '.pdf', '.zip', '.js', '.css', '.webp', '.woff', '.woff2')
     for e in EMAIL_REGEX.findall(html):
         e_low = e.lower()
-        if any(e_low.endswith(ext) for ext in EXCLUDED_EXT): continue
-        if not any(g in e_low for g in GARBAGE_EMAIL_DOMAINS): found.add(e)
+        if not any(e_low.endswith(x) for x in EXT) and not any(g in e_low for g in GARBAGE_EMAIL_DOMAINS): found.add(e)
     return found
 
 async def scrape_with_playwright(url):
@@ -223,53 +154,45 @@ async def scrape_with_playwright(url):
         try:
             async with async_playwright() as p:
                 browser = await p.chromium.launch(headless=True)
-                context = await browser.new_context(user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
-                page = await context.new_page()
+                ctx = await browser.new_context(user_agent="Mozilla/5.0")
+                page = await ctx.new_page()
                 try: await page.goto(url, timeout=TIMEOUT_SCRAPE_JS * 1000, wait_until="networkidle")
                 except: pass
-                content = await page.content()
-                text = await page.evaluate("() => document.body.innerText")
+                txt, html = await page.evaluate("() => document.body.innerText"), await page.content()
                 await browser.close()
-                return text[:2000], extract_emails(content)
+                return txt[:2000], extract_emails(html)
         except: return None, None
 
 async def scrape_and_save_lead(res):
     url = res.get('url', '').lower()
     if not url or any(b in urlparse(url).netloc.lower() for b in BLOCKED_DOMAINS): return 0
-    if await supabase.select('marketing_verified_contacts', 'id', {'url': url}) or \
-       await supabase.select('marketing_raw_contacts', 'id', {'url': url}): return 0
+    if await supabase.select('marketing_verified_contacts', 'id', {'url': url}) or await supabase.select('marketing_raw_contacts', 'id', {'url': url}): return 0
     
-    page_text, emails = '', set()
-    async with scrape_semaphore:
-        try:
-            async with httpx.AsyncClient(timeout=TIMEOUT_SCRAPE, follow_redirects=True, headers={'User-Agent': 'Mozilla/5.0'}) as client:
-                r = await client.get(url)
-                if r.status_code == 200:
-                    page_text = re.sub(r'<[^>]+>', ' ', r.text)[:2000]
-                    emails = extract_emails(r.text)
-                    if not any(s in url for s in SOCIAL_PLATFORMS) and not emails:
-                        for path in SUBPAGE_PATHS:
-                            try:
-                                r_sub = await client.get(url.rstrip('/') + path, timeout=5)
-                                if r_sub.status_code == 200:
-                                    emails.update(extract_emails(r_sub.text))
-                                    if len(page_text) < 1500: page_text += " " + re.sub(r'<[^>]+>', ' ', r_sub.text)[:1000]
-                                    if emails: break
-                            except: continue
-        except: pass
+    txt, emails = '', set()
+    try:
+        async with httpx.AsyncClient(timeout=TIMEOUT_SCRAPE, follow_redirects=True, headers={'User-Agent': 'Mozilla/5.0'}) as client:
+            r = await client.get(url)
+            if r.status_code == 200:
+                txt = re.sub(r'<[^>]+>', ' ', r.text)[:2000]
+                emails = extract_emails(r.text)
+                if not any(s in url for s in SOCIAL_PLATFORMS) and not emails:
+                    for path in SUBPAGE_PATHS:
+                        try:
+                            r_sub = await client.get(url.rstrip('/') + path, timeout=5)
+                            if r_sub.status_code == 200:
+                                emails.update(extract_emails(r_sub.text))
+                                if len(txt) < 1500: txt += " " + re.sub(r'<[^>]+>', ' ', r_sub.text)[:1000]
+                                if emails: break
+                        except: continue
+    except: pass
 
-    if (not emails or not page_text) and not any(s in url for s in SOCIAL_PLATFORMS):
-        pw_text, pw_emails = await scrape_with_playwright(url)
-        if pw_text: page_text = pw_text[:2000]
-        if pw_emails: emails.update(pw_emails)
+    if (not emails or not txt) and not any(s in url for s in SOCIAL_PLATFORMS):
+        p_txt, p_emails = await scrape_with_playwright(url)
+        if p_txt: txt = p_txt[:2000]
+        if p_emails: emails.update(p_emails)
 
-    if not emails or not page_text: return 0
-    if any(k in page_text.lower() for k in NEGATIVE_KEYWORDS): return 0
-
-    return 1 if await supabase.insert('marketing_raw_contacts', {
-        'url': url, 'title': res.get('title',''), 'page_text': page_text[:2000], 
-        'emails_found': list(emails), 'status': 'pending'
-    }) else 0
+    if not emails or not txt or any(k in txt.lower() for k in NEGATIVE_KEYWORDS): return 0
+    return 1 if await supabase.insert('marketing_raw_contacts', {'url': url, 'title': res.get('title',''), 'page_text': txt[:2000], 'emails_found': list(emails), 'status': 'pending'}) else 0
 
 async def producer_task(run_id):
     while task_status == "running" and task_run_id == run_id:
@@ -277,43 +200,57 @@ async def producer_task(run_id):
         if not pending or len(pending) < RAW_BUFFER_THRESHOLD:
             cities = await supabase.select('marketing_cities', 'name', {'is_active': 'true'})
             if cities:
-                city, role = random.choice(cities)['name'], random.choice(ROLES)
-                template = random.choice(SEARCH_TEMPLATES)
-                query = template.replace('{role}', role).replace('{city}', city)
-                logger.info(f"[PRODUCER] Query: {query}")
-                try:
-                    r = await supabase.client.get(f'{SEARXNG_URL}/search', params={'q': query, 'format': 'json', 'language': 'pl-PL'}, timeout=TIMEOUT_SEARCH)
-                    if r.status_code == 200:
-                        for res in r.json().get('results', []): await scrape_and_save_lead(res)
-                except: pass
+                # Pool logic: role:city
+                history = await supabase.select('marketing_search_queries_log', 'query_text')
+                done = set(h['query_text'] for h in history) if history else set()
+                pool = [f"{r}:{c['name']}" for r in ROLES for c in cities]
+                available = [p for p in pool if p not in done]
+                
+                if not available:
+                    logger.info("[PRODUCER] Pool exhausted. Clearing history.")
+                    await supabase.delete('marketing_search_queries_log')
+                    available = pool
+
+                picked = random.choice(available)
+                role, city = picked.split(':', 1)
+                logger.info(f"[PRODUCER] Picking: {role} in {city}")
+                
+                # Execute ALL templates for this pair
+                for template in SEARCH_TEMPLATES:
+                    if task_status != "running": break
+                    query = template.replace('{role}', role).replace('{city}', city)
+                    logger.info(f"[PRODUCER] Query: {query}")
+                    try:
+                        r = await supabase.client.get(f'{SEARXNG_URL}/search', params={'q': query, 'format': 'json', 'language': 'pl-PL'}, timeout=TIMEOUT_SEARCH)
+                        if r.status_code == 200:
+                            for res in r.json().get('results', []): await scrape_and_save_lead(res)
+                    except: pass
+                
+                await supabase.insert('marketing_search_queries_log', {'query_text': picked})
         await asyncio.sleep(15)
 
 async def verify_raw_lead(lead, c_id):
-    url, page_text, emails, title = lead['url'], lead['page_text'], lead['emails_found'], lead.get('title', '')
-    order = await get_provider_order_async()
-    
+    url, txt, emails, title = lead['url'], lead['page_text'], lead['emails_found'], lead.get('title', '')
+    order = await supabase.call_rpc('get_provider_order') or ['openrouter', 'groq', 'gemini']
+    if isinstance(order, list) and len(order) > 0 and isinstance(order[0], dict): order = [o.get('provider_order','') for o in order][0].split(',')
+
     prompt_path = os.path.join(os.path.dirname(__file__), 'ai_prompt.txt')
-    try:
-        with open(prompt_path, 'r', encoding='utf-8') as f:
-            lines = f.readlines()
-            base_prompt = "\n".join([l for l in lines if not l.strip().startswith('#')])
-    except:
-        base_prompt = "Verify if event organizer. Reply ONLY JSON: {'ok': 1/0, 'email': '...', 'reason': '...'}"
+    with open(prompt_path, 'r', encoding='utf-8') as f:
+        base = "\n".join([l for l in f.readlines() if not l.strip().startswith('#')])
+    prompt = base.replace('{url}', url).replace('{title}', title).replace('{emails}', str(emails)).replace('{text}', txt[:2000])
 
-    prompt = base_prompt.replace('{url}', url).replace('{title}', title).replace('{emails}', str(emails)).replace('{text}', page_text[:2000])
-
-    for provider in order:
-        if is_provider_on_cooldown(provider): continue
+    for provider in [p.strip().lower() for p in order if p.strip()]:
+        if provider in provider_cooldowns and time.time() < provider_cooldowns[provider]: continue
         logger.info(f"[C{c_id}] AI: {provider} → {url}")
         status, content, err = await call_ai_provider(provider, prompt)
-        
         if status == 200:
             try:
                 res = json.loads(re.search(r'\{.*\}', content, re.DOTALL).group().replace("'", '"'))
+                logger.info(f"[C{c_id}] AI response: {res}")
                 await asyncio.sleep(AI_DELAY)
                 return res
             except: continue
-        elif status == 429: set_provider_cooldown(provider)
+        elif status == 429: provider_cooldowns[provider] = time.time() + PROVIDER_COOLDOWN_SECONDS
     return None
 
 async def consumer_task(run_id, c_id, target):
@@ -326,13 +263,12 @@ async def consumer_task(run_id, c_id, target):
         
         lead = result[0]
         res = await verify_raw_lead(lead, c_id)
-        
         if res is None:
             consecutive_critical += 1
             critical_errors_in_run += 1
             await supabase.update('marketing_raw_contacts', {'status': 'pending'}, {'id': lead['id']})
             if consecutive_critical >= 3:
-                logger.critical(f"[C{c_id}] KILL SWITCH! 3 consecutive AI failures."); task_status = "cancelled"; break
+                logger.critical(f"[C{c_id}] KILL SWITCH! 3 failures."); task_status = "cancelled"; break
             continue
         
         consecutive_critical = 0
@@ -340,31 +276,20 @@ async def consumer_task(run_id, c_id, target):
             email = str(res['email']).strip().lower()
             if not await supabase.select('marketing_verified_contacts', 'id', {'email': email}):
                 await supabase.insert('marketing_verified_contacts', {
-                    'email': email, 
-                    'url': lead['url'], 
-                    'title': res.get('title') or lead.get('title'),
-                    'short_description': res.get('short_description'),
-                    'verify_reason': str(res.get('reason',''))[:500]
+                    'email': email, 'url': lead['url'], 'title': res.get('title') or lead.get('title'),
+                    'short_description': res.get('short_description'), 'verify_reason': str(res.get('reason',''))[:500],
+                    'ai_score': res.get('score'), 'seo_score': res.get('seo_spam_score')
                 })
                 verified_in_run += 1
                 logger.info(f"[C{c_id}] VERIFIED! ({verified_in_run}/{target}) - {email}")
             await supabase.delete('marketing_raw_contacts', {'id': lead['id']})
         else:
-            await supabase.update('marketing_raw_contacts', {
-                'status': 'rejected', 'reject_reason': str(res.get('reason',''))[:500]
-            }, {'id': lead['id']})
+            await supabase.update('marketing_raw_contacts', {'status': 'rejected', 'reject_reason': str(res.get('reason',''))[:500]}, {'id': lead['id']})
             logger.info(f"[C{c_id}] REJECTED.")
-
-async def warmup_ai_providers():
-    order = await get_provider_order_async()
-    for p in order:
-        status, _, _ = await call_ai_provider(p, "Hey")
-        if status != 200: set_provider_cooldown(p)
 
 async def run_worker(run_id, target):
     global task_status, verified_in_run, critical_errors_in_run
     task_status, verified_in_run, critical_errors_in_run = "running", 0, 0
-    await warmup_ai_providers()
     p_task = asyncio.create_task(producer_task(run_id))
     c_tasks = [asyncio.create_task(consumer_task(run_id, i, target)) for i in range(3)]
     while task_status == "running" and verified_in_run < target: await asyncio.sleep(1)
@@ -376,8 +301,7 @@ app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 @app.on_event("shutdown")
-async def shutdown_event():
-    await supabase.client.aclose()
+async def shutdown_event(): await supabase.client.aclose()
 
 @app.post("/api/search-runs")
 async def start(target_count: int = 50):
