@@ -345,7 +345,7 @@ async def verify_raw_lead(lead, c_id):
         "2. ODRZUĆ (ok: 0) artykuły prasowe, Wikipedie, blogi o historii.\n"
         "3. ODRZUĆ (ok: 0) urzędy, szkoły, parafie, gazownie.\n"
         "4. AKCEPTUJ (ok: 1) tylko jeśli widzisz ofertę usług na imprezy/wesela.\n"
-        "Odpowiedz TYLKO JSON: {'ok': 1/0, 'email': 'najbardziej sensowny mail', 'reason': 'dlaczego tak/nie (krótko)'}"
+        "Odpowiedz TYLKO JSON: {'ok': 1/0, 'email': '...', 'name': 'Nazwa Firmy/Wykonawcy', 'description': 'Krótki opis usług (max 150 znaków)', 'reason': 'dlaczego tak/nie'}"
     )
 
     for provider in order:
@@ -408,6 +408,8 @@ async def consumer_task(run_id, c_id, target):
             email = str(res['email']).strip().lower()
             if not await supabase.select('marketing_verified_contacts', 'id', {'email': email}):
                 await supabase.insert('marketing_verified_contacts', {
+                    'title': res.get('name') or lead.get('title'),
+                    'short_description': res.get('description'),
                     'email': email, 
                     'url': lead['url'], 
                     'verify_reason': res.get('reason','')[:500]
