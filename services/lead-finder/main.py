@@ -336,17 +336,15 @@ async def verify_raw_lead(lead, c_id):
     url, page_text, emails = lead['url'], lead['page_text'], lead['emails_found']
     order = await get_provider_order_async()
     
-    # Enhanced prompt to avoid false positives (movies, databases)
-    prompt = (
-        f"URL: {url}\nEmails: {emails}\nContent: {page_text[:2000]}\n"
-        "ZADANIE: Sprawdź czy to jest strona BIZNESU oferującego oprawę imprez (Wodzirej, DJ, Zespół, Firma Eventowa).\n"
-        "KRYTYCZNE ZASADY:\n"
-        "1. ODRZUĆ (ok: 0) bazy filmów (np. filmpolski, fdb, filmweb, imdb) - interesują nas realne firmy, a nie filmy fabularne.\n"
-        "2. ODRZUĆ (ok: 0) artykuły prasowe, Wikipedie, blogi o historii.\n"
-        "3. ODRZUĆ (ok: 0) urzędy, szkoły, parafie, gazownie.\n"
-        "4. AKCEPTUJ (ok: 1) tylko jeśli widzisz ofertę usług na imprezy/wesela.\n"
-        "Odpowiedz TYLKO JSON: {'ok': 1/0, 'email': '...', 'name': 'Nazwa Firmy/Wykonawcy', 'description': 'Krótki opis usług (max 150 znaków)', 'reason': 'dlaczego tak/nie'}"
-    )
+    # Load prompt from file
+    prompt_path = os.path.join(os.path.dirname(__file__), 'ai_prompt.txt')
+    try:
+        with open(prompt_path, 'r', encoding='utf-8') as f:
+            base_prompt = f.read()
+    except:
+        base_prompt = "Verify if event organizer. Reply ONLY JSON: {'ok': 1/0, 'email': '...', 'name': '...', 'description': '...', 'reason': '...'}"
+
+    prompt = base_prompt.replace('{url}', url).replace('{emails}', str(emails)).replace('{content}', page_text[:2000])
 
     for provider in order:
         if is_provider_on_cooldown(provider): continue
