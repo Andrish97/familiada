@@ -126,7 +126,7 @@ SUBPAGE_PATHS = ['/' + p for p in load_txt_lines('subpage_paths.txt')]
 EMAIL_REGEX = re.compile(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}')
 RAW_BUFFER_THRESHOLD = CONFIG.get('RAW_BUFFER_THRESHOLD', 20)
 AI_DELAY = 12
-PROVIDER_COOLDOWN_SECONDS = int(CONFIG.get('PROVIDER_COOLDOWN_SECONDS', 60))
+PROVIDER_COOLDOWN_SECONDS = 60 # Sztywne 60s zgodnie z prośbą
 TIMEOUT_SEARCH = 25
 TIMEOUT_SCRAPE = 12
 TIMEOUT_SCRAPE_JS = 15
@@ -169,22 +169,23 @@ async def scrape_and_save_lead(res):
     if await supabase.select('marketing_verified_contacts', 'id', {'url': url}) or await supabase.select('marketing_raw_contacts', 'id', {'url': url}): return 0
     
     txt, emails = '', set()
-    try:
-        async with httpx.AsyncClient(timeout=TIMEOUT_SCRAPE, follow_redirects=True, headers={'User-Agent': 'Mozilla/5.0'}) as client:
-            r = await client.get(url)
-            if r.status_code == 200:
-                txt = re.sub(r'<[^>]+>', ' ', r.text)[:2000]
-                emails = extract_emails(r.text)
-                if not any(s in url for s in SOCIAL_PLATFORMS) and not emails:
-                    for path in SUBPAGE_PATHS:
-                        try:
-                            r_sub = await client.get(url.rstrip('/') + path, timeout=5)
-                            if r_sub.status_code == 200:
-                                emails.update(extract_emails(r_sub.text))
-                                if len(txt) < 1500: txt += " " + re.sub(r'<[^>]+>', ' ', r_sub.text)[:1000]
-                                if emails: break
-                        except: continue
-    except: pass
+    async with scrape_semaphore:
+        try:
+            async with httpx.AsyncClient(timeout=TIMEOUT_SCRAPE, follow_redirects=True, headers={'User-Agent': 'Mozilla/5.0'}) as client:
+                r = await client.get(url)
+                if r.status_code == 200:
+                    txt = re.sub(r'<[^>]+>', ' ', r.text)[:2000]
+                    emails = extract_emails(r.text)
+                    if not any(s in url for s in SOCIAL_PLATFORMS) and not emails:
+                        for path in SUBPAGE_PATHS:
+                            try:
+                                r_sub = await client.get(url.rstrip('/') + path, timeout=5)
+                                if r_sub.status_code == 200:
+                                    emails.update(extract_emails(r_sub.text))
+                                    if len(txt) < 1500: txt += " " + re.sub(r'<[^>]+>', ' ', r_sub.text)[:1000]
+                                    if emails: break
+                            except: continue
+        except: pass
 
     is_social = any(s in url for s in SOCIAL_PLATFORMS)
     if (not emails or len(txt) < 200) and not is_social:
@@ -254,9 +255,14 @@ async def call_ai_provider(name, prompt):
 
 async def verify_raw_lead(lead):
     url, txt, emails, title = lead['url'], lead['page_text'], lead['emails_found'], lead.get('title', '')
-    order = await supabase.call_rpc('get_provider_order') or ['openrouter', 'groq', 'gemini']
-    if isinstance(order, list) and len(order) > 0 and isinstance(order[0], dict): order = [o.get('provider_order','') for o in order][0].split(',')
-
+    
+    # Pobieramy aktualną kolejność przy każdym leadzie
+    order_data = await supabase.call_rpc('get_provider_order')
+    if order_data and isinstance(order_data, list) and len(order_data) > 0:
+        if isinstance(order_data[0], dict): order = order_data[0].get('provider_order','').split(',')
+        else: order = order_data
+    else: order = ['openrouter', 'groq', 'gemini']
+    
     prompt_path = os.path.join(os.path.dirname(__file__), 'ai_prompt.txt')
     with open(prompt_path, 'r', encoding='utf-8') as f:
         base = "\n".join([l for l in f.readlines() if not l.strip().startswith('#')])
@@ -265,7 +271,14 @@ async def verify_raw_lead(lead):
     logger.info(f"Rozpoczynam weryfikację: {url}")
 
     for provider in [p.strip().lower() for p in order if p.strip()]:
-        if provider in provider_cooldowns and time.time() < provider_cooldowns[provider]: continue
+        # SPRAWDZAMY COOLDOWN PRZED KAŻDYM ZAPYTANIEM
+        if provider in provider_cooldowns:
+            remains = provider_cooldowns[provider] - time.time()
+            if remains > 0:
+                logger.info(f"Dostawca {provider} wciąż na cooldownie (jeszcze {int(remains)}s). Pomijam.")
+                continue
+            else:
+                del provider_cooldowns[provider] # Czas minął, usuwamy karę
         
         logger.info(f"Weryfikuję przez {provider}")
         status, content, err = await call_ai_provider(provider, prompt)
@@ -273,16 +286,18 @@ async def verify_raw_lead(lead):
         if status == 200:
             try:
                 res = json.loads(re.search(r'\{.*\}', content, re.DOTALL).group().replace("'", '"'))
+                # SUKCES -> CZEKAMY 12S ZGODNIE ZE SPECYFIKACJĄ
                 await asyncio.sleep(AI_DELAY)
                 return res
             except: 
-                logger.warning(f"Błąd parsowania odpowiedzi od {provider}")
-                continue
-        elif status == 429: 
-            logger.warning(f"Rate Limit (429) dla {provider}. Nakładam cooldown.")
-            provider_cooldowns[provider] = time.time() + PROVIDER_COOLDOWN_SECONDS
+                logger.warning(f"Błąd parsowania odpowiedzi od {provider}. Nakładam cooldown.")
+                provider_cooldowns[provider] = time.time() + PROVIDER_COOLDOWN_SECONDS
+                continue # Natychmiast następny
         else:
-            logger.warning(f"Nie udało się przez {provider} (Błąd {status})")
+            # BŁĄD 429 lub 500/Timeout -> NAKŁADAMY COOLDOWN 60S I NATYCHMIAST NASTĘPNY
+            logger.warning(f"Nie udało się przez {provider} (Status {status}). Nakładam 60s cooldown.")
+            provider_cooldowns[provider] = time.time() + PROVIDER_COOLDOWN_SECONDS
+            continue # Próba natychmiastowa kolejnego AI
             
     return None
 
@@ -326,15 +341,18 @@ async def consumer_task(run_id, target):
 
 async def warmup_ai_providers():
     logger.info("Rozpoczynam rozgrzewanie modeli AI (Hey)...")
-    order = await supabase.call_rpc('get_provider_order') or ['openrouter', 'groq', 'gemini']
-    if isinstance(order, list) and len(order) > 0 and isinstance(order[0], dict): order = [o.get('provider_order','') for o in order][0].split(',')
+    order_data = await supabase.call_rpc('get_provider_order')
+    if order_data and isinstance(order_data, list) and len(order_data) > 0:
+        if isinstance(order_data[0], dict): order = order_data[0].get('provider_order','').split(',')
+        else: order = order_data
+    else: order = ['openrouter', 'groq', 'gemini']
     
     for p in [x.strip().lower() for x in order if x.strip()]:
         status, _, _ = await call_ai_provider(p, "Hey")
         if status == 200:
             logger.info(f"Model {p} jest gotowy.")
         else: 
-            logger.warning(f"Model {p} nie odpowiada (Błąd {status}). Nakładam cooldown.")
+            logger.warning(f"Model {p} nie odpowiada (Błąd {status}). Nakładam 60s cooldown.")
             provider_cooldowns[p] = time.time() + PROVIDER_COOLDOWN_SECONDS
 
 async def run_worker(run_id, target):
