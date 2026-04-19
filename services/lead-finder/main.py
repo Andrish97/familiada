@@ -395,6 +395,10 @@ async def run_worker(run_id, target):
     try:
         task_status, verified_in_run, critical_errors_in_run = "running", 0, 0
         provider_blacklist, provider_cooldowns = set(), {}
+        
+        # CZYŚCIMY STARE LOGI PRZED STARTEM NOWEGO ZLECENIA
+        await supabase.delete('marketing_search_logs')
+        
         logger.info(f"Zlecono {target} kontaktów.")
         await warmup_ai_providers()
         p_task = asyncio.create_task(producer_task(run_id))
