@@ -111,14 +111,11 @@ def load_config():
     return config
 
 CONFIG = load_config()
-
-# --- Configuration Mapping ---
 AI_DELAY = CONFIG.get('AI_DELAY', 12)
 PROVIDER_COOLDOWN_SECONDS = CONFIG.get('PROVIDER_COOLDOWN_SECONDS', 60)
 PROVIDER_COOLDOWN_LONG = CONFIG.get('PROVIDER_COOLDOWN_LONG', 300)
 RAW_BUFFER_THRESHOLD = CONFIG.get('RAW_BUFFER_THRESHOLD', 20)
 SEARCH_RESULTS_LIMIT = CONFIG.get('SEARCH_RESULTS_LIMIT', 20)
-
 TIMEOUT_SEARCH = CONFIG.get('TIMEOUT_SEARCH', 25)
 TIMEOUT_SCRAPE = CONFIG.get('TIMEOUT_SCRAPE', 12)
 TIMEOUT_SCRAPE_JS = CONFIG.get('TIMEOUT_SCRAPE_JS', 15)
@@ -155,12 +152,25 @@ playwright_semaphore = asyncio.Semaphore(MAX_CONCURRENT_PLAYWRIGHT)
 
 # --- Logic ---
 
+def clean_text(text):
+    if not text: return ""
+    # Remove large blocks of whitespace
+    text = re.sub(r'\s+', ' ', text).strip()
+    # Basic filter for code blocks if they leaked into text
+    if "function(" in text or "var " in text or "window." in text:
+        # Try to strip obvious JS
+        text = re.sub(r'\{[^\}]+\}', '', text)
+    return text[:2000]
+
 def extract_emails(html):
     found = set()
     EXT = ('.png', '.jpg', '.jpeg', '.gif', '.svg', '.pdf', '.zip', '.js', '.css', '.webp', '.woff', '.woff2')
+    JUNK_PREFIXES = ('webmaster@', 'dmca@', 'privacy@', 'subscriptions@', 'legal@', 'press@', 'noreply@', 'office@it')
     for e in EMAIL_REGEX.findall(html):
         e_low = e.lower()
-        if not any(e_low.endswith(x) for x in EXT) and not any(g in e_low for g in GARBAGE_EMAIL_DOMAINS): found.add(e)
+        if any(e_low.endswith(x) for x in EXT): continue
+        if any(e_low.startswith(p) for p in JUNK_PREFIXES): continue
+        if not any(g in e_low for g in GARBAGE_EMAIL_DOMAINS): found.add(e)
     return found
 
 async def scrape_with_playwright(url):
@@ -174,7 +184,7 @@ async def scrape_with_playwright(url):
                 except: pass
                 txt, html = await page.evaluate("() => document.body.innerText"), await page.content()
                 await browser.close()
-                return txt[:2000], extract_emails(html)
+                return clean_text(txt), extract_emails(html)
         except: return None, None
 
 async def scrape_and_save_lead(res):
@@ -188,7 +198,7 @@ async def scrape_and_save_lead(res):
             async with httpx.AsyncClient(timeout=TIMEOUT_SCRAPE, follow_redirects=True, headers={'User-Agent': 'Mozilla/5.0'}) as client:
                 r = await client.get(url)
                 if r.status_code == 200:
-                    txt = re.sub(r'<[^>]+>', ' ', r.text)[:2000]
+                    txt = clean_text(re.sub(r'<[^>]+>', ' ', r.text))
                     emails = extract_emails(r.text)
                     if not any(s in url for s in SOCIAL_PLATFORMS) and not emails:
                         for path in SUBPAGE_PATHS:
@@ -196,19 +206,25 @@ async def scrape_and_save_lead(res):
                                 r_sub = await client.get(url.rstrip('/') + path, timeout=5)
                                 if r_sub.status_code == 200:
                                     emails.update(extract_emails(r_sub.text))
-                                    if len(txt) < 1500: txt += " " + re.sub(r'<[^>]+>', ' ', r_sub.text)[:1000]
+                                    if len(txt) < 1500: txt += " " + clean_text(re.sub(r'<[^>]+>', ' ', r_sub.text))[:1000]
                                     if emails: break
                             except: continue
         except: pass
 
     is_social = any(s in url for s in SOCIAL_PLATFORMS)
-    if (not emails or len(txt) < 200) and not is_social:
+    if (not emails or len(txt) < 250) and not is_social:
         p_txt, p_emails = await scrape_with_playwright(url)
-        if p_txt: txt = p_txt[:2000]
+        if p_txt: txt = p_txt
         if p_emails: emails.update(p_emails)
 
-    if not emails or not txt or any(k in txt.lower() for k in NEGATIVE_KEYWORDS): return 0
-    return 1 if await supabase.insert('marketing_raw_contacts', {'url': url, 'title': res.get('title',''), 'page_text': txt[:2000], 'emails_found': list(emails), 'status': 'pending'}) else 0
+    if not emails or len(txt) < 100: return 0
+    txt_low = txt.lower()
+    if any(k in txt_low for k in NEGATIVE_KEYWORDS): return 0
+
+    return 1 if await supabase.insert('marketing_raw_contacts', {
+        'url': url, 'title': res.get('title',''), 'page_text': txt[:2000], 
+        'emails_found': list(emails), 'status': 'pending'
+    }) else 0
 
 async def producer_task(run_id):
     while task_status == "running" and task_run_id == run_id:
@@ -255,6 +271,7 @@ async def call_ai_provider(name, prompt):
     except Exception as e: return 500, None, str(e)
 
 async def verify_raw_lead(lead, target):
+    global verified_in_run
     url, txt, emails, title = lead['url'], lead['page_text'], lead['emails_found'], lead.get('title', '')
     order_data = await supabase.call_rpc('get_provider_order')
     if order_data and isinstance(order_data, list) and len(order_data) > 0:

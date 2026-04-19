@@ -1,44 +1,45 @@
-# Zakazane slowa kluczowe - strony z tymi slowami sa pomijane
-# Uzywane do filtrowania wynikow wyszukiwania
+# Infrastruktura i Media
+wodociągi
+kanalizacja
+oczyszczalnia
+gazownia
+energetyka
+elektrownia
+ciepłownia
+zakład komunalny
+mpwik
+pwik
 
-urząd
+# Urzędy i Instytucje
+urząd miasta
+urząd gminy
+starostwo
 ministerstwo
-bip.gov.pl
 komenda
 policja
-sąd
 prokuratura
-ośrodek pomocy
-ops
-parafia
-kościoła
-# Edukacja i opieka
-szkoła podstawowa
-liceum
-technikum
-uniwersytet
-przedszkole publiczne
-żłobek miejski
-szpital
-przychodnia
-apteka
+sąd rejonowy
+bip.gov.pl
 
-# Kultura (Filmy/Teatr - wyklucza bazy filmowe o filmie "Wodzirej")
+# Techniczne / Artykuły (często w śmieciach)
+cookie policy
+privacy statement
+all rights reserved
+powered by joomla
+powered by wordpress
+window.yootheme
+function(e)
+var $theme
+javascript
+vulnerability
+audit show
+
+# Filmy (wykluczenie bazy o filmie Wodzirej)
 obsada
 reżyseria
 scenariusz
 film fabularny
-produkcja filmowa
 premiera filmu
-fdb.pl
-filmpolski.pl
-filmweb
-imdb
 aktorzy
 kinematografia
-bwa.ostrowiec.pl
-mpwik
-wodociągi
-kanalizacja
-gazownia
-energetyka
+produkcja filmowa
