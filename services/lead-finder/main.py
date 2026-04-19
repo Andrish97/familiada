@@ -318,11 +318,15 @@ async def producer_task(run_id):
         if not pending or len(pending) < RAW_BUFFER_THRESHOLD:
             cities = await supabase.select('marketing_cities', 'name', {'is_active': 'true'})
             if cities:
-                city, role = random.choice(cities)['name'], random.choice(ROLES)
-                logger.info(f"[PRODUCER] Target: {role} | {city}")
+                city = random.choice(cities)['name']
+                role = random.choice(ROLES)
+                template = random.choice(SEARCH_TEMPLATES)
+                query = template.replace('{role}', role).replace('{city}', city)
+                
+                logger.info(f"[PRODUCER] Query: {query}")
                 try:
                     async with httpx.AsyncClient(timeout=TIMEOUT_SEARCH) as client:
-                        r = await client.get(f'{SEARXNG_URL}/search', params={'q': f'{role} {city}', 'format': 'json', 'language': 'pl-PL'})
+                        r = await client.get(f'{SEARXNG_URL}/search', params={'q': query, 'format': 'json', 'language': 'pl-PL'})
                         if r.status_code == 200:
                             results = r.json().get('results', [])
                             for res in results: 
