@@ -280,8 +280,18 @@ async def producer_task(run_id):
 async def verify_raw_lead(lead, c_id):
     url, page_text, emails, title = lead['url'], lead['page_text'], lead['emails_found'], lead.get('title', '')
     order = await get_provider_order_async()
-    with open(os.path.join(os.path.dirname(__file__), 'ai_prompt.txt'), 'r', encoding='utf-8') as f:
-        prompt = f.read().replace('{url}', url).replace('{title}', title).replace('{emails}', str(emails)).replace('{text}', page_text[:2000])
+    
+    # Load prompt from file and ignore comment lines starting with #
+    prompt_path = os.path.join(os.path.dirname(__file__), 'ai_prompt.txt')
+    try:
+        with open(prompt_path, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+            base_prompt = "\n".join([l for l in lines if not l.strip().startswith('#')])
+    except:
+        base_prompt = "Verify if event organizer. Reply ONLY JSON: {'ok': 1/0, 'email': '...', 'reason': '...'}"
+
+    # .replace() is safe for JSON brackets {} in the prompt
+    prompt = base_prompt.replace('{url}', url).replace('{title}', title).replace('{emails}', str(emails)).replace('{text}', page_text[:2000])
 
     for provider in order:
         if is_provider_on_cooldown(provider): continue
