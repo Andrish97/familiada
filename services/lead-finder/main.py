@@ -29,6 +29,21 @@ _handler = logging.StreamHandler()
 _handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
 logger.addHandler(_handler)
 
+class SupabaseLoggingHandler(logging.Handler):
+    def emit(self, record):
+        try:
+            msg = self.format(record)
+            # Run in background to not block execution
+            asyncio.create_task(supabase.insert('marketing_search_logs', {
+                'level': record.levelname.lower(),
+                'message': msg
+            }))
+        except: pass
+
+_db_handler = SupabaseLoggingHandler()
+_db_handler.setLevel(logging.INFO)
+logger.addHandler(_db_handler)
+
 # --- Configuration ---
 SEARXNG_URL = "http://searxng:8080"
 AI_PROVIDERS = {
