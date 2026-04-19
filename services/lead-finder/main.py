@@ -289,14 +289,28 @@ async def consumer_task(run_id, c_id, target):
 
 async def run_worker(run_id, target):
     global task_status, verified_in_run, critical_errors_in_run
-    task_status, verified_in_run, critical_errors_in_run = "running", 0, 0
-    p_task = asyncio.create_task(producer_task(run_id))
-    # Tylko JEDEN konsument, aby weryfikacja leciała ściśle po kolei
-    c_tasks = [asyncio.create_task(consumer_task(run_id, 0, target))]
-    while task_status == "running" and verified_in_run < target: await asyncio.sleep(1)
-    p_task.cancel()
-    for c in c_tasks: c.cancel()
-    if task_status == "running": task_status = "completed"
+    try:
+        task_status, verified_in_run, critical_errors_in_run = "running", 0, 0
+        p_task = asyncio.create_task(producer_task(run_id))
+        c_tasks = [asyncio.create_task(consumer_task(run_id, 0, target))]
+        
+        while task_status == "running" and verified_in_run < target:
+            await asyncio.sleep(1)
+        
+        p_task.cancel()
+        for c in c_tasks: c.cancel()
+        
+        if task_status == "running":
+            task_status = "completed"
+            logger.info(f"[SYSTEM] Task {run_id} completed successfully.")
+    except Exception as e:
+        logger.error(f"[SYSTEM] Error in run_worker: {e}")
+        task_status = "error"
+    finally:
+        # Give logs a moment to flush and set back to idle after a delay
+        await asyncio.sleep(5)
+        task_status = "idle"
+        logger.info("[SYSTEM] System is now IDLE and ready for next run.")
 
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
@@ -307,8 +321,12 @@ async def shutdown_event(): await supabase.client.aclose()
 @app.post("/api/search-runs")
 async def start(target_count: int = 50):
     global task_run_id, task_status
-    if task_status == "running": raise HTTPException(400, "Active")
+    if task_status != "idle":
+        logger.warning(f"[API] Blocked start request. Current status: {task_status}")
+        raise HTTPException(400, f"System is currently {task_status}. Wait for it to finish.")
+    
     task_run_id = str(uuid.uuid4())
+    logger.info(f"[API] Starting new run: {task_run_id} with target {target_count}")
     asyncio.create_task(run_worker(task_run_id, target_count))
     return {"ok": True, "run_id": task_run_id}
 
