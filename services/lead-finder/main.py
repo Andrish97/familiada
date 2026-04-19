@@ -22,7 +22,9 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from playwright.async_api import async_playwright
 
-# --- Logger ---
+# --- Logger Configuration ---
+# logger.info goes to BOTH console and Supabase (UI)
+# print() goes ONLY to server console
 logger = logging.getLogger("lead_finder")
 logger.setLevel(logging.INFO)
 _handler = logging.StreamHandler()
@@ -39,7 +41,9 @@ class SupabaseClient:
         try:
             r = await self.client.post(f'{self.url}/rest/v1/{table}', json=data)
             return r.status_code in (200, 201)
-        except: return False
+        except Exception as e:
+            print(f"[SERVER CONSOLE ONLY] DB Insert Error: {e}")
+            return False
 
     async def select(self, table, columns='*', filters=None, limit=None):
         try:
@@ -77,12 +81,16 @@ supabase = SupabaseClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
 class SupabaseLoggingHandler(logging.Handler):
     def emit(self, record):
-        try:
-            msg = self.format(record)
-            loop = asyncio.get_event_loop()
-            if loop.is_running():
-                loop.create_task(supabase.insert('marketing_search_logs', {'level': record.levelname.lower(), 'message': msg}))
-        except: pass
+        if record.levelname == 'INFO': # Only info level to UI
+            try:
+                msg = self.format(record)
+                loop = asyncio.get_event_loop()
+                if loop.is_running():
+                    loop.create_task(supabase.insert('marketing_search_logs', {
+                        'level': 'info',
+                        'message': msg
+                    }))
+            except: pass
 
 _db_handler = SupabaseLoggingHandler()
 _db_handler.setLevel(logging.INFO)
@@ -126,7 +134,7 @@ SUBPAGE_PATHS = ['/' + p for p in load_txt_lines('subpage_paths.txt')]
 EMAIL_REGEX = re.compile(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}')
 RAW_BUFFER_THRESHOLD = CONFIG.get('RAW_BUFFER_THRESHOLD', 20)
 AI_DELAY = 12
-PROVIDER_COOLDOWN_SECONDS = 60 # Sztywne 60s zgodnie z prośbą
+PROVIDER_COOLDOWN_SECONDS = 60
 TIMEOUT_SEARCH = 25
 TIMEOUT_SCRAPE = 12
 TIMEOUT_SCRAPE_JS = 15
@@ -169,23 +177,22 @@ async def scrape_and_save_lead(res):
     if await supabase.select('marketing_verified_contacts', 'id', {'url': url}) or await supabase.select('marketing_raw_contacts', 'id', {'url': url}): return 0
     
     txt, emails = '', set()
-    async with scrape_semaphore:
-        try:
-            async with httpx.AsyncClient(timeout=TIMEOUT_SCRAPE, follow_redirects=True, headers={'User-Agent': 'Mozilla/5.0'}) as client:
-                r = await client.get(url)
-                if r.status_code == 200:
-                    txt = re.sub(r'<[^>]+>', ' ', r.text)[:2000]
-                    emails = extract_emails(r.text)
-                    if not any(s in url for s in SOCIAL_PLATFORMS) and not emails:
-                        for path in SUBPAGE_PATHS:
-                            try:
-                                r_sub = await client.get(url.rstrip('/') + path, timeout=5)
-                                if r_sub.status_code == 200:
-                                    emails.update(extract_emails(r_sub.text))
-                                    if len(txt) < 1500: txt += " " + re.sub(r'<[^>]+>', ' ', r_sub.text)[:1000]
-                                    if emails: break
-                            except: continue
-        except: pass
+    try:
+        async with httpx.AsyncClient(timeout=TIMEOUT_SCRAPE, follow_redirects=True, headers={'User-Agent': 'Mozilla/5.0'}) as client:
+            r = await client.get(url)
+            if r.status_code == 200:
+                txt = re.sub(r'<[^>]+>', ' ', r.text)[:2000]
+                emails = extract_emails(r.text)
+                if not any(s in url for s in SOCIAL_PLATFORMS) and not emails:
+                    for path in SUBPAGE_PATHS:
+                        try:
+                            r_sub = await client.get(url.rstrip('/') + path, timeout=5)
+                            if r_sub.status_code == 200:
+                                emails.update(extract_emails(r_sub.text))
+                                if len(txt) < 1500: txt += " " + re.sub(r'<[^>]+>', ' ', r_sub.text)[:1000]
+                                if emails: break
+                        except: continue
+    except: pass
 
     is_social = any(s in url for s in SOCIAL_PLATFORMS)
     if (not emails or len(txt) < 200) and not is_social:
@@ -211,7 +218,7 @@ async def producer_task(run_id):
                 available = [p for p in pool if p not in done]
                 
                 if not available:
-                    logger.info("Pula wyszukiwania wyczerpana. Czyszczę historię i zaczynam od nowa.")
+                    print("[SERVER] Pula wyszukiwania wyczerpana. Czyszczę historię.")
                     await supabase.delete('marketing_search_queries_log')
                     available = pool
 
@@ -256,7 +263,6 @@ async def call_ai_provider(name, prompt):
 async def verify_raw_lead(lead):
     url, txt, emails, title = lead['url'], lead['page_text'], lead['emails_found'], lead.get('title', '')
     
-    # Pobieramy aktualną kolejność przy każdym leadzie
     order_data = await supabase.call_rpc('get_provider_order')
     if order_data and isinstance(order_data, list) and len(order_data) > 0:
         if isinstance(order_data[0], dict): order = order_data[0].get('provider_order','').split(',')
@@ -271,14 +277,13 @@ async def verify_raw_lead(lead):
     logger.info(f"Rozpoczynam weryfikację: {url}")
 
     for provider in [p.strip().lower() for p in order if p.strip()]:
-        # SPRAWDZAMY COOLDOWN PRZED KAŻDYM ZAPYTANIEM
         if provider in provider_cooldowns:
             remains = provider_cooldowns[provider] - time.time()
             if remains > 0:
-                logger.info(f"Dostawca {provider} wciąż na cooldownie (jeszcze {int(remains)}s). Pomijam.")
+                print(f"[SERVER] {provider} na cooldownie ({int(remains)}s).")
                 continue
             else:
-                del provider_cooldowns[provider] # Czas minął, usuwamy karę
+                del provider_cooldowns[provider]
         
         logger.info(f"Weryfikuję przez {provider}")
         status, content, err = await call_ai_provider(provider, prompt)
@@ -286,18 +291,17 @@ async def verify_raw_lead(lead):
         if status == 200:
             try:
                 res = json.loads(re.search(r'\{.*\}', content, re.DOTALL).group().replace("'", '"'))
-                # SUKCES -> CZEKAMY 12S ZGODNIE ZE SPECYFIKACJĄ
                 await asyncio.sleep(AI_DELAY)
                 return res
             except: 
-                logger.warning(f"Błąd parsowania odpowiedzi od {provider}. Nakładam cooldown.")
+                print(f"[SERVER] Błąd parsowania {provider}")
                 provider_cooldowns[provider] = time.time() + PROVIDER_COOLDOWN_SECONDS
-                continue # Natychmiast następny
+                continue
         else:
-            # BŁĄD 429 lub 500/Timeout -> NAKŁADAMY COOLDOWN 60S I NATYCHMIAST NASTĘPNY
-            logger.warning(f"Nie udało się przez {provider} (Status {status}). Nakładam 60s cooldown.")
+            logger.info(f"Nie udało się przez {provider}")
+            print(f"[SERVER] {provider} Error {status}: {err}")
             provider_cooldowns[provider] = time.time() + PROVIDER_COOLDOWN_SECONDS
-            continue # Próba natychmiastowa kolejnego AI
+            continue
             
     return None
 
@@ -315,10 +319,10 @@ async def consumer_task(run_id, target):
         if res is None:
             consecutive_critical += 1
             critical_errors_in_run += 1
-            logger.error(f"Błąd krytyczny: Żadne AI nie odpowiedziało dla {lead['url']}")
+            print(f"[SERVER] Błąd krytyczny dla {lead['url']}")
             await supabase.update('marketing_raw_contacts', {'status': 'pending'}, {'id': lead['id']})
             if consecutive_critical >= 3:
-                logger.critical(f"KILL SWITCH! 3 błędy krytyczne pod rząd. Przerywam zlecenie.")
+                logger.error("KILL SWITCH! 3 błędy krytyczne pod rząd. Przerywam zlecenie.")
                 task_status = "cancelled"
                 break
             continue
@@ -340,7 +344,7 @@ async def consumer_task(run_id, target):
             logger.info(f"Odrzucono {lead['url']}. Przyczyna: {reason}")
 
 async def warmup_ai_providers():
-    logger.info("Rozpoczynam rozgrzewanie modeli AI (Hey)...")
+    print("[SERVER] Rozgrzewanie modeli AI (Hey)...")
     order_data = await supabase.call_rpc('get_provider_order')
     if order_data and isinstance(order_data, list) and len(order_data) > 0:
         if isinstance(order_data[0], dict): order = order_data[0].get('provider_order','').split(',')
@@ -349,10 +353,8 @@ async def warmup_ai_providers():
     
     for p in [x.strip().lower() for x in order if x.strip()]:
         status, _, _ = await call_ai_provider(p, "Hey")
-        if status == 200:
-            logger.info(f"Model {p} jest gotowy.")
-        else: 
-            logger.warning(f"Model {p} nie odpowiada (Błąd {status}). Nakładam 60s cooldown.")
+        if status != 200: 
+            print(f"[SERVER] Model {p} nie odpowiada (Błąd {status}). Cooldown.")
             provider_cooldowns[p] = time.time() + PROVIDER_COOLDOWN_SECONDS
 
 async def run_worker(run_id, target):
@@ -371,12 +373,11 @@ async def run_worker(run_id, target):
         c_task.cancel()
         if task_status == "running": task_status = "completed"
     except Exception as e:
-        logger.error(f"Błąd krytyczny systemu: {e}")
+        print(f"[SERVER] Błąd krytyczny run_worker: {e}")
         task_status = "error"
     finally:
         await asyncio.sleep(5)
         task_status = "idle"
-        logger.info("System jest gotowy na nowe zlecenie.")
 
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
