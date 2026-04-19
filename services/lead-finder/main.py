@@ -276,9 +276,11 @@ async def consumer_task(run_id, c_id, target):
             email = str(res['email']).strip().lower()
             if not await supabase.select('marketing_verified_contacts', 'id', {'email': email}):
                 await supabase.insert('marketing_verified_contacts', {
-                    'email': email, 'url': lead['url'], 'title': res.get('title') or lead.get('title'),
-                    'short_description': res.get('short_description'), 'verify_reason': str(res.get('reason',''))[:500],
-                    'ai_score': res.get('score'), 'seo_score': res.get('seo_spam_score')
+                    'email': email, 
+                    'url': lead['url'], 
+                    'title': res.get('title') or lead.get('title'),
+                    'short_description': res.get('short_description'),
+                    'verify_reason': str(res.get('reason',''))[:500]
                 })
                 verified_in_run += 1
                 logger.info(f"[C{c_id}] VERIFIED! ({verified_in_run}/{target}) - {email}")

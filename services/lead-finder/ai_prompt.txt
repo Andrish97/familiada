@@ -272,8 +272,6 @@ JESLI OK:
   "email": "...",
   "title": "max 50 znakow",
   "short_description": "100-200 znakow",
-  "score": liczba,
-  "seo_spam_score": liczba,
   "reason": "dlaczego to realny lead"
 }
 
