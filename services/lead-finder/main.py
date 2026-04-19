@@ -65,7 +65,8 @@ def load_txt_lines(filename):
     path = os.path.join(os.path.dirname(__file__), filename)
     if not os.path.exists(path): return []
     with open(path, 'r', encoding='utf-8') as f:
-        return [l.strip() for l in f if l.strip() and not l.startswith('#')]
+        # Lowercase for better matching
+        return [l.strip().lower() for l in f if l.strip() and not l.startswith('#')]
 
 def load_config():
     path = os.path.join(os.path.dirname(__file__), 'config.txt')
@@ -84,15 +85,15 @@ def load_config():
 CONFIG = load_config()
 ROLES = load_txt_lines('roles.txt')
 SEARCH_TEMPLATES = load_txt_lines('templates.txt')
-NEGATIVE_KEYWORDS = set(load_txt_lines('negative_keywords.txt'))
-BLOCKED_DOMAINS = set(load_txt_lines('blocked_domains.txt'))
+NEGATIVE_KEYWORDS = load_txt_lines('negative_keywords.txt')
+BLOCKED_DOMAINS = load_txt_lines('blocked_domains.txt')
 GARBAGE_EMAIL_DOMAINS = set(load_txt_lines('garbage_email_domains.txt'))
 SOCIAL_PLATFORMS = tuple(load_txt_lines('social_platforms.txt'))
 SUBPAGE_PATHS = ['/' + p for p in load_txt_lines('subpage_paths.txt')]
 
 EMAIL_REGEX = re.compile(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}')
 RAW_BUFFER_THRESHOLD = CONFIG.get('RAW_BUFFER_THRESHOLD', 20)
-AI_DELAY = CONFIG.get('AI_DELAY', 5) # Default 5 as per config.txt
+AI_DELAY = CONFIG.get('AI_DELAY', 5) 
 PROVIDER_COOLDOWN_SECONDS = int(CONFIG.get('PROVIDER_COOLDOWN_SECONDS', 60))
 TIMEOUT_SUPABASE_RPC = 30
 TIMEOUT_SEARCH = 25
@@ -196,12 +197,11 @@ supabase = SupabaseClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
 def extract_emails(html):
     found = set()
-    # Basic filter for common non-email matches (like SVG paths or images)
+    # Filter for common non-email matches (like SVG paths or images)
     EXCLUDED_EXT = ('.png', '.jpg', '.jpeg', '.gif', '.svg', '.pdf', '.zip', '.js', '.css', '.webp', '.woff', '.woff2')
     for e in EMAIL_REGEX.findall(html):
         e_low = e.lower()
-        if any(e_low.endswith(ext) for ext in EXCLUDED_EXT):
-            continue
+        if any(e_low.endswith(ext) for ext in EXCLUDED_EXT): continue
         if not any(g in e_low for g in GARBAGE_EMAIL_DOMAINS):
             found.add(e)
     return found
@@ -216,7 +216,7 @@ async def scrape_with_playwright(url):
                 page = await context.new_page()
                 try:
                     await page.goto(url, timeout=TIMEOUT_SCRAPE_JS * 1000, wait_until="networkidle")
-                except: pass # Continue even if timeout
+                except: pass 
                 
                 content = await page.content()
                 text = await page.evaluate("() => document.body.innerText")
@@ -228,11 +228,20 @@ async def scrape_with_playwright(url):
 
 async def scrape_and_save_lead(res):
     url = res.get('url', '').lower()
-    if not url or any(b in url for b in BLOCKED_DOMAINS): return 0
+    if not url: return 0
+    
+    # 1. Blocked domains filter
+    domain = urlparse(url).netloc.lower()
+    if any(b in domain for b in BLOCKED_DOMAINS):
+        return 0
+    
+    # 2. Title-based filter
+    title_low = res.get('title', '').lower()
+    if any(k in title_low for k in NEGATIVE_KEYWORDS):
+        return 0
     
     try:
-        domain = urlparse(url).netloc.lower().replace('www.', '')
-        # Deduplication
+        # 3. Deduplication
         if await supabase.select('marketing_verified_contacts', 'id', {'url': url}) or \
            await supabase.select('marketing_raw_contacts', 'id', {'url': url}): return 0
     except: return 0
@@ -246,7 +255,6 @@ async def scrape_and_save_lead(res):
                     page_text = re.sub(r'<[^>]+>', ' ', r.text)[:2000]
                     emails = extract_emails(r.text)
                     
-                    # If not social and no emails, try subpages
                     if not any(s in url for s in SOCIAL_PLATFORMS) and not emails:
                         for path in SUBPAGE_PATHS:
                             sub_url = url.rstrip('/') + path
@@ -258,15 +266,18 @@ async def scrape_and_save_lead(res):
                             except: continue
         except: pass
 
-    # Heavy Scraping (Playwright) if needed
-    if (not emails or not page_text) and not any(s in url for s in SOCIAL_PLATFORMS):
+    # 4. Heavy Scraping (Playwright) - ONLY for business/relevant domains
+    is_pl_domain = domain.endswith('.pl') or '.pl/' in url
+    is_likely_business = any(k in title_low for k in ['dj', 'wodzirej', 'zespół', 'oprawa', 'atrakcje', 'organizacja', 'event'])
+    
+    if (not emails or not page_text) and not any(s in url for s in SOCIAL_PLATFORMS) and (is_pl_domain or is_likely_business):
         pw_text, pw_emails = await scrape_with_playwright(url)
         if pw_text: page_text = pw_text[:2000]
         if pw_emails: emails.update(pw_emails)
 
     if not emails or not page_text: return 0
     
-    # Negative keywords filter
+    # 5. Content-based negative keywords filter
     text_low = page_text.lower()
     if any(k in text_low for k in NEGATIVE_KEYWORDS):
         logger.info(f"[PRODUCER] Rejected by keyword: {url}")
@@ -297,7 +308,9 @@ async def producer_task(run_id):
                         r = await client.get(f'{SEARXNG_URL}/search', params={'q': f'{role} {city}', 'format': 'json', 'language': 'pl-PL'})
                         if r.status_code == 200:
                             results = r.json().get('results', [])
-                            for res in results: await scrape_and_save_lead(res)
+                            for res in results: 
+                                if task_status != "running": break
+                                await scrape_and_save_lead(res)
                 except Exception as e:
                     logger.error(f"[PRODUCER ERROR] Search failed: {e}")
         await asyncio.sleep(15)
@@ -305,7 +318,18 @@ async def producer_task(run_id):
 async def verify_raw_lead(lead, c_id):
     url, page_text, emails = lead['url'], lead['page_text'], lead['emails_found']
     order = await get_provider_order_async()
-    prompt = f"URL: {url}\nEmails: {emails}\nContent: {page_text[:2000]}\nVerify if event organizer (Wodzirej/DJ/Event Company). Reply ONLY JSON: {{'ok': 1/0, 'email': '...', 'reason': '...'}}"
+    
+    # Enhanced prompt to avoid false positives (movies, databases)
+    prompt = (
+        f"URL: {url}\nEmails: {emails}\nContent: {page_text[:2000]}\n"
+        "ZADANIE: Sprawdź czy to jest strona BIZNESU oferującego oprawę imprez (Wodzirej, DJ, Zespół, Firma Eventowa).\n"
+        "KRYTYCZNE ZASADY:\n"
+        "1. ODRZUĆ (ok: 0) bazy filmów (np. filmpolski, fdb, filmweb, imdb) - interesują nas realne firmy, a nie filmy fabularne.\n"
+        "2. ODRZUĆ (ok: 0) artykuły prasowe, Wikipedie, blogi o historii.\n"
+        "3. ODRZUĆ (ok: 0) urzędy, szkoły, parafie, gazownie.\n"
+        "4. AKCEPTUJ (ok: 1) tylko jeśli widzisz ofertę usług na imprezy/wesela.\n"
+        "Odpowiedz TYLKO JSON: {'ok': 1/0, 'email': 'najbardziej sensowny mail', 'reason': 'dlaczego tak/nie (krótko)'}"
+    )
 
     for provider in order:
         if is_provider_on_cooldown(provider): continue
@@ -314,7 +338,6 @@ async def verify_raw_lead(lead, c_id):
         
         if status == 200:
             try:
-                # Robust JSON extraction
                 match = re.search(r'\{.*\}', content, re.DOTALL)
                 if not match: continue
                 res = json.loads(match.group().replace("'", '"'))
@@ -338,9 +361,8 @@ async def consumer_task(run_id, c_id, target):
     consecutive_errors = 0
     
     while task_run_id == run_id:
-        if task_status != "running":
-            if task_status in ("completed", "cancelled"): break
-            await asyncio.sleep(1); continue
+        if task_status != "running" or verified_in_run >= target:
+            break
         
         # ATOMIC CLAIM via RPC
         result = await supabase.call_rpc('claim_next_pending_lead')
@@ -348,13 +370,17 @@ async def consumer_task(run_id, c_id, target):
             await asyncio.sleep(5); continue
         
         lead = result[0]
+        # RE-CHECK TARGET after claiming to avoid overshoot
+        if verified_in_run >= target:
+            await supabase.update('marketing_raw_contacts', {'status': 'pending'}, {'id': lead['id']})
+            break
+
         logger.info(f"[C{c_id}] Got lead: {lead['url']} | emails: {lead.get('emails_found',[])}")
         
         res = await verify_raw_lead(lead, c_id)
         if res is None:
             consecutive_errors += 1
             logger.error(f"[C{c_id}] AI failed for {lead['url']}. Errors: {consecutive_errors}/3")
-            # Return to pending for retry later
             await supabase.update('marketing_raw_contacts', {'status': 'pending'}, {'id': lead['id']})
             if consecutive_errors >= 3:
                 logger.critical(f"[C{c_id}] KILL SWITCH! 3 consecutive AI failures."); task_status = "cancelled"; break
@@ -362,8 +388,7 @@ async def consumer_task(run_id, c_id, target):
         
         consecutive_errors = 0
         if res.get('ok') and res.get('email'):
-            email = res['email'].strip().lower()
-            # Final deduplication before insert
+            email = str(res['email']).strip().lower()
             if not await supabase.select('marketing_verified_contacts', 'id', {'email': email}):
                 await supabase.insert('marketing_verified_contacts', {
                     'email': email, 
@@ -376,7 +401,7 @@ async def consumer_task(run_id, c_id, target):
             await supabase.delete('marketing_raw_contacts', {'id': lead['id']})
             if verified_in_run >= target: 
                 task_status = "completed"
-                logger.info("[CONSUMER] Target reached, stopping.")
+                logger.info("[CONSUMER] Target reached.")
                 break
         else:
             await supabase.update('marketing_raw_contacts', {
@@ -391,12 +416,9 @@ async def warmup_ai_providers():
     for p in order:
         status, content, err = await call_ai_provider(p, "Hey, reply only OK")
         if status == 200: logger.info(f"[WARMUP] ✓ {p} - OK")
-        elif status == 429: 
-            set_provider_cooldown(p)
-            logger.warning(f"[WARMUP] ✗ {p} - Rate limited")
         else: 
-            set_provider_cooldown(p) # Also cooldown on errors during warmup
-            logger.warning(f"[WARMUP] ✗ {p} - Error {status}")
+            set_provider_cooldown(p)
+            logger.warning(f"[WARMUP] ✗ {p} - Error/Limited {status}")
 
 async def run_worker(run_id, target):
     global task_status, verified_in_run
@@ -408,7 +430,7 @@ async def run_worker(run_id, target):
     c_tasks = [asyncio.create_task(consumer_task(run_id, i, target)) for i in range(3)]
     
     while task_status == "running" and verified_in_run < target:
-        await asyncio.sleep(2)
+        await asyncio.sleep(1)
     
     p_task.cancel()
     for c in c_tasks: c.cancel()

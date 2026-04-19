@@ -12,10 +12,33 @@ ośrodek pomocy
 ops
 parafia
 kościoła
+# Edukacja i opieka
 szkoła podstawowa
 liceum
+technikum
+uniwersytet
 przedszkole publiczne
 żłobek miejski
 szpital
 przychodnia
 apteka
+
+# Kultura (Filmy/Teatr - wyklucza bazy filmowe o filmie "Wodzirej")
+obsada
+reżyseria
+scenariusz
+film fabularny
+produkcja filmowa
+premiera filmu
+fdb.pl
+filmpolski.pl
+filmweb
+imdb
+aktorzy
+kinematografia
+bwa.ostrowiec.pl
+mpwik
+wodociągi
+kanalizacja
+gazownia
+energetyka
