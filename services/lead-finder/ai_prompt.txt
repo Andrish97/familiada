@@ -1,4 +1,286 @@
-Verify if event organizer. Reply ONLY JSON: {'ok': 1/0, 'email': '...', 'reason': '...'}
+# ZMIENNE DO PODSTAWIENIA:
+# {url} - URL strony
+# {title} - tytuł strony  
+# {emails} - lista maili (string)
+# {text} - tekst strony (max 2000 znaków)
+
+ZADANIE:
+Klasyfikuj czy strona to potencjalny LEAD do systemu interaktywnych eventow
+(DJ, wodzirej, konferansjer, animator, prowadzenie publicznosci).
+
+Celem jest wykrycie osob/firm, ktore PROWADZA lub MODERUJA wydarzenia.
+
+---------------------------------------
+DANE WEJSCIOWE:
+---------------------------------------
 URL: {url}
-Emails: {emails}
-Content: {content}
+TYTUL: {title}
+MAILE: {emails}
+TEXT: {text}
+
+=================================================
+KROK 1 - TYP STRONY (KLASYFIKACJA)
+=================================================
+
+A) EVENT PROVIDER (HIGH VALUE)
+
+* DJ weselny (prowadzacy + oprawa muzyczna)
+* DJ / wodzirej / DJ konferansjer
+* konferansjer / MC / prezenter / host
+* animator (dzieci lub dorośli)
+* agencja eventowa
+* firmy prowadzace eventy / imprezy/ organizacja imprez
+* team building/ gry integracyjne
+
+B) VENUE
+
+* hotel / restauracja / sala / dekoracje/ miejsce eventowe (bez prowadzenia wydarzen)
+
+C) DIRECTORY / SEO
+
+* katalog firm / listing / panorama / agregator / baza firm
+
+D) NON-EVENT
+
+* inne branze (handel, uslugi bez eventow, edukacja bez eventow itd.)
+
+DODATKOWO: jeśli usługi są kombinowane np. A i B to zaliczaj do A. np. hotel który tez prowadzi imprezy.
+
+---------------------------------------
+WAZNA UWAGA - DJ (KLUCZOWE ROZROZNIENIE)
+---------------------------------------
+
+Istnieja 2 typy DJ:
+
+NIE INTERESUJACE NAS:
+* tylko granie muzyki
+* tylko mix / sety klubowe / radio DJ
+* brak prowadzenia imprezy
+* brak interakcji z goscmi
+
+INTERESUJACE NAS (DJ WARTOSCIOWY):
+* DJ weselny
+* DJ prowadzacy impreze
+* DJ + wodzirej
+* DJ + konferansjer / MC
+* prowadzenie zabaw, konkursow, interakcji
+* oprawa muzyczna + prowadzenie wydarzenia
+* wesela / urodziny / imprezy firmowe / eventy prywatne
+
+ZASADA:
+JESLI JEST DJ, ALE NIE MA INFORMACJI O PROWADZENIU -> NIE DAWAJ AUTOMATYCZNEGO HIGH SCORE
+JESLI JEST DJ + PROWADZENIE -> TRAKTUJ JAK ROLE +5 (HARD VALUE)
+
+---------------------------------------
+KROK 2 - SYGNALY EVENTOWE
+---------------------------------------
+
++3 (MOCNE):
+* prowadzenie eventow / imprez
+* DJ weselny / wodzirej / konferansjer / MC
+* animacje / zabawy / interakcje z goscmi
+* moderacja / hosting / scena
+* "prowadzę imprezy"
+* integracje uczestnikow
+
++2 (SREDNIE):
+* organizacja eventow
+* imprezy firmowe / wesela / urodziny / integracje
+* konferencje / gale / szkolenia / eventy prywatne
+
++1 (SLABE):
+* eventy
+* oferta eventowa
+* obsluga wydarzen
+* wzmianki bez konkretow
+
+---------------------------------------
+KROK 3 - ROLE NA WYDARZENIU (KLUCZOWE)
+---------------------------------------
+
++5 (BEZPOSREDNIA ROLA NA SCENIE):
+* DJ weselny (prowadzacy + oprawa muzyczna)
+* DJ + wodzirej
+* konferansjer / MC / host / prezenter
+* animator
+
++3 (ORGANIZACJA / ZAPLECZE):
+* agencja eventowa
+* organizacja wydarzen / event manager
+
+0:
+* brak roli
+
+---------------------------------------
+KROK 3.1 - HARD OVERRIDE (NAJWYŻSZY PRIORYTET)
+---------------------------------------
+
+JESLI WYSTEPUJE:
+* DJ weselny
+* DJ + prowadzenie imprezy
+* wodzirej
+* konferansjer / MC / host
+* animator
+
+-> AUTOMATYCZNIE:
+TYPE = A
+PRODUCT_FIT = TRUE
+
+W TYM PRZYPADKU:
+* IGNORUJ SEO
+* IGNORUJ brak "idealnych slow kluczowych"
+* LICZY SIE FUNKCJA NA EVENTACH
+
+---------------------------------------
+KROK 3.2 - AGENCJE EVENTOWE (SOFT OVERRIDE)
+---------------------------------------
+
+JESLI:
+* agencja eventowa
+* organizacja eventow
+ORA Z:
+* opis uslug + portfolio + realizacje + oferta
+
+-> PRODUCT_FIT = TRUE
+
+JESLI:
+* tylko technika (naglosnienie / swiatlo / wynajem sprzetu)
+-> PRODUCT_FIT = FALSE
+
+---------------------------------------
+KROK 4 - BUSINESS SIGNALS
+---------------------------------------
+
++2 oferta uslug / realna oferta
++2 kontakt (email / telefon)
++2 portfolio / realizacje / referencje / opinie
++1 doswiadczenie (lata, liczba eventow, historia firmy)
+
+---------------------------------------
+KROK 5 - ANTI-SEO / SPAM
+---------------------------------------
+
+-5 katalog / listing / panorama / agregator / baza SEO
+-3 brak realnej tresci (strony generowane SEO)
+-2 keyword stuffing / wiele miast / spam lokalizacji
++1 konkretna marka / osoba / firma z oferta
+
+SEO_SCORE = suma
+
+WAZNE ZASADY SEO:
+* SEO_SCORE NIE MOZE SAM ODRZUCAC EVENT PROVIDEROW
+* SEO tylko modyfikuje wynik koncowy
+* NIE BLOKUJE HARD OVERRIDE
+
+---------------------------------------
+KROK 6 - SCORE STRONY
+---------------------------------------
+
+TOTAL_SCORE =
+EVENT_SIGNALS
++ ROLE_SCORE
++ BUSINESS_SIGNALS
++ SEO_SCORE
+
+---------------------------------------
+KROK 7 - PRODUCT FIT (FINAL LOGIC)
+---------------------------------------
+
+PRODUCT_FIT = TRUE jesli:
+* ROLE_SCORE >= 3
+LUB
+* EVENT_SIGNALS >= 4
+LUB
+* HARD OVERRIDE (KROK 3.1)
+
+---------------------------------------
+KROK 8 - EMAIL RANKING (NIE BLOKUJE LEADOW)
+---------------------------------------
+
+ZASADA KLUCZOWA:
+* NIE odrzucaj przez obecnosc zlych maili
+* wybierz NAJLEPSZY dostepny email
+
+EMAIL_SCORE:
+
++5:
+* kontakt@domena
+* biuro@domena
+
++4:
+* info@ / office@ / hello@ / sales@
+
++3:
+* imie@domena (np. jan@firma.pl)
+
++2:
+* inne maile w domenie strony
+
++1:
+* gmail / wp / onet / o2 / interia / outlook / yahoo
+
+-5:
+* test@ / example@ / demo@
+* noreply@ / no-reply@
+* admin@localhost
+* placeholderowe maile
+* systemowe / monitoring
+
+---------------------------------------
+KROK 8.1 - WYBOR EMAILA
+---------------------------------------
+
+* policz EMAIL_SCORE dla kazdego maila
+* wybierz najwyzszy wynik
+* HAS_EMAIL = TRUE jesli najlepszy >= 1
+* HAS_EMAIL = FALSE jesli najlepszy <= 0
+
+---------------------------------------
+KROK 9 - FINALNA DECYZJA
+---------------------------------------
+
+IS_LEAD =
+
+(TYPE = A)
+AND (PRODUCT_FIT = TRUE)
+AND (TOTAL_SCORE >= 6)
+AND (SEO_SCORE > -3)
+
+UWAGA KONCOWA:
+JESLI HARD OVERRIDE ZACHODZI -> NIE MA WPLYWU TOTAL_SCORE NA PRODUCT_FIT
+(ale SEO_SCORE nadal jest liczony i widoczny)
+
+---------------------------------------
+AKCEPTACJA / ODRZUCENIE
+---------------------------------------
+
+AKCEPTUJ jesli:
+IS_LEAD = TRUE
+AND HAS_EMAIL = TRUE
+
+ODRZUC jesli:
+IS_LEAD = FALSE
+LUB HAS_EMAIL = FALSE
+
+---------------------------------------
+OUTPUT JSON
+---------------------------------------
+
+JESLI OK:
+{
+  "ok": 1,
+  "email": "...",
+  "title": "max 50 znakow",
+  "short_description": "100-200 znakow",
+  "score": liczba,
+  "seo_spam_score": liczba,
+  "reason": "dlaczego to realny lead"
+}
+
+JESLI NIE:
+{
+  "ok": 0,
+  "reason": "konkretny powod odrzucenia"
+}
+
+ODPOWIEDZ TYLKO CZYSTYM JSONEM

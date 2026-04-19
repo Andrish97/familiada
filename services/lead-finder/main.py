@@ -241,7 +241,7 @@ async def scrape_and_save_lead(res):
                                 r_sub = await client.get(url.rstrip('/') + path, timeout=5)
                                 if r_sub.status_code == 200:
                                     emails.update(extract_emails(r_sub.text))
-                                    if len(page_text) < 1000: page_text += " " + re.sub(r'<[^>]+>', ' ', r_sub.text)[:1000]
+                                    if len(page_text) < 1500: page_text += " " + re.sub(r'<[^>]+>', ' ', r_sub.text)[:1000]
                                     if emails: break
                             except: continue
         except: pass
@@ -278,10 +278,10 @@ async def producer_task(run_id):
         await asyncio.sleep(15)
 
 async def verify_raw_lead(lead, c_id):
-    url, page_text, emails = lead['url'], lead['page_text'], lead['emails_found']
+    url, page_text, emails, title = lead['url'], lead['page_text'], lead['emails_found'], lead.get('title', '')
     order = await get_provider_order_async()
     with open(os.path.join(os.path.dirname(__file__), 'ai_prompt.txt'), 'r', encoding='utf-8') as f:
-        prompt = f.read().replace('{url}', url).replace('{emails}', str(emails)).replace('{content}', page_text[:2000])
+        prompt = f.read().replace('{url}', url).replace('{title}', title).replace('{emails}', str(emails)).replace('{text}', page_text[:2000])
 
     for provider in order:
         if is_provider_on_cooldown(provider): continue
@@ -295,7 +295,6 @@ async def verify_raw_lead(lead, c_id):
                 return res
             except: continue
         elif status == 429: set_provider_cooldown(provider)
-        # Błąd 500/Timeout -> pętla leci do następnego providera dla tego samego leada
     return None
 
 async def consumer_task(run_id, c_id, target):
@@ -321,15 +320,20 @@ async def consumer_task(run_id, c_id, target):
         if res.get('ok') and res.get('email'):
             email = str(res['email']).strip().lower()
             if not await supabase.select('marketing_verified_contacts', 'id', {'email': email}):
+                reason_full = f"{res.get('reason','')}. [Score: {res.get('score', 0)}, SEO: {res.get('seo_spam_score', 0)}]"
                 await supabase.insert('marketing_verified_contacts', {
-                    'email': email, 'url': lead['url'], 'verify_reason': res.get('reason','')[:500]
+                    'email': email, 
+                    'url': lead['url'], 
+                    'title': res.get('title') or lead.get('title'),
+                    'short_description': res.get('short_description'),
+                    'verify_reason': reason_full[:500]
                 })
                 verified_in_run += 1
                 logger.info(f"[C{c_id}] VERIFIED! ({verified_in_run}/{target}) - {email}")
             await supabase.delete('marketing_raw_contacts', {'id': lead['id']})
         else:
             await supabase.update('marketing_raw_contacts', {
-                'status': 'rejected', 'reject_reason': res.get('reason','')[:500]
+                'status': 'rejected', 'reject_reason': str(res.get('reason',''))[:500]
             }, {'id': lead['id']})
             logger.info(f"[C{c_id}] REJECTED.")
 
