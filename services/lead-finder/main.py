@@ -29,14 +29,68 @@ _handler = logging.StreamHandler()
 _handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
 logger.addHandler(_handler)
 
+# Global client for Supabase to avoid connection overhead
+class SupabaseClient:
+    def __init__(self, url, key):
+        self.url = url
+        self.headers = {'apikey': key, 'Authorization': f'Bearer {key}', 'Content-Type': 'application/json'}
+        self.client = httpx.AsyncClient(timeout=30, headers=self.headers)
+    
+    async def insert(self, table, data):
+        try:
+            r = await self.client.post(f'{self.url}/rest/v1/{table}', json=data)
+            return r.status_code in (200, 201)
+        except Exception as e:
+            # We don't use logger here to avoid infinite recursion
+            print(f"[DB ERROR] Insert failed: {e}")
+            return False
+
+    async def select(self, table, columns='*', filters=None, limit=None):
+        try:
+            params = {'select': columns}
+            if filters:
+                for k, v in filters.items(): params[k] = f'eq.{v}'
+            if limit: params['limit'] = limit
+            r = await self.client.get(f'{self.url}/rest/v1/{table}', params=params)
+            return r.json() if r.status_code == 200 else None
+        except: return None
+
+    async def update(self, table, data, filters):
+        try:
+            params = {k: f'eq.{v}' for k, v in filters.items()}
+            r = await self.client.patch(f'{self.url}/rest/v1/{table}', json=data, params=params)
+            return r.status_code in (200, 204)
+        except: return False
+
+    async def delete(self, table, filters=None):
+        try:
+            params = {k: f'eq.{v}' for k, v in filters.items()} if filters else {}
+            r = await self.client.delete(f'{self.url}/rest/v1/{table}', params=params)
+            return r.status_code in (200, 204, 404)
+        except: return False
+    
+    async def call_rpc(self, fn, params=None):
+        try:
+            r = await self.client.post(f'{self.url}/rest/v1/rpc/{fn}', json=params or {})
+            return r.json() if r.status_code in (200, 201) else (True if r.status_code == 204 else None)
+        except: return None
+
+# Initialize Supabase first
+SUPABASE_URL = "http://kong:8000"
+SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", os.getenv("SERVICE_ROLE_KEY", ""))
+supabase = SupabaseClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+
 class SupabaseLoggingHandler(logging.Handler):
     def emit(self, record):
         try:
             msg = self.format(record)
-            asyncio.create_task(supabase.insert('marketing_search_logs', {
-                'level': record.levelname.lower(),
-                'message': msg
-            }))
+            # Create background task for log insertion
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                loop.create_task(supabase.insert('marketing_search_logs', {
+                    'level': record.levelname.lower(),
+                    'message': msg
+                }))
         except: pass
 
 _db_handler = SupabaseLoggingHandler()
@@ -68,9 +122,6 @@ AI_PROVIDERS = {
         'timeout': 30,
     },
 }
-
-SUPABASE_URL = "http://kong:8000"
-SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", os.getenv("SERVICE_ROLE_KEY", ""))
 
 def load_txt_lines(filename):
     path = os.path.join(os.path.dirname(__file__), filename)
@@ -118,15 +169,14 @@ provider_cooldowns = {}
 scrape_semaphore = asyncio.Semaphore(10)
 playwright_semaphore = asyncio.Semaphore(3)
 
-# --- AI & DB Helpers ---
+# --- AI Helpers ---
 
 async def get_provider_order_async():
     try:
         url = f"{SUPABASE_URL}/rest/v1/ai_settings?select=provider_order&limit=1"
-        async with httpx.AsyncClient(timeout=5) as client:
-            r = await client.get(url, headers={'apikey': SUPABASE_SERVICE_KEY, 'Authorization': f'Bearer {SUPABASE_SERVICE_KEY}'})
-            if r.status_code == 200 and r.json():
-                return [p.strip().lower() for p in r.json()[0]['provider_order'].split(',') if p.strip()]
+        r = await supabase.client.get(url)
+        if r.status_code == 200 and r.json():
+            return [p.strip().lower() for p in r.json()[0]['provider_order'].split(',') if p.strip()]
     except: pass
     return ['openrouter', 'groq', 'gemini']
 
@@ -143,57 +193,19 @@ async def call_ai_provider(name, prompt):
     cfg = AI_PROVIDERS.get(name)
     if not cfg or not cfg['key']: return 500, None, "Missing config"
     try:
-        async with httpx.AsyncClient(timeout=cfg['timeout']) as client:
-            if name == 'gemini':
-                url = cfg['endpoint'].format(model=cfg['model']) + f"?key={cfg['key']}"
-                r = await client.post(url, json={'contents': [{'parts': [{'text': prompt}]}], 'generationConfig': {'temperature': 0.1}})
-                if r.status_code == 200:
-                    text = r.json().get('candidates', [{}])[0].get('content', {}).get('parts', [{}])[0].get('text', '')
-                    return 200, text, None
-            else:
-                r = await client.post(cfg['endpoint'], headers={'Authorization': f'Bearer {cfg["key"]}', **cfg['headers']},
-                    json={'model': cfg['model'], 'messages': [{'role': 'system', 'content': 'Odpowiadaj tylko JSON.'}, {'role': 'user', 'content': prompt}], 'temperature': 0.1})
-                if r.status_code == 200:
-                    return 200, r.json()['choices'][0]['message']['content'], None
-            return r.status_code, None, r.text[:100]
+        if name == 'gemini':
+            url = cfg['endpoint'].format(model=cfg['model']) + f"?key={cfg['key']}"
+            r = await supabase.client.post(url, json={'contents': [{'parts': [{'text': prompt}]}], 'generationConfig': {'temperature': 0.1}})
+            if r.status_code == 200:
+                text = r.json().get('candidates', [{}])[0].get('content', {}).get('parts', [{}])[0].get('text', '')
+                return 200, text, None
+        else:
+            r = await supabase.client.post(cfg['endpoint'], headers={'Authorization': f'Bearer {cfg["key"]}', **cfg['headers']},
+                json={'model': cfg['model'], 'messages': [{'role': 'system', 'content': 'Odpowiadaj tylko JSON.'}, {'role': 'user', 'content': prompt}], 'temperature': 0.1})
+            if r.status_code == 200:
+                return 200, r.json()['choices'][0]['message']['content'], None
+        return r.status_code, None, r.text[:100]
     except Exception as e: return 500, None, str(e)
-
-class SupabaseClient:
-    def __init__(self, url, key):
-        self.url, self.headers = url, {'apikey': key, 'Authorization': f'Bearer {key}', 'Content-Type': 'application/json'}
-    
-    async def insert(self, table, data):
-        async with httpx.AsyncClient(timeout=30) as client:
-            r = await client.post(f'{self.url}/rest/v1/{table}', headers=self.headers, json=data)
-            return r.status_code in (200, 201)
-
-    async def select(self, table, columns='*', filters=None, limit=None):
-        async with httpx.AsyncClient(timeout=30) as client:
-            params = {'select': columns}
-            if filters:
-                for k, v in filters.items(): params[k] = f'eq.{v}'
-            if limit: params['limit'] = limit
-            r = await client.get(f'{self.url}/rest/v1/{table}', headers=self.headers, params=params)
-            return r.json() if r.status_code == 200 else None
-
-    async def update(self, table, data, filters):
-        async with httpx.AsyncClient(timeout=30) as client:
-            params = {k: f'eq.{v}' for k, v in filters.items()}
-            r = await client.patch(f'{self.url}/rest/v1/{table}', headers=self.headers, json=data, params=params)
-            return r.status_code in (200, 204)
-
-    async def delete(self, table, filters=None):
-        async with httpx.AsyncClient(timeout=30) as client:
-            params = {k: f'eq.{v}' for k, v in filters.items()} if filters else {}
-            r = await client.delete(f'{self.url}/rest/v1/{table}', headers=self.headers, params=params)
-            return r.status_code in (200, 204, 404)
-    
-    async def call_rpc(self, fn, params=None):
-        async with httpx.AsyncClient(timeout=30) as client:
-            r = await client.post(f'{self.url}/rest/v1/rpc/{fn}', headers=self.headers, json=params or {})
-            return r.json() if r.status_code in (200, 201) else (True if r.status_code == 204 else None)
-
-supabase = SupabaseClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
 # --- Core Logic ---
 
@@ -270,10 +282,9 @@ async def producer_task(run_id):
                 query = template.replace('{role}', role).replace('{city}', city)
                 logger.info(f"[PRODUCER] Query: {query}")
                 try:
-                    async with httpx.AsyncClient(timeout=TIMEOUT_SEARCH) as client:
-                        r = await client.get(f'{SEARXNG_URL}/search', params={'q': query, 'format': 'json', 'language': 'pl-PL'})
-                        if r.status_code == 200:
-                            for res in r.json().get('results', []): await scrape_and_save_lead(res)
+                    r = await supabase.client.get(f'{SEARXNG_URL}/search', params={'q': query, 'format': 'json', 'language': 'pl-PL'}, timeout=TIMEOUT_SEARCH)
+                    if r.status_code == 200:
+                        for res in r.json().get('results', []): await scrape_and_save_lead(res)
                 except: pass
         await asyncio.sleep(15)
 
@@ -281,7 +292,6 @@ async def verify_raw_lead(lead, c_id):
     url, page_text, emails, title = lead['url'], lead['page_text'], lead['emails_found'], lead.get('title', '')
     order = await get_provider_order_async()
     
-    # Load prompt from file and ignore comment lines starting with #
     prompt_path = os.path.join(os.path.dirname(__file__), 'ai_prompt.txt')
     try:
         with open(prompt_path, 'r', encoding='utf-8') as f:
@@ -290,7 +300,6 @@ async def verify_raw_lead(lead, c_id):
     except:
         base_prompt = "Verify if event organizer. Reply ONLY JSON: {'ok': 1/0, 'email': '...', 'reason': '...'}"
 
-    # .replace() is safe for JSON brackets {} in the prompt
     prompt = base_prompt.replace('{url}', url).replace('{title}', title).replace('{emails}', str(emails)).replace('{text}', page_text[:2000])
 
     for provider in order:
@@ -330,7 +339,6 @@ async def consumer_task(run_id, c_id, target):
         if res.get('ok') and res.get('email'):
             email = str(res['email']).strip().lower()
             if not await supabase.select('marketing_verified_contacts', 'id', {'email': email}):
-                # Zapisujemy do zweryfikowanych - dane punktowe (score) idą tylko do logów (już są w logger.info wyżej)
                 await supabase.insert('marketing_verified_contacts', {
                     'email': email, 
                     'url': lead['url'], 
@@ -342,10 +350,8 @@ async def consumer_task(run_id, c_id, target):
                 logger.info(f"[C{c_id}] VERIFIED! ({verified_in_run}/{target}) - {email}")
             await supabase.delete('marketing_raw_contacts', {'id': lead['id']})
         else:
-            # Rezygnacja/Odrzucenie - zapisujemy powód w marketing_raw_contacts zgodnie z Twoim schematem
             await supabase.update('marketing_raw_contacts', {
-                'status': 'rejected', 
-                'reject_reason': str(res.get('reason',''))[:500]
+                'status': 'rejected', 'reject_reason': str(res.get('reason',''))[:500]
             }, {'id': lead['id']})
             logger.info(f"[C{c_id}] REJECTED.")
 
@@ -368,6 +374,10 @@ async def run_worker(run_id, target):
 
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    await supabase.client.aclose()
 
 @app.post("/api/search-runs")
 async def start(target_count: int = 50):
