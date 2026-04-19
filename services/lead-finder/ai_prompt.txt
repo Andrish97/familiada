@@ -1,21 +1,4 @@
-ZADANIE: Sprawdź czy poniższa strona to biznes oferujący oprawę imprez (Wodzirej, DJ, Zespół, Firma Eventowa, Atrakcje).
-
-DANE:
+Verify if event organizer. Reply ONLY JSON: {'ok': 1/0, 'email': '...', 'reason': '...'}
 URL: {url}
-EMAILS: {emails}
-TREŚĆ: {content}
-
-ZASADY WERYFIKACJI:
-1. ODRZUĆ (ok: 0) bazy filmów (filmpolski, fdb, filmweb, imdb) - interesują nas firmy, a nie opisy filmów fabularnych.
-2. ODRZUĆ (ok: 0) artykuły, blogi o historii, Wikipedie.
-3. ODRZUĆ (ok: 0) instytucje (urzędy, szkoły, parafie, gazownie), które nie są usługodawcami eventowymi.
-4. AKCEPTUJ (ok: 1) tylko jeśli widzisz realną ofertę usług na wesele/imprezę.
-
-FORMAT ODPOWIEDZI (TYLKO JSON):
-{
-  "ok": 1 lub 0,
-  "email": "wybrany mail kontaktowy",
-  "name": "Nazwa Firmy/DJa/Zespołu",
-  "description": "Opis usług (max 150 znaków)",
-  "reason": "krótkie uzasadnienie decyzji"
-}
+Emails: {emails}
+Content: {content}
