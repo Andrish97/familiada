@@ -268,9 +268,11 @@ async def scrape_and_save_lead(res):
 
     # 4. Heavy Scraping (Playwright) - ONLY for business/relevant domains
     is_pl_domain = domain.endswith('.pl') or '.pl/' in url
+    is_social = any(s in domain for s in SOCIAL_PLATFORMS)
     is_likely_business = any(k in title_low for k in ['dj', 'wodzirej', 'zespół', 'oprawa', 'atrakcje', 'organizacja', 'event'])
     
-    if (not emails or not page_text) and not any(s in url for s in SOCIAL_PLATFORMS) and (is_pl_domain or is_likely_business):
+    # Playwright on Social Media is usually blocked or overkill, skip it for them
+    if (not emails or not page_text) and not is_social and (is_pl_domain or is_likely_business):
         pw_text, pw_emails = await scrape_with_playwright(url)
         if pw_text: page_text = pw_text[:2000]
         if pw_emails: emails.update(pw_emails)

@@ -26,15 +26,6 @@ wikipedia.org
 en.wikipedia.org
 pl.wikipedia.org
 
-facebook.com
-instagram.com
-twitter.com
-linkedin.com
-youtube.com
-tiktok.com
-pinterest.com
-snapchat.com
-
 pracuj.pl
 praca.pl
 jooble.pl
