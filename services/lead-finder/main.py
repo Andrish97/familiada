@@ -291,7 +291,8 @@ async def run_worker(run_id, target):
     global task_status, verified_in_run, critical_errors_in_run
     task_status, verified_in_run, critical_errors_in_run = "running", 0, 0
     p_task = asyncio.create_task(producer_task(run_id))
-    c_tasks = [asyncio.create_task(consumer_task(run_id, i, target)) for i in range(3)]
+    # Tylko JEDEN konsument, aby weryfikacja leciała ściśle po kolei
+    c_tasks = [asyncio.create_task(consumer_task(run_id, 0, target))]
     while task_status == "running" and verified_in_run < target: await asyncio.sleep(1)
     p_task.cancel()
     for c in c_tasks: c.cancel()
