@@ -269,7 +269,7 @@ async def verify_raw_lead(lead, target):
         logger.info(f"Weryfikuję przez {provider}")
         status, content, err = await call_ai_provider(provider, prompt)
         
-        if status == 200:
+        elif status == 200:
             try:
                 res = json.loads(re.search(r'\{.*\}', content, re.DOTALL).group().replace("'", '"'))
                 await asyncio.sleep(AI_DELAY)
@@ -282,9 +282,14 @@ async def verify_raw_lead(lead, target):
             logger.info(f"Model {provider} wykluczony z tej sesji (Błąd {status}).")
             provider_blacklist.add(provider)
             continue
-        else:
-            logger.info(f"Nie udało się przez {provider}")
+        elif status == 429:
+            logger.info(f"Dostawca {provider} przeciążony (429). Cooldown 60s.")
             provider_cooldowns[provider] = time.time() + PROVIDER_COOLDOWN_SECONDS
+            continue
+        else:
+            # Błędy 500, 503, Timeout itp. - długa kara
+            logger.info(f"Nie udało się przez {provider} (Błąd {status}). Cooldown 5 min.")
+            provider_cooldowns[provider] = time.time() + 300 # 5 minut kary
             continue
             
     if not any_available:
@@ -333,12 +338,17 @@ async def warmup_ai_providers():
     else: order = ['openrouter', 'groq', 'gemini']
     for p in [x.strip().lower() for x in order if x.strip()]:
         status, _, _ = await call_ai_provider(p, "Hey")
-        if status in (401, 403, 404):
+        if status == 200:
+            logger.info(f"Model {p} jest gotowy.")
+        elif status in (401, 403, 404):
             print(f"[SERVER] Model {p} wykluczony permanentnie (Błąd {status}).")
             provider_blacklist.add(p)
-        elif status != 200:
-            print(f"[SERVER] Model {p} na cooldownie (Błąd {status}).")
+        elif status == 429:
+            print(f"[SERVER] Model {p} na cooldownie 60s (Błąd {status}).")
             provider_cooldowns[p] = time.time() + PROVIDER_COOLDOWN_SECONDS
+        else:
+            print(f"[SERVER] Model {p} na cooldownie 5 min (Błąd {status}).")
+            provider_cooldowns[p] = time.time() + 300
 
 async def run_worker(run_id, target):
     global task_status, verified_in_run, critical_errors_in_run, provider_blacklist, provider_cooldowns
