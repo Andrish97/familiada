@@ -22,6 +22,11 @@ accounts.google.com
 apple.com
 itunes.apple.com
 apps.apple.com
+microsoft.com
+apps.microsoft.com
+duckduckgo.com
+bing.com
+yahoo.com
 wikipedia.org
 en.wikipedia.org
 pl.wikipedia.org

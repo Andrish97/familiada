@@ -23,8 +23,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from playwright.async_api import async_playwright
 
 # --- Logger Configuration ---
-# logger.info goes to BOTH console and Supabase (UI)
-# print() goes ONLY to server console
 logger = logging.getLogger("lead_finder")
 logger.setLevel(logging.INFO)
 _handler = logging.StreamHandler()
@@ -41,9 +39,7 @@ class SupabaseClient:
         try:
             r = await self.client.post(f'{self.url}/rest/v1/{table}', json=data)
             return r.status_code in (200, 201)
-        except Exception as e:
-            print(f"[SERVER CONSOLE ONLY] DB Insert Error: {e}")
-            return False
+        except: return False
 
     async def select(self, table, columns='*', filters=None, limit=None):
         try:
@@ -81,15 +77,13 @@ supabase = SupabaseClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
 class SupabaseLoggingHandler(logging.Handler):
     def emit(self, record):
-        if record.levelname == 'INFO': # Only info level to UI
+        if record.levelname == 'INFO' or record.levelname == 'ERROR' or record.levelname == 'CRITICAL':
             try:
                 msg = self.format(record)
                 loop = asyncio.get_event_loop()
                 if loop.is_running():
-                    loop.create_task(supabase.insert('marketing_search_logs', {
-                        'level': 'info',
-                        'message': msg
-                    }))
+                    level = 'info' if record.levelname == 'INFO' else 'error'
+                    loop.create_task(supabase.insert('marketing_search_logs', {'level': level, 'message': msg}))
             except: pass
 
 _db_handler = SupabaseLoggingHandler()
@@ -260,7 +254,8 @@ async def call_ai_provider(name, prompt):
         return r.status_code, None, r.text[:100]
     except Exception as e: return 500, None, str(e)
 
-async def verify_raw_lead(lead):
+async def verify_raw_lead(lead, target):
+    global verified_in_run
     url, txt, emails, title = lead['url'], lead['page_text'], lead['emails_found'], lead.get('title', '')
     
     order_data = await supabase.call_rpc('get_provider_order')
@@ -274,17 +269,16 @@ async def verify_raw_lead(lead):
         base = "\n".join([l for l in f.readlines() if not l.strip().startswith('#')])
     prompt = base.replace('{url}', url).replace('{title}', title).replace('{emails}', str(emails)).replace('{text}', txt[:2000])
 
-    logger.info(f"Rozpoczynam weryfikację: {url}")
+    logger.info(f"Weryfikacja [{verified_in_run + 1}/{target}]: {url}")
 
+    any_provider_available = False
     for provider in [p.strip().lower() for p in order if p.strip()]:
         if provider in provider_cooldowns:
             remains = provider_cooldowns[provider] - time.time()
-            if remains > 0:
-                print(f"[SERVER] {provider} na cooldownie ({int(remains)}s).")
-                continue
-            else:
-                del provider_cooldowns[provider]
+            if remains > 0: continue
+            else: del provider_cooldowns[provider]
         
+        any_provider_available = True
         logger.info(f"Weryfikuję przez {provider}")
         status, content, err = await call_ai_provider(provider, prompt)
         
@@ -303,6 +297,10 @@ async def verify_raw_lead(lead):
             provider_cooldowns[provider] = time.time() + PROVIDER_COOLDOWN_SECONDS
             continue
             
+    if not any_provider_available:
+        print("[SERVER] Wszystkie AI na cooldownie. Czekam 30s...")
+        await asyncio.sleep(30)
+            
     return None
 
 async def consumer_task(run_id, target):
@@ -314,15 +312,14 @@ async def consumer_task(run_id, target):
             await asyncio.sleep(5); continue
         
         lead = result[0]
-        res = await verify_raw_lead(lead)
+        res = await verify_raw_lead(lead, target)
         
         if res is None:
             consecutive_critical += 1
             critical_errors_in_run += 1
-            print(f"[SERVER] Błąd krytyczny dla {lead['url']}")
             await supabase.update('marketing_raw_contacts', {'status': 'pending'}, {'id': lead['id']})
             if consecutive_critical >= 3:
-                logger.error("KILL SWITCH! 3 błędy krytyczne pod rząd. Przerywam zlecenie.")
+                logger.error("Zlecenie przerwane: 3 błędy krytyczne AI pod rząd.")
                 task_status = "cancelled"
                 break
             continue
@@ -361,6 +358,7 @@ async def run_worker(run_id, target):
     global task_status, verified_in_run, critical_errors_in_run
     try:
         task_status, verified_in_run, critical_errors_in_run = "running", 0, 0
+        logger.info(f"Zlecono {target} kontaktów.")
         await warmup_ai_providers()
         
         p_task = asyncio.create_task(producer_task(run_id))
@@ -371,7 +369,9 @@ async def run_worker(run_id, target):
         
         p_task.cancel()
         c_task.cancel()
-        if task_status == "running": task_status = "completed"
+        if task_status == "running": 
+            task_status = "completed"
+            logger.info(f"Zlecenie zakończone. Sukces: {verified_in_run}/{target}.")
     except Exception as e:
         print(f"[SERVER] Błąd krytyczny run_worker: {e}")
         task_status = "error"
