@@ -12,19 +12,11 @@ Settings panel (admin)
 - GET /_admin_api/mail/logs
 */
 
-<<<<<<< HEAD
-import { initI18n, t, getUiLang } from "../../translation/translation.js?v=v2026-04-20T08154";
-import { initUiSelect } from "../core/ui-select.js?v=v2026-04-20T08154";
-import { confirmModal } from "../core/modal.js?v=v2026-04-20T08154";
-import { sb } from "../core/supabase.js?v=v2026-04-20T08154";
-import { v as cacheBust } from "../core/cache-bust.js?v=v2026-04-20T08154";
-=======
 import { initI18n, t, getUiLang } from "../../translation/translation.js?v=v2026-04-20T12380";
 import { initUiSelect } from "../core/ui-select.js?v=v2026-04-20T12380";
 import { confirmModal } from "../core/modal.js?v=v2026-04-20T12380";
 import { sb } from "../core/supabase.js?v=v2026-04-20T12380";
 import { v as cacheBust } from "../core/cache-bust.js?v=v2026-04-20T12380";
->>>>>>> 1e5e93ff32e884968064bb4eece9b9fd5f020ad6
 
 const API_BASE = "/_admin_api";
 const TOOLS_MANIFEST = "/settings-tools/tools.json";
@@ -914,9 +906,7 @@ function renderLogRows(rows) {
   });
 }
 
-// ============================================================
 // MARKETPLACE ADMIN
-// ============================================================
 
 let marketActiveStatus = "pending";
 let marketPreviewId = null;
@@ -968,8 +958,6 @@ async function loadMarketplace({ silent = false } = {}) {
       <td>${escSetting(authorLabel)}</td>
       <td>${date}</td>
       <td class="market-actions">${actions}</td>`;
-<<<<<<< HEAD
-=======
     tbody.appendChild(tr);
   }
 
@@ -1207,9 +1195,7 @@ async function testTelegram() {
 }
 
 // helper — fetch do /_admin_api/*
-// ============================================================
 // REPORTS ADMIN
-// ============================================================
 
 // ── Mail client state ──────────────────────────────────────────
 let msgActiveFolder  = "inbox";  // inbox | sent | trash | reports | <report-uuid>
@@ -5310,4 +5296,3 @@ function wireEvents() {
     showAuth("settings.login.accessRequired");
   }
 })();
->>>>>>> 1e5e93ff32e884968064bb4eece9b9fd5f020ad6
