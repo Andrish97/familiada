@@ -153,6 +153,13 @@ GARBAGE_EMAIL_DOMAINS = [g.lower() for g in load_txt_lines('garbage_email_domain
 SOCIAL_PLATFORMS = tuple(load_txt_lines('social_platforms.txt'))
 SUBPAGE_PATHS = ['/' + p for p in load_txt_lines('subpage_paths.txt')]
 
+# Słowa kluczowe, które MUSZĄ wystąpić (choć jedno), abyśmy zapytali AI
+REQUIRED_KEYWORDS = [
+    'dj', 'wodzirej', 'konferansjer', 'animator', 'zespół', 'muzyka', 'oprawa',
+    'event', 'wesele', 'urodziny', 'imprez', 'organizacja', 'komunie', 'studniówk', 
+    'bal', 'prowadzen', 'integrac', 'nagłośnienie', 'oświetlenie'
+]
+
 EMAIL_REGEX = re.compile(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}')
 
 # --- Global State ---
@@ -242,7 +249,14 @@ async def scrape_and_save_lead(res):
         if p_emails: emails.update(p_emails)
 
     if not emails or len(txt) < 100: return 0
-    if any(k in txt.lower() for k in NEGATIVE_KEYWORDS): return 0
+    txt_low = txt.lower()
+    
+    # Filtr Bouncera: czy są jakiekolwiek słowa kluczowe sukcesu?
+    # Pozwoli to odsiać słowniki, newsy i inne śmieci przed wysłaniem do AI
+    if not any(k in txt_low for k in REQUIRED_KEYWORDS):
+        return 0
+
+    if any(k in txt_low for k in NEGATIVE_KEYWORDS): return 0
 
     return 1 if await supabase.insert('marketing_raw_contacts', {'url': url, 'title': res.get('title',''), 'page_text': txt[:2000], 'emails_found': list(emails), 'status': 'pending'}) else 0
 
