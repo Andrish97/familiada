@@ -174,7 +174,7 @@ let activeTab = "maintenance";
 let previousTabBeforeTools = "maintenance";
 let mailSettingsLoaded = false;
 let mailProviderOrder = [...MAIL_PROVIDERS];
-let aiProviderOrder = (JSON.parse(localStorage.getItem("aiProviderOrder") || "null") || [...AI_PROVIDERS]).filter(p => ["openrouter", "groq"].includes(p));
+let aiProviderOrder = JSON.parse(localStorage.getItem("aiProviderOrder") || "null") || [...AI_PROVIDERS];
 let mailCronPresetValue = "5m";
 let mailCronSupported = true;
 let mailQueueStatusValue = "all";
@@ -1743,9 +1743,7 @@ async function loadAiProviderOrder() {
     if (data) {
       const raw = Array.isArray(data) ? data[0]?.provider_order : data;
       if (raw) {
-        aiProviderOrder = raw.split(',').map(p => p.trim().lower()).filter(p => ["openrouter", "groq"].includes(p));
-        // Jeśli baza była pusta lub miała tylko śmieci
-        if (aiProviderOrder.length === 0) aiProviderOrder = ["openrouter", "groq"];
+        aiProviderOrder = raw.split(',').map(p => p.trim().lower());
         localStorage.setItem("aiProviderOrder", JSON.stringify(aiProviderOrder));
         renderAiProviderOrder();
       }
