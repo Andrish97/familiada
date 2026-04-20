@@ -12,27 +12,11 @@ Settings panel (admin)
 - GET /_admin_api/mail/logs
 */
 
-<<<<<<< HEAD
 import { initI18n, t, getUiLang } from "../../translation/translation.js?v=v2026-04-20T12380";
 import { initUiSelect } from "../core/ui-select.js?v=v2026-04-20T12380";
 import { confirmModal } from "../core/modal.js?v=v2026-04-20T12380";
 import { sb } from "../core/supabase.js?v=v2026-04-20T12380";
 import { v as cacheBust } from "../core/cache-bust.js?v=v2026-04-20T12380";
-=======
-<<<<<<< HEAD
-import { initI18n, t, getUiLang } from "../../translation/translation.js?v=v2026-04-20T12564";
-import { initUiSelect } from "../core/ui-select.js?v=v2026-04-20T12564";
-import { confirmModal } from "../core/modal.js?v=v2026-04-20T12564";
-import { sb } from "../core/supabase.js?v=v2026-04-20T12564";
-import { v as cacheBust } from "../core/cache-bust.js?v=v2026-04-20T12564";
-=======
-import { initI18n, t, getUiLang } from "../../translation/translation.js?v=v2026-04-20T12564";
-import { initUiSelect } from "../core/ui-select.js?v=v2026-04-20T12564";
-import { confirmModal } from "../core/modal.js?v=v2026-04-20T12564";
-import { sb } from "../core/supabase.js?v=v2026-04-20T12564";
-import { v as cacheBust } from "../core/cache-bust.js?v=v2026-04-20T12564";
->>>>>>> 1e5e93ff32e884968064bb4eece9b9fd5f020ad6
->>>>>>> b192c7066a2d9191bdd1f2c9510e2160ef8f2168
 
 const API_BASE = "/_admin_api";
 const TOOLS_MANIFEST = "/settings-tools/tools.json";
