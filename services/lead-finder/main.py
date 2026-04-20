@@ -128,11 +128,12 @@ def load_config():
 CONFIG = load_config()
 SEARXNG_URL = "http://searxng:8080"
 AI_DELAY = CONFIG.get('AI_DELAY', 12)
+AI_DELAY_REJECT = 2 # Szybki przeskok dla śmieci
 PROVIDER_COOLDOWN_SECONDS = CONFIG.get('PROVIDER_COOLDOWN_SECONDS', 60)
 PROVIDER_COOLDOWN_LONG = CONFIG.get('PROVIDER_COOLDOWN_LONG', 300)
 RAW_BUFFER_THRESHOLD = CONFIG.get('RAW_BUFFER_THRESHOLD', 20)
 SEARCH_RESULTS_LIMIT = CONFIG.get('SEARCH_RESULTS_LIMIT', 20)
-TIMEOUT_SEARCH = CONFIG.get('TIMEOUT_SEARCH', 25)
+TIMEOUT_SEARCH = 25
 TIMEOUT_SCRAPE = 12
 TIMEOUT_SCRAPE_JS = 15
 TIMEOUT_AI = 30
@@ -153,7 +154,6 @@ GARBAGE_EMAIL_DOMAINS = [g.lower() for g in load_txt_lines('garbage_email_domain
 SOCIAL_PLATFORMS = tuple(load_txt_lines('social_platforms.txt'))
 SUBPAGE_PATHS = ['/' + p for p in load_txt_lines('subpage_paths.txt')]
 
-# Słowa kluczowe, które MUSZĄ wystąpić (choć jedno), abyśmy zapytali AI
 REQUIRED_KEYWORDS = [
     'dj', 'wodzirej', 'konferansjer', 'animator', 'zespół', 'muzyka', 'oprawa',
     'event', 'wesele', 'urodziny', 'imprez', 'organizacja', 'komunie', 'studniówk', 
@@ -166,9 +166,11 @@ EMAIL_REGEX = re.compile(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}')
 task_status = "idle" 
 task_run_id = None
 verified_in_run = 0
+attempts_in_run = 0
 critical_errors_in_run = 0
 provider_cooldowns = {} 
 provider_blacklist = set() 
+rejected_domains = set() # Domeny odrzucone przez AI w bieżącym zleceniu
 scrape_semaphore = asyncio.Semaphore(MAX_CONCURRENT_SCRAPES)
 playwright_semaphore = asyncio.Semaphore(MAX_CONCURRENT_PLAYWRIGHT)
 
@@ -209,17 +211,14 @@ async def scrape_with_playwright(url):
 async def scrape_and_save_lead(res):
     url = res.get('url', '').lower()
     if not url: return 0
-    
     parsed = urlparse(url)
-    domain = parsed.netloc.lower()
+    domain = parsed.netloc.lower().replace('www.', '')
     
-    # Blokada domen technologicznych i gigantów
+    if domain in rejected_domains: return 0
     if any(b in domain for b in BLOCKED_DOMAINS): return 0
     
-    # Blokada domen egzotycznych (.br, .pt, .ru itp) - zostawiamy .pl, .com, .net, .org, .eu i lokalne
     allowed_tlds = ('.pl', '.com', '.net', '.org', '.eu', '.info', '.biz', '.online', '.site')
-    if not any(url.endswith(t) or f'{t}/' in url for t in allowed_tlds):
-        return 0
+    if not any(url.endswith(t) or f'{t}/' in url for t in allowed_tlds): return 0
 
     if await supabase.select('marketing_verified_contacts', 'id', {'url': url}) or await supabase.select('marketing_raw_contacts', 'id', {'url': url}): return 0
     
@@ -250,12 +249,7 @@ async def scrape_and_save_lead(res):
 
     if not emails or len(txt) < 100: return 0
     txt_low = txt.lower()
-    
-    # Filtr Bouncera: czy są jakiekolwiek słowa kluczowe sukcesu?
-    # Pozwoli to odsiać słowniki, newsy i inne śmieci przed wysłaniem do AI
-    if not any(k in txt_low for k in REQUIRED_KEYWORDS):
-        return 0
-
+    if not any(k in txt_low for k in REQUIRED_KEYWORDS): return 0
     if any(k in txt_low for k in NEGATIVE_KEYWORDS): return 0
 
     return 1 if await supabase.insert('marketing_raw_contacts', {'url': url, 'title': res.get('title',''), 'page_text': txt[:2000], 'emails_found': list(emails), 'status': 'pending'}) else 0
@@ -303,8 +297,14 @@ async def call_ai_provider(name, prompt):
     except Exception as e: return 500, None, str(e)
 
 async def verify_raw_lead(lead, target):
-    global verified_in_run
+    global verified_in_run, attempts_in_run
     url, txt, emails, title = lead['url'], lead['page_text'], lead['emails_found'], lead.get('title', '')
+    
+    parsed = urlparse(url)
+    domain = parsed.netloc.lower().replace('www.', '')
+    if domain in rejected_domains:
+        return {"ok": 0, "reason": "Domena wcześniej odrzucona w tej sesji."}
+
     order_data = await supabase.call_rpc('get_provider_order')
     if order_data and isinstance(order_data, list) and len(order_data) > 0:
         order = order_data[0].get('provider_order','').split(',') if isinstance(order_data[0], dict) else order_data
@@ -314,6 +314,9 @@ async def verify_raw_lead(lead, target):
     with open(prompt_path, 'r', encoding='utf-8') as f:
         base = "\n".join([l for l in f.readlines() if not l.strip().startswith('#')])
     prompt = base.replace('{url}', url).replace('{title}', title).replace('{emails}', str(emails)).replace('{text}', txt[:2000])
+
+    attempts_in_run += 1
+    logger.info(f"Weryfikacja [{attempts_in_run}] (Znaleziono: {verified_in_run}/{target}): {url}")
 
     while task_status in ("running", "paused") and task_run_id is not None:
         if task_status == "paused":
@@ -325,21 +328,21 @@ async def verify_raw_lead(lead, target):
         for provider in [p.strip().lower() for p in order if p.strip()]:
             if provider in provider_blacklist: continue
             any_provider_exists = True
-            
             if provider in provider_cooldowns:
                 if time.time() < provider_cooldowns[provider]: continue
                 else: del provider_cooldowns[provider]
             
             any_provider_free = True
-            # Logowanie weryfikacji ZAWSZE na początku próby
-            logger.info(f"Weryfikacja [{verified_in_run + 1}/{target}]: {url}")
             logger.info(f"Weryfikuję przez {provider}")
-            
             status, content, err = await call_ai_provider(provider, prompt)
+            
             if status == 200:
                 try:
                     res = json.loads(re.search(r'\{.*\}', content, re.DOTALL).group().replace("'", '"'))
-                    await asyncio.sleep(AI_DELAY)
+                    # DYNAMICZNY DELAY: 12s dla sukcesu, 2s dla śmieci
+                    delay = AI_DELAY if res.get('ok') else AI_DELAY_REJECT
+                    await asyncio.sleep(delay)
+                    if not res.get('ok'): rejected_domains.add(domain)
                     return res
                 except: 
                     provider_cooldowns[provider] = time.time() + PROVIDER_COOLDOWN_SECONDS
@@ -357,11 +360,11 @@ async def verify_raw_lead(lead, target):
                 continue
         
         if not any_provider_exists:
-            logger.error("Brak dostępnych modeli AI w tej sesji!")
+            logger.error("Brak dostępnych modeli AI!")
             return "FATAL"
             
         if not any_provider_free:
-            print("[SERVER] Oczekiwanie na odblokowanie AI (30s)...")
+            print("[SERVER] Czekam na AI (30s)...")
             await asyncio.sleep(30)
             continue
             
@@ -377,16 +380,15 @@ async def consumer_task(run_id, target):
         result = await supabase.call_rpc('claim_next_pending_lead')
         if not result or not isinstance(result, list) or len(result) == 0:
             await asyncio.sleep(5); continue
+        
         lead = result[0]
         res = await verify_raw_lead(lead, target)
         
         if res is None or res == "FATAL":
-            # Tylko prawdziwe błędy (nie czekanie) liczą się do Kill Switcha
             if res == "FATAL" or consecutive_critical < 3: 
                 consecutive_critical += 1
                 critical_errors_in_run += 1
                 await supabase.update('marketing_raw_contacts', {'status': 'pending'}, {'id': lead['id']})
-            
             if consecutive_critical >= 3:
                 logger.error("Zlecenie przerwane: 3 błędy krytyczne AI pod rząd.")
                 task_status = "cancelled"; break
@@ -416,16 +418,18 @@ async def warmup_ai_providers():
     else: order = ['openrouter', 'groq']
     for p in [x.strip().lower() for x in order if x.strip()]:
         status, _, _ = await call_ai_provider(p, "Hey")
-        if status in (401, 403, 404):
+        if status == 200:
+            logger.info(f"Model {p} jest gotowy.")
+        elif status in (401, 403, 404):
             provider_blacklist.add(p)
-        elif status != 200:
+        else:
             provider_cooldowns[p] = time.time() + (60 if status == 429 else 300)
 
 async def run_worker(run_id, target):
-    global task_status, verified_in_run, critical_errors_in_run, provider_blacklist, provider_cooldowns
+    global task_status, verified_in_run, attempts_in_run, critical_errors_in_run, provider_blacklist, provider_cooldowns, rejected_domains
     try:
-        task_status, verified_in_run, critical_errors_in_run = "running", 0, 0
-        provider_blacklist, provider_cooldowns = set(), {}
+        task_status, verified_in_run, attempts_in_run, critical_errors_in_run = "running", 0, 0, 0
+        provider_blacklist, provider_cooldowns, rejected_domains = set(), {}, set()
         await supabase.delete('marketing_search_logs', {'level': 'neq.null'})
         logger.info(f"Zlecono {target} kontaktów.")
         await warmup_ai_providers()

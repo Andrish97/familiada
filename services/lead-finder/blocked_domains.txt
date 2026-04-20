@@ -14,7 +14,7 @@ icloud.com
 wikipedia.org
 brave.com
 
-# Sklepy i Aplikacje
+# Sklepy, Słowniki i Aplikacje
 apps.microsoft.com
 play.google.com
 apps.apple.com
@@ -24,6 +24,12 @@ ebay.com
 allegro.pl
 olx.pl
 sprzedajemy.pl
+sjp.pwn.pl
+pwn.pl
+merriam-webster.com
+dictionary.com
+weather.com
+accuweather.com
 
 # Technologia i Newsy
 cnet.com
@@ -50,3 +56,5 @@ archive.org
 facebook.com/messages
 twitter.com/login
 linkedin.com/jobs
+officeapps.live.com
+live.com
