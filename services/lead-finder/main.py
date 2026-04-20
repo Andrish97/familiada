@@ -128,7 +128,7 @@ def load_config():
 CONFIG = load_config()
 SEARXNG_URL = "http://searxng:8080"
 AI_DELAY = CONFIG.get('AI_DELAY', 12)
-AI_DELAY_REJECT = 2 # Szybki przeskok dla śmieci
+AI_DELAY_REJECT = 2
 PROVIDER_COOLDOWN_SECONDS = CONFIG.get('PROVIDER_COOLDOWN_SECONDS', 60)
 PROVIDER_COOLDOWN_LONG = CONFIG.get('PROVIDER_COOLDOWN_LONG', 300)
 RAW_BUFFER_THRESHOLD = CONFIG.get('RAW_BUFFER_THRESHOLD', 20)
@@ -170,7 +170,7 @@ attempts_in_run = 0
 critical_errors_in_run = 0
 provider_cooldowns = {} 
 provider_blacklist = set() 
-rejected_domains = set() # Domeny odrzucone przez AI w bieżącym zleceniu
+rejected_domains = set() 
 scrape_semaphore = asyncio.Semaphore(MAX_CONCURRENT_SCRAPES)
 playwright_semaphore = asyncio.Semaphore(MAX_CONCURRENT_PLAYWRIGHT)
 
@@ -281,7 +281,10 @@ async def producer_task(run_id):
                         r = await global_client.get(f'{SEARXNG_URL}/search', params={'q': query, 'format': 'json', 'language': 'pl-PL', 'limit': SEARCH_RESULTS_LIMIT}, timeout=TIMEOUT_SEARCH)
                         if r.status_code == 200:
                             for res in r.json().get('results', []): total_added += await scrape_and_save_lead(res)
-                    except: pass
+                        else:
+                            print(f"[SERVER] SearXNG Error {r.status_code}: {r.text[:100]}")
+                    except Exception as e:
+                        print(f"[SERVER] SearXNG Connection Error: {e}")
                 logger.info(f"Zakończono wyszukiwanie {role} {city}, dodano {total_added} surowych kontaktów.")
                 await supabase.insert('marketing_search_queries_log', {'query_text': picked})
         await asyncio.sleep(15)
@@ -289,19 +292,31 @@ async def producer_task(run_id):
 async def call_ai_provider(name, prompt):
     cfg = AI_PROVIDERS.get(name)
     if not cfg or not cfg['key']: return 500, None, "Missing config"
+    headers = {'Content-Type': 'application/json'}
+    if name == 'openrouter':
+        headers.update({
+            'Authorization': f'Bearer {cfg["key"]}',
+            'HTTP-Referer': 'https://familiada.online',
+            'X-Title': 'Familiada Lead Finder'
+        })
+    else:
+        headers.update({'Authorization': f'Bearer {cfg["key"]}'})
+        
     try:
-        r = await global_client.post(cfg['endpoint'], headers={'Authorization': f'Bearer {cfg["key"]}', 'Content-Type': 'application/json'},
+        r = await global_client.post(cfg['endpoint'], headers=headers,
             json={'model': cfg['model'], 'messages': [{'role': 'system', 'content': 'Odpowiadaj tylko JSON.'}, {'role': 'user', 'content': prompt}], 'temperature': 0.1}, timeout=cfg['timeout'])
         if r.status_code == 200: return 200, r.json()['choices'][0]['message']['content'], None
-        else: return r.status_code, None, r.text[:100]
+        else:
+            print(f"[SERVER] {name.capitalize()} Error {r.status_code}: {r.text[:200]}")
+            return r.status_code, None, r.text[:100]
     except Exception as e: return 500, None, str(e)
 
 async def verify_raw_lead(lead, target):
     global verified_in_run, attempts_in_run
     url, txt, emails, title = lead['url'], lead['page_text'], lead['emails_found'], lead.get('title', '')
-    
     parsed = urlparse(url)
     domain = parsed.netloc.lower().replace('www.', '')
+    
     if domain in rejected_domains:
         return {"ok": 0, "reason": "Domena wcześniej odrzucona w tej sesji."}
 
@@ -335,11 +350,9 @@ async def verify_raw_lead(lead, target):
             any_provider_free = True
             logger.info(f"Weryfikuję przez {provider}")
             status, content, err = await call_ai_provider(provider, prompt)
-            
             if status == 200:
                 try:
                     res = json.loads(re.search(r'\{.*\}', content, re.DOTALL).group().replace("'", '"'))
-                    # DYNAMICZNY DELAY: 12s dla sukcesu, 2s dla śmieci
                     delay = AI_DELAY if res.get('ok') else AI_DELAY_REJECT
                     await asyncio.sleep(delay)
                     if not res.get('ok'): rejected_domains.add(domain)
@@ -364,7 +377,7 @@ async def verify_raw_lead(lead, target):
             return "FATAL"
             
         if not any_provider_free:
-            print("[SERVER] Czekam na AI (30s)...")
+            print("[SERVER] Oczekiwanie na odblokowanie AI (30s)...")
             await asyncio.sleep(30)
             continue
             
@@ -380,18 +393,18 @@ async def consumer_task(run_id, target):
         result = await supabase.call_rpc('claim_next_pending_lead')
         if not result or not isinstance(result, list) or len(result) == 0:
             await asyncio.sleep(5); continue
-        
         lead = result[0]
         res = await verify_raw_lead(lead, target)
         
         if res is None or res == "FATAL":
-            if res == "FATAL" or consecutive_critical < 3: 
-                consecutive_critical += 1
-                critical_errors_in_run += 1
-                await supabase.update('marketing_raw_contacts', {'status': 'pending'}, {'id': lead['id']})
-            if consecutive_critical >= 3:
-                logger.error("Zlecenie przerwane: 3 błędy krytyczne AI pod rząd.")
-                task_status = "cancelled"; break
+            consecutive_critical += 1
+            critical_errors_in_run += 1
+            await supabase.update('marketing_raw_contacts', {'status': 'pending'}, {'id': lead['id']})
+            
+            if consecutive_critical >= 10: # Zamiast 3, czekamy na dłuższą serię błędów
+                logger.warning("Wykryto serię błędów AI. Zasypiam na 10 minut...")
+                await asyncio.sleep(600)
+                consecutive_critical = 0
             continue
         
         consecutive_critical = 0
@@ -418,11 +431,9 @@ async def warmup_ai_providers():
     else: order = ['openrouter', 'groq']
     for p in [x.strip().lower() for x in order if x.strip()]:
         status, _, _ = await call_ai_provider(p, "Hey")
-        if status == 200:
-            logger.info(f"Model {p} jest gotowy.")
-        elif status in (401, 403, 404):
+        if status in (401, 403, 404):
             provider_blacklist.add(p)
-        else:
+        elif status != 200:
             provider_cooldowns[p] = time.time() + (60 if status == 429 else 300)
 
 async def run_worker(run_id, target):
