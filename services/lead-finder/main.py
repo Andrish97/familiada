@@ -29,7 +29,7 @@ _handler = logging.StreamHandler()
 _handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
 logger.addHandler(_handler)
 
-# 1. Czysty klient do zapytań zewnętrznych (AI, SearXNG)
+# Klient do zapytań zewnętrznych (AI, SearXNG) - BEZ nagłówków Supabase
 global_client = httpx.AsyncClient(timeout=60)
 
 class SupabaseClient:
@@ -65,7 +65,6 @@ class SupabaseClient:
 
     async def delete(self, table, filters=None):
         try:
-            # filters can be {'col': 'val'} -> eq.val OR {'col': 'neq.val'} -> neq.val
             params = {}
             if filters:
                 for k, v in filters.items():
@@ -80,6 +79,7 @@ class SupabaseClient:
             return r.json() if r.status_code in (200, 201) else (True if r.status_code == 204 else None)
         except: return None
 
+# Inicjalizacja Supabase i kluczy Telegrama
 SUPABASE_URL = "http://kong:8000"
 SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", os.getenv("SERVICE_ROLE_KEY", ""))
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
@@ -108,6 +108,8 @@ class SupabaseLoggingHandler(logging.Handler):
 _db_handler = SupabaseLoggingHandler()
 _db_handler.setLevel(logging.INFO)
 logger.addHandler(_db_handler)
+
+# --- Configuration Loading ---
 
 def load_txt_lines(filename):
     path = os.path.join(os.path.dirname(__file__), filename)
@@ -167,7 +169,7 @@ provider_blacklist = set()
 scrape_semaphore = asyncio.Semaphore(MAX_CONCURRENT_SCRAPES)
 playwright_semaphore = asyncio.Semaphore(MAX_CONCURRENT_PLAYWRIGHT)
 
-# --- Logic ---
+# --- Core Logic ---
 
 def clean_text(text):
     if not text: return ""
@@ -232,8 +234,7 @@ async def scrape_and_save_lead(res):
         if p_emails: emails.update(p_emails)
 
     if not emails or len(txt) < 100: return 0
-    txt_low = txt.lower()
-    if any(k in txt_low for k in NEGATIVE_KEYWORDS): return 0
+    if any(k in txt.lower() for k in NEGATIVE_KEYWORDS): return 0
 
     return 1 if await supabase.insert('marketing_raw_contacts', {
         'url': url, 'title': res.get('title',''), 'page_text': txt[:2000], 
@@ -241,7 +242,10 @@ async def scrape_and_save_lead(res):
     }) else 0
 
 async def producer_task(run_id):
-    while task_status == "running" and task_run_id == run_id:
+    while task_status in ("running", "paused") and task_run_id == run_id:
+        if task_status == "paused":
+            await asyncio.sleep(5); continue
+            
         pending = await supabase.select('marketing_raw_contacts', 'id', {'status': 'pending'}, limit=RAW_BUFFER_THRESHOLD)
         if not pending or len(pending) < RAW_BUFFER_THRESHOLD:
             cities = await supabase.select('marketing_cities', 'name', {'is_active': 'true'})
@@ -251,8 +255,7 @@ async def producer_task(run_id):
                 pool = [f"{r}:{c['name']}" for r in ROLES for c in cities]
                 available = [p for p in pool if p not in done]
                 if not available:
-                    print("[SERVER] Pula wyszukiwania wyczerpana. Czyszczę historię.")
-                    await supabase.delete('marketing_search_queries_log')
+                    await supabase.delete('marketing_search_queries_log', {'query_text': 'neq.null'})
                     available = pool
                 picked = random.choice(available)
                 role, city = picked.split(':', 1)
@@ -265,10 +268,7 @@ async def producer_task(run_id):
                         r = await global_client.get(f'{SEARXNG_URL}/search', params={'q': query, 'format': 'json', 'language': 'pl-PL', 'limit': SEARCH_RESULTS_LIMIT}, timeout=TIMEOUT_SEARCH)
                         if r.status_code == 200:
                             for res in r.json().get('results', []): total_added += await scrape_and_save_lead(res)
-                        else:
-                            print(f"[SERVER] SearXNG Error {r.status_code}: {r.text[:100]}")
-                    except Exception as e:
-                        print(f"[SERVER] SearXNG Connection Error: {e}")
+                    except: pass
                 logger.info(f"Zakończono wyszukiwanie {role} {city}, dodano {total_added} surowych kontaktów.")
                 await supabase.insert('marketing_search_queries_log', {'query_text': picked})
         await asyncio.sleep(15)
@@ -280,35 +280,18 @@ async def call_ai_provider(name, prompt):
         r = await global_client.post(cfg['endpoint'], headers={'Authorization': f'Bearer {cfg["key"]}', 'Content-Type': 'application/json'},
             json={'model': cfg['model'], 'messages': [{'role': 'system', 'content': 'Odpowiadaj tylko JSON.'}, {'role': 'user', 'content': prompt}], 'temperature': 0.1}, timeout=cfg['timeout'])
         if r.status_code == 200: return 200, r.json()['choices'][0]['message']['content'], None
-        else:
-            print(f"[SERVER] {name.capitalize()} Error {r.status_code}: {r.text}")
-            return r.status_code, None, r.text[:100]
+        else: return r.status_code, None, r.text[:100]
     except Exception as e: return 500, None, str(e)
 
 async def verify_raw_lead(lead, target):
     global verified_in_run
     url, txt, emails, title = lead['url'], lead['page_text'], lead['emails_found'], lead.get('title', '')
-
     order_data = await supabase.call_rpc('get_provider_order')
-    # Debug print w konsoli serwera
-    print(f"[SERVER] Raw RPC order_data: {order_data}")
-
     if order_data and isinstance(order_data, list) and len(order_data) > 0:
-        if isinstance(order_data[0], dict): 
-            order = order_data[0].get('provider_order','').split(',')
-        else: 
-            order = order_data
-    else: 
-        order = ['openrouter', 'groq']
-
-    current_order = [p.strip().lower() for p in order if p.strip()]
-
-    # Logowanie kolejności do UI przy pierwszym leadzie w sesji
-    if verified_in_run == 0:
-        logger.info(f"Kolejność dostawców AI: {', '.join(current_order)}")
-
+        order = order_data[0].get('provider_order','').split(',') if isinstance(order_data[0], dict) else order_data
+    else: order = ['openrouter', 'groq']
+    
     prompt_path = os.path.join(os.path.dirname(__file__), 'ai_prompt.txt')
-
     with open(prompt_path, 'r', encoding='utf-8') as f:
         base = "\n".join([l for l in f.readlines() if not l.strip().startswith('#')])
     prompt = base.replace('{url}', url).replace('{title}', title).replace('{emails}', str(emails)).replace('{text}', txt[:2000])
@@ -325,14 +308,12 @@ async def verify_raw_lead(lead, target):
         any_available = True
         logger.info(f"Weryfikuję przez {provider}")
         status, content, err = await call_ai_provider(provider, prompt)
-        
         if status == 200:
             try:
                 res = json.loads(re.search(r'\{.*\}', content, re.DOTALL).group().replace("'", '"'))
                 await asyncio.sleep(AI_DELAY)
                 return res
             except: 
-                print(f"[SERVER] Parse error {provider}")
                 provider_cooldowns[provider] = time.time() + PROVIDER_COOLDOWN_SECONDS
                 continue
         elif status in (401, 403, 404):
@@ -340,11 +321,9 @@ async def verify_raw_lead(lead, target):
             provider_blacklist.add(provider)
             continue
         elif status == 429:
-            logger.info(f"Dostawca {provider} przeciążony (429). Cooldown {PROVIDER_COOLDOWN_SECONDS}s.")
             provider_cooldowns[provider] = time.time() + PROVIDER_COOLDOWN_SECONDS
             continue
         else:
-            logger.info(f"Nie udało się przez {provider} (Błąd {status}). Cooldown {PROVIDER_COOLDOWN_LONG}s.")
             provider_cooldowns[provider] = time.time() + PROVIDER_COOLDOWN_LONG
             continue
             
@@ -356,7 +335,10 @@ async def verify_raw_lead(lead, target):
 async def consumer_task(run_id, target):
     global verified_in_run, critical_errors_in_run, task_status
     consecutive_critical = 0
-    while task_run_id == run_id and task_status == "running" and verified_in_run < target:
+    while task_run_id == run_id and task_status in ("running", "paused") and verified_in_run < target:
+        if task_status == "paused":
+            await asyncio.sleep(5); continue
+            
         result = await supabase.call_rpc('claim_next_pending_lead')
         if not result or not isinstance(result, list) or len(result) == 0:
             await asyncio.sleep(5); continue
@@ -394,32 +376,22 @@ async def warmup_ai_providers():
     else: order = ['openrouter', 'groq']
     for p in [x.strip().lower() for x in order if x.strip()]:
         status, _, _ = await call_ai_provider(p, "Hey")
-        if status == 200:
-            logger.info(f"Model {p} jest gotowy.")
-        elif status in (401, 403, 404):
-            print(f"[SERVER] Model {p} wykluczony permanentnie (Błąd {status}).")
+        if status in (401, 403, 404):
             provider_blacklist.add(p)
-        elif status == 429:
-            print(f"[SERVER] Model {p} na cooldownie {PROVIDER_COOLDOWN_SECONDS}s (Błąd {status}).")
-            provider_cooldowns[p] = time.time() + PROVIDER_COOLDOWN_SECONDS
-        else:
-            print(f"[SERVER] Model {p} na cooldownie {PROVIDER_COOLDOWN_LONG}s (Błąd {status}).")
-            provider_cooldowns[p] = time.time() + PROVIDER_COOLDOWN_LONG
+        elif status != 200:
+            provider_cooldowns[p] = time.time() + (60 if status == 429 else 300)
 
 async def run_worker(run_id, target):
     global task_status, verified_in_run, critical_errors_in_run, provider_blacklist, provider_cooldowns
     try:
         task_status, verified_in_run, critical_errors_in_run = "running", 0, 0
         provider_blacklist, provider_cooldowns = set(), {}
-        
-        # Czyścimy logi używając filtra, który pasuje do wszystkiego (level nie jest nullem)
         await supabase.delete('marketing_search_logs', {'level': 'neq.null'})
-        
         logger.info(f"Zlecono {target} kontaktów.")
         await warmup_ai_providers()
         p_task = asyncio.create_task(producer_task(run_id))
         c_task = asyncio.create_task(consumer_task(run_id, target))
-        while task_status == "running" and verified_in_run < target: await asyncio.sleep(1)
+        while task_status in ("running", "paused") and verified_in_run < target: await asyncio.sleep(1)
         p_task.cancel(); c_task.cancel()
         if task_status == "running": 
             task_status = "completed"
@@ -447,6 +419,33 @@ async def start(target_count: int = 50):
     task_run_id = str(uuid.uuid4())
     asyncio.create_task(run_worker(task_run_id, target_count))
     return {"ok": True, "run_id": task_run_id}
+
+@app.post("/api/search-runs/{run_id}/pause")
+async def pause(run_id: str):
+    global task_status
+    if task_run_id == run_id and task_status == "running":
+        task_status = "paused"
+        logger.info("Zlecenie wstrzymane.")
+        return {"ok": True}
+    raise HTTPException(404)
+
+@app.post("/api/search-runs/{run_id}/resume")
+async def resume(run_id: str):
+    global task_status
+    if task_run_id == run_id and task_status == "paused":
+        task_status = "running"
+        logger.info("Zlecenie wznowione.")
+        return {"ok": True}
+    raise HTTPException(404)
+
+@app.post("/api/search-runs/{run_id}/cancel")
+async def cancel(run_id: str):
+    global task_status
+    if task_run_id == run_id:
+        task_status = "cancelled"
+        logger.info("Zlecenie anulowane przez użytkownika.")
+        return {"ok": True}
+    raise HTTPException(404)
 
 @app.get("/api/search-runs/status")
 async def status(): return {"status": task_status, "run_id": task_run_id, "verified": verified_in_run, "errors": critical_errors_in_run}
