@@ -1726,10 +1726,32 @@ function renderAiProviderOrder() {
 
 async function saveAiProviderOrder() {
   try {
-    await sb().rpc('update_ai_provider_order', { p_order: aiProviderOrder.join(",") });
-    showToast(`AI: ${aiProviderOrder.join(" → ")}`);
+    // Zawsze filtrujemy Gemini przed zapisem
+    const cleanOrder = aiProviderOrder.filter(p => ["openrouter", "groq"].includes(p));
+    aiProviderOrder = cleanOrder;
+    await sb().rpc('update_ai_provider_order', { p_order: cleanOrder.join(",") });
+    showToast(`AI: ${cleanOrder.join(" → ")}`);
+    renderAiProviderOrder();
   } catch(e) {
     console.warn("[AI] save order error:", e);
+  }
+}
+
+async function loadAiProviderOrder() {
+  try {
+    const { data } = await sb().rpc('get_provider_order');
+    if (data) {
+      const raw = Array.isArray(data) ? data[0]?.provider_order : data;
+      if (raw) {
+        aiProviderOrder = raw.split(',').map(p => p.trim().lower()).filter(p => ["openrouter", "groq"].includes(p));
+        // Jeśli baza była pusta lub miała tylko śmieci
+        if (aiProviderOrder.length === 0) aiProviderOrder = ["openrouter", "groq"];
+        localStorage.setItem("aiProviderOrder", JSON.stringify(aiProviderOrder));
+        renderAiProviderOrder();
+      }
+    }
+  } catch(e) {
+    console.warn("[AI] load order error:", e);
   }
 }
 
@@ -6316,9 +6338,10 @@ function wireEvents() {
       await mcLoadRuns();
       mcLoadLogs();
       if (document.getElementById("mcAutoRefreshLogs")?.checked) mcStartLogAutoRefresh();
-      renderAiProviderOrder();
+      await loadAiProviderOrder();
     }
   });
+
   const mcPanel = document.getElementById("marketingContactsPanel");
   if (mcPanel) mcObserver.observe(mcPanel, { attributes: true, attributeFilter: ["hidden"] });
 
