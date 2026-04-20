@@ -3270,14 +3270,6 @@ function adminFetch(path, init = {}) {
   return fetch(`/_admin_api${path}`, init);
 }
 
-function escSetting(str) {
-  return String(str ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
-
 function wireMarketplaceEvents() {
   // Tab wewnętrzne
   const tabs = [
