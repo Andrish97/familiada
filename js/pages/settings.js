@@ -1687,7 +1687,11 @@ function renderAiProviderOrder() {
   const el = document.getElementById("aiProviderOrderList");
   if (!el) return;
   el.innerHTML = "";
-  aiProviderOrder.forEach((provider, idx) => {
+  // Twardy filtr: tylko OpenRouter i Groq są dozwolone w UI
+  const allowed = ["openrouter", "groq"];
+  const filteredOrder = aiProviderOrder.filter(p => allowed.includes(p));
+  
+  filteredOrder.forEach((provider, idx) => {
     const row = document.createElement("div");
     row.className = "provider-order-row";
     row.style.marginBottom = "4px";
