@@ -65,7 +65,11 @@ class SupabaseClient:
 
     async def delete(self, table, filters=None):
         try:
-            params = {k: f'eq.{v}' for k, v in filters.items()} if filters else {}
+            # filters can be {'col': 'val'} -> eq.val OR {'col': 'neq.val'} -> neq.val
+            params = {}
+            if filters:
+                for k, v in filters.items():
+                    params[k] = v if '.' in str(v) else f'eq.{v}'
             r = await self.client.delete(f'{self.url}/rest/v1/{table}', params=params)
             return r.status_code in (200, 204, 404)
         except: return False
@@ -397,7 +401,10 @@ async def run_worker(run_id, target):
     try:
         task_status, verified_in_run, critical_errors_in_run = "running", 0, 0
         provider_blacklist, provider_cooldowns = set(), {}
-        await supabase.delete('marketing_search_logs')
+        
+        # Czyścimy logi używając filtra, który pasuje do wszystkiego (level nie jest nullem)
+        await supabase.delete('marketing_search_logs', {'level': 'neq.null'})
+        
         logger.info(f"Zlecono {target} kontaktów.")
         await warmup_ai_providers()
         p_task = asyncio.create_task(producer_task(run_id))
