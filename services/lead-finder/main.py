@@ -274,13 +274,27 @@ async def call_ai_provider(name, prompt):
 async def verify_raw_lead(lead, target):
     global verified_in_run
     url, txt, emails, title = lead['url'], lead['page_text'], lead['emails_found'], lead.get('title', '')
-    
+
     order_data = await supabase.call_rpc('get_provider_order')
+    # Debug print w konsoli serwera
+    print(f"[SERVER] Raw RPC order_data: {order_data}")
+
     if order_data and isinstance(order_data, list) and len(order_data) > 0:
-        order = order_data[0].get('provider_order','').split(',') if isinstance(order_data[0], dict) else order_data
-    else: order = ['openrouter', 'groq']
-    
+        if isinstance(order_data[0], dict): 
+            order = order_data[0].get('provider_order','').split(',')
+        else: 
+            order = order_data
+    else: 
+        order = ['openrouter', 'groq']
+
+    current_order = [p.strip().lower() for p in order if p.strip()]
+
+    # Logowanie kolejności do UI przy pierwszym leadzie w sesji
+    if verified_in_run == 0:
+        logger.info(f"Kolejność dostawców AI: {', '.join(current_order)}")
+
     prompt_path = os.path.join(os.path.dirname(__file__), 'ai_prompt.txt')
+
     with open(prompt_path, 'r', encoding='utf-8') as f:
         base = "\n".join([l for l in f.readlines() if not l.strip().startswith('#')])
     prompt = base.replace('{url}', url).replace('{title}', title).replace('{emails}', str(emails)).replace('{text}', txt[:2000])
