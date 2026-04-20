@@ -143,7 +143,8 @@ MAX_CONCURRENT_PLAYWRIGHT = CONFIG.get('MAX_CONCURRENT_PLAYWRIGHT', 3)
 
 AI_PROVIDERS = {
     'openrouter': {'key': os.getenv("OPENROUTER_API_KEY", ""), 'model': os.getenv("OPENROUTER_MODEL", "anthropic/claude-3-haiku"), 'endpoint': "https://openrouter.ai/api/v1/chat/completions", 'timeout': 60},
-    'groq': {'key': os.getenv("GROQ_API_KEY", ""), 'model': os.getenv("GROQ_MODEL", "llama-3.1-8b-instant"), 'endpoint': "https://api.groq.com/openai/v1/chat/completions", 'timeout': TIMEOUT_AI}
+    'groq': {'key': os.getenv("GROQ_API_KEY", ""), 'model': os.getenv("GROQ_MODEL", "llama-3.1-8b-instant"), 'endpoint': "https://api.groq.com/openai/v1/chat/completions", 'timeout': TIMEOUT_AI},
+    'deepseek': {'key': os.getenv("DEEP_SEEK_API_KEY", ""), 'model': "deepseek-chat", 'endpoint': "https://api.deepseek.com/chat/completions", 'timeout': 60}
 }
 
 ROLES = load_txt_lines('roles.txt')
@@ -213,7 +214,6 @@ async def scrape_and_save_lead(res):
     if not url: return 0
     parsed = urlparse(url)
     domain = parsed.netloc.lower().replace('www.', '')
-    
     if domain in rejected_domains: return 0
     if any(b in domain for b in BLOCKED_DOMAINS): return 0
     
@@ -258,7 +258,6 @@ async def producer_task(run_id):
     while task_status in ("running", "paused") and task_run_id == run_id:
         if task_status == "paused":
             await asyncio.sleep(5); continue
-            
         pending = await supabase.select('marketing_raw_contacts', 'id', {'status': 'pending'}, limit=RAW_BUFFER_THRESHOLD)
         if not pending or len(pending) < RAW_BUFFER_THRESHOLD:
             cities = await supabase.select('marketing_cities', 'name', {'is_active': 'true'})
@@ -294,11 +293,7 @@ async def call_ai_provider(name, prompt):
     if not cfg or not cfg['key']: return 500, None, "Missing config"
     headers = {'Content-Type': 'application/json'}
     if name == 'openrouter':
-        headers.update({
-            'Authorization': f'Bearer {cfg["key"]}',
-            'HTTP-Referer': 'https://familiada.online',
-            'X-Title': 'Familiada Lead Finder'
-        })
+        headers.update({'Authorization': f'Bearer {cfg["key"]}', 'HTTP-Referer': 'https://familiada.online', 'X-Title': 'Familiada Lead Finder'})
     else:
         headers.update({'Authorization': f'Bearer {cfg["key"]}'})
         
@@ -307,7 +302,11 @@ async def call_ai_provider(name, prompt):
             json={'model': cfg['model'], 'messages': [{'role': 'system', 'content': 'Odpowiadaj tylko JSON.'}, {'role': 'user', 'content': prompt}], 'temperature': 0.1}, timeout=cfg['timeout'])
         if r.status_code == 200: return 200, r.json()['choices'][0]['message']['content'], None
         else:
+            err_body = r.text.lower()
             print(f"[SERVER] {name.capitalize()} Error {r.status_code}: {r.text[:200]}")
+            # Wykrywanie limitów dziennych (per day / quota / limit exceeded)
+            if r.status_code == 429 and any(x in err_body for x in ("day", "daily", "quota", "credit")):
+                return 403, None, "Daily limit reached"
             return r.status_code, None, r.text[:100]
     except Exception as e: return 500, None, str(e)
 
@@ -316,14 +315,12 @@ async def verify_raw_lead(lead, target):
     url, txt, emails, title = lead['url'], lead['page_text'], lead['emails_found'], lead.get('title', '')
     parsed = urlparse(url)
     domain = parsed.netloc.lower().replace('www.', '')
-    
-    if domain in rejected_domains:
-        return {"ok": 0, "reason": "Domena wcześniej odrzucona w tej sesji."}
+    if domain in rejected_domains: return {"ok": 0, "reason": "Domena wcześniej odrzucona w tej sesji."}
 
     order_data = await supabase.call_rpc('get_provider_order')
     if order_data and isinstance(order_data, list) and len(order_data) > 0:
         order = order_data[0].get('provider_order','').split(',') if isinstance(order_data[0], dict) else order_data
-    else: order = ['openrouter', 'groq']
+    else: order = ['openrouter', 'groq', 'deepseek']
     
     prompt_path = os.path.join(os.path.dirname(__file__), 'ai_prompt.txt')
     with open(prompt_path, 'r', encoding='utf-8') as f:
@@ -361,14 +358,14 @@ async def verify_raw_lead(lead, target):
                     provider_cooldowns[provider] = time.time() + PROVIDER_COOLDOWN_SECONDS
                     continue
             elif status in (401, 403, 404):
-                logger.info(f"Model {provider} wykluczony (Błąd {status}).")
+                logger.info(f"Model {provider} wykluczony z tej sesji (Błąd {status}).")
                 provider_blacklist.add(provider)
                 continue
             elif status == 429:
                 provider_cooldowns[provider] = time.time() + PROVIDER_COOLDOWN_SECONDS
                 continue
             else:
-                logger.info(f"Nie udało się przez {provider}")
+                logger.info(f"Nie udało się przez {provider} (Błąd {status})")
                 provider_cooldowns[provider] = time.time() + PROVIDER_COOLDOWN_LONG
                 continue
         
@@ -380,7 +377,6 @@ async def verify_raw_lead(lead, target):
             print("[SERVER] Oczekiwanie na odblokowanie AI (30s)...")
             await asyncio.sleep(30)
             continue
-            
     return None
 
 async def consumer_task(run_id, target):
@@ -389,24 +385,20 @@ async def consumer_task(run_id, target):
     while task_run_id == run_id and task_status in ("running", "paused") and verified_in_run < target:
         if task_status == "paused":
             await asyncio.sleep(5); continue
-            
         result = await supabase.call_rpc('claim_next_pending_lead')
         if not result or not isinstance(result, list) or len(result) == 0:
             await asyncio.sleep(5); continue
         lead = result[0]
         res = await verify_raw_lead(lead, target)
-        
         if res is None or res == "FATAL":
             consecutive_critical += 1
             critical_errors_in_run += 1
             await supabase.update('marketing_raw_contacts', {'status': 'pending'}, {'id': lead['id']})
-            
-            if consecutive_critical >= 10: # Zamiast 3, czekamy na dłuższą serię błędów
+            if consecutive_critical >= 10:
                 logger.warning("Wykryto serię błędów AI. Zasypiam na 10 minut...")
                 await asyncio.sleep(600)
                 consecutive_critical = 0
             continue
-        
         consecutive_critical = 0
         if res.get('ok') and res.get('email'):
             email = str(res['email']).strip().lower()
@@ -428,7 +420,7 @@ async def warmup_ai_providers():
     order_data = await supabase.call_rpc('get_provider_order')
     if order_data and isinstance(order_data, list) and len(order_data) > 0:
         order = order_data[0].get('provider_order','').split(',') if isinstance(order_data[0], dict) else order_data
-    else: order = ['openrouter', 'groq']
+    else: order = ['openrouter', 'groq', 'deepseek']
     for p in [x.strip().lower() for x in order if x.strip()]:
         status, _, _ = await call_ai_provider(p, "Hey")
         if status in (401, 403, 404):
@@ -444,8 +436,7 @@ async def run_worker(run_id, target):
         await supabase.delete('marketing_search_logs', {'level': 'neq.null'})
         logger.info(f"Zlecono {target} kontaktów.")
         await warmup_ai_providers()
-        p_task = asyncio.create_task(producer_task(run_id))
-        c_task = asyncio.create_task(consumer_task(run_id, target))
+        p_task, c_task = asyncio.create_task(producer_task(run_id)), asyncio.create_task(consumer_task(run_id, target))
         while task_status in ("running", "paused") and verified_in_run < target: await asyncio.sleep(1)
         p_task.cancel(); c_task.cancel()
         if task_status == "running": 
@@ -479,27 +470,21 @@ async def start(target_count: int = 50):
 async def pause(run_id: str):
     global task_status
     if task_run_id == run_id and task_status == "running":
-        task_status = "paused"
-        logger.info("Zlecenie wstrzymane.")
-        return {"ok": True}
+        task_status = "paused"; logger.info("Zlecenie wstrzymane."); return {"ok": True}
     raise HTTPException(404)
 
 @app.post("/api/search-runs/{run_id}/resume")
 async def resume(run_id: str):
     global task_status
     if task_run_id == run_id and task_status == "paused":
-        task_status = "running"
-        logger.info("Zlecenie wznowione.")
-        return {"ok": True}
+        task_status = "running"; logger.info("Zlecenie wznowione."); return {"ok": True}
     raise HTTPException(404)
 
 @app.post("/api/search-runs/{run_id}/cancel")
 async def cancel(run_id: str):
     global task_status
     if task_run_id == run_id:
-        task_status = "cancelled"
-        logger.info("Zlecenie anulowane przez użytkownika.")
-        return {"ok": True}
+        task_status = "cancelled"; logger.info("Zlecenie anulowane przez użytkownika."); return {"ok": True}
     raise HTTPException(404)
 
 @app.get("/api/search-runs/status")
