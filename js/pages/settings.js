@@ -12,11 +12,11 @@ Settings panel (admin)
 - GET /_admin_api/mail/logs
 */
 
-import { initI18n, t, getUiLang } from "../../translation/translation.js?v=v2026-04-20T14272";
-import { initUiSelect } from "../core/ui-select.js?v=v2026-04-20T14272";
-import { confirmModal } from "../core/modal.js?v=v2026-04-20T14272";
-import { sb } from "../core/supabase.js?v=v2026-04-20T14272";
-import { v as cacheBust } from "../core/cache-bust.js?v=v2026-04-20T14272";
+import { initI18n, t, getUiLang } from "../../translation/translation.js?v=v2026-04-19T21352";
+import { initUiSelect } from "../core/ui-select.js?v=v2026-04-19T21352";
+import { confirmModal } from "../core/modal.js?v=v2026-04-19T21352";
+import { sb } from "../core/supabase.js?v=v2026-04-19T21352";
+import { v as cacheBust } from "../core/cache-bust.js?v=v2026-04-19T21352";
 
 const API_BASE = "/_admin_api";
 const TOOLS_MANIFEST = "/settings-tools/tools.json";
@@ -174,7 +174,7 @@ let activeTab = "maintenance";
 let previousTabBeforeTools = "maintenance";
 let mailSettingsLoaded = false;
 let mailProviderOrder = [...MAIL_PROVIDERS];
-let aiProviderOrder = [];
+let aiProviderOrder = JSON.parse(localStorage.getItem("aiProviderOrder") || "null") || [...AI_PROVIDERS];
 let mailCronPresetValue = "5m";
 let mailCronSupported = true;
 let mailQueueStatusValue = "all";
@@ -411,7 +411,7 @@ function formatCountdownUk(totalSeconds) {
   const days = Math.floor(totalSeconds / 86400);
   if (days > 0) return `${days} ${pluralUk(days, "день", "дні", "днів")}`;
   if (hours > 0) return `${hours} ${pluralUk(hours, "година", "години", "годин")}`;
-  if (mins > 0) return `${mins} ${pluralUk(mins, "хвиlina", "хвилини", "хвилин")}`;
+  if (mins > 0) return `${mins} ${pluralUk(mins, "хвилина", "хвилини", "хвилин")}`;
   return `${totalSeconds} ${pluralUk(totalSeconds, "секунда", "секунди", "секунд")}`;
 }
 
@@ -501,51 +501,1103 @@ function roundToNext10Minutes(date = new Date()) {
   return d;
 }
 
-function tNoCache(url) {
-  return `${url}?v=${cacheBust}`;
+function getFieldValue(prefix) {
+  const y = document.getElementById(`${prefix}Year`);
+  const m = document.getElementById(`${prefix}Month`);
+  const d = document.getElementById(`${prefix}Day`);
+  const h = document.getElementById(`${prefix}Hour`);
+  const min = document.getElementById(`${prefix}Minute`);
+  if (!y || !m || !d || !h || !min) return null;
+  const yy = Number(y.value);
+  const mm = Number(m.value);
+  const dd = Number(d.value);
+  const hh = Number(h.value);
+  const mi = Number(min.value);
+  if (!yy || !mm || !dd || Number.isNaN(hh) || Number.isNaN(mi)) return null;
+  const date = new Date(yy, mm - 1, dd, hh, mi, 0, 0);
+  if (Number.isNaN(date.getTime())) return null;
+  return date;
 }
 
-function escSetting(str) {
-  if (!str) return "";
-  return String(str)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+function setFieldValue(prefix, date) {
+  if (!date) return;
+  const y = document.getElementById(`${prefix}Year`);
+  const m = document.getElementById(`${prefix}Month`);
+  const d = document.getElementById(`${prefix}Day`);
+  const h = document.getElementById(`${prefix}Hour`);
+  const min = document.getElementById(`${prefix}Minute`);
+  if (!y || !m || !d || !h || !min) return;
+  y.value = String(date.getFullYear());
+  m.value = String(date.getMonth() + 1).padStart(2, "0");
+  d.value = String(date.getDate()).padStart(2, "0");
+  h.value = String(date.getHours()).padStart(2, "0");
+  min.value = String(date.getMinutes()).padStart(2, "0");
 }
 
-function updateMailSettingsUI(data) {
-  if (!data) return;
-  if (els.mailQueueEnabled) els.mailQueueEnabled.checked = data.queue_enabled;
-  if (data.provider_order) {
-    mailProviderOrder = parseProviderOrder(data.provider_order);
-    renderProviderOrder();
+function ensureDefaults(prefix) {
+  const hasAny = ["Year","Month","Day","Hour","Minute"].some((k) => {
+    const el = document.getElementById(`${prefix}${k}`);
+    return el && el.value;
+  });
+  if (!hasAny) setFieldValue(prefix, roundToNext10Minutes(new Date()));
+}
+
+function isValidFuture(prefix) {
+  const date = getFieldValue(prefix);
+  if (!date) return false;
+  return date.getTime() >= minAllowedDate().getTime();
+}
+
+function clampField(id, min, max) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const n = Number(el.value);
+  if (Number.isNaN(n)) return;
+  const v = Math.min(Math.max(n, min), max);
+  el.value = String(v).padStart(2, "0");
+}
+
+function daysInMonth(year, month) {
+  return new Date(year, month, 0).getDate();
+}
+
+function normalizeDateFields(prefix) {
+  const y = document.getElementById(`${prefix}Year`);
+  const m = document.getElementById(`${prefix}Month`);
+  const d = document.getElementById(`${prefix}Day`);
+  if (!y || !m || !d) return;
+  const yy = Number(y.value);
+  const mm = Number(m.value);
+  if (!yy || !mm) return;
+  const dim = daysInMonth(yy, mm);
+  clampField(`${prefix}Month`, 1, 12);
+  clampField(`${prefix}Day`, 1, dim);
+  clampField(`${prefix}Hour`, 0, 23);
+  clampField(`${prefix}Minute`, 0, 59);
+}
+
+function openPicker(prefix) {
+  activePicker = prefix;
+  const modal = document.getElementById("dtModal");
+  if (!modal) return;
+  const current = getFieldValue(prefix) || minAllowedDate();
+  pickerState = {
+    year: current.getFullYear(),
+    month: current.getMonth() + 1,
+    day: current.getDate(),
+  };
+  initTimeWheels();
+  setWheelValue("dtHourWheel", current.getHours());
+  setWheelValue("dtMinuteWheel", current.getMinutes());
+  renderCalendar();
+  modal.hidden = false;
+}
+
+function closePicker() {
+  const modal = document.getElementById("dtModal");
+  if (modal) modal.hidden = true;
+}
+
+function rearrangeDateFields(prefix, order, sepChar) {
+  const anchor = document.getElementById(`${prefix}Day`);
+  const group = anchor ? anchor.closest(".dt-group") : null;
+  if (!group) return;
+  const day = document.getElementById(`${prefix}Day`);
+  const month = document.getElementById(`${prefix}Month`);
+  const year = document.getElementById(`${prefix}Year`);
+  if (!day || !month || !year) return;
+  const dots = Array.from(group.querySelectorAll(".dt-dot"));
+  if (dots.length >= 1) dots[0].textContent = sepChar;
+  if (dots.length >= 2) dots[1].textContent = sepChar;
+  [day, month, year, ...dots].forEach((el) => el.remove());
+  const map = { day, month, year };
+  order.forEach((key, idx) => {
+    group.appendChild(map[key]);
+    if (idx < order.length - 1 && dots[idx]) {
+      group.appendChild(dots[idx]);
+    }
+  });
+}
+
+function applyDateOrderByLang() {
+  const lang = (document.documentElement.lang || "").toLowerCase();
+  if (lang.startsWith("en")) {
+    rearrangeDateFields("returnAt", ["month", "day", "year"], "/");
+    rearrangeDateFields("endAt", ["month", "day", "year"], "/");
+  } else {
+    rearrangeDateFields("returnAt", ["day", "month", "year"], ".");
+    rearrangeDateFields("endAt", ["day", "month", "year"], ".");
   }
-  if (els.mailDelayMs) els.mailDelayMs.value = String(data.delay_ms);
-  if (els.mailBatchMax) els.mailBatchMax.value = String(data.batch_max);
-  if (els.mailWorkerLimit) els.mailWorkerLimit.value = String(data.worker_limit);
-  if (data.cron) {
-    mailCronPresetValue = data.cron.preset || "5m";
-    mailCronSupported = data.cron.supported !== false;
-    mailCronActive = data.cron.active;
-    renderCronPresetOptions();
-    updateMailSettingsStatus(data.cron);
+}
+
+function applyModalLabels() {
+  const set = (id, key, fallback) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const val = t(key);
+    el.textContent = val && val !== key ? val : fallback;
+  };
+  set("dtToday", "settings.actions.today", "Dziś");
+  set("dtCancel", "settings.actions.cancel", "Anuluj");
+  set("dtOk", "settings.actions.ok", "OK");
+  set("dtTimeLabel", "settings.actions.time", "Czas");
+}
+
+function renderCalendar() {
+  const title = document.getElementById("dtTitle");
+  const grid = document.getElementById("dtGrid");
+  if (!grid) return;
+  const year = pickerState.year;
+  const month = pickerState.month;
+  if (title) title.textContent = `${year}-${String(month).padStart(2, "0")}`;
+  grid.innerHTML = "";
+  const firstDay = new Date(year, month - 1, 1).getDay() || 7;
+  const days = daysInMonth(year, month);
+  const lang = document.documentElement.lang || undefined;
+  const weekdayFmt = new Intl.DateTimeFormat(lang, { weekday: "short" });
+  const monday = new Date(2020, 10, 2);
+  const labels = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    return weekdayFmt.format(d);
+  });
+  labels.forEach((l) => {
+    const el = document.createElement("div");
+    el.className = "dt-day dt-day--label";
+    el.textContent = l;
+    grid.appendChild(el);
+  });
+  for (let i = 1; i < firstDay; i += 1) {
+    const pad = document.createElement("div");
+    pad.className = "dt-day dt-day--pad";
+    grid.appendChild(pad);
   }
-  if (els.mailGreeting) {
-    mailGreetingValue = data.greeting || "witaj";
-    mailGreetingCustomValue = data.greeting_custom || "";
-    els.mailGreeting.setValue(mailGreetingValue, { silent: true });
-    els.mailGreetingCustomWrap.hidden = mailGreetingValue !== "custom";
-    if (els.mailGreetingCustom) els.mailGreetingCustom.value = mailGreetingCustomValue;
+  for (let d = 1; d <= days; d += 1) {
+    const el = document.createElement("button");
+    el.type = "button";
+    el.className = "dt-day";
+    if (d === pickerState.day) el.classList.add("is-active");
+    el.textContent = String(d);
+    el.addEventListener("click", () => {
+      pickerState.day = d;
+      renderCalendar();
+    });
+    grid.appendChild(el);
   }
-  if (els.mailFarewell) {
-    mailFarewellValue = data.farewell || "team";
-    mailFarewellCustomValue = data.farewell_custom || "";
-    els.mailFarewell.setValue(mailFarewellValue, { silent: true });
-    els.mailFarewellCustomWrap.hidden = mailFarewellValue !== "custom";
-    if (els.mailFarewellCustom) els.mailFarewellCustom.value = mailFarewellCustomValue;
+}
+
+function initTimeWheels() {
+  if (wheelReady) return;
+  const hourWheel = document.getElementById("dtHourWheel");
+  const minuteWheel = document.getElementById("dtMinuteWheel");
+  if (!hourWheel || !minuteWheel) return;
+
+  const build = (wheel, max) => {
+    wheel.innerHTML = "";
+    for (let i = 0; i <= max; i += 1) {
+      const item = document.createElement("div");
+      item.className = "dt-wheel-item";
+      item.textContent = String(i).padStart(2, "0");
+      item.dataset.value = String(i);
+      item.addEventListener("click", () => {
+        setWheelValue(wheel.id, i);
+      });
+      wheel.appendChild(item);
+    }
+    let raf = null;
+    wheel.addEventListener("scroll", () => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        updateWheelActive(wheel);
+        raf = null;
+      });
+    }, { passive: true });
+  };
+
+  build(hourWheel, 23);
+  build(minuteWheel, 59);
+  wheelReady = true;
+}
+
+function setWheelValue(wheelId, value) {
+  const wheel = document.getElementById(wheelId);
+  if (!wheel) return;
+  const itemHeight = 32;
+  wheel.scrollTop = value * itemHeight;
+  updateWheelActive(wheel);
+}
+
+function snapWheel(wheel) {
+  updateWheelActive(wheel);
+}
+
+function updateWheelActive(wheel, idxOverride) {
+  const itemHeight = 32;
+  const idx = typeof idxOverride === "number" ? idxOverride : Math.round(wheel.scrollTop / itemHeight);
+  const clamped = Math.max(0, Math.min(idx, wheel.children.length - 1));
+  Array.from(wheel.children).forEach((el, i) => {
+    el.classList.toggle("is-active", i === clamped);
+  });
+}
+
+function getWheelValue(wheelId) {
+  const wheel = document.getElementById(wheelId);
+  if (!wheel) return 0;
+  const itemHeight = 32;
+  const idx = Math.round(wheel.scrollTop / itemHeight);
+  return Math.max(0, Math.min(idx, wheel.children.length - 1));
+}
+
+function animateWheelTo() {}
+
+function setMode(mode) {
+  currentMode = mode;
+  if (els.modeSlider) {
+    const idx = MODE_TO_INDEX[mode] ?? 0;
+    els.modeSlider.value = String(idx);
   }
+  if (els.modeLabels) {
+    els.modeLabels.querySelectorAll(".mode-label").forEach((label) => {
+      label.classList.toggle("active", label.dataset.mode === mode);
+    });
+  }
+  if (els.modeMessage) els.modeMessage.hidden = mode !== "message";
+  if (els.modeReturnAt) els.modeReturnAt.hidden = mode !== "returnAt";
+  if (els.modeCountdown) els.modeCountdown.hidden = mode !== "countdown";
+  updateValidation();
+  if (currentState) updateModeStatus(currentState);
+  if (mode === "message") {
+    const warn = document.getElementById("timeWarn");
+    if (warn) warn.hidden = true;
+    if (els.btnStartStop) els.btnStartStop.disabled = false;
+  }
+}
+
+function setLocked(locked) {
+  if (els.modeSlider) {
+    els.modeSlider.disabled = locked;
+  }
+  if (els.modeSliderWrap) {
+    els.modeSliderWrap.classList.toggle("is-locked", locked);
+  }
+  if (els.modeLabels) {
+    els.modeLabels.classList.toggle("is-disabled", locked);
+  }
+  if (els.returnAtInput) els.returnAtInput.disabled = locked;
+  if (els.endAtInput) els.endAtInput.disabled = locked;
+  if (els.btnRefresh) els.btnRefresh.disabled = false;
+  if (els.maintenanceControls) {
+    els.maintenanceControls.classList.toggle("is-locked", locked);
+  }
+}
+
+function updateStatus(state) {
+  if (!state) {
+    setText(els.statusValue, "—");
+    return;
+  }
+  if (!state.enabled || state.mode === "off") {
+    setText(els.statusValue, t("settings.status.off"));
+    if (els.modeStatus) els.modeStatus.hidden = true;
+    return;
+  }
+  const modeLabel = t(`settings.status.mode_${state.mode}`);
+  setText(els.statusValue, `${t("settings.status.on")} • ${modeLabel}`);
+  updateModeStatus(state);
+}
+
+function updateStartStop(state) {
+  const enabled = Boolean(state?.enabled);
+  if (els.btnStartStop) {
+    els.btnStartStop.dataset.state = enabled ? "on" : "off";
+    els.btnStartStop.textContent = enabled ? t("settings.actions.stop") : t("settings.actions.start");
+  }
+  setLocked(enabled);
+}
+
+function applyState(state) {
+  if (formDirty) {
+    updateStatus(state);
+    updateStartStop(state);
+    return;
+  }
+  currentState = state;
+  const mode = state?.mode || "message";
+  setMode(mode === "off" ? "message" : mode);
+  
+  if (els.maintenanceUseStandardText) {
+    els.maintenanceUseStandardText.checked = state?.useStandardText ?? (state?.customComments?.pl || state?.customComments?.en || state?.customComments?.uk ? false : true);
+    if (els.maintenanceCustomCommentWrap) {
+      els.maintenanceCustomCommentWrap.hidden = els.maintenanceUseStandardText.checked;
+    }
+  }
+  
+  if (els.maintenanceCustomCommentPl) els.maintenanceCustomCommentPl.value = state?.customComments?.pl || "";
+  if (els.maintenanceCustomCommentEn) els.maintenanceCustomCommentEn.value = state?.customComments?.en || "";
+  if (els.maintenanceCustomCommentUk) els.maintenanceCustomCommentUk.value = state?.customComments?.uk || "";
+
+  if (state?.returnAt) {
+    const date = new Date(state.returnAt);
+    setFieldValue("returnAt", date);
+    setFieldValue("endAt", date);
+  } else {
+    ensureDefaults("returnAt");
+    ensureDefaults("endAt");
+  }
+  updateStatus(state);
+  updateStartStop(state);
+  updateModeStatus(state);
+  updateReturnPreview();
+}
+function buildPayload() {
+  const common = {
+    enabled: true,
+    useStandardText: els.maintenanceUseStandardText?.checked ?? true,
+    customComments: {
+      pl: els.maintenanceCustomCommentPl?.value || null,
+      en: els.maintenanceCustomCommentEn?.value || null,
+      uk: els.maintenanceCustomCommentUk?.value || null
+    }
+  };
+
+  if (currentMode === "message") {
+    return { ...common, mode: "message", returnAt: null };
+  }
+  if (currentMode === "returnAt") {
+    const date = getFieldValue("returnAt");
+    return { ...common, mode: "returnAt", returnAt: date ? date.toISOString() : null };
+  }
+  if (currentMode === "countdown") {
+    const date = getFieldValue("endAt");
+    return { ...common, mode: "countdown", returnAt: date ? date.toISOString() : null };
+  }
+  return { ...common, mode: "message", returnAt: null };
+}
+
+function formatCountdownDisplay(ms) {
+  return formatCountdown(ms);
+}
+
+function updateReturnPreview() {
+  const row = document.getElementById("returnPreview");
+  const val = document.getElementById("returnPreviewValue");
+  if (!row || !val) return;
+  if (currentMode !== "returnAt") {
+    row.hidden = true;
+    return;
+  }
+  const date = getFieldValue("returnAt");
+  if (!date) {
+    row.hidden = true;
+    return;
+  }
+  row.hidden = false;
+  val.textContent = formatReturnPreview(date);
+}
+
+function updateModeStatus(state) {
+  if (!els.modeStatus || !els.modeStatusValue) return;
+  if (!state?.enabled || state.mode === "off" || state.mode === "message") {
+    els.modeStatus.hidden = true;
+    return;
+  }
+  const date = state.returnAt ? new Date(state.returnAt) : null;
+  if (state.mode === "returnAt") {
+    els.modeStatus.hidden = false;
+    els.modeStatusValue.textContent = date ? formatReturnAtValue(date) : "—";
+    return;
+  }
+  if (state.mode === "countdown") {
+    els.modeStatus.hidden = false;
+    if (!date || Number.isNaN(date.getTime())) {
+      els.modeStatusValue.textContent = "—";
+      return;
+    }
+    const diff = date.getTime() - Date.now();
+    if (diff <= 0) {
+      els.modeStatusValue.textContent = t("settings.preview.ready");
+      return;
+    }
+    els.modeStatusValue.textContent = formatCountdownDisplay(diff);
+  }
+}
+
+function startCountdownTimer() {
+  if (countdownTimer) clearInterval(countdownTimer);
+  countdownTimer = setInterval(() => {
+    if (currentState?.enabled && currentState.mode === "countdown") {
+      updateModeStatus(currentState);
+    }
+  }, 1000);
+}
+
+function setStatus(msg) {
+  const el = document.getElementById("statusValue");
+  if (el) el.textContent = msg;
+}
+
+async function openMaintenancePreview() {
+  const overlay = document.getElementById("maintenancePreviewOverlay");
+  const frame = document.getElementById("maintenancePreviewFrame");
+  if (!overlay || !frame) return;
+
+  // Build preview HTML
+  const useStandard = els.maintenanceUseStandardText?.checked ?? true;
+
+  // Get language to preview based on current UI language
+  const currentUiLang = (getUiLang() || "pl").toLowerCase();
+  let customCommentRaw = "";
+  if (currentUiLang.startsWith("pl")) customCommentRaw = els.maintenanceCustomCommentPl?.value || "";
+  else if (currentUiLang.startsWith("uk")) customCommentRaw = els.maintenanceCustomCommentUk?.value || "";
+  else customCommentRaw = els.maintenanceCustomCommentEn?.value || "";
+
+  const state = currentState || {};  const mode = currentMode || state.mode || "message";
+  const returnAtValue = (mode === "returnAt") ? getFieldValue("returnAt") : (mode === "countdown" ? getFieldValue("endAt") : null);
+  
+  let titleText = t("maintenance.title") || "TRWA PRZERWA TECHNICZNA";
+  let messageText = t("maintenance.messageText") || "System jest chwilowo niedostępny. Za moment wszystko wróci do normy.";
+  
+  if (mode === "returnAt" && returnAtValue) {
+    titleText = t("maintenance.returnAtTitle") || titleText;
+    messageText = t("maintenance.returnAtText")?.replace("{returnAt}", formatReturnAtValue(returnAtValue)) || `Powrót o ${formatReturnAtValue(returnAtValue)}`;
+  } else if (mode === "countdown" && returnAtValue) {
+    titleText = t("maintenance.countdownTitle") || titleText;
+    messageText = t("maintenance.countdownText") || "System wróci za: {countdown}";
+  }
+
+  let finalContentHtml = "";
+  if (useStandard) {
+    finalContentHtml = `
+      <p>${escSetting(messageText)}</p>
+      <div class="countdown" id="countdown" ${mode === "countdown" || mode === "returnAt" ? "" : "hidden"}>
+        ${mode === "countdown" ? "00:00:00" : (returnAtValue ? formatReturnAtValue(returnAtValue) : "—")}
+      </div>
+    `;
+  } else {
+    // Custom text logic
+    let customHtml = escSetting(customCommentRaw).replace(/\n/g, "<br>");
+    
+    // Replace #timer
+    if (customHtml.includes("#timer")) {
+      let timerReplacement = "";
+      if (mode === "countdown") {
+        timerReplacement = '<span class="countdown-inline">00:00:00</span>';
+      } else if (mode === "returnAt" && returnAtValue) {
+        timerReplacement = `<span class="countdown-inline">${formatReturnAtValue(returnAtValue)}</span>`;
+      } else {
+        timerReplacement = ""; // or some placeholder if no time
+      }
+      customHtml = customHtml.replace("#timer", timerReplacement);
+    }
+    
+    finalContentHtml = `
+      <div class="custom-maintenance-content">
+        ${customHtml}
+      </div>
+    `;
+  }
+
+  const previewHtml = `<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <link rel="stylesheet" href="/css/base.css"/>
+  <link rel="stylesheet" href="/css/maintenance.css"/>
+  <style>
+    body{margin:0;padding:0}
+    .custom-maintenance-content { font-size: 18px; line-height: 1.6; opacity: 0.9; }
+    .countdown-inline { font-weight: bold; color: var(--gold); }
+  </style>
+</head>
+<body class="maintenance-body">
+  <header class="topbar topbar-layout-4 topbar-mobile-keep-brand">
+    <div class="topbar-section topbar-section-1"><span class="brand">FAMILIADA</span></div>
+    <div class="topbar-section topbar-section-2"></div>
+    <div class="topbar-section topbar-section-3"></div>
+    <div class="topbar-section topbar-section-4"></div>
+  </header>
+  <main class="maintenance-main">
+    <section class="maintenance-card" role="status" aria-live="polite">
+      <div class="card-top">
+        <h1>${escSetting(titleText)}</h1>
+        ${finalContentHtml}
+      </div>
+    </section>
+  </main>
+  <footer class="footer wrap">
+    <span>Familiada — tryb konserwacji</span>
+    <span>Masz pilną sprawę? Skontaktuj się z nami.</span>
+  </footer>
+</body>
+</html>`;
+
+  frame.srcdoc = previewHtml;
+  overlay.style.display = "block";
+}
+
+function closeMaintenancePreview() {
+  const overlay = document.getElementById("maintenancePreviewOverlay");
+  if (overlay) overlay.style.display = "none";
+}
+
+async function loadAdminStats({ silent = false } = {}) {
+  if (!silent) setStatus("Ładowanie statystyk…");
+  try {
+    const { data, error } = await sb().rpc("get_admin_stats");
+    if (error) throw error;
+
+    if (els.statUsersTotal) els.statUsersTotal.textContent = data.users.total;
+    if (els.statUsersGrowth) els.statUsersGrowth.textContent = `Dziś: ${data.users.new_today} | 7 dni: ${data.users.new_7d} | 30 dni: ${data.users.new_30d}`;
+    if (els.statUsersLangs) els.statUsersLangs.textContent = `PL: ${data.users.langs.pl} | EN: ${data.users.langs.en} | UK: ${data.users.langs.uk}`;
+
+    if (els.statGamesTotal) els.statGamesTotal.textContent = data.games.total;
+    if (els.statGamesGrowth) els.statGamesGrowth.textContent = `Dziś: ${data.games.new_today} | 7 dni: ${data.games.new_7d} | 30 dni: ${data.games.new_30d}`;
+    if (els.statGamesQuality) els.statGamesQuality.textContent = `Gotowe: ${data.games.ready} | Śr. pytań: ${data.games.avg_q}`;
+
+    if (els.statPlayedTotal) els.statPlayedTotal.textContent = data.gameplay.played_30d;
+    if (els.statPlayedPeriods) els.statPlayedPeriods.textContent = `Dziś: ${data.gameplay.played_today} | 7 dni: ${data.gameplay.played_7d} | 30 dni: ${data.gameplay.played_30d}`;
+    if (els.statBuzzerActivity) els.statBuzzerActivity.textContent = `Buzzer 7d: ${data.gameplay.buzzer_7d} | Sesje ankiet 7d: ${data.polls.sessions_7d}`;
+
+    if (els.statBasesTotal) els.statBasesTotal.textContent = data.bases.total;
+    if (els.statBasesGrowth) els.statBasesGrowth.textContent = `Dziś: ${data.bases.new_today} | 7 dni: ${data.bases.new_7d} | 30 dni: ${data.bases.new_30d}`;
+
+    if (els.statLogosTotal) els.statLogosTotal.textContent = data.logos.total;
+    if (els.statLogosGrowth) els.statLogosGrowth.textContent = `Dziś: ${data.logos.new_today} | 7 dni: ${data.logos.new_7d} | 30 dni: ${data.logos.new_30d}`;
+    if (els.statLogosSub) els.statLogosSub.textContent = `Aktywne: ${data.logos.active}`;
+
+    if (els.statRating) els.statRating.textContent = `${data.ratings.average} / 5`;
+    if (els.statRatingsGrowth) els.statRatingsGrowth.textContent = `Dziś: ${data.ratings.new_today} | 7 dni: ${data.ratings.new_7d} | 30 dni: ${data.ratings.new_30d}`;
+    if (els.statRatingsTotal) els.statRatingsTotal.textContent = `Łącznie: ${data.ratings.total}`;
+    if (els.statHealthMails) els.statHealthMails.textContent = `Błędy maili (24h): ${data.health.mail_errors}`;
+    
+    if (els.statsUpdateTs) {
+      const date = new Date(data.timestamp).toLocaleString();
+      els.statsUpdateTs.textContent = `Ostatnia aktualizacja: ${date}`;
+    }
+  } catch (e) {
+    console.error("[settings] loadAdminStats error:", e);
+  } finally {
+    if (!silent) setStatus(t("settings.status.loaded") || "Załadowano");
+  }
+}
+
+function pct(part, total) {
+  if (!total) return "0%";
+  return Math.round((part / total) * 100) + "%";
+}
+
+function renderRetentionTable(data) {
+  const tbody = document.getElementById("retentionTable");
+  if (!tbody) return;
+  const { funnel, retention } = data;
+  const total = funnel.registered || 1;
+  const d7pct  = retention.d7.cohort  ? Math.round(retention.d7.returned  / retention.d7.cohort  * 100) : null;
+  const d30pct = retention.d30.cohort ? Math.round(retention.d30.returned / retention.d30.cohort * 100) : null;
+
+  const sep = `<tr><td colspan="3" style="padding:4px 0 2px"><div style="border-top:1px solid rgba(255,255,255,.08)"></div></td></tr>`;
+  const row = (label, value, percent, color) => `
+    <tr>
+      <td style="padding:5px 0;opacity:.6;font-size:12px">${label}</td>
+      <td style="padding:5px 0;text-align:right;font-weight:700">${value}</td>
+      <td style="padding:5px 0;text-align:right;padding-left:10px;font-size:12px;color:${color || "inherit"};opacity:.8">${percent}</td>
+    </tr>`;
+
+  tbody.innerHTML = `
+    ${row("1. Zarejestrowani", funnel.registered, "100%", "inherit")}
+    ${row("2. Stworzyli grę", funnel.game_created, pct(funnel.game_created, total), funnel.game_created / total >= 0.3 ? "#4caf50" : "#ffc107")}
+    ${row("3. Uruchomili rozgrywkę", funnel.game_played, pct(funnel.game_played, total), funnel.game_played / total >= 0.1 ? "#4caf50" : funnel.game_played > 0 ? "#ffc107" : "#ff5722")}
+    ${row("Nigdy aktywni", funnel.never_active, pct(funnel.never_active, total), "#ff5722")}
+    ${sep}
+    ${row(
+      `Retencja D7 <span style="opacity:.4;font-size:11px">(z ${retention.d7.cohort})</span>`,
+      retention.d7.returned,
+      d7pct !== null ? d7pct + "%" : "—",
+      d7pct >= 30 ? "#4caf50" : d7pct >= 10 ? "#ffc107" : "#ff5722"
+    )}
+    ${row(
+      `Retencja D30 <span style="opacity:.4;font-size:11px">(z ${retention.d30.cohort})</span>`,
+      retention.d30.returned,
+      d30pct !== null ? d30pct + "%" : "—",
+      d30pct >= 20 ? "#4caf50" : d30pct >= 5 ? "#ffc107" : "#ff5722"
+    )}`;
+}
+
+function renderSegmentBars(segments, total) {
+  const el = document.getElementById("segmentBars");
+  if (!el) return;
+  const items = [
+    { label: "Aktywni ≤7d",     count: segments.active_7d,    color: "#4caf50" },
+    { label: "Aktywni 8–30d",   count: segments.active_8_30d, color: "#ffc107" },
+    { label: "Uśpieni 30d+",    count: segments.dormant,      color: "#ff5722" },
+    { label: "Brak aktywności", count: segments.never,        color: "rgba(255,255,255,.25)" },
+  ];
+  el.innerHTML = items.map(({ label, count, color }) => {
+    const p = total > 0 ? Math.round(count / total * 100) : 0;
+    return `<div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">
+        <span style="opacity:.7">${label}</span>
+        <span style="font-weight:700">${count} <span style="opacity:.45;font-weight:400;font-size:11px">${p}%</span></span>
+      </div>
+      <div style="height:6px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden">
+        <div style="height:100%;width:${p}%;background:${color};border-radius:3px;transition:width .5s"></div>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function renderTrendChart(trend) {
+  const chartEl = document.getElementById("trendChart");
+  const labelsEl = document.getElementById("trendLabels");
+  if (!chartEl || !labelsEl) return;
+
+  const days = [];
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    const found = (trend || []).find(t => t.day === key);
+    days.push({ day: key, count: found?.count ?? 0 });
+  }
+
+  const maxCount = Math.max(...days.map(d => d.count), 1);
+
+  chartEl.innerHTML = days.map(({ day, count }) => {
+    const h = count > 0 ? Math.max(Math.round((count / maxCount) * 100), 4) : 0;
+    return `<div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%">
+      <div title="${day}: ${count}" style="width:100%;height:${h}%;background:var(--gold);border-radius:2px 2px 0 0;opacity:.8;min-height:${count > 0 ? "3px" : "0"}"></div>
+    </div>`;
+  }).join("");
+
+  labelsEl.innerHTML = days.map(({ day }, i) => {
+    const show = i === 0 || i === 6 || i === 13;
+    return `<div style="flex:1;font-size:9px;opacity:.4;text-align:center;overflow:hidden;white-space:nowrap">${show ? day.slice(5) : ""}</div>`;
+  }).join("");
+}
+
+function renderExcludedList(users) {
+  const el = document.getElementById("excludedList");
+  if (!el) return;
+  if (!users.length) {
+    el.innerHTML = `<div style="opacity:.4;font-size:12px">Brak wykluczonych kont.</div>`;
+    return;
+  }
+  el.innerHTML = users.map(u => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border:1px solid rgba(255,255,255,.08);border-radius:8px;font-size:12px">
+      <span><b>${u.username || "—"}</b> <span style="opacity:.4">${u.email}</span></span>
+      <button class="btn xs" type="button" data-uid="${u.user_id}" style="opacity:.6">Usuń</button>
+    </div>`).join("");
+
+  el.querySelectorAll("[data-uid]").forEach(btn => {
+    btn.addEventListener("click", () => removeExcludedUser(btn.dataset.uid));
+  });
+}
+
+async function loadExcludedUsers() {
+  try {
+    const { data, error } = await sb().rpc("stats_excluded_list");
+    if (error) throw error;
+    renderExcludedList(Array.isArray(data) ? data : []);
+  } catch (e) {
+    console.error("[settings] loadExcludedUsers error:", e);
+  }
+}
+
+async function addExcludedUser() {
+  const input = document.getElementById("excludeUsernameInput");
+  const msg   = document.getElementById("excludeMsg");
+  const username = input?.value?.trim();
+  if (!username || !msg) return;
+  msg.textContent = "";
+  try {
+    const { data, error } = await sb().rpc("stats_exclude_user", { p_username: username });
+    if (error) throw error;
+    if (!data.ok) {
+      msg.style.color = "#ff5722";
+      msg.textContent = data.err === "not_found" ? "Nie znaleziono użytkownika." : data.err;
+      return;
+    }
+    msg.style.color = "#4caf50";
+    msg.textContent = `Wykluczono: ${username}`;
+    input.value = "";
+    await loadExcludedUsers();
+  } catch (e) {
+    msg.style.color = "#ff5722";
+    msg.textContent = "Błąd: " + (e.message || e);
+  }
+}
+
+async function removeExcludedUser(userId) {
+  try {
+    const { error } = await sb().rpc("stats_unexclude_user", { p_user_id: userId });
+    if (error) throw error;
+    await loadExcludedUsers();
+  } catch (e) {
+    console.error("[settings] removeExcludedUser error:", e);
+  }
+}
+
+async function loadRetentionStats() {
+  try {
+    const { data, error } = await sb().rpc("get_retention_stats");
+    if (error) throw error;
+    if (!data?.funnel) throw new Error("get_retention_stats: unexpected response shape: " + JSON.stringify(data));
+    renderRetentionTable(data);
+    renderSegmentBars(data.segments, data.funnel.registered);
+    renderTrendChart(data.trend_users);
+  } catch (e) {
+    console.error("[settings] loadRetentionStats error:", e);
+  }
+}
+
+async function loadRatings({ silent = false } = {}) {
+  if (!silent) setStatus("Ładowanie ocen…");
+  if (els.ratingsTableBody) els.ratingsTableBody.innerHTML = "";
+  if (els.ratingsTableInfo) els.ratingsTableInfo.textContent = "";
+
+  try {
+    // Load stats
+    const { data: statsData, error: statsError } = await sb().rpc("get_app_rating_stats");
+    if (statsError) throw statsError;
+    const stats = Array.isArray(statsData) ? statsData[0] : statsData;
+    if (els.ratingsGlobalStats && stats) {
+      els.ratingsGlobalStats.innerHTML = `Średnia: ${stats.avg_stars}/5 ⭐ | Łącznie: ${stats.total_count}`;
+    }
+
+    // Load detailed ratings
+    const { data, error } = await sb().rpc("get_ratings_admin");
+
+    if (error) throw error;
+
+    const rows = Array.isArray(data) ? data : [];
+    if (rows.length === 0) {
+      if (els.ratingsTableBody) els.ratingsTableBody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;opacity:.5">Brak ocen.</td></tr>';
+      return;
+    }
+
+    if (els.ratingsTableBody) {
+      els.ratingsTableBody.innerHTML = rows.map(r => {
+        const date = new Date(r.created_at).toLocaleString();
+        const user = r.username || r.email || "Nieznany";
+        const stars = "★".repeat(r.stars) + "☆".repeat(5 - r.stars);
+        return `
+          <tr>
+            <td style="font-size:11px;opacity:.7">${date}</td>
+            <td style="font-weight:900">${esc(user)}</td>
+            <td style="color:var(--gold)">${stars}</td>
+            <td style="font-size:13px">${esc(r.comment || "-")}</td>
+          </tr>
+        `;
+      }).join("");
+    }
+  } catch (e) {
+    console.error("[settings] loadRatings error:", e);
+    if (els.ratingsTableInfo) els.ratingsTableInfo.textContent = "Błąd ładowania ocen: " + e.message;
+  } finally {
+    if (!silent) setStatus(t("settings.status.loaded") || "Załadowano");
+  }
+}
+
+async function loadState({ silent = false } = {}) {
+  try {
+    const res = await apiFetch(`${API_BASE}/state`, { method: "GET" });
+    if (res.status === 401) {
+      stopPolling();
+      showAuth("settings.login.accessRequired");
+      return;
+    }
+    if (!res.ok) throw new Error("state fetch failed");
+    const data = await res.json();
+    applyState(data);
+  } catch (err) {
+    if (silent) {
+      console.warn("[settings] state poll failed", err);
+      return;
+    }
+    if (shouldShowActionError()) showToast(t("settings.toast.error"), "error");
+  }
+}
+
+async function startMaintenance() {
+  const payload = buildPayload();
+  try {
+    const res = await apiFetch(`${API_BASE}/state`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error("save failed");
+    const data = await res.json();
+    applyState(data);
+    showToast(t("settings.toast.saved"));
+  } catch(e) {
+    if (shouldShowActionError()) showToast(t("settings.toast.error"), "error");
+  }
+}
+
+function updateValidation() {
+  const warn = document.getElementById("timeWarn");
+  if (currentMode === "message") {
+    if (warn) warn.hidden = true;
+    if (els.btnStartStop) els.btnStartStop.disabled = false;
+    return;
+  }
+  let ok = true;
+  if (currentMode === "returnAt") ok = isValidFuture("returnAt");
+  if (currentMode === "countdown") ok = isValidFuture("endAt");
+  if (warn) warn.hidden = ok;
+  if (els.btnStartStop) {
+    const blocked = !ok && !currentState?.enabled;
+    els.btnStartStop.disabled = blocked;
+  }
+}
+
+async function stopMaintenance() {
+  try {
+    const res = await apiFetch(`${API_BASE}/off`, { method: "POST" });
+    if (!res.ok) throw new Error("off failed");
+    const data = await res.json();
+    applyState(data);
+    const now = roundToNext10Minutes(new Date());
+    setFieldValue("returnAt", now);
+    setFieldValue("endAt", now);
+    showToast(t("settings.toast.saved"));
+  } catch(e) {
+    if (shouldShowActionError()) showToast(t("settings.toast.error"), "error");
+  }
+}
+
+async function setBypass(state) {
+  const path = state === "on" ? `${API_BASE}/bypass` : `${API_BASE}/bypass_off`;
+  const res = await apiFetch(path, { method: "POST" });
+  if (res.ok) {
+    showToast(state === "on" ? t("settings.toast.bypassOn") : t("settings.toast.bypassOff"));
+  } else {
+    if (shouldShowActionError()) showToast(t("settings.toast.error"), "error");
+  }
+}
+
+function providerLabel(provider) {
+  const key = `settings.mail.providers.${provider}`;
+  const translated = t(key);
+  return translated === key ? provider : translated;
+}
+
+function trOr(key, fallback) {
+  const translated = t(key);
+  return translated === key ? fallback : translated;
+}
+
+function getCronPresetById(id) {
+  return CRON_PRESETS.find((p) => p.id === String(id || "").trim()) || null;
+}
+
+function getCronPresetBySchedule(schedule) {
+  const value = String(schedule || "").trim();
+  if (!value) return null;
+  return CRON_PRESETS.find((p) => p.schedule === value) || null;
+}
+
+function cronPresetLabel(preset) {
+  if (!preset) return "—";
+  return trOr(`settings.mail.cronPreset.${preset.id}`, `Every ${preset.minutes} min`);
+}
+
+function getGreetingOptions() {
+  return [
+    { value: "none", label: t("settings.mail.greetingOptions.none") || "Brak powitania" },
+    { value: "witaj", label: t("settings.mail.greetingOptions.witaj") || "Witaj" },
+    { value: "hello", label: t("settings.mail.greetingOptions.hello") || "Dzień dobry" },
+    { value: "hi", label: t("settings.mail.greetingOptions.hi") || "Cześć" },
+    { value: "dearUser", label: t("settings.mail.greetingOptions.dearUser") || "Szanowny Użytkowniku" },
+    { value: "dearCustomer", label: t("settings.mail.greetingOptions.dearCustomer") || "Szanowny Kliencie" },
+    { value: "custom", label: t("settings.mail.greetingOptions.custom") || "Własne..." },
+  ];
+}
+
+function getFarewellOptions() {
+  return [
+    { value: "none", label: t("settings.mail.farewellOptions.none") || "Brak pożegnania" },
+    { value: "regards", label: t("settings.mail.farewellOptions.regards") || "Pozdrawiam" },
+    { value: "regardsPl", label: t("settings.mail.farewellOptions.regardsPl") || "Pozdrawiamy" },
+    { value: "bestRegards", label: t("settings.mail.farewellOptions.bestRegards") || "Z poważaniem" },
+    { value: "kindRegards", label: t("settings.mail.farewellOptions.kindRegards") || "Łączę wyrazy szacunku" },
+    { value: "custom", label: t("settings.mail.farewellOptions.custom") || "Własne..." },
+  ];
+}
+
+function getSenderOptions() {
+  return [
+    { value: "none", label: t("settings.mail.senderOptions.none") || "Brak nadawcy" },
+    { value: "team", label: t("settings.mail.senderOptions.team") || "Zespół Familiada" },
+    { value: "creator", label: t("settings.mail.senderOptions.creator") || "Twórca Familiada" },
+    { value: "admin", label: t("settings.mail.senderOptions.admin") || "Admin" },
+    { value: "support", label: t("settings.mail.senderOptions.support") || "Wsparcie techniczne" },
+    { value: "custom", label: t("settings.mail.senderOptions.custom") || "Własny..." },
+  ];
+}
+
+function buildEmailSignature({ greeting = "none", farewell = "none", sender = "none", greetingCustom = "", farewellCustom = "", senderCustom = "" } = {}) {
+  let greetingText = "";
+  if (greeting === "custom" && greetingCustom) {
+    greetingText = greetingCustom.trim();
+  } else if (greeting !== "none" && greeting !== "custom") {
+    greetingText = {
+      witaj: t("settings.mail.greetingOptions.witaj") || "Witaj",
+      hello: t("settings.mail.greetingOptions.hello") || "Dzień dobry",
+      hi: t("settings.mail.greetingOptions.hi") || "Cześć",
+      dearUser: t("settings.mail.greetingOptions.dearUser") || "Szanowny Użytkowniku",
+      dearCustomer: t("settings.mail.greetingOptions.dearCustomer") || "Szanowny Kliencie",
+    }[greeting] || "";
+  }
+
+  let farewellText = "";
+  if (farewell === "custom" && farewellCustom) {
+    farewellText = farewellCustom.trim();
+  } else if (farewell !== "none" && farewell !== "custom") {
+    farewellText = {
+      regards: t("settings.mail.farewellOptions.regards") || "Pozdrawiam",
+      regardsPl: t("settings.mail.farewellOptions.regardsPl") || "Pozdrawiamy",
+      bestRegards: t("settings.mail.farewellOptions.bestRegards") || "Z poważaniem",
+      kindRegards: t("settings.mail.farewellOptions.kindRegards") || "Łączę wyrazy szacunku",
+    }[farewell] || "";
+  }
+
+  let senderText = "";
+  if (sender === "custom" && senderCustom) {
+    senderText = senderCustom.trim();
+  } else if (sender !== "none" && sender !== "custom") {
+    senderText = {
+      team: t("settings.mail.senderOptions.team") || "Zespół Familiada",
+      creator: t("settings.mail.senderOptions.creator") || "Twórca Familiada",
+      admin: t("settings.mail.senderOptions.admin") || "Admin",
+      support: t("settings.mail.senderOptions.support") || "Wsparcie techniczne",
+    }[sender] || "";
+  }
+
+  // Combine farewell and sender
+  if (farewellText && senderText) {
+    farewellText = `${farewellText},\n${senderText}`;
+  } else if (farewellText) {
+    farewellText = `${farewellText},`;
+  }
+
+  const parts = [];
+  if (greetingText) parts.push(greetingText);
+  if (farewellText) parts.push(farewellText);
+
+  return parts.length ? parts.join("\n\n") : "";
+}
+
+function mailQueueStatusOptions() {
+  return [
+    { value: "all", label: t("settings.mail.filter.all") },
+    { value: "pending", label: t("settings.mail.filter.pending") },
+    { value: "sending", label: t("settings.mail.filter.sending") },
+    { value: "failed", label: t("settings.mail.filter.failed") },
+  ];
+}
+
+function mailLogFnOptions() {
+  return [
+    { value: "all", label: t("settings.mail.filter.allFunctions") },
+    { value: "send-mail", label: "send-mail" },
+    { value: "send-email", label: "send-email" },
+    { value: "mail-worker", label: "mail-worker" },
+  ];
+}
+
+function mailLogLevelOptions() {
+  return [
+    { value: "all", label: t("settings.mail.filter.allLevels") },
+    { value: "info", label: "info" },
+    { value: "warn", label: "warn" },
+    { value: "error", label: "error" },
+  ];
+}
+
+function syncMailSelectLabels() {
+  if (mailQueueStatusSelect) {
+    mailQueueStatusSelect.setOptions(mailQueueStatusOptions());
+    mailQueueStatusSelect.setValue(mailQueueStatusValue, { silent: true });
+  }
+  if (mailLogFnSelect) {
+    mailLogFnSelect.setOptions(mailLogFnOptions());
+    mailLogFnSelect.setValue(mailLogFnValue, { silent: true });
+  }
+  if (mailLogLevelSelect) {
+    mailLogLevelSelect.setOptions(mailLogLevelOptions());
+    mailLogLevelSelect.setValue(mailLogLevelValue, { silent: true });
+  }
+  updateMailCategoryHighlights();
+}
+
+function initMailSelects() {
+  if (!mailCronSelect && els.mailCronPresetSelect) {
+    mailCronSelect = initUiSelect(els.mailCronPresetSelect, {
+      options: [],
+      value: mailCronPresetValue,
+      placeholder: "—",
+      onChange: (val) => {
+        mailCronPresetValue = String(val || mailCronPresetValue);
+        updateCronHint();
+        updateMailCategoryHighlights();
+      },
+    });
+  }
+
+  if (!mailQueueStatusSelect && els.mailQueueStatusSelect) {
+    mailQueueStatusSelect = initUiSelect(els.mailQueueStatusSelect, {
+      options: mailQueueStatusOptions(),
+      value: mailQueueStatusValue,
+      placeholder: "—",
+      onChange: (val) => {
+        mailQueueStatusValue = String(val || "all");
+        updateMailCategoryHighlights();
+        void loadMailQueue();
+      },
+    });
+  }
+
+  if (!mailLogFnSelect && els.mailLogFnSelect) {
+    mailLogFnSelect = initUiSelect(els.mailLogFnSelect, {
+      options: mailLogFnOptions(),
+      value: mailLogFnValue,
+      placeholder: "—",
+      onChange: (val) => {
+        mailLogFnValue = String(val || "all");
+        mailLogsPage = 1;
+        updateMailCategoryHighlights();
+        void loadMailLogs();
+      },
+    });
+  }
+
+  if (!mailLogLevelSelect && els.mailLogLevelSelect) {
+    mailLogLevelSelect = initUiSelect(els.mailLogLevelSelect, {
+      options: mailLogLevelOptions(),
+      value: mailLogLevelValue,
+      placeholder: "—",
+      onChange: (val) => {
+        mailLogLevelValue = String(val || "all");
+        mailLogsPage = 1;
+        updateMailCategoryHighlights();
+        void loadMailLogs();
+      },
+    });
+  }
+}
+
+function renderCronPresetOptions() {
+  if (!mailCronSelect) return;
+  const prev = mailCronPresetValue;
+  const selected = getCronPresetById(prev) || getCronPresetById("5m") || CRON_PRESETS[0];
+  if (!selected) return;
+
+  mailCronSelect.setOptions(CRON_PRESETS.map((preset) => ({ value: preset.id, label: cronPresetLabel(preset) })));
+  mailCronPresetValue = selected.id;
+  mailCronSelect.setValue(selected.id, { silent: true });
+  mailCronSelect.setDisabled(!mailCronSupported);
+  updateCronHint();
   updateMailCategoryHighlights();
 }
 
@@ -628,14 +1680,13 @@ function renderProviderOrder() {
 
 function aiProviderLabel(provider) {
   const labels = { openrouter: "OpenRouter", groq: "Groq" };
-  return labels[provider] || (provider.charAt(0).toUpperCase() + provider.slice(1));
+  return labels[provider] || provider;
 }
 
 function renderAiProviderOrder() {
   const el = document.getElementById("aiProviderOrderList");
   if (!el) return;
   el.innerHTML = "";
-  
   aiProviderOrder.forEach((provider, idx) => {
     const row = document.createElement("div");
     row.className = "provider-order-row";
@@ -656,16 +1707,14 @@ function renderAiProviderOrder() {
     up.type = "button";
     up.className = "btn sm";
     up.textContent = "↑";
-    // Zablokuj górną strzałkę dla pierwszego elementu
-    up.disabled = (idx === 0);
+    up.disabled = idx === 0;
     up.addEventListener("click", () => moveAiProvider(idx, -1));
 
     const down = document.createElement("button");
     down.type = "button";
     down.className = "btn sm";
     down.textContent = "↓";
-    // Zablokuj dolną strzałkę dla ostatniego elementu
-    down.disabled = (idx === aiProviderOrder.length - 1);
+    down.disabled = idx >= aiProviderOrder.length - 1;
     down.addEventListener("click", () => moveAiProvider(idx, 1));
 
     actions.append(up, down);
@@ -676,26 +1725,10 @@ function renderAiProviderOrder() {
 
 async function saveAiProviderOrder() {
   try {
-    const orderStr = aiProviderOrder.join(",");
-    await sb().rpc('update_ai_provider_order', { p_order: orderStr });
+    await sb().rpc('update_ai_provider_order', { p_order: aiProviderOrder.join(",") });
     showToast(`AI: ${aiProviderOrder.join(" → ")}`);
   } catch(e) {
     console.warn("[AI] save order error:", e);
-  }
-}
-
-async function loadAiProviderOrder() {
-  try {
-    const { data } = await sb().rpc('get_provider_order');
-    if (data) {
-      const raw = Array.isArray(data) ? data[0]?.provider_order : data;
-      if (raw) {
-        aiProviderOrder = raw.split(',').map(p => p.trim().lower()).filter(Boolean);
-        renderAiProviderOrder();
-      }
-    }
-  } catch(e) {
-    console.warn("[AI] load order error:", e);
   }
 }
 
@@ -705,6 +1738,7 @@ function moveAiProvider(idx, dir) {
   const next = [...aiProviderOrder];
   [next[idx], next[newIdx]] = [next[newIdx], next[idx]];
   aiProviderOrder = next;
+  localStorage.setItem("aiProviderOrder", JSON.stringify(aiProviderOrder));
   renderAiProviderOrder();
   saveAiProviderOrder();
 }
@@ -906,7 +1940,9 @@ function renderLogRows(rows) {
   });
 }
 
+// ============================================================
 // MARKETPLACE ADMIN
+// ============================================================
 
 let marketActiveStatus = "pending";
 let marketPreviewId = null;
@@ -1195,7 +2231,9 @@ async function testTelegram() {
 }
 
 // helper — fetch do /_admin_api/*
+// ============================================================
 // REPORTS ADMIN
+// ============================================================
 
 // ── Mail client state ──────────────────────────────────────────
 let msgActiveFolder  = "inbox";  // inbox | sent | trash | reports | <report-uuid>
@@ -3270,6 +4308,14 @@ function adminFetch(path, init = {}) {
   return fetch(`/_admin_api${path}`, init);
 }
 
+function escSetting(str) {
+  return String(str ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 function wireMarketplaceEvents() {
   // Tab wewnętrzne
   const tabs = [
@@ -4653,7 +5699,7 @@ function wireEvents() {
   // ═══════════════════════════════════════════════════════════
   // MARKETING CONTACTS
   // ═══════════════════════════════════════════════════════════
-  const { rt } = await import("../core/realtime.js?v=v2026-04-20T14272");
+  const { rt } = await import("../core/realtime.js?v=v2026-04-19T21352");
   const MC_API = "https://leads.familiada.online";
   const MC_PAGE_SIZE = 50;
   let mcToken = null;
@@ -5269,10 +6315,9 @@ function wireEvents() {
       await mcLoadRuns();
       mcLoadLogs();
       if (document.getElementById("mcAutoRefreshLogs")?.checked) mcStartLogAutoRefresh();
-      await loadAiProviderOrder();
+      renderAiProviderOrder();
     }
   });
-
   const mcPanel = document.getElementById("marketingContactsPanel");
   if (mcPanel) mcObserver.observe(mcPanel, { attributes: true, attributeFilter: ["hidden"] });
 
