@@ -1,5 +1,5 @@
-import { t } from "../../translation/translation.js?v=v2026-04-20T14153";
-import { sb } from "../../js/core/supabase.js?v=v2026-04-20T14153";
+import { t } from "../../translation/translation.js?v=v2026-04-20T14272";
+import { sb } from "../../js/core/supabase.js?v=v2026-04-20T14272";
 
 // ================== KOMUNIKATY (PRESENCE) ==================
 const PRESENCE_MSG = {
