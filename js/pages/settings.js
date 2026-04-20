@@ -483,6 +483,38 @@ function formatReturnPreview(date) {
   return t("settings.preview.at").replace("{time}", formatReturnAtValue(date));
 }
 
+function rearrangeDateFields(prefix, order, sepChar) {
+  const anchor = document.getElementById(`${prefix}Day`);
+  const group = anchor ? anchor.closest(".dt-group") : null;
+  if (!group) return;
+  const day = document.getElementById(`${prefix}Day`);
+  const month = document.getElementById(`${prefix}Month`);
+  const year = document.getElementById(`${prefix}Year`);
+  if (!day || !month || !year) return;
+  const dots = Array.from(group.querySelectorAll(".dt-dot"));
+  if (dots.length >= 1) dots[0].textContent = sepChar;
+  if (dots.length >= 2) dots[1].textContent = sepChar;
+  [day, month, year, ...dots].forEach((el) => el.remove());
+  const map = { day, month, year };
+  order.forEach((key, idx) => {
+    group.appendChild(map[key]);
+    if (idx < order.length - 1 && dots[idx]) {
+      group.appendChild(dots[idx]);
+    }
+  });
+}
+
+function applyDateOrderByLang() {
+  const lang = (document.documentElement.lang || "").toLowerCase();
+  if (lang.startsWith("en")) {
+    rearrangeDateFields("returnAt", ["month", "day", "year"], "/");
+    rearrangeDateFields("endAt", ["month", "day", "year"], "/");
+  } else {
+    rearrangeDateFields("returnAt", ["day", "month", "year"], ".");
+    rearrangeDateFields("endAt", ["day", "month", "year"], ".");
+  }
+}
+
 function minAllowedDate() {
   return new Date(Date.now() + MINUTES_MIN * 60 * 1000);
 }
