@@ -82,7 +82,17 @@ class SupabaseClient:
 
 SUPABASE_URL = "http://kong:8000"
 SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", os.getenv("SERVICE_ROLE_KEY", ""))
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
+TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
 supabase = SupabaseClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+
+async def send_telegram_notification(message):
+    if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID: return
+    try:
+        url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+        await global_client.post(url, json={"chat_id": TELEGRAM_CHAT_ID, "text": message, "parse_mode": "HTML"})
+    except Exception as e:
+        print(f"[SERVER] Telegram Error: {e}")
 
 class SupabaseLoggingHandler(logging.Handler):
     def emit(self, record):
@@ -413,9 +423,12 @@ async def run_worker(run_id, target):
         p_task.cancel(); c_task.cancel()
         if task_status == "running": 
             task_status = "completed"
+            msg = f"✅ <b>Zlecenie zakończone</b>\nSukces: {verified_in_run}/{target}"
             logger.info(f"Zlecenie zakończone. Sukces: {verified_in_run}/{target}.")
+            await send_telegram_notification(msg)
     except Exception as e:
         print(f"[SERVER] Error: {e}"); task_status = "error"
+        await send_telegram_notification(f"❌ <b>Błąd krytyczny bota</b>\n{e}")
     finally:
         await asyncio.sleep(5); task_status = "idle"
 
