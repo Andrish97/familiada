@@ -4,11 +4,13 @@
 # === BUFOR I LIMITI ===
 RAW_BUFFER_THRESHOLD=20          # Ile leadów 'pending' trzymać w bazie (bufor dla AI)
 SEARCH_RESULTS_LIMIT=20          # Max wyników z jednego zapytania do SearXNG
+AI_TEXT_LIMIT=1000               # Max długość tekstu strony wysyłanego do AI
 
 # === AI ===
 AI_DELAY=12                      # Opóźnienie po UDANEJ weryfikacji (sekundy)
 PROVIDER_COOLDOWN_SECONDS=60     # Cooldown dla Typ 2 - Rate Limit 429 (sekundy)
 PROVIDER_COOLDOWN_LONG=300       # Cooldown dla Typ 2 - Błędy 500/Timeout (sekundy)
+PROVIDER_COOLDOWN_QUOTA=3600     # Cooldown dla Typ 3 - Limit dzienny/brak środków (sekundy)
 
 # === RÓWNOLEGŁOŚĆ ===
 MAX_CONCURRENT_SCRAPES=10        # Max równoległych lekkich scrapowań

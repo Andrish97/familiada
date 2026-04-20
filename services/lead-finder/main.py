@@ -129,8 +129,10 @@ CONFIG = load_config()
 SEARXNG_URL = "http://searxng:8080"
 AI_DELAY = CONFIG.get('AI_DELAY', 12)
 AI_DELAY_REJECT = 2
+AI_TEXT_LIMIT = CONFIG.get('AI_TEXT_LIMIT', 1000)
 PROVIDER_COOLDOWN_SECONDS = CONFIG.get('PROVIDER_COOLDOWN_SECONDS', 60)
 PROVIDER_COOLDOWN_LONG = CONFIG.get('PROVIDER_COOLDOWN_LONG', 300)
+PROVIDER_COOLDOWN_QUOTA = CONFIG.get('PROVIDER_COOLDOWN_QUOTA', 3600)
 RAW_BUFFER_THRESHOLD = CONFIG.get('RAW_BUFFER_THRESHOLD', 20)
 SEARCH_RESULTS_LIMIT = CONFIG.get('SEARCH_RESULTS_LIMIT', 20)
 TIMEOUT_SEARCH = 25
@@ -182,7 +184,7 @@ def clean_text(text):
     text = re.sub(r'\s+', ' ', text).strip()
     if "function(" in text or "var " in text or "window." in text:
         text = re.sub(r'\{[^\}]+\}', '', text)
-    return text[:2000]
+    return text[:AI_TEXT_LIMIT]
 
 def extract_emails(html):
     found = set()
@@ -216,10 +218,8 @@ async def scrape_and_save_lead(res):
     domain = parsed.netloc.lower().replace('www.', '')
     if domain in rejected_domains: return 0
     if any(b in domain for b in BLOCKED_DOMAINS): return 0
-    
     allowed_tlds = ('.pl', '.com', '.net', '.org', '.eu', '.info', '.biz', '.online', '.site')
     if not any(url.endswith(t) or f'{t}/' in url for t in allowed_tlds): return 0
-
     if await supabase.select('marketing_verified_contacts', 'id', {'url': url}) or await supabase.select('marketing_raw_contacts', 'id', {'url': url}): return 0
     
     txt, emails = '', set()
@@ -236,7 +236,7 @@ async def scrape_and_save_lead(res):
                                 r_sub = await client.get(url.rstrip('/') + path, timeout=5)
                                 if r_sub.status_code == 200:
                                     emails.update(extract_emails(r_sub.text))
-                                    if len(txt) < 1500: txt += " " + clean_text(re.sub(r'<[^>]+>', ' ', r_sub.text))[:1000]
+                                    if len(txt) < (AI_TEXT_LIMIT * 0.8): txt += " " + clean_text(re.sub(r'<[^>]+>', ' ', r_sub.text))[:500]
                                     if emails: break
                             except: continue
         except: pass
@@ -252,7 +252,7 @@ async def scrape_and_save_lead(res):
     if not any(k in txt_low for k in REQUIRED_KEYWORDS): return 0
     if any(k in txt_low for k in NEGATIVE_KEYWORDS): return 0
 
-    return 1 if await supabase.insert('marketing_raw_contacts', {'url': url, 'title': res.get('title',''), 'page_text': txt[:2000], 'emails_found': list(emails), 'status': 'pending'}) else 0
+    return 1 if await supabase.insert('marketing_raw_contacts', {'url': url, 'title': res.get('title',''), 'page_text': txt[:AI_TEXT_LIMIT], 'emails_found': list(emails), 'status': 'pending'}) else 0
 
 async def producer_task(run_id):
     while task_status in ("running", "paused") and task_run_id == run_id:
@@ -304,7 +304,6 @@ async def call_ai_provider(name, prompt):
         else:
             err_body = r.text.lower()
             print(f"[SERVER] {name.capitalize()} Error {r.status_code}: {r.text[:200]}")
-            # Wykrywanie limitów dziennych (per day / quota / limit exceeded)
             if r.status_code == 429 and any(x in err_body for x in ("day", "daily", "quota", "credit")):
                 return 403, None, "Daily limit reached"
             return r.status_code, None, r.text[:100]
@@ -325,7 +324,7 @@ async def verify_raw_lead(lead, target):
     prompt_path = os.path.join(os.path.dirname(__file__), 'ai_prompt.txt')
     with open(prompt_path, 'r', encoding='utf-8') as f:
         base = "\n".join([l for l in f.readlines() if not l.strip().startswith('#')])
-    prompt = base.replace('{url}', url).replace('{title}', title).replace('{emails}', str(emails)).replace('{text}', txt[:2000])
+    prompt = base.replace('{url}', url).replace('{title}', title).replace('{emails}', str(emails)).replace('{text}', txt[:AI_TEXT_LIMIT])
 
     attempts_in_run += 1
     logger.info(f"Weryfikacja [{attempts_in_run}] (Znaleziono: {verified_in_run}/{target}): {url}")
@@ -333,7 +332,6 @@ async def verify_raw_lead(lead, target):
     while task_status in ("running", "paused") and task_run_id is not None:
         if task_status == "paused":
             await asyncio.sleep(2); continue
-            
         any_provider_exists = False
         any_provider_free = False
         
@@ -341,7 +339,8 @@ async def verify_raw_lead(lead, target):
             if provider in provider_blacklist: continue
             any_provider_exists = True
             if provider in provider_cooldowns:
-                if time.time() < provider_cooldowns[provider]: continue
+                remains = provider_cooldowns[provider] - time.time()
+                if remains > 0: continue
                 else: del provider_cooldowns[provider]
             
             any_provider_free = True
@@ -358,8 +357,8 @@ async def verify_raw_lead(lead, target):
                     provider_cooldowns[provider] = time.time() + PROVIDER_COOLDOWN_SECONDS
                     continue
             elif status in (401, 403, 404):
-                logger.info(f"Model {provider} wykluczony z tej sesji (Błąd {status}).")
-                provider_blacklist.add(provider)
+                logger.info(f"Dostawca {provider} zablokowany czasowo (Błąd {status} - Limit/Brak środków).")
+                provider_cooldowns[provider] = time.time() + PROVIDER_COOLDOWN_QUOTA
                 continue
             elif status == 429:
                 provider_cooldowns[provider] = time.time() + PROVIDER_COOLDOWN_SECONDS
@@ -368,15 +367,13 @@ async def verify_raw_lead(lead, target):
                 logger.info(f"Nie udało się przez {provider} (Błąd {status})")
                 provider_cooldowns[provider] = time.time() + PROVIDER_COOLDOWN_LONG
                 continue
-        
+        if not any_provider_exists and not any_provider_free:
+            print("[SERVER] Wszystkie modele na karcie. Czekam na odblokowanie (30s)...")
+            await asyncio.sleep(30)
+            continue
         if not any_provider_exists:
             logger.error("Brak dostępnych modeli AI!")
             return "FATAL"
-            
-        if not any_provider_free:
-            print("[SERVER] Oczekiwanie na odblokowanie AI (30s)...")
-            await asyncio.sleep(30)
-            continue
     return None
 
 async def consumer_task(run_id, target):
@@ -424,7 +421,7 @@ async def warmup_ai_providers():
     for p in [x.strip().lower() for x in order if x.strip()]:
         status, _, _ = await call_ai_provider(p, "Hey")
         if status in (401, 403, 404):
-            provider_blacklist.add(p)
+            provider_cooldowns[p] = time.time() + PROVIDER_COOLDOWN_QUOTA
         elif status != 200:
             provider_cooldowns[p] = time.time() + (60 if status == 429 else 300)
 
