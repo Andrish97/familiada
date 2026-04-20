@@ -175,6 +175,11 @@ let previousTabBeforeTools = "maintenance";
 let mailSettingsLoaded = false;
 let mailProviderOrder = [...MAIL_PROVIDERS];
 let aiProviderOrder = JSON.parse(localStorage.getItem("aiProviderOrder") || "null") || [...AI_PROVIDERS];
+// One-time purge of legacy gemini data from cache
+if (aiProviderOrder.includes("gemini")) {
+  aiProviderOrder = aiProviderOrder.filter(p => p !== "gemini");
+  localStorage.setItem("aiProviderOrder", JSON.stringify(aiProviderOrder));
+}
 let mailCronPresetValue = "5m";
 let mailCronSupported = true;
 let mailQueueStatusValue = "all";
