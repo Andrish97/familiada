@@ -12,6 +12,7 @@ microsoft.com
 apple.com
 icloud.com
 wikipedia.org
+brave.com
 
 # Sklepy i Aplikacje
 apps.microsoft.com
@@ -24,11 +25,15 @@ allegro.pl
 olx.pl
 sprzedajemy.pl
 
-# Technologia i Newsy (często w wynikach o 'Wodzireju' jako filmie)
+# Technologia i Newsy
 cnet.com
 techtarget.com
 digitaltrends.com
 gsmarena.com
+techtudo.com.br
+techtudo.com
+gizmodo.com
+theverge.com
 filmweb.pl
 filmpolski.pl
 fdb.pl
@@ -42,3 +47,6 @@ reddit.com
 quora.com
 pinterest.com
 archive.org
+facebook.com/messages
+twitter.com/login
+linkedin.com/jobs
