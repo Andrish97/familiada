@@ -174,7 +174,7 @@ let activeTab = "maintenance";
 let previousTabBeforeTools = "maintenance";
 let mailSettingsLoaded = false;
 let mailProviderOrder = [...MAIL_PROVIDERS];
-let aiProviderOrder = JSON.parse(localStorage.getItem("aiProviderOrder") || "null") || [...AI_PROVIDERS];
+let aiProviderOrder = (JSON.parse(localStorage.getItem("aiProviderOrder") || "null") || [...AI_PROVIDERS]).filter(p => ["openrouter", "groq"].includes(p));
 let mailCronPresetValue = "5m";
 let mailCronSupported = true;
 let mailQueueStatusValue = "all";
@@ -1687,11 +1687,8 @@ function renderAiProviderOrder() {
   const el = document.getElementById("aiProviderOrderList");
   if (!el) return;
   el.innerHTML = "";
-  // Twardy filtr: tylko OpenRouter i Groq są dozwolone w UI
-  const allowed = ["openrouter", "groq"];
-  const filteredOrder = aiProviderOrder.filter(p => allowed.includes(p));
   
-  filteredOrder.forEach((provider, idx) => {
+  aiProviderOrder.forEach((provider, idx) => {
     const row = document.createElement("div");
     row.className = "provider-order-row";
     row.style.marginBottom = "4px";
