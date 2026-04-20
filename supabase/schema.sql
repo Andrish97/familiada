@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 5rNGxmVLqylOwzQW3M49ZHsHJWBhfOuSxes5OfOKGVnXTXAffbwUDcoA8rPtgDW
+\restrict XlolIGkDpi8pTv2WfPOL2tNA66haQxTMaqOGJV1SfA9GRzffCEm5G2ILQAeqM7w
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -2887,6 +2887,19 @@ begin
 
   return out;
 end;
+$$;
+
+
+--
+-- Name: get_provider_order(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."get_provider_order"() RETURNS TABLE("provider_order" "text")
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+BEGIN
+  RETURN QUERY SELECT s.provider_order FROM "public"."ai_settings" s LIMIT 1;
+END;
 $$;
 
 
@@ -13864,5 +13877,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 5rNGxmVLqylOwzQW3M49ZHsHJWBhfOuSxes5OfOKGVnXTXAffbwUDcoA8rPtgDW
+\unrestrict XlolIGkDpi8pTv2WfPOL2tNA66haQxTMaqOGJV1SfA9GRzffCEm5G2ILQAeqM7w
 
