@@ -29,7 +29,6 @@ _handler = logging.StreamHandler()
 _handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
 logger.addHandler(_handler)
 
-# Klient do zapytań zewnętrznych (AI, SearXNG) - BEZ nagłówków Supabase
 global_client = httpx.AsyncClient(timeout=60)
 
 class SupabaseClient:
@@ -79,7 +78,6 @@ class SupabaseClient:
             return r.json() if r.status_code in (200, 201) else (True if r.status_code == 204 else None)
         except: return None
 
-# Inicjalizacja Supabase i kluczy Telegrama
 SUPABASE_URL = "http://kong:8000"
 SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", os.getenv("SERVICE_ROLE_KEY", ""))
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
@@ -109,8 +107,6 @@ _db_handler = SupabaseLoggingHandler()
 _db_handler.setLevel(logging.INFO)
 logger.addHandler(_db_handler)
 
-# --- Configuration Loading ---
-
 def load_txt_lines(filename):
     path = os.path.join(os.path.dirname(__file__), filename)
     if not os.path.exists(path): return []
@@ -137,9 +133,9 @@ PROVIDER_COOLDOWN_LONG = CONFIG.get('PROVIDER_COOLDOWN_LONG', 300)
 RAW_BUFFER_THRESHOLD = CONFIG.get('RAW_BUFFER_THRESHOLD', 20)
 SEARCH_RESULTS_LIMIT = CONFIG.get('SEARCH_RESULTS_LIMIT', 20)
 TIMEOUT_SEARCH = CONFIG.get('TIMEOUT_SEARCH', 25)
-TIMEOUT_SCRAPE = CONFIG.get('TIMEOUT_SCRAPE', 12)
-TIMEOUT_SCRAPE_JS = CONFIG.get('TIMEOUT_SCRAPE_JS', 15)
-TIMEOUT_AI = CONFIG.get('TIMEOUT_AI', 30)
+TIMEOUT_SCRAPE = 12
+TIMEOUT_SCRAPE_JS = 15
+TIMEOUT_AI = 30
 
 MAX_CONCURRENT_SCRAPES = CONFIG.get('MAX_CONCURRENT_SCRAPES', 10)
 MAX_CONCURRENT_PLAYWRIGHT = CONFIG.get('MAX_CONCURRENT_PLAYWRIGHT', 3)
@@ -169,7 +165,7 @@ provider_blacklist = set()
 scrape_semaphore = asyncio.Semaphore(MAX_CONCURRENT_SCRAPES)
 playwright_semaphore = asyncio.Semaphore(MAX_CONCURRENT_PLAYWRIGHT)
 
-# --- Core Logic ---
+# --- Logic ---
 
 def clean_text(text):
     if not text: return ""
@@ -205,7 +201,19 @@ async def scrape_with_playwright(url):
 
 async def scrape_and_save_lead(res):
     url = res.get('url', '').lower()
-    if not url or any(b in urlparse(url).netloc.lower() for b in BLOCKED_DOMAINS): return 0
+    if not url: return 0
+    
+    parsed = urlparse(url)
+    domain = parsed.netloc.lower()
+    
+    # Blokada domen technologicznych i gigantów
+    if any(b in domain for b in BLOCKED_DOMAINS): return 0
+    
+    # Blokada domen egzotycznych (.br, .pt, .ru itp) - zostawiamy .pl, .com, .net, .org, .eu i lokalne
+    allowed_tlds = ('.pl', '.com', '.net', '.org', '.eu', '.info', '.biz', '.online', '.site')
+    if not any(url.endswith(t) or f'{t}/' in url for t in allowed_tlds):
+        return 0
+
     if await supabase.select('marketing_verified_contacts', 'id', {'url': url}) or await supabase.select('marketing_raw_contacts', 'id', {'url': url}): return 0
     
     txt, emails = '', set()
@@ -236,10 +244,7 @@ async def scrape_and_save_lead(res):
     if not emails or len(txt) < 100: return 0
     if any(k in txt.lower() for k in NEGATIVE_KEYWORDS): return 0
 
-    return 1 if await supabase.insert('marketing_raw_contacts', {
-        'url': url, 'title': res.get('title',''), 'page_text': txt[:2000], 
-        'emails_found': list(emails), 'status': 'pending'
-    }) else 0
+    return 1 if await supabase.insert('marketing_raw_contacts', {'url': url, 'title': res.get('title',''), 'page_text': txt[:2000], 'emails_found': list(emails), 'status': 'pending'}) else 0
 
 async def producer_task(run_id):
     while task_status in ("running", "paused") and task_run_id == run_id:
@@ -296,40 +301,56 @@ async def verify_raw_lead(lead, target):
         base = "\n".join([l for l in f.readlines() if not l.strip().startswith('#')])
     prompt = base.replace('{url}', url).replace('{title}', title).replace('{emails}', str(emails)).replace('{text}', txt[:2000])
 
-    logger.info(f"Weryfikacja [{verified_in_run + 1}/{target}]: {url}")
-
-    any_available = False
-    for provider in [p.strip().lower() for p in order if p.strip()]:
-        if provider in provider_blacklist: continue
-        if provider in provider_cooldowns:
-            if time.time() < provider_cooldowns[provider]: continue
-            else: del provider_cooldowns[provider]
+    while task_status in ("running", "paused") and task_run_id is not None:
+        if task_status == "paused":
+            await asyncio.sleep(2); continue
+            
+        any_provider_exists = False
+        any_provider_free = False
         
-        any_available = True
-        logger.info(f"Weryfikuję przez {provider}")
-        status, content, err = await call_ai_provider(provider, prompt)
-        if status == 200:
-            try:
-                res = json.loads(re.search(r'\{.*\}', content, re.DOTALL).group().replace("'", '"'))
-                await asyncio.sleep(AI_DELAY)
-                return res
-            except: 
+        for provider in [p.strip().lower() for p in order if p.strip()]:
+            if provider in provider_blacklist: continue
+            any_provider_exists = True
+            
+            if provider in provider_cooldowns:
+                if time.time() < provider_cooldowns[provider]: continue
+                else: del provider_cooldowns[provider]
+            
+            any_provider_free = True
+            # Logowanie weryfikacji ZAWSZE na początku próby
+            logger.info(f"Weryfikacja [{verified_in_run + 1}/{target}]: {url}")
+            logger.info(f"Weryfikuję przez {provider}")
+            
+            status, content, err = await call_ai_provider(provider, prompt)
+            if status == 200:
+                try:
+                    res = json.loads(re.search(r'\{.*\}', content, re.DOTALL).group().replace("'", '"'))
+                    await asyncio.sleep(AI_DELAY)
+                    return res
+                except: 
+                    provider_cooldowns[provider] = time.time() + PROVIDER_COOLDOWN_SECONDS
+                    continue
+            elif status in (401, 403, 404):
+                logger.info(f"Model {provider} wykluczony (Błąd {status}).")
+                provider_blacklist.add(provider)
+                continue
+            elif status == 429:
                 provider_cooldowns[provider] = time.time() + PROVIDER_COOLDOWN_SECONDS
                 continue
-        elif status in (401, 403, 404):
-            logger.info(f"Model {provider} wykluczony z tej sesji (Błąd {status}).")
-            provider_blacklist.add(provider)
-            continue
-        elif status == 429:
-            provider_cooldowns[provider] = time.time() + PROVIDER_COOLDOWN_SECONDS
-            continue
-        else:
-            provider_cooldowns[provider] = time.time() + PROVIDER_COOLDOWN_LONG
+            else:
+                logger.info(f"Nie udało się przez {provider}")
+                provider_cooldowns[provider] = time.time() + PROVIDER_COOLDOWN_LONG
+                continue
+        
+        if not any_provider_exists:
+            logger.error("Brak dostępnych modeli AI w tej sesji!")
+            return "FATAL"
+            
+        if not any_provider_free:
+            print("[SERVER] Oczekiwanie na odblokowanie AI (30s)...")
+            await asyncio.sleep(30)
             continue
             
-    if not any_available:
-        print("[SERVER] Brak aktywnych AI. Czekam 30s...")
-        await asyncio.sleep(30)
     return None
 
 async def consumer_task(run_id, target):
@@ -344,14 +365,19 @@ async def consumer_task(run_id, target):
             await asyncio.sleep(5); continue
         lead = result[0]
         res = await verify_raw_lead(lead, target)
-        if res is None:
-            consecutive_critical += 1
-            critical_errors_in_run += 1
-            await supabase.update('marketing_raw_contacts', {'status': 'pending'}, {'id': lead['id']})
+        
+        if res is None or res == "FATAL":
+            # Tylko prawdziwe błędy (nie czekanie) liczą się do Kill Switcha
+            if res == "FATAL" or consecutive_critical < 3: 
+                consecutive_critical += 1
+                critical_errors_in_run += 1
+                await supabase.update('marketing_raw_contacts', {'status': 'pending'}, {'id': lead['id']})
+            
             if consecutive_critical >= 3:
                 logger.error("Zlecenie przerwane: 3 błędy krytyczne AI pod rząd.")
                 task_status = "cancelled"; break
             continue
+        
         consecutive_critical = 0
         if res.get('ok') and res.get('email'):
             email = str(res['email']).strip().lower()
