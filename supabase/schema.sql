@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict N8Wc10BbjfV5shAgd0mAd3vyNR7A75O4hTvURSzPXLVbCAGZtbT4ESS7mvj3qDj
+\restrict sbx3NQ2y8RXqdQ9Df5ytVuGnnpHMQYJvZYRKgKh3cBiqhdppk8orBS8Ubsir05x
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -2679,6 +2679,27 @@ CREATE FUNCTION "public"."get_app_rating_stats"() RETURNS TABLE("avg_stars" nume
         COALESCE(ROUND(AVG(stars), 1), 0.0) as avg_stars,
         COUNT(*) as total_count
     FROM public.app_ratings;
+$$;
+
+
+--
+-- Name: get_available_ai_providers(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."get_available_ai_providers"() RETURNS TABLE("name" "text", "label" "text", "cooldown_remains" integer)
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+BEGIN
+  RETURN QUERY 
+  SELECT 
+    p.name, 
+    p.label,
+    EXTRACT(EPOCH FROM (p.cooldown_until - now()))::integer as cooldown_remains
+  FROM "public"."marketing_ai_providers" p
+  WHERE p.is_active = true 
+    AND (p.cooldown_until IS NULL OR p.cooldown_until < now())
+  ORDER BY p.priority ASC;
+END;
 $$;
 
 
@@ -9191,6 +9212,24 @@ $$;
 
 
 --
+-- Name: set_ai_provider_cooldown("text", integer, "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."set_ai_provider_cooldown"("p_name" "text", "p_seconds" integer, "p_error" "text" DEFAULT NULL::"text") RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+BEGIN
+  UPDATE "public"."marketing_ai_providers"
+  SET 
+    cooldown_until = now() + (p_seconds || ' seconds')::interval,
+    last_error = p_error,
+    updated_at = now()
+  WHERE name = p_name;
+END;
+$$;
+
+
+--
 -- Name: set_device_state("uuid", "text", "jsonb"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -10499,6 +10538,21 @@ COMMENT ON COLUMN "public"."market_games"."storage_path" IS 'Path to JSON in com
 
 
 --
+-- Name: marketing_ai_providers; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."marketing_ai_providers" (
+    "name" "text" NOT NULL,
+    "label" "text" NOT NULL,
+    "is_active" boolean DEFAULT true,
+    "priority" integer DEFAULT 0,
+    "cooldown_until" timestamp with time zone,
+    "last_error" "text",
+    "updated_at" timestamp with time zone DEFAULT "now"()
+);
+
+
+--
 -- Name: marketing_cities; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -11156,6 +11210,14 @@ ALTER TABLE ONLY "public"."market_game_ratings"
 
 ALTER TABLE ONLY "public"."market_games"
     ADD CONSTRAINT "market_games_pkey" PRIMARY KEY ("id");
+
+
+--
+-- Name: marketing_ai_providers marketing_ai_providers_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."marketing_ai_providers"
+    ADD CONSTRAINT "marketing_ai_providers_pkey" PRIMARY KEY ("name");
 
 
 --
@@ -13097,6 +13159,19 @@ ALTER TABLE "public"."market_game_ratings" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."market_games" ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: marketing_ai_providers; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."marketing_ai_providers" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: marketing_ai_providers marketing_ai_providers_all; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "marketing_ai_providers_all" ON "public"."marketing_ai_providers" USING (true) WITH CHECK (true);
+
+
+--
 -- Name: marketing_cities; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -13878,5 +13953,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict N8Wc10BbjfV5shAgd0mAd3vyNR7A75O4hTvURSzPXLVbCAGZtbT4ESS7mvj3qDj
+\unrestrict sbx3NQ2y8RXqdQ9Df5ytVuGnnpHMQYJvZYRKgKh3cBiqhdppk8orBS8Ubsir05x
 
