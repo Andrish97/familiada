@@ -6239,13 +6239,13 @@ function wireEvents() {
   async function mcLoadLogs() {
     const el = document.getElementById("mcLogsContainer");
     try {
-      const { data, error } = await sb().from("marketing_search_logs").select("*").order("created_at", {ascending: true}).limit(200);
+      const { data, error } = await sb().from("marketing_search_logs").select("*").order("created_at", {ascending: false}).limit(200);
       if (error) throw error;
-      mcState.logs = data || [];
+      // Odwróć, aby najstarsze były na górze, najnowsze na dole (chronologicznie)
+      mcState.logs = (data || []).reverse();
       mcRenderLogs();
     } catch(e) { el.innerHTML = `<div style="text-align:center;opacity:.5">Błąd: ${e.message}</div>`; }
   }
-  
   async function mcClearLogs() {
     try {
       const { error } = await sb().rpc('clear_marketing_logs');
