@@ -55,7 +55,10 @@ JESLI WYSTEPUJE: DJ weselny, wodzirej, konferansjer, MC, host, animator -> TYPE 
 ---------------------------------------
 FINALNA DECYZJA
 ---------------------------------------
-AKCEPTUJ (ok: 1) tylko jeśli widzisz realną ofertę usług na imprezy (Typ A).
+AKCEPTUJ (ok: 1) TYLKO JEŚLI spełnione są oba warunki:
+1. Widzisz realną ofertę usług na imprezy (Typ A).
+2. Email należy do firmy/osoby, a NIE do portalu ogłoszeniowego (odrzuć jeśli mail to np. @fixly.pl, @oferteo.pl, @olx.pl, @panoramafirm.pl itp.).
+
 W przeciwnym razie ODRZUĆ (ok: 0).
 
 OUTPUT JSON (TYLKO CZYSTY JSON):

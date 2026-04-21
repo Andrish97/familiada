@@ -17,3 +17,25 @@ kowalski.com
 nowak.pl
 website.com
 yourdomain.com
+
+# Portale ogłoszeniowe i listingi (MAILE PORTALOWE ODRZUCAMY)
+fixly.pl
+oferteo.pl
+olx.pl
+gratka.pl
+panoramafirm.pl
+aleo.com
+biznesfinder.pl
+pkt.pl
+zamoscklik.pl
+gumtree.pl
+morizon.pl
+otodom.pl
+trojmiasto.pl
+naszemiasto.pl
+naszregion.pl
+firmy.net
+infobel.com
+cylex.pl
+yelp.com
+yellowpages.com
