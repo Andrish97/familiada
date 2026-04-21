@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 4YDhaRUtrymlit8YRwfWDamqgoobt61tBiWS0sjsUMGsRp8FdUf43BgPTU0Bpem
+\restrict N8Wc10BbjfV5shAgd0mAd3vyNR7A75O4hTvURSzPXLVbCAGZtbT4ESS7mvj3qDj
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -2894,11 +2894,11 @@ $$;
 -- Name: get_provider_order(); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION "public"."get_provider_order"() RETURNS TABLE("provider_order" "text")
+CREATE FUNCTION "public"."get_provider_order"() RETURNS TABLE("provider_order" "text", "provider_labels" "jsonb")
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
 BEGIN
-  RETURN QUERY SELECT s.provider_order FROM "public"."ai_settings" s LIMIT 1;
+  RETURN QUERY SELECT s.provider_order, s.provider_labels FROM "public"."ai_settings" s LIMIT 1;
 END;
 $$;
 
@@ -10121,7 +10121,8 @@ end $$;
 CREATE TABLE "public"."ai_settings" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
     "provider_order" "text" DEFAULT 'openrouter,groq'::"text" NOT NULL,
-    "updated_at" timestamp with time zone DEFAULT "now"()
+    "updated_at" timestamp with time zone DEFAULT "now"(),
+    "provider_labels" "jsonb" DEFAULT '{"groq": "Groq", "deepseek": "DeepSeek", "openrouter": "OpenRouter"}'::"jsonb"
 );
 
 
@@ -13877,5 +13878,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 4YDhaRUtrymlit8YRwfWDamqgoobt61tBiWS0sjsUMGsRp8FdUf43BgPTU0Bpem
+\unrestrict N8Wc10BbjfV5shAgd0mAd3vyNR7A75O4hTvURSzPXLVbCAGZtbT4ESS7mvj3qDj
 
