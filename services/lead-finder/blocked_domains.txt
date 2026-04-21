@@ -33,6 +33,8 @@ accuweather.com
 
 # Technologia i Newsy
 cnet.com
+techradar.com
+tomsguide.com
 techtarget.com
 digitaltrends.com
 gsmarena.com
