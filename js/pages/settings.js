@@ -1677,53 +1677,6 @@ function renderProviderOrder() {
   });
 }
 
-function aiProviderLabel(provider) {
-  const label = aiProviderLabels[provider];
-  if (label) return label;
-  // Fallback: capitalize ID (e.g. 'gpt4' -> 'Gpt4')
-  return provider.charAt(0).toUpperCase() + provider.slice(1);
-}
-
-function renderAiProviderOrder() {
-  const el = document.getElementById("aiProviderOrderList");
-  if (!el) return;
-  el.innerHTML = "";
-  aiProviderOrder.forEach((provider, idx) => {
-    const row = document.createElement("div");
-    row.className = "provider-order-row";
-    row.style.marginBottom = "4px";
-
-    const rank = document.createElement("div");
-    rank.className = "provider-order-rank";
-    rank.textContent = String(idx + 1);
-
-    const name = document.createElement("div");
-    name.className = "provider-order-name";
-    name.textContent = aiProviderLabel(provider);
-
-    const actions = document.createElement("div");
-    actions.className = "provider-order-actions";
-
-    const up = document.createElement("button");
-    up.type = "button";
-    up.className = "btn sm";
-    up.textContent = "↑";
-    up.disabled = idx === 0;
-    up.addEventListener("click", () => moveAiProvider(idx, -1));
-
-    const down = document.createElement("button");
-    down.type = "button";
-    down.className = "btn sm";
-    down.textContent = "↓";
-    down.disabled = idx >= aiProviderOrder.length - 1;
-    down.addEventListener("click", () => moveAiProvider(idx, 1));
-
-    actions.append(up, down);
-    row.append(rank, name, actions);
-    el.appendChild(row);
-  });
-}
-
 let aiProviders = []; // Pełne obiekty dostawców z bazy
 
 function aiProviderLabel(providerObj) {
