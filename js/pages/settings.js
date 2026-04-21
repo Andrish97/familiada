@@ -1724,12 +1724,93 @@ function renderAiProviderOrder() {
   });
 }
 
-let aiProviderLabels = {}; // Dynamiczne etykiety z bazy
+let aiProviders = []; // Pełne obiekty dostawców z bazy
+
+function aiProviderLabel(providerObj) {
+  if (providerObj.label) return providerObj.label;
+  return providerObj.name.charAt(0).toUpperCase() + providerObj.name.slice(1);
+}
+
+function renderAiProviderOrder() {
+  const el = document.getElementById("aiProviderOrderList");
+  if (!el) return;
+  el.innerHTML = "";
+  
+  aiProviders.forEach((p, idx) => {
+    const row = document.createElement("div");
+    row.className = "provider-order-row";
+    row.style.marginBottom = "8px";
+    row.style.display = "flex";
+    row.style.alignItems = "center";
+    row.style.gap = "10px";
+
+    const rank = document.createElement("div");
+    rank.className = "provider-order-rank";
+    rank.style.fontWeight = "bold";
+    rank.textContent = String(idx + 1);
+
+    const infoWrap = document.createElement("div");
+    infoWrap.style.flex = "1";
+
+    const name = document.createElement("div");
+    name.className = "provider-order-name";
+    name.textContent = aiProviderLabel(p);
+
+    const status = document.createElement("div");
+    status.style.fontSize = "11px";
+    
+    const now = new Date();
+    const cooldown = p.cooldown_until ? new Date(p.cooldown_until) : null;
+    
+    if (!p.is_active) {
+      status.textContent = "Wyłączony";
+      status.style.color = "#ff4d4d";
+    } else if (cooldown && cooldown > now) {
+      const diff = Math.ceil((cooldown - now) / 1000);
+      const hours = Math.floor(diff / 3600);
+      const mins = Math.ceil((diff % 3600) / 60);
+      status.textContent = `Zablokowany (Quota) - jeszcze ${hours}h ${mins}m`;
+      status.style.color = "#ffa500";
+    } else {
+      status.textContent = "Aktywny";
+      status.style.color = "#00ff00";
+    }
+    
+    infoWrap.append(name, status);
+
+    const actions = document.createElement("div");
+    actions.className = "provider-order-actions";
+    actions.style.display = "flex";
+    actions.style.gap = "4px";
+
+    const up = document.createElement("button");
+    up.type = "button";
+    up.className = "btn sm";
+    up.textContent = "↑";
+    up.disabled = (idx === 0);
+    up.addEventListener("click", () => moveAiProvider(idx, -1));
+
+    const down = document.createElement("button");
+    down.type = "button";
+    down.className = "btn sm";
+    down.textContent = "↓";
+    down.disabled = (idx === aiProviders.length - 1);
+    down.addEventListener("click", () => moveAiProvider(idx, 1));
+
+    actions.append(up, down);
+    row.append(rank, infoWrap, actions);
+    el.appendChild(row);
+  });
+}
 
 async function saveAiProviderOrder() {
   try {
-    await sb().rpc('update_ai_provider_order', { p_order: aiProviderOrder.join(",") });
-    showToast(`AI: ${aiProviderOrder.join(" → ")}`);
+    // Aktualizuj priorytety dla wszystkich modeli w bazie
+    const updates = aiProviders.map((p, idx) => 
+      sb().from('marketing_ai_providers').update({ priority: idx }).eq('name', p.name)
+    );
+    await Promise.all(updates);
+    showToast(`Kolejność AI zapisana.`);
   } catch(e) {
     console.warn("[AI] save order error:", e);
   }
@@ -1737,36 +1818,27 @@ async function saveAiProviderOrder() {
 
 async function loadAiProviderOrder() {
   try {
-    const { data, error } = await sb().rpc('get_provider_order');
+    const { data, error } = await sb()
+      .from('marketing_ai_providers')
+      .select('*')
+      .order('priority', { ascending: true });
+    
     if (error) throw error;
     if (data) {
-      const row = Array.isArray(data) ? data[0] : data;
-      if (row) {
-        if (row.provider_order) {
-          aiProviderOrder = row.provider_order.split(',').map(p => p.trim().toLowerCase()).filter(Boolean);
-        }
-        if (row.provider_labels) {
-          aiProviderLabels = row.provider_labels;
-        }
-        renderAiProviderOrder();
-      }
-    }
-  } catch(e) {
-    console.warn("[AI] load order error:", e);
-    if (aiProviderOrder.length === 0) {
-      aiProviderOrder = ["openrouter", "groq"];
+      aiProviders = data;
       renderAiProviderOrder();
     }
+  } catch(e) {
+    console.warn("[AI] load providers error:", e);
   }
 }
 
 function moveAiProvider(idx, dir) {
   const newIdx = idx + dir;
-  if (newIdx < 0 || newIdx >= aiProviderOrder.length) return;
-  const next = [...aiProviderOrder];
+  if (newIdx < 0 || newIdx >= aiProviders.length) return;
+  const next = [...aiProviders];
   [next[idx], next[newIdx]] = [next[newIdx], next[idx]];
-  aiProviderOrder = next;
-  localStorage.setItem("aiProviderOrder", JSON.stringify(aiProviderOrder));
+  aiProviders = next;
   renderAiProviderOrder();
   saveAiProviderOrder();
 }
