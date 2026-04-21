@@ -2,13 +2,13 @@
 # {url} - URL strony
 # {title} - tytuł strony  
 # {emails} - lista maili (string)
-# {text} - tekst strony (max 2000 znaków)
+# {text} - tekst strony (max 1000 znaków)
 
 ZADANIE:
 Klasyfikuj czy strona to potencjalny LEAD do systemu interaktywnych eventow
-(DJ, wodzirej, konferansjer, animator, agencja eventowa, prowadzenie publicznosci).
+(DJ, wodzirej, konferansjer, animator, prowadzenie publicznosci).
 
-Celem jest wykrycie osób/firm, które PROWADZĄ, MODERUJĄ lub ORGANIZUJĄ wydarzenia z udziałem publiczności.
+Celem jest wykrycie osob/firm, ktore PROWADZA, MODERUJA lub ORGANIZUJA wydarzenia.
 
 ---------------------------------------
 DANE WEJSCIOWE:
@@ -23,46 +23,57 @@ KROK 1 - TYP STRONY (KLASYFIKACJA)
 =================================================
 
 A) EVENT PROVIDER (HIGH VALUE)
-* DJ weselny, wodzirej, konferansjer, MC, host.
-* Animator (dzieci lub dorośli).
-* Agencja eventowa / Firma organizująca imprezy / integracje.
-* Team building / Gry miejskie / Gry integracyjne.
+* DJ weselny (prowadzacy + oprawa muzyczna)
+* DJ / wodzirej / DJ konferansjer
+* konferansjer / MC / prezenter / host
+* animator (dzieci lub dorośli)
+* agencja eventowa
+* firmy prowadzace eventy / imprezy / organizacja imprez
+* team building / gry integracyjne / gry miejskie
 
-B) VENUE (Miejsce)
-* Hotel, restauracja, sala, miejsce eventowe (bez własnej oferty prowadzenia).
+B) VENUE
+* hotel / restauracja / sala / dekoracje/ miejsce eventowe (bez prowadzenia wydarzen)
 
-C) DIRECTORY / SEO (Katalogi)
-* Bazy firm, Panoramy Firm, Fixly, Oferteo, listingi.
+C) DIRECTORY / SEO
+* katalog firm / listing / panorama / agregator / baza firm
 
-D) NON-EVENT (Inne)
-* Biznesy niezwiązane z eventami.
+D) NON-EVENT
+* inne branze (handel, uslugi bez eventow, edukacja bez eventow itd.)
 
-DODATKOWO: Jeśli strona łączy A i B (np. Hotel z ofertą animacji), wybierz A.
+DODATKOWO: jeśli usługi są kombinowane np. A i B to zaliczaj do A. np. hotel który tez prowadzi imprezy.
 
 ---------------------------------------
-WAZNA ZASADA - AGENCJE I PROWADZENIE
+WAZNA UWAGA - AGENCJE I ORGANIZACJA (ZMIĘKCZENIE)
 ---------------------------------------
-Jeśli strona oferuje "Organizację imprez", "Gry integracyjne" lub "Animacje", ZAŁÓŻ że są one PROWADZONE przez ludzi (LEAD). 
-Odrzuć tylko jeśli to wyłącznie:
-- wynajem sprzętu (technika, nagłośnienie) bez obsługi ludzkiej.
-- sam catering lub same dekoracje.
+JESLI strona oferuje "Organizację imprez", "Eventy firmowe", "Gry integracyjne" lub "Animacje" -> AUTOMATYCZNIE traktuj jako LEAD (Typ A). 
+Zakładamy, że organizacja takich wydarzeń wiąże się z ich prowadzeniem/moderowaniem.
+Odrzuć tylko jeśli to WYŁĄCZNIE wynajem sprzętu (nagłośnienie/namioty) bez personelu.
+
+---------------------------------------
+WAZNA UWAGA - DJ (KLUCZOWE ROZROZNIENIE)
+---------------------------------------
+INTERESUJACE NAS (DJ WARTOSCIOWY):
+* DJ weselny / DJ prowadzacy impreze / DJ + wodzirej
+* prowadzenie zabaw, konkursow, interakcji
+* oprawa muzyczna + prowadzenie wydarzenia
 
 ---------------------------------------
 KROK 3.1 - HARD OVERRIDE (NAJWYŻSZY PRIORYTET)
 ---------------------------------------
-JESLI WYSTEPUJE: DJ weselny, wodzirej, konferansjer, MC, host, animator -> TYPE = A, PRODUCT_FIT = TRUE.
+JESLI WYSTEPUJE: DJ weselny, DJ + prowadzenie, wodzirej, konferansjer, animator -> TYPE = A, PRODUCT_FIT = TRUE.
+IGNORUJ SEO, IGNORUJ brak "idealnych slow". Liczy sie funkcja na scenie.
 
 ---------------------------------------
-FINALNA DECYZJA
+KROK 9 - FINALNA DECYZJA
 ---------------------------------------
-AKCEPTUJ (ok: 1) tylko jeśli widzisz realną ofertę usług na imprezy (Typ A).
+AKCEPTUJ (ok: 1) jeśli (TYPE = A) i posiada jakikolwiek sensowny kontakt email.
 W przeciwnym razie ODRZUĆ (ok: 0).
 
 OUTPUT JSON (TYLKO CZYSTY JSON):
 {
-  "ok": 1 lub 0,
-  "email": "najlepszy mail",
-  "title": "nazwa firmy",
-  "short_description": "opis usług",
-  "reason": "dlaczego to lead (lub dlaczego nie)"
+  "ok": 1,
+  "email": "...",
+  "title": "max 50 znakow",
+  "short_description": "100-200 znakow",
+  "reason": "krótkie uzasadnienie zgodne z 9-krokową logiką"
 }
