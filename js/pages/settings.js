@@ -1678,8 +1678,7 @@ function renderProviderOrder() {
 }
 
 function aiProviderLabel(provider) {
-  const labels = { openrouter: "OpenRouter", groq: "Groq", deepseek: "DeepSeek" };
-  return labels[provider] || provider;
+  return aiProviderLabels[provider] || provider;
 }
 
 function renderAiProviderOrder() {
@@ -1722,12 +1721,39 @@ function renderAiProviderOrder() {
   });
 }
 
+let aiProviderLabels = {}; // Dynamiczne etykiety z bazy
+
 async function saveAiProviderOrder() {
   try {
     await sb().rpc('update_ai_provider_order', { p_order: aiProviderOrder.join(",") });
     showToast(`AI: ${aiProviderOrder.join(" → ")}`);
   } catch(e) {
     console.warn("[AI] save order error:", e);
+  }
+}
+
+async function loadAiProviderOrder() {
+  try {
+    const { data, error } = await sb().rpc('get_provider_order');
+    if (error) throw error;
+    if (data) {
+      const row = Array.isArray(data) ? data[0] : data;
+      if (row) {
+        if (row.provider_order) {
+          aiProviderOrder = row.provider_order.split(',').map(p => p.trim().lower()).filter(Boolean);
+        }
+        if (row.provider_labels) {
+          aiProviderLabels = row.provider_labels;
+        }
+        renderAiProviderOrder();
+      }
+    }
+  } catch(e) {
+    console.warn("[AI] load order error:", e);
+    if (aiProviderOrder.length === 0) {
+      aiProviderOrder = ["openrouter", "groq"];
+      renderAiProviderOrder();
+    }
   }
 }
 
@@ -6314,8 +6340,9 @@ function wireEvents() {
       await mcLoadRuns();
       mcLoadLogs();
       if (document.getElementById("mcAutoRefreshLogs")?.checked) mcStartLogAutoRefresh();
-      renderAiProviderOrder();
-    }
+      await loadAiProviderOrder();
+      }
+
   });
   const mcPanel = document.getElementById("marketingContactsPanel");
   if (mcPanel) mcObserver.observe(mcPanel, { attributes: true, attributeFilter: ["hidden"] });
