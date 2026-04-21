@@ -48,7 +48,6 @@ class SupabaseClient:
             if filters:
                 for k, v in filters.items(): params[k] = f'eq.{v}'
             r = await self.client.get(f'{self.url}/rest/v1/{table}', params=params)
-            # PostgREST zwraca count w nagłówku Content-Range: 0-0/123
             cr = r.headers.get('Content-Range', '')
             return int(cr.split('/')[-1]) if '/' in cr else 0
         except: return 0
@@ -148,7 +147,7 @@ AI_DELAY_REJECT = 2
 AI_TEXT_LIMIT = CONFIG.get('AI_TEXT_LIMIT', 1000)
 PROVIDER_COOLDOWN_SECONDS = CONFIG.get('PROVIDER_COOLDOWN_SECONDS', 60)
 PROVIDER_COOLDOWN_LONG = CONFIG.get('PROVIDER_COOLDOWN_LONG', 300)
-PROVIDER_COOLDOWN_QUOTA = CONFIG.get('PROVIDER_COOLDOWN_QUOTA', 3600)
+PROVIDER_COOLDOWN_QUOTA = 3600
 RAW_BUFFER_THRESHOLD = CONFIG.get('RAW_BUFFER_THRESHOLD', 20)
 SEARCH_RESULTS_LIMIT = CONFIG.get('SEARCH_RESULTS_LIMIT', 20)
 TIMEOUT_SEARCH = 25
@@ -188,7 +187,7 @@ verified_in_run = 0
 attempts_in_run = 0
 critical_errors_in_run = 0
 provider_cooldowns = {} 
-provider_blacklist = set() 
+provider_blacklist = set() # Modele wykluczone w tej sesji (Quota)
 rejected_domains = set() 
 scrape_semaphore = asyncio.Semaphore(MAX_CONCURRENT_SCRAPES)
 playwright_semaphore = asyncio.Semaphore(MAX_CONCURRENT_PLAYWRIGHT)
@@ -274,7 +273,6 @@ async def producer_task(run_id):
     while task_status in ("running", "paused") and task_run_id == run_id:
         if task_status == "paused":
             await asyncio.sleep(5); continue
-            
         pending_count = await supabase.get_count('marketing_raw_contacts', {'status': 'pending'})
         if pending_count < RAW_BUFFER_THRESHOLD:
             cities = await supabase.select('marketing_cities', 'name', {'is_active': 'true'})
@@ -289,7 +287,6 @@ async def producer_task(run_id):
                 picked = random.choice(available)
                 role, city = picked.split(':', 1)
                 logger.info(f"Za mało surowych kontaktów w bazie ({pending_count}), rozpoczynam wyszukiwanie {role} {city}")
-                
                 total_added = 0
                 for template in SEARCH_TEMPLATES:
                     if task_status not in ("running", "paused"): break
@@ -298,17 +295,12 @@ async def producer_task(run_id):
                         r = await global_client.get(f'{SEARXNG_URL}/search', params={'q': query, 'format': 'json', 'language': 'pl-PL', 'limit': SEARCH_RESULTS_LIMIT}, timeout=TIMEOUT_SEARCH)
                         if r.status_code == 200:
                             results = r.json().get('results', [])
-                            # RÓWNOLEGŁE SCRAPOWANIE WYNIKÓW
                             added_results = await asyncio.gather(*[scrape_and_save_lead(res) for res in results])
                             total_added += sum(added_results)
-                        else:
-                            print(f"[SERVER] SearXNG Error {r.status_code}")
-                    except Exception as e:
-                        print(f"[SERVER] SearXNG Error: {e}")
-                
+                    except: pass
                 logger.info(f"Zakończono wyszukiwanie {role} {city}, dodano {total_added} surowych kontaktów.")
                 await supabase.insert('marketing_search_queries_log', {'query_text': picked})
-        await asyncio.sleep(5) # Częstsze sprawdzanie bufora
+        await asyncio.sleep(5)
 
 async def call_ai_provider(name, prompt):
     cfg = AI_PROVIDERS.get(name)
@@ -326,7 +318,7 @@ async def call_ai_provider(name, prompt):
             err_body = r.text.lower()
             print(f"[SERVER] {name.capitalize()} Error {r.status_code}: {r.text[:200]}")
             if r.status_code in (401, 403, 429) and any(x in err_body for x in ("day", "daily", "quota", "credit", "unauthorized")):
-                return 403, None, "Quota limit"
+                return 403, None, "Quota reached"
             return r.status_code, None, r.text[:100]
     except Exception as e: return 500, None, str(e)
 
@@ -348,18 +340,25 @@ async def verify_raw_lead(lead, target):
     prompt = base.replace('{url}', url).replace('{title}', title).replace('{emails}', str(emails)).replace('{text}', txt[:AI_TEXT_LIMIT])
 
     attempts_in_run += 1
+    # Log postępu tylko RAZ dla danego leada
     logger.info(f"Weryfikacja [{attempts_in_run}] (Znaleziono: {verified_in_run}/{target}): {url}")
 
     while task_status in ("running", "paused") and task_run_id is not None:
         if task_status == "paused":
             await asyncio.sleep(2); continue
-        any_provider_free = False
+            
+        any_provider_configured = False
+        any_provider_available = False
+        
         for provider in [p.strip().lower() for p in order if p.strip()]:
+            if provider in provider_blacklist: continue
+            any_provider_configured = True
+            
             if provider in provider_cooldowns:
-                remains = provider_cooldowns[provider] - time.time()
-                if remains > 0: continue
+                if time.time() < provider_cooldowns[provider]: continue
                 else: del provider_cooldowns[provider]
-            any_provider_free = True
+            
+            any_provider_available = True
             logger.info(f"Weryfikuję przez {provider}")
             status, content, err = await call_ai_provider(provider, prompt)
             if status == 200:
@@ -373,17 +372,21 @@ async def verify_raw_lead(lead, target):
                     provider_cooldowns[provider] = time.time() + PROVIDER_COOLDOWN_SECONDS
                     continue
             elif status == 403:
-                logger.info(f"Dostawca {provider} wyczerpał limit dzienny. Przerwa 1h.")
-                provider_cooldowns[provider] = time.time() + PROVIDER_COOLDOWN_QUOTA
+                logger.info(f"Dostawca {provider} zablokowany w tej sesji (Limit Quota).")
+                provider_blacklist.add(provider)
                 continue
             elif status == 429:
                 provider_cooldowns[provider] = time.time() + PROVIDER_COOLDOWN_SECONDS
                 continue
             else:
-                logger.info(f"Nie udało się przez {provider} (Błąd {status})")
+                logger.info(f"Nie udało się przez {provider}")
                 provider_cooldowns[provider] = time.time() + PROVIDER_COOLDOWN_LONG
                 continue
-        if not any_provider_free:
+        
+        if not any_provider_configured:
+            return "NO_QUOTA"
+            
+        if not any_provider_available:
             print("[SERVER] Oczekiwanie na odblokowanie AI (30s)...")
             await asyncio.sleep(30)
             continue
@@ -398,9 +401,18 @@ async def consumer_task(run_id, target):
         result = await supabase.call_rpc('claim_next_pending_lead')
         if not result or not isinstance(result, list) or len(result) == 0:
             await asyncio.sleep(5); continue
+        
         lead = result[0]
         res = await verify_raw_lead(lead, target)
-        if res is None or res == "FATAL":
+        
+        if res == "NO_QUOTA":
+            logger.error("Brak dostępnych limitów u wszystkich dostawców AI. Przerywam.")
+            await supabase.update('marketing_raw_contacts', {'status': 'pending'}, {'id': lead['id']})
+            task_status = "cancelled"
+            await send_telegram_notification("⚠️ <b>Zlecenie przerwane</b>\nBrak limitów AI u wszystkich dostawców.")
+            break
+
+        if res is None:
             consecutive_critical += 1
             critical_errors_in_run += 1
             await supabase.update('marketing_raw_contacts', {'status': 'pending'}, {'id': lead['id']})
@@ -409,6 +421,7 @@ async def consumer_task(run_id, target):
                 await asyncio.sleep(600)
                 consecutive_critical = 0
             continue
+        
         consecutive_critical = 0
         if res.get('ok') and res.get('email'):
             email = str(res['email']).strip().lower()
@@ -433,19 +446,16 @@ async def warmup_ai_providers():
     else: order = ['openrouter', 'groq', 'deepseek']
     for p in [x.strip().lower() for x in order if x.strip()]:
         status, _, _ = await call_ai_provider(p, "Hey")
-        if status == 200:
-            logger.info(f"Model {p} jest gotowy.")
-        elif status == 403:
-            provider_cooldowns[p] = time.time() + PROVIDER_COOLDOWN_QUOTA
-        else:
+        if status == 403:
+            provider_blacklist.add(p)
+        elif status != 200:
             provider_cooldowns[p] = time.time() + (60 if status == 429 else 300)
 
 async def run_worker(run_id, target):
-    global task_status, verified_in_run, attempts_in_run, critical_errors_in_run, provider_cooldowns, rejected_domains
+    global task_status, verified_in_run, attempts_in_run, critical_errors_in_run, provider_blacklist, provider_cooldowns, rejected_domains
     try:
         task_status, verified_in_run, attempts_in_run, critical_errors_in_run = "running", 0, 0, 0
-        provider_cooldowns.clear()
-        rejected_domains.clear()
+        provider_blacklist.clear(); provider_cooldowns.clear(); rejected_domains.clear()
         await supabase.delete('marketing_search_logs', {'level': 'neq.null'})
         await supabase.update('marketing_raw_contacts', {'status': 'pending'}, {'status': 'processing'})
         logger.info(f"Zlecono {target} kontaktów.")
