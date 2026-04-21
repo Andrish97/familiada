@@ -1740,7 +1740,7 @@ async function loadAiProviderOrder() {
       const row = Array.isArray(data) ? data[0] : data;
       if (row) {
         if (row.provider_order) {
-          aiProviderOrder = row.provider_order.split(',').map(p => p.trim().lower()).filter(Boolean);
+          aiProviderOrder = row.provider_order.split(',').map(p => p.trim().toLowerCase()).filter(Boolean);
         }
         if (row.provider_labels) {
           aiProviderLabels = row.provider_labels;
