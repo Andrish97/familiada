@@ -228,52 +228,62 @@ async def scrape_with_playwright(url):
         except: return None, None
 
 async def scrape_and_save_lead(res):
-    url = res.get('url', '').lower()
-    if not url: return 0
-    parsed = urlparse(url)
-    domain = parsed.netloc.lower().replace('www.', '')
-    if domain in rejected_domains: return 0
-    if any(b in domain for b in BLOCKED_DOMAINS): return 0
-    allowed_tlds = ('.pl', '.com', '.net', '.org', '.eu', '.info', '.biz', '.online', '.site')
-    if not any(url.endswith(t) or f'{t}/' in url for t in allowed_tlds): return 0
-    if await supabase.select('marketing_verified_contacts', 'id', {'url': url}) or await supabase.select('marketing_raw_contacts', 'id', {'url': url}): return 0
-    
-    txt, emails = '', set()
-    async with scrape_semaphore:
-        try:
-            async with httpx.AsyncClient(timeout=TIMEOUT_SCRAPE, follow_redirects=True, headers={'User-Agent': 'Mozilla/5.0'}) as client:
-                r = await client.get(url)
-                if r.status_code == 200:
-                    txt = clean_text(re.sub(r'<[^>]+>', ' ', r.text))
-                    emails = extract_emails(r.text)
-                    if not any(s in url for s in SOCIAL_PLATFORMS) and not emails:
-                        for path in SUBPAGE_PATHS:
-                            try:
-                                r_sub = await client.get(url.rstrip('/') + path, timeout=5)
-                                if r_sub.status_code == 200:
-                                    emails.update(extract_emails(r_sub.text))
-                                    if len(txt) < (AI_TEXT_LIMIT * 0.8): txt += " " + clean_text(re.sub(r'<[^>]+>', ' ', r_sub.text))[:500]
-                                    if emails: break
-                            except: continue
-        except: pass
+    try:
+        url = res.get('url', '').lower()
+        if not url: return 0
+        parsed = urlparse(url)
+        domain = parsed.netloc.lower().replace('www.', '')
+        if domain in rejected_domains: return 0
+        if any(b in domain for b in BLOCKED_DOMAINS): return 0
+        allowed_tlds = ('.pl', '.com', '.net', '.org', '.eu', '.info', '.biz', '.online', '.site')
+        if not any(url.endswith(t) or f'{t}/' in url for t in allowed_tlds): return 0
+        if await supabase.select('marketing_verified_contacts', 'id', {'url': url}) or await supabase.select('marketing_raw_contacts', 'id', {'url': url}): return 0
+        
+        txt, emails = '', set()
+        async with scrape_semaphore:
+            try:
+                async with httpx.AsyncClient(timeout=TIMEOUT_SCRAPE, follow_redirects=True, headers={'User-Agent': 'Mozilla/5.0'}) as client:
+                    r = await client.get(url)
+                    if r.status_code == 200:
+                        txt = clean_text(re.sub(r'<[^>]+>', ' ', r.text))
+                        emails = extract_emails(r.text)
+                        if not any(s in url for s in SOCIAL_PLATFORMS) and not emails:
+                            for path in SUBPAGE_PATHS:
+                                try:
+                                    r_sub = await client.get(url.rstrip('/') + path, timeout=5)
+                                    if r_sub.status_code == 200:
+                                        emails.update(extract_emails(r_sub.text))
+                                        if len(txt) < (AI_TEXT_LIMIT * 0.8): txt += " " + clean_text(re.sub(r'<[^>]+>', ' ', r_sub.text))[:500]
+                                        if emails: break
+                                except: continue
+            except: pass
 
-    is_social = any(s in url for s in SOCIAL_PLATFORMS)
-    if (not emails or len(txt) < 250) and not is_social:
-        p_txt, p_emails = await scrape_with_playwright(url)
-        if p_txt: txt = p_txt
-        if p_emails: emails.update(p_emails)
+        is_social = any(s in url for s in SOCIAL_PLATFORMS)
+        if (not emails or len(txt) < 250) and not is_social:
+            p_txt, p_emails = await scrape_with_playwright(url)
+            if p_txt: txt = p_txt
+            if p_emails: emails.update(p_emails)
 
-    if not emails or len(txt) < 100: return 0
-    txt_low = txt.lower()
-    if not any(k in txt_low for k in REQUIRED_KEYWORDS): return 0
-    if any(k in txt_low for k in NEGATIVE_KEYWORDS): return 0
+        if not emails or len(txt) < 100: return 0
+        txt_low = txt.lower()
+        if not any(k in txt_low for k in REQUIRED_KEYWORDS): return 0
+        if any(k in txt_low for k in NEGATIVE_KEYWORDS): return 0
 
-    return 1 if await supabase.insert('marketing_raw_contacts', {'url': url, 'title': res.get('title',''), 'page_text': txt[:AI_TEXT_LIMIT], 'emails_found': list(emails), 'status': 'pending'}) else 0
+        return 1 if await supabase.insert('marketing_raw_contacts', {'url': url, 'title': res.get('title',''), 'page_text': txt[:AI_TEXT_LIMIT], 'emails_found': list(emails), 'status': 'pending'}) else 0
+    except Exception as e:
+        print(f"[SERVER] Scrape Error for {res.get('url')}: {e}")
+        return 0
 
 async def producer_task(run_id):
+    last_heartbeat = time.time()
     while task_status in ("running", "paused") and task_run_id == run_id:
         if task_status == "paused":
             await asyncio.sleep(5); continue
+            
+        if time.time() - last_heartbeat > 60:
+            print(f"[HEARTBEAT] Producent żyje. Status: {task_status}")
+            last_heartbeat = time.time()
+
         pending_count = await supabase.get_count('marketing_raw_contacts', {'status': 'pending'})
         if pending_count < RAW_BUFFER_THRESHOLD:
             cities = await supabase.select('marketing_cities', 'name', {'is_active': 'true'})
@@ -296,9 +306,17 @@ async def producer_task(run_id):
                         r = await global_client.get(f'{SEARXNG_URL}/search', params={'q': query, 'format': 'json', 'language': 'pl-PL', 'limit': SEARCH_RESULTS_LIMIT}, timeout=TIMEOUT_SEARCH)
                         if r.status_code == 200:
                             results = r.json().get('results', [])
-                            added_results = await asyncio.gather(*[scrape_and_save_lead(res) for res in results])
-                            total_added += sum(added_results)
-                    except: pass
+                            # LIMITUJEMY CZAS NA SCRAPOWANIE PACZKI
+                            try:
+                                added_results = await asyncio.wait_for(
+                                    asyncio.gather(*[scrape_and_save_lead(res) for res in results]),
+                                    timeout=180 # Max 3 minuty na paczkę wyników
+                                )
+                                total_added += sum(added_results)
+                            except asyncio.TimeoutError:
+                                print(f"[SERVER] Timeout podczas scrapowania wyników dla {query}")
+                    except Exception as e:
+                        print(f"[SERVER] SearXNG/Gather Error: {e}")
                 logger.info(f"Zakończono wyszukiwanie {role} {city}, dodano {total_added} surowych kontaktów.")
                 await supabase.insert('marketing_search_queries_log', {'query_text': picked})
         await asyncio.sleep(5)
@@ -311,15 +329,13 @@ async def call_ai_provider(name, prompt):
         headers.update({'Authorization': f'Bearer {cfg["key"]}', 'HTTP-Referer': 'https://familiada.online', 'X-Title': 'Familiada Lead Finder'})
     else:
         headers.update({'Authorization': f'Bearer {cfg["key"]}'})
-        
+    
     payload = {
         'model': cfg['model'],
         'messages': [{'role': 'system', 'content': 'Odpowiadaj tylko JSON.'}, {'role': 'user', 'content': prompt}],
         'temperature': 0.1,
         'max_tokens': 1000
     }
-    
-    # Tryb JSON dla obsługiwanych modeli
     if name in ('deepseek', 'groq'):
         payload['response_format'] = {"type": "json_object"}
 
@@ -362,24 +378,20 @@ async def verify_raw_lead(lead, target):
             status, content, err = await call_ai_provider(provider, prompt)
             
             if status == 200:
-                print(f"[AI RAW RESP - {provider}] {content}") # ZAWSZE LOGUJ RAW
+                print(f"[AI RAW RESP - {provider}] {content}")
                 try:
                     clean_json = re.search(r'\{.*\}', content, re.DOTALL).group()
                     res = json.loads(clean_json)
                     delay = AI_DELAY if res.get('ok') else AI_DELAY_REJECT
                     await asyncio.sleep(delay)
                     if not res.get('ok'):
-                        # Nie blokuj całej domeny, jeśli to portal ogłoszeniowy (chcemy widzieć inne ogłoszenia)
                         is_portal = any(p in domain for p in ('olx.pl', 'fixly.pl', 'oferteo.pl', 'gratka.pl', 'panoramafirm.pl', 'pkt.pl'))
-                        if not is_portal:
-                            rejected_domains.add(domain)
-                    res['_raw_ai_response'] = content[:500]
- 
+                        if not is_portal: rejected_domains.add(domain)
+                    res['_raw_ai_response'] = content[:500] 
                     return res
                 except Exception as parse_err: 
                     msg = f"Model {provider} zwrócił niepoprawny JSON: {parse_err}"
                     logger.error(msg)
-                    # Mała kara 10s za błąd składni, aby nie blokować sesji
                     await supabase.call_rpc('set_ai_provider_cooldown', {'p_name': provider, 'p_seconds': 10, 'p_error': msg})
                     continue
             elif status in (401, 403, 429) and any(x in str(err) for x in ("day", "daily", "quota", "credit", "unauthorized", "insufficient")):
@@ -400,9 +412,15 @@ async def verify_raw_lead(lead, target):
 async def consumer_task(run_id, target):
     global verified_in_run, critical_errors_in_run, task_status
     consecutive_critical = 0
+    last_heartbeat = time.time()
     while task_run_id == run_id and task_status in ("running", "paused") and verified_in_run < target:
         if task_status == "paused":
             await asyncio.sleep(5); continue
+        
+        if time.time() - last_heartbeat > 60:
+            print(f"[HEARTBEAT] Konsument żyje. Status: {task_status}")
+            last_heartbeat = time.time()
+
         result = await supabase.call_rpc('claim_next_pending_lead')
         if not result or not isinstance(result, list) or len(result) == 0:
             await asyncio.sleep(5); continue
@@ -428,7 +446,6 @@ async def consumer_task(run_id, target):
             continue
         
         consecutive_critical = 0
-        raw_resp = res.get('_raw_ai_response', '')
         if res.get('ok') and res.get('email'):
             email = str(res['email']).strip().lower()
             if not await supabase.select('marketing_verified_contacts', 'id', {'email': email}):
@@ -454,7 +471,7 @@ async def warmup_ai_providers():
         if status == 200:
             logger.info(f"Model {name} jest gotowy.")
         elif status in (401, 403, 429) and any(x in str(err) for x in ("day", "daily", "quota", "credit", "unauthorized", "insufficient")):
-            msg = f"Model {name} wyczerpał limit (Błąd {status}): {err}"
+            msg = f"Model {name} wyczerpał limit. Cooldown 24h. Błąd: {err}"
             logger.info(msg)
             await supabase.call_rpc('set_ai_provider_cooldown', {'p_name': name, 'p_seconds': PROVIDER_COOLDOWN_QUOTA, 'p_error': msg})
         else:
