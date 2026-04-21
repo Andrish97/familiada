@@ -2,13 +2,13 @@
 # {url} - URL strony
 # {title} - tytuł strony  
 # {emails} - lista maili (string)
-# {text} - tekst strony (max 2000 znaków)
+# {text} - tekst strony (max 1000 znaków)
 
 ZADANIE:
 Klasyfikuj czy strona to potencjalny LEAD do systemu interaktywnych eventow
-(DJ, wodzirej, konferansjer, animator, agencja eventowa, prowadzenie publicznosci).
+(DJ, wodzirej, konferansjer, animator, prowadzenie publicznosci).
 
-Celem jest wykrycie osób/firm, które PROWADZĄ, MODERUJĄ lub ORGANIZUJĄ wydarzenia z udziałem publiczności.
+Celem jest wykrycie osob/firm, które PROWADZĄ, MODERUJĄ lub ORGANIZUJĄ wydarzenia z udziałem publiczności.
 
 ---------------------------------------
 DANE WEJSCIOWE:
@@ -19,45 +19,47 @@ MAILE: {emails}
 TEXT: {text}
 
 =================================================
-KROK 1 - TYP STRONY (KLASYFIKACJA)
+KROK 1 - TYP STRONY I SPECJALIZACJA
 =================================================
 
+KRYTERIUM ROZMIARU I SPECJALIZACJI (WAŻNE):
+Odrzucaj firmy o wąskiej specjalizacji fizycznej, które sprzedają tylko jedną, konkretną atrakcję (np. ścianka wspinaczkowa, park trampolin, paintball, gokarty, tor przeszkód). One są "obiektami sportowymi", a nie agencjami eventowymi – nie potrzebują prowadzenia teleturniejów.
+AKCEPTUJ TYLKO firmy, które oferują KOMPLEKSOWĄ organizację (agencje eventowe) lub szeroką gamę usług moderowanych (DJ, wodzirej, konferansjer, animatorzy).
+
 A) EVENT PROVIDER (HIGH VALUE)
-* DJ weselny, wodzirej, konferansjer, MC, host.
-* Animator (dzieci lub dorośli).
-* Agencja eventowa / Firma organizująca imprezy / integracje.
-* Team building / Gry miejskie / Gry integracyjne.
+* DJ weselny/eventowy + prowadzenie
+* Wodzirej / Konferansjer / MC
+* Agencja eventowa (szeroki wachlarz usług)
+* Animatorzy prowadzący imprezy (nie tylko atrakcje fizyczne)
 
-B) VENUE (Miejsce)
-* Hotel, restauracja, sala, miejsce eventowe (bez własnej oferty prowadzenia).
+B) VENUE / OBIEKT SPORTOWY (ODRZUCAJ)
+* Hotele, sale, restauracje (chyba że mają własny dział eventowy/DJ-a).
+* Obiekty sportowe z jedną atrakcją (wspinaczka, trampoliny, paintball, gokarty).
 
-C) DIRECTORY / SEO (Katalogi)
-* Bazy firm, Panoramy Firm, Fixly, Oferteo, listingi.
+C) DIRECTORY / SEO
+* Katalogi, bazy, listy (Odrzucaj).
 
-D) NON-EVENT (Inne)
-* Biznesy niezwiązane z eventami.
-
-DODATKOWO: Jeśli strona łączy A i B (np. Hotel z ofertą animacji), wybierz A.
+D) NON-EVENT
+* Inne branże (Odrzucaj).
 
 ---------------------------------------
 WAZNA ZASADA - AGENCJE I PROWADZENIE
 ---------------------------------------
-Jeśli strona oferuje "Organizację imprez", "Gry integracyjne" lub "Animacje", ZAŁÓŻ że są one PROWADZONE przez ludzi (LEAD). 
-Odrzuć tylko jeśli to wyłącznie:
-- wynajem sprzętu (technika, nagłośnienie) bez obsługi ludzkiej.
-- sam catering lub same dekoracje.
+Jeśli strona oferuje "Organizację imprez", "Eventy firmowe" lub "Animacje", ale jest to wąska oferta jednej atrakcji (np. "wynajmij naszą ściankę wspinaczkową") -> ODRZUĆ (Typ B).
+Odrzuć, jeśli firma jest tylko dostawcą sprzętu lub miejsca bez personelu prowadzącego imprezę.
 
 ---------------------------------------
-KROK 3.1 - HARD OVERRIDE (NAJWYŻSZY PRIORYTET)
+KROK 3.1 - HARD OVERRIDE
 ---------------------------------------
-JESLI WYSTEPUJE: DJ weselny, wodzirej, konferansjer, MC, host, animator -> TYPE = A, PRODUCT_FIT = TRUE.
+JESLI WYSTEPUJE: DJ weselny, DJ + prowadzenie, wodzirej, konferansjer, animator -> TYPE = A, PRODUCT_FIT = TRUE.
+IGNORUJ wszystko inne, jeśli to są profesjonalni prowadzący z mikrofonem.
 
 ---------------------------------------
 FINALNA DECYZJA
 ---------------------------------------
 AKCEPTUJ (ok: 1) TYLKO JEŚLI spełnione są oba warunki:
-1. Widzisz realną ofertę usług na imprezy (Typ A).
-2. Email należy do firmy/osoby, a NIE do portalu ogłoszeniowego (odrzuć jeśli mail to np. @fixly.pl, @oferteo.pl, @olx.pl, @panoramafirm.pl itp.).
+1. TYPE = A (Dostawca usług moderowanych).
+2. Posiada REALNY EMAIL właściciela/firmy, a NIE mail portalu ogłoszeniowego (@fixly.pl, @oferteo.pl, @olx.pl, @panoramafirm.pl itp.).
 
 W przeciwnym razie ODRZUĆ (ok: 0).
 
