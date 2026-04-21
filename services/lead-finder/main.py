@@ -311,9 +311,20 @@ async def call_ai_provider(name, prompt):
         headers.update({'Authorization': f'Bearer {cfg["key"]}', 'HTTP-Referer': 'https://familiada.online', 'X-Title': 'Familiada Lead Finder'})
     else:
         headers.update({'Authorization': f'Bearer {cfg["key"]}'})
+        
+    payload = {
+        'model': cfg['model'],
+        'messages': [{'role': 'system', 'content': 'Odpowiadaj tylko JSON.'}, {'role': 'user', 'content': prompt}],
+        'temperature': 0.1,
+        'max_tokens': 1000
+    }
+    
+    # Tryb JSON dla obsługiwanych modeli
+    if name in ('deepseek', 'groq'):
+        payload['response_format'] = {"type": "json_object"}
+
     try:
-        r = await global_client.post(cfg['endpoint'], headers=headers,
-            json={'model': cfg['model'], 'messages': [{'role': 'system', 'content': 'Odpowiadaj tylko JSON.'}, {'role': 'user', 'content': prompt}], 'temperature': 0.1}, timeout=cfg['timeout'])
+        r = await global_client.post(cfg['endpoint'], headers=headers, json=payload, timeout=cfg['timeout'])
         if r.status_code == 200: return 200, r.json()['choices'][0]['message']['content'], None
         else:
             err_body = r.text.lower()
@@ -326,7 +337,6 @@ async def verify_raw_lead(lead, target):
     parsed = urlparse(url)
     domain = parsed.netloc.lower().replace('www.', '')
     
-    # SAFETY: Odrzuć jeśli domena jest na czarnej liście (nawet jeśli już jest w bazie)
     if domain in rejected_domains or any(b in domain for b in BLOCKED_DOMAINS):
         return {"ok": 0, "reason": "Domena zablokowana (Bouncer Safety)."}
 
@@ -344,8 +354,6 @@ async def verify_raw_lead(lead, target):
             
         providers_data = await supabase.call_rpc('get_available_ai_providers')
         if not providers_data: return "NO_QUOTA"
-        
-        # Normalizacja wyniku z RPC (może być listą lub słownikiem)
         providers = providers_data if isinstance(providers_data, list) else [providers_data]
         
         for p_info in providers:
@@ -354,17 +362,20 @@ async def verify_raw_lead(lead, target):
             status, content, err = await call_ai_provider(provider, prompt)
             
             if status == 200:
+                print(f"[AI RAW RESP - {provider}] {content}") # ZAWSZE LOGUJ RAW
                 try:
-                    res = json.loads(re.search(r'\{.*\}', content, re.DOTALL).group().replace("'", '"'))
+                    clean_json = re.search(r'\{.*\}', content, re.DOTALL).group()
+                    res = json.loads(clean_json)
                     delay = AI_DELAY if res.get('ok') else AI_DELAY_REJECT
                     await asyncio.sleep(delay)
                     if not res.get('ok'): rejected_domains.add(domain)
                     res['_raw_ai_response'] = content[:500] 
                     return res
-                except: 
-                    msg = f"Model {provider} zwrócił niepoprawny JSON."
+                except Exception as parse_err: 
+                    msg = f"Model {provider} zwrócił niepoprawny JSON: {parse_err}"
                     logger.error(msg)
-                    await supabase.call_rpc('set_ai_provider_cooldown', {'p_name': provider, 'p_seconds': PROVIDER_COOLDOWN_SECONDS, 'p_error': msg})
+                    # Mała kara 10s za błąd składni, aby nie blokować sesji
+                    await supabase.call_rpc('set_ai_provider_cooldown', {'p_name': provider, 'p_seconds': 10, 'p_error': msg})
                     continue
             elif status in (401, 403, 429) and any(x in str(err) for x in ("day", "daily", "quota", "credit", "unauthorized", "insufficient")):
                 msg = f"Dostawca {provider} wyczerpał limit (Błąd {status}): {err}"
@@ -395,7 +406,7 @@ async def consumer_task(run_id, target):
         res = await verify_raw_lead(lead, target)
         
         if res == "NO_QUOTA":
-            logger.error("Brak dostępnych limitów u wszystkich dostawców AI w bazie danych. Przerywam.")
+            logger.error("Brak dostępnych limitów u wszystkich dostawców AI. PRZERWANO.")
             await supabase.update('marketing_raw_contacts', {'status': 'pending'}, {'id': lead['id']})
             task_status = "cancelled"
             await send_telegram_notification("⚠️ <b>Zlecenie przerwane</b>\nBrak limitów AI u wszystkich dostawców.")
@@ -422,13 +433,11 @@ async def consumer_task(run_id, target):
                 })
                 verified_in_run += 1
                 logger.info(f"Zweryfikowano {lead['url']}. Przyczyna: {res.get('reason','')}")
-                if raw_resp: print(f"[AI RESP] {raw_resp}")
             await supabase.delete('marketing_raw_contacts', {'id': lead['id']})
         else:
             reason = str(res.get('reason',''))
             await supabase.update('marketing_raw_contacts', {'status': 'rejected', 'reject_reason': reason[:500]}, {'id': lead['id']})
             logger.info(f"Odrzucono {lead['url']}. Przyczyna: {reason}")
-            if raw_resp: print(f"[AI RESP] {raw_resp}")
 
 async def warmup_ai_providers():
     print("[SERVER] Rozgrzewanie modeli AI (Hey)...")
@@ -440,7 +449,7 @@ async def warmup_ai_providers():
         if status == 200:
             logger.info(f"Model {name} jest gotowy.")
         elif status in (401, 403, 429) and any(x in str(err) for x in ("day", "daily", "quota", "credit", "unauthorized", "insufficient")):
-            msg = f"Model {name} wyczerpał limit. Cooldown 24h. Błąd: {err}"
+            msg = f"Model {name} wyczerpał limit (Błąd {status}): {err}"
             logger.info(msg)
             await supabase.call_rpc('set_ai_provider_cooldown', {'p_name': name, 'p_seconds': PROVIDER_COOLDOWN_QUOTA, 'p_error': msg})
         else:
