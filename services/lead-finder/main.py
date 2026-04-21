@@ -34,9 +34,25 @@ global_client = httpx.AsyncClient(timeout=60)
 class SupabaseClient:
     def __init__(self, url, key):
         self.url = url
-        self.headers = {'apikey': key, 'Authorization': f'Bearer {key}', 'Content-Type': 'application/json'}
+        self.headers = {
+            'apikey': key, 
+            'Authorization': f'Bearer {key}', 
+            'Content-Type': 'application/json',
+            'Prefer': 'count=exact'
+        }
         self.client = httpx.AsyncClient(timeout=30, headers=self.headers)
     
+    async def get_count(self, table, filters=None):
+        try:
+            params = {'select': 'id', 'limit': 1}
+            if filters:
+                for k, v in filters.items(): params[k] = f'eq.{v}'
+            r = await self.client.get(f'{self.url}/rest/v1/{table}', params=params)
+            # PostgREST zwraca count w nagłówku Content-Range: 0-0/123
+            cr = r.headers.get('Content-Range', '')
+            return int(cr.split('/')[-1]) if '/' in cr else 0
+        except: return 0
+
     async def insert(self, table, data):
         try:
             r = await self.client.post(f'{self.url}/rest/v1/{table}', json=data)
@@ -172,6 +188,7 @@ verified_in_run = 0
 attempts_in_run = 0
 critical_errors_in_run = 0
 provider_cooldowns = {} 
+provider_blacklist = set() 
 rejected_domains = set() 
 scrape_semaphore = asyncio.Semaphore(MAX_CONCURRENT_SCRAPES)
 playwright_semaphore = asyncio.Semaphore(MAX_CONCURRENT_PLAYWRIGHT)
@@ -257,8 +274,9 @@ async def producer_task(run_id):
     while task_status in ("running", "paused") and task_run_id == run_id:
         if task_status == "paused":
             await asyncio.sleep(5); continue
-        pending = await supabase.select('marketing_raw_contacts', 'id', {'status': 'pending'}, limit=RAW_BUFFER_THRESHOLD)
-        if not pending or len(pending) < RAW_BUFFER_THRESHOLD:
+            
+        pending_count = await supabase.get_count('marketing_raw_contacts', {'status': 'pending'})
+        if pending_count < RAW_BUFFER_THRESHOLD:
             cities = await supabase.select('marketing_cities', 'name', {'is_active': 'true'})
             if cities:
                 history = await supabase.select('marketing_search_queries_log', 'query_text')
@@ -270,22 +288,27 @@ async def producer_task(run_id):
                     available = pool
                 picked = random.choice(available)
                 role, city = picked.split(':', 1)
-                logger.info(f"Za mało surowych kontaktów w bazie, rozpoczynam wyszukiwanie {role} {city}")
+                logger.info(f"Za mało surowych kontaktów w bazie ({pending_count}), rozpoczynam wyszukiwanie {role} {city}")
+                
                 total_added = 0
                 for template in SEARCH_TEMPLATES:
-                    if task_status != "running": break
+                    if task_status not in ("running", "paused"): break
                     query = template.replace('{role}', role).replace('{city}', city)
                     try:
                         r = await global_client.get(f'{SEARXNG_URL}/search', params={'q': query, 'format': 'json', 'language': 'pl-PL', 'limit': SEARCH_RESULTS_LIMIT}, timeout=TIMEOUT_SEARCH)
                         if r.status_code == 200:
-                            for res in r.json().get('results', []): total_added += await scrape_and_save_lead(res)
+                            results = r.json().get('results', [])
+                            # RÓWNOLEGŁE SCRAPOWANIE WYNIKÓW
+                            added_results = await asyncio.gather(*[scrape_and_save_lead(res) for res in results])
+                            total_added += sum(added_results)
                         else:
-                            print(f"[SERVER] SearXNG Error {r.status_code}: {r.text[:100]}")
+                            print(f"[SERVER] SearXNG Error {r.status_code}")
                     except Exception as e:
-                        print(f"[SERVER] SearXNG Connection Error: {e}")
+                        print(f"[SERVER] SearXNG Error: {e}")
+                
                 logger.info(f"Zakończono wyszukiwanie {role} {city}, dodano {total_added} surowych kontaktów.")
                 await supabase.insert('marketing_search_queries_log', {'query_text': picked})
-        await asyncio.sleep(15)
+        await asyncio.sleep(5) # Częstsze sprawdzanie bufora
 
 async def call_ai_provider(name, prompt):
     cfg = AI_PROVIDERS.get(name)
@@ -295,7 +318,6 @@ async def call_ai_provider(name, prompt):
         headers.update({'Authorization': f'Bearer {cfg["key"]}', 'HTTP-Referer': 'https://familiada.online', 'X-Title': 'Familiada Lead Finder'})
     else:
         headers.update({'Authorization': f'Bearer {cfg["key"]}'})
-        
     try:
         r = await global_client.post(cfg['endpoint'], headers=headers,
             json={'model': cfg['model'], 'messages': [{'role': 'system', 'content': 'Odpowiadaj tylko JSON.'}, {'role': 'user', 'content': prompt}], 'temperature': 0.1}, timeout=cfg['timeout'])
@@ -332,13 +354,11 @@ async def verify_raw_lead(lead, target):
         if task_status == "paused":
             await asyncio.sleep(2); continue
         any_provider_free = False
-        
         for provider in [p.strip().lower() for p in order if p.strip()]:
             if provider in provider_cooldowns:
                 remains = provider_cooldowns[provider] - time.time()
                 if remains > 0: continue
                 else: del provider_cooldowns[provider]
-            
             any_provider_free = True
             logger.info(f"Weryfikuję przez {provider}")
             status, content, err = await call_ai_provider(provider, prompt)
@@ -416,7 +436,6 @@ async def warmup_ai_providers():
         if status == 200:
             logger.info(f"Model {p} jest gotowy.")
         elif status == 403:
-            print(f"[SERVER] Model {p} wyczerpał limit. Cooldown 1h.")
             provider_cooldowns[p] = time.time() + PROVIDER_COOLDOWN_QUOTA
         else:
             provider_cooldowns[p] = time.time() + (60 if status == 429 else 300)
