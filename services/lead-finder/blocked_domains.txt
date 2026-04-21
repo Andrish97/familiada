@@ -1,13 +1,4 @@
-# Social Media
-facebook.com
-instagram.com
-twitter.com
-linkedin.com
-youtube.com
-pinterest.com
-tiktok.com
-
-# Technologia i Newsy (GIGANCI - tych blokujemy)
+# Technologia i Newsy (GIGANCI - tych blokujemy, bo to portale z artykułami)
 cnet.com
 techradar.com
 tomsguide.com
