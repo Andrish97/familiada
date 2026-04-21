@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict sbx3NQ2y8RXqdQ9Df5ytVuGnnpHMQYJvZYRKgKh3cBiqhdppk8orBS8Ubsir05x
+\restrict GycmFqNktYQ3NDhdVcVK8uv0aRlMqo0Dd98EaVNR1SM8j6SRsngX3NPqWj6bimA
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -2908,19 +2908,6 @@ begin
 
   return out;
 end;
-$$;
-
-
---
--- Name: get_provider_order(); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."get_provider_order"() RETURNS TABLE("provider_order" "text", "provider_labels" "jsonb")
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    AS $$
-BEGIN
-  RETURN QUERY SELECT s.provider_order, s.provider_labels FROM "public"."ai_settings" s LIMIT 1;
-END;
 $$;
 
 
@@ -9994,21 +9981,6 @@ $$;
 
 
 --
--- Name: update_ai_provider_order("text"); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."update_ai_provider_order"("p_order" "text") RETURNS "void"
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    AS $$
-BEGIN
-  UPDATE "public"."ai_settings" 
-  SET "provider_order" = p_order, "updated_at" = now()
-  WHERE id IN (SELECT id FROM "public"."ai_settings" LIMIT 1);
-END;
-$$;
-
-
---
 -- Name: update_base_share_role("uuid", "uuid", "public"."base_share_role"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -10151,18 +10123,6 @@ begin
   set is_active = true
   where id = p_logo_id and user_id = v_uid;
 end $$;
-
-
---
--- Name: ai_settings; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE "public"."ai_settings" (
-    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
-    "provider_order" "text" DEFAULT 'openrouter,groq'::"text" NOT NULL,
-    "updated_at" timestamp with time zone DEFAULT "now"(),
-    "provider_labels" "jsonb" DEFAULT '{"groq": "Groq", "deepseek": "DeepSeek", "openrouter": "OpenRouter"}'::"jsonb"
-);
 
 
 --
@@ -11002,14 +10962,6 @@ CREATE TABLE "public"."user_market_library" (
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "game_id" "uuid"
 );
-
-
---
--- Name: ai_settings ai_settings_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY "public"."ai_settings"
-    ADD CONSTRAINT "ai_settings_pkey" PRIMARY KEY ("id");
 
 
 --
@@ -12852,19 +12804,6 @@ CREATE POLICY "Users can update their own rating" ON "public"."app_ratings" FOR 
 
 
 --
--- Name: ai_settings; Type: ROW SECURITY; Schema: public; Owner: -
---
-
-ALTER TABLE "public"."ai_settings" ENABLE ROW LEVEL SECURITY;
-
---
--- Name: ai_settings ai_settings_all; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "ai_settings_all" ON "public"."ai_settings" USING (true) WITH CHECK (true);
-
-
---
 -- Name: answers; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -13953,5 +13892,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict sbx3NQ2y8RXqdQ9Df5ytVuGnnpHMQYJvZYRKgKh3cBiqhdppk8orBS8Ubsir05x
+\unrestrict GycmFqNktYQ3NDhdVcVK8uv0aRlMqo0Dd98EaVNR1SM8j6SRsngX3NPqWj6bimA
 
