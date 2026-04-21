@@ -1,62 +1,30 @@
-# Systemy i Wyszukiwarki
-google.com
-google.pl
-google.de
-bing.com
-duckduckgo.com
-yahoo.com
-ask.com
-baidu.com
-yandex.com
-microsoft.com
-apple.com
-icloud.com
-wikipedia.org
-brave.com
+# Social Media
+facebook.com
+instagram.com
+twitter.com
+linkedin.com
+youtube.com
+pinterest.com
+tiktok.com
 
-# Sklepy, Słowniki i Aplikacje
-apps.microsoft.com
-play.google.com
-apps.apple.com
-amazon.com
-amazon.pl
-ebay.com
-allegro.pl
-olx.pl
-sprzedajemy.pl
-sjp.pwn.pl
-pwn.pl
-merriam-webster.com
-dictionary.com
-weather.com
-accuweather.com
-
-# Technologia i Newsy
+# Technologia i Newsy (GIGANCI - tych blokujemy)
 cnet.com
 techradar.com
 tomsguide.com
 techtarget.com
 digitaltrends.com
 gsmarena.com
-techtudo.com.br
-techtudo.com
 gizmodo.com
 theverge.com
-filmweb.pl
-filmpolski.pl
-fdb.pl
-imdb.com
-rottentomatoes.com
 
-# Inne śmieciowe
-github.com
-stackoverflow.com
-reddit.com
-quora.com
-pinterest.com
-archive.org
-facebook.com/messages
-twitter.com/login
-linkedin.com/jobs
-officeapps.live.com
-live.com
+# Inne (Nieproduktywne)
+wikipedia.org
+interia.pl
+onet.pl
+wp.pl
+gazeta.pl
+allegro.pl
+ebay.com
+amazon.com
+weather.com
+accuweather.com

@@ -368,8 +368,13 @@ async def verify_raw_lead(lead, target):
                     res = json.loads(clean_json)
                     delay = AI_DELAY if res.get('ok') else AI_DELAY_REJECT
                     await asyncio.sleep(delay)
-                    if not res.get('ok'): rejected_domains.add(domain)
-                    res['_raw_ai_response'] = content[:500] 
+                    if not res.get('ok'):
+                        # Nie blokuj całej domeny, jeśli to portal ogłoszeniowy (chcemy widzieć inne ogłoszenia)
+                        is_portal = any(p in domain for p in ('olx.pl', 'fixly.pl', 'oferteo.pl', 'gratka.pl', 'panoramafirm.pl', 'pkt.pl'))
+                        if not is_portal:
+                            rejected_domains.add(domain)
+                    res['_raw_ai_response'] = content[:500]
+ 
                     return res
                 except Exception as parse_err: 
                     msg = f"Model {provider} zwrócił niepoprawny JSON: {parse_err}"
