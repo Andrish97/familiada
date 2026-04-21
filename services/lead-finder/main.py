@@ -205,7 +205,7 @@ def clean_text(text):
 def extract_emails(html):
     found = set()
     EXT = ('.png', '.jpg', '.jpeg', '.gif', '.svg', '.pdf', '.zip', '.js', '.css', '.webp', '.woff', '.woff2')
-    JUNK_PREFIXES = ('webmaster@', 'dmca@', 'privacy@', 'subscriptions@', 'legal@', 'press@', 'noreply@', 'office@it')
+    JUNK_PREFIXES = ('webmaster@', 'dmca@', 'privacy@', 'subscriptions@', 'legal@', 'press@', 'noreply@', 'office@it', 'jan@', 'test@', 'example@', 'mail@', 'email@', 'xyz@')
     for e in EMAIL_REGEX.findall(html):
         e_low = e.lower()
         if any(e_low.endswith(x) for x in EXT): continue
