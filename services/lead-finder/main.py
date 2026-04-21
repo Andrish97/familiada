@@ -92,10 +92,8 @@ class SupabaseClient:
             r = await self.client.post(f'{self.url}/rest/v1/rpc/{fn}', json=params or {})
             if r.status_code in (200, 201): return r.json()
             if r.status_code == 204: return True
-            print(f"[SERVER] RPC {fn} Error {r.status_code}: {r.text}")
             return None
         except Exception as e:
-            print(f"[SERVER] RPC {fn} Exception: {e}")
             return None
 
 SUPABASE_URL = "http://kong:8000"
@@ -152,7 +150,7 @@ AI_DELAY_REJECT = 2
 AI_TEXT_LIMIT = CONFIG.get('AI_TEXT_LIMIT', 1000)
 PROVIDER_COOLDOWN_SECONDS = CONFIG.get('PROVIDER_COOLDOWN_SECONDS', 60)
 PROVIDER_COOLDOWN_LONG = CONFIG.get('PROVIDER_COOLDOWN_LONG', 300)
-PROVIDER_COOLDOWN_QUOTA = 86400 # 24 GODZINY dla dziennych limitów
+PROVIDER_COOLDOWN_QUOTA = 86400 # 24 GODZINY
 RAW_BUFFER_THRESHOLD = CONFIG.get('RAW_BUFFER_THRESHOLD', 20)
 SEARCH_RESULTS_LIMIT = CONFIG.get('SEARCH_RESULTS_LIMIT', 20)
 TIMEOUT_SEARCH = 25
@@ -319,10 +317,7 @@ async def call_ai_provider(name, prompt):
         if r.status_code == 200: return 200, r.json()['choices'][0]['message']['content'], None
         else:
             err_body = r.text.lower()
-            print(f"[SERVER] {name.capitalize()} Error {r.status_code}: {r.text[:200]}")
-            if r.status_code in (401, 403, 429) and any(x in err_body for x in ("day", "daily", "quota", "credit", "unauthorized")):
-                return 403, None, "Quota reached"
-            return r.status_code, None, r.text[:100]
+            return r.status_code, None, err_body[:200]
     except Exception as e: return 500, None, str(e)
 
 async def verify_raw_lead(lead, target):
@@ -330,7 +325,10 @@ async def verify_raw_lead(lead, target):
     url, txt, emails, title = lead['url'], lead['page_text'], lead['emails_found'], lead.get('title', '')
     parsed = urlparse(url)
     domain = parsed.netloc.lower().replace('www.', '')
-    if domain in rejected_domains: return {"ok": 0, "reason": "Domena wcześniej odrzucona w tej sesji."}
+    
+    # SAFETY: Odrzuć jeśli domena jest na czarnej liście (nawet jeśli już jest w bazie)
+    if domain in rejected_domains or any(b in domain for b in BLOCKED_DOMAINS):
+        return {"ok": 0, "reason": "Domena zablokowana (Bouncer Safety)."}
 
     prompt_path = os.path.join(os.path.dirname(__file__), 'ai_prompt.txt')
     with open(prompt_path, 'r', encoding='utf-8') as f:
@@ -344,7 +342,6 @@ async def verify_raw_lead(lead, target):
         if task_status == "paused":
             await asyncio.sleep(2); continue
             
-        # Pobierz modele, które NIE SĄ na cooldownie i są aktywne
         providers = await supabase.call_rpc('get_available_ai_providers')
         if not providers: return "NO_QUOTA"
         
@@ -359,24 +356,21 @@ async def verify_raw_lead(lead, target):
                     delay = AI_DELAY if res.get('ok') else AI_DELAY_REJECT
                     await asyncio.sleep(delay)
                     if not res.get('ok'): rejected_domains.add(domain)
-                    # Dodaj odpowiedź AI do obiektu decyzji, aby trafiła do logów
                     res['_raw_ai_response'] = content[:500] 
                     return res
                 except: 
+                    logger.error(f"Model {provider} zwrócił niepoprawny JSON.")
                     await supabase.call_rpc('set_ai_provider_cooldown', {'p_name': provider, 'p_seconds': PROVIDER_COOLDOWN_SECONDS, 'p_error': 'JSON Parse Error'})
                     continue
-            elif status == 403:
-                logger.info(f"Dostawca {provider} zablokowany (Quota). Przerwa 24h.")
-                await supabase.call_rpc('set_ai_provider_cooldown', {'p_name': provider, 'p_seconds': PROVIDER_COOLDOWN_QUOTA, 'p_error': 'Quota Limit'})
-                continue # Sprawdź kolejny model z listy
-            elif status == 429:
-                await supabase.call_rpc('set_ai_provider_cooldown', {'p_name': provider, 'p_seconds': PROVIDER_COOLDOWN_SECONDS, 'p_error': 'Rate Limit'})
+            elif status in (401, 403, 429) and any(x in str(err) for x in ("day", "daily", "quota", "credit", "unauthorized", "insufficient")):
+                logger.info(f"Dostawca {provider} wyczerpał limit (Błąd {status}): {err}")
+                await supabase.call_rpc('set_ai_provider_cooldown', {'p_name': provider, 'p_seconds': PROVIDER_COOLDOWN_QUOTA, 'p_error': f'Quota: {err}'})
                 continue
             else:
-                await supabase.call_rpc('set_ai_provider_cooldown', {'p_name': provider, 'p_seconds': PROVIDER_COOLDOWN_LONG, 'p_error': f'Błąd {status}'})
+                logger.info(f"Dostawca {provider} zwrócił błąd {status}: {err}")
+                await supabase.call_rpc('set_ai_provider_cooldown', {'p_name': provider, 'p_seconds': PROVIDER_COOLDOWN_LONG, 'p_error': f'HTTP {status}: {err}'})
                 continue
         
-        # Jeśli tu dotarliśmy, oznacza to, że wszystkie modele z tej tury wpadły w cooldown
         print("[SERVER] Oczekiwanie na odblokowanie AI (30s)...")
         await asyncio.sleep(30)
     return None
@@ -395,10 +389,10 @@ async def consumer_task(run_id, target):
         res = await verify_raw_lead(lead, target)
         
         if res == "NO_QUOTA":
-            logger.error("Brak dostępnych limitów u wszystkich dostawców AI w bazie danych. Przerywam.")
+            logger.error("Brak dostępnych limitów u wszystkich dostawców AI. PRZERWANO.")
             await supabase.update('marketing_raw_contacts', {'status': 'pending'}, {'id': lead['id']})
             task_status = "cancelled"
-            await send_telegram_notification("⚠️ <b>Zlecenie przerwane</b>\nBrak limitów AI u wszystkich dostawców.")
+            await send_telegram_notification("⚠️ <b>Zlecenie przerwane</b>\nBrak limitów AI u wszystkich dostawców w bazie.")
             break
 
         if res is None:
@@ -436,13 +430,14 @@ async def warmup_ai_providers():
     if not providers: return
     for p in providers:
         name = p['name']
-        status, _, _ = await call_ai_provider(name, "Hey")
-        if status == 403:
-            await supabase.call_rpc('set_ai_provider_cooldown', {'p_name': name, 'p_seconds': PROVIDER_COOLDOWN_QUOTA, 'p_error': 'Warmup Quota Limit'})
-        elif status == 200:
+        status, _, err = await call_ai_provider(name, "Hey")
+        if status == 200:
             logger.info(f"Model {name} jest gotowy.")
+        elif status in (401, 403, 429) and any(x in str(err) for x in ("day", "daily", "quota", "credit", "unauthorized", "insufficient")):
+            logger.info(f"Model {name} wyczerpał limit. Cooldown 24h.")
+            await supabase.call_rpc('set_ai_provider_cooldown', {'p_name': name, 'p_seconds': PROVIDER_COOLDOWN_QUOTA, 'p_error': f'Quota: {err}'})
         else:
-            await supabase.call_rpc('set_ai_provider_cooldown', {'p_name': name, 'p_seconds': PROVIDER_COOLDOWN_SECONDS, 'p_error': f'Warmup Error {status}'})
+            await supabase.call_rpc('set_ai_provider_cooldown', {'p_name': name, 'p_seconds': PROVIDER_COOLDOWN_SECONDS, 'p_error': f'Warmup Error {status}: {err}'})
 
 async def run_worker(run_id, target):
     global task_status, verified_in_run, attempts_in_run, critical_errors_in_run, rejected_domains
