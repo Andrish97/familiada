@@ -172,7 +172,6 @@ verified_in_run = 0
 attempts_in_run = 0
 critical_errors_in_run = 0
 provider_cooldowns = {} 
-provider_blacklist = set() 
 rejected_domains = set() 
 scrape_semaphore = asyncio.Semaphore(MAX_CONCURRENT_SCRAPES)
 playwright_semaphore = asyncio.Semaphore(MAX_CONCURRENT_PLAYWRIGHT)
@@ -304,8 +303,8 @@ async def call_ai_provider(name, prompt):
         else:
             err_body = r.text.lower()
             print(f"[SERVER] {name.capitalize()} Error {r.status_code}: {r.text[:200]}")
-            if r.status_code == 429 and any(x in err_body for x in ("day", "daily", "quota", "credit")):
-                return 403, None, "Daily limit reached"
+            if r.status_code in (401, 403, 429) and any(x in err_body for x in ("day", "daily", "quota", "credit", "unauthorized")):
+                return 403, None, "Quota limit"
             return r.status_code, None, r.text[:100]
     except Exception as e: return 500, None, str(e)
 
@@ -332,12 +331,9 @@ async def verify_raw_lead(lead, target):
     while task_status in ("running", "paused") and task_run_id is not None:
         if task_status == "paused":
             await asyncio.sleep(2); continue
-        any_provider_exists = False
         any_provider_free = False
         
         for provider in [p.strip().lower() for p in order if p.strip()]:
-            if provider in provider_blacklist: continue
-            any_provider_exists = True
             if provider in provider_cooldowns:
                 remains = provider_cooldowns[provider] - time.time()
                 if remains > 0: continue
@@ -356,8 +352,8 @@ async def verify_raw_lead(lead, target):
                 except: 
                     provider_cooldowns[provider] = time.time() + PROVIDER_COOLDOWN_SECONDS
                     continue
-            elif status in (401, 403, 404):
-                logger.info(f"Dostawca {provider} zablokowany czasowo (Błąd {status} - Limit/Brak środków).")
+            elif status == 403:
+                logger.info(f"Dostawca {provider} wyczerpał limit dzienny. Przerwa 1h.")
                 provider_cooldowns[provider] = time.time() + PROVIDER_COOLDOWN_QUOTA
                 continue
             elif status == 429:
@@ -367,13 +363,10 @@ async def verify_raw_lead(lead, target):
                 logger.info(f"Nie udało się przez {provider} (Błąd {status})")
                 provider_cooldowns[provider] = time.time() + PROVIDER_COOLDOWN_LONG
                 continue
-        if not any_provider_exists and not any_provider_free:
-            print("[SERVER] Wszystkie modele na karcie. Czekam na odblokowanie (30s)...")
+        if not any_provider_free:
+            print("[SERVER] Oczekiwanie na odblokowanie AI (30s)...")
             await asyncio.sleep(30)
             continue
-        if not any_provider_exists:
-            logger.error("Brak dostępnych modeli AI!")
-            return "FATAL"
     return None
 
 async def consumer_task(run_id, target):
@@ -420,23 +413,22 @@ async def warmup_ai_providers():
     else: order = ['openrouter', 'groq', 'deepseek']
     for p in [x.strip().lower() for x in order if x.strip()]:
         status, _, _ = await call_ai_provider(p, "Hey")
-        if status in (401, 403, 404):
+        if status == 200:
+            logger.info(f"Model {p} jest gotowy.")
+        elif status == 403:
+            print(f"[SERVER] Model {p} wyczerpał limit. Cooldown 1h.")
             provider_cooldowns[p] = time.time() + PROVIDER_COOLDOWN_QUOTA
-        elif status != 200:
+        else:
             provider_cooldowns[p] = time.time() + (60 if status == 429 else 300)
 
 async def run_worker(run_id, target):
-    global task_status, verified_in_run, attempts_in_run, critical_errors_in_run, provider_blacklist, provider_cooldowns, rejected_domains
+    global task_status, verified_in_run, attempts_in_run, critical_errors_in_run, provider_cooldowns, rejected_domains
     try:
         task_status, verified_in_run, attempts_in_run, critical_errors_in_run = "running", 0, 0, 0
-        provider_blacklist, provider_cooldowns, rejected_domains = set(), {}, set()
-        
-        # 1. CZYŚCIMY LOGI
+        provider_cooldowns.clear()
+        rejected_domains.clear()
         await supabase.delete('marketing_search_logs', {'level': 'neq.null'})
-        
-        # 2. RESETUJEMY "ZOMBIE-LEADY" (jeśli coś utknęło w processing z poprzedniej sesji)
         await supabase.update('marketing_raw_contacts', {'status': 'pending'}, {'status': 'processing'})
-        
         logger.info(f"Zlecono {target} kontaktów.")
         await warmup_ai_providers()
         p_task, c_task = asyncio.create_task(producer_task(run_id)), asyncio.create_task(consumer_task(run_id, target))
