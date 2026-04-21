@@ -430,7 +430,13 @@ async def run_worker(run_id, target):
     try:
         task_status, verified_in_run, attempts_in_run, critical_errors_in_run = "running", 0, 0, 0
         provider_blacklist, provider_cooldowns, rejected_domains = set(), {}, set()
+        
+        # 1. CZYŚCIMY LOGI
         await supabase.delete('marketing_search_logs', {'level': 'neq.null'})
+        
+        # 2. RESETUJEMY "ZOMBIE-LEADY" (jeśli coś utknęło w processing z poprzedniej sesji)
+        await supabase.update('marketing_raw_contacts', {'status': 'pending'}, {'status': 'processing'})
+        
         logger.info(f"Zlecono {target} kontaktów.")
         await warmup_ai_providers()
         p_task, c_task = asyncio.create_task(producer_task(run_id)), asyncio.create_task(consumer_task(run_id, target))
