@@ -1678,7 +1678,10 @@ function renderProviderOrder() {
 }
 
 function aiProviderLabel(provider) {
-  return aiProviderLabels[provider] || provider;
+  const label = aiProviderLabels[provider];
+  if (label) return label;
+  // Fallback: capitalize ID (e.g. 'gpt4' -> 'Gpt4')
+  return provider.charAt(0).toUpperCase() + provider.slice(1);
 }
 
 function renderAiProviderOrder() {
