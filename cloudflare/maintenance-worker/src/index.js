@@ -850,45 +850,27 @@ async function handleAdminMarketingApi(request, env, url) {
       return json({ ok: false, error: "queue_insert_failed", details: summarizeSupabaseError(qRes) }, qRes.status || 500);
     }
 
-    // Save message record for EACH email (so they appear individually in "Sent" and "Marketing" folders)
-    // Marketing emails are detected by is_marketing flag, not by subject prefix
-    const msgSubject = mktSubject;
-    let savedCount = 0;
-    let marketingCount = 0;
-    for (const email of validEmails.slice(0, 100)) { // Limit to 100 to avoid timeout
-      try {
-        const saveRes = await supabaseRpc(env, "save_outbound_message", {
-          p_to_email:  email,
-          p_subject:   msgSubject,
-          p_body:      emailText,
-          p_body_html: emailHtml,
-          p_report_id: null,
-          p_queue_id:  null,
-        });
-        
-        // Get the message ID from the RPC result and set is_marketing flag
-        const msgId = saveRes.ok ? saveRes.data : null;
-        if (msgId) {
-          const flagRes = await supabaseRequest(env, `/rest/v1/messages?id=eq.${encodeURIComponent(msgId)}`, {
-            method: "PATCH",
-            headers: { Prefer: "return=minimal" },
-            body: { is_marketing: true },
-          });
-          if (flagRes.ok) marketingCount++;
-          else console.error("[marketing/send] Failed to set is_marketing for", msgId, flagRes);
-        } else {
-          console.error("[marketing/send] No message ID returned for", email);
-        }
-        savedCount++;
-      } catch (e) {
-        console.error("[marketing/send] save_outbound_message failed for", email, e);
-      }
-    }
-    
-    console.log("[marketing/send] Set is_marketing flag on", marketingCount, "of", savedCount, "messages");
+    // Save message record for ALL emails in batch (so they appear in "Sent" / "Marketing")
+    const messageRows = validEmails.map(email => ({
+      to_email: email,
+      subject: String(mktSubject),
+      body_text: emailText,
+      body_html: emailHtml,
+      is_marketing: true,
+      direction: 'outbound',
+      status: 'sent',
+      sent_at: new Date().toISOString(),
+    }));
 
-    if (savedCount < validEmails.length) {
-      console.error(`[marketing/send] Only saved ${savedCount}/${validEmails.length} message records`);
+    // Batch insert into messages table
+    const mRes = await supabaseRequest(env, "/rest/v1/messages", {
+      method: "POST",
+      headers: { Prefer: "return=minimal" },
+      body: messageRows,
+    });
+
+    if (!mRes.ok) {
+      console.error("[marketing/send] Failed to save message history records", summarizeSupabaseError(mRes));
     }
 
     return json({ ok: true, queued: validEmails.length, total: validEmails.length });
