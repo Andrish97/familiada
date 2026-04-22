@@ -1,3 +1,6 @@
+# IGNOROWANE ROZSZERZENIA PLIKÓW
+# Jeśli wykryty "mail" kończy się na te rozszerzenia, jest traktowany jako plik (np. obrazek), a nie adres email.
+
 .png
 .jpg
 .jpeg

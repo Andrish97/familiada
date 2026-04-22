@@ -1,3 +1,7 @@
+# WYMAGANE SŁOWA KLUCZOWE
+# Strona musi zawierać przynajmniej jedno z tych słów w swojej treści,
+# aby została uznana za potencjalnie wartościową (Typ A).
+
 dj
 wodzirej
 konferansjer
@@ -10,5 +14,10 @@ wesele
 urodziny
 imprez
 organizacja
-prowadzenie
-integracja
+komunie
+studniówk
+bal
+prowadzen
+integrac
+nagłośnienie
+oświetlenie

@@ -1,4 +1,8 @@
-# Technologia i Newsy (GIGANCI - tych blokujemy, bo to portale z artykułami)
+# ZABLOKOWANE DOMENY
+# Strony z tych domen są pomijane na etapie wyszukiwania (Bouncer Safety).
+# Używaj do blokowania dużych portali informacyjnych i stron niegenerujących leadów.
+
+# Technologia i Newsy (Giganci - portale z artykułami)
 cnet.com
 techradar.com
 tomsguide.com

@@ -1,8 +1,14 @@
-# Szablony wyszukiwania - format: zapytanie;limit, w zapytaniu podstawiane {role} i {city}
-# Jeśli brak limitu, domyślnie jest 20
+# SZABLONY WYSZUKIWANIA
+# Format: "zapytanie_do_searxng;limit_wynikow"
+# {role} i {city} są dynamicznie podstawiane przez system.
+# Jeśli ;limit nie zostanie podany, użyty zostanie globalny SEARCH_RESULTS_LIMIT z config.txt.
 
-{role} {city} kontakt;50
-{role} {city} oferta;20
-site:facebook.com {city} {role};10
-site:instagram.com {city} {role};10
-site:maps.app.goo.gl {city} {role};10
+Team building {city};15
+DJ wesele {role} {city};25
+Animator {role} {city};20
+Organizacja imprez {city};30
+Gry integracyjne {city};20
+Konferansjer {city};15
+Wodzirej {role} {city};20
+Oprawa muzyczna {city};25
+Nagłośnienie i oświetlenie {city};15
