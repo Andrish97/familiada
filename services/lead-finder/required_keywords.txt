@@ -10,10 +10,5 @@ wesele
 urodziny
 imprez
 organizacja
-komunie
-studniówk
-bal
-prowadzen
-integrac
-nagłośnienie
-oświetlenie
+prowadzenie
+integracja

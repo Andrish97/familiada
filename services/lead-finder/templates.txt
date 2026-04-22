@@ -1,8 +1,8 @@
-# Szablony wyszukiwania - format: zapytanie;limit
+# Szablony wyszukiwania - format: zapytanie;limit, w zapytaniu podstawiane {role} i {city}
 # Jeśli brak limitu, domyślnie jest 20
 
-{role} {city} kontakt;15
-{role} {city} oferta;30
-site:facebook.com {city} {role};40
-site:instagram.com {city} {role};30
-site:maps.app.goo.gl {city} {role};20
+{role} {city} kontakt;50
+{role} {city} oferta;20
+site:facebook.com {city} {role};10
+site:instagram.com {city} {role};10
+site:maps.app.goo.gl {city} {role};10
