@@ -354,26 +354,42 @@ async def producer_task(run_id):
                 picked = random.choice(available)
                 role, city = picked.split(':', 1)
                 logger.info(f"Za mało surowych kontaktów w bazie ({pending_count}), rozpoczynam wyszukiwanie {role} {city}")
+                
                 total_added = 0
+                total_found = 0
+                
                 for template_line in SEARCH_TEMPLATES:
                     if task_status not in ("running", "paused"): break
                     parts = template_line.split(';')
                     query_tpl = parts[0]
                     search_limit = int(parts[1]) if len(parts) > 1 and parts[1].isdigit() else SEARCH_RESULTS_LIMIT
                     query = query_tpl.replace('{role}', role).replace('{city}', city)
+                    
                     try:
                         r = await global_client.get(f'{SEARXNG_URL}/search', params={'q': query, 'format': 'json', 'language': 'pl-PL', 'limit': search_limit}, timeout=TIMEOUT_SEARCH)
                         if r.status_code == 200:
                             results = r.json().get('results', [])
                             urls_found_count = len(results)
+                            total_found += urls_found_count
                             try:
                                 added_results = await asyncio.wait_for(asyncio.gather(*[scrape_and_save_lead(res) for res in results]), timeout=300)
                                 added_count = sum(added_results)
                                 total_added += added_count
-                                await supabase.insert('marketing_search_queries_log', {'query_text': query, 'urls_found': urls_found_count, 'urls_added': added_count})
-                            except asyncio.TimeoutError: print(f"[SERVER] Timeout dla {query}")
-                    except Exception as e: print(f"[SERVER] SearXNG Error: {e}")
-                logger.info(f"Zakończono wyszukiwanie {role} {city}, dodano {total_added} surowych kontaktów.")
+                            except asyncio.TimeoutError: 
+                                print(f"[SERVER] Timeout dla {query}")
+                    except Exception as e: 
+                        print(f"[SERVER] SearXNG Error for {query}: {e}")
+
+                # Zapisz zagregowany wynik dla całego WYSZUKIWANIA (rola + miasto)
+                # Używamy formatu 'rola:miasto' jako query_text, aby pasowało do unikalnego klucza i puli
+                await supabase.insert('marketing_search_queries_log', {
+                    'query_text': picked, 
+                    'urls_found': total_found, 
+                    'urls_added': total_added,
+                    'status': 'completed'
+                })
+                
+                logger.info(f"Zakończono wyszukiwanie {role} {city}, dodano łącznie {total_added} surowych kontaktów (znaleziono {total_found} URL).")
         await asyncio.sleep(5)
 
 async def call_ai_provider(name, prompt):
