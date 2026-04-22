@@ -1,8 +1,8 @@
-# Szablony wyszukiwania - podstawiane {role} i {city}
-# Używane do generowania zapytań do SearXNG
+# Szablony wyszukiwania - format: zapytanie;limit
+# Jeśli brak limitu, domyślnie jest 20
 
-{role} {city} kontakt
-{role} {city} oferta
-site:facebook.com {city} {role}
-site:instagram.com {city} {role}
-site:maps.app.goo.gl {city} {role}
+{role} {city} kontakt;15
+{role} {city} oferta;30
+site:facebook.com {city} {role};40
+site:instagram.com {city} {role};30
+site:maps.app.goo.gl {city} {role};20

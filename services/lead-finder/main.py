@@ -295,11 +295,17 @@ async def producer_task(run_id):
                 role, city = picked.split(':', 1)
                 logger.info(f"Za mało surowych kontaktów w bazie ({pending_count}), rozpoczynam wyszukiwanie {role} {city}")
                 total_added = 0
-                for template in SEARCH_TEMPLATES:
+                for template_line in SEARCH_TEMPLATES:
                     if task_status not in ("running", "paused"): break
-                    query = template.replace('{role}', role).replace('{city}', city)
+                    
+                    # Parsowanie formatu: "szablon;limit"
+                    parts = template_line.split(';')
+                    query_tpl = parts[0]
+                    search_limit = int(parts[1]) if len(parts) > 1 and parts[1].isdigit() else 20
+                    
+                    query = query_tpl.replace('{role}', role).replace('{city}', city)
                     try:
-                        r = await global_client.get(f'{SEARXNG_URL}/search', params={'q': query, 'format': 'json', 'language': 'pl-PL', 'limit': SEARCH_RESULTS_LIMIT}, timeout=TIMEOUT_SEARCH)
+                        r = await global_client.get(f'{SEARXNG_URL}/search', params={'q': query, 'format': 'json', 'language': 'pl-PL', 'limit': search_limit}, timeout=TIMEOUT_SEARCH)
                         if r.status_code == 200:
                             results = r.json().get('results', [])
                             # LIMITUJEMY CZAS NA SCRAPOWANIE PACZKI
