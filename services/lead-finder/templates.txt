@@ -1,8 +1,3 @@
-# SZABLONY WYSZUKIWANIA
-# Format: "zapytanie_do_searxng;limit_wynikow"
-# {role} i {city} są dynamicznie podstawiane przez system.
-# Jeśli ;limit nie zostanie podany, użyty zostanie globalny SEARCH_RESULTS_LIMIT z config.txt.
-
 Team building {city};15
 DJ wesele {role} {city};25
 Animator {role} {city};20
