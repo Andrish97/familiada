@@ -301,7 +301,7 @@ async def producer_task(run_id):
                     # Parsowanie formatu: "szablon;limit"
                     parts = template_line.split(';')
                     query_tpl = parts[0]
-                    search_limit = int(parts[1]) if len(parts) > 1 and parts[1].isdigit() else 20
+                    search_limit = int(parts[1]) if len(parts) > 1 and parts[1].isdigit() else SEARCH_RESULTS_LIMIT
                     
                     query = query_tpl.replace('{role}', role).replace('{city}', city)
                     try:
