@@ -169,7 +169,7 @@ RAW_BUFFER_THRESHOLD = CONFIG.get('RAW_BUFFER_THRESHOLD', 20)
 SEARCH_RESULTS_LIMIT = CONFIG.get('SEARCH_RESULTS_LIMIT', 20)
 TIMEOUT_SEARCH = CONFIG.get('TIMEOUT_SEARCH', 25)
 TIMEOUT_SCRAPE = CONFIG.get('TIMEOUT_SCRAPE', 12)
-TIMEOUT_SCRAPE_JS = CONFIG.get('TIMEOUT_SCRAPE_JS', 15)
+TIMEOUT_SCRAPE_JS = CONFIG.get('TIMEOUT_SCRAPE_JS', 25)
 TIMEOUT_AI = CONFIG.get('TIMEOUT_AI', 30)
 
 MAX_CONCURRENT_SCRAPES = CONFIG.get('MAX_CONCURRENT_SCRAPES', 10)
@@ -400,7 +400,10 @@ async def call_ai_provider(name, prompt):
     
     payload = {
         'model': cfg['model'],
-        'messages': [{'role': 'system', 'content': 'Odpowiadaj tylko JSON.'}, {'role': 'user', 'content': prompt}],
+        'messages': [
+            {'role': 'system', 'content': 'You are a precise analyzer. You MUST return ONLY a valid JSON object. No preamble, no explanation, no markdown blocks. Just the raw JSON starting with { and ending with }.'}, 
+            {'role': 'user', 'content': prompt}
+        ],
         'temperature': 0.1,
         'max_tokens': 1000
     }
@@ -409,7 +412,11 @@ async def call_ai_provider(name, prompt):
 
     try:
         r = await global_client.post(cfg['endpoint'], headers=headers, json=payload, timeout=cfg['timeout'])
-        if r.status_code == 200: return 200, r.json()['choices'][0]['message']['content'], None
+        if r.status_code == 200: 
+            resp_json = r.json()
+            if 'choices' in resp_json and len(resp_json['choices']) > 0:
+                return 200, resp_json['choices'][0]['message']['content'], None
+            return 500, None, "Malformed provider response (no choices)"
         else:
             err_body = r.text.lower()
             return r.status_code, None, err_body[:200]
@@ -454,7 +461,11 @@ async def verify_raw_lead(lead, target):
             if status == 200:
                 print(f"[AI RAW RESP - {provider}] {content}")
                 try:
-                    clean_json = re.search(r'\{.*\}', content, re.DOTALL).group()
+                    match = re.search(r'\{.*\}', content, re.DOTALL)
+                    if not match:
+                        raise ValueError("Brak bloku JSON w odpowiedzi modelu.")
+                    
+                    clean_json = match.group()
                     res = json.loads(clean_json)
                     delay = AI_DELAY if res.get('ok') else AI_DELAY_REJECT
                     await asyncio.sleep(delay)
@@ -464,9 +475,9 @@ async def verify_raw_lead(lead, target):
                     res['_raw_ai_response'] = content[:500] 
                     return res
                 except Exception as parse_err: 
-                    msg = f"Model {provider} zwrócił niepoprawny JSON: {parse_err}"
+                    msg = f"Model {provider} zwrócił niepoprawny format: {parse_err}"
                     logger.error(msg)
-                    await supabase.call_rpc('set_ai_provider_cooldown', {'p_name': provider, 'p_seconds': 10, 'p_error': msg})
+                    await supabase.call_rpc('set_ai_provider_cooldown', {'p_name': provider, 'p_seconds': 30, 'p_error': msg})
                     continue
             elif status in (401, 403, 429) and any(x in str(err) for x in ("day", "daily", "quota", "credit", "unauthorized", "insufficient")):
                 msg = f"Dostawca {provider} wyczerpał limit (Błąd {status}): {err}"
