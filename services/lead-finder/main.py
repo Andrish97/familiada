@@ -204,7 +204,7 @@ def clean_text(text):
 
 def extract_emails(html):
     found = set()
-    EXT = ('.png', '.jpg', '.jpeg', '.gif', '.svg', '.pdf', '.zip', '.js', '.css', '.webp', '.woff', '.woff2')
+    EXT = tuple(load_txt_lines('ignored_extensions.txt'))
     JUNK_PREFIXES = tuple(load_txt_lines('junk_email_prefixes.txt'))
     for e in EMAIL_REGEX.findall(html):
         e_low = e.lower()
