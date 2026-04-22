@@ -308,19 +308,21 @@ async def producer_task(run_id):
                         r = await global_client.get(f'{SEARXNG_URL}/search', params={'q': query, 'format': 'json', 'language': 'pl-PL', 'limit': search_limit}, timeout=TIMEOUT_SEARCH)
                         if r.status_code == 200:
                             results = r.json().get('results', [])
-                            # LIMITUJEMY CZAS NA SCRAPOWANIE PACZKI
+                            urls_found_count = len(results)
+                            # RÓWNOLEGŁE SCRAPOWANIE WYNIKÓW
                             try:
                                 added_results = await asyncio.wait_for(
                                     asyncio.gather(*[scrape_and_save_lead(res) for res in results]),
-                                    timeout=180 # Max 3 minuty na paczkę wyników
+                                    timeout=180
                                 )
                                 total_added += sum(added_results)
+                                # ZAPIS LOGU Z ILOŚCIĄ
+                                await supabase.insert('marketing_search_queries_log', {'query_text': query, 'urls_found': urls_found_count})
                             except asyncio.TimeoutError:
                                 print(f"[SERVER] Timeout podczas scrapowania wyników dla {query}")
                     except Exception as e:
                         print(f"[SERVER] SearXNG/Gather Error: {e}")
                 logger.info(f"Zakończono wyszukiwanie {role} {city}, dodano {total_added} surowych kontaktów.")
-                await supabase.insert('marketing_search_queries_log', {'query_text': picked})
         await asyncio.sleep(5)
 
 async def call_ai_provider(name, prompt):
