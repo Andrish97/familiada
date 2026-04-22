@@ -315,9 +315,14 @@ async def producer_task(run_id):
                                     asyncio.gather(*[scrape_and_save_lead(res) for res in results]),
                                     timeout=180
                                 )
-                                total_added += sum(added_results)
-                                # ZAPIS LOGU Z ILOŚCIĄ
-                                await supabase.insert('marketing_search_queries_log', {'query_text': query, 'urls_found': urls_found_count})
+                                added_count = sum(added_results)
+                                total_added += added_count
+                                # ZAPIS LOGU Z ILOŚCIĄ ZNALEZIONYCH I DODANYCH
+                                await supabase.insert('marketing_search_queries_log', {
+                                    'query_text': query, 
+                                    'urls_found': urls_found_count, 
+                                    'urls_added': added_count
+                                })
                             except asyncio.TimeoutError:
                                 print(f"[SERVER] Timeout podczas scrapowania wyników dla {query}")
                     except Exception as e:
