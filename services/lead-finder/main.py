@@ -153,10 +153,10 @@ PROVIDER_COOLDOWN_LONG = CONFIG.get('PROVIDER_COOLDOWN_LONG', 300)
 PROVIDER_COOLDOWN_QUOTA = 86400 # 24 GODZINY
 RAW_BUFFER_THRESHOLD = CONFIG.get('RAW_BUFFER_THRESHOLD', 20)
 SEARCH_RESULTS_LIMIT = CONFIG.get('SEARCH_RESULTS_LIMIT', 20)
-TIMEOUT_SEARCH = 25
-TIMEOUT_SCRAPE = 12
-TIMEOUT_SCRAPE_JS = 15
-TIMEOUT_AI = 30
+TIMEOUT_SEARCH = CONFIG.get('TIMEOUT_SEARCH', 25)
+TIMEOUT_SCRAPE = CONFIG.get('TIMEOUT_SCRAPE', 12)
+TIMEOUT_SCRAPE_JS = CONFIG.get('TIMEOUT_SCRAPE_JS', 15)
+TIMEOUT_AI = CONFIG.get('TIMEOUT_AI', 30)
 
 MAX_CONCURRENT_SCRAPES = CONFIG.get('MAX_CONCURRENT_SCRAPES', 10)
 MAX_CONCURRENT_PLAYWRIGHT = CONFIG.get('MAX_CONCURRENT_PLAYWRIGHT', 3)
@@ -175,11 +175,7 @@ GARBAGE_EMAIL_DOMAINS = [g.lower() for g in load_txt_lines('garbage_email_domain
 SOCIAL_PLATFORMS = tuple(load_txt_lines('social_platforms.txt'))
 SUBPAGE_PATHS = ['/' + p for p in load_txt_lines('subpage_paths.txt')]
 
-REQUIRED_KEYWORDS = [
-    'dj', 'wodzirej', 'konferansjer', 'animator', 'zespół', 'muzyka', 'oprawa',
-    'event', 'wesele', 'urodziny', 'imprez', 'organizacja', 'komunie', 'studniówk', 
-    'bal', 'prowadzen', 'integrac', 'nagłośnienie', 'oświetlenie'
-]
+REQUIRED_KEYWORDS = load_txt_lines('required_keywords.txt')
 
 EMAIL_REGEX = re.compile(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}')
 
