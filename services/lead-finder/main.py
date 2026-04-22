@@ -250,8 +250,11 @@ async def scrape_with_playwright(url):
                 await page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
                 
                 try: 
+                    if any(url.endswith(ext) for ext in ('.pdf', '.doc', '.docx', '.xls', '.xlsx', '.zip', '.rar', '.jpg', '.jpeg', '.png', '.gif')):
+                        return "", None
+
                     await page.goto(url, timeout=TIMEOUT_SCRAPE_JS * 1000, wait_until="domcontentloaded")
-                    await page.wait_for_timeout(2500) # Czekaj na renderowanie JS
+                    await page.wait_for_timeout(2500) 
 
                     # Obsługa Google Consent
                     if "google." in url:
@@ -278,10 +281,13 @@ async def scrape_with_playwright(url):
                     
                     return clean_text(txt), extract_emails(html)
                 except Exception as e:
-                    print(f"[SERVER] Playwright Error for {url}: {e}")
+                    # Wycinamy tylko pierwszą linię błędu (bez całego tracebacku Playwright)
+                    err_msg = str(e).split('\n')[0]
+                    print(f"[SERVER] Playwright: {url} niedostępna ({err_msg})")
                     return "", None
         except Exception as e:
-            print(f"[SERVER] Playwright Critical Error for {url}: {e}")
+            err_msg = str(e).split('\n')[0]
+            print(f"[SERVER] Playwright Critical: {url} ({err_msg})")
             return None, None
         finally:
             if browser:
@@ -292,6 +298,11 @@ async def scrape_and_save_lead(res):
     try:
         url = res.get('url', '').lower()
         if not url: return 0
+        
+        # Ignoruj pliki binarne i dokumenty
+        if any(url.endswith(ext) for ext in ('.pdf', '.doc', '.docx', '.xls', '.xlsx', '.zip', '.rar', '.jpg', '.jpeg', '.png', '.gif')):
+            return 0
+
         parsed = urlparse(url)
         domain = parsed.netloc.lower().replace('www.', '')
         if domain in rejected_domains: return 0
