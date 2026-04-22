@@ -31,6 +31,20 @@ logger.addHandler(_handler)
 
 global_client = httpx.AsyncClient(timeout=60)
 
+# --- Global Assets Cache ---
+READABILITY_JS = ""
+
+async def get_readability_js():
+    global READABILITY_JS
+    if READABILITY_JS: return READABILITY_JS
+    try:
+        r = await global_client.get("https://cdnjs.cloudflare.com/ajax/libs/readability/0.4.4/Readability.min.js")
+        if r.status_code == 200:
+            READABILITY_JS = r.text
+            return READABILITY_JS
+    except: pass
+    return ""
+
 class SupabaseClient:
     def __init__(self, url, key):
         self.url = url
@@ -150,7 +164,7 @@ AI_DELAY_REJECT = 2
 AI_TEXT_LIMIT = CONFIG.get('AI_TEXT_LIMIT', 1000)
 PROVIDER_COOLDOWN_SECONDS = CONFIG.get('PROVIDER_COOLDOWN_SECONDS', 60)
 PROVIDER_COOLDOWN_LONG = CONFIG.get('PROVIDER_COOLDOWN_LONG', 300)
-PROVIDER_COOLDOWN_QUOTA = 86400 # 24 GODZINY
+PROVIDER_COOLDOWN_QUOTA = CONFIG.get('PROVIDER_COOLDOWN_QUOTA', 86400) 
 RAW_BUFFER_THRESHOLD = CONFIG.get('RAW_BUFFER_THRESHOLD', 20)
 SEARCH_RESULTS_LIMIT = CONFIG.get('SEARCH_RESULTS_LIMIT', 20)
 TIMEOUT_SEARCH = CONFIG.get('TIMEOUT_SEARCH', 25)
@@ -174,7 +188,6 @@ BLOCKED_DOMAINS = [d.lower() for d in load_txt_lines('blocked_domains.txt')]
 GARBAGE_EMAIL_DOMAINS = [g.lower() for g in load_txt_lines('garbage_email_domains.txt')]
 SOCIAL_PLATFORMS = tuple(load_txt_lines('social_platforms.txt'))
 SUBPAGE_PATHS = ['/' + p for p in load_txt_lines('subpage_paths.txt')]
-
 REQUIRED_KEYWORDS = load_txt_lines('required_keywords.txt')
 
 EMAIL_REGEX = re.compile(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}')
@@ -192,33 +205,13 @@ playwright_semaphore = asyncio.Semaphore(MAX_CONCURRENT_PLAYWRIGHT)
 # --- Logic ---
 
 def is_garbage_text(text: str) -> bool:
-    if not text or len(text) < 100:
-        return True
-    
-    # Policz czytelne słowa (polskie/łacińskie litery)
+    if not text or len(text) < 100: return True
     readable_words = re.findall(r'[a-zA-ZąęółźżćńśĄĘÓŁŹŻĆŃŚ]{3,}', text)
     total_chars = len(text)
     readable_chars = sum(len(w) for w in readable_words)
-    
-    # Jeśli mniej niż 30% tekstu to czytelne słowa → garbage
-    if readable_chars / total_chars < 0.30:
-        return True
-    
-    # Detekcja konkretnych wzorców JS/CSS
-    garbage_patterns = [
-        r'window\.__next_s',
-        r'self\.__next_s',
-        r'getElementsByTagName',
-        r' @keyframes\s+\w+',
-        r'\.wp-site-blocks',
-        r'dataLayer\.push',
-        r'gtm\.js\?id=',
-    ]
-    for pattern in garbage_patterns:
-        if re.search(pattern, text):
-            return True
-    
-    return False
+    if readable_chars / total_chars < 0.30: return True
+    patterns = [r'window\.__next_s', r'self\.__next_s', r'getElementsByTagName', r' @keyframes\s+\w+', r'\.wp-site-blocks', r'dataLayer\.push', r'gtm\.js\?id=']
+    return any(re.search(p, text) for p in patterns)
 
 def clean_text(text):
     if not text: return ""
@@ -241,43 +234,36 @@ def extract_emails(html):
 async def scrape_with_playwright(url):
     USER_AGENTS = [
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
-        "Mozilla/5.0 (iPhone; CPU iPhone OS 17_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Mobile/15E148 Safari/604.1",
-        "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
     ]
+    js_code = await get_readability_js()
     async with playwright_semaphore:
         try:
             async with async_playwright() as p:
                 browser = await p.chromium.launch(headless=True)
-                # Stealth flags simulation
-                ctx = await browser.new_context(
-                    user_agent=random.choice(USER_AGENTS),
-                    viewport={'width': 1920, 'height': 1080},
-                    device_scale_factor=1,
-                    has_touch=False,
-                    is_mobile=False
-                )
+                ctx = await browser.new_context(user_agent=random.choice(USER_AGENTS))
                 page = await ctx.new_page()
-                # Bypass basic bot detection
                 await page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
                 
                 try: 
                     await page.goto(url, timeout=TIMEOUT_SCRAPE_JS * 1000, wait_until="networkidle")
-                    await page.wait_for_timeout(1500) # SSR Buffer
-                except: pass
-                
-                # Inject Readability.js from CDN
-                await page.add_script_tag(url="https://cdnjs.cloudflare.com/ajax/libs/readability/0.4.4/Readability.min.js")
-                
-                # Extract clean content or fallback to innerText
-                txt = await page.evaluate("""() => {
-                    try {
-                        const doc = document.cloneNode(true);
-                        const reader = new Readability(doc);
-                        const article = reader.parse();
-                        return article ? article.textContent : document.body.innerText;
-                    } catch(e) { return document.body.innerText; }
-                }""")
+                    await page.wait_for_timeout(1500)
+                    
+                    if js_code:
+                        # Wstrzyknij treść biblioteki zamiast URL (Omija CSP)
+                        await page.add_script_tag(content=js_code)
+                        txt = await page.evaluate("""() => {
+                            try {
+                                const doc = document.cloneNode(true);
+                                const reader = new Readability(doc);
+                                const article = reader.parse();
+                                return article ? article.textContent : document.body.innerText;
+                            } catch(e) { return document.body.innerText; }
+                        }""")
+                    else:
+                        txt = await page.evaluate("() => document.body.innerText")
+                except: 
+                    txt = await page.evaluate("() => document.body.innerText")
                 
                 html = await page.content()
                 await browser.close()
@@ -317,8 +303,7 @@ async def scrape_and_save_lead(res):
                                 except: continue
             except: pass
 
-        is_social = any(s in url for s in SOCIAL_PLATFORMS)
-        if (not emails or len(txt) < 250) and not is_social:
+        if (not emails or len(txt) < 250) and not any(s in url for s in SOCIAL_PLATFORMS):
             p_txt, p_emails = await scrape_with_playwright(url)
             if p_txt: txt = p_txt
             if p_emails: emails.update(p_emails)
@@ -338,11 +323,9 @@ async def producer_task(run_id):
     while task_status in ("running", "paused") and task_run_id == run_id:
         if task_status == "paused":
             await asyncio.sleep(5); continue
-            
         if time.time() - last_heartbeat > 60:
             print(f"[HEARTBEAT] Producent żyje. Status: {task_status}")
             last_heartbeat = time.time()
-
         pending_count = await supabase.get_count('marketing_raw_contacts', {'status': 'pending'})
         if pending_count < RAW_BUFFER_THRESHOLD:
             cities = await supabase.select('marketing_cities', 'name', {'is_active': 'true'})
@@ -360,47 +343,30 @@ async def producer_task(run_id):
                 total_added = 0
                 for template_line in SEARCH_TEMPLATES:
                     if task_status not in ("running", "paused"): break
-                    
-                    # Parsowanie formatu: "szablon;limit"
                     parts = template_line.split(';')
                     query_tpl = parts[0]
                     search_limit = int(parts[1]) if len(parts) > 1 and parts[1].isdigit() else SEARCH_RESULTS_LIMIT
-                    
                     query = query_tpl.replace('{role}', role).replace('{city}', city)
                     try:
                         r = await global_client.get(f'{SEARXNG_URL}/search', params={'q': query, 'format': 'json', 'language': 'pl-PL', 'limit': search_limit}, timeout=TIMEOUT_SEARCH)
                         if r.status_code == 200:
                             results = r.json().get('results', [])
                             urls_found_count = len(results)
-                            # RÓWNOLEGŁE SCRAPOWANIE WYNIKÓW
                             try:
-                                added_results = await asyncio.wait_for(
-                                    asyncio.gather(*[scrape_and_save_lead(res) for res in results]),
-                                    timeout=180
-                                )
+                                added_results = await asyncio.wait_for(asyncio.gather(*[scrape_and_save_lead(res) for res in results]), timeout=180)
                                 added_count = sum(added_results)
                                 total_added += added_count
-                                # ZAPIS LOGU Z ILOŚCIĄ ZNALEZIONYCH I DODANYCH
-                                await supabase.insert('marketing_search_queries_log', {
-                                    'query_text': query, 
-                                    'urls_found': urls_found_count, 
-                                    'urls_added': added_count
-                                })
-                            except asyncio.TimeoutError:
-                                print(f"[SERVER] Timeout podczas scrapowania wyników dla {query}")
-                    except Exception as e:
-                        print(f"[SERVER] SearXNG/Gather Error: {e}")
+                                await supabase.insert('marketing_search_queries_log', {'query_text': query, 'urls_found': urls_found_count, 'urls_added': added_count})
+                            except asyncio.TimeoutError: print(f"[SERVER] Timeout dla {query}")
+                    except Exception as e: print(f"[SERVER] SearXNG Error: {e}")
                 logger.info(f"Zakończono wyszukiwanie {role} {city}, dodano {total_added} surowych kontaktów.")
         await asyncio.sleep(5)
 
 async def call_ai_provider(name, prompt):
     cfg = AI_PROVIDERS.get(name)
     if not cfg or not cfg['key']: return 500, None, "Missing config"
-    headers = {'Content-Type': 'application/json'}
-    if name == 'openrouter':
-        headers.update({'Authorization': f'Bearer {cfg["key"]}', 'HTTP-Referer': 'https://familiada.online', 'X-Title': 'Familiada Lead Finder'})
-    else:
-        headers.update({'Authorization': f'Bearer {cfg["key"]}'})
+    headers = {'Content-Type': 'application/json', 'Authorization': f'Bearer {cfg["key"]}'}
+    if name == 'openrouter': headers.update({'HTTP-Referer': 'https://familiada.online', 'X-Title': 'Familiada Lead Finder'})
     
     payload = {
         'model': cfg['model'],
@@ -463,7 +429,7 @@ async def verify_raw_lead(lead, target):
                     delay = AI_DELAY if res.get('ok') else AI_DELAY_REJECT
                     await asyncio.sleep(delay)
                     if not res.get('ok'):
-                        is_portal = any(p in domain for p in ('olx.pl', 'fixly.pl', 'oferteo.pl', 'gratka.pl', 'panoramafirm.pl', 'pkt.pl'))
+                        is_portal = any(p in domain for p in ('olx.pl', 'fixly.pl', 'oferteo.pl', 'gratka.pl', 'panoramafirm.pl'))
                         if not is_portal: rejected_domains.add(domain)
                     res['_raw_ai_response'] = content[:500] 
                     return res
@@ -507,7 +473,7 @@ async def consumer_task(run_id, target):
         res = await verify_raw_lead(lead, target)
         
         if res == "NO_QUOTA":
-            logger.error("Brak dostępnych limitów u wszystkich dostawców AI. PRZERWANO.")
+            logger.error("Brak dostępnych limitów u wszystkich dostawców AI w bazie danych. Przerywam.")
             await supabase.update('marketing_raw_contacts', {'status': 'pending'}, {'id': lead['id']})
             task_status = "cancelled"
             await send_telegram_notification("⚠️ <b>Zlecenie przerwane</b>\nBrak limitów AI u wszystkich dostawców.")
@@ -524,6 +490,7 @@ async def consumer_task(run_id, target):
             continue
         
         consecutive_critical = 0
+        raw_resp = res.get('_raw_ai_response', '')
         if res.get('ok') and res.get('email'):
             email = str(res['email']).strip().lower()
             if not await supabase.select('marketing_verified_contacts', 'id', {'email': email}):
@@ -549,7 +516,7 @@ async def warmup_ai_providers():
         if status == 200:
             logger.info(f"Model {name} jest gotowy.")
         elif status in (401, 403, 429) and any(x in str(err) for x in ("day", "daily", "quota", "credit", "unauthorized", "insufficient")):
-            msg = f"Model {name} wyczerpał limit. Cooldown 24h. Błąd: {err}"
+            msg = f"Model {name} wyczerpał limit (Błąd {status}): {err}"
             logger.info(msg)
             await supabase.call_rpc('set_ai_provider_cooldown', {'p_name': name, 'p_seconds': PROVIDER_COOLDOWN_QUOTA, 'p_error': msg})
         else:
@@ -583,10 +550,10 @@ async def run_worker(run_id, target):
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
-@app.on_event("shutdown")
-async def shutdown_event(): 
-    await supabase.client.aclose()
-    await global_client.aclose()
+@app.on_event("startup")
+async def startup_event():
+    # Pobierz skrypt Readability raz przy starcie
+    await get_readability_js()
 
 @app.post("/api/search-runs")
 async def start(target_count: int = 50):
@@ -595,27 +562,6 @@ async def start(target_count: int = 50):
     task_run_id = str(uuid.uuid4())
     asyncio.create_task(run_worker(task_run_id, target_count))
     return {"ok": True, "run_id": task_run_id}
-
-@app.post("/api/search-runs/{run_id}/pause")
-async def pause(run_id: str):
-    global task_status
-    if task_run_id == run_id and task_status == "running":
-        task_status = "paused"; logger.info("Zlecenie wstrzymane."); return {"ok": True}
-    raise HTTPException(404)
-
-@app.post("/api/search-runs/{run_id}/resume")
-async def resume(run_id: str):
-    global task_status
-    if task_run_id == run_id and task_status == "paused":
-        task_status = "running"; logger.info("Zlecenie wznowione."); return {"ok": True}
-    raise HTTPException(404)
-
-@app.post("/api/search-runs/{run_id}/cancel")
-async def cancel(run_id: str):
-    global task_status
-    if task_run_id == run_id:
-        task_status = "cancelled"; logger.info("Zlecenie anulowane przez użytkownika."); return {"ok": True}
-    raise HTTPException(404)
 
 @app.get("/api/search-runs/status")
 async def status(): return {"status": task_status, "run_id": task_run_id, "verified": verified_in_run, "errors": critical_errors_in_run}
