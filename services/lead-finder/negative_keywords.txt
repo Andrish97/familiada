@@ -27,26 +27,6 @@ bip.gov.pl
 rzecznik praw
 biuro rachunkowe
 
-# --- Techniczne / JS garbage (często strona nie renderuje JS) ---
-cookie policy
-privacy statement
-all rights reserved
-powered by joomla
-powered by wordpress
-window.yootheme
-addEventListener
-getElementsBy
-document.createElement
-var $theme
-javascript
-vulnerability
-audit show
-function(e){
-})(window,document
-<script type=
-gtm.js
-dataLayer
-
 # --- Ochrona zdrowia / Medyczne ---
 icd-10
 ból głowy
@@ -78,15 +58,6 @@ organ prowadzący
 podstawa programowa
 kuratorium oświaty
 dyrektor szkoły
-
-# --- Portale / News / Blogi obcojęzyczne ---
-all rights reserved
-terms of service
-privacy policy
-cookie settings
-subscribe to newsletter
-breaking news
-latest news
 
 # --- Sport wyczynowy / Organizacje sportowe ---
 liga kickboxingu

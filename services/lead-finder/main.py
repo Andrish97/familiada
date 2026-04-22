@@ -238,6 +238,7 @@ async def scrape_with_playwright(url):
     ]
     js_code = await get_readability_js()
     async with playwright_semaphore:
+        browser = None
         try:
             async with async_playwright() as p:
                 browser = await p.chromium.launch(headless=True)
@@ -246,31 +247,40 @@ async def scrape_with_playwright(url):
                 await page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
                 
                 try: 
-                    await page.goto(url, timeout=TIMEOUT_SCRAPE_JS * 1000, wait_until="networkidle")
-                    await page.wait_for_timeout(1500)
+                    await page.goto(url, timeout=TIMEOUT_SCRAPE_JS * 1000, wait_until="domcontentloaded")
+                    await page.wait_for_timeout(2000)
                     
-                    if js_code:
-                        # Wstrzyknij treść biblioteki zamiast URL (Omija CSP)
-                        await page.add_script_tag(content=js_code)
-                        txt = await page.evaluate("""() => {
-                            try {
-                                const doc = document.cloneNode(true);
-                                const reader = new Readability(doc);
-                                const article = reader.parse();
-                                return article ? article.textContent : document.body.innerText;
-                            } catch(e) { return document.body.innerText; }
-                        }""")
-                    else:
+                    # Spróbuj wyciągnąć tekst; obsłuż możliwe zniszczenie kontekstu
+                    try:
+                        if js_code:
+                            await page.add_script_tag(content=js_code)
+                            txt = await page.evaluate("""() => {
+                                try {
+                                    const doc = document.cloneNode(true);
+                                    const reader = new Readability(doc);
+                                    const article = reader.parse();
+                                    return article ? article.textContent : document.body.innerText;
+                                } catch(e) { return document.body.innerText; }
+                            }""")
+                        else:
+                            txt = await page.evaluate("() => document.body.innerText")
+                    except Exception as e:
+                        print(f"[SERVER] Playwright Eval Error for {url}: {e}")
                         txt = await page.evaluate("() => document.body.innerText")
-                except: 
-                    txt = await page.evaluate("() => document.body.innerText")
+                except Exception as e:
+                    print(f"[SERVER] Playwright Goto/Wait Error for {url}: {e}")
+                    try: txt = await page.evaluate("() => document.body.innerText")
+                    except: txt = ""
                 
                 html = await page.content()
-                await browser.close()
                 return clean_text(txt), extract_emails(html)
         except Exception as e:
-            print(f"[SERVER] Playwright Error for {url}: {e}")
+            print(f"[SERVER] Playwright Critical Error for {url}: {e}")
             return None, None
+        finally:
+            if browser:
+                try: await browser.close()
+                except: pass
 
 async def scrape_and_save_lead(res):
     try:
@@ -282,7 +292,10 @@ async def scrape_and_save_lead(res):
         if any(b in domain for b in BLOCKED_DOMAINS): return 0
         allowed_tlds = ('.pl', '.com', '.net', '.org', '.eu', '.info', '.biz', '.online', '.site')
         if not any(url.endswith(t) or f'{t}/' in url for t in allowed_tlds): return 0
-        if await supabase.select('marketing_verified_contacts', 'id', {'url': url}) or await supabase.select('marketing_raw_contacts', 'id', {'url': url}): return 0
+        
+        # Szybkie sprawdzenie czy już istnieje (można to zoptymalizować do jednego RPC w przyszłości)
+        if await supabase.select('marketing_verified_contacts', 'id', {'url': url}, limit=1): return 0
+        if await supabase.select('marketing_raw_contacts', 'id', {'url': url}, limit=1): return 0
         
         txt, emails = '', set()
         async with scrape_semaphore:
@@ -290,15 +303,21 @@ async def scrape_and_save_lead(res):
                 async with httpx.AsyncClient(timeout=TIMEOUT_SCRAPE, follow_redirects=True, headers={'User-Agent': 'Mozilla/5.0'}) as client:
                     r = await client.get(url)
                     if r.status_code == 200:
-                        txt = clean_text(re.sub(r'<[^>]+>', ' ', r.text))
+                        # Usuń skrypty, style i nawigację przed wyciągnięciem tekstu do filtrów/AI
+                        clean_html = re.sub(r'<(script|style|nav|header|footer)[^>]*>.*?</\1>', ' ', r.text, flags=re.DOTALL | re.IGNORECASE)
+                        txt = clean_text(re.sub(r'<[^>]+>', ' ', clean_html))
                         emails = extract_emails(r.text)
+                        
                         if not any(s in url for s in SOCIAL_PLATFORMS) and not emails:
                             for path in SUBPAGE_PATHS:
                                 try:
                                     r_sub = await client.get(url.rstrip('/') + path, timeout=5)
                                     if r_sub.status_code == 200:
                                         emails.update(extract_emails(r_sub.text))
-                                        if len(txt) < (AI_TEXT_LIMIT * 0.8): txt += " " + clean_text(re.sub(r'<[^>]+>', ' ', r_sub.text))[:500]
+                                        # Do tekstu dla AI dodajemy też treść podstron (jeśli tekst główny krótki)
+                                        if len(txt) < (AI_TEXT_LIMIT * 0.8):
+                                            sub_clean = re.sub(r'<(script|style|nav|header|footer)[^>]*>.*?</\1>', ' ', r_sub.text, flags=re.DOTALL | re.IGNORECASE)
+                                            txt += " " + clean_text(re.sub(r'<[^>]+>', ' ', sub_clean))[:500]
                                         if emails: break
                                 except: continue
             except: pass
@@ -353,7 +372,7 @@ async def producer_task(run_id):
                             results = r.json().get('results', [])
                             urls_found_count = len(results)
                             try:
-                                added_results = await asyncio.wait_for(asyncio.gather(*[scrape_and_save_lead(res) for res in results]), timeout=180)
+                                added_results = await asyncio.wait_for(asyncio.gather(*[scrape_and_save_lead(res) for res in results]), timeout=300)
                                 added_count = sum(added_results)
                                 total_added += added_count
                                 await supabase.insert('marketing_search_queries_log', {'query_text': query, 'urls_found': urls_found_count, 'urls_added': added_count})
