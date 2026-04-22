@@ -1,14 +1,15 @@
 # ZMIENNE DO PODSTAWIENIA:
 # {url} - URL strony
-# {title} - tytuł strony  
+# {title} - tytuł strony
 # {emails} - lista maili (string)
 # {text} - tekst strony (max 1000 znaków)
 
 ZADANIE:
 Klasyfikuj czy strona to potencjalny LEAD do systemu interaktywnych eventow
-(DJ, wodzirej, konferansjer, animator, prowadzenie publicznosci).
+(DJ, wodzirej, konferansjer, animator, prowadzenie publicznosci, quiz/teleturniej na zywo).
 
-Celem jest wykrycie osob/firm, które PROWADZĄ, MODERUJĄ lub ORGANIZUJĄ wydarzenia z udziałem publiczności.
+Celem jest wykrycie osob/firm, ktore PROWADZA, MODERUJA lub ORGANIZUJA wydarzenia
+z udzialem publicznosci.
 
 ---------------------------------------
 DANE WEJSCIOWE:
@@ -19,55 +20,140 @@ MAILE: {emails}
 TEXT: {text}
 
 =================================================
-KROK 1 - TYP STRONY I SPECJALIZACJA
+KROK 0 - NATYCHMIASTOWE ODRZUCENIE (przed dalszą analizą)
 =================================================
 
-KRYTERIUM ROZMIARU I SPECJALIZACJI (WAŻNE):
-Odrzucaj firmy o wąskiej specjalizacji fizycznej, które sprzedają tylko jedną, konkretną atrakcję (np. ścianka wspinaczkowa, park trampolin, paintball, gokarty, tor przeszkód). One są "obiektami sportowymi", a nie agencjami eventowymi – nie potrzebują prowadzenia teleturniejów.
-AKCEPTUJ TYLKO firmy, które oferują KOMPLEKSOWĄ organizację (agencje eventowe) lub szeroką gamę usług moderowanych (DJ, wodzirej, konferansjer, animatorzy).
+Odrzuć NATYCHMIAST (ok: 0, reason: "Non-event domain / garbage URL") jeśli URL należy do:
+- Serwisów globalnych: healthline.com, w3schools.com, wikipedia.org, mlb.com, nba.com,
+  roblox.com, youtube.com, netflix.com, hbomax.com, rottentomatoes.com, thestreamable.com,
+  play.google.com, apps.microsoft.com, wise.com, americanexpress.com, thesaurus.com,
+  deepl.com, xataka.com, xatakandroid.com, infobae.com, thegatewaypundit.com,
+  nbcnews.com, foxnews.com, fox13seattle.com, hotrod.com, wpbeginner.com,
+  sportsbrackets.net, wonderfulwanderings.com, travellingking.com, talkofthevillages.com,
+  bolavip.com, ticketmaster.com, dcacar.com, inforcapital.com, retailrestaurantfb.com,
+  1000thingsmagazine.com, coolwoodwildlifepark.com, iere.org, thecityceleb.com,
+  ingles.com, arimetrics.com, aztlanherbalremedies.com, prombs.com,
+  supportyourtech.com, hotelguides.com, governmentjobs.com, careers.homedepot.com,
+  kariera.itaka.pl, visitbydgoszcz.pl
+- Portali pracy, rekrutacji, bankowości, streamingu, wiadomości, słowników, tłumaczeń
+- Stron obcojęzycznych (angielski, hiszpański itp.) które NIE są polską firmą eventową
 
-A) EVENT PROVIDER (HIGH VALUE)
-* DJ weselny/eventowy + prowadzenie
-* Wodzirej / Konferansjer / MC
-* Agencja eventowa (szeroki wachlarz usług)
-* Animatorzy prowadzący imprezy (nie tylko atrakcje fizyczne)
+Odrzuć NATYCHMIAST jeśli URL to STRONA KATEGORII (nie profil firmy) w katalogach:
+- panoramafirm.pl/kategoria/... (np. /organizacja_imprez/region,miasto)
+  WYJĄTEK: panoramafirm.pl/region,powiat,miasto,ulica/NAZWA-FIRMY-xxx.html → ANALIZUJ DALEJ
+- oferteo.pl/kategoria/miasto (np. /animator-dla-dzieci/lublin)
+  WYJĄTEK: oferteo.pl/konkretna-firma/firma/ID → ANALIZUJ DALEJ
+- mamfach.pl/kategorie/..., dealoo.pl/kategoria/..., ebilet.pl/miasto/...
+- weselicho.net/firmy-weselne/kategoria/..., wedding.pl/kategoria/...
+- salebiznesowe.pl/miasto/..., mojekonferencje.pl/blog/...
 
-B) VENUE / OBIEKT SPORTOWY (ODRZUCAJ)
-* Hotele, sale, restauracje (chyba że mają własny dział eventowy/DJ-a).
-* Obiekty sportowe z jedną atrakcją (wspinaczka, trampoliny, paintball, gokarty).
+=================================================
+KROK 1 - ZASADA GARBAGE PAGE_TEXT
+=================================================
 
-C) DIRECTORY / SEO
-* Katalogi, bazy, listy (Odrzucaj).
+Jeśli {text} zawiera głównie JavaScript / CSS / kod HTML (mało czytelnych słów po polsku):
+→ Opieraj się WYŁĄCZNIE na {url} i {title} do klasyfikacji.
+→ Jeśli URL lub tytuł wskazuje na firmę eventową → akceptuj.
+→ Jeśli URL lub tytuł jest niejednoznaczny i brak emaila → odrzuć.
 
-D) NON-EVENT
-* Inne branże (Odrzucaj).
+=================================================
+KROK 2 - HARD OVERRIDE (natychmiastowa akceptacja)
+=================================================
 
----------------------------------------
-WAZNA ZASADA - AGENCJE I PROWADZENIE
----------------------------------------
-Jeśli strona oferuje "Organizację imprez", "Eventy firmowe" lub "Animacje", ale jest to wąska oferta jednej atrakcji (np. "wynajmij naszą ściankę wspinaczkową") -> ODRZUĆ (Typ B).
-Odrzuć, jeśli firma jest tylko dostawcą sprzętu lub miejsca bez personelu prowadzącego imprezę.
+JEŚLI W {url}, {title} LUB {text} WYSTEPUJE KTÓREKOLWIEK Z PONIŻSZYCH → TYPE = A, ok = 1.
+Ignoruj wszystko inne - to są jednoznaczne leady.
 
----------------------------------------
-KROK 3.1 - HARD OVERRIDE
----------------------------------------
-JESLI WYSTEPUJE: DJ weselny, DJ + prowadzenie, wodzirej, konferansjer, animator -> TYPE = A, PRODUCT_FIT = TRUE.
-IGNORUJ wszystko inne, jeśli to są profesjonalni prowadzący z mikrofonem.
+Słowa kluczowe HARD OVERRIDE:
+  • DJ weselny / DJ na wesele / DJ eventowy / DJ + prowadzenie
+  • wodzirej
+  • konferansjer / konferansjera / MC imprezy
+  • animator zabaw / animator imprez (NIE: "kurs animatora", "sklep dla animatorów")
+  • quiz na żywo / teleturniej na żywo / familiada firmowa
+  • gry eventowe / gry dla firm / interaktywna rozgrywka z publicznością
+  • prezenter muzyczny (w kontekście imprez)
 
----------------------------------------
-FINALNA DECYZJA
----------------------------------------
-AKCEPTUJ (ok: 1) TYLKO JEŚLI spełnione są oba warunki:
-1. TYPE = A (Dostawca usług moderowanych).
-2. Posiada REALNY EMAIL właściciela/firmy, a NIE mail portalu ogłoszeniowego (@fixly.pl, @oferteo.pl, @olx.pl, @panoramafirm.pl itp.).
+WARUNEK KONIECZNY DO AKCEPTACJI nawet przy HARD OVERRIDE:
+  Email musi być realnym mailem właściciela/firmy.
+  Musi być conajmniej jeden mail odpowiadający kryteriom.
+  NIE akceptuj jeśli email pochodzi z: @fixly.pl, @oferteo.pl, @olx.pl,
+  @panoramafirm.pl, @weselicho.net, @wedding.pl, @thebash.com, @dealoo.pl,
+  @mamfach.pl, @ebilet.pl lub innych portali ogłoszeniowych.
+
+=================================================
+KROK 3 - KLASYFIKACJA TYPU
+=================================================
+
+A) EVENT PROVIDER — HIGH VALUE (AKCEPTUJ jeśli ma realny email)
+   • DJ weselny/eventowy + prowadzenie
+   • Wodzirej / Konferansjer / MC
+   • Agencja eventowa z SZEROKĄ ofertą (kompleksowa organizacja)
+   • Animatorzy prowadzący imprezy z udziałem publiczności
+   • Firmy robiące quiz/teleturniej/familiada na żywo ← IDEALNY LEAD dla produktu!
+   • Organizatorzy team building z WŁASNYM PERSONELEM prowadzącym program
+     (nie tylko wynajem miejsca lub sprzętu)
+
+B) VENUE / OBIEKT / SPRZĘT (ODRZUĆ)
+   • Hotele, sale, restauracje bez własnego personelu eventowego
+   • Obiekty sportowe (paintball, trampoliny, wspinaczka, quady, gokarty)
+   • Firmy wynajmujące TYLKO sprzęt/atrakcje bez personelu prowadzącego
+     (dmuchańce, fotobudka, kasyno LED, ścianka wspinaczkowa)
+   • Ośrodki z "opcją integracji" = wynajem miejsca + własne atrakcje bez prowadzącego
+
+C) DIRECTORY / SEO (ODRZUĆ)
+   • Katalogi, bazy, rankingi firm (po przejściu filtra KROKU 0)
+   • Podstrony kategorii portali ogłoszeniowych
+
+D) NON-EVENT (ODRZUĆ)
+   • Szkoły, przedszkola, żłobki, uczelnie
+   • Agencje marketingowe / SEO / reklamowe
+   • Biura podróży, portale turystyczne, blogi
+   • Sklepy internetowe (w tym sklepy dla animatorów)
+   • Platformy kursów / szkoły dla animatorów / kursy DJ
+   • Inne branże niezwiązane z eventami
+
+=================================================
+KROK 3.1 - OSTRA GRANICA: TYPE A vs TYPE B
+=================================================
+
+KLUCZOWE PYTANIE: "Czy firma wysyła WŁASNYCH LUDZI do prowadzenia imprezy?"
+
+TYPE A jeśli TAK — firma ma PERSONEL (animatorzy, koordynatorzy, prowadzący program,
+DJ, wodzirej), który przyjeżdża i prowadzi wydarzenie z udziałem publiczności.
+Sygnały TYPE A bez explicite "DJ/wodzirej":
+  ✓ "nasz zespół animatorów", "nasi koordynatorzy"
+  ✓ "organizujemy od A do Z", "kompleksowa obsługa"
+  ✓ "program integracyjny z prowadzącym"
+  ✓ "agencja eventowa" + własna domena firmowa
+  ✓ team building z programem aktywności prowadzonym przez firmę
+
+TYPE B jeśli NIE — firma TYLKO:
+  ✗ wynajmuje miejsce ("nasza sala", "nasz park", "nasz ośrodek")
+  ✗ wynajmuje sprzęt lub konkretną atrakcję fizyczną
+  ✗ organizuje imprezy ALE wyłącznie jako catering/logistyka bez personelu prowadzącego
+
+SZARA STREFA — firmy oferujące "organizację imprez" z atrakcjami mieszanymi
+(np. paintball + piknik + grill):
+  → Jeśli w opisie pojawia się "animator", "prowadzący", "program z prowadzącym",
+    "imprezy od A do Z z obsługą" → TYPE A
+  → Jeśli to głównie "obiekt z paintballem i opcją grilla" → TYPE B
+
+=================================================
+KROK 4 - FINALNA DECYZJA
+=================================================
+
+AKCEPTUJ (ok: 1) TYLKO jeśli spełnione SĄ OBA warunki:
+  1. TYPE = A (dostawca usług z własnym personelem prowadzącym)
+  2. Email jest REALNYM mailem właściciela lub firmy (nie portalu ogłoszeniowego)
 
 W przeciwnym razie ODRZUĆ (ok: 0).
 
-OUTPUT JSON (TYLKO CZYSTY JSON):
+=================================================
+OUTPUT JSON (TYLKO CZYSTY JSON, bez markdown):
+=================================================
 {
   "ok": 1 lub 0,
   "email": "najlepszy mail",
   "title": "nazwa firmy",
-  "short_description": "opis usług",
-  "reason": "dlaczego to lead (lub dlaczego nie)"
+  "short_description": "opis usług w 1 zdaniu",
+  "reason": "dlaczego to lead (lub dlaczego nie) — max 2 zdania"
 }

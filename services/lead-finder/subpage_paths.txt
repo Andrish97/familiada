@@ -1,10 +1,17 @@
-# Ścieżki do podstron crawlowanych w poszukiwaniu emaili
+# ==============================================
+# SUBPAGE PATHS - ścieżki crawlowane po znalezieniu domeny
+# Crawler odwiedza te podstrony w poszukiwaniu emaili i treści
+# ==============================================
+# LIMIT: max 3 podstrony na domenę żeby nie duplikować URLi!
+# ==============================================
+
+# --- Kontakt (priorytet 1 — najczęściej zawiera email) ---
 kontakt
 contact
+kontakty
+
+# --- O firmie (priorytet 2 — zawiera opis usług) ---
 o-nas
 about
 onas
-uslugi
-oferta
-portfolio
-realizacje
+o-mnie

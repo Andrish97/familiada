@@ -1,23 +1,79 @@
-# WYMAGANE SŁOWA KLUCZOWE
-# Strona musi zawierać przynajmniej jedno z tych słów w swojej treści,
-# aby została uznana za potencjalnie wartościową (Typ A).
+# ==============================================
+# REQUIRED KEYWORDS - przynajmniej JEDNO musi wystąpić
+# w tytule lub treści, żeby strona trafiła do AI
+# ==============================================
+# WAŻNE: To jest pre-filter przed AI — ma być szeroki,
+# żeby nie odrzucać dobrych leadów. AI zrobi dokładną klasyfikację.
+# ==============================================
 
+# --- Prowadzenie / moderowanie (core) ---
 dj
 wodzirej
 konferansjer
+prezenter muzyczny
+prowadzący imprez
+mc wesel
+
+# --- Animacja ---
 animator
-zespół
-muzyka
-oprawa
-event
+animacja imprez
+animacje dla dzieci
+zabawy z animatorem
+
+# --- Organizacja eventów ---
+agencja eventowa
+agencja event
+firma eventowa
+organizacja imprez
+organizacja eventów
+organizacja wesel
+obsługa imprez
+oprawa imprez
+event manager
+
+# --- Typy eventów ---
 wesele
-urodziny
-imprez
-organizacja
+wesela
+ślub
 komunie
+komunia
 studniówk
+studniówka
 bal
-prowadzen
+urodziny
+chrzciny
+imieniny
+
+# --- Integracja / Team building ---
 integrac
+imprezy firmowe
+imprezy integracyjne
+eventy firmowe
+team building
+wyjazdy integracyjne
+piknik firmowy
+pikniki dla firm
+
+# --- Gry i quiz eventowe (NOWE - brakujące leady!) ---
+quiz na żywo
+teleturniej
+familiada
+gry eventowe
+gry dla firm
+gry integracyjne
+interaktywna rozgrywka
+zabawa z publicznością
+teleturniej firmowy
+
+# --- Technika eventowa (często towarzysząca prowadzeniu) ---
 nagłośnienie
-oświetlenie
+oświetlenie eventowe
+oprawa muzyczna
+muzyczna oprawa
+oprawa dźwiękowa
+
+# --- Ogólne (szerokie, wymagają potwierdzenia przez AI) ---
+imprez
+event
+eventy
+muzyka na wesele

@@ -191,6 +191,35 @@ playwright_semaphore = asyncio.Semaphore(MAX_CONCURRENT_PLAYWRIGHT)
 
 # --- Logic ---
 
+def is_garbage_text(text: str) -> bool:
+    if not text or len(text) < 100:
+        return True
+    
+    # Policz czytelne słowa (polskie/łacińskie litery)
+    readable_words = re.findall(r'[a-zA-ZąęółźżćńśĄĘÓŁŹŻĆŃŚ]{3,}', text)
+    total_chars = len(text)
+    readable_chars = sum(len(w) for w in readable_words)
+    
+    # Jeśli mniej niż 30% tekstu to czytelne słowa → garbage
+    if readable_chars / total_chars < 0.30:
+        return True
+    
+    # Detekcja konkretnych wzorców JS/CSS
+    garbage_patterns = [
+        r'window\.__next_s',
+        r'self\.__next_s',
+        r'getElementsByTagName',
+        r' @keyframes\s+\w+',
+        r'\.wp-site-blocks',
+        r'dataLayer\.push',
+        r'gtm\.js\?id=',
+    ]
+    for pattern in garbage_patterns:
+        if re.search(pattern, text):
+            return True
+    
+    return False
+
 def clean_text(text):
     if not text: return ""
     text = re.sub(r'\s+', ' ', text).strip()
@@ -210,18 +239,52 @@ def extract_emails(html):
     return found
 
 async def scrape_with_playwright(url):
+    USER_AGENTS = [
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 17_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Mobile/15E148 Safari/604.1",
+        "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
+    ]
     async with playwright_semaphore:
         try:
             async with async_playwright() as p:
                 browser = await p.chromium.launch(headless=True)
-                ctx = await browser.new_context(user_agent="Mozilla/5.0")
+                # Stealth flags simulation
+                ctx = await browser.new_context(
+                    user_agent=random.choice(USER_AGENTS),
+                    viewport={'width': 1920, 'height': 1080},
+                    device_scale_factor=1,
+                    has_touch=False,
+                    is_mobile=False
+                )
                 page = await ctx.new_page()
-                try: await page.goto(url, timeout=TIMEOUT_SCRAPE_JS * 1000, wait_until="networkidle")
+                # Bypass basic bot detection
+                await page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+                
+                try: 
+                    await page.goto(url, timeout=TIMEOUT_SCRAPE_JS * 1000, wait_until="networkidle")
+                    await page.wait_for_timeout(1500) # SSR Buffer
                 except: pass
-                txt, html = await page.evaluate("() => document.body.innerText"), await page.content()
+                
+                # Inject Readability.js from CDN
+                await page.add_script_tag(url="https://cdnjs.cloudflare.com/ajax/libs/readability/0.4.4/Readability.min.js")
+                
+                # Extract clean content or fallback to innerText
+                txt = await page.evaluate("""() => {
+                    try {
+                        const doc = document.cloneNode(true);
+                        const reader = new Readability(doc);
+                        const article = reader.parse();
+                        return article ? article.textContent : document.body.innerText;
+                    } catch(e) { return document.body.innerText; }
+                }""")
+                
+                html = await page.content()
                 await browser.close()
                 return clean_text(txt), extract_emails(html)
-        except: return None, None
+        except Exception as e:
+            print(f"[SERVER] Playwright Error for {url}: {e}")
+            return None, None
 
 async def scrape_and_save_lead(res):
     try:
@@ -368,7 +431,13 @@ async def verify_raw_lead(lead, target):
     prompt_path = os.path.join(os.path.dirname(__file__), 'ai_prompt.txt')
     with open(prompt_path, 'r', encoding='utf-8') as f:
         base = "\n".join([l for l in f.readlines() if not l.strip().startswith('#')])
-    prompt = base.replace('{url}', url).replace('{title}', title).replace('{emails}', str(emails)).replace('{text}', txt[:AI_TEXT_LIMIT])
+    
+    # Detekcja Garbage Tekstu przed wysyłką do AI
+    final_text = txt
+    if is_garbage_text(txt):
+        final_text = "[NIEDOSTĘPNY - śmieciowy kod JS/CSS]"
+
+    prompt = base.replace('{url}', url).replace('{title}', title).replace('{emails}', str(emails)).replace('{text}', final_text[:AI_TEXT_LIMIT])
 
     attempts_in_run += 1
     logger.info(f"Weryfikacja [{attempts_in_run}] (Znaleziono: {verified_in_run}/{target}): {url}")
