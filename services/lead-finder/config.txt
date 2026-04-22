@@ -8,6 +8,7 @@ AI_TEXT_LIMIT=1000               # Max długość tekstu strony wysyłanego do A
 
 # === AI ===
 AI_DELAY=12                      # Opóźnienie po UDANEJ weryfikacji (sekundy)
+AI_DELAY_REJECT=2                # Opóźnienie po ODRZUCONEJ weryfikacji (sekundy)
 PROVIDER_COOLDOWN_SECONDS=60     # Cooldown dla Typ 2 - Rate Limit 429 (sekundy)
 PROVIDER_COOLDOWN_LONG=300       # Cooldown dla Typ 2 - Błędy 500/Timeout (sekundy)
 PROVIDER_COOLDOWN_QUOTA=86400    # Cooldown dla Typ 3 - Limit dzienny/brak środków (sekundy)
@@ -19,5 +20,5 @@ MAX_CONCURRENT_PLAYWRIGHT=3      # Max instancji Chromium
 # === TIMEOUTY (sekundy) ===
 TIMEOUT_SEARCH=25                # Timeout wyszukiwania SearXNG
 TIMEOUT_SCRAPE=12                # Scrapowanie strony (httpx)
-TIMEOUT_SCRAPE_JS=15             # Scrapowanie strony JS (Playwright)
+TIMEOUT_SCRAPE_JS=25             # Scrapowanie strony JS (Playwright)
 TIMEOUT_AI=30                    # Domyślny timeout dla zapytań do modeli AI
