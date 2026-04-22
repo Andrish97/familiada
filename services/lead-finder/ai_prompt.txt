@@ -104,7 +104,7 @@ C) DIRECTORY / SEO (ODRZUĆ)
    • Podstrony kategorii portali ogłoszeniowych
 
 D) NON-EVENT (ODRZUĆ)
-   • Szkoły, przedszkola, żłobki, uczelnie
+   • Szkoły, przelizum, żłobki, uczelnie
    • Agencje marketingowe / SEO / reklamowe
    • Biura podróży, portale turystyczne, blogi
    • Sklepy internetowe (w tym sklepy dla animatorów)
@@ -148,12 +148,19 @@ AKCEPTUJ (ok: 1) TYLKO jeśli spełnione SĄ OBA warunki:
 W przeciwnym razie ODRZUĆ (ok: 0).
 
 =================================================
-OUTPUT JSON (TYLKO CZYSTY JSON, bez markdown):
+OUTPUT JSON FORMAT (STRICT):
 =================================================
+W przypadku AKCEPTACJI (ok: 1):
 {
-  "ok": 1 lub 0,
+  "ok": 1,
   "email": "najlepszy mail",
   "title": "nazwa firmy",
   "short_description": "opis usług w 1 zdaniu",
-  "reason": "dlaczego to lead (lub dlaczego nie) — max 2 zdania"
+  "reason": "dlaczego to lead"
+}
+
+W przypadku ODRZUCENIA (ok: 0):
+{
+  "ok": 0,
+  "reason": "bardzo krótka przyczyna odrzucenia (max 10 słów)"
 }
