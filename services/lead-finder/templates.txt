@@ -1,9 +1,5 @@
-Team building {city};15
-DJ wesele {role} {city};25
-Animator {role} {city};20
-Organizacja imprez {city};30
-Gry integracyjne {city};20
-Konferansjer {city};15
-Wodzirej {role} {city};20
-Oprawa muzyczna {city};25
-Nagłośnienie i oświetlenie {city};15
+{role} {city} kontakt
+{role} {city} oferta
+site:facebook.com {city} {role}
+site:instagram.com {city} {role}
+site:maps.app.goo.gl {city} {role}
