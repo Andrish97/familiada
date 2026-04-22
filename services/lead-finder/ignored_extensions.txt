@@ -1,5 +1,5 @@
 # IGNOROWANE ROZSZERZENIA PLIKÓW
-# Jeśli wykryty "mail" kończy się na te rozszerzenia, jest traktowany jako plik (np. obrazek), a nie adres email.
+# Służy do filtrowania fałszywych maili oraz do omijania adresów URL wskazujących na pliki.
 
 .png
 .jpg
@@ -8,6 +8,7 @@
 .svg
 .pdf
 .zip
+.rar
 .js
 .css
 .webp
@@ -17,3 +18,13 @@
 .mp3
 .mp4
 .wav
+.doc
+.docx
+.xls
+.xlsx
+.ppt
+.pptx
+.odt
+.txt
+.xml
+.json

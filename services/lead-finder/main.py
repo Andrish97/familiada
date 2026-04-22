@@ -189,6 +189,7 @@ GARBAGE_EMAIL_DOMAINS = [g.lower() for g in load_txt_lines('garbage_email_domain
 SOCIAL_PLATFORMS = tuple(load_txt_lines('social_platforms.txt'))
 SUBPAGE_PATHS = ['/' + p for p in load_txt_lines('subpage_paths.txt')]
 REQUIRED_KEYWORDS = load_txt_lines('required_keywords.txt')
+IGNORED_EXTENSIONS = tuple(load_txt_lines('ignored_extensions.txt'))
 
 EMAIL_REGEX = re.compile(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}')
 
@@ -222,11 +223,10 @@ def clean_text(text):
 
 def extract_emails(html):
     found = set()
-    EXT = tuple(load_txt_lines('ignored_extensions.txt'))
     JUNK_PREFIXES = tuple(load_txt_lines('junk_email_prefixes.txt'))
     for e in EMAIL_REGEX.findall(html):
         e_low = e.lower()
-        if any(e_low.endswith(x) for x in EXT): continue
+        if any(e_low.endswith(x) for x in IGNORED_EXTENSIONS): continue
         if any(e_low.startswith(p) for p in JUNK_PREFIXES): continue
         if not any(g in e_low for g in GARBAGE_EMAIL_DOMAINS): found.add(e)
     return found
@@ -250,7 +250,7 @@ async def scrape_with_playwright(url):
                 await page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
                 
                 try: 
-                    if any(url.endswith(ext) for ext in ('.pdf', '.doc', '.docx', '.xls', '.xlsx', '.zip', '.rar', '.jpg', '.jpeg', '.png', '.gif')):
+                    if any(url.endswith(ext) for ext in IGNORED_EXTENSIONS):
                         return "", None
 
                     await page.goto(url, timeout=TIMEOUT_SCRAPE_JS * 1000, wait_until="domcontentloaded")
@@ -300,7 +300,7 @@ async def scrape_and_save_lead(res):
         if not url: return 0
         
         # Ignoruj pliki binarne i dokumenty
-        if any(url.endswith(ext) for ext in ('.pdf', '.doc', '.docx', '.xls', '.xlsx', '.zip', '.rar', '.jpg', '.jpeg', '.png', '.gif')):
+        if any(url.endswith(ext) for ext in IGNORED_EXTENSIONS):
             return 0
 
         parsed = urlparse(url)
