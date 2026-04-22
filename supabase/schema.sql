@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict GycmFqNktYQ3NDhdVcVK8uv0aRlMqo0Dd98EaVNR1SM8j6SRsngX3NPqWj6bimA
+\restrict 8MUOTxvYSke77kgeXgFvlTYIMmdd2UU0nt5qlAgd7E3MBe9SLKzoaSMqnOUf21D
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -10546,7 +10546,8 @@ CREATE TABLE "public"."marketing_search_queries_log" (
     "query_text" "text" NOT NULL,
     "urls_found" integer DEFAULT 0,
     "status" "text" DEFAULT 'completed'::"text",
-    "created_at" timestamp with time zone DEFAULT "now"()
+    "created_at" timestamp with time zone DEFAULT "now"(),
+    "urls_added" integer DEFAULT 0
 );
 
 
@@ -13892,5 +13893,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict GycmFqNktYQ3NDhdVcVK8uv0aRlMqo0Dd98EaVNR1SM8j6SRsngX3NPqWj6bimA
+\unrestrict 8MUOTxvYSke77kgeXgFvlTYIMmdd2UU0nt5qlAgd7E3MBe9SLKzoaSMqnOUf21D
 
