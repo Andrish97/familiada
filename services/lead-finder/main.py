@@ -236,44 +236,50 @@ async def scrape_with_playwright(url):
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
     ]
-    js_code = await get_readability_js()
     async with playwright_semaphore:
         browser = None
         try:
             async with async_playwright() as p:
                 browser = await p.chromium.launch(headless=True)
-                ctx = await browser.new_context(user_agent=random.choice(USER_AGENTS))
+                ctx = await browser.new_context(
+                    user_agent=random.choice(USER_AGENTS),
+                    bypass_csp=True,
+                    viewport={'width': 1280, 'height': 800}
+                )
                 page = await ctx.new_page()
                 await page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
                 
                 try: 
                     await page.goto(url, timeout=TIMEOUT_SCRAPE_JS * 1000, wait_until="domcontentloaded")
-                    await page.wait_for_timeout(2000)
+                    await page.wait_for_timeout(2500) # Czekaj na renderowanie JS
+
+                    # Obsługa Google Consent
+                    if "google." in url:
+                        try:
+                            for btn_text in ["Zaakceptuj wszystko", "Accept all", "Ich stimme zu", "Accetta wszystko"]:
+                                btn = page.get_by_role("button", name=btn_text, exact=False).first
+                                if await btn.is_visible(timeout=1000):
+                                    await btn.click()
+                                    await page.wait_for_timeout(1000)
+                                    break
+                        except: pass
                     
-                    # Spróbuj wyciągnąć tekst; obsłuż możliwe zniszczenie kontekstu
-                    try:
-                        if js_code:
-                            await page.add_script_tag(content=js_code)
-                            txt = await page.evaluate("""() => {
-                                try {
-                                    const doc = document.cloneNode(true);
-                                    const reader = new Readability(doc);
-                                    const article = reader.parse();
-                                    return article ? article.textContent : document.body.innerText;
-                                } catch(e) { return document.body.innerText; }
-                            }""")
-                        else:
-                            txt = await page.evaluate("() => document.body.innerText")
-                    except Exception as e:
-                        print(f"[SERVER] Playwright Eval Error for {url}: {e}")
-                        txt = await page.evaluate("() => document.body.innerText")
+                    # Pobierz wyrenderowany HTML
+                    html = await page.content()
+                    
+                    # Wyciągnij tekst za pomocą evaluate, ale operując na przekazanym HTML 
+                    # lub bezpośrednio na DOM (bezpieczne, bo nie dodajemy tagów <script>)
+                    txt = await page.evaluate("""() => {
+                        const clone = document.body.cloneNode(true);
+                        const selectors = 'script, style, nav, header, footer, noscript, iframe, svg, [style*="display: none"]';
+                        clone.querySelectorAll(selectors).forEach(n => n.remove());
+                        return clone.innerText || clone.textContent;
+                    }""")
+                    
+                    return clean_text(txt), extract_emails(html)
                 except Exception as e:
-                    print(f"[SERVER] Playwright Goto/Wait Error for {url}: {e}")
-                    try: txt = await page.evaluate("() => document.body.innerText")
-                    except: txt = ""
-                
-                html = await page.content()
-                return clean_text(txt), extract_emails(html)
+                    print(f"[SERVER] Playwright Error for {url}: {e}")
+                    return "", None
         except Exception as e:
             print(f"[SERVER] Playwright Critical Error for {url}: {e}")
             return None, None
@@ -293,44 +299,33 @@ async def scrape_and_save_lead(res):
         allowed_tlds = ('.pl', '.com', '.net', '.org', '.eu', '.info', '.biz', '.online', '.site')
         if not any(url.endswith(t) or f'{t}/' in url for t in allowed_tlds): return 0
         
-        # Szybkie sprawdzenie czy już istnieje (można to zoptymalizować do jednego RPC w przyszłości)
         if await supabase.select('marketing_verified_contacts', 'id', {'url': url}, limit=1): return 0
         if await supabase.select('marketing_raw_contacts', 'id', {'url': url}, limit=1): return 0
         
         txt, emails = '', set()
+        # Metoda 1: HTTPX (Szybka)
         async with scrape_semaphore:
             try:
                 async with httpx.AsyncClient(timeout=TIMEOUT_SCRAPE, follow_redirects=True, headers={'User-Agent': 'Mozilla/5.0'}) as client:
                     r = await client.get(url)
                     if r.status_code == 200:
-                        # Usuń skrypty, style i nawigację przed wyciągnięciem tekstu do filtrów/AI
                         clean_html = re.sub(r'<(script|style|nav|header|footer)[^>]*>.*?</\1>', ' ', r.text, flags=re.DOTALL | re.IGNORECASE)
                         txt = clean_text(re.sub(r'<[^>]+>', ' ', clean_html))
                         emails = extract_emails(r.text)
-                        
-                        if not any(s in url for s in SOCIAL_PLATFORMS) and not emails:
-                            for path in SUBPAGE_PATHS:
-                                try:
-                                    r_sub = await client.get(url.rstrip('/') + path, timeout=5)
-                                    if r_sub.status_code == 200:
-                                        emails.update(extract_emails(r_sub.text))
-                                        # Do tekstu dla AI dodajemy też treść podstron (jeśli tekst główny krótki)
-                                        if len(txt) < (AI_TEXT_LIMIT * 0.8):
-                                            sub_clean = re.sub(r'<(script|style|nav|header|footer)[^>]*>.*?</\1>', ' ', r_sub.text, flags=re.DOTALL | re.IGNORECASE)
-                                            txt += " " + clean_text(re.sub(r'<[^>]+>', ' ', sub_clean))[:500]
-                                        if emails: break
-                                except: continue
             except: pass
 
-        if (not emails or len(txt) < 250) and not any(s in url for s in SOCIAL_PLATFORMS):
+        # Metoda 2: Playwright (jeśli HTTPX zawiódł lub tekst jest zbyt krótki)
+        if (not emails or len(txt) < 150) and not any(s in url for s in SOCIAL_PLATFORMS):
             p_txt, p_emails = await scrape_with_playwright(url)
-            if p_txt: txt = p_txt
+            if p_txt and len(p_txt) > len(txt): txt = p_txt
             if p_emails: emails.update(p_emails)
 
-        if not emails or len(txt) < 100: return 0
-        txt_low = txt.lower()
-        if not any(k in txt_low for k in REQUIRED_KEYWORDS): return 0
-        if any(k in txt_low for k in NEGATIVE_KEYWORDS): return 0
+        # FINALNA DECYZJA
+        if not emails: return 0 # Brak maila = odrzucamy
+
+        # Jeśli mamy maile, ale tekst jest śmieciowy - nie odrzucamy, wstawiamy placeholder
+        if len(txt) < 100:
+            txt = f"[SYSTEM: Nie udało się pobrać treści strony. Metoda renderowania Playwright zwróciła zbyt mało danych. URL: {url}]"
 
         return 1 if await supabase.insert('marketing_raw_contacts', {'url': url, 'title': res.get('title',''), 'page_text': txt[:AI_TEXT_LIMIT], 'emails_found': list(emails), 'status': 'pending'}) else 0
     except Exception as e:
