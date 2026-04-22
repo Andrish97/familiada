@@ -854,12 +854,11 @@ async function handleAdminMarketingApi(request, env, url) {
     const messageRows = validEmails.map(email => ({
       to_email: email,
       subject: String(mktSubject),
-      body_text: emailText,
+      body: emailText,
       body_html: emailHtml,
       is_marketing: true,
       direction: 'outbound',
-      status: 'sent',
-      sent_at: new Date().toISOString(),
+      source: 'email'
     }));
 
     // Batch insert into messages table
