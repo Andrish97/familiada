@@ -205,21 +205,11 @@ def clean_text(text):
 def extract_emails(html):
     found = set()
     EXT = ('.png', '.jpg', '.jpeg', '.gif', '.svg', '.pdf', '.zip', '.js', '.css', '.webp', '.woff', '.woff2')
-    # Rozszerzona lista odrzucanych maili
-    JUNK_PREFIXES = (
-        'webmaster@', 'dmca@', 'privacy@', 'subscriptions@', 'legal@', 'press@', 'noreply@', 'office@it', 
-        'jan@', 'test@', 'example@', 'mail@', 'email@', 'xyz@', 'info@', 'kontakt@', 'biuro@'
-    )
+    JUNK_PREFIXES = ('webmaster@', 'dmca@', 'privacy@', 'subscriptions@', 'legal@', 'press@', 'noreply@', 'office@it', 'jan@', 'test@', 'example@', 'mail@', 'email@', 'xyz@')
     for e in EMAIL_REGEX.findall(html):
         e_low = e.lower()
         if any(e_low.endswith(x) for x in EXT): continue
-        # Odrzuć jeśli mail zaczyna się od śmieciowego prefixu, ALE zrób wyjątek jeśli domena wygląda na specyficzną
-        if any(e_low.startswith(p) for p in JUNK_PREFIXES):
-            # Wyjątek: jeśli to mail typu info@ lub biuro@, ale domena jest "wieloczłonowa" (np. firma-nazwa.pl)
-            # pozwalamy go przepuścić, bo to często realny kontakt biznesowy. 
-            # Odrzucamy tylko ewidentne śmieci.
-            if not (e_low.startswith(('info@', 'kontakt@', 'biuro@')) and len(e_low.split('@')[1].split('.')) > 2):
-                continue
+        if any(e_low.startswith(p) for p in JUNK_PREFIXES): continue
         if not any(g in e_low for g in GARBAGE_EMAIL_DOMAINS): found.add(e)
     return found
 
