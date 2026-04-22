@@ -4001,7 +4001,14 @@ async function sendComposeWithSignature(greetingSelect, farewellSelect, senderSe
 
   // Build HTML email body with Familiada wrapper (dark theme)
   const greetingText = buildEmailSignature({ greeting: greetingValue, farewell: "none", greetingCustom, farewellCustom: "" });
-  const farewellText = buildEmailSignature({ greeting: "none", farewell: farewellValue, greetingCustom: "", farewellCustom });
+  const farewellText = buildEmailSignature({ 
+    greeting: "none", 
+    farewell: farewellValue, 
+    sender: senderValue,
+    greetingCustom: "", 
+    farewellCustom,
+    senderCustom
+  });
 
   // body from TinyMCE is already HTML (<p>, <strong>, etc.) - don't replace \n with <br>
   let bodyContent = body;
