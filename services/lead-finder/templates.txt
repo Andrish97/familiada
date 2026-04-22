@@ -1,3 +1,4 @@
+# Format: Szablon wyszukiwania (używa {role} i {city})
 {role} {city} kontakt
 {role} {city} oferta
 site:facebook.com {city} {role}
