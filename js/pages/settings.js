@@ -4547,7 +4547,6 @@ async function loadMailSettings({ silent = false } = {}) {
     mailProviderOrder = providers;
     renderProviderOrder();
 
-    if (els.mailQueueEnabled) els.mailQueueEnabled.checked = settings.queue_enabled !== false;
     if (els.mailDelayMs) els.mailDelayMs.value = String(clampInt(settings.delay_ms, 0, 5000, 250));
     if (els.mailBatchMax) els.mailBatchMax.value = String(clampInt(settings.batch_max, 1, 500, 100));
     if (els.mailWorkerLimit) els.mailWorkerLimit.value = String(clampInt(settings.worker_limit, 1, 200, 25));
@@ -4600,7 +4599,6 @@ async function loadMailSettings({ silent = false } = {}) {
 }
 
 async function saveMailSettings() {
-  const queueEnabled = els.mailQueueEnabled?.checked !== false;
   const delayMs = clampInt(els.mailDelayMs?.value, 0, 5000, 250);
   const batchMax = clampInt(els.mailBatchMax?.value, 1, 500, 100);
   const workerLimit = clampInt(els.mailWorkerLimit?.value, 1, 200, 25);
@@ -4613,7 +4611,6 @@ async function saveMailSettings() {
   const cronActive = els.mailCronActive?.checked !== false;
 
   const payload = {
-    queue_enabled: queueEnabled,
     providers: mailProviderOrder,
     delay_ms: delayMs,
     batch_max: batchMax,

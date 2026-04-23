@@ -384,6 +384,7 @@ async function handleAdminMailApi(request, env, url) {
       return json({
         ok: true,
         settings: loaded.settings,
+        providers: loaded.providers,
         cron: cron.ok ? cron.data : { supported: false, configured: false, error: cron.error || "cron_status_failed" },
       });
     }
@@ -2516,13 +2517,12 @@ function escapeHtml(str) {
 }
 
 async function loadMailSettings(env) {
-  const q = "select=id,queue_enabled,provider_order,delay_ms,batch_max,worker_limit,updated_at&id=eq.1&limit=1";
+  const q = "select=id,delay_ms,batch_max,worker_limit,updated_at&id=eq.1&limit=1";
   const res = await supabaseRequest(env, `/rest/v1/mail_settings?${q}`, { method: "GET" });
   if (!res.ok) {
     return { ok: false, status: res.status, error: "mail_settings_load_failed", details: summarizeSupabaseError(res) };
   }
-
-  // Pobierz dostawców z nowej tabeli
+  
   const providersRes = await supabaseRequest(env, "/rest/v1/email_providers?select=id,name,label,priority,daily_limit,rem_worker,rem_immediate,is_active&order=priority.asc", { method: "GET" });
   const providers = Array.isArray(providersRes.data) ? providersRes.data : [];
 
@@ -2539,7 +2539,6 @@ async function loadMailSettings(env) {
     ok: true,
     settings: {
       id: 1,
-      queue_enabled: row.queue_enabled !== false,
       delay_ms: clampInt(row.delay_ms, 0, 5000, DEFAULT_MAIL_SETTINGS.delay_ms),
       batch_max: clampInt(row.batch_max, 1, 500, DEFAULT_MAIL_SETTINGS.batch_max),
       worker_limit: clampInt(row.worker_limit, 1, 200, DEFAULT_MAIL_SETTINGS.worker_limit),
