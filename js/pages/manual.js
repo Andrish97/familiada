@@ -2,9 +2,9 @@
 // Zakładki mają działać nawet jeśli auth się nie załaduje.
 // Najpierw UI, potem auth „miękko”.
 
-import { confirmModal } from "../core/modal.js?v=v2026-04-23T16213";
-import { initI18n, setUiLang, t, withLangParam } from "../../translation/translation.js?v=v2026-04-23T16213";
-import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-04-23T16213";
+import { confirmModal } from "../core/modal.js?v=v2026-04-23T16303";
+import { initI18n, setUiLang, t, withLangParam } from "../../translation/translation.js?v=v2026-04-23T16303";
+import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-04-23T16303";
 import "../core/contact-modal.js";
 
 function isModalMode() {
@@ -179,7 +179,7 @@ async function wireDemoActions(user) {
   const btn = byId("demoRestoreBtn");
   if (!btn || !user?.id) return;
 
-  const { sb } = await import("../core/supabase.js?v=v2026-04-23T16213");
+  const { sb } = await import("../core/supabase.js?v=v2026-04-23T16303");
 
   btn.addEventListener("click", async () => {
     const ok = await confirmModal({
@@ -209,7 +209,7 @@ async function wireDemoActions(user) {
 }
 
 async function wireAuthSoft() {
-  const { requireAuth } = await import("../core/auth.js?v=v2026-04-23T16213");
+  const { requireAuth } = await import("../core/auth.js?v=v2026-04-23T16303");
   const user = await requireAuth("login");
 
   initTopbarAccountDropdown(user);
