@@ -214,7 +214,7 @@
 }
 
 .toggle-slider::before{
-  /* content: attr(data-text); - usunięte, aby uniknąć dublowania */
+  /* content: attr(data-text); - całkowicie usunięte */
 }
 
 /* Pierwszy element - zaokrąglenie lewe */
@@ -1124,7 +1124,8 @@
 .ansText {
     margin-top: 6px;
     font-weight: 900;
-    line-height: 1.25
+    line-height: 1.25;
+    font-size: 18px;
 }
 
 .ansBtn.revealed {
@@ -1333,7 +1334,13 @@
 }
 
 .finalTable .qCell {
-    width: 55%
+    width: 55%;
+    font-size: 16px;
+    font-weight: 800;
+    padding: 14px;
+    border: 1px solid rgba(255, 234, 166, 0.2);
+    border-radius: 8px;
+    background: rgba(255, 234, 166, 0.03);
 }
 
 .finalTable .aCell,.finalTable .p1Cell {
