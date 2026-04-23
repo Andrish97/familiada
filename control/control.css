@@ -214,7 +214,7 @@
 }
 
 .toggle-slider::before{
-  content: attr(data-text);
+  /* content: attr(data-text); - usunięte, aby uniknąć dublowania */
 }
 
 /* Pierwszy element - zaokrąglenie lewe */
@@ -1065,6 +1065,17 @@
     font-weight: 1000;
     line-height: 1.25;
     font-size: 16px
+}
+
+#roundQuestion, .qPrompt {
+    font-size: 20px;
+    padding: 12px 16px;
+    background: rgba(255, 234, 166, 0.05);
+    border: 2px solid var(--gold);
+    border-radius: 12px;
+    margin: 10px 0;
+    color: var(--gold);
+    text-align: center;
 }
 
 .timer3 {
