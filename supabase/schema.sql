@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict G4osKNJ8amqoizhgitspdeVpfCvQCZwOdZIa6zQiVocFY4WKXa9hKxgbzwdMJ0m
+\restrict G8xTnsFfereeRhwDD5CYWGU6hZRBGZgZhSQpZPaCd9LgSBHT5cjg0MqHYZZjzZz
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -1633,6 +1633,36 @@ begin
     body := '{"action":"embed-missing","lang":"all","limit":25}'
   );
 end;
+$$;
+
+
+--
+-- Name: decrement_provider_immediate("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."decrement_provider_immediate"("p_id" "uuid") RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+BEGIN
+    UPDATE public.email_providers
+    SET rem_immediate = GREATEST(0, rem_immediate - 1)
+    WHERE id = p_id;
+END;
+$$;
+
+
+--
+-- Name: decrement_provider_worker("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."decrement_provider_worker"("p_id" "uuid") RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+BEGIN
+    UPDATE public.email_providers
+    SET rem_worker = GREATEST(0, rem_worker - 1)
+    WHERE id = p_id;
+END;
 $$;
 
 
@@ -8828,6 +8858,22 @@ $$;
 
 
 --
+-- Name: reset_email_limits(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."reset_email_limits"() RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+BEGIN
+    UPDATE "public"."email_providers"
+    SET "rem_worker" = floor("daily_limit" * 0.8),
+        "rem_immediate" = "daily_limit" - floor("daily_limit" * 0.8)
+    WHERE "is_active" = true;
+END;
+$$;
+
+
+--
 -- Name: restore_message("uuid"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -10318,6 +10364,23 @@ CREATE TABLE "public"."email_intents" (
 
 
 --
+-- Name: email_providers; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."email_providers" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "name" "text" NOT NULL,
+    "label" "text" NOT NULL,
+    "priority" integer DEFAULT 0 NOT NULL,
+    "daily_limit" integer DEFAULT 1000 NOT NULL,
+    "rem_worker" integer DEFAULT 800 NOT NULL,
+    "rem_immediate" integer DEFAULT 200 NOT NULL,
+    "is_active" boolean DEFAULT true NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL
+);
+
+
+--
 -- Name: email_unsub_tokens; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -11081,6 +11144,14 @@ ALTER TABLE ONLY "public"."email_cooldowns"
 
 ALTER TABLE ONLY "public"."email_intents"
     ADD CONSTRAINT "email_intents_pkey" PRIMARY KEY ("email");
+
+
+--
+-- Name: email_providers email_providers_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."email_providers"
+    ADD CONSTRAINT "email_providers_pkey" PRIMARY KEY ("id");
 
 
 --
@@ -12959,6 +13030,26 @@ CREATE POLICY "email_intents_service_only" ON "public"."email_intents" TO "authe
 
 
 --
+-- Name: email_providers; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."email_providers" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: email_providers email_providers_admin_all; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "email_providers_admin_all" ON "public"."email_providers" USING (true) WITH CHECK (true);
+
+
+--
+-- Name: email_providers email_providers_read_all; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "email_providers_read_all" ON "public"."email_providers" FOR SELECT USING (true);
+
+
+--
 -- Name: email_unsub_tokens; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -13899,5 +13990,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict G4osKNJ8amqoizhgitspdeVpfCvQCZwOdZIa6zQiVocFY4WKXa9hKxgbzwdMJ0m
+\unrestrict G8xTnsFfereeRhwDD5CYWGU6hZRBGZgZhSQpZPaCd9LgSBHT5cjg0MqHYZZjzZz
 
