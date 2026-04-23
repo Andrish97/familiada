@@ -12,17 +12,17 @@ Settings panel (admin)
 - GET /_admin_api/mail/logs
 */
 
-import { initI18n, t, getUiLang } from "../../translation/translation.js?v=v2026-04-23T22191";
-import { initUiSelect } from "../core/ui-select.js?v=v2026-04-23T22191";
-import { confirmModal } from "../core/modal.js?v=v2026-04-23T22191";
-import { sb } from "../core/supabase.js?v=v2026-04-23T22191";
-import { v as cacheBust } from "../core/cache-bust.js?v=v2026-04-23T22191";
+import { initI18n, t, getUiLang } from "../../translation/translation.js?v=v2026-04-23T17271";
+import { initUiSelect } from "../core/ui-select.js?v=v2026-04-23T17271";
+import { confirmModal } from "../core/modal.js?v=v2026-04-23T17271";
+import { sb } from "../core/supabase.js?v=v2026-04-23T17271";
+import { v as cacheBust } from "../core/cache-bust.js?v=v2026-04-23T17271";
 
 const API_BASE = "/_admin_api";
 const TOOLS_MANIFEST = "/settings-tools/tools.json";
 const POLL_MS = 15000;
 const MINUTES_MIN = 10;
-const MAIL_PROVIDERS = ["brevo", "mailgun", "sendpulse", "mailerlite"];
+const MAIL_PROVIDERS = ["sendgrid", "brevo", "mailgun", "ses"];
 const EMAIL_TEMPLATES = {
   custom: "",
   info: "Dziękujemy za wiadomość. Odpowiemy tak szybko, jak to możliwe.",
@@ -125,6 +125,7 @@ const els = {
   modeStatus: document.getElementById("modeStatus"),
   modeStatusValue: document.getElementById("modeStatusValue"),
   toast: document.getElementById("toast"),
+  mailQueueEnabled: document.getElementById("mailQueueEnabled"),
   mailProviderOrderList: document.getElementById("mailProviderOrderList"),
   mailDelayMs: document.getElementById("mailDelayMs"),
   mailBatchMax: document.getElementById("mailBatchMax"),
@@ -5845,7 +5846,7 @@ function wireEvents() {
   // ═══════════════════════════════════════════════════════════
   // MARKETING CONTACTS
   // ═══════════════════════════════════════════════════════════
-  const { rt } = await import("../core/realtime.js?v=v2026-04-23T22191");
+  const { rt } = await import("../core/realtime.js?v=v2026-04-23T17271");
   const MC_API = "https://leads.familiada.online";
   const MC_PAGE_SIZE = 50;
   let mcToken = null;
