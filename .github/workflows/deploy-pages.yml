@@ -55,9 +55,8 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config http.postBuffer 524288000
           
-          # Czyścimy niechciane pliki tymczasowe przed operacjami gita
-          git reset --hard
-          git clean -fd
+          # Zapisz wszystko w stashu, żeby mieć czyste drzewo do rebase'u
+          git stash
           
           git add *.html js/ logo-editor/js/ translation/ display/js/ control/js/ sw.js version.txt
           
@@ -71,6 +70,9 @@ jobs:
               git push origin HEAD:main && break || sleep 5
             done
           fi
+          
+          # Przywróć to, co było w stashu (jeśli coś było)
+          git stash pop || echo "No stash to pop"
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
