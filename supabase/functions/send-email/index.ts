@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { Webhook } from "https://esm.sh/standardwebhooks@1.0.0";
-import { getEmailCopy, type EmailLang } from "./email-templates.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 type ProviderType = "brevo" | "mailgun" | "sendpulse" | "mailerlite";
@@ -24,6 +23,7 @@ const HOOK_SECRET_RAW = Deno.env.get("SEND_EMAIL_HOOK_SECRET") || "";
 const HOOK_SECRET = HOOK_SECRET_RAW.replace("v1,whsec_", "");
 const webhook = new Webhook(HOOK_SECRET);
 
+// Helpers
 function scrubEmail(email: string) { const e = String(email || "").trim(); const at = e.indexOf("@"); if (at <= 1) return e ? "***" : ""; return `${e.slice(0, 2)}***${e.slice(at)}`; }
 function clampError(message: unknown, max = 2000) { return String(message ?? "").slice(0, max); }
 
@@ -68,6 +68,7 @@ async function queueEmail(to: string, subject: string, html: string) {
   await sbAdmin.from("mail_queue").insert({ to_email: to, subject, html, status: "pending", meta: { queued_reason: "limits_exceeded" } });
 }
 
+// Funkcje wysyłkowe
 async function sendViaBrevo(to: string, subject: string, html: string) {
   if (!BREVO_KEY) throw new Error("missing_BREVO_API_KEY");
   const res = await fetch("https://api.brevo.com/v3/smtp/email", {
