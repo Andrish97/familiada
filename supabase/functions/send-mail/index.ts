@@ -42,6 +42,17 @@ function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+function parseProviderOrder(raw: string): Provider[] {
+  const allowed: Provider[] = ["sendgrid", "brevo", "mailgun", "ses"];
+  const out = String(raw || "")
+    .toLowerCase()
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .filter((x) => allowed.includes(x as Provider)) as Provider[];
+  return out.length ? out : ["sendgrid", "brevo", "mailgun"];
+}
+
 function parseItems(body: any): { items: MailItem[]; mode: "batch" | "single" } {
   if (body && Array.isArray(body.items)) {
     const items: MailItem[] = body.items
@@ -78,6 +89,37 @@ function htmlToText(html: string): string {
     .replace(/\s+/g, ' ')               // Collapse whitespace
     .trim()
     .slice(0, 500);                     // Limit length for preview
+}
+
+async function sendViaSendgrid(it: MailItem) {
+  if (!SENDGRID_KEY) throw new Error("missing_SENDGRID_API_KEY");
+  const plainText = htmlToText(it.html);
+
+  const sgRes = await fetch("https://api.sendgrid.com/v3/mail/send", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${SENDGRID_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      personalizations: [{ to: [{ email: it.to }] }],
+      from: { email: FROM_EMAIL, name: FROM_NAME },
+      subject: it.subject,
+      content: [
+        { type: "text/plain", value: plainText },
+        { type: "text/html", value: it.html }
+      ],
+      tracking_settings: {
+        click_tracking: { enable: false, enable_text: false },
+        open_tracking: { enable: false },
+      },
+    }),
+  });
+
+  if (!sgRes.ok) {
+    const errTxt = await sgRes.text().catch(() => "");
+    throw new Error(`sendgrid_failed:${errTxt || sgRes.status}`);
+  }
 }
 
 async function sendViaBrevo(it: MailItem) {
@@ -133,40 +175,73 @@ async function sendViaMailgun(it: MailItem) {
   }
 }
 
-async function sendViaSendpulse(it: MailItem) {
-  if (!SENDPULSE_ID || !SENDPULSE_SECRET) throw new Error("missing_SENDPULSE_credentials");
-  const addrBook = "familiada_online";
-  const plainText = htmlToText(it.html);
-  const emailData: any = {
-    from: { email: FROM_EMAIL, name: FROM_NAME },
-    to: [{ email: it.to }],
-    subject: it.subject,
-    html: it.html,
-    text: plainText,
-  };
-  const res = await fetch(`https://api.sendpulse.io/${addrBook}/emails`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${btoa(`${SENDPULSE_ID}:${SENDPULSE_SECRET}`)}` },
-    body: JSON.stringify(emailData),
-  });
-  if (!res.ok) throw new Error(`sendpulse_failed:${await res.text().catch(() => "")}`);
-}
+async function sendViaSes(it: MailItem, region: string) {
+  if (!SES_ACCESS_KEY || !SES_SECRET_KEY) throw new Error("missing_AWS_SES_credentials");
 
-async function sendViaMailerlite(it: MailItem) {
-  if (!MAILERLITE_KEY) throw new Error("missing_MAILERLITE_API_KEY");
+  // AWS SES v2 REST API z Signature V4
+  const sesRegion = region || "us-east-1";
+  const endpoint = `https://email.${sesRegion}.amazonaws.com/v2/email/outbound-emails`;
   const plainText = htmlToText(it.html);
-  const res = await fetch("https://api.mailerlite.com/api/v1/send", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${MAILERLITE_KEY}` },
-    body: JSON.stringify({
-      email: [{ address: it.to }],
-      from: FROM_EMAIL,
-      subject: it.subject,
-      html: it.html,
-      text: plainText,
-    }),
+
+  const payload = JSON.stringify({
+    FromEmailAddress: `${FROM_NAME} <${FROM_EMAIL}>`,
+    Destination: { ToAddresses: [it.to] },
+    Content: {
+      Simple: {
+        Subject: { Data: it.subject, Charset: "UTF-8" },
+        Body: { 
+          Html: { Data: it.html, Charset: "UTF-8" },
+          Text: { Data: plainText, Charset: "UTF-8" }
+        },
+      },
+    },
   });
-  if (!res.ok) throw new Error(`mailerlite_failed:${await res.text().catch(() => "")}`);
+
+  const now = new Date();
+  const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, "").slice(0, 15) + "Z";
+  const dateStamp = amzDate.slice(0, 8);
+  const service = "ses";
+  const host = `email.${sesRegion}.amazonaws.com`;
+
+  // Canonical request
+  const bodyHash = await sha256Hex(payload);
+  const canonicalHeaders = `content-type:application/json\nhost:${host}\nx-amz-date:${amzDate}\n`;
+  const signedHeaders = "content-type;host;x-amz-date";
+  const canonicalRequest = ["POST", "/v2/email/outbound-emails", "", canonicalHeaders, signedHeaders, bodyHash].join("\n");
+
+  // String to sign
+  const credentialScope = `${dateStamp}/${sesRegion}/${service}/aws4_request`;
+  const stringToSign = ["AWS4-HMAC-SHA256", amzDate, credentialScope, await sha256Hex(canonicalRequest)].join("\n");
+
+  // Signing key
+  const signingKey = await hmacSha256(
+    await hmacSha256(
+      await hmacSha256(
+        await hmacSha256(new TextEncoder().encode("AWS4" + SES_SECRET_KEY), dateStamp),
+        sesRegion
+      ),
+      service
+    ),
+    "aws4_request"
+  );
+  const signature = await hmacSha256Hex(signingKey, stringToSign);
+
+  const authHeader = `AWS4-HMAC-SHA256 Credential=${SES_ACCESS_KEY}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
+
+  const res = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Amz-Date": amzDate,
+      "Authorization": authHeader,
+    },
+    body: payload,
+  });
+
+  if (!res.ok) {
+    const errTxt = await res.text().catch(() => "");
+    throw new Error(`ses_failed:${errTxt || res.status}`);
+  }
 }
 
 async function sha256Hex(data: string): Promise<string> {
@@ -189,9 +264,9 @@ async function sendWithFallbacks(it: MailItem, order: Provider[]) {
   const errs: string[] = [];
   for (const p of order) {
     try {
-      if (p === "brevo") await sendViaBrevo(it);
-      else if (p === "sendpulse") await sendViaSendpulse(it);
-      else if (p === "mailerlite") await sendViaMailerlite(it);
+      if (p === "sendgrid") await sendViaSendgrid(it);
+      else if (p === "brevo") await sendViaBrevo(it);
+      else if (p === "ses") await sendViaSes(it, SES_REGION);
       else await sendViaMailgun(it);
       return { provider: p as Provider };
     } catch (e) {
@@ -204,13 +279,15 @@ async function sendWithFallbacks(it: MailItem, order: Provider[]) {
 async function loadSettings() {
   const { data, error } = await sbAdmin
     .from("mail_settings")
-    .select("delay_ms,batch_max")
+    .select("queue_enabled,provider_order,delay_ms,batch_max")
     .eq("id", 1)
     .maybeSingle();
 
   if (error) throw error;
 
   return {
+    queue_enabled: !!data?.queue_enabled,
+    provider_order: String(data?.provider_order || "sendgrid,brevo,mailgun"),
     delay_ms: Number.isFinite(Number(data?.delay_ms)) ? Number(data?.delay_ms) : 250,
     batch_max: Number.isFinite(Number(data?.batch_max)) ? Number(data?.batch_max) : 100,
   };
@@ -413,9 +490,10 @@ serve(async (req) => {
         actorUserId,
         error: String((err as any)?.message || err),
       });
-settings = { delay_ms: 250, batch_max: 100 };
+      settings = { queue_enabled: true, provider_order: "sendgrid,brevo,mailgun", delay_ms: 250, batch_max: 100 };
+    }
 
-    const order = ["brevo", "mailgun", "sendpulse", "mailerlite"];
+    const order = parseProviderOrder(settings.provider_order);
     const delayMs = Math.max(0, Math.min(5000, Number(settings.delay_ms || 0)));
     const batchMax = Math.max(1, Math.min(500, Number(settings.batch_max || 100)));
     const sliced = items.slice(0, batchMax);
@@ -447,8 +525,10 @@ settings = { delay_ms: 250, batch_max: 100 };
         itemsAfterBatch: sliced.length,
         itemsAfterFilter: finalItems.length,
         skippedByRecipientSettings: f.skipped,
+        queueEnabled: settings.queue_enabled,
         delayMs,
         batchMax,
+        providerOrder: order.join(","),
       },
     });
 
@@ -471,10 +551,11 @@ settings = { delay_ms: 250, batch_max: 100 };
         to_email: it.to,
         subject: it.subject,
         html: it.html,
-        text: htmlToText(it.html),
+        text: htmlToText(it.html),  // Generate plain text for Apple Mail preview
         status: "pending",
         not_before: new Date().toISOString(),
         attempts: 0,
+        provider_order: order.join(","),
         meta: it.meta || {},
       }));
 
@@ -497,7 +578,7 @@ settings = { delay_ms: 250, batch_max: 100 };
         event: "queue_inserted",
         status: "queued",
         actorUserId,
-        meta: { count: rows.length },
+        meta: { count: rows.length, providerOrder: order.join(",") },
       });
 
       return json({
@@ -506,6 +587,49 @@ settings = { delay_ms: 250, batch_max: 100 };
         results: rows.map((r) => ({ to: r.to_email, ok: true, queued: true })),
       });
     }
+
+    // ---- SEND NOW MODE ----
+    const results: any[] = [];
+    for (let i = 0; i < finalItems.length; i++) {
+      const it = finalItems[i];
+      try {
+        const out = await sendWithFallbacks(it, order);
+        results.push({ to: it.to, ok: true, provider: out.provider });
+        await writeLog({
+          requestId,
+          event: "send_item_ok",
+          status: "sent",
+          actorUserId,
+          recipientEmail: it.to,
+          provider: out.provider,
+        });
+      } catch (e) {
+        const errMsg = String((e as any)?.message || e);
+        results.push({ to: it.to, ok: false, error: errMsg });
+        console.warn("[send-mail] send:item_fail", { to: scrubEmail(it.to), error: errMsg });
+        await writeLog({
+          requestId,
+          level: "error",
+          event: "send_item_failed",
+          status: "failed",
+          actorUserId,
+          recipientEmail: it.to,
+          error: errMsg,
+        });
+      }
+      if (delayMs && i < finalItems.length - 1) await sleep(delayMs);
+    }
+
+    const failed = results.filter((r) => !r.ok).length;
+    await writeLog({
+      requestId,
+      level: failed ? "warn" : "info",
+      event: "request_done",
+      status: failed ? "partial_failed" : "ok",
+      actorUserId,
+      meta: { mode, total: results.length, failed },
+    });
+    return json({ ok: failed === 0, mode, results, failed });
   } catch (e) {
     await writeLog({
       requestId,
@@ -517,6 +641,4 @@ settings = { delay_ms: 250, batch_max: 100 };
     });
     return json({ ok: false, error: String((e as any)?.message || e) }, 500);
   }
-});
-
 });
