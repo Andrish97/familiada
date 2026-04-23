@@ -125,6 +125,7 @@ const els = {
   modeStatus: document.getElementById("modeStatus"),
   modeStatusValue: document.getElementById("modeStatusValue"),
   toast: document.getElementById("toast"),
+  mailProviderOrderList: document.getElementById("mailProviderOrderList"),
   mailDelayMs: document.getElementById("mailDelayMs"),
   mailBatchMax: document.getElementById("mailBatchMax"),
   mailWorkerLimit: document.getElementById("mailWorkerLimit"),
