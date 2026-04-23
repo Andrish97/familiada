@@ -28,6 +28,14 @@ function htmlToText(html: string): string { return html.replace(/<[^>]*>/g, ' ')
 
 interface EmailProvider { id: string; name: string; type: ProviderType; label: string; priority: number; rem_worker: number; }
 
+function parseQueueIds(raw: string | null): string[] {
+  if (!raw) return [];
+  const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  const uniq = new Set<string>();
+  String(raw).split(",").map((v) => v.trim()).filter(Boolean).forEach((id) => { if (uuidRe.test(id)) uniq.add(id); });
+  return [...uniq].slice(0, 200);
+}
+
 async function loadProviders(): Promise<EmailProvider[]> {
   const { data, error } = await sbAdmin.from("email_providers").select("*").eq("is_active", true).order("priority", { ascending: true });
   if (error) return [];
@@ -38,8 +46,32 @@ async function decrementWorkerLimit(providerId: string) {
   await sbAdmin.rpc("decrement_provider_worker", { p_id: providerId });
 }
 
-// Funkcje wysyłkowe
-async function sendViaBrevo(to: string, subject: string, html: string, fromEmail?: string, attachments?: any[], text?: string) {
+async function loadSettings() {
+  const { data } = await sbAdmin.from("mail_settings").select("delay_ms,worker_limit").eq("id", 1).maybeSingle();
+  return {
+    delay_ms: Number.isFinite(Number(data?.delay_ms)) ? Number(data?.delay_ms) : 250,
+    worker_limit: Number.isFinite(Number(data?.worker_limit)) ? Number(data?.worker_limit) : 25,
+  };
+}
+
+async function writeLog(entry: any) {
+  try {
+    await sbAdmin.from("mail_function_logs").insert({
+      function_name: "mail-worker",
+      level: entry.level || "info",
+      event: entry.event,
+      request_id: entry.requestId,
+      queue_id: entry.queueId || null,
+      recipient_email: entry.recipientEmail || null,
+      provider: entry.provider || null,
+      status: entry.status || null,
+      error: entry.error ? clampError(entry.error) : null,
+      meta: entry.meta || {},
+    });
+  } catch (err) { console.warn("[mail-worker] log:insert_failed", err); }
+}
+
+async function sendViaBrevo(to: string, subject: string, html: string, fromEmail?: string, text?: string) {
   if (!BREVO_KEY) throw new Error("missing_BREVO_API_KEY");
   const res = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
@@ -49,12 +81,11 @@ async function sendViaBrevo(to: string, subject: string, html: string, fromEmail
   if (!res.ok) throw new Error(`brevo_failed:${await res.text().catch(() => "")}`);
 }
 
-async function sendViaMailgun(to: string, subject: string, html: string, fromEmail?: string, attachments?: any[], text?: string) {
+async function sendViaMailgun(to: string, subject: string, html: string, fromEmail?: string, text?: string) {
   if (!MAILGUN_KEY || !MAILGUN_DOMAIN) throw new Error("missing_MAILGUN_CREDENTIALS");
   const base = MAILGUN_REGION === "eu" ? "https://api.eu.mailgun.net" : "https://api.mailgun.net";
   const form = new FormData();
-  form.append("from", `${FROM_NAME} <${fromEmail || FROM_EMAIL}>`);
-  form.append("to", to); form.append("subject", subject); form.append("html", html); form.append("text", text || htmlToText(html));
+  form.append("from", `${FROM_NAME} <${fromEmail || FROM_EMAIL}>`); form.append("to", to); form.append("subject", subject); form.append("html", html); form.append("text", text || htmlToText(html));
   const res = await fetch(`${base}/v3/${MAILGUN_DOMAIN}/messages`, { method: "POST", headers: { Authorization: `Basic ${btoa(`api:${MAILGUN_KEY}`)}` }, body: form });
   if (!res.ok) throw new Error(`mailgun_failed:${await res.text().catch(() => "")}`);
 }
@@ -79,15 +110,15 @@ async function sendViaMailerlite(to: string, subject: string, html: string, from
   if (!res.ok) throw new Error(`mailerlite_failed:${await res.text().catch(() => "")}`);
 }
 
-async function sendWithFallbacks(to: string, subject: string, html: string, providers: EmailProvider[], fromEmail?: string, attachments?: any[], plainText?: string) {
+async function sendWithFallbacks(to: string, subject: string, html: string, providers: EmailProvider[], fromEmail?: string, text?: string) {
   const available = providers.filter(p => p.rem_worker > 0);
   if (available.length === 0) throw new Error("no_available_worker_limits");
   for (const p of available) {
     try {
-      if (p.type === "brevo") await sendViaBrevo(to, subject, html, fromEmail, attachments, plainText);
+      if (p.type === "brevo") await sendViaBrevo(to, subject, html, fromEmail, undefined, text);
       else if (p.type === "sendpulse") await sendViaSendpulse(to, subject, html, fromEmail);
       else if (p.type === "mailerlite") await sendViaMailerlite(to, subject, html, fromEmail);
-      else await sendViaMailgun(to, subject, html, fromEmail, attachments, plainText);
+      else await sendViaMailgun(to, subject, html, fromEmail, undefined, text);
       await decrementWorkerLimit(p.id);
       return p.name;
     } catch (e) { console.error(`[mail-worker] provider ${p.name} failed:`, e); }
@@ -96,8 +127,44 @@ async function sendWithFallbacks(to: string, subject: string, html: string, prov
 }
 
 serve(async (req) => {
-  // ... (reszta logiki: pick batch, loop, logowanie)
-  // W pętli głównej wywołanie:
-  // const provider = await sendWithFallbacks(...);
-  // await sbAdmin.rpc("mail_queue_mark", { p_id: r.id, p_ok: true, p_provider: provider, p_error: "" });
+  const requestId = crypto.randomUUID();
+  if (req.method !== "POST" && req.method !== "GET") return json({ ok: false, error: "Method not allowed" }, 405);
+  await writeLog({ requestId, event: "request_start", status: "started", meta: { method: req.method, url: req.url } });
+
+  const url = new URL(req.url);
+  if (WORKER_SECRET) {
+    const got = req.headers.get("x-mail-worker-secret") || req.headers.get("authorization")?.slice(7) || url.searchParams.get("secret") || "";
+    if (got !== WORKER_SECRET) {
+      await writeLog({ requestId, level: "warn", event: "request_forbidden_bad_secret", status: "failed" });
+      return json({ ok: false, error: "forbidden" }, 403);
+    }
+  }
+
+  const settings = await loadSettings();
+  const providers = await loadProviders();
+  const limit = Math.max(1, Math.min(200, Number(url.searchParams.get("limit") || String(settings.worker_limit))));
+  const selectedIds = parseQueueIds(url.searchParams.get("ids"));
+  const { data: rows, error } = await sbAdmin.rpc(selectedIds.length ? "mail_queue_pick_selected" : "mail_queue_pick", selectedIds.length ? { p_ids: selectedIds, p_limit: limit } : { p_limit: limit });
+  
+  if (error) {
+    await writeLog({ requestId, level: "error", event: "queue_pick_failed", status: "failed", error: String(error.message) });
+    return json({ ok: false, error: "pick_failed" }, 500);
+  }
+
+  let sent = 0, failed = 0;
+  for (const r of (rows || [])) {
+    if (!providers.some(p => p.rem_worker > 0)) break;
+    try {
+      const provider = await sendWithFallbacks(r.to_email, r.subject, r.html, providers, r.from_email, r.text);
+      await sbAdmin.rpc("mail_queue_mark", { p_id: r.id, p_ok: true, p_provider: provider, p_error: "" });
+      sent++;
+    } catch (e) {
+      await sbAdmin.rpc("mail_queue_mark", { p_id: r.id, p_ok: false, p_provider: "", p_error: String(e) });
+      failed++;
+    }
+    if (settings.delay_ms) await sleep(settings.delay_ms);
+  }
+
+  await writeLog({ requestId, level: failed ? "warn" : "info", event: "request_done", status: failed ? "partial_failed" : "ok", meta: { sent, failed } });
+  return json({ ok: true, sent, failed });
 });
