@@ -515,10 +515,8 @@ settings = { delay_ms: 250, batch_max: 100 };
       actorUserId,
       error: String((e as any)?.message || e),
     });
-return json({ ok: false, error: String((e as any)?.message || e) }, 500);
+    return json({ ok: false, error: String((e as any)?.message || e) }, 500);
   }
-});
-
 });
 
 });
