@@ -55,24 +55,20 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config http.postBuffer 524288000
           
-          # Zapisz wszystko w stashu, żeby mieć czyste drzewo do rebase'u
-          git stash
-          
-          git add *.html js/ logo-editor/js/ translation/ display/js/ control/js/ sw.js version.txt
+          # Dodaj zmiany wygenerowane przez skrypt
+          git add .
           
           if ! git diff --cached --quiet; then
             git commit -m "ci: update version hashes [skip ci]"
             
-            git fetch origin main
-            git rebase origin/main
+            # Pobierz zmiany i wykonaj merge zamiast rebase
+            git pull origin main --rebase=false
             
+            # Wypchnij zmiany
             for i in {1..3}; do
               git push origin HEAD:main && break || sleep 5
             done
           fi
-          
-          # Przywróć to, co było w stashu (jeśli coś było)
-          git stash pop || echo "No stash to pop"
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
