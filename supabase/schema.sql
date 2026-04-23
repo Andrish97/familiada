@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict G8xTnsFfereeRhwDD5CYWGU6hZRBGZgZhSQpZPaCd9LgSBHT5cjg0MqHYZZjzZz
+\restrict HVI2yvwLsr6ShAeZlo9xypwmGDow6B2pidv5laQb2viZYsj7jELtQ9BxVPDz9nr
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -10498,21 +10498,12 @@ ALTER TABLE "public"."mail_function_logs" ALTER COLUMN "id" ADD GENERATED ALWAYS
 
 CREATE TABLE "public"."mail_settings" (
     "id" integer DEFAULT 1 NOT NULL,
-    "queue_enabled" boolean DEFAULT true NOT NULL,
-    "provider_order" "text" DEFAULT 'sendgrid,brevo,mailgun'::"text" NOT NULL,
     "delay_ms" integer DEFAULT 250 NOT NULL,
     "batch_max" integer DEFAULT 100 NOT NULL,
     "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "worker_limit" integer DEFAULT 25 NOT NULL,
     CONSTRAINT "mail_settings_singleton" CHECK (("id" = 1))
 );
-
-
---
--- Name: COLUMN "mail_settings"."provider_order"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN "public"."mail_settings"."provider_order" IS 'Kolejność providerów: sendgrid, brevo, mailgun, ses. Oddzielone przecinkami.';
 
 
 --
@@ -13990,5 +13981,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict G8xTnsFfereeRhwDD5CYWGU6hZRBGZgZhSQpZPaCd9LgSBHT5cjg0MqHYZZjzZz
+\unrestrict HVI2yvwLsr6ShAeZlo9xypwmGDow6B2pidv5laQb2viZYsj7jELtQ9BxVPDz9nr
 
