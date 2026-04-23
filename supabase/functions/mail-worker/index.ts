@@ -204,14 +204,16 @@ async function sendViaSendpulse(to: string, subject: string, html: string, fromE
 async function sendViaMailerlite(to: string, subject: string, html: string, fromEmail?: string) {
   if (!MAILERLITE_KEY) throw new Error("missing_MAILERLITE_API_KEY");
   const from = fromEmail || FROM_EMAIL;
-  const res = await fetch("https://connect.mailerlite.com/api/emails/transactional", {
+  const text = html.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').trim().slice(0, 500);
+  const res = await fetch("https://api.mailerlite.com/api/v1/send", {
     method: "POST",
-    headers: { "Authorization": `Bearer ${MAILERLITE_KEY}`, "Content-Type": "application/json", "Accept": "application/json" },
+    headers: { "Authorization": `Bearer ${MAILERLITE_KEY}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      from: { email: from, name: FROM_NAME },
-      to: { email: to },
+      recipient: to,
+      from: from,
       subject: subject,
-      html: html
+      html: html,
+      text: text
     }),
   });
   if (!res.ok) throw new Error(`mailerlite_failed:${await res.text().catch(() => "")}`);
