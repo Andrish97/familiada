@@ -65,8 +65,8 @@ done
 
 # 3) Restart container
 echo
-echo "== Restart supabase-edge-functions =="
-docker restart supabase-edge-functions >/dev/null
+echo "== Build & Restart supabase-edge-functions =="
+cd /home/andrish97/supabase-selfhost/supabase/docker && docker compose up -d --build functions
 echo "OK"
 
 
