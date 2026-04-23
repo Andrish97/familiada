@@ -398,11 +398,20 @@ async function handleAdminMailApi(request, env, url) {
       if (!loaded.ok) return json({ ok: false, error: loaded.error || "mail_settings_load_failed" }, loaded.status || 500);
       const current = loaded.settings;
 
-      const providerOrderArr = parseProviderOrderInput(
-        body.provider_order ?? body.providerOrder ?? current.provider_order
-      );
-      if (!providerOrderArr.length) {
-        return json({ ok: false, error: "Invalid provider_order" }, 400);
+      // Aktualizuj dostawców jeśli przesłano nową listę
+      if (Array.isArray(body.providers)) {
+        for (let i = 0; i < body.providers.length; i++) {
+          const p = body.providers[i];
+          if (!p.id) continue;
+          await supabaseRequest(env, `/rest/v1/email_providers?id=eq.${encodeURIComponent(p.id)}`, {
+            method: "PATCH",
+            body: { 
+              daily_limit: clampInt(p.daily_limit, 0, 1000000, 1000),
+              priority: i + 1,
+              is_active: p.is_active !== false
+            }
+          });
+        }
       }
 
       const next = {
@@ -413,7 +422,6 @@ async function handleAdminMailApi(request, env, url) {
             : typeof body.queueEnabled === "boolean"
               ? body.queueEnabled
               : current.queue_enabled,
-        provider_order: providerOrderArr.join(","),
         delay_ms: clampInt(
           body.delay_ms ?? body.delayMs ?? current.delay_ms,
           0,
@@ -477,6 +485,7 @@ async function handleAdminMailApi(request, env, url) {
       return json({
         ok: true,
         settings: refreshed.ok ? refreshed.settings : next,
+        providers: refreshed.ok ? refreshed.providers : [],
         cron: cron.ok ? cron.data : cronResult || { supported: false, configured: false, error: "cron_status_failed" },
       });
     }
@@ -2507,37 +2516,36 @@ function escapeHtml(str) {
 }
 
 async function loadMailSettings(env) {
-  const q =
-    "select=id,queue_enabled,provider_order,delay_ms,batch_max,worker_limit,updated_at&id=eq.1&limit=1";
+  const q = "select=id,queue_enabled,provider_order,delay_ms,batch_max,worker_limit,updated_at&id=eq.1&limit=1";
   const res = await supabaseRequest(env, `/rest/v1/mail_settings?${q}`, { method: "GET" });
   if (!res.ok) {
     return { ok: false, status: res.status, error: "mail_settings_load_failed", details: summarizeSupabaseError(res) };
   }
 
+  // Pobierz dostawców z nowej tabeli
+  const providersRes = await supabaseRequest(env, "/rest/v1/email_providers?select=id,name,label,priority,daily_limit,rem_worker,rem_immediate,is_active&order=priority.asc", { method: "GET" });
+  const providers = Array.isArray(providersRes.data) ? providersRes.data : [];
+
   const row = Array.isArray(res.data) && res.data.length ? res.data[0] : null;
   if (!row) {
     return {
       ok: true,
-      settings: {
-        id: 1,
-        ...DEFAULT_MAIL_SETTINGS,
-        updated_at: null,
-      },
+      settings: { id: 1, ...DEFAULT_MAIL_SETTINGS, updated_at: null },
+      providers: providers
     };
   }
 
-  const order = parseProviderOrderInput(row.provider_order || DEFAULT_MAIL_SETTINGS.provider_order);
   return {
     ok: true,
     settings: {
       id: 1,
       queue_enabled: row.queue_enabled !== false,
-      provider_order: order.join(","),
       delay_ms: clampInt(row.delay_ms, 0, 5000, DEFAULT_MAIL_SETTINGS.delay_ms),
       batch_max: clampInt(row.batch_max, 1, 500, DEFAULT_MAIL_SETTINGS.batch_max),
       worker_limit: clampInt(row.worker_limit, 1, 200, DEFAULT_MAIL_SETTINGS.worker_limit),
       updated_at: row.updated_at || null,
     },
+    providers: providers
   };
 }
 

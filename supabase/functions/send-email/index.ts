@@ -37,54 +37,64 @@ type HookPayload = {
   };
 };
 
-type Provider = "sendgrid" | "brevo" | "mailgun";
+type ProviderType = "sendgrid" | "brevo" | "mailgun" | "sendpulse" | "mailerlite";
 type LogLevel = "debug" | "info" | "warn" | "error";
 
-function parseProviderOrder(raw: string): Provider[] {
-  const allowed: Provider[] = ["sendgrid", "brevo", "mailgun"];
-  const out = String(raw || "")
-    .toLowerCase()
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean)
-    .filter((x) => allowed.includes(x as Provider)) as Provider[];
-
-  return out.length ? out : ["sendgrid", "brevo", "mailgun"];
+interface EmailProvider {
+  id: string;
+  name: string; // techniczny identyfikator mapowany na ENV
+  type: ProviderType; // typ dostawcy (do wyboru funkcji wysyłającej)
+  label: string;
+  priority: number;
+  rem_immediate: number;
 }
 
-async function loadProviderOrder(): Promise<Provider[]> {
-  if (!sbAdmin) {
-    console.warn("[send-email] no sbAdmin → fallback default order");
-    return ["sendgrid", "brevo", "mailgun"];
-  }
-
+async function loadProviders(): Promise<EmailProvider[]> {
+  if (!sbAdmin) return [];
   try {
     const { data, error } = await sbAdmin
-      .from("mail_settings")
-      .select("provider_order")
-      .eq("id", 1)
-      .maybeSingle();
+      .from("email_providers")
+      .select("id, name, label, priority, rem_immediate")
+      .eq("is_active", true)
+      .order("priority", { ascending: true });
 
     if (error) throw error;
 
-    const order = parseProviderOrder(data?.provider_order || "");
-
-    return order;
+    return (data || []).map(p => ({
+      ...p,
+      type: (p.name.split('_')[0]) as ProviderType // np. 'sendgrid_main' -> 'sendgrid'
+    }));
   } catch (e) {
-    console.warn(
-      "[send-email] provider_order load failed → default",
-      String((e as any)?.message || e)
-    );
-    return ["sendgrid", "brevo", "mailgun"];
+    console.warn("[send-email] loadProviders failed", e);
+    return [];
   }
 }
 
+async function decrementImmediateLimit(providerId: string) {
+  if (!sbAdmin) return;
+  const { error } = await sbAdmin.rpc("decrement_provider_immediate", { p_id: providerId });
+  if (error) console.error("[send-email] decrement failed", error);
+}
 
-const SENDGRID_KEY = Deno.env.get("SENDGRID_API_KEY");
+async function queueEmail(to: string, subject: string, html: string) {
+  if (!sbAdmin) return;
+  const { error } = await sbAdmin.from("mail_queue").insert({
+    to_email: to,
+    subject,
+    html,
+    status: "pending",
+    meta: { queued_reason: "limits_exceeded" }
+  });
+  if (error) throw new Error(`failed_to_queue_email: ${error.message}`);
+}
+
+const SENDGRID_KEY = Deno.env.get("SENDGRID_API_KEY") || "";
 const BREVO_KEY = Deno.env.get("BREVO_API_KEY") || "";
 const MAILGUN_KEY = Deno.env.get("MAILGUN_API_KEY") || "";
 const MAILGUN_DOMAIN = Deno.env.get("MAILGUN_DOMAIN") || "";
 const MAILGUN_REGION = (Deno.env.get("MAILGUN_REGION") || "eu").toLowerCase();
+const SENDPULSE_KEY = Deno.env.get("SENDPULSE_API_KEY") || "";
+const MAILERLITE_KEY = Deno.env.get("MAILERLITE_API_KEY") || "";
 
 const FROM_EMAIL = Deno.env.get("MAIL_FROM_EMAIL") || "no-reply@familiada.online";
 const FROM_NAME = Deno.env.get("MAIL_FROM_NAME") || "Familiada";
@@ -192,22 +202,73 @@ async function sendViaMailgun(to: string, subject: string, html: string) {
   if (!res.ok) throw new Error(`mailgun_failed:${await res.text().catch(() => "")}`);
 }
 
+async function sendViaSendpulse(to: string, subject: string, html: string) {
+  if (!SENDPULSE_KEY) throw new Error("missing_SENDPULSE_API_KEY");
+  const res = await fetch("https://api.sendpulse.com/smtp/emails", {
+    method: "POST",
+    headers: { "Authorization": `Bearer ${SENDPULSE_KEY}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: {
+        subject,
+        html: btoa(html),
+        from: { name: FROM_NAME, email: FROM_EMAIL },
+        to: [{ email: to }]
+      }
+    }),
+  });
+  if (!res.ok) throw new Error(`sendpulse_failed:${await res.text().catch(() => "")}`);
+}
+
+async function sendViaMailerlite(to: string, subject: string, html: string) {
+  if (!MAILERLITE_KEY) throw new Error("missing_MAILERLITE_API_KEY");
+  const res = await fetch("https://connect.mailerlite.com/api/emails/transactional", {
+    method: "POST",
+    headers: { "Authorization": `Bearer ${MAILERLITE_KEY}`, "Content-Type": "application/json", "Accept": "application/json" },
+    body: JSON.stringify({
+      from: { email: FROM_EMAIL, name: FROM_NAME },
+      to: { email: to },
+      subject: subject,
+      html: html
+    }),
+  });
+  if (!res.ok) throw new Error(`mailerlite_failed:${await res.text().catch(() => "")}`);
+}
+
 async function sendWithFallbacks(
   to: string,
   subject: string,
   html: string,
   opts: { requestId: string; actorUserId?: string | null } | null = null,
 ) {
-  const order = await loadProviderOrder();
+  const providers = await loadProviders();
+  const available = providers.filter(p => p.rem_immediate > 0);
+
+  if (available.length === 0) {
+    console.warn("[send-email] no available immediate limits, queuing");
+    await queueEmail(to, subject, html);
+    if (opts?.requestId) {
+      await writeLog({
+        requestId: opts.requestId,
+        event: "email_queued_due_to_limits",
+        status: "queued",
+        recipientEmail: to,
+      });
+    }
+    return { status: "queued" };
+  }
 
   const errs: string[] = [];
 
-  for (const p of order) {
+  for (const p of available) {
     try {
+      if (p.type === "sendgrid") await sendViaSendgrid(to, subject, html);
+      else if (p.type === "brevo") await sendViaBrevo(to, subject, html);
+      else if (p.type === "sendpulse") await sendViaSendpulse(to, subject, html);
+      else if (p.type === "mailerlite") await sendViaMailerlite(to, subject, html);
+      else if (p.type === "mailgun") await sendViaMailgun(to, subject, html);
+      else throw new Error(`unknown_provider_type:${p.type}`);
 
-      if (p === "sendgrid") await sendViaSendgrid(to, subject, html);
-      else if (p === "brevo") await sendViaBrevo(to, subject, html);
-      else await sendViaMailgun(to, subject, html);
+      await decrementImmediateLimit(p.id);
 
       if (opts?.requestId) {
         await writeLog({
@@ -216,13 +277,13 @@ async function sendWithFallbacks(
           status: "sent",
           actorUserId: opts.actorUserId || null,
           recipientEmail: to,
-          provider: p,
+          provider: p.name,
         });
       }
-      return { provider: p };
+      return { provider: p.name, status: "sent" };
     } catch (e) {
       const msg = String((e as any)?.message || e);
-      console.warn("[send-email] provider failed", { provider: p, error: msg });
+      console.warn("[send-email] provider failed", { provider: p.name, error: msg });
       if (opts?.requestId) {
         await writeLog({
           requestId: opts.requestId,
@@ -231,27 +292,28 @@ async function sendWithFallbacks(
           status: "failed",
           actorUserId: opts.actorUserId || null,
           recipientEmail: to,
-          provider: p,
+          provider: p.name,
           error: msg,
         });
       }
-      errs.push(`${p}:${msg}`);
+      errs.push(`${p.name}:${msg}`);
     }
   }
 
-  console.error("[send-email] all providers failed", errs);
+  console.error("[send-email] all available immediate providers failed, queuing as last resort", errs);
+  await queueEmail(to, subject, html);
   if (opts?.requestId) {
     await writeLog({
       requestId: opts.requestId,
       level: "error",
-      event: "all_providers_failed",
-      status: "failed",
+      event: "all_providers_failed_queuing",
+      status: "queued",
       actorUserId: opts.actorUserId || null,
       recipientEmail: to,
       error: errs.join("|"),
     });
   }
-  throw new Error(errs.join("|"));
+  return { status: "queued", error: errs.join("|") };
 }
 
 function getRedirectUrl(payload: HookPayload): URL | null {

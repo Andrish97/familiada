@@ -2,7 +2,7 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-type Provider = "sendgrid" | "brevo" | "mailgun" | "ses";
+type ProviderType = "sendgrid" | "brevo" | "mailgun" | "sendpulse" | "mailerlite";
 type LogLevel = "debug" | "info" | "warn" | "error";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -16,9 +16,8 @@ const BREVO_KEY = Deno.env.get("BREVO_API_KEY") || "";
 const MAILGUN_KEY = Deno.env.get("MAILGUN_API_KEY") || "";
 const MAILGUN_DOMAIN = Deno.env.get("MAILGUN_DOMAIN") || "";
 const MAILGUN_REGION = (Deno.env.get("MAILGUN_REGION") || "eu").toLowerCase();
-const SES_ACCESS_KEY = Deno.env.get("AWS_SES_ACCESS_KEY_ID") || "";
-const SES_SECRET_KEY = Deno.env.get("AWS_SES_SECRET_ACCESS_KEY") || "";
-const SES_REGION = Deno.env.get("AWS_SES_REGION") || "us-east-1";
+const SENDPULSE_KEY = Deno.env.get("SENDPULSE_API_KEY") || "";
+const MAILERLITE_KEY = Deno.env.get("MAILERLITE_API_KEY") || "";
 
 const FROM_EMAIL = Deno.env.get("MAIL_FROM_EMAIL") || "no-reply@familiada.online";
 const FROM_NAME = Deno.env.get("MAIL_FROM_NAME") || "Familiada";
@@ -37,39 +36,45 @@ function clampError(message: unknown, max = 2000) {
   return String(message ?? "").slice(0, max);
 }
 
-function parseQueueIds(raw: string | null): string[] {
-  if (!raw) return [];
-  const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-  const uniq = new Set<string>();
-  String(raw)
-    .split(",")
-    .map((v) => v.trim())
-    .filter(Boolean)
-    .forEach((id) => {
-      if (uuidRe.test(id)) uniq.add(id);
-    });
-  return [...uniq].slice(0, 200);
+interface EmailProvider {
+  id: string;
+  name: string;
+  type: ProviderType;
+  label: string;
+  priority: number;
+  rem_worker: number;
 }
 
-function parseProviderOrder(raw: string): Provider[] {
-  const allowed: Provider[] = ["sendgrid", "brevo", "mailgun", "ses"];
-  const out = String(raw || "")
-    .toLowerCase()
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean)
-    .filter((x) => allowed.includes(x as Provider)) as Provider[];
-  return out.length ? out : ["sendgrid", "brevo", "mailgun"];
+async function loadProviders(): Promise<EmailProvider[]> {
+  const { data, error } = await sbAdmin
+    .from("email_providers")
+    .select("id, name, label, priority, rem_worker")
+    .eq("is_active", true)
+    .order("priority", { ascending: true });
+
+  if (error) {
+    console.error("[mail-worker] loadProviders failed", error);
+    return [];
+  }
+
+  return (data || []).map(p => ({
+    ...p,
+    type: (p.name.split('_')[0]) as ProviderType
+  }));
+}
+
+async function decrementWorkerLimit(providerId: string) {
+  const { error } = await sbAdmin.rpc("decrement_provider_worker", { p_id: providerId });
+  if (error) console.error("[mail-worker] decrement failed", error);
 }
 
 async function loadSettings() {
   const { data } = await sbAdmin
     .from("mail_settings")
-    .select("provider_order,delay_ms,worker_limit")
+    .select("delay_ms,worker_limit")
     .eq("id", 1)
     .maybeSingle();
   return {
-    provider_order: String(data?.provider_order || "sendgrid,brevo,mailgun"),
     delay_ms: Number.isFinite(Number(data?.delay_ms)) ? Number(data?.delay_ms) : 250,
     worker_limit: Number.isFinite(Number(data?.worker_limit)) ? Number(data?.worker_limit) : 25,
   };
@@ -124,7 +129,6 @@ function htmlToText(html: string): string {
     .slice(0, 500);                     // Limit length for preview
 }
 
-// Providers (same jak w send-mail, skrócone)
 async function sendViaSendgrid(to: string, subject: string, html: string, fromEmail?: string, attachments?: Attachment[], plainText?: string) {
   if (!SENDGRID_KEY) throw new Error("missing_SENDGRID_API_KEY");
   const from = fromEmail || FROM_EMAIL;
@@ -188,59 +192,38 @@ async function sendViaMailgun(to: string, subject: string, html: string, fromEma
   if (!res.ok) throw new Error(`mailgun_failed:${await res.text().catch(() => "")}`);
 }
 
-async function sha256Hex(data: string): Promise<string> {
-  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(data));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
-}
-async function hmacSha256(key: Uint8Array | ArrayBuffer, data: string): Promise<Uint8Array> {
-  const k = await crypto.subtle.importKey("raw", key, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
-  return new Uint8Array(await crypto.subtle.sign("HMAC", k, new TextEncoder().encode(data)));
-}
-async function hmacSha256Hex(key: Uint8Array, data: string): Promise<string> {
-  return Array.from(await hmacSha256(key, data)).map(b => b.toString(16).padStart(2, "0")).join("");
+async function sendViaSendpulse(to: string, subject: string, html: string, fromEmail?: string) {
+  if (!SENDPULSE_KEY) throw new Error("missing_SENDPULSE_API_KEY");
+  const from = fromEmail || FROM_EMAIL;
+  const res = await fetch("https://api.sendpulse.com/smtp/emails", {
+    method: "POST",
+    headers: { "Authorization": `Bearer ${SENDPULSE_KEY}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: {
+        subject,
+        html: btoa(html),
+        from: { name: FROM_NAME, email: from },
+        to: [{ email: to }]
+      }
+    }),
+  });
+  if (!res.ok) throw new Error(`sendpulse_failed:${await res.text().catch(() => "")}`);
 }
 
-async function sendViaSes(to: string, subject: string, html: string, sesRegion: string, fromEmail?: string, plainText?: string) {
-  if (!SES_ACCESS_KEY || !SES_SECRET_KEY) throw new Error("missing_AWS_SES_credentials");
+async function sendViaMailerlite(to: string, subject: string, html: string, fromEmail?: string) {
+  if (!MAILERLITE_KEY) throw new Error("missing_MAILERLITE_API_KEY");
   const from = fromEmail || FROM_EMAIL;
-  const region = sesRegion || "us-east-1";
-  const endpoint = `https://email.${region}.amazonaws.com/v2/email/outbound-emails`;
-  const text = plainText || htmlToText(html);
-  const payload = JSON.stringify({
-    FromEmailAddress: `${FROM_NAME} <${from}>`,
-    Destination: { ToAddresses: [to] },
-    Content: { 
-      Simple: { 
-        Subject: { Data: subject, Charset: "UTF-8" }, 
-        Body: { 
-          Html: { Data: html, Charset: "UTF-8" },
-          Text: { Data: text, Charset: "UTF-8" }
-        } 
-      } 
-    },
-  });
-  const now = new Date();
-  const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, "").slice(0, 15) + "Z";
-  const dateStamp = amzDate.slice(0, 8);
-  const host = `email.${region}.amazonaws.com`;
-  const bodyHash = await sha256Hex(payload);
-  const canonicalHeaders = `content-type:application/json\nhost:${host}\nx-amz-date:${amzDate}\n`;
-  const signedHeaders = "content-type;host;x-amz-date";
-  const canonicalRequest = ["POST", "/v2/email/outbound-emails", "", canonicalHeaders, signedHeaders, bodyHash].join("\n");
-  const credentialScope = `${dateStamp}/${region}/ses/aws4_request`;
-  const stringToSign = ["AWS4-HMAC-SHA256", amzDate, credentialScope, await sha256Hex(canonicalRequest)].join("\n");
-  const signingKey = await hmacSha256(
-    await hmacSha256(await hmacSha256(await hmacSha256(new TextEncoder().encode("AWS4" + SES_SECRET_KEY), dateStamp), region), "ses"),
-    "aws4_request"
-  );
-  const signature = await hmacSha256Hex(signingKey, stringToSign);
-  const authHeader = `AWS4-HMAC-SHA256 Credential=${SES_ACCESS_KEY}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
-  const res = await fetch(endpoint, {
+  const res = await fetch("https://connect.mailerlite.com/api/emails/transactional", {
     method: "POST",
-    headers: { "Content-Type": "application/json", "X-Amz-Date": amzDate, "Authorization": authHeader },
-    body: payload,
+    headers: { "Authorization": `Bearer ${MAILERLITE_KEY}`, "Content-Type": "application/json", "Accept": "application/json" },
+    body: JSON.stringify({
+      from: { email: from, name: FROM_NAME },
+      to: { email: to },
+      subject: subject,
+      html: html
+    }),
   });
-  if (!res.ok) throw new Error(`ses_failed:${await res.text().catch(() => String(res.status))}`);
+  if (!res.ok) throw new Error(`mailerlite_failed:${await res.text().catch(() => "")}`);
 }
 
 async function checkSuppressedEmails(emails: string[]): Promise<Map<string, string>> {
@@ -281,17 +264,24 @@ async function checkSuppressedEmails(emails: string[]): Promise<Map<string, stri
   return result;
 }
 
-async function sendWithFallbacks(to: string, subject: string, html: string, order: Provider[], fromEmail?: string, attachments?: Attachment[], plainText?: string) {
+async function sendWithFallbacks(to: string, subject: string, html: string, providers: EmailProvider[], fromEmail?: string, attachments?: Attachment[], plainText?: string) {
+  const available = providers.filter(p => p.rem_worker > 0);
+  if (available.length === 0) throw new Error("no_available_worker_limits");
+
   const errs: string[] = [];
   const text = plainText || htmlToText(html);
-  for (const p of order) {
+  for (const p of available) {
     try {
-      if (p === "sendgrid") { await sendViaSendgrid(to, subject, html, fromEmail, attachments, text); return p; }
-      if (p === "brevo") { await sendViaBrevo(to, subject, html, fromEmail, attachments, text); return p; }
-      if (p === "ses") { await sendViaSes(to, subject, html, SES_REGION, fromEmail, text); return p; }
-      await sendViaMailgun(to, subject, html, fromEmail, attachments, text); return p;
+      if (p.type === "sendgrid") { await sendViaSendgrid(to, subject, html, fromEmail, attachments, text); }
+      else if (p.type === "brevo") { await sendViaBrevo(to, subject, html, fromEmail, attachments, text); }
+      else if (p.type === "sendpulse") { await sendViaSendpulse(to, subject, html, fromEmail); }
+      else if (p.type === "mailerlite") { await sendViaMailerlite(to, subject, html, fromEmail); }
+      else { await sendViaMailgun(to, subject, html, fromEmail, attachments, text); }
+      
+      await decrementWorkerLimit(p.id);
+      return p.name;
     } catch (e) {
-      errs.push(`${p}:${String((e as any)?.message || e)}`);
+      errs.push(`${p.name}:${String((e as any)?.message || e)}`);
     }
   }
   throw new Error(errs.join("|"));
@@ -328,7 +318,7 @@ serve(async (req) => {
   }
 
   const settings = await loadSettings();
-  const order = parseProviderOrder(settings.provider_order);
+  const providers = await loadProviders();
   const delayMs = Math.max(0, Math.min(5000, Number(settings.delay_ms || 0)));
   const defaultLimit = Math.max(1, Math.min(200, Number(settings.worker_limit || 25)));
   const limit = Math.max(1, Math.min(200, Number(url.searchParams.get("limit") || String(defaultLimit))));
@@ -337,11 +327,12 @@ serve(async (req) => {
   const pickPayload = selectedIds.length
     ? { p_ids: selectedIds, p_limit: limit }
     : { p_limit: limit };
+  
   await writeLog({
     requestId,
     event: "request_settings_loaded",
     status: "ok",
-    meta: { providerOrder: order.join(","), delayMs, limit, defaultLimit, selectedIds: selectedIds.length },
+    meta: { providersCount: providers.length, delayMs, limit, defaultLimit, selectedIds: selectedIds.length },
   });
 
   // pick batch
@@ -379,6 +370,21 @@ serve(async (req) => {
 
   for (let i = 0; i < (rows || []).length; i++) {
     const r = rows[i];
+    
+    // Sprawdź czy nadal mamy jakieś limity
+    const anyLimits = providers.some(p => p.rem_worker > 0);
+    if (!anyLimits) {
+      console.warn("[mail-worker] all worker limits exhausted, stopping batch");
+      await writeLog({
+        requestId,
+        level: "warn",
+        event: "worker_limits_exhausted_stopping",
+        status: "partial",
+        meta: { processed: i, total: rows.length },
+      });
+      break;
+    }
+
     try {
 
       // suppression check
@@ -417,7 +423,7 @@ serve(async (req) => {
         }
       }
 
-      const provider = await sendWithFallbacks(r.to_email, r.subject, r.html, order, r.from_email || undefined, emailAttachments.length ? emailAttachments : undefined, r.text);
+      const provider = await sendWithFallbacks(r.to_email, r.subject, r.html, providers, r.from_email || undefined, emailAttachments.length ? emailAttachments : undefined, r.text);
       const { error: markOkError } = await sbAdmin.rpc("mail_queue_mark", { p_id: r.id, p_ok: true, p_provider: provider, p_error: "" });
       if (markOkError) {
         console.error("[mail-worker] queue:mark_sent_failed", { id: r.id, error: markOkError });

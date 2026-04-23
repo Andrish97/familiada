@@ -1630,49 +1630,134 @@ function toggleMailLogsHelp() {
 function renderProviderOrder() {
   if (!els.mailProviderOrderList) return;
   els.mailProviderOrderList.innerHTML = "";
-  mailProviderOrder.forEach((provider, idx) => {
+  
+  mailProviderOrder.forEach((p, idx) => {
     const row = document.createElement("div");
     row.className = "provider-order-row";
+    row.style.display = "flex";
+    row.style.alignItems = "center";
+    row.style.gap = "12px";
+    row.style.padding = "10px 14px";
+    row.style.borderBottom = "1px solid rgba(255,255,255,0.08)";
+    row.style.background = p.is_active ? "transparent" : "rgba(255,0,0,0.05)";
+
+    const activeCheck = document.createElement("input");
+    activeCheck.type = "checkbox";
+    activeCheck.checked = p.is_active !== false;
+    activeCheck.title = "Active";
+    activeCheck.addEventListener("change", (e) => {
+      p.is_active = e.target.checked;
+      row.style.background = p.is_active ? "transparent" : "rgba(255,0,0,0.05)";
+    });
 
     const rank = document.createElement("div");
     rank.className = "provider-order-rank";
+    rank.style.width = "20px";
+    rank.style.fontSize = "12px";
+    rank.style.opacity = "0.5";
     rank.textContent = String(idx + 1);
 
-    const name = document.createElement("div");
-    name.className = "provider-order-name";
-    name.textContent = providerLabel(provider);
+    const info = document.createElement("div");
+    info.style.flex = "1";
+    
+    const label = document.createElement("div");
+    label.style.fontWeight = "600";
+    label.textContent = p.label || p.name;
+    
+    const stats = document.createElement("div");
+    stats.style.fontSize = "11px";
+    stats.style.opacity = "0.7";
+    stats.style.marginTop = "4px";
+    stats.style.display = "flex";
+    stats.style.flexDirection = "column";
+    stats.style.gap = "4px";
+
+    const remW = p.rem_worker ?? 0;
+    const remI = p.rem_immediate ?? 0;
+    const total = p.daily_limit ?? 0;
+    const limitW = Math.floor(total * 0.8);
+    const limitI = total - limitW;
+
+    const createBar = (current, max, label) => {
+      const perc = max > 0 ? Math.round((current / max) * 100) : 0;
+      const color = perc > 20 ? "#4ade80" : perc > 5 ? "#fbbf24" : "#f87171";
+      const wrap = document.createElement("div");
+      wrap.style.display = "flex";
+      wrap.style.alignItems = "center";
+      wrap.style.gap = "6px";
+      
+      const lbl = document.createElement("span");
+      lbl.style.width = "65px";
+      lbl.textContent = label;
+      
+      const barBg = document.createElement("div");
+      barBg.style.flex = "1";
+      barBg.style.height = "6px";
+      barBg.style.background = "rgba(255,255,255,0.1)";
+      barBg.style.borderRadius = "3px";
+      barBg.style.overflow = "hidden";
+      
+      const barFill = document.createElement("div");
+      barFill.style.width = `${perc}%`;
+      barFill.style.height = "100%";
+      barFill.style.background = color;
+      barFill.style.transition = "width 0.3s ease";
+      
+      const val = document.createElement("span");
+      val.style.width = "60px";
+      val.style.textAlign = "right";
+      val.textContent = `${current}/${max}`;
+      
+      barBg.appendChild(barFill);
+      wrap.append(lbl, barBg, val);
+      return wrap;
+    };
+
+    stats.appendChild(createBar(remW, limitW, "Worker"));
+    stats.appendChild(createBar(remI, limitI, "Immediate"));
+    
+    info.append(label, stats);
+
+    const limitInput = document.createElement("input");
+    limitInput.type = "number";
+    limitInput.className = "inp sm";
+    limitInput.style.width = "80px";
+    limitInput.style.textAlign = "center";
+    limitInput.value = String(p.daily_limit || 1000);
+    limitInput.title = "Daily Limit";
+    limitInput.addEventListener("change", (e) => {
+      p.daily_limit = parseInt(e.target.value) || 0;
+    });
 
     const actions = document.createElement("div");
     actions.className = "provider-order-actions";
+    actions.style.display = "flex";
+    actions.style.gap = "6px";
 
     const up = document.createElement("button");
     up.type = "button";
     up.className = "btn sm";
-    up.textContent = "↑";
+    up.innerHTML = '<span style="font-size:14px">↑</span>';
     up.disabled = idx === 0;
     up.addEventListener("click", () => {
       if (idx <= 0) return;
-      const next = [...mailProviderOrder];
-      [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
-      mailProviderOrder = next;
+      [mailProviderOrder[idx - 1], mailProviderOrder[idx]] = [mailProviderOrder[idx], mailProviderOrder[idx - 1]];
       renderProviderOrder();
     });
 
     const down = document.createElement("button");
     down.type = "button";
     down.className = "btn sm";
-    down.textContent = "↓";
+    down.innerHTML = '<span style="font-size:14px">↓</span>';
     down.disabled = idx >= mailProviderOrder.length - 1;
     down.addEventListener("click", () => {
       if (idx >= mailProviderOrder.length - 1) return;
-      const next = [...mailProviderOrder];
-      [next[idx + 1], next[idx]] = [next[idx], next[idx + 1]];
-      mailProviderOrder = next;
+      [mailProviderOrder[idx + 1], mailProviderOrder[idx]] = [mailProviderOrder[idx], mailProviderOrder[idx + 1]];
       renderProviderOrder();
     });
 
     actions.append(up, down);
-    row.append(rank, name, actions);
+    row.append(activeCheck, rank, info, limitInput, actions);
     els.mailProviderOrderList?.appendChild(row);
   });
 }
@@ -4456,9 +4541,10 @@ async function loadMailSettings({ silent = false } = {}) {
     if (!res.ok) throw new Error(`mail settings fetch failed: ${res.status}`);
     const data = await res.json();
     const settings = data?.settings || {};
+    const providers = data?.providers || [];
     const cron = data?.cron || null;
 
-    mailProviderOrder = parseProviderOrder(settings.provider_order);
+    mailProviderOrder = providers;
     renderProviderOrder();
 
     if (els.mailQueueEnabled) els.mailQueueEnabled.checked = settings.queue_enabled !== false;
@@ -4528,7 +4614,7 @@ async function saveMailSettings() {
 
   const payload = {
     queue_enabled: queueEnabled,
-    provider_order: mailProviderOrder,
+    providers: mailProviderOrder,
     delay_ms: delayMs,
     batch_max: batchMax,
     worker_limit: workerLimit,
