@@ -66,12 +66,6 @@ async function loadProviders(): Promise<EmailProvider[]> {
 
   if (error) {
     console.error("[mail-worker] loadProviders DB error:", error);
-    await writeLog({
-      requestId: "SYSTEM",
-      level: "error",
-      event: "load_providers_failed",
-      error: String(error.message),
-    });
     return [];
   }
 
@@ -190,13 +184,15 @@ async function sendViaMailgun(to: string, subject: string, html: string, fromEma
 async function sendViaSendpulse(to: string, subject: string, html: string, fromEmail?: string) {
   if (!SENDPULSE_KEY) throw new Error("missing_SENDPULSE_API_KEY");
   const from = fromEmail || FROM_EMAIL;
+  const text = html.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').trim().slice(0, 500);
   const res = await fetch("https://api.sendpulse.com/smtp/emails", {
     method: "POST",
     headers: { "Authorization": `Bearer ${SENDPULSE_KEY}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       email: {
         subject,
-        html: btoa(html),
+        text,
+        html,
         from: { name: FROM_NAME, email: from },
         to: [{ email: to }]
       }
@@ -281,11 +277,11 @@ async function sendWithFallbacks(to: string, subject: string, html: string, prov
       await decrementWorkerLimit(p.id);
       return p.name;
     } catch (e) {
-      const errMsg = String((e as any)?.message || e);
-      console.log("[mail-worker] FAILED provider:", p.name, "error:", errMsg);
+const errMsg = String((e as any)?.message || e);
       errs.push(`${p.name}:${errMsg}`);
+      console.log("[mail-worker] FAILED provider:", p.name, "error:", errMsg);
       await writeLog({
-        requestId: "SYSTEM",
+        requestId: crypto.randomUUID(),
         level: "warn",
         event: "provider_failed",
         provider: p.name,
