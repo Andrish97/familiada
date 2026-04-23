@@ -275,7 +275,15 @@ async function sendWithFallbacks(to: string, subject: string, html: string, prov
       await decrementWorkerLimit(p.id);
       return p.name;
     } catch (e) {
-      errs.push(`${p.name}:${String((e as any)?.message || e)}`);
+      const errMsg = String((e as any)?.message || e);
+      errs.push(`${p.name}:${errMsg}`);
+      await writeLog({
+        requestId: "SYSTEM",
+        level: "warn",
+        event: "provider_failed",
+        provider: p.name,
+        error: errMsg,
+      });
     }
   }
   throw new Error(errs.join("|"));
