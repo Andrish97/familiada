@@ -2,6 +2,9 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+type ProviderType = "brevo" | "mailgun" | "sendpulse" | "mailerlite";
+type LogLevel = "debug" | "info" | "warn" | "error";
+
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const sbAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -18,19 +21,83 @@ const MAILERLITE_KEY = Deno.env.get("MAILERLITE_API_KEY") || "";
 const FROM_EMAIL = Deno.env.get("MAIL_FROM_EMAIL") || "no-reply@familiada.online";
 const FROM_NAME = Deno.env.get("MAIL_FROM_NAME") || "Familiada";
 
-type ProviderLimits = { name: string; rem_worker: number; rem_immediate: number; is_active: boolean };
-
-async function loadProviderOrder(): Promise<string[]> {
-  const { data } = await sbAdmin
-    .from("email_providers")
-    .select("name")
-    .eq("is_active", true)
-    .order("priority")
-    .limit(10);
-  return (data || []).map(p => p.name);
+function json(obj: any, status = 200) {
+  return new Response(JSON.stringify(obj), { status, headers: { "Content-Type": "application/json; charset=utf-8" } });
+}
+function sleep(ms: number) { return new Promise((r) => setTimeout(r, ms)); }
+function scrubEmail(email: string) {
+  const e = String(email || "").trim();
+  const at = e.indexOf("@");
+  if (at <= 1) return e ? "***" : "";
+  return `${e.slice(0, 2)}***${e.slice(at)}`;
+}
+function clampError(message: unknown, max = 2000) {
+  return String(message ?? "").slice(0, max);
 }
 
-type LogLevel = "debug" | "info" | "warn" | "error";
+interface EmailProvider {
+  id: string;
+  name: string;
+  type: ProviderType;
+  label: string;
+  priority: number;
+  rem_worker: number;
+}
+
+function parseQueueIds(raw: string | null): string[] {
+  if (!raw) return [];
+  const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  const uniq = new Set<string>();
+  String(raw)
+    .split(",")
+    .map((v) => v.trim())
+    .filter(Boolean)
+    .forEach((id) => {
+      if (uuidRe.test(id)) uniq.add(id);
+    });
+  return [...uniq].slice(0, 200);
+}
+
+async function loadProviders(): Promise<EmailProvider[]> {
+  const { data, error } = await sbAdmin
+    .from("email_providers")
+    .select("id, name, label, priority, daily_limit, rem_worker, rem_immediate, is_active")
+    .order("priority", { ascending: true });
+
+  if (error) {
+    console.error("[mail-worker] loadProviders DB error:", error);
+    await writeLog({
+      requestId: "SYSTEM",
+      level: "error",
+      event: "load_providers_failed",
+      error: String(error.message),
+    });
+    return [];
+  }
+
+  return (data || []).map(p => ({
+    ...p,
+    type: (p.name.split('_')[0]) as ProviderType
+  }));
+}
+
+
+async function decrementWorkerLimit(providerId: string) {
+  const { error } = await sbAdmin.rpc("decrement_provider_worker", { p_id: providerId });
+  if (error) console.error("[mail-worker] decrement failed", error);
+}
+
+async function loadSettings() {
+  const { data } = await sbAdmin
+    .from("mail_settings")
+    .select("delay_ms,worker_limit")
+    .eq("id", 1)
+    .maybeSingle();
+  return {
+    delay_ms: Number.isFinite(Number(data?.delay_ms)) ? Number(data?.delay_ms) : 250,
+    worker_limit: Number.isFinite(Number(data?.worker_limit)) ? Number(data?.worker_limit) : 25,
+  };
+}
 
 async function writeLog(entry: {
   requestId: string;
@@ -66,18 +133,6 @@ async function writeLog(entry: {
 
 type Attachment = { filename: string; content: string; contentType: string };
 
-async function loadSettings() {
-  const { data } = await sbAdmin
-    .from("mail_settings")
-    .select("delay_ms,worker_limit")
-    .eq("id", 1)
-    .maybeSingle();
-  return {
-    delay_ms: Number.isFinite(Number(data?.delay_ms)) ? Number(data?.delay_ms) : 250,
-    worker_limit: Number.isFinite(Number(data?.worker_limit)) ? Number(data?.worker_limit) : 25,
-  };
-}
-
 // Helper function to strip HTML tags and get plain text
 function htmlToText(html: string): string {
   return html
@@ -90,10 +145,9 @@ function htmlToText(html: string): string {
     .replace(/&#39;/g, "'")             // Replace &#39; with '
     .replace(/\s+/g, ' ')               // Collapse whitespace
     .trim()
-    .slice(0, 500);                     // Limit length for preview
+.slice(0, 500);
 }
 
-// Providers (same jak w send-mail, skrócone)
 async function sendViaBrevo(to: string, subject: string, html: string, fromEmail?: string, attachments?: Attachment[], plainText?: string) {
   if (!BREVO_KEY) throw new Error("missing_BREVO_API_KEY");
   const from = fromEmail || FROM_EMAIL;
@@ -132,41 +186,36 @@ async function sendViaMailgun(to: string, subject: string, html: string, fromEma
   const res = await fetch(url, { method: "POST", headers: { Authorization: `Basic ${btoa(`api:${MAILGUN_KEY}`)}` }, body: form });
   if (!res.ok) throw new Error(`mailgun_failed:${await res.text().catch(() => "")}`);
 }
-async function sendViaSendpulse(to: string, subject: string, html: string, fromEmail?: string, attachments?: Attachment[], plainText?: string) {
+
+async function sendViaSendpulse(to: string, subject: string, html: string, fromEmail?: string) {
   if (!SENDPULSE_KEY) throw new Error("missing_SENDPULSE_API_KEY");
   const from = fromEmail || FROM_EMAIL;
-  const text = plainText || htmlToText(html);
-  const addrBook = "familiada_online";
-  const emailData: any = {
-    from: { email: from, name: FROM_NAME },
-    to: [{ email: to }],
-    subject,
-    html,
-    text,
-  };
-  if (attachments?.length) {
-    emailData.attachments = attachments.map(a => ({ content: a.content, filename: a.filename, content_type: a.contentType }));
-  }
-  const res = await fetch(`https://api.sendpulse.io/${addrBook}/emails`, {
+  const res = await fetch("https://api.sendpulse.com/smtp/emails", {
     method: "POST",
-    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${SENDPULSE_KEY}` },
-    body: JSON.stringify(emailData),
+    headers: { "Authorization": `Bearer ${SENDPULSE_KEY}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: {
+        subject,
+        html: btoa(html),
+        from: { name: FROM_NAME, email: from },
+        to: [{ email: to }]
+      }
+    }),
   });
   if (!res.ok) throw new Error(`sendpulse_failed:${await res.text().catch(() => "")}`);
 }
-async function sendViaMailerlite(to: string, subject: string, html: string, fromEmail?: string, attachments?: Attachment[], plainText?: string) {
+
+async function sendViaMailerlite(to: string, subject: string, html: string, fromEmail?: string) {
   if (!MAILERLITE_KEY) throw new Error("missing_MAILERLITE_API_KEY");
   const from = fromEmail || FROM_EMAIL;
-  const text = plainText || htmlToText(html);
-  const res = await fetch("https://api.mailerlite.com/api/v1/send", {
+  const res = await fetch("https://connect.mailerlite.com/api/emails/transactional", {
     method: "POST",
-    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${MAILERLITE_KEY}` },
+    headers: { "Authorization": `Bearer ${MAILERLITE_KEY}`, "Content-Type": "application/json", "Accept": "application/json" },
     body: JSON.stringify({
-      email: [{ address: to }],
-      from,
-      subject,
-      html,
-      text,
+      from: { email: from, name: FROM_NAME },
+      to: { email: to },
+      subject: subject,
+      html: html
     }),
   });
   if (!res.ok) throw new Error(`mailerlite_failed:${await res.text().catch(() => "")}`);
@@ -210,25 +259,23 @@ async function checkSuppressedEmails(emails: string[]): Promise<Map<string, stri
   return result;
 }
 
-async function sendWithFallbacks(to: string, subject: string, html: string, order: string[], fromEmail?: string, attachments?: Attachment[], plainText?: string) {
-  const limits = await loadProviderLimits();
+async function sendWithFallbacks(to: string, subject: string, html: string, providers: EmailProvider[], fromEmail?: string, attachments?: Attachment[], plainText?: string) {
+  const available = providers.filter(p => p.rem_worker > 0);
+  if (available.length === 0) throw new Error("no_available_worker_limits");
+
   const errs: string[] = [];
   const text = plainText || htmlToText(html);
-  for (const p of order) {
-    const limit = limits.get(p);
-    if (!limit || limit.rem_worker <= 0) {
-      errs.push(`${p}:no_worker_quota`);
-      continue;
-    }
+  for (const p of available) {
     try {
-      if (p === "brevo") { await sendViaBrevo(to, subject, html, fromEmail, attachments, text); }
-      else if (p === "sendpulse") { await sendViaSendpulse(to, subject, html, fromEmail, attachments, text); }
-      else if (p === "mailerlite") { await sendViaMailerlite(to, subject, html, fromEmail, attachments, text); }
-      else await sendViaMailgun(to, subject, html, fromEmail, attachments, text);
-      await decrementWorkerLimit(p, limits);
-      return p;
+      if (p.type === "brevo") { await sendViaBrevo(to, subject, html, fromEmail, attachments, text); }
+      else if (p.type === "sendpulse") { await sendViaSendpulse(to, subject, html, fromEmail); }
+      else if (p.type === "mailerlite") { await sendViaMailerlite(to, subject, html, fromEmail); }
+      else { await sendViaMailgun(to, subject, html, fromEmail, attachments, text); }
+      
+      await decrementWorkerLimit(p.id);
+      return p.name;
     } catch (e) {
-      errs.push(`${p}:${String((e as any)?.message || e)}`);
+      errs.push(`${p.name}:${String((e as any)?.message || e)}`);
     }
   }
   throw new Error(errs.join("|"));
@@ -265,7 +312,7 @@ serve(async (req) => {
   }
 
   const settings = await loadSettings();
-  const order = await loadProviderOrder();
+  const providers = await loadProviders();
   const delayMs = Math.max(0, Math.min(5000, Number(settings.delay_ms || 0)));
   const defaultLimit = Math.max(1, Math.min(200, Number(settings.worker_limit || 25)));
   const limit = Math.max(1, Math.min(200, Number(url.searchParams.get("limit") || String(defaultLimit))));
@@ -274,11 +321,12 @@ serve(async (req) => {
   const pickPayload = selectedIds.length
     ? { p_ids: selectedIds, p_limit: limit }
     : { p_limit: limit };
+  
   await writeLog({
     requestId,
     event: "request_settings_loaded",
     status: "ok",
-    meta: { providerOrder: order.join(","), delayMs, limit, defaultLimit, selectedIds: selectedIds.length },
+    meta: { providersCount: providers.length, delayMs, limit, defaultLimit, selectedIds: selectedIds.length },
   });
 
   // pick batch
@@ -316,6 +364,21 @@ serve(async (req) => {
 
   for (let i = 0; i < (rows || []).length; i++) {
     const r = rows[i];
+    
+    // Sprawdź czy nadal mamy jakieś limity
+    const anyLimits = providers.some(p => p.rem_worker > 0);
+    if (!anyLimits) {
+      console.warn("[mail-worker] all worker limits exhausted, stopping batch");
+      await writeLog({
+        requestId,
+        level: "warn",
+        event: "worker_limits_exhausted_stopping",
+        status: "partial",
+        meta: { processed: i, total: rows.length },
+      });
+      break;
+    }
+
     try {
 
       // suppression check
@@ -354,7 +417,7 @@ serve(async (req) => {
         }
       }
 
-      const provider = await sendWithFallbacks(r.to_email, r.subject, r.html, order, r.from_email || undefined, emailAttachments.length ? emailAttachments : undefined, r.text);
+      const provider = await sendWithFallbacks(r.to_email, r.subject, r.html, providers, r.from_email || undefined, emailAttachments.length ? emailAttachments : undefined, r.text);
       const { error: markOkError } = await sbAdmin.rpc("mail_queue_mark", { p_id: r.id, p_ok: true, p_provider: provider, p_error: "" });
       if (markOkError) {
         console.error("[mail-worker] queue:mark_sent_failed", { id: r.id, error: markOkError });
