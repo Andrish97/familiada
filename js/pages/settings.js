@@ -12,17 +12,25 @@ Settings panel (admin)
 - GET /_admin_api/mail/logs
 */
 
+<<<<<<< HEAD
 import { initI18n, t, getUiLang } from "../../translation/translation.js?v=v2026-04-23T17271";
 import { initUiSelect } from "../core/ui-select.js?v=v2026-04-23T17271";
 import { confirmModal } from "../core/modal.js?v=v2026-04-23T17271";
 import { sb } from "../core/supabase.js?v=v2026-04-23T17271";
 import { v as cacheBust } from "../core/cache-bust.js?v=v2026-04-23T17271";
+=======
+import { initI18n, t, getUiLang } from "../../translation/translation.js?v=v2026-04-23T22255";
+import { initUiSelect } from "../core/ui-select.js?v=v2026-04-23T22255";
+import { confirmModal } from "../core/modal.js?v=v2026-04-23T22255";
+import { sb } from "../core/supabase.js?v=v2026-04-23T22255";
+import { v as cacheBust } from "../core/cache-bust.js?v=v2026-04-23T22255";
+>>>>>>> 3b9d02497ee77b4707ad719247efae14a45e4180
 
 const API_BASE = "/_admin_api";
 const TOOLS_MANIFEST = "/settings-tools/tools.json";
 const POLL_MS = 15000;
 const MINUTES_MIN = 10;
-const MAIL_PROVIDERS = ["sendgrid", "brevo", "mailgun", "ses"];
+const MAIL_PROVIDERS = ["brevo", "mailgun", "sendpulse", "mailerlite"];
 const EMAIL_TEMPLATES = {
   custom: "",
   info: "Dziękujemy za wiadomość. Odpowiemy tak szybko, jak to możliwe.",
@@ -5846,7 +5854,11 @@ function wireEvents() {
   // ═══════════════════════════════════════════════════════════
   // MARKETING CONTACTS
   // ═══════════════════════════════════════════════════════════
+<<<<<<< HEAD
   const { rt } = await import("../core/realtime.js?v=v2026-04-23T17271");
+=======
+  const { rt } = await import("../core/realtime.js?v=v2026-04-23T22255");
+>>>>>>> 3b9d02497ee77b4707ad719247efae14a45e4180
   const MC_API = "https://leads.familiada.online";
   const MC_PAGE_SIZE = 50;
   let mcToken = null;
