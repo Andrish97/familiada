@@ -66,6 +66,18 @@ async function writeLog(entry: {
 
 type Attachment = { filename: string; content: string; contentType: string };
 
+async function loadSettings() {
+  const { data } = await sbAdmin
+    .from("mail_settings")
+    .select("delay_ms,worker_limit")
+    .eq("id", 1)
+    .maybeSingle();
+  return {
+    delay_ms: Number.isFinite(Number(data?.delay_ms)) ? Number(data?.delay_ms) : 250,
+    worker_limit: Number.isFinite(Number(data?.worker_limit)) ? Number(data?.worker_limit) : 25,
+  };
+}
+
 // Helper function to strip HTML tags and get plain text
 function htmlToText(html: string): string {
   return html
