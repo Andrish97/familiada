@@ -1,3 +1,4 @@
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { Webhook } from "https://esm.sh/standardwebhooks@1.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -12,7 +13,8 @@ const BREVO_KEY = Deno.env.get("BREVO_API_KEY") || "";
 const MAILGUN_KEY = Deno.env.get("MAILGUN_API_KEY") || "";
 const MAILGUN_DOMAIN = Deno.env.get("MAILGUN_DOMAIN") || "";
 const MAILGUN_REGION = (Deno.env.get("MAILGUN_REGION") || "eu").toLowerCase();
-const SENDPULSE_KEY = Deno.env.get("SENDPULSE_API_KEY") || "";
+const SENDPULSE_ID = Deno.env.get("SENDPULSE_ID") || "";
+const SENDPULSE_SECRET = Deno.env.get("SENDPULSE_SECRET") || "";
 const MAILERLITE_KEY = Deno.env.get("MAILERLITE_API_KEY") || "";
 
 const FROM_EMAIL = Deno.env.get("MAIL_FROM_EMAIL") || "no-reply@familiada.online";
@@ -66,8 +68,17 @@ async function queueEmail(to: string, subject: string, html: string) {
   await sbAdmin.from("mail_queue").insert({ to_email: to, subject, html, status: "pending", meta: { queued_reason: "limits_exceeded" } });
 }
 
+async function getSendPulseToken() {
+  const res = await fetch("https://api.sendpulse.com/oauth/access_token", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ grant_type: "client_credentials", client_id: SENDPULSE_ID, client_secret: SENDPULSE_SECRET })
+  });
+  const data = await res.json();
+  return data.access_token;
+}
+
 async function sendViaBrevo(to: string, subject: string, html: string) {
-  if (!BREVO_KEY) throw new Error("missing_BREVO_API_KEY");
   const res = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
     headers: { "api-key": BREVO_KEY, "Content-Type": "application/json" },
@@ -77,7 +88,6 @@ async function sendViaBrevo(to: string, subject: string, html: string) {
 }
 
 async function sendViaMailgun(to: string, subject: string, html: string) {
-  if (!MAILGUN_KEY || !MAILGUN_DOMAIN) throw new Error("missing_MAILGUN_CREDENTIALS");
   const base = MAILGUN_REGION === "eu" ? "https://api.eu.mailgun.net" : "https://api.mailgun.net";
   const form = new FormData();
   form.append("from", `${FROM_NAME} <${FROM_EMAIL}>`); form.append("to", to); form.append("subject", subject); form.append("html", html);
@@ -86,17 +96,16 @@ async function sendViaMailgun(to: string, subject: string, html: string) {
 }
 
 async function sendViaSendpulse(to: string, subject: string, html: string) {
-  if (!SENDPULSE_KEY) throw new Error("missing_SENDPULSE_API_KEY");
+  const token = await getSendPulseToken();
   const res = await fetch("https://api.sendpulse.com/smtp/emails", {
     method: "POST",
-    headers: { "Authorization": `Bearer ${SENDPULSE_KEY}`, "Content-Type": "application/json" },
+    headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
     body: JSON.stringify({ email: { subject, html: btoa(html), from: { name: FROM_NAME, email: FROM_EMAIL }, to: [{ email: to }] } }),
   });
   if (!res.ok) throw new Error(`sendpulse_failed:${await res.text().catch(() => "")}`);
 }
 
 async function sendViaMailerlite(to: string, subject: string, html: string) {
-  if (!MAILERLITE_KEY) throw new Error("missing_MAILERLITE_API_KEY");
   const res = await fetch("https://connect.mailerlite.com/api/emails/transactional", {
     method: "POST",
     headers: { "Authorization": `Bearer ${MAILERLITE_KEY}`, "Content-Type": "application/json" },
@@ -105,16 +114,25 @@ async function sendViaMailerlite(to: string, subject: string, html: string) {
   if (!res.ok) throw new Error(`mailerlite_failed:${await res.text().catch(() => "")}`);
 }
 
-async function sendWithFallbacks(to: string, subject: string, html: string, opts: { requestId: string; actorUserId?: string | null } | null = null) {
+serve(async (req) => {
+  const requestId = crypto.randomUUID();
+  const bodyText = await req.text();
+  try {
+    webhook.verify(bodyText, Object.fromEntries(req.headers.entries()));
+  } catch (err) { return json({ error: "Invalid signature" }, 403); }
+
+  const payload = JSON.parse(bodyText);
+  const { to, subject, html, userId } = payload.emailData;
+  
   const providers = await loadProviders();
   const available = providers.filter(p => p.rem_immediate > 0);
+  
   if (available.length === 0) {
     await queueEmail(to, subject, html);
-    if (opts?.requestId) await writeLog({ requestId: opts.requestId, event: "email_queued_due_to_limits", status: "queued", recipientEmail: to });
-    return { status: "queued" };
+    await writeLog({ requestId, event: "email_queued_due_to_limits", status: "queued", recipientEmail: to, actorUserId: userId });
+    return json({ status: "queued" });
   }
 
-  const errs: string[] = [];
   for (const p of available) {
     try {
       if (p.type === "brevo") await sendViaBrevo(to, subject, html);
@@ -123,23 +141,11 @@ async function sendWithFallbacks(to: string, subject: string, html: string, opts
       else await sendViaMailgun(to, subject, html);
       
       await decrementImmediateLimit(p.id);
-      if (opts?.requestId) await writeLog({ requestId: opts.requestId, event: "provider_success", status: "sent", actorUserId: opts.actorUserId, recipientEmail: to, provider: p.name });
-      return { provider: p.name, status: "sent" };
-    } catch (e) { errs.push(`${p.name}:${String(e)}`); }
+      await writeLog({ requestId, event: "provider_success", status: "sent", actorUserId: userId, recipientEmail: to, provider: p.name });
+      return json({ provider: p.name, status: "sent" });
+    } catch (e) { console.error(`Provider ${p.name} failed:`, e); }
   }
-  await queueEmail(to, subject, html);
-  return { status: "queued", error: errs.join("|") };
-}
-
-Deno.serve(async (req) => {
-  const requestId = crypto.randomUUID();
-  if (req.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
   
-  let payload;
-  try { payload = await req.json(); } catch (e) { return json({ ok: false, error: "Invalid JSON" }, 400); }
-
-  await writeLog({ requestId, event: "request_start", status: "started", meta: { url: req.url } });
-
-  // Tu wywołujemy logikę wysyłki i zwracamy odpowiedź
-  // ... (reszta logiki webhooka)
+  await queueEmail(to, subject, html);
+  return json({ status: "queued", error: "all_providers_failed" });
 });
