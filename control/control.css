@@ -1090,7 +1090,7 @@
 
 .ansGrid {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: 10px;
     margin-top: 12px
 }
@@ -2138,4 +2138,15 @@
     border: 1px solid rgba(255, 234, 166, 0.2);
     border-radius: 8px;
     background: rgba(255, 234, 166, 0.03);
+}
+
+/* --- Dodatkowe powiększenie czcionek w mapowaniu --- */
+.mapBtnsGrid .btn {
+    font-size: 15px !important;
+    font-weight: 900 !important;
+}
+
+.finalRevealBtn {
+    font-size: 16px !important;
+    font-weight: 1000 !important;
 }
