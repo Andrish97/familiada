@@ -1,4 +1,3 @@
-import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 type ProviderType = "brevo" | "mailgun" | "sendpulse" | "mailerlite";
@@ -105,7 +104,7 @@ async function sendViaMailerlite(to: string, subject: string, html: string, from
   const res = await fetch("https://connect.mailerlite.com/api/emails/transactional", {
     method: "POST",
     headers: { "Authorization": `Bearer ${MAILERLITE_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ from: { email: fromEmail || FROM_EMAIL, name: FROM_NAME }, to: { email: to }, subject, html }),
+    body: JSON.stringify({ from: { email: fromEmail || FROM_EMAIL, name: FROM_NAME }, to: [{ email: to }], subject, html }),
   });
   if (!res.ok) throw new Error(`mailerlite_failed:${await res.text().catch(() => "")}`);
 }
@@ -126,7 +125,7 @@ async function sendWithFallbacks(to: string, subject: string, html: string, prov
   throw new Error("all_providers_failed");
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   const requestId = crypto.randomUUID();
   if (req.method !== "POST" && req.method !== "GET") return json({ ok: false, error: "Method not allowed" }, 405);
   await writeLog({ requestId, event: "request_start", status: "started", meta: { method: req.method, url: req.url } });
@@ -153,6 +152,7 @@ serve(async (req) => {
 
   let sent = 0, failed = 0;
   for (const r of (rows || [])) {
+    if (!r || !r.id) continue;
     if (!providers.some(p => p.rem_worker > 0)) break;
     try {
       const provider = await sendWithFallbacks(r.to_email, r.subject, r.html, providers, r.from_email, r.text);

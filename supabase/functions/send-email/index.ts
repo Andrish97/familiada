@@ -1,4 +1,3 @@
-import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { Webhook } from "https://esm.sh/standardwebhooks@1.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -23,8 +22,7 @@ const HOOK_SECRET_RAW = Deno.env.get("SEND_EMAIL_HOOK_SECRET") || "";
 const HOOK_SECRET = HOOK_SECRET_RAW.replace("v1,whsec_", "");
 const webhook = new Webhook(HOOK_SECRET);
 
-// Helpers
-function scrubEmail(email: string) { const e = String(email || "").trim(); const at = e.indexOf("@"); if (at <= 1) return e ? "***" : ""; return `${e.slice(0, 2)}***${e.slice(at)}`; }
+function json(obj: any, status = 200) { return new Response(JSON.stringify(obj), { status, headers: { "Content-Type": "application/json; charset=utf-8" } }); }
 function clampError(message: unknown, max = 2000) { return String(message ?? "").slice(0, max); }
 
 async function writeLog(entry: any) {
@@ -68,7 +66,6 @@ async function queueEmail(to: string, subject: string, html: string) {
   await sbAdmin.from("mail_queue").insert({ to_email: to, subject, html, status: "pending", meta: { queued_reason: "limits_exceeded" } });
 }
 
-// Funkcje wysyłkowe
 async function sendViaBrevo(to: string, subject: string, html: string) {
   if (!BREVO_KEY) throw new Error("missing_BREVO_API_KEY");
   const res = await fetch("https://api.brevo.com/v3/smtp/email", {
@@ -103,7 +100,7 @@ async function sendViaMailerlite(to: string, subject: string, html: string) {
   const res = await fetch("https://connect.mailerlite.com/api/emails/transactional", {
     method: "POST",
     headers: { "Authorization": `Bearer ${MAILERLITE_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ from: { email: FROM_EMAIL, name: FROM_NAME }, to: { email: to }, subject, html }),
+    body: JSON.stringify({ from: { email: FROM_EMAIL, name: FROM_NAME }, to: [{ email: to }], subject, html }),
   });
   if (!res.ok) throw new Error(`mailerlite_failed:${await res.text().catch(() => "")}`);
 }
@@ -134,4 +131,15 @@ async function sendWithFallbacks(to: string, subject: string, html: string, opts
   return { status: "queued", error: errs.join("|") };
 }
 
-serve(async (req) => { /* ... logika obsługi webhooka ... */ });
+Deno.serve(async (req) => {
+  const requestId = crypto.randomUUID();
+  if (req.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
+  
+  let payload;
+  try { payload = await req.json(); } catch (e) { return json({ ok: false, error: "Invalid JSON" }, 400); }
+
+  await writeLog({ requestId, event: "request_start", status: "started", meta: { url: req.url } });
+
+  // Tu wywołujemy logikę wysyłki i zwracamy odpowiedź
+  // ... (reszta logiki webhooka)
+});
