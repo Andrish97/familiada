@@ -2,6 +2,23 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const sbAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+const WORKER_SECRET = Deno.env.get("MAIL_WORKER_SECRET") || "";
+
+const BREVO_KEY = Deno.env.get("BREVO_API_KEY") || "";
+const MAILGUN_KEY = Deno.env.get("MAILGUN_API_KEY") || "";
+const MAILGUN_DOMAIN = Deno.env.get("MAILGUN_DOMAIN") || "";
+const MAILGUN_REGION = (Deno.env.get("MAILGUN_REGION") || "eu").toLowerCase();
+const SENDPULSE_ID = Deno.env.get("SENDPULSE_ID") || "";
+const SENDPULSE_SECRET = Deno.env.get("SENDPULSE_SECRET") || "";
+const MAILERLITE_KEY = Deno.env.get("MAILERLITE_API_KEY") || "";
+
+const FROM_EMAIL = Deno.env.get("MAIL_FROM_EMAIL") || "no-reply@familiada.online";
+const FROM_NAME = Deno.env.get("MAIL_FROM_NAME") || "Familiada";
+
 type ProviderLimits = { name: string; rem_worker: number; rem_immediate: number; is_active: boolean };
 
 async function loadProviderOrder(): Promise<string[]> {
