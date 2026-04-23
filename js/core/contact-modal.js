@@ -1,4 +1,4 @@
-import { t, getUiLang } from "../../translation/translation.js?v=v2026-04-23T16261";
+import { t, getUiLang } from "../../translation/translation.js?v=v2026-04-23T16303";
 
 let modalEl = null;
 let isSubmitting = false;
@@ -102,7 +102,7 @@ function ensureModal() {
 
 async function prefillEmail() {
   try {
-    const { sb } = await import("./supabase.js?v=v2026-04-23T16261");
+    const { sb } = await import("./supabase.js?v=v2026-04-23T16303");
     const { data } = await sb().auth.getSession();
     const user = data?.session?.user;
     const isGuest = user?.user_metadata?.is_guest === true || user?.app_metadata?.is_guest === true;
