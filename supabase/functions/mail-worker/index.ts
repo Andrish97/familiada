@@ -2,78 +2,19 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-type Provider = "sendgrid" | "brevo" | "mailgun" | "ses";
-type LogLevel = "debug" | "info" | "warn" | "error";
+type ProviderLimits = { name: string; rem_worker: number; rem_immediate: number; is_active: boolean };
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const sbAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-
-const WORKER_SECRET = Deno.env.get("MAIL_WORKER_SECRET") || "";
-
-const SENDGRID_KEY = Deno.env.get("SENDGRID_API_KEY") || "";
-const BREVO_KEY = Deno.env.get("BREVO_API_KEY") || "";
-const MAILGUN_KEY = Deno.env.get("MAILGUN_API_KEY") || "";
-const MAILGUN_DOMAIN = Deno.env.get("MAILGUN_DOMAIN") || "";
-const MAILGUN_REGION = (Deno.env.get("MAILGUN_REGION") || "eu").toLowerCase();
-const SES_ACCESS_KEY = Deno.env.get("AWS_SES_ACCESS_KEY_ID") || "";
-const SES_SECRET_KEY = Deno.env.get("AWS_SES_SECRET_ACCESS_KEY") || "";
-const SES_REGION = Deno.env.get("AWS_SES_REGION") || "us-east-1";
-
-const FROM_EMAIL = Deno.env.get("MAIL_FROM_EMAIL") || "no-reply@familiada.online";
-const FROM_NAME = Deno.env.get("MAIL_FROM_NAME") || "Familiada";
-
-function json(obj: any, status = 200) {
-  return new Response(JSON.stringify(obj), { status, headers: { "Content-Type": "application/json; charset=utf-8" } });
-}
-function sleep(ms: number) { return new Promise((r) => setTimeout(r, ms)); }
-function scrubEmail(email: string) {
-  const e = String(email || "").trim();
-  const at = e.indexOf("@");
-  if (at <= 1) return e ? "***" : "";
-  return `${e.slice(0, 2)}***${e.slice(at)}`;
-}
-function clampError(message: unknown, max = 2000) {
-  return String(message ?? "").slice(0, max);
-}
-
-function parseQueueIds(raw: string | null): string[] {
-  if (!raw) return [];
-  const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-  const uniq = new Set<string>();
-  String(raw)
-    .split(",")
-    .map((v) => v.trim())
-    .filter(Boolean)
-    .forEach((id) => {
-      if (uuidRe.test(id)) uniq.add(id);
-    });
-  return [...uniq].slice(0, 200);
-}
-
-function parseProviderOrder(raw: string): Provider[] {
-  const allowed: Provider[] = ["sendgrid", "brevo", "mailgun", "ses"];
-  const out = String(raw || "")
-    .toLowerCase()
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean)
-    .filter((x) => allowed.includes(x as Provider)) as Provider[];
-  return out.length ? out : ["sendgrid", "brevo", "mailgun"];
-}
-
-async function loadSettings() {
+async function loadProviderOrder(): Promise<string[]> {
   const { data } = await sbAdmin
-    .from("mail_settings")
-    .select("provider_order,delay_ms,worker_limit")
-    .eq("id", 1)
-    .maybeSingle();
-  return {
-    provider_order: String(data?.provider_order || "sendgrid,brevo,mailgun"),
-    delay_ms: Number.isFinite(Number(data?.delay_ms)) ? Number(data?.delay_ms) : 250,
-    worker_limit: Number.isFinite(Number(data?.worker_limit)) ? Number(data?.worker_limit) : 25,
-  };
+    .from("email_providers")
+    .select("name")
+    .eq("is_active", true)
+    .order("priority")
+    .limit(10);
+  return (data || []).map(p => p.name);
 }
+
+type LogLevel = "debug" | "info" | "warn" | "error";
 
 async function writeLog(entry: {
   requestId: string;
@@ -125,30 +66,6 @@ function htmlToText(html: string): string {
 }
 
 // Providers (same jak w send-mail, skrócone)
-async function sendViaSendgrid(to: string, subject: string, html: string, fromEmail?: string, attachments?: Attachment[], plainText?: string) {
-  if (!SENDGRID_KEY) throw new Error("missing_SENDGRID_API_KEY");
-  const from = fromEmail || FROM_EMAIL;
-  const text = plainText || htmlToText(html);
-  const payload: any = {
-    personalizations: [{ to: [{ email: to }] }],
-    from: { email: from, name: FROM_NAME },
-    subject,
-    content: [
-      { type: "text/plain", value: text },
-      { type: "text/html", value: html }
-    ],
-    tracking_settings: { click_tracking: { enable: false, enable_text: false }, open_tracking: { enable: false } },
-  };
-  if (attachments?.length) {
-    payload.attachments = attachments.map(a => ({ content: a.content, filename: a.filename, type: a.contentType, disposition: "attachment" }));
-  }
-  const res = await fetch("https://api.sendgrid.com/v3/mail/send", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${SENDGRID_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) throw new Error(`sendgrid_failed:${await res.text().catch(() => "")}`);
-}
 async function sendViaBrevo(to: string, subject: string, html: string, fromEmail?: string, attachments?: Attachment[], plainText?: string) {
   if (!BREVO_KEY) throw new Error("missing_BREVO_API_KEY");
   const from = fromEmail || FROM_EMAIL;
@@ -187,60 +104,44 @@ async function sendViaMailgun(to: string, subject: string, html: string, fromEma
   const res = await fetch(url, { method: "POST", headers: { Authorization: `Basic ${btoa(`api:${MAILGUN_KEY}`)}` }, body: form });
   if (!res.ok) throw new Error(`mailgun_failed:${await res.text().catch(() => "")}`);
 }
-
-async function sha256Hex(data: string): Promise<string> {
-  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(data));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
-}
-async function hmacSha256(key: Uint8Array | ArrayBuffer, data: string): Promise<Uint8Array> {
-  const k = await crypto.subtle.importKey("raw", key, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
-  return new Uint8Array(await crypto.subtle.sign("HMAC", k, new TextEncoder().encode(data)));
-}
-async function hmacSha256Hex(key: Uint8Array, data: string): Promise<string> {
-  return Array.from(await hmacSha256(key, data)).map(b => b.toString(16).padStart(2, "0")).join("");
-}
-
-async function sendViaSes(to: string, subject: string, html: string, sesRegion: string, fromEmail?: string, plainText?: string) {
-  if (!SES_ACCESS_KEY || !SES_SECRET_KEY) throw new Error("missing_AWS_SES_credentials");
+async function sendViaSendpulse(to: string, subject: string, html: string, fromEmail?: string, attachments?: Attachment[], plainText?: string) {
+  if (!SENDPULSE_ID || !SENDPULSE_SECRET) throw new Error("missing_SENDPULSE_credentials");
   const from = fromEmail || FROM_EMAIL;
-  const region = sesRegion || "us-east-1";
-  const endpoint = `https://email.${region}.amazonaws.com/v2/email/outbound-emails`;
   const text = plainText || htmlToText(html);
-  const payload = JSON.stringify({
-    FromEmailAddress: `${FROM_NAME} <${from}>`,
-    Destination: { ToAddresses: [to] },
-    Content: { 
-      Simple: { 
-        Subject: { Data: subject, Charset: "UTF-8" }, 
-        Body: { 
-          Html: { Data: html, Charset: "UTF-8" },
-          Text: { Data: text, Charset: "UTF-8" }
-        } 
-      } 
-    },
-  });
-  const now = new Date();
-  const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, "").slice(0, 15) + "Z";
-  const dateStamp = amzDate.slice(0, 8);
-  const host = `email.${region}.amazonaws.com`;
-  const bodyHash = await sha256Hex(payload);
-  const canonicalHeaders = `content-type:application/json\nhost:${host}\nx-amz-date:${amzDate}\n`;
-  const signedHeaders = "content-type;host;x-amz-date";
-  const canonicalRequest = ["POST", "/v2/email/outbound-emails", "", canonicalHeaders, signedHeaders, bodyHash].join("\n");
-  const credentialScope = `${dateStamp}/${region}/ses/aws4_request`;
-  const stringToSign = ["AWS4-HMAC-SHA256", amzDate, credentialScope, await sha256Hex(canonicalRequest)].join("\n");
-  const signingKey = await hmacSha256(
-    await hmacSha256(await hmacSha256(await hmacSha256(new TextEncoder().encode("AWS4" + SES_SECRET_KEY), dateStamp), region), "ses"),
-    "aws4_request"
-  );
-  const signature = await hmacSha256Hex(signingKey, stringToSign);
-  const authHeader = `AWS4-HMAC-SHA256 Credential=${SES_ACCESS_KEY}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
-  const res = await fetch(endpoint, {
+  const addrBook = "familiada_online";
+  const emailData: any = {
+    from: { email: from, name: FROM_NAME },
+    to: [{ email: to }],
+    subject,
+    html,
+    text,
+  };
+  if (attachments?.length) {
+    emailData.attachments = attachments.map(a => ({ content: a.content, filename: a.filename, content_type: a.contentType }));
+  }
+  const res = await fetch(`https://api.sendpulse.io/${addrBook}/emails`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", "X-Amz-Date": amzDate, "Authorization": authHeader },
-    body: payload,
+    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${btoa(`${SENDPULSE_ID}:${SENDPULSE_SECRET}`)}` },
+    body: JSON.stringify(emailData),
   });
-  if (!res.ok) throw new Error(`ses_failed:${await res.text().catch(() => String(res.status))}`);
+  if (!res.ok) throw new Error(`sendpulse_failed:${await res.text().catch(() => "")}`);
+}
+async function sendViaMailerlite(to: string, subject: string, html: string, fromEmail?: string, attachments?: Attachment[], plainText?: string) {
+  if (!MAILERLITE_KEY) throw new Error("missing_MAILERLITE_API_KEY");
+  const from = fromEmail || FROM_EMAIL;
+  const text = plainText || htmlToText(html);
+  const res = await fetch("https://api.mailerlite.com/api/v1/send", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${MAILERLITE_KEY}` },
+    body: JSON.stringify({
+      email: [{ address: to }],
+      from,
+      subject,
+      html,
+      text,
+    }),
+  });
+  if (!res.ok) throw new Error(`mailerlite_failed:${await res.text().catch(() => "")}`);
 }
 
 async function checkSuppressedEmails(emails: string[]): Promise<Map<string, string>> {
@@ -281,15 +182,23 @@ async function checkSuppressedEmails(emails: string[]): Promise<Map<string, stri
   return result;
 }
 
-async function sendWithFallbacks(to: string, subject: string, html: string, order: Provider[], fromEmail?: string, attachments?: Attachment[], plainText?: string) {
+async function sendWithFallbacks(to: string, subject: string, html: string, order: string[], fromEmail?: string, attachments?: Attachment[], plainText?: string) {
+  const limits = await loadProviderLimits();
   const errs: string[] = [];
   const text = plainText || htmlToText(html);
   for (const p of order) {
+    const limit = limits.get(p);
+    if (!limit || limit.rem_worker <= 0) {
+      errs.push(`${p}:no_worker_quota`);
+      continue;
+    }
     try {
-      if (p === "sendgrid") { await sendViaSendgrid(to, subject, html, fromEmail, attachments, text); return p; }
-      if (p === "brevo") { await sendViaBrevo(to, subject, html, fromEmail, attachments, text); return p; }
-      if (p === "ses") { await sendViaSes(to, subject, html, SES_REGION, fromEmail, text); return p; }
-      await sendViaMailgun(to, subject, html, fromEmail, attachments, text); return p;
+      if (p === "brevo") { await sendViaBrevo(to, subject, html, fromEmail, attachments, text); }
+      else if (p === "sendpulse") { await sendViaSendpulse(to, subject, html, fromEmail, attachments, text); }
+      else if (p === "mailerlite") { await sendViaMailerlite(to, subject, html, fromEmail, attachments, text); }
+      else await sendViaMailgun(to, subject, html, fromEmail, attachments, text);
+      await decrementWorkerLimit(p, limits);
+      return p;
     } catch (e) {
       errs.push(`${p}:${String((e as any)?.message || e)}`);
     }
@@ -328,7 +237,7 @@ serve(async (req) => {
   }
 
   const settings = await loadSettings();
-  const order = parseProviderOrder(settings.provider_order);
+  const order = await loadProviderOrder();
   const delayMs = Math.max(0, Math.min(5000, Number(settings.delay_ms || 0)));
   const defaultLimit = Math.max(1, Math.min(200, Number(settings.worker_limit || 25)));
   const limit = Math.max(1, Math.min(200, Number(url.searchParams.get("limit") || String(defaultLimit))));

@@ -22,7 +22,7 @@ const API_BASE = "/_admin_api";
 const TOOLS_MANIFEST = "/settings-tools/tools.json";
 const POLL_MS = 15000;
 const MINUTES_MIN = 10;
-const MAIL_PROVIDERS = ["sendgrid", "brevo", "mailgun", "ses"];
+const MAIL_PROVIDERS = ["brevo", "mailgun", "sendpulse", "mailerlite"];
 const EMAIL_TEMPLATES = {
   custom: "",
   info: "Dziękujemy za wiadomość. Odpowiemy tak szybko, jak to możliwe.",
@@ -125,8 +125,6 @@ const els = {
   modeStatus: document.getElementById("modeStatus"),
   modeStatusValue: document.getElementById("modeStatusValue"),
   toast: document.getElementById("toast"),
-  mailQueueEnabled: document.getElementById("mailQueueEnabled"),
-  mailProviderOrderList: document.getElementById("mailProviderOrderList"),
   mailDelayMs: document.getElementById("mailDelayMs"),
   mailBatchMax: document.getElementById("mailBatchMax"),
   mailWorkerLimit: document.getElementById("mailWorkerLimit"),
