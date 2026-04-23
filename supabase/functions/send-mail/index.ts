@@ -518,3 +518,5 @@ settings = { delay_ms: 250, batch_max: 100 };
     return json({ ok: false, error: String((e as any)?.message || e) }, 500);
   }
 });
+
+});
