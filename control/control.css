@@ -204,7 +204,7 @@
   background: transparent;
   color: var(--gold);
   font-weight: 700;
-  font-size: 13px;
+  font-size: 0;
   letter-spacing: .02em;
   transition: background .24s ease, color .24s ease;
   position: relative;
@@ -214,7 +214,8 @@
 }
 
 .toggle-slider::before{
-  /* content: attr(data-text); - całkowicie usunięte */
+  content: attr(data-text);
+  font-size: 13px;
 }
 
 /* Pierwszy element - zaokrąglenie lewe */
@@ -1067,17 +1068,6 @@
     font-size: 16px
 }
 
-#roundQuestion, .qPrompt {
-    font-size: 20px;
-    padding: 12px 16px;
-    background: rgba(255, 234, 166, 0.05);
-    border: 2px solid var(--gold);
-    border-radius: 12px;
-    margin: 10px 0;
-    color: var(--gold);
-    text-align: center;
-}
-
 .timer3 {
     min-width: 40px;
     padding: 6px 10px;
@@ -1124,8 +1114,7 @@
 .ansText {
     margin-top: 6px;
     font-weight: 900;
-    line-height: 1.25;
-    font-size: 18px;
+    line-height: 1.25
 }
 
 .ansBtn.revealed {
@@ -1334,13 +1323,7 @@
 }
 
 .finalTable .qCell {
-    width: 55%;
-    font-size: 16px;
-    font-weight: 800;
-    padding: 14px;
-    border: 1px solid rgba(255, 234, 166, 0.2);
-    border-radius: 8px;
-    background: rgba(255, 234, 166, 0.03);
+    width: 55%
 }
 
 .finalTable .aCell,.finalTable .p1Cell {
@@ -2130,4 +2113,29 @@
 }
 #shareDeviceOverlay .importRow .btn {
   flex: 0 0 auto;
+}
+
+/* --- Dodatkowe poprawki czytelności --- */
+#roundQuestion, .qPrompt {
+    font-size: 20px;
+    padding: 12px 16px;
+    background: rgba(255, 234, 166, 0.05);
+    border: 2px solid var(--gold);
+    border-radius: 12px;
+    margin: 10px 0;
+    color: var(--gold);
+    text-align: center;
+}
+
+.ansText {
+    font-size: 18px !important;
+}
+
+.finalTable .qCell {
+    font-size: 16px;
+    font-weight: 800;
+    padding: 14px;
+    border: 1px solid rgba(255, 234, 166, 0.2);
+    border-radius: 8px;
+    background: rgba(255, 234, 166, 0.03);
 }

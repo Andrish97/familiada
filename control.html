@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-04-23T16055"/>
+  <meta name="app-version" content="v2026-04-22T12533"/>
 
   <meta charset="UTF-8"/>
   <meta name="robots" content="noindex, nofollow"/>
@@ -12,12 +12,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
   <title data-i18n="control.title">Familiada — Panel sterowania</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-04-23T16055"/>
-  <link rel="stylesheet" href="/css/base.css?v=v2026-04-23T16055"/>
-  <link rel="stylesheet" href="/control/control.css?v=v2026-04-23T16055"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-04-22T12533"/>
+  <link rel="stylesheet" href="/css/base.css?v=v2026-04-22T12533"/>
+  <link rel="stylesheet" href="/control/control.css?v=v2026-04-22T12533"/>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script src="js/core/security-warning.js?v=v2026-04-23T16055" defer></script>
+  <script src="js/core/security-warning.js?v=v2026-04-22T12533" defer></script>
   <script type="module">
     import { initI18n, t } from "/translation/translation.js";
 
@@ -495,11 +495,11 @@
                         <div class="toggle-group">
                           <label class="toggle-item">
                             <input type="radio" name="hasFinal" value="yes" id="finalYes" />
-                            <span class="toggle-slider" data-i18n="control.toggleYes">Tak</span>
+                            <span class="toggle-slider" data-i18n-data-text="control.toggleYes">Tak</span>
                           </label>
                           <label class="toggle-item">
                             <input type="radio" name="hasFinal" value="no" id="finalNo" checked />
-                            <span class="toggle-slider" data-i18n-data-text="control.toggleNo"></span>
+                            <span class="toggle-slider" data-i18n-data-text="control.toggleNo">Nie</span>
                           </label>
                         </div>
                       </div>
@@ -509,11 +509,11 @@
                         <div class="toggle-group">
                           <label class="toggle-item">
                             <input type="radio" name="finalMode" value="random" id="finalRandom" checked />
-                            <span class="toggle-slider" data-i18n-data-text="control.toggleRandom"></span>
-                                                      </label>
-                                                      <label class="toggle-item">
-                                                        <input type="radio" name="roundMode" value="pick" id="roundModePick" />
-                                                        <span class="toggle-slider" data-i18n-data-text="control.togglePick"></span>
+                            <span class="toggle-slider" data-i18n-data-text="control.toggleRandom">Losuj</span>
+                          </label>
+                          <label class="toggle-item">
+                            <input type="radio" name="finalMode" value="pick" id="finalPick" />
+                            <span class="toggle-slider" data-i18n-data-text="control.togglePick">Wybierz</span>
                           </label>
                         </div>
                       </div>
@@ -530,11 +530,11 @@
                         <div class="toggle-group">
                           <label class="toggle-item">
                             <input type="radio" name="roundsMode" value="random" id="roundsRandom" checked />
-                            <span class="toggle-slider" data-i18n-data-text="control.toggleRandom"></span>
-                                                      </label>
-                                                      <label class="toggle-item">
-                                                        <input type="radio" name="roundMode" value="pick" id="roundModePick" />
-                                                        <span class="toggle-slider" data-i18n-data-text="control.togglePick"></span>
+                            <span class="toggle-slider" data-i18n-data-text="control.toggleRandom">Losuj</span>
+                          </label>
+                          <label class="toggle-item">
+                            <input type="radio" name="roundsMode" value="pick" id="roundsPick" />
+                            <span class="toggle-slider" data-i18n-data-text="control.togglePick">Wybierz</span>
                           </label>
                         </div>
                       </div>
@@ -1190,7 +1190,7 @@
       <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
     </div>
   </main>
-  <script type="module" src="js/core/contact-modal.js?v=v2026-04-23T16055"></script>
+  <script type="module" src="js/core/contact-modal.js?v=v2026-04-22T12533"></script>
 
   <!-- Modal: Udostępnij urządzenie -->
   <div class="overlay" id="shareDeviceOverlay" style="display:none;">
@@ -1226,4 +1226,4 @@
     </div>
   </div>
 </body>
-
+</html> 
