@@ -263,19 +263,26 @@ async function sendWithFallbacks(to: string, subject: string, html: string, prov
   const available = providers.filter(p => p.rem_worker > 0);
   if (available.length === 0) throw new Error("no_available_worker_limits");
 
+  console.log("[mail-worker] available providers:", available.map(p => p.name));
+  console.log("[mail-worker] trying first:", available[0]?.name);
+
   const errs: string[] = [];
   const text = plainText || htmlToText(html);
   for (const p of available) {
     try {
+      console.log("[mail-worker] trying provider:", p.name, "type:", p.type);
+      
       if (p.type === "brevo") { await sendViaBrevo(to, subject, html, fromEmail, attachments, text); }
       else if (p.type === "sendpulse") { await sendViaSendpulse(to, subject, html, fromEmail); }
       else if (p.type === "mailerlite") { await sendViaMailerlite(to, subject, html, fromEmail); }
       else { await sendViaMailgun(to, subject, html, fromEmail, attachments, text); }
       
+      console.log("[mail-worker] SUCCESS via:", p.name);
       await decrementWorkerLimit(p.id);
       return p.name;
     } catch (e) {
       const errMsg = String((e as any)?.message || e);
+      console.log("[mail-worker] FAILED provider:", p.name, "error:", errMsg);
       errs.push(`${p.name}:${errMsg}`);
       await writeLog({
         requestId: "SYSTEM",
@@ -286,6 +293,8 @@ async function sendWithFallbacks(to: string, subject: string, html: string, prov
       });
     }
   }
+  
+  console.log("[mail-worker] ALL providers failed:", errs);
   throw new Error(errs.join("|"));
 }
 
