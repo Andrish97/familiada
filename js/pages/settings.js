@@ -1628,7 +1628,11 @@ function toggleMailLogsHelp() {
 }
 
 function renderProviderOrder() {
-  if (!els.mailProviderOrderList) return;
+  console.log("Rendering providers:", mailProviderOrder);
+  if (!els.mailProviderOrderList) {
+    console.error("List element not found!");
+    return;
+  }
   els.mailProviderOrderList.innerHTML = "";
   
   mailProviderOrder.forEach((p, idx) => {

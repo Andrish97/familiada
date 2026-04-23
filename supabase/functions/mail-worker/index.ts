@@ -45,15 +45,34 @@ interface EmailProvider {
   rem_worker: number;
 }
 
+function parseQueueIds(raw: string | null): string[] {
+  if (!raw) return [];
+  const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  const uniq = new Set<string>();
+  String(raw)
+    .split(",")
+    .map((v) => v.trim())
+    .filter(Boolean)
+    .forEach((id) => {
+      if (uuidRe.test(id)) uniq.add(id);
+    });
+  return [...uniq].slice(0, 200);
+}
+
 async function loadProviders(): Promise<EmailProvider[]> {
   const { data, error } = await sbAdmin
     .from("email_providers")
-    .select("id, name, label, priority, rem_worker")
-    .eq("is_active", true)
+    .select("id, name, label, priority, daily_limit, rem_worker, rem_immediate, is_active")
     .order("priority", { ascending: true });
 
   if (error) {
-    console.error("[mail-worker] loadProviders failed", error);
+    console.error("[mail-worker] loadProviders DB error:", error);
+    await writeLog({
+      requestId: "SYSTEM",
+      level: "error",
+      event: "load_providers_failed",
+      error: String(error.message),
+    });
     return [];
   }
 
@@ -62,6 +81,7 @@ async function loadProviders(): Promise<EmailProvider[]> {
     type: (p.name.split('_')[0]) as ProviderType
   }));
 }
+
 
 async function decrementWorkerLimit(providerId: string) {
   const { error } = await sbAdmin.rpc("decrement_provider_worker", { p_id: providerId });
