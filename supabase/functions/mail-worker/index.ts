@@ -12,8 +12,7 @@ const BREVO_KEY = Deno.env.get("BREVO_API_KEY") || "";
 const MAILGUN_KEY = Deno.env.get("MAILGUN_API_KEY") || "";
 const MAILGUN_DOMAIN = Deno.env.get("MAILGUN_DOMAIN") || "";
 const MAILGUN_REGION = (Deno.env.get("MAILGUN_REGION") || "eu").toLowerCase();
-const SENDPULSE_ID = Deno.env.get("SENDPULSE_ID") || "";
-const SENDPULSE_SECRET = Deno.env.get("SENDPULSE_SECRET") || "";
+const SENDPULSE_KEY = Deno.env.get("SENDPULSE_API_KEY") || "";
 const MAILERLITE_KEY = Deno.env.get("MAILERLITE_API_KEY") || "";
 
 const FROM_EMAIL = Deno.env.get("MAIL_FROM_EMAIL") || "no-reply@familiada.online";
@@ -122,7 +121,7 @@ async function sendViaMailgun(to: string, subject: string, html: string, fromEma
   if (!res.ok) throw new Error(`mailgun_failed:${await res.text().catch(() => "")}`);
 }
 async function sendViaSendpulse(to: string, subject: string, html: string, fromEmail?: string, attachments?: Attachment[], plainText?: string) {
-  if (!SENDPULSE_ID || !SENDPULSE_SECRET) throw new Error("missing_SENDPULSE_credentials");
+  if (!SENDPULSE_KEY) throw new Error("missing_SENDPULSE_API_KEY");
   const from = fromEmail || FROM_EMAIL;
   const text = plainText || htmlToText(html);
   const addrBook = "familiada_online";
@@ -138,7 +137,7 @@ async function sendViaSendpulse(to: string, subject: string, html: string, fromE
   }
   const res = await fetch(`https://api.sendpulse.io/${addrBook}/emails`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${btoa(`${SENDPULSE_ID}:${SENDPULSE_SECRET}`)}` },
+    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${SENDPULSE_KEY}` },
     body: JSON.stringify(emailData),
   });
   if (!res.ok) throw new Error(`sendpulse_failed:${await res.text().catch(() => "")}`);
