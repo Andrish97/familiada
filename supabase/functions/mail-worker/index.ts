@@ -136,7 +136,7 @@ function buildAttachmentHtml(attachments: Array<{ filename: string; storage_path
   if (!attachments.length) return '';
   const items = attachments.map(a => {
     const name = a.filename.replace(/\.[^.]+$/, '');
-    const url = `${SUPABASE_URL}/storage/v1/object/public/${a.storage_path}`;
+    const url = `https://api.familiada.online/storage/v1/object/public/${a.storage_path}`;
     return `<a href="${url}" style="display: block; padding: 8px 12px; margin: 4px 0; background: #fff; border: 1px solid #e5e7eb; border-radius: 6px; text-decoration: none; color: #3b82f6;">📎 ${name}</a>`;
   }).join('');
   return `<div style="margin-top: 16px; border-top: 1px solid #e5e7eb; padding-top: 12px;">${items}</div>`;
