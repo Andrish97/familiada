@@ -202,8 +202,6 @@ async function sendViaSendpulse(to: string, subject: string, html: string) {
   });
   if (!res.ok) throw new Error(`sendpulse_failed:${await res.text().catch(() => "")}`);
 }
-  if (!res.ok) throw new Error(`sendpulse_failed:${await res.text().catch(() => "")}`);
-}
 
 async function sendViaMailerlite(to: string, subject: string, html: string) {
   if (!MAILERLITE_KEY) throw new Error("missing_MAILERLITE_API_KEY");
