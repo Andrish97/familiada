@@ -202,10 +202,10 @@ async function sendViaSendpulse(to: string, subject: string, html: string) {
     body: JSON.stringify({
       email: {
         subject,
-        text_b64: btoa(unescape(encodeURIComponent(text))),
-        html_b64: btoa(unescape(encodeURIComponent(html))),
+        text,
+        html,
         from: { name: FROM_NAME, email: FROM_EMAIL },
-        to: [{ email: to }]
+        to: [{ email: to, name: "" }]
       }
     }),
   });
@@ -215,16 +215,16 @@ async function sendViaSendpulse(to: string, subject: string, html: string) {
 async function sendViaMailerlite(to: string, subject: string, html: string) {
   if (!MAILERLITE_KEY) throw new Error("missing_MAILERLITE_API_KEY");
   const text = htmlToText(html);
-  const res = await fetch("https://mailerlite.com", {
+  const res = await fetch("https://connect.mailerlite.com/api/emails", {
     method: "POST",
     headers: { "Authorization": `Bearer ${MAILERLITE_KEY}`, "Content-Type": "application/json", "Accept": "application/json" },
     body: JSON.stringify({
       subject,
       from: FROM_EMAIL,
       from_name: FROM_NAME,
-      to: [{ email: to }],
-      html,
-      text,
+      to: to,
+      html: html,
+      text: text,
     }),
   });
   if (!res.ok) throw new Error(`mailerlite_failed:${await res.text().catch(() => "")}`);

@@ -281,10 +281,10 @@ async function sendViaSendpulse(to: string, subject: string, html: string, fromE
   
   const emailPayload: any = {
     subject,
-    text_b64: btoa(unescape(encodeURIComponent(text))),
-    html_b64: btoa(unescape(encodeURIComponent(html))),
+    text,
+    html,
     from: { name: FROM_NAME, email: from },
-    to: [{ email: to }]
+    to: [{ email: to, name: "" }]
   };
   
   if (attachments?.length) {
@@ -311,16 +311,16 @@ async function sendViaMailerlite(to: string, subject: string, html: string, from
     fullHtml = injectHtmlPart(html, buildAttachmentHtml(attachmentsMeta));
   }
   
-  const res = await fetch("https://mailerlite.com", {
+  const res = await fetch("https://connect.mailerlite.com/api/emails", {
     method: "POST",
     headers: { "Authorization": `Bearer ${MAILERLITE_KEY}`, "Content-Type": "application/json", "Accept": "application/json" },
     body: JSON.stringify({
       subject,
-      from,
+      from: from,
       from_name: FROM_NAME,
-      to: [{ email: to }],
+      to: to,
       html: fullHtml,
-      text
+      text: text
     }),
   });
   if (!res.ok) throw new Error(`mailerlite_failed:${await res.text().catch(() => "")}`);
