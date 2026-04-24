@@ -7,17 +7,6 @@ type LogLevel = "debug" | "info" | "warn" | "error";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const SITE_URL = Deno.env.get("SITE_URL") || "https://familiada.online";
-
-function utf8ToBase64(str: string): string {
-  const encoder = new TextEncoder();
-  const bytes = encoder.encode(str);
-  let binary = "";
-  for (const byte of bytes) {
-    binary += String.fromCharCode(byte);
-  }
-  return btoa(binary);
-}
 const sbAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
 const WORKER_SECRET = Deno.env.get("MAIL_WORKER_SECRET") || "";
@@ -154,21 +143,14 @@ function htmlToText(html: string): string {
 .slice(0, 500);
 }
 
-function addAttachmentLinks(html: string, attachmentsMeta?: Array<{filename: string, mime_type: string, storage_path: string}>): string {
-  if (!attachmentsMeta?.length) return html;
-  const exts = new Set(["pdf","docx","doc","docm","rtf","txt","csv","ods","xlsx","xls","msg","pub","mobi","odt","jpg","jpeg","png","gif","tif","tiff","bmp","eps","cgm","ppt","pptx","mp3","m4a","m4v","wma","ogg","flac","wav","aif","aifc","aiff","mp4","mov","avi","mkv","mpeg","mpg","wmv","zip","tar","xml","html","htm","shtml","css","ics","ez","pkpass"]);
-  const isSupported = (path: string) => { const p = path.split("."); return p.length > 1 && exts.has(p[p.length-1].toLowerCase()); };
-  
-  const linkHtml = attachmentsMeta.map((att, i) => { const url = `${SUPABASE_URL}/storage/v1/object/public/${att.storage_path}`; return `<p style="margin:8px 0;"><a href="${url}" style="color:#ffeaa6;text-decoration:underline;">📎 ${i+1}</a></p>`; }).join("\n");
-  return html.replace(/<\/body>/i, `<div style="margin-top:20px;padding-top:12px;border-top:1px solid rgba(255,255,255,.15);">${linkHtml}</div></body>`);
-}
-
-async function sendViaBrevo(to: string, subject: string, html: string, fromEmail?: string, attachmentsMeta?: Array<{filename: string, mime_type: string, storage_path: string}>, plainText?: string) {
+async function sendViaBrevo(to: string, subject: string, html: string, fromEmail?: string, attachments?: Attachment[], plainText?: string) {
   if (!BREVO_KEY) throw new Error("missing_BREVO_API_KEY");
   const from = fromEmail || FROM_EMAIL;
   const text = plainText || htmlToText(html);
-  const htmlWithLinks = addAttachmentLinks(html, attachmentsMeta);
-  const payload = { sender: { email: from, name: FROM_NAME }, to: [{ email: to }], subject, htmlContent: htmlWithLinks, textContent: text };
+  const payload: any = { sender: { email: from, name: FROM_NAME }, to: [{ email: to }], subject, htmlContent: html, textContent: text };
+  if (attachments?.length) {
+    payload.attachment = attachments.map(a => ({ name: a.filename, content: a.content, contentType: a.contentType }));
+  }
   const res = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
     headers: { "api-key": BREVO_KEY, "Content-Type": "application/json", Accept: "application/json" },
@@ -176,12 +158,11 @@ async function sendViaBrevo(to: string, subject: string, html: string, fromEmail
   });
   if (!res.ok) throw new Error(`brevo_failed:${await res.text().catch(() => "")}`);
 }
-async function sendViaMailgun(to: string, subject: string, html: string, fromEmail?: string, attachmentsMeta?: Array<{filename: string, mime_type: string, storage_path: string}>, plainText?: string) {
+async function sendViaMailgun(to: string, subject: string, html: string, fromEmail?: string, attachments?: Attachment[], plainText?: string) {
   if (!MAILGUN_KEY) throw new Error("missing_MAILGUN_API_KEY");
   if (!MAILGUN_DOMAIN) throw new Error("missing_MAILGUN_DOMAIN");
   const from = fromEmail || FROM_EMAIL;
   const text = plainText || htmlToText(html);
-  const htmlWithLinks = addAttachmentLinks(html, attachmentsMeta);
   const base = MAILGUN_REGION === "eu" ? "https://api.eu.mailgun.net" : "https://api.mailgun.net";
   const url = `${base}/v3/${MAILGUN_DOMAIN}/messages`;
 
@@ -227,70 +208,45 @@ async function getSendpulseToken(): Promise<string> {
   return sendpulseToken;
 }
 
-async function sendViaSendpulse(to: string, subject: string, html: string, fromEmail?: string, attachments?: Attachment[], plainText?: string) {
+async function sendViaSendpulse(to: string, subject: string, html: string, fromEmail?: string) {
   if (!SENDPULSE_ID || !SENDPULSE_SECRET) throw new Error("missing_SENDPULSE_credentials");
   
   const from = fromEmail || FROM_EMAIL;
-  const text = plainText || html.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').trim().slice(0, 500);
-  const htmlBase64 = utf8ToBase64(html);
+  const text = html.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').trim().slice(0, 500);
   
   const token = await getSendpulseToken();
-  
-  const emailBody: Record<string, unknown> = {
-    subject,
-    text,
-    html: htmlBase64,
-    from: { name: FROM_NAME, email: from },
-    to: [{ email: to }]
-  };
-  
-  if (attachments?.length) {
-    const attachmentsBinary: Record<string, string> = {};
-    for (const att of attachments) {
-      attachmentsBinary[att.filename] = att.content;
-    }
-    emailBody.attachments_binary = attachmentsBinary;
-  }
   
   const res = await fetch("https://api.sendpulse.com/smtp/emails", {
     method: "POST",
     headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ email: emailBody }),
+    body: JSON.stringify({
+      email: {
+        subject,
+        text,
+        html,
+        from: `${FROM_NAME} <${from}>`,
+        to: [{ email: to }]
+      }
+    }),
   });
   if (!res.ok) throw new Error(`sendpulse_failed:${await res.text().catch(() => "")}`);
 }
 
-async function sendViaMailerlite(to: string, subject: string, html: string, fromEmail?: string, attachments?: Attachment[], attachmentsMeta?: Array<{filename: string, mime_type: string, storage_path: string}>, plainText?: string) {
+async function sendViaMailerlite(to: string, subject: string, html: string, fromEmail?: string) {
   if (!MAILERLITE_KEY) throw new Error("missing_MAILERLITE_API_KEY");
   const from = fromEmail || FROM_EMAIL;
-  const text = plainText || html.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').trim().slice(0, 500);
-  
-  let htmlWithLinks = html;
-  if (attachments?.length && attachmentsMeta?.length) {
-    const linksHtml = attachmentsMeta.map((att, i) => {
-      const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/${att.storage_path}`;
-      return `<p style="margin:8px 0;"><a href="${publicUrl}" style="color:#ffeaa6;text-decoration:underline;">📎 ${i + 1}</a></p>`;
-    }).join('\n');
-    
-    const attachmentsBlock = `<div style="margin-top:20px;padding-top:12px;border-top:1px solid rgba(255,255,255,.15);">
-      ${linksHtml}
-    </div>`;
-    htmlWithLinks = html.replace(/<\/body>/i, attachmentsBlock + '</body>');
-  }
-  
-  const payload: Record<string, unknown> = {
-    subject,
-    from,
-    from_name: FROM_NAME,
-    to: [{ email: to }],
-    html: htmlWithLinks,
-    text
-  };
-  
-  const res = await fetch("https://connect.mailerlite.com/api/send", {
+  const text = html.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').trim().slice(0, 500);
+  const res = await fetch("https://mailerlite.com", {
     method: "POST",
     headers: { "Authorization": `Bearer ${MAILERLITE_KEY}`, "Content-Type": "application/json", "Accept": "application/json" },
-    body: JSON.stringify(payload),
+    body: JSON.stringify({
+      subject,
+      from,
+      from_name: FROM_NAME,
+      to: [{ email: to }],
+      html,
+      text
+    }),
   });
   if (!res.ok) throw new Error(`mailerlite_failed:${await res.text().catch(() => "")}`);
 }
@@ -333,7 +289,7 @@ async function checkSuppressedEmails(emails: string[]): Promise<Map<string, stri
   return result;
 }
 
-async function sendWithFallbacks(to: string, subject: string, html: string, providers: EmailProvider[], fromEmail?: string, attachments?: Attachment[], attachmentsMeta?: Array<{filename: string, mime_type: string, storage_path: string}>, plainText?: string) {
+async function sendWithFallbacks(to: string, subject: string, html: string, providers: EmailProvider[], fromEmail?: string, attachments?: Attachment[], plainText?: string) {
   const available = providers.filter(p => p.rem_worker > 0);
   if (available.length === 0) throw new Error("no_available_worker_limits");
 
@@ -347,8 +303,8 @@ async function sendWithFallbacks(to: string, subject: string, html: string, prov
       console.log("[mail-worker] trying provider:", p.name, "type:", p.type);
       
       if (p.type === "brevo") { await sendViaBrevo(to, subject, html, fromEmail, attachments, text); }
-      else if (p.type === "sendpulse") { await sendViaSendpulse(to, subject, html, fromEmail, attachments, text); }
-      else if (p.type === "mailerlite") { await sendViaMailerlite(to, subject, html, fromEmail, attachments, metaAttachments, text); }
+      else if (p.type === "sendpulse") { await sendViaSendpulse(to, subject, html, fromEmail); }
+      else if (p.type === "mailerlite") { await sendViaMailerlite(to, subject, html, fromEmail); }
       else { await sendViaMailgun(to, subject, html, fromEmail, attachments, text); }
       
       console.log("[mail-worker] SUCCESS via:", p.name);
@@ -508,7 +464,7 @@ serve(async (req) => {
         }
       }
 
-      const provider = await sendWithFallbacks(r.to_email, r.subject, r.html, providers, r.from_email || undefined, emailAttachments.length ? emailAttachments : undefined, metaAttachments, r.text);
+      const provider = await sendWithFallbacks(r.to_email, r.subject, r.html, providers, r.from_email || undefined, emailAttachments.length ? emailAttachments : undefined, r.text);
       const { error: markOkError } = await sbAdmin.rpc("mail_queue_mark", { p_id: r.id, p_ok: true, p_provider: provider, p_error: "" });
       if (markOkError) {
         console.error("[mail-worker] queue:mark_sent_failed", { id: r.id, error: markOkError });

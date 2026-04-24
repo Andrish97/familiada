@@ -68,16 +68,6 @@ const MAILERLITE_KEY = Deno.env.get("MAILERLITE_API_KEY") || "";
 const FROM_EMAIL = Deno.env.get("MAIL_FROM_EMAIL") || "no-reply@familiada.online";
 const FROM_NAME = Deno.env.get("MAIL_FROM_NAME") || "Familiada";
 
-function utf8ToBase64(str: string): string {
-  const encoder = new TextEncoder();
-  const bytes = encoder.encode(str);
-  let binary = "";
-  for (const byte of bytes) {
-    binary += String.fromCharCode(byte);
-  }
-  return btoa(binary);
-}
-
 function htmlToText(html: string): string {
   return html
     .replace(/<[^>]*>/g, ' ')
@@ -203,8 +193,7 @@ async function getSendpulseToken(): Promise<string> {
 async function sendViaSendpulse(to: string, subject: string, html: string) {
   if (!SENDPULSE_ID || !SENDPULSE_SECRET) throw new Error("missing_SENDPULSE_credentials");
   
-const text = htmlToText(html);
-  const htmlBase64 = utf8ToBase64(html);
+  const text = htmlToText(html);
   const token = await getSendpulseToken();
   
   const res = await fetch("https://api.sendpulse.com/smtp/emails", {
@@ -212,10 +201,10 @@ const text = htmlToText(html);
     headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       email: {
-        html: htmlBase64,
-        text,
         subject,
-        from: { name: FROM_NAME, email: FROM_EMAIL },
+        text,
+        html,
+        from: `${FROM_NAME} <${FROM_EMAIL}>`,
         to: [{ email: to }]
       }
     }),
