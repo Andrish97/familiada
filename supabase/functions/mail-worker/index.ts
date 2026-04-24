@@ -8,6 +8,16 @@ type LogLevel = "debug" | "info" | "warn" | "error";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const SITE_URL = Deno.env.get("SITE_URL") || "https://familiada.online";
+
+function utf8ToBase64(str: string): string {
+  const encoder = new TextEncoder();
+  const bytes = encoder.encode(str);
+  let binary = "";
+  for (const byte of bytes) {
+    binary += String.fromCharCode(byte);
+  }
+  return btoa(binary);
+}
 const sbAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
 const WORKER_SECRET = Deno.env.get("MAIL_WORKER_SECRET") || "";
@@ -214,7 +224,7 @@ async function sendViaSendpulse(to: string, subject: string, html: string, fromE
   
   const from = fromEmail || FROM_EMAIL;
   const text = plainText || html.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').trim().slice(0, 500);
-  const htmlBase64 = btoa(html);
+  const htmlBase64 = utf8ToBase64(html);
   
   const token = await getSendpulseToken();
   
