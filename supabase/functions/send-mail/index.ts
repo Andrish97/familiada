@@ -279,15 +279,13 @@ async function sendWithFallbacks(it: MailItem, order: Provider[]) {
 async function loadSettings() {
   const { data, error } = await sbAdmin
     .from("mail_settings")
-    .select("queue_enabled,provider_order,delay_ms,batch_max")
+    .select("delay_ms,batch_max")
     .eq("id", 1)
     .maybeSingle();
 
   if (error) throw error;
 
   return {
-    queue_enabled: !!data?.queue_enabled,
-    provider_order: String(data?.provider_order || "sendgrid,brevo,mailgun"),
     delay_ms: Number.isFinite(Number(data?.delay_ms)) ? Number(data?.delay_ms) : 250,
     batch_max: Number.isFinite(Number(data?.batch_max)) ? Number(data?.batch_max) : 100,
   };
@@ -490,10 +488,9 @@ serve(async (req) => {
         actorUserId,
         error: String((err as any)?.message || err),
       });
-      settings = { queue_enabled: true, provider_order: "sendgrid,brevo,mailgun", delay_ms: 250, batch_max: 100 };
+      settings = { delay_ms: 250, batch_max: 100 };
     }
 
-    const order = parseProviderOrder(settings.provider_order);
     const delayMs = Math.max(0, Math.min(5000, Number(settings.delay_ms || 0)));
     const batchMax = Math.max(1, Math.min(500, Number(settings.batch_max || 100)));
     const sliced = items.slice(0, batchMax);
@@ -525,10 +522,8 @@ serve(async (req) => {
         itemsAfterBatch: sliced.length,
         itemsAfterFilter: finalItems.length,
         skippedByRecipientSettings: f.skipped,
-        queueEnabled: settings.queue_enabled,
         delayMs,
         batchMax,
-        providerOrder: order.join(","),
       },
     });
 
@@ -545,19 +540,17 @@ serve(async (req) => {
 
 
     // ---- QUEUE MODE ----
-    if (settings.queue_enabled) {
-      const rows = finalItems.map((it) => ({
-        created_by: uid,
-        to_email: it.to,
-        subject: it.subject,
-        html: it.html,
-        text: htmlToText(it.html),  // Generate plain text for Apple Mail preview
-        status: "pending",
-        not_before: new Date().toISOString(),
-        attempts: 0,
-        provider_order: order.join(","),
-        meta: it.meta || {},
-      }));
+    const rows = finalItems.map((it) => ({
+      created_by: uid,
+      to_email: it.to,
+      subject: it.subject,
+      html: it.html,
+      text: htmlToText(it.html),
+      status: "pending",
+      not_before: new Date().toISOString(),
+      attempts: 0,
+      meta: it.meta || {},
+    }));
 
       const { error } = await sbAdmin.from("mail_queue").insert(rows);
       if (error) {
