@@ -1889,7 +1889,10 @@ async function handleInboundEmail(message, env) {
   let inboundAttachments = [];
   try {
     const rawText = await new Response(message.raw).text();
+    console.log("[email] raw length:", rawText.length);
+    console.log("[email] raw preview:", rawText.slice(0, 500));
     const parts = extractMimeParts(rawText);
+    console.log("[email] parsed:", { textLen: parts.text?.length, htmlLen: parts.html?.length, attCount: parts.attachments?.length });
     body = parts.text;
     bodyHtml = parts.html || null;
     inboundAttachments = parts.attachments || [];
@@ -1927,8 +1930,12 @@ async function handleInboundEmail(message, env) {
     }
   }
 
-  if (!from || (!body && !inboundAttachments.length)) return;
+  if (!from || (!body && !inboundAttachments.length)) {
+    console.log("[email] skipping - no from or body, body:", body?.slice(0, 100), "attachments:", inboundAttachments.length);
+    return;
+  }
 
+  console.log("[email] saving:", { from, subject: subject.slice(0, 50), bodyLen: body.length, htmlLen: bodyHtml?.length || 0 });
   const rpc = await supabaseRpc(env, "save_inbound_message", {
     p_from_email:    from,
     p_subject:       subject.slice(0, 500),
