@@ -202,9 +202,9 @@ async function sendViaSendpulse(to: string, subject: string, html: string) {
     body: JSON.stringify({
       email: {
         subject,
-        text,
-        html,
-        from: `${FROM_NAME} <${FROM_EMAIL}>`,
+        text_b64: btoa(unescape(encodeURIComponent(text))),
+        html_b64: btoa(unescape(encodeURIComponent(html))),
+        from: { name: FROM_NAME, email: FROM_EMAIL },
         to: [{ email: to }]
       }
     }),

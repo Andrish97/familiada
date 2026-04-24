@@ -126,7 +126,41 @@ async function writeLog(entry: {
   }
 }
 
+function injectHtmlPart(html: string, htmlPart: string): string {
+  if (!htmlPart) return html;
+  const endBody = html.includes('</body>') ? html.replace(/<\/body>/i, htmlPart + '</body>') : html + htmlPart;
+  return endBody;
+}
+
+function buildAttachmentHtml(attachments: Array<{ filename: string; storage_path: string }>): string {
+  if (!attachments.length) return '';
+  const items = attachments.map(a => {
+    const name = a.filename.replace(/\.[^.]+$/, '');
+    const url = `${SUPABASE_URL}/storage/v1/object/public/${a.storage_path}`;
+    return `<a href="${url}" style="display: block; padding: 8px 12px; margin: 4px 0; background: #fff; border: 1px solid #e5e7eb; border-radius: 6px; text-decoration: none; color: #3b82f6;">📎 ${name}</a>`;
+  }).join('');
+  return `<div style="margin-top: 16px; border-top: 1px solid #e5e7eb; padding-top: 12px;">${items}</div>`;
+}
+
 type Attachment = { filename: string; content: string; contentType: string };
+
+async function loadAttachmentsFromStorage(attachments: Array<{ filename: string; storage_path: string; mime_type?: string }>): Promise<Attachment[]> {
+  const result: Attachment[] = [];
+  for (const att of attachments) {
+    try {
+      const storageBucketPath = att.storage_path.replace(/^message-attachments\//, "");
+      const { data, error } = await sbAdmin.storage.from("message-attachments").download(storageBucketPath);
+      if (!error && data) {
+        const buf = await data.arrayBuffer();
+        const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+        result.push({ filename: att.filename, content: b64, contentType: att.mime_type || "application/octet-stream" });
+      }
+    } catch (err) {
+      console.error("[mail-worker] attachment_load_failed:", att.filename, err);
+    }
+  }
+  return result;
+}
 
 // Helper function to strip HTML tags and get plain text
 function htmlToText(html: string): string {
@@ -143,13 +177,42 @@ function htmlToText(html: string): string {
 .slice(0, 500);
 }
 
-async function sendViaBrevo(to: string, subject: string, html: string, fromEmail?: string, attachments?: Attachment[], plainText?: string) {
+const ALLOWED_ATTACHMENT_EXTENSIONS = new Set(["pdf", "docx", "doc", "docm", "rtf", "txt", "csv", "ods", "xlsx", "xls", "msg", "pub", "mobi", "odt", "jpg", "jpeg", "png", "gif", "tif", "tiff", "bmp", "eps", "cgm", "ppt", "pptx", "mp3", "m4a", "m4v", "wma", "ogg", "flac", "wav", "aif", "aifc", "aiff", "mp4", "mov", "avi", "mkv", "mpeg", "mpg", "wmv", "zip", "tar", "xml", "html", "htm", "shtml", "css", "ics", "ez", "pkpass"]);
+
+function splitAttachmentsByExtension(attachments: Array<{ filename: string; storage_path: string }>): { allowed: Array<{ filename: string; storage_path: string }>; discard: Array<{ filename: string; storage_path: string }> } {
+  const allowed: typeof attachments = [];
+  const discard: typeof attachments = [];
+  for (const a of attachments) {
+    const ext = a.filename.split('.').pop()?.toLowerCase() || '';
+    if (ALLOWED_ATTACHMENT_EXTENSIONS.has(ext)) {
+      allowed.push(a);
+    } else {
+      discard.push(a);
+    }
+  }
+  return { allowed, discard };
+}
+
+async function sendViaBrevo(to: string, subject: string, html: string, fromEmail?: string, attachments?: Attachment[], plainText?: string, attachmentsMeta?: Array<{ filename: string; storage_path: string }>) {
   if (!BREVO_KEY) throw new Error("missing_BREVO_API_KEY");
   const from = fromEmail || FROM_EMAIL;
   const text = plainText || htmlToText(html);
-  const payload: any = { sender: { email: from, name: FROM_NAME }, to: [{ email: to }], subject, htmlContent: html, textContent: text };
-  if (attachments?.length) {
-    payload.attachment = attachments.map(a => ({ name: a.filename, content: a.content, contentType: a.contentType }));
+  
+  let fullHtml = html;
+  let brevoAttachments = attachments;
+  
+  if (attachments?.length && attachmentsMeta?.length) {
+    const { allowed, discard } = splitAttachmentsByExtension(attachmentsMeta);
+    if (discard.length) {
+      fullHtml = injectHtmlPart(html, buildAttachmentHtml(discard));
+    }
+    const allowedSet = new Set(allowed.map(a => a.filename));
+    brevoAttachments = attachments.filter(a => allowedSet.has(a.filename));
+  }
+  
+  const payload: any = { sender: { email: from, name: FROM_NAME }, to: [{ email: to }], subject, htmlContent: fullHtml, textContent: text };
+  if (brevoAttachments?.length) {
+    payload.attachment = brevoAttachments.map(a => ({ name: a.filename, content: a.content, contentType: a.contentType }));
   }
   const res = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
@@ -208,7 +271,7 @@ async function getSendpulseToken(): Promise<string> {
   return sendpulseToken;
 }
 
-async function sendViaSendpulse(to: string, subject: string, html: string, fromEmail?: string) {
+async function sendViaSendpulse(to: string, subject: string, html: string, fromEmail?: string, attachments?: Attachment[]) {
   if (!SENDPULSE_ID || !SENDPULSE_SECRET) throw new Error("missing_SENDPULSE_credentials");
   
   const from = fromEmail || FROM_EMAIL;
@@ -216,26 +279,38 @@ async function sendViaSendpulse(to: string, subject: string, html: string, fromE
   
   const token = await getSendpulseToken();
   
+  const emailPayload: any = {
+    subject,
+    text_b64: btoa(unescape(encodeURIComponent(text))),
+    html_b64: btoa(unescape(encodeURIComponent(html))),
+    from: { name: FROM_NAME, email: from },
+    to: [{ email: to }]
+  };
+  
+  if (attachments?.length) {
+    emailPayload.attachments_binary = Object.fromEntries(
+      attachments.map(a => [a.filename, a.content])
+    );
+  }
+  
   const res = await fetch("https://api.sendpulse.com/smtp/emails", {
     method: "POST",
     headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      email: {
-        subject,
-        text,
-        html,
-        from: `${FROM_NAME} <${from}>`,
-        to: [{ email: to }]
-      }
-    }),
+    body: JSON.stringify({ email: emailPayload }),
   });
   if (!res.ok) throw new Error(`sendpulse_failed:${await res.text().catch(() => "")}`);
 }
 
-async function sendViaMailerlite(to: string, subject: string, html: string, fromEmail?: string) {
+async function sendViaMailerlite(to: string, subject: string, html: string, fromEmail?: string, attachmentsMeta?: Array<{ filename: string; storage_path: string }>) {
   if (!MAILERLITE_KEY) throw new Error("missing_MAILERLITE_API_KEY");
   const from = fromEmail || FROM_EMAIL;
   const text = html.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').trim().slice(0, 500);
+  
+  let fullHtml = html;
+  if (attachmentsMeta?.length) {
+    fullHtml = injectHtmlPart(html, buildAttachmentHtml(attachmentsMeta));
+  }
+  
   const res = await fetch("https://mailerlite.com", {
     method: "POST",
     headers: { "Authorization": `Bearer ${MAILERLITE_KEY}`, "Content-Type": "application/json", "Accept": "application/json" },
@@ -244,7 +319,7 @@ async function sendViaMailerlite(to: string, subject: string, html: string, from
       from,
       from_name: FROM_NAME,
       to: [{ email: to }],
-      html,
+      html: fullHtml,
       text
     }),
   });
@@ -289,7 +364,7 @@ async function checkSuppressedEmails(emails: string[]): Promise<Map<string, stri
   return result;
 }
 
-async function sendWithFallbacks(to: string, subject: string, html: string, providers: EmailProvider[], fromEmail?: string, attachments?: Attachment[], plainText?: string) {
+async function sendWithFallbacks(to: string, subject: string, html: string, providers: EmailProvider[], fromEmail?: string, attachments?: Attachment[], plainText?: string, metaAttachments?: Array<{ filename: string; storage_path: string }>) {
   const available = providers.filter(p => p.rem_worker > 0);
   if (available.length === 0) throw new Error("no_available_worker_limits");
 
@@ -302,9 +377,9 @@ async function sendWithFallbacks(to: string, subject: string, html: string, prov
     try {
       console.log("[mail-worker] trying provider:", p.name, "type:", p.type);
       
-      if (p.type === "brevo") { await sendViaBrevo(to, subject, html, fromEmail, attachments, text); }
-      else if (p.type === "sendpulse") { await sendViaSendpulse(to, subject, html, fromEmail); }
-      else if (p.type === "mailerlite") { await sendViaMailerlite(to, subject, html, fromEmail); }
+      if (p.type === "brevo") { await sendViaBrevo(to, subject, html, fromEmail, attachments, text, metaAttachments); }
+      else if (p.type === "sendpulse") { await sendViaSendpulse(to, subject, html, fromEmail, attachments); }
+      else if (p.type === "mailerlite") { await sendViaMailerlite(to, subject, html, fromEmail, metaAttachments); }
       else { await sendViaMailgun(to, subject, html, fromEmail, attachments, text); }
       
       console.log("[mail-worker] SUCCESS via:", p.name);
@@ -446,25 +521,10 @@ serve(async (req) => {
       }
 
       // Load attachments from storage if any
-      let emailAttachments: Attachment[] = [];
       const metaAttachments = (r.meta?.attachments || []) as Array<{filename: string, mime_type: string, storage_path: string}>;
-      if (metaAttachments.length) {
-        for (const att of metaAttachments) {
-          try {
-            const storageBucketPath = att.storage_path.replace(/^message-attachments\//, "");
-            const { data, error } = await sbAdmin.storage.from("message-attachments").download(storageBucketPath);
-            if (!error && data) {
-              const buf = await data.arrayBuffer();
-              const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
-              emailAttachments.push({ filename: att.filename, content: b64, contentType: att.mime_type || "application/octet-stream" });
-            }
-          } catch (err) {
-            console.error("[mail-worker] attachment_load_failed:", att.filename, err);
-          }
-        }
-      }
+      const emailAttachments = metaAttachments.length ? await loadAttachmentsFromStorage(metaAttachments) : [];
 
-      const provider = await sendWithFallbacks(r.to_email, r.subject, r.html, providers, r.from_email || undefined, emailAttachments.length ? emailAttachments : undefined, r.text);
+      const provider = await sendWithFallbacks(r.to_email, r.subject, r.html, providers, r.from_email || undefined, emailAttachments.length ? emailAttachments : undefined, r.text, metaAttachments);
       const { error: markOkError } = await sbAdmin.rpc("mail_queue_mark", { p_id: r.id, p_ok: true, p_provider: provider, p_error: "" });
       if (markOkError) {
         console.error("[mail-worker] queue:mark_sent_failed", { id: r.id, error: markOkError });
