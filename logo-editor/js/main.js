@@ -974,6 +974,10 @@ function closeRenameModal(){
 }
 
 async function renameOk(){
+  const btnOk = document.getElementById("btnRenameOk");
+  if (btnOk?.disabled) return;
+  if (btnOk) btnOk.disabled = true;
+  
   setMsg(renameMsg, "");
   const val = String(renameInput.value || "").trim();
   if (!val){
@@ -993,6 +997,8 @@ async function renameOk(){
   }catch(e){
     console.error(e);
     setMsg(renameMsg, renameMode === "create" ? t("logoEditor.errors.createFailed") : t("logoEditor.rename.failed"));
+  } finally {
+    if (btnOk) btnOk.disabled = false;
   }
 }
 
