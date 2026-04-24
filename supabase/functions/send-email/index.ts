@@ -173,7 +173,7 @@ async function getSendpulseToken(): Promise<string> {
   
   if (!SENDPULSE_ID || !SENDPULSE_SECRET) throw new Error("missing_SENDPULSE_credentials");
   
-  const authRes = await fetch("https://api.sendpulse.com/oauth/token", {
+  const authRes = await fetch("https://api.sendpulse.com/oauth/access_token", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
