@@ -224,7 +224,7 @@ async function sendViaSendpulse(to: string, subject: string, html: string, fromE
         subject,
         text,
         html,
-        from: { name: FROM_NAME, email: from },
+        from: `${FROM_NAME} <${from}>`,
         to: [{ email: to }]
       }
     }),
