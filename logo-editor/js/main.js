@@ -269,6 +269,10 @@ function makeUniqueName(baseName, excludeId = null){
 }
 
 async function createNewLogoWithType(type, mode, name){
+  const btnOk = document.getElementById("btnCreateOk");
+  if (btnOk?.disabled) return;
+  if (btnOk) btnOk.disabled = true;
+  
   try{
     let payload = null;
     
@@ -312,6 +316,8 @@ async function createNewLogoWithType(type, mode, name){
   } catch(e){
     console.error(e);
     void alertModal({ text: t("logoEditor.errors.createFailedDetailed", { error: e?.message || e }) });
+  } finally {
+    if (btnOk) btnOk.disabled = false;
   }
 }
 

@@ -1614,6 +1614,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   btnNameCancel?.addEventListener("click", closeRenameModal);
   nameOverlay?.addEventListener("click", (ev) => { if (ev.target === nameOverlay) closeRenameModal(); });
   btnNameOk?.addEventListener("click", async () => {
+    if (btnNameOk?.disabled) return;
     const val = String(nameInp?.value || "").trim();
     if (!val) return;
 

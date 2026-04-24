@@ -1361,6 +1361,8 @@ function closeNameModal() {
 }
 
 async function nameOk() {
+  if (btnNameOk?.disabled) return;
+  if (btnNameOk) btnNameOk.disabled = true;
   setMsg(nameMsg, "");
   const val = safeName(nameInp.value);
   try {
@@ -1380,6 +1382,8 @@ async function nameOk() {
   } catch (e) {
     console.warn("[bases] name ok error:", e);
     setMsg(nameMsg, t("bases.nameModal.failed"));
+  } finally {
+    if (btnNameOk) btnNameOk.disabled = false;
   }
 }
 
