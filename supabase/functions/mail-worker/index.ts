@@ -276,7 +276,6 @@ async function sendViaMailerlite(to: string, subject: string, html: string, from
   });
   if (!res.ok) throw new Error(`mailerlite_failed:${await res.text().catch(() => "")}`);
 }
-}
 
 async function checkSuppressedEmails(emails: string[]): Promise<Map<string, string>> {
   const result = new Map<string, string>();
