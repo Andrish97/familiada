@@ -193,7 +193,8 @@ async function getSendpulseToken(): Promise<string> {
 async function sendViaSendpulse(to: string, subject: string, html: string) {
   if (!SENDPULSE_ID || !SENDPULSE_SECRET) throw new Error("missing_SENDPULSE_credentials");
   
-  const text = htmlToText(html);
+const text = htmlToText(html);
+  const htmlBase64 = btoa(html);
   const token = await getSendpulseToken();
   
   const res = await fetch("https://api.sendpulse.com/smtp/emails", {
@@ -201,10 +202,10 @@ async function sendViaSendpulse(to: string, subject: string, html: string) {
     headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       email: {
-        subject,
+        html: htmlBase64,
         text,
-        html,
-        from: `${FROM_NAME} <${FROM_EMAIL}>`,
+        subject,
+        from: { name: FROM_NAME, email: FROM_EMAIL },
         to: [{ email: to }]
       }
     }),
