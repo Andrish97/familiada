@@ -447,6 +447,7 @@ const en = {
     statusError: "Error.",
     errInvalidEmail: "Enter a valid email.",
     errEmailPending: "An email change is already in progress. Finish it or cancel it first.",
+    errEmailSameAsCurrent: "This is your current email address.",
     errNoPendingEmail: "No email change in progress.",
     cooldown: "You can try again in {time}.",
     errCooldown: "Too soon. Try again in {time}.",

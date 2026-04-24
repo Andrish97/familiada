@@ -447,6 +447,7 @@ const uk = {
     statusError: "Помилка.",
     errInvalidEmail: "Вкажи коректний e-mail.",
     errEmailPending: "Зміна e-mail уже в процесі. Спочатку заверши її або скасуй.",
+    errEmailSameAsCurrent: "Це твоя поточна e-mail адреса.",
     errNoPendingEmail: "Немає активної зміни e-mail.",
     cooldown: "Повторна дія можлива через {time}.",
     errCooldown: "Занадто швидко. Спробуй знову через {time}.",

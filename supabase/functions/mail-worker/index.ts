@@ -154,14 +154,24 @@ function htmlToText(html: string): string {
 .slice(0, 500);
 }
 
-async function sendViaBrevo(to: string, subject: string, html: string, fromEmail?: string, attachments?: Attachment[], plainText?: string) {
+function addAttachmentLinks(html: string, attachmentsMeta?: Array<{filename: string, mime_type: string, storage_path: string}>): string {
+  if (!attachmentsMeta?.length) return html;
+  const linksHtml = attachmentsMeta.map((att, i) => {
+    const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/${att.storage_path}`;
+    return `<p style="margin:8px 0;"><a href="${publicUrl}" style="color:#ffeaa6;text-decoration:underline;">📎 ${i + 1}</a></p>`;
+  }).join('\n');
+  const attachmentsBlock = `<div style="margin-top:20px;padding-top:12px;border-top:1px solid rgba(255,255,255,.15);">
+    ${linksHtml}
+  </div>`;
+  return html.replace(/<\/body>/i, attachmentsBlock + '</body>');
+}
+
+async function sendViaBrevo(to: string, subject: string, html: string, fromEmail?: string, attachmentsMeta?: Array<{filename: string, mime_type: string, storage_path: string}>, plainText?: string) {
   if (!BREVO_KEY) throw new Error("missing_BREVO_API_KEY");
   const from = fromEmail || FROM_EMAIL;
   const text = plainText || htmlToText(html);
-  const payload: any = { sender: { email: from, name: FROM_NAME }, to: [{ email: to }], subject, htmlContent: html, textContent: text };
-  if (attachments?.length) {
-    payload.attachment = attachments.map(a => ({ name: a.filename, content: a.content, contentType: a.contentType }));
-  }
+  const htmlWithLinks = addAttachmentLinks(html, attachmentsMeta);
+  const payload = { sender: { email: from, name: FROM_NAME }, to: [{ email: to }], subject, htmlContent: htmlWithLinks, textContent: text };
   const res = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
     headers: { "api-key": BREVO_KEY, "Content-Type": "application/json", Accept: "application/json" },
@@ -169,11 +179,12 @@ async function sendViaBrevo(to: string, subject: string, html: string, fromEmail
   });
   if (!res.ok) throw new Error(`brevo_failed:${await res.text().catch(() => "")}`);
 }
-async function sendViaMailgun(to: string, subject: string, html: string, fromEmail?: string, attachments?: Attachment[], plainText?: string) {
+async function sendViaMailgun(to: string, subject: string, html: string, fromEmail?: string, attachmentsMeta?: Array<{filename: string, mime_type: string, storage_path: string}>, plainText?: string) {
   if (!MAILGUN_KEY) throw new Error("missing_MAILGUN_API_KEY");
   if (!MAILGUN_DOMAIN) throw new Error("missing_MAILGUN_DOMAIN");
   const from = fromEmail || FROM_EMAIL;
   const text = plainText || htmlToText(html);
+  const htmlWithLinks = addAttachmentLinks(html, attachmentsMeta);
   const base = MAILGUN_REGION === "eu" ? "https://api.eu.mailgun.net" : "https://api.mailgun.net";
   const url = `${base}/v3/${MAILGUN_DOMAIN}/messages`;
 

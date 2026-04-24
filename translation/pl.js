@@ -447,6 +447,7 @@ const pl = {
     statusError: "Błąd.",
     errInvalidEmail: "Podaj poprawny e-mail.",
     errEmailPending: "Zmiana e-maila jest już w toku. Najpierw dokończ ją lub anuluj.",
+    errEmailSameAsCurrent: "To jest Twój obecny adres e-mail.",
     errNoPendingEmail: "Brak aktywnej zmiany e-maila.",
     cooldown: "Ponowna akcja możliwa za {time}.",
     errCooldown: "Zbyt szybko. Spróbuj ponownie za {time}.",

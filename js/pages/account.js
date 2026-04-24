@@ -454,6 +454,8 @@ async function handleEmailSave() {
     if (!mail || !mail.includes("@")) throw new Error(t("account.errInvalidEmail"));
 
     const normalizedMail = mail.toLowerCase();
+    if (normalizedMail === currentEmail.toLowerCase()) throw new Error(t("account.errEmailSameAsCurrent"));
+
     const language = getUiLang();
 
     const confirmUrl = new URL("/confirm", location.origin);
