@@ -166,12 +166,13 @@ async function sendViaMailgun(to: string, subject: string, html: string) {
   if (!res.ok) throw new Error(`mailgun_failed:${await res.text().catch(() => "")}`);
 }
 
-async function sendViaSendpulse(to: string, subject: string, html: string) {
+let sendpulseToken: string | null = null;
+
+async function getSendpulseToken(): Promise<string> {
+  if (sendpulseToken) return sendpulseToken;
+  
   if (!SENDPULSE_ID || !SENDPULSE_SECRET) throw new Error("missing_SENDPULSE_credentials");
   
-  const text = htmlToText(html);
-  
-  // Get token
   const authRes = await fetch("https://api.sendpulse.com/oauth/token", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -185,7 +186,15 @@ async function sendViaSendpulse(to: string, subject: string, html: string) {
   if (!authRes.ok) throw new Error(`sendpulse_auth_failed:${await authRes.text().catch(() => "")}`);
   
   const authData = await authRes.json();
-  const token = authData.access_token;
+  sendpulseToken = authData.access_token;
+  return sendpulseToken;
+}
+
+async function sendViaSendpulse(to: string, subject: string, html: string) {
+  if (!SENDPULSE_ID || !SENDPULSE_SECRET) throw new Error("missing_SENDPULSE_credentials");
+  
+  const text = htmlToText(html);
+  const token = await getSendpulseToken();
   
   const res = await fetch("https://api.sendpulse.com/smtp/emails", {
     method: "POST",
