@@ -15,8 +15,8 @@ const BREVO_KEY = Deno.env.get("BREVO_API_KEY") || "";
 const MAILGUN_KEY = Deno.env.get("MAILGUN_API_KEY") || "";
 const MAILGUN_DOMAIN = Deno.env.get("MAILGUN_DOMAIN") || "";
 const MAILGUN_REGION = (Deno.env.get("MAILGUN_REGION") || "eu").toLowerCase();
-const SENDPULSE_ID = Deno.env.get("SENDPULSE_CLIENT_ID") || "";
-const SENDPULSE_SECRET = Deno.env.get("SENDPULSE_CLIENT_SECRET") || "";
+const SENDPULSE_ID = Deno.env.get("SENDPULSE_ID") || "";
+const SENDPULSE_SECRET = Deno.env.get("SENDPULSE_SECRET") || "";
 const MAILERLITE_KEY = Deno.env.get("MAILERLITE_API_KEY") || "";
 
 const FROM_EMAIL = Deno.env.get("MAIL_FROM_EMAIL") || "no-reply@familiada.online";
