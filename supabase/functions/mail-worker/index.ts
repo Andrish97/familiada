@@ -236,15 +236,16 @@ async function sendViaMailerlite(to: string, subject: string, html: string, from
   if (!MAILERLITE_KEY) throw new Error("missing_MAILERLITE_API_KEY");
   const from = fromEmail || FROM_EMAIL;
   const text = html.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').trim().slice(0, 500);
-  const res = await fetch("https://api.mailerlite.com/api/v1/send", {
+  const res = await fetch("https://mailerlite.com", {
     method: "POST",
-    headers: { "Authorization": `Bearer ${MAILERLITE_KEY}`, "Content-Type": "application/json" },
+    headers: { "Authorization": `Bearer ${MAILERLITE_KEY}`, "Content-Type": "application/json", "Accept": "application/json" },
     body: JSON.stringify({
-      recipient: to,
-      from: from,
-      subject: subject,
-      html: html,
-      text: text
+      subject,
+      from,
+      from_name: FROM_NAME,
+      to: [{ email: to }],
+      html,
+      text
     }),
   });
   if (!res.ok) throw new Error(`mailerlite_failed:${await res.text().catch(() => "")}`);
