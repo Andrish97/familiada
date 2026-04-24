@@ -156,14 +156,11 @@ function htmlToText(html: string): string {
 
 function addAttachmentLinks(html: string, attachmentsMeta?: Array<{filename: string, mime_type: string, storage_path: string}>): string {
   if (!attachmentsMeta?.length) return html;
-  const linksHtml = attachmentsMeta.map((att, i) => {
-    const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/${att.storage_path}`;
-    return `<p style="margin:8px 0;"><a href="${publicUrl}" style="color:#ffeaa6;text-decoration:underline;">📎 ${i + 1}</a></p>`;
-  }).join('\n');
-  const attachmentsBlock = `<div style="margin-top:20px;padding-top:12px;border-top:1px solid rgba(255,255,255,.15);">
-    ${linksHtml}
-  </div>`;
-  return html.replace(/<\/body>/i, attachmentsBlock + '</body>');
+  const exts = new Set(["pdf","docx","doc","docm","rtf","txt","csv","ods","xlsx","xls","msg","pub","mobi","odt","jpg","jpeg","png","gif","tif","tiff","bmp","eps","cgm","ppt","pptx","mp3","m4a","m4v","wma","ogg","flac","wav","aif","aifc","aiff","mp4","mov","avi","mkv","mpeg","mpg","wmv","zip","tar","xml","html","htm","shtml","css","ics","ez","pkpass"]);
+  const isSupported = (path: string) => { const p = path.split("."); return p.length > 1 && exts.has(p[p.length-1].toLowerCase()); };
+  
+  const linkHtml = attachmentsMeta.map((att, i) => { const url = `${SUPABASE_URL}/storage/v1/object/public/${att.storage_path}`; return `<p style="margin:8px 0;"><a href="${url}" style="color:#ffeaa6;text-decoration:underline;">📎 ${i+1}</a></p>`; }).join("\n");
+  return html.replace(/<\/body>/i, `<div style="margin-top:20px;padding-top:12px;border-top:1px solid rgba(255,255,255,.15);">${linkHtml}</div></body>`);
 }
 
 async function sendViaBrevo(to: string, subject: string, html: string, fromEmail?: string, attachmentsMeta?: Array<{filename: string, mime_type: string, storage_path: string}>, plainText?: string) {
