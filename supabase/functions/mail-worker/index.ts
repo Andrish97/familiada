@@ -15,8 +15,8 @@ const BREVO_KEY = Deno.env.get("BREVO_API_KEY") || "";
 const MAILGUN_KEY = Deno.env.get("MAILGUN_API_KEY") || "";
 const MAILGUN_DOMAIN = Deno.env.get("MAILGUN_DOMAIN") || "";
 const MAILGUN_REGION = (Deno.env.get("MAILGUN_REGION") || "eu").toLowerCase();
-const SENDPULSE_CLIENT_ID = Deno.env.get("SENDPULSE_CLIENT_ID") || "";
-const SENDPULSE_CLIENT_SECRET = Deno.env.get("SENDPULSE_CLIENT_SECRET") || "";
+const SENDPULSE_ID = Deno.env.get("SENDPULSE_CLIENT_ID") || "";
+const SENDPULSE_SECRET = Deno.env.get("SENDPULSE_CLIENT_SECRET") || "";
 const MAILERLITE_KEY = Deno.env.get("MAILERLITE_API_KEY") || "";
 
 const FROM_EMAIL = Deno.env.get("MAIL_FROM_EMAIL") || "no-reply@familiada.online";
@@ -187,7 +187,7 @@ let sendpulseToken: string | null = null;
 async function getSendpulseToken(): Promise<string> {
   if (sendpulseToken) return sendpulseToken;
   
-  if (!SENDPULSE_CLIENT_ID || !SENDPULSE_CLIENT_SECRET) {
+  if (!SENDPULSE_ID || !SENDPULSE_SECRET) {
     throw new Error("missing_SENDPULSE_credentials");
   }
   
@@ -196,8 +196,8 @@ async function getSendpulseToken(): Promise<string> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       grant_type: "client_credentials",
-      client_id: SENDPULSE_CLIENT_ID,
-      client_secret: SENDPULSE_CLIENT_SECRET
+      client_id: SENDPULSE_ID,
+      client_secret: SENDPULSE_SECRET
     })
   });
   
@@ -209,7 +209,7 @@ async function getSendpulseToken(): Promise<string> {
 }
 
 async function sendViaSendpulse(to: string, subject: string, html: string, fromEmail?: string) {
-  if (!SENDPULSE_CLIENT_ID || !SENDPULSE_CLIENT_SECRET) throw new Error("missing_SENDPULSE_credentials");
+  if (!SENDPULSE_ID || !SENDPULSE_SECRET) throw new Error("missing_SENDPULSE_credentials");
   
   const from = fromEmail || FROM_EMAIL;
   const text = html.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').trim().slice(0, 500);

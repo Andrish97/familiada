@@ -61,7 +61,8 @@ const BREVO_KEY = Deno.env.get("BREVO_API_KEY") || "";
 const MAILGUN_KEY = Deno.env.get("MAILGUN_API_KEY") || "";
 const MAILGUN_DOMAIN = Deno.env.get("MAILGUN_DOMAIN") || "";
 const MAILGUN_REGION = (Deno.env.get("MAILGUN_REGION") || "eu").toLowerCase();
-const SENDPULSE_KEY = Deno.env.get("SENDPULSE_API_KEY") || "";
+const SENDPULSE_ID = Deno.env.get("SENDPULSE_CLIENT_ID") || "";
+const SENDPULSE_SECRET = Deno.env.get("SENDPULSE_CLIENT_SECRET") || "";
 const MAILERLITE_KEY = Deno.env.get("MAILERLITE_API_KEY") || "";
 
 const FROM_EMAIL = Deno.env.get("MAIL_FROM_EMAIL") || "no-reply@familiada.online";
@@ -166,21 +167,41 @@ async function sendViaMailgun(to: string, subject: string, html: string) {
 }
 
 async function sendViaSendpulse(to: string, subject: string, html: string) {
-  if (!SENDPULSE_KEY) throw new Error("missing_SENDPULSE_API_KEY");
-  const addrBook = "familiada_online";
+  if (!SENDPULSE_ID || !SENDPULSE_SECRET) throw new Error("missing_SENDPULSE_credentials");
+  
   const text = htmlToText(html);
-  const emailData: any = {
-    from: { email: FROM_EMAIL, name: FROM_NAME },
-    to: [{ email: to }],
-    subject,
-    html,
-    text,
-  };
-  const res = await fetch(`https://api.sendpulse.io/${addrBook}/emails`, {
+  
+  // Get token
+  const authRes = await fetch("https://api.sendpulse.com/oauth/token", {
     method: "POST",
-    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${SENDPULSE_KEY}` },
-    body: JSON.stringify(emailData),
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      grant_type: "client_credentials",
+      client_id: SENDPULSE_ID,
+      client_secret: SENDPULSE_SECRET
+    })
   });
+  
+  if (!authRes.ok) throw new Error(`sendpulse_auth_failed:${await authRes.text().catch(() => "")}`);
+  
+  const authData = await authRes.json();
+  const token = authData.access_token;
+  
+  const res = await fetch("https://api.sendpulse.com/smtp/emails", {
+    method: "POST",
+    headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: {
+        subject,
+        text,
+        html,
+        from: { name: FROM_NAME, email: FROM_EMAIL },
+        to: [{ email: to }]
+      }
+    }),
+  });
+  if (!res.ok) throw new Error(`sendpulse_failed:${await res.text().catch(() => "")}`);
+}
   if (!res.ok) throw new Error(`sendpulse_failed:${await res.text().catch(() => "")}`);
 }
 
