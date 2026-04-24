@@ -242,16 +242,16 @@ async function sendViaSendpulse(to: string, subject: string, html: string, fromE
   if (!res.ok) throw new Error(`sendpulse_failed:${await res.text().catch(() => "")}`);
 }
 
-async function sendViaMailerlite(to: string, subject: string, html: string, fromEmail?: string, attachments?: Attachment[], plainText?: string) {
+async function sendViaMailerlite(to: string, subject: string, html: string, fromEmail?: string, attachments?: Attachment[], attachmentsMeta?: Array<{filename: string, mime_type: string, storage_path: string}>, plainText?: string) {
   if (!MAILERLITE_KEY) throw new Error("missing_MAILERLITE_API_KEY");
   const from = fromEmail || FROM_EMAIL;
   const text = plainText || html.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').trim().slice(0, 500);
   
   let htmlWithLinks = html;
-  if (attachments?.length) {
-    const linksHtml = attachments.map((att, i) => {
-      const downloadUrl = `${SUPABASE_URL}/storage/v1/object/public/${att.filename}`;
-      return `<p style="margin:8px 0;"><a href="${downloadUrl}" style="color:#ffeaa6;text-decoration:underline;">📎 ${i + 1}</a></p>`;
+  if (attachments?.length && attachmentsMeta?.length) {
+    const linksHtml = attachmentsMeta.map((att, i) => {
+      const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/${att.storage_path}`;
+      return `<p style="margin:8px 0;"><a href="${publicUrl}" style="color:#ffeaa6;text-decoration:underline;">📎 ${i + 1}</a></p>`;
     }).join('\n');
     
     const attachmentsBlock = `<div style="margin-top:20px;padding-top:12px;border-top:1px solid rgba(255,255,255,.15);">
@@ -316,7 +316,7 @@ async function checkSuppressedEmails(emails: string[]): Promise<Map<string, stri
   return result;
 }
 
-async function sendWithFallbacks(to: string, subject: string, html: string, providers: EmailProvider[], fromEmail?: string, attachments?: Attachment[], plainText?: string) {
+async function sendWithFallbacks(to: string, subject: string, html: string, providers: EmailProvider[], fromEmail?: string, attachments?: Attachment[], attachmentsMeta?: Array<{filename: string, mime_type: string, storage_path: string}>, plainText?: string) {
   const available = providers.filter(p => p.rem_worker > 0);
   if (available.length === 0) throw new Error("no_available_worker_limits");
 
@@ -331,7 +331,7 @@ async function sendWithFallbacks(to: string, subject: string, html: string, prov
       
       if (p.type === "brevo") { await sendViaBrevo(to, subject, html, fromEmail, attachments, text); }
       else if (p.type === "sendpulse") { await sendViaSendpulse(to, subject, html, fromEmail, attachments, text); }
-      else if (p.type === "mailerlite") { await sendViaMailerlite(to, subject, html, fromEmail, attachments, text); }
+      else if (p.type === "mailerlite") { await sendViaMailerlite(to, subject, html, fromEmail, attachments, metaAttachments, text); }
       else { await sendViaMailgun(to, subject, html, fromEmail, attachments, text); }
       
       console.log("[mail-worker] SUCCESS via:", p.name);
@@ -491,7 +491,7 @@ serve(async (req) => {
         }
       }
 
-      const provider = await sendWithFallbacks(r.to_email, r.subject, r.html, providers, r.from_email || undefined, emailAttachments.length ? emailAttachments : undefined, r.text);
+      const provider = await sendWithFallbacks(r.to_email, r.subject, r.html, providers, r.from_email || undefined, emailAttachments.length ? emailAttachments : undefined, metaAttachments, r.text);
       const { error: markOkError } = await sbAdmin.rpc("mail_queue_mark", { p_id: r.id, p_ok: true, p_provider: provider, p_error: "" });
       if (markOkError) {
         console.error("[mail-worker] queue:mark_sent_failed", { id: r.id, error: markOkError });
