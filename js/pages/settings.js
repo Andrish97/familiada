@@ -5666,6 +5666,7 @@ function wireEvents() {
   wireMarketingEvents();
   wireRatingsEvents();
   wireStatsEvents();
+  initMobileMailNav();
 
   if (els.toolsShell) {
     els.toolsShell.addEventListener("dblclick", closeTools);
