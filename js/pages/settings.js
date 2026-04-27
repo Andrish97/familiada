@@ -3978,20 +3978,25 @@ function showCompose(defaults = {}) {
       const span = document.createElement("span");
       span.style.display = "inline-flex";
       span.style.alignItems = "center";
-      span.style.gap = "4px";
-      span.style.padding = "2px 8px";
-      span.style.borderRadius = "10px";
-      span.style.border = "1px solid rgba(255,255,255,.12)";
-      span.style.fontSize = "11px";
-      span.style.color = "rgba(255,255,255,.6)";
+      span.style.gap = "6px";
+      span.style.padding = "4px 10px";
+      span.style.borderRadius = "12px";
+      span.style.background = "rgba(255,255,255,0.08)";
+      span.style.fontSize = "12px";
+      span.style.color = "rgba(255,255,255,0.8)";
       span.textContent = f.name;
 
       const removeBtn = document.createElement("button");
       removeBtn.type = "button";
-      removeBtn.className = "btn sm";
-      removeBtn.style.padding = "0 4px";
-      removeBtn.style.marginLeft = "4px";
+      removeBtn.style.background = "none";
+      removeBtn.style.border = "none";
+      removeBtn.style.cursor = "pointer";
+      removeBtn.style.color = "rgba(255,255,255,0.5)";
+      removeBtn.style.fontWeight = "900";
+      removeBtn.style.fontSize = "14px";
       removeBtn.textContent = "✕";
+      removeBtn.addEventListener("mouseenter", () => removeBtn.style.color = "#fff");
+      removeBtn.addEventListener("mouseleave", () => removeBtn.style.color = "rgba(255,255,255,0.5)");
       removeBtn.addEventListener("click", () => {
         currentAttachments.splice(index, 1);
         updateAttachmentList();
