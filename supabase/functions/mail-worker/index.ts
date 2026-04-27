@@ -315,8 +315,8 @@ async function sendViaZeptomail(to: string, subject: string, html: string, fromE
     from: { address: from, name: FROM_NAME },
     to: [{ email_address: { address: to, name: "" } }],
     subject: subject,
-    html_body: html,
-    text_body: htmlToText(html)
+    htmlbody: html,
+    textbody: htmlToText(html)
   };
   
   if (ZEPTOMAIL_BOUNCE) {
