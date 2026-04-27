@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict oUVfz06WxLS6q218hMhNpemqkbGtbJbCaVxzxLs8pfNr16Le2mT77cbiwvePcST
+\restrict 8DiFvOUx0i1UPgaewlmtycGbjwfeNkpB2pvzQpwFsQxag0O5beGiVLH7PceEnA9
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -1132,15 +1132,15 @@ BEGIN
     RAISE EXCEPTION 'not_authenticated';
   END IF;
 
-  -- Read pending new_email before clearing it
-  SELECT new_email INTO v_new_email
+  -- W nowszych wersjach Supabase kolumna nazywa się 'email_change', a nie 'new_email'
+  SELECT email_change INTO v_new_email
   FROM auth.users
   WHERE id = v_user_id;
 
-  -- Clear new_email + email change tokens from auth.users
+  -- Czyścimy tokeny i oczekujący e-mail
   PERFORM public.auth_clear_email_change(v_user_id);
 
-  -- Mark email_intents as expired so auth-email-status sees no pending
+  -- Oznaczamy intencję jako wygasłą w naszej tabeli pomocniczej
   IF v_new_email IS NOT NULL AND v_new_email <> '' THEN
     UPDATE public.email_intents
     SET status = 'expired', updated_at = now()
@@ -13981,5 +13981,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict oUVfz06WxLS6q218hMhNpemqkbGtbJbCaVxzxLs8pfNr16Le2mT77cbiwvePcST
+\unrestrict 8DiFvOUx0i1UPgaewlmtycGbjwfeNkpB2pvzQpwFsQxag0O5beGiVLH7PceEnA9
 
