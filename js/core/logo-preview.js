@@ -30,7 +30,7 @@ function resolveGlyph(glyphs, ch) {
   return v;
 }
 
-import { v } from './cache-bust.js?v=v2026-04-27T19411';
+import { v } from './cache-bust.js?v=v2026-04-27T20103';
 
 export async function loadFont5x7(url = "/display/font_5x7.json") {
   const r = await fetch(await v(url), { cache: "force-cache" });
