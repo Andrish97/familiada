@@ -1935,11 +1935,19 @@ async function handleInboundEmail(message, env) {
     return;
   }
 
-  console.log("[email] saving:", { from, subject: subject.slice(0, 50), bodyLen: body.length, htmlLen: bodyHtml?.length || 0 });
+  let finalBody = body || "";
+  if (!finalBody && inboundAttachments.length > 0) {
+    const names = inboundAttachments.map(a => a.filename).join(", ");
+    finalBody = `(Wiadomość zawiera tylko załączniki: ${names})`;
+  } else if (!finalBody) {
+    finalBody = "(brak treści)";
+  }
+
+  console.log("[email] saving:", { from, subject: subject.slice(0, 50), bodyLen: finalBody.length, htmlLen: bodyHtml?.length || 0 });
   const rpc = await supabaseRpc(env, "save_inbound_message", {
     p_from_email:    from,
     p_subject:       subject.slice(0, 500),
-    p_body:          body || "(brak treści)",
+    p_body:          finalBody,
     p_body_html:     bodyHtml,
     p_ticket_number: ticketArg,
   });
@@ -2035,77 +2043,91 @@ function decodeMimePart(part, content) {
 }
 
 function extractMimeParts(raw) {
-  // Unfold RFC 2822 folded headers (CRLF + whitespace → single space)
+  // Unfold RFC 2822 folded headers
   const unfolded = raw.replace(/\r\n([ \t])/g, " ").replace(/\n([ \t])/g, " ");
-  const boundaryMatch = unfolded.match(/Content-Type:\s*multipart\/[^\r\n]+boundary="?([^"\r\n;]+)"?/i);
-  if (boundaryMatch) {
-    const boundary = boundaryMatch[1].trim();
-    const escaped  = boundary.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const rawParts = raw.split(new RegExp(`--${escaped}(?:\r?\n)`, "")).slice(1);
+  
+  const textParts = [];
+  const htmlParts = [];
+  const attachments = [];
+  const cidMap = {};
 
-    let text = "";
-    let html  = "";
-    const cidMap  = {};      // cid → data URI (inline images)
-    const attachments = [];  // { filename, mimeType, data_b64, cid, inline, size }
+  function parseLevel(content, boundary) {
+    if (!boundary) return;
+    const escaped = boundary.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const rawParts = content.split(new RegExp(`--${escaped}(?:\r?\n|--)`, "")).slice(1);
 
     for (const part of rawParts) {
+      if (part.trim() === "" || part.trim() === "--") continue;
+
       const bodyStart = part.indexOf("\r\n\r\n");
       if (bodyStart === -1) continue;
-      let content = part.slice(bodyStart + 4);
-      const nextBound = content.indexOf("\r\n--");
-      if (nextBound !== -1) content = content.slice(0, nextBound);
 
-      const ctMatch  = part.match(/Content-Type:\s*([^;\r\n]+)/i);
+      const headers = part.slice(0, bodyStart);
+      let body = part.slice(bodyStart + 4);
+      // Remove trailing CRLF if present before the next boundary
+      if (body.endsWith("\r\n")) body = body.slice(0, -2);
+
+      const ctMatch = headers.match(/Content-Type:\s*([^;\r\n]+)/i);
       const mimeType = ctMatch ? ctMatch[1].trim().toLowerCase() : "application/octet-stream";
-      const cidMatch  = part.match(/Content-ID:\s*<([^>]+)>/i);
-      const dispMatch = part.match(/Content-Disposition:\s*(attachment|inline)/i);
-      const fnMatch   = part.match(/filename\*?=(?:.*?'')?["']?([^"'\r\n;]+)["']?/i);
-      const isB64     = /Content-Transfer-Encoding:\s*base64/i.test(part);
-      const isQP      = /Content-Transfer-Encoding:\s*quoted-printable/i.test(part);
-
-      if (/text\/plain/i.test(mimeType) && !dispMatch && !text) {
-        text = decodeMimePart(part, content).trim();
-        continue;
-      }
-      if (/text\/html/i.test(mimeType) && !dispMatch && !html) {
-        html = decodeMimePart(part, content).trim();
+      
+      const subBoundaryMatch = headers.match(/boundary="?([^"\r\n;]+)"?/i);
+      if (subBoundaryMatch && mimeType.startsWith("multipart/")) {
+        parseLevel(body, subBoundaryMatch[1]);
         continue;
       }
 
-      // Inline image (CID) or attachment
-      const isAttachment = dispMatch || cidMatch || (mimeType.startsWith("image/") && !text && !html);
-      if (!isAttachment) continue;
+      const dispMatch = headers.match(/Content-Disposition:\s*(attachment|inline)/i);
+      const cidMatch = headers.match(/Content-ID:\s*<([^>]+)>/i);
+      const fnMatch = headers.match(/filename\*?=(?:.*?'')?["']?([^"'\r\n;]+)["']?/i);
+      const isB64 = /Content-Transfer-Encoding:\s*base64/i.test(headers);
+      const isQP = /Content-Transfer-Encoding:\s*quoted-printable/i.test(headers);
 
-      const b64 = isB64
-        ? content.replace(/\s+/g, "")
-        : btoa(String.fromCharCode(...new TextEncoder().encode(isQP ? decodeMimePart(part, content) : content)));
+      if (mimeType === "text/plain" && !dispMatch) {
+        textParts.push(decodeMimePart(headers, body).trim());
+      } else if (mimeType === "text/html" && !dispMatch) {
+        htmlParts.push(decodeMimePart(headers, body).trim());
+      } else {
+        // Attachment or Inline
+        const isAttachment = dispMatch || cidMatch || (mimeType.startsWith("image/") && !textParts.length && !htmlParts.length);
+        if (isAttachment) {
+          const b64 = isB64
+            ? body.replace(/\s+/g, "")
+            : btoa(String.fromCharCode(...new TextEncoder().encode(isQP ? decodeMimePart(headers, body) : body)));
 
-      const filename = fnMatch ? decodeURIComponent(fnMatch[1].trim()) : `attachment_${Date.now()}`;
-      const cid      = cidMatch ? cidMatch[1] : null;
-      const inline   = !!cidMatch; // only truly inline when referenced via cid:
-
-      if (cid) {
-        cidMap[cid] = `data:${mimeType};base64,${b64}`;
+          const filename = fnMatch ? decodeURIComponent(fnMatch[1].trim()) : `attachment_${Date.now()}_${attachments.length}`;
+          const cid = cidMatch ? cidMatch[1] : null;
+          if (cid) cidMap[cid] = `data:${mimeType};base64,${b64}`;
+          
+          attachments.push({
+            filename,
+            mimeType,
+            data_b64: b64,
+            cid,
+            inline: !!cidMatch,
+            size: Math.round(b64.length * 0.75)
+          });
+        }
       }
-      // approximate size from base64 length
-      const size = Math.round(b64.length * 0.75);
-      attachments.push({ filename, mimeType, data_b64: b64, cid, inline, size });
     }
+  }
 
-    // Replace CID refs in HTML
+  const boundaryMatch = unfolded.match(/Content-Type:\s*multipart\/[^\r\n]+boundary="?([^"\r\n;]+)"?/i);
+  if (boundaryMatch) {
+    parseLevel(raw, boundaryMatch[1]);
+    let html = htmlParts.join("\n");
     if (html && Object.keys(cidMap).length) {
       for (const [cid, dataUri] of Object.entries(cidMap)) {
         html = html.split(`cid:${cid}`).join(dataUri);
       }
     }
-    return { text, html, attachments };
+    return { text: textParts.join("\n"), html, attachments };
   }
 
   // Non-multipart
   const bodyStart = raw.indexOf("\r\n\r\n");
-  const content   = bodyStart !== -1 ? raw.slice(bodyStart + 4).trim() : "";
-  const decoded   = decodeMimePart(raw, content);
-  const isHtml    = /^\s*<!doctype html|^\s*<html/i.test(decoded);
+  const content = bodyStart !== -1 ? raw.slice(bodyStart + 4).trim() : "";
+  const decoded = decodeMimePart(raw, content);
+  const isHtml = /^\s*<!doctype html|^\s*<html/i.test(decoded);
   return { text: isHtml ? "" : decoded, html: isHtml ? decoded : "", attachments: [] };
 }
 
