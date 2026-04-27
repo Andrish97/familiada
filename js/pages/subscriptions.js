@@ -369,7 +369,7 @@ function renderSubscribers() {
               throw new Error(data?.error || "fail");
             }
             if (data?.to && data?.link) {
-              const ownerLabel = who?.textContent || "Familiada";
+              const ownerLabel = who?.querySelector('.account-who')?.textContent || "Familiada";
               await sendSubscriptionEmail({ to: data.to, link: data.link, ownerLabel, unsubToken: data.unsub_token || null, isRegistered: !!data.registered });
             }
             await refreshData();
@@ -551,7 +551,7 @@ async function invite(value) {
         await sendSubscriptionEmail({
           to: resendData.to,
           link: resendData.link,
-          ownerLabel: who?.textContent || "Familiada",
+          ownerLabel: who?.querySelector('.account-who')?.textContent || "Familiada",
           unsubToken: resendData.unsub_token || null,
           isRegistered: !!resendData.registered,
         });
