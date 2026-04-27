@@ -215,7 +215,7 @@ async function sendViaSendpulse(to: string, subject: string, html: string) {
 async function sendViaMailerlite(to: string, subject: string, html: string) {
   if (!MAILERLITE_KEY) throw new Error("missing_MAILERLITE_API_KEY");
   const text = htmlToText(html);
-  const res = await fetch("https://connect.mailerlite.com/api/emails", {
+  const res = await fetch("https://connect.mailerlite.com/api/emails/transactional", {
     method: "POST",
     headers: { "Authorization": `Bearer ${MAILERLITE_KEY}`, "Content-Type": "application/json", "Accept": "application/json" },
     body: JSON.stringify({

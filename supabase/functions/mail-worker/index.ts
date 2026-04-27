@@ -311,7 +311,7 @@ async function sendViaMailerlite(to: string, subject: string, html: string, from
     fullHtml = injectHtmlPart(html, buildAttachmentHtml(attachmentsMeta));
   }
   
-  const res = await fetch("https://connect.mailerlite.com/api/emails", {
+  const res = await fetch("https://connect.mailerlite.com/api/emails/transactional", {
     method: "POST",
     headers: { "Authorization": `Bearer ${MAILERLITE_KEY}`, "Content-Type": "application/json", "Accept": "application/json" },
     body: JSON.stringify({
