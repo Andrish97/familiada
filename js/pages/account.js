@@ -517,6 +517,10 @@ async function handleEmailResend() {
     if (error) throw error;
 
     setStatus(t("account.statusEmailResent"));
+    
+    // Optymistyczna aktualizacja UI, aby przycisk Anuluj pojawił się natychmiast
+    setEmailPendingUi(normalizedMail);
+    
     await refreshAuthEmailState();
     await loadCooldownsFromServer();
   } catch (e) {
@@ -544,6 +548,9 @@ async function handleEmailCancel() {
     }
 
     setStatus(t("account.statusEmailCancelling"));
+
+    // Optymistyczna aktualizacja UI, aby przycisk Anuluj zniknął natychmiast
+    setEmailPendingUi("");
 
     // 1. Clear new_email + tokens from auth.users via SECURITY DEFINER RPC
     const { error: rpcErr } = await sb().rpc("cancel_my_email_change");
