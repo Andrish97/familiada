@@ -225,7 +225,7 @@ async function sendViaZeptomail(to: string, subject: string, html: string) {
   const res = await fetch(url, {
     method: "POST",
     headers: { 
-      "Authorization": ZEPTOMAIL_KEY, 
+      "Authorization": `Zoho-enczapikey ${ZEPTOMAIL_KEY}`, 
       "Content-Type": "application/json",
       "Accept": "application/json"
     },
