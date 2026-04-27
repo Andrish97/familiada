@@ -365,7 +365,7 @@ async function handleAdminApi(request, env) {
   return new Response("Not Found", { status: 404 });
 }
 
-const MAIL_PROVIDERS = ["brevo", "mailgun", "sendpulse", "mailerlite"];
+const MAIL_PROVIDERS = ["brevo", "mailgun", "sendpulse", "mailersend"];
 const DEFAULT_MAIL_SETTINGS = {
   delay_ms: 250,
   batch_max: 100,

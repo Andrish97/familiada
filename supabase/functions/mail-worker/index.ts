@@ -2,7 +2,7 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-type ProviderType = "brevo" | "mailgun" | "sendpulse" | "mailerlite";
+type ProviderType = "brevo" | "mailgun" | "sendpulse" | "mailersend";
 type LogLevel = "debug" | "info" | "warn" | "error";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -17,7 +17,7 @@ const MAILGUN_DOMAIN = Deno.env.get("MAILGUN_DOMAIN") || "";
 const MAILGUN_REGION = (Deno.env.get("MAILGUN_REGION") || "eu").toLowerCase();
 const SENDPULSE_ID = Deno.env.get("SENDPULSE_ID") || "";
 const SENDPULSE_SECRET = Deno.env.get("SENDPULSE_SECRET") || "";
-const MAILERLITE_KEY = Deno.env.get("MAILERLITE_API_KEY") || "";
+const MAILERSEND_KEY = Deno.env.get("MAILERSEND_API_KEY") || "";
 
 const FROM_EMAIL = Deno.env.get("MAIL_FROM_EMAIL") || "no-reply@familiada.online";
 const FROM_NAME = Deno.env.get("MAIL_FROM_NAME") || "Familiada";
@@ -301,8 +301,8 @@ async function sendViaSendpulse(to: string, subject: string, html: string, fromE
   if (!res.ok) throw new Error(`sendpulse_failed:${await res.text().catch(() => "")}`);
 }
 
-async function sendViaMailerlite(to: string, subject: string, html: string, fromEmail?: string, attachmentsMeta?: Array<{ filename: string; storage_path: string }>) {
-  if (!MAILERLITE_KEY) throw new Error("missing_MAILERLITE_API_KEY");
+async function sendViaMailersend(to: string, subject: string, html: string, fromEmail?: string, attachmentsMeta?: Array<{ filename: string; storage_path: string }>) {
+  if (!MAILERSEND_KEY) throw new Error("missing_MAILERSEND_API_KEY");
   const from = fromEmail || FROM_EMAIL;
   const text = html.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').trim().slice(0, 500);
   
@@ -311,19 +311,18 @@ async function sendViaMailerlite(to: string, subject: string, html: string, from
     fullHtml = injectHtmlPart(html, buildAttachmentHtml(attachmentsMeta));
   }
   
-  const res = await fetch("https://connect.mailerlite.com/api/emails/transactional", {
+  const res = await fetch("https://api.mailersend.com/v1/email", {
     method: "POST",
-    headers: { "Authorization": `Bearer ${MAILERLITE_KEY}`, "Content-Type": "application/json", "Accept": "application/json" },
+    headers: { "Authorization": `Bearer ${MAILERSEND_KEY}`, "Content-Type": "application/json", "Accept": "application/json" },
     body: JSON.stringify({
-      subject,
-      from: from,
-      from_name: FROM_NAME,
-      to: to,
+      from: { email: from, name: FROM_NAME },
+      to: [{ email: to }],
+      subject: subject,
       html: fullHtml,
       text: text
     }),
   });
-  if (!res.ok) throw new Error(`mailerlite_failed:${await res.text().catch(() => "")}`);
+  if (!res.ok) throw new Error(`mailersend_failed:${await res.text().catch(() => "")}`);
 }
 
 async function checkSuppressedEmails(emails: string[]): Promise<Map<string, string>> {
@@ -377,13 +376,15 @@ async function sendWithFallbacks(to: string, subject: string, html: string, prov
     try {
       console.log("[mail-worker] trying provider:", p.name, "type:", p.type);
       
+      // Zmniejszamy limit za każdą podjętą próbę (zgodnie z prośbą użytkownika)
+      await decrementWorkerLimit(p.id);
+
       if (p.type === "brevo") { await sendViaBrevo(to, subject, html, fromEmail, attachments, text, metaAttachments); }
       else if (p.type === "sendpulse") { await sendViaSendpulse(to, subject, html, fromEmail, attachments); }
-      else if (p.type === "mailerlite") { await sendViaMailerlite(to, subject, html, fromEmail, metaAttachments); }
+      else if (p.type === "mailersend") { await sendViaMailersend(to, subject, html, fromEmail, metaAttachments); }
       else { await sendViaMailgun(to, subject, html, fromEmail, attachments, text); }
       
       console.log("[mail-worker] SUCCESS via:", p.name);
-      await decrementWorkerLimit(p.id);
       return p.name;
     } catch (e) {
 const errMsg = String((e as any)?.message || e);

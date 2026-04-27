@@ -63,7 +63,7 @@ const MAILGUN_DOMAIN = Deno.env.get("MAILGUN_DOMAIN") || "";
 const MAILGUN_REGION = (Deno.env.get("MAILGUN_REGION") || "eu").toLowerCase();
 const SENDPULSE_ID = Deno.env.get("SENDPULSE_ID") || "";
 const SENDPULSE_SECRET = Deno.env.get("SENDPULSE_SECRET") || "";
-const MAILERLITE_KEY = Deno.env.get("MAILERLITE_API_KEY") || "";
+const MAILERSEND_KEY = Deno.env.get("MAILERSEND_API_KEY") || "";
 
 const FROM_EMAIL = Deno.env.get("MAIL_FROM_EMAIL") || "no-reply@familiada.online";
 const FROM_NAME = Deno.env.get("MAIL_FROM_NAME") || "Familiada";
@@ -96,6 +96,8 @@ function scrubEmail(email: string) {
 function clampError(message: unknown, max = 2000) {
   return String(message ?? "").slice(0, max);
 }
+
+type LogLevel = "debug" | "info" | "warn" | "error";
 
 async function writeLog(entry: {
   requestId: string;
@@ -212,22 +214,45 @@ async function sendViaSendpulse(to: string, subject: string, html: string) {
   if (!res.ok) throw new Error(`sendpulse_failed:${await res.text().catch(() => "")}`);
 }
 
-async function sendViaMailerlite(to: string, subject: string, html: string) {
-  if (!MAILERLITE_KEY) throw new Error("missing_MAILERLITE_API_KEY");
+async function sendViaMailersend(to: string, subject: string, html: string) {
+  if (!MAILERSEND_KEY) throw new Error("missing_MAILERSEND_API_KEY");
   const text = htmlToText(html);
-  const res = await fetch("https://connect.mailerlite.com/api/emails/transactional", {
+  const res = await fetch("https://api.mailersend.com/v1/email", {
     method: "POST",
-    headers: { "Authorization": `Bearer ${MAILERLITE_KEY}`, "Content-Type": "application/json", "Accept": "application/json" },
+    headers: { "Authorization": `Bearer ${MAILERSEND_KEY}`, "Content-Type": "application/json", "Accept": "application/json" },
     body: JSON.stringify({
-      subject,
-      from: FROM_EMAIL,
-      from_name: FROM_NAME,
-      to: to,
+      from: { email: FROM_EMAIL, name: FROM_NAME },
+      to: [{ email: to }],
+      subject: subject,
       html: html,
       text: text,
     }),
   });
-  if (!res.ok) throw new Error(`mailerlite_failed:${await res.text().catch(() => "")}`);
+  if (!res.ok) throw new Error(`mailersend_failed:${await res.text().catch(() => "")}`);
+}
+
+async function loadUserEmailFallbacks(userId: string): Promise<{
+  email: string;
+  emailNew: string;
+  pendingMetaEmail: string;
+}> {
+  if (!sbAdmin) return { email: "", emailNew: "", pendingMetaEmail: "" };
+
+  try {
+    const { data, error } = await sbAdmin.auth.admin.getUserById(userId);
+    if (error) throw error;
+
+    const user = data?.user;
+    const pendingMetaEmail = String(user?.user_metadata?.familiada_email_change_pending || "").trim();
+    return {
+      email: String(user?.email || "").trim(),
+      emailNew: String((user as { email_change?: string } | undefined)?.email_change || "").trim(),
+      pendingMetaEmail,
+    };
+  } catch (err) {
+    console.warn("[send-email] fallback user load failed", { userId, error: String(err) });
+    return { email: "", emailNew: "", pendingMetaEmail: "" };
+  }
 }
 
 async function loadProviderLimits(): Promise<Map<string, { name: string; rem_worker: number; rem_immediate: number; is_active: boolean }>> {
@@ -290,13 +315,14 @@ async function sendWithFallbacks(
       continue;
     }
     try {
+      // Zmniejszamy limit za każdą podjętą próbę (zgodnie z prośbą użytkownika)
+      await decrementImmediateLimit(p, limits);
 
       if (p === "brevo") await sendViaBrevo(to, subject, html);
       else if (p === "sendpulse") await sendViaSendpulse(to, subject, html);
-      else if (p === "mailerlite") await sendViaMailerlite(to, subject, html);
+      else if (p === "mailersend") await sendViaMailersend(to, subject, html);
       else await sendViaMailgun(to, subject, html);
 
-      await decrementImmediateLimit(p, limits);
       usedProvider = p;
 
       if (opts?.requestId) {
@@ -440,31 +466,6 @@ function firstEmail(...values: (string | undefined)[]): string {
   return "";
 }
 
-async function loadUserEmailFallbacks(userId: string): Promise<{
-  email: string;
-  emailNew: string;
-  pendingMetaEmail: string;
-}> {
-  if (!sbAdmin) return { email: "", emailNew: "", pendingMetaEmail: "" };
-
-  try {
-    const { data, error } = await sbAdmin.auth.admin.getUserById(userId);
-    if (error) throw error;
-
-    const user = data?.user;
-    const pendingMetaEmail = String(user?.user_metadata?.familiada_email_change_pending || "").trim();
-    return {
-      email: String(user?.email || "").trim(),
-      emailNew: String((user as { email_change?: string } | undefined)?.email_change || "").trim(),
-      pendingMetaEmail,
-    };
-  } catch (err) {
-    console.warn("[send-email] fallback user load failed", { userId, error: String(err) });
-    return { email: "", emailNew: "", pendingMetaEmail: "" };
-  }
-}
-
-
 function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
     status,
@@ -501,7 +502,7 @@ serve(async (req) => {
     return json({ ok: false, error: "Method not allowed" }, 405);
   }
 
-  if (!BREVO_KEY && !MAILGUN_KEY && !SENDPULSE_ID && !MAILERLITE_KEY) {
+  if (!BREVO_KEY && !MAILGUN_KEY && !SENDPULSE_ID && !MAILERSEND_KEY) {
     console.error("[send-email] config:missing_mail_keys");
     await writeLog({
       requestId,
@@ -509,7 +510,7 @@ serve(async (req) => {
       event: "config_missing_mail_keys",
       status: "failed",
     });
-    return json({ ok: false, error: "Missing mail provider keys (BREVO_API_KEY, MAILGUN_API_KEY, SENDPULSE credentials, or MAILERLITE_API_KEY)" }, 500);
+    return json({ ok: false, error: "Missing mail provider keys (BREVO_API_KEY, MAILGUN_API_KEY, SENDPULSE credentials, or MAILERSEND_API_KEY)" }, 500);
   }
 
   if (!HOOK_SECRET) {
@@ -578,15 +579,12 @@ serve(async (req) => {
       const intent = String(payload.user.user_metadata?.familiada_email_change_intent || "").trim().toLowerCase();
       const isGuestMigrate = intent === "guest_migrate";
 
-      const redirect = String(payload.email_data.redirect_to || "").trim();
       const targetEmail = firstEmail(
         extractTargetEmail(payload, redirectUrl),
         newEmail,
         payload.user.email_new,
         fallbackUser.emailNew,
         pendingMetaEmail,
-        // Supabase potrafi wysłać pusty user.email przy konwersji konta gościa.
-        // Wtedy old_email bywa jedynym dostępnym adresem nowego konta.
         oldEmail,
       ).trim();
       const targetEmailNormalized = targetEmail.toLowerCase();
@@ -597,9 +595,6 @@ serve(async (req) => {
       const emailTemplate = isGuestMigrate ? "guest_migrate" : "email_change";
       const subject = subjectFor(emailTemplate, lang);
 
-      // mapping zgodny z Supabase:
-      // - token_hash      => current email
-      // - token_hash_new  => new email (lub token_hash jeśli secure email change OFF)
       const thCurrent = tokenHash;
       const thNew = tokenHashNew || tokenHash;
 
@@ -608,7 +603,6 @@ serve(async (req) => {
       const linkTarget =
         `${baseOrigin}/confirm.html?token_hash=${encodeURIComponent(thNew)}&type=email_change&lang=${lang}`;
 
-      // ✅ CURRENT mail zawsze na payload.user.email
       if (currentEmail && thCurrent) {
         const htmlCurrent = emailTemplate === "guest_migrate"
           ? renderSignupMigrate(lang, linkCurrent)
@@ -616,8 +610,6 @@ serve(async (req) => {
         await sendEmail(currentEmail, subject, htmlCurrent, { requestId, actorUserId });
       }
 
-      // ✅ NEW mail tylko jeśli znamy adres z redirect_to?to=
-      // I to działa zarówno dla email_change_new, jak i dla “pojedynczego” email_change
       if (targetEmail && thNew && targetEmailNormalized !== currentEmailNormalized) {
         const htmlTarget = emailTemplate === "guest_migrate"
           ? renderSignupMigrate(lang, linkTarget)

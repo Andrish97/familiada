@@ -22,7 +22,7 @@ const API_BASE = "/_admin_api";
 const TOOLS_MANIFEST = "/settings-tools/tools.json";
 const POLL_MS = 15000;
 const MINUTES_MIN = 10;
-const MAIL_PROVIDERS = ["brevo", "mailgun", "sendpulse", "mailerlite"];
+const MAIL_PROVIDERS = ["brevo", "mailgun", "sendpulse", "mailersend"];
 const EMAIL_TEMPLATES = {
   custom: "",
   info: "Dziękujemy za wiadomość. Odpowiemy tak szybko, jak to możliwe.",
