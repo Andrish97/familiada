@@ -2,7 +2,7 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-type ProviderType = "brevo" | "mailgun" | "sendpulse" | "mailersend";
+type ProviderType = "brevo" | "mailgun" | "sendpulse" | "zeptomail";
 type LogLevel = "debug" | "info" | "warn" | "error";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -17,7 +17,9 @@ const MAILGUN_DOMAIN = Deno.env.get("MAILGUN_DOMAIN") || "";
 const MAILGUN_REGION = (Deno.env.get("MAILGUN_REGION") || "eu").toLowerCase();
 const SENDPULSE_ID = Deno.env.get("SENDPULSE_ID") || "";
 const SENDPULSE_SECRET = Deno.env.get("SENDPULSE_SECRET") || "";
-const MAILERSEND_KEY = Deno.env.get("MAILERSEND_API_KEY") || "";
+const ZEPTOMAIL_KEY = Deno.env.get("ZEPTOMAIL_API_KEY") || "";
+const ZEPTOMAIL_BOUNCE = Deno.env.get("ZEPTOMAIL_BOUNCE_ADDRESS") || "";
+const ZEPTOMAIL_REGION = Deno.env.get("ZEPTOMAIL_REGION") || "com"; // com, eu, in
 
 const FROM_EMAIL = Deno.env.get("MAIL_FROM_EMAIL") || "no-reply@familiada.online";
 const FROM_NAME = Deno.env.get("MAIL_FROM_NAME") || "Familiada";
@@ -63,6 +65,7 @@ async function loadProviders(): Promise<EmailProvider[]> {
   const { data, error } = await sbAdmin
     .from("email_providers")
     .select("id, name, label, priority, daily_limit, rem_worker, rem_immediate, is_active")
+    .eq("is_active", true) // Rygorystyczne filtrowanie po is_active
     .order("priority", { ascending: true });
 
   if (error) {
@@ -301,28 +304,43 @@ async function sendViaSendpulse(to: string, subject: string, html: string, fromE
   if (!res.ok) throw new Error(`sendpulse_failed:${await res.text().catch(() => "")}`);
 }
 
-async function sendViaMailersend(to: string, subject: string, html: string, fromEmail?: string, attachmentsMeta?: Array<{ filename: string; storage_path: string }>) {
-  if (!MAILERSEND_KEY) throw new Error("missing_MAILERSEND_API_KEY");
+async function sendViaZeptomail(to: string, subject: string, html: string, fromEmail?: string, attachments?: Attachment[]) {
+  if (!ZEPTOMAIL_KEY) throw new Error("missing_ZEPTOMAIL_API_KEY");
+  
   const from = fromEmail || FROM_EMAIL;
-  const text = html.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').trim().slice(0, 500);
+  const host = ZEPTOMAIL_REGION === "eu" ? "api.zeptomail.eu" : ZEPTOMAIL_REGION === "in" ? "api.zeptomail.in" : "api.zeptomail.com";
+  const url = `https://${host}/v1.1/email`;
+
+  const payload: any = {
+    from: { address: from, name: FROM_NAME },
+    to: [{ email_address: { address: to, name: "" } }],
+    subject: subject,
+    html_body: html,
+    text_body: htmlToText(html)
+  };
   
-  let fullHtml = html;
-  if (attachmentsMeta?.length) {
-    fullHtml = injectHtmlPart(html, buildAttachmentHtml(attachmentsMeta));
+  if (ZEPTOMAIL_BOUNCE) {
+    payload.bounce_address = ZEPTOMAIL_BOUNCE;
   }
-  
-  const res = await fetch("https://api.mailersend.com/v1/email", {
+
+  if (attachments?.length) {
+    payload.attachments = attachments.map(a => ({
+      content: a.content,
+      mime_type: a.contentType,
+      name: a.filename
+    }));
+  }
+
+  const res = await fetch(url, {
     method: "POST",
-    headers: { "Authorization": `Bearer ${MAILERSEND_KEY}`, "Content-Type": "application/json", "Accept": "application/json" },
-    body: JSON.stringify({
-      from: { email: from, name: FROM_NAME },
-      to: [{ email: to }],
-      subject: subject,
-      html: fullHtml,
-      text: text
-    }),
+    headers: { 
+      "Authorization": ZEPTOMAIL_KEY, 
+      "Content-Type": "application/json",
+      "Accept": "application/json"
+    },
+    body: JSON.stringify(payload),
   });
-  if (!res.ok) throw new Error(`mailersend_failed:${await res.text().catch(() => "")}`);
+  if (!res.ok) throw new Error(`zeptomail_failed:${await res.text().catch(() => "")}`);
 }
 
 async function checkSuppressedEmails(emails: string[]): Promise<Map<string, string>> {
@@ -381,7 +399,7 @@ async function sendWithFallbacks(to: string, subject: string, html: string, prov
 
       if (p.type === "brevo") { await sendViaBrevo(to, subject, html, fromEmail, attachments, text, metaAttachments); }
       else if (p.type === "sendpulse") { await sendViaSendpulse(to, subject, html, fromEmail, attachments); }
-      else if (p.type === "mailersend") { await sendViaMailersend(to, subject, html, fromEmail, metaAttachments); }
+      else if (p.type === "zeptomail") { await sendViaZeptomail(to, subject, html, fromEmail, attachments); }
       else { await sendViaMailgun(to, subject, html, fromEmail, attachments, text); }
       
       console.log("[mail-worker] SUCCESS via:", p.name);

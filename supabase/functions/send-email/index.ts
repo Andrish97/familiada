@@ -46,7 +46,7 @@ async function loadProviderOrder(): Promise<string[]> {
     const { data } = await sbAdmin
       .from("email_providers")
       .select("name")
-      .eq("is_active", true)
+      .eq("is_active", true) // Rygorystyczne filtrowanie po is_active
       .order("priority")
       .limit(10);
     return (data || []).map(p => p.name);
@@ -63,7 +63,9 @@ const MAILGUN_DOMAIN = Deno.env.get("MAILGUN_DOMAIN") || "";
 const MAILGUN_REGION = (Deno.env.get("MAILGUN_REGION") || "eu").toLowerCase();
 const SENDPULSE_ID = Deno.env.get("SENDPULSE_ID") || "";
 const SENDPULSE_SECRET = Deno.env.get("SENDPULSE_SECRET") || "";
-const MAILERSEND_KEY = Deno.env.get("MAILERSEND_API_KEY") || "";
+const ZEPTOMAIL_KEY = Deno.env.get("ZEPTOMAIL_API_KEY") || "";
+const ZEPTOMAIL_BOUNCE = Deno.env.get("ZEPTOMAIL_BOUNCE_ADDRESS") || "";
+const ZEPTOMAIL_REGION = Deno.env.get("ZEPTOMAIL_REGION") || "com";
 
 const FROM_EMAIL = Deno.env.get("MAIL_FROM_EMAIL") || "no-reply@familiada.online";
 const FROM_NAME = Deno.env.get("MAIL_FROM_NAME") || "Familiada";
@@ -214,21 +216,29 @@ async function sendViaSendpulse(to: string, subject: string, html: string) {
   if (!res.ok) throw new Error(`sendpulse_failed:${await res.text().catch(() => "")}`);
 }
 
-async function sendViaMailersend(to: string, subject: string, html: string) {
-  if (!MAILERSEND_KEY) throw new Error("missing_MAILERSEND_API_KEY");
-  const text = htmlToText(html);
-  const res = await fetch("https://api.mailersend.com/v1/email", {
+async function sendViaZeptomail(to: string, subject: string, html: string) {
+  if (!ZEPTOMAIL_KEY) throw new Error("missing_ZEPTOMAIL_API_KEY");
+  
+  const host = ZEPTOMAIL_REGION === "eu" ? "api.zeptomail.eu" : ZEPTOMAIL_REGION === "in" ? "api.zeptomail.in" : "api.zeptomail.com";
+  const url = `https://${host}/v1.1/email`;
+
+  const res = await fetch(url, {
     method: "POST",
-    headers: { "Authorization": `Bearer ${MAILERSEND_KEY}`, "Content-Type": "application/json", "Accept": "application/json" },
+    headers: { 
+      "Authorization": ZEPTOMAIL_KEY, 
+      "Content-Type": "application/json",
+      "Accept": "application/json"
+    },
     body: JSON.stringify({
-      from: { email: FROM_EMAIL, name: FROM_NAME },
-      to: [{ email: to }],
+      from: { address: FROM_EMAIL, name: FROM_NAME },
+      to: [{ email_address: { address: to, name: "" } }],
       subject: subject,
-      html: html,
-      text: text,
+      html_body: html,
+      text_body: htmlToText(html),
+      bounce_address: ZEPTOMAIL_BOUNCE || undefined
     }),
   });
-  if (!res.ok) throw new Error(`mailersend_failed:${await res.text().catch(() => "")}`);
+  if (!res.ok) throw new Error(`zeptomail_failed:${await res.text().catch(() => "")}`);
 }
 
 async function loadUserEmailFallbacks(userId: string): Promise<{
@@ -320,7 +330,7 @@ async function sendWithFallbacks(
 
       if (p === "brevo") await sendViaBrevo(to, subject, html);
       else if (p === "sendpulse") await sendViaSendpulse(to, subject, html);
-      else if (p === "mailersend") await sendViaMailersend(to, subject, html);
+      else if (p === "zeptomail") await sendViaZeptomail(to, subject, html);
       else await sendViaMailgun(to, subject, html);
 
       usedProvider = p;
@@ -502,7 +512,7 @@ serve(async (req) => {
     return json({ ok: false, error: "Method not allowed" }, 405);
   }
 
-  if (!BREVO_KEY && !MAILGUN_KEY && !SENDPULSE_ID && !MAILERSEND_KEY) {
+  if (!BREVO_KEY && !MAILGUN_KEY && !SENDPULSE_ID && !ZEPTOMAIL_KEY) {
     console.error("[send-email] config:missing_mail_keys");
     await writeLog({
       requestId,
@@ -510,7 +520,7 @@ serve(async (req) => {
       event: "config_missing_mail_keys",
       status: "failed",
     });
-    return json({ ok: false, error: "Missing mail provider keys (BREVO_API_KEY, MAILGUN_API_KEY, SENDPULSE credentials, or MAILERSEND_API_KEY)" }, 500);
+    return json({ ok: false, error: "Missing mail provider keys (BREVO_API_KEY, MAILGUN_API_KEY, SENDPULSE, or ZEPTOMAIL_API_KEY)" }, 500);
   }
 
   if (!HOOK_SECRET) {
@@ -709,7 +719,7 @@ function subjectFor(type: string, lang: EmailLang): string {
     signup: {
       pl: "FAMILIADA — Potwierdzenie konta",
       en: "FAMILIADA — Confirm your account",
-      uk: "FAMILIADA — Підтвердження облікового запису",
+      uk: "FAMILIADA — Підтвердження облікового zapisu",
     },
     guest_migrate: {
       pl: "FAMILIADA — Potwierdź migrację",
