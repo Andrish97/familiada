@@ -1813,7 +1813,7 @@ const pl = {
         Operator rozpoczyna od tego, żeby wszystkie były online (prowadzący jest opcjonalny, możesz prowadzić rozgrywkę z panelu operatora, jeśli brakuje osób).
       </p>
 
-      <h3 class="m-h3">Krok 1: Urzadzenia</h3>
+      <h3 class="m-h3">Krok 1: Urządzenia</h3>
 
       <p class="m-p">
         W tym kroku panel pokazuje linki i kody QR dla urządzeń.
@@ -1840,6 +1840,16 @@ const pl = {
         <b>Jak wygodnie podłączyć urządzenie?</b><br/>
         Dla najlepszego użytkowania przycisku i prowadzącego sugerowane jest zainstalowanie aplikacji webowej Familiada.online. Na swoim telefonie zaloguj się na konto, na stronie <span class="m-strong">Moje gry</span> kliknij przycisk pobierania — dostaniesz wskazówki, jak ją pobrać. Po pobraniu przejdź do panelu <span class="m-code">Podłącz urządzenie 📱</span>, naciśnij <span class="m-strong">Skanuj kod QR</span> — po zeskanowaniu uruchomi się przycisk lub prowadzący.
       </div>
+      
+      <div class="m-note">
+        <b>Jak wygodnie wyświetlić tablicę na drugim ekranie?</b><br/>
+        Dla najlepszego efektu użyj trybu rozszerzonego ekranu.  
+        W systemie <span class="m-strong">Windows</span> przełączysz go skrótem <span class="m-code">Win + P</span>,  
+        a na <span class="m-strong">Macu</span> użyj <span class="m-code">⌘ F1</span> (czasem dodatkowo <span class="m-code">Fn</span>).<br/><br/>
+        
+        Następnie otwórz tablicę w nowym oknie przeglądarki, przeciągnij je na drugi ekran (monitor lub telewizor) i włącz tryb pełnoekranowy.  
+        Dzięki temu możesz jednocześnie sterować na swoim urządzeniu i wyświetlać treść dla innych.
+      </div>
 
       <div class="m-warn">
         <b>Uwaga:</b><br/>
@@ -1848,7 +1858,7 @@ const pl = {
         oraz trzymać urządzenia na jednej stabilnej sieci Wi-Fi.
       </div>
 
-      <h3 class="m-h3">Krok 3: Dźwięk</h3>
+      <h3 class="m-h3">Krok 2: Dźwięk</h3>
 
       <p class="m-p">
         Przeglądarki blokują automatyczne odtwarzanie dźwięku,
