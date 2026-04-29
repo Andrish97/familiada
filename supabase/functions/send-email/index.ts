@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { Webhook } from "https://esm.sh/standardwebhooks@1.0.0";
+import { encodeBase64 } from "https://deno.land/std@0.224.0/encoding/base64.ts";
 import { getEmailCopy, type EmailLang } from "./email-templates.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -199,6 +200,7 @@ async function sendViaSendpulse(to: string, subject: string, html: string) {
   
   const text = htmlToText(html);
   const token = await getSendpulseToken();
+  const htmlBase64 = encodeBase64(new TextEncoder().encode(html));
   
   const res = await fetch("https://api.sendpulse.com/smtp/emails", {
     method: "POST",
@@ -207,7 +209,7 @@ async function sendViaSendpulse(to: string, subject: string, html: string) {
       email: {
         subject,
         text,
-        html,
+        html: htmlBase64,
         from: { name: FROM_NAME, email: FROM_EMAIL },
         to: [{ email: to, name: "" }]
       }

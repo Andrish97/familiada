@@ -1,5 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import { encodeBase64 } from "https://deno.land/std@0.224.0/encoding/base64.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 type ProviderType = "brevo" | "mailgun" | "sendpulse" | "zeptomail";
@@ -278,14 +279,15 @@ async function sendViaSendpulse(to: string, subject: string, html: string, fromE
   if (!SENDPULSE_ID || !SENDPULSE_SECRET) throw new Error("missing_SENDPULSE_credentials");
   
   const from = fromEmail || FROM_EMAIL;
-  const text = html.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').trim().slice(0, 500);
+  const text = htmlToText(html);
   
   const token = await getSendpulseToken();
+  const htmlBase64 = encodeBase64(new TextEncoder().encode(html));
   
   const emailPayload: any = {
     subject,
     text,
-    html,
+    html: htmlBase64,
     from: { name: FROM_NAME, email: from },
     to: [{ email: to, name: "" }]
   };
