@@ -3680,6 +3680,7 @@ async function toggleReportStatus(reportId, currentStatus) {
 
 let _composePrevActiveId   = null;
 let _composePrevIsReport   = false;
+let _composeCurrentAttachments = [];
 
 function showCompose(defaults = {}) {
   const conv = document.getElementById("mailConv");
@@ -3968,13 +3969,13 @@ function showCompose(defaults = {}) {
   });
 
   // ── Attachments Logic ──────────────────────────────────────────────────────
-  let currentAttachments = [];
+  _composeCurrentAttachments = defaults.attachments || [];
 
   const updateAttachmentList = () => {
     const list = document.getElementById("composeAttachmentList");
     if (!list) return;
     list.innerHTML = "";
-    currentAttachments.forEach((f, index) => {
+    _composeCurrentAttachments.forEach((f, index) => {
       const span = document.createElement("span");
       span.style.display = "inline-flex";
       span.style.alignItems = "center";
@@ -3998,7 +3999,7 @@ function showCompose(defaults = {}) {
       removeBtn.addEventListener("mouseenter", () => removeBtn.style.color = "#fff");
       removeBtn.addEventListener("mouseleave", () => removeBtn.style.color = "rgba(255,255,255,0.5)");
       removeBtn.addEventListener("click", () => {
-        currentAttachments.splice(index, 1);
+        _composeCurrentAttachments.splice(index, 1);
         updateAttachmentList();
       });
 
@@ -4007,9 +4008,12 @@ function showCompose(defaults = {}) {
     });
   };
 
+  // Initial list update
+  updateAttachmentList();
+
   document.getElementById("composeAttachmentInput")?.addEventListener("change", (e) => {
     const files = Array.from(e.target.files || []);
-    currentAttachments = [...currentAttachments, ...files];
+    _composeCurrentAttachments = [..._composeCurrentAttachments, ...files];
     e.target.value = ""; // reset input
     updateAttachmentList();
   });
@@ -4038,6 +4042,7 @@ function showCompose(defaults = {}) {
         farewellValue,
         greetingCustom,
         farewellCustom,
+        attachments: _composeCurrentAttachments,
       };
       
       // Reopen compose with new quote position
@@ -4182,10 +4187,9 @@ async function sendComposeWithSignature(greetingSelect, farewellSelect, senderSe
 </html>`;
 
   // Upload attachments
-  const fileInput = document.getElementById("composeAttachmentInput");
   const uploadedAttachments = [];
-  if (fileInput?.files?.length) {
-    for (const file of fileInput.files) {
+  if (_composeCurrentAttachments.length) {
+    for (const file of _composeCurrentAttachments) {
       const fd = new FormData();
       fd.append("file", file);
       const upRes = await adminFetch("/attachments/upload", { method: "POST", body: fd });
