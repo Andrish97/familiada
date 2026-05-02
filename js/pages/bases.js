@@ -1313,8 +1313,13 @@ function render() {
   if (!guestMode) {
     if (!sharedBases.length) {
       const empty = document.createElement("div");
-      empty.className = "emptyNote";
-      empty.textContent = t("bases.sections.sharedEmpty");
+      empty.className = "addCard";
+      empty.style.cursor = "default";
+      empty.style.pointerEvents = "none";
+      empty.innerHTML = `
+        <div class="txt">${escapeHtml(t("bases.sections.sharedEmpty"))}</div>
+        <div class="sub">${escapeHtml(t("bases.sections.sharedEmptyHint"))}</div>
+      `;
       sharedGrid.appendChild(empty);
     } else {
       for (const b of sharedBases) renderTile(b, sharedGrid);

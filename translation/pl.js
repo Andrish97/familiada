@@ -651,6 +651,7 @@ const pl = {
       newBase: "Nowa baza",
       shared: "Udostępnione",
       sharedEmpty: "Brak udostępnionych baz.",
+      sharedEmptyHint: "Poproś kogoś o udostępnienie lub skorzystaj z własnych baz.",
     },
     mail: {
       noSession: "Brak sesji do wysyłki maila.",

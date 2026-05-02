@@ -134,7 +134,7 @@ function buildScanOverlay() {
 
   const closeBtn = document.createElement("button");
   closeBtn.textContent = "✕";
-  closeBtn.style.cssText = "position:fixed;top:16px;right:16px;z-index:10000;padding:10px 16px;border-radius:12px;border:none;background:rgba(0,0,0,.7);color:#fff;font-size:1.2rem;cursor:pointer;";
+  closeBtn.style.cssText = "position:fixed;top:calc(16px + env(safe-area-inset-top, 0px));right:16px;z-index:10000;padding:10px 16px;border-radius:12px;border:none;background:rgba(0,0,0,.7);color:#fff;font-size:1.2rem;cursor:pointer;";
 
   return { video, closeBtn };
 }

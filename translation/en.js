@@ -651,6 +651,7 @@ const en = {
       newBase: "New base",
       shared: "Shared",
       sharedEmpty: "No shared bases.",
+      sharedEmptyHint: "Ask someone to share a base or use your own.",
     },
     mail: {
       noSession: "No session available for sending email.",
