@@ -1115,11 +1115,13 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   .market-admin-panel{
     max-width: 100% !important;
     min-width: 0 !important;
-    width: 100% !important;
+    width: auto !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
   }
   .mail-card{
     padding: 14px;
-    width: 100% !important;
+    width: auto !important;
     max-width: 100% !important;
     box-sizing: border-box !important;
   }
@@ -1129,6 +1131,8 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   }
   .stat-box{
     padding: 12px !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
   }
   .stat-label{
     font-size: 10px !important;
