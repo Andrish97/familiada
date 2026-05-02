@@ -3685,6 +3685,12 @@ let _composeCurrentAttachments = [];
 function showCompose(defaults = {}) {
   const conv = document.getElementById("mailConv");
   if (!conv) return;
+
+  // On mobile: switch to conversation view
+  if (window.matchMedia("(max-width: 900px)").matches) {
+    setMailView("conv");
+  }
+
   _composePrevActiveId = msgActiveId;
   _composePrevIsReport = msgActiveFolder === "reports";
   msgActiveId = null;
@@ -3706,7 +3712,7 @@ function showCompose(defaults = {}) {
 
   conv.innerHTML = `
     <div class="mail-compose-pane">
-      <div id="composePaneInner">
+      <div id="composePaneInner" class="mail-conv-header">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-shrink:0;padding:16px 16px 0 16px">
           <div style="font-size:14px;font-weight:700">${t("settings.reports.compose.title") || "Napisz nową wiadomość"}</div>
           <button id="btnComposeClose" type="button" title="Zamknij" style="background:none;border:none;cursor:pointer;padding:4px;color:rgba(255,255,255,.4);line-height:1;font-size:18px;border-radius:4px" onmouseover="this.style.color='rgba(255,255,255,.8)'" onmouseout="this.style.color='rgba(255,255,255,.4)'">✕</button>
@@ -4089,6 +4095,11 @@ function closeCompose() {
     if (!conv) return;
     conv.innerHTML = `<div class="mail-conv-placeholder"><div style="font-size:48px;margin-bottom:12px;opacity:.3">✉</div><div style="opacity:.4;font-size:13px">${t("settings.reports.selectMsg") || "Wybierz wątek"}</div></div>`;
     msgActiveId = null;
+
+    // On mobile: switch back to list view
+    if (window.matchMedia("(max-width: 900px)").matches) {
+      setMailView("list");
+    }
   }
   _composePrevActiveId = null;
   _composePrevIsReport = false;
