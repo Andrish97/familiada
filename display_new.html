@@ -44,9 +44,11 @@
   <!-- TRYB GRA – 3 warstwy -->
   <div id="gameScreen" class="hidden">
     <div id="displayRoot" class="display-root">
-      <div class="layer-bg"></div>
-      <svg class="layer-base" id="baseSvg"></svg>
-      <svg class="layer-displays" id="displaysSvg"><g id="displays"></g></svg>
+      <div class="display-frame">
+        <div class="layer-bg"></div>
+      <svg class="layer-base" id="baseSvg" viewBox="0 0 1280 720"></svg>
+      <svg class="layer-displays" id="displaysSvg" viewBox="0 0 1280 720"><g id="displays"></g></svg>
+      </div>
     </div>
   </div>
   <div id="blackScreen" class="black-screen"></div>
