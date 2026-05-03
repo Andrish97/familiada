@@ -2,25 +2,39 @@
 <html lang="pl">
 <head>
   <meta charset="utf-8"/>
-  <title>Theme Builder – Position Displays</title>
+  <title>Theme Builder – Visual Theme Editor</title>
   <style>
-    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background: #1a1a1a; color: #e0e0e0; font-family: system-ui, sans-serif; display: flex; flex-direction: column; height: 100vh; }
+    *, *::before, *::after { margin:0; padding:0; box-sizing: border-box; }
+    body { background: #1a1a2e; color: #e0e0e0; font-family: system-ui, sans-serif; display: flex; height: 100vh; overflow: hidden; }
 
-    .toolbar {
-      display: flex; align-items: center; gap: 12px; padding: 10px 16px;
-      background: #2a2a2a; border-bottom: 1px solid #444; flex-wrap: wrap;
+    .sidebar {
+      width: 380px; min-width: 380px; background: #16213e; border-right: 1px solid #444;
+      display: flex; flex-direction: column; overflow: hidden;
     }
-    .toolbar label { font-size: 13px; font-weight: 600; }
-    .toolbar input[type="file"] { font-size: 12px; }
-    .toolbar button {
-      padding: 6px 14px; border: none; border-radius: 6px; cursor: pointer;
-      font-size: 13px; font-weight: 600;
+    .sidebar-header { padding: 14px 16px; background: #0f3460; font-weight: 700; font-size: 15px; letter-spacing: 0.5px; }
+    .sidebar-content { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+
+    .section { background: #1a1a3e; border-radius: 8px; padding: 12px; }
+    .section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #888; margin-bottom: 10px; }
+
+    .color-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .color-row label { font-size: 12px; width: 56px; font-weight: 600; }
+    .color-row input[type="color"] { width: 36px; height: 28px; border: none; border-radius: 4px; cursor: pointer; }
+    .color-row input[type="text"] { flex: 1; background: #0f3460; border: 1px solid #444; color: #e0e0e0; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-family: monospace; }
+
+    .btn {
+      padding: 7px 12px; border: none; border-radius: 6px; cursor: pointer;
+      font-size: 12px; font-weight: 600; transition: background 0.2s;
     }
-    .btn-export { background: #2e7d32; color: #fff; }
-    .btn-export:hover { background: #388e3c; }
-    .btn-reset { background: #c62828; color: #fff; }
-    .btn-reset:hover { background: #d32f2f; }
+    .btn-primary { background: #e94560; color: #fff; }
+    .btn-primary:hover { background: #ff6b81; }
+    .btn-success { background: #2e7d32; color: #fff; }
+    .btn-success:hover { background: #388e3c; }
+    .btn-warning { background: #f57c00; color: #fff; }
+    .btn-warning:hover { background: #fb8c00; }
+    .btn-danger { background: #c62828; color: #fff; }
+    .btn-danger:hover { background: #d32f2f; }
+    .btn-sm { padding: 4px 8px; font-size: 11px; }
 
     .workspace {
       flex: 1; position: relative; overflow: auto; display: flex;
@@ -31,9 +45,8 @@
       position: relative; width: 1280px; height: 720px;
       background: #111; border: 2px solid #555; flex-shrink: 0;
     }
-
     .canvas-frame svg.uploaded {
-      position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none;
+      position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: auto;
     }
 
     .display-box {
@@ -41,44 +54,231 @@
       background: rgba(255,255,100,0.08); cursor: move; user-select: none;
       display: flex; align-items: center; justify-content: center;
       font-size: 11px; font-weight: 700; color: rgba(255,255,100,0.9);
-      pointer-events: auto;
+      pointer-events: auto; z-index: 100;
     }
     .display-box:hover { background: rgba(255,255,100,0.15); }
     .display-box.dragging { border-color: #fff; background: rgba(255,255,100,0.2); }
 
-    /* Center dot */
-    .display-box::after {
-      content: ''; position: absolute;
-      width: 6px; height: 6px; border-radius: 50%;
-      background: #ffeb3b; pointer-events: none;
-      transform: translate(-50%, -50%);
-      left: 50%; top: 50%;
+    .element-list { display: flex; flex-direction: column; gap: 3px; max-height: 200px; overflow-y: auto; }
+    .element-item {
+      display: flex; align-items: center; gap: 6px; padding: 5px 8px;
+      background: #0f3460; border-radius: 4px; cursor: pointer; font-size: 11px;
+      transition: background 0.15s;
+    }
+    .element-item:hover { background: #1a1a4e; }
+    .element-item.selected { background: #e94560; color: #fff; }
+    .element-item.assigned { border-left: 3px solid #e94560; }
+
+    .control-mode {
+      display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px;
+    }
+    .mode-btn {
+      padding: 6px 10px; border: 2px solid #444; border-radius: 4px; cursor: pointer;
+      font-size: 11px; font-weight: 600; background: #0f3460; color: #e0e0e0;
+      transition: all 0.2s;
+    }
+    .mode-btn:hover { background: #1a1a4e; }
+    .mode-btn.active { border-color: #e94560; background: #e94560; color: #fff; }
+    .mode-btn.a-on { border-left: 3px solid #c4002f; }
+    .mode-btn.a-off { border-left: 3px solid #8b0000; }
+    .mode-btn.b-on { border-left: 3px solid #2a62ff; }
+    .mode-btn.b-off { border-left: 3px solid #1a3c8a; }
+
+    .prop-panel { display: flex; flex-direction: column; gap: 6px; }
+    .prop-row { display: flex; align-items: center; gap: 6px; }
+    .prop-row label { font-size: 11px; width: 70px; }
+    .prop-row input, .prop-row select {
+      flex: 1; background: #0f3460; border: 1px solid #444; color: #e0e0e0;
+      padding: 4px 8px; border-radius: 4px; font-size: 11px;
+    }
+
+    .var-select {
+      background: #0f3460; border: 1px solid #444; color: #e0e0e0;
+      padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;
+    }
+
+    .bg-editor { display: flex; flex-direction: column; gap: 6px; }
+    .bg-type { display: flex; gap: 8px; flex-wrap: wrap; }
+    .bg-type label { font-size: 11px; display: flex; align-items: center; gap: 4px; cursor: pointer; }
+
+    .gradient-preview {
+      height: 50px; border-radius: 6px; border: 2px solid #555; margin-top: 4px;
     }
 
     .output-panel {
-      position: fixed; bottom: 0; left: 0; right: 0;
+      position: fixed; bottom: 0; left: 380px; right: 0;
       background: #222; border-top: 1px solid #555;
-      max-height: 200px; overflow: auto; padding: 12px 16px;
-      font-family: 'Fira Code', monospace; font-size: 12px; line-height: 1.6;
-      white-space: pre-wrap; color: #8be9fd;
+      max-height: 350px; overflow: auto; padding: 12px 16px;
+      font-family: 'Fira Code', monospace; font-size: 11px; line-height: 1.5;
+      white-space: pre-wrap; color: #8be9fd; display: none;
     }
-    .output-panel .label { color: #aaa; }
+    .output-panel.show { display: block; }
+
+    .help-text { font-size: 11px; color: #888; line-height: 1.4; }
+    .help-text code { background: #0f3460; padding: 1px 4px; border-radius: 3px; font-size: 10px; }
+
+    .info-box {
+      background: #0f3460; border-left: 3px solid #e94560; padding: 8px;
+      border-radius: 4px; font-size: 11px; line-height: 1.4;
+    }
   </style>
 </head>
 <body>
 
-<div class="toolbar">
-  <label>SVG:</label>
-  <input type="file" id="svgUpload" accept=".svg"/>
-  <label style="margin-left:16px;">Grid:</label>
-  <input type="checkbox" id="showGrid" checked/>
-  <button class="btn-export" id="btnExport">Get Coordinates</button>
-  <button class="btn-reset" id="btnReset">Reset Positions</button>
+<div class="sidebar">
+  <div class="sidebar-header">Theme Builder</div>
+  <div class="sidebar-content">
+    <!-- Upload -->
+    <div class="section">
+      <div class="section-title">1. Upload SVG</div>
+      <input type="file" id="svgUpload" accept=".svg" style="color:#e0e0e0; font-size:12px;"/>
+      <p class="help-text" style="margin-top:6px;">Inkscape: Selection only, 1280×720, no background.</p>
+    </div>
+
+    <!-- Preview Colors -->
+    <div class="section">
+      <div class="section-title">2. Preview Colors (Theme Variables)</div>
+      <div class="color-row">
+        <label>${d.A}</label>
+        <input type="color" id="colorA" value="#c4002f"/>
+        <input type="text" id="colorAHex" value="#c4002f"/>
+      </div>
+      <div class="color-row">
+        <label>${d.B}</label>
+        <input type="color" id="colorB" value="#2a62ff"/>
+        <input type="text" id="colorBHex" value="#2a62ff"/>
+      </div>
+      <div class="color-row">
+        <label>${d.BG}</label>
+        <input type="color" id="colorBG" value="#d21180"/>
+        <input type="text" id="colorBGHex" value="#d21180"/>
+      </div>
+      <button class="btn btn-primary" id="btnPreviewColors" style="margin-top:6px; width:100%;">Preview Colors</button>
+    </div>
+
+    <!-- Background -->
+    <div class="section">
+      <div class="section-title">3. Background (Full Screen)</div>
+      <div class="bg-editor">
+        <select id="bgType" class="var-select">
+          <option value="radial">Radial Gradient</option>
+          <option value="linear">Linear Gradient</option>
+          <option value="solid">Solid Color</option>
+        </select>
+        <div id="bgGradientEditor">
+          <div class="prop-row">
+            <label>Stop 1</label>
+            <input type="color" id="bgStop1Color" value="#f06"/>
+            <input type="text" id="bgStop1Hex" value="#f06" style="width:60px;"/>
+            <input type="range" id="bgStop1Off" min="0" max="100" value="0"/>
+            <span id="bgStop1Val">0%</span>
+          </div>
+          <div class="prop-row">
+            <label>Stop 2</label>
+            <input type="color" id="bgStop2Color" value="#c4002f"/>
+            <input type="text" id="bgStop2Hex" value="#c4002f" style="width:60px;"/>
+            <input type="range" id="bgStop2Off" min="0" max="100" value="40"/>
+            <span id="bgStop2Val">40%</span>
+          </div>
+          <div class="prop-row">
+            <label>Stop 3</label>
+            <input type="color" id="bgStop3Color" value="#6b003d"/>
+            <input type="text" id="bgStop3Hex" value="#6b003d" style="width:60px;"/>
+            <input type="range" id="bgStop3Off" min="0" max="100" value="100"/>
+            <span id="bgStop3Val">100%</span>
+          </div>
+        </div>
+        <div class="gradient-preview" id="bgPreview"></div>
+        <button class="btn btn-warning btn-sm" id="btnApplyBg" style="margin-top:4px;">Apply BG</button>
+      </div>
+    </div>
+
+    <!-- Control Mode -->
+    <div class="section">
+      <div class="section-title">4. Control Mode</div>
+      <p class="help-text" style="margin-bottom:8px;">Select mode, then edit elements visually. Switch modes to set ON/OFF states.</p>
+      <div class="control-mode">
+        <button class="mode-btn a-on" data-mode="A_on">A ON</button>
+        <button class="mode-btn a-off" data-mode="A_off">A OFF</button>
+        <button class="mode-btn b-on" data-mode="B_on">B ON</button>
+        <button class="mode-btn b-off" data-mode="B_off">B OFF</button>
+        <button class="mode-btn" data-mode="">None</button>
+      </div>
+      <div class="info-box" id="modeInfo">
+        Mode: <strong>None</strong><br/>
+        Editing normally. Elements will keep their appearance.
+      </div>
+    </div>
+
+    <!-- SVG Elements -->
+    <div class="section">
+      <div class="section-title">5. SVG Elements</div>
+      <p class="help-text">Click to select. In control mode, changes are saved to that state.</p>
+      <div class="element-list" id="elementList"></div>
+    </div>
+
+    <!-- Properties -->
+    <div class="section" id="propSection" style="display:none;">
+      <div class="section-title">6. Properties: <span id="selId"></span></div>
+      <div class="prop-panel">
+        <div class="prop-row">
+          <label>Fill</label>
+          <select class="var-select" id="propFillVar">
+            <option value="">-- hardcoded --</option>
+            <option value="${d.A}">${d.A}</option>
+            <option value="${d.B}">${d.B}</option>
+            <option value="${d.A_dark}">${d.A_dark}</option>
+            <option value="${d.B_dark}">${d.B_dark}</option>
+            <option value="${d.A_lamp}">${d.A_lamp}</option>
+            <option value="${d.B_lamp}">${d.B_lamp}</option>
+            <option value="${d.B_glow}">${d.B_glow}</option>
+            <option value="none">none</option>
+          </select>
+        </div>
+        <div class="prop-row">
+          <label>or Hex</label>
+          <input type="color" id="propFillColor" value="#ffffff"/>
+          <input type="text" id="propFillHex" value="#ffffff" style="width:70px;"/>
+        </div>
+        <div class="prop-row">
+          <label>Stroke</label>
+          <select class="var-select" id="propStrokeVar">
+            <option value="">-- hardcoded --</option>
+            <option value="${d.A}">${d.A}</option>
+            <option value="${d.B}">${d.B}</option>
+            <option value="${d.A_dark}">${d.A_dark}</option>
+            <option value="${d.B_dark}">${d.B_dark}</option>
+            <option value="none">none</option>
+          </select>
+        </div>
+        <div class="prop-row">
+          <label>or Hex</label>
+          <input type="color" id="propStrokeColor" value="#000000"/>
+          <input type="text" id="propStrokeHex" value="#000000" style="width:70px;"/>
+        </div>
+        <div class="prop-row">
+          <label>Opacity</label>
+          <input type="range" id="propOpacity" min="0" max="1" step="0.05" value="1" style="flex:1;"/>
+          <span id="propOpacityVal" style="font-size:11px;width:32px;">1.0</span>
+        </div>
+        <button class="btn btn-warning btn-sm" id="btnApplyProps">Apply to Element</button>
+      </div>
+    </div>
+
+    <!-- Display Positions -->
+    <div class="section">
+      <div class="section-title">7. Display Positions</div>
+      <label style="font-size:11px; display:flex; align-items:center; gap:8px;">
+        <input type="checkbox" id="showGrid" checked/> Grid
+      </label>
+      <button class="btn btn-success" id="btnExport" style="margin-top:6px; width:100%;">Export Theme (.js)</button>
+      <button class="btn btn-danger btn-sm" id="btnReset" style="margin-top:4px; width:100%;">Reset Displays</button>
+    </div>
+  </div>
 </div>
 
 <div class="workspace">
   <div class="canvas-frame" id="frame">
-    <!-- Grid -->
     <svg id="gridSvg" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:0.15">
       <defs>
         <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
@@ -87,38 +287,55 @@
       </defs>
       <rect width="1280" height="720" fill="url(#grid)"/>
     </svg>
-    <!-- Uploaded SVG goes here -->
-    <!-- Display boxes go here -->
   </div>
 </div>
 
-<div class="output-panel" id="output"><span class="label">Upload SVG and drag the 6 display boxes, then click "Get Coordinates".</span></div>
+<div class="output-panel" id="output"></div>
 
 <script>
 const NS = "http://www.w3.org/2000/svg";
 const frame = document.getElementById("frame");
 const output = document.getElementById("output");
-const showGrid = document.getElementById("showGrid");
+const elementList = document.getElementById("elementList");
+const propSection = document.getElementById("propSection");
 
-// Definicje 6 wyświetlaczy (domyślne wymiary i pozycje)
+// State
+let currentMode = ""; // "", "A_on", "A_off", "B_on", "B_off"
+let svgEl = null;
+let svgElements = [];
+let selectedElementId = null;
+
+// Store element states per mode: elementStates[mode][elementId] = { fill, stroke, opacity, outerHTML }
+let elementStates = {
+  A_on: {},
+  A_off: {},
+  B_on: {},
+  B_off: {}
+};
+
+// Colors
+const colorA = document.getElementById("colorA");
+const colorAHex = document.getElementById("colorAHex");
+const colorB = document.getElementById("colorB");
+const colorBHex = document.getElementById("colorBHex");
+const colorBG = document.getElementById("colorBG");
+const colorBGHex = document.getElementById("colorBGHex");
+
+[colorA, colorAHex].forEach(el => el.addEventListener("input", () => { colorAHex.value = colorA.value; }));
+[colorB, colorBHex].forEach(el => el.addEventListener("input", () => { colorBHex.value = colorB.value; }));
+[colorBG, colorBGHex].forEach(el => el.addEventListener("input", () => { colorBGHex.value = colorBG.value; }));
+
+// DISPLAYS
 const DISPLAYS = [
-  { key: "big",        label: "BIG",         w: 660, h: 235, cx: 640,   cy: 360    },
-  { key: "leftPanel",  label: "LEFT PANEL",  w: 80,  h: 50,  cx: 79.4,  cy: 360    },
-  { key: "rightPanel", label: "RIGHT PANEL", w: 80,  h: 50,  cx: 1200.6, cy: 360   },
-  { key: "topPanel",   label: "TOP PANEL",   w: 80,  h: 50,  cx: 640,   cy: 79.7   },
-  { key: "long1",      label: "LONG1",       w: 280, h: 50,  cx: 356.8, cy: 646.4  },
-  { key: "long2",      label: "LONG2",       w: 280, h: 50,  cx: 923.2, cy: 646.4  },
+  { key: "big",        label: "BIG",         w: 660, h: 235, cx: 640,    cy: 360    },
+  { key: "leftPanel",  label: "LEFT PANEL",  w: 80,  h: 50,  cx: 79.4,  cy: 360   },
+  { key: "rightPanel", label: "RIGHT PANEL", w: 80,  h: 50,  cx: 1200.6, cy: 360  },
+  { key: "topPanel",   label: "TOP PANEL",   w: 80,  h: 50,  cx: 640,    cy: 79.7  },
+  { key: "long1",      label: "LONG1",       w: 280, h: 50,  cx: 356.8,  cy: 646.4 },
+  { key: "long2",      label: "LONG2",       w: 280, h: 50,  cx: 923.2,  cy: 646.4 },
 ];
 
-// Helper: cx/cy → left/top
-const toRect = (d) => ({
-  x: d.cx - d.w / 2,
-  y: d.cy - d.h / 2,
-  w: d.w,
-  h: d.h,
-});
-
-// Render display boxes
+const toRect = (d) => ({ x: d.cx - d.w / 2, y: d.cy - d.h / 2, w: d.w, h: d.h });
 const boxes = [];
 DISPLAYS.forEach((d) => {
   const rect = toRect(d);
@@ -134,9 +351,8 @@ DISPLAYS.forEach((d) => {
   boxes.push({ el: div, data: d });
 });
 
-// Drag
+// Drag displays
 let dragTarget = null, dragOffsetX = 0, dragOffsetY = 0;
-
 function pointerDown(e) {
   const box = e.target.closest(".display-box");
   if (!box) return;
@@ -149,7 +365,6 @@ function pointerDown(e) {
   dragOffsetX = clientX - rect.left;
   dragOffsetY = clientY - rect.top;
 }
-
 function pointerMove(e) {
   if (!dragTarget) return;
   e.preventDefault();
@@ -158,7 +373,6 @@ function pointerMove(e) {
   const clientY = e.touches ? e.touches[0].clientY : e.clientY;
   let x = clientX - frameRect.left - dragOffsetX;
   let y = clientY - frameRect.top - dragOffsetY;
-  // Clamp
   const w = parseFloat(dragTarget.style.width);
   const h = parseFloat(dragTarget.style.height);
   x = Math.max(0, Math.min(1280 - w, x));
@@ -166,12 +380,10 @@ function pointerMove(e) {
   dragTarget.style.left = x + "px";
   dragTarget.style.top = y + "px";
 }
-
 function pointerUp() {
   if (dragTarget) dragTarget.classList.remove("dragging");
   dragTarget = null;
 }
-
 frame.addEventListener("mousedown", pointerDown);
 window.addEventListener("mousemove", pointerMove);
 window.addEventListener("mouseup", pointerUp);
@@ -179,60 +391,468 @@ frame.addEventListener("touchstart", pointerDown, { passive: false });
 window.addEventListener("touchmove", pointerMove, { passive: false });
 window.addEventListener("touchend", pointerUp);
 
-// Upload SVG
+// Control Mode
+document.querySelectorAll(".mode-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const mode = btn.dataset.mode;
+    currentMode = mode;
+    document.querySelectorAll(".mode-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+
+    const info = document.getElementById("modeInfo");
+    if (mode === "") {
+      info.innerHTML = `Mode: <strong>None</strong><br/>Editing normally. Changes apply to base SVG.`;
+    } else {
+      const team = mode.startsWith("A") ? "A" : "B";
+      const state = mode.endsWith("on") ? "ON" : "OFF";
+      info.innerHTML = `Mode: <strong>${mode}</strong><br/>Editing ${team} ${state} state. Changes saved to this state.`;
+      // Apply this mode's saved state to SVG
+      applyModeToSvg(mode);
+    }
+  });
+});
+
+function applyModeToSvg(mode) {
+  if (!svgEl || !elementStates[mode]) return;
+  Object.entries(elementStates[mode]).forEach(([id, state]) => {
+    const el = svgEl.querySelector(`#${id}`);
+    if (!el) return;
+    if (state.outerHTML) {
+      el.outerHTML = state.outerHTML;
+    } else {
+      if (state.fill !== undefined) el.setAttribute("fill", state.fill);
+      if (state.stroke !== undefined) el.setAttribute("stroke", state.stroke);
+      if (state.opacity !== undefined) el.setAttribute("opacity", state.opacity);
+    }
+  });
+}
+
+// SVG Upload
 document.getElementById("svgUpload").addEventListener("change", (e) => {
   const file = e.target.files[0];
   if (!file) return;
   const reader = new FileReader();
   reader.onload = (ev) => {
-    let svg = ev.target.result;
-    // Strip outer <svg> tag, keep content only – we place it inside our frame
-    // But we want it at 1280x720, so let's just inject it as-is with proper sizing
-    // Remove existing uploaded SVGs
-    const existing = frame.querySelectorAll("svg.uploaded");
-    existing.forEach(s => s.remove());
-
-    // Parse and inject
     const container = document.createElement("div");
-    container.innerHTML = svg;
-    const svgEl = container.querySelector("svg");
-    if (!svgEl) { output.textContent = "Error: no SVG element found in file."; return; }
-    svgEl.setAttribute("viewBox", "0 0 1280 720");
-    svgEl.setAttribute("width", "1280");
-    svgEl.setAttribute("height", "720");
-    svgEl.classList.add("uploaded");
-    svgEl.style.pointerEvents = "none";
-    frame.insertBefore(svgEl, frame.firstChild.nextSibling);
+    container.innerHTML = ev.target.result;
+    const svg = container.querySelector("svg");
+    if (!svg) { output.textContent = "Error: no SVG found."; return; }
+    frame.querySelectorAll("svg.uploaded").forEach(s => s.remove());
+    svg.setAttribute("viewBox", "0 0 1280 720");
+    svg.setAttribute("width", "1280");
+    svg.setAttribute("height", "720");
+    svg.classList.add("uploaded");
+    frame.insertBefore(svg, frame.firstChild.nextSibling);
+    svgEl = svg;
+    collectElements();
+    // Reset states
+    elementStates = { A_on: {}, A_off: {}, B_on: {}, B_off: {} };
     output.textContent = `Loaded: ${file.name}`;
   };
   reader.readAsText(file);
 });
 
-// Grid toggle
-showGrid.addEventListener("change", () => {
-  document.getElementById("gridSvg").style.opacity = showGrid.checked ? "0.15" : "0";
+function collectElements() {
+  if (!svgEl) return;
+  svgElements = [];
+  const defs = svgEl.querySelector("defs");
+  if (defs) svgElements.push({ el: defs, id: "defs" });
+  const all = svgEl.querySelectorAll(":not(defs) *");
+  all.forEach(el => {
+    if (el.tagName === "defs") return;
+    const id = el.id || `el_${svgElements.length}`;
+    if (!el.id) el.id = id;
+    svgElements.push({ el, id });
+  });
+  renderElementList();
+}
+
+function renderElementList() {
+  elementList.innerHTML = "";
+  svgElements.forEach(({ el, id }) => {
+    if (!el) return;
+    const item = document.createElement("div");
+    item.className = "element-item";
+    item.dataset.id = id;
+
+    // Check if assigned to any control
+    const isAssigned = Object.keys(elementStates).some(mode => elementStates[mode][id]);
+    if (isAssigned) item.classList.add("assigned");
+
+    const label = document.createElement("span");
+    label.textContent = id;
+    label.style.flex = "1";
+    label.style.overflow = "hidden";
+    label.style.textOverflow = "ellipsis";
+
+    // Show which modes this element is assigned to
+    const modes = [];
+    Object.entries(elementStates).forEach(([mode, states]) => {
+      if (states[id]) modes.push(mode);
+    });
+    if (modes.length > 0) {
+      const tag = document.createElement("span");
+      tag.style.fontSize = "9px";
+      tag.style.color = "#aaa";
+      tag.textContent = ` [${modes.join(",")}]`;
+      label.appendChild(tag);
+    }
+
+    item.appendChild(label);
+    item.addEventListener("click", () => selectElement(id));
+    elementList.appendChild(item);
+  });
+}
+
+function selectElement(id) {
+  selectedElementId = id;
+  const item = svgElements.find(e => e.id === id);
+  if (!item || !item.el) return;
+
+  elementList.querySelectorAll(".element-item").forEach(el => {
+    el.classList.toggle("selected", el.dataset.id === id);
+  });
+
+  propSection.style.display = "block";
+  document.getElementById("selId").textContent = id;
+
+  // Show current properties (from SVG, not state)
+  const el = item.el;
+  const fill = el.getAttribute("fill") || "";
+  const stroke = el.getAttribute("stroke") || "";
+  const opacity = el.getAttribute("opacity") || "1";
+
+  document.getElementById("propFillVar").value = "";
+  document.getElementById("propFillColor").value = fill && fill !== "none" ? fill : "#ffffff";
+  document.getElementById("propFillHex").value = fill && fill !== "none" ? fill : "#ffffff";
+
+  document.getElementById("propStrokeVar").value = "";
+  document.getElementById("propStrokeColor").value = stroke && stroke !== "none" ? stroke : "#000000";
+  document.getElementById("propStrokeHex").value = stroke && stroke !== "none" ? stroke : "#000000";
+
+  document.getElementById("propOpacity").value = opacity;
+  document.getElementById("propOpacityVal").textContent = parseFloat(opacity).toFixed(2);
+}
+
+// Preview colors
+document.getElementById("btnPreviewColors").addEventListener("click", () => {
+  if (!svgEl) return;
+  const vars = {
+    "${d.A}": colorA.value,
+    "${d.B}": colorB.value,
+    "${d.A_dark}": computeDark(colorA.value, 0.38),
+    "${d.B_dark}": computeDark(colorB.value, 0.35),
+    "${d.A_lamp}": computeLight(colorA.value, 0.25),
+    "${d.B_lamp}": computeLight(colorB.value, 0.18),
+    "${d.B_glow}": computeLight(colorB.value, 0.28),
+  };
+
+  svgEl.querySelectorAll("*").forEach(el => {
+    ["fill", "stroke", "stop-color", "flood-color"].forEach(attr => {
+      const val = el.getAttribute(attr);
+      if (!val) return;
+      Object.entries(vars).forEach(([v, hex]) => {
+        if (val === v || val === hex) el.setAttribute(attr, hex);
+      });
+    });
+  });
+  updateBgPreview();
 });
 
-// Export coordinates
+function hexToRgb(hex) {
+  const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return m ? { r: parseInt(m[1],16), g: parseInt(m[2],16), b: parseInt(m[3],16) } : {r:0,g:0,b:0};
+}
+function rgbToHex({r,g,b}) { return `#${(r<<16|g<<8|b).toString(16).padStart(6,"0")}`; }
+function mix(c1,c2,t) { return { r:Math.round(c1.r+(c2.r-c1.r)*t), g:Math.round(c1.g+(c2.g-c1.g)*t), b:Math.round(c1.b+(c2.b-c1.b)*t) }; }
+function lighten(c,t) { return mix(c,{r:255,g:255,b:255},t); }
+function darken(c,t) { return mix(c,{r:0,g:0,b:0},t); }
+function computeLight(hex,t) { return rgbToHex(lighten(hexToRgb(hex),t)); }
+function computeDark(hex,t) { return rgbToHex(darken(hexToRgb(hex),t)); }
+
+// Apply properties
+document.getElementById("btnApplyProps").addEventListener("click", () => {
+  if (!selectedElementId) return;
+  const item = svgElements.find(e => e.id === selectedElementId);
+  if (!item || !item.el) return;
+  const el = item.el;
+  const id = selectedElementId;
+
+  const fillVar = document.getElementById("propFillVar").value;
+  const strokeVar = document.getElementById("propStrokeVar").value;
+
+  let fillVal, strokeVal, opacityVal;
+
+  if (fillVar) {
+    fillVal = fillVar;
+  } else {
+    fillVal = document.getElementById("propFillHex").value;
+  }
+
+  if (strokeVar) {
+    strokeVal = strokeVar;
+  } else {
+    strokeVal = document.getElementById("propStrokeHex").value;
+  }
+
+  opacityVal = document.getElementById("propOpacity").value;
+
+  // Apply to SVG
+  el.setAttribute("fill", fillVal);
+  el.setAttribute("stroke", strokeVal);
+  el.setAttribute("opacity", opacityVal);
+
+  // Save to current mode state
+  if (currentMode && elementStates[currentMode]) {
+    elementStates[currentMode][id] = {
+      fill: fillVal,
+      stroke: strokeVal,
+      opacity: opacityVal,
+      outerHTML: null
+    };
+  }
+
+  renderElementList();
+});
+
+// Background
+function updateBgPreview() {
+  const type = document.getElementById("bgType").value;
+  const c1 = document.getElementById("bgStop1Hex").value;
+  const o1 = document.getElementById("bgStop1Off").value;
+  const c2 = document.getElementById("bgStop2Hex").value;
+  const o2 = document.getElementById("bgStop2Off").value;
+  const c3 = document.getElementById("bgStop3Hex").value;
+  const o3 = document.getElementById("bgStop3Off").value;
+
+  document.getElementById("bgStop1Val").textContent = o1 + "%";
+  document.getElementById("bgStop2Val").textContent = o2 + "%";
+  document.getElementById("bgStop3Val").textContent = o3 + "%";
+
+  if (type === "radial") {
+    document.getElementById("bgPreview").style.background = `radial-gradient(150vw 90vh at 50% 25%, ${c1} ${o1}%, ${c2} ${o2}%, ${c3} ${o3}%)`;
+  } else if (type === "linear") {
+    document.getElementById("bgPreview").style.background = `linear-gradient(to bottom, ${c1} ${o1}%, ${c2} ${o2}%, ${c3} ${o3}%)`;
+  } else {
+    document.getElementById("bgPreview").style.background = c1;
+  }
+}
+
+["bgStop1Off","bgStop2Off","bgStop3Off"].forEach(id => document.getElementById(id).addEventListener("input", updateBgPreview));
+["bgStop1Color","bgStop1Hex","bgStop2Color","bgStop2Hex","bgStop3Color","bgStop3Hex"].forEach(id => {
+  document.getElementById(id).addEventListener("input", () => {
+    const num = id.replace("bgStop","").replace(/[A-Za-z]/g,'');
+    document.getElementById(`bgStop${num}Hex`).value = document.getElementById(`bgStop${num}Color`).value;
+    updateBgPreview();
+  });
+});
+document.getElementById("bgType").addEventListener("change", updateBgPreview);
+updateBgPreview();
+
+document.getElementById("btnApplyBg").addEventListener("click", () => {
+  const bgCSS = getBgCSS();
+  frame.style.background = bgCSS;
+  output.textContent = `BG: ${bgCSS}`;
+  output.classList.add("show");
+});
+
+function getBgCSS() {
+  const type = document.getElementById("bgType").value;
+  const c1 = document.getElementById("bgStop1Hex").value;
+  const o1 = document.getElementById("bgStop1Off").value;
+  const c2 = document.getElementById("bgStop2Hex").value;
+  const o2 = document.getElementById("bgStop2Off").value;
+  const c3 = document.getElementById("bgStop3Hex").value;
+  const o3 = document.getElementById("bgStop3Off").value;
+
+  if (type === "radial") {
+    return `radial-gradient(150vw 90vh at 50% 25%, ${c1} ${o1}%, ${c2} ${o2}%, ${c3} ${o3}%)`;
+  } else if (type === "linear") {
+    return `linear-gradient(to bottom, ${c1} ${o1}%, ${c2} ${o2}%, ${c3} ${o3}%)`;
+  }
+  return c1;
+}
+
+// Grid toggle
+document.getElementById("showGrid").addEventListener("change", () => {
+  document.getElementById("gridSvg").style.opacity = document.getElementById("showGrid").checked ? "0.15" : "0";
+});
+
+// Export
 document.getElementById("btnExport").addEventListener("click", () => {
-  const result = {};
+  const name = prompt("Theme name:", "my_theme");
+  if (!name) return;
+  const themeContent = generateThemeFile(name);
+  output.textContent = themeContent;
+  output.classList.add("show");
+
+  const blob = new Blob([themeContent], { type: "application/javascript" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `theme_${name}.js`;
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+function generateThemeFile(name) {
+  const cA = colorA.value;
+  const cB = colorB.value;
+  const cBG = colorBG.value;
+
+  // Build controls with shapes
+  const controlsA = [];
+  const controlsB = [];
+
+  ["A_on", "A_off", "B_on", "B_off"].forEach(mode => {
+    const states = elementStates[mode];
+    if (!states || Object.keys(states).length === 0) return;
+
+    const isOn = mode.endsWith("on");
+    const team = mode.startsWith("A") ? "A" : "B";
+    const shapeOn = isOn ? "on" : "off";
+
+    // Build shape objects for each element
+    const shapes = [];
+    Object.entries(states).forEach(([id, state]) => {
+      if (state.outerHTML) {
+        shapes.push(`      "${id}": \`${state.outerHTML}\``);
+      }
+    });
+
+    if (shapes.length > 0) {
+      const rule = `    { mode: "${mode}", shapes: {\n${shapes.join(",\n")}\n    } }`;
+      if (team === "A") controlsA.push(rule);
+      else controlsB.push(rule);
+    } else {
+      // Simple opacity-based controls
+      Object.keys(states).forEach(id => {
+        const rule = `    { id: "${id}", attr: "opacity", on: "${isOn ? "1" : "0.2"}", off: "${isOn ? "0.2" : "1"}" }`;
+        if (team === "A") controlsA.push(rule);
+        else controlsB.push(rule);
+      });
+    }
+  });
+
+  // Get SVG content (base state)
+  let svgContent = "";
+  if (svgEl) {
+    svgElements.forEach(({ el, id }) => {
+      if (!el) return;
+      svgContent += el.outerHTML + "\n";
+    });
+  }
+
+  // Display positions
+  const displays = {};
   boxes.forEach(({ el, data }) => {
     const left = parseFloat(el.style.left);
     const top = parseFloat(el.style.top);
-    result[data.key] = {
+    displays[data.key] = {
       cx: Math.round((left + data.w / 2) * 10) / 10,
       cy: Math.round((top + data.h / 2) * 10) / 10,
     };
   });
 
-  const js = `displays: {\n${Object.entries(result).map(([k, v]) =>
-    `      ${k.padEnd(12)}{ cx: ${String(v.cx).padStart(6)}, cy: ${v.cy} }`
-  ).join(",\n")}\n    }`;
+  const bgCSS = getBgCSS();
 
-  const json = JSON.stringify(result, null, 2);
+  return `// theme_${name}.js - generated by Theme Builder
+const hexToRgb = (hex) => {
+  const m = /^#?([a-f\\d]{2})([a-f\\d]{2})([a-f\\d]{2})$/i.exec(hex);
+  return m ? { r: parseInt(m[1], 16), g: parseInt(m[2], 16), b: parseInt(m[3], 16) } : { r: 0, g: 0, b: 0 };
+};
+const rgbToHex = ({ r, g, b }) => \`#\${(r << 16 | g << 8 | b).toString(16).padStart(6, "0")}\`;
+const mix = (c1, c2, t) => ({ r: Math.round(c1.r + (c2.r - c1.r) * t), g: Math.round(c1.g + (c2.g - c1.g) * t), b: Math.round(c1.b + (c2.b - c1.b) * t) });
+const lighten = (c, t) => mix(c, { r: 255, g: 255, b: 255 }, t);
+const darken = (c, t) => mix(c, { r: 0, g: 0, b: 0 }, t);
 
-  output.innerHTML = `<span class="label">// Copy-paste into your theme:</span>\n${js}\n\n<span class="label">// JSON:</span>\n${json}`;
-});
+const DEFAULT_COLORS = { A: "${cA}", B: "${cB}", BG: "${cBG}" };
+
+function computeDerived(c) {
+  const A = hexToRgb(c.A), B = hexToRgb(c.B);
+  return {
+    A_dark: rgbToHex(darken(A, 0.38)),
+    B_dark: rgbToHex(darken(B, 0.35)),
+    A_lamp: rgbToHex(lighten(A, 0.25)),
+    B_lamp: rgbToHex(lighten(B, 0.18)),
+    B_glow: rgbToHex(lighten(B, 0.28)),
+  };
+}
+
+function computeBg(c) {
+  return \`${bgCSS}\`;
+}
+
+const CONTROLS = {
+  A: [
+${controlsA.join(",\n")}
+  ],
+  B: [
+${controlsB.join(",\n")}
+  ],
+};
+
+function applyControls(svg, controls) {
+  for (const side of ["A", "B"]) {
+    const on = controls[side] === true;
+    for (const rule of CONTROLS[side]) {
+      if (rule.shapes) {
+        // Shape-based control
+        const mode = on ? rule.mode : rule.mode.replace("on", "off").replace("off", "on");
+        if (rule.mode === (side + "_" + (on ? "on" : "off"))) {
+          Object.entries(rule.shapes).forEach(([id, html]) => {
+            const el = svg.querySelector(\`#\${id}\`);
+            if (el) el.outerHTML = html;
+          });
+        }
+      } else {
+        const el = svg.querySelector(\`#\${rule.id}\`);
+        if (!el) continue;
+        el.setAttribute(rule.attr, on ? rule.on : rule.off);
+      }
+    }
+  }
+}
+
+function buildSvgContent(d) {
+  return \`${svgContent}\`;
+}
+
+function render(svg, bgLayer, d, colors, controls) {
+  svg.setAttribute("viewBox", "0 0 1280 720");
+  svg.innerHTML = buildSvgContent(d);
+  applyControls(svg, controls);
+  bgLayer.style.background = computeBg(colors);
+}
+
+export function createTheme(baseSvg, bgLayer, config = {}) {
+  let colors = { ...DEFAULT_COLORS, ...config.colors };
+  let controls = { A: false, B: false, ...config.controls };
+
+  const derived = computeDerived(colors);
+  render(baseSvg, bgLayer, derived, colors, controls);
+
+  return {
+    name: "${name}",
+    displays: {
+${Object.entries(displays).map(([k, v]) => `      ${k.padEnd(12)} { cx: ${v.cx}, cy: ${v.cy} }`).join(",\n")}
+    },
+    multiplier: 1.0,
+    updateColors(newColors) {
+      Object.assign(colors, newColors);
+      const d = computeDerived(colors);
+      render(baseSvg, bgLayer, d, colors, controls);
+    },
+    updateControls(newControls) {
+      Object.assign(controls, newControls);
+      applyControls(baseSvg, controls);
+    },
+    getColors: () => ({ ...colors }),
+    getControls: () => ({ ...controls }),
+  };
+}
+`;
+}
 
 // Reset
 document.getElementById("btnReset").addEventListener("click", () => {
@@ -241,7 +861,6 @@ document.getElementById("btnReset").addEventListener("click", () => {
     el.style.left = rect.x + "px";
     el.style.top = rect.y + "px";
   });
-  output.textContent = "Positions reset to defaults.";
 });
 </script>
 </body>
