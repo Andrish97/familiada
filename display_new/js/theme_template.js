@@ -1,46 +1,27 @@
 // theme_template.js
-// Szablon motywu – definiuje wejścia/wyjścia i dostarcza API dla wyświetlaczy
+// Interfejs motywu – definicja API które musi spełniać każdy motyw
 
-import { createDisplays } from "./displays.js";
-import { GEOMETRY } from "./display-geometry.js";
+// Motyw otrzymuje:
+//   baseSvg – element SVG warstwy 2 (base)
+//   bgLayer – element DIV warstwy 3 (background)
+//   config  – { colors: { A, B, BG }, controls: { A: bool, B: bool } }
+//
+// Motyw zwraca:
+//   {
+//     name: string,
+//     displays: {
+//       big:       { cx, cy },
+//       leftPanel: { cx, cy },
+//       rightPanel:{ cx, cy },
+//       topPanel:  { cx, cy },
+//       long1:     { cx, cy },
+//       long2:     { cx, cy },
+//     },
+//     multiplier: number, // mnożnik rozmiaru wyświetlaczy
+//     updateColors(colors)  – zmienia kolory
+//     updateControls(controls) – zmienia stan kontrolek
+//   }
 
-// Domyślne kolory – nadpisywane przez motyw
-const DEFAULT_COLORS = {
-  A: "#c4002f",
-  B: "#2a62ff",
-  BG: "#d21180",
-};
-
-// Domyślny stan kontrolek
-const DEFAULT_CONTROLS = { A: false, B: false };
-
-// Domyślny mnożnik wyświetlaczy
-const DEFAULT_MULTIPLIER = 1.0;
-
-export function createTheme(svg, displaysGroup, config = {}) {
-  const colors = { ...DEFAULT_COLORS, ...config.colors };
-  const controls = { ...DEFAULT_CONTROLS, ...config.controls };
-  const multiplier = config.multiplier ?? DEFAULT_MULTIPLIER;
-
-  const displays = createDisplays({ svgGroup: displaysGroup, multiplier });
-
-  return {
-    getColors: () => ({ ...colors }),
-    getControls: () => ({ ...controls }),
-    getMultiplier: () => multiplier,
-    getDisplays: () => displays,
-    getGeometry: () => GEOMETRY,
-
-    updateColors(newColors) {
-      Object.assign(colors, newColors);
-    },
-
-    updateControls(newControls) {
-      Object.assign(controls, newControls);
-    },
-
-    updateMultiplier(m) {
-      displays.setGlobalMultiplier(m);
-    },
-  };
+export function createTheme(baseSvg, bgLayer, config = {}) {
+  throw new Error("createTheme must be implemented by a theme module");
 }

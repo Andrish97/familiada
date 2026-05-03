@@ -1,9 +1,9 @@
 // displays.js
-// Moduł renderujący 6 wyświetlaczy w SVG na podstawie geometrii
+// Moduł renderujący 6 wyświetlacze w SVG na podstawie pozycji z motywu + geometrii
 
-import { GEOMETRY, Wgrid, Hgrid } from "./display-geometry.js";
+import { GEOMETRY, DOT_BIG, GAP, Wgrid, Hgrid } from "./display-geometry.js";
 
-export function createDisplays({ svgGroup, multiplier = 1.0 }) {
+export function createDisplays({ svgGroup, theme }) {
   const NS = "http://www.w3.org/2000/svg";
   const el = (name, attrs = {}) => {
     const n = document.createElementNS(NS, name);
@@ -11,35 +11,42 @@ export function createDisplays({ svgGroup, multiplier = 1.0 }) {
     return n;
   };
 
-  const { displays, panels, longs, gapCells: gapCellsBase } = GEOMETRY;
-  const allDisplays = [displays.big, panels.leftPanel, panels.rightPanel, panels.topPanel, longs.long1, longs.long2];
+  const displaysPos = theme.displays;
+  const multiplier = theme.multiplier ?? 1.0;
+  const gapCells = 2 * DOT_BIG;
 
-  function buildTiledDisplay(geo, mult) {
-    const { cx, cy, tilesX, tilesY, dotSize, gap } = geo;
-    const gapCells = 2 * dotSize;
+  // Config każdego typu wyświetlacza z GEOMETRY
+  const tileConfigs = {
+    big:       { tilesX: 30, tilesY: 10, dotSize: DOT_BIG, gap: GAP },
+    leftPanel: { tilesX: 3,  tilesY: 1,  dotSize: 3 * DOT_BIG, gap: GAP },
+    rightPanel:{ tilesX: 3,  tilesY: 1,  dotSize: 3 * DOT_BIG, gap: GAP },
+    topPanel:  { tilesX: 3,  tilesY: 1,  dotSize: 3 * DOT_BIG, gap: GAP },
+    long1:     { X: 95, Y: 7, dotSize: 1.5 * DOT_BIG, gap: GAP },
+    long2:     { X: 95, Y: 7, dotSize: 1.5 * DOT_BIG, gap: GAP },
+  };
+
+  function buildTiledDisplay(pos, cfg) {
+    const { cx, cy } = pos;
+    const { tilesX, tilesY, dotSize, gap } = cfg;
     const wSmall = Wgrid(5, dotSize, gap);
     const hSmall = Hgrid(7, dotSize, gap);
 
-    const m = mult;
-    const w = (tilesX * wSmall + (tilesX - 1) * gapCells + 2 * gap) * m;
-    const h = (tilesY * hSmall + (tilesY - 1) * gapCells + 2 * gap) * m;
+    const w = (tilesX * wSmall + (tilesX - 1) * gapCells + 2 * gap) * multiplier;
+    const h = (tilesY * hSmall + (tilesY - 1) * gapCells + 2 * gap) * multiplier;
     const x = cx - w / 2;
     const y = cy - h / 2;
 
     const g = el("g");
-
-    // Tło
     g.appendChild(el("rect", { x, y, width: w, height: h, fill: "#2e2e32" }));
 
-    // Kafelki i kropki
     const tiles = Array.from({ length: tilesY }, () =>
       Array.from({ length: tilesX }, () => null)
     );
 
-    const r = (dotSize * m) / 2;
-    const stepX = (wSmall + gapCells) * m;
-    const stepY = (hSmall + gapCells) * m;
-    const pad = gap * m;
+    const r = (dotSize * multiplier) / 2;
+    const stepX = (wSmall + gapCells) * multiplier;
+    const stepY = (hSmall + gapCells) * multiplier;
+    const pad = gap * multiplier;
 
     for (let ty = 0; ty < tilesY; ty++) {
       for (let tx = 0; tx < tilesX; tx++) {
@@ -47,27 +54,18 @@ export function createDisplays({ svgGroup, multiplier = 1.0 }) {
         const cellX = x + pad + tx * stepX;
         const cellY = y + pad + ty * stepY;
 
-        // Tło komórki
         tileG.appendChild(
-          el("rect", {
-            x: cellX,
-            y: cellY,
-            width: wSmall * m,
-            height: hSmall * m,
-            fill: "#000000",
-          })
+          el("rect", { x: cellX, y: cellY, width: wSmall * multiplier, height: hSmall * multiplier, fill: "#000000" })
         );
 
-        // Kropki
         const dots = [];
         for (let row = 0; row < 7; row++) {
           const dotsRow = [];
           for (let col = 0; col < 5; col++) {
             const circle = el("circle", {
-              cx: cellX + pad + r + col * (dotSize * m + pad),
-              cy: cellY + pad + r + row * (dotSize * m + pad),
-              r: r,
-              fill: "#2e2e32",
+              cx: cellX + pad + r + col * (dotSize * multiplier + pad),
+              cy: cellY + pad + r + row * (dotSize * multiplier + pad),
+              r: r, fill: "#2e2e32",
             });
             tileG.appendChild(circle);
             dotsRow.push(circle);
@@ -83,10 +81,7 @@ export function createDisplays({ svgGroup, multiplier = 1.0 }) {
     svgGroup.appendChild(g);
 
     return {
-      geo,
-      tiles,
-      tilesX,
-      tilesY,
+      tiles, tilesX, tilesY,
       setDotColor(tx, ty, row, col, color) {
         const t = tiles[ty]?.[tx];
         const c = t?.dots[row]?.[col];
@@ -106,9 +101,7 @@ export function createDisplays({ svgGroup, multiplier = 1.0 }) {
           for (let tx = 0; tx < tilesX; tx++) {
             const t = tiles[ty][tx];
             if (!t) { rowSnap.push(null); continue; }
-            rowSnap.push(
-              t.dots.map(r => r.map(c => c.getAttribute("fill")))
-            );
+            rowSnap.push(t.dots.map(r => r.map(c => c.getAttribute("fill"))));
           }
           snap.push(rowSnap);
         }
@@ -125,9 +118,7 @@ export function createDisplays({ svgGroup, multiplier = 1.0 }) {
             for (let row = 0; row < 7; row++) {
               for (let col = 0; col < 5; col++) {
                 const fill = tileData[row]?.[col];
-                if (fill != null) {
-                  t.dots[row][col].setAttribute("fill", fill);
-                }
+                if (fill != null) t.dots[row][col].setAttribute("fill", fill);
               }
             }
           }
@@ -136,44 +127,35 @@ export function createDisplays({ svgGroup, multiplier = 1.0 }) {
     };
   }
 
-  function buildDotPanel(geo, mult) {
-    const { cx, cy, X, Y, dotSize, gap } = geo;
+  function buildDotPanel(pos, cfg) {
+    const { cx, cy } = pos;
+    const { X, Y, dotSize, gap } = cfg;
 
-    const m = mult;
-    const wInner = Wgrid(X, dotSize, gap) * m;
-    const hInner = Hgrid(Y, dotSize, gap) * m;
-    const w = (wInner + 2 * gap * m);
-    const h = (hInner + 2 * gap * m);
+    const wInner = Wgrid(X, dotSize, gap) * multiplier;
+    const hInner = Hgrid(Y, dotSize, gap) * multiplier;
+    const w = wInner + 2 * gap * multiplier;
+    const h = hInner + 2 * gap * multiplier;
     const x = cx - w / 2;
     const y = cy - h / 2;
 
     const g = el("g");
     const dots = Array.from({ length: Y }, () => Array.from({ length: X }, () => null));
 
-    // Tło
     g.appendChild(el("rect", { x, y, width: w, height: h, fill: "#2e2e32" }));
-    // Wewnętrzne tło
     g.appendChild(
-      el("rect", {
-        x: x + gap * m,
-        y: y + gap * m,
-        width: wInner,
-        height: hInner,
-        fill: "#000000",
-      })
+      el("rect", { x: x + gap * multiplier, y: y + gap * multiplier, width: wInner, height: hInner, fill: "#000000" })
     );
 
-    const r = (dotSize * m) / 2;
-    const step = dotSize * m + gap * m;
-    const pad = gap * m;
+    const r = (dotSize * multiplier) / 2;
+    const step = dotSize * multiplier + gap * multiplier;
+    const pad = gap * multiplier;
 
     for (let row = 0; row < Y; row++) {
       for (let col = 0; col < X; col++) {
         const circle = el("circle", {
           cx: x + pad + r + col * step,
           cy: y + pad + r + row * step,
-          r: r,
-          fill: "#2e2e32",
+          r: r, fill: "#2e2e32",
         });
         g.appendChild(circle);
         dots[row][col] = circle;
@@ -183,10 +165,7 @@ export function createDisplays({ svgGroup, multiplier = 1.0 }) {
     svgGroup.appendChild(g);
 
     return {
-      geo,
-      dots,
-      X,
-      Y,
+      dots, X, Y,
       setDotColor(row, col, color) {
         const c = dots[row]?.[col];
         if (c) c.setAttribute("fill", color);
@@ -211,19 +190,16 @@ export function createDisplays({ svgGroup, multiplier = 1.0 }) {
     };
   }
 
-  const big = buildTiledDisplay(displays.big, multiplier);
-  const leftPanel = buildTiledDisplay(panels.leftPanel, multiplier);
-  const rightPanel = buildTiledDisplay(panels.rightPanel, multiplier);
-  const topPanel = buildTiledDisplay(panels.topPanel, multiplier);
-  const long1 = buildDotPanel(longs.long1, multiplier);
-  const long2 = buildDotPanel(longs.long2, multiplier);
+  const big       = buildTiledDisplay(displaysPos.big,       tileConfigs.big);
+  const leftPanel = buildTiledDisplay(displaysPos.leftPanel, tileConfigs.leftPanel);
+  const rightPanel= buildTiledDisplay(displaysPos.rightPanel, tileConfigs.rightPanel);
+  const topPanel  = buildTiledDisplay(displaysPos.topPanel,  tileConfigs.topPanel);
+  const long1     = buildDotPanel(displaysPos.long1,         tileConfigs.long1);
+  const long2     = buildDotPanel(displaysPos.long2,         tileConfigs.long2);
 
-  return {
-    big,
-    left: leftPanel,
-    right: rightPanel,
-    top: topPanel,
-    long1,
-    long2,
-  };
+  const leftTriple  = [leftPanel.tiles[0][0],  leftPanel.tiles[0][1],  leftPanel.tiles[0][2]];
+  const rightTriple = [rightPanel.tiles[0][0], rightPanel.tiles[0][1], rightPanel.tiles[0][2]];
+  const topTriple   = [topPanel.tiles[0][0],   topPanel.tiles[0][1],   topPanel.tiles[0][2]];
+
+  return { big, left: leftPanel, right: rightPanel, top: topPanel, long1, long2, leftTriple, rightTriple, topTriple };
 }
