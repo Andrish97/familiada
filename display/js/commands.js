@@ -1,6 +1,6 @@
 // commands.js
-import { setUiLang } from "../../translation/translation.js?v=v2026-05-03T20495";
-import { sb } from "../../js/core/supabase.js?v=v2026-05-03T20495";
+import { setUiLang } from "../../translation/translation.js?v=v2026-05-03T21005";
+import { sb } from "../../js/core/supabase.js?v=v2026-05-03T21005";
 
 const tokenize = (raw) => {
   const tokens = [];
