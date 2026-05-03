@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8"/>
+  <title>Theme Builder – Position Displays</title>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #1a1a1a; color: #e0e0e0; font-family: system-ui, sans-serif; display: flex; flex-direction: column; height: 100vh; }
+
+    .toolbar {
+      display: flex; align-items: center; gap: 12px; padding: 10px 16px;
+      background: #2a2a2a; border-bottom: 1px solid #444; flex-wrap: wrap;
+    }
+    .toolbar label { font-size: 13px; font-weight: 600; }
+    .toolbar input[type="file"] { font-size: 12px; }
+    .toolbar button {
+      padding: 6px 14px; border: none; border-radius: 6px; cursor: pointer;
+      font-size: 13px; font-weight: 600;
+    }
+    .btn-export { background: #2e7d32; color: #fff; }
+    .btn-export:hover { background: #388e3c; }
+    .btn-reset { background: #c62828; color: #fff; }
+    .btn-reset:hover { background: #d32f2f; }
+
+    .workspace {
+      flex: 1; position: relative; overflow: auto; display: flex;
+      justify-content: center; align-items: flex-start; padding: 20px;
+    }
+
+    .canvas-frame {
+      position: relative; width: 1280px; height: 720px;
+      background: #111; border: 2px solid #555; flex-shrink: 0;
+    }
+
+    .canvas-frame svg.uploaded {
+      position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none;
+    }
+
+    .display-box {
+      position: absolute; border: 2px dashed rgba(255,255,100,0.8);
+      background: rgba(255,255,100,0.08); cursor: move; user-select: none;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; color: rgba(255,255,100,0.9);
+      pointer-events: auto;
+    }
+    .display-box:hover { background: rgba(255,255,100,0.15); }
+    .display-box.dragging { border-color: #fff; background: rgba(255,255,100,0.2); }
+
+    /* Center dot */
+    .display-box::after {
+      content: ''; position: absolute;
+      width: 6px; height: 6px; border-radius: 50%;
+      background: #ffeb3b; pointer-events: none;
+      transform: translate(-50%, -50%);
+      left: 50%; top: 50%;
+    }
+
+    .output-panel {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: #222; border-top: 1px solid #555;
+      max-height: 200px; overflow: auto; padding: 12px 16px;
+      font-family: 'Fira Code', monospace; font-size: 12px; line-height: 1.6;
+      white-space: pre-wrap; color: #8be9fd;
+    }
+    .output-panel .label { color: #aaa; }
+  </style>
+</head>
+<body>
+
+<div class="toolbar">
+  <label>SVG:</label>
+  <input type="file" id="svgUpload" accept=".svg"/>
+  <label style="margin-left:16px;">Grid:</label>
+  <input type="checkbox" id="showGrid" checked/>
+  <button class="btn-export" id="btnExport">Get Coordinates</button>
+  <button class="btn-reset" id="btnReset">Reset Positions</button>
+</div>
+
+<div class="workspace">
+  <div class="canvas-frame" id="frame">
+    <!-- Grid -->
+    <svg id="gridSvg" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:0.15">
+      <defs>
+        <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+          <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#fff" stroke-width="0.5"/>
+        </pattern>
+      </defs>
+      <rect width="1280" height="720" fill="url(#grid)"/>
+    </svg>
+    <!-- Uploaded SVG goes here -->
+    <!-- Display boxes go here -->
+  </div>
+</div>
+
+<div class="output-panel" id="output"><span class="label">Upload SVG and drag the 6 display boxes, then click "Get Coordinates".</span></div>
+
+<script>
+const NS = "http://www.w3.org/2000/svg";
+const frame = document.getElementById("frame");
+const output = document.getElementById("output");
+const showGrid = document.getElementById("showGrid");
+
+// Definicje 6 wyświetlaczy (domyślne wymiary i pozycje)
+const DISPLAYS = [
+  { key: "big",        label: "BIG",         w: 660, h: 235, cx: 640,   cy: 360    },
+  { key: "leftPanel",  label: "LEFT PANEL",  w: 80,  h: 50,  cx: 79.4,  cy: 360    },
+  { key: "rightPanel", label: "RIGHT PANEL", w: 80,  h: 50,  cx: 1200.6, cy: 360   },
+  { key: "topPanel",   label: "TOP PANEL",   w: 80,  h: 50,  cx: 640,   cy: 79.7   },
+  { key: "long1",      label: "LONG1",       w: 280, h: 50,  cx: 356.8, cy: 646.4  },
+  { key: "long2",      label: "LONG2",       w: 280, h: 50,  cx: 923.2, cy: 646.4  },
+];
+
+// Helper: cx/cy → left/top
+const toRect = (d) => ({
+  x: d.cx - d.w / 2,
+  y: d.cy - d.h / 2,
+  w: d.w,
+  h: d.h,
+});
+
+// Render display boxes
+const boxes = [];
+DISPLAYS.forEach((d) => {
+  const rect = toRect(d);
+  const div = document.createElement("div");
+  div.className = "display-box";
+  div.dataset.key = d.key;
+  div.style.left = rect.x + "px";
+  div.style.top = rect.y + "px";
+  div.style.width = rect.w + "px";
+  div.style.height = rect.h + "px";
+  div.textContent = d.label;
+  frame.appendChild(div);
+  boxes.push({ el: div, data: d });
+});
+
+// Drag
+let dragTarget = null, dragOffsetX = 0, dragOffsetY = 0;
+
+function pointerDown(e) {
+  const box = e.target.closest(".display-box");
+  if (!box) return;
+  e.preventDefault();
+  dragTarget = box;
+  box.classList.add("dragging");
+  const rect = box.getBoundingClientRect();
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  dragOffsetX = clientX - rect.left;
+  dragOffsetY = clientY - rect.top;
+}
+
+function pointerMove(e) {
+  if (!dragTarget) return;
+  e.preventDefault();
+  const frameRect = frame.getBoundingClientRect();
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  let x = clientX - frameRect.left - dragOffsetX;
+  let y = clientY - frameRect.top - dragOffsetY;
+  // Clamp
+  const w = parseFloat(dragTarget.style.width);
+  const h = parseFloat(dragTarget.style.height);
+  x = Math.max(0, Math.min(1280 - w, x));
+  y = Math.max(0, Math.min(720 - h, y));
+  dragTarget.style.left = x + "px";
+  dragTarget.style.top = y + "px";
+}
+
+function pointerUp() {
+  if (dragTarget) dragTarget.classList.remove("dragging");
+  dragTarget = null;
+}
+
+frame.addEventListener("mousedown", pointerDown);
+window.addEventListener("mousemove", pointerMove);
+window.addEventListener("mouseup", pointerUp);
+frame.addEventListener("touchstart", pointerDown, { passive: false });
+window.addEventListener("touchmove", pointerMove, { passive: false });
+window.addEventListener("touchend", pointerUp);
+
+// Upload SVG
+document.getElementById("svgUpload").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    let svg = ev.target.result;
+    // Strip outer <svg> tag, keep content only – we place it inside our frame
+    // But we want it at 1280x720, so let's just inject it as-is with proper sizing
+    // Remove existing uploaded SVGs
+    const existing = frame.querySelectorAll("svg.uploaded");
+    existing.forEach(s => s.remove());
+
+    // Parse and inject
+    const container = document.createElement("div");
+    container.innerHTML = svg;
+    const svgEl = container.querySelector("svg");
+    if (!svgEl) { output.textContent = "Error: no SVG element found in file."; return; }
+    svgEl.setAttribute("viewBox", "0 0 1280 720");
+    svgEl.setAttribute("width", "1280");
+    svgEl.setAttribute("height", "720");
+    svgEl.classList.add("uploaded");
+    svgEl.style.pointerEvents = "none";
+    frame.insertBefore(svgEl, frame.firstChild.nextSibling);
+    output.textContent = `Loaded: ${file.name}`;
+  };
+  reader.readAsText(file);
+});
+
+// Grid toggle
+showGrid.addEventListener("change", () => {
+  document.getElementById("gridSvg").style.opacity = showGrid.checked ? "0.15" : "0";
+});
+
+// Export coordinates
+document.getElementById("btnExport").addEventListener("click", () => {
+  const result = {};
+  boxes.forEach(({ el, data }) => {
+    const left = parseFloat(el.style.left);
+    const top = parseFloat(el.style.top);
+    result[data.key] = {
+      cx: Math.round((left + data.w / 2) * 10) / 10,
+      cy: Math.round((top + data.h / 2) * 10) / 10,
+    };
+  });
+
+  const js = `displays: {\n${Object.entries(result).map(([k, v]) =>
+    `      ${k.padEnd(12)}{ cx: ${String(v.cx).padStart(6)}, cy: ${v.cy} }`
+  ).join(",\n")}\n    }`;
+
+  const json = JSON.stringify(result, null, 2);
+
+  output.innerHTML = `<span class="label">// Copy-paste into your theme:</span>\n${js}\n\n<span class="label">// JSON:</span>\n${json}`;
+});
+
+// Reset
+document.getElementById("btnReset").addEventListener("click", () => {
+  boxes.forEach(({ el, data }) => {
+    const rect = toRect(data);
+    el.style.left = rect.x + "px";
+    el.style.top = rect.y + "px";
+  });
+  output.textContent = "Positions reset to defaults.";
+});
+</script>
+</body>
+</html>

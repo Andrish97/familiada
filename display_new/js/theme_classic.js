@@ -15,18 +15,30 @@ const darken  = (c, t) => mix(c, { r: 0, g: 0, b: 0 }, t);
 
 const DEFAULT_COLORS = { A: "#c4002f", B: "#2a62ff", BG: "#d21180" };
 
+// ============================================================
+// 1b. TŁO – dowolna deklaracja CSS background
+// ============================================================
+
+// Funkcja przyjmuje kolory bazowe, zwraca string CSS dla .layer-bg
+// Może to być solid, gradient, url(), cokolwiek:
+//   background: "#1a1a2e"
+//   background: "linear-gradient(to bottom, #0f0c29, #302b63, #24243e)"
+//   background: "radial-gradient(1400px 700px at 50% 25%, #e00 0%, #000 100%)"
+function computeBg(c) {
+  const G = hexToRgb(c.BG);
+  const top = lighten(G, 0.10);
+  const bot = darken(G, 0.85);
+  return `radial-gradient(1400px 700px at 50% 25%, ${rgbToHex(top)} 0%, ${rgbToHex(G)} 40%, ${rgbToHex(bot)} 100%)`;
+}
+
 function computeDerived(c) {
-  const A = hexToRgb(c.A), B = hexToRgb(c.B), G = hexToRgb(c.BG);
-  const bg0 = lighten(G, 0.10);
-  const bg1 = mix(G, darken(G, 0.75), 0.55);
-  const aAcc = mix(bg0, A, 0.18), bAcc = mix(bg0, B, 0.16);
+  const A = hexToRgb(c.A), B = hexToRgb(c.B);
   return {
     A_dark: rgbToHex(darken(A, 0.38)),
     B_dark: rgbToHex(darken(B, 0.35)),
     A_lamp: rgbToHex(lighten(A, 0.25)),
     B_lamp: rgbToHex(lighten(B, 0.18)),
     B_glow: rgbToHex(lighten(B, 0.28)),
-    bgGradient: `radial-gradient(1400px 700px at 50% 25%, ${rgbToHex(mix(aAcc, bAcc, 0.50))} 0%, ${rgbToHex(bg0)} 30%, ${rgbToHex(bg1)} 70%, ${rgbToHex(darken(G, 0.85))} 100%)`,
   };
 }
 
@@ -139,10 +151,11 @@ function applyControls(svg, controls) {
   }
 }
 
-function render(svg, d, controls) {
+function render(svg, bgLayer, d, colors, controls) {
   svg.setAttribute("viewBox", "0 0 1280 720");
   svg.innerHTML = buildSvgContent(d);
   applyControls(svg, controls);
+  bgLayer.style.background = computeBg(colors);
 }
 
 // ============================================================
@@ -153,8 +166,7 @@ export function createTheme(baseSvg, bgLayer, config = {}) {
   let controls = { A: false, B: false, ...config.controls };
 
   const derived = computeDerived(colors);
-  render(baseSvg, derived, controls);
-  bgLayer.style.background = derived.bgGradient;
+  render(baseSvg, bgLayer, derived, colors, controls);
 
   return {
     name: "classic",
@@ -170,8 +182,7 @@ export function createTheme(baseSvg, bgLayer, config = {}) {
     updateColors(newColors) {
       Object.assign(colors, newColors);
       const d = computeDerived(colors);
-      render(baseSvg, d, controls);
-      bgLayer.style.background = d.bgGradient;
+      render(baseSvg, bgLayer, d, colors, controls);
     },
     updateControls(newControls) {
       Object.assign(controls, newControls);
