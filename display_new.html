@@ -45,7 +45,72 @@
   <div id="gameScreen" class="hidden">
     <div id="displayRoot" class="display-root">
       <div class="layer-bg"></div>
-      <svg class="layer-base" id="baseSvg"></svg>
+      <svg class="layer-base" id="baseSvg" viewBox="0 0 1280 720">
+        <defs>
+          <linearGradient id="rimGrad" x1="0" y1="0" x2="1" y2="0">
+            <stop id="rimStop0" offset="0" stop-color="#c4002f"/>
+            <stop id="rimStop1" offset="0.35" stop-color="#7a001d"/>
+            <stop id="rimStop2" offset="0.65" stop-color="#102666"/>
+            <stop id="rimStop3" offset="1" stop-color="#2a62ff"/>
+          </linearGradient>
+          <linearGradient id="innerGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#e6eaef"/>
+            <stop offset="1" stop-color="#bfc7cf"/>
+          </linearGradient>
+          <linearGradient id="silverGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#f6f7f9"/>
+            <stop offset="0.55" stop-color="#d1d5db"/>
+            <stop offset="1" stop-color="#aab1bb"/>
+          </linearGradient>
+          <filter id="neonBlue" x="-60%" y="-120%" width="220%" height="340%">
+            <feDropShadow id="neonDS1" dx="0" dy="0" stdDeviation="4" flood-color="#6a95ff" flood-opacity="0.95"/>
+            <feDropShadow id="neonDS2" dx="0" dy="0" stdDeviation="10" flood-color="#6a95ff" flood-opacity="0.60"/>
+          </filter>
+          <radialGradient id="lampGrad_A" cx="35%" cy="30%" r="70%">
+            <stop offset="0%" stop-color="#ffffff" stop-opacity="0.65"/>
+            <stop offset="25%" stop-color="#dd3362"/>
+            <stop offset="100%" stop-color="#000000" stop-opacity="0.35"/>
+          </radialGradient>
+          <radialGradient id="lampGrad_B" cx="35%" cy="30%" r="70%">
+            <stop offset="0%" stop-color="#ffffff" stop-opacity="0.65"/>
+            <stop offset="25%" stop-color="#5483ff"/>
+            <stop offset="100%" stop-color="#000000" stop-opacity="0.35"/>
+          </radialGradient>
+        </defs>
+        <rect id="outerOval" x="-1.1" y="39.4" width="1282.2" height="641.1" rx="320.6" fill="url(#rimGrad)" stroke="#ffffff" stroke-width="6" stroke-opacity="0.9"/>
+        <rect id="innerOval" x="160" y="120" width="960" height="480" rx="240" fill="url(#innerGrad)"/>
+        <g id="frameLines">
+          <line x1="1087.9" y1="240" x2="1215.8" y2="166.1" stroke="#ffffff" stroke-opacity="0.9" stroke-width="4.5" stroke-linecap="round"/>
+          <line x1="1087.9" y1="480" x2="1215.8" y2="553.9" stroke="#ffffff" stroke-opacity="0.9" stroke-width="4.5" stroke-linecap="round"/>
+          <line x1="192.2" y1="240" x2="64.2" y2="166.1" stroke="#ffffff" stroke-opacity="0.9" stroke-width="4.5" stroke-linecap="round"/>
+          <line x1="192.2" y1="480" x2="64.2" y2="553.9" stroke="#ffffff" stroke-opacity="0.9" stroke-width="4.5" stroke-linecap="round"/>
+          <line x1="880" y1="600" x2="880" y2="680.6" stroke="#ffffff" stroke-opacity="0.9" stroke-width="4.5" stroke-linecap="round"/>
+          <line x1="880" y1="120" x2="880" y2="39.4" stroke="#ffffff" stroke-opacity="0.9" stroke-width="4.5" stroke-linecap="round"/>
+          <line x1="400" y1="600" x2="400" y2="680.6" stroke="#ffffff" stroke-opacity="0.9" stroke-width="4.5" stroke-linecap="round"/>
+          <line x1="400" y1="120" x2="400" y2="39.4" stroke="#ffffff" stroke-opacity="0.9" stroke-width="4.5" stroke-linecap="round"/>
+        </g>
+        <rect x="24" y="616" width="1232" height="60.8" fill="url(#silverGrad)"/>
+        <rect id="basebarOutlineA" x="24" y="616" width="616" height="60.8" fill="none" stroke="#c4002f" stroke-width="6" stroke-opacity="0.55" stroke-linejoin="round"/>
+        <rect id="basebarOutlineB" x="640" y="616" width="616" height="60.8" fill="none" stroke="#2a62ff" stroke-width="6" stroke-opacity="0.55" stroke-linejoin="round"/>
+        <rect x="25" y="617" width="1230" height="58.8" fill="none" stroke="#f6f7f9" stroke-width="1.5" stroke-opacity="0.7"/>
+        <g id="lampA">
+          <circle cx="68.16" cy="646.4" r="20.01" fill="#000" opacity="0.20"/>
+          <circle id="lampA_glow" cx="66.56" cy="644.48" r="21.61" fill="#dd3362" opacity="0" filter="url(#neonBlue)"/>
+          <circle id="lampA_off" cx="66.56" cy="644.48" r="19.2" fill="#0a0a0a" opacity="0.92"/>
+          <circle id="lampA_on" cx="66.56" cy="644.48" r="19.2" fill="url(#lampGrad_A)" opacity="0"/>
+          <circle id="lampA_highlight" cx="61.18" cy="638.72" r="4.22" fill="#fff" opacity="0.14"/>
+          <circle cx="66.56" cy="644.48" r="21.2" fill="none" stroke="rgba(255,255,255,0.42)" stroke-width="2" opacity="0.95"/>
+        </g>
+        <g id="lampB">
+          <circle cx="1213.44" cy="646.4" r="20.01" fill="#000" opacity="0.20"/>
+          <circle id="lampB_glow" cx="1211.84" cy="644.48" r="21.61" fill="#5483ff" opacity="0" filter="url(#neonBlue)"/>
+          <circle id="lampB_off" cx="1211.84" cy="644.48" r="19.2" fill="#0a0a0a" opacity="0.92"/>
+          <circle id="lampB_on" cx="1211.84" cy="644.48" r="19.2" fill="url(#lampGrad_B)" opacity="0"/>
+          <circle id="lampB_highlight" cx="1206.46" cy="638.72" r="4.22" fill="#fff" opacity="0.14"/>
+          <circle cx="1211.84" cy="644.48" r="21.2" fill="none" stroke="rgba(255,255,255,0.42)" stroke-width="2" opacity="0.95"/>
+        </g>
+        <text x="1260" y="708" text-anchor="end" font-family="sans-serif" font-size="18" fill="#ffffff" fill-opacity="0.25" letter-spacing="0.5">familiada.online</text>
+      </svg>
       <svg class="layer-displays" id="displaysSvg"><g id="displays"></g></svg>
     </div>
   </div>

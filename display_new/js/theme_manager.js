@@ -14,10 +14,11 @@ export function createThemeManager(baseSvg, bgLayer) {
   let activeName = null;
 
   const load = (name, config = {}) => {
-    const factory = THEMES[name];
+    const key = name.toLowerCase();
+    const factory = THEMES[key];
     if (!factory) throw new Error(`THEME: nieznany motyw "${name}". Dostępne: ${Object.keys(THEMES).join(", ")}`);
     activeTheme = factory(baseSvg, bgLayer, config);
-    activeName = name;
+    activeName = key;
     return activeTheme;
   };
 

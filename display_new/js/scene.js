@@ -550,13 +550,13 @@ export async function createScene() {
     // THEME <name> / THEME ACTIVE
     // ============================================================
     if (head === "THEME") {
-      const action = (tokens[1] ?? "").toUpperCase();
-      if (action === "ACTIVE") {
-        console.log(`[THEME] Aktywny motyw: ${themeMgr.getActive()}`);
+      const action = (tokens[1] ?? "");
+      if (action.toUpperCase() === "ACTIVE") {
+        console.log(themeMgr.getActive());
         return;
       }
       if (!action) { console.warn(`[THEME] Brak nazwy motywu. Dostępne: ${themeMgr.getAvailable().join(", ")}`); return; }
-      const themeName = unquote(action);
+      const themeName = unquote(action).toLowerCase();
       try {
         const newTheme = themeMgr.load(themeName, { colors: themeMgr.getActiveTheme()?.getColors?.() });
         displaysGroup.innerHTML = "";
