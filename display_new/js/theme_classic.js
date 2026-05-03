@@ -26,9 +26,10 @@ const DEFAULT_COLORS = { A: "#c4002f", B: "#2a62ff", BG: "#d21180" };
 //   background: "radial-gradient(1400px 700px at 50% 25%, #e00 0%, #000 100%)"
 function computeBg(c) {
   const G = hexToRgb(c.BG);
-  const top = lighten(G, 0.10);
-  const bot = darken(G, 0.85);
-  return `radial-gradient(1400px 700px at 50% 25%, ${rgbToHex(top)} 0%, ${rgbToHex(G)} 40%, ${rgbToHex(bot)} 100%)`;
+  const top = lighten(G, 0.18);
+  const mid = lighten(G, 0.05);
+  const bot = darken(G, 0.55);
+  return `radial-gradient(150vw 90vh at 50% 25%, ${rgbToHex(top)} 0%, ${rgbToHex(mid)} 30%, ${rgbToHex(G)} 55%, ${rgbToHex(bot)} 100%)`;
 }
 
 function computeDerived(c) {
@@ -53,13 +54,26 @@ function buildSvgContent(d) {
     <stop offset="0.65" stop-color="${d.B_dark}"/>
     <stop offset="1"    stop-color="${d.B}"/>
   </linearGradient>
+  <linearGradient id="rimShine" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0"   stop-color="#ffffff" stop-opacity="0.25"/>
+    <stop offset="45%"  stop-color="#ffffff" stop-opacity="0"/>
+    <stop offset="55%"  stop-color="#000000" stop-opacity="0"/>
+    <stop offset="100%" stop-color="#000000" stop-opacity="0.18"/>
+  </linearGradient>
   <linearGradient id="innerGrad" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0" stop-color="#e6eaef"/>
-    <stop offset="1" stop-color="#bfc7cf"/>
+    <stop offset="0"   stop-color="#e6eaef"/>
+    <stop offset="0.4" stop-color="#d1d8e0"/>
+    <stop offset="1"   stop-color="#bfc7cf"/>
+  </linearGradient>
+  <linearGradient id="innerShine" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0"   stop-color="#ffffff" stop-opacity="0.35"/>
+    <stop offset="35%" stop-color="#ffffff" stop-opacity="0"/>
+    <stop offset="1"   stop-color="#000000" stop-opacity="0.08"/>
   </linearGradient>
   <linearGradient id="silverGrad" x1="0" y1="0" x2="0" y2="1">
     <stop offset="0"    stop-color="#f6f7f9"/>
-    <stop offset="0.55" stop-color="#d1d5db"/>
+    <stop offset="0.45" stop-color="#e0e3e8"/>
+    <stop offset="0.55" stop-color="#c8cdd5"/>
     <stop offset="1"    stop-color="#aab1bb"/>
   </linearGradient>
   <filter id="neonBlue" x="-60%" y="-120%" width="220%" height="340%">
@@ -67,31 +81,33 @@ function buildSvgContent(d) {
     <feDropShadow id="neonDS2" dx="0" dy="0" stdDeviation="10" flood-color="${d.B_glow}" flood-opacity="0.60"/>
   </filter>
   <radialGradient id="lampGrad_A" cx="35%" cy="30%" r="70%">
-    <stop offset="0%"   stop-color="#ffffff" stop-opacity="0.65"/>
-    <stop offset="25%"  stop-color="${d.A_lamp}"/>
-    <stop offset="100%" stop-color="#000000" stop-opacity="0.35"/>
+    <stop offset="0%"   stop-color="#ffffff" stop-opacity="0.7"/>
+    <stop offset="20%"  stop-color="${d.A_lamp}"/>
+    <stop offset="100%" stop-color="#000000" stop-opacity="0.4"/>
   </radialGradient>
   <radialGradient id="lampGrad_B" cx="35%" cy="30%" r="70%">
-    <stop offset="0%"   stop-color="#ffffff" stop-opacity="0.65"/>
-    <stop offset="25%"  stop-color="${d.B_lamp}"/>
-    <stop offset="100%" stop-color="#000000" stop-opacity="0.35"/>
+    <stop offset="0%"   stop-color="#ffffff" stop-opacity="0.7"/>
+    <stop offset="20%"  stop-color="${d.B_lamp}"/>
+    <stop offset="100%" stop-color="#000000" stop-opacity="0.4"/>
   </radialGradient>
 </defs>
 
 <!-- Owale -->
-<rect id="outerOval" x="-1.1" y="39.4" width="1282.2" height="641.1" rx="320.6" fill="url(#rimGrad)" stroke="#ffffff" stroke-width="6" stroke-opacity="0.9"/>
+<rect id="outerOval" x="-1.1" y="39.4" width="1282.2" height="641.1" rx="320.6" fill="url(#rimGrad)"/>
+<rect x="0" y="40" width="1280" height="640" rx="320" fill="none" stroke="url(#rimShine)" stroke-width="8" stroke-opacity="0.7"/>
 <rect id="innerOval" x="160" y="120" width="960" height="480" rx="240" fill="url(#innerGrad)"/>
+<rect x="162" y="122" width="956" height="476" rx="238" fill="none" stroke="url(#innerShine)" stroke-width="4" stroke-opacity="0.5"/>
 
 <!-- Linie stadionu -->
-<g id="frameLines">
-  <line x1="1087.9" y1="240"   x2="1215.8" y2="166.1" stroke="#ffffff" stroke-opacity="0.9" stroke-width="4.5" stroke-linecap="round"/>
-  <line x1="1087.9" y1="480"   x2="1215.8" y2="553.9" stroke="#ffffff" stroke-opacity="0.9" stroke-width="4.5" stroke-linecap="round"/>
-  <line x1="192.2"  y1="240"   x2="64.2"    y2="166.1" stroke="#ffffff" stroke-opacity="0.9" stroke-width="4.5" stroke-linecap="round"/>
-  <line x1="192.2"  y1="480"   x2="64.2"    y2="553.9" stroke="#ffffff" stroke-opacity="0.9" stroke-width="4.5" stroke-linecap="round"/>
-  <line x1="880"    y1="600"   x2="880"     y2="680.6" stroke="#ffffff" stroke-opacity="0.9" stroke-width="4.5" stroke-linecap="round"/>
-  <line x1="880"    y1="120"   x2="880"     y2="39.4"  stroke="#ffffff" stroke-opacity="0.9" stroke-width="4.5" stroke-linecap="round"/>
-  <line x1="400"    y1="600"   x2="400"     y2="680.6" stroke="#ffffff" stroke-opacity="0.9" stroke-width="4.5" stroke-linecap="round"/>
-  <line x1="400"    y1="120"   x2="400"     y2="39.4"  stroke="#ffffff" stroke-opacity="0.9" stroke-width="4.5" stroke-linecap="round"/>
+<g id="frameLines" stroke-linecap="round">
+  <line x1="1087.9" y1="240"   x2="1215.8" y2="166.1" stroke="#ffffff" stroke-opacity="0.9" stroke-width="4.5"/>
+  <line x1="1087.9" y1="480"   x2="1215.8" y2="553.9" stroke="#ffffff" stroke-opacity="0.9" stroke-width="4.5"/>
+  <line x1="192.2"  y1="240"   x2="64.2"    y2="166.1" stroke="#ffffff" stroke-opacity="0.9" stroke-width="4.5"/>
+  <line x1="192.2"  y1="480"   x2="64.2"    y2="553.9" stroke="#ffffff" stroke-opacity="0.9" stroke-width="4.5"/>
+  <line x1="880"    y1="600"   x2="880"     y2="680.6" stroke="#ffffff" stroke-opacity="0.9" stroke-width="4.5"/>
+  <line x1="880"    y1="120"   x2="880"     y2="39.4"  stroke="#ffffff" stroke-opacity="0.9" stroke-width="4.5"/>
+  <line x1="400"    y1="600"   x2="400"     y2="680.6" stroke="#ffffff" stroke-opacity="0.9" stroke-width="4.5"/>
+  <line x1="400"    y1="120"   x2="400"     y2="39.4"  stroke="#ffffff" stroke-opacity="0.9" stroke-width="4.5"/>
 </g>
 
 <!-- Basebar -->
@@ -99,6 +115,8 @@ function buildSvgContent(d) {
 <rect id="basebarOutlineA" x="24" y="616" width="616" height="60.8" fill="none" stroke="${d.A}" stroke-width="6" stroke-opacity="0.55" stroke-linejoin="round"/>
 <rect id="basebarOutlineB" x="640" y="616" width="616" height="60.8" fill="none" stroke="${d.B}" stroke-width="6" stroke-opacity="0.55" stroke-linejoin="round"/>
 <rect x="25" y="617" width="1230" height="58.8" fill="none" stroke="#f6f7f9" stroke-width="1.5" stroke-opacity="0.7"/>
+<text x="320" y="655" text-anchor="middle" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="${d.A}" fill-opacity="0.85" letter-spacing="2">A</text>
+<text x="960" y="655" text-anchor="middle" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="${d.B}" fill-opacity="0.85" letter-spacing="2">B</text>
 
 <!-- Lampki -->
 <g id="lampA">
@@ -108,6 +126,7 @@ function buildSvgContent(d) {
   <circle id="lampA_on"   cx="66.56" cy="644.48" r="19.2"  fill="url(#lampGrad_A)" opacity="0"/>
   <circle id="lampA_highlight" cx="61.18" cy="638.72" r="4.22" fill="#fff" opacity="0.14"/>
   <circle cx="66.56" cy="644.48" r="21.2" fill="none" stroke="rgba(255,255,255,0.42)" stroke-width="2" opacity="0.95"/>
+  <circle cx="66.56" cy="644.48" r="19.2" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
 </g>
 <g id="lampB">
   <circle cx="1213.44" cy="646.4" r="20.01" fill="#000" opacity="0.20"/>
@@ -116,6 +135,7 @@ function buildSvgContent(d) {
   <circle id="lampB_on"   cx="1211.84" cy="644.48" r="19.2"  fill="url(#lampGrad_B)" opacity="0"/>
   <circle id="lampB_highlight" cx="1206.46" cy="638.72" r="4.22" fill="#fff" opacity="0.14"/>
   <circle cx="1211.84" cy="644.48" r="21.2" fill="none" stroke="rgba(255,255,255,0.42)" stroke-width="2" opacity="0.95"/>
+  <circle cx="1211.84" cy="644.48" r="19.2" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
 </g>
 
 <!-- Watermark -->

@@ -5,10 +5,11 @@
 // 1a. KOLOWE BAZOWE   – A, B, BG (użytkownik ustawia przez COLOR)
 // 1b. KOLOWE DERIVED  – policzone odcienie (opcjonalne)
 // 1c. TŁO             – dowolny CSS background: solid, gradient, url(), cokolwiek
-// 1d. KONTROLKI       – ON/OFF → atrybut LUB podmiana SVG (shape)
-// 2. SVG TEMPLATE      – wklejasz z Inkscape, kolory → ${d.A}, ${d.B_glow}…
-//                        SVG BEZ TŁA, viewBox="0 0 1280 720"
-// 3. WSPÓŁRZĘDNE       – sztywne {cx, cy} + multiplier → output
+//                       TŁO POKRYWA CAŁY EKRAN (viewport), nie tylko obszar 1280x720
+// 1d. KONTROLKI       – ON/OFF → zmiana atrybutu LUB podmiana fragmentu SVG
+// 2. SVG TEMPLATE     – wklejasz z Inkscape, kolory → ${d.A}, ${d.B}...
+//                       SVG BEZ TŁA, viewBox="0 0 1280 720"
+// 3. WSPÓŁRZĘDNE      – sztywne {cx, cy} wyświetlaczy w układzie 1280x720
 // ============================================================
 
 const hexToRgb = (hex) => {
@@ -21,7 +22,7 @@ const lighten = (c, t) => mix(c, { r: 255, g: 255, b: 255 }, t);
 const darken  = (c, t) => mix(c, { r: 0, g: 0, b: 0 }, t);
 
 // ============================================================
-// 1a. KOLOWE BAZOWE – to użytkownik ustawia przez COLOR A/B/BACKGROUND
+// 1a. KOLOWE BAZOWE – użytkownik ustawia przez COLOR A/B/BACKGROUND
 // ============================================================
 const DEFAULT_COLORS = { A: "#c4002f", B: "#2a62ff", BG: "#d21180" };
 
@@ -40,45 +41,35 @@ function computeDerived(c) {
 }
 
 // ============================================================
-// 1c. TŁO – dowolny CSS background dla .layer-bg
+// 1c. TŁO – CSS background pokrywający CAŁY EKRAN (viewport)
 // ============================================================
-// Zwróć STRING CSS – co tam chcesz:
-//   SOLID:      return c.BG
-//   GRADIENT:   return `linear-gradient(...)` lub `radial-gradient(...)`
-//   IMAGE:      return `url(...) center/cover no-repeat`
-//   MULTI:      return `color, url(...), linear-gradient(...)` (stacked)
-//
-// Możesz użyć kolorów bazowych c.A, c.B, c.BG albo derived.
+// Użyj jednostek viewport (vw/vh) aby tło wypełniało całe okno przeglądarki.
+// Możesz zwrócić: solid, gradient, url(), lub ich kombinację.
 function computeBg(c) {
+  // Przykład: radial-gradient na cały ekran
   const G = hexToRgb(c.BG);
-  const top = lighten(G, 0.10);
-  const bot = darken(G, 0.85);
-  return `radial-gradient(1400px 700px at 50% 25%, ${rgbToHex(top)} 0%, ${rgbToHex(G)} 40%, ${rgbToHex(bot)} 100%)`;
+  const top = lighten(G, 0.18);
+  const mid = lighten(G, 0.05);
+  const bot = darken(G, 0.55);
+  return `radial-gradient(150vw 90vh at 50% 25%, ${rgbToHex(top)} 0%, ${rgbToHex(mid)} 30%, ${rgbToHex(G)} 55%, ${rgbToHex(bot)} 100%)`;
+
+  // Inne przykłady:
+  // return c.BG;                                          // solid
+  // return `linear-gradient(to bottom, ${c.BG}, #000)`;    // gradient liniowy
+  // return `url(bg.jpg) center/cover no-repeat`;           // obrazek
 }
 
 // ============================================================
 // 1d. KONTROLKI – co się zmienia przy ON vs OFF
-//     Regułka może zmieniać atrybut LUB wymieniać fragment SVG (shape)
 // ============================================================
+// Każdy element to { id: "svgElementId", attr: "atrybut", on: "wartość", off: "wartość" }
+// Lub: { id: "...", shape: { on: "<svg>...</svg>", off: "<svg>...</svg>" } }
 const CONTROLS = {
   A: [
-    // Zmiana atrybutu:
-    { id: "lampA_glow",      attr: "opacity", on: "0.85", off: "0" },
-    { id: "lampA_on",        attr: "opacity", on: "0.98", off: "0" },
-    { id: "lampA_off",       attr: "opacity", on: "0.20", off: "0.92" },
-    { id: "lampA_highlight", attr: "opacity", on: "0.28", off: "0.14" },
-
-    // Przykładowa podmiana kształtu:
-    // { id: "shapeContainer", shape: {
-    //     on:  `<path d="M0 0 L10 10 L20 0" fill="${d.A}"/>`,
-    //     off: `<circle cx="10" cy="5" r="8" fill="#333"/>`,
-    // }},
+    // Przykład: { id: "lampA", attr: "opacity", on: "1", off: "0.2" },
   ],
   B: [
-    { id: "lampB_glow",      attr: "opacity", on: "0.85", off: "0" },
-    { id: "lampB_on",        attr: "opacity", on: "0.98", off: "0" },
-    { id: "lampB_off",       attr: "opacity", on: "0.20", off: "0.92" },
-    { id: "lampB_highlight", attr: "opacity", on: "0.28", off: "0.14" },
+    // Przykład: { id: "lampB", attr: "opacity", on: "1", off: "0.2" },
   ],
 };
 
@@ -103,36 +94,45 @@ function applyControls(svg, controls) {
 // ============================================================
 function buildSvgContent(d) {
   return `<defs>
-  <!-- gradienty z policzonymi kolorami -->
+  <!-- Zdefiniuj gradienty używając zmiennych:
+       ${d.A}, ${d.B}, ${d.A_dark}, ${d.B_dark}, ${d.A_lamp}, ${d.B_lamp}, ${d.B_glow}
+  -->
 </defs>
 
-<!-- Tutaj wklejasz SVG z Inkscape -->
-<!-- Kolory zamieniasz na ${d.A}, ${d.B}, ${d.A_dark}, ${d.B_glow} itd. -->
+<!--
+  Wklej tutaj SVG wyeksportowany z Inkscape (bez tagu <svg> i viewBox)
+  Zamień kolory na zmienne:
+    - kolor drużyny A:      ${d.A}, ${d.A_dark}, ${d.A_lamp}
+    - kolor drużyny B:      ${d.B}, ${d.B_dark}, ${d.B_lamp}, ${d.B_glow}
+    - dla tła: zostaw przezroczyste (fill="none" lub usuń), tło jest w .layer-bg
+  Elementy sterowane przez KONTROLKI oznacz unikalnymi id
+-->
 `;
 }
 
-function render(svg, d, colors, controls) {
+function render(svg, bgLayer, d, colors, controls) {
   svg.setAttribute("viewBox", "0 0 1280 720");
   svg.innerHTML = buildSvgContent(d);
   applyControls(svg, controls);
+  bgLayer.style.background = computeBg(colors);
 }
 
 // ============================================================
-// 3. WSPÓŁRZĘDNE WYŚWIETLACZY – sztywne, ręcznie wpisane 1280×720
+// 3. WSPÓŁRZĘDNE WYŚWIETLACZY – sztywne {cx, cy} w układzie 1280×720
 // ============================================================
+// Użyj theme_builder.html aby przeciągnąć wyświetlacze i pobrać współrzędne.
 export function createTheme(baseSvg, bgLayer, config = {}) {
   let colors   = { ...DEFAULT_COLORS, ...config.colors };
   let controls = { A: false, B: false, ...config.controls };
 
   const derived = computeDerived(colors);
-  render(baseSvg, derived, colors, controls);
-  bgLayer.style.background = computeBg(colors);
+  render(baseSvg, bgLayer, derived, colors, controls);
 
   return {
-    name: "nazwa_motywu",
+    name: "temat_xyz",  // <-- zmień na nazwę swojego motywu
     displays: {
-      big:        { cx: 640,    cy: 360   },
-      leftPanel:  { cx: 79.4,   cy: 360   },
+      big:        { cx: 640,    cy: 360   },  // <-- użyj theme_builder.html
+      leftPanel:  { cx: 79.4,   cy: 360   },  //     aby ustalić te wartości
       rightPanel: { cx: 1200.6, cy: 360   },
       topPanel:   { cx: 640,    cy: 79.7  },
       long1:      { cx: 356.8,  cy: 646.4 },
@@ -142,8 +142,7 @@ export function createTheme(baseSvg, bgLayer, config = {}) {
     updateColors(newColors) {
       Object.assign(colors, newColors);
       const d = computeDerived(colors);
-      render(baseSvg, d, colors, controls);
-      bgLayer.style.background = computeBg(colors);
+      render(baseSvg, bgLayer, d, colors, controls);
     },
     updateControls(newControls) {
       Object.assign(controls, newControls);
