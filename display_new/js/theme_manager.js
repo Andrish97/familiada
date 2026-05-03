@@ -1,15 +1,30 @@
 // theme_manager.js
-// Menadżer motywów – ładowanie, przełączanie, THEME command
+// Menadżer motywów – rejestr z themes.json, dynamiczne ładowanie, THEME command
 
-import { createTheme as createThemeClassic } from "./theme_classic.js";
+let THEMES = {};
+let DEFAULT_THEME = "classic";
 
-const THEMES = {
-  classic: createThemeClassic,
-};
+async function initRegistry() {
+  try {
+    const res = await fetch("./display_new/js/themes.json");
+    const json = await res.json();
+    DEFAULT_THEME = json.default ?? DEFAULT_THEME;
+    for (const entry of json.themes) {
+      const mod = await import(entry.module);
+      THEMES[entry.key] = mod.createTheme;
+    }
+  } catch (e) {
+    console.warn("[theme_manager] Fallback do static:", e.message);
+  }
+  if (Object.keys(THEMES).length === 0) {
+    const { createTheme: createThemeClassic } = await import("./theme_classic.js");
+    THEMES.classic = createThemeClassic;
+  }
+}
 
-const DEFAULT_THEME = "classic";
+export async function createThemeManager(baseSvg, bgLayer) {
+  await initRegistry();
 
-export function createThemeManager(baseSvg, bgLayer) {
   let activeTheme = null;
   let activeName = null;
 
@@ -25,6 +40,7 @@ export function createThemeManager(baseSvg, bgLayer) {
   const getActive = () => activeName;
   const getActiveTheme = () => activeTheme;
   const getAvailable = () => Object.keys(THEMES);
+  const getDefault = () => DEFAULT_THEME;
 
   const updateColors = (colors) => {
     if (!activeTheme) return;
@@ -36,7 +52,6 @@ export function createThemeManager(baseSvg, bgLayer) {
     activeTheme.updateControls?.(controls);
   };
 
-  // Load default
   load(DEFAULT_THEME);
 
   return {
@@ -46,6 +61,6 @@ export function createThemeManager(baseSvg, bgLayer) {
     getAvailable,
     updateColors,
     updateControls,
-    getDefault: () => DEFAULT_THEME,
+    getDefault,
   };
 }

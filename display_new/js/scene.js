@@ -20,7 +20,7 @@ export async function createScene() {
   const bgLayer = document.querySelector(".layer-bg");
   const displaysGroup = $("displays");
 
-  const themeMgr = createThemeManager(baseSvg, bgLayer);
+  const themeMgr = await createThemeManager(baseSvg, bgLayer);
   const activeTheme = themeMgr.getActiveTheme();
   let displays = createDisplays({ svgGroup: displaysGroup, theme: activeTheme });
 

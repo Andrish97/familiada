@@ -1,0 +1,10 @@
+{
+  "default": "classic",
+  "themes": [
+    {
+      "key": "classic",
+      "label": "Classic",
+      "module": "./theme_classic.js"
+    }
+  ]
+}
