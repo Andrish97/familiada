@@ -1,6 +1,5 @@
 // theme_classic.js
-// Klasyczny motyw – SVG 1280×720 (tylko dekoracja)
-// Wyświetlacze są rysowane osobno przez displays.js
+console.log("[Theme: Classic] Loaded v2");
 
 const hexToRgb = (hex) => {
   const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -18,8 +17,8 @@ function computeDerived(c) {
   return {
     A_dark: rgbToHex(darken(A, 0.38)),
     B_dark: rgbToHex(darken(B, 0.35)),
-    A_lamp: rgbToHex(lighten(A, 0.15)),
-    B_lamp: rgbToHex(lighten(B, 0.15)),
+    A_lamp: rgbToHex(lighten(A, 0.25)),
+    B_lamp: rgbToHex(lighten(B, 0.22)),
     B_glow: rgbToHex(lighten(B, 0.28)),
   };
 }
@@ -32,21 +31,20 @@ function computeBg(c) {
   return `radial-gradient(150vw 90vh at 50% 25%, ${rgbToHex(top)} 0%, ${rgbToHex(mid)} 30%, ${rgbToHex(G)} 55%, ${rgbToHex(bot)} 100%)`;
 }
 
-// Mapowanie kontrolek na ID z display.svg
 const CONTROLS = {
   A: [
-    { id: "circle10837", attr: "opacity", on: "0.85", off: "0" },    // lampRed_glow
-    { id: "circle10839", attr: "opacity", on: "0.98", off: "0" },    // lampRed_on
-    { id: "circle10838", attr: "opacity", on: "0.20", off: "0.92" },   // lampRed_off
-    { id: "rect10834",   attr: "stroke-opacity", on: "1.0", off: "0.55" }, // basebar_A border
-    { id: "rect10834",   attr: "filter", on: "url(#neonRed)", off: "none" }, // basebar_A glow
+    { id: "circle10837", attr: "opacity", on: "0.85", off: "0" },
+    { id: "circle10839", attr: "opacity", on: "0.98", off: "0" },
+    { id: "circle10838", attr: "opacity", on: "0.20", off: "0.92" },
+    { id: "rect10834",   attr: "stroke-opacity", on: "1.0", off: "0.55" },
+    { id: "rect10834",   attr: "filter", on: "url(#neonRed)", off: "none" },
   ],
   B: [
-    { id: "circle10843", attr: "opacity", on: "0.85", off: "0" },    // lampBlue_glow
-    { id: "circle10845", attr: "opacity", on: "0.98", off: "0" },    // lampBlue_on
-    { id: "circle10844", attr: "opacity", on: "0.20", off: "0.92" },   // lampBlue_off
-    { id: "rect10835",   attr: "stroke-opacity", on: "1.0", off: "0.55" }, // basebar_B border
-    { id: "rect10835",   attr: "filter", on: "url(#neonBlue)", off: "none" }, // basebar_B glow
+    { id: "circle10843", attr: "opacity", on: "0.85", off: "0" },
+    { id: "circle10845", attr: "opacity", on: "0.98", off: "0" },
+    { id: "circle10844", attr: "opacity", on: "0.20", off: "0.92" },
+    { id: "rect10835",   attr: "stroke-opacity", on: "1.0", off: "0.55" },
+    { id: "rect10835",   attr: "filter", on: "url(#neonBlue)", off: "none" },
   ],
 };
 
@@ -63,8 +61,8 @@ function applyControls(svg, controls) {
 
 function buildSvgContent(d) {
   return `<defs id="defs11">
-  <!-- RIM GRADIENT: objectBoundingBox gwarantuje rozpiętość 0-100% elementu -->
-  <linearGradient id="rimGrad" gradientUnits="objectBoundingBox" x1="0" y1="0.5" x2="1" y2="0.5">
+  <!-- RIM GRADIENT: Używamy bezwzględnych współrzędnych x1/x2 dla pewności -->
+  <linearGradient id="rimGrad" gradientUnits="userSpaceOnUse" x1="17" y1="341" x2="1263" y2="341">
     <stop offset="0"    stop-color="${d.A}"/>
     <stop offset="0.35" stop-color="${d.A_dark}"/>
     <stop offset="0.65" stop-color="${d.B_dark}"/>
@@ -82,15 +80,14 @@ function buildSvgContent(d) {
     <stop offset="1"    stop-color="#aab1bb" id="stop5" />
   </linearGradient>
 
-  <!-- Filtry z powiększonym obszarem (x, y, width, height), aby nie uciekały cienie -->
-  <filter id="neonRed" x="-100%" y="-100%" width="300%" height="300%" filterUnits="objectBoundingBox">
-    <feDropShadow dx="0" dy="0" stdDeviation="6"  flood-color="${d.A}" flood-opacity="0.9"/>
-    <feDropShadow dx="0" dy="0" stdDeviation="14" flood-color="${d.A_dark}" flood-opacity="0.5"/>
+  <filter id="neonRed" x="-100" y="-100" width="1000" height="300" filterUnits="userSpaceOnUse">
+    <feDropShadow dx="0" dy="0" stdDeviation="8"  flood-color="${d.A}" flood-opacity="1"/>
+    <feDropShadow dx="0" dy="0" stdDeviation="20" flood-color="${d.A_dark}" flood-opacity="0.6"/>
   </filter>
 
-  <filter id="neonBlue" x="-100%" y="-100%" width="300%" height="300%" filterUnits="objectBoundingBox">
-    <feDropShadow dx="0" dy="0" stdDeviation="6"  flood-color="${d.B}" flood-opacity="0.9"/>
-    <feDropShadow dx="0" dy="0" stdDeviation="14" flood-color="${d.B_dark}" flood-opacity="0.5"/>
+  <filter id="neonBlue" x="700" y="-100" width="1000" height="300" filterUnits="userSpaceOnUse">
+    <feDropShadow dx="0" dy="0" stdDeviation="8"  flood-color="${d.B}" flood-opacity="1"/>
+    <feDropShadow dx="0" dy="0" stdDeviation="20" flood-color="${d.B_dark}" flood-opacity="0.6"/>
   </filter>
 
   <radialGradient id="lampGrad_Red" cx="61.616001" cy="798.21082" r="34.048" fx="61.616001" fy="798.21082" gradientUnits="userSpaceOnUse">
