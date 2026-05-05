@@ -16,8 +16,8 @@ const DEFAULT_COLORS = { A: "#c4002f", B: "#2a62ff", BG: "#d21180" };
 function computeDerived(c) {
   const A = hexToRgb(c.A), B = hexToRgb(c.B);
   return {
-    A_dark: rgbToHex(darken(A, 0.38)),
-    B_dark: rgbToHex(darken(B, 0.35)),
+    A_dark: rgbToHex(darken(A, 0.35)),
+    B_dark: rgbToHex(darken(B, 0.32)),
     A_lamp: rgbToHex(lighten(A, 0.25)),
     B_lamp: rgbToHex(lighten(B, 0.18)),
     B_glow: rgbToHex(lighten(B, 0.28)),
@@ -116,8 +116,8 @@ function buildSvgContent(d) {
 <!-- Basebar with lamps -->
 <g id="basebar" transform="matrix(0.8,0,0,0.8,1.5258789e-5,-18.413443)">
   <rect x="30" y="769.93884" width="1540" height="76" fill="url(#silverGrad)" id="rect10833"/>
-  <rect id="rect10834" x="30" y="769.93884" width="770" height="76" fill="none" stroke="${d.A}" stroke-width="6" stroke-opacity="0.55" stroke-linejoin="round" style="display:inline"/>
-  <rect id="rect10835" x="800" y="769.93884" width="770" height="76" fill="none" stroke="${d.B}" stroke-width="6" stroke-opacity="0.55" stroke-linejoin="round" style="display:inline"/>
+  <rect id="rect10834" x="30" y="769.93884" width="770" height="76" fill="none" stroke="${d.A}" stroke-width="4" stroke-opacity="0.7" stroke-linejoin="round" style="display:inline"/>
+  <rect id="rect10835" x="800" y="769.93884" width="770" height="76" fill="none" stroke="${d.B}" stroke-width="4" stroke-opacity="0.7" stroke-linejoin="round" style="display:inline"/>
   <text x="320" y="655" text-anchor="middle" font-family="Arial,sans-serif" font-size="25.6" font-weight="bold" fill="${d.A}" fill-opacity="0.85" letter-spacing="1.6">A</text>
   <text x="960" y="655" text-anchor="middle" font-family="Arial,sans-serif" font-size="25.6" font-weight="bold" fill="${d.B}" fill-opacity="0.85" letter-spacing="1.6">B</text>
 
