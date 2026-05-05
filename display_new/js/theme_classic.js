@@ -96,7 +96,7 @@ function buildSvgContent(d) {
 </defs>
 
 <!-- Outer oval (rim) -->
-<rect id="outerOval" x="17.21785" y="30.195477" width="1245.5643" height="622.78217" rx="336" fill="url(#rimGrad)" stroke="#ffffff" stroke-width="4.8" stroke-opacity="0.9"/>
+<rect id="outerOval" x="17.21785" y="30.195477" width="1245.5643" height="622.78217" rx="336" fill="url(#rimGrad)" stroke="#ffffff" stroke-width="4.8" stroke-opacity="0.9" style="display:inline;fill:url(#rimGrad)"/>
 
 <!-- Stadium lines -->
 <g id="frameLines" transform="matrix(0.8,0,0,0.8,1.5258789e-5,-18.413443)">
@@ -111,13 +111,13 @@ function buildSvgContent(d) {
 </g>
 
 <!-- Inner oval (light gradient) -->
-<rect id="innerOval" x="160.09785" y="101.63547" width="959.80432" height="479.90216" rx="248" fill="url(#innerGrad)"/>
+<rect id="innerOval" x="160.09785" y="101.63547" width="959.80432" height="479.90216" rx="248" fill="url(#innerGrad)" style="display:inline;fill:url(#innerGrad);stroke-width:0.8"/>
 
 <!-- Basebar with lamps -->
 <g id="basebar" transform="matrix(0.8,0,0,0.8,1.5258789e-5,-18.413443)">
   <rect x="30" y="769.93884" width="1540" height="76" fill="url(#silverGrad)" id="rect10833"/>
-  <rect id="rect10834" x="30" y="769.93884" width="770" height="76" fill="none" stroke="${d.A}" stroke-width="6" stroke-opacity="0.55" stroke-linejoin="round"/>
-  <rect id="rect10835" x="800" y="769.93884" width="770" height="76" fill="none" stroke="${d.B}" stroke-width="6" stroke-opacity="0.55" stroke-linejoin="round"/>
+  <rect id="rect10834" x="30" y="769.93884" width="770" height="76" fill="none" stroke="${d.A}" stroke-width="6" stroke-opacity="0.55" stroke-linejoin="round" style="display:inline"/>
+  <rect id="rect10835" x="800" y="769.93884" width="770" height="76" fill="none" stroke="${d.B}" stroke-width="6" stroke-opacity="0.55" stroke-linejoin="round" style="display:inline"/>
   <rect id="rect10836" x="31" y="770.93884" width="1538" height="74" fill="none" stroke="#f6f7f9" stroke-width="1.5" stroke-opacity="0.7" style="display:none"/>
   <text x="320" y="655" text-anchor="middle" font-family="Arial,sans-serif" font-size="25.6" font-weight="bold" fill="${d.A}" fill-opacity="0.85" letter-spacing="1.6">A</text>
   <text x="960" y="655" text-anchor="middle" font-family="Arial,sans-serif" font-size="25.6" font-weight="bold" fill="${d.B}" fill-opacity="0.85" letter-spacing="1.6">B</text>
