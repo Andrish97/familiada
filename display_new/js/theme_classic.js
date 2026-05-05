@@ -68,7 +68,7 @@ function applyControls(svg, controls) {
 
 function buildSvgContent(d) {
   return `<defs id="defs11">
-  <linearGradient id="rimGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+  <linearGradient id="rimGrad" gradientUnits="objectBoundingBox" x1="0%" y1="0%" x2="100%" y2="0%">
     <stop offset="0"    stop-color="${d.A}"/>
     <stop offset="0.35" stop-color="${d.A_dark}"/>
     <stop offset="0.65" stop-color="${d.B_dark}"/>
@@ -83,13 +83,13 @@ function buildSvgContent(d) {
     <stop offset="0.55" stop-color="#d1d5db"/>
     <stop offset="1"    stop-color="#aab1bb"/>
   </linearGradient>
-  <filter id="neonRed" x="-100%" y="-100%" width="300%" height="300%">
-    <feDropShadow dx="0" dy="0" stdDeviation="6"  flood-color="${d.A_lamp}" flood-opacity="0.9"/>
-    <feDropShadow dx="0" dy="0" stdDeviation="15" flood-color="${d.A_dark}" flood-opacity="0.5"/>
+  <filter id="neonRed" x="-150%" y="-150%" width="400%" height="400%">
+    <feDropShadow dx="0" dy="0" stdDeviation="8"  flood-color="${d.A_lamp}" flood-opacity="0.95"/>
+    <feDropShadow dx="0" dy="0" stdDeviation="20" flood-color="${d.A_dark}" flood-opacity="0.6"/>
   </filter>
-  <filter id="neonBlue" x="-100%" y="-100%" width="300%" height="300%">
-    <feDropShadow dx="0" dy="0" stdDeviation="6"  flood-color="${d.B_glow}" flood-opacity="0.9"/>
-    <feDropShadow dx="0" dy="0" stdDeviation="15" flood-color="${d.B_dark}" flood-opacity="0.5"/>
+  <filter id="neonBlue" x="-150%" y="-150%" width="400%" height="400%">
+    <feDropShadow dx="0" dy="0" stdDeviation="8"  flood-color="${d.B_glow}" flood-opacity="0.95"/>
+    <feDropShadow dx="0" dy="0" stdDeviation="20" flood-color="${d.B_dark}" flood-opacity="0.6"/>
   </filter>
   <radialGradient id="lampGrad_A" cx="61.616001" cy="798.21082" r="34.048" fx="61.616001" fy="798.21082" gradientUnits="userSpaceOnUse">
     <stop offset="0%"   stop-color="#ffffff" stop-opacity="0.65"/>
