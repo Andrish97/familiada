@@ -71,9 +71,8 @@ function buildSvgContent(d) {
     <stop offset="1"    stop-color="${d.B}"/>
   </linearGradient>
   <linearGradient id="innerGrad" x1="141.50781" y1="212.21851" x2="141.50781" y2="1060.5737" gradientTransform="matrix(1.1313709,0,0,0.56568542,1.5258789e-5,-18.413443)" gradientUnits="userSpaceOnUse">
-    <stop offset="0"   stop-color="#f0f2f5"/>
-    <stop offset="0.4" stop-color="#e0e5ea"/>
-    <stop offset="1"   stop-color="#d0d8e0"/>
+    <stop offset="0"   stop-color="#e6eaef"/>
+    <stop offset="1" stop-color="#bfc7cf"/>
   </linearGradient>
   <linearGradient id="silverGrad" x1="6.6645017" y1="3465.8503" x2="6.6645017" y2="3807.9612" gradientTransform="scale(4.5014618,0.22215006)" gradientUnits="userSpaceOnUse">
     <stop offset="0"    stop-color="#f6f7f9"/>
@@ -119,7 +118,7 @@ function buildSvgContent(d) {
   <rect x="30" y="769.93884" width="1540" height="76" fill="url(#silverGrad)" id="rect10833"/>
   <rect id="rect10834" x="30" y="769.93884" width="770" height="76" fill="none" stroke="${d.A}" stroke-width="6" stroke-opacity="0.55" stroke-linejoin="round"/>
   <rect id="rect10835" x="800" y="769.93884" width="770" height="76" fill="none" stroke="${d.B}" stroke-width="6" stroke-opacity="0.55" stroke-linejoin="round"/>
-  <rect x="31" y="770.93884" width="1538" height="74" fill="none" stroke="#f6f7f9" stroke-width="1.5" stroke-opacity="0.7"/>
+  <rect id="rect10836" x="31" y="770.93884" width="1538" height="74" fill="none" stroke="#f6f7f9" stroke-width="1.5" stroke-opacity="0.7" style="display:none"/>
   <text x="320" y="655" text-anchor="middle" font-family="Arial,sans-serif" font-size="25.6" font-weight="bold" fill="${d.A}" fill-opacity="0.85" letter-spacing="1.6">A</text>
   <text x="960" y="655" text-anchor="middle" font-family="Arial,sans-serif" font-size="25.6" font-weight="bold" fill="${d.B}" fill-opacity="0.85" letter-spacing="1.6">B</text>
 
