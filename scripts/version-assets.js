@@ -19,7 +19,7 @@ const version = process.env.VERSION_HASH || `v${new Date().toISOString().replace
 // ─── 1. Update ALL HTML files ───────────────────────────────────────────────
 
 const htmlFiles = [
-  'index.html', 'settings.html', 'host.html', 'control.html', 'display.html',
+  'index.html', 'settings.html', 'host.html', 'control.html', 'display.html', 'display_new.html',
   'buzzer.html', 'builder.html', 'editor.html', 'bases.html', 'base-explorer.html',
   'logo-editor.html', 'login.html', 'account.html', 'confirm.html', 'reset.html',
   'connect-device.html', 'polls.html', 'poll-go.html', 'poll-qr.html',
@@ -60,7 +60,7 @@ for (const file of htmlFiles) {
 
 // ─── 2. Update ALL JS files (import ... from "...js?v=xxx") ─────────────────
 
-const jsDirs = ['js/', 'logo-editor/js/', 'translation/', 'display/js/', 'control/js/'];
+const jsDirs = ['js/', 'logo-editor/js/', 'translation/', 'display/js/', 'display_new/js/', 'control/js/'];
 let jsUpdated = 0;
 
 for (const jsDir of jsDirs) {
