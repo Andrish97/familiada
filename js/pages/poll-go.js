@@ -1,8 +1,8 @@
 // js/pages/poll-go.js
-import { sb } from "../core/supabase.js?v=v2026-05-04T07282";
-import { getUser } from "../core/auth.js?v=v2026-05-04T07282";
-import { initI18n, t } from "../../translation/translation.js?v=v2026-05-04T07282";
-import { alertModal } from "../core/modal.js?v=v2026-05-04T07282";
+import { sb } from "../core/supabase.js?v=v2026-05-05T08372";
+import { getUser } from "../core/auth.js?v=v2026-05-05T08372";
+import { initI18n, t } from "../../translation/translation.js?v=v2026-05-05T08372";
+import { alertModal } from "../core/modal.js?v=v2026-05-05T08372";
 
 initI18n({ withSwitcher: true });
 
