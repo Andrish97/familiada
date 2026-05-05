@@ -2,123 +2,99 @@
 
 /**
  * scripts/version-assets.js
- * Globalny cache-buster: JEDEN timestamp dla WSZYSTKICH assetów.
- * Działa automatycznie — nowy plik? Dostaje ten sam ?v=.
- * Zmieniony plik? Nowy deploy → nowy timestamp → cache bust.
- * Run ONLY in GitHub Actions (not committed back to repo).
+ * Globalny cache-buster: JEDEN timestamp dla WSZYSTKICH zasobów w całym repozytorium.
+ * Przeszukuje automatycznie wszystkie pliki tekstowe i aktualizuje odniesienia do zasobów.
  */
 
 const fs = require('fs');
 const path = require('path');
 
 const ROOT = process.cwd();
-
-// Globalny version - użyj SHA z env albo timestamp
 const version = process.env.VERSION_HASH || `v${new Date().toISOString().replace(/[:.]/g, '').slice(0, -5)}`;
 
-// ─── 1. Update ALL HTML files ───────────────────────────────────────────────
+// Rozszerzenia plików, które chcemy wersjonować (zasoby)
+const ASSET_EXT = 'js|css|json|png|svg|ico|jpg|jpeg|gif|woff2?|ttf|otf|webp|avif|xml|webmanifest|eot|mp3|wav|ogg|mp4|webm';
 
-const htmlFiles = [
-  'index.html', 'settings.html', 'host.html', 'control.html', 'display.html', 'display_new.html',
-  'buzzer.html', 'builder.html', 'editor.html', 'bases.html', 'base-explorer.html',
-  'logo-editor.html', 'login.html', 'account.html', 'confirm.html', 'reset.html',
-  'connect-device.html', 'polls.html', 'poll-go.html', 'poll-qr.html',
-  'poll-text.html', 'poll-points.html', 'polls-hub.html', 'marketplace.html',
-  'subscriptions.html', 'privacy.html', 'maintenance.html', '404.html', 'manual.html',
-  'settings-tools/editor_5x7.html', 'settings-tools/exporterandeditor.html',
-  'settings-tools/kora-builder.html',
-];
+// Rozszerzenia plików, w których szukamy odniesień do zasobów (pliki źródłowe)
+const SOURCE_EXT = ['.html', '.js', '.json', '.css', '.webmanifest'];
 
-let htmlUpdated = 0;
-for (const file of htmlFiles) {
-  const htmlPath = path.join(ROOT, file);
-  if (!fs.existsSync(htmlPath)) {
-    continue;
-  }
+// Katalogi do całkowitego pominięcia
+const IGNORE_DIRS = ['.git', 'node_modules', '.claude', '.qwen', '.github', 'audio', 'img'];
 
-  let content = fs.readFileSync(htmlPath, 'utf8');
-  const originalContent = content;
-
-  // Zamień istniejące ?v= na nowy version (relative URLs: /, ./, ../, lub bez prefiksu)
-  content = content.replace(/(=["'])([a-zA-Z0-9_/.-]*\.(?:js|css|json|png|svg|ico|jpg|jpeg|gif|woff2?|ttf|otf|webp|avif|xml|webmanifest|eot))\?v=[a-zA-Z0-9T:-]+/g, `$1$2?v=${version}`);
-  // Dodaj ?v= tam gdzie go brakuje (relative URLs)
-  content = content.replace(/(=["'])([a-zA-Z0-9_/.-]*\.(?:js|css|json|png|svg|ico|jpg|jpeg|gif|woff2?|ttf|otf|webp|avif|xml|webmanifest|eot))(?=['"])/g, `$1$2?v=${version}`);
-
-  // Meta version
-  content = content.replace(/<meta name="app-version" content="[^"]*"/g, `<meta name="app-version" content="${version}"`);
-
-  // Dodaj Cache-Control no-store (jeśli jeszcze nie ma)
-  if (!content.includes('http-equiv="Cache-Control"')) {
-    content = content.replace(/<head>/i, `<head>\n  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">`);
-  }
-
-  if (content !== originalContent) {
-    fs.writeFileSync(htmlPath, content, 'utf8');
-    htmlUpdated++;
-  }
-}
-
-// ─── 2. Update ALL JS files (import ... from "...js?v=xxx") ─────────────────
-
-const jsDirs = ['js/', 'logo-editor/js/', 'translation/', 'display/js/', 'display_new/js/', 'control/js/'];
-let jsUpdated = 0;
-
-for (const jsDir of jsDirs) {
-  const dirPath = path.join(ROOT, jsDir);
-  if (!fs.existsSync(dirPath)) {
-    continue;
-  }
-
-  function walk(dir) {
-    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-      const full = path.join(dir, entry.name);
-      if (entry.isDirectory()) { walk(full); continue; }
-      if (!entry.name.endsWith('.js')) continue;
-
-      let content = fs.readFileSync(full, 'utf8');
-      const originalContent = content;
-      let changed = false;
-
-      // import from "...js?v=xxx" - dopasowuje WSZYSTKIE formaty wersji
-      content = content.replace(/(from\s+['"])([a-zA-Z0-9_./-]+\.(?:js|json))\?v=[a-zA-Z0-9T:-]+(['"])/g, (m, pre, rel, post) => {
-        changed = true;
-        return `${pre}${rel}?v=${version}${post}`;
-      });
-      // import from "...js" (bez ?v=)
-      content = content.replace(/(from\s+['"])([a-zA-Z0-9_./-]+\.(?:js|json))(?=['"])/g, (m, pre, rel) => {
-        changed = true;
-        return `${pre}${rel}?v=${version}`;
-      });
-
-      // import dynamiczne - `import("...")`
-      content = content.replace(/(import\s*\(\s*['"])([a-zA-Z0-9_./-]+\.(?:js|json))\?v=[a-zA-Z0-9T:-]+(['"]\s*\))/g, (m, pre, rel, post) => {
-        changed = true;
-        return `${pre}${rel}?v=${version}${post}`;
-      });
-      content = content.replace(/(import\s*\(\s*['"])([a-zA-Z0-9_./-]+\.(?:js|json))(?=['"]\s*\))/g, (m, pre, rel) => {
-        changed = true;
-        return `${pre}${rel}?v=${version}`;
-      });
-
-      if (changed && content !== originalContent) {
-        fs.writeFileSync(full, content, 'utf8');
-        jsUpdated++;
+/**
+ * Rekurencyjnie pobiera listę plików do przetworzenia
+ */
+function getFiles(dir, allFiles = []) {
+  const files = fs.readdirSync(dir, { withFileTypes: true });
+  for (const file of files) {
+    const fullPath = path.join(dir, file.name);
+    if (file.isDirectory()) {
+      if (!IGNORE_DIRS.includes(file.name)) {
+        getFiles(fullPath, allFiles);
+      }
+    } else {
+      if (SOURCE_EXT.includes(path.extname(file.name).toLowerCase())) {
+        allFiles.push(fullPath);
       }
     }
   }
-  walk(dirPath);
+  return allFiles;
 }
 
-// ─── 3. Write version.txt ───────────────────────────────────────────────────
+console.log(`[Versioner] Target version: ${version}`);
 
+const filesToProcess = getFiles(ROOT);
+let updatedCount = 0;
+
+filesToProcess.forEach(filePath => {
+  // Pomiń sam skrypt wersjonujący i sw.js (on ma specjalną logikę na końcu)
+  if (filePath.endsWith('version-assets.js') || filePath.endsWith('sw.js')) return;
+
+  let content = fs.readFileSync(filePath, 'utf8');
+  const originalContent = content;
+  const ext = path.extname(filePath).toLowerCase();
+
+  // 1. Uniwersalne zastępowanie istniejących wersji: path.ext?v=stara_wersja
+  const existingVersionRegex = new RegExp(`(\\.[a-zA-Z0-9]+)\\?v=[a-zA-Z0-9T:-]+`, 'g');
+  content = content.replace(existingVersionRegex, `$1?v=${version}`);
+
+  // 2. Dodawanie wersji tam, gdzie jej nie ma
+  // Wzorce: ="path.ext", ='path.ext', : "path.ext", url("path.ext"), from "path.ext", import("path.ext")
+  const noVersionRegex = new RegExp(`((?:=|: |from |import\\s*\\(|url\\s*\\()\\s*['"])([^'"]+\\.(?:${ASSET_EXT}))(?=['"]|\\s*\\))`, 'g');
+  
+  content = content.replace(noVersionRegex, (match, prefix, assetPath) => {
+    // Jeśli ścieżka już ma wersję (co nie powinno się stać po kroku 1, ale na wszelki wypadek)
+    if (assetPath.includes('?v=')) return match;
+    // Nie wersjonuj linków zewnętrznych (http/https)
+    if (assetPath.startsWith('http') || assetPath.startsWith('//')) return match;
+    return `${prefix}${assetPath}?v=${version}`;
+  });
+
+  // 3. Specjalna obsługa dla HTML (meta version i Cache-Control)
+  if (ext === '.html') {
+    content = content.replace(/<meta name="app-version" content="[^"]*"/g, `<meta name="app-version" content="${version}"`);
+    if (!content.includes('http-equiv="Cache-Control"')) {
+      content = content.replace(/<head>/i, `<head>\n  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">`);
+    }
+  }
+
+  if (content !== originalContent) {
+    fs.writeFileSync(filePath, content, 'utf8');
+    updatedCount++;
+  }
+});
+
+// ─── Update version.txt ───────────────────────────────────────────────────
 fs.writeFileSync(path.join(ROOT, 'version.txt'), version, 'utf8');
 
-// ─── 4. Update sw.js ────────────────────────────────────────────────────────
-
+// ─── Update sw.js ────────────────────────────────────────────────────────
 const swPath = path.join(ROOT, 'sw.js');
 if (fs.existsSync(swPath)) {
   let swContent = fs.readFileSync(swPath, 'utf8');
   swContent = swContent.replace(/\/\/ Version: .*/, '').trim();
   swContent = `// Version: ${version}\n${swContent}`;
   fs.writeFileSync(swPath, swContent, 'utf8');
+  console.log(`[Versioner] Updated sw.js`);
 }
+
+console.log(`[Versioner] Finished. Processed ${filesToProcess.length} files, updated ${updatedCount} files.`);
