@@ -12,11 +12,11 @@ import {
   setViewSearch,
   rememberBrowseLocation,
   restoreBrowseLocation,
-} from "./state.js?v=c58d730d";
+} from "./state.js?v=v2026-05-05T15373";
 
-import { importGame } from "../../js/pages/builder-import-export.js?v=60f1f0df";
+import { importGame } from "../../js/pages/builder-import-export.js?v=v2026-05-05T15373";
 
-import { renderAll, renderToolbar, renderList, renderTree, renderTags } from "./render.js?v=fb8e975e";
+import { renderAll, renderToolbar, renderList, renderTree, renderTags } from "./render.js?v=v2026-05-05T15373";
 
 import {
   listQuestionsByCategory,
@@ -24,16 +24,16 @@ import {
   listCategories,
   listQuestionTags,
   listCategoryTags
-} from "./repo.js?v=e8a2caa7";
+} from "./repo.js?v=v2026-05-05T15373";
 
-import { showContextMenu, hideContextMenu } from "./context-menu.js?v=9821a2cd";
-import { openTagsModal } from "./tags-modal.js?v=db4ffb52";
-import { initExportModal } from "./export-modal.js?v=0a07a6ec";
-import { initQuestionModal } from "./question-modal.js?v=6f6145c3";
-import { sb } from "../../js/core/supabase.js?v=ece3a0c0";
-import { alertModal, confirmModal } from "../../js/core/modal.js?v=0c9fe6fd";
-import { t } from "../../translation/translation.js?v=7222ec9e";
-import { addLongPress, addDoubleTap } from "./mobile.js?v=8d87b81b";
+import { showContextMenu, hideContextMenu } from "./context-menu.js?v=v2026-05-05T15373";
+import { openTagsModal } from "./tags-modal.js?v=v2026-05-05T15373";
+import { initExportModal } from "./export-modal.js?v=v2026-05-05T15373";
+import { initQuestionModal } from "./question-modal.js?v=v2026-05-05T15373";
+import { sb } from "../../js/core/supabase.js?v=v2026-05-05T15373";
+import { alertModal, confirmModal } from "../../js/core/modal.js?v=v2026-05-05T15373";
+import { t } from "../../translation/translation.js?v=v2026-05-05T15373";
+import { addLongPress, addDoubleTap } from "./mobile.js?v=v2026-05-05T15373";
 
 let exportModal = null;
 
