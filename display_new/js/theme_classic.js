@@ -35,12 +35,16 @@ function computeBg(c) {
 const CONTROLS = {
   A: [
     { id: "lampA_glow",  attr: "opacity", on: "0.85", off: "0" },
+    { id: "rect10834",   attr: "filter",  on: "url(#neonRed)", off: "none" },
+    { id: "rect10834",   attr: "stroke-opacity", on: "1", off: "0.7" },
     { id: "circle10839", attr: "opacity", on: "0.98", off: "0" },    // lampA_on (fill:url(#lampGrad_A))
     { id: "circle10838", attr: "opacity", on: "0.20", off: "0.92" },   // lampA_off
     { id: "circle10840", attr: "opacity", on: "0.28", off: "0.14" },   // lampA_highlight
   ],
   B: [
     { id: "lampB_glow",  attr: "opacity", on: "0.85", off: "0" },
+    { id: "rect10835",   attr: "filter",  on: "url(#neonBlue)", off: "none" },
+    { id: "rect10835",   attr: "stroke-opacity", on: "1", off: "0.7" },
     { id: "circle10845", attr: "opacity", on: "0.98", off: "0" },    // lampB_on (fill:url(#lampGrad_B))
     { id: "circle10844", attr: "opacity", on: "0.20", off: "0.92" },   // lampB_off
     { id: "circle10846", attr: "opacity", on: "0.28", off: "0.14" },   // lampB_highlight
@@ -64,7 +68,7 @@ function applyControls(svg, controls) {
 
 function buildSvgContent(d) {
   return `<defs id="defs11">
-  <linearGradient id="rimGrad" x1="13.12235" y1="81.530251" x2="1120.418" y2="81.530251" gradientTransform="matrix(1.1292055,0,0,0.56677018,1.5258789e-5,-18.413443)" gradientUnits="userSpaceOnUse">
+  <linearGradient id="rimGrad" x1="0%" y1="0%" x2="100%" y2="0%">
     <stop offset="0"    stop-color="${d.A}"/>
     <stop offset="0.35" stop-color="${d.A_dark}"/>
     <stop offset="0.65" stop-color="${d.B_dark}"/>
@@ -79,9 +83,13 @@ function buildSvgContent(d) {
     <stop offset="0.55" stop-color="#d1d5db"/>
     <stop offset="1"    stop-color="#aab1bb"/>
   </linearGradient>
-  <filter id="neonBlue" x="-60%" y="-120%" width="220%" height="340%">
-    <feDropShadow id="neonDS1" dx="0" dy="0" stdDeviation="4"  flood-color="${d.B_glow}" flood-opacity="0.95"/>
-    <feDropShadow id="neonDS2" dx="0" dy="0" stdDeviation="10" flood-color="${d.B_glow}" flood-opacity="0.60"/>
+  <filter id="neonRed" x="-100%" y="-100%" width="300%" height="300%">
+    <feDropShadow dx="0" dy="0" stdDeviation="6"  flood-color="${d.A_lamp}" flood-opacity="0.9"/>
+    <feDropShadow dx="0" dy="0" stdDeviation="15" flood-color="${d.A_dark}" flood-opacity="0.5"/>
+  </filter>
+  <filter id="neonBlue" x="-100%" y="-100%" width="300%" height="300%">
+    <feDropShadow dx="0" dy="0" stdDeviation="6"  flood-color="${d.B_glow}" flood-opacity="0.9"/>
+    <feDropShadow dx="0" dy="0" stdDeviation="15" flood-color="${d.B_dark}" flood-opacity="0.5"/>
   </filter>
   <radialGradient id="lampGrad_A" cx="61.616001" cy="798.21082" r="34.048" fx="61.616001" fy="798.21082" gradientUnits="userSpaceOnUse">
     <stop offset="0%"   stop-color="#ffffff" stop-opacity="0.65"/>
@@ -124,7 +132,7 @@ function buildSvgContent(d) {
   <!-- Lamps A (g10841) -->
   <g id="g10841">
     <circle cx="70.857597" cy="810.85724" r="24.8064" fill="#000000" opacity="0.2" id="circle10836"/>
-    <circle id="lampA_glow" cx="68.912003" cy="807.93884" r="26.2656" fill="${d.A_lamp}" opacity="0" filter="url(#neonBlue)"/>
+    <circle id="lampA_glow" cx="68.912003" cy="807.93884" r="26.2656" fill="${d.A_lamp}" opacity="0" filter="url(#neonRed)"/>
     <circle id="circle10838" cx="68.912003" cy="807.93884" r="24.32" fill="#0a0a0a" opacity="0.95"/>
     <circle id="circle10839" cx="68.912003" cy="807.93884" r="24.32" fill="url(#lampGrad_A)" opacity="0"/>
     <circle id="circle10840" cx="62.102402" cy="800.64288" r="5.3504" fill="#ffffff" opacity="0.14"/>
