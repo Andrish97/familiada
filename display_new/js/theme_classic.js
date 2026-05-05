@@ -1,6 +1,6 @@
 // theme_classic.js
-// Klasyczny motyw – SVG 1280×720 przeskalowany z 1600×900 (0.8×)
-// Wyświetlacze: środki prostokątów z Inkscape labels
+// Klasyczny motyw – SVG 1280×720 (tylko dekoracja)
+// Wyświetlacze są rysowane osobno przez displays.js
 
 const hexToRgb = (hex) => {
   const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -35,15 +35,15 @@ function computeBg(c) {
 const CONTROLS = {
   A: [
     { id: "lampA_glow",  attr: "opacity", on: "0.85", off: "0" },
-    { id: "circle10839",    attr: "opacity", on: "0.98", off: "0" },    // lampA_on (fill:url(#lampGrad_A))
-    { id: "circle10838",    attr: "opacity", on: "0.20", off: "0.92" },   // lampA_off
-    { id: "circle10840",    attr: "opacity", on: "0.28", off: "0.14" },   // lampA_highlight
+    { id: "circle10839", attr: "opacity", on: "0.98", off: "0" },    // lampA_on (fill:url(#lampGrad_A))
+    { id: "circle10838", attr: "opacity", on: "0.20", off: "0.92" },   // lampA_off
+    { id: "circle10840", attr: "opacity", on: "0.28", off: "0.14" },   // lampA_highlight
   ],
   B: [
     { id: "lampB_glow",  attr: "opacity", on: "0.85", off: "0" },
-    { id: "circle10845",    attr: "opacity", on: "0.98", off: "0" },    // lampB_on (fill:url(#lampGrad_B))
-    { id: "circle10844",    attr: "opacity", on: "0.20", off: "0.92" },   // lampB_off
-    { id: "circle10846",    attr: "opacity", on: "0.28", off: "0.14" },   // lampB_highlight
+    { id: "circle10845", attr: "opacity", on: "0.98", off: "0" },    // lampB_on (fill:url(#lampGrad_B))
+    { id: "circle10844", attr: "opacity", on: "0.20", off: "0.92" },   // lampB_off
+    { id: "circle10846", attr: "opacity", on: "0.28", off: "0.14" },   // lampB_highlight
   ],
 };
 
@@ -71,15 +71,16 @@ function buildSvgContent(d) {
     <stop offset="1"    stop-color="${d.B}"/>
   </linearGradient>
   <linearGradient id="innerGrad" x1="141.50781" y1="212.21851" x2="141.50781" y2="1060.5737" gradientTransform="matrix(1.1313709,0,0,0.56568542,1.5258789e-5,-18.413443)" gradientUnits="userSpaceOnUse">
-    <stop offset="0"   stop-color="#e6eaef"/>
-    <stop offset="1" stop-color="#bfc7cf"/>
+    <stop offset="0"   stop-color="#f0f2f5"/>
+    <stop offset="0.4" stop-color="#e0e5ea"/>
+    <stop offset="1"   stop-color="#d0d8e0"/>
   </linearGradient>
   <linearGradient id="silverGrad" x1="6.6645017" y1="3465.8503" x2="6.6645017" y2="3807.9612" gradientTransform="scale(4.5014618,0.22215006)" gradientUnits="userSpaceOnUse">
     <stop offset="0"    stop-color="#f6f7f9"/>
     <stop offset="0.55" stop-color="#d1d5db"/>
     <stop offset="1"    stop-color="#aab1bb"/>
   </linearGradient>
-  <filter id="neonBlue" x="0" y="0" width="1" height="1">
+  <filter id="neonBlue" x="-60%" y="-120%" width="220%" height="340%">
     <feDropShadow id="neonDS1" dx="0" dy="0" stdDeviation="4"  flood-color="${d.B_glow}" flood-opacity="0.95"/>
     <feDropShadow id="neonDS2" dx="0" dy="0" stdDeviation="10" flood-color="${d.B_glow}" flood-opacity="0.60"/>
   </filter>
@@ -102,27 +103,27 @@ function buildSvgContent(d) {
 <g id="frameLines" transform="matrix(0.8,0,0,0.8,1.5258789e-5,-18.413443)">
   <line x1="1359.6935" y1="300.03058" x2="1501.7794" y2="217.99724" stroke="#ffffff" stroke-opacity="0.9" stroke-width="4.5" stroke-linecap="round"/>
   <line x1="1359.6935" y1="599.96942" x2="1501.7794" y2="682.00275" stroke="#ffffff" stroke-opacity="0.9" stroke-width="4.5" stroke-linecap="round"/>
-  <line x1="240.30647"  y1="300.03058" x2="98.220573" y2="217.99724" stroke="#ffffff" stroke-opacity="0.9" stroke-width="4.5" stroke-linecap="round"/>
+  <line x1="240.30647"  y1="300.03058" x2="98.220573"  y2="217.99724" stroke="#ffffff" stroke-opacity="0.9" stroke-width="4.5" stroke-linecap="round"/>
   <line x1="240.30647"  y1="599.96942" x2="98.220573"  y2="682.00275" stroke="#ffffff" stroke-opacity="0.9" stroke-width="4.5" stroke-linecap="round"/>
   <line x1="1099.9388" y1="749.93884" x2="1099.9388" y2="839.23883" stroke="#ffffff" stroke-opacity="0.9" stroke-width="4.5" stroke-linecap="round"/>
   <line x1="1099.9388" y1="150.06114" x2="1099.9388" y2="60.761143"  stroke="#ffffff" stroke-opacity="0.9" stroke-width="4.5" stroke-linecap="round"/>
-  <line x1="500.06116" y1="749.93884" x2="500.06116" y2="839.23883" stroke="#ffffff" stroke-opacity="0.9" stroke-width="4.5" stroke-linecap="round"/>
-  <line x1="500.06116" y1="150.06114" x2="500.06116" y2="60.761143"  stroke="#ffffff" stroke-opacity="0.9" stroke-width="4.5" stroke-linecap="round"/>
+  <line x1="500.06116"  y1="749.93884" x2="500.06116"  y2="839.23883" stroke="#ffffff" stroke-opacity="0.9" stroke-width="4.5" stroke-linecap="round"/>
+  <line x1="500.06116"  y1="150.06114" x2="500.06116"  y2="60.761143"  stroke="#ffffff" stroke-opacity="0.9" stroke-width="4.5" stroke-linecap="round"/>
 </g>
 
-<!-- Inner oval -->
+<!-- Inner oval (light gradient) -->
 <rect id="innerOval" x="160.09785" y="101.63547" width="959.80432" height="479.90216" rx="248" fill="url(#innerGrad)"/>
 
-<!-- Basebar -->
+<!-- Basebar with lamps -->
 <g id="basebar" transform="matrix(0.8,0,0,0.8,1.5258789e-5,-18.413443)">
   <rect x="30" y="769.93884" width="1540" height="76" fill="url(#silverGrad)" id="rect10833"/>
   <rect id="rect10834" x="30" y="769.93884" width="770" height="76" fill="none" stroke="${d.A}" stroke-width="6" stroke-opacity="0.55" stroke-linejoin="round"/>
   <rect id="rect10835" x="800" y="769.93884" width="770" height="76" fill="none" stroke="${d.B}" stroke-width="6" stroke-opacity="0.55" stroke-linejoin="round"/>
-  <rect id="rect10836" x="31" y="770.93884" width="1538" height="74" fill="none" stroke="#f6f7f9" stroke-width="1.5" stroke-opacity="0.7"/>
+  <rect x="31" y="770.93884" width="1538" height="74" fill="none" stroke="#f6f7f9" stroke-width="1.5" stroke-opacity="0.7"/>
   <text x="320" y="655" text-anchor="middle" font-family="Arial,sans-serif" font-size="25.6" font-weight="bold" fill="${d.A}" fill-opacity="0.85" letter-spacing="1.6">A</text>
   <text x="960" y="655" text-anchor="middle" font-family="Arial,sans-serif" font-size="25.6" font-weight="bold" fill="${d.B}" fill-opacity="0.85" letter-spacing="1.6">B</text>
 
-  <!-- Lamps A -->
+  <!-- Lamps A (g10841) -->
   <g id="g10841">
     <circle cx="70.857597" cy="810.85724" r="24.8064" fill="#000000" opacity="0.2" id="circle10836"/>
     <circle id="lampA_glow" cx="68.912003" cy="807.93884" r="26.2656" fill="${d.A_lamp}" opacity="0" filter="url(#neonBlue)"/>
@@ -131,7 +132,8 @@ function buildSvgContent(d) {
     <circle id="circle10840" cx="62.102402" cy="800.64288" r="5.3504" fill="#ffffff" opacity="0.14"/>
     <circle cx="68.912003" cy="807.93884" r="26.32" fill="none" stroke="rgba(255,255,255,0.42)" stroke-width="2" opacity="0.95"/>
   </g>
-  <!-- Lamps B -->
+
+  <!-- Lamps B (g10847) -->
   <g id="g10847">
     <circle cx="1533.0336" cy="810.85724" r="24.8064" fill="#000000" opacity="0.2" id="circle10842"/>
     <circle id="lampB_glow" cx="1531.088" cy="807.93884" r="26.2656" fill="${d.B_lamp}" opacity="0" filter="url(#neonBlue)"/>
@@ -141,14 +143,6 @@ function buildSvgContent(d) {
     <circle cx="1531.088" cy="807.93884" r="26.32" fill="none" stroke="rgba(255,255,255,0.42)" stroke-width="2" opacity="0.95"/>
   </g>
 </g>
-
-<!-- Display rectangles (dark panels) with proper IDs from Inkscape labels -->
-<rect id="rect18"      x="234.40001" y="167.98656" width="811.20001" height="347.20001" rx="0" fill="#2e2e32"/>
-<rect id="rect10518"   x="2.257843"   y="303.98654" width="172.8"     height="75.199997" rx="0" fill="#2e2e32"/>
-<rect id="rect10623"   x="1104.9421"  y="303.98654" width="172.8"     height="75.199997" rx="0" fill="#2e2e32"/>
-<rect id="rect10728"   x="553.59998"  y="28.315472" width="172.8"     height="75.199997" rx="0" fill="#2e2e32"/>
-<rect id="rect10847"   x="89.600021"  y="607.13763" width="534.40002"  height="41.599998" rx="0" fill="#2e2e32"/>
-<rect id="rect11512"   x="656"        y="607.13763" width="534.40002"  height="41.599998" rx="0" fill="#2e2e32"/>
 
 <!-- Watermark -->
 <text x="1264" y="691.98657" text-anchor="end" font-family="sans-serif" font-size="14.4" fill="#ffffff" fill-opacity="0.25" letter-spacing="0.5">familiada.online</text>`;
