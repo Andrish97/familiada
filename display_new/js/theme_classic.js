@@ -15,8 +15,11 @@ const DEFAULT_COLORS = { A: "#c4002f", B: "#2a62ff", BG: "#d21180" };
 function computeDerived(c) {
   const A = hexToRgb(c.A), B = hexToRgb(c.B);
   return {
-    A_dark: rgbToHex(darken(A, 0.25)), // mniej mroczny środek
-    B_dark: rgbToHex(darken(B, 0.22)),
+    A: c.A,
+    B: c.B,
+    BG: c.BG,
+    A_dark: rgbToHex(darken(A, 0.12)), // znacznie jaśniejszy środek (było 0.25)
+    B_dark: rgbToHex(darken(B, 0.10)), // znacznie jaśniejszy środek (było 0.22)
     A_lamp: rgbToHex(lighten(A, 0.25)),
     B_lamp: rgbToHex(lighten(B, 0.22)),
     B_glow: rgbToHex(lighten(B, 0.28)),
@@ -36,15 +39,11 @@ const CONTROLS = {
     { id: "circle10837", attr: "opacity", on: "0.85", off: "0" },
     { id: "circle10839", attr: "opacity", on: "0.98", off: "0" },
     { id: "circle10838", attr: "opacity", on: "0.20", off: "0.92" },
-    { id: "rect10834",   attr: "stroke-opacity", on: "1.0", off: "0.55" },
-    { id: "rect10834",   attr: "filter", on: "url(#neonRed)", off: "none" },
   ],
   B: [
     { id: "circle10843", attr: "opacity", on: "0.85", off: "0" },
     { id: "circle10845", attr: "opacity", on: "0.98", off: "0" },
     { id: "circle10844", attr: "opacity", on: "0.20", off: "0.92" },
-    { id: "rect10835",   attr: "stroke-opacity", on: "1.0", off: "0.55" },
-    { id: "rect10835",   attr: "filter", on: "url(#neonBlue)", off: "none" },
   ],
 };
 
