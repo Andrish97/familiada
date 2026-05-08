@@ -18,10 +18,10 @@ function computeDerived(c) {
     A: c.A,
     B: c.B,
     BG: c.BG,
-    A_dark: rgbToHex(darken(A, 0.12)), // znacznie jaśniejszy środek (było 0.25)
-    B_dark: rgbToHex(darken(B, 0.10)), // znacznie jaśniejszy środek (było 0.22)
+    A_dark: rgbToHex(darken(A, 0.38)),
+    B_dark: rgbToHex(darken(B, 0.35)),
     A_lamp: rgbToHex(lighten(A, 0.25)),
-    B_lamp: rgbToHex(lighten(B, 0.22)),
+    B_lamp: rgbToHex(lighten(B, 0.18)),
     B_glow: rgbToHex(lighten(B, 0.28)),
   };
 }
@@ -60,7 +60,7 @@ function applyControls(svg, controls) {
 
 function buildSvgContent(d) {
   return `<defs id="defs11">
-  <!-- RIM GRADIENT: 100% kopia parametrów z Twojego SVG -->
+  <!-- RIM GRADIENT -->
   <linearGradient
        id="rimGrad"
        x1="13.12235"
@@ -86,22 +86,24 @@ function buildSvgContent(d) {
     <stop offset="1"    stop-color="#aab1bb" />
   </linearGradient>
 
-  <!-- Filtry obejmujące dół ekranu (userSpaceOnUse) -->
-  <filter id="neonRed" x="0" y="500" width="800" height="220" filterUnits="userSpaceOnUse">
-    <feDropShadow dx="0" dy="0" stdDeviation="8"  flood-color="${d.A}" flood-opacity="0.9"/>
+  <!-- Filtry neonowe (przywrócone podwójne cienie dla lepszej głębi) -->
+  <filter id="neonRed" x="-60%" y="-120%" width="220%" height="340%">
+    <feDropShadow dx="0" dy="0" stdDeviation="4"  flood-color="${d.A}" flood-opacity="0.95"/>
+    <feDropShadow dx="0" dy="0" stdDeviation="10" flood-color="${d.A}" flood-opacity="0.60"/>
   </filter>
 
-  <filter id="neonBlue" x="480" y="500" width="800" height="220" filterUnits="userSpaceOnUse">
-    <feDropShadow dx="0" dy="0" stdDeviation="8"  flood-color="${d.B}" flood-opacity="0.9"/>
+  <filter id="neonBlue" x="-60%" y="-120%" width="220%" height="340%">
+    <feDropShadow dx="0" dy="0" stdDeviation="4"  flood-color="${d.B}" flood-opacity="0.95"/>
+    <feDropShadow dx="0" dy="0" stdDeviation="10" flood-color="${d.B}" flood-opacity="0.60"/>
   </filter>
 
-  <radialGradient id="lampGrad_Red" cx="61.616001" cy="798.21082" r="34.048" fx="61.616001" fy="798.21082" gradientUnits="userSpaceOnUse">
+  <radialGradient id="lampGrad_Red" cx="35%" cy="30%" r="70%">
     <stop offset="0%"   stop-color="#ffffff" stop-opacity="0.65" />
     <stop offset="25%"  stop-color="${d.A_lamp}" stop-opacity="1" />
     <stop offset="100%" stop-color="#000000" stop-opacity="0.35" />
   </radialGradient>
 
-  <radialGradient id="lampGrad_Blue" cx="1523.792" cy="798.21082" r="34.048" fx="1523.792" fy="798.21082" gradientUnits="userSpaceOnUse">
+  <radialGradient id="lampGrad_Blue" cx="35%" cy="30%" r="70%">
     <stop offset="0%"   stop-color="#ffffff" stop-opacity="0.65" />
     <stop offset="25%"  stop-color="${d.B_lamp}" stop-opacity="1" />
     <stop offset="100%" stop-color="#000000" stop-opacity="0.35" />
