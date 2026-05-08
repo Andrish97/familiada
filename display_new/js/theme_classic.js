@@ -128,11 +128,11 @@ function buildSvgContent(d) {
 
 <g id="basebar" transform="matrix(0.8,0,0,0.8,1.5258789e-5,-18.413443)">
   <rect x="30" y="769.93884" width="1540" height="76" fill="url(#silverGrad)" id="rect10833" />
-  <rect id="rect10834" x="30" y="769.93884" width="770" height="76" fill="none" stroke="${d.A}" stroke-width="6" stroke-opacity="0.9" stroke-linejoin="round" />
-  <rect id="rect10835" x="800" y="769.93884" width="770" height="76" fill="none" stroke="${d.B}" stroke-width="6" stroke-opacity="0.9" stroke-linejoin="round" />
+  <rect id="rect10834" x="30" y="769.93884" width="770" height="76" fill="none" stroke="${d.A}" stroke-width="4" stroke-opacity="0.6" stroke-linejoin="round" />
+  <rect id="rect10835" x="800" y="769.93884" width="770" height="76" fill="none" stroke="${d.B}" stroke-width="4" stroke-opacity="0.6" stroke-linejoin="round" />
   
-  <text x="320" y="655" text-anchor="middle" font-family="Arial,sans-serif" font-size="25.6" font-weight="bold" fill="${d.A}" fill-opacity="0.85" letter-spacing="1.6">A</text>
-  <text x="960" y="655" text-anchor="middle" font-family="Arial,sans-serif" font-size="25.6" font-weight="bold" fill="${d.B}" fill-opacity="0.85" letter-spacing="1.6">B</text>
+  <text x="320" y="655" text-anchor="middle" font-family="Arial,sans-serif" font-size="25.6" font-weight="bold" fill="${d.A}" fill-opacity="0.6" letter-spacing="1.6">A</text>
+  <text x="960" y="655" text-anchor="middle" font-family="Arial,sans-serif" font-size="25.6" font-weight="bold" fill="${d.B}" fill-opacity="0.6" letter-spacing="1.6">B</text>
 
   <g id="g10841">
     <circle cx="70.857597" cy="810.85724" r="24.8064" fill="#000000" opacity="0.2" id="circle10836" />
