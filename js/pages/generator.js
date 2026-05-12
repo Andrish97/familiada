@@ -1,6 +1,6 @@
 
-import { sb as supabase } from "../core/supabase.js?v=v2026-05-12T15200";
-import { alertModal, confirmModal } from "../core/modal.js?v=v2026-05-12T15200";
+import { sb as supabase } from "../core/supabase.js?v=v2026-05-12T15415";
+import { alertModal, confirmModal } from "../core/modal.js?v=v2026-05-12T15415";
 
 let games = [];
 const uniquenessCache = new Map();
@@ -931,7 +931,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const json = JSON.stringify(example, null, 2);
     const a = document.createElement('a');
     a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(json);
-    a.download = 'przykladowa-gra.json?v=v2026-05-12T15200';
+    a.download = 'przykladowa-gra.json?v=v2026-05-12T15415';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
