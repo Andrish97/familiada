@@ -30,14 +30,9 @@ function setupLayers(bgLayer) {
   bgLayer.innerHTML = "";
   bgLayer.style.position = "relative";
   bgLayer.style.overflow = "hidden";
-
-  const div = document.createElement("div");
-  div.id = "bg-modern-main";
-  div.style.position = "absolute";
-  div.style.top = "0"; div.style.left = "0";
-  div.style.width = "100%"; div.style.height = "100%";
-  bgLayer.appendChild(div);
-  return { main: div };
+  bgLayer.style.width = "100%";
+  bgLayer.style.height = "100%";
+  return { main: bgLayer };
 }
 
 function updateBackground(layer, d, tA, tB) {
@@ -55,7 +50,9 @@ function updateBackground(layer, d, tA, tB) {
   const c2 = rgbToHex(mix(B_dark, A_mid, tA));
   const c3 = rgbToHex(mix(B, A_light, tA));
 
-  layer.style.background = `linear-gradient(90deg, ${c0} 0%, ${c1} 35%, ${c2} 65%, ${c3} 100%)`;
+  layer.style.background = `linear-gradient(135deg, ${c0}, ${c1}, ${c2}, ${c3})`;
+  console.log("Modern theme background set to:", layer.style.background);
+  layer.style.opacity = "1";
 }
 
 function buildSvgContent(d) {
