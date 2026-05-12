@@ -558,7 +558,12 @@ export async function createScene() {
       if (!action) { console.warn(`[THEME] Brak nazwy motywu. Dostępne: ${themeMgr.getAvailable().join(", ")}`); return; }
       const themeName = unquote(action).toLowerCase();
       try {
-        const newTheme = themeMgr.load(themeName, { colors: themeMgr.getActiveTheme()?.getColors?.() });
+        const oldTheme = themeMgr.getActiveTheme();
+        const config = {
+          colors: oldTheme?.getColors?.(),
+          controls: oldTheme?.getControls?.()
+        };
+        const newTheme = themeMgr.load(themeName, config);
         displaysGroup.innerHTML = "";
         const newDisplays = createDisplays({ svgGroup: displaysGroup, theme: newTheme });
         big = newDisplays.big;
