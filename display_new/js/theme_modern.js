@@ -160,7 +160,7 @@ export function createTheme(baseSvg, bgLayer, config = {}) {
   }
 
   render(baseSvg, layers, derived);
-  updateBackground(layers.main, derived, currentA, currentB);
+  startAnimation(); // Trigger initial animation to set correct state
 
   return {
     name: "modern",
