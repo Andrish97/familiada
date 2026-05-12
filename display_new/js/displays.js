@@ -37,7 +37,7 @@ export function createDisplays({ svgGroup, theme }) {
     const y = cy - h / 2;
 
     const g = el("g");
-    g.appendChild(el("rect", { x, y, width: w, height: h, fill: "#2e2e32" }));
+    g.appendChild(el("rect", { x, y, width: w, height: h, fill: "#000000" }));
 
     const tiles = Array.from({ length: tilesY }, () =>
       Array.from({ length: tilesX }, () => null)
@@ -141,7 +141,7 @@ export function createDisplays({ svgGroup, theme }) {
     const g = el("g");
     const dots = Array.from({ length: Y }, () => Array.from({ length: X }, () => null));
 
-    g.appendChild(el("rect", { x, y, width: w, height: h, fill: "#2e2e32" }));
+    g.appendChild(el("rect", { x, y, width: w, height: h, fill: "#000000" }));
     g.appendChild(
       el("rect", { x: x + gap * multiplier, y: y + gap * multiplier, width: wInner, height: hInner, fill: "#000000" })
     );

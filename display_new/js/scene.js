@@ -34,7 +34,7 @@ export async function createScene() {
   let rightTriple = displays.rightTriple;
   let topTriple = displays.topTriple;
 
-  const COLORS = { big: "#2e2e32", cell: "#000000", dotOff: "#2e2e32" };
+  const COLORS = { big: "#000000", cell: "#000000", dotOff: "#2e2e32" };
   const LIT = { main: "#d7ff3d", top: "#d7ff3d", left: "#d7ff3d", right: "#d7ff3d", bottom: "#d7ff3d" };
 
   // ============================================================
