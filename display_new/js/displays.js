@@ -153,8 +153,8 @@ export function createDisplays({ svgGroup, theme }) {
     for (let row = 0; row < Y; row++) {
       for (let col = 0; col < X; col++) {
         const circle = el("circle", {
-          cx: x + pad + r + col * step,
-          cy: y + pad + r + row * step,
+          cx: x + 2 * pad + r + col * step,
+          cy: y + 2 * pad + r + row * step,
           r: r, fill: "#2e2e32",
         });
         g.appendChild(circle);
