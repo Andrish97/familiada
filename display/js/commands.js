@@ -98,8 +98,9 @@ export const createCommandHandler = (app) => {
   function ensureGameMode() {
     if (app.mode === "GAME") return true;
 
-    console.warn("[display] KOMENDA SCENE zignorowana, bo APP =", app.mode, "(wymagane APP=GAME)");
-    return false;
+    console.warn("[display] KOMENDA SCENE wymusza APP=GAME (było", app.mode, ")");
+    app.setMode("GAME");
+    return true;
   }
 
   function ensureQrMode() {
