@@ -270,7 +270,7 @@ export function createUI() {
   }
 
   function setActiveTheme(key) {
-    if (themeSelectApi) themeSelectApi.setValue(key || "");
+    if (themeSelectApi) themeSelectApi.setValue(key || "", { silent: true });
   }
 
   function openColorModal(title) {
