@@ -20,7 +20,7 @@ async function initRegistry() {
     console.warn("[theme_manager] Fallback do static:", e.message);
   }
   if (Object.keys(THEMES).length === 0) {
-    const { createTheme: createThemeClassic } = await import("./theme_classic.js?v=v2026-05-13T08195");
+    const { createTheme: createThemeClassic } = await import("./theme_classic.js?v=v2026-05-13T08065");
     THEMES.classic = createThemeClassic;
     THEME_META = [{ key: "classic", label: "display.theme.classic" }];
   }
