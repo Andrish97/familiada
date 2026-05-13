@@ -35,7 +35,7 @@ export async function createScene() {
   let topTriple = displays.topTriple;
 
   const COLORS = { big: "#000000", cell: "#000000", dotOff: "#2e2e32" };
-  const updateDotOff = (oldColor, newColor) => {
+  const updateDotColor = (oldColor, newColor) => {
     const updateTiled = (d) => {
       for (let ty = 0; ty < d.tilesY; ty++)
         for (let tx = 0; tx < d.tilesX; tx++) {
@@ -57,6 +57,7 @@ export async function createScene() {
     updatePanel(long1); updatePanel(long2);
   };
   const LIT = { main: "#d7ff3d", top: "#d7ff3d", left: "#d7ff3d", right: "#d7ff3d", bottom: "#d7ff3d" };
+  const LIT_DEFAULT = "#d7ff3d";
 
   // ============================================================
   // Render 5x7 glyph into a tile
@@ -620,16 +621,20 @@ export async function createScene() {
         const def = themeMgr.getDefault(); themeMgr.load(def);
         const oldDot = COLORS.dotOff;
         COLORS.dotOff = "#2e2e32";
-        updateDotOff(oldDot, COLORS.dotOff);
+        updateDotColor(oldDot, COLORS.dotOff);
+        const oldLit = LIT.main;
+        const newLit = LIT_DEFAULT;
+        LIT.main = newLit; LIT.top = newLit; LIT.left = newLit; LIT.right = newLit; LIT.bottom = newLit;
+        updateDotColor(oldLit, LIT.main);
         return;
       }
       if (target === "DOT") {
         const val = unquote(tokens.slice(2).join(" "));
         const cssColorToRgb = (css) => { const s=(css??"").toString().trim(); if (!s) return null; const tmp=document.createElement("div"); tmp.style.color=s; document.body.appendChild(tmp); const rgb=getComputedStyle(tmp).color; tmp.remove(); const m=rgb.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i); if (!m) return null; return {r:+m[1],g:+m[2],b:+m[3]}; };
         if (!cssColorToRgb(val)) { console.warn(`COLOR: nieprawidłowy kolor: ${val}`); return; }
-        const oldDot = COLORS.dotOff;
-        COLORS.dotOff = val;
-        updateDotOff(oldDot, COLORS.dotOff);
+        const oldLit = LIT.main;
+        LIT.main = val; LIT.top = val; LIT.left = val; LIT.right = val; LIT.bottom = val;
+        updateDotColor(oldLit, LIT.main);
         return;
       }
       const val = unquote(tokens.slice(2).join(" "));

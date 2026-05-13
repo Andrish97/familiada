@@ -63,7 +63,7 @@ const DEFAULT_COLORS = {
   A: "#c4002f",
   B: "#2a62ff",
   BACKGROUND: "#d21180",
-  DOT: "#2e2e32",
+  DOT: "#d7ff3d",
 };
 
 function normHex(input) {
@@ -1484,7 +1484,7 @@ async function sendZeroStatesToDevices() {
       target === "A" ? t("control.teamAColorAria") :
       target === "B" ? t("control.teamBColorAria") :
       target === "BACKGROUND" ? t("control.bgColorAria") :
-      t("control.dotColorAria")
+      t("control.activeColorAria")
     );
 
     ui.setColorModalRgb?.(rgb);
