@@ -463,6 +463,10 @@ const uk = {
     qrHostAlt: "QR Ведучий",
     qrBuzzerAlt: "QR Кнопки",
     sumLabel: "СУМА",
+    theme: {
+      classic: "Класична",
+      modern: "Сучасна",
+    },
   },
   host: {
     title: "Familiada — ведучий",
@@ -4599,6 +4603,8 @@ const uk = {
     teamHint: "Введіть назви команд.",
     stepLook: "Вигляд",
     lookColors: "Кольори",
+    lookTheme: "Тема",
+    lookThemeHint: "Виберіть тему дисплея.",
     lookLogoTitle: "Логотип",
     lookLogoHint: "Оберіть логотип, який з'явиться на дисплеї.",
     lookLogoDefault: "Стандартний",

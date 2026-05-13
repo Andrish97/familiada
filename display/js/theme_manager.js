@@ -1,14 +1,17 @@
 // theme_manager.js
 // Menadżer motywów – rejestr z themes.json, dynamiczne ładowanie, THEME command
+import { t } from "../../translation/translation.js?v=v2026-05-13T08195";
 
 let THEMES = {};
+let THEME_META = [];
 let DEFAULT_THEME = "classic";
 
 async function initRegistry() {
   try {
-    const res = await fetch("./display_new/js/themes.json");
+    const res = await fetch("./display/js/themes.json");
     const json = await res.json();
     DEFAULT_THEME = json.default ?? DEFAULT_THEME;
+    THEME_META = json.themes.map(e => ({ key: e.key, label: e.label }));
     for (const entry of json.themes) {
       const mod = await import(entry.module);
       THEMES[entry.key] = mod.createTheme;
@@ -17,8 +20,9 @@ async function initRegistry() {
     console.warn("[theme_manager] Fallback do static:", e.message);
   }
   if (Object.keys(THEMES).length === 0) {
-    const { createTheme: createThemeClassic } = await import("./theme_classic.js?v=v2026-05-13T08001");
+    const { createTheme: createThemeClassic } = await import("./theme_classic.js?v=v2026-05-13T08195");
     THEMES.classic = createThemeClassic;
+    THEME_META = [{ key: "classic", label: "display.theme.classic" }];
   }
 }
 
@@ -31,7 +35,7 @@ export async function createThemeManager(baseSvg, bgLayer) {
   const load = (name, config = {}) => {
     const key = name.toLowerCase();
     const factory = THEMES[key];
-    if (!factory) throw new Error(`THEME: nieznany motyw "${name}". Dostępne: ${Object.keys(THEMES).join(", ")}`);
+    if (!factory) throw new Error(`THEME: nieznany motyw "${name}". Dostępne: ${getAvailableLabels().map(m => m.label).join(", ")}`);
     activeTheme = factory(baseSvg, bgLayer, config);
     activeName = key;
     return activeTheme;
@@ -41,6 +45,12 @@ export async function createThemeManager(baseSvg, bgLayer) {
   const getActiveTheme = () => activeTheme;
   const getAvailable = () => Object.keys(THEMES);
   const getDefault = () => DEFAULT_THEME;
+
+  const getAvailableLabels = () => THEME_META.map(m => ({ key: m.key, label: t(m.label) }));
+  const getThemeLabel = (key) => {
+    const m = THEME_META.find(x => x.key === key);
+    return m ? t(m.label) : key;
+  };
 
   const updateColors = (colors) => {
     if (!activeTheme) return;
@@ -59,6 +69,8 @@ export async function createThemeManager(baseSvg, bgLayer) {
     getActive,
     getActiveTheme,
     getAvailable,
+    getAvailableLabels,
+    getThemeLabel,
     updateColors,
     updateControls,
     getDefault,

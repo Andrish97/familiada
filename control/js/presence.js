@@ -1,5 +1,5 @@
-import { t } from "../../translation/translation.js?v=v2026-05-13T08001";
-import { sb } from "../../js/core/supabase.js?v=v2026-05-13T08001";
+import { t } from "../../translation/translation.js?v=v2026-05-13T08195";
+import { sb } from "../../js/core/supabase.js?v=v2026-05-13T08195";
 
 // ================== KOMUNIKATY (PRESENCE) ==================
 const PRESENCE_MSG = {
@@ -20,7 +20,7 @@ function fmtSince(ts) {
   return PRESENCE_MSG.SINCE_LABEL(s);
 }
 
-export function createPresence({ game, ui, store, devices }) {
+export function createPresence({ game, ui, store, devices, getTheme }) {
   let timer = null;
 
   // poprzednie stany TYLKO dla tej sesji presence
@@ -122,6 +122,8 @@ export function createPresence({ game, ui, store, devices }) {
         try {
           await devices.sendDisplayCmd("APP GAME");
           await devices.sendDisplayCmd("COLOR RESET");
+          const themeKey = typeof getTheme === "function" ? getTheme() : null;
+          if (themeKey) await devices.sendDisplayCmd(`THEME ${themeKey}`);
           await devices.sendDisplayCmd("APP BLACK");
         } catch {}
       }

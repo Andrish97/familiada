@@ -463,6 +463,10 @@ const en = {
     qrHostAlt: "QR Host",
     qrBuzzerAlt: "QR Buzzer",
     sumLabel: "SUM",
+    theme: {
+      classic: "Classic",
+      modern: "Modern",
+    },
   },
   host: {
     title: "Familiada — host",
@@ -4724,6 +4728,8 @@ const en = {
     teamHint: "Enter team names.",
     stepLook: "Appearance",
     lookColors: "Colors",
+    lookTheme: "Theme",
+    lookThemeHint: "Select display theme.",
     lookLogoTitle: "Logo",
     lookLogoHint: "Select a logo to show on the display.",
     lookLogoDefault: "Default",

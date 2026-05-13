@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-05-13T08001"/>
+  <meta name="app-version" content="v2026-05-13T08195"/>
 
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow"/>
@@ -16,10 +16,10 @@
   <meta property="og:type" content="website"/>
   <title data-i18n="display.title">Wyświetlacz jak w klasycznej Familiadzie</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script src="js/core/security-warning.js?v=v2026-05-13T08001" defer></script>
-  <script type="module" src="./display/js/main.js?v=v2026-05-13T08001"></script>
-  <link rel="stylesheet" href="./display/styles.css?v=v2026-05-13T08001" />
-  <link rel="icon" href="favicon.ico?v=v2026-05-13T08001" />
+  <script src="js/core/security-warning.js?v=v2026-05-13T08195" defer></script>
+  <script type="module" src="./display/js/main.js?v=v2026-05-13T08195"></script>
+  <link rel="stylesheet" href="./display/styles.css?v=v2026-05-13T08195" />
+  <link rel="icon" href="favicon.ico?v=v2026-05-13T08195" />
 </head>
 <body>
   <article style="display:none">
@@ -41,72 +41,17 @@
     </div>
   </div>
 
-<!-- TRYB GRA -->
-<div id="gameScreen" class="wrap">
-  <svg viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <linearGradient id="rimGrad" x1="0" y1="0" x2="1" y2="0">
-        <stop id="rimStopA"  offset="0"    stop-color="#c4002f"/>
-        <stop id="rimStopA2" offset="0.35" stop-color="#7a1230"/>
-        <stop id="rimStopB2" offset="0.65" stop-color="#2a62ff"/>
-        <stop id="rimStopB"  offset="1"    stop-color="#2a62ff"/>
-      </linearGradient>
-
-      <linearGradient id="innerGrad" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="#e6eaef"/>
-        <stop offset="1" stop-color="#bfc7cf"/>
-      </linearGradient>
-
-      <linearGradient id="silverGrad" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="#f6f7f9"/>
-        <stop offset="0.55" stop-color="#d1d5db"/>
-        <stop offset="1" stop-color="#aab1bb"/>
-      </linearGradient>
-
-      <filter id="neonBlue" x="-60%" y="-120%" width="220%" height="340%">
-        <feDropShadow id="neonDS1" dx="0" dy="0" stdDeviation="4"  flood-color="#4db4ff" flood-opacity="0.95"/>
-        <feDropShadow id="neonDS2" dx="0" dy="0" stdDeviation="10" flood-color="#4db4ff" flood-opacity="0.60"/>
-      </filter>
-    </defs>
-
-    <!-- OWAL ZEWNĘTRZNY (granica ekranu) -->
-    <rect
-      id="outerOval"
-      x="10"
-      y="30"
-      width="1580"
-      height="840"
-      rx="420"
-      fill="url(#rimGrad)"
-      stroke="#ffffff"
-      stroke-width="6"
-      stroke-opacity="0.9"
-    />
-
-    <!-- LINIE PODZIAŁU (tylko na ringu – resztę zakryje innerOval) -->
-    <g id="frameLines"></g>
-
-    <!-- OWAL WEWNĘTRZNY – opisuje big -->
-    <rect
-      id="innerOval"
-      x="226"
-      y="124"
-      width="1148"
-      height="652"
-      rx="310"
-      fill="url(#innerGrad)"
-    />
-
-    <g id="center"></g>
-    <g id="panels"></g>
-    <g id="basebar"></g>
-    <g id="bottom"></g>
-
-    <text x="1580" y="888" text-anchor="end" font-family="sans-serif" font-size="18" fill="#ffffff" fill-opacity="0.25" letter-spacing="0.5">familiada.online</text>
-
-  </svg>
-</div>
-<div id="blackScreen" class="black-screen"></div>
+  <!-- TRYB GRA – 3 warstwy -->
+  <div id="gameScreen" class="hidden">
+    <div id="displayRoot" class="display-root">
+      <div class="layer-bg"></div>
+      <div class="display-frame">
+        <svg class="layer-base" id="baseSvg" viewBox="0 0 1280 720" overflow="visible"></svg>
+        <svg class="layer-displays" id="displaysSvg" viewBox="0 0 1280 720"><g id="displays"></g></svg>
+      </div>
+    </div>
+  </div>
+  <div id="blackScreen" class="black-screen"></div>
 
 </body>
 </html>

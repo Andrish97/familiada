@@ -463,6 +463,10 @@ const pl = {
     qrHostAlt: "QR Prowadzący",
     qrBuzzerAlt: "QR Przyciski",
     sumLabel: "SUMA",
+    theme: {
+      classic: "Klasyczny",
+      modern: "Nowoczesny",
+    },
   },
   host: {
     title: "Familiada — prowadzący",
@@ -4133,6 +4137,8 @@ const pl = {
     teamHint: "Tutaj należy wprowadzić nazwy drużyn.",
     stepLook: "Wygląd",
     lookColors: "Kolory",
+    lookTheme: "Motyw",
+    lookThemeHint: "Wybierz motyw wyświetlacza.",
     lookLogoTitle: "Logo",
     lookLogoHint: "Wybierz logo, które pojawi się na wyświetlaczu.",
     lookLogoDefault: "Domyślne",

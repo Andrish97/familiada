@@ -1,6 +1,6 @@
 // /familiada/js/pages/controlui.js
 
-import { t } from "../../translation/translation.js?v=v2026-05-13T08001";
+import { t } from "../../translation/translation.js?v=v2026-05-13T08195";
 
 // ================== KOMUNIKATY (UI) ==================
 const UI_MSG = {
@@ -249,6 +249,23 @@ export function createUI() {
     setSwatch($("swatchTeamA"), teamA);
     setSwatch($("swatchTeamB"), teamB);
     setSwatch($("swatchBg"), bg);
+  }
+
+  function setThemeOptions(themes) {
+    const sel = $("themeSelect");
+    if (!sel) return;
+    sel.innerHTML = "";
+    for (const t of themes) {
+      const opt = document.createElement("option");
+      opt.value = t.key;
+      opt.textContent = t.label;
+      sel.appendChild(opt);
+    }
+  }
+
+  function setActiveTheme(key) {
+    const sel = $("themeSelect");
+    if (sel) sel.value = key || "";
   }
 
   function openColorModal(title) {
@@ -668,6 +685,8 @@ export function createUI() {
     if (g) g.addEventListener("input", () => emit("colors.input", { kind: "G", value: g.value }));
     if (b2) b2.addEventListener("input", () => emit("colors.input", { kind: "B", value: b2.value }));
 
+    // --- Motyw ---
+    $("themeSelect")?.addEventListener("change", (e) => emit("theme.change", e.target.value));
 
     // --- Dodatkowe ustawienia (mnożniki, progi, tryb końca gry) ---
     const advInputs = [
@@ -800,6 +819,9 @@ export function createUI() {
     setColorModalHex,
     setColorPreview,
 
+    // motyw
+    setThemeOptions,
+    setActiveTheme,
 
     setFinalHasFinal,
     setFinalConfirmed,

@@ -1,7 +1,7 @@
 // /familiada/js/pages/controlapp.js
-import { confirmModal } from "../../js/core/modal.js?v=v2026-05-13T08001";
-import { getUiLang, initI18n, t } from "../../translation/translation.js?v=v2026-05-13T08001";
-import { v as cacheBust } from "../../js/core/cache-bust.js?v=v2026-05-13T08001";
+import { confirmModal } from "../../js/core/modal.js?v=v2026-05-13T08195";
+import { getUiLang, initI18n, t } from "../../translation/translation.js?v=v2026-05-13T08195";
+import { v as cacheBust } from "../../js/core/cache-bust.js?v=v2026-05-13T08195";
 
 // ================== KOMUNIKATY ==================
 const APP_MSG = {
@@ -36,22 +36,22 @@ const APP_MSG = {
 };
 // ================= KONIEC KOMUNIKATÓW =================
 
-import { requireAuth, signOut } from "../../js/core/auth.js?v=v2026-05-13T08001";
-import { setTopbarAccount } from "../../js/core/topbar-controller.js?v=v2026-05-13T08001";
-import { isGuestUser } from "../../js/core/guest-mode.js?v=v2026-05-13T08001";
-import { sb } from "../../js/core/supabase.js?v=v2026-05-13T08001";
-import { rt } from "../../js/core/realtime.js?v=v2026-05-13T08001";
-import { validateGameReadyToPlay, loadGameBasic, loadQuestions, loadAnswers } from "../../js/core/game-validate.js?v=v2026-05-13T08001";
-import { unlockAudio, isAudioUnlocked, playSfx } from "../../js/core/sfx.js?v=v2026-05-13T08001";
-import { createStore } from "./store.js?v=v2026-05-13T08001";
-import { createUI } from "./ui.js?v=v2026-05-13T08001";
-import { createDevices } from "./devices.js?v=v2026-05-13T08001";
-import { createPresence } from "./presence.js?v=v2026-05-13T08001";
-import { createDisplay } from "./display.js?v=v2026-05-13T08001";
-import { createRounds } from "./gameRounds.js?v=v2026-05-13T08001";
-import { createFinal } from "./gameFinal.js?v=v2026-05-13T08001";
-import { initShareDevice } from "./share-device.js?v=v2026-05-13T08001";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../../js/core/logo-preview.js?v=v2026-05-13T08001";
+import { requireAuth, signOut } from "../../js/core/auth.js?v=v2026-05-13T08195";
+import { setTopbarAccount } from "../../js/core/topbar-controller.js?v=v2026-05-13T08195";
+import { isGuestUser } from "../../js/core/guest-mode.js?v=v2026-05-13T08195";
+import { sb } from "../../js/core/supabase.js?v=v2026-05-13T08195";
+import { rt } from "../../js/core/realtime.js?v=v2026-05-13T08195";
+import { validateGameReadyToPlay, loadGameBasic, loadQuestions, loadAnswers } from "../../js/core/game-validate.js?v=v2026-05-13T08195";
+import { unlockAudio, isAudioUnlocked, playSfx } from "../../js/core/sfx.js?v=v2026-05-13T08195";
+import { createStore } from "./store.js?v=v2026-05-13T08195";
+import { createUI } from "./ui.js?v=v2026-05-13T08195";
+import { createDevices } from "./devices.js?v=v2026-05-13T08195";
+import { createPresence } from "./presence.js?v=v2026-05-13T08195";
+import { createDisplay } from "./display.js?v=v2026-05-13T08195";
+import { createRounds } from "./gameRounds.js?v=v2026-05-13T08195";
+import { createFinal } from "./gameFinal.js?v=v2026-05-13T08195";
+import { initShareDevice } from "./share-device.js?v=v2026-05-13T08195";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../../js/core/logo-preview.js?v=v2026-05-13T08195";
 
 initI18n({ withSwitcher: true });
 
@@ -193,6 +193,24 @@ async function main() {
 
   // pokaż na start kafelki
   ui.setSwatches?.({ teamA: colors.A, teamB: colors.B, bg: colors.BACKGROUND });
+
+  // ===== Motyw: stan UI (lokalny) =====
+  let activeTheme = null;
+  let themeList = [];
+
+  // wczytaj listę motywów z themes.json
+  (async () => {
+    try {
+      const res = await fetch("./display/js/themes.json");
+      const json = await res.json();
+      activeTheme = json.default || "classic";
+      themeList = json.themes.map(e => ({ key: e.key, label: t(e.label) }));
+      ui.setThemeOptions?.(themeList);
+      ui.setActiveTheme?.(activeTheme);
+    } catch (e) {
+      console.warn("Nie można wczytać themes.json:", e);
+    }
+  })();
 
   // throttlowane wysyłki, żeby nie zabić realtime
   const sendColorA = throttleMs(120, async (hex) => {
@@ -452,7 +470,7 @@ async function sendZeroStatesToDevices() {
   const chBuzzer = rt(`familiada-buzzer:${game.id}`);
 
   const devices = createDevices({ game, ui, store, chDisplay, chHost, chBuzzer });
-  const presence = createPresence({ game, ui, store, devices });
+  const presence = createPresence({ game, ui, store, devices, getTheme: () => activeTheme });
 
   shareDevice = initShareDevice({ currentUser, game, devices });
   void shareDevice.refreshBadges();
@@ -1516,6 +1534,17 @@ async function sendZeroStatesToDevices() {
     applyColor(colorModalTarget, hex);
   });
 
+  // ===== Motyw =====
+  const sendTheme = async (key) => {
+    if (!devices || !key) return;
+    await devices.sendDisplayCmd(`THEME ${key}`).catch(() => {});
+  };
+
+  ui.on("theme.change", (key) => {
+    activeTheme = key;
+    ui.setActiveTheme?.(key);
+    sendTheme(key);
+  });
 
   ui.on("advanced.change", () => {
     if (!ui.getAdvancedForm || !store.setAdvanced) return;
