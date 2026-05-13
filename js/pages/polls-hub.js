@@ -1,11 +1,11 @@
-import { sb, SUPABASE_URL } from "../core/supabase.js?v=v2026-05-13T08065";
-import { requireAuth } from "../core/auth.js?v=v2026-05-13T08065";
-import { isGuestUser, showGuestBlockedOverlay } from "../core/guest-mode.js?v=v2026-05-13T08065";
-import { validatePollReadyToOpen } from "../core/game-validate.js?v=v2026-05-13T08065";
-import { alertModal, confirmModal } from "../core/modal.js?v=v2026-05-13T08065";
-import { initUiSelect } from "../core/ui-select.js?v=v2026-05-13T08065";
-import { initI18n, t, getUiLang } from "../../translation/translation.js?v=v2026-05-13T08065";
-import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-05-13T08065";
+import { sb, SUPABASE_URL } from "../core/supabase.js?v=v2026-05-13T08382";
+import { requireAuth } from "../core/auth.js?v=v2026-05-13T08382";
+import { isGuestUser, showGuestBlockedOverlay } from "../core/guest-mode.js?v=v2026-05-13T08382";
+import { validatePollReadyToOpen } from "../core/game-validate.js?v=v2026-05-13T08382";
+import { alertModal, confirmModal } from "../core/modal.js?v=v2026-05-13T08382";
+import { initUiSelect } from "../core/ui-select.js?v=v2026-05-13T08382";
+import { initI18n, t, getUiLang } from "../../translation/translation.js?v=v2026-05-13T08382";
+import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-05-13T08382";
 import "../core/contact-modal.js";
 
 initI18n({ withSwitcher: true });
