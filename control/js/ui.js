@@ -1,6 +1,7 @@
 // /familiada/js/pages/controlui.js
 
 import { t } from "../../translation/translation.js?v=v2026-05-13T11050";
+import { initUiSelect } from "../../js/core/ui-select.js?v=v2026-05-13T11050";
 
 // ================== KOMUNIKATY (UI) ==================
 const UI_MSG = {
@@ -252,21 +253,24 @@ export function createUI() {
     setSwatch($("swatchDot"), dot);
   }
 
+  let themeSelectApi = null;
+
   function setThemeOptions(themes) {
-    const sel = $("themeSelect");
-    if (!sel) return;
-    sel.innerHTML = "";
-    for (const t of themes) {
-      const opt = document.createElement("option");
-      opt.value = t.key;
-      opt.textContent = t.label;
-      sel.appendChild(opt);
+    const root = $("themeSelect");
+    if (!root) return;
+    if (themeSelectApi) {
+      themeSelectApi.setOptions(themes.map(t => ({ value: t.key, label: t.label })));
+      return;
     }
+    themeSelectApi = initUiSelect(root, {
+      options: themes.map(t => ({ value: t.key, label: t.label })),
+      placeholder: "—",
+      onChange: (val) => emit("theme.change", val),
+    });
   }
 
   function setActiveTheme(key) {
-    const sel = $("themeSelect");
-    if (sel) sel.value = key || "";
+    if (themeSelectApi) themeSelectApi.setValue(key || "");
   }
 
   function openColorModal(title) {
@@ -686,9 +690,6 @@ export function createUI() {
     if (r) r.addEventListener("input", () => emit("colors.input", { kind: "R", value: r.value }));
     if (g) g.addEventListener("input", () => emit("colors.input", { kind: "G", value: g.value }));
     if (b2) b2.addEventListener("input", () => emit("colors.input", { kind: "B", value: b2.value }));
-
-    // --- Motyw ---
-    $("themeSelect")?.addEventListener("change", (e) => emit("theme.change", e.target.value));
 
     // --- Dodatkowe ustawienia (mnożniki, progi, tryb końca gry) ---
     const advInputs = [

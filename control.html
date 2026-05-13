@@ -468,7 +468,13 @@
                   <div class="sectionBlock">
                     <div class="sectionTitle" data-i18n="control.lookTheme">Motyw</div>
                     <div class="hint" data-i18n="control.lookThemeHint">Wybierz motyw wyświetlacza.</div>
-                    <select class="inp" id="themeSelect"></select>
+                    <div class="ui-select" id="themeSelect">
+                      <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
+                        <span class="ui-select-label">—</span>
+                        <span class="ui-select-caret" aria-hidden="true">▾</span>
+                      </button>
+                      <div class="ui-select-menu" role="listbox"></div>
+                    </div>
                   </div>
 
                   <div class="sectionBlock">
