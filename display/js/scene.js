@@ -1,6 +1,8 @@
 // scene.js
 import { loadJson, buildGlyphMap, resolveGlyph } from "./fonts.js?v=v2026-05-13T08382";
 import { createAnimator } from "./anim.js?v=v2026-05-13T08382";
+import { createDisplays } from "./displays.js?v=v2026-05-13T08382";
+import { createThemeManager } from "./theme_manager.js?v=v2026-05-13T08382";
 import { sb } from "../../js/core/supabase.js?v=v2026-05-13T08382";
 import { t } from "../../translation/translation.js?v=v2026-05-13T08382";
 
