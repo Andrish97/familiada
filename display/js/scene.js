@@ -35,6 +35,27 @@ export async function createScene() {
   let topTriple = displays.topTriple;
 
   const COLORS = { big: "#000000", cell: "#000000", dotOff: "#2e2e32" };
+  const updateDotOff = (oldColor, newColor) => {
+    const updateTiled = (d) => {
+      for (let ty = 0; ty < d.tilesY; ty++)
+        for (let tx = 0; tx < d.tilesX; tx++) {
+          const tile = d.tiles[ty]?.[tx];
+          if (!tile) continue;
+          for (let row = 0; row < 7; row++)
+            for (let col = 0; col < 5; col++)
+              if (tile.dots[row][col].getAttribute("fill") === oldColor)
+                tile.dots[row][col].setAttribute("fill", newColor);
+        }
+    };
+    const updatePanel = (d) => {
+      for (let row = 0; row < d.Y; row++)
+        for (let col = 0; col < d.X; col++)
+          if (d.dots[row][col].getAttribute("fill") === oldColor)
+            d.dots[row][col].setAttribute("fill", newColor);
+    };
+    updateTiled(big); updateTiled(leftPanel); updateTiled(rightPanel); updateTiled(topPanel);
+    updatePanel(long1); updatePanel(long2);
+  };
   const LIT = { main: "#d7ff3d", top: "#d7ff3d", left: "#d7ff3d", right: "#d7ff3d", bottom: "#d7ff3d" };
 
   // ============================================================
@@ -591,16 +612,31 @@ export async function createScene() {
     }
 
     // ============================================================
-    // COLOR A|B|BACKGROUND <value> / COLOR RESET
+    // COLOR A|B|BACKGROUND|DOT <value> / COLOR RESET
     // ============================================================
     if (head === "COLOR") {
       const target = (tokens[1]?? "").toUpperCase();
-      if (target === "RESET") { const def = themeMgr.getDefault(); themeMgr.load(def); return; }
+      if (target === "RESET") {
+        const def = themeMgr.getDefault(); themeMgr.load(def);
+        const oldDot = COLORS.dotOff;
+        COLORS.dotOff = "#2e2e32";
+        updateDotOff(oldDot, COLORS.dotOff);
+        return;
+      }
+      if (target === "DOT") {
+        const val = unquote(tokens.slice(2).join(" "));
+        const cssColorToRgb = (css) => { const s=(css??"").toString().trim(); if (!s) return null; const tmp=document.createElement("div"); tmp.style.color=s; document.body.appendChild(tmp); const rgb=getComputedStyle(tmp).color; tmp.remove(); const m=rgb.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i); if (!m) return null; return {r:+m[1],g:+m[2],b:+m[3]}; };
+        if (!cssColorToRgb(val)) { console.warn(`COLOR: nieprawidłowy kolor: ${val}`); return; }
+        const oldDot = COLORS.dotOff;
+        COLORS.dotOff = val;
+        updateDotOff(oldDot, COLORS.dotOff);
+        return;
+      }
       const val = unquote(tokens.slice(2).join(" "));
       const cssColorToRgb = (css) => { const s=(css??"").toString().trim(); if (!s) return null; const tmp=document.createElement("div"); tmp.style.color=s; document.body.appendChild(tmp); const rgb=getComputedStyle(tmp).color; tmp.remove(); const m=rgb.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i); if (!m) return null; return {r:+m[1],g:+m[2],b:+m[3]}; };
       if (!cssColorToRgb(val)) { console.warn(`COLOR: nieprawidłowy kolor: ${val}`); return; }
       const key = target === "A" ? "A" : target === "B" ? "B" : target === "BACKGROUND" ? "BG" : null;
-      if (!key) { console.warn(`COLOR: nieznany cel "${target}" (użyj A | B | BACKGROUND)`); return; }
+      if (!key) { console.warn(`COLOR: nieznany cel "${target}" (użyj A | B | BACKGROUND | DOT)`); return; }
       themeMgr.updateColors({ [key]: val });
       return;
     }

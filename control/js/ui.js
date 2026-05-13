@@ -245,10 +245,11 @@ export function createUI() {
     el.title = hex || "";
   }
 
-  function setSwatches({ teamA, teamB, bg }) {
+  function setSwatches({ teamA, teamB, bg, dot }) {
     setSwatch($("swatchTeamA"), teamA);
     setSwatch($("swatchTeamB"), teamB);
     setSwatch($("swatchBg"), bg);
+    setSwatch($("swatchDot"), dot);
   }
 
   function setThemeOptions(themes) {
@@ -666,6 +667,7 @@ export function createUI() {
     $("swatchTeamA")?.addEventListener("click", () => emit("colors.open", "A"));
     $("swatchTeamB")?.addEventListener("click", () => emit("colors.open", "B"));
     $("swatchBg")?.addEventListener("click", () => emit("colors.open", "BACKGROUND"));
+    $("swatchDot")?.addEventListener("click", () => emit("colors.open", "DOT"));
 
     $("btnColorsReset")?.addEventListener("click", () => emit("colors.reset"));
 

@@ -4603,6 +4603,8 @@ const uk = {
     teamHint: "Введіть назви команд.",
     stepLook: "Вигляд",
     lookColors: "Кольори",
+    dotColorLabel: "Колір вимкнених крапок",
+    dotColorAria: "Виберіть колір вимкнених крапок",
     lookTheme: "Тема",
     lookThemeHint: "Виберіть тему дисплея.",
     lookLogoTitle: "Логотип",

@@ -63,6 +63,7 @@ const DEFAULT_COLORS = {
   A: "#c4002f",
   B: "#2a62ff",
   BACKGROUND: "#d21180",
+  DOT: "#2e2e32",
 };
 
 function normHex(input) {
@@ -189,10 +190,11 @@ async function main() {
     A: DEFAULT_COLORS.A,
     B: DEFAULT_COLORS.B,
     BACKGROUND: DEFAULT_COLORS.BACKGROUND,
+    DOT: DEFAULT_COLORS.DOT,
   };
 
   // pokaż na start kafelki
-  ui.setSwatches?.({ teamA: colors.A, teamB: colors.B, bg: colors.BACKGROUND });
+  ui.setSwatches?.({ teamA: colors.A, teamB: colors.B, bg: colors.BACKGROUND, dot: colors.DOT });
 
   // ===== Motyw: stan UI (lokalny) =====
   let activeTheme = null;
@@ -238,6 +240,13 @@ async function main() {
     await devices.sendDisplayCmd(`COLOR BACKGROUND ${h}`).catch(() => {});
   });
 
+  const sendColorDot = throttleMs(120, async (hex) => {
+    if (!devices) return;
+    const h = normHex(hex);
+    if (!h) return;
+    await devices.sendDisplayCmd(`COLOR DOT ${h}`).catch(() => {});
+  });
+
   async function sendColorsReset() {
     if (!devices) return;
     await devices.sendDisplayCmd("COLOR RESET").catch(() => {});
@@ -251,20 +260,26 @@ async function main() {
 
     if (kind === "A") {
       colors.A = h;
-      ui.setSwatches?.({ teamA: colors.A, teamB: colors.B, bg: colors.BACKGROUND });
+      ui.setSwatches?.({ teamA: colors.A, teamB: colors.B, bg: colors.BACKGROUND, dot: colors.DOT });
       sendColorA(h);
       return;
     }
     if (kind === "B") {
       colors.B = h;
-      ui.setSwatches?.({ teamA: colors.A, teamB: colors.B, bg: colors.BACKGROUND });
+      ui.setSwatches?.({ teamA: colors.A, teamB: colors.B, bg: colors.BACKGROUND, dot: colors.DOT });
       sendColorB(h);
       return;
     }
     if (kind === "BACKGROUND") {
       colors.BACKGROUND = h;
-      ui.setSwatches?.({ teamA: colors.A, teamB: colors.B, bg: colors.BACKGROUND });
+      ui.setSwatches?.({ teamA: colors.A, teamB: colors.B, bg: colors.BACKGROUND, dot: colors.DOT });
       sendColorBg(h);
+      return;
+    }
+    if (kind === "DOT") {
+      colors.DOT = h;
+      ui.setSwatches?.({ teamA: colors.A, teamB: colors.B, bg: colors.BACKGROUND, dot: colors.DOT });
+      sendColorDot(h);
       return;
     }
   }
@@ -507,6 +522,7 @@ async function sendZeroStatesToDevices() {
     sendColorA(colors.A);
     sendColorB(colors.B);
     sendColorBg(colors.BACKGROUND);
+    sendColorDot(colors.DOT);
 
     // ustaw nazwy drużyn przy swatchach
     const teamA = store.state.teams?.teamA || t("control.teamALabel");
@@ -1450,23 +1466,25 @@ async function sendZeroStatesToDevices() {
   });
 
     // ===== UI: Kolory =====
-  let colorModalTarget = null; // "A" | "B" | "BACKGROUND"
+  let colorModalTarget = null; // "A" | "B" | "BACKGROUND" | "DOT"
 
   ui.on("colors.open", (target) => {
-    if (target !== "A" && target !== "B" && target !== "BACKGROUND") return;
+    if (target !== "A" && target !== "B" && target !== "BACKGROUND" && target !== "DOT") return;
     colorModalTarget = target;
 
     const hex =
       target === "A" ? colors.A :
       target === "B" ? colors.B :
-      colors.BACKGROUND;
+      target === "BACKGROUND" ? colors.BACKGROUND :
+      colors.DOT;
 
     const rgb = hexToRgb(hex);
 
     ui.openColorModal?.(
       target === "A" ? t("control.teamAColorAria") :
       target === "B" ? t("control.teamBColorAria") :
-      t("control.bgColorAria")
+      target === "BACKGROUND" ? t("control.bgColorAria") :
+      t("control.dotColorAria")
     );
 
     ui.setColorModalRgb?.(rgb);
@@ -1483,16 +1501,18 @@ async function sendZeroStatesToDevices() {
       A: DEFAULT_COLORS.A,
       B: DEFAULT_COLORS.B,
       BACKGROUND: DEFAULT_COLORS.BACKGROUND,
+      DOT: DEFAULT_COLORS.DOT,
     };
 
-    ui.setSwatches?.({ teamA: colors.A, teamB: colors.B, bg: colors.BACKGROUND });
+    ui.setSwatches?.({ teamA: colors.A, teamB: colors.B, bg: colors.BACKGROUND, dot: colors.DOT });
 
     // ustaw modal (jeśli otwarty) na domyślne dla aktualnego targetu
     if (colorModalTarget) {
       const hex =
         colorModalTarget === "A" ? colors.A :
         colorModalTarget === "B" ? colors.B :
-        colors.BACKGROUND;
+        colorModalTarget === "BACKGROUND" ? colors.BACKGROUND :
+        colors.DOT;
       ui.setColorModalHex?.(hex);
       ui.setColorModalRgb?.(hexToRgb(hex));
     }

@@ -4728,6 +4728,8 @@ const en = {
     teamHint: "Enter team names.",
     stepLook: "Appearance",
     lookColors: "Colors",
+    dotColorLabel: "Dots off color",
+    dotColorAria: "Choose dots off color",
     lookTheme: "Theme",
     lookThemeHint: "Select display theme.",
     lookLogoTitle: "Logo",

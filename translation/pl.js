@@ -4137,6 +4137,8 @@ const pl = {
     teamHint: "Tutaj należy wprowadzić nazwy drużyn.",
     stepLook: "Wygląd",
     lookColors: "Kolory",
+    dotColorLabel: "Kolor wyłączonych kropek",
+    dotColorAria: "Wybierz kolor wyłączonych kropek",
     lookTheme: "Motyw",
     lookThemeHint: "Wybierz motyw wyświetlacza.",
     lookLogoTitle: "Logo",
