@@ -1,11 +1,11 @@
 // js/pages/editor.js
-import { sb } from "../core/supabase.js?v=v2026-05-12T22142";
-import { requireAuth } from "../core/auth.js?v=v2026-05-12T22142";
-import { alertModal, confirmModal } from "../core/modal.js?v=v2026-05-12T22142";
-import { parseQaText, clip as clipN } from "../core/text-import.js?v=v2026-05-12T22142";
-import { canEnterEdit, RULES as GV_RULES, TYPES } from "../core/game-validate.js?v=v2026-05-12T22142";
-import { initI18n, t } from "../../translation/translation.js?v=v2026-05-12T22142";
-import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-05-12T22142";
+import { sb } from "../core/supabase.js?v=v2026-05-13T08001";
+import { requireAuth } from "../core/auth.js?v=v2026-05-13T08001";
+import { alertModal, confirmModal } from "../core/modal.js?v=v2026-05-13T08001";
+import { parseQaText, clip as clipN } from "../core/text-import.js?v=v2026-05-13T08001";
+import { canEnterEdit, RULES as GV_RULES, TYPES } from "../core/game-validate.js?v=v2026-05-13T08001";
+import { initI18n, t } from "../../translation/translation.js?v=v2026-05-13T08001";
+import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-05-13T08001";
 import "../core/contact-modal.js";
 
 initI18n({ withSwitcher: true });
