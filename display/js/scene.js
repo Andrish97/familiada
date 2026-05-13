@@ -563,6 +563,11 @@ export async function createScene() {
           colors: oldTheme?.getColors?.(),
           controls: oldTheme?.getControls?.()
         };
+        const snap = {
+          big: big.snapshot(), left: leftPanel.snapshot(),
+          right: rightPanel.snapshot(), top: topPanel.snapshot(),
+          long1: long1.snapshot(), long2: long2.snapshot(),
+        };
         const newTheme = themeMgr.load(themeName, config);
         displaysGroup.innerHTML = "";
         const newDisplays = createDisplays({ svgGroup: displaysGroup, theme: newTheme });
@@ -575,7 +580,12 @@ export async function createScene() {
         leftTriple = newDisplays.leftTriple;
         rightTriple = newDisplays.rightTriple;
         topTriple = newDisplays.topTriple;
-        console.log(`[THEME] Przełączono na: ${themeName}`);
+        big.restore(snap.big);
+        leftPanel.restore(snap.left);
+        rightPanel.restore(snap.right);
+        topPanel.restore(snap.top);
+        long1.restore(snap.long1);
+        long2.restore(snap.long2);
       } catch (e) { console.warn(`[THEME] ${e.message}`); }
       return;
     }
