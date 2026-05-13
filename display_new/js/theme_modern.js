@@ -28,10 +28,7 @@ function computeDerived(c) {
 
 function setupLayers(bgLayer) {
   bgLayer.innerHTML = "";
-  bgLayer.style.position = "relative";
   bgLayer.style.overflow = "hidden";
-  bgLayer.style.width = "100%";
-  bgLayer.style.height = "100%";
   return { main: bgLayer };
 }
 
