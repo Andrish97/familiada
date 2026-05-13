@@ -1,5 +1,5 @@
 // theme_modern.js
-console.log("[Theme: Modern] Loaded v2.1 - Smooth Transitions");
+
 
 const hexToRgb = (hex) => {
   const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -48,7 +48,6 @@ function updateBackground(layer, d, tA, tB) {
   const c3 = rgbToHex(mix(B, A_light, tA));
 
   layer.style.background = `linear-gradient(135deg, ${c0}, ${c1}, ${c2}, ${c3})`;
-  console.log("Modern theme background set to:", layer.style.background);
   layer.style.opacity = "1";
 }
 
@@ -93,12 +92,12 @@ function buildSvgContent(d) {
 </g>
 
 <g id="display_frames" style="stroke:#ffffff;stroke-opacity:0.24421053;stroke-width:9;stroke-dasharray:none;paint-order:stroke markers fill">
-  <rect x="647.93054" y="516.98523" width="550.53888" height="59.4048" rx="20" ry="20" style="display:inline;fill:#090909;fill-opacity:1;stroke-width:9;stroke:#ffffff;stroke-opacity:0.24421053;stroke-dasharray:none;paint-order:stroke markers fill" />
-  <rect x="81.530571" y="516.98523" width="550.53888" height="59.4048" rx="20" ry="20" style="display:inline;fill:#090909;fill-opacity:1;stroke-width:9;stroke:#ffffff;stroke-opacity:0.24421053;stroke-dasharray:none;paint-order:stroke markers fill" />
-  <rect x="18.479759" y="291.31412" width="190.35648" height="92.044792" rx="20" ry="20" style="fill:#090909;fill-opacity:1;stroke-width:9;stroke:#ffffff;stroke-opacity:0.24421053;stroke-dasharray:none;paint-order:stroke markers fill" />
-  <rect x="1069.1637" y="291.31412" width="190.35648" height="92.044792" rx="20" ry="20" style="fill:#090909;fill-opacity:1;stroke-width:9;stroke:#ffffff;stroke-opacity:0.24421053;stroke-dasharray:none;paint-order:stroke markers fill" />
-  <rect x="544.82178" y="11.143076" width="190.35648" height="92.044792" rx="20" ry="20" style="display:inline;fill:#090909;fill-opacity:1;stroke:#ffffff;stroke-width:9;stroke-dasharray:none;stroke-opacity:0.244211;paint-order:stroke markers fill" />
-  <rect x="226.32941" y="124.91698" width="827.34125" height="364.83914" rx="20" ry="20" style="display:inline;fill:#090909;fill-opacity:1;stroke-width:9;stroke:#ffffff;stroke-opacity:0.24421053;stroke-dasharray:none;paint-order:stroke markers fill" />
+  <rect x="647.93054" y="516.98523" width="550.53888" height="59.4048" rx="20" ry="20" style="display:inline;fill:#000000;fill-opacity:1;stroke-width:9;stroke:#ffffff;stroke-opacity:0.24421053;stroke-dasharray:none;paint-order:stroke markers fill" />
+  <rect x="81.530571" y="516.98523" width="550.53888" height="59.4048" rx="20" ry="20" style="display:inline;fill:#000000;fill-opacity:1;stroke-width:9;stroke:#ffffff;stroke-opacity:0.24421053;stroke-dasharray:none;paint-order:stroke markers fill" />
+  <rect x="18.479759" y="291.31412" width="190.35648" height="92.044792" rx="20" ry="20" style="fill:#000000;fill-opacity:1;stroke-width:9;stroke:#ffffff;stroke-opacity:0.24421053;stroke-dasharray:none;paint-order:stroke markers fill" />
+  <rect x="1069.1637" y="291.31412" width="190.35648" height="92.044792" rx="20" ry="20" style="fill:#000000;fill-opacity:1;stroke-width:9;stroke:#ffffff;stroke-opacity:0.24421053;stroke-dasharray:none;paint-order:stroke markers fill" />
+  <rect x="544.82178" y="11.143076" width="190.35648" height="92.044792" rx="20" ry="20" style="display:inline;fill:#000000;fill-opacity:1;stroke:#ffffff;stroke-width:9;stroke-dasharray:none;stroke-opacity:0.244211;paint-order:stroke markers fill" />
+  <rect x="226.32941" y="124.91698" width="827.34125" height="364.83914" rx="20" ry="20" style="display:inline;fill:#000000;fill-opacity:1;stroke-width:9;stroke:#ffffff;stroke-opacity:0.24421053;stroke-dasharray:none;paint-order:stroke markers fill" />
 </g>`;
 }
 
