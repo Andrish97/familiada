@@ -240,12 +240,12 @@ async function main() {
     await devices.sendDisplayCmd(`COLOR BACKGROUND ${h}`).catch(() => {});
   });
 
-  const sendColorDot = throttleMs(120, async (hex) => {
+  const sendColorDot = async (hex) => {
     if (!devices) return;
     const h = normHex(hex);
     if (!h) return;
     await devices.sendDisplayCmd(`COLOR DOT ${h}`).catch(() => {});
-  });
+  };
 
   async function sendColorsReset() {
     if (!devices) return;
@@ -657,6 +657,7 @@ async function sendZeroStatesToDevices() {
     } catch (e) { console.warn("[logo] set active failed", e); }
 
     // przeładuj logo na wyświetlaczu
+    sendColorDot(colors.DOT);
     await devices.sendDisplayCmd("LOGO RELOAD").catch(() => {});
   }
   
