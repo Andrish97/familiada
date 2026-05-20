@@ -96,6 +96,20 @@ const pl = {
     back: "Wróć do moich gier",
     login: "Zaloguj / Załóż konto",
   },
+  guestInfo: {
+    title: "⚠️ Konto gościa",
+    subtitle: "Zanim zaczniesz — kilka ważnych informacji:",
+    icon1: "🗂️",
+    warning1: "Twoje dane są zapisane <strong>tylko w tej przeglądarce</strong>. Wyczyszczenie historii (cookies) spowoduje utratę dostępu do konta.",
+    icon2: "⏳",
+    warning2: "Konto zostanie <strong>usunięte po 5 dniach</strong> od ostatniego logowania.",
+    migrateTitle: "💾 Jak zachować swoje dane?",
+    step1: "Kliknij swoją nazwę użytkownika w prawym górnym rogu",
+    step2: "Wybierz <em>Zaloguj\u00A0/\u00A0Załóż konto</em>",
+    step3: "Podaj adres email i hasło — zostaniesz zapytany o migrację danych",
+    step4: "Po potwierdzeniu adresu email wszystkie Twoje dane zostaną automatycznie przeniesione",
+    ok: "Rozumiem",
+  },
     home: {
     title: "Familiada Online — system do prowadzenia gry na żywo",
     nav: {
