@@ -6,6 +6,7 @@ import { hideForGuest, isGuestUser } from "../core/guest-mode.js?v=v2026-05-20T1
 import { initI18n, t, applyTranslations } from "../../translation/translation.js?v=v2026-05-20T11500";
 import { initRatingSystem } from "../core/rating-system.js?v=v2026-05-20T11500";
 import { initUiSelect } from "../core/ui-select.js?v=v2026-05-20T11500";
+import { maybeShowGuestInfoModal } from "../core/guest-info-modal.js?v=v2026-05-20T11500";
 
 import { initPwa, isStandalone, isMobileDevice } from "../core/pwa.js?v=v2026-05-20T11500";
 
