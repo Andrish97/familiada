@@ -1064,7 +1064,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   currentUser = await requireAuth("login");
   const guestMode = isGuestUser(currentUser);
-
+  
+  await maybeShowGuestInfoModal(currentUser);
+  
   if (hideForGuest(currentUser, [btnPollsHub, btnSubscriptionsHub])) {
     // data-nav-hidden prevents recalc() from resetting display on these buttons
     if (btnPollsHub) btnPollsHub.dataset.navHidden = "true";
