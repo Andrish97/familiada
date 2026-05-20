@@ -96,6 +96,20 @@ const en = {
     back: "Back to my games",
     login: "Sign in / Create account",
   },
+  guestInfo: {
+    title: "⚠️ Guest account",
+    subtitle: "Before you start — a few important notes:",
+    icon1: "🗂️",
+    warning1: "Your data is stored <strong>in this browser only</strong>. Clearing your history (cookies) will result in losing access to your account.",
+    icon2: "⏳",
+    warning2: "The account will be <strong>deleted after 5 days</strong> of inactivity.",
+    migrateTitle: "💾 How to keep your data?",
+    step1: "Click your username in the top right corner",
+    step2: "Choose <em>Log\u00A0in\u00A0/\u00A0Create account</em>",
+    step3: "Enter your email and password — you will be asked about data migration",
+    step4: "After confirming your email address, all your data will be transferred automatically",
+    ok: "Got it",
+  },
   home: {
     title: "Familiada Online — live game hosting system",
     nav: {
