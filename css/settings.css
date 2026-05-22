@@ -2387,3 +2387,276 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   }
 }
 
+
+/* ============================================================
+   MOBILE RESPONSIVE FIXES  — dodaj na koniec settings.css
+   ============================================================ */
+
+/* 1. GLOBALNE ------------------------------------------------ */
+
+/* Zapobiegamy poziomemu overflow całej strony */
+.settings-body {
+  overflow-x: hidden;
+}
+
+/* Wszystkie panele nie mogą być szersze niż viewport */
+.market-admin-panel,
+#mailPanel,
+#panelScreen {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.mail-card {
+  max-width: 100%;
+  box-sizing: border-box;
+  /* WAŻNE: nie używaj overflow:hidden tutaj – blokuje scroll tabel */
+}
+
+/* Table wrappers mogą scrollować w poziomie */
+.mail-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+}
+
+/* 2. TOPBAR -------------------------------------------------- */
+
+@media (max-width: 900px) {
+  .topbar-section-2 {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding-bottom: 2px;
+  }
+  .topbar-section-2::-webkit-scrollbar {
+    display: none;
+  }
+  /* Przyciski nie zmniejszaj poniżej czytelności */
+  .topbar-section-2 .btn,
+  .topbar-section-2 .tab-btn {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+}
+
+/* 3. KONTAKTY MARKETINGOWE ----------------------------------- */
+
+/* mc-controls: przyciski Run/Cancel/Refresh zawijają się */
+@media (max-width: 640px) {
+  .mc-controls {
+    width: 100%;
+  }
+  .mc-field-inline {
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+  }
+  .mc-field-inline label {
+    width: 100%;
+    margin-bottom: 2px;
+  }
+  .mc-field-inline input[type="number"] {
+    width: 70px !important;
+  }
+
+  /* Toolbar nad tabelą: selekcja + akcje */
+  #marketingContactsPanel [style*="display:flex;gap:6px"] {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  /* Paginacja: przyciski full-width */
+  #mcPrevPage,
+  #mcNextPage {
+    flex: 1;
+  }
+}
+
+/* mc-table: scrollowalna, czytelna na mobile */
+/* Wrapper ma inline overflow-x:auto – upewniamy się że działa */
+#mcContactsTable {
+  min-width: 520px; /* wymusza scroll zamiast ściskania */
+}
+
+@media (max-width: 640px) {
+  #mcContactsTable {
+    font-size: 12px !important;
+    table-layout: auto !important; /* lepszy flow tekstu na mobile */
+  }
+  #mcContactsTable th,
+  #mcContactsTable td {
+    padding: 8px 6px !important; /* większy tap target */
+    word-break: break-word;
+    white-space: normal;
+  }
+  /* Ukryj URL na bardzo wąskim ekranie – mamy przycisk "Odwiedź" */
+  #mcContactsTable th:nth-child(3),
+  #mcContactsTable td:nth-child(3) {
+    display: none;
+  }
+  /* Kolumna "Użyte" – tylko ikona, nie traci miejsca */
+  #mcContactsTable th:nth-child(5),
+  #mcContactsTable td:nth-child(5) {
+    width: 40px !important;
+    text-align: center;
+  }
+  /* Zaznaczanie wierszy: padding zwiększa area dotykowy */
+  #mcTableBody tr {
+    cursor: pointer;
+  }
+  #mcTableBody td:first-child {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+}
+
+/* 4. ZAKŁADKA MAILE ----------------------------------------- */
+
+/* mail-inline-grid: stacking na mobile */
+@media (max-width: 640px) {
+  .mail-inline-grid {
+    grid-template-columns: 1fr !important;
+    display: grid !important;
+  }
+
+  /* mail-controls (pasek nad tabelami kolejki/logów) */
+  .mail-controls {
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+    align-items: flex-start !important;
+  }
+  .mail-controls .btn,
+  .mail-controls select,
+  .mail-controls input[type="number"] {
+    flex-shrink: 0;
+  }
+  .mail-controls .ui-select {
+    flex: 1;
+    min-width: 120px;
+  }
+  #mailQueueLimit {
+    width: 70px !important;
+  }
+  /* Provider order: przewijalna lista zamiast row */
+  .provider-order-list {
+    flex-wrap: wrap;
+  }
+}
+
+/* 5. PRACE TECHNICZNE — dt-group (date-time) --------------- */
+
+@media (max-width: 480px) {
+  .dt-group {
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
+  }
+  .dt-input {
+    width: 44px !important;
+    min-width: 36px;
+    flex-shrink: 0;
+  }
+  /* Year input trochę szerszy */
+  #returnAtYear,
+  #endAtYear {
+    width: 60px !important;
+  }
+  .dt-sep {
+    width: 100%; /* separator wchodzi w nową linię, grupując czas i datę */
+    display: block;
+    opacity: 0;
+    height: 2px;
+  }
+}
+
+/* 6. STATYSTYKI --------------------------------------------- */
+
+@media (max-width: 600px) {
+  /* Retention & Segmenty: 2-kol → 1-kol
+     Muszą być !important bo inline style */
+  #statsPanel > .mail-card > div > div[style*="grid-template-columns:1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+  /* stat-boxes: 2 kolumny wystarczą na mobile */
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  /* Trend chart: nie wychodź poza panel */
+  #trendChart {
+    overflow-x: auto;
+    min-width: 0;
+  }
+  #trendLabels {
+    overflow-x: auto;
+    min-width: 0;
+  }
+}
+
+/* 7. OCENY --------------------------------------------------- */
+
+@media (max-width: 600px) {
+  #ratingsTableBody td:last-child {
+    word-break: break-word;
+    max-width: 100px;
+  }
+}
+
+/* 8. GRY SPOŁECZNOŚCI / PRODUCENTA -------------------------- */
+
+@media (max-width: 640px) {
+  /* Przyciski statusów marketplace */
+  #marketplacePanel .mail-controls,
+  #marketplacePanel [class*="controls"] {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  /* bulk-bar w generatorze */
+  .bulk-bar {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  /* gen-pending-bar */
+  .pending-bar {
+    flex-wrap: wrap;
+  }
+  /* gen-session: pola w wierszu → kolumna */
+  #gen-session-card > div[style*="display:flex"] {
+    flex-wrap: wrap;
+  }
+}
+
+/* 9. ZGŁOSZENIA — mail client (3-panelowy) ------------------ */
+
+@media (max-width: 768px) {
+  .mail-client {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+  .mail-list-toolbar {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .mail-search {
+    min-width: 0;
+    flex: 1;
+  }
+}
+
+/* 10. MARKETING (wysyłka) ----------------------------------- */
+
+@media (max-width: 640px) {
+  /* Przyciski szablonów: zawijaj */
+  #mktTemplateButtons {
+    flex-wrap: wrap;
+  }
+  /* Przyciski odbiorców */
+  #marketingPanel [style*="display:flex;align-items:center;gap:8px"] {
+    flex-wrap: wrap;
+  }
+}
+
+/* ============================================================
+   KONIEC MOBILE FIXES
+   ============================================================ */
