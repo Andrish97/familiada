@@ -362,6 +362,7 @@ export function renderToolbar(state) {
   const oneSelKey = oneSel ? realKeys[0] : null;
   const oneSelIsQuestion = oneSelKey?.startsWith("q:");
   const hasQuestionInSel = realKeys.some(k => k.startsWith("q:"));
+  const hasFolderInSel   = realKeys.some(k => k.startsWith("c:"));
 
   const dis = new Map();
 
@@ -389,7 +390,7 @@ export function renderToolbar(state) {
     dis.set("copy",         !canCopy);
     dis.set("cut",          !canCut);
     dis.set("duplicate",    !canMutate);
-    dis.set("createGame",   !hasQuestionInSel);
+    dis.set("createGame",   !(hasQuestionInSel || hasFolderInSel));
   }
 
   if (manySel) {
@@ -400,7 +401,7 @@ export function renderToolbar(state) {
     dis.set("copy",         !canCopy);
     dis.set("cut",          !canCut);
     dis.set("duplicate",    !canMutate);
-    dis.set("createGame",   !hasQuestionInSel);
+    dis.set("createGame",   !(hasQuestionInSel || hasFolderInSel));
   }
   
   // zastosuj do DOM
