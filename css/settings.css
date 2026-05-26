@@ -2389,143 +2389,93 @@ body.tools-fullscreen .tools-frame-wrap iframe{
 
 
 /* ============================================================
-   MOBILE FIX v3  — wklej NA KONIEC css/settings.css
-   (usuń poprzednią wersję jeśli była)
+   MOBILE FIX v4  — usuń poprzednie wersje, wklej to
    ============================================================ */
 
-/* ----------------------------------------------------------
-   1. CORE FIX: przerwanie łańcucha min-width:auto
-      Bez tego grid/flex items rozszerzają się do 860px
-      (szerokość min-width mail-table) mimo overflow:auto na wrapperze
-   ---------------------------------------------------------- */
-
-body.settings-body > main > * {
-  min-width: 0;
-}
-
+/* 1. Zakotwiczenie — min-width:0 przerywa łańcuch rozszerzania */
 .market-admin-panel,
 #mailPanel,
 #panelScreen {
   min-width: 0;
   max-width: 100%;
-}
-
-.mail-cards {
-  min-width: 0;
-  max-width: 100%;
-}
-
-/*
-  overflow-x:clip = przycina overflow w osi X,
-  ale NIE tworzy BFC → nie blokuje position:absolute dropdownów
-  NIE tworzy scroll container → nie psuje ui-select-menu
-*/
-.mail-card {
-  min-width: 0;
+  /* clip tylko na zewnętrznym wrapperze — nie psuje dropdownów */
   overflow-x: clip;
 }
 
-/* Upewniamy się że wrapper tabeli ma 100% rodzica */
-.mail-table-wrap {
-  width: 100%;
+.mail-cards,
+.mail-card {
   min-width: 0;
 }
+/* mail-card NIE dostaje clip — elementy muszą się zawijać, nie być przycinane */
 
-/* ----------------------------------------------------------
-   2. MAILE — selects zbyt szerokie, zwijają się dziwnie
-   ---------------------------------------------------------- */
-
+/* 2. Mniejsze paddingi na mobile — więcej miejsca na treść
+   (18+14+15=94px → 10+10+10=30px, zysk 64px na każdą stronę = 128px więcej treści) */
 @media (max-width: 640px) {
-  /* Dwa selects po 170px każdy + select + 2 przyciski → overflow */
+  .mail-panel {
+    padding: 10px;
+  }
+  .mail-card {
+    padding: 10px;
+  }
+  .market-admin-panel > .mail-panel {
+    padding: 10px;
+  }
+}
+
+/* 3. mail-ui-select — 170px to za dużo na wąski ekran */
+@media (max-width: 640px) {
   .mail-ui-select {
     min-width: 0 !important;
-    flex: 1 1 120px;
+    flex: 1 1 130px;
   }
-
-  /* gap mniejszy żeby lepiej się mieściły */
   .mail-controls {
     gap: 6px;
   }
-
-  /* mail-card-head: tytuł i kontrolki zawijaj */
-  .mail-card-head {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-  }
-  .mail-card-head .mail-controls {
-    width: 100%;
-  }
 }
 
-/* ----------------------------------------------------------
-   3. KONTAKTY MARKETINGOWE — mc-field-inline + mc-table
-   ---------------------------------------------------------- */
-
-/* mc-field-inline: prawdopodobnie display:flex bez wrap */
+/* 4. mc-field-inline — label + input + przyciski: muszą się zawijać */
 .mc-field-inline {
   flex-wrap: wrap !important;
   gap: 6px !important;
 }
 
-/* mc-table: komórki z długimi URL/email przepełniają się */
+/* 5. mc-table — komórki: zapobiegaj przepełnieniu treścią (długie URL/e-mail)
+   + user-select:none żeby tap zaznaczał wiersz zamiast tekstu */
 .mc-table td {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  /* Zapobiega też przypadkowemu zaznaczaniu tekstu przy tap-selekcji */
   user-select: none;
   -webkit-user-select: none;
 }
 
-/* Na mobile: padding większy = łatwiejszy tap */
 @media (max-width: 640px) {
   .mc-table th,
   .mc-table td {
     padding: 10px 6px !important;
   }
-
-  /* URL kolumna (3): schowaj — jest przycisk "Odwiedź" */
+  /* Ukryj kolumnę URL (3) — jest przycisk Odwiedź */
   .mc-table thead tr th:nth-child(3),
   .mc-table tbody tr td:nth-child(3) {
     display: none !important;
   }
-
-  /* Ustaw nowe proporcje bez kolumny URL */
-  .mc-table thead tr th:nth-child(1),
-  .mc-table tbody tr td:nth-child(1) { width: 35% !important; }
-  .mc-table thead tr th:nth-child(2),
-  .mc-table tbody tr td:nth-child(2) { width: 35% !important; }
-  .mc-table thead tr th:nth-child(4),
-  .mc-table tbody tr td:nth-child(4) { width: 20% !important; }
-  .mc-table thead tr th:nth-child(5),
-  .mc-table tbody tr td:nth-child(5) { width: 10% !important; }
 }
 
-/* ----------------------------------------------------------
-   4. Pozostałe panele
-   ---------------------------------------------------------- */
-
-/* Wszystkie market-admin-panel mają min-width:0 (punkt 1),
-   ale ich wewnętrzne mail-card też potrzebują tego */
-.market-admin-panel .mail-card {
-  min-width: 0;
-  overflow-x: clip;
-}
-
-/* Generator: wewnętrzne karty */
-#generatorPanel .mail-card,
+/* 6. Pozostałe panele — te same zasady */
+.maintenance-panel .mail-card,
+#statsPanel .mail-card,
+#ratingsPanel .mail-card,
+#reportsPanel .mail-card,
 #marketplacePanel .mail-card,
-#reportsPanel .mail-card {
+#generatorPanel .mail-card {
   min-width: 0;
 }
 
-/* Mail client (Zgłoszenia) */
-.mail-client,
-.mail-sidebar,
-.mail-list,
-.mail-conv {
-  min-width: 0;
+@media (max-width: 640px) {
+  /* dt-group (Prace techniczne) — już ma flex-wrap, tylko zmniejsz input */
+  .dt-input {
+    width: 70px !important;
+  }
 }
 
 /* ============================================================ */
