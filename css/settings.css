@@ -2327,14 +2327,15 @@ body.tools-fullscreen .tools-frame-wrap iframe{
 
 .mc-table tbody tr {
   transition: background .15s;
+  cursor: pointer;
 }
 
 .mc-table tbody tr:hover {
   background: rgba(255,255,255,.04);
 }
 
-.mc-table tbody tr.selected {
-  background: rgba(116,185,255,.12);
+.mc-table tbody tr.mc-row-selected {
+  background: rgba(116,185,255,.16) !important;
 }
 
 .mc-table tbody tr.used {
@@ -2362,16 +2363,16 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   vertical-align: middle;
 }
 
-.mc-selectable {
-  cursor: cell;
-  user-select: none;
-  -webkit-user-select: none;
+.mc-checkbox-cell {
+  width: 40px;
+  text-align: center;
+  padding: 0 6px !important;
 }
 
-.mc-cell-selected {
-  background: rgba(116,185,255,.25) !important;
-  outline: 2px solid #74b9ff;
-  outline-offset: -2px;
+.mc-checkbox-cell input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
 }
 
 /* Logs */

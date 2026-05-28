@@ -5925,6 +5925,7 @@ function wireEvents() {
     runs: [],
     contacts: [],
     selectedRows: new Set(),
+    lastSelectedIdx: null,
     page: 1,
     sortCol: 'added_at',
     sortDir: 'desc',
@@ -6094,20 +6095,25 @@ function wireEvents() {
   function mcRenderContacts(totalCount) {
     const tbody = document.getElementById("mcTableBody");
     if (!mcState.contacts.length) {
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;opacity:.5;padding:1.5rem">Brak kontaktów</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;opacity:.5;padding:1.5rem">Brak kontaktów</td></tr>';
       mcUpdatePagination(0);
+      mcUpdateToolbar();
       return;
     }
     tbody.innerHTML = mcState.contacts.map((c, i) => {
       const usedClass = c.is_used ? 'mc-used' : '';
+      const selectedClass = mcState.selectedRows.has(c.id) ? 'mc-row-selected' : '';
+      const checked = mcState.selectedRows.has(c.id) ? 'checked' : '';
       const usedText = c.is_used ? '✓' : '';
       const addedAt = c.added_at ? new Date(c.added_at).toLocaleString('pl-PL', {month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit'}) : '—';
-      return `<tr class="${usedClass}" data-id="${c.id}">
-        <td class="mc-cell mc-selectable" data-row="${i}" data-col="0">${mcEsc(c.title||'')}</td>
-        <td class="mc-cell mc-selectable" data-row="${i}" data-col="1">${mcEsc(c.email||'')}</td>
-        <td class="mc-cell mc-selectable" data-row="${i}" data-col="2">${mcEsc(c.url||'')}</td>
-        <td class="mc-cell mc-selectable" data-row="${i}" data-col="3">${addedAt}</td>
-        <td class="mc-cell mc-selectable" data-row="${i}" data-col="4" style="text-align:center">${usedText}</td>
+      const urlHtml = c.url ? `<a href="${mcEsc(c.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${mcEsc(c.url)}</a>` : '';
+      return `<tr class="${usedClass} ${selectedClass}" data-id="${c.id}" data-idx="${i}">
+        <td class="mc-cell mc-checkbox-cell"><input type="checkbox" class="mc-row-check" ${checked} onclick="event.stopPropagation()"></td>
+        <td class="mc-cell">${mcEsc(c.title||'')}</td>
+        <td class="mc-cell">${mcEsc(c.email||'')}</td>
+        <td class="mc-cell" style="max-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${urlHtml}</td>
+        <td class="mc-cell">${addedAt}</td>
+        <td class="mc-cell" style="text-align:center">${usedText}</td>
       </tr>`;
     }).join("");
     mcUpdatePagination(totalCount);
@@ -6116,208 +6122,73 @@ function wireEvents() {
 
   function mcSetupTableSelection() {
     const tbody = document.getElementById("mcTableBody");
-    let isDragging = false;
-    let startCell = null;
-    let scrollInterval = null;
+    const selectAllCb = document.getElementById("mcSelectAllCheckbox");
 
-    function highlightCells() {
-      tbody.querySelectorAll('.mc-cell-selected').forEach(c => c.classList.remove('mc-cell-selected'));
-      mcState.selectedCells.forEach(({row, col}) => {
-        const cellEl = tbody.querySelector(`.mc-selectable[data-row="${row}"][data-col="${col}"]`);
-        if (cellEl) cellEl.classList.add('mc-cell-selected');
+    function updateUI() {
+      tbody.querySelectorAll('tr[data-id]').forEach(tr => {
+        const id = parseInt(tr.dataset.id);
+        const selected = mcState.selectedRows.has(id);
+        tr.classList.toggle('mc-row-selected', selected);
+        const cb = tr.querySelector('.mc-row-check');
+        if (cb) cb.checked = selected;
       });
-      // Show/hide visit URL button
-      mcUpdateUrlButton();
-      // Update mark used button
-      mcUpdateMarkUsedBtn();
+      mcSyncSelectAllCheckbox();
+      mcUpdateToolbar();
     }
 
-    function toggleCell(row, col) {
-      const idx = mcState.selectedCells.findIndex(c => c.row === row && c.col === col);
-      if (idx >= 0) mcState.selectedCells.splice(idx, 1);
-      else mcState.selectedCells.push({row, col});
-      highlightCells();
-    }
-
-    function selectRange(startRow, startCol, endRow, endCol) {
-      mcState.selectedCells = [];
-      const minRow = Math.min(startRow, endRow);
-      const maxRow = Math.max(startRow, endRow);
-      const minCol = Math.min(startCol, endCol);
-      const maxCol = Math.max(startCol, endCol);
-      for (let r = minRow; r <= maxRow; r++) {
-        for (let c = minCol; c <= maxCol; c++) {
-          mcState.selectedCells.push({row: r, col: c});
+    function toggleRow(id, idx, shiftKey) {
+      if (shiftKey && mcState.lastSelectedIdx !== null) {
+        const from = Math.min(mcState.lastSelectedIdx, idx);
+        const to = Math.max(mcState.lastSelectedIdx, idx);
+        for (let i = from; i <= to; i++) {
+          const c = mcState.contacts[i];
+          if (c) mcState.selectedRows.add(c.id);
         }
-      }
-      highlightCells();
-    }
-
-    function deselectAll() {
-      mcState.selectedCells = [];
-      highlightCells();
-    }
-
-    function mcUpdateUrlButton() {
-      const btn = document.getElementById("mcVisitUrlBtn");
-      const info = document.getElementById("mcSelectionInfo");
-      if (!btn) return;
-
-      // Only show button if exactly ONE cell is selected and it's a URL cell
-      if (mcState.selectedCells.length === 1 && mcState.selectedCells[0].col === 2) {
-        const row = mcState.selectedCells[0].row;
-        const contact = mcState.contacts[row];
-        if (contact && contact.url) {
-          btn.href = contact.url;
-          btn.style.display = '';
-          if (info) info.textContent = '';
-          return;
-        }
-      }
-
-      btn.style.display = 'none';
-      // Update selection info
-      if (info) {
-        const rows = new Set(mcState.selectedCells.map(c => c.row));
-        info.textContent = mcState.selectedCells.length > 0 ? `${mcState.selectedCells.length} komórek, ${rows.size} wierszy` : '';
-      }
-    }
-
-    // Auto-scroll during drag
-    function startAutoScroll() {
-      if (scrollInterval) return;
-      scrollInterval = setInterval(() => {
-        if (!isDragging || !startCell) { stopAutoScroll(); return; }
-        
-        const threshold = 100;
-        const scrollSpeed = 20;
-        const viewportHeight = window.innerHeight;
-        
-        let scrolled = false;
-        if (mcDragY < threshold) {
-          window.scrollBy(0, -scrollSpeed);
-          scrolled = true;
-        } else if (mcDragY > viewportHeight - threshold) {
-          window.scrollBy(0, scrollSpeed);
-          scrolled = true;
-        }
-
-        if (scrolled) {
-          const el = document.elementFromPoint(mcDragX, mcDragY);
-          const cell = el ? el.closest('.mc-selectable') : null;
-          if (cell) {
-            const endRow = parseInt(cell.dataset.row);
-            const endCol = parseInt(cell.dataset.col);
-            selectRange(startCell.row, startCell.col, endRow, endCol);
-          }
-        }
-      }, 20);
-    }
-
-    function stopAutoScroll() {
-      if (scrollInterval) { clearInterval(scrollInterval); scrollInterval = null; }
-    }
-
-    let mcDragX = 0;
-    let mcDragY = 0;
-
-    // Mouse down on cell
-    tbody.addEventListener('mousedown', (e) => {
-      const cell = e.target.closest('.mc-selectable');
-      if (!cell) return;
-      e.preventDefault();
-      const row = parseInt(cell.dataset.row);
-      const col = parseInt(cell.dataset.col);
-
-      if (e.metaKey || e.ctrlKey) {
-        toggleCell(row, col);
-        console.log('[MC] Toggle cell:', row, col, 'selected:', mcState.selectedCells.length);
-      } else if (e.shiftKey && mcState.selectedCells.length > 0) {
-        const last = mcState.selectedCells[mcState.selectedCells.length - 1];
-        selectRange(last.row, last.col, row, col);
       } else {
-        isDragging = true;
-        startCell = {row, col};
-        mcDragX = e.clientX;
-        mcDragY = e.clientY;
-        mcState.selectedCells = [];
-        mcState.selectedCells.push({row, col});
-        highlightCells();
+        if (mcState.selectedRows.has(id)) mcState.selectedRows.delete(id);
+        else mcState.selectedRows.add(id);
+        mcState.lastSelectedIdx = idx;
       }
-    });
+      updateUI();
+    }
 
-    // Mouse move - drag select with auto-scroll
-    document.addEventListener('mousemove', (e) => {
-      if (!isDragging || !startCell) return;
-      mcDragX = e.clientX;
-      mcDragY = e.clientY;
-      
-      const threshold = 100;
-      const vh = window.innerHeight;
-      if (mcDragY < threshold || mcDragY > vh - threshold) {
-        startAutoScroll();
+    tbody.addEventListener('click', e => {
+      const cb = e.target.closest('.mc-row-check');
+      const tr = e.target.closest('tr[data-id]');
+      if (!tr) return;
+      const id = parseInt(tr.dataset.id);
+      const idx = parseInt(tr.dataset.idx);
+      if (cb) {
+        if (mcState.selectedRows.has(id)) mcState.selectedRows.delete(id);
+        else mcState.selectedRows.add(id);
+        mcState.lastSelectedIdx = idx;
+        updateUI();
       } else {
-        stopAutoScroll();
-      }
-
-      const cell = e.target.closest('.mc-selectable');
-      if (cell) {
-        const endRow = parseInt(cell.dataset.row);
-        const endCol = parseInt(cell.dataset.col);
-        selectRange(startCell.row, startCell.col, endRow, endCol);
+        toggleRow(id, idx, e.shiftKey);
       }
     });
 
-    // Mouse up
-    document.addEventListener('mouseup', () => {
-      isDragging = false;
-      startCell = null;
-      stopAutoScroll();
-    });
-
-    // Click outside table to deselect
-    document.addEventListener('mousedown', (e) => {
-      if (!e.target.closest('#mcContactsTable') && 
-          !e.target.closest('#mcVisitUrlBtn') &&
-          !e.target.closest('#mcMarkUsedBtn') &&
-          !e.target.closest('#mcDeleteBtn')) {
-        deselectAll();
-      }
-    });
-
-    // Copy
-    document.addEventListener('copy', (e) => {
-      if (!mcState.selectedCells || mcState.selectedCells.length === 0) return;
-      const panel = document.getElementById("marketingContactsPanel");
-      if (panel && panel.hidden) return;
-      e.preventDefault();
-      const rows = {};
-      mcState.selectedCells.forEach(({row, col}) => {
-        if (!rows[row]) rows[row] = [];
-        rows[row].push(col);
+    if (selectAllCb) {
+      selectAllCb.addEventListener('change', () => {
+        if (selectAllCb.checked) mcState.contacts.forEach(c => mcState.selectedRows.add(c.id));
+        else mcState.contacts.forEach(c => mcState.selectedRows.delete(c.id));
+        mcState.lastSelectedIdx = null;
+        updateUI();
       });
-      const sortedRows = Object.keys(rows).map(Number).sort((a,b) => a - b);
-      const allCols = new Set();
-      mcState.selectedCells.forEach(({col}) => allCols.add(col));
-      const sortedCols = [...allCols].sort((a,b) => a - b);
-      const lines = sortedRows.map(r => {
-        return sortedCols.map(c => {
-          const cell = tbody.querySelector(`.mc-selectable[data-row="${r}"][data-col="${c}"]`);
-          return cell ? cell.textContent.trim() : '';
-        }).join('\t');
-      });
-      e.clipboardData.setData('text/plain', lines.join('\n'));
-    });
+    }
+  }
+
+  function mcSyncSelectAllCheckbox() {
+    const cb = document.getElementById("mcSelectAllCheckbox");
+    if (!cb || !mcState.contacts.length) return;
+    const pageIds = mcState.contacts.map(c => c.id);
+    const sel = pageIds.filter(id => mcState.selectedRows.has(id));
+    if (sel.length === 0) { cb.indeterminate = false; cb.checked = false; }
+    else if (sel.length === pageIds.length) { cb.indeterminate = false; cb.checked = true; }
+    else { cb.indeterminate = true; cb.checked = false; }
   }
 
   function mcEsc(s) { const d=document.createElement("div"); d.textContent=s; return d.innerHTML; }
-
-  window.mcToggle = function(id, checked) {
-    if (checked) mcState.selected.add(id); else mcState.selected.delete(id);
-    document.querySelectorAll("#mcTableBody tr").forEach(tr => {
-      tr.classList.toggle("selected", mcState.selected.has(tr.dataset.id));
-    });
-  };
 
   window.mcUpdate = async function(id, field, value) {
     try {
@@ -6326,54 +6197,59 @@ function wireEvents() {
     } catch(e) { mcLoadContacts(); }
   };
 
+  function mcUpdateToolbar() {
+    const info = document.getElementById("mcSelectionInfo");
+    const urlBtn = document.getElementById("mcVisitUrlBtn");
+    const count = mcState.selectedRows.size;
+    if (info) info.textContent = count > 0 ? `${count} zaznaczonych` : '';
+    if (urlBtn) {
+      if (count === 1) {
+        const id = [...mcState.selectedRows][0];
+        const contact = mcState.contacts.find(c => c.id === id);
+        if (contact?.url) { urlBtn.href = contact.url; urlBtn.style.display = ''; }
+        else urlBtn.style.display = 'none';
+      } else {
+        urlBtn.style.display = 'none';
+      }
+    }
+    mcUpdateMarkUsedBtn();
+  }
+
   function mcUpdateMarkUsedBtn() {
     const btn = document.getElementById("mcMarkUsedBtn");
     if (!btn) return;
-    const rows = new Set(mcState.selectedCells.map(c => c.row));
-    if (!rows.size) {
-      btn.textContent = "✓ Użyte";
-      return;
-    }
-    const selected = [...rows].map(i => mcState.contacts[i]).filter(Boolean);
+    if (!mcState.selectedRows.size) { btn.textContent = "✓ Użyte"; return; }
+    const selected = mcState.contacts.filter(c => mcState.selectedRows.has(c.id));
+    if (!selected.length) { btn.textContent = "✓ Użyte"; return; }
     const allUsed = selected.every(c => c.is_used);
     const allUnused = selected.every(c => !c.is_used);
-    if (allUsed) {
-      btn.textContent = "✗ Nieużyte";
-    } else if (allUnused) {
-      btn.textContent = "✓ Użyte";
-    } else {
-      btn.textContent = "⇄ Użyte";
-    }
+    if (allUsed) btn.textContent = "✗ Nieużyte";
+    else if (allUnused) btn.textContent = "✓ Użyte";
+    else btn.textContent = "⇄ Użyte";
   }
 
   async function mcMarkUsed() {
-    const rows = new Set(mcState.selectedCells.map(c => c.row));
-    console.log('[MC] mcMarkUsed called, selectedCells:', mcState.selectedCells.length, 'rows:', rows.size);
-    if (!rows.size) { console.log('[MC] No rows selected!'); return; }
+    if (!mcState.selectedRows.size) return;
     try {
-      const selectedContacts = [...rows].map(i => mcState.contacts[i]).filter(Boolean);
+      const selectedContacts = mcState.contacts.filter(c => mcState.selectedRows.has(c.id));
       if (!selectedContacts.length) return;
       const allUsed = selectedContacts.every(c => c.is_used);
-      const newUsedState = !allUsed;
-      const ids = selectedContacts.map(c => c.id);
-      const { error } = await sb().from("marketing_verified_contacts").update({is_used: newUsedState}).in("id", ids);
+      const ids = [...mcState.selectedRows];
+      const { error } = await sb().from("marketing_verified_contacts").update({is_used: !allUsed}).in("id", ids);
       if (error) throw error;
-      mcState.selectedCells = [];
+      mcState.selectedRows.clear();
       mcLoadContacts();
     } catch(e) { alert("Błąd: " + e.message); }
   }
 
   async function mcDeleteSelected() {
-    const rows = new Set(mcState.selectedCells.map(c => c.row));
-    console.log('[MC] mcDeleteSelected called, selectedCells:', mcState.selectedCells.length, 'rows:', rows.size);
-    if (!rows.size) { console.log('[MC] No rows selected!'); return; }
-    if (!confirm(`Usunąć ${rows.size} kontaktów?`)) return;
+    if (!mcState.selectedRows.size) return;
+    if (!confirm(`Usunąć ${mcState.selectedRows.size} kontaktów?`)) return;
     try {
-      const ids = [...rows].map(i => mcState.contacts[i]?.id).filter(Boolean);
-      if (!ids.length) return;
+      const ids = [...mcState.selectedRows];
       const { error } = await sb().from("marketing_verified_contacts").delete().in("id", ids);
       if (error) throw error;
-      mcState.selectedCells = [];
+      mcState.selectedRows.clear();
       mcLoadContacts();
     } catch(e) { alert("Błąd: " + e.message); }
   }
