@@ -695,6 +695,7 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   background: rgba(255,255,255,.04);
   padding: 14px;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 10px;
   position: relative;
 }
@@ -2314,6 +2315,10 @@ body.tools-fullscreen .tools-frame-wrap iframe{
 }
 
 /* Excel-like table styling */
+.mc-table {
+  min-width: 620px;
+}
+
 .mc-table th {
   background: rgba(255,255,255,.04);
   font-size: 11px;
@@ -2534,11 +2539,6 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   .mc-table th,
   .mc-table td {
     padding: 10px 6px !important;
-  }
-  /* Ukryj kolumnę URL (3) — jest przycisk Odwiedź */
-  .mc-table thead tr th:nth-child(3),
-  .mc-table tbody tr td:nth-child(3) {
-    display: none !important;
   }
 }
 
