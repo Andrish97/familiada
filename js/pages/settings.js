@@ -6122,6 +6122,9 @@ function wireEvents() {
     let autoScrollTimer = null;
     let lastTouchX = 0;
     let lastTouchY = 0;
+    let existingSelection = [];
+    let tapStartX = 0;
+    let tapStartY = 0;
 
     function highlight() {
       tbody.querySelectorAll('.mc-cell-selected').forEach(c => c.classList.remove('mc-cell-selected'));
@@ -6134,12 +6137,17 @@ function wireEvents() {
     }
 
     function selectRange(r1, c1, r2, c2) {
-      mcState.selectedCells = [];
       const rMin = Math.min(r1, r2), rMax = Math.max(r1, r2);
       const cMin = Math.min(c1, c2), cMax = Math.max(c1, c2);
+      const newRange = [];
       for (let r = rMin; r <= rMax; r++)
         for (let c = cMin; c <= cMax; c++)
-          mcState.selectedCells.push({row: r, col: c});
+          newRange.push({row: r, col: c});
+      const existSet = new Set(existingSelection.map(c => `${c.row}:${c.col}`));
+      mcState.selectedCells = [
+        ...existingSelection,
+        ...newRange.filter(c => !existSet.has(`${c.row}:${c.col}`))
+      ];
       highlight();
     }
 
@@ -6180,10 +6188,12 @@ function wireEvents() {
       e.preventDefault();
       const row = parseInt(cell.dataset.row), col = parseInt(cell.dataset.col);
       if (e.shiftKey && mcState.selectedCells.length) {
+        existingSelection = [];
         const last = mcState.selectedCells[mcState.selectedCells.length - 1];
         selectRange(last.row, last.col, row, col);
         return;
       }
+      existingSelection = [];
       isDragging = true;
       dragStart = {row, col};
       mcState.selectedCells = [{row, col}];
@@ -6202,17 +6212,27 @@ function wireEvents() {
       isDragging = false; dragStart = null; stopAutoScroll();
     });
 
-    // ── Touch: 1 palec = scroll (domyślny), 2 palce = zaznaczanie ─────────
+    // ── Touch: 1 palec = scroll / tap kasuje; 2 palce = dodawanie do zaznaczenia ──
     tbody.addEventListener('touchstart', e => {
+      if (e.touches.length === 1) {
+        tapStartX = e.touches[0].clientX; tapStartY = e.touches[0].clientY;
+        return;
+      }
       if (e.touches.length < 2) return;
       const anchor = cellAt(e.touches[0].clientX, e.touches[0].clientY);
       if (!anchor) return;
       isDragging = true;
+      existingSelection = [...mcState.selectedCells];
       dragStart = {row: parseInt(anchor.dataset.row), col: parseInt(anchor.dataset.col)};
       lastTouchX = e.touches[1].clientX; lastTouchY = e.touches[1].clientY;
       const cursor = cellAt(lastTouchX, lastTouchY);
       if (cursor) selectRange(dragStart.row, dragStart.col, parseInt(cursor.dataset.row), parseInt(cursor.dataset.col));
-      else { mcState.selectedCells = [{row: dragStart.row, col: dragStart.col}]; highlight(); }
+      else {
+        const key = `${dragStart.row}:${dragStart.col}`;
+        if (!existingSelection.some(c => `${c.row}:${c.col}` === key))
+          mcState.selectedCells = [...existingSelection, {row: dragStart.row, col: dragStart.col}];
+        highlight();
+      }
       startAutoScroll(() => ({x: lastTouchX, y: lastTouchY}));
     }, {passive: true});
 
@@ -6224,7 +6244,15 @@ function wireEvents() {
       if (cell) selectRange(dragStart.row, dragStart.col, parseInt(cell.dataset.row), parseInt(cell.dataset.col));
     }, {passive: false});
 
-    tbody.addEventListener('touchend', () => {
+    tbody.addEventListener('touchend', e => {
+      if (!isDragging && e.changedTouches.length === 1) {
+        const dx = e.changedTouches[0].clientX - tapStartX;
+        const dy = e.changedTouches[0].clientY - tapStartY;
+        if (Math.hypot(dx, dy) < 12 && mcState.selectedCells.length) {
+          mcState.selectedCells = [];
+          highlight();
+        }
+      }
       isDragging = false; dragStart = null; stopAutoScroll();
     });
 
