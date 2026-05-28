@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-05-28T14150"/>
+  <meta name="app-version" content="v2026-05-28T15300"/>
 
   <meta charset="UTF-8"/>
   <meta name="robots" content="noindex, nofollow"/>
@@ -13,17 +13,17 @@
   
   <title data-i18n="settings.title">Familiada — pulpit admina</title>
 
-  <link rel="icon" href="favicon.ico?v=v2026-05-28T14150"/>
-  <link rel="stylesheet" href="css/base.css?v=v2026-05-28T14150"/>
-  <link rel="stylesheet" href="css/builder.css?v=v2026-05-28T14150"/>
-  <link rel="stylesheet" href="css/settings.css?v=v2026-05-28T14150"/>
+  <link rel="icon" href="favicon.ico?v=v2026-05-28T15300"/>
+  <link rel="stylesheet" href="css/base.css?v=v2026-05-28T15300"/>
+  <link rel="stylesheet" href="css/builder.css?v=v2026-05-28T15300"/>
+  <link rel="stylesheet" href="css/settings.css?v=v2026-05-28T15300"/>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/tinymce@7/tinymce.min.js"></script>
-  <script src="js/core/security-warning.js?v=v2026-05-28T14150" defer></script>
-  <script type="module" src="js/core/topbar-controller.js?v=v2026-05-28T14150" defer></script>
-  <script type="module" src="js/pages/settings.js?v=v2026-05-28T14150" defer></script>
-  <script type="module" src="js/pages/generator.js?v=v2026-05-28T14150" defer></script>
+  <script src="js/core/security-warning.js?v=v2026-05-28T15300" defer></script>
+  <script type="module" src="js/core/topbar-controller.js?v=v2026-05-28T15300" defer></script>
+  <script type="module" src="js/pages/settings.js?v=v2026-05-28T15300" defer></script>
+  <script type="module" src="js/pages/generator.js?v=v2026-05-28T15300" defer></script>
 </head>
 <body class="builder-body settings-body settings-locked no-footer-line">
   <header class="topbar topbar-layout-4 topbar-mobile-keep-brand">
@@ -64,7 +64,7 @@
 
   <main class="wrap">
     <div class="settings-panel maintenance-panel" id="panelScreen" hidden>
-      <div class="mail-card">
+      <div class="settings-card">
         <div class="panel-head">
           <div class="panel-title" data-i18n="settings.maintenance.title">Prace techniczne</div>
           <div class="panel-sub" data-i18n="settings.maintenance.subtitle">Ustawienia strony maintenance</div>
@@ -187,8 +187,8 @@
     </div>
 
       <div id="mailPanel" hidden>
-        <div class="mail-cards">
-          <section class="mail-card mail-card-settings">
+        <div class="settings-cards">
+          <section class="settings-card settings-card-settings">
             <div class="panel-head">
               <div class="panel-title" data-i18n="settings.mail.settingsTitle">Ustawienia wysyłki</div>
             </div>
@@ -253,9 +253,9 @@
             </div>
           </section>
 
-          <section class="mail-card mail-card-wide mail-card-queue">
-            <div class="mail-card-head">
-              <div class="mail-card-title" data-i18n="settings.mail.queueTitle">Kolejka wysyłki (mail_queue)</div>
+          <section class="settings-card settings-card-wide settings-card-queue">
+            <div class="settings-card-head">
+              <div class="settings-card-title" data-i18n="settings.mail.queueTitle">Kolejka wysyłki (mail_queue)</div>
               <div class="mail-controls">
                 <div class="ui-select mail-ui-select" id="mailQueueStatusSelect">
                   <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
@@ -288,8 +288,8 @@
             <div class="field-hint" id="mailQueueInfo">—</div>
           </section>
 
-          <section class="mail-card mail-card-worker">
-            <div class="mail-card-title" data-i18n="settings.mail.workerActions">Ręczne akcje workera</div>
+          <section class="settings-card settings-card-worker">
+            <div class="settings-card-title" data-i18n="settings.mail.workerActions">Ręczne akcje workera</div>
             <div class="mail-inline-grid">
               <div class="field">
                 <label class="field-label" for="mailRunLimit" data-i18n="settings.mail.runLimit">Limit dla uruchomienia ręcznego</label>
@@ -305,9 +305,9 @@
             <div class="field-hint" data-i18n="settings.mail.workerHint">W tabeli możesz też kliknąć „Wyślij teraz" przy pojedynczym mailu.</div>
           </section>
 
-          <section class="mail-card mail-card-wide mail-card-logs">
-            <div class="mail-card-head">
-              <div class="mail-card-title" data-i18n="settings.mail.logsTitle">Logi funkcji mailowych</div>
+          <section class="settings-card settings-card-wide settings-card-logs">
+            <div class="settings-card-head">
+              <div class="settings-card-title" data-i18n="settings.mail.logsTitle">Logi funkcji mailowych</div>
               <div class="mail-controls">
                 <div class="ui-select mail-ui-select" id="mailLogFnSelect">
                   <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
@@ -368,7 +368,7 @@
       </div>
       <!-- MARKETPLACE PANEL -->
       <div class="market-admin-panel" id="marketplacePanel" hidden>
-      <div class="mail-card">
+      <div class="settings-card">
         <div class="panel-head">
           <div class="panel-title" data-i18n="settings.marketplace.title">Gry Społeczności</div>
           <div class="panel-sub" data-i18n="settings.marketplace.subtitle">Moderacja zgłoszeń i gry producenta</div>
@@ -412,12 +412,12 @@
 
       <!-- GENERATOR PANEL -->
       <div class="market-admin-panel" id="generatorPanel" hidden>
-        <div class="mail-card" id="gen-session-card">
+        <div class="settings-card" id="gen-session-card">
           <div class="panel-head">
             <div class="panel-title" data-i18n="settings.generator.title">Generator gier</div>
             <div class="panel-sub" data-i18n="settings.generator.subtitle">Generowanie i zarządzanie grami producenta</div>
           </div>
-          <div class="mail-card-title">🌐 Sesja</div>
+          <div class="settings-card-title">🌐 Sesja</div>
           <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
             <div class="field" style="flex:1;min-width:120px">
               <label class="field-label">Język</label>
@@ -441,8 +441,8 @@
         </div>
 
         <!-- Manage existing -->
-        <div class="mail-card" id="gen-manage-card" style="display:none">
-          <div class="mail-card-title">📋 Gry w marketplace</div>
+        <div class="settings-card" id="gen-manage-card" style="display:none">
+          <div class="settings-card-title">📋 Gry w marketplace</div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:4px">
             <button class="btn sm btn-blue" id="gen-scan-btn" disabled>🔍 Skanuj</button>
           </div>
@@ -460,8 +460,8 @@
         </div>
 
         <!-- Import -->
-        <div class="mail-card" id="gen-import-card" style="display:none">
-          <div class="mail-card-title">📥 Import gier z JSON</div>
+        <div class="settings-card" id="gen-import-card" style="display:none">
+          <div class="settings-card-title">📥 Import gier z JSON</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
             <label class="btn sm" style="cursor:pointer">
               Wybierz pliki JSON
@@ -478,8 +478,8 @@
         </div>
 
         <!-- Generate -->
-        <div class="mail-card" id="gen-input-card" style="display:none">
-          <div class="mail-card-title">⚙️ Kolejka generowania gier</div>
+        <div class="settings-card" id="gen-input-card" style="display:none">
+          <div class="settings-card-title">⚙️ Kolejka generowania gier</div>
           <div style="margin-bottom:12px">
             <div class="field">
               <label class="field-label">Liczba gier</label>
@@ -503,9 +503,9 @@
         </div>
 
         <!-- Generated results -->
-        <div class="mail-card" id="gen-results-section" style="display:none;margin-top:16px">
+        <div class="settings-card" id="gen-results-section" style="display:none;margin-top:16px">
           <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:4px">
-            <div class="mail-card-title" style="margin-bottom:0">📝 Wygenerowane gry</div>
+            <div class="settings-card-title" style="margin-bottom:0">📝 Wygenerowane gry</div>
             <div style="display:flex;gap:8px;align-items:center">
               <span id="gen-results-counter" style="font-size:12px;color:var(--muted)"></span>
               <div class="progress-bar-bg" style="width:120px;margin:0"><div class="progress-bar-fill" id="gen-progress-fill"></div></div>
@@ -577,7 +577,7 @@
 
       <!-- RATINGS PANEL -->
       <div class="market-admin-panel" id="ratingsPanel" hidden>
-        <div class="mail-card">
+        <div class="settings-card">
           <div class="panel-head">
             <div class="panel-title">Oceny aplikacji</div>
             <div class="panel-sub">Co użytkownicy myślą o systemie</div>
@@ -604,9 +604,9 @@
           <div class="field-hint" id="ratingsTableInfo">—</div>
         </div>
 
-        <div class="mail-card">
-          <div class="mail-card-head">
-            <div class="mail-card-title" data-i18n="settings.marketplace.producerRatingsTitle">Oceny gier producenta</div>
+        <div class="settings-card">
+          <div class="settings-card-head">
+            <div class="settings-card-title" data-i18n="settings.marketplace.producerRatingsTitle">Oceny gier producenta</div>
             <button class="btn sm" id="btnProducerRatingsRefresh" type="button" data-i18n="settings.actions.refresh">Odśwież</button>
           </div>
           <div class="mail-table-wrap">
@@ -630,7 +630,7 @@
 
       <!-- STATS PANEL -->
       <div class="market-admin-panel" id="statsPanel" hidden>
-        <div class="mail-card">
+        <div class="settings-card">
           <div class="panel-head">
             <div class="panel-title">Statystyki systemu</div>
             <div class="panel-sub">Monitoruj aktywność i rozwój platformy</div>
@@ -731,7 +731,7 @@
 
       <!-- ── Marketing panel ── -->
       <div class="market-admin-panel" id="marketingPanel" hidden>
-        <div class="mail-card">
+        <div class="settings-card">
           <div class="panel-head">
             <div class="panel-title" data-i18n="settings.marketing.title">Wysyłka marketingowa</div>
             <div class="panel-sub" data-i18n="settings.marketing.subtitle">Wyślij wiadomość do wielu adresatów jednocześnie</div>
@@ -807,7 +807,7 @@
 
       <!-- ── Marketing Contacts panel ── -->
       <div class="market-admin-panel" id="marketingContactsPanel" hidden>
-        <div class="mail-card">
+        <div class="settings-card">
           <div class="panel-head">
             <div class="panel-title" data-i18n="settings.marketingContacts.title">Kontakty Marketingowe</div>
             <div class="panel-sub" data-i18n="settings.marketingContacts.subtitle">Wyszukiwarka leadów: SearXNG → Email → AI Weryfikacja</div>
