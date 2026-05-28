@@ -6196,18 +6196,9 @@ function wireEvents() {
       isDragging = false; dragStart = null; stopAutoScroll();
     });
 
-    // ── Touch: 1 palec = scroll, 2 palce = zaznaczanie ───────────────────
-    let tapStart = null;
-
+    // ── Touch: 1 palec = scroll (domyślny), 2 palce = zaznaczanie ─────────
     tbody.addEventListener('touchstart', e => {
-      if (e.touches.length === 1) {
-        // Zapisz komórkę pod palcem — wybierzemy ją przy touchend jeśli to tap
-        const cell = e.target.closest('.mc-selectable');
-        tapStart = cell ? {row: parseInt(cell.dataset.row), col: parseInt(cell.dataset.col),
-                           x: e.touches[0].clientX, y: e.touches[0].clientY} : null;
-        return; // nie blokuj scrolla
-      }
-      // 2+ palce — zaznaczanie
+      if (e.touches.length < 2) return;
       e.preventDefault();
       const anchor = cellAt(e.touches[0].clientX, e.touches[0].clientY);
       if (!anchor) return;
@@ -6228,20 +6219,8 @@ function wireEvents() {
       if (cell) selectRange(dragStart.row, dragStart.col, parseInt(cell.dataset.row), parseInt(cell.dataset.col));
     }, {passive: false});
 
-    tbody.addEventListener('touchend', e => {
-      if (isDragging) {
-        isDragging = false; dragStart = null; stopAutoScroll(); tapStart = null; return;
-      }
-      // 1-palcowy tap — zaznacz pojedynczą komórkę
-      if (tapStart) {
-        const t = e.changedTouches[0];
-        const dx = Math.abs(t.clientX - tapStart.x), dy = Math.abs(t.clientY - tapStart.y);
-        if (dx < 10 && dy < 10) {
-          mcState.selectedCells = [{row: tapStart.row, col: tapStart.col}];
-          highlight();
-        }
-        tapStart = null;
-      }
+    tbody.addEventListener('touchend', () => {
+      isDragging = false; dragStart = null; stopAutoScroll();
     });
 
     // ── Klik poza tabelą → odznacz ─────────────────────────────────────────
