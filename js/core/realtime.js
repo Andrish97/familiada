@@ -1,5 +1,5 @@
 // js/core/realtime.js
-import { sb } from "./supabase.js?v=v2026-05-26T22445";
+import { sb } from "./supabase.js?v=v2026-05-28T13442";
 
 const channels = new Map();
 
