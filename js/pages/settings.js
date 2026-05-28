@@ -6123,6 +6123,7 @@ function wireEvents() {
     let lastTouchX = 0;
     let lastTouchY = 0;
     let existingSelection = [];
+    let touchToggleMode = false;
     let tapStartX = 0;
     let tapStartY = 0;
 
@@ -6143,11 +6144,19 @@ function wireEvents() {
       for (let r = rMin; r <= rMax; r++)
         for (let c = cMin; c <= cMax; c++)
           newRange.push({row: r, col: c});
-      const existSet = new Set(existingSelection.map(c => `${c.row}:${c.col}`));
-      mcState.selectedCells = [
-        ...existingSelection,
-        ...newRange.filter(c => !existSet.has(`${c.row}:${c.col}`))
-      ];
+      if (touchToggleMode) {
+        const rangeKeys = new Set(newRange.map(c => `${c.row}:${c.col}`));
+        const existMap = new Map(existingSelection.map(c => [`${c.row}:${c.col}`, c]));
+        const result = existingSelection.filter(c => !rangeKeys.has(`${c.row}:${c.col}`));
+        for (const c of newRange) { if (!existMap.has(`${c.row}:${c.col}`)) result.push(c); }
+        mcState.selectedCells = result;
+      } else {
+        const existSet = new Set(existingSelection.map(c => `${c.row}:${c.col}`));
+        mcState.selectedCells = [
+          ...existingSelection,
+          ...newRange.filter(c => !existSet.has(`${c.row}:${c.col}`))
+        ];
+      }
       highlight();
     }
 
@@ -6222,6 +6231,7 @@ function wireEvents() {
       const anchor = cellAt(e.touches[0].clientX, e.touches[0].clientY);
       if (!anchor) return;
       isDragging = true;
+      touchToggleMode = true;
       existingSelection = [...mcState.selectedCells];
       dragStart = {row: parseInt(anchor.dataset.row), col: parseInt(anchor.dataset.col)};
       lastTouchX = e.touches[1].clientX; lastTouchY = e.touches[1].clientY;
@@ -6257,7 +6267,7 @@ function wireEvents() {
           }
         }
       }
-      isDragging = false; dragStart = null; stopAutoScroll();
+      isDragging = false; dragStart = null; touchToggleMode = false; stopAutoScroll();
     });
 
     // ── Klik poza tabelą → odznacz ─────────────────────────────────────────
