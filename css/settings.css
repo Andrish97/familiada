@@ -698,10 +698,13 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   grid-template-columns: minmax(0, 1fr);
   gap: 10px;
   position: relative;
+<<<<<<< HEAD
 }
 
 .settings-card:has(.ui-select.open) {
   z-index: 10;
+=======
+>>>>>>> a7a17fb (fix: remove stacking-context trap on mail-card, fix topbar sync timing)
 }
 
 .settings-card-queue{
