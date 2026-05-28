@@ -1,7 +1,7 @@
 // /familiada/js/pages/controlapp.js
-import { confirmModal } from "../../js/core/modal.js?v=v2026-05-28T21254";
-import { getUiLang, initI18n, t } from "../../translation/translation.js?v=v2026-05-28T21254";
-import { v as cacheBust } from "../../js/core/cache-bust.js?v=v2026-05-28T21254";
+import { confirmModal } from "../../js/core/modal.js?v=v2026-05-28T21473";
+import { getUiLang, initI18n, t } from "../../translation/translation.js?v=v2026-05-28T21473";
+import { v as cacheBust } from "../../js/core/cache-bust.js?v=v2026-05-28T21473";
 
 // ================== KOMUNIKATY ==================
 const APP_MSG = {
@@ -36,22 +36,22 @@ const APP_MSG = {
 };
 // ================= KONIEC KOMUNIKATÓW =================
 
-import { requireAuth, signOut } from "../../js/core/auth.js?v=v2026-05-28T21254";
-import { setTopbarAccount } from "../../js/core/topbar-controller.js?v=v2026-05-28T21254";
-import { isGuestUser } from "../../js/core/guest-mode.js?v=v2026-05-28T21254";
-import { sb } from "../../js/core/supabase.js?v=v2026-05-28T21254";
-import { rt } from "../../js/core/realtime.js?v=v2026-05-28T21254";
-import { validateGameReadyToPlay, loadGameBasic, loadQuestions, loadAnswers } from "../../js/core/game-validate.js?v=v2026-05-28T21254";
-import { unlockAudio, isAudioUnlocked, playSfx } from "../../js/core/sfx.js?v=v2026-05-28T21254";
-import { createStore } from "./store.js?v=v2026-05-28T21254";
-import { createUI } from "./ui.js?v=v2026-05-28T21254";
-import { createDevices } from "./devices.js?v=v2026-05-28T21254";
-import { createPresence } from "./presence.js?v=v2026-05-28T21254";
-import { createDisplay } from "./display.js?v=v2026-05-28T21254";
-import { createRounds } from "./gameRounds.js?v=v2026-05-28T21254";
-import { createFinal } from "./gameFinal.js?v=v2026-05-28T21254";
-import { initShareDevice } from "./share-device.js?v=v2026-05-28T21254";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../../js/core/logo-preview.js?v=v2026-05-28T21254";
+import { requireAuth, signOut } from "../../js/core/auth.js?v=v2026-05-28T21473";
+import { setTopbarAccount } from "../../js/core/topbar-controller.js?v=v2026-05-28T21473";
+import { isGuestUser } from "../../js/core/guest-mode.js?v=v2026-05-28T21473";
+import { sb } from "../../js/core/supabase.js?v=v2026-05-28T21473";
+import { rt } from "../../js/core/realtime.js?v=v2026-05-28T21473";
+import { validateGameReadyToPlay, loadGameBasic, loadQuestions, loadAnswers } from "../../js/core/game-validate.js?v=v2026-05-28T21473";
+import { unlockAudio, isAudioUnlocked, playSfx } from "../../js/core/sfx.js?v=v2026-05-28T21473";
+import { createStore } from "./store.js?v=v2026-05-28T21473";
+import { createUI } from "./ui.js?v=v2026-05-28T21473";
+import { createDevices } from "./devices.js?v=v2026-05-28T21473";
+import { createPresence } from "./presence.js?v=v2026-05-28T21473";
+import { createDisplay } from "./display.js?v=v2026-05-28T21473";
+import { createRounds } from "./gameRounds.js?v=v2026-05-28T21473";
+import { createFinal } from "./gameFinal.js?v=v2026-05-28T21473";
+import { initShareDevice } from "./share-device.js?v=v2026-05-28T21473";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../../js/core/logo-preview.js?v=v2026-05-28T21473";
 
 initI18n({ withSwitcher: true });
 
