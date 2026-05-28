@@ -3771,24 +3771,15 @@ export function wireActions({ state }) {
     let touchMarquee = null;
     let touchStart = null;
     let touchBase = null;
+    let autoTimer = null;
+    let lastTX = 0, lastTY = 0;
 
     if (listEl && getComputedStyle(listEl).position === "static")
       listEl.style.position = "relative";
 
-    listEl?.addEventListener("touchstart", e => {
-      if (e.touches.length !== 2) return;
-      touchBase = new Set(state.selection.keys);
-      touchStart = listLocalPoint(e.touches[0]);
-      touchMarquee = document.createElement("div");
-      touchMarquee.className = "marquee";
-      touchMarquee.style.cssText = `left:${touchStart.x}px;top:${touchStart.y}px;width:0;height:0`;
-      listEl.appendChild(touchMarquee);
-    }, { passive: true });
-
-    listEl?.addEventListener("touchmove", e => {
-      if (!touchMarquee || e.touches.length < 2) return;
-      e.preventDefault();
-      const cur = listLocalPoint(e.touches[1]);
+    function listUpdateBox() {
+      if (!touchMarquee || !touchStart) return;
+      const cur = listLocalPoint({ clientX: lastTX, clientY: lastTY });
       const box = rectNorm(touchStart, cur);
       touchMarquee.style.left = `${box.left}px`;
       touchMarquee.style.top = `${box.top}px`;
@@ -3796,10 +3787,35 @@ export function wireActions({ state }) {
       touchMarquee.style.height = `${box.height}px`;
       marqueeAdd = true; marqueeBaseKeys = touchBase;
       updateMarqueeSelection(box);
+    }
+
+    listEl?.addEventListener("touchstart", e => {
+      if (e.touches.length !== 2) return;
+      touchBase = new Set(state.selection.keys);
+      touchStart = listLocalPoint(e.touches[0]);
+      lastTX = e.touches[1].clientX; lastTY = e.touches[1].clientY;
+      touchMarquee = document.createElement("div");
+      touchMarquee.className = "marquee";
+      touchMarquee.style.cssText = `left:${touchStart.x}px;top:${touchStart.y}px;width:0;height:0`;
+      listEl.appendChild(touchMarquee);
+      autoTimer = setInterval(() => {
+        const r = listEl.getBoundingClientRect(), thresh = 60, speed = 14;
+        if (lastTY < r.top + thresh) listEl.scrollTop -= speed;
+        else if (lastTY > r.bottom - thresh) listEl.scrollTop += speed;
+        listUpdateBox();
+      }, 20);
+    }, { passive: true });
+
+    listEl?.addEventListener("touchmove", e => {
+      if (!touchMarquee || e.touches.length < 2) return;
+      e.preventDefault();
+      lastTX = e.touches[1].clientX; lastTY = e.touches[1].clientY;
+      listUpdateBox();
     }, { passive: false });
 
     listEl?.addEventListener("touchend", () => {
       if (!touchMarquee) return;
+      clearInterval(autoTimer); autoTimer = null;
       touchMarquee.remove();
       touchMarquee = null; touchStart = null; touchBase = null;
       marqueeAdd = false; marqueeBaseKeys = null;
@@ -3932,22 +3948,12 @@ export function wireActions({ state }) {
     let touchMarquee = null;
     let touchStart = null;
     let touchBase = null;
+    let autoTimer = null;
+    let lastTX = 0, lastTY = 0;
 
-    treeEl?.addEventListener("touchstart", e => {
-      if (e.touches.length !== 2) return;
-      if (isTreeLocked(state)) return;
-      touchBase = new Set(state.selection.keys);
-      touchStart = treeLocalPoint(e.touches[0]);
-      touchMarquee = document.createElement("div");
-      touchMarquee.className = "marquee";
-      touchMarquee.style.cssText = `left:${touchStart.x}px;top:${touchStart.y}px;width:0;height:0`;
-      treeEl.appendChild(touchMarquee);
-    }, { passive: true });
-
-    treeEl?.addEventListener("touchmove", e => {
-      if (!touchMarquee || e.touches.length < 2) return;
-      e.preventDefault();
-      const cur = treeLocalPoint(e.touches[1]);
+    function treeUpdateBox() {
+      if (!touchMarquee || !touchStart) return;
+      const cur = treeLocalPoint({ clientX: lastTX, clientY: lastTY });
       const box = rectNorm(touchStart, cur);
       touchMarquee.style.left = `${box.left}px`;
       touchMarquee.style.top = `${box.top}px`;
@@ -3955,10 +3961,36 @@ export function wireActions({ state }) {
       touchMarquee.style.height = `${box.height}px`;
       treeMarqueeAdd = true; treeMarqueeBase = touchBase;
       updateTreeMarqueeSelection(box);
+    }
+
+    treeEl?.addEventListener("touchstart", e => {
+      if (e.touches.length !== 2) return;
+      if (isTreeLocked(state)) return;
+      touchBase = new Set(state.selection.keys);
+      touchStart = treeLocalPoint(e.touches[0]);
+      lastTX = e.touches[1].clientX; lastTY = e.touches[1].clientY;
+      touchMarquee = document.createElement("div");
+      touchMarquee.className = "marquee";
+      touchMarquee.style.cssText = `left:${touchStart.x}px;top:${touchStart.y}px;width:0;height:0`;
+      treeEl.appendChild(touchMarquee);
+      autoTimer = setInterval(() => {
+        const r = treeEl.getBoundingClientRect(), thresh = 60, speed = 14;
+        if (lastTY < r.top + thresh) treeEl.scrollTop -= speed;
+        else if (lastTY > r.bottom - thresh) treeEl.scrollTop += speed;
+        treeUpdateBox();
+      }, 20);
+    }, { passive: true });
+
+    treeEl?.addEventListener("touchmove", e => {
+      if (!touchMarquee || e.touches.length < 2) return;
+      e.preventDefault();
+      lastTX = e.touches[1].clientX; lastTY = e.touches[1].clientY;
+      treeUpdateBox();
     }, { passive: false });
 
     treeEl?.addEventListener("touchend", () => {
       if (!touchMarquee) return;
+      clearInterval(autoTimer); autoTimer = null;
       touchMarquee.remove();
       touchMarquee = null; touchStart = null; touchBase = null;
       treeMarqueeAdd = false; treeMarqueeBase = null;
@@ -4117,6 +4149,20 @@ export function wireActions({ state }) {
     let touchMarquee = null;
     let touchStart = null;
     let touchBase = null;
+    let autoTimer = null;
+    let lastTX = 0, lastTY = 0;
+
+    function tagsUpdateBox() {
+      if (!touchMarquee || !touchStart) return;
+      const cur = tagsLocalPoint({ clientX: lastTX, clientY: lastTY });
+      const box = rectNorm(touchStart, cur);
+      touchMarquee.style.left = `${box.left}px`;
+      touchMarquee.style.top = `${box.top}px`;
+      touchMarquee.style.width = `${box.width}px`;
+      touchMarquee.style.height = `${box.height}px`;
+      tagsMarqueeAdd = true; tagsMarqueeBase = touchBase;
+      updateTagsMarqueeSelection(box);
+    }
 
     tagsEl?.addEventListener(“touchstart”, e => {
       if (e.touches.length !== 2) return;
@@ -4127,27 +4173,29 @@ export function wireActions({ state }) {
         ...Array.from(state.tagSelection?.ids || []).map(id => `t:${id}`),
       ]);
       touchStart = tagsLocalPoint(e.touches[0]);
+      lastTX = e.touches[1].clientX; lastTY = e.touches[1].clientY;
       touchMarquee = document.createElement(“div”);
       touchMarquee.className = “marquee”;
       touchMarquee.style.cssText = `left:${touchStart.x}px;top:${touchStart.y}px;width:0;height:0`;
       tagsEl.appendChild(touchMarquee);
+      autoTimer = setInterval(() => {
+        const r = tagsEl.getBoundingClientRect(), thresh = 60, speed = 14;
+        if (lastTY < r.top + thresh) tagsEl.scrollTop -= speed;
+        else if (lastTY > r.bottom - thresh) tagsEl.scrollTop += speed;
+        tagsUpdateBox();
+      }, 20);
     }, { passive: true });
 
     tagsEl?.addEventListener(“touchmove”, e => {
       if (!touchMarquee || e.touches.length < 2) return;
       e.preventDefault();
-      const cur = tagsLocalPoint(e.touches[1]);
-      const box = rectNorm(touchStart, cur);
-      touchMarquee.style.left = `${box.left}px`;
-      touchMarquee.style.top = `${box.top}px`;
-      touchMarquee.style.width = `${box.width}px`;
-      touchMarquee.style.height = `${box.height}px`;
-      tagsMarqueeAdd = true; tagsMarqueeBase = touchBase;
-      updateTagsMarqueeSelection(box);
+      lastTX = e.touches[1].clientX; lastTY = e.touches[1].clientY;
+      tagsUpdateBox();
     }, { passive: false });
 
     tagsEl?.addEventListener(“touchend”, async () => {
       if (!touchMarquee) return;
+      clearInterval(autoTimer); autoTimer = null;
       touchMarquee.remove();
       touchMarquee = null; touchStart = null; touchBase = null;
       tagsMarqueeAdd = false; tagsMarqueeBase = null;
