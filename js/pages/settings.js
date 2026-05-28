@@ -224,6 +224,7 @@ function showPanel() {
   document.body.classList.remove("settings-locked");
   document.body.classList.remove("no-footer-line");
   moveLangSwitcher(false);
+  syncTopbarHeight();
 }
 
 function stopPolling() {
@@ -1638,12 +1639,7 @@ function renderProviderOrder() {
   mailProviderOrder.forEach((p, idx) => {
     const row = document.createElement("div");
     row.className = "provider-order-row";
-    row.style.display = "flex";
-    row.style.alignItems = "center";
-    row.style.gap = "12px";
-    row.style.padding = "10px 14px";
-    row.style.borderBottom = "1px solid rgba(255,255,255,0.08)";
-    row.style.background = p.is_active ? "transparent" : "rgba(255,0,0,0.05)";
+    row.style.background = p.is_active ? "" : "rgba(255,0,0,0.05)";
 
     const activeCheck = document.createElement("input");
     activeCheck.type = "checkbox";
@@ -1651,7 +1647,7 @@ function renderProviderOrder() {
     activeCheck.title = "Active";
     activeCheck.addEventListener("change", (e) => {
       p.is_active = e.target.checked;
-      row.style.background = p.is_active ? "transparent" : "rgba(255,0,0,0.05)";
+      row.style.background = p.is_active ? "" : "rgba(255,0,0,0.05)";
     });
 
     const rank = document.createElement("div");
@@ -1781,10 +1777,6 @@ function renderAiProviderOrder() {
   aiProviders.forEach((p, idx) => {
     const row = document.createElement("div");
     row.className = "provider-order-row";
-    row.style.marginBottom = "8px";
-    row.style.display = "flex";
-    row.style.alignItems = "center";
-    row.style.gap = "10px";
 
     const rank = document.createElement("div");
     rank.className = "provider-order-rank";
