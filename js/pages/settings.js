@@ -6199,7 +6199,6 @@ function wireEvents() {
     // ── Touch: 1 palec = scroll (domyślny), 2 palce = zaznaczanie ─────────
     tbody.addEventListener('touchstart', e => {
       if (e.touches.length < 2) return;
-      e.preventDefault();
       const anchor = cellAt(e.touches[0].clientX, e.touches[0].clientY);
       if (!anchor) return;
       isDragging = true;
@@ -6209,7 +6208,7 @@ function wireEvents() {
       if (cursor) selectRange(dragStart.row, dragStart.col, parseInt(cursor.dataset.row), parseInt(cursor.dataset.col));
       else { mcState.selectedCells = [{row: dragStart.row, col: dragStart.col}]; highlight(); }
       startAutoScroll(() => ({x: lastTouchX, y: lastTouchY}));
-    }, {passive: false});
+    }, {passive: true});
 
     tbody.addEventListener('touchmove', e => {
       if (e.touches.length < 2 || !isDragging || !dragStart) return;
