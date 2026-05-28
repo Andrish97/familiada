@@ -6154,12 +6154,18 @@ function wireEvents() {
 
     function startAutoScroll(getXY) {
       if (autoScrollTimer) return;
+      const tableWrap = document.getElementById("mcContactsTable")?.parentElement;
       autoScrollTimer = setInterval(() => {
         if (!isDragging) { stopAutoScroll(); return; }
         const {x, y} = getXY();
         const thresh = 80, speed = 18;
         if (y < thresh) window.scrollBy(0, -speed);
         else if (y > window.innerHeight - thresh) window.scrollBy(0, speed);
+        if (tableWrap) {
+          const rect = tableWrap.getBoundingClientRect();
+          if (x < rect.left + thresh) tableWrap.scrollLeft -= speed;
+          else if (x > rect.right - thresh) tableWrap.scrollLeft += speed;
+        }
         const cell = cellAt(x, y);
         if (cell && dragStart) {
           selectRange(dragStart.row, dragStart.col, parseInt(cell.dataset.row), parseInt(cell.dataset.col));
