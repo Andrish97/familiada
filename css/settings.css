@@ -2367,7 +2367,7 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   cursor: cell;
   user-select: none;
   -webkit-user-select: none;
-  touch-action: none;
+  touch-action: pan-x pan-y;
 }
 
 .mc-cell-selected {
