@@ -711,7 +711,7 @@ function renderEditorQuestions(questions) {
   container.innerHTML = '';
   questions.forEach((q, qi) => {
     const qDiv = document.createElement('div');
-    qDiv.className = 'mail-card';
+    qDiv.className = 'settings-card';
     qDiv.style.gap = '8px';
     qDiv.innerHTML = `
       <div style="display:flex;gap:8px;align-items:center">

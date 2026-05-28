@@ -682,13 +682,13 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   overscroll-behavior: contain;
 }
 
-.mail-cards{
+.settings-cards{
   margin-top: 16px;
   display: grid;
   gap: 14px;
 }
 
-.mail-card{
+.settings-card{
   border: 1px solid rgba(255,255,255,.12);
   border-radius: 14px;
   background: rgba(255,255,255,.04);
@@ -698,34 +698,34 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   position: relative;
 }
 
-.mail-card-queue{
+.settings-card-queue{
   order: 1;
 }
 
-.mail-card-settings{
+.settings-card-settings{
   order: 2;
 }
 
-.mail-card-worker{
+.settings-card-worker{
   order: 3;
 }
 
-.mail-card-logs{
+.settings-card-logs{
   order: 4;
 }
 
-.mail-card-wide{
+.settings-card-wide{
   grid-column: 1 / -1;
 }
 
-.mail-card-title{
+.settings-card-title{
   font-size: 13px;
   font-weight: 900;
   letter-spacing: .08em;
   text-transform: uppercase;
 }
 
-.mail-card-head{
+.settings-card-head{
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1195,7 +1195,7 @@ body.tools-fullscreen .tools-frame-wrap iframe{
     margin-left: 0 !important;
     margin-right: 0 !important;
   }
-  .mail-card{
+  .settings-card{
     padding: 14px;
     width: auto !important;
     max-width: 100% !important;
@@ -2481,11 +2481,11 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   overflow-x: clip;
 }
 
-.mail-cards,
-.mail-card {
+.settings-cards,
+.settings-card {
   min-width: 0;
 }
-/* mail-card NIE dostaje clip — elementy muszą się zawijać, nie być przycinane */
+/* settings-card NIE dostaje clip — elementy muszą się zawijać, nie być przycinane */
 
 /* 2. Mniejsze paddingi na mobile — więcej miejsca na treść
    (18+14+15=94px → 10+10+10=30px, zysk 64px na każdą stronę = 128px więcej treści) */
@@ -2493,7 +2493,7 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   .mail-panel {
     padding: 10px;
   }
-  .mail-card {
+  .settings-card {
     padding: 10px;
   }
   .market-admin-panel > .mail-panel {
@@ -2541,12 +2541,12 @@ body.tools-fullscreen .tools-frame-wrap iframe{
 }
 
 /* 6. Pozostałe panele — te same zasady */
-.maintenance-panel .mail-card,
-#statsPanel .mail-card,
-#ratingsPanel .mail-card,
-#reportsPanel .mail-card,
-#marketplacePanel .mail-card,
-#generatorPanel .mail-card {
+.maintenance-panel .settings-card,
+#statsPanel .settings-card,
+#ratingsPanel .settings-card,
+#reportsPanel .settings-card,
+#marketplacePanel .settings-card,
+#generatorPanel .settings-card {
   min-width: 0;
 }
 
