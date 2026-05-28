@@ -1095,8 +1095,10 @@ body.tools-fullscreen .tools-frame-wrap iframe{
 
 /* Stats grid - desktop default */
 .stats-grid{
+  display: grid;
   grid-template-columns: repeat(auto-fill,minmax(240px,1fr));
   gap: 14px;
+  margin-top: 10px;
 }
 
 .stat-box{
@@ -1118,6 +1120,82 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   background: rgba(255,255,255,.07);
 }
 
+.stat-label{
+  font-size: 11px;
+  opacity: .7;
+  text-transform: uppercase;
+  font-weight: 900;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+
+.stat-value{
+  font-size: 32px;
+  font-weight: 900;
+  color: var(--gold);
+}
+
+.stat-sub{
+  font-size: 12px;
+  opacity: .8;
+  margin-top: 4px;
+  color: var(--gold);
+}
+
+.stat-sub.dim{
+  font-size: 11px;
+  opacity: .5;
+  color: inherit;
+}
+
+.stat-sub.mono{
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+/* Stats internal sections */
+.stats-section{
+  margin-top: 24px;
+}
+
+.stats-section-label{
+  font-size: 11px;
+  opacity: .4;
+  text-transform: uppercase;
+  font-weight: 900;
+  letter-spacing: 1px;
+  margin-bottom: 14px;
+}
+
+.stats-inner-grid{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.stats-inner-card{
+  padding: 16px;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 14px;
+  background: rgba(255,255,255,.03);
+}
+
+.stats-inner-card + .stats-inner-card{
+  margin-top: 14px;
+}
+
+.stats-inner-grid + .stats-inner-card{
+  margin-top: 14px;
+}
+
+.stats-inner-label{
+  font-size: 11px;
+  opacity: .5;
+  text-transform: uppercase;
+  font-weight: 900;
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+}
+
 @media (max-width: 900px){
   .market-admin-panel{
     max-width: 100% !important;
@@ -1135,6 +1213,9 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   .stats-grid{
     grid-template-columns: 1fr !important;
     gap: 10px !important;
+  }
+  .stats-inner-grid{
+    grid-template-columns: 1fr !important;
   }
   .stat-box{
     padding: 12px !important;

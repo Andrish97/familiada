@@ -412,12 +412,11 @@
 
       <!-- GENERATOR PANEL -->
       <div class="market-admin-panel" id="generatorPanel" hidden>
-        <div class="panel-head">
-          <div class="panel-title" data-i18n="settings.generator.title">Generator gier</div>
-          <div class="panel-sub" data-i18n="settings.generator.subtitle">Generowanie i zarządzanie grami producenta</div>
-        </div>
-
         <div class="mail-card" id="gen-session-card">
+          <div class="panel-head">
+            <div class="panel-title" data-i18n="settings.generator.title">Generator gier</div>
+            <div class="panel-sub" data-i18n="settings.generator.subtitle">Generowanie i zarządzanie grami producenta</div>
+          </div>
           <div class="mail-card-title">🌐 Sesja</div>
           <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
             <div class="field" style="flex:1;min-width:120px">
@@ -605,9 +604,9 @@
           <div class="field-hint" id="ratingsTableInfo">—</div>
         </div>
 
-        <div class="mail-card" style="margin-top:20px">
-          <div class="panel-head" style="margin-bottom:12px">
-            <div class="panel-title" style="font-size:1em" data-i18n="settings.marketplace.producerRatingsTitle">Oceny gier producenta</div>
+        <div class="mail-card">
+          <div class="mail-card-head">
+            <div class="mail-card-title" data-i18n="settings.marketplace.producerRatingsTitle">Oceny gier producenta</div>
             <button class="btn sm" id="btnProducerRatingsRefresh" type="button" data-i18n="settings.actions.refresh">Odśwież</button>
           </div>
           <div class="mail-table-wrap">
@@ -641,87 +640,80 @@
             <button class="btn sm" id="btnStatsRefresh" type="button" data-i18n="settings.actions.refresh">Odśwież</button>
           </div>
 
-          <div class="stats-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;margin-top:10px">
-            <div class="stat-box" data-detail="users" style="padding:18px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(255,255,255,.03);cursor:pointer;transition:background .15s" onmouseenter="this.style.background='rgba(255,255,255,.07)'" onmouseleave="this.style.background='rgba(255,255,255,.03)'">
-              <div class="stat-label" style="font-size:11px;opacity:.7;text-transform:uppercase;font-weight:900;letter-spacing:1px;margin-bottom:8px">Użytkownicy</div>
-              <div class="stat-value" id="statUsersTotal" style="font-size:32px;font-weight:900;color:var(--gold)">0</div>
-              <div class="stat-sub" id="statUsersGrowth" style="font-size:12px;opacity:.8;margin-top:4px;color:var(--gold)">Dziś: 0 | 7 dni: 0 | 30 dni: 0</div>
-              <div class="stat-sub" id="statUsersLangs" style="font-size:11px;opacity:.5;margin-top:4px;font-family:monospace">PL: 0 | EN: 0 | UK: 0</div>
+          <div class="stats-grid">
+            <div class="stat-box" data-detail="users">
+              <div class="stat-label">Użytkownicy</div>
+              <div class="stat-value" id="statUsersTotal">0</div>
+              <div class="stat-sub" id="statUsersGrowth">Dziś: 0 | 7 dni: 0 | 30 dni: 0</div>
+              <div class="stat-sub dim mono" id="statUsersLangs">PL: 0 | EN: 0 | UK: 0</div>
             </div>
 
-            <div class="stat-box" data-detail="games" style="padding:18px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(255,255,255,.03);cursor:pointer;transition:background .15s" onmouseenter="this.style.background='rgba(255,255,255,.07)'" onmouseleave="this.style.background='rgba(255,255,255,.03)'">
-              <div class="stat-label" style="font-size:11px;opacity:.7;text-transform:uppercase;font-weight:900;letter-spacing:1px;margin-bottom:8px">Gry</div>
-              <div class="stat-value" id="statGamesTotal" style="font-size:32px;font-weight:900;color:var(--gold)">0</div>
-              <div class="stat-sub" id="statGamesGrowth" style="font-size:12px;opacity:.8;margin-top:4px;color:var(--gold)">Dziś: 0 | 7 dni: 0 | 30 dni: 0</div>
-              <div class="stat-sub" id="statGamesQuality" style="font-size:11px;opacity:.5;margin-top:4px">Gotowe: 0 | Śr. pytań: 0</div>
+            <div class="stat-box" data-detail="games">
+              <div class="stat-label">Gry</div>
+              <div class="stat-value" id="statGamesTotal">0</div>
+              <div class="stat-sub" id="statGamesGrowth">Dziś: 0 | 7 dni: 0 | 30 dni: 0</div>
+              <div class="stat-sub dim" id="statGamesQuality">Gotowe: 0 | Śr. pytań: 0</div>
             </div>
 
-            <div class="stat-box" data-detail="gameplay" style="padding:18px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(255,255,255,.03);cursor:pointer;transition:background .15s" onmouseenter="this.style.background='rgba(255,255,255,.07)'" onmouseleave="this.style.background='rgba(255,255,255,.03)'">
-              <div class="stat-label" style="font-size:11px;opacity:.7;text-transform:uppercase;font-weight:900;letter-spacing:1px;margin-bottom:8px">Rozgrywki & Ankiety</div>
-              <div class="stat-value" id="statPlayedTotal" style="font-size:32px;font-weight:900;color:var(--gold)">0</div>
-              <div class="stat-sub" id="statPlayedPeriods" style="font-size:12px;opacity:.8;margin-top:4px;color:var(--gold)">Dziś: 0 | 7 dni: 0 | 30 dni: 0</div>
-              <div class="stat-sub" id="statBuzzerActivity" style="font-size:11px;opacity:.5;margin-top:4px">Buzzer 7d: 0 | Sesje ankiet 7d: 0</div>
+            <div class="stat-box" data-detail="gameplay">
+              <div class="stat-label">Rozgrywki &amp; Ankiety</div>
+              <div class="stat-value" id="statPlayedTotal">0</div>
+              <div class="stat-sub" id="statPlayedPeriods">Dziś: 0 | 7 dni: 0 | 30 dni: 0</div>
+              <div class="stat-sub dim" id="statBuzzerActivity">Buzzer 7d: 0 | Sesje ankiet 7d: 0</div>
             </div>
 
-            <div class="stat-box" data-detail="bases" style="padding:18px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(255,255,255,.03);cursor:pointer;transition:background .15s" onmouseenter="this.style.background='rgba(255,255,255,.07)'" onmouseleave="this.style.background='rgba(255,255,255,.03)'">
-              <div class="stat-label" style="font-size:11px;opacity:.7;text-transform:uppercase;font-weight:900;letter-spacing:1px;margin-bottom:8px">Bazy pytań</div>
-              <div class="stat-value" id="statBasesTotal" style="font-size:32px;font-weight:900;color:var(--gold)">0</div>
-              <div class="stat-sub" id="statBasesGrowth" style="font-size:12px;opacity:.8;margin-top:4px;color:var(--gold)">Dziś: 0 | 7 dni: 0 | 30 dni: 0</div>
+            <div class="stat-box" data-detail="bases">
+              <div class="stat-label">Bazy pytań</div>
+              <div class="stat-value" id="statBasesTotal">0</div>
+              <div class="stat-sub" id="statBasesGrowth">Dziś: 0 | 7 dni: 0 | 30 dni: 0</div>
             </div>
 
-            <div class="stat-box" data-detail="logos" style="padding:18px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(255,255,255,.03);cursor:pointer;transition:background .15s" onmouseenter="this.style.background='rgba(255,255,255,.07)'" onmouseleave="this.style.background='rgba(255,255,255,.03)'">
-              <div class="stat-label" style="font-size:11px;opacity:.7;text-transform:uppercase;font-weight:900;letter-spacing:1px;margin-bottom:8px">Logo</div>
-              <div class="stat-value" id="statLogosTotal" style="font-size:32px;font-weight:900;color:var(--gold)">0</div>
-              <div class="stat-sub" id="statLogosGrowth" style="font-size:12px;opacity:.8;margin-top:4px;color:var(--gold)">Dziś: 0 | 7 dni: 0 | 30 dni: 0</div>
-              <div class="stat-sub" id="statLogosSub" style="font-size:11px;opacity:.5;margin-top:4px">Aktywne: 0</div>
+            <div class="stat-box" data-detail="logos">
+              <div class="stat-label">Logo</div>
+              <div class="stat-value" id="statLogosTotal">0</div>
+              <div class="stat-sub" id="statLogosGrowth">Dziś: 0 | 7 dni: 0 | 30 dni: 0</div>
+              <div class="stat-sub dim" id="statLogosSub">Aktywne: 0</div>
             </div>
 
-            <div class="stat-box" data-detail="ratings" style="padding:18px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(255,255,255,.03);cursor:pointer;transition:background .15s" onmouseenter="this.style.background='rgba(255,255,255,.07)'" onmouseleave="this.style.background='rgba(255,255,255,.03)'">
-              <div class="stat-label" style="font-size:11px;opacity:.7;text-transform:uppercase;font-weight:900;letter-spacing:1px;margin-bottom:8px">Oceny</div>
-              <div class="stat-value" id="statRating" style="font-size:32px;font-weight:900;color:var(--gold)">0 / 5</div>
-              <div class="stat-sub" id="statRatingsGrowth" style="font-size:12px;opacity:.8;margin-top:4px;color:var(--gold)">Dziś: 0 | 7 dni: 0 | 30 dni: 0</div>
-              <div class="stat-sub" id="statRatingsTotal" style="font-size:11px;opacity:.5;margin-top:4px">Łącznie: 0</div>
-              <div class="stat-sub" id="statHealthMails" style="font-size:11px;opacity:.5;margin-top:2px">Błędy maili (24h): 0</div>
+            <div class="stat-box" data-detail="ratings">
+              <div class="stat-label">Oceny</div>
+              <div class="stat-value" id="statRating">0 / 5</div>
+              <div class="stat-sub" id="statRatingsGrowth">Dziś: 0 | 7 dni: 0 | 30 dni: 0</div>
+              <div class="stat-sub dim" id="statRatingsTotal">Łącznie: 0</div>
+              <div class="stat-sub dim" id="statHealthMails">Błędy maili (24h): 0</div>
             </div>
           </div>
-          <!-- Retention & Activity -->
-          <div style="margin-top:24px">
-            <div style="font-size:11px;opacity:.4;text-transform:uppercase;font-weight:900;letter-spacing:1px;margin-bottom:14px">Retencja &amp; Aktywność</div>
 
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-
-              <!-- Lejek 3-poziomowy + D7/D30 -->
-              <div style="padding:16px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(255,255,255,.03)">
-                <div style="font-size:11px;opacity:.5;text-transform:uppercase;font-weight:900;letter-spacing:1px;margin-bottom:12px">Lejek &amp; Retencja</div>
+          <!-- Retencja & Aktywność -->
+          <div class="stats-section">
+            <div class="stats-section-label">Retencja &amp; Aktywność</div>
+            <div class="stats-inner-grid">
+              <div class="stats-inner-card">
+                <div class="stats-inner-label">Lejek &amp; Retencja</div>
                 <table style="width:100%;border-collapse:collapse;font-size:13px">
                   <tbody id="retentionTable">
                     <tr><td colspan="3" style="opacity:.4;font-size:12px;padding:8px 0">Ładowanie…</td></tr>
                   </tbody>
                 </table>
               </div>
-
-              <!-- Segmenty użytkowników z paskami -->
-              <div style="padding:16px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(255,255,255,.03)">
-                <div style="font-size:11px;opacity:.5;text-transform:uppercase;font-weight:900;letter-spacing:1px;margin-bottom:12px">Segmenty użytkowników</div>
+              <div class="stats-inner-card">
+                <div class="stats-inner-label">Segmenty użytkowników</div>
                 <div id="segmentBars" style="display:flex;flex-direction:column;gap:10px">
                   <div style="opacity:.4;font-size:12px">Ładowanie…</div>
                 </div>
               </div>
-
             </div>
-
-            <!-- Mini wykres: nowi użytkownicy 14 dni -->
-            <div style="margin-top:14px;padding:16px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(255,255,255,.03)">
-              <div style="font-size:11px;opacity:.5;text-transform:uppercase;font-weight:900;letter-spacing:1px;margin-bottom:12px">Nowi użytkownicy — ostatnie 14 dni</div>
+            <div class="stats-inner-card">
+              <div class="stats-inner-label">Nowi użytkownicy — ostatnie 14 dni</div>
               <div id="trendChart" style="display:flex;align-items:flex-end;gap:3px;height:64px"></div>
               <div id="trendLabels" style="display:flex;gap:3px;margin-top:4px"></div>
             </div>
           </div>
 
           <!-- Wykluczenia ze statystyk -->
-          <div style="margin-top:24px">
-            <div style="font-size:11px;opacity:.4;text-transform:uppercase;font-weight:900;letter-spacing:1px;margin-bottom:14px">Wykluczenia ze statystyk</div>
-            <div style="padding:16px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(255,255,255,.03)">
+          <div class="stats-section">
+            <div class="stats-section-label">Wykluczenia ze statystyk</div>
+            <div class="stats-inner-card">
               <div style="display:flex;gap:8px;margin-bottom:14px">
                 <input class="inp" id="excludeUsernameInput" type="text" placeholder="Nazwa użytkownika…" style="flex:1"/>
                 <button class="btn sm gold" id="btnExcludeAdd" type="button">Wyklucz</button>
