@@ -695,6 +695,13 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   padding: 14px;
   display: grid;
   gap: 10px;
+  position: relative;
+  z-index: 0;
+}
+
+/* Lift card above siblings when its dropdown is open */
+.mail-card:has(.ui-select.open){
+  z-index: 10;
 }
 
 .mail-card-queue{
