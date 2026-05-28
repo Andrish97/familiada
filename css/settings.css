@@ -2486,8 +2486,8 @@ body.tools-fullscreen .tools-frame-wrap iframe{
 .settings-cards,
 .settings-card {
   min-width: 0;
+  overflow-x: clip;
 }
-/* settings-card NIE dostaje clip — elementy muszą się zawijać, nie być przycinane */
 
 /* 2. Mniejsze paddingi na mobile — więcej miejsca na treść
    (18+14+15=94px → 10+10+10=30px, zysk 64px na każdą stronę = 128px więcej treści) */
