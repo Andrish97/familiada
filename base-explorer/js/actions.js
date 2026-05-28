@@ -3634,6 +3634,19 @@ export function wireActions({ state }) {
   let marqueeStart = null;
   let marqueeAdd = false;       // ctrl/meta => dodawanie do selekcji
   let marqueeBaseKeys = null;   // snapshot selekcji startowej (dla add)
+  let listMouseTimer = null;
+  let lastListMX = 0, lastListMY = 0;
+
+  function listMouseUpdateBox() {
+    if (!marquee || !marqueeStart) return;
+    const cur = listLocalPoint({ clientX: lastListMX, clientY: lastListMY });
+    const box = rectNorm(marqueeStart, cur);
+    marquee.style.left = `${box.left}px`;
+    marquee.style.top = `${box.top}px`;
+    marquee.style.width = `${box.width}px`;
+    marquee.style.height = `${box.height}px`;
+    updateMarqueeSelection(box);
+  }
 
   function listLocalPoint(ev) {
     const r = listEl.getBoundingClientRect();
@@ -3738,25 +3751,26 @@ export function wireActions({ state }) {
     marquee.style.height = "0px";
     listEl.appendChild(marquee);
 
+    lastListMX = e.clientX; lastListMY = e.clientY;
+    listMouseTimer = setInterval(() => {
+      const r = listEl.getBoundingClientRect(), thresh = 60, speed = 14;
+      if (lastListMY < r.top + thresh) listEl.scrollTop -= speed;
+      else if (lastListMY > r.bottom - thresh) listEl.scrollTop += speed;
+      listMouseUpdateBox();
+    }, 20);
+
     e.preventDefault(); // ważne: nie zaznaczaj tekstu
   });
 
   document.addEventListener("mousemove", (e) => {
     if (!marquee || !marqueeStart) return;
-
-    const cur = listLocalPoint(e);
-    const box = rectNorm(marqueeStart, cur);
-
-    marquee.style.left = `${box.left}px`;
-    marquee.style.top = `${box.top}px`;
-    marquee.style.width = `${box.width}px`;
-    marquee.style.height = `${box.height}px`;
-
-    updateMarqueeSelection(box);
+    lastListMX = e.clientX; lastListMY = e.clientY;
+    listMouseUpdateBox();
   });
 
   document.addEventListener("mouseup", () => {
     if (!marquee) return;
+    clearInterval(listMouseTimer); listMouseTimer = null;
     marquee.remove();
     marquee = null;
     marqueeStart = null;
@@ -3828,6 +3842,19 @@ export function wireActions({ state }) {
   let treeMarqueeStart = null;
   let treeMarqueeAdd = false;
   let treeMarqueeBase = null;
+  let treeMouseTimer = null;
+  let lastTreeMX = 0, lastTreeMY = 0;
+
+  function treeMouseUpdateBox() {
+    if (!treeMarquee || !treeMarqueeStart) return;
+    const cur = treeLocalPoint({ clientX: lastTreeMX, clientY: lastTreeMY });
+    const box = rectNorm(treeMarqueeStart, cur);
+    treeMarquee.style.left = `${box.left}px`;
+    treeMarquee.style.top = `${box.top}px`;
+    treeMarquee.style.width = `${box.width}px`;
+    treeMarquee.style.height = `${box.height}px`;
+    updateTreeMarqueeSelection(box);
+  }
 
   function treeLocalPoint(ev) {
     const r = treeEl.getBoundingClientRect();
@@ -3915,24 +3942,26 @@ export function wireActions({ state }) {
     treeMarquee.style.height = "0px";
     treeEl.appendChild(treeMarquee);
 
+    lastTreeMX = e.clientX; lastTreeMY = e.clientY;
+    treeMouseTimer = setInterval(() => {
+      const r = treeEl.getBoundingClientRect(), thresh = 60, speed = 14;
+      if (lastTreeMY < r.top + thresh) treeEl.scrollTop -= speed;
+      else if (lastTreeMY > r.bottom - thresh) treeEl.scrollTop += speed;
+      treeMouseUpdateBox();
+    }, 20);
+
     e.preventDefault();
   });
 
   document.addEventListener("mousemove", (e) => {
     if (!treeMarquee || !treeMarqueeStart) return;
-    const cur = treeLocalPoint(e);
-    const box = rectNorm(treeMarqueeStart, cur);
-
-    treeMarquee.style.left = `${box.left}px`;
-    treeMarquee.style.top = `${box.top}px`;
-    treeMarquee.style.width = `${box.width}px`;
-    treeMarquee.style.height = `${box.height}px`;
-
-    updateTreeMarqueeSelection(box);
+    lastTreeMX = e.clientX; lastTreeMY = e.clientY;
+    treeMouseUpdateBox();
   });
-  
+
   document.addEventListener("mouseup", () => {
     if (!treeMarquee) return;
+    clearInterval(treeMouseTimer); treeMouseTimer = null;
     treeMarquee.remove();
     treeMarquee = null;
     treeMarqueeStart = null;
@@ -4004,6 +4033,19 @@ export function wireActions({ state }) {
   let tagsMarqueeStart = null;
   let tagsMarqueeAdd = false;
   let tagsMarqueeBase = null;
+  let tagsMouseTimer = null;
+  let lastTagsMX = 0, lastTagsMY = 0;
+
+  function tagsMouseUpdateBox() {
+    if (!tagsMarquee || !tagsMarqueeStart) return;
+    const cur = tagsLocalPoint({ clientX: lastTagsMX, clientY: lastTagsMY });
+    const box = rectNorm(tagsMarqueeStart, cur);
+    tagsMarquee.style.left = `${box.left}px`;
+    tagsMarquee.style.top = `${box.top}px`;
+    tagsMarquee.style.width = `${box.width}px`;
+    tagsMarquee.style.height = `${box.height}px`;
+    updateTagsMarqueeSelection(box);
+  }
 
   function tagsLocalPoint(ev) {
     const r = tagsEl.getBoundingClientRect();
@@ -4105,33 +4147,34 @@ export function wireActions({ state }) {
       for (const r of rows) r.classList.remove("is-selected");
     }
 
-    tagsMarquee = document.createElement("div");
-    tagsMarquee.className = "marquee";
+    tagsMarquee = document.createElement(“div”);
+    tagsMarquee.className = “marquee”;
     tagsMarquee.style.left = `${tagsMarqueeStart.x}px`;
     tagsMarquee.style.top = `${tagsMarqueeStart.y}px`;
-    tagsMarquee.style.width = "0px";
-    tagsMarquee.style.height = "0px";
+    tagsMarquee.style.width = “0px”;
+    tagsMarquee.style.height = “0px”;
     tagsEl.appendChild(tagsMarquee);
+
+    lastTagsMX = e.clientX; lastTagsMY = e.clientY;
+    tagsMouseTimer = setInterval(() => {
+      const r = tagsEl.getBoundingClientRect(), thresh = 60, speed = 14;
+      if (lastTagsMY < r.top + thresh) tagsEl.scrollTop -= speed;
+      else if (lastTagsMY > r.bottom - thresh) tagsEl.scrollTop += speed;
+      tagsMouseUpdateBox();
+    }, 20);
 
     e.preventDefault();
   });
 
-  document.addEventListener("mousemove", (e) => {
+  document.addEventListener(“mousemove”, (e) => {
     if (!tagsMarquee || !tagsMarqueeStart) return;
-
-    const cur = tagsLocalPoint(e);
-    const box = rectNorm(tagsMarqueeStart, cur);
-
-    tagsMarquee.style.left = `${box.left}px`;
-    tagsMarquee.style.top = `${box.top}px`;
-    tagsMarquee.style.width = `${box.width}px`;
-    tagsMarquee.style.height = `${box.height}px`;
-
-    updateTagsMarqueeSelection(box);
+    lastTagsMX = e.clientX; lastTagsMY = e.clientY;
+    tagsMouseUpdateBox();
   });
 
   document.addEventListener(“mouseup”, async () => {
     if (!tagsMarquee) return;
+    clearInterval(tagsMouseTimer); tagsMouseTimer = null;
     tagsMarquee.remove();
     tagsMarquee = null;
     tagsMarqueeStart = null;
