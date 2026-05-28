@@ -6246,11 +6246,15 @@ function wireEvents() {
 
     tbody.addEventListener('touchend', e => {
       if (!isDragging && e.changedTouches.length === 1) {
-        const dx = e.changedTouches[0].clientX - tapStartX;
-        const dy = e.changedTouches[0].clientY - tapStartY;
-        if (Math.hypot(dx, dy) < 12 && mcState.selectedCells.length) {
-          mcState.selectedCells = [];
-          highlight();
+        const t = e.changedTouches[0];
+        const dx = t.clientX - tapStartX, dy = t.clientY - tapStartY;
+        if (Math.hypot(dx, dy) < 12) {
+          const cell = cellAt(t.clientX, t.clientY);
+          if (cell) {
+            existingSelection = [];
+            mcState.selectedCells = [{row: parseInt(cell.dataset.row), col: parseInt(cell.dataset.col)}];
+            highlight();
+          }
         }
       }
       isDragging = false; dragStart = null; stopAutoScroll();
