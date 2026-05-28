@@ -5924,8 +5924,7 @@ function wireEvents() {
   let mcState = {
     runs: [],
     contacts: [],
-    selectedRows: new Set(),
-    lastSelectedIdx: null,
+    selectedCells: [],
     page: 1,
     sortCol: 'added_at',
     sortDir: 'desc',
@@ -6095,25 +6094,21 @@ function wireEvents() {
   function mcRenderContacts(totalCount) {
     const tbody = document.getElementById("mcTableBody");
     if (!mcState.contacts.length) {
-      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;opacity:.5;padding:1.5rem">Brak kontaktów</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;opacity:.5;padding:1.5rem">Brak kontaktów</td></tr>';
       mcUpdatePagination(0);
-      mcUpdateToolbar();
+      mcUpdateSelectionInfo();
       return;
     }
     tbody.innerHTML = mcState.contacts.map((c, i) => {
       const usedClass = c.is_used ? 'mc-used' : '';
-      const selectedClass = mcState.selectedRows.has(c.id) ? 'mc-row-selected' : '';
-      const checked = mcState.selectedRows.has(c.id) ? 'checked' : '';
       const usedText = c.is_used ? '✓' : '';
       const addedAt = c.added_at ? new Date(c.added_at).toLocaleString('pl-PL', {month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit'}) : '—';
-      const urlHtml = c.url ? `<a href="${mcEsc(c.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${mcEsc(c.url)}</a>` : '';
-      return `<tr class="${usedClass} ${selectedClass}" data-id="${c.id}" data-idx="${i}">
-        <td class="mc-cell mc-checkbox-cell"><input type="checkbox" class="mc-row-check" ${checked} onclick="event.stopPropagation()"></td>
-        <td class="mc-cell">${mcEsc(c.title||'')}</td>
-        <td class="mc-cell">${mcEsc(c.email||'')}</td>
-        <td class="mc-cell" style="max-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${urlHtml}</td>
-        <td class="mc-cell">${addedAt}</td>
-        <td class="mc-cell" style="text-align:center">${usedText}</td>
+      return `<tr class="${usedClass}" data-id="${c.id}">
+        <td class="mc-cell mc-selectable" data-row="${i}" data-col="0">${mcEsc(c.title||'')}</td>
+        <td class="mc-cell mc-selectable" data-row="${i}" data-col="1">${mcEsc(c.email||'')}</td>
+        <td class="mc-cell mc-selectable" data-row="${i}" data-col="2">${mcEsc(c.url||'')}</td>
+        <td class="mc-cell mc-selectable" data-row="${i}" data-col="3">${addedAt}</td>
+        <td class="mc-cell mc-selectable" data-row="${i}" data-col="4" style="text-align:center">${usedText}</td>
       </tr>`;
     }).join("");
     mcUpdatePagination(totalCount);
@@ -6122,70 +6117,146 @@ function wireEvents() {
 
   function mcSetupTableSelection() {
     const tbody = document.getElementById("mcTableBody");
-    const selectAllCb = document.getElementById("mcSelectAllCheckbox");
+    let isDragging = false;
+    let dragStart = null;
+    let autoScrollTimer = null;
+    let lastTouchX = 0;
+    let lastTouchY = 0;
 
-    function updateUI() {
-      tbody.querySelectorAll('tr[data-id]').forEach(tr => {
-        const id = parseInt(tr.dataset.id);
-        const selected = mcState.selectedRows.has(id);
-        tr.classList.toggle('mc-row-selected', selected);
-        const cb = tr.querySelector('.mc-row-check');
-        if (cb) cb.checked = selected;
+    function highlight() {
+      tbody.querySelectorAll('.mc-cell-selected').forEach(c => c.classList.remove('mc-cell-selected'));
+      mcState.selectedCells.forEach(({row, col}) => {
+        const el = tbody.querySelector(`.mc-selectable[data-row="${row}"][data-col="${col}"]`);
+        if (el) el.classList.add('mc-cell-selected');
       });
-      mcSyncSelectAllCheckbox();
-      mcUpdateToolbar();
+      mcUpdateSelectionInfo();
+      mcUpdateMarkUsedBtn();
     }
 
-    function toggleRow(id, idx, shiftKey) {
-      if (shiftKey && mcState.lastSelectedIdx !== null) {
-        const from = Math.min(mcState.lastSelectedIdx, idx);
-        const to = Math.max(mcState.lastSelectedIdx, idx);
-        for (let i = from; i <= to; i++) {
-          const c = mcState.contacts[i];
-          if (c) mcState.selectedRows.add(c.id);
+    function selectRange(r1, c1, r2, c2) {
+      mcState.selectedCells = [];
+      const rMin = Math.min(r1, r2), rMax = Math.max(r1, r2);
+      const cMin = Math.min(c1, c2), cMax = Math.max(c1, c2);
+      for (let r = rMin; r <= rMax; r++)
+        for (let c = cMin; c <= cMax; c++)
+          mcState.selectedCells.push({row: r, col: c});
+      highlight();
+    }
+
+    function cellAt(x, y) {
+      const el = document.elementFromPoint(x, y);
+      return el ? el.closest('.mc-selectable') : null;
+    }
+
+    function stopAutoScroll() {
+      if (autoScrollTimer) { clearInterval(autoScrollTimer); autoScrollTimer = null; }
+    }
+
+    function startAutoScroll(getXY) {
+      if (autoScrollTimer) return;
+      autoScrollTimer = setInterval(() => {
+        if (!isDragging) { stopAutoScroll(); return; }
+        const {x, y} = getXY();
+        const thresh = 80, speed = 18;
+        if (y < thresh) window.scrollBy(0, -speed);
+        else if (y > window.innerHeight - thresh) window.scrollBy(0, speed);
+        const cell = cellAt(x, y);
+        if (cell && dragStart) {
+          selectRange(dragStart.row, dragStart.col, parseInt(cell.dataset.row), parseInt(cell.dataset.col));
         }
-      } else {
-        if (mcState.selectedRows.has(id)) mcState.selectedRows.delete(id);
-        else mcState.selectedRows.add(id);
-        mcState.lastSelectedIdx = idx;
-      }
-      updateUI();
+      }, 20);
     }
 
-    tbody.addEventListener('click', e => {
-      const cb = e.target.closest('.mc-row-check');
-      const tr = e.target.closest('tr[data-id]');
-      if (!tr) return;
-      const id = parseInt(tr.dataset.id);
-      const idx = parseInt(tr.dataset.idx);
-      if (cb) {
-        if (mcState.selectedRows.has(id)) mcState.selectedRows.delete(id);
-        else mcState.selectedRows.add(id);
-        mcState.lastSelectedIdx = idx;
-        updateUI();
-      } else {
-        toggleRow(id, idx, e.shiftKey);
+    // ── Mouse ──────────────────────────────────────────────────────────────
+    tbody.addEventListener('mousedown', e => {
+      const cell = e.target.closest('.mc-selectable');
+      if (!cell) return;
+      e.preventDefault();
+      const row = parseInt(cell.dataset.row), col = parseInt(cell.dataset.col);
+      if (e.shiftKey && mcState.selectedCells.length) {
+        const last = mcState.selectedCells[mcState.selectedCells.length - 1];
+        selectRange(last.row, last.col, row, col);
+        return;
+      }
+      isDragging = true;
+      dragStart = {row, col};
+      mcState.selectedCells = [{row, col}];
+      highlight();
+      startAutoScroll(() => ({x: lastTouchX, y: lastTouchY}));
+    });
+
+    document.addEventListener('mousemove', e => {
+      if (!isDragging || !dragStart) return;
+      lastTouchX = e.clientX; lastTouchY = e.clientY;
+      const cell = cellAt(e.clientX, e.clientY);
+      if (cell) selectRange(dragStart.row, dragStart.col, parseInt(cell.dataset.row), parseInt(cell.dataset.col));
+    });
+
+    document.addEventListener('mouseup', () => {
+      isDragging = false; dragStart = null; stopAutoScroll();
+    });
+
+    // ── Touch ──────────────────────────────────────────────────────────────
+    tbody.addEventListener('touchstart', e => {
+      const cell = e.target.closest('.mc-selectable');
+      if (!cell) return;
+      const t = e.touches[0];
+      lastTouchX = t.clientX; lastTouchY = t.clientY;
+      isDragging = false;
+      dragStart = {row: parseInt(cell.dataset.row), col: parseInt(cell.dataset.col)};
+    }, {passive: true});
+
+    tbody.addEventListener('touchmove', e => {
+      if (!dragStart) return;
+      const t = e.touches[0];
+      const dx = Math.abs(t.clientX - lastTouchX);
+      const dy = Math.abs(t.clientY - lastTouchY);
+      if (!isDragging && dx < 6 && dy < 6) return;
+      isDragging = true;
+      e.preventDefault();
+      lastTouchX = t.clientX; lastTouchY = t.clientY;
+      const cell = cellAt(t.clientX, t.clientY);
+      if (cell) selectRange(dragStart.row, dragStart.col, parseInt(cell.dataset.row), parseInt(cell.dataset.col));
+      startAutoScroll(() => ({x: lastTouchX, y: lastTouchY}));
+    }, {passive: false});
+
+    document.addEventListener('touchend', () => {
+      if (!isDragging && dragStart) {
+        mcState.selectedCells = [{row: dragStart.row, col: dragStart.col}];
+        highlight();
+      }
+      isDragging = false; dragStart = null; stopAutoScroll();
+    });
+
+    // ── Klik poza tabelą → odznacz ─────────────────────────────────────────
+    document.addEventListener('mousedown', e => {
+      if (!e.target.closest('#mcContactsTable') &&
+          !e.target.closest('#mcVisitUrlBtn') &&
+          !e.target.closest('#mcMarkUsedBtn') &&
+          !e.target.closest('#mcDeleteBtn')) {
+        mcState.selectedCells = [];
+        highlight();
       }
     });
 
-    if (selectAllCb) {
-      selectAllCb.addEventListener('change', () => {
-        if (selectAllCb.checked) mcState.contacts.forEach(c => mcState.selectedRows.add(c.id));
-        else mcState.contacts.forEach(c => mcState.selectedRows.delete(c.id));
-        mcState.lastSelectedIdx = null;
-        updateUI();
-      });
-    }
-  }
-
-  function mcSyncSelectAllCheckbox() {
-    const cb = document.getElementById("mcSelectAllCheckbox");
-    if (!cb || !mcState.contacts.length) return;
-    const pageIds = mcState.contacts.map(c => c.id);
-    const sel = pageIds.filter(id => mcState.selectedRows.has(id));
-    if (sel.length === 0) { cb.indeterminate = false; cb.checked = false; }
-    else if (sel.length === pageIds.length) { cb.indeterminate = false; cb.checked = true; }
-    else { cb.indeterminate = true; cb.checked = false; }
+    // ── Kopiowanie ─────────────────────────────────────────────────────────
+    document.addEventListener('copy', e => {
+      if (!mcState.selectedCells.length) return;
+      const panel = document.getElementById("marketingContactsPanel");
+      if (panel && panel.hidden) return;
+      e.preventDefault();
+      const rows = {};
+      mcState.selectedCells.forEach(({row, col}) => { (rows[row] = rows[row] || []).push(col); });
+      const sortedRows = Object.keys(rows).map(Number).sort((a, b) => a - b);
+      const allCols = [...new Set(mcState.selectedCells.map(c => c.col))].sort((a, b) => a - b);
+      const lines = sortedRows.map(r =>
+        allCols.map(c => {
+          const el = tbody.querySelector(`.mc-selectable[data-row="${r}"][data-col="${c}"]`);
+          return el ? el.textContent.trim() : '';
+        }).join('\t')
+      );
+      e.clipboardData.setData('text/plain', lines.join('\n'));
+    });
   }
 
   function mcEsc(s) { const d=document.createElement("div"); d.textContent=s; return d.innerHTML; }
@@ -6197,29 +6268,33 @@ function wireEvents() {
     } catch(e) { mcLoadContacts(); }
   };
 
-  function mcUpdateToolbar() {
+  function mcUpdateSelectionInfo() {
     const info = document.getElementById("mcSelectionInfo");
     const urlBtn = document.getElementById("mcVisitUrlBtn");
-    const count = mcState.selectedRows.size;
-    if (info) info.textContent = count > 0 ? `${count} zaznaczonych` : '';
-    if (urlBtn) {
-      if (count === 1) {
-        const id = [...mcState.selectedRows][0];
-        const contact = mcState.contacts.find(c => c.id === id);
-        if (contact?.url) { urlBtn.href = contact.url; urlBtn.style.display = ''; }
-        else urlBtn.style.display = 'none';
+    const cells = mcState.selectedCells;
+    if (info) {
+      if (cells.length) {
+        const rowCount = new Set(cells.map(c => c.row)).size;
+        info.textContent = cells.length === 1 ? '1 komórka' : `${cells.length} komórek, ${rowCount} wierszy`;
       } else {
-        urlBtn.style.display = 'none';
+        info.textContent = '';
       }
     }
-    mcUpdateMarkUsedBtn();
+    if (urlBtn) {
+      if (cells.length === 1 && cells[0].col === 2) {
+        const contact = mcState.contacts[cells[0].row];
+        if (contact?.url) { urlBtn.href = contact.url; urlBtn.style.display = ''; return; }
+      }
+      urlBtn.style.display = 'none';
+    }
   }
 
   function mcUpdateMarkUsedBtn() {
     const btn = document.getElementById("mcMarkUsedBtn");
     if (!btn) return;
-    if (!mcState.selectedRows.size) { btn.textContent = "✓ Użyte"; return; }
-    const selected = mcState.contacts.filter(c => mcState.selectedRows.has(c.id));
+    const rows = new Set(mcState.selectedCells.map(c => c.row));
+    if (!rows.size) { btn.textContent = "✓ Użyte"; return; }
+    const selected = [...rows].map(i => mcState.contacts[i]).filter(Boolean);
     if (!selected.length) { btn.textContent = "✓ Użyte"; return; }
     const allUsed = selected.every(c => c.is_used);
     const allUnused = selected.every(c => !c.is_used);
@@ -6229,27 +6304,29 @@ function wireEvents() {
   }
 
   async function mcMarkUsed() {
-    if (!mcState.selectedRows.size) return;
+    const rows = new Set(mcState.selectedCells.map(c => c.row));
+    if (!rows.size) return;
     try {
-      const selectedContacts = mcState.contacts.filter(c => mcState.selectedRows.has(c.id));
-      if (!selectedContacts.length) return;
-      const allUsed = selectedContacts.every(c => c.is_used);
-      const ids = [...mcState.selectedRows];
+      const selected = [...rows].map(i => mcState.contacts[i]).filter(Boolean);
+      if (!selected.length) return;
+      const allUsed = selected.every(c => c.is_used);
+      const ids = selected.map(c => c.id);
       const { error } = await sb().from("marketing_verified_contacts").update({is_used: !allUsed}).in("id", ids);
       if (error) throw error;
-      mcState.selectedRows.clear();
+      mcState.selectedCells = [];
       mcLoadContacts();
     } catch(e) { alert("Błąd: " + e.message); }
   }
 
   async function mcDeleteSelected() {
-    if (!mcState.selectedRows.size) return;
-    if (!confirm(`Usunąć ${mcState.selectedRows.size} kontaktów?`)) return;
+    const rows = new Set(mcState.selectedCells.map(c => c.row));
+    if (!rows.size) return;
+    if (!confirm(`Usunąć ${rows.size} kontaktów?`)) return;
     try {
-      const ids = [...mcState.selectedRows];
+      const ids = [...rows].map(i => mcState.contacts[i]?.id).filter(Boolean);
       const { error } = await sb().from("marketing_verified_contacts").delete().in("id", ids);
       if (error) throw error;
-      mcState.selectedRows.clear();
+      mcState.selectedCells = [];
       mcLoadContacts();
     } catch(e) { alert("Błąd: " + e.message); }
   }
