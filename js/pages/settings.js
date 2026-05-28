@@ -6196,36 +6196,52 @@ function wireEvents() {
       isDragging = false; dragStart = null; stopAutoScroll();
     });
 
-    // ── Touch ──────────────────────────────────────────────────────────────
-    tbody.addEventListener('touchstart', e => {
-      const cell = e.target.closest('.mc-selectable');
-      if (!cell) return;
-      const t = e.touches[0];
-      lastTouchX = t.clientX; lastTouchY = t.clientY;
-      isDragging = false;
-      dragStart = {row: parseInt(cell.dataset.row), col: parseInt(cell.dataset.col)};
-    }, {passive: true});
+    // ── Touch: 1 palec = scroll, 2 palce = zaznaczanie ───────────────────
+    let tapStart = null;
 
-    tbody.addEventListener('touchmove', e => {
-      if (!dragStart) return;
-      const t = e.touches[0];
-      const dx = Math.abs(t.clientX - lastTouchX);
-      const dy = Math.abs(t.clientY - lastTouchY);
-      if (!isDragging && dx < 6 && dy < 6) return;
-      isDragging = true;
+    tbody.addEventListener('touchstart', e => {
+      if (e.touches.length === 1) {
+        // Zapisz komórkę pod palcem — wybierzemy ją przy touchend jeśli to tap
+        const cell = e.target.closest('.mc-selectable');
+        tapStart = cell ? {row: parseInt(cell.dataset.row), col: parseInt(cell.dataset.col),
+                           x: e.touches[0].clientX, y: e.touches[0].clientY} : null;
+        return; // nie blokuj scrolla
+      }
+      // 2+ palce — zaznaczanie
       e.preventDefault();
-      lastTouchX = t.clientX; lastTouchY = t.clientY;
-      const cell = cellAt(t.clientX, t.clientY);
-      if (cell) selectRange(dragStart.row, dragStart.col, parseInt(cell.dataset.row), parseInt(cell.dataset.col));
+      const anchor = cellAt(e.touches[0].clientX, e.touches[0].clientY);
+      if (!anchor) return;
+      isDragging = true;
+      dragStart = {row: parseInt(anchor.dataset.row), col: parseInt(anchor.dataset.col)};
+      lastTouchX = e.touches[1].clientX; lastTouchY = e.touches[1].clientY;
+      const cursor = cellAt(lastTouchX, lastTouchY);
+      if (cursor) selectRange(dragStart.row, dragStart.col, parseInt(cursor.dataset.row), parseInt(cursor.dataset.col));
+      else { mcState.selectedCells = [{row: dragStart.row, col: dragStart.col}]; highlight(); }
       startAutoScroll(() => ({x: lastTouchX, y: lastTouchY}));
     }, {passive: false});
 
-    document.addEventListener('touchend', () => {
-      if (!isDragging && dragStart) {
-        mcState.selectedCells = [{row: dragStart.row, col: dragStart.col}];
-        highlight();
+    tbody.addEventListener('touchmove', e => {
+      if (e.touches.length < 2 || !isDragging || !dragStart) return;
+      e.preventDefault();
+      lastTouchX = e.touches[1].clientX; lastTouchY = e.touches[1].clientY;
+      const cell = cellAt(lastTouchX, lastTouchY);
+      if (cell) selectRange(dragStart.row, dragStart.col, parseInt(cell.dataset.row), parseInt(cell.dataset.col));
+    }, {passive: false});
+
+    tbody.addEventListener('touchend', e => {
+      if (isDragging) {
+        isDragging = false; dragStart = null; stopAutoScroll(); tapStart = null; return;
       }
-      isDragging = false; dragStart = null; stopAutoScroll();
+      // 1-palcowy tap — zaznacz pojedynczą komórkę
+      if (tapStart) {
+        const t = e.changedTouches[0];
+        const dx = Math.abs(t.clientX - tapStart.x), dy = Math.abs(t.clientY - tapStart.y);
+        if (dx < 10 && dy < 10) {
+          mcState.selectedCells = [{row: tapStart.row, col: tapStart.col}];
+          highlight();
+        }
+        tapStart = null;
+      }
     });
 
     // ── Klik poza tabelą → odznacz ─────────────────────────────────────────
@@ -6271,6 +6287,7 @@ function wireEvents() {
   function mcUpdateSelectionInfo() {
     const info = document.getElementById("mcSelectionInfo");
     const urlBtn = document.getElementById("mcVisitUrlBtn");
+    const copyBtn = document.getElementById("mcCopyBtn");
     const cells = mcState.selectedCells;
     if (info) {
       if (cells.length) {
@@ -6280,6 +6297,7 @@ function wireEvents() {
         info.textContent = '';
       }
     }
+    if (copyBtn) copyBtn.style.display = cells.length ? '' : 'none';
     if (urlBtn) {
       if (cells.length === 1 && cells[0].col === 2) {
         const contact = mcState.contacts[cells[0].row];
@@ -6457,6 +6475,21 @@ function wireEvents() {
   document.getElementById("mcFilterUsed")?.addEventListener("change", () => { mcState.page=1; mcLoadContacts(); });
   document.getElementById("mcMarkUsedBtn")?.addEventListener("click", mcMarkUsed);
   document.getElementById("mcDeleteBtn")?.addEventListener("click", mcDeleteSelected);
+  document.getElementById("mcCopyBtn")?.addEventListener("click", () => {
+    if (!mcState.selectedCells.length) return;
+    const tbody = document.getElementById("mcTableBody");
+    const rows = {};
+    mcState.selectedCells.forEach(({row, col}) => { (rows[row] = rows[row] || []).push(col); });
+    const sortedRows = Object.keys(rows).map(Number).sort((a, b) => a - b);
+    const allCols = [...new Set(mcState.selectedCells.map(c => c.col))].sort((a, b) => a - b);
+    const text = sortedRows.map(r =>
+      allCols.map(c => {
+        const el = tbody?.querySelector(`.mc-selectable[data-row="${r}"][data-col="${c}"]`);
+        return el ? el.textContent.trim() : '';
+      }).join('\t')
+    ).join('\n');
+    navigator.clipboard.writeText(text).catch(() => {});
+  });
   document.getElementById("mcPrevPage")?.addEventListener("click", () => { if(mcState.page>1){mcState.page--;mcLoadContacts();} });
   document.getElementById("mcNextPage")?.addEventListener("click", () => { mcState.page++; mcLoadContacts(); });
   document.getElementById("mcAutoRefreshLogs")?.addEventListener("change", (e) => { if(e.target.checked) mcStartLogAutoRefresh(); else mcStopLogAutoRefresh(); });

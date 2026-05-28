@@ -686,6 +686,7 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   margin-top: 16px;
   display: grid;
   gap: 14px;
+  isolation: isolate;
 }
 
 .settings-card{
@@ -696,6 +697,10 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   display: grid;
   gap: 10px;
   position: relative;
+}
+
+.settings-card:has(.ui-select.open) {
+  z-index: 10;
 }
 
 .settings-card-queue{
