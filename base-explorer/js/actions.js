@@ -12,11 +12,11 @@ import {
   setViewSearch,
   rememberBrowseLocation,
   restoreBrowseLocation,
-} from "./state.js?v=v2026-05-28T21254";
+} from "./state.js?v=v2026-05-28T21400";
 
-import { importGame } from "../../js/pages/builder-import-export.js?v=v2026-05-28T21254";
+import { importGame } from "../../js/pages/builder-import-export.js?v=v2026-05-28T21400";
 
-import { renderAll, renderToolbar, renderList, renderTree, renderTags } from "./render.js?v=v2026-05-28T21254";
+import { renderAll, renderToolbar, renderList, renderTree, renderTags } from "./render.js?v=v2026-05-28T21400";
 
 import {
   listQuestionsByCategory,
@@ -24,16 +24,16 @@ import {
   listCategories,
   listQuestionTags,
   listCategoryTags
-} from "./repo.js?v=v2026-05-28T21254";
+} from "./repo.js?v=v2026-05-28T21400";
 
-import { showContextMenu, hideContextMenu } from "./context-menu.js?v=v2026-05-28T21254";
-import { openTagsModal } from "./tags-modal.js?v=v2026-05-28T21254";
-import { initExportModal } from "./export-modal.js?v=v2026-05-28T21254";
-import { initQuestionModal } from "./question-modal.js?v=v2026-05-28T21254";
-import { sb } from "../../js/core/supabase.js?v=v2026-05-28T21254";
-import { alertModal, confirmModal } from "../../js/core/modal.js?v=v2026-05-28T21254";
-import { t } from "../../translation/translation.js?v=v2026-05-28T21254";
-import { addLongPress, addDoubleTap } from "./mobile.js?v=v2026-05-28T21254";
+import { showContextMenu, hideContextMenu } from "./context-menu.js?v=v2026-05-28T21400";
+import { openTagsModal } from "./tags-modal.js?v=v2026-05-28T21400";
+import { initExportModal } from "./export-modal.js?v=v2026-05-28T21400";
+import { initQuestionModal } from "./question-modal.js?v=v2026-05-28T21400";
+import { sb } from "../../js/core/supabase.js?v=v2026-05-28T21400";
+import { alertModal, confirmModal } from "../../js/core/modal.js?v=v2026-05-28T21400";
+import { t } from "../../translation/translation.js?v=v2026-05-28T21400";
+import { addLongPress, addDoubleTap } from "./mobile.js?v=v2026-05-28T21400";
 
 let exportModal = null;
 
@@ -3762,9 +3762,50 @@ export function wireActions({ state }) {
     marqueeStart = null;
     marqueeAdd = false;
     marqueeBaseKeys = null;
-  
+
     renderList(state); // wyrównaj po zakończeniu
   });
+
+  // ── Touch marquee: LIST (2 palce = marquee addytywny) ─────────────────
+  {
+    let touchMarquee = null;
+    let touchStart = null;
+    let touchBase = null;
+
+    if (listEl && getComputedStyle(listEl).position === "static")
+      listEl.style.position = "relative";
+
+    listEl?.addEventListener("touchstart", e => {
+      if (e.touches.length !== 2) return;
+      touchBase = new Set(state.selection.keys);
+      touchStart = listLocalPoint(e.touches[0]);
+      touchMarquee = document.createElement("div");
+      touchMarquee.className = "marquee";
+      touchMarquee.style.cssText = `left:${touchStart.x}px;top:${touchStart.y}px;width:0;height:0`;
+      listEl.appendChild(touchMarquee);
+    }, { passive: true });
+
+    listEl?.addEventListener("touchmove", e => {
+      if (!touchMarquee || e.touches.length < 2) return;
+      e.preventDefault();
+      const cur = listLocalPoint(e.touches[1]);
+      const box = rectNorm(touchStart, cur);
+      touchMarquee.style.left = `${box.left}px`;
+      touchMarquee.style.top = `${box.top}px`;
+      touchMarquee.style.width = `${box.width}px`;
+      touchMarquee.style.height = `${box.height}px`;
+      marqueeAdd = true; marqueeBaseKeys = touchBase;
+      updateMarqueeSelection(box);
+    }, { passive: false });
+
+    listEl?.addEventListener("touchend", () => {
+      if (!touchMarquee) return;
+      touchMarquee.remove();
+      touchMarquee = null; touchStart = null; touchBase = null;
+      marqueeAdd = false; marqueeBaseKeys = null;
+      renderList(state);
+    });
+  }
 
     /* ================= Marquee: TREE ================= */
   let treeMarquee = null;
@@ -3881,10 +3922,49 @@ export function wireActions({ state }) {
     treeMarqueeStart = null;
     treeMarqueeAdd = false;
     treeMarqueeBase = null;
-  
+
     // wyrównaj UI po marquee w drzewie
     renderAll(state);
   });
+
+  // ── Touch marquee: TREE ───────────────────────────────────────────────
+  {
+    let touchMarquee = null;
+    let touchStart = null;
+    let touchBase = null;
+
+    treeEl?.addEventListener("touchstart", e => {
+      if (e.touches.length !== 2) return;
+      if (isTreeLocked(state)) return;
+      touchBase = new Set(state.selection.keys);
+      touchStart = treeLocalPoint(e.touches[0]);
+      touchMarquee = document.createElement("div");
+      touchMarquee.className = "marquee";
+      touchMarquee.style.cssText = `left:${touchStart.x}px;top:${touchStart.y}px;width:0;height:0`;
+      treeEl.appendChild(touchMarquee);
+    }, { passive: true });
+
+    treeEl?.addEventListener("touchmove", e => {
+      if (!touchMarquee || e.touches.length < 2) return;
+      e.preventDefault();
+      const cur = treeLocalPoint(e.touches[1]);
+      const box = rectNorm(touchStart, cur);
+      touchMarquee.style.left = `${box.left}px`;
+      touchMarquee.style.top = `${box.top}px`;
+      touchMarquee.style.width = `${box.width}px`;
+      touchMarquee.style.height = `${box.height}px`;
+      treeMarqueeAdd = true; treeMarqueeBase = touchBase;
+      updateTreeMarqueeSelection(box);
+    }, { passive: false });
+
+    treeEl?.addEventListener("touchend", () => {
+      if (!touchMarquee) return;
+      touchMarquee.remove();
+      touchMarquee = null; touchStart = null; touchBase = null;
+      treeMarqueeAdd = false; treeMarqueeBase = null;
+      renderAll(state);
+    });
+  }
 
     /* ================= Marquee: TAGS ================= */
   let tagsMarquee = null;
@@ -4018,7 +4098,7 @@ export function wireActions({ state }) {
     updateTagsMarqueeSelection(box);
   });
 
-  document.addEventListener("mouseup", async () => {
+  document.addEventListener(“mouseup”, async () => {
     if (!tagsMarquee) return;
     tagsMarquee.remove();
     tagsMarquee = null;
@@ -4028,9 +4108,54 @@ export function wireActions({ state }) {
 
     suppressNextTagsClick = true;
     setTimeout(() => { suppressNextTagsClick = false; }, 0);
-  
+
     await applyLeftFiltersView(); // <<< to robi właściwe “odświeżenie widoku”
   });
+
+  // ── Touch marquee: TAGS ───────────────────────────────────────────────
+  {
+    let touchMarquee = null;
+    let touchStart = null;
+    let touchBase = null;
+
+    tagsEl?.addEventListener(“touchstart”, e => {
+      if (e.touches.length !== 2) return;
+      if (isLeftPanelLockedBySearch()) return;
+      ensureLeftSelections(state);
+      touchBase = new Set([
+        ...Array.from(state.metaSelection?.ids || []).map(id => `m:${id}`),
+        ...Array.from(state.tagSelection?.ids || []).map(id => `t:${id}`),
+      ]);
+      touchStart = tagsLocalPoint(e.touches[0]);
+      touchMarquee = document.createElement(“div”);
+      touchMarquee.className = “marquee”;
+      touchMarquee.style.cssText = `left:${touchStart.x}px;top:${touchStart.y}px;width:0;height:0`;
+      tagsEl.appendChild(touchMarquee);
+    }, { passive: true });
+
+    tagsEl?.addEventListener(“touchmove”, e => {
+      if (!touchMarquee || e.touches.length < 2) return;
+      e.preventDefault();
+      const cur = tagsLocalPoint(e.touches[1]);
+      const box = rectNorm(touchStart, cur);
+      touchMarquee.style.left = `${box.left}px`;
+      touchMarquee.style.top = `${box.top}px`;
+      touchMarquee.style.width = `${box.width}px`;
+      touchMarquee.style.height = `${box.height}px`;
+      tagsMarqueeAdd = true; tagsMarqueeBase = touchBase;
+      updateTagsMarqueeSelection(box);
+    }, { passive: false });
+
+    tagsEl?.addEventListener(“touchend”, async () => {
+      if (!touchMarquee) return;
+      touchMarquee.remove();
+      touchMarquee = null; touchStart = null; touchBase = null;
+      tagsMarqueeAdd = false; tagsMarqueeBase = null;
+      suppressNextTagsClick = true;
+      setTimeout(() => { suppressNextTagsClick = false; }, 0);
+      await applyLeftFiltersView();
+    });
+  }
 
   const api = {
     refreshList: () => refreshList(state),
