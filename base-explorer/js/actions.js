@@ -287,7 +287,7 @@ function collectDescendantFolderIds(categories, rootFolderId) {
   return out;
 }
 
-/* ================= META (stałe “tagi” bez DB) ================= */
+/* ================= META (stałe "tagi" bez DB) ================= */
 
 function metaForQuestionPayload(payload) {
   const p = (payload && typeof payload === "object") ? payload : {};
@@ -534,7 +534,7 @@ async function ensureTagMapsForUI(state) {
 
   // 1) CATEGORY TAG MAP — najlepiej cache dla CAŁEGO drzewa (folderów)
   // ZAMIANA: nie bierzemy tagów folderów z qb_category_tags.
-  // Folder ma “tag” tylko jeśli 100% pytań w jego poddrzewie ma ten tag.
+  // Folder ma "tag" tylko jeśli 100% pytań w jego poddrzewie ma ten tag.
   await ensureDerivedFolderMaps(state);
 
   // dla zgodności z resztą kodu:
@@ -553,7 +553,7 @@ async function ensureTagMapsForUI(state) {
     }
   }
   state._viewQuestionTagMap = mQ;
-    // 3) META MAPS (stałe “tagi”)
+    // 3) META MAPS (stałe "tagi")
   await ensureMetaMapsForUI(state);
 }
 
@@ -676,7 +676,7 @@ async function refreshList(state) {
   // ====== WIDOKI WIRTUALNE ======
   // SEARCH / TAG / META korzystają z jednej ścieżki: filtrujemy pytania globalnie,
   // potem budujemy foldery wynikowe analogicznie do SEARCH (foldery z wyników + rodzice),
-  // a na końcu “ukrywamy” pytania będące wewnątrz folderów które pokazujemy jako topFolders.
+  // a na końcu "ukrywamy" pytania będące wewnątrz folderów które pokazujemy jako topFolders.
   async function buildVirtualViewResults({ tagIds, metaIds, textQ }) {
     const qAll = state._allQuestions || [];
     const byIdAll = new Map(foldersAll.map(c => [c.id, c]));
@@ -697,7 +697,7 @@ async function refreshList(state) {
 
     qs = applySearchFilterToQuestions(qs, textQ);
 
-    // 2) foldery wynikowe — WYŁĄCZNIE „100% dzieci pasujących”
+    // 2) foldery wynikowe — WYŁĄCZNIE „100% dzieci pasujących"
     // Folder pokazujemy tylko wtedy, gdy wszystkie pytania w jego poddrzewie spełniają predykat (tag/meta/text).
     // Jeśli folder jest pokazany, to pytań spod niego NIE pokazujemy w wynikach.
     const matchedQIds = new Set((qs || []).map(q => q.id).filter(Boolean));
@@ -721,7 +721,7 @@ async function refreshList(state) {
       fullFolderIdSet.add(c.id);
     }
 
-    // topFolders = tylko te „pełne” foldery, które nie mają przodka też „pełnego”
+    // topFolders = tylko te „pełne" foldery, które nie mają przodka też „pełnego"
     function hasFullAncestor(folderId) {
       let cur = byIdAll.get(folderId);
       let guard = 0;
@@ -2172,7 +2172,7 @@ async function afterTagsModalClose(state, result) {
     return false;
   }
 
-  // ZAPAMIĘTAJ selekcję, bo refreshList może ją po drodze “zgubić” w UI
+  // ZAPAMIĘTAJ selekcję, bo refreshList może ją po drodze "zgubić" w UI
   const selKeys = new Set(state?.selection?.keys || []);
   const selAnchor = state?.selection?.anchorKey || null;
 
@@ -2757,7 +2757,7 @@ export function wireActions({ state }) {
         const parentId = (state.view === VIEW.FOLDER && state.folderId) ? state.folderId : null;
         const categoryId = parentId;
       
-        // pomocnicze: zaznaczenie “real” (bez root)
+        // pomocnicze: zaznaczenie "real" (bez root)
         const realKeys = Array.from(state.selection?.keys || []).filter(k => k && k !== "root");
         const oneSelected = realKeys.length === 1;
         const oneIsQuestion = oneSelected && String(realKeys[0]).startsWith("q:");
@@ -2831,7 +2831,7 @@ export function wireActions({ state }) {
               return;
       
             case "duplicate":
-              // w context-menu “Duplikuj” jest placeholderem, ale u Ciebie funkcja istnieje – zostawiam realne wywołanie
+              // w context-menu "Duplikuj" jest placeholderem, ale u Ciebie funkcja istnieje – zostawiam realne wywołanie
               if (!canMutateHere(state)) return;
               if (!realKeys.length) return;
               await duplicateSelected(state);
@@ -2884,7 +2884,7 @@ export function wireActions({ state }) {
     const nextVal = (before + after).replace(/\s+/g, " ").trimStart();
     inputEl.value = nextVal;
   
-    // kursor w miejscu “po czyszczeniu”
+    // kursor w miejscu "po czyszczeniu"
     const newPos = Math.min(before.trimEnd().length + 1, nextVal.length);
     try { inputEl.setSelectionRange(newPos, newPos); } catch {}
   
@@ -2923,7 +2923,7 @@ export function wireActions({ state }) {
       }
     }
     // Space / comma / Enter -> jeśli tuż przed kursorem jest #tag i jest pełną nazwą taga,
-    // zamień na chip, ale NIE “przepisuj input” w trakcie normalnego pisania.
+    // zamień na chip, ale NIE "przepisuj input" w trakcie normalnego pisania.
     if (e.key === " " || e.key === "," || e.key === "Enter") {
       const consumed = tryConsumeHashTagTokenFromInput(t);
       if (consumed) {
@@ -3062,8 +3062,8 @@ export function wireActions({ state }) {
     if (!canTagDnD()) return;
     e.preventDefault();
   
-    // tu NIE ma copy/move – to zawsze “dodaj tag”,
-    // ale trzymamy to w logice dla spójności z UI (i ewentualnych badge’y)
+    // tu NIE ma copy/move – to zawsze "dodaj tag",
+    // ale trzymamy to w logice dla spójności z UI (i ewentualnych badge'y)
     const isCopy = isCopyDragModifier(e);
     e.dataTransfer.dropEffect = isCopy ? "copy" : "copy"; // zawsze copy-semantyka
   
@@ -3421,7 +3421,7 @@ export function wireActions({ state }) {
         return;
       }
   
-      // jeśli user przeciąga same pytania na drzewo “między” — traktujemy jak “do folderu”
+      // jeśli user przeciąga same pytania na drzewo "między" — traktujemy jak "do folderu"
       await moveItemsTo(state, targetId, { mode: "move" });
 
       pulseEl(treeEl);
@@ -4098,7 +4098,7 @@ export function wireActions({ state }) {
     updateTagsMarqueeSelection(box);
   });
 
-  document.addEventListener(“mouseup”, async () => {
+  document.addEventListener("mouseup", async () => {
     if (!tagsMarquee) return;
     tagsMarquee.remove();
     tagsMarquee = null;
@@ -4109,7 +4109,7 @@ export function wireActions({ state }) {
     suppressNextTagsClick = true;
     setTimeout(() => { suppressNextTagsClick = false; }, 0);
 
-    await applyLeftFiltersView(); // <<< to robi właściwe “odświeżenie widoku”
+    await applyLeftFiltersView(); // <<< to robi właściwe "odświeżenie widoku"
   });
 
   // ── Touch marquee: TAGS ───────────────────────────────────────────────
@@ -4118,7 +4118,7 @@ export function wireActions({ state }) {
     let touchStart = null;
     let touchBase = null;
 
-    tagsEl?.addEventListener(“touchstart”, e => {
+    tagsEl?.addEventListener("touchstart", e => {
       if (e.touches.length !== 2) return;
       if (isLeftPanelLockedBySearch()) return;
       ensureLeftSelections(state);
@@ -4127,13 +4127,13 @@ export function wireActions({ state }) {
         ...Array.from(state.tagSelection?.ids || []).map(id => `t:${id}`),
       ]);
       touchStart = tagsLocalPoint(e.touches[0]);
-      touchMarquee = document.createElement(“div”);
-      touchMarquee.className = “marquee”;
+      touchMarquee = document.createElement("div");
+      touchMarquee.className = "marquee";
       touchMarquee.style.cssText = `left:${touchStart.x}px;top:${touchStart.y}px;width:0;height:0`;
       tagsEl.appendChild(touchMarquee);
     }, { passive: true });
 
-    tagsEl?.addEventListener(“touchmove”, e => {
+    tagsEl?.addEventListener("touchmove", e => {
       if (!touchMarquee || e.touches.length < 2) return;
       e.preventDefault();
       const cur = tagsLocalPoint(e.touches[1]);
@@ -4146,7 +4146,7 @@ export function wireActions({ state }) {
       updateTagsMarqueeSelection(box);
     }, { passive: false });
 
-    tagsEl?.addEventListener(“touchend”, async () => {
+    tagsEl?.addEventListener("touchend", async () => {
       if (!touchMarquee) return;
       touchMarquee.remove();
       touchMarquee = null; touchStart = null; touchBase = null;
@@ -4321,7 +4321,7 @@ export function wireActions({ state }) {
         const byId = new Map((state._allQuestions || []).map(q => [q.id, q]));
         const rows = qids.map(id => byId.get(id)).filter(Boolean);
   
-        // Normalizacja do formy, którą modal „łyka” zawsze:
+        // Normalizacja do formy, którą modal „łyka" zawsze:
         // - id musi być na top-level
         // - text/answers mogą być na top-level albo w payload (modal już jest odporny, ale tu też porządkujemy)
         questionsForModal = rows.map(r => ({
@@ -4357,7 +4357,7 @@ export function wireActions({ state }) {
             msg: "",
           });
 
-          // “pływający” pasek (symulacja), żeby nie stał na 0%
+          // "pływający" pasek (symulacja), żeby nie stał na 0%
           let t = null;
           let i = 0;
           const tick = () => {
