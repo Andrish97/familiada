@@ -3634,6 +3634,7 @@ export function wireActions({ state }) {
   let marqueeStart = null;
   let marqueeAdd = false;       // ctrl/meta => dodawanie do selekcji
   let marqueeBaseKeys = null;   // snapshot selekcji startowej (dla add)
+  let marqueeToggle = false;    // touch: XOR z bazą
 
   function listLocalPoint(ev) {
     const r = listEl.getBoundingClientRect();
@@ -3677,9 +3678,12 @@ export function wireActions({ state }) {
       if (intersects(box, r)) hit.add(key);
     }
   
-    // ctrl/meta = dodaj do bazowej selekcji
-    const out = marqueeAdd && marqueeBaseKeys ? new Set(marqueeBaseKeys) : new Set();
-    for (const k of hit) out.add(k);
+    const out = (marqueeAdd || marqueeToggle) && marqueeBaseKeys ? new Set(marqueeBaseKeys) : new Set();
+    if (marqueeToggle) {
+      for (const k of hit) { if (out.has(k)) out.delete(k); else out.add(k); }
+    } else {
+      for (const k of hit) out.add(k);
+    }
   
     state.selection.keys = out;
     state.selection.anchorKey = null;
@@ -3794,7 +3798,7 @@ export function wireActions({ state }) {
       touchMarquee.style.top = `${box.top}px`;
       touchMarquee.style.width = `${box.width}px`;
       touchMarquee.style.height = `${box.height}px`;
-      marqueeAdd = true; marqueeBaseKeys = touchBase;
+      marqueeToggle = true; marqueeBaseKeys = touchBase;
       updateMarqueeSelection(box);
     }, { passive: false });
 
@@ -3802,7 +3806,7 @@ export function wireActions({ state }) {
       if (!touchMarquee) return;
       touchMarquee.remove();
       touchMarquee = null; touchStart = null; touchBase = null;
-      marqueeAdd = false; marqueeBaseKeys = null;
+      marqueeToggle = false; marqueeBaseKeys = null;
       renderList(state);
     });
   }
@@ -3812,6 +3816,7 @@ export function wireActions({ state }) {
   let treeMarqueeStart = null;
   let treeMarqueeAdd = false;
   let treeMarqueeBase = null;
+  let treeMarqueeToggle = false;
 
   function treeLocalPoint(ev) {
     const r = treeEl.getBoundingClientRect();
@@ -3841,8 +3846,12 @@ export function wireActions({ state }) {
       if (intersects(box, r)) hit.add(key);
     }
 
-    const out = treeMarqueeAdd && treeMarqueeBase ? new Set(treeMarqueeBase) : new Set();
-    for (const k of hit) out.add(k);
+    const out = (treeMarqueeAdd || treeMarqueeToggle) && treeMarqueeBase ? new Set(treeMarqueeBase) : new Set();
+    if (treeMarqueeToggle) {
+      for (const k of hit) { if (out.has(k)) out.delete(k); else out.add(k); }
+    } else {
+      for (const k of hit) out.add(k);
+    }
 
     state.selection.keys = out;
     state.selection.anchorKey = null;
@@ -3953,7 +3962,7 @@ export function wireActions({ state }) {
       touchMarquee.style.top = `${box.top}px`;
       touchMarquee.style.width = `${box.width}px`;
       touchMarquee.style.height = `${box.height}px`;
-      treeMarqueeAdd = true; treeMarqueeBase = touchBase;
+      treeMarqueeToggle = true; treeMarqueeBase = touchBase;
       updateTreeMarqueeSelection(box);
     }, { passive: false });
 
@@ -3961,7 +3970,7 @@ export function wireActions({ state }) {
       if (!touchMarquee) return;
       touchMarquee.remove();
       touchMarquee = null; touchStart = null; touchBase = null;
-      treeMarqueeAdd = false; treeMarqueeBase = null;
+      treeMarqueeToggle = false; treeMarqueeBase = null;
       renderAll(state);
     });
   }
@@ -3972,6 +3981,7 @@ export function wireActions({ state }) {
   let tagsMarqueeStart = null;
   let tagsMarqueeAdd = false;
   let tagsMarqueeBase = null;
+  let tagsMarqueeToggle = false;
 
   function tagsLocalPoint(ev) {
     const r = tagsEl.getBoundingClientRect();
@@ -4002,11 +4012,15 @@ export function wireActions({ state }) {
       if (key) hitKeys.add(key);
     }
   
-    const base = (tagsMarqueeAdd && tagsMarqueeBase)
+    const base = (tagsMarqueeAdd || tagsMarqueeToggle) && tagsMarqueeBase
       ? new Set(tagsMarqueeBase)
       : new Set();
-  
-    for (const k of hitKeys) base.add(k);
+
+    if (tagsMarqueeToggle) {
+      for (const k of hitKeys) { if (base.has(k)) base.delete(k); else base.add(k); }
+    } else {
+      for (const k of hitKeys) base.add(k);
+    }
   
     // Przepisz do state (meta/tag)
     state.tagSelection.ids.clear();
@@ -4142,7 +4156,7 @@ export function wireActions({ state }) {
       touchMarquee.style.top = `${box.top}px`;
       touchMarquee.style.width = `${box.width}px`;
       touchMarquee.style.height = `${box.height}px`;
-      tagsMarqueeAdd = true; tagsMarqueeBase = touchBase;
+      tagsMarqueeToggle = true; tagsMarqueeBase = touchBase;
       updateTagsMarqueeSelection(box);
     }, { passive: false });
 
@@ -4150,7 +4164,7 @@ export function wireActions({ state }) {
       if (!touchMarquee) return;
       touchMarquee.remove();
       touchMarquee = null; touchStart = null; touchBase = null;
-      tagsMarqueeAdd = false; tagsMarqueeBase = null;
+      tagsMarqueeToggle = false; tagsMarqueeBase = null;
       suppressNextTagsClick = true;
       setTimeout(() => { suppressNextTagsClick = false; }, 0);
       await applyLeftFiltersView();
