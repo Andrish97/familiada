@@ -98,6 +98,10 @@
   opacity: .4;
 }
 
+.builder-shell > .builder-card {
+  flex: 0 0 auto;
+}
+
 .builder-shell > .builder-card + .builder-card {
   margin-top: 16px;
 }
