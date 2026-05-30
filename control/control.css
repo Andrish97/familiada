@@ -2177,14 +2177,17 @@
 
 /* ── QR modal — kod zamiast linka ───────────────────────────────────────────── */
 .qrModalCode {
-  flex: 1;
   display: flex;
-  align-items: center;
   justify-content: center;
-  padding: 10px 14px;
+  align-items: center;
+  max-width: 260px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 18px;
   background: rgba(255,234,166,.07);
   border: 1px solid rgba(255,234,166,.22);
   border-radius: 12px;
+  box-sizing: border-box;
 }
 
 .qrModalCodeVal {
@@ -2194,6 +2197,11 @@
   color: #ffeaa6;
   font-variant-numeric: tabular-nums;
   font-family: ui-monospace, 'SF Mono', Monaco, 'Cascadia Mono', monospace;
+}
+
+.qrModalActions {
+  display: flex;
+  justify-content: center;
 }
 
 .qrModalCodeHint {
