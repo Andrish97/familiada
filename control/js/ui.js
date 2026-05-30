@@ -608,7 +608,7 @@ export function createUI() {
 
     // modal QR
     $("qrModalClose")?.addEventListener("click", () => emit("auth.qr.close"));
-    $("qrModalOpen")?.addEventListener("click", () => emit("auth.qr.open"));
+    $("qrModalCopy")?.addEventListener("click", () => emit("auth.qr.copy"));
     $("qrModalOverlay")?.addEventListener("click", (ev) => {
       if (ev.target && ev.target.id === "qrModalOverlay") emit("auth.qr.close");
     });
