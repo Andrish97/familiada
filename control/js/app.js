@@ -124,6 +124,7 @@ async function ensureAuthOrRedirect() {
         await sendZeroStatesToDevices().catch(() => {});
       }
       await shareDevice.expireShares();
+      await expireConnectCodes();
       suppressUnloadWarn = true;
     },
   });
@@ -329,6 +330,12 @@ async function main() {
     overlay.classList.remove("hidden");
   }
 
+  async function expireConnectCodes() {
+    try {
+      await sb().from("device_connect_codes").delete().eq("owner_id", (await sb().auth.getUser()).data.user?.id).eq("game_id", game.id);
+    } catch {}
+  }
+
   async function initDeviceCodes() {
     const cfgs = [
       { type: "display", valId: "displayCodeVal", shareKey: game.share_key_display },
@@ -501,6 +508,7 @@ async function sendZeroStatesToDevices() {
     }
     // Wygaś udostępnienia – fire-and-forget (przeglądarka może zabić JS)
     shareDevice.expireShares().catch(() => {});
+    expireConnectCodes().catch(() => {});
   });
 
   // realtime channels
@@ -1393,6 +1401,7 @@ async function sendZeroStatesToDevices() {
     }
 
     await shareDevice.expireShares();
+    await expireConnectCodes();
     suppressUnloadWarn = true;
     location.href = "../builder";
   });
