@@ -345,7 +345,6 @@ async function main() {
       { type: "host",    valId: "hostCodeVal",    shareKey: game.share_key_host },
       { type: "buzzer",  valId: "buzzerCodeVal",  shareKey: game.share_key_buzzer },
     ];
-    let firstError = null;
     for (const cfg of cfgs) {
       try {
         const { data, error } = await sb().rpc("generate_device_connect_code", {
@@ -354,22 +353,12 @@ async function main() {
           p_share_key:   cfg.shareKey || "",
           p_game_name:   game.name || null,
         });
-        if (error) {
-          firstError = firstError ?? `RPC error [${cfg.type}]: ${error.message ?? JSON.stringify(error)}`;
-          continue;
-        }
-        if (data?.ok && data?.code) {
-          _deviceCodes[cfg.type] = data.code;
-          const el = document.getElementById(cfg.valId);
-          if (el) el.textContent = data.code;
-        } else {
-          firstError = firstError ?? `RPC not-ok [${cfg.type}]: ${JSON.stringify(data)}`;
-        }
-      } catch (e) {
-        firstError = firstError ?? `Exception [${cfg.type}]: ${e?.message ?? String(e)}`;
-      }
+        if (error || !data?.ok || !data?.code) continue;
+        _deviceCodes[cfg.type] = data.code;
+        const el = document.getElementById(cfg.valId);
+        if (el) el.textContent = data.code;
+      } catch {}
     }
-    if (firstError) ui.showAlert(`Kody: ${firstError}`);
   }
 
   async function copyQrLink() {
