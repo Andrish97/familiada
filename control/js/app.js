@@ -363,13 +363,13 @@ async function main() {
   }
 
   async function copyQrLink() {
-    const url = getDeviceUrl(currentQrKind);
-    if (!url) return;
+    const code = _deviceCodes[currentQrKind];
+    if (!code) return;
     try {
-      await navigator.clipboard.writeText(url);
-      ui.showAlert(APP_MSG.QR_COPY_OK);
+      await navigator.clipboard.writeText(code);
+      ui.showAlert(APP_MSG.CODE_COPY_OK);
     } catch {
-      ui.showAlert(APP_MSG.QR_COPY_FAIL);
+      ui.showAlert(APP_MSG.CODE_COPY_FAIL);
     }
   }
 
@@ -1415,7 +1415,7 @@ async function sendZeroStatesToDevices() {
 
   ui.on("auth.showQr", (kind) => showQrModal(kind));
   ui.on("auth.qr.close", () => hideQrModal());
-  ui.on("auth.qr.open", () => openQrLink());
+  ui.on("auth.qr.copy", () => copyQrLink());
 
   // DEVICES kroki
   ui.on("devices.next", () => store.setDevicesStep("devices_audio"));
