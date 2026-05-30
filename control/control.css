@@ -2201,3 +2201,11 @@
   text-align: center;
   line-height: 1.4;
 }
+
+.device-code-hint {
+  margin-top: 14px;
+  font-size: .8rem;
+  opacity: .5;
+  line-height: 1.4;
+  padding: 0 2px;
+}

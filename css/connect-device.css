@@ -98,6 +98,10 @@
   opacity: .4;
 }
 
+.builder-shell > .builder-card + .builder-card {
+  margin-top: 16px;
+}
+
 .connect-device-enter-code-row {
   display: flex;
   gap: 10px;

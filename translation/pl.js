@@ -4140,6 +4140,7 @@ const pl = {
     qrModalImgAlt: "Kod QR",
     qrModalLinkAria: "Link do urządzenia",
     qrModalCodeHint: "familiada.online → Podłącz urządzenie → wprowadź kod",
+    deviceCodeHint: "Wejdź na familiada.online, kliknij \"Podłącz urządzenie\" i wprowadź kod urządzenia.",
     qrCodeBtn: "Kod QR",
     qrOnDisplayToggle: "QR na wyświetlaczu",
     alertOk: "OK",

@@ -4741,6 +4741,7 @@ const en = {
     qrModalImgAlt: "QR Code",
     qrModalLinkAria: "Device link",
     qrModalCodeHint: "familiada.online → Connect device → enter code",
+    deviceCodeHint: "Go to familiada.online, click \"Connect device\" and enter the device code.",
     alertOk: "OK",
     colorTitle: "Color",
     colorHexLabel: "HEX",
