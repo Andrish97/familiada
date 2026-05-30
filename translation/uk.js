@@ -4616,6 +4616,7 @@ const uk = {
     qrModalImgAlt: "QR-код",
     qrModalLinkAria: "Посилання на пристрій",
     qrModalCodeHint: "familiada.online → Підключити пристрій → введіть код",
+    deviceCodeHint: "Перейдіть на familiada.online, натисніть «Підключити пристрій» і введіть код пристрою.",
     alertOk: "OK",
     colorTitle: "Колір",
     colorHexLabel: "HEX",
