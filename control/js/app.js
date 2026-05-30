@@ -1183,6 +1183,8 @@ async function sendZeroStatesToDevices() {
     // Aktualizuj przyciski "QR na wyświetlaczu" dla hosta i buzzera
     updateQrOnDisplayButtons();
 
+    ui.setEnabled("btnDispBlack", displayReady);
+
     // Dalej w kroku 1 (wyświetlacz) i kroku 2 (host/buzzer)
     // Wymagamy Display + Buzzer
     ui.setEnabled("btnDevicesNext", requiredOnline);
