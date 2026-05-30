@@ -4314,6 +4314,8 @@ const pl = {
     gameNotFound: "Nie znaleziono gry.",
     qrCopyOk: "Skopiowano!",
     qrCopyFail: "Błąd kopiowania.",
+    codeCopyOk: "Kod skopiowany!",
+    codeCopyFail: "Błąd kopiowania kodu.",
     unloadWarn: "Gra w toku. Czy na pewno chcesz wyjść?",
     confirmBack: "Czy na pewno chcesz wrócić? Postęp może zostać utracony.",
     leaveTitle: "Wróć do Moich gier?",
