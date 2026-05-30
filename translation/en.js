@@ -1851,31 +1851,60 @@ const en = {
         The operator starts by making sure all are online.
       </p>
     
-      <h3 class="m-h3">Step 1: Display</h3>
-    
-      <p class="m-p">
-        In this step the panel shows a <span class="m-strong">6-digit code</span> and QR code for the display.
+      <h3 class=”m-h3”>Step 1: Display</h3>
+
+      <p class=”m-p”>
+        In this step the panel shows a <span class=”m-strong”>6-digit code</span> and QR code for the display.
         It’s best to open the display on a TV or projector,
         in full-screen mode (no browser bars).
         Only when the display is online will the panel allow you to proceed.
       </p>
 
-      <h3 class="m-h3">Step 2: Host and buzzer</h3>
+      <p class=”m-p”>
+        <span class=”m-strong”>”Black screen”</span> — if after loading the display you see leftovers from a previous game,
+        use this button to restore a black screen while you finish setting up.
+      </p>
 
-      <p class="m-p">
+      <div class=”m-note”>
+        <b>How to show the board on a second screen?</b><br/>
+        For the best result use extended display mode.
+        On <span class=”m-strong”>Windows</span> press <span class=”m-code”>Win + P</span>,
+        on <span class=”m-strong”>Mac</span> use <span class=”m-code”>⌘ F1</span> (sometimes also <span class=”m-code”>Fn</span>).<br/><br/>
+        Then open the board in a new browser window, drag it to the second screen (TV or monitor) and enable full-screen mode.
+        This lets you control the game on your device while displaying content for others.
+      </div>
+
+      <h3 class=”m-h3”>Step 2: Host and buzzer</h3>
+
+      <p class=”m-p”>
         In the second step you connect the host device and the buzzer device.
         The panel shows a 6-digit code and QR code for each.
         In practice it’s best to use two separate phones or a phone and a tablet.
       </p>
-    
-      <p class="m-p">
-        In this step there is an option <span class="m-strong">“QR on display”</span> —
+
+      <p class=”m-p”>
+        In this step there is an option <span class=”m-strong”>”QR on display”</span> —
         after using it the QR codes can be shown on the large screen,
         so the crew can quickly scan them with phones.
         This speeds up the start on set because there is no need to type links manually.
       </p>
-    
-      <div class="m-warn">
+
+      <p class=”m-p”>
+        Via the <span class=”m-strong”>”Share”</span> option — you can quickly send someone a link by email or share with your subscribers.
+        Shared devices will appear in their account (registered users only) in the <span class=”m-code”>Connect device 📱</span> panel.
+        Non-registered users will simply receive an email with the link.
+      </p>
+
+      <div class=”m-note”>
+        <b>How to conveniently connect a device?</b><br/>
+        Easiest way: go to <span class=”m-code”>familiada.online</span>, click <span class=”m-code”>Connect device 📱</span>
+        in the top bar and enter the <span class=”m-strong”>6-digit code</span> shown next to the device in the operator panel.<br/><br/>
+        Alternatively: on a mobile device you can scan the <span class=”m-strong”>QR code</span> visible in the panel.
+        For the best experience we recommend installing the web app — go to <span class=”m-strong”>My games</span>
+        and click the download button for installation instructions.
+      </div>
+
+      <div class=”m-warn”>
         <b>Warning:</b><br/>
         If any device disconnects during the game, the panel can show a warning.
         Most often it helps to disable battery saving, avoid minimizing the browser,

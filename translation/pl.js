@@ -1849,12 +1849,34 @@ const pl = {
         Operator rozpoczyna od tego, żeby wszystkie były online (prowadzący jest opcjonalny, możesz prowadzić rozgrywkę z panelu operatora, jeśli brakuje osób).
       </p>
 
-      <h3 class="m-h3">Krok 1: Urządzenia</h3>
+      <h3 class="m-h3">Krok 1: Wyświetlacz</h3>
 
       <p class="m-p">
-        W tym kroku panel pokazuje <span class="m-strong">6-cyfrowe kody</span> i kody QR dla urządzeń.
-        Najlepiej otworzyć wyświetlacz na telewizorze lub rzutniku,
-        w trybie pełnoekranowym (bez pasków przeglądarki). Dalej podłączasz urządzenie prowadzącego i urządzenie przycisku. W praktyce najlepiej użyć dwóch osobnych telefonów albo telefonu i tabletu.
+        W tym kroku panel pokazuje <span class="m-strong">6-cyfrowy kod</span> i kod QR dla wyświetlacza.
+        Najlepiej otworzyć wyświetlacz na telewizorze lub rzutniku w trybie pełnoekranowym (bez pasków przeglądarki).
+        Dopiero gdy wyświetlacz jest online, panel pozwala przejść dalej.
+      </p>
+
+      <p class="m-p">
+        <span class="m-strong">„Czarny ekran"</span> — jeśli po załadowaniu ekranu widzisz pozostałości po starej rozgrywce,
+        użyj tego przycisku, żeby przywrócić czarny ekran na czas ustawień.
+      </p>
+
+      <div class="m-note">
+        <b>Jak wygodnie wyświetlić tablicę na drugim ekranie?</b><br/>
+        Dla najlepszego efektu użyj trybu rozszerzonego ekranu.
+        W systemie <span class="m-strong">Windows</span> przełączysz go skrótem <span class="m-code">Win + P</span>,
+        a na <span class="m-strong">Macu</span> użyj <span class="m-code">⌘ F1</span> (czasem dodatkowo <span class="m-code">Fn</span>).<br/><br/>
+        Następnie otwórz tablicę w nowym oknie przeglądarki, przeciągnij je na drugi ekran i włącz tryb pełnoekranowy.
+        Dzięki temu możesz jednocześnie sterować na swoim urządzeniu i wyświetlać treść dla innych.
+      </div>
+
+      <h3 class="m-h3">Krok 2: Host i Przycisk</h3>
+
+      <p class="m-p">
+        W drugim kroku podłączasz urządzenie prowadzącego i urządzenie przycisku.
+        Panel pokazuje <span class="m-strong">6-cyfrowy kod</span> i kod QR dla każdego z nich.
+        W praktyce najlepiej użyć dwóch osobnych telefonów albo telefonu i tabletu.
       </p>
 
       <p class="m-p">
@@ -1862,10 +1884,6 @@ const pl = {
         po jej użyciu kody QR mogą zostać pokazane na dużym ekranie (po podłączeniu wyświetlacza),
         żeby ekipa mogła szybko zeskanować je telefonami.
         To przyspiesza start na planie, bo nie trzeba przepisywać linków.
-      </p>
-
-      <p class="m-p">
-        <span class="m-strong">„Czarny ekran"</span> — gdyby się zdarzyło, że po załadowaniu ekranu widzisz pozostałości po starej rozgrywce (czasem tak się zdarzy), użyj tego przycisku, żeby przywrócić czarny ekran na czas ustawień.
       </p>
 
       <p class="m-p">
@@ -1880,16 +1898,6 @@ const pl = {
         Dla najlepszego użytkowania sugerowane jest zainstalowanie aplikacji webowej — na stronie <span class="m-strong">Moje gry</span>
         kliknij przycisk pobierania, aby uzyskać wskazówki.
       </div>
-      
-      <div class="m-note">
-        <b>Jak wygodnie wyświetlić tablicę na drugim ekranie?</b><br/>
-        Dla najlepszego efektu użyj trybu rozszerzonego ekranu.  
-        W systemie <span class="m-strong">Windows</span> przełączysz go skrótem <span class="m-code">Win + P</span>,  
-        a na <span class="m-strong">Macu</span> użyj <span class="m-code">⌘ F1</span> (czasem dodatkowo <span class="m-code">Fn</span>).<br/><br/>
-        
-        Następnie otwórz tablicę w nowym oknie przeglądarki, przeciągnij je na drugi ekran (monitor lub telewizor) i włącz tryb pełnoekranowy.  
-        Dzięki temu możesz jednocześnie sterować na swoim urządzeniu i wyświetlać treść dla innych.
-      </div>
 
       <div class="m-warn">
         <b>Uwaga:</b><br/>
@@ -1898,7 +1906,7 @@ const pl = {
         oraz trzymać urządzenia na jednej stabilnej sieci Wi-Fi.
       </div>
 
-      <h3 class="m-h3">Krok 2: Dźwięk</h3>
+      <h3 class="m-h3">Krok 3: Dźwięk</h3>
 
       <p class="m-p">
         Przeglądarki blokują automatyczne odtwarzanie dźwięku,
