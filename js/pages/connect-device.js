@@ -1,8 +1,8 @@
 // js/pages/connect-device.js
 
 import { sb } from "../core/supabase.js?v=v2026-05-29T21440";
-import { requireAuth } from "../core/auth.js?v=v2026-05-29T21440";
-import { isGuestUser, showGuestBlockedOverlay } from "../core/guest-mode.js?v=v2026-05-29T21440";
+import { getUser } from "../core/auth.js?v=v2026-05-29T21440";
+import { isGuestUser } from "../core/guest-mode.js?v=v2026-05-29T21440";
 import { isMobileDevice } from "../core/pwa.js?v=v2026-05-29T21440";
 import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js?v=v2026-05-29T21440";
 import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-05-29T21440";
@@ -10,24 +10,34 @@ import "../core/contact-modal.js";
 
 initI18n({ withSwitcher: true });
 
-const who = document.getElementById("who");
-const btnBack = document.getElementById("btnBack");
-const btnManual = document.getElementById("btnManual");
-const btnLogout = document.getElementById("btnLogout");
-const btnScanQr = document.getElementById("btnScanQr");
-const sharedDevicesList = document.getElementById("sharedDevicesList");
-const msg = document.getElementById("msg");
-const pageHint = document.getElementById("pageHint");
+const btnBack             = document.getElementById("btnBack");
+const btnManual           = document.getElementById("btnManual");
+const btnScanQr           = document.getElementById("btnScanQr");
+const sharedDevicesCard   = document.getElementById("sharedDevicesCard");
+const sharedDevicesList   = document.getElementById("sharedDevicesList");
+const msg                 = document.getElementById("msg");
+const pageHint            = document.getElementById("pageHint");
+const connectCodeInput    = document.getElementById("connectCodeInput");
+const btnConnectCode      = document.getElementById("btnConnectCode");
+const connectCodeMsg      = document.getElementById("connectCodeMsg");
 
-function setMsg(text) { if (msg) msg.textContent = text || ""; }
+const devicePreviewOverlay   = document.getElementById("devicePreviewOverlay");
+const devicePreviewTitle     = document.getElementById("devicePreviewTitle");
+const devicePreviewSub       = document.getElementById("devicePreviewSub");
+const btnDevicePreviewConnect = document.getElementById("btnDevicePreviewConnect");
+const btnDevicePreviewCancel  = document.getElementById("btnDevicePreviewCancel");
+const btnDevicePreviewClose   = document.getElementById("btnDevicePreviewClose");
+
+function setMsg(text)     { if (msg) msg.textContent = text || ""; }
+function setCodeMsg(text) { if (connectCodeMsg) connectCodeMsg.textContent = text || ""; }
 
 function escapeHtml(s) {
   return String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 }
 
 function deviceTypeLabel(type) {
-  if (type === "host") return t("connectDevice.deviceType.host") || "Prowadzący";
-  if (type === "buzzer") return t("connectDevice.deviceType.buzzer") || "Buzzer";
+  if (type === "host")    return t("connectDevice.deviceType.host")    || "Prowadzący";
+  if (type === "buzzer")  return t("connectDevice.deviceType.buzzer")  || "Buzzer";
   if (type === "display") return t("connectDevice.deviceType.display") || "Wyświetlacz";
   return type;
 }
@@ -46,11 +56,82 @@ function buildManualUrl() {
   const url = new URL("manual", location.href);
   url.searchParams.set("ret", getCurrentRelativeUrl());
   url.searchParams.set("lang", getUiLang() || "pl");
-  url.hash = "connect"; // Otwieraj zakładkę "Podłącz urządzenie"
+  url.hash = "connect";
   return url.toString();
 }
 
+// ── Device preview modal ───────────────────────────────────────────────────────
+let _previewDeviceInfo = null;
+
+function showDevicePreview(info) {
+  _previewDeviceInfo = info;
+  const typeLabel = deviceTypeLabel(info.device_type);
+  const emoji = deviceTypeEmoji(info.device_type);
+  if (devicePreviewTitle) {
+    devicePreviewTitle.textContent = `${emoji} ${typeLabel}`;
+  }
+  if (devicePreviewSub) {
+    const gameName = info.game_name || "—";
+    const owner    = info.owner_username || "—";
+    const gameLabel  = t("connectDevice.enterCode.previewGame")  || "Gra:";
+    const ownerLabel = t("connectDevice.enterCode.previewOwner") || "Właściciel:";
+    devicePreviewSub.textContent = `${gameLabel} ${gameName}\n${ownerLabel} ${owner}`;
+  }
+  if (devicePreviewOverlay) devicePreviewOverlay.style.display = "";
+}
+
+function hideDevicePreview() {
+  if (devicePreviewOverlay) devicePreviewOverlay.style.display = "none";
+  _previewDeviceInfo = null;
+}
+
+btnDevicePreviewClose?.addEventListener("click", hideDevicePreview);
+btnDevicePreviewCancel?.addEventListener("click", hideDevicePreview);
+devicePreviewOverlay?.addEventListener("click", (e) => {
+  if (e.target === devicePreviewOverlay) hideDevicePreview();
+});
+
+btnDevicePreviewConnect?.addEventListener("click", () => {
+  if (!_previewDeviceInfo) return;
+  const info = _previewDeviceInfo;
+  hideDevicePreview();
+  const page = info.device_type === "display" ? "display" : info.device_type;
+  window.location.href = `/${page}?id=${info.game_id}&key=${info.share_key}`;
+});
+
+// ── Code input ─────────────────────────────────────────────────────────────────
+async function handleCodeConnect() {
+  const raw = String(connectCodeInput?.value || "").trim().replace(/\D/g, "");
+  if (raw.length !== 6) {
+    setCodeMsg(t("connectDevice.enterCode.invalidCode") || "Wprowadź 6-cyfrowy kod.");
+    return;
+  }
+  setCodeMsg(t("connectDevice.enterCode.resolving") || "Sprawdzanie kodu…");
+  if (btnConnectCode) btnConnectCode.disabled = true;
+
+  try {
+    const { data, error } = await sb().rpc("resolve_device_connect_code", { p_code: raw });
+    if (error || !data?.ok) {
+      setCodeMsg(t("connectDevice.enterCode.codeNotFound") || "Nie znaleziono urządzenia dla tego kodu.");
+      return;
+    }
+    setCodeMsg("");
+    showDevicePreview(data);
+  } catch (e) {
+    setCodeMsg(e?.message || "Błąd.");
+  } finally {
+    if (btnConnectCode) btnConnectCode.disabled = false;
+  }
+}
+
+btnConnectCode?.addEventListener("click", handleCodeConnect);
+connectCodeInput?.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") { e.preventDefault(); handleCodeConnect(); }
+});
+
+// ── Shared devices (only logged-in non-guests) ─────────────────────────────────
 async function renderSharedDevices() {
+  if (!sharedDevicesList) return;
   sharedDevicesList.innerHTML = `<div style="opacity:.55;font-size:.88rem;text-align:center;padding:20px;">${t("connectDevice.shared.loading") || "Ładowanie…"}</div>`;
 
   const { data, error } = await sb().rpc("list_shared_devices_for_me");
@@ -77,8 +158,8 @@ async function renderSharedDevices() {
     row.className = "connect-device-tile";
 
     const ownerLabel = escapeHtml(item.owner_username || item.owner_email || "—");
-    const gameName = escapeHtml(item.game_name || t("connectDevice.shared.noName") || "—");
-    const typeLabel = deviceTypeLabel(item.device_type);
+    const gameName   = escapeHtml(item.game_name || t("connectDevice.shared.noName") || "—");
+    const typeLabel  = deviceTypeLabel(item.device_type);
 
     row.innerHTML = `
       <div class="connect-device-tile-icon">${deviceTypeEmoji(item.device_type)}</div>
@@ -94,9 +175,9 @@ async function renderSharedDevices() {
     `;
 
     row.addEventListener("click", async () => {
-      if (!item.game_id || !item.share_key) { 
+      if (!item.game_id || !item.share_key) {
         setMsg(t("connectDevice.shared.gameNotFound") || "Nie znaleziono gry.");
-        return; 
+        return;
       }
       const isMobileType = item.device_type === "host" || item.device_type === "buzzer";
       if (_isMobile && item.device_type === "display") {
@@ -117,6 +198,7 @@ async function renderSharedDevices() {
   }
 }
 
+// ── QR scanner ─────────────────────────────────────────────────────────────────
 async function loadJsQR() {
   if (window.jsQR) return;
   await new Promise((res, rej) => {
@@ -139,11 +221,9 @@ function buildScanOverlay() {
   return { video, closeBtn };
 }
 
-// QR scanner – live video (BarcodeDetector lub jsQR), fallback: input[capture]
 async function startQrScan() {
   const hasCamera = !!navigator.mediaDevices?.getUserMedia;
 
-  // --- Live video (iOS Safari 14.5+ i Chrome/Android) ---
   if (hasCamera) {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
@@ -164,7 +244,6 @@ async function startQrScan() {
       closeBtn.addEventListener("click", stop);
 
       if ("BarcodeDetector" in window) {
-        // Chrome / Android – natywny detektor
         const detector = new window.BarcodeDetector({ formats: ["qr_code"] });
         const scan = async () => {
           if (!scanning) return;
@@ -181,7 +260,6 @@ async function startQrScan() {
         };
         requestAnimationFrame(scan);
       } else {
-        // iOS Safari – jsQR na klatkach wideo
         await loadJsQR();
         const canvas = document.createElement("canvas");
         const ctx = canvas.getContext("2d");
@@ -210,7 +288,6 @@ async function startQrScan() {
     }
   }
 
-  // --- Fallback: input[capture] + jsQR (bardzo stare przeglądarki) ---
   await loadJsQR();
   const input = document.createElement("input");
   input.type = "file";
@@ -260,29 +337,37 @@ async function startQrScan() {
   input.click();
 }
 
+// ── Bootstrap ──────────────────────────────────────────────────────────────────
 (async () => {
-  const currentUser = await requireAuth(withLangParam("../login"));
-  const guestMode = isGuestUser(currentUser);
+  let currentUser = null;
+  try { currentUser = await getUser(); } catch {}
 
-  if (guestMode) {
-    showGuestBlockedOverlay({ backHref: "builder", loginHref: "login?force_auth=1", showLoginButton: true });
-    return;
+  const isLoggedIn = !!currentUser;
+  const guestMode  = isLoggedIn ? isGuestUser(currentUser) : true;
+
+  if (isLoggedIn) {
+    initTopbarAccountDropdown(currentUser);
   }
 
-  initTopbarAccountDropdown(currentUser);
+  btnBack?.addEventListener("click", () => {
+    location.href = (isLoggedIn && !guestMode)
+      ? withLangParam("builder")
+      : withLangParam("index");
+  });
+
+  btnManual?.addEventListener("click", () => { location.href = buildManualUrl(); });
 
   if (pageHint) pageHint.textContent = _isMobile
     ? (t("connectDevice.header.hintMobile") || "Podłącz się jako prowadzący lub buzzer, albo zeskanuj QR z panelu sterowania.")
     : (t("connectDevice.header.hintDesktop") || "Podłącz się jako wyświetlacz lub zeskanuj QR z panelu sterowania.");
 
-  // Skanowanie QR tylko na mobile
   if (_isMobile && btnScanQr) {
     btnScanQr.style.display = "";
     btnScanQr.addEventListener("click", startQrScan);
   }
 
-  btnBack?.addEventListener("click", () => { location.href = withLangParam("builder"); });
-  btnManual?.addEventListener("click", () => { location.href = buildManualUrl(); });
-
-  await renderSharedDevices();
+  if (isLoggedIn && !guestMode) {
+    if (sharedDevicesCard) sharedDevicesCard.style.display = "";
+    await renderSharedDevices();
+  }
 })();

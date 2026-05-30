@@ -1725,14 +1725,31 @@ const pl = {
       </div>`,
       connect: `<p class="m-p">
         <span class="m-strong">Podłącz urządzenie</span> to panel, gdzie możesz szybko połączyć się z urządzeniem niezbędnym do rozgrywki:
-        <span class="m-strong">Wyświetlaczem</span>, <span class="m-strong">Przyciskiem</span> lub <span class="m-strong">Prowadzącym</span>
-        za pomocą przycisku <span class="m-code">Podłącz urządzenie 🎮</span>.
+        <span class="m-strong">Wyświetlaczem</span>, <span class="m-strong">Przyciskiem</span> lub <span class="m-strong">Prowadzącym</span>.
+        Dostępny bez logowania — wystarczy kod 6-cyfrowy z panelu operatora.
       </p>
+
+      <h3 class="m-h2">Wprowadź kod urządzenia</h3>
+
+      <p class="m-p">
+        Najprostszy sposób na połączenie. Operator w panelu sterowania widzi <span class="m-strong">6-cyfrowy kod</span>
+        przy każdym urządzeniu (Wyświetlaczu, Prowadzącym, Przycisku).
+        Wpisz ten kod i kliknij <span class="m-code">Podłącz</span> — zobaczysz podgląd urządzenia i po potwierdzeniu
+        zostaniesz na nie przekierowany.
+      </p>
+
+      <div class="m-note">
+        <b>Jak skorzystać z kodu?</b><br/>
+        1. Operator otwiera panel sterowania i widzi kody przy urządzeniach.<br/>
+        2. Wejdź na <span class="m-code">familiada.online</span> (lub otwórz aplikację).<br/>
+        3. Kliknij przycisk <span class="m-code">Podłącz urządzenie 📱</span> w górnym pasku.<br/>
+        4. Wpisz 6-cyfrowy kod i naciśnij <span class="m-code">Podłącz</span>.
+      </div>
 
       <h3 class="m-h2">Urządzenia udostępnione dla mnie</h3>
 
       <p class="m-p">
-        Tutaj widzisz urządzenia, które tobie udostępnił któryś z użytkowników.
+        Tutaj widzisz urządzenia, które tobie udostępnił któryś z użytkowników (opcja dostępna tylko dla zalogowanych).
         Klikając w nie możesz się z nim połączyć — zostaniesz przekierowany na stronę urządzenia.
       </p>
 
@@ -1753,7 +1770,7 @@ const pl = {
       <div class="m-note">
         <b>Wskazówka:</b><br/>
         Dla najlepszego użytkowania przycisku i prowadzącego sugerowane jest zainstalowanie aplikacji webowej Familiada.online.
-        Na swoim telefonie zaloguj się na konto, na stronie <span class="m-strong">Moje gry</span> kliknij przycisk pobierania — dostaniesz wskazówki, jak ją pobrać.
+        Na swoim telefonie na stronie <span class="m-strong">Moje gry</span> kliknij przycisk pobierania — dostaniesz wskazówki, jak ją pobrać.
       </div>`,
       control: `<p class="m-p">
         Do Panelu sterowania przechodzisz z listy „Moje gry"
@@ -1835,7 +1852,7 @@ const pl = {
       <h3 class="m-h3">Krok 1: Urządzenia</h3>
 
       <p class="m-p">
-        W tym kroku panel pokazuje linki i kody QR dla urządzeń.
+        W tym kroku panel pokazuje <span class="m-strong">6-cyfrowe kody</span> i kody QR dla urządzeń.
         Najlepiej otworzyć wyświetlacz na telewizorze lub rzutniku,
         w trybie pełnoekranowym (bez pasków przeglądarki). Dalej podłączasz urządzenie prowadzącego i urządzenie przycisku. W praktyce najlepiej użyć dwóch osobnych telefonów albo telefonu i tabletu.
       </p>
@@ -1857,7 +1874,11 @@ const pl = {
 
       <div class="m-note">
         <b>Jak wygodnie podłączyć urządzenie?</b><br/>
-        Dla najlepszego użytkowania przycisku i prowadzącego sugerowane jest zainstalowanie aplikacji webowej Familiada.online. Na swoim telefonie zaloguj się na konto, na stronie <span class="m-strong">Moje gry</span> kliknij przycisk pobierania — dostaniesz wskazówki, jak ją pobrać. Po pobraniu przejdź do panelu <span class="m-code">Podłącz urządzenie 📱</span>, naciśnij <span class="m-strong">Skanuj kod QR</span> — po zeskanowaniu uruchomi się przycisk lub prowadzący.
+        Najprostszy sposób: wejdź na <span class="m-code">familiada.online</span>, kliknij <span class="m-code">Podłącz urządzenie 📱</span>
+        w górnym pasku i wprowadź <span class="m-strong">6-cyfrowy kod</span> widoczny przy urządzeniu w panelu operatora.<br/><br/>
+        Alternatywnie: na urządzeniu mobilnym możesz zeskanować <span class="m-strong">kod QR</span> widoczny w panelu.
+        Dla najlepszego użytkowania sugerowane jest zainstalowanie aplikacji webowej — na stronie <span class="m-strong">Moje gry</span>
+        kliknij przycisk pobierania, aby uzyskać wskazówki.
       </div>
       
       <div class="m-note">
@@ -4118,6 +4139,7 @@ const pl = {
     qrModalTitle: "Urządzenie",
     qrModalImgAlt: "Kod QR",
     qrModalLinkAria: "Link do urządzenia",
+    qrModalCodeHint: "familiada.online → Podłącz urządzenie → wprowadź kod",
     qrCodeBtn: "Kod QR",
     qrOnDisplayToggle: "QR na wyświetlaczu",
     alertOk: "OK",
@@ -5061,6 +5083,18 @@ const pl = {
     warning: {
       mobileOnly: "Ta strona działa najlepiej na telefonie lub tablecie. Możesz kontynuować.",
       desktopOnly: "Ta strona działa najlepiej na komputerze lub TV. Możesz kontynuować.",
+    },
+    enterCode: {
+      title: "Wprowadź kod urządzenia",
+      placeholder: "000000",
+      btn: "Podłącz",
+      connectBtn: "Połącz",
+      hint: "Wejdź na familiada.online, kliknij „Podłącz urządzenie" i wprowadź ten kod.",
+      invalidCode: "Wprowadź 6-cyfrowy kod.",
+      resolving: "Sprawdzanie kodu…",
+      codeNotFound: "Nie znaleziono urządzenia dla tego kodu. Sprawdź czy kod jest poprawny.",
+      previewGame: "Gra:",
+      previewOwner: "Właściciel:",
     },
   },
   security: {

@@ -133,13 +133,7 @@ export function createDevices({ game, ui, store, chDisplay, chHost, chBuzzer }) 
   function updateLinksAndQr(lang) {
     urls = buildUrls(lang);
 
-    ui.setValue("displayLink", urls.displayUrl);
-    ui.setValue("hostLink", urls.hostUrl);
-    ui.setValue("buzzerLink", urls.buzzerUrl);
-
-    ui.setImg("qrDisplayImg", qrSrc(urls.displayUrl));
-    ui.setImg("qrHostImg", qrSrc(urls.hostUrl));
-    ui.setImg("qrBuzzerImg", qrSrc(urls.buzzerUrl));
+    // Linki są teraz skrócone do 6-cyfrowych kodów (generowanych asynchronicznie przez app.js)
   }
 
   let actionsBound = false;
@@ -150,33 +144,6 @@ export function createDevices({ game, ui, store, chDisplay, chHost, chBuzzer }) 
     ui.on("devices.openDisplay", () => window.open(urls.displayUrl, "_blank"));
     ui.on("devices.openHost", () => window.open(urls.hostUrl, "_blank"));
     ui.on("devices.openBuzzer", () => window.open(urls.buzzerUrl, "_blank"));
-
-    ui.on(
-      "devices.copyDisplay",
-      async () =>
-        ui.setMsg(
-          "msgDevices",
-          (await copyToClipboard(urls.displayUrl)) ? DEVICES_MSG.COPY_OK : DEVICES_MSG.COPY_FAIL
-        )
-    );
-
-    ui.on(
-      "devices.copyHost",
-      async () =>
-        ui.setMsg(
-          "msgDevices",
-          (await copyToClipboard(urls.hostUrl)) ? DEVICES_MSG.COPY_OK : DEVICES_MSG.COPY_FAIL
-        )
-    );
-
-    ui.on(
-      "devices.copyBuzzer",
-      async () =>
-        ui.setMsg(
-          "msgDevices",
-          (await copyToClipboard(urls.buzzerUrl)) ? DEVICES_MSG.COPY_OK : DEVICES_MSG.COPY_FAIL
-        )
-    );
   }
 
   function initLinksAndQr() {

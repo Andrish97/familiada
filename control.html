@@ -93,10 +93,12 @@
         </div>
 
         <div class="qrModalLinkRow">
-          <input class="inp" id="qrModalLink" readonly aria-label="Link do urządzenia" data-i18n-aria-label="control.qrModalLinkAria"/>
-          <button class="btn" id="qrModalCopy" type="button" data-i18n="common.copy">Kopiuj</button>
+          <div class="qrModalCode">
+            <span class="qrModalCodeVal" id="qrModalCodeVal">——————</span>
+          </div>
           <button class="btn gold" id="qrModalOpen" type="button" data-i18n="common.open">Otwórz</button>
         </div>
+        <div class="qrModalCodeHint" data-i18n="control.qrModalCodeHint">Wejdź na familiada.online → Podłącz urządzenie → wprowadź kod</div>
       </div>
     </div>
   </div>
@@ -288,10 +290,11 @@
                         <div class="device-name" data-i18n="control.deviceDisplay">Wyświetlacz</div>
                         <div class="badge mid" id="pillDisplay">—</div>
                       </div>
-                      <!-- Rząd 2: input(link), btnCopy, btnOpen -->
+                      <!-- Rząd 2: kod 6-cyfrowy, btnOpen -->
                       <div class="device-row-2">
-                        <input class="inp" id="displayLink" readonly />
-                        <button class="btn" id="btnCopyDisplay" type="button" data-i18n="common.copy">Kopiuj</button>
+                        <div class="device-connect-code">
+                          <span class="device-connect-code-val" id="displayCodeVal">——————</span>
+                        </div>
                         <button class="btn gold" id="btnOpenDisplay" type="button" data-i18n="common.open">Otwórz</button>
                       </div>
                       <!-- Rząd 3: przycisk QR, udostępnij, Czarny ekran -->
@@ -317,10 +320,11 @@
                         </div>
                         <div class="badge mid" id="pillHost">—</div>
                       </div>
-                      <!-- Rząd 2: input(link), btnCopy, btnOpen -->
+                      <!-- Rząd 2: kod 6-cyfrowy, btnOpen -->
                       <div class="device-row-2">
-                        <input class="inp" id="hostLink" readonly aria-label="Link do prowadzącego" data-i18n-aria-label="control.hostLinkAria"/>
-                        <button class="btn" id="btnCopyHost" type="button" data-i18n="common.copy">Kopiuj</button>
+                        <div class="device-connect-code">
+                          <span class="device-connect-code-val" id="hostCodeVal">——————</span>
+                        </div>
                         <button class="btn gold" id="btnOpenHost" type="button" data-i18n="common.open">Otwórz</button>
                       </div>
                       <!-- Rząd 3: przycisk QR, QR na wyświetlaczu, udostępnij -->
@@ -341,10 +345,11 @@
                         <div class="device-name" data-i18n="control.deviceBuzzer">Przycisk</div>
                         <div class="badge mid" id="pillBuzzer">—</div>
                       </div>
-                      <!-- Rząd 2: input(link), btnCopy, btnOpen -->
+                      <!-- Rząd 2: kod 6-cyfrowy, btnOpen -->
                       <div class="device-row-2">
-                        <input class="inp" id="buzzerLink" readonly aria-label="Link do przycisku" data-i18n-aria-label="control.buzzerLinkAria"/>
-                        <button class="btn" id="btnCopyBuzzer" type="button" data-i18n="common.copy">Kopiuj</button>
+                        <div class="device-connect-code">
+                          <span class="device-connect-code-val" id="buzzerCodeVal">——————</span>
+                        </div>
                         <button class="btn gold" id="btnOpenBuzzer" type="button" data-i18n="common.open">Otwórz</button>
                       </div>
                       <!-- Rząd 3: przycisk QR, QR na wyświetlaczu, udostępnij -->

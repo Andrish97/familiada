@@ -56,7 +56,19 @@
     </div>
 
     <section class="builder-shell">
-      <div class="card builder-card">
+      <!-- Blok: Wprowadź kod -->
+      <div class="card builder-card" id="enterCodeCard">
+        <div class="connect-device-card-header" data-i18n="connectDevice.enterCode.title">Wprowadź kod urządzenia</div>
+        <div class="connect-device-enter-code-row">
+          <input class="inp connect-device-code-input" id="connectCodeInput" type="text" inputmode="numeric" maxlength="6" placeholder="000000" autocomplete="off" spellcheck="false" data-i18n-placeholder="connectDevice.enterCode.placeholder"/>
+          <button class="btn gold" id="btnConnectCode" type="button" data-i18n="connectDevice.enterCode.btn">Podłącz</button>
+        </div>
+        <div id="connectCodeMsg" class="connect-device-msg"></div>
+        <div class="connect-device-code-hint" data-i18n="connectDevice.enterCode.hint">Wejdź na familiada.online, kliknij „Podłącz urządzenie" i wprowadź ten kod.</div>
+      </div>
+
+      <!-- Blok: Udostępnione dla mnie (tylko zalogowani) -->
+      <div class="card builder-card" id="sharedDevicesCard" style="display:none;">
         <div class="connect-device-card-header" data-i18n="connectDevice.shared.title">Urządzenia udostępnione dla mnie</div>
         <div id="sharedDevicesList" class="grid"></div>
       </div>
@@ -67,6 +79,21 @@
       <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
     </div>
   </main>
+
+  <!-- Modal: podgląd urządzenia po kodzie -->
+  <div class="overlay" id="devicePreviewOverlay" style="display:none;">
+    <div class="modal">
+      <div class="mHead">
+        <div class="mTitle" id="devicePreviewTitle">Urządzenie</div>
+        <button class="btn sm" id="btnDevicePreviewClose" type="button">✕</button>
+      </div>
+      <div class="mSub" id="devicePreviewSub"></div>
+      <div class="importRow" style="margin-top:16px;">
+        <button class="btn gold" id="btnDevicePreviewConnect" type="button" data-i18n="connectDevice.enterCode.connectBtn">Połącz</button>
+        <button class="btn" id="btnDevicePreviewCancel" type="button" data-i18n="common.modal.confirmCancel">Anuluj</button>
+      </div>
+    </div>
+  </div>
 
   <script type="module" src="js/core/contact-modal.js?v=v2026-05-29T21440"></script>
 </body>

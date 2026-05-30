@@ -2150,3 +2150,54 @@
     font-size: 16px !important;
     font-weight: 1000 !important;
 }
+
+/* ── Device connect code (BLIK-style 6-digit) ──────────────────────────────── */
+.device-connect-code {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  min-height: 42px;
+  background: rgba(255,234,166,.07);
+  border: 1px solid rgba(255,234,166,.22);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.device-connect-code-val {
+  font-size: 1.45rem;
+  font-weight: 900;
+  letter-spacing: .22em;
+  color: #ffeaa6;
+  font-variant-numeric: tabular-nums;
+  font-family: ui-monospace, 'SF Mono', Monaco, 'Cascadia Mono', monospace;
+}
+
+/* ── QR modal — kod zamiast linka ───────────────────────────────────────────── */
+.qrModalCode {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 14px;
+  background: rgba(255,234,166,.07);
+  border: 1px solid rgba(255,234,166,.22);
+  border-radius: 12px;
+}
+
+.qrModalCodeVal {
+  font-size: 2rem;
+  font-weight: 900;
+  letter-spacing: .32em;
+  color: #ffeaa6;
+  font-variant-numeric: tabular-nums;
+  font-family: ui-monospace, 'SF Mono', Monaco, 'Cascadia Mono', monospace;
+}
+
+.qrModalCodeHint {
+  margin-top: 10px;
+  font-size: .8rem;
+  opacity: .55;
+  text-align: center;
+  line-height: 1.4;
+}

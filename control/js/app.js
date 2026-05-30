@@ -287,6 +287,7 @@ async function main() {
 
   // === Modal QR z auth bar (top-status) ===
   let currentQrKind = null; // "display" | "host" | "buzzer"
+  const _deviceCodes = { display: null, host: null, buzzer: null };
 
   function qrSrc(url) {
     const u = encodeURIComponent(String(url ?? ""));
@@ -314,18 +315,41 @@ async function main() {
 
     currentQrKind = kind;
 
-    const overlay = document.getElementById("qrModalOverlay");
-    const titleEl = document.getElementById("qrModalTitle");
-    const imgEl = document.getElementById("qrModalImg");
-    const linkEl = document.getElementById("qrModalLink");
+    const overlay     = document.getElementById("qrModalOverlay");
+    const titleEl     = document.getElementById("qrModalTitle");
+    const imgEl       = document.getElementById("qrModalImg");
+    const codeValEl   = document.getElementById("qrModalCodeVal");
 
-    if (!overlay || !titleEl || !imgEl || !linkEl) return;
+    if (!overlay || !titleEl || !imgEl) return;
 
     titleEl.textContent = APP_MSG.QR_LABEL(kind);
-    linkEl.value = url;
     imgEl.src = qrSrc(url);
+    if (codeValEl) codeValEl.textContent = _deviceCodes[kind] || "——————";
 
     overlay.classList.remove("hidden");
+  }
+
+  async function initDeviceCodes() {
+    const cfgs = [
+      { type: "display", valId: "displayCodeVal", shareKey: game.share_key_display },
+      { type: "host",    valId: "hostCodeVal",    shareKey: game.share_key_host },
+      { type: "buzzer",  valId: "buzzerCodeVal",  shareKey: game.share_key_buzzer },
+    ];
+    for (const cfg of cfgs) {
+      try {
+        const { data } = await sb().rpc("generate_device_connect_code", {
+          p_game_id:     game.id,
+          p_device_type: cfg.type,
+          p_share_key:   cfg.shareKey || "",
+          p_game_name:   game.name || null,
+        });
+        if (data?.ok && data?.code) {
+          _deviceCodes[cfg.type] = data.code;
+          const el = document.getElementById(cfg.valId);
+          if (el) el.textContent = data.code;
+        }
+      } catch {}
+    }
   }
 
   async function copyQrLink() {
@@ -782,7 +806,10 @@ async function sendZeroStatesToDevices() {
       
       // Initialize device links
       devices.initLinksAndQr();
-      
+
+      // Generuj kody połączeń (raz na sesję, nie blokujące)
+      initDeviceCodes().catch(() => {});
+
       // Send LANG commands (non-blocking)
       const initialLang = getUiLang();
       await Promise.all([
@@ -1376,7 +1403,6 @@ async function sendZeroStatesToDevices() {
 
   ui.on("auth.showQr", (kind) => showQrModal(kind));
   ui.on("auth.qr.close", () => hideQrModal());
-  ui.on("auth.qr.copy", async () => await copyQrLink());
   ui.on("auth.qr.open", () => openQrLink());
 
   // DEVICES kroki

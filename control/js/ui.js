@@ -608,7 +608,6 @@ export function createUI() {
 
     // modal QR
     $("qrModalClose")?.addEventListener("click", () => emit("auth.qr.close"));
-    $("qrModalCopy")?.addEventListener("click", () => emit("auth.qr.copy"));
     $("qrModalOpen")?.addEventListener("click", () => emit("auth.qr.open"));
     $("qrModalOverlay")?.addEventListener("click", (ev) => {
       if (ev.target && ev.target.id === "qrModalOverlay") emit("auth.qr.close");
@@ -622,10 +621,6 @@ export function createUI() {
     $("btnDevicesFinish")?.addEventListener("click", () => emit("devices.finish"));
 
     $("btnUnlockAudio")?.addEventListener("click", () => emit("audio.unlock"));
-
-    $("btnCopyDisplay")?.addEventListener("click", () => emit("devices.copyDisplay"));
-    $("btnCopyHost")?.addEventListener("click", () => emit("devices.copyHost"));
-    $("btnCopyBuzzer")?.addEventListener("click", () => emit("devices.copyBuzzer"));
 
     $("btnOpenDisplay")?.addEventListener("click", () => emit("devices.openDisplay"));
     $("btnOpenHost")?.addEventListener("click", () => emit("devices.openHost"));
