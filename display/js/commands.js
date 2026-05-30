@@ -194,6 +194,10 @@ export const createCommandHandler = (app) => {
 
       if (hostIdx >= 0) qr.setHost(unquote(tokens[hostIdx + 1] ?? ""));
       if (buzIdx  >= 0) qr.setBuzzer(unquote(tokens[buzIdx + 1] ?? ""));
+      const hostCodeIdx = tokens.findIndex(t => t.toUpperCase() === "HOST_CODE");
+      const buzCodeIdx  = tokens.findIndex(t => t.toUpperCase() === "BUZZER_CODE");
+      if (hostCodeIdx >= 0) qr.setHostCode(unquote(tokens[hostCodeIdx + 1] ?? ""));
+      if (buzCodeIdx  >= 0) qr.setBuzzerCode(unquote(tokens[buzCodeIdx + 1] ?? ""));
 
       // UWAGA: tutaj JUŻ NIE zmieniamy app.mode!
       // Tryb QR ustawiasz komendą: APP QR

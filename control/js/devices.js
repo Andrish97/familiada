@@ -158,13 +158,15 @@ export function createDevices({ game, ui, store, chDisplay, chHost, chBuzzer }) 
       .replaceAll("\r\n", "\n");
   }
 
-  async function sendQrToDisplay() {
+  async function sendQrToDisplay(codes) {
     await sendDisplayCmd("APP QR");
-    await sendDisplayCmd(`QR HOST "${escQ(urls.hostUrl)}" BUZZER "${escQ(urls.buzzerUrl)}"`);
+    await sendQrLinksToDisplay(codes);
   }
 
-  async function sendQrLinksToDisplay() {
-    await sendDisplayCmd(`QR HOST "${escQ(urls.hostUrl)}" BUZZER "${escQ(urls.buzzerUrl)}"`);
+  async function sendQrLinksToDisplay(codes) {
+    const hostCode   = codes?.host   ? ` HOST_CODE "${escQ(codes.host)}"`   : "";
+    const buzzerCode = codes?.buzzer ? ` BUZZER_CODE "${escQ(codes.buzzer)}"` : "";
+    await sendDisplayCmd(`QR HOST "${escQ(urls.hostUrl)}"${hostCode} BUZZER "${escQ(urls.buzzerUrl)}"${buzzerCode}`);
   }
 
   return {
