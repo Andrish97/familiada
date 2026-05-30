@@ -1987,13 +1987,6 @@
   min-width: 180px;
 }
 
-.device-row-3 {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-top: 4px;
-}
 
 .device-name {
   font-weight: 1000;
@@ -2161,11 +2154,11 @@
 
 /* ── Device connect code (BLIK-style 6-digit) ──────────────────────────────── */
 .device-connect-code {
-  flex: 1;
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 14px;
+  padding: 0 12px;
   min-height: 42px;
   background: rgba(255,234,166,.07);
   border: 1px solid rgba(255,234,166,.22);

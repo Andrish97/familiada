@@ -82,6 +82,13 @@ body {
     padding: 18px
 }
 
+.qr-code {
+    font: 700 48px/1 'Courier New',Courier,monospace;
+    color: #f5d06e;
+    letter-spacing: .18em;
+    min-height: 1.1em
+}
+
 .qr-label {
     font: 700 26px/1.1 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
     color: #fff;

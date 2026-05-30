@@ -37,6 +37,8 @@ window.addEventListener("DOMContentLoaded", async () => {
       gameScreen,
       hostImg: $("qrHostImg"),
       buzzerImg: $("qrBuzzerImg"),
+      hostCodeEl: $("qrHostCode"),
+      buzzerCodeEl: $("qrBuzzerCode"),
     });
 
     const scene = await createScene();

@@ -817,8 +817,8 @@ async function sendZeroStatesToDevices() {
       // Initialize device links
       devices.initLinksAndQr();
 
-      // Generuj kody połączeń (raz na sesję, nie blokujące)
-      initDeviceCodes().catch(() => {});
+      // Generuj kody połączeń
+      await initDeviceCodes().catch(() => {});
 
       // Send LANG commands (non-blocking)
       const initialLang = getUiLang();
@@ -827,9 +827,9 @@ async function sendZeroStatesToDevices() {
         devices.sendHostCmd(`LANG ${initialLang}`).catch(() => {}),
         devices.sendBuzzerCmd(`LANG ${initialLang}`).catch(() => {}),
       ]);
-      
+
       if (store.state.flags.qrOnDisplay) {
-        await devices.sendQrLinksToDisplay().catch(() => {});
+        await devices.sendQrLinksToDisplay(_deviceCodes).catch(() => {});
       }
     } catch (e) {
       console.error("Device init error:", e);
@@ -1145,7 +1145,7 @@ async function sendZeroStatesToDevices() {
       devices.sendBuzzerCmd(`LANG ${nextLang}`).catch(() => {}),
     ]);
     if (store.state.flags.qrOnDisplay) {
-      await devices.sendQrLinksToDisplay().catch(() => {});
+      await devices.sendQrLinksToDisplay(_deviceCodes).catch(() => {});
     }
   });
 
@@ -1454,7 +1454,7 @@ async function sendZeroStatesToDevices() {
     const now = store.state.flags.qrOnDisplay;
 
     if (!now) {
-      await devices.sendQrToDisplay();
+      await devices.sendQrToDisplay(_deviceCodes);
       store.setQrOnDisplay(true);
       ui.setQrToggleLabel(true, store.state.flags.displayOnline && store.state.flags.buzzerOnline);
     } else {
@@ -1471,7 +1471,7 @@ async function sendZeroStatesToDevices() {
 
     // Wysyłamy komendę QR na wyświetlacz (host + buzzer)
     if (!now) {
-      await devices.sendQrToDisplay();
+      await devices.sendQrToDisplay(_deviceCodes);
       store.setQrHostOnDisplay(true);
       store.setQrBuzzerOnDisplay(true);
     } else {
@@ -1490,7 +1490,7 @@ async function sendZeroStatesToDevices() {
     const now = store.state.flags.qrBuzzerOnDisplay || false;
 
     if (!now) {
-      await devices.sendQrToDisplay();
+      await devices.sendQrToDisplay(_deviceCodes);
       store.setQrHostOnDisplay(true);
       store.setQrBuzzerOnDisplay(true);
     } else {

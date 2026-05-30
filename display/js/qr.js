@@ -6,7 +6,7 @@ const mkQR = (url, size = 420) => {
   return u.toString();
 };
 
-export const createQRController = ({ qrScreen, gameScreen, hostImg, buzzerImg }) => {
+export const createQRController = ({ qrScreen, gameScreen, hostImg, buzzerImg, hostCodeEl, buzzerCodeEl }) => {
   let hostUrl = "";
   let buzzerUrl = "";
 
@@ -18,6 +18,14 @@ export const createQRController = ({ qrScreen, gameScreen, hostImg, buzzerImg })
   const setBuzzer = (url) => {
     buzzerUrl = (url ?? "").toString();
     if (buzzerUrl) buzzerImg.src = mkQR(buzzerUrl);
+  };
+
+  const setHostCode = (code) => {
+    if (hostCodeEl) hostCodeEl.textContent = code ?? "";
+  };
+
+  const setBuzzerCode = (code) => {
+    if (buzzerCodeEl) buzzerCodeEl.textContent = code ?? "";
   };
 
   const show = () => {
@@ -32,5 +40,5 @@ export const createQRController = ({ qrScreen, gameScreen, hostImg, buzzerImg })
     gameScreen.classList.remove("hidden");
   };
 
-  return { setHost, setBuzzer, show, hide, get: () => ({ hostUrl, buzzerUrl }) };
+  return { setHost, setBuzzer, setHostCode, setBuzzerCode, show, hide, get: () => ({ hostUrl, buzzerUrl }) };
 };
