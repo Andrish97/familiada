@@ -622,9 +622,9 @@ export function createUI() {
 
     $("btnUnlockAudio")?.addEventListener("click", () => emit("audio.unlock"));
 
-    $("btnOpenDisplay")?.addEventListener("click", () => emit("devices.openDisplay"));
-    $("btnOpenHost")?.addEventListener("click", () => emit("devices.openHost"));
-    $("btnOpenBuzzer")?.addEventListener("click", () => emit("devices.openBuzzer"));
+    $("btnCopyDisplay")?.addEventListener("click", () => emit("devices.copyCode", "display"));
+    $("btnCopyHost")?.addEventListener("click", () => emit("devices.copyCode", "host"));
+    $("btnCopyBuzzer")?.addEventListener("click", () => emit("devices.copyCode", "buzzer"));
 
     $("btnDispBlack")?.addEventListener("click", () => emit("display.black"));
     $("btnQrToggle")?.addEventListener("click", () => emit("qr.toggle"));

@@ -19,6 +19,9 @@ const APP_MSG = {
   get QR_COPY_OK() { return t("control.qrCopyOk"); },
   get QR_COPY_FAIL() { return t("control.qrCopyFail"); },
 
+  get CODE_COPY_OK() { return t("control.codeCopyOk"); },
+  get CODE_COPY_FAIL() { return t("control.codeCopyFail"); },
+
   get UNLOAD_WARN() { return t("control.unloadWarn"); },
 
   get CONFIRM_BACK() { return t("control.confirmBack"); },
@@ -1430,6 +1433,17 @@ async function sendZeroStatesToDevices() {
   ui.on("devices.finish", () => {
     store.completeCard("devices");
     store.setActiveCard("setup");
+  });
+
+  ui.on("devices.copyCode", async (kind) => {
+    const code = _deviceCodes[kind];
+    if (!code) return;
+    try {
+      await navigator.clipboard.writeText(code);
+      ui.showAlert(APP_MSG.CODE_COPY_OK);
+    } catch {
+      ui.showAlert(APP_MSG.CODE_COPY_FAIL);
+    }
   });
 
   ui.on("display.black", async () => {

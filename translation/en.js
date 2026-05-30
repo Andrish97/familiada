@@ -4934,6 +4934,8 @@ const en = {
     gameNotFound: "Game not found.",
     qrCopyOk: "Copied!",
     qrCopyFail: "Copy failed.",
+    codeCopyOk: "Code copied!",
+    codeCopyFail: "Failed to copy code.",
     unloadWarn: "Game in progress. Are you sure you want to leave?",
     confirmBack: "Are you sure you want to go back? Progress may be lost.",
     leaveTitle: "Go back to My Games?",
