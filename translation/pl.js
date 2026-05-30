@@ -5090,7 +5090,7 @@ const pl = {
       placeholder: "000000",
       btn: "Podłącz",
       connectBtn: "Połącz",
-      hint: "Wejdź na familiada.online, kliknij „Podłącz urządzenie" i wprowadź ten kod.",
+      hint: "Wejdź na familiada.online, kliknij „Podłącz urządzenie” i wprowadź ten kod.",
       invalidCode: "Wprowadź 6-cyfrowy kod.",
       resolving: "Sprawdzanie kodu…",
       codeNotFound: "Nie znaleziono urządzenia dla tego kodu. Sprawdź czy kod jest poprawny.",
