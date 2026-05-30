@@ -366,10 +366,7 @@ async function main() {
     if (!code) return;
     try {
       await navigator.clipboard.writeText(code);
-      ui.showAlert(APP_MSG.CODE_COPY_OK);
-    } catch {
-      ui.showAlert(APP_MSG.CODE_COPY_FAIL);
-    }
+    } catch {}
   }
 
   function openQrLink() {
@@ -1439,10 +1436,7 @@ async function sendZeroStatesToDevices() {
     if (!code) return;
     try {
       await navigator.clipboard.writeText(code);
-      ui.showAlert(APP_MSG.CODE_COPY_OK);
-    } catch {
-      ui.showAlert(APP_MSG.CODE_COPY_FAIL);
-    }
+    } catch {}
   });
 
   ui.on("display.black", async () => {
