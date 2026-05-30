@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict Jt5oAVzrKO8Y41HJqcwyxKW0myx5CdxVoHekC9wb3CtwyAxSF8DehRRKrO70nBd
+\restrict oanPBlvQccpfICd9udzdr94726XgFAuoKRudnrgmJ1iuZgGaOqoaXcThwuGy4DA
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -2526,12 +2526,12 @@ CREATE FUNCTION "public"."generate_device_connect_code"("p_game_id" "uuid", "p_d
 DECLARE
   v_owner    uuid := auth.uid();
   v_code     text;
-  v_existing record;
 BEGIN
   IF v_owner IS NULL THEN
     RETURN jsonb_build_object('ok', false, 'err', 'not_authenticated');
   END IF;
 
+  -- Usuń wygasłe kody (tylko te z ustawionym expires_at)
   DELETE FROM public.device_connect_codes
   WHERE owner_id = v_owner
     AND game_id = p_game_id
@@ -2539,26 +2539,19 @@ BEGIN
     AND expires_at IS NOT NULL
     AND expires_at < now();
 
-  SELECT * INTO v_existing
-  FROM public.device_connect_codes
-  WHERE owner_id = v_owner
-    AND game_id = p_game_id
-    AND device_type = p_device_type;
-
-  IF v_existing IS NOT NULL THEN
-    UPDATE public.device_connect_codes
-    SET share_key = p_share_key,
-        game_name = COALESCE(p_game_name, game_name)
-    WHERE id = v_existing.id;
-    RETURN jsonb_build_object('ok', true, 'code', v_existing.code);
-  END IF;
-
+  -- Wygeneruj nowy kod (użyty tylko jeśli brak istniejącego)
   v_code := gen_connect_code();
 
+  -- Atomowy upsert: wstaw nowy kod lub zaktualizuj share_key przy konflikcie.
+  -- RETURNING zwraca istniejący code jeśli był konflikt (code nie jest aktualizowany).
   INSERT INTO public.device_connect_codes
     (code, owner_id, game_id, game_name, device_type, share_key, expires_at)
   VALUES
-    (v_code, v_owner, p_game_id, p_game_name, p_device_type, p_share_key, p_expires_at);
+    (v_code, v_owner, p_game_id, p_game_name, p_device_type, p_share_key, p_expires_at)
+  ON CONFLICT (owner_id, game_id, device_type) DO UPDATE
+    SET share_key = EXCLUDED.share_key,
+        game_name = COALESCE(EXCLUDED.game_name, device_connect_codes.game_name)
+  RETURNING code INTO v_code;
 
   RETURN jsonb_build_object('ok', true, 'code', v_code);
 END;
@@ -14171,5 +14164,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict Jt5oAVzrKO8Y41HJqcwyxKW0myx5CdxVoHekC9wb3CtwyAxSF8DehRRKrO70nBd
+\unrestrict oanPBlvQccpfICd9udzdr94726XgFAuoKRudnrgmJ1iuZgGaOqoaXcThwuGy4DA
 
