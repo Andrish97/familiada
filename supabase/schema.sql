@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 8DiFvOUx0i1UPgaewlmtycGbjwfeNkpB2pvzQpwFsQxag0O5beGiVLH7PceEnA9
+\restrict Jt5oAVzrKO8Y41HJqcwyxKW0myx5CdxVoHekC9wb3CtwyAxSF8DehRRKrO70nBd
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -2450,6 +2450,31 @@ $$;
 
 
 --
+-- Name: gen_connect_code(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."gen_connect_code"() RETURNS "text"
+    LANGUAGE "plpgsql"
+    AS $$
+DECLARE
+  v_code   text;
+  v_exists boolean;
+BEGIN
+  LOOP
+    v_code := lpad(floor(random() * 1000000)::int::text, 6, '0');
+    SELECT EXISTS (
+      SELECT 1 FROM public.device_connect_codes
+      WHERE code = v_code
+        AND (expires_at IS NULL OR expires_at > now())
+    ) INTO v_exists;
+    EXIT WHEN NOT v_exists;
+  END LOOP;
+  RETURN v_code;
+END;
+$$;
+
+
+--
 -- Name: gen_contact_ticket_number(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -2487,6 +2512,56 @@ CREATE FUNCTION "public"."gen_share_key"("n_bytes" integer DEFAULT 24) RETURNS "
     SET "search_path" TO 'public', 'extensions'
     AS $$
   SELECT encode(gen_random_bytes(n_bytes), 'hex');
+$$;
+
+
+--
+-- Name: generate_device_connect_code("uuid", "text", "text", "text", timestamp with time zone); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."generate_device_connect_code"("p_game_id" "uuid", "p_device_type" "text", "p_share_key" "text", "p_game_name" "text" DEFAULT NULL::"text", "p_expires_at" timestamp with time zone DEFAULT NULL::timestamp with time zone) RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE
+  v_owner    uuid := auth.uid();
+  v_code     text;
+  v_existing record;
+BEGIN
+  IF v_owner IS NULL THEN
+    RETURN jsonb_build_object('ok', false, 'err', 'not_authenticated');
+  END IF;
+
+  DELETE FROM public.device_connect_codes
+  WHERE owner_id = v_owner
+    AND game_id = p_game_id
+    AND device_type = p_device_type
+    AND expires_at IS NOT NULL
+    AND expires_at < now();
+
+  SELECT * INTO v_existing
+  FROM public.device_connect_codes
+  WHERE owner_id = v_owner
+    AND game_id = p_game_id
+    AND device_type = p_device_type;
+
+  IF v_existing IS NOT NULL THEN
+    UPDATE public.device_connect_codes
+    SET share_key = p_share_key,
+        game_name = COALESCE(p_game_name, game_name)
+    WHERE id = v_existing.id;
+    RETURN jsonb_build_object('ok', true, 'code', v_existing.code);
+  END IF;
+
+  v_code := gen_connect_code();
+
+  INSERT INTO public.device_connect_codes
+    (code, owner_id, game_id, game_name, device_type, share_key, expires_at)
+  VALUES
+    (v_code, v_owner, p_game_id, p_game_name, p_device_type, p_share_key, p_expires_at);
+
+  RETURN jsonb_build_object('ok', true, 'code', v_code);
+END;
 $$;
 
 
@@ -8874,6 +8949,43 @@ $$;
 
 
 --
+-- Name: resolve_device_connect_code("text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."resolve_device_connect_code"("p_code" "text") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE
+  v_rec record;
+BEGIN
+  DELETE FROM public.device_connect_codes
+  WHERE expires_at IS NOT NULL AND expires_at < now();
+
+  SELECT dcc.*, p.username AS owner_username
+  INTO v_rec
+  FROM public.device_connect_codes dcc
+  JOIN public.profiles p ON p.id = dcc.owner_id
+  WHERE dcc.code = p_code;
+
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('ok', false, 'err', 'not_found');
+  END IF;
+
+  RETURN jsonb_build_object(
+    'ok',             true,
+    'code',           v_rec.code,
+    'device_type',    v_rec.device_type,
+    'game_id',        v_rec.game_id,
+    'game_name',      v_rec.game_name,
+    'share_key',      v_rec.share_key,
+    'owner_username', v_rec.owner_username
+  );
+END;
+$$;
+
+
+--
 -- Name: restore_message("uuid"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -10310,6 +10422,24 @@ CREATE TABLE "public"."demo_template_data" (
 
 
 --
+-- Name: device_connect_codes; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."device_connect_codes" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "code" "text" NOT NULL,
+    "owner_id" "uuid" NOT NULL,
+    "game_id" "uuid",
+    "game_name" "text",
+    "device_type" "text" NOT NULL,
+    "share_key" "text" NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "expires_at" timestamp with time zone,
+    CONSTRAINT "device_connect_codes_device_type_check" CHECK (("device_type" = ANY (ARRAY['display'::"text", 'host'::"text", 'buzzer'::"text"])))
+);
+
+
+--
 -- Name: device_presence; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -11103,6 +11233,30 @@ ALTER TABLE ONLY "public"."contact_reports"
 
 ALTER TABLE ONLY "public"."demo_template_data"
     ADD CONSTRAINT "demo_template_data_pkey" PRIMARY KEY ("lang", "slot");
+
+
+--
+-- Name: device_connect_codes device_connect_codes_code_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."device_connect_codes"
+    ADD CONSTRAINT "device_connect_codes_code_key" UNIQUE ("code");
+
+
+--
+-- Name: device_connect_codes device_connect_codes_owner_id_game_id_device_type_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."device_connect_codes"
+    ADD CONSTRAINT "device_connect_codes_owner_id_game_id_device_type_key" UNIQUE ("owner_id", "game_id", "device_type");
+
+
+--
+-- Name: device_connect_codes device_connect_codes_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."device_connect_codes"
+    ADD CONSTRAINT "device_connect_codes_pkey" PRIMARY KEY ("id");
 
 
 --
@@ -12409,6 +12563,22 @@ ALTER TABLE ONLY "public"."contact_reports"
 
 
 --
+-- Name: device_connect_codes device_connect_codes_game_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."device_connect_codes"
+    ADD CONSTRAINT "device_connect_codes_game_id_fkey" FOREIGN KEY ("game_id") REFERENCES "public"."games"("id") ON DELETE CASCADE;
+
+
+--
+-- Name: device_connect_codes device_connect_codes_owner_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."device_connect_codes"
+    ADD CONSTRAINT "device_connect_codes_owner_id_fkey" FOREIGN KEY ("owner_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+--
 -- Name: device_presence device_presence_game_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -12915,6 +13085,13 @@ CREATE POLICY "answers_owner_write" ON "public"."answers" TO "authenticated" USI
 
 
 --
+-- Name: device_connect_codes anyone can read device_connect_codes; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "anyone can read device_connect_codes" ON "public"."device_connect_codes" FOR SELECT USING (true);
+
+
+--
 -- Name: app_config; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -12970,6 +13147,12 @@ ALTER TABLE "public"."demo_template_data" ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "deny all" ON "public"."base_share_tasks" USING (false) WITH CHECK (false);
 
+
+--
+-- Name: device_connect_codes; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."device_connect_codes" ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: device_presence; Type: ROW SECURITY; Schema: public; Owner: -
@@ -13339,6 +13522,13 @@ CREATE POLICY "mgr_update" ON "public"."market_game_ratings" FOR UPDATE USING ((
 --
 
 CREATE POLICY "owner can manage" ON "public"."shared_devices" USING (("owner_id" = "auth"."uid"()));
+
+
+--
+-- Name: device_connect_codes owner can manage device_connect_codes; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "owner can manage device_connect_codes" ON "public"."device_connect_codes" USING (("owner_id" = "auth"."uid"()));
 
 
 --
@@ -13981,5 +14171,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 8DiFvOUx0i1UPgaewlmtycGbjwfeNkpB2pvzQpwFsQxag0O5beGiVLH7PceEnA9
+\unrestrict Jt5oAVzrKO8Y41HJqcwyxKW0myx5CdxVoHekC9wb3CtwyAxSF8DehRRKrO70nBd
 
