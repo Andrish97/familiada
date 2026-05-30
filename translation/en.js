@@ -1651,80 +1651,77 @@ const en = {
         whether that user exists. If not, a message is shown.
         For email, invitations can also be sent to non-registered people as an email message.
       </p>`,
-      logo: `<p class="m-p">
-      The system lets you set your own logo that appears on the display
-      (during the start or end of the game). You can access the logo creator from the top bar of the “My games” page
-        using the <span class="m-code">Logo🖥️</span> button.
-    </p>
+      logo: `<p class=”m-p”>
+        The system lets you set your own logo that appears on the display
+        (during the start or end of the game). You can access the logo creator from the top bar of the “My games” page
+        using the <span class=”m-code”>Logo 🖥️</span> button.
+      </p>
 
-    <div class="m-note">
-      <b>Important:</b><br/>
-      The logo has a technical size of <span class="m-code">30×10</span> (character tiles) or <span class="m-code">150×70</span> (pixels).
-      This limitation comes from the physical layout of the board and ensures readability live.
-    </div>
+      <div class=”m-note”>
+        <b>Important:</b><br/>
+        The logo has a technical size of <span class=”m-code”>30×10</span> (character tiles) or <span class=”m-code”>150×70</span> (pixels).
+        This limitation comes from the physical layout of the board and ensures readability live.
+      </div>
 
-    <h3 class="m-h2">Logo creation modes</h3>
+      <h3 class=”m-h2”>Creating and editing a logo</h3>
 
-    <p class="m-p">
-      When creating a new logo you choose one of the modes.
-      Each mode leads to the same result (a logo on the display),
-      but differs in how it is created.
-    </p>
+      <p class=”m-p”>
+        You create a new logo by clicking the tile with the “＋” symbol. You can save the logo under your own name. After creating it, to start editing, select the tile and click the <span class=”m-code”>Edit</span> button. The editor for that logo type will open. You can save your work and always come back to edit.
+      </p>
 
-    <ul class="m-ul">
-      <li>
-        <span class="m-strong">Text</span> — a classic logo made of characters (the "Familiada" style).
-        Good when you want a quick, readable title.
-      </li>
-      <li>
-        <span class="m-strong">Drawing</span> — draw by hand on a grid (like a simple graphics editor).
-        Good for icons and simple shapes.
-      </li>
-      <li>
-        <span class="m-strong">Image</span> — import an image and fit it to the board.
-        Good when you already have a ready logo, e.g. a company logo.
-      </li>
-    </ul>
+      <p class=”m-p”>
+        All logos you create will be available in the Control Panel, and you can choose which one to use in a given game.
+      </p>
 
-    <h3 class="m-h2">Display preview</h3>
+      <h3 class=”m-h3”>Logo creation modes</h3>
 
-    <p class="m-p">
-      In the editor you always see a preview “as on the board.”
-      This is important because what looks good in high resolution
-      may be unreadable when reduced to <span class="m-code">150×70</span>.
-    </p>
+      <p class=”m-p”>
+        When creating a new logo you choose one of the modes.
+        Each mode leads to the same result (a logo on the display),
+        but differs in how it is created.
+      </p>
 
-    <div class="m-note">
-      <b>Practical tip:</b><br/>
-      Thick shapes, large letters, and high contrast work best.
-      Thin lines, small details, and subtle gradients usually disappear.
-    </div>
+      <ul class=”m-ul”>
+        <li>
+          <span class=”m-strong”>Text</span> — a classic logo made of characters (the “Familiada” style).
+          Good when you want a quick, readable title.
+        </li>
+        <li>
+          <span class=”m-strong”>Drawing</span> — draw by hand on a grid (like a simple graphics editor).
+          Good for icons and simple shapes.
+        </li>
+        <li>
+          <span class=”m-strong”>Image</span> — import an image and fit it to the board.
+          Good when you already have a ready logo, e.g. a company logo.
+        </li>
+      </ul>
 
-    <h3 class="m-h2">Saving and active logo</h3>
+      <h3 class=”m-h3”>Display preview</h3>
 
-    <p class="m-p">
-      You can save a logo under your own name. In the logo list you can also set
-      which logo is <span class="m-strong">active</span>.
-      The active logo will be used by the display automatically.
-    </p>
+      <p class=”m-p”>
+        In the editor you always see a preview “as on the board.”
+        This is important because what looks good in high resolution
+        may be unreadable when reduced to <span class=”m-code”>150×70</span>.
+      </p>
 
-    <p class="m-p">
-      If you do not set any active logo, the system uses
-      the <span class="m-strong">default logo</span>.
-    </p>
+      <div class=”m-note”>
+        <b>Practical tip:</b><br/>
+        Thick shapes, large letters, and high contrast work best.
+        Thin lines, small details, and subtle gradients usually disappear.
+      </div>
 
-    <h3 class="m-h2">Logo import and export</h3>
+      <h3 class=”m-h3”>Logo import and export</h3>
 
-    <p class="m-p">
-      The editor allows exporting the active logo to a file and importing a logo from a file.
-      This lets you move logos between accounts or make backups.
-    </p>
+      <p class=”m-p”>
+        The editor allows exporting the active logo to a file and importing a logo from a file.
+        This lets you move logos between accounts or make backups.
+      </p>
 
-    <div class="m-warn">
-      <b>Warning:</b><br/>
-      Do not edit logo files manually. This is a technical format — manual changes may cause
-      the import to fail or the logo to work incorrectly.
-    </div>`,
+      <div class=”m-warn”>
+        <b>Warning:</b><br/>
+        Do not edit logo files manually. This is a technical format — manual changes may cause
+        the import to fail or the logo to work incorrectly.
+      </div>`,
       connect: `<p class="m-p">
         <span class="m-strong">Connect device</span> is the panel where you can quickly connect to a device needed for the game:
         <span class="m-strong">Display</span>, <span class="m-strong">Buzzer</span>, or <span class="m-strong">Host</span>.
@@ -1926,54 +1923,61 @@ const en = {
         When devices are online, you move on to game settings.
       </p>
     
-      <h3 class="m-h3">Team names</h3>
-    
-      <p class="m-p">
+      <h3 class=”m-h3”>Team names</h3>
+
+      <p class=”m-p”>
         You set the names of Team A and Team B.
-        These are the labels seen by players and the audience on the display,
-        so it’s best to decide them before the rounds begin.
-        The panel blocks moving forward until both names are entered.
+        These are the labels seen by players and the audience on the display. The panel blocks moving forward until both names are entered.
       </p>
 
-      <p class="m-p">
-        Here you can also set team colors, which will be used on all devices
-        and update immediately, as well as the board background color.
+      <h3 class=”m-h3”>Appearance</h3>
+
+      <ul class=”m-ul”>
+        <li>
+          <span class=”m-strong”>Colors</span> — here you set team colors, which will be used on all devices and update immediately, as well as the board background color.
+        </li>
+        <li>
+          <span class=”m-strong”>Logo</span> — if you have created any logos, you will see them here. You can choose one for this game or leave the default.
+        </li>
+      </ul>
+
+      <h3 class=”m-h3”>Question settings and gameplay</h3>
+
+      <p class=”m-p”>
+        Here you choose whether the game will have a final and whether you want to manually select or randomly draw questions for the final and for the rounds. If you check <span class=”m-strong”>Select</span>, the next two steps will ask you to choose them.
       </p>
 
-      <h3 class="m-h3">Question settings</h3>
-
-      <p class="m-p">
-        Here you choose whether the game will have a final and whether you want
-        to manually select or randomly draw questions for the final and for the rounds.
-      </p>
-    
-      <h3 class="m-h3">Additional settings (important for the operator)</h3>
-    
-      <p class="m-p">
+      <p class=”m-p”>
         In “Additional settings” you tailor the game to the episode format.
         These options do not change the rules’ meaning, only the pace and thresholds.
       </p>
-    
-      <ul class="m-ul">
+
+      <ul class=”m-ul”>
         <li>
-          <span class="m-strong">Round multipliers</span> — entered comma-separated (e.g. <span class="m-code">1,1,1,2,3</span>).
+          <span class=”m-strong”>Round multipliers</span> — entered comma-separated (e.g. <span class=”m-code”>1,1,1,2,3</span>).
           This matches the classic doubling/tripling values in later stages.
           In practice: the round bank at the end is multiplied by the current round multiplier.
         </li>
         <li>
-          <span class="m-strong">Game target</span> — the point threshold after which the game can go to the final
+          <span class=”m-strong”>Game target</span> — the point threshold after which the game can go to the final
           (in the classic format often 300). This lets you adjust the game length.
         </li>
         <li>
-          <span class="m-strong">Final target</span> — the point threshold in the final (default 200 in the classic format).
+          <span class=”m-strong”>Final target</span> — the point threshold in the final (default 200 in the classic format).
         </li>
         <li>
-          <span class="m-strong">Game ending</span> — what the display shows at the end
-          (logo / points / final prize). This is production-important: the “last frame.”
+          <span class=”m-strong”>Game ending</span> — what the display shows at the end
+          (logo / points / prize after the final). This is production-important: the “last frame.”
+        </li>
+        <li>
+          <span class=”m-strong”>Prize multiplier (after final)</span> — by default, if we want to play for a prize like in the classic Familiada, after the final the prize equals points earned during the game ×3.
+        </li>
+        <li>
+          <span class=”m-strong”>Main prize amount</span> — if in the final the team reached the threshold (default 200 points), the main prize amount is added to the final prize, default 25000.
         </li>
       </ul>
-    
-      <div class="m-note">
+
+      <div class=”m-note”>
         <b>Why is this in the Control Panel and not in the editor?</b><br/>
         Because these are episode (production) settings, not question content.
         Questions shouldn’t change during the game, but game parameters sometimes do.
