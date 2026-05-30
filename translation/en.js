@@ -1726,15 +1726,32 @@ const en = {
       the import to fail or the logo to work incorrectly.
     </div>`,
       connect: `<p class="m-p">
-        <span class="m-strong">Connect device</span> is a panel where you can quickly connect to a device needed for the game:
-        <span class="m-strong">Display</span>, <span class="m-strong">Buzzer</span>, or <span class="m-strong">Host</span>
-        using the <span class="m-code">Connect device 🎮</span> button.
+        <span class="m-strong">Connect device</span> is the panel where you can quickly connect to a device needed for the game:
+        <span class="m-strong">Display</span>, <span class="m-strong">Buzzer</span>, or <span class="m-strong">Host</span>.
+        Available without login — all you need is the 6-digit code from the operator panel.
       </p>
+
+      <h3 class="m-h2">Enter device code</h3>
+
+      <p class="m-p">
+        The easiest way to connect. The operator sees a <span class="m-strong">6-digit code</span>
+        next to each device (Display, Host, Buzzer) in the control panel.
+        Enter the code and click <span class="m-code">Connect</span> — you'll see a device preview and after confirming
+        you'll be redirected to the device.
+      </p>
+
+      <div class="m-note">
+        <b>How to use the code?</b><br/>
+        1. The operator opens the control panel and sees the codes next to each device.<br/>
+        2. Go to <span class="m-code">familiada.online</span> (or open the app).<br/>
+        3. Click the <span class="m-code">Connect device 📱</span> button in the top bar.<br/>
+        4. Enter the 6-digit code and press <span class="m-code">Connect</span>.
+      </div>
 
       <h3 class="m-h2">Devices shared with me</h3>
 
       <p class="m-p">
-        Here you see devices that have been shared with you by other users.
+        Here you see devices that other users have shared with you (only available for logged-in users).
         Clicking on one will connect you to it — you'll be redirected to the device page.
       </p>
 
@@ -1755,7 +1772,7 @@ const en = {
       <div class="m-note">
         <b>Tip:</b><br/>
         For the best experience with Buzzer and Host, we recommend installing the Familiada.online web app.
-        On your phone, log in to your account, go to <span class="m-strong">My games</span> and click the download button — you'll get instructions on how to download it.
+        On your phone go to <span class="m-strong">My games</span> and click the download button — you'll get instructions on how to install it.
       </div>`,
       control: `<p class="m-p">
         You reach the Control Panel from the “My games” list
@@ -1837,17 +1854,17 @@ const en = {
       <h3 class="m-h3">Step 1: Display</h3>
     
       <p class="m-p">
-        In this step the panel shows a QR code and link for the display.
+        In this step the panel shows a <span class="m-strong">6-digit code</span> and QR code for the display.
         It’s best to open the display on a TV or projector,
         in full-screen mode (no browser bars).
         Only when the display is online will the panel allow you to proceed.
       </p>
-    
+
       <h3 class="m-h3">Step 2: Host and buzzer</h3>
-    
+
       <p class="m-p">
         In the second step you connect the host device and the buzzer device.
-        The panel also shows a QR/link for connection.
+        The panel shows a 6-digit code and QR code for each.
         In practice it’s best to use two separate phones or a phone and a tablet.
       </p>
     
