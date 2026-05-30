@@ -1379,11 +1379,11 @@ async function sendZeroStatesToDevices() {
     // Aktualizuj etykiety
     if (btnHost) {
       btnHost.textContent = hostOn ? t("control.qrHide") : t("control.qrOnDisplay");
-      btnHost.disabled = !displayOnline || !buzzerOnline;
+      btnHost.disabled = !displayOnline;
     }
     if (btnBuzzer) {
       btnBuzzer.textContent = buzzerOn ? t("control.qrHide") : t("control.qrOnDisplay");
-      btnBuzzer.disabled = !displayOnline || !buzzerOnline;
+      btnBuzzer.disabled = !displayOnline;
     }
   }
 
