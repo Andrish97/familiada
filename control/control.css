@@ -2000,8 +2000,16 @@
   font-size: 15px;
   letter-spacing: .04em;
   display: flex;
-  align-items: center;
-  gap: 6px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.device-name-sub {
+  font-size: .7rem;
+  font-weight: 400;
+  opacity: .45;
+  letter-spacing: .03em;
 }
 
 /* =========================================================
