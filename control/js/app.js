@@ -347,18 +347,23 @@ async function main() {
     ];
     for (const cfg of cfgs) {
       try {
-        const { data } = await sb().rpc("generate_device_connect_code", {
+        const { data, error } = await sb().rpc("generate_device_connect_code", {
           p_game_id:     game.id,
           p_device_type: cfg.type,
           p_share_key:   cfg.shareKey || "",
           p_game_name:   game.name || null,
         });
+        if (error) { console.error("[initDeviceCodes] RPC error", cfg.type, error); continue; }
         if (data?.ok && data?.code) {
           _deviceCodes[cfg.type] = data.code;
           const el = document.getElementById(cfg.valId);
           if (el) el.textContent = data.code;
+        } else {
+          console.warn("[initDeviceCodes] RPC returned not-ok", cfg.type, data);
         }
-      } catch {}
+      } catch (e) {
+        console.error("[initDeviceCodes] exception", cfg.type, e);
+      }
     }
   }
 
