@@ -1479,18 +1479,20 @@ async function sendZeroStatesToDevices() {
   }
 
   ui.on("devices.physicalBuzzer", async (checked) => {
+    const wasShowingBuzzer = !!store.state.flags.qrBuzzerOnDisplay;
     store.setPhysicalBuzzer(checked);
-    if (checked) store.setQrBuzzerOnDisplay(false);
-    if (store.state.flags.qrHostOnDisplay || store.state.flags.qrBuzzerOnDisplay) {
+    if (checked && wasShowingBuzzer) {
+      store.setQrBuzzerOnDisplay(false);
       await syncQrDisplay();
     }
     updateQrOnDisplayButtons();
   });
 
   ui.on("devices.noHostTablet", async (checked) => {
+    const wasShowingHost = !!store.state.flags.qrHostOnDisplay;
     store.setNoHostTablet(checked);
-    if (checked) store.setQrHostOnDisplay(false);
-    if (store.state.flags.qrHostOnDisplay || store.state.flags.qrBuzzerOnDisplay) {
+    if (checked && wasShowingHost) {
+      store.setQrHostOnDisplay(false);
       await syncQrDisplay();
     }
     updateQrOnDisplayButtons();
