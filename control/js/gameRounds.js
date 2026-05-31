@@ -717,6 +717,10 @@ function hostUpdate() {
       ui.setEnabled("btnBuzzAcceptA", true);
       ui.setEnabled("btnBuzzAcceptB", true);
       ui.setEnabled("btnBuzzRetry", false);
+      const btnA = document.getElementById("btnBuzzAcceptA");
+      const btnB = document.getElementById("btnBuzzAcceptB");
+      if (btnA) btnA.textContent = teamName("A");
+      if (btnB) btnB.textContent = teamName("B");
       const retryBtn = document.getElementById("btnBuzzRetry");
       if (retryBtn) retryBtn.textContent = t("control.roundsBuzzConfirm");
     } else {
@@ -757,7 +761,9 @@ function hostUpdate() {
     const btnB = document.getElementById("btnBuzzAcceptB");
     if (btnA) btnA.classList.remove("buzz-selected");
     if (btnB) btnB.classList.remove("buzz-selected");
-    // Przywróć label retry
+    // Przywróć oryginalne etykiety przycisków
+    if (btnA) btnA.setAttribute("data-i18n", "control.roundsBuzzAcceptA");
+    if (btnB) btnB.setAttribute("data-i18n", "control.roundsBuzzAcceptB");
     const retryBtn = document.getElementById("btnBuzzRetry");
     if (retryBtn) retryBtn.setAttribute("data-i18n", "control.roundsBuzzRetry");
     acceptBuzz(team); // bez dźwięku — acceptBuzz nie gra dźwięku
@@ -785,6 +791,12 @@ function hostUpdate() {
       ui.setEnabled("btnBuzzAcceptA", true);
       ui.setEnabled("btnBuzzAcceptB", true);
       ui.setEnabled("btnBuzzRetry", false);
+      const btnA = document.getElementById("btnBuzzAcceptA");
+      const btnB = document.getElementById("btnBuzzAcceptB");
+      if (btnA) btnA.textContent = teamName("A");
+      if (btnB) btnB.textContent = teamName("B");
+      const retryBtn2 = document.getElementById("btnBuzzRetry");
+      if (retryBtn2) retryBtn2.textContent = t("control.roundsBuzzConfirm");
     } else {
       setDuelMsg(ROUNDS_MSG.DUEL_RETRY);
       ui.setEnabled("btnBuzzAcceptA", false);

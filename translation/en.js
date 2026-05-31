@@ -4918,7 +4918,7 @@ const en = {
     roundsBuzzAcceptB: "Accept B",
     roundsBuzzRetry: "Retry",
     roundsBuzzConfirm: "Confirm",
-    roundsDuelHintPhysical: "Select the team that pressed the buzzer first, then confirm.",
+    roundsDuelHintPhysical: "Watch who pressed the buzzer first. Click the team, then click Confirm.",
     physicalBuzzer: "Physical buzzer",
     physicalBuzzerHint: "Use this option if you have a physical buzzer button. The operator decides who pressed first based on observation.",
     noHostTablet: "No host tablet",

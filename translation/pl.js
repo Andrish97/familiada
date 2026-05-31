@@ -4297,7 +4297,7 @@ const pl = {
     roundsBuzzAcceptB: "Zatwierdź drużynę B",
     roundsBuzzRetry: "Ponów naciśnięcie",
     roundsBuzzConfirm: "Zatwierdź",
-    roundsDuelHintPhysical: "Wybierz drużynę, która nacisnęła przycisk jako pierwsza, następnie zatwierdź.",
+    roundsDuelHintPhysical: "Obserwuj kto nacisnął przycisk jako pierwszy. Kliknij drużynę, a następnie kliknij Zatwierdź.",
     physicalBuzzer: "Fizyczny przycisk",
     physicalBuzzerHint: "Jeśli posiadasz fizyczny przycisk typu buzzer użyj tej opcji. Operator decyduje o tym kto nacisnął pierwszy na podstawie obserwacji.",
     noHostTablet: "Nie używaj tabletu prowadzącego",
