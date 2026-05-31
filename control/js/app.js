@@ -1378,22 +1378,23 @@ async function sendZeroStatesToDevices() {
 
   // ===== Helper: aktualizacja etykiet przycisków "QR na wyświetlaczu" =====
   function updateQrOnDisplayButtons() {
-    const hostOn = !!store.state.flags.qrHostOnDisplay;
-    const buzzerOn = !!store.state.flags.qrBuzzerOnDisplay;
-    const displayOnline = !!store.state.flags.displayOnline;
-    const buzzerOnline = !!store.state.flags.buzzerOnline;
+    const f = store.state.flags;
+    const hostOn    = !!f.qrHostOnDisplay;
+    const buzzerOn  = !!f.qrBuzzerOnDisplay;
+    const displayOk = !!f.displayOnline;
 
-    const btnHost = document.getElementById("btnQrHostOnDisplay");
+    const btnHost   = document.getElementById("btnQrHostOnDisplay");
     const btnBuzzer = document.getElementById("btnQrBuzzerOnDisplay");
 
-    // Aktualizuj etykiety
     if (btnHost) {
-      btnHost.textContent = hostOn ? t("control.qrHide") : t("control.qrOnDisplay");
-      btnHost.disabled = !displayOnline;
+      btnHost.style.display = f.noHostTablet ? "none" : "";
+      btnHost.textContent   = hostOn ? t("control.qrHide") : t("control.qrOnDisplay");
+      btnHost.disabled      = !displayOk;
     }
     if (btnBuzzer) {
-      btnBuzzer.textContent = buzzerOn ? t("control.qrHide") : t("control.qrOnDisplay");
-      btnBuzzer.disabled = !displayOnline;
+      btnBuzzer.style.display = f.physicalBuzzer ? "none" : "";
+      btnBuzzer.textContent   = buzzerOn ? t("control.qrHide") : t("control.qrOnDisplay");
+      btnBuzzer.disabled      = !displayOk;
     }
   }
 
@@ -1457,65 +1458,63 @@ async function sendZeroStatesToDevices() {
     await devices.sendDisplayCmd("APP BLACK");
   });
 
-  ui.on("devices.physicalBuzzer", (checked) => {
-    store.setPhysicalBuzzer(checked);
-  });
+  // Wysyła właściwą komendę QR lub BLACK na podstawie qrHostOnDisplay + qrBuzzerOnDisplay + opt-out
+  async function syncQrDisplay() {
+    const f = store.state.flags;
+    const wantHost   = !!f.qrHostOnDisplay   && !f.noHostTablet;
+    const wantBuzzer = !!f.qrBuzzerOnDisplay  && !f.physicalBuzzer;
 
-  ui.on("devices.noHostTablet", (checked) => {
-    store.setNoHostTablet(checked);
-  });
-
-  // QR na wyświetlaczu - globalny (stary przycisk)
-  ui.on("qr.toggle", async () => {
-    const now = store.state.flags.qrOnDisplay;
-
-    if (!now) {
-      await devices.sendQrToDisplay(_deviceCodes, store.state.flags);
-      store.setQrOnDisplay(true);
-      ui.setQrToggleLabel(true, store.state.flags.displayOnline && store.state.flags.buzzerOnline);
-    } else {
-      await devices.sendDisplayCmd("APP BLACK");
-      store.setQrOnDisplay(false);
-      ui.setQrToggleLabel(false, store.state.flags.displayOnline && store.state.flags.buzzerOnline);
-    }
-  });
-
-  // QR na wyświetlaczu - prowadzący (sparowany z buzzerem)
-  ui.on("qr.host.toggle", async () => {
-    const now = store.state.flags.qrHostOnDisplay || false;
-    const buzzerNow = store.state.flags.qrBuzzerOnDisplay || false;
-
-    // Wysyłamy komendę QR na wyświetlacz (host + buzzer)
-    if (!now) {
-      await devices.sendQrToDisplay(_deviceCodes, store.state.flags);
-      store.setQrHostOnDisplay(true);
-      store.setQrBuzzerOnDisplay(true);
-    } else {
-      // Jeśli wyłączamy, wysyłamy czarny ekran
-      await devices.sendDisplayCmd("APP BLACK");
+    if (!wantHost && !wantBuzzer) {
       store.setQrHostOnDisplay(false);
       store.setQrBuzzerOnDisplay(false);
+      await devices.sendDisplayCmd("APP BLACK").catch(() => {});
+      return;
     }
 
-    // Aktualizuj etykiety przycisków
+    // Przekaż syntetyczne flagi: opt-out = odwrotność tego co chcemy pokazać
+    const syntheticFlags = { ...f, noHostTablet: !wantHost, physicalBuzzer: !wantBuzzer };
+    await devices.sendDisplayCmd("APP QR").catch(() => {});
+    await devices.sendQrLinksToDisplay(_deviceCodes, syntheticFlags).catch(() => {});
     updateQrOnDisplayButtons();
+  }
+
+  ui.on("devices.physicalBuzzer", async (checked) => {
+    store.setPhysicalBuzzer(checked);
+    if (checked) store.setQrBuzzerOnDisplay(false);
+    if (store.state.flags.qrHostOnDisplay || store.state.flags.qrBuzzerOnDisplay) {
+      await syncQrDisplay();
+    }
+    updateQrOnDisplayButtons();
+  });
+
+  ui.on("devices.noHostTablet", async (checked) => {
+    store.setNoHostTablet(checked);
+    if (checked) store.setQrHostOnDisplay(false);
+    if (store.state.flags.qrHostOnDisplay || store.state.flags.qrBuzzerOnDisplay) {
+      await syncQrDisplay();
+    }
+    updateQrOnDisplayButtons();
+  });
+
+  // Globalny przycisk "Schowaj QR" — chowa wszystko
+  ui.on("qr.toggle", async () => {
+    store.setQrHostOnDisplay(false);
+    store.setQrBuzzerOnDisplay(false);
+    store.setQrOnDisplay(false);
+    await devices.sendDisplayCmd("APP BLACK").catch(() => {});
+    updateQrOnDisplayButtons();
+  });
+
+  ui.on("qr.host.toggle", async () => {
+    const now = !!store.state.flags.qrHostOnDisplay;
+    store.setQrHostOnDisplay(!now);
+    await syncQrDisplay();
   });
 
   ui.on("qr.buzzer.toggle", async () => {
-    // Sparowane z hostem - ta sama logika
-    const now = store.state.flags.qrBuzzerOnDisplay || false;
-
-    if (!now) {
-      await devices.sendQrToDisplay(_deviceCodes, store.state.flags);
-      store.setQrHostOnDisplay(true);
-      store.setQrBuzzerOnDisplay(true);
-    } else {
-      await devices.sendDisplayCmd("APP BLACK");
-      store.setQrHostOnDisplay(false);
-      store.setQrBuzzerOnDisplay(false);
-    }
-
-    updateQrOnDisplayButtons();
+    const now = !!store.state.flags.qrBuzzerOnDisplay;
+    store.setQrBuzzerOnDisplay(!now);
+    await syncQrDisplay();
   });
 
   // Obsługa przycisków QR dla każdego urządzenia (otwierają modal)

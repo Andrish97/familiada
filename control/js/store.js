@@ -79,6 +79,8 @@ export function createStore(gameId) {
         physicalBuzzer: false,
         noHostTablet: false,
         qrOnDisplay: false,
+        qrHostOnDisplay: false,
+        qrBuzzerOnDisplay: false,
       },
   
       rounds: {
