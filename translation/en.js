@@ -1901,14 +1901,43 @@ const en = {
         and click the download button for installation instructions.
       </div>
 
+      <h3 class=”m-h3”>Mode without host tablet</h3>
+
+      <p class=”m-p”>
+        If the host is not using a separate device (phone/tablet), check the option
+        <span class=”m-strong”>”Don't use host tablet”</span> next to the Host device.
+        Once checked: the host device buttons and connection code are grayed out,
+        the host device is not required to proceed,
+        and the host status dot in the top bar becomes inactive.
+        The operator can run the game entirely from the control panel.
+      </p>
+
+      <h3 class=”m-h3”>Physical buzzer</h3>
+
+      <p class=”m-p”>
+        If you use a physical buzzer instead of the browser-based button,
+        check the option <span class=”m-strong”>”Physical buzzer”</span> next to the Buzzer device.
+        Once checked: the buzzer device is not required,
+        and the duel flow changes — the operator decides who pressed first.
+      </p>
+
+      <p class=”m-p”>Physical buzzer duel flow:</p>
+
+      <ol class=”m-ul”>
+        <li>After starting a duel, two buttons appear: <span class=”m-code”>Team A</span> and <span class=”m-code”>Team B</span>.</li>
+        <li>The operator clicks the team that pressed the physical buzzer first — the button highlights.</li>
+        <li>The operator clicks <span class=”m-code”>Confirm</span> to confirm the selection and proceed.</li>
+        <li>To restart the duel, use <span class=”m-code”>Retry</span> as usual.</li>
+      </ol>
+
       <div class=”m-warn”>
         <b>Warning:</b><br/>
         If any device disconnects during the game, the panel can show a warning.
         Most often it helps to disable battery saving, avoid minimizing the browser,
         and keep devices on one stable Wi-Fi network.
       </div>
-    
-      <h3 class="m-h3">Step 3: Sound</h3>
+
+      <h3 class=”m-h3”>Step 3: Sound</h3>
     
       <p class="m-p">
         Browsers block automatic sound playback

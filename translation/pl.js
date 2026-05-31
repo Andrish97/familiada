@@ -1899,6 +1899,38 @@ const pl = {
         kliknij przycisk pobierania, aby uzyskać wskazówki.
       </div>
 
+      <h3 class="m-h3">Tryb bez tabletu prowadzącego</h3>
+
+      <p class="m-p">
+        Jeśli prowadzący nie korzysta z osobnego urządzenia (telefonu/tabletu), zaznacz opcję
+        <span class="m-strong">„Nie używaj tabletu prowadzącego"</span> przy urządzeniu Prowadzący.
+        Po zaznaczeniu: przyciski i kod połączenia dla prowadzącego są wyszarzone,
+        podpięcie urządzenia prowadzącego nie jest wymagane do przejścia dalej,
+        a dot statusu prowadzącego w górnym pasku staje się nieaktywny.
+        Operator może samodzielnie prowadzić rozgrywkę z panelu sterowania.
+      </p>
+
+      <h3 class="m-h3">Fizyczny przycisk (buzzer)</h3>
+
+      <p class="m-p">
+        Jeśli zamiast wirtualnego przycisku w przeglądarce używasz fizycznego buzzera
+        (np. sprzętowego przycisku podłączonego inną ścieżką), zaznacz opcję
+        <span class="m-strong">„Fizyczny przycisk"</span> przy urządzeniu Przycisk.
+        Po zaznaczeniu: podpięcie urządzenia przycisku nie jest wymagane,
+        a przebieg pojedynku zmienia się — operator sam decyduje, kto nacisnął pierwszy.
+      </p>
+
+      <p class="m-p">
+        W trybie fizycznego przycisku przebieg pojedynku wygląda tak:
+      </p>
+
+      <ol class="m-ul">
+        <li>Po uruchomieniu pojedynku pojawiają się dwa przyciski: <span class="m-code">Drużyna A</span> i <span class="m-code">Drużyna B</span>.</li>
+        <li>Operator klika drużynę, która nacisnęła fizyczny przycisk jako pierwsza — przycisk się podświetla.</li>
+        <li>Operator klika <span class="m-code">Zatwierdź</span>, aby potwierdzić wybór i przejść dalej.</li>
+        <li>Jeśli trzeba powtórzyć pojedynek, używa przycisku <span class="m-code">Ponów</span> jak normalnie.</li>
+      </ol>
+
       <div class="m-warn">
         <b>Uwaga:</b><br/>
         Jeśli któreś urządzenie rozłączy się w trakcie, panel potrafi pokazać ostrzeżenie.
