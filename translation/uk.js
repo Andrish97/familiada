@@ -477,10 +477,6 @@ const uk = {
     qrHostAlt: "QR Ведучий",
     qrBuzzerAlt: "QR Кнопки",
     sumLabel: "СУМА",
-    theme: {
-      classic: "Класична",
-      modern: "Сучасна",
-    },
   },
   host: {
     title: "Familiada — ведучий",

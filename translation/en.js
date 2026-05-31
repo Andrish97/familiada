@@ -477,10 +477,6 @@ const en = {
     qrHostAlt: "QR Host",
     qrBuzzerAlt: "QR Buzzer",
     sumLabel: "SUM",
-    theme: {
-      classic: "Classic",
-      modern: "Modern",
-    },
   },
   host: {
     title: "Familiada — host",

@@ -477,10 +477,6 @@ const pl = {
     qrHostAlt: "QR Prowadzący",
     qrBuzzerAlt: "QR Przyciski",
     sumLabel: "SUMA",
-    theme: {
-      classic: "Klasyczny",
-      modern: "Nowoczesny",
-    },
   },
   host: {
     title: "Familiada — prowadzący",

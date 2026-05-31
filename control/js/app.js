@@ -210,7 +210,13 @@ async function main() {
       const res = await fetch("./display/js/themes.json");
       const json = await res.json();
       activeTheme = json.default || "classic";
-      themeList = json.themes.map(e => ({ key: e.key, label: t(e.label) }));
+      themeList = json.themes.map(e => {
+        const lang = document.documentElement.lang || "pl";
+        const label = typeof e.label === "object"
+          ? (e.label[lang] ?? e.label["en"] ?? e.key)
+          : t(e.label);
+        return { key: e.key, label };
+      });
       ui.setThemeOptions?.(themeList);
       ui.setActiveTheme?.(activeTheme);
     } catch (e) {
@@ -1139,7 +1145,12 @@ async function sendZeroStatesToDevices() {
     if (themeList.length) {
       const res = await fetch("./display/js/themes.json").then(r => r.json()).catch(() => null);
       if (res) {
-        themeList = res.themes.map(e => ({ key: e.key, label: t(e.label) }));
+        themeList = res.themes.map(e => {
+          const label = typeof e.label === "object"
+            ? (e.label[nextLang] ?? e.label["en"] ?? e.key)
+            : t(e.label);
+          return { key: e.key, label };
+        });
         ui.setThemeOptions?.(themeList);
         if (activeTheme) ui.setActiveTheme?.(activeTheme);
       }
