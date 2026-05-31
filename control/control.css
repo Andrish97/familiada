@@ -1975,19 +1975,41 @@
 }
 
 
+.device-row-opt {
+  border-top: 1px solid rgba(255,255,255,.1);
+  margin-top: 6px;
+  padding-top: 8px;
+}
+
 .device-opt-check {
-  margin-left: auto;
   display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: .78rem;
-  opacity: .7;
+  align-items: flex-start;
+  gap: 8px;
   cursor: pointer;
-  white-space: nowrap;
   user-select: none;
 }
-.device-opt-check:hover { opacity: 1; }
-.device-opt-check input[type="checkbox"] { accent-color: #ffeaa6; cursor: pointer; }
+.device-opt-check input[type="checkbox"] {
+  accent-color: #ffeaa6;
+  cursor: pointer;
+  margin-top: 2px;
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+}
+.device-opt-check-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.device-opt-check-label {
+  font-size: .82rem;
+  color: #eee;
+}
+.device-opt-check-hint {
+  font-size: .72rem;
+  color: rgba(255,255,255,.45);
+  line-height: 1.3;
+}
 
 .device-row-2 {
   display: flex;
@@ -1998,7 +2020,7 @@
 
 /* W trybie opt-out wyszarzone przyciski i kod */
 .device-row[data-opted-out] .device-row-2 { opacity: .35; pointer-events: none; }
-.device-row[data-opted-out] .device-opt-check { opacity: 1; }
+.device-row[data-opted-out] .device-row-opt { opacity: 1; }
 
 /* Zaznaczony przycisk drużyny w trybie fizycznym */
 .buzz-selected { background: rgba(255,234,166,.25) !important; border-color: #ffeaa6 !important; }

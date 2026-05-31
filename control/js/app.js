@@ -2187,10 +2187,24 @@ async function sendZeroStatesToDevices() {
   );
 }
 
+function showGlobalError(msg) {
+  const bar = document.getElementById("alertBar");
+  const txt = document.getElementById("alertTxt");
+  if (txt) txt.textContent = msg;
+  bar?.classList.remove("hidden");
+}
+
+window.addEventListener("unhandledrejection", (ev) => {
+  const msg = ev.reason?.message || String(ev.reason ?? "Nieznany błąd");
+  console.error("[unhandled]", msg);
+  showGlobalError(msg);
+});
+
 main().catch((e) => {
   console.error(e);
   const el = document.getElementById("msgSide");
   if (el) el.textContent = e?.message || String(e);
+  showGlobalError(e?.message || String(e));
   if (e?._notFound) {
     setTimeout(() => { location.href = "builder?tab=market"; }, 3000);
   }

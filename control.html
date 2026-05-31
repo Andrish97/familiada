@@ -310,16 +310,12 @@
 
                     <!-- Prowadzący 1 -->
                     <div class="device-row" data-device="host">
-                      <!-- Rząd 1: nazwa, badge status, checkbox -->
+                      <!-- Rząd 1: nazwa, badge status -->
                       <div class="device-row-1">
                         <div class="device-name">
                           <span data-i18n="control.deviceHost">Prowadzący</span>
                         </div>
                         <div class="badge mid" id="pillHost">—</div>
-                        <label class="device-opt-check" title="" data-i18n-title="control.noHostTabletHint">
-                          <input type="checkbox" id="chkNoHostTablet"/>
-                          <span data-i18n="control.noHostTablet">Nie używaj tabletu prowadzącego</span>
-                        </label>
                       </div>
                       <!-- Rząd 2: kod + przyciski -->
                       <div class="device-row-2">
@@ -334,6 +330,16 @@
                           <span class="badge" id="shareHostBadge" aria-hidden="true"></span>
                         </button>
                       </div>
+                      <!-- Rząd opt-out -->
+                      <div class="device-row-opt">
+                        <label class="device-opt-check">
+                          <input type="checkbox" id="chkNoHostTablet"/>
+                          <div class="device-opt-check-text">
+                            <span class="device-opt-check-label" data-i18n="control.noHostTablet">Nie używaj tabletu prowadzącego</span>
+                            <span class="device-opt-check-hint" data-i18n="control.noHostTabletHint">Jeśli prowadzący nie używa osobnego tabletu/telefonu, zaznacz tę opcję.</span>
+                          </div>
+                        </label>
+                      </div>
                     </div>
 
                     <!-- Prowadzący 2 (Buzzer) -->
@@ -342,10 +348,6 @@
                       <div class="device-row-1">
                         <div class="device-name" data-i18n="control.deviceBuzzer">Przycisk</div>
                         <div class="badge mid" id="pillBuzzer">—</div>
-                        <label class="device-opt-check" title="" data-i18n-title="control.physicalBuzzerHint">
-                          <input type="checkbox" id="chkPhysicalBuzzer"/>
-                          <span data-i18n="control.physicalBuzzer">Fizyczny przycisk</span>
-                        </label>
                       </div>
                       <!-- Rząd 2: kod + przyciski -->
                       <div class="device-row-2">
@@ -359,6 +361,16 @@
                           Udostępnij
                           <span class="badge" id="shareBuzzerBadge" aria-hidden="true"></span>
                         </button>
+                      </div>
+                      <!-- Rząd opt-out -->
+                      <div class="device-row-opt">
+                        <label class="device-opt-check">
+                          <input type="checkbox" id="chkPhysicalBuzzer"/>
+                          <div class="device-opt-check-text">
+                            <span class="device-opt-check-label" data-i18n="control.physicalBuzzer">Fizyczny przycisk</span>
+                            <span class="device-opt-check-hint" data-i18n="control.physicalBuzzerHint">Jeśli posiadasz fizyczny przycisk buzzer, zaznacz tę opcję.</span>
+                          </div>
+                        </label>
                       </div>
                     </div>
 
