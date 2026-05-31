@@ -1089,7 +1089,7 @@ async function sendZeroStatesToDevices() {
 
     finalPickerUpdateButtons();
     
-    // 1) ustaw na start minimalną, żeby nie było “0”
+    // 1) ustaw na start minimalną, żeby nie było "0"
     poolRoot.style.minHeight = "120px";
     finalRoot.style.minHeight = "120px";
     
@@ -1180,30 +1180,30 @@ async function sendZeroStatesToDevices() {
     const requiredOnline = displayReady && buzzerReady && hostReady;
 
     // Opt-out: wyszarz całą sekcję urządzenia
-    const buzzerRow = document.querySelector(“.device-row[data-device='buzzer']”);
-    const hostRow   = document.querySelector(“.device-row[data-device='host']”);
-    if (buzzerRow) buzzerRow.toggleAttribute(“data-opted-out”, physBuzzer);
-    if (hostRow)   hostRow.toggleAttribute(“data-opted-out”, noHostTablet);
+    const buzzerRow = document.querySelector(".device-row[data-device='buzzer']");
+    const hostRow   = document.querySelector(".device-row[data-device='host']");
+    if (buzzerRow) buzzerRow.toggleAttribute("data-opted-out", physBuzzer);
+    if (hostRow)   hostRow.toggleAttribute("data-opted-out", noHostTablet);
 
     // Topbar: wyszarz dot-row gdy opt-out
-    const dotBuzzerRow = document.getElementById(“dotBuzzerRow”);
-    const dotHostRow   = document.getElementById(“dotHostRow”);
-    if (dotBuzzerRow) dotBuzzerRow.style.pointerEvents = physBuzzer    ? “none” : “”;
-    if (dotHostRow)   dotHostRow.style.pointerEvents   = noHostTablet  ? “none” : “”;
+    const dotBuzzerRow = document.getElementById("dotBuzzerRow");
+    const dotHostRow   = document.getElementById("dotHostRow");
+    if (dotBuzzerRow) dotBuzzerRow.style.pointerEvents = physBuzzer    ? "none" : "";
+    if (dotHostRow)   dotHostRow.style.pointerEvents   = noHostTablet  ? "none" : "";
 
     // QR na wyświetlaczu tylko gdy wyświetlacz jest online
-    ui.setEnabled(“btnQrToggle”, displayReady);
+    ui.setEnabled("btnQrToggle", displayReady);
 
-    // Aktualizuj przyciski “QR na wyświetlaczu” dla hosta i buzzera
+    // Aktualizuj przyciski "QR na wyświetlaczu" dla hosta i buzzera
     updateQrOnDisplayButtons();
 
-    ui.setEnabled(“btnDispBlack”, displayReady);
+    ui.setEnabled("btnDispBlack", displayReady);
 
-    ui.setEnabled(“btnDevicesNext”, requiredOnline);
+    ui.setEnabled("btnDevicesNext", requiredOnline);
 
-    // krok 3: „Gotowe — przejdź dalej” po odblokowaniu audio
+    // krok 3: „Gotowe — przejdź dalej" po odblokowaniu audio
     ui.setEnabled(
-      “btnDevicesFinish”,
+      "btnDevicesFinish",
       requiredOnline && !!flags.audioUnlocked
     );
 
