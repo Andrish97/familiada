@@ -1135,6 +1135,15 @@ async function sendZeroStatesToDevices() {
   // Language change handler
   window.addEventListener("i18n:lang", async (event) => {
     const nextLang = event?.detail?.lang;
+    // Przelicz etykiety motywów po zmianie języka
+    if (themeList.length) {
+      const res = await fetch("./display/js/themes.json").then(r => r.json()).catch(() => null);
+      if (res) {
+        themeList = res.themes.map(e => ({ key: e.key, label: t(e.label) }));
+        ui.setThemeOptions?.(themeList);
+        if (activeTheme) ui.setActiveTheme?.(activeTheme);
+      }
+    }
     devices.updateLinksAndQr(nextLang);
     await Promise.all([
       devices.sendDisplayCmd(`LANG ${nextLang}`).catch(() => {}),
