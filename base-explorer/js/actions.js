@@ -12,11 +12,11 @@ import {
   setViewSearch,
   rememberBrowseLocation,
   restoreBrowseLocation,
-} from "./state.js?v=v2026-05-31T22031";
+} from "./state.js?v=v2026-05-31T22082";
 
-import { importGame } from "../../js/pages/builder-import-export.js?v=v2026-05-31T22031";
+import { importGame } from "../../js/pages/builder-import-export.js?v=v2026-05-31T22082";
 
-import { renderAll, renderToolbar, renderList, renderTree, renderTags } from "./render.js?v=v2026-05-31T22031";
+import { renderAll, renderToolbar, renderList, renderTree, renderTags } from "./render.js?v=v2026-05-31T22082";
 
 import {
   listQuestionsByCategory,
@@ -24,16 +24,16 @@ import {
   listCategories,
   listQuestionTags,
   listCategoryTags
-} from "./repo.js?v=v2026-05-31T22031";
+} from "./repo.js?v=v2026-05-31T22082";
 
-import { showContextMenu, hideContextMenu } from "./context-menu.js?v=v2026-05-31T22031";
-import { openTagsModal } from "./tags-modal.js?v=v2026-05-31T22031";
-import { initExportModal } from "./export-modal.js?v=v2026-05-31T22031";
-import { initQuestionModal } from "./question-modal.js?v=v2026-05-31T22031";
-import { sb } from "../../js/core/supabase.js?v=v2026-05-31T22031";
-import { alertModal, confirmModal } from "../../js/core/modal.js?v=v2026-05-31T22031";
-import { t } from "../../translation/translation.js?v=v2026-05-31T22031";
-import { addLongPress, addDoubleTap } from "./mobile.js?v=v2026-05-31T22031";
+import { showContextMenu, hideContextMenu } from "./context-menu.js?v=v2026-05-31T22082";
+import { openTagsModal } from "./tags-modal.js?v=v2026-05-31T22082";
+import { initExportModal } from "./export-modal.js?v=v2026-05-31T22082";
+import { initQuestionModal } from "./question-modal.js?v=v2026-05-31T22082";
+import { sb } from "../../js/core/supabase.js?v=v2026-05-31T22082";
+import { alertModal, confirmModal } from "../../js/core/modal.js?v=v2026-05-31T22082";
+import { t } from "../../translation/translation.js?v=v2026-05-31T22082";
+import { addLongPress, addDoubleTap } from "./mobile.js?v=v2026-05-31T22082";
 
 let exportModal = null;
 

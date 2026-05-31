@@ -4,12 +4,12 @@
     {
       "key": "classic",
       "label": "display.theme.classic",
-      "module": "./theme_classic.js?v=v2026-05-31T22031"
+      "module": "./theme_classic.js?v=v2026-05-31T22082"
     },
     {
       "key": "modern",
       "label": "display.theme.modern",
-      "module": "./theme_modern.js?v=v2026-05-31T22031"
+      "module": "./theme_modern.js?v=v2026-05-31T22082"
     }
   ]
 }
