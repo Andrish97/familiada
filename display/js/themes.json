@@ -6,7 +6,7 @@
       "label": {
         "pl": "Klasyczny",
         "en": "Classic",
-        "uk": "Класичний"
+        "uk": "Класична"
       },
       "module": "./theme_classic.js?v=v2026-05-31T22484"
     },
@@ -15,7 +15,7 @@
       "label": {
         "pl": "Nowoczesny",
         "en": "Modern",
-        "uk": "Сучасний"
+        "uk": "Сучасна"
       },
       "module": "./theme_modern.js?v=v2026-05-31T22484"
     }
