@@ -1188,8 +1188,8 @@ async function sendZeroStatesToDevices() {
     // Topbar: wyszarz dot-row gdy opt-out
     const dotBuzzerRow = document.getElementById("dotBuzzerRow");
     const dotHostRow   = document.getElementById("dotHostRow");
-    if (dotBuzzerRow) dotBuzzerRow.style.pointerEvents = physBuzzer    ? "none" : "";
-    if (dotHostRow)   dotHostRow.style.pointerEvents   = noHostTablet  ? "none" : "";
+    if (dotBuzzerRow) dotBuzzerRow.classList.toggle("opted-out", physBuzzer);
+    if (dotHostRow)   dotHostRow.classList.toggle("opted-out", noHostTablet);
 
     // QR na wyświetlaczu tylko gdy wyświetlacz jest online
     ui.setEnabled("btnQrToggle", displayReady);

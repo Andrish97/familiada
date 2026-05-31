@@ -926,6 +926,11 @@
     opacity: .85
 }
 
+.dotRow.opted-out {
+    opacity: .3;
+    pointer-events: none;
+}
+
 .dot,.qrBox img,.qrSlim img {
     border: 1px solid rgba(255,255,255,.18)
 }
@@ -1972,6 +1977,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  justify-content: space-between;
 }
 
 
