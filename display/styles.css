@@ -95,6 +95,11 @@ body {
     letter-spacing: .6px
 }
 
+.qr-single {
+    grid-template-columns: 1fr;
+    justify-items: center
+}
+
 .black-screen {
     position: fixed;
     inset: 0;

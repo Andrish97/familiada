@@ -310,13 +310,16 @@
 
                     <!-- Prowadzący 1 -->
                     <div class="device-row" data-device="host">
-                      <!-- Rząd 1: nazwa, badge status, badge opcjonalnie -->
+                      <!-- Rząd 1: nazwa, badge status, checkbox -->
                       <div class="device-row-1">
                         <div class="device-name">
                           <span data-i18n="control.deviceHost">Prowadzący</span>
-                          <span class="device-name-sub" data-i18n="control.optional">(opcjonalnie)</span>
                         </div>
                         <div class="badge mid" id="pillHost">—</div>
+                        <label class="device-opt-check" title="" data-i18n-title="control.noHostTabletHint">
+                          <input type="checkbox" id="chkNoHostTablet"/>
+                          <span data-i18n="control.noHostTablet">Nie używaj tabletu prowadzącego</span>
+                        </label>
                       </div>
                       <!-- Rząd 2: kod + przyciski -->
                       <div class="device-row-2">
@@ -339,6 +342,10 @@
                       <div class="device-row-1">
                         <div class="device-name" data-i18n="control.deviceBuzzer">Przycisk</div>
                         <div class="badge mid" id="pillBuzzer">—</div>
+                        <label class="device-opt-check" title="" data-i18n-title="control.physicalBuzzerHint">
+                          <input type="checkbox" id="chkPhysicalBuzzer"/>
+                          <span data-i18n="control.physicalBuzzer">Fizyczny przycisk</span>
+                        </label>
                       </div>
                       <!-- Rząd 2: kod + przyciski -->
                       <div class="device-row-2">

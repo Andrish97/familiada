@@ -35,6 +35,8 @@ window.addEventListener("DOMContentLoaded", async () => {
     const qr = createQRController({
       qrScreen,
       gameScreen,
+      hostCard: $("qrHostCard"),
+      buzzerCard: $("qrBuzzerCard"),
       hostImg: $("qrHostImg"),
       buzzerImg: $("qrBuzzerImg"),
       hostCodeEl: $("qrHostCode"),

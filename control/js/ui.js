@@ -626,6 +626,9 @@ export function createUI() {
     $("btnCopyHost")?.addEventListener("click", () => emit("devices.copyCode", "host"));
     $("btnCopyBuzzer")?.addEventListener("click", () => emit("devices.copyCode", "buzzer"));
 
+    $("chkPhysicalBuzzer")?.addEventListener("change", (e) => emit("devices.physicalBuzzer", e.target.checked));
+    $("chkNoHostTablet")?.addEventListener("change", (e) => emit("devices.noHostTablet", e.target.checked));
+
     $("btnDispBlack")?.addEventListener("click", () => emit("display.black"));
     $("btnQrToggle")?.addEventListener("click", () => emit("qr.toggle"));
 

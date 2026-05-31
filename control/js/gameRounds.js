@@ -706,20 +706,61 @@ function hostUpdate() {
     r.duel.firstTeam = null;
     r.duel.secondTeam = null;
     r.duel.currentTeam = null;
+    r.duel.physicalSelected = null;
     duelResetCycle();
 
-    setDuelMsg(ROUNDS_MSG.DUEL_WAIT);
-    ui.setRoundsHud(r, store.state.teams);
+    const phys = !!store.state.flags.physicalBuzzer;
 
-    ui.setEnabled("btnBuzzAcceptA", false);
-    ui.setEnabled("btnBuzzAcceptB", false);
-    ui.setEnabled("btnBuzzRetry", false);
+    if (phys) {
+      setDuelMsg(t("control.roundsDuelHintPhysical"));
+      ui.setRoundsHud(r, store.state.teams);
+      ui.setEnabled("btnBuzzAcceptA", true);
+      ui.setEnabled("btnBuzzAcceptB", true);
+      ui.setEnabled("btnBuzzRetry", false);
+      const retryBtn = document.getElementById("btnBuzzRetry");
+      if (retryBtn) retryBtn.textContent = t("control.roundsBuzzConfirm");
+    } else {
+      setDuelMsg(ROUNDS_MSG.DUEL_WAIT);
+      ui.setRoundsHud(r, store.state.teams);
+      ui.setEnabled("btnBuzzAcceptA", false);
+      ui.setEnabled("btnBuzzAcceptB", false);
+      ui.setEnabled("btnBuzzRetry", false);
+      const retryBtn = document.getElementById("btnBuzzRetry");
+      if (retryBtn) retryBtn.setAttribute("data-i18n", "control.roundsBuzzRetry");
+      devices.sendBuzzerCmd("ON").catch(() => {});
+    }
 
     updatePlayControls();
-
-    devices.sendBuzzerCmd("ON").catch(() => {});
-
     hostUpdate();
+  }
+
+  function physicalSelectTeam(team) {
+    ensureRoundsState();
+    const r = store.state.rounds;
+    if (!r.duel.enabled) return;
+    r.duel.physicalSelected = team;
+
+    const btnA = document.getElementById("btnBuzzAcceptA");
+    const btnB = document.getElementById("btnBuzzAcceptB");
+    if (btnA) btnA.classList.toggle("buzz-selected", team === "A");
+    if (btnB) btnB.classList.toggle("buzz-selected", team === "B");
+
+    ui.setEnabled("btnBuzzRetry", true);
+  }
+
+  function confirmPhysicalTeam() {
+    ensureRoundsState();
+    const r = store.state.rounds;
+    const team = r.duel.physicalSelected;
+    if (!team) return;
+    const btnA = document.getElementById("btnBuzzAcceptA");
+    const btnB = document.getElementById("btnBuzzAcceptB");
+    if (btnA) btnA.classList.remove("buzz-selected");
+    if (btnB) btnB.classList.remove("buzz-selected");
+    // Przywróć label retry
+    const retryBtn = document.getElementById("btnBuzzRetry");
+    if (retryBtn) retryBtn.setAttribute("data-i18n", "control.roundsBuzzRetry");
+    acceptBuzz(team); // bez dźwięku — acceptBuzz nie gra dźwięku
   }
 
   function retryDuel() {
@@ -730,19 +771,31 @@ function hostUpdate() {
     r.duel.firstTeam = null;
     r.duel.secondTeam = null;
     r.duel.currentTeam = null;
+    r.duel.physicalSelected = null;
     duelResetCycle();
 
-    setDuelMsg(ROUNDS_MSG.DUEL_RETRY);
+    const phys = !!store.state.flags.physicalBuzzer;
+    const btnA = document.getElementById("btnBuzzAcceptA");
+    const btnB = document.getElementById("btnBuzzAcceptB");
+    if (btnA) btnA.classList.remove("buzz-selected");
+    if (btnB) btnB.classList.remove("buzz-selected");
+
+    if (phys) {
+      setDuelMsg(t("control.roundsDuelHintPhysical"));
+      ui.setEnabled("btnBuzzAcceptA", true);
+      ui.setEnabled("btnBuzzAcceptB", true);
+      ui.setEnabled("btnBuzzRetry", false);
+    } else {
+      setDuelMsg(ROUNDS_MSG.DUEL_RETRY);
+      ui.setEnabled("btnBuzzAcceptA", false);
+      ui.setEnabled("btnBuzzAcceptB", false);
+      ui.setEnabled("btnBuzzRetry", false);
+      devices.sendBuzzerCmd("RESET").catch(() => {});
+      devices.sendBuzzerCmd("ON").catch(() => {});
+    }
+
     ui.setRoundsHud(r, store.state.teams);
-
-    ui.setEnabled("btnBuzzAcceptA", false);
-    ui.setEnabled("btnBuzzAcceptB", false);
-    ui.setEnabled("btnBuzzRetry", false);
-
     updatePlayControls();
-
-    devices.sendBuzzerCmd("RESET").catch(() => {});
-    devices.sendBuzzerCmd("ON").catch(() => {});
   }
 
   function duelRegisterResult(team, { pts, isX, isTop }) {
@@ -820,6 +873,7 @@ function hostUpdate() {
   }
 
   function handleBuzzerClick(team) {
+    if (store.state.flags.physicalBuzzer) return;
     ensureRoundsState();
     const r = store.state.rounds;
 
@@ -1512,6 +1566,8 @@ function hostUpdate() {
     enableBuzzerDuel,
     retryDuel,
     acceptBuzz,
+    physicalSelectTeam,
+    confirmPhysicalTeam,
     handleBuzzerClick,
 
     passQuestion,

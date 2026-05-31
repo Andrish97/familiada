@@ -826,7 +826,7 @@ async function sendZeroStatesToDevices() {
       ]);
 
       if (store.state.flags.qrOnDisplay) {
-        await devices.sendQrLinksToDisplay(_deviceCodes).catch(() => {});
+        await devices.sendQrLinksToDisplay(_deviceCodes, store.state.flags).catch(() => {});
       }
     } catch (e) {
       console.error("Device init error:", e);
@@ -1142,7 +1142,7 @@ async function sendZeroStatesToDevices() {
       devices.sendBuzzerCmd(`LANG ${nextLang}`).catch(() => {}),
     ]);
     if (store.state.flags.qrOnDisplay) {
-      await devices.sendQrLinksToDisplay(_deviceCodes).catch(() => {});
+      await devices.sendQrLinksToDisplay(_deviceCodes, store.state.flags).catch(() => {});
     }
   });
 
@@ -1172,26 +1172,38 @@ async function sendZeroStatesToDevices() {
 
     // ===== DEVICES =====
 
-    // krok 2: prowadzący + przycisk online (Tylko host jest opcjonalny)
-    const displayReady = !!flags.displayOnline;
-    const buzzerReady = !!flags.buzzerOnline;
-    const requiredOnline = displayReady && buzzerReady;
-    
-    // QR na wyświetlaczu tylko gdy wyświetlacz jest online
-    ui.setEnabled("btnQrToggle", displayReady);
+    const displayReady  = !!flags.displayOnline;
+    const physBuzzer    = !!flags.physicalBuzzer;
+    const noHostTablet  = !!flags.noHostTablet;
+    const buzzerReady   = !!flags.buzzerOnline || physBuzzer;
+    const hostReady     = !!flags.hostOnline   || noHostTablet;
+    const requiredOnline = displayReady && buzzerReady && hostReady;
 
-    // Aktualizuj przyciski "QR na wyświetlaczu" dla hosta i buzzera
+    // Opt-out: wyszarz całą sekcję urządzenia
+    const buzzerRow = document.querySelector(“.device-row[data-device='buzzer']”);
+    const hostRow   = document.querySelector(“.device-row[data-device='host']”);
+    if (buzzerRow) buzzerRow.toggleAttribute(“data-opted-out”, physBuzzer);
+    if (hostRow)   hostRow.toggleAttribute(“data-opted-out”, noHostTablet);
+
+    // Topbar: wyszarz dot-row gdy opt-out
+    const dotBuzzerRow = document.getElementById(“dotBuzzerRow”);
+    const dotHostRow   = document.getElementById(“dotHostRow”);
+    if (dotBuzzerRow) dotBuzzerRow.style.pointerEvents = physBuzzer    ? “none” : “”;
+    if (dotHostRow)   dotHostRow.style.pointerEvents   = noHostTablet  ? “none” : “”;
+
+    // QR na wyświetlaczu tylko gdy wyświetlacz jest online
+    ui.setEnabled(“btnQrToggle”, displayReady);
+
+    // Aktualizuj przyciski “QR na wyświetlaczu” dla hosta i buzzera
     updateQrOnDisplayButtons();
 
-    ui.setEnabled("btnDispBlack", displayReady);
+    ui.setEnabled(“btnDispBlack”, displayReady);
 
-    // Dalej w kroku 1 (wyświetlacz) i kroku 2 (host/buzzer)
-    // Wymagamy Display + Buzzer
-    ui.setEnabled("btnDevicesNext", requiredOnline);
+    ui.setEnabled(“btnDevicesNext”, requiredOnline);
 
     // krok 3: „Gotowe — przejdź dalej” po odblokowaniu audio
     ui.setEnabled(
-      "btnDevicesFinish",
+      “btnDevicesFinish”,
       requiredOnline && !!flags.audioUnlocked
     );
 
@@ -1445,12 +1457,20 @@ async function sendZeroStatesToDevices() {
     await devices.sendDisplayCmd("APP BLACK");
   });
 
+  ui.on("devices.physicalBuzzer", (checked) => {
+    store.setPhysicalBuzzer(checked);
+  });
+
+  ui.on("devices.noHostTablet", (checked) => {
+    store.setNoHostTablet(checked);
+  });
+
   // QR na wyświetlaczu - globalny (stary przycisk)
   ui.on("qr.toggle", async () => {
     const now = store.state.flags.qrOnDisplay;
 
     if (!now) {
-      await devices.sendQrToDisplay(_deviceCodes);
+      await devices.sendQrToDisplay(_deviceCodes, store.state.flags);
       store.setQrOnDisplay(true);
       ui.setQrToggleLabel(true, store.state.flags.displayOnline && store.state.flags.buzzerOnline);
     } else {
@@ -1467,7 +1487,7 @@ async function sendZeroStatesToDevices() {
 
     // Wysyłamy komendę QR na wyświetlacz (host + buzzer)
     if (!now) {
-      await devices.sendQrToDisplay(_deviceCodes);
+      await devices.sendQrToDisplay(_deviceCodes, store.state.flags);
       store.setQrHostOnDisplay(true);
       store.setQrBuzzerOnDisplay(true);
     } else {
@@ -1486,7 +1506,7 @@ async function sendZeroStatesToDevices() {
     const now = store.state.flags.qrBuzzerOnDisplay || false;
 
     if (!now) {
-      await devices.sendQrToDisplay(_deviceCodes);
+      await devices.sendQrToDisplay(_deviceCodes, store.state.flags);
       store.setQrHostOnDisplay(true);
       store.setQrBuzzerOnDisplay(true);
     } else {
@@ -2104,9 +2124,18 @@ async function sendZeroStatesToDevices() {
 
   // duel
   ui.on("buzz.enable", () => rounds.enableBuzzerDuel());
-  ui.on("buzz.retry", () => rounds.retryDuel());
-  ui.on("buzz.acceptA", () => rounds.acceptBuzz("A"));
-  ui.on("buzz.acceptB", () => rounds.acceptBuzz("B"));
+  ui.on("buzz.retry", () => {
+    if (store.state.flags.physicalBuzzer) rounds.confirmPhysicalTeam();
+    else rounds.retryDuel();
+  });
+  ui.on("buzz.acceptA", () => {
+    if (store.state.flags.physicalBuzzer) rounds.physicalSelectTeam("A");
+    else rounds.acceptBuzz("A");
+  });
+  ui.on("buzz.acceptB", () => {
+    if (store.state.flags.physicalBuzzer) rounds.physicalSelectTeam("B");
+    else rounds.acceptBuzz("B");
+  });
 
   // play
   ui.on("rounds.pass", () => rounds.passQuestion());

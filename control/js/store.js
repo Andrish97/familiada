@@ -76,6 +76,8 @@ export function createStore(gameId) {
         hostOnline: false,
         buzzerOnline: false,
         audioUnlocked: false,
+        physicalBuzzer: false,
+        noHostTablet: false,
         qrOnDisplay: false,
       },
   
@@ -165,7 +167,10 @@ export function createStore(gameId) {
   }
 
   function allDevicesOnline() {
-    return state.flags.displayOnline && state.flags.hostOnline && state.flags.buzzerOnline;
+    const f = state.flags;
+    const buzzerOk = f.buzzerOnline || f.physicalBuzzer;
+    const hostOk   = f.hostOnline   || f.noHostTablet;
+    return f.displayOnline && buzzerOk && hostOk;
   }
 
   function canStartRounds() {
@@ -296,6 +301,16 @@ export function createStore(gameId) {
     emit();
   }
 
+  function setPhysicalBuzzer(v) {
+    state.flags.physicalBuzzer = !!v;
+    emit();
+  }
+
+  function setNoHostTablet(v) {
+    state.flags.noHostTablet = !!v;
+    emit();
+  }
+
   function setQrOnDisplay(v) {
     state.flags.qrOnDisplay = !!v;
     emit();
@@ -414,6 +429,8 @@ export function createStore(gameId) {
 
     setOnlineFlags,
     setAudioUnlocked,
+    setPhysicalBuzzer,
+    setNoHostTablet,
     setQrOnDisplay,
     setQrHostOnDisplay,
     setQrBuzzerOnDisplay,

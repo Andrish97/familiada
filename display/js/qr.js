@@ -6,7 +6,7 @@ const mkQR = (url, size = 420) => {
   return u.toString();
 };
 
-export const createQRController = ({ qrScreen, gameScreen, hostImg, buzzerImg, hostCodeEl, buzzerCodeEl }) => {
+export const createQRController = ({ qrScreen, gameScreen, hostCard, buzzerCard, hostImg, buzzerImg, hostCodeEl, buzzerCodeEl }) => {
   let hostUrl = "";
   let buzzerUrl = "";
 
@@ -28,6 +28,14 @@ export const createQRController = ({ qrScreen, gameScreen, hostImg, buzzerImg, h
     if (buzzerCodeEl) buzzerCodeEl.textContent = code ?? "";
   };
 
+  const setSingle = (single) => {
+    const grid = qrScreen?.querySelector(".qr-grid");
+    if (!grid) return;
+    grid.classList.toggle("qr-single", !!single);
+    if (hostCard)   hostCard.classList.toggle("hidden",  single && !hostUrl);
+    if (buzzerCard) buzzerCard.classList.toggle("hidden", single && !buzzerUrl);
+  };
+
   const show = () => {
     qrScreen.classList.remove("hidden");
     qrScreen.setAttribute("aria-hidden", "false");
@@ -40,5 +48,5 @@ export const createQRController = ({ qrScreen, gameScreen, hostImg, buzzerImg, h
     gameScreen.classList.remove("hidden");
   };
 
-  return { setHost, setBuzzer, setHostCode, setBuzzerCode, show, hide, get: () => ({ hostUrl, buzzerUrl }) };
+  return { setHost, setBuzzer, setHostCode, setBuzzerCode, setSingle, show, hide, get: () => ({ hostUrl, buzzerUrl }) };
 };

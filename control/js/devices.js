@@ -158,15 +158,27 @@ export function createDevices({ game, ui, store, chDisplay, chHost, chBuzzer }) 
       .replaceAll("\r\n", "\n");
   }
 
-  async function sendQrToDisplay(codes) {
+  async function sendQrToDisplay(codes, flags) {
     await sendDisplayCmd("APP QR");
-    await sendQrLinksToDisplay(codes);
+    await sendQrLinksToDisplay(codes, flags);
   }
 
-  async function sendQrLinksToDisplay(codes) {
-    const hostCode   = codes?.host   ? ` HOST_CODE "${escQ(codes.host)}"`   : "";
-    const buzzerCode = codes?.buzzer ? ` BUZZER_CODE "${escQ(codes.buzzer)}"` : "";
-    await sendDisplayCmd(`QR HOST "${escQ(urls.hostUrl)}"${hostCode} BUZZER "${escQ(urls.buzzerUrl)}"${buzzerCode}`);
+  async function sendQrLinksToDisplay(codes, flags) {
+    const showHost   = !(flags?.noHostTablet);
+    const showBuzzer = !(flags?.physicalBuzzer);
+    const parts = [];
+    if (showHost) {
+      const hc = codes?.host ? ` HOST_CODE "${escQ(codes.host)}"` : "";
+      parts.push(`HOST "${escQ(urls.hostUrl)}"${hc}`);
+    }
+    if (showBuzzer) {
+      const bc = codes?.buzzer ? ` BUZZER_CODE "${escQ(codes.buzzer)}"` : "";
+      parts.push(`BUZZER "${escQ(urls.buzzerUrl)}"${bc}`);
+    }
+    const single = (!showHost || !showBuzzer) ? " SINGLE" : "";
+    if (parts.length) {
+      await sendDisplayCmd(`QR ${parts.join(" ")}${single}`);
+    }
   }
 
   return {

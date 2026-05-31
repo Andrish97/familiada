@@ -1971,9 +1971,23 @@
 .device-row-1 {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 10px;
 }
+
+
+.device-opt-check {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: .78rem;
+  opacity: .7;
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+}
+.device-opt-check:hover { opacity: 1; }
+.device-opt-check input[type="checkbox"] { accent-color: #ffeaa6; cursor: pointer; }
 
 .device-row-2 {
   display: flex;
@@ -1981,6 +1995,13 @@
   gap: 8px;
   flex-wrap: wrap;
 }
+
+/* W trybie opt-out wyszarzone przyciski i kod */
+.device-row[data-opted-out] .device-row-2 { opacity: .35; pointer-events: none; }
+.device-row[data-opted-out] .device-opt-check { opacity: 1; }
+
+/* Zaznaczony przycisk drużyny w trybie fizycznym */
+.buzz-selected { background: rgba(255,234,166,.25) !important; border-color: #ffeaa6 !important; }
 
 .device-row-2 .inp {
   flex: 1 1 200px;
@@ -1996,6 +2017,7 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 2px;
+  flex: 0 0 auto;
 }
 
 .device-name-sub {
