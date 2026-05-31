@@ -8,7 +8,7 @@
         "en": "Classic",
         "uk": "Класичний"
       },
-      "module": "./theme_classic.js?v=v2026-05-31T22482"
+      "module": "./theme_classic.js?v=v2026-05-31T22484"
     },
     {
       "key": "modern",
@@ -17,7 +17,7 @@
         "en": "Modern",
         "uk": "Сучасний"
       },
-      "module": "./theme_modern.js?v=v2026-05-31T22482"
+      "module": "./theme_modern.js?v=v2026-05-31T22484"
     }
   ]
 }
