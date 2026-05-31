@@ -13,11 +13,13 @@ export const createQRController = ({ qrScreen, gameScreen, hostCard, buzzerCard,
   const setHost = (url) => {
     hostUrl = (url ?? "").toString();
     if (hostUrl) hostImg.src = mkQR(hostUrl);
+    else if (hostImg) hostImg.removeAttribute("src");
   };
 
   const setBuzzer = (url) => {
     buzzerUrl = (url ?? "").toString();
     if (buzzerUrl) buzzerImg.src = mkQR(buzzerUrl);
+    else if (buzzerImg) buzzerImg.removeAttribute("src");
   };
 
   const setHostCode = (code) => {

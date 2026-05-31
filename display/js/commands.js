@@ -199,6 +199,9 @@ export const createCommandHandler = (app) => {
       if (hostCodeIdx >= 0) qr.setHostCode(unquote(tokens[hostCodeIdx + 1] ?? ""));
       if (buzCodeIdx  >= 0) qr.setBuzzerCode(unquote(tokens[buzCodeIdx + 1] ?? ""));
       const single = tokens.some(t => t.toUpperCase() === "SINGLE");
+      // Gdy SINGLE — wyczyść brakujące karty żeby setSingle wiedziało co ukryć
+      if (single && hostIdx < 0)  { qr.setHost(""); qr.setHostCode(""); }
+      if (single && buzIdx  < 0)  { qr.setBuzzer(""); qr.setBuzzerCode(""); }
       qr.setSingle(single);
 
       // UWAGA: tutaj JUŻ NIE zmieniamy app.mode!
