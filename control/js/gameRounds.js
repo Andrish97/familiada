@@ -216,6 +216,20 @@ function hostUpdate() {
     clearPlayMsgs();
   }
 
+  function setDuelStaticHint(text) {
+    const el = document.querySelector('[data-step="r_duel"] .hint');
+    if (!el) return;
+    el.removeAttribute("data-i18n");
+    el.textContent = text;
+  }
+
+  function restoreDuelStaticHint() {
+    const el = document.querySelector('[data-step="r_duel"] .hint');
+    if (!el) return;
+    el.setAttribute("data-i18n", "control.roundsDuelHint");
+    el.textContent = t("control.roundsDuelHint");
+  }
+
   function setPlayMsg(text) {
     ui.setMsg("msgRoundsPlay", text || "");
     ui.setMsg("msgSteal", "");
@@ -712,7 +726,8 @@ function hostUpdate() {
     const phys = !!store.state.flags.physicalBuzzer;
 
     if (phys) {
-      setDuelMsg(t("control.roundsDuelHintPhysical"));
+      setDuelMsg("");
+      setDuelStaticHint(t("control.roundsDuelHintPhysical"));
       ui.setRoundsHud(r, store.state.teams);
       ui.setEnabled("btnBuzzAcceptA", true);
       ui.setEnabled("btnBuzzAcceptB", true);
@@ -725,6 +740,7 @@ function hostUpdate() {
       if (retryBtn) retryBtn.textContent = t("control.roundsBuzzConfirm");
     } else {
       setDuelMsg(ROUNDS_MSG.DUEL_WAIT);
+      restoreDuelStaticHint();
       ui.setRoundsHud(r, store.state.teams);
       ui.setEnabled("btnBuzzAcceptA", false);
       ui.setEnabled("btnBuzzAcceptB", false);
@@ -787,7 +803,8 @@ function hostUpdate() {
     if (btnB) btnB.classList.remove("buzz-selected");
 
     if (phys) {
-      setDuelMsg(t("control.roundsDuelHintPhysical"));
+      setDuelMsg("");
+      setDuelStaticHint(t("control.roundsDuelHintPhysical"));
       ui.setEnabled("btnBuzzAcceptA", true);
       ui.setEnabled("btnBuzzAcceptB", true);
       ui.setEnabled("btnBuzzRetry", false);
@@ -799,6 +816,7 @@ function hostUpdate() {
       if (retryBtn2) retryBtn2.textContent = t("control.roundsBuzzConfirm");
     } else {
       setDuelMsg(ROUNDS_MSG.DUEL_RETRY);
+      restoreDuelStaticHint();
       ui.setEnabled("btnBuzzAcceptA", false);
       ui.setEnabled("btnBuzzAcceptB", false);
       ui.setEnabled("btnBuzzRetry", false);
