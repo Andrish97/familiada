@@ -213,7 +213,7 @@ async function main() {
       themeList = json.themes.map(e => {
         const lang = document.documentElement.lang || "pl";
         const label = typeof e.label === "object"
-          ? (e.label[lang] ?? e.label["en"] ?? e.key)
+          ? (e.label[lang] ?? e.label["pl"] ?? e.key)
           : t(e.label);
         return { key: e.key, label };
       });
