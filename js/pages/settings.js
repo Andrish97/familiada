@@ -6275,7 +6275,8 @@ function wireEvents() {
       if (!e.target.closest('#mcContactsTable') &&
           !e.target.closest('#mcVisitUrlBtn') &&
           !e.target.closest('#mcMarkUsedBtn') &&
-          !e.target.closest('#mcDeleteBtn')) {
+          !e.target.closest('#mcDeleteBtn') &&
+          !e.target.closest('#mcCopyBtn')) {
         mcState.selectedCells = [];
         highlight();
       }
@@ -6514,7 +6515,33 @@ function wireEvents() {
         return el ? el.textContent.trim() : '';
       }).join('\t')
     ).join('\n');
-    navigator.clipboard.writeText(text).catch(() => {});
+
+    const btn = document.getElementById("mcCopyBtn");
+    function flash(ok) {
+      if (!btn) return;
+      const orig = btn.textContent;
+      btn.textContent = ok ? '✓' : '✗';
+      setTimeout(() => { btn.textContent = orig; }, 1200);
+    }
+
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(text).then(() => flash(true)).catch(() => {
+        try { fallbackCopy(text); flash(true); } catch { flash(false); }
+      });
+    } else {
+      try { fallbackCopy(text); flash(true); } catch { flash(false); }
+    }
+
+    function fallbackCopy(txt) {
+      const ta = document.createElement('textarea');
+      ta.value = txt;
+      ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0';
+      document.body.appendChild(ta);
+      ta.focus(); ta.select();
+      const ok = document.execCommand('copy');
+      ta.remove();
+      if (!ok) throw new Error('execCommand failed');
+    }
   });
   document.getElementById("mcPrevPage")?.addEventListener("click", () => { if(mcState.page>1){mcState.page--;mcLoadContacts();} });
   document.getElementById("mcNextPage")?.addEventListener("click", () => { mcState.page++; mcLoadContacts(); });
