@@ -1,0 +1,874 @@
+// /familiada/js/pages/controlui.js
+
+import { t } from "../../translation/translation.js?v=v2026-06-01T07291";
+import { initUiSelect } from "../../js/core/ui-select.js?v=v2026-06-01T07291";
+
+// ================== KOMUNIKATY (UI) ==================
+const UI_MSG = {
+  get DEVICE_STATUS_OK() { return t("control.deviceStatusOk"); },
+  get DEVICE_STATUS_OFFLINE() { return t("control.deviceStatusOffline"); },
+  get DEVICE_STATUS_NONE() { return t("control.deviceStatusNone"); },
+  get DEVICE_SEEN_NONE() { return t("control.deviceSeenNone"); },
+
+  get AUDIO_OK() { return t("control.audioStatusOk"); },
+  get AUDIO_BLOCKED() { return t("control.audioBlocked"); },
+
+  get CONTROL_PREFIX() { return t("control.controlPrefix"); },
+  get CONTROL_TITLE() { return t("control.controlTitle"); },
+
+  get QR_ON_DISPLAY() { return t("control.qrOnDisplay"); },
+  get QR_HIDE() { return t("control.qrHide"); },
+  get QR_BLACK_SCREEN() { return t("control.blackScreen"); },
+
+  get COLOR_TITLE() { return t("control.colorTitle"); },
+
+  get DASH() { return t("control.dash"); },
+  get ANSWER_FALLBACK() { return t("control.answerFallback"); },
+};
+// =====================================================
+
+export function createUI() {
+  const $ = (id) => document.getElementById(id);
+
+  // prosty event-bus
+  const handlers = new Map();
+
+  function on(event, fn) {
+    if (!handlers.has(event)) {
+      handlers.set(event, new Set());
+    }
+    handlers.get(event).add(fn);
+  }
+
+  function emit(event, payload) {
+    const set = handlers.get(event);
+    if (!set) return;
+    for (const fn of set) {
+      try {
+        fn(payload);
+      } catch (e) {
+        console.error("[ui] handler error", e);
+      }
+    }
+  }
+
+  function setHtml(id, html) {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = html;
+  }
+
+  function setMsg(id, text) {
+    const el = typeof id === "string" ? $(id) : id;
+    if (el && "textContent" in el) {
+      el.textContent = text || "";
+    }
+  }
+
+  function setText(target, text) {
+    const el = typeof target === "string" ? document.getElementById(target) : target;
+    if (el && "textContent" in el) {
+      el.textContent = text ?? "";
+    }
+  }
+
+  function setValue(target, value) {
+    const el = typeof target === "string" ? document.getElementById(target) : target;
+    if (el && "value" in el) {
+      el.value = value ?? "";
+    }
+  }
+
+  function setEnabled(target, enabled) {
+    const el = typeof target === "string" ? document.getElementById(target) : target;
+    if (el && "disabled" in el) {
+      el.disabled = !enabled;
+    }
+  }
+
+  function setImg(target, src) {
+    const el = typeof target === "string" ? document.getElementById(target) : target;
+    if (el && "src" in el) {
+      el.src = src || "";
+    }
+  }
+
+  function setFinalTimerP1(sec) {
+    setText("finalTimerP1", sec ?? UI_MSG.DASH);
+  }
+  
+  function setFinalTimerP2(sec) {
+    setText("finalTimerP2", sec ?? UI_MSG.DASH);
+  }
+
+  function showCard(card) {
+    // ukryj wszystkie panele kart
+    document
+      .querySelectorAll(".cardPanel[data-card]")
+      .forEach((p) => p.classList.add("hidden"));
+
+    // pokaż wybraną kartę
+    document
+      .querySelector(`.cardPanel[data-card="${card}"]`)
+      ?.classList.remove("hidden");
+
+    // zaktualizuj aktywną zakładkę
+    document
+      .querySelectorAll(".navItem[data-card]")
+      .forEach((b) => b.classList.remove("active"));
+
+    document
+      .querySelector(`.navItem[data-card="${card}"]`)
+      ?.classList.add("active");
+  }
+
+  function mountNavigation({ canEnter, onNavigate }) {
+    document.querySelectorAll(".navItem[data-card]").forEach((b) => {
+      b.addEventListener("click", () => {
+        const card = b.dataset.card;
+        if (!card) return;
+        if (!canEnter(card)) return;
+        onNavigate(card);
+        showCard(card);
+      });
+    });
+  }
+
+  function setNavEnabled(flags) {
+    if ($("navDevices")) $("navDevices").disabled = !flags.devices;
+    if ($("navSetup")) $("navSetup").disabled = !flags.setup;
+    if ($("navRounds")) $("navRounds").disabled = !flags.rounds;
+    if ($("navFinal")) $("navFinal").disabled = !flags.final;
+  }
+
+  function showDevicesStep(step) {
+    const s1 = document.querySelector('[data-step="devices_display"]');
+    const s2 = document.querySelector('[data-step="devices_hostbuzzer"]');
+    const s3 = document.querySelector('[data-step="devices_audio"]');
+    if (!s1 || !s2 || !s3) return;
+
+    s1.classList.toggle("hidden", step !== "devices_display");
+    s2.classList.toggle("hidden", step !== "devices_hostbuzzer");
+    s3.classList.toggle("hidden", step !== "devices_audio");
+  }
+
+  function showSetupStep(step) {
+    const steps = {
+      setup_names: document.querySelector('[data-step="setup_names"]'),
+      setup_look: document.querySelector('[data-step="setup_look"]'),
+      setup_game: document.querySelector('[data-step="setup_game"]'),
+      setup_final: document.querySelector('[data-step="setup_final"]'),
+      setup_rounds: document.querySelector('[data-step="setup_rounds"]'),
+      setup_finish: document.querySelector('[data-step="setup_finish"]'),
+    };
+    
+    for (const [stepName, el] of Object.entries(steps)) {
+      if (!el) continue;
+      el.classList.toggle("hidden", step !== stepName);
+    }
+  }
+
+  function badge(el, status, text) {
+    if (!el) return;
+    el.classList.remove("ok","bad","mid");
+    el.classList.add(status);
+    el.textContent = text;
+  }
+  function dot(el, status) {
+    if (!el) return;
+    el.classList.remove("ok","bad","mid");
+    el.classList.add(status);
+  }
+
+  function setDeviceBadges({ display, host, buzzer }) {
+    badge(
+      $("pillDisplay"),
+      display.on ? "ok" : "bad",
+      display.on ? UI_MSG.DEVICE_STATUS_OK : UI_MSG.DEVICE_STATUS_OFFLINE
+    );
+    badge(
+      $("pillHost"),
+      host.on ? "ok" : "bad",
+      host.on ? UI_MSG.DEVICE_STATUS_OK : UI_MSG.DEVICE_STATUS_OFFLINE
+    );
+    badge(
+      $("pillBuzzer"),
+      buzzer.on ? "ok" : "bad",
+      buzzer.on ? UI_MSG.DEVICE_STATUS_OK : UI_MSG.DEVICE_STATUS_OFFLINE
+    );
+
+    if ($("seenDisplay")) $("seenDisplay").textContent = display.seen || UI_MSG.DEVICE_STATUS_NONE;
+    if ($("seenHost")) $("seenHost").textContent = host.seen || UI_MSG.DEVICE_STATUS_NONE;
+    if ($("seenBuzzer")) $("seenBuzzer").textContent = buzzer.seen || UI_MSG.DEVICE_STATUS_NONE;
+
+    dot($("dotDisplay"), display.on ? "ok" : "bad");
+    dot($("dotHost"), host.on ? "ok" : "bad");
+    dot($("dotBuzzer"), buzzer.on ? "ok" : "bad");
+  }
+
+  function setDeviceBadgesUnavailable() {
+    badge($("pillDisplay"), "mid", UI_MSG.DEVICE_STATUS_NONE);
+    badge($("pillHost"), "mid", UI_MSG.DEVICE_STATUS_NONE);
+    badge($("pillBuzzer"), "mid", UI_MSG.DEVICE_STATUS_NONE);
+
+    if ($("seenDisplay")) $("seenDisplay").textContent = UI_MSG.DEVICE_SEEN_NONE;
+    if ($("seenHost")) $("seenHost").textContent = UI_MSG.DEVICE_SEEN_NONE;
+    if ($("seenBuzzer")) $("seenBuzzer").textContent = UI_MSG.DEVICE_SEEN_NONE;
+
+    dot($("dotDisplay"), "mid");
+    dot($("dotHost"), "mid");
+    dot($("dotBuzzer"), "mid");
+  }
+
+  function showAlert(text) {
+    const bar = $("alertBar");
+    const txt = $("alertTxt");
+    if (txt) txt.textContent = text;
+    bar?.classList.remove("hidden");
+  }
+  function hideAlert() { $("alertBar")?.classList.add("hidden"); }
+
+  function setAudioStatus(unlocked) {
+    const el = $("audioStatus");
+    if (!el) return;
+    el.classList.remove("ok","bad","mid");
+    el.classList.add(unlocked ? "ok" : "bad");
+    el.textContent = unlocked ? UI_MSG.AUDIO_OK : UI_MSG.AUDIO_BLOCKED;
+  }
+
+  function getTeamA() { return String($("teamA")?.value ?? "").trim(); }
+  function getTeamB() { return String($("teamB")?.value ?? "").trim(); }
+
+  //kolory
+  function setSwatch(el, hex) {
+    if (!el) return;
+    el.style.background = hex || "";
+    el.dataset.hex = hex || "";
+    el.title = hex || "";
+  }
+
+  function setSwatches({ teamA, teamB, bg, dot }) {
+    setSwatch($("swatchTeamA"), teamA);
+    setSwatch($("swatchTeamB"), teamB);
+    setSwatch($("swatchBg"), bg);
+    setSwatch($("swatchDot"), dot);
+  }
+
+  let themeSelectApi = null;
+
+  function setThemeOptions(themes) {
+    const root = $("themeSelect");
+    if (!root) return;
+    if (themeSelectApi) {
+      themeSelectApi.setOptions(themes.map(t => ({ value: t.key, label: t.label })));
+      return;
+    }
+    themeSelectApi = initUiSelect(root, {
+      options: themes.map(t => ({ value: t.key, label: t.label })),
+      placeholder: "—",
+      onChange: (val) => emit("theme.change", val),
+    });
+  }
+
+  function setActiveTheme(key) {
+    if (themeSelectApi) themeSelectApi.setValue(key || "", { silent: true });
+  }
+
+  function openColorModal(title) {
+    if ($("colorModalTitle")) $("colorModalTitle").textContent = title || UI_MSG.COLOR_TITLE;
+    $("colorModalOverlay")?.classList.remove("hidden");
+  }
+
+  function closeColorModal() {
+    $("colorModalOverlay")?.classList.add("hidden");
+  }
+
+  function setColorPreview(hex) {
+    const p = $("colorPreview");
+    if (p) p.style.background = hex || "";
+  }
+
+  function setColorModalHex(hex) {
+    if ($("colorHex")) $("colorHex").value = hex || "";
+    setColorPreview(hex);
+  }
+
+  function setColorModalRgb({ r, g, b }) {
+    const rr = $("colorR");
+    const gg = $("colorG");
+    const bb = $("colorB");
+  
+    const R = clamp255(r ?? 0);
+    const G = clamp255(g ?? 0);
+    const B = clamp255(b ?? 0);
+  
+    if (rr) rr.value = String(R);
+    if (gg) gg.value = String(G);
+    if (bb) bb.value = String(B);
+  
+    if ($("colorRVal")) $("colorRVal").textContent = String(R);
+    if ($("colorGVal")) $("colorGVal").textContent = String(G);
+    if ($("colorBVal")) $("colorBVal").textContent = String(B);
+  
+    // ===== Google-like gradient tracks =====
+    // R: 0..255 przy stałych G,B
+    if (rr) {
+      const left = rgbToHexLocal(0, G, B);
+      const right = rgbToHexLocal(255, G, B);
+      rr.style.setProperty("--track", `linear-gradient(to right, ${left}, ${right})`);
+    }
+  
+    // G: 0..255 przy stałych R,B
+    if (gg) {
+      const left = rgbToHexLocal(R, 0, B);
+      const right = rgbToHexLocal(R, 255, B);
+      gg.style.setProperty("--track", `linear-gradient(to right, ${left}, ${right})`);
+    }
+  
+    // B: 0..255 przy stałych R,G
+    if (bb) {
+      const left = rgbToHexLocal(R, G, 0);
+      const right = rgbToHexLocal(R, G, 255);
+      bb.style.setProperty("--track", `linear-gradient(to right, ${left}, ${right})`);
+    }
+  }
+
+
+  function getAdvancedForm() {
+    const rm = $("roundMultipliers");
+    const fm = $("finalMinPoints");
+    const ft = $("finalTargetPoints");
+    const winMoney = $("winModeMoney");
+    const winLogo = $("winModeLogo");
+    const winPoints = $("winModePoints");
+    const fpm = $("finalPrizeMultiplier");
+    const mpa = $("mainPrizeAmount");
+
+    return {
+      roundMultipliersText: rm ? rm.value : "",
+      finalMinPointsText: fm ? fm.value : "",
+      finalTargetText: ft ? ft.value : "",
+      finalPrizeMultiplierText: fpm ? fpm.value : "",
+      mainPrizeAmountText: mpa ? mpa.value : "",
+      winMode:
+        winMoney && winMoney.checked
+          ? "money"
+          : winLogo && winLogo.checked
+          ? "logo"
+          : winPoints&& winPoints.checked
+          ? "points"
+          : null,
+    };
+  }
+
+  function setAdvancedForm(advanced) {
+    const adv = advanced || {};
+    const rms = Array.isArray(adv.roundMultipliers)
+      ? adv.roundMultipliers.join(", ")
+      : "";
+
+    if ($("roundMultipliers")) $("roundMultipliers").value = rms;
+    if ($("finalMinPoints"))
+      $("finalMinPoints").value =
+        typeof adv.finalMinPoints === "number" ? String(adv.finalMinPoints) : "";
+    if ($("finalTargetPoints"))
+      $("finalTargetPoints").value =
+        typeof adv.finalTarget === "number" ? String(adv.finalTarget) : "";
+    if ($("finalPrizeMultiplier"))
+      $("finalPrizeMultiplier").value =
+        typeof adv.finalPrizeMultiplier === "number" ? String(adv.finalPrizeMultiplier) : "";
+    if ($("mainPrizeAmount"))
+      $("mainPrizeAmount").value =
+        typeof adv.mainPrizeAmount === "number" ? String(adv.mainPrizeAmount) : "";
+
+    // -------- tryb ekranu końcowego --------
+    // 1) najpierw próbujemy endScreenMode,
+    // 2) jeśli nie ma, robimy fallback z winEnabled (kompatybilność wstecz),
+    // 3) default: "logo".
+    let mode = adv.endScreenMode;
+    if (mode !== "logo" && mode !== "points" && mode !== "money") {
+      if (typeof adv.winEnabled === "boolean") {
+        mode = adv.winEnabled ? "points" : "logo";
+      } else {
+        mode = "logo";
+      }
+    }
+  
+    if ($("winModeMoney")) $("winModeMoney").checked = mode === "money";
+    if ($("winModeLogo")) $("winModeLogo").checked = mode === "logo";
+    if ($("winModePoints")) $("winModePoints").checked = mode === "points";
+  }
+  
+  function setFinalHasFinal(on) {
+    const card = $("finalPickerCard");
+    if (!card) return;
+    card.style.display = on ? "" : "none";
+  }
+
+  function setFinalConfirmed(confirmed) {
+    const only = $("finalOnlyView");
+    const btnEdit = $("btnEditFinal");
+    const btnConfirm = $("btnConfirmFinal");
+
+    if (only) only.style.display = confirmed ? "" : "none";
+    if (btnEdit) btnEdit.style.display = confirmed ? "" : "none";
+    if (btnConfirm) btnConfirm.style.display = confirmed ? "none" : "";
+  }
+
+  function showFinalStep(step) {
+    document.querySelectorAll('.cardPanel[data-card="final"] .step[data-step]')
+      .forEach((s) => s.classList.add("hidden"));
+    document.querySelector(`.cardPanel[data-card="final"] .step[data-step="${step}"]`)
+      ?.classList.remove("hidden");
+  }
+
+  function setRoundsStep(step) {
+    document.querySelectorAll('[data-round-step]').forEach(el => {
+      el.classList.toggle(
+        "hidden",
+        el.dataset.roundStep !== step
+      );
+    });
+  }
+
+  function setQrToggleLabel(isOn, mandatoryDevicesOnline = false) {
+    const b = $("btnQrToggle");
+    if (!b) return;
+  
+    // Gdy QR są pokazane:
+    // - jeśli wymagane urządzenia (Display + Buzzer) są już online, sensowniejsze jest "Czarny ekran"
+    // - w przeciwnym razie "Schowaj QR"
+    if (isOn) {
+      b.textContent = mandatoryDevicesOnline ? UI_MSG.QR_BLACK_SCREEN : UI_MSG.QR_HIDE;
+      return;
+    }
+  
+    b.textContent = UI_MSG.QR_ON_DISPLAY;
+  }
+
+  function setRoundsHud(r, teams) {
+    const nameA = teams?.teamA || t("control.teamALabel");
+    const nameB = teams?.teamB || t("control.teamBLabel");
+    setText("roundNo", String(r.roundNo));
+    setText(
+      "controlTeam",
+      r.controlTeam ? (r.controlTeam === "A" ? nameA : nameB) : t("control.dash")
+    );
+    setText("bankPts", String(r.bankPts));
+    setText("xA", String(r.xA));
+    setText("xB", String(r.xB));
+    setText("t3", r.timer3.running ? String(r.timer3.secLeft ?? 3) : t("control.dash"));
+  }
+
+  function setGameHeader(name, meta) {
+    setText(
+      "gameLabel",
+      name ? `${UI_MSG.CONTROL_PREFIX}${name}` : UI_MSG.CONTROL_TITLE
+    );
+    setText("gameMeta", meta || "");
+  }
+
+  function setRoundQuestion(text) {
+    setText("roundQuestion", text || UI_MSG.DASH);
+  }
+
+  function renderAnswersGeneric(rootId, answers, revealedSet, eventName) {
+    const root = $(rootId);
+    if (!root) return;
+
+    // normalizacja: Set lub tablica -> Set
+    const revealed =
+      revealedSet instanceof Set
+        ? revealedSet
+        : new Set(revealedSet || []);
+
+    root.innerHTML = (answers || [])
+      .map((a) => {
+        const ord = a.ord ?? 0;
+        const isRevealed = revealed.has(ord);
+        const pts = a.fixed_points ?? a.points ?? 0;
+
+        return `
+          <button
+            type="button"
+            class="ansBtn ${isRevealed ? "revealed" : ""}"
+            data-ord="${ord}"
+          >
+            <span class="ansOrd">${ord})</span>
+            <span class="ansText">${escapeHtml(a.text || UI_MSG.ANSWER_FALLBACK)}</span>
+            <span class="ansPts">(${pts})</span>
+          </button>
+        `;
+      })
+      .join("");
+
+    root
+      .querySelectorAll("button.ansBtn[data-ord]")
+      .forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const ord = Number.parseInt(btn.dataset.ord || "0", 10);
+          if (!Number.isFinite(ord) || !ord) return;
+          // KLUCZ: używamy lokalnego emit, NIE bus.emit
+          emit(eventName, ord);
+        });
+      });
+  }
+
+
+  function setAnswersMode(mode) {
+    const ids = ["roundAnswers", "roundStealAnswers", "roundRevealAnswers"];
+    ids.forEach((id) => {
+      const el = $(id);
+      if (!el) return;
+      const show =
+        (mode === "play" && id === "roundAnswers") ||
+        (mode === "steal" && id === "roundStealAnswers") ||
+        (mode === "reveal" && id === "roundRevealAnswers");
+  
+      if (show) {
+        el.classList.remove("hidden");
+      } else {
+        el.classList.add("hidden");
+      }
+    });
+  }
+
+  function renderRoundAnswers(answers, revealedSet) {
+    // główna rozgrywka
+    setAnswersMode("play");
+    renderAnswersGeneric(
+      "roundAnswers",
+      answers,
+      revealedSet,
+      "rounds.answerClick"
+    );
+  }
+  
+  function renderRoundStealAnswers(answers, revealedSet) {
+    // tryb kradzieży
+    setAnswersMode("steal");
+    renderAnswersGeneric(
+      "roundStealAnswers",
+      answers,
+      revealedSet,
+      "rounds.stealTry"
+    );
+  }
+  
+  function renderRoundRevealAnswers(answers, revealedSet) {
+    // odsłanianie brakujących odpowiedzi
+    setAnswersMode("reveal");
+    renderAnswersGeneric(
+      "roundRevealAnswers",
+      answers,
+      revealedSet,
+      "rounds.revealClick"
+    );
+  }
+
+  function setFinalStatusList(linesHtml) {
+    const root = $("finalStatusList");
+    if (root) root.innerHTML = linesHtml || "";
+  }
+  function setFinalInputs(html) {
+    const root = $("finalInputs");
+    if (root) root.innerHTML = html || "";
+  }
+  function setFinalMapping(html) {
+    const root = $("finalMapping");
+    if (root) root.innerHTML = html || "";
+  }
+
+  // ROUNDS: sterowanie widokami kroków
+  function showRoundsStep(step) {
+    document.querySelectorAll('.cardPanel[data-card="rounds"] .step[data-step]')
+      .forEach((s) => s.classList.add("hidden"));
+    document.querySelector(`.cardPanel[data-card="rounds"] .step[data-step="${step}"]`)
+      ?.classList.remove("hidden");
+  }
+
+  function wire() {
+    $("btnBack")?.addEventListener("click", () => emit("top.back"));
+    $("btnManual")?.addEventListener("click", () => emit("top.manual"));
+    $("btnLogout")?.addEventListener("click", () => emit("top.logout"));
+    $("btnAlertClose")?.addEventListener("click", () => hideAlert());
+
+    // auth bar – kliknięcie w status urządzeń
+    const topDisplayRow = $("dotDisplay")?.parentElement;
+    if (topDisplayRow) {
+      topDisplayRow.addEventListener("click", () => emit("auth.showQr", "display"));
+    }
+    const topHostRow = $("dotHost")?.parentElement;
+    if (topHostRow) {
+      topHostRow.addEventListener("click", () => emit("auth.showQr", "host"));
+    }
+    const topBuzzerRow = $("dotBuzzer")?.parentElement;
+    if (topBuzzerRow) {
+      topBuzzerRow.addEventListener("click", () => emit("auth.showQr", "buzzer"));
+    }
+
+    // modal QR
+    $("qrModalClose")?.addEventListener("click", () => emit("auth.qr.close"));
+    $("qrModalCopy")?.addEventListener("click", () => emit("auth.qr.copy"));
+    $("qrModalOverlay")?.addEventListener("click", (ev) => {
+      if (ev.target && ev.target.id === "qrModalOverlay") emit("auth.qr.close");
+    });
+
+    // devices
+    $("btnDevicesNext")?.addEventListener("click", () => emit("devices.next"));
+    $("btnDevicesBack")?.addEventListener("click", () => emit("devices.back"));
+    $("btnDevicesToAudio")?.addEventListener("click", () => emit("devices.toAudio"));
+    $("btnAudioBack")?.addEventListener("click", () => emit("audio.back"));
+    $("btnDevicesFinish")?.addEventListener("click", () => emit("devices.finish"));
+
+    $("btnUnlockAudio")?.addEventListener("click", () => emit("audio.unlock"));
+
+    $("btnCopyDisplay")?.addEventListener("click", () => emit("devices.copyCode", "display"));
+    $("btnCopyHost")?.addEventListener("click", () => emit("devices.copyCode", "host"));
+    $("btnCopyBuzzer")?.addEventListener("click", () => emit("devices.copyCode", "buzzer"));
+
+    $("chkPhysicalBuzzer")?.addEventListener("change", (e) => emit("devices.physicalBuzzer", e.target.checked));
+    $("chkNoHostTablet")?.addEventListener("change", (e) => emit("devices.noHostTablet", e.target.checked));
+
+    $("btnDispBlack")?.addEventListener("click", () => emit("display.black"));
+    $("btnQrToggle")?.addEventListener("click", () => emit("qr.toggle"));
+
+    // Nowe przyciski QR dla każdego urządzenia (otwierają modal)
+    $("btnQrDisplay")?.addEventListener("click", () => emit("qr.display.show"));
+    $("btnQrHost")?.addEventListener("click", () => emit("qr.host.show"));
+    $("btnQrBuzzer")?.addEventListener("click", () => emit("qr.buzzer.show"));
+
+    // QR na wyświetlaczu - prowadzący i buzzer (sparowane)
+    $("btnQrHostOnDisplay")?.addEventListener("click", () => emit("qr.host.toggle"));
+    $("btnQrBuzzerOnDisplay")?.addEventListener("click", () => emit("qr.buzzer.toggle"));
+
+    // setup
+    $("btnBackToDevices")?.addEventListener("click", () => emit("setup.backToDevices"));
+    $("btnSetupNext")?.addEventListener("click", () => emit("setup.next"));
+    $("btnSetupBack")?.addEventListener("click", () => emit("setup.back"));
+
+    $("btnTeamMore")?.addEventListener("click", () => {
+      $("teamExtra")?.classList.toggle("hidden");
+    });
+
+    // LIVE wpis nazw + Enter -> następne pole (bez zatwierdzania)
+    const a = $("teamA");
+    const b = $("teamB");
+    if (a && b) {
+      a.addEventListener("input", () => emit("teams.change", { teamA: a.value, teamB: b.value }));
+      b.addEventListener("input", () => emit("teams.change", { teamA: a.value, teamB: b.value }));
+
+      a.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") { e.preventDefault(); b.focus(); }
+      });
+      b.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") { e.preventDefault(); b.blur(); }
+      });
+    }
+
+        // --- Kolory (kafelki + modal) ---
+    $("swatchTeamA")?.addEventListener("click", () => emit("colors.open", "A"));
+    $("swatchTeamB")?.addEventListener("click", () => emit("colors.open", "B"));
+    $("swatchBg")?.addEventListener("click", () => emit("colors.open", "BACKGROUND"));
+    $("swatchDot")?.addEventListener("click", () => emit("colors.open", "DOT"));
+
+    $("btnColorsReset")?.addEventListener("click", () => emit("colors.reset"));
+
+    $("colorModalClose")?.addEventListener("click", () => emit("colors.close"));
+    $("colorModalDone")?.addEventListener("click", () => emit("colors.close"));
+    $("colorModalOverlay")?.addEventListener("click", (ev) => {
+      if (ev.target && ev.target.id === "colorModalOverlay") emit("colors.close");
+    });
+
+    const hex = $("colorHex");
+    const r = $("colorR");
+    const g = $("colorG");
+    const b2 = $("colorB");
+
+    if (hex) hex.addEventListener("input", () => emit("colors.input", { kind: "HEX", value: hex.value }));
+    if (r) r.addEventListener("input", () => emit("colors.input", { kind: "R", value: r.value }));
+    if (g) g.addEventListener("input", () => emit("colors.input", { kind: "G", value: g.value }));
+    if (b2) b2.addEventListener("input", () => emit("colors.input", { kind: "B", value: b2.value }));
+
+    // --- Dodatkowe ustawienia (mnożniki, progi, tryb końca gry) ---
+    const advInputs = [
+      "roundMultipliers",
+      "finalMinPoints",
+      "finalTargetPoints",
+      "finalPrizeMultiplier",
+      "mainPrizeAmount",
+    ];
+    advInputs.forEach((id) => {
+      const el = $(id);
+      if (el) {
+        el.addEventListener("change", () => emit("advanced.change"));
+      }
+    });
+    
+    const winLogo = $("winModeLogo");
+    const winPoints = $("winModePoints");
+    const winMoney = $("winModeMoney");
+
+    if (winLogo) {
+      winLogo.addEventListener("change", () => emit("advanced.change"));
+    }
+    if (winPoints) {
+      winPoints.addEventListener("change", () => emit("advanced.change"));
+    }
+    if (winMoney) {
+      winMoney.addEventListener("change", () => emit("advanced.change"));
+    }
+
+    $("btnAdvancedReset")?.addEventListener("click", () =>
+      emit("advanced.reset")
+    );
+
+    $("finalYes")?.addEventListener("change", () => emit("final.toggle", true));
+    $("finalNo")?.addEventListener("change", () => emit("final.toggle", false));
+    $("btnReloadQuestions")?.addEventListener("click", () => emit("final.reload"));
+    $("btnConfirmFinal")?.addEventListener("click", () => emit("final.confirm"));
+    $("btnEditFinal")?.addEventListener("click", () => emit("final.edit"));
+
+    // rounds (kroki)
+    $("btnGameReady")?.addEventListener("click", () => emit("game.ready"));
+    $("btnStartShowIntro")?.addEventListener("click", () => emit("game.startIntro"));
+    $("btnStartRound")?.addEventListener("click", () => emit("rounds.start"));
+
+    $("btnBuzzAcceptA")?.addEventListener("click", () => emit("buzz.acceptA"));
+    $("btnBuzzAcceptB")?.addEventListener("click", () => emit("buzz.acceptB"));
+    $("btnBuzzRetry")?.addEventListener("click", () => emit("buzz.retry"));
+
+    $("btnPassQuestion")?.addEventListener("click", () => emit("rounds.pass"));
+    $("btnStartTimer3")?.addEventListener("click", () => emit("rounds.timer3"));
+    $("btnAddX")?.addEventListener("click", () => emit("rounds.addX"));
+    $("btnGoEndRound")?.addEventListener("click", () => emit("rounds.goEnd"));
+    $("btnShowGameEnd")?.addEventListener("click", () => emit("rounds.gameEndShow"));
+
+
+    // final (kroki)
+    $("btnFinalP1StartTimer")?.addEventListener("click", () => emit("final.p1.timerStart"));
+    $("btnFinalP1Next")?.addEventListener("click", () => emit("final.p1.next"));
+    
+    $("btnFinalP1MapPrev")?.addEventListener("click", () => emit("final.p1.mapPrev"));
+    $("btnFinalP1MapNext")?.addEventListener("click", () => emit("final.p1.mapNext"));
+    
+    $("btnFinalRound2Back")?.addEventListener("click", () => emit("final.round2.back"));
+    $("btnFinalRound2Start")?.addEventListener("click", () => emit("final.round2.start"));
+    
+    $("btnFinalP2StartTimer")?.addEventListener("click", () => emit("final.p2.timerStart"));
+    $("btnFinalP2Next")?.addEventListener("click", () => emit("final.p2.next"));
+    
+    $("btnFinalP2MapPrev")?.addEventListener("click", () => emit("final.p2.mapPrev"));
+    $("btnFinalP2MapNext")?.addEventListener("click", () => emit("final.p2.mapNext"));
+    
+    $("btnFinalFinishBack")?.addEventListener("click", () => emit("final.finish.back"));
+    $("btnFinalStart")?.addEventListener("click", () => emit("final.start"));
+
+    
+    $("btnFinalToP1MapQ1")?.addEventListener("click", () => emit("final.p1.toQ", 1));
+    
+    $("btnFinalNextFromP1Q1")?.addEventListener("click", () => emit("final.p1.nextQ", 1));
+    $("btnFinalNextFromP1Q2")?.addEventListener("click", () => emit("final.p1.nextQ", 2));
+    $("btnFinalNextFromP1Q3")?.addEventListener("click", () => emit("final.p1.nextQ", 3));
+    $("btnFinalNextFromP1Q4")?.addEventListener("click", () => emit("final.p1.nextQ", 4));
+    $("btnFinalNextFromP1Q5")?.addEventListener("click", () => emit("final.p1.nextQ", 5));
+    
+    $("btnFinalStartP2")?.addEventListener("click", () => emit("final.p2.start"));
+    $("btnRepeatTest")?.addEventListener("click", () => emit("final.repeatTest"));
+    
+    $("btnFinalToP2MapQ1")?.addEventListener("click", () => emit("final.p2.toQ", 1));
+    
+    $("btnFinalNextFromP2Q1")?.addEventListener("click", () => emit("final.p2.nextQ", 1));
+    $("btnFinalNextFromP2Q2")?.addEventListener("click", () => emit("final.p2.nextQ", 2));
+    $("btnFinalNextFromP2Q3")?.addEventListener("click", () => emit("final.p2.nextQ", 3));
+    $("btnFinalNextFromP2Q4")?.addEventListener("click", () => emit("final.p2.nextQ", 4));
+    $("btnFinalNextFromP2Q5")?.addEventListener("click", () => emit("final.p2.nextQ", 5));
+    
+    $("btnFinalFinish")?.addEventListener("click", () => emit("final.finish"));
+
+  }
+
+  wire();
+
+  return {
+    on, emit,
+
+    setMsg, setText, setValue, setEnabled, setImg,
+
+    setFinalTimerP1,
+    setFinalTimerP2,
+
+    showCard,
+    mountNavigation,
+    setNavEnabled,
+
+    showDevicesStep,
+    showSetupStep,
+
+    setDeviceBadges,
+    setDeviceBadgesUnavailable,
+
+    showAlert,
+    setAudioStatus,
+
+    getTeamA, getTeamB,
+
+    // kolory
+    setSwatches,
+    openColorModal,
+    closeColorModal,
+    setColorModalRgb,
+    setColorModalHex,
+    setColorPreview,
+
+    // motyw
+    setThemeOptions,
+    setActiveTheme,
+
+    setFinalHasFinal,
+    setFinalConfirmed,
+    showFinalStep,
+
+    setQrToggleLabel,
+
+    setRoundsHud,
+    setRoundsStep,
+    setRoundQuestion,
+    
+    renderRoundAnswers,
+    renderRoundStealAnswers,
+    renderRoundRevealAnswers,
+    
+    showRoundsStep,
+    setFinalStatusList,
+    setFinalInputs,
+    setFinalMapping,
+
+    setGameHeader,
+    setHtml,
+
+    getAdvancedForm,
+    setAdvancedForm,
+  };
+}
+
+function clamp255(n) {
+  const x = Number(n);
+  if (!Number.isFinite(x)) return 0;
+  return Math.max(0, Math.min(255, Math.round(x)));
+}
+
+function rgbToHexLocal(r, g, b) {
+  const rr = clamp255(r).toString(16).padStart(2, "0");
+  const gg = clamp255(g).toString(16).padStart(2, "0");
+  const bb = clamp255(b).toString(16).padStart(2, "0");
+  return ("#" + rr + gg + bb).toUpperCase();
+}
+
+function escapeHtml(s) {
+  return String(s ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}

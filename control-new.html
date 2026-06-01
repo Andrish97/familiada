@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+  <meta name="app-version" content="v2026-06-01T07291"/>
+
+  <meta charset="UTF-8"/>
+  <meta name="robots" content="noindex, nofollow"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <title data-i18n="control.title">Familiada — Panel sterowania</title>
+
+  <link rel="icon" href="/favicon.ico?v=v2026-06-01T07291"/>
+  <link rel="stylesheet" href="/css/base.css?v=v2026-06-01T07291"/>
+  <link rel="stylesheet" href="/control-new/control.css?v=v2026-06-01T07291"/>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="js/core/security-warning.js?v=v2026-06-01T07291" defer></script>
+  <script type="module">
+    import { initI18n, t } from "/translation/translation.js?v=v2026-06-01T07291";
+
+    await initI18n({ withSwitcher: false });
+
+    import("/control-new/js/app.js?v=v2026-06-01T07291");
+  </script>
+</head>
+<body class="control-body">
+  <header class="topbar topbar-layout-4">
+    <div class="topbar-section topbar-section-1">
+      <div class="brand">FAMILIADA</div>
+      <button class="btn" id="btnBack" type="button" data-i18n="control.backToGames">← Moje gry</button>
+    </div>
+    <div class="topbar-section topbar-section-2">
+      <div class="top-status" aria-label="Status urządzeń" data-i18n-aria-label="control.statusLabel">
+        <div class="dotRow" title="Wyświetlacz" id="dotDisplayRow" data-i18n-title="control.deviceDisplay">
+          <span class="dot mid" id="dotDisplay"></span><span class="lbl" data-i18n="control.deviceDisplay">Wyświetlacz</span>
+        </div>
+        <div class="dotRow" title="Prowadzący" id="dotHostRow" data-i18n-title="control.deviceHost">
+          <span class="dot mid" id="dotHost"></span><span class="lbl" data-i18n="control.deviceHost">Prowadzący</span>
+        </div>
+        <div class="dotRow" title="Przycisk" id="dotBuzzerRow" data-i18n-title="control.deviceBuzzer">
+          <span class="dot mid" id="dotBuzzer"></span><span class="lbl" data-i18n="control.deviceBuzzer">Przycisk</span>
+        </div>
+      </div>
+    </div>
+    <div class="topbar-section topbar-section-3">
+      <button class="btn" id="btnManual" type="button">ℹ️</button>
+    </div>
+    <div class="topbar-section topbar-section-4">
+      <span class="who" id="who">—</span>
+      <button class="btn" id="btnLogout" type="button" data-i18n="control.logout">Wyloguj</button>
+    </div>
+  </header>
+
+  <div class="helpOverlay hidden" id="helpOverlay">
+    <div class="helpModal" role="dialog" aria-modal="true">
+      <div class="helpModalToolbar">
+        <button class="btn btn-sm" id="btnLegal" type="button" data-i18n="manual.legal">🔐 Polityka prywatności</button>
+        <button class="btn xs helpCloseBtn" id="btnHelpClose" type="button" onclick="document.getElementById('helpOverlay').classList.add('hidden')">✕</button>
+      </div>
+      <iframe id="helpFrame" class="helpFrame" src="/manual?modal=control" title="Wskazówki"></iframe>
+    </div>
+  </div>
+
+  <div class="legalOverlay hidden" id="legalOverlay">
+    <div class="legalModal" role="dialog" aria-modal="true">
+      <div class="legalModalToolbar">
+        <button class="btn btn-sm" id="btnBackToManual" type="button" data-i18n="privacy.backToManual">← Wskazówki</button>
+        <button class="btn xs legalCloseBtn" id="btnLegalClose" type="button" onclick="document.getElementById('legalOverlay').classList.add('hidden')">✕</button>
+      </div>
+      <iframe id="legalFrame" class="legalFrame" src="/manual?modal=control" title="Polityka prywatności"></iframe>
+    </div>
+  </div>
+
+  <div class="alertBar hidden" id="alertBar">
+    <div class="alertTxt" id="alertTxt">—</div>
+    <button class="btn xs" id="btnAlertClose" type="button" data-i18n="control.alertOk">OK</button>
+  </div>
+
+  <!-- Modal QR urządzeń z top bara -->
+  <div class="qrModalOverlay hidden" id="qrModalOverlay">
+    <div class="qrModalBox">
+      <div class="qrModalHead">
+        <div class="qrModalTitle" id="qrModalTitle" data-i18n="control.qrModalTitle">Urządzenie</div>
+        <button class="btn xs" id="qrModalClose" type="button">✕</button>
+      </div>
+
+      <div class="qrModalBody">
+        <div class="qrModalQr">
+          <img id="qrModalImg" alt="Kod QR" data-i18n-alt="control.qrModalImgAlt"/>
+        </div>
+
+        <div class="qrModalCode">
+          <span class="qrModalCodeVal" id="qrModalCodeVal">——————</span>
+        </div>
+
+        <div class="qrModalActions">
+          <button class="btn gold" id="qrModalCopy" type="button" data-i18n="common.copy">Kopiuj</button>
+          <a class="btn hidden" id="qrModalOpen" target="_blank" rel="noopener" data-i18n="common.open">Otwórz</a>
+        </div>
+        <div class="qrModalCodeHint" data-i18n="control.qrModalCodeHint">Wejdź na familiada.online → Podłącz urządzenie → wprowadź kod</div>
+      </div>
+    </div>
+  </div>
+
+    <!-- Modal wyboru koloru -->
+  <div class="colorModalOverlay hidden" id="colorModalOverlay">
+    <div class="colorModalBox">
+      <div class="colorModalHead">
+        <div class="colorModalTitle" id="colorModalTitle" data-i18n="control.colorTitle">Kolor</div>
+        <button class="btn xs" id="colorModalClose" type="button">✕</button>
+      </div>
+
+      <div class="colorModalBody">
+        <div class="colorTopRow">
+          <div class="colorPreview" id="colorPreview" aria-label="Podgląd koloru" data-i18n-aria-label="control.colorPreviewAria"></div>
+
+          <div class="field sm" style="min-width:260px;">
+            <div class="lbl2" data-i18n="control.colorHexLabel">HEX</div>
+            <input class="inp" id="colorHex" autocomplete="off" spellcheck="false" inputmode="text" />
+            <div class="hint" style="max-width:360px;">
+              <span data-i18n="control.colorHexFormat">Format:</span> <b>#RRGGBB</b>
+            </div>
+          </div>
+        </div>
+
+        <div class="sliders">
+          <div class="sliderRow">
+            <div class="sLbl">R</div>
+            <input class="rng" id="colorR" type="range" min="0" max="255" step="1" />
+            <div class="sVal" id="colorRVal">0</div>
+          </div>
+
+          <div class="sliderRow">
+            <div class="sLbl">G</div>
+            <input class="rng" id="colorG" type="range" min="0" max="255" step="1" />
+            <div class="sVal" id="colorGVal">0</div>
+          </div>
+
+          <div class="sliderRow">
+            <div class="sLbl">B</div>
+            <input class="rng" id="colorB" type="range" min="0" max="255" step="1" />
+            <div class="sVal" id="colorBVal">0</div>
+          </div>
+        </div>
+
+        <div class="colorModalFoot">
+          <div class="hint" style="max-width:520px;" data-i18n="control.colorHint">
+            Zmiany wysyłamy pokazywane na bierząco.
+          </div>
+          <button class="btn gold" id="colorModalDone" type="button" data-i18n="common.done">Gotowe</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <main class="wrap wide">
+    <div class="shell">
+
+      <!-- KARTA GŁÓWNA Z ZAKŁADKAMI -->
+      <div class="control-tabs-card">
+
+        <!-- Pasek zakładek -->
+        <div class="tabsBar">
+          <div class="tabs-strip">
+            <!-- Urządzenia -->
+            <div class="tab-slot slot-devices">
+              <button
+                class="navItem tab-label active"
+                data-card="devices"
+                id="navDevices"
+                type="button"
+                title="Urządzenia"
+                data-i18n-title="control.tabDevices"
+              >
+                <span class="ico">🔌</span>
+                <span class="navLabel" data-i18n="control.tabDevices">Urządzenia</span>
+              </button>
+
+              <div class="tab-wrapper">
+                <div class="tab-active">
+                  <span class="ico">🔌</span>
+                  <span class="navLabel" data-i18n="control.tabDevices">Urządzenia</span>
+                </div>
+                <div class="tab-corner tab-corner-left"></div>
+                <div class="tab-corner tab-corner-right"></div>
+              </div>
+            </div>
+
+            <!-- Ustawienia -->
+            <div class="tab-slot slot-setup">
+              <button
+                class="navItem tab-label"
+                data-card="setup"
+                id="navSetup"
+                type="button"
+                title="Pytania i ustawienia"
+                data-i18n-title="control.tabSetup"
+                disabled
+              >
+                <span class="ico">📝</span>
+                <span class="navLabel" data-i18n="control.tabSetupShort">Ustawienia</span>
+              </button>
+
+              <div class="tab-wrapper">
+                <div class="tab-active">
+                  <span class="ico">📝</span>
+                  <span class="navLabel" data-i18n="control.tabSetupShort">Ustawienia</span>
+                </div>
+                <div class="tab-corner tab-corner-left"></div>
+                <div class="tab-corner tab-corner-right"></div>
+              </div>
+            </div>
+
+            <!-- Rundy -->
+            <div class="tab-slot slot-rounds">
+              <button
+                class="navItem tab-label"
+                data-card="rounds"
+                id="navRounds"
+                type="button"
+                title="Rozgrywka"
+                data-i18n-title="control.tabRounds"
+                disabled
+              >
+                <span class="ico">🎮</span>
+                <span class="navLabel" data-i18n="control.tabRounds">Rundy</span>
+              </button>
+
+              <div class="tab-wrapper">
+                <div class="tab-active">
+                  <span class="ico">🎮</span>
+                  <span class="navLabel" data-i18n="control.tabRounds">Rundy</span>
+                </div>
+                <div class="tab-corner tab-corner-left"></div>
+                <div class="tab-corner tab-corner-right"></div>
+              </div>
+            </div>
+
+            <!-- Finał -->
+            <div class="tab-slot slot-final">
+              <button
+                class="navItem tab-label"
+                data-card="final"
+                id="navFinal"
+                type="button"
+                title="Finał"
+                data-i18n-title="control.tabFinal"
+                disabled
+              >
+                <span class="ico">🏁</span>
+                <span class="navLabel" data-i18n="control.tabFinal">Finał</span>
+              </button>
+
+              <div class="tab-wrapper">
+                <div class="tab-active">
+                  <span class="ico">🏁</span>
+                  <span class="navLabel" data-i18n="control.tabFinal">Finał</span>
+                </div>
+                <div class="tab-corner tab-corner-left"></div>
+                <div class="tab-corner tab-corner-right"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="tabsFoot">
+            <div class="msg msg-inline" id="msgSide"></div>
+          </div>
+        </div>
+
+        <!-- Główna karta -->
+        <section class="main control-main-card">
+
+          <!-- DEVICES -->
+          <section class="cardPanel" data-card="devices">
+            <div class="panelHead">
+              <div class="panelStep" data-panel-step></div>
+            </div>
+
+            <!-- Step 1: wszystkie 3 urządzenia -->
+            <div class="step" data-step="devices_display">
+              <div class="stepTitle" data-i18n="control.stepDevices">Urządzenia</div>
+                <div class="card">
+                  <div class="cardBody">
+
+                    <!-- Wyświetlacz -->
+                    <div class="device-row" data-device="display">
+                      <!-- Rząd 1: nazwa, badge status -->
+                      <div class="device-row-1">
+                        <div class="device-name" data-i18n="control.deviceDisplay">Wyświetlacz</div>
+                        <div class="badge mid" id="pillDisplay">—</div>
+                      </div>
+                      <!-- Rząd 2: kod + przyciski -->
+                      <div class="device-row-2">
+                        <div class="device-connect-code">
+                          <span class="device-connect-code-val" id="displayCodeVal">——————</span>
+                        </div>
+                        <button class="btn gold" id="btnCopyDisplay" type="button" data-i18n="common.copy">Kopiuj</button>
+                        <a class="btn" id="btnOpenDisplay" target="_blank" rel="noopener" data-i18n="common.open">Otwórz</a>
+                        <button class="btn" id="btnQrDisplay" type="button" data-i18n="control.qrCodeBtn">Kod QR</button>
+                        <button class="btn" id="btnShareDisplay" type="button" data-i18n="control.shareDevice">
+                          Udostępnij
+                          <span class="badge" id="shareDisplayBadge" aria-hidden="true"></span>
+                        </button>
+                        <button class="btn" id="btnDispBlack" type="button">
+                          <span data-i18n="control.blackScreen">Czarny ekran</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Prowadzący 1 -->
+                    <div class="device-row" data-device="host">
+                      <!-- Rząd 1: nazwa, badge status -->
+                      <div class="device-row-1">
+                        <div class="device-name">
+                          <span data-i18n="control.deviceHost">Prowadzący</span>
+                        </div>
+                        <div class="badge mid" id="pillHost">—</div>
+                      </div>
+                      <!-- Rząd 2: kod + przyciski -->
+                      <div class="device-row-2">
+                        <div class="device-connect-code">
+                          <span class="device-connect-code-val" id="hostCodeVal">——————</span>
+                        </div>
+                        <button class="btn gold" id="btnCopyHost" type="button" data-i18n="common.copy">Kopiuj</button>
+                        <button class="btn" id="btnQrHost" type="button" data-i18n="control.qrCodeBtn">Kod QR</button>
+                        <button class="btn" id="btnQrHostOnDisplay" type="button" data-i18n="control.qrOnDisplay">QR na wyświetlaczu</button>
+                        <button class="btn" id="btnShareHost" type="button" data-i18n="control.shareDevice">
+                          Udostępnij
+                          <span class="badge" id="shareHostBadge" aria-hidden="true"></span>
+                        </button>
+                      </div>
+                      <!-- Rząd opt-out -->
+                      <div class="device-row-opt">
+                        <label class="device-opt-check">
+                          <input type="checkbox" id="chkNoHostTablet"/>
+                          <div class="device-opt-check-text">
+                            <span class="device-opt-check-label" data-i18n="control.noHostTablet">Nie używaj tabletu prowadzącego</span>
+                            <span class="device-opt-check-hint" data-i18n="control.noHostTabletHint">Jeśli prowadzący nie używa osobnego tabletu/telefonu, zaznacz tę opcję.</span>
+                          </div>
+                        </label>
+                      </div>
+                    </div>
+
+                    <!-- Prowadzący 2 (Buzzer) -->
+                    <div class="device-row" data-device="buzzer">
+                      <!-- Rząd 1: nazwa, badge status -->
+                      <div class="device-row-1">
+                        <div class="device-name" data-i18n="control.deviceBuzzer">Przycisk</div>
+                        <div class="badge mid" id="pillBuzzer">—</div>
+                      </div>
+                      <!-- Rząd 2: kod + przyciski -->
+                      <div class="device-row-2">
+                        <div class="device-connect-code">
+                          <span class="device-connect-code-val" id="buzzerCodeVal">——————</span>
+                        </div>
+                        <button class="btn gold" id="btnCopyBuzzer" type="button" data-i18n="common.copy">Kopiuj</button>
+                        <button class="btn" id="btnQrBuzzer" type="button" data-i18n="control.qrCodeBtn">Kod QR</button>
+                        <button class="btn" id="btnQrBuzzerOnDisplay" type="button" data-i18n="control.qrOnDisplay">QR na wyświetlaczu</button>
+                        <button class="btn" id="btnShareBuzzer" type="button" data-i18n="control.shareDevice">
+                          Udostępnij
+                          <span class="badge" id="shareBuzzerBadge" aria-hidden="true"></span>
+                        </button>
+                      </div>
+                      <!-- Rząd opt-out -->
+                      <div class="device-row-opt">
+                        <label class="device-opt-check">
+                          <input type="checkbox" id="chkPhysicalBuzzer"/>
+                          <div class="device-opt-check-text">
+                            <span class="device-opt-check-label" data-i18n="control.physicalBuzzer">Fizyczny przycisk</span>
+                            <span class="device-opt-check-hint" data-i18n="control.physicalBuzzerHint">Jeśli posiadasz fizyczny przycisk buzzer, zaznacz tę opcję.</span>
+                          </div>
+                        </label>
+                      </div>
+                    </div>
+
+                    <div class="device-code-hint" data-i18n="control.deviceCodeHint">Wejdź na familiada.online, kliknij „Podłącz urządzenie" i wprowadź kod urządzenia.</div>
+
+                  </div>
+
+                  <div class="stepFoot">
+                    <div class="stepFootButtons">
+                      <button class="btn gold" id="btnDevicesNext" type="button" disabled data-i18n="common.next">Dalej</button>
+                    </div>
+                    <div class="msg msg-pill" id="msgDevices"></div>
+                  </div>
+                </div>
+            </div>
+
+            <!-- Step 2 (host+buzzer) – usunięty, scalony z step 1 -->
+            <div class="step hidden" data-step="devices_hostbuzzer" aria-hidden="true" style="display:none!important;"></div>
+
+            <!-- Step 3: Dźwięk -->
+            <div class="step hidden" data-step="devices_audio">
+              <div class="stepTitle" data-i18n="control.stepAudio">Dźwięk</div>
+
+              <div class="card">
+                <div class="cardBody">
+                  <div class="name" data-i18n="control.audioUnlockTitle">Odblokuj dźwięk</div>
+                  <div class="hint" data-i18n="control.audioUnlockHint">
+                    Kliknij raz przycisk, żeby przeglądarka zezwoliła na odtwarzanie dźwięków.
+                  </div>
+                  <div class="rowBtns">
+                    <button class="btn gold" id="btnUnlockAudio" type="button" data-i18n="control.audioUnlockBtn">🔊 Odblokuj</button>
+                    <div class="badge bad" id="audioStatus" data-i18n="control.audioBlocked">ZABLOKOWANE</div>
+                  </div>
+                </div>
+
+                <div class="stepFoot step-foot-spaced">
+                  <div class="stepFootButtons">
+                    <button class="btn" id="btnAudioBack" type="button" data-i18n="common.back">Wstecz</button>
+                    <button class="btn gold" id="btnDevicesFinish" type="button" disabled data-i18n="control.devicesFinish">Gotowe — przejdź dalej</button>
+                  </div>
+                  <div class="msg msg-pill" id="msgAudio"></div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- SETUP -->
+          <section class="cardPanel hidden" data-card="setup">
+            <div class="panelHead">
+              <div class="panelStep" data-panel-step></div>
+            </div>
+
+            <div class="step" data-step="setup_names">
+              <div class="stepTitle" data-i18n="control.stepTeamNames">Nazwy drużyn</div>
+
+              <div class="card">
+                <div class="cardBody">
+                  <div class="hint" data-i18n="control.teamHint">
+                    Tutaj należy wprowadzić nazwy drużyn.
+                  </div>
+                  <div class="rowBtns">
+                    <div class="field">
+                      <div class="lbl2" data-i18n="control.teamALabel">Drużyna A</div>
+                      <input class="inp" id="teamA" autocomplete="off"/>
+                    </div>
+                    <div class="field">
+                      <div class="lbl2" data-i18n="control.teamBLabel">Drużyna B</div>
+                      <input class="inp" id="teamB" autocomplete="off"/>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="stepFoot">
+                  <div class="stepFootButtons">
+                    <button class="btn" id="btnBackToDevices" type="button" data-i18n="common.back">Wstecz</button>
+                    <button class="btn gold" id="btnSetupNext" type="button" data-i18n="common.next">Dalej</button>
+                  </div>
+                  <div class="msg msg-pill" id="msgSetup"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- STEP: SETUP_LOOK - wygląd (kolory drużyn + logo) -->
+            <div class="step hidden" data-step="setup_look">
+              <div class="stepTitle" data-i18n="control.stepLook">Wygląd</div>
+
+              <div class="card">
+                <div class="cardBody">
+
+                  <div class="sectionBlock">
+                    <div class="sectionTitle" data-i18n="control.lookColors">Kolory</div>
+                    <div class="colorRow">
+                      <div class="colorItem">
+                        <span class="lbl2" id="lookTeamAName" data-i18n="control.teamALabel">Drużyna A</span>
+                        <button class="swatchBtn" id="swatchTeamA" type="button" aria-label="Kolor drużyny A" data-i18n-aria-label="control.teamAColorAria"></button>
+                      </div>
+                      <div class="colorItem">
+                        <span class="lbl2" id="lookTeamBName" data-i18n="control.teamBLabel">Drużyna B</span>
+                        <button class="swatchBtn" id="swatchTeamB" type="button" aria-label="Kolor drużyny B" data-i18n-aria-label="control.teamBColorAria"></button>
+                      </div>
+                      <div class="colorItem">
+                        <span class="lbl2" data-i18n="control.bgColorLabel">Kolor tła wyświetlacza</span>
+                        <button class="swatchBtn" id="swatchBg" type="button" aria-label="Kolor tła wyświetlacza" data-i18n-aria-label="control.bgColorAria"></button>
+                      </div>
+                      <div class="colorItem">
+                        <span class="lbl2" data-i18n="control.activeColorLabel">Kolor aktywnych kropek</span>
+                        <button class="swatchBtn" id="swatchDot" type="button" aria-label="Kolor aktywnych kropek" data-i18n-aria-label="control.activeColorAria"></button>
+                      </div>
+                      <button class="btn btn-sm" type="button" id="btnColorsReset" data-i18n="control.resetColors">Reset</button>
+                    </div>
+                  </div>
+
+                  <div class="sectionBlock">
+                    <div class="sectionTitle" data-i18n="control.lookTheme">Motyw</div>
+                    <div class="hint" data-i18n="control.lookThemeHint">Wybierz motyw wyświetlacza.</div>
+                    <div class="ui-select" id="themeSelect">
+                      <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
+                        <span class="ui-select-label">—</span>
+                        <span class="ui-select-caret" aria-hidden="true">▾</span>
+                      </button>
+                      <div class="ui-select-menu" role="listbox"></div>
+                    </div>
+                  </div>
+
+                  <div class="sectionBlock">
+                    <div class="sectionTitle" data-i18n="control.lookLogoTitle">Logo</div>
+                    <div class="hint" data-i18n="control.lookLogoHint">Wybierz logo, które pojawi się na wyświetlaczu.</div>
+                    <div id="logoGrid" class="logoGrid"></div>
+                  </div>
+
+                </div>
+
+                <div class="stepFoot">
+                  <div class="stepFootButtons">
+                    <button class="btn" id="btnSetupLookBack" type="button" data-i18n="common.back">Wstecz</button>
+                    <button class="btn gold" id="btnSetupLookNext" type="button" data-i18n="common.next">Dalej</button>
+                  </div>
+                  <div class="msg msg-pill" id="msgSetupLook"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="step hidden" data-step="setup_game">
+              <div class="stepTitle" data-i18n="control.stepGameSettings">Ustawienia pytań i rozgrywki</div>
+
+              <div class="card">
+                <div class="cardBody">
+                  
+                  <!-- GÓRNA SEKCJA - FINAŁ -->
+                  <div class="sectionBlock">
+                    <div class="sectionTitle" data-i18n="control.sectionFinal">Finał</div>
+
+                    <div class="settings-grid">
+                      <div class="setting-item">
+                        <div class="lbl2" data-i18n="control.playFinal">Gramy finał?</div>
+                        <div class="toggle-group">
+                          <label class="toggle-item">
+                            <input type="radio" name="hasFinal" value="yes" id="finalYes" />
+                            <span class="toggle-slider" data-i18n-data-text="control.toggleYes">Tak</span>
+                          </label>
+                          <label class="toggle-item">
+                            <input type="radio" name="hasFinal" value="no" id="finalNo" checked />
+                            <span class="toggle-slider" data-i18n-data-text="control.toggleNo">Nie</span>
+                          </label>
+                        </div>
+                      </div>
+
+                      <div class="setting-item" id="finalModeField">
+                        <div class="lbl2" data-i18n="control.finalQuestionsMode">Pytania finału</div>
+                        <div class="toggle-group">
+                          <label class="toggle-item">
+                            <input type="radio" name="finalMode" value="random" id="finalRandom" checked />
+                            <span class="toggle-slider" data-i18n-data-text="control.toggleRandom">Losuj</span>
+                          </label>
+                          <label class="toggle-item">
+                            <input type="radio" name="finalMode" value="pick" id="finalPick" />
+                            <span class="toggle-slider" data-i18n-data-text="control.togglePick">Wybierz</span>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- ŚRODKOWA SEKCJA - RUNDY -->
+                  <div class="sectionBlock">
+                    <div class="sectionTitle" data-i18n="control.sectionRounds">Rundy</div>
+
+                    <div class="settings-grid">
+                      <div class="setting-item">
+                        <div class="lbl2" data-i18n="control.roundsQuestionsMode">Pytania rund</div>
+                        <div class="toggle-group">
+                          <label class="toggle-item">
+                            <input type="radio" name="roundsMode" value="random" id="roundsRandom" checked />
+                            <span class="toggle-slider" data-i18n-data-text="control.toggleRandom">Losuj</span>
+                          </label>
+                          <label class="toggle-item">
+                            <input type="radio" name="roundsMode" value="pick" id="roundsPick" />
+                            <span class="toggle-slider" data-i18n-data-text="control.togglePick">Wybierz</span>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- DOLNA SEKCJA - DODATKOWE USTAWIENIA -->
+                  <div class="sectionBlock">
+                    <div class="sectionTitle" data-i18n="control.extraSettingsTitle">Dodatkowe ustawienia</div>
+                    <div class="hint" data-i18n="control.extraSettingsHint" style="margin-bottom:10px;">
+                      Zmieniaj ustawienia mądrze! Zbyt wysokie progi mogą spowodować brak pytań, a za duża kwota wygranej może nie zmieścić się na wyświetlaczu.
+                    </div>
+
+                    <div class="settings-grid settings-grid-2">
+                      <div class="setting-item">
+                        <div class="lbl2" data-i18n="control.roundMultipliers">Mnożniki rund</div>
+                        <div class="hint" data-i18n-html="control.roundMultipliersHint">
+                          Podaj po przecinku, np. <b>1,1,1,2,3</b>
+                        </div>
+                        <input
+                          id="roundMultipliers"
+                          class="inp"
+                          type="text"
+                          autocomplete="off"
+                          inputmode="numeric"
+                        />
+                      </div>
+
+                      <div class="setting-item">
+                        <div class="lbl2" data-i18n="control.gameTarget">Cel rozgrywki</div>
+                        <input
+                          id="finalMinPoints"
+                          class="inp"
+                          type="number"
+                          min="0"
+                          step="10"
+                        />
+                      </div>
+
+                      <div class="setting-item" id="finalTargetField">
+                        <div class="lbl2" data-i18n="control.finalTarget">Cel finału</div>
+                        <input
+                          id="finalTargetPoints"
+                          class="inp"
+                          type="number"
+                          min="0"
+                          step="10"
+                        />
+                      </div>
+
+                      <div class="setting-item">
+                        <div class="lbl2" data-i18n="control.gameEndMode">Zakończenie gry</div>
+                        <div class="radio-group">
+                          <label class="chk">
+                            <input type="radio" id="winModeLogo" name="endMode" value="logo" checked />
+                            <span data-i18n="control.showLogo">Pokaż logo</span>
+                          </label>
+                          <label class="chk">
+                            <input type="radio" id="winModePoints" name="endMode" value="points" />
+                            <span data-i18n="control.showPoints">Pokaż punkty</span>
+                          </label>
+                          <label class="chk" id="winModeMoneyChk">
+                            <input type="radio" id="winModeMoney" name="endMode" value="money" />
+                            <span data-i18n="control.showMoney">Pokaż kwotę (po finale)</span>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Pola nagrody - osobny blok, tylko gdy finał i "Pokaż kwotę" -->
+                    <div class="settings-grid settings-grid-2" id="prizeSettingsRow">
+                      <div class="setting-item">
+                        <div class="lbl2" data-i18n="control.finalPrizeMultiplier">Mnożnik nagrody (po finale)</div>
+                        <div class="hint" data-i18n="control.finalPrizeMultiplierHint">
+                          Mnożnik decydujący o kwocie nagrody głównej
+                        </div>
+                        <input
+                          id="finalPrizeMultiplier"
+                          class="inp"
+                          type="number"
+                          min="1"
+                          step="1"
+                        />
+                      </div>
+
+                      <div class="setting-item">
+                        <div class="lbl2" data-i18n="control.mainPrizeAmount">Kwota nagrody głównej</div>
+                        <input
+                          id="mainPrizeAmount"
+                          class="inp"
+                          type="number"
+                          min="0"
+                          max="99999"
+                          step="100"
+                        />
+                        <div class="hint" data-i18n="control.mainPrizeAmountHint">
+                          Maks. 5 cyfr (do 99 999)
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="rowBtns">
+                      <button class="btn" type="button" id="btnAdvancedReset" data-i18n="control.advancedReset">Przywróć domyślne</button>
+                      <div class="msg msg-inline" id="msgAdvanced"></div>
+                    </div>
+                  </div>
+
+                </div>
+
+                <div class="stepFoot">
+                  <div class="stepFootButtons">
+                    <button class="btn" id="btnSetupGameBack" type="button" data-i18n="common.back">Wstecz</button>
+                    <button class="btn gold" id="btnSetupGameNext" type="button" data-i18n="common.next">Dalej</button>
+                  </div>
+                  <div class="msg msg-pill" id="msgSetupGame"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="step hidden" data-step="setup_final">
+              <div class="stepTitle" data-i18n="control.stepFinalPick">Wybierz pytania finału</div>
+
+              <div class="card">
+                <div class="cardBody">
+                  
+                  <div class="card card-soft" id="finalPickerCard">
+                    <div class="head">
+                      <div class="name" data-i18n="control.finalQuestions">Pytania</div>
+                      <div class="badge"><span data-i18n="control.finalBadge">Finał:</span> <b id="pickedCount">0</b>/5</div>
+                    </div>
+
+                    <div class="finalLists">
+                      <div class="finalCol">
+                        <div class="mini">
+                          <div class="hint" data-i18n="control.finalPoolHint">Pytania do rozgrywki (pula).</div>
+                        </div>
+                        <div class="qList" id="finalGameList"></div>
+                      </div>
+
+                      <div class="finalCol">
+                        <div class="mini">
+                          <div class="hint" data-i18n="control.finalListHint">Pytania finału (max 5).</div>
+                        </div>
+                        <div class="qList" id="finalFinalList"></div>
+
+                        <div class="mini" id="finalOnlyView" style="display:none;">
+                          <div class="hint" data-i18n="control.finalOnlyHint">Pytania zatwierdzone. Kliknij „Edytuj", aby zmienić.</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="rowBtns">
+                      <button class="btn" id="btnReloadQuestions" type="button" data-i18n="control.refresh">Odśwież</button>
+                      <button class="btn gold" id="btnConfirmFinal" type="button" disabled data-i18n="control.confirm">Zatwierdź</button>
+                      <button class="btn" id="btnEditFinal" type="button" style="display:none;" data-i18n="control.edit">Edytuj</button>
+                      <div class="msg msg-inline" id="msgFinalPick"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="stepFoot">
+                  <div class="stepFootButtons">
+                    <button class="btn" id="btnSetupFinalBack" type="button" data-i18n="common.back">Wstecz</button>
+                    <button class="btn gold" id="btnSetupFinish" type="button" data-i18n="common.next">Dalej</button>
+                  </div>
+                  <div class="msg msg-pill" id="msgSetup2"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- STEP: SETUP_ROUNDS - wybór kolejności pytań rund -->
+            <div class="step hidden" data-step="setup_rounds">
+              <div class="stepTitle" data-i18n="control.stepRoundsPick">Kolejność pytań rund</div>
+
+              <div class="card">
+                <div class="cardBody">
+                  <div class="hint" data-i18n="control.roundsPickHint">
+                    Ustaw kolejność pytań dla kolejnych rund. Pytania z finału zostały wykluczone.
+                  </div>
+                  
+                  <div class="roundsOrderList" id="roundsOrderList">
+                    <!-- Tu będą kafelki pytań z drag handles -->
+                  </div>
+                </div>
+
+                <div class="stepFoot">
+                  <div class="stepFootButtons">
+                    <button class="btn" id="btnSetupRoundsBack" type="button" data-i18n="common.back">Wstecz</button>
+                    <button class="btn gold" id="btnSetupRoundsNext" type="button" data-i18n="common.next">Dalej</button>
+                  </div>
+                  <div class="msg msg-pill" id="msgSetupRounds"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- STEP: SETUP_FINISH - podsumowanie przed startem -->
+            <div class="step hidden" data-step="setup_finish">
+              <div class="stepTitle" data-i18n="control.stepSetupFinish">Podsumowanie</div>
+
+              <div class="card">
+                <div class="cardBody">
+
+                  <div class="summarySection">
+                    <div class="summarySectionTitle" data-i18n="control.summaryTeams">Drużyny</div>
+                    <div class="summarySectionValue" id="summaryTeams">—</div>
+                  </div>
+
+                  <div class="summarySection">
+                    <div class="summarySectionTitle" data-i18n="control.summaryFinal">Finał</div>
+                    <div class="summarySectionValue" id="summaryFinal">—</div>
+                  </div>
+
+                  <div class="summarySection" id="summaryFinalSection">
+                    <div class="summarySectionTitle" data-i18n="control.summaryFinalQuestions">Pytania finału</div>
+                    <ol class="summaryQList" id="summaryFinalQuestions"></ol>
+                  </div>
+
+                  <div class="summarySection">
+                    <div class="summarySectionTitle" data-i18n="control.summaryRoundsQuestions">Pytania rund</div>
+                    <ol class="summaryQList" id="summaryRoundsQuestions"></ol>
+                  </div>
+
+                  <div class="hint" data-i18n="control.setupFinishHint">
+                    Po kliknięciu „Gotowe" przejdziesz do panelu rund.
+                  </div>
+                </div>
+
+                <div class="stepFoot">
+                  <div class="stepFootButtons">
+                    <button class="btn" id="btnSetupFinishBack" type="button" data-i18n="common.back">Wstecz</button>
+                    <button class="btn gold" id="btnSetupFinish2" type="button" data-i18n="control.devicesFinish">Gotowe — przejdź do rund</button>
+                  </div>
+                  <div class="msg msg-pill" id="msgSetupFinish"></div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ROUNDS -->
+          <section class="cardPanel hidden" data-card="rounds">
+            <div class="panelHead">
+              <div class="panelStep" data-panel-step></div>
+            </div>
+
+            <div class="step hidden" data-step="r_intro">
+              <div class="stepTitle" data-i18n="control.roundsIntroTitle">Intro gry</div>
+              <div class="card">
+                <div class="cardBody">
+                  <div class="name" data-i18n="control.roundsIntroName">Rozpocznij grę</div>
+                  <div class="hint" data-i18n="control.roundsIntroHint">
+                    Na wyświetlaczu pojawi się logo programu i zostanie otworzone intro. Po zakończeniu przejdziesz do pierwszej rundy.
+                  </div>
+                </div>
+                <div class="stepFoot">
+                  <div class="stepFootButtons">
+                    <button class="btn gold" id="btnStartShowIntro" type="button" data-i18n="control.roundsIntroBtn">Rozpocznij grę</button>
+                  </div>
+                  <div class="msg msg-pill" id="msgRoundsIntro"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="step hidden" data-step="r_roundStart">
+              <div class="stepTitle" data-i18n="control.roundsStartTitle">Rozpocznij rundę</div>
+              <div class="card">
+                <div class="cardBody">
+                  <div class="name" data-i18n="control.roundsStartName">Pusta plansza + pytanie</div>
+                  <div class="hint" data-i18n="control.roundsStartHint">
+                    Na wyświetlaczu pojawi się pusta plansza rundy, a prowadzący dostanie treść pytania.
+                  </div>
+                </div>
+                <div class="stepFoot">
+                  <div class="stepFootButtons">
+                    <button class="btn gold" id="btnStartRound" type="button" data-i18n="control.roundsStartBtn">Rozpocznij rundę</button>
+                  </div>
+                  <div class="msg msg-pill" id="msgRoundsRoundStart"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="step hidden" data-step="r_duel">
+              <div class="stepTitle" data-i18n="control.roundsDuelTitle">Zatwierdź przycisk</div>
+              <div class="card">
+                <div class="cardBody">
+                  <div class="name" data-i18n="control.roundsDuelName">Pojedynek przyciskiem</div>
+                  <div class="hint hint-compact" data-i18n="control.roundsDuelHint">
+                    Przycisk jest aktywny. Gdy któraś drużyna naciśnie — wybierz, czy zatwierdzasz,
+                    albo powtórz naciśniecie.
+                  </div>
+
+                  <ul class="hList">
+                    <li>
+                      <button class="btn" id="btnBuzzAcceptA" type="button" data-i18n="control.roundsBuzzAcceptA">Zatwierdź drużynę A</button>
+                    </li>
+                    <li>
+                      <button class="btn" id="btnBuzzAcceptB" type="button" data-i18n="control.roundsBuzzAcceptB">Zatwierdź drużynę B</button>
+                    </li>
+                    <li>
+                      <button class="btn" id="btnBuzzRetry" type="button" data-i18n="control.roundsBuzzRetry">Ponów naciśnięcie</button>
+                    </li>
+                  </ul>
+                </div>
+
+                <div class="stepFoot">
+                  <div class="stepFootButtons"></div>
+                  <div class="msg msg-pill" id="msgDuel"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="step hidden" data-step="r_play">
+              <div class="stepTitle" data-i18n="control.roundsPlayTitle">Runda</div>
+
+              <div class="card">
+                <div class="cardBody">
+                  <div class="name" data-i18n="control.roundsPlayName">Rozgrywka</div>
+                  <div class="qText" id="roundQuestion">—</div>
+                    <div class="hint" data-i18n="control.roundsPlayHint">
+                      Wciskaj odpowiedź jesli poprawna, lub X (pudło), można również uruchonić odicznie 3s (czas=X).
+                      Po zakończeniu pojedynku, można oddać pytanie przeciwnej drużynie.
+                      We właściwej rozgrywce po trzech X uruchomi się kradzież (szansa przeciwnej drużyny).
+                    </div>
+
+                  <div class="rowBtns" style="margin-top:10px;">
+                    <button class="btn" id="btnPassQuestion" type="button" data-i18n="control.roundsPassQuestion">Oddaj pytanie</button>
+                  </div>
+
+                  <div class="card card-soft" style="margin-top:14px;">
+                    <div class="cardBody">
+                      <div class="name" data-i18n="control.roundsAnswers">Odpowiedzi</div>
+                      <div class="ansGrid" id="roundAnswers"></div>
+                    </div>
+                  </div>
+
+                  <div class="rowBtns" style="margin-top:14px; align-items:center;">
+                    <button class="btn" id="btnAddX" type="button" data-i18n="control.roundsAddX">X (pudło)</button>
+                    <button class="btn" id="btnStartTimer3" type="button" data-i18n="control.roundsStartTimer3">Rozpocznij odliczanie 3s</button>
+                    <div class="timer3" id="t3">—</div>
+                  </div>
+
+                  <div class="msgStack" style="margin-top:10px;">
+                    <div class="msg msg-inline" id="msgRoundsPlay"></div>
+                    <div class="msg msg-inline" id="msgSteal"></div>
+                    <div class="msg msg-inline" id="msgRoundsReveal"></div>
+                    <div class="msg msg-inline" id="msgRoundsEnd"></div>
+                  </div>
+                </div>
+
+                <div class="stepFoot">
+                  <div class="stepFootButtons">
+                    <button class="btn gold" id="btnGoEndRound" type="button" data-i18n="control.roundsEndRound">Zakończ rundę</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="step hidden" data-step="r_gameEnd">
+              <div class="stepTitle" data-i18n="control.roundsGameEndTitle">Koniec gry</div>
+              <div class="card">
+                <div class="cardBody">
+                  <div class="name" data-i18n="control.roundsGameEndName">Zakończ grę</div>
+                  <div class="hint" data-i18n="control.roundsGameEndHint">
+                    To była ostatnia runda. Na wyświetlaczu pokażemy logo programu
+                    albo punkty zwycięskiej drużyny (jeśli są włączone).
+                  </div>
+                </div>
+
+                <div class="stepFoot">
+                  <div class="stepFootButtons">
+                    <button class="btn gold" id="btnShowGameEnd" type="button" data-i18n="control.roundsGameEndBtn">Zakończ grę</button>
+                  </div>
+                  <div class="msg msg-pill" id="msgGameEnd"></div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- FINAL -->
+          <section class="cardPanel hidden" data-card="final">
+            <div class="panelHead">
+              <div class="panelStep" data-panel-step></div>
+            </div>
+
+            <div class="step" data-step="f_start">
+              <div class="stepTitle" data-i18n="control.finalStartTitle">Start finału</div>
+              <div class="card">
+                <div class="cardBody">
+                  <div class="name" data-i18n="control.finalStartName">Rozpocznij finał</div>
+                  <div class="hint" data-i18n="control.finalStartHint">
+                    Dźwięk finału, schowanie starej planszy, wjazd planszy finału.
+                    Prowadzący dostaje pytania.
+                  </div>
+                </div>
+
+                <div class="stepFoot">
+                  <div class="stepFootButtons">
+                    <button class="btn gold" id="btnFinalStart" type="button" data-i18n="control.finalStartBtn">Rozpocznij finał</button>
+                  </div>
+                  <div class="msg msg-pill" id="msgFinal"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="step hidden" data-step="f_p1_entry">
+              <div class="stepTitle" data-i18n="control.finalP1EntryTitle">Runda 1 — wpisywanie</div>
+              <div class="card">
+                <div class="cardBody">
+                  <div class="name" data-i18n="control.finalP1EntryName">Odpowiedzi gracza 1 (15s)</div>
+                  <div class="hint" data-i18n="control.finalP1EntryHint">
+                    Operator wpisuje odpowiedzi gracza. Możesz użyć Enter, żeby przejść do następnego pytania,
+                    lub strzałki góra/dół, żeby szybko przelączać się między pytaniami. Odliczanie rusza po wciśnięciu przycisku.
+                    Timer mozna uruchomić przyciskiem lub skrótem Shift + Ctrl (Cmd na Macu),
+                    można też zatrzymać jesli wszytko zostało wpisane, przyciskiem lub tym samym skrótem.
+                  </div>
+
+                  <div class="rowBtns" style="margin-top:10px;">
+                    <button class="btn" id="btnFinalP1StartTimer" type="button" data-i18n="control.finalStartTimer15">Rozpocznij odliczanie (15s)</button>
+                    <div class="finalTimerPill" id="finalTimerP1">—</div>
+                  </div>
+
+                  <div id="finalP1Inputs" style="margin-top:10px;"></div>
+                </div>
+
+                <div class="stepFoot">
+                  <div class="stepFootButtons">
+                    <button class="btn gold" id="btnFinalToP1MapQ1" type="button" disabled data-i18n="common.next">Dalej</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="step hidden" data-step="f_p1_map_q1">
+              <div class="stepTitle" data-i18n="control.finalP1MapQ1Title">Runda 1 — mapowanie (P1)</div>
+              <div class="card">
+              <div class="hint" data-i18n="control.finalMapHint">
+                Wybierz odpowiedź z listy, jesli pasuje, jesli nie to odpowiedź gracza za 0 pkt.
+                Jeśli nic nie było wpisane to brak odpowiedzi. Możesz odsłonić odpowiedź i punkty.
+              </div>
+                <div class="cardBody"><div id="finalP1MapQ1"></div></div>
+                <div class="stepFoot">
+                  <div class="stepFootButtons"><button class="btn gold" id="btnFinalNextFromP1Q1" type="button" data-i18n="common.next">Dalej</button></div>
+                  <div class="msg msg-pill" id="msgFinalP1Q1"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="step hidden" data-step="f_p1_map_q2">
+              <div class="stepTitle" data-i18n="control.finalP1MapQ2Title">Runda 1 — mapowanie (P2)</div>
+              <div class="card">
+              <div class="hint" data-i18n="control.finalMapHint">
+                Wybierz odpowiedź z listy, jesli pasuje, jesli nie to odpowiedź gracza za 0 pkt.
+                Jeśli nic nie było wpisane to brak odpowiedzi. Możesz odsłonić odpowiedź i punkty.
+              </div>
+                <div class="cardBody"><div id="finalP1MapQ2"></div></div>
+                <div class="stepFoot">
+                  <div class="stepFootButtons"><button class="btn gold" id="btnFinalNextFromP1Q2" type="button" data-i18n="common.next">Dalej</button></div>
+                  <div class="msg msg-pill" id="msgFinalP1Q2"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="step hidden" data-step="f_p1_map_q3">
+              <div class="stepTitle" data-i18n="control.finalP1MapQ3Title">Runda 1 — mapowanie (P3)</div>
+              <div class="card">
+              <div class="hint" data-i18n="control.finalMapHint">
+                Wybierz odpowiedź z listy, jesli pasuje, jesli nie to odpowiedź gracza za 0 pkt.
+                Jeśli nic nie było wpisane to brak odpowiedzi. Możesz odsłonić odpowiedź i punkty.
+              </div>
+                <div class="cardBody"><div id="finalP1MapQ3"></div></div>
+                <div class="stepFoot">
+                  <div class="stepFootButtons"><button class="btn gold" id="btnFinalNextFromP1Q3" type="button" data-i18n="common.next">Dalej</button></div>
+                  <div class="msg msg-pill" id="msgFinalP1Q3"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="step hidden" data-step="f_p1_map_q4">
+              <div class="stepTitle" data-i18n="control.finalP1MapQ4Title">Runda 1 — mapowanie (P4)</div>
+              <div class="card">
+              <div class="hint" data-i18n="control.finalMapHint">
+                Wybierz odpowiedź z listy, jesli pasuje, jesli nie to odpowiedź gracza za 0 pkt.
+                Jeśli nic nie było wpisane to brak odpowiedzi. Możesz odsłonić odpowiedź i punkty.
+              </div>
+                <div class="cardBody"><div id="finalP1MapQ4"></div></div>
+                <div class="stepFoot">
+                  <div class="stepFootButtons"><button class="btn gold" id="btnFinalNextFromP1Q4" type="button" data-i18n="common.next">Dalej</button></div>
+                  <div class="msg msg-pill" id="msgFinalP1Q4"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="step hidden" data-step="f_p1_map_q5">
+              <div class="stepTitle" data-i18n="control.finalP1MapQ5Title">Runda 1 — mapowanie (P5)</div>
+              <div class="card">
+                <div class="hint" data-i18n="control.finalMapHint">
+                Wybierz odpowiedź z listy, jesli pasuje, jesli nie to odpowiedź gracza za 0 pkt.
+                Jeśli nic nie było wpisane to brak odpowiedzi. Możesz odsłonić odpowiedź i punkty.
+              </div>
+                <div class="cardBody"><div id="finalP1MapQ5"></div></div>
+                <div class="stepFoot">
+                  <div class="stepFootButtons"><button class="btn gold" id="btnFinalNextFromP1Q5" type="button" data-i18n="common.next">Dalej</button></div>
+                  <div class="msg msg-pill" id="msgFinalP1Q5"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="step hidden" data-step="f_p2_start">
+              <div class="stepTitle" data-i18n="control.finalP2StartTitle">Runda 2 — start</div>
+              <div class="card">
+                <div class="cardBody">
+                  <div class="name" data-i18n="control.finalP2StartName">Rozpocznij 2 rundę</div>
+                  <div class="hint" data-i18n="control.finalP2StartHint">Dźwięk rundy, odpowiedzi gracza 1 zostaną ukryte, tutaj możesz odtworzyć dzwięk powtórzenia.</div>
+                </div>
+                <div class="stepFoot">
+                  <div class="stepFootButtons">
+                    <button class="btn gold" id="btnFinalStartP2" type="button" data-i18n="control.finalP2StartBtn">Rozpocznij 2 rundę</button>
+                    <button class="btn sm danger" id="btnRepeatTest" type="button" data-i18n="control.finalRepeatSound">Dźwiek powtórzenia</button>
+                  </div>
+                  <div class="msg msg-pill" id="msgFinalP2Start"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="step hidden" data-step="f_p2_entry">
+              <div class="stepTitle" data-i18n="control.finalP2EntryTitle">Runda 2 — wpisywanie</div>
+              <div class="card">
+                <div class="cardBody">
+                  <div class="name" data-i18n="control.finalP2EntryName">Odpowiedzi gracza 2 (20s)</div>
+                  <div class="hint" data-i18n="control.finalP2EntryHint">
+                    Operator wpisuje odpowiedzi gracza. Możesz użyć Enter, żeby przejść do następnego pytania,
+                    lub strzałki góra/dół, żeby szybko przelączać się między pytaniami. Enter + Shift zaznacza powtórzenie.
+                    Odliczanie rusza po wciśnięciu przycisku. Możesz widzieć odpowiedź gracza 1.
+                    Powtórzenie to tylko dźwięk + status dla prowadzącego. Timer mozna uruchomić przyciskiem
+                    lub skrótem Shift + Ctrl (Cmd na Macu), można też zatrzymać jesli wszytko zostało wpisane,
+                    przyciskiem lub tym samym skrótem.
+                  </div>
+
+                  <div class="rowBtns" style="margin-top:10px;">
+                    <button class="btn" id="btnFinalP2StartTimer" type="button" data-i18n="control.finalStartTimer20">Rozpocznij odliczanie (20s)</button>
+                    <div class="finalTimerPill" id="finalTimerP2">—</div>
+                  </div>
+
+                  <div id="finalP2Inputs" style="margin-top:10px;"></div>
+                </div>
+
+                <div class="stepFoot">
+                  <div class="stepFootButtons"><button class="btn gold" id="btnFinalToP2MapQ1" type="button" disabled data-i18n="common.next">Dalej</button></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="step hidden" data-step="f_p2_map_q1">
+              <div class="stepTitle" data-i18n="control.finalP2MapQ1Title">Runda 2 — mapowanie (P1)</div>
+              <div class="card">
+                <div class="hint" data-i18n="control.finalMapHint">
+                Wybierz odpowiedź z listy, jesli pasuje, jesli nie to odpowiedź gracza za 0 pkt.
+                Jeśli nic nie było wpisane to brak odpowiedzi. Możesz odsłonić odpowiedź i punkty.
+              </div>
+                <div class="cardBody"><div id="finalP2MapQ1"></div></div>
+                <div class="stepFoot">
+                  <div class="stepFootButtons"><button class="btn gold" id="btnFinalNextFromP2Q1" type="button" data-i18n="common.next">Dalej</button></div>
+                  <div class="msg msg-pill" id="msgFinalP2Q1"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="step hidden" data-step="f_p2_map_q2">
+              <div class="stepTitle" data-i18n="control.finalP2MapQ2Title">Runda 2 — mapowanie (P2)</div>
+              <div class="card">
+                <div class="hint" data-i18n="control.finalMapHint">
+                Wybierz odpowiedź z listy, jesli pasuje, jesli nie to odpowiedź gracza za 0 pkt.
+                Jeśli nic nie było wpisane to brak odpowiedzi. Możesz odsłonić odpowiedź i punkty.
+              </div>
+                <div class="cardBody"><div id="finalP2MapQ2"></div></div>
+                <div class="stepFoot">
+                  <div class="stepFootButtons"><button class="btn gold" id="btnFinalNextFromP2Q2" type="button" data-i18n="common.next">Dalej</button></div>
+                  <div class="msg msg-pill" id="msgFinalP2Q2"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="step hidden" data-step="f_p2_map_q3">
+              <div class="stepTitle" data-i18n="control.finalP2MapQ3Title">Runda 2 — mapowanie (P3)</div>
+              <div class="card">
+                <div class="hint" data-i18n="control.finalMapHint">
+                Wybierz odpowiedź z listy, jesli pasuje, jesli nie to odpowiedź gracza za 0 pkt.
+                Jeśli nic nie było wpisane to brak odpowiedzi. Możesz odsłonić odpowiedź i punkty.
+              </div>
+                <div class="cardBody"><div id="finalP2MapQ3"></div></div>
+                <div class="stepFoot">
+                  <div class="stepFootButtons"><button class="btn gold" id="btnFinalNextFromP2Q3" type="button" data-i18n="common.next">Dalej</button></div>
+                  <div class="msg msg-pill" id="msgFinalP2Q3"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="step hidden" data-step="f_p2_map_q4">
+              <div class="stepTitle" data-i18n="control.finalP2MapQ4Title">Runda 2 — mapowanie (P4)</div>
+              <div class="card">
+                <div class="hint" data-i18n="control.finalMapHint">
+                Wybierz odpowiedź z listy, jesli pasuje, jesli nie to odpowiedź gracza za 0 pkt.
+                Jeśli nic nie było wpisane to brak odpowiedzi. Możesz odsłonić odpowiedź i punkty.
+              </div>
+                <div class="cardBody"><div id="finalP2MapQ4"></div></div>
+                <div class="stepFoot">
+                  <div class="stepFootButtons"><button class="btn gold" id="btnFinalNextFromP2Q4" type="button" data-i18n="common.next">Dalej</button></div>
+                  <div class="msg msg-pill" id="msgFinalP2Q4"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="step hidden" data-step="f_p2_map_q5">
+              <div class="stepTitle" data-i18n="control.finalP2MapQ5Title">Runda 2 — mapowanie (P5)</div>
+              <div class="card">
+                <div class="hint" data-i18n="control.finalMapHint">
+                Wybierz odpowiedź z listy, jesli pasuje, jesli nie to odpowiedź gracza za 0 pkt.
+                Jeśli nic nie było wpisane to brak odpowiedzi. Możesz odsłonić odpowiedź i punkty.
+              </div>
+                <div class="cardBody"><div id="finalP2MapQ5"></div></div>
+                <div class="stepFoot">
+                  <div class="stepFootButtons"><button class="btn gold" id="btnFinalNextFromP2Q5" type="button" data-i18n="common.next">Dalej</button></div>
+                  <div class="msg msg-pill" id="msgFinalP2Q5"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="step hidden" data-step="f_end">
+              <div class="stepTitle" data-i18n="control.finalEndTitle">Zakończ finał</div>
+              <div class="card">
+                <div class="cardBody">
+                  <div class="name" data-i18n="control.finalEndName">Koniec</div>
+                    <div class="hint" data-i18n="control.finalEndHint">
+                      To konic finału. Na wyświetlaczu pokażemy logo programu,
+                      punkty zwycięskiej drużyny lub kwotę wygranej (w zależności co wybrałeś w ustawiniach).
+                    </div>
+                  <div class="hint" id="finalEndHint">—</div>
+                </div>
+
+                <div class="stepFoot">
+                  <div class="stepFootButtons"><button class="btn gold" id="btnFinalFinish" type="button" data-i18n="control.finalEndBtn">Zakończ finał</button></div>
+                  <div class="msg msg-pill" id="msgFinalEnd"></div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+        </section>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div data-i18n="common.footer.left">© 2026 Familiada — system do gry na żywo</div>
+      <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
+    </div>
+  </main>
+  <script type="module" src="js/core/contact-modal.js?v=v2026-06-01T07291"></script>
+
+  <!-- Modal: Udostępnij urządzenie -->
+  <div class="overlay" id="shareDeviceOverlay" style="display:none;">
+    <div class="modal shareModal">
+      <div class="mHead">
+        <div class="mTitle" id="shareDeviceTitle" data-i18n="control.shareDeviceModal.title">Udostępnij urządzenie</div>
+        <button class="btn sm" id="btnShareDeviceClose" type="button" aria-label="Zamknij">✕</button>
+      </div>
+      <div class="mSub" data-i18n="control.shareDeviceModal.subtitle">Wybierz subskrybenta lub wpisz e-mail / nazwę użytkownika.</div>
+
+      <!-- Kogo aktualnie udostępniono -->
+      <div id="shareDeviceCurrentWrap" class="shareCurrent" style="display:none;">
+        <div class="shareCurrentLabel" data-i18n="control.shareDeviceModal.currentLabel">Aktualnie udostępnione dla:</div>
+        <div id="shareDeviceCurrentContent"></div>
+      </div>
+
+      <div class="shareSection">
+        <div class="shareSectionTitle" data-i18n="control.shareDeviceModal.sectionAdd">Przez e-mail / nazwę</div>
+        <div class="importRow">
+          <input id="shareDeviceEmail" class="inp" type="text"
+                 placeholder="Nazwa użytkownika lub e-mail..."
+                 data-i18n-placeholder="bases.shareModal.placeholder"/>
+          <button class="btn sm gold" id="btnShareDeviceAdd" type="button" data-i18n="bases.shareModal.add">Dodaj</button>
+        </div>
+        <div class="importMsg" id="shareDeviceMsg"></div>
+      </div>
+
+      <div class="shareSection">
+        <div class="shareSectionTitle" data-i18n="bases.shareModal.sectionSubscribers">Moi subskrybenci</div>
+        <div class="shareList" id="shareDeviceSubsList"></div>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html> 

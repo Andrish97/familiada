@@ -1,0 +1,452 @@
+export function createStore(gameId) {
+  const KEY = `familiada:control:v5:${gameId}`;
+  const listeners = new Set();
+  const FINAL_MIN_POINTS = 300; // domyślny próg do finału
+
+  const DEFAULT_ADVANCED = {
+    // mnożniki dla kolejnych rund; ostatnia wartość powtarza się dla dalszych rund
+    roundMultipliers: [1, 1, 1, 2, 3],
+    // próg wejścia do finału (ktoś musi tyle zdobyć w sumie)
+    finalMinPoints: 300,
+    // cel w finale (domyślne 200)
+    finalTarget: 200,
+    // czy na końcu gry wyświetlamy ekran „wygrana" (true) czy samo logo (false)
+    endScreenMode: "logo", // "logo" | "points" | "money"
+    // mnożnik nagrody głównej (po finale) - domyślnie 3
+    finalPrizeMultiplier: 3,
+    // kwota nagrody głównej - domyślnie 25000
+    mainPrizeAmount: 25000,
+
+  };
+
+  function makeDefaultState() {
+    return {
+      gameId,
+      activeCard: "devices",
+  
+      steps: {
+        devices: "devices_display",
+        setup: "setup_names", // setup_names → setup_look → setup_game → setup_final/setup_rounds → setup_finish
+      },
+  
+      completed: {
+        devices: false,
+        setup: false,
+      },
+  
+      locks: {
+        gameStarted: false,
+        finalActive: false,
+      },
+  
+      teams: {
+        teamA: "",
+        teamB: "",
+      },
+
+      hasFinal: null,
+      
+      // Tryb wyboru pytań: "random" lub "pick"
+      finalQuestionsMode: "random",
+      roundsQuestionsMode: "random",
+      
+      // Wybrane pytania rund w kolejności (dla trybu "pick")
+      roundsPicked: [], // [{id, text, ord}]
+  
+      final: {
+        picked: [],
+        confirmed: false,
+        runtime: {
+          phase: "IDLE",
+          sum: 0,
+          winSide: "A",
+          timer: { running: false, secLeft: 0, phase: "P1" },
+          mapIndex: 0,
+          p1List: null,
+          p2List: null,
+          mapP1: null,
+          mapP2: null,
+          reached200: false,
+        },
+        step: "f_start",
+      },
+  
+      flags: {
+        displayOnline: false,
+        hostOnline: false,
+        buzzerOnline: false,
+        audioUnlocked: false,
+        physicalBuzzer: false,
+        noHostTablet: false,
+        qrOnDisplay: false,
+        qrHostOnDisplay: false,
+        qrBuzzerOnDisplay: false,
+      },
+  
+      rounds: {
+        phase: "IDLE",
+        roundNo: 1,
+        controlTeam: null,
+        bankPts: 0,
+        xA: 0,
+        xB: 0,
+        totals: { A: 0, B: 0 },
+        step: "r_intro",
+        passUsed: false,
+        stealWon: false,
+  
+        question: null,
+        answers: [],
+        revealed: new Set(),
+  
+        duel: {
+          enabled: false,
+          lastPressed: null,
+        },
+  
+        timer3: {
+          running: false,
+          endsAt: 0,
+        },
+  
+        steal: {
+          active: false,
+          used: false,
+        },
+  
+        allowPass: false,
+      },
+  
+      advanced: { ...DEFAULT_ADVANCED },
+    };
+  }
+  
+  const state = makeDefaultState();
+
+  function emit() {
+    try {
+      localStorage.setItem(KEY, JSON.stringify(serialize(state)));
+    } catch {}
+    for (const fn of listeners) fn(state);
+  }
+
+  function subscribe(fn) {
+    listeners.add(fn);
+    return () => listeners.delete(fn);
+  }
+
+  function serialize(s) {
+    const out = structuredClone(s);
+    out.rounds.revealed = Array.from(s.rounds.revealed);
+    return out;
+  }
+
+  // Stare isFinalActive – zostawione tylko jako pomocnicze (gdyby coś jeszcze wołało po kroku)
+  function isFinalActiveLegacy() {
+    const step = state.final?.step || "f_start";
+    return step !== "f_start";
+  }
+
+  function teamsOk() {
+    return state.teams.teamA.trim().length > 0 && state.teams.teamB.trim().length > 0;
+  }
+
+  function canFinishSetup() {
+    if (!teamsOk()) return false;
+    
+    // Jeśli nie gramy finału - OK
+    if (state.hasFinal === false) return true;
+    
+    // Jeśli gramy finał:
+    if (state.hasFinal === true) {
+      // Tryb losowy - zawsze OK (losowanie w tle)
+      if (state.finalQuestionsMode === "random") return true;
+      // Tryb ręczny - wymaga potwierdzenia 5 pytań
+      return state.final.confirmed === true && state.final.picked.length === 5;
+    }
+    
+    return false;
+  }
+
+  function allDevicesOnline() {
+    const f = state.flags;
+    const buzzerOk = f.buzzerOnline || f.physicalBuzzer;
+    const hostOk   = f.hostOnline   || f.noHostTablet;
+    return f.displayOnline && buzzerOk && hostOk;
+  }
+
+  function canStartRounds() {
+    return allDevicesOnline() && state.flags.audioUnlocked && canFinishSetup();
+  }
+
+  // Właściwa funkcja – logika przełączona na locka
+  function isFinalActive() {
+    return state.locks.finalActive === true;
+  }
+
+  function canEnterCard(card) {
+    const totals = state.rounds?.totals || { A: 0, B: 0 };
+    const adv = state.advanced || {};
+    const threshold =
+      typeof adv.finalMinPoints === "number" ? adv.finalMinPoints : FINAL_MIN_POINTS;
+    const hasFinalPoints =
+      (totals.A || 0) >= threshold || (totals.B || 0) >= threshold;
+
+    // URZĄDZENIA – dostępne tylko do momentu "Gra gotowa"
+    if (card === "devices") {
+      return !state.locks.gameStarted;
+    }
+
+    // USTAWIENIA – po urządzeniach, też tylko do "Gra gotowa"
+    if (card === "setup") {
+      return state.completed.devices && !state.locks.gameStarted;
+    }
+
+    // ROUNDS – dostępne po Urządzeniach, ale tylko dopóki finał się nie zaczął
+    if (card === "rounds") {
+      return state.completed.devices && !state.locks.finalActive;
+    }
+
+
+    // FINAŁ – tylko jeśli:
+    // - gra ma finał,
+    // - ustawienia są poprawne (w tym wybrane pytania finału),
+    // - któraś drużyna osiągnęła wymagany próg punktów
+    if (card === "final") {
+      return state.hasFinal === true && canFinishSetup() && hasFinalPoints;
+    }
+
+    return false;
+  }
+
+  function setActiveCard(card) {
+    if (!canEnterCard(card)) return;
+    state.activeCard = card;
+    emit();
+  }
+
+  function setDevicesStep(step) {
+    state.steps.devices = step;
+    emit();
+  }
+
+  function setSetupStep(step) {
+    state.steps.setup = step;
+    emit();
+  }
+
+  function completeCard(card) {
+    state.completed[card] = true;
+    emit();
+  }
+
+  function setTeams(a, b) {
+    state.teams.teamA = String(a ?? "");
+    state.teams.teamB = String(b ?? "");
+    emit();
+  }
+
+  function setGameStarted(v) {
+    state.locks.gameStarted = !!v;
+    emit();
+  }
+
+  function setHasFinal(v) {
+    state.hasFinal = v;
+    if (v === false) {
+      state.final.picked = [];
+      state.final.confirmed = false;
+    }
+    emit();
+  }
+  
+  function setFinalQuestionsMode(mode) {
+    state.finalQuestionsMode = mode;
+    emit();
+  }
+  
+  function setRoundsQuestionsMode(mode) {
+    state.roundsQuestionsMode = mode;
+    emit();
+  }
+  
+  function setRoundsPicked(orderedQuestions) {
+    state.roundsPicked = Array.isArray(orderedQuestions) ? orderedQuestions.slice() : [];
+    emit();
+  }
+
+  function setFinalActive(v) {
+    state.locks.finalActive = !!v;
+    emit();
+  }
+
+  function confirmFinalQuestions(ids) {
+    state.final.picked = Array.isArray(ids) ? ids.slice(0, 5) : [];
+    state.final.confirmed = true;
+    emit();
+  }
+
+  function unconfirmFinalQuestions() {
+    state.final.confirmed = false;
+    emit();
+  }
+
+  function setOnlineFlags({ display, host, buzzer }) {
+    state.flags.displayOnline = !!display;
+    state.flags.hostOnline = !!host;
+    state.flags.buzzerOnline = !!buzzer;
+    emit();
+  }
+
+  function setAudioUnlocked(v) {
+    state.flags.audioUnlocked = !!v;
+    emit();
+  }
+
+  function setPhysicalBuzzer(v) {
+    state.flags.physicalBuzzer = !!v;
+    emit();
+  }
+
+  function setNoHostTablet(v) {
+    state.flags.noHostTablet = !!v;
+    emit();
+  }
+
+  function setQrOnDisplay(v) {
+    state.flags.qrOnDisplay = !!v;
+    emit();
+  }
+
+  function setQrHostOnDisplay(v) {
+    state.flags.qrHostOnDisplay = !!v;
+    emit();
+  }
+
+  function setQrBuzzerOnDisplay(v) {
+    state.flags.qrBuzzerOnDisplay = !!v;
+    emit();
+  }
+
+  // ---- obsługa typu wejścia na stronę (odświeżenie vs. nowa nawigacja) ----
+
+  function hydrate() {
+    // Nie przywracamy progresu — nigdy.
+    try {
+      localStorage.removeItem(KEY);
+    } catch {}
+  }
+
+  function setAdvanced(partial) {
+    const cur = state.advanced || { ...DEFAULT_ADVANCED };
+    const next = { ...cur };
+
+    if (partial.roundMultipliers && Array.isArray(partial.roundMultipliers)) {
+      next.roundMultipliers = partial.roundMultipliers
+        .map((x) => {
+          const n = Number.parseInt(String(x), 10);
+          return Number.isFinite(n) && n > 0 ? n : 1;
+        });
+      if (!next.roundMultipliers.length) {
+        next.roundMultipliers = [...DEFAULT_ADVANCED.roundMultipliers];
+      }
+    }
+
+    if (typeof partial.finalMinPoints === "number") {
+      next.finalMinPoints = partial.finalMinPoints;
+    }
+
+    if (typeof partial.finalTarget === "number") {
+      next.finalTarget = partial.finalTarget;
+    }
+  
+    // nowy klucz: tryb ekranu końcowego
+    if (typeof partial.endScreenMode === "string") {
+      const m = partial.endScreenMode;
+      if (m === "logo" || m === "points" || m === "money") {
+        next.endScreenMode = m;
+      }
+    }
+
+    // mnożnik nagrody głównej
+    if (typeof partial.finalPrizeMultiplier === "number") {
+      next.finalPrizeMultiplier = partial.finalPrizeMultiplier;
+    }
+
+    // kwota nagrody głównej (max 5 cyfr)
+    if (typeof partial.mainPrizeAmount === "number") {
+      next.mainPrizeAmount = Math.min(partial.mainPrizeAmount, 99999);
+    }
+
+    // stary klucz (kompatybilność)
+    if (typeof partial.winEnabled === "boolean") {
+      next.winEnabled = partial.winEnabled;
+    }
+  
+    state.advanced = next;
+    emit();
+  }
+
+  function resetAdvanced() {
+    state.advanced = { ...DEFAULT_ADVANCED };
+    emit();
+  }
+
+  function resetProgress({ keepAdvanced = true } = {}) {
+    const adv = keepAdvanced ? structuredClone(state.advanced) : { ...DEFAULT_ADVANCED };
+    const fresh = makeDefaultState();
+    fresh.advanced = adv;
+  
+    // zachowujemy stałe pola
+    fresh.gameId = state.gameId;
+  
+    // podmień stan “w miejscu” (żeby referencje do `state` nie padły)
+    for (const k of Object.keys(state)) delete state[k];
+    Object.assign(state, fresh);
+  
+    emit();
+  }
+
+  function notify() {
+    emit();
+  }
+
+  return {
+    state,
+    hydrate,
+    subscribe,
+
+    setActiveCard,
+    setDevicesStep,
+    setSetupStep,
+
+    completeCard,
+    setTeams,
+    setHasFinal,
+    setFinalQuestionsMode,
+    setRoundsQuestionsMode,
+    setRoundsPicked,
+    confirmFinalQuestions,
+    unconfirmFinalQuestions,
+
+    setOnlineFlags,
+    setAudioUnlocked,
+    setPhysicalBuzzer,
+    setNoHostTablet,
+    setQrOnDisplay,
+    setQrHostOnDisplay,
+    setQrBuzzerOnDisplay,
+    setFinalActive,
+    setGameStarted,
+    notify,
+
+    teamsOk,
+    canFinishSetup,
+    canStartRounds,
+    canEnterCard,
+
+    setAdvanced,
+    resetAdvanced,
+    resetProgress,
+  };
+}
