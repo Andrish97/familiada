@@ -1924,7 +1924,6 @@ const pl = {
         <li>Po uruchomieniu pojedynku pojawiają się dwa przyciski: <span class="m-code">Drużyna A</span> i <span class="m-code">Drużyna B</span>.</li>
         <li>Operator klika drużynę, która nacisnęła fizyczny przycisk jako pierwsza — przycisk się podświetla.</li>
         <li>Operator klika <span class="m-code">Zatwierdź</span>, aby potwierdzić wybór i przejść dalej.</li>
-        <li>Jeśli trzeba powtórzyć pojedynek, używa przycisku <span class="m-code">Ponów</span> jak normalnie.</li>
       </ol>
 
       <div class="m-warn">

@@ -1923,7 +1923,6 @@ const en = {
         <li>After starting a duel, two buttons appear: <span class=”m-code”>Team A</span> and <span class=”m-code”>Team B</span>.</li>
         <li>The operator clicks the team that pressed the physical buzzer first — the button highlights.</li>
         <li>The operator clicks <span class=”m-code”>Confirm</span> to confirm the selection and proceed.</li>
-        <li>To restart the duel, use <span class=”m-code”>Retry</span> as usual.</li>
       </ol>
 
       <div class=”m-warn”>
