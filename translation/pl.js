@@ -1738,7 +1738,7 @@ const pl = {
         <b>Jak skorzystać z kodu?</b><br/>
         1. Operator otwiera panel sterowania i widzi kody przy urządzeniach.<br/>
         2. Wejdź na <span class="m-code">familiada.online</span> (lub otwórz aplikację).<br/>
-        3. Kliknij przycisk <span class="m-code">Podłącz urządzenie 📱</span> w górnym pasku.<br/>
+        3. Kliknij przycisk <span class="m-code">Podłącz urządzenie 📱</span>.<br/>
         4. Wpisz 6-cyfrowy kod i naciśnij <span class="m-code">Podłącz</span>.
       </div>
 

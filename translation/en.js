@@ -1737,7 +1737,7 @@ const en = {
         <b>How to use the code?</b><br/>
         1. The operator opens the control panel and sees the codes next to each device.<br/>
         2. Go to <span class="m-code">familiada.online</span> (or open the app).<br/>
-        3. Click the <span class="m-code">Connect device 📱</span> button in the top bar.<br/>
+        3. Click the <span class="m-code">Connect device 📱</span> button.<br/>
         4. Enter the 6-digit code and press <span class="m-code">Connect</span>.
       </div>
 
