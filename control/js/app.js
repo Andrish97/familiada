@@ -336,6 +336,16 @@ async function main() {
     imgEl.src = qrSrc(url);
     if (codeValEl) codeValEl.textContent = _deviceCodes[kind] || "——————";
 
+    const openBtn = document.getElementById("qrModalOpen");
+    if (openBtn) {
+      if (kind === "display") {
+        openBtn.href = url;
+        openBtn.classList.remove("hidden");
+      } else {
+        openBtn.classList.add("hidden");
+      }
+    }
+
     overlay.classList.remove("hidden");
   }
 

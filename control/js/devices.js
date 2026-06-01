@@ -134,6 +134,8 @@ export function createDevices({ game, ui, store, chDisplay, chHost, chBuzzer }) 
     urls = buildUrls(lang);
 
     // Linki są teraz skrócone do 6-cyfrowych kodów (generowanych asynchronicznie przez app.js)
+    const openBtn = document.getElementById("btnOpenDisplay");
+    if (openBtn) openBtn.href = urls.displayUrl || "#";
   }
 
   let actionsBound = false;
