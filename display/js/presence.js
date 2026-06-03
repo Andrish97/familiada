@@ -96,7 +96,7 @@ export async function startPresence({
           }
           firstConnect = false;
         }
-        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
           scheduleReconnect();
         }
       });

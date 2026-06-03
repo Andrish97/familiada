@@ -603,13 +603,10 @@ function openChannel() {
     })
     .subscribe((status) => {
       if (status === "SUBSCRIBED") {
-        if (!firstConnect) {
-          void restoreState();
-          void ping();
-        }
+        if (!firstConnect) void ping();
         firstConnect = false;
       }
-      if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+      if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
         scheduleReconnect();
       }
     });
