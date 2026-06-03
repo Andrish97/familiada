@@ -51,20 +51,63 @@ export async function startPresence({
   try { onSnapshot?.(snap); } catch (e) { if (debug) console.warn(e); }
 
   await ping();
-  const pingTimer = setInterval(ping, pingMs);
 
-  const ch = sb()
-    .channel(chName)
-    .on("broadcast", { event: "DISPLAY_CMD" }, (msg) => {
-      const line = msg?.payload?.line;
-      if (!line) return;
-      try { onCommand?.(String(line)); } catch (e) { if (debug) console.warn(e); }
-    })
-    .subscribe();
+  let pingTimer = null;
+  function schedulePing() {
+    clearTimeout(pingTimer);
+    pingTimer = setTimeout(async () => {
+      await ping();
+      schedulePing();
+    }, pingMs);
+  }
+  schedulePing();
+
+  let ch = null;
+  let reconnectTimer = null;
+  let firstConnect = true;
+
+  function scheduleReconnect() {
+    if (reconnectTimer) return;
+    reconnectTimer = setTimeout(() => {
+      reconnectTimer = null;
+      if (ch) {
+        try { sb().removeChannel(ch); } catch {}
+        ch = null;
+      }
+      openChannel();
+    }, 2000);
+  }
+
+  function openChannel() {
+    ch = sb()
+      .channel(chName)
+      .on("broadcast", { event: "DISPLAY_CMD" }, (msg) => {
+        const line = msg?.payload?.line;
+        if (!line) return;
+        try { onCommand?.(String(line)); } catch (e) { if (debug) console.warn(e); }
+      })
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") {
+          if (!firstConnect) {
+            getSnapshot().then(snap => {
+              try { onSnapshot?.(snap); } catch (e) { if (debug) console.warn(e); }
+            });
+            void ping();
+          }
+          firstConnect = false;
+        }
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+          scheduleReconnect();
+        }
+      });
+  }
+
+  openChannel();
 
   const stop = () => {
-    try { clearInterval(pingTimer); } catch {}
-    try { sb().removeChannel(ch); } catch {}
+    clearTimeout(pingTimer);
+    clearTimeout(reconnectTimer);
+    if (ch) try { sb().removeChannel(ch); } catch {}
   };
 
   window.addEventListener("beforeunload", stop);

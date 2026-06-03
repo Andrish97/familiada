@@ -305,6 +305,8 @@ async function persistColorsOnly() {
 /* ========= REALTIME ========= */
 let ch = null;
 let pingTimer = null;
+let reconnectTimer = null;
+let firstConnect = true;
 
 async function handleCommand(lineRaw) {
   const raw = String(lineRaw || "").trim();
@@ -365,20 +367,40 @@ async function handleCommand(lineRaw) {
   console.warn("[buzzer] unknown command:", raw);
 }
 
-function ensureChannel() {
-  if (ch) return ch;
+function scheduleReconnect() {
+  if (reconnectTimer) return;
+  reconnectTimer = setTimeout(() => {
+    reconnectTimer = null;
+    if (ch) {
+      try { sb().removeChannel(ch); } catch {}
+      ch = null;
+    }
+    openChannel();
+  }, 2000);
+}
+
+function openChannel() {
+  if (ch) return;
 
   ch = sb()
     .channel(`familiada-buzzer:${gameId}`)
     .on("broadcast", { event: "BUZZER_CMD" }, (msg) => {
-      // async nie musi być awaitowane, ale dobrze logować błędy
       handleCommand(msg?.payload?.line).catch((e) =>
         console.warn("[buzzer] handleCommand failed", e)
       );
     })
-    .subscribe();
-
-  return ch;
+    .subscribe((status) => {
+      if (status === "SUBSCRIBED") {
+        if (!firstConnect) {
+          void restoreState();
+          void ping();
+        }
+        firstConnect = false;
+      }
+      if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+        scheduleReconnect();
+      }
+    });
 }
 
 /* ========= CLICK -> CONTROL ========= */
@@ -448,7 +470,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   // KLUCZ: odbiór komend działa nawet bez key
-  ensureChannel();
+  openChannel();
 
   // bez key nie robimy RPC/presence, ale komendy od operatora mają działać
   if (!key) {
@@ -458,31 +480,22 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   await restoreState();
 
-  const startPingLoop = () => {
-    if (pingTimer) return;
-    ping();
-    pingTimer = setInterval(() => {
-      if (document.visibilityState !== "visible") return;
-      void ping();
-    }, 5000);
-  };
-
-  const stopPingLoop = () => {
-    if (!pingTimer) return;
-    clearInterval(pingTimer);
-    pingTimer = null;
-  };
+  function schedulePing() {
+    clearTimeout(pingTimer);
+    const ms = document.visibilityState === "visible" ? 3000 : 8000;
+    pingTimer = setTimeout(async () => {
+      await ping();
+      schedulePing();
+    }, ms);
+  }
 
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") {
-      startPingLoop();
-      void ping();
-      return;
+      ping().then(schedulePing);
     }
-    stopPingLoop();
   });
 
-  startPingLoop();
+  ping().then(schedulePing);
 });
 
 window.__buzzer = {

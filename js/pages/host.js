@@ -579,15 +579,40 @@ async function handleCommand(lineRaw) {
 /* ========= REALTIME ========= */
 let ch = null;
 let pingTimer = null;
-function ensureChannel() {
-  if (ch) return ch;
+let reconnectTimer = null;
+let firstConnect = true;
+
+function scheduleReconnect() {
+  if (reconnectTimer) return;
+  reconnectTimer = setTimeout(() => {
+    reconnectTimer = null;
+    if (ch) {
+      try { sb().removeChannel(ch); } catch {}
+      ch = null;
+    }
+    openChannel();
+  }, 2000);
+}
+
+function openChannel() {
+  if (ch) return;
   ch = sb()
     .channel(`familiada-host:${gameId}`)
     .on("broadcast", { event: "HOST_CMD" }, (msg) => {
       handleCommand(msg?.payload?.line);
     })
-    .subscribe();
-  return ch;
+    .subscribe((status) => {
+      if (status === "SUBSCRIBED") {
+        if (!firstConnect) {
+          void restoreState();
+          void ping();
+        }
+        firstConnect = false;
+      }
+      if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+        scheduleReconnect();
+      }
+    });
 }
 
 /* ========= PRESENCE ========= */
@@ -759,33 +784,24 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   await restoreState();
-  ensureChannel();
+  openChannel();
 
-  const startPingLoop = () => {
-    if (pingTimer) return;
-    ping();
-    pingTimer = setInterval(() => {
-      if (document.visibilityState !== "visible") return;
-      void ping();
-    }, 5000);
-  };
-
-  const stopPingLoop = () => {
-    if (!pingTimer) return;
-    clearInterval(pingTimer);
-    pingTimer = null;
-  };
+  function schedulePing() {
+    clearTimeout(pingTimer);
+    const ms = document.visibilityState === "visible" ? 3000 : 8000;
+    pingTimer = setTimeout(async () => {
+      await ping();
+      schedulePing();
+    }, ms);
+  }
 
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") {
-      startPingLoop();
-      void ping();
-      return;
+      ping().then(schedulePing);
     }
-    stopPingLoop();
   });
 
-  startPingLoop();
+  ping().then(schedulePing);
 });
 
 /* debug */

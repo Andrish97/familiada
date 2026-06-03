@@ -10,7 +10,7 @@ const PRESENCE_MSG = {
 };
 // ===========================================================
 
-const ONLINE_MS = 12_000;
+const ONLINE_MS = 8_000;
 const INIT_WINDOW_MS = 20000; // tylko pierwsze 8s od startu presence
 
 function fmtSince(ts) {

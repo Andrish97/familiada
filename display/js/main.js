@@ -74,7 +74,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     app.setMode("BLACK_SCREEN");
 
     const pres = await startPresence({
-      pingMs: 5000,
+      pingMs: 3000,
       debug: true,
       onCommand: (line) => handleCommand(line),
 
