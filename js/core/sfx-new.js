@@ -51,7 +51,7 @@ function loadIntoCache(key, url) {
 // ===================== WARIANTY =====================
 
 export function getSfxVariant(key) {
-  return localStorage.getItem(LS_VAR_PREFIX + key) || "default.mp3";
+  return localStorage.getItem(LS_VAR_PREFIX + key) || "classic.mp3";
 }
 
 export function setSfxVariant(key, file) {
@@ -65,7 +65,7 @@ export function setSfxVariant(key, file) {
 export function resetSfxVariants() {
   for (const cat of getSfxCategories()) {
     localStorage.removeItem(LS_VAR_PREFIX + cat.key);
-    loadIntoCache(cat.key, buildUrl(cat.folder, "default.mp3"));
+    loadIntoCache(cat.key, buildUrl(cat.folder, "classic.mp3"));
     applySfxVolume(cat.key);
   }
 }
@@ -267,7 +267,7 @@ export function unlockAudio() {
   try {
     const a = new Audio();
     a.volume = 0;
-    a.src = `${AUDIO_BASE}bells/default.mp3`;
+    a.src = `${AUDIO_BASE}bells/classic.mp3`;
     a.play().catch(() => {});
     unlocked = true;
     return true;

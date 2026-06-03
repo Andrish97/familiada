@@ -9,48 +9,77 @@ głośności (do wyłączenia), podmianę własnym plikiem, zapis w chmurze
 
 ---
 
-## Struktura plików audio
+## Obecne pliki audio (stan wyjściowy)
+
+Folder `audio/` zawiera aktualnie 10 plików MP3 — jeden per kategoria:
+
+| Plik | Opis |
+|---|---|
+| `show_intro.mp3` | Muzyka intro programu |
+| `round_transition.mp3` | Przejście między rundami |
+| `round_transition2.mp3` | Przejście między rundami (wariant) |
+| `final_theme.mp3` | Muzyka finału |
+| `buzzer_press.mp3` | Naciśnięcie buzzera |
+| `answer_correct.mp3` | Poprawna odpowiedź |
+| `answer_wrong.mp3` | Błędna odpowiedź (X) |
+| `answer_repeat.mp3` | Powtórzenie odpowiedzi w finale |
+| `time_over.mp3` | Koniec czasu w finale |
+| `bells.mp3` | Przejście wyniku na tablicę drużyny |
+
+Folder `audio/` i istniejące odwołania w `sfx.js` **pozostają bez zmian** —
+nowa struktura rozwijana jest w `audio_new/` i `sfx-new.js` (sandbox).
+Migracja do `audio_new/` nastąpi gdy sandbox będzie gotowy do produkcji.
+
+---
+
+## Docelowa struktura plików audio
 
 ### Foldery zamiast pojedynczych plików
 
+Nazwa folderu = klucz kategorii (identyczna z dotychczasową nazwą pliku bez rozszerzenia).
+Każdy wariant wbudowany nazwany jest według schematu `{wariant}.mp3`.
+Pierwszy (bazowy) wariant we wszystkich kategoriach nazywa się `classic.mp3`
+— odpowiada dotychczasowym plikom z `audio/`.
+
+Tłumaczenia nazwy wariantu są wbudowane w `sounds.json`:
+`"label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" }`
+
 ```
-audio/
+audio_new/
   sounds.json                   ← manifest wszystkich kategorii i wariantów
   buzzer_press/
-    default.mp3
-    soft.mp3
-    ...
+    classic.mp3                 ← = audio/buzzer_press.mp3
+    ...                         ← kolejne warianty dokładane w przyszłości
   answer_correct/
-    default.mp3
-    chime.mp3
+    classic.mp3
     ...
   answer_wrong/
-    default.mp3
+    classic.mp3
     ...
   answer_repeat/
-    default.mp3
+    classic.mp3
     ...
   bells/
-    default.mp3
+    classic.mp3
     ...
   time_over/
-    default.mp3
+    classic.mp3
     ...
   round_transition/
-    default.mp3
+    classic.mp3
     ...
   round_transition2/
-    default.mp3
+    classic.mp3
     ...
   final_theme/
-    default.mp3
+    classic.mp3
     ...
   show_intro/
-    default.mp3
+    classic.mp3
     ...
 ```
 
-### Format `audio/sounds.json`
+### Format `audio_new/sounds.json`
 
 ```json
 {
@@ -61,13 +90,10 @@ audio/
       "limitSec": 5,
       "sounds": [
         {
-          "file": "default.mp3",
-          "label": { "pl": "Domyślny", "en": "Default", "uk": "Типовий" }
-        },
-        {
-          "file": "soft.mp3",
-          "label": { "pl": "Miękki", "en": "Soft", "uk": "М'який" }
+          "file": "classic.mp3",
+          "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" }
         }
+        // kolejne warianty dokładane tu w przyszłości
       ]
     },
     {
@@ -76,8 +102,8 @@ audio/
       "limitSec": 5,
       "sounds": [
         {
-          "file": "default.mp3",
-          "label": { "pl": "Domyślny", "en": "Default", "uk": "Типовий" }
+          "file": "classic.mp3",
+          "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" }
         }
       ]
     }
@@ -86,9 +112,9 @@ audio/
 }
 ```
 
-`sfx.js` wczytuje manifest raz przy starcie i buduje ścieżki jako
-`audio/{folder}/{file}`. Aktywny wariant per kategoria zapisywany w
-localStorage `sfx_variant_{key}` (wartość: nazwa pliku, np. `"soft.mp3"`).
+`sfx-new.js` wczytuje manifest raz przy starcie i buduje ścieżki jako
+`audio_new/{folder}/{file}`. Aktywny wariant per kategoria zapisywany w
+localStorage `sfx_variant_{key}` (wartość: nazwa pliku, np. `"classic.mp3"`).
 
 ---
 
