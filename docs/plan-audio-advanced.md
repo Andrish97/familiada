@@ -3,8 +3,92 @@
 ## Cel
 
 Dodanie sekcji "Zaawansowane" w zakładce Dźwięk panelu kontrolnego.
-Umożliwia: podgląd dźwięków, regulację głośności (do wyłączenia), podmianę
-własnym plikiem, zapis ustawień w chmurze (tylko zalogowani).
+Umożliwia: wybór wariantu dźwięku z listy wbudowanych, podgląd, regulację
+głośności (do wyłączenia), podmianę własnym plikiem, zapis w chmurze
+(tylko zalogowani).
+
+---
+
+## Struktura plików audio
+
+### Foldery zamiast pojedynczych plików
+
+```
+audio/
+  sounds.json                   ← manifest wszystkich kategorii i wariantów
+  buzzer_press/
+    default.mp3
+    soft.mp3
+    ...
+  answer_correct/
+    default.mp3
+    chime.mp3
+    ...
+  answer_wrong/
+    default.mp3
+    ...
+  answer_repeat/
+    default.mp3
+    ...
+  bells/
+    default.mp3
+    ...
+  time_over/
+    default.mp3
+    ...
+  round_transition/
+    default.mp3
+    ...
+  round_transition2/
+    default.mp3
+    ...
+  final_theme/
+    default.mp3
+    ...
+  show_intro/
+    default.mp3
+    ...
+```
+
+### Format `audio/sounds.json`
+
+```json
+{
+  "categories": [
+    {
+      "key": "buzzer_press",
+      "folder": "buzzer_press",
+      "limitSec": 5,
+      "sounds": [
+        {
+          "file": "default.mp3",
+          "label": { "pl": "Domyślny", "en": "Default", "uk": "Типовий" }
+        },
+        {
+          "file": "soft.mp3",
+          "label": { "pl": "Miękki", "en": "Soft", "uk": "М'який" }
+        }
+      ]
+    },
+    {
+      "key": "answer_correct",
+      "folder": "answer_correct",
+      "limitSec": 5,
+      "sounds": [
+        {
+          "file": "default.mp3",
+          "label": { "pl": "Domyślny", "en": "Default", "uk": "Типовий" }
+        }
+      ]
+    }
+    // ... pozostałe kategorie analogicznie
+  ]
+}
+```
+
+`sfx.js` wczytuje manifest raz przy starcie i buduje ścieżki jako
+`audio/{folder}/{file}`. Aktywny wariant per kategoria zapisywany w
+localStorage `sfx_variant_{key}` (wartość: nazwa pliku, np. `"soft.mp3"`).
 
 ---
 
@@ -17,26 +101,34 @@ własnym plikiem, zapis ustawień w chmurze (tylko zalogowani).
 | Zalogowany, kliknął "Zapisz" | ✓ | ✓ (sync) |
 | Przywróć domyślne | czyszczone | czyszczone |
 
-- Głośności: zawsze localStorage, per urządzenie
-- Przy starcie z `sfx_save_cloud=true`: ładuj z bucketu (ignoruj IndexedDB dla podmienionch)
+- Głośności i wybrane warianty: zawsze localStorage, per urządzenie
+- Przy starcie z `sfx_save_cloud=true`: ładuj z bucketu (ignoruj IndexedDB dla podmienionych)
 - Odznaczenie checkboxa: usuwa z bucketu, zostaje lokalna kopia
 
 ---
 
-## Limity czasu plików
+## Limity czasu plików (walidacja uploadów użytkownika)
 
-| Dźwięki | Limit |
+| Kategorie | Limit |
 |---|---|
 | `buzzer_press`, `answer_correct`, `answer_wrong`, `answer_repeat`, `bells`, `time_over` | **5s** |
 | `round_transition`, `round_transition2`, `final_theme`, `show_intro` | **30s** |
 
-Walidacja przez `AudioContext.decodeAudioData`. Przekroczenie → `alertModal`.
+Limity pochodzą z `sounds.json` (`limitSec`). Walidacja przez
+`AudioContext.decodeAudioData`. Przekroczenie → `alertModal`.
 
 ---
 
 ## Pliki do zmiany / stworzenia
 
-### 1. `supabase/migrations/2026-05-31_205_user_sounds_bucket.sql` (nowy)
+### 1. `audio/sounds.json` (nowy)
+
+Manifest jak powyżej. Na start każda kategoria ma jeden wariant `default.mp3`.
+Kolejne warianty dokładane jako nowe pliki w folderze + wpis w JSON.
+
+---
+
+### 2. `supabase/migrations/2026-05-31_205_user_sounds_bucket.sql` (nowy)
 
 Bucket `user-sounds`:
 - prywatny (`public: false`)
@@ -48,68 +140,50 @@ RLS (wzór z `user-logos`):
 - SELECT: tylko właściciel (`auth.uid() == folder[1]`)
 - INSERT: tylko authenticated, folder musi być `{uid}/`
 - UPDATE/DELETE: tylko właściciel
-- Indeks na `bucket_id + folder[1]`
 
 ---
 
-### 2. `js/core/sfx.js` — rozszerzenie
+### 3. `js/core/sfx.js` — rozszerzenie
 
-Nowe stałe:
-```js
-const SFX_LIMITS = {
-  buzzer_press: 5, answer_correct: 5, answer_wrong: 5,
-  answer_repeat: 5, bells: 5, time_over: 5,
-  round_transition: 30, round_transition2: 30,
-  final_theme: 30, show_intro: 30,
-};
-```
+**Nowe funkcje eksportowane:**
 
-Nowe funkcje eksportowane:
-- `getSfxLimits()` → zwraca `SFX_LIMITS`
-- `setSfxVolume(name, v)` → ustawia `audio.volume`, zapisuje do localStorage `sfx_vol_{name}`
-- `getSfxVolumes()` → `Map<name, number>` z localStorage
-- `resetSfxVolumes()` → czyści klucze `sfx_vol_*` z localStorage, wraca do 1.0 na wszystkich Audio
-- `setSfxCustomBlob(name, blob, filename)` → tworzy blob URL, podmiena cache, zapisuje do IndexedDB
-- `getSfxCustomFiles()` → `Map<name, {blob, filename}>` z IndexedDB
-- `clearSfxCustomFile(name)` → revoke blob URL, usuwa z IndexedDB, przywraca domyślne źródło
+- `loadSfxManifest()` → fetch `audio/sounds.json`, cache manifest, zwraca tablicę kategorii
+- `getSfxCategories()` → zwraca załadowany manifest (po `loadSfxManifest`)
+- `setSfxVariant(key, file)` → ustawia aktywny wariant, ładuje `Audio` z `audio/{folder}/{file}`, zapisuje do localStorage `sfx_variant_{key}`
+- `getSfxVariant(key)` → czyta z localStorage, fallback `"default.mp3"`
+- `setSfxVolume(key, v)` → ustawia `audio.volume`, zapisuje do localStorage `sfx_vol_{key}`
+- `getSfxVolumes()` → `Map<key, number>` z localStorage
+- `resetSfxVolumes()` → czyści `sfx_vol_*` z localStorage, wraca do 1.0
+- `resetSfxVariants()` → czyści `sfx_variant_*` z localStorage, wczytuje `default.mp3`
+- `setSfxCustomBlob(key, blob, filename)` → tworzy blob URL, podmienia cache dla klucza, zapisuje do IndexedDB; **nadpisuje wybrany wariant** (custom ma priorytet)
+- `getSfxCustomFiles()` → `Map<key, {blob, filename}>` z IndexedDB
+- `clearSfxCustomFile(key)` → revoke blob URL, usuwa z IndexedDB, wraca do aktywnego wariantu (`getSfxVariant`)
 - `clearAllSfxCustomFiles()` → dla wszystkich kluczy `clearSfxCustomFile`
-- `loadSfxFromCloud(urlMap)` → `Map<name, url>` → podmiena źródła Audio na cloud URL (bez IndexedDB)
+- `loadSfxFromCloud(urlMap)` → `Map<key, url>` → podmienia źródła na cloud URL (bez IndexedDB)
 - `applySfxVolumes()` → odczytuje localStorage, aplikuje na wszystkie Audio
 
-Modyfikacja `playSfx(name)`: respektuje aktualny `audio.volume` (już pośrednio działa przez `setSfxVolume`).
-
-IndexedDB: baza `familiada-sfx`, store `custom-files`, klucz = `name`, wartość = `{blob, filename}`.
+IndexedDB: baza `familiada-sfx`, store `custom-files`, klucz = `key`, wartość = `{blob, filename}`.
 
 ---
 
-### 3. `js/core/sfx-cloud.js` (nowy)
-
-Izolacja logiki Supabase Storage:
+### 4. `js/core/sfx-cloud.js` (nowy)
 
 ```js
 const BUCKET = "user-sounds";
 
 export async function uploadSoundToCloud(userId, key, blob)
-// sb().storage.from(BUCKET).upload(`${userId}/${key}.mp3`, blob, { upsert: true })
-
 export async function deleteSoundFromCloud(userId, key)
-// sb().storage.from(BUCKET).remove([`${userId}/${key}.mp3`])
-
 export async function deleteAllSoundsFromCloud(userId)
-// sb().storage.from(BUCKET).list(userId + "/") → remove wszystkich
-
-export async function listCloudSounds(userId)
-// list + getPublicUrl/createSignedUrl → Map<key, url>
-
-export function getSfxSaveFlag()   // localStorage "sfx_save_cloud" === "1"
-export function setSfxSaveFlag(v)  // localStorage "sfx_save_cloud" = v ? "1" : "0"
+export async function listCloudSounds(userId)   // → Map<key, url>
+export function getSfxSaveFlag()                // localStorage "sfx_save_cloud" === "1"
+export function setSfxSaveFlag(v)
 ```
 
 ---
 
-### 4. `control.html` — sekcja Zaawansowane
+### 5. `control-new.html` — sekcja Zaawansowane
 
-Poniżej istniejącej karty z odblokowaniem — nowa karta:
+Poniżej istniejącej karty z odblokowaniem:
 
 ```html
 <div class="card sfx-advanced-card">
@@ -141,22 +215,34 @@ Poniżej istniejącej karty z odblokowaniem — nowa karta:
 </div>
 ```
 
-Struktura wiersza tabeli (generowana przez JS):
+Struktura wiersza (generowana przez JS):
+
 ```html
 <div class="sfx-row" data-key="answer_correct">
   <div class="sfx-row-desc">Poprawna odpowiedź</div>
+
+  <!-- UI select: lista wbudowanych wariantów -->
+  <div class="sfx-variant-wrap">
+    <div class="ui-select" data-sfx-variant="answer_correct">
+      <!-- opcje generowane z sounds.json -->
+    </div>
+  </div>
+
+  <!-- Podgląd -->
   <button class="sfx-preview-btn" type="button" title="Podgląd">🔊</button>
+
+  <!-- Głośność -->
   <div class="sfx-vol-wrap">
     <input type="range" class="sfx-vol" min="0" max="100" value="100"/>
     <span class="sfx-vol-label">100%</span>
   </div>
+
+  <!-- Własny plik użytkownika -->
   <div class="sfx-file-wrap">
-    <!-- Stan A: brak własnego pliku -->
     <button class="btn sfx-add-btn" type="button"
-      data-i18n="control.sfxAddFile">Dodaj</button>
+      data-i18n="control.sfxAddFile">Własny plik</button>
     <input type="file" class="sfx-file-input hidden"
       accept="audio/mpeg,audio/wav,audio/ogg"/>
-    <!-- Stan B: własny plik (toggle .hidden) -->
     <div class="sfx-file-tag hidden">
       <span class="sfx-file-name">nazwa.mp3</span>
       <button class="sfx-file-remove" type="button" title="Usuń">✕</button>
@@ -165,92 +251,86 @@ Struktura wiersza tabeli (generowana przez JS):
 </div>
 ```
 
+Kiedy użytkownik ma wczytany własny plik: `ui-select` jest wyszarzony
+(`disabled`), a "Własny plik" pokazuje ramkę z nazwą pliku i przyciskiem ✕.
+Usunięcie własnego pliku przywraca aktywność `ui-select` i wgrywa wybrany wariant.
+
 ---
 
-### 5. `control/js/app.js` — logika
+### 6. `control-new/js/app.js` — logika
 
 **Na starcie (`main()`):**
 ```
+await loadSfxManifest()
 applySfxVolumes()
+for each category: setSfxVariant(key, getSfxVariant(key))   // wczytaj zapisany wariant
 if (zalogowany && getSfxSaveFlag()):
     urls = await listCloudSounds(userId)
     loadSfxFromCloud(urls)
 else:
     files = await getSfxCustomFiles()
-    for each: setSfxCustomBlob(name, blob, filename)
+    for each: setSfxCustomBlob(key, blob, filename)
 buildSfxTable()
-sfxSaveWrap.style.display = guestMode ? "none" : ""
+sfxSaveWrap.hidden = guestMode
 ```
 
 **`buildSfxTable()`:**
-Iteruje `Object.keys(SFX_LIMITS)`, dla każdego tworzy wiersz z:
+Iteruje `getSfxCategories()`, dla każdej kategorii buduje wiersz z:
 - opisem: `t("control.sfxDesc." + key)`
-- suwakiem z wartością z `getSfxVolumes()`
+- `ui-select` z listą wariantów z `sounds.json` (zainicjowany na `getSfxVariant(key)`)
+- suwakiem głośności z wartością z `getSfxVolumes()`
 - stanem pliku na podstawie `getSfxCustomFiles()`
 
 **Handlery:**
+
 | Zdarzenie | Akcja |
 |---|---|
-| suwak `input` | `setSfxVolume(name, val/100)`, aktualizuj etykietę `${val}%` |
-| 🔊 `click` | `playSfx(name)` |
-| "Dodaj" `click` | trigger `sfxFileInput.click()` |
-| `file input change` | decode → sprawdź długość → za długi: `alertModal` → else: `setSfxCustomBlob`, pokaż ramkę, ukryj "Dodaj" |
-| ✕ `click` | `clearSfxCustomFile(name)`, ukryj ramkę, pokaż "Dodaj" |
+| `ui-select` zmiana wariantu | `setSfxVariant(key, file)` |
+| suwak `input` | `setSfxVolume(key, val/100)`, aktualizuj etykietę `${val}%` |
+| 🔊 `click` | `playSfx(key)` |
+| "Własny plik" `click` | trigger `sfxFileInput.click()` |
+| `file input change` | decode → sprawdź `buf.duration > limitSec` → za długi: `alertModal` → else: `setSfxCustomBlob`, zablokuj `ui-select`, pokaż ramkę |
+| ✕ `click` | `clearSfxCustomFile(key)`, odblokuj `ui-select`, pokaż "Własny plik" |
 | toggle "Zaawansowane" | toggle `.hidden` na `sfxAdvancedBody`, obróć strzałkę |
-| `chkSfxSave change` | jeśli odznaczono: `deleteAllSoundsFromCloud`, `setSfxSaveFlag(false)`, ukryj "Zapisz"; jeśli zaznaczono: pokaż "Zapisz" |
+| `chkSfxSave change` | odznaczono: `deleteAllSoundsFromCloud` + `setSfxSaveFlag(false)` + ukryj "Zapisz"; zaznaczono: pokaż "Zapisz" |
 | "Zapisz" `click` | dla każdego z IndexedDB: `uploadSoundToCloud` → `setSfxSaveFlag(true)`, ukryj "Zapisz" |
-| "Przywróć domyślne" `click` | `confirmModal` → `clearAllSfxCustomFiles()` + `deleteAllSoundsFromCloud()` + `resetSfxVolumes()` + `setSfxSaveFlag(false)` + rebuild tabeli |
-
-**Walidacja pliku:**
-```js
-const ctx = new AudioContext();
-const buf = await ctx.decodeAudioData(await file.arrayBuffer());
-const limit = SFX_LIMITS[name];
-if (buf.duration > limit) {
-  alertModal({ title: t("control.sfxTooLongTitle"), text: t("control.sfxTooLong", { limit }) });
-  return;
-}
-```
+| "Przywróć domyślne" `click` | `confirmModal` → `clearAllSfxCustomFiles()` + `deleteAllSoundsFromCloud()` + `resetSfxVolumes()` + `resetSfxVariants()` + `setSfxSaveFlag(false)` + rebuild tabeli |
 
 ---
 
-### 6. `control/control.css`
+### 7. `control-new/control.css`
 
 ```css
-.sfx-advanced-toggle          /* flex, gap, cursor pointer, styl jak nagłówek sekcji */
-.sfx-toggle-arrow             /* transition rotate 0→90deg gdy open */
-.sfx-advanced-body            /* padding-top: 12px */
-.sfx-table                    /* display: flex; flex-direction: column; gap: 6px */
-.sfx-row                      /* display: grid; grid-template-columns: 1fr auto auto auto;
-                                  align-items: center; gap: 10px; padding: 6px 0 */
-.sfx-row-desc                 /* font-size: .85rem */
-.sfx-preview-btn              /* btn-icon, małe */
-.sfx-vol-wrap                 /* display: flex; align-items: center; gap: 6px */
-.sfx-vol                      /* input range, szer. 90px */
-.sfx-vol-label                /* font-size: .8rem; min-width: 36px; text-align: right */
-.sfx-file-tag                 /* flex; border: 1px solid rgba(255,255,255,.2);
-                                  border-radius: 8px; padding: 3px 8px;
-                                  background: rgba(0,0,0,.15); gap: 6px */
-.sfx-file-name                /* max-width: 110px; overflow: hidden;
-                                  text-overflow: ellipsis; white-space: nowrap;
-                                  font-size: .8rem */
-.sfx-file-remove              /* btn-icon, małe, ✕ */
-.sfx-advanced-foot            /* display: flex; align-items: center; gap: 12px;
-                                  flex-wrap: wrap; margin-top: 14px; padding-top: 12px;
-                                  border-top: 1px solid rgba(255,255,255,.1) */
-.sfx-save-check               /* flex; align-items: center; gap: 6px; font-size: .85rem */
+.sfx-advanced-toggle     /* flex, gap, cursor pointer */
+.sfx-toggle-arrow        /* transition rotate 0→90deg gdy open */
+.sfx-advanced-body       /* padding-top: 12px */
+.sfx-table               /* flex-direction: column; gap: 6px */
+.sfx-row                 /* grid: desc | variant-select | preview | vol | file;
+                            align-items: center; gap: 10px; padding: 6px 0 */
+.sfx-row-desc            /* font-size: .85rem */
+.sfx-variant-wrap        /* flex; min-width: 120px */
+.sfx-preview-btn         /* btn-icon, małe */
+.sfx-vol-wrap            /* flex; align-items: center; gap: 6px */
+.sfx-vol                 /* input range, szer. 90px */
+.sfx-vol-label           /* font-size: .8rem; min-width: 36px; text-align: right */
+.sfx-file-tag            /* flex; border, border-radius, padding, background */
+.sfx-file-name           /* max-width: 110px; overflow: hidden; text-overflow: ellipsis */
+.sfx-file-remove         /* btn-icon, małe, ✕ */
+.sfx-advanced-foot       /* flex; gap: 12px; flex-wrap: wrap; margin-top: 14px;
+                            padding-top: 12px; border-top */
+.sfx-save-check          /* flex; align-items: center; gap: 6px; font-size: .85rem */
 ```
 
 ---
 
-### 7. Tłumaczenia
+### 8. Tłumaczenia
 
-Nowe klucze `control.*` (pl / en / uk):
+Nowe klucze `control.*`:
 
 | klucz | pl | en | uk |
 |---|---|---|---|
 | `sfxAdvanced` | Zaawansowane | Advanced | Розширені |
-| `sfxAddFile` | Dodaj | Add | Додати |
+| `sfxAddFile` | Własny plik | Custom file | Власний файл |
 | `sfxSaveCloud` | Zapisz w chmurze | Save to cloud | Зберегти в хмарі |
 | `sfxSaveBtn` | Zapisz | Save | Зберегти |
 | `sfxResetAll` | Przywróć domyślne | Restore defaults | Відновити типові |
@@ -270,16 +350,17 @@ Nowe klucze `control.sfxDesc.*`:
 | `answer_wrong` | Błędna odpowiedź (X) | Wrong answer (X) | Неправильна відповідь (X) |
 | `answer_repeat` | Powtórzenie odpowiedzi w finale | Repeat answer (final) | Повторення відповіді у фіналі |
 | `time_over` | Koniec czasu w finale | Time's up (final) | Час вийшов (фінал) |
-| `bells` | Przejście wyniku na tablicę drużyny | Score transfer to team board | Перенесення рахунку на табло |
+| `bells` | Przejście wyniku na tablicę drużyny | Score transfer to team board | Перенесення rахунку на табло |
 
 ---
 
 ## Kolejność implementacji
 
-1. `supabase/migrations/2026-05-31_205_user_sounds_bucket.sql`
-2. `js/core/sfx.js` — rozszerzenie (IndexedDB, głośności, blob URL)
-3. `js/core/sfx-cloud.js` — nowy (Supabase Storage)
-4. Tłumaczenia (pl / en / uk)
-5. `control.html` — HTML sekcji Zaawansowane
-6. `control/control.css` — style
-7. `control/js/app.js` — `buildSfxTable()` + wszystkie handlery
+1. `audio/sounds.json` + foldery (na razie `default.mp3` per kategoria — same wpisy w JSON, pliki już istnieją w `audio/`)
+2. `js/core/sfx.js` — rozszerzenie: manifest, warianty, głośności, blob URL, IndexedDB
+3. `js/core/sfx-cloud.js` — nowy
+4. `supabase/migrations/2026-05-31_205_user_sounds_bucket.sql`
+5. Tłumaczenia (pl / en / uk)
+6. `control-new.html` — sekcja Zaawansowane
+7. `control-new/control.css` — style
+8. `control-new/js/app.js` — `buildSfxTable()` + handlery
