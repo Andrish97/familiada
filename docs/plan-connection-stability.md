@@ -1,240 +1,302 @@
-# Plan wdrożenia — Stabilność połączenia urządzeń + tryb LAN
+# Plan wdrożenia — Stabilność połączenia urządzeń
 
-## Cel
+## Diagnoza problemów
 
-Poprawa niezawodności połączenia buzzera i hosta (najczęściej gubione) oraz wyświetlacza.
-Wprowadzenie przezroczystego trybu sieci lokalnej (LAN) — operator nic nie konfiguruje,
-urządzenia automatycznie używają LAN gdy dostępne, niezależnie od metody połączenia (QR lub kod 6-cyfrowy).
+### Buzzer i host — dwa krytyczne błędy
 
----
+**Błąd 1: ping zatrzymuje się gdy karta w tle**
 
-## Moduł A — `js/core/transport.js` (nowa warstwa abstrakcji)
-
-Wszystkie urządzenia (buzzer, host, display) przestają używać bezpośrednio Supabase channel
-do odbierania komend. Zamiast tego importują `createTransport(topic)` który pod spodem:
-
-1. Próbuje WebSocket na LAN (`ws://[lan-host]:7411/[topic]`)
-2. Jeśli LAN niedostępne — używa Supabase Realtime (obecne zachowanie)
-3. Jeśli Supabase WS padnie — HTTP fallback (obecne zachowanie)
-
-### API
+`buzzer.js` i `host.js` mają identyczny kod:
 
 ```js
-const t = createTransport(topic);
-t.onMessage(event, handler);      // zastępuje ch.on("broadcast", ...)
-t.send(event, payload);           // zastępuje rt(...).sendBroadcast(...)
-t.onLanStatusChange(cb);          // cb({ lan: true/false })
+pingTimer = setInterval(() => {
+  if (document.visibilityState !== "visible") return;
+  void ping();
+}, 5000);
 ```
 
-### Wykrywanie LAN
+Gdy użytkownik przełączy zakładkę lub ekran urządzenia zgaśnie,
+`visibilityState` staje się `"hidden"` i ping przestaje działać całkowicie.
+Po 12 sekundach (`ONLINE_MS`) control oznacza urządzenie jako offline
+i wyświetla alert. Operator musi ręcznie „wznowić" połączenie.
 
-Wykrywanie LAN jest **przezroczyste** — urządzenie samo próbuje, operator nic nie widzi.
+`keep-alive.js` blokuje throttling timera przez WebLock — ale nie pomaga
+gdy kod jawnie sprawdza `visibilityState` przed każdym pingiem.
 
-Mechanizm A (komenda po wejściu online): po tym jak urządzenie zgłosi się przez Supabase (`device_ping`),
-control wysyła komendę `LAN_URL ws://192.168.x.x:7411` przez Supabase channel.
-Urządzenie próbuje połączyć się z tym adresem przez WS. Jeśli uda się — przełącza na LAN.
-Jeśli nie — zostaje na Supabase, transparentnie.
+**Błąd 2: kanał Supabase nigdy nie reconnectuje po błędzie**
 
-Mechanizm B (sonda portu — fallback, dla urządzeń QR): urządzenie próbuje `http://[sugerowany-host]:7411/ping`
-przez `fetch` z timeout 500 ms. Adres hosta pochodzi z parametru `?lan=` w URL (dla QR)
-albo z komendy `LAN_URL` (dla kodu 6-cyfrowego).
+```js
+function ensureChannel() {
+  if (ch) return ch;
+  ch = sb()
+    .channel(`familiada-buzzer:${gameId}`)
+    .on("broadcast", { event: "BUZZER_CMD" }, handler)
+    .subscribe();  // ← brak callbacka statusu
+  return ch;
+}
+```
 
-Oba mechanizmy działają razem — B przyspiesza dla QR, A działa dla wszystkich.
+Gdy WebSocket rozłączy się (sieć mobilna, uśpienie telefonu, timeout),
+Supabase wywoła wewnętrznie `CHANNEL_ERROR` lub `TIMED_OUT`, ale kod
+tego nie obserwuje. Kanał zostaje „martwy" — komendy od operatora
+przestają docierać do urządzenia na zawsze (do odświeżenia strony).
+
+### Display — mniejszy problem
+
+`display/js/presence.js` uruchamia ping bez warunku visibilityState (dobrze),
+ale kanał DISPLAY_CMD też nie ma auto-reconnect. Wyświetlacz jest jednak
+zazwyczaj stale widoczny, więc pilność niższa.
+
+### Control — brak pilnych problemów
+
+Control korzysta z `realtime.js` (`sendBroadcast` z `mode: "http"`),
+który wysyła komendy przez REST — odporne na WS. Polling presence co 1.5s
+przez REST działa niezawodnie.
 
 ---
 
-## Moduł B — `lan-server/` (minimalny serwer Node.js)
+## Moduł 1 — Krótsze timeouty presence
 
-Operator uruchamia `node lan-server/index.js` na komputerze z panelem control (lub automatycznie
-z Electron/PWA Service Worker w przyszłości). Serwer jest **opcjonalny** — bez niego wszystko działa
-jak dotąd przez Supabase.
+### Pliki: `control/js/presence.js`, `js/pages/buzzer.js`, `js/pages/host.js`, `display/js/presence.js`
 
-### Stos
+**Ryzyko: zerowe** — tylko stałe liczbowe.
 
-- Node.js 18+ (wbudowany `ws` lub `uWebSockets`)
-- Port 7411 (konfiguowalny przez env `LAN_PORT`)
-- Endpointy:
-  - `GET /ping` → `{ ok: true, ts: Date.now() }`
-  - `WS /[topic]` → przekazuje broadcast w ramach topic (fan-out)
-  - `POST /broadcast` → wysyła komendę do wszystkich subskrybentów topic (dla control)
+### control/js/presence.js
 
-### Bezpieczeństwo
+```js
+// PRZED:
+const ONLINE_MS = 12_000;
 
-- Brak auth (LAN = ufamy sieci lokalnej)
-- Opcjonalny `ALLOW_ORIGIN` regex do CORS
-
-### Pliki
-
-```
-lan-server/
-  index.js          # main entry point
-  package.json
-  README.md
+// PO:
+const ONLINE_MS = 8_000;
 ```
 
-### Autodetekcja adresu IP
+Uzasadnienie: przy ping co 3s (po Module 2) i ONLINE_MS = 8s mamy bufor
+2–3 nieodebranych pingów. Wystarczy na chwilowe zawahanie sieci.
+Przy obecnym ONLINE_MS = 12s + ping co 5s urządzenie może być „offline"
+w control przez ponad 10s zanim alert się pojawi.
 
-`index.js` wypisuje na stdout:
+### js/pages/buzzer.js i js/pages/host.js
+
+Ping interval: 5000 ms → 3000 ms (widoczne) / 8000 ms (tło).
+Szczegóły w Module 2, bo zmiana interwału jest połączona z fix pingu w tle.
+
+### display/js/presence.js
+
+```js
+// Domyślny pingMs to 5000. Zmiana w wywołaniu startPresence (w display app.js):
+startPresence({ ..., pingMs: 3000 })
 ```
-LAN server ready: ws://192.168.1.42:7411
-```
-Control panel odczytuje ten URL (albo operator wkleja go ręcznie — ale to nie jest potrzebne).
-W przyszłości: mDNS broadcast `familiada.local`.
 
 ---
 
-## Moduł C — Reconnect + background ping dla buzzer i host
+## Moduł 2 — Ping działa zawsze (buzzer + host)
 
-### Problem
+### Pliki: `js/pages/buzzer.js`, `js/pages/host.js`
 
-`ensureChannel()` w `buzzer.js` i `host.js` tworzy kanał Supabase raz i nigdy nie
-próbuje ponownie po błędzie (`CHANNEL_ERROR` / `TIMED_OUT`). Gdy WebSocket jest
-zresetowany przez sieć, kanał pozostaje martwy.
+**Ryzyko: niskie** — zmiana logiki timera, bez ryzyka dla innych funkcji.
+
+### Problem — obecny kod
+
+```js
+const startPingLoop = () => {
+  if (pingTimer) return;
+  ping();
+  pingTimer = setInterval(() => {
+    if (document.visibilityState !== "visible") return;  // ← to jest błąd
+    void ping();
+  }, 5000);
+};
+
+const stopPingLoop = () => {
+  if (!pingTimer) return;
+  clearInterval(pingTimer);
+  pingTimer = null;
+};
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") {
+    startPingLoop();
+    void ping();
+    return;
+  }
+  stopPingLoop();  // ← całkowite zatrzymanie pingu
+});
+```
+
+### Rozwiązanie — adaptive setTimeout
+
+Zamiast `setInterval` z `if (visibilityState)` — rekurencyjny `setTimeout`
+z krótszym interwałem gdy widoczne, dłuższym gdy w tle.
+`stopPingLoop` / `startPingLoop` i `visibilitychange` handler zostają usunięte
+(nie są już potrzebne):
+
+```js
+let pingTimer = null;
+
+function schedulePing() {
+  clearTimeout(pingTimer);
+  const ms = document.visibilityState === "visible" ? 3000 : 8000;
+  pingTimer = setTimeout(async () => {
+    await ping();
+    schedulePing();
+  }, ms);
+}
+
+// startuje raz, po starcie:
+ping().then(schedulePing);
+
+// po powrocie do widoczności: wyślij ping natychmiast i skróć interwał
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") {
+    ping().then(schedulePing);
+  }
+  // w tle: nie przerywamy, schedulePing sam zwiększy interwał do 8s
+});
+```
+
+Efekt: urządzenie pinguje co 3s gdy aktywne, co 8s w tle.
+`keep-alive.js` (WebLock) zapewnia że timer w tle nie jest throttlowany
+przez przeglądarkę do 1/minutę.
+
+---
+
+## Moduł 3 — Auto-reconnect kanału Supabase (buzzer + host)
+
+### Pliki: `js/pages/buzzer.js`, `js/pages/host.js`
+
+**Ryzyko: średnie** — zmiana zarządzania cyklem życia kanału.
+
+### Rozwiązanie — subscribe callback + reconnect
+
+```js
+let ch = null;
+let reconnectTimer = null;
+
+function scheduleReconnect() {
+  if (reconnectTimer) return;
+  reconnectTimer = setTimeout(() => {
+    reconnectTimer = null;
+    if (ch) {
+      try { sb().removeChannel(ch); } catch {}
+      ch = null;
+    }
+    openChannel();
+  }, 2000);
+}
+
+function openChannel() {
+  if (ch) return;
+
+  ch = sb()
+    .channel(`familiada-buzzer:${gameId}`)
+    .on("broadcast", { event: "BUZZER_CMD" }, (msg) => {
+      handleCommand(msg?.payload?.line).catch(console.warn);
+    })
+    .subscribe((status) => {
+      if (status === "SUBSCRIBED") {
+        // reconnect: odbuduj stan i potwierdź obecność
+        void restoreState();
+        void ping();
+      }
+      if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+        scheduleReconnect();
+      }
+    });
+}
+```
+
+Stara funkcja `ensureChannel()` zostaje zastąpiona przez `openChannel()`.
+
+### Uwagi
+
+- `restoreState()` przy `SUBSCRIBED` jest wywoływane zarówno przy pierwszym
+  połączeniu jak i po każdym reconnect — to poprawne (idempotentne przez snapshot).
+- Delay 2s przed reconnect zapobiega burzom połączeń gdy sieć jest chwilowo niestabilna.
+- `reconnectTimer` guard zapobiega wielokrotnym próbom reconnect.
+
+---
+
+## Moduł 4 — Auto-reconnect display
+
+### Plik: `display/js/presence.js`
+
+**Ryzyko: niskie** — display jest stabilniejszy, ale warto ujednolicić.
 
 ### Rozwiązanie
 
-Przenieść zarządzanie kanałem do `transport.js` (Moduł A), który automatycznie:
-1. Nasłuchuje na `CHANNEL_ERROR` / `TIMED_OUT` / `CLOSED`
-2. Po 2s próbuje `reset()` + `ensureChannel()`
-3. Po reconnect wysyła `device_ping` natychmiast (żeby control wiedział że urządzenie wróciło)
-4. Po reconnect wywołuje `restoreState()` (żeby odbudować snapshot)
-
-### Ping w tle
-
-Obecny kod:
-```js
-if (document.visibilityState !== "visible") return;
-```
-Problem: gdy karta jest w tle, ping zatrzymuje się. Po ~10–12s control uznaje urządzenie za offline.
-
-Rozwiązanie: ping działa zawsze (bez warunku `visibilityState`). Interwał w tle zwiększamy
-do 10s zamiast 5s, żeby oszczędzać baterię. `keep-alive.js` już zapobiega throttlingowi przez WebLock.
+Analogicznie do Modułu 3 — dodać `subscribe` callback z `scheduleReconnect`:
 
 ```js
-const interval = document.visibilityState === "visible" ? 5000 : 10000;
+let chRef = null;
+let reconnectTimer = null;
+
+function scheduleReconnect() {
+  if (reconnectTimer) return;
+  reconnectTimer = setTimeout(() => {
+    reconnectTimer = null;
+    if (chRef) {
+      try { sb().removeChannel(chRef); } catch {}
+      chRef = null;
+    }
+    openChannel();
+  }, 2000);
+}
+
+function openChannel() {
+  chRef = sb()
+    .channel(chName)
+    .on("broadcast", { event: "DISPLAY_CMD" }, (msg) => {
+      const line = msg?.payload?.line;
+      if (line) try { onCommand?.(String(line)); } catch {}
+    })
+    .subscribe((status) => {
+      if (status === "SUBSCRIBED") {
+        // po reconnect: odśwież snapshot
+        getSnapshot().then(snap => {
+          try { onSnapshot?.(snap); } catch {}
+        });
+        void ping();
+      }
+      if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+        scheduleReconnect();
+      }
+    });
+}
 ```
-
----
-
-## Moduł D — Krótsze timeouty presence
-
-### Obecne wartości (`control/js/app.js` lub stałe)
-
-| Stała | Obecna | Proponowana |
-|-------|--------|-------------|
-| `ONLINE_MS` | 12 000 ms | 8 000 ms |
-| ping interval (device) | 5 000 ms | 3 000 ms (visible) / 8 000 ms (hidden) |
-| control polling | 1 500 ms | 1 500 ms (bez zmian) |
-
-Przy ping co 3s i ONLINE_MS = 8s mamy bufor 2–3 nieodebranych pingów zanim urządzenie
-zostanie uznane za offline. To wystarczy na chwilowe zawahanie sieci.
-
----
-
-## Moduł E — Snapshot przy reconnect
-
-### Problem
-
-Gdy buzzer lub host połączy się ponownie po przerwie, nie odświeża stanu (np. kolor drużyn,
-aktualny stan przycisku). Musi czekać na kolejną komendę od operatora.
-
-### Rozwiązanie
-
-Po każdym reconnect (wykrytym w `transport.js` przez reset + re-subscribe) wywołaj:
-```js
-await restoreState();
-```
-To pobiera ostatni snapshot z `device_state_get` RPC — urządzenie natychmiast wyrównuje stan.
-
-Control po wykryciu, że urządzenie wróciło online (`deviceOnline` event), wysyła też pełen zestaw komend
-(kolory, stan) — to już działa przez `cmdQueues` + `flushQueued()` w `devices.js`.
-
----
-
-## Moduł F — Realtime presence przez `postgres_changes` (opcjonalne, v2)
-
-Obecne: control odpytuje `device_presence` przez REST co 1.5s.
-Optymalizacja v2: subskrypcja `postgres_changes` na `device_presence` → natychmiastowa reakcja
-bez polling.
-
-To jest opcjonalne — obecny polling działa, tylko wprowadza ~1.5s opóźnienie.
-Implementacja po Modułach A–E.
 
 ---
 
 ## Kolejność wdrożenia
 
-1. **Moduł D** — tylko zmiana stałych, 0 ryzyka
-2. **Moduł C** — reconnect + ping w tle, niezależne od LAN
-3. **Moduł E** — snapshot przy reconnect
-4. **Moduł B** — serwer LAN (nowy plik, nic nie psuje)
-5. **Moduł A** — `transport.js` i refactor buzzer/host/display do używania go
-6. **Moduł F** — opcjonalnie, po stabilizacji
+| Krok | Moduł | Pliki | Ryzyko |
+|------|-------|-------|--------|
+| 1 | Moduł 1 — timeouty | `control/js/presence.js` | zerowe |
+| 2 | Moduł 2 — ping w tle | `buzzer.js`, `host.js` | niskie |
+| 3 | Moduł 3 — reconnect | `buzzer.js`, `host.js` | średnie |
+| 4 | Moduł 4 — reconnect display | `display/js/presence.js` | niskie |
+
+Kroki 2 i 3 można wdrożyć razem (jeden commit per plik).
 
 ---
 
-## Architektura LAN — szczegóły przepływu
+## Pliki do modyfikacji
 
-### Przypadek 1: urządzenie skanuje QR
-
-```
-QR URL: https://familiada.app/buzzer?id=xxx&key=yyy&lan=ws://192.168.1.42:7411
-                                                      ^^^^^^^^^^^^^^^^^^^^^^^^
-                                                      dodawane przez control gdy LAN server wykryty
-
-Buzzer:
-  1. Łączy się Supabase (jak zawsze)
-  2. Równolegle: fetch("http://192.168.1.42:7411/ping", { signal: AbortSignal.timeout(500) })
-  3. OK → otwiera WS na lan-server, wypisuje do DevTools "[transport] LAN active"
-  4. Supabase channel zostaje jako backup (nie jest zamykany)
-```
-
-### Przypadek 2: urządzenie łączy się 6-cyfrowym kodem
-
-```
-Buzzer nie ma ?lan= w URL.
-  1. Łączy się Supabase
-  2. device_ping → control wykrywa urządzenie online
-  3. Control sprawdza czy LAN server jest aktywny (flaga w state)
-  4. Jeśli tak: wysyła BUZZER_CMD "LAN_URL ws://192.168.1.42:7411" przez Supabase
-  5. Buzzer odbiera komendę, próbuje fetch ping, jeśli OK → otwiera WS LAN
-```
-
-### Przypadek 3: brak LAN servera
-
-```
-Oba przypadki: urządzenie nie dostaje odpowiedzi na ping (timeout 500ms)
-→ zostaje na Supabase, bez żadnego komunikatu dla operatora
-→ transparentne, identyczne zachowanie jak dotąd
-```
-
-### Tryb mieszany
-
-Control śledzi per-urządzenie czy jest na LAN czy Supabase.
-Komendy wysyłane są przez **oba** kanały jednocześnie (jeśli urządzenie jest na LAN,
-odbierze przez WS; jeśli przez Supabase — odbierze przez Realtime).
-Duplikaty są ignorowane przez `handled` set (hash komendy + timestamp).
-
----
-
-## Pliki do modyfikacji / utworzenia
-
-| Plik | Zmiana |
+| Plik | Zmiany |
 |------|--------|
-| `js/core/transport.js` | Nowy — warstwa abstrakcji WS/Supabase |
-| `lan-server/index.js` | Nowy — serwer lokalny |
-| `lan-server/package.json` | Nowy |
-| `js/pages/buzzer.js` | Moduły C, D, E — reconnect, ping, snapshot |
-| `js/pages/host.js` | Moduły C, D, E |
-| `js/pages/display/display.js` | Moduł D — krótszy ONLINE_MS |
-| `control/js/devices.js` | Moduł A — wysyłanie LAN_URL po wejściu online |
-| `control/js/app.js` | Moduł D — ONLINE_MS |
+| `control/js/presence.js` | `ONLINE_MS`: 12000 → 8000 |
+| `js/pages/buzzer.js` | adaptive ping (Moduł 2) + reconnect (Moduł 3) |
+| `js/pages/host.js` | adaptive ping (Moduł 2) + reconnect (Moduł 3) |
+| `display/js/presence.js` | pingMs 5000→3000, reconnect (Moduł 4) |
 
 ---
 
 ## Co NIE zmienia się
 
-- Supabase pozostaje domyślnym i zawsze-dostępnym kanałem
-- Operator nie musi nic konfigurować ani wiedzieć o LAN
-- QR i kody 6-cyfrowe działają identycznie jak dotąd
-- UI control panel bez zmian (żadnych wskaźników LAN — transparentne)
+- Supabase jako jedyny kanał komunikacji (brak LAN)
+- Struktura komend (BUZZER_CMD, HOST_CMD, DISPLAY_CMD) — bez zmian
+- `devices.js` / `cmdQueues` / `flushQueued` — bez zmian
+- Snapshot RPC (`device_state_set_public` / `device_state_get`) — bez zmian
+- UI control panel — bez zmian
+- `keep-alive.js` — bez zmian (już działa poprawnie)
+- `realtime.js` — bez zmian (HTTP fallback dla komend control jest wystarczający)
