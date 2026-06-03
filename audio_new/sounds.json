@@ -1,0 +1,84 @@
+{
+  "categories": [
+    {
+      "key": "show_intro",
+      "folder": "show_intro",
+      "limitSec": 30,
+      "sounds": [
+        { "file": "default.mp3", "label": { "pl": "Domyślny", "en": "Default", "uk": "Типовий" } }
+      ]
+    },
+    {
+      "key": "round_transition",
+      "folder": "round_transition",
+      "limitSec": 30,
+      "sounds": [
+        { "file": "default.mp3", "label": { "pl": "Domyślny", "en": "Default", "uk": "Типовий" } }
+      ]
+    },
+    {
+      "key": "round_transition2",
+      "folder": "round_transition2",
+      "limitSec": 30,
+      "sounds": [
+        { "file": "default.mp3", "label": { "pl": "Domyślny", "en": "Default", "uk": "Типовий" } }
+      ]
+    },
+    {
+      "key": "final_theme",
+      "folder": "final_theme",
+      "limitSec": 30,
+      "sounds": [
+        { "file": "default.mp3", "label": { "pl": "Domyślny", "en": "Default", "uk": "Типовий" } }
+      ]
+    },
+    {
+      "key": "buzzer_press",
+      "folder": "buzzer_press",
+      "limitSec": 5,
+      "sounds": [
+        { "file": "default.mp3", "label": { "pl": "Domyślny", "en": "Default", "uk": "Типовий" } }
+      ]
+    },
+    {
+      "key": "answer_correct",
+      "folder": "answer_correct",
+      "limitSec": 5,
+      "sounds": [
+        { "file": "default.mp3", "label": { "pl": "Domyślny", "en": "Default", "uk": "Типовий" } }
+      ]
+    },
+    {
+      "key": "answer_wrong",
+      "folder": "answer_wrong",
+      "limitSec": 5,
+      "sounds": [
+        { "file": "default.mp3", "label": { "pl": "Domyślny", "en": "Default", "uk": "Типовий" } }
+      ]
+    },
+    {
+      "key": "answer_repeat",
+      "folder": "answer_repeat",
+      "limitSec": 5,
+      "sounds": [
+        { "file": "default.mp3", "label": { "pl": "Domyślny", "en": "Default", "uk": "Типовий" } }
+      ]
+    },
+    {
+      "key": "time_over",
+      "folder": "time_over",
+      "limitSec": 5,
+      "sounds": [
+        { "file": "default.mp3", "label": { "pl": "Domyślny", "en": "Default", "uk": "Типовий" } }
+      ]
+    },
+    {
+      "key": "bells",
+      "folder": "bells",
+      "limitSec": 5,
+      "sounds": [
+        { "file": "default.mp3", "label": { "pl": "Domyślny", "en": "Default", "uk": "Типовий" } }
+      ]
+    }
+  ]
+}
