@@ -2269,3 +2269,195 @@
   line-height: 1.4;
   padding: 0 2px;
 }
+
+/* ===== SFX ADVANCED ===== */
+
+.sfx-advanced-card {
+  margin-top: 12px;
+}
+
+.sfx-advanced-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: .9rem;
+  font-weight: 600;
+  color: inherit;
+  padding: 0;
+  width: 100%;
+  text-align: left;
+}
+
+.sfx-toggle-arrow {
+  display: inline-block;
+  transition: transform .2s ease;
+  font-size: .75rem;
+  opacity: .7;
+}
+
+.sfx-advanced-toggle.open .sfx-toggle-arrow {
+  transform: rotate(90deg);
+}
+
+.sfx-advanced-body {
+  padding-top: 12px;
+}
+
+.sfx-table {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sfx-row {
+  display: grid;
+  grid-template-columns: minmax(130px, 1fr) minmax(110px, 160px) auto minmax(130px, 180px) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+}
+
+.sfx-row:last-child {
+  border-bottom: none;
+}
+
+.sfx-row-desc {
+  font-size: .85rem;
+  opacity: .85;
+}
+
+.sfx-variant-wrap {
+  display: flex;
+  min-width: 110px;
+}
+
+.sfx-variant-wrap .ui-select {
+  width: 100%;
+}
+
+.sfx-variant-wrap .ui-select.disabled,
+.sfx-variant-wrap .ui-select[data-disabled="true"] {
+  opacity: .4;
+  pointer-events: none;
+}
+
+.sfx-preview-btn {
+  background: none;
+  border: 1px solid rgba(255,255,255,.25);
+  border-radius: 6px;
+  padding: 4px 7px;
+  cursor: pointer;
+  font-size: .85rem;
+  color: inherit;
+  line-height: 1;
+  transition: background .15s;
+}
+
+.sfx-preview-btn:hover {
+  background: rgba(255,255,255,.1);
+}
+
+.sfx-vol-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sfx-vol {
+  width: 90px;
+  accent-color: #ffeaa6;
+}
+
+.sfx-vol-label {
+  font-size: .8rem;
+  min-width: 36px;
+  text-align: right;
+  opacity: .75;
+}
+
+.sfx-file-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sfx-file-input {
+  display: none;
+}
+
+.sfx-file-tag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(255,255,255,.3);
+  border-radius: 6px;
+  padding: 3px 8px;
+  background: rgba(255,255,255,.07);
+  font-size: .8rem;
+  max-width: 160px;
+}
+
+.sfx-file-name {
+  max-width: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sfx-file-remove {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+  opacity: .6;
+  font-size: .85rem;
+  padding: 0 2px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.sfx-file-remove:hover {
+  opacity: 1;
+}
+
+.sfx-advanced-foot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,.1);
+}
+
+.sfx-save-check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: .85rem;
+  cursor: pointer;
+}
+
+@media (max-width: 700px) {
+  .sfx-row {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto auto;
+  }
+
+  .sfx-row-desc {
+    grid-column: 1 / -1;
+    font-weight: 600;
+  }
+
+  .sfx-vol-wrap {
+    flex-wrap: wrap;
+  }
+
+  .sfx-vol {
+    width: 70px;
+  }
+}

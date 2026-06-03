@@ -1,5 +1,5 @@
 // /familiada/js/pages/controlapp.js
-import { confirmModal } from "../../js/core/modal.js?v=v2026-06-03T21003";
+import { confirmModal, alertModal } from "../../js/core/modal.js?v=v2026-06-03T21003";
 import { getUiLang, initI18n, t } from "../../translation/translation.js?v=v2026-06-03T21003";
 import { v as cacheBust } from "../../js/core/cache-bust.js?v=v2026-06-03T21003";
 
@@ -46,6 +46,20 @@ import { sb } from "../../js/core/supabase.js?v=v2026-06-03T21003";
 import { rt } from "../../js/core/realtime.js?v=v2026-06-03T21003";
 import { validateGameReadyToPlay, loadGameBasic, loadQuestions, loadAnswers } from "../../js/core/game-validate.js?v=v2026-06-03T21003";
 import { unlockAudio, isAudioUnlocked, playSfx } from "../../js/core/sfx.js?v=v2026-06-03T21003";
+import {
+  loadSfxManifest, getSfxCategories,
+  setSfxVariant, getSfxVariant,
+  setSfxVolume, getSfxVolumes, applySfxVolumes, resetSfxVolumes,
+  resetSfxVariants,
+  setSfxCustomBlob, getSfxCustomFiles, clearSfxCustomFile, clearAllSfxCustomFiles,
+  loadSfxFromCloud,
+  playSfx as playSfxNew,
+  initSfx,
+} from "../../js/core/sfx-new.js?v=v2026-06-03T21003";
+import {
+  getSfxSaveFlag, setSfxSaveFlag,
+  uploadSoundToCloud, deleteSoundFromCloud, deleteAllSoundsFromCloud, listCloudSounds,
+} from "../../js/core/sfx-cloud.js?v=v2026-06-03T21003";
 import { createStore } from "./store.js?v=v2026-06-03T21003";
 import { createUI } from "./ui.js?v=v2026-06-03T21003";
 import { createDevices } from "./devices.js?v=v2026-06-03T21003";
@@ -1179,6 +1193,325 @@ async function sendZeroStatesToDevices() {
   // audio: stan początkowy
   store.setAudioUnlocked(!!isAudioUnlocked());
   ui.setAudioStatus(store.state.flags.audioUnlocked);
+
+  // ===== SFX ADVANCED =====
+
+  // Inicjalizacja manifestu + dźwięków (raz, w tle)
+  let _sfxReady = false;
+  (async () => {
+    try {
+      await loadSfxManifest();
+      await initSfx();
+      _sfxReady = true;
+
+      // Załaduj custom z chmury jeśli zalogowany i flaga ustawiona
+      if (!guestMode && getSfxSaveFlag()) {
+        try {
+          const currentUser2 = await (async () => { const { data } = await sb().auth.getUser(); return data?.user; })();
+          if (currentUser2?.id) {
+            const urls = await listCloudSounds(currentUser2.id);
+            if (urls.size) loadSfxFromCloud(urls);
+          }
+        } catch (e) { console.warn("[sfx-cloud] load failed", e); }
+      }
+
+      buildSfxTable();
+    } catch (e) {
+      console.warn("[sfx] init failed", e);
+    }
+  })();
+
+  function buildSfxTable() {
+    const tableEl = document.getElementById("sfxTable");
+    if (!tableEl) return;
+
+    const categories = getSfxCategories();
+    const volumes = getSfxVolumes();
+    const lang = document.documentElement.lang || "pl";
+
+    tableEl.innerHTML = "";
+
+    for (const cat of categories) {
+      const key = cat.key;
+      const currentVariant = getSfxVariant(key);
+      const vol = volumes.get(key) ?? 1.0;
+      const volPct = Math.round(vol * 100);
+
+      // ui-select options
+      const optionsHtml = cat.sounds.map(s => {
+        const file = s.file.split("?")[0]; // strip cache-bust from value comparison
+        const label = typeof s.label === "object"
+          ? (s.label[lang] ?? s.label["pl"] ?? s.file)
+          : s.file;
+        const selected = file === currentVariant ? ' data-selected="true"' : "";
+        return `<div class="ui-select-option" data-value="${file}"${selected}>${label}</div>`;
+      }).join("");
+
+      const selectedSound = cat.sounds.find(s => s.file.split("?")[0] === currentVariant) || cat.sounds[0];
+      const selectedLabel = selectedSound
+        ? (typeof selectedSound.label === "object"
+          ? (selectedSound.label[lang] ?? selectedSound.label["pl"] ?? selectedSound.file)
+          : selectedSound.file)
+        : currentVariant;
+
+      const descKey = `control.sfxDesc.${key}`;
+      const desc = t(descKey) || key;
+
+      const row = document.createElement("div");
+      row.className = "sfx-row";
+      row.dataset.key = key;
+      row.innerHTML = `
+        <div class="sfx-row-desc">${desc}</div>
+        <div class="sfx-variant-wrap">
+          <div class="ui-select" data-sfx-variant="${key}" id="sfxSelect_${key}">
+            <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
+              <span class="ui-select-label">${selectedLabel}</span>
+              <span class="ui-select-caret" aria-hidden="true">▾</span>
+            </button>
+            <div class="ui-select-menu" role="listbox">${optionsHtml}</div>
+          </div>
+        </div>
+        <button class="sfx-preview-btn" type="button" title="Podgląd" data-sfx-preview="${key}">🔊</button>
+        <div class="sfx-vol-wrap">
+          <input type="range" class="sfx-vol" min="0" max="100" value="${volPct}" data-sfx-vol="${key}"/>
+          <span class="sfx-vol-label" id="sfxVolLabel_${key}">${volPct}%</span>
+        </div>
+        <div class="sfx-file-wrap" id="sfxFileWrap_${key}">
+          <button class="btn sfx-add-btn" type="button" data-sfx-add="${key}"
+            data-i18n="control.sfxAddFile">${t("control.sfxAddFile")}</button>
+          <input type="file" class="sfx-file-input" accept="audio/mpeg,audio/wav,audio/ogg"
+            data-sfx-file-input="${key}"/>
+          <div class="sfx-file-tag hidden" id="sfxFileTag_${key}">
+            <span class="sfx-file-name" id="sfxFileName_${key}"></span>
+            <button class="sfx-file-remove" type="button" title="Usuń" data-sfx-remove="${key}">✕</button>
+          </div>
+        </div>
+      `;
+      tableEl.appendChild(row);
+    }
+
+    // Podłącz handlery dla każdego wiersza
+    for (const cat of categories) {
+      const key = cat.key;
+      _bindSfxRowHandlers(key, cat);
+    }
+
+    // Odśwież stan plików własnych (po wczytaniu z IndexedDB)
+    _refreshCustomFileTags();
+
+    // Inicjalizuj ui-select (jeśli jest funkcja initUiSelects)
+    _initSfxSelects(tableEl);
+
+    // Pokaż/ukryj checkbox "Zapisz w chmurze"
+    const sfxSaveWrap = document.getElementById("sfxSaveWrap");
+    if (sfxSaveWrap) sfxSaveWrap.classList.toggle("hidden", guestMode);
+
+    // Przywróć stan checkboxa
+    const chkSfxSave = document.getElementById("chkSfxSave");
+    if (chkSfxSave) chkSfxSave.checked = getSfxSaveFlag();
+  }
+
+  function _initSfxSelects(root) {
+    root.querySelectorAll(".ui-select[data-sfx-variant]").forEach(selectEl => {
+      const key = selectEl.dataset.sfxVariant;
+      const btn = selectEl.querySelector(".ui-select-btn");
+      const menu = selectEl.querySelector(".ui-select-menu");
+      if (!btn || !menu) return;
+
+      // toggle menu
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const isOpen = selectEl.classList.contains("open");
+        // zamknij inne
+        root.querySelectorAll(".ui-select.open").forEach(el => el.classList.remove("open"));
+        if (!isOpen) selectEl.classList.add("open");
+      });
+
+      // wybór opcji
+      menu.querySelectorAll(".ui-select-option").forEach(opt => {
+        opt.addEventListener("click", () => {
+          const file = opt.dataset.value;
+          menu.querySelectorAll(".ui-select-option").forEach(o => o.removeAttribute("data-selected"));
+          opt.setAttribute("data-selected", "true");
+          const labelEl = btn.querySelector(".ui-select-label");
+          if (labelEl) labelEl.textContent = opt.textContent;
+          selectEl.classList.remove("open");
+          setSfxVariant(key, file);
+        });
+      });
+    });
+
+    // zamknij po kliknięciu poza
+    document.addEventListener("click", () => {
+      root.querySelectorAll(".ui-select.open").forEach(el => el.classList.remove("open"));
+    }, { capture: true, once: false });
+  }
+
+  function _bindSfxRowHandlers(key, cat) {
+    // Podgląd
+    const previewBtn = document.querySelector(`[data-sfx-preview="${key}"]`);
+    previewBtn?.addEventListener("click", () => playSfxNew(key));
+
+    // Głośność
+    const volSlider = document.querySelector(`[data-sfx-vol="${key}"]`);
+    const volLabel = document.getElementById(`sfxVolLabel_${key}`);
+    volSlider?.addEventListener("input", () => {
+      const v = Number(volSlider.value);
+      if (volLabel) volLabel.textContent = `${v}%`;
+      setSfxVolume(key, v / 100);
+    });
+
+    // Własny plik — przycisk otwierający dialog
+    const addBtn = document.querySelector(`[data-sfx-add="${key}"]`);
+    const fileInput = document.querySelector(`[data-sfx-file-input="${key}"]`);
+    addBtn?.addEventListener("click", () => fileInput?.click());
+
+    fileInput?.addEventListener("change", async () => {
+      const file = fileInput.files?.[0];
+      if (!file) return;
+      fileInput.value = "";
+
+      // Walidacja długości
+      try {
+        const buf = await file.arrayBuffer();
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const decoded = await ctx.decodeAudioData(buf);
+        ctx.close().catch(() => {});
+
+        const limitSec = cat.limitSec || 30;
+        if (decoded.duration > limitSec) {
+          await alertModal({
+            title: t("control.sfxTooLongTitle"),
+            text: t("control.sfxTooLong", { limit: limitSec }),
+          });
+          return;
+        }
+
+        const blob = new Blob([await file.arrayBuffer()], { type: file.type || "audio/mpeg" });
+        await setSfxCustomBlob(key, blob, file.name);
+        _setCustomFileTag(key, file.name, true);
+        _setSfxSelectDisabled(key, true);
+      } catch (e) {
+        console.warn("[sfx] file decode error", e);
+      }
+    });
+
+    // Usunięcie własnego pliku
+    const removeBtn = document.querySelector(`[data-sfx-remove="${key}"]`);
+    removeBtn?.addEventListener("click", async () => {
+      await clearSfxCustomFile(key);
+      _setCustomFileTag(key, "", false);
+      _setSfxSelectDisabled(key, false);
+    });
+  }
+
+  function _setCustomFileTag(key, filename, show) {
+    const tag = document.getElementById(`sfxFileTag_${key}`);
+    const nameEl = document.getElementById(`sfxFileName_${key}`);
+    const addBtn = document.querySelector(`[data-sfx-add="${key}"]`);
+    if (tag) tag.classList.toggle("hidden", !show);
+    if (addBtn) addBtn.classList.toggle("hidden", show);
+    if (nameEl && filename) nameEl.textContent = filename;
+  }
+
+  function _setSfxSelectDisabled(key, disabled) {
+    const sel = document.getElementById(`sfxSelect_${key}`);
+    if (!sel) return;
+    if (disabled) sel.setAttribute("data-disabled", "true");
+    else sel.removeAttribute("data-disabled");
+  }
+
+  async function _refreshCustomFileTags() {
+    try {
+      const files = await getSfxCustomFiles();
+      for (const [key, { filename }] of files) {
+        _setCustomFileTag(key, filename, true);
+        _setSfxSelectDisabled(key, true);
+      }
+    } catch (e) {
+      console.warn("[sfx] refresh custom tags failed", e);
+    }
+  }
+
+  // Toggle panelu zaawansowanego
+  document.getElementById("btnSfxAdvanced")?.addEventListener("click", () => {
+    const body = document.getElementById("sfxAdvancedBody");
+    const btn = document.getElementById("btnSfxAdvanced");
+    if (!body) return;
+    const isOpen = !body.classList.contains("hidden");
+    body.classList.toggle("hidden", isOpen);
+    btn?.classList.toggle("open", !isOpen);
+
+    // Buduj tabelę przy pierwszym otwarciu
+    if (!isOpen && _sfxReady) {
+      const tableEl = document.getElementById("sfxTable");
+      if (tableEl && tableEl.childElementCount === 0) buildSfxTable();
+    }
+  });
+
+  // Przywróć domyślne
+  document.getElementById("btnSfxReset")?.addEventListener("click", async () => {
+    const ok = await confirmModal({
+      title: t("control.sfxResetAll"),
+      text: t("common.confirmDefault") || "Przywrócić domyślne ustawienia dźwięku?",
+      okText: t("control.sfxResetAll"),
+      cancelText: t("common.cancel") || "Anuluj",
+    });
+    if (!ok) return;
+
+    await clearAllSfxCustomFiles();
+    resetSfxVolumes();
+    resetSfxVariants();
+
+    if (!guestMode && getSfxSaveFlag()) {
+      try {
+        const { data } = await sb().auth.getUser();
+        if (data?.user?.id) await deleteAllSoundsFromCloud(data.user.id);
+      } catch (e) { console.warn("[sfx-cloud] delete all failed", e); }
+    }
+    setSfxSaveFlag(false);
+
+    buildSfxTable();
+  });
+
+  // Checkbox "Zapisz w chmurze"
+  document.getElementById("chkSfxSave")?.addEventListener("change", async (e) => {
+    const checked = e.target.checked;
+    const btnSave = document.getElementById("btnSfxSave");
+    if (checked) {
+      btnSave?.classList.remove("hidden");
+    } else {
+      btnSave?.classList.add("hidden");
+      setSfxSaveFlag(false);
+      if (!guestMode) {
+        try {
+          const { data } = await sb().auth.getUser();
+          if (data?.user?.id) await deleteAllSoundsFromCloud(data.user.id);
+        } catch (e) { console.warn("[sfx-cloud] delete on uncheck failed", e); }
+      }
+    }
+  });
+
+  // Przycisk "Zapisz"
+  document.getElementById("btnSfxSave")?.addEventListener("click", async () => {
+    const btnSave = document.getElementById("btnSfxSave");
+    if (!guestMode) {
+      try {
+        const { data } = await sb().auth.getUser();
+        const userId = data?.user?.id;
+        if (userId) {
+          const files = await getSfxCustomFiles();
+          for (const [key, { blob }] of files) {
+            await uploadSoundToCloud(userId, key, blob);
+          }
+          setSfxSaveFlag(true);
+          btnSave?.classList.add("hidden");
+        }
+      } catch (e) {
+        console.warn("[sfx-cloud] save failed", e);
+      }
+    }
+  });
 
   // === GLOBALNE RENDEROWANIE STANU (Opcja B) ===
   function renderFromState(state) {
