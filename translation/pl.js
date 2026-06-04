@@ -4362,6 +4362,7 @@ const pl = {
     sfxSaveCloud: "Zapisz w chmurze",
     sfxSaveBtn: "Zapisz",
     sfxResetAll: "Przywróć domyślne",
+    sfxResetConfirm: "Przywrócić domyślne ustawienia dźwięku? Wszystkie własne pliki i głośności zostaną usunięte.",
     sfxTooLongTitle: "Plik za długi",
     sfxTooLong: "Maksymalna długość to {limit}s",
     sfxDesc: {

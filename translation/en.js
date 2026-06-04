@@ -4983,6 +4983,7 @@ const en = {
     sfxSaveCloud: "Save to cloud",
     sfxSaveBtn: "Save",
     sfxResetAll: "Restore defaults",
+    sfxResetConfirm: "Restore default sound settings? All custom files and volumes will be removed.",
     sfxTooLongTitle: "File too long",
     sfxTooLong: "Maximum length is {limit}s",
     sfxDesc: {

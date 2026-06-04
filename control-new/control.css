@@ -2272,8 +2272,10 @@
 
 /* ===== SFX ADVANCED ===== */
 
-.sfx-advanced-card {
-  margin-top: 12px;
+.sfx-advanced-section {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255,255,255,.1);
 }
 
 .sfx-advanced-toggle {

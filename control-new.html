@@ -408,40 +408,39 @@
                   </div>
                 </div>
 
+                  <!-- Zaawansowane ustawienia dźwięku — w tej samej karcie -->
+                  <div class="sfx-advanced-section">
+                    <button class="sfx-advanced-toggle" id="btnSfxAdvanced" type="button">
+                      <span class="sfx-toggle-arrow">▶</span>
+                      <span data-i18n="control.sfxAdvanced">Zaawansowane</span>
+                    </button>
+
+                    <div class="sfx-advanced-body hidden" id="sfxAdvancedBody">
+                      <div class="sfx-table" id="sfxTable">
+                        <!-- wiersze generowane dynamicznie przez JS -->
+                      </div>
+
+                      <div class="sfx-advanced-foot">
+                        <button class="btn" id="btnSfxReset" type="button"
+                          data-i18n="control.sfxResetAll">Przywróć domyślne</button>
+
+                        <label class="sfx-save-check hidden" id="sfxSaveWrap">
+                          <input type="checkbox" id="chkSfxSave"/>
+                          <span data-i18n="control.sfxSaveCloud">Zapisz w chmurze</span>
+                        </label>
+                        <button class="btn gold hidden" id="btnSfxSave" type="button"
+                          data-i18n="control.sfxSaveBtn">Zapisz</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 <div class="stepFoot step-foot-spaced">
                   <div class="stepFootButtons">
                     <button class="btn" id="btnAudioBack" type="button" data-i18n="common.back">Wstecz</button>
                     <button class="btn gold" id="btnDevicesFinish" type="button" disabled data-i18n="control.devicesFinish">Gotowe — przejdź dalej</button>
                   </div>
                   <div class="msg msg-pill" id="msgAudio"></div>
-                </div>
-              </div>
-
-              <!-- Zaawansowane ustawienia dźwięku -->
-              <div class="card sfx-advanced-card">
-                <div class="cardBody">
-                  <button class="sfx-advanced-toggle" id="btnSfxAdvanced" type="button">
-                    <span class="sfx-toggle-arrow">▶</span>
-                    <span data-i18n="control.sfxAdvanced">Zaawansowane</span>
-                  </button>
-
-                  <div class="sfx-advanced-body hidden" id="sfxAdvancedBody">
-                    <div class="sfx-table" id="sfxTable">
-                      <!-- wiersze generowane dynamicznie przez JS -->
-                    </div>
-
-                    <div class="sfx-advanced-foot">
-                      <button class="btn" id="btnSfxReset" type="button"
-                        data-i18n="control.sfxResetAll">Przywróć domyślne</button>
-
-                      <label class="sfx-save-check hidden" id="sfxSaveWrap">
-                        <input type="checkbox" id="chkSfxSave"/>
-                        <span data-i18n="control.sfxSaveCloud">Zapisz w chmurze</span>
-                      </label>
-                      <button class="btn gold hidden" id="btnSfxSave" type="button"
-                        data-i18n="control.sfxSaveBtn">Zapisz</button>
-                    </div>
-                  </div>
                 </div>
               </div>
             </div>

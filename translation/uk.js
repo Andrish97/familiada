@@ -4971,6 +4971,7 @@ const uk = {
     sfxSaveCloud: "Зберегти в хмарі",
     sfxSaveBtn: "Зберегти",
     sfxResetAll: "Відновити типові",
+    sfxResetConfirm: "Відновити типові налаштування звуку? Усі власні файли та гучності буде видалено.",
     sfxTooLongTitle: "Файл занадто довгий",
     sfxTooLong: "Максимальна тривалість — {limit}с",
     sfxDesc: {
