@@ -1271,7 +1271,7 @@ async function sendZeroStatesToDevices() {
             <div class="ui-select-menu" role="listbox">${optionsHtml}</div>
           </div>
         </div>
-        <button class="sfx-preview-btn" type="button" title="Podgląd" data-sfx-preview="${key}">🔊</button>
+        <button class="sfx-preview-btn" type="button" title="Odtwórz" data-sfx-preview="${key}">▶</button>
         <div class="sfx-vol-wrap">
           <input type="range" class="sfx-vol" min="0" max="100" value="${volPct}" data-sfx-vol="${key}"/>
           <span class="sfx-vol-label" id="sfxVolLabel_${key}">${volPct}%</span>
@@ -1453,9 +1453,9 @@ async function sendZeroStatesToDevices() {
   document.getElementById("btnSfxReset")?.addEventListener("click", async () => {
     const ok = await confirmModal({
       title: t("control.sfxResetAll"),
-      text: t("common.confirmDefault") || "Przywrócić domyślne ustawienia dźwięku?",
+      text: t("control.sfxResetConfirm"), // klucz zdefiniowany w pl/en/uk
       okText: t("control.sfxResetAll"),
-      cancelText: t("common.cancel") || "Anuluj",
+      cancelText: t("common.cancel"),
     });
     if (!ok) return;
 
