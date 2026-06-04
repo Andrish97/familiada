@@ -1,7 +1,7 @@
 // js/core/sfx-new.js — sandbox rozszerzenia sfx.js
 // Dodaje: manifest z audio_new/sounds.json, warianty, głośności, custom blob URL, IndexedDB
 
-const MANIFEST_PATH = "../audio_new/sounds.json?v=v2026-06-04T22494";
+const MANIFEST_PATH = "../audio_new/sounds.json?v=v2026-06-04T22541";
 const AUDIO_BASE    = "../audio_new/";
 const IDB_NAME      = "familiada-sfx";
 const IDB_STORE     = "custom-files";
