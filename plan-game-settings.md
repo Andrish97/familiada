@@ -26,7 +26,7 @@ Modyfikowane:
 builder-new.js                          # przycisk ⚙ na kartach gier
 control-new.html                        # uproszczony flow
 control-new/js/app.js                   # ładuje settings na starcie
-js/core/sfx-new.js                      # klucz IndexedDB: gameId:key
+js/core/sfx-new.js                      # cloud-first upload + initSfx(gameId, soundSettings)
 translation/pl.js, en.js, uk.js         # nowe klucze
 ```
 
@@ -57,8 +57,14 @@ Odczyt zawsze merguje z `getDefaults(locale)`, więc `{}` jest bezpieczne dla is
     "nameB": "Drużyna B"
   },
   "display": {
-    "logoId": null,          // null = domyślne logo z JSON; jeśli ID wskazuje usunięte → fallback do JSON
-    "frameMode": "classic"   // "classic" | "minimal"
+    "logoId": null,          // null = domyślne; jeśli ID usunięte → fallback do domyślnego
+    "theme": "classic",      // klucz motywu (lista z themes.json)
+    "colors": {
+      "teamA": null,         // null = kolor z motywu
+      "teamB": null,
+      "bg": null,
+      "dot": null
+    }
   },
   "sound": {
     "volumes": {             // 0–100 (int)
@@ -74,16 +80,22 @@ Odczyt zawsze merguje z `getDefaults(locale)`, więc `{}` jest bezpieczne dla is
       "bells": 100
     },
     "variants": {},          // {} = wszystko "classic"; { "buzzer_press": "custom" }
-    "cloudSave": false
+    "customFiles": {}        // { "buzzer_press": "https://..." } — URL z Supabase Storage
   },
   "questions": {
-    "mode": "random",        // "random" | "ordered"
-    "count": 3,              // ile pytań losowych per runda (tylko gdy random)
-    "selectedIds": [],       // kolejność pytań (tylko gdy ordered); [] = wszystkie po kolei
-    "roundsCount": 3,        // liczba rund (random: maks; ordered: = len(selectedIds))
-    "finaleMode": "random",  // "random" | "selected"
-    "finaleCount": 5,        // ile pytań finałowych z puli (tylko gdy finaleMode=random)
-    "finaleIds": []          // konkretne pytania do finału (tylko gdy finaleMode=selected)
+    "finaleMode": "random",  // "random" | "pick"
+    "finaleIds": [],         // wybrane pytania finału (gdy finaleMode="pick")
+    "roundsMode": "random",  // "random" | "ordered"
+    "orderedIds": []         // kolejność pytań rund (gdy roundsMode="ordered"); po wykluczeniu finałowych
+  },
+  "gameplay": {
+    "hasFinal": true,             // gramy finał?
+    "roundMultipliers": "1,1,1,2,3",  // mnożniki rund po przecinku
+    "gameTarget": 0,              // cel rozgrywki (min. pkt do finału; 0 = brak)
+    "finalTarget": 0,             // cel finału (0 = brak)
+    "endMode": "logo",            // "logo" | "points" | "money"
+    "prizeMultiplier": 1,         // mnożnik nagrody (tylko gdy endMode="money")
+    "mainPrizeAmount": 0          // kwota nagrody głównej (tylko gdy endMode="money")
   }
 }
 ```
@@ -146,8 +158,11 @@ export async function resolveLogoUrl(logoId, userId)
 │  └───────────┘  │                                           │
 │  ┌───────────┐  │                                           │
 │  │ Pytania   │  │                                           │
-│  │  · Rundy  │  │                                           │
 │  │  · Finał  │  │                                           │
+│  │  · Rundy  │  │                                           │
+│  └───────────┘  │                                           │
+│  ┌───────────┐  │                                           │
+│  │ Rozgrywka │  │                                           │
 │  └───────────┘  │                                           │
 ├─────────────────┴───────────────────────────────────────────┤
 │  PASEK DOLNY: [● Masz niezapisane zmiany]    [Zapisz]       │
@@ -187,25 +202,38 @@ Bez wypustek. Sidebar: karty bez zaokrąglonych narożników kart-zakładek. Akt
 ┌──────────────────────────┬──────────────────────┐
 │  Ustawienia              │  Podgląd wyświetlacza │
 │                          │  ┌────────────────┐   │
-│  Logo:                   │  │ ┌──┐  PYTANIE  │   │
-│  [ui-select: lista logo] │  │ │🖼 │  ======== │   │
-│  [Bez logo] [Domyślne]   │  │ └──┘  A: ████  │   │
-│                          │  │       B: ████  │   │
-│  Tryb ramki:             │  │  [Drużyna A] 0 │   │
-│  ○ Klasyczna             │  │  [Drużyna B] 0 │   │
-│  ○ Minimalna             │  └────────────────┘   │
-│                          │  ~320×200px           │
+│  Motyw:                  │  │ ┌──┐  PYTANIE  │   │
+│  [ui-select: motywy  ▾]  │  │ │🖼 │  ======== │   │
+│                          │  │ └──┘  A: ████  │   │
+│  Logo:                   │  │       B: ████  │   │
+│  [ui-select: lista logo] │  │  [Drużyna A] 0 │   │
+│  [Bez logo] [Domyślne]   │  │  [Drużyna B] 0 │   │
+│                          │  └────────────────┘   │
+│  Kolory:                 │  ~320×200px           │
+│  Drużyna A  [🟦]         │                       │
+│  Drużyna B  [🟥]         │                       │
+│  Tło        [⬛]         │                       │
+│  Kropki     [🟡]         │                       │
+│  [Reset kolorów]         │                       │
 └──────────────────────────┴──────────────────────┘
 ```
+
+**Motyw:**
+- Dropdown `ui-select` z listą dostępnych motywów (identyczny jak w control `setup_look`)
+- Zmiana motywu → reset kolorów do wartości motywu (z potwierdzeniem)
 
 **Logo:**
 - Dropdown `ui-select` z miniaturami logo użytkownika
 - Opcja "Domyślne" (wartość `null` → JSON default)
 - Jeśli wybrany logoId zniknął z bazy → automatycznie pokazuje "Domyślne" z informacją
 
+**Kolory:**
+- Swatch button dla każdego koloru → otwiera color picker (identyczny jak w control)
+- `null` = kolor z motywu; nadpisanie daje `"#RRGGBB"`
+
 **Podgląd:**
 - `<div class="display-preview">` — statyczny HTML stylizowany jak ekran gry
-- Aktualizuje się live przy każdej zmianie (logo, ramka, nazwy drużyn)
+- Aktualizuje się live przy każdej zmianie (motyw, logo, kolory, nazwy drużyn)
 - Zawiera: logo w rogu, planszę z odpowiedziami (placeholder), paski punktów z nazwami drużyn
 - NIE jest iframe — tylko stylizowany div
 
@@ -220,7 +248,7 @@ logoId nie istnieje w DB  → defaultLogoJson.url + log warn
 
 ## Kategoria: Dźwięk
 
-Pełna tabela 10 kategorii. Per-game — IndexedDB klucz: `{gameId}:{sfxKey}`.
+Pełna tabela 10 kategorii. Per-game, cloud-first — pliki własne w Supabase Storage.
 
 ### UI (grid 5 kolumn, identyczny układ jak sfx-advanced-section w control-new)
 ```
@@ -233,37 +261,74 @@ Przejście   | [własny plik  ▾]  | ▶ | ──●────── 60% | [m
 
 Przyciski na dole:
 ```
-[Przywróć domyślne dźwięki]    □ Zapisz w chmurze    [Zapisz do chmury]
+[Przywróć domyślne dźwięki]
 ```
 
-### Zmiana klucza IndexedDB
-- Stara baza: `familiada-sfx` / store: `custom-files` / klucz: `sfxKey`
-- Nowa baza: `familiada-sfx` / store: `custom-files` / klucz: `{gameId}:{sfxKey}`
-- `sfx-new.js` dostaje `gameId` przez `initSfx(gameId)` — wszystkie operacje prefixują klucz
+Brak checkboxa "Zapisz w chmurze" — ustawienia (łącznie z dźwiękiem i URLami plików)
+zapisywane do chmury automatycznie przy kliknięciu głównego "Zapisz wszystko".
+
+### Pliki własne — cloud-first (bez IndexedDB)
+- Upload pliku → natychmiast do Supabase Storage (`user-sounds/{userId}/{gameId}_{key}.mp3`)
+- URL zwrócony z uploadu zapisuje się w `settings.sound.customFiles.{key}`
+- `sfx-new.js` dostaje URL z settings i ładuje audio bezpośrednio z niego
+- Brak IndexedDB dla per-game dźwięków
 
 ---
 
 ## Kategoria: Pytania
 
-### Podsekcja: Rundy
+### Logika
+Pula = wszystkie pytania gry. Jedna runda = jedno pytanie — brak osobnego "count per round".
+
+1. Najpierw wybieramy pytania **finału** (losowo lub ręcznie).
+2. Pytania **rund** = cała pula minus wybrane/wylosowane do finału.
+3. Liczba rund = liczba pytań rund (auto).
+
+### Podsekcja: Finał
+
+Widoczna zawsze (opcja "Gramy finał?" jest w kategorii Rozgrywka — tu tylko wybieramy pytania).
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│  Pytania do rund                                     │
+│  Pytania finałowe                                    │
+│                                                      │
+│  Tryb:  ○ Losowe    ○ Wybierz ręcznie                │
+│                                                      │
+│  [JEŚLI LOSOWE]                                      │
+│  (pytania zostaną wylosowane przy starcie finału)    │
+│                                                      │
+│  [JEŚLI WYBIERZ RĘCZNIE]                             │
+│  ┌──────────────────────────────────────────────┐    │
+│  │ ☰  1. Pytanie finałowe A  [↑][↓][✕]         │    │
+│  │ ☰  2. Pytanie finałowe B  [↑][↓][✕]         │    │
+│  │ [+ Dodaj pytanie z puli]                     │    │
+│  └──────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────┘
+```
+
+| Klucz | UI | Domyślna |
+|-------|-----|----------|
+| `questions.finaleMode` | Radio: Losowe / Wybierz ręcznie | `"random"` |
+| `questions.finaleIds` | Lista z reorder (drag & drop) | `[]` |
+
+### Podsekcja: Rundy
+
+Pytania rund = pula minus finałowe. Jeśli `finaleMode="random"` — pokazujemy info że pula rund zależy od losowania.
+
+```
+┌─────────────────────────────────────────────────────┐
+│  Kolejność pytań rund                                │
+│  Pula: wszystkie pytania gry minus finałowe          │
 │                                                      │
 │  Tryb:  ○ Losowe    ○ Ustalona kolejność             │
 │                                                      │
-│  [JEŚLI LOSOWE]                                      │
-│  Liczba pytań per runda:  [3 ▾]  (1–10)             │
-│  Maksymalna liczba rund:  [3 ▾]  (1–10)             │
-│                                                      │
 │  [JEŚLI USTALONA KOLEJNOŚĆ]                          │
-│  Lista pytań (drag & drop lub numery):               │
+│  Lista pytań (drag & drop):                          │
 │  ┌──────────────────────────────────────────────┐    │
 │  │ ☰  1. Jak nazywa się...  [↑][↓][✕]          │    │
 │  │ ☰  2. Wymień 5 rzeczy... [↑][↓][✕]          │    │
 │  │ ☰  3. Co robi...         [↑][↓][✕]          │    │
-│  │ [+ Dodaj pytanie z puli]                      │    │
+│  │ [+ Dodaj pytanie z puli]                     │    │
 │  └──────────────────────────────────────────────┘    │
 │  Liczba rund = liczba wybranych pytań               │
 └─────────────────────────────────────────────────────┘
@@ -271,37 +336,52 @@ Przyciski na dole:
 
 | Klucz | UI | Domyślna |
 |-------|-----|----------|
-| `questions.mode` | Radio: Losowe / Ustalona kolejność | `"random"` |
-| `questions.count` | Select 1–10 | `3` |
-| `questions.roundsCount` | Select 1–10 | `3` |
-| `questions.selectedIds` | Lista z reorder | `[]` |
+| `questions.roundsMode` | Radio: Losowe / Ustalona kolejność | `"random"` |
+| `questions.orderedIds` | Lista z reorder (drag & drop) | `[]` |
 
-### Podsekcja: Finał
+---
 
-Widoczna tylko gdy `game.type !== "prepared"` (gry preparowane nie mają finału ankietowego).
+## Kategoria: Rozgrywka
 
+Odpowiada "Dodatkowym ustawieniom" z control — konfiguruje mechanikę i przepływ rozgrywki.
+
+### UI
 ```
 ┌─────────────────────────────────────────────────────┐
-│  Pytania finałowe                                    │
+│  Rozgrywka                                           │
 │                                                      │
-│  Tryb:  ○ Losowe z puli    ○ Ustalone                │
+│  Gramy finał?       ○ Tak    ○ Nie                   │
 │                                                      │
-│  [JEŚLI LOSOWE]                                      │
-│  Liczba pytań finałowych:  [5 ▾]  (1–10)            │
+│  Mnożniki rund:     [1,1,1,2,3          ]            │
+│  (podaj po przecinku; liczba wartości = l. rund)     │
 │                                                      │
-│  [JEŚLI USTALONE]                                    │
-│  ┌──────────────────────────────────────────────┐    │
-│  │ ☰  1. Pytanie finałowe A  [↑][↓][✕]         │    │
-│  │ [+ Dodaj pytanie finałowe]                    │    │
-│  └──────────────────────────────────────────────┘    │
+│  Cel rozgrywki:     [  0  ] pkt  (0 = brak limitu)   │
+│                                                      │
+│  [jeśli "Gramy finał?" = Tak]                        │
+│  Cel finału:        [  0  ] pkt  (0 = brak limitu)   │
+│                                                      │
+│  Zakończenie gry:                                    │
+│  ○ Pokaż logo                                        │
+│  ○ Pokaż punkty                                      │
+│  ○ Pokaż kwotę (po finale)                           │
+│                                                      │
+│  [jeśli "Pokaż kwotę"]                               │
+│  Mnożnik nagrody:   [  1  ]                          │
+│  Kwota nagrody:     [  0  ]  (maks. 99 999)          │
+│                                                      │
+│  [Przywróć domyślne]                                 │
 └─────────────────────────────────────────────────────┘
 ```
 
 | Klucz | UI | Domyślna |
 |-------|-----|----------|
-| `questions.finaleMode` | Radio: Losowe / Ustalone | `"random"` |
-| `questions.finaleCount` | Select 1–10 | `5` |
-| `questions.finaleIds` | Lista z reorder | `[]` |
+| `gameplay.hasFinal` | Radio: Tak / Nie | `true` |
+| `gameplay.roundMultipliers` | Text input | `"1,1,1,2,3"` |
+| `gameplay.gameTarget` | Number input | `0` |
+| `gameplay.finalTarget` | Number input | `0` |
+| `gameplay.endMode` | Radio: logo / points / money | `"logo"` |
+| `gameplay.prizeMultiplier` | Number input | `1` |
+| `gameplay.mainPrizeAmount` | Number input | `0` |
 
 ---
 
@@ -309,15 +389,21 @@ Widoczna tylko gdy `game.type !== "prepared"` (gry preparowane nie mają finału
 
 ### Przycisk Ustawienia na karcie gry
 
-Dodany obok `[Graj]` i `[Ankieta]`:
+Dodany bezpośrednio obok `[Graj]`:
 ```
-[Podgląd] [Edytuj] [Graj] [Ankieta] [⚙ Ustawienia]
+[Podgląd] [Edytuj] [Graj] [⚙ Ustawienia] [Ankieta]
 ```
 
-Logika widoczności / stanu:
-- Widoczny: zawsze gdy widoczny `[Graj]`
-- `disabled`: gdy gra nie jest grywalna (`canPlay === false`)
-- Klik: `location.href = \`game-settings?id=\${selectedId}\``
+Logika widoczności / stanu: **identyczna jak `btnPlay`** — te same warunki (`validateGameReadyToPlay`),
+ten sam moment aktywacji, ten sam disabled state. Żadnej osobnej logiki.
+
+W kodzie `builder-new.js` — wszędzie gdzie ustawiany jest stan `btnPlay`, ustawiany jest też `btnSettings`:
+```js
+btnPlay.disabled = !canPlay;
+btnSettings.disabled = !canPlay;   // zawsze razem z btnPlay
+```
+
+Klik: `location.href = \`game-settings?id=\${selectedId}\``
 
 ---
 
@@ -356,20 +442,28 @@ applyDisplaySettings(settings.display);
 
 ## Zmiany w sfx-new.js
 
+Cloud-first: pliki własne nie trafiają do IndexedDB — są uploadowane do Supabase Storage,
+a URL zapisywany w `settings.sound.customFiles`.
+
 ```js
 // Stara sygnatura:
 export async function initSfx()
 
 // Nowa:
-export async function initSfx(gameId)
-// gameId przekazywany do wszystkich operacji IndexedDB
-// klucz: `${gameId}:${sfxKey}` zamiast `${sfxKey}`
+export async function initSfx(gameId, soundSettings)
+// soundSettings = settings.sound (volumes, variants, customFiles)
+// customFiles[key] to URL z Supabase Storage → AudioBuffer ładowany fetch()
 
-// Inne funkcje dotknięte:
-setSfxCustomBlob(key, blob, filename, gameId)
-getSfxCustomFiles(gameId)
-clearSfxCustomFile(key, gameId)
-clearAllSfxCustomFiles(gameId)
+// Upload pliku własnego (wywoływany ze strony game-settings):
+export async function uploadSfxFile(key, file, gameId, userId)
+// → upload do `user-sounds/{userId}/{gameId}_{key}.mp3`
+// → zwraca url (string)
+// Caller zapisuje: settings.sound.customFiles[key] = url
+
+// Usunięcie pliku własnego:
+export async function deleteSfxFile(key, gameId, userId)
+// → usuwa z Supabase Storage
+// Caller usuwa: delete settings.sound.customFiles[key]
 ```
 
 ---
@@ -391,8 +485,9 @@ settings: {
     display: "Wygląd",
     sound: "Dźwięk",
     questions: "Pytania",
-    rounds: "Rundy",
     finale: "Finał",
+    rounds: "Rundy",
+    gameplay: "Rozgrywka",
   },
   teams: {
     nameA: "Nazwa drużyny A",
@@ -406,22 +501,42 @@ settings: {
     logoDefault: "Domyślne",
     logoNone: "Bez logo",
     logoMissing: "Logo zostało usunięte — używamy domyślnego",
-    frameMode: "Tryb ramki",
-    frameModeClassic: "Klasyczna",
-    frameModeMinimal: "Minimalna",
+    theme: "Motyw wyświetlacza",
+    colors: "Kolory",
+    colorTeamA: "Kolor drużyny A",
+    colorTeamB: "Kolor drużyny B",
+    colorBg: "Kolor tła",
+    colorDot: "Kolor kropek",
+    resetColors: "Reset kolorów",
     preview: "Podgląd wyświetlacza",
   },
   questions: {
-    modeRandom: "Losowe",
-    modeOrdered: "Ustalona kolejność",
-    countPerRound: "Pytań per runda",
-    roundsCount: "Liczba rund",
-    addQuestion: "+ Dodaj pytanie z puli",
     finaleTitle: "Pytania finałowe",
-    finaleModeRandom: "Losowe z puli",
-    finaleModeSelected: "Ustalone",
-    finaleCount: "Liczba pytań finałowych",
-    addFinaleQuestion: "+ Dodaj pytanie finałowe",
+    finaleModeRandom: "Losowe",
+    finaleModeManual: "Wybierz ręcznie",
+    addFinaleQuestion: "+ Dodaj pytanie z puli",
+    roundsTitle: "Kolejność pytań rund",
+    roundsModeRandom: "Losowe",
+    roundsModeOrdered: "Ustalona kolejność",
+    addRoundQuestion: "+ Dodaj pytanie z puli",
+    roundsPoolInfo: "Pula: wszystkie pytania gry minus finałowe",
+  },
+  gameplay: {
+    title: "Rozgrywka",
+    hasFinal: "Gramy finał?",
+    roundMultipliers: "Mnożniki rund",
+    roundMultipliersHint: "Podaj po przecinku, np. 1,1,1,2,3",
+    gameTarget: "Cel rozgrywki",
+    gameTargetHint: "0 = brak limitu",
+    finalTarget: "Cel finału",
+    endMode: "Zakończenie gry",
+    endModeLogo: "Pokaż logo",
+    endModePoints: "Pokaż punkty",
+    endModeMoney: "Pokaż kwotę (po finale)",
+    prizeMultiplier: "Mnożnik nagrody",
+    mainPrizeAmount: "Kwota nagrody głównej",
+    mainPrizeAmountHint: "Maks. 5 cyfr (do 99 999)",
+    restoreDefaults: "Przywróć domyślne",
   },
 }
 ```
@@ -513,9 +628,10 @@ Analogiczne klucze w `en.js` i `uk.js` z odpowiednimi tłumaczeniami i domyślny
 1. **Migracja SQL** + moduł `game-settings.js` (load/save/defaults/resolveLogoUrl)
 2. **game-settings.html** — szkielet HTML + CSS layout (sidebar + content)
 3. **Kategoria Drużyny** — najprostsza, dobry smoke test
-4. **Kategoria Wygląd** — logo dropdown + preview div (bez iframe)
-5. **Kategoria Dźwięk** — port z sfx-advanced-section + zmiana klucza IndexedDB w sfx-new.js
-6. **Kategoria Pytania** — Rundy + Finał (najbardziej złożona)
-7. **Zapis + dirty tracking** — `isDirty`, `beforeunload`, pasek dolny
-8. **builder-new.js** — przycisk ⚙ na kartach
-9. **control-new** — usunięcie kroków + `loadSettings` na starcie
+4. **Kategoria Wygląd** — logo + motyw + kolory + preview div
+5. **Kategoria Dźwięk** — port z sfx-advanced-section + cloud upload w sfx-new.js
+6. **Kategoria Pytania** — Finał + Rundy (drag & drop, pula minus finałowe)
+7. **Kategoria Rozgrywka** — port "Dodatkowych ustawień" z control
+8. **Zapis + dirty tracking** — `isDirty`, `beforeunload`, pasek dolny
+9. **builder-new.js** — przycisk ⚙ na kartach
+10. **control-new** — usunięcie kroków setup + `loadSettings` na starcie
