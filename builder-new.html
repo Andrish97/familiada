@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+  <meta name="app-version" content="v2026-06-03T21150"/>
+
+  <meta charset="UTF-8"/>
+  <meta name="robots" content="noindex, nofollow"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <title data-i18n="builder.title">Familiada — moje gry</title>
+
+  <link rel="icon" href="favicon.ico?v=v2026-06-03T21150"/>
+  <link rel="manifest" href="/manifest.json?v=v2026-06-03T21150"/>
+  <meta name="theme-color" content="#050914"/>
+  <link rel="stylesheet" href="css/base.css?v=v2026-06-03T21150"/>
+  <link rel="stylesheet" href="css/builder.css?v=v2026-06-03T21150"/>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="js/core/security-warning.js?v=v2026-06-03T21150" defer></script>
+  <script type="module" src="js/pages/builder-new.js?v=v2026-06-03T21150" defer></script>
+  <script type="module" src="js/core/topbar-controller.js?v=v2026-06-03T21150" defer></script>
+</head>
+
+<body class="builder-body">
+  <header class="topbar topbar-layout-4 topbar-mobile-keep-brand">
+    <div class="topbar-section topbar-section-1">
+      <div class="brand">FAMILIADA</div>
+    </div>
+    <div class="topbar-section topbar-section-2">
+      <button class="btn" id="btnMarketplace">
+        <span data-i18n="builder.nav.marketplace">Gry Społeczności 🎮</span>
+        <span class="badge" id="marketplaceBadge" aria-hidden="true"></span>
+      </button>
+
+      <button class="btn" id="btnLogoEditor">
+        <span data-i18n="builder.nav.logo">Logo 🖥️</span>
+      </button>
+
+      <button class="btn" id="btnBases">
+        <span data-i18n="builder.nav.bases">Bazy pytań 🗃️</span>
+        <span class="badge" id="basesBadge" aria-hidden="true"></span>
+      </button>
+
+      <button class="btn" id="btnPollsHub">
+        <span data-i18n="builder.nav.pollsHubPolls">Ankiety 📊</span>
+        <span class="badge" id="pollsHubBadge" aria-hidden="true"></span>
+      </button>
+
+      <button class="btn" id="btnSubscriptionsHub">
+        <span data-i18n="builder.nav.pollsHubSubs">Subskrypcje 📧</span>
+        <span class="badge" id="subscriptionsHubBadge" aria-hidden="true"></span>
+      </button>
+
+      <button class="btn" id="btnConnectDevice" data-nav-hidden="true" style="display:none;">
+        <span data-i18n="builder.nav.connectDevice">Podłącz urządzenie 📱</span>
+        <span class="badge" id="connectDeviceBadge" aria-hidden="true"></span>
+      </button>
+
+      <div class="nav-more" id="navMore" style="display:none;">
+        <button class="btn" id="btnMore" type="button">Więcej ▾<span class="badge" id="moreBadge" aria-hidden="true"></span></button>
+        <div class="nav-more-dropdown" id="navMoreDropdown" hidden></div>
+      </div>
+    </div>
+    <div class="topbar-section topbar-section-3">
+      <button class="btn icon-btn" id="btnInstall" type="button" style="display:none;" title="Zainstaluj aplikację"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+      <button class="btn icon-btn" id="btnManual" type="button">ℹ️</button>
+    </div>
+    <div class="topbar-section topbar-section-4">
+      <div class="who" id="whoStatic">—</div>
+      <button class="btn" id="btnLogout" type="button" data-i18n="common.authEntry">Zaloguj / Załóż konto</button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="bar">
+      <div>
+        <div class="title" data-i18n="builder.header.title">Twoje gry</div>
+        <div class="hint" id="hint" data-i18n="builder.header.hint">Naciśnij kafelek, żeby go zaznaczyć. Podwójne naciśnięcie zmienia nazwę.</div>
+      </div>
+
+      <div class="actions">
+        <!-- góra: tylko te trzy przyciski -->
+        <button class="btn sm" id="btnPreview" type="button" disabled>
+          <span class="only-desktop" data-i18n="builder.actions.preview">Podgląd</span>
+          <span class="only-mobile" data-i18n="builder.actions.previewMobile">Podgl.</span>
+        </button>
+
+        <button class="btn sm" id="btnEdit" type="button" disabled>
+          <span class="only-desktop" data-i18n="builder.actions.edit">Edytuj</span>
+          <span class="only-mobile" data-i18n="builder.actions.editMobile">Edyt.</span>
+        </button>
+
+        <button class="btn sm gold" id="btnPlay" type="button" disabled>
+          <span class="only-desktop" data-i18n="builder.actions.play">Graj</span>
+          <span class="only-mobile" data-i18n="builder.actions.playMobile">Graj</span>
+        </button>
+
+        <button class="btn sm gold" id="btnPoll" type="button" disabled>
+          <span class="only-desktop" data-i18n="builder.actions.poll">Ankieta</span>
+          <span class="only-mobile" data-i18n="builder.actions.pollMobile">Sond.</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Karty z wypustką (kształt jak w Twoim pliku) -->
+    <section class="builder-shell">
+      <div class="tabs-card" id="tabs-root">
+        <!-- PASEK ZAKŁADEK -->
+        <div class="tabs-strip">
+          <!-- SLOT 1: typowa ankieta -->
+          <div class="tab-slot slot-pollText">
+            <button class="tab-label" id="tabPollText" type="button">
+              <span class="only-desktop" data-i18n="builder.tabs.pollText">Typowa ankieta</span>
+              <span class="only-mobile" data-i18n="builder.tabs.pollTextMobile">Ankieta</span>
+            </button>
+            <div class="tab-wrapper">
+              <div class="tab-active">
+                <span class="only-desktop" data-i18n="builder.tabs.pollText">Typowa ankieta</span>
+                <span class="only-mobile" data-i18n="builder.tabs.pollTextMobile">Ankieta</span>
+              </div>
+              <div class="tab-corner tab-corner-left"></div>
+              <div class="tab-corner tab-corner-right"></div>
+            </div>
+          </div>
+
+          <!-- SLOT 2: punktacja -->
+          <div class="tab-slot slot-pollPoints">
+            <button class="tab-label" id="tabPollPoints" type="button">
+              <span class="only-desktop" data-i18n="builder.tabs.pollPoints">Punktacja</span>
+              <span class="only-mobile" data-i18n="builder.tabs.pollPointsMobile">Punkty</span>
+            </button>
+            <div class="tab-wrapper">
+              <div class="tab-active">
+                <span class="only-desktop" data-i18n="builder.tabs.pollPoints">Punktacja</span>
+                <span class="only-mobile" data-i18n="builder.tabs.pollPointsMobile">Punkty</span>
+              </div>
+              <div class="tab-corner tab-corner-left"></div>
+              <div class="tab-corner tab-corner-right"></div>
+            </div>
+          </div>
+
+          <!-- SLOT 3: preparowana -->
+          <div class="tab-slot slot-prepared">
+            <button class="tab-label" id="tabPrepared" type="button">
+              <span class="only-desktop" data-i18n="builder.tabs.prepared">Preparowana</span>
+              <span class="only-mobile" data-i18n="builder.tabs.preparedMobile">Gotowa</span>
+            </button>
+            <div class="tab-wrapper">
+              <div class="tab-active">
+                <span class="only-desktop" data-i18n="builder.tabs.prepared">Preparowana</span>
+                <span class="only-mobile" data-i18n="builder.tabs.preparedMobile">Gotowa</span>
+              </div>
+              <div class="tab-corner tab-corner-left"></div>
+              <div class="tab-corner tab-corner-right"></div>
+            </div>
+          </div>
+
+          <!-- SLOT 4: Z marketu -->
+          <div class="tab-slot slot-market">
+            <button class="tab-label" id="tabMarket" type="button">
+              <span class="only-desktop" data-i18n="builder.tabs.market">Gry Społeczności</span>
+              <span class="only-mobile" data-i18n="builder.tabs.marketMobile">Społ.</span>
+            </button>
+            <div class="tab-wrapper">
+              <div class="tab-active">
+                <span class="only-desktop" data-i18n="builder.tabs.market">Gry Społeczności</span>
+                <span class="only-mobile" data-i18n="builder.tabs.marketMobile">Społ.</span>
+              </div>
+              <div class="tab-corner tab-corner-left"></div>
+              <div class="tab-corner tab-corner-right"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- KARTA POD WYPUSTKĄ -->
+        <div class="card builder-card">
+          <div class="grid" id="grid"></div>
+
+          <div class="builder-bottom">
+            <div class="builder-bottom-left"></div>
+            <div class="builder-bottom-right">
+              <button class="btn sm" id="btnExport" type="button" disabled>
+                <span class="only-desktop" data-i18n="builder.actions.exportFile">Eksportuj do pliku</span>
+                <span class="only-mobile" data-i18n="builder.actions.exportFileMobile">Exp.plk</span>
+              </button>
+              <button class="btn sm" id="btnExportBase" type="button" disabled>
+                <span class="only-desktop" data-i18n="builder.actions.exportBase">Eksportuj do bazy</span>
+                <span class="only-mobile" data-i18n="builder.actions.exportBaseMobile">Exp.bz</span>
+              </button>
+              <button class="btn sm" id="btnImport" type="button">
+                <span class="only-desktop" data-i18n="builder.actions.import">Importuj</span>
+                <span class="only-mobile" data-i18n="builder.actions.importMobile">Imp</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="footer">
+      <div data-i18n="common.footer.left">© 2026 Familiada — system do gry na żywo</div>
+      <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
+    </div>
+  </main>
+
+  <!-- Modal: import JSON -->
+  <div class="overlay" id="importOverlay" style="display:none;">
+    <div class="modal">
+      <div class="mHead">
+        <div class="mTitle" data-i18n="builder.import.title">Importuj</div>
+        <button class="btn sm" id="btnCancelImport" type="button" aria-label="Zamknij">✕</button>
+      </div>
+
+      <div class="importRow" style="margin-top:8px">
+        <input id="importFile" class="inp" type="file" accept=".famgame,.json,application/json">
+      </div>
+
+      <!-- Podgląd / błąd po wczytaniu pliku -->
+      <div id="importPreview" style="display:none;margin-top:10px;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.12);font-size:.88rem;display:grid;gap:4px"></div>
+      <div id="importErr" style="display:none;margin-top:8px;color:#f87171;font-size:.88rem"></div>
+
+      <!-- Pasek postępu (podczas importu) -->
+      <div id="importProg" style="display:none;margin-top:12px;gap:10px">
+        <div class="importRow" style="align-items:center">
+          <div id="importProgStep" style="font-weight:800;letter-spacing:.04em">—</div>
+          <div id="importProgCount" style="margin-left:auto;opacity:.8">0/0</div>
+        </div>
+        <div style="height:10px;border-radius:999px;background:rgba(255,255,255,.10);overflow:hidden">
+          <div id="importProgBar" style="height:100%;width:0%;background:rgba(255,255,255,.85)"></div>
+        </div>
+        <div class="importMsg" id="importProgMsg" style="min-height:18px"></div>
+      </div>
+
+      <div class="importRow" style="margin-top:12px">
+        <button class="btn sm gold" id="btnImportJson" type="button" disabled data-i18n="builder.import.confirm">Importuj</button>
+        <div class="importMsg" id="importMsg"></div>
+      </div>
+    </div>
+  </div>
+  <!-- Modal: eksport do bazy pytań -->
+  <div class="overlay" id="exportBaseOverlay" style="display:none;">
+    <div class="modal">
+      <div class="mHead">
+        <div class="mTitle" data-i18n="builder.exportBase.title">Eksport do bazy</div>
+        <button class="btn sm" id="btnExportBaseCancel" type="button" aria-label="Zamknij">✕</button>
+      </div>
+      <div class="mSub">
+        <span data-i18n="builder.exportBase.subtitle">Wybierz bazę pytań. Zostanie utworzony folder w głównym katalogu o nazwie jak gra.</span>
+      </div>
+
+      <div class="ui-select" id="baseSelectWrap" style="margin-top:12px;width:100%;">
+        <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
+          <span class="ui-select-label">—</span>
+          <span class="ui-select-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="ui-select-menu" role="listbox"></div>
+      </div>
+
+      <!-- PROGRES: export do bazy (ukryty, pokazuje się tylko podczas exportu) -->
+      <div id="exportBaseProg" style="display:none;margin-top:12px;gap:10px">
+        <div class="importRow" style="align-items:center">
+          <div id="exportBaseProgStep" style="font-weight:800;letter-spacing:.04em">—</div>
+          <div id="exportBaseProgCount" style="margin-left:auto;opacity:.8">0/0</div>
+        </div>
+
+        <div style="height:10px;border-radius:999px;background:rgba(255,255,255,.10);overflow:hidden">
+          <div id="exportBaseProgBar" style="height:100%;width:0%;background:rgba(255,255,255,.85)"></div>
+        </div>
+
+        <div class="importMsg" id="exportBaseProgMsg" style="min-height:18px"></div>
+      </div>
+
+      <div class="importRow" style="margin-top:10px;">
+        <button class="btn sm gold" id="btnExportBaseDo" type="button" data-i18n="builder.exportBase.confirm">Eksportuj</button>
+        <div class="importMsg" id="exportBaseMsg"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EXPORT DO PLIKU: PROGRES -->
+  <div class="overlay" id="exportJsonOverlay" style="display:none;">
+    <div class="modal" style="width:min(640px,94vw)">
+      <div class="mTitle" data-i18n="builder.exportFile.title">EKSPORT…</div>
+      <div class="mSub" id="exportJsonSub" data-i18n="builder.exportFile.subtitle">Nie zamykaj strony. Trwa przygotowanie pliku.</div>
+
+      <div style="margin-top:12px;display:grid;gap:10px">
+        <div class="importRow" style="align-items:center">
+          <div id="exportJsonStep" style="font-weight:800;letter-spacing:.04em">—</div>
+          <div id="exportJsonCount" style="margin-left:auto;opacity:.8">0/0</div>
+        </div>
+
+        <div style="height:10px;border-radius:999px;background:rgba(255,255,255,.10);overflow:hidden">
+          <div id="exportJsonBar" style="height:100%;width:0%;background:rgba(255,255,255,.85)"></div>
+        </div>
+
+        <div class="importMsg" id="exportJsonMsg" style="min-height:18px"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: podgląd gry -->
+  <div class="overlay" id="previewOverlay" style="display:none;">
+    <div class="modal bld-preview-modal">
+      <div class="bld-preview-head">
+        <div class="mTitle" id="previewTitle">—</div>
+        <button class="btn sm" id="btnPreviewClose" type="button" aria-label="Zamknij">✕</button>
+      </div>
+      <div class="bld-preview-questions" id="previewQuestions"></div>
+    </div>
+  </div>
+
+  <!-- Modal: zmiana nazwy -->
+  <div class="overlay" id="nameOverlay" style="display:none;">
+    <div class="modal">
+      <div class="mTitle" id="nameTitle" data-i18n="builder.nameModal.title">Zmień nazwę</div>
+      <div class="mSub" id="nameSub" data-i18n="builder.nameModal.sub">Podaj nową nazwę gry.</div>
+
+      <div class="importRow">
+        <input id="nameInp" class="inp" type="text" maxlength="80" placeholder="Nazwa..." data-i18n-placeholder="builder.nameModal.placeholder"/>
+      </div>
+
+      <div class="importRow">
+        <button class="btn sm gold" id="btnNameOk" type="button" data-i18n="builder.common.save">Zapisz</button>
+        <button class="btn sm" id="btnNameCancel" type="button" data-i18n="builder.common.cancel">Anuluj</button>
+        <div class="importMsg" id="nameMsg"></div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
