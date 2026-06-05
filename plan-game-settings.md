@@ -175,6 +175,30 @@ Bez wypustek. Sidebar: karty bez zaokrąglonych narożników kart-zakładek. Akt
 - `window.onbeforeunload` → przeglądarkowe ostrzeżenie
 - `← Builder` → `confirmModal` z pytaniem o niezapisane zmiany
 
+### Baner domyślnych ustawień
+
+Jeśli `games.settings` w bazie to `{}` (gra nigdy nie miała zapisanych ustawień) — po załadowaniu strony pokazujemy baner informacyjny na górze obszaru treści:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  ℹ  Ta gra używa domyślnych ustawień. Możesz je teraz           │
+│     dostosować — zostaną zapisane dopiero po kliknięciu         │
+│     „Zapisz wszystko".                               [✕ Ukryj]  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+- Wykrycie: `loadSettings` zwraca flagę `isDefault: true` gdy raw `settings === '{}'` lub `settings === null`
+- Baner znika po: kliknięciu [✕ Ukryj] lub kliknięciu "Zapisz wszystko"
+- Baner NIE pojawia się przy kolejnych wejściach (gdy użytkownik już coś zapisał)
+- Kolor: informacyjny (niebieski/złoty info-banner), nie ostrzeżenie
+
+```js
+// w loadSettings:
+const raw = data.settings;
+const isDefault = !raw || Object.keys(raw).length === 0;
+return { settings: mergeWithDefaults(raw, locale), isDefault };
+```
+
 ---
 
 ## Kategoria: Drużyny
