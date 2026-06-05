@@ -42,6 +42,7 @@ function loadIntoCache(key, url) {
     try { old.pause(); } catch {}
     if (old.src.startsWith("blob:")) URL.revokeObjectURL(old.src);
   }
+  durationPromises.delete(key);
   const a = new Audio(url);
   a.preload = "auto";
   cache.set(key, a);
@@ -178,6 +179,28 @@ export async function clearAllSfxCustomFiles() {
   for (const cat of getSfxCategories()) {
     await clearSfxCustomFile(cat.key);
   }
+}
+
+// ===================== DŁUGOŚĆ DŹWIĘKU =====================
+
+const durationPromises = new Map();
+
+export function getSfxDuration(key) {
+  if (durationPromises.has(key)) return durationPromises.get(key);
+  const a = cache.get(key);
+  if (!a) {
+    const p = Promise.resolve(0);
+    durationPromises.set(key, p);
+    return p;
+  }
+  const p = new Promise(resolve => {
+    if (!Number.isNaN(a.duration) && a.duration > 0) { resolve(a.duration); return; }
+    const onMeta = () => { a.removeEventListener("loadedmetadata", onMeta); resolve(a.duration || 0); };
+    a.addEventListener("loadedmetadata", onMeta);
+    setTimeout(() => { a.removeEventListener("loadedmetadata", onMeta); resolve(a.duration || 0); }, 5000);
+  });
+  durationPromises.set(key, p);
+  return p;
 }
 
 // ===================== CLOUD URL =====================
