@@ -1,5 +1,6 @@
-// js/core/sfx-new.js — sandbox rozszerzenia sfx.js
-// Dodaje: manifest z audio_new/sounds.json, warianty, głośności, custom blob URL, IndexedDB
+// js/core/sfx-new.js
+// Kopia sfx.js z rozszerzeniami: manifest, warianty, głośności, custom blob, cloud URL.
+// Plik samodzielny — nie importuje sfx.js.
 
 const MANIFEST_PATH = "../audio_new/sounds.json?v=v2026-06-03T21150";
 const AUDIO_BASE    = "../audio_new/";
@@ -8,9 +9,9 @@ const IDB_STORE     = "custom-files";
 const LS_VOL_PREFIX = "sfx_vol_";
 const LS_VAR_PREFIX = "sfx_variant_";
 
-// ===================== MANIFEST =====================
+/* ========= MANIFEST ========= */
 
-let manifest = null; // tablica categories po załadowaniu
+let manifest = null;
 
 export async function loadSfxManifest() {
   if (manifest) return manifest;
@@ -24,11 +25,15 @@ export function getSfxCategories() {
   return manifest || [];
 }
 
+export function listSfx() {
+  return getSfxCategories().map(c => c.key);
+}
+
 function getCategoryMeta(key) {
   return (manifest || []).find(c => c.key === key) || null;
 }
 
-// ===================== CACHE AUDIO =====================
+/* ========= CACHE AUDIO ========= */
 
 const cache = new Map(); // key → Audio
 
@@ -49,7 +54,7 @@ function loadIntoCache(key, url) {
   return a;
 }
 
-// ===================== WARIANTY =====================
+/* ========= WARIANTY ========= */
 
 export function getSfxVariant(key) {
   return localStorage.getItem(LS_VAR_PREFIX + key) || "classic.mp3";
@@ -71,7 +76,7 @@ export function resetSfxVariants() {
   }
 }
 
-// ===================== GŁOŚNOŚCI =====================
+/* ========= GŁOŚNOŚCI ========= */
 
 export function getSfxVolume(key) {
   const v = localStorage.getItem(LS_VOL_PREFIX + key);
@@ -112,7 +117,7 @@ export function resetSfxVolumes() {
   }
 }
 
-// ===================== CUSTOM BLOB (IndexedDB) =====================
+/* ========= CUSTOM BLOB (IndexedDB) ========= */
 
 function openIDB() {
   return new Promise((resolve, reject) => {
@@ -159,7 +164,6 @@ export async function clearSfxCustomFile(key) {
   const old = cache.get(key);
   if (old?.src?.startsWith("blob:")) URL.revokeObjectURL(old.src);
 
-  // wróć do aktywnego wariantu
   const meta = getCategoryMeta(key);
   if (meta) {
     loadIntoCache(key, buildUrl(meta.folder, getSfxVariant(key)));
@@ -181,29 +185,7 @@ export async function clearAllSfxCustomFiles() {
   }
 }
 
-// ===================== DŁUGOŚĆ DŹWIĘKU =====================
-
-const durationPromises = new Map();
-
-export function getSfxDuration(key) {
-  if (durationPromises.has(key)) return durationPromises.get(key);
-  const a = cache.get(key);
-  if (!a) {
-    const p = Promise.resolve(0);
-    durationPromises.set(key, p);
-    return p;
-  }
-  const p = new Promise(resolve => {
-    if (!Number.isNaN(a.duration) && a.duration > 0) { resolve(a.duration); return; }
-    const onMeta = () => { a.removeEventListener("loadedmetadata", onMeta); resolve(a.duration || 0); };
-    a.addEventListener("loadedmetadata", onMeta);
-    setTimeout(() => { a.removeEventListener("loadedmetadata", onMeta); resolve(a.duration || 0); }, 5000);
-  });
-  durationPromises.set(key, p);
-  return p;
-}
-
-// ===================== CLOUD URL =====================
+/* ========= CLOUD URL ========= */
 
 export function loadSfxFromCloud(urlMap) {
   for (const [key, url] of urlMap) {
@@ -212,7 +194,7 @@ export function loadSfxFromCloud(urlMap) {
   }
 }
 
-// ===================== ODTWARZANIE =====================
+/* ========= PROSTE ODTWARZANIE ========= */
 
 export function playSfx(key) {
   const a = cache.get(key);
@@ -223,6 +205,8 @@ export function playSfx(key) {
   } catch {}
 }
 
+/* ========= MIKSER / ŚLEDZENIE CZASU ========= */
+
 export function createSfxMixer() {
   let audio = null;
   let raf = null;
@@ -230,7 +214,9 @@ export function createSfxMixer() {
 
   function notify() {
     if (!audio) return;
-    for (const fn of listeners) fn(audio.currentTime || 0, audio.duration || 0);
+    const t = audio.currentTime || 0;
+    const d = audio.duration || 0;
+    for (const fn of listeners) fn(t, d);
   }
 
   function tick() {
@@ -254,34 +240,41 @@ export function createSfxMixer() {
       audio = null;
     },
     onTime(fn) { listeners.add(fn); return () => listeners.delete(fn); },
-    get time() { return audio?.currentTime || 0; },
+    get time() { return audio ? audio.currentTime : 0; },
     get duration() { return audio?.duration || 0; },
   };
 }
 
-// ===================== INICJALIZACJA =====================
+/* ========= DOKŁADNE MIERZENIE DŁUGOŚCI AUDIO ========= */
+
+const durationPromises = new Map();
 
 /**
- * Wywołać raz przy starcie (po loadSfxManifest):
- * wczytuje zapisane warianty, głośności i custom blobs z IndexedDB
+ * Zwraca Promise z dokładną długością dźwięku w sekundach (float).
+ * Jeśli nie da się odczytać – zwraca 0.
  */
-export async function initSfx() {
-  for (const cat of getSfxCategories()) {
-    const variant = getSfxVariant(cat.key);
-    loadIntoCache(cat.key, buildUrl(cat.folder, variant));
-  }
-  applySfxVolumes();
+export function getSfxDuration(key) {
+  if (durationPromises.has(key)) return durationPromises.get(key);
 
-  // wczytaj custom blobs z IndexedDB
-  const files = await getSfxCustomFiles();
-  for (const [key, { blob }] of files) {
-    const url = URL.createObjectURL(blob);
-    loadIntoCache(key, url);
-    applySfxVolume(key);
+  const a = cache.get(key);
+  if (!a) {
+    const p = Promise.resolve(0);
+    durationPromises.set(key, p);
+    return p;
   }
+
+  const p = new Promise((resolve) => {
+    if (!Number.isNaN(a.duration) && a.duration > 0) { resolve(a.duration); return; }
+    const onMeta = () => { a.removeEventListener("loadedmetadata", onMeta); resolve(a.duration || 0); };
+    a.addEventListener("loadedmetadata", onMeta);
+    setTimeout(() => { a.removeEventListener("loadedmetadata", onMeta); resolve(a.duration || 0); }, 5000);
+  });
+
+  durationPromises.set(key, p);
+  return p;
 }
 
-// ===================== AUDIO UNLOCK =====================
+/* ========= AUDIO UNLOCK (gesture) ========= */
 
 let unlocked = false;
 
@@ -298,3 +291,22 @@ export function unlockAudio() {
 }
 
 export function isAudioUnlocked() { return unlocked; }
+
+/* ========= INICJALIZACJA ========= */
+
+/**
+ * Wywołać raz przy starcie (po loadSfxManifest):
+ * wczytuje zapisane warianty, głośności i custom blobs z IndexedDB.
+ */
+export async function initSfx() {
+  for (const cat of getSfxCategories()) {
+    loadIntoCache(cat.key, buildUrl(cat.folder, getSfxVariant(cat.key)));
+  }
+  applySfxVolumes();
+
+  const customFiles = await getSfxCustomFiles();
+  for (const [key, { blob }] of customFiles) {
+    loadIntoCache(key, URL.createObjectURL(blob));
+    applySfxVolume(key);
+  }
+}
