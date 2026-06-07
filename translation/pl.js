@@ -5164,6 +5164,52 @@ const pl = {
   security: {
     selfXssWarning: "Używanie tej konsoli może pozwolić atakującym na podszywanie się pod Ciebie i kradzież informacji przy użyciu ataku zwanego Self-XSS. Nie wprowadzaj ani nie wklejaj kodu, którego nie rozumiesz.",
   },
+  settings: {
+    title: "Ustawienia gry",
+    back: "← Builder",
+    saveAll: "Zapisz wszystko",
+    unsaved: "Niezapisane zmiany",
+    unsavedConfirm: "Masz niezapisane zmiany. Czy chcesz opuścić stronę?",
+    saved: "Zapisano",
+    saveError: "Błąd zapisu",
+    categories: {
+      teams: "Drużyny",
+      display: "Wygląd",
+      sound: "Dźwięk",
+      questions: "Pytania",
+      rounds: "Rundy",
+      finale: "Finał",
+    },
+    teams: {
+      nameA: "Nazwa drużyny A",
+      nameB: "Nazwa drużyny B",
+      restoreDefaults: "Przywróć domyślne",
+      defaultA: "Drużyna A",
+      defaultB: "Drużyna B",
+    },
+    display: {
+      logo: "Logo",
+      logoDefault: "Domyślne",
+      logoNone: "Bez logo",
+      logoMissing: "Logo zostało usunięte — używamy domyślnego",
+      frameMode: "Tryb ramki",
+      frameModeClassic: "Klasyczna",
+      frameModeMinimal: "Minimalna",
+      preview: "Podgląd wyświetlacza",
+    },
+    questions: {
+      modeRandom: "Losowe",
+      modeOrdered: "Ustalona kolejność",
+      countPerRound: "Pytań per runda",
+      roundsCount: "Liczba rund",
+      addQuestion: "+ Dodaj pytanie z puli",
+      finaleTitle: "Pytania finałowe",
+      finaleModeRandom: "Losowe z puli",
+      finaleModeSelected: "Ustalone",
+      finaleCount: "Liczba pytań finałowych",
+      addFinaleQuestion: "+ Dodaj pytanie finałowe",
+    },
+  },
 };
 
 export default pl;
