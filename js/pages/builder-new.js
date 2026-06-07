@@ -97,6 +97,7 @@ const btnEdit = document.getElementById("btnEdit");
 const btnPreview = document.getElementById("btnPreview");
 const btnPlay = document.getElementById("btnPlay");
 const btnPoll = document.getElementById("btnPoll");
+const btnSettings = document.getElementById("btnSettings");
 
 const btnManual = document.getElementById("btnManual");
 const btnLogoEditor = document.getElementById("btnLogoEditor");

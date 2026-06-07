@@ -2516,6 +2516,8 @@ const en = {
       exportBaseMobile: "Exp.base",
       import: "Import",
       importMobile: "Import",
+      settings: "⚙ Settings",
+      settingsMobile: "⚙",
     },
     preview: {
       noQuestions: "No questions.",
