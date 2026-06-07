@@ -2516,8 +2516,8 @@ const en = {
       exportBaseMobile: "Exp.base",
       import: "Import",
       importMobile: "Import",
-      settings: "⚙ Settings",
-      settingsMobile: "⚙",
+      settings: "Game Settings",
+      settingsMobile: "Settings",
     },
     preview: {
       noQuestions: "No questions.",

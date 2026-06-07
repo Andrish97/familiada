@@ -2504,8 +2504,8 @@ const uk = {
       exportBaseMobile: "Експ.база",
       import: "Імпорт",
       importMobile: "Імп.",
-      settings: "⚙ Налаштування",
-      settingsMobile: "⚙",
+      settings: "Налаштування гри",
+      settingsMobile: "Налаш.",
     },
     preview: {
       noQuestions: "Немає питань.",

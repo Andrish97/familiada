@@ -2511,8 +2511,8 @@ const pl = {
       exportBaseMobile: "Exp.bz",
       import: "Importuj",
       importMobile: "Imp",
-      settings: "⚙ Ustawienia",
-      settingsMobile: "⚙",
+      settings: "Ustawienia rozgrywki",
+      settingsMobile: "Ustaw.",
     },
     preview: {
       noQuestions: "Brak pytań.",
