@@ -307,6 +307,21 @@ Widoczna tylko gdy `game.type !== "prepared"` (gry preparowane nie mają finału
 
 ## Zmiany w builder-new.js
 
+### Kolejność przycisków topbaru
+
+W oryginale (`builder.html`) nawigacja topbaru ma kolejność:
+```
+Logo → Bazy → PollsHub → SubscriptionsHub → Podłącz urządzenie
+```
+
+W `builder-new.html` zmieniamy kolejność — **Podłącz urządzenie bezpośrednio po Bazy**:
+```
+Logo → Bazy → Podłącz urządzenie → PollsHub → SubscriptionsHub
+```
+
+Zmiana tylko w HTML (`builder-new.html`) — przestawienie kolejności elementów DOM.
+Logika widoczności `btnConnectDevice` (pokazuje się po zalogowaniu) pozostaje bez zmian.
+
 ### Przycisk Ustawienia na karcie gry
 
 Dodany obok `[Graj]` i `[Ankieta]`:
