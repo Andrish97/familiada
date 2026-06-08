@@ -84,18 +84,18 @@ function questionById(id) {
 function renderTeams() {
   const { nameA, nameB } = state.settings.teams;
   gsContent.innerHTML = `
-    <div class="gs-cat-title">${t("settings.categories.teams")}</div>
+    <div class="gs-cat-title">${t("gameSettings.categories.teams")}</div>
     <div class="gs-section">
       <div class="gs-field">
-        <label class="gs-label" for="gsTeamA">${t("settings.teams.nameA")}</label>
+        <label class="gs-label" for="gsTeamA">${t("gameSettings.teams.nameA")}</label>
         <input class="inp" id="gsTeamA" type="text" maxlength="30" value="${esc(nameA)}"/>
       </div>
       <div class="gs-field">
-        <label class="gs-label" for="gsTeamB">${t("settings.teams.nameB")}</label>
+        <label class="gs-label" for="gsTeamB">${t("gameSettings.teams.nameB")}</label>
         <input class="inp" id="gsTeamB" type="text" maxlength="30" value="${esc(nameB)}"/>
       </div>
       <div class="rowBtns" style="margin-top:12px;">
-        <button class="btn btn-sm" id="btnTeamsReset" type="button">${t("settings.teams.restoreDefaults")}</button>
+        <button class="btn btn-sm" id="btnTeamsReset" type="button">${t("gameSettings.teams.restoreDefaults")}</button>
       </div>
     </div>`;
 
@@ -119,36 +119,36 @@ function renderTeams() {
 function renderDisplay() {
   const { logoId, frameMode } = state.settings.display;
   const logoOptions = [
-    `<option value=""${!logoId ? " selected" : ""}>${t("settings.display.logoDefault")}</option>`,
+    `<option value=""${!logoId ? " selected" : ""}>${t("gameSettings.display.logoDefault")}</option>`,
     ...state.logos.map(l =>
       `<option value="${esc(l.id)}"${l.id === logoId ? " selected" : ""}>${esc(l.name || l.id)}</option>`
     ),
   ].join("");
 
   gsContent.innerHTML = `
-    <div class="gs-cat-title">${t("settings.categories.display")}</div>
+    <div class="gs-cat-title">${t("gameSettings.categories.display")}</div>
     <div class="gs-section gs-display-cols">
       <div>
         <div class="gs-field">
-          <div class="gs-label">${t("settings.display.logo")}</div>
+          <div class="gs-label">${t("gameSettings.display.logo")}</div>
           <select class="inp" id="gsLogoSelect" style="max-width:260px;">${logoOptions}</select>
         </div>
         <div class="gs-field" style="margin-top:16px;">
-          <div class="gs-label">${t("settings.display.frameMode")}</div>
+          <div class="gs-label">${t("gameSettings.display.frameMode")}</div>
           <div class="gs-frame-radios">
             <label class="gs-radio-item">
               <input type="radio" name="gsFrameMode" value="classic" ${frameMode !== "minimal" ? "checked" : ""}/>
-              ${t("settings.display.frameModeClassic")}
+              ${t("gameSettings.display.frameModeClassic")}
             </label>
             <label class="gs-radio-item">
               <input type="radio" name="gsFrameMode" value="minimal" ${frameMode === "minimal" ? "checked" : ""}/>
-              ${t("settings.display.frameModeMinimal")}
+              ${t("gameSettings.display.frameModeMinimal")}
             </label>
           </div>
         </div>
       </div>
       <div>
-        <div class="gs-label">${t("settings.display.preview")}</div>
+        <div class="gs-label">${t("gameSettings.display.preview")}</div>
         <div class="display-preview" id="gsDisplayPreview" style="margin-top:8px;"></div>
       </div>
     </div>`;
@@ -210,7 +210,7 @@ function renderSound() {
   }).join("");
 
   gsContent.innerHTML = `
-    <div class="gs-cat-title">${t("settings.categories.sound")}</div>
+    <div class="gs-cat-title">${t("gameSettings.categories.sound")}</div>
     <div class="gs-section">
       <div class="gs-sfx-table">
         <div class="gs-sfx-head">Dźwięk</div>
@@ -218,7 +218,7 @@ function renderSound() {
         ${rows}
       </div>
       <div class="rowBtns" style="margin-top:16px;">
-        <button class="btn btn-sm" id="btnSoundReset" type="button">${t("settings.teams.restoreDefaults")}</button>
+        <button class="btn btn-sm" id="btnSoundReset" type="button">${t("gameSettings.teams.restoreDefaults")}</button>
       </div>
     </div>`;
 
@@ -264,31 +264,31 @@ function renderRounds() {
   ).join("");
 
   gsContent.innerHTML = `
-    <div class="gs-cat-title">${t("settings.categories.rounds")}</div>
+    <div class="gs-cat-title">${t("gameSettings.categories.rounds")}</div>
     <div class="gs-section">
       <div class="gs-field">
         <div class="gs-label">Tryb pytań rund</div>
         <div class="gs-radio-group">
           <label class="gs-radio-item">
             <input type="radio" name="gsRoundsMode" value="random" ${!isOrdered ? "checked" : ""}/>
-            ${t("settings.questions.modeRandom")}
+            ${t("gameSettings.questions.modeRandom")}
           </label>
           <label class="gs-radio-item">
             <input type="radio" name="gsRoundsMode" value="ordered" ${isOrdered ? "checked" : ""}/>
-            ${t("settings.questions.modeOrdered")}
+            ${t("gameSettings.questions.modeOrdered")}
           </label>
         </div>
       </div>
 
       <div id="gsRoundsRandom" ${isOrdered ? 'style="display:none"' : ""}>
         <div class="gs-count-row">
-          <div class="gs-label">${t("settings.questions.countPerRound")}</div>
+          <div class="gs-label">${t("gameSettings.questions.countPerRound")}</div>
           <select class="inp" id="gsRoundCount" style="width:auto;">
             ${[1,2,3,4,5,6,7,8,9,10].map(n =>
               `<option value="${n}" ${q.count === n ? "selected" : ""}>${n}</option>`
             ).join("")}
           </select>
-          <div class="gs-label" style="margin-left:12px;">${t("settings.questions.roundsCount")}</div>
+          <div class="gs-label" style="margin-left:12px;">${t("gameSettings.questions.roundsCount")}</div>
           <select class="inp" id="gsRoundsCount" style="width:auto;">
             ${[1,2,3,4,5,6,7,8,9,10].map(n =>
               `<option value="${n}" ${q.roundsCount === n ? "selected" : ""}>${n}</option>`
@@ -303,7 +303,7 @@ function renderRounds() {
         ${available.length > 0 ? `
           <div class="gs-add-row">
             <select class="inp" id="gsAddRoundQ">${addOptions}</select>
-            <button class="btn btn-sm" id="btnAddRoundQ" type="button">${t("settings.questions.addQuestion")}</button>
+            <button class="btn btn-sm" id="btnAddRoundQ" type="button">${t("gameSettings.questions.addQuestion")}</button>
           </div>` : `<div class="gs-hint" style="margin-top:8px;">Wszystkie pytania dodane.</div>`}
       </div>
     </div>`;
@@ -358,25 +358,25 @@ function renderFinale() {
   ).join("");
 
   gsContent.innerHTML = `
-    <div class="gs-cat-title">${t("settings.categories.finale")}</div>
+    <div class="gs-cat-title">${t("gameSettings.categories.finale")}</div>
     <div class="gs-section">
       <div class="gs-field">
         <div class="gs-label">Tryb pytań finałowych</div>
         <div class="gs-radio-group">
           <label class="gs-radio-item">
             <input type="radio" name="gsFinaleMode" value="random" ${!isSelected ? "checked" : ""}/>
-            ${t("settings.questions.finaleModeRandom")}
+            ${t("gameSettings.questions.finaleModeRandom")}
           </label>
           <label class="gs-radio-item">
             <input type="radio" name="gsFinaleMode" value="selected" ${isSelected ? "checked" : ""}/>
-            ${t("settings.questions.finaleModeSelected")}
+            ${t("gameSettings.questions.finaleModeSelected")}
           </label>
         </div>
       </div>
 
       <div id="gsFinaleRandom" ${isSelected ? 'style="display:none"' : ""}>
         <div class="gs-count-row">
-          <div class="gs-label">${t("settings.questions.finaleCount")}</div>
+          <div class="gs-label">${t("gameSettings.questions.finaleCount")}</div>
           <select class="inp" id="gsFinaleCount" style="width:auto;">
             ${[1,2,3,4,5,6,7,8,9,10].map(n =>
               `<option value="${n}" ${q.finaleCount === n ? "selected" : ""}>${n}</option>`
@@ -391,7 +391,7 @@ function renderFinale() {
         ${available.length > 0 ? `
           <div class="gs-add-row">
             <select class="inp" id="gsAddFinaleQ">${addOptions}</select>
-            <button class="btn btn-sm" id="btnAddFinaleQ" type="button">${t("settings.questions.addFinaleQuestion")}</button>
+            <button class="btn btn-sm" id="btnAddFinaleQ" type="button">${t("gameSettings.questions.addFinaleQuestion")}</button>
           </div>` : `<div class="gs-hint" style="margin-top:8px;">Wszystkie pytania dodane.</div>`}
       </div>
     </div>`;
@@ -451,7 +451,7 @@ async function save() {
   try {
     const { error } = await saveSettings(state.gameId, state.settings);
     if (error) {
-      await alertModal({ text: `${t("settings.saveError")}: ${error.message}` });
+      await alertModal({ text: `${t("gameSettings.saveError")}: ${error.message}` });
       return;
     }
     markClean();
@@ -514,7 +514,7 @@ async function init() {
 
   btnBack?.addEventListener("click", async () => {
     if (state.isDirty) {
-      const ok = await confirmModal({ text: t("settings.unsavedConfirm") });
+      const ok = await confirmModal({ text: t("gameSettings.unsavedConfirm") });
       if (!ok) return;
     }
     history.back();

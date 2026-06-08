@@ -5281,7 +5281,7 @@ const pl = {
   security: {
     selfXssWarning: "Używanie tej konsoli może pozwolić atakującym na podszywanie się pod Ciebie i kradzież informacji przy użyciu ataku zwanego Self-XSS. Nie wprowadzaj ani nie wklejaj kodu, którego nie rozumiesz.",
   },
-  settings: {
+  gameSettings: {
     title: "Ustawienia gry",
     back: "← Builder",
     saveAll: "Zapisz wszystko",
