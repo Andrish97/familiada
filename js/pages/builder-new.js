@@ -640,6 +640,7 @@ function setButtonsState({ hasSel, canEdit, canPlay, canPoll, canExport }) {
   if (btnPreview) btnPreview.disabled = !hasSel;
   if (btnPlay) btnPlay.disabled = !hasSel || !canPlay;
   if (btnPoll) btnPoll.disabled = !hasSel || !canPoll;
+  if (btnSettings) btnSettings.disabled = !hasSel || !canPlay;
   if (btnExport) btnExport.disabled = !hasSel || !canExport;
   if (btnExportBase) btnExportBase.disabled = !hasSel || !canExport;
 }
@@ -1501,6 +1502,15 @@ document.addEventListener("DOMContentLoaded", async () => {
       console.error(e);
       void alertModal({ text: MSG.alertOpenPollFailed() });
     }
+  });
+
+  // SETTINGS
+  btnSettings?.addEventListener("click", () => {
+    const gameId = activeTab === TYPES.MARKET
+      ? marketGamesAll.find(g => g.market_game_id === selectedMarketId)?.game_id
+      : selectedId;
+    if (!gameId) return;
+    location.href = `game-settings?id=${encodeURIComponent(gameId)}`;
   });
 
   // EXPORT — pobierz dane z paskiem, potem instant download

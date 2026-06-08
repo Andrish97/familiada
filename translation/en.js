@@ -829,6 +829,7 @@ const en = {
       control: "Control panel",
       demo: "Demo Materials",
       community: "Community Games",
+      gameSettings: "Game settings",
     },
     demo: {
       modalTitle: "Restore demo files?",
@@ -2356,6 +2357,75 @@ const en = {
         directly — without going through moderation.
         They are distinguished by a dedicated badge.
       </p>`,
+      gameSettings: `<p class="m-p">
+        The <span class="m-strong">Game settings</span> screen lets you customise
+        each game individually — without affecting its content (questions and answers).
+        Changes apply only to that game and are saved separately from the questions.
+      </p>
+
+      <p class="m-p">
+        To open settings, select a game from the list in the Builder and click the
+        <span class="m-code">Game settings</span> button in the top bar.
+        The button is active only when the game is ready to launch.
+      </p>
+
+      <h3 class="m-h2">Teams</h3>
+
+      <p class="m-p">
+        You can change the names of both teams shown on the board during the game.
+        Default names are <span class="m-strong">Team A</span>
+        and <span class="m-strong">Team B</span>.
+        Maximum name length is 30 characters.
+        The <span class="m-code">Restore defaults</span> button resets both names to their initial values.
+      </p>
+
+      <h3 class="m-h2">Display</h3>
+
+      <p class="m-p">
+        In the Display category you choose the logo shown on the board during the game.
+        You can pick one of your own logos (created in the logo editor),
+        set the default logo (the Familiada logo) or disable the logo entirely.
+        The preview on the right shows how the board looks with the selected settings.
+      </p>
+
+      <p class="m-p">
+        Frame mode controls the appearance of the score-board border:
+        <span class="m-strong">Classic</span> — full frame with background,
+        <span class="m-strong">Minimal</span> — simplified, no background.
+      </p>
+
+      <h3 class="m-h2">Sound</h3>
+
+      <p class="m-p">
+        For each sound effect (e.g. answer reveal, X error, finale music)
+        you can set an individual volume in the range 0–100%.
+        A value of 0 mutes that sound, 100 is full volume.
+        Changes apply only to this game — other games have their own sound settings.
+      </p>
+
+      <h3 class="m-h2">Questions — Rounds</h3>
+
+      <p class="m-p">
+        You can choose whether questions in rounds are drawn from the pool in random order,
+        or played in an order you define.
+        In random mode just specify how many questions per round and how many rounds.
+        In fixed-order mode you select the questions and their order yourself
+        — you can add them from the available question list and rearrange them freely.
+      </p>
+
+      <h3 class="m-h2">Questions — Finale</h3>
+
+      <p class="m-p">
+        The finale has its own question settings, independent of the rounds.
+        You can choose to draw finale questions randomly or specify a fixed list.
+        The Finale category is available only for <span class="m-strong">Poll-based</span> games
+        — in prepared games (without a poll) the finale is not used.
+      </p>
+
+      <div class="m-warn">
+        Game settings are saved separately from questions and answers.
+        Changes to settings do not affect game content and vice versa.
+      </div>`,
     },
   },
   privacy: {

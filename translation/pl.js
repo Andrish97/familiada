@@ -831,6 +831,7 @@ const pl = {
       control: "Panel sterowania",
       demo: "Materiały Demo",
       community: "Gry Społeczności",
+      gameSettings: "Ustawienia rozgrywki",
     },
     demo: {
       modalTitle: "Przywrócić pliki demo?",
@@ -2359,6 +2360,75 @@ const pl = {
         bezpośrednio — bez przechodzenia przez moderację.
         Wyróżniają się dedykowaną odznaką.
       </p>`,
+      gameSettings: `<p class="m-p">
+        Ekran <span class="m-strong">Ustawienia rozgrywki</span> pozwala dostosować
+        każdą grę indywidualnie — bez wpływu na jej treść (pytania i odpowiedzi).
+        Zmiany dotyczą tylko tej jednej gry i są zapisywane oddzielnie od pytań.
+      </p>
+
+      <p class="m-p">
+        Aby otworzyć ustawienia, zaznacz grę na liście w Builder i kliknij przycisk
+        <span class="m-code">Ustawienia rozgrywki</span> w górnym pasku.
+        Przycisk jest aktywny tylko wtedy, gdy gra jest gotowa do uruchomienia.
+      </p>
+
+      <h3 class="m-h2">Drużyny</h3>
+
+      <p class="m-p">
+        Możesz zmienić nazwy obu drużyn widoczne na tablicy podczas rozgrywki.
+        Domyślne nazwy to <span class="m-strong">Drużyna A</span>
+        i <span class="m-strong">Drużyna B</span>.
+        Maksymalna długość nazwy to 30 znaków.
+        Przycisk <span class="m-code">Przywróć domyślne</span> cofa obie nazwy do wartości początkowych.
+      </p>
+
+      <h3 class="m-h2">Wygląd</h3>
+
+      <p class="m-p">
+        W kategorii Wygląd wybierasz logo wyświetlane na tablicy podczas rozgrywki.
+        Możesz wybrać jedno ze swoich własnych logotypów (tworzonych w edytorze logo),
+        ustawić logo domyślne (logotyp Familiada) lub wyłączyć logo całkowicie.
+        Podgląd po prawej stronie pokazuje, jak wygląda tablica z wybranymi ustawieniami.
+      </p>
+
+      <p class="m-p">
+        Tryb ramki steruje wyglądem obramowania tablicy wynikowej:
+        <span class="m-strong">Klasyczna</span> — pełna ramka z tłem,
+        <span class="m-strong">Minimalna</span> — uproszczona, bez tła.
+      </p>
+
+      <h3 class="m-h2">Dźwięk</h3>
+
+      <p class="m-p">
+        Dla każdego efektu dźwiękowego (np. reveal odpowiedzi, błąd X, muzyka finałowa)
+        możesz ustawić indywidualną głośność w zakresie 0–100%.
+        Wartość 0 wycisza dany dźwięk, 100 to pełna głośność.
+        Zmiany dotyczą tylko tej gry — inne gry mają swoje własne ustawienia dźwięku.
+      </p>
+
+      <h3 class="m-h2">Pytania — Rundy</h3>
+
+      <p class="m-p">
+        Możesz wybrać, czy pytania w rundach są losowane z puli w przypadkowej kolejności,
+        czy rozgrywane w ustalonej przez Ciebie kolejności.
+        W trybie losowym wystarczy podać, ile pytań ma być na rundę i ile rund ma być w grze.
+        W trybie ustalonej kolejności samodzielnie wskazujesz pytania i ich kolejność
+        — możesz je dodawać z listy dostępnych pytań i dowolnie przestawiać.
+      </p>
+
+      <h3 class="m-h2">Pytania — Finał</h3>
+
+      <p class="m-p">
+        Finał ma własne ustawienia pytań, niezależne od rund.
+        Możesz wybrać losowanie pytań finałowych lub ustalić konkretną ich listę.
+        Kategoria Finał jest dostępna wyłącznie dla gier typu <span class="m-strong">Ankietowana</span>
+        — w grach przygotowanych (bez ankiety) finał nie jest używany.
+      </p>
+
+      <div class="m-warn">
+        Ustawienia rozgrywki są zapisywane osobno od pytań i odpowiedzi.
+        Zmiany w ustawieniach nie wpływają na treść gry i odwrotnie.
+      </div>`,
     },
   },
   privacy: {
