@@ -5281,6 +5281,7 @@ const uk = {
       questions: "Питання",
       rounds: "Раунди",
       finale: "Фінал",
+      game: "Налаштування гри",
     },
     teams: {
       nameA: "Назва команди А",
@@ -5318,6 +5319,30 @@ const uk = {
       finaleCount: "Кількість питань фіналу",
       addFinaleQuestion: "+ Додати питання фіналу",
     },
+    finale: {
+      hasFinal: "Граємо фінал?",
+      yes: "Так",
+      no: "Ні",
+      disabled: "Фінал вимкнено — питання фіналу не будуть використані.",
+      randomize: "Виборати {n} питань",
+      rerandomize: "Обрати знову",
+      randomLocked: "Вибрані питання фіналу (тільки читання):",
+    },
+    game: {
+      roundMultipliers: "Множники раундів",
+      roundMultipliersHint: "Через кому, напр. 1,1,1,2,3. Остання значення повторюється для подальших раундів.",
+      finalMinPoints: "Поріг фіналу",
+      finalMinPointsHint: "Мінімальна сума балів для входу у фінал.",
+      finalTarget: "Ціль фіналу",
+      endMode: "Екран кінця гри",
+      endModeLogo: "Показати логотип",
+      endModePoints: "Показати бали",
+      endModeMoney: "Показати суму призу (після фіналу)",
+      prizeMultiplier: "Множник призу",
+      prizeAmount: "Сума головного призу",
+      restoreDefaults: "Відновити за замовчуванням",
+    },
   },
 };
+export default uk;
 export default uk;

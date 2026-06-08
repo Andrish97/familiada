@@ -61,6 +61,7 @@ import {
   uploadSoundToCloud, deleteSoundFromCloud, deleteAllSoundsFromCloud, listCloudSounds,
 } from "../../js/core/sfx-cloud.js?v=v2026-06-07T17254";
 import { createStore } from "./store.js?v=v2026-06-07T17254";
+import { loadSettings as loadGameSettings } from "../../js/core/game-settings.js?v=v2026-06-07T17254";
 import { createUI } from "./ui.js?v=v2026-06-07T17254";
 import { createDevices } from "./devices.js?v=v2026-06-07T17254";
 import { createPresence } from "./presence.js?v=v2026-06-07T17254";
@@ -407,6 +408,24 @@ async function main() {
 
   const store = createStore(game.id);
   store.hydrate();
+
+  // Load game settings (source of truth) and apply to store
+  try {
+    const locale = document.documentElement.lang || "pl";
+    const gs = await loadGameSettings(game.id, locale);
+    store.setTeams(gs.teams.nameA, gs.teams.nameB);
+    store.setHasFinal(gs.questions.hasFinal === true);
+    store.setAdvanced({
+      roundMultipliers:    gs.game.roundMultipliers,
+      finalMinPoints:      gs.game.finalMinPoints,
+      finalTarget:         gs.game.finalTarget,
+      endScreenMode:       gs.game.endMode,
+      finalPrizeMultiplier: gs.game.prizeMultiplier,
+      mainPrizeAmount:     gs.game.prizeAmount,
+    });
+  } catch (e) {
+    console.warn("[control] Could not load game-settings:", e);
+  }
 
   const hasFinalNow = store.state.hasFinal === true;
   const finalYesRadio = document.getElementById("finalYes");

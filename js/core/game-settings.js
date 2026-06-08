@@ -51,9 +51,18 @@ export function getDefaults(locale = "pl") {
       count:       3,
       selectedIds: [],
       roundsCount: 3,
+      hasFinal:    false,
       finaleMode:  "random",
       finaleCount: 5,
       finaleIds:   [],
+    },
+    game: {
+      roundMultipliers: [1, 1, 1, 2, 3],
+      finalMinPoints:   300,
+      finalTarget:      200,
+      endMode:          "logo",
+      prizeMultiplier:  3,
+      prizeAmount:      25000,
     },
   };
 }

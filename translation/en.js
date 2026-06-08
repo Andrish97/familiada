@@ -5294,6 +5294,7 @@ const en = {
       questions: "Questions",
       rounds: "Rounds",
       finale: "Finale",
+      game: "Game settings",
     },
     teams: {
       nameA: "Team A name",
@@ -5331,6 +5332,30 @@ const en = {
       finaleCount: "Number of finale questions",
       addFinaleQuestion: "+ Add finale question",
     },
+    finale: {
+      hasFinal: "Play finale?",
+      yes: "Yes",
+      no: "No",
+      disabled: "Finale disabled — finale questions will not be used.",
+      randomize: "Draw {n} questions",
+      rerandomize: "Draw again",
+      randomLocked: "Drawn finale questions (read-only):",
+    },
+    game: {
+      roundMultipliers: "Round multipliers",
+      roundMultipliersHint: "Comma-separated, e.g. 1,1,1,2,3. Last value repeats for further rounds.",
+      finalMinPoints: "Finale threshold",
+      finalMinPointsHint: "Minimum total points required to enter the finale.",
+      finalTarget: "Finale target",
+      endMode: "Game end screen",
+      endModeLogo: "Show logo",
+      endModePoints: "Show points",
+      endModeMoney: "Show prize amount (after finale)",
+      prizeMultiplier: "Prize multiplier",
+      prizeAmount: "Main prize amount",
+      restoreDefaults: "Restore defaults",
+    },
   },
 };
+export default en;
 export default en;

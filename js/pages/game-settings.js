@@ -62,11 +62,12 @@ function setCategory(cat) {
 
 function renderContent() {
   const cat = state.activeCategory;
-  if (cat === "teams")   renderTeams();
+  if (cat === "teams")        renderTeams();
   else if (cat === "display") renderDisplay();
   else if (cat === "sound")   renderSound();
   else if (cat === "rounds")  renderRounds();
   else if (cat === "finale")  renderFinale();
+  else if (cat === "game")    renderGame();
 }
 
 /* ===== HELPERS ===== */
@@ -367,7 +368,8 @@ function renderRounds() {
   const q = state.settings.questions;
   const isOrdered = q.mode === "ordered";
   const selectedSet = new Set(q.selectedIds);
-  const available = state.questions.filter(qObj => !selectedSet.has(qObj.id));
+  const finaleExclude = q.hasFinal ? new Set(q.finaleIds) : new Set();
+  const available = state.questions.filter(qObj => !selectedSet.has(qObj.id) && !finaleExclude.has(qObj.id));
 
   const orderedItems = q.selectedIds.map((id, i) => {
     const qObj = questionById(id);
@@ -457,70 +459,132 @@ function renderRounds() {
 }
 
 /* ===== FINALE ===== */
+function doRandomizeFinale() {
+  const q = state.settings.questions;
+  const count = q.finaleCount || 5;
+  const selectedSet = new Set(q.selectedIds);
+  const pool = state.questions.filter(qObj => !selectedSet.has(qObj.id));
+  if (!pool.length) return;
+  const shuffled = [...pool];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  const picked = shuffled.slice(0, count).map(qObj => qObj.id);
+  q.selectedIds = q.selectedIds.filter(id => !picked.includes(id));
+  q.finaleIds = picked;
+  markDirty();
+  renderFinale();
+}
+
 function renderFinale() {
   const q = state.settings.questions;
-  const isSelected = q.finaleMode === "selected";
-  const finaleSet = new Set(q.finaleIds);
-  const available = state.questions.filter(qObj => !finaleSet.has(qObj.id));
+  const { hasFinal, finaleMode, finaleCount, finaleIds } = q;
 
-  const selectedItems = q.finaleIds.map((id, i) => {
-    const qObj = questionById(id);
-    const text = qObj ? esc(qObj.text) : `<em style="opacity:.5;">[usunięte]</em>`;
-    return `<div class="gs-q-item" data-id="${esc(id)}" data-idx="${i}">
-      <span class="gs-q-item-handle">☰</span>
-      <span class="gs-q-item-text">${text}</span>
-      <button class="btn xs" type="button" data-move="-1">↑</button>
-      <button class="btn xs" type="button" data-move="1">↓</button>
-      <button class="gs-q-item-remove" type="button" data-remove="${esc(id)}">✕</button>
-    </div>`;
-  }).join("") || `<div class="gs-hint">Brak wybranych pytań finałowych.</div>`;
+  const finaleSet = new Set(finaleIds);
+  const finalePool = state.questions.filter(qObj => !finaleSet.has(qObj.id));
 
-  const addOptions = available.map(qObj =>
-    `<option value="${esc(qObj.id)}">${esc(qObj.text)}</option>`
-  ).join("");
+  let finaleBody = "";
+  if (hasFinal) {
+    const isSelected = finaleMode === "selected";
+    let pickSection = "";
+
+    if (isSelected) {
+      const selectedItems = finaleIds.map((id, i) => {
+        const qObj = questionById(id);
+        const text = qObj ? esc(qObj.text) : `<em style="opacity:.5;">[usunięte]</em>`;
+        return `<div class="gs-q-item" data-id="${esc(id)}" data-idx="${i}">
+          <span class="gs-q-item-handle">☰</span>
+          <span class="gs-q-item-text">${text}</span>
+          <button class="btn xs" type="button" data-move="-1">↑</button>
+          <button class="btn xs" type="button" data-move="1">↓</button>
+          <button class="gs-q-item-remove" type="button" data-remove="${esc(id)}">✕</button>
+        </div>`;
+      }).join("") || `<div class="gs-hint">Brak wybranych pytań finałowych.</div>`;
+      const addOptions = finalePool.map(qObj =>
+        `<option value="${esc(qObj.id)}">${esc(qObj.text)}</option>`
+      ).join("");
+      pickSection = `
+        <div class="gs-q-list" id="gsFinaleQList">${selectedItems}</div>
+        ${finalePool.length > 0 ? `
+          <div class="gs-add-row">
+            <select class="inp" id="gsAddFinaleQ">${addOptions}</select>
+            <button class="btn btn-sm" id="btnAddFinaleQ" type="button">${t("gameSettings.questions.addFinaleQuestion")}</button>
+          </div>` : ""}`;
+    } else {
+      if (!finaleIds.length) {
+        pickSection = `<button class="btn btn-sm gold" id="btnFinaleRandomize" type="button">${t("gameSettings.finale.randomize").replace("{n}", finaleCount || 5)}</button>`;
+      } else {
+        const lockedItems = finaleIds.map(id => {
+          const qObj = questionById(id);
+          const text = qObj ? esc(qObj.text) : `<em style="opacity:.5;">[usunięte]</em>`;
+          return `<div class="gs-q-item"><span class="gs-q-item-text">${text}</span></div>`;
+        }).join("");
+        pickSection = `
+          <div class="gs-hint" style="margin-bottom:6px;">${t("gameSettings.finale.randomLocked")}</div>
+          <div class="gs-q-list">${lockedItems}</div>
+          <button class="btn btn-sm" id="btnFinaleReRandomize" type="button" style="margin-top:8px;">${t("gameSettings.finale.rerandomize")}</button>`;
+      }
+    }
+
+    finaleBody = `
+      <div class="gs-field" style="margin-top:16px;">
+        <div class="gs-label">${t("gameSettings.questions.finaleTitle")}</div>
+        <div class="gs-radio-group">
+          <label class="gs-radio-item">
+            <input type="radio" name="gsFinaleQMode" value="random" ${!isSelected ? "checked" : ""}/>
+            ${t("gameSettings.questions.finaleModeRandom")}
+          </label>
+          <label class="gs-radio-item">
+            <input type="radio" name="gsFinaleQMode" value="selected" ${isSelected ? "checked" : ""}/>
+            ${t("gameSettings.questions.finaleModeSelected")}
+          </label>
+        </div>
+      </div>
+      ${!isSelected ? `
+      <div class="gs-field" style="margin-top:10px;">
+        <div class="gs-label">${t("gameSettings.questions.finaleCount")}</div>
+        <select class="inp" id="gsFinaleCount" style="width:auto;">
+          ${[1,2,3,4,5,6,7,8,9,10].map(n =>
+            `<option value="${n}" ${finaleCount === n ? "selected" : ""}>${n}</option>`
+          ).join("")}
+        </select>
+      </div>` : ""}
+      <div class="gs-field" style="margin-top:12px;">${pickSection}</div>`;
+  } else {
+    finaleBody = `<div class="gs-hint" style="margin-top:12px;">${t("gameSettings.finale.disabled")}</div>`;
+  }
 
   gsContent.innerHTML = `
     <div class="gs-cat-title">${t("gameSettings.categories.finale")}</div>
     <div class="gs-section">
       <div class="gs-field">
-        <div class="gs-label">Tryb pytań finałowych</div>
+        <div class="gs-label">${t("gameSettings.finale.hasFinal")}</div>
         <div class="gs-radio-group">
           <label class="gs-radio-item">
-            <input type="radio" name="gsFinaleMode" value="random" ${!isSelected ? "checked" : ""}/>
-            ${t("gameSettings.questions.finaleModeRandom")}
+            <input type="radio" name="gsHasFinal" value="yes" ${hasFinal ? "checked" : ""}/>
+            ${t("gameSettings.finale.yes")}
           </label>
           <label class="gs-radio-item">
-            <input type="radio" name="gsFinaleMode" value="selected" ${isSelected ? "checked" : ""}/>
-            ${t("gameSettings.questions.finaleModeSelected")}
+            <input type="radio" name="gsHasFinal" value="no" ${!hasFinal ? "checked" : ""}/>
+            ${t("gameSettings.finale.no")}
           </label>
         </div>
       </div>
-
-      <div id="gsFinaleRandom" ${isSelected ? 'style="display:none"' : ""}>
-        <div class="gs-count-row">
-          <div class="gs-label">${t("gameSettings.questions.finaleCount")}</div>
-          <select class="inp" id="gsFinaleCount" style="width:auto;">
-            ${[1,2,3,4,5,6,7,8,9,10].map(n =>
-              `<option value="${n}" ${q.finaleCount === n ? "selected" : ""}>${n}</option>`
-            ).join("")}
-          </select>
-        </div>
-      </div>
-
-      <div id="gsFinaleSelected" ${!isSelected ? 'style="display:none"' : ""}>
-        <div class="gs-hint" style="margin-bottom:6px;">Pytania finałowe w ustalonej kolejności.</div>
-        <div class="gs-q-list" id="gsFinaleQList">${selectedItems}</div>
-        ${available.length > 0 ? `
-          <div class="gs-add-row">
-            <select class="inp" id="gsAddFinaleQ">${addOptions}</select>
-            <button class="btn btn-sm" id="btnAddFinaleQ" type="button">${t("gameSettings.questions.addFinaleQuestion")}</button>
-          </div>` : `<div class="gs-hint" style="margin-top:8px;">Wszystkie pytania dodane.</div>`}
-      </div>
+      ${finaleBody}
     </div>`;
 
-  document.querySelectorAll("input[name=gsFinaleMode]").forEach(r => {
+  document.querySelectorAll("input[name=gsHasFinal]").forEach(r => {
+    r.addEventListener("change", () => {
+      state.settings.questions.hasFinal = r.value === "yes";
+      markDirty();
+      renderFinale();
+    });
+  });
+  document.querySelectorAll("input[name=gsFinaleQMode]").forEach(r => {
     r.addEventListener("change", () => {
       state.settings.questions.finaleMode = r.value;
+      if (r.value === "random") state.settings.questions.finaleIds = [];
       markDirty();
       renderFinale();
     });
@@ -529,14 +593,112 @@ function renderFinale() {
     state.settings.questions.finaleCount = Number(e.target.value);
     markDirty();
   });
+  document.getElementById("btnFinaleRandomize")?.addEventListener("click", doRandomizeFinale);
+  document.getElementById("btnFinaleReRandomize")?.addEventListener("click", doRandomizeFinale);
   document.getElementById("gsFinaleQList")?.addEventListener("click", onQListClick.bind(null, "finaleIds", renderFinale));
   document.getElementById("btnAddFinaleQ")?.addEventListener("click", () => {
     const sel = document.getElementById("gsAddFinaleQ");
-    if (sel?.value) {
-      state.settings.questions.finaleIds.push(sel.value);
+    if (!sel?.value) return;
+    const id = sel.value;
+    state.settings.questions.finaleIds.push(id);
+    state.settings.questions.selectedIds = state.settings.questions.selectedIds.filter(x => x !== id);
+    markDirty();
+    renderFinale();
+  });
+}
+
+/* ===== GAME SETTINGS ===== */
+function renderGame() {
+  const g = state.settings.game;
+  const hasFinal = state.settings.questions.hasFinal;
+  const multipliersStr = Array.isArray(g.roundMultipliers) ? g.roundMultipliers.join(", ") : "";
+  const showMoney = hasFinal && g.endMode === "money";
+
+  gsContent.innerHTML = `
+    <div class="gs-cat-title">${t("gameSettings.categories.game")}</div>
+    <div class="gs-section">
+      <div class="gs-field">
+        <div class="gs-label">${t("gameSettings.game.roundMultipliers")}</div>
+        <div class="gs-hint">${t("gameSettings.game.roundMultipliersHint")}</div>
+        <input class="inp" id="gsRoundMultipliers" type="text" value="${esc(multipliersStr)}" style="max-width:240px;" autocomplete="off" inputmode="numeric"/>
+      </div>
+      <div class="gs-field" style="margin-top:14px;">
+        <div class="gs-label">${t("gameSettings.game.finalMinPoints")}</div>
+        <div class="gs-hint">${t("gameSettings.game.finalMinPointsHint")}</div>
+        <input class="inp" id="gsFinalMinPoints" type="number" min="0" step="10" value="${g.finalMinPoints}" style="max-width:120px;"/>
+      </div>
+      ${hasFinal ? `
+      <div class="gs-field" style="margin-top:14px;">
+        <div class="gs-label">${t("gameSettings.game.finalTarget")}</div>
+        <input class="inp" id="gsFinalTarget" type="number" min="0" step="10" value="${g.finalTarget}" style="max-width:120px;"/>
+      </div>` : ""}
+      <div class="gs-field" style="margin-top:14px;">
+        <div class="gs-label">${t("gameSettings.game.endMode")}</div>
+        <div class="gs-radio-group">
+          <label class="gs-radio-item">
+            <input type="radio" name="gsEndMode" value="logo" ${g.endMode === "logo" ? "checked" : ""}/>
+            ${t("gameSettings.game.endModeLogo")}
+          </label>
+          <label class="gs-radio-item">
+            <input type="radio" name="gsEndMode" value="points" ${g.endMode === "points" ? "checked" : ""}/>
+            ${t("gameSettings.game.endModePoints")}
+          </label>
+          ${hasFinal ? `
+          <label class="gs-radio-item">
+            <input type="radio" name="gsEndMode" value="money" ${g.endMode === "money" ? "checked" : ""}/>
+            ${t("gameSettings.game.endModeMoney")}
+          </label>` : ""}
+        </div>
+      </div>
+      ${showMoney ? `
+      <div class="gs-field" style="margin-top:14px;">
+        <div class="gs-label">${t("gameSettings.game.prizeMultiplier")}</div>
+        <input class="inp" id="gsPrizeMultiplier" type="number" min="1" step="1" value="${g.prizeMultiplier}" style="max-width:120px;"/>
+      </div>
+      <div class="gs-field" style="margin-top:14px;">
+        <div class="gs-label">${t("gameSettings.game.prizeAmount")}</div>
+        <input class="inp" id="gsPrizeAmount" type="number" min="0" max="99999" step="100" value="${g.prizeAmount}" style="max-width:160px;"/>
+      </div>` : ""}
+      <div class="rowBtns" style="margin-top:16px;">
+        <button class="btn btn-sm" id="btnGameReset" type="button">${t("gameSettings.game.restoreDefaults")}</button>
+      </div>
+    </div>`;
+
+  document.getElementById("gsRoundMultipliers")?.addEventListener("change", (e) => {
+    const parts = e.target.value.split(/[,\s]+/).filter(Boolean);
+    state.settings.game.roundMultipliers = parts.map(p => {
+      const n = parseInt(p, 10);
+      return Number.isFinite(n) && n > 0 ? n : 1;
+    });
+    markDirty();
+  });
+  document.getElementById("gsFinalMinPoints")?.addEventListener("change", (e) => {
+    state.settings.game.finalMinPoints = Math.max(0, Number(e.target.value) || 0);
+    markDirty();
+  });
+  document.getElementById("gsFinalTarget")?.addEventListener("change", (e) => {
+    state.settings.game.finalTarget = Math.max(0, Number(e.target.value) || 0);
+    markDirty();
+  });
+  document.querySelectorAll("input[name=gsEndMode]").forEach(r => {
+    r.addEventListener("change", () => {
+      state.settings.game.endMode = r.value;
       markDirty();
-      renderFinale();
-    }
+      renderGame();
+    });
+  });
+  document.getElementById("gsPrizeMultiplier")?.addEventListener("change", (e) => {
+    state.settings.game.prizeMultiplier = Math.max(1, Number(e.target.value) || 1);
+    markDirty();
+  });
+  document.getElementById("gsPrizeAmount")?.addEventListener("change", (e) => {
+    state.settings.game.prizeAmount = Math.min(99999, Math.max(0, Number(e.target.value) || 0));
+    markDirty();
+  });
+  document.getElementById("btnGameReset")?.addEventListener("click", () => {
+    state.settings.game = { ...getDefaults(state.locale).game };
+    markDirty();
+    renderGame();
   });
 }
 
