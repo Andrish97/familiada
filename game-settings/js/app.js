@@ -15,12 +15,14 @@ const SFX_KEYS = [
 const state = {
   gameId:   null,
   game:     null,
+  shareKeyDisplay: null,
   settings: null,
   questions: [],
   logos:    [],
   locale:   "pl",
   activeCategory: "teams",
   isDirty:  false,
+  previewIframe: null,
 };
 
 /* ===== ELEMENTS ===== */
@@ -102,10 +104,12 @@ function renderTeams() {
   document.getElementById("gsTeamA").addEventListener("input", (e) => {
     state.settings.teams.nameA = e.target.value;
     markDirty();
+    refreshPreviewTeams();
   });
   document.getElementById("gsTeamB").addEventListener("input", (e) => {
     state.settings.teams.nameB = e.target.value;
     markDirty();
+    refreshPreviewTeams();
   });
   document.getElementById("btnTeamsReset").addEventListener("click", () => {
     const def = getDefaults(state.locale).teams;
@@ -115,15 +119,87 @@ function renderTeams() {
   });
 }
 
+/* ===== DISPLAY PREVIEW (iframe) ===== */
+let _previewCmdQueue = [];
+let _previewReady = false;
+
+function getPreviewIframe() {
+  return document.getElementById("gsDisplayIframe");
+}
+
+function sendPreviewCmd(cmd) {
+  const iframe = getPreviewIframe();
+  if (!iframe) return;
+  const win = iframe.contentWindow;
+  if (!win) return;
+  try { win.handleCommand?.(cmd); } catch (e) { /* cross-origin or not loaded */ }
+}
+
+function flushPreviewCmds() {
+  const q = _previewCmdQueue.splice(0);
+  for (const cmd of q) sendPreviewCmd(cmd);
+}
+
+function queuePreviewCmd(cmd) {
+  if (_previewReady) {
+    sendPreviewCmd(cmd);
+  } else {
+    _previewCmdQueue.push(cmd);
+  }
+}
+
+function initPreviewIframe() {
+  if (!state.shareKeyDisplay) return;
+
+  const iframe = getPreviewIframe();
+  if (!iframe) return;
+
+  _previewReady = false;
+  _previewCmdQueue = [];
+
+  iframe.src = `/display.html?id=${encodeURIComponent(state.gameId)}&key=${encodeURIComponent(state.shareKeyDisplay)}`;
+
+  iframe.onload = () => {
+    _previewReady = true;
+    sendPreviewCommands();
+    flushPreviewCmds();
+  };
+}
+
+function sendPreviewCommands() {
+  const { nameA, nameB } = state.settings.teams;
+  const q = (s) => `"${(s || "").replace(/"/g, '\\"')}"`;
+  sendPreviewCmd("APP GAME");
+  sendPreviewCmd(`LONG1 ${q(nameA || "A")}`);
+  sendPreviewCmd(`LONG2 ${q(nameB || "B")}`);
+  sendPreviewCmd("LOGO RELOAD");
+}
+
+function refreshPreviewTeams() {
+  if (!_previewReady) return;
+  const { nameA, nameB } = state.settings.teams;
+  const q = (s) => `"${(s || "").replace(/"/g, '\\"')}"`;
+  sendPreviewCmd(`LONG1 ${q(nameA || "A")}`);
+  sendPreviewCmd(`LONG2 ${q(nameB || "B")}`);
+}
+
+function refreshPreviewLogo() {
+  if (!_previewReady) return;
+  sendPreviewCmd("LOGO RELOAD");
+}
+
 /* ===== DISPLAY ===== */
 function renderDisplay() {
   const { logoId, frameMode } = state.settings.display;
   const logoOptions = [
     `<option value=""${!logoId ? " selected" : ""}>${t("gameSettings.display.logoDefault")}</option>`,
+    `<option value="none"${logoId === "none" ? " selected" : ""}>${t("gameSettings.display.logoNone")}</option>`,
     ...state.logos.map(l =>
       `<option value="${esc(l.id)}"${l.id === logoId ? " selected" : ""}>${esc(l.name || l.id)}</option>`
     ),
   ].join("");
+
+  const hasPreview = !!state.shareKeyDisplay;
 
   gsContent.innerHTML = `
     <div class="gs-cat-title">${t("gameSettings.categories.display")}</div>
@@ -149,15 +225,21 @@ function renderDisplay() {
       </div>
       <div>
         <div class="gs-label">${t("gameSettings.display.preview")}</div>
-        <div class="display-preview" id="gsDisplayPreview" style="margin-top:8px;"></div>
+        ${hasPreview
+          ? `<iframe id="gsDisplayIframe" class="display-preview" style="margin-top:8px;border:none;" scrolling="no" allowfullscreen></iframe>`
+          : `<div class="display-preview display-preview-placeholder" style="margin-top:8px;"></div>`
+        }
       </div>
     </div>`;
 
-  updateDisplayPreview();
+  if (hasPreview) {
+    initPreviewIframe();
+  }
 
   document.getElementById("gsLogoSelect").addEventListener("change", (e) => {
     state.settings.display.logoId = e.target.value || null;
     markDirty();
+    refreshPreviewLogo();
   });
   document.querySelectorAll("input[name=gsFrameMode]").forEach(r => {
     r.addEventListener("change", (e) => {
@@ -165,33 +247,6 @@ function renderDisplay() {
       markDirty();
     });
   });
-}
-
-function updateDisplayPreview() {
-  const el = document.getElementById("gsDisplayPreview");
-  if (!el) return;
-  const { nameA, nameB } = state.settings.teams;
-  el.innerHTML = `
-    <div style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;padding:10px 12px;color:#fff;font-family:monospace;">
-      <div style="display:flex;gap:8px;align-items:center;">
-        <div style="width:32px;height:32px;border:1px solid rgba(255,255,255,.15);border-radius:4px;background:#111;
-          display:flex;align-items:center;justify-content:center;font-size:7px;opacity:.4;flex-shrink:0;">LOGO</div>
-        <div style="flex:1;">
-          <div style="height:6px;background:rgba(255,255,255,.13);border-radius:3px;margin-bottom:5px;"></div>
-          <div style="height:6px;background:rgba(255,255,255,.08);border-radius:3px;width:65%;"></div>
-        </div>
-      </div>
-      <div style="display:flex;gap:8px;">
-        <div style="flex:1;background:rgba(255,255,255,.07);border-radius:6px;padding:6px 8px;">
-          <div style="font-size:8px;opacity:.5;margin-bottom:2px;">${esc(nameA || "A")}</div>
-          <div style="font-size:13px;font-weight:700;">0</div>
-        </div>
-        <div style="flex:1;background:rgba(255,255,255,.07);border-radius:6px;padding:6px 8px;">
-          <div style="font-size:8px;opacity:.5;margin-bottom:2px;">${esc(nameB || "B")}</div>
-          <div style="font-size:13px;font-weight:700;">0</div>
-        </div>
-      </div>
-    </div>`;
 }
 
 /* ===== SOUND ===== */
@@ -476,7 +531,7 @@ async function init() {
   // Load game
   const { data: game, error: gameErr } = await sb()
     .from("games")
-    .select("id,name,type,owner_id")
+    .select("id,name,type,owner_id,share_key_display")
     .eq("id", gameId)
     .single();
 
@@ -485,6 +540,7 @@ async function init() {
     return;
   }
   state.game = game;
+  state.shareKeyDisplay = game.share_key_display || null;
 
   gsTitle.textContent = game.name;
   document.title = `${game.name} — Ustawienia rozgrywki`;

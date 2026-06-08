@@ -200,6 +200,17 @@
   flex-shrink: 0;
 }
 
+.display-preview-placeholder::after {
+  content: "—";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .75rem;
+  opacity: .25;
+}
+
 .gs-frame-radios {
   display: flex;
   gap: 16px;
