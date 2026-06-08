@@ -1,10 +1,8 @@
-// game-settings/js/app.js
-
-import { t, applyTranslations } from "../translation/translation.js?v=v2026-06-07T17254";
-import { sb } from "../js/core/supabase.js?v=v2026-06-07T17254";
-import { requireAuth } from "../js/core/auth.js?v=v2026-06-07T17254";
-import { confirmModal, alertModal } from "../js/core/modal.js?v=v2026-06-07T17254";
-import { loadSettings, saveSettings, getDefaults } from "../js/core/game-settings.js?v=v2026-06-07T17254";
+import { t, applyTranslations } from "../../translation/translation.js?v=v2026-06-07T17254";
+import { sb } from "../core/supabase.js?v=v2026-06-07T17254";
+import { requireAuth } from "../core/auth.js?v=v2026-06-07T17254";
+import { confirmModal, alertModal } from "../core/modal.js?v=v2026-06-07T17254";
+import { loadSettings, saveSettings, getDefaults } from "../core/game-settings.js?v=v2026-06-07T17254";
 
 const SFX_KEYS = [
   "show_intro", "round_transition", "round_transition2", "final_theme",
