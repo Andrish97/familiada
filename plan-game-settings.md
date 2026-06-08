@@ -568,3 +568,4 @@ Analogiczne klucze w `en.js` i `uk.js` z odpowiednimi tłumaczeniami i domyślny
 7. **Zapis + dirty tracking** — `isDirty`, `beforeunload`, pasek dolny
 8. **builder-new.js** — przycisk ⚙ na kartach
 9. **control-new** — usunięcie kroków + `loadSettings` na starcie
+10. **manual.html** — nowa zakładka „Ustawienia rozgrywki" z opisem wszystkich kategorii (Drużyny, Wygląd, Dźwięk, Pytania/Rundy, Pytania/Finał) + jak się do nich dostać z builder-new (przycisk „Ustawienia rozgrywki")
