@@ -2360,75 +2360,120 @@ const pl = {
         bezpośrednio — bez przechodzenia przez moderację.
         Wyróżniają się dedykowaną odznaką.
       </p>`,
-      gameSettings: `<p class="m-p">
-        Ekran <span class="m-strong">Ustawienia rozgrywki</span> pozwala dostosować
-        każdą grę indywidualnie — bez wpływu na jej treść (pytania i odpowiedzi).
-        Zmiany dotyczą tylko tej jednej gry i są zapisywane oddzielnie od pytań.
+      gameSettings: ``, /* tab zakomentowana w manual.html */
+      /* DRAFT gameSettings (na podstawie sekcji control, bez ustawień):
+      gameSettings: `<h3 class="m-h2">1) Urządzenia</h3>
+
+      <p class="m-p">
+        Pierwszy etap w panelu to podłączenie urządzeń.
+        W górnym pasku panelu widzisz trzy statusy:
+        <span class="m-strong">Wyświetlacz</span>,
+        <span class="m-strong">Prowadzący</span>,
+        <span class="m-strong">Przycisk</span>.
+        Operator rozpoczyna od tego, żeby wszystkie były online (prowadzący jest opcjonalny, możesz prowadzić rozgrywkę z panelu operatora, jeśli brakuje osób).
+      </p>
+
+      <h3 class="m-h3">Krok 1: Wyświetlacz</h3>
+
+      <p class="m-p">
+        W tym kroku panel pokazuje <span class="m-strong">6-cyfrowy kod</span> i kod QR dla wyświetlacza.
+        Najlepiej otworzyć wyświetlacz na telewizorze lub rzutniku w trybie pełnoekranowym (bez pasków przeglądarki).
+        Dopiero gdy wyświetlacz jest online, panel pozwala przejść dalej.
       </p>
 
       <p class="m-p">
-        Aby otworzyć ustawienia, zaznacz grę na liście w Builder i kliknij przycisk
-        <span class="m-code">Ustawienia rozgrywki</span> w górnym pasku.
-        Przycisk jest aktywny tylko wtedy, gdy gra jest gotowa do uruchomienia.
+        <span class="m-strong">„Czarny ekran"</span> — jeśli po załadowaniu ekranu widzisz pozostałości po starej rozgrywce,
+        użyj tego przycisku, żeby przywrócić czarny ekran na czas ustawień.
       </p>
 
-      <h3 class="m-h2">Drużyny</h3>
+      <div class="m-note">
+        <b>Jak wygodnie wyświetlić tablicę na drugim ekranie?</b><br/>
+        Dla najlepszego efektu użyj trybu rozszerzonego ekranu.
+        W systemie <span class="m-strong">Windows</span> przełączysz go skrótem <span class="m-code">Win + P</span>,
+        a na <span class="m-strong">Macu</span> użyj <span class="m-code">⌘ F1</span> (czasem dodatkowo <span class="m-code">Fn</span>).<br/><br/>
+        Następnie otwórz tablicę w nowym oknie przeglądarki, przeciągnij je na drugi ekran i włącz tryb pełnoekranowy.
+        Dzięki temu możesz jednocześnie sterować na swoim urządzeniu i wyświetlać treść dla innych.
+      </div>
+
+      <h3 class="m-h3">Krok 2: Host i Przycisk</h3>
 
       <p class="m-p">
-        Możesz zmienić nazwy obu drużyn widoczne na tablicy podczas rozgrywki.
-        Domyślne nazwy to <span class="m-strong">Drużyna A</span>
-        i <span class="m-strong">Drużyna B</span>.
-        Maksymalna długość nazwy to 30 znaków.
-        Przycisk <span class="m-code">Przywróć domyślne</span> cofa obie nazwy do wartości początkowych.
-      </p>
-
-      <h3 class="m-h2">Wygląd</h3>
-
-      <p class="m-p">
-        W kategorii Wygląd wybierasz logo wyświetlane na tablicy podczas rozgrywki.
-        Możesz wybrać jedno ze swoich własnych logotypów (tworzonych w edytorze logo),
-        ustawić logo domyślne (logotyp Familiada) lub wyłączyć logo całkowicie.
-        Podgląd po prawej stronie pokazuje, jak wygląda tablica z wybranymi ustawieniami.
+        W drugim kroku podłączasz urządzenie prowadzącego i urządzenie przycisku.
+        Panel pokazuje <span class="m-strong">6-cyfrowy kod</span> i kod QR dla każdego z nich.
+        W praktyce najlepiej użyć dwóch osobnych telefonów albo telefonu i tabletu.
       </p>
 
       <p class="m-p">
-        Tryb ramki steruje wyglądem obramowania tablicy wynikowej:
-        <span class="m-strong">Klasyczna</span> — pełna ramka z tłem,
-        <span class="m-strong">Minimalna</span> — uproszczona, bez tła.
+        W tym kroku jest opcja <span class="m-strong">„QR na wyświetlaczu"</span> —
+        po jej użyciu kody QR mogą zostać pokazane na dużym ekranie (po podłączeniu wyświetlacza),
+        żeby ekipa mogła szybko zeskanować je telefonami.
+        To przyspiesza start na planie, bo nie trzeba przepisywać linków.
       </p>
-
-      <h3 class="m-h2">Dźwięk</h3>
 
       <p class="m-p">
-        Dla każdego efektu dźwiękowego (np. reveal odpowiedzi, błąd X, muzyka finałowa)
-        możesz ustawić indywidualną głośność w zakresie 0–100%.
-        Wartość 0 wycisza dany dźwięk, 100 to pełna głośność.
-        Zmiany dotyczą tylko tej gry — inne gry mają swoje własne ustawienia dźwięku.
+        Poprzez opcję <span class="m-strong">„Udostępnij"</span> — możesz szybko wysłać komuś linka na maila lub udostępnić swoim subskrybentom. Udostępnione urządzenia będą widoczne na koncie (tylko dla zarejestrowanych) w panelu <span class="m-code">Podłącz urządzenie 📱</span>. Niezarejestrowani dostaną po prostu linka na maila.
       </p>
 
-      <h3 class="m-h2">Pytania — Rundy</h3>
+      <div class="m-note">
+        <b>Jak wygodnie podłączyć urządzenie?</b><br/>
+        Najprostszy sposób: wejdź na <span class="m-code">familiada.online</span>, kliknij <span class="m-code">Podłącz urządzenie 📱</span>
+        w górnym pasku i wprowadź <span class="m-strong">6-cyfrowy kod</span> widoczny przy urządzeniu w panelu operatora.<br/><br/>
+        Alternatywnie: na urządzeniu mobilnym możesz zeskanować <span class="m-strong">kod QR</span> widoczny w panelu.
+        Dla najlepszego użytkowania sugerowane jest zainstalowanie aplikacji webowej — na stronie <span class="m-strong">Moje gry</span>
+        kliknij przycisk pobierania, aby uzyskać wskazówki.
+      </div>
+
+      <h3 class="m-h3">Tryb bez tabletu prowadzącego</h3>
 
       <p class="m-p">
-        Możesz wybrać, czy pytania w rundach są losowane z puli w przypadkowej kolejności,
-        czy rozgrywane w ustalonej przez Ciebie kolejności.
-        W trybie losowym wystarczy podać, ile pytań ma być na rundę i ile rund ma być w grze.
-        W trybie ustalonej kolejności samodzielnie wskazujesz pytania i ich kolejność
-        — możesz je dodawać z listy dostępnych pytań i dowolnie przestawiać.
+        Jeśli prowadzący nie korzysta z osobnego urządzenia (telefonu/tabletu), zaznacz opcję
+        <span class="m-strong">„Nie używaj tabletu prowadzącego"</span> przy urządzeniu Prowadzący.
+        Po zaznaczeniu: przyciski i kod połączenia dla prowadzącego są wyszarzone,
+        podpięcie urządzenia prowadzącego nie jest wymagane do przejścia dalej,
+        a dot statusu prowadzącego w górnym pasku staje się nieaktywny.
+        Operator może samodzielnie prowadzić rozgrywkę z panelu sterowania.
       </p>
 
-      <h3 class="m-h2">Pytania — Finał</h3>
+      <h3 class="m-h3">Fizyczny przycisk (buzzer)</h3>
 
       <p class="m-p">
-        Finał ma własne ustawienia pytań, niezależne od rund.
-        Możesz wybrać losowanie pytań finałowych lub ustalić konkretną ich listę.
-        Kategoria Finał jest dostępna wyłącznie dla gier typu <span class="m-strong">Ankietowana</span>
-        — w grach przygotowanych (bez ankiety) finał nie jest używany.
+        Jeśli zamiast wirtualnego przycisku w przeglądarce używasz fizycznego buzzera
+        (np. sprzętowego przycisku podłączonego inną ścieżką), zaznacz opcję
+        <span class="m-strong">„Fizyczny przycisk"</span> przy urządzeniu Przycisk.
+        Po zaznaczeniu: podpięcie urządzenia przycisku nie jest wymagane,
+        a przebieg pojedynku zmienia się — operator sam decyduje, kto nacisnął pierwszy.
       </p>
+
+      <p class="m-p">
+        W trybie fizycznego przycisku przebieg pojedynku wygląda tak:
+      </p>
+
+      <ol class="m-ul">
+        <li>Po uruchomieniu pojedynku pojawiają się dwa przyciski: <span class="m-code">Drużyna A</span> i <span class="m-code">Drużyna B</span>.</li>
+        <li>Operator klika drużynę, która nacisnęła fizyczny przycisk jako pierwsza — przycisk się podświetla.</li>
+        <li>Operator klika <span class="m-code">Zatwierdź</span>, aby potwierdzić wybór i przejść dalej.</li>
+      </ol>
 
       <div class="m-warn">
-        Ustawienia rozgrywki są zapisywane osobno od pytań i odpowiedzi.
-        Zmiany w ustawieniach nie wpływają na treść gry i odwrotnie.
-      </div>`,
+        <b>Uwaga:</b><br/>
+        Jeśli któreś urządzenie rozłączy się w trakcie, panel potrafi pokazać ostrzeżenie.
+        Najczęściej pomaga: wyłączyć oszczędzanie baterii, nie minimalizować przeglądarki
+        oraz trzymać urządzenia na jednej stabilnej sieci Wi-Fi.
+      </div>
+
+      <h3 class="m-h3">Krok 3: Dźwięk</h3>
+
+      <p class="m-p">
+        Przeglądarki blokują automatyczne odtwarzanie dźwięku,
+        dopóki użytkownik nie wykona „gestu" (kliknięcia).
+        Dlatego panel ma osobny krok odblokowania dźwięku.
+        Bez tego możesz nie usłyszeć sygnałów, które wspierają tempo gry.
+      </p>
+
+      <h3 class="m-h3">Podsumowanie</h3>
+
+      <p class="m-p">Tutaj zobaczysz podsumowanie wybranych ustawień.</p>`,
+      */
     },
   },
   privacy: {
