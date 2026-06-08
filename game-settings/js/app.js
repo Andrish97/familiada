@@ -19,10 +19,10 @@ const state = {
   settings: null,
   questions: [],
   logos:    [],
+  themes:   [],
   locale:   "pl",
   activeCategory: "teams",
   isDirty:  false,
-  previewIframe: null,
 };
 
 /* ===== ELEMENTS ===== */
@@ -168,11 +168,20 @@ function initPreviewIframe() {
 
 function sendPreviewCommands() {
   const { nameA, nameB } = state.settings.teams;
+  const { colors, theme } = state.settings.display;
   const q = (s) => `"${(s || "").replace(/"/g, '\\"')}"`;
   sendPreviewCmd("APP GAME");
+  sendPreviewCmd(`COLOR A ${colors.A}`);
+  sendPreviewCmd(`COLOR B ${colors.B}`);
+  sendPreviewCmd(`COLOR BACKGROUND ${colors.BACKGROUND}`);
+  sendPreviewCmd(`COLOR DOT ${colors.DOT}`);
+  sendPreviewCmd("LOGO RELOAD");
+  sendPreviewCmd("LEFT 123");
+  sendPreviewCmd("RIGHT 123");
+  sendPreviewCmd("TOP 1");
   sendPreviewCmd(`LONG1 ${q(nameA || "A")}`);
   sendPreviewCmd(`LONG2 ${q(nameB || "B")}`);
-  sendPreviewCmd("LOGO RELOAD");
+  if (theme) sendPreviewCmd(`THEME ${theme}`);
 }
 
 function refreshPreviewTeams() {
@@ -188,9 +197,20 @@ function refreshPreviewLogo() {
   sendPreviewCmd("LOGO RELOAD");
 }
 
+function refreshPreviewColor(key, hex) {
+  if (!_previewReady) return;
+  sendPreviewCmd(`COLOR ${key} ${hex}`);
+}
+
+function refreshPreviewTheme(key) {
+  if (!_previewReady) return;
+  if (key) sendPreviewCmd(`THEME ${key}`);
+}
+
 /* ===== DISPLAY ===== */
 function renderDisplay() {
-  const { logoId, frameMode } = state.settings.display;
+  const { logoId, frameMode, theme, colors } = state.settings.display;
+
   const logoOptions = [
     `<option value=""${!logoId ? " selected" : ""}>${t("gameSettings.display.logoDefault")}</option>`,
     `<option value="none"${logoId === "none" ? " selected" : ""}>${t("gameSettings.display.logoNone")}</option>`,
@@ -198,6 +218,23 @@ function renderDisplay() {
       `<option value="${esc(l.id)}"${l.id === logoId ? " selected" : ""}>${esc(l.name || l.id)}</option>`
     ),
   ].join("");
+
+  const themeOptions = state.themes.map(th =>
+    `<option value="${esc(th.key)}"${th.key === theme ? " selected" : ""}>${esc(th.label)}</option>`
+  ).join("");
+
+  const colorDefs = [
+    { key: "A",          label: t("gameSettings.display.colorA"),   val: colors.A },
+    { key: "B",          label: t("gameSettings.display.colorB"),   val: colors.B },
+    { key: "BACKGROUND", label: t("gameSettings.display.colorBg"),  val: colors.BACKGROUND },
+    { key: "DOT",        label: t("gameSettings.display.colorDot"), val: colors.DOT },
+  ];
+  const colorSwatches = colorDefs.map(cd =>
+    `<div class="gs-color-item">
+       <input type="color" class="gs-color-input" id="gsColor${cd.key}" value="${esc(cd.val)}"/>
+       <span>${cd.label}</span>
+     </div>`
+  ).join("");
 
   const hasPreview = !!state.shareKeyDisplay;
 
@@ -222,6 +259,16 @@ function renderDisplay() {
             </label>
           </div>
         </div>
+        <div class="gs-field" style="margin-top:16px;">
+          <div class="gs-label">${t("gameSettings.display.colors")}</div>
+          <div class="gs-color-row">${colorSwatches}</div>
+          <button class="btn btn-sm" id="btnColorsReset" type="button" style="margin-top:10px;">${t("gameSettings.display.colorsReset")}</button>
+        </div>
+        ${themeOptions ? `
+        <div class="gs-field" style="margin-top:16px;">
+          <div class="gs-label">${t("gameSettings.display.theme")}</div>
+          <select class="inp" id="gsThemeSelect" style="max-width:200px;">${themeOptions}</select>
+        </div>` : ""}
       </div>
       <div>
         <div class="gs-label">${t("gameSettings.display.preview")}</div>
@@ -241,11 +288,33 @@ function renderDisplay() {
     markDirty();
     refreshPreviewLogo();
   });
+
   document.querySelectorAll("input[name=gsFrameMode]").forEach(r => {
     r.addEventListener("change", (e) => {
       state.settings.display.frameMode = e.target.value;
       markDirty();
     });
+  });
+
+  ["A", "B", "BACKGROUND", "DOT"].forEach(key => {
+    document.getElementById(`gsColor${key}`)?.addEventListener("input", (e) => {
+      state.settings.display.colors[key] = e.target.value;
+      markDirty();
+      refreshPreviewColor(key, e.target.value);
+    });
+  });
+
+  document.getElementById("btnColorsReset")?.addEventListener("click", () => {
+    const defColors = getDefaults(state.locale).display.colors;
+    state.settings.display.colors = { ...defColors };
+    markDirty();
+    renderDisplay();
+  });
+
+  document.getElementById("gsThemeSelect")?.addEventListener("change", (e) => {
+    state.settings.display.theme = e.target.value;
+    markDirty();
+    refreshPreviewTheme(e.target.value);
   });
 }
 
@@ -549,16 +618,25 @@ async function init() {
     sidebarFinale.style.display = "none";
   }
 
-  // Load settings, questions, logos in parallel
-  const [settings, { data: questions }, { data: logos }] = await Promise.all([
+  // Load settings, questions, logos, themes in parallel
+  const [settings, { data: questions }, { data: logos }, themesJson] = await Promise.all([
     loadSettings(gameId, state.locale),
     sb().from("questions").select("id,ord,text").eq("game_id", gameId).order("ord"),
     sb().from("user_logos").select("id,name,type").eq("user_id", user.id).order("created_at", { ascending: false }),
+    fetch("/display/js/themes.json").then(r => r.json()).catch(() => null),
   ]);
 
   state.settings  = settings;
   state.questions = questions || [];
   state.logos     = logos    || [];
+  if (themesJson?.themes) {
+    state.themes = themesJson.themes.map(e => ({
+      key: e.key,
+      label: typeof e.label === "object"
+        ? (e.label[state.locale] ?? e.label["en"] ?? e.key)
+        : String(e.label ?? e.key),
+    }));
+  }
 
   applyTranslations();
 

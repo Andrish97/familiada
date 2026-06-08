@@ -5311,6 +5311,13 @@ const en = {
       frameModeClassic: "Classic",
       frameModeMinimal: "Minimal",
       preview: "Display preview",
+      colors: "Colors",
+      colorA: "Team A color",
+      colorB: "Team B color",
+      colorBg: "Background color",
+      colorDot: "Dot color",
+      colorsReset: "Reset colors",
+      theme: "Theme",
     },
     questions: {
       modeRandom: "Random",

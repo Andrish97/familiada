@@ -5298,6 +5298,13 @@ const uk = {
       frameModeClassic: "Класична",
       frameModeMinimal: "Мінімальна",
       preview: "Попередній перегляд",
+      colors: "Кольори",
+      colorA: "Колір команди А",
+      colorB: "Колір команди Б",
+      colorBg: "Колір фону",
+      colorDot: "Колір крапки",
+      colorsReset: "Скинути кольори",
+      theme: "Тема",
     },
     questions: {
       modeRandom: "Випадково",

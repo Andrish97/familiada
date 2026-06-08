@@ -22,6 +22,13 @@ export function getDefaults(locale = "pl") {
     display: {
       logoId:    null,
       frameMode: "classic",
+      theme:     "classic",
+      colors: {
+        A:          "#c4002f",
+        B:          "#2a62ff",
+        BACKGROUND: "#d21180",
+        DOT:        "#d7ff3d",
+      },
     },
     sound: {
       volumes: {

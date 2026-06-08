@@ -295,3 +295,30 @@
   flex: 1;
   max-width: 360px;
 }
+
+/* ===== COLOR PICKERS ===== */
+.gs-color-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.gs-color-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: .83rem;
+}
+
+.gs-color-input {
+  width: 34px;
+  height: 26px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  padding: 1px 2px;
+  background: none;
+  cursor: pointer;
+  flex-shrink: 0;
+}

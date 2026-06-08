@@ -5313,6 +5313,13 @@ const pl = {
       frameModeClassic: "Klasyczna",
       frameModeMinimal: "Minimalna",
       preview: "Podgląd wyświetlacza",
+      colors: "Kolory",
+      colorA: "Kolor drużyny A",
+      colorB: "Kolor drużyny B",
+      colorBg: "Kolor tła",
+      colorDot: "Kolor kropki",
+      colorsReset: "Resetuj kolory",
+      theme: "Motyw",
     },
     questions: {
       modeRandom: "Losowe",
