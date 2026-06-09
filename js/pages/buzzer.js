@@ -1,8 +1,8 @@
 // js/pages/buzzer.js
-import { initI18n, setUiLang, t, applyTranslations } from "../../translation/translation.js?v=v2026-06-09T17070";
-import { sb } from "../core/supabase.js?v=v2026-06-09T17070";
-import { rt } from "../core/realtime.js?v=v2026-06-09T17070";
-import { startKeepAlive } from "../core/keep-alive.js?v=v2026-06-09T17070";
+import { initI18n, setUiLang, t, applyTranslations } from "../../translation/translation.js?v=v2026-06-09T17094";
+import { sb } from "../core/supabase.js?v=v2026-06-09T17094";
+import { rt } from "../core/realtime.js?v=v2026-06-09T17094";
+import { startKeepAlive } from "../core/keep-alive.js?v=v2026-06-09T17094";
 startKeepAlive();
 
 const qs = new URLSearchParams(location.search);
