@@ -1,22 +1,22 @@
-import { addRenameGesture } from "../core/rename-gesture.js?v=v2026-06-04T22541";
-import { sb } from "../core/supabase.js?v=v2026-06-04T22541";
-import { requireAuth } from "../core/auth.js?v=v2026-06-04T22541";
-import { alertModal, confirmModal } from "../core/modal.js?v=v2026-06-04T22541";
-import { hideForGuest, isGuestUser } from "../core/guest-mode.js?v=v2026-06-04T22541";
-import { initI18n, t, applyTranslations } from "../../translation/translation.js?v=v2026-06-04T22541";
-import { initRatingSystem } from "../core/rating-system.js?v=v2026-06-04T22541";
-import { initUiSelect } from "../core/ui-select.js?v=v2026-06-04T22541";
-import { maybeShowGuestInfoModal } from "../core/guest-info-modal.js?v=v2026-06-04T22541";
+import { addRenameGesture } from "../core/rename-gesture.js?v=v2026-06-07T17254";
+import { sb } from "../core/supabase.js?v=v2026-06-07T17254";
+import { requireAuth } from "../core/auth.js?v=v2026-06-07T17254";
+import { alertModal, confirmModal } from "../core/modal.js?v=v2026-06-07T17254";
+import { hideForGuest, isGuestUser } from "../core/guest-mode.js?v=v2026-06-07T17254";
+import { initI18n, t, applyTranslations } from "../../translation/translation.js?v=v2026-06-07T17254";
+import { initRatingSystem } from "../core/rating-system.js?v=v2026-06-07T17254";
+import { initUiSelect } from "../core/ui-select.js?v=v2026-06-07T17254";
+import { maybeShowGuestInfoModal } from "../core/guest-info-modal.js?v=v2026-06-07T17254";
 
-import { initPwa, isStandalone, isMobileDevice } from "../core/pwa.js?v=v2026-06-04T22541";
+import { initPwa, isStandalone, isMobileDevice } from "../core/pwa.js?v=v2026-06-07T17254";
 
 // Zarejestruj listener PWA jak najwcześniej – beforeinstallprompt może odpalić przed requireAuth
 const pwaApi = initPwa();
 // Jeśli beforeinstallprompt już odpalił zanim dodaliśmy listener w IIFE, sprawdzimy po zalogowaniu
 
 
-import { exportGame, importGame, downloadJson } from "./builder-import-export.js?v=v2026-06-04T22541";
-import { setTopbarNavPriority, setTopbarAccount } from '../core/topbar-controller.js?v=v2026-06-04T22541';
+import { exportGame, importGame, downloadJson } from "./builder-import-export.js?v=v2026-06-07T17254";
+import { setTopbarNavPriority, setTopbarAccount } from '../core/topbar-controller.js?v=v2026-06-07T17254';
 
 import "../core/contact-modal.js";
 import {
@@ -27,7 +27,7 @@ import {
   validateGameReadyToPlay,
   validatePollEntry,
   validatePollReadyToOpen,
-} from "../core/game-validate.js?v=v2026-06-04T22541";
+} from "../core/game-validate.js?v=v2026-06-07T17254";
 
 const MSG = {
   exportBaseEmpty: () => t("builder.exportBase.empty"),
@@ -97,6 +97,7 @@ const btnEdit = document.getElementById("btnEdit");
 const btnPreview = document.getElementById("btnPreview");
 const btnPlay = document.getElementById("btnPlay");
 const btnPoll = document.getElementById("btnPoll");
+const btnSettings = document.getElementById("btnSettings");
 
 const btnManual = document.getElementById("btnManual");
 const btnLogoEditor = document.getElementById("btnLogoEditor");
@@ -639,6 +640,7 @@ function setButtonsState({ hasSel, canEdit, canPlay, canPoll, canExport }) {
   if (btnPreview) btnPreview.disabled = !hasSel;
   if (btnPlay) btnPlay.disabled = !hasSel || !canPlay;
   if (btnPoll) btnPoll.disabled = !hasSel || !canPoll;
+  if (btnSettings) btnSettings.disabled = !hasSel || !canPlay;
   if (btnExport) btnExport.disabled = !hasSel || !canExport;
   if (btnExportBase) btnExportBase.disabled = !hasSel || !canExport;
 }
@@ -1500,6 +1502,15 @@ document.addEventListener("DOMContentLoaded", async () => {
       console.error(e);
       void alertModal({ text: MSG.alertOpenPollFailed() });
     }
+  });
+
+  // SETTINGS
+  btnSettings?.addEventListener("click", () => {
+    const gameId = activeTab === TYPES.MARKET
+      ? marketGamesAll.find(g => g.market_game_id === selectedMarketId)?.game_id
+      : selectedId;
+    if (!gameId) return;
+    location.href = `game-settings?id=${encodeURIComponent(gameId)}`;
   });
 
   // EXPORT — pobierz dane z paskiem, potem instant download

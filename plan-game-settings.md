@@ -307,6 +307,21 @@ Widoczna tylko gdy `game.type !== "prepared"` (gry preparowane nie mają finału
 
 ## Zmiany w builder-new.js
 
+### Kolejność przycisków topbaru
+
+W oryginale (`builder.html`) nawigacja topbaru ma kolejność:
+```
+Logo → Bazy → PollsHub → SubscriptionsHub → Podłącz urządzenie
+```
+
+W `builder-new.html` zmieniamy kolejność — **Podłącz urządzenie bezpośrednio po Bazy**:
+```
+Logo → Bazy → Podłącz urządzenie → PollsHub → SubscriptionsHub
+```
+
+Zmiana tylko w HTML (`builder-new.html`) — przestawienie kolejności elementów DOM.
+Logika widoczności `btnConnectDevice` (pokazuje się po zalogowaniu) pozostaje bez zmian.
+
 ### Przycisk Ustawienia na karcie gry
 
 Dodany obok `[Graj]` i `[Ankieta]`:
@@ -339,8 +354,42 @@ Krok 2: Dźwięk
   - Przycisk "🔊 Odblokuj dźwięk"
   - Status
 
+Krok 3: Podsumowanie ustawień
+  - Wszystkie kategorie na jednej karcie, same opisy (bez edycji)
+  - [link: Zmień ustawienia → game-settings?id=...]
+
 → [Rozpocznij grę]
 ```
+
+### Krok 3 — szczegóły UI
+
+```
+┌─────────────────────────────────────────────────────┐
+│  Ustawienia gry                                      │
+│                                                      │
+│  [⚠ Używasz domyślnych ustawień — rozważ konfigurację]  ← tylko gdy isDefault
+│                                                      │
+│  Drużyny       Drużyna A vs Drużyna B               │
+│  Wygląd        Motyw: classic, Logo: domyślne        │
+│  Dźwięk        Głośności domyślne, brak plików       │
+│  Pytania       Finał: losowe · Rundy: losowe         │
+│  Rozgrywka     Finał: tak · Mnożniki: 1,1,1,2,3     │
+│                                                      │
+│  Pytania rund:                                       │
+│  (wszystkie — kolejność losowa)                      │
+│                                                      │
+│  Pytania finału:                                     │
+│  (wylosowane przy starcie finału)                    │
+│                                                      │
+│                          [⚙ Zmień ustawienia]       │
+└─────────────────────────────────────────────────────┘
+```
+
+- Każda kategoria: jedna linia z najważniejszymi wartościami
+- Pytania: streszczenie takie jak obecne `summaryRoundsQuestions` / `summaryFinalQuestions` w control
+- `isDefault === true` → żółty badge ostrzegawczy u góry (nie blokuje startu)
+- `[⚙ Zmień ustawienia]` → `location.href = \`game-settings?id=\${gameId}\``
+- Dane ze `settings` załadowanych przy starcie control — nie wymaga dodatkowego fetch
 
 ### Startup w control-new/js/app.js
 ```js
@@ -519,3 +568,4 @@ Analogiczne klucze w `en.js` i `uk.js` z odpowiednimi tłumaczeniami i domyślny
 7. **Zapis + dirty tracking** — `isDirty`, `beforeunload`, pasek dolny
 8. **builder-new.js** — przycisk ⚙ na kartach
 9. **control-new** — usunięcie kroków + `loadSettings` na starcie
+10. **manual.html** — nowa zakładka „Ustawienia rozgrywki" z opisem wszystkich kategorii (Drużyny, Wygląd, Dźwięk, Pytania/Rundy, Pytania/Finał) + jak się do nich dostać z builder-new (przycisk „Ustawienia rozgrywki")

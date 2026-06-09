@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+  <meta name="app-version" content="v2026-06-07T17254"/>
+  <meta charset="UTF-8"/>
+  <meta name="robots" content="noindex, nofollow"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <title data-i18n="gameSettings.title">Familiada — Ustawienia rozgrywki</title>
+
+  <link rel="icon" href="favicon.ico?v=v2026-06-07T17254"/>
+  <link rel="stylesheet" href="css/base.css?v=v2026-06-07T17254"/>
+  <link rel="stylesheet" href="css/game-settings.css?v=v2026-06-07T17254"/>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="js/core/security-warning.js?v=v2026-06-07T17254" defer></script>
+  <script type="module">
+    import { initI18n } from "/translation/translation.js?v=v2026-06-07T17254";
+    await initI18n({ withSwitcher: false });
+    import("/js/pages/game-settings.js?v=v2026-06-07T17254");
+  </script>
+</head>
+<body class="gs-body">
+  <header class="topbar topbar-layout-4">
+    <div class="topbar-section topbar-section-1">
+      <div class="brand">FAMILIADA</div>
+      <button class="btn" id="btnBack" type="button" data-i18n="gameSettings.back">← Builder</button>
+    </div>
+    <div class="topbar-section topbar-section-2">
+      <span class="gs-game-title" id="gsTitle">—</span>
+    </div>
+    <div class="topbar-section topbar-section-3">
+      <span class="badge bad gs-unsaved-badge hidden" id="gsUnsavedBadge" data-i18n="gameSettings.unsaved">Niezapisane</span>
+    </div>
+    <div class="topbar-section topbar-section-4">
+      <button class="btn gold" id="btnSaveAll" type="button" data-i18n="gameSettings.saveAll">Zapisz wszystko</button>
+    </div>
+  </header>
+
+  <div class="gs-layout">
+    <nav class="gs-sidebar" id="gsSidebar">
+      <button class="gs-sidebar-item active" data-cat="teams"   type="button" data-i18n="gameSettings.categories.teams">Drużyny</button>
+      <button class="gs-sidebar-item"        data-cat="display" type="button" data-i18n="gameSettings.categories.display">Wygląd</button>
+      <button class="gs-sidebar-item"        data-cat="sound"   type="button" data-i18n="gameSettings.categories.sound">Dźwięk</button>
+      <button class="gs-sidebar-item"        data-cat="rounds"  type="button" data-i18n="gameSettings.categories.rounds">Pytania — Rundy</button>
+      <button class="gs-sidebar-item" id="sidebarFinale" data-cat="finale" type="button" data-i18n="gameSettings.categories.finale">Pytania — Finał</button>
+      <button class="gs-sidebar-item" data-cat="game" type="button" data-i18n="gameSettings.categories.game">Ustawienia gry</button>
+    </nav>
+
+    <main class="gs-content" id="gsContent">
+      <!-- rendered by JS -->
+    </main>
+
+    <footer class="gs-footer hidden" id="gsFooter">
+      <span class="gs-footer-msg" data-i18n="gameSettings.unsaved">Niezapisane zmiany</span>
+      <button class="btn gold" id="btnSaveFooter" type="button" data-i18n="gameSettings.saveAll">Zapisz</button>
+    </footer>
+  </div>
+</body>
+</html>

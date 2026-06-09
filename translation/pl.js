@@ -831,6 +831,7 @@ const pl = {
       control: "Panel sterowania",
       demo: "Materiały Demo",
       community: "Gry Społeczności",
+      gameSettings: "Ustawienia rozgrywki",
     },
     demo: {
       modalTitle: "Przywrócić pliki demo?",
@@ -2359,6 +2360,120 @@ const pl = {
         bezpośrednio — bez przechodzenia przez moderację.
         Wyróżniają się dedykowaną odznaką.
       </p>`,
+      gameSettings: ``, /* tab zakomentowana w manual.html */
+      /* DRAFT gameSettings (na podstawie sekcji control, bez ustawień):
+      gameSettings: `<h3 class="m-h2">1) Urządzenia</h3>
+
+      <p class="m-p">
+        Pierwszy etap w panelu to podłączenie urządzeń.
+        W górnym pasku panelu widzisz trzy statusy:
+        <span class="m-strong">Wyświetlacz</span>,
+        <span class="m-strong">Prowadzący</span>,
+        <span class="m-strong">Przycisk</span>.
+        Operator rozpoczyna od tego, żeby wszystkie były online (prowadzący jest opcjonalny, możesz prowadzić rozgrywkę z panelu operatora, jeśli brakuje osób).
+      </p>
+
+      <h3 class="m-h3">Krok 1: Wyświetlacz</h3>
+
+      <p class="m-p">
+        W tym kroku panel pokazuje <span class="m-strong">6-cyfrowy kod</span> i kod QR dla wyświetlacza.
+        Najlepiej otworzyć wyświetlacz na telewizorze lub rzutniku w trybie pełnoekranowym (bez pasków przeglądarki).
+        Dopiero gdy wyświetlacz jest online, panel pozwala przejść dalej.
+      </p>
+
+      <p class="m-p">
+        <span class="m-strong">„Czarny ekran"</span> — jeśli po załadowaniu ekranu widzisz pozostałości po starej rozgrywce,
+        użyj tego przycisku, żeby przywrócić czarny ekran na czas ustawień.
+      </p>
+
+      <div class="m-note">
+        <b>Jak wygodnie wyświetlić tablicę na drugim ekranie?</b><br/>
+        Dla najlepszego efektu użyj trybu rozszerzonego ekranu.
+        W systemie <span class="m-strong">Windows</span> przełączysz go skrótem <span class="m-code">Win + P</span>,
+        a na <span class="m-strong">Macu</span> użyj <span class="m-code">⌘ F1</span> (czasem dodatkowo <span class="m-code">Fn</span>).<br/><br/>
+        Następnie otwórz tablicę w nowym oknie przeglądarki, przeciągnij je na drugi ekran i włącz tryb pełnoekranowy.
+        Dzięki temu możesz jednocześnie sterować na swoim urządzeniu i wyświetlać treść dla innych.
+      </div>
+
+      <h3 class="m-h3">Krok 2: Host i Przycisk</h3>
+
+      <p class="m-p">
+        W drugim kroku podłączasz urządzenie prowadzącego i urządzenie przycisku.
+        Panel pokazuje <span class="m-strong">6-cyfrowy kod</span> i kod QR dla każdego z nich.
+        W praktyce najlepiej użyć dwóch osobnych telefonów albo telefonu i tabletu.
+      </p>
+
+      <p class="m-p">
+        W tym kroku jest opcja <span class="m-strong">„QR na wyświetlaczu"</span> —
+        po jej użyciu kody QR mogą zostać pokazane na dużym ekranie (po podłączeniu wyświetlacza),
+        żeby ekipa mogła szybko zeskanować je telefonami.
+        To przyspiesza start na planie, bo nie trzeba przepisywać linków.
+      </p>
+
+      <p class="m-p">
+        Poprzez opcję <span class="m-strong">„Udostępnij"</span> — możesz szybko wysłać komuś linka na maila lub udostępnić swoim subskrybentom. Udostępnione urządzenia będą widoczne na koncie (tylko dla zarejestrowanych) w panelu <span class="m-code">Podłącz urządzenie 📱</span>. Niezarejestrowani dostaną po prostu linka na maila.
+      </p>
+
+      <div class="m-note">
+        <b>Jak wygodnie podłączyć urządzenie?</b><br/>
+        Najprostszy sposób: wejdź na <span class="m-code">familiada.online</span>, kliknij <span class="m-code">Podłącz urządzenie 📱</span>
+        w górnym pasku i wprowadź <span class="m-strong">6-cyfrowy kod</span> widoczny przy urządzeniu w panelu operatora.<br/><br/>
+        Alternatywnie: na urządzeniu mobilnym możesz zeskanować <span class="m-strong">kod QR</span> widoczny w panelu.
+        Dla najlepszego użytkowania sugerowane jest zainstalowanie aplikacji webowej — na stronie <span class="m-strong">Moje gry</span>
+        kliknij przycisk pobierania, aby uzyskać wskazówki.
+      </div>
+
+      <h3 class="m-h3">Tryb bez tabletu prowadzącego</h3>
+
+      <p class="m-p">
+        Jeśli prowadzący nie korzysta z osobnego urządzenia (telefonu/tabletu), zaznacz opcję
+        <span class="m-strong">„Nie używaj tabletu prowadzącego"</span> przy urządzeniu Prowadzący.
+        Po zaznaczeniu: przyciski i kod połączenia dla prowadzącego są wyszarzone,
+        podpięcie urządzenia prowadzącego nie jest wymagane do przejścia dalej,
+        a dot statusu prowadzącego w górnym pasku staje się nieaktywny.
+        Operator może samodzielnie prowadzić rozgrywkę z panelu sterowania.
+      </p>
+
+      <h3 class="m-h3">Fizyczny przycisk (buzzer)</h3>
+
+      <p class="m-p">
+        Jeśli zamiast wirtualnego przycisku w przeglądarce używasz fizycznego buzzera
+        (np. sprzętowego przycisku podłączonego inną ścieżką), zaznacz opcję
+        <span class="m-strong">„Fizyczny przycisk"</span> przy urządzeniu Przycisk.
+        Po zaznaczeniu: podpięcie urządzenia przycisku nie jest wymagane,
+        a przebieg pojedynku zmienia się — operator sam decyduje, kto nacisnął pierwszy.
+      </p>
+
+      <p class="m-p">
+        W trybie fizycznego przycisku przebieg pojedynku wygląda tak:
+      </p>
+
+      <ol class="m-ul">
+        <li>Po uruchomieniu pojedynku pojawiają się dwa przyciski: <span class="m-code">Drużyna A</span> i <span class="m-code">Drużyna B</span>.</li>
+        <li>Operator klika drużynę, która nacisnęła fizyczny przycisk jako pierwsza — przycisk się podświetla.</li>
+        <li>Operator klika <span class="m-code">Zatwierdź</span>, aby potwierdzić wybór i przejść dalej.</li>
+      </ol>
+
+      <div class="m-warn">
+        <b>Uwaga:</b><br/>
+        Jeśli któreś urządzenie rozłączy się w trakcie, panel potrafi pokazać ostrzeżenie.
+        Najczęściej pomaga: wyłączyć oszczędzanie baterii, nie minimalizować przeglądarki
+        oraz trzymać urządzenia na jednej stabilnej sieci Wi-Fi.
+      </div>
+
+      <h3 class="m-h3">Krok 3: Dźwięk</h3>
+
+      <p class="m-p">
+        Przeglądarki blokują automatyczne odtwarzanie dźwięku,
+        dopóki użytkownik nie wykona „gestu" (kliknięcia).
+        Dlatego panel ma osobny krok odblokowania dźwięku.
+        Bez tego możesz nie usłyszeć sygnałów, które wspierają tempo gry.
+      </p>
+
+      <h3 class="m-h3">Podsumowanie</h3>
+
+      <p class="m-p">Tutaj zobaczysz podsumowanie wybranych ustawień.</p>`,
+      */
     },
   },
   privacy: {
@@ -2511,6 +2626,8 @@ const pl = {
       exportBaseMobile: "Exp.bz",
       import: "Importuj",
       importMobile: "Imp",
+      settings: "Ustawienia rozgrywki",
+      settingsMobile: "Ustaw.",
     },
     preview: {
       noQuestions: "Brak pytań.",
@@ -5163,6 +5280,83 @@ const pl = {
   },
   security: {
     selfXssWarning: "Używanie tej konsoli może pozwolić atakującym na podszywanie się pod Ciebie i kradzież informacji przy użyciu ataku zwanego Self-XSS. Nie wprowadzaj ani nie wklejaj kodu, którego nie rozumiesz.",
+  },
+  gameSettings: {
+    title: "Ustawienia gry",
+    back: "← Builder",
+    saveAll: "Zapisz wszystko",
+    unsaved: "Niezapisane zmiany",
+    unsavedConfirm: "Masz niezapisane zmiany. Czy chcesz opuścić stronę?",
+    saved: "Zapisano",
+    saveError: "Błąd zapisu",
+    categories: {
+      teams: "Drużyny",
+      display: "Wygląd",
+      sound: "Dźwięk",
+      questions: "Pytania",
+      rounds: "Rundy",
+      finale: "Finał",
+      game: "Ustawienia gry",
+    },
+    teams: {
+      nameA: "Nazwa drużyny A",
+      nameB: "Nazwa drużyny B",
+      restoreDefaults: "Przywróć domyślne",
+      defaultA: "Drużyna A",
+      defaultB: "Drużyna B",
+    },
+    display: {
+      logo: "Logo",
+      logoDefault: "Domyślne",
+      logoNone: "Bez logo",
+      logoMissing: "Logo zostało usunięte — używamy domyślnego",
+      frameMode: "Tryb ramki",
+      frameModeClassic: "Klasyczna",
+      frameModeMinimal: "Minimalna",
+      preview: "Podgląd wyświetlacza",
+      colors: "Kolory",
+      colorA: "Kolor drużyny A",
+      colorB: "Kolor drużyny B",
+      colorBg: "Kolor tła",
+      colorDot: "Kolor kropki",
+      colorsReset: "Resetuj kolory",
+      theme: "Motyw",
+    },
+    questions: {
+      modeRandom: "Losowe",
+      modeOrdered: "Ustalona kolejność",
+      countPerRound: "Pytań per runda",
+      roundsCount: "Liczba rund",
+      addQuestion: "+ Dodaj pytanie z puli",
+      finaleTitle: "Pytania finałowe",
+      finaleModeRandom: "Losowe z puli",
+      finaleModeSelected: "Ustalone",
+      finaleCount: "Liczba pytań finałowych",
+      addFinaleQuestion: "+ Dodaj pytanie finałowe",
+    },
+    finale: {
+      hasFinal: "Gramy finał?",
+      yes: "Tak",
+      no: "Nie",
+      disabled: "Finał wyłączony — pytania finałowe nie będą używane.",
+      randomize: "Losuj {n} pytań",
+      rerandomize: "Losuj ponownie",
+      randomLocked: "Wylosowane pytania finału (niemodyfikowalne):",
+    },
+    game: {
+      roundMultipliers: "Mnożniki rund",
+      roundMultipliersHint: "Po przecinku, np. 1,1,1,2,3. Ostatnia wartość powtarza się dla kolejnych rund.",
+      finalMinPoints: "Próg do finału",
+      finalMinPointsHint: "Minimalna suma punktów potrzebna do wejścia w finał.",
+      finalTarget: "Cel finału",
+      endMode: "Zakończenie gry",
+      endModeLogo: "Pokaż logo",
+      endModePoints: "Pokaż punkty",
+      endModeMoney: "Pokaż kwotę (po finale)",
+      prizeMultiplier: "Mnożnik nagrody",
+      prizeAmount: "Kwota nagrody głównej",
+      restoreDefaults: "Przywróć domyślne",
+    },
   },
 };
 

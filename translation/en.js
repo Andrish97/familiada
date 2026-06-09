@@ -829,6 +829,7 @@ const en = {
       control: "Control panel",
       demo: "Demo Materials",
       community: "Community Games",
+      gameSettings: "Game settings",
     },
     demo: {
       modalTitle: "Restore demo files?",
@@ -2356,6 +2357,120 @@ const en = {
         directly — without going through moderation.
         They are distinguished by a dedicated badge.
       </p>`,
+      gameSettings: ``, /* tab commented out in manual.html */
+      /* DRAFT gameSettings (based on control section, without settings):
+      gameSettings: `<h3 class="m-h2">1) Devices</h3>
+
+      <p class="m-p">
+        The first stage in the panel is connecting devices.
+        In the top bar you see three statuses:
+        <span class="m-strong">Display</span>,
+        <span class="m-strong">Host</span>,
+        <span class="m-strong">Buzzer</span>.
+        The operator starts by making sure all are online.
+      </p>
+
+      <h3 class="m-h3">Step 1: Display</h3>
+
+      <p class="m-p">
+        In this step the panel shows a <span class="m-strong">6-digit code</span> and QR code for the display.
+        It's best to open the display on a TV or projector,
+        in full-screen mode (no browser bars).
+        Only when the display is online will the panel allow you to proceed.
+      </p>
+
+      <p class="m-p">
+        <span class="m-strong">"Black screen"</span> — if after loading the display you see leftovers from a previous game,
+        use this button to restore a black screen while you finish setting up.
+      </p>
+
+      <div class="m-note">
+        <b>How to show the board on a second screen?</b><br/>
+        For the best result use extended display mode.
+        On <span class="m-strong">Windows</span> press <span class="m-code">Win + P</span>,
+        on <span class="m-strong">Mac</span> use <span class="m-code">⌘ F1</span> (sometimes also <span class="m-code">Fn</span>).<br/><br/>
+        Then open the board in a new browser window, drag it to the second screen (TV or monitor) and enable full-screen mode.
+        This lets you control the game on your device while displaying content for others.
+      </div>
+
+      <h3 class="m-h3">Step 2: Host and buzzer</h3>
+
+      <p class="m-p">
+        In the second step you connect the host device and the buzzer device.
+        The panel shows a 6-digit code and QR code for each.
+        In practice it's best to use two separate phones or a phone and a tablet.
+      </p>
+
+      <p class="m-p">
+        In this step there is an option <span class="m-strong">"QR on display"</span> —
+        after using it the QR codes can be shown on the large screen,
+        so the crew can quickly scan them with phones.
+        This speeds up the start on set because there is no need to type links manually.
+      </p>
+
+      <p class="m-p">
+        Via the <span class="m-strong">"Share"</span> option — you can quickly send someone a link by email or share with your subscribers.
+        Shared devices will appear in their account (registered users only) in the <span class="m-code">Connect device 📱</span> panel.
+        Non-registered users will simply receive an email with the link.
+      </p>
+
+      <div class="m-note">
+        <b>How to conveniently connect a device?</b><br/>
+        Easiest way: go to <span class="m-code">familiada.online</span>, click <span class="m-code">Connect device 📱</span>
+        in the top bar and enter the <span class="m-strong">6-digit code</span> shown next to the device in the operator panel.<br/><br/>
+        Alternatively: on a mobile device you can scan the <span class="m-strong">QR code</span> visible in the panel.
+        For the best experience we recommend installing the web app — go to <span class="m-strong">My games</span>
+        and click the download button for installation instructions.
+      </div>
+
+      <h3 class="m-h3">Mode without host tablet</h3>
+
+      <p class="m-p">
+        If the host is not using a separate device (phone/tablet), check the option
+        <span class="m-strong">"Don't use host tablet"</span> next to the Host device.
+        Once checked: the host device buttons and connection code are grayed out,
+        the host device is not required to proceed,
+        and the host status dot in the top bar becomes inactive.
+        The operator can run the game entirely from the control panel.
+      </p>
+
+      <h3 class="m-h3">Physical buzzer</h3>
+
+      <p class="m-p">
+        If you use a physical buzzer instead of the browser-based button,
+        check the option <span class="m-strong">"Physical buzzer"</span> next to the Buzzer device.
+        Once checked: the buzzer device is not required,
+        and the duel flow changes — the operator decides who pressed first.
+      </p>
+
+      <p class="m-p">Physical buzzer duel flow:</p>
+
+      <ol class="m-ul">
+        <li>After starting a duel, two buttons appear: <span class="m-code">Team A</span> and <span class="m-code">Team B</span>.</li>
+        <li>The operator clicks the team that pressed the physical buzzer first — the button highlights.</li>
+        <li>The operator clicks <span class="m-code">Confirm</span> to confirm the selection and proceed.</li>
+      </ol>
+
+      <div class="m-warn">
+        <b>Warning:</b><br/>
+        If any device disconnects during the game, the panel can show a warning.
+        Most often it helps to disable battery saving, avoid minimizing the browser,
+        and keep devices on one stable Wi-Fi network.
+      </div>
+
+      <h3 class="m-h3">Step 3: Sound</h3>
+
+      <p class="m-p">
+        Browsers block automatic sound playback
+        until the user performs a "gesture" (click).
+        That's why the panel has a separate step to unlock sound.
+        Without it you may not hear signals that help keep the game pace.
+      </p>
+
+      <h3 class="m-h3">Summary</h3>
+
+      <p class="m-p">Here you will see a summary of the settings you have chosen.</p>`,
+      */
     },
   },
   privacy: {
@@ -2516,6 +2631,8 @@ const en = {
       exportBaseMobile: "Exp.base",
       import: "Import",
       importMobile: "Import",
+      settings: "Game Settings",
+      settingsMobile: "Settings",
     },
     preview: {
       noQuestions: "No questions.",
@@ -5162,5 +5279,83 @@ const en = {
   security: {
     selfXssWarning: "Using this console may allow attackers to impersonate you and steal your information using an attack called Self-XSS. Do not enter or paste code that you do not understand.",
   },
+  gameSettings: {
+    title: "Game Settings",
+    back: "← Builder",
+    saveAll: "Save all",
+    unsaved: "Unsaved changes",
+    unsavedConfirm: "You have unsaved changes. Leave the page?",
+    saved: "Saved",
+    saveError: "Save error",
+    categories: {
+      teams: "Teams",
+      display: "Display",
+      sound: "Sound",
+      questions: "Questions",
+      rounds: "Rounds",
+      finale: "Finale",
+      game: "Game settings",
+    },
+    teams: {
+      nameA: "Team A name",
+      nameB: "Team B name",
+      restoreDefaults: "Restore defaults",
+      defaultA: "Team A",
+      defaultB: "Team B",
+    },
+    display: {
+      logo: "Logo",
+      logoDefault: "Default",
+      logoNone: "No logo",
+      logoMissing: "Logo was deleted — using default",
+      frameMode: "Frame mode",
+      frameModeClassic: "Classic",
+      frameModeMinimal: "Minimal",
+      preview: "Display preview",
+      colors: "Colors",
+      colorA: "Team A color",
+      colorB: "Team B color",
+      colorBg: "Background color",
+      colorDot: "Dot color",
+      colorsReset: "Reset colors",
+      theme: "Theme",
+    },
+    questions: {
+      modeRandom: "Random",
+      modeOrdered: "Fixed order",
+      countPerRound: "Questions per round",
+      roundsCount: "Number of rounds",
+      addQuestion: "+ Add question from pool",
+      finaleTitle: "Finale questions",
+      finaleModeRandom: "Random from pool",
+      finaleModeSelected: "Fixed",
+      finaleCount: "Number of finale questions",
+      addFinaleQuestion: "+ Add finale question",
+    },
+    finale: {
+      hasFinal: "Play finale?",
+      yes: "Yes",
+      no: "No",
+      disabled: "Finale disabled — finale questions will not be used.",
+      randomize: "Draw {n} questions",
+      rerandomize: "Draw again",
+      randomLocked: "Drawn finale questions (read-only):",
+    },
+    game: {
+      roundMultipliers: "Round multipliers",
+      roundMultipliersHint: "Comma-separated, e.g. 1,1,1,2,3. Last value repeats for further rounds.",
+      finalMinPoints: "Finale threshold",
+      finalMinPointsHint: "Minimum total points required to enter the finale.",
+      finalTarget: "Finale target",
+      endMode: "Game end screen",
+      endModeLogo: "Show logo",
+      endModePoints: "Show points",
+      endModeMoney: "Show prize amount (after finale)",
+      prizeMultiplier: "Prize multiplier",
+      prizeAmount: "Main prize amount",
+      restoreDefaults: "Restore defaults",
+    },
+  },
 };
+export default en;
 export default en;
