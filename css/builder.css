@@ -66,7 +66,7 @@ body.builder-body > main.wrap{
 /* W builder.css masz własną .wrap – przywracamy sensowny padding (żeby nie lepiło do krawędzi). */
 .wrap{
   margin: 0 auto;
-  padding: 18px;
+  padding: 10px 18px 18px;
   box-sizing: border-box;
 }
 
@@ -75,7 +75,7 @@ body.builder-body > main.wrap{
   .wrap{
     padding: 15px;
   }
-  #btnPlay, #btnSettings{ display: none; }
+  .btn-group{ display: none; }
 }
 
 /* --- BAR (nagłówek listy) nie może rozpychać wysokości --- */
@@ -114,8 +114,23 @@ body.builder-body > main.wrap{
 .actions{
   display: flex;
   gap: 8px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  align-items: center;
   margin: 10px;
+}
+
+.btn-group{
+  display: inline-flex;
+  align-items: stretch;
+}
+.btn-group > .btn:not(:last-child){
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-right: 1px solid rgba(255,255,255,.15);
+}
+.btn-group > .btn:not(:first-child){
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
 }
 
 /* --- BUILDER SHELL: wypełnia resztę ekranu --- */
