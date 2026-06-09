@@ -4,11 +4,129 @@ import { requireAuth } from "../core/auth.js?v=v2026-06-09T17173";
 import { confirmModal, alertModal } from "../core/modal.js?v=v2026-06-09T17173";
 import { loadSettings, saveSettings, getDefaults } from "../core/game-settings.js?v=v2026-06-09T17173";
 import { guardDesktopOnly } from "../core/device-guard.js?v=v2026-06-09T17173";
+import { initUiSelect } from "../core/ui-select.js?v=v2026-06-09T17173";
+import { loadSfxManifest, getSfxCategories } from "../core/sfx-new.js?v=v2026-06-09T17173";
 
 const SFX_KEYS = [
   "show_intro", "round_transition", "round_transition2", "final_theme",
   "buzzer_press", "answer_correct", "answer_wrong", "answer_repeat", "time_over", "bells",
 ];
+
+/* ===== COLOR HELPERS ===== */
+function normHex(h) {
+  h = h.replace(/^#/, "").trim();
+  if (h.length === 3) h = h.split("").map(c => c + c).join("");
+  return h.length === 6 ? "#" + h.toLowerCase() : "#000000";
+}
+
+function hexToRgb(hex) {
+  const h = normHex(hex).slice(1);
+  return {
+    r: parseInt(h.slice(0,2), 16),
+    g: parseInt(h.slice(2,4), 16),
+    b: parseInt(h.slice(4,6), 16),
+  };
+}
+
+function rgbToHex(r, g, b) {
+  return "#" + [r,g,b].map(v => Math.max(0,Math.min(255,v)).toString(16).padStart(2,"0")).join("");
+}
+
+let _colorModalTarget = null;
+
+function openGsColorModal(target, title) {
+  _colorModalTarget = target;
+  const hex = state.settings.display.colors[target] || "#000000";
+  const { r, g, b } = hexToRgb(hex);
+  const overlay = document.getElementById("gsColorModal");
+  if (!overlay) return;
+  document.getElementById("gsColorModalTitle").textContent = title || target;
+  document.getElementById("gsColorPreview").style.background = hex;
+  document.getElementById("gsColorHex").value = hex;
+  document.getElementById("gsColorR").value = r;
+  document.getElementById("gsColorG").value = g;
+  document.getElementById("gsColorB").value = b;
+  document.getElementById("gsColorRVal").textContent = r;
+  document.getElementById("gsColorGVal").textContent = g;
+  document.getElementById("gsColorBVal").textContent = b;
+  updateRngTrack("gsColorR", r, 255);
+  updateRngTrack("gsColorG", g, 255);
+  updateRngTrack("gsColorB", b, 255);
+  overlay.classList.remove("hidden");
+}
+
+function closeGsColorModal() {
+  document.getElementById("gsColorModal")?.classList.add("hidden");
+  _colorModalTarget = null;
+}
+
+function updateRngTrack(id, val, max) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const pct = (val / max) * 100;
+  el.style.setProperty("--track", `linear-gradient(to right,#000 0%,#fff ${pct}%,rgba(255,255,255,.15) ${pct}%)`);
+}
+
+function applyGsColorFromModal() {
+  if (!_colorModalTarget) return;
+  const hex = normHex(document.getElementById("gsColorHex")?.value || "#000000");
+  state.settings.display.colors[_colorModalTarget] = hex;
+  const swatch = document.getElementById("gsSwatch" + _colorModalTarget);
+  if (swatch) swatch.style.background = hex;
+  markDirty();
+  refreshPreviewColor(_colorModalTarget, hex);
+}
+
+function initColorModal() {
+  const rSlider = document.getElementById("gsColorR");
+  const gSlider = document.getElementById("gsColorG");
+  const bSlider = document.getElementById("gsColorB");
+  const hexInput = document.getElementById("gsColorHex");
+  const preview = document.getElementById("gsColorPreview");
+
+  function updateFromSliders() {
+    const r = Number(rSlider.value);
+    const g = Number(gSlider.value);
+    const b = Number(bSlider.value);
+    const hex = rgbToHex(r, g, b);
+    if (preview) preview.style.background = hex;
+    if (hexInput) hexInput.value = hex;
+    document.getElementById("gsColorRVal").textContent = r;
+    document.getElementById("gsColorGVal").textContent = g;
+    document.getElementById("gsColorBVal").textContent = b;
+    updateRngTrack("gsColorR", r, 255);
+    updateRngTrack("gsColorG", g, 255);
+    updateRngTrack("gsColorB", b, 255);
+    applyGsColorFromModal();
+  }
+
+  rSlider?.addEventListener("input", updateFromSliders);
+  gSlider?.addEventListener("input", updateFromSliders);
+  bSlider?.addEventListener("input", updateFromSliders);
+
+  hexInput?.addEventListener("input", () => {
+    const raw = hexInput.value.trim();
+    const cleaned = raw.replace(/^#/, "");
+    if (cleaned.length === 6 && /^[0-9a-fA-F]{6}$/.test(cleaned)) {
+      const hex = "#" + cleaned.toLowerCase();
+      const { r, g, b } = hexToRgb(hex);
+      if (rSlider) rSlider.value = r;
+      if (gSlider) gSlider.value = g;
+      if (bSlider) bSlider.value = b;
+      document.getElementById("gsColorRVal").textContent = r;
+      document.getElementById("gsColorGVal").textContent = g;
+      document.getElementById("gsColorBVal").textContent = b;
+      updateRngTrack("gsColorR", r, 255);
+      updateRngTrack("gsColorG", g, 255);
+      updateRngTrack("gsColorB", b, 255);
+      if (preview) preview.style.background = hex;
+      applyGsColorFromModal();
+    }
+  });
+
+  document.getElementById("gsColorModalClose")?.addEventListener("click", closeGsColorModal);
+  document.getElementById("gsColorModalDone")?.addEventListener("click", closeGsColorModal);
+}
 
 /* ===== STATE ===== */
 const state = {
@@ -209,7 +327,7 @@ function refreshPreviewTheme(key) {
 
 /* ===== DISPLAY ===== */
 function renderDisplay() {
-  const { logoId, frameMode, theme, colors } = state.settings.display;
+  const { logoId, theme, colors } = state.settings.display;
 
   const logoOptions = [
     `<option value=""${!logoId ? " selected" : ""}>${t("gameSettings.display.logoDefault")}</option>`,
@@ -219,10 +337,6 @@ function renderDisplay() {
     ),
   ].join("");
 
-  const themeOptions = state.themes.map(th =>
-    `<option value="${esc(th.key)}"${th.key === theme ? " selected" : ""}>${esc(th.label)}</option>`
-  ).join("");
-
   const colorDefs = [
     { key: "A",          label: t("gameSettings.display.colorA"),   val: colors.A },
     { key: "B",          label: t("gameSettings.display.colorB"),   val: colors.B },
@@ -230,13 +344,20 @@ function renderDisplay() {
     { key: "DOT",        label: t("gameSettings.display.colorDot"), val: colors.DOT },
   ];
   const colorSwatches = colorDefs.map(cd =>
-    `<div class="gs-color-item">
-       <input type="color" class="gs-color-input" id="gsColor${cd.key}" value="${esc(cd.val)}"/>
-       <span>${cd.label}</span>
+    `<div class="colorItem">
+       <button class="swatchBtn" id="gsSwatch${cd.key}" type="button" style="background:${esc(cd.val)};"></button>
+       <span class="lbl2">${cd.label}</span>
      </div>`
   ).join("");
 
   const hasPreview = !!state.shareKeyDisplay;
+
+  const themeSelectId = "gsThemeSelect";
+  const themeOptions = state.themes.map(th =>
+    `<div class="ui-select-option" data-value="${esc(th.key)}"${th.key === theme ? ' data-selected="true"' : ""}>${esc(th.label)}</div>`
+  ).join("");
+  const currentTheme = state.themes.find(th => th.key === theme);
+  const currentThemeLabel = currentTheme ? esc(currentTheme.label) : (theme ? esc(theme) : "—");
 
   gsContent.innerHTML = `
     <div class="gs-cat-title">${t("gameSettings.categories.display")}</div>
@@ -247,27 +368,20 @@ function renderDisplay() {
           <select class="inp" id="gsLogoSelect" style="max-width:260px;">${logoOptions}</select>
         </div>
         <div class="gs-field" style="margin-top:16px;">
-          <div class="gs-label">${t("gameSettings.display.frameMode")}</div>
-          <div class="gs-frame-radios">
-            <label class="gs-radio-item">
-              <input type="radio" name="gsFrameMode" value="classic" ${frameMode !== "minimal" ? "checked" : ""}/>
-              ${t("gameSettings.display.frameModeClassic")}
-            </label>
-            <label class="gs-radio-item">
-              <input type="radio" name="gsFrameMode" value="minimal" ${frameMode === "minimal" ? "checked" : ""}/>
-              ${t("gameSettings.display.frameModeMinimal")}
-            </label>
-          </div>
-        </div>
-        <div class="gs-field" style="margin-top:16px;">
           <div class="gs-label">${t("gameSettings.display.colors")}</div>
-          <div class="gs-color-row">${colorSwatches}</div>
+          <div class="colorRow">${colorSwatches}</div>
           <button class="btn btn-sm" id="btnColorsReset" type="button" style="margin-top:10px;">${t("gameSettings.display.colorsReset")}</button>
         </div>
         ${themeOptions ? `
         <div class="gs-field" style="margin-top:16px;">
           <div class="gs-label">${t("gameSettings.display.theme")}</div>
-          <select class="inp" id="gsThemeSelect" style="max-width:200px;">${themeOptions}</select>
+          <div class="ui-select" id="${themeSelectId}" style="max-width:260px;">
+            <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
+              <span class="ui-select-label">${currentThemeLabel}</span>
+              <span class="ui-select-caret" aria-hidden="true">▾</span>
+            </button>
+            <div class="ui-select-menu" role="listbox">${themeOptions}</div>
+          </div>
         </div>` : ""}
       </div>
       <div>
@@ -289,20 +403,10 @@ function renderDisplay() {
     refreshPreviewLogo();
   });
 
-  document.querySelectorAll("input[name=gsFrameMode]").forEach(r => {
-    r.addEventListener("change", (e) => {
-      state.settings.display.frameMode = e.target.value;
-      markDirty();
-    });
-  });
-
-  ["A", "B", "BACKGROUND", "DOT"].forEach(key => {
-    document.getElementById(`gsColor${key}`)?.addEventListener("input", (e) => {
-      state.settings.display.colors[key] = e.target.value;
-      markDirty();
-      refreshPreviewColor(key, e.target.value);
-    });
-  });
+  document.getElementById("gsSwatchA")?.addEventListener("click", () => openGsColorModal("A", t("gameSettings.display.colorA")));
+  document.getElementById("gsSwatchB")?.addEventListener("click", () => openGsColorModal("B", t("gameSettings.display.colorB")));
+  document.getElementById("gsSwatchBACKGROUND")?.addEventListener("click", () => openGsColorModal("BACKGROUND", t("gameSettings.display.colorBg")));
+  document.getElementById("gsSwatchDOT")?.addEventListener("click", () => openGsColorModal("DOT", t("gameSettings.display.colorDot")));
 
   document.getElementById("btnColorsReset")?.addEventListener("click", () => {
     const defColors = getDefaults(state.locale).display.colors;
@@ -311,54 +415,169 @@ function renderDisplay() {
     renderDisplay();
   });
 
-  document.getElementById("gsThemeSelect")?.addEventListener("change", (e) => {
-    state.settings.display.theme = e.target.value;
-    markDirty();
-    refreshPreviewTheme(e.target.value);
-  });
+  // Theme select via ui-select API
+  const themeSelectEl = document.getElementById(themeSelectId);
+  if (themeSelectEl && themeOptions) {
+    const btn = themeSelectEl.querySelector(".ui-select-btn");
+    const menu = themeSelectEl.querySelector(".ui-select-menu");
+    if (btn && menu) {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const isOpen = themeSelectEl.classList.contains("open");
+        document.querySelectorAll(".ui-select.open").forEach(el => el.classList.remove("open"));
+        if (!isOpen) themeSelectEl.classList.add("open");
+      });
+      menu.querySelectorAll(".ui-select-option").forEach(opt => {
+        opt.addEventListener("click", () => {
+          const val = opt.dataset.value;
+          menu.querySelectorAll(".ui-select-option").forEach(o => o.removeAttribute("data-selected"));
+          opt.setAttribute("data-selected", "true");
+          themeSelectEl.querySelector(".ui-select-label").textContent = opt.textContent;
+          themeSelectEl.classList.remove("open");
+          state.settings.display.theme = val;
+          markDirty();
+          refreshPreviewTheme(val);
+        });
+      });
+      document.addEventListener("click", () => {
+        themeSelectEl?.classList.remove("open");
+      });
+    }
+  }
 }
 
 /* ===== SOUND ===== */
 function renderSound() {
-  const volumes = state.settings.sound.volumes;
+  const categories = getSfxCategories();
+  const lang = document.documentElement.lang || "pl";
 
-  const rows = SFX_KEYS.map(key => {
-    const vol = volumes[key] ?? 100;
-    return `
-      <div class="gs-sfx-name">${t("control.sfxDesc." + key)}</div>
-      <div class="gs-vol-wrap">
-        <input type="range" min="0" max="100" step="1" value="${vol}"
-          class="gs-vol-slider" data-key="${key}" />
-        <span class="gs-vol-val" id="gsVol-${key}">${vol}%</span>
-      </div>`;
+  if (!categories.length) {
+    gsContent.innerHTML = `<div class="gs-cat-title">${t("gameSettings.categories.sound")}</div><div class="gs-section"><div class="gs-hint">Ładowanie...</div></div>`;
+    return;
+  }
+
+  const rows = categories.map(cat => {
+    const key = cat.key;
+    const vol = state.settings.sound.volumes[key] ?? 100;
+    const currentVariant = state.settings.sound.variants[key] || cat.sounds[0]?.file || "";
+
+    const optionsHtml = cat.sounds.map(s => {
+      const file = s.file.split("?")[0];
+      const label = typeof s.label === "object" ? (s.label[lang] ?? s.label["pl"] ?? s.file) : s.file;
+      const selected = file === currentVariant ? ' data-selected="true"' : "";
+      return `<div class="ui-select-option" data-value="${file}"${selected}>${label}</div>`;
+    }).join("");
+
+    const selectedSound = cat.sounds.find(s => s.file.split("?")[0] === currentVariant) || cat.sounds[0];
+    const selectedLabel = selectedSound
+      ? (typeof selectedSound.label === "object" ? (selectedSound.label[lang] ?? selectedSound.label["pl"] ?? selectedSound.file) : selectedSound.file)
+      : currentVariant;
+
+    const desc = t("control.sfxDesc." + key) || key;
+
+    return `<div class="sfx-row" data-key="${key}">
+      <div class="sfx-row-desc">${desc}</div>
+      <div class="sfx-variant-wrap">
+        <div class="ui-select" id="sfxSelect_${key}">
+          <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
+            <span class="ui-select-label">${selectedLabel}</span>
+            <span class="ui-select-caret" aria-hidden="true">▾</span>
+          </button>
+          <div class="ui-select-menu" role="listbox">${optionsHtml}</div>
+        </div>
+      </div>
+      <button class="sfx-preview-btn" type="button" data-sfx-preview="${key}">▶</button>
+      <div class="sfx-vol-wrap">
+        <input type="range" class="sfx-vol" min="0" max="100" value="${vol}" data-sfx-vol="${key}"/>
+        <span class="sfx-vol-label" id="sfxVolLabel_${key}">${vol}%</span>
+      </div>
+    </div>`;
   }).join("");
+
+  const cloudSave = state.settings.sound.cloudSave;
 
   gsContent.innerHTML = `
     <div class="gs-cat-title">${t("gameSettings.categories.sound")}</div>
     <div class="gs-section">
-      <div class="gs-sfx-table">
-        <div class="gs-sfx-head">Dźwięk</div>
-        <div class="gs-sfx-head" style="text-align:right;">Głośność</div>
-        ${rows}
+      <div id="sfxTableGs">${rows}</div>
+      <div class="sfx-save-row" style="margin-top:14px;">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+          <input type="checkbox" id="chkSfxSaveGs" ${cloudSave ? "checked" : ""}/>
+          <span>${t("control.sfxSaveCloud") || "Zapisz dźwięki w chmurze"}</span>
+        </label>
       </div>
-      <div class="rowBtns" style="margin-top:16px;">
+      <div class="rowBtns" style="margin-top:12px;">
         <button class="btn btn-sm" id="btnSoundReset" type="button">${t("gameSettings.teams.restoreDefaults")}</button>
       </div>
     </div>`;
 
-  gsContent.querySelectorAll(".gs-vol-slider").forEach(slider => {
+  // Wire up sfx selects
+  const tableEl = document.getElementById("sfxTableGs");
+
+  // Close open selects when clicking outside
+  const sfxOutsideClick = () => {
+    tableEl?.querySelectorAll(".ui-select.open").forEach(el => el.classList.remove("open"));
+  };
+  document.addEventListener("click", sfxOutsideClick);
+
+  tableEl.querySelectorAll(".ui-select").forEach(selectEl => {
+    const key = selectEl.id.replace("sfxSelect_", "");
+    const btn = selectEl.querySelector(".ui-select-btn");
+    const menu = selectEl.querySelector(".ui-select-menu");
+    if (!btn || !menu) return;
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const isOpen = selectEl.classList.contains("open");
+      tableEl.querySelectorAll(".ui-select.open").forEach(el => el.classList.remove("open"));
+      if (!isOpen) selectEl.classList.add("open");
+    });
+    menu.querySelectorAll(".ui-select-option").forEach(opt => {
+      opt.addEventListener("click", () => {
+        const file = opt.dataset.value;
+        menu.querySelectorAll(".ui-select-option").forEach(o => o.removeAttribute("data-selected"));
+        opt.setAttribute("data-selected", "true");
+        selectEl.querySelector(".ui-select-label").textContent = opt.textContent;
+        selectEl.classList.remove("open");
+        state.settings.sound.variants[key] = file;
+        markDirty();
+      });
+    });
+  });
+
+  // Volume sliders
+  tableEl.querySelectorAll(".sfx-vol").forEach(slider => {
     slider.addEventListener("input", () => {
-      const key = slider.dataset.key;
+      const key = slider.dataset.sfxVol;
       const val = Number(slider.value);
       state.settings.sound.volumes[key] = val;
-      const lbl = document.getElementById("gsVol-" + key);
+      const lbl = document.getElementById("sfxVolLabel_" + key);
       if (lbl) lbl.textContent = val + "%";
       markDirty();
     });
   });
 
-  document.getElementById("btnSoundReset").addEventListener("click", () => {
-    state.settings.sound.volumes = { ...getDefaults(state.locale).sound.volumes };
+  // Preview buttons
+  tableEl.querySelectorAll("[data-sfx-preview]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const key = btn.dataset.sfxPreview;
+      const cat = getSfxCategories().find(c => c.key === key);
+      if (!cat) return;
+      const variant = state.settings.sound.variants[key] || cat.sounds[0]?.file || "";
+      try {
+        new Audio(`/audio_new/${cat.folder}/${variant}`).play();
+      } catch {}
+    });
+  });
+
+  // Cloud save
+  document.getElementById("chkSfxSaveGs")?.addEventListener("change", (e) => {
+    state.settings.sound.cloudSave = e.target.checked;
+    markDirty();
+  });
+
+  document.getElementById("btnSoundReset")?.addEventListener("click", () => {
+    state.settings.sound = { ...getDefaults(state.locale).sound };
+    document.removeEventListener("click", sfxOutsideClick);
     renderSound();
     markDirty();
   });
@@ -393,14 +612,14 @@ function renderRounds() {
     <div class="gs-section">
       <div class="gs-field">
         <div class="gs-label">Tryb pytań rund</div>
-        <div class="gs-radio-group">
-          <label class="gs-radio-item">
+        <div class="toggle-group">
+          <label class="toggle-item">
             <input type="radio" name="gsRoundsMode" value="random" ${!isOrdered ? "checked" : ""}/>
-            ${t("gameSettings.questions.modeRandom")}
+            <span class="toggle-slider" data-text="${t("gameSettings.questions.modeRandom")}"></span>
           </label>
-          <label class="gs-radio-item">
+          <label class="toggle-item">
             <input type="radio" name="gsRoundsMode" value="ordered" ${isOrdered ? "checked" : ""}/>
-            ${t("gameSettings.questions.modeOrdered")}
+            <span class="toggle-slider" data-text="${t("gameSettings.questions.modeOrdered")}"></span>
           </label>
         </div>
       </div>
@@ -531,14 +750,14 @@ function renderFinale() {
     finaleBody = `
       <div class="gs-field" style="margin-top:16px;">
         <div class="gs-label">${t("gameSettings.questions.finaleTitle")}</div>
-        <div class="gs-radio-group">
-          <label class="gs-radio-item">
+        <div class="toggle-group">
+          <label class="toggle-item">
             <input type="radio" name="gsFinaleQMode" value="random" ${!isSelected ? "checked" : ""}/>
-            ${t("gameSettings.questions.finaleModeRandom")}
+            <span class="toggle-slider" data-text="${t("gameSettings.questions.finaleModeRandom")}"></span>
           </label>
-          <label class="gs-radio-item">
+          <label class="toggle-item">
             <input type="radio" name="gsFinaleQMode" value="selected" ${isSelected ? "checked" : ""}/>
-            ${t("gameSettings.questions.finaleModeSelected")}
+            <span class="toggle-slider" data-text="${t("gameSettings.questions.finaleModeSelected")}"></span>
           </label>
         </div>
       </div>
@@ -561,14 +780,14 @@ function renderFinale() {
     <div class="gs-section">
       <div class="gs-field">
         <div class="gs-label">${t("gameSettings.finale.hasFinal")}</div>
-        <div class="gs-radio-group">
-          <label class="gs-radio-item">
+        <div class="toggle-group">
+          <label class="toggle-item">
             <input type="radio" name="gsHasFinal" value="yes" ${hasFinal ? "checked" : ""}/>
-            ${t("gameSettings.finale.yes")}
+            <span class="toggle-slider" data-text="${t("gameSettings.finale.yes")}"></span>
           </label>
-          <label class="gs-radio-item">
+          <label class="toggle-item">
             <input type="radio" name="gsHasFinal" value="no" ${!hasFinal ? "checked" : ""}/>
-            ${t("gameSettings.finale.no")}
+            <span class="toggle-slider" data-text="${t("gameSettings.finale.no")}"></span>
           </label>
         </div>
       </div>
@@ -781,12 +1000,13 @@ async function init() {
     sidebarFinale.style.display = "none";
   }
 
-  // Load settings, questions, logos, themes in parallel
+  // Load settings, questions, logos, themes, sfx manifest in parallel
   const [settings, { data: questions }, { data: logos }, themesJson] = await Promise.all([
     loadSettings(gameId, state.locale),
     sb().from("questions").select("id,ord,text").eq("game_id", gameId).order("ord"),
     sb().from("user_logos").select("id,name,type").eq("user_id", user.id).order("created_at", { ascending: false }),
     fetch("/display/js/themes.json").then(r => r.json()).catch(() => null),
+    loadSfxManifest(),
   ]);
 
   state.settings  = settings;
@@ -802,6 +1022,7 @@ async function init() {
   }
 
   applyTranslations();
+  initColorModal();
 
   // Events
   gsSidebar.addEventListener("click", (e) => {

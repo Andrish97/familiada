@@ -59,5 +59,44 @@
       <button class="btn gold" id="btnSaveFooter" type="button" data-i18n="gameSettings.saveAll">Zapisz</button>
     </footer>
   </div>
+
+<div class="colorModalOverlay hidden" id="gsColorModal">
+  <div class="colorModalBox">
+    <div class="colorModalHead">
+      <div class="colorModalTitle" id="gsColorModalTitle">Kolor</div>
+      <button class="btn xs" id="gsColorModalClose" type="button">✕</button>
+    </div>
+    <div class="colorModalBody">
+      <div class="colorTopRow">
+        <div class="colorPreview" id="gsColorPreview"></div>
+        <div style="min-width:220px;flex:1;">
+          <div class="lbl2">HEX</div>
+          <input class="inp" id="gsColorHex" autocomplete="off" spellcheck="false" inputmode="text" placeholder="#RRGGBB"/>
+        </div>
+      </div>
+      <div class="sliders">
+        <div class="sliderRow">
+          <div class="sLbl">R</div>
+          <input class="rng" id="gsColorR" type="range" min="0" max="255" step="1"/>
+          <div class="sVal" id="gsColorRVal">0</div>
+        </div>
+        <div class="sliderRow">
+          <div class="sLbl">G</div>
+          <input class="rng" id="gsColorG" type="range" min="0" max="255" step="1"/>
+          <div class="sVal" id="gsColorGVal">0</div>
+        </div>
+        <div class="sliderRow">
+          <div class="sLbl">B</div>
+          <input class="rng" id="gsColorB" type="range" min="0" max="255" step="1"/>
+          <div class="sVal" id="gsColorBVal">0</div>
+        </div>
+      </div>
+      <div class="colorModalFoot">
+        <div></div>
+        <button class="btn gold" id="gsColorModalDone" type="button">Gotowe</button>
+      </div>
+    </div>
+  </div>
+</div>
 </body>
 </html>
