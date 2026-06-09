@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict UEojPtPfYkEBIg3bNs3Flv2fCC966W6KfpsQMfsIRm0VwNrb4G69mf7Jwopibj4
+\restrict n7bbsQpaN5y444bwCunDjcearyjc6iNFq0VPERw1yEGaXpbPoO9Eha70wlf9b7W
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -1938,33 +1938,42 @@ CREATE FUNCTION "public"."display_logo_get_public"("p_game_id" "uuid", "p_key" "
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
 declare
-  v_owner uuid;
-  v_ok boolean;
-  v_logo jsonb;
+  v_owner    uuid;
+  v_ok       boolean;
+  v_logo_id  uuid;
+  v_logo     jsonb;
 begin
-  -- walidacja: czy istnieje gra i czy klucz pasuje do display
-  select (g.share_key_display = p_key), g.owner_id
-    into v_ok, v_owner
+  select (g.share_key_display = p_key),
+         g.owner_id,
+         (g.settings -> 'display' ->> 'logoId')::uuid
+    into v_ok, v_owner, v_logo_id
   from public.games g
   where g.id = p_game_id;
 
   if v_ok is distinct from true then
-    -- brak dostępu
     return null;
   end if;
 
-  -- pobierz aktywne logo użytkownika
-  select jsonb_build_object(
-    'type', ul.type,
-    'payload', ul.payload,
-    'name', ul.name
-  )
-  into v_logo
+  -- per-game logo from settings.display.logoId
+  if v_logo_id is not null then
+    select jsonb_build_object('type', ul.type, 'payload', ul.payload, 'name', ul.name)
+      into v_logo
+    from public.user_logos ul
+    where ul.id = v_logo_id and ul.user_id = v_owner;
+
+    if v_logo is not null then
+      return v_logo;
+    end if;
+  end if;
+
+  -- fallback: globally active logo
+  select jsonb_build_object('type', ul.type, 'payload', ul.payload, 'name', ul.name)
+    into v_logo
   from public.user_logos ul
   where ul.user_id = v_owner and ul.is_active = true
   limit 1;
 
-  return v_logo; -- null jeśli brak
+  return v_logo;
 end $$;
 
 
@@ -10573,11 +10582,19 @@ CREATE TABLE "public"."games" (
     "poll_share_updated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "is_demo" boolean DEFAULT false NOT NULL,
     "source_market_id" "uuid",
+    "settings" "jsonb" DEFAULT '{}'::"jsonb" NOT NULL,
     CONSTRAINT "games_name_len" CHECK ((("char_length"("name") >= 1) AND ("char_length"("name") <= 80))),
     CONSTRAINT "games_poll_status_ok" CHECK (((("type" = ANY (ARRAY['prepared'::"public"."game_type", 'market'::"public"."game_type"])) AND ("status" = ANY (ARRAY['draft'::"public"."game_status", 'ready'::"public"."game_status"]))) OR (("type" <> ALL (ARRAY['prepared'::"public"."game_type", 'market'::"public"."game_type"])) AND ("status" = ANY (ARRAY['draft'::"public"."game_status", 'poll_open'::"public"."game_status", 'ready'::"public"."game_status"]))))),
     CONSTRAINT "games_status_check" CHECK (("status" = ANY (ARRAY['draft'::"public"."game_status", 'poll_open'::"public"."game_status", 'ready'::"public"."game_status"]))),
     CONSTRAINT "games_type_check" CHECK (("type" = ANY (ARRAY['poll_text'::"public"."game_type", 'poll_points'::"public"."game_type", 'prepared'::"public"."game_type", 'market'::"public"."game_type"])))
 );
+
+
+--
+-- Name: COLUMN "games"."settings"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN "public"."games"."settings" IS 'Per-game settings: teams, display, sound, questions';
 
 
 --
@@ -14164,5 +14181,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict UEojPtPfYkEBIg3bNs3Flv2fCC966W6KfpsQMfsIRm0VwNrb4G69mf7Jwopibj4
+\unrestrict n7bbsQpaN5y444bwCunDjcearyjc6iNFq0VPERw1yEGaXpbPoO9Eha70wlf9b7W
 
