@@ -1054,9 +1054,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       document.getElementById('btnMarketplace'),
       document.getElementById('btnLogoEditor'),
       document.getElementById('btnBases'),
+      document.getElementById('btnConnectDevice'),
       document.getElementById('btnPollsHub'),
       document.getElementById('btnSubscriptionsHub'),
-      document.getElementById('btnConnectDevice'),
     ],
     {
       moreEl: document.getElementById('navMore'),
