@@ -1457,7 +1457,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
 
       if (!gameId) return;
-      location.href = `control?id=${encodeURIComponent(gameId)}`;
+      location.href = `control-new?id=${encodeURIComponent(gameId)}`;
       return;
     }
 
@@ -1469,7 +1469,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         void alertModal({ text: chk.reason });
         return;
       }
-      location.href = `control?id=${encodeURIComponent(selectedId)}`;
+      location.href = `control-new?id=${encodeURIComponent(selectedId)}`;
     } catch (e) {
       console.error(e);
       void alertModal({ text: MSG.alertCheckFailed() });
