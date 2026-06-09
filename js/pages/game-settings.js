@@ -494,18 +494,10 @@ function renderSound() {
     </div>`;
   }).join("");
 
-  const cloudSave = state.settings.sound.cloudSave;
-
   gsContent.innerHTML = `
     <div class="gs-cat-title">${t("gameSettings.categories.sound")}</div>
     <div class="gs-section">
       <div id="sfxTableGs">${rows}</div>
-      <div class="sfx-save-row" style="margin-top:14px;">
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
-          <input type="checkbox" id="chkSfxSaveGs" ${cloudSave ? "checked" : ""}/>
-          <span>${t("control.sfxSaveCloud") || "Zapisz dźwięki w chmurze"}</span>
-        </label>
-      </div>
       <div class="rowBtns" style="margin-top:12px;">
         <button class="btn btn-sm" id="btnSoundReset" type="button">${t("gameSettings.teams.restoreDefaults")}</button>
       </div>
@@ -567,12 +559,6 @@ function renderSound() {
         new Audio(`/audio_new/${cat.folder}/${variant}`).play();
       } catch {}
     });
-  });
-
-  // Cloud save
-  document.getElementById("chkSfxSaveGs")?.addEventListener("change", (e) => {
-    state.settings.sound.cloudSave = e.target.checked;
-    markDirty();
   });
 
   document.getElementById("btnSoundReset")?.addEventListener("click", () => {
