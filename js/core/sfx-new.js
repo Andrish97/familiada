@@ -2,7 +2,7 @@
 // Kopia sfx.js z rozszerzeniami: manifest, warianty, głośności, custom blob, cloud URL.
 // Plik samodzielny — nie importuje sfx.js.
 
-const MANIFEST_PATH = "../audio_new/sounds.json?v=v2026-06-09T16501";
+const MANIFEST_PATH = "../audio_new/sounds.json?v=v2026-06-09T16563";
 const AUDIO_BASE    = "../audio_new/";
 const IDB_NAME      = "familiada-sfx";
 const IDB_STORE     = "custom-files";
