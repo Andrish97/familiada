@@ -748,7 +748,7 @@ async function save() {
 
 /* ===== INIT ===== */
 async function init() {
-  guardDesktopOnly();
+  // guardDesktopOnly();
 
   const params = new URLSearchParams(location.search);
   const gameId = params.get("id");
