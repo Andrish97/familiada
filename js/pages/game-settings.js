@@ -3,6 +3,7 @@ import { sb } from "../core/supabase.js?v=v2026-06-09T16473";
 import { requireAuth } from "../core/auth.js?v=v2026-06-09T16473";
 import { confirmModal, alertModal } from "../core/modal.js?v=v2026-06-09T16473";
 import { loadSettings, saveSettings, getDefaults } from "../core/game-settings.js?v=v2026-06-09T16473";
+import { guardDesktopOnly } from "../core/device-guard.js?v=v2026-06-09T16473";
 
 const SFX_KEYS = [
   "show_intro", "round_transition", "round_transition2", "final_theme",
@@ -747,6 +748,8 @@ async function save() {
 
 /* ===== INIT ===== */
 async function init() {
+  guardDesktopOnly();
+
   const params = new URLSearchParams(location.search);
   const gameId = params.get("id");
   if (!gameId) { location.href = "/builder-new"; return; }
