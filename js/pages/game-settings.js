@@ -1,11 +1,11 @@
-import { t, applyTranslations } from "../../translation/translation.js?v=v2026-06-09T17173";
-import { sb } from "../core/supabase.js?v=v2026-06-09T17173";
-import { requireAuth } from "../core/auth.js?v=v2026-06-09T17173";
-import { confirmModal, alertModal } from "../core/modal.js?v=v2026-06-09T17173";
-import { loadSettings, saveSettings, getDefaults } from "../core/game-settings.js?v=v2026-06-09T17173";
-import { guardDesktopOnly } from "../core/device-guard.js?v=v2026-06-09T17173";
-import { initUiSelect } from "../core/ui-select.js?v=v2026-06-09T17173";
-import { loadSfxManifest, getSfxCategories } from "../core/sfx-new.js?v=v2026-06-09T17173";
+import { t, applyTranslations } from "../../translation/translation.js?v=v2026-06-09T17333";
+import { sb } from "../core/supabase.js?v=v2026-06-09T17333";
+import { requireAuth } from "../core/auth.js?v=v2026-06-09T17333";
+import { confirmModal, alertModal } from "../core/modal.js?v=v2026-06-09T17333";
+import { loadSettings, saveSettings, getDefaults } from "../core/game-settings.js?v=v2026-06-09T17333";
+import { guardDesktopOnly } from "../core/device-guard.js?v=v2026-06-09T17333";
+import { initUiSelect } from "../core/ui-select.js?v=v2026-06-09T17333";
+import { loadSfxManifest, getSfxCategories } from "../core/sfx-new.js?v=v2026-06-09T17333";
 
 const SFX_KEYS = [
   "show_intro", "round_transition", "round_transition2", "final_theme",
