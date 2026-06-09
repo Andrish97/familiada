@@ -1,9 +1,9 @@
-import { t, applyTranslations } from "../../translation/translation.js?v=v2026-06-09T16563";
-import { sb } from "../core/supabase.js?v=v2026-06-09T16563";
-import { requireAuth } from "../core/auth.js?v=v2026-06-09T16563";
-import { confirmModal, alertModal } from "../core/modal.js?v=v2026-06-09T16563";
-import { loadSettings, saveSettings, getDefaults } from "../core/game-settings.js?v=v2026-06-09T16563";
-import { guardDesktopOnly } from "../core/device-guard.js?v=v2026-06-09T16563";
+import { t, applyTranslations } from "../../translation/translation.js?v=v2026-06-09T17070";
+import { sb } from "../core/supabase.js?v=v2026-06-09T17070";
+import { requireAuth } from "../core/auth.js?v=v2026-06-09T17070";
+import { confirmModal, alertModal } from "../core/modal.js?v=v2026-06-09T17070";
+import { loadSettings, saveSettings, getDefaults } from "../core/game-settings.js?v=v2026-06-09T17070";
+import { guardDesktopOnly } from "../core/device-guard.js?v=v2026-06-09T17070";
 
 const SFX_KEYS = [
   "show_intro", "round_transition", "round_transition2", "final_theme",
