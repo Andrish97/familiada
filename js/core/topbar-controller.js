@@ -64,11 +64,15 @@ let _mobileActive = false;
  * @param {{ moreEl: HTMLElement, moreDropdownEl: HTMLElement }} config
  * @returns {{ recalc: Function }}
  */
-export function setTopbarNavPriority(getButtons, { moreEl, moreDropdownEl } = {}) {
+export function setTopbarNavPriority({ moreEl, moreDropdownEl } = {}) {
   if (!moreEl || !moreDropdownEl) return { recalc: () => {} };
 
   const section2 = document.querySelector('.topbar-section-2');
   if (!section2) return { recalc: () => {} };
+
+  function getButtons() {
+    return Array.from(section2.querySelectorAll(':scope > .btn'));
+  }
 
   const moreBadge = moreEl.querySelector('.badge');
   const btnMore = document.getElementById('btnMore') || moreEl.querySelector('button');

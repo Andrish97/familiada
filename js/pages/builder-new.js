@@ -1049,20 +1049,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   const _btnLogoutEl = document.getElementById('btnLogout');
   if (_btnLogoutEl) _btnLogoutEl.dataset.topbarAuthReady = '1';
 
-  const { recalc: _navRecalc } = setTopbarNavPriority(
-    () => [
-      document.getElementById('btnMarketplace'),
-      document.getElementById('btnLogoEditor'),
-      document.getElementById('btnBases'),
-      document.getElementById('btnConnectDevice'),
-      document.getElementById('btnPollsHub'),
-      document.getElementById('btnSubscriptionsHub'),
-    ],
-    {
-      moreEl: document.getElementById('navMore'),
-      moreDropdownEl: document.getElementById('navMoreDropdown'),
-    }
-  );
+  const { recalc: _navRecalc } = setTopbarNavPriority({
+    moreEl: document.getElementById('navMore'),
+    moreDropdownEl: document.getElementById('navMoreDropdown'),
+  });
 
   currentUser = await requireAuth("login");
   const guestMode = isGuestUser(currentUser);
