@@ -5345,4 +5345,3 @@ const uk = {
   },
 };
 export default uk;
-export default uk;
