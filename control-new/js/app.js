@@ -48,6 +48,7 @@ import { validateGameReadyToPlay, loadGameBasic, loadQuestions, loadAnswers } fr
 import { unlockAudio, isAudioUnlocked, playSfx } from "../../js/core/sfx.js?v=v2026-06-09T17381";
 import {
   loadSfxManifest, getSfxCategories,
+  applySfxGameSettings,
   setSfxVariant, getSfxVariant,
   setSfxVolume, getSfxVolumes, applySfxVolumes, resetSfxVolumes,
   resetSfxVariants,
@@ -410,9 +411,10 @@ async function main() {
   store.hydrate();
 
   // Load game settings (source of truth) and apply to store
+  let gs = null;
   try {
     const locale = document.documentElement.lang || "pl";
-    const gs = await loadGameSettings(game.id, locale);
+    gs = await loadGameSettings(game.id, locale);
     store.setTeams(gs.teams.nameA, gs.teams.nameB);
     store.setHasFinal(gs.questions.hasFinal === true);
     store.setAdvanced({
@@ -1220,6 +1222,7 @@ async function sendZeroStatesToDevices() {
   (async () => {
     try {
       await loadSfxManifest();
+      if (gs?.sound) applySfxGameSettings(gs.sound);
       await initSfx();
       _sfxReady = true;
 

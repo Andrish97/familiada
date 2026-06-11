@@ -292,6 +292,23 @@ export function unlockAudio() {
 
 export function isAudioUnlocked() { return unlocked; }
 
+/* ========= PER-GAME SETTINGS ========= */
+
+/**
+ * Nadpisuje localStorage wariantów i głośności ustawieniami konkretnej gry.
+ * Wywołać po loadSfxManifest(), przed initSfx() — initSfx odczyta je naturalnie,
+ * a custom pliki z IndexedDB nadpiszą warianty built-in.
+ * volumes: { key: 0–100 (int) }, variants: { key: "classic.mp3" }
+ */
+export function applySfxGameSettings({ volumes = {}, variants = {} } = {}) {
+  for (const [key, pct] of Object.entries(volumes)) {
+    if (typeof pct === "number") setSfxVolume(key, pct / 100);
+  }
+  for (const [key, file] of Object.entries(variants)) {
+    if (file) localStorage.setItem(LS_VAR_PREFIX + key, file);
+  }
+}
+
 /* ========= INICJALIZACJA ========= */
 
 /**
