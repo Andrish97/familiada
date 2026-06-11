@@ -2,7 +2,7 @@
 // Kopia sfx.js z rozszerzeniami: manifest, warianty, głośności, custom blob, cloud URL.
 // Plik samodzielny — nie importuje sfx.js.
 
-const MANIFEST_PATH = "../audio_new/sounds.json?v=v2026-06-09T17381";
+const MANIFEST_PATH = "../audio_new/sounds.json?v=v2026-06-11T21213";
 const AUDIO_BASE    = "../audio_new/";
 const IDB_NAME      = "familiada-sfx";
 const IDB_STORE     = "custom-files";
@@ -298,7 +298,7 @@ export function isAudioUnlocked() { return unlocked; }
  * Nadpisuje localStorage wariantów i głośności ustawieniami konkretnej gry.
  * Wywołać po loadSfxManifest(), przed initSfx() — initSfx odczyta je naturalnie,
  * a custom pliki z IndexedDB nadpiszą warianty built-in.
- * volumes: { key: 0–100 (int) }, variants: { key: "classic.mp3" }
+ * volumes: { key: 0–100 (int) }, variants: { key: "classic.mp3?v=v2026-06-11T21213" }
  */
 export function applySfxGameSettings({ volumes = {}, variants = {} } = {}) {
   for (const [key, pct] of Object.entries(volumes)) {
