@@ -225,7 +225,7 @@ async function main() {
     try {
       const res = await fetch("./display/js/themes.json");
       const json = await res.json();
-      activeTheme = json.default || "classic";
+      if (!activeTheme) activeTheme = json.default || "classic";
       themeList = json.themes.map(e => {
         const lang = document.documentElement.lang || "pl";
         const label = typeof e.label === "object"
@@ -425,8 +425,19 @@ async function main() {
       finalPrizeMultiplier: gs.game.prizeMultiplier,
       mainPrizeAmount:     gs.game.prizeAmount,
     });
+    // Wygląd: kolory, motyw, logo
+    if (gs.display?.colors) {
+      Object.assign(colors, gs.display.colors);
+      ui.setSwatches?.({ teamA: colors.A, teamB: colors.B, bg: colors.BACKGROUND, dot: colors.DOT });
+    }
+    if (gs.display?.theme) {
+      activeTheme = gs.display.theme;
+      ui.setActiveTheme?.(gs.display.theme);
+    }
+    selectedLogoId = gs.display?.logoId ?? null;
   } catch (e) {
     console.warn("[control] Could not load game-settings:", e);
+    if (selectedLogoId === undefined) selectedLogoId = null;
   }
 
   const hasFinalNow = store.state.hasFinal === true;
@@ -579,8 +590,8 @@ async function sendZeroStatesToDevices() {
   let wasInSetupFinish = false;
   let wasInSetupRounds = false;
 
-  // Logo wybrane w setup_look (null = domyślne)
-  let selectedLogoId = null;
+  // Logo wybrane w setup_look (null = domyślne, undefined = jeszcze nie wczytane z game-settings)
+  let selectedLogoId = undefined;
   // Załadowana czcionka (potrzebna do podglądu GLYPH)
   let _logoFont = null;
   // Domyślne logo Familiady (payload z pliku JSON)
@@ -600,11 +611,12 @@ async function sendZeroStatesToDevices() {
     await devices.sendDisplayCmd("APP GAME").catch(() => {});
     await devices.sendBuzzerCmd("ON").catch(() => {});
     await devices.sendHostCmd("COVER").catch(() => {});
-    // pokaż aktualne kolory na wyświetlaczu
+    // pokaż aktualne kolory i motyw na wyświetlaczu
     sendColorA(colors.A);
     sendColorB(colors.B);
     sendColorBg(colors.BACKGROUND);
     sendColorDot(colors.DOT);
+    if (activeTheme) sendTheme(activeTheme);
 
     // ustaw nazwy drużyn przy swatchach
     const teamA = store.state.teams?.teamA || t("control.teamALabel");
@@ -654,13 +666,12 @@ async function sendZeroStatesToDevices() {
 
       const list = logos || [];
 
-      if (list.length === 0 && selectedLogoId !== null) selectedLogoId = null;
-
-      // ustal które logo jest aktywne (db) jeśli jeszcze nie wybrano
-      if (selectedLogoId === null) {
+      if (selectedLogoId === undefined) {
+        // game-settings nie załadowało — fallback na is_active z DB
         const active = list.find(l => l.is_active);
-        if (active) selectedLogoId = active.id;
+        selectedLogoId = active ? active.id : null;
       }
+      if (list.length === 0) selectedLogoId = null;
 
       grid.innerHTML = "";
 
