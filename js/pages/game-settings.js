@@ -5,7 +5,11 @@ import { confirmModal, alertModal } from "../core/modal.js?v=v2026-06-11T21271";
 import { loadSettings, saveSettings, getDefaults } from "../core/game-settings.js?v=v2026-06-11T21271";
 import { guardDesktopOnly } from "../core/device-guard.js?v=v2026-06-11T21271";
 import { initUiSelect } from "../core/ui-select.js?v=v2026-06-11T21271";
-import { loadSfxManifest, getSfxCategories } from "../core/sfx-new.js?v=v2026-06-11T21271";
+import {
+  loadSfxManifest, getSfxCategories,
+  setSfxCustomBlob, clearSfxCustomFile, getSfxCustomFiles,
+} from "../core/sfx-new.js?v=v2026-06-11T21271";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../core/logo-preview.js?v=v2026-06-11T21271";
 
 const SFX_KEYS = [
   "show_intro", "round_transition", "round_transition2", "final_theme",
@@ -141,6 +145,9 @@ const state = {
   activeCategory: "teams",
   isDirty:  false,
 };
+
+let _gsLogoFont = null;
+let _gsDefaultLogoPayload = null;
 
 /* ===== ELEMENTS ===== */
 const btnBack        = document.getElementById("btnBack");
@@ -279,8 +286,19 @@ function initPreviewIframe() {
 
   iframe.onload = () => {
     _previewReady = true;
-    sendPreviewCommands();
-    flushPreviewCmds();
+    // display/js/main.js sets window.handleCommand asynchronously inside
+    // DOMContentLoaded — poll until it's available before sending commands
+    const tryInit = (n) => {
+      try {
+        if (iframe.contentWindow?.handleCommand) {
+          sendPreviewCommands();
+          flushPreviewCmds();
+          return;
+        }
+      } catch {}
+      if (n > 0) setTimeout(() => tryInit(n - 1), 150);
+    };
+    tryInit(15);
   };
 }
 
@@ -327,15 +345,7 @@ function refreshPreviewTheme(key) {
 
 /* ===== DISPLAY ===== */
 function renderDisplay() {
-  const { logoId, theme, colors } = state.settings.display;
-
-  const logoOptions = [
-    `<option value=""${!logoId ? " selected" : ""}>${t("gameSettings.display.logoDefault")}</option>`,
-    `<option value="none"${logoId === "none" ? " selected" : ""}>${t("gameSettings.display.logoNone")}</option>`,
-    ...state.logos.map(l =>
-      `<option value="${esc(l.id)}"${l.id === logoId ? " selected" : ""}>${esc(l.name || l.id)}</option>`
-    ),
-  ].join("");
+  const { theme, colors } = state.settings.display;
 
   const colorDefs = [
     { key: "A",          label: t("gameSettings.display.colorA"),   val: colors.A },
@@ -365,7 +375,7 @@ function renderDisplay() {
       <div>
         <div class="gs-field">
           <div class="gs-label">${t("gameSettings.display.logo")}</div>
-          <select class="inp" id="gsLogoSelect" style="max-width:260px;">${logoOptions}</select>
+          <div class="logoGrid" id="gsLogoGrid"><div class="hint" style="font-size:.8rem;opacity:.5;">Ładowanie...</div></div>
         </div>
         <div class="gs-field" style="margin-top:16px;">
           <div class="gs-label">${t("gameSettings.display.colors")}</div>
@@ -393,15 +403,11 @@ function renderDisplay() {
       </div>
     </div>`;
 
+  renderGsLogoGrid().catch(console.error);
+
   if (hasPreview) {
     initPreviewIframe();
   }
-
-  document.getElementById("gsLogoSelect").addEventListener("change", (e) => {
-    state.settings.display.logoId = e.target.value || null;
-    markDirty();
-    refreshPreviewLogo();
-  });
 
   document.getElementById("gsSwatchA")?.addEventListener("click", () => openGsColorModal("A", t("gameSettings.display.colorA")));
   document.getElementById("gsSwatchB")?.addEventListener("click", () => openGsColorModal("B", t("gameSettings.display.colorB")));
@@ -415,7 +421,6 @@ function renderDisplay() {
     renderDisplay();
   });
 
-  // Theme select via ui-select API
   const themeSelectEl = document.getElementById(themeSelectId);
   if (themeSelectEl && themeOptions) {
     const btn = themeSelectEl.querySelector(".ui-select-btn");
@@ -446,8 +451,76 @@ function renderDisplay() {
   }
 }
 
+/* ===== LOGO GRID ===== */
+async function renderGsLogoGrid() {
+  const grid = document.getElementById("gsLogoGrid");
+  if (!grid) return;
+
+  if (!_gsLogoFont) {
+    try { _gsLogoFont = await loadFont5x7(); } catch {}
+  }
+  if (!_gsDefaultLogoPayload) {
+    try {
+      const r = await fetch("/display/logo_familiada.json", { cache: "force-cache" });
+      if (r.ok) _gsDefaultLogoPayload = await r.json();
+    } catch {}
+  }
+
+  grid.innerHTML = "";
+  grid.appendChild(makeGsLogo(null));
+  for (const logo of state.logos) {
+    grid.appendChild(makeGsLogo(logo));
+  }
+  if (!state.logos.length) {
+    const em = document.createElement("div");
+    em.className = "logoGridEmpty hint";
+    em.textContent = "Brak logo. Dodaj je w edytorze logo.";
+    grid.appendChild(em);
+  }
+
+  grid.querySelectorAll(".logoTile").forEach(tile => {
+    tile.addEventListener("click", () => {
+      const key = tile.dataset.logoId;
+      const newId = key === "default" ? null : key;
+      state.settings.display.logoId = newId;
+      markDirty();
+      refreshPreviewLogo();
+      grid.querySelectorAll(".logoTile").forEach(t => t.classList.remove("selected"));
+      tile.classList.add("selected");
+    });
+  });
+}
+
+function makeGsLogo(logo) {
+  const id = logo?.id ?? null;
+  const key = id ?? "default";
+  const name = logo?.name || (id === null ? (t("control.lookLogoDefault") || "Domyślne") : "—");
+  const curId = state.settings.display.logoId;
+  const sel = (id === null && !curId) || (id !== null && id === curId);
+
+  const previewData = id === null
+    ? (_gsDefaultLogoPayload ? { type: "GLYPH_30x10", payload: _gsDefaultLogoPayload } : null)
+    : logo;
+
+  const el = document.createElement("div");
+  el.className = "logoTile" + (sel ? " selected" : "");
+  el.dataset.logoId = String(key);
+
+  const prev = document.createElement("div");
+  prev.className = "logoTilePrev";
+  prev.appendChild(buildLogoPreviewCanvas(previewData, _gsLogoFont));
+  el.appendChild(prev);
+
+  const label = document.createElement("div");
+  label.className = "logoTileName";
+  label.textContent = name;
+  el.appendChild(label);
+
+  return el;
+}
+
 /* ===== SOUND ===== */
-function renderSound() {
+async function renderSound() {
   const categories = getSfxCategories();
   const lang = document.documentElement.lang || "pl";
 
@@ -456,10 +529,14 @@ function renderSound() {
     return;
   }
 
+  let customFiles = new Map();
+  try { customFiles = await getSfxCustomFiles(); } catch {}
+
   const rows = categories.map(cat => {
     const key = cat.key;
     const vol = state.settings.sound.volumes[key] ?? 100;
     const currentVariant = state.settings.sound.variants[key] || cat.sounds[0]?.file || "";
+    const custom = customFiles.get(key);
 
     const optionsHtml = cat.sounds.map(s => {
       const file = s.file.split("?")[0];
@@ -474,6 +551,9 @@ function renderSound() {
       : currentVariant;
 
     const desc = t("control.sfxDesc." + key) || key;
+    const customTag = custom
+      ? `<div class="sfx-custom-tag"><span class="sfx-custom-name" title="${esc(custom.name)}">${esc(custom.name)}</span><button class="sfx-custom-clear" type="button" data-sfx-clear="${key}">✕</button></div>`
+      : "";
 
     return `<div class="sfx-row" data-key="${key}">
       <div class="sfx-row-desc">${desc}</div>
@@ -484,6 +564,11 @@ function renderSound() {
             <span class="ui-select-caret" aria-hidden="true">▾</span>
           </button>
           <div class="ui-select-menu" role="listbox">${optionsHtml}</div>
+        </div>
+        <div class="sfx-file-area">
+          ${customTag}
+          <button class="sfx-file-btn" type="button" data-sfx-file="${key}">Plik…</button>
+          <input type="file" style="display:none;" data-sfx-key="${key}" accept="audio/*"/>
         </div>
       </div>
       <button class="sfx-preview-btn" type="button" data-sfx-preview="${key}">▶</button>
@@ -503,10 +588,8 @@ function renderSound() {
       </div>
     </div>`;
 
-  // Wire up sfx selects
   const tableEl = document.getElementById("sfxTableGs");
 
-  // Close open selects when clicking outside
   const sfxOutsideClick = () => {
     tableEl?.querySelectorAll(".ui-select.open").forEach(el => el.classList.remove("open"));
   };
@@ -536,7 +619,6 @@ function renderSound() {
     });
   });
 
-  // Volume sliders
   tableEl.querySelectorAll(".sfx-vol").forEach(slider => {
     slider.addEventListener("input", () => {
       const key = slider.dataset.sfxVol;
@@ -548,16 +630,47 @@ function renderSound() {
     });
   });
 
-  // Preview buttons
   tableEl.querySelectorAll("[data-sfx-preview]").forEach(btn => {
     btn.addEventListener("click", () => {
       const key = btn.dataset.sfxPreview;
       const cat = getSfxCategories().find(c => c.key === key);
       if (!cat) return;
+      const custom = customFiles.get(key);
+      if (custom?.blob) {
+        const url = URL.createObjectURL(custom.blob);
+        const audio = new Audio(url);
+        audio.play().catch(() => {});
+        audio.onended = () => URL.revokeObjectURL(url);
+        return;
+      }
       const variant = state.settings.sound.variants[key] || cat.sounds[0]?.file || "";
+      try { new Audio(`/audio_new/${cat.folder}/${variant}`).play(); } catch {}
+    });
+  });
+
+  tableEl.querySelectorAll("[data-sfx-file]").forEach(btn => {
+    const key = btn.dataset.sfxFile;
+    const input = btn.closest(".sfx-file-area")?.querySelector(`input[data-sfx-key="${key}"]`);
+    if (!input) return;
+    btn.addEventListener("click", () => input.click());
+    input.addEventListener("change", async () => {
+      const file = input.files?.[0];
+      if (!file) return;
       try {
-        new Audio(`/audio_new/${cat.folder}/${variant}`).play();
-      } catch {}
+        await setSfxCustomBlob(key, file.name, file);
+        renderSound().catch(console.error);
+      } catch (err) { console.error("setSfxCustomBlob", err); }
+      input.value = "";
+    });
+  });
+
+  tableEl.querySelectorAll("[data-sfx-clear]").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const key = btn.dataset.sfxClear;
+      try {
+        await clearSfxCustomFile(key);
+        renderSound().catch(console.error);
+      } catch (err) { console.error("clearSfxCustomFile", err); }
     });
   });
 
@@ -696,27 +809,23 @@ function renderFinale() {
     let pickSection = "";
 
     if (isSelected) {
-      const selectedItems = finaleIds.map((id, i) => {
-        const qObj = questionById(id);
-        const text = qObj ? esc(qObj.text) : `<em style="opacity:.5;">[usunięte]</em>`;
-        return `<div class="gs-q-item" data-id="${esc(id)}" data-idx="${i}">
-          <span class="gs-q-item-handle">☰</span>
-          <span class="gs-q-item-text">${text}</span>
-          <button class="btn xs" type="button" data-move="-1">↑</button>
-          <button class="btn xs" type="button" data-move="1">↓</button>
-          <button class="gs-q-item-remove" type="button" data-remove="${esc(id)}">✕</button>
-        </div>`;
-      }).join("") || `<div class="gs-hint">Brak wybranych pytań finałowych.</div>`;
-      const addOptions = finalePool.map(qObj =>
-        `<option value="${esc(qObj.id)}">${esc(qObj.text)}</option>`
-      ).join("");
       pickSection = `
-        <div class="gs-q-list" id="gsFinaleQList">${selectedItems}</div>
-        ${finalePool.length > 0 ? `
-          <div class="gs-add-row">
-            <select class="inp" id="gsAddFinaleQ">${addOptions}</select>
-            <button class="btn btn-sm" id="btnAddFinaleQ" type="button">${t("gameSettings.questions.addFinaleQuestion")}</button>
-          </div>` : ""}`;
+        <div class="gs-picker-card">
+          <div class="gs-picker-head">
+            <span class="gs-label" style="margin-bottom:0;">${t("gameSettings.questions.finaleTitle") || "Pytania finału"}</span>
+            <span class="badge"><span>Finał:</span> <b id="gsFinalePickCount">${finaleIds.length}</b>/5</span>
+          </div>
+          <div class="gs-picker-lists">
+            <div class="gs-picker-col">
+              <div class="gs-picker-col-title">${t("control.finalPoolHint") || "Pytania do rozgrywki (pula)"}</div>
+              <div class="gs-qrow-list" id="gsFinalPoolList"></div>
+            </div>
+            <div class="gs-picker-col">
+              <div class="gs-picker-col-title">${t("control.finalListHint") || "Pytania finału (max 5)"}</div>
+              <div class="gs-qrow-list" id="gsFinalSelectedList"></div>
+            </div>
+          </div>
+        </div>`;
     } else {
       if (!finaleIds.length) {
         pickSection = `<button class="btn btn-sm gold" id="btnFinaleRandomize" type="button">${t("gameSettings.finale.randomize").replace("{n}", finaleCount || 5)}</button>`;
@@ -801,16 +910,59 @@ function renderFinale() {
   });
   document.getElementById("btnFinaleRandomize")?.addEventListener("click", doRandomizeFinale);
   document.getElementById("btnFinaleReRandomize")?.addEventListener("click", doRandomizeFinale);
-  document.getElementById("gsFinaleQList")?.addEventListener("click", onQListClick.bind(null, "finaleIds", renderFinale));
-  document.getElementById("btnAddFinaleQ")?.addEventListener("click", () => {
-    const sel = document.getElementById("gsAddFinaleQ");
-    if (!sel?.value) return;
-    const id = sel.value;
-    state.settings.questions.finaleIds.push(id);
-    state.settings.questions.selectedIds = state.settings.questions.selectedIds.filter(x => x !== id);
-    markDirty();
-    renderFinale();
-  });
+  if (document.getElementById("gsFinalPoolList")) renderGsFinalPicker();
+}
+
+function renderGsFinalPicker() {
+  const poolRoot     = document.getElementById("gsFinalPoolList");
+  const selectedRoot = document.getElementById("gsFinalSelectedList");
+  const countEl      = document.getElementById("gsFinalePickCount");
+  if (!poolRoot || !selectedRoot) return;
+
+  const finaleSet = new Set(state.settings.questions.finaleIds);
+  const pool   = state.questions.filter(q => !finaleSet.has(q.id));
+  const picked = state.settings.questions.finaleIds.map(id => questionById(id)).filter(Boolean);
+
+  if (countEl) countEl.textContent = String(picked.length);
+
+  function makeRow(q, isInFinal) {
+    const div = document.createElement("div");
+    div.className = "gs-qrow";
+    div.innerHTML = `<span class="meta">#${q.ord ?? ""}</span><span class="txt">${esc(q.text)}</span>`;
+    div.addEventListener("click", () => {
+      if (isInFinal) {
+        state.settings.questions.finaleIds = state.settings.questions.finaleIds.filter(x => x !== q.id);
+      } else {
+        if (state.settings.questions.finaleIds.length >= 5) return;
+        state.settings.questions.finaleIds.push(q.id);
+      }
+      markDirty();
+      renderGsFinalPicker();
+    });
+    return div;
+  }
+
+  poolRoot.innerHTML = "";
+  if (pool.length) {
+    pool.forEach(q => poolRoot.appendChild(makeRow(q, false)));
+  } else {
+    const em = document.createElement("div");
+    em.className = "gs-picker-empty";
+    em.textContent = "Brak dostępnych pytań.";
+    poolRoot.appendChild(em);
+  }
+
+  selectedRoot.innerHTML = "";
+  if (picked.length) {
+    picked.forEach(q => selectedRoot.appendChild(makeRow(q, true)));
+  } else {
+    const em = document.createElement("div");
+    em.className = "gs-picker-empty";
+    em.textContent = "Nie wybrano pytań finałowych.";
+    selectedRoot.appendChild(em);
+  }
+
+  if (countEl) countEl.textContent = String(picked.length);
 }
 
 /* ===== GAME SETTINGS ===== */
@@ -1021,7 +1173,7 @@ async function init() {
       const ok = await confirmModal({ text: t("gameSettings.unsavedConfirm") });
       if (!ok) return;
     }
-    history.back();
+    location.href = "/builder-new";
   });
 
   btnSaveAll?.addEventListener("click", save);
