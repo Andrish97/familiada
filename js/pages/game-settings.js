@@ -1117,12 +1117,15 @@ async function init() {
 
   state.locale = document.documentElement.lang || "pl";
 
-  // Load game
-  const { data: game, error: gameErr } = await sb()
-    .from("games")
-    .select("id,name,type,owner_id,share_key_display")
-    .eq("id", gameId)
-    .single();
+  // Load game + all related data in parallel
+  const [{ data: game, error: gameErr }, settings, { data: questions }, { data: logos }, themesJson] = await Promise.all([
+    sb().from("games").select("id,name,type,owner_id,share_key_display").eq("id", gameId).single(),
+    loadSettings(gameId, state.locale),
+    sb().from("questions").select("id,ord,text").eq("game_id", gameId).order("ord"),
+    sb().from("user_logos").select("id,name,type").eq("user_id", user.id).order("created_at", { ascending: false }),
+    fetch("/display/js/themes.json").then(r => r.json()).catch(() => null),
+    loadSfxManifest(),
+  ]);
 
   if (gameErr || !game || game.owner_id !== user.id) {
     location.href = "/builder-new";
@@ -1137,15 +1140,6 @@ async function init() {
   if (game.type === "prepared" && sidebarFinale) {
     sidebarFinale.style.display = "none";
   }
-
-  // Load settings, questions, logos, themes, sfx manifest in parallel
-  const [settings, { data: questions }, { data: logos }, themesJson] = await Promise.all([
-    loadSettings(gameId, state.locale),
-    sb().from("questions").select("id,ord,text").eq("game_id", gameId).order("ord"),
-    sb().from("user_logos").select("id,name,type").eq("user_id", user.id).order("created_at", { ascending: false }),
-    fetch("/display/js/themes.json").then(r => r.json()).catch(() => null),
-    loadSfxManifest(),
-  ]);
 
   state.settings  = settings;
   state.questions = questions || [];

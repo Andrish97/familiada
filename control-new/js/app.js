@@ -167,26 +167,23 @@ function syncPanelStepPills() {
 async function loadGameOrThrow() {
   if (!gameId) throw new Error(APP_MSG.NO_ID);
 
-  let basic;
+  let gameData, v;
   try {
-    basic = await loadGameBasic(gameId);
+    [{ data: gameData }, v] = await Promise.all([
+      sb().from("games")
+        .select("id,name,type,status,share_key_display,share_key_host,share_key_buzzer")
+        .eq("id", gameId)
+        .single(),
+      validateGameReadyToPlay(gameId),
+    ]);
   } catch (e) {
     if (e?.code === "PGRST116") throw Object.assign(new Error(APP_MSG.GAME_NOT_FOUND), { _notFound: true });
     throw e;
   }
 
-  const v = await validateGameReadyToPlay(gameId);
+  if (!gameData) throw Object.assign(new Error(APP_MSG.GAME_NOT_FOUND), { _notFound: true });
   if (!v.ok) throw new Error(APP_MSG.GAME_NOT_READY(v.reason));
-
-  const { data, error } = await sb()
-    .from("games")
-    .select("id,name,type,status,share_key_display,share_key_host,share_key_buzzer")
-    .eq("id", gameId)
-    .single();
-
-  if (error) throw error;
-  if (data?.id !== basic.id) throw new Error(APP_MSG.DATA_MISMATCH);
-  return data;
+  return gameData;
 }
 
 async function main() {
@@ -412,6 +409,8 @@ async function main() {
 
   // Load game settings (source of truth) and apply to store
   let gs = null;
+  // Logo wybrane w setup_look (null = domyślne, undefined = jeszcze nie wczytane z game-settings)
+  let selectedLogoId = undefined;
   try {
     const locale = document.documentElement.lang || "pl";
     gs = await loadGameSettings(game.id, locale);
@@ -594,8 +593,6 @@ async function sendZeroStatesToDevices() {
   shareDevice = initShareDevice({ currentUser, game, devices });
   void shareDevice.refreshBadges();
 
-  // Logo wybrane w setup_look (null = domyślne, undefined = jeszcze nie wczytane z game-settings)
-  let selectedLogoId = undefined;
   // Załadowana czcionka (potrzebna do podglądu GLYPH)
   let _logoFont = null;
   // Domyślne logo Familiady (payload z pliku JSON)

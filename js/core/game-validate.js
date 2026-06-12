@@ -66,10 +66,16 @@ export async function loadAnswers(questionId) {
 
 async function getQA(gameId) {
   const qs = await loadQuestions(gameId);
-  const ansByQ = new Map();
-  for (const q of qs) {
-    ansByQ.set(q.id, await loadAnswers(q.id));
-  }
+  if (!qs.length) return { qs, ansByQ: new Map() };
+  const qIds = qs.map(q => q.id);
+  const { data: allAnswers, error } = await sb()
+    .from("answers")
+    .select("id,ord,text,fixed_points,question_id")
+    .in("question_id", qIds)
+    .order("ord", { ascending: true });
+  if (error) throw error;
+  const ansByQ = new Map(qs.map(q => [q.id, []]));
+  for (const a of (allAnswers || [])) ansByQ.get(a.question_id)?.push(a);
   return { qs, ansByQ };
 }
 
