@@ -128,21 +128,29 @@ function openIDB() {
   });
 }
 
-export async function setSfxCustomBlob(key, blob, filename) {
-  const url = URL.createObjectURL(blob);
-  loadIntoCache(key, url);
-  applySfxVolume(key);
+function idbKey(key, gameId) {
+  return gameId ? `${gameId}:${key}` : key;
+}
+
+export async function setSfxCustomBlob(key, blob, filename, gameId) {
+  const k = idbKey(key, gameId);
+  // Only update audio cache for global (no-gameId) blobs
+  if (!gameId) {
+    const url = URL.createObjectURL(blob);
+    loadIntoCache(key, url);
+    applySfxVolume(key);
+  }
 
   const db = await openIDB();
   await new Promise((res, rej) => {
     const tx = db.transaction(IDB_STORE, "readwrite");
-    const req = tx.objectStore(IDB_STORE).put({ blob, filename }, key);
+    const req = tx.objectStore(IDB_STORE).put({ blob, filename }, k);
     req.onsuccess = res;
     req.onerror = () => rej(req.error);
   });
 }
 
-export async function getSfxCustomFiles() {
+export async function getSfxCustomFiles(gameId) {
   const db = await openIDB();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(IDB_STORE, "readonly");
@@ -154,34 +162,46 @@ export async function getSfxCustomFiles() {
     keyReq.onsuccess = () => { keys = keyReq.result; if (data) finish(); };
     req.onerror = keyReq.onerror = () => reject(req.error);
     function finish() {
-      keys.forEach((k, i) => result.set(k, data[i]));
+      const prefix = gameId ? `${gameId}:` : null;
+      keys.forEach((k, i) => {
+        if (prefix) {
+          if (String(k).startsWith(prefix)) {
+            result.set(String(k).slice(prefix.length), data[i]);
+          }
+        } else {
+          // Global: only keys without ":" (backward compat)
+          if (!String(k).includes(":")) result.set(k, data[i]);
+        }
+      });
       resolve(result);
     }
   });
 }
 
-export async function clearSfxCustomFile(key) {
-  const old = cache.get(key);
-  if (old?.src?.startsWith("blob:")) URL.revokeObjectURL(old.src);
-
-  const meta = getCategoryMeta(key);
-  if (meta) {
-    loadIntoCache(key, buildUrl(meta.folder, getSfxVariant(key)));
-    applySfxVolume(key);
+export async function clearSfxCustomFile(key, gameId) {
+  const k = idbKey(key, gameId);
+  if (!gameId) {
+    const old = cache.get(key);
+    if (old?.src?.startsWith("blob:")) URL.revokeObjectURL(old.src);
+    const meta = getCategoryMeta(key);
+    if (meta) {
+      loadIntoCache(key, buildUrl(meta.folder, getSfxVariant(key)));
+      applySfxVolume(key);
+    }
   }
 
   const db = await openIDB();
   await new Promise((res, rej) => {
     const tx = db.transaction(IDB_STORE, "readwrite");
-    const req = tx.objectStore(IDB_STORE).delete(key);
+    const req = tx.objectStore(IDB_STORE).delete(k);
     req.onsuccess = res;
     req.onerror = () => rej(req.error);
   });
 }
 
-export async function clearAllSfxCustomFiles() {
+export async function clearAllSfxCustomFiles(gameId) {
   for (const cat of getSfxCategories()) {
-    await clearSfxCustomFile(cat.key);
+    await clearSfxCustomFile(cat.key, gameId);
   }
 }
 

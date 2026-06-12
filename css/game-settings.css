@@ -47,6 +47,17 @@
   background: rgba(255,255,255,.05);
 }
 
+.gs-sidebar-sub {
+  padding-left: 28px;
+  font-size: .82rem;
+  font-weight: 500;
+}
+
+.gs-sidebar-item-disabled {
+  opacity: .3;
+  cursor: default;
+}
+
 .gs-sidebar-item.active {
   border-left: 3px solid var(--gold);
   border-radius: 0 10px 10px 0;
@@ -361,40 +372,23 @@
   border-top:1px solid rgba(255,255,255,.1);
 }
 
-/* ===== SFX TABLE (jak w control-new) ===== */
+/* ===== SFX TABLE (identyczny z control-new) ===== */
 .sfx-row{
   display:grid;
-  grid-template-columns:minmax(120px,1fr) minmax(100px,150px) auto minmax(120px,170px);
+  grid-template-columns:minmax(130px,1fr) minmax(110px,160px) auto minmax(130px,180px) auto;
   align-items:center;
   gap:10px; padding:6px 0;
   border-bottom:1px solid rgba(255,255,255,.07);
+  position:relative;
 }
 .sfx-row:last-child{ border-bottom:none; }
 .sfx-row-desc{ font-size:.85rem; opacity:.85; }
-.sfx-variant-wrap{ display:flex; flex-direction:column; gap:4px; min-width:0; position:relative; z-index:1; }
+.sfx-variant-wrap{ display:flex; min-width:0; position:relative; z-index:1; }
 .sfx-variant-wrap .ui-select{ width:100%; min-width:0; }
 .sfx-variant-wrap .ui-select.open{ z-index:10; }
-.sfx-file-area{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
-.sfx-file-btn{
-  background:none; border:1px solid rgba(255,255,255,.3);
-  border-radius:6px; padding:3px 8px; cursor:pointer;
-  font-size:.75rem; color:inherit; line-height:1.4;
-  white-space:nowrap; transition:background .15s;
+.sfx-variant-wrap .ui-select[data-disabled="true"]{
+  opacity:.4; pointer-events:none;
 }
-.sfx-file-btn:hover{ background:rgba(255,255,255,.1); }
-.sfx-custom-tag{
-  display:flex; align-items:center; gap:4px;
-  font-size:.73rem; background:rgba(255,220,100,.18);
-  border-radius:4px; padding:2px 6px; max-width:150px;
-}
-.sfx-custom-name{
-  overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; min-width:0;
-}
-.sfx-custom-clear{
-  background:none; border:none; color:inherit; cursor:pointer;
-  opacity:.6; padding:0; font-size:.75rem; flex-shrink:0; line-height:1;
-}
-.sfx-custom-clear:hover{ opacity:1; }
 .sfx-preview-btn{
   background:none; border:1px solid rgba(255,255,255,.25);
   border-radius:6px; padding:4px 7px; cursor:pointer;
@@ -408,7 +402,52 @@
   font-size:.8rem; min-width:36px;
   text-align:right; opacity:.75;
 }
-.sfx-save-row{ display:flex; align-items:center; gap:8px; margin-top:12px; font-size:.85rem; }
+.sfx-file-wrap{ display:flex; align-items:center; gap:6px; }
+.sfx-file-input{ display:none; }
+.sfx-file-tag{
+  display:flex; align-items:center; gap:6px;
+  border:1px solid rgba(255,255,255,.3);
+  border-radius:6px; padding:3px 8px;
+  background:rgba(255,255,255,.07);
+  font-size:.8rem; max-width:160px;
+}
+.sfx-file-name{
+  max-width:110px; overflow:hidden;
+  text-overflow:ellipsis; white-space:nowrap;
+}
+.sfx-file-remove{
+  background:none; border:none; cursor:pointer; color:inherit;
+  opacity:.6; font-size:.85rem; padding:0 2px; line-height:1;
+  flex-shrink:0;
+}
+.sfx-file-remove:hover{ opacity:1; }
+.sfx-add-btn{ font-size:.8rem; padding:4px 8px; }
+.sfx-advanced-foot{
+  display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  margin-top:14px; padding-top:12px;
+  border-top:1px solid rgba(255,255,255,.1);
+}
+.sfx-save-check{
+  display:flex; align-items:center; gap:6px; font-size:.85rem;
+}
+.sfx-disabled-msg{
+  opacity:.55; font-size:.85rem; padding:6px 0;
+}
+
+/* ===== QUESTIONS SETTINGS (sekcje jak w control) ===== */
+.sectionBlock{
+  margin-bottom:18px; padding-bottom:16px;
+  border-bottom:1px solid rgba(255,255,255,.07);
+}
+.sectionBlock:last-child{ border-bottom:none; margin-bottom:0; padding-bottom:0; }
+.sectionTitle{
+  font-size:.75rem; font-weight:700; letter-spacing:.08em;
+  text-transform:uppercase; opacity:.5; margin-bottom:10px;
+}
+.setting-item{ margin-bottom:12px; }
+.setting-item:last-child{ margin-bottom:0; }
+.setting-item .lbl2{ font-size:.87rem; margin-bottom:6px; opacity:.85; }
+.lbl2{ font-size:.87rem; opacity:.85; }
 
 /* ===== FINALE / ROUNDS PICKER ===== */
 .gs-picker-card{
@@ -448,6 +487,13 @@
 .gs-picker-empty{
   opacity:.38; font-size:.8rem; padding:8px 4px; font-style:italic;
 }
+.gs-qrow-list.droptarget{
+  background:rgba(255,255,255,.06);
+  outline:2px dashed rgba(255,255,255,.28);
+  outline-offset:2px;
+  border-radius:8px;
+}
+.gs-qrow.dragging{ opacity:.3; transform:scale(.97); pointer-events:none; }
 @media (max-width:700px){
   .gs-picker-lists{ grid-template-columns:1fr; }
 }

@@ -7,7 +7,7 @@ import { guardDesktopOnly } from "../core/device-guard.js?v=v2026-06-11T21271";
 import { initUiSelect } from "../core/ui-select.js?v=v2026-06-11T21271";
 import {
   loadSfxManifest, getSfxCategories,
-  setSfxCustomBlob, clearSfxCustomFile, getSfxCustomFiles,
+  setSfxCustomBlob, clearSfxCustomFile, clearAllSfxCustomFiles, getSfxCustomFiles,
 } from "../core/sfx-new.js?v=v2026-06-11T21271";
 import { loadFont5x7, buildLogoPreviewCanvas } from "../core/logo-preview.js?v=v2026-06-11T21271";
 
@@ -190,7 +190,8 @@ function renderContent() {
   const cat = state.activeCategory;
   if (cat === "teams")        renderTeams();
   else if (cat === "display") renderDisplay();
-  else if (cat === "sound")   renderSound();
+  else if (cat === "sound")   renderSound().catch(console.error);
+  else if (cat === "questions") renderQuestions();
   else if (cat === "rounds")  renderRounds();
   else if (cat === "finale")  renderFinale();
   else if (cat === "game")    renderGame();
@@ -355,8 +356,8 @@ function renderDisplay() {
   ];
   const colorSwatches = colorDefs.map(cd =>
     `<div class="colorItem">
-       <button class="swatchBtn" id="gsSwatch${cd.key}" type="button" style="background:${esc(cd.val)};"></button>
        <span class="lbl2">${cd.label}</span>
+       <button class="swatchBtn" id="gsSwatch${cd.key}" type="button" style="background:${esc(cd.val)};"></button>
      </div>`
   ).join("");
 
@@ -373,18 +374,14 @@ function renderDisplay() {
     <div class="gs-cat-title">${t("gameSettings.categories.display")}</div>
     <div class="gs-section gs-display-cols">
       <div>
-        <div class="gs-field">
-          <div class="gs-label">${t("gameSettings.display.logo")}</div>
-          <div class="logoGrid" id="gsLogoGrid"><div class="hint" style="font-size:.8rem;opacity:.5;">Ładowanie...</div></div>
-        </div>
-        <div class="gs-field" style="margin-top:16px;">
-          <div class="gs-label">${t("gameSettings.display.colors")}</div>
+        <div class="sectionBlock">
+          <div class="sectionTitle">${t("gameSettings.display.colors")}</div>
           <div class="colorRow">${colorSwatches}</div>
           <button class="btn btn-sm" id="btnColorsReset" type="button" style="margin-top:10px;">${t("gameSettings.display.colorsReset")}</button>
         </div>
         ${themeOptions ? `
-        <div class="gs-field" style="margin-top:16px;">
-          <div class="gs-label">${t("gameSettings.display.theme")}</div>
+        <div class="sectionBlock">
+          <div class="sectionTitle">${t("gameSettings.display.theme")}</div>
           <div class="ui-select" id="${themeSelectId}" style="max-width:260px;">
             <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
               <span class="ui-select-label">${currentThemeLabel}</span>
@@ -393,9 +390,13 @@ function renderDisplay() {
             <div class="ui-select-menu" role="listbox">${themeOptions}</div>
           </div>
         </div>` : ""}
+        <div class="sectionBlock">
+          <div class="sectionTitle">${t("gameSettings.display.logo")}</div>
+          <div class="logoGrid" id="gsLogoGrid"><div class="hint" style="font-size:.8rem;opacity:.5;">Ładowanie...</div></div>
+        </div>
       </div>
       <div>
-        <div class="gs-label">${t("gameSettings.display.preview")}</div>
+        <div class="sectionTitle">${t("gameSettings.display.preview")}</div>
         ${hasPreview
           ? `<iframe id="gsDisplayIframe" class="display-preview" style="margin-top:8px;border:none;" scrolling="no" allowfullscreen></iframe>`
           : `<div class="display-preview display-preview-placeholder" style="margin-top:8px;"></div>`
@@ -530,9 +531,20 @@ async function renderSound() {
   }
 
   let customFiles = new Map();
-  try { customFiles = await getSfxCustomFiles(); } catch {}
+  try { customFiles = await getSfxCustomFiles(state.gameId); } catch {}
 
-  const rows = categories.map(cat => {
+  gsContent.innerHTML = `
+    <div class="gs-cat-title">${t("gameSettings.categories.sound")}</div>
+    <div class="gs-section">
+      <div id="sfxTableGs"></div>
+      <div class="sfx-advanced-foot">
+        <button class="btn btn-sm" id="btnSoundReset" type="button">${t("gameSettings.teams.restoreDefaults")}</button>
+      </div>
+    </div>`;
+
+  const tableEl = document.getElementById("sfxTableGs");
+
+  for (const cat of categories) {
     const key = cat.key;
     const vol = state.settings.sound.volumes[key] ?? 100;
     const currentVariant = state.settings.sound.variants[key] || cat.sounds[0]?.file || "";
@@ -551,52 +563,50 @@ async function renderSound() {
       : currentVariant;
 
     const desc = t("control.sfxDesc." + key) || key;
-    const customTag = custom
-      ? `<div class="sfx-custom-tag"><span class="sfx-custom-name" title="${esc(custom.name)}">${esc(custom.name)}</span><button class="sfx-custom-clear" type="button" data-sfx-clear="${key}">✕</button></div>`
-      : "";
 
-    return `<div class="sfx-row" data-key="${key}">
+    const row = document.createElement("div");
+    row.className = "sfx-row";
+    row.dataset.key = key;
+    row.innerHTML = `
       <div class="sfx-row-desc">${desc}</div>
       <div class="sfx-variant-wrap">
-        <div class="ui-select" id="sfxSelect_${key}">
+        <div class="ui-select" data-sfx-variant="${key}" id="sfxSelect_${key}"${custom ? ' data-disabled="true"' : ""}>
           <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
             <span class="ui-select-label">${selectedLabel}</span>
             <span class="ui-select-caret" aria-hidden="true">▾</span>
           </button>
           <div class="ui-select-menu" role="listbox">${optionsHtml}</div>
         </div>
-        <div class="sfx-file-area">
-          ${customTag}
-          <button class="sfx-file-btn" type="button" data-sfx-file="${key}">Plik…</button>
-          <input type="file" style="display:none;" data-sfx-key="${key}" accept="audio/*"/>
-        </div>
       </div>
-      <button class="sfx-preview-btn" type="button" data-sfx-preview="${key}">▶</button>
+      <button class="sfx-preview-btn" type="button" title="Odtwórz" data-sfx-preview="${key}">▶</button>
       <div class="sfx-vol-wrap">
         <input type="range" class="sfx-vol" min="0" max="100" value="${vol}" data-sfx-vol="${key}"/>
         <span class="sfx-vol-label" id="sfxVolLabel_${key}">${vol}%</span>
       </div>
-    </div>`;
-  }).join("");
+      <div class="sfx-file-wrap" id="sfxFileWrap_${key}">
+        <button class="btn sm sfx-add-btn${custom ? " hidden" : ""}" type="button" data-sfx-add="${key}"
+          data-i18n="control.sfxAddFile">${t("control.sfxAddFile") || "Własny plik"}</button>
+        <input type="file" class="sfx-file-input" accept="audio/mpeg,audio/wav,audio/ogg" data-sfx-file-input="${key}"/>
+        <div class="sfx-file-tag${custom ? "" : " hidden"}" id="sfxFileTag_${key}">
+          <span class="sfx-file-name" id="sfxFileName_${key}">${custom ? esc(custom.filename) : ""}</span>
+          <button class="sfx-file-remove" type="button" title="Usuń" data-sfx-remove="${key}">✕</button>
+        </div>
+      </div>`;
+    tableEl.appendChild(row);
+    _bindGsSfxRow(key, cat, customFiles);
+  }
 
-  gsContent.innerHTML = `
-    <div class="gs-cat-title">${t("gameSettings.categories.sound")}</div>
-    <div class="gs-section">
-      <div id="sfxTableGs">${rows}</div>
-      <div class="rowBtns" style="margin-top:12px;">
-        <button class="btn btn-sm" id="btnSoundReset" type="button">${t("gameSettings.teams.restoreDefaults")}</button>
-      </div>
-    </div>`;
-
-  const tableEl = document.getElementById("sfxTableGs");
-
-  const sfxOutsideClick = () => {
-    tableEl?.querySelectorAll(".ui-select.open").forEach(el => el.classList.remove("open"));
+  // Close selects on outside click
+  const sfxOutsideClick = (e) => {
+    if (!e.target.closest(".ui-select")) {
+      tableEl?.querySelectorAll(".ui-select.open").forEach(el => el.classList.remove("open"));
+    }
   };
   document.addEventListener("click", sfxOutsideClick);
 
-  tableEl.querySelectorAll(".ui-select").forEach(selectEl => {
-    const key = selectEl.id.replace("sfxSelect_", "");
+  // Variant selects
+  tableEl.querySelectorAll(".ui-select[data-sfx-variant]").forEach(selectEl => {
+    const key = selectEl.dataset.sfxVariant;
     const btn = selectEl.querySelector(".ui-select-btn");
     const menu = selectEl.querySelector(".ui-select-menu");
     if (!btn || !menu) return;
@@ -611,7 +621,7 @@ async function renderSound() {
         const file = opt.dataset.value;
         menu.querySelectorAll(".ui-select-option").forEach(o => o.removeAttribute("data-selected"));
         opt.setAttribute("data-selected", "true");
-        selectEl.querySelector(".ui-select-label").textContent = opt.textContent;
+        btn.querySelector(".ui-select-label").textContent = opt.textContent;
         selectEl.classList.remove("open");
         state.settings.sound.variants[key] = file;
         markDirty();
@@ -619,73 +629,203 @@ async function renderSound() {
     });
   });
 
-  tableEl.querySelectorAll(".sfx-vol").forEach(slider => {
-    slider.addEventListener("input", () => {
-      const key = slider.dataset.sfxVol;
-      const val = Number(slider.value);
-      state.settings.sound.volumes[key] = val;
-      const lbl = document.getElementById("sfxVolLabel_" + key);
-      if (lbl) lbl.textContent = val + "%";
-      markDirty();
-    });
-  });
-
-  tableEl.querySelectorAll("[data-sfx-preview]").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const key = btn.dataset.sfxPreview;
-      const cat = getSfxCategories().find(c => c.key === key);
-      if (!cat) return;
-      const custom = customFiles.get(key);
-      if (custom?.blob) {
-        const url = URL.createObjectURL(custom.blob);
-        const audio = new Audio(url);
-        audio.play().catch(() => {});
-        audio.onended = () => URL.revokeObjectURL(url);
-        return;
-      }
-      const variant = state.settings.sound.variants[key] || cat.sounds[0]?.file || "";
-      try { new Audio(`/audio_new/${cat.folder}/${variant}`).play(); } catch {}
-    });
-  });
-
-  tableEl.querySelectorAll("[data-sfx-file]").forEach(btn => {
-    const key = btn.dataset.sfxFile;
-    const input = btn.closest(".sfx-file-area")?.querySelector(`input[data-sfx-key="${key}"]`);
-    if (!input) return;
-    btn.addEventListener("click", () => input.click());
-    input.addEventListener("change", async () => {
-      const file = input.files?.[0];
-      if (!file) return;
-      try {
-        await setSfxCustomBlob(key, file.name, file);
-        renderSound().catch(console.error);
-      } catch (err) { console.error("setSfxCustomBlob", err); }
-      input.value = "";
-    });
-  });
-
-  tableEl.querySelectorAll("[data-sfx-clear]").forEach(btn => {
-    btn.addEventListener("click", async () => {
-      const key = btn.dataset.sfxClear;
-      try {
-        await clearSfxCustomFile(key);
-        renderSound().catch(console.error);
-      } catch (err) { console.error("clearSfxCustomFile", err); }
-    });
-  });
-
-  document.getElementById("btnSoundReset")?.addEventListener("click", () => {
+  document.getElementById("btnSoundReset")?.addEventListener("click", async () => {
+    const ok = await confirmModal({ text: t("gameSettings.sound.resetConfirm") || "Przywrócić domyślne ustawienia dźwięku? Usunie to wszystkie własne pliki." });
+    if (!ok) return;
     state.settings.sound = { ...getDefaults(state.locale).sound };
+    try { await clearAllSfxCustomFiles(state.gameId); } catch {}
     document.removeEventListener("click", sfxOutsideClick);
-    renderSound();
+    markDirty();
+    renderSound().catch(console.error);
+  });
+}
+
+function _bindGsSfxRow(key, cat, customFiles) {
+  const volSlider = document.querySelector(`[data-sfx-vol="${key}"]`);
+  const volLabel = document.getElementById(`sfxVolLabel_${key}`);
+  volSlider?.addEventListener("input", () => {
+    const v = Number(volSlider.value);
+    if (volLabel) volLabel.textContent = `${v}%`;
+    state.settings.sound.volumes[key] = v;
     markDirty();
   });
+
+  const previewBtn = document.querySelector(`[data-sfx-preview="${key}"]`);
+  previewBtn?.addEventListener("click", () => {
+    const custom = customFiles.get(key);
+    if (custom?.blob) {
+      const url = URL.createObjectURL(custom.blob);
+      const audio = new Audio(url);
+      audio.play().catch(() => {});
+      audio.onended = () => URL.revokeObjectURL(url);
+      return;
+    }
+    const variant = state.settings.sound.variants[key] || cat.sounds[0]?.file || "";
+    try { new Audio(`/audio_new/${cat.folder}/${variant}`).play(); } catch {}
+  });
+
+  const addBtn = document.querySelector(`[data-sfx-add="${key}"]`);
+  const fileInput = document.querySelector(`[data-sfx-file-input="${key}"]`);
+  addBtn?.addEventListener("click", () => fileInput?.click());
+
+  fileInput?.addEventListener("change", async () => {
+    const file = fileInput.files?.[0];
+    if (!file) return;
+    fileInput.value = "";
+    try {
+      const buf = await file.arrayBuffer();
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const decoded = await ctx.decodeAudioData(buf.slice());
+      ctx.close().catch(() => {});
+      const limitSec = cat.limitSec || 30;
+      if (decoded.duration > limitSec) {
+        await alertModal({ title: t("control.sfxTooLongTitle"), text: t("control.sfxTooLong", { limit: limitSec }) || `Maksymalna długość: ${limitSec}s` });
+        return;
+      }
+      const blob = new Blob([buf], { type: file.type || "audio/mpeg" });
+      await setSfxCustomBlob(key, blob, file.name, state.gameId);
+      _gsSetFileTag(key, file.name, true);
+      document.getElementById(`sfxSelect_${key}`)?.setAttribute("data-disabled", "true");
+    } catch (e) { console.warn("[sfx] decode error", e); }
+  });
+
+  const removeBtn = document.querySelector(`[data-sfx-remove="${key}"]`);
+  removeBtn?.addEventListener("click", async () => {
+    await clearSfxCustomFile(key, state.gameId).catch(console.warn);
+    _gsSetFileTag(key, "", false);
+    document.getElementById(`sfxSelect_${key}`)?.removeAttribute("data-disabled");
+  });
+}
+
+function _gsSetFileTag(key, filename, show) {
+  const tag = document.getElementById(`sfxFileTag_${key}`);
+  const nameEl = document.getElementById(`sfxFileName_${key}`);
+  const addBtn = document.querySelector(`[data-sfx-add="${key}"]`);
+  tag?.classList.toggle("hidden", !show);
+  addBtn?.classList.toggle("hidden", show);
+  if (nameEl && filename) nameEl.textContent = filename;
+}
+
+/* ===== QUESTIONS SETTINGS ===== */
+function updateQSidebarState() {
+  const q = state.settings.questions;
+  const finaleClickable = q.hasFinal && q.finaleMode === "selected";
+  const roundsClickable = q.mode === "ordered";
+
+  const finaleBtn = document.getElementById("sidebarFinale");
+  const roundsBtn = document.getElementById("sidebarRounds");
+
+  finaleBtn?.classList.toggle("gs-sidebar-item-disabled", !finaleClickable);
+  roundsBtn?.classList.toggle("gs-sidebar-item-disabled", !roundsClickable);
+
+  if (state.activeCategory === "finale" && !finaleClickable) setCategory("questions");
+  if (state.activeCategory === "rounds" && !roundsClickable) setCategory("questions");
+}
+
+function renderQuestions() {
+  const q = state.settings.questions;
+  const hasFinal = q.hasFinal;
+  const finalMode = q.finaleMode || "random";
+  const roundsMode = q.mode === "ordered" ? "pick" : "random";
+
+  gsContent.innerHTML = `
+    <div class="gs-cat-title">${t("gameSettings.categories.questions") || "Pytania — Ustawienia"}</div>
+    <div class="gs-section">
+      <div class="sectionBlock">
+        <div class="sectionTitle">${t("control.sectionFinal") || "Finał"}</div>
+        <div class="setting-item">
+          <div class="lbl2">${t("control.playFinal") || "Gramy finał?"}</div>
+          <div class="toggle-group">
+            <label class="toggle-item">
+              <input type="radio" name="qHasFinal" value="yes" ${hasFinal ? "checked" : ""}/>
+              <span class="toggle-slider" data-text="${t("control.toggleYes") || "Tak"}"></span>
+            </label>
+            <label class="toggle-item">
+              <input type="radio" name="qHasFinal" value="no" ${!hasFinal ? "checked" : ""}/>
+              <span class="toggle-slider" data-text="${t("control.toggleNo") || "Nie"}"></span>
+            </label>
+          </div>
+        </div>
+        <div class="setting-item" id="qFinalModeField" style="${hasFinal ? "" : "opacity:.35;pointer-events:none;"}">
+          <div class="lbl2">${t("control.finalQuestionsMode") || "Pytania finału"}</div>
+          <div class="toggle-group">
+            <label class="toggle-item">
+              <input type="radio" name="qFinalMode" value="random" ${finalMode !== "selected" ? "checked" : ""}/>
+              <span class="toggle-slider" data-text="${t("control.toggleRandom") || "Losuj"}"></span>
+            </label>
+            <label class="toggle-item">
+              <input type="radio" name="qFinalMode" value="selected" ${finalMode === "selected" ? "checked" : ""}/>
+              <span class="toggle-slider" data-text="${t("control.togglePick") || "Wybierz"}"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="sectionBlock">
+        <div class="sectionTitle">${t("control.sectionRounds") || "Rundy"}</div>
+        <div class="setting-item">
+          <div class="lbl2">${t("control.roundsQuestionsMode") || "Pytania rund"}</div>
+          <div class="toggle-group">
+            <label class="toggle-item">
+              <input type="radio" name="qRoundsMode" value="random" ${roundsMode !== "pick" ? "checked" : ""}/>
+              <span class="toggle-slider" data-text="${t("control.toggleRandom") || "Losuj"}"></span>
+            </label>
+            <label class="toggle-item">
+              <input type="radio" name="qRoundsMode" value="pick" ${roundsMode === "pick" ? "checked" : ""}/>
+              <span class="toggle-slider" data-text="${t("control.togglePick") || "Wybierz"}"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>`;
+
+  document.querySelectorAll("input[name=qHasFinal]").forEach(r => {
+    r.addEventListener("change", () => {
+      state.settings.questions.hasFinal = r.value === "yes";
+      markDirty();
+      updateQSidebarState();
+      renderQuestions();
+    });
+  });
+  document.querySelectorAll("input[name=qFinalMode]").forEach(r => {
+    r.addEventListener("change", () => {
+      state.settings.questions.finaleMode = r.value;
+      if (r.value === "random") state.settings.questions.finaleIds = [];
+      markDirty();
+      updateQSidebarState();
+      renderQuestions();
+    });
+  });
+  document.querySelectorAll("input[name=qRoundsMode]").forEach(r => {
+    r.addEventListener("change", () => {
+      state.settings.questions.mode = r.value === "pick" ? "ordered" : "random";
+      if (r.value === "random") state.settings.questions.selectedIds = [];
+      markDirty();
+      updateQSidebarState();
+      renderQuestions();
+    });
+  });
+
+  updateQSidebarState();
 }
 
 /* ===== ROUNDS ===== */
 function renderRounds() {
   const q = state.settings.questions;
   const isOrdered = q.mode === "ordered";
+
+  if (!isOrdered) {
+    gsContent.innerHTML = `
+      <div class="gs-cat-title">${t("gameSettings.categories.rounds")}</div>
+      <div class="gs-section">
+        <div class="gs-hint sfx-disabled-msg">
+          Pytania rund są losowane automatycznie.<br>
+          Aby ustalić kolejność, przejdź do <a href="#" id="linkQSettings">Pytania — Ustawienia</a> i wybierz tryb „Wybierz".
+        </div>
+      </div>`;
+    document.getElementById("linkQSettings")?.addEventListener("click", (e) => { e.preventDefault(); setCategory("questions"); });
+    return;
+  }
+
   const selectedSet = new Set(q.selectedIds);
   const finaleExclude = q.hasFinal ? new Set(q.finaleIds) : new Set();
   const available = state.questions.filter(qObj => !selectedSet.has(qObj.id) && !finaleExclude.has(qObj.id));
@@ -709,63 +849,15 @@ function renderRounds() {
   gsContent.innerHTML = `
     <div class="gs-cat-title">${t("gameSettings.categories.rounds")}</div>
     <div class="gs-section">
-      <div class="gs-field">
-        <div class="gs-label">Tryb pytań rund</div>
-        <div class="toggle-group">
-          <label class="toggle-item">
-            <input type="radio" name="gsRoundsMode" value="random" ${!isOrdered ? "checked" : ""}/>
-            <span class="toggle-slider" data-text="${t("gameSettings.questions.modeRandom")}"></span>
-          </label>
-          <label class="toggle-item">
-            <input type="radio" name="gsRoundsMode" value="ordered" ${isOrdered ? "checked" : ""}/>
-            <span class="toggle-slider" data-text="${t("gameSettings.questions.modeOrdered")}"></span>
-          </label>
-        </div>
-      </div>
-
-      <div id="gsRoundsRandom" ${isOrdered ? 'style="display:none"' : ""}>
-        <div class="gs-count-row">
-          <div class="gs-label">${t("gameSettings.questions.countPerRound")}</div>
-          <select class="inp" id="gsRoundCount" style="width:auto;">
-            ${[1,2,3,4,5,6,7,8,9,10].map(n =>
-              `<option value="${n}" ${q.count === n ? "selected" : ""}>${n}</option>`
-            ).join("")}
-          </select>
-          <div class="gs-label" style="margin-left:12px;">${t("gameSettings.questions.roundsCount")}</div>
-          <select class="inp" id="gsRoundsCount" style="width:auto;">
-            ${[1,2,3,4,5,6,7,8,9,10].map(n =>
-              `<option value="${n}" ${q.roundsCount === n ? "selected" : ""}>${n}</option>`
-            ).join("")}
-          </select>
-        </div>
-      </div>
-
-      <div id="gsRoundsOrdered" ${!isOrdered ? 'style="display:none"' : ""}>
-        <div class="gs-hint" style="margin-bottom:6px;">Pytania zostaną zadane w tej kolejności. Liczba rund = liczba wybranych pytań.</div>
-        <div class="gs-q-list" id="gsRoundsQList">${orderedItems}</div>
-        ${available.length > 0 ? `
-          <div class="gs-add-row">
-            <select class="inp" id="gsAddRoundQ">${addOptions}</select>
-            <button class="btn btn-sm" id="btnAddRoundQ" type="button">${t("gameSettings.questions.addQuestion")}</button>
-          </div>` : `<div class="gs-hint" style="margin-top:8px;">Wszystkie pytania dodane.</div>`}
-      </div>
+      <div class="gs-hint" style="margin-bottom:10px;">Pytania zostaną zadane w tej kolejności. Liczba rund = liczba wybranych pytań.</div>
+      <div class="gs-q-list" id="gsRoundsQList">${orderedItems}</div>
+      ${available.length > 0 ? `
+        <div class="gs-add-row">
+          <select class="inp" id="gsAddRoundQ">${addOptions}</select>
+          <button class="btn btn-sm" id="btnAddRoundQ" type="button">${t("gameSettings.questions.addQuestion")}</button>
+        </div>` : `<div class="gs-hint" style="margin-top:8px;">Wszystkie pytania zostały dodane.</div>`}
     </div>`;
 
-  document.querySelectorAll("input[name=gsRoundsMode]").forEach(r => {
-    r.addEventListener("change", () => {
-      state.settings.questions.mode = r.value;
-      markDirty();
-      renderRounds();
-    });
-  });
-  document.getElementById("gsRoundCount")?.addEventListener("change", (e) => {
-    state.settings.questions.count = Number(e.target.value);
-    markDirty();
-  });
-  document.getElementById("gsRoundsCount")?.addEventListener("change", (e) => {
-    state.settings.questions.roundsCount = Number(e.target.value);
-    markDirty();
-  });
   document.getElementById("gsRoundsQList")?.addEventListener("click", onQListClick.bind(null, "selectedIds", renderRounds));
   document.getElementById("btnAddRoundQ")?.addEventListener("click", () => {
     const sel = document.getElementById("gsAddRoundQ");
@@ -778,191 +870,140 @@ function renderRounds() {
 }
 
 /* ===== FINALE ===== */
-function doRandomizeFinale() {
-  const q = state.settings.questions;
-  const count = q.finaleCount || 5;
-  const selectedSet = new Set(q.selectedIds);
-  const pool = state.questions.filter(qObj => !selectedSet.has(qObj.id));
-  if (!pool.length) return;
-  const shuffled = [...pool];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  const picked = shuffled.slice(0, count).map(qObj => qObj.id);
-  q.selectedIds = q.selectedIds.filter(id => !picked.includes(id));
-  q.finaleIds = picked;
-  markDirty();
-  renderFinale();
-}
-
 function renderFinale() {
   const q = state.settings.questions;
-  const { hasFinal, finaleMode, finaleCount, finaleIds } = q;
+  const enabled = q.hasFinal && q.finaleMode === "selected";
 
-  const finaleSet = new Set(finaleIds);
-  const finalePool = state.questions.filter(qObj => !finaleSet.has(qObj.id));
-
-  let finaleBody = "";
-  if (hasFinal) {
-    const isSelected = finaleMode === "selected";
-    let pickSection = "";
-
-    if (isSelected) {
-      pickSection = `
-        <div class="gs-picker-card">
-          <div class="gs-picker-head">
-            <span class="gs-label" style="margin-bottom:0;">${t("gameSettings.questions.finaleTitle") || "Pytania finału"}</span>
-            <span class="badge"><span>Finał:</span> <b id="gsFinalePickCount">${finaleIds.length}</b>/5</span>
-          </div>
-          <div class="gs-picker-lists">
-            <div class="gs-picker-col">
-              <div class="gs-picker-col-title">${t("control.finalPoolHint") || "Pytania do rozgrywki (pula)"}</div>
-              <div class="gs-qrow-list" id="gsFinalPoolList"></div>
-            </div>
-            <div class="gs-picker-col">
-              <div class="gs-picker-col-title">${t("control.finalListHint") || "Pytania finału (max 5)"}</div>
-              <div class="gs-qrow-list" id="gsFinalSelectedList"></div>
-            </div>
-          </div>
-        </div>`;
-    } else {
-      if (!finaleIds.length) {
-        pickSection = `<button class="btn btn-sm gold" id="btnFinaleRandomize" type="button">${t("gameSettings.finale.randomize").replace("{n}", finaleCount || 5)}</button>`;
-      } else {
-        const lockedItems = finaleIds.map(id => {
-          const qObj = questionById(id);
-          const text = qObj ? esc(qObj.text) : `<em style="opacity:.5;">[usunięte]</em>`;
-          return `<div class="gs-q-item"><span class="gs-q-item-text">${text}</span></div>`;
-        }).join("");
-        pickSection = `
-          <div class="gs-hint" style="margin-bottom:6px;">${t("gameSettings.finale.randomLocked")}</div>
-          <div class="gs-q-list">${lockedItems}</div>
-          <button class="btn btn-sm" id="btnFinaleReRandomize" type="button" style="margin-top:8px;">${t("gameSettings.finale.rerandomize")}</button>`;
-      }
-    }
-
-    finaleBody = `
-      <div class="gs-field" style="margin-top:16px;">
-        <div class="gs-label">${t("gameSettings.questions.finaleTitle")}</div>
-        <div class="toggle-group">
-          <label class="toggle-item">
-            <input type="radio" name="gsFinaleQMode" value="random" ${!isSelected ? "checked" : ""}/>
-            <span class="toggle-slider" data-text="${t("gameSettings.questions.finaleModeRandom")}"></span>
-          </label>
-          <label class="toggle-item">
-            <input type="radio" name="gsFinaleQMode" value="selected" ${isSelected ? "checked" : ""}/>
-            <span class="toggle-slider" data-text="${t("gameSettings.questions.finaleModeSelected")}"></span>
-          </label>
-        </div>
-      </div>
-      ${!isSelected ? `
-      <div class="gs-field" style="margin-top:10px;">
-        <div class="gs-label">${t("gameSettings.questions.finaleCount")}</div>
-        <select class="inp" id="gsFinaleCount" style="width:auto;">
-          ${[1,2,3,4,5,6,7,8,9,10].map(n =>
-            `<option value="${n}" ${finaleCount === n ? "selected" : ""}>${n}</option>`
-          ).join("")}
-        </select>
-      </div>` : ""}
-      <div class="gs-field" style="margin-top:12px;">${pickSection}</div>`;
-  } else {
-    finaleBody = `<div class="gs-hint" style="margin-top:12px;">${t("gameSettings.finale.disabled")}</div>`;
+  if (!enabled) {
+    const reason = !q.hasFinal
+      ? `Finał jest wyłączony.`
+      : `Pytania finału są losowane automatycznie.`;
+    const hint = !q.hasFinal
+      ? `Aby wybrać pytania, przejdź do <a href="#" id="linkQSettingsFinale">Pytania — Ustawienia</a> i ustaw „Gramy finał → Tak" oraz „Pytania finału → Wybierz".`
+      : `Aby wybrać pytania, przejdź do <a href="#" id="linkQSettingsFinale">Pytania — Ustawienia</a> i zmień „Pytania finału → Wybierz".`;
+    gsContent.innerHTML = `
+      <div class="gs-cat-title">${t("gameSettings.categories.finale")}</div>
+      <div class="gs-section">
+        <div class="gs-hint sfx-disabled-msg">${reason}<br>${hint}</div>
+      </div>`;
+    document.getElementById("linkQSettingsFinale")?.addEventListener("click", (e) => {
+      e.preventDefault();
+      setCategory("questions");
+    });
+    return;
   }
 
+  const finaleIds = q.finaleIds || [];
   gsContent.innerHTML = `
     <div class="gs-cat-title">${t("gameSettings.categories.finale")}</div>
     <div class="gs-section">
-      <div class="gs-field">
-        <div class="gs-label">${t("gameSettings.finale.hasFinal")}</div>
-        <div class="toggle-group">
-          <label class="toggle-item">
-            <input type="radio" name="gsHasFinal" value="yes" ${hasFinal ? "checked" : ""}/>
-            <span class="toggle-slider" data-text="${t("gameSettings.finale.yes")}"></span>
-          </label>
-          <label class="toggle-item">
-            <input type="radio" name="gsHasFinal" value="no" ${!hasFinal ? "checked" : ""}/>
-            <span class="toggle-slider" data-text="${t("gameSettings.finale.no")}"></span>
-          </label>
+      <div class="gs-picker-card">
+        <div class="gs-picker-head">
+          <span class="gs-label" style="margin-bottom:0;">${t("control.finalListHint") || "Pytania finału"}</span>
+          <span class="badge"><span>Finał:</span> <b id="gsFinalePickCount">${finaleIds.length}</b>/5</span>
+        </div>
+        <div class="gs-picker-lists">
+          <div class="gs-picker-col">
+            <div class="gs-picker-col-title">${t("control.finalPoolHint") || "Pytania do rozgrywki (pula)"}</div>
+            <div class="gs-qrow-list" id="gsFinalPoolList"></div>
+          </div>
+          <div class="gs-picker-col">
+            <div class="gs-picker-col-title">${t("control.finalListHint") || "Pytania finału (max 5)"}</div>
+            <div class="gs-qrow-list" id="gsFinalSelectedList"></div>
+          </div>
         </div>
       </div>
-      ${finaleBody}
     </div>`;
 
-  document.querySelectorAll("input[name=gsHasFinal]").forEach(r => {
-    r.addEventListener("change", () => {
-      state.settings.questions.hasFinal = r.value === "yes";
-      markDirty();
-      renderFinale();
-    });
-  });
-  document.querySelectorAll("input[name=gsFinaleQMode]").forEach(r => {
-    r.addEventListener("change", () => {
-      state.settings.questions.finaleMode = r.value;
-      if (r.value === "random") state.settings.questions.finaleIds = [];
-      markDirty();
-      renderFinale();
-    });
-  });
-  document.getElementById("gsFinaleCount")?.addEventListener("change", (e) => {
-    state.settings.questions.finaleCount = Number(e.target.value);
-    markDirty();
-  });
-  document.getElementById("btnFinaleRandomize")?.addEventListener("click", doRandomizeFinale);
-  document.getElementById("btnFinaleReRandomize")?.addEventListener("click", doRandomizeFinale);
-  if (document.getElementById("gsFinalPoolList")) renderGsFinalPicker();
+  renderGsFinalPickerDnD();
 }
 
-function renderGsFinalPicker() {
-  const poolRoot     = document.getElementById("gsFinalPoolList");
-  const selectedRoot = document.getElementById("gsFinalSelectedList");
-  const countEl      = document.getElementById("gsFinalePickCount");
-  if (!poolRoot || !selectedRoot) return;
+function renderGsFinalPickerDnD() {
+  const poolRoot = document.getElementById("gsFinalPoolList");
+  const finalRoot = document.getElementById("gsFinalSelectedList");
+  const countEl = document.getElementById("gsFinalePickCount");
+  if (!poolRoot || !finalRoot) return;
 
-  const finaleSet = new Set(state.settings.questions.finaleIds);
-  const pool   = state.questions.filter(q => !finaleSet.has(q.id));
-  const picked = state.settings.questions.finaleIds.map(id => questionById(id)).filter(Boolean);
+  const finaleIds = state.settings.questions.finaleIds;
+  const finaleSet = new Set(finaleIds);
+  const pool = state.questions.filter(q => !finaleSet.has(q.id));
+  const picked = finaleIds.map(id => questionById(id)).filter(Boolean);
 
   if (countEl) countEl.textContent = String(picked.length);
 
-  function makeRow(q, isInFinal) {
-    const div = document.createElement("div");
-    div.className = "gs-qrow";
-    div.innerHTML = `<span class="meta">#${q.ord ?? ""}</span><span class="txt">${esc(q.text)}</span>`;
-    div.addEventListener("click", () => {
-      if (isInFinal) {
-        state.settings.questions.finaleIds = state.settings.questions.finaleIds.filter(x => x !== q.id);
+  function renderList(root, list, side) {
+    root.innerHTML = list.length
+      ? list.map(q =>
+          `<div class="gs-qrow" data-id="${esc(q.id)}" draggable="true">
+            <span class="meta">#${q.ord ?? ""}</span>
+            <span class="txt">${esc(q.text)}</span>
+          </div>`
+        ).join("")
+      : `<div class="gs-picker-empty">${
+          side === "final" ? "Nie wybrano pytań finałowych." : "Brak dostępnych pytań."
+        }</div>`;
+
+    root.querySelectorAll(".gs-qrow").forEach(row => {
+      const id = row.dataset.id;
+      row.addEventListener("dragstart", (e) => {
+        e.dataTransfer.setData("text/plain", id);
+        e.dataTransfer.effectAllowed = "move";
+        row.classList.add("dragging");
+      });
+      row.addEventListener("dragend", () => {
+        row.classList.remove("dragging");
+        poolRoot.classList.remove("droptarget");
+        finalRoot.classList.remove("droptarget");
+      });
+      row.addEventListener("click", () => {
+        const ids = state.settings.questions.finaleIds;
+        if (side === "final") {
+          state.settings.questions.finaleIds = ids.filter(x => x !== id);
+        } else {
+          if (ids.length >= 5) return;
+          state.settings.questions.finaleIds = [...ids, id];
+        }
+        markDirty();
+        renderGsFinalPickerDnD();
+      });
+    });
+  }
+
+  function bindDropZone(root, targetSide) {
+    if (root._dndBound) return;
+    root._dndBound = true;
+    root.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      root.classList.add("droptarget");
+      if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
+    });
+    root.addEventListener("dragleave", (e) => {
+      if (root.contains(e.relatedTarget)) return;
+      root.classList.remove("droptarget");
+    });
+    root.addEventListener("drop", (e) => {
+      e.preventDefault();
+      root.classList.remove("droptarget");
+      const id = e.dataTransfer?.getData("text/plain");
+      if (!id) return;
+      const ids = state.settings.questions.finaleIds;
+      if (targetSide === "final") {
+        if (!ids.includes(id)) {
+          if (ids.length >= 5) return;
+          state.settings.questions.finaleIds = [...ids, id];
+        }
       } else {
-        if (state.settings.questions.finaleIds.length >= 5) return;
-        state.settings.questions.finaleIds.push(q.id);
+        state.settings.questions.finaleIds = ids.filter(x => x !== id);
       }
       markDirty();
-      renderGsFinalPicker();
+      renderGsFinalPickerDnD();
     });
-    return div;
   }
 
-  poolRoot.innerHTML = "";
-  if (pool.length) {
-    pool.forEach(q => poolRoot.appendChild(makeRow(q, false)));
-  } else {
-    const em = document.createElement("div");
-    em.className = "gs-picker-empty";
-    em.textContent = "Brak dostępnych pytań.";
-    poolRoot.appendChild(em);
-  }
-
-  selectedRoot.innerHTML = "";
-  if (picked.length) {
-    picked.forEach(q => selectedRoot.appendChild(makeRow(q, true)));
-  } else {
-    const em = document.createElement("div");
-    em.className = "gs-picker-empty";
-    em.textContent = "Nie wybrano pytań finałowych.";
-    selectedRoot.appendChild(em);
-  }
-
-  if (countEl) countEl.textContent = String(picked.length);
+  renderList(poolRoot, pool, "pool");
+  renderList(finalRoot, picked, "final");
+  bindDropZone(poolRoot, "pool");
+  bindDropZone(finalRoot, "final");
 }
 
 /* ===== GAME SETTINGS ===== */

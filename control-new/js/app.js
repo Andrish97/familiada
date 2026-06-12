@@ -411,6 +411,7 @@ async function main() {
   let gs = null;
   // Logo wybrane w setup_look (null = domyślne, undefined = jeszcze nie wczytane z game-settings)
   let selectedLogoId = undefined;
+  let logosMap = new Map(); // id → logo object (dla nazwy w podsumowaniu)
   try {
     const locale = document.documentElement.lang || "pl";
     gs = await loadGameSettings(game.id, locale);
@@ -658,6 +659,7 @@ async function sendZeroStatesToDevices() {
       if (error) throw error;
 
       const list = logos || [];
+      logosMap = new Map(list.map(l => [l.id, l]));
 
       if (selectedLogoId === undefined) {
         // game-settings nie załadowało — fallback na is_active z DB
@@ -1996,9 +1998,9 @@ async function sendZeroStatesToDevices() {
     const logoEl = document.getElementById("summaryLogo");
     if (logoEl) {
       if (selectedLogoId === null) {
-        logoEl.textContent = t("control.logoDefault") || "Domyślne";
+        logoEl.textContent = t("control.lookLogoDefault") || "Domyślne";
       } else if (selectedLogoId) {
-        logoEl.textContent = `ID: ${selectedLogoId}`;
+        logoEl.textContent = logosMap.get(selectedLogoId)?.name || selectedLogoId;
       } else {
         logoEl.textContent = "—";
       }
@@ -2052,14 +2054,22 @@ async function sendZeroStatesToDevices() {
         `Zakończenie: <b>${escapeHtml(endLabel)}</b>`;
     }
 
-    // Głośności dźwięków
+    // Głośności i warianty dźwięków
     const soundEl = document.getElementById("summarySound");
     if (soundEl) {
+      const cats = getSfxCategories();
       const vols = getSfxVolumes();
       const rows = [];
-      for (const [key, v] of vols) {
+      for (const cat of cats) {
+        const key = cat.key;
+        const v = vols.get(key) ?? 1.0;
         const pct = Math.round(v * 100);
-        if (pct !== 100) rows.push(`${escapeHtml(key)}: <b>${pct}%</b>`);
+        const variant = getSfxVariant(key);
+        const isNonDefault = variant && variant !== "classic.mp3";
+        const parts = [];
+        if (pct !== 100) parts.push(`${pct}%`);
+        if (isNonDefault) parts.push(escapeHtml(variant.replace(/\.[^.]+$/, "")));
+        if (parts.length) rows.push(`${escapeHtml(key)}: <b>${parts.join(", ")}</b>`);
       }
       soundEl.innerHTML = rows.length ? rows.join("&nbsp;&nbsp;") : "Wszystkie 100%";
     }
