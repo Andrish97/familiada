@@ -15,6 +15,7 @@ const DEFAULT_TEAM_NAMES = {
 export function getDefaults(locale = "pl") {
   const teams = DEFAULT_TEAM_NAMES[locale] ?? DEFAULT_TEAM_NAMES.pl;
   return {
+    ingame: false,
     teams: {
       nameA: teams.nameA,
       nameB: teams.nameB,

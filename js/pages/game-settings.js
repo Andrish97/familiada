@@ -1172,6 +1172,69 @@ async function save() {
   }
 }
 
+/* ===== INGAME GUARD ===== */
+function showIngameGuard(gameId, settings) {
+  const overlay = document.createElement("div");
+  overlay.id = "ingameGuard";
+  Object.assign(overlay.style, {
+    position: "fixed",
+    inset: "0",
+    width: "100vw",
+    height: "100vh",
+    fontFamily: "system-ui,-apple-system,Segoe UI,sans-serif",
+    background: "rgba(0,0,0,.78)",
+    backdropFilter: "blur(10px)",
+    WebkitBackdropFilter: "blur(10px)",
+    color: "#fff",
+    zIndex: "2147483647",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "16px",
+    boxSizing: "border-box",
+  });
+
+  overlay.innerHTML = `
+    <div style="
+      width:100%;max-width:520px;box-sizing:border-box;
+      background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);
+      border-radius:18px;padding:24px;text-align:left;
+    ">
+      <div style="font-weight:900;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px;font-size:1.1em;">
+        ${t("control.ingameGuard.title") || "Gra w toku"}
+      </div>
+      <div style="opacity:.9;line-height:1.5;margin-bottom:18px;">
+        ${t("control.ingameGuard.message") || "Nie możesz zmieniać ustawień podczas trwającej rozgrywki."}
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button id="ingameGuardBack" type="button" style="
+          appearance:none;border:0;border-radius:12px;padding:10px 16px;
+          font-weight:800;cursor:pointer;background:rgba(255,255,255,.14);color:#fff;
+        ">${t("control.ingameGuard.back") || "Wróć"}</button>
+        <button id="ingameGuardUnlock" type="button" style="
+          appearance:none;border:0;border-radius:12px;padding:10px 16px;
+          font-weight:800;cursor:pointer;background:rgba(255,100,100,.25);color:#fff;
+        ">${t("control.ingameGuard.unlock") || "Odblokuj ustawienia"}</button>
+      </div>
+    </div>
+  `;
+
+  overlay.querySelector("#ingameGuardBack").addEventListener("click", () => {
+    if (window.history.length > 1) { history.back(); return; }
+    location.href = "/builder-new";
+  });
+
+  overlay.querySelector("#ingameGuardUnlock").addEventListener("click", async () => {
+    const btn = overlay.querySelector("#ingameGuardUnlock");
+    btn.disabled = true;
+    btn.style.opacity = "0.5";
+    await saveSettings(gameId, { ...settings, ingame: false }).catch(() => {});
+    location.reload();
+  });
+
+  document.documentElement.appendChild(overlay);
+}
+
 /* ===== INIT ===== */
 async function init() {
   // guardDesktopOnly();
@@ -1209,6 +1272,11 @@ async function init() {
 
   if (game.type === "prepared" && sidebarFinale) {
     sidebarFinale.style.display = "none";
+  }
+
+  if (settings.ingame === true) {
+    showIngameGuard(gameId, settings);
+    return;
   }
 
   state.settings  = settings;

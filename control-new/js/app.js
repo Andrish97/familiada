@@ -63,7 +63,7 @@ import {
   uploadSoundToCloud, deleteSoundFromCloud, deleteAllSoundsFromCloud, listCloudSounds,
 } from "../../js/core/sfx-cloud.js?v=v2026-06-13T07282";
 import { createStore } from "./store.js?v=v2026-06-13T07282";
-import { loadSettings as loadGameSettings } from "../../js/core/game-settings.js?v=v2026-06-13T07282";
+import { loadSettings as loadGameSettings, saveSettings as saveGameSettings } from "../../js/core/game-settings.js?v=v2026-06-13T07282";
 import { createUI } from "./ui.js?v=v2026-06-13T07282";
 import { createDevices } from "./devices.js?v=v2026-06-13T07282";
 import { createPresence } from "./presence.js?v=v2026-06-13T07282";
@@ -570,6 +570,7 @@ async function sendZeroStatesToDevices() {
     if (confirmed) {
       suppressUnloadWarn = true;
       navGuardBusy = true;
+      if (gs) { gs.ingame = false; saveGameSettings(game.id, gs).catch(() => {}); }
       history.go(-2);
     }
   });
@@ -582,6 +583,7 @@ async function sendZeroStatesToDevices() {
     // Wygaś udostępnienia – fire-and-forget (przeglądarka może zabić JS)
     shareDevice.expireShares().catch(() => {});
     expireConnectCodes().catch(() => {});
+    if (gs) { gs.ingame = false; saveGameSettings(game.id, gs).catch(() => {}); }
   });
 
   // realtime channels
@@ -1636,6 +1638,7 @@ async function sendZeroStatesToDevices() {
 
     await shareDevice.expireShares();
     await expireConnectCodes();
+    if (gs) { gs.ingame = false; await saveGameSettings(game.id, gs).catch(() => {}); }
     suppressUnloadWarn = true;
     location.href = "../builder";
   });
@@ -2118,6 +2121,10 @@ async function sendZeroStatesToDevices() {
   ui.on("game.startIntro", async () => {
     if (!store.state.locks.gameStarted) {
       store.setGameStarted(true);
+      if (gs) {
+        gs.ingame = true;
+        saveGameSettings(game.id, gs).catch(() => {});
+      }
       await rounds.stateGameReady();
     }
     await rounds.stateStartGameIntro();
