@@ -347,3 +347,17 @@ export async function initSfx() {
     applySfxVolume(key);
   }
 }
+
+/**
+ * Nadpisuje cache plikami własnymi przypisanymi do konkretnej gry.
+ * Wywołać po initSfx() w control, żeby per-game pliki z game-settings
+ * miały pierwszeństwo nad globalnymi.
+ */
+export async function loadSfxCustomForGame(gameId) {
+  if (!gameId) return;
+  const customFiles = await getSfxCustomFiles(gameId);
+  for (const [key, { blob }] of customFiles) {
+    loadIntoCache(key, URL.createObjectURL(blob));
+    applySfxVolume(key);
+  }
+}

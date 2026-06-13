@@ -55,7 +55,7 @@ import {
   setSfxCustomBlob, getSfxCustomFiles, clearSfxCustomFile, clearAllSfxCustomFiles,
   loadSfxFromCloud,
   playSfx as playSfxNew,
-  initSfx,
+  initSfx, loadSfxCustomForGame,
 } from "../../js/core/sfx-new.js?v=v2026-06-13T07205";
 import {
   getSfxSaveFlag, setSfxSaveFlag,
@@ -1125,6 +1125,7 @@ async function sendZeroStatesToDevices() {
       await loadSfxManifest();
       if (gs?.sound) applySfxGameSettings(gs.sound);
       await initSfx();
+      await loadSfxCustomForGame(game.id); // per-game custom files nadpisują globalne
       _sfxReady = true;
 
       // Załaduj custom z chmury jeśli zalogowany i flaga ustawiona
