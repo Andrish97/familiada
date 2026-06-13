@@ -543,24 +543,31 @@ async function renderSound() {
     </div>`;
 
   const tableEl = document.getElementById("sfxTableGs");
+  const customLabel = t("control.sfxCustom") || "Własny";
 
   for (const cat of categories) {
     const key = cat.key;
     const vol = state.settings.sound.volumes[key] ?? 100;
-    const currentVariant = state.settings.sound.variants[key] || cat.sounds[0]?.file || "";
+    const currentVariant = state.settings.sound.variants[key] || cat.sounds[0]?.file?.split("?")[0] || "";
     const custom = customFiles.get(key);
+    const isCustom = !!custom;
 
-    const optionsHtml = cat.sounds.map(s => {
+    const soundOptions = cat.sounds.map(s => {
       const file = s.file.split("?")[0];
       const label = typeof s.label === "object" ? (s.label[lang] ?? s.label["pl"] ?? s.file) : s.file;
-      const selected = file === currentVariant ? ' data-selected="true"' : "";
+      const selected = !isCustom && file === currentVariant ? ' data-selected="true"' : "";
       return `<div class="ui-select-option" data-value="${file}"${selected}>${label}</div>`;
-    }).join("");
+    });
+    const optionsHtml = [
+      ...soundOptions,
+      `<div class="ui-select-option" data-value="custom"${isCustom ? ' data-selected="true"' : ""}>${customLabel}</div>`,
+    ].join("");
 
     const selectedSound = cat.sounds.find(s => s.file.split("?")[0] === currentVariant) || cat.sounds[0];
-    const selectedLabel = selectedSound
+    const variantLabel = selectedSound
       ? (typeof selectedSound.label === "object" ? (selectedSound.label[lang] ?? selectedSound.label["pl"] ?? selectedSound.file) : selectedSound.file)
       : currentVariant;
+    const displayLabel = isCustom ? customLabel : variantLabel;
 
     const desc = t("control.sfxDesc." + key) || key;
 
@@ -570,9 +577,9 @@ async function renderSound() {
     row.innerHTML = `
       <div class="sfx-row-desc">${desc}</div>
       <div class="sfx-variant-wrap">
-        <div class="ui-select" data-sfx-variant="${key}" id="sfxSelect_${key}"${custom ? ' data-disabled="true"' : ""}>
+        <div class="ui-select" data-sfx-variant="${key}" id="sfxSelect_${key}">
           <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
-            <span class="ui-select-label">${selectedLabel}</span>
+            <span class="ui-select-label">${displayLabel}</span>
             <span class="ui-select-caret" aria-hidden="true">▾</span>
           </button>
           <div class="ui-select-menu" role="listbox">${optionsHtml}</div>
@@ -583,9 +590,8 @@ async function renderSound() {
         <input type="range" class="sfx-vol" min="0" max="100" value="${vol}" data-sfx-vol="${key}"/>
         <span class="sfx-vol-label" id="sfxVolLabel_${key}">${vol}%</span>
       </div>
-      <div class="sfx-file-wrap" id="sfxFileWrap_${key}">
-        <button class="btn sm sfx-add-btn${custom ? " hidden" : ""}" type="button" data-sfx-add="${key}"
-          data-i18n="control.sfxAddFile">${t("control.sfxAddFile") || "Własny plik"}</button>
+      <div class="sfx-file-wrap${isCustom ? "" : " hidden"}" id="sfxFileWrap_${key}">
+        <button class="btn sm sfx-add-btn${custom ? " hidden" : ""}" type="button" data-sfx-add="${key}">${t("control.sfxAddFile") || "Wybierz plik"}</button>
         <input type="file" class="sfx-file-input" accept="audio/mpeg,audio/wav,audio/ogg" data-sfx-file-input="${key}"/>
         <div class="sfx-file-tag${custom ? "" : " hidden"}" id="sfxFileTag_${key}">
           <span class="sfx-file-name" id="sfxFileName_${key}">${custom ? esc(custom.filename) : ""}</span>
@@ -593,7 +599,7 @@ async function renderSound() {
         </div>
       </div>`;
     tableEl.appendChild(row);
-    _bindGsSfxRow(key, cat, customFiles);
+    _bindGsSfxRow(key, cat, custom || null, currentVariant);
   }
 
   // Close selects on outside click
@@ -623,8 +629,15 @@ async function renderSound() {
         opt.setAttribute("data-selected", "true");
         btn.querySelector(".ui-select-label").textContent = opt.textContent;
         selectEl.classList.remove("open");
-        state.settings.sound.variants[key] = file;
-        markDirty();
+        const fileWrap = document.getElementById(`sfxFileWrap_${key}`);
+        if (file === "custom") {
+          fileWrap?.classList.remove("hidden");
+        } else {
+          fileWrap?.classList.add("hidden");
+          clearSfxCustomFile(key, state.gameId).catch(() => {});
+          state.settings.sound.variants[key] = file;
+          markDirty();
+        }
       });
     });
   });
@@ -640,7 +653,9 @@ async function renderSound() {
   });
 }
 
-function _bindGsSfxRow(key, cat, customFiles) {
+function _bindGsSfxRow(key, cat, initialCustom, currentVariant) {
+  let currentCustom = initialCustom;
+
   const volSlider = document.querySelector(`[data-sfx-vol="${key}"]`);
   const volLabel = document.getElementById(`sfxVolLabel_${key}`);
   volSlider?.addEventListener("input", () => {
@@ -652,9 +667,8 @@ function _bindGsSfxRow(key, cat, customFiles) {
 
   const previewBtn = document.querySelector(`[data-sfx-preview="${key}"]`);
   previewBtn?.addEventListener("click", () => {
-    const custom = customFiles.get(key);
-    if (custom?.blob) {
-      const url = URL.createObjectURL(custom.blob);
+    if (currentCustom?.blob) {
+      const url = URL.createObjectURL(currentCustom.blob);
       const audio = new Audio(url);
       audio.play().catch(() => {});
       audio.onended = () => URL.revokeObjectURL(url);
@@ -684,16 +698,30 @@ function _bindGsSfxRow(key, cat, customFiles) {
       }
       const blob = new Blob([buf], { type: file.type || "audio/mpeg" });
       await setSfxCustomBlob(key, blob, file.name, state.gameId);
+      currentCustom = { blob, filename: file.name };
       _gsSetFileTag(key, file.name, true);
-      document.getElementById(`sfxSelect_${key}`)?.setAttribute("data-disabled", "true");
     } catch (e) { console.warn("[sfx] decode error", e); }
   });
 
   const removeBtn = document.querySelector(`[data-sfx-remove="${key}"]`);
   removeBtn?.addEventListener("click", async () => {
     await clearSfxCustomFile(key, state.gameId).catch(console.warn);
+    currentCustom = null;
     _gsSetFileTag(key, "", false);
-    document.getElementById(`sfxSelect_${key}`)?.removeAttribute("data-disabled");
+    // Przełącz select z powrotem na poprzedni wariant
+    const selectEl = document.getElementById(`sfxSelect_${key}`);
+    const menu = selectEl?.querySelector(".ui-select-menu");
+    const labelEl = selectEl?.querySelector(".ui-select-label");
+    const fallback = currentVariant || cat.sounds[0]?.file?.split("?")[0] || "";
+    if (menu && labelEl) {
+      menu.querySelectorAll(".ui-select-option").forEach(o => {
+        if (o.dataset.value === fallback) o.setAttribute("data-selected", "true");
+        else o.removeAttribute("data-selected");
+      });
+      const opt = menu.querySelector(`[data-value="${fallback}"]`);
+      if (opt) labelEl.textContent = opt.textContent;
+    }
+    document.getElementById(`sfxFileWrap_${key}`)?.classList.add("hidden");
   });
 }
 
