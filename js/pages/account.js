@@ -1,10 +1,10 @@
-import { sb } from "../core/supabase.js?v=v2026-06-13T07253";
-import { cooldownGet, cooldownReserve, cooldownRelease } from "../core/cooldown.js?v=v2026-06-13T07253";
-import { requireAuth, updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles } from "../core/auth.js?v=v2026-06-13T07253";
-import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../core/user-flags.js?v=v2026-06-13T07253";
-import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js?v=v2026-06-13T07253";
-import { confirmModal } from "../core/modal.js?v=v2026-06-13T07253";
-import { isGuestUser, showGuestBlockedOverlay } from "../core/guest-mode.js?v=v2026-06-13T07253";
+import { sb } from "../core/supabase.js?v=v2026-06-13T07282";
+import { cooldownGet, cooldownReserve, cooldownRelease } from "../core/cooldown.js?v=v2026-06-13T07282";
+import { requireAuth, updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles } from "../core/auth.js?v=v2026-06-13T07282";
+import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../core/user-flags.js?v=v2026-06-13T07282";
+import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js?v=v2026-06-13T07282";
+import { confirmModal } from "../core/modal.js?v=v2026-06-13T07282";
+import { isGuestUser, showGuestBlockedOverlay } from "../core/guest-mode.js?v=v2026-06-13T07282";
 import "../core/contact-modal.js";
 
 
