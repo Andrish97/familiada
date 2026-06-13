@@ -48,6 +48,7 @@ import { validateGameReadyToPlay, loadGameBasic, loadQuestions, loadAnswers } fr
 import { unlockAudio, isAudioUnlocked, playSfx } from "../../js/core/sfx.js?v=v2026-06-13T07253";
 import {
   loadSfxManifest, getSfxCategories,
+  setCurrentGameId,
   applySfxGameSettings,
   setSfxVariant, getSfxVariant,
   setSfxVolume, getSfxVolumes, applySfxVolumes, resetSfxVolumes,
@@ -55,7 +56,7 @@ import {
   setSfxCustomBlob, getSfxCustomFiles, clearSfxCustomFile, clearAllSfxCustomFiles,
   loadSfxFromCloud,
   playSfx as playSfxNew,
-  initSfx, loadSfxCustomForGame,
+  initSfx,
 } from "../../js/core/sfx-new.js?v=v2026-06-13T07253";
 import {
   getSfxSaveFlag, setSfxSaveFlag,
@@ -1123,9 +1124,9 @@ async function sendZeroStatesToDevices() {
   (async () => {
     try {
       await loadSfxManifest();
+      setCurrentGameId(game.id);
       if (gs?.sound) applySfxGameSettings(gs.sound);
       await initSfx();
-      await loadSfxCustomForGame(game.id); // per-game custom files nadpisują globalne
       _sfxReady = true;
 
       // Załaduj custom z chmury jeśli zalogowany i flaga ustawiona

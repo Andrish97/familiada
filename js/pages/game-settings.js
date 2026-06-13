@@ -6,7 +6,7 @@ import { loadSettings, saveSettings, getDefaults } from "../core/game-settings.j
 import { guardDesktopOnly } from "../core/device-guard.js?v=v2026-06-13T07253";
 import { initUiSelect } from "../core/ui-select.js?v=v2026-06-13T07253";
 import {
-  loadSfxManifest, getSfxCategories,
+  loadSfxManifest, getSfxCategories, setCurrentGameId,
   setSfxCustomBlob, clearSfxCustomFile, clearAllSfxCustomFiles, getSfxCustomFiles,
 } from "../core/sfx-new.js?v=v2026-06-13T07253";
 import { loadFont5x7, buildLogoPreviewCanvas } from "../core/logo-preview.js?v=v2026-06-13T07253";
@@ -531,7 +531,7 @@ async function renderSound() {
   }
 
   let customFiles = new Map();
-  try { customFiles = await getSfxCustomFiles(state.gameId); } catch {}
+  try { customFiles = await getSfxCustomFiles(); } catch {}
 
   gsContent.innerHTML = `
     <div class="gs-cat-title">${t("gameSettings.categories.sound")}</div>
@@ -634,7 +634,7 @@ async function renderSound() {
           fileWrap?.classList.remove("hidden");
         } else {
           fileWrap?.classList.add("hidden");
-          clearSfxCustomFile(key, state.gameId).catch(() => {});
+          clearSfxCustomFile(key).catch(() => {});
           state.settings.sound.variants[key] = file;
           markDirty();
         }
@@ -646,7 +646,7 @@ async function renderSound() {
     const ok = await confirmModal({ text: t("gameSettings.sound.resetConfirm") || "Przywrócić domyślne ustawienia dźwięku? Usunie to wszystkie własne pliki." });
     if (!ok) return;
     state.settings.sound = { ...getDefaults(state.locale).sound };
-    try { await clearAllSfxCustomFiles(state.gameId); } catch {}
+    try { await clearAllSfxCustomFiles(); } catch {}
     document.removeEventListener("click", sfxOutsideClick);
     markDirty();
     renderSound().catch(console.error);
@@ -697,7 +697,7 @@ function _bindGsSfxRow(key, cat, initialCustom, currentVariant) {
         return;
       }
       const blob = new Blob([buf], { type: file.type || "audio/mpeg" });
-      await setSfxCustomBlob(key, blob, file.name, state.gameId);
+      await setSfxCustomBlob(key, blob, file.name);
       currentCustom = { blob, filename: file.name };
       _gsSetFileTag(key, file.name, true);
     } catch (e) { console.warn("[sfx] decode error", e); }
@@ -705,7 +705,7 @@ function _bindGsSfxRow(key, cat, initialCustom, currentVariant) {
 
   const removeBtn = document.querySelector(`[data-sfx-remove="${key}"]`);
   removeBtn?.addEventListener("click", async () => {
-    await clearSfxCustomFile(key, state.gameId).catch(console.warn);
+    await clearSfxCustomFile(key).catch(console.warn);
     currentCustom = null;
     _gsSetFileTag(key, "", false);
     // Przełącz select z powrotem na poprzedni wariant
@@ -1202,6 +1202,7 @@ async function init() {
   }
   state.game = game;
   state.shareKeyDisplay = game.share_key_display || null;
+  setCurrentGameId(gameId);
 
   gsTitle.textContent = game.name;
   document.title = `${game.name} — Ustawienia rozgrywki`;

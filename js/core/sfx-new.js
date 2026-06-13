@@ -9,6 +9,19 @@ const IDB_STORE     = "custom-files";
 const LS_VOL_PREFIX = "sfx_vol_";
 const LS_VAR_PREFIX = "sfx_variant_";
 
+/* ========= KONTEKST GRY ========= */
+
+let _currentGameId = null;
+
+/** Ustaw kontekst gry — initSfx() i setSfxCustomBlob() domyślnie używają tego gameId. */
+export function setCurrentGameId(gameId) {
+  _currentGameId = gameId ?? null;
+}
+
+export function getCurrentGameId() {
+  return _currentGameId;
+}
+
 /* ========= MANIFEST ========= */
 
 let manifest = null;
@@ -132,14 +145,11 @@ function idbKey(key, gameId) {
   return gameId ? `${gameId}:${key}` : key;
 }
 
-export async function setSfxCustomBlob(key, blob, filename, gameId) {
+export async function setSfxCustomBlob(key, blob, filename, gameId = _currentGameId) {
   const k = idbKey(key, gameId);
-  // Only update audio cache for global (no-gameId) blobs
-  if (!gameId) {
-    const url = URL.createObjectURL(blob);
-    loadIntoCache(key, url);
-    applySfxVolume(key);
-  }
+  const url = URL.createObjectURL(blob);
+  loadIntoCache(key, url);
+  applySfxVolume(key);
 
   const db = await openIDB();
   await new Promise((res, rej) => {
@@ -178,16 +188,15 @@ export async function getSfxCustomFiles(gameId) {
   });
 }
 
-export async function clearSfxCustomFile(key, gameId) {
+export async function clearSfxCustomFile(key, gameId = _currentGameId) {
   const k = idbKey(key, gameId);
-  if (!gameId) {
-    const old = cache.get(key);
-    if (old?.src?.startsWith("blob:")) URL.revokeObjectURL(old.src);
-    const meta = getCategoryMeta(key);
-    if (meta) {
-      loadIntoCache(key, buildUrl(meta.folder, getSfxVariant(key)));
-      applySfxVolume(key);
-    }
+  // Przywróć dźwięk z wariantu (jeśli nie ma globalnego custom pliku)
+  const old = cache.get(key);
+  if (old?.src?.startsWith("blob:")) URL.revokeObjectURL(old.src);
+  const meta = getCategoryMeta(key);
+  if (meta) {
+    loadIntoCache(key, buildUrl(meta.folder, getSfxVariant(key)));
+    applySfxVolume(key);
   }
 
   const db = await openIDB();
@@ -199,7 +208,7 @@ export async function clearSfxCustomFile(key, gameId) {
   });
 }
 
-export async function clearAllSfxCustomFiles(gameId) {
+export async function clearAllSfxCustomFiles(gameId = _currentGameId) {
   for (const cat of getSfxCategories()) {
     await clearSfxCustomFile(cat.key, gameId);
   }
@@ -332,8 +341,9 @@ export function applySfxGameSettings({ volumes = {}, variants = {} } = {}) {
 /* ========= INICJALIZACJA ========= */
 
 /**
- * Wywołać raz przy starcie (po loadSfxManifest):
- * wczytuje zapisane warianty, głośności i custom blobs z IndexedDB.
+ * Wywołać raz przy starcie (po loadSfxManifest i setCurrentGameId):
+ * wczytuje warianty, głośności, globalne custom blobs oraz per-game blobs.
+ * Per-game mają pierwszeństwo nad globalnymi.
  */
 export async function initSfx() {
   for (const cat of getSfxCategories()) {
@@ -341,23 +351,17 @@ export async function initSfx() {
   }
   applySfxVolumes();
 
-  const customFiles = await getSfxCustomFiles();
-  for (const [key, { blob }] of customFiles) {
+  const globalFiles = await getSfxCustomFiles();
+  for (const [key, { blob }] of globalFiles) {
     loadIntoCache(key, URL.createObjectURL(blob));
     applySfxVolume(key);
   }
-}
 
-/**
- * Nadpisuje cache plikami własnymi przypisanymi do konkretnej gry.
- * Wywołać po initSfx() w control, żeby per-game pliki z game-settings
- * miały pierwszeństwo nad globalnymi.
- */
-export async function loadSfxCustomForGame(gameId) {
-  if (!gameId) return;
-  const customFiles = await getSfxCustomFiles(gameId);
-  for (const [key, { blob }] of customFiles) {
-    loadIntoCache(key, URL.createObjectURL(blob));
-    applySfxVolume(key);
+  if (_currentGameId) {
+    const gameFiles = await getSfxCustomFiles(_currentGameId);
+    for (const [key, { blob }] of gameFiles) {
+      loadIntoCache(key, URL.createObjectURL(blob));
+      applySfxVolume(key);
+    }
   }
 }
