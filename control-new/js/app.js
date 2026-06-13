@@ -1,7 +1,7 @@
 // /familiada/js/pages/controlapp.js
-import { confirmModal, alertModal } from "../../js/core/modal.js?v=v2026-06-11T21271";
-import { getUiLang, initI18n, t } from "../../translation/translation.js?v=v2026-06-11T21271";
-import { v as cacheBust } from "../../js/core/cache-bust.js?v=v2026-06-11T21271";
+import { confirmModal, alertModal } from "../../js/core/modal.js?v=v2026-06-13T07205";
+import { getUiLang, initI18n, t } from "../../translation/translation.js?v=v2026-06-13T07205";
+import { v as cacheBust } from "../../js/core/cache-bust.js?v=v2026-06-13T07205";
 
 // ================== KOMUNIKATY ==================
 const APP_MSG = {
@@ -39,13 +39,13 @@ const APP_MSG = {
 };
 // ================= KONIEC KOMUNIKATÓW =================
 
-import { requireAuth, signOut } from "../../js/core/auth.js?v=v2026-06-11T21271";
-import { setTopbarAccount } from "../../js/core/topbar-controller.js?v=v2026-06-11T21271";
-import { isGuestUser } from "../../js/core/guest-mode.js?v=v2026-06-11T21271";
-import { sb } from "../../js/core/supabase.js?v=v2026-06-11T21271";
-import { rt } from "../../js/core/realtime.js?v=v2026-06-11T21271";
-import { validateGameReadyToPlay, loadGameBasic, loadQuestions, loadAnswers } from "../../js/core/game-validate.js?v=v2026-06-11T21271";
-import { unlockAudio, isAudioUnlocked, playSfx } from "../../js/core/sfx.js?v=v2026-06-11T21271";
+import { requireAuth, signOut } from "../../js/core/auth.js?v=v2026-06-13T07205";
+import { setTopbarAccount } from "../../js/core/topbar-controller.js?v=v2026-06-13T07205";
+import { isGuestUser } from "../../js/core/guest-mode.js?v=v2026-06-13T07205";
+import { sb } from "../../js/core/supabase.js?v=v2026-06-13T07205";
+import { rt } from "../../js/core/realtime.js?v=v2026-06-13T07205";
+import { validateGameReadyToPlay, loadGameBasic, loadQuestions, loadAnswers } from "../../js/core/game-validate.js?v=v2026-06-13T07205";
+import { unlockAudio, isAudioUnlocked, playSfx } from "../../js/core/sfx.js?v=v2026-06-13T07205";
 import {
   loadSfxManifest, getSfxCategories,
   applySfxGameSettings,
@@ -56,21 +56,21 @@ import {
   loadSfxFromCloud,
   playSfx as playSfxNew,
   initSfx,
-} from "../../js/core/sfx-new.js?v=v2026-06-11T21271";
+} from "../../js/core/sfx-new.js?v=v2026-06-13T07205";
 import {
   getSfxSaveFlag, setSfxSaveFlag,
   uploadSoundToCloud, deleteSoundFromCloud, deleteAllSoundsFromCloud, listCloudSounds,
-} from "../../js/core/sfx-cloud.js?v=v2026-06-11T21271";
-import { createStore } from "./store.js?v=v2026-06-11T21271";
-import { loadSettings as loadGameSettings } from "../../js/core/game-settings.js?v=v2026-06-11T21271";
-import { createUI } from "./ui.js?v=v2026-06-11T21271";
-import { createDevices } from "./devices.js?v=v2026-06-11T21271";
-import { createPresence } from "./presence.js?v=v2026-06-11T21271";
-import { createDisplay } from "./display.js?v=v2026-06-11T21271";
-import { createRounds } from "./gameRounds.js?v=v2026-06-11T21271";
-import { createFinal } from "./gameFinal.js?v=v2026-06-11T21271";
-import { initShareDevice } from "./share-device.js?v=v2026-06-11T21271";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../../js/core/logo-preview.js?v=v2026-06-11T21271";
+} from "../../js/core/sfx-cloud.js?v=v2026-06-13T07205";
+import { createStore } from "./store.js?v=v2026-06-13T07205";
+import { loadSettings as loadGameSettings } from "../../js/core/game-settings.js?v=v2026-06-13T07205";
+import { createUI } from "./ui.js?v=v2026-06-13T07205";
+import { createDevices } from "./devices.js?v=v2026-06-13T07205";
+import { createPresence } from "./presence.js?v=v2026-06-13T07205";
+import { createDisplay } from "./display.js?v=v2026-06-13T07205";
+import { createRounds } from "./gameRounds.js?v=v2026-06-13T07205";
+import { createFinal } from "./gameFinal.js?v=v2026-06-13T07205";
+import { initShareDevice } from "./share-device.js?v=v2026-06-13T07205";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../../js/core/logo-preview.js?v=v2026-06-13T07205";
 
 initI18n({ withSwitcher: true });
 
@@ -2065,7 +2065,7 @@ async function sendZeroStatesToDevices() {
         const v = vols.get(key) ?? 1.0;
         const pct = Math.round(v * 100);
         const variant = getSfxVariant(key);
-        const isNonDefault = variant && variant !== "classic.mp3";
+        const isNonDefault = variant && variant !== "classic.mp3?v=v2026-06-13T07205";
         const parts = [];
         if (pct !== 100) parts.push(`${pct}%`);
         if (isNonDefault) parts.push(escapeHtml(variant.replace(/\.[^.]+$/, "")));
