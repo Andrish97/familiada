@@ -1,7 +1,7 @@
 // control/js/share-device.js
 
-import { sb, SUPABASE_URL } from "../../js/core/supabase.js?v=v2026-06-13T07282";
-import { t } from "../../translation/translation.js?v=v2026-06-13T07282";
+import { sb, SUPABASE_URL } from "../../js/core/supabase.js?v=v2026-06-13T21505";
+import { t } from "../../translation/translation.js?v=v2026-06-13T21505";
 
 const MAIL_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/send-mail`;
 const SHARE_TTL_MS = 4 * 60 * 60 * 1000;
