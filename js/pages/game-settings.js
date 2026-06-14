@@ -79,6 +79,7 @@ function applyGsColorFromModal() {
   if (swatch) swatch.style.background = hex;
   markDirty();
   refreshPreviewColor(_colorModalTarget, hex);
+  scheduleDisplaySave();
 }
 
 function initColorModal() {
@@ -148,6 +149,7 @@ const state = {
 
 let _gsLogoFont = null;
 let _gsDefaultLogoPayload = null;
+let _displaySaveTimer = null;
 
 /* ===== ELEMENTS ===== */
 const btnBack        = document.getElementById("btnBack");
@@ -171,6 +173,13 @@ function markClean() {
   state.isDirty = false;
   gsFooter.classList.add("hidden");
   gsUnsavedBadge.classList.add("hidden");
+}
+
+function scheduleDisplaySave() {
+  clearTimeout(_displaySaveTimer);
+  _displaySaveTimer = setTimeout(() => {
+    saveSettings(state.gameId, state.settings).catch(() => {});
+  }, 600);
 }
 
 window.addEventListener("beforeunload", (e) => {
@@ -409,6 +418,7 @@ function renderDisplay() {
     state.settings.display.colors = { ...defColors };
     markDirty();
     renderDisplay();
+    saveSettings(state.gameId, state.settings).catch(() => {});
   });
 
   const themeSelectEl = document.getElementById(themeSelectId);
@@ -431,6 +441,7 @@ function renderDisplay() {
           themeSelectEl.classList.remove("open");
           state.settings.display.theme = val;
           markDirty();
+          saveSettings(state.gameId, state.settings).catch(() => {});
         });
       });
       document.addEventListener("click", () => {
@@ -476,6 +487,7 @@ async function renderGsLogoGrid() {
       state.settings.display.logoId = newId;
       markDirty();
       refreshPreviewLogo();
+      saveSettings(state.gameId, state.settings).catch(() => {});
       grid.querySelectorAll(".logoTile").forEach(t => t.classList.remove("selected"));
       tile.classList.add("selected");
     });
