@@ -366,45 +366,50 @@ function renderDisplay() {
 
   gsContent.innerHTML = `
     <div class="gs-cat-title">${t("gameSettings.categories.display")}</div>
-    <div class="gs-section">
-      <div class="sectionBlock">
-        <div class="sectionTitle">${t("control.lookColors")}</div>
-        <div class="colorRow">
-          <div class="colorItem">
-            <span class="lbl2">${t("control.teamALabel")}</span>
-            <button class="swatchBtn" id="gsSwatchA" type="button" style="background:${esc(colors.A)};"></button>
+    <div class="gs-display-cols">
+      <div class="gs-section">
+        <div class="sectionBlock">
+          <div class="sectionTitle">${t("control.lookColors")}</div>
+          <div class="colorRow">
+            <div class="colorItem">
+              <span class="lbl2">${t("control.teamALabel")}</span>
+              <button class="swatchBtn" id="gsSwatchA" type="button" style="background:${esc(colors.A)};"></button>
+            </div>
+            <div class="colorItem">
+              <span class="lbl2">${t("control.teamBLabel")}</span>
+              <button class="swatchBtn" id="gsSwatchB" type="button" style="background:${esc(colors.B)};"></button>
+            </div>
+            <div class="colorItem">
+              <span class="lbl2">${t("control.bgColorLabel")}</span>
+              <button class="swatchBtn" id="gsSwatchBACKGROUND" type="button" style="background:${esc(colors.BACKGROUND)};"></button>
+            </div>
+            <div class="colorItem">
+              <span class="lbl2">${t("control.activeColorLabel")}</span>
+              <button class="swatchBtn" id="gsSwatchDOT" type="button" style="background:${esc(colors.DOT)};"></button>
+            </div>
+            <button class="btn btn-sm" id="btnColorsReset" type="button">${t("control.resetColors")}</button>
           </div>
-          <div class="colorItem">
-            <span class="lbl2">${t("control.teamBLabel")}</span>
-            <button class="swatchBtn" id="gsSwatchB" type="button" style="background:${esc(colors.B)};"></button>
+        </div>
+        ${themeOptions ? `
+        <div class="sectionBlock">
+          <div class="sectionTitle">${t("control.lookTheme")}</div>
+          <div class="hint">${t("control.lookThemeHint")}</div>
+          <div class="ui-select" id="${themeSelectId}" style="max-width:260px;">
+            <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
+              <span class="ui-select-label">${currentThemeLabel}</span>
+              <span class="ui-select-caret" aria-hidden="true">▾</span>
+            </button>
+            <div class="ui-select-menu" role="listbox">${themeOptions}</div>
           </div>
-          <div class="colorItem">
-            <span class="lbl2">${t("control.bgColorLabel")}</span>
-            <button class="swatchBtn" id="gsSwatchBACKGROUND" type="button" style="background:${esc(colors.BACKGROUND)};"></button>
-          </div>
-          <div class="colorItem">
-            <span class="lbl2">${t("control.activeColorLabel")}</span>
-            <button class="swatchBtn" id="gsSwatchDOT" type="button" style="background:${esc(colors.DOT)};"></button>
-          </div>
-          <button class="btn btn-sm" id="btnColorsReset" type="button">${t("control.resetColors")}</button>
+        </div>` : ""}
+        <div class="sectionBlock">
+          <div class="sectionTitle">${t("control.lookLogoTitle")}</div>
+          <div class="hint">${t("control.lookLogoHint")}</div>
+          <div class="logoGrid" id="gsLogoGrid"><div class="hint" style="font-size:.8rem;opacity:.5;">${t("control.lookLogoLoading")}</div></div>
         </div>
       </div>
-      ${themeOptions ? `
-      <div class="sectionBlock">
-        <div class="sectionTitle">${t("control.lookTheme")}</div>
-        <div class="hint">${t("control.lookThemeHint")}</div>
-        <div class="ui-select" id="${themeSelectId}" style="max-width:260px;">
-          <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
-            <span class="ui-select-label">${currentThemeLabel}</span>
-            <span class="ui-select-caret" aria-hidden="true">▾</span>
-          </button>
-          <div class="ui-select-menu" role="listbox">${themeOptions}</div>
-        </div>
-      </div>` : ""}
-      <div class="sectionBlock">
-        <div class="sectionTitle">${t("control.lookLogoTitle")}</div>
-        <div class="hint">${t("control.lookLogoHint")}</div>
-        <div class="logoGrid" id="gsLogoGrid"><div class="hint" style="font-size:.8rem;opacity:.5;">${t("control.lookLogoLoading")}</div></div>
+      <div class="display-preview">
+        <iframe id="gsDisplayIframe" title="Podgląd" style="width:100%;height:100%;border:none;display:block;"></iframe>
       </div>
     </div>`;
 
@@ -442,6 +447,7 @@ function renderDisplay() {
           state.settings.display.theme = val;
           markDirty();
           saveSettings(state.gameId, state.settings).catch(() => {});
+          refreshPreviewTheme(val);
         });
       });
       document.addEventListener("click", () => {
@@ -451,6 +457,7 @@ function renderDisplay() {
   }
 
   renderGsLogoGrid().catch(console.error);
+  initPreviewIframe();
 }
 
 /* ===== LOGO GRID ===== */
