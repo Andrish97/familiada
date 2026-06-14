@@ -56,6 +56,7 @@
 .gs-sidebar-item-disabled {
   opacity: .3;
   cursor: default;
+  pointer-events: none;
 }
 
 .gs-sidebar-item.active {

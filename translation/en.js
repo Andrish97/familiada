@@ -5303,9 +5303,9 @@ const en = {
       teams: "Teams",
       display: "Display",
       sound: "Sound",
-      questions: "Questions",
-      rounds: "Rounds",
-      finale: "Finale",
+      questions: "Questions — Settings",
+      rounds: "Questions — Rounds",
+      finale: "Questions — Finale",
       game: "Game settings",
     },
     teams: {

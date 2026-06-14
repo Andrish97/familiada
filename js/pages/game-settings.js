@@ -348,21 +348,6 @@ function refreshPreviewTheme(key) {
 function renderDisplay() {
   const { theme, colors } = state.settings.display;
 
-  const colorDefs = [
-    { key: "A",          label: t("gameSettings.display.colorA"),   val: colors.A },
-    { key: "B",          label: t("gameSettings.display.colorB"),   val: colors.B },
-    { key: "BACKGROUND", label: t("gameSettings.display.colorBg"),  val: colors.BACKGROUND },
-    { key: "DOT",        label: t("gameSettings.display.colorDot"), val: colors.DOT },
-  ];
-  const colorSwatches = colorDefs.map(cd =>
-    `<div class="colorItem">
-       <span class="lbl2">${cd.label}</span>
-       <button class="swatchBtn" id="gsSwatch${cd.key}" type="button" style="background:${esc(cd.val)};"></button>
-     </div>`
-  ).join("");
-
-  const hasPreview = !!state.shareKeyDisplay;
-
   const themeSelectId = "gsThemeSelect";
   const themeOptions = state.themes.map(th =>
     `<div class="ui-select-option" data-value="${esc(th.key)}"${th.key === theme ? ' data-selected="true"' : ""}>${esc(th.label)}</div>`
@@ -372,48 +357,52 @@ function renderDisplay() {
 
   gsContent.innerHTML = `
     <div class="gs-cat-title">${t("gameSettings.categories.display")}</div>
-    <div class="gs-section gs-display-cols">
-      <div>
-        <div class="sectionBlock">
-          <div class="sectionTitle">${t("gameSettings.display.colors")}</div>
-          <div class="colorRow">${colorSwatches}</div>
-          <button class="btn btn-sm" id="btnColorsReset" type="button" style="margin-top:10px;">${t("gameSettings.display.colorsReset")}</button>
-        </div>
-        ${themeOptions ? `
-        <div class="sectionBlock">
-          <div class="sectionTitle">${t("gameSettings.display.theme")}</div>
-          <div class="ui-select" id="${themeSelectId}" style="max-width:260px;">
-            <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
-              <span class="ui-select-label">${currentThemeLabel}</span>
-              <span class="ui-select-caret" aria-hidden="true">▾</span>
-            </button>
-            <div class="ui-select-menu" role="listbox">${themeOptions}</div>
+    <div class="gs-section">
+      <div class="sectionBlock">
+        <div class="sectionTitle">${t("control.lookColors")}</div>
+        <div class="colorRow">
+          <div class="colorItem">
+            <span class="lbl2">${t("control.teamALabel")}</span>
+            <button class="swatchBtn" id="gsSwatchA" type="button" style="background:${esc(colors.A)};"></button>
           </div>
-        </div>` : ""}
-        <div class="sectionBlock">
-          <div class="sectionTitle">${t("gameSettings.display.logo")}</div>
-          <div class="logoGrid" id="gsLogoGrid"><div class="hint" style="font-size:.8rem;opacity:.5;">Ładowanie...</div></div>
+          <div class="colorItem">
+            <span class="lbl2">${t("control.teamBLabel")}</span>
+            <button class="swatchBtn" id="gsSwatchB" type="button" style="background:${esc(colors.B)};"></button>
+          </div>
+          <div class="colorItem">
+            <span class="lbl2">${t("control.bgColorLabel")}</span>
+            <button class="swatchBtn" id="gsSwatchBACKGROUND" type="button" style="background:${esc(colors.BACKGROUND)};"></button>
+          </div>
+          <div class="colorItem">
+            <span class="lbl2">${t("control.activeColorLabel")}</span>
+            <button class="swatchBtn" id="gsSwatchDOT" type="button" style="background:${esc(colors.DOT)};"></button>
+          </div>
+          <button class="btn btn-sm" id="btnColorsReset" type="button">${t("control.resetColors")}</button>
         </div>
       </div>
-      <div>
-        <div class="sectionTitle">${t("gameSettings.display.preview")}</div>
-        ${hasPreview
-          ? `<iframe id="gsDisplayIframe" class="display-preview" style="margin-top:8px;border:none;" scrolling="no" allowfullscreen></iframe>`
-          : `<div class="display-preview display-preview-placeholder" style="margin-top:8px;"></div>`
-        }
+      ${themeOptions ? `
+      <div class="sectionBlock">
+        <div class="sectionTitle">${t("control.lookTheme")}</div>
+        <div class="hint">${t("control.lookThemeHint")}</div>
+        <div class="ui-select" id="${themeSelectId}" style="max-width:260px;">
+          <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
+            <span class="ui-select-label">${currentThemeLabel}</span>
+            <span class="ui-select-caret" aria-hidden="true">▾</span>
+          </button>
+          <div class="ui-select-menu" role="listbox">${themeOptions}</div>
+        </div>
+      </div>` : ""}
+      <div class="sectionBlock">
+        <div class="sectionTitle">${t("control.lookLogoTitle")}</div>
+        <div class="hint">${t("control.lookLogoHint")}</div>
+        <div class="logoGrid" id="gsLogoGrid"><div class="hint" style="font-size:.8rem;opacity:.5;">${t("control.lookLogoLoading")}</div></div>
       </div>
     </div>`;
 
-  renderGsLogoGrid().catch(console.error);
-
-  if (hasPreview) {
-    initPreviewIframe();
-  }
-
-  document.getElementById("gsSwatchA")?.addEventListener("click", () => openGsColorModal("A", t("gameSettings.display.colorA")));
-  document.getElementById("gsSwatchB")?.addEventListener("click", () => openGsColorModal("B", t("gameSettings.display.colorB")));
-  document.getElementById("gsSwatchBACKGROUND")?.addEventListener("click", () => openGsColorModal("BACKGROUND", t("gameSettings.display.colorBg")));
-  document.getElementById("gsSwatchDOT")?.addEventListener("click", () => openGsColorModal("DOT", t("gameSettings.display.colorDot")));
+  document.getElementById("gsSwatchA")?.addEventListener("click", () => openGsColorModal("A", t("control.teamALabel")));
+  document.getElementById("gsSwatchB")?.addEventListener("click", () => openGsColorModal("B", t("control.teamBLabel")));
+  document.getElementById("gsSwatchBACKGROUND")?.addEventListener("click", () => openGsColorModal("BACKGROUND", t("control.bgColorLabel")));
+  document.getElementById("gsSwatchDOT")?.addEventListener("click", () => openGsColorModal("DOT", t("control.activeColorLabel")));
 
   document.getElementById("btnColorsReset")?.addEventListener("click", () => {
     const defColors = getDefaults(state.locale).display.colors;
@@ -442,7 +431,6 @@ function renderDisplay() {
           themeSelectEl.classList.remove("open");
           state.settings.display.theme = val;
           markDirty();
-          refreshPreviewTheme(val);
         });
       });
       document.addEventListener("click", () => {
@@ -450,6 +438,8 @@ function renderDisplay() {
       });
     }
   }
+
+  renderGsLogoGrid().catch(console.error);
 }
 
 /* ===== LOGO GRID ===== */

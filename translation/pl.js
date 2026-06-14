@@ -5305,9 +5305,9 @@ const pl = {
       teams: "Drużyny",
       display: "Wygląd",
       sound: "Dźwięk",
-      questions: "Pytania",
-      rounds: "Rundy",
-      finale: "Finał",
+      questions: "Pytania — Ustawienia",
+      rounds: "Pytania — Rundy",
+      finale: "Pytania — Finał",
       game: "Ustawienia gry",
     },
     teams: {

@@ -5290,9 +5290,9 @@ const uk = {
       teams: "Команди",
       display: "Вигляд",
       sound: "Звук",
-      questions: "Питання",
-      rounds: "Раунди",
-      finale: "Фінал",
+      questions: "Питання — Налаштування",
+      rounds: "Питання — Раунди",
+      finale: "Питання — Фінал",
       game: "Налаштування гри",
     },
     teams: {
