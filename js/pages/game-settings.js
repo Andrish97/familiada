@@ -1,15 +1,15 @@
-import { t, applyTranslations } from "../../translation/translation.js?v=v2026-06-13T21505";
-import { sb } from "../core/supabase.js?v=v2026-06-13T21505";
-import { requireAuth } from "../core/auth.js?v=v2026-06-13T21505";
-import { confirmModal, alertModal } from "../core/modal.js?v=v2026-06-13T21505";
-import { loadSettings, saveSettings, getDefaults } from "../core/game-settings.js?v=v2026-06-13T21505";
-import { guardDesktopOnly } from "../core/device-guard.js?v=v2026-06-13T21505";
-import { initUiSelect } from "../core/ui-select.js?v=v2026-06-13T21505";
+import { t, applyTranslations } from "../../translation/translation.js?v=v2026-06-14T06050";
+import { sb } from "../core/supabase.js?v=v2026-06-14T06050";
+import { requireAuth } from "../core/auth.js?v=v2026-06-14T06050";
+import { confirmModal, alertModal } from "../core/modal.js?v=v2026-06-14T06050";
+import { loadSettings, saveSettings, getDefaults } from "../core/game-settings.js?v=v2026-06-14T06050";
+import { guardDesktopOnly } from "../core/device-guard.js?v=v2026-06-14T06050";
+import { initUiSelect } from "../core/ui-select.js?v=v2026-06-14T06050";
 import {
   loadSfxManifest, getSfxCategories, setCurrentGameId,
   setSfxCustomBlob, clearSfxCustomFile, clearAllSfxCustomFiles, getSfxCustomFiles,
-} from "../core/sfx-new.js?v=v2026-06-13T21505";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../core/logo-preview.js?v=v2026-06-13T21505";
+} from "../core/sfx-new.js?v=v2026-06-14T06050";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../core/logo-preview.js?v=v2026-06-14T06050";
 
 const SFX_KEYS = [
   "show_intro", "round_transition", "round_transition2", "final_theme",

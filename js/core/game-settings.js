@@ -2,7 +2,7 @@
 // Shared module for loading and saving per-game settings.
 // No existing code imports this — safe to add without side effects.
 
-import { sb } from "./supabase.js?v=v2026-06-13T21505";
+import { sb } from "./supabase.js?v=v2026-06-14T06050";
 
 /* ========= DEFAULTS ========= */
 
