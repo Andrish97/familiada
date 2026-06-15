@@ -301,7 +301,6 @@ async function createNewLogoWithType(type, mode, name){
       user_id: currentUser.id,
       name,
       type,
-      is_active: false,
       payload
     };
     
@@ -594,7 +593,6 @@ async function importLogoFromFile(file){
       user_id: currentUser.id,
       name,
       type: TYPE_GLYPH,
-      is_active: false,
       payload: {
         layers: [
           { rows: parsed.rows }
@@ -611,7 +609,6 @@ async function importLogoFromFile(file){
       user_id: currentUser.id,
       name,
       type: TYPE_PIX,
-      is_active: false,
       payload: parsed.pixPayload
     };
   }
@@ -846,7 +843,7 @@ function unpackBitsRowMajorMSB(bitsB64, w, h){
 async function listLogos(){
   const { data, error } = await sb()
     .from("user_logos")
-    .select("id,name,type,is_active,updated_at,payload")
+    .select("id,name,type,updated_at,payload")
     .order("updated_at", { ascending: false });
   if (error) throw error;
   return data || [];
@@ -1450,7 +1447,6 @@ async function handleCreate(){
       name,
       type: res.type,
       payload: res.payload,
-      is_active: false,
     };
 
     // save current mode for future editing (don't overwrite other source fields!)
