@@ -189,32 +189,16 @@ async function main() {
   let shareDevice = { refreshBadges: async () => {}, expireShares: async () => {} };
 
   
-  // ===== Ustawienia wyświetlacza w localStorage =====
-  const _displayKey = `familiada:display:${game.id}`;
-  function loadDisplaySettings() {
-    try { return JSON.parse(sessionStorage.getItem(_displayKey) || "null") || {}; } catch { return {}; }
-  }
-  let _saveDisplayTimer = null;
-  function scheduleDisplaySave() {
-    clearTimeout(_saveDisplayTimer);
-    _saveDisplayTimer = setTimeout(() => {
-      try {
-        sessionStorage.setItem(_displayKey, JSON.stringify({
-          colors: { A: colors.A, B: colors.B, BACKGROUND: colors.BACKGROUND, DOT: colors.DOT },
-          theme: activeTheme,
-          logoId: selectedLogoId ?? null,
-        }));
-      } catch {}
-    }, 600);
-  }
-  const _savedDisplay = loadDisplaySettings();
+  // Store tworzony tutaj — zanim zainicjujemy kolory, żeby odczytać display z localStorage
+  const store = createStore(game.id);
+  store.hydrate();
 
-  // ===== Kolory: stan UI (lokalny) =====
+  // ===== Kolory: inicjalizowane ze store.state.display =====
   let colors = {
-    A: normHex(_savedDisplay?.colors?.A) ?? DEFAULT_COLORS.A,
-    B: normHex(_savedDisplay?.colors?.B) ?? DEFAULT_COLORS.B,
-    BACKGROUND: normHex(_savedDisplay?.colors?.BACKGROUND) ?? DEFAULT_COLORS.BACKGROUND,
-    DOT: normHex(_savedDisplay?.colors?.DOT) ?? DEFAULT_COLORS.DOT,
+    A: normHex(store.state.display.colors.A) ?? DEFAULT_COLORS.A,
+    B: normHex(store.state.display.colors.B) ?? DEFAULT_COLORS.B,
+    BACKGROUND: normHex(store.state.display.colors.BACKGROUND) ?? DEFAULT_COLORS.BACKGROUND,
+    DOT: normHex(store.state.display.colors.DOT) ?? DEFAULT_COLORS.DOT,
   };
 
   // pokaż na start kafelki
@@ -238,7 +222,7 @@ async function main() {
         return { key: e.key, label };
       });
       // przywróć zapisany motyw jeśli istnieje na liście, inaczej domyślny
-      const savedTheme = _savedDisplay?.theme;
+      const savedTheme = store.state.display.theme;
       activeTheme = (savedTheme && themeList.some(t => t.key === savedTheme))
         ? savedTheme
         : defaultTheme;
@@ -297,28 +281,28 @@ async function main() {
       colors.A = h;
       ui.setSwatches?.({ teamA: colors.A, teamB: colors.B, bg: colors.BACKGROUND, dot: colors.DOT });
       sendColorA(h);
-      scheduleDisplaySave();
+      store.setDisplay({ colors: { ...colors } });
       return;
     }
     if (kind === "B") {
       colors.B = h;
       ui.setSwatches?.({ teamA: colors.A, teamB: colors.B, bg: colors.BACKGROUND, dot: colors.DOT });
       sendColorB(h);
-      scheduleDisplaySave();
+      store.setDisplay({ colors: { ...colors } });
       return;
     }
     if (kind === "BACKGROUND") {
       colors.BACKGROUND = h;
       ui.setSwatches?.({ teamA: colors.A, teamB: colors.B, bg: colors.BACKGROUND, dot: colors.DOT });
       sendColorBg(h);
-      scheduleDisplaySave();
+      store.setDisplay({ colors: { ...colors } });
       return;
     }
     if (kind === "DOT") {
       colors.DOT = h;
       ui.setSwatches?.({ teamA: colors.A, teamB: colors.B, bg: colors.BACKGROUND, dot: colors.DOT });
       sendColorDot(h);
-      scheduleDisplaySave();
+      store.setDisplay({ colors: { ...colors } });
       return;
     }
   }
@@ -419,9 +403,6 @@ async function main() {
     if (!url) return;
     window.open(url, "_blank");
   }
-
-  const store = createStore(game.id);
-  store.hydrate();
 
   const hasFinalNow = store.state.hasFinal === true;
   const finalYesRadio = document.getElementById("finalYes");
@@ -573,8 +554,8 @@ async function sendZeroStatesToDevices() {
   let wasInSetupFinish = false;
   let wasInSetupRounds = false;
 
-  // Logo wybrane w setup_look (null = domyślne), przywrócone z poprzedniej sesji
-  let selectedLogoId = _savedDisplay?.logoId ?? null;
+  // Logo wybrane w setup_look (null = domyślne), przywrócone ze store
+  let selectedLogoId = store.state.display.logoId ?? null;
   // Załadowana czcionka (potrzebna do podglądu GLYPH)
   let _logoFont = null;
   // Domyślne logo Familiady (payload z pliku JSON)
@@ -720,7 +701,7 @@ async function sendZeroStatesToDevices() {
     // przeładuj logo na wyświetlaczu
     sendColorDot(colors.DOT);
     await devices.sendDisplayCmd("LOGO RELOAD").catch(() => {});
-    scheduleDisplaySave();
+    store.setDisplay({ logoId: selectedLogoId });
   }
   
   async function leaveSetupLook() {
@@ -1629,7 +1610,7 @@ async function sendZeroStatesToDevices() {
     }
 
     await sendColorsReset().catch(() => {});
-    scheduleDisplaySave();
+    store.setDisplay({ colors: { ...colors } });
   });
 
   ui.on("colors.input", ({ kind, value }) => {
@@ -1676,7 +1657,7 @@ async function sendZeroStatesToDevices() {
     activeTheme = key;
     ui.setActiveTheme?.(key);
     sendTheme(key);
-    scheduleDisplaySave();
+    store.setDisplay({ theme: key });
   });
 
   ui.on("advanced.change", () => {
