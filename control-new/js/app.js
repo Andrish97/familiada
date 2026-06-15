@@ -164,7 +164,7 @@ async function loadGameOrThrow() {
 
   const { data, error } = await sb()
     .from("games")
-    .select("id,name,type,status,share_key_display,share_key_host,share_key_buzzer,settings")
+    .select("id,name,type,status,share_key_display,share_key_host,share_key_buzzer")
     .eq("id", gameId)
     .single();
 
@@ -189,8 +189,25 @@ async function main() {
   let shareDevice = { refreshBadges: async () => {}, expireShares: async () => {} };
 
   
-  // Zapisane ustawienia wyświetlacza z poprzedniej sesji
-  const _savedDisplay = game.settings?.display ?? null;
+  // ===== Ustawienia wyświetlacza w localStorage =====
+  const _displayKey = `familiada:display:${game.id}`;
+  function loadDisplaySettings() {
+    try { return JSON.parse(localStorage.getItem(_displayKey) || "null") || {}; } catch { return {}; }
+  }
+  let _saveDisplayTimer = null;
+  function scheduleDisplaySave() {
+    clearTimeout(_saveDisplayTimer);
+    _saveDisplayTimer = setTimeout(() => {
+      try {
+        localStorage.setItem(_displayKey, JSON.stringify({
+          colors: { A: colors.A, B: colors.B, BACKGROUND: colors.BACKGROUND, DOT: colors.DOT },
+          theme: activeTheme,
+          logoId: selectedLogoId ?? null,
+        }));
+      } catch {}
+    }, 600);
+  }
+  const _savedDisplay = loadDisplaySettings();
 
   // ===== Kolory: stan UI (lokalny) =====
   let colors = {
@@ -231,24 +248,6 @@ async function main() {
       console.warn("Nie można wczytać themes.json:", e);
     }
   })();
-
-  // ===== Zapis ustawień wyświetlacza do games.settings.display =====
-  let _saveDisplayTimer = null;
-  function scheduleDisplaySave() {
-    clearTimeout(_saveDisplayTimer);
-    _saveDisplayTimer = setTimeout(async () => {
-      game.settings ??= {};
-      game.settings.display = {
-        colors: { A: colors.A, B: colors.B, BACKGROUND: colors.BACKGROUND, DOT: colors.DOT },
-        theme: activeTheme,
-        ...(selectedLogoId != null ? { logoId: selectedLogoId } : {}),
-      };
-      await sb().from("games")
-        .update({ settings: game.settings })
-        .eq("id", game.id)
-        .catch(e => console.warn("[display] save settings failed", e));
-    }, 600);
-  }
 
   // throttlowane wysyłki, żeby nie zabić realtime
   const sendColorA = throttleMs(120, async (hex) => {
