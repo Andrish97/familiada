@@ -612,20 +612,14 @@ async function sendZeroStatesToDevices() {
     try {
       const { data: logos, error } = await sb()
         .from("user_logos")
-        .select("id,name,type,is_active,payload")
+        .select("id,name,type,payload")
         .order("updated_at", { ascending: false });
 
       if (error) throw error;
 
       const list = logos || [];
 
-      if (list.length === 0 && selectedLogoId !== null) selectedLogoId = null;
-
-      // ustal które logo jest aktywne (db) jeśli jeszcze nie wybrano
-      if (selectedLogoId === null) {
-        const active = list.find(l => l.is_active);
-        if (active) selectedLogoId = active.id;
-      }
+      if (list.length === 0) selectedLogoId = null;
 
       grid.innerHTML = "";
 
@@ -693,15 +687,6 @@ async function sendZeroStatesToDevices() {
     grid.querySelectorAll(".logoTile").forEach(el => el.classList.remove("selected"));
     const key = selectedLogoId ?? "default";
     grid.querySelector(`[data-logo-id="${key}"]`)?.classList.add("selected");
-
-    // ustaw aktywne w bazie (fire-and-forget)
-    try {
-      if (selectedLogoId === null) {
-        await sb().rpc("user_logo_clear_active");
-      } else {
-        await sb().rpc("user_logo_set_active", { p_logo_id: selectedLogoId });
-      }
-    } catch (e) { console.warn("[logo] set active failed", e); }
 
     // przeładuj logo na wyświetlaczu
     sendColorDot(colors.DOT);
