@@ -65,6 +65,45 @@
   color: #fff;
 }
 
+.summaryDisplayInfo {
+  display: grid;
+  gap: 6px;
+}
+
+.summaryDisplayRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #fff;
+}
+
+.summaryDisplayLabel {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  opacity: .5;
+  min-width: 44px;
+}
+
+.summaryColorDot {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255,255,255,.25);
+  flex-shrink: 0;
+}
+
+.summaryLogoCanvas {
+  max-width: 120px;
+  max-height: 40px;
+  border-radius: 4px;
+  display: block;
+}
+
 .summaryQList {
   margin: 0;
   padding: 0 0 0 16px;

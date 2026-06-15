@@ -560,6 +560,8 @@ async function sendZeroStatesToDevices() {
   let _logoFont = null;
   // Domyślne logo Familiady (payload z pliku JSON)
   let _defaultLogoPayload = null;
+  // Cache załadowanych logo (potrzebny w streszczeniu)
+  let _loadedLogos = [];
 
   async function enterSetupNames() {
     // urządzenia startują dopiero w setup_look
@@ -628,6 +630,7 @@ async function sendZeroStatesToDevices() {
       if (error) throw error;
 
       const list = logos || [];
+      _loadedLogos = list;
 
       if (list.length === 0) selectedLogoId = null;
 
@@ -1924,6 +1927,42 @@ async function sendZeroStatesToDevices() {
     // Drużyny
     const teamsEl = document.getElementById("summaryTeams");
     if (teamsEl) teamsEl.textContent = `${s.teams.teamA || "—"} vs ${s.teams.teamB || "—"}`;
+
+    // Wygląd
+    const colorDotsEl = document.getElementById("summaryColorDots");
+    if (colorDotsEl) {
+      const c = s.display.colors;
+      colorDotsEl.innerHTML = ["A", "B", "BACKGROUND", "DOT"].map(k =>
+        `<span class="summaryColorDot" title="${k}" style="background:${c[k]}"></span>`
+      ).join("");
+    }
+
+    const themeNameEl = document.getElementById("summaryThemeName");
+    if (themeNameEl) {
+      const th = themeList.find(th => th.key === s.display.theme);
+      themeNameEl.textContent = th?.label || s.display.theme || "—";
+    }
+
+    const logoTileEl = document.getElementById("summaryLogoTile");
+    if (logoTileEl) {
+      logoTileEl.innerHTML = "";
+      const logoId = s.display.logoId;
+      let logoObj = null;
+      if (logoId) {
+        const found = _loadedLogos.find(l => l.id === logoId);
+        if (found) logoObj = found;
+      }
+      const previewSrc = logoObj ?? (
+        _defaultLogoPayload ? { type: "GLYPH_30x10", payload: _defaultLogoPayload } : null
+      );
+      if (previewSrc && _logoFont) {
+        const canvas = buildLogoPreviewCanvas(previewSrc, _logoFont);
+        canvas.classList.add("summaryLogoCanvas");
+        logoTileEl.appendChild(canvas);
+      } else {
+        logoTileEl.textContent = logoObj?.name || (logoId ? "—" : t("control.lookLogoDefault"));
+      }
+    }
 
     // Finał
     const finalEl = document.getElementById("summaryFinal");
