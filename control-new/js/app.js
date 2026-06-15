@@ -164,7 +164,7 @@ async function loadGameOrThrow() {
 
   const { data, error } = await sb()
     .from("games")
-    .select("id,name,type,status,share_key_display,share_key_host,share_key_buzzer")
+    .select("id,name,type,status,share_key_display,share_key_host,share_key_buzzer,settings")
     .eq("id", gameId)
     .single();
 
@@ -189,12 +189,15 @@ async function main() {
   let shareDevice = { refreshBadges: async () => {}, expireShares: async () => {} };
 
   
+  // Zapisane ustawienia wyświetlacza z poprzedniej sesji
+  const _savedDisplay = game.settings?.display ?? null;
+
   // ===== Kolory: stan UI (lokalny) =====
   let colors = {
-    A: DEFAULT_COLORS.A,
-    B: DEFAULT_COLORS.B,
-    BACKGROUND: DEFAULT_COLORS.BACKGROUND,
-    DOT: DEFAULT_COLORS.DOT,
+    A: normHex(_savedDisplay?.colors?.A) ?? DEFAULT_COLORS.A,
+    B: normHex(_savedDisplay?.colors?.B) ?? DEFAULT_COLORS.B,
+    BACKGROUND: normHex(_savedDisplay?.colors?.BACKGROUND) ?? DEFAULT_COLORS.BACKGROUND,
+    DOT: normHex(_savedDisplay?.colors?.DOT) ?? DEFAULT_COLORS.DOT,
   };
 
   // pokaż na start kafelki
@@ -209,7 +212,7 @@ async function main() {
     try {
       const res = await fetch("./display/js/themes.json");
       const json = await res.json();
-      activeTheme = json.default || "classic";
+      const defaultTheme = json.default || "classic";
       themeList = json.themes.map(e => {
         const lang = document.documentElement.lang || "pl";
         const label = typeof e.label === "object"
@@ -217,12 +220,35 @@ async function main() {
           : t(e.label);
         return { key: e.key, label };
       });
+      // przywróć zapisany motyw jeśli istnieje na liście, inaczej domyślny
+      const savedTheme = _savedDisplay?.theme;
+      activeTheme = (savedTheme && themeList.some(t => t.key === savedTheme))
+        ? savedTheme
+        : defaultTheme;
       ui.setThemeOptions?.(themeList);
       ui.setActiveTheme?.(activeTheme);
     } catch (e) {
       console.warn("Nie można wczytać themes.json:", e);
     }
   })();
+
+  // ===== Zapis ustawień wyświetlacza do games.settings.display =====
+  let _saveDisplayTimer = null;
+  function scheduleDisplaySave() {
+    clearTimeout(_saveDisplayTimer);
+    _saveDisplayTimer = setTimeout(async () => {
+      game.settings ??= {};
+      game.settings.display = {
+        colors: { A: colors.A, B: colors.B, BACKGROUND: colors.BACKGROUND, DOT: colors.DOT },
+        theme: activeTheme,
+        ...(selectedLogoId != null ? { logoId: selectedLogoId } : {}),
+      };
+      await sb().from("games")
+        .update({ settings: game.settings })
+        .eq("id", game.id)
+        .catch(e => console.warn("[display] save settings failed", e));
+    }, 600);
+  }
 
   // throttlowane wysyłki, żeby nie zabić realtime
   const sendColorA = throttleMs(120, async (hex) => {
@@ -272,24 +298,28 @@ async function main() {
       colors.A = h;
       ui.setSwatches?.({ teamA: colors.A, teamB: colors.B, bg: colors.BACKGROUND, dot: colors.DOT });
       sendColorA(h);
+      scheduleDisplaySave();
       return;
     }
     if (kind === "B") {
       colors.B = h;
       ui.setSwatches?.({ teamA: colors.A, teamB: colors.B, bg: colors.BACKGROUND, dot: colors.DOT });
       sendColorB(h);
+      scheduleDisplaySave();
       return;
     }
     if (kind === "BACKGROUND") {
       colors.BACKGROUND = h;
       ui.setSwatches?.({ teamA: colors.A, teamB: colors.B, bg: colors.BACKGROUND, dot: colors.DOT });
       sendColorBg(h);
+      scheduleDisplaySave();
       return;
     }
     if (kind === "DOT") {
       colors.DOT = h;
       ui.setSwatches?.({ teamA: colors.A, teamB: colors.B, bg: colors.BACKGROUND, dot: colors.DOT });
       sendColorDot(h);
+      scheduleDisplaySave();
       return;
     }
   }
@@ -544,8 +574,8 @@ async function sendZeroStatesToDevices() {
   let wasInSetupFinish = false;
   let wasInSetupRounds = false;
 
-  // Logo wybrane w setup_look (null = domyślne)
-  let selectedLogoId = null;
+  // Logo wybrane w setup_look (null = domyślne), przywrócone z poprzedniej sesji
+  let selectedLogoId = _savedDisplay?.logoId ?? null;
   // Załadowana czcionka (potrzebna do podglądu GLYPH)
   let _logoFont = null;
   // Domyślne logo Familiady (payload z pliku JSON)
@@ -691,6 +721,7 @@ async function sendZeroStatesToDevices() {
     // przeładuj logo na wyświetlaczu
     sendColorDot(colors.DOT);
     await devices.sendDisplayCmd("LOGO RELOAD").catch(() => {});
+    scheduleDisplaySave();
   }
   
   async function leaveSetupLook() {
@@ -1599,6 +1630,7 @@ async function sendZeroStatesToDevices() {
     }
 
     await sendColorsReset().catch(() => {});
+    scheduleDisplaySave();
   });
 
   ui.on("colors.input", ({ kind, value }) => {
@@ -1645,6 +1677,7 @@ async function sendZeroStatesToDevices() {
     activeTheme = key;
     ui.setActiveTheme?.(key);
     sendTheme(key);
+    scheduleDisplaySave();
   });
 
   ui.on("advanced.change", () => {
@@ -1719,6 +1752,12 @@ async function sendZeroStatesToDevices() {
   ui.on("setup.game.back", () => store.setSetupStep("setup_look"));
   ui.on("setup.finish.back", () => store.setSetupStep("setup_game"));
   ui.on("setup.finish", () => {
+    // zastosuj aktualne ustawienia wyświetlacza przed przejściem do gry
+    sendColorA(colors.A);
+    sendColorB(colors.B);
+    sendColorBg(colors.BACKGROUND);
+    sendColorDot(colors.DOT);
+    if (activeTheme) sendTheme(activeTheme);
     store.completeCard("setup");
     store.setActiveCard("rounds");
   });
