@@ -395,7 +395,7 @@ export function createStore(gameId) {
     if (colors) state.display.colors = { ...state.display.colors, ...colors };
     if (theme !== undefined) state.display.theme = theme;
     if (logoId !== undefined) state.display.logoId = logoId;
-    // celowo bez emit() — ustawienia wyświetlacza żyją tylko w pamięci sesji
+    emit();
   }
 
   function resetAdvanced() {
