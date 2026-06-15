@@ -192,14 +192,14 @@ async function main() {
   // ===== Ustawienia wyświetlacza w localStorage =====
   const _displayKey = `familiada:display:${game.id}`;
   function loadDisplaySettings() {
-    try { return JSON.parse(localStorage.getItem(_displayKey) || "null") || {}; } catch { return {}; }
+    try { return JSON.parse(sessionStorage.getItem(_displayKey) || "null") || {}; } catch { return {}; }
   }
   let _saveDisplayTimer = null;
   function scheduleDisplaySave() {
     clearTimeout(_saveDisplayTimer);
     _saveDisplayTimer = setTimeout(() => {
       try {
-        localStorage.setItem(_displayKey, JSON.stringify({
+        sessionStorage.setItem(_displayKey, JSON.stringify({
           colors: { A: colors.A, B: colors.B, BACKGROUND: colors.BACKGROUND, DOT: colors.DOT },
           theme: activeTheme,
           logoId: selectedLogoId ?? null,
