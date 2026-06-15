@@ -337,17 +337,8 @@ export function createStore(gameId) {
   // ---- obsługa typu wejścia na stronę (odświeżenie vs. nowa nawigacja) ----
 
   function hydrate() {
-    // Progresu gry nie przywracamy — ale ustawienia wyświetlacza tak.
-    try {
-      const saved = JSON.parse(localStorage.getItem(KEY) || "null");
-      if (saved?.display) {
-        const d = saved.display;
-        if (d.colors) state.display.colors = { ...state.display.colors, ...d.colors };
-        if (d.theme) state.display.theme = d.theme;
-        if (d.logoId != null) state.display.logoId = d.logoId;
-      }
-      localStorage.removeItem(KEY);
-    } catch {}
+    // Stan gry nie jest przywracany między sesjami.
+    try { localStorage.removeItem(KEY); } catch {}
   }
 
   function setAdvanced(partial) {
@@ -404,7 +395,7 @@ export function createStore(gameId) {
     if (colors) state.display.colors = { ...state.display.colors, ...colors };
     if (theme !== undefined) state.display.theme = theme;
     if (logoId !== undefined) state.display.logoId = logoId;
-    emit();
+    // celowo bez emit() — ustawienia wyświetlacza żyją tylko w pamięci sesji
   }
 
   function resetAdvanced() {
