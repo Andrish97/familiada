@@ -164,13 +164,57 @@ async function loadGameOrThrow() {
 
   const { data, error } = await sb()
     .from("games")
-    .select("id,name,type,status,share_key_display,share_key_host,share_key_buzzer")
+    .select("id,name,type,status,share_key_display,share_key_host,share_key_buzzer,settings")
     .eq("id", gameId)
     .single();
 
   if (error) throw error;
   if (data?.id !== basic.id) throw new Error(APP_MSG.DATA_MISMATCH);
   return data;
+}
+
+// Stosuje dane z games.settings JSON do store przed startem UI
+function applyGameSettingsToStore(settings, store) {
+  if (!settings || typeof settings !== "object") return;
+
+  const { teams, display, game, questions } = settings;
+
+  if (teams?.teamA || teams?.teamB) {
+    store.setTeams(teams.teamA || "", teams.teamB || "");
+  }
+
+  if (display) {
+    store.setDisplay({
+      colors: display.colors,
+      theme: display.theme,
+      logoId: display.logoId,
+    });
+  }
+
+  if (game) {
+    if (game.hasFinal !== undefined && game.hasFinal !== null) {
+      store.setHasFinal(game.hasFinal);
+    }
+    if (game.finalQuestionsMode) {
+      store.setFinalQuestionsMode(game.finalQuestionsMode);
+    }
+    if (game.roundsQuestionsMode) {
+      store.setRoundsQuestionsMode(game.roundsQuestionsMode);
+    }
+    if (game.advanced && typeof game.advanced === "object") {
+      store.setAdvanced(game.advanced);
+    }
+  }
+
+  if (questions) {
+    if (Array.isArray(questions.final) && questions.final.length > 0) {
+      const ids = questions.final.map(q => q.id).filter(Boolean);
+      if (ids.length > 0) store.confirmFinalQuestions(ids);
+    }
+    if (Array.isArray(questions.rounds) && questions.rounds.length > 0) {
+      store.setRoundsPicked(questions.rounds);
+    }
+  }
 }
 
 async function main() {
@@ -192,6 +236,9 @@ async function main() {
   // Store tworzony tutaj — zanim zainicjujemy kolory, żeby odczytać display z localStorage
   const store = createStore(game.id);
   store.hydrate();
+
+  // Wczytaj ustawienia z games.settings (DB) i zastosuj do store
+  applyGameSettingsToStore(game.settings, store);
 
   // ===== Kolory: inicjalizowane ze store.state.display =====
   let colors = {
@@ -564,7 +611,11 @@ async function sendZeroStatesToDevices() {
   let _loadedLogos = [];
 
   async function enterSetupNames() {
-    // urządzenia startują dopiero w setup_look
+    // Wypełnij pola nazw drużyn z zapisanego stanu (np. wczytanego z game.settings)
+    const inpA = document.getElementById("teamA");
+    const inpB = document.getElementById("teamB");
+    if (inpA && !inpA.value) inpA.value = store.state.teams.teamA || "";
+    if (inpB && !inpB.value) inpB.value = store.state.teams.teamB || "";
   }
 
   async function leaveSetupNames() {
