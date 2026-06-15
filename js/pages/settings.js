@@ -110,7 +110,6 @@ const els = {
   statBasesGrowth: document.getElementById("statBasesGrowth"),
   statLogosTotal: document.getElementById("statLogosTotal"),
   statLogosGrowth: document.getElementById("statLogosGrowth"),
-  statLogosSub: document.getElementById("statLogosSub"),
   statRating: document.getElementById("statRating"),
   statRatingsGrowth: document.getElementById("statRatingsGrowth"),
   statRatingsTotal: document.getElementById("statRatingsTotal"),
@@ -1064,7 +1063,6 @@ async function loadAdminStats({ silent = false } = {}) {
 
     if (els.statLogosTotal) els.statLogosTotal.textContent = data.logos.total;
     if (els.statLogosGrowth) els.statLogosGrowth.textContent = `Dziś: ${data.logos.new_today} | 7 dni: ${data.logos.new_7d} | 30 dni: ${data.logos.new_30d}`;
-    if (els.statLogosSub) els.statLogosSub.textContent = `Aktywne: ${data.logos.active}`;
 
     if (els.statRating) els.statRating.textContent = `${data.ratings.average} / 5`;
     if (els.statRatingsGrowth) els.statRatingsGrowth.textContent = `Dziś: ${data.ratings.new_today} | 7 dni: ${data.ratings.new_7d} | 30 dni: ${data.ratings.new_30d}`;
@@ -5048,8 +5046,8 @@ const STAT_DETAIL_CONFIG = {
   },
   logos: {
     title: "Logo",
-    cols: ["Nazwa", "Typ", "Aktywne", "Właściciel", "Data"],
-    row: r => [r.name || "—", r.type || "—", r.is_active ? "tak" : "nie", r.owner || "—", fmtDate(r.created_at)],
+    cols: ["Nazwa", "Typ", "Właściciel", "Data"],
+    row: r => [r.name || "—", r.type || "—", r.owner || "—", fmtDate(r.created_at)],
   },
   ratings: {
     title: "Oceny",
