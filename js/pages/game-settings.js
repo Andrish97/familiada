@@ -1,10 +1,10 @@
 // js/pages/game-settings.js
-import { requireAuth } from "../core/auth.js?v=v2026-06-22T17130";
-import { setTopbarAccount } from "../core/topbar-controller.js?v=v2026-06-22T17130";
-import { sb } from "../core/supabase.js?v=v2026-06-22T17130";
-import { loadQuestions } from "../core/game-validate.js?v=v2026-06-22T17130";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../core/logo-preview.js?v=v2026-06-22T17130";
-import { v as cacheBust } from "../core/cache-bust.js?v=v2026-06-22T17130";
+import { requireAuth } from "../core/auth.js?v=v2026-06-22T20360";
+import { setTopbarAccount } from "../core/topbar-controller.js?v=v2026-06-22T20360";
+import { sb } from "../core/supabase.js?v=v2026-06-22T20360";
+import { loadQuestions } from "../core/game-validate.js?v=v2026-06-22T20360";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../core/logo-preview.js?v=v2026-06-22T20360";
+import { v as cacheBust } from "../core/cache-bust.js?v=v2026-06-22T20360";
 
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
