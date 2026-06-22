@@ -1,5 +1,5 @@
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
-import { initI18n, setUiLang, t, getUiLang } from "../../translation/translation.js?v=v2026-06-15T06311";
+import { initI18n, setUiLang, t, getUiLang } from "../../translation/translation.js?v=v2026-06-22T17130";
 
 // 1. Inicjalizacja i18n
 await initI18n({ withSwitcher: false });
