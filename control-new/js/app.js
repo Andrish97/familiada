@@ -585,6 +585,7 @@ async function sendZeroStatesToDevices() {
   void shareDevice.refreshBadges();
 
   let wasInSetupFinish = false;
+  let prevDisplayOnline = false;
   // Załadowana czcionka (potrzebna do podglądu GLYPH)
   let _logoFont = null;
   // Domyślne logo Familiady (payload z pliku JSON)
@@ -747,13 +748,16 @@ async function sendZeroStatesToDevices() {
     const inSetupFinish =
       (state.activeCard === "setup" && state.steps?.setup === "setup_finish");
 
-    if (inSetupFinish && !wasInSetupFinish) {
+    const displayJustCameOnline = !!state.flags?.displayOnline && !prevDisplayOnline;
+    // wywołaj enterSetupFinish: przy pierwszym wejściu LUB gdy wyświetlacz się podłączył podczas setup_finish
+    if (inSetupFinish && (!wasInSetupFinish || displayJustCameOnline)) {
       enterSetupFinish().catch(() => {});
     }
     if (inSetupFinish) {
       renderSetupFinishSummary();
     }
     wasInSetupFinish = inSetupFinish;
+    prevDisplayOnline = !!state.flags?.displayOnline;
 
   }
 
@@ -1073,8 +1077,9 @@ async function sendZeroStatesToDevices() {
     const colorDotsEl = document.getElementById("summaryColorDots");
     if (colorDotsEl) {
       const c = s.display.colors;
+      const labels = { A: "A", B: "B", BACKGROUND: "Tło", DOT: "Kropki" };
       colorDotsEl.innerHTML = ["A", "B", "BACKGROUND", "DOT"].map(k =>
-        `<span class="summaryColorDot" title="${k}" style="background:${c[k]}"></span>`
+        `<span class="summaryColorDotItem"><span class="summaryColorDot" style="background:${c[k]}"></span><span class="summaryColorDotLabel">${labels[k]}</span></span>`
       ).join("");
     }
 
@@ -1130,7 +1135,7 @@ async function sendZeroStatesToDevices() {
         if (items.length) {
           finalQEl.innerHTML = items.join("");
         } else {
-          finalQEl.innerHTML = `<li class="summaryQRandom">${s.finalQuestionsMode === "random" ? t("control.summaryQRandom") : t("control.summaryQNone")}</li>`;
+          finalQEl.innerHTML = `<li class="summaryQRandom">${s.finalQuestionsMode === "random" ? t("control.summaryQWillRandom") : t("control.summaryQNone")}</li>`;
         }
       }
     }
