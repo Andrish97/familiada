@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict tgaGt9gViFeo4pG6d4bvzq5zSCJvzP2ZaKBgZqwLHNnbctHDja2HCz6rcobVHEb
+\restrict aEABVORJu2YtNaAiJmY8sR9kVkWUZT7cwneyLY38tMu2FPMVy1XOY17tP7Gi2ZD
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -2664,8 +2664,11 @@ BEGIN
   SELECT COUNT(*) INTO games_new_today  FROM public.games WHERE is_demo = false AND source_market_id IS NULL AND created_at >= CURRENT_DATE AND NOT (owner_id = ANY(excluded_ids));
   SELECT COUNT(*) INTO games_new_7d     FROM public.games WHERE is_demo = false AND source_market_id IS NULL AND created_at >= now() - interval '7 days' AND NOT (owner_id = ANY(excluded_ids));
   SELECT COUNT(*) INTO games_new_30d    FROM public.games WHERE is_demo = false AND source_market_id IS NULL AND created_at >= now() - interval '30 days' AND NOT (owner_id = ANY(excluded_ids));
-  SELECT COALESCE(AVG(jsonb_array_length(g.questions)), 0) INTO avg_questions
-    FROM public.games g WHERE g.is_demo = false AND source_market_id IS NULL AND NOT (g.owner_id = ANY(excluded_ids));
+  SELECT COALESCE(ROUND(AVG(q_count), 1), 0) INTO avg_questions
+    FROM (SELECT COUNT(*) AS q_count FROM public.questions q
+          JOIN public.games g ON g.id = q.game_id
+          WHERE g.is_demo = false AND g.source_market_id IS NULL AND NOT (g.owner_id = ANY(excluded_ids))
+          GROUP BY q.game_id) AS sub;
 
   -- Gameplay
   SELECT COUNT(*) INTO played_today FROM public.game_sessions WHERE started_at >= CURRENT_DATE;
@@ -2684,60 +2687,75 @@ BEGIN
   SELECT COUNT(*) INTO bases_new_7d    FROM public.question_bases WHERE is_demo = false AND created_at >= now() - interval '7 days' AND NOT (owner_id = ANY(excluded_ids));
   SELECT COUNT(*) INTO bases_new_30d   FROM public.question_bases WHERE is_demo = false AND created_at >= now() - interval '30 days' AND NOT (owner_id = ANY(excluded_ids));
 
-  -- User logos
-  SELECT COUNT(*) INTO logos_total     FROM public.user_logos WHERE is_demo = false AND NOT (user_id = ANY(excluded_ids));
-  SELECT COUNT(*) INTO logos_new_today FROM public.user_logos WHERE is_demo = false AND created_at >= CURRENT_DATE AND NOT (user_id = ANY(excluded_ids));
-  SELECT COUNT(*) INTO logos_new_7d    FROM public.user_logos WHERE is_demo = false AND created_at >= now() - interval '7 days' AND NOT (user_id = ANY(excluded_ids));
-  SELECT COUNT(*) INTO logos_new_30d   FROM public.user_logos WHERE is_demo = false AND created_at >= now() - interval '30 days' AND NOT (user_id = ANY(excluded_ids));
+  -- Logos
+  SELECT COUNT(*) INTO logos_total     FROM public.user_logos WHERE NOT (owner_id = ANY(excluded_ids));
+  SELECT COUNT(*) INTO logos_new_today FROM public.user_logos WHERE created_at >= CURRENT_DATE AND NOT (owner_id = ANY(excluded_ids));
+  SELECT COUNT(*) INTO logos_new_7d    FROM public.user_logos WHERE created_at >= now() - interval '7 days' AND NOT (owner_id = ANY(excluded_ids));
+  SELECT COUNT(*) INTO logos_new_30d   FROM public.user_logos WHERE created_at >= now() - interval '30 days' AND NOT (owner_id = ANY(excluded_ids));
 
-  -- Health
-  BEGIN
-    SELECT COUNT(*) INTO mail_errors_24h FROM public.mail_queue
-      WHERE status = 'failed' AND updated_at >= now() - interval '24 hours';
-  EXCEPTION WHEN OTHERS THEN
-    mail_errors_24h := 0;
-  END;
+  -- Mail errors
+  SELECT COUNT(*) INTO mail_errors_24h FROM public.mail_error_log WHERE created_at >= now() - interval '24 hours';
 
   -- Ratings
-  SELECT COUNT(*) INTO total_ratings     FROM public.app_ratings;
-  SELECT COALESCE(ROUND(AVG(stars), 1), 0) INTO avg_rating FROM public.app_ratings;
-  SELECT COUNT(*) INTO ratings_new_today FROM public.app_ratings WHERE created_at >= CURRENT_DATE;
-  SELECT COUNT(*) INTO ratings_new_7d    FROM public.app_ratings WHERE created_at >= now() - interval '7 days';
-  SELECT COUNT(*) INTO ratings_new_30d   FROM public.app_ratings WHERE created_at >= now() - interval '30 days';
+  SELECT COUNT(*), COALESCE(AVG(rating), 0) INTO total_ratings, avg_rating FROM public.market_game_ratings;
+  SELECT COUNT(*) INTO ratings_new_today FROM public.market_game_ratings WHERE created_at >= CURRENT_DATE;
+  SELECT COUNT(*) INTO ratings_new_7d    FROM public.market_game_ratings WHERE created_at >= now() - interval '7 days';
+  SELECT COUNT(*) INTO ratings_new_30d   FROM public.market_game_ratings WHERE created_at >= now() - interval '30 days';
 
   result := jsonb_build_object(
+    'timestamp', now(),
     'users', jsonb_build_object(
-      'total', total_users, 'confirmed', confirmed_users, 'guests', guest_users,
-      'new_today', users_new_today, 'new_7d', users_new_7d, 'new_30d', users_new_30d,
+      'total', total_users,
+      'confirmed', confirmed_users,
+      'guest', guest_users,
+      'new_today', users_new_today,
+      'new_7d', users_new_7d,
+      'new_30d', users_new_30d,
       'langs', jsonb_build_object('pl', users_pl, 'en', users_en, 'uk', users_uk)
     ),
     'games', jsonb_build_object(
-      'total', total_games, 'ready', games_ready,
-      'new_today', games_new_today, 'new_7d', games_new_7d, 'new_30d', games_new_30d,
+      'total', total_games,
+      'ready', games_ready,
+      'new_today', games_new_today,
+      'new_7d', games_new_7d,
+      'new_30d', games_new_30d,
       'avg_q', avg_questions
     ),
     'gameplay', jsonb_build_object(
-      'played_today', played_today, 'played_7d', played_7d,
-      'played_30d', played_30d, 'buzzer_7d', buzzer_7d
+      'played_today', played_today,
+      'played_7d', played_7d,
+      'played_30d', played_30d,
+      'buzzer_7d', buzzer_7d
     ),
     'polls', jsonb_build_object(
-      'sessions_7d', poll_sessions_7d, 'votes_7d', poll_votes_7d, 'votes_total', poll_votes_total
+      'sessions_7d', poll_sessions_7d,
+      'votes_7d', poll_votes_7d,
+      'votes_total', poll_votes_total
     ),
     'bases', jsonb_build_object(
       'total', bases_total,
-      'new_today', bases_new_today, 'new_7d', bases_new_7d, 'new_30d', bases_new_30d
+      'new_today', bases_new_today,
+      'new_7d', bases_new_7d,
+      'new_30d', bases_new_30d
     ),
     'logos', jsonb_build_object(
       'total', logos_total,
-      'new_today', logos_new_today, 'new_7d', logos_new_7d, 'new_30d', logos_new_30d
+      'new_today', logos_new_today,
+      'new_7d', logos_new_7d,
+      'new_30d', logos_new_30d
     ),
-    'health',   jsonb_build_object('mail_errors', mail_errors_24h),
-    'ratings',  jsonb_build_object(
-      'total', total_ratings, 'average', avg_rating,
-      'new_today', ratings_new_today, 'new_7d', ratings_new_7d, 'new_30d', ratings_new_30d
+    'health', jsonb_build_object(
+      'mail_errors', mail_errors_24h
     ),
-    'timestamp', now()
+    'ratings', jsonb_build_object(
+      'total', total_ratings,
+      'average', ROUND(avg_rating, 2),
+      'new_today', ratings_new_today,
+      'new_7d', ratings_new_7d,
+      'new_30d', ratings_new_30d
+    )
   );
+
   RETURN result;
 END;
 $$;
@@ -14048,5 +14066,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict tgaGt9gViFeo4pG6d4bvzq5zSCJvzP2ZaKBgZqwLHNnbctHDja2HCz6rcobVHEb
+\unrestrict aEABVORJu2YtNaAiJmY8sR9kVkWUZT7cwneyLY38tMu2FPMVy1XOY17tP7Gi2ZD
 
