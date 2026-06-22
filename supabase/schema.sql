@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict n7bbsQpaN5y444bwCunDjcearyjc6iNFq0VPERw1yEGaXpbPoO9Eha70wlf9b7W
+\restrict tgaGt9gViFeo4pG6d4bvzq5zSCJvzP2ZaKBgZqwLHNnbctHDja2HCz6rcobVHEb
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -1954,24 +1954,12 @@ begin
     return null;
   end if;
 
-  -- per-game logo from settings.display.logoId
   if v_logo_id is not null then
     select jsonb_build_object('type', ul.type, 'payload', ul.payload, 'name', ul.name)
       into v_logo
     from public.user_logos ul
     where ul.id = v_logo_id and ul.user_id = v_owner;
-
-    if v_logo is not null then
-      return v_logo;
-    end if;
   end if;
-
-  -- fallback: globally active logo
-  select jsonb_build_object('type', ul.type, 'payload', ul.payload, 'name', ul.name)
-    into v_logo
-  from public.user_logos ul
-  where ul.user_id = v_owner and ul.is_active = true
-  limit 1;
 
   return v_logo;
 end $$;
@@ -2638,7 +2626,6 @@ DECLARE
   bases_new_30d  bigint;
 
   logos_total    bigint;
-  logos_active   bigint;
   logos_new_today bigint;
   logos_new_7d   bigint;
   logos_new_30d  bigint;
@@ -2661,7 +2648,6 @@ BEGIN
   SELECT COUNT(*) INTO users_new_7d    FROM public.profiles WHERE created_at >= now() - interval '7 days'  AND NOT (id = ANY(excluded_ids));
   SELECT COUNT(*) INTO users_new_30d   FROM public.profiles WHERE created_at >= now() - interval '30 days' AND NOT (id = ANY(excluded_ids));
 
-  -- Language counts from auth.users.raw_user_meta_data (the only reliable source)
   SELECT COUNT(*) INTO users_pl FROM auth.users u
     JOIN public.profiles p ON p.id = u.id
     WHERE lower(u.raw_user_meta_data->>'language') = 'pl' AND NOT (u.id = ANY(excluded_ids));
@@ -2672,52 +2658,34 @@ BEGIN
     JOIN public.profiles p ON p.id = u.id
     WHERE lower(u.raw_user_meta_data->>'language') = 'uk' AND NOT (u.id = ANY(excluded_ids));
 
-  -- Games (bez demo, bez kopii z marketu, bez wykluczonych)
+  -- Games
   SELECT COUNT(*) INTO total_games      FROM public.games WHERE is_demo = false AND source_market_id IS NULL AND NOT (owner_id = ANY(excluded_ids));
   SELECT COUNT(*) INTO games_ready      FROM public.games WHERE is_demo = false AND source_market_id IS NULL AND status = 'ready' AND NOT (owner_id = ANY(excluded_ids));
   SELECT COUNT(*) INTO games_new_today  FROM public.games WHERE is_demo = false AND source_market_id IS NULL AND created_at >= CURRENT_DATE AND NOT (owner_id = ANY(excluded_ids));
   SELECT COUNT(*) INTO games_new_7d     FROM public.games WHERE is_demo = false AND source_market_id IS NULL AND created_at >= now() - interval '7 days' AND NOT (owner_id = ANY(excluded_ids));
   SELECT COUNT(*) INTO games_new_30d    FROM public.games WHERE is_demo = false AND source_market_id IS NULL AND created_at >= now() - interval '30 days' AND NOT (owner_id = ANY(excluded_ids));
-  SELECT COALESCE(ROUND(AVG(q_count), 1), 0) INTO avg_questions
-    FROM (SELECT COUNT(*) AS q_count FROM public.questions q
-          JOIN public.games g ON g.id = q.game_id
-          WHERE g.is_demo = false AND g.source_market_id IS NULL AND NOT (g.owner_id = ANY(excluded_ids))
-          GROUP BY q.game_id) AS sub;
+  SELECT COALESCE(AVG(jsonb_array_length(g.questions)), 0) INTO avg_questions
+    FROM public.games g WHERE g.is_demo = false AND source_market_id IS NULL AND NOT (g.owner_id = ANY(excluded_ids));
 
   -- Gameplay
-  SELECT COUNT(DISTINCT dp.game_id) INTO played_today FROM public.device_presence dp
-    JOIN public.games g ON g.id = dp.game_id
-    WHERE dp.device_type = 'display' AND dp.last_seen_at >= CURRENT_DATE AND g.is_demo = false AND NOT (g.owner_id = ANY(excluded_ids));
-  SELECT COUNT(DISTINCT dp.game_id) INTO played_7d FROM public.device_presence dp
-    JOIN public.games g ON g.id = dp.game_id
-    WHERE dp.device_type = 'display' AND dp.last_seen_at >= now() - interval '7 days' AND g.is_demo = false AND NOT (g.owner_id = ANY(excluded_ids));
-  SELECT COUNT(DISTINCT dp.game_id) INTO played_30d FROM public.device_presence dp
-    JOIN public.games g ON g.id = dp.game_id
-    WHERE dp.device_type = 'display' AND dp.last_seen_at >= now() - interval '30 days' AND g.is_demo = false AND NOT (g.owner_id = ANY(excluded_ids));
-  SELECT COUNT(DISTINCT dp.game_id) INTO buzzer_7d FROM public.device_presence dp
-    JOIN public.games g ON g.id = dp.game_id
-    WHERE dp.device_type = 'buzzer' AND dp.last_seen_at >= now() - interval '7 days' AND g.is_demo = false AND NOT (g.owner_id = ANY(excluded_ids));
+  SELECT COUNT(*) INTO played_today FROM public.game_sessions WHERE started_at >= CURRENT_DATE;
+  SELECT COUNT(*) INTO played_7d    FROM public.game_sessions WHERE started_at >= now() - interval '7 days';
+  SELECT COUNT(*) INTO played_30d   FROM public.game_sessions WHERE started_at >= now() - interval '30 days';
+  SELECT COUNT(*) INTO buzzer_7d    FROM public.game_sessions WHERE started_at >= now() - interval '7 days' AND session_type = 'buzzer';
 
   -- Polls
-  SELECT COUNT(*) INTO poll_sessions_7d FROM public.poll_sessions ps
-    JOIN public.games g ON g.id = ps.game_id
-    WHERE ps.created_at >= now() - interval '7 days' AND g.is_demo = false AND NOT (g.owner_id = ANY(excluded_ids));
-  SELECT COUNT(*) INTO poll_votes_7d FROM public.poll_votes pv
-    JOIN public.games g ON g.id = pv.game_id
-    WHERE pv.created_at >= now() - interval '7 days' AND g.is_demo = false AND NOT (g.owner_id = ANY(excluded_ids));
-  SELECT COUNT(*) INTO poll_votes_total FROM public.poll_votes pv
-    JOIN public.games g ON g.id = pv.game_id
-    WHERE g.is_demo = false AND NOT (g.owner_id = ANY(excluded_ids));
+  SELECT COUNT(*) INTO poll_sessions_7d FROM public.poll_sessions WHERE created_at >= now() - interval '7 days';
+  SELECT COUNT(*) INTO poll_votes_7d    FROM public.poll_votes    WHERE created_at >= now() - interval '7 days';
+  SELECT COUNT(*) INTO poll_votes_total FROM public.poll_votes;
 
-  -- Question bases (bez demo)
+  -- Question bases
   SELECT COUNT(*) INTO bases_total     FROM public.question_bases WHERE is_demo = false AND NOT (owner_id = ANY(excluded_ids));
   SELECT COUNT(*) INTO bases_new_today FROM public.question_bases WHERE is_demo = false AND created_at >= CURRENT_DATE AND NOT (owner_id = ANY(excluded_ids));
   SELECT COUNT(*) INTO bases_new_7d    FROM public.question_bases WHERE is_demo = false AND created_at >= now() - interval '7 days' AND NOT (owner_id = ANY(excluded_ids));
   SELECT COUNT(*) INTO bases_new_30d   FROM public.question_bases WHERE is_demo = false AND created_at >= now() - interval '30 days' AND NOT (owner_id = ANY(excluded_ids));
 
-  -- User logos (bez demo)
+  -- User logos
   SELECT COUNT(*) INTO logos_total     FROM public.user_logos WHERE is_demo = false AND NOT (user_id = ANY(excluded_ids));
-  SELECT COUNT(*) INTO logos_active    FROM public.user_logos WHERE is_demo = false AND is_active = true AND NOT (user_id = ANY(excluded_ids));
   SELECT COUNT(*) INTO logos_new_today FROM public.user_logos WHERE is_demo = false AND created_at >= CURRENT_DATE AND NOT (user_id = ANY(excluded_ids));
   SELECT COUNT(*) INTO logos_new_7d    FROM public.user_logos WHERE is_demo = false AND created_at >= now() - interval '7 days' AND NOT (user_id = ANY(excluded_ids));
   SELECT COUNT(*) INTO logos_new_30d   FROM public.user_logos WHERE is_demo = false AND created_at >= now() - interval '30 days' AND NOT (user_id = ANY(excluded_ids));
@@ -2760,7 +2728,7 @@ BEGIN
       'new_today', bases_new_today, 'new_7d', bases_new_7d, 'new_30d', bases_new_30d
     ),
     'logos', jsonb_build_object(
-      'total', logos_total, 'active', logos_active,
+      'total', logos_total,
       'new_today', logos_new_today, 'new_7d', logos_new_7d, 'new_30d', logos_new_30d
     ),
     'health',   jsonb_build_object('mail_errors', mail_errors_24h),
@@ -3257,44 +3225,6 @@ BEGIN
       LIMIT p_limit
     ) r;
 
-  WHEN 'games' THEN
-    SELECT jsonb_agg(r)
-    INTO result
-    FROM (
-      SELECT
-        g.name,
-        g.type,
-        g.status,
-        pr.username AS owner,
-        g.created_at
-      FROM public.games g
-      LEFT JOIN public.profiles pr ON pr.id = g.owner_id
-      WHERE g.is_demo = false
-        AND g.source_market_id IS NULL
-        AND NOT (g.owner_id = ANY(excluded_ids))
-      ORDER BY g.created_at DESC
-      LIMIT p_limit
-    ) r;
-
-  WHEN 'gameplay' THEN
-    SELECT jsonb_agg(r)
-    INTO result
-    FROM (
-      SELECT
-        g.name AS game_name,
-        pr.username AS owner,
-        MAX(dp.last_seen_at) AS last_seen_at
-      FROM public.device_presence dp
-      JOIN public.games g ON g.id = dp.game_id
-      LEFT JOIN public.profiles pr ON pr.id = g.owner_id
-      WHERE dp.device_type = 'display'
-        AND g.is_demo = false
-        AND NOT (g.owner_id = ANY(excluded_ids))
-      GROUP BY g.id, g.name, pr.username
-      ORDER BY MAX(dp.last_seen_at) DESC
-      LIMIT p_limit
-    ) r;
-
   WHEN 'bases' THEN
     SELECT jsonb_agg(r)
     INTO result
@@ -3318,7 +3248,6 @@ BEGIN
       SELECT
         l.name,
         l.type,
-        l.is_active,
         pr.username AS owner,
         l.created_at
       FROM public.user_logos l
@@ -10238,60 +10167,6 @@ $$;
 
 
 --
--- Name: user_logo_clear_active(); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."user_logo_clear_active"() RETURNS "void"
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    AS $$
-declare
-  v_uid uuid := auth.uid();
-begin
-  if v_uid is null then
-    raise exception 'Not authenticated';
-  end if;
-
-  update public.user_logos
-  set is_active = false
-  where user_id = v_uid and is_active = true;
-end $$;
-
-
---
--- Name: user_logo_set_active("uuid"); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."user_logo_set_active"("p_logo_id" "uuid") RETURNS "void"
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    AS $$
-declare
-  v_uid uuid := auth.uid();
-begin
-  if v_uid is null then
-    raise exception 'Not authenticated';
-  end if;
-
-  -- upewnij się, że logo należy do usera
-  if not exists (
-    select 1 from public.user_logos
-    where id = p_logo_id and user_id = v_uid
-  ) then
-    raise exception 'Logo not found';
-  end if;
-
-  -- zdejmij aktywność ze wszystkich
-  update public.user_logos
-  set is_active = false
-  where user_id = v_uid and is_active = true;
-
-  -- ustaw jedno
-  update public.user_logos
-  set is_active = true
-  where id = p_logo_id and user_id = v_uid;
-end $$;
-
-
---
 -- Name: answers; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -11144,7 +11019,6 @@ CREATE TABLE "public"."user_logos" (
     "user_id" "uuid" NOT NULL,
     "name" "text" DEFAULT ''::"text" NOT NULL,
     "type" "text" NOT NULL,
-    "is_active" boolean DEFAULT false NOT NULL,
     "payload" "jsonb" DEFAULT '{}'::"jsonb" NOT NULL,
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
@@ -12360,13 +12234,6 @@ CREATE INDEX "reports_status_idx" ON "public"."reports" USING "btree" ("status")
 --
 
 CREATE INDEX "uml_market_game_idx" ON "public"."user_market_library" USING "btree" ("market_game_id");
-
-
---
--- Name: user_logos_one_active_per_user; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX "user_logos_one_active_per_user" ON "public"."user_logos" USING "btree" ("user_id") WHERE ("is_active" = true);
 
 
 --
@@ -14181,5 +14048,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict n7bbsQpaN5y444bwCunDjcearyjc6iNFq0VPERw1yEGaXpbPoO9Eha70wlf9b7W
+\unrestrict tgaGt9gViFeo4pG6d4bvzq5zSCJvzP2ZaKBgZqwLHNnbctHDja2HCz6rcobVHEb
 
