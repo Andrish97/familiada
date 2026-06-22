@@ -1,0 +1,850 @@
+// js/pages/game-settings.js
+import { requireAuth } from "../core/auth.js?v=v2026-06-14T06050";
+import { setTopbarAccount } from "../core/topbar-controller.js?v=v2026-06-14T06050";
+import { sb } from "../core/supabase.js?v=v2026-06-14T06050";
+import { loadQuestions } from "../core/game-validate.js?v=v2026-06-14T06050";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../core/logo-preview.js?v=v2026-06-14T06050";
+import { v as cacheBust } from "../core/cache-bust.js?v=v2026-06-14T06050";
+
+const qs = new URLSearchParams(location.search);
+const gameId = qs.get("id");
+
+// ===== DEFAULTS =====
+const DEFAULT_SETTINGS = {
+  teams: { teamA: "", teamB: "" },
+  display: {
+    colors: { A: "#c4002f", B: "#2a62ff", BACKGROUND: "#d21180", DOT: "#d7ff3d" },
+    theme: null,
+    logoId: null,
+  },
+  game: {
+    hasFinal: null,
+    finalQuestionsMode: "random",
+    roundsQuestionsMode: "random",
+    advanced: {
+      roundMultipliers: [1, 1, 1, 2, 3],
+      finalMinPoints: 300,
+      finalTarget: 200,
+      endScreenMode: "logo",
+      finalPrizeMultiplier: 3,
+      mainPrizeAmount: 25000,
+    },
+  },
+  questions: { final: [], rounds: [] },
+};
+
+function mergeSettings(saved) {
+  const s = saved || {};
+  const defs = DEFAULT_SETTINGS;
+  const savedAdv = s.game?.advanced || {};
+  const defsAdv = defs.game.advanced;
+  return {
+    teams: {
+      teamA: s.teams?.teamA ?? defs.teams.teamA,
+      teamB: s.teams?.teamB ?? defs.teams.teamB,
+    },
+    display: {
+      colors: {
+        A: s.display?.colors?.A ?? defs.display.colors.A,
+        B: s.display?.colors?.B ?? defs.display.colors.B,
+        BACKGROUND: s.display?.colors?.BACKGROUND ?? defs.display.colors.BACKGROUND,
+        DOT: s.display?.colors?.DOT ?? defs.display.colors.DOT,
+      },
+      theme: s.display?.theme ?? defs.display.theme,
+      logoId: s.display?.logoId ?? defs.display.logoId,
+    },
+    game: {
+      hasFinal: s.game?.hasFinal ?? defs.game.hasFinal,
+      finalQuestionsMode: s.game?.finalQuestionsMode ?? defs.game.finalQuestionsMode,
+      roundsQuestionsMode: s.game?.roundsQuestionsMode ?? defs.game.roundsQuestionsMode,
+      advanced: {
+        roundMultipliers: Array.isArray(savedAdv.roundMultipliers) ? savedAdv.roundMultipliers : defsAdv.roundMultipliers,
+        finalMinPoints: typeof savedAdv.finalMinPoints === "number" ? savedAdv.finalMinPoints : defsAdv.finalMinPoints,
+        finalTarget: typeof savedAdv.finalTarget === "number" ? savedAdv.finalTarget : defsAdv.finalTarget,
+        endScreenMode: savedAdv.endScreenMode || defsAdv.endScreenMode,
+        finalPrizeMultiplier: typeof savedAdv.finalPrizeMultiplier === "number" ? savedAdv.finalPrizeMultiplier : defsAdv.finalPrizeMultiplier,
+        mainPrizeAmount: typeof savedAdv.mainPrizeAmount === "number" ? savedAdv.mainPrizeAmount : defsAdv.mainPrizeAmount,
+      },
+    },
+    questions: {
+      final: Array.isArray(s.questions?.final) ? s.questions.final : [],
+      rounds: Array.isArray(s.questions?.rounds) ? s.questions.rounds : [],
+    },
+  };
+}
+
+// ===== STATE =====
+let localSettings = mergeSettings(null);
+let isDirty = false;
+let activeCat = "teams";
+let themeList = [];
+let allQuestions = [];
+let _logoFont = null;
+let _defaultLogoPayload = null;
+let _loadedLogos = [];
+
+// Color modal state
+let colorModalTarget = null;
+let colorModalR = 0, colorModalG = 0, colorModalB = 0;
+
+// ===== ELEMENTS =====
+const titleEl = document.getElementById("gsTitle");
+const unsavedBadge = document.getElementById("gsUnsavedBadge");
+const btnSaveAll = document.getElementById("btnSaveAll");
+const btnBack = document.getElementById("btnBack");
+const content = document.getElementById("gsContent");
+const sidebar = document.getElementById("gsSidebar");
+const sidebarFinale = document.getElementById("sidebarFinale");
+const sidebarRounds = document.getElementById("sidebarRounds");
+
+// Color modal elements
+const colorModal = document.getElementById("gsColorModal");
+const colorModalTitleEl = document.getElementById("gsColorModalTitle");
+const colorR = document.getElementById("gsColorR");
+const colorG = document.getElementById("gsColorG");
+const colorB = document.getElementById("gsColorB");
+const colorRVal = document.getElementById("gsColorRVal");
+const colorGVal = document.getElementById("gsColorGVal");
+const colorBVal = document.getElementById("gsColorBVal");
+const colorHex = document.getElementById("gsColorHex");
+const colorPreviewEl = document.getElementById("gsColorPreview");
+const colorModalClose = document.getElementById("gsColorModalClose");
+const colorModalDone = document.getElementById("gsColorModalDone");
+
+// ===== DIRTY / SAVE =====
+function markDirty() {
+  isDirty = true;
+  unsavedBadge?.classList.remove("hidden");
+  document.getElementById("gsFooter")?.classList.remove("hidden");
+}
+
+function clearDirty() {
+  isDirty = false;
+  unsavedBadge?.classList.add("hidden");
+  document.getElementById("gsFooter")?.classList.add("hidden");
+}
+
+async function saveAll() {
+  if (btnSaveAll) btnSaveAll.disabled = true;
+  try {
+    const { error } = await sb()
+      .from("games")
+      .update({ settings: localSettings })
+      .eq("id", gameId);
+    if (error) throw error;
+    clearDirty();
+  } catch (e) {
+    alert("Błąd zapisu: " + (e?.message || String(e)));
+  } finally {
+    if (btnSaveAll) btnSaveAll.disabled = false;
+  }
+}
+
+// ===== SUB-TAB GRAYING =====
+function updateSubTabStates() {
+  const hasFinal = localSettings.game.hasFinal === true;
+  const finalRandom = localSettings.game.finalQuestionsMode !== "pick";
+  const roundsRandom = localSettings.game.roundsQuestionsMode !== "pick";
+
+  if (sidebarFinale) {
+    sidebarFinale.classList.toggle("gs-sidebar-item-disabled", !hasFinal || finalRandom);
+  }
+  if (sidebarRounds) {
+    sidebarRounds.classList.toggle("gs-sidebar-item-disabled", roundsRandom);
+  }
+}
+
+// ===== NAVIGATION =====
+function setActiveCat(cat) {
+  activeCat = cat;
+  sidebar?.querySelectorAll(".gs-sidebar-item").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.cat === cat);
+  });
+  renderCat(cat);
+}
+
+// ===== HEX / RGB UTILS =====
+function normHex(s) {
+  s = String(s ?? "").trim();
+  if (!s.startsWith("#")) s = "#" + s;
+  s = s.toUpperCase();
+  return /^#[0-9A-F]{6}$/.test(s) ? s : null;
+}
+
+function hexToRgb(hex) {
+  const h = normHex(hex);
+  if (!h) return { r: 0, g: 0, b: 0 };
+  const n = parseInt(h.slice(1), 16);
+  return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+}
+
+function rgbToHex(r, g, b) {
+  const n = (Math.max(0, Math.min(255, r | 0)) << 16) | (Math.max(0, Math.min(255, g | 0)) << 8) | Math.max(0, Math.min(255, b | 0));
+  return "#" + n.toString(16).padStart(6, "0").toUpperCase();
+}
+
+// ===== COLOR MODAL =====
+const COLOR_LABELS = {
+  A: "Kolor drużyny A",
+  B: "Kolor drużyny B",
+  BACKGROUND: "Tło",
+  DOT: "Akcent (DOT)",
+};
+
+function openColorModal(key) {
+  colorModalTarget = key;
+  const hex = localSettings.display.colors[key] || "#000000";
+  const { r, g, b } = hexToRgb(hex);
+  colorModalR = r; colorModalG = g; colorModalB = b;
+  if (colorModalTitleEl) colorModalTitleEl.textContent = COLOR_LABELS[key] || key;
+  syncColorModalUI();
+  colorModal?.classList.remove("hidden");
+}
+
+function syncColorModalUI() {
+  if (colorR) { colorR.value = colorModalR; if (colorRVal) colorRVal.textContent = colorModalR; }
+  if (colorG) { colorG.value = colorModalG; if (colorGVal) colorGVal.textContent = colorModalG; }
+  if (colorB) { colorB.value = colorModalB; if (colorBVal) colorBVal.textContent = colorModalB; }
+  const hex = rgbToHex(colorModalR, colorModalG, colorModalB);
+  if (colorHex) colorHex.value = hex;
+  if (colorPreviewEl) colorPreviewEl.style.background = hex;
+  updateSliderTrack(colorR, colorModalG, colorModalB, "r");
+  updateSliderTrack(colorG, colorModalR, colorModalB, "g");
+  updateSliderTrack(colorB, colorModalR, colorModalG, "b");
+}
+
+function updateSliderTrack(el, v1, v2, ch) {
+  if (!el) return;
+  const from = ch === "r" ? `rgb(0,${v1},${v2})` : ch === "g" ? `rgb(${v1},0,${v2})` : `rgb(${v1},${v2},0)`;
+  const to   = ch === "r" ? `rgb(255,${v1},${v2})` : ch === "g" ? `rgb(${v1},255,${v2})` : `rgb(${v1},${v2},255)`;
+  el.style.setProperty("--track", `linear-gradient(to right, ${from}, ${to})`);
+}
+
+function applyColorModal() {
+  const hex = rgbToHex(colorModalR, colorModalG, colorModalB);
+  if (!colorModalTarget) return;
+  localSettings.display.colors[colorModalTarget] = hex;
+  markDirty();
+  content?.querySelectorAll(`[data-color-key="${colorModalTarget}"]`).forEach(el => {
+    el.style.background = hex;
+  });
+  colorModal?.classList.add("hidden");
+}
+
+function initColorModal() {
+  colorR?.addEventListener("input", () => {
+    colorModalR = parseInt(colorR.value, 10);
+    syncColorModalUI();
+  });
+  colorG?.addEventListener("input", () => {
+    colorModalG = parseInt(colorG.value, 10);
+    syncColorModalUI();
+  });
+  colorB?.addEventListener("input", () => {
+    colorModalB = parseInt(colorB.value, 10);
+    syncColorModalUI();
+  });
+  colorHex?.addEventListener("change", () => {
+    const h = normHex(colorHex.value);
+    if (!h) return;
+    const { r, g, b } = hexToRgb(h);
+    colorModalR = r; colorModalG = g; colorModalB = b;
+    syncColorModalUI();
+  });
+  colorModalClose?.addEventListener("click", () => colorModal?.classList.add("hidden"));
+  colorModalDone?.addEventListener("click", applyColorModal);
+  colorModal?.addEventListener("click", e => {
+    if (e.target === colorModal) colorModal.classList.add("hidden");
+  });
+}
+
+// ===== STRING HELPERS =====
+function escAttr(s) {
+  return String(s ?? "").replaceAll("&", "&amp;").replaceAll('"', "&quot;");
+}
+
+function escText(s) {
+  return String(s ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+}
+
+// ===== RENDER CATEGORIES =====
+function renderCat(cat) {
+  if (!content) return;
+  switch (cat) {
+    case "teams":     renderTeams();     break;
+    case "display":   renderDisplay();   break;
+    case "sound":     renderSound();     break;
+    case "questions": renderQuestions(); break;
+    case "finale":    renderFinale();    break;
+    case "rounds":    renderRounds();    break;
+    case "game":      renderGame();      break;
+  }
+}
+
+// --- DRUŻYNY ---
+function renderTeams() {
+  content.innerHTML = `
+    <div class="gs-cat-title">Drużyny</div>
+    <div class="gs-section">
+      <div class="gs-field">
+        <div class="gs-label">Nazwa drużyny A</div>
+        <input class="inp" id="gsTeamA" value="${escAttr(localSettings.teams.teamA)}" maxlength="40" placeholder="np. Rodzina Kowalskich"/>
+      </div>
+      <div class="gs-field">
+        <div class="gs-label">Nazwa drużyny B</div>
+        <input class="inp" id="gsTeamB" value="${escAttr(localSettings.teams.teamB)}" maxlength="40" placeholder="np. Rodzina Nowaków"/>
+      </div>
+    </div>
+  `;
+
+  document.getElementById("gsTeamA")?.addEventListener("input", e => {
+    localSettings.teams.teamA = e.target.value;
+    markDirty();
+  });
+  document.getElementById("gsTeamB")?.addEventListener("input", e => {
+    localSettings.teams.teamB = e.target.value;
+    markDirty();
+  });
+}
+
+// --- WYGLĄD ---
+function renderDisplay() {
+  const c = localSettings.display.colors;
+  const swatches = ["A", "B", "BACKGROUND", "DOT"].map(key => `
+    <div class="colorItem">
+      <div class="lbl2">${escText(COLOR_LABELS[key])}</div>
+      <button class="swatchBtn" data-color-key="${key}" style="background:${c[key]}" title="${key}" type="button"></button>
+    </div>
+  `).join("");
+
+  const themeOptions = themeList.map(th =>
+    `<option value="${escAttr(th.key)}" ${localSettings.display.theme === th.key ? "selected" : ""}>${escText(th.label)}</option>`
+  ).join("");
+
+  content.innerHTML = `
+    <div class="gs-cat-title">Wygląd</div>
+    <div class="gs-section">
+      <div class="gs-label">Kolory</div>
+      <div class="colorRow">${swatches}</div>
+    </div>
+    <div class="gs-section">
+      <div class="gs-label">Motyw wyświetlacza</div>
+      <select class="inp" id="gsThemeSelect" style="margin-top:8px">
+        <option value="">— domyślny —</option>
+        ${themeOptions}
+      </select>
+    </div>
+    <div class="gs-section">
+      <div class="gs-label">Logo</div>
+      <div id="gsLogoGrid" style="margin-top:10px;display:flex;flex-wrap:wrap;gap:8px"></div>
+    </div>
+  `;
+
+  content.querySelectorAll(".swatchBtn").forEach(btn => {
+    btn.addEventListener("click", () => openColorModal(btn.dataset.colorKey));
+  });
+
+  const themeSelect = document.getElementById("gsThemeSelect");
+  if (themeSelect) {
+    themeSelect.value = localSettings.display.theme || "";
+    themeSelect.addEventListener("change", e => {
+      localSettings.display.theme = e.target.value || null;
+      markDirty();
+    });
+  }
+
+  renderLogoGrid();
+}
+
+async function renderLogoGrid() {
+  const grid = document.getElementById("gsLogoGrid");
+  if (!grid) return;
+
+  grid.innerHTML = `<div class="hint" style="padding:8px 0">Ładowanie logo…</div>`;
+
+  if (!_logoFont) {
+    try { _logoFont = await loadFont5x7(); } catch {}
+  }
+  if (!_defaultLogoPayload) {
+    try {
+      const r = await fetch(await cacheBust("/display/logo_familiada.json"), { cache: "force-cache" });
+      if (r.ok) _defaultLogoPayload = await r.json();
+    } catch {}
+  }
+
+  try {
+    const { data, error } = await sb()
+      .from("user_logos")
+      .select("id,name,type,payload")
+      .order("updated_at", { ascending: false });
+    if (error) throw error;
+    _loadedLogos = data || [];
+  } catch (e) {
+    if (document.getElementById("gsLogoGrid")) {
+      grid.innerHTML = `<div class="hint">${escText(e?.message || String(e))}</div>`;
+    }
+    return;
+  }
+
+  // Check tab still active
+  if (!document.getElementById("gsLogoGrid")) return;
+
+  grid.innerHTML = "";
+  const selectedId = localSettings.display.logoId;
+
+  grid.appendChild(makeLogoTile(null, selectedId));
+  for (const logo of _loadedLogos) {
+    grid.appendChild(makeLogoTile(logo.id, selectedId));
+  }
+
+  grid.querySelectorAll(".logoTile").forEach(tile => {
+    tile.addEventListener("click", () => {
+      const rawId = tile.dataset.logoId;
+      const id = rawId === "default" ? null : rawId;
+      localSettings.display.logoId = id;
+      markDirty();
+      grid.querySelectorAll(".logoTile").forEach(t => t.classList.remove("selected"));
+      tile.classList.add("selected");
+    });
+  });
+}
+
+function makeLogoTile(id, selectedId) {
+  const key = id ?? "default";
+  const name = id === null ? "Domyślne" : (_loadedLogos.find(l => l.id === id)?.name || "—");
+  const logoObj = id === null
+    ? (_defaultLogoPayload ? { type: "GLYPH_30x10", payload: _defaultLogoPayload } : null)
+    : _loadedLogos.find(l => l.id === id) || null;
+  const sel = (id === null && selectedId === null) || (id !== null && id === selectedId);
+
+  const el = document.createElement("div");
+  el.className = "logoTile" + (sel ? " selected" : "");
+  el.dataset.logoId = String(key);
+  el.style.cursor = "pointer";
+
+  const prev = document.createElement("div");
+  prev.className = "logoTilePrev";
+  const canvas = buildLogoPreviewCanvas(logoObj, _logoFont);
+  canvas.style.cursor = "pointer";
+  prev.appendChild(canvas);
+  el.appendChild(prev);
+
+  const label = document.createElement("div");
+  label.className = "logoTileName";
+  label.textContent = name;
+  el.appendChild(label);
+
+  return el;
+}
+
+// --- DŹWIĘK ---
+function renderSound() {
+  content.innerHTML = `
+    <div class="gs-cat-title">Dźwięk</div>
+    <div class="gs-section">
+      <p class="gs-hint" style="font-size:.9rem">Ustawienia dźwięku będą dostępne wkrótce.</p>
+    </div>
+  `;
+}
+
+// --- PYTANIA — USTAWIENIA ---
+function renderQuestions() {
+  const g = localSettings.game;
+  const hasFinal = g.hasFinal === true;
+  const finalRandom = g.finalQuestionsMode !== "pick";
+  const roundsRandom = g.roundsQuestionsMode !== "pick";
+
+  content.innerHTML = `
+    <div class="gs-cat-title">Pytania — Ustawienia</div>
+    <div class="gs-section">
+      <div class="sectionBlock">
+        <div class="sectionTitle">Finał</div>
+        <div class="setting-item">
+          <div class="lbl2">Czy gra zawiera finał?</div>
+          <div class="toggle-group" style="margin-top:8px">
+            <label class="toggle-item">
+              <input type="radio" name="gsHasFinal" value="yes" ${hasFinal ? "checked" : ""}/>
+              <span class="toggle-slider" data-text="Tak"></span>
+            </label>
+            <label class="toggle-item">
+              <input type="radio" name="gsHasFinal" value="no" ${!hasFinal ? "checked" : ""}/>
+              <span class="toggle-slider" data-text="Nie"></span>
+            </label>
+          </div>
+        </div>
+        <div class="setting-item" id="gsFinalModeField" style="display:${hasFinal ? "block" : "none"}">
+          <div class="lbl2">Tryb wyboru pytań finału</div>
+          <div class="toggle-group" style="margin-top:8px">
+            <label class="toggle-item">
+              <input type="radio" name="gsFinalMode" value="random" ${finalRandom ? "checked" : ""}/>
+              <span class="toggle-slider" data-text="Losowe"></span>
+            </label>
+            <label class="toggle-item">
+              <input type="radio" name="gsFinalMode" value="pick" ${!finalRandom ? "checked" : ""}/>
+              <span class="toggle-slider" data-text="Ręcznie"></span>
+            </label>
+          </div>
+          <div class="gs-hint">Losowe = 5 pytań losowanych automatycznie. Ręcznie = wybierz pytania w zakładce „Pytania — Finał".</div>
+        </div>
+      </div>
+      <div class="sectionBlock">
+        <div class="sectionTitle">Rundy</div>
+        <div class="setting-item">
+          <div class="lbl2">Tryb kolejności pytań rund</div>
+          <div class="toggle-group" style="margin-top:8px">
+            <label class="toggle-item">
+              <input type="radio" name="gsRoundsMode" value="random" ${roundsRandom ? "checked" : ""}/>
+              <span class="toggle-slider" data-text="Losowe"></span>
+            </label>
+            <label class="toggle-item">
+              <input type="radio" name="gsRoundsMode" value="pick" ${!roundsRandom ? "checked" : ""}/>
+              <span class="toggle-slider" data-text="Kolejność"></span>
+            </label>
+          </div>
+          <div class="gs-hint">Losowe = każda runda losuje pytanie. Kolejność = pytania w ustalonej kolejności (zakładka „Pytania — Rundy").</div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  content.querySelectorAll("[name='gsHasFinal']").forEach(radio => {
+    radio.addEventListener("change", () => {
+      localSettings.game.hasFinal = radio.value === "yes";
+      markDirty();
+      updateSubTabStates();
+      const field = document.getElementById("gsFinalModeField");
+      if (field) field.style.display = localSettings.game.hasFinal ? "block" : "none";
+    });
+  });
+
+  content.querySelectorAll("[name='gsFinalMode']").forEach(radio => {
+    radio.addEventListener("change", () => {
+      localSettings.game.finalQuestionsMode = radio.value;
+      markDirty();
+      updateSubTabStates();
+    });
+  });
+
+  content.querySelectorAll("[name='gsRoundsMode']").forEach(radio => {
+    radio.addEventListener("change", () => {
+      localSettings.game.roundsQuestionsMode = radio.value;
+      markDirty();
+      updateSubTabStates();
+    });
+  });
+}
+
+// --- PYTANIA — FINAŁ ---
+function renderFinale() {
+  const picked = localSettings.questions.final;
+  const pickedIds = new Set(picked.map(q => q.id));
+  const pool = allQuestions.filter(q => !pickedIds.has(q.id));
+
+  content.innerHTML = `
+    <div class="gs-cat-title">Pytania — Finał</div>
+    <div class="gs-section">
+      <div class="gs-hint" style="margin-bottom:12px">Wybierz 5 pytań do finału. Kliknij pytanie, aby przenieść.</div>
+      <div class="gs-picker-card">
+        <div class="gs-picker-lists">
+          <div class="gs-picker-col">
+            <div class="gs-picker-col-title">Pula pytań (${pool.length})</div>
+            <div class="gs-qrow-list" id="gsFinalePool">
+              ${pool.length === 0
+                ? '<div class="gs-picker-empty">Brak dostępnych pytań</div>'
+                : pool.map(q => `<div class="gs-qrow" data-qid="${escAttr(q.id)}" data-ord="${q.ord}">
+                    <span class="meta">#${q.ord}</span>
+                    <span class="txt">${escText(q.text)}</span>
+                  </div>`).join("")}
+            </div>
+          </div>
+          <div class="gs-picker-col">
+            <div class="gs-picker-col-title">Finał (${picked.length}/5)</div>
+            <div class="gs-qrow-list" id="gsGsFinalePicked">
+              ${picked.length === 0
+                ? '<div class="gs-picker-empty">Kliknij pytanie, aby dodać (max 5)</div>'
+                : picked.map((q, i) => `<div class="gs-qrow" data-qid="${escAttr(q.id)}" data-ord="${q.ord}">
+                    <span class="meta">${i + 1}.</span>
+                    <span class="txt">${escText(q.text)}</span>
+                    <button class="gs-q-item-remove" type="button" title="Usuń">✕</button>
+                  </div>`).join("")}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById("gsFinalePool")?.addEventListener("click", e => {
+    const row = e.target.closest(".gs-qrow");
+    if (!row) return;
+    if (localSettings.questions.final.length >= 5) return;
+    const id = row.dataset.qid;
+    const q = allQuestions.find(q => q.id === id);
+    if (!q || localSettings.questions.final.some(p => p.id === id)) return;
+    localSettings.questions.final = [...localSettings.questions.final, q];
+    markDirty();
+    renderFinale();
+  });
+
+  document.getElementById("gsGsFinalePicked")?.addEventListener("click", e => {
+    const removeBtn = e.target.closest(".gs-q-item-remove");
+    if (removeBtn) {
+      const id = removeBtn.closest(".gs-qrow")?.dataset.qid;
+      if (!id) return;
+      localSettings.questions.final = localSettings.questions.final.filter(p => p.id !== id);
+      markDirty();
+      renderFinale();
+      return;
+    }
+    const row = e.target.closest(".gs-qrow");
+    if (!row) return;
+    const id = row.dataset.qid;
+    localSettings.questions.final = localSettings.questions.final.filter(p => p.id !== id);
+    markDirty();
+    renderFinale();
+  });
+}
+
+// --- PYTANIA — RUNDY ---
+function renderRounds() {
+  const picked = localSettings.questions.rounds;
+  const pickedIds = new Set(picked.map(q => q.id));
+  const pool = allQuestions.filter(q => !pickedIds.has(q.id));
+
+  content.innerHTML = `
+    <div class="gs-cat-title">Pytania — Rundy</div>
+    <div class="gs-section">
+      <div class="gs-hint" style="margin-bottom:12px">Ustaw kolejność pytań rund. Kliknij pytanie, aby przenieść.</div>
+      <div class="gs-picker-card">
+        <div class="gs-picker-lists">
+          <div class="gs-picker-col">
+            <div class="gs-picker-col-title">Dostępne pytania (${pool.length})</div>
+            <div class="gs-qrow-list" id="gsRoundsPool">
+              ${pool.length === 0
+                ? '<div class="gs-picker-empty">Wszystkie pytania są w kolejności</div>'
+                : pool.map(q => `<div class="gs-qrow" data-qid="${escAttr(q.id)}" data-ord="${q.ord}">
+                    <span class="meta">#${q.ord}</span>
+                    <span class="txt">${escText(q.text)}</span>
+                  </div>`).join("")}
+            </div>
+          </div>
+          <div class="gs-picker-col">
+            <div class="gs-picker-col-title">Kolejność rund (${picked.length})</div>
+            <div class="gs-qrow-list" id="gsRoundsPicked">
+              ${picked.length === 0
+                ? '<div class="gs-picker-empty">Kliknij pytanie po lewej, aby dodać</div>'
+                : picked.map((q, i) => `<div class="gs-qrow" data-qid="${escAttr(q.id)}" data-ord="${q.ord}">
+                    <span class="meta">${i + 1}.</span>
+                    <span class="txt">${escText(q.text)}</span>
+                    <button class="gs-q-item-remove" type="button" title="Usuń">✕</button>
+                  </div>`).join("")}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById("gsRoundsPool")?.addEventListener("click", e => {
+    const row = e.target.closest(".gs-qrow");
+    if (!row) return;
+    const id = row.dataset.qid;
+    const q = allQuestions.find(q => q.id === id);
+    if (!q) return;
+    localSettings.questions.rounds = [...localSettings.questions.rounds, q];
+    markDirty();
+    renderRounds();
+  });
+
+  document.getElementById("gsRoundsPicked")?.addEventListener("click", e => {
+    const removeBtn = e.target.closest(".gs-q-item-remove");
+    if (removeBtn) {
+      const id = removeBtn.closest(".gs-qrow")?.dataset.qid;
+      if (!id) return;
+      localSettings.questions.rounds = localSettings.questions.rounds.filter(p => p.id !== id);
+      markDirty();
+      renderRounds();
+      return;
+    }
+    const row = e.target.closest(".gs-qrow");
+    if (!row) return;
+    const id = row.dataset.qid;
+    localSettings.questions.rounds = localSettings.questions.rounds.filter(p => p.id !== id);
+    markDirty();
+    renderRounds();
+  });
+}
+
+// --- USTAWIENIA GRY ---
+function renderGame() {
+  const adv = localSettings.game.advanced;
+  const hasFinal = localSettings.game.hasFinal === true;
+  const endMode = adv.endScreenMode || "logo";
+
+  content.innerHTML = `
+    <div class="gs-cat-title">Ustawienia gry</div>
+    <div class="gs-section">
+      <div class="sectionBlock">
+        <div class="sectionTitle">Punktacja rund</div>
+        <div class="setting-item">
+          <div class="lbl2">Mnożniki rund (po przecinku)</div>
+          <input class="inp" id="gsMultipliers" value="${escAttr(adv.roundMultipliers.join(", "))}" placeholder="1, 1, 1, 2, 3" style="margin-top:6px"/>
+          <div class="gs-hint">Ostatnia wartość powtarza się dla dalszych rund. Np. „1, 1, 2" → rundy 1, 2 × 1; rundy 3+ × 2.</div>
+        </div>
+      </div>
+      <div class="sectionBlock">
+        <div class="sectionTitle">Finał</div>
+        <div class="setting-item">
+          <div class="lbl2">Próg punktów do finału</div>
+          <input class="inp" id="gsFinalMinPts" type="number" min="0" max="9999" value="${adv.finalMinPoints}" style="margin-top:6px;max-width:160px"/>
+          <div class="gs-hint">Przynajmniej jedna drużyna musi zdobyć tyle punktów, by odblokować finał.</div>
+        </div>
+        <div class="setting-item" id="gsFinalTargetField" style="display:${hasFinal ? "block" : "none"}">
+          <div class="lbl2">Cel finału (pkt)</div>
+          <input class="inp" id="gsFinalTarget" type="number" min="50" max="999" value="${adv.finalTarget}" style="margin-top:6px;max-width:160px"/>
+        </div>
+      </div>
+      <div class="sectionBlock">
+        <div class="sectionTitle">Ekran końcowy</div>
+        <div class="setting-item">
+          <div class="lbl2">Tryb ekranu po zakończeniu</div>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+            <label style="display:flex;gap:8px;align-items:center;cursor:pointer">
+              <input type="radio" name="gsEndMode" value="logo" ${endMode === "logo" ? "checked" : ""}/>Logo
+            </label>
+            <label style="display:flex;gap:8px;align-items:center;cursor:pointer">
+              <input type="radio" name="gsEndMode" value="points" ${endMode === "points" ? "checked" : ""}/>Punkty
+            </label>
+            <label style="display:${hasFinal ? "flex" : "none"};gap:8px;align-items:center;cursor:pointer" id="gsEndModeMoneyLabel">
+              <input type="radio" name="gsEndMode" value="money" ${endMode === "money" ? "checked" : ""}/>Kwota nagrody
+            </label>
+          </div>
+        </div>
+        <div class="setting-item" id="gsPrizeSettingsRow" style="display:${hasFinal && endMode === "money" ? "grid" : "none"};grid-template-columns:1fr 1fr;gap:14px">
+          <div>
+            <div class="lbl2">Kwota główna nagrody</div>
+            <input class="inp" id="gsMainPrize" type="number" min="1" max="99999" value="${adv.mainPrizeAmount}" style="margin-top:6px"/>
+          </div>
+          <div>
+            <div class="lbl2">Mnożnik nagrody (po finale)</div>
+            <input class="inp" id="gsPrizeMultiplier" type="number" min="1" max="10" value="${adv.finalPrizeMultiplier}" style="margin-top:6px"/>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById("gsMultipliers")?.addEventListener("change", e => {
+    const parts = e.target.value.split(/[,\s]+/)
+      .map(s => parseInt(s.trim(), 10))
+      .filter(n => Number.isFinite(n) && n > 0);
+    if (parts.length > 0) {
+      localSettings.game.advanced.roundMultipliers = parts;
+      markDirty();
+    }
+  });
+
+  document.getElementById("gsFinalMinPts")?.addEventListener("change", e => {
+    const v = parseInt(e.target.value, 10);
+    if (Number.isFinite(v) && v >= 0) { localSettings.game.advanced.finalMinPoints = v; markDirty(); }
+  });
+
+  document.getElementById("gsFinalTarget")?.addEventListener("change", e => {
+    const v = parseInt(e.target.value, 10);
+    if (Number.isFinite(v) && v > 0) { localSettings.game.advanced.finalTarget = v; markDirty(); }
+  });
+
+  content.querySelectorAll("[name='gsEndMode']").forEach(radio => {
+    radio.addEventListener("change", () => {
+      localSettings.game.advanced.endScreenMode = radio.value;
+      markDirty();
+      const prizeRow = document.getElementById("gsPrizeSettingsRow");
+      if (prizeRow) {
+        prizeRow.style.display = (localSettings.game.hasFinal === true && radio.value === "money") ? "grid" : "none";
+      }
+    });
+  });
+
+  document.getElementById("gsMainPrize")?.addEventListener("change", e => {
+    const v = parseInt(e.target.value, 10);
+    if (Number.isFinite(v) && v > 0) { localSettings.game.advanced.mainPrizeAmount = Math.min(v, 99999); markDirty(); }
+  });
+
+  document.getElementById("gsPrizeMultiplier")?.addEventListener("change", e => {
+    const v = parseInt(e.target.value, 10);
+    if (Number.isFinite(v) && v > 0) { localSettings.game.advanced.finalPrizeMultiplier = v; markDirty(); }
+  });
+}
+
+// ===== MAIN =====
+async function main() {
+  const user = await requireAuth("../login");
+  setTopbarAccount(user, { showAuthEntry: false });
+
+  if (!gameId) {
+    location.href = "/my-games";
+    return;
+  }
+
+  // Load game + saved settings
+  const { data: game, error: gameErr } = await sb()
+    .from("games")
+    .select("id,name,settings")
+    .eq("id", gameId)
+    .single();
+
+  if (gameErr || !game) {
+    if (content) content.innerHTML = `<p style="color:red;padding:20px">Nie można załadować gry: ${escText(gameErr?.message || "nieznany błąd")}</p>`;
+    return;
+  }
+
+  if (titleEl) titleEl.textContent = game.name || "—";
+  document.title = `${game.name || "Gra"} — Ustawienia rozgrywki`;
+
+  localSettings = mergeSettings(game.settings);
+
+  // Load themes list
+  try {
+    const res = await fetch("/display/js/themes.json");
+    const json = await res.json();
+    const lang = document.documentElement.lang || "pl";
+    themeList = (json.themes || []).map(e => ({
+      key: e.key,
+      label: typeof e.label === "object" ? (e.label[lang] ?? e.label["pl"] ?? e.key) : (e.label || e.key),
+    }));
+  } catch {}
+
+  // Load all questions for pickers
+  try {
+    allQuestions = await loadQuestions(gameId);
+  } catch {}
+
+  updateSubTabStates();
+
+  // Sidebar clicks
+  sidebar?.addEventListener("click", e => {
+    const btn = e.target.closest(".gs-sidebar-item");
+    if (!btn || btn.classList.contains("gs-sidebar-item-disabled")) return;
+    const cat = btn.dataset.cat;
+    if (cat) setActiveCat(cat);
+  });
+
+  // Save buttons
+  btnSaveAll?.addEventListener("click", saveAll);
+  document.getElementById("btnSaveFooter")?.addEventListener("click", saveAll);
+
+  // Back button
+  btnBack?.addEventListener("click", () => {
+    if (isDirty && !confirm("Masz niezapisane zmiany. Czy na pewno chcesz wyjść?")) return;
+    history.back();
+  });
+
+  initColorModal();
+
+  setActiveCat("teams");
+}
+
+main().catch(err => {
+  console.error("[game-settings]", err);
+  if (content) content.innerHTML = `<p style="color:red;padding:20px">Błąd: ${escText(String(err?.message || err))}</p>`;
+});

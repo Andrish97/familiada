@@ -164,13 +164,57 @@ async function loadGameOrThrow() {
 
   const { data, error } = await sb()
     .from("games")
-    .select("id,name,type,status,share_key_display,share_key_host,share_key_buzzer")
+    .select("id,name,type,status,share_key_display,share_key_host,share_key_buzzer,settings")
     .eq("id", gameId)
     .single();
 
   if (error) throw error;
   if (data?.id !== basic.id) throw new Error(APP_MSG.DATA_MISMATCH);
   return data;
+}
+
+// Stosuje dane z games.settings JSON do store przed startem UI
+function applyGameSettingsToStore(settings, store) {
+  if (!settings || typeof settings !== "object") return;
+
+  const { teams, display, game, questions } = settings;
+
+  if (teams?.teamA || teams?.teamB) {
+    store.setTeams(teams.teamA || "", teams.teamB || "");
+  }
+
+  if (display) {
+    store.setDisplay({
+      colors: display.colors,
+      theme: display.theme,
+      logoId: display.logoId,
+    });
+  }
+
+  if (game) {
+    if (game.hasFinal !== undefined && game.hasFinal !== null) {
+      store.setHasFinal(game.hasFinal);
+    }
+    if (game.finalQuestionsMode) {
+      store.setFinalQuestionsMode(game.finalQuestionsMode);
+    }
+    if (game.roundsQuestionsMode) {
+      store.setRoundsQuestionsMode(game.roundsQuestionsMode);
+    }
+    if (game.advanced && typeof game.advanced === "object") {
+      store.setAdvanced(game.advanced);
+    }
+  }
+
+  if (questions) {
+    if (Array.isArray(questions.final) && questions.final.length > 0) {
+      const ids = questions.final.map(q => q.id).filter(Boolean);
+      if (ids.length > 0) store.confirmFinalQuestions(ids);
+    }
+    if (Array.isArray(questions.rounds) && questions.rounds.length > 0) {
+      store.setRoundsPicked(questions.rounds);
+    }
+  }
 }
 
 async function main() {
@@ -189,12 +233,19 @@ async function main() {
   let shareDevice = { refreshBadges: async () => {}, expireShares: async () => {} };
 
   
-  // ===== Kolory: stan UI (lokalny) =====
+  // Store tworzony tutaj — zanim zainicjujemy kolory, żeby odczytać display z localStorage
+  const store = createStore(game.id);
+  store.hydrate();
+
+  // Wczytaj ustawienia z games.settings (DB) i zastosuj do store
+  applyGameSettingsToStore(game.settings, store);
+
+  // ===== Kolory: inicjalizowane ze store.state.display =====
   let colors = {
-    A: DEFAULT_COLORS.A,
-    B: DEFAULT_COLORS.B,
-    BACKGROUND: DEFAULT_COLORS.BACKGROUND,
-    DOT: DEFAULT_COLORS.DOT,
+    A: normHex(store.state.display.colors.A) ?? DEFAULT_COLORS.A,
+    B: normHex(store.state.display.colors.B) ?? DEFAULT_COLORS.B,
+    BACKGROUND: normHex(store.state.display.colors.BACKGROUND) ?? DEFAULT_COLORS.BACKGROUND,
+    DOT: normHex(store.state.display.colors.DOT) ?? DEFAULT_COLORS.DOT,
   };
 
   // pokaż na start kafelki
@@ -209,7 +260,7 @@ async function main() {
     try {
       const res = await fetch("./display/js/themes.json");
       const json = await res.json();
-      activeTheme = json.default || "classic";
+      const defaultTheme = json.default || "classic";
       themeList = json.themes.map(e => {
         const lang = document.documentElement.lang || "pl";
         const label = typeof e.label === "object"
@@ -217,6 +268,11 @@ async function main() {
           : t(e.label);
         return { key: e.key, label };
       });
+      // przywróć zapisany motyw jeśli istnieje na liście, inaczej domyślny
+      const savedTheme = store.state.display.theme;
+      activeTheme = (savedTheme && themeList.some(t => t.key === savedTheme))
+        ? savedTheme
+        : defaultTheme;
       ui.setThemeOptions?.(themeList);
       ui.setActiveTheme?.(activeTheme);
     } catch (e) {
@@ -272,24 +328,28 @@ async function main() {
       colors.A = h;
       ui.setSwatches?.({ teamA: colors.A, teamB: colors.B, bg: colors.BACKGROUND, dot: colors.DOT });
       sendColorA(h);
+      store.setDisplay({ colors: { ...colors } });
       return;
     }
     if (kind === "B") {
       colors.B = h;
       ui.setSwatches?.({ teamA: colors.A, teamB: colors.B, bg: colors.BACKGROUND, dot: colors.DOT });
       sendColorB(h);
+      store.setDisplay({ colors: { ...colors } });
       return;
     }
     if (kind === "BACKGROUND") {
       colors.BACKGROUND = h;
       ui.setSwatches?.({ teamA: colors.A, teamB: colors.B, bg: colors.BACKGROUND, dot: colors.DOT });
       sendColorBg(h);
+      store.setDisplay({ colors: { ...colors } });
       return;
     }
     if (kind === "DOT") {
       colors.DOT = h;
       ui.setSwatches?.({ teamA: colors.A, teamB: colors.B, bg: colors.BACKGROUND, dot: colors.DOT });
       sendColorDot(h);
+      store.setDisplay({ colors: { ...colors } });
       return;
     }
   }
@@ -390,19 +450,6 @@ async function main() {
     if (!url) return;
     window.open(url, "_blank");
   }
-
-  const store = createStore(game.id);
-  store.hydrate();
-
-  const hasFinalNow = store.state.hasFinal === true;
-  const finalYesRadio = document.getElementById("finalYes");
-  const finalNoRadio = document.getElementById("finalNo");
-
-  if (finalYesRadio && finalNoRadio) {
-    finalYesRadio.checked = hasFinalNow;
-    finalNoRadio.checked = !hasFinalNow;
-  }
-  ui.setFinalHasFinal(hasFinalNow);
 
 
   // === OSTRZEŻENIE PRZY WYJŚCIU ZE STRONY ===
@@ -537,280 +584,14 @@ async function sendZeroStatesToDevices() {
   shareDevice = initShareDevice({ currentUser, game, devices });
   void shareDevice.refreshBadges();
 
-    // ===== Wejście/wyjście z kroku "Nazwy drużyn" =====
-  let wasInSetupNames = false;
-  let wasInSetupLook = false;
-  let wasInSetupGame = false;
   let wasInSetupFinish = false;
-  let wasInSetupRounds = false;
-
-  // Logo wybrane w setup_look (null = domyślne)
-  let selectedLogoId = null;
   // Załadowana czcionka (potrzebna do podglądu GLYPH)
   let _logoFont = null;
   // Domyślne logo Familiady (payload z pliku JSON)
   let _defaultLogoPayload = null;
+  // Cache załadowanych logo (potrzebny w streszczeniu)
+  let _loadedLogos = [];
 
-  async function enterSetupNames() {
-    // urządzenia startują dopiero w setup_look
-  }
-
-  async function leaveSetupNames() {
-    // nic
-  }
-
-  async function enterSetupLook() {
-    if (!devices) return;
-    // uruchom urządzenia przy wejściu w ten krok
-    await devices.sendDisplayCmd("APP GAME").catch(() => {});
-    await devices.sendBuzzerCmd("ON").catch(() => {});
-    await devices.sendHostCmd("COVER").catch(() => {});
-    // pokaż aktualne kolory na wyświetlaczu
-    sendColorA(colors.A);
-    sendColorB(colors.B);
-    sendColorBg(colors.BACKGROUND);
-    sendColorDot(colors.DOT);
-
-    // ustaw nazwy drużyn przy swatchach
-    const teamA = store.state.teams?.teamA || t("control.teamALabel");
-    const teamB = store.state.teams?.teamB || t("control.teamBLabel");
-    const elA = document.getElementById("lookTeamAName");
-    const elB = document.getElementById("lookTeamBName");
-    if (elA) elA.textContent = teamA;
-    if (elB) elB.textContent = teamB;
-
-    // podgląd na urządzeniach: logo + przykładowe wyniki + nazwy drużyn
-    const q = (s) => `"${String(s ?? "").replace(/"/g, "'")}"`;
-    devices.sendDisplayCmd(`LOGO RELOAD`).catch(() => {});
-    devices.sendDisplayCmd(`LEFT 123`).catch(() => {});
-    devices.sendDisplayCmd(`RIGHT 123`).catch(() => {});
-    devices.sendDisplayCmd(`TOP 1`).catch(() => {});
-    devices.sendDisplayCmd(`LONG1 ${q(teamA)}`).catch(() => {});
-    devices.sendDisplayCmd(`LONG2 ${q(teamB)}`).catch(() => {});
-    devices.sendHostCmd(`SET1 ${q(teamA)}`).catch(() => {});
-    devices.sendHostCmd(`SET2 ${q(teamB)}`).catch(() => {});
-
-    // załaduj czcionkę i domyślne logo (raz) i wyrenderuj grid
-    if (!_logoFont) {
-      try { _logoFont = await loadFont5x7(); } catch (e) { console.warn("[logo] font load failed", e); }
-    }
-    if (!_defaultLogoPayload) {
-      try {
-        const r = await fetch(await cacheBust("/display/logo_familiada.json"), { cache: "force-cache" });
-        if (r.ok) _defaultLogoPayload = await r.json();
-      } catch (e) { console.warn("[logo] default logo load failed", e); }
-    }
-    await renderLogoGrid();
-  }
-
-  async function renderLogoGrid() {
-    const grid = document.getElementById("logoGrid");
-    if (!grid) return;
-
-    grid.innerHTML = `<div class="hint">${t("control.lookLogoLoading")}</div>`;
-
-    try {
-      const { data: logos, error } = await sb()
-        .from("user_logos")
-        .select("id,name,type,is_active,payload")
-        .order("updated_at", { ascending: false });
-
-      if (error) throw error;
-
-      const list = logos || [];
-
-      if (list.length === 0 && selectedLogoId !== null) selectedLogoId = null;
-
-      // ustal które logo jest aktywne (db) jeśli jeszcze nie wybrano
-      if (selectedLogoId === null) {
-        const active = list.find(l => l.is_active);
-        if (active) selectedLogoId = active.id;
-      }
-
-      grid.innerHTML = "";
-
-      // kafelek "Domyślne" — ze podglądem domyślnego logo
-      const defaultLogoObj = _defaultLogoPayload
-        ? { type: "GLYPH_30x10", payload: _defaultLogoPayload }
-        : null;
-      grid.appendChild(makeLogo(null, defaultLogoObj));
-
-      for (const logo of list) {
-        grid.appendChild(makeLogo(logo));
-      }
-
-      if (list.length === 0) {
-        const empty = document.createElement("div");
-        empty.className = "logoGridEmpty hint";
-        empty.textContent = t("control.lookLogoNone");
-        grid.appendChild(empty);
-      }
-
-      grid.querySelectorAll(".logoTile").forEach(tile => {
-        tile.addEventListener("click", () => onLogoTileClick(tile.dataset.logoId || null, grid));
-      });
-
-    } catch (e) {
-      grid.innerHTML = `<div class="hint">${e?.message || String(e)}</div>`;
-    }
-  }
-
-  // Buduje kafelek logo jako element DOM (z canvasem)
-  // previewLogo: opcjonalny obiekt {type,payload} do renderowania (dla kafelka "Domyślne")
-  function makeLogo(logo, previewLogo) {
-    const id = logo?.id ?? null;
-    const key = id ?? "default";
-    const name = logo?.name || (id === null ? t("control.lookLogoDefault") : "—");
-    const sel = (id === null && selectedLogoId === null) || (id !== null && id === selectedLogoId);
-
-    const el = document.createElement("div");
-    el.className = "logoTile" + (sel ? " selected" : "");
-    el.dataset.logoId = String(key);
-
-    const prev = document.createElement("div");
-    prev.className = "logoTilePrev";
-    const canvas = buildLogoPreviewCanvas(previewLogo ?? logo, _logoFont);
-    canvas.style.cursor = "default";
-    prev.appendChild(canvas);
-    el.appendChild(prev);
-
-    const label = document.createElement("div");
-    label.className = "logoTileName";
-    label.textContent = name;
-    el.appendChild(label);
-
-    return el;
-  }
-
-  function escapeHtmlAttr(s) {
-    return String(s ?? "").replaceAll("&", "&amp;").replaceAll('"', "&quot;");
-  }
-
-  async function onLogoTileClick(logoId, grid) {
-    selectedLogoId = logoId === "default" ? null : logoId;
-
-    // wizualna selekcja
-    grid.querySelectorAll(".logoTile").forEach(el => el.classList.remove("selected"));
-    const key = selectedLogoId ?? "default";
-    grid.querySelector(`[data-logo-id="${key}"]`)?.classList.add("selected");
-
-    // ustaw aktywne w bazie (fire-and-forget)
-    try {
-      if (selectedLogoId === null) {
-        await sb().rpc("user_logo_clear_active");
-      } else {
-        await sb().rpc("user_logo_set_active", { p_logo_id: selectedLogoId });
-      }
-    } catch (e) { console.warn("[logo] set active failed", e); }
-
-    // przeładuj logo na wyświetlaczu
-    sendColorDot(colors.DOT);
-    await devices.sendDisplayCmd("LOGO RELOAD").catch(() => {});
-  }
-  
-  async function leaveSetupLook() {
-    if (!devices) return;
-    // zgaś podgląd na urządzeniach (przejście do setup_game)
-    await devices.sendDisplayCmd("APP BLACK").catch(() => {});
-    await devices.sendBuzzerCmd("OFF").catch(() => {});
-    await devices.sendHostCmd("CLEAR").catch(() => {});
-  }
-
-  async function enterSetupGame() {
-    // synchronizacja stanu z UI przy wejściu
-    syncGameSettingsUI();
-  }
-  
-  async function leaveSetupGame() {
-    // Nic nie robimy - zapis następuje przy kliknięciu "Dalej"
-  }
-  
-  // ===== Ustawienia gry - synchronizacja UI z store =====
-  function syncGameSettingsUI() {
-    const s = store.state;
-
-    // Czy gramy finał?
-    const finalYes = document.getElementById("finalYes");
-    const finalNo = document.getElementById("finalNo");
-    if (finalYes && finalNo) {
-      finalYes.checked = (s.hasFinal === true);
-      finalNo.checked = (s.hasFinal !== true);
-    }
-
-    // Tryb pytań finału
-    const finalRandom = document.getElementById("finalRandom");
-    const finalPick = document.getElementById("finalPick");
-    if (finalRandom && finalPick) {
-      finalRandom.checked = (s.finalQuestionsMode !== "pick");
-      finalPick.checked = (s.finalQuestionsMode === "pick");
-    }
-
-    // Tryb pytań rund
-    const roundsRandom = document.getElementById("roundsRandom");
-    const roundsPick = document.getElementById("roundsPick");
-    if (roundsRandom && roundsPick) {
-      roundsRandom.checked = (s.roundsQuestionsMode !== "pick");
-      roundsPick.checked = (s.roundsQuestionsMode === "pick");
-    }
-
-    // Tryb zakończenia gry
-    const adv = s.advanced || {};
-    const endMode = adv.endScreenMode || "logo";
-    const winModeLogo = document.getElementById("winModeLogo");
-    const winModePoints = document.getElementById("winModePoints");
-    const winModeMoney = document.getElementById("winModeMoney");
-    if (winModeLogo) winModeLogo.checked = (endMode === "logo");
-    if (winModePoints) winModePoints.checked = (endMode === "points");
-    if (winModeMoney) winModeMoney.checked = (endMode === "money");
-
-    // Pokaż/ukryj opcje w zależności od wyboru
-    updateGameSettingsVisibility();
-  }
-  
-  function updateGameSettingsVisibility() {
-    // Pokaż/ukryj wybór pytań finału w zależności od czy gramy finał
-    const finalModeField = document.getElementById("finalModeField");
-    const hasFinal = document.getElementById("finalYes")?.checked;
-    if (finalModeField) {
-      finalModeField.style.display = hasFinal ? "flex" : "none";
-    }
-
-    // "Cel finału" - tylko gdy finał włączony
-    const finalTargetField = document.getElementById("finalTargetField");
-    if (finalTargetField) {
-      finalTargetField.style.display = hasFinal ? "flex" : "none";
-    }
-
-    // "Pokaż kwotę (po finale)" - tylko gdy finał włączony
-    const winModeMoneyChk = document.getElementById("winModeMoneyChk");
-    if (winModeMoneyChk) {
-      winModeMoneyChk.style.display = hasFinal ? "flex" : "none";
-    }
-
-    // Pola nagrody - widoczne tylko gdy finał włączony I wybrano "Pokaż kwotę"
-    const prizeSettingsRow = document.getElementById("prizeSettingsRow");
-    const winModeMoney = document.getElementById("winModeMoney")?.checked;
-    const showPrizeFields = hasFinal && winModeMoney;
-
-    if (prizeSettingsRow) {
-      prizeSettingsRow.style.display = showPrizeFields ? "grid" : "none";
-    }
-  }
-  
-  function saveGameSettings() {
-    const hasFinal = document.getElementById("finalYes")?.checked;
-    const finalMode = document.getElementById("finalRandom")?.checked ? "random" : "pick";
-    const roundsMode = document.getElementById("roundsRandom")?.checked ? "random" : "pick";
-    
-    store.setHasFinal(hasFinal);
-    store.setFinalQuestionsMode(finalMode);
-    store.setRoundsQuestionsMode(roundsMode);
-    
-    // Jeśli wybrano losowanie, wyczyść potwierdzenie wyboru ręcznego
-    if (finalMode === "random") {
-      store.unconfirmFinalQuestions();
-    }
-  }
 
 
   const display = createDisplay({ devices, store });
@@ -862,81 +643,6 @@ async function sendZeroStatesToDevices() {
     })
     .subscribe();
 
-  // === PICKER PYTAŃ FINAŁU: góra "czy gramy", lewo rozgrywka, prawo finał ===
-  let finalPickerAll = [];
-  let finalPickerSelected = new Set(); // trzymamy ID jako STRINGI
-
-  // ===== FINAL PICKER: stała wysokość kafelków + synchronizacja slotów =====
-  
-  const finalDnd = {
-    draggingId: null, // string
-    fromSide: null,   // "pool" | "final"
-    overSide: null,   // "pool" | "final"
-  };
-  
-  function countRows(root) {
-    return root ? root.querySelectorAll(".qRow").length : 0;
-  }
-  
-  function computeVirtualCounts(poolRoot, finalRoot) {
-    let poolN = countRows(poolRoot);
-    let finalN = countRows(finalRoot);
-  
-    // klocek "w ręku" = znika ze źródła
-    if (finalDnd.draggingId && finalDnd.fromSide) {
-      if (finalDnd.fromSide === "pool") poolN = Math.max(0, poolN - 1);
-      if (finalDnd.fromSide === "final") finalN = Math.max(0, finalN - 1);
-    }
-  
-    // klocek "nad pudełkiem" = jakby już tam wpadł
-    if (finalDnd.draggingId && finalDnd.overSide) {
-      if (finalDnd.overSide === "pool") poolN = poolN + 1;
-      if (finalDnd.overSide === "final") finalN = finalN + 1;
-    }
-  
-    return { poolN, finalN };
-  }
-  
-  function readGapPx(el) {
-    if (!el) return 0;
-    const cs = getComputedStyle(el);
-    // dla flex: gap
-    const g = parseFloat(cs.gap || "0");
-    return Number.isFinite(g) ? g : 0;
-  }
-  
-  function readPadPx(el) {
-    if (!el) return 0;
-    const cs = getComputedStyle(el);
-    const pt = parseFloat(cs.paddingTop || "0") || 0;
-    const pb = parseFloat(cs.paddingBottom || "0") || 0;
-    return pt + pb;
-  }
-  
-  function readTileHeightPx(poolRoot, finalRoot) {
-    const tile =
-      poolRoot?.querySelector(".qRow") ||
-      finalRoot?.querySelector(".qRow");
-    if (!tile) return 56;
-    return Math.round(tile.getBoundingClientRect().height);
-  }
-  
-  function syncFinalPickerSlotsHeight(poolRoot, finalRoot) {
-    if (!poolRoot || !finalRoot) return;
-  
-    const { poolN, finalN } = computeVirtualCounts(poolRoot, finalRoot);
-    const maxCount = Math.max(poolN, finalN, 1);
-  
-    const tileH = readTileHeightPx(poolRoot, finalRoot);
-    const gap = readGapPx(poolRoot);      // oba mają ten sam CSS
-    const pad = readPadPx(poolRoot);      // padding slotu
-  
-    const h = maxCount * tileH + (maxCount - 1) * gap + pad;
-  
-    poolRoot.style.minHeight = `${h}px`;
-    finalRoot.style.minHeight = `${h}px`;
-  }
-
   function escapeHtml(s) {
     return String(s ?? "")
       .replaceAll("&", "&amp;")
@@ -944,208 +650,6 @@ async function sendZeroStatesToDevices() {
       .replaceAll(">", "&gt;")
       .replaceAll('"', "&quot;")
       .replaceAll("'", "&#039;");
-  }
-
-  function finalPickerGetSelectedIds() {
-    return Array.from(finalPickerSelected);
-  }
-
-  function finalPickerUpdateButtons() {
-    const cntEl = document.getElementById("pickedCount");
-    const btnConfirm = document.getElementById("btnConfirmFinal");
-
-    const hasFinal = store.state.hasFinal === true;
-    const confirmed = store.state.final.confirmed === true;
-    const count = finalPickerSelected.size;
-
-    if (cntEl) cntEl.textContent = String(count);
-
-    if (btnConfirm) {
-      btnConfirm.disabled = !hasFinal || confirmed || count !== 5;
-    }
-
-    // dodatkowo: chowamy/pokazujemy kartę z listami
-    const pickerCard = document.getElementById("finalPickerCard");
-    if (pickerCard) {
-      pickerCard.style.display = hasFinal ? "" : "none";
-    }
-
-    // ustawienie stanu radio (wizualnie)
-    const finalYes = document.getElementById("finalYes");
-    const finalNo = document.getElementById("finalNo");
-    if (finalYes && finalNo) {
-      if (hasFinal) {
-        finalYes.checked = true;
-        finalNo.checked = false;
-      } else {
-        finalYes.checked = false;
-        finalNo.checked = true;
-      }
-    }
-  }
-
-  // strefa zrzutu dla list (lewa/prawa)
-  function bindDropZone(root, targetSide) {
-    if (!root || root._finalDndBound) return;
-    root._finalDndBound = true;
-  
-    root.addEventListener("dragover", (e) => {
-      if (store.state.final.confirmed) return;
-      e.preventDefault();
-  
-      root.classList.add("droptarget");
-  
-      if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
-    });
-  
-    root.addEventListener("dragleave", (e) => {
-      if (root.contains(e.relatedTarget)) return;
-      root.classList.remove("droptarget");
-      if (finalDnd.overSide === targetSide) finalDnd.overSide = null;
-    });
-  
-    root.addEventListener("drop", (e) => {
-      if (store.state.final.confirmed) return;
-      e.preventDefault();
-  
-      root.classList.remove("droptarget");
-      finalDnd.overSide = null;
-  
-      const id = e.dataTransfer ? e.dataTransfer.getData("text/plain") : "";
-      if (!id) return;
-  
-      if (targetSide === "final") {
-        if (!finalPickerSelected.has(id)) {
-          if (finalPickerSelected.size >= 5) return; // limit 5
-          finalPickerSelected.add(id);
-        }
-      } else {
-        finalPickerSelected.delete(id);
-      }
-  
-      store.state.final.picked = finalPickerGetSelectedIds();
-      finalPickerRender();
-  
-      const poolRoot = document.getElementById("finalGameList");
-      const finalRoot = document.getElementById("finalFinalList");
-      syncFinalPickerSlotsHeight(poolRoot, finalRoot);
-    });
-  }
-
-  function renderList(root, list, side, confirmed) {
-    if (!root) return;
-  
-    root.innerHTML = list
-      .map(
-        (q) => `
-        <div class="qRow" data-id="${String(q.id)}" draggable="${confirmed ? "false" : "true"}">
-          <div class="meta">#${q.ord}</div>
-          <div class="txt">${escapeHtml(q.text || "")}</div>
-        </div>
-      `
-      )
-      .join("");
-  
-    if (confirmed) return;
-  
-    root.querySelectorAll(".qRow").forEach((row) => {
-      const id = row.dataset.id || "";
-      if (!id) return;
-  
-      row.addEventListener("dragstart", (e) => {
-        if (store.state.final.confirmed) return;
-  
-        finalDnd.draggingId = id;
-        finalDnd.fromSide = side;     // "pool" albo "final"
-        finalDnd.overSide = null;
-  
-        if (e.dataTransfer) {
-          e.dataTransfer.setData("text/plain", id);
-          e.dataTransfer.effectAllowed = "move";
-        }
-        row.classList.add("dragging");
-      });
-  
-      row.addEventListener("dragend", () => {
-        row.classList.remove("dragging");
-  
-        // sprzątamy stan DND
-        finalDnd.draggingId = null;
-        finalDnd.fromSide = null;
-        finalDnd.overSide = null;
-  
-        const poolRoot = document.getElementById("finalGameList");
-        const finalRoot = document.getElementById("finalFinalList");
-        if (poolRoot) poolRoot.classList.remove("droptarget");
-        if (finalRoot) finalRoot.classList.remove("droptarget");
-  
-        syncFinalPickerSlotsHeight(poolRoot, finalRoot);
-      });
-    });
-  }
-
-  function finalPickerRender() {
-    const poolRoot = document.getElementById("finalGameList");   // lewo – rozgrywka
-    const finalRoot = document.getElementById("finalFinalList"); // prawo – finał
-
-    if (!poolRoot || !finalRoot) return;
-
-    const confirmed = store.state.final.confirmed === true;
-
-    // podpinamy strefy drop (tylko raz na root)
-    bindDropZone(poolRoot, "pool");
-    bindDropZone(finalRoot, "final");
-
-    const pickedIds = finalPickerSelected;
-    const picked = finalPickerAll.filter((q) => pickedIds.has(String(q.id)));
-    const pool = finalPickerAll.filter((q) => !pickedIds.has(String(q.id)));
-
-    renderList(poolRoot, pool, "pool", confirmed);
-    renderList(finalRoot, picked, "final", confirmed);
-
-    finalPickerUpdateButtons();
-    
-    // 1) ustaw na start minimalną, żeby nie było "0"
-    poolRoot.style.minHeight = "120px";
-    finalRoot.style.minHeight = "120px";
-    
-    // 2) synchronizacja po layout (2 klatki)
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        syncFinalPickerSlotsHeight(poolRoot, finalRoot);
-      });
-    });
-  }
-
-  async function finalPickerReload() {
-    // Use cached questions if available, otherwise load fresh
-    let qsAll = [];
-    const cached = sessionStorage.getItem("familiada:questionsCache");
-    if (cached) {
-      try { qsAll = JSON.parse(cached); } catch {}
-    }
-    if (!qsAll.length) {
-      qsAll = await loadQuestions(game.id);
-      sessionStorage.setItem("familiada:questionsCache", JSON.stringify(qsAll));
-    }
-    
-    finalPickerAll = qsAll;
-  
-    const confirmed = store.state.final.confirmed === true;
-  
-    if (!confirmed) {
-      // NIEzatwierdzony finał: czyścimy wybór
-      finalPickerSelected = new Set();
-      store.state.final.picked = [];
-    } else {
-      // Zatwierdzony finał: zachowujemy wybór ze store
-      const existing = Array.isArray(store.state.final?.picked)
-        ? store.state.final.picked
-        : [];
-      finalPickerSelected = new Set(existing.map((id) => String(id)));
-    }
-  
-    finalPickerRender();
   }
 
   // Language change handler
@@ -1239,85 +743,17 @@ async function sendZeroStatesToDevices() {
 
     // ===== SETUP =====
 
-    // 1/2 — Nazwy drużyn: przynajmniej jedna nazwa niepusta
-    const teamA = (state.teams.teamA || "").trim();
-    const teamB = (state.teams.teamB || "").trim();
-    const teamsOk = teamA.length > 0 && teamB.length > 0;
-    ui.setEnabled("btnSetupNext", teamsOk);
-
-    // 2/2 — Finał: logika jak w store.canFinishSetup()
-    const hasFinal = state.hasFinal === true;
-    const finalPickedOk =
-      Array.isArray(state.final?.picked) &&
-      state.final.picked.length === 5 &&
-      state.final.confirmed === true;
-
-    const setupOk =
-      teamsOk &&
-      (
-        !hasFinal ||                 // finał wyłączony
-        (hasFinal && finalPickedOk)  // finał włączony + 5 zatwierdzonych pytań
-      );
-
-    ui.setEnabled("btnSetupFinish", setupOk);
-
-    // od razu zsynchronizuj wizualnie radio + kartę list
-    finalPickerUpdateButtons();
-    syncPanelStepPills();
-
-    // ===== detekcja wejścia/wyjścia z setup_names =====
-    const inSetupNames =
-      (state.activeCard === "setup" && state.steps?.setup === "setup_names");
-
-    if (inSetupNames && !wasInSetupNames) {
-      enterSetupNames().catch(() => {});
-    }
-    if (!inSetupNames && wasInSetupNames) {
-      leaveSetupNames().catch(() => {});
-    }
-    wasInSetupNames = inSetupNames;
-
-    // ===== detekcja wejścia/wyjścia z setup_look =====
-    const inSetupLook =
-      (state.activeCard === "setup" && state.steps?.setup === "setup_look");
-
-    if (inSetupLook && !wasInSetupLook) {
-      enterSetupLook().catch(() => {});
-    }
-    if (!inSetupLook && wasInSetupLook) {
-      leaveSetupLook().catch(() => {});
-    }
-    wasInSetupLook = inSetupLook;
-
-    // ===== detekcja wejścia/wyjścia z setup_game =====
-    const inSetupGame =
-      (state.activeCard === "setup" && state.steps?.setup === "setup_game");
-
-    if (inSetupGame && !wasInSetupGame) {
-      enterSetupGame().catch(() => {});
-    }
-    if (!inSetupGame && wasInSetupGame) {
-      leaveSetupGame().catch(() => {});
-    }
-    wasInSetupGame = inSetupGame;
-
-    // ===== detekcja wejścia/wyjścia z setup_finish =====
+    // ===== detekcja wejścia z setup_finish =====
     const inSetupFinish =
       (state.activeCard === "setup" && state.steps?.setup === "setup_finish");
 
+    if (inSetupFinish && !wasInSetupFinish) {
+      enterSetupFinish().catch(() => {});
+    }
     if (inSetupFinish) {
       renderSetupFinishSummary();
     }
     wasInSetupFinish = inSetupFinish;
-
-    // ===== detekcja wejścia/wyjścia z setup_rounds =====
-    const inSetupRounds =
-      (state.activeCard === "setup" && state.steps?.setup === "setup_rounds");
-
-    if (inSetupRounds && !wasInSetupRounds) {
-      renderSetupRoundsOrder();
-    }
-    wasInSetupRounds = inSetupRounds;
 
   }
 
@@ -1473,6 +909,7 @@ async function sendZeroStatesToDevices() {
 
   ui.on("devices.finish", () => {
     store.completeCard("devices");
+    store.setSetupStep("setup_finish");
     store.setActiveCard("setup");
   });
 
@@ -1557,183 +994,20 @@ async function sendZeroStatesToDevices() {
   // SETUP
   ui.on("setup.backToDevices", () => store.setActiveCard("devices"));
 
-  ui.on("teams.change", ({ teamA, teamB }) => {
-    store.setTeams(teamA, teamB);
-  });
-
-    // ===== UI: Kolory =====
-  let colorModalTarget = null; // "A" | "B" | "BACKGROUND" | "DOT"
-
-  ui.on("colors.open", (target) => {
-    if (target !== "A" && target !== "B" && target !== "BACKGROUND" && target !== "DOT") return;
-    colorModalTarget = target;
-
-    const hex =
-      target === "A" ? colors.A :
-      target === "B" ? colors.B :
-      target === "BACKGROUND" ? colors.BACKGROUND :
-      colors.DOT;
-
-    const rgb = hexToRgb(hex);
-
-    ui.openColorModal?.(
-      target === "A" ? t("control.teamAColorAria") :
-      target === "B" ? t("control.teamBColorAria") :
-      target === "BACKGROUND" ? t("control.bgColorAria") :
-      t("control.activeColorAria")
-    );
-
-    ui.setColorModalRgb?.(rgb);
-    ui.setColorModalHex?.(hex);
-  });
-
-  ui.on("colors.close", () => {
-    colorModalTarget = null;
-    ui.closeColorModal?.();
-  });
-
-  ui.on("colors.reset", async () => {
-    colors = {
-      A: DEFAULT_COLORS.A,
-      B: DEFAULT_COLORS.B,
-      BACKGROUND: DEFAULT_COLORS.BACKGROUND,
-      DOT: DEFAULT_COLORS.DOT,
-    };
-
-    ui.setSwatches?.({ teamA: colors.A, teamB: colors.B, bg: colors.BACKGROUND, dot: colors.DOT });
-
-    // ustaw modal (jeśli otwarty) na domyślne dla aktualnego targetu
-    if (colorModalTarget) {
-      const hex =
-        colorModalTarget === "A" ? colors.A :
-        colorModalTarget === "B" ? colors.B :
-        colorModalTarget === "BACKGROUND" ? colors.BACKGROUND :
-        colors.DOT;
-      ui.setColorModalHex?.(hex);
-      ui.setColorModalRgb?.(hexToRgb(hex));
-    }
-
-    await sendColorsReset().catch(() => {});
-  });
-
-  ui.on("colors.input", ({ kind, value }) => {
-    if (!colorModalTarget) return;
-
-    // pobierz aktualne rgb z suwaków (źródło prawdy podczas kręcenia)
-    const rEl = document.getElementById("colorR");
-    const gEl = document.getElementById("colorG");
-    const bEl = document.getElementById("colorB");
-
-    let r = Number(rEl?.value ?? 0);
-    let g = Number(gEl?.value ?? 0);
-    let b = Number(bEl?.value ?? 0);
-
-    if (kind === "HEX") {
-      const h = normHex(value);
-      if (!h) return;
-      const rgb = hexToRgb(h);
-      ui.setColorModalRgb?.(rgb);
-      ui.setColorModalHex?.(h);
-      applyColor(colorModalTarget, h);
-      return;
-    }
-
-    if (kind === "R") r = Number(value ?? 0);
-    if (kind === "G") g = Number(value ?? 0);
-    if (kind === "B") b = Number(value ?? 0);
-
-    const hex = rgbToHex(r, g, b);
-
-    ui.setColorModalRgb?.({ r, g, b });
-    ui.setColorModalHex?.(hex);
-
-    applyColor(colorModalTarget, hex);
-  });
-
   // ===== Motyw =====
   const sendTheme = async (key) => {
     if (!devices || !key) return;
     await devices.sendDisplayCmd(`THEME ${key}`).catch(() => {});
   };
 
-  ui.on("theme.change", (key) => {
-    activeTheme = key;
-    ui.setActiveTheme?.(key);
-    sendTheme(key);
-  });
-
-  ui.on("advanced.change", () => {
-    if (!ui.getAdvancedForm || !store.setAdvanced) return;
-
-    const form = ui.getAdvancedForm();
-    const adv = {};
-
-    // mnożniki
-    if (form.roundMultipliersText != null) {
-      const parts = String(form.roundMultipliersText)
-        .split(/[,\s]+/)
-        .filter(Boolean);
-      if (parts.length) {
-        adv.roundMultipliers = parts.map((p) => {
-          const n = Number.parseInt(p, 10);
-          return Number.isFinite(n) && n > 0 ? n : 1;
-        });
-      }
-    }
-
-    // próg do finału
-    if (form.finalMinPointsText != null && form.finalMinPointsText !== "") {
-      const n = Number.parseInt(form.finalMinPointsText, 10);
-      if (Number.isFinite(n) && n >= 0) adv.finalMinPoints = n;
-    }
-
-    // cel finału
-    if (form.finalTargetText != null && form.finalTargetText !== "") {
-      const n = Number.parseInt(form.finalTargetText, 10);
-      if (Number.isFinite(n) && n >= 0) adv.finalTarget = n;
-    }
-
-    // mnożnik nagrody głównej
-    if (form.finalPrizeMultiplierText != null && form.finalPrizeMultiplierText !== "") {
-      const n = Number.parseInt(form.finalPrizeMultiplierText, 10);
-      if (Number.isFinite(n) && n >= 1) adv.finalPrizeMultiplier = n;
-    }
-
-    // kwota nagrody głównej
-    if (form.mainPrizeAmountText != null && form.mainPrizeAmountText !== "") {
-      const n = Number.parseInt(form.mainPrizeAmountText, 10);
-      if (Number.isFinite(n) && n >= 0) {
-        adv.mainPrizeAmount = Math.min(n, 99999); // max 5 cyfr
-      }
-    }
-
-    if (form.winMode === "logo" || form.winMode === "points" || form.winMode === "money") {
-      adv.endScreenMode = form.winMode;
-    }
-    // kompatybilność wstecz:
-    if (form.winMode === "money") adv.winEnabled = true;
-    if (form.winMode === "logo") adv.winEnabled = false;
-    if (form.winMode === "points") adv.winEnabled = true;
-
-    store.setAdvanced(adv);
-    ui.setMsg?.("msgAdvanced", APP_MSG.ADV_SAVED);
-  });
-
-  ui.on("advanced.reset", () => {
-    if (!store.resetAdvanced || !ui.setAdvancedForm) return;
-    store.resetAdvanced();
-    ui.setAdvancedForm(store.state.advanced);
-    ui.setMsg?.("msgAdvanced", APP_MSG.ADV_RESET);
-  });
-
-  ui.on("setup.next", () => store.setSetupStep("setup_look"));
-  ui.on("setup.back", () => store.setSetupStep("setup_names"));
-  ui.on("setup.look.next", () => store.setSetupStep("setup_game"));
-  ui.on("setup.look.back", () => store.setSetupStep("setup_names"));
-  ui.on("setup.game.next", () => goToNextSetupStep());
-  ui.on("setup.game.back", () => store.setSetupStep("setup_look"));
-  ui.on("setup.finish.back", () => store.setSetupStep("setup_game"));
+  ui.on("setup.finish.back", () => store.setActiveCard("devices"));
   ui.on("setup.finish", () => {
+    // zastosuj aktualne ustawienia wyświetlacza przed przejściem do gry
+    sendColorA(colors.A);
+    sendColorB(colors.B);
+    sendColorBg(colors.BACKGROUND);
+    sendColorDot(colors.DOT);
+    if (activeTheme) sendTheme(activeTheme);
     store.completeCard("setup");
     store.setActiveCard("rounds");
   });
@@ -1746,173 +1020,47 @@ async function sendZeroStatesToDevices() {
     ui.emit("setup.finish.back");
   });
   
-  // Przyciski w setup_game
-  document.getElementById("btnSetupGameNext")?.addEventListener("click", () => {
-    ui.emit("setup.game.next");
-  });
-  document.getElementById("btnSetupGameBack")?.addEventListener("click", () => {
-    ui.emit("setup.game.back");
-  });
-  
-  // Przyciski w setup_names
-  document.getElementById("btnSetupNext")?.addEventListener("click", () => {
-    ui.emit("setup.next");
-  });
-  document.getElementById("btnBackToDevices")?.addEventListener("click", () => {
-    ui.emit("setup.back");
-  });
+  // ===== SETUP_FINISH =====
 
-  // Przyciski w setup_look
-  document.getElementById("btnSetupLookNext")?.addEventListener("click", () => {
-    ui.emit("setup.look.next");
-  });
-  document.getElementById("btnSetupLookBack")?.addEventListener("click", () => {
-    ui.emit("setup.look.back");
-  });
-  
-  // Nasłuchiwanie zmian w setup_game
-  document.getElementById("finalYes")?.addEventListener("change", (e) => {
-    if (e.target.checked) {
-      store.setHasFinal(true);
-      updateGameSettingsVisibility();
+  async function enterSetupFinish() {
+    // Załaduj font i logo potrzebne do podglądu w streszczeniu
+    if (!_logoFont) {
+      try { _logoFont = await loadFont5x7(); } catch {}
     }
-  });
-  document.getElementById("finalNo")?.addEventListener("change", (e) => {
-    if (e.target.checked) {
-      store.setHasFinal(false);
-      updateGameSettingsVisibility();
+    if (!_defaultLogoPayload) {
+      try {
+        const r = await fetch(await cacheBust("/display/logo_familiada.json"), { cache: "force-cache" });
+        if (r.ok) _defaultLogoPayload = await r.json();
+      } catch {}
     }
-  });
-  document.getElementById("finalRandom")?.addEventListener("change", (e) => {
-    if (e.target.checked) {
-      store.setFinalQuestionsMode("random");
-    }
-  });
-  document.getElementById("finalPick")?.addEventListener("change", (e) => {
-    if (e.target.checked) {
-      store.setFinalQuestionsMode("pick");
-    }
-  });
-  document.getElementById("roundsRandom")?.addEventListener("change", (e) => {
-    if (e.target.checked) {
-      store.setRoundsQuestionsMode("random");
-    }
-  });
-  document.getElementById("roundsPick")?.addEventListener("change", (e) => {
-    if (e.target.checked) {
-      store.setRoundsQuestionsMode("pick");
-    }
-  });
-
-  // Nasłuchiwanie zmian w trybie zakończenia gry (pokazuj/ukrywaj pola kwoty)
-  document.getElementById("winModeLogo")?.addEventListener("change", updateGameSettingsVisibility);
-  document.getElementById("winModePoints")?.addEventListener("change", updateGameSettingsVisibility);
-  document.getElementById("winModeMoney")?.addEventListener("change", updateGameSettingsVisibility);
-  
-  // ===== Nawigacja w setup_game - decyzja o losowaniu =====
-  function goToNextSetupStep() {
-    saveGameSettings();
-
-    const hasFinal = store.state.hasFinal === true;
-    const finalMode = store.state.finalQuestionsMode;
-    const roundsMode = store.state.roundsQuestionsMode;
-
-    // Losuj finał w tle jeśli wybrano "random" i gramy finał (nie blokuj nawigacji)
-    if (hasFinal && finalMode === "random") {
-      pickRandomFinalQuestions().catch(console.error);
+    // Załaduj logo użytkownika (potrzebne do podglądu w streszczeniu)
+    if (_loadedLogos.length === 0 && store.state.display.logoId) {
+      try {
+        const { data } = await sb().from("user_logos").select("id,name,type,payload").order("updated_at", { ascending: false });
+        _loadedLogos = data || [];
+      } catch {}
     }
 
-    // Losuj rundy w tle jeśli wybrano "random" (nie blokuj nawigacji)
-    if (roundsMode === "random") {
-      pickRandomRoundsQuestions().catch(console.error);
-    }
-
-    // Decyzja: czy przechodzimy do wyboru ręcznego, czy od razu do finish?
-    const needsFinalPick = hasFinal && finalMode === "pick";
-    const needsRoundsPick = roundsMode === "pick";
-
-    // Nawigacja natychmiastowa (bez czekania na losowanie)
-    if (needsFinalPick) {
-      // Najpierw wybór finału
-      store.setSetupStep("setup_final");
-    } else if (needsRoundsPick) {
-      // Tylko wybór rund - przejdź do stepu wyboru kolejności
-      store.setSetupStep("setup_rounds");
-    } else {
-      // Wszystko wylosowane - przejdź do finish
-      store.setSetupStep("setup_finish");
+    // Inicjalizacja urządzeń: wyślij kolory, motyw, logo, nazwy drużyn
+    if (devices) {
+      const teamA = store.state.teams?.teamA || "";
+      const teamB = store.state.teams?.teamB || "";
+      const q = (s) => `"${String(s ?? "").replace(/"/g, "'")}"`;
+      await devices.sendDisplayCmd("APP GAME").catch(() => {});
+      await devices.sendBuzzerCmd("ON").catch(() => {});
+      await devices.sendHostCmd("COVER").catch(() => {});
+      sendColorA(colors.A);
+      sendColorB(colors.B);
+      sendColorBg(colors.BACKGROUND);
+      sendColorDot(colors.DOT);
+      if (activeTheme) sendTheme(activeTheme);
+      await devices.sendDisplayCmd(`LOGO RELOAD`).catch(() => {});
+      await devices.sendDisplayCmd(`LONG1 ${q(teamA)}`).catch(() => {});
+      await devices.sendDisplayCmd(`LONG2 ${q(teamB)}`).catch(() => {});
+      await devices.sendHostCmd(`SET1 ${q(teamA)}`).catch(() => {});
+      await devices.sendHostCmd(`SET2 ${q(teamB)}`).catch(() => {});
     }
   }
-  
-  // Powrót z setup_final/setup_rounds do setup_game
-  ui.on("setup.final.back", () => {
-    store.unconfirmFinalQuestions();
-    ui.setFinalConfirmed(false);
-    store.setSetupStep("setup_game");
-  });
-  ui.on("setup.rounds.back", () => store.setSetupStep("setup_game"));
-  ui.on("setup.rounds.next", () => {
-    // Zatwierź kolejność rund i przejdź do finish
-    store.setSetupStep("setup_finish");
-  });
-  ui.on("setup.final.next", () => {
-    store.confirmFinalQuestions(finalPickerGetSelectedIds());
-    ui.setFinalConfirmed(true);
-    ui.setMsg("msgFinalPick", APP_MSG.FINAL_CONFIRMED);
-    const roundsMode = store.state.roundsQuestionsMode;
-    if (roundsMode === "pick") store.setSetupStep("setup_rounds");
-    else store.setSetupStep("setup_finish");
-  });  
-  // Przycisk powrotu w setup_final
-  document.getElementById("btnSetupFinalBack")?.addEventListener("click", () => {
-    ui.emit("setup.final.back");
-  });
-  // Przycisk dalej w setup_final
-  document.getElementById("btnSetupFinish")?.addEventListener("click", () => {
-    ui.emit("setup.final.next");
-  });
-
-  // Przyciski w setup_rounds
-  document.getElementById("btnSetupRoundsBack")?.addEventListener("click", () => {
-    ui.emit("setup.rounds.back");
-  });
-  document.getElementById("btnSetupRoundsNext")?.addEventListener("click", () => {
-    ui.emit("setup.rounds.next");
-  });
-  
-  async function pickRandomFinalQuestions() {
-    // Losuje 5 pytań z puli i zatwierdza
-    // Use cached questions if available
-    let all = [];
-    const cached = sessionStorage.getItem("familiada:questionsCache");
-    if (cached) {
-      try { all = JSON.parse(cached); } catch {}
-    }
-    if (!all.length) {
-      all = await loadQuestions(store.state.gameId || "");
-    }
-    
-    if (!all || all.length < 5) {
-      ui.setMsg("msgSetupGame", t("control.tooFewFinalQuestions"));
-      return;
-    }
-
-    // Tasowanie Fisher-Yates
-    for (let i = all.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [all[i], all[j]] = [all[j], all[i]];
-    }
-
-    const picked = all.slice(0, 5).map(q => q.id);
-    store.confirmFinalQuestions(picked);
-  }
-  
-  async function pickRandomRoundsQuestions() {
-    // Losuje pytania rund z pozostałych (po odjęciu finałowych)
-    // Na razie tylko oznaczamy że losowane - właściwe losowanie w gameRounds.js
-  }
-  
-  // ===== SETUP_FINISH - renderowanie podsumowania =====
 
   function renderSetupFinishSummary() {
     const s = store.state;
@@ -1920,6 +1068,42 @@ async function sendZeroStatesToDevices() {
     // Drużyny
     const teamsEl = document.getElementById("summaryTeams");
     if (teamsEl) teamsEl.textContent = `${s.teams.teamA || "—"} vs ${s.teams.teamB || "—"}`;
+
+    // Wygląd
+    const colorDotsEl = document.getElementById("summaryColorDots");
+    if (colorDotsEl) {
+      const c = s.display.colors;
+      colorDotsEl.innerHTML = ["A", "B", "BACKGROUND", "DOT"].map(k =>
+        `<span class="summaryColorDot" title="${k}" style="background:${c[k]}"></span>`
+      ).join("");
+    }
+
+    const themeNameEl = document.getElementById("summaryThemeName");
+    if (themeNameEl) {
+      const th = themeList.find(th => th.key === s.display.theme);
+      themeNameEl.textContent = th?.label || s.display.theme || "—";
+    }
+
+    const logoTileEl = document.getElementById("summaryLogoTile");
+    if (logoTileEl) {
+      logoTileEl.innerHTML = "";
+      const logoId = s.display.logoId;
+      let logoObj = null;
+      if (logoId) {
+        const found = _loadedLogos.find(l => l.id === logoId);
+        if (found) logoObj = found;
+      }
+      const previewSrc = logoObj ?? (
+        _defaultLogoPayload ? { type: "GLYPH_30x10", payload: _defaultLogoPayload } : null
+      );
+      if (previewSrc && _logoFont) {
+        const canvas = buildLogoPreviewCanvas(previewSrc, _logoFont);
+        canvas.classList.add("summaryLogoCanvas");
+        logoTileEl.appendChild(canvas);
+      } else {
+        logoTileEl.textContent = logoObj?.name || (logoId ? "—" : t("control.lookLogoDefault"));
+      }
+    }
 
     // Finał
     const finalEl = document.getElementById("summaryFinal");
@@ -1964,181 +1148,6 @@ async function sendZeroStatesToDevices() {
     }
   }
   
-  // ===== SETUP_ROUNDS - renderowanie listy pytań z drag-and-drop =====
-  let roundsOrderAll = []; // wszystkie pytania (bez finałowych)
-  
-  async function renderSetupRoundsOrder() {
-    const container = document.getElementById("roundsOrderList");
-    if (!container) return;
-
-    const s = store.state;
-    const finalPickedIds = new Set(s.final?.picked || []);
-
-    // Use cached questions if available, otherwise load
-    let all = [];
-    const cached = sessionStorage.getItem("familiada:questionsCache");
-    if (cached) {
-      try { all = JSON.parse(cached); } catch {}
-    }
-    if (!all.length) {
-      all = await loadQuestions(s.gameId || "");
-    }
-
-    roundsOrderAll = (all || []).filter(q => !finalPickedIds.has(q.id));
-
-    // Jeśli już mamy zapisaną kolejność, użyj jej
-    if (s.roundsPicked?.length > 0) {
-      // Przywróć zapisaną kolejność
-      const ordered = s.roundsPicked;
-      renderRoundsOrderList(container, ordered);
-    } else {
-      // Domyślna kolejność (jak w puli)
-      renderRoundsOrderList(container, roundsOrderAll);
-    }
-  }
-  
-  function renderRoundsOrderList(container, questions) {
-    container.innerHTML = questions.map((q, i) => `
-      <div class="roundsOrderItem" draggable="true" data-id="${q.id}">
-        <div class="roundsOrderHandle">⋮⋮</div>
-        <div class="roundsOrderNum">${i + 1}</div>
-        <div class="roundsOrderText">${escapeHtml(q.text || "")}</div>
-        <div class="roundsOrderActions">
-          <button class="roundsOrderBtn" data-dir="up" title="W górę">↑</button>
-          <button class="roundsOrderBtn" data-dir="down" title="W dół">↓</button>
-        </div>
-      </div>
-    `).join("");
-    
-    // Obsługa przycisków góra/dół
-    container.querySelectorAll(".roundsOrderBtn").forEach(btn => {
-      btn.addEventListener("click", (e) => {
-        const item = e.target.closest(".roundsOrderItem");
-        const dir = btn.dataset.dir;
-        const id = item.dataset.id;
-        moveRoundsOrderItem(id, dir);
-      });
-    });
-    
-    // Drag and drop
-    setupRoundsDragAndDrop(container);
-  }
-  
-  function moveRoundsOrderItem(id, dir) {
-    const container = document.getElementById("roundsOrderList");
-    if (!container) return;
-    
-    const items = Array.from(container.querySelectorAll(".roundsOrderItem"));
-    const idx = items.findIndex(item => item.dataset.id === id);
-    if (idx < 0) return;
-    
-    const newIdx = dir === "up" ? idx - 1 : idx + 1;
-    if (newIdx < 0 || newIdx >= items.length) return;
-    
-    // Zamień miejscami
-    if (dir === "up") {
-      container.insertBefore(items[idx], items[newIdx]);
-    } else {
-      container.insertBefore(items[newIdx], items[idx]);
-    }
-    
-    // Aktualizuj numerację
-    updateRoundsOrderNumbers();
-  }
-  
-  function updateRoundsOrderNumbers() {
-    const container = document.getElementById("roundsOrderList");
-    if (!container) return;
-    
-    container.querySelectorAll(".roundsOrderItem").forEach((item, i) => {
-      const numEl = item.querySelector(".roundsOrderNum");
-      if (numEl) numEl.textContent = i + 1;
-    });
-  }
-  
-  function setupRoundsDragAndDrop(container) {
-    let draggedItem = null;
-    
-    container.querySelectorAll(".roundsOrderItem").forEach(item => {
-      item.addEventListener("dragstart", (e) => {
-        draggedItem = item;
-        item.classList.add("dragging");
-        e.dataTransfer.effectAllowed = "move";
-      });
-      
-      item.addEventListener("dragend", () => {
-        draggedItem = null;
-        item.classList.remove("dragging");
-        updateRoundsOrderNumbers();
-        saveRoundsOrder();
-      });
-      
-      item.addEventListener("dragover", (e) => {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = "move";
-        if (draggedItem && draggedItem !== item) {
-          const rect = item.getBoundingClientRect();
-          const midY = rect.top + rect.height / 2;
-          if (e.clientY < midY) {
-            container.insertBefore(draggedItem, item);
-          } else {
-            container.insertBefore(draggedItem, item.nextSibling);
-          }
-        }
-      });
-    });
-  }
-  
-  function saveRoundsOrder() {
-    const container = document.getElementById("roundsOrderList");
-    if (!container) return;
-    
-    const ordered = [];
-    container.querySelectorAll(".roundsOrderItem").forEach(item => {
-      const id = item.dataset.id;
-      const q = roundsOrderAll.find(x => x.id === id);
-      if (q) ordered.push(q);
-    });
-    
-    store.setRoundsPicked(ordered);
-  }
-  
-  ui.on("final.toggle", (hasFinal) => {
-    store.setHasFinal(hasFinal);
-    ui.setFinalHasFinal(hasFinal);   // <-- to chowa/pokazuje #finalPickerCard
-    finalPickerUpdateButtons();
-  });
-
-
-  ui.on("final.reload", async () => {
-    ui.setMsg("msgFinalPick", APP_MSG.FINAL_RELOAD_START);
-    try {
-      await finalPickerReload();
-      ui.setMsg("msgFinalPick", APP_MSG.FINAL_RELOAD_DONE);
-    } catch (e) {
-      ui.setMsg("msgFinalPick", e?.message || String(e));
-    }
-  });
-
-    // pierwszy load – żeby lista była gotowa po wejściu w krok 2/2
-  finalPickerReload().catch((e) => {
-    console.error(e);
-    ui.setMsg("msgFinalPick", e?.message || String(e));
-  });
-
-  ui.on("final.confirm", () => {
-    store.confirmFinalQuestions(finalPickerGetSelectedIds());
-    ui.setFinalConfirmed(true);
-    ui.setMsg("msgFinalPick", APP_MSG.FINAL_CONFIRMED);
-    finalPickerRender();
-  });
-
-  ui.on("final.edit", () => {
-    store.unconfirmFinalQuestions();
-    ui.setFinalConfirmed(false);
-    ui.setMsg("msgFinalPick", "");
-    finalPickerRender();
-  });
 
     // ROUNDS
   ui.on("game.startIntro", async () => {

@@ -26,7 +26,7 @@ export function createStore(gameId) {
   
       steps: {
         devices: "devices_display",
-        setup: "setup_names", // setup_names → setup_look → setup_game → setup_final/setup_rounds → setup_finish
+        setup: "setup_finish",
       },
   
       completed: {
@@ -118,6 +118,12 @@ export function createStore(gameId) {
       },
   
       advanced: { ...DEFAULT_ADVANCED },
+
+      display: {
+        colors: { A: "#c4002f", B: "#2a62ff", BACKGROUND: "#d21180", DOT: "#d7ff3d" },
+        theme: null,
+        logoId: null,
+      },
     };
   }
   
@@ -331,10 +337,8 @@ export function createStore(gameId) {
   // ---- obsługa typu wejścia na stronę (odświeżenie vs. nowa nawigacja) ----
 
   function hydrate() {
-    // Nie przywracamy progresu — nigdy.
-    try {
-      localStorage.removeItem(KEY);
-    } catch {}
+    // Stan gry nie jest przywracany między sesjami.
+    try { localStorage.removeItem(KEY); } catch {}
   }
 
   function setAdvanced(partial) {
@@ -384,6 +388,13 @@ export function createStore(gameId) {
     }
   
     state.advanced = next;
+    emit();
+  }
+
+  function setDisplay({ colors, theme, logoId } = {}) {
+    if (colors) state.display.colors = { ...state.display.colors, ...colors };
+    if (theme !== undefined) state.display.theme = theme;
+    if (logoId !== undefined) state.display.logoId = logoId;
     emit();
   }
 
@@ -448,5 +459,6 @@ export function createStore(gameId) {
     setAdvanced,
     resetAdvanced,
     resetProgress,
+    setDisplay,
   };
 }
