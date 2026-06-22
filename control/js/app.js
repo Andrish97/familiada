@@ -542,7 +542,6 @@ async function sendZeroStatesToDevices() {
   let wasInSetupLook = false;
   let wasInSetupGame = false;
   let wasInSetupFinish = false;
-  let prevDisplayOnline = false;
   let wasInSetupRounds = false;
 
   // Logo wybrane w setup_look (null = domyślne)
@@ -1251,9 +1250,6 @@ async function sendZeroStatesToDevices() {
     finalPickerUpdateButtons();
     syncPanelStepPills();
 
-    const displayJustCameOnline = !!state.flags?.displayOnline && !prevDisplayOnline;
-    prevDisplayOnline = !!state.flags?.displayOnline;
-
     // ===== detekcja wejścia/wyjścia z setup_names =====
     const inSetupNames =
       (state.activeCard === "setup" && state.steps?.setup === "setup_names");
@@ -1270,7 +1266,7 @@ async function sendZeroStatesToDevices() {
     const inSetupLook =
       (state.activeCard === "setup" && state.steps?.setup === "setup_look");
 
-    if (inSetupLook && (!wasInSetupLook || displayJustCameOnline)) {
+    if (inSetupLook && !wasInSetupLook) {
       enterSetupLook().catch(() => {});
     }
     if (!inSetupLook && wasInSetupLook) {
