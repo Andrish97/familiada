@@ -90,11 +90,21 @@
 
 .summaryColorDot {
   display: inline-block;
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   border: 1.5px solid rgba(255,255,255,.25);
   flex-shrink: 0;
+}
+.summaryColorDotItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-right: 10px;
+}
+.summaryColorDotLabel {
+  font-size: 12px;
+  opacity: .65;
 }
 
 .summaryLogoCanvas {

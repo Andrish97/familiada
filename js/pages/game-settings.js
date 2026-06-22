@@ -127,14 +127,16 @@ function clearDirty() {
 async function saveAll() {
   if (btnSaveAll) btnSaveAll.disabled = true;
   try {
+    const payload = JSON.parse(JSON.stringify(localSettings));
     const { error } = await sb()
       .from("games")
-      .update({ settings: localSettings })
+      .update({ settings: payload })
       .eq("id", gameId);
     if (error) throw error;
     clearDirty();
   } catch (e) {
-    alert("Błąd zapisu: " + (e?.message || String(e)));
+    console.error("[game-settings] saveAll error:", e);
+    alert("Błąd zapisu: " + (e?.message || e?.code || String(e)));
   } finally {
     if (btnSaveAll) btnSaveAll.disabled = false;
   }
@@ -188,7 +190,7 @@ const COLOR_LABELS = {
   A: "Kolor drużyny A",
   B: "Kolor drużyny B",
   BACKGROUND: "Tło",
-  DOT: "Akcent (DOT)",
+  DOT: "Kolor kropek",
 };
 
 function openColorModal(key) {
@@ -317,8 +319,9 @@ function renderDisplay() {
     </div>
   `).join("");
 
+  const effectiveTheme = localSettings.display.theme || (themeList[0]?.key ?? "");
   const themeOptions = themeList.map(th =>
-    `<option value="${escAttr(th.key)}" ${localSettings.display.theme === th.key ? "selected" : ""}>${escText(th.label)}</option>`
+    `<option value="${escAttr(th.key)}" ${effectiveTheme === th.key ? "selected" : ""}>${escText(th.label)}</option>`
   ).join("");
 
   content.innerHTML = `
@@ -330,13 +333,12 @@ function renderDisplay() {
     <div class="gs-section">
       <div class="gs-label">Motyw wyświetlacza</div>
       <select class="inp" id="gsThemeSelect" style="margin-top:8px">
-        <option value="">— domyślny —</option>
         ${themeOptions}
       </select>
     </div>
     <div class="gs-section">
       <div class="gs-label">Logo</div>
-      <div id="gsLogoGrid" style="margin-top:10px;display:flex;flex-wrap:wrap;gap:8px"></div>
+      <div id="gsLogoGrid" class="gs-logo-grid"></div>
     </div>
   `;
 
@@ -346,7 +348,6 @@ function renderDisplay() {
 
   const themeSelect = document.getElementById("gsThemeSelect");
   if (themeSelect) {
-    themeSelect.value = localSettings.display.theme || "";
     themeSelect.addEventListener("change", e => {
       localSettings.display.theme = e.target.value || null;
       markDirty();
@@ -397,13 +398,13 @@ async function renderLogoGrid() {
     grid.appendChild(makeLogoTile(logo.id, selectedId));
   }
 
-  grid.querySelectorAll(".logoTile").forEach(tile => {
+  grid.querySelectorAll(".gs-logo-tile").forEach(tile => {
     tile.addEventListener("click", () => {
       const rawId = tile.dataset.logoId;
       const id = rawId === "default" ? null : rawId;
       localSettings.display.logoId = id;
       markDirty();
-      grid.querySelectorAll(".logoTile").forEach(t => t.classList.remove("selected"));
+      grid.querySelectorAll(".gs-logo-tile").forEach(t => t.classList.remove("selected"));
       tile.classList.add("selected");
     });
   });
@@ -418,19 +419,17 @@ function makeLogoTile(id, selectedId) {
   const sel = (id === null && selectedId === null) || (id !== null && id === selectedId);
 
   const el = document.createElement("div");
-  el.className = "logoTile" + (sel ? " selected" : "");
+  el.className = "gs-logo-tile" + (sel ? " selected" : "");
   el.dataset.logoId = String(key);
-  el.style.cursor = "pointer";
 
   const prev = document.createElement("div");
-  prev.className = "logoTilePrev";
-  const canvas = buildLogoPreviewCanvas(logoObj, _logoFont);
-  canvas.style.cursor = "pointer";
+  prev.className = "gs-logo-prev";
+  const canvas = buildLogoPreviewCanvas(logoObj, _logoFont, 180, 84);
   prev.appendChild(canvas);
   el.appendChild(prev);
 
   const label = document.createElement("div");
-  label.className = "logoTileName";
+  label.className = "gs-logo-name";
   label.textContent = name;
   el.appendChild(label);
 
@@ -543,7 +542,7 @@ function renderFinale() {
   content.innerHTML = `
     <div class="gs-cat-title">Pytania — Finał</div>
     <div class="gs-section">
-      <div class="gs-hint" style="margin-bottom:12px">Wybierz 5 pytań do finału. Kliknij pytanie, aby przenieść.</div>
+      <div class="gs-hint" style="margin-bottom:12px">Wybierz 5 pytań do finału. Kliknij pytanie z puli, aby dodać. Przeciągnij aby zmienić kolejność.</div>
       <div class="gs-picker-card">
         <div class="gs-picker-lists">
           <div class="gs-picker-col">
@@ -562,7 +561,8 @@ function renderFinale() {
             <div class="gs-qrow-list" id="gsGsFinalePicked">
               ${picked.length === 0
                 ? '<div class="gs-picker-empty">Kliknij pytanie, aby dodać (max 5)</div>'
-                : picked.map((q, i) => `<div class="gs-qrow" data-qid="${escAttr(q.id)}" data-ord="${q.ord}">
+                : picked.map((q, i) => `<div class="gs-qrow gs-draggable" draggable="true" data-qid="${escAttr(q.id)}" data-ord="${q.ord}">
+                    <span class="gs-drag-handle">⠿</span>
                     <span class="meta">${i + 1}.</span>
                     <span class="txt">${escText(q.text)}</span>
                     <button class="gs-q-item-remove" type="button" title="Usuń">✕</button>
@@ -586,23 +586,21 @@ function renderFinale() {
     renderFinale();
   });
 
-  document.getElementById("gsGsFinalePicked")?.addEventListener("click", e => {
-    const removeBtn = e.target.closest(".gs-q-item-remove");
-    if (removeBtn) {
-      const id = removeBtn.closest(".gs-qrow")?.dataset.qid;
-      if (!id) return;
-      localSettings.questions.final = localSettings.questions.final.filter(p => p.id !== id);
-      markDirty();
-      renderFinale();
-      return;
-    }
-    const row = e.target.closest(".gs-qrow");
-    if (!row) return;
-    const id = row.dataset.qid;
-    localSettings.questions.final = localSettings.questions.final.filter(p => p.id !== id);
-    markDirty();
-    renderFinale();
-  });
+  const pickedList = document.getElementById("gsGsFinalePicked");
+  if (pickedList) {
+    pickedList.addEventListener("click", e => {
+      const removeBtn = e.target.closest(".gs-q-item-remove");
+      if (removeBtn) {
+        const id = removeBtn.closest(".gs-qrow")?.dataset.qid;
+        if (!id) return;
+        localSettings.questions.final = localSettings.questions.final.filter(p => p.id !== id);
+        markDirty();
+        renderFinale();
+        return;
+      }
+    });
+    initDragSort(pickedList, () => localSettings.questions.final, v => { localSettings.questions.final = v; }, renderFinale);
+  }
 }
 
 // --- PYTANIA — RUNDY ---
@@ -614,7 +612,7 @@ function renderRounds() {
   content.innerHTML = `
     <div class="gs-cat-title">Pytania — Rundy</div>
     <div class="gs-section">
-      <div class="gs-hint" style="margin-bottom:12px">Ustaw kolejność pytań rund. Kliknij pytanie, aby przenieść.</div>
+      <div class="gs-hint" style="margin-bottom:12px">Ustaw kolejność pytań rund. Kliknij pytanie z puli, aby dodać. Przeciągnij aby zmienić kolejność.</div>
       <div class="gs-picker-card">
         <div class="gs-picker-lists">
           <div class="gs-picker-col">
@@ -633,7 +631,8 @@ function renderRounds() {
             <div class="gs-qrow-list" id="gsRoundsPicked">
               ${picked.length === 0
                 ? '<div class="gs-picker-empty">Kliknij pytanie po lewej, aby dodać</div>'
-                : picked.map((q, i) => `<div class="gs-qrow" data-qid="${escAttr(q.id)}" data-ord="${q.ord}">
+                : picked.map((q, i) => `<div class="gs-qrow gs-draggable" draggable="true" data-qid="${escAttr(q.id)}" data-ord="${q.ord}">
+                    <span class="gs-drag-handle">⠿</span>
                     <span class="meta">${i + 1}.</span>
                     <span class="txt">${escText(q.text)}</span>
                     <button class="gs-q-item-remove" type="button" title="Usuń">✕</button>
@@ -656,22 +655,70 @@ function renderRounds() {
     renderRounds();
   });
 
-  document.getElementById("gsRoundsPicked")?.addEventListener("click", e => {
-    const removeBtn = e.target.closest(".gs-q-item-remove");
-    if (removeBtn) {
-      const id = removeBtn.closest(".gs-qrow")?.dataset.qid;
-      if (!id) return;
-      localSettings.questions.rounds = localSettings.questions.rounds.filter(p => p.id !== id);
+  const pickedList = document.getElementById("gsRoundsPicked");
+  if (pickedList) {
+    pickedList.addEventListener("click", e => {
+      const removeBtn = e.target.closest(".gs-q-item-remove");
+      if (removeBtn) {
+        const id = removeBtn.closest(".gs-qrow")?.dataset.qid;
+        if (!id) return;
+        localSettings.questions.rounds = localSettings.questions.rounds.filter(p => p.id !== id);
+        markDirty();
+        renderRounds();
+        return;
+      }
+    });
+    initDragSort(pickedList, () => localSettings.questions.rounds, v => { localSettings.questions.rounds = v; }, renderRounds);
+  }
+}
+
+// --- DRAG-AND-DROP SORT ---
+function initDragSort(listEl, getItems, setItems, reRender) {
+  let dragged = null;
+
+  listEl.querySelectorAll(".gs-draggable").forEach(row => {
+    row.addEventListener("dragstart", e => {
+      dragged = row;
+      row.classList.add("gs-row-dragging");
+      e.dataTransfer.effectAllowed = "move";
+    });
+    row.addEventListener("dragend", () => {
+      if (dragged) dragged.classList.remove("gs-row-dragging");
+      listEl.querySelectorAll(".gs-row-drag-over-top, .gs-row-drag-over-bot").forEach(el => {
+        el.classList.remove("gs-row-drag-over-top", "gs-row-drag-over-bot");
+      });
+      // persist DOM order to state
+      const newOrder = [...listEl.querySelectorAll(".gs-draggable")].map(el => {
+        return getItems().find(q => q.id === el.dataset.qid);
+      }).filter(Boolean);
+      setItems(newOrder);
       markDirty();
-      renderRounds();
-      return;
-    }
-    const row = e.target.closest(".gs-qrow");
-    if (!row) return;
-    const id = row.dataset.qid;
-    localSettings.questions.rounds = localSettings.questions.rounds.filter(p => p.id !== id);
-    markDirty();
-    renderRounds();
+      dragged = null;
+      reRender();
+    });
+    row.addEventListener("dragover", e => {
+      e.preventDefault();
+      if (!dragged || dragged === row) return;
+      const rect = row.getBoundingClientRect();
+      const half = rect.top + rect.height / 2;
+      row.classList.toggle("gs-row-drag-over-top", e.clientY < half);
+      row.classList.toggle("gs-row-drag-over-bot", e.clientY >= half);
+    });
+    row.addEventListener("dragleave", () => {
+      row.classList.remove("gs-row-drag-over-top", "gs-row-drag-over-bot");
+    });
+    row.addEventListener("drop", e => {
+      e.preventDefault();
+      if (!dragged || dragged === row) return;
+      const rect = row.getBoundingClientRect();
+      const half = rect.top + rect.height / 2;
+      if (e.clientY < half) {
+        listEl.insertBefore(dragged, row);
+      } else {
+        listEl.insertBefore(dragged, row.nextSibling);
+      }
+      row.classList.remove("gs-row-drag-over-top", "gs-row-drag-over-bot");
+    });
   });
 }
 
@@ -836,7 +883,7 @@ async function main() {
   // Back button
   btnBack?.addEventListener("click", () => {
     if (isDirty && !confirm("Masz niezapisane zmiany. Czy na pewno chcesz wyjść?")) return;
-    history.back();
+    location.href = "/my-games";
   });
 
   initColorModal();

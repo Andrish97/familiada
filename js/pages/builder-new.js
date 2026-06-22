@@ -1152,7 +1152,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Przycisk "Podłącz urządzenie":
   // - desktop/TV: zawsze widoczny
   // - mobile/tablet: tylko w webapp (standalone)
-  const showConnectDevice = !guestMode && (!isMobileDevice() || isStandalone());
+  const showConnectDevice = !guestMode;
   if (showConnectDevice) {
     // Usuń data-nav-hidden żeby overflow nav wiedział że ten przycisk jest aktywny
     if (btnConnectDevice) {
