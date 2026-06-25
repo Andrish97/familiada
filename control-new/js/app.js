@@ -1063,8 +1063,6 @@ async function sendZeroStatesToDevices() {
       await devices.sendDisplayCmd(`LONG2 ${q(teamB)}`).catch(() => {});
       await devices.sendHostCmd(`SET1 ${q(teamA)}`).catch(() => {});
       await devices.sendHostCmd(`SET2 ${q(teamB)}`).catch(() => {});
-      // Wyślij APP GAME na końcu — nadpisuje APP BLACK z presence.js (race condition w oknie init)
-      await devices.sendDisplayCmd("APP GAME").catch(() => {});
     }
   }
 
