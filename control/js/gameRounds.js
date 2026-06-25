@@ -502,7 +502,14 @@ function hostUpdate() {
 
     ui.setEnabled("btnStartShowIntro", false);
 
-    await display.stateIntroLogo(teamA, teamB);
+    try {
+      await display.stateIntroLogo(teamA, teamB);
+    } catch (e) {
+      console.warn("[intro] stateIntroLogo failed:", e);
+      r._introPlayed = false;
+      ui.setEnabled("btnStartShowIntro", true);
+      return;
+    }
     ui.setMsg("msgRoundsIntro", ROUNDS_MSG.INTRO_RUNNING);
 
     if (!introMixer) {
