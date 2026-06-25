@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict aEABVORJu2YtNaAiJmY8sR9kVkWUZT7cwneyLY38tMu2FPMVy1XOY17tP7Gi2ZD
+\restrict FyE8C8lxMlkqcbK9w8DhVgNLtc0qYhJlOlwd0rMKNP4HhG2P5aPOOnzoHY6SvgI
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -2687,20 +2687,26 @@ BEGIN
   SELECT COUNT(*) INTO bases_new_7d    FROM public.question_bases WHERE is_demo = false AND created_at >= now() - interval '7 days' AND NOT (owner_id = ANY(excluded_ids));
   SELECT COUNT(*) INTO bases_new_30d   FROM public.question_bases WHERE is_demo = false AND created_at >= now() - interval '30 days' AND NOT (owner_id = ANY(excluded_ids));
 
-  -- Logos
-  SELECT COUNT(*) INTO logos_total     FROM public.user_logos WHERE NOT (owner_id = ANY(excluded_ids));
-  SELECT COUNT(*) INTO logos_new_today FROM public.user_logos WHERE created_at >= CURRENT_DATE AND NOT (owner_id = ANY(excluded_ids));
-  SELECT COUNT(*) INTO logos_new_7d    FROM public.user_logos WHERE created_at >= now() - interval '7 days' AND NOT (owner_id = ANY(excluded_ids));
-  SELECT COUNT(*) INTO logos_new_30d   FROM public.user_logos WHERE created_at >= now() - interval '30 days' AND NOT (owner_id = ANY(excluded_ids));
+  -- User logos (user_id, is_demo)
+  SELECT COUNT(*) INTO logos_total     FROM public.user_logos WHERE is_demo = false AND NOT (user_id = ANY(excluded_ids));
+  SELECT COUNT(*) INTO logos_new_today FROM public.user_logos WHERE is_demo = false AND created_at >= CURRENT_DATE AND NOT (user_id = ANY(excluded_ids));
+  SELECT COUNT(*) INTO logos_new_7d    FROM public.user_logos WHERE is_demo = false AND created_at >= now() - interval '7 days' AND NOT (user_id = ANY(excluded_ids));
+  SELECT COUNT(*) INTO logos_new_30d   FROM public.user_logos WHERE is_demo = false AND created_at >= now() - interval '30 days' AND NOT (user_id = ANY(excluded_ids));
 
-  -- Mail errors
-  SELECT COUNT(*) INTO mail_errors_24h FROM public.mail_error_log WHERE created_at >= now() - interval '24 hours';
+  -- Mail errors (mail_queue)
+  BEGIN
+    SELECT COUNT(*) INTO mail_errors_24h FROM public.mail_queue
+      WHERE status = 'failed' AND updated_at >= now() - interval '24 hours';
+  EXCEPTION WHEN OTHERS THEN
+    mail_errors_24h := 0;
+  END;
 
-  -- Ratings
-  SELECT COUNT(*), COALESCE(AVG(rating), 0) INTO total_ratings, avg_rating FROM public.market_game_ratings;
-  SELECT COUNT(*) INTO ratings_new_today FROM public.market_game_ratings WHERE created_at >= CURRENT_DATE;
-  SELECT COUNT(*) INTO ratings_new_7d    FROM public.market_game_ratings WHERE created_at >= now() - interval '7 days';
-  SELECT COUNT(*) INTO ratings_new_30d   FROM public.market_game_ratings WHERE created_at >= now() - interval '30 days';
+  -- Ratings (app_ratings, stars)
+  SELECT COUNT(*) INTO total_ratings FROM public.app_ratings;
+  SELECT COALESCE(ROUND(AVG(stars), 1), 0) INTO avg_rating FROM public.app_ratings;
+  SELECT COUNT(*) INTO ratings_new_today FROM public.app_ratings WHERE created_at >= CURRENT_DATE;
+  SELECT COUNT(*) INTO ratings_new_7d    FROM public.app_ratings WHERE created_at >= now() - interval '7 days';
+  SELECT COUNT(*) INTO ratings_new_30d   FROM public.app_ratings WHERE created_at >= now() - interval '30 days';
 
   result := jsonb_build_object(
     'timestamp', now(),
@@ -2749,7 +2755,7 @@ BEGIN
     ),
     'ratings', jsonb_build_object(
       'total', total_ratings,
-      'average', ROUND(avg_rating, 2),
+      'average', avg_rating,
       'new_today', ratings_new_today,
       'new_7d', ratings_new_7d,
       'new_30d', ratings_new_30d
@@ -14066,5 +14072,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict aEABVORJu2YtNaAiJmY8sR9kVkWUZT7cwneyLY38tMu2FPMVy1XOY17tP7Gi2ZD
+\unrestrict FyE8C8lxMlkqcbK9w8DhVgNLtc0qYhJlOlwd0rMKNP4HhG2P5aPOOnzoHY6SvgI
 
