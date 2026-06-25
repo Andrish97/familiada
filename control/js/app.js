@@ -562,17 +562,9 @@ async function sendZeroStatesToDevices() {
 
   async function enterSetupLook() {
     if (!devices) return;
-    // uruchom urządzenia przy wejściu w ten krok
-    await devices.sendDisplayCmd("APP GAME").catch(() => {});
-    await devices.sendBuzzerCmd("ON").catch(() => {});
-    await devices.sendHostCmd("COVER").catch(() => {});
-    // pokaż aktualne kolory na wyświetlaczu
-    sendColorA(colors.A);
-    sendColorB(colors.B);
-    sendColorBg(colors.BACKGROUND);
-    sendColorDot(colors.DOT);
 
-    // ustaw nazwy drużyn przy swatchach
+    // Najpierw UI (bez urządzeń) i zapytania DB — opóźnienie pozwala
+    // presence.js zakończyć sekwencję APP BLACK zanim wyślemy komendy do displaya.
     const teamA = store.state.teams?.teamA || t("control.teamALabel");
     const teamB = store.state.teams?.teamB || t("control.teamBLabel");
     const elA = document.getElementById("lookTeamAName");
@@ -580,18 +572,6 @@ async function sendZeroStatesToDevices() {
     if (elA) elA.textContent = teamA;
     if (elB) elB.textContent = teamB;
 
-    // podgląd na urządzeniach: logo + przykładowe wyniki + nazwy drużyn
-    const q = (s) => `"${String(s ?? "").replace(/"/g, "'")}"`;
-    devices.sendDisplayCmd(`LOGO RELOAD`).catch(() => {});
-    devices.sendDisplayCmd(`LEFT 123`).catch(() => {});
-    devices.sendDisplayCmd(`RIGHT 123`).catch(() => {});
-    devices.sendDisplayCmd(`TOP 1`).catch(() => {});
-    devices.sendDisplayCmd(`LONG1 ${q(teamA)}`).catch(() => {});
-    devices.sendDisplayCmd(`LONG2 ${q(teamB)}`).catch(() => {});
-    devices.sendHostCmd(`SET1 ${q(teamA)}`).catch(() => {});
-    devices.sendHostCmd(`SET2 ${q(teamB)}`).catch(() => {});
-
-    // załaduj czcionkę i domyślne logo (raz) i wyrenderuj grid
     if (!_logoFont) {
       try { _logoFont = await loadFont5x7(); } catch (e) { console.warn("[logo] font load failed", e); }
     }
@@ -602,9 +582,24 @@ async function sendZeroStatesToDevices() {
       } catch (e) { console.warn("[logo] default logo load failed", e); }
     }
     await renderLogoGrid();
-    // Wyślij APP GAME po wszystkich komendach inicjalizacji — gwarantuje że
-    // nadpisze APP BLACK wysłany przez presence.js w oknie init (race condition)
+
+    // Teraz komendy do urządzeń: APP GAME jako pierwsza, potem komendy sceny.
+    const q = (s) => `"${String(s ?? "").replace(/"/g, "'")}"`;
     await devices.sendDisplayCmd("APP GAME").catch(() => {});
+    await devices.sendBuzzerCmd("ON").catch(() => {});
+    await devices.sendHostCmd("COVER").catch(() => {});
+    sendColorA(colors.A);
+    sendColorB(colors.B);
+    sendColorBg(colors.BACKGROUND);
+    sendColorDot(colors.DOT);
+    devices.sendDisplayCmd(`LOGO RELOAD`).catch(() => {});
+    devices.sendDisplayCmd(`LEFT 123`).catch(() => {});
+    devices.sendDisplayCmd(`RIGHT 123`).catch(() => {});
+    devices.sendDisplayCmd(`TOP 1`).catch(() => {});
+    devices.sendDisplayCmd(`LONG1 ${q(teamA)}`).catch(() => {});
+    devices.sendDisplayCmd(`LONG2 ${q(teamB)}`).catch(() => {});
+    devices.sendHostCmd(`SET1 ${q(teamA)}`).catch(() => {});
+    devices.sendHostCmd(`SET2 ${q(teamB)}`).catch(() => {});
   }
 
   async function renderLogoGrid() {
