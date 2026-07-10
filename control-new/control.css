@@ -74,18 +74,16 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 15px;
+  font-weight: 800;
   color: #fff;
 }
 
 .summaryDisplayLabel {
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: .06em;
-  opacity: .5;
-  min-width: 44px;
+  font-size: 15px;
+  font-weight: 800;
+  color: #fff;
+  min-width: 52px;
 }
 
 .summaryColorDot {
