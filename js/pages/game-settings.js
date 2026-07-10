@@ -1,5 +1,6 @@
 // js/pages/game-settings.js
 import { requireAuth } from "../core/auth.js?v=v2026-07-10T21205";
+import { t } from "../../translation/translation.js?v=v2026-07-10T21205";
 import { setTopbarAccount } from "../core/topbar-controller.js?v=v2026-07-10T21205";
 import { sb } from "../core/supabase.js?v=v2026-07-10T21205";
 import { loadQuestions } from "../core/game-validate.js?v=v2026-07-10T21205";
@@ -540,42 +541,44 @@ function renderFinale() {
   const pool = allQuestions.filter(q => !pickedIds.has(q.id));
 
   content.innerHTML = `
-    <div class="gs-cat-title">Pytania — Finał</div>
+    <div class="gs-cat-title">${t("gameSettings.categories.finale")}</div>
     <div class="gs-section">
-      <div class="gs-hint" style="margin-bottom:12px">Wybierz 5 pytań do finału. Kliknij pytanie z puli, aby dodać. Przeciągnij aby zmienić kolejność.</div>
-      <div class="gs-picker-card">
-        <div class="gs-picker-lists">
-          <div class="gs-picker-col">
-            <div class="gs-picker-col-title">Pula pytań (${pool.length})</div>
-            <div class="gs-qrow-list" id="gsFinalePool">
-              ${pool.length === 0
-                ? '<div class="gs-picker-empty">Brak dostępnych pytań</div>'
-                : pool.map(q => `<div class="gs-qrow" data-qid="${escAttr(q.id)}" data-ord="${q.ord}">
-                    <span class="meta">#${q.ord}</span>
-                    <span class="txt">${escText(q.text)}</span>
-                  </div>`).join("")}
-            </div>
+      <div class="gs-badge-row">
+        <span class="badge">${t("control.finalBadge")} <b>${picked.length}</b>/5</span>
+      </div>
+      <div class="finalLists">
+        <div class="finalCol">
+          <div class="mini"><div class="hint">${t("control.finalPoolHint")}</div></div>
+          <div class="qList" id="gsFinalePool">
+            ${pool.length === 0
+              ? `<div class="gs-picker-empty">${t("control.finalPoolEmpty") || "Brak dostępnych pytań"}</div>`
+              : pool.map(q => `<div class="qRow" data-qid="${escAttr(q.id)}" draggable="true">
+                  <div class="meta">#${q.ord}</div>
+                  <div class="txt">${escText(q.text)}</div>
+                </div>`).join("")}
           </div>
-          <div class="gs-picker-col">
-            <div class="gs-picker-col-title">Finał (${picked.length}/5)</div>
-            <div class="gs-qrow-list" id="gsGsFinalePicked">
-              ${picked.length === 0
-                ? '<div class="gs-picker-empty">Kliknij pytanie, aby dodać (max 5)</div>'
-                : picked.map((q, i) => `<div class="gs-qrow gs-draggable" draggable="true" data-qid="${escAttr(q.id)}" data-ord="${q.ord}">
-                    <span class="gs-drag-handle">⠿</span>
-                    <span class="meta">${i + 1}.</span>
-                    <span class="txt">${escText(q.text)}</span>
-                    <button class="gs-q-item-remove" type="button" title="Usuń">✕</button>
-                  </div>`).join("")}
-            </div>
+        </div>
+        <div class="finalCol">
+          <div class="mini"><div class="hint">${t("control.finalListHint")}</div></div>
+          <div class="qList" id="gsGsFinalePicked">
+            ${picked.length === 0
+              ? `<div class="gs-picker-empty">${t("control.finalPickEmpty") || "Kliknij pytanie, aby dodać (max 5)"}</div>`
+              : picked.map(q => `<div class="qRow gs-draggable" draggable="true" data-qid="${escAttr(q.id)}">
+                  <div class="meta">#${q.ord}</div>
+                  <div class="txt">${escText(q.text)}</div>
+                </div>`).join("")}
           </div>
         </div>
       </div>
     </div>
   `;
 
-  document.getElementById("gsFinalePool")?.addEventListener("click", e => {
-    const row = e.target.closest(".gs-qrow");
+  const poolEl = document.getElementById("gsFinalePool");
+  const pickedEl = document.getElementById("gsGsFinalePicked");
+
+  // Klik w puli → dodaj do finału
+  poolEl?.addEventListener("click", e => {
+    const row = e.target.closest(".qRow");
     if (!row) return;
     if (localSettings.questions.final.length >= 5) return;
     const id = row.dataset.qid;
@@ -586,93 +589,185 @@ function renderFinale() {
     renderFinale();
   });
 
-  const pickedList = document.getElementById("gsGsFinalePicked");
-  if (pickedList) {
-    pickedList.addEventListener("click", e => {
-      const removeBtn = e.target.closest(".gs-q-item-remove");
-      if (removeBtn) {
-        const id = removeBtn.closest(".gs-qrow")?.dataset.qid;
-        if (!id) return;
-        localSettings.questions.final = localSettings.questions.final.filter(p => p.id !== id);
-        markDirty();
-        renderFinale();
-        return;
-      }
-    });
-    initDragSort(pickedList, () => localSettings.questions.final, v => { localSettings.questions.final = v; }, renderFinale);
+  // Klik w finałowej → usuń
+  pickedEl?.addEventListener("click", e => {
+    const row = e.target.closest(".qRow");
+    if (!row) return;
+    const id = row.dataset.qid;
+    if (!id) return;
+    localSettings.questions.final = localSettings.questions.final.filter(p => p.id !== id);
+    markDirty();
+    renderFinale();
+  });
+
+  // Drag: przenoszenie między kolumnami
+  setupFinaleColumnDnd(poolEl, pickedEl);
+
+  // Drag: sortowanie wewnątrz finałowej listy
+  if (pickedEl) {
+    initDragSort(pickedEl, () => localSettings.questions.final, v => { localSettings.questions.final = v; }, renderFinale);
   }
+}
+
+function setupFinaleColumnDnd(poolEl, pickedEl) {
+  if (!poolEl || !pickedEl) return;
+  let dragId = null;
+  let dragSide = null; // "pool" | "picked"
+
+  function onDragStart(side, e) {
+    const row = e.target.closest(".qRow");
+    if (!row) return;
+    dragId = row.dataset.qid;
+    dragSide = side;
+    e.dataTransfer.effectAllowed = "move";
+  }
+
+  function onDragOver(targetSide, e) {
+    if (!dragId) return;
+    if (dragSide === targetSide) return; // nie przenosimy w obrębie tej samej kolumny tu (initDragSort to obsługuje)
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    (targetSide === "pool" ? poolEl : pickedEl).classList.add("droptarget");
+  }
+
+  function onDragLeave(targetSide) {
+    (targetSide === "pool" ? poolEl : pickedEl).classList.remove("droptarget");
+  }
+
+  function onDrop(targetSide, e) {
+    e.preventDefault();
+    poolEl.classList.remove("droptarget");
+    pickedEl.classList.remove("droptarget");
+    if (!dragId || dragSide === targetSide) return;
+    if (targetSide === "picked") {
+      if (localSettings.questions.final.length >= 5) return;
+      const q = allQuestions.find(q => q.id === dragId);
+      if (!q || localSettings.questions.final.some(p => p.id === dragId)) return;
+      localSettings.questions.final = [...localSettings.questions.final, q];
+    } else {
+      localSettings.questions.final = localSettings.questions.final.filter(p => p.id !== dragId);
+    }
+    dragId = null; dragSide = null;
+    markDirty();
+    renderFinale();
+  }
+
+  poolEl.addEventListener("dragstart", e => onDragStart("pool", e));
+  pickedEl.addEventListener("dragstart", e => onDragStart("picked", e));
+  poolEl.addEventListener("dragover", e => onDragOver("pool", e));
+  pickedEl.addEventListener("dragover", e => onDragOver("picked", e));
+  poolEl.addEventListener("dragleave", () => onDragLeave("pool"));
+  pickedEl.addEventListener("dragleave", () => onDragLeave("picked"));
+  poolEl.addEventListener("drop", e => onDrop("pool", e));
+  pickedEl.addEventListener("drop", e => onDrop("picked", e));
 }
 
 // --- PYTANIA — RUNDY ---
 function renderRounds() {
-  const picked = localSettings.questions.rounds;
-  const pickedIds = new Set(picked.map(q => q.id));
-  const pool = allQuestions.filter(q => !pickedIds.has(q.id));
+  // Zbuduj pełną listę: najpierw zapisana kolejność, potem brakujące pytania
+  const pickedIds = new Set(localSettings.questions.rounds.map(q => q.id));
+  const missing = allQuestions.filter(q => !pickedIds.has(q.id));
+  if (missing.length > 0) {
+    // Uzupełnij bez markDirty — to inicjalizacja domyślna
+    localSettings.questions.rounds = [...localSettings.questions.rounds, ...missing];
+  }
+
+  const questions = localSettings.questions.rounds;
 
   content.innerHTML = `
-    <div class="gs-cat-title">Pytania — Rundy</div>
+    <div class="gs-cat-title">${t("gameSettings.categories.rounds")}</div>
     <div class="gs-section">
-      <div class="gs-hint" style="margin-bottom:12px">Ustaw kolejność pytań rund. Kliknij pytanie z puli, aby dodać. Przeciągnij aby zmienić kolejność.</div>
-      <div class="gs-picker-card">
-        <div class="gs-picker-lists">
-          <div class="gs-picker-col">
-            <div class="gs-picker-col-title">Dostępne pytania (${pool.length})</div>
-            <div class="gs-qrow-list" id="gsRoundsPool">
-              ${pool.length === 0
-                ? '<div class="gs-picker-empty">Wszystkie pytania są w kolejności</div>'
-                : pool.map(q => `<div class="gs-qrow" data-qid="${escAttr(q.id)}" data-ord="${q.ord}">
-                    <span class="meta">#${q.ord}</span>
-                    <span class="txt">${escText(q.text)}</span>
-                  </div>`).join("")}
+      <div class="gs-hint" style="margin-bottom:12px">${t("control.roundsPickHint") || "Ustaw kolejność pytań dla rund. Przeciągnij lub użyj strzałek."}</div>
+      <div class="roundsOrderList" id="gsRoundsOrderList">
+        ${questions.map((q, i) => `
+          <div class="roundsOrderItem" draggable="true" data-qid="${escAttr(q.id)}">
+            <div class="roundsOrderHandle">⋮⋮</div>
+            <div class="roundsOrderNum">${i + 1}</div>
+            <div class="roundsOrderText">${escText(q.text)}</div>
+            <div class="roundsOrderActions">
+              <button class="roundsOrderBtn" data-dir="up" title="W górę" ${i === 0 ? "disabled" : ""}>↑</button>
+              <button class="roundsOrderBtn" data-dir="down" title="W dół" ${i === questions.length - 1 ? "disabled" : ""}>↓</button>
             </div>
           </div>
-          <div class="gs-picker-col">
-            <div class="gs-picker-col-title">Kolejność rund (${picked.length})</div>
-            <div class="gs-qrow-list" id="gsRoundsPicked">
-              ${picked.length === 0
-                ? '<div class="gs-picker-empty">Kliknij pytanie po lewej, aby dodać</div>'
-                : picked.map((q, i) => `<div class="gs-qrow gs-draggable" draggable="true" data-qid="${escAttr(q.id)}" data-ord="${q.ord}">
-                    <span class="gs-drag-handle">⠿</span>
-                    <span class="meta">${i + 1}.</span>
-                    <span class="txt">${escText(q.text)}</span>
-                    <button class="gs-q-item-remove" type="button" title="Usuń">✕</button>
-                  </div>`).join("")}
-            </div>
-          </div>
-        </div>
+        `).join("")}
       </div>
     </div>
   `;
 
-  document.getElementById("gsRoundsPool")?.addEventListener("click", e => {
-    const row = e.target.closest(".gs-qrow");
-    if (!row) return;
-    const id = row.dataset.qid;
-    const q = allQuestions.find(q => q.id === id);
-    if (!q) return;
-    localSettings.questions.rounds = [...localSettings.questions.rounds, q];
+  const listEl = document.getElementById("gsRoundsOrderList");
+  if (!listEl) return;
+
+  // Przyciski ↑↓
+  listEl.addEventListener("click", e => {
+    const btn = e.target.closest(".roundsOrderBtn");
+    if (!btn) return;
+    const item = btn.closest(".roundsOrderItem");
+    if (!item) return;
+    const id = item.dataset.qid;
+    const dir = btn.dataset.dir;
+    const idx = localSettings.questions.rounds.findIndex(q => q.id === id);
+    if (idx < 0) return;
+    const arr = [...localSettings.questions.rounds];
+    const newIdx = dir === "up" ? idx - 1 : idx + 1;
+    if (newIdx < 0 || newIdx >= arr.length) return;
+    [arr[idx], arr[newIdx]] = [arr[newIdx], arr[idx]];
+    localSettings.questions.rounds = arr;
     markDirty();
     renderRounds();
   });
 
-  const pickedList = document.getElementById("gsRoundsPicked");
-  if (pickedList) {
-    pickedList.addEventListener("click", e => {
-      const removeBtn = e.target.closest(".gs-q-item-remove");
-      if (removeBtn) {
-        const id = removeBtn.closest(".gs-qrow")?.dataset.qid;
-        if (!id) return;
-        localSettings.questions.rounds = localSettings.questions.rounds.filter(p => p.id !== id);
-        markDirty();
-        renderRounds();
-        return;
-      }
-    });
-    initDragSort(pickedList, () => localSettings.questions.rounds, v => { localSettings.questions.rounds = v; }, renderRounds);
-  }
+  // Drag & drop
+  setupRoundsOrderDnd(listEl);
 }
 
-// --- DRAG-AND-DROP SORT ---
+function setupRoundsOrderDnd(listEl) {
+  let dragged = null;
+
+  listEl.querySelectorAll(".roundsOrderItem").forEach(item => {
+    item.addEventListener("dragstart", e => {
+      dragged = item;
+      item.classList.add("dragging");
+      e.dataTransfer.effectAllowed = "move";
+    });
+    item.addEventListener("dragend", () => {
+      if (dragged) dragged.classList.remove("dragging");
+      listEl.querySelectorAll(".roundsOrderItem").forEach(el => el.classList.remove("gs-row-drag-over-top", "gs-row-drag-over-bot"));
+      // Zapisz nową kolejność z DOM
+      const newOrder = [...listEl.querySelectorAll(".roundsOrderItem")]
+        .map(el => localSettings.questions.rounds.find(q => q.id === el.dataset.qid))
+        .filter(Boolean);
+      localSettings.questions.rounds = newOrder;
+      markDirty();
+      dragged = null;
+      renderRounds();
+    });
+    item.addEventListener("dragover", e => {
+      e.preventDefault();
+      if (!dragged || dragged === item) return;
+      const rect = item.getBoundingClientRect();
+      const half = rect.top + rect.height / 2;
+      item.classList.toggle("gs-row-drag-over-top", e.clientY < half);
+      item.classList.toggle("gs-row-drag-over-bot", e.clientY >= half);
+    });
+    item.addEventListener("dragleave", () => {
+      item.classList.remove("gs-row-drag-over-top", "gs-row-drag-over-bot");
+    });
+    item.addEventListener("drop", e => {
+      e.preventDefault();
+      if (!dragged || dragged === item) return;
+      const rect = item.getBoundingClientRect();
+      const half = rect.top + rect.height / 2;
+      if (e.clientY < half) {
+        listEl.insertBefore(dragged, item);
+      } else {
+        listEl.insertBefore(dragged, item.nextSibling);
+      }
+      item.classList.remove("gs-row-drag-over-top", "gs-row-drag-over-bot");
+    });
+  });
+}
+
+// --- DRAG-AND-DROP SORT (dla finału - reorder wewnątrz kolumny) ---
 function initDragSort(listEl, getItems, setItems, reRender) {
   let dragged = null;
 
@@ -687,7 +782,6 @@ function initDragSort(listEl, getItems, setItems, reRender) {
       listEl.querySelectorAll(".gs-row-drag-over-top, .gs-row-drag-over-bot").forEach(el => {
         el.classList.remove("gs-row-drag-over-top", "gs-row-drag-over-bot");
       });
-      // persist DOM order to state
       const newOrder = [...listEl.querySelectorAll(".gs-draggable")].map(el => {
         return getItems().find(q => q.id === el.dataset.qid);
       }).filter(Boolean);
@@ -878,12 +972,11 @@ async function main() {
 
   // Save buttons
   btnSaveAll?.addEventListener("click", saveAll);
-  document.getElementById("btnSaveFooter")?.addEventListener("click", saveAll);
 
   // Back button
   btnBack?.addEventListener("click", () => {
-    if (isDirty && !confirm("Masz niezapisane zmiany. Czy na pewno chcesz wyjść?")) return;
-    location.href = "/my-games";
+    if (isDirty && !confirm(t("gameSettings.unsavedConfirm") || "Masz niezapisane zmiany. Czy na pewno chcesz wyjść?")) return;
+    location.href = `/builder?id=${gameId}`;
   });
 
   initColorModal();

@@ -536,3 +536,147 @@
 @media (max-width:700px){
   .gs-picker-lists{ grid-template-columns:1fr; }
 }
+
+/* ===== FINALE PICKER (control-style) ===== */
+.gs-badge-row{
+  margin-bottom:10px;
+}
+
+.finalLists{
+  margin-top:12px;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+}
+.finalCol{
+  display:flex;
+  flex-direction:column;
+  min-height:280px;
+}
+.finalCol .qList{
+  flex:1;
+  min-height:0;
+  overflow:auto;
+}
+.finalCol .mini{
+  margin-top:0;
+  margin-bottom:6px;
+}
+.qList{
+  box-sizing:border-box;
+  width:100%;
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.12);
+  margin-top:12px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  padding:10px;
+  background:rgba(0,0,0,.14);
+  min-height:60px;
+}
+.qList.droptarget{
+  outline:2px dashed rgba(255,255,255,.45);
+  outline-offset:2px;
+}
+.qRow{
+  display:grid;
+  grid-template-columns:64px 1fr;
+  align-items:center;
+  min-height:56px;
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(0,0,0,.16);
+  padding:10px 12px;
+  cursor:grab;
+  user-select:none;
+  overflow:hidden;
+  box-sizing:border-box;
+}
+.qRow:active{ cursor:grabbing; }
+.qRow:hover{ border-color:rgba(255,255,255,.22); }
+.qRow .meta{
+  font-weight:1000;
+  opacity:.85;
+  white-space:nowrap;
+}
+.qRow .txt{
+  font-weight:900;
+  line-height:1.15;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  min-width:0;
+}
+@media(max-width:900px){
+  .finalLists{ grid-template-columns:1fr; }
+}
+
+/* ===== ROUNDS ORDER (control-style) ===== */
+.roundsOrderList{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  margin-top:10px;
+}
+.roundsOrderItem{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:12px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(0,0,0,.08);
+  cursor:grab;
+  transition:transform .12s ease,box-shadow .12s ease,border-color .12s ease;
+}
+.roundsOrderItem:hover{
+  border-color:rgba(255,255,255,.22);
+  box-shadow:0 4px 12px rgba(0,0,0,.25);
+}
+.roundsOrderItem.dragging{ opacity:.5; cursor:grabbing; }
+.roundsOrderHandle{
+  opacity:.5;
+  font-size:18px;
+  cursor:grab;
+  user-select:none;
+  flex-shrink:0;
+}
+.roundsOrderItem:hover .roundsOrderHandle{ opacity:1; }
+.roundsOrderNum{
+  font-weight:1000;
+  font-size:16px;
+  color:var(--gold,#f0b429);
+  min-width:28px;
+  text-align:center;
+  flex-shrink:0;
+}
+.roundsOrderText{
+  flex:1;
+  font-size:13px;
+  line-height:1.4;
+  min-width:0;
+}
+.roundsOrderActions{ display:flex; gap:4px; flex-shrink:0; }
+.roundsOrderBtn{
+  width:28px;
+  height:28px;
+  min-width:28px;
+  border-radius:8px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(0,0,0,.12);
+  color:#fff;
+  cursor:pointer;
+  display:grid;
+  place-items:center;
+  font-size:14px;
+  transition:background .12s ease,border-color .12s ease;
+}
+.roundsOrderBtn:hover{
+  background:rgba(0,0,0,.20);
+  border-color:rgba(255,255,255,.22);
+}
+.roundsOrderBtn:disabled{
+  opacity:.3;
+  cursor:default;
+}
