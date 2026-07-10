@@ -1,5 +1,23 @@
 // js/core/realtime.js
-import { sb } from "./supabase.js?v=v2026-06-22T20360";
+import { sb, SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase.js?v=v2026-06-22T20360";
+
+// ch.httpSend() używa nowego URL /realtime/v1/api/broadcast/{topic}/events/{event}
+// który zwraca 404 na tym serwerze. Używamy starego stabilnego endpointu z body { messages }.
+async function restBroadcast(topic, event, payload) {
+  const res = await fetch(`${SUPABASE_URL}/realtime/v1/api/broadcast`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "apikey": SUPABASE_ANON_KEY,
+      "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+    },
+    body: JSON.stringify({ messages: [{ topic, event, payload }] }),
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`broadcast ${res.status}: ${text}`);
+  }
+}
 
 const channels = new Map();
 
@@ -62,15 +80,13 @@ function createManagedChannel(topic) {
 
     // jawny REST
     if (mode === "http") {
-      const { error } = await ch.httpSend(event, safe);
-      if (error) throw error;
+      await restBroadcast(topic, event, safe);
       return true;
     }
 
     // auto: jeśli nie jesteśmy SUBSCRIBED, nie próbujemy WS → idziemy od razu HTTP
     if (mode === "auto" && status !== "SUBSCRIBED") {
-      const { error } = await ch.httpSend(event, safe);
-      if (error) throw error;
+      await restBroadcast(topic, event, safe);
       return true;
     }
 
@@ -82,8 +98,7 @@ function createManagedChannel(topic) {
         throw new Error(`Realtime not ready for topic ${topic}`);
       }
       // auto: jak nie gotowe, lecimy HTTP
-      const { error } = await ch.httpSend(event, safe);
-      if (error) throw error;
+      await restBroadcast(topic, event, safe);
       return true;
     }
 
@@ -96,8 +111,7 @@ function createManagedChannel(topic) {
     if (mode === "ws") throw error;
 
     // auto: jawny fallback
-    const { error: e2 } = await ch.httpSend(event, safe);
-    if (e2) throw e2;
+    await restBroadcast(topic, event, safe);
     return true;
   }
 

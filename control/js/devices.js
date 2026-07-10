@@ -26,8 +26,7 @@ export function createDevices({ game, ui, store, chDisplay, chHost, chBuzzer }) 
   async function sendCmd(channel, event, line) {
     const l = String(line ?? "").trim();
     if (!l) return;
-    // Wysyłamy jawnie przez REST (httpSend), żeby uniknąć ostrzeżeń Supabase
-    // o automatycznym fallbacku send() -> REST.
+    // Wysyłamy jawnie przez REST — realtime.js używa własnego fetch zamiast ch.httpSend()
     await channel.sendBroadcast(event, { line: l }, { mode: "http" });
   }
 

@@ -2792,7 +2792,11 @@ async function fetchWith404(request, originBase, originHost, resolveOverride) {
         headers: {
           "Content-Type": ct,
           "Cache-Control": "no-store",
-          "X-GitHub-Request-Id": res.headers.get("X-GitHub-Request-Id") || ""
+          "X-GitHub-Request-Id": res.headers.get("X-GitHub-Request-Id") || "",
+          // Pozwala na iframy z tej samej domeny (np. /manual w control.html)
+          // oraz challenge Cloudflare. Cloudflare domyślnie dodaje tylko challenges.cloudflare.com
+          // bez 'self', co blokuje wewnętrzne iframy.
+          "Content-Security-Policy": "frame-src 'self' https://challenges.cloudflare.com"
         }
       });
     }
