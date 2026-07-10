@@ -6,6 +6,7 @@ import { sb } from "../core/supabase.js?v=v2026-07-10T22261";
 import { loadQuestions } from "../core/game-validate.js?v=v2026-07-10T22261";
 import { loadFont5x7, buildLogoPreviewCanvas } from "../core/logo-preview.js?v=v2026-07-10T22261";
 import { v as cacheBust } from "../core/cache-bust.js?v=v2026-07-10T22261";
+import { alertModal, confirmModal } from "../core/modal.js?v=v2026-07-10T22261";
 
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
@@ -138,7 +139,7 @@ async function saveAll() {
     clearDirty();
   } catch (e) {
     console.error("[game-settings] saveAll error:", e);
-    alert("Błąd zapisu: " + (e?.message || e?.code || String(e)));
+    alertModal({ text: "Błąd zapisu: " + (e?.message || e?.code || String(e)) });
   } finally {
     if (btnSaveAll) btnSaveAll.disabled = false;
   }
@@ -975,16 +976,16 @@ async function main() {
   btnSaveAll?.addEventListener("click", saveAll);
 
   // Reset to defaults
-  btnResetAll?.addEventListener("click", () => {
-    if (!confirm(t("gameSettings.resetAllConfirm") || "Przywrócić ustawienia domyślne? Niezapisane zmiany zostaną utracone.")) return;
+  btnResetAll?.addEventListener("click", async () => {
+    if (!await confirmModal({ text: t("gameSettings.resetAllConfirm") || "Przywrócić ustawienia domyślne? Niezapisane zmiany zostaną utracone." })) return;
     localSettings = mergeSettings(null);
     markDirty();
     setActiveCat(activeCat);
   });
 
   // Back button
-  btnBack?.addEventListener("click", () => {
-    if (isDirty && !confirm(t("gameSettings.unsavedConfirm") || "Masz niezapisane zmiany. Czy na pewno chcesz wyjść?")) return;
+  btnBack?.addEventListener("click", async () => {
+    if (isDirty && !await confirmModal({ text: t("gameSettings.unsavedConfirm") || "Masz niezapisane zmiany. Czy na pewno chcesz wyjść?" })) return;
     location.href = `/builder?id=${gameId}`;
   });
 

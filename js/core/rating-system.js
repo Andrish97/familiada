@@ -2,6 +2,7 @@
 import { sb } from "./supabase.js?v=v2026-07-10T22261";
 import { getUser } from "./auth.js?v=v2026-07-10T22261";
 import { t } from "../../translation/translation.js?v=v2026-07-10T22261";
+import { alertModal } from "./modal.js?v=v2026-07-10T22261";
 
 const RATING_LS_KEY = "fam:app_rated";
 const RATING_DISMISSED_KEY = "fam:app_rating_dismissed_at";
@@ -124,7 +125,7 @@ function showRatingModal(userId) {
 
         if (error) {
             console.error("[rating] Error saving rating:", error);
-            alert(t("common.rating.modal.error"));
+            alertModal({ text: t("common.rating.modal.error") });
             sendBtn.disabled = false;
         } else {
             localStorage.setItem(RATING_LS_KEY, "true");

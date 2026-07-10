@@ -14,7 +14,7 @@ Settings panel (admin)
 
 import { initI18n, t, getUiLang } from "../../translation/translation.js?v=v2026-07-10T22261";
 import { initUiSelect } from "../core/ui-select.js?v=v2026-07-10T22261";
-import { confirmModal } from "../core/modal.js?v=v2026-07-10T22261";
+import { alertModal, confirmModal, promptModal } from "../core/modal.js?v=v2026-07-10T22261";
 import { sb } from "../core/supabase.js?v=v2026-07-10T22261";
 import { v as cacheBust } from "../core/cache-bust.js?v=v2026-07-10T22261";
 
@@ -3497,7 +3497,7 @@ function openAssignModal(messageId) {
 }
 
 async function fallbackAssign(messageId) {
-  const ticketOrId = prompt("Podaj ID zgłoszenia lub wpisz temat nowego:");
+  const ticketOrId = await promptModal({ text: "Podaj ID zgłoszenia lub wpisz temat nowego:" });
   if (!ticketOrId) return;
   await doAssign(messageId, ticketOrId, false);
 }
@@ -6002,7 +6002,7 @@ function wireEvents() {
       mcState.logRun = data.run_id;
       mcStartLogAutoRefresh();
     } catch(e) {
-      alert("Błąd: " + e.message);
+      alertModal({ text: "Błąd: " + e.message });
       mcUpdateButtons();
     }
   }
@@ -6031,7 +6031,7 @@ function wireEvents() {
   };
 
   window.mcCancel = async function() {
-    if(!confirm("Anulować zlecenie?")) return;
+    if(!await confirmModal({ text: "Anulować zlecenie?" })) return;
     const actionBtn = document.getElementById("mcActionBtn");
     const cancelBtn = document.getElementById("mcCancelBtn");
     actionBtn.disabled = true;
@@ -6358,20 +6358,20 @@ function wireEvents() {
       if (error) throw error;
       mcState.selectedCells = [];
       mcLoadContacts();
-    } catch(e) { alert("Błąd: " + e.message); }
+    } catch(e) { alertModal({ text: "Błąd: " + e.message }); }
   }
 
   async function mcDeleteSelected() {
     const rows = new Set(mcState.selectedCells.map(c => c.row));
     if (!rows.size) return;
-    if (!confirm(`Usunąć ${rows.size} kontaktów?`)) return;
+    if (!await confirmModal({ text: `Usunąć ${rows.size} kontaktów?` })) return;
     try {
       const ids = [...rows].map(i => mcState.contacts[i]?.id).filter(Boolean);
       const { error } = await sb().from("marketing_verified_contacts").delete().in("id", ids);
       if (error) throw error;
       mcState.selectedCells = [];
       mcLoadContacts();
-    } catch(e) { alert("Błąd: " + e.message); }
+    } catch(e) { alertModal({ text: "Błąd: " + e.message }); }
   }
 
   function mcUpdatePagination(total) {

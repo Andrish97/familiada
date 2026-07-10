@@ -6,6 +6,7 @@ import { isGuestUser } from "../core/guest-mode.js?v=v2026-07-10T22261";
 import { isMobileDevice } from "../core/pwa.js?v=v2026-07-10T22261";
 import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js?v=v2026-07-10T22261";
 import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-07-10T22261";
+import { alertModal } from "../core/modal.js?v=v2026-07-10T22261";
 import "../core/contact-modal.js";
 
 initI18n({ withSwitcher: true });
@@ -181,9 +182,9 @@ async function renderSharedDevices() {
       }
       const isMobileType = item.device_type === "host" || item.device_type === "buzzer";
       if (_isMobile && item.device_type === "display") {
-        alert(t("connectDevice.warning.desktopOnly"));
+        alertModal({ text: t("connectDevice.warning.desktopOnly") });
       } else if (!_isMobile && isMobileType) {
-        alert(t("connectDevice.warning.mobileOnly"));
+        alertModal({ text: t("connectDevice.warning.mobileOnly") });
       }
       setMsg(t("connectDevice.shared.opening") || "Otwieranie…");
       try {
