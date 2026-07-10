@@ -1154,8 +1154,10 @@ async function sendZeroStatesToDevices() {
       );
       if (previewSrc && _logoFont) {
         const canvas = buildLogoPreviewCanvas(previewSrc, _logoFont);
-        canvas.classList.add("summaryLogoCanvas");
-        logoTileEl.appendChild(canvas);
+        const frame = document.createElement("div");
+        frame.className = "summaryLogoFrame";
+        frame.appendChild(canvas);
+        logoTileEl.appendChild(frame);
       } else {
         logoTileEl.textContent = logoObj?.name || (logoId ? "—" : t("control.lookLogoDefault"));
       }
