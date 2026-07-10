@@ -92,6 +92,7 @@ let colorModalR = 0, colorModalG = 0, colorModalB = 0;
 const titleEl = document.getElementById("gsTitle");
 const unsavedBadge = document.getElementById("gsUnsavedBadge");
 const btnSaveAll = document.getElementById("btnSaveAll");
+const btnResetAll = document.getElementById("btnResetAll");
 const btnBack = document.getElementById("btnBack");
 const content = document.getElementById("gsContent");
 const sidebar = document.getElementById("gsSidebar");
@@ -972,6 +973,14 @@ async function main() {
 
   // Save buttons
   btnSaveAll?.addEventListener("click", saveAll);
+
+  // Reset to defaults
+  btnResetAll?.addEventListener("click", () => {
+    if (!confirm(t("gameSettings.resetAllConfirm") || "Przywrócić ustawienia domyślne? Niezapisane zmiany zostaną utracone.")) return;
+    localSettings = mergeSettings(null);
+    markDirty();
+    setActiveCat(activeCat);
+  });
 
   // Back button
   btnBack?.addEventListener("click", () => {
