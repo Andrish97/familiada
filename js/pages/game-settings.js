@@ -1,6 +1,6 @@
 // js/pages/game-settings.js
 import { requireAuth } from "../core/auth.js?v=v2026-07-10T22584";
-import { t } from "../../translation/translation.js?v=v2026-07-10T22584";
+import { t, getUiLang } from "../../translation/translation.js?v=v2026-07-10T22584";
 import { setTopbarAccount } from "../core/topbar-controller.js?v=v2026-07-10T22584";
 import { sb } from "../core/supabase.js?v=v2026-07-10T22584";
 import { loadQuestions } from "../core/game-validate.js?v=v2026-07-10T22584";
@@ -991,6 +991,53 @@ async function main() {
   });
 
   initColorModal();
+
+  // Manual / Legal overlays
+  const helpOverlay = document.getElementById("helpOverlay");
+  const helpFrame   = document.getElementById("helpFrame");
+  const legalOverlay = document.getElementById("legalOverlay");
+  const legalFrame   = document.getElementById("legalFrame");
+  const btnManual     = document.getElementById("btnManual");
+  const btnHelpClose  = document.getElementById("btnHelpClose");
+  const btnLegal      = document.getElementById("btnLegal");
+  const btnBackToManual = document.getElementById("btnBackToManual");
+  const btnLegalClose = document.getElementById("btnLegalClose");
+
+  function buildHelpUrl() {
+    const url = new URL("/manual", location.href);
+    url.searchParams.set("ret", `game-settings${location.search}`);
+    url.searchParams.set("modal", "control");
+    url.searchParams.set("lang", getUiLang() || "pl");
+    url.searchParams.set("tab", "control");
+    return url.toString();
+  }
+  function buildLegalUrl() {
+    const url = new URL("/privacy", location.href);
+    url.searchParams.set("ret", `game-settings${location.search}`);
+    url.searchParams.set("modal", "control");
+    url.searchParams.set("lang", getUiLang() || "pl");
+    return url.toString();
+  }
+
+  btnManual?.addEventListener("click", () => {
+    if (helpFrame) helpFrame.src = buildHelpUrl();
+    helpOverlay?.classList.remove("hidden");
+  });
+  btnHelpClose?.addEventListener("click", () => helpOverlay?.classList.add("hidden"));
+  helpOverlay?.addEventListener("click", (ev) => { if (ev.target === helpOverlay) helpOverlay.classList.add("hidden"); });
+
+  btnLegal?.addEventListener("click", (ev) => {
+    ev.stopImmediatePropagation();
+    if (legalFrame) legalFrame.src = buildLegalUrl();
+    legalOverlay?.classList.remove("hidden");
+  });
+  btnBackToManual?.addEventListener("click", () => {
+    legalOverlay?.classList.add("hidden");
+    if (helpFrame) helpFrame.src = buildHelpUrl();
+    helpOverlay?.classList.remove("hidden");
+  });
+  btnLegalClose?.addEventListener("click", () => legalOverlay?.classList.add("hidden"));
+  legalOverlay?.addEventListener("click", (ev) => { if (ev.target === legalOverlay) legalOverlay.classList.add("hidden"); });
 
   setActiveCat("teams");
 }

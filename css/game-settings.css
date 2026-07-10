@@ -680,3 +680,60 @@
   opacity:.3;
   cursor:default;
 }
+
+/* ===== MANUAL / LEGAL OVERLAYS ===== */
+.helpOverlay{
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0,0,0,.62);
+  display: grid; place-items: center; padding: 4vh 4vw;
+}
+.helpOverlay.hidden{ display:none; }
+.helpModal{
+  position: relative;
+  width: min(1280px, 80vw); height: min(860px, 80vh);
+  border-radius: 16px; overflow: hidden;
+  border: 1px solid rgba(255,255,255,.18);
+  background: #0f1728;
+  box-shadow: 0 20px 60px rgba(0,0,0,.55);
+  display: flex; flex-direction: column;
+}
+.helpModalToolbar{
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px; padding: 10px 14px;
+  background: rgba(255,234,166,.08);
+  border-bottom: 1px solid rgba(255,255,255,.1);
+}
+.helpCloseBtn{
+  position: static; min-width: 34px; height: 34px;
+  border-radius: 999px; padding: 0 10px;
+  background: rgba(10,16,32,.72); border: 1px solid rgba(255,255,255,.28);
+}
+.helpFrame{ width:100%; flex:1; border:0; display:block; background:var(--bg,#0a1020); }
+
+.legalOverlay{
+  position: fixed; inset: 0; z-index: 10000;
+  background: rgba(0,0,0,.62);
+  display: grid; place-items: center; padding: 4vh 4vw;
+}
+.legalOverlay.hidden{ display:none; }
+.legalModal{
+  position: relative;
+  width: min(1280px, 80vw); height: min(860px, 80vh);
+  border-radius: 16px; overflow: hidden;
+  border: 1px solid rgba(255,255,255,.18);
+  background: #0f1728;
+  box-shadow: 0 20px 60px rgba(0,0,0,.55);
+  display: flex; flex-direction: column;
+}
+.legalModalToolbar{
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px; padding: 10px 14px;
+  background: rgba(255,234,166,.08);
+  border-bottom: 1px solid rgba(255,255,255,.1);
+}
+.legalCloseBtn{
+  position: static; min-width: 34px; height: 34px;
+  border-radius: 999px; padding: 0 10px;
+  background: rgba(10,16,32,.72); border: 1px solid rgba(255,255,255,.28);
+}
+.legalFrame{ width:100%; flex:1; border:0; display:block; background:var(--bg,#0a1020); }

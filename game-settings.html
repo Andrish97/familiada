@@ -19,7 +19,7 @@
   <script src="js/core/security-warning.js?v=v2026-07-10T22584" defer></script>
   <script type="module">
     import { initI18n } from "/translation/translation.js?v=v2026-07-10T22584";
-    await initI18n({ withSwitcher: false });
+    await initI18n({ withSwitcher: true });
     import("/js/pages/game-settings.js?v=v2026-07-10T22584");
   </script>
 </head>
@@ -34,12 +34,35 @@
     </div>
     <div class="topbar-section topbar-section-3">
       <span class="badge bad gs-unsaved-badge hidden" id="gsUnsavedBadge" data-i18n="gameSettings.unsaved">Niezapisane</span>
+      <button class="btn" id="btnManual" type="button">ℹ️</button>
     </div>
     <div class="topbar-section topbar-section-4">
+      <span class="who" id="whoStatic">—</span>
+      <button class="btn" id="btnLogout" type="button" data-i18n="common.authEntry">Zaloguj / Załóż konto</button>
       <button class="btn" id="btnResetAll" type="button" data-i18n="gameSettings.resetAll">Przywróć domyślne</button>
       <button class="btn gold" id="btnSaveAll" type="button" data-i18n="gameSettings.saveAll">Zapisz wszystko</button>
     </div>
   </header>
+
+  <div class="helpOverlay hidden" id="helpOverlay">
+    <div class="helpModal" role="dialog" aria-modal="true">
+      <div class="helpModalToolbar">
+        <button class="btn btn-sm" id="btnLegal" type="button" data-i18n="manual.legal">🔐 Polityka prywatności</button>
+        <button class="btn xs helpCloseBtn" id="btnHelpClose" type="button" onclick="document.getElementById('helpOverlay').classList.add('hidden')">✕</button>
+      </div>
+      <iframe id="helpFrame" class="helpFrame" src="" title="Wskazówki"></iframe>
+    </div>
+  </div>
+
+  <div class="legalOverlay hidden" id="legalOverlay">
+    <div class="legalModal" role="dialog" aria-modal="true">
+      <div class="legalModalToolbar">
+        <button class="btn btn-sm" id="btnBackToManual" type="button" data-i18n="privacy.backToManual">← Wskazówki</button>
+        <button class="btn xs legalCloseBtn" id="btnLegalClose" type="button" onclick="document.getElementById('legalOverlay').classList.add('hidden')">✕</button>
+      </div>
+      <iframe id="legalFrame" class="legalFrame" src="" title="Polityka prywatności"></iframe>
+    </div>
+  </div>
 
   <div class="gs-layout">
     <nav class="gs-sidebar" id="gsSidebar">
@@ -99,5 +122,7 @@
     </div>
   </div>
 </div>
+
+  <script type="module" src="js/core/contact-modal.js?v=v2026-07-10T22584"></script>
 </body>
 </html>
