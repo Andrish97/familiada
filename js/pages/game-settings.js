@@ -980,6 +980,7 @@ async function main() {
     if (!await confirmModal({ text: t("gameSettings.resetAllConfirm") || "Przywrócić ustawienia domyślne? Niezapisane zmiany zostaną utracone." })) return;
     localSettings = mergeSettings(null);
     markDirty();
+    updateSubTabStates();
     setActiveCat(activeCat);
   });
 
