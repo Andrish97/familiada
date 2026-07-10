@@ -4992,6 +4992,8 @@ const uk = {
     summaryFinal: "Фінал",
     summaryFinalQuestions: "Питання фіналу",
     summaryRoundsQuestions: "Питання раундів",
+    summaryDefaultSettings: "Ви використовуєте типові налаштування гри. Можете їх змінити в Налаштуваннях гри.",
+    summaryDefaultSettingsLink: "Відкрити налаштування →",
     summaryDisplay: "Вигляд",
     summaryColors: "Кольори",
     summaryTheme: "Тема",

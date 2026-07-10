@@ -954,6 +954,22 @@
     /* max-width: 640px; */
 }
 
+.summaryDefaultHint {
+    padding: 10px 14px;
+    margin-bottom: 12px;
+    background: rgba(180, 140, 0, 0.13);
+    border: 1px solid rgba(200, 160, 0, 0.35);
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.5;
+}
+.summaryDefaultHint.hidden { display: none; }
+.summaryDefaultHintLink {
+    color: inherit;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
 .hint-compact {
     max-width: 520px
 }

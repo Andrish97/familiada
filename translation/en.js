@@ -5007,6 +5007,8 @@ const en = {
     summaryFinal: "Final",
     summaryFinalQuestions: "Final questions",
     summaryRoundsQuestions: "Round questions",
+    summaryDefaultSettings: "You are using default game settings. You can customise them in Game Settings.",
+    summaryDefaultSettingsLink: "Open settings →",
     summaryDisplay: "Appearance",
     summaryColors: "Colors",
     summaryTheme: "Theme",

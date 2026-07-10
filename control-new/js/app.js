@@ -592,6 +592,8 @@ async function sendZeroStatesToDevices() {
   let _defaultLogoPayload = null;
   // Cache załadowanych logo (potrzebny w streszczeniu)
   let _loadedLogos = [];
+  // true gdy game.settings zawierały zapisane ustawienia (nie null)
+  const _hasCustomSettings = game.settings != null && typeof game.settings === "object";
 
 
 
@@ -1090,6 +1092,22 @@ async function sendZeroStatesToDevices() {
 
   function renderSetupFinishSummary() {
     const s = store.state;
+
+    // Baner domyślnych ustawień
+    const hintEl = document.getElementById("summaryDefaultHint");
+    const hintTextEl = document.getElementById("summaryDefaultHintText");
+    if (hintEl && hintTextEl) {
+      if (!_hasCustomSettings) {
+        const msg = t("control.summaryDefaultSettings") || "Używasz domyślnych ustawień rozgrywki.";
+        const linkLabel = t("control.summaryDefaultSettingsLink") || "Otwórz ustawienia →";
+        const settingsUrl = `/game-settings?id=${store.state.gameId || gameId}`;
+        hintTextEl.innerHTML = `${escapeHtml(msg)} <a href="${escapeHtml(settingsUrl)}" class="summaryDefaultHintLink">${escapeHtml(linkLabel)}</a>`;
+        hintEl.classList.remove("hidden");
+      } else {
+        hintEl.classList.add("hidden");
+      }
+    }
+
     const defaultA = t("gameSettings.teams.defaultA") || "Drużyna A";
     const defaultB = t("gameSettings.teams.defaultB") || "Drużyna B";
     const teamA = s.teams?.teamA || defaultA;

@@ -4386,6 +4386,8 @@ const pl = {
     summaryFinal: "Finał",
     summaryFinalQuestions: "Pytania finału",
     summaryRoundsQuestions: "Pytania rund",
+    summaryDefaultSettings: "Używasz domyślnych ustawień rozgrywki. Możesz je dostosować w Ustawieniach rozgrywki.",
+    summaryDefaultSettingsLink: "Otwórz ustawienia →",
     summaryDisplay: "Wygląd",
     summaryColors: "Kolory",
     summaryTheme: "Motyw",
