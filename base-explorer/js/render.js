@@ -1,8 +1,8 @@
 // base-explorerjs/render.js
 // Renderowanie UI eksploratora na podstawie state (bez DB, bez akcji).
 
-import { VIEW, META, META_ORDER } from "./state.js?v=v2026-07-10T22471";
-import { t } from "../../translation/translation.js?v=v2026-07-10T22471";
+import { VIEW, META, META_ORDER } from "./state.js?v=v2026-07-10T22544";
+import { t } from "../../translation/translation.js?v=v2026-07-10T22544";
 
 /* ================= DOM ================= */
 const elBaseName = document.getElementById("baseName");

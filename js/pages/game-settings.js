@@ -1,12 +1,12 @@
 // js/pages/game-settings.js
-import { requireAuth } from "../core/auth.js?v=v2026-07-10T22471";
-import { t } from "../../translation/translation.js?v=v2026-07-10T22471";
-import { setTopbarAccount } from "../core/topbar-controller.js?v=v2026-07-10T22471";
-import { sb } from "../core/supabase.js?v=v2026-07-10T22471";
-import { loadQuestions } from "../core/game-validate.js?v=v2026-07-10T22471";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../core/logo-preview.js?v=v2026-07-10T22471";
-import { v as cacheBust } from "../core/cache-bust.js?v=v2026-07-10T22471";
-import { alertModal, confirmModal } from "../core/modal.js?v=v2026-07-10T22471";
+import { requireAuth } from "../core/auth.js?v=v2026-07-10T22544";
+import { t } from "../../translation/translation.js?v=v2026-07-10T22544";
+import { setTopbarAccount } from "../core/topbar-controller.js?v=v2026-07-10T22544";
+import { sb } from "../core/supabase.js?v=v2026-07-10T22544";
+import { loadQuestions } from "../core/game-validate.js?v=v2026-07-10T22544";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../core/logo-preview.js?v=v2026-07-10T22544";
+import { v as cacheBust } from "../core/cache-bust.js?v=v2026-07-10T22544";
+import { alertModal, confirmModal } from "../core/modal.js?v=v2026-07-10T22544";
 
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
