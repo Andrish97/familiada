@@ -85,7 +85,7 @@ let _logoFont = null;
 let _defaultLogoPayload = null;
 let _loadedLogos = [];
 
-// Color modal state
+// Color modal state — labels populated lazily from t()
 let colorModalTarget = null;
 let colorModalR = 0, colorModalG = 0, colorModalB = 0;
 
@@ -139,7 +139,7 @@ async function saveAll() {
     clearDirty();
   } catch (e) {
     console.error("[game-settings] saveAll error:", e);
-    alertModal({ text: "Błąd zapisu: " + (e?.message || e?.code || String(e)) });
+    alertModal({ text: t("gameSettings.saveErrorPrefix") + (e?.message || e?.code || String(e)) });
   } finally {
     if (btnSaveAll) btnSaveAll.disabled = false;
   }
@@ -189,19 +189,21 @@ function rgbToHex(r, g, b) {
 }
 
 // ===== COLOR MODAL =====
-const COLOR_LABELS = {
-  A: "Kolor drużyny A",
-  B: "Kolor drużyny B",
-  BACKGROUND: "Tło",
-  DOT: "Kolor kropek",
-};
+function getColorLabels() {
+  return {
+    A: t("gameSettings.display.colorA"),
+    B: t("gameSettings.display.colorB"),
+    BACKGROUND: t("gameSettings.display.colorBgShort"),
+    DOT: t("gameSettings.display.colorDot"),
+  };
+}
 
 function openColorModal(key) {
   colorModalTarget = key;
   const hex = localSettings.display.colors[key] || "#000000";
   const { r, g, b } = hexToRgb(hex);
   colorModalR = r; colorModalG = g; colorModalB = b;
-  if (colorModalTitleEl) colorModalTitleEl.textContent = COLOR_LABELS[key] || key;
+  if (colorModalTitleEl) colorModalTitleEl.textContent = getColorLabels()[key] || key;
   syncColorModalUI();
   colorModal?.classList.remove("hidden");
 }
@@ -289,15 +291,15 @@ function renderCat(cat) {
 // --- DRUŻYNY ---
 function renderTeams() {
   content.innerHTML = `
-    <div class="gs-cat-title">Drużyny</div>
+    <div class="gs-cat-title">${t("gameSettings.categories.teams")}</div>
     <div class="gs-section">
       <div class="gs-field">
-        <div class="gs-label">Nazwa drużyny A</div>
-        <input class="inp" id="gsTeamA" value="${escAttr(localSettings.teams.teamA)}" maxlength="40" placeholder="np. Rodzina Kowalskich"/>
+        <div class="gs-label">${t("gameSettings.teams.nameA")}</div>
+        <input class="inp" id="gsTeamA" value="${escAttr(localSettings.teams.teamA)}" maxlength="40" placeholder="${escAttr(t("gameSettings.teams.placeholderA"))}"/>
       </div>
       <div class="gs-field">
-        <div class="gs-label">Nazwa drużyny B</div>
-        <input class="inp" id="gsTeamB" value="${escAttr(localSettings.teams.teamB)}" maxlength="40" placeholder="np. Rodzina Nowaków"/>
+        <div class="gs-label">${t("gameSettings.teams.nameB")}</div>
+        <input class="inp" id="gsTeamB" value="${escAttr(localSettings.teams.teamB)}" maxlength="40" placeholder="${escAttr(t("gameSettings.teams.placeholderB"))}"/>
       </div>
     </div>
   `;
@@ -315,9 +317,10 @@ function renderTeams() {
 // --- WYGLĄD ---
 function renderDisplay() {
   const c = localSettings.display.colors;
+  const colorLabels = getColorLabels();
   const swatches = ["A", "B", "BACKGROUND", "DOT"].map(key => `
     <div class="colorItem">
-      <div class="lbl2">${escText(COLOR_LABELS[key])}</div>
+      <div class="lbl2">${escText(colorLabels[key])}</div>
       <button class="swatchBtn" data-color-key="${key}" style="background:${c[key]}" title="${key}" type="button"></button>
     </div>
   `).join("");
@@ -328,19 +331,19 @@ function renderDisplay() {
   ).join("");
 
   content.innerHTML = `
-    <div class="gs-cat-title">Wygląd</div>
+    <div class="gs-cat-title">${t("gameSettings.categories.display")}</div>
     <div class="gs-section">
-      <div class="gs-label">Kolory</div>
+      <div class="gs-label">${t("gameSettings.display.colors")}</div>
       <div class="colorRow">${swatches}</div>
     </div>
     <div class="gs-section">
-      <div class="gs-label">Motyw wyświetlacza</div>
+      <div class="gs-label">${t("gameSettings.display.theme")}</div>
       <select class="inp" id="gsThemeSelect" style="margin-top:8px">
         ${themeOptions}
       </select>
     </div>
     <div class="gs-section">
-      <div class="gs-label">Logo</div>
+      <div class="gs-label">${t("gameSettings.display.logo")}</div>
       <div id="gsLogoGrid" class="gs-logo-grid"></div>
     </div>
   `;
@@ -364,7 +367,7 @@ async function renderLogoGrid() {
   const grid = document.getElementById("gsLogoGrid");
   if (!grid) return;
 
-  grid.innerHTML = `<div class="hint" style="padding:8px 0">Ładowanie logo…</div>`;
+  grid.innerHTML = `<div class="hint" style="padding:8px 0">${t("gameSettings.display.logoLoading")}</div>`;
 
   if (!_logoFont) {
     try { _logoFont = await loadFont5x7(); } catch {}
@@ -415,7 +418,7 @@ async function renderLogoGrid() {
 
 function makeLogoTile(id, selectedId) {
   const key = id ?? "default";
-  const name = id === null ? "Domyślne" : (_loadedLogos.find(l => l.id === id)?.name || "—");
+  const name = id === null ? t("gameSettings.display.logoDefault") : (_loadedLogos.find(l => l.id === id)?.name || "—");
   const logoObj = id === null
     ? (_defaultLogoPayload ? { type: "GLYPH_30x10", payload: _defaultLogoPayload } : null)
     : _loadedLogos.find(l => l.id === id) || null;
@@ -442,9 +445,9 @@ function makeLogoTile(id, selectedId) {
 // --- DŹWIĘK ---
 function renderSound() {
   content.innerHTML = `
-    <div class="gs-cat-title">Dźwięk</div>
+    <div class="gs-cat-title">${t("gameSettings.categories.sound")}</div>
     <div class="gs-section">
-      <p class="gs-hint" style="font-size:.9rem">Ustawienia dźwięku będą dostępne wkrótce.</p>
+      <p class="gs-hint" style="font-size:.9rem">${t("gameSettings.sound.comingSoon")}</p>
     </div>
   `;
 }
@@ -457,53 +460,53 @@ function renderQuestions() {
   const roundsRandom = g.roundsQuestionsMode !== "pick";
 
   content.innerHTML = `
-    <div class="gs-cat-title">Pytania — Ustawienia</div>
+    <div class="gs-cat-title">${t("gameSettings.categories.questions")}</div>
     <div class="gs-section">
       <div class="sectionBlock">
-        <div class="sectionTitle">Finał</div>
+        <div class="sectionTitle">${t("gameSettings.questions.finaleSection")}</div>
         <div class="setting-item">
-          <div class="lbl2">Czy gra zawiera finał?</div>
+          <div class="lbl2">${t("gameSettings.finale.hasFinal")}</div>
           <div class="toggle-group" style="margin-top:8px">
             <label class="toggle-item">
               <input type="radio" name="gsHasFinal" value="yes" ${hasFinal ? "checked" : ""}/>
-              <span class="toggle-slider" data-text="Tak"></span>
+              <span class="toggle-slider" data-text="${escAttr(t("gameSettings.finale.yes"))}"></span>
             </label>
             <label class="toggle-item">
               <input type="radio" name="gsHasFinal" value="no" ${!hasFinal ? "checked" : ""}/>
-              <span class="toggle-slider" data-text="Nie"></span>
+              <span class="toggle-slider" data-text="${escAttr(t("gameSettings.finale.no"))}"></span>
             </label>
           </div>
         </div>
         <div class="setting-item" id="gsFinalModeField" style="display:${hasFinal ? "block" : "none"}">
-          <div class="lbl2">Tryb wyboru pytań finału</div>
+          <div class="lbl2">${t("gameSettings.questions.finalModeLabel")}</div>
           <div class="toggle-group" style="margin-top:8px">
             <label class="toggle-item">
               <input type="radio" name="gsFinalMode" value="random" ${finalRandom ? "checked" : ""}/>
-              <span class="toggle-slider" data-text="Losowe"></span>
+              <span class="toggle-slider" data-text="${escAttr(t("gameSettings.questions.modeRandom"))}"></span>
             </label>
             <label class="toggle-item">
               <input type="radio" name="gsFinalMode" value="pick" ${!finalRandom ? "checked" : ""}/>
-              <span class="toggle-slider" data-text="Ręcznie"></span>
+              <span class="toggle-slider" data-text="${escAttr(t("gameSettings.questions.modeManual"))}"></span>
             </label>
           </div>
-          <div class="gs-hint">Losowe = 5 pytań losowanych automatycznie. Ręcznie = wybierz pytania w zakładce „Pytania — Finał".</div>
+          <div class="gs-hint">${t("gameSettings.questions.finalModeHint")}</div>
         </div>
       </div>
       <div class="sectionBlock">
-        <div class="sectionTitle">Rundy</div>
+        <div class="sectionTitle">${t("gameSettings.questions.roundsSection")}</div>
         <div class="setting-item">
-          <div class="lbl2">Tryb kolejności pytań rund</div>
+          <div class="lbl2">${t("gameSettings.questions.roundsModeLabel")}</div>
           <div class="toggle-group" style="margin-top:8px">
             <label class="toggle-item">
               <input type="radio" name="gsRoundsMode" value="random" ${roundsRandom ? "checked" : ""}/>
-              <span class="toggle-slider" data-text="Losowe"></span>
+              <span class="toggle-slider" data-text="${escAttr(t("gameSettings.questions.modeRandom"))}"></span>
             </label>
             <label class="toggle-item">
               <input type="radio" name="gsRoundsMode" value="pick" ${!roundsRandom ? "checked" : ""}/>
-              <span class="toggle-slider" data-text="Kolejność"></span>
+              <span class="toggle-slider" data-text="${escAttr(t("gameSettings.questions.modeOrdered"))}"></span>
             </label>
           </div>
-          <div class="gs-hint">Losowe = każda runda losuje pytanie. Kolejność = pytania w ustalonej kolejności (zakładka „Pytania — Rundy").</div>
+          <div class="gs-hint">${t("gameSettings.questions.roundsModeHint")}</div>
         </div>
       </div>
     </div>
@@ -679,7 +682,7 @@ function renderRounds() {
   content.innerHTML = `
     <div class="gs-cat-title">${t("gameSettings.categories.rounds")}</div>
     <div class="gs-section">
-      <div class="gs-hint" style="margin-bottom:12px">${t("control.roundsPickHint") || "Ustaw kolejność pytań dla rund. Przeciągnij lub użyj strzałek."}</div>
+      <div class="gs-hint" style="margin-bottom:12px">${t("gameSettings.rounds.hint")}</div>
       <div class="roundsOrderList" id="gsRoundsOrderList">
         ${questions.map((q, i) => `
           <div class="roundsOrderItem" draggable="true" data-qid="${escAttr(q.id)}">
@@ -687,8 +690,8 @@ function renderRounds() {
             <div class="roundsOrderNum">${i + 1}</div>
             <div class="roundsOrderText">${escText(q.text)}</div>
             <div class="roundsOrderActions">
-              <button class="roundsOrderBtn" data-dir="up" title="W górę" ${i === 0 ? "disabled" : ""}>↑</button>
-              <button class="roundsOrderBtn" data-dir="down" title="W dół" ${i === questions.length - 1 ? "disabled" : ""}>↓</button>
+              <button class="roundsOrderBtn" data-dir="up" title="${escAttr(t("gameSettings.rounds.up"))}" ${i === 0 ? "disabled" : ""}>↑</button>
+              <button class="roundsOrderBtn" data-dir="down" title="${escAttr(t("gameSettings.rounds.down"))}" ${i === questions.length - 1 ? "disabled" : ""}>↓</button>
             </div>
           </div>
         `).join("")}
@@ -825,51 +828,51 @@ function renderGame() {
   const endMode = adv.endScreenMode || "logo";
 
   content.innerHTML = `
-    <div class="gs-cat-title">Ustawienia gry</div>
+    <div class="gs-cat-title">${t("gameSettings.categories.game")}</div>
     <div class="gs-section">
       <div class="sectionBlock">
-        <div class="sectionTitle">Punktacja rund</div>
+        <div class="sectionTitle">${t("gameSettings.game.roundsScoreSection")}</div>
         <div class="setting-item">
-          <div class="lbl2">Mnożniki rund (po przecinku)</div>
+          <div class="lbl2">${t("gameSettings.game.roundMultipliers")}</div>
           <input class="inp" id="gsMultipliers" value="${escAttr(adv.roundMultipliers.join(", "))}" placeholder="1, 1, 1, 2, 3" style="margin-top:6px"/>
-          <div class="gs-hint">Ostatnia wartość powtarza się dla dalszych rund. Np. „1, 1, 2" → rundy 1, 2 × 1; rundy 3+ × 2.</div>
+          <div class="gs-hint">${t("gameSettings.game.roundMultipliersHint")}</div>
         </div>
       </div>
       <div class="sectionBlock">
-        <div class="sectionTitle">Finał</div>
+        <div class="sectionTitle">${t("gameSettings.game.finaleSection")}</div>
         <div class="setting-item">
-          <div class="lbl2">Próg punktów do finału</div>
+          <div class="lbl2">${t("gameSettings.game.finalMinPoints")}</div>
           <input class="inp" id="gsFinalMinPts" type="number" min="0" max="9999" value="${adv.finalMinPoints}" style="margin-top:6px;max-width:160px"/>
-          <div class="gs-hint">Przynajmniej jedna drużyna musi zdobyć tyle punktów, by odblokować finał.</div>
+          <div class="gs-hint">${t("gameSettings.game.finalMinPointsHint")}</div>
         </div>
         <div class="setting-item" id="gsFinalTargetField" style="display:${hasFinal ? "block" : "none"}">
-          <div class="lbl2">Cel finału (pkt)</div>
+          <div class="lbl2">${t("gameSettings.game.finalTarget")}</div>
           <input class="inp" id="gsFinalTarget" type="number" min="50" max="999" value="${adv.finalTarget}" style="margin-top:6px;max-width:160px"/>
         </div>
       </div>
       <div class="sectionBlock">
-        <div class="sectionTitle">Ekran końcowy</div>
+        <div class="sectionTitle">${t("gameSettings.game.endScreenSection")}</div>
         <div class="setting-item">
-          <div class="lbl2">Tryb ekranu po zakończeniu</div>
+          <div class="lbl2">${t("gameSettings.game.endModeLabel")}</div>
           <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
             <label style="display:flex;gap:8px;align-items:center;cursor:pointer">
-              <input type="radio" name="gsEndMode" value="logo" ${endMode === "logo" ? "checked" : ""}/>Logo
+              <input type="radio" name="gsEndMode" value="logo" ${endMode === "logo" ? "checked" : ""}/>${t("gameSettings.game.endModeLogoShort")}
             </label>
             <label style="display:flex;gap:8px;align-items:center;cursor:pointer">
-              <input type="radio" name="gsEndMode" value="points" ${endMode === "points" ? "checked" : ""}/>Punkty
+              <input type="radio" name="gsEndMode" value="points" ${endMode === "points" ? "checked" : ""}/>${t("gameSettings.game.endModePointsShort")}
             </label>
             <label style="display:${hasFinal ? "flex" : "none"};gap:8px;align-items:center;cursor:pointer" id="gsEndModeMoneyLabel">
-              <input type="radio" name="gsEndMode" value="money" ${endMode === "money" ? "checked" : ""}/>Kwota nagrody
+              <input type="radio" name="gsEndMode" value="money" ${endMode === "money" ? "checked" : ""}/>${t("gameSettings.game.endModeMoneyShort")}
             </label>
           </div>
         </div>
         <div class="setting-item" id="gsPrizeSettingsRow" style="display:${hasFinal && endMode === "money" ? "grid" : "none"};grid-template-columns:1fr 1fr;gap:14px">
           <div>
-            <div class="lbl2">Kwota główna nagrody</div>
+            <div class="lbl2">${t("gameSettings.game.prizeAmount")}</div>
             <input class="inp" id="gsMainPrize" type="number" min="1" max="99999" value="${adv.mainPrizeAmount}" style="margin-top:6px"/>
           </div>
           <div>
-            <div class="lbl2">Mnożnik nagrody (po finale)</div>
+            <div class="lbl2">${t("gameSettings.game.prizeMultiplier")}</div>
             <input class="inp" id="gsPrizeMultiplier" type="number" min="1" max="10" value="${adv.finalPrizeMultiplier}" style="margin-top:6px"/>
           </div>
         </div>
@@ -937,12 +940,12 @@ async function main() {
     .single();
 
   if (gameErr || !game) {
-    if (content) content.innerHTML = `<p style="color:red;padding:20px">Nie można załadować gry: ${escText(gameErr?.message || "nieznany błąd")}</p>`;
+    if (content) content.innerHTML = `<p style="color:red;padding:20px">${escText(t("gameSettings.loadError"))}${escText(gameErr?.message || t("gameSettings.unknownError"))}</p>`;
     return;
   }
 
   if (titleEl) titleEl.textContent = game.name || "—";
-  document.title = `${game.name || "Gra"} — Ustawienia rozgrywki`;
+  document.title = `${game.name || t("gameSettings.defaultGameName")} — ${t("gameSettings.pageTitle")}`;
 
   localSettings = mergeSettings(game.settings);
 
@@ -987,7 +990,7 @@ async function main() {
   // Back button
   btnBack?.addEventListener("click", async () => {
     if (isDirty && !await confirmModal({ text: t("gameSettings.unsavedConfirm") || "Masz niezapisane zmiany. Czy na pewno chcesz wyjść?" })) return;
-    location.href = `/builder?id=${gameId}`;
+    location.href = `/builder`;
   });
 
   initColorModal();
@@ -1040,9 +1043,13 @@ async function main() {
   legalOverlay?.addEventListener("click", (ev) => { if (ev.target === legalOverlay) legalOverlay.classList.add("hidden"); });
 
   setActiveCat("teams");
+
+  window.addEventListener("i18n:lang", () => {
+    renderCat(activeCat);
+  });
 }
 
 main().catch(err => {
   console.error("[game-settings]", err);
-  if (content) content.innerHTML = `<p style="color:red;padding:20px">Błąd: ${escText(String(err?.message || err))}</p>`;
+  if (content) content.innerHTML = `<p style="color:red;padding:20px">${escText(t("gameSettings.errorPrefix"))}${escText(String(err?.message || err))}</p>`;
 });

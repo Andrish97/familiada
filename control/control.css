@@ -312,9 +312,9 @@
     display: grid;
     grid-template-columns: 64px 1fr;
     align-items: center;
-    height: 56px;
+    height: 40px;
     background: rgba(0,0,0,.16);
-    padding: 10px 12px;
+    padding: 6px 12px;
     cursor: grab;
     user-select: none;
     overflow: hidden
@@ -331,6 +331,7 @@
 }
 
 .qRow .txt {
+    font-size: 13px;
     font-weight: 900;
     line-height: 1.15;
     white-space: nowrap;
@@ -2036,6 +2037,9 @@
   min-width: 180px;
 }
 
+.device-row-2 .btn {
+  font-size: 14px;
+}
 
 .device-name {
   font-weight: 1000;
