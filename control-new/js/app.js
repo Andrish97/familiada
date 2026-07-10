@@ -820,8 +820,23 @@ async function sendZeroStatesToDevices() {
     return url.toString();
   }
 
+  async function loadIntoDiv(div, url) {
+    if (!div) return;
+    if (div.dataset.loadedUrl === url) return;
+    div.innerHTML = "<p>Ładowanie…</p>";
+    try {
+      const res = await fetch(url);
+      const html = await res.text();
+      const doc = new DOMParser().parseFromString(html, "text/html");
+      div.innerHTML = doc.body.innerHTML;
+      div.dataset.loadedUrl = url;
+    } catch {
+      div.innerHTML = `<p><a href="${url}" target="_blank" rel="noopener">Otwórz w nowej karcie ↗</a></p>`;
+    }
+  }
+
   function openHelpModal() {
-    if (helpFrame) helpFrame.src = buildHelpUrl();
+    loadIntoDiv(helpFrame, buildHelpUrl());
     helpOverlay?.classList.remove("hidden");
   }
 
@@ -830,7 +845,7 @@ async function sendZeroStatesToDevices() {
   }
 
   function openLegalModal() {
-    if (legalFrame) legalFrame.src = buildLegalUrl();
+    loadIntoDiv(legalFrame, buildLegalUrl());
     legalOverlay?.classList.remove("hidden");
   }
 
