@@ -118,13 +118,13 @@ const colorModalDone = document.getElementById("gsColorModalDone");
 function markDirty() {
   isDirty = true;
   unsavedBadge?.classList.remove("hidden");
-  document.getElementById("gsFooter")?.classList.remove("hidden");
+  document.getElementById("gsFooterMsg")?.classList.remove("hidden");
 }
 
 function clearDirty() {
   isDirty = false;
   unsavedBadge?.classList.add("hidden");
-  document.getElementById("gsFooter")?.classList.add("hidden");
+  document.getElementById("gsFooterMsg")?.classList.add("hidden");
 }
 
 async function saveAll() {

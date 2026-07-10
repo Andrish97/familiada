@@ -39,8 +39,6 @@
     <div class="topbar-section topbar-section-4">
       <span class="who" id="whoStatic">—</span>
       <button class="btn" id="btnLogout" type="button" data-i18n="common.authEntry">Zaloguj / Załóż konto</button>
-      <button class="btn" id="btnResetAll" type="button" data-i18n="gameSettings.resetAll">Przywróć domyślne</button>
-      <button class="btn gold" id="btnSaveAll" type="button" data-i18n="gameSettings.saveAll">Zapisz wszystko</button>
     </div>
   </header>
 
@@ -79,8 +77,11 @@
       <!-- rendered by JS -->
     </main>
 
-    <footer class="gs-footer hidden" id="gsFooter">
-      <span class="gs-footer-msg" data-i18n="gameSettings.unsaved">Niezapisane zmiany</span>
+    <footer class="gs-footer" id="gsFooter">
+      <span class="gs-footer-msg hidden" id="gsFooterMsg" data-i18n="gameSettings.unsaved">Niezapisane zmiany</span>
+      <div style="flex:1"></div>
+      <button class="btn" id="btnResetAll" type="button" data-i18n="gameSettings.resetAll">Przywróć domyślne</button>
+      <button class="btn gold" id="btnSaveAll" type="button" data-i18n="gameSettings.saveAll">Zapisz wszystko</button>
     </footer>
   </div>
 
