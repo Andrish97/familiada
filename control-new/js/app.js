@@ -1045,10 +1045,32 @@ async function sendZeroStatesToDevices() {
       } catch {}
     }
 
+    // Losowanie pytań (jeśli tryb losowy i jeszcze nie wylosowano)
+    if (store.state.hasFinal === true && store.state.finalQuestionsMode === "random"
+        && (!store.state.final?.confirmed || (store.state.final?.picked || []).length !== 5)) {
+      try {
+        const cached = sessionStorage.getItem("familiada:questionsCache");
+        let all = [];
+        try { all = cached ? JSON.parse(cached) : []; } catch {}
+        const roundsPool = store.state.rounds?._questionPool || [];
+        const usedIds = new Set(roundsPool.map(q => String(q.id)));
+        const pool = all.filter(q => !usedIds.has(String(q.id)));
+        const shuffled = pool.slice();
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        const ids = shuffled.slice(0, 5).map(q => q.id).filter(Boolean);
+        if (ids.length === 5) store.confirmFinalQuestions(ids);
+      } catch {}
+    }
+
+    await rounds.prePickForSummary().catch(() => {});
+
     // Inicjalizacja urządzeń: wyślij kolory, motyw, logo, nazwy drużyn
     if (devices) {
-      const teamA = store.state.teams?.teamA || "";
-      const teamB = store.state.teams?.teamB || "";
+      const teamA = store.state.teams?.teamA || t("gameSettings.teams.defaultA") || "Drużyna A";
+      const teamB = store.state.teams?.teamB || t("gameSettings.teams.defaultB") || "Drużyna B";
       const q = (s) => `"${String(s ?? "").replace(/"/g, "'")}"`;
       await devices.sendDisplayCmd("APP GAME").catch(() => {});
       await devices.sendBuzzerCmd("ON").catch(() => {});
@@ -1068,25 +1090,36 @@ async function sendZeroStatesToDevices() {
 
   function renderSetupFinishSummary() {
     const s = store.state;
+    const defaultA = t("gameSettings.teams.defaultA") || "Drużyna A";
+    const defaultB = t("gameSettings.teams.defaultB") || "Drużyna B";
+    const teamA = s.teams?.teamA || defaultA;
+    const teamB = s.teams?.teamB || defaultB;
 
     // Drużyny
     const teamsEl = document.getElementById("summaryTeams");
-    if (teamsEl) teamsEl.textContent = `${s.teams.teamA || "—"} vs ${s.teams.teamB || "—"}`;
+    if (teamsEl) teamsEl.textContent = `${teamA} vs ${teamB}`;
 
-    // Wygląd
+    // Wygląd — kolory z nazwami drużyn
     const colorDotsEl = document.getElementById("summaryColorDots");
     if (colorDotsEl) {
       const c = s.display.colors;
-      const labels = { A: "A", B: "B", BACKGROUND: t("control.colorBg") || "Tło", DOT: t("control.colorDot") || "Kropki" };
+      const labels = {
+        A: teamA,
+        B: teamB,
+        BACKGROUND: t("control.colorBg") || "Tło",
+        DOT: t("control.colorDot") || "Kropki",
+      };
       colorDotsEl.innerHTML = ["A", "B", "BACKGROUND", "DOT"].map(k =>
-        `<span class="summaryColorDotItem"><span class="summaryColorDot" style="background:${c[k]}"></span><span class="summaryColorDotLabel">${labels[k]}</span></span>`
+        `<span class="summaryColorDotItem"><span class="summaryColorDot" style="background:${c[k]}"></span><span class="summaryColorDotLabel">${escapeHtml(labels[k])}</span></span>`
       ).join("");
     }
 
+    // Motyw — "Klasyczny" gdy null/brak (domyślny)
     const themeNameEl = document.getElementById("summaryThemeName");
     if (themeNameEl) {
-      const th = themeList.find(th => th.key === s.display.theme);
-      themeNameEl.textContent = th?.label || s.display.theme || "—";
+      const effectiveTheme = s.display.theme || "classic";
+      const th = themeList.find(th => th.key === effectiveTheme);
+      themeNameEl.textContent = th?.label || effectiveTheme;
     }
 
     const logoTileEl = document.getElementById("summaryLogoTile");
@@ -1118,7 +1151,7 @@ async function sendZeroStatesToDevices() {
     const finalSection = document.getElementById("summaryFinalSection");
     if (finalSection) finalSection.style.display = s.hasFinal ? "" : "none";
 
-    // Pytania finału
+    // Pytania finału — pokaż wylosowane (lub picked)
     const finalQEl = document.getElementById("summaryFinalQuestions");
     if (finalQEl) {
       if (!s.hasFinal) {
@@ -1132,23 +1165,24 @@ async function sendZeroStatesToDevices() {
           const q = all.find(x => x.id === id);
           return q ? `<li>${escapeHtml((q.text || "").slice(0, 60))}</li>` : "";
         }).filter(Boolean);
-        if (items.length) {
-          finalQEl.innerHTML = items.join("");
-        } else {
-          finalQEl.innerHTML = `<li class="summaryQRandom">${s.finalQuestionsMode === "random" ? t("control.summaryQWillRandom") : t("control.summaryQNone")}</li>`;
-        }
+        finalQEl.innerHTML = items.length
+          ? items.join("")
+          : `<li class="summaryQRandom">${t("control.summaryQNone")}</li>`;
       }
     }
 
-    // Pytania rund
+    // Pytania rund — pokaż wylosowane (lub ordered)
     const roundsQEl = document.getElementById("summaryRoundsQuestions");
     if (roundsQEl) {
-      if (s.roundsQuestionsMode === "random") {
-        roundsQEl.innerHTML = `<li class="summaryQRandom">${t("control.summaryQWillRandom")}</li>`;
-      } else {
+      const pool = s.rounds?._questionPool || [];
+      if (pool.length > 0) {
+        roundsQEl.innerHTML = pool.map(q => `<li>${escapeHtml((q.text || "").slice(0, 60))}</li>`).join("");
+      } else if (s.roundsQuestionsMode === "pick") {
         const ordered = s.roundsPicked || [];
         const items = ordered.map(q => `<li>${escapeHtml((q.text || "").slice(0, 60))}</li>`).filter(Boolean);
         roundsQEl.innerHTML = items.length ? items.join("") : `<li class="summaryQRandom">${t("control.summaryQNoOrder")}</li>`;
+      } else {
+        roundsQEl.innerHTML = `<li class="summaryQRandom">${t("control.summaryQWillRandom")}</li>`;
       }
     }
   }

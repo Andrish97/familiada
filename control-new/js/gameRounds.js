@@ -417,6 +417,23 @@ function hostUpdate() {
     }
   }
 
+  // Wywołaj podczas podsumowania (setup_finish) — losuje i zapisuje pulę zawczasu.
+  // Jeśli pula już ustawiona — nic nie robi (brak retasowania).
+  // Zwraca [{id, text}] do wyświetlenia.
+  async function prePickForSummary() {
+    if (store.state.roundsQuestionsMode !== "random") return [];
+    ensureRoundsState();
+    const r = store.state.rounds;
+    if (r._questionPool && r._questionPool.length > 0) {
+      return r._questionPool.map(q => ({ id: q.id, text: q.text }));
+    }
+    const rounds = await pickQuestionsForRounds(store.state.gameId || "");
+    r._questionPool = rounds || [];
+    r._usedQuestionIds = [];
+    store.notify();
+    return r._questionPool.map(q => ({ id: q.id, text: q.text }));
+  }
+
   function pickNextQuestionObj() {
     ensureRoundsState();
     const r = store.state.rounds;
@@ -1616,7 +1633,9 @@ function hostUpdate() {
     revealDone,
 
     gameEndShow,
-    
+
     syncTeamLabels,
+
+    prePickForSummary,
   };
 }
