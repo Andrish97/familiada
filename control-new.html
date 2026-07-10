@@ -438,20 +438,30 @@
                   </div>
 
                   <div class="summarySection">
-                    <div class="summarySectionTitle">Wygląd</div>
-                    <div class="summaryDisplayInfo" id="summaryDisplay">
-                      <div class="summaryDisplayRow">
-                        <span class="summaryDisplayLabel">Kolory:</span>
-                        <span id="summaryColorDots"></span>
+                    <div class="summarySectionTitle" data-i18n="control.summaryDisplay">Wygląd</div>
+                    <div class="summaryDisplayGrid">
+                      <div class="summaryTeamsRow">
+                        <div class="summaryTeamCard">
+                          <div class="summaryTeamSwatch" id="summarySwatchA"></div>
+                          <div class="summaryTeamCardName" id="summaryTeamNameA">—</div>
+                        </div>
+                        <div class="summaryTeamCard">
+                          <div class="summaryTeamSwatch" id="summarySwatchB"></div>
+                          <div class="summaryTeamCardName" id="summaryTeamNameB">—</div>
+                        </div>
                       </div>
-                      <div class="summaryDisplayRow">
-                        <span class="summaryDisplayLabel">Motyw:</span>
-                        <span id="summaryThemeName">—</span>
+                      <div class="summaryMiniRow">
+                        <span class="summaryMiniColorItem">
+                          <span class="summaryColorDot" id="summaryDotBg"></span>
+                          <span class="summaryColorDotLabel" data-i18n="control.colorBg">Tło</span>
+                        </span>
+                        <span class="summaryMiniColorItem">
+                          <span class="summaryColorDot" id="summaryDotDot"></span>
+                          <span class="summaryColorDotLabel" data-i18n="control.colorDot">Kropki</span>
+                        </span>
+                        <span class="summaryThemeChip" id="summaryThemeName">—</span>
                       </div>
-                      <div class="summaryDisplayRow">
-                        <span class="summaryDisplayLabel">Logo:</span>
-                        <span id="summaryLogoTile"></span>
-                      </div>
+                      <div class="summaryLogoRow" id="summaryLogoTile"></div>
                     </div>
                   </div>
 

@@ -114,6 +114,74 @@
   display: block;
 }
 
+/* ===== NOWY WYGLĄD SEKCJI WYGLĄD ===== */
+.summaryDisplayGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.summaryTeamsRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.summaryTeamCard {
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.15);
+  background: rgba(0,0,0,.18);
+}
+
+.summaryTeamSwatch {
+  height: 30px;
+  width: 100%;
+  transition: background .25s;
+}
+
+.summaryTeamCardName {
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+  padding: 5px 6px;
+  background: rgba(0,0,0,.25);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: .02em;
+}
+
+.summaryMiniRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.summaryMiniColorItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.summaryThemeChip {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 600;
+  opacity: .6;
+  background: rgba(255,255,255,.08);
+  padding: 2px 8px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,.1);
+}
+
+.summaryLogoRow {
+  display: flex;
+  align-items: center;
+}
+
 .summaryQList {
   margin: 0;
   padding: 0 0 0 16px;
