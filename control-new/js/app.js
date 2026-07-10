@@ -1073,20 +1073,15 @@ async function sendZeroStatesToDevices() {
     const teamsEl = document.getElementById("summaryTeams");
     if (teamsEl) teamsEl.textContent = `${s.teams.teamA || "—"} vs ${s.teams.teamB || "—"}`;
 
-    // Wygląd — karty drużyn
-    const c = s.display.colors;
-    const swatchA = document.getElementById("summarySwatchA");
-    const swatchB = document.getElementById("summarySwatchB");
-    const nameA = document.getElementById("summaryTeamNameA");
-    const nameB = document.getElementById("summaryTeamNameB");
-    const dotBg = document.getElementById("summaryDotBg");
-    const dotDot = document.getElementById("summaryDotDot");
-    if (swatchA) swatchA.style.background = c.A;
-    if (swatchB) swatchB.style.background = c.B;
-    if (nameA) nameA.textContent = s.teams?.teamA || t("gameSettings.teams.defaultA") || "Drużyna A";
-    if (nameB) nameB.textContent = s.teams?.teamB || t("gameSettings.teams.defaultB") || "Drużyna B";
-    if (dotBg) dotBg.style.background = c.BACKGROUND;
-    if (dotDot) dotDot.style.background = c.DOT;
+    // Wygląd
+    const colorDotsEl = document.getElementById("summaryColorDots");
+    if (colorDotsEl) {
+      const c = s.display.colors;
+      const labels = { A: "A", B: "B", BACKGROUND: t("control.colorBg") || "Tło", DOT: t("control.colorDot") || "Kropki" };
+      colorDotsEl.innerHTML = ["A", "B", "BACKGROUND", "DOT"].map(k =>
+        `<span class="summaryColorDotItem"><span class="summaryColorDot" style="background:${c[k]}"></span><span class="summaryColorDotLabel">${labels[k]}</span></span>`
+      ).join("");
+    }
 
     const themeNameEl = document.getElementById("summaryThemeName");
     if (themeNameEl) {
