@@ -89,7 +89,6 @@ let _loadedLogos = [];
 // Display preview iframe
 let _displayIframe = null;
 let _displayReady = false;
-let _displayKey = "";
 
 // Color modal state — labels populated lazily from t()
 let colorModalTarget = null;
@@ -389,9 +388,7 @@ function initDisplayPreview() {
   }
 
   if (!_displayIframe) {
-    const src = gameId && _displayKey
-      ? `/display?id=${encodeURIComponent(gameId)}&key=${encodeURIComponent(_displayKey)}`
-      : "/display";
+    const src = "/display";
     _displayIframe = document.createElement("iframe");
     _displayIframe.id = "gsDisplayPreview";
     _displayIframe.src = src;
@@ -1067,7 +1064,7 @@ async function main() {
   // Load game + saved settings
   const { data: game, error: gameErr } = await sb()
     .from("games")
-    .select("id,name,settings,share_key_display")
+    .select("id,name,settings")
     .eq("id", gameId)
     .single();
 
@@ -1076,7 +1073,6 @@ async function main() {
     return;
   }
 
-  _displayKey = game.share_key_display || "";
   if (titleEl) titleEl.textContent = game.name || "—";
   document.title = `${game.name || t("gameSettings.defaultGameName")} — ${t("gameSettings.pageTitle")}`;
 
