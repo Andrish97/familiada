@@ -5287,7 +5287,7 @@ const uk = {
   },
   gameSettings: {
     title: "Налаштування гри",
-    back: "← Builder",
+    back: "← Мої ігри",
     saveAll: "Зберегти все",
     resetAll: "Відновити типові",
     resetAllConfirm: "Відновити типові налаштування? Незбережені зміни буде втрачено.",

@@ -5302,7 +5302,7 @@ const pl = {
   },
   gameSettings: {
     title: "Ustawienia gry",
-    back: "← Builder",
+    back: "← Moje gry",
     saveAll: "Zapisz wszystko",
     resetAll: "Przywróć domyślne",
     resetAllConfirm: "Przywrócić ustawienia domyślne? Niezapisane zmiany zostaną utracone.",

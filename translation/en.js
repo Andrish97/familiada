@@ -5300,7 +5300,7 @@ const en = {
   },
   gameSettings: {
     title: "Game Settings",
-    back: "← Builder",
+    back: "← My games",
     saveAll: "Save all",
     resetAll: "Restore defaults",
     resetAllConfirm: "Restore default settings? Unsaved changes will be lost.",
