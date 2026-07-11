@@ -90,6 +90,8 @@ let _loadedLogos = [];
 let _displayIframe = null;
 let _displayReady = false;
 let _displayResizeObserver = null;
+let _positionRAF = null;
+let _lastHolderRect = null;
 
 // Color modal state — labels populated lazily from t()
 let colorModalTarget = null;
@@ -292,6 +294,8 @@ function escText(s) {
 }
 
 function parkDisplayIframe() {
+  if (_positionRAF) { cancelAnimationFrame(_positionRAF); _positionRAF = null; }
+  _lastHolderRect = null;
   const holder = document.getElementById("gsDisplayIframeHolder");
   if (holder) holder.style.cssText = "display:none";
 }
@@ -301,8 +305,21 @@ function positionDisplayIframe() {
   const container = document.getElementById("gsDisplayPreviewContainer");
   if (!holder || !container) return;
   const r = container.getBoundingClientRect();
-  // position:fixed z-index poniżej topbara (10) — nie nakłada się na pasek
+  // Aktualizuj style tylko jeśli pozycja/rozmiar się zmieniły
+  const lr = _lastHolderRect;
+  if (lr && lr.left === r.left && lr.top === r.top && lr.width === r.width && lr.height === r.height) return;
+  _lastHolderRect = { left: r.left, top: r.top, width: r.width, height: r.height };
   holder.style.cssText = `display:block;position:fixed;left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px;overflow:hidden;border-radius:10px;z-index:2`;
+}
+
+function startPositionLoop() {
+  if (_positionRAF) return;
+  const tick = () => {
+    if (activeCat !== "display") { _positionRAF = null; return; }
+    positionDisplayIframe();
+    _positionRAF = requestAnimationFrame(tick);
+  };
+  _positionRAF = requestAnimationFrame(tick);
 }
 
 // ===== RENDER CATEGORIES =====
@@ -452,24 +469,11 @@ function initDisplayPreview() {
     sendDisplayInitCmds();
   }
   // Jeśli jeszcze nie gotowy — load listener w createDisplayIframe wywoła sendDisplayInitCmds
-
-  // Śledź pozycję placeholdera przy resize/scroll
-  const container = document.getElementById("gsDisplayPreviewContainer");
-  if (container) {
-    if (_displayResizeObserver) _displayResizeObserver.disconnect();
-    _displayResizeObserver = new ResizeObserver(() => {
-      if (activeCat === "display") positionDisplayIframe();
-    });
-    _displayResizeObserver.observe(container);
-  }
+  startPositionLoop(); // rAF loop trzyma holder nad placeholderem co klatkę
 }
 
 function stopDisplayPreview() {
-  if (_displayResizeObserver) {
-    _displayResizeObserver.disconnect();
-    _displayResizeObserver = null;
-  }
-  parkDisplayIframe();
+  parkDisplayIframe(); // zatrzymuje też rAF loop
 }
 
 function renderDisplay() {
@@ -1237,18 +1241,6 @@ async function main() {
 
   // Create display preview iframe early (loads in background while user is on other tabs)
   createDisplayIframe();
-
-  // Trzymaj holder nad placeholderem przy scroll wewnątrz panelu i resize okna
-  // RAF throttling — max raz na klatkę, bez feedback loop
-  let _rafPending = false;
-  const onLayoutChange = () => {
-    if (activeCat !== "display" || _rafPending) return;
-    _rafPending = true;
-    requestAnimationFrame(() => { _rafPending = false; positionDisplayIframe(); });
-  };
-  window.addEventListener("resize", onLayoutChange, { passive: true });
-  const gsContent = document.getElementById("gsContent");
-  gsContent?.addEventListener("scroll", onLayoutChange, { passive: true });
 
   setActiveCat("teams");
 
