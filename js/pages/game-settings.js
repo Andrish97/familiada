@@ -323,10 +323,14 @@ function renderTeams() {
   document.getElementById("gsTeamA")?.addEventListener("input", e => {
     localSettings.teams.teamA = e.target.value;
     markDirty();
+    const q = (s) => `"${String(s ?? "").replace(/"/g, "'")}"`;
+    sendDisplayCmd(`LONG1 ${q(e.target.value || t("gameSettings.teams.defaultA"))}`);
   });
   document.getElementById("gsTeamB")?.addEventListener("input", e => {
     localSettings.teams.teamB = e.target.value;
     markDirty();
+    const q = (s) => `"${String(s ?? "").replace(/"/g, "'")}"`;
+    sendDisplayCmd(`LONG2 ${q(e.target.value || t("gameSettings.teams.defaultB"))}`);
   });
 }
 
@@ -380,41 +384,47 @@ function initDisplayPreview() {
   const container = document.getElementById("gsDisplayPreviewContainer");
   if (!container) return;
 
-  if (_displayIframe && _displayReady) {
-    // Re-attach existing loaded iframe — no reload, just re-send state
+  // Check if the iframe content is still alive
+  const isAlive = (() => {
+    try { return !!_displayIframe?.contentWindow?.handleCommand; } catch { return false; }
+  })();
+
+  if (isAlive) {
     container.appendChild(_displayIframe);
     sendDisplayInitCmds();
     return;
   }
 
+  // Create once or reload if content was destroyed (e.g. parent innerHTML was replaced)
   if (!_displayIframe) {
-    const src = "/display";
     _displayIframe = document.createElement("iframe");
     _displayIframe.id = "gsDisplayPreview";
-    _displayIframe.src = src;
     _displayIframe.style.cssText = "width:100%;height:100%;border:none;display:block";
     _displayIframe.title = "Display preview";
-    _displayReady = false;
-
-    _displayIframe.addEventListener("load", () => {
-      let attempts = 0;
-      const poll = setInterval(() => {
-        attempts++;
-        try {
-          if (_displayIframe?.contentWindow?.handleCommand) {
-            clearInterval(poll);
-            _displayReady = true;
-            sendDisplayInitCmds();
-          } else if (attempts >= 30) {
-            clearInterval(poll);
-          }
-        } catch {
-          clearInterval(poll);
-        }
-      }, 100);
-    }, { once: true });
   }
 
+  _displayReady = false;
+
+  const startPoll = () => {
+    let attempts = 0;
+    const poll = setInterval(() => {
+      attempts++;
+      try {
+        if (_displayIframe?.contentWindow?.handleCommand) {
+          clearInterval(poll);
+          _displayReady = true;
+          sendDisplayInitCmds();
+        } else if (attempts >= 30) {
+          clearInterval(poll);
+        }
+      } catch {
+        clearInterval(poll);
+      }
+    }, 100);
+  };
+
+  _displayIframe.addEventListener("load", startPoll, { once: true });
+  _displayIframe.src = "/display"; // (re)load — triggers new load event
   container.appendChild(_displayIframe);
 }
 
