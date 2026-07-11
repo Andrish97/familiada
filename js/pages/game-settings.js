@@ -89,6 +89,7 @@ let _loadedLogos = [];
 // Display preview iframe
 let _displayIframe = null;
 let _displayReady = false;
+let _displayKey = "";
 
 // Color modal state — labels populated lazily from t()
 let colorModalTarget = null;
@@ -377,36 +378,47 @@ function sendDisplayInitCmds() {
 }
 
 function initDisplayPreview() {
-  const existing = document.getElementById("gsDisplayPreview");
-  if (!existing) return;
+  const container = document.getElementById("gsDisplayPreviewContainer");
+  if (!container) return;
 
-  if (_displayIframe && _displayReady && _displayIframe === existing) {
-    // Already initialized — just re-send state
+  if (_displayIframe && _displayReady) {
+    // Re-attach existing loaded iframe — no reload, just re-send state
+    container.appendChild(_displayIframe);
     sendDisplayInitCmds();
     return;
   }
 
-  _displayIframe = existing;
-  _displayReady = false;
+  if (!_displayIframe) {
+    const src = gameId && _displayKey
+      ? `/display?id=${encodeURIComponent(gameId)}&key=${encodeURIComponent(_displayKey)}`
+      : "/display";
+    _displayIframe = document.createElement("iframe");
+    _displayIframe.id = "gsDisplayPreview";
+    _displayIframe.src = src;
+    _displayIframe.style.cssText = "width:100%;height:100%;border:none;display:block";
+    _displayIframe.title = "Display preview";
+    _displayReady = false;
 
-  _displayIframe.addEventListener("load", () => {
-    // Poll until handleCommand is available (display init is async)
-    let attempts = 0;
-    const poll = setInterval(() => {
-      attempts++;
-      try {
-        if (_displayIframe?.contentWindow?.handleCommand) {
-          clearInterval(poll);
-          _displayReady = true;
-          sendDisplayInitCmds();
-        } else if (attempts >= 30) {
+    _displayIframe.addEventListener("load", () => {
+      let attempts = 0;
+      const poll = setInterval(() => {
+        attempts++;
+        try {
+          if (_displayIframe?.contentWindow?.handleCommand) {
+            clearInterval(poll);
+            _displayReady = true;
+            sendDisplayInitCmds();
+          } else if (attempts >= 30) {
+            clearInterval(poll);
+          }
+        } catch {
           clearInterval(poll);
         }
-      } catch {
-        clearInterval(poll);
-      }
-    }, 100);
-  }, { once: true });
+      }, 100);
+    }, { once: true });
+  }
+
+  container.appendChild(_displayIframe);
 }
 
 function renderDisplay() {
@@ -424,6 +436,9 @@ function renderDisplay() {
     `<option value="${escAttr(th.key)}" ${effectiveTheme === th.key ? "selected" : ""}>${escText(th.label)}</option>`
   ).join("");
 
+  // Detach iframe before wiping innerHTML — re-attached by initDisplayPreview()
+  if (_displayIframe?.isConnected) _displayIframe.remove();
+
   content.innerHTML = `
     <div class="gs-cat-title">${t("gameSettings.categories.display")}</div>
     <div class="gs-section">
@@ -440,14 +455,7 @@ function renderDisplay() {
       <div class="gs-label">${t("gameSettings.display.logo")}</div>
       <div id="gsLogoGrid" class="gs-logo-grid"></div>
     </div>
-    <div class="display-preview">
-      <iframe
-        id="gsDisplayPreview"
-        src="/display"
-        style="width:100%;height:100%;border:none;display:block"
-        title="Display preview"
-      ></iframe>
-    </div>
+    <div class="display-preview" id="gsDisplayPreviewContainer"></div>
   `;
 
   content.querySelectorAll(".swatchBtn").forEach(btn => {
@@ -1059,7 +1067,7 @@ async function main() {
   // Load game + saved settings
   const { data: game, error: gameErr } = await sb()
     .from("games")
-    .select("id,name,settings")
+    .select("id,name,settings,share_key_display")
     .eq("id", gameId)
     .single();
 
@@ -1068,6 +1076,7 @@ async function main() {
     return;
   }
 
+  _displayKey = game.share_key_display || "";
   if (titleEl) titleEl.textContent = game.name || "—";
   document.title = `${game.name || t("gameSettings.defaultGameName")} — ${t("gameSettings.pageTitle")}`;
 
