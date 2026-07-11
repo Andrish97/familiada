@@ -79,6 +79,7 @@ function mergeSettings(saved) {
 let localSettings = mergeSettings(null);
 let isDirty = false;
 let activeCat = "teams";
+let themeRaw = [];
 let themeList = [];
 let allQuestions = [];
 let _logoFont = null;
@@ -953,12 +954,17 @@ async function main() {
   try {
     const res = await fetch("/display/js/themes.json");
     const json = await res.json();
-    const lang = document.documentElement.lang || "pl";
-    themeList = (json.themes || []).map(e => ({
+    themeRaw = json.themes || [];
+    resolveThemeLabels();
+  } catch {}
+
+  function resolveThemeLabels() {
+    const lang = getUiLang() || "pl";
+    themeList = themeRaw.map(e => ({
       key: e.key,
       label: typeof e.label === "object" ? (e.label[lang] ?? e.label["pl"] ?? e.key) : (e.label || e.key),
     }));
-  } catch {}
+  }
 
   // Load all questions for pickers
   try {
@@ -1045,6 +1051,7 @@ async function main() {
   setActiveCat("teams");
 
   window.addEventListener("i18n:lang", () => {
+    resolveThemeLabels();
     renderCat(activeCat);
   });
 }
