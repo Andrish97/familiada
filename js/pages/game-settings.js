@@ -728,7 +728,7 @@ function renderRounds() {
   const listEl = document.getElementById("gsRoundsOrderList");
   if (!listEl) return;
 
-  // Przyciski ↑↓
+  // Przyciski ↑↓ — operujemy na przefiltrowanej liście (bez finałowych)
   listEl.addEventListener("click", e => {
     const btn = e.target.closest(".roundsOrderBtn");
     if (!btn) return;
@@ -736,9 +736,10 @@ function renderRounds() {
     if (!item) return;
     const id = item.dataset.qid;
     const dir = btn.dataset.dir;
-    const idx = localSettings.questions.rounds.findIndex(q => q.id === id);
+    const finaleSet = new Set(localSettings.questions.final.map(q => q.id));
+    const arr = localSettings.questions.rounds.filter(q => !finaleSet.has(q.id));
+    const idx = arr.findIndex(q => q.id === id);
     if (idx < 0) return;
-    const arr = [...localSettings.questions.rounds];
     const newIdx = dir === "up" ? idx - 1 : idx + 1;
     if (newIdx < 0 || newIdx >= arr.length) return;
     [arr[idx], arr[newIdx]] = [arr[newIdx], arr[idx]];
@@ -763,11 +764,13 @@ function setupRoundsOrderDnd(listEl) {
     item.addEventListener("dragend", () => {
       if (dragged) dragged.classList.remove("dragging");
       listEl.querySelectorAll(".roundsOrderItem").forEach(el => el.classList.remove("gs-row-drag-over-top", "gs-row-drag-over-bot"));
-      // Zapisz nową kolejność z DOM
+      // Zapisz nową kolejność z DOM (tylko widoczne, bez finalowych)
+      const finaleSet = new Set(localSettings.questions.final.map(q => q.id));
       const newOrder = [...listEl.querySelectorAll(".roundsOrderItem")]
         .map(el => localSettings.questions.rounds.find(q => q.id === el.dataset.qid))
         .filter(Boolean);
-      localSettings.questions.rounds = newOrder;
+      // Zachowaj w rounds tylko pytania nie-finalowe, w nowej kolejności
+      localSettings.questions.rounds = newOrder.filter(q => !finaleSet.has(q.id));
       markDirty();
       dragged = null;
       renderRounds();
@@ -974,6 +977,14 @@ async function main() {
   document.title = `${game.name || t("gameSettings.defaultGameName")} — ${t("gameSettings.pageTitle")}`;
 
   localSettings = mergeSettings(game.settings);
+
+  // Cleanup: usuń pytania finałowe z rounds (mogły tam trafić przed wdrożeniem tej logiki)
+  {
+    const finalSet = new Set(localSettings.questions.final.map(q => q.id));
+    if (finalSet.size > 0) {
+      localSettings.questions.rounds = localSettings.questions.rounds.filter(q => !finalSet.has(q.id));
+    }
+  }
 
   // Load themes list
   try {
