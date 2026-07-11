@@ -423,7 +423,6 @@ function renderDisplay() {
           src="/display"
           style="width:100%;height:100%;border:none;display:block"
           title="Display preview"
-          sandbox="allow-scripts allow-same-origin"
         ></iframe>
       </div>
     </div>
