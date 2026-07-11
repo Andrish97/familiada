@@ -339,6 +339,22 @@ function sendDisplayCmd(cmd) {
   } catch {}
 }
 
+function previewLogo(id) {
+  try {
+    const logoApi = _displayIframe?.contentWindow?.scene?.api?.logo;
+    if (!logoApi) return;
+    if (!logoApi._origGetSource) logoApi._origGetSource = logoApi._getSource;
+    if (id === null) {
+      logoApi._getSource = logoApi._origGetSource;
+    } else {
+      const logo = _loadedLogos.find(l => l.id === id);
+      if (!logo) return;
+      logoApi._getSource = () => ({ type: logo.type, payload: logo.payload });
+    }
+    logoApi.draw();
+  } catch {}
+}
+
 function sendDisplayInitCmds() {
   const c = localSettings.display.colors;
   const q = (s) => `"${String(s ?? "").replace(/"/g, "'")}"`;
@@ -501,7 +517,7 @@ async function renderLogoGrid() {
       markDirty();
       grid.querySelectorAll(".gs-logo-tile").forEach(t => t.classList.remove("selected"));
       tile.classList.add("selected");
-      sendDisplayCmd("LOGO DRAW");
+      previewLogo(id);
     });
   });
 }
