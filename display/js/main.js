@@ -113,6 +113,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     await scene.api.logo.bindGame?.(app.gameId);
 
   } catch (e) {
-    showBlack(e?.message || String(e));
+    const msg = e?.message || String(e);
+    showBlack(/Brak id lub key/i.test(msg) ? null : msg);
   }
 });

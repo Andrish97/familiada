@@ -62,6 +62,13 @@
     </div>
   </div>
 
+  <footer class="gs-footer" id="gsFooter">
+    <span class="gs-footer-msg hidden" id="gsFooterMsg" data-i18n="gameSettings.unsaved">Niezapisane zmiany</span>
+    <div style="flex:1"></div>
+    <button class="btn" id="btnResetAll" type="button" data-i18n="gameSettings.resetAll">Przywróć domyślne</button>
+    <button class="btn gold" id="btnSaveAll" type="button" data-i18n="gameSettings.saveAll">Zapisz wszystko</button>
+  </footer>
+
   <div class="gs-layout">
     <nav class="gs-sidebar" id="gsSidebar">
       <button class="gs-sidebar-item active" data-cat="teams"     type="button" data-i18n="gameSettings.categories.teams">Drużyny</button>
@@ -78,12 +85,10 @@
       <div id="gsDisplayIframeHolder" class="display-preview" style="display:none"></div>
     </main>
 
-    <footer class="gs-footer" id="gsFooter">
-      <span class="gs-footer-msg hidden" id="gsFooterMsg" data-i18n="gameSettings.unsaved">Niezapisane zmiany</span>
-      <div style="flex:1"></div>
-      <button class="btn" id="btnResetAll" type="button" data-i18n="gameSettings.resetAll">Przywróć domyślne</button>
-      <button class="btn gold" id="btnSaveAll" type="button" data-i18n="gameSettings.saveAll">Zapisz wszystko</button>
-    </footer>
+    <div class="footer gs-page-footer">
+      <div data-i18n="common.footer.left">© 2026 Familiada — system do gry na żywo</div>
+      <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
+    </div>
   </div>
 
 <div class="colorModalOverlay hidden" id="gsColorModal">
