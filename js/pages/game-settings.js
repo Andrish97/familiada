@@ -302,16 +302,15 @@ function positionDisplayIframe() {
   const holder = document.getElementById("gsDisplayIframeHolder");
   const container = document.getElementById("gsDisplayPreviewContainer");
   if (!holder || !container) return;
-  // Pozycja absolutna względem gs-layout (position:relative w CSS)
-  // Musimy odjąć offset gs-layout i dodać scroll gsContent
+  // Pozycja absolutna względem gs-layout (position:relative w CSS).
+  // getBoundingClientRect() zwraca już widoczną (po scroll) pozycję w viewport.
+  // Dla position:absolute wystarczy odjąć offset kontenera rodzica — BEZ dodawania scrollTop.
   const layout = holder.closest(".gs-layout") || document.querySelector(".gs-layout");
   if (!layout) return;
   const containerRect = container.getBoundingClientRect();
   const layoutRect = layout.getBoundingClientRect();
-  const gsContent = document.getElementById("gsContent");
-  const scrollTop = gsContent?.scrollTop ?? 0;
   const left = containerRect.left - layoutRect.left;
-  const top  = containerRect.top  - layoutRect.top + scrollTop;
+  const top  = containerRect.top  - layoutRect.top;
   holder.style.cssText = `display:block;position:absolute;left:${left}px;top:${top}px;width:${containerRect.width}px;height:${containerRect.height}px;overflow:hidden;border-radius:10px;z-index:10;pointer-events:auto`;
 }
 
