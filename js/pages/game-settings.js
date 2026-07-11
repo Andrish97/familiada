@@ -300,8 +300,8 @@ function parkDisplayIframe() {
 // ===== RENDER CATEGORIES =====
 function renderCat(cat) {
   if (!content) return;
-  // Park display iframe in off-screen holder before any innerHTML replacement
-  if (cat !== "display") parkDisplayIframe();
+  // Zawsze parkuj iframe przed jakimkolwiek innerHTML (w tym re-render tego samego taba)
+  parkDisplayIframe();
   switch (cat) {
     case "teams":     renderTeams();     break;
     case "display":   renderDisplay();   break;
