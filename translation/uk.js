@@ -5296,6 +5296,7 @@ const uk = {
     saved: "Збережено",
     saveError: "Помилка збереження",
     saveErrorPrefix: "Помилка збереження: ",
+    saveErrorFinalNeed5: (v) => `Оберіть 5 фінальних питань (вибрано ${v.count}/5).`,
     loadError: "Не вдалося завантажити гру: ",
     unknownError: "невідома помилка",
     errorPrefix: "Помилка: ",

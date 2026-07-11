@@ -129,6 +129,16 @@ function clearDirty() {
 }
 
 async function saveAll() {
+  // Walidacja: finale w trybie "selected" wymaga dokładnie 5 pytań
+  const hasFinal = localSettings.game.hasFinal !== false;
+  if (hasFinal && localSettings.game.finalQuestionsMode === "selected") {
+    const count = localSettings.questions.final.length;
+    if (count < 5) {
+      alertModal({ text: t("gameSettings.saveErrorFinalNeed5", { count }) });
+      return;
+    }
+  }
+
   if (btnSaveAll) btnSaveAll.disabled = true;
   try {
     const payload = JSON.parse(JSON.stringify(localSettings));
@@ -591,6 +601,8 @@ function renderFinale() {
     const q = allQuestions.find(q => q.id === id);
     if (!q || localSettings.questions.final.some(p => p.id === id)) return;
     localSettings.questions.final = [...localSettings.questions.final, q];
+    // Usuń z listy rund (żeby nie było duplikatu)
+    localSettings.questions.rounds = localSettings.questions.rounds.filter(r => r.id !== id);
     markDirty();
     renderFinale();
   });
@@ -601,7 +613,12 @@ function renderFinale() {
     if (!row) return;
     const id = row.dataset.qid;
     if (!id) return;
+    const q = allQuestions.find(q => q.id === id);
     localSettings.questions.final = localSettings.questions.final.filter(p => p.id !== id);
+    // Przywróć do rund (na końcu) jeśli jeszcze nie ma
+    if (q && !localSettings.questions.rounds.some(r => r.id === id)) {
+      localSettings.questions.rounds = [...localSettings.questions.rounds, q];
+    }
     markDirty();
     renderFinale();
   });
@@ -650,8 +667,13 @@ function setupFinaleColumnDnd(poolEl, pickedEl) {
       const q = allQuestions.find(q => q.id === dragId);
       if (!q || localSettings.questions.final.some(p => p.id === dragId)) return;
       localSettings.questions.final = [...localSettings.questions.final, q];
+      localSettings.questions.rounds = localSettings.questions.rounds.filter(r => r.id !== dragId);
     } else {
+      const q = allQuestions.find(q => q.id === dragId);
       localSettings.questions.final = localSettings.questions.final.filter(p => p.id !== dragId);
+      if (q && !localSettings.questions.rounds.some(r => r.id === dragId)) {
+        localSettings.questions.rounds = [...localSettings.questions.rounds, q];
+      }
     }
     dragId = null; dragSide = null;
     markDirty();
@@ -670,15 +692,22 @@ function setupFinaleColumnDnd(poolEl, pickedEl) {
 
 // --- PYTANIA — RUNDY ---
 function renderRounds() {
-  // Zbuduj pełną listę: najpierw zapisana kolejność, potem brakujące pytania
+  // Pytania finale są wykluczone z rund (tylko w trybie "selected")
+  const finaleMode = localSettings.game.finalQuestionsMode;
+  const hasFinal = localSettings.game.hasFinal !== false;
+  const finaleIds = new Set(
+    (hasFinal && finaleMode === "selected") ? localSettings.questions.final.map(q => q.id) : []
+  );
+
+  // Zbuduj pełną listę: najpierw zapisana kolejność (bez finalowych), potem brakujące
   const pickedIds = new Set(localSettings.questions.rounds.map(q => q.id));
-  const missing = allQuestions.filter(q => !pickedIds.has(q.id));
+  const missing = allQuestions.filter(q => !pickedIds.has(q.id) && !finaleIds.has(q.id));
   if (missing.length > 0) {
     // Uzupełnij bez markDirty — to inicjalizacja domyślna
     localSettings.questions.rounds = [...localSettings.questions.rounds, ...missing];
   }
-
-  const questions = localSettings.questions.rounds;
+  // Przefiltruj rounds — usuń pytania które są teraz w finale
+  const questions = localSettings.questions.rounds.filter(q => !finaleIds.has(q.id));
 
   content.innerHTML = `
     <div class="gs-cat-title">${t("gameSettings.categories.rounds")}</div>

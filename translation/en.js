@@ -5309,6 +5309,7 @@ const en = {
     saved: "Saved",
     saveError: "Save error",
     saveErrorPrefix: "Save error: ",
+    saveErrorFinalNeed5: (v) => `Select 5 finale questions (${v.count}/5 selected).`,
     loadError: "Could not load game: ",
     unknownError: "unknown error",
     errorPrefix: "Error: ",

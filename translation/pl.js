@@ -5311,6 +5311,7 @@ const pl = {
     saved: "Zapisano",
     saveError: "Błąd zapisu",
     saveErrorPrefix: "Błąd zapisu: ",
+    saveErrorFinalNeed5: (v) => `Wybierz 5 pytań finałowych (wybrano ${v.count}/5).`,
     loadError: "Nie można załadować gry: ",
     unknownError: "nieznany błąd",
     errorPrefix: "Błąd: ",
