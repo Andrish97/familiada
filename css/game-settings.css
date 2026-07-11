@@ -156,14 +156,22 @@
   align-items: start;
 }
 
+.gs-display-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+}
+
 .display-preview {
   width: 480px;
-  height: 270px;
+  aspect-ratio: 16 / 9;
+  height: auto;
   border-radius: 10px;
   border: 1px solid rgba(255,255,255,.18);
   background: #050914;
   position: sticky;
-  top: 80px;
+  top: 0;
   overflow: hidden;
   flex-shrink: 0;
 }

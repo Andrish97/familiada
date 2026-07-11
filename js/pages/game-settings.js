@@ -86,6 +86,10 @@ let _logoFont = null;
 let _defaultLogoPayload = null;
 let _loadedLogos = [];
 
+// Display preview iframe
+let _displayIframe = null;
+let _displayReady = false;
+
 // Color modal state — labels populated lazily from t()
 let colorModalTarget = null;
 let colorModalR = 0, colorModalG = 0, colorModalB = 0;
@@ -246,6 +250,7 @@ function applyColorModal() {
   content?.querySelectorAll(`[data-color-key="${colorModalTarget}"]`).forEach(el => {
     el.style.background = hex;
   });
+  sendDisplayCmd(`COLOR ${colorModalTarget} ${hex}`);
   colorModal?.classList.add("hidden");
 }
 
@@ -326,6 +331,58 @@ function renderTeams() {
 }
 
 // --- WYGLĄD ---
+function sendDisplayCmd(cmd) {
+  try {
+    if (_displayIframe?.contentWindow?.handleCommand) {
+      _displayIframe.contentWindow.handleCommand(cmd);
+    }
+  } catch {}
+}
+
+function sendDisplayInitCmds() {
+  const c = localSettings.display.colors;
+  sendDisplayCmd("APP GAME");
+  sendDisplayCmd(`COLOR A ${c.A}`);
+  sendDisplayCmd(`COLOR B ${c.B}`);
+  sendDisplayCmd(`COLOR BACKGROUND ${c.BACKGROUND}`);
+  sendDisplayCmd(`COLOR DOT ${c.DOT}`);
+  const theme = localSettings.display.theme || (themeList[0]?.key ?? "");
+  if (theme) sendDisplayCmd(`THEME ${theme}`);
+}
+
+function initDisplayPreview() {
+  const existing = document.getElementById("gsDisplayPreview");
+  if (!existing) return;
+
+  if (_displayIframe && _displayReady && _displayIframe === existing) {
+    // Already initialized — just re-send state
+    sendDisplayInitCmds();
+    return;
+  }
+
+  _displayIframe = existing;
+  _displayReady = false;
+
+  _displayIframe.addEventListener("load", () => {
+    // Poll until handleCommand is available (display init is async)
+    let attempts = 0;
+    const poll = setInterval(() => {
+      attempts++;
+      try {
+        if (_displayIframe?.contentWindow?.handleCommand) {
+          clearInterval(poll);
+          _displayReady = true;
+          sendDisplayInitCmds();
+        } else if (attempts >= 30) {
+          clearInterval(poll);
+        }
+      } catch {
+        clearInterval(poll);
+      }
+    }, 100);
+  }, { once: true });
+}
+
 function renderDisplay() {
   const c = localSettings.display.colors;
   const colorLabels = getColorLabels();
@@ -343,19 +400,32 @@ function renderDisplay() {
 
   content.innerHTML = `
     <div class="gs-cat-title">${t("gameSettings.categories.display")}</div>
-    <div class="gs-section">
-      <div class="gs-label">${t("gameSettings.display.colors")}</div>
-      <div class="colorRow">${swatches}</div>
-    </div>
-    <div class="gs-section">
-      <div class="gs-label">${t("gameSettings.display.theme")}</div>
-      <select class="inp" id="gsThemeSelect" style="margin-top:8px">
-        ${themeOptions}
-      </select>
-    </div>
-    <div class="gs-section">
-      <div class="gs-label">${t("gameSettings.display.logo")}</div>
-      <div id="gsLogoGrid" class="gs-logo-grid"></div>
+    <div class="gs-display-cols">
+      <div class="gs-display-settings">
+        <div class="gs-section">
+          <div class="gs-label">${t("gameSettings.display.colors")}</div>
+          <div class="colorRow">${swatches}</div>
+        </div>
+        <div class="gs-section">
+          <div class="gs-label">${t("gameSettings.display.theme")}</div>
+          <select class="inp" id="gsThemeSelect" style="margin-top:8px">
+            ${themeOptions}
+          </select>
+        </div>
+        <div class="gs-section">
+          <div class="gs-label">${t("gameSettings.display.logo")}</div>
+          <div id="gsLogoGrid" class="gs-logo-grid"></div>
+        </div>
+      </div>
+      <div class="display-preview">
+        <iframe
+          id="gsDisplayPreview"
+          src="/display"
+          style="width:100%;height:100%;border:none;display:block"
+          title="Display preview"
+          sandbox="allow-scripts allow-same-origin"
+        ></iframe>
+      </div>
     </div>
   `;
 
@@ -368,9 +438,12 @@ function renderDisplay() {
     themeSelect.addEventListener("change", e => {
       localSettings.display.theme = e.target.value || null;
       markDirty();
+      const key = e.target.value || (themeList[0]?.key ?? "");
+      if (key) sendDisplayCmd(`THEME ${key}`);
     });
   }
 
+  initDisplayPreview();
   renderLogoGrid();
 }
 
@@ -423,6 +496,7 @@ async function renderLogoGrid() {
       markDirty();
       grid.querySelectorAll(".gs-logo-tile").forEach(t => t.classList.remove("selected"));
       tile.classList.add("selected");
+      sendDisplayCmd("LOGO RELOAD");
     });
   });
 }
