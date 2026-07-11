@@ -89,9 +89,6 @@ let _loadedLogos = [];
 // Display preview iframe
 let _displayIframe = null;
 let _displayReady = false;
-let _displayResizeObserver = null;
-let _positionRAF = null;
-let _lastHolderRect = null;
 
 // Color modal state — labels populated lazily from t()
 let colorModalTarget = null;
@@ -103,7 +100,7 @@ const unsavedBadge = document.getElementById("gsUnsavedBadge");
 const btnSaveAll = document.getElementById("btnSaveAll");
 const btnResetAll = document.getElementById("btnResetAll");
 const btnBack = document.getElementById("btnBack");
-const content = document.getElementById("gsContent");
+const content = document.getElementById("gsContentInner");
 const sidebar = document.getElementById("gsSidebar");
 const sidebarFinale = document.getElementById("sidebarFinale");
 const sidebarRounds = document.getElementById("sidebarRounds");
@@ -294,32 +291,13 @@ function escText(s) {
 }
 
 function parkDisplayIframe() {
-  if (_positionRAF) { cancelAnimationFrame(_positionRAF); _positionRAF = null; }
-  _lastHolderRect = null;
   const holder = document.getElementById("gsDisplayIframeHolder");
-  if (holder) holder.style.cssText = "display:none";
+  if (holder) holder.style.display = "none";
 }
 
-function positionDisplayIframe() {
+function showDisplayIframe() {
   const holder = document.getElementById("gsDisplayIframeHolder");
-  const container = document.getElementById("gsDisplayPreviewContainer");
-  if (!holder || !container) return;
-  const r = container.getBoundingClientRect();
-  // Aktualizuj style tylko jeśli pozycja/rozmiar się zmieniły
-  const lr = _lastHolderRect;
-  if (lr && lr.left === r.left && lr.top === r.top && lr.width === r.width && lr.height === r.height) return;
-  _lastHolderRect = { left: r.left, top: r.top, width: r.width, height: r.height };
-  holder.style.cssText = `display:block;position:fixed;left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px;overflow:hidden;border-radius:10px;z-index:2`;
-}
-
-function startPositionLoop() {
-  if (_positionRAF) return;
-  const tick = () => {
-    if (activeCat !== "display") { _positionRAF = null; return; }
-    positionDisplayIframe();
-    _positionRAF = requestAnimationFrame(tick);
-  };
-  _positionRAF = requestAnimationFrame(tick);
+  if (holder) holder.style.display = "";
 }
 
 // ===== RENDER CATEGORIES =====
@@ -462,18 +440,8 @@ function createDisplayIframe() {
   holder.appendChild(_displayIframe);
 }
 
-function initDisplayPreview() {
-  // Iframe nigdy nie jest przenoszony w DOM — tylko pozycjonujemy holder przez CSS
-  positionDisplayIframe();
-  if (_displayReady) {
-    sendDisplayInitCmds();
-  }
-  // Jeśli jeszcze nie gotowy — load listener w createDisplayIframe wywoła sendDisplayInitCmds
-  startPositionLoop(); // rAF loop trzyma holder nad placeholderem co klatkę
-}
-
 function stopDisplayPreview() {
-  parkDisplayIframe(); // zatrzymuje też rAF loop
+  parkDisplayIframe();
 }
 
 function renderDisplay() {
@@ -507,7 +475,6 @@ function renderDisplay() {
       <div class="gs-label">${t("gameSettings.display.logo")}</div>
       <div id="gsLogoGrid" class="gs-logo-grid"></div>
     </div>
-    <div class="display-preview" id="gsDisplayPreviewContainer"></div>
   `;
 
   content.querySelectorAll(".swatchBtn").forEach(btn => {
@@ -524,7 +491,9 @@ function renderDisplay() {
     });
   }
 
-  initDisplayPreview();
+  // Iframe jest zawsze w gsDisplayIframeHolder (sibling gsContentInner) — tylko show/hide
+  showDisplayIframe();
+  if (_displayReady) sendDisplayInitCmds();
   renderLogoGrid();
 }
 
