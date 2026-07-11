@@ -300,9 +300,10 @@ function parkDisplayIframe() {
 function positionDisplayIframe() {
   const holder = document.getElementById("gsDisplayIframeHolder");
   const container = document.getElementById("gsDisplayPreviewContainer");
-  if (!holder || !container) return;
+  if (!holder || !container) { console.warn("[gs-display] positionDisplayIframe: brak holder lub container", {holder:!!holder, container:!!container}); return; }
   const rect = container.getBoundingClientRect();
-  holder.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;height:${rect.height}px;overflow:hidden;visibility:visible;z-index:1;border-radius:10px`;
+  console.log("[gs-display] positionDisplayIframe rect:", rect.left, rect.top, rect.width, rect.height, "ready:", _displayReady);
+  holder.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;height:${rect.height}px;overflow:hidden;visibility:visible;z-index:999;border-radius:10px`;
 }
 
 // ===== RENDER CATEGORIES =====
@@ -414,10 +415,12 @@ function createDisplayIframe() {
   let _pollInterval = null;
   _displayIframe.addEventListener("load", () => {
     // Pomiń load z about:blank (brak handleCommand)
+    let loc = "";
     try {
-      const loc = _displayIframe.contentWindow?.location?.href ?? "";
-      if (!loc || loc === "about:blank") return;
-    } catch { return; }
+      loc = _displayIframe.contentWindow?.location?.href ?? "";
+      console.log("[gs-display] iframe load event, loc:", loc);
+      if (!loc || loc === "about:blank") { console.log("[gs-display] pominięto about:blank"); return; }
+    } catch (e) { console.log("[gs-display] load event - błąd dostępu do location:", e); return; }
 
     if (_pollInterval) clearInterval(_pollInterval);
     let attempts = 0;
@@ -428,14 +431,17 @@ function createDisplayIframe() {
           clearInterval(_pollInterval);
           _pollInterval = null;
           _displayReady = true;
+          console.log("[gs-display] handleCommand znalezione po", attempts, "próbach, activeCat:", activeCat);
           if (activeCat === "display") {
             sendDisplayInitCmds();
           }
         } else if (attempts >= 50) {
+          console.warn("[gs-display] handleCommand NIE znalezione po 50 próbach");
           clearInterval(_pollInterval);
           _pollInterval = null;
         }
-      } catch {
+      } catch (e) {
+        console.warn("[gs-display] poll błąd:", e);
         clearInterval(_pollInterval);
         _pollInterval = null;
       }
