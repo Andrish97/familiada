@@ -11,6 +11,12 @@ import { alertModal, confirmModal } from "../core/modal.js?v=v2026-07-11T21304";
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
 
+// Ustaw padding-top body na dokładną wysokość topbara (fixed), żeby nie było przerwy
+{
+  const _tb = document.querySelector(".topbar");
+  if (_tb) document.body.style.paddingTop = _tb.getBoundingClientRect().height + "px";
+}
+
 // ===== DEFAULTS =====
 const DEFAULT_SETTINGS = {
   teams: { teamA: "", teamB: "" },

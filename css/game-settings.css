@@ -5,17 +5,6 @@
   flex-direction: column;
   height: 100dvh;
   overflow: hidden;
-  padding-top: 0 !important;
-}
-
-/* Topbar w gs-body nie jest fixed — jest pierwszym flex-item,
-   więc nie ma przerwy między nim a gs-layout */
-.gs-body .topbar {
-  position: relative;
-  top: auto;
-  left: auto;
-  right: auto;
-  z-index: 10;
 }
 
 .gs-layout {
