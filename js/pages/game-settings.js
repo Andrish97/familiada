@@ -294,16 +294,25 @@ function escText(s) {
 function parkDisplayIframe() {
   const holder = document.getElementById("gsDisplayIframeHolder");
   if (!holder) return;
-  holder.style.cssText = "position:fixed;left:-9999px;top:-9999px;width:480px;height:270px;overflow:hidden;visibility:hidden;z-index:0";
+  // display:none nie powoduje reload iframe, tylko ukrywa rendering
+  holder.style.cssText = "display:none;position:absolute;pointer-events:none";
 }
 
 function positionDisplayIframe() {
   const holder = document.getElementById("gsDisplayIframeHolder");
   const container = document.getElementById("gsDisplayPreviewContainer");
-  if (!holder || !container) { console.warn("[gs-display] positionDisplayIframe: brak holder lub container", {holder:!!holder, container:!!container}); return; }
-  const rect = container.getBoundingClientRect();
-  console.log("[gs-display] positionDisplayIframe rect:", rect.left, rect.top, rect.width, rect.height, "ready:", _displayReady);
-  holder.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;height:${rect.height}px;overflow:hidden;visibility:visible;z-index:999;border-radius:10px`;
+  if (!holder || !container) return;
+  // Pozycja absolutna względem gs-layout (position:relative w CSS)
+  // Musimy odjąć offset gs-layout i dodać scroll gsContent
+  const layout = holder.closest(".gs-layout") || document.querySelector(".gs-layout");
+  if (!layout) return;
+  const containerRect = container.getBoundingClientRect();
+  const layoutRect = layout.getBoundingClientRect();
+  const gsContent = document.getElementById("gsContent");
+  const scrollTop = gsContent?.scrollTop ?? 0;
+  const left = containerRect.left - layoutRect.left;
+  const top  = containerRect.top  - layoutRect.top + scrollTop;
+  holder.style.cssText = `display:block;position:absolute;left:${left}px;top:${top}px;width:${containerRect.width}px;height:${containerRect.height}px;overflow:hidden;border-radius:10px;z-index:10;pointer-events:auto`;
 }
 
 // ===== RENDER CATEGORIES =====
@@ -414,13 +423,11 @@ function createDisplayIframe() {
   // NIE używamy { once:true } — pomijamy blank, startujemy poll dopiero przy prawdziwym /display.
   let _pollInterval = null;
   _displayIframe.addEventListener("load", () => {
-    // Pomiń load z about:blank (brak handleCommand)
-    let loc = "";
+    // Pomiń load z about:blank (przed właściwym /display)
     try {
-      loc = _displayIframe.contentWindow?.location?.href ?? "";
-      console.log("[gs-display] iframe load event, loc:", loc);
-      if (!loc || loc === "about:blank") { console.log("[gs-display] pominięto about:blank"); return; }
-    } catch (e) { console.log("[gs-display] load event - błąd dostępu do location:", e); return; }
+      const loc = _displayIframe.contentWindow?.location?.href ?? "";
+      if (!loc || loc === "about:blank") return;
+    } catch { return; }
 
     if (_pollInterval) clearInterval(_pollInterval);
     let attempts = 0;
@@ -431,17 +438,14 @@ function createDisplayIframe() {
           clearInterval(_pollInterval);
           _pollInterval = null;
           _displayReady = true;
-          console.log("[gs-display] handleCommand znalezione po", attempts, "próbach, activeCat:", activeCat);
           if (activeCat === "display") {
             sendDisplayInitCmds();
           }
         } else if (attempts >= 50) {
-          console.warn("[gs-display] handleCommand NIE znalezione po 50 próbach");
           clearInterval(_pollInterval);
           _pollInterval = null;
         }
-      } catch (e) {
-        console.warn("[gs-display] poll błąd:", e);
+      } catch {
         clearInterval(_pollInterval);
         _pollInterval = null;
       }
@@ -1244,10 +1248,16 @@ async function main() {
   // Create display preview iframe early (loads in background while user is on other tabs)
   createDisplayIframe();
 
-  // Trzymaj holder nad placeholderem przy scroll/resize
-  const gsContent = document.getElementById("gsContent");
-  const onLayoutChange = () => { if (activeCat === "display") positionDisplayIframe(); };
+  // Trzymaj holder nad placeholderem przy scroll wewnątrz panelu i resize okna
+  // RAF throttling — max raz na klatkę, bez feedback loop
+  let _rafPending = false;
+  const onLayoutChange = () => {
+    if (activeCat !== "display" || _rafPending) return;
+    _rafPending = true;
+    requestAnimationFrame(() => { _rafPending = false; positionDisplayIframe(); });
+  };
   window.addEventListener("resize", onLayoutChange, { passive: true });
+  const gsContent = document.getElementById("gsContent");
   gsContent?.addEventListener("scroll", onLayoutChange, { passive: true });
 
   setActiveCat("teams");
