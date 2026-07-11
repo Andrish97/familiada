@@ -129,9 +129,9 @@ function clearDirty() {
 }
 
 async function saveAll() {
-  // Walidacja: finale w trybie "selected" wymaga dokładnie 5 pytań
-  const hasFinal = localSettings.game.hasFinal !== false;
-  if (hasFinal && localSettings.game.finalQuestionsMode === "selected") {
+  // Walidacja: finale w trybie "pick" wymaga dokładnie 5 pytań
+  const hasFinal = localSettings.game.hasFinal === true;
+  if (hasFinal && localSettings.game.finalQuestionsMode === "pick") {
     const count = localSettings.questions.final.length;
     if (count < 5) {
       alertModal({ text: t("gameSettings.saveErrorFinalNeed5", { count }) });
@@ -692,11 +692,11 @@ function setupFinaleColumnDnd(poolEl, pickedEl) {
 
 // --- PYTANIA — RUNDY ---
 function renderRounds() {
-  // Pytania finale są wykluczone z rund (tylko w trybie "selected")
+  // Pytania finale są wykluczone z rund (tylko gdy finał włączony i tryb "pick")
   const finaleMode = localSettings.game.finalQuestionsMode;
-  const hasFinal = localSettings.game.hasFinal !== false;
+  const hasFinal = localSettings.game.hasFinal === true;
   const finaleIds = new Set(
-    (hasFinal && finaleMode === "selected") ? localSettings.questions.final.map(q => q.id) : []
+    (hasFinal && finaleMode === "pick") ? localSettings.questions.final.map(q => q.id) : []
   );
 
   // Zbuduj pełną listę: najpierw zapisana kolejność (bez finalowych), potem brakujące
