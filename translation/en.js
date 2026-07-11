@@ -5365,10 +5365,10 @@ const en = {
       finaleCount: "Number of finale questions",
       addFinaleQuestion: "+ Add finale question",
       finalModeLabel: "Finale questions mode",
-      finalModeHint: "Random = 5 questions drawn automatically. Manual = pick questions in the "Questions — Finale" tab.",
+      finalModeHint: "Random = 5 questions drawn automatically. Manual = pick questions in the \u201CQuestions \u2014 Finale\u201D tab.",
       roundsSection: "Rounds",
       roundsModeLabel: "Rounds question order mode",
-      roundsModeHint: "Random = each round draws a question. Order = questions in fixed order (\"Questions — Rounds\" tab).",
+      roundsModeHint: "Random = each round draws a question. Order = questions in fixed order (\u201CQuestions \u2014 Rounds\u201D tab).",
     },
     finale: {
       hasFinal: "Does the game include a finale?",

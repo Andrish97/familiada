@@ -5367,10 +5367,10 @@ const pl = {
       finaleCount: "Liczba pytań finałowych",
       addFinaleQuestion: "+ Dodaj pytanie finałowe",
       finalModeLabel: "Tryb wyboru pytań finału",
-      finalModeHint: "Losowe = 5 pytań losowanych automatycznie. Ręcznie = wybierz pytania w zakładce „Pytania — Finał".",
+      finalModeHint: "Losowe = 5 pytań losowanych automatycznie. Ręcznie = wybierz pytania w zakładce \u201EPytania \u2014 Fina\u0142\u201D.",
       roundsSection: "Rundy",
       roundsModeLabel: "Tryb kolejności pytań rund",
-      roundsModeHint: "Losowe = każda runda losuje pytanie. Kolejność = pytania w ustalonej kolejności (zakładka „Pytania — Rundy").",
+      roundsModeHint: "Losowe = każda runda losuje pytanie. Kolejność = pytania w ustalonej kolejności (zakładka \u201EPytania \u2014 Rundy\u201D).",
     },
     finale: {
       hasFinal: "Czy gra zawiera finał?",
