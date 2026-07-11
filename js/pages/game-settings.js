@@ -293,6 +293,8 @@ function escText(s) {
 // ===== RENDER CATEGORIES =====
 function renderCat(cat) {
   if (!content) return;
+  // Detach display iframe BEFORE any innerHTML replacement so the browser keeps it alive
+  if (_displayIframe?.isConnected) _displayIframe.remove();
   switch (cat) {
     case "teams":     renderTeams();     break;
     case "display":   renderDisplay();   break;
@@ -442,9 +444,6 @@ function renderDisplay() {
   const themeOptions = themeList.map(th =>
     `<option value="${escAttr(th.key)}" ${effectiveTheme === th.key ? "selected" : ""}>${escText(th.label)}</option>`
   ).join("");
-
-  // Detach iframe before wiping innerHTML — re-attached by initDisplayPreview()
-  if (_displayIframe?.isConnected) _displayIframe.remove();
 
   content.innerHTML = `
     <div class="gs-cat-title">${t("gameSettings.categories.display")}</div>
