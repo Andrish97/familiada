@@ -349,6 +349,13 @@ function sendDisplayInitCmds() {
   const theme = localSettings.display.theme || (themeList[0]?.key ?? "");
   if (theme) sendDisplayCmd(`THEME ${theme}`);
   sendDisplayCmd("LOGO DRAW");
+  // clear small panels so the preview is clean
+  sendDisplayCmd("TOP    ");
+  sendDisplayCmd("LEFT   ");
+  sendDisplayCmd("RIGHT  ");
+  sendDisplayCmd("LONG1 ");
+  sendDisplayCmd("LONG2 ");
+  sendDisplayCmd("INDICATOR OFF");
 }
 
 function initDisplayPreview() {
