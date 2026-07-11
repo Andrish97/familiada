@@ -1,21 +1,21 @@
 // familiada/logo-editorjs/main.js
 // Glowna logika strony + lista kafelkow + routing do edytorow.
 
-import { addRenameGesture } from "../../js/core/rename-gesture.js?v=v2026-07-11T20451";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../../js/core/logo-preview.js?v=v2026-07-11T20451";
+import { addRenameGesture } from "../../js/core/rename-gesture.js?v=v2026-07-11T20475";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../../js/core/logo-preview.js?v=v2026-07-11T20475";
 
-import { sb } from "../../js/core/supabase.js?v=v2026-07-11T20451";
-import { requireAuth } from "../../js/core/auth.js?v=v2026-07-11T20451";
-import { isGuestUser } from "../../js/core/guest-mode.js?v=v2026-07-11T20451";
-import { alertModal, confirmModal } from "../../js/core/modal.js?v=v2026-07-11T20451";
-import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-07-11T20451";
-import { initTopbarAccountDropdown } from "../../js/core/topbar-controller.js?v=v2026-07-11T20451";
-import { isMobileDevice } from "../../js/core/pwa.js?v=v2026-07-11T20451";
-import { v as cacheBust } from "../../js/core/cache-bust.js?v=v2026-07-11T20451";
+import { sb } from "../../js/core/supabase.js?v=v2026-07-11T20475";
+import { requireAuth } from "../../js/core/auth.js?v=v2026-07-11T20475";
+import { isGuestUser } from "../../js/core/guest-mode.js?v=v2026-07-11T20475";
+import { alertModal, confirmModal } from "../../js/core/modal.js?v=v2026-07-11T20475";
+import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-07-11T20475";
+import { initTopbarAccountDropdown } from "../../js/core/topbar-controller.js?v=v2026-07-11T20475";
+import { isMobileDevice } from "../../js/core/pwa.js?v=v2026-07-11T20475";
+import { v as cacheBust } from "../../js/core/cache-bust.js?v=v2026-07-11T20475";
 
-import { initTextEditor } from "./text.js?v=v2026-07-11T20451";
-import { initDrawEditor } from "./draw.js?v=v2026-07-11T20451";
-import { initImageEditor } from "./image.js?v=v2026-07-11T20451";
+import { initTextEditor } from "./text.js?v=v2026-07-11T20475";
+import { initDrawEditor } from "./draw.js?v=v2026-07-11T20475";
+import { initImageEditor } from "./image.js?v=v2026-07-11T20475";
 
 window.addEventListener("error", (e) => {
   console.error("window error", e.error || e.message);
@@ -34,9 +34,9 @@ const DOT_H = 70;  // 10*7
 
 // UWAGA: to sa sciezki wzgledne wobec logo-editor
 // (ustalone, nie zgadujemy)
-const FONT_3x10_URL = "display/font_3x10.json?v=v2026-07-11T20451";
-const FONT_5x7_URL  = "display/font_5x7.json?v=v2026-07-11T20451";
-const DEFAULT_LOGO_URL = "display/logo_familiada.json?v=v2026-07-11T20451";
+const FONT_3x10_URL = "display/font_3x10.json?v=v2026-07-11T20475";
+const FONT_5x7_URL  = "display/font_5x7.json?v=v2026-07-11T20475";
+const DEFAULT_LOGO_URL = "display/logo_familiada.json?v=v2026-07-11T20475";
 
 /* =========================================================
    DOM
@@ -1542,7 +1542,7 @@ async function boot(){
    imageEditor = initImageEditor(editorCtx);
 
   // Updater - sprawdzanie nowej wersji (TYLKO RAZ)
-  import('../../js/core/updater.js?v=v2026-07-11T20451').then(m => m.initUpdater()).catch(() => {});
+  import('../../js/core/updater.js?v=v2026-07-11T20475').then(m => m.initUpdater()).catch(() => {});
 
    armNavGuard();
 
