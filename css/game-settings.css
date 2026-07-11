@@ -148,43 +148,15 @@
   margin-top: 4px;
 }
 
-/* ===== DISPLAY COLS ===== */
-.gs-display-cols {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 24px;
-  align-items: start;
-}
-
-.gs-display-settings {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  min-width: 0;
-}
-
+/* ===== DISPLAY PREVIEW ===== */
 .display-preview {
-  width: 480px;
+  width: 100%;
   aspect-ratio: 16 / 9;
-  height: auto;
   border-radius: 10px;
   border: 1px solid rgba(255,255,255,.18);
   background: #050914;
-  position: sticky;
-  top: 0;
   overflow: hidden;
-  flex-shrink: 0;
-}
-
-.display-preview-placeholder::after {
-  content: "—";
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: .75rem;
-  opacity: .25;
+  margin-bottom: 14px;
 }
 
 /* ===== QUESTIONS ===== */

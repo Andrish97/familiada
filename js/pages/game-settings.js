@@ -348,6 +348,7 @@ function sendDisplayInitCmds() {
   sendDisplayCmd(`COLOR DOT ${c.DOT}`);
   const theme = localSettings.display.theme || (themeList[0]?.key ?? "");
   if (theme) sendDisplayCmd(`THEME ${theme}`);
+  sendDisplayCmd("LOGO DRAW");
 }
 
 function initDisplayPreview() {
@@ -400,31 +401,27 @@ function renderDisplay() {
 
   content.innerHTML = `
     <div class="gs-cat-title">${t("gameSettings.categories.display")}</div>
-    <div class="gs-display-cols">
-      <div class="gs-display-settings">
-        <div class="gs-section">
-          <div class="gs-label">${t("gameSettings.display.colors")}</div>
-          <div class="colorRow">${swatches}</div>
-        </div>
-        <div class="gs-section">
-          <div class="gs-label">${t("gameSettings.display.theme")}</div>
-          <select class="inp" id="gsThemeSelect" style="margin-top:8px">
-            ${themeOptions}
-          </select>
-        </div>
-        <div class="gs-section">
-          <div class="gs-label">${t("gameSettings.display.logo")}</div>
-          <div id="gsLogoGrid" class="gs-logo-grid"></div>
-        </div>
-      </div>
-      <div class="display-preview">
-        <iframe
-          id="gsDisplayPreview"
-          src="/display"
-          style="width:100%;height:100%;border:none;display:block"
-          title="Display preview"
-        ></iframe>
-      </div>
+    <div class="gs-section">
+      <div class="gs-label">${t("gameSettings.display.colors")}</div>
+      <div class="colorRow">${swatches}</div>
+    </div>
+    <div class="gs-section">
+      <div class="gs-label">${t("gameSettings.display.theme")}</div>
+      <select class="inp" id="gsThemeSelect" style="margin-top:8px">
+        ${themeOptions}
+      </select>
+    </div>
+    <div class="gs-section">
+      <div class="gs-label">${t("gameSettings.display.logo")}</div>
+      <div id="gsLogoGrid" class="gs-logo-grid"></div>
+    </div>
+    <div class="display-preview">
+      <iframe
+        id="gsDisplayPreview"
+        src="/display"
+        style="width:100%;height:100%;border:none;display:block"
+        title="Display preview"
+      ></iframe>
     </div>
   `;
 
