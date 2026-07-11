@@ -341,8 +341,9 @@ function sendDisplayCmd(cmd) {
 
 function sendDisplayInitCmds() {
   const c = localSettings.display.colors;
-  const teamA = localSettings.teams.teamA || "DRUŻYNA A";
-  const teamB = localSettings.teams.teamB || "DRUŻYNA B";
+  const q = (s) => `"${String(s ?? "").replace(/"/g, "'")}"`;
+  const teamA = localSettings.teams.teamA || t("gameSettings.teams.teamAPlaceholder") || "DRUŻYNA A";
+  const teamB = localSettings.teams.teamB || t("gameSettings.teams.teamBPlaceholder") || "DRUŻYNA B";
   sendDisplayCmd("APP GAME");
   sendDisplayCmd(`COLOR A ${c.A}`);
   sendDisplayCmd(`COLOR B ${c.B}`);
@@ -351,10 +352,11 @@ function sendDisplayInitCmds() {
   const theme = localSettings.display.theme || (themeList[0]?.key ?? "");
   if (theme) sendDisplayCmd(`THEME ${theme}`);
   sendDisplayCmd("LOGO DRAW");
-  sendDisplayCmd(`LONG1 ${teamA}`);
-  sendDisplayCmd(`LONG2 ${teamB}`);
-  sendDisplayCmd("LEFT 000");
-  sendDisplayCmd("RIGHT 000");
+  sendDisplayCmd("LEFT 123");
+  sendDisplayCmd("RIGHT 123");
+  sendDisplayCmd("TOP 1");
+  sendDisplayCmd(`LONG1 ${q(teamA)}`);
+  sendDisplayCmd(`LONG2 ${q(teamB)}`);
   sendDisplayCmd("INDICATOR OFF");
 }
 
