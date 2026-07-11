@@ -341,6 +341,8 @@ function sendDisplayCmd(cmd) {
 
 function sendDisplayInitCmds() {
   const c = localSettings.display.colors;
+  const teamA = localSettings.teams.teamA || "DRUŻYNA A";
+  const teamB = localSettings.teams.teamB || "DRUŻYNA B";
   sendDisplayCmd("APP GAME");
   sendDisplayCmd(`COLOR A ${c.A}`);
   sendDisplayCmd(`COLOR B ${c.B}`);
@@ -349,12 +351,10 @@ function sendDisplayInitCmds() {
   const theme = localSettings.display.theme || (themeList[0]?.key ?? "");
   if (theme) sendDisplayCmd(`THEME ${theme}`);
   sendDisplayCmd("LOGO DRAW");
-  // clear small panels so the preview is clean
-  sendDisplayCmd("TOP    ");
-  sendDisplayCmd("LEFT   ");
-  sendDisplayCmd("RIGHT  ");
-  sendDisplayCmd("LONG1 ");
-  sendDisplayCmd("LONG2 ");
+  sendDisplayCmd(`LONG1 ${teamA}`);
+  sendDisplayCmd(`LONG2 ${teamB}`);
+  sendDisplayCmd("LEFT 000");
+  sendDisplayCmd("RIGHT 000");
   sendDisplayCmd("INDICATOR OFF");
 }
 
@@ -499,7 +499,7 @@ async function renderLogoGrid() {
       markDirty();
       grid.querySelectorAll(".gs-logo-tile").forEach(t => t.classList.remove("selected"));
       tile.classList.add("selected");
-      sendDisplayCmd("LOGO RELOAD");
+      sendDisplayCmd("LOGO DRAW");
     });
   });
 }
