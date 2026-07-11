@@ -89,6 +89,7 @@ let _loadedLogos = [];
 // Display preview iframe
 let _displayIframe = null;
 let _displayReady = false;
+let _displayResizeObserver = null;
 
 // Color modal state — labels populated lazily from t()
 let colorModalTarget = null;
@@ -292,16 +293,23 @@ function escText(s) {
 
 function parkDisplayIframe() {
   const holder = document.getElementById("gsDisplayIframeHolder");
-  if (_displayIframe && holder && !holder.contains(_displayIframe)) {
-    holder.appendChild(_displayIframe);
-  }
+  if (!holder) return;
+  holder.style.cssText = "position:fixed;left:-9999px;top:-9999px;width:480px;height:270px;overflow:hidden;visibility:hidden;z-index:0";
+}
+
+function positionDisplayIframe() {
+  const holder = document.getElementById("gsDisplayIframeHolder");
+  const container = document.getElementById("gsDisplayPreviewContainer");
+  if (!holder || !container) return;
+  const rect = container.getBoundingClientRect();
+  holder.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;height:${rect.height}px;overflow:hidden;visibility:visible;z-index:1;border-radius:10px`;
 }
 
 // ===== RENDER CATEGORIES =====
 function renderCat(cat) {
   if (!content) return;
-  // Zawsze parkuj iframe przed jakimkolwiek innerHTML (w tym re-render tego samego taba)
-  parkDisplayIframe();
+  // Zawsze zatrzymaj podgląd przed innerHTML (iframe nie rusza się w DOM)
+  stopDisplayPreview();
   switch (cat) {
     case "teams":     renderTeams();     break;
     case "display":   renderDisplay();   break;
@@ -409,8 +417,7 @@ function createDisplayIframe() {
         if (_displayIframe?.contentWindow?.handleCommand) {
           clearInterval(poll);
           _displayReady = true;
-          // Only send init if currently visible in the display tab
-          if (document.getElementById("gsDisplayPreviewContainer")?.contains(_displayIframe)) {
+          if (activeCat === "display") {
             sendDisplayInitCmds();
           }
         } else if (attempts >= 30) {
@@ -426,17 +433,30 @@ function createDisplayIframe() {
 }
 
 function initDisplayPreview() {
-  const container = document.getElementById("gsDisplayPreviewContainer");
-  if (!container) return;
-
-  // Move iframe from holder into the visible container
-  container.appendChild(_displayIframe);
-
+  // Iframe nigdy nie jest przenoszony w DOM — tylko pozycjonujemy holder przez CSS
+  positionDisplayIframe();
   if (_displayReady) {
     sendDisplayInitCmds();
   }
-  // If not ready yet, the load listener in createDisplayIframe will call sendDisplayInitCmds
-  // once handleCommand is available — but only when the container is visible
+  // Jeśli jeszcze nie gotowy — load listener w createDisplayIframe wywoła sendDisplayInitCmds
+
+  // Śledź pozycję placeholdera przy resize/scroll
+  const container = document.getElementById("gsDisplayPreviewContainer");
+  if (container) {
+    if (_displayResizeObserver) _displayResizeObserver.disconnect();
+    _displayResizeObserver = new ResizeObserver(() => {
+      if (activeCat === "display") positionDisplayIframe();
+    });
+    _displayResizeObserver.observe(container);
+  }
+}
+
+function stopDisplayPreview() {
+  if (_displayResizeObserver) {
+    _displayResizeObserver.disconnect();
+    _displayResizeObserver = null;
+  }
+  parkDisplayIframe();
 }
 
 function renderDisplay() {
@@ -1204,6 +1224,12 @@ async function main() {
 
   // Create display preview iframe early (loads in background while user is on other tabs)
   createDisplayIframe();
+
+  // Trzymaj holder nad placeholderem przy scroll/resize
+  const gsContent = document.getElementById("gsContent");
+  const onLayoutChange = () => { if (activeCat === "display") positionDisplayIframe(); };
+  window.addEventListener("resize", onLayoutChange, { passive: true });
+  gsContent?.addEventListener("scroll", onLayoutChange, { passive: true });
 
   setActiveCat("teams");
 
