@@ -293,25 +293,16 @@ function escText(s) {
 
 function parkDisplayIframe() {
   const holder = document.getElementById("gsDisplayIframeHolder");
-  if (!holder) return;
-  // display:none nie powoduje reload iframe, tylko ukrywa rendering
-  holder.style.cssText = "display:none;position:absolute;pointer-events:none";
+  if (holder) holder.style.cssText = "display:none";
 }
 
 function positionDisplayIframe() {
   const holder = document.getElementById("gsDisplayIframeHolder");
   const container = document.getElementById("gsDisplayPreviewContainer");
   if (!holder || !container) return;
-  // Pozycja absolutna względem gs-layout (position:relative w CSS).
-  // getBoundingClientRect() zwraca już widoczną (po scroll) pozycję w viewport.
-  // Dla position:absolute wystarczy odjąć offset kontenera rodzica — BEZ dodawania scrollTop.
-  const layout = holder.closest(".gs-layout") || document.querySelector(".gs-layout");
-  if (!layout) return;
-  const containerRect = container.getBoundingClientRect();
-  const layoutRect = layout.getBoundingClientRect();
-  const left = containerRect.left - layoutRect.left;
-  const top  = containerRect.top  - layoutRect.top;
-  holder.style.cssText = `display:block;position:absolute;left:${left}px;top:${top}px;width:${containerRect.width}px;height:${containerRect.height}px;overflow:hidden;border-radius:10px;z-index:10;pointer-events:auto`;
+  const r = container.getBoundingClientRect();
+  // position:fixed z-index poniżej topbara (10) — nie nakłada się na pasek
+  holder.style.cssText = `display:block;position:fixed;left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px;overflow:hidden;border-radius:10px;z-index:2`;
 }
 
 // ===== RENDER CATEGORIES =====
