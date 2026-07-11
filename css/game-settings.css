@@ -82,12 +82,18 @@
 
 /* ===== FOOTER (pasek akcji pod topbarem) ===== */
 .gs-footer {
+  margin: 0;
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 10px 20px;
   border-bottom: 1px solid var(--line);
   background: rgba(255,234,166,.06);
+}
+
+.gs-footer .hidden,
+.gs-unsaved-badge.hidden {
+  display: none !important;
 }
 
 .gs-footer.hidden { display: none; }
