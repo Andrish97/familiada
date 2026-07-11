@@ -1,12 +1,17 @@
 // js/pages/game-settings.js
-import { requireAuth } from "../core/auth.js?v=v2026-07-11T21331";
-import { t, getUiLang } from "../../translation/translation.js?v=v2026-07-11T21331";
-import { setTopbarAccount } from "../core/topbar-controller.js?v=v2026-07-11T21331";
-import { sb } from "../core/supabase.js?v=v2026-07-11T21331";
-import { loadQuestions } from "../core/game-validate.js?v=v2026-07-11T21331";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../core/logo-preview.js?v=v2026-07-11T21331";
-import { v as cacheBust } from "../core/cache-bust.js?v=v2026-07-11T21331";
-import { alertModal, confirmModal } from "../core/modal.js?v=v2026-07-11T21331";
+import { requireAuth } from "../core/auth.js?v=v2026-07-11T21304";
+import { t, getUiLang } from "../../translation/translation.js?v=v2026-07-11T21304";
+import { setTopbarAccount } from "../core/topbar-controller.js?v=v2026-07-11T21304";
+import { sb } from "../core/supabase.js?v=v2026-07-11T21304";
+import { loadQuestions } from "../core/game-validate.js?v=v2026-07-11T21304";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../core/logo-preview.js?v=v2026-07-11T21304";
+import { v as cacheBust } from "../core/cache-bust.js?v=v2026-07-11T21304";
+import { alertModal, confirmModal } from "../core/modal.js?v=v2026-07-11T21304";
+import {
+  loadSfxManifest, getSfxCategories,
+  setSfxCustomBlob, clearSfxCustomFile, clearAllSfxCustomFiles, getSfxCustomFiles,
+  playSfx, setSfxVolume,
+} from "../core/sfx-new.js";
 
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
@@ -39,6 +44,10 @@ const DEFAULT_SETTINGS = {
     },
   },
   questions: { final: [], rounds: [] },
+  sound: {
+    volumes: {},   // key → 0–100 (int procent)
+    variants: {},  // key → nazwa pliku, np. "classic.mp3"
+  },
 };
 
 function mergeSettings(saved) {
@@ -77,6 +86,10 @@ function mergeSettings(saved) {
     questions: {
       final: Array.isArray(s.questions?.final) ? s.questions.final : [],
       rounds: Array.isArray(s.questions?.rounds) ? s.questions.rounds : [],
+    },
+    sound: {
+      volumes:  (s.sound?.volumes  && typeof s.sound.volumes  === "object") ? { ...s.sound.volumes }  : {},
+      variants: (s.sound?.variants && typeof s.sound.variants === "object") ? { ...s.sound.variants } : {},
     },
   };
 }
@@ -314,7 +327,7 @@ function renderCat(cat) {
   switch (cat) {
     case "teams":     renderTeams();     break;
     case "display":   renderDisplay();   break;
-    case "sound":     renderSound();     break;
+    case "sound":     renderSound().catch(console.error);     break;
     case "questions": renderQuestions(); break;
     case "finale":    renderFinale();    break;
     case "rounds":    renderRounds();    break;
@@ -584,13 +597,190 @@ function makeLogoTile(id, selectedId) {
 }
 
 // --- DŹWIĘK ---
-function renderSound() {
+async function renderSound() {
   content.innerHTML = `
     <div class="gs-cat-title">${t("gameSettings.categories.sound")}</div>
     <div class="gs-section">
-      <p class="gs-hint" style="font-size:.9rem">${t("gameSettings.sound.comingSoon")}</p>
+      <div class="gs-hint" style="margin-bottom:12px">${t("gameSettings.sound.hint") || "Ustaw głośność i wariant każdego dźwięku. Możesz też wgrać własny plik."}</div>
+      <div class="sfx-table" id="sfxTableGs"></div>
+      <div class="sfx-foot">
+        <button class="btn" id="btnSoundReset" type="button">${t("gameSettings.sound.resetConfirm") ? (t("control.sfxResetAll") || "Przywróć domyślne") : "Przywróć domyślne"}</button>
+      </div>
     </div>
   `;
+
+  // Załaduj manifest jeśli jeszcze nie załadowany
+  try { await loadSfxManifest(); } catch (e) {
+    const t2 = document.getElementById("sfxTableGs");
+    if (t2) t2.innerHTML = `<div class="gs-hint" style="color:red">Błąd ładowania manifest dźwięków: ${escText(e?.message || String(e))}</div>`;
+    return;
+  }
+
+  const categories = getSfxCategories();
+  const lang = getUiLang() || "pl";
+
+  let customFiles = new Map();
+  try { customFiles = await getSfxCustomFiles(gameId); } catch {}
+
+  const tableEl = document.getElementById("sfxTableGs");
+  if (!tableEl) return;
+
+  for (const cat of categories) {
+    const key = cat.key;
+    const volPct = localSettings.sound.volumes[key] ?? 100;
+    const currentVariant = localSettings.sound.variants[key] || cat.sounds[0]?.file || "classic.mp3";
+    const custom = customFiles.get(key);
+    const desc = t("control.sfxDesc." + key) || key;
+
+    const row = document.createElement("div");
+    row.className = "sfx-row";
+    row.dataset.key = key;
+
+    // Wariant select — tylko jeśli > 1 opcja (teraz zawsze 1, zostawione na przyszłość)
+    const hasVariants = cat.sounds.length > 1;
+    const variantHtml = hasVariants ? `
+      <div class="sfx-variant-wrap">
+        <div class="ui-select${custom ? " ui-select-disabled" : ""}" data-sfx-variant="${escAttr(key)}">
+          <button class="ui-select-btn" type="button">
+            <span class="ui-select-label">${escText(
+              cat.sounds.find(s => s.file === currentVariant || s.file.split("?")[0] === currentVariant)
+                ?.label?.[lang] || cat.sounds[0]?.label?.[lang] || "Klasyczny"
+            )}</span>
+            <span class="ui-select-arrow">▾</span>
+          </button>
+          <div class="ui-select-menu" role="listbox">
+            ${cat.sounds.map(s => {
+              const file = s.file.split("?")[0];
+              const label = s.label?.[lang] || s.file;
+              const sel = file === currentVariant || s.file === currentVariant;
+              return `<div class="ui-select-opt${sel ? " selected" : ""}" data-val="${escAttr(file)}">${escText(label)}</div>`;
+            }).join("")}
+          </div>
+        </div>
+      </div>` : `<div class="sfx-variant-wrap" style="opacity:.4;font-size:.8rem">${escText(
+        cat.sounds[0]?.label?.[lang] || "Klasyczny"
+      )}</div>`;
+
+    const fileTagHtml = custom
+      ? `<div class="sfx-file-tag">
+           <span class="sfx-file-name" title="${escAttr(custom.filename)}">${escText(custom.filename)}</span>
+           <button class="sfx-file-remove" type="button" data-sfx-clear="${escAttr(key)}" title="Usuń własny plik">✕</button>
+         </div>`
+      : "";
+
+    row.innerHTML = `
+      <div class="sfx-row-desc">${escText(desc)}</div>
+      ${variantHtml}
+      <button class="sfx-preview-btn" type="button" data-sfx-preview="${escAttr(key)}" title="Podgląd">▶</button>
+      <div class="sfx-vol-wrap">
+        <input class="sfx-vol" type="range" min="0" max="100" step="1" value="${volPct}" data-sfx-vol="${escAttr(key)}"/>
+        <span class="sfx-vol-label" id="sfxVol_${escAttr(key)}">${volPct}%</span>
+      </div>
+      <div class="sfx-file-wrap">
+        ${fileTagHtml}
+        <button class="btn sfx-add-btn${custom ? " hidden" : ""}" type="button" data-sfx-file="${escAttr(key)}">${t("control.sfxAddFile") || "Własny plik"}</button>
+        <input class="sfx-file-input" type="file" accept="audio/mpeg,audio/wav,audio/ogg" data-sfx-key="${escAttr(key)}"/>
+      </div>
+    `;
+
+    tableEl.appendChild(row);
+  }
+
+  // Bindowanie eventów
+  tableEl.addEventListener("click", async (e) => {
+    // Podgląd
+    const previewBtn = e.target.closest("[data-sfx-preview]");
+    if (previewBtn) {
+      const key = previewBtn.dataset.sfxPreview;
+      const custom = customFiles.get(key);
+      if (custom?.blob) {
+        const url = URL.createObjectURL(custom.blob);
+        const audio = new Audio(url);
+        audio.play().catch(() => {});
+        audio.onended = () => URL.revokeObjectURL(url);
+      } else {
+        setSfxVolume(key, (localSettings.sound.volumes[key] ?? 100) / 100);
+        playSfx(key);
+      }
+      return;
+    }
+
+    // Własny plik — trigger input
+    const fileBtn = e.target.closest("[data-sfx-file]");
+    if (fileBtn) {
+      const key = fileBtn.dataset.sfxFile;
+      const input = tableEl.querySelector(`input[data-sfx-key="${key}"]`);
+      input?.click();
+      return;
+    }
+
+    // Usuń własny plik
+    const clearBtn = e.target.closest("[data-sfx-clear]");
+    if (clearBtn) {
+      const key = clearBtn.dataset.sfxClear;
+      try { await clearSfxCustomFile(key, gameId); } catch {}
+      customFiles.delete(key);
+      localSettings.sound.variants[key] = undefined;
+      markDirty();
+      renderSound();
+      return;
+    }
+  });
+
+  // Głośność
+  tableEl.querySelectorAll(".sfx-vol").forEach(slider => {
+    slider.addEventListener("input", () => {
+      const key = slider.dataset.sfxVol;
+      const pct = parseInt(slider.value, 10);
+      localSettings.sound.volumes[key] = pct;
+      const lbl = document.getElementById(`sfxVol_${key}`);
+      if (lbl) lbl.textContent = `${pct}%`;
+      setSfxVolume(key, pct / 100);
+      markDirty();
+    });
+  });
+
+  // Upload własnego pliku
+  tableEl.querySelectorAll(".sfx-file-input").forEach(input => {
+    input.addEventListener("change", async () => {
+      const key = input.dataset.sfxKey;
+      const file = input.files?.[0];
+      input.value = "";
+      if (!file) return;
+
+      const cat = categories.find(c => c.key === key);
+      const limitSec = cat?.limitSec || 30;
+
+      try {
+        const buf = await file.arrayBuffer();
+        const ctx = new AudioContext();
+        const decoded = await ctx.decodeAudioData(buf);
+        await ctx.close();
+        if (decoded.duration > limitSec) {
+          alertModal({ text: (t("control.sfxTooLong") || "Maksymalna długość to {limit}s").replace("{limit}", limitSec) });
+          return;
+        }
+      } catch { /* nie blokuj jeśli AudioContext niedostępny */ }
+
+      try {
+        await setSfxCustomBlob(key, file, file.name, gameId);
+        customFiles.set(key, { blob: file, filename: file.name });
+        markDirty();
+        renderSound();
+      } catch (e) {
+        alertModal({ text: `Błąd: ${e?.message || String(e)}` });
+      }
+    });
+  });
+
+  // Reset dźwięków
+  document.getElementById("btnSoundReset")?.addEventListener("click", async () => {
+    if (!await confirmModal({ text: t("gameSettings.sound.resetConfirm") || "Przywrócić domyślne ustawienia dźwięku?" })) return;
+    localSettings.sound = { volumes: {}, variants: {} };
+    try { await clearAllSfxCustomFiles(gameId); } catch {}
+    markDirty();
+    renderSound();
+  });
 }
 
 // --- PYTANIA — USTAWIENIA ---
