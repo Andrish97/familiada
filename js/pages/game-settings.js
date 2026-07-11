@@ -290,11 +290,18 @@ function escText(s) {
   return String(s ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
 }
 
+function parkDisplayIframe() {
+  const holder = document.getElementById("gsDisplayIframeHolder");
+  if (_displayIframe && holder && !holder.contains(_displayIframe)) {
+    holder.appendChild(_displayIframe);
+  }
+}
+
 // ===== RENDER CATEGORIES =====
 function renderCat(cat) {
   if (!content) return;
-  // Detach display iframe BEFORE any innerHTML replacement so the browser keeps it alive
-  if (_displayIframe?.isConnected) _displayIframe.remove();
+  // Park display iframe in off-screen holder before any innerHTML replacement
+  if (cat !== "display") parkDisplayIframe();
   switch (cat) {
     case "teams":     renderTeams();     break;
     case "display":   renderDisplay();   break;
@@ -382,32 +389,19 @@ function sendDisplayInitCmds() {
   sendDisplayCmd("INDICATOR OFF");
 }
 
-function initDisplayPreview() {
-  const container = document.getElementById("gsDisplayPreviewContainer");
-  if (!container) return;
+function createDisplayIframe() {
+  if (_displayIframe) return;
+  const holder = document.getElementById("gsDisplayIframeHolder");
+  if (!holder) return;
 
-  // Check if the iframe content is still alive
-  const isAlive = (() => {
-    try { return !!_displayIframe?.contentWindow?.handleCommand; } catch { return false; }
-  })();
-
-  if (isAlive) {
-    container.appendChild(_displayIframe);
-    sendDisplayInitCmds();
-    return;
-  }
-
-  // Create once or reload if content was destroyed (e.g. parent innerHTML was replaced)
-  if (!_displayIframe) {
-    _displayIframe = document.createElement("iframe");
-    _displayIframe.id = "gsDisplayPreview";
-    _displayIframe.style.cssText = "width:100%;height:100%;border:none;display:block";
-    _displayIframe.title = "Display preview";
-  }
-
+  _displayIframe = document.createElement("iframe");
+  _displayIframe.id = "gsDisplayPreview";
+  _displayIframe.src = "/display";
+  _displayIframe.style.cssText = "width:100%;height:100%;border:none;display:block";
+  _displayIframe.title = "Display preview";
   _displayReady = false;
 
-  const startPoll = () => {
+  _displayIframe.addEventListener("load", () => {
     let attempts = 0;
     const poll = setInterval(() => {
       attempts++;
@@ -415,7 +409,10 @@ function initDisplayPreview() {
         if (_displayIframe?.contentWindow?.handleCommand) {
           clearInterval(poll);
           _displayReady = true;
-          sendDisplayInitCmds();
+          // Only send init if currently visible in the display tab
+          if (document.getElementById("gsDisplayPreviewContainer")?.contains(_displayIframe)) {
+            sendDisplayInitCmds();
+          }
         } else if (attempts >= 30) {
           clearInterval(poll);
         }
@@ -423,11 +420,23 @@ function initDisplayPreview() {
         clearInterval(poll);
       }
     }, 100);
-  };
+  }, { once: true });
 
-  _displayIframe.addEventListener("load", startPoll, { once: true });
-  _displayIframe.src = "/display"; // (re)load — triggers new load event
+  holder.appendChild(_displayIframe);
+}
+
+function initDisplayPreview() {
+  const container = document.getElementById("gsDisplayPreviewContainer");
+  if (!container) return;
+
+  // Move iframe from holder into the visible container
   container.appendChild(_displayIframe);
+
+  if (_displayReady) {
+    sendDisplayInitCmds();
+  }
+  // If not ready yet, the load listener in createDisplayIframe will call sendDisplayInitCmds
+  // once handleCommand is available — but only when the container is visible
 }
 
 function renderDisplay() {
@@ -1192,6 +1201,9 @@ async function main() {
   });
   btnLegalClose?.addEventListener("click", () => legalOverlay?.classList.add("hidden"));
   legalOverlay?.addEventListener("click", (ev) => { if (ev.target === legalOverlay) legalOverlay.classList.add("hidden"); });
+
+  // Create display preview iframe early (loads in background while user is on other tabs)
+  createDisplayIframe();
 
   setActiveCat("teams");
 
