@@ -409,25 +409,38 @@ function createDisplayIframe() {
   _displayIframe.title = "Display preview";
   _displayReady = false;
 
+  // Chrome odpala load najpierw dla about:blank, a potem dla /display.
+  // NIE używamy { once:true } — pomijamy blank, startujemy poll dopiero przy prawdziwym /display.
+  let _pollInterval = null;
   _displayIframe.addEventListener("load", () => {
+    // Pomiń load z about:blank (brak handleCommand)
+    try {
+      const loc = _displayIframe.contentWindow?.location?.href ?? "";
+      if (!loc || loc === "about:blank") return;
+    } catch { return; }
+
+    if (_pollInterval) clearInterval(_pollInterval);
     let attempts = 0;
-    const poll = setInterval(() => {
+    _pollInterval = setInterval(() => {
       attempts++;
       try {
         if (_displayIframe?.contentWindow?.handleCommand) {
-          clearInterval(poll);
+          clearInterval(_pollInterval);
+          _pollInterval = null;
           _displayReady = true;
           if (activeCat === "display") {
             sendDisplayInitCmds();
           }
-        } else if (attempts >= 30) {
-          clearInterval(poll);
+        } else if (attempts >= 50) {
+          clearInterval(_pollInterval);
+          _pollInterval = null;
         }
       } catch {
-        clearInterval(poll);
+        clearInterval(_pollInterval);
+        _pollInterval = null;
       }
     }, 100);
-  }, { once: true });
+  });
 
   holder.appendChild(_displayIframe);
 }
