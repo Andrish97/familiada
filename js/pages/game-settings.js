@@ -342,8 +342,8 @@ function sendDisplayCmd(cmd) {
 function sendDisplayInitCmds() {
   const c = localSettings.display.colors;
   const q = (s) => `"${String(s ?? "").replace(/"/g, "'")}"`;
-  const teamA = localSettings.teams.teamA || t("gameSettings.teams.teamAPlaceholder") || "DRUŻYNA A";
-  const teamB = localSettings.teams.teamB || t("gameSettings.teams.teamBPlaceholder") || "DRUŻYNA B";
+  const teamA = localSettings.teams.teamA || t("gameSettings.teams.defaultA");
+  const teamB = localSettings.teams.teamB || t("gameSettings.teams.defaultB");
   sendDisplayCmd("APP GAME");
   sendDisplayCmd(`COLOR A ${c.A}`);
   sendDisplayCmd(`COLOR B ${c.B}`);
