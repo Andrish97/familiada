@@ -597,22 +597,22 @@ function makeLogoTile(id, selectedId) {
 }
 
 // --- DŹWIĘK ---
+const VARIANT_CUSTOM = "__custom__";
+
 async function renderSound() {
   content.innerHTML = `
     <div class="gs-cat-title">${t("gameSettings.categories.sound")}</div>
     <div class="gs-section">
-      <div class="gs-hint" style="margin-bottom:12px">${t("gameSettings.sound.hint") || "Ustaw głośność i wariant każdego dźwięku. Możesz też wgrać własny plik."}</div>
       <div class="sfx-table" id="sfxTableGs"></div>
       <div class="sfx-foot">
-        <button class="btn" id="btnSoundReset" type="button">${t("gameSettings.sound.resetConfirm") ? (t("control.sfxResetAll") || "Przywróć domyślne") : "Przywróć domyślne"}</button>
+        <button class="btn" id="btnSoundReset" type="button">${t("control.sfxResetAll") || "Przywróć domyślne"}</button>
       </div>
     </div>
   `;
 
-  // Załaduj manifest jeśli jeszcze nie załadowany
   try { await loadSfxManifest(); } catch (e) {
-    const t2 = document.getElementById("sfxTableGs");
-    if (t2) t2.innerHTML = `<div class="gs-hint" style="color:red">Błąd ładowania manifest dźwięków: ${escText(e?.message || String(e))}</div>`;
+    const tbl = document.getElementById("sfxTableGs");
+    if (tbl) tbl.innerHTML = `<div class="gs-hint" style="color:red">Błąd ładowania dźwięków: ${escText(e?.message || String(e))}</div>`;
     return;
   }
 
@@ -628,57 +628,48 @@ async function renderSound() {
   for (const cat of categories) {
     const key = cat.key;
     const volPct = localSettings.sound.volumes[key] ?? 100;
-    const currentVariant = localSettings.sound.variants[key] || cat.sounds[0]?.file || "classic.mp3";
     const custom = customFiles.get(key);
+    // Aktywny wariant: "__custom__" jeśli mamy własny plik, inaczej zapisany lub domyślny
+    const activeVariant = custom ? VARIANT_CUSTOM
+      : (localSettings.sound.variants[key] || cat.sounds[0]?.file || "classic.mp3");
     const desc = t("control.sfxDesc." + key) || key;
 
     const row = document.createElement("div");
     row.className = "sfx-row";
     row.dataset.key = key;
 
-    // Wariant select — tylko jeśli > 1 opcja (teraz zawsze 1, zostawione na przyszłość)
-    const hasVariants = cat.sounds.length > 1;
-    const variantHtml = hasVariants ? `
-      <div class="sfx-variant-wrap">
-        <div class="ui-select${custom ? " ui-select-disabled" : ""}" data-sfx-variant="${escAttr(key)}">
-          <button class="ui-select-btn" type="button">
-            <span class="ui-select-label">${escText(
-              cat.sounds.find(s => s.file === currentVariant || s.file.split("?")[0] === currentVariant)
-                ?.label?.[lang] || cat.sounds[0]?.label?.[lang] || "Klasyczny"
-            )}</span>
-            <span class="ui-select-arrow">▾</span>
-          </button>
-          <div class="ui-select-menu" role="listbox">
-            ${cat.sounds.map(s => {
-              const file = s.file.split("?")[0];
-              const label = s.label?.[lang] || s.file;
-              const sel = file === currentVariant || s.file === currentVariant;
-              return `<div class="ui-select-opt${sel ? " selected" : ""}" data-val="${escAttr(file)}">${escText(label)}</div>`;
-            }).join("")}
-          </div>
-        </div>
-      </div>` : `<div class="sfx-variant-wrap" style="opacity:.4;font-size:.8rem">${escText(
-        cat.sounds[0]?.label?.[lang] || "Klasyczny"
-      )}</div>`;
+    // Opcje selecta: warianty twórcy + "Własny" na końcu
+    const variantOpts = cat.sounds.map(s => {
+      const file = s.file.split("?")[0];
+      const label = s.label?.[lang] || s.file;
+      const sel = !custom && (file === activeVariant || s.file === activeVariant);
+      return `<option value="${escAttr(file)}"${sel ? " selected" : ""}>${escText(label)}</option>`;
+    });
+    variantOpts.push(`<option value="${VARIANT_CUSTOM}"${custom ? " selected" : ""}>${escText(t("control.sfxCustom") || "Własny")}</option>`);
 
+    // Tag z własnym plikiem (widoczny tylko gdy custom)
     const fileTagHtml = custom
       ? `<div class="sfx-file-tag">
            <span class="sfx-file-name" title="${escAttr(custom.filename)}">${escText(custom.filename)}</span>
-           <button class="sfx-file-remove" type="button" data-sfx-clear="${escAttr(key)}" title="Usuń własny plik">✕</button>
+           <button class="sfx-file-remove" type="button" data-sfx-clear="${escAttr(key)}" title="Usuń">✕</button>
          </div>`
+      : "";
+
+    // Przycisk "Wgraj plik" — widoczny tylko gdy wybrany "Własny" i nie ma jeszcze pliku
+    const uploadBtnHtml = (!custom)
+      ? `<button class="btn sfx-add-btn hidden" type="button" data-sfx-file="${escAttr(key)}">${t("control.sfxAddFile") || "Wgraj plik…"}</button>`
       : "";
 
     row.innerHTML = `
       <div class="sfx-row-desc">${escText(desc)}</div>
-      ${variantHtml}
+      <select class="inp sfx-variant-select" data-sfx-variant="${escAttr(key)}">${variantOpts.join("")}</select>
       <button class="sfx-preview-btn" type="button" data-sfx-preview="${escAttr(key)}" title="Podgląd">▶</button>
       <div class="sfx-vol-wrap">
         <input class="sfx-vol" type="range" min="0" max="100" step="1" value="${volPct}" data-sfx-vol="${escAttr(key)}"/>
         <span class="sfx-vol-label" id="sfxVol_${escAttr(key)}">${volPct}%</span>
       </div>
       <div class="sfx-file-wrap">
-        ${fileTagHtml}
-        <button class="btn sfx-add-btn${custom ? " hidden" : ""}" type="button" data-sfx-file="${escAttr(key)}">${t("control.sfxAddFile") || "Własny plik"}</button>
+        ${fileTagHtml}${uploadBtnHtml}
         <input class="sfx-file-input" type="file" accept="audio/mpeg,audio/wav,audio/ogg" data-sfx-key="${escAttr(key)}"/>
       </div>
     `;
@@ -686,45 +677,43 @@ async function renderSound() {
     tableEl.appendChild(row);
   }
 
-  // Bindowanie eventów
-  tableEl.addEventListener("click", async (e) => {
-    // Podgląd
-    const previewBtn = e.target.closest("[data-sfx-preview]");
-    if (previewBtn) {
-      const key = previewBtn.dataset.sfxPreview;
+  // Zmiana wariantu w select
+  tableEl.querySelectorAll(".sfx-variant-select").forEach(sel => {
+    sel.addEventListener("change", () => {
+      const key = sel.dataset.sfxVariant;
+      const val = sel.value;
+      const row = sel.closest(".sfx-row");
+      const uploadBtn = row?.querySelector("[data-sfx-file]");
+      const fileWrap = row?.querySelector(".sfx-file-wrap");
+
+      if (val === VARIANT_CUSTOM) {
+        // Pokaż przycisk wgrania
+        if (uploadBtn) uploadBtn.classList.remove("hidden");
+      } else {
+        // Schowaj przycisk wgrania, zapisz wariant
+        if (uploadBtn) uploadBtn.classList.add("hidden");
+        localSettings.sound.variants[key] = val;
+        markDirty();
+      }
+    });
+  });
+
+  // Podgląd
+  tableEl.querySelectorAll("[data-sfx-preview]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const key = btn.dataset.sfxPreview;
       const custom = customFiles.get(key);
       if (custom?.blob) {
         const url = URL.createObjectURL(custom.blob);
         const audio = new Audio(url);
+        audio.volume = (localSettings.sound.volumes[key] ?? 100) / 100;
         audio.play().catch(() => {});
         audio.onended = () => URL.revokeObjectURL(url);
       } else {
         setSfxVolume(key, (localSettings.sound.volumes[key] ?? 100) / 100);
         playSfx(key);
       }
-      return;
-    }
-
-    // Własny plik — trigger input
-    const fileBtn = e.target.closest("[data-sfx-file]");
-    if (fileBtn) {
-      const key = fileBtn.dataset.sfxFile;
-      const input = tableEl.querySelector(`input[data-sfx-key="${key}"]`);
-      input?.click();
-      return;
-    }
-
-    // Usuń własny plik
-    const clearBtn = e.target.closest("[data-sfx-clear]");
-    if (clearBtn) {
-      const key = clearBtn.dataset.sfxClear;
-      try { await clearSfxCustomFile(key, gameId); } catch {}
-      customFiles.delete(key);
-      localSettings.sound.variants[key] = undefined;
-      markDirty();
-      renderSound();
-      return;
-    }
+    });
   });
 
   // Głośność
@@ -737,6 +726,14 @@ async function renderSound() {
       if (lbl) lbl.textContent = `${pct}%`;
       setSfxVolume(key, pct / 100);
       markDirty();
+    });
+  });
+
+  // Trigger input pliku
+  tableEl.querySelectorAll("[data-sfx-file]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const key = btn.dataset.sfxFile;
+      tableEl.querySelector(`input[data-sfx-key="${key}"]`)?.click();
     });
   });
 
@@ -773,7 +770,19 @@ async function renderSound() {
     });
   });
 
-  // Reset dźwięków
+  // Usuń własny plik → wróć do pierwszego wariantu
+  tableEl.querySelectorAll("[data-sfx-clear]").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const key = btn.dataset.sfxClear;
+      try { await clearSfxCustomFile(key, gameId); } catch {}
+      customFiles.delete(key);
+      delete localSettings.sound.variants[key];
+      markDirty();
+      renderSound();
+    });
+  });
+
+  // Reset wszystkich dźwięków
   document.getElementById("btnSoundReset")?.addEventListener("click", async () => {
     if (!await confirmModal({ text: t("gameSettings.sound.resetConfirm") || "Przywrócić domyślne ustawienia dźwięku?" })) return;
     localSettings.sound = { volumes: {}, variants: {} };
