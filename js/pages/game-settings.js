@@ -692,12 +692,8 @@ function setupFinaleColumnDnd(poolEl, pickedEl) {
 
 // --- PYTANIA — RUNDY ---
 function renderRounds() {
-  // Pytania finale są wykluczone z rund (tylko gdy finał włączony i tryb "pick")
-  const finaleMode = localSettings.game.finalQuestionsMode;
-  const hasFinal = localSettings.game.hasFinal === true;
-  const finaleIds = new Set(
-    (hasFinal && finaleMode === "pick") ? localSettings.questions.final.map(q => q.id) : []
-  );
+  // Pytania w finale ZAWSZE wykluczone z rund (bez względu na tryb)
+  const finaleIds = new Set(localSettings.questions.final.map(q => q.id));
 
   // Zbuduj pełną listę: najpierw zapisana kolejność (bez finalowych), potem brakujące
   const pickedIds = new Set(localSettings.questions.rounds.map(q => q.id));
