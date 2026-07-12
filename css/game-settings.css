@@ -167,6 +167,7 @@
 }
 .sfx-file-remove:hover { opacity: 1; }
 .sfx-add-btn { font-size: .8rem; padding: 4px 8px; }
+.sfx-add-btn[hidden] { display: none !important; }
 
 .sfx-foot {
   display: flex;

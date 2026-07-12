@@ -655,10 +655,9 @@ async function renderSound() {
          </div>`
       : "";
 
-    // Przycisk "Wgraj plik" — widoczny tylko gdy wybrany "Własny" i nie ma jeszcze pliku
-    const uploadBtnHtml = (!custom)
-      ? `<button class="btn sfx-add-btn hidden" type="button" data-sfx-file="${escAttr(key)}">${t("control.sfxAddFile") || "Wgraj plik…"}</button>`
-      : "";
+    // Przycisk "Wybierz plik" — widoczny tylko gdy wybrany "Własny" i nie ma jeszcze pliku
+    const showUploadBtn = !custom && activeVariant === VARIANT_CUSTOM;
+    const uploadBtnHtml = `<button class="btn sfx-add-btn" type="button" data-sfx-file="${escAttr(key)}"${showUploadBtn ? "" : " hidden"}>Wybierz plik</button>`;
 
     row.innerHTML = `
       <div class="sfx-row-desc">${escText(desc)}</div>
@@ -687,11 +686,12 @@ async function renderSound() {
       const fileWrap = row?.querySelector(".sfx-file-wrap");
 
       if (val === VARIANT_CUSTOM) {
-        // Pokaż przycisk wgrania
-        if (uploadBtn) uploadBtn.classList.remove("hidden");
+        // Pokaż przycisk wgrania (jeśli nie ma jeszcze pliku)
+        const hasCustom = !!customFiles.get(key);
+        if (uploadBtn) uploadBtn.hidden = hasCustom;
       } else {
         // Schowaj przycisk wgrania, zapisz wariant
-        if (uploadBtn) uploadBtn.classList.add("hidden");
+        if (uploadBtn) uploadBtn.hidden = true;
         localSettings.sound.variants[key] = val;
         markDirty();
       }
@@ -770,7 +770,7 @@ async function renderSound() {
     });
   });
 
-  // Usuń własny plik → wróć do pierwszego wariantu
+  // Usuń własny plik → pokaż "Wybierz plik", usuń tag
   tableEl.querySelectorAll("[data-sfx-clear]").forEach(btn => {
     btn.addEventListener("click", async () => {
       const key = btn.dataset.sfxClear;
@@ -778,7 +778,14 @@ async function renderSound() {
       customFiles.delete(key);
       delete localSettings.sound.variants[key];
       markDirty();
-      renderSound();
+
+      const row = btn.closest(".sfx-row");
+      if (!row) return;
+      // Usuń tag z nazwą pliku
+      btn.closest(".sfx-file-tag")?.remove();
+      // Pokaż "Wybierz plik" (Własny nadal wybrany w select)
+      const uploadBtn = row.querySelector("[data-sfx-file]");
+      if (uploadBtn) uploadBtn.hidden = false;
     });
   });
 
