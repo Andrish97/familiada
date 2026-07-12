@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict kuqGEmxAFXbCNgLPjLhig8BIaFO8KnQh4pjJ4aEIPD9og2dqW9InBlgNAzaWNHy
+\restrict gWMbbCjV1ZkzBMOGuGN4qTX8lPgJc4iFrbKgiyPa98PqcIFPEkkNSCl1YMcU5cw
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -2670,11 +2670,19 @@ BEGIN
           WHERE g.is_demo = false AND g.source_market_id IS NULL AND NOT (g.owner_id = ANY(excluded_ids))
           GROUP BY q.game_id) AS sub;
 
-  -- Gameplay
-  SELECT COUNT(*) INTO played_today FROM public.game_sessions WHERE started_at >= CURRENT_DATE;
-  SELECT COUNT(*) INTO played_7d    FROM public.game_sessions WHERE started_at >= now() - interval '7 days';
-  SELECT COUNT(*) INTO played_30d   FROM public.game_sessions WHERE started_at >= now() - interval '30 days';
-  SELECT COUNT(*) INTO buzzer_7d    FROM public.game_sessions WHERE started_at >= now() - interval '7 days' AND session_type = 'buzzer';
+  -- Gameplay (device_presence — game_sessions table does not exist)
+  SELECT COUNT(DISTINCT dp.game_id) INTO played_today FROM public.device_presence dp
+    JOIN public.games g ON g.id = dp.game_id
+    WHERE dp.device_type = 'display' AND dp.last_seen_at >= CURRENT_DATE AND g.is_demo = false AND NOT (g.owner_id = ANY(excluded_ids));
+  SELECT COUNT(DISTINCT dp.game_id) INTO played_7d FROM public.device_presence dp
+    JOIN public.games g ON g.id = dp.game_id
+    WHERE dp.device_type = 'display' AND dp.last_seen_at >= now() - interval '7 days' AND g.is_demo = false AND NOT (g.owner_id = ANY(excluded_ids));
+  SELECT COUNT(DISTINCT dp.game_id) INTO played_30d FROM public.device_presence dp
+    JOIN public.games g ON g.id = dp.game_id
+    WHERE dp.device_type = 'display' AND dp.last_seen_at >= now() - interval '30 days' AND g.is_demo = false AND NOT (g.owner_id = ANY(excluded_ids));
+  SELECT COUNT(DISTINCT dp.game_id) INTO buzzer_7d FROM public.device_presence dp
+    JOIN public.games g ON g.id = dp.game_id
+    WHERE dp.device_type = 'buzzer' AND dp.last_seen_at >= now() - interval '7 days' AND g.is_demo = false AND NOT (g.owner_id = ANY(excluded_ids));
 
   -- Polls
   SELECT COUNT(*) INTO poll_sessions_7d FROM public.poll_sessions WHERE created_at >= now() - interval '7 days';
@@ -2687,13 +2695,13 @@ BEGIN
   SELECT COUNT(*) INTO bases_new_7d    FROM public.question_bases WHERE is_demo = false AND created_at >= now() - interval '7 days' AND NOT (owner_id = ANY(excluded_ids));
   SELECT COUNT(*) INTO bases_new_30d   FROM public.question_bases WHERE is_demo = false AND created_at >= now() - interval '30 days' AND NOT (owner_id = ANY(excluded_ids));
 
-  -- User logos (user_id, is_demo — no is_active since migration 208)
+  -- User logos (user_id — no is_active since migration 208)
   SELECT COUNT(*) INTO logos_total     FROM public.user_logos WHERE is_demo = false AND NOT (user_id = ANY(excluded_ids));
   SELECT COUNT(*) INTO logos_new_today FROM public.user_logos WHERE is_demo = false AND created_at >= CURRENT_DATE AND NOT (user_id = ANY(excluded_ids));
   SELECT COUNT(*) INTO logos_new_7d    FROM public.user_logos WHERE is_demo = false AND created_at >= now() - interval '7 days' AND NOT (user_id = ANY(excluded_ids));
   SELECT COUNT(*) INTO logos_new_30d   FROM public.user_logos WHERE is_demo = false AND created_at >= now() - interval '30 days' AND NOT (user_id = ANY(excluded_ids));
 
-  -- Mail errors (mail_queue, not mail_error_log)
+  -- Mail errors
   BEGIN
     SELECT COUNT(*) INTO mail_errors_24h FROM public.mail_queue
       WHERE status = 'failed' AND updated_at >= now() - interval '24 hours';
@@ -2701,7 +2709,7 @@ BEGIN
     mail_errors_24h := 0;
   END;
 
-  -- Ratings (app_ratings/stars, not market_game_ratings/rating)
+  -- Ratings
   SELECT COUNT(*) INTO total_ratings FROM public.app_ratings;
   SELECT COALESCE(ROUND(AVG(stars), 1), 0) INTO avg_rating FROM public.app_ratings;
   SELECT COUNT(*) INTO ratings_new_today FROM public.app_ratings WHERE created_at >= CURRENT_DATE;
@@ -14072,5 +14080,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict kuqGEmxAFXbCNgLPjLhig8BIaFO8KnQh4pjJ4aEIPD9og2dqW9InBlgNAzaWNHy
+\unrestrict gWMbbCjV1ZkzBMOGuGN4qTX8lPgJc4iFrbKgiyPa98PqcIFPEkkNSCl1YMcU5cw
 
