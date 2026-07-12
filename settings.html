@@ -323,12 +323,13 @@
                   </button>
                   <div class="ui-select-menu" role="listbox"></div>
                 </div>
-                <select id="mailLogPerPage" class="btn sm">
-                  <option value="25">25 / str.</option>
-                  <option value="50" selected>50 / str.</option>
-                  <option value="100">100 / str.</option>
-                  <option value="200">200 / str.</option>
-                </select>
+                <div class="ui-select mail-ui-select" id="mailLogPerPage">
+                  <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
+                    <span class="ui-select-label">—</span>
+                    <span class="ui-select-caret" aria-hidden="true">▾</span>
+                  </button>
+                  <div class="ui-select-menu" role="listbox"></div>
+                </div>
                 <button class="btn sm" id="btnMailLogsHelp" type="button" data-i18n="settings.mail.logsHelpBtn">Jak czytać logi</button>
                 <button class="btn sm" id="btnMailLogsRefresh" type="button" data-i18n="settings.actions.refresh">Odśwież</button>
               </div>
@@ -421,12 +422,13 @@
           <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
             <div class="field" style="flex:1;min-width:120px">
               <label class="field-label">Język</label>
-              <select id="gen-manage-lang">
-                <option value="all">🌐 Wszystkie</option>
-                <option value="pl">🇵🇱 Polski</option>
-                <option value="uk">🇺🇦 Українська</option>
-                <option value="en">🇬🇧 English</option>
-              </select>
+              <div class="ui-select" id="gen-manage-lang" style="width:100%">
+                <button class="btn inp ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
+                  <span class="ui-select-label">—</span>
+                  <span class="ui-select-caret" aria-hidden="true">▾</span>
+                </button>
+                <div class="ui-select-menu" role="listbox"></div>
+              </div>
             </div>
             <button class="btn sm" id="gen-load-btn">Wczytaj</button>
             <button class="btn sm danger" id="gen-reset-btn" style="display:none">↺ Zrezygnuj</button>
@@ -850,11 +852,13 @@
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px">
               <div class="panel-title" style="font-size:1rem" data-i18n="settings.marketingContacts.verifiedTitle">Zweryfikowane kontakty</div>
               <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-                <select class="inp" id="mcFilterUsed" style="width:auto;min-width:120px;font-size:12px">
-                  <option value="">Wszystkie</option>
-                  <option value="false">Nieużywane</option>
-                  <option value="true">Używane</option>
-                </select>
+                <div class="ui-select" id="mcFilterUsed" style="min-width:120px">
+                  <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
+                    <span class="ui-select-label">—</span>
+                    <span class="ui-select-caret" aria-hidden="true">▾</span>
+                  </button>
+                  <div class="ui-select-menu" role="listbox"></div>
+                </div>
                 <a id="mcVisitUrlBtn" href="#" target="_blank" rel="noopener" class="btn sm" style="display:none">🌐 Odwiedź</a>
                 <button class="btn sm" id="mcCopyBtn" type="button" style="display:none">📋 Kopiuj</button>
                 <button class="btn sm" id="mcMarkUsedBtn" type="button" data-i18n="settings.marketingContacts.markUsed">✓ Użyte</button>

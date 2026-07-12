@@ -188,6 +188,7 @@ let mailFarewellCustomValue = "";
 let mailQueueStatusSelect = null;
 let mailLogFnSelect = null;
 let mailLogLevelSelect = null;
+let mailLogPerPageSelect = null;
 const selectedQueueIds = new Set();
 const MODE_ORDER = ["message", "returnAt", "countdown"];
 const MODE_TO_INDEX = {
@@ -1581,6 +1582,19 @@ function initMailSelects() {
         updateMailCategoryHighlights();
         void loadMailLogs();
       },
+    });
+  }
+
+  if (!mailLogPerPageSelect && els.mailLogPerPage) {
+    mailLogPerPageSelect = initUiSelect(els.mailLogPerPage, {
+      options: [
+        { value: "25", label: "25 / str." },
+        { value: "50", label: "50 / str." },
+        { value: "100", label: "100 / str." },
+        { value: "200", label: "200 / str." },
+      ],
+      value: "50",
+      onChange: () => { mailLogsPage = 1; void loadMailLogs(); },
     });
   }
 }
@@ -3756,17 +3770,13 @@ function showCompose(defaults = {}) {
 
           <div class="field" style="margin-bottom:12px">
             <label class="field-label" style="font-size:12px">${t("settings.reports.compose.templateLabel") || "Szablon odpowiedzi"}</label>
-            <select class="inp" id="composeTemplateSelect" style="width:100%;box-sizing:border-box">
-              <option value="custom">${t("settings.reports.compose.templates.custom") || "Własny"}</option>
-              <option value="info">${t("settings.reports.compose.templates.info") || "Podziękowanie"}</option>
-              <option value="received">${t("settings.reports.compose.templates.received") || "Potwierdzenie otrzymania"}</option>
-              <option value="resolved">${t("settings.reports.compose.templates.resolved") || "Zgłoszenie rozwiązane"}</option>
-              <option value="pending">${t("settings.reports.compose.templates.pending") || "W trakcie realizacji"}</option>
-              <option value="more_info">${t("settings.reports.compose.templates.moreInfo") || "Prośba o informacje"}</option>
-              <option value="followup">${t("settings.reports.compose.templates.followup") || "Follow-up"}</option>
-              <option value="closed">${t("settings.reports.compose.templates.closed") || "Zamknięcie zgłoszenia"}</option>
-              <option value="thanks">${t("settings.reports.compose.templates.thanks") || "Podziękowanie"}</option>
-            </select>
+            <div class="ui-select" id="composeTemplateSelect" style="width:100%">
+              <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
+                <span class="ui-select-label">—</span>
+                <span class="ui-select-caret" aria-hidden="true">▾</span>
+              </button>
+              <div class="ui-select-menu" role="listbox"></div>
+            </div>
           </div>
 
           <div class="field" style="margin-bottom:12px;min-height:0;display:flex;flex-direction:column">
@@ -4051,13 +4061,24 @@ function showCompose(defaults = {}) {
   });
   
   // Template select - insert template text into TinyMCE body
-  document.getElementById("composeTemplateSelect")?.addEventListener("change", (e) => {
-    const templateKey = e.target.value;
-    const templateText = EMAIL_TEMPLATES[templateKey] || "";
-    const editor = tinymce.get("composeMessageArea");
-    if (editor && templateText) {
-      editor.setContent(templateText);
-    }
+  initUiSelect(document.getElementById("composeTemplateSelect"), {
+    options: [
+      { value: "custom", label: t("settings.reports.compose.templates.custom") || "Własny" },
+      { value: "info", label: t("settings.reports.compose.templates.info") || "Podziękowanie" },
+      { value: "received", label: t("settings.reports.compose.templates.received") || "Potwierdzenie otrzymania" },
+      { value: "resolved", label: t("settings.reports.compose.templates.resolved") || "Zgłoszenie rozwiązane" },
+      { value: "pending", label: t("settings.reports.compose.templates.pending") || "W trakcie realizacji" },
+      { value: "more_info", label: t("settings.reports.compose.templates.moreInfo") || "Prośba o informacje" },
+      { value: "followup", label: t("settings.reports.compose.templates.followup") || "Follow-up" },
+      { value: "closed", label: t("settings.reports.compose.templates.closed") || "Zamknięcie zgłoszenia" },
+      { value: "thanks", label: t("settings.reports.compose.templates.thanks") || "Podziękowanie" },
+    ],
+    value: "custom",
+    onChange: (templateKey) => {
+      const templateText = EMAIL_TEMPLATES[templateKey] || "";
+      const editor = tinymce.get("composeMessageArea");
+      if (editor && templateText) editor.setContent(templateText);
+    },
   });
 
   // Insert #quote button - only for replies (when hasQuote is true)
@@ -4799,7 +4820,7 @@ async function loadMailLogs({ silent = false, page } = {}) {
   try {
     const fn = String(mailLogFnValue || "all");
     const level = String(mailLogLevelValue || "all");
-    const perPage = clampInt(els.mailLogPerPage?.value, 10, 200, 50);
+    const perPage = clampInt(mailLogPerPageSelect?.getValue() ?? "50", 10, 200, 50);
     mailLogsPerPage = perPage;
     const res = await apiFetch(
       `${API_BASE}/mail/logs?fn=${encodeURIComponent(fn)}&level=${encodeURIComponent(level)}&per_page=${perPage}&page=${mailLogsPage}`,
@@ -5779,10 +5800,7 @@ function wireEvents() {
     await loadMailLogs();
   });
 
-  els.mailLogPerPage?.addEventListener("change", () => {
-    mailLogsPage = 1;
-    void loadMailLogs();
-  });
+  // mailLogPerPage onChange handled in initMailSelects via mailLogPerPageSelect
 
   els.btnMailLogsHelp?.addEventListener("click", () => {
     toggleMailLogsHelp();
@@ -5919,6 +5937,7 @@ function wireEvents() {
     } catch(e) {}
     return null;
   }
+  let mcFilterUsedValue = "";
   let mcState = {
     runs: [],
     contacts: [],
@@ -6050,7 +6069,7 @@ function wireEvents() {
     console.log('[MC] mcLoadContacts called, page:', mcState.page, 'panel hidden:', document.getElementById("marketingContactsPanel")?.hidden);
     try {
       let query = sb().from("marketing_verified_contacts").select("*", { count: 'exact' });
-      const fUsed = document.getElementById("mcFilterUsed").value;
+      const fUsed = mcFilterUsedValue;
       if (fUsed !== "") query = query.eq("is_used", fUsed === "true");
       const from = (mcState.page - 1) * MC_PAGE_SIZE;
       const to = from + MC_PAGE_SIZE - 1;
@@ -6497,7 +6516,15 @@ function wireEvents() {
   document.getElementById("mcActionBtn")?.addEventListener("click", mcAction);
   document.getElementById("mcCancelBtn")?.addEventListener("click", mcCancel);
   document.getElementById("mcRefreshBtn")?.addEventListener("click", () => { mcLoadRuns(); mcLoadContacts(); mcLoadLogs(); });
-  document.getElementById("mcFilterUsed")?.addEventListener("change", () => { mcState.page=1; mcLoadContacts(); });
+  initUiSelect(document.getElementById("mcFilterUsed"), {
+    options: [
+      { value: "", label: "Wszystkie" },
+      { value: "false", label: "Nieużywane" },
+      { value: "true", label: "Używane" },
+    ],
+    value: "",
+    onChange: (val) => { mcFilterUsedValue = val; mcState.page = 1; mcLoadContacts(); },
+  });
   document.getElementById("mcMarkUsedBtn")?.addEventListener("click", mcMarkUsed);
   document.getElementById("mcDeleteBtn")?.addEventListener("click", mcDeleteSelected);
   document.getElementById("mcCopyBtn")?.addEventListener("click", () => {

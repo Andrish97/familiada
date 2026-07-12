@@ -474,9 +474,6 @@ function renderDisplay() {
   `).join("");
 
   const effectiveTheme = localSettings.display.theme || (themeList[0]?.key ?? "");
-  const themeOptions = themeList.map(th =>
-    `<option value="${escAttr(th.key)}" ${effectiveTheme === th.key ? "selected" : ""}>${escText(th.label)}</option>`
-  ).join("");
 
   content.innerHTML = `
     <div class="gs-cat-title">${t("gameSettings.categories.display")}</div>
@@ -486,9 +483,13 @@ function renderDisplay() {
     </div>
     <div class="gs-section">
       <div class="gs-label">${t("gameSettings.display.theme")}</div>
-      <select class="inp" id="gsThemeSelect" style="margin-top:8px">
-        ${themeOptions}
-      </select>
+      <div class="ui-select" id="gsThemeSelect" style="margin-top:8px;width:100%">
+        <button class="btn inp ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
+          <span class="ui-select-label">—</span>
+          <span class="ui-select-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="ui-select-menu" role="listbox"></div>
+      </div>
     </div>
     <div class="gs-section">
       <div class="gs-label">${t("gameSettings.display.logo")}</div>
@@ -500,15 +501,16 @@ function renderDisplay() {
     btn.addEventListener("click", () => openColorModal(btn.dataset.colorKey));
   });
 
-  const themeSelect = document.getElementById("gsThemeSelect");
-  if (themeSelect) {
-    themeSelect.addEventListener("change", e => {
-      localSettings.display.theme = e.target.value || null;
+  initUiSelect(document.getElementById("gsThemeSelect"), {
+    options: themeList.map(th => ({ value: th.key, label: th.label })),
+    value: effectiveTheme,
+    onChange: (val) => {
+      localSettings.display.theme = val || null;
       markDirty();
-      const key = e.target.value || (themeList[0]?.key ?? "");
+      const key = val || (themeList[0]?.key ?? "");
       if (key) sendDisplayCmd(`THEME ${key}`);
-    });
-  }
+    },
+  });
 
   // Iframe jest zawsze w gsDisplayIframeHolder (sibling gsContentInner) — tylko show/hide
   showDisplayIframe();
@@ -625,6 +627,8 @@ async function renderSound() {
   const tableEl = document.getElementById("sfxTableGs");
   if (!tableEl) return;
 
+  const variantInsts = new Map(); // key → ui-select instance
+
   for (const cat of categories) {
     const key = cat.key;
     const volPct = localSettings.sound.volumes[key] ?? 100;
@@ -638,14 +642,13 @@ async function renderSound() {
     row.className = "sfx-row";
     row.dataset.key = key;
 
-    // Opcje selecta: warianty twórcy + "Własny" na końcu
-    const variantOpts = cat.sounds.map(s => {
+    // Opcje dla ui-select: warianty twórcy + "Własny" na końcu
+    const variantOptions = cat.sounds.map(s => {
       const file = s.file.split("?")[0];
       const label = s.label?.[lang] || s.file;
-      const sel = !custom && (file === activeVariant || s.file === activeVariant);
-      return `<option value="${escAttr(file)}"${sel ? " selected" : ""}>${escText(label)}</option>`;
+      return { value: file, label };
     });
-    variantOpts.push(`<option value="${VARIANT_CUSTOM}"${custom ? " selected" : ""}>${escText(t("control.sfxCustom") || "Własny")}</option>`);
+    variantOptions.push({ value: VARIANT_CUSTOM, label: t("control.sfxCustom") || "Własny" });
 
     // Tag z własnym plikiem (widoczny tylko gdy custom)
     const fileTagHtml = custom
@@ -664,7 +667,13 @@ async function renderSound() {
 
     row.innerHTML = `
       <div class="sfx-row-desc">${escText(desc)}</div>
-      <select class="inp sfx-variant-select" data-sfx-variant="${escAttr(key)}">${variantOpts.join("")}</select>
+      <div class="ui-select sfx-variant-select" data-sfx-variant="${escAttr(key)}" style="min-width:0">
+        <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
+          <span class="ui-select-label">—</span>
+          <span class="ui-select-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="ui-select-menu" role="listbox"></div>
+      </div>
       <button class="sfx-preview-btn" type="button" data-sfx-preview="${escAttr(key)}" title="Podgląd"${previewDisabled ? " disabled" : ""}>▶</button>
       <div class="sfx-vol-wrap">
         <input class="sfx-vol" type="range" min="0" max="100" step="1" value="${volPct}" data-sfx-vol="${escAttr(key)}"/>
@@ -676,40 +685,37 @@ async function renderSound() {
       </div>
     `;
 
+    // Inicjalizacja ui-select dla tego wiersza
+    const variantRoot = row.querySelector(".sfx-variant-select");
+    const variantInst = initUiSelect(variantRoot, {
+      options: variantOptions,
+      value: activeVariant,
+      onChange: (val) => {
+        const uploadBtn = row.querySelector("[data-sfx-file]");
+        const previewBtn = row.querySelector("[data-sfx-preview]");
+        if (val === VARIANT_CUSTOM) {
+          const hasCustom = !!customFiles.get(key);
+          if (uploadBtn) uploadBtn.hidden = hasCustom;
+          if (previewBtn) previewBtn.disabled = !hasCustom;
+        } else {
+          if (uploadBtn) uploadBtn.hidden = true;
+          if (previewBtn) previewBtn.disabled = false;
+          localSettings.sound.variants[key] = val;
+          markDirty();
+        }
+      },
+    });
+    variantInsts.set(key, variantInst);
+
     tableEl.appendChild(row);
   }
-
-  // Zmiana wariantu w select
-  tableEl.querySelectorAll(".sfx-variant-select").forEach(sel => {
-    sel.addEventListener("change", () => {
-      const key = sel.dataset.sfxVariant;
-      const val = sel.value;
-      const row = sel.closest(".sfx-row");
-      const uploadBtn = row?.querySelector("[data-sfx-file]");
-      const previewBtn = row?.querySelector("[data-sfx-preview]");
-
-      if (val === VARIANT_CUSTOM) {
-        // Pokaż przycisk wgrania (jeśli nie ma jeszcze pliku)
-        const hasCustom = !!customFiles.get(key);
-        if (uploadBtn) uploadBtn.hidden = hasCustom;
-        if (previewBtn) previewBtn.disabled = !hasCustom;
-      } else {
-        // Schowaj przycisk wgrania, zapisz wariant, odblokuj podgląd
-        if (uploadBtn) uploadBtn.hidden = true;
-        if (previewBtn) previewBtn.disabled = false;
-        localSettings.sound.variants[key] = val;
-        markDirty();
-      }
-    });
-  });
 
   // Podgląd — odtwarza aktualnie wybrany wariant z selecta
   tableEl.querySelectorAll("[data-sfx-preview]").forEach(btn => {
     btn.addEventListener("click", () => {
       const key = btn.dataset.sfxPreview;
       const row = btn.closest(".sfx-row");
-      const sel = row?.querySelector("[data-sfx-variant]");
-      const val = sel?.value || VARIANT_CUSTOM;
+      const val = variantInsts.get(key)?.getValue() ?? VARIANT_CUSTOM;
       const vol = (localSettings.sound.volumes[key] ?? 100) / 100;
 
       if (val === VARIANT_CUSTOM) {

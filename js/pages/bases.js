@@ -984,39 +984,49 @@ async function renderShareModal() {
             ${escapeHtml(label)}
           </div>
           <div class="shareRowActions">
-            <select class="share-role-select" data-user-id="${userId}" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:6px;padding:2px 6px;font-size:11px;color:#fff;cursor:pointer" title="${escapeHtml(t("bases.shareModal.changeRole") || "Zmień rolę")}">
-              <option value="editor" ${role === "editor" ? "selected" : ""}>Edycja</option>
-              <option value="viewer" ${role === "viewer" ? "selected" : ""}>Przeglądanie</option>
-            </select>
+            <div class="ui-select share-role-select" data-user-id="${userId}">
+              <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
+                <span class="ui-select-label">—</span>
+                <span class="ui-select-caret" aria-hidden="true">▾</span>
+              </button>
+              <div class="ui-select-menu" role="listbox"></div>
+            </div>
             <button class="btn xsm" data-x type="button" title="${escapeHtml(t("bases.share.remove"))}">✕</button>
           </div>
         `;
 
         // Zmiana roli
-        row.querySelector(".share-role-select")?.addEventListener("change", async (e) => {
-          const newRole = e.target.value;
-          const selUserId = e.target.dataset.userId;
-          if (!selUserId) return;
-          e.target.disabled = true;
-          setMsg(shareMsg, "");
+        const roleSelectEl = row.querySelector(".share-role-select");
+        const roleSelectInst = initUiSelect(roleSelectEl, {
+          options: [
+            { value: "editor", label: t("bases.share.roleEditor") || "Edycja" },
+            { value: "viewer", label: t("bases.share.roleViewer") || "Przeglądanie" },
+          ],
+          value: role,
+          onChange: async (newRole) => {
+            const selUserId = roleSelectEl?.dataset.userId;
+            if (!selUserId) return;
+            roleSelectInst?.setDisabled(true);
+            setMsg(shareMsg, "");
 
-          const { data, error } = await sb().rpc("update_base_share_role", {
-            p_base_id: b.id,
-            p_user_id: selUserId,
-            p_role: newRole,
-          });
+            const { data, error } = await sb().rpc("update_base_share_role", {
+              p_base_id: b.id,
+              p_user_id: selUserId,
+              p_role: newRole,
+            });
 
-          e.target.disabled = false;
-          const rowRes = Array.isArray(data) ? data[0] : data;
-          if (error || !rowRes?.ok) {
-            setMsg(shareMsg, t("bases.share.failed") || "Nie udało się zmienić roli");
+            roleSelectInst?.setDisabled(false);
+            const rowRes = Array.isArray(data) ? data[0] : data;
+            if (error || !rowRes?.ok) {
+              setMsg(shareMsg, t("bases.share.failed") || "Nie udało się zmienić roli");
+              invalidateShareModalCache(b.id);
+              await renderShareModal();
+              return;
+            }
+            setMsg(shareMsg, t("bases.share.roleChanged") || "Zmieniono rolę");
             invalidateShareModalCache(b.id);
             await renderShareModal();
-            return;
-          }
-          setMsg(shareMsg, t("bases.share.roleChanged") || "Zmieniono rolę");
-          invalidateShareModalCache(b.id);
-          await renderShareModal();
+          },
         });
 
         // Usuń

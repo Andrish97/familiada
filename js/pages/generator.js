@@ -1,8 +1,10 @@
 
 import { sb as supabase } from "../core/supabase.js?v=v2026-07-12T21444";
 import { alertModal, confirmModal } from "../core/modal.js?v=v2026-07-12T21444";
+import { initUiSelect } from "../core/ui-select.js?v=v2026-07-12T21444";
 
 let games = [];
+let genLangSelect = null;
 const uniquenessCache = new Map();
 const weaknessCache = new Map();
 const selectedIds = new Set();
@@ -52,7 +54,7 @@ async function callEdgeAction(action, body = {}) {
 
 // Main logic
 async function loadGames() {
-  const lang = $('gen-manage-lang').value;
+  const lang = genLangSelect?.getValue();
   setBusy(true);
   showStatus('gen-session-status', 'Wczytuję gry...', 'info');
   try {
@@ -78,7 +80,7 @@ async function loadGames() {
 }
 
 async function generateGames() {
-  const lang = $('gen-manage-lang').value;
+  const lang = genLangSelect?.getValue();
   const count = parseInt($('gen-count').value) || 1;
   const topic = $('gen-topic').value.trim();
   lastGenerateParams = { lang, topic };
@@ -437,7 +439,7 @@ function renderWeakInfo(container, report) {
 
 async function scanForDuplicates() {
   setBusy(true);
-  const lang = $('gen-manage-lang').value;
+  const lang = genLangSelect?.getValue();
   showStatus('gen-session-status', 'Dobiłem embeddingi (synonimy/parafrazy) i skanuję unikalność...', 'info');
   try {
     await callEdgeAction('embed-missing', { lang, limit: 25 });
@@ -959,14 +961,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const pushApprovedBtn = $('gen-push-approved-btn');
   if (pushApprovedBtn) pushApprovedBtn.addEventListener('click', (e) => { e.preventDefault(); publishApproved(); });
   
-  const lastLang = localStorage.getItem('gen_last_lang');
-  if (lastLang) {
-    $('gen-manage-lang').value = lastLang;
-  }
-  
-  $('gen-manage-lang').addEventListener('change', (e) => {
-    localStorage.setItem('gen_last_lang', e.target.value);
-    loadGames();
+  const lastLang = localStorage.getItem('gen_last_lang') || 'all';
+  genLangSelect = initUiSelect($('gen-manage-lang'), {
+    options: [
+      { value: 'all', label: '🌐 Wszystkie' },
+      { value: 'pl', label: '🇵🇱 Polski' },
+      { value: 'uk', label: '🇺🇦 Українська' },
+      { value: 'en', label: '🇬🇧 English' },
+    ],
+    value: lastLang,
+    onChange: (val) => { localStorage.setItem('gen_last_lang', val); loadGames(); },
   });
 
   window.resetGeneratorSession = loadGames;
