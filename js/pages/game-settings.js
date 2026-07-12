@@ -659,10 +659,13 @@ async function renderSound() {
     const showUploadBtn = !custom && activeVariant === VARIANT_CUSTOM;
     const uploadBtnHtml = `<button class="btn sfx-add-btn" type="button" data-sfx-file="${escAttr(key)}"${showUploadBtn ? "" : " hidden"}>Wybierz plik</button>`;
 
+    // Przycisk odtwarzania — zablokowany gdy Własny bez pliku
+    const previewDisabled = activeVariant === VARIANT_CUSTOM && !custom;
+
     row.innerHTML = `
       <div class="sfx-row-desc">${escText(desc)}</div>
       <select class="inp sfx-variant-select" data-sfx-variant="${escAttr(key)}">${variantOpts.join("")}</select>
-      <button class="sfx-preview-btn" type="button" data-sfx-preview="${escAttr(key)}" title="Podgląd">▶</button>
+      <button class="sfx-preview-btn" type="button" data-sfx-preview="${escAttr(key)}" title="Podgląd"${previewDisabled ? " disabled" : ""}>▶</button>
       <div class="sfx-vol-wrap">
         <input class="sfx-vol" type="range" min="0" max="100" step="1" value="${volPct}" data-sfx-vol="${escAttr(key)}"/>
         <span class="sfx-vol-label" id="sfxVol_${escAttr(key)}">${volPct}%</span>
@@ -683,35 +686,46 @@ async function renderSound() {
       const val = sel.value;
       const row = sel.closest(".sfx-row");
       const uploadBtn = row?.querySelector("[data-sfx-file]");
-      const fileWrap = row?.querySelector(".sfx-file-wrap");
+      const previewBtn = row?.querySelector("[data-sfx-preview]");
 
       if (val === VARIANT_CUSTOM) {
         // Pokaż przycisk wgrania (jeśli nie ma jeszcze pliku)
         const hasCustom = !!customFiles.get(key);
         if (uploadBtn) uploadBtn.hidden = hasCustom;
+        if (previewBtn) previewBtn.disabled = !hasCustom;
       } else {
-        // Schowaj przycisk wgrania, zapisz wariant
+        // Schowaj przycisk wgrania, zapisz wariant, odblokuj podgląd
         if (uploadBtn) uploadBtn.hidden = true;
+        if (previewBtn) previewBtn.disabled = false;
         localSettings.sound.variants[key] = val;
         markDirty();
       }
     });
   });
 
-  // Podgląd
+  // Podgląd — odtwarza aktualnie wybrany wariant z selecta
   tableEl.querySelectorAll("[data-sfx-preview]").forEach(btn => {
     btn.addEventListener("click", () => {
       const key = btn.dataset.sfxPreview;
-      const custom = customFiles.get(key);
-      if (custom?.blob) {
+      const row = btn.closest(".sfx-row");
+      const sel = row?.querySelector("[data-sfx-variant]");
+      const val = sel?.value || VARIANT_CUSTOM;
+      const vol = (localSettings.sound.volumes[key] ?? 100) / 100;
+
+      if (val === VARIANT_CUSTOM) {
+        const custom = customFiles.get(key);
+        if (!custom?.blob) return;
         const url = URL.createObjectURL(custom.blob);
         const audio = new Audio(url);
-        audio.volume = (localSettings.sound.volumes[key] ?? 100) / 100;
+        audio.volume = vol;
         audio.play().catch(() => {});
         audio.onended = () => URL.revokeObjectURL(url);
       } else {
-        setSfxVolume(key, (localSettings.sound.volumes[key] ?? 100) / 100);
-        playSfx(key);
+        const cat = categories.find(c => c.key === key);
+        if (!cat) return;
+        const audio = new Audio(`/audio_new/${cat.folder}/${val}`);
+        audio.volume = vol;
+        audio.play().catch(() => {});
       }
     });
   });
@@ -763,6 +777,10 @@ async function renderSound() {
         await setSfxCustomBlob(key, file, file.name, gameId);
         customFiles.set(key, { blob: file, filename: file.name });
         markDirty();
+        // Odblokuj podgląd po wgraniu pliku
+        const row = input.closest(".sfx-row");
+        const previewBtn = row?.querySelector("[data-sfx-preview]");
+        if (previewBtn) previewBtn.disabled = false;
         renderSound();
       } catch (e) {
         alertModal({ text: `Błąd: ${e?.message || String(e)}` });
@@ -783,9 +801,11 @@ async function renderSound() {
       if (!row) return;
       // Usuń tag z nazwą pliku
       btn.closest(".sfx-file-tag")?.remove();
-      // Pokaż "Wybierz plik" (Własny nadal wybrany w select)
+      // Pokaż "Wybierz plik" i zablokuj podgląd (Własny nadal wybrany, brak pliku)
       const uploadBtn = row.querySelector("[data-sfx-file]");
       if (uploadBtn) uploadBtn.hidden = false;
+      const previewBtn = row.querySelector("[data-sfx-preview]");
+      if (previewBtn) previewBtn.disabled = true;
     });
   });
 
