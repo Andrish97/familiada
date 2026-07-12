@@ -7,6 +7,7 @@ import { loadQuestions } from "../core/game-validate.js?v=v2026-07-12T21555";
 import { loadFont5x7, buildLogoPreviewCanvas } from "../core/logo-preview.js?v=v2026-07-12T21555";
 import { v as cacheBust } from "../core/cache-bust.js?v=v2026-07-12T21555";
 import { alertModal, confirmModal } from "../core/modal.js?v=v2026-07-12T21555";
+import { initUiSelect } from "../core/ui-select.js?v=v2026-07-12T21555";
 import {
   loadSfxManifest, getSfxCategories,
   setSfxCustomBlob, clearSfxCustomFile, clearAllSfxCustomFiles, getSfxCustomFiles,
