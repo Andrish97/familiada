@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict FyE8C8lxMlkqcbK9w8DhVgNLtc0qYhJlOlwd0rMKNP4HhG2P5aPOOnzoHY6SvgI
+\restrict z35blNEm91DJt8OVitKA9ePuHPHf9upSfPmYhdyQ3XUttyAQjYWqOvV4HNcg0Lx
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -2687,13 +2687,13 @@ BEGIN
   SELECT COUNT(*) INTO bases_new_7d    FROM public.question_bases WHERE is_demo = false AND created_at >= now() - interval '7 days' AND NOT (owner_id = ANY(excluded_ids));
   SELECT COUNT(*) INTO bases_new_30d   FROM public.question_bases WHERE is_demo = false AND created_at >= now() - interval '30 days' AND NOT (owner_id = ANY(excluded_ids));
 
-  -- User logos (user_id, is_demo)
+  -- User logos (user_id, is_demo — no is_active since migration 208)
   SELECT COUNT(*) INTO logos_total     FROM public.user_logos WHERE is_demo = false AND NOT (user_id = ANY(excluded_ids));
   SELECT COUNT(*) INTO logos_new_today FROM public.user_logos WHERE is_demo = false AND created_at >= CURRENT_DATE AND NOT (user_id = ANY(excluded_ids));
   SELECT COUNT(*) INTO logos_new_7d    FROM public.user_logos WHERE is_demo = false AND created_at >= now() - interval '7 days' AND NOT (user_id = ANY(excluded_ids));
   SELECT COUNT(*) INTO logos_new_30d   FROM public.user_logos WHERE is_demo = false AND created_at >= now() - interval '30 days' AND NOT (user_id = ANY(excluded_ids));
 
-  -- Mail errors (mail_queue)
+  -- Mail errors (mail_queue, not mail_error_log)
   BEGIN
     SELECT COUNT(*) INTO mail_errors_24h FROM public.mail_queue
       WHERE status = 'failed' AND updated_at >= now() - interval '24 hours';
@@ -2701,7 +2701,7 @@ BEGIN
     mail_errors_24h := 0;
   END;
 
-  -- Ratings (app_ratings, stars)
+  -- Ratings (app_ratings/stars, not market_game_ratings/rating)
   SELECT COUNT(*) INTO total_ratings FROM public.app_ratings;
   SELECT COALESCE(ROUND(AVG(stars), 1), 0) INTO avg_rating FROM public.app_ratings;
   SELECT COUNT(*) INTO ratings_new_today FROM public.app_ratings WHERE created_at >= CURRENT_DATE;
@@ -14072,5 +14072,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict FyE8C8lxMlkqcbK9w8DhVgNLtc0qYhJlOlwd0rMKNP4HhG2P5aPOOnzoHY6SvgI
+\unrestrict z35blNEm91DJt8OVitKA9ePuHPHf9upSfPmYhdyQ3XUttyAQjYWqOvV4HNcg0Lx
 
