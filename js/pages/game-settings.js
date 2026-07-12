@@ -13,6 +13,9 @@ import {
   setSfxCustomBlob, clearSfxCustomFile, clearAllSfxCustomFiles, getSfxCustomFiles,
   playSfx, setSfxVolume,
 } from "../core/sfx-new.js?v=v2026-07-12T22330";
+import {
+  uploadGameSound, deleteGameSound, deleteAllGameSounds,
+} from "../core/sfx-cloud.js?v=v2026-07-12T22330";
 
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
@@ -165,12 +168,21 @@ async function saveAll() {
 
   if (btnSaveAll) btnSaveAll.disabled = true;
   try {
+    // Uzupełnij filenames w sound settings (do streszczenia w control-new)
+    await _syncSoundFilenames();
+
     const payload = JSON.parse(JSON.stringify(localSettings));
     const { error } = await sb()
       .from("games")
       .update({ settings: payload })
       .eq("id", gameId);
     if (error) throw error;
+
+    // Synchronizuj custom pliki audio z bucketem (po sukcesie zapisu do DB)
+    await _syncSoundBucket().catch(e => {
+      console.warn("[game-settings] bucket sync partial failure:", e);
+    });
+
     clearDirty();
   } catch (e) {
     console.error("[game-settings] saveAll error:", e);
@@ -178,6 +190,56 @@ async function saveAll() {
   } finally {
     if (btnSaveAll) btnSaveAll.disabled = false;
   }
+}
+
+async function _getSoundUserId() {
+  const { data: { user } } = await sb().auth.getUser();
+  return user?.id ?? null;
+}
+
+// Uzupełnia localSettings.sound.filenames na podstawie IndexedDB customFiles
+async function _syncSoundFilenames() {
+  let customFiles = new Map();
+  try { customFiles = await getSfxCustomFiles(gameId); } catch {}
+  if (!localSettings.sound.filenames) localSettings.sound.filenames = {};
+  for (const cat of getSfxCategories()) {
+    const key = cat.key;
+    const custom = customFiles.get(key);
+    if (custom?.filename) {
+      localSettings.sound.filenames[key] = custom.filename;
+    } else {
+      delete localSettings.sound.filenames[key];
+    }
+  }
+  // Wyczyść obiekt jeśli pusty
+  if (Object.keys(localSettings.sound.filenames).length === 0) {
+    delete localSettings.sound.filenames;
+  }
+}
+
+// Upload custom files do bucketu, usuń te których już nie ma
+async function _syncSoundBucket() {
+  if (!gameId) return;
+  const userId = await _getSoundUserId();
+  if (!userId) return;
+
+  let customFiles = new Map();
+  try { customFiles = await getSfxCustomFiles(gameId); } catch {}
+
+  const cats = getSfxCategories();
+  await Promise.all(cats.map(async cat => {
+    const key = cat.key;
+    const variant = localSettings.sound.variants[key];
+    const custom = customFiles.get(key);
+
+    if (variant === "__custom__" && custom?.blob) {
+      // Wgraj plik do bucketu
+      await uploadGameSound(sb(), userId, gameId, key, custom.blob);
+    } else if (variant !== "__custom__") {
+      // Wariant z listy — usuń ewentualny stary custom z bucketu (błąd 404 ignorowany)
+      await deleteGameSound(sb(), userId, gameId, key);
+    }
+  }));
 }
 
 // ===== SUB-TAB GRAYING =====
@@ -795,11 +857,16 @@ async function renderSound() {
     });
   });
 
-  // Usuń własny plik → pokaż "Wybierz plik", usuń tag
+  // Usuń własny plik → pokaż "Wybierz plik", usuń tag, usuń z bucketu
   tableEl.querySelectorAll("[data-sfx-clear]").forEach(btn => {
     btn.addEventListener("click", async () => {
       const key = btn.dataset.sfxClear;
+      // IndexedDB
       try { await clearSfxCustomFile(key, gameId); } catch {}
+      // Bucket (fire-and-forget, błąd nie blokuje UI)
+      _getSoundUserId().then(userId => {
+        if (userId) deleteGameSound(sb(), userId, gameId, key).catch(console.warn);
+      });
       customFiles.delete(key);
       delete localSettings.sound.variants[key];
       markDirty();
@@ -819,8 +886,20 @@ async function renderSound() {
   // Reset wszystkich dźwięków
   document.getElementById("btnSoundReset")?.addEventListener("click", async () => {
     if (!await confirmModal({ text: t("gameSettings.sound.resetConfirm") || "Przywrócić domyślne ustawienia dźwięku?" })) return;
+
+    const customKeys = [...customFiles.keys()];
     localSettings.sound = { volumes: {}, variants: {} };
+
+    // IndexedDB
     try { await clearAllSfxCustomFiles(gameId); } catch {}
+
+    // Bucket (fire-and-forget)
+    if (customKeys.length > 0) {
+      _getSoundUserId().then(userId => {
+        if (userId) deleteAllGameSounds(sb(), userId, gameId, customKeys).catch(console.warn);
+      });
+    }
+
     markDirty();
     renderSound();
   });
