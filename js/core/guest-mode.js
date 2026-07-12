@@ -1,5 +1,5 @@
 // js/core/guest-mode.js
-import { applyTranslations, t, withLangParam } from "../../translation/translation.js?v=v2026-07-12T20505";
+import { applyTranslations, t, withLangParam } from "../../translation/translation.js?v=v2026-07-12T21411";
 
 export function isGuestUser(user) {
   if (!user) return false;
