@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict gWMbbCjV1ZkzBMOGuGN4qTX8lPgJc4iFrbKgiyPa98PqcIFPEkkNSCl1YMcU5cw
+\restrict Bgi5PK13mA6PQS8DeZuORulcc1yQTRuhWqhE2E5rx9xC2AzPiPGhYXhUqww6pp9
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -3254,6 +3254,44 @@ BEGIN
       JOIN auth.users u ON u.id = p.id
       WHERE NOT (p.id = ANY(excluded_ids))
       ORDER BY p.created_at DESC
+      LIMIT p_limit
+    ) r;
+
+  WHEN 'games' THEN
+    SELECT jsonb_agg(r)
+    INTO result
+    FROM (
+      SELECT
+        g.name,
+        g.type,
+        g.status,
+        pr.username AS owner,
+        g.created_at
+      FROM public.games g
+      LEFT JOIN public.profiles pr ON pr.id = g.owner_id
+      WHERE g.is_demo = false
+        AND g.source_market_id IS NULL
+        AND NOT (g.owner_id = ANY(excluded_ids))
+      ORDER BY g.created_at DESC
+      LIMIT p_limit
+    ) r;
+
+  WHEN 'gameplay' THEN
+    SELECT jsonb_agg(r)
+    INTO result
+    FROM (
+      SELECT
+        g.name AS game_name,
+        pr.username AS owner,
+        MAX(dp.last_seen_at) AS last_seen_at
+      FROM public.device_presence dp
+      JOIN public.games g ON g.id = dp.game_id
+      LEFT JOIN public.profiles pr ON pr.id = g.owner_id
+      WHERE dp.device_type = 'display'
+        AND g.is_demo = false
+        AND NOT (g.owner_id = ANY(excluded_ids))
+      GROUP BY g.id, g.name, pr.username
+      ORDER BY MAX(dp.last_seen_at) DESC
       LIMIT p_limit
     ) r;
 
@@ -14080,5 +14118,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict gWMbbCjV1ZkzBMOGuGN4qTX8lPgJc4iFrbKgiyPa98PqcIFPEkkNSCl1YMcU5cw
+\unrestrict Bgi5PK13mA6PQS8DeZuORulcc1yQTRuhWqhE2E5rx9xC2AzPiPGhYXhUqww6pp9
 
