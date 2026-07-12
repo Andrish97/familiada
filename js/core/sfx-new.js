@@ -324,6 +324,10 @@ export function applySfxGameSettings({ volumes = {}, variants = {} } = {}) {
     if (typeof pct === "number") setSfxVolume(key, pct / 100);
   }
   for (const [key, file] of Object.entries(variants)) {
-    if (file) localStorage.setItem(`sfx_variant_${key}`, file);
+    // "__custom__" nie jest plikiem z audio_new/ — pomijamy,
+    // plik custom zostanie załadowany osobno przez loadSfxFromCloud()
+    if (file && file !== "__custom__") {
+      localStorage.setItem(`sfx_variant_${key}`, file);
+    }
   }
 }
