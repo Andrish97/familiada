@@ -136,6 +136,8 @@
   transition: background .15s;
 }
 .sfx-preview-btn:hover { background: rgba(255,255,255,.1); }
+.sfx-preview-btn:disabled { opacity: .35; cursor: not-allowed; }
+.sfx-preview-btn:disabled:hover { background: none; }
 
 .sfx-vol-wrap { display: flex; align-items: center; gap: 6px; }
 .sfx-vol { width: 90px; accent-color: #ffeaa6; }
@@ -465,6 +467,8 @@
   transition:background .15s;
 }
 .sfx-preview-btn:hover{ background:rgba(255,255,255,.1); }
+.sfx-preview-btn:disabled{ opacity:.35; cursor:not-allowed; }
+.sfx-preview-btn:disabled:hover{ background:none; }
 .sfx-vol-wrap{ display:flex; align-items:center; gap:6px; }
 .sfx-vol{ width:90px; accent-color:#ffeaa6; }
 .sfx-vol-label{

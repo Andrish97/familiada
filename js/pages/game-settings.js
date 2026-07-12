@@ -636,7 +636,7 @@ async function renderSound() {
     const custom = customFiles.get(key);
     // Aktywny wariant: "__custom__" jeśli mamy własny plik, inaczej zapisany lub domyślny
     const activeVariant = custom ? VARIANT_CUSTOM
-      : (localSettings.sound.variants[key] || cat.sounds[0]?.file || "classic.mp3");
+      : (localSettings.sound.variants[key] || (cat.sounds[0]?.file || "classic.mp3").split("?")[0]);
     const desc = t("control.sfxDesc." + key) || key;
 
     const row = document.createElement("div");
