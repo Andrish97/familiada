@@ -5181,13 +5181,13 @@ async function openStatsDetailModal(type) {
   infoEl.style.cssText = "font-size:11px;opacity:.4;margin-bottom:6px;min-height:16px";
 
   const tableWrap = document.createElement("div");
-  tableWrap.style.cssText = "min-height:60px";
+  tableWrap.style.cssText = "min-height:60px;overflow-y:auto;flex:1";
   tableWrap.textContent = "Ładowanie…";
 
   const pageWrap = document.createElement("div");
 
   const body = document.createElement("div");
-  body.style.cssText = "min-width:min(680px,88vw)";
+  body.style.cssText = "min-width:min(680px,88vw);display:flex;flex-direction:column;max-height:calc(82vh - 140px);overflow:hidden";
   body.appendChild(infoEl);
   body.appendChild(tableWrap);
   body.appendChild(pageWrap);
