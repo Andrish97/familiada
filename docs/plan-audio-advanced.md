@@ -1,392 +1,438 @@
-# Plan wdrożenia — Zaawansowane ustawienia dźwięku
+# Plan wdrożenia dźwięku per-gra — aktualny
 
-## Cel
-
-Dodanie sekcji "Zaawansowane" w zakładce Dźwięk panelu kontrolnego.
-Umożliwia: wybór wariantu dźwięku z listy wbudowanych, podgląd, regulację
-głośności (do wyłączenia), podmianę własnym plikiem, zapis w chmurze
-(tylko zalogowani).
+**Ostatnia aktualizacja:** 2026-07-13
 
 ---
 
-## Obecne pliki audio (stan wyjściowy)
+## Stan obecny (co jest gotowe)
 
-Folder `audio/` zawiera aktualnie 10 plików MP3 — jeden per kategoria:
-
-| Plik | Opis |
+| Element | Status |
 |---|---|
-| `show_intro.mp3` | Muzyka intro programu |
-| `round_transition.mp3` | Przejście między rundami |
-| `round_transition2.mp3` | Przejście między rundami (wariant) |
-| `final_theme.mp3` | Muzyka finału |
-| `buzzer_press.mp3` | Naciśnięcie buzzera |
-| `answer_correct.mp3` | Poprawna odpowiedź |
-| `answer_wrong.mp3` | Błędna odpowiedź (X) |
-| `answer_repeat.mp3` | Powtórzenie odpowiedzi w finale |
-| `time_over.mp3` | Koniec czasu w finale |
-| `bells.mp3` | Przejście wyniku na tablicę drużyny |
-
-Folder `audio/` i istniejące odwołania w `sfx.js` **pozostają bez zmian** —
-nowa struktura rozwijana jest w `audio_new/` i `sfx-new.js` (sandbox).
-Migracja do `audio_new/` nastąpi gdy sandbox będzie gotowy do produkcji.
+| `audio_new/` + `sounds.json` (10 kategorii, `classic.mp3`) | ✅ gotowe |
+| `js/core/sfx-new.js` (manifest, warianty, głośności, IndexedDB per-game) | ✅ gotowe |
+| `game-settings.html` — panel Dźwięk (ui-select wariantów, upload, preview, głośność) | ✅ gotowe |
+| `css/game-settings.css` — style sfx | ✅ gotowe |
+| `js/pages/game-settings.js` — `renderSound()` | ✅ gotowe |
+| Bucket `user-sounds` w Supabase (migracja 205) | ✅ gotowe (ścieżka do zmiany) |
+| `js/core/sfx-cloud.js` | ❌ nie istnieje |
+| Zapis do DB przy "Zapisz wszystko" w game-settings | ❌ brak obsługi custom files (bucket) |
+| X usuwa plik z bucketu | ❌ tylko IndexedDB |
+| Przywróć domyślne usuwa z bucketu | ❌ tylko IndexedDB |
+| `control-new/` używa `sfx-new.js` | ❌ używa starego `sfx.js` |
+| `control-new/js/app.js` — init sfx-new przy starcie gry | ❌ |
+| Streszczenie dźwięku w podsumowaniu (`control-new.html`) | ❌ |
 
 ---
 
-## Docelowa struktura plików audio
-
-### Foldery zamiast pojedynczych plików
-
-Nazwa folderu = klucz kategorii (identyczna z dotychczasową nazwą pliku bez rozszerzenia).
-Każdy wariant wbudowany nazwany jest według schematu `{wariant}.mp3`.
-Pierwszy (bazowy) wariant we wszystkich kategoriach nazywa się `classic.mp3`
-— odpowiada dotychczasowym plikom z `audio/`.
-
-Tłumaczenia nazwy wariantu są wbudowane w `sounds.json`:
-`"label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" }`
+## Cel końcowy — przepływ
 
 ```
-audio_new/
-  sounds.json                   ← manifest wszystkich kategorii i wariantów
-  buzzer_press/
-    classic.mp3                 ← = audio/buzzer_press.mp3
-    ...                         ← kolejne warianty dokładane w przyszłości
-  answer_correct/
-    classic.mp3
-    ...
-  answer_wrong/
-    classic.mp3
-    ...
-  answer_repeat/
-    classic.mp3
-    ...
-  bells/
-    classic.mp3
-    ...
-  time_over/
-    classic.mp3
-    ...
-  round_transition/
-    classic.mp3
-    ...
-  round_transition2/
-    classic.mp3
-    ...
-  final_theme/
-    classic.mp3
-    ...
-  show_intro/
-    classic.mp3
-    ...
+[game-settings] użytkownik wybiera wariant / wgrywa plik → Zapisz →
+  → custom files: IndexedDB + upload do bucket user-sounds/{uid}/{game_id}/{key}
+  → variants + volumes: games.settings.sound → DB
+  → X: delete z bucketu + update localSettings
+  → Przywróć domyślne: delete all z bucketu + reset
+
+[control-new] operator otwiera grę →
+  → loadGame() → game.settings.sound z DB
+  → applySfxGameSettings(sound) → localStorage warianty/głośności
+  → initSfx() → cache /audio_new/{folder}/{variant}
+  → dla kluczy z variant==="__custom__": signed URL z bucketu → loadSfxFromCloud()
+  → playSfx("bells") → odtwarza właściwy plik z cache
 ```
 
-### Format `audio_new/sounds.json`
+---
 
-```json
-{
-  "categories": [
-    {
-      "key": "buzzer_press",
-      "folder": "buzzer_press",
-      "limitSec": 5,
-      "sounds": [
-        {
-          "file": "classic.mp3",
-          "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" }
-        }
-        // kolejne warianty dokładane tu w przyszłości
-      ]
-    },
-    {
-      "key": "answer_correct",
-      "folder": "answer_correct",
-      "limitSec": 5,
-      "sounds": [
-        {
-          "file": "classic.mp3",
-          "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" }
-        }
-      ]
-    }
-    // ... pozostałe kategorie analogicznie
-  ]
+## Co NIE jest zmieniane
+
+- `control/` (stary panel) — bez żadnych zmian
+- `sfx.js` — bez żadnych zmian
+- `audio/` — bez żadnych zmian
+- Interfejs publiczny `sfx-new.js` (`playSfx`, `createSfxMixer`, `getSfxDuration`, `unlockAudio`) — identyczny jak w `sfx.js`
+
+---
+
+## Krok 1 — Migracja SQL: ścieżka bucketu per-game
+
+**Plik:** `supabase/migrations/2026-07-13_214_user_sounds_per_game.sql`
+
+Bucket `user-sounds` już istnieje. Zmiana: RLS aktualizowane tak, żeby ścieżka wymagana to `{uid}/{game_id}/{sfx_key}` (zamiast starego `{uid}/{sfx_key}`).
+
+```sql
+-- Usuń stare polityki
+DROP POLICY IF EXISTS "user-sounds-select" ON storage.objects;
+DROP POLICY IF EXISTS "user-sounds-insert" ON storage.objects;
+DROP POLICY IF EXISTS "user-sounds-update" ON storage.objects;
+DROP POLICY IF EXISTS "user-sounds-delete" ON storage.objects;
+
+-- Nowe polityki: (storage.foldername(name))[1] = uid, (foldername)[2] = game_id
+CREATE POLICY "user-sounds-select" ON storage.objects FOR SELECT TO authenticated
+  USING (bucket_id = 'user-sounds' AND (storage.foldername(name))[1] = auth.uid()::text);
+
+CREATE POLICY "user-sounds-insert" ON storage.objects FOR INSERT TO authenticated
+  WITH CHECK (bucket_id = 'user-sounds' AND (storage.foldername(name))[1] = auth.uid()::text);
+
+CREATE POLICY "user-sounds-update" ON storage.objects FOR UPDATE TO authenticated
+  USING (bucket_id = 'user-sounds' AND (storage.foldername(name))[1] = auth.uid()::text);
+
+CREATE POLICY "user-sounds-delete" ON storage.objects FOR DELETE TO authenticated
+  USING (bucket_id = 'user-sounds' AND (storage.foldername(name))[1] = auth.uid()::text);
+```
+
+Ścieżka pliku: `{uid}/{game_id}/{sfx_key}` (bez rozszerzenia — Supabase Storage przechowuje surowy blob, typ z MIME).
+
+---
+
+## Krok 2 — `js/core/sfx-cloud.js` (nowy)
+
+```js
+// js/core/sfx-cloud.js
+const BUCKET = "user-sounds";
+
+// path: {userId}/{gameId}/{key}
+function path(userId, gameId, key) {
+  return `${userId}/${gameId}/${key}`;
+}
+
+export async function uploadGameSound(sb, userId, gameId, key, blob) {
+  const p = path(userId, gameId, key);
+  // upsert = true — nadpisz jeśli istnieje
+  const { error } = await sb.storage.from(BUCKET).upload(p, blob, { upsert: true, contentType: blob.type || "audio/mpeg" });
+  if (error) throw error;
+}
+
+export async function deleteGameSound(sb, userId, gameId, key) {
+  const { error } = await sb.storage.from(BUCKET).remove([path(userId, gameId, key)]);
+  if (error) throw error;
+}
+
+export async function deleteAllGameSounds(sb, userId, gameId, keys) {
+  // keys = tablica kluczy sfx, np. ["bells","answer_correct",...]
+  const paths = keys.map(k => path(userId, gameId, k));
+  const { error } = await sb.storage.from(BUCKET).remove(paths);
+  if (error) throw error;
+}
+
+export async function getGameSoundSignedUrl(sb, userId, gameId, key, expiresIn = 3600) {
+  const { data, error } = await sb.storage.from(BUCKET).createSignedUrl(path(userId, gameId, key), expiresIn);
+  if (error) throw error;
+  return data.signedUrl;
+}
+
+export async function listGameSounds(sb, userId, gameId, keys) {
+  // Pobiera signed URLs tylko dla podanych kluczy (gdzie variant === "__custom__")
+  // Zwraca Map<key, signedUrl>
+  const result = new Map();
+  await Promise.all(keys.map(async key => {
+    try {
+      const url = await getGameSoundSignedUrl(sb, userId, gameId, key);
+      result.set(key, url);
+    } catch {}
+  }));
+  return result;
 }
 ```
 
-`sfx-new.js` wczytuje manifest raz przy starcie i buduje ścieżki jako
-`audio_new/{folder}/{file}`. Aktywny wariant per kategoria zapisywany w
-localStorage `sfx_variant_{key}` (wartość: nazwa pliku, np. `"classic.mp3"`).
-
 ---
 
-## Zasady przechowywania
+## Krok 3 — `sfx-new.js` — poprawka `applySfxGameSettings`
 
-| Stan | IndexedDB | Supabase bucket |
-|---|---|---|
-| Gość | ✓ (własne pliki) | ✗ (brak checkboxa) |
-| Zalogowany, nie zapisał | ✓ | ✗ |
-| Zalogowany, kliknął "Zapisz" | ✓ | ✓ (sync) |
-| Przywróć domyślne | czyszczone | czyszczone |
-
-- Głośności i wybrane warianty: zawsze localStorage, per urządzenie
-- Przy starcie z `sfx_save_cloud=true`: ładuj z bucketu (ignoruj IndexedDB dla podmienionych)
-- Odznaczenie checkboxa: usuwa z bucketu, zostaje lokalna kopia
-
----
-
-## Limity czasu plików (walidacja uploadów użytkownika)
-
-| Kategorie | Limit |
-|---|---|
-| `buzzer_press`, `answer_correct`, `answer_wrong`, `answer_repeat`, `bells`, `time_over` | **5s** |
-| `round_transition`, `round_transition2`, `final_theme`, `show_intro` | **30s** |
-
-Limity pochodzą z `sounds.json` (`limitSec`). Walidacja przez
-`AudioContext.decodeAudioData`. Przekroczenie → `alertModal`.
-
----
-
-## Pliki do zmiany / stworzenia
-
-### 1. `audio/sounds.json` (nowy)
-
-Manifest jak powyżej. Na start każda kategoria ma jeden wariant `default.mp3`.
-Kolejne warianty dokładane jako nowe pliki w folderze + wpis w JSON.
-
----
-
-### 2. `supabase/migrations/2026-05-31_205_user_sounds_bucket.sql` (nowy)
-
-Bucket `user-sounds`:
-- prywatny (`public: false`)
-- limit pliku: 2MB
-- dozwolone typy: `audio/mpeg`, `audio/wav`, `audio/ogg`
-- ścieżka: `{user_id}/{sfx_key}.mp3`
-
-RLS (wzór z `user-logos`):
-- SELECT: tylko właściciel (`auth.uid() == folder[1]`)
-- INSERT: tylko authenticated, folder musi być `{uid}/`
-- UPDATE/DELETE: tylko właściciel
-
----
-
-### 3. `js/core/sfx.js` — rozszerzenie
-
-**Nowe funkcje eksportowane:**
-
-- `loadSfxManifest()` → fetch `audio/sounds.json`, cache manifest, zwraca tablicę kategorii
-- `getSfxCategories()` → zwraca załadowany manifest (po `loadSfxManifest`)
-- `setSfxVariant(key, file)` → ustawia aktywny wariant, ładuje `Audio` z `audio/{folder}/{file}`, zapisuje do localStorage `sfx_variant_{key}`
-- `getSfxVariant(key)` → czyta z localStorage, fallback `"default.mp3"`
-- `setSfxVolume(key, v)` → ustawia `audio.volume`, zapisuje do localStorage `sfx_vol_{key}`
-- `getSfxVolumes()` → `Map<key, number>` z localStorage
-- `resetSfxVolumes()` → czyści `sfx_vol_*` z localStorage, wraca do 1.0
-- `resetSfxVariants()` → czyści `sfx_variant_*` z localStorage, wczytuje `default.mp3`
-- `setSfxCustomBlob(key, blob, filename)` → tworzy blob URL, podmienia cache dla klucza, zapisuje do IndexedDB; **nadpisuje wybrany wariant** (custom ma priorytet)
-- `getSfxCustomFiles()` → `Map<key, {blob, filename}>` z IndexedDB
-- `clearSfxCustomFile(key)` → revoke blob URL, usuwa z IndexedDB, wraca do aktywnego wariantu (`getSfxVariant`)
-- `clearAllSfxCustomFiles()` → dla wszystkich kluczy `clearSfxCustomFile`
-- `loadSfxFromCloud(urlMap)` → `Map<key, url>` → podmienia źródła na cloud URL (bez IndexedDB)
-- `applySfxVolumes()` → odczytuje localStorage, aplikuje na wszystkie Audio
-
-IndexedDB: baza `familiada-sfx`, store `custom-files`, klucz = `key`, wartość = `{blob, filename}`.
-
----
-
-### 4. `js/core/sfx-cloud.js` (nowy)
+Aktualnie ustawia `sfx_variant_{key} = "__custom__"` co powoduje że `initSfx()` próbuje załadować plik `__custom__.mp3`. Guard:
 
 ```js
-const BUCKET = "user-sounds";
-
-export async function uploadSoundToCloud(userId, key, blob)
-export async function deleteSoundFromCloud(userId, key)
-export async function deleteAllSoundsFromCloud(userId)
-export async function listCloudSounds(userId)   // → Map<key, url>
-export function getSfxSaveFlag()                // localStorage "sfx_save_cloud" === "1"
-export function setSfxSaveFlag(v)
+export function applySfxGameSettings({ volumes = {}, variants = {} } = {}) {
+  for (const [key, pct] of Object.entries(volumes)) {
+    if (typeof pct === "number") setSfxVolume(key, pct / 100);
+  }
+  for (const [key, file] of Object.entries(variants)) {
+    // __custom__ nie jest wariantem z dysku — pomijamy, plik ładowany z bucketu osobno
+    if (file && file !== "__custom__") localStorage.setItem(`sfx_variant_${key}`, file);
+  }
+}
 ```
 
 ---
 
-### 5. `control-new.html` — sekcja Zaawansowane
+## Krok 4 — `game-settings.js` — zapis/usuwanie z bucketu
 
-Poniżej istniejącej karty z odblokowaniem:
+### 4a. Zapis przy "Zapisz wszystko"
+
+`saveSettings()` już zapisuje `localSettings` do `games.settings` w DB.
+Rozszerzenie o obsługę bucketu:
+
+```js
+// W saveSettings(), po sukcesie zapisu do DB:
+const { data: { user } } = await sb().auth.getUser();
+const userId = user?.id;
+if (userId && gameId) {
+  for (const [key, variant] of Object.entries(localSettings.sound.variants)) {
+    if (variant === VARIANT_CUSTOM) {
+      const custom = customFiles.get(key);  // z IndexedDB
+      if (custom?.blob) {
+        await uploadGameSound(sb(), userId, gameId, key, custom.blob);
+      }
+    } else {
+      // Jeśli wcześniej był custom (sprawdź w DB przed zapisem) — usuń z bucketu
+      // Wystarczy próba usunięcia (ignoruj błąd 404)
+      try { await deleteGameSound(sb(), userId, gameId, key); } catch {}
+    }
+  }
+}
+```
+
+### 4b. X (`[data-sfx-clear]`) — usuwa plik z bucketu
+
+```js
+btn.addEventListener("click", async () => {
+  const key = btn.dataset.sfxClear;
+  // IndexedDB
+  try { await clearSfxCustomFile(key, gameId); } catch {}
+  // Bucket
+  const { data: { user } } = await sb().auth.getUser();
+  if (user?.id) {
+    try { await deleteGameSound(sb(), user.id, gameId, key); } catch {}
+  }
+  customFiles.delete(key);
+  delete localSettings.sound.variants[key];
+  markDirty();
+  // ... in-place DOM update (bez re-renderu)
+});
+```
+
+### 4c. Przywróć domyślne (`btnSoundReset`)
+
+```js
+btnSoundReset.addEventListener("click", async () => {
+  if (!await confirmModal(...)) return;
+  localSettings.sound = { volumes: {}, variants: {} };
+  try { await clearAllSfxCustomFiles(gameId); } catch {}
+  // Bucket: usuń wszystkie custom files tej gry
+  const { data: { user } } = await sb().auth.getUser();
+  if (user?.id) {
+    const customKeys = [...customFiles.keys()];
+    if (customKeys.length > 0) {
+      try { await deleteAllGameSounds(sb(), user.id, gameId, customKeys); } catch {}
+    }
+  }
+  markDirty();
+  renderSound();
+});
+```
+
+---
+
+## Krok 5 — `control-new/` — zmiana importu sfx
+
+**Pliki do zmiany:** `control-new/js/gameRounds.js`, `control-new/js/gameFinal.js`, `control-new/js/app.js`
+
+Tylko zmiana importu — interfejs identyczny:
+
+```js
+// PRZED:
+import { playSfx, createSfxMixer, getSfxDuration } from "../../js/core/sfx.js?v=...";
+// PO:
+import { playSfx, createSfxMixer, getSfxDuration } from "../../js/core/sfx-new.js?v=...";
+```
+
+Brak żadnych zmian w logice wywołań `playSfx(...)`.
+
+---
+
+## Krok 6 — `control-new/js/app.js` — inicjalizacja sfx-new przy starcie
+
+Dodać import i blok inicjalizacji w `main()`, po `applyGameSettingsToStore()`:
+
+```js
+import { setCurrentGameId, loadSfxManifest, initSfx, applySfxGameSettings, loadSfxFromCloud } from "../../js/core/sfx-new.js?v=...";
+import { listGameSounds } from "../../js/core/sfx-cloud.js?v=...";
+
+// W main(), po applyGameSettingsToStore():
+setCurrentGameId(game.id);
+await loadSfxManifest();
+
+const soundSettings = game.settings?.sound;
+if (soundSettings) {
+  applySfxGameSettings(soundSettings);  // ustawia localStorage warianty/głośności
+}
+
+await initSfx();  // ładuje warianty do cache z /audio_new/
+
+// Załaduj custom files z bucketu
+const customKeys = Object.entries(soundSettings?.variants ?? {})
+  .filter(([, v]) => v === "__custom__")
+  .map(([k]) => k);
+
+if (customKeys.length > 0) {
+  try {
+    const urlMap = await listGameSounds(sb(), currentUser.id, game.id, customKeys);
+    loadSfxFromCloud(urlMap);
+  } catch {}
+}
+```
+
+---
+
+## Krok 7 — Streszczenie dźwięku w podsumowaniu
+
+### 7a. `control-new.html` — nowa sekcja po sekcji Wygląd
 
 ```html
-<div class="card sfx-advanced-card">
-  <div class="cardBody">
-    <button class="sfx-advanced-toggle" id="btnSfxAdvanced" type="button">
-      <span class="sfx-toggle-arrow">▶</span>
-      <span data-i18n="control.sfxAdvanced">Zaawansowane</span>
-    </button>
-
-    <div class="sfx-advanced-body hidden" id="sfxAdvancedBody">
-      <div class="sfx-table" id="sfxTable">
-        <!-- wiersze generowane dynamicznie przez JS -->
-      </div>
-
-      <div class="sfx-advanced-foot">
-        <button class="btn" id="btnSfxReset" type="button"
-          data-i18n="control.sfxResetAll">Przywróć domyślne</button>
-
-        <!-- ukryte dla gościa -->
-        <label class="sfx-save-check" id="sfxSaveWrap">
-          <input type="checkbox" id="chkSfxSave"/>
-          <span data-i18n="control.sfxSaveCloud">Zapisz w chmurze</span>
-        </label>
-        <button class="btn gold hidden" id="btnSfxSave" type="button"
-          data-i18n="control.sfxSaveBtn">Zapisz</button>
-      </div>
-    </div>
-  </div>
+<div class="summarySection" id="summarySoundSection">
+  <div class="summarySectionTitle" data-i18n="control.summarySound">Dźwięk</div>
+  <div id="summarySoundList" class="summarySoundList"></div>
 </div>
 ```
 
-Struktura wiersza (generowana przez JS):
+Ukryta gdy brak niestandardowych ustawień (`hidden` jeśli wszystko domyślne).
 
-```html
-<div class="sfx-row" data-key="answer_correct">
-  <div class="sfx-row-desc">Poprawna odpowiedź</div>
-
-  <!-- UI select: lista wbudowanych wariantów -->
-  <div class="sfx-variant-wrap">
-    <div class="ui-select" data-sfx-variant="answer_correct">
-      <!-- opcje generowane z sounds.json -->
-    </div>
-  </div>
-
-  <!-- Podgląd -->
-  <button class="sfx-preview-btn" type="button" title="Podgląd">🔊</button>
-
-  <!-- Głośność -->
-  <div class="sfx-vol-wrap">
-    <input type="range" class="sfx-vol" min="0" max="100" value="100"/>
-    <span class="sfx-vol-label">100%</span>
-  </div>
-
-  <!-- Własny plik użytkownika -->
-  <div class="sfx-file-wrap">
-    <button class="btn sfx-add-btn" type="button"
-      data-i18n="control.sfxAddFile">Własny plik</button>
-    <input type="file" class="sfx-file-input hidden"
-      accept="audio/mpeg,audio/wav,audio/ogg"/>
-    <div class="sfx-file-tag hidden">
-      <span class="sfx-file-name">nazwa.mp3</span>
-      <button class="sfx-file-remove" type="button" title="Usuń">✕</button>
-    </div>
-  </div>
-</div>
-```
-
-Kiedy użytkownik ma wczytany własny plik: `ui-select` jest wyszarzony
-(`disabled`), a "Własny plik" pokazuje ramkę z nazwą pliku i przyciskiem ✕.
-Usunięcie własnego pliku przywraca aktywność `ui-select` i wgrywa wybrany wariant.
-
----
-
-### 6. `control-new/js/app.js` — logika
-
-**Na starcie (`main()`):**
-```
-await loadSfxManifest()
-applySfxVolumes()
-for each category: setSfxVariant(key, getSfxVariant(key))   // wczytaj zapisany wariant
-if (zalogowany && getSfxSaveFlag()):
-    urls = await listCloudSounds(userId)
-    loadSfxFromCloud(urls)
-else:
-    files = await getSfxCustomFiles()
-    for each: setSfxCustomBlob(key, blob, filename)
-buildSfxTable()
-sfxSaveWrap.hidden = guestMode
-```
-
-**`buildSfxTable()`:**
-Iteruje `getSfxCategories()`, dla każdej kategorii buduje wiersz z:
-- opisem: `t("control.sfxDesc." + key)`
-- `ui-select` z listą wariantów z `sounds.json` (zainicjowany na `getSfxVariant(key)`)
-- suwakiem głośności z wartością z `getSfxVolumes()`
-- stanem pliku na podstawie `getSfxCustomFiles()`
-
-**Handlery:**
-
-| Zdarzenie | Akcja |
-|---|---|
-| `ui-select` zmiana wariantu | `setSfxVariant(key, file)` |
-| suwak `input` | `setSfxVolume(key, val/100)`, aktualizuj etykietę `${val}%` |
-| 🔊 `click` | `playSfx(key)` |
-| "Własny plik" `click` | trigger `sfxFileInput.click()` |
-| `file input change` | decode → sprawdź `buf.duration > limitSec` → za długi: `alertModal` → else: `setSfxCustomBlob`, zablokuj `ui-select`, pokaż ramkę |
-| ✕ `click` | `clearSfxCustomFile(key)`, odblokuj `ui-select`, pokaż "Własny plik" |
-| toggle "Zaawansowane" | toggle `.hidden` na `sfxAdvancedBody`, obróć strzałkę |
-| `chkSfxSave change` | odznaczono: `deleteAllSoundsFromCloud` + `setSfxSaveFlag(false)` + ukryj "Zapisz"; zaznaczono: pokaż "Zapisz" |
-| "Zapisz" `click` | dla każdego z IndexedDB: `uploadSoundToCloud` → `setSfxSaveFlag(true)`, ukryj "Zapisz" |
-| "Przywróć domyślne" `click` | `confirmModal` → `clearAllSfxCustomFiles()` + `deleteAllSoundsFromCloud()` + `resetSfxVolumes()` + `resetSfxVariants()` + `setSfxSaveFlag(false)` + rebuild tabeli |
-
----
-
-### 7. `control-new/control.css`
+### 7b. CSS (`control-new/control.css`)
 
 ```css
-.sfx-advanced-toggle     /* flex, gap, cursor pointer */
-.sfx-toggle-arrow        /* transition rotate 0→90deg gdy open */
-.sfx-advanced-body       /* padding-top: 12px */
-.sfx-table               /* flex-direction: column; gap: 6px */
-.sfx-row                 /* grid: desc | variant-select | preview | vol | file;
-                            align-items: center; gap: 10px; padding: 6px 0 */
-.sfx-row-desc            /* font-size: .85rem */
-.sfx-variant-wrap        /* flex; min-width: 120px */
-.sfx-preview-btn         /* btn-icon, małe */
-.sfx-vol-wrap            /* flex; align-items: center; gap: 6px */
-.sfx-vol                 /* input range, szer. 90px */
-.sfx-vol-label           /* font-size: .8rem; min-width: 36px; text-align: right */
-.sfx-file-tag            /* flex; border, border-radius, padding, background */
-.sfx-file-name           /* max-width: 110px; overflow: hidden; text-overflow: ellipsis */
-.sfx-file-remove         /* btn-icon, małe, ✕ */
-.sfx-advanced-foot       /* flex; gap: 12px; flex-wrap: wrap; margin-top: 14px;
-                            padding-top: 12px; border-top */
-.sfx-save-check          /* flex; align-items: center; gap: 6px; font-size: .85rem */
+.summarySoundList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: .82rem;
+}
+.summarySoundRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.summarySoundKey {
+  opacity: .55;
+  min-width: 140px;
+  flex-shrink: 0;
+}
+.summarySoundVariant {
+  font-weight: 700;
+}
+.summarySoundVol {
+  opacity: .6;
+}
+.summarySoundFile {
+  font-style: italic;
+  opacity: .7;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 160px;
+}
 ```
 
----
+### 7c. `control-new/js/app.js` — `renderSetupFinishSummary()`
 
-### 8. Tłumaczenia
+Po załadowaniu manifestu i ustawień gry:
 
-Nowe klucze `control.*`:
+```js
+const soundSection = document.getElementById("summarySoundSection");
+const soundList = document.getElementById("summarySoundList");
+if (soundList && soundSection) {
+  const sound = game.settings?.sound || {};
+  const cats = getSfxCategories();  // z sfx-new.js (manifest już załadowany)
+  const lang = getUiLang() || "pl";
+
+  // Pokaż tylko gdy jakiekolwiek ustawienie różni się od domyślnego
+  const hasCustomSound = cats.some(cat => {
+    const vol = sound.volumes?.[cat.key];
+    const variant = sound.variants?.[cat.key];
+    return (vol !== undefined && vol !== 100) || (variant && variant !== "classic.mp3");
+  });
+
+  if (!hasCustomSound) {
+    soundSection.hidden = true;
+  } else {
+    soundSection.hidden = false;
+    soundList.innerHTML = cats.map(cat => {
+      const key = cat.key;
+      const vol = sound.volumes?.[key] ?? 100;
+      const variant = sound.variants?.[key] || "classic.mp3";
+      const isCustom = variant === "__custom__";
+      const desc = t("control.sfxDesc." + key) || key;
+
+      // Etykieta wariantu: z manifestu lub "Własny"
+      const variantLabel = isCustom
+        ? (t("control.sfxCustom") || "Własny")
+        : (cat.sounds.find(s => s.file.split("?")[0] === variant)?.label?.[lang] || variant);
+
+      // Nazwa pliku — dostępna tylko po inicjalizacji (przez IndexedDB) w game-settings
+      // W control-new nie mamy dostępu do IndexedDB — pokazujemy tylko fakt że to własny plik
+      const volLabel = vol !== 100 ? `<span class="summarySoundVol">${vol}%</span>` : "";
+      const fileLabel = isCustom ? `<span class="summarySoundFile">(własny plik)</span>` : "";
+
+      return `
+        <div class="summarySoundRow">
+          <span class="summarySoundKey">${escapeHtml(desc)}</span>
+          <span class="summarySoundVariant">${escapeHtml(String(variantLabel))}</span>
+          ${volLabel}
+          ${fileLabel}
+        </div>`;
+    }).join("");
+  }
+}
+```
+
+**Uwaga:** nazwy plików custom (`filename`) są przechowywane w IndexedDB (tylko w game-settings).
+W `control-new` dostępna jest tylko informacja że wariant = `"__custom__"`. Jeśli potrzebna jest nazwa pliku w streszczeniu, należy ją dodać do `games.settings.sound` przy zapisie (np. `sound.filenames: { key: "moj-dzwiek.mp3" }`).
+
+### 7d. Tłumaczenia
 
 | klucz | pl | en | uk |
 |---|---|---|---|
-| `sfxAdvanced` | Zaawansowane | Advanced | Розширені |
-| `sfxAddFile` | Własny plik | Custom file | Власний файл |
-| `sfxSaveCloud` | Zapisz w chmurze | Save to cloud | Зберегти в хмарі |
-| `sfxSaveBtn` | Zapisz | Save | Зберегти |
-| `sfxResetAll` | Przywróć domyślne | Restore defaults | Відновити типові |
-| `sfxTooLongTitle` | Plik za długi | File too long | Файл занадто довгий |
-| `sfxTooLong` | Maksymalna długość to {limit}s | Maximum length is {limit}s | Максимальна тривалість — {limit}с |
-
-Nowe klucze `control.sfxDesc.*`:
-
-| klucz | pl | en | uk |
-|---|---|---|---|
-| `show_intro` | Muzyka intro programu | Show intro music | Вступна музика програми |
-| `round_transition` | Przejście między rundami | Round transition | Перехід між раундами |
-| `round_transition2` | Przejście między rundami (wariant) | Round transition (variant) | Перехід між раундами (варіант) |
-| `final_theme` | Muzyka finału | Final theme music | Музика фіналу |
-| `buzzer_press` | Naciśnięcie buzzera | Buzzer press | Натискання кнопки |
-| `answer_correct` | Poprawna odpowiedź | Correct answer | Правильна відповідь |
-| `answer_wrong` | Błędna odpowiedź (X) | Wrong answer (X) | Неправильна відповідь (X) |
-| `answer_repeat` | Powtórzenie odpowiedzi w finale | Repeat answer (final) | Повторення відповіді у фіналі |
-| `time_over` | Koniec czasu w finale | Time's up (final) | Час вийшов (фінал) |
-| `bells` | Przejście wyniku na tablicę drużyny | Score transfer to team board | Перенесення rахунку на табло |
+| `control.summarySound` | Dźwięk | Sound | Звук |
 
 ---
 
 ## Kolejność implementacji
 
-1. `audio/sounds.json` + foldery (na razie `default.mp3` per kategoria — same wpisy w JSON, pliki już istnieją w `audio/`)
-2. `js/core/sfx.js` — rozszerzenie: manifest, warianty, głośności, blob URL, IndexedDB
-3. `js/core/sfx-cloud.js` — nowy
-4. `supabase/migrations/2026-05-31_205_user_sounds_bucket.sql`
-5. Tłumaczenia (pl / en / uk)
-6. `control-new.html` — sekcja Zaawansowane
-7. `control-new/control.css` — style
-8. `control-new/js/app.js` — `buildSfxTable()` + handlery
+1. `supabase/migrations/2026-07-13_214_user_sounds_per_game.sql`
+2. `js/core/sfx-cloud.js`
+3. Poprawka `applySfxGameSettings` w `sfx-new.js`
+4. Import `sfx-cloud.js` + obsługa bucketu w `game-settings.js` (zapis, X, reset)
+5. Zmiana importu sfx w `control-new/js/gameRounds.js`, `gameFinal.js`, `app.js`
+6. Inicjalizacja sfx-new w `control-new/js/app.js` (`main()`)
+7. Streszczenie dźwięku: HTML + CSS + JS w `renderSetupFinishSummary()`
+8. Tłumaczenia (`control.summarySound`)
+
+---
+
+## Dane w `games.settings.sound`
+
+```json
+{
+  "sound": {
+    "volumes": {
+      "bells": 80,
+      "answer_correct": 100
+    },
+    "variants": {
+      "bells": "classic.mp3",
+      "answer_correct": "__custom__"
+    },
+    "filenames": {
+      "answer_correct": "moj-dzwiek-poprawny.mp3"
+    }
+  }
+}
+```
+
+- `volumes[key]` — 0–100 (int), brak = 100
+- `variants[key]` — nazwa pliku z `audio_new/` albo `"__custom__"`, brak = `"classic.mp3"`
+- `filenames[key]` — oryginalna nazwa wgranego pliku (do wyświetlenia w streszczeniu), opcjonalne
+
+---
+
+## Struktura bucketu
+
+```
+user-sounds/
+  {owner_id}/
+    {game_id}/
+      bells
+      answer_correct
+      answer_wrong
+      ...
+```
+
+Pliki bez rozszerzenia — typ określany przez MIME przy uploadzie.
