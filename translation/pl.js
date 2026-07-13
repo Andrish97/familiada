@@ -1946,95 +1946,56 @@ const pl = {
       <h3 class="m-h2">2) Ustawienia</h3>
 
       <p class="m-p">
-        Gdy urządzenia są online, przechodzisz do ustawień rozgrywki.
+        Gdy urządzenia są online, przechodzisz do podsumowania ustawień. Wszystkie opcje (kolory, dźwięk, parametry gry) możesz wcześniej skonfigurować na stronie <span class="m-strong">Ustawień rozgrywki</span> — Panel sterowania wczyta je automatycznie.
       </p>
 
       <h3 class="m-h3">Nazwy drużyn</h3>
 
       <p class="m-p">
-        Ustawiasz nazwę drużyny A i B.
-        Są to napisy, które widzą zawodnicy i widownia na wyświetlaczu. Panel blokuje przejście dalej, dopóki obie nazwy nie są wpisane.
+        Są to napisy widoczne na wyświetlaczu, na urządzeniu prowadzącego i w wynikach. Jeśli nie wpiszesz nic w <span class="m-strong">Ustawieniach rozgrywki</span>, zostaną wczytane domyślne wartości: <span class="m-strong">Drużyna A</span> i <span class="m-strong">Drużyna B</span>.
       </p>
 
       <h3 class="m-h3">Wygląd</h3>
 
       <ul class="m-ul">
-        <li>
-          <span class="m-strong">Kolory</span> — tutaj ustawiasz kolory drużyn, które będą używane na każdym z urządzeń i zmienią się od razu, oraz kolor tła tablicy.
-        </li>
-        <li>
-          <span class="m-strong">Logo</span> — jeśli masz utworzone jakieś logo, zobaczysz je tutaj. Możesz wybrać któreś dla tej rozgrywki lub zostawić domyślne.
-        </li>
+        <li><span class="m-strong">Kolory</span> — kolory drużyn, tła i kropek.</li>
+        <li><span class="m-strong">Motyw</span> — styl wizualny tablicy.</li>
+        <li><span class="m-strong">Logo</span> — logo wyświetlane w trakcie rozgrywki.</li>
       </ul>
 
-      <h3 class="m-h3">Ustawienia pytań i rozgrywki</h3>
-
-      <p class="m-p">
-        Tutaj wybierasz, czy rozgrywka będzie miała finał oraz czy chcesz wybierać lub wylosować pytania do finału i do rozgrywki. Jeśli zaznaczysz <span class="m-strong">Wybierz</span>, to w następnych dwóch krokach zostaniesz poproszony o ich wybranie.
-      </p>
-
-      <p class="m-p">
-        W „Dodatkowych ustawieniach" dopasowujesz rozgrywkę do formatu rozgrywki.
-        Te opcje nie zmieniają sensu zasad, tylko ustawiają tempo i progi gry.
-      </p>
+      <h3 class="m-h3">Dźwięk</h3>
 
       <ul class="m-ul">
-        <li>
-          <span class="m-strong">Mnożniki rund</span> — wpisywane po przecinku (np. <span class="m-code">1,1,1,2,3</span>).
-          To odpowiada klasycznemu podwajaniu/potrajaniu wartości w kolejnych etapach.
-          W praktyce: bank rundy na końcu jest mnożony przez mnożnik bieżącej rundy.
-        </li>
-        <li>
-          <span class="m-strong">Cel rozgrywki</span> — próg punktów, po którym gra może przejść do finału
-          (w klasycznej formule często 300). To pozwala dopasować długość gry.
-        </li>
-        <li>
-          <span class="m-strong">Cel finału</span> — próg punktów w finale (domyślnie 200 w klasycznej formule).
-        </li>
-        <li>
-          <span class="m-strong">Zakończenie gry</span> — co pokazuje wyświetlacz na końcu
-          (logo / punkty / kwota po finale). To jest ważne produkcyjnie: „ostatni kadr".
-        </li>
-        <li>
-          <span class="m-strong">Mnożnik nagrody (po finale)</span> — domyślnie, jeśli chcemy grać o nagrodę jak w klasycznej Familiadzie, po finale nagroda to punkty uzyskane podczas gry ×3.
-        </li>
-        <li>
-          <span class="m-strong">Kwota nagrody głównej</span> — jeśli w finale drużyna uzyskała próg (domyślnie 200 punktów), to do nagrody finału jest dodawana kwota nagrody głównej, domyślnie 25000.
-        </li>
+        <li>Przy każdej kategorii dźwiękowej widzisz aktualny <span class="m-strong">wariant</span> (np. Klasyczny lub nazwę własnego pliku).</li>
+        <li>Suwak <span class="m-strong">głośności</span> pozwala dostosować poziom każdego dźwięku.</li>
+        <li>Przycisk <span class="m-strong">▶</span> pozwala odsłuchać dźwięk przed rozgrywką.</li>
       </ul>
 
       <div class="m-note">
-        <b>Dlaczego to jest w Panelu sterowania, a nie w edytorze?</b><br/>
-        Bo to są ustawienia odcinka (produkcji), a nie treści pytań.
-        Pytania nie powinny się zmieniać podczas rozgrywki, ale parametry gry czasem tak.
+        Jeśli zmienisz poziom głośności tutaj, zostanie on zmieniony tylko dla tej konkretnej rozgrywki. Przy ponownym uruchomieniu rozgrywki zostaną wczytane wartości nadane w <span class="m-strong">Ustawieniach rozgrywki</span>.
       </div>
 
-      <h3 class="m-h3">Finał: wybierz 5 pytań</h3>
+      <h3 class="m-h3">Finał</h3>
+
+      <p class="m-p">Tu zobaczysz tylko potwierdzenie, czy rozgrywka ma finał.</p>
 
       <p class="m-p">
-        Jeśli rozgrywka ma mieć finał, i nie włączyliśmy opcji losuj, to tutaj wybierasz dokładnie <span class="m-strong">5 pytań finału</span>.
-        Panel pokazuje listę pytań oraz listę „Pytania finału (max 5)".
-        Po wybraniu piątki używasz przycisku <span class="m-strong">Zatwierdź</span>.
+        Jeśli finał jest włączony i wybrano tryb <span class="m-strong">Ręcznie</span> — tutaj zobaczysz wybrane przez Ciebie 5 pytań finałowych. Przy trybie <span class="m-strong">Losowe</span> zobaczysz wylosowane pytania finałowe.
       </p>
-
-      <div class="m-warn">
-        <b>Uwaga:</b><br/>
-        Finał wymaga zatwierdzonych 5 pytań przed startem rund.
-        To celowa blokada — na żywo nie ma czasu na wybieranie pytań „na szybko".
-        Jeśli chcesz zmienić zestaw, używasz trybu <span class="m-strong">Edytuj</span> przy pytaniach finału.
-      </div>
 
       <h3 class="m-h3">Rundy: kolejność pytań</h3>
 
       <p class="m-p">
-        Jeśli nie wybrano losowania, tutaj można ustawić kolejność pytań
-        spośród tych, które pozostały po wybraniu finałowych.
-        W tej kolejności będą podawane podczas rozgrywki rund.
+        Jeśli wybrano tryb <span class="m-strong">Kolejność</span> dla pytań rund — tutaj będzie widoczna kolejność pytań, które zostaną użyte podczas rozgrywki zasadniczej. Przy trybie <span class="m-strong">Losowe</span> zobaczysz wylosowane pytania rund.
       </p>
 
-      <h3 class="m-h3">Podsumowanie</h3>
+      <div class="m-note">
+        Zawsze możesz wcisnąć przycisk <span class="m-strong">Zmień ustawienia</span>, po czym otworzy się okienko ustawień — szczegóły w zakładce <span class="m-strong">Ustawienia rozgrywki</span>.
+      </div>
 
-      <p class="m-p">Tutaj zobaczysz podsumowanie wybranych ustawień.</p>
+      <p class="m-p">
+        Gdy wszystko się zgadza — kliknij <span class="m-strong">Gotowe — przejdź do rund</span>, żeby rozpocząć rozgrywkę.
+      </p>
 
       <h3 class="m-h2">3) Rundy — przebieg gry krok po kroku</h3>
 
@@ -2360,120 +2321,164 @@ const pl = {
         bezpośrednio — bez przechodzenia przez moderację.
         Wyróżniają się dedykowaną odznaką.
       </p>`,
-      gameSettings: ``, /* tab zakomentowana w manual.html */
-      /* DRAFT gameSettings (na podstawie sekcji control, bez ustawień):
-      gameSettings: `<h3 class="m-h2">1) Urządzenia</h3>
+      gameSettings: `<h2 class="m-h2">Ustawienia rozgrywki</h2>
 
       <p class="m-p">
-        Pierwszy etap w panelu to podłączenie urządzeń.
-        W górnym pasku panelu widzisz trzy statusy:
-        <span class="m-strong">Wyświetlacz</span>,
-        <span class="m-strong">Prowadzący</span>,
-        <span class="m-strong">Przycisk</span>.
-        Operator rozpoczyna od tego, żeby wszystkie były online (prowadzący jest opcjonalny, możesz prowadzić rozgrywkę z panelu operatora, jeśli brakuje osób).
-      </p>
-
-      <h3 class="m-h3">Krok 1: Wyświetlacz</h3>
-
-      <p class="m-p">
-        W tym kroku panel pokazuje <span class="m-strong">6-cyfrowy kod</span> i kod QR dla wyświetlacza.
-        Najlepiej otworzyć wyświetlacz na telewizorze lub rzutniku w trybie pełnoekranowym (bez pasków przeglądarki).
-        Dopiero gdy wyświetlacz jest online, panel pozwala przejść dalej.
+        Strona Ustawień rozgrywki pozwala skonfigurować grę na spokojnie — zanim wejdziesz do Panelu sterowania i zaczniesz rozgrywkę na żywo. Wszystko, co tu ustawisz, jest zapisane do gry i zostanie automatycznie wczytane przez Panel sterowania.
       </p>
 
       <p class="m-p">
-        <span class="m-strong">„Czarny ekran"</span> — jeśli po załadowaniu ekranu widzisz pozostałości po starej rozgrywce,
-        użyj tego przycisku, żeby przywrócić czarny ekran na czas ustawień.
+        Otworzysz ją ze strony <span class="m-strong">Moje gry</span> przyciskiem <span class="m-strong">Ustawienia rozgrywki</span> przy wybranej grze.
       </p>
 
-      <div class="m-note">
-        <b>Jak wygodnie wyświetlić tablicę na drugim ekranie?</b><br/>
-        Dla najlepszego efektu użyj trybu rozszerzonego ekranu.
-        W systemie <span class="m-strong">Windows</span> przełączysz go skrótem <span class="m-code">Win + P</span>,
-        a na <span class="m-strong">Macu</span> użyj <span class="m-code">⌘ F1</span> (czasem dodatkowo <span class="m-code">Fn</span>).<br/><br/>
-        Następnie otwórz tablicę w nowym oknie przeglądarki, przeciągnij je na drugi ekran i włącz tryb pełnoekranowy.
-        Dzięki temu możesz jednocześnie sterować na swoim urządzeniu i wyświetlać treść dla innych.
-      </div>
-
-      <h3 class="m-h3">Krok 2: Host i Przycisk</h3>
+      <h3 class="m-h2">Drużyny</h3>
 
       <p class="m-p">
-        W drugim kroku podłączasz urządzenie prowadzącego i urządzenie przycisku.
-        Panel pokazuje <span class="m-strong">6-cyfrowy kod</span> i kod QR dla każdego z nich.
-        W praktyce najlepiej użyć dwóch osobnych telefonów albo telefonu i tabletu.
+        Wpisz nazwy drużyn. Te nazwy będą wyświetlane na tablicy podczas rozgrywki oraz na urządzeniu prowadzącego.
       </p>
-
-      <p class="m-p">
-        W tym kroku jest opcja <span class="m-strong">„QR na wyświetlaczu"</span> —
-        po jej użyciu kody QR mogą zostać pokazane na dużym ekranie (po podłączeniu wyświetlacza),
-        żeby ekipa mogła szybko zeskanować je telefonami.
-        To przyspiesza start na planie, bo nie trzeba przepisywać linków.
-      </p>
-
-      <p class="m-p">
-        Poprzez opcję <span class="m-strong">„Udostępnij"</span> — możesz szybko wysłać komuś linka na maila lub udostępnić swoim subskrybentom. Udostępnione urządzenia będą widoczne na koncie (tylko dla zarejestrowanych) w panelu <span class="m-code">Podłącz urządzenie 📱</span>. Niezarejestrowani dostaną po prostu linka na maila.
-      </p>
-
-      <div class="m-note">
-        <b>Jak wygodnie podłączyć urządzenie?</b><br/>
-        Najprostszy sposób: wejdź na <span class="m-code">familiada.online</span>, kliknij <span class="m-code">Podłącz urządzenie 📱</span>
-        w górnym pasku i wprowadź <span class="m-strong">6-cyfrowy kod</span> widoczny przy urządzeniu w panelu operatora.<br/><br/>
-        Alternatywnie: na urządzeniu mobilnym możesz zeskanować <span class="m-strong">kod QR</span> widoczny w panelu.
-        Dla najlepszego użytkowania sugerowane jest zainstalowanie aplikacji webowej — na stronie <span class="m-strong">Moje gry</span>
-        kliknij przycisk pobierania, aby uzyskać wskazówki.
-      </div>
-
-      <h3 class="m-h3">Tryb bez tabletu prowadzącego</h3>
-
-      <p class="m-p">
-        Jeśli prowadzący nie korzysta z osobnego urządzenia (telefonu/tabletu), zaznacz opcję
-        <span class="m-strong">„Nie używaj tabletu prowadzącego"</span> przy urządzeniu Prowadzący.
-        Po zaznaczeniu: przyciski i kod połączenia dla prowadzącego są wyszarzone,
-        podpięcie urządzenia prowadzącego nie jest wymagane do przejścia dalej,
-        a dot statusu prowadzącego w górnym pasku staje się nieaktywny.
-        Operator może samodzielnie prowadzić rozgrywkę z panelu sterowania.
-      </p>
-
-      <h3 class="m-h3">Fizyczny przycisk (buzzer)</h3>
-
-      <p class="m-p">
-        Jeśli zamiast wirtualnego przycisku w przeglądarce używasz fizycznego buzzera
-        (np. sprzętowego przycisku podłączonego inną ścieżką), zaznacz opcję
-        <span class="m-strong">„Fizyczny przycisk"</span> przy urządzeniu Przycisk.
-        Po zaznaczeniu: podpięcie urządzenia przycisku nie jest wymagane,
-        a przebieg pojedynku zmienia się — operator sam decyduje, kto nacisnął pierwszy.
-      </p>
-
-      <p class="m-p">
-        W trybie fizycznego przycisku przebieg pojedynku wygląda tak:
-      </p>
-
-      <ol class="m-ul">
-        <li>Po uruchomieniu pojedynku pojawiają się dwa przyciski: <span class="m-code">Drużyna A</span> i <span class="m-code">Drużyna B</span>.</li>
-        <li>Operator klika drużynę, która nacisnęła fizyczny przycisk jako pierwsza — przycisk się podświetla.</li>
-        <li>Operator klika <span class="m-code">Zatwierdź</span>, aby potwierdzić wybór i przejść dalej.</li>
-      </ol>
 
       <div class="m-warn">
-        <b>Uwaga:</b><br/>
-        Jeśli któreś urządzenie rozłączy się w trakcie, panel potrafi pokazać ostrzeżenie.
-        Najczęściej pomaga: wyłączyć oszczędzanie baterii, nie minimalizować przeglądarki
-        oraz trzymać urządzenia na jednej stabilnej sieci Wi-Fi.
+        Jeśli nie wpiszesz nic — zostaną wyświetlone domyślne wartości <span class="m-strong">Drużyna A</span> i <span class="m-strong">Drużyna B</span>.
       </div>
 
-      <h3 class="m-h3">Krok 3: Dźwięk</h3>
+      <h3 class="m-h2">Wygląd</h3>
+
+      <h3 class="m-h3">Kolory</h3>
+
+      <p class="m-p">Ustalasz tu kolory czterech elementów:</p>
+
+      <ul class="m-ul">
+        <li><span class="m-strong">Kolor drużyny A</span> i <span class="m-strong">kolor drużyny B</span> — kolory elementów tablicy zależnych od drużyn.</li>
+        <li><span class="m-strong">Kolor tła tablicy</span> — główne tło wyświetlacza.</li>
+        <li><span class="m-strong">Kolor kropek</span> — kolor kropek wyświetlaczy punktowych na tablicy.</li>
+      </ul>
+
+      <p class="m-p">Kolory zmieniają się na podglądzie natychmiast po wybraniu. Kliknij pole koloru, żeby otworzyć okno wyboru.</p>
+
+      <h3 class="m-h3">Motyw</h3>
 
       <p class="m-p">
-        Przeglądarki blokują automatyczne odtwarzanie dźwięku,
-        dopóki użytkownik nie wykona „gestu" (kliknięcia).
-        Dlatego panel ma osobny krok odblokowania dźwięku.
-        Bez tego możesz nie usłyszeć sygnałów, które wspierają tempo gry.
+        Wybierz motyw wizualny tablicy. Motyw wpływa na styl graficzny całego wyświetlacza. Domyślny motyw to <span class="m-strong">Klasyczny</span>.
       </p>
 
-      <h3 class="m-h3">Podsumowanie</h3>
+      <h3 class="m-h3">Logo</h3>
 
-      <p class="m-p">Tutaj zobaczysz podsumowanie wybranych ustawień.</p>`,
-      */
+      <p class="m-p">
+        Jeśli masz stworzone własne logo (z narzędzia <span class="m-strong">Moje logo</span>), możesz wybrać je dla tej gry. Logo pojawia się na ekranie startowym i końcowym. Jeśli nie wybierzesz nic — wyświetlane jest domyślne logo Familiad.online.
+      </p>
+
+      <div class="m-note">
+        Przycisk <span class="m-strong">Przywróć domyślne</span> w sekcji Wygląd resetuje kolory, motyw i logo do wartości domyślnych.
+      </div>
+
+      <h3 class="m-h2">Dźwięk</h3>
+
+      <p class="m-p">
+        W tej sekcji konfigurujesz dźwięki używane podczas rozgrywki. Każda kategoria dźwiękowa (np. <span class="m-strong">Poprawna odpowiedź</span>, <span class="m-strong">Błędna odpowiedź</span>, <span class="m-strong">Intro</span>, <span class="m-strong">Przejście rundy</span>, <span class="m-strong">Odsłanianie</span>) ma własne ustawienia.
+      </p>
+
+      <h3 class="m-h3">Wariant dźwięku</h3>
+
+      <p class="m-p">Przy każdej kategorii możesz wybrać <span class="m-strong">wariant</span> z listy:</p>
+
+      <ul class="m-ul">
+        <li>Dostępne są warianty predefiniowane (np. <span class="m-strong">Klasyczny</span>)</li>
+        <li>Opcja <span class="m-strong">Własny</span> pozwala załadować własny plik audio (MP3, WAV, OGG) — po wybraniu jej pojawia się przycisk <span class="m-strong">Wybierz plik</span></li>
+      </ul>
+
+      <h3 class="m-h3">Własny plik audio</h3>
+
+      <p class="m-p">
+        Po kliknięciu <span class="m-strong">Wybierz plik</span> wskazujesz plik z dysku. W tabeli przy danej kategorii pojawia się etykieta z nazwą pliku.
+      </p>
+
+      <p class="m-p">
+        Aby usunąć własny plik, użyj przycisku <span class="m-strong">X</span> przy pliku.
+        Jeśli chcesz wrócić do wariantu predefiniowanego — zmień wariant na inny niż <span class="m-strong">Własny</span>.
+      </p>
+
+      <div class="m-warn">
+        Własny plik audio jest zapisywany w chmurze razem z grą i będzie dostępny na każdym urządzeniu, na którym uruchomisz tę grę.
+      </div>
+
+      <h3 class="m-h3">Głośność</h3>
+
+      <p class="m-p">
+        Przy każdej kategorii jest suwak głośności (0–100%). Zmiany są zapisywane i wczytywane automatycznie przy każdej rozgrywce.
+      </p>
+
+      <h3 class="m-h3">Przycisk odtwarzania (▶)</h3>
+
+      <p class="m-p">
+        Obok każdej kategorii jest mały przycisk odtwarzania. Kliknij go, żeby usłyszeć wybrany dźwięk z ustawioną głośnością. Ponowne kliknięcie (■) zatrzymuje odtwarzanie.
+      </p>
+
+      <div class="m-note">
+        Przycisk <span class="m-strong">Przywróć domyślne</span> w sekcji Dźwięk resetuje wszystkie warianty do <span class="m-strong">Klasycznego</span>, głośności do <span class="m-strong">100%</span> oraz usuwa wszystkie własne pliki audio (z chmury i lokalnie).<br><b>Operacja jest nieodwracalna — pliki trzeba wgrać ponownie.</b>
+      </div>
+
+      <h3 class="m-h2">Pytania</h3>
+
+      <h3 class="m-h3">Finał</h3>
+
+      <p class="m-p">
+        Przełącznik <span class="m-strong">Czy gra zawiera finał?</span> decyduje, czy gra zakończy się etapem finałowym. Gdy finał jest <span class="m-strong">wyłączony</span>, rozgrywka kończy się po rundach zasadniczych. Gdy jest <span class="m-strong">włączony</span> — dostępne stają się dodatkowe opcje wyboru pytań finałowych.
+      </p>
+
+      <h3 class="m-h3">Tryb pytań do rund</h3>
+
+      <ul class="m-ul">
+        <li><span class="m-strong">Losuj</span> — pytania do rund zostaną wylosowane automatycznie przy starcie rozgrywki. Nie musisz nic wybierać — system sam dobierze pytania z puli.</li>
+        <li><span class="m-strong">Wybierz</span> — możesz ręcznie ustalić kolejność pytań spośród dostępnych.</li>
+      </ul>
+
+      <h3 class="m-h3">Tryb pytań do finału</h3>
+
+      <ul class="m-ul">
+        <li><span class="m-strong">Losuj</span> — 5 pytań finałowych zostanie wylosowanych automatycznie (z pominięciem pytań użytych w rundach). Losowanie odbywa się przy wejściu do kroku Podsumowanie w Panelu sterowania.</li>
+        <li><span class="m-strong">Wybierz</span> — w Panelu sterowania (krok Ustawienia → Finał) możesz wybrać dokładnie 5 pytań ręcznie i je zatwierdzić.</li>
+      </ul>
+
+      <h3 class="m-h3">Dodatkowe ustawienia</h3>
+
+      <p class="m-p">
+        Tu dopasowujesz parametry rozgrywki do swojego formatu. Opcje nie zmieniają zasad gry, tylko jej progi i tempo.
+      </p>
+
+      <ul class="m-ul">
+        <li><span class="m-strong">Mnożniki rund</span> — wpisywane po przecinku (np. <span class="m-code">1,1,1,2,3</span>). Bank każdej rundy jest mnożony przez odpowiadający mnożnik. To odpowiada klasycznemu podwajaniu/potrajaniu w kolejnych etapach. Jeśli rozgrywka trwa dalej, do kolejnych rund stosowany jest ostatni mnożnik.</li>
+        <li><span class="m-strong">Cel rozgrywki</span> — liczba punktów, po której osiągnięciu jedna z drużyn może zakwalifikować się do finału (klasycznie: 300). Jeśli żadna drużyna nie osiągnie progu przed wyczerpaniem pytań — rundy kończą się naturalnie.</li>
+        <li><span class="m-strong">Cel finału</span> — liczba punktów do zdobycia w finale, żeby wygrać nagrodę główną (klasycznie: 200).</li>
+        <li><span class="m-strong">Zakończenie gry</span> — co wyświetlacz pokazuje po zakończeniu rozgrywki:
+          <ul class="m-ul">
+            <li><span class="m-strong">Logo</span> — ekran z logo</li>
+            <li><span class="m-strong">Punkty</span> — wynik końcowy drużyny zwycięskiej</li>
+            <li><span class="m-strong">Kwota wygranej</span> — obliczona kwota nagrody (dla rozgrywek z nagrodami pieniężnymi)</li>
+          </ul>
+        </li>
+        <li><span class="m-strong">Mnożnik nagrody</span> — jeśli w finale drużyna nie osiągnęła celu, nagroda to punkty zdobyte w całej rozgrywce pomnożone przez ten współczynnik (klasycznie: ×3).</li>
+        <li><span class="m-strong">Kwota nagrody głównej</span> — kwota dodawana do nagrody, gdy drużyna osiągnie cel finału (klasycznie: 25 000).</li>
+      </ul>
+
+      <div class="m-note">
+        Dodatkowe ustawienia mają rozsądne wartości domyślne odpowiadające klasycznej Familiadzie. Dla większości rozgrywek nie musisz ich zmieniać.
+      </div>
+
+      <h3 class="m-h3">Zapis ustawień</h3>
+
+      <p class="m-p">
+        Zmiany są zapisywane po kliknięciu <span class="m-strong">Zapisz wszystko</span>. Nie ma automatycznego zapisu przy samej zmianie — pamiętaj o kliknięciu przycisku przed wyjściem.
+      </p>
+
+      <h3 class="m-h3">Przywróć domyślne</h3>
+
+      <p class="m-p">
+        Przycisk <span class="m-strong">Przywróć domyślne</span> na górze strony resetuje całość ustawień do wartości domyślnych.
+      </p>
+
+      <div class="m-warn">
+        Ta czynność jest nieodwracalna — jeśli wciśniesz przypadkiem i zatwierdzisz, trzeba będzie zmieniać wszystko od nowa (w tym wgrywanie plików dźwiękowych).
+      </div>`,
     },
   },
   privacy: {

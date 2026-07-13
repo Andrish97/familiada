@@ -1942,99 +1942,61 @@ const en = {
         Without it you may not hear signals that help keep the game pace.
       </p>
     
-      <h3 class="m-h2">2) Settings</h3>
-    
-      <p class="m-p">
-        When devices are online, you move on to game settings.
+      <h3 class=”m-h2”>2) Settings</h3>
+
+      <p class=”m-p”>
+        When devices are online, you move on to the settings summary. All options (colors, sound, game parameters) can be configured in advance on the <span class=”m-strong”>Game Settings</span> page — the Control Panel will load them automatically.
       </p>
-    
+
       <h3 class=”m-h3”>Team names</h3>
 
       <p class=”m-p”>
-        You set the names of Team A and Team B.
-        These are the labels seen by players and the audience on the display. The panel blocks moving forward until both names are entered.
+        These are the labels visible on the display, on the host’s device, and in the results. If you leave the <span class=”m-strong”>Game Settings</span> blank, the default values will be loaded: <span class=”m-strong”>Team A</span> and <span class=”m-strong”>Team B</span>.
       </p>
 
       <h3 class=”m-h3”>Appearance</h3>
 
       <ul class=”m-ul”>
-        <li>
-          <span class=”m-strong”>Colors</span> — here you set team colors, which will be used on all devices and update immediately, as well as the board background color.
-        </li>
-        <li>
-          <span class=”m-strong”>Logo</span> — if you have created any logos, you will see them here. You can choose one for this game or leave the default.
-        </li>
+        <li><span class=”m-strong”>Colors</span> — team colors, background, and dots.</li>
+        <li><span class=”m-strong”>Theme</span> — the visual style of the board.</li>
+        <li><span class=”m-strong”>Logo</span> — the logo displayed during gameplay.</li>
       </ul>
 
-      <h3 class=”m-h3”>Question settings and gameplay</h3>
-
-      <p class=”m-p”>
-        Here you choose whether the game will have a final and whether you want to manually select or randomly draw questions for the final and for the rounds. If you check <span class=”m-strong”>Select</span>, the next two steps will ask you to choose them.
-      </p>
-
-      <p class=”m-p”>
-        In “Additional settings” you tailor the game to the episode format.
-        These options do not change the rules’ meaning, only the pace and thresholds.
-      </p>
+      <h3 class=”m-h3”>Sound</h3>
 
       <ul class=”m-ul”>
-        <li>
-          <span class=”m-strong”>Round multipliers</span> — entered comma-separated (e.g. <span class=”m-code”>1,1,1,2,3</span>).
-          This matches the classic doubling/tripling values in later stages.
-          In practice: the round bank at the end is multiplied by the current round multiplier.
-        </li>
-        <li>
-          <span class=”m-strong”>Game target</span> — the point threshold after which the game can go to the final
-          (in the classic format often 300). This lets you adjust the game length.
-        </li>
-        <li>
-          <span class=”m-strong”>Final target</span> — the point threshold in the final (default 200 in the classic format).
-        </li>
-        <li>
-          <span class=”m-strong”>Game ending</span> — what the display shows at the end
-          (logo / points / prize after the final). This is production-important: the “last frame.”
-        </li>
-        <li>
-          <span class=”m-strong”>Prize multiplier (after final)</span> — by default, if we want to play for a prize like in the classic Familiada, after the final the prize equals points earned during the game ×3.
-        </li>
-        <li>
-          <span class=”m-strong”>Main prize amount</span> — if in the final the team reached the threshold (default 200 points), the main prize amount is added to the final prize, default 25000.
-        </li>
+        <li>For each sound category you see the current <span class=”m-strong”>variant</span> (e.g. Classic or the name of a custom file).</li>
+        <li>The <span class=”m-strong”>volume</span> slider lets you adjust the level of each sound.</li>
+        <li>The <span class=”m-strong”>▶</span> button lets you preview the sound before gameplay.</li>
       </ul>
 
       <div class=”m-note”>
-        <b>Why is this in the Control Panel and not in the editor?</b><br/>
-        Because these are episode (production) settings, not question content.
-        Questions shouldn’t change during the game, but game parameters sometimes do.
-      </div>
-    
-      <h3 class="m-h3">Final: choose 5 questions</h3>
-    
-      <p class="m-p">
-        If the game should have a final and the random draw option is not enabled, here you choose exactly <span class="m-strong">5 final questions</span>.
-        The panel shows a list of questions and a list “Final questions (max 5)”.
-        After selecting five, you use the <span class="m-strong">Confirm</span> button.</p>
-    
-      <div class="m-warn">
-        <b>Warning:</b><br/>
-        The final requires 5 confirmed questions before rounds start.
-        This is an intentional lock — in live play there’s no time to pick questions “on the fly.”
-        If you want to change the set, use the <span class="m-strong">Edit</span> mode for final questions.
+        If you change the volume level here, it will only be changed for this specific game session. When you start a new game session, the values set in <span class=”m-strong”>Game Settings</span> will be loaded.
       </div>
 
-      <h3 class="m-h3">Rounds: question order</h3>
+      <h3 class=”m-h3”>Final</h3>
 
-      <p class="m-p">
-        If random draw is not selected, here you can set the order of questions
-        from those remaining after selecting the final questions.
-        They will be presented in this order during the rounds.
+      <p class=”m-p”>Here you will only see confirmation of whether the game has a final.</p>
+
+      <p class=”m-p”>
+        If the final is enabled and <span class=”m-strong”>Manual</span> mode was selected — here you will see the 5 final questions you chose. With <span class=”m-strong”>Random</span> mode you will see the randomly drawn final questions.
       </p>
 
-      <h3 class="m-h3">Summary</h3>
+      <h3 class=”m-h3”>Rounds: question order</h3>
 
-      <p class="m-p">Here you will see a summary of the settings you have chosen.</p>
-    
-      <h3 class="m-h2">3) Rounds — gameplay step by step</h3>
+      <p class=”m-p”>
+        If <span class=”m-strong”>Order</span> mode was selected for round questions — here you will see the order of questions that will be used during the main rounds. With <span class=”m-strong”>Random</span> mode you will see the randomly drawn round questions.
+      </p>
+
+      <div class=”m-note”>
+        You can always press the <span class=”m-strong”>Change settings</span> button, which will open the settings window — see the <span class=”m-strong”>Game Settings</span> tab for details.
+      </div>
+
+      <p class=”m-p”>
+        When everything looks good — click <span class=”m-strong”>Done — go to rounds</span> to start the game.
+      </p>
+
+      <h3 class=”m-h2”>3) Rounds — gameplay step by step</h3>
     
       <p class="m-p">
         In rounds you conduct the main gameplay: questions, answers, points, and the round bank.
@@ -2357,7 +2319,164 @@ const en = {
         directly — without going through moderation.
         They are distinguished by a dedicated badge.
       </p>`,
-      gameSettings: ``, /* tab commented out in manual.html */
+      gameSettings: `<h2 class="m-h2">Game Settings</h2>
+
+      <p class="m-p">
+        The Game Settings page lets you configure your game at your own pace — before you open the Control Panel and start the live game. Everything you set here is saved to the game and will be automatically loaded by the Control Panel.
+      </p>
+
+      <p class="m-p">
+        You can open it from the <span class="m-strong">My Games</span> page using the <span class="m-strong">Game Settings</span> button next to the selected game.
+      </p>
+
+      <h3 class="m-h2">Teams</h3>
+
+      <p class="m-p">
+        Enter the team names. These names will be displayed on the board during gameplay and on the host's device.
+      </p>
+
+      <div class="m-warn">
+        If you leave this blank — the default values <span class="m-strong">Team A</span> and <span class="m-strong">Team B</span> will be displayed.
+      </div>
+
+      <h3 class="m-h2">Appearance</h3>
+
+      <h3 class="m-h3">Colors</h3>
+
+      <p class="m-p">Here you set the colors of four elements:</p>
+
+      <ul class="m-ul">
+        <li><span class="m-strong">Team A color</span> and <span class="m-strong">Team B color</span> — colors of board elements depending on the teams.</li>
+        <li><span class="m-strong">Board background color</span> — the main background of the display.</li>
+        <li><span class="m-strong">Dot color</span> — the color of the dots on the score displays on the board.</li>
+      </ul>
+
+      <p class="m-p">Colors update on the preview immediately after selection. Click the color field to open the color picker.</p>
+
+      <h3 class="m-h3">Theme</h3>
+
+      <p class="m-p">
+        Choose the visual theme of the board. The theme affects the graphic style of the entire display. The default theme is <span class="m-strong">Classic</span>.
+      </p>
+
+      <h3 class="m-h3">Logo</h3>
+
+      <p class="m-p">
+        If you have created your own logo (using the <span class="m-strong">My Logo</span> tool), you can select it for this game. The logo appears on the start and end screens. If you don't select anything — the default Familiad.online logo is displayed.
+      </p>
+
+      <div class="m-note">
+        The <span class="m-strong">Restore Defaults</span> button in the Appearance section resets colors, theme, and logo to their default values.
+      </div>
+
+      <h3 class="m-h2">Sound</h3>
+
+      <p class="m-p">
+        In this section you configure the sounds used during gameplay. Each sound category (e.g. <span class="m-strong">Correct answer</span>, <span class="m-strong">Wrong answer</span>, <span class="m-strong">Intro</span>, <span class="m-strong">Round transition</span>, <span class="m-strong">Reveal</span>) has its own settings.
+      </p>
+
+      <h3 class="m-h3">Sound Variant</h3>
+
+      <p class="m-p">For each category you can choose a <span class="m-strong">variant</span> from the list:</p>
+
+      <ul class="m-ul">
+        <li>Predefined variants are available (e.g. <span class="m-strong">Classic</span>)</li>
+        <li>The <span class="m-strong">Custom</span> option lets you load your own audio file (MP3, WAV, OGG) — after selecting it, a <span class="m-strong">Choose file</span> button appears</li>
+      </ul>
+
+      <h3 class="m-h3">Custom Audio File</h3>
+
+      <p class="m-p">
+        After clicking <span class="m-strong">Choose file</span> you select a file from your disk. A label with the file name appears in the table next to that category.
+      </p>
+
+      <p class="m-p">
+        To remove a custom file, use the <span class="m-strong">X</span> button next to the file.
+        If you want to go back to a predefined variant — change the variant to something other than <span class="m-strong">Custom</span>.
+      </p>
+
+      <div class="m-warn">
+        Custom audio files are saved in the cloud together with the game and will be available on any device where you run this game.
+      </div>
+
+      <h3 class="m-h3">Volume</h3>
+
+      <p class="m-p">
+        Each category has a volume slider (0–100%). Changes are saved and loaded automatically with each game session.
+      </p>
+
+      <h3 class="m-h3">Play Button (▶)</h3>
+
+      <p class="m-p">
+        Next to each category there is a small play button. Click it to hear the selected sound at the set volume. Clicking again (■) stops playback.
+      </p>
+
+      <div class="m-note">
+        The <span class="m-strong">Restore Defaults</span> button in the Sound section resets all variants to <span class="m-strong">Classic</span>, volumes to <span class="m-strong">100%</span>, and removes all custom audio files (from the cloud and locally).<br><b>This operation is irreversible — files must be uploaded again.</b>
+      </div>
+
+      <h3 class="m-h2">Questions</h3>
+
+      <h3 class="m-h3">Final</h3>
+
+      <p class="m-p">
+        The <span class="m-strong">Does the game include a final?</span> toggle decides whether the game will end with a final stage. When the final is <span class="m-strong">off</span>, gameplay ends after the main rounds. When it is <span class="m-strong">on</span> — additional options for selecting final questions become available.
+      </p>
+
+      <h3 class="m-h3">Round Question Mode</h3>
+
+      <ul class="m-ul">
+        <li><span class="m-strong">Random</span> — questions for the rounds will be drawn automatically at the start of gameplay. You don't need to select anything — the system will pick questions from the pool.</li>
+        <li><span class="m-strong">Select</span> — you can manually set the order of questions from those available.</li>
+      </ul>
+
+      <h3 class="m-h3">Final Question Mode</h3>
+
+      <ul class="m-ul">
+        <li><span class="m-strong">Random</span> — 5 final questions will be drawn automatically (skipping questions used in the rounds). The draw happens when you enter the Summary step in the Control Panel.</li>
+        <li><span class="m-strong">Select</span> — in the Control Panel (Settings step → Final) you can manually select exactly 5 questions and confirm them.</li>
+      </ul>
+
+      <h3 class="m-h3">Additional Settings</h3>
+
+      <p class="m-p">
+        Here you tailor the gameplay parameters to your format. The options do not change the game rules, only its thresholds and pace.
+      </p>
+
+      <ul class="m-ul">
+        <li><span class="m-strong">Round multipliers</span> — entered comma-separated (e.g. <span class="m-code">1,1,1,2,3</span>). Each round's bank is multiplied by the corresponding multiplier. This matches the classic doubling/tripling in later stages. If the game continues further, the last multiplier is applied to subsequent rounds.</li>
+        <li><span class="m-strong">Game target</span> — the number of points after which one team can qualify for the final (classically: 300). If no team reaches the threshold before questions run out — the rounds end naturally.</li>
+        <li><span class="m-strong">Final target</span> — the number of points to earn in the final to win the main prize (classically: 200).</li>
+        <li><span class="m-strong">Game ending</span> — what the display shows after gameplay ends:
+          <ul class="m-ul">
+            <li><span class="m-strong">Logo</span> — logo screen</li>
+            <li><span class="m-strong">Points</span> — the winning team's final score</li>
+            <li><span class="m-strong">Prize amount</span> — the calculated prize amount (for games with monetary prizes)</li>
+          </ul>
+        </li>
+        <li><span class="m-strong">Prize multiplier</span> — if the team did not reach the final target, the prize equals points earned during the entire game multiplied by this factor (classically: ×3).</li>
+        <li><span class="m-strong">Main prize amount</span> — amount added to the prize when a team reaches the final target (classically: 25,000).</li>
+      </ul>
+
+      <div class="m-note">
+        Additional settings have sensible default values corresponding to the classic Familiada. For most games you won't need to change them.
+      </div>
+
+      <h3 class="m-h3">Save Settings</h3>
+
+      <p class="m-p">
+        Changes are saved after clicking <span class="m-strong">Save all</span>. There is no auto-save on change — remember to click the button before leaving.
+      </p>
+
+      <h3 class="m-h3">Restore Defaults</h3>
+
+      <p class="m-p">
+        The <span class="m-strong">Restore Defaults</span> button at the top of the page resets all settings to their default values.
+      </p>
+
+      <div class="m-warn">
+        This action is irreversible — if you press it accidentally and confirm, you will have to redo everything from scratch (including re-uploading audio files).
+      </div>`,
       /* DRAFT gameSettings (based on control section, without settings):
       gameSettings: `<h3 class="m-h2">1) Devices</h3>
 
