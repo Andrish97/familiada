@@ -5337,7 +5337,7 @@ const pl = {
       defaultB: "Drużyna B",
       placeholderA: "np. Rodzina Kowalskich",
       placeholderB: "np. Rodzina Nowaków",
-      defaultHint: (a, b) => `Jeśli nie wpiszesz nazw drużyn, zostaną pokazane domyślne wartości: ${a} i ${b}`,
+      defaultHint: "Jeśli nie wpiszesz nazw drużyn, zostaną pokazane domyślne wartości: {a} i {b}",
     },
     display: {
       logo: "Logo",

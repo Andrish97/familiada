@@ -5335,7 +5335,7 @@ const en = {
       defaultB: "Team B",
       placeholderA: "e.g. The Smith Family",
       placeholderB: "e.g. The Johnson Family",
-      defaultHint: (a, b) => `If you don't enter team names, the default values will be shown: ${a} and ${b}`,
+      defaultHint: "If you don't enter team names, the default values will be shown: {a} and {b}",
     },
     display: {
       logo: "Logo",

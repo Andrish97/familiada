@@ -425,7 +425,7 @@ function renderTeams() {
         <div class="gs-label">${t("gameSettings.teams.nameB")}</div>
         <input class="inp" id="gsTeamB" value="${escAttr(localSettings.teams.teamB)}" maxlength="40" placeholder="${escAttr(t("gameSettings.teams.placeholderB"))}"/>
       </div>
-      <div class="gs-hint" style="margin-top:10px">${t("gameSettings.teams.defaultHint")(t("gameSettings.teams.defaultA"), t("gameSettings.teams.defaultB"))}</div>
+      <div class="gs-hint" style="margin-top:10px">${t("gameSettings.teams.defaultHint").replace("{a}", t("gameSettings.teams.defaultA")).replace("{b}", t("gameSettings.teams.defaultB"))}</div>
     </div>
   `;
 
