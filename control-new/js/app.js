@@ -45,7 +45,7 @@ import { isGuestUser } from "../../js/core/guest-mode.js?v=v2026-07-13T08561";
 import { sb } from "../../js/core/supabase.js?v=v2026-07-13T08561";
 import { rt } from "../../js/core/realtime.js?v=v2026-07-13T08561";
 import { validateGameReadyToPlay, loadGameBasic, loadQuestions, loadAnswers } from "../../js/core/game-validate.js?v=v2026-07-13T08561";
-import { unlockAudio, isAudioUnlocked, playSfx, initSfx, loadSfxManifest, applySfxGameSettings, setCurrentGameId, loadSfxFromCloud, getSfxCategories, getSfxVariant, getSfxVolume, setSessionSfxVolume } from "../../js/core/sfx-new.js?v=v2026-07-13T08561";
+import { unlockAudio, isAudioUnlocked, playSfx, initSfx, loadSfxManifest, applySfxGameSettings, setCurrentGameId, loadSfxFromCloud, getSfxCategories, getSfxVariant, getSfxVolume, setSessionSfxVolume, getSfxCustomFiles } from "../../js/core/sfx-new.js?v=v2026-07-13T08561";
 import { listGameSounds } from "../../js/core/sfx-cloud.js?v=v2026-07-13T08561";
 import { createStore } from "./store.js?v=v2026-07-13T08561";
 import { createUI } from "./ui.js?v=v2026-07-13T08561";
@@ -619,6 +619,8 @@ async function sendZeroStatesToDevices() {
   let _defaultLogoPayload = null;
   // Cache załadowanych logo (potrzebny w streszczeniu)
   let _loadedLogos = [];
+  // Custom pliki dźwiękowe (potrzebne do nazwy pliku w streszczeniu)
+  let _soundCustomFiles = new Map();
   // true gdy game.settings zawierały zapisane ustawienia (nie null)
   const _hasCustomSettings = game.settings != null && typeof game.settings === "object";
 
@@ -1104,6 +1106,7 @@ async function sendZeroStatesToDevices() {
     }
 
     await rounds.prePickForSummary().catch(() => {});
+    try { _soundCustomFiles = await getSfxCustomFiles(game.id); } catch {}
 
     // Inicjalizacja urządzeń: wyślij kolory, motyw, logo, nazwy drużyn
     if (devices) {
@@ -1237,8 +1240,9 @@ async function sendZeroStatesToDevices() {
         const variant = getSfxVariant(cat.key);
         const vol = getSfxVolume(cat.key);
         const isCustom = variant === VARIANT_CUSTOM;
+        const customFile = _soundCustomFiles.get(cat.key);
         const variantLabel = isCustom
-          ? (t("control.sfxCustom") || "Własny")
+          ? `${t("control.sfxCustom") || "Własny"}${customFile ? `: ${customFile.filename}` : ""}`
           : (cat.sounds.find(s => s.file.split("?")[0] === variant)?.label?.[lang] || variant);
         const desc = t("control.sfxDesc." + cat.key) || cat.key;
         const volPct = Math.round(vol * 100);
@@ -1279,8 +1283,8 @@ async function sendZeroStatesToDevices() {
         const items = ordered.map(q => `<li>${escapeHtml((q.text || "").slice(0, 60))}</li>`).filter(Boolean);
         roundsQEl.innerHTML = items.length ? items.join("") : `<li class="summaryQRandom">${t("control.summaryQNoOrder")}</li>`;
       } else {
-        // Pool empty but loading (prePickForSummary in progress) — show nothing
-        roundsQEl.innerHTML = "";
+        // Pool empty — prePickForSummary in progress
+        roundsQEl.innerHTML = `<li class="summaryQRandom">${t("control.summaryQRandom") || "Losowanie w toku…"}</li>`;
       }
     }
   }
