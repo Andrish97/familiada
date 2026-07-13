@@ -1047,19 +1047,9 @@ async function sendZeroStatesToDevices() {
 
   ui.on("setup.finish.back", () => store.setActiveCard("devices"));
   ui.on("setup.finish", async () => {
-    // Wyczyść wyświetlacz: schowaj logo, usuń przykładowe wartości, zostaw nazwy drużyn
+    // Schowaj logo i wyczyść przykładowe wartości paneli — reszta już ustawiona przez enterSetupFinish
     if (devices) {
-      const q = (s) => `"${String(s ?? "").replace(/"/g, "'")}"`;
-      const teamA = store.state.teams?.teamA || t("gameSettings.teams.defaultA") || "Drużyna A";
-      const teamB = store.state.teams?.teamB || t("gameSettings.teams.defaultB") || "Drużyna B";
       await devices.sendDisplayCmd("LOGO HIDE").catch(() => {});
-      await devices.sendDisplayCmd(`COLOR A ${colors.A}`).catch(() => {});
-      await devices.sendDisplayCmd(`COLOR B ${colors.B}`).catch(() => {});
-      await devices.sendDisplayCmd(`COLOR BACKGROUND ${colors.BACKGROUND}`).catch(() => {});
-      await devices.sendDisplayCmd(`COLOR DOT ${colors.DOT}`).catch(() => {});
-      if (activeTheme) await devices.sendDisplayCmd(`THEME ${activeTheme}`).catch(() => {});
-      await devices.sendDisplayCmd(`LONG1 ${q(teamA)}`).catch(() => {});
-      await devices.sendDisplayCmd(`LONG2 ${q(teamB)}`).catch(() => {});
       await devices.sendDisplayCmd('TOP ""').catch(() => {});
       await devices.sendDisplayCmd('LEFT ""').catch(() => {});
       await devices.sendDisplayCmd('RIGHT ""').catch(() => {});
