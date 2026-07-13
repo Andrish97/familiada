@@ -1021,7 +1021,7 @@ function renderFinale() {
             ${pool.length === 0
               ? `<div class="gs-picker-empty">${t("control.finalPoolEmpty") || "Brak dostępnych pytań"}</div>`
               : pool.map(q => `<div class="qRow" data-qid="${escAttr(q.id)}" draggable="true">
-                  <div class="meta">#${q.ord}</div>
+                  <div class="meta">${q.ord}</div>
                   <div class="txt">${escText(q.text)}</div>
                 </div>`).join("")}
           </div>
@@ -1032,7 +1032,7 @@ function renderFinale() {
             ${picked.length === 0
               ? `<div class="gs-picker-empty">${t("control.finalPickEmpty") || "Kliknij pytanie, aby dodać (max 5)"}</div>`
               : picked.map(q => `<div class="qRow gs-draggable" draggable="true" data-qid="${escAttr(q.id)}">
-                  <div class="meta">#${q.ord}</div>
+                  <div class="meta">${q.ord}</div>
                   <div class="txt">${escText(q.text)}</div>
                 </div>`).join("")}
           </div>
