@@ -4402,6 +4402,7 @@ const pl = {
     summaryQNone: "Brak pytań",
     summaryQWillRandom: "Zostaną wylosowane przy starcie",
     summaryQNoOrder: "Brak kolejności",
+    summaryDefault: "Domyślne",
     roundsReadyTitle: "Gra gotowa",
     roundsReadyName: "Przygotowanie gry",
     roundsReadyHint: "Upewnij się, że Wyświetlacz, Prowadzący i Przycisk są podłączone. Potem uruchom ekran gry.",

@@ -45,7 +45,7 @@ import { isGuestUser } from "../../js/core/guest-mode.js?v=v2026-07-13T08293";
 import { sb } from "../../js/core/supabase.js?v=v2026-07-13T08293";
 import { rt } from "../../js/core/realtime.js?v=v2026-07-13T08293";
 import { validateGameReadyToPlay, loadGameBasic, loadQuestions, loadAnswers } from "../../js/core/game-validate.js?v=v2026-07-13T08293";
-import { unlockAudio, isAudioUnlocked, playSfx, initSfx, loadSfxManifest, applySfxGameSettings, setCurrentGameId, loadSfxFromCloud } from "../../js/core/sfx-new.js?v=v2026-07-13T08293";
+import { unlockAudio, isAudioUnlocked, playSfx, initSfx, loadSfxManifest, applySfxGameSettings, setCurrentGameId, loadSfxFromCloud, getSfxCategories, getSfxVariant, getSfxVolume } from "../../js/core/sfx-new.js?v=v2026-07-13T08293";
 import { listGameSounds } from "../../js/core/sfx-cloud.js?v=v2026-07-13T08293";
 import { createStore } from "./store.js?v=v2026-07-13T08293";
 import { createUI } from "./ui.js?v=v2026-07-13T08293";
@@ -1215,6 +1215,33 @@ async function sendZeroStatesToDevices() {
         finalQEl.innerHTML = items.length
           ? items.join("")
           : `<li class="summaryQRandom">${t("control.summaryQNone")}</li>`;
+      }
+    }
+
+    // Dźwięk
+    const soundListEl = document.getElementById("summarySoundList");
+    if (soundListEl) {
+      const cats = getSfxCategories();
+      const lang = getUiLang() || "pl";
+      const VARIANT_CUSTOM = "__custom__";
+      const allDefault = cats.every(cat => {
+        const defaultFile = (cat.sounds[0]?.file || "classic.mp3").split("?")[0];
+        return getSfxVariant(cat.key) === defaultFile && getSfxVolume(cat.key) === 1.0;
+      });
+      if (allDefault || cats.length === 0) {
+        soundListEl.innerHTML = `<li>${escapeHtml(t("control.summaryDefault") || "Domyślne")}</li>`;
+      } else {
+        soundListEl.innerHTML = cats.map(cat => {
+          const variant = getSfxVariant(cat.key);
+          const vol = getSfxVolume(cat.key);
+          const isCustom = variant === VARIANT_CUSTOM;
+          const variantLabel = isCustom
+            ? (t("control.sfxCustom") || "Własny")
+            : (cat.sounds.find(s => s.file.split("?")[0] === variant)?.label?.[lang] || variant);
+          const desc = t("control.sfxDesc." + cat.key) || cat.key;
+          const volStr = vol !== 1.0 ? ` (${Math.round(vol * 100)}%)` : "";
+          return `<li>${escapeHtml(desc)}: <strong>${escapeHtml(variantLabel)}</strong>${escapeHtml(volStr)}</li>`;
+        }).join("");
       }
     }
 

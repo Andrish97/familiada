@@ -5023,6 +5023,7 @@ const en = {
     summaryQNone: "No questions",
     summaryQWillRandom: "Will be randomized at start",
     summaryQNoOrder: "No order set",
+    summaryDefault: "Default",
     roundsReadyTitle: "Ready",
     roundsReadyName: "Preparation",
     roundsReadyHint: "Ensure devices are connected.",

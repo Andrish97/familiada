@@ -5008,6 +5008,7 @@ const uk = {
     summaryQNone: "Немає питань",
     summaryQWillRandom: "Будуть рандомізовані на старті",
     summaryQNoOrder: "Черговість не встановлена",
+    summaryDefault: "За замовчуванням",
     roundsReadyTitle: "Готово",
     roundsReadyName: "Підготовка",
     roundsReadyHint: "Переконайся, що пристрої підключені.",
