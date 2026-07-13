@@ -66,11 +66,10 @@ export function createDisplay({ devices, store }) {
   }
 
   // Intro: przygotowanie ekranu pod intro
+  // APP GAME + kolory + LONG1/LONG2 już wysłane przez handler "game.startIntro" przed wywołaniem.
   // Uwaga: NIE pokazuje logo – to robi logika w gameRounds (po 14s pierwszego intra).
   async function stateIntroLogo(teamA, teamB) {
-    await appGra();
-    await setTeamsLongs(teamA, teamB);
-    // Ekran przygotowany pod intro — logo pokażemy osobno (po 14s pierwszego intra).
+    // (no-op — setup done in handler before stateGameReady/stateStartGameIntro)
   }
 
   // === ROUNDS – plansza/odpowiedzi/X/suma ===

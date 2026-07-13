@@ -1351,22 +1351,17 @@ async function sendZeroStatesToDevices() {
   let _gsModalCmdBlocked = false;
 
   async function onGsModalClose() {
-    // Immediately block forwarding of preview commands — in-flight HTTP requests
-    // may still be en-route to the display and must arrive BEFORE restore commands.
     _gsModalCmdBlocked = true;
-    const closeTs = Date.now();
-
     gsOverlayEl?.classList.add("hidden");
     gsFrameEl.src = "";
-    // Reload game settings from DB and re-apply
+    // Reload game settings from DB — update local state only, no display commands.
+    // Display will be synced when user clicks "Gotowe".
     try {
       const { data } = await sb().from("games").select("settings").eq("id", gameId).single();
       if (data) {
         _hasCustomSettings = data.settings != null && typeof data.settings === "object";
         applyGameSettingsToStore(data.settings, store);
-        // Reload sound custom files
         try { _soundCustomFiles = await getSfxCustomFiles(game.id); } catch {}
-        // Reload logos if logoId changed
         _loadedLogos = [];
         if (store.state.display.logoId) {
           try {
@@ -1375,35 +1370,16 @@ async function sendZeroStatesToDevices() {
           } catch {}
         }
         renderSetupFinishSummary();
-        // Restore display to summary state after modal close.
-        // Wait until at least 500ms have elapsed since close — gives in-flight preview
-        // broadcast commands time to arrive and be processed by the display BEFORE
-        // our restore commands, so restore always wins.
-        if (devices) {
-          const elapsed = Date.now() - closeTs;
-          if (elapsed < 500) await new Promise(r => setTimeout(r, 500 - elapsed));
-
-          const newDisplay = store.state.display;
-          if (newDisplay?.colors) {
-            colors.A = normHex(newDisplay.colors.A) ?? DEFAULT_COLORS.A;
-            colors.B = normHex(newDisplay.colors.B) ?? DEFAULT_COLORS.B;
-            colors.BACKGROUND = normHex(newDisplay.colors.BACKGROUND) ?? DEFAULT_COLORS.BACKGROUND;
-            colors.DOT = normHex(newDisplay.colors.DOT) ?? DEFAULT_COLORS.DOT;
-          }
-          if (newDisplay?.theme) activeTheme = newDisplay.theme;
-          const teamA = store.state.teams?.teamA || t("gameSettings.teams.defaultA") || "Drużyna A";
-          const teamB = store.state.teams?.teamB || t("gameSettings.teams.defaultB") || "Drużyna B";
-          const q = (s) => `"${String(s ?? "").replace(/"/g, "'")}"`;
-          await devices.sendDisplayCmd("APP GAME").catch(() => {});
-          sendColorA(colors.A);
-          sendColorB(colors.B);
-          sendColorBg(colors.BACKGROUND);
-          sendColorDot(colors.DOT);
-          if (activeTheme) sendTheme(activeTheme);
-          await devices.sendDisplayCmd("LOGO RELOAD").catch(() => {});
-          await devices.sendDisplayCmd(`LONG1 ${q(teamA)}`).catch(() => {});
-          await devices.sendDisplayCmd(`LONG2 ${q(teamB)}`).catch(() => {});
+        // Keep local color/theme in sync so "Gotowe" sends the right values
+        const newDisplay = store.state.display;
+        if (newDisplay?.colors) {
+          colors.A = normHex(newDisplay.colors.A) ?? DEFAULT_COLORS.A;
+          colors.B = normHex(newDisplay.colors.B) ?? DEFAULT_COLORS.B;
+          colors.BACKGROUND = normHex(newDisplay.colors.BACKGROUND) ?? DEFAULT_COLORS.BACKGROUND;
+          colors.DOT = normHex(newDisplay.colors.DOT) ?? DEFAULT_COLORS.DOT;
         }
+        if (newDisplay?.theme) activeTheme = newDisplay.theme;
+        if (store.state.teams?.teamA) store.setTeams(store.state.teams.teamA, store.state.teams.teamB);
       }
     } catch (e) { console.warn("[gs-modal] reload failed", e); }
     finally { _gsModalCmdBlocked = false; }
@@ -1426,6 +1402,22 @@ async function sendZeroStatesToDevices() {
 
     // ROUNDS
   ui.on("game.startIntro", async () => {
+    // Sync display to current settings before starting the game.
+    // This handles the case where the user changed settings in the modal
+    // (colors/theme/teams might differ from what's on the display after preview).
+    if (devices) {
+      const q = (s) => `"${String(s ?? "").replace(/"/g, "'")}"`;
+      const teamA = store.state.teams?.teamA || t("gameSettings.teams.defaultA") || "Drużyna A";
+      const teamB = store.state.teams?.teamB || t("gameSettings.teams.defaultB") || "Drużyna B";
+      await devices.sendDisplayCmd(`COLOR A ${colors.A}`).catch(() => {});
+      await devices.sendDisplayCmd(`COLOR B ${colors.B}`).catch(() => {});
+      await devices.sendDisplayCmd(`COLOR BACKGROUND ${colors.BACKGROUND}`).catch(() => {});
+      await devices.sendDisplayCmd(`COLOR DOT ${colors.DOT}`).catch(() => {});
+      if (activeTheme) await devices.sendDisplayCmd(`THEME ${activeTheme}`).catch(() => {});
+      await devices.sendDisplayCmd(`LONG1 ${q(teamA)}`).catch(() => {});
+      await devices.sendDisplayCmd(`LONG2 ${q(teamB)}`).catch(() => {});
+      await devices.sendDisplayCmd("LOGO HIDE ANIMOUT edge down 1000").catch(() => {});
+    }
     if (!store.state.locks.gameStarted) {
       store.setGameStarted(true);
       await rounds.stateGameReady();
