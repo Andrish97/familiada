@@ -5313,6 +5313,7 @@ const pl = {
     saveError: "Błąd zapisu",
     saveErrorPrefix: "Błąd zapisu: ",
     saveErrorFinalNeed5: (v) => `Wybierz 5 pytań finałowych (wybrano ${v.count}/5).`,
+    saveErrorCustomNoFile: "Wybrano własny dźwięk ale nie wgrano pliku dla: {names}",
     loadError: "Nie można załadować gry: ",
     unknownError: "nieznany błąd",
     errorPrefix: "Błąd: ",

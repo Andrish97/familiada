@@ -166,6 +166,20 @@ async function saveAll() {
     }
   }
 
+  // Walidacja: nie można zapisać gdy wybrano "Własny" bez wgranego pliku
+  {
+    let cfCheck = new Map();
+    try { cfCheck = await getSfxCustomFiles(gameId); } catch {}
+    const missing = getSfxCategories().filter(cat =>
+      localSettings.sound.variants[cat.key] === VARIANT_CUSTOM && !cfCheck.get(cat.key)
+    );
+    if (missing.length > 0) {
+      const names = missing.map(cat => t("control.sfxDesc." + cat.key) || cat.key).join(", ");
+      alertModal({ text: (t("gameSettings.saveErrorCustomNoFile") || "Wgraj plik dla: {names}").replace("{names}", names) });
+      return;
+    }
+  }
+
   if (btnSaveAll) btnSaveAll.disabled = true;
   try {
     // Uzupełnij filenames w sound settings (do streszczenia w control-new)

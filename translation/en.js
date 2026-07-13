@@ -5311,6 +5311,7 @@ const en = {
     saveError: "Save error",
     saveErrorPrefix: "Save error: ",
     saveErrorFinalNeed5: (v) => `Select 5 finale questions (${v.count}/5 selected).`,
+    saveErrorCustomNoFile: "Custom sound selected but no file uploaded for: {names}",
     loadError: "Could not load game: ",
     unknownError: "unknown error",
     errorPrefix: "Error: ",
