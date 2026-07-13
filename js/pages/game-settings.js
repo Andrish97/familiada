@@ -804,31 +804,61 @@ async function renderSound() {
     tableEl.appendChild(row);
   }
 
-  // Podgląd — odtwarza aktualnie wybrany wariant z selecta
+  // Podgląd — play/stop toggle
+  let _previewAudio = null;
+  let _previewBtn   = null;
+  let _previewUrl   = null; // blob URL do zwolnienia
+
+  function _stopPreview() {
+    if (_previewAudio) { try { _previewAudio.pause(); _previewAudio.currentTime = 0; } catch {} }
+    if (_previewUrl)   { URL.revokeObjectURL(_previewUrl); _previewUrl = null; }
+    if (_previewBtn)   { _previewBtn.textContent = "▶"; delete _previewBtn.dataset.playing; }
+    _previewAudio = null;
+    _previewBtn   = null;
+  }
+
   tableEl.querySelectorAll("[data-sfx-preview]").forEach(btn => {
     btn.addEventListener("click", () => {
+      // Stop jeśli to ten sam przycisk
+      if (_previewBtn === btn) { _stopPreview(); return; }
+      _stopPreview();
+
       const key = btn.dataset.sfxPreview;
-      const row = btn.closest(".sfx-row");
       const val = variantInsts.get(key)?.getValue() ?? VARIANT_CUSTOM;
       const vol = (localSettings.sound.volumes[key] ?? 100) / 100;
 
+      let audio, blobUrl = null;
       if (val === VARIANT_CUSTOM) {
         const custom = customFiles.get(key);
         if (!custom?.blob) return;
-        const url = URL.createObjectURL(custom.blob);
-        const audio = new Audio(url);
-        audio.volume = vol;
-        audio.play().catch(() => {});
-        audio.onended = () => URL.revokeObjectURL(url);
+        blobUrl = URL.createObjectURL(custom.blob);
+        audio = new Audio(blobUrl);
       } else {
         const cat = categories.find(c => c.key === key);
         if (!cat) return;
-        const audio = new Audio(`/audio_new/${cat.folder}/${val}`);
-        audio.volume = vol;
-        audio.play().catch(() => {});
+        audio = new Audio(`/audio_new/${cat.folder}/${val}`);
       }
+      audio.volume = vol;
+      audio.play().catch(() => {});
+      audio.addEventListener("ended", _stopPreview, { once: true });
+
+      _previewAudio = audio;
+      _previewBtn   = btn;
+      _previewUrl   = blobUrl;
+      btn.textContent = "■";
+      btn.dataset.playing = "1";
     });
   });
+
+  // Zmiana głośności podczas odtwarzania podglądu
+  tableEl.querySelectorAll(".sfx-vol").forEach(slider => {
+    slider.addEventListener("input", () => {
+      const key = slider.dataset.sfxVol;
+      if (_previewBtn?.dataset.sfxPreview === key && _previewAudio) {
+        _previewAudio.volume = parseInt(slider.value, 10) / 100;
+      }
+    });
+  }, true); // capture=true żeby odpalić przed istniejącym listenerem
 
   // Głośność
   tableEl.querySelectorAll(".sfx-vol").forEach(slider => {

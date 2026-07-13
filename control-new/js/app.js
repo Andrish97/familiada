@@ -45,7 +45,7 @@ import { isGuestUser } from "../../js/core/guest-mode.js?v=v2026-07-13T09054";
 import { sb } from "../../js/core/supabase.js?v=v2026-07-13T09054";
 import { rt } from "../../js/core/realtime.js?v=v2026-07-13T09054";
 import { validateGameReadyToPlay, loadGameBasic, loadQuestions, loadAnswers } from "../../js/core/game-validate.js?v=v2026-07-13T09054";
-import { unlockAudio, isAudioUnlocked, playSfx, initSfx, loadSfxManifest, applySfxGameSettings, setCurrentGameId, loadSfxFromCloud, getSfxCategories, getSfxVariant, getSfxVolume, setSessionSfxVolume, getSfxCustomFiles } from "../../js/core/sfx-new.js?v=v2026-07-13T09054";
+import { unlockAudio, isAudioUnlocked, playSfx, stopSfx, isSfxPlaying, onSfxEnd, initSfx, loadSfxManifest, applySfxGameSettings, setCurrentGameId, loadSfxFromCloud, getSfxCategories, getSfxVariant, getSfxVolume, setSessionSfxVolume, getSfxCustomFiles } from "../../js/core/sfx-new.js?v=v2026-07-13T09054";
 import { listGameSounds } from "../../js/core/sfx-cloud.js?v=v2026-07-13T09054";
 import { createStore } from "./store.js?v=v2026-07-13T09054";
 import { createUI } from "./ui.js?v=v2026-07-13T09054";
@@ -1261,7 +1261,16 @@ async function sendZeroStatesToDevices() {
         const slider   = row.querySelector(".summarySoundVol");
         const volLabel = row.querySelector(".summarySoundVolLabel");
 
-        playBtn.addEventListener("click", () => playSfx(cat.key));
+        playBtn.addEventListener("click", () => {
+          if (isSfxPlaying(cat.key)) {
+            stopSfx(cat.key);
+            playBtn.textContent = "▶";
+          } else {
+            playSfx(cat.key);
+            playBtn.textContent = "■";
+            onSfxEnd(cat.key, () => { playBtn.textContent = "▶"; });
+          }
+        });
         slider.addEventListener("input", () => {
           const pct = parseInt(slider.value, 10);
           volLabel.textContent = `${pct}%`;

@@ -128,8 +128,9 @@ const _sessionVolumes = new Map();
 export function setSessionSfxVolume(key, v) {
   const clamped = Math.max(0, Math.min(1, v));
   _sessionVolumes.set(key, clamped);
+  // Gdy nie gra: ustaw bezpośrednio; gdy gra: fade RAF odbierze zmianę na następnym ticku
   const a = cache.get(key);
-  if (a && a.paused) a.volume = clamped; // tylko gdy nie gra — fade zajmuje się resztą
+  if (a && a.paused) a.volume = clamped;
 }
 
 function _getEffectiveVolume(key) {
@@ -259,10 +260,11 @@ function _fadeVolume(a, ct, dur, target) {
   return target;
 }
 
-function _startFade(key, a, target) {
+function _startFade(key, a) {
   _cancelFade(key);
   function tick() {
     if (!a || a.paused || a.ended) { _fadeRafs.delete(key); return; }
+    const target = _getEffectiveVolume(key); // czyta na żywo — reaguje na zmianę głośności
     a.volume = Math.max(0, Math.min(1, _fadeVolume(a, a.currentTime, a.duration, target)));
     _fadeRafs.set(key, requestAnimationFrame(tick));
   }
@@ -271,16 +273,34 @@ function _startFade(key, a, target) {
 
 /* ========= ODTWARZANIE ========= */
 
+export function stopSfx(key) {
+  _cancelFade(key);
+  const a = cache.get(key);
+  if (!a) return;
+  try { a.pause(); a.currentTime = 0; a.volume = 0; } catch {}
+}
+
+export function isSfxPlaying(key) {
+  const a = cache.get(key);
+  return !!a && !a.paused && !a.ended;
+}
+
+export function onSfxEnd(key, fn) {
+  const a = cache.get(key);
+  if (!a) return () => {};
+  a.addEventListener("ended", fn, { once: true });
+  return () => a.removeEventListener("ended", fn);
+}
+
 export function playSfx(key) {
   const a = cache.get(key);
   if (!a) return;
   try {
     _cancelFade(key);
-    const target = _getEffectiveVolume(key);
     a.currentTime = 0;
     a.volume = 0;
     a.play().catch(() => {});
-    _startFade(key, a, target);
+    _startFade(key, a);
   } catch {}
 }
 
@@ -288,6 +308,7 @@ export function createSfxMixer() {
   let audio = null;
   let raf = null;
   let _fadeKey = null;
+  let _endedHandler = null;
   const listeners = new Set();
 
   function notify() {
@@ -313,17 +334,25 @@ export function createSfxMixer() {
       _fadeKey = key;
       audio = cache.get(key);
       if (!audio) return;
-      const target = _getEffectiveVolume(key);
       audio.currentTime = 0;
       audio.volume = 0;
       audio.play().catch(() => {});
+      // Fired when audio ends naturally — lets onTime listeners detect end even if last RAF tick missed it
+      _endedHandler = () => {
+        const d = audio?.duration || 0;
+        for (const fn of listeners) fn(d, d);
+      };
+      audio.addEventListener("ended", _endedHandler, { once: true });
       raf = requestAnimationFrame(tick);
     },
     stop() {
       if (raf) cancelAnimationFrame(raf);
       raf = null;
       _fadeKey = null;
-      if (audio) { try { audio.pause(); audio.currentTime = 0; } catch {} }
+      if (audio) {
+        if (_endedHandler) { audio.removeEventListener("ended", _endedHandler); _endedHandler = null; }
+        try { audio.pause(); audio.currentTime = 0; } catch {}
+      }
       audio = null;
     },
     onTime(fn) { listeners.add(fn); return () => listeners.delete(fn); },
