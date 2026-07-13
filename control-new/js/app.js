@@ -1125,6 +1125,10 @@ async function sendZeroStatesToDevices() {
       await devices.sendDisplayCmd(`LOGO RELOAD`).catch(() => {});
       await devices.sendDisplayCmd(`LONG1 ${q(teamA)}`).catch(() => {});
       await devices.sendDisplayCmd(`LONG2 ${q(teamB)}`).catch(() => {});
+      await devices.sendDisplayCmd("LEFT 123").catch(() => {});
+      await devices.sendDisplayCmd("RIGHT 123").catch(() => {});
+      await devices.sendDisplayCmd("TOP 1").catch(() => {});
+      await devices.sendDisplayCmd("INDICATOR OFF").catch(() => {});
       await devices.sendHostCmd(`SET1 ${q(teamA)}`).catch(() => {});
       await devices.sendHostCmd(`SET2 ${q(teamB)}`).catch(() => {});
     }
