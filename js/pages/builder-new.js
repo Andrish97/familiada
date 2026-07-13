@@ -640,7 +640,7 @@ function setButtonsState({ hasSel, canEdit, canPlay, canPoll, canExport }) {
   if (btnPreview) btnPreview.disabled = !hasSel;
   if (btnPlay) btnPlay.disabled = !hasSel || !canPlay;
   if (btnPoll) btnPoll.disabled = !hasSel || !canPoll;
-  if (btnSettings) btnSettings.disabled = !hasSel || !canPlay;
+  if (btnSettings) btnSettings.disabled = !hasSel;
   if (btnExport) btnExport.disabled = !hasSel || !canExport;
   if (btnExportBase) btnExportBase.disabled = !hasSel || !canExport;
 }

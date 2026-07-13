@@ -64,6 +64,15 @@
     </div>
   </div>
 
+  <div class="gsOverlay hidden" id="gsOverlay">
+    <div class="gsModal" role="dialog" aria-modal="true">
+      <div class="gsModalToolbar">
+        <button class="btn xs gsModalCloseBtn" id="btnGsClose" type="button">✕</button>
+      </div>
+      <iframe id="gsFrame" class="gsFrame" src="" title="Ustawienia rozgrywki"></iframe>
+    </div>
+  </div>
+
   <div class="legalOverlay hidden" id="legalOverlay">
     <div class="legalModal" role="dialog" aria-modal="true">
       <div class="legalModalToolbar">
@@ -436,6 +445,10 @@
                     <span id="summaryDefaultHintText"></span>
                   </div>
 
+                  <div class="summarySettingsLink" id="summarySettingsLink">
+                    <button class="btn sm" id="btnOpenGsModal" type="button" data-i18n="control.summarySettingsLink">Ustawienia rozgrywki →</button>
+                  </div>
+
                   <div class="summarySection">
                     <div class="summarySectionTitle" data-i18n="control.summaryTeams">Drużyny</div>
                     <div class="summarySectionValue" id="summaryTeams">—</div>
@@ -471,11 +484,13 @@
 
                   <div class="summarySection" id="summaryFinalSection">
                     <div class="summarySectionTitle" data-i18n="control.summaryFinalQuestions">Pytania finału</div>
+                    <div class="summaryQMode" id="summaryFinalQMode"></div>
                     <ol class="summaryQList" id="summaryFinalQuestions"></ol>
                   </div>
 
                   <div class="summarySection">
                     <div class="summarySectionTitle" data-i18n="control.summaryRoundsQuestions">Pytania rund</div>
+                    <div class="summaryQMode" id="summaryRoundsQMode"></div>
                     <ol class="summaryQList" id="summaryRoundsQuestions"></ol>
                   </div>
 

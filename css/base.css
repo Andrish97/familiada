@@ -244,6 +244,12 @@ a.btn.gold {
     background: rgba(255,120,120,.12)
 }
 
+.btn.green {
+    border-color: rgba(80,200,100,.4);
+    background: rgba(80,200,100,.15);
+    color: #5dc870;
+}
+
 html, body{
     min-height: 100%;
 }

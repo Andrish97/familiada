@@ -122,6 +122,7 @@ const titleEl = document.getElementById("gsTitle");
 const unsavedBadge = document.getElementById("gsUnsavedBadge");
 const btnSaveAll = document.getElementById("btnSaveAll");
 const btnResetAll = document.getElementById("btnResetAll");
+const btnPlay = document.getElementById("btnPlay");
 const btnBack = document.getElementById("btnBack");
 const content = document.getElementById("gsContentInner");
 const sidebar = document.getElementById("gsSidebar");
@@ -1491,6 +1492,24 @@ async function main() {
   if (titleEl) titleEl.textContent = game.name || "—";
   document.title = `${game.name || t("gameSettings.defaultGameName")} — ${t("gameSettings.pageTitle")}`;
 
+  // Modal mode (opened from control-new)
+  const isModal = new URLSearchParams(location.search).get("modal") === "1";
+  if (isModal) {
+    document.body.classList.add("gs-modal-mode");
+    // Hide back button — modal has its own ✕ close button
+    if (btnBack) btnBack.classList.add("hidden");
+    // Hide "Graj" button — user is already in control-new
+    if (btnPlay) btnPlay.classList.add("hidden");
+    // Handle close requests from parent — confirm if unsaved changes
+    window.addEventListener("message", async (ev) => {
+      if (ev.data?.type !== "gs:requestClose") return;
+      if (isDirty) {
+        if (!await confirmModal({ text: t("gameSettings.unsavedConfirm") || "Masz niezapisane zmiany. Czy na pewno chcesz wyjść?" })) return;
+      }
+      window.parent.postMessage({ type: "gs:close" }, "*");
+    });
+  }
+
   localSettings = mergeSettings(game.settings);
 
   // Cleanup: usuń pytania finałowe z rounds (mogły tam trafić przed wdrożeniem tej logiki)
@@ -1521,6 +1540,16 @@ async function main() {
   try {
     allQuestions = await loadQuestions(gameId);
   } catch {}
+
+  // Show "Graj" button if game has questions (is playable)
+  if (btnPlay) {
+    if (allQuestions.length > 0) {
+      btnPlay.classList.remove("hidden");
+    }
+    btnPlay.addEventListener("click", () => {
+      location.href = `control-new?id=${encodeURIComponent(gameId)}`;
+    });
+  }
 
   updateSubTabStates();
 
@@ -1556,10 +1585,12 @@ async function main() {
   });
 
   // Back button
-  btnBack?.addEventListener("click", async () => {
-    if (isDirty && !await confirmModal({ text: t("gameSettings.unsavedConfirm") || "Masz niezapisane zmiany. Czy na pewno chcesz wyjść?" })) return;
-    location.href = `/builder`;
-  });
+  if (!isModal) {
+    btnBack?.addEventListener("click", async () => {
+      if (isDirty && !await confirmModal({ text: t("gameSettings.unsavedConfirm") || "Masz niezapisane zmiany. Czy na pewno chcesz wyjść?" })) return;
+      location.href = `/builder`;
+    });
+  }
 
   initColorModal();
 

@@ -623,7 +623,7 @@ async function sendZeroStatesToDevices() {
   let _soundCustomFiles = new Map();
   const _summaryVolumes = new Map(); // zapamiętuje głośności zmienione w podsumowaniu
   // true gdy game.settings zawierały zapisane ustawienia (nie null)
-  const _hasCustomSettings = game.settings != null && typeof game.settings === "object";
+  let _hasCustomSettings = game.settings != null && typeof game.settings === "object";
 
 
 
@@ -1133,15 +1133,13 @@ async function sendZeroStatesToDevices() {
   function renderSetupFinishSummary() {
     const s = store.state;
 
-    // Baner domyślnych ustawień
+    // Baner domyślnych ustawień — tylko gdy nie ma zapisanych ustawień
     const hintEl = document.getElementById("summaryDefaultHint");
     const hintTextEl = document.getElementById("summaryDefaultHintText");
     if (hintEl && hintTextEl) {
       if (!_hasCustomSettings) {
         const msg = t("control.summaryDefaultSettings") || "Używasz domyślnych ustawień rozgrywki.";
-        const linkLabel = t("control.summaryDefaultSettingsLink") || "Otwórz ustawienia →";
-        const settingsUrl = `/game-settings?id=${store.state.gameId || gameId}`;
-        hintTextEl.innerHTML = `${escapeHtml(msg)} <a href="${escapeHtml(settingsUrl)}" class="summaryDefaultHintLink">${escapeHtml(linkLabel)}</a>`;
+        hintTextEl.textContent = msg;
         hintEl.classList.remove("hidden");
       } else {
         hintEl.classList.add("hidden");
@@ -1231,6 +1229,18 @@ async function sendZeroStatesToDevices() {
       }
     }
 
+    // Tryb pytań finału
+    const finalQModeEl = document.getElementById("summaryFinalQMode");
+    if (finalQModeEl && s.hasFinal) {
+      const mode = s.finalQuestionsMode === "pick"
+        ? (t("control.summaryQModePick") || "Wybrane")
+        : (t("control.summaryQModeRandom") || "Losowane");
+      finalQModeEl.textContent = mode;
+      finalQModeEl.className = "summaryQMode summaryQMode--" + (s.finalQuestionsMode === "pick" ? "pick" : "random");
+    } else if (finalQModeEl) {
+      finalQModeEl.textContent = "";
+    }
+
     // Dźwięk
     const soundListEl = document.getElementById("summarySoundList");
     if (soundListEl) {
@@ -1316,8 +1326,64 @@ async function sendZeroStatesToDevices() {
         roundsQEl.innerHTML = `<li class="summaryQRandom">${t("control.summaryQRandom") || "Losowanie w toku…"}</li>`;
       }
     }
+
+    // Tryb pytań rund
+    const roundsQModeEl = document.getElementById("summaryRoundsQMode");
+    if (roundsQModeEl) {
+      const mode = s.roundsQuestionsMode === "pick"
+        ? (t("control.summaryQModePick") || "Wybrane")
+        : (t("control.summaryQModeRandom") || "Losowane");
+      roundsQModeEl.textContent = mode;
+      roundsQModeEl.className = "summaryQMode summaryQMode--" + (s.roundsQuestionsMode === "pick" ? "pick" : "random");
+    }
   }
-  
+
+  // ===== GAME SETTINGS MODAL =====
+  const gsOverlayEl = document.getElementById("gsOverlay");
+  const gsFrameEl   = document.getElementById("gsFrame");
+
+  function openGsModal() {
+    const id = store.state.gameId || gameId;
+    gsFrameEl.src = `/game-settings?id=${encodeURIComponent(id)}&modal=1`;
+    gsOverlayEl?.classList.remove("hidden");
+  }
+
+  async function onGsModalClose() {
+    gsOverlayEl?.classList.add("hidden");
+    gsFrameEl.src = "";
+    // Reload game settings from DB and re-apply
+    try {
+      const { data } = await sb().from("games").select("settings").eq("id", gameId).single();
+      if (data) {
+        _hasCustomSettings = data.settings != null && typeof data.settings === "object";
+        applyGameSettingsToStore(data.settings, store);
+        // Reload sound custom files
+        try { _soundCustomFiles = await getSfxCustomFiles(game.id); } catch {}
+        // Reload logos if logoId changed
+        _loadedLogos = [];
+        if (store.state.display.logoId) {
+          try {
+            const { data: logos } = await sb().from("user_logos").select("id,name,type,payload").order("updated_at", { ascending: false });
+            _loadedLogos = logos || [];
+          } catch {}
+        }
+        renderSetupFinishSummary();
+      }
+    } catch (e) { console.warn("[gs-modal] reload failed", e); }
+  }
+
+  function requestGsModalClose() {
+    gsFrameEl?.contentWindow?.postMessage({ type: "gs:requestClose" }, "*");
+  }
+
+  document.getElementById("btnOpenGsModal")?.addEventListener("click", openGsModal);
+  document.getElementById("btnGsClose")?.addEventListener("click", requestGsModalClose);
+  gsOverlayEl?.addEventListener("click", (ev) => { if (ev.target === gsOverlayEl) requestGsModalClose(); });
+
+  window.addEventListener("message", (ev) => {
+    if (ev.data?.type === "gs:close") onGsModalClose();
+  });
+
 
     // ROUNDS
   ui.on("game.startIntro", async () => {
