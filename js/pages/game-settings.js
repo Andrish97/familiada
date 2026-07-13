@@ -460,18 +460,25 @@ function sendDisplayCmd(cmd) {
   } catch {}
 }
 
+function logoToBase64(data) {
+  const json = JSON.stringify(data);
+  const bytes = new TextEncoder().encode(json);
+  let bin = "";
+  bytes.forEach(b => bin += String.fromCharCode(b));
+  return btoa(bin);
+}
+
 function previewLogo(id) {
   if (_isModal) {
-    if (id === null) {
-      sendDisplayCmd("LOGO RELOAD");
-    } else {
-      const logo = _loadedLogos.find(l => l.id === id);
-      if (!logo) return;
-      try {
-        const encoded = btoa(unescape(encodeURIComponent(JSON.stringify({ type: logo.type, payload: logo.payload }))));
-        sendDisplayCmd(`LOGO JSON ${encoded}`);
-      } catch {}
-    }
+    try {
+      if (id === null) {
+        sendDisplayCmd(`LOGO JSON ${logoToBase64(null)}`);
+      } else {
+        const logo = _loadedLogos.find(l => l.id === id);
+        if (!logo) return;
+        sendDisplayCmd(`LOGO JSON ${logoToBase64({ type: logo.type, payload: logo.payload })}`);
+      }
+    } catch {}
     return;
   }
   try {
@@ -501,11 +508,14 @@ function sendDisplayInitCmds() {
   sendDisplayCmd(`COLOR DOT ${c.DOT}`);
   const theme = localSettings.display.theme || (themeList[0]?.key ?? "");
   if (theme) sendDisplayCmd(`THEME ${theme}`);
-  // In modal mode, RELOAD from DB; in local preview iframe, use previewLogo to set correct logo
   if (_isModal) {
     sendDisplayCmd("LOGO RELOAD");
-  } else {
+  } else if (localSettings.display.logoId === null || _loadedLogos.length > 0) {
+    // logos already loaded (or default selected) — preview correctly
     previewLogo(localSettings.display.logoId);
+  } else {
+    // logos not yet loaded — draw default for now; renderLogoGrid will call previewLogo after load
+    sendDisplayCmd("LOGO DRAW");
   }
   sendDisplayCmd("LEFT 123");
   sendDisplayCmd("RIGHT 123");
@@ -655,6 +665,8 @@ async function renderLogoGrid() {
       .order("updated_at", { ascending: false });
     if (error) throw error;
     _loadedLogos = data || [];
+    // After loading: update preview iframe with the selected logo
+    if (_displayReady && !_isModal) previewLogo(localSettings.display.logoId);
   } catch (e) {
     if (document.getElementById("gsLogoGrid")) {
       grid.innerHTML = `<div class="hint">${escText(e?.message || String(e))}</div>`;
