@@ -1503,6 +1503,17 @@ async function main() {
   // Reset to defaults
   btnResetAll?.addEventListener("click", async () => {
     if (!await confirmModal({ text: t("gameSettings.resetAllConfirm") || "Przywrócić ustawienia domyślne? Niezapisane zmiany zostaną utracone." })) return;
+
+    // Wyczyść custom pliki dźwiękowe (IndexedDB + bucket)
+    let customKeys = [];
+    try { customKeys = [...(await getSfxCustomFiles(gameId)).keys()]; } catch {}
+    try { await clearAllSfxCustomFiles(gameId); } catch {}
+    if (customKeys.length > 0) {
+      _getSoundUserId().then(userId => {
+        if (userId) deleteAllGameSounds(sb(), userId, gameId, customKeys).catch(console.warn);
+      });
+    }
+
     localSettings = mergeSettings(null);
     markDirty();
     updateSubTabStates();
