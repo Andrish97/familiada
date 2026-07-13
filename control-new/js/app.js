@@ -45,7 +45,7 @@ import { isGuestUser } from "../../js/core/guest-mode.js?v=v2026-07-13T08511";
 import { sb } from "../../js/core/supabase.js?v=v2026-07-13T08511";
 import { rt } from "../../js/core/realtime.js?v=v2026-07-13T08511";
 import { validateGameReadyToPlay, loadGameBasic, loadQuestions, loadAnswers } from "../../js/core/game-validate.js?v=v2026-07-13T08511";
-import { unlockAudio, isAudioUnlocked, playSfx, initSfx, loadSfxManifest, applySfxGameSettings, setCurrentGameId, loadSfxFromCloud, getSfxCategories, getSfxVariant, getSfxVolume } from "../../js/core/sfx-new.js?v=v2026-07-13T08511";
+import { unlockAudio, isAudioUnlocked, playSfx, initSfx, loadSfxManifest, applySfxGameSettings, setCurrentGameId, loadSfxFromCloud, getSfxCategories, getSfxVariant, getSfxVolume, setSessionSfxVolume } from "../../js/core/sfx-new.js?v=v2026-07-13T08511";
 import { listGameSounds } from "../../js/core/sfx-cloud.js?v=v2026-07-13T08511";
 import { createStore } from "./store.js?v=v2026-07-13T08511";
 import { createUI } from "./ui.js?v=v2026-07-13T08511";
@@ -1227,13 +1227,13 @@ async function sendZeroStatesToDevices() {
       }
     }
 
-    // Dźwięk
+    // Dźwięk — renderuj tylko raz (slider nie resetuje się przy re-renderze)
     const soundListEl = document.getElementById("summarySoundList");
-    if (soundListEl) {
+    if (soundListEl && soundListEl.children.length === 0) {
       const cats = getSfxCategories();
       const lang = getUiLang() || "pl";
       const VARIANT_CUSTOM = "__custom__";
-      soundListEl.innerHTML = cats.map(cat => {
+      cats.forEach(cat => {
         const variant = getSfxVariant(cat.key);
         const vol = getSfxVolume(cat.key);
         const isCustom = variant === VARIANT_CUSTOM;
@@ -1241,9 +1241,31 @@ async function sendZeroStatesToDevices() {
           ? (t("control.sfxCustom") || "Własny")
           : (cat.sounds.find(s => s.file.split("?")[0] === variant)?.label?.[lang] || variant);
         const desc = t("control.sfxDesc." + cat.key) || cat.key;
-        const volStr = ` (${Math.round(vol * 100)}%)`;
-        return `<li>${escapeHtml(desc)}: <strong>${escapeHtml(variantLabel)}</strong>${escapeHtml(volStr)}</li>`;
-      }).join("") || `<li>—</li>`;
+        const volPct = Math.round(vol * 100);
+
+        const row = document.createElement("div");
+        row.className = "summarySoundRow";
+        row.innerHTML = `
+          <span class="summarySoundDesc">${escapeHtml(desc)}</span>
+          <span class="summarySoundVariant">${escapeHtml(variantLabel)}</span>
+          <button class="btn sm summarySoundPlay" type="button">▶</button>
+          <input class="summarySoundVol" type="range" min="0" max="100" step="1" value="${volPct}">
+          <span class="summarySoundVolLabel">${volPct}%</span>
+        `;
+
+        const playBtn  = row.querySelector(".summarySoundPlay");
+        const slider   = row.querySelector(".summarySoundVol");
+        const volLabel = row.querySelector(".summarySoundVolLabel");
+
+        playBtn.addEventListener("click", () => playSfx(cat.key));
+        slider.addEventListener("input", () => {
+          const pct = parseInt(slider.value, 10);
+          volLabel.textContent = `${pct}%`;
+          setSessionSfxVolume(cat.key, pct / 100);
+        });
+
+        soundListEl.appendChild(row);
+      });
     }
 
     // Pytania rund — pokaż wylosowane (lub ordered)

@@ -2411,3 +2411,43 @@
   line-height: 1.4;
   padding: 0 2px;
 }
+
+/* ===== Summary — sound rows ===== */
+.summarySoundRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 14px;
+  color: #fff;
+}
+.summarySoundDesc {
+  min-width: 90px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.summarySoundVariant {
+  flex: 1;
+  min-width: 0;
+  opacity: .7;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.summarySoundPlay {
+  flex-shrink: 0;
+  padding: 2px 7px;
+  font-size: 12px;
+}
+.summarySoundVol {
+  flex-shrink: 0;
+  width: 90px;
+  accent-color: var(--gold, #f0b429);
+}
+.summarySoundVolLabel {
+  flex-shrink: 0;
+  min-width: 34px;
+  text-align: right;
+  font-size: 12px;
+  opacity: .7;
+}

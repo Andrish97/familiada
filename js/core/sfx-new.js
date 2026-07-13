@@ -113,6 +113,13 @@ function _applySfxVolume(key) {
   if (a) a.volume = getSfxVolume(key);
 }
 
+// Ustawia głośność na żywo bez zapisu do localStorage (użycie w podsumowaniu)
+export function setSessionSfxVolume(key, v) {
+  const clamped = Math.max(0, Math.min(1, v));
+  const a = cache.get(key);
+  if (a) a.volume = clamped;
+}
+
 export function applySfxVolumes() {
   for (const cat of getSfxCategories()) {
     _applySfxVolume(cat.key);
