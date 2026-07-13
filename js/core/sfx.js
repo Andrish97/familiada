@@ -5,21 +5,21 @@
 const PATH = "../audio/";
 
 const files = {
-  show_intro: "show_intro.mp3?v=v2026-07-13T07003",
-  round_transition: "round_transition.mp3?v=v2026-07-13T07003",
-  round_transition2: "round_transition2.mp3?v=v2026-07-13T07003",
-  final_theme: "final_theme.mp3?v=v2026-07-13T07003",
+  show_intro: "show_intro.mp3?v=v2026-07-13T07015",
+  round_transition: "round_transition.mp3?v=v2026-07-13T07015",
+  round_transition2: "round_transition2.mp3?v=v2026-07-13T07015",
+  final_theme: "final_theme.mp3?v=v2026-07-13T07015",
 
-  buzzer_press: "buzzer_press.mp3?v=v2026-07-13T07003",
+  buzzer_press: "buzzer_press.mp3?v=v2026-07-13T07015",
 
-  answer_correct: "answer_correct.mp3?v=v2026-07-13T07003",
-  answer_wrong: "answer_wrong.mp3?v=v2026-07-13T07003",
-  answer_repeat: "answer_repeat.mp3?v=v2026-07-13T07003",
+  answer_correct: "answer_correct.mp3?v=v2026-07-13T07015",
+  answer_wrong: "answer_wrong.mp3?v=v2026-07-13T07015",
+  answer_repeat: "answer_repeat.mp3?v=v2026-07-13T07015",
 
-  time_over: "time_over.mp3?v=v2026-07-13T07003",
+  time_over: "time_over.mp3?v=v2026-07-13T07015",
 
   // dawny ui_tick -> teraz bells; zostawiam alias ui_tick dla bezpieczeństwa
-  bells: "bells.mp3?v=v2026-07-13T07003",
+  bells: "bells.mp3?v=v2026-07-13T07015",
 };
 
 export function listSfx() {
