@@ -113,6 +113,9 @@ let _loadedLogos = [];
 let _displayIframe = null;
 let _displayReady = false;
 
+// Wykryj modal mode już na poziomie modułu (inline script w <head> dodaje klasę przed renderem)
+const _isModal = document.documentElement.classList.contains("gs-modal-mode");
+
 // Color modal state — labels populated lazily from t()
 let colorModalTarget = null;
 let colorModalR = 0, colorModalG = 0, colorModalB = 0;
@@ -447,6 +450,10 @@ function renderTeams() {
 // --- WYGLĄD ---
 function sendDisplayCmd(cmd) {
   try {
+    if (_isModal) {
+      window.parent.postMessage({ type: "gs:displayCmd", cmd }, "*");
+      return;
+    }
     if (_displayIframe?.contentWindow?.handleCommand) {
       _displayIframe.contentWindow.handleCommand(cmd);
     }
@@ -1492,14 +1499,33 @@ async function main() {
   if (titleEl) titleEl.textContent = game.name || "—";
   document.title = `${game.name || t("gameSettings.defaultGameName")} — ${t("gameSettings.pageTitle")}`;
 
-  // Modal mode (opened from control-new)
-  const isModal = new URLSearchParams(location.search).get("modal") === "1";
+  // Modal mode (opened from control-new) — odczyt z modułowej stałej _isModal
+  const isModal = _isModal;
   if (isModal) {
-    document.body.classList.add("gs-modal-mode");
-    // Hide back button — modal has its own ✕ close button
+    // Hide back button — modal backdrop closes it
     if (btnBack) btnBack.classList.add("hidden");
-    // Hide "Graj" button — user is already in control-new
-    if (btnPlay) btnPlay.classList.add("hidden");
+
+    // Sidebar toggle (☰ button)
+    const btnToggle   = document.getElementById("btnToggleSidebar");
+    const sidebarEl   = document.getElementById("gsSidebar");
+    const backdropEl  = document.getElementById("gsSidebarBackdrop");
+    if (btnToggle) btnToggle.classList.remove("hidden");
+
+    function openSidebar()  {
+      sidebarEl?.classList.add("gs-sidebar-open");
+      backdropEl?.classList.add("gs-sidebar-open");
+    }
+    function closeSidebar() {
+      sidebarEl?.classList.remove("gs-sidebar-open");
+      backdropEl?.classList.remove("gs-sidebar-open");
+    }
+    btnToggle?.addEventListener("click", openSidebar);
+    backdropEl?.addEventListener("click", closeSidebar);
+    // Zamknij drawer po wyborze kategorii
+    sidebarEl?.addEventListener("click", (e) => {
+      if (e.target.closest(".gs-sidebar-item")) closeSidebar();
+    });
+
     // Handle close requests from parent — confirm if unsaved changes
     window.addEventListener("message", async (ev) => {
       if (ev.data?.type !== "gs:requestClose") return;
@@ -1541,8 +1567,8 @@ async function main() {
     allQuestions = await loadQuestions(gameId);
   } catch {}
 
-  // Show "Graj" button if game has questions (is playable)
-  if (btnPlay) {
+  // Show "Graj" button if game has questions — only outside modal mode
+  if (btnPlay && !isModal) {
     if (allQuestions.length > 0) {
       btnPlay.classList.remove("hidden");
     }
@@ -1641,8 +1667,8 @@ async function main() {
   btnLegalClose?.addEventListener("click", () => legalOverlay?.classList.add("hidden"));
   legalOverlay?.addEventListener("click", (ev) => { if (ev.target === legalOverlay) legalOverlay.classList.add("hidden"); });
 
-  // Create display preview iframe early (loads in background while user is on other tabs)
-  createDisplayIframe();
+  // Create display preview iframe — skip in modal mode (real display managed by control-new)
+  if (!isModal) createDisplayIframe();
 
   setActiveCat("teams");
 

@@ -1377,11 +1377,13 @@ async function sendZeroStatesToDevices() {
   }
 
   document.getElementById("btnOpenGsModal")?.addEventListener("click", openGsModal);
-  document.getElementById("btnGsClose")?.addEventListener("click", requestGsModalClose);
   gsOverlayEl?.addEventListener("click", (ev) => { if (ev.target === gsOverlayEl) requestGsModalClose(); });
 
   window.addEventListener("message", (ev) => {
     if (ev.data?.type === "gs:close") onGsModalClose();
+    if (ev.data?.type === "gs:displayCmd" && ev.source === gsFrameEl?.contentWindow) {
+      devices?.sendDisplayCmd(ev.data.cmd).catch(() => {});
+    }
   });
 
 

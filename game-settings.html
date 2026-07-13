@@ -14,6 +14,7 @@
   <link rel="icon" href="favicon.ico?v=v2026-07-13T11223"/>
   <link rel="stylesheet" href="css/base.css?v=v2026-07-13T11223"/>
   <link rel="stylesheet" href="css/game-settings.css?v=v2026-07-13T11223"/>
+  <script>if(new URLSearchParams(location.search).get("modal")==="1")document.documentElement.classList.add("gs-modal-mode");</script>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script src="js/core/security-warning.js?v=v2026-07-13T11223" defer></script>
@@ -64,6 +65,7 @@
 
   <div class="gs-layout">
     <div class="gs-actionbar" id="gsFooter">
+      <button class="btn gs-sidebar-toggle hidden" id="btnToggleSidebar" type="button">☰</button>
       <span class="gs-actionbar-msg hidden" id="gsFooterMsg" data-i18n="gameSettings.unsaved">Niezapisane zmiany</span>
       <div style="flex:1"></div>
       <button class="btn" id="btnResetAll" type="button" data-i18n="gameSettings.resetAll">Przywróć domyślne</button>
@@ -71,6 +73,7 @@
       <button class="btn green hidden" id="btnPlay" type="button" data-i18n="gameSettings.play">▶ Graj</button>
     </div>
 
+    <div class="gs-sidebar-backdrop" id="gsSidebarBackdrop"></div>
     <nav class="gs-sidebar" id="gsSidebar">
       <button class="gs-sidebar-item active" data-cat="teams"     type="button" data-i18n="gameSettings.categories.teams">Drużyny</button>
       <button class="gs-sidebar-item"        data-cat="display"   type="button" data-i18n="gameSettings.categories.display">Wygląd</button>
