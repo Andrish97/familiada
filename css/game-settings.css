@@ -651,38 +651,34 @@
   outline-offset:2px;
 }
 .qRow{
-  display:grid;
-  grid-template-columns:36px 1fr;
+  display:flex;
   align-items:center;
-  min-height:56px;
-  border-radius:16px;
-  border:1px solid rgba(255,255,255,.12);
-  background:rgba(0,0,0,.16);
-  padding:10px 12px;
+  gap:8px;
+  background:rgba(255,255,255,.07);
+  border-radius:6px;
+  padding:7px 10px;
   cursor:grab;
+  font-size:.83rem;
   user-select:none;
-  overflow:hidden;
-  box-sizing:border-box;
+  transition:background .12s;
 }
 .qRow:active{ cursor:grabbing; }
-.qRow:hover{ border-color:rgba(255,255,255,.22); }
+.qRow:hover{ background:rgba(255,255,255,.16); }
 .qRow .meta{
   font-weight:1000;
-  font-size:13px;
+  font-size:.65rem;
   color:var(--gold,#f0b429);
-  min-width:28px;
+  min-width:18px;
   text-align:center;
   flex-shrink:0;
   white-space:nowrap;
 }
 .qRow .txt{
-  font-size:13px;
-  font-weight:900;
-  line-height:1.15;
+  flex:1;
+  min-width:0;
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
-  min-width:0;
 }
 @media(max-width:900px){
   .finalLists{ grid-template-columns:1fr; }
