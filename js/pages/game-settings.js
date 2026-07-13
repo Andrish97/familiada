@@ -1011,6 +1011,7 @@ function renderFinale() {
   content.innerHTML = `
     <div class="gs-cat-title">${t("gameSettings.categories.finale")}</div>
     <div class="gs-section">
+      <div class="gs-hint" style="margin-bottom:12px">${t("gameSettings.finale.dragHint")}</div>
       <div class="gs-badge-row">
         <span class="badge">${t("control.finalBadge")} <b>${picked.length}</b>/5</span>
       </div>

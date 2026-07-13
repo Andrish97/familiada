@@ -5375,6 +5375,7 @@ const pl = {
       roundsModeHint: "Losowe = każda runda losuje pytanie. Kolejność = pytania w ustalonej kolejności (zakładka \u201EPytania \u2014 Rundy\u201D).",
     },
     finale: {
+      dragHint: "Naciśnij pytanie, aby przenieść do finału. Przeciągnij, aby zmienić kolejność.",
       hasFinal: "Czy gra zawiera finał?",
       yes: "Tak",
       no: "Nie",

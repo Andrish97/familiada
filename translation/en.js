@@ -5373,6 +5373,7 @@ const en = {
       roundsModeHint: "Random = each round draws a question. Order = questions in fixed order (\u201CQuestions \u2014 Rounds\u201D tab).",
     },
     finale: {
+      dragHint: "Click a question to move it to the finale. Drag to reorder.",
       hasFinal: "Does the game include a finale?",
       yes: "Yes",
       no: "No",

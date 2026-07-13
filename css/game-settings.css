@@ -548,11 +548,22 @@
   display:flex; align-items:center; gap:8px;
   background:rgba(255,255,255,.07);
   border-radius:6px; padding:7px 10px;
-  cursor:pointer; font-size:.83rem;
+  cursor:grab; font-size:.83rem;
+  overflow:hidden;
+  user-select:none;
   transition:background .12s;
 }
+.gs-qrow:active{ cursor:grabbing; }
 .gs-qrow:hover{ background:rgba(255,255,255,.16); }
-.gs-qrow .meta{ opacity:.4; font-size:.65rem; min-width:18px; flex-shrink:0; }
+.gs-qrow .meta{
+  font-weight:1000;
+  font-size:.65rem;
+  color:var(--gold,#f0b429);
+  min-width:18px;
+  text-align:center;
+  flex-shrink:0;
+  white-space:nowrap;
+}
 .gs-qrow .txt{
   flex:1; min-width:0;
   overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
