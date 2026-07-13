@@ -1224,25 +1224,17 @@ async function sendZeroStatesToDevices() {
       const cats = getSfxCategories();
       const lang = getUiLang() || "pl";
       const VARIANT_CUSTOM = "__custom__";
-      const allDefault = cats.every(cat => {
-        const defaultFile = (cat.sounds[0]?.file || "classic.mp3").split("?")[0];
-        return getSfxVariant(cat.key) === defaultFile && getSfxVolume(cat.key) === 1.0;
-      });
-      if (allDefault || cats.length === 0) {
-        soundListEl.innerHTML = `<li>${escapeHtml(t("control.summaryDefault") || "Domyślne")}</li>`;
-      } else {
-        soundListEl.innerHTML = cats.map(cat => {
-          const variant = getSfxVariant(cat.key);
-          const vol = getSfxVolume(cat.key);
-          const isCustom = variant === VARIANT_CUSTOM;
-          const variantLabel = isCustom
-            ? (t("control.sfxCustom") || "Własny")
-            : (cat.sounds.find(s => s.file.split("?")[0] === variant)?.label?.[lang] || variant);
-          const desc = t("control.sfxDesc." + cat.key) || cat.key;
-          const volStr = vol !== 1.0 ? ` (${Math.round(vol * 100)}%)` : "";
-          return `<li>${escapeHtml(desc)}: <strong>${escapeHtml(variantLabel)}</strong>${escapeHtml(volStr)}</li>`;
-        }).join("");
-      }
+      soundListEl.innerHTML = cats.map(cat => {
+        const variant = getSfxVariant(cat.key);
+        const vol = getSfxVolume(cat.key);
+        const isCustom = variant === VARIANT_CUSTOM;
+        const variantLabel = isCustom
+          ? (t("control.sfxCustom") || "Własny")
+          : (cat.sounds.find(s => s.file.split("?")[0] === variant)?.label?.[lang] || variant);
+        const desc = t("control.sfxDesc." + cat.key) || cat.key;
+        const volStr = vol !== 1.0 ? ` (${Math.round(vol * 100)}%)` : "";
+        return `<li>${escapeHtml(desc)}: <strong>${escapeHtml(variantLabel)}</strong>${escapeHtml(volStr)}</li>`;
+      }).join("") || `<li>—</li>`;
     }
 
     // Pytania rund — pokaż wylosowane (lub ordered)
