@@ -1348,7 +1348,14 @@ async function sendZeroStatesToDevices() {
     gsOverlayEl?.classList.remove("hidden");
   }
 
+  let _gsModalCmdBlocked = false;
+
   async function onGsModalClose() {
+    // Immediately block forwarding of preview commands — in-flight HTTP requests
+    // may still be en-route to the display and must arrive BEFORE restore commands.
+    _gsModalCmdBlocked = true;
+    const closeTs = Date.now();
+
     gsOverlayEl?.classList.add("hidden");
     gsFrameEl.src = "";
     // Reload game settings from DB and re-apply
@@ -1368,8 +1375,14 @@ async function sendZeroStatesToDevices() {
           } catch {}
         }
         renderSetupFinishSummary();
-        // Restore display to summary state after modal close
+        // Restore display to summary state after modal close.
+        // Wait until at least 500ms have elapsed since close — gives in-flight preview
+        // broadcast commands time to arrive and be processed by the display BEFORE
+        // our restore commands, so restore always wins.
         if (devices) {
+          const elapsed = Date.now() - closeTs;
+          if (elapsed < 500) await new Promise(r => setTimeout(r, 500 - elapsed));
+
           const newDisplay = store.state.display;
           if (newDisplay?.colors) {
             colors.A = normHex(newDisplay.colors.A) ?? DEFAULT_COLORS.A;
@@ -1393,6 +1406,7 @@ async function sendZeroStatesToDevices() {
         }
       }
     } catch (e) { console.warn("[gs-modal] reload failed", e); }
+    finally { _gsModalCmdBlocked = false; }
   }
 
   function requestGsModalClose() {
@@ -1404,7 +1418,7 @@ async function sendZeroStatesToDevices() {
 
   window.addEventListener("message", (ev) => {
     if (ev.data?.type === "gs:close") onGsModalClose();
-    if (ev.data?.type === "gs:displayCmd" && ev.source === gsFrameEl?.contentWindow) {
+    if (ev.data?.type === "gs:displayCmd" && !_gsModalCmdBlocked && ev.source === gsFrameEl?.contentWindow) {
       devices?.sendDisplayCmd(ev.data.cmd).catch(() => {});
     }
   });
