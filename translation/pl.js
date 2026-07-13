@@ -4501,7 +4501,8 @@ const pl = {
     sfxTooLong: "Maksymalna długość to {limit}s",
     sfxDesc: {
       show_intro: "Muzyka intro programu",
-      round_transition: "Przejście między rundami",
+      round_start: "Przejście - start rundy",
+      round_transition: "Przejście po zakończeniu rundy",
       final_theme: "Muzyka finału",
       buzzer_press: "Naciśnięcie buzzera",
       answer_correct: "Poprawna odpowiedź",

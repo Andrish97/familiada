@@ -5107,7 +5107,8 @@ const uk = {
     sfxTooLong: "Максимальна тривалість — {limit}с",
     sfxDesc: {
       show_intro: "Вступна музика програми",
-      round_transition: "Перехід між раундами",
+      round_start: "Перехід - початок раунду",
+      round_transition: "Перехід після раунду",
       final_theme: "Музика фіналу",
       buzzer_press: "Натискання кнопки",
       answer_correct: "Правильна відповідь",

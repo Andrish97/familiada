@@ -5122,7 +5122,8 @@ const en = {
     sfxTooLong: "Maximum length is {limit}s",
     sfxDesc: {
       show_intro: "Show intro music",
-      round_transition: "Round transition",
+      round_start: "Round start transition",
+      round_transition: "Post-round transition",
       final_theme: "Final theme music",
       buzzer_press: "Buzzer press",
       answer_correct: "Correct answer",

@@ -2,7 +2,7 @@
 // Rozszerzony moduł dźwięku: manifest, warianty, głośności, własne pliki (IndexedDB).
 // Nie wpływa na sfx.js — używany przez game-settings i control-new.
 
-const MANIFEST_PATH = "/audio_new/sounds.json?v=v2026-07-13T17575";
+const MANIFEST_PATH = "/audio_new/sounds.json?v=v2026-07-13T18000";
 const AUDIO_BASE    = "/audio_new/";
 const IDB_NAME      = "familiada-sfx";
 const IDB_STORE     = "custom-files";

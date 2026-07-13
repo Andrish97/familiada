@@ -650,27 +650,17 @@ function hostUpdate() {
 
     store.notify();
 
-    let rtDur = 0, revealDur = 0;
+    let rtDur = 0;
     try {
-      [rtDur, revealDur] = await Promise.all([
-        getSfxDuration("round_transition"),
-        getSfxDuration("reveal"),
-      ]);
+      rtDur = await getSfxDuration("round_start");
     } catch (e) {
-      console.warn("getSfxDuration(round_transition/reveal) error", e);
+      console.warn("getSfxDuration(round_start) error", e);
     }
 
-    const totalMs = Math.max(rtDur, revealDur, 2) * 1000;
+    const totalMs = Math.max(rtDur, 2) * 1000;
     const transitionAnchorMs = 920;
 
-    // Nakładanie reveal + round_transition zsynchronizowane na koniec
-    if (rtDur >= revealDur) {
-      playSfx("round_transition");
-      setTimeout(() => playSfx("reveal"), (rtDur - revealDur) * 1000);
-    } else {
-      playSfx("reveal");
-      setTimeout(() => playSfx("round_transition"), (revealDur - rtDur) * 1000);
-    }
+    playSfx("round_start");
 
     setTimeout(() => {
       const rowsCount = Math.max(1, Math.min(6, r.answers.length || 6));

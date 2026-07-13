@@ -1652,25 +1652,13 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
   async function toP2Start() {
     await timerStopAndReset();
 
-    // Odtwórz overlay: round_transition + reveal zsynchronizowane na końcu
     try {
-      let rtDur = 0, revealDur = 0;
-      [rtDur, revealDur] = await Promise.all([
-        getSfxDuration("round_transition").catch(() => 0),
-        getSfxDuration("reveal").catch(() => 0),
-      ]);
-      const totalMs = Math.max(rtDur, revealDur, 2) * 1000;
-      if (rtDur >= revealDur) {
-        playSfx("round_transition");
-        if (rtDur - revealDur > 0) setTimeout(() => playSfx("reveal"), (rtDur - revealDur) * 1000);
-        else playSfx("reveal");
-      } else {
-        playSfx("reveal");
-        setTimeout(() => playSfx("round_transition"), (revealDur - rtDur) * 1000);
-      }
+      const rtDur = await getSfxDuration("round_start").catch(() => 0);
+      const totalMs = Math.max(rtDur, 2) * 1000;
+      playSfx("round_start");
       if (totalMs > 0) await new Promise((resolve) => setTimeout(resolve, totalMs));
     } catch (e) {
-      console.warn("round_transition/reveal audio failed", e);
+      console.warn("round_start audio failed", e);
     }
 
     (async () => {
@@ -1779,22 +1767,10 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       } catch {}
     };
 
-    // FIX: kolejność audio/wideo — overlay round_transition + reveal zsynchronizowane na końcu
-    let rtDur2 = 0, revealDur2 = 0;
-    [rtDur2, revealDur2] = await Promise.all([
-      getSfxDuration("round_transition").catch(() => 0),
-      getSfxDuration("reveal").catch(() => 0),
-    ]);
-    const trMs = Math.max(rtDur2, revealDur2, 2) * 1000;
+    const rtDur2 = await getSfxDuration("round_start").catch(() => 0);
+    const trMs = Math.max(rtDur2, 2) * 1000;
 
-    if (rtDur2 >= revealDur2) {
-      playSfx("round_transition");
-      if (rtDur2 - revealDur2 > 0) setTimeout(() => playSfx("reveal"), (rtDur2 - revealDur2) * 1000);
-      else playSfx("reveal");
-    } else {
-      playSfx("reveal");
-      setTimeout(() => playSfx("round_transition"), (revealDur2 - rtDur2) * 1000);
-    }
+    playSfx("round_start");
 
     setTimeout(() => {
       showEndScreen().catch(() => {});
