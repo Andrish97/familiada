@@ -883,7 +883,7 @@ async function renderSound() {
       } else {
         const cat = categories.find(c => c.key === key);
         if (!cat) return;
-        audio = new Audio(`/audio_new/${cat.folder}/${val}`);
+        audio = new Audio(`/audio/${cat.folder}/${val}`);
       }
       audio.volume = vol;
       audio.play().catch(() => {});
