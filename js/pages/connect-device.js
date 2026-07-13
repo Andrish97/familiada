@@ -1,12 +1,12 @@
 // js/pages/connect-device.js
 
-import { sb } from "../core/supabase.js?v=v2026-07-13T07105";
-import { getUser } from "../core/auth.js?v=v2026-07-13T07105";
-import { isGuestUser } from "../core/guest-mode.js?v=v2026-07-13T07105";
-import { isMobileDevice } from "../core/pwa.js?v=v2026-07-13T07105";
-import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js?v=v2026-07-13T07105";
-import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-07-13T07105";
-import { alertModal } from "../core/modal.js?v=v2026-07-13T07105";
+import { sb } from "../core/supabase.js?v=v2026-07-13T07174";
+import { getUser } from "../core/auth.js?v=v2026-07-13T07174";
+import { isGuestUser } from "../core/guest-mode.js?v=v2026-07-13T07174";
+import { isMobileDevice } from "../core/pwa.js?v=v2026-07-13T07174";
+import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js?v=v2026-07-13T07174";
+import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-07-13T07174";
+import { alertModal } from "../core/modal.js?v=v2026-07-13T07174";
 import "../core/contact-modal.js";
 
 initI18n({ withSwitcher: true });
