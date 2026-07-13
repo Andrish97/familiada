@@ -45,7 +45,8 @@ import { isGuestUser } from "../../js/core/guest-mode.js?v=v2026-07-13T07453";
 import { sb } from "../../js/core/supabase.js?v=v2026-07-13T07453";
 import { rt } from "../../js/core/realtime.js?v=v2026-07-13T07453";
 import { validateGameReadyToPlay, loadGameBasic, loadQuestions, loadAnswers } from "../../js/core/game-validate.js?v=v2026-07-13T07453";
-import { unlockAudio, isAudioUnlocked, playSfx } from "../../js/core/sfx-new.js?v=v2026-07-13T07453";
+import { unlockAudio, isAudioUnlocked, playSfx, initSfx, applySfxGameSettings, setCurrentGameId, loadSfxFromCloud } from "../../js/core/sfx-new.js?v=v2026-07-13T07453";
+import { listGameSounds } from "../../js/core/sfx-cloud.js?v=v2026-07-13T07453";
 import { createStore } from "./store.js?v=v2026-07-13T07453";
 import { createUI } from "./ui.js?v=v2026-07-13T07453";
 import { createDevices } from "./devices.js?v=v2026-07-13T07453";
@@ -177,7 +178,10 @@ async function loadGameOrThrow() {
 function applyGameSettingsToStore(settings, store) {
   if (!settings || typeof settings !== "object") return;
 
-  const { teams, display, game, questions } = settings;
+  const { teams, display, game, questions, sound } = settings;
+
+  // Dźwięk — głośności i warianty
+  if (sound) applySfxGameSettings(sound);
 
   if (teams?.teamA || teams?.teamB) {
     store.setTeams(teams.teamA || "", teams.teamB || "");
@@ -220,6 +224,29 @@ function applyGameSettingsToStore(settings, store) {
 async function main() {
   const currentUser = await ensureAuthOrRedirect();
   const game = await loadGameOrThrow();
+
+  // Inicjalizuj sfx-new: załaduj manifest + ustaw gameId
+  setCurrentGameId(game.id);
+  initSfx().catch(console.warn);
+
+  // Załaduj custom pliki audio z bucketu (fire-and-forget)
+  if (game.settings?.sound) {
+    const sound = game.settings.sound;
+    const customKeys = Object.entries(sound.variants || {})
+      .filter(([, v]) => v === "__custom__")
+      .map(([k]) => k);
+    if (customKeys.length > 0) {
+      (async () => {
+        try {
+          const { data: { user } } = await sb().auth.getUser();
+          if (user?.id) {
+            const urlMap = await listGameSounds(sb(), user.id, game.id, customKeys);
+            if (urlMap.size > 0) loadSfxFromCloud(urlMap);
+          }
+        } catch (e) { console.warn("[sfx] cloud load failed", e); }
+      })();
+    }
+  }
 
   // Load questions in background (non-blocking)
   loadQuestions(game.id).then(qsAll => {
