@@ -39,9 +39,9 @@
         <span data-i18n="builder.nav.logo">Logo 🖥️</span>
       </button>
 
-      <button class="btn" id="btnBases">
-        <span data-i18n="builder.nav.bases">Bazy pytań 🗃️</span>
-        <span class="badge" id="basesBadge" aria-hidden="true"></span>
+      <button class="btn" id="btnConnectDevice" data-nav-hidden="true" style="display:none;">
+        <span data-i18n="builder.nav.connectDevice">Podłącz urządzenie 📱</span>
+        <span class="badge" id="connectDeviceBadge" aria-hidden="true"></span>
       </button>
 
       <button class="btn" id="btnPollsHub">
@@ -54,9 +54,9 @@
         <span class="badge" id="subscriptionsHubBadge" aria-hidden="true"></span>
       </button>
 
-      <button class="btn" id="btnConnectDevice" data-nav-hidden="true" style="display:none;">
-        <span data-i18n="builder.nav.connectDevice">Podłącz urządzenie 📱</span>
-        <span class="badge" id="connectDeviceBadge" aria-hidden="true"></span>
+      <button class="btn" id="btnBases">
+        <span data-i18n="builder.nav.bases">Bazy pytań 🗃️</span>
+        <span class="badge" id="basesBadge" aria-hidden="true"></span>
       </button>
 
       <div class="nav-more" id="navMore" style="display:none;">
@@ -87,16 +87,21 @@
           <span class="only-desktop" data-i18n="builder.actions.preview">Podgląd</span>
           <span class="only-mobile" data-i18n="builder.actions.previewMobile">Podgl.</span>
         </button>
-        
+
         <button class="btn sm" id="btnEdit" type="button" disabled>
           <span class="only-desktop" data-i18n="builder.actions.edit">Edytuj</span>
           <span class="only-mobile" data-i18n="builder.actions.editMobile">Edyt.</span>
         </button>
 
-        <button class="btn sm gold" id="btnPlay" type="button" disabled>
-          <span class="only-desktop" data-i18n="builder.actions.play">Graj</span>
-          <span class="only-mobile" data-i18n="builder.actions.playMobile">Graj</span>
-        </button>
+        <div class="btn-group">
+          <button class="btn sm gold" id="btnPlay" type="button" disabled>
+            <span class="only-desktop" data-i18n="builder.actions.play">Graj</span>
+            <span class="only-mobile" data-i18n="builder.actions.playMobile">Graj</span>
+          </button>
+          <button class="btn sm gold" id="btnSettings" type="button" disabled>
+            <span data-i18n="builder.actions.settings">Ustawienia rozgrywki</span>
+          </button>
+        </div>
 
         <button class="btn sm gold" id="btnPoll" type="button" disabled>
           <span class="only-desktop" data-i18n="builder.actions.poll">Ankieta</span>

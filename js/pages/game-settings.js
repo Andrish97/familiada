@@ -1618,7 +1618,7 @@ async function main() {
       btnPlay.classList.remove("hidden");
     }
     btnPlay.addEventListener("click", () => {
-      location.href = `control-new?id=${encodeURIComponent(gameId)}`;
+      location.href = `control?id=${encodeURIComponent(gameId)}`;
     });
   }
 

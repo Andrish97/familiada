@@ -97,6 +97,7 @@ const btnEdit = document.getElementById("btnEdit");
 const btnPreview = document.getElementById("btnPreview");
 const btnPlay = document.getElementById("btnPlay");
 const btnPoll = document.getElementById("btnPoll");
+const btnSettings = document.getElementById("btnSettings");
 
 const btnManual = document.getElementById("btnManual");
 const btnLogoEditor = document.getElementById("btnLogoEditor");
@@ -226,7 +227,7 @@ function stopAutoRefresh() {
 // DOMYŚLNIE: PREPAROWANA
 let activeTab = TYPES.PREPARED;
 
-const actionStateCache = new Map(); 
+const actionStateCache = new Map();
 // gameId -> { rev: string, res: { canEdit, canPlay, canPoll, canExport, needsResetWarning } }
 
 /* ================= UI helpers ================= */
@@ -444,28 +445,28 @@ async function listExportableBases() {
 
 function renderBaseSelect(bases) {
   if (!baseSelectWrap) return;
-  
+
   // Zniszcz poprzedni ui-select jeśli istnieje
   if (baseSelectApi) {
     baseSelectApi.destroy();
     baseSelectApi = null;
   }
-  
+
   if (!bases || !bases.length) {
     // Brak baz - pokaż komunikat
     baseSelectWrap.style.display = "none";
     setExportBaseMsg(MSG.exportBaseEmpty());
     return;
   }
-  
+
   baseSelectWrap.style.display = "";
-  
+
   // Przygotuj opcje
   const options = bases.map(b => ({
     value: b.id,
     label: b.name || MSG.gameFallback(),
   }));
-  
+
   // Inicjalizuj ui-select
   baseSelectApi = initUiSelect(baseSelectWrap, {
     options,
@@ -519,13 +520,13 @@ async function exportSelectedGameToBase(baseId, onProgress) {
       onProgress({ step: step || MSG.exportFetch(), i, n, msg });
     }
   });
-  
+
   const gameNameRaw = String(obj?.game?.name || MSG.gameFallback()).trim() || MSG.gameFallback();
   const gameName = await pickUniqueRootFolderName(baseId, gameNameRaw);
 
   // 2) Utwórz folder w root o nazwie gry
   // Ustal ord = max(root.ord)+1 (opcjonalnie, ale stabilnie)
-  
+
   const { data: lastRoot, error: eLast } = await sb()
     .from("qb_categories")
     .select("ord")
@@ -541,7 +542,7 @@ async function exportSelectedGameToBase(baseId, onProgress) {
   if (typeof onProgress === "function") {
     onProgress({ step: MSG.exportBaseFolderStep(), i: 0, n: 1, msg: "" });
   }
-  
+
   const { data: folder, error: eCat } = await sb()
     .from("qb_categories")
     .insert(
@@ -570,16 +571,16 @@ async function exportSelectedGameToBase(baseId, onProgress) {
   if (rows.length) {
     const nQ = rows.length;
     const CHUNK = 200;
-  
+
     if (typeof onProgress === "function") {
       onProgress({ step: MSG.exportBaseQuestionsStep(), i: 0, n: nQ, msg: "" });
     }
-  
+
     for (let i = 0; i < rows.length; i += CHUNK) {
       const part = rows.slice(i, i + CHUNK);
       const { error: eQ } = await sb().from("qb_questions").insert(part, { defaultToNull: false });
       if (eQ) throw eQ;
-  
+
       if (typeof onProgress === "function") {
         onProgress({
           step: MSG.exportBaseQuestionsStep(),
@@ -639,6 +640,7 @@ function setButtonsState({ hasSel, canEdit, canPlay, canPoll, canExport }) {
   if (btnPreview) btnPreview.disabled = !hasSel;
   if (btnPlay) btnPlay.disabled = !hasSel || !canPlay;
   if (btnPoll) btnPoll.disabled = !hasSel || !canPoll;
+  if (btnSettings) btnSettings.disabled = !hasSel;
   if (btnExport) btnExport.disabled = !hasSel || !canExport;
   if (btnExportBase) btnExportBase.disabled = !hasSel || !canExport;
 }
@@ -949,7 +951,7 @@ async function fetchActionState(gameId, revHint) {
 
   if (error) throw error;
   const res = {
-    canEdit: true, // finalnie i tak liczysz canEnterEdit() w UI, ale tu trzymamy “stan przycisku”
+    canEdit: true, // finalnie i tak liczysz canEnterEdit() w UI, ale tu trzymamy "stan przycisku"
     needsResetWarning: !!data?.needs_reset_warning,
     canPlay: !!data?.can_play,
     canPoll: !!data?.can_poll,
@@ -978,10 +980,10 @@ async function updateActionState() {
   const revHint = sel.updated_at ? String(sel.updated_at) : "";
   const cached = actionStateCache.get(sel.id);
   if (cached && revHint && String(cached.rev) === revHint) {
-    
+
     const edit = canEnterEdit(normalizeGameForValidate(sel));
     const canEdit = !!edit.ok;
-    
+
     setButtonsState({
       hasSel: true,
       canEdit,
@@ -1054,9 +1056,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   currentUser = await requireAuth("login");
   const guestMode = isGuestUser(currentUser);
-  
+
   await maybeShowGuestInfoModal(currentUser);
-  
+
   if (hideForGuest(currentUser, [btnPollsHub, btnSubscriptionsHub])) {
     // data-nav-hidden prevents recalc() from resetting display on these buttons
     if (btnPollsHub) btnPollsHub.dataset.navHidden = "true";
@@ -1150,7 +1152,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Przycisk "Podłącz urządzenie":
   // - desktop/TV: zawsze widoczny
   // - mobile/tablet: tylko w webapp (standalone)
-  const showConnectDevice = !guestMode && (!isMobileDevice() || isStandalone());
+  const showConnectDevice = !guestMode;
   if (showConnectDevice) {
     // Usuń data-nav-hidden żeby overflow nav wiedział że ten przycisk jest aktywny
     if (btnConnectDevice) {
@@ -1189,7 +1191,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     try{
       const { data, error } = await sb().rpc("polls_badge_get");
       if (error) throw error;
-  
+
       const row = Array.isArray(data) ? data[0] : data;
       const tasks = Number(row?.tasks_pending ?? 0);
       const invites = Number(row?.subs_pending ?? 0);
@@ -1207,18 +1209,18 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (subscriptionsHubBadge) subscriptionsHubBadge.textContent = "";
     }
   }
-  
+
   async function refreshBasesBadge(){
     try{
       const { data: cnt, error } = await sb().rpc("bases_count_incoming_share_invites");
       if (error) throw error;
-  
+
       const n = Number(cnt || 0);
       const el = document.getElementById("basesBadge");
       const btn = document.getElementById("btnBases");
-  
+
       if (!el || !btn) return;
-  
+
       if (n > 0){
         el.textContent = n > 99 ? "99+" : String(n);
         btn.classList.add("has-badge");
@@ -1230,7 +1232,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       // cicho, UI ma działać dalej
     }
   }
-  
+
 
   let badgesRefreshInFlight = null;
   let badgesRefreshTimer = null;
@@ -1295,7 +1297,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   btnLogoEditor?.addEventListener("click", async () => {
     location.href = "./logo-editor";
   });
-  
+
   btnBases?.addEventListener("click", async () => {
     location.href = "bases?from=builder";
   });
@@ -1392,7 +1394,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const g = gamesAll.find(x => x.id === selectedId);
     if (!g) return;
-    
+
     const info = canEnterEdit(normalizeGameForValidate(g));
     if (!info.ok) {
       void alertModal({ text: info.reason });
@@ -1492,6 +1494,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
+  // SETTINGS
+  btnSettings?.addEventListener("click", () => {
+    const gameId = activeTab === TYPES.MARKET
+      ? marketGamesAll.find(g => g.market_game_id === selectedMarketId)?.game_id
+      : selectedId;
+    if (!gameId) return;
+    location.href = `game-settings?id=${encodeURIComponent(gameId)}`;
+  });
+
   // EXPORT — pobierz dane z paskiem, potem instant download
   btnExport?.addEventListener("click", async () => {
     if (!selectedId || btnExport?.disabled) return;
@@ -1541,9 +1552,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       setExportBaseMsg(MSG.exportBasePick());
       return;
     }
-  
+
     if (btnExportBaseDo?.disabled) return;
-  
+
     setExportBaseMsg("");
     showProgBlock(exportBaseProg, true);
     setProgUi(exportBaseProgStep, exportBaseProgCount, exportBaseProgBar, exportBaseProgMsg, {
@@ -1552,10 +1563,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       n: 1,
       msg: "",
     });
-  
+
     if (btnExportBaseDo) btnExportBaseDo.disabled = true;
     if (btnExportBaseCancel) btnExportBaseCancel.disabled = true;
-  
+
     try {
       await exportSelectedGameToBase(baseId, ({ step, i, n, msg, isError } = {}) => {
         setProgUi(exportBaseProgStep, exportBaseProgCount, exportBaseProgBar, exportBaseProgMsg, {
@@ -1566,14 +1577,14 @@ document.addEventListener("DOMContentLoaded", async () => {
           isError,
         });
       });
-  
+
       setProgUi(exportBaseProgStep, exportBaseProgCount, exportBaseProgBar, exportBaseProgMsg, {
         step: MSG.exportBaseDone(),
         i: 1,
         n: 1,
         msg: MSG.exportBaseSaved(),
       });
-  
+
       closeExportBaseModal();
       void alertModal({ text: MSG.exportBaseSaved() });
     } catch (e) {
