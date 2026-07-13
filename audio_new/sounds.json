@@ -9,14 +9,6 @@
       ]
     },
     {
-      "key": "round_start",
-      "folder": "round_start",
-      "limitSec": 30,
-      "sounds": [
-        { "file": "classic.mp3?v=v2026-07-13T18303", "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" } }
-      ]
-    },
-    {
       "key": "round_transition",
       "folder": "round_transition",
       "limitSec": 30,
