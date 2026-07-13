@@ -5315,6 +5315,7 @@ const pl = {
     resetSectionConfirm: "Przywrócić domyślne ustawienia tej sekcji?",
     unsaved: "Niezapisane zmiany",
     unsavedConfirm: "Masz niezapisane zmiany. Czy chcesz opuścić stronę?",
+    unsavedConfirmModal: "Masz niezapisane zmiany. Czy chcesz zamknąć ustawienia?",
     saved: "Zapisano",
     saveError: "Błąd zapisu",
     saveErrorPrefix: "Błąd zapisu: ",

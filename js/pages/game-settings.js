@@ -1530,7 +1530,7 @@ async function main() {
     window.addEventListener("message", async (ev) => {
       if (ev.data?.type !== "gs:requestClose") return;
       if (isDirty) {
-        if (!await confirmModal({ text: t("gameSettings.unsavedConfirm") || "Masz niezapisane zmiany. Czy na pewno chcesz wyjść?" })) return;
+        if (!await confirmModal({ text: t("gameSettings.unsavedConfirmModal") || "Masz niezapisane zmiany. Czy chcesz zamknąć ustawienia?" })) return;
       }
       // Reset defaultValue na wszystkich inputach żeby przeglądarka nie pokazała
       // natywnego "Masz niezapisane zmiany" przy nawigacji iframe

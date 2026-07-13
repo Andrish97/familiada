@@ -5313,6 +5313,7 @@ const en = {
     resetSectionConfirm: "Restore default settings for this section?",
     unsaved: "Unsaved changes",
     unsavedConfirm: "You have unsaved changes. Leave the page?",
+    unsavedConfirmModal: "You have unsaved changes. Close settings?",
     saved: "Saved",
     saveError: "Save error",
     saveErrorPrefix: "Save error: ",
