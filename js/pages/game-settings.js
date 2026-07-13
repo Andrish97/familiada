@@ -1532,6 +1532,12 @@ async function main() {
       if (isDirty) {
         if (!await confirmModal({ text: t("gameSettings.unsavedConfirm") || "Masz niezapisane zmiany. Czy na pewno chcesz wyjść?" })) return;
       }
+      // Reset defaultValue na wszystkich inputach żeby przeglądarka nie pokazała
+      // natywnego "Masz niezapisane zmiany" przy nawigacji iframe
+      document.querySelectorAll("input, textarea, select").forEach(el => {
+        if (el.type === "checkbox" || el.type === "radio") el.defaultChecked = el.checked;
+        else el.defaultValue = el.value;
+      });
       window.parent.postMessage({ type: "gs:close" }, "*");
     });
   }

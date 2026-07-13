@@ -1377,6 +1377,7 @@ async function sendZeroStatesToDevices() {
   }
 
   document.getElementById("btnOpenGsModal")?.addEventListener("click", openGsModal);
+  document.getElementById("btnGsClose")?.addEventListener("click", requestGsModalClose);
   gsOverlayEl?.addEventListener("click", (ev) => { if (ev.target === gsOverlayEl) requestGsModalClose(); });
 
   window.addEventListener("message", (ev) => {
