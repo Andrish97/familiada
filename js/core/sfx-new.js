@@ -45,13 +45,21 @@ function getCategoryMeta(key) {
 
 /* ========= CACHE AUDIO ========= */
 
-const cache = new Map(); // key → Audio
+const cache = new Map();     // key → Audio
+const _fadeRafs = new Map(); // key → rafId (zdefiniowane tu, używane w loadIntoCache i fade)
+
+function _cancelFade(key) {
+  const id = _fadeRafs.get(key);
+  if (id) cancelAnimationFrame(id);
+  _fadeRafs.delete(key);
+}
 
 function buildUrl(folder, file) {
   return `${AUDIO_BASE}${folder}/${file}`;
 }
 
 function loadIntoCache(key, url) {
+  _cancelFade(key);
   const old = cache.get(key);
   if (old) {
     try { old.pause(); } catch {}
@@ -113,11 +121,19 @@ function _applySfxVolume(key) {
   if (a) a.volume = getSfxVolume(key);
 }
 
+// Głośności sesyjne (nadpisują localStorage na czas sesji, nie zapisują)
+const _sessionVolumes = new Map();
+
 // Ustawia głośność na żywo bez zapisu do localStorage (użycie w podsumowaniu)
 export function setSessionSfxVolume(key, v) {
   const clamped = Math.max(0, Math.min(1, v));
+  _sessionVolumes.set(key, clamped);
   const a = cache.get(key);
-  if (a) a.volume = clamped;
+  if (a && a.paused) a.volume = clamped; // tylko gdy nie gra — fade zajmuje się resztą
+}
+
+function _getEffectiveVolume(key) {
+  return _sessionVolumes.has(key) ? _sessionVolumes.get(key) : getSfxVolume(key);
 }
 
 export function applySfxVolumes() {
@@ -223,17 +239,55 @@ export function loadSfxFromCloud(urlMap) {
   }
 }
 
+/* ========= FADE ========= */
+
+// Fade: 5% długości na wejście, 8% na wyjście (min/max w sekundach)
+const FADE_IN_RATIO  = 0.05;
+const FADE_OUT_RATIO = 0.08;
+const FADE_IN_MIN    = 0.08;
+const FADE_IN_MAX    = 0.4;
+const FADE_OUT_MIN   = 0.10;
+const FADE_OUT_MAX   = 0.6;
+
+function _fadeVolume(a, ct, dur, target) {
+  if (!dur || !isFinite(dur) || dur <= 0) return target;
+  const fadeIn  = Math.max(FADE_IN_MIN,  Math.min(FADE_IN_MAX,  dur * FADE_IN_RATIO));
+  const fadeOut = Math.max(FADE_OUT_MIN, Math.min(FADE_OUT_MAX, dur * FADE_OUT_RATIO));
+  const remaining = dur - ct;
+  if (ct < fadeIn)           return target * (ct / fadeIn);
+  if (remaining < fadeOut)   return target * Math.max(0, remaining / fadeOut);
+  return target;
+}
+
+function _startFade(key, a, target) {
+  _cancelFade(key);
+  function tick() {
+    if (!a || a.paused || a.ended) { _fadeRafs.delete(key); return; }
+    a.volume = Math.max(0, Math.min(1, _fadeVolume(a, a.currentTime, a.duration, target)));
+    _fadeRafs.set(key, requestAnimationFrame(tick));
+  }
+  _fadeRafs.set(key, requestAnimationFrame(tick));
+}
+
 /* ========= ODTWARZANIE ========= */
 
 export function playSfx(key) {
   const a = cache.get(key);
   if (!a) return;
-  try { a.currentTime = 0; a.play().catch(() => {}); } catch {}
+  try {
+    _cancelFade(key);
+    const target = _getEffectiveVolume(key);
+    a.currentTime = 0;
+    a.volume = 0;
+    a.play().catch(() => {});
+    _startFade(key, a, target);
+  } catch {}
 }
 
 export function createSfxMixer() {
   let audio = null;
   let raf = null;
+  let _fadeKey = null;
   const listeners = new Set();
 
   function notify() {
@@ -243,21 +297,32 @@ export function createSfxMixer() {
     for (const fn of listeners) fn(t, d);
   }
   function tick() {
-    notify();
-    if (audio && !audio.paused) raf = requestAnimationFrame(tick);
+    if (audio && !audio.paused) {
+      // fade
+      if (_fadeKey !== null) {
+        const target = _getEffectiveVolume(_fadeKey);
+        audio.volume = Math.max(0, Math.min(1, _fadeVolume(audio, audio.currentTime, audio.duration, target)));
+      }
+      notify();
+      raf = requestAnimationFrame(tick);
+    }
   }
   return {
     play(key) {
       this.stop();
+      _fadeKey = key;
       audio = cache.get(key);
       if (!audio) return;
+      const target = _getEffectiveVolume(key);
       audio.currentTime = 0;
+      audio.volume = 0;
       audio.play().catch(() => {});
       raf = requestAnimationFrame(tick);
     },
     stop() {
       if (raf) cancelAnimationFrame(raf);
       raf = null;
+      _fadeKey = null;
       if (audio) { try { audio.pause(); audio.currentTime = 0; } catch {} }
       audio = null;
     },
