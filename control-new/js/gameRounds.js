@@ -1,5 +1,6 @@
-import { playSfx, createSfxMixer, getSfxDuration } from "../../js/core/sfx.js?v=v2026-07-13T07412";
+import { playSfx, createSfxMixer, getSfxDuration } from "../../js/core/sfx-new.js?v=v2026-07-13T07412";
 import { t } from "../../translation/translation.js?v=v2026-07-13T07412";
+
 
 function nInt(v, d = 0) {
   const x = Number.parseInt(String(v ?? ""), 10);
@@ -68,7 +69,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
   const introMixer = createSfxMixer?.();
 
  
-// ================== HOST (ROUNDS) ==================
+// ==== HOST (ROUNDS) ====
 function hostTag(style, text) {
   return `[${style}]${String(text ?? "")}[/]`;
 }
@@ -137,7 +138,7 @@ function hostUpdate() {
   hostSetLeft(left).catch(() => {});
   hostSetRight(right).catch(() => {});
 }
-// ==================================================
+// =
 
   function refreshHostTranslations() {
     hostUpdate();

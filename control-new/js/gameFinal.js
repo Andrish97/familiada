@@ -1,4 +1,4 @@
-// ==================  KOMUNIKATY (FINAL)  ==================
+// ====  KOMUNIKATY (FINAL)  ====
 const finalMsg = (key, vars) => t(`control.finalMsg.${key}`, vars);
 const finalHost = (key, vars) => t(`control.finalHost.${key}`, vars);
 const finalUi = (key, vars) => t(`control.finalUi.${key}`, vars);
@@ -49,8 +49,9 @@ const FINAL_MSG = {
 
 // =========================================================
 
-import { playSfx, getSfxDuration } from "../../js/core/sfx.js?v=v2026-07-13T07412";
+import { playSfx, getSfxDuration } from "../../js/core/sfx-new.js?v=v2026-07-13T07412";
 import { t } from "../../translation/translation.js?v=v2026-07-13T07412";
+
 
 function nInt(v, d = 0) {
   const x = Number.parseInt(String(v ?? ""), 10);
