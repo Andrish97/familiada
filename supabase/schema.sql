@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict FMsf2PUb4LEIbYPMADm421N3bK9aJx5ExSTlfRDrYN12Zruh4AWhLdYzwUFpAzb
+\restrict Yeixm5PaGrnGBnZvXijDcPoV5JFAq7dfR4rSo0TDImiwkMTHhrffwh3llMyjF1t
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -446,66 +446,62 @@ CREATE FUNCTION "public"."auth_clear_email_change"("p_user_id" "uuid") RETURNS b
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
     AS $_$
-declare
+DECLARE
   sets text[] := array[]::text[];
-  q text;
+  q    text;
   has_col boolean;
-begin
-  -- helper: column exists?
-  select exists (
-    select 1
-    from information_schema.columns
-    where table_schema = 'auth'
-      and table_name = 'users'
-      and column_name = 'new_email'
-  ) into has_col;
-  if has_col then sets := sets || 'new_email = null'; end if;
+BEGIN
+  -- new_email (legacy GoTrue)
+  SELECT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'auth' AND table_name = 'users' AND column_name = 'new_email'
+  ) INTO has_col;
+  IF has_col THEN sets := array_append(sets, 'new_email = null'); END IF;
 
-  select exists (
-    select 1
-    from information_schema.columns
-    where table_schema = 'auth'
-      and table_name = 'users'
-      and column_name = 'email_change_token_current'
-  ) into has_col;
-  if has_col then sets := sets || 'email_change_token_current = null'; end if;
+  -- email_change (current GoTrue)
+  SELECT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'auth' AND table_name = 'users' AND column_name = 'email_change'
+  ) INTO has_col;
+  IF has_col THEN sets := array_append(sets, 'email_change = null'); END IF;
 
-  select exists (
-    select 1
-    from information_schema.columns
-    where table_schema = 'auth'
-      and table_name = 'users'
-      and column_name = 'email_change_token_new'
-  ) into has_col;
-  if has_col then sets := sets || 'email_change_token_new = null'; end if;
+  -- email_change_token_current
+  SELECT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'auth' AND table_name = 'users' AND column_name = 'email_change_token_current'
+  ) INTO has_col;
+  IF has_col THEN sets := array_append(sets, 'email_change_token_current = null'); END IF;
 
-  select exists (
-    select 1
-    from information_schema.columns
-    where table_schema = 'auth'
-      and table_name = 'users'
-      and column_name = 'email_change_sent_at'
-  ) into has_col;
-  if has_col then sets := sets || 'email_change_sent_at = null'; end if;
+  -- email_change_token_new
+  SELECT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'auth' AND table_name = 'users' AND column_name = 'email_change_token_new'
+  ) INTO has_col;
+  IF has_col THEN sets := array_append(sets, 'email_change_token_new = null'); END IF;
 
-  select exists (
-    select 1
-    from information_schema.columns
-    where table_schema = 'auth'
-      and table_name = 'users'
-      and column_name = 'email_change_confirm_status'
-  ) into has_col;
-  if has_col then sets := sets || 'email_change_confirm_status = 0'; end if;
+  -- email_change_sent_at
+  SELECT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'auth' AND table_name = 'users' AND column_name = 'email_change_sent_at'
+  ) INTO has_col;
+  IF has_col THEN sets := array_append(sets, 'email_change_sent_at = null'); END IF;
 
-  if array_length(sets, 1) is null then
-    return false; -- unknown GoTrue layout
-  end if;
+  -- email_change_confirm_status
+  SELECT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'auth' AND table_name = 'users' AND column_name = 'email_change_confirm_status'
+  ) INTO has_col;
+  IF has_col THEN sets := array_append(sets, 'email_change_confirm_status = 0'); END IF;
 
-  q := format('update auth.users set %s where id = $1', array_to_string(sets, ', '));
-  execute q using p_user_id;
+  IF array_length(sets, 1) IS NULL THEN
+    RETURN false; -- unknown GoTrue layout
+  END IF;
 
-  return true;
-end;
+  q := format('UPDATE auth.users SET %s WHERE id = $1', array_to_string(sets, ', '));
+  EXECUTE q USING p_user_id;
+
+  RETURN true;
+END;
 $_$;
 
 
@@ -14118,5 +14114,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict FMsf2PUb4LEIbYPMADm421N3bK9aJx5ExSTlfRDrYN12Zruh4AWhLdYzwUFpAzb
+\unrestrict Yeixm5PaGrnGBnZvXijDcPoV5JFAq7dfR4rSo0TDImiwkMTHhrffwh3llMyjF1t
 
