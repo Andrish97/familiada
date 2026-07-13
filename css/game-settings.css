@@ -706,22 +706,22 @@
 .roundsOrderItem{
   display:flex;
   align-items:center;
-  gap:10px;
-  padding:12px;
-  border-radius:12px;
-  border:1px solid rgba(255,255,255,.12);
-  background:rgba(0,0,0,.08);
+  gap:8px;
+  background:rgba(255,255,255,.07);
+  border-radius:6px;
+  padding:7px 10px;
   cursor:grab;
-  transition:transform .12s ease,box-shadow .12s ease,border-color .12s ease;
+  font-size:.83rem;
+  user-select:none;
+  overflow:hidden;
+  transition:background .12s;
 }
-.roundsOrderItem:hover{
-  border-color:rgba(255,255,255,.22);
-  box-shadow:0 4px 12px rgba(0,0,0,.25);
-}
+.roundsOrderItem:active{ cursor:grabbing; }
+.roundsOrderItem:hover{ background:rgba(255,255,255,.16); }
 .roundsOrderItem.dragging{ opacity:.5; cursor:grabbing; }
 .roundsOrderHandle{
-  opacity:.5;
-  font-size:18px;
+  opacity:.4;
+  font-size:.9rem;
   cursor:grab;
   user-select:none;
   flex-shrink:0;
@@ -729,17 +729,20 @@
 .roundsOrderItem:hover .roundsOrderHandle{ opacity:1; }
 .roundsOrderNum{
   font-weight:1000;
-  font-size:16px;
+  font-size:.65rem;
   color:var(--gold,#f0b429);
-  min-width:28px;
+  min-width:18px;
   text-align:center;
   flex-shrink:0;
+  white-space:nowrap;
 }
 .roundsOrderText{
   flex:1;
-  font-size:13px;
-  line-height:1.4;
+  font-size:inherit;
   min-width:0;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
 .roundsOrderActions{ display:flex; gap:4px; flex-shrink:0; }
 .roundsOrderBtn{
