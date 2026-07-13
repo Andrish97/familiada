@@ -1232,7 +1232,7 @@ async function sendZeroStatesToDevices() {
           ? (t("control.sfxCustom") || "Własny")
           : (cat.sounds.find(s => s.file.split("?")[0] === variant)?.label?.[lang] || variant);
         const desc = t("control.sfxDesc." + cat.key) || cat.key;
-        const volStr = vol !== 1.0 ? ` (${Math.round(vol * 100)}%)` : "";
+        const volStr = ` (${Math.round(vol * 100)}%)`;
         return `<li>${escapeHtml(desc)}: <strong>${escapeHtml(variantLabel)}</strong>${escapeHtml(volStr)}</li>`;
       }).join("") || `<li>—</li>`;
     }
