@@ -832,7 +832,8 @@
     padding-top: 0 !important;
 }
 .gs-modal-mode .topbar,
-.gs-modal-mode .gs-page-footer {
+.gs-modal-mode .gs-page-footer,
+.gs-modal-mode #gsDisplayIframeHolder {
     display: none !important;
 }
 
