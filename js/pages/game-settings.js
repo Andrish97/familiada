@@ -461,6 +461,19 @@ function sendDisplayCmd(cmd) {
 }
 
 function previewLogo(id) {
+  if (_isModal) {
+    if (id === null) {
+      sendDisplayCmd("LOGO RELOAD");
+    } else {
+      const logo = _loadedLogos.find(l => l.id === id);
+      if (!logo) return;
+      try {
+        const encoded = btoa(unescape(encodeURIComponent(JSON.stringify({ type: logo.type, payload: logo.payload }))));
+        sendDisplayCmd(`LOGO JSON ${encoded}`);
+      } catch {}
+    }
+    return;
+  }
   try {
     const logoApi = _displayIframe?.contentWindow?.scene?.api?.logo;
     if (!logoApi) return;
@@ -488,7 +501,8 @@ function sendDisplayInitCmds() {
   sendDisplayCmd(`COLOR DOT ${c.DOT}`);
   const theme = localSettings.display.theme || (themeList[0]?.key ?? "");
   if (theme) sendDisplayCmd(`THEME ${theme}`);
-  sendDisplayCmd("LOGO DRAW");
+  // In modal mode, RELOAD from DB (ACTIVE_LOGO may be stale); in local preview, DRAW current
+  sendDisplayCmd(_isModal ? "LOGO RELOAD" : "LOGO DRAW");
   sendDisplayCmd("LEFT 123");
   sendDisplayCmd("RIGHT 123");
   sendDisplayCmd("TOP 1");
@@ -1675,6 +1689,7 @@ async function main() {
 
   // Create display preview iframe — skip in modal mode (real display managed by control-new)
   if (!isModal) createDisplayIframe();
+  else sendDisplayInitCmds();
 
   setActiveCat("teams");
 

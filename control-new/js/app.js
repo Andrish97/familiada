@@ -1368,6 +1368,29 @@ async function sendZeroStatesToDevices() {
           } catch {}
         }
         renderSetupFinishSummary();
+        // Restore display to summary state after modal close
+        if (devices) {
+          const newDisplay = store.state.display;
+          if (newDisplay?.colors) {
+            colors.A = normHex(newDisplay.colors.A) ?? DEFAULT_COLORS.A;
+            colors.B = normHex(newDisplay.colors.B) ?? DEFAULT_COLORS.B;
+            colors.BACKGROUND = normHex(newDisplay.colors.BACKGROUND) ?? DEFAULT_COLORS.BACKGROUND;
+            colors.DOT = normHex(newDisplay.colors.DOT) ?? DEFAULT_COLORS.DOT;
+          }
+          if (newDisplay?.theme) activeTheme = newDisplay.theme;
+          const teamA = store.state.teams?.teamA || t("gameSettings.teams.defaultA") || "Drużyna A";
+          const teamB = store.state.teams?.teamB || t("gameSettings.teams.defaultB") || "Drużyna B";
+          const q = (s) => `"${String(s ?? "").replace(/"/g, "'")}"`;
+          await devices.sendDisplayCmd("APP GAME").catch(() => {});
+          sendColorA(colors.A);
+          sendColorB(colors.B);
+          sendColorBg(colors.BACKGROUND);
+          sendColorDot(colors.DOT);
+          if (activeTheme) sendTheme(activeTheme);
+          await devices.sendDisplayCmd("LOGO RELOAD").catch(() => {});
+          await devices.sendDisplayCmd(`LONG1 ${q(teamA)}`).catch(() => {});
+          await devices.sendDisplayCmd(`LONG2 ${q(teamB)}`).catch(() => {});
+        }
       }
     } catch (e) { console.warn("[gs-modal] reload failed", e); }
   }
