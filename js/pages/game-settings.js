@@ -747,7 +747,7 @@ async function renderSound() {
 
     // Przycisk "Wybierz plik" — widoczny tylko gdy wybrany "Własny" i nie ma jeszcze pliku
     const showUploadBtn = !custom && activeVariant === VARIANT_CUSTOM;
-    const uploadBtnHtml = `<button class="btn sfx-add-btn" type="button" data-sfx-file="${escAttr(key)}"${showUploadBtn ? "" : " hidden"}>Wybierz plik</button>`;
+    const uploadBtnHtml = `<button class="btn sfx-add-btn" type="button" data-sfx-file="${escAttr(key)}"${showUploadBtn ? "" : " hidden"}>${t("control.sfxChooseFile") || "Wybierz plik"}</button>`;
 
     // Przycisk odtwarzania — zablokowany gdy Własny bez pliku
     const previewDisabled = activeVariant === VARIANT_CUSTOM && !custom;

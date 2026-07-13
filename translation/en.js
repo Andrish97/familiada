@@ -5109,6 +5109,7 @@ const en = {
     audioFail: "Audio error.",
     sfxAdvanced: "Advanced",
     sfxAddFile: "Custom file",
+    sfxChooseFile: "Choose file",
     sfxSaveCloud: "Save to cloud",
     sfxSaveBtn: "Save",
     sfxResetAll: "Restore defaults",

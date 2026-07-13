@@ -4488,6 +4488,7 @@ const pl = {
     audioFail: "Błąd dźwięku.",
     sfxAdvanced: "Zaawansowane",
     sfxAddFile: "Własny plik",
+    sfxChooseFile: "Wybierz plik",
     sfxSaveCloud: "Zapisz w chmurze",
     sfxSaveBtn: "Zapisz",
     sfxResetAll: "Przywróć domyślne",

@@ -5094,6 +5094,7 @@ const uk = {
     audioFail: "Помилка звуку.",
     sfxAdvanced: "Розширені",
     sfxAddFile: "Власний файл",
+    sfxChooseFile: "Вибрати файл",
     sfxSaveCloud: "Зберегти в хмарі",
     sfxSaveBtn: "Зберегти",
     sfxResetAll: "Відновити типові",
