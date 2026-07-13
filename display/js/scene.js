@@ -671,7 +671,7 @@ export async function createScene() {
       if (op === "LOAD") { console.warn("LOGO LOAD jest wyłączone."); return; }
       if (op === "RELOAD") { const gid=api.logo._gameId, key=api.logo._key; if (!gid) return; loadActiveLogoFromDb(gid,key).then(dbLogo => { ACTIVE_LOGO=(dbLogo&&dbLogo.type&&dbLogo.payload)?dbLogo:null; try { api.logo.draw(); } catch(e) { console.warn("[logo] draw after RELOAD failed:", e); } }).catch(e => console.warn("[logo] RELOAD failed:", e)); return; }
       if (op === "DRAW") { api.logo.draw(); return; }
-      if (op === "JSON") { try { const d=JSON.parse(atob(tokens[2]||"")); if (d?.type&&d?.payload!==undefined){ACTIVE_LOGO=d;api.logo.draw();} } catch(e){console.warn("[logo] JSON cmd failed:",e);} return; }
+      if (op === "JSON") { try { const d=JSON.parse(decodeURIComponent(escape(atob(tokens[2]||"")))); if (d?.type&&d?.payload!==undefined){ACTIVE_LOGO=d;api.logo.draw();} } catch(e){console.warn("[logo] JSON cmd failed:",e);} return; }
       if (op === "SHOW") { let ai=null; const i=tokens.findIndex(t=>t.toUpperCase()==="ANIMIN"); if (i>=0) ai=parseAnim(tokens,i+1); return api.logo.show(ai??{type:"edge",dir:"left",ms:14}); }
       if (op === "HIDE") { let ao=null; const i=tokens.findIndex(t=>t.toUpperCase()==="ANIMOUT"); if (i>=0) ao=parseAnim(tokens,i+1); return api.logo.hide(ao??{type:"edge",dir:"right",ms:14}); }
     }

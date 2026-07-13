@@ -501,8 +501,12 @@ function sendDisplayInitCmds() {
   sendDisplayCmd(`COLOR DOT ${c.DOT}`);
   const theme = localSettings.display.theme || (themeList[0]?.key ?? "");
   if (theme) sendDisplayCmd(`THEME ${theme}`);
-  // In modal mode, RELOAD from DB (ACTIVE_LOGO may be stale); in local preview, DRAW current
-  sendDisplayCmd(_isModal ? "LOGO RELOAD" : "LOGO DRAW");
+  // In modal mode, RELOAD from DB; in local preview iframe, use previewLogo to set correct logo
+  if (_isModal) {
+    sendDisplayCmd("LOGO RELOAD");
+  } else {
+    previewLogo(localSettings.display.logoId);
+  }
   sendDisplayCmd("LEFT 123");
   sendDisplayCmd("RIGHT 123");
   sendDisplayCmd("TOP 1");
