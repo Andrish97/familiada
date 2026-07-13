@@ -785,13 +785,15 @@ async function renderSound() {
           const hasCustom = !!customFiles.get(key);
           if (uploadBtn) uploadBtn.hidden = hasCustom;
           if (previewBtn) previewBtn.disabled = !hasCustom;
+          const fileTag = row.querySelector(".sfx-file-tag");
+          if (fileTag) fileTag.hidden = !hasCustom;
           localSettings.sound.variants[key] = VARIANT_CUSTOM;
           markDirty();
         } else {
           if (uploadBtn) uploadBtn.hidden = true;
           if (previewBtn) previewBtn.disabled = false;
           const fileTag = row.querySelector(".sfx-file-tag");
-          if (fileTag) fileTag.remove();
+          if (fileTag) fileTag.hidden = true;
           localSettings.sound.variants[key] = val;
           markDirty();
         }
