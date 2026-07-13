@@ -649,17 +649,27 @@ function hostUpdate() {
 
     store.notify();
 
-    let dur = 0;
+    let rtDur = 0, revealDur = 0;
     try {
-      dur = await getSfxDuration("round_transition");
+      [rtDur, revealDur] = await Promise.all([
+        getSfxDuration("round_transition"),
+        getSfxDuration("reveal"),
+      ]);
     } catch (e) {
-      console.warn("getSfxDuration(round_transition) error", e);
+      console.warn("getSfxDuration(round_transition/reveal) error", e);
     }
 
-    const totalMs = typeof dur === "number" && dur > 0 ? dur * 1000 : 2000;
+    const totalMs = Math.max(rtDur, revealDur, 2) * 1000;
     const transitionAnchorMs = 920;
 
-    playSfx("round_transition");
+    // Nakładanie reveal + round_transition zsynchronizowane na koniec
+    if (rtDur >= revealDur) {
+      playSfx("round_transition");
+      setTimeout(() => playSfx("reveal"), (rtDur - revealDur) * 1000);
+    } else {
+      playSfx("reveal");
+      setTimeout(() => playSfx("round_transition"), (revealDur - rtDur) * 1000);
+    }
 
     setTimeout(() => {
       const rowsCount = Math.max(1, Math.min(6, r.answers.length || 6));
@@ -1339,12 +1349,12 @@ function hostUpdate() {
 
     let bellsDur = 0;
     try {
-      bellsDur = await getSfxDuration("bells");
+      bellsDur = await getSfxDuration("reveal");
     } catch (e) {
-      console.warn("getSfxDuration(bells) error", e);
+      console.warn("getSfxDuration(reveal) error", e);
     }
 
-    playSfx("bells");
+    playSfx("reveal");
 
     try {
       if (display.roundsSetTotals) {
@@ -1361,7 +1371,7 @@ function hostUpdate() {
       await new Promise((resolve) => setTimeout(resolve, bellsDur * 1000));
     }
 
-    playSfx("round_transition2");
+    playSfx("round_transition");
 
     const msg =
       mult === 1

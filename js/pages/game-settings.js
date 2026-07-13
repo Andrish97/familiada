@@ -558,6 +558,9 @@ function renderDisplay() {
       <div class="gs-label">${t("gameSettings.display.logo")}</div>
       <div id="gsLogoGrid" class="gs-logo-grid"></div>
     </div>
+    <div class="sfx-foot">
+      <button class="btn" id="btnDisplayReset" type="button">${t("gameSettings.resetSection") || "Przywróć domyślne"}</button>
+    </div>
   `;
 
   content.querySelectorAll(".swatchBtn").forEach(btn => {
@@ -573,6 +576,13 @@ function renderDisplay() {
       const key = val || (themeList[0]?.key ?? "");
       if (key) sendDisplayCmd(`THEME ${key}`);
     },
+  });
+
+  document.getElementById("btnDisplayReset")?.addEventListener("click", async () => {
+    if (!await confirmModal({ text: t("gameSettings.resetSectionConfirm") || "Przywrócić domyślne ustawienia wyglądu?" })) return;
+    localSettings.display = JSON.parse(JSON.stringify(DEFAULT_SETTINGS.display));
+    markDirty();
+    renderDisplay();
   });
 
   // Iframe jest zawsze w gsDisplayIframeHolder (sibling gsContentInner) — tylko show/hide
@@ -1349,6 +1359,9 @@ function renderGame() {
         </div>
       </div>
     </div>
+    <div class="sfx-foot">
+      <button class="btn" id="btnGameReset" type="button">${t("gameSettings.resetSection") || "Przywróć domyślne"}</button>
+    </div>
   `;
 
   document.getElementById("gsMultipliers")?.addEventListener("change", e => {
@@ -1390,6 +1403,13 @@ function renderGame() {
   document.getElementById("gsPrizeMultiplier")?.addEventListener("change", e => {
     const v = parseInt(e.target.value, 10);
     if (Number.isFinite(v) && v > 0) { localSettings.game.advanced.finalPrizeMultiplier = v; markDirty(); }
+  });
+
+  document.getElementById("btnGameReset")?.addEventListener("click", async () => {
+    if (!await confirmModal({ text: t("gameSettings.resetSectionConfirm") || "Przywrócić domyślne ustawienia gry?" })) return;
+    localSettings.game.advanced = { ...DEFAULT_SETTINGS.game.advanced };
+    markDirty();
+    renderGame();
   });
 }
 

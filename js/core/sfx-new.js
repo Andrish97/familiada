@@ -285,7 +285,7 @@ export function unlockAudio() {
   try {
     const a = new Audio();
     a.volume = 0;
-    a.src = `${AUDIO_BASE}bells/classic.mp3`;
+    a.src = `${AUDIO_BASE}reveal/classic.mp3`;
     a.play().catch(() => {});
     unlocked = true;
     return true;

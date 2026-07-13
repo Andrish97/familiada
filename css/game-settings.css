@@ -672,6 +672,7 @@
   white-space:nowrap;
 }
 .qRow .txt{
+  font-size:13px;
   font-weight:900;
   line-height:1.15;
   white-space:nowrap;
