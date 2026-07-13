@@ -2436,11 +2436,12 @@
 }
 .summarySoundPlay {
   flex-shrink: 0;
-  width: 2.2em;
-  padding: 2px 0;
-  font-size: 14px;
-  text-align: center;
-  line-height: 1;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 .summarySoundVol {
   flex-shrink: 0;

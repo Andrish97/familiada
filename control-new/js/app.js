@@ -1247,12 +1247,15 @@ async function sendZeroStatesToDevices() {
         const desc = t("control.sfxDesc." + cat.key) || cat.key;
         const volPct = Math.round(vol * 100);
 
+        const SVG_PLAY = `<svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><polygon points="2,1 11,6 2,11" fill="currentColor"/></svg>`;
+        const SVG_STOP = `<svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1.5" y="1.5" width="9" height="9" fill="currentColor"/></svg>`;
+
         const row = document.createElement("div");
         row.className = "summarySoundRow";
         row.innerHTML = `
           <span class="summarySoundDesc">${escapeHtml(desc)}</span>
           <span class="summarySoundVariant">${escapeHtml(variantLabel)}</span>
-          <button class="btn sm summarySoundPlay" type="button">▶</button>
+          <button class="btn sm summarySoundPlay" type="button">${SVG_PLAY}</button>
           <input class="summarySoundVol" type="range" min="0" max="100" step="1" value="${volPct}">
           <span class="summarySoundVolLabel">${volPct}%</span>
         `;
@@ -1264,11 +1267,11 @@ async function sendZeroStatesToDevices() {
         playBtn.addEventListener("click", () => {
           if (isSfxPlaying(cat.key)) {
             stopSfx(cat.key);
-            playBtn.textContent = "▶";
+            playBtn.innerHTML = SVG_PLAY;
           } else {
             playSfx(cat.key);
-            playBtn.textContent = "⏹";
-            onSfxEnd(cat.key, () => { playBtn.textContent = "▶"; });
+            playBtn.innerHTML = SVG_STOP;
+            onSfxEnd(cat.key, () => { playBtn.innerHTML = SVG_PLAY; });
           }
         });
         slider.addEventListener("input", () => {

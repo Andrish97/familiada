@@ -762,7 +762,7 @@ async function renderSound() {
         </button>
         <div class="ui-select-menu" role="listbox"></div>
       </div>
-      <button class="sfx-preview-btn" type="button" data-sfx-preview="${escAttr(key)}" title="Podgląd"${previewDisabled ? " disabled" : ""}>▶</button>
+      <button class="sfx-preview-btn" type="button" data-sfx-preview="${escAttr(key)}" title="Podgląd"${previewDisabled ? " disabled" : ""}><svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><polygon points="2,1 11,6 2,11" fill="currentColor"/></svg></button>
       <div class="sfx-vol-wrap">
         <input class="sfx-vol" type="range" min="0" max="100" step="1" value="${volPct}" data-sfx-vol="${escAttr(key)}"/>
         <span class="sfx-vol-label" id="sfxVol_${escAttr(key)}">${volPct}%</span>
@@ -812,7 +812,7 @@ async function renderSound() {
   function _stopPreview() {
     if (_previewAudio) { try { _previewAudio.pause(); _previewAudio.currentTime = 0; } catch {} }
     if (_previewUrl)   { URL.revokeObjectURL(_previewUrl); _previewUrl = null; }
-    if (_previewBtn)   { _previewBtn.textContent = "▶"; delete _previewBtn.dataset.playing; }
+    if (_previewBtn)   { _previewBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><polygon points="2,1 11,6 2,11" fill="currentColor"/></svg>'; delete _previewBtn.dataset.playing; }
     _previewAudio = null;
     _previewBtn   = null;
   }
@@ -845,7 +845,7 @@ async function renderSound() {
       _previewAudio = audio;
       _previewBtn   = btn;
       _previewUrl   = blobUrl;
-      btn.textContent = "⏹";
+      btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1.5" y="1.5" width="9" height="9" fill="currentColor"/></svg>';
       btn.dataset.playing = "1";
     });
   });
