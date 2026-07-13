@@ -12,7 +12,7 @@ import {
   loadSfxManifest, getSfxCategories,
   setSfxCustomBlob, clearSfxCustomFile, clearAllSfxCustomFiles, getSfxCustomFiles,
   playSfx, setSfxVolume,
-} from "../core/sfx-new.js?v=v2026-07-13T22260";
+} from "../core/sfx.js?v=v2026-07-13T22260";
 import {
   uploadGameSound, deleteGameSound, deleteAllGameSounds,
 } from "../core/sfx-cloud.js?v=v2026-07-13T22260";
@@ -483,7 +483,16 @@ function previewLogo(id) {
   }
   try {
     const logoApi = _displayIframe?.contentWindow?.scene?.api?.logo;
-    if (!logoApi) return;
+    if (!logoApi) {
+      // scene.api.logo not ready yet — fallback to LOGO JSON command
+      if (id === null) {
+        sendDisplayCmd(`LOGO JSON ${logoToBase64(null)}`);
+      } else {
+        const logo = _loadedLogos.find(l => l.id === id);
+        if (logo) sendDisplayCmd(`LOGO JSON ${logoToBase64({ type: logo.type, payload: logo.payload })}`);
+      }
+      return;
+    }
     if (!logoApi._origGetSource) logoApi._origGetSource = logoApi._getSource;
     if (id === null) {
       logoApi._getSource = logoApi._origGetSource;
