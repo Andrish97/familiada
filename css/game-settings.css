@@ -875,6 +875,17 @@
     display: inline-flex !important;
 }
 
+/* Przycisk zamknij modal — widoczny tylko w modal mode */
+.gs-close-btn {
+    display: none;
+}
+.gs-modal-mode .gs-close-btn {
+    display: inline-flex !important;
+    min-width: 34px; height: 34px;
+    border-radius: 999px; padding: 0 10px;
+    background: rgba(10,16,32,.72); border: 1px solid rgba(255,255,255,.28);
+}
+
 /* Layout wymaga position:relative na gs-layout żeby absolute działało */
 .gs-modal-mode .gs-layout {
     position: relative;

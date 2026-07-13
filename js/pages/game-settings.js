@@ -1540,9 +1540,8 @@ async function main() {
       if (e.target.closest(".gs-sidebar-item")) closeSidebar();
     });
 
-    // Handle close requests from parent — confirm if unsaved changes
-    window.addEventListener("message", async (ev) => {
-      if (ev.data?.type !== "gs:requestClose") return;
+    // Handle close requests — confirm if unsaved changes
+    async function tryClose() {
       if (isDirty) {
         if (!await confirmModal({ text: t("gameSettings.unsavedConfirmModal") || "Masz niezapisane zmiany. Czy chcesz zamknąć ustawienia?" })) return;
       }
@@ -1553,7 +1552,17 @@ async function main() {
         else el.defaultValue = el.value;
       });
       window.parent.postMessage({ type: "gs:close" }, "*");
+    }
+
+    window.addEventListener("message", (ev) => {
+      if (ev.data?.type === "gs:requestClose") tryClose();
     });
+
+    const btnGsModalClose = document.getElementById("btnGsModalClose");
+    if (btnGsModalClose) {
+      btnGsModalClose.classList.remove("hidden");
+      btnGsModalClose.addEventListener("click", tryClose);
+    }
   }
 
   localSettings = mergeSettings(game.settings);
