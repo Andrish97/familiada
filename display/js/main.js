@@ -73,6 +73,10 @@ window.addEventListener("DOMContentLoaded", async () => {
     window.handleCommand = handleCommand;
     app.setMode("BLACK_SCREEN");
 
+    // Jeśli brak parametrów URL (np. podgląd w game-settings) — nie łączymy z Supabase
+    const _previewParams = new URL(location.href).searchParams;
+    if (!_previewParams.get("id") || !_previewParams.get("key")) return;
+
     const pres = await startPresence({
       pingMs: 3000,
       debug: true,

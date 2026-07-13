@@ -359,6 +359,7 @@ export async function createScene() {
   try { LOGO_JSON = await loadJson("display/logo_familiada.json"); } catch {}
   const DEFAULT_LOGO = LOGO_JSON ?? { layers:[{color:"main",rows:Array(10).fill(" ".repeat(30))}] };
   let ACTIVE_LOGO = null;
+  let logoSeq = 0;
 
   const loadActiveLogoFromDb = async (gameId, key) => {
     if (!gameId || !key) return null;
@@ -669,9 +670,9 @@ export async function createScene() {
     if (head === "LOGO") {
       bigMode = "OTHER"; const op = (tokens[1]?? "").toUpperCase();
       if (op === "LOAD") { console.warn("LOGO LOAD jest wyłączone."); return; }
-      if (op === "RELOAD") { const gid=api.logo._gameId, key=api.logo._key; if (!gid) return; loadActiveLogoFromDb(gid,key).then(dbLogo => { ACTIVE_LOGO=(dbLogo&&dbLogo.type&&dbLogo.payload)?dbLogo:null; try { api.logo.draw(); } catch(e) { console.warn("[logo] draw after RELOAD failed:", e); } }).catch(e => console.warn("[logo] RELOAD failed:", e)); return; }
-      if (op === "DRAW") { api.logo.draw(); return; }
-      if (op === "JSON") { try { const bin=atob(tokens[2]||""); const bytes=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i); const d=JSON.parse(new TextDecoder().decode(bytes)); ACTIVE_LOGO=(d?.type&&d?.payload!==undefined)?d:null; api.logo.draw(); } catch(e){console.warn("[logo] JSON cmd failed:",e);} return; }
+      if (op === "RELOAD") { const gid=api.logo._gameId, key=api.logo._key; if (!gid) return; const seq=++logoSeq; loadActiveLogoFromDb(gid,key).then(dbLogo => { if (seq!==logoSeq) return; ACTIVE_LOGO=(dbLogo&&dbLogo.type&&dbLogo.payload)?dbLogo:null; try { api.logo.draw(); } catch(e) { console.warn("[logo] draw after RELOAD failed:", e); } }).catch(e => console.warn("[logo] RELOAD failed:", e)); return; }
+      if (op === "DRAW") { ++logoSeq; api.logo.draw(); return; }
+      if (op === "JSON") { ++logoSeq; try { const bin=atob(tokens[2]||""); const bytes=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i); const d=JSON.parse(new TextDecoder().decode(bytes)); ACTIVE_LOGO=(d?.type&&d?.payload!==undefined)?d:null; api.logo.draw(); } catch(e){console.warn("[logo] JSON cmd failed:",e);} return; }
       if (op === "SHOW") { let ai=null; const i=tokens.findIndex(t=>t.toUpperCase()==="ANIMIN"); if (i>=0) ai=parseAnim(tokens,i+1); return api.logo.show(ai??{type:"edge",dir:"left",ms:14}); }
       if (op === "HIDE") { let ao=null; const i=tokens.findIndex(t=>t.toUpperCase()==="ANIMOUT"); if (i>=0) ao=parseAnim(tokens,i+1); return api.logo.hide(ao??{type:"edge",dir:"right",ms:14}); }
     }
