@@ -1355,6 +1355,7 @@ function hostUpdate() {
       console.warn("getSfxDuration(reveal) error", e);
     }
 
+    console.log("[goEndRound] bellsDur =", bellsDur);
     playSfx("reveal");
 
     try {
@@ -1368,10 +1369,12 @@ function hostUpdate() {
       console.warn("[rounds] update totals failed", e);
     }
 
+    console.log("[goEndRound] waiting", bellsDur, "s before round_transition");
     if (bellsDur > 0) {
       await new Promise((resolve) => setTimeout(resolve, bellsDur * 1000));
     }
 
+    console.log("[goEndRound] playing round_transition now");
     playSfx("round_transition");
 
     const msg =
