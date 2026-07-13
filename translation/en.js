@@ -447,6 +447,12 @@ const en = {
     emailNotifSavedOn: "Email notifications: ON ✅",
     emailNotifSavedOff: "Email notifications: OFF ✅",
     emailNotifSaveFailed: "Failed to save the setting ❌",
+    demo: {
+      title: "Demo Materials",
+      hint: "Restore sample starter materials: a question bank, logos and ready-made games of various categories.",
+      btn: "↺ Restore demo files",
+      btnHint: "After clicking you will be taken to My Games where demo content will be added automatically.",
+    },
     statusLoaded: "Profile loaded.",
     statusUsernameSaved: "Username saved.",
     statusSavingEmail: "Saving email address…",

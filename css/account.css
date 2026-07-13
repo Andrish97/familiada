@@ -70,6 +70,10 @@ main.account-wrap .bar > div {
   background: rgba(255,120,120,.08);
 }
 
+.account-panel--demo {
+  grid-column: 1 / -1;
+}
+
 @media (max-width: 900px) {
   .account-grid {
     grid-template-columns: 1fr;

@@ -1681,7 +1681,7 @@ async function main() {
     url.searchParams.set("ret", `game-settings${location.search}`);
     url.searchParams.set("modal", "control");
     url.searchParams.set("lang", getUiLang() || "pl");
-    url.searchParams.set("tab", "control");
+    url.searchParams.set("tab", "gameSettings");
     return url.toString();
   }
   function buildLegalUrl() {

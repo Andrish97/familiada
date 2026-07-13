@@ -447,6 +447,12 @@ const pl = {
     emailNotifSavedOn: "Wiadomości e-mail: WŁĄCZONE ✅",
     emailNotifSavedOff: "Wiadomości e-mail: WYŁĄCZONE ✅",
     emailNotifSaveFailed: "Nie udało się zapisać ustawienia ❌",
+    demo: {
+      title: "Materiały Demo",
+      hint: "Przywróć przykładowe materiały startowe: bazę pytań, loga i gotowe gry różnych kategorii.",
+      btn: "↺ Przywróć pliki demo",
+      btnHint: "Po kliknięciu nastąpi przejście do widoku Moje gry i automatyczne wgranie demo.",
+    },
     statusLoaded: "Profil załadowany.",
     statusUsernameSaved: "Nazwa użytkownika zapisana.",
     statusSavingEmail: "Zapisywanie adresu e-mail…",

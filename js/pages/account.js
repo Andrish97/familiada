@@ -376,6 +376,28 @@ async function loadUserRating(userId) {
   }
 }
 
+async function wireDemoActions(user) {
+  const btn = document.getElementById("demoRestoreBtn");
+  if (!btn || !user?.id) return;
+
+  btn.addEventListener("click", async () => {
+    const ok = await confirmModal({
+      title: t("manual.demo.modalTitle"),
+      text: t("manual.demo.modalText"),
+      okText: t("manual.demo.modalOk"),
+      cancelText: t("manual.demo.modalCancel"),
+    });
+    if (!ok) return;
+    const lang = localStorage.getItem("uiLang") || "pl";
+    const { error } = await sb().rpc("restore_my_demo", { p_lang: lang });
+    if (error) {
+      console.error("restore_my_demo error:", error);
+      return;
+    }
+    location.href = "./builder";
+  });
+}
+
 async function loadProfile() {
   const user = await requireAuth("login?setup=username");
   if (!user) return;
@@ -400,6 +422,7 @@ async function loadProfile() {
 
   await initEmailNotificationsUi(user);
   await loadUserRating(user.id);
+  await wireDemoActions(user);
 
   setStatus(t("account.statusLoaded"));
   await refreshAuthEmailState();

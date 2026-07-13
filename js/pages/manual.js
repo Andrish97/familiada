@@ -55,12 +55,6 @@ function setActive(name) {
 }
 
 function wireTabs() {
-  if (!shouldShowDemoTab() || isModalMode()) {
-    document.querySelector('.simple-tabs .tab[data-tab="demo"], .modal-tabs .tab[data-tab="demo"]')?.remove();
-    pages.demo?.remove();
-    delete pages.demo;
-  }
-
   getTabs().forEach(tab => {
     tab.addEventListener("click", () => setActive(tab.dataset.tab));
   });
@@ -114,11 +108,6 @@ function applyControlModalLayout() {
   document.querySelector(".topbar-section-2")?.remove();
   document.querySelector(".topbar-section-4")?.remove();
 
-  // Remove demo tab before cloning
-  document.querySelector('.simple-tabs .tab[data-tab="demo"]')?.remove();
-  pages.demo?.remove();
-  delete pages.demo;
-
   // Replace simple-tabs with modal-tabs so topbar-controller doesn't pick it up
   const tabs = document.querySelector(".simple-tabs");
   if (tabs) {
@@ -127,10 +116,6 @@ function applyControlModalLayout() {
   }
 }
 
-function shouldShowDemoTab() {
-  const retPath = getRetPathnameLower();
-  return retPath.endsWith("/builder") || retPath.endsWith("/builder.html");
-}
 
 function buildPrivacyUrl() {
   const url = new URL("privacy", location.href);
@@ -175,38 +160,6 @@ function wireFallbackNav() {
 
 }
 
-async function wireDemoActions(user) {
-  const btn = byId("demoRestoreBtn");
-  if (!btn || !user?.id) return;
-
-  const { sb } = await import("../core/supabase.js?v=v2026-07-13T21340");
-
-  btn.addEventListener("click", async () => {
-    const ok = await confirmModal({
-      title: t("manual.demo.modalTitle"),
-      text: t("manual.demo.modalText"),
-      okText: t("manual.demo.modalOk"),
-      cancelText: t("manual.demo.modalCancel"),
-    });
-
-    if (!ok) return;
-
-    const lang = localStorage.getItem("uiLang") || "pl";
-    const { error } = await sb().rpc("restore_my_demo", { p_lang: lang });
-    if (error) {
-      console.error("restore_my_demo error:", {
-        message: error.message,
-        code: error.code,
-        details: error.details,
-        hint: error.hint,
-        status: error.status,
-        raw: JSON.stringify(error),
-      });
-      return;
-    }
-    location.href = "./builder";
-  });
-}
 
 async function wireAuthSoft() {
   const { requireAuth } = await import("../core/auth.js?v=v2026-07-13T21340");
@@ -223,7 +176,6 @@ async function wireAuthSoft() {
     location.href = decodeRet();
   });
 
-  await wireDemoActions(user);
 }
 
 /* ================= Init ================= */
