@@ -1416,7 +1416,7 @@ async function sendZeroStatesToDevices() {
       if (activeTheme) await devices.sendDisplayCmd(`THEME ${activeTheme}`).catch(() => {});
       await devices.sendDisplayCmd(`LONG1 ${q(teamA)}`).catch(() => {});
       await devices.sendDisplayCmd(`LONG2 ${q(teamB)}`).catch(() => {});
-      await devices.sendDisplayCmd("LOGO HIDE ANIMOUT edge down 1000").catch(() => {});
+      await devices.sendDisplayCmd("LOGO HIDE").catch(() => {});
     }
     if (!store.state.locks.gameStarted) {
       store.setGameStarted(true);
