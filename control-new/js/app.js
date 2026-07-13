@@ -1267,7 +1267,7 @@ async function sendZeroStatesToDevices() {
             playBtn.textContent = "▶";
           } else {
             playSfx(cat.key);
-            playBtn.textContent = "■";
+            playBtn.textContent = "⏹";
             onSfxEnd(cat.key, () => { playBtn.textContent = "▶"; });
           }
         });

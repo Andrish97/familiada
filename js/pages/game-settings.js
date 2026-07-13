@@ -845,7 +845,7 @@ async function renderSound() {
       _previewAudio = audio;
       _previewBtn   = btn;
       _previewUrl   = blobUrl;
-      btn.textContent = "■";
+      btn.textContent = "⏹";
       btn.dataset.playing = "1";
     });
   });
