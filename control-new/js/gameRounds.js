@@ -1355,6 +1355,7 @@ function hostUpdate() {
       console.warn("getSfxDuration(reveal) error", e);
     }
 
+    const revealStart = Date.now();
     playSfx("reveal");
 
     try {
@@ -1369,7 +1370,11 @@ function hostUpdate() {
     }
 
     if (bellsDur > 0) {
-      await new Promise((resolve) => setTimeout(resolve, bellsDur * 1000));
+      const elapsed = (Date.now() - revealStart) / 1000;
+      const remaining = bellsDur - elapsed;
+      if (remaining > 0) {
+        await new Promise((resolve) => setTimeout(resolve, remaining * 1000));
+      }
     }
 
     playSfx("round_transition");
