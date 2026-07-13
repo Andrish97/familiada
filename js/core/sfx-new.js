@@ -285,6 +285,12 @@ export function isSfxPlaying(key) {
   return !!a && !a.paused && !a.ended;
 }
 
+export function debugSfx(key) {
+  const a = cache.get(key);
+  if (!a) { console.warn("[sfx debug]", key, "— NOT IN CACHE"); return; }
+  console.log("[sfx debug]", key, "| src:", a.src?.slice(-40), "| duration:", a.duration, "| paused:", a.paused, "| ended:", a.ended, "| error:", a.error?.code, "| readyState:", a.readyState, "| volume:", a.volume);
+}
+
 export function onSfxEnd(key, fn) {
   const a = cache.get(key);
   if (!a) return () => {};

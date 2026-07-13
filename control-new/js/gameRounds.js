@@ -1,4 +1,4 @@
-import { playSfx, createSfxMixer, getSfxDuration } from "../../js/core/sfx-new.js?v=v2026-07-13T18352";
+import { playSfx, createSfxMixer, getSfxDuration, debugSfx } from "../../js/core/sfx-new.js?v=v2026-07-13T18352";
 import { t } from "../../translation/translation.js?v=v2026-07-13T18352";
 
 
@@ -660,16 +660,20 @@ function hostUpdate() {
       console.warn("getSfxDuration(round_transition/reveal) error", e);
     }
 
+    console.log("[startRound] rtDur =", rtDur, "revealDur =", revealDur);
+
     const totalMs = Math.max(rtDur, revealDur, 2) * 1000;
     const transitionAnchorMs = 920;
 
     // Nakładanie reveal + round_transition zsynchronizowane na koniec
     if (rtDur >= revealDur) {
+      console.log("[startRound] branch: rt first, reveal delay =", (rtDur - revealDur) * 1000, "ms");
       playSfx("round_transition");
-      setTimeout(() => playSfx("reveal"), (rtDur - revealDur) * 1000);
+      setTimeout(() => { console.log("[startRound] reveal fires now"); playSfx("reveal"); }, (rtDur - revealDur) * 1000);
     } else {
+      console.log("[startRound] branch: reveal first, rt delay =", (revealDur - rtDur) * 1000, "ms");
       playSfx("reveal");
-      setTimeout(() => playSfx("round_transition"), (revealDur - rtDur) * 1000);
+      setTimeout(() => { console.log("[startRound] round_transition fires now"); playSfx("round_transition"); }, (revealDur - rtDur) * 1000);
     }
 
     setTimeout(() => {
@@ -1375,7 +1379,9 @@ function hostUpdate() {
     }
 
     console.log("[goEndRound] playing round_transition now");
+    debugSfx("round_transition");
     playSfx("round_transition");
+    setTimeout(() => debugSfx("round_transition"), 300);
 
     const msg =
       mult === 1
