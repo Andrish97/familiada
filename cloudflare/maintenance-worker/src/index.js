@@ -21,7 +21,7 @@ export default {
     const ORIGIN_RESOLVE = "andrish97.github.io";
     
     // PUBLIC STATE ENDPOINT (works on every host/subdomain)
-    if (url.pathname === "/maintenance-state.json?v=v2026-07-13T12295") {
+    if (url.pathname === "/maintenance-state.json?v=v2026-07-13T17162") {
       const state = await getState(env);
       return json(state);
     }
@@ -149,7 +149,7 @@ export default {
     }
 
     // Dynamic sitemap — includes all published game URLs
-    if (request.method === "GET" && url.pathname === "/sitemap.xml?v=v2026-07-13T12295") {
+    if (request.method === "GET" && url.pathname === "/sitemap.xml?v=v2026-07-13T17162") {
       return serveDynamicSitemap(env);
     }
 
