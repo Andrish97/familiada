@@ -770,6 +770,8 @@ async function renderSound() {
           const hasCustom = !!customFiles.get(key);
           if (uploadBtn) uploadBtn.hidden = hasCustom;
           if (previewBtn) previewBtn.disabled = !hasCustom;
+          localSettings.sound.variants[key] = VARIANT_CUSTOM;
+          markDirty();
         } else {
           if (uploadBtn) uploadBtn.hidden = true;
           if (previewBtn) previewBtn.disabled = false;
@@ -855,6 +857,7 @@ async function renderSound() {
       try {
         await setSfxCustomBlob(key, file, file.name, gameId);
         customFiles.set(key, { blob: file, filename: file.name });
+        localSettings.sound.variants[key] = VARIANT_CUSTOM;
         markDirty();
         // Odblokuj podgląd po wgraniu pliku
         const row = input.closest(".sfx-row");
