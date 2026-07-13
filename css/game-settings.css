@@ -660,6 +660,7 @@
   cursor:grab;
   font-size:.83rem;
   user-select:none;
+  overflow:hidden;
   transition:background .12s;
 }
 .qRow:active{ cursor:grabbing; }
