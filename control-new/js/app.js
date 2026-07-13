@@ -998,6 +998,15 @@ async function sendZeroStatesToDevices() {
     updateQrOnDisplayButtons();
   });
 
+  // Sync DOM → store na wypadek kliknięcia przed zarejestrowaniem handlerów
+  {
+    const chkBuzzer = document.getElementById("chkPhysicalBuzzer");
+    const chkHost   = document.getElementById("chkNoHostTablet");
+    if (chkBuzzer?.checked) store.setPhysicalBuzzer(true);
+    if (chkHost?.checked)   store.setNoHostTablet(true);
+    if (chkBuzzer?.checked || chkHost?.checked) updateQrOnDisplayButtons();
+  }
+
   // Globalny przycisk "Schowaj QR" — chowa wszystko
   ui.on("qr.toggle", async () => {
     store.setQrHostOnDisplay(false);
