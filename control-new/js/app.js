@@ -45,7 +45,7 @@ import { isGuestUser } from "../../js/core/guest-mode.js?v=v2026-07-13T07553";
 import { sb } from "../../js/core/supabase.js?v=v2026-07-13T07553";
 import { rt } from "../../js/core/realtime.js?v=v2026-07-13T07553";
 import { validateGameReadyToPlay, loadGameBasic, loadQuestions, loadAnswers } from "../../js/core/game-validate.js?v=v2026-07-13T07553";
-import { unlockAudio, isAudioUnlocked, playSfx, initSfx, applySfxGameSettings, setCurrentGameId, loadSfxFromCloud } from "../../js/core/sfx-new.js?v=v2026-07-13T07553";
+import { unlockAudio, isAudioUnlocked, playSfx, initSfx, loadSfxManifest, applySfxGameSettings, setCurrentGameId, loadSfxFromCloud } from "../../js/core/sfx-new.js?v=v2026-07-13T07553";
 import { listGameSounds } from "../../js/core/sfx-cloud.js?v=v2026-07-13T07553";
 import { createStore } from "./store.js?v=v2026-07-13T07553";
 import { createUI } from "./ui.js?v=v2026-07-13T07553";
@@ -227,7 +227,7 @@ async function main() {
 
   // Inicjalizuj sfx-new: załaduj manifest + ustaw gameId
   setCurrentGameId(game.id);
-  initSfx().catch(console.warn);
+  loadSfxManifest().then(() => initSfx()).catch(console.warn);
 
   // Załaduj custom pliki audio z bucketu (fire-and-forget)
   if (game.settings?.sound) {
