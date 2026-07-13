@@ -1184,15 +1184,19 @@ async function sendZeroStatesToDevices() {
       themeNameEl.textContent = th?.label || effectiveTheme;
     }
 
+    const logoNameEl = document.getElementById("summaryLogoTileName");
     const logoTileEl = document.getElementById("summaryLogoTile");
+    const logoId = s.display.logoId;
+    let logoObj = null;
+    if (logoId) {
+      const found = _loadedLogos.find(l => l.id === logoId);
+      if (found) logoObj = found;
+    }
+    if (logoNameEl) {
+      logoNameEl.textContent = logoObj?.name || (logoId ? "—" : t("control.lookLogoDefault"));
+    }
     if (logoTileEl) {
       logoTileEl.innerHTML = "";
-      const logoId = s.display.logoId;
-      let logoObj = null;
-      if (logoId) {
-        const found = _loadedLogos.find(l => l.id === logoId);
-        if (found) logoObj = found;
-      }
       const previewSrc = logoObj ?? (
         _defaultLogoPayload ? { type: "GLYPH_30x10", payload: _defaultLogoPayload } : null
       );
@@ -1202,8 +1206,6 @@ async function sendZeroStatesToDevices() {
         frame.className = "summaryLogoFrame";
         frame.appendChild(canvas);
         logoTileEl.appendChild(frame);
-      } else {
-        logoTileEl.textContent = logoObj?.name || (logoId ? "—" : t("control.lookLogoDefault"));
       }
     }
 
