@@ -557,9 +557,9 @@ function renderDisplay() {
     <div class="gs-section">
       <div class="gs-label">${t("gameSettings.display.logo")}</div>
       <div id="gsLogoGrid" class="gs-logo-grid"></div>
-      <div class="sfx-foot">
-        <button class="btn" id="btnDisplayReset" type="button">${t("gameSettings.resetSection") || "Przywróć domyślne"}</button>
-      </div>
+    </div>
+    <div class="sfx-foot">
+      <button class="btn" id="btnDisplayReset" type="button">${t("gameSettings.resetSection") || "Przywróć domyślne"}</button>
     </div>
   `;
 
@@ -679,9 +679,9 @@ async function renderSound() {
     <div class="gs-cat-title">${t("gameSettings.categories.sound")}</div>
     <div class="gs-section">
       <div class="sfx-table" id="sfxTableGs"></div>
-      <div class="sfx-foot">
-        <button class="btn" id="btnSoundReset" type="button">${t("control.sfxResetAll") || "Przywróć domyślne"}</button>
-      </div>
+    </div>
+    <div class="sfx-foot">
+      <button class="btn" id="btnSoundReset" type="button">${t("control.sfxResetAll") || "Przywróć domyślne"}</button>
     </div>
   `;
 
@@ -1359,9 +1359,9 @@ function renderGame() {
           </div>
         </div>
       </div>
-      <div class="sfx-foot">
-        <button class="btn" id="btnGameReset" type="button">${t("gameSettings.resetSection") || "Przywróć domyślne"}</button>
-      </div>
+    </div>
+    <div class="sfx-foot">
+      <button class="btn" id="btnGameReset" type="button">${t("gameSettings.resetSection") || "Przywróć domyślne"}</button>
     </div>
   `;
 
