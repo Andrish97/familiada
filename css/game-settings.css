@@ -667,10 +667,13 @@
 .qRow:active{ cursor:grabbing; }
 .qRow:hover{ border-color:rgba(255,255,255,.22); }
 .qRow .meta{
-  opacity:.4;
-  font-size:.72rem;
-  white-space:nowrap;
+  font-weight:1000;
+  font-size:13px;
+  color:var(--gold,#f0b429);
+  min-width:28px;
+  text-align:center;
   flex-shrink:0;
+  white-space:nowrap;
 }
 .qRow .txt{
   font-size:13px;
