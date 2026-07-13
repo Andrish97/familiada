@@ -790,6 +790,8 @@ async function renderSound() {
         } else {
           if (uploadBtn) uploadBtn.hidden = true;
           if (previewBtn) previewBtn.disabled = false;
+          const fileTag = row.querySelector(".sfx-file-tag");
+          if (fileTag) fileTag.remove();
           localSettings.sound.variants[key] = val;
           markDirty();
         }

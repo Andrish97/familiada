@@ -1229,7 +1229,8 @@ async function sendZeroStatesToDevices() {
         const items = ordered.map(q => `<li>${escapeHtml((q.text || "").slice(0, 60))}</li>`).filter(Boolean);
         roundsQEl.innerHTML = items.length ? items.join("") : `<li class="summaryQRandom">${t("control.summaryQNoOrder")}</li>`;
       } else {
-        roundsQEl.innerHTML = `<li class="summaryQRandom">${t("control.summaryQWillRandom")}</li>`;
+        // Pool empty but loading (prePickForSummary in progress) — show nothing
+        roundsQEl.innerHTML = "";
       }
     }
   }
