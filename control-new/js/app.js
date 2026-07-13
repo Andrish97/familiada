@@ -621,6 +621,7 @@ async function sendZeroStatesToDevices() {
   let _loadedLogos = [];
   // Custom pliki dźwiękowe (potrzebne do nazwy pliku w streszczeniu)
   let _soundCustomFiles = new Map();
+  const _summaryVolumes = new Map(); // zapamiętuje głośności zmienione w podsumowaniu
   // true gdy game.settings zawierały zapisane ustawienia (nie null)
   const _hasCustomSettings = game.settings != null && typeof game.settings === "object";
 
@@ -1230,28 +1231,43 @@ async function sendZeroStatesToDevices() {
       }
     }
 
-    // Dźwięk — renderuj tylko raz (slider nie resetuje się przy re-renderze)
+    // Dźwięk
     const soundListEl = document.getElementById("summarySoundList");
-    if (soundListEl && soundListEl.children.length === 0) {
+    if (soundListEl) {
       const cats = getSfxCategories();
       const lang = getUiLang() || "pl";
-      const VARIANT_CUSTOM = "__custom__";
-      cats.forEach(cat => {
-        const variant = getSfxVariant(cat.key);
-        const vol = getSfxVolume(cat.key);
-        const isCustom = variant === VARIANT_CUSTOM;
-        const customFile = _soundCustomFiles.get(cat.key);
-        const variantLabel = isCustom
-          ? `${t("control.sfxCustom") || "Własny"}${customFile ? `: ${customFile.filename}` : ""}`
-          : (cat.sounds.find(s => s.file.split("?")[0] === variant)?.label?.[lang] || variant);
-        const desc = t("control.sfxDesc." + cat.key) || cat.key;
-        const volPct = Math.round(vol * 100);
+      const SVG_PLAY = `<svg width="16" height="16" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><polygon points="2,1 11,6 2,11" fill="currentColor"/></svg>`;
+      const SVG_STOP = `<svg width="16" height="16" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1.5" y="1.5" width="9" height="9" fill="currentColor"/></svg>`;
 
-        const SVG_PLAY = `<svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><polygon points="2,1 11,6 2,11" fill="currentColor"/></svg>`;
-        const SVG_STOP = `<svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1.5" y="1.5" width="9" height="9" fill="currentColor"/></svg>`;
+      const existing = new Map(); // key → row element (jeśli już wyrenderowany)
+      for (const row of soundListEl.children) {
+        existing.set(row.dataset.sfxKey, row);
+      }
+
+      cats.forEach(cat => {
+        const customFile  = _soundCustomFiles.get(cat.key);
+        const isCustom    = !!customFile;
+        const variant     = getSfxVariant(cat.key);
+        const variantLabel = isCustom
+          ? `${t("control.sfxCustom") || "Własny"}: ${customFile.filename}`
+          : (cat.sounds.find(s => s.file.split("?")[0] === variant.split("?")[0])?.label?.[lang] || variant.split("?")[0]);
+        const desc = t("control.sfxDesc." + cat.key) || cat.key;
+
+        if (existing.has(cat.key)) {
+          // Aktualizuj tylko etykietę wariantu — slider i play-btn zostawiamy
+          const row = existing.get(cat.key);
+          const varEl = row.querySelector(".summarySoundVariant");
+          if (varEl) varEl.textContent = variantLabel;
+          return;
+        }
+
+        // Pierwsze renderowanie wiersza
+        const vol    = getSfxVolume(cat.key);
+        const volPct = _summaryVolumes.has(cat.key) ? _summaryVolumes.get(cat.key) : Math.round(vol * 100);
 
         const row = document.createElement("div");
         row.className = "summarySoundRow";
+        row.dataset.sfxKey = cat.key;
         row.innerHTML = `
           <span class="summarySoundDesc">${escapeHtml(desc)}</span>
           <span class="summarySoundVariant">${escapeHtml(variantLabel)}</span>
@@ -1276,6 +1292,7 @@ async function sendZeroStatesToDevices() {
         });
         slider.addEventListener("input", () => {
           const pct = parseInt(slider.value, 10);
+          _summaryVolumes.set(cat.key, pct);
           volLabel.textContent = `${pct}%`;
           setSessionSfxVolume(cat.key, pct / 100);
         });
