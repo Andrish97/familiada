@@ -4990,7 +4990,7 @@ const en = {
     finalBadge: "Final:",
     finalPoolHint: "Question pool.",
     finalPoolEmpty: "No questions available",
-    finalPickEmpty: "Click a question to add (max 5)",
+    finalPickEmpty: "Click or drag a question to add (max 5)",
     finalListHint: "Final questions (5).",
     finalOnlyHint: "Confirmed.",
     refresh: "Refresh",
@@ -5373,7 +5373,7 @@ const en = {
       roundsModeHint: "Random = each round draws a question. Order = questions in fixed order (\u201CQuestions \u2014 Rounds\u201D tab).",
     },
     finale: {
-      dragHint: "Click a question to move it to the finale. Drag to reorder.",
+      dragHint: "Select finale questions. Click or drag",
       hasFinal: "Does the game include a finale?",
       yes: "Yes",
       no: "No",

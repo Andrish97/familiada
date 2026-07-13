@@ -4369,7 +4369,7 @@ const pl = {
     finalBadge: "Finał:",
     finalPoolHint: "Pytania do rozgrywki (pula).",
     finalPoolEmpty: "Brak dostępnych pytań",
-    finalPickEmpty: "Kliknij pytanie, aby dodać (max 5)",
+    finalPickEmpty: "Kliknij lub przeciągnij pytanie, żeby dodać (max 5)",
     finalListHint: "Pytania finału (max 5).",
     finalOnlyHint: "Pytania zatwierdzone. Kliknij \"Edytuj\", aby zmienić.",
     refresh: "Odśwież",
@@ -5375,7 +5375,7 @@ const pl = {
       roundsModeHint: "Losowe = każda runda losuje pytanie. Kolejność = pytania w ustalonej kolejności (zakładka \u201EPytania \u2014 Rundy\u201D).",
     },
     finale: {
-      dragHint: "Naciśnij pytanie, aby przenieść do finału. Przeciągnij, aby zmienić kolejność.",
+      dragHint: "Wybierz pytania do finału. Klikaj lub przeciągaj",
       hasFinal: "Czy gra zawiera finał?",
       yes: "Tak",
       no: "Nie",
