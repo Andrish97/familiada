@@ -557,9 +557,9 @@ function renderDisplay() {
     <div class="gs-section">
       <div class="gs-label">${t("gameSettings.display.logo")}</div>
       <div id="gsLogoGrid" class="gs-logo-grid"></div>
-    </div>
-    <div class="sfx-foot">
-      <button class="btn" id="btnDisplayReset" type="button">${t("gameSettings.resetSection") || "Przywróć domyślne"}</button>
+      <div class="sfx-foot">
+        <button class="btn" id="btnDisplayReset" type="button">${t("gameSettings.resetSection") || "Przywróć domyślne"}</button>
+      </div>
     </div>
   `;
 
@@ -1358,9 +1358,9 @@ function renderGame() {
           </div>
         </div>
       </div>
-    </div>
-    <div class="sfx-foot">
-      <button class="btn" id="btnGameReset" type="button">${t("gameSettings.resetSection") || "Przywróć domyślne"}</button>
+      <div class="sfx-foot">
+        <button class="btn" id="btnGameReset" type="button">${t("gameSettings.resetSection") || "Przywróć domyślne"}</button>
+      </div>
     </div>
   `;
 

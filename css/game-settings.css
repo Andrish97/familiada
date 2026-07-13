@@ -552,7 +552,7 @@
   transition:background .12s;
 }
 .gs-qrow:hover{ background:rgba(255,255,255,.16); }
-.gs-qrow .meta{ opacity:.4; font-size:.72rem; min-width:22px; flex-shrink:0; }
+.gs-qrow .meta{ opacity:.4; font-size:.65rem; min-width:18px; flex-shrink:0; }
 .gs-qrow .txt{
   flex:1; min-width:0;
   overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
@@ -652,7 +652,7 @@
 }
 .qRow{
   display:grid;
-  grid-template-columns:64px 1fr;
+  grid-template-columns:36px 1fr;
   align-items:center;
   min-height:56px;
   border-radius:16px;
@@ -667,9 +667,10 @@
 .qRow:active{ cursor:grabbing; }
 .qRow:hover{ border-color:rgba(255,255,255,.22); }
 .qRow .meta{
-  font-weight:1000;
-  opacity:.85;
+  opacity:.4;
+  font-size:.72rem;
   white-space:nowrap;
+  flex-shrink:0;
 }
 .qRow .txt{
   font-size:13px;
