@@ -449,7 +449,7 @@ const pl = {
     emailNotifSaveFailed: "Nie udało się zapisać ustawienia ❌",
     demo: {
       title: "Materiały Demo",
-      hint: "Przywróć przykładowe materiały startowe: bazę pytań, loga i gotowe gry różnych kategorii.",
+      hint: "Przywróć przykładowe materiały startowe: bazy pytań, loga i gotowe gry różnych kategorii.",
       btn: "↺ Przywróć pliki demo",
       btnHint: "Po kliknięciu nastąpi przejście do widoku Moje gry i automatyczne wgranie demo.",
     },
