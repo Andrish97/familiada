@@ -5,21 +5,21 @@
 const PATH = "../audio/";
 
 const files = {
-  show_intro: "show_intro.mp3?v=v2026-07-13T07291",
-  round_transition: "round_transition.mp3?v=v2026-07-13T07291",
-  round_transition2: "round_transition2.mp3?v=v2026-07-13T07291",
-  final_theme: "final_theme.mp3?v=v2026-07-13T07291",
+  show_intro: "show_intro.mp3?v=v2026-07-13T07315",
+  round_transition: "round_transition.mp3?v=v2026-07-13T07315",
+  round_transition2: "round_transition2.mp3?v=v2026-07-13T07315",
+  final_theme: "final_theme.mp3?v=v2026-07-13T07315",
 
-  buzzer_press: "buzzer_press.mp3?v=v2026-07-13T07291",
+  buzzer_press: "buzzer_press.mp3?v=v2026-07-13T07315",
 
-  answer_correct: "answer_correct.mp3?v=v2026-07-13T07291",
-  answer_wrong: "answer_wrong.mp3?v=v2026-07-13T07291",
-  answer_repeat: "answer_repeat.mp3?v=v2026-07-13T07291",
+  answer_correct: "answer_correct.mp3?v=v2026-07-13T07315",
+  answer_wrong: "answer_wrong.mp3?v=v2026-07-13T07315",
+  answer_repeat: "answer_repeat.mp3?v=v2026-07-13T07315",
 
-  time_over: "time_over.mp3?v=v2026-07-13T07291",
+  time_over: "time_over.mp3?v=v2026-07-13T07315",
 
   // dawny ui_tick -> teraz bells; zostawiam alias ui_tick dla bezpieczeństwa
-  bells: "bells.mp3?v=v2026-07-13T07291",
+  bells: "bells.mp3?v=v2026-07-13T07315",
 };
 
 export function listSfx() {
