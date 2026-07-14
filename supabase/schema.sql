@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 2mZMIKOxHlU5lDjvUYPfFy2U1wdFDYlax1Upy8JQQj4tQr2gM4jA0o3kDs79DjQ
+\restrict sAXyYqAU7cS9nBJJimccf2UENvJ07smrJfYDC03xmHLhfWnHBRvQEcJuGOe75f6
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -9283,12 +9283,11 @@ BEGIN
   FOREACH v_logo_slot IN ARRAY ARRAY['logo_text', 'logo_draw', 'logo_image'] LOOP
     SELECT payload INTO v_tpl FROM demo_template_data WHERE lang = v_lang AND slot = v_logo_slot;
     IF v_tpl IS NOT NULL THEN
-      INSERT INTO user_logos (user_id, name, type, is_active, is_demo, payload)
+      INSERT INTO user_logos (user_id, name, type, is_demo, payload)
       VALUES (
         p_uid,
         v_tpl->>'name',
         CASE WHEN v_tpl->>'kind' = 'GLYPH' THEN 'GLYPH_30x10' ELSE 'PIX_150x70' END,
-        false,
         true,
         v_tpl->'payload'
       );
@@ -14114,5 +14113,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 2mZMIKOxHlU5lDjvUYPfFy2U1wdFDYlax1Upy8JQQj4tQr2gM4jA0o3kDs79DjQ
+\unrestrict sAXyYqAU7cS9nBJJimccf2UENvJ07smrJfYDC03xmHLhfWnHBRvQEcJuGOe75f6
 
