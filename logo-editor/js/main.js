@@ -882,8 +882,12 @@ async function deleteLogo(id){
   }
 
   // Jeśli logo ma imageUrl w payload.source, usuń plik ze storage
+  // Pomijamy pliki spoza folderu usera (np. wspólne zasoby statyczne)
   const imageUrl = logo?.payload?.source?.imageUrl;
-  if (imageUrl) {
+  const currentUser = (await sb().auth.getUser())?.data?.user;
+  const isUserFile = imageUrl && currentUser &&
+    imageUrl.includes(`/user-logos/${currentUser.id}/`);
+  if (isUserFile) {
     try {
       // Wyodrębnij ścieżkę z URL: https://.../storage/v1/object/public/user-logos/user-id/filename.ext -> user-id/filename.ext
       const urlParts = imageUrl.split("/user-logos/");
