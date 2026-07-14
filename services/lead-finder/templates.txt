@@ -3,6 +3,11 @@
 
 {role} {city} kontakt;50
 {role} {city} oferta;20
+{role} {city} cennik;30
+{role} {city} rezerwacja;30
+{role} {city} strona;30
+{role} {city} wesele;30
+{role} {city} impreza firmowa;30
 site:facebook.com {city} {role};10
 site:instagram.com {city} {role};10
 site:maps.app.goo.gl {city} {role};10

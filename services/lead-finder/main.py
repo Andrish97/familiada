@@ -334,6 +334,11 @@ async def scrape_and_save_lead(res):
         # FINALNA DECYZJA
         if not emails: return 0 # Brak maila = odrzucamy
 
+        # Pomiń jeśli którykolwiek email już jest w bazie zweryfikowanych kontaktów
+        for em in [e.lower().strip() for e in emails]:
+            if await supabase.select('marketing_verified_contacts', 'id', {'email': em}, limit=1):
+                return 0
+
         # Jeśli mamy maile, ale tekst jest śmieciowy - nie odrzucamy, wstawiamy placeholder
         if len(txt) < 100:
             txt = f"[SYSTEM: Nie udało się pobrać treści strony. Metoda renderowania Playwright zwróciła zbyt mało danych. URL: {url}]"
