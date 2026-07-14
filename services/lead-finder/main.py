@@ -176,9 +176,9 @@ MAX_CONCURRENT_SCRAPES = CONFIG['MAX_CONCURRENT_SCRAPES']
 MAX_CONCURRENT_PLAYWRIGHT = CONFIG['MAX_CONCURRENT_PLAYWRIGHT']
 
 AI_PROVIDERS = {
-    'openrouter': {'key': os.getenv("OPENROUTER_API_KEY", ""), 'model': os.getenv("OPENROUTER_MODEL", "anthropic/claude-3-haiku"), 'endpoint': "https://openrouter.ai/api/v1/chat/completions", 'timeout': 60},
     'groq': {'key': os.getenv("GROQ_API_KEY", ""), 'model': os.getenv("GROQ_MODEL", "llama-3.1-8b-instant"), 'endpoint': "https://api.groq.com/openai/v1/chat/completions", 'timeout': TIMEOUT_AI},
-    'deepseek': {'key': os.getenv("DEEP_SEEK_API_KEY", ""), 'model': "deepseek-chat", 'endpoint': "https://api.deepseek.com/chat/completions", 'timeout': 60}
+    'deepseek': {'key': os.getenv("DEEP_SEEK_API_KEY", ""), 'model': "deepseek-chat", 'endpoint': "https://api.deepseek.com/chat/completions", 'timeout': 60},
+    'anthropic': {'key': os.getenv("ANTHROPIC_API_KEY", ""), 'model': os.getenv("ANTHROPIC_MODEL", "claude-haiku-4-5-20251001"), 'endpoint': "https://api.anthropic.com/v1/messages", 'timeout': 60},
 }
 
 ROLES = load_txt_lines('roles.txt')
@@ -406,13 +406,37 @@ async def producer_task(run_id):
 async def call_ai_provider(name, prompt):
     cfg = AI_PROVIDERS.get(name)
     if not cfg or not cfg['key']: return 500, None, "Missing config"
+
+    if name == 'anthropic':
+        headers = {
+            'Content-Type': 'application/json',
+            'x-api-key': cfg['key'],
+            'anthropic-version': '2023-06-01',
+        }
+        payload = {
+            'model': cfg['model'],
+            'max_tokens': 1000,
+            'system': 'You are a precise analyzer. You MUST return ONLY a valid JSON object. No preamble, no explanation, no markdown blocks. Just the raw JSON starting with { and ending with }.',
+            'messages': [{'role': 'user', 'content': prompt}],
+            'temperature': 0.1,
+        }
+        try:
+            r = await global_client.post(cfg['endpoint'], headers=headers, json=payload, timeout=cfg['timeout'])
+            if r.status_code == 200:
+                resp_json = r.json()
+                if 'content' in resp_json and len(resp_json['content']) > 0:
+                    return 200, resp_json['content'][0]['text'], None
+                return 500, None, "Malformed provider response (no content)"
+            else:
+                return r.status_code, None, r.text.lower()[:200]
+        except Exception as e: return 500, None, str(e)
+
     headers = {'Content-Type': 'application/json', 'Authorization': f'Bearer {cfg["key"]}'}
-    if name == 'openrouter': headers.update({'HTTP-Referer': 'https://familiada.online', 'X-Title': 'Familiada Lead Finder'})
-    
+
     payload = {
         'model': cfg['model'],
         'messages': [
-            {'role': 'system', 'content': 'You are a precise analyzer. You MUST return ONLY a valid JSON object. No preamble, no explanation, no markdown blocks. Just the raw JSON starting with { and ending with }.'}, 
+            {'role': 'system', 'content': 'You are a precise analyzer. You MUST return ONLY a valid JSON object. No preamble, no explanation, no markdown blocks. Just the raw JSON starting with { and ending with }.'},
             {'role': 'user', 'content': prompt}
         ],
         'temperature': 0.1,
@@ -423,7 +447,7 @@ async def call_ai_provider(name, prompt):
 
     try:
         r = await global_client.post(cfg['endpoint'], headers=headers, json=payload, timeout=cfg['timeout'])
-        if r.status_code == 200: 
+        if r.status_code == 200:
             resp_json = r.json()
             if 'choices' in resp_json and len(resp_json['choices']) > 0:
                 return 200, resp_json['choices'][0]['message']['content'], None
