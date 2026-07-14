@@ -1,21 +1,21 @@
 // js/pages/game-settings.js
-import { requireAuth } from "../core/auth.js?v=v2026-07-13T23295";
-import { t, getUiLang } from "../../translation/translation.js?v=v2026-07-13T23295";
-import { setTopbarAccount } from "../core/topbar-controller.js?v=v2026-07-13T23295";
-import { sb } from "../core/supabase.js?v=v2026-07-13T23295";
-import { loadQuestions } from "../core/game-validate.js?v=v2026-07-13T23295";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../core/logo-preview.js?v=v2026-07-13T23295";
-import { v as cacheBust } from "../core/cache-bust.js?v=v2026-07-13T23295";
-import { alertModal, confirmModal } from "../core/modal.js?v=v2026-07-13T23295";
-import { initUiSelect } from "../core/ui-select.js?v=v2026-07-13T23295";
+import { requireAuth } from "../core/auth.js?v=v2026-07-14T07434";
+import { t, getUiLang } from "../../translation/translation.js?v=v2026-07-14T07434";
+import { setTopbarAccount } from "../core/topbar-controller.js?v=v2026-07-14T07434";
+import { sb } from "../core/supabase.js?v=v2026-07-14T07434";
+import { loadQuestions } from "../core/game-validate.js?v=v2026-07-14T07434";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../core/logo-preview.js?v=v2026-07-14T07434";
+import { v as cacheBust } from "../core/cache-bust.js?v=v2026-07-14T07434";
+import { alertModal, confirmModal } from "../core/modal.js?v=v2026-07-14T07434";
+import { initUiSelect } from "../core/ui-select.js?v=v2026-07-14T07434";
 import {
   loadSfxManifest, getSfxCategories,
   setSfxCustomBlob, clearSfxCustomFile, clearAllSfxCustomFiles, getSfxCustomFiles,
   playSfx, setSfxVolume,
-} from "../core/sfx.js?v=v2026-07-13T23295";
+} from "../core/sfx.js?v=v2026-07-14T07434";
 import {
   uploadGameSound, deleteGameSound, deleteAllGameSounds,
-} from "../core/sfx-cloud.js?v=v2026-07-13T23295";
+} from "../core/sfx-cloud.js?v=v2026-07-14T07434";
 
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
