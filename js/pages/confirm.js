@@ -123,6 +123,7 @@ async function redirectAfterConfirm(user) {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
+  try {
   await initI18n({ withSwitcher: true });
   setErr("");
   if (go) go.href = withLangParam(go.dataset.baseHref || "builder");
@@ -295,5 +296,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       setErr(msg);
     }
     back.style.display = "inline-flex";
+  }
+  } finally {
+    document.documentElement.classList.remove('page-loading');
   }
 });
