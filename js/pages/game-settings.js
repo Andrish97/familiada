@@ -1,22 +1,22 @@
 // js/pages/game-settings.js
-import { requireAuth } from "../core/auth.js?v=v2026-07-15T19101";
-import { t, getUiLang } from "../../translation/translation.js?v=v2026-07-15T19101";
-import { setTopbarAccount } from "../core/topbar-controller.js?v=v2026-07-15T19101";
-import { sb } from "../core/supabase.js?v=v2026-07-15T19101";
-import { loadQuestions } from "../core/game-validate.js?v=v2026-07-15T19101";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../core/logo-preview.js?v=v2026-07-15T19101";
-import { v as cacheBust } from "../core/cache-bust.js?v=v2026-07-15T19101";
-import { alertModal, confirmModal } from "../core/modal.js?v=v2026-07-15T19101";
-import { initUiSelect } from "../core/ui-select.js?v=v2026-07-15T19101";
+import { requireAuth } from "../core/auth.js?v=v2026-07-15T19111";
+import { t, getUiLang } from "../../translation/translation.js?v=v2026-07-15T19111";
+import { setTopbarAccount } from "../core/topbar-controller.js?v=v2026-07-15T19111";
+import { sb } from "../core/supabase.js?v=v2026-07-15T19111";
+import { loadQuestions } from "../core/game-validate.js?v=v2026-07-15T19111";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../core/logo-preview.js?v=v2026-07-15T19111";
+import { v as cacheBust } from "../core/cache-bust.js?v=v2026-07-15T19111";
+import { alertModal, confirmModal } from "../core/modal.js?v=v2026-07-15T19111";
+import { initUiSelect } from "../core/ui-select.js?v=v2026-07-15T19111";
 import {
   loadSfxManifest, getSfxCategories,
   setSfxCustomBlob, clearSfxCustomFile, clearAllSfxCustomFiles, getSfxCustomFiles,
   playSfx, setSfxVolume,
-} from "../core/sfx.js?v=v2026-07-15T19101";
+} from "../core/sfx.js?v=v2026-07-15T19111";
 import {
   uploadGameSound, deleteGameSound, deleteAllGameSounds,
-} from "../core/sfx-cloud.js?v=v2026-07-15T19101";
-import { guardDesktopOnly } from "../core/device-guard.js?v=v2026-07-15T19101";
+} from "../core/sfx-cloud.js?v=v2026-07-15T19111";
+import { guardDesktopOnly } from "../core/device-guard.js?v=v2026-07-15T19111";
 
 guardDesktopOnly();
 
