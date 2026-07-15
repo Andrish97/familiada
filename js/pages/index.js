@@ -300,6 +300,9 @@ function initImageViewer() {
 /* ---------- boot ---------- */
 
 document.addEventListener("DOMContentLoaded", async () => {
+  const redirected = await redirectIfSession();
+  if (redirected) return;
+
   await initI18n({ withSwitcher: true });
   initRatingSystem();
   applyTranslations();
@@ -314,7 +317,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   initPipeline();
   initImageViewer();
 
-  await redirectIfSession();
   await loadRatingStats();
   document.documentElement.classList.remove('page-loading');
 
