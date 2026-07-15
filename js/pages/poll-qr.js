@@ -136,7 +136,7 @@ if (myGameId) {
 }
 
 updateFsIcon();
-render(url);
+render(url).finally(() => document.documentElement.classList.remove('page-loading'));
 
 // Powiadom polls, że urządzenie jest gotowe — polls odpowie POLL_QR_LANG z aktualnym językiem
 if (myGameId) {

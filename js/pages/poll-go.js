@@ -543,4 +543,4 @@ emailInput?.addEventListener("keydown", async (event) => {
   await subscribeByEmail();
 });
 
-init();
+init().finally(() => document.documentElement.classList.remove('page-loading'));

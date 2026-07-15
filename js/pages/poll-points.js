@@ -362,5 +362,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     console.error("[poll-points] init error:", e);
     setSub(MSG.openPollFail(e?.message || e));
     showClosed(true);
+  } finally {
+    document.documentElement.classList.remove('page-loading');
   }
 });
