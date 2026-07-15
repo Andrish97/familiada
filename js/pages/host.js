@@ -772,6 +772,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.addEventListener("pointerup", onPointerUp, { passive: true });
   document.addEventListener("pointercancel", () => (swDown = false), { passive: true });
 
+  document.documentElement.classList.remove('page-loading');
+
   if (!gameId || !key) {
     text1 = "";
     text2 = "";

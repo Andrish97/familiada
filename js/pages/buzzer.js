@@ -460,6 +460,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.documentElement.classList.add("webapp");
   }
 
+  document.documentElement.classList.remove('page-loading');
+
   // tryb totalnie lokalny (bez gameId) – nie ma czego słuchać
   if (!gameId) {
     show(STATE.OFF);

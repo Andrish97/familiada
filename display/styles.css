@@ -1,5 +1,8 @@
 /* display/styles.css */
 
+html.page-loading body { opacity: 0; }
+body { transition: opacity .3s ease-in; }
+
 body,html {
     height: 100%;
     margin: 0

@@ -72,6 +72,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     window.scene = scene;
     window.handleCommand = handleCommand;
     app.setMode("BLACK_SCREEN");
+    document.documentElement.classList.remove('page-loading');
 
     // Jeśli brak parametrów URL (np. podgląd w game-settings) — nie łączymy z Supabase
     const _previewParams = new URL(location.href).searchParams;
