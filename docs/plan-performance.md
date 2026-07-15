@@ -85,8 +85,8 @@ Dla każdej strony: dwie zmiany — HTML (inline script) + JS (odkrycie po pełn
 ### 1.5 — game-settings.html + js/pages/game-settings.js
 **Struktura JS:** `main()` async function, wywoływana na dole pliku (linia 1739)
 
-- 🔲 `game-settings.html` — inline script w `<head>` (oprócz już istniejącego mobile guard)
-- 🔲 `js/pages/game-settings.js` — po linii **1731** (`setActiveCat("teams")`), tuż przed końcem funkcji `main()` (linia 1737):
+- ✅ `game-settings.html` — inline script w `<head>` (oprócz już istniejącego mobile guard)
+- ✅ `js/pages/game-settings.js` — po linii **1731** (`setActiveCat("teams")`), tuż przed końcem funkcji `main()` (linia 1737):
   ```javascript
   document.documentElement.style.visibility = '';
   ```

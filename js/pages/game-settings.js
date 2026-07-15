@@ -1729,6 +1729,7 @@ async function main() {
   else sendDisplayInitCmds();
 
   setActiveCat("teams");
+  document.documentElement.style.visibility = '';
 
   window.addEventListener("i18n:lang", () => {
     resolveThemeLabels();
