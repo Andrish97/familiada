@@ -42,7 +42,7 @@ const btnPollAction = $("btnPollAction");
 
 // QR modal (wyświetlacz ankiety)
 const pollQrModalOverlay = $("pollQrModalOverlay");
-const pollQrModalImg     = $("pollQrModalImg");
+
 const pollQrModalCodeVal = $("pollQrModalCodeVal");
 const pollQrModalCopy    = $("pollQrModalCopy");
 const pollQrModalOpen    = $("pollQrModalOpen");
@@ -144,11 +144,7 @@ async function showPollQrModal() {
   _pollQrOpenUrl = displayUrl.toString();
 
   if (pollQrModalCodeVal) pollQrModalCodeVal.textContent = "——————";
-  if (pollQrModalImg) pollQrModalImg.src = "";
   if (pollQrModalOverlay) pollQrModalOverlay.classList.remove("hidden");
-
-  // QR koduje bezpośredni link do wyświetlacza (nie liczbę kodu)
-  pollQrModalImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodeURIComponent(_pollQrOpenUrl)}&margin=10`;
 
   try {
     const { data, error } = await sb().rpc("generate_device_connect_code", {

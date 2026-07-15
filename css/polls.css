@@ -47,21 +47,6 @@
   flex-direction: column;
   gap: 12px;
 }
-.qrModalQr {
-  display: flex;
-  justify-content: center;
-  padding: 8px 0;
-}
-.qrModalQr img {
-  display: block;
-  max-width: 260px;
-  width: 100%;
-  height: auto;
-  border-radius: 12px;
-  padding: 18px;
-  background: #fff;
-  box-sizing: border-box;
-}
 .qrModalCode {
   display: flex;
   justify-content: center;
