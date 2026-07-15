@@ -1,15 +1,15 @@
 // js/pages/bases.js
 // Builder baz pytań (warstwa 1) – styl i ergonomia jak builder gier.
 
-import { addRenameGesture } from "../core/rename-gesture.js?v=v2026-07-15T23101";
+import { addRenameGesture } from "../core/rename-gesture.js?v=v2026-07-15T23152";
 
-import { sb, SUPABASE_URL } from "../core/supabase.js?v=v2026-07-15T23101";
-import { requireAuth } from "../core/auth.js?v=v2026-07-15T23101";
-import { alertModal, confirmModal } from "../core/modal.js?v=v2026-07-15T23101";
-import { isGuestUser, hideForGuest } from "../core/guest-mode.js?v=v2026-07-15T23101";
-import { initUiSelect } from "../core/ui-select.js?v=v2026-07-15T23101";
-import { getUiLang, initI18n, t } from "../../translation/translation.js?v=v2026-07-15T23101";
-import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-07-15T23101";
+import { sb, SUPABASE_URL } from "../core/supabase.js?v=v2026-07-15T23152";
+import { requireAuth } from "../core/auth.js?v=v2026-07-15T23152";
+import { alertModal, confirmModal } from "../core/modal.js?v=v2026-07-15T23152";
+import { isGuestUser, hideForGuest } from "../core/guest-mode.js?v=v2026-07-15T23152";
+import { initUiSelect } from "../core/ui-select.js?v=v2026-07-15T23152";
+import { getUiLang, initI18n, t } from "../../translation/translation.js?v=v2026-07-15T23152";
+import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-07-15T23152";
 import "../core/contact-modal.js";
 
 initI18n({ withSwitcher: true });
