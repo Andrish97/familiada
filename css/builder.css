@@ -75,7 +75,6 @@ body.builder-body > main.wrap{
   .wrap{
     padding: 15px;
   }
-  .btn-group{ display: none; }
 }
 
 /* --- BAR (nagłówek listy) nie może rozpychać wysokości --- */
@@ -120,8 +119,11 @@ body.builder-body > main.wrap{
 }
 
 .btn-group{
-  display: inline-flex;
+  display: none;
   align-items: stretch;
+}
+@media (min-width: 1025px){
+  .btn-group{ display: inline-flex; }
 }
 .btn-group > .btn:not(:last-child){
   border-top-right-radius: 0;
