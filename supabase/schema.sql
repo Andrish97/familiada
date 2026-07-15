@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict UK8L4VbQfRck5khcTJS6VsAB86lcGfQaPjiDWEzWLyiS96eQMcaDriC7NnGY3EZ
+\restrict fEN7hLuxtS58IbWDe38I6gRl5txWs1UYVjKhmKtCSgooSI5JUEpvcLCGiSqFhQz
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -10377,7 +10377,7 @@ CREATE TABLE "public"."device_connect_codes" (
     "share_key" "text" NOT NULL,
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "expires_at" timestamp with time zone,
-    CONSTRAINT "device_connect_codes_device_type_check" CHECK (("device_type" = ANY (ARRAY['display'::"text", 'host'::"text", 'buzzer'::"text"])))
+    CONSTRAINT "device_connect_codes_device_type_check" CHECK (("device_type" = ANY (ARRAY['display'::"text", 'host'::"text", 'buzzer'::"text", 'poll_qr'::"text"])))
 );
 
 
@@ -14113,5 +14113,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict UK8L4VbQfRck5khcTJS6VsAB86lcGfQaPjiDWEzWLyiS96eQMcaDriC7NnGY3EZ
+\unrestrict fEN7hLuxtS58IbWDe38I6gRl5txWs1UYVjKhmKtCSgooSI5JUEpvcLCGiSqFhQz
 
