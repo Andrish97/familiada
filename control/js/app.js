@@ -14,7 +14,6 @@ const APP_MSG = {
   get GAME_NOT_FOUND() { return t("control.gameNotFound"); },
 
   QR_LABEL: (kind) =>
-    kind === "display" ? t("control.deviceDisplay") :
     kind === "host" ? t("control.deviceHost") :
     kind === "buzzer" ? t("control.deviceBuzzer") :
     t("control.qrModalTitle"),
@@ -427,15 +426,7 @@ async function main() {
 
     if (imgEl) imgEl.src = qrSrc(url);
 
-    const openBtn = document.getElementById("qrModalOpen");
-    if (openBtn) {
-      if (kind === "display") {
-        openBtn.href = url;
-        openBtn.classList.remove("hidden");
-      } else {
-        openBtn.classList.add("hidden");
-      }
-    }
+    document.getElementById("qrModalOpen")?.classList.add("hidden");
 
     overlay.classList.remove("hidden");
   }
@@ -768,7 +759,6 @@ async function sendZeroStatesToDevices() {
     // Aktualizuj przyciski "QR na wyświetlaczu" dla hosta i buzzera
     updateQrOnDisplayButtons();
 
-    ui.setEnabled("btnDispBlack", displayReady);
 
     ui.setEnabled("btnDevicesNext", requiredOnline);
 
@@ -961,9 +951,6 @@ async function sendZeroStatesToDevices() {
     } catch {}
   });
 
-  ui.on("display.black", async () => {
-    await devices.sendDisplayCmd("APP BLACK");
-  });
 
   // Wysyła właściwą komendę QR lub BLACK na podstawie qrHostOnDisplay + qrBuzzerOnDisplay + opt-out
   async function syncQrDisplay() {

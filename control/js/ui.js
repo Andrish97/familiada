@@ -18,7 +18,6 @@ const UI_MSG = {
 
   get QR_ON_DISPLAY() { return t("control.qrOnDisplay"); },
   get QR_HIDE() { return t("control.qrHide"); },
-  get QR_BLACK_SCREEN() { return t("control.blackScreen"); },
 
   get COLOR_TITLE() { return t("control.colorTitle"); },
 
@@ -434,11 +433,8 @@ export function createUI() {
     const b = $("btnQrToggle");
     if (!b) return;
   
-    // Gdy QR są pokazane:
-    // - jeśli wymagane urządzenia (Display + Buzzer) są już online, sensowniejsze jest "Czarny ekran"
-    // - w przeciwnym razie "Schowaj QR"
     if (isOn) {
-      b.textContent = mandatoryDevicesOnline ? UI_MSG.QR_BLACK_SCREEN : UI_MSG.QR_HIDE;
+      b.textContent = UI_MSG.QR_HIDE;
       return;
     }
   
@@ -629,7 +625,6 @@ export function createUI() {
     $("chkPhysicalBuzzer")?.addEventListener("change", (e) => emit("devices.physicalBuzzer", e.target.checked));
     $("chkNoHostTablet")?.addEventListener("change", (e) => emit("devices.noHostTablet", e.target.checked));
 
-    $("btnDispBlack")?.addEventListener("click", () => emit("display.black"));
     $("btnQrToggle")?.addEventListener("click", () => emit("qr.toggle"));
 
     // Przyciski QR dla hosta i buzzera (otwierają modal)
