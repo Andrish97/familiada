@@ -700,7 +700,8 @@ const pl = {
     defaultName: "Ankieta",
     qrModal: {
       title: "Wyświetlacz QR",
-      hint: "familiada.online → Podłącz urządzenie → wprowadź kod",
+      subtitle: "Kod do podłączenia wyświetlacza — nie do głosowania",
+      hint: "Zeskanuj QR aparatem TV/rzutnika lub wejdź na familiada.online → Podłącz urządzenie → wprowadź kod",
       copied: "Skopiowano kod.",
       copyBtn: "Kopiuj",
       openBtn: "Otwórz",
@@ -1479,22 +1480,35 @@ const pl = {
         i użyty w rozgrywce.
       </div>
     
-      <h3 class="m-h2">Link i kod QR</h3>
-    
+      <h3 class="m-h2">Link i kod QR do głosowania</h3>
+
       <p class="m-p">
         Po uruchomieniu ankiety system generuje
         unikalny link do ankiety.
-        Link ten można skopiować,
-        otworzyć w nowej karcie
-        lub wyświetlić jako kod QR.
+        Link ten można skopiować lub otworzyć w nowej karcie —
+        uczestnicy wpisują go na swoich telefonach i oddają głos.
+        Mały kod QR widoczny na stronie ankiety też koduje ten link.
       </p>
-    
+
+      <h3 class="m-h2">QR na wyświetlaczu (TV / rzutnik)</h3>
+
       <p class="m-p">
-        Kod QR jest przeznaczony do wyświetlania
-        na ekranie widocznym dla ankietowanych
-        (telewizor, rzutnik, duży monitor).
+        Przycisk <span class="m-code">QR na wyświetlaczu</span> otwiera modal z dwoma elementami:
       </p>
-    
+      <ul class="m-ul">
+        <li><span class="m-strong">Kod QR</span> — bezpośredni link do strony wyświetlacza ankiety.
+          Zeskanuj go kamerą telewizora lub rzutnika, a urządzenie automatycznie
+          przejdzie na stronę pokazującą uczestnikom kod QR do głosowania.</li>
+        <li><span class="m-strong">6-cyfrowy kod</span> — wpisz go na stronie
+          <span class="m-code">Podłącz urządzenie</span>, aby ręcznie połączyć TV lub drugi ekran.</li>
+      </ul>
+
+      <div class="m-note">
+        <b>Dwa różne kody QR — nie mylić:</b><br/>
+        • <b>Mały QR na stronie ankiety</b> — koduje link do głosowania (dla uczestników z telefonami)<br/>
+        • <b>QR w modalu „QR na wyświetlaczu"</b> — koduje link do wyświetlacza ankiety (dla TV/rzutnika)
+      </div>
+
       <h3 class="m-h2">Przebieg ankiety</h3>
     
       <p class="m-p">
@@ -1738,7 +1752,8 @@ const pl = {
       </div>`,
       connect: `<p class="m-p">
         <span class="m-strong">Podłącz urządzenie</span> to panel, gdzie możesz szybko połączyć się z urządzeniem niezbędnym do rozgrywki:
-        <span class="m-strong">Wyświetlaczem</span>, <span class="m-strong">Przyciskiem</span> lub <span class="m-strong">Prowadzącym</span>.
+        <span class="m-strong">Wyświetlaczem</span>, <span class="m-strong">Przyciskiem</span>, <span class="m-strong">Prowadzącym</span>
+        lub <span class="m-strong">Wyświetlaczem QR ankiety 📊</span>.
         Dostępny bez logowania — wystarczy kod 6-cyfrowy z panelu operatora.
       </p>
 
@@ -1749,6 +1764,12 @@ const pl = {
         przy każdym urządzeniu (Wyświetlaczu, Prowadzącym, Przycisku).
         Wpisz ten kod i kliknij <span class="m-code">Podłącz</span> — zobaczysz podgląd urządzenia i po potwierdzeniu
         zostaniesz na nie przekierowany.
+      </p>
+
+      <p class="m-p">
+        Kod <span class="m-strong">Wyświetlacza QR ankiety 📊</span> znajdziesz w zakładce
+        <span class="m-code">Ankieta</span> — kliknij <span class="m-code">QR na wyświetlaczu</span>.
+        Po podłączeniu TV lub rzutnik wyświetla kod QR do głosowania dla uczestników.
       </p>
 
       <div class="m-note">

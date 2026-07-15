@@ -35,6 +35,13 @@
   text-transform: uppercase;
   opacity: .9;
 }
+.qrModalSubtitle {
+  font-size: .78rem;
+  opacity: .55;
+  text-align: center;
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
 .qrModalBody {
   display: flex;
   flex-direction: column;

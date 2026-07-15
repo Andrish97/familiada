@@ -4,7 +4,7 @@ import { rt } from "../core/realtime.js?v=v2026-07-15T21233";
 import { requireAuth } from "../core/auth.js?v=v2026-07-15T21233";
 import { alertModal, confirmModal } from "../core/modal.js?v=v2026-07-15T21233";
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
-import { initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-07-15T21233";
+import { initI18n, t, withLangParam, getUiLang } from "../../translation/translation.js?v=v2026-07-15T21233";
 import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-07-15T21233";
 import "../core/contact-modal.js";
 
@@ -135,10 +135,20 @@ function hidePollQrModal() {
 
 async function showPollQrModal() {
   if (!game || !pollLinkEl?.value) return;
-  _pollQrOpenUrl = pollLinkEl.value;
+
+  // URL do strony wyświetlacza (poll-qr) — zawiera aktualny język polls
+  const displayUrl = new URL("poll-qr", location.href);
+  displayUrl.searchParams.set("id", game.id);
+  displayUrl.searchParams.set("key", game.share_key_poll);
+  displayUrl.searchParams.set("lang", getUiLang() || "pl");
+  _pollQrOpenUrl = displayUrl.toString();
+
   if (pollQrModalCodeVal) pollQrModalCodeVal.textContent = "——————";
   if (pollQrModalImg) pollQrModalImg.src = "";
   if (pollQrModalOverlay) pollQrModalOverlay.classList.remove("hidden");
+
+  // QR koduje bezpośredni link do wyświetlacza (nie liczbę kodu)
+  pollQrModalImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodeURIComponent(_pollQrOpenUrl)}&margin=10`;
 
   try {
     const { data, error } = await sb().rpc("generate_device_connect_code", {
@@ -150,9 +160,6 @@ async function showPollQrModal() {
     if (error || !data?.ok) throw new Error(error?.message || "RPC error");
     _pollQrDeviceCode = data.code;
     if (pollQrModalCodeVal) pollQrModalCodeVal.textContent = data.code;
-    if (pollQrModalImg) {
-      pollQrModalImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodeURIComponent(data.code)}&margin=10`;
-    }
   } catch (e) {
     console.warn("[polls] showPollQrModal error", e);
     setMsg(t("common.genericError") || "Błąd.");

@@ -700,7 +700,8 @@ const en = {
     defaultName: "Poll",
     qrModal: {
       title: "QR Display",
-      hint: "familiada.online → Connect device → enter code",
+      subtitle: "Code to connect the display — not for voting",
+      hint: "Scan QR with TV/projector camera or go to familiada.online → Connect device → enter code",
       copied: "Code copied.",
       copyBtn: "Copy",
       openBtn: "Open",
@@ -1479,22 +1480,35 @@ const en = {
         and used in gameplay.
       </div>
     
-      <h3 class="m-h2">Link and QR code</h3>
-    
+      <h3 class="m-h2">Voting link and QR code</h3>
+
       <p class="m-p">
         After starting a poll, the system generates
         a unique voting link.
-        You can copy it,
-        open it in a new tab,
-        or display it as a QR code.
+        You can copy it or open it in a new tab —
+        participants type it on their phones and vote.
+        The small QR code visible on the poll page also encodes this link.
       </p>
-    
+
+      <h3 class="m-h2">QR on display (TV / projector)</h3>
+
       <p class="m-p">
-        The QR code is meant to be displayed
-        on a screen visible to respondents
-        (TV, projector, large monitor).
+        The <span class="m-code">QR on display</span> button opens a modal with two elements:
       </p>
-    
+      <ul class="m-ul">
+        <li><span class="m-strong">QR code</span> — a direct link to the poll display page.
+          Scan it with your TV or projector camera and the device will automatically
+          open the page showing participants the voting QR code.</li>
+        <li><span class="m-strong">6-digit code</span> — enter it on the
+          <span class="m-code">Connect device</span> page to manually link a TV or second screen.</li>
+      </ul>
+
+      <div class="m-note">
+        <b>Two different QR codes — don't confuse them:</b><br/>
+        • <b>Small QR on the poll page</b> — encodes the voting link (for participants with phones)<br/>
+        • <b>QR in the "QR on display" modal</b> — encodes the display page link (for TV/projector)
+      </div>
+
       <h3 class="m-h2">Poll flow</h3>
     
       <p class="m-p">
@@ -1737,7 +1751,8 @@ const en = {
       </div>`,
       connect: `<p class="m-p">
         <span class="m-strong">Connect device</span> is the panel where you can quickly connect to a device needed for the game:
-        <span class="m-strong">Display</span>, <span class="m-strong">Buzzer</span>, or <span class="m-strong">Host</span>.
+        <span class="m-strong">Display</span>, <span class="m-strong">Buzzer</span>, <span class="m-strong">Host</span>,
+        or <span class="m-strong">Poll QR Display 📊</span>.
         Available without login — all you need is the 6-digit code from the operator panel.
       </p>
 
@@ -1748,6 +1763,12 @@ const en = {
         next to each device (Display, Host, Buzzer) in the control panel.
         Enter the code and click <span class="m-code">Connect</span> — you'll see a device preview and after confirming
         you'll be redirected to the device.
+      </p>
+
+      <p class="m-p">
+        The <span class="m-strong">Poll QR Display 📊</span> code can be found in the
+        <span class="m-code">Poll</span> tab — click <span class="m-code">QR on display</span>.
+        Once connected, the TV or projector shows the voting QR code for participants.
       </p>
 
       <div class="m-note">
