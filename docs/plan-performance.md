@@ -73,8 +73,8 @@ Dla każdej strony: dwie zmiany — HTML (inline script) + JS (odkrycie po pełn
 ### 1.4 — editor.html + js/pages/editor.js
 **Struktura JS:** `boot()` async function, wywoływana z `DOMContentLoaded` (linia 1218)
 
-- 🔲 `editor.html` — inline script w `<head>`
-- 🔲 `js/pages/editor.js` — po linii **1203** (`renderEditor()`), przed końcem funkcji `boot()` (linia 1216):
+- ✅ `editor.html` — inline script w `<head>`
+- ✅ `js/pages/editor.js` — po linii **1203** (`renderEditor()`), przed końcem funkcji `boot()` (linia 1216):
   ```javascript
   document.documentElement.style.visibility = '';
   ```
