@@ -1092,9 +1092,11 @@ function getBackLink() {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
+  try {
   currentUser = await requireAuth("login");
   if (isGuestUser(currentUser)) {
     showGuestBlockedOverlay({ backHref: "builder", loginHref: "login?force_auth=1", showLoginButton: true });
+    document.documentElement.classList.remove('page-loading');
     return;
   }
   initTopbarAccountDropdown(currentUser);
@@ -1146,5 +1148,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   await refreshData();
+  document.documentElement.classList.remove('page-loading');
   setInterval(() => refreshData(), 30000);
+  } catch (e) {
+    document.documentElement.classList.remove('page-loading');
+    throw e;
+  }
 });
