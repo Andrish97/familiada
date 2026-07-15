@@ -1518,7 +1518,7 @@ function renderGame() {
 
 // ===== MAIN =====
 async function main() {
-  const user = await requireAuth("../login");
+  const user = await requireAuth("login");
   setTopbarAccount(user, { showAuthEntry: false });
 
   if (!gameId) {
