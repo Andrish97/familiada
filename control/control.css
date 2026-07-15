@@ -906,6 +906,7 @@
     text-transform: uppercase;
     white-space: nowrap
 }
+.badge:empty { display: none; }
 
 .badge.mid {
     border-color: rgba(255,234,166,.35);
