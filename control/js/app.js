@@ -424,7 +424,13 @@ async function main() {
     titleEl.textContent = APP_MSG.QR_LABEL(kind);
     if (codeValEl) codeValEl.textContent = _deviceCodes[kind] || "——————";
 
-    if (imgEl) imgEl.src = qrSrc(url);
+    const qrWrap = document.getElementById("qrModalQrWrap");
+    if (kind === "display") {
+      if (qrWrap) qrWrap.style.display = "none";
+    } else {
+      if (qrWrap) qrWrap.style.display = "";
+      if (imgEl) imgEl.src = qrSrc(url);
+    }
 
     document.getElementById("qrModalOpen")?.classList.add("hidden");
 
