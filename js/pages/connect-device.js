@@ -98,11 +98,12 @@ btnDevicePreviewConnect?.addEventListener("click", () => {
   if (!_previewDeviceInfo) return;
   const info = _previewDeviceInfo;
   hideDevicePreview();
+  const lang = getUiLang() || "pl";
   if (info.device_type === "poll_qr") {
-    window.location.href = `poll-qr?id=${info.game_id}&key=${info.share_key}`;
+    window.location.href = `poll-qr?id=${info.game_id}&key=${info.share_key}&lang=${lang}`;
   } else {
     const page = info.device_type === "display" ? "display" : info.device_type;
-    window.location.href = `/${page}?id=${info.game_id}&key=${info.share_key}`;
+    window.location.href = `/${page}?id=${info.game_id}&key=${info.share_key}&lang=${lang}`;
   }
 });
 
