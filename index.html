@@ -37,7 +37,21 @@
   <meta name="theme-color" content="#050914"/>
   <link rel="stylesheet" href="css/base.css?v=v2026-07-15T18390"/>
   <link rel="stylesheet" href="css/index.css?v=v2026-07-15T18390"/>
-  <script>document.documentElement.classList.add('page-loading')</script>
+  <script>
+    document.documentElement.classList.add('page-loading');
+    try {
+      for (var _i = 0; _i < localStorage.length; _i++) {
+        var _k = localStorage.key(_i);
+        if (!_k || !_k.startsWith('sb-') || !_k.endsWith('-auth-token')) continue;
+        var _s = JSON.parse(localStorage.getItem(_k));
+        var _u = _s && (_s.user || (_s.currentSession && _s.currentSession.user));
+        var _exp = _s && (_s.expires_at || (_s.currentSession && _s.currentSession.expires_at));
+        if (_u && !_u.is_anonymous && (!_exp || Date.now() / 1000 < _exp + 60)) {
+          location.replace('builder.html' + location.search); break;
+        }
+      }
+    } catch(_e) {}
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script src="js/core/security-warning.js?v=v2026-07-15T18390" defer></script>
   <script type="module" src="js/pages/index.js?v=v2026-07-15T18390" defer></script>
