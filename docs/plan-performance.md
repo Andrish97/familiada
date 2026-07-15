@@ -121,8 +121,8 @@ Dla każdej strony: dwie zmiany — HTML (inline script) + JS (odkrycie po pełn
 ### 1.8 — settings.html + js/pages/settings.js
 **Struktura JS:** różna — wymaga osobnej inspekcji
 
-- 🔲 `settings.html` — inline script w `<head>`
-- 🔲 `js/pages/settings.js` — znaleźć główny entry point (DOMContentLoaded lub IIFE), dodać odkrycie po pierwszym renderze panelu i sprawdzeniu auth
+- ✅ `settings.html` — inline script w `<head>`
+- ✅ `js/pages/settings.js` — po `checkMe()` + `loadState()`, w obu gałęziach (ok/fail), tuż przed `})();`
 
 ---
 
