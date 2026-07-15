@@ -2,6 +2,9 @@
 import { confirmModal } from "../../js/core/modal.js?v=v2026-07-14T08311";
 import { getUiLang, initI18n, t } from "../../translation/translation.js?v=v2026-07-14T08311";
 import { v as cacheBust } from "../../js/core/cache-bust.js?v=v2026-07-14T08311";
+import { guardDesktopOnly } from "../../js/core/device-guard.js?v=v2026-07-14T08311";
+
+guardDesktopOnly();
 
 // ================== KOMUNIKATY ==================
 const APP_MSG = {

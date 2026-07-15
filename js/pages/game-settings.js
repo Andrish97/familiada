@@ -16,6 +16,9 @@ import {
 import {
   uploadGameSound, deleteGameSound, deleteAllGameSounds,
 } from "../core/sfx-cloud.js?v=v2026-07-14T08311";
+import { guardDesktopOnly } from "../core/device-guard.js?v=v2026-07-14T08311";
+
+guardDesktopOnly();
 
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
