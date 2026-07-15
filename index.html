@@ -37,7 +37,19 @@
   <meta name="theme-color" content="#050914"/>
   <link rel="stylesheet" href="css/base.css?v=v2026-07-15T18151"/>
   <link rel="stylesheet" href="css/index.css?v=v2026-07-15T18151"/>
-  <script>document.documentElement.classList.add('page-loading')</script>
+  <script>
+    document.documentElement.classList.add('page-loading');
+    try {
+      const key = Object.keys(localStorage).find(k => k.startsWith('sb-') && k.endsWith('-auth-token'));
+      if (key) {
+        const s = JSON.parse(localStorage.getItem(key));
+        if (s && s.user && !s.user.is_anonymous) {
+          const lang = new URLSearchParams(location.search).get('lang');
+          location.replace('builder.html' + (lang ? '?lang=' + lang : ''));
+        }
+      }
+    } catch(e) {}
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script src="js/core/security-warning.js?v=v2026-07-15T18151" defer></script>
   <script type="module" src="js/pages/index.js?v=v2026-07-15T18151" defer></script>
