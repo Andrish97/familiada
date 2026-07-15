@@ -1764,5 +1764,5 @@ document.addEventListener("DOMContentLoaded", async () => {
     else startAutoRefresh();
   });
   startAutoRefresh();
-  document.documentElement.style.visibility = '';
+  document.documentElement.style.opacity = '';
 });

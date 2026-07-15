@@ -1202,7 +1202,7 @@ async function boot() {
   renderQuestions();
   renderEditor();
   setMsg("");
-  document.documentElement.style.visibility = '';
+  document.documentElement.style.opacity = '';
 
   window.addEventListener("resize", () => {
     syncMobileEditingState();

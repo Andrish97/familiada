@@ -20,6 +20,7 @@ html, body {
 html {
     min-height: 100dvh;
     background: #050914;
+    transition: opacity .15s ease;
 }
 
 body {
