@@ -1066,7 +1066,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   setTopbarAccount(currentUser, { withAccountSettings: true });
-  document.querySelector('.topbar')?.classList.add('topbar-ready');
 
   // btnInstall: widoczny gdy pwa:installable odpalił (canInstall) lub iOS Safari — nie standalone
   if (btnInstall) {
