@@ -85,6 +85,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       setStatus(t("reset.sessionSwitchCancelled"));
       setErr(t("reset.sessionSwitchCancelledHint"));
       back.style.display = "inline-flex";
+      document.documentElement.classList.remove('page-loading');
       return;
     }
   }
@@ -127,8 +128,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     setStatus(t("reset.verifyFailed"));
     setErr(niceAuthError(e));
     back.style.display = "inline-flex";
+    document.documentElement.classList.remove('page-loading');
     return;
   }
+
+  document.documentElement.classList.remove('page-loading');
 
   save.addEventListener("click", async () => {
     setErr("");
