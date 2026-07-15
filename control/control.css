@@ -1413,24 +1413,9 @@
     gap: 12px
 }
 
-.qrModalQr {
-    display: flex;
-    justify-content: center;
-    padding: 8px 0
-}
-
-.qrBlock img,.qrBox img,.qrModalQr img,.qrSlim img {
+.qrBlock img,.qrBox img,.qrSlim img {
     background: #fff;
     box-sizing: border-box
-}
-
-.qrModalQr img {
-    display: block;
-    max-width: 260px;
-    width: 100%;
-    height: auto;
-    border-radius: 12px;
-    padding: 18px
 }
 
 .qrModalLinkRow {

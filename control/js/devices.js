@@ -105,11 +105,6 @@ export function createDevices({ game, ui, store, chDisplay, chHost, chBuzzer }) 
     }
   }
 
-  function qrSrc(url) {
-    const u = encodeURIComponent(String(url));
-    return `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${u}`;
-  }
-
   async function copyToClipboard(text) {
     try { await navigator.clipboard.writeText(text); return true; } catch { return false; }
   }
