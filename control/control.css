@@ -1,5 +1,25 @@
 /* /familiada/control/control.css */
 
+/* ── Two-phase reveal ─────────────────────────────────────
+   Phase 1: body fades in after auth (topbar stable, no "—" jump)
+   Phase 2: .wrap fades in after game data loaded
+──────────────────────────────────────────────────────────── */
+.wrap {
+  transition: opacity .3s ease-in;
+}
+.wrap.content-loading {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Smooth device-status transitions (dots + badges in topbar and device rows) */
+.dot {
+  transition: background .25s ease, border-color .25s ease, box-shadow .25s ease;
+}
+.badge {
+  transition: background .25s ease, border-color .25s ease, color .25s ease;
+}
+
 .wrap.wide{
     width: 90%;
     min-height: calc(100dvh - var(--topbar-h, 70px));
