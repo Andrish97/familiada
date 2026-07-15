@@ -936,6 +936,7 @@
     flex: 1 1 100%;
     margin-top: 4px
 }
+.rowBtns .msg:empty { display: none; }
 
 .field {
     display: grid;

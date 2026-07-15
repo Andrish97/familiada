@@ -32,6 +32,7 @@ main.account-wrap .bar > div {
   color: #ff9d9d;
   font-size: 13px;
 }
+.account-status .err:empty { display: none; }
 
 .account-grid {
   margin-top: 16px;
