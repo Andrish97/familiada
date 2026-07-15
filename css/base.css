@@ -27,7 +27,7 @@ html.page-loading body {
 }
 
 body {
-    transition: opacity .15s ease;
+    transition: opacity .3s ease-in;
 }
 
 body {
