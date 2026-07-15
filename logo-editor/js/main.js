@@ -1544,6 +1544,7 @@ async function boot(){
    textEditor = initTextEditor(editorCtx);
    drawEditor = initDrawEditor(editorCtx);
    imageEditor = initImageEditor(editorCtx);
+   document.documentElement.classList.remove('page-loading');
 
   // Updater - sprawdzanie nowej wersji (TYLKO RAZ)
   import('../../js/core/updater.js?v=v2026-07-15T19254').then(m => m.initUpdater()).catch(() => {});
