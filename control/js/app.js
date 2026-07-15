@@ -224,14 +224,10 @@ function applyGameSettingsToStore(settings, store) {
 }
 
 async function main() {
-  // Faza 1: auth → topbar stabilny (poprawna nazwa, bez skoku "—")
-  const currentUser = await ensureAuthOrRedirect();
-  const wrap = document.querySelector('.wrap');
-  if (wrap) wrap.classList.add('content-loading'); // content ukryty podczas ładowania gry
-  document.documentElement.classList.remove('page-loading'); // topbar widoczny
-
-  // Faza 2: dane gry
-  const game = await loadGameOrThrow();
+  const [currentUser, game] = await Promise.all([
+    ensureAuthOrRedirect(),
+    loadGameOrThrow(),
+  ]);
 
   // Inicjalizuj sfx-new: załaduj manifest + ustaw gameId
   setCurrentGameId(game.id);
@@ -807,9 +803,16 @@ async function sendZeroStatesToDevices() {
 
   }
 
-  // startowy render + subskrypcja
+  // startowy render + reveal
   renderFromState(store.state);
-  if (wrap) wrap.classList.remove('content-loading'); // Faza 2: content fade-in
+  document.documentElement.classList.remove('page-loading');
+
+  // Stagger: device rows wchodzą pojedynczo po reveal
+  document.querySelectorAll('.device-row').forEach((row, i) => {
+    row.style.animationDelay = `${i * 90}ms`;
+    row.classList.add('ctrl-enter');
+  });
+
   store.subscribe(renderFromState);
 
   // Subskrypcja na zmiany nazw drużyn - aktualizacja HUD w rundach
@@ -1510,7 +1513,6 @@ window.addEventListener("unhandledrejection", (ev) => {
 
 main().catch((e) => {
   document.documentElement.classList.remove('page-loading');
-  document.querySelector('.wrap')?.classList.remove('content-loading');
   console.error(e);
   const el = document.getElementById("msgSide");
   if (el) el.textContent = e?.message || String(e);

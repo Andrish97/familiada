@@ -1,23 +1,29 @@
 /* /familiada/control/control.css */
 
-/* ── Two-phase reveal ─────────────────────────────────────
-   Phase 1: body fades in after auth (topbar stable, no "—" jump)
-   Phase 2: .wrap fades in after game data loaded
+/* ── Smooth device-status transitions ─────────────────────
+   Dots and badges update via realtime — transitions prevent jarring jumps
 ──────────────────────────────────────────────────────────── */
-.wrap {
-  transition: opacity .3s ease-in;
-}
-.wrap.content-loading {
-  opacity: 0;
-  pointer-events: none;
-}
-
-/* Smooth device-status transitions (dots + badges in topbar and device rows) */
 .dot {
   transition: background .25s ease, border-color .25s ease, box-shadow .25s ease;
 }
 .badge {
   transition: background .25s ease, border-color .25s ease, color .25s ease;
+}
+
+/* #who: smooth when topbar-controller sets the username */
+#who {
+  transition: opacity .2s ease;
+}
+
+/* ── Stagger animation for device rows after page reveal ──
+   Each row fades+slides in individually with a delay
+──────────────────────────────────────────────────────────── */
+@keyframes ctrlEnter {
+  from { opacity: 0; transform: translateY(7px); }
+  to   { opacity: 1; transform: none; }
+}
+.device-row.ctrl-enter {
+  animation: ctrlEnter .35s ease forwards;
 }
 
 .wrap.wide{
