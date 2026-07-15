@@ -1491,5 +1491,24 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   await refresh();
+
+  // Gdy poll-qr zgłosi gotowość (POLL_QR_READY), odpowiedz aktualnym językiem
+  i18nBc?.addEventListener("message", (ev) => {
+    const d = ev?.data;
+    if (!d || d.type !== "polls:qr:ready" || !game) return;
+    const scope = `${game.id}:${game.share_key_poll}`;
+    if (d.scope && d.scope !== scope) return;
+    broadcastLang(getUiLang());
+  });
+  if (game?.id) {
+    rt(`familiada-poll-qr:${game.id}`).onBroadcast("POLL_QR_READY", (msg) => {
+      const { scope } = msg?.payload ?? {};
+      if (!game) return;
+      const myScope = `${game.id}:${game.share_key_poll}`;
+      if (scope && scope !== myScope) return;
+      broadcastLang(getUiLang());
+    });
+  }
+
   document.documentElement.classList.remove('page-loading');
 });

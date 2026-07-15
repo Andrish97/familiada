@@ -137,3 +137,12 @@ if (myGameId) {
 
 updateFsIcon();
 render(url);
+
+// Powiadom polls, że urządzenie jest gotowe — polls odpowie POLL_QR_LANG z aktualnym językiem
+if (myGameId) {
+  const readyPayload = { scope: myScope };
+  try { i18nBc?.postMessage({ type: "polls:qr:ready", ...readyPayload }); } catch {}
+  rt(`familiada-poll-qr:${myGameId}`)
+    .sendBroadcast("POLL_QR_READY", readyPayload, { mode: "http" })
+    .catch((e) => console.warn("[poll-qr] ready broadcast failed", e));
+}
