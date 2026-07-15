@@ -158,10 +158,11 @@ html:has(.landing-body) {
 }
 
 .landing-body .footer {
-    width: min(560px, 92vw);
-    margin-left: auto;
-    margin-right: auto;
+    width: 100%;
+    padding-left: max(4%, env(safe-area-inset-left));
+    padding-right: max(4%, env(safe-area-inset-right));
+    box-sizing: border-box;
 }
 .landing-body .footer::before {
-    width: 100%;
+    width: 92%;
 }

@@ -269,12 +269,13 @@ body.mode-login #pwdHint               { display: none; }
 }
 
 .login-body .footer {
-    width: min(520px, 92vw);
-    margin-left: auto;
-    margin-right: auto;
+    width: 100%;
+    padding-left: max(4%, env(safe-area-inset-left));
+    padding-right: max(4%, env(safe-area-inset-right));
+    box-sizing: border-box;
 }
 .login-body .footer::before {
-    width: 100%;
+    width: 92%;
 }
 
 @media (max-width: 600px) {
