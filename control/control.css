@@ -1041,6 +1041,7 @@
     min-height: 20px;
     display: flex
 }
+.msg-pill:empty { display: none; }
 
 .finalTimerPill {
     display: inline-flex;
