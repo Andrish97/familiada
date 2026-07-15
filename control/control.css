@@ -13,6 +13,14 @@ html.page-loading body.control-body {
   to   { opacity: 1; }
 }
 
+/* ── Topbar: locked height prevents changes when DOM is modified ──
+   setTopbarAccount / injectLanguageSwitcher insert elements while
+   sections 3+4 are invisible — without this the topbar grows visibly
+──────────────────────────────────────────────────────────── */
+body.control-body .topbar {
+  height: var(--topbar-h);
+}
+
 /* ── Topbar sections 3+4: hidden until topbar-controller finishes ──
    Prevents lang/ℹ️/#who from jumping into position after skeleton visible
 ──────────────────────────────────────────────────────────── */
@@ -27,12 +35,13 @@ html.page-loading body.control-body {
 }
 
 /* ── panelStep: hidden until renderFromState sets it ──────
-   Prevents layout shift (pushes content down when text appears)
+   min-height: 25px = line-height(13) + padding(8) + border(2)
+   reserves exact pill height so layout doesn't shift when text appears
 ──────────────────────────────────────────────────────────── */
 [data-panel-step] {
   opacity: 0;
   transition: opacity .3s ease;
-  min-height: 1em; /* reserve space so layout doesn't shift */
+  min-height: 25px;
 }
 [data-panel-step].ctrl-step-ready {
   opacity: 1;
