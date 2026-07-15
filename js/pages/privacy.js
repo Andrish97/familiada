@@ -81,6 +81,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const user = await getUser();
   setAuthUi(user);
+  document.documentElement.classList.remove('page-loading');
 
   window.addEventListener("i18n:lang", async () => {
     const u = await getUser();

@@ -696,6 +696,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const user = await requireAuth("login");
   if (isGuestUser(user)) {
     showGuestBlockedOverlay({ backHref: "builder", loginHref: "login?force_auth=1", showLoginButton: true });
+    document.documentElement.classList.remove('page-loading');
     return;
   }
   initTopbarAccountDropdown(user);
@@ -734,6 +735,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   await refreshData();
+  document.documentElement.classList.remove('page-loading');
 
   // po zamknięciu dowolnego confirm/alert w aplikacji — odśwież listy
   document.addEventListener("uni-modal:closed", () => { refreshData(); });

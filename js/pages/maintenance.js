@@ -366,6 +366,7 @@ async function refresh() {
 (async () => {
   await initI18n({ withSwitcher: true, apply: true });
   await refresh();
+  document.documentElement.classList.remove('page-loading');
   window.addEventListener("i18n:lang", () => {
     if (lastState) {
       renderState(lastState);
