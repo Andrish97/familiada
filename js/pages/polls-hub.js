@@ -1100,6 +1100,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
   initTopbarAccountDropdown(currentUser);
+  document.querySelector('.topbar')?.classList.add('topbar-ready');
 
   renderSelect(sortPollsDesktop, "polls");
   renderSelect(sortPollsMobile, "polls");
