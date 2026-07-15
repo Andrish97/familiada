@@ -97,8 +97,8 @@ Dla każdej strony: dwie zmiany — HTML (inline script) + JS (odkrycie po pełn
 ### 1.6 — connect-device.html + js/pages/connect-device.js
 **Struktura JS:** IIFE `(async () => {` od linii 340
 
-- 🔲 `connect-device.html` — inline script w `<head>`
-- 🔲 `js/pages/connect-device.js` — po linii **371** (`await renderSharedDevices()`), tuż przed `})();` (linia 373):
+- ✅ `connect-device.html` — inline script w `<head>`
+- ✅ `js/pages/connect-device.js` — po linii **371** (`await renderSharedDevices()`), tuż przed `})();` (linia 373):
   ```javascript
   document.documentElement.style.visibility = '';
   ```

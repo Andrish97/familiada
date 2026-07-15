@@ -370,4 +370,5 @@ async function startQrScan() {
     if (sharedDevicesCard) sharedDevicesCard.style.display = "";
     await renderSharedDevices();
   }
+  document.documentElement.style.visibility = '';
 })();
