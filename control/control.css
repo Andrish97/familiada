@@ -1,38 +1,9 @@
 /* /familiada/control/control.css */
 
-/* ── Control: skeleton visible immediately ─────────────────
-   Don't wait for auth+game — show skeleton structure right away.
-   base.css hides body via html.page-loading, we override that here.
+/* ── Control uses shared skel-body pattern from base.css ──
+   body.control-body also has class skel-body (see control.html)
+   Control-specific extras below.
 ──────────────────────────────────────────────────────────── */
-html.page-loading body.control-body {
-  opacity: 1;
-  animation: ctrlBodyIn .25s ease;
-}
-@keyframes ctrlBodyIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-
-/* ── Topbar: locked height prevents changes when DOM is modified ──
-   setTopbarAccount / injectLanguageSwitcher insert elements while
-   sections 3+4 are invisible — without this the topbar grows visibly
-──────────────────────────────────────────────────────────── */
-body.control-body .topbar {
-  height: var(--topbar-h);
-}
-
-/* ── Topbar sections 3+4: hidden until topbar-controller finishes ──
-   Prevents lang/ℹ️/#who from jumping into position after skeleton visible
-──────────────────────────────────────────────────────────── */
-.topbar-section-3,
-.topbar-section-4 {
-  opacity: 0;
-  transition: opacity .25s ease;
-}
-.topbar.ctrl-topbar-ready .topbar-section-3,
-.topbar.ctrl-topbar-ready .topbar-section-4 {
-  opacity: 1;
-}
 
 /* ── panelStep: hidden until renderFromState sets it ──────
    min-height: 25px = line-height(13) + padding(8) + border(2)

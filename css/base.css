@@ -50,6 +50,37 @@ body:has(.topbar) {
     padding-top: var(--topbar-h);
 }
 
+/* ── Skeleton loading pattern (shared across pages) ────────────────────────
+   Add class "skel-body" to <body> to enable.
+   JS: after auth → document.querySelector('.topbar')?.classList.add('topbar-ready')
+
+   Effect:
+   - Body appears immediately with 250ms fade (no waiting for auth+data)
+   - Topbar height is locked (DOM insertions by topbar-controller don't shift it)
+   - Topbar sections 3+4 (who, lang, buttons) hidden until auth → smooth reveal
+──────────────────────────────────────────────────────────── */
+html.page-loading body.skel-body {
+    opacity: 1;
+    animation: skelBodyIn .25s ease;
+}
+@keyframes skelBodyIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+body.skel-body .topbar {
+    height: var(--topbar-h);
+}
+body.skel-body .topbar-section-3,
+body.skel-body .topbar-section-4 {
+    opacity: 0;
+    transition: opacity .25s ease;
+}
+body.skel-body .topbar.topbar-ready .topbar-section-3,
+body.skel-body .topbar.topbar-ready .topbar-section-4 {
+    opacity: 1;
+}
+/* ─────────────────────────────────────────────────────────────────────────── */
+
 /*
   Topbar: position:fixed tak żeby zawsze był widoczny (Safari nie chowa go przy skrollu).
   padding-top: env(safe-area-inset-top) = wysokość status bara → dzieci są poniżej paska.

@@ -226,7 +226,7 @@ function applyGameSettingsToStore(settings, store) {
 async function main() {
   // Sekwencyjnie: auth najpierw → topbar-controller ustawia who/lang/ℹ️ → odsłaniamy sekcje 3+4
   const currentUser = await ensureAuthOrRedirect();
-  document.querySelector('.topbar')?.classList.add('ctrl-topbar-ready');
+  document.querySelector('.topbar')?.classList.add('topbar-ready');
 
   // Potem gra
   const game = await loadGameOrThrow();
