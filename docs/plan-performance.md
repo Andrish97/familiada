@@ -175,6 +175,88 @@ Dla każdej strony: dwie zmiany — HTML (inline script) + JS (odkrycie po pełn
 
 ---
 
+### 1.15 — account.html + js/pages/account.js
+- 🔲 `account.html` — inline script w `<head>`
+- 🔲 `js/pages/account.js` — znaleźć koniec setup, dodać odkrycie
+
+---
+
+### 1.16 — buzzer.html
+- 🔲 `buzzer.html` — inline script w `<head>`
+- 🔲 plik JS — znaleźć koniec setup, dodać odkrycie
+
+---
+
+### 1.17 — display.html
+- 🔲 `display.html` — inline script w `<head>`
+- 🔲 plik JS — znaleźć koniec setup, dodać odkrycie
+
+---
+
+### 1.18 — host.html
+- 🔲 `host.html` — inline script w `<head>`
+- 🔲 plik JS — znaleźć koniec setup, dodać odkrycie
+
+---
+
+### 1.19 — logo-editor.html
+- 🔲 `logo-editor.html` — inline script w `<head>`
+- 🔲 plik JS — znaleźć koniec setup, dodać odkrycie
+
+---
+
+### 1.20 — poll-go.html
+- 🔲 `poll-go.html` — inline script w `<head>`
+- 🔲 plik JS — znaleźć koniec setup, dodać odkrycie
+
+---
+
+### 1.21 — poll-points.html
+- 🔲 `poll-points.html` — inline script w `<head>`
+- 🔲 plik JS — znaleźć koniec setup, dodać odkrycie
+
+---
+
+### 1.22 — poll-qr.html
+- 🔲 `poll-qr.html` — inline script w `<head>`
+- 🔲 plik JS — znaleźć koniec setup, dodać odkrycie
+
+---
+
+### 1.23 — poll-text.html
+- 🔲 `poll-text.html` — inline script w `<head>`
+- 🔲 plik JS — znaleźć koniec setup, dodać odkrycie
+
+---
+
+### 1.24 — polls-hub.html
+- 🔲 `polls-hub.html` — inline script w `<head>`
+- 🔲 plik JS — znaleźć koniec setup, dodać odkrycie
+
+---
+
+### 1.25 — privacy.html
+- 🔲 `privacy.html` — inline script w `<head>`
+- 🔲 plik JS (jeśli istnieje) — znaleźć koniec setup, dodać odkrycie
+
+---
+
+### 1.26 — subscriptions.html
+- 🔲 `subscriptions.html` — inline script w `<head>`
+- 🔲 plik JS — znaleźć koniec setup, dodać odkrycie
+
+---
+
+### 1.27 — 404.html
+- 🔲 `404.html` — inline script w `<head>`, reveal od razu (strona statyczna, brak async JS)
+
+---
+
+### 1.28 — maintenance.html
+- 🔲 `maintenance.html` — inline script w `<head>`, reveal od razu (strona statyczna)
+
+---
+
 ## ETAP 2 — iOS: touch-action + pointerdown w topbarze
 
 **Problem:** `topbar-controller.js` używa `click` — na iOS 300ms opóźnienie na każde
