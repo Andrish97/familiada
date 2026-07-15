@@ -316,6 +316,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   await redirectIfSession();
   await loadRatingStats();
+  document.documentElement.classList.remove('page-loading');
 
   // Tab Title Animation (Accepted)
   const originalTitle = document.title;
