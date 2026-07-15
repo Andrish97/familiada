@@ -668,7 +668,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   bindCooldown({ key: CD.password, labelEl: passwordCooldownEl, disableEls: [pass1, pass2, savePass] });
   startCooldownTicker();
 
-  await loadProfile();
+  await loadProfile().finally(() => {
+    document.documentElement.classList.remove('page-loading');
+  });
 
   saveUsername?.addEventListener("click", handleUsernameSave);
   saveEmail?.addEventListener("click", handleEmailSave);
