@@ -66,25 +66,16 @@
       <div class="name" id="gName">—</div>
       <div class="meta" id="gMeta">—</div>
 
-      <div class="row">
-        <input class="inp" id="pollLink" readonly placeholder="Link pojawi się po uruchomieniu..." data-i18n-placeholder="polls.linkPlaceholder" />
-
-        <button class="btn sm" id="btnCopy" type="button" disabled>
-          <span class="only-desktop" data-i18n="polls.actions.copyLink">Kopiuj link</span>
-          <span class="only-mobile" data-i18n="polls.actions.copyShort">Kopiuj</span>
-        </button>
-
-        <button class="btn sm gold" id="btnOpen" type="button" disabled>
-          <span class="only-desktop" data-i18n="polls.actions.openLink">Otwórz link</span>
-          <span class="only-mobile" data-i18n="polls.actions.openShort">Otwórz</span>
-        </button>
-
-        <button class="btn sm" id="btnOpenQr" type="button" data-i18n="polls.actions.qrOnDisplay" disabled>QR na wyświetlaczu</button>
+      <div class="qrBox">
+        <div class="qrBox img" id="qr"></div>
       </div>
 
-      <div class="qrBox">
-        <div class="qrBox img" id="qr"/>
-        </div>
+      <input class="inp pollLinkInp" id="pollLink" readonly placeholder="Link pojawi się po uruchomieniu..." data-i18n-placeholder="polls.linkPlaceholder" />
+
+      <div class="row pollLinkActions">
+        <button class="btn sm" id="btnCopy" type="button" disabled data-i18n="polls.actions.copyLink">Kopiuj link</button>
+        <button class="btn sm gold" id="btnOpen" type="button" disabled data-i18n="polls.actions.openLink">Otwórz link</button>
+        <button class="btn sm" id="btnOpenQr" type="button" data-i18n="polls.actions.qrOnDisplay" disabled>QR na wyświetlaczu</button>
       </div>
 
       <div class="row">

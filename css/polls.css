@@ -339,6 +339,23 @@ body.polls-body {
   margin: 12px 0;
 }
 
+.pollLinkInp {
+  width: 100%;
+  margin-top: 8px;
+  font-weight: 900;
+  font-size: 14px;
+  letter-spacing: .02em;
+  text-align: center;
+}
+
+.pollLinkActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
 .tcTxtInp{
   width:100%;
   background:transparent;
