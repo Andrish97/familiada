@@ -432,7 +432,15 @@ async function main() {
       if (imgEl) imgEl.src = qrSrc(url);
     }
 
-    document.getElementById("qrModalOpen")?.classList.add("hidden");
+    const openBtn = document.getElementById("qrModalOpen");
+    if (openBtn) {
+      if (kind === "display") {
+        openBtn.href = url;
+        openBtn.classList.remove("hidden");
+      } else {
+        openBtn.classList.add("hidden");
+      }
+    }
 
     overlay.classList.remove("hidden");
   }
