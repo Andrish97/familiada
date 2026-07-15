@@ -504,6 +504,7 @@ main{
     color: var(--gold);
     padding: 6px 0
 }
+.importMsg:empty { display: none; }
 
 .importTa {
     width: 100%;

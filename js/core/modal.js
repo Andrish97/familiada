@@ -70,7 +70,7 @@ function buildModal({
 
   const msg = document.createElement("div");
   msg.className = "importMsg";
-  msg.textContent = "—";
+  msg.textContent = "";
 
   foot.appendChild(okBtn);
   if (showCancel) foot.appendChild(cancelBtn);
