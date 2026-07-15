@@ -36,6 +36,7 @@
     import { initI18n, t } from "/translation/translation.js?v=v2026-07-15T23423";
 
     await initI18n({ withSwitcher: false });
+    document.documentElement.classList.remove('page-loading'); // translations ready — show skeleton
 
     import("/control/js/app.js?v=v2026-07-15T23423");
   </script>

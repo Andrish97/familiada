@@ -59,9 +59,6 @@ body:has(.topbar) {
    - Topbar height is locked (DOM insertions by topbar-controller don't shift it)
    - Topbar sections 3+4 (who, lang, buttons) hidden until auth → smooth reveal
 ──────────────────────────────────────────────────────────── */
-html.page-loading body.skel-body {
-    opacity: 1;
-}
 body.skel-body .topbar {
     height: var(--topbar-h);
 }

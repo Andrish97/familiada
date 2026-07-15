@@ -8,7 +8,9 @@ import { initI18n, t, getUiLang } from "../../translation/translation.js?v=v2026
 import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-07-15T23423";
 import "../core/contact-modal.js";
 
-initI18n({ withSwitcher: true });
+initI18n({ withSwitcher: true }).then(() => {
+  document.documentElement.classList.remove('page-loading');
+});
 
 const $ = (id) => document.getElementById(id);
 

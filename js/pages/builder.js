@@ -1043,6 +1043,7 @@ async function refresh() {
 
 document.addEventListener("DOMContentLoaded", async () => {
   await initI18n({ withSwitcher: true });
+  document.documentElement.classList.remove('page-loading'); // translations ready — show skeleton
   initRatingSystem();
 
   // Blokuj autoInitTopbarAuthButton — builder wywołuje setTopbarAccount z withAccountSettings:true
@@ -1066,6 +1067,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   setTopbarAccount(currentUser, { withAccountSettings: true });
+  document.querySelector('.topbar')?.classList.add('topbar-ready');
 
   // btnInstall: widoczny gdy pwa:installable odpalił (canInstall) lub iOS Safari — nie standalone
   if (btnInstall) {
