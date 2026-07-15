@@ -47,7 +47,7 @@
         var _u = _s && (_s.user || (_s.currentSession && _s.currentSession.user));
         var _exp = _s && (_s.expires_at || (_s.currentSession && _s.currentSession.expires_at));
         if (_u && !_u.is_anonymous && (!_exp || Date.now() / 1000 < _exp + 60)) {
-          location.replace('builder.html' + location.search); break;
+          location.replace('builder' + location.search); break;
         }
       }
     } catch(_e) {}
