@@ -835,6 +835,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
   
   setStatus(t("index.statusLoggedOut"));
+  document.documentElement.classList.remove('page-loading');
 
   // Preload captcha API script only — token is fetched on first user interaction
   if (captchaSiteKey) void loadCaptchaApi();
