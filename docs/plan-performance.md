@@ -109,8 +109,8 @@ Dla każdej strony: dwie zmiany — HTML (inline script) + JS (odkrycie po pełn
 ### 1.7 — marketplace.html + js/pages/marketplace.js
 **Struktura JS:** `DOMContentLoaded` handler
 
-- 🔲 `marketplace.html` — inline script w `<head>`
-- 🔲 `js/pages/marketplace.js` — po linii **735** (`await loadBrowse({ reset: true })`), przed linią 739 (obsługa modali URL):
+- ✅ `marketplace.html` — inline script w `<head>`
+- ✅ `js/pages/marketplace.js` — po linii **735** (`await loadBrowse({ reset: true })`), przed linią 739 (obsługa modali URL):
   ```javascript
   document.documentElement.style.visibility = '';
   ```
