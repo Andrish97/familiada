@@ -224,8 +224,10 @@ function applyGameSettingsToStore(settings, store) {
 }
 
 async function main() {
-  const currentUser = await ensureAuthOrRedirect();
-  const game = await loadGameOrThrow();
+  const [currentUser, game] = await Promise.all([
+    ensureAuthOrRedirect(),
+    loadGameOrThrow(),
+  ]);
 
   // Inicjalizuj sfx-new: załaduj manifest + ustaw gameId
   setCurrentGameId(game.id);
@@ -803,6 +805,7 @@ async function sendZeroStatesToDevices() {
 
   // startowy render + subskrypcja
   renderFromState(store.state);
+  document.documentElement.classList.remove('page-loading');
   store.subscribe(renderFromState);
 
   // Subskrypcja na zmiany nazw drużyn - aktualizacja HUD w rundach
@@ -1502,6 +1505,7 @@ window.addEventListener("unhandledrejection", (ev) => {
 });
 
 main().catch((e) => {
+  document.documentElement.classList.remove('page-loading');
   console.error(e);
   const el = document.getElementById("msgSide");
   if (el) el.textContent = e?.message || String(e);
