@@ -21,7 +21,7 @@
     document.documentElement.classList.add('page-loading');
     try {
       var _p = new URLSearchParams(location.search);
-      if (!_p.get('force_auth') && !_p.get('setup') && !_p.get('next')) {
+      if (!_p.get('force_auth') && !_p.get('setup')) {
         for (var _i = 0; _i < localStorage.length; _i++) {
           var _k = localStorage.key(_i);
           if (!_k || !_k.startsWith('sb-') || !_k.endsWith('-auth-token')) continue;
@@ -29,7 +29,16 @@
           var _u = _s && (_s.user || (_s.currentSession && _s.currentSession.user));
           var _exp = _s && (_s.expires_at || (_s.currentSession && _s.currentSession.expires_at));
           if (_u && !_u.is_anonymous && (!_exp || Date.now() / 1000 < _exp + 60)) {
-            location.replace('builder' + location.search); break;
+            var _next = _p.get('next');
+            var _dest;
+            if (_next === 'polls-hub') {
+              _dest = 'polls-hub' + (_p.get('t') ? '?t=' + _p.get('t') : '');
+            } else if (_next === 'subscriptions') {
+              _dest = 'subscriptions' + (_p.get('s') ? '?s=' + _p.get('s') : '');
+            } else {
+              _dest = 'builder';
+            }
+            location.replace(_dest); break;
           }
         }
       }
