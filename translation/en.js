@@ -16,6 +16,7 @@ const en = {
     open: "Open",
     copy: "Copy",
     done: "Done",
+    loading: "Loading…",
     authEntry: "Sign in / Create account",
     logout: "Log out",
     cancel: "Cancel",
@@ -649,6 +650,8 @@ const en = {
       emailFailed: "Invite created, but email sending failed.",
       enterEmail: "Enter email or username",
       selectSubscriber: "Select subscriber",
+      roleChanged: "Role updated",
+      userNotFound: "User not found.",
     },
     badges: {
       from: "From: {name}",
@@ -4011,23 +4014,6 @@ const en = {
         createFailed: "Failed to create logo.",
       },
     },
-    errors: {
-      noMobileEdit: "Logo editing is not available on mobile devices.",
-      invalidType: "Invalid logo type.",
-      createFailedDetailed: "Logo creation failed: {error}",
-      invalidJson: "Invalid JSON file format.",
-      pixSize: "Invalid PIX size. Expected {expectedW}x{expectedH}, got {actualW}x{actualH}.",
-      missingBits: "Missing pixel data (bits_b64).",
-      unknownImportFormat: "Unknown import format.",
-      saveFailed: "Save failed.",
-      saveFailedDetailed: "Error details: {error}",
-      saveError: "Save error.",
-      fontsLoad: "Failed to load fonts.",
-      importFailedDetailed: "Import failed: {error}",
-      exportFailedDetailed: "Export failed: {error}",
-      cannotEditOldLogo: "Cannot edit logo in this format.",
-      deleteFailed: "Delete failed.",
-    },
     image: {
       pickImage: "Choose image 📁",
       brightness: "Brightness",
@@ -4142,6 +4128,8 @@ const en = {
       createFailedDetailed: "Couldn't create.\n\n{error}",
       invalidType: "Unknown logo type.",
       cannotEditOldLogo: "This logo cannot be edited.",
+      noMobileEdit: "Logo editing is not available on mobile devices.",
+      createFailed: "Failed to create logo.",
     },
     defaults: {
       logoName: "Default logo",
@@ -4865,6 +4853,7 @@ const en = {
   marketplace: {
     title: "Community Games",
     subtitle: "Browse games created by the community and add them to your library.",
+    loading: "Loading…",
     nav: {
       myGames: "← My games",
       myGamesMobile: "← 🎮",

@@ -9,8 +9,6 @@ import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-
 import { alertModal } from "../core/modal.js?v=v2026-07-15T16143";
 import "../core/contact-modal.js";
 
-initI18n({ withSwitcher: true });
-
 const btnBack             = document.getElementById("btnBack");
 const btnManual           = document.getElementById("btnManual");
 const btnScanQr           = document.getElementById("btnScanQr");
@@ -340,6 +338,7 @@ async function startQrScan() {
 
 // ── Bootstrap ──────────────────────────────────────────────────────────────────
 (async () => {
+  await initI18n({ withSwitcher: true });
   let currentUser = null;
   try { currentUser = await getUser(); } catch {}
 

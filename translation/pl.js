@@ -16,6 +16,7 @@ const pl = {
     open: "Otwórz",
     copy: "Kopiuj",
     done: "Gotowe",
+    loading: "Ładowanie…",
     authEntry: "Zaloguj / Załóż konto",
     logout: "Wyloguj",
     cancel: "Anuluj",
@@ -649,6 +650,8 @@ const pl = {
       emailFailed: "Zaproszenie utworzone, ale nie udało się wysłać maila.",
       enterEmail: "Wpisz adres email lub nazwę użytkownika",
       selectSubscriber: "Wybierz subskrybenta",
+      roleChanged: "Zmieniono rolę",
+      userNotFound: "Nie znaleziono użytkownika.",
     },
     badges: {
       from: "Od: {name}",
@@ -3893,23 +3896,6 @@ const pl = {
         createFailed: "Nie udało się utworzyć logo.",
       },
     },
-    errors: {
-      noMobileEdit: "Edycja logo nie jest dostępna na urządzeniach mobilnych.",
-      invalidType: "Nieprawidłowy typ logo.",
-      createFailedDetailed: "Tworzenie logo nie powiodło się: {error}",
-      invalidJson: "Nieprawidłowy format pliku JSON.",
-      pixSize: "Nieprawidłowy rozmiar PIX. Oczekiwano {expectedW}x{expectedH}, otrzymano {actualW}x{actualH}.",
-      missingBits: "Brak danych pikseli (bits_b64).",
-      unknownImportFormat: "Nieznany format importu.",
-      saveFailed: "Zapis nie powiódł się.",
-      saveFailedDetailed: "Szczegóły błędu: {error}",
-      saveError: "Błąd zapisu.",
-      fontsLoad: "Nie udało się wczytać fontów.",
-      importFailedDetailed: "Import nie powiódł się: {error}",
-      exportFailedDetailed: "Export nie powiódł się: {error}",
-      cannotEditOldLogo: "Nie można edytować logo w tym formacie.",
-      deleteFailed: "Usuwanie nie powiodło się.",
-    },
     image: {
       pickImage: "Wybierz obraz 📁",
       brightness: "Jasność",
@@ -4024,6 +4010,8 @@ const pl = {
       createFailedDetailed: "Nie udało się utworzyć.\n\n{error}",
       invalidType: "Nieznany typ logo.",
       cannotEditOldLogo: "To logo nie może być edytowane.",
+      noMobileEdit: "Edycja logo nie jest dostępna na urządzeniach mobilnych.",
+      createFailed: "Nie udało się utworzyć logo.",
     },
     defaults: {
       logoName: "Domyślne logo",
@@ -5151,6 +5139,7 @@ const pl = {
   marketplace: {
     title: "Gry Społeczności",
     subtitle: "Przeglądaj gry stworzone przez społeczność i dodawaj je do swojej biblioteki.",
+    loading: "Ładowanie…",
     nav: {
       myGames: "← Moje gry",
       myGamesMobile: "← 🎮",
