@@ -632,8 +632,7 @@ export function createUI() {
     $("btnDispBlack")?.addEventListener("click", () => emit("display.black"));
     $("btnQrToggle")?.addEventListener("click", () => emit("qr.toggle"));
 
-    // Nowe przyciski QR dla każdego urządzenia (otwierają modal)
-    $("btnQrDisplay")?.addEventListener("click", () => emit("qr.display.show"));
+    // Przyciski QR dla hosta i buzzera (otwierają modal)
     $("btnQrHost")?.addEventListener("click", () => emit("qr.host.show"));
     $("btnQrBuzzer")?.addEventListener("click", () => emit("qr.buzzer.show"));
 

@@ -418,7 +418,6 @@ async function main() {
     const overlay     = document.getElementById("qrModalOverlay");
     const titleEl     = document.getElementById("qrModalTitle");
     const imgEl       = document.getElementById("qrModalImg");
-    const qrWrap      = document.getElementById("qrModalQrWrap");
     const codeValEl   = document.getElementById("qrModalCodeVal");
 
     if (!overlay || !titleEl) return;
@@ -426,9 +425,7 @@ async function main() {
     titleEl.textContent = APP_MSG.QR_LABEL(kind);
     if (codeValEl) codeValEl.textContent = _deviceCodes[kind] || "——————";
 
-    // QR tylko dla hosta i buzzera — display podłącza się kodem lub "Otwórz"
-    if (qrWrap) qrWrap.style.display = kind === "display" ? "none" : "";
-    if (imgEl && kind !== "display") imgEl.src = qrSrc(url);
+    if (imgEl) imgEl.src = qrSrc(url);
 
     const openBtn = document.getElementById("qrModalOpen");
     if (openBtn) {
@@ -1038,8 +1035,7 @@ async function sendZeroStatesToDevices() {
     await syncQrDisplay();
   });
 
-  // Obsługa przycisków QR dla każdego urządzenia (otwierają modal)
-  ui.on("qr.display.show", () => showQrModal("display"));
+  // Obsługa przycisków QR dla hosta i buzzera (otwierają modal)
   ui.on("qr.host.show", () => showQrModal("host"));
   ui.on("qr.buzzer.show", () => showQrModal("buzzer"));
 
