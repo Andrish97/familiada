@@ -698,6 +698,13 @@ const pl = {
     qrFailed: "QR nie działa.",
     missingId: "Brak parametru id.",
     defaultName: "Ankieta",
+    qrModal: {
+      title: "Wyświetlacz QR",
+      hint: "familiada.online → Podłącz urządzenie → wprowadź kod",
+      copied: "Skopiowano kod.",
+      copyBtn: "Kopiuj",
+      openBtn: "Otwórz",
+    },
     actions: {
       copyLink: "Kopiuj link",
       copyShort: "Kopiuj",
@@ -3034,6 +3041,8 @@ const pl = {
     scan: "Zeskanuj QR, aby zagłosować",
     missingUrl: "Brak URL",
     qrFailed: "Nie udało się wygenerować QR",
+    loadingGame: "Ładowanie gry…",
+    missingUrlOrKey: "Brak URL lub nieprawidłowy klucz.",
   },
   pollsHub: {
     title: "Familiada — centrum ankiet",
@@ -5264,6 +5273,7 @@ const pl = {
       host: "Prowadzący",
       buzzer: "Buzzer",
       display: "Wyświetlacz",
+      pollQr: "Wyświetlacz QR",
     },
     warning: {
       mobileOnly: "Ta strona działa najlepiej na telefonie lub tablecie. Możesz kontynuować.",

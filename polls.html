@@ -134,5 +134,28 @@
       <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
     </div>
   </main>
+
+  <!-- Modal QR wyświetlacza ankiety -->
+  <div class="qrModalOverlay hidden" id="pollQrModalOverlay">
+    <div class="qrModalBox">
+      <div class="qrModalHead">
+        <div class="qrModalTitle" id="pollQrModalTitle" data-i18n="polls.qrModal.title">Wyświetlacz QR</div>
+        <button class="btn xs" id="pollQrModalClose" type="button">✕</button>
+      </div>
+      <div class="qrModalBody">
+        <div class="qrModalQr">
+          <img id="pollQrModalImg" alt="Kod QR"/>
+        </div>
+        <div class="qrModalCode">
+          <span class="qrModalCodeVal" id="pollQrModalCodeVal">——————</span>
+        </div>
+        <div class="qrModalActions">
+          <button class="btn gold" id="pollQrModalCopy" type="button" data-i18n="polls.qrModal.copyBtn">Kopiuj</button>
+          <button class="btn" id="pollQrModalOpen" type="button" data-i18n="polls.qrModal.openBtn">Otwórz</button>
+        </div>
+        <div class="qrModalCodeHint" data-i18n="polls.qrModal.hint">familiada.online → Podłącz urządzenie → wprowadź kod</div>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

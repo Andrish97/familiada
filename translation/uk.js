@@ -699,6 +699,13 @@ const uk = {
     qrFailed: "QR не працює.",
     missingId: "Немає параметра id.",
     defaultName: "Опитування",
+    qrModal: {
+      title: "QR-дисплей",
+      hint: "familiada.online → Підключити пристрій → введіть код",
+      copied: "Код скопійовано.",
+      copyBtn: "Копіювати",
+      openBtn: "Відкрити",
+    },
     actions: {
       copyLink: "Скопіювати посилання",
       copyShort: "Копіювати",
@@ -3151,6 +3158,8 @@ const uk = {
     scan: "Скануй QR, щоб проголосувати",
     missingUrl: "Немає URL",
     qrFailed: "Не вдалося згенерувати QR",
+    loadingGame: "Завантаження гри…",
+    missingUrlOrKey: "Немає URL або невірний ключ.",
   },
   pollsHub: {
     title: "Familiada — центр опитувань",
@@ -4973,7 +4982,7 @@ const uk = {
       gameNotFound: "Гру не знайдено.",
       noName: "Без назви",
     },
-    deviceType: { host: "Ведучий", buzzer: "Бузер", display: "Дисплей" },
+    deviceType: { host: "Ведучий", buzzer: "Бузер", display: "Дисплей", pollQr: "QR-дисплей" },
     warning: {
       mobileOnly: "Ця сторінка найкраще працює на телефоні або планшеті. Можна продовжити.",
       desktopOnly: "Ця сторінка найкраще працює на комп'ютері або TV. Можна продовжити.",

@@ -698,6 +698,13 @@ const en = {
     qrFailed: "QR failed.",
     missingId: "Missing id parameter.",
     defaultName: "Poll",
+    qrModal: {
+      title: "QR Display",
+      hint: "familiada.online → Connect device → enter code",
+      copied: "Code copied.",
+      copyBtn: "Copy",
+      openBtn: "Open",
+    },
     actions: {
       copyLink: "Copy link",
       copyShort: "Copy",
@@ -3161,6 +3168,8 @@ const en = {
     scan: "Scan the QR code to vote",
     missingUrl: "Missing URL",
     qrFailed: "Failed to generate QR",
+    loadingGame: "Loading game…",
+    missingUrlOrKey: "Missing URL or invalid key.",
   },
   pollsHub: {
     title: "Familiada — polls hub",
@@ -4982,7 +4991,7 @@ const en = {
       gameNotFound: "Game not found.",
       noName: "Untitled",
     },
-    deviceType: { host: "Host", buzzer: "Buzzer", display: "Display" },
+    deviceType: { host: "Host", buzzer: "Buzzer", display: "Display", pollQr: "QR Display" },
     warning: {
       mobileOnly: "This page works best on a phone or tablet. You may continue.",
       desktopOnly: "This page works best on a desktop or TV. You may continue.",

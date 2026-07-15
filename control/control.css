@@ -2412,6 +2412,11 @@
 .qrModalActions {
   display: flex;
   justify-content: center;
+  gap: 10px;
+}
+
+.qrModalActions .btn {
+  font-size: inherit;
 }
 
 .qrModalCodeHint {

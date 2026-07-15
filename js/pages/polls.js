@@ -1,5 +1,6 @@
 // js/pages/polls.js
 import { sb } from "../core/supabase.js?v=v2026-07-15T19290";
+import { rt } from "../core/realtime.js?v=v2026-07-15T19290";
 import { requireAuth } from "../core/auth.js?v=v2026-07-15T19290";
 import { alertModal, confirmModal } from "../core/modal.js?v=v2026-07-15T19290";
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
@@ -38,6 +39,16 @@ const btnOpen = $("btnOpen");
 const btnOpenQr = $("btnOpenQr");
 
 const btnPollAction = $("btnPollAction");
+
+// QR modal (wyświetlacz ankiety)
+const pollQrModalOverlay = $("pollQrModalOverlay");
+const pollQrModalImg     = $("pollQrModalImg");
+const pollQrModalCodeVal = $("pollQrModalCodeVal");
+const pollQrModalCopy    = $("pollQrModalCopy");
+const pollQrModalOpen    = $("pollQrModalOpen");
+const pollQrModalClose   = $("pollQrModalClose");
+let _pollQrDeviceCode = "";
+let _pollQrOpenUrl    = "";
 
 // “⟳ Odśwież” (fallback na stare ID, jeśli HTML jeszcze nie zmieniony)
 const btnRefreshResults = $("btnRefreshResults") || $("btnPreview");
@@ -117,16 +128,74 @@ function buildManualUrl() {
 let ppCache = null;
 // ppCache = { qsKey, ansKey, valByAnswerId, builtAt }
 
+// --- QR modal (wyświetlacz ankiety) ---
+function hidePollQrModal() {
+  if (pollQrModalOverlay) pollQrModalOverlay.classList.add("hidden");
+}
+
+async function showPollQrModal() {
+  if (!game || !pollLinkEl?.value) return;
+  _pollQrOpenUrl = pollLinkEl.value;
+  if (pollQrModalCodeVal) pollQrModalCodeVal.textContent = "——————";
+  if (pollQrModalImg) pollQrModalImg.src = "";
+  if (pollQrModalOverlay) pollQrModalOverlay.classList.remove("hidden");
+
+  try {
+    const { data, error } = await sb().rpc("generate_device_connect_code", {
+      p_game_id:     game.id,
+      p_device_type: "poll_qr",
+      p_share_key:   game.share_key_poll,
+      p_game_name:   game.name,
+    });
+    if (error || !data?.ok) throw new Error(error?.message || "RPC error");
+    _pollQrDeviceCode = data.code;
+    if (pollQrModalCodeVal) pollQrModalCodeVal.textContent = data.code;
+    if (pollQrModalImg) {
+      pollQrModalImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodeURIComponent(data.code)}&margin=10`;
+    }
+  } catch (e) {
+    console.warn("[polls] showPollQrModal error", e);
+    setMsg(t("common.genericError") || "Błąd.");
+  }
+}
+
+pollQrModalClose?.addEventListener("click", hidePollQrModal);
+pollQrModalOverlay?.addEventListener("click", (e) => {
+  if (e.target === pollQrModalOverlay) hidePollQrModal();
+});
+pollQrModalCopy?.addEventListener("click", async () => {
+  if (!_pollQrDeviceCode) return;
+  try {
+    await navigator.clipboard.writeText(_pollQrDeviceCode);
+    setMsg(t("polls.qrModal.copied"));
+  } catch {
+    setMsg(t("polls.copy.failed"));
+  }
+});
+pollQrModalOpen?.addEventListener("click", () => {
+  if (!_pollQrOpenUrl) return;
+  const u = new URL(withLangParam("poll-qr"), location.href);
+  u.searchParams.set("url", _pollQrOpenUrl);
+  window.open(u.toString(), "_blank", "noopener,noreferrer");
+});
+
 // --- i18n sync (polls -> poll-qr) ---
 const I18N_BC_NAME = "familiada:polls:qr-sync";
 const i18nBc = ("BroadcastChannel" in window) ? new BroadcastChannel(I18N_BC_NAME) : null;
 
 function broadcastLang(lang) {
+  const scope = `${game?.id || ""}:${game?.share_key_poll || ""}`;
+  // BroadcastChannel — same-browser (ten sam komputer)
   try {
-    const scope = `${game?.id || ""}:${game?.share_key_poll || ""}`;
     i18nBc?.postMessage({ type: "polls:qr:i18n", scope, lang });
   } catch (e) {
-    console.warn("[polls] i18n broadcast failed", e);
+    console.warn("[polls] i18n bc broadcast failed", e);
+  }
+  // Supabase Realtime — cross-device (np. TV)
+  if (game?.id) {
+    rt(`familiada-poll-qr:${game.id}`)
+      .sendBroadcast("POLL_QR_LANG", { lang, scope }, { mode: "http" })
+      .catch((e) => console.warn("[polls] i18n rt broadcast failed", e));
   }
 }
 
@@ -1209,11 +1278,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   btnOpenQr?.addEventListener("click", () => {
-    if (!pollLinkEl?.value) return;
-
-    const u1 = new URL(withLangParam("poll-qr"), location.href);
-    u1.searchParams.set("url", pollLinkEl.value);
-    window.open(u1.toString(), "_blank", "noopener,noreferrer");
+    showPollQrModal();
   });
 
   // ⟳ Odśwież (naprawione: zawsze pokazuje loading + błąd w meta)

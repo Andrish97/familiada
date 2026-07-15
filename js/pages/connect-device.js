@@ -35,14 +35,18 @@ function escapeHtml(s) {
 }
 
 function deviceTypeLabel(type) {
-  if (type === "host")    return t("connectDevice.deviceType.host")    || "Prowadzący";
-  if (type === "buzzer")  return t("connectDevice.deviceType.buzzer")  || "Buzzer";
-  if (type === "display") return t("connectDevice.deviceType.display") || "Wyświetlacz";
+  if (type === "host")     return t("connectDevice.deviceType.host")    || "Prowadzący";
+  if (type === "buzzer")   return t("connectDevice.deviceType.buzzer")  || "Buzzer";
+  if (type === "display")  return t("connectDevice.deviceType.display") || "Wyświetlacz";
+  if (type === "poll_qr")  return t("connectDevice.deviceType.pollQr")  || "Wyświetlacz QR";
   return type;
 }
 
 function deviceTypeEmoji(type) {
-  return type === "host" ? "🎤" : type === "buzzer" ? "🔔" : "📺";
+  if (type === "host")    return "🎤";
+  if (type === "buzzer")  return "🔔";
+  if (type === "poll_qr") return "📊";
+  return "📺";
 }
 
 const _isMobile = isMobileDevice();
@@ -94,8 +98,12 @@ btnDevicePreviewConnect?.addEventListener("click", () => {
   if (!_previewDeviceInfo) return;
   const info = _previewDeviceInfo;
   hideDevicePreview();
-  const page = info.device_type === "display" ? "display" : info.device_type;
-  window.location.href = `/${page}?id=${info.game_id}&key=${info.share_key}`;
+  if (info.device_type === "poll_qr") {
+    window.location.href = `poll-qr?id=${info.game_id}&key=${info.share_key}`;
+  } else {
+    const page = info.device_type === "display" ? "display" : info.device_type;
+    window.location.href = `/${page}?id=${info.game_id}&key=${info.share_key}`;
+  }
 });
 
 // ── Code input ─────────────────────────────────────────────────────────────────
