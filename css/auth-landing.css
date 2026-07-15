@@ -159,10 +159,16 @@ html:has(.landing-body) {
 
 .landing-body .footer {
     width: 100%;
-    padding-left: max(4%, env(safe-area-inset-left));
-    padding-right: max(4%, env(safe-area-inset-right));
+    padding-left: max(18px, env(safe-area-inset-left));
+    padding-right: max(18px, env(safe-area-inset-right));
     box-sizing: border-box;
 }
 .landing-body .footer::before {
     width: 92%;
+}
+@media (max-width: 900px) {
+    .landing-body .footer {
+        padding-left: max(15px, env(safe-area-inset-left));
+        padding-right: max(15px, env(safe-area-inset-right));
+    }
 }
