@@ -1,17 +1,25 @@
 /* /familiada/control/control.css */
 
-/* ── Smooth realtime status transitions ────────────────────
-   Dots and badges change color via realtime — transitions prevent jarring jumps
+/* ── Control: skeleton visible immediately ─────────────────
+   Don't wait for auth+game — show skeleton structure right away.
+   base.css hides body via html.page-loading, we override that here.
 ──────────────────────────────────────────────────────────── */
-.dot {
-  transition: background .25s ease, border-color .25s ease, box-shadow .25s ease;
+html.page-loading body.control-body {
+  opacity: 1;
+  animation: ctrlBodyIn .25s ease;
 }
-.badge {
-  transition: background .25s ease, border-color .25s ease, color .25s ease;
+@keyframes ctrlBodyIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
-/* ── Device dots (top-status): hidden until realtime ready ─
-   Fade in after page reveal + realtime connects (~500ms)
+/* #who: invisible in skeleton, fades in after auth sets username */
+#who {
+  opacity: 0;
+  transition: opacity .25s ease;
+}
+
+/* ── Device dots: hidden until realtime connects (~500ms) ──
 ──────────────────────────────────────────────────────────── */
 .top-status {
   opacity: 0;
@@ -19,6 +27,15 @@
 }
 .top-status.ctrl-dots-ready {
   opacity: 1;
+}
+
+/* ── Smooth realtime status transitions ────────────────────
+──────────────────────────────────────────────────────────── */
+.dot {
+  transition: background .25s ease, border-color .25s ease, box-shadow .25s ease;
+}
+.badge {
+  transition: background .25s ease, border-color .25s ease, color .25s ease;
 }
 
 .wrap.wide{

@@ -803,11 +803,15 @@ async function sendZeroStatesToDevices() {
 
   }
 
-  // startowy render + reveal
+  // startowy render
   renderFromState(store.state);
-  document.documentElement.classList.remove('page-loading');
+  document.documentElement.classList.remove('page-loading'); // no visual effect — body already visible via CSS override
 
-  // Kropeczki statusów wchodzą po reveal — po czasie dającym realtime na połączenie
+  // #who: auth już ustawił username, teraz odsłaniamy
+  const whoEl = document.getElementById('who');
+  if (whoEl) whoEl.style.opacity = '1';
+
+  // Kropeczki: czekamy na realtime (~500ms)
   setTimeout(() => {
     document.querySelector('.top-status')?.classList.add('ctrl-dots-ready');
   }, 500);
