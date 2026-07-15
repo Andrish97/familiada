@@ -1,7 +1,7 @@
 // /familiada/js/pages/controlui.js
 
-import { t } from "../../translation/translation.js?v=v2026-07-15T22582";
-import { initUiSelect } from "../../js/core/ui-select.js?v=v2026-07-15T22582";
+import { t } from "../../translation/translation.js?v=v2026-07-15T23043";
+import { initUiSelect } from "../../js/core/ui-select.js?v=v2026-07-15T23043";
 
 // ================== KOMUNIKATY (UI) ==================
 const UI_MSG = {
