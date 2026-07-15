@@ -49,8 +49,8 @@ Dla każdej strony: dwie zmiany — HTML (inline script) + JS (odkrycie po pełn
 ### 1.2 — bases.html + js/pages/bases.js
 **Struktura JS:** IIFE `(async function init() {` od linii 1606
 
-- 🔲 `bases.html` — inline script w `<head>`
-- 🔲 `js/pages/bases.js` — po linii **1704** (`setButtonsState(...)`), tuż przed zamknięciem IIFE (linia 1705 `})();`):
+- ✅ `bases.html` — inline script w `<head>`
+- ✅ `js/pages/bases.js` — po linii **1704** (`setButtonsState(...)`), tuż przed zamknięciem IIFE (linia 1705 `})();`):
   ```javascript
   document.documentElement.style.visibility = '';
   ```

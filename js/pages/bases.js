@@ -1702,4 +1702,5 @@ async function refreshAltBadge() {
     }
   }
   setButtonsState();
+  document.documentElement.style.visibility = '';
 })();
