@@ -701,7 +701,7 @@ const en = {
     qrModal: {
       title: "QR Display",
       subtitle: "Code to connect the display — not for voting",
-      hint: "Scan QR with TV/projector camera or go to familiada.online → Connect device → enter code",
+      hint: "Go to familiada.online → Connect device → enter code",
       copied: "Code copied.",
       copyBtn: "Copy",
       openBtn: "Open",
@@ -1496,18 +1496,9 @@ const en = {
         The <span class="m-code">QR on display</span> button opens a modal with two elements:
       </p>
       <ul class="m-ul">
-        <li><span class="m-strong">QR code</span> — a direct link to the poll display page.
-          Scan it with your TV or projector camera and the device will automatically
-          open the page showing participants the voting QR code.</li>
         <li><span class="m-strong">6-digit code</span> — enter it on the
           <span class="m-code">Connect device</span> page to manually link a TV or second screen.</li>
       </ul>
-
-      <div class="m-note">
-        <b>Two different QR codes — don't confuse them:</b><br/>
-        • <b>Small QR on the poll page</b> — encodes the voting link (for participants with phones)<br/>
-        • <b>QR in the "QR on display" modal</b> — encodes the display page link (for TV/projector)
-      </div>
 
       <h3 class="m-h2">Poll flow</h3>
     

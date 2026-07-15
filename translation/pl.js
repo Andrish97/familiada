@@ -701,7 +701,7 @@ const pl = {
     qrModal: {
       title: "Wyświetlacz QR",
       subtitle: "Kod do podłączenia wyświetlacza — nie do głosowania",
-      hint: "Zeskanuj QR aparatem TV/rzutnika lub wejdź na familiada.online → Podłącz urządzenie → wprowadź kod",
+      hint: "Wejdź na familiada.online → Podłącz urządzenie → wprowadź kod",
       copied: "Skopiowano kod.",
       copyBtn: "Kopiuj",
       openBtn: "Otwórz",
@@ -1496,18 +1496,9 @@ const pl = {
         Przycisk <span class="m-code">QR na wyświetlaczu</span> otwiera modal z dwoma elementami:
       </p>
       <ul class="m-ul">
-        <li><span class="m-strong">Kod QR</span> — bezpośredni link do strony wyświetlacza ankiety.
-          Zeskanuj go kamerą telewizora lub rzutnika, a urządzenie automatycznie
-          przejdzie na stronę pokazującą uczestnikom kod QR do głosowania.</li>
         <li><span class="m-strong">6-cyfrowy kod</span> — wpisz go na stronie
           <span class="m-code">Podłącz urządzenie</span>, aby ręcznie połączyć TV lub drugi ekran.</li>
       </ul>
-
-      <div class="m-note">
-        <b>Dwa różne kody QR — nie mylić:</b><br/>
-        • <b>Mały QR na stronie ankiety</b> — koduje link do głosowania (dla uczestników z telefonami)<br/>
-        • <b>QR w modalu „QR na wyświetlaczu"</b> — koduje link do wyświetlacza ankiety (dla TV/rzutnika)
-      </div>
 
       <h3 class="m-h2">Przebieg ankiety</h3>
     
