@@ -13,10 +13,29 @@ html.page-loading body.control-body {
   to   { opacity: 1; }
 }
 
-/* #who: invisible in skeleton, fades in after auth sets username */
-#who {
+/* ── Topbar sections 3+4: hidden until topbar-controller finishes ──
+   Prevents lang/ℹ️/#who from jumping into position after skeleton visible
+──────────────────────────────────────────────────────────── */
+.topbar-section-3,
+.topbar-section-4 {
   opacity: 0;
   transition: opacity .25s ease;
+}
+.topbar.ctrl-topbar-ready .topbar-section-3,
+.topbar.ctrl-topbar-ready .topbar-section-4 {
+  opacity: 1;
+}
+
+/* ── panelStep: hidden until renderFromState sets it ──────
+   Prevents layout shift (pushes content down when text appears)
+──────────────────────────────────────────────────────────── */
+[data-panel-step] {
+  opacity: 0;
+  transition: opacity .3s ease;
+  min-height: 1em; /* reserve space so layout doesn't shift */
+}
+[data-panel-step].ctrl-step-ready {
+  opacity: 1;
 }
 
 /* ── Device dots: hidden until realtime connects (~500ms) ──

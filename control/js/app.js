@@ -224,10 +224,12 @@ function applyGameSettingsToStore(settings, store) {
 }
 
 async function main() {
-  const [currentUser, game] = await Promise.all([
-    ensureAuthOrRedirect(),
-    loadGameOrThrow(),
-  ]);
+  // Sekwencyjnie: auth najpierw → topbar-controller ustawia who/lang/ℹ️ → odsłaniamy sekcje 3+4
+  const currentUser = await ensureAuthOrRedirect();
+  document.querySelector('.topbar')?.classList.add('ctrl-topbar-ready');
+
+  // Potem gra
+  const game = await loadGameOrThrow();
 
   // Inicjalizuj sfx-new: załaduj manifest + ustaw gameId
   setCurrentGameId(game.id);
@@ -805,11 +807,10 @@ async function sendZeroStatesToDevices() {
 
   // startowy render
   renderFromState(store.state);
-  document.documentElement.classList.remove('page-loading'); // no visual effect — body already visible via CSS override
+  document.documentElement.classList.remove('page-loading');
 
-  // #who: auth już ustawił username, teraz odsłaniamy
-  const whoEl = document.getElementById('who');
-  if (whoEl) whoEl.style.opacity = '1';
+  // panelStep ustawiony przez renderFromState — teraz odsłaniamy
+  document.querySelectorAll('[data-panel-step]').forEach(el => el.classList.add('ctrl-step-ready'));
 
   // Kropeczki: czekamy na realtime (~500ms)
   setTimeout(() => {
