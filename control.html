@@ -16,6 +16,9 @@
   <link rel="stylesheet" href="/css/base.css?v=v2026-07-15T16424"/>
   <link rel="stylesheet" href="/control/control.css?v=v2026-07-15T16424"/>
 
+  <script>if(matchMedia('(max-width:980px)').matches)document.documentElement.dataset.mobileGuard=''</script>
+  <style>html[data-mobile-guard]{overflow:hidden;touch-action:none}html[data-mobile-guard] body{visibility:hidden}</style>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script src="js/core/security-warning.js?v=v2026-07-15T16424" defer></script>
   <script type="module">

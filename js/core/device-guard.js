@@ -122,6 +122,8 @@ export function guardDesktopOnly({
     overlay.style.display = on ? "flex" : "none";
     lockScroll(on);
     if (on) applyTranslations(overlay);
+    // Usuń wczesną blokadę (inline script w <head>) — guard przejął kontrolę
+    document.documentElement.removeAttribute("data-mobile-guard");
   }
 
   // reaguj na zmianę języka globalnie
