@@ -39,6 +39,7 @@ Dla każdej strony: dwie zmiany — HTML (inline script) + JS (odkrycie po pełn
   ```html
   <script>document.documentElement.classList.add('page-loading')</script>
   ```
+- ✅ `builder.html` — instant redirect: brak sesji → login (inline script w `<head>`)
 - ✅ `js/pages/builder.js` — po linii **1766** (`startAutoRefresh()`), na końcu handlera DOMContentLoaded:
   ```javascript
   document.documentElement.classList.remove('page-loading');
@@ -51,6 +52,7 @@ Dla każdej strony: dwie zmiany — HTML (inline script) + JS (odkrycie po pełn
 **Struktura JS:** IIFE `(async function init() {` od linii 1606
 
 - ✅ `bases.html` — inline script w `<head>`
+- ✅ `bases.html` — instant redirect: brak sesji → login
 - ✅ `js/pages/bases.js` — po linii **1704** (`setButtonsState(...)`), tuż przed zamknięciem IIFE (linia 1705 `})();`):
   ```javascript
   document.documentElement.classList.remove('page-loading');
@@ -63,6 +65,7 @@ Dla każdej strony: dwie zmiany — HTML (inline script) + JS (odkrycie po pełn
 **Struktura JS:** `DOMContentLoaded` handler
 
 - ✅ `polls.html` — inline script w `<head>`
+- ✅ `polls.html` — instant redirect: brak sesji → login
 - ✅ `js/pages/polls.js` — po linii **1421** (`await refresh()`), na końcu handlera:
   ```javascript
   document.documentElement.classList.remove('page-loading');
@@ -75,6 +78,7 @@ Dla każdej strony: dwie zmiany — HTML (inline script) + JS (odkrycie po pełn
 **Struktura JS:** `boot()` async function, wywoływana z `DOMContentLoaded` (linia 1218)
 
 - ✅ `editor.html` — inline script w `<head>`
+- ✅ `editor.html` — instant redirect: brak sesji → login
 - ✅ `js/pages/editor.js` — po linii **1203** (`renderEditor()`), przed końcem funkcji `boot()` (linia 1216):
   ```javascript
   document.documentElement.classList.remove('page-loading');
@@ -87,6 +91,7 @@ Dla każdej strony: dwie zmiany — HTML (inline script) + JS (odkrycie po pełn
 **Struktura JS:** `main()` async function, wywoływana na dole pliku (linia 1739)
 
 - ✅ `game-settings.html` — inline script w `<head>` (oprócz już istniejącego mobile guard)
+- ✅ `game-settings.html` — instant redirect: brak sesji → login
 - ✅ `js/pages/game-settings.js` — po linii **1731** (`setActiveCat("teams")`), tuż przed końcem funkcji `main()` (linia 1737):
   ```javascript
   document.documentElement.classList.remove('page-loading');
@@ -128,37 +133,27 @@ Dla każdej strony: dwie zmiany — HTML (inline script) + JS (odkrycie po pełn
 ---
 
 ### 1.9 — index.html + js/pages/index.js
-**Struktura JS:** `DOMContentLoaded` handler
-
-- 🔲 `index.html` — inline script w `<head>`
-- 🔲 `js/pages/index.js` — po linii **318** (`await loadRatingStats()`), przed linią 337 (teaser handlery):
-  ```javascript
-  document.documentElement.classList.remove('page-loading');
-  ```
-  *Dlaczego tu:* po `initI18n` (303) → `initPipeline` + `initImageViewer` (314-315) → `redirectIfSession` (317, może przenieść na login) → `loadRatingStats()` (318, wypełnia DOM). Strona gotowa.
+- ✅ `index.html` — inline script page-loading + instant redirect zalogowany → builder (localStorage)
+- ✅ `js/pages/index.js` — reveal po `loadRatingStats()`, `redirectIfSession` przeniesiony na pierwszą pozycję
 
 ---
 
 ### 1.10 — login.html + js/pages/login.js
-**Struktura JS:** `DOMContentLoaded` handler
-
-- 🔲 `login.html` — inline script w `<head>`
-- 🔲 `js/pages/login.js` — po linii **807** (`await getUser()`) i warunkowej logice (linie 819-837), zanim zacznę bindować event listenery (linia 840):
-  ```javascript
-  document.documentElement.classList.remove('page-loading');
-  ```
-  *Dlaczego tu:* po `initI18n` (782) → `applyMode()` (789, ustawia tryb login/register) → `getUser` (807) → logika redirect/render (819-837). Login gotowy do wyświetlenia.
+- ✅ `login.html` — inline script page-loading + instant redirect zalogowany → builder/polls-hub/subscriptions (localStorage, z obsługą ?next, ?t, ?s)
+- ✅ `js/pages/login.js` — reveal po `setStatus(t("index.statusLoggedOut"))`
 
 ---
 
 ### 1.11 — base-explorer.html + base-explorer/js/page.js
 - 🔲 `base-explorer.html` — inline script w `<head>`
+- 🔲 `base-explorer.html` — instant redirect: brak sesji → login (jeśli używa requireAuth)
 - 🔲 `base-explorer/js/page.js` — przeczytać plik, znaleźć koniec setup, dodać odkrycie
 
 ---
 
 ### 1.12 — manual.html
 - 🔲 `manual.html` — ma już inline script (linie 19-30 — modal detection). Dodać FOUC script jako **pierwszy** w `<head>`, przed wszystkim
+- 🔲 `manual.html` — instant redirect: brak sesji → login (używa requireAuth)
 - 🔲 `js/pages/manual.js` — znaleźć koniec setup, dodać odkrycie
 
 ---
@@ -177,6 +172,7 @@ Dla każdej strony: dwie zmiany — HTML (inline script) + JS (odkrycie po pełn
 
 ### 1.15 — account.html + js/pages/account.js
 - 🔲 `account.html` — inline script w `<head>`
+- 🔲 `account.html` — instant redirect: brak sesji → login (używa requireAuth)
 - 🔲 `js/pages/account.js` — znaleźć koniec setup, dodać odkrycie
 
 ---
@@ -231,6 +227,7 @@ Dla każdej strony: dwie zmiany — HTML (inline script) + JS (odkrycie po pełn
 
 ### 1.24 — polls-hub.html
 - 🔲 `polls-hub.html` — inline script w `<head>`
+- 🔲 `polls-hub.html` — instant redirect: brak sesji → login (używa requireAuth)
 - 🔲 plik JS — znaleźć koniec setup, dodać odkrycie
 
 ---
@@ -243,6 +240,7 @@ Dla każdej strony: dwie zmiany — HTML (inline script) + JS (odkrycie po pełn
 
 ### 1.26 — subscriptions.html
 - 🔲 `subscriptions.html` — inline script w `<head>`
+- 🔲 `subscriptions.html` — instant redirect: brak sesji → login (używa requireAuth)
 - 🔲 plik JS — znaleźć koniec setup, dodać odkrycie
 
 ---

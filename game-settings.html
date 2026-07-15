@@ -17,8 +17,17 @@
   <script>if(new URLSearchParams(location.search).get("modal")==="1")document.documentElement.classList.add("gs-modal-mode");</script>
   <script>if(matchMedia('(max-width:980px)').matches)document.documentElement.dataset.mobileGuard=''</script>
   <style>html[data-mobile-guard]{overflow:hidden;touch-action:none}html[data-mobile-guard] body{visibility:hidden}</style>
-  <script>document.documentElement.classList.add('page-loading')</script>
-
+  <script>
+    document.documentElement.classList.add('page-loading');
+    try {
+      var _has = false;
+      for (var _i = 0; _i < localStorage.length; _i++) {
+        var _k = localStorage.key(_i);
+        if (_k && _k.startsWith('sb-') && _k.endsWith('-auth-token')) { _has = true; break; }
+      }
+      if (!_has) location.replace('login');
+    } catch(_e) {}
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script src="js/core/security-warning.js?v=v2026-07-15T18504" defer></script>
   <script type="module">
