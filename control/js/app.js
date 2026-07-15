@@ -807,11 +807,10 @@ async function sendZeroStatesToDevices() {
   renderFromState(store.state);
   document.documentElement.classList.remove('page-loading');
 
-  // Stagger: device rows wchodzą pojedynczo po reveal
-  document.querySelectorAll('.device-row').forEach((row, i) => {
-    row.style.animationDelay = `${i * 90}ms`;
-    row.classList.add('ctrl-enter');
-  });
+  // Kropeczki statusów wchodzą po reveal — po czasie dającym realtime na połączenie
+  setTimeout(() => {
+    document.querySelector('.top-status')?.classList.add('ctrl-dots-ready');
+  }, 500);
 
   store.subscribe(renderFromState);
 

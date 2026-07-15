@@ -1,7 +1,7 @@
 /* /familiada/control/control.css */
 
-/* ── Smooth device-status transitions ─────────────────────
-   Dots and badges update via realtime — transitions prevent jarring jumps
+/* ── Smooth realtime status transitions ────────────────────
+   Dots and badges change color via realtime — transitions prevent jarring jumps
 ──────────────────────────────────────────────────────────── */
 .dot {
   transition: background .25s ease, border-color .25s ease, box-shadow .25s ease;
@@ -10,20 +10,15 @@
   transition: background .25s ease, border-color .25s ease, color .25s ease;
 }
 
-/* #who: smooth when topbar-controller sets the username */
-#who {
-  transition: opacity .2s ease;
-}
-
-/* ── Stagger animation for device rows after page reveal ──
-   Each row fades+slides in individually with a delay
+/* ── Device dots (top-status): hidden until realtime ready ─
+   Fade in after page reveal + realtime connects (~500ms)
 ──────────────────────────────────────────────────────────── */
-@keyframes ctrlEnter {
-  from { opacity: 0; transform: translateY(7px); }
-  to   { opacity: 1; transform: none; }
+.top-status {
+  opacity: 0;
+  transition: opacity .4s ease;
 }
-.device-row.ctrl-enter {
-  animation: ctrlEnter .35s ease forwards;
+.top-status.ctrl-dots-ready {
+  opacity: 1;
 }
 
 .wrap.wide{
