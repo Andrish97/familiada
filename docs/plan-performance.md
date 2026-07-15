@@ -61,8 +61,8 @@ Dla każdej strony: dwie zmiany — HTML (inline script) + JS (odkrycie po pełn
 ### 1.3 — polls.html + js/pages/polls.js
 **Struktura JS:** `DOMContentLoaded` handler
 
-- 🔲 `polls.html` — inline script w `<head>`
-- 🔲 `js/pages/polls.js` — po linii **1421** (`await refresh()`), na końcu handlera:
+- ✅ `polls.html` — inline script w `<head>`
+- ✅ `js/pages/polls.js` — po linii **1421** (`await refresh()`), na końcu handlera:
   ```javascript
   document.documentElement.style.visibility = '';
   ```
