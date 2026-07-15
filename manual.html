@@ -31,6 +31,20 @@
 
   <link rel="stylesheet" href="css/base.css?v=v2026-07-15T19043" />
   <link rel="stylesheet" href="css/manual.css?v=v2026-07-15T19043" />
+  <script>
+    document.documentElement.classList.add('page-loading');
+    try {
+      var _modal = new URLSearchParams(location.search).get('modal');
+      if (!_modal || _modal === 'false') {
+        var _has = false;
+        for (var _i = 0; _i < localStorage.length; _i++) {
+          var _k = localStorage.key(_i);
+          if (_k && _k.startsWith('sb-') && _k.endsWith('-auth-token')) { _has = true; break; }
+        }
+        if (!_has) location.replace('login');
+      }
+    } catch(_e) {}
+  </script>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script type="module" src="js/pages/manual.js?v=v2026-07-15T19043" defer></script>

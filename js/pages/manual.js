@@ -185,9 +185,12 @@ wireTabs();
 updateBackButtonLabel();
 wireFallbackNav();
 
-wireAuthSoft().catch((err) => {
-  console.warn("[manual] auth nieaktywny:", err);
-});
+wireAuthSoft()
+  .then(() => document.documentElement.classList.remove('page-loading'))
+  .catch((err) => {
+    document.documentElement.classList.remove('page-loading');
+    console.warn("[manual] auth nieaktywny:", err);
+  });
 
 
 window.addEventListener("i18n:lang", () => {
