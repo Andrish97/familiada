@@ -1043,17 +1043,20 @@ async function refresh() {
 
 document.addEventListener("DOMContentLoaded", async () => {
   await initI18n({ withSwitcher: true });
-  document.documentElement.classList.remove('page-loading'); // translations ready — show skeleton
-  initRatingSystem();
 
   // Blokuj autoInitTopbarAuthButton — builder wywołuje setTopbarAccount z withAccountSettings:true
   const _btnLogoutEl = document.getElementById('btnLogout');
   if (_btnLogoutEl) _btnLogoutEl.dataset.topbarAuthReady = '1';
 
+  // Nav priority BEFORE remove('page-loading') — recalc via RAF fires before first paint,
+  // so user never sees buttons jump from "all visible" to "some in Więcej"
   const { recalc: _navRecalc } = setTopbarNavPriority({
     moreEl: document.getElementById('navMore'),
     moreDropdownEl: document.getElementById('navMoreDropdown'),
   });
+
+  document.documentElement.classList.remove('page-loading'); // translations ready — show skeleton
+  initRatingSystem();
 
   currentUser = await requireAuth("login");
   const guestMode = isGuestUser(currentUser);
