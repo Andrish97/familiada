@@ -1493,7 +1493,7 @@ const en = {
       <h3 class="m-h2">QR on display (TV / projector)</h3>
 
       <p class="m-p">
-        The <span class="m-code">QR on display</span> button opens a modal with two elements:
+        The <span class="m-code">QR on display</span> button opens a modal with the device code:
       </p>
       <ul class="m-ul">
         <li><span class="m-strong">6-digit code</span> — enter it on the

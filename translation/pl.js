@@ -1493,7 +1493,7 @@ const pl = {
       <h3 class="m-h2">QR na wyświetlaczu (TV / rzutnik)</h3>
 
       <p class="m-p">
-        Przycisk <span class="m-code">QR na wyświetlaczu</span> otwiera modal z dwoma elementami:
+        Przycisk <span class="m-code">QR na wyświetlaczu</span> otwiera modal z kodem urządzenia:
       </p>
       <ul class="m-ul">
         <li><span class="m-strong">6-cyfrowy kod</span> — wpisz go na stronie
