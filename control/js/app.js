@@ -389,6 +389,11 @@ async function main() {
   let currentQrKind = null; // "display" | "host" | "buzzer"
   const _deviceCodes = { display: null, host: null, buzzer: null };
 
+  function qrSrc(url) {
+    const u = encodeURIComponent(String(url ?? ""));
+    return `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${u}`;
+  }
+
   function getDeviceUrl(kind) {
     if (!window || !kind) return null;
     if (!devices || !devices.getUrls) return null;
@@ -412,12 +417,18 @@ async function main() {
 
     const overlay     = document.getElementById("qrModalOverlay");
     const titleEl     = document.getElementById("qrModalTitle");
+    const imgEl       = document.getElementById("qrModalImg");
+    const qrWrap      = document.getElementById("qrModalQrWrap");
     const codeValEl   = document.getElementById("qrModalCodeVal");
 
     if (!overlay || !titleEl) return;
 
     titleEl.textContent = APP_MSG.QR_LABEL(kind);
     if (codeValEl) codeValEl.textContent = _deviceCodes[kind] || "——————";
+
+    // QR tylko dla hosta i buzzera — display podłącza się kodem lub "Otwórz"
+    if (qrWrap) qrWrap.style.display = kind === "display" ? "none" : "";
+    if (imgEl && kind !== "display") imgEl.src = qrSrc(url);
 
     const openBtn = document.getElementById("qrModalOpen");
     if (openBtn) {
