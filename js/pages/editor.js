@@ -1202,7 +1202,7 @@ async function boot() {
   renderQuestions();
   renderEditor();
   setMsg("");
-  document.documentElement.style.opacity = '';
+  document.documentElement.classList.remove('page-loading');
 
   window.addEventListener("resize", () => {
     syncMobileEditingState();

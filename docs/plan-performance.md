@@ -15,11 +15,11 @@ potem JS go przebudowuje — wygląda to brzydko.
 1. W `css/base.css` — płynne pojawianie się (`html { transition: opacity .15s ease; }`)
 2. W `<head>` każdej strony — inline script chowający całą stronę:
    ```html
-   <script>document.documentElement.style.opacity='0'</script>
+   <script>document.documentElement.classList.add('page-loading')</script>
    ```
 3. W JS każdej strony — odkrycie PO ZAKOŃCZENIU PEŁNEGO SETUP (auth + render danych):
    ```javascript
-   document.documentElement.style.opacity = '';
+   document.documentElement.classList.remove('page-loading');
    ```
    **Ważne:** odkrycie NIE po `initI18n`, tylko po OSTATNIEJ operacji inicjalizacyjnej
    (po wyrenderowaniu danych, ustawieniu topbara, obsłużeniu trybów guest/auth).
@@ -37,11 +37,11 @@ Dla każdej strony: dwie zmiany — HTML (inline script) + JS (odkrycie po pełn
 
 - ✅ `builder.html` — dodać przed `</head>`:
   ```html
-  <script>document.documentElement.style.opacity='0'</script>
+  <script>document.documentElement.classList.add('page-loading')</script>
   ```
 - ✅ `js/pages/builder.js` — po linii **1766** (`startAutoRefresh()`), na końcu handlera DOMContentLoaded:
   ```javascript
-  document.documentElement.style.opacity = '';
+  document.documentElement.classList.remove('page-loading');
   ```
   *Dlaczego tu:* linia 1766 to ostatnia operacja po `initI18n` (1045) → `requireAuth` (1057) → `setTopbarAccount` (1068) → `refresh()` (1743, renduje grid gier). Po tym strona jest w pełni gotowa.
 
@@ -53,7 +53,7 @@ Dla każdej strony: dwie zmiany — HTML (inline script) + JS (odkrycie po pełn
 - ✅ `bases.html` — inline script w `<head>`
 - ✅ `js/pages/bases.js` — po linii **1704** (`setButtonsState(...)`), tuż przed zamknięciem IIFE (linia 1705 `})();`):
   ```javascript
-  document.documentElement.style.opacity = '';
+  document.documentElement.classList.remove('page-loading');
   ```
   *Dlaczego tu:* po `requireAuth` (1607) → `initTopbarAccountDropdown` (1615) → `refreshBases()` (1642) → `render()` (1643) → `setButtonsState` (1704). Strona wyrenderowana.
 
@@ -65,7 +65,7 @@ Dla każdej strony: dwie zmiany — HTML (inline script) + JS (odkrycie po pełn
 - ✅ `polls.html` — inline script w `<head>`
 - ✅ `js/pages/polls.js` — po linii **1421** (`await refresh()`), na końcu handlera:
   ```javascript
-  document.documentElement.style.opacity = '';
+  document.documentElement.classList.remove('page-loading');
   ```
   *Dlaczego tu:* po `requireAuth` (1151) → `initTopbarAccountDropdown` (1152) → `refresh()` (1421, ładuje dane i renduje). Strona gotowa.
 
@@ -77,7 +77,7 @@ Dla każdej strony: dwie zmiany — HTML (inline script) + JS (odkrycie po pełn
 - ✅ `editor.html` — inline script w `<head>`
 - ✅ `js/pages/editor.js` — po linii **1203** (`renderEditor()`), przed końcem funkcji `boot()` (linia 1216):
   ```javascript
-  document.documentElement.style.opacity = '';
+  document.documentElement.classList.remove('page-loading');
   ```
   *Dlaczego tu:* po `requireAuth` (495) → załadowanie pytań (1197-1200) → `renderQuestions()` + `renderEditor()` (1202-1203). Edytor wyrenderowany.
 
@@ -89,7 +89,7 @@ Dla każdej strony: dwie zmiany — HTML (inline script) + JS (odkrycie po pełn
 - ✅ `game-settings.html` — inline script w `<head>` (oprócz już istniejącego mobile guard)
 - ✅ `js/pages/game-settings.js` — po linii **1731** (`setActiveCat("teams")`), tuż przed końcem funkcji `main()` (linia 1737):
   ```javascript
-  document.documentElement.style.opacity = '';
+  document.documentElement.classList.remove('page-loading');
   ```
   *Dlaczego tu:* po `requireAuth` (1521) → `setTopbarAccount` (1522) → `mergeSettings` (1596) → `initColorModal` (1678) → `setActiveCat("teams")` (1731, pierwszy render `#gsContentInner`). Sidebar + treść wyrenderowane.
 
@@ -101,7 +101,7 @@ Dla każdej strony: dwie zmiany — HTML (inline script) + JS (odkrycie po pełn
 - ✅ `connect-device.html` — inline script w `<head>`
 - ✅ `js/pages/connect-device.js` — po linii **371** (`await renderSharedDevices()`), tuż przed `})();` (linia 373):
   ```javascript
-  document.documentElement.style.opacity = '';
+  document.documentElement.classList.remove('page-loading');
   ```
   *Dlaczego tu:* po `initI18n` (341) → `getUser` (343) → `initTopbarAccountDropdown` (349) → aktualizacja tekstów (360-362) → `renderSharedDevices()` (371, warunkowy render listy urządzeń). Strona gotowa.
 
@@ -113,7 +113,7 @@ Dla każdej strony: dwie zmiany — HTML (inline script) + JS (odkrycie po pełn
 - ✅ `marketplace.html` — inline script w `<head>`
 - ✅ `js/pages/marketplace.js` — po linii **735** (`await loadBrowse({ reset: true })`), przed linią 739 (obsługa modali URL):
   ```javascript
-  document.documentElement.style.opacity = '';
+  document.documentElement.classList.remove('page-loading');
   ```
   *Dlaczego tu:* po `initI18n` (702) → `getUser` (704) → `initTopbarAccountDropdown` (708) → `showView("browse")` (734) → `loadBrowse()` (735, ładuje i renduje gry). Marketplace wyrenderowany.
 
@@ -133,7 +133,7 @@ Dla każdej strony: dwie zmiany — HTML (inline script) + JS (odkrycie po pełn
 - 🔲 `index.html` — inline script w `<head>`
 - 🔲 `js/pages/index.js` — po linii **318** (`await loadRatingStats()`), przed linią 337 (teaser handlery):
   ```javascript
-  document.documentElement.style.opacity = '';
+  document.documentElement.classList.remove('page-loading');
   ```
   *Dlaczego tu:* po `initI18n` (303) → `initPipeline` + `initImageViewer` (314-315) → `redirectIfSession` (317, może przenieść na login) → `loadRatingStats()` (318, wypełnia DOM). Strona gotowa.
 
@@ -145,7 +145,7 @@ Dla każdej strony: dwie zmiany — HTML (inline script) + JS (odkrycie po pełn
 - 🔲 `login.html` — inline script w `<head>`
 - 🔲 `js/pages/login.js` — po linii **807** (`await getUser()`) i warunkowej logice (linie 819-837), zanim zacznę bindować event listenery (linia 840):
   ```javascript
-  document.documentElement.style.opacity = '';
+  document.documentElement.classList.remove('page-loading');
   ```
   *Dlaczego tu:* po `initI18n` (782) → `applyMode()` (789, ustawia tryb login/register) → `getUser` (807) → logika redirect/render (819-837). Login gotowy do wyświetlenia.
 
@@ -432,10 +432,10 @@ Użytkownik nie wie czy coś się dzieje.
 ### 7.2 — control.html + app.js: visibility:hidden jak inne strony
 
 - 🔲 `control.html` — sprawdzić czy już ma `visibility:hidden` (ma mobile guard ale nie FOUC fix)
-- 🔲 Jeśli nie — inline script `document.documentElement.style.opacity='0'`
+- 🔲 Jeśli nie — inline script `document.documentElement.classList.add('page-loading')`
 - 🔲 `control/js/app.js` — po linii **800** (`renderFromState(store.state)`):
   ```javascript
-  document.documentElement.style.opacity = '';
+  document.documentElement.classList.remove('page-loading');
   ```
   *Punkt odkrycia:* linia 800 to pierwszy render UI — topbar ustawiony, karta urządzeń widoczna, przyciski w prawidłowym stanie.
 

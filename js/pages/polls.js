@@ -1419,5 +1419,5 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   await refresh();
-  document.documentElement.style.opacity = '';
+  document.documentElement.classList.remove('page-loading');
 });

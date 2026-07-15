@@ -1729,7 +1729,7 @@ async function main() {
   else sendDisplayInitCmds();
 
   setActiveCat("teams");
-  document.documentElement.style.opacity = '';
+  document.documentElement.classList.remove('page-loading');
 
   window.addEventListener("i18n:lang", () => {
     resolveThemeLabels();

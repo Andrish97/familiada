@@ -6599,5 +6599,5 @@ function wireEvents() {
   } else {
     showAuth("settings.login.accessRequired");
   }
-  document.documentElement.style.opacity = '';
+  document.documentElement.classList.remove('page-loading');
 })();

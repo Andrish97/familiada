@@ -1764,5 +1764,5 @@ document.addEventListener("DOMContentLoaded", async () => {
     else startAutoRefresh();
   });
   startAutoRefresh();
-  document.documentElement.style.opacity = '';
+  document.documentElement.classList.remove('page-loading');
 });

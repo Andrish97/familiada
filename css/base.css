@@ -20,6 +20,13 @@ html, body {
 html {
     min-height: 100dvh;
     background: #050914;
+}
+
+html.page-loading body {
+    opacity: 0;
+}
+
+body {
     transition: opacity .15s ease;
 }
 

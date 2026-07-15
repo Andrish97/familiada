@@ -733,7 +733,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   showView("browse");
   await loadBrowse({ reset: true });
-  document.documentElement.style.opacity = '';
+  document.documentElement.classList.remove('page-loading');
 
   // Otwórz modal jeśli URL to /marketplace/game/[slug-or-uuid]
   const pathParts = location.pathname.split("/");
