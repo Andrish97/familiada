@@ -3069,7 +3069,7 @@ const pl = {
       subscriptions: "Subskrypcje",
       tasks: "Zadania",
       subscribersMobile: "Subskryb.",
-      subscriptionsMobile: "Subskryp.",
+      subscriptionsMobile: "Subskrypc.",
     },
     sections: {
       myPolls: "Moje ankiety",
@@ -3303,7 +3303,7 @@ const pl = {
       subscriptions: "Subskrypcje",
       tasks: "Zadania",
       subscribersMobile: "Subskryb.",
-      subscriptionsMobile: "Subskryp.",
+      subscriptionsMobile: "Subskrypc.",
     },
     sections: {
       myPolls: "Moje ankiety",
@@ -3538,7 +3538,7 @@ const pl = {
       subscriptions: "Subskrypcje",
       tasks: "Zadania",
       subscribersMobile: "Subskryb.",
-      subscriptionsMobile: "Subskryp.",
+      subscriptionsMobile: "Subskrypc.",
     },
     sections: {
       myPolls: "Moje ankiety",

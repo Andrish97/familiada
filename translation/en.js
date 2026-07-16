@@ -3195,8 +3195,8 @@ const en = {
       polls: "Polls",
       subscriptions: "Subscriptions",
       tasks: "Tasks",
-      subscribersMobile: "Subs.",
-      subscriptionsMobile: "Subs.",
+      subscribersMobile: "Followers",
+      subscriptionsMobile: "Following",
     },
     sections: {
       myPolls: "My polls",
@@ -3429,8 +3429,8 @@ const en = {
       polls: "Polls",
       subscriptions: "Subscriptions",
       tasks: "Tasks",
-      subscribersMobile: "Subs.",
-      subscriptionsMobile: "Subs.",
+      subscribersMobile: "Followers",
+      subscriptionsMobile: "Following",
     },
     sections: {
       myPolls: "My polls",
@@ -3664,8 +3664,8 @@ const en = {
       polls: "Polls",
       subscriptions: "Subscriptions",
       tasks: "Tasks",
-      subscribersMobile: "Subs.",
-      subscriptionsMobile: "Subs.",
+      subscribersMobile: "Followers",
+      subscriptionsMobile: "Following",
     },
     sections: {
       myPolls: "My polls",

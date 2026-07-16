@@ -3185,8 +3185,8 @@ const uk = {
       polls: "Опитування",
       subscriptions: "Підписки",
       tasks: "Завдання",
-      subscribersMobile: "Підпис.",
-      subscriptionsMobile: "Підпис.",
+      subscribersMobile: "Підписники",
+      subscriptionsMobile: "Підписки",
     },
     sections: {
       myPolls: "Мої опитування",
@@ -3419,8 +3419,8 @@ const uk = {
       polls: "Опитування",
       subscriptions: "Підписки",
       tasks: "Завдання",
-      subscribersMobile: "Підпис.",
-      subscriptionsMobile: "Підпис.",
+      subscribersMobile: "Підписники",
+      subscriptionsMobile: "Підписки",
     },
     sections: {
       myPolls: "Мої опитування",
@@ -3654,8 +3654,8 @@ const uk = {
       polls: "Опитування",
       subscriptions: "Підписки",
       tasks: "Завдання",
-      subscribersMobile: "Підпис.",
-      subscriptionsMobile: "Підпис.",
+      subscribersMobile: "Підписники",
+      subscriptionsMobile: "Підписки",
     },
     sections: {
       myPolls: "Мої опитування",

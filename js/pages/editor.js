@@ -8,7 +8,7 @@ import { initI18n, t } from "../../translation/translation.js?v=v2026-07-16T2132
 import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-07-16T21324";
 import "../core/contact-modal.js";
 
-initI18n({ withSwitcher: true });
+// initI18n + remove('page-loading') są w boot() — przed requireAuth, żeby body pojawiło się przed auth/danymi
 
 const MSG = {
   defaultGameName: () => t("editor.defaultGameName"),
@@ -491,9 +491,14 @@ function setTxtImportProgress({ step, i, n, msg, isError } = {}) {
 
 /* ================= Boot ================= */
 async function boot() {
+  /* ---------- i18n + early body reveal ---------- */
+  await initI18n({ withSwitcher: true });
+  document.documentElement.classList.remove('page-loading');
+
   /* ---------- auth/topbar ---------- */
   const user = await requireAuth("login");
   initTopbarAccountDropdown(user);
+  document.querySelector('.topbar')?.classList.add('topbar-ready');
 
 
   const btnBack = $("btnBack");
@@ -1202,7 +1207,7 @@ async function boot() {
   renderQuestions();
   renderEditor();
   setMsg("");
-  document.documentElement.classList.remove('page-loading');
+  document.querySelectorAll('[data-skel-step]').forEach(el => el.classList.add('skel-step-ready'));
 
   window.addEventListener("resize", () => {
     syncMobileEditingState();
