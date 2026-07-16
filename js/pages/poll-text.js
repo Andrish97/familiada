@@ -3,7 +3,9 @@ import { sb } from "../core/supabase.js?v=v2026-07-16T23063";
 import { getUser } from "../core/auth.js?v=v2026-07-16T23063";
 import { initI18n, t } from "../../translation/translation.js?v=v2026-07-16T23063";
 
-initI18n({ withSwitcher: true });
+initI18n({ withSwitcher: true }).then(() => {
+  document.documentElement.classList.remove('page-loading');
+});
 
 const MSG = {
   thanks: () => t("pollText.thanks"),
@@ -415,7 +417,5 @@ document.addEventListener("DOMContentLoaded", async () => {
     console.error("[poll-text] init error:", e);
     setSub(MSG.openPollFail(e?.message || e));
     showClosed(true);
-  } finally {
-    document.documentElement.classList.remove('page-loading');
   }
 });
