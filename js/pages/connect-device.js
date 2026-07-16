@@ -348,6 +348,8 @@ async function startQrScan() {
 // ── Bootstrap ──────────────────────────────────────────────────────────────────
 (async () => {
   await initI18n({ withSwitcher: true });
+  document.documentElement.classList.remove('page-loading');
+
   let currentUser = null;
   try { currentUser = await getUser(); } catch {}
 
@@ -357,6 +359,7 @@ async function startQrScan() {
   if (isLoggedIn) {
     initTopbarAccountDropdown(currentUser);
   }
+  document.querySelector('.topbar')?.classList.add('topbar-ready');
 
   btnBack?.addEventListener("click", () => {
     location.href = (isLoggedIn && !guestMode)
@@ -379,5 +382,4 @@ async function startQrScan() {
     if (sharedDevicesCard) sharedDevicesCard.style.display = "";
     await renderSharedDevices();
   }
-  document.documentElement.classList.remove('page-loading');
 })();
