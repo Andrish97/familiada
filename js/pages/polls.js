@@ -1181,8 +1181,8 @@ async function refresh() {
       resetPreviewDomCache();
       await Promise.all([previewResults(), validatePromise]);
     } catch (e) {
-      console.warn(“[polls] previewResults in refresh failed”, e);
-      setResultsMeta(t(“polls.results.refreshFailed”));
+      console.warn('[polls] previewResults in refresh failed', e);
+      setResultsMeta(t('polls.results.refreshFailed'));
     }
   }
 
