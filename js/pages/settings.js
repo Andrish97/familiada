@@ -5855,6 +5855,8 @@ function wireEvents() {
 
 (async () => {
   await initI18n({ withSwitcher: true, apply: true });
+  document.documentElement.classList.remove('page-loading');
+  document.querySelector('.topbar')?.classList.add('topbar-ready');
 
   applyDateOrderByLang();
   applyModalLabels();
@@ -6599,5 +6601,4 @@ function wireEvents() {
   } else {
     showAuth("settings.login.accessRequired");
   }
-  document.documentElement.classList.remove('page-loading');
 })();
