@@ -6,6 +6,7 @@ import { alertModal } from "../core/modal.js?v=v2026-07-16T22505";
 
 initI18n({ withSwitcher: true }).then(() => {
   document.documentElement.classList.remove('page-loading');
+  document.querySelector('.topbar')?.classList.add('topbar-ready');
 });
 
 const MSG = {
