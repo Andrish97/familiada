@@ -8,7 +8,7 @@ import { initI18n, t, withLangParam, getUiLang } from "../../translation/transla
 import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-07-16T22183";
 import "../core/contact-modal.js";
 
-initI18n({ withSwitcher: true });
+// initI18n is called at the start of DOMContentLoaded (see below)
 
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
@@ -1220,8 +1220,12 @@ async function refresh() {
 ======================= */
 
 document.addEventListener("DOMContentLoaded", async () => {
+  await initI18n({ withSwitcher: true });
+  document.documentElement.classList.remove('page-loading');
+
   const u = await requireAuth("login");
   initTopbarAccountDropdown(u);
+  document.querySelector('.topbar')?.classList.add('topbar-ready');
 
   if (btnBack) {
     btnBack.textContent = getRetPathnameLower().endsWith("/polls-hub") ? t("polls.backToHub") : t("polls.backToGames");
@@ -1506,5 +1510,4 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  document.documentElement.classList.remove('page-loading');
 });
