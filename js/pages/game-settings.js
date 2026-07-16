@@ -1521,13 +1521,14 @@ async function main() {
     return;
   }
 
-  // Load game + saved settings
-  const { data: game, error: gameErr } = await sb()
-    .from("games")
-    .select("id,name,settings")
-    .eq("id", gameId)
-    .single();
+  // Load game, themes and questions in parallel
+  const [gameResult, themesJson, questionsList] = await Promise.all([
+    sb().from("games").select("id,name,settings").eq("id", gameId).single(),
+    fetch("/display/js/themes.json").then(r => r.json()).catch(() => ({ themes: [] })),
+    loadQuestions(gameId).catch(() => []),
+  ]);
 
+  const { data: game, error: gameErr } = gameResult;
   if (gameErr || !game) {
     if (content) content.innerHTML = `<p style="color:red;padding:20px">${escText(t("gameSettings.loadError"))}${escText(gameErr?.message || t("gameSettings.unknownError"))}</p>`;
     return;
@@ -1598,13 +1599,8 @@ async function main() {
     }
   }
 
-  // Load themes list
-  try {
-    const res = await fetch("/display/js/themes.json");
-    const json = await res.json();
-    themeRaw = json.themes || [];
-    resolveThemeLabels();
-  } catch {}
+  themeRaw = themesJson.themes || [];
+  allQuestions = questionsList;
 
   function resolveThemeLabels() {
     const lang = getUiLang() || "pl";
@@ -1614,10 +1610,7 @@ async function main() {
     }));
   }
 
-  // Load all questions for pickers
-  try {
-    allQuestions = await loadQuestions(gameId);
-  } catch {}
+  resolveThemeLabels();
 
   // Show "Graj" button if game has questions — only outside modal mode
   if (btnPlay && !isModal) {
