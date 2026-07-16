@@ -12,7 +12,9 @@ import { getUiLang, initI18n, t } from "../../translation/translation.js?v=v2026
 import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-07-16T21320";
 import "../core/contact-modal.js";
 
-initI18n({ withSwitcher: true });
+initI18n({ withSwitcher: true }).then(() => {
+  document.documentElement.classList.remove('page-loading');
+});
 
 /* ================= DOM ================= */
 const mineGrid = document.getElementById("mineGrid");
@@ -1613,6 +1615,7 @@ async function refreshAltBadge() {
     sessionStorage.setItem("basesMobileTab", "mine");
   }
   initTopbarAccountDropdown(currentUser);
+  document.querySelector('.topbar')?.classList.add('topbar-ready');
 
   // mobile tabs
   if (basesTabsMobile) {
@@ -1641,6 +1644,7 @@ async function refreshAltBadge() {
     
   await refreshBases();
   render();
+  document.querySelectorAll('[data-skel-step]').forEach(el => el.classList.add('skel-step-ready'));
 
   // auto refresh jak w polls-hub
   document.addEventListener("visibilitychange", () => {
@@ -1702,5 +1706,4 @@ async function refreshAltBadge() {
     }
   }
   setButtonsState();
-  document.documentElement.classList.remove('page-loading');
 })();
