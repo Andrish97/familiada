@@ -34,7 +34,7 @@
   <script src="js/core/security-warning.js?v=v2026-07-15T23571" defer></script>
 </head>
 
-<body class="polls-hub-body">
+<body class="polls-hub-body skel-body">
   <header class="topbar topbar-layout-4">
     <div class="topbar-section topbar-section-1">
       <div class="brand">FAMILIADA</div>
@@ -62,12 +62,12 @@
       <div class="card hub-card">
         <div class="hub-tab-panel active" id="panelSubs">
           <div class="hub-grid">
-            <section class="hub-col">
+            <section class="hub-col" data-skel-step>
               <div class="hub-col-head"><div><div class="hub-col-title" data-i18n="pollsHubSubscriptions.sections.mySubscribers">Moi subskrybenci</div><div class="hub-col-hint" data-i18n="pollsHubSubscriptions.sections.subscribersHint">Zaproś nowych i zarządzaj zaproszeniami.</div></div><div class="hub-controls"><div class="ui-select" id="sortSubscribersDesktop"><button class="ui-select-btn inp sm" type="button"><span class="ui-select-label">—</span><span class="ui-select-caret">▾</span></button><div class="ui-select-menu" role="listbox"></div></div><div class="hub-toggle" data-kind="subscribers"><button class="btn xs btn-toggle" data-toggle="current" data-i18n="pollsHubSubscriptions.toggle.current">Aktualne</button><button class="btn xs btn-toggle" data-toggle="archive" data-i18n="pollsHubSubscriptions.toggle.archive">Archiwalne</button></div></div></div>
               <div class="hub-invite"><input class="inp" id="inviteInputDesktop" placeholder="Email lub nazwa użytkownika" data-i18n-placeholder="pollsHubSubscriptions.invite.placeholder"/><button class="btn xs gold" id="btnInviteDesktop" type="button" data-i18n="pollsHubSubscriptions.invite.button">Zaproś</button></div>
               <div class="hub-list" id="subscribersListDesktop"></div>
             </section>
-            <section class="hub-col">
+            <section class="hub-col" data-skel-step>
               <div class="hub-col-head"><div><div class="hub-col-title" data-i18n="pollsHubSubscriptions.sections.mySubscriptions">Moje subskrypcje</div><div class="hub-col-hint" data-i18n="pollsHubSubscriptions.sections.subscriptionsHint">Akceptuj zaproszenia od innych.</div></div><div class="hub-controls"><div class="ui-select" id="sortSubscriptionsDesktop"><button class="ui-select-btn inp sm" type="button"><span class="ui-select-label">—</span><span class="ui-select-caret">▾</span></button><div class="ui-select-menu" role="listbox"></div></div><div class="hub-toggle" data-kind="subscriptions"><button class="btn xs btn-toggle" data-toggle="current" data-i18n="pollsHubSubscriptions.toggle.current">Aktualne</button><button class="btn xs btn-toggle" data-toggle="archive" data-i18n="pollsHubSubscriptions.toggle.archive">Archiwalne</button></div></div></div>
               <div class="hub-list" id="subscriptionsListDesktop"></div>
             </section>
@@ -83,12 +83,12 @@
           <div class="tab-slot slot-mobile-subscriptions"><button class="tab-label" id="tabSubscriptionsMobile" type="button"><span data-i18n="pollsHubSubscriptions.tabs.subscriptionsMobile">Subskryp.</span><span class="hub-tab-badge is-empty" data-badge="subs"></span></button><div class="tab-wrapper"><div class="tab-active"><span data-i18n="pollsHubSubscriptions.tabs.subscriptionsMobile">Subskryp.</span></div><div class="tab-corner tab-corner-left"></div><div class="tab-corner tab-corner-right"></div></div></div>
         </div>
         <div class="card hub-card">
-          <div class="hub-tab-panel hub-mobile-panel" id="panelSubscribersMobile">
+          <div class="hub-tab-panel hub-mobile-panel" id="panelSubscribersMobile" data-skel-step>
             <div class="hub-col-head"><div><div class="hub-col-title" data-i18n="pollsHubSubscriptions.sections.mySubscribers">Moi subskrybenci</div><div class="hub-col-hint" data-i18n="pollsHubSubscriptions.sections.subscribersHint">Zaproś nowych i zarządzaj zaproszeniami.</div></div><div class="hub-controls"><div class="ui-select" id="sortSubscribersMobile"><button class="ui-select-btn inp sm" type="button"><span class="ui-select-label">—</span><span class="ui-select-caret">▾</span></button><div class="ui-select-menu" role="listbox"></div></div><div class="hub-toggle" data-kind="subscribers"><button class="btn xs btn-toggle" data-toggle="current" data-i18n="pollsHubSubscriptions.toggle.current">Aktualne</button><button class="btn xs btn-toggle" data-toggle="archive" data-i18n="pollsHubSubscriptions.toggle.archive">Archiwalne</button></div></div></div>
             <div class="hub-invite"><input class="inp" id="inviteInputMobile" placeholder="Email lub nazwa użytkownika" data-i18n-placeholder="pollsHubSubscriptions.invite.placeholder"/><button class="btn xs gold" id="btnInviteMobile" type="button" data-i18n="pollsHubSubscriptions.invite.button">Zaproś</button></div>
             <div class="hub-list" id="subscribersListMobile"></div>
           </div>
-          <div class="hub-tab-panel hub-mobile-panel" id="panelSubscriptionsMobile">
+          <div class="hub-tab-panel hub-mobile-panel" id="panelSubscriptionsMobile" data-skel-step>
             <div class="hub-col-head"><div><div class="hub-col-title" data-i18n="pollsHubSubscriptions.sections.mySubscriptions">Moje subskrypcje</div><div class="hub-col-hint" data-i18n="pollsHubSubscriptions.sections.subscriptionsHint">Akceptuj zaproszenia od innych.</div></div><div class="hub-controls"><div class="ui-select" id="sortSubscriptionsMobile"><button class="ui-select-btn inp sm" type="button"><span class="ui-select-label">—</span><span class="ui-select-caret">▾</span></button><div class="ui-select-menu" role="listbox"></div></div><div class="hub-toggle" data-kind="subscriptions"><button class="btn xs btn-toggle" data-toggle="current" data-i18n="pollsHubSubscriptions.toggle.current">Aktualne</button><button class="btn xs btn-toggle" data-toggle="archive" data-i18n="pollsHubSubscriptions.toggle.archive">Archiwalne</button></div></div></div>
             <div class="hub-list" id="subscriptionsListMobile"></div>
           </div>

@@ -7,7 +7,9 @@ import { getUiLang, initI18n, t } from "../../translation/translation.js?v=v2026
 import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-07-15T23571";
 import "../core/contact-modal.js";
 
-initI18n({ withSwitcher: true });
+initI18n({ withSwitcher: true }).then(() => {
+  document.documentElement.classList.remove('page-loading');
+});
 
 const $ = (id) => document.getElementById(id);
 
@@ -695,11 +697,12 @@ function getBackLink() {
 document.addEventListener("DOMContentLoaded", async () => {
   const user = await requireAuth("login");
   if (isGuestUser(user)) {
+    document.querySelector('.topbar')?.classList.add('topbar-ready');
     showGuestBlockedOverlay({ backHref: "builder", loginHref: "login?force_auth=1", showLoginButton: true });
-    document.documentElement.classList.remove('page-loading');
     return;
   }
   initTopbarAccountDropdown(user);
+  document.querySelector('.topbar')?.classList.add('topbar-ready');
 
   renderSelect(sortAD, "subscribers");
   renderSelect(sortAM, "subscribers");
@@ -735,7 +738,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   await refreshData();
-  document.documentElement.classList.remove('page-loading');
+  document.querySelectorAll('[data-skel-step]').forEach(el => el.classList.add('skel-step-ready'));
 
   // po zamknięciu dowolnego confirm/alert w aplikacji — odśwież listy
   document.addEventListener("uni-modal:closed", () => { refreshData(); });

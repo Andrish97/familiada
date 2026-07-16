@@ -71,6 +71,17 @@ body.skel-body .topbar.topbar-ready .topbar-section-3,
 body.skel-body .topbar.topbar-ready .topbar-section-4 {
     opacity: 1;
 }
+/* ── Slow-content reveal (individual elements) ─────────────────────────────
+   Add data-skel-step to any element that loads slowly (after auth or data fetch).
+   JS: after data ready → el.classList.add('skel-step-ready')
+──────────────────────────────────────────────────────────── */
+[data-skel-step] {
+    opacity: 0;
+    transition: opacity .3s ease;
+}
+[data-skel-step].skel-step-ready {
+    opacity: 1;
+}
 /* ─────────────────────────────────────────────────────────────────────────── */
 
 /*
