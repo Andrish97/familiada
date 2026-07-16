@@ -50,7 +50,7 @@ const pollQrModalClose   = $("pollQrModalClose");
 let _pollQrDeviceCode = "";
 let _pollQrOpenUrl    = "";
 
-// “⟳ Odśwież” (fallback na stare ID, jeśli HTML jeszcze nie zmieniony)
+// '⟳ Odśwież' (fallback na stare ID, jeśli HTML jeszcze nie zmieniony)
 const btnRefreshResults = $("btnRefreshResults") || $("btnPreview");
 
 const resultsCard = $("resultsCard");
@@ -286,7 +286,7 @@ function setChips(g) {
     else chipStatus.classList.add("bad");
   }
 
-  // hintTop – bez “g.desc”, bo go nie ma
+  // hintTop – bez 'g.desc', bo go nie ma
   if (hintTop) hintTop.textContent = "";
 }
 
@@ -620,7 +620,7 @@ async function validateCanClose(g) {
 }
 
 /* =======================
-   Wyniki (zawsze widoczne) — bez “Перегляд наживо”
+   Wyniki (zawsze widoczne) — bez 'Перегляд наживо'
 ======================= */
 
 function buildPollPointsPreviewDom(qsList, ansByQ) {
@@ -730,7 +730,7 @@ async function previewResults() {
     return;
   }
 
-  // LIVE (w trakcie): meta ma być PUSTE (usuwa “Перегляд наживо:”)
+  // LIVE (w trakcie): meta ma być PUSTE (usuwa 'Перегляд наживо:')
   if (game.type === TYPES.POLL_POINTS) {
     const ansByQ = new Map();
     for (const q of qsList) {
@@ -837,7 +837,7 @@ function clip17Final(s) {
   return t1.length > 17 ? t1.slice(0, 17) : t1;
 }
 
-// normalizacja “klasyczna” dla text-close (z Twojej wersji)
+// normalizacja 'klasyczna' dla text-close (z Twojej wersji)
 function normalizeTo100Int(items) {
   const normalized = normalizeCountsTo100(items);
   if (!normalized.length) return [];
@@ -1190,38 +1190,38 @@ async function refresh() {
   const chk = await validatePromise;
 
   if (game.type === TYPES.PREPARED) {
-    setActionButton(t(“polls.actions.noPoll”), true, t(“polls.meta.prepared”));
+    setActionButton(t('polls.actions.noPoll'), true, t('polls.meta.prepared'));
     return;
   }
 
   if (st === STATUS.DRAFT) {
     setActionButton(
-      t(“polls.actions.openPoll”),
+      t('polls.actions.openPoll'),
       !chk.ok,
-      chk.ok ? t(“polls.actions.openReady”) : chk.reason
+      chk.ok ? t('polls.actions.openReady') : chk.reason
     );
     return;
   }
 
   if (st === STATUS.POLL_OPEN) {
     setActionButton(
-      t(“polls.actions.closePoll”),
+      t('polls.actions.closePoll'),
       !chk.ok,
-      chk.ok ? t(“polls.actions.closeReady”) : chk.reason
+      chk.ok ? t('polls.actions.closeReady') : chk.reason
     );
     return;
   }
 
   if (st === STATUS.READY) {
     setActionButton(
-      t(“polls.actions.reopenPoll”),
+      t('polls.actions.reopenPoll'),
       !chk.ok,
-      chk.ok ? t(“polls.actions.reopenHint”) : chk.reason
+      chk.ok ? t('polls.actions.reopenHint') : chk.reason
     );
     return;
   }
 
-  setActionButton(“”, true, t(“polls.actions.unknownStatus”));
+  setActionButton('', true, t('polls.actions.unknownStatus'));
 }
 
 /* =======================
