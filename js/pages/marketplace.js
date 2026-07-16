@@ -700,12 +700,14 @@ function wireEvents() {
 ========================================================= */
 document.addEventListener("DOMContentLoaded", async () => {
   await initI18n({ withSwitcher: true });
+  document.documentElement.classList.remove('page-loading');
 
   currentUser = await getUser();
   isGuest = !currentUser || isGuestUser(currentUser);
 
   // Topbar — user info (account dropdown)
   initTopbarAccountDropdown(currentUser, { showAuthEntry: false });
+  document.querySelector('.topbar')?.classList.add('topbar-ready');
 
   if (!currentUser) {
     // Anonim: zmień przycisk powrotu na "← Strona główna", ukryj zbędne przyciski
@@ -733,7 +735,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   showView("browse");
   await loadBrowse({ reset: true });
-  document.documentElement.classList.remove('page-loading');
+  document.getElementById('browseGrid')?.classList.add('skel-step-ready');
 
   // Otwórz modal jeśli URL to /marketplace/game/[slug-or-uuid]
   const pathParts = location.pathname.split("/");
