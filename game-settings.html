@@ -33,10 +33,11 @@
   <script type="module">
     import { initI18n } from "/translation/translation.js?v=v2026-07-16T21564";
     await initI18n({ withSwitcher: true });
+    document.documentElement.classList.remove('page-loading');
     import("/js/pages/game-settings.js?v=v2026-07-16T21564");
   </script>
 </head>
-<body class="gs-body">
+<body class="gs-body skel-body">
   <header class="topbar topbar-layout-4">
     <div class="topbar-section topbar-section-1">
       <div class="brand">FAMILIADA</div>
@@ -98,7 +99,7 @@
     </nav>
 
     <main class="gs-content" id="gsContent">
-      <div id="gsContentInner"><!-- rendered by JS --></div>
+      <div id="gsContentInner" data-skel-step><!-- rendered by JS --></div>
       <div id="gsDisplayIframeHolder" class="display-preview" style="display:none"></div>
     </main>
 
