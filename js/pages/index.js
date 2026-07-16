@@ -304,6 +304,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (redirected) return;
 
   await initI18n({ withSwitcher: true });
+  document.documentElement.classList.remove('page-loading');
+  document.querySelector('.topbar')?.classList.add('topbar-ready');
   initRatingSystem();
   applyTranslations();
 
@@ -318,7 +320,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   initImageViewer();
 
   await loadRatingStats();
-  document.documentElement.classList.remove('page-loading');
 
   // Tab Title Animation (Accepted)
   const originalTitle = document.title;
