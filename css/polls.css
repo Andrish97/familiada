@@ -305,6 +305,10 @@ body.polls-body {
     background: rgba(120,200,255,.16);
 }
 
+#resultsMeta {
+    min-height: 1.4em;
+}
+
 #resultsList {
     display: grid;
     gap: 12px

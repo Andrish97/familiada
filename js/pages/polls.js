@@ -1102,9 +1102,11 @@ function renderTextCloseFromModel() {
 
 function setActionButton(label, disabled, hint) {
   if (btnPollAction) {
-    btnPollAction.textContent = label || "—";
+    btnPollAction.textContent = label || "";
     btnPollAction.disabled = !!disabled;
+    btnPollAction.style.visibility = '';
   }
+  if (btnRefreshResults) btnRefreshResults.style.visibility = '';
   if (hintTop) hintTop.textContent = hint || "";
 }
 

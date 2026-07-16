@@ -63,8 +63,8 @@
     </div>
 
     <div class="card" id="cardMain" style="display:none;">
-      <div class="name" id="gName">—</div>
-      <div class="meta" id="gMeta">—</div>
+      <div class="name" id="gName"></div>
+      <div class="meta" id="gMeta"></div>
 
       <div class="qrBox">
         <div class="qrBox img" id="qr"></div>
@@ -79,9 +79,9 @@
       </div>
 
       <div class="row">
-        <button class="btn sm gold" id="btnPollAction" type="button">—</button>
+        <button class="btn sm gold" id="btnPollAction" type="button" style="visibility:hidden"></button>
         <button class="btn sm" id="btnCancelTextCloseTop" type="button" style="display:none;" data-i18n="polls.actions.cancel">Anuluj</button>
-        <button class="btn sm" id="btnRefreshResults" type="button">
+        <button class="btn sm" id="btnRefreshResults" type="button" style="visibility:hidden">
           <span data-i18n="polls.actions.refresh">⟳ Odśwież wyniki</span>
         </button>
       </div>
@@ -106,7 +106,7 @@
 
       <div class="card" id="resultsCard" style="display:none; margin-top:12px;">
         <div class="name" data-i18n="polls.results.title">Wyniki</div>
-        <div class="meta" id="resultsMeta">—</div>
+        <div class="meta" id="resultsMeta"></div>
         <div id="resultsList" style="margin-top:10px;"></div>
       </div>
     </div>
