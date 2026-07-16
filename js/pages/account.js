@@ -660,6 +660,7 @@ async function handleDeleteAccount() {
 
 document.addEventListener("DOMContentLoaded", async () => {
   await initI18n({ withSwitcher: true });
+  document.documentElement.classList.remove('page-loading');
   initPasswordToggles();
 
   // cooldown: server state (cross-device)
@@ -669,7 +670,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   startCooldownTicker();
 
   await loadProfile().finally(() => {
-    document.documentElement.classList.remove('page-loading');
+    document.querySelector('.topbar')?.classList.add('topbar-ready');
+    document.querySelectorAll('[data-skel-step]').forEach(el => el.classList.add('skel-step-ready'));
   });
 
   saveUsername?.addEventListener("click", handleUsernameSave);
