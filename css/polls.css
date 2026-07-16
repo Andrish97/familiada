@@ -1,5 +1,9 @@
 /* css/polls.css */
 
+#hintTop {
+    min-height: 1.4em;
+}
+
 /* ── QR modal (wyświetlacz ankiety) — współdzielone style z control ─────── */
 .qrModalOverlay {
   position: fixed;
