@@ -4,7 +4,9 @@ import { getUser } from "../core/auth.js?v=v2026-07-16T22472";
 import { initI18n, t } from "../../translation/translation.js?v=v2026-07-16T22472";
 import { alertModal } from "../core/modal.js?v=v2026-07-16T22472";
 
-initI18n({ withSwitcher: true });
+initI18n({ withSwitcher: true }).then(() => {
+  document.documentElement.classList.remove('page-loading');
+});
 
 const MSG = {
   declined: () => t("pollGo.declined"),
@@ -543,4 +545,4 @@ emailInput?.addEventListener("keydown", async (event) => {
   await subscribeByEmail();
 });
 
-init().finally(() => document.documentElement.classList.remove('page-loading'));
+init();
