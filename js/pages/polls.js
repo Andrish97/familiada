@@ -1167,54 +1167,61 @@ async function refresh() {
 
   updateRefreshButtonState();
 
-  // odśwież wyniki przy każdym refresh UI (bez “LIVE” metki)
+  // Uruchamiamy walidację i podgląd wyników równolegle — są niezależne
+  const validatePromise = (() => {
+    if (game.type === TYPES.PREPARED) return Promise.resolve(null);
+    if (st === STATUS.DRAFT)      return validateCanOpen(game);
+    if (st === STATUS.POLL_OPEN)  return validateCanClose(game);
+    if (st === STATUS.READY)      return validateCanReopen(game);
+    return Promise.resolve(null);
+  })();
+
   if (!uiTextCloseOpen) {
     try {
-      resetPreviewDomCache(); // bezpiecznie: nie zostawiaj starego DOM przy zmianach gry
-      await previewResults();
+      resetPreviewDomCache();
+      await Promise.all([previewResults(), validatePromise]);
     } catch (e) {
-      console.warn("[polls] previewResults in refresh failed", e);
-      setResultsMeta(t("polls.results.refreshFailed"));
+      console.warn(“[polls] previewResults in refresh failed”, e);
+      setResultsMeta(t(“polls.results.refreshFailed”));
     }
   }
 
-  // przycisk główny
+  // przycisk główny (validatePromise już rozwiązany)
+  const chk = await validatePromise;
+
   if (game.type === TYPES.PREPARED) {
-    setActionButton(t("polls.actions.noPoll"), true, t("polls.meta.prepared"));
+    setActionButton(t(“polls.actions.noPoll”), true, t(“polls.meta.prepared”));
     return;
   }
 
   if (st === STATUS.DRAFT) {
-    const chk = await validateCanOpen(game);
     setActionButton(
-      t("polls.actions.openPoll"),
+      t(“polls.actions.openPoll”),
       !chk.ok,
-      chk.ok ? t("polls.actions.openReady") : chk.reason
+      chk.ok ? t(“polls.actions.openReady”) : chk.reason
     );
     return;
   }
 
   if (st === STATUS.POLL_OPEN) {
-    const chk = await validateCanClose(game);
     setActionButton(
-      t("polls.actions.closePoll"),
+      t(“polls.actions.closePoll”),
       !chk.ok,
-      chk.ok ? t("polls.actions.closeReady") : chk.reason
+      chk.ok ? t(“polls.actions.closeReady”) : chk.reason
     );
     return;
   }
 
   if (st === STATUS.READY) {
-    const chk = await validateCanReopen(game);
     setActionButton(
-      t("polls.actions.reopenPoll"),
+      t(“polls.actions.reopenPoll”),
       !chk.ok,
-      chk.ok ? t("polls.actions.reopenHint") : chk.reason
+      chk.ok ? t(“polls.actions.reopenHint”) : chk.reason
     );
     return;
   }
 
-  setActionButton("—", true, t("polls.actions.unknownStatus"));
+  setActionButton(“”, true, t(“polls.actions.unknownStatus”));
 }
 
 /* =======================
