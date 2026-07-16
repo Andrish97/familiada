@@ -1,11 +1,11 @@
 // js/pages/editor.js
-import { sb } from "../core/supabase.js?v=v2026-07-16T22505";
-import { requireAuth } from "../core/auth.js?v=v2026-07-16T22505";
-import { alertModal, confirmModal } from "../core/modal.js?v=v2026-07-16T22505";
-import { parseQaText, clip as clipN } from "../core/text-import.js?v=v2026-07-16T22505";
-import { canEnterEdit, RULES as GV_RULES, TYPES } from "../core/game-validate.js?v=v2026-07-16T22505";
-import { initI18n, t } from "../../translation/translation.js?v=v2026-07-16T22505";
-import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-07-16T22505";
+import { sb } from "../core/supabase.js?v=v2026-07-16T22552";
+import { requireAuth } from "../core/auth.js?v=v2026-07-16T22552";
+import { alertModal, confirmModal } from "../core/modal.js?v=v2026-07-16T22552";
+import { parseQaText, clip as clipN } from "../core/text-import.js?v=v2026-07-16T22552";
+import { canEnterEdit, RULES as GV_RULES, TYPES } from "../core/game-validate.js?v=v2026-07-16T22552";
+import { initI18n, t } from "../../translation/translation.js?v=v2026-07-16T22552";
+import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-07-16T22552";
 import "../core/contact-modal.js";
 
 // initI18n + remove('page-loading') są w boot() — przed requireAuth, żeby body pojawiło się przed auth/danymi
