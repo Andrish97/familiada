@@ -23,6 +23,7 @@ async function initManualI18n() {
   }
 
   await initI18n({ withSwitcher: !isModalMode() });
+  document.documentElement.classList.remove('page-loading');
 }
 
 function qsa(sel) { return Array.from(document.querySelectorAll(sel)); }
@@ -166,6 +167,7 @@ async function wireAuthSoft() {
   const user = await requireAuth("login");
 
   initTopbarAccountDropdown(user);
+  document.querySelector('.topbar')?.classList.add('topbar-ready');
 
   byId("btnLegal")?.addEventListener("click", () => {
     location.href = buildPrivacyUrl();
@@ -185,12 +187,9 @@ wireTabs();
 updateBackButtonLabel();
 wireFallbackNav();
 
-wireAuthSoft()
-  .then(() => document.documentElement.classList.remove('page-loading'))
-  .catch((err) => {
-    document.documentElement.classList.remove('page-loading');
-    console.warn("[manual] auth nieaktywny:", err);
-  });
+wireAuthSoft().catch((err) => {
+  console.warn("[manual] auth nieaktywny:", err);
+});
 
 
 window.addEventListener("i18n:lang", () => {

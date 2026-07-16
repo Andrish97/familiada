@@ -1501,6 +1501,7 @@ async function handleCreate(){
 ========================================================= */
 async function boot(){
    await initI18n({ withSwitcher: true });
+   document.documentElement.classList.remove('page-loading');
    // guardDesktopOnly usunięty – logo editor działa na mobile (bez tworzenia nowych logo)
    const _isMobile = window.matchMedia("(max-width:980px)").matches;
    if (_isMobile && btnCreate) btnCreate.style.display = "none";
@@ -1515,6 +1516,7 @@ async function boot(){
    currentUser = await requireAuth(withLangParam("../login"));
    guestMode = isGuestUser(currentUser);
    initTopbarAccountDropdown(currentUser, { accountHref: "../account", loginHref: "../login" });
+   document.querySelector('.topbar')?.classList.add('topbar-ready');
 
   try{
     await loadFonts();
@@ -1544,7 +1546,6 @@ async function boot(){
    textEditor = initTextEditor(editorCtx);
    drawEditor = initDrawEditor(editorCtx);
    imageEditor = initImageEditor(editorCtx);
-   document.documentElement.classList.remove('page-loading');
 
   // Updater - sprawdzanie nowej wersji (TYLKO RAZ)
   import('../../js/core/updater.js?v=v2026-07-16T22582').then(m => m.initUpdater()).catch(() => {});

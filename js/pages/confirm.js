@@ -125,6 +125,7 @@ async function redirectAfterConfirm(user) {
 document.addEventListener("DOMContentLoaded", async () => {
   try {
   await initI18n({ withSwitcher: true });
+  document.documentElement.classList.remove('page-loading');
   setErr("");
   if (go) go.href = withLangParam(go.dataset.baseHref || "builder");
   if (back) back.href = withLangParam(back.dataset.baseHref || "login");

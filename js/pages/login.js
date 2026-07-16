@@ -782,9 +782,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     await initI18n({ withSwitcher: true });
   } catch (e) {
     console.error("[i18n] init failed", e);
-    // Fallback to at least replace data-i18n keys.
     try { applyTranslations(document); } catch {}
   }
+  document.documentElement.classList.remove('page-loading');
+  document.querySelector('.topbar')?.classList.add('topbar-ready');
   const syncLanguage = () => updateUserLanguage(getUiLang());
   applyMode();
   initPasswordToggles();
@@ -835,7 +836,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
   
   setStatus(t("index.statusLoggedOut"));
-  document.documentElement.classList.remove('page-loading');
 
   // Preload captcha API script only — token is fetched on first user interaction
   if (captchaSiteKey) void loadCaptchaApi();

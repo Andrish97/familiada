@@ -64,6 +64,7 @@ async function requireNoActiveSessionBeforeAuthFlow() {
 
 document.addEventListener("DOMContentLoaded", async () => {
   await initI18n({ withSwitcher: true });
+  document.documentElement.classList.remove('page-loading');
   initPasswordToggles();
   if (pwdHint) pwdHint.textContent = getPasswordRulesText();
   setErr("");
