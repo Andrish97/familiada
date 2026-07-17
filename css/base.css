@@ -60,7 +60,7 @@ body:has(.topbar) {
    - Topbar sections 3+4 (who, lang, buttons) hidden until auth → smooth reveal
 ──────────────────────────────────────────────────────────── */
 body.skel-body .topbar {
-    height: var(--topbar-h);
+    min-height: var(--topbar-h);
 }
 body.skel-body .topbar-section-3,
 body.skel-body .topbar-section-4 {
