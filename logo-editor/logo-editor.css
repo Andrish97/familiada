@@ -1139,7 +1139,7 @@ body.builder-body.logo-editor-body > main.logoWrap{
   min-height: 0;
   overflow: auto;
   -webkit-overflow-scrolling: touch;
-  scrollbar-gutter: stable; /* rezerwuje miejsce na scrollbar — zapobiega zmianie szerokości kolumn */
+  scrollbar-gutter: stable both-edges; /* rezerwuje miejsce symetrycznie po obu stronach — brak zmiany szerokości kolumn i brak asymetrii */
   padding-right: 2px;
 }
 
