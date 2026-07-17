@@ -24,8 +24,6 @@
   --lamp-glow: rgba(255,235,59,.7);
 }
 
-/* atrybut [hidden] zawsze wygrywa */
-[hidden]{ display:none !important; }
 
 /* =========================================================
    TOPBAR CLOSE BUTTON (match lang-switcher size)

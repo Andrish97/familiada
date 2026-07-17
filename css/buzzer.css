@@ -133,10 +133,6 @@ body {
     letter-spacing: -2px
 }
 
-[hidden] {
-    display: none!important
-}
-
 .arena,.off {
     position: fixed;
     inset: 0

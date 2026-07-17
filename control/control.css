@@ -771,10 +771,6 @@
     max-width: none;
 }
 
-.hidden {
-    display: none!important
-}
-
 .panelHead {
     display: flex;
     align-items: center;
