@@ -3691,7 +3691,7 @@ function showCompose(defaults = {}) {
   if (!conv) return;
 
   // On mobile: switch to conversation view
-  if (window.matchMedia("(max-width: 900px)").matches) {
+  if (window.matchMedia("(max-width: 980px)").matches) {
     setMailView("conv");
   }
 
@@ -4108,7 +4108,7 @@ function closeCompose() {
     msgActiveId = null;
 
     // On mobile: switch back to list view
-    if (window.matchMedia("(max-width: 900px)").matches) {
+    if (window.matchMedia("(max-width: 980px)").matches) {
       setMailView("list");
     }
   }
@@ -4390,7 +4390,7 @@ function setMailView(view) {
   if (!client) return;
   client.dataset.mailView = view;
 
-  const isMobile = window.matchMedia("(max-width: 900px)").matches;
+  const isMobile = window.matchMedia("(max-width: 980px)").matches;
 
   if (!isMobile) {
     if (navTopbar) navTopbar.style.display = "none";
@@ -4428,7 +4428,7 @@ function initMobileMailNav() {
   // When clicking a folder on mobile, go to list view
   document.querySelectorAll(".mail-folder").forEach(el => {
     el.addEventListener("click", () => {
-      if (window.matchMedia("(max-width: 900px)").matches) {
+      if (window.matchMedia("(max-width: 980px)").matches) {
         setMailView("list");
       }
     });
@@ -4439,7 +4439,7 @@ function initMobileMailNav() {
     if (activeTab !== "reports") return;
     const conv = document.getElementById("mailConv");
     const hasContent = conv && conv.querySelector(".mail-conv-header");
-    if (hasContent && window.matchMedia("(max-width: 900px)").matches) {
+    if (hasContent && window.matchMedia("(max-width: 980px)").matches) {
       setMailView("conv");
     }
   });

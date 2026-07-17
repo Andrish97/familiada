@@ -220,7 +220,7 @@ function initImageViewer() {
   const open = (src, title) => {
     stage.innerHTML = "";
     titleEl.textContent = title || "";
-    const isMobile = window.matchMedia("(max-width: 900px)").matches;
+    const isMobile = window.matchMedia("(max-width: 980px)").matches;
     if (isMobile) {
       const zoom = document.createElement("div");
       zoom.className = "imgv-zoom";
