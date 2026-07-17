@@ -1,11 +1,11 @@
 // js/pages/game-settings.js
-import { requireAuth } from "../core/auth.js?v=v2026-07-17T10432";
-import { t } from "../../translation/translation.js?v=v2026-07-17T10432";
-import { setTopbarAccount } from "../core/topbar-controller.js?v=v2026-07-17T10432";
-import { sb } from "../core/supabase.js?v=v2026-07-17T10432";
-import { loadQuestions } from "../core/game-validate.js?v=v2026-07-17T10432";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../core/logo-preview.js?v=v2026-07-17T10432";
-import { v as cacheBust } from "../core/cache-bust.js?v=v2026-07-17T10432";
+import { requireAuth } from "../core/auth.js?v=v2026-07-17T10571";
+import { t } from "../../translation/translation.js?v=v2026-07-17T10571";
+import { setTopbarAccount } from "../core/topbar-controller.js?v=v2026-07-17T10571";
+import { sb } from "../core/supabase.js?v=v2026-07-17T10571";
+import { loadQuestions } from "../core/game-validate.js?v=v2026-07-17T10571";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../core/logo-preview.js?v=v2026-07-17T10571";
+import { v as cacheBust } from "../core/cache-bust.js?v=v2026-07-17T10571";
 
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");

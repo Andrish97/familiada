@@ -1,11 +1,11 @@
 // js/pages/polls.js
-import { sb } from "../core/supabase.js?v=v2026-07-17T10432";
-import { rt } from "../core/realtime.js?v=v2026-07-17T10432";
-import { requireAuth } from "../core/auth.js?v=v2026-07-17T10432";
-import { alertModal, confirmModal } from "../core/modal.js?v=v2026-07-17T10432";
+import { sb } from "../core/supabase.js?v=v2026-07-17T10571";
+import { rt } from "../core/realtime.js?v=v2026-07-17T10571";
+import { requireAuth } from "../core/auth.js?v=v2026-07-17T10571";
+import { alertModal, confirmModal } from "../core/modal.js?v=v2026-07-17T10571";
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
-import { initI18n, t, withLangParam, getUiLang } from "../../translation/translation.js?v=v2026-07-17T10432";
-import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-07-17T10432";
+import { initI18n, t, withLangParam, getUiLang } from "../../translation/translation.js?v=v2026-07-17T10571";
+import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-07-17T10571";
 import "../core/contact-modal.js";
 
 // initI18n is called at the start of DOMContentLoaded (see below)

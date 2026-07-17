@@ -1,7 +1,7 @@
 // js/core/sfx.js
 // Rozszerzony moduł dźwięku: manifest, warianty, głośności, własne pliki (IndexedDB).
 
-const MANIFEST_PATH = "/audio/sounds.json?v=v2026-07-17T10432";
+const MANIFEST_PATH = "/audio/sounds.json?v=v2026-07-17T10571";
 const AUDIO_BASE    = "/audio/";
 const IDB_NAME      = "familiada-sfx";
 const IDB_STORE     = "custom-files";
@@ -423,7 +423,7 @@ export async function initSfx() {
 
 /**
  * Nadpisuje ustawienia z game.settings.sound (per-game).
- * volumes: { key: 0–100 }, variants: { key: "classic.mp3?v=v2026-07-17T10432" }
+ * volumes: { key: 0–100 }, variants: { key: "classic.mp3?v=v2026-07-17T10571" }
  */
 export function applySfxGameSettings({ volumes = {}, variants = {} } = {}) {
   for (const [key, pct] of Object.entries(volumes)) {
