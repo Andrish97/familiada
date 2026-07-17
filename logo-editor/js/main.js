@@ -1153,15 +1153,12 @@ function renderList(){
       }
     });
 
-    const prevWrap = el.querySelector(".logoPrev");
-    const prevCanvas = buildLogoPreviewCanvas(logo, GLYPH_5x7, 520, 240);
-    prevCanvas.style.cursor = "default";
-    prevWrap.appendChild(prevCanvas);
-
     return el;
   }
 
-  // LOGA USERA
+  // LOGA USERA — najpierw kafelki (bez canvas), potem canvas async
+  const canvasQueue = []; // { prevWrap, logo }
+
   for (const l of logos){
     const el = makeTile({
       key: l.id,
@@ -1171,7 +1168,22 @@ function renderList(){
       canDelete: true
     });
     grid.appendChild(el);
+    canvasQueue.push({ prevWrap: el.querySelector(".logoPrev"), logo: l });
   }
+
+  // Renderuj canvasy jeden po drugim, żeby nie blokować UI
+  const ric = window.requestIdleCallback || ((cb) => setTimeout(cb, 0));
+  function renderNextCanvas() {
+    if (!canvasQueue.length) return;
+    const { prevWrap, logo } = canvasQueue.shift();
+    if (prevWrap.isConnected) {
+      const c = buildLogoPreviewCanvas(logo, GLYPH_5x7, 520, 240);
+      c.style.cursor = "default";
+      prevWrap.appendChild(c);
+    }
+    if (canvasQueue.length) ric(renderNextCanvas);
+  }
+  ric(renderNextCanvas);
 
   // jeśli zaznaczenie wskazuje na nieistniejące -> czyść
   if (selectedKey){

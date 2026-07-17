@@ -142,6 +142,7 @@
   background: var(--bg-weak);
   padding: 8px;
   overflow:hidden;
+  min-height: 151px; /* 135px canvas + 2×8px padding — rezerwuje miejsce przed załadowaniem canvas */
 }
 .logoPrev canvas{
   width: 100%;
