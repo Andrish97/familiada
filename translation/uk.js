@@ -5014,6 +5014,7 @@ const uk = {
   },
   control: {
     title: "Familiada — Панель керування",
+    loading: "Завантаження панелі…",
     backToGames: "← Мої ігри",
     logout: "Вийти",
     statusLabel: "Статус пристроїв",

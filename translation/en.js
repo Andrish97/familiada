@@ -5023,6 +5023,7 @@ const en = {
   },
   control: {
     title: "Familiada — Control Panel",
+    loading: "Loading panel…",
     backToGames: "← My games",
     logout: "Logout",
     statusLabel: "Device status",

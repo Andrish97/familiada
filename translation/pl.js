@@ -4277,6 +4277,7 @@ const pl = {
   },
   control: {
     title: "Familiada — Panel sterowania",
+    loading: "Ładowanie panelu…",
     backToGames: "← Moje gry",
     logout: "Wyloguj",
     statusLabel: "Status urządzeń",

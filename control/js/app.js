@@ -224,12 +224,12 @@ function applyGameSettingsToStore(settings, store) {
 }
 
 async function main() {
-  // Sekwencyjnie: auth najpierw → topbar-controller ustawia who/lang/ℹ️ → odsłaniamy sekcje 3+4
-  const currentUser = await ensureAuthOrRedirect();
+  // Auth i ładowanie gry równolegle — loadGameOrThrow() nie potrzebuje usera
+  const [currentUser, game] = await Promise.all([
+    ensureAuthOrRedirect(),
+    loadGameOrThrow(),
+  ]);
   document.querySelector('.topbar')?.classList.add('topbar-ready');
-
-  // Potem gra
-  const game = await loadGameOrThrow();
 
   // Inicjalizuj sfx-new: załaduj manifest + ustaw gameId
   setCurrentGameId(game.id);
@@ -807,6 +807,7 @@ async function sendZeroStatesToDevices() {
 
   // startowy render
   renderFromState(store.state);
+  document.getElementById('ctrlLoader')?.remove();
   document.documentElement.classList.remove('page-loading');
 
   // panelStep ustawiony przez renderFromState — teraz odsłaniamy
