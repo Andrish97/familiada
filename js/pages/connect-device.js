@@ -347,11 +347,11 @@ async function startQrScan() {
 
 // ── Bootstrap ──────────────────────────────────────────────────────────────────
 (async () => {
+  const getUserP = getUser().catch(() => null); // start równolegle z initI18n
   await initI18n({ withSwitcher: true });
   document.documentElement.classList.remove('page-loading');
 
-  let currentUser = null;
-  try { currentUser = await getUser(); } catch {}
+  let currentUser = await getUserP;
 
   const isLoggedIn = !!currentUser;
   const guestMode  = isLoggedIn ? isGuestUser(currentUser) : true;

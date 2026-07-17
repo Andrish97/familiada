@@ -8,9 +8,9 @@ import { requireAuth } from "../core/auth.js?v=v2026-07-17T07343";
 import { alertModal, confirmModal } from "../core/modal.js?v=v2026-07-17T07343";
 import { isGuestUser, hideForGuest } from "../core/guest-mode.js?v=v2026-07-17T07343";
 import { initUiSelect } from "../core/ui-select.js?v=v2026-07-17T07343";
-import { getUiLang, initI18n, t, withLangParam, withLangParam } from "../../translation/translation.js?v=v2026-07-17T07343";
-import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-07-17T07343";import "../core/contact-modal.js";
-
+import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-07-17T07343";
+import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-07-17T07343";
+import "../core/contact-modal.js";
 initI18n({ withSwitcher: true }).then(() => {
   document.documentElement.classList.remove('page-loading');
 });

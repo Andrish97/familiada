@@ -1229,10 +1229,11 @@ async function refresh() {
 ======================= */
 
 document.addEventListener("DOMContentLoaded", async () => {
+  const requireAuthP = requireAuth("login"); // start równolegle z initI18n
   await initI18n({ withSwitcher: true });
   document.documentElement.classList.remove('page-loading');
 
-  const u = await requireAuth("login");
+  const u = await requireAuthP;
   initTopbarAccountDropdown(u);
   document.querySelector('.topbar')?.classList.add('topbar-ready');
 

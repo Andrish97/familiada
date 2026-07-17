@@ -1042,6 +1042,7 @@ async function refresh() {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
+  const requireAuthP = requireAuth("login"); // start równolegle z initI18n
   await initI18n({ withSwitcher: true });
 
   // Blokuj autoInitTopbarAuthButton — builder wywołuje setTopbarAccount z withAccountSettings:true
@@ -1058,7 +1059,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.documentElement.classList.remove('page-loading'); // translations ready — show skeleton
   initRatingSystem();
 
-  currentUser = await requireAuth("login");
+  currentUser = await requireAuthP;
   const guestMode = isGuestUser(currentUser);
 
   await maybeShowGuestInfoModal(currentUser);

@@ -699,10 +699,11 @@ function wireEvents() {
    Init
 ========================================================= */
 document.addEventListener("DOMContentLoaded", async () => {
+  const getUserP = getUser().catch(() => null); // start równolegle z initI18n
   await initI18n({ withSwitcher: true });
   document.documentElement.classList.remove('page-loading');
 
-  currentUser = await getUser();
+  currentUser = await getUserP;
   isGuest = !currentUser || isGuestUser(currentUser);
 
   // Topbar — user info (account dropdown)

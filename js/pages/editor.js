@@ -4,9 +4,9 @@ import { requireAuth } from "../core/auth.js?v=v2026-07-17T07343";
 import { alertModal, confirmModal } from "../core/modal.js?v=v2026-07-17T07343";
 import { parseQaText, clip as clipN } from "../core/text-import.js?v=v2026-07-17T07343";
 import { canEnterEdit, RULES as GV_RULES, TYPES } from "../core/game-validate.js?v=v2026-07-17T07343";
-import { initI18n, t, withLangParam, withLangParam } from "../../translation/translation.js?v=v2026-07-17T07343";
-import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-07-17T07343";import "../core/contact-modal.js";
-
+import { initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-07-17T07343";
+import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-07-17T07343";
+import "../core/contact-modal.js";
 // initI18n + remove('page-loading') są w boot() — przed requireAuth, żeby body pojawiło się przed auth/danymi
 
 const MSG = {
@@ -491,11 +491,12 @@ function setTxtImportProgress({ step, i, n, msg, isError } = {}) {
 /* ================= Boot ================= */
 async function boot() {
   /* ---------- i18n + early body reveal ---------- */
+  const requireAuthP = requireAuth("login"); // start równolegle z initI18n
   await initI18n({ withSwitcher: true });
   document.documentElement.classList.remove('page-loading');
 
   /* ---------- auth/topbar ---------- */
-  const user = await requireAuth("login");
+  const user = await requireAuthP;
   initTopbarAccountDropdown(user);
   document.querySelector('.topbar')?.classList.add('topbar-ready');
 
