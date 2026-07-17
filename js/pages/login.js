@@ -274,7 +274,7 @@ async function getSilentCaptchaToken() {
 
     const tokenPromise = new Promise((resolve) => {
       const done = () => resolve(String(token || "").trim());
-    const timer = setTimeout(done, 2000);
+    const timer = setTimeout(done, 6000);
 
       const setToken = (value) => {
         token = String(value || "");

@@ -20,8 +20,8 @@ export default {
     const ORIGIN_HOST = "familiada.online";
     const ORIGIN_RESOLVE = "andrish97.github.io";
     
-    // PUBLIC STATE ENDPOINT (works on every host/subdomain)
-    if (url.pathname === "/maintenance-state.json?v=v2026-07-17T06473") {
+    // PUBLIC STATE ENDPOINT (works on every host/subdomain, ignore ?v= cache-busting)
+    if (url.pathname === "/maintenance-state.json") {
       const state = await getState(env);
       return json(state);
     }
