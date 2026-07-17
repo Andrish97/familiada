@@ -269,7 +269,7 @@ body.polls-hub-body .bar{
   gap: 16px;
 }
 
-@media (min-width: 901px){
+@media (min-width: 981px){
   .hub-grid{ gap: 0; }
   .hub-col{ padding: 0 16px; }
   .hub-col + .hub-col{ border-left: 1px solid rgba(255,255,255,.12); }
@@ -707,7 +707,7 @@ body.polls-hub-body .bar{
   border-top-right-radius: var(--radius);
 }
 
-@media (min-width: 901px){
+@media (min-width: 981px){
   .hub-desktop-single .hub-card{
     margin-top: 16px;
   }
