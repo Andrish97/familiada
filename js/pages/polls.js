@@ -695,26 +695,20 @@ async function previewResults() {
   if (!game) return;
 
   resultsList.style.display = "grid";
-
-  // loading
   setResultsMeta(t("polls.results.loading"));
-  // NIE czyścimy resultsList tutaj — bo poll_points ma cache i może reużyć DOM
-  // resultsList.innerHTML = "";
 
+  const { data, error } = await sb().rpc("get_poll_preview", { p_game_id: gameId });
+  if (error) throw error;
 
-  const st = game.status || STATUS.DRAFT;
-  const qsList = await listQuestionsBasic();
+  const { status, type, questions } = data;
 
-  // FINAL (po zamknięciu): pokazujemy meta (to OK)
-  if (st === STATUS.READY) {
-    for (const q of qsList) {
-      const ans = await listAnswersFinalForQuestion(q.id);
-
+  // FINAL (po zamknięciu)
+  if (status === STATUS.READY) {
+    for (const q of questions) {
       const box = document.createElement("div");
       box.className = "resultQ";
       box.innerHTML = `<div class="qTitle">P${q.ord}: ${escapeHtml(q.text)}</div>`;
-
-      for (const a of ans || []) {
+      for (const a of q.answers || []) {
         const row = document.createElement("div");
         row.className = "aRow";
         row.innerHTML = `<div class="aTxt"></div><div class="aVal"></div>`;
@@ -722,91 +716,29 @@ async function previewResults() {
         row.querySelector(".aVal").textContent = String(Number(a.fixed_points) || 0);
         box.appendChild(row);
       }
-
       resultsList.appendChild(box);
     }
-
     setResultsMeta(t("polls.results.final"));
     return;
   }
 
-  // LIVE (w trakcie): meta ma być PUSTE (usuwa 'Перегляд наживо:')
-  if (game.type === TYPES.POLL_POINTS) {
-    const ansByQ = new Map();
-    for (const q of qsList) {
-      const ans = await listAnswersBasicForQuestion(q.id);
-      ansByQ.set(q.id, ans || []);
-    }
-
-    buildPollPointsPreviewDom(qsList, ansByQ);
+  // LIVE poll_points
+  if (type === TYPES.POLL_POINTS) {
+    const ansByQ = new Map(questions.map((q) => [q.id, q.answers || []]));
+    buildPollPointsPreviewDom(questions, ansByQ);
 
     const values = new Map();
-    const qIds = qsList.map((q) => q.id).filter(Boolean);
-    const sessionByQ = await getLastSessionIdsByQuestion(qIds);
-    const lastSessionIds = [...new Set([...sessionByQ.values()].filter(Boolean))];
-
-    for (const q of qsList) {
-      const ans = ansByQ.get(q.id) || [];
-      for (const a of ans) values.set(a.id, 0);
+    for (const q of questions) {
+      for (const a of q.answers || []) values.set(a.id, a.votes || 0);
     }
-
-    if (lastSessionIds.length) {
-      const { data: votes, error: vErr } = await sb()
-        .from("poll_votes")
-        .select("poll_session_id,question_id,answer_id")
-        .in("poll_session_id", lastSessionIds)
-        .in("question_id", qIds);
-      if (vErr) throw vErr;
-
-      for (const v of votes || []) {
-        const lastSid = sessionByQ.get(v.question_id);
-        if (!lastSid || v.poll_session_id !== lastSid) continue;
-        if (!v.answer_id) continue;
-        values.set(v.answer_id, (values.get(v.answer_id) || 0) + 1);
-      }
-    }
-
-    // Uwaga: buildPollPointsPreviewDom przebudował listę; więc nie czyścimy jej już ponownie.
     updatePollPointsPreviewValues(values);
-    setResultsMeta(""); // <— TU usuwamy LIVE tekst
+    setResultsMeta("");
     return;
   }
 
-  // poll_text LIVE
-  const qIds = qsList.map((q) => q.id).filter(Boolean);
-  const sessionByQ = await getLastSessionIdsByQuestion(qIds);
-  const lastSessionIds = [...new Set([...sessionByQ.values()].filter(Boolean))];
-  const grouped = new Map();
-
-  if (lastSessionIds.length) {
-    const { data, error } = await sb()
-      .from("poll_text_entries")
-      .select("poll_session_id,question_id,answer_norm")
-      .in("poll_session_id", lastSessionIds)
-      .in("question_id", qIds);
-    if (error) throw error;
-
-    for (const r of data || []) {
-      const lastSid = sessionByQ.get(r.question_id);
-      if (!lastSid || r.poll_session_id !== lastSid) continue;
-      const key = `${r.question_id}::${(r.answer_norm || "").trim()}`;
-      if (key.endsWith("::")) continue;
-      grouped.set(key, (grouped.get(key) || 0) + 1);
-    }
-  }
-
-  for (const q of qsList) {
-    const map = new Map();
-    for (const [k, count] of grouped.entries()) {
-      const [qid, txt] = k.split("::");
-      if (qid !== String(q.id)) continue;
-      map.set(txt, count);
-    }
-
-    const rows = [...map.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 12)
-      .map(([txt, cnt]) => ({ text: txt, val: cnt }));
+  // LIVE poll_text
+  for (const q of questions) {
+    const rows = q.text_rows || [];
 
     const box = document.createElement("div");
     box.className = "resultQ";
