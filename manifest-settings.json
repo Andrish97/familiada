@@ -10,12 +10,12 @@
   "orientation": "landscape",
   "icons": [
     {
-      "src": "/img/icon.png?v=v2026-07-17T09323",
+      "src": "/img/icon.png?v=v2026-07-17T09562",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/img/icon.png?v=v2026-07-17T09323",
+      "src": "/img/icon.png?v=v2026-07-17T09562",
       "sizes": "512x512",
       "type": "image/png"
     }
