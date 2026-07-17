@@ -1,8 +1,8 @@
-import { getUser } from "../core/auth.js?v=v2026-07-17T11020";
-import { sb } from "../core/supabase.js?v=v2026-07-17T11020";
-import { initI18n, withLangParam, applyTranslations, getUiLang, t } from "../../translation/translation.js?v=v2026-07-17T11020";
-import { isGuestUser } from "../core/guest-mode.js?v=v2026-07-17T11020";
-import { initRatingSystem } from "../core/rating-system.js?v=v2026-07-17T11020";
+import { getUser } from "../core/auth.js?v=v2026-07-17T17520";
+import { sb } from "../core/supabase.js?v=v2026-07-17T17520";
+import { initI18n, withLangParam, applyTranslations, getUiLang, t } from "../../translation/translation.js?v=v2026-07-17T17520";
+import { isGuestUser } from "../core/guest-mode.js?v=v2026-07-17T17520";
+import { initRatingSystem } from "../core/rating-system.js?v=v2026-07-17T17520";
 
 async function redirectIfSession() {
   try {
