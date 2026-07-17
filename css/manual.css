@@ -211,7 +211,7 @@ html.modal-mode .wrap {
     color: rgba(255,255,255,.92)
 }
 
-@media (max-width:900px) {
+@media (max-width: 980px) {
     .mobile-only-tab-subtitle {
         display: block;
     }

@@ -166,7 +166,7 @@ html:has(.landing-body) {
 .landing-body .footer::before {
     width: 92%;
 }
-@media (max-width: 900px) {
+@media (max-width: 980px) {
     .landing-body .footer {
         padding-left: max(15px, env(safe-area-inset-left));
         padding-right: max(15px, env(safe-area-inset-right));

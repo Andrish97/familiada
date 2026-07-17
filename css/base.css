@@ -116,7 +116,7 @@ body.skel-body .topbar.topbar-ready .topbar-section-4 {
     }
 }
 
-@media (max-width: 900px){
+@media (max-width: 980px){
   .spacer{
     display: none !important;
   }
@@ -196,7 +196,7 @@ body.skel-body .topbar.topbar-ready .topbar-section-4 {
 }
 
 /* ===== MOBILE ===== */
-@media (max-width: 900px){
+@media (max-width: 980px){
 
   /* usuń separator i tekst */
   .user-btn .user-sub{
@@ -711,7 +711,7 @@ main{
     .topbar-section-3 .only-mobile  { display: none !important; }
 }
 
-@media (max-width: 900px){
+@media (max-width: 980px){
     .wrap{
         width: 100%;
         padding: 15px;
@@ -876,7 +876,7 @@ html.showA2HS .a2hs {
 
 
 
-@media (max-width: 900px){
+@media (max-width: 980px){
   .topbar{
     transition: transform .22s ease, opacity .22s ease;
     will-change: transform;
@@ -889,7 +889,7 @@ html.showA2HS .a2hs {
 }
 
 
-@media (max-width: 900px) {
+@media (max-width: 980px) {
   .topbar-menu-toggle {
     position: relative;
     padding: 10px 12px;
@@ -1003,7 +1003,7 @@ html.showA2HS .a2hs {
   max-width:100%;
 }
 
-@media (max-width: 900px){
+@media (max-width: 980px){
   .topbar-layout-4{
     grid-template-columns:minmax(0,1fr) auto;
     grid-template-areas:
@@ -1102,7 +1102,7 @@ html.showA2HS .a2hs {
   .topbar-mobile-panel .only-mobile  { display: none !important; }
 }
 
-@media (max-width: 900px){
+@media (max-width: 980px){
   .topbar-mobile-hidden{ display:none !important; }
 }
 
@@ -1168,7 +1168,7 @@ body{
   flex: 1;
   padding-right: 42px;
 }
-@media (max-width: 900px) {
+@media (max-width: 980px) {
   .hide-mobile { display: none !important; }
 }
 .pass-wrap .pass-toggle {

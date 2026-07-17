@@ -569,8 +569,8 @@ body.polls-hub-body .bar{
   color: transparent;
 }
 
-/* Mobile również w landscape na niskim ekranie (np. telefony >900px szerokości) */
-@media (max-width: 900px), (max-height: 520px) and (orientation: landscape){
+/* Mobile również w landscape na niskim ekranie (np. telefony >980px szerokości) */
+@media (max-width: 980px), (max-height: 520px) and (orientation: landscape){
   .hub-desktop{ display:none; }
   .hub-mobile{ display:flex; }
 
@@ -662,7 +662,7 @@ body.polls-hub-body .bar{
   gap: 14px;
   margin-top: 14px;
 }
-@media (max-width: 900px){
+@media (max-width: 980px){
   .hub-details-grid{ grid-template-columns: 1fr; }
   .hub-col-title{ display: none; }
 }
@@ -733,7 +733,7 @@ body.polls-hub-body .bar{
    - brak "wewnętrznych" scrolli list
    - hub-card dopasowuje się do zawartości
 ========================================================= */
-@media (max-width: 900px) and (orientation: landscape) {
+@media (max-width: 980px) and (orientation: landscape) {
   .polls-hub-body{
     height: auto;
     min-height: 100%;
