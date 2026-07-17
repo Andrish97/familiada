@@ -75,13 +75,14 @@ function setAuthUi(user) {
 window.dispatchEvent(new Event("resize"));
 
 document.addEventListener("DOMContentLoaded", async () => {
+  const getUserP = getUser().catch(() => null); // start równolegle z initI18n
   await initI18n({ withSwitcher: !(new URLSearchParams(location.search).get("modal") === "control") });
   document.documentElement.classList.remove('page-loading');
   document.querySelector('.topbar')?.classList.add('topbar-ready');
 
   applyControlModalLayout();
 
-  const user = await getUser();
+  const user = await getUserP;
   setAuthUi(user);
 
   window.addEventListener("i18n:lang", async () => {

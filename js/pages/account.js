@@ -659,6 +659,7 @@ async function handleDeleteAccount() {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
+  const loadProfileP = loadProfile(); // start równolegle z initI18n
   await initI18n({ withSwitcher: true });
   document.documentElement.classList.remove('page-loading');
   initPasswordToggles();
@@ -669,7 +670,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   bindCooldown({ key: CD.password, labelEl: passwordCooldownEl, disableEls: [pass1, pass2, savePass] });
   startCooldownTicker();
 
-  await loadProfile().finally(() => {
+  await loadProfileP.finally(() => {
     document.querySelector('.topbar')?.classList.add('topbar-ready');
     document.querySelectorAll('[data-skel-step]').forEach(el => el.classList.add('skel-step-ready'));
   });
