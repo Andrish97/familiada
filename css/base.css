@@ -799,6 +799,7 @@ html.showA2HS .a2hs {
   min-height: 38px;
   display: grid;
   place-items: center;
+  touch-action: manipulation;
 }
 
 .lang-menu{
@@ -974,6 +975,10 @@ html.showA2HS .a2hs {
   align-items:center;
   align-content:center;
   gap:8px;
+}
+
+.topbar-layout-4 .topbar-section button {
+  touch-action: manipulation;
 }
 
 .topbar-layout-4 .topbar-section-2{
@@ -1204,6 +1209,7 @@ body{
   max-width: 200px;
   overflow: hidden;
   text-overflow: ellipsis;
+  touch-action: manipulation;
 }
 
 .account-btn .account-who {
@@ -1251,6 +1257,7 @@ body{
   letter-spacing: 0.04em;
   cursor: pointer;
   transition: background 0.12s;
+  touch-action: manipulation;
 }
 
 .account-menu-item:hover {

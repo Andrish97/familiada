@@ -151,14 +151,14 @@ export function setTopbarNavPriority({ moreEl, moreDropdownEl } = {}) {
     });
   }
 
-  btnMore?.addEventListener('click', (e) => {
+  btnMore?.addEventListener('pointerdown', (e) => {
     e.stopPropagation();
     if (_mobileActive) return;
     moreDropdownEl.hidden = !moreDropdownEl.hidden;
     if (!moreDropdownEl.hidden) repositionDropdown(moreEl, moreDropdownEl);
   });
 
-  document.addEventListener('click', (e) => {
+  document.addEventListener('pointerdown', (e) => {
     if (!moreEl.contains(e.target) && !moreDropdownEl.contains(e.target)) {
       moreDropdownEl.hidden = true;
     }
@@ -313,14 +313,14 @@ export function setTopbarAccount(user, {
   menu.appendChild(btnAction);
 
   // Desktop: dropdown
-  whoEl.addEventListener('click', (e) => {
+  whoEl.addEventListener('pointerdown', (e) => {
     e.stopPropagation();
     if (_mobileActive) return;
     menu.hidden = !menu.hidden;
     if (!menu.hidden) repositionDropdown(whoEl, menu);
   });
 
-  document.addEventListener('click', (e) => {
+  document.addEventListener('pointerdown', (e) => {
     if (!whoEl.contains(e.target) && !menu.contains(e.target)) menu.hidden = true;
   });
 
@@ -505,8 +505,8 @@ function initTopbarController() {
     toggleBadge = toggleBtn.querySelector('.badge');
     section3.append(toggleBtn);
 
-    toggleBtn.addEventListener('click', open);
-    closeBtn.addEventListener('click', close);
+    toggleBtn.addEventListener('pointerdown', open);
+    closeBtn.addEventListener('pointerdown', close);
     overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
 
     section2.style.display = 'none';
