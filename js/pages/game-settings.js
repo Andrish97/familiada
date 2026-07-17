@@ -1,23 +1,11 @@
 // js/pages/game-settings.js
-import { requireAuth } from "../core/auth.js?v=v2026-07-17T09161";
-import { t, getUiLang, withLangParam } from "../../translation/translation.js?v=v2026-07-17T09161";
-import { setTopbarAccount } from "../core/topbar-controller.js?v=v2026-07-17T09161";
-import { sb } from "../core/supabase.js?v=v2026-07-17T09161";
-import { loadQuestions } from "../core/game-validate.js?v=v2026-07-17T09161";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../core/logo-preview.js?v=v2026-07-17T09161";
-import { v as cacheBust } from "../core/cache-bust.js?v=v2026-07-17T09161";
-import { alertModal, confirmModal } from "../core/modal.js?v=v2026-07-17T09161";
-import { initUiSelect } from "../core/ui-select.js?v=v2026-07-17T09161";import {
-  loadSfxManifest, getSfxCategories,
-  setSfxCustomBlob, clearSfxCustomFile, clearAllSfxCustomFiles, getSfxCustomFiles,
-  playSfx, setSfxVolume,
-} from "../core/sfx.js?v=v2026-07-17T09161";
-import {
-  uploadGameSound, deleteGameSound, deleteAllGameSounds,
-} from "../core/sfx-cloud.js?v=v2026-07-17T09161";
-import { guardDesktopOnly } from "../core/device-guard.js?v=v2026-07-17T09161";
-
-guardDesktopOnly();
+import { requireAuth } from "../core/auth.js?v=v2026-07-10T21174";
+import { t } from "../../translation/translation.js?v=v2026-07-10T21174";
+import { setTopbarAccount } from "../core/topbar-controller.js?v=v2026-07-10T21174";
+import { sb } from "../core/supabase.js?v=v2026-07-10T21174";
+import { loadQuestions } from "../core/game-validate.js?v=v2026-07-10T21174";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../core/logo-preview.js?v=v2026-07-10T21174";
+import { v as cacheBust } from "../core/cache-bust.js?v=v2026-07-10T21174";
 
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
@@ -44,10 +32,6 @@ const DEFAULT_SETTINGS = {
     },
   },
   questions: { final: [], rounds: [] },
-  sound: {
-    volumes: {},   // key → 0–100 (int procent)
-    variants: {},  // key → nazwa pliku, np. "classic.mp3"
-  },
 };
 
 function mergeSettings(saved) {
@@ -87,10 +71,6 @@ function mergeSettings(saved) {
       final: Array.isArray(s.questions?.final) ? s.questions.final : [],
       rounds: Array.isArray(s.questions?.rounds) ? s.questions.rounds : [],
     },
-    sound: {
-      volumes:  (s.sound?.volumes  && typeof s.sound.volumes  === "object") ? { ...s.sound.volumes }  : {},
-      variants: (s.sound?.variants && typeof s.sound.variants === "object") ? { ...s.sound.variants } : {},
-    },
   };
 }
 
@@ -98,21 +78,13 @@ function mergeSettings(saved) {
 let localSettings = mergeSettings(null);
 let isDirty = false;
 let activeCat = "teams";
-let themeRaw = [];
 let themeList = [];
 let allQuestions = [];
 let _logoFont = null;
 let _defaultLogoPayload = null;
 let _loadedLogos = [];
 
-// Display preview iframe
-let _displayIframe = null;
-let _displayReady = false;
-
-// Wykryj modal mode już na poziomie modułu (inline script w <head> dodaje klasę przed renderem)
-const _isModal = document.documentElement.classList.contains("gs-modal-mode");
-
-// Color modal state — labels populated lazily from t()
+// Color modal state
 let colorModalTarget = null;
 let colorModalR = 0, colorModalG = 0, colorModalB = 0;
 
@@ -120,10 +92,8 @@ let colorModalR = 0, colorModalG = 0, colorModalB = 0;
 const titleEl = document.getElementById("gsTitle");
 const unsavedBadge = document.getElementById("gsUnsavedBadge");
 const btnSaveAll = document.getElementById("btnSaveAll");
-const btnResetAll = document.getElementById("btnResetAll");
-const btnPlay = document.getElementById("btnPlay");
 const btnBack = document.getElementById("btnBack");
-const content = document.getElementById("gsContentInner");
+const content = document.getElementById("gsContent");
 const sidebar = document.getElementById("gsSidebar");
 const sidebarFinale = document.getElementById("sidebarFinale");
 const sidebarRounds = document.getElementById("sidebarRounds");
@@ -146,114 +116,31 @@ const colorModalDone = document.getElementById("gsColorModalDone");
 function markDirty() {
   isDirty = true;
   unsavedBadge?.classList.remove("hidden");
-  document.getElementById("gsFooterMsg")?.classList.remove("hidden");
+  document.getElementById("gsFooter")?.classList.remove("hidden");
 }
 
 function clearDirty() {
   isDirty = false;
   unsavedBadge?.classList.add("hidden");
-  document.getElementById("gsFooterMsg")?.classList.add("hidden");
+  document.getElementById("gsFooter")?.classList.add("hidden");
 }
 
 async function saveAll() {
-  // Walidacja: finale w trybie "pick" wymaga dokładnie 5 pytań
-  const hasFinal = localSettings.game.hasFinal === true;
-  if (hasFinal && localSettings.game.finalQuestionsMode === "pick") {
-    const count = localSettings.questions.final.length;
-    if (count < 5) {
-      alertModal({ text: t("gameSettings.saveErrorFinalNeed5", { count }) });
-      return;
-    }
-  }
-
-  // Walidacja: nie można zapisać gdy wybrano "Własny" bez wgranego pliku
-  {
-    let cfCheck = new Map();
-    try { cfCheck = await getSfxCustomFiles(gameId); } catch {}
-    const missing = getSfxCategories().filter(cat =>
-      localSettings.sound.variants[cat.key] === VARIANT_CUSTOM && !cfCheck.get(cat.key)
-    );
-    if (missing.length > 0) {
-      const names = missing.map(cat => t("control.sfxDesc." + cat.key) || cat.key).join(", ");
-      alertModal({ text: (t("gameSettings.saveErrorCustomNoFile") || "Wgraj plik dla: {names}").replace("{names}", names) });
-      return;
-    }
-  }
-
   if (btnSaveAll) btnSaveAll.disabled = true;
   try {
-    // Uzupełnij filenames w sound settings (do streszczenia w control-new)
-    await _syncSoundFilenames();
-
     const payload = JSON.parse(JSON.stringify(localSettings));
     const { error } = await sb()
       .from("games")
       .update({ settings: payload })
       .eq("id", gameId);
     if (error) throw error;
-
-    // Synchronizuj custom pliki audio z bucketem (po sukcesie zapisu do DB)
-    await _syncSoundBucket().catch(e => {
-      console.warn("[game-settings] bucket sync partial failure:", e);
-    });
-
     clearDirty();
   } catch (e) {
     console.error("[game-settings] saveAll error:", e);
-    alertModal({ text: t("gameSettings.saveErrorPrefix") + (e?.message || e?.code || String(e)) });
+    alert("Błąd zapisu: " + (e?.message || e?.code || String(e)));
   } finally {
     if (btnSaveAll) btnSaveAll.disabled = false;
   }
-}
-
-async function _getSoundUserId() {
-  const { data: { user } } = await sb().auth.getUser();
-  return user?.id ?? null;
-}
-
-// Uzupełnia localSettings.sound.filenames na podstawie IndexedDB customFiles
-async function _syncSoundFilenames() {
-  let customFiles = new Map();
-  try { customFiles = await getSfxCustomFiles(gameId); } catch {}
-  if (!localSettings.sound.filenames) localSettings.sound.filenames = {};
-  for (const cat of getSfxCategories()) {
-    const key = cat.key;
-    const custom = customFiles.get(key);
-    if (custom?.filename) {
-      localSettings.sound.filenames[key] = custom.filename;
-    } else {
-      delete localSettings.sound.filenames[key];
-    }
-  }
-  // Wyczyść obiekt jeśli pusty
-  if (Object.keys(localSettings.sound.filenames).length === 0) {
-    delete localSettings.sound.filenames;
-  }
-}
-
-// Upload custom files do bucketu, usuń te których już nie ma
-async function _syncSoundBucket() {
-  if (!gameId) return;
-  const userId = await _getSoundUserId();
-  if (!userId) return;
-
-  let customFiles = new Map();
-  try { customFiles = await getSfxCustomFiles(gameId); } catch {}
-
-  const cats = getSfxCategories();
-  await Promise.all(cats.map(async cat => {
-    const key = cat.key;
-    const variant = localSettings.sound.variants[key];
-    const custom = customFiles.get(key);
-
-    if (variant === "__custom__" && custom?.blob) {
-      // Wgraj plik do bucketu
-      await uploadGameSound(sb(), userId, gameId, key, custom.blob);
-    } else if (variant !== "__custom__") {
-      // Wariant z listy — usuń ewentualny stary custom z bucketu (błąd 404 ignorowany)
-      await deleteGameSound(sb(), userId, gameId, key);
-    }
-  }));
 }
 
 // ===== SUB-TAB GRAYING =====
@@ -300,21 +187,19 @@ function rgbToHex(r, g, b) {
 }
 
 // ===== COLOR MODAL =====
-function getColorLabels() {
-  return {
-    A: t("gameSettings.display.colorA"),
-    B: t("gameSettings.display.colorB"),
-    BACKGROUND: t("gameSettings.display.colorBgShort"),
-    DOT: t("gameSettings.display.colorDot"),
-  };
-}
+const COLOR_LABELS = {
+  A: "Kolor drużyny A",
+  B: "Kolor drużyny B",
+  BACKGROUND: "Tło",
+  DOT: "Kolor kropek",
+};
 
 function openColorModal(key) {
   colorModalTarget = key;
   const hex = localSettings.display.colors[key] || "#000000";
   const { r, g, b } = hexToRgb(hex);
   colorModalR = r; colorModalG = g; colorModalB = b;
-  if (colorModalTitleEl) colorModalTitleEl.textContent = getColorLabels()[key] || key;
+  if (colorModalTitleEl) colorModalTitleEl.textContent = COLOR_LABELS[key] || key;
   syncColorModalUI();
   colorModal?.classList.remove("hidden");
 }
@@ -346,7 +231,6 @@ function applyColorModal() {
   content?.querySelectorAll(`[data-color-key="${colorModalTarget}"]`).forEach(el => {
     el.style.background = hex;
   });
-  sendDisplayCmd(`COLOR ${colorModalTarget} ${hex}`);
   colorModal?.classList.add("hidden");
 }
 
@@ -386,25 +270,13 @@ function escText(s) {
   return String(s ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
 }
 
-function parkDisplayIframe() {
-  const holder = document.getElementById("gsDisplayIframeHolder");
-  if (holder) holder.style.display = "none";
-}
-
-function showDisplayIframe() {
-  const holder = document.getElementById("gsDisplayIframeHolder");
-  if (holder) holder.style.display = "";
-}
-
 // ===== RENDER CATEGORIES =====
 function renderCat(cat) {
   if (!content) return;
-  // Zawsze zatrzymaj podgląd przed innerHTML (iframe nie rusza się w DOM)
-  stopDisplayPreview();
   switch (cat) {
     case "teams":     renderTeams();     break;
     case "display":   renderDisplay();   break;
-    case "sound":     renderSound().catch(console.error);     break;
+    case "sound":     renderSound();     break;
     case "questions": renderQuestions(); break;
     case "finale":    renderFinale();    break;
     case "rounds":    renderRounds();    break;
@@ -415,207 +287,59 @@ function renderCat(cat) {
 // --- DRUŻYNY ---
 function renderTeams() {
   content.innerHTML = `
-    <div class="gs-cat-title">${t("gameSettings.categories.teams")}</div>
+    <div class="gs-cat-title">Drużyny</div>
     <div class="gs-section">
       <div class="gs-field">
-        <div class="gs-label">${t("gameSettings.teams.nameA")}</div>
-        <input class="inp" id="gsTeamA" value="${escAttr(localSettings.teams.teamA)}" maxlength="40" placeholder="${escAttr(t("gameSettings.teams.placeholderA"))}"/>
+        <div class="gs-label">Nazwa drużyny A</div>
+        <input class="inp" id="gsTeamA" value="${escAttr(localSettings.teams.teamA)}" maxlength="40" placeholder="np. Rodzina Kowalskich"/>
       </div>
       <div class="gs-field">
-        <div class="gs-label">${t("gameSettings.teams.nameB")}</div>
-        <input class="inp" id="gsTeamB" value="${escAttr(localSettings.teams.teamB)}" maxlength="40" placeholder="${escAttr(t("gameSettings.teams.placeholderB"))}"/>
+        <div class="gs-label">Nazwa drużyny B</div>
+        <input class="inp" id="gsTeamB" value="${escAttr(localSettings.teams.teamB)}" maxlength="40" placeholder="np. Rodzina Nowaków"/>
       </div>
-      <div class="gs-hint" style="margin-top:10px">${t("gameSettings.teams.defaultHint").replace("{a}", t("gameSettings.teams.defaultA")).replace("{b}", t("gameSettings.teams.defaultB"))}</div>
     </div>
   `;
 
   document.getElementById("gsTeamA")?.addEventListener("input", e => {
     localSettings.teams.teamA = e.target.value;
     markDirty();
-    const q = (s) => `"${String(s ?? "").replace(/"/g, "'")}"`;
-    sendDisplayCmd(`LONG1 ${q(e.target.value || t("gameSettings.teams.defaultA"))}`);
   });
   document.getElementById("gsTeamB")?.addEventListener("input", e => {
     localSettings.teams.teamB = e.target.value;
     markDirty();
-    const q = (s) => `"${String(s ?? "").replace(/"/g, "'")}"`;
-    sendDisplayCmd(`LONG2 ${q(e.target.value || t("gameSettings.teams.defaultB"))}`);
   });
 }
 
 // --- WYGLĄD ---
-function sendDisplayCmd(cmd) {
-  try {
-    if (_isModal) {
-      window.parent.postMessage({ type: "gs:displayCmd", cmd }, "*");
-      return;
-    }
-    if (_displayIframe?.contentWindow?.handleCommand) {
-      _displayIframe.contentWindow.handleCommand(cmd);
-    }
-  } catch {}
-}
-
-function logoToBase64(data) {
-  const json = JSON.stringify(data);
-  const bytes = new TextEncoder().encode(json);
-  let bin = "";
-  bytes.forEach(b => bin += String.fromCharCode(b));
-  return btoa(bin);
-}
-
-function previewLogo(id) {
-  if (_isModal) {
-    try {
-      if (id === null) {
-        sendDisplayCmd(`LOGO JSON ${logoToBase64(null)}`);
-      } else {
-        const logo = _loadedLogos.find(l => l.id === id);
-        if (!logo) return;
-        sendDisplayCmd(`LOGO JSON ${logoToBase64({ type: logo.type, payload: logo.payload })}`);
-      }
-    } catch {}
-    return;
-  }
-  try {
-    const logoApi = _displayIframe?.contentWindow?.scene?.api?.logo;
-    if (!logoApi) {
-      // scene.api.logo not ready yet — fallback to LOGO JSON command
-      if (id === null) {
-        sendDisplayCmd(`LOGO JSON ${logoToBase64(null)}`);
-      } else {
-        const logo = _loadedLogos.find(l => l.id === id);
-        if (logo) sendDisplayCmd(`LOGO JSON ${logoToBase64({ type: logo.type, payload: logo.payload })}`);
-      }
-      return;
-    }
-    if (!logoApi._origGetSource) logoApi._origGetSource = logoApi._getSource;
-    if (id === null) {
-      logoApi._getSource = logoApi._origGetSource;
-    } else {
-      const logo = _loadedLogos.find(l => l.id === id);
-      if (!logo) return;
-      logoApi._getSource = () => ({ type: logo.type, payload: logo.payload });
-    }
-    logoApi.draw();
-  } catch {}
-}
-
-function sendDisplayInitCmds() {
-  const c = localSettings.display.colors;
-  const q = (s) => `"${String(s ?? "").replace(/"/g, "'")}"`;
-  const teamA = localSettings.teams.teamA || t("gameSettings.teams.defaultA");
-  const teamB = localSettings.teams.teamB || t("gameSettings.teams.defaultB");
-  sendDisplayCmd("APP GAME");
-  sendDisplayCmd(`COLOR A ${c.A}`);
-  sendDisplayCmd(`COLOR B ${c.B}`);
-  sendDisplayCmd(`COLOR BACKGROUND ${c.BACKGROUND}`);
-  sendDisplayCmd(`COLOR DOT ${c.DOT}`);
-  const theme = localSettings.display.theme || (themeList[0]?.key ?? "");
-  if (theme) sendDisplayCmd(`THEME ${theme}`);
-  if (_isModal) {
-    sendDisplayCmd("LOGO RELOAD");
-  } else if (localSettings.display.logoId === null || _loadedLogos.length > 0) {
-    // logos already loaded (or default selected) — preview correctly
-    previewLogo(localSettings.display.logoId);
-  } else {
-    // logos not yet loaded — draw default for now; renderLogoGrid will call previewLogo after load
-    sendDisplayCmd("LOGO DRAW");
-  }
-  sendDisplayCmd("LEFT 123");
-  sendDisplayCmd("RIGHT 123");
-  sendDisplayCmd("TOP 1");
-  sendDisplayCmd(`LONG1 ${q(teamA)}`);
-  sendDisplayCmd(`LONG2 ${q(teamB)}`);
-  sendDisplayCmd("INDICATOR OFF");
-}
-
-function createDisplayIframe() {
-  if (_displayIframe) return;
-  const holder = document.getElementById("gsDisplayIframeHolder");
-  if (!holder) return;
-
-  _displayIframe = document.createElement("iframe");
-  _displayIframe.id = "gsDisplayPreview";
-  _displayIframe.src = "/display";
-  _displayIframe.style.cssText = "width:100%;height:100%;border:none;display:block";
-  _displayIframe.title = "Display preview";
-  _displayReady = false;
-
-  // Chrome odpala load najpierw dla about:blank, a potem dla /display.
-  // NIE używamy { once:true } — pomijamy blank, startujemy poll dopiero przy prawdziwym /display.
-  let _pollInterval = null;
-  _displayIframe.addEventListener("load", () => {
-    // Pomiń load z about:blank (przed właściwym /display)
-    try {
-      const loc = _displayIframe.contentWindow?.location?.href ?? "";
-      if (!loc || loc === "about:blank") return;
-    } catch { return; }
-
-    if (_pollInterval) clearInterval(_pollInterval);
-    let attempts = 0;
-    _pollInterval = setInterval(() => {
-      attempts++;
-      try {
-        if (_displayIframe?.contentWindow?.handleCommand) {
-          clearInterval(_pollInterval);
-          _pollInterval = null;
-          _displayReady = true;
-          if (activeCat === "display") {
-            sendDisplayInitCmds();
-          }
-        } else if (attempts >= 50) {
-          clearInterval(_pollInterval);
-          _pollInterval = null;
-        }
-      } catch {
-        clearInterval(_pollInterval);
-        _pollInterval = null;
-      }
-    }, 100);
-  });
-
-  holder.appendChild(_displayIframe);
-}
-
-function stopDisplayPreview() {
-  parkDisplayIframe();
-}
-
 function renderDisplay() {
   const c = localSettings.display.colors;
-  const colorLabels = getColorLabels();
   const swatches = ["A", "B", "BACKGROUND", "DOT"].map(key => `
     <div class="colorItem">
-      <div class="lbl2">${escText(colorLabels[key])}</div>
+      <div class="lbl2">${escText(COLOR_LABELS[key])}</div>
       <button class="swatchBtn" data-color-key="${key}" style="background:${c[key]}" title="${key}" type="button"></button>
     </div>
   `).join("");
 
   const effectiveTheme = localSettings.display.theme || (themeList[0]?.key ?? "");
+  const themeOptions = themeList.map(th =>
+    `<option value="${escAttr(th.key)}" ${effectiveTheme === th.key ? "selected" : ""}>${escText(th.label)}</option>`
+  ).join("");
 
   content.innerHTML = `
-    <div class="gs-cat-title">${t("gameSettings.categories.display")}</div>
+    <div class="gs-cat-title">Wygląd</div>
     <div class="gs-section">
-      <div class="gs-label">${t("gameSettings.display.colors")}</div>
+      <div class="gs-label">Kolory</div>
       <div class="colorRow">${swatches}</div>
     </div>
     <div class="gs-section">
-      <div class="gs-label">${t("gameSettings.display.theme")}</div>
-      <div class="ui-select" id="gsThemeSelect" style="margin-top:8px;width:100%">
-        <button class="btn inp ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
-          <span class="ui-select-label">—</span>
-          <span class="ui-select-caret" aria-hidden="true">▾</span>
-        </button>
-        <div class="ui-select-menu" role="listbox"></div>
-      </div>
+      <div class="gs-label">Motyw wyświetlacza</div>
+      <select class="inp" id="gsThemeSelect" style="margin-top:8px">
+        ${themeOptions}
+      </select>
     </div>
     <div class="gs-section">
-      <div class="gs-label">${t("gameSettings.display.logo")}</div>
+      <div class="gs-label">Logo</div>
       <div id="gsLogoGrid" class="gs-logo-grid"></div>
-    </div>
-    <div class="sfx-foot">
-      <button class="btn" id="btnDisplayReset" type="button">${t("gameSettings.resetSection") || "Przywróć domyślne"}</button>
     </div>
   `;
 
@@ -623,27 +347,14 @@ function renderDisplay() {
     btn.addEventListener("click", () => openColorModal(btn.dataset.colorKey));
   });
 
-  initUiSelect(document.getElementById("gsThemeSelect"), {
-    options: themeList.map(th => ({ value: th.key, label: th.label })),
-    value: effectiveTheme,
-    onChange: (val) => {
-      localSettings.display.theme = val || null;
+  const themeSelect = document.getElementById("gsThemeSelect");
+  if (themeSelect) {
+    themeSelect.addEventListener("change", e => {
+      localSettings.display.theme = e.target.value || null;
       markDirty();
-      const key = val || (themeList[0]?.key ?? "");
-      if (key) sendDisplayCmd(`THEME ${key}`);
-    },
-  });
+    });
+  }
 
-  document.getElementById("btnDisplayReset")?.addEventListener("click", async () => {
-    if (!await confirmModal({ text: t("gameSettings.resetSectionConfirm") || "Przywrócić domyślne ustawienia wyglądu?" })) return;
-    localSettings.display = JSON.parse(JSON.stringify(DEFAULT_SETTINGS.display));
-    markDirty();
-    renderDisplay();
-  });
-
-  // Iframe jest zawsze w gsDisplayIframeHolder (sibling gsContentInner) — tylko show/hide
-  showDisplayIframe();
-  if (_displayReady) sendDisplayInitCmds();
   renderLogoGrid();
 }
 
@@ -651,7 +362,7 @@ async function renderLogoGrid() {
   const grid = document.getElementById("gsLogoGrid");
   if (!grid) return;
 
-  grid.innerHTML = `<div class="hint" style="padding:8px 0">${t("gameSettings.display.logoLoading")}</div>`;
+  grid.innerHTML = `<div class="hint" style="padding:8px 0">Ładowanie logo…</div>`;
 
   if (!_logoFont) {
     try { _logoFont = await loadFont5x7(); } catch {}
@@ -670,8 +381,6 @@ async function renderLogoGrid() {
       .order("updated_at", { ascending: false });
     if (error) throw error;
     _loadedLogos = data || [];
-    // After loading: update preview iframe with the selected logo
-    if (_displayReady && !_isModal) previewLogo(localSettings.display.logoId);
   } catch (e) {
     if (document.getElementById("gsLogoGrid")) {
       grid.innerHTML = `<div class="hint">${escText(e?.message || String(e))}</div>`;
@@ -698,14 +407,13 @@ async function renderLogoGrid() {
       markDirty();
       grid.querySelectorAll(".gs-logo-tile").forEach(t => t.classList.remove("selected"));
       tile.classList.add("selected");
-      previewLogo(id);
     });
   });
 }
 
 function makeLogoTile(id, selectedId) {
   const key = id ?? "default";
-  const name = id === null ? t("gameSettings.display.logoDefault") : (_loadedLogos.find(l => l.id === id)?.name || "—");
+  const name = id === null ? "Domyślne" : (_loadedLogos.find(l => l.id === id)?.name || "—");
   const logoObj = id === null
     ? (_defaultLogoPayload ? { type: "GLYPH_30x10", payload: _defaultLogoPayload } : null)
     : _loadedLogos.find(l => l.id === id) || null;
@@ -730,284 +438,13 @@ function makeLogoTile(id, selectedId) {
 }
 
 // --- DŹWIĘK ---
-const VARIANT_CUSTOM = "__custom__";
-
-async function renderSound() {
+function renderSound() {
   content.innerHTML = `
-    <div class="gs-cat-title">${t("gameSettings.categories.sound")}</div>
+    <div class="gs-cat-title">Dźwięk</div>
     <div class="gs-section">
-      <div class="sfx-table" id="sfxTableGs"></div>
-    </div>
-    <div class="sfx-foot">
-      <button class="btn" id="btnSoundReset" type="button">${t("control.sfxResetAll") || "Przywróć domyślne"}</button>
+      <p class="gs-hint" style="font-size:.9rem">Ustawienia dźwięku będą dostępne wkrótce.</p>
     </div>
   `;
-
-  try { await loadSfxManifest(); } catch (e) {
-    const tbl = document.getElementById("sfxTableGs");
-    if (tbl) tbl.innerHTML = `<div class="gs-hint" style="color:red">Błąd ładowania dźwięków: ${escText(e?.message || String(e))}</div>`;
-    return;
-  }
-
-  const categories = getSfxCategories();
-  const lang = getUiLang() || "pl";
-
-  let customFiles = new Map();
-  try { customFiles = await getSfxCustomFiles(gameId); } catch {}
-
-  const tableEl = document.getElementById("sfxTableGs");
-  if (!tableEl) return;
-
-  const variantInsts = new Map(); // key → ui-select instance
-
-  for (const cat of categories) {
-    const key = cat.key;
-    const volPct = localSettings.sound.volumes[key] ?? 100;
-    const custom = customFiles.get(key);
-    // Aktywny wariant: "__custom__" jeśli mamy własny plik, inaczej zapisany lub domyślny
-    const activeVariant = custom ? VARIANT_CUSTOM
-      : (localSettings.sound.variants[key] || (cat.sounds[0]?.file || "classic.mp3").split("?")[0]);
-    const desc = t("control.sfxDesc." + key) || key;
-
-    const row = document.createElement("div");
-    row.className = "sfx-row";
-    row.dataset.key = key;
-
-    // Opcje dla ui-select: warianty twórcy + "Własny" na końcu
-    const variantOptions = cat.sounds.map(s => {
-      const file = s.file.split("?")[0];
-      const label = s.label?.[lang] || s.file;
-      return { value: file, label };
-    });
-    variantOptions.push({ value: VARIANT_CUSTOM, label: t("control.sfxCustom") || "Własny" });
-
-    // Tag z własnym plikiem (widoczny tylko gdy custom)
-    const fileTagHtml = custom
-      ? `<div class="sfx-file-tag">
-           <span class="sfx-file-name" title="${escAttr(custom.filename)}">${escText(custom.filename)}</span>
-           <button class="sfx-file-remove" type="button" data-sfx-clear="${escAttr(key)}" title="Usuń">✕</button>
-         </div>`
-      : "";
-
-    // Przycisk "Wybierz plik" — widoczny tylko gdy wybrany "Własny" i nie ma jeszcze pliku
-    const showUploadBtn = !custom && activeVariant === VARIANT_CUSTOM;
-    const uploadBtnHtml = `<button class="btn sfx-add-btn" type="button" data-sfx-file="${escAttr(key)}"${showUploadBtn ? "" : " hidden"}>${t("control.sfxChooseFile") || "Wybierz plik"}</button>`;
-
-    // Przycisk odtwarzania — zablokowany gdy Własny bez pliku
-    const previewDisabled = activeVariant === VARIANT_CUSTOM && !custom;
-
-    row.innerHTML = `
-      <div class="sfx-row-desc">${escText(desc)}</div>
-      <div class="ui-select sfx-variant-select" data-sfx-variant="${escAttr(key)}" style="min-width:0">
-        <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
-          <span class="ui-select-label">—</span>
-          <span class="ui-select-caret" aria-hidden="true">▾</span>
-        </button>
-        <div class="ui-select-menu" role="listbox"></div>
-      </div>
-      <button class="sfx-preview-btn" type="button" data-sfx-preview="${escAttr(key)}" title="Podgląd"${previewDisabled ? " disabled" : ""}><svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><polygon points="2,1 11,6 2,11" fill="currentColor"/></svg></button>
-      <div class="sfx-vol-wrap">
-        <input class="sfx-vol" type="range" min="0" max="100" step="1" value="${volPct}" data-sfx-vol="${escAttr(key)}"/>
-        <span class="sfx-vol-label" id="sfxVol_${escAttr(key)}">${volPct}%</span>
-      </div>
-      <div class="sfx-file-wrap">
-        ${fileTagHtml}${uploadBtnHtml}
-        <input class="sfx-file-input" type="file" accept="audio/mpeg,audio/wav,audio/ogg" data-sfx-key="${escAttr(key)}"/>
-      </div>
-    `;
-
-    // Inicjalizacja ui-select dla tego wiersza
-    const variantRoot = row.querySelector(".sfx-variant-select");
-    const variantInst = initUiSelect(variantRoot, {
-      options: variantOptions,
-      value: activeVariant,
-      onChange: (val) => {
-        const uploadBtn = row.querySelector("[data-sfx-file]");
-        const previewBtn = row.querySelector("[data-sfx-preview]");
-        if (val === VARIANT_CUSTOM) {
-          const hasCustom = !!customFiles.get(key);
-          if (uploadBtn) uploadBtn.hidden = hasCustom;
-          if (previewBtn) previewBtn.disabled = !hasCustom;
-          const fileTag = row.querySelector(".sfx-file-tag");
-          if (fileTag) fileTag.hidden = !hasCustom;
-          localSettings.sound.variants[key] = VARIANT_CUSTOM;
-          markDirty();
-        } else {
-          if (uploadBtn) uploadBtn.hidden = true;
-          if (previewBtn) previewBtn.disabled = false;
-          const fileTag = row.querySelector(".sfx-file-tag");
-          if (fileTag) fileTag.hidden = true;
-          localSettings.sound.variants[key] = val;
-          markDirty();
-        }
-      },
-    });
-    variantInsts.set(key, variantInst);
-
-    tableEl.appendChild(row);
-  }
-
-  // Podgląd — play/stop toggle
-  let _previewAudio = null;
-  let _previewBtn   = null;
-  let _previewUrl   = null; // blob URL do zwolnienia
-
-  function _stopPreview() {
-    if (_previewAudio) { try { _previewAudio.pause(); _previewAudio.currentTime = 0; } catch {} }
-    if (_previewUrl)   { URL.revokeObjectURL(_previewUrl); _previewUrl = null; }
-    if (_previewBtn)   { _previewBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><polygon points="2,1 11,6 2,11" fill="currentColor"/></svg>'; delete _previewBtn.dataset.playing; }
-    _previewAudio = null;
-    _previewBtn   = null;
-  }
-
-  tableEl.querySelectorAll("[data-sfx-preview]").forEach(btn => {
-    btn.addEventListener("click", () => {
-      // Stop jeśli to ten sam przycisk
-      if (_previewBtn === btn) { _stopPreview(); return; }
-      _stopPreview();
-
-      const key = btn.dataset.sfxPreview;
-      const val = variantInsts.get(key)?.getValue() ?? VARIANT_CUSTOM;
-      const vol = (localSettings.sound.volumes[key] ?? 100) / 100;
-
-      let audio, blobUrl = null;
-      if (val === VARIANT_CUSTOM) {
-        const custom = customFiles.get(key);
-        if (!custom?.blob) return;
-        blobUrl = URL.createObjectURL(custom.blob);
-        audio = new Audio(blobUrl);
-      } else {
-        const cat = categories.find(c => c.key === key);
-        if (!cat) return;
-        audio = new Audio(`/audio/${cat.folder}/${val}`);
-      }
-      audio.volume = vol;
-      audio.play().catch(() => {});
-      audio.addEventListener("ended", _stopPreview, { once: true });
-
-      _previewAudio = audio;
-      _previewBtn   = btn;
-      _previewUrl   = blobUrl;
-      btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1.5" y="1.5" width="9" height="9" fill="currentColor"/></svg>';
-      btn.dataset.playing = "1";
-    });
-  });
-
-  // Zmiana głośności podczas odtwarzania podglądu
-  tableEl.querySelectorAll(".sfx-vol").forEach(slider => {
-    slider.addEventListener("input", () => {
-      const key = slider.dataset.sfxVol;
-      if (_previewBtn?.dataset.sfxPreview === key && _previewAudio) {
-        _previewAudio.volume = parseInt(slider.value, 10) / 100;
-      }
-    });
-  }, true); // capture=true żeby odpalić przed istniejącym listenerem
-
-  // Głośność
-  tableEl.querySelectorAll(".sfx-vol").forEach(slider => {
-    slider.addEventListener("input", () => {
-      const key = slider.dataset.sfxVol;
-      const pct = parseInt(slider.value, 10);
-      localSettings.sound.volumes[key] = pct;
-      const lbl = document.getElementById(`sfxVol_${key}`);
-      if (lbl) lbl.textContent = `${pct}%`;
-      setSfxVolume(key, pct / 100);
-      markDirty();
-    });
-  });
-
-  // Trigger input pliku
-  tableEl.querySelectorAll("[data-sfx-file]").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const key = btn.dataset.sfxFile;
-      tableEl.querySelector(`input[data-sfx-key="${key}"]`)?.click();
-    });
-  });
-
-  // Upload własnego pliku
-  tableEl.querySelectorAll(".sfx-file-input").forEach(input => {
-    input.addEventListener("change", async () => {
-      const key = input.dataset.sfxKey;
-      const file = input.files?.[0];
-      input.value = "";
-      if (!file) return;
-
-      const cat = categories.find(c => c.key === key);
-      const limitSec = cat?.limitSec || 30;
-
-      try {
-        const buf = await file.arrayBuffer();
-        const ctx = new AudioContext();
-        const decoded = await ctx.decodeAudioData(buf);
-        await ctx.close();
-        if (decoded.duration > limitSec) {
-          alertModal({ text: (t("control.sfxTooLong") || "Maksymalna długość to {limit}s").replace("{limit}", limitSec) });
-          return;
-        }
-      } catch { /* nie blokuj jeśli AudioContext niedostępny */ }
-
-      try {
-        await setSfxCustomBlob(key, file, file.name, gameId);
-        customFiles.set(key, { blob: file, filename: file.name });
-        localSettings.sound.variants[key] = VARIANT_CUSTOM;
-        markDirty();
-        // Odblokuj podgląd po wgraniu pliku
-        const row = input.closest(".sfx-row");
-        const previewBtn = row?.querySelector("[data-sfx-preview]");
-        if (previewBtn) previewBtn.disabled = false;
-        renderSound();
-      } catch (e) {
-        alertModal({ text: `Błąd: ${e?.message || String(e)}` });
-      }
-    });
-  });
-
-  // Usuń własny plik → pokaż "Wybierz plik", usuń tag, usuń z bucketu
-  tableEl.querySelectorAll("[data-sfx-clear]").forEach(btn => {
-    btn.addEventListener("click", async () => {
-      const key = btn.dataset.sfxClear;
-      // IndexedDB
-      try { await clearSfxCustomFile(key, gameId); } catch {}
-      // Bucket (fire-and-forget, błąd nie blokuje UI)
-      _getSoundUserId().then(userId => {
-        if (userId) deleteGameSound(sb(), userId, gameId, key).catch(console.warn);
-      });
-      customFiles.delete(key);
-      delete localSettings.sound.variants[key];
-      markDirty();
-
-      const row = btn.closest(".sfx-row");
-      if (!row) return;
-      // Usuń tag z nazwą pliku
-      btn.closest(".sfx-file-tag")?.remove();
-      // Pokaż "Wybierz plik" i zablokuj podgląd (Własny nadal wybrany, brak pliku)
-      const uploadBtn = row.querySelector("[data-sfx-file]");
-      if (uploadBtn) uploadBtn.hidden = false;
-      const previewBtn = row.querySelector("[data-sfx-preview]");
-      if (previewBtn) previewBtn.disabled = true;
-    });
-  });
-
-  // Reset wszystkich dźwięków
-  document.getElementById("btnSoundReset")?.addEventListener("click", async () => {
-    if (!await confirmModal({ text: t("gameSettings.sound.resetConfirm") || "Przywrócić domyślne ustawienia dźwięku?" })) return;
-
-    const customKeys = [...customFiles.keys()];
-    localSettings.sound = { volumes: {}, variants: {} };
-
-    // IndexedDB
-    try { await clearAllSfxCustomFiles(gameId); } catch {}
-
-    // Bucket (fire-and-forget)
-    if (customKeys.length > 0) {
-      _getSoundUserId().then(userId => {
-        if (userId) deleteAllGameSounds(sb(), userId, gameId, customKeys).catch(console.warn);
-      });
-    }
-
-    markDirty();
-    renderSound();
-  });
 }
 
 // --- PYTANIA — USTAWIENIA ---
@@ -1018,53 +455,53 @@ function renderQuestions() {
   const roundsRandom = g.roundsQuestionsMode !== "pick";
 
   content.innerHTML = `
-    <div class="gs-cat-title">${t("gameSettings.categories.questions")}</div>
+    <div class="gs-cat-title">Pytania — Ustawienia</div>
     <div class="gs-section">
       <div class="sectionBlock">
-        <div class="sectionTitle">${t("gameSettings.questions.finaleSection")}</div>
+        <div class="sectionTitle">Finał</div>
         <div class="setting-item">
-          <div class="lbl2">${t("gameSettings.finale.hasFinal")}</div>
+          <div class="lbl2">Czy gra zawiera finał?</div>
           <div class="toggle-group" style="margin-top:8px">
             <label class="toggle-item">
               <input type="radio" name="gsHasFinal" value="yes" ${hasFinal ? "checked" : ""}/>
-              <span class="toggle-slider" data-text="${escAttr(t("gameSettings.finale.yes"))}"></span>
+              <span class="toggle-slider" data-text="Tak"></span>
             </label>
             <label class="toggle-item">
               <input type="radio" name="gsHasFinal" value="no" ${!hasFinal ? "checked" : ""}/>
-              <span class="toggle-slider" data-text="${escAttr(t("gameSettings.finale.no"))}"></span>
+              <span class="toggle-slider" data-text="Nie"></span>
             </label>
           </div>
         </div>
         <div class="setting-item" id="gsFinalModeField" style="display:${hasFinal ? "block" : "none"}">
-          <div class="lbl2">${t("gameSettings.questions.finalModeLabel")}</div>
+          <div class="lbl2">Tryb wyboru pytań finału</div>
           <div class="toggle-group" style="margin-top:8px">
             <label class="toggle-item">
               <input type="radio" name="gsFinalMode" value="random" ${finalRandom ? "checked" : ""}/>
-              <span class="toggle-slider" data-text="${escAttr(t("gameSettings.questions.modeRandom"))}"></span>
+              <span class="toggle-slider" data-text="Losowe"></span>
             </label>
             <label class="toggle-item">
               <input type="radio" name="gsFinalMode" value="pick" ${!finalRandom ? "checked" : ""}/>
-              <span class="toggle-slider" data-text="${escAttr(t("gameSettings.questions.modeManual"))}"></span>
+              <span class="toggle-slider" data-text="Ręcznie"></span>
             </label>
           </div>
-          <div class="gs-hint">${t("gameSettings.questions.finalModeHint")}</div>
+          <div class="gs-hint">Losowe = 5 pytań losowanych automatycznie. Ręcznie = wybierz pytania w zakładce „Pytania — Finał".</div>
         </div>
       </div>
       <div class="sectionBlock">
-        <div class="sectionTitle">${t("gameSettings.questions.roundsSection")}</div>
+        <div class="sectionTitle">Rundy</div>
         <div class="setting-item">
-          <div class="lbl2">${t("gameSettings.questions.roundsModeLabel")}</div>
+          <div class="lbl2">Tryb kolejności pytań rund</div>
           <div class="toggle-group" style="margin-top:8px">
             <label class="toggle-item">
               <input type="radio" name="gsRoundsMode" value="random" ${roundsRandom ? "checked" : ""}/>
-              <span class="toggle-slider" data-text="${escAttr(t("gameSettings.questions.modeRandom"))}"></span>
+              <span class="toggle-slider" data-text="Losowe"></span>
             </label>
             <label class="toggle-item">
               <input type="radio" name="gsRoundsMode" value="pick" ${!roundsRandom ? "checked" : ""}/>
-              <span class="toggle-slider" data-text="${escAttr(t("gameSettings.questions.modeOrdered"))}"></span>
+              <span class="toggle-slider" data-text="Kolejność"></span>
             </label>
           </div>
-          <div class="gs-hint">${t("gameSettings.questions.roundsModeHint")}</div>
+          <div class="gs-hint">Losowe = każda runda losuje pytanie. Kolejność = pytania w ustalonej kolejności (zakładka „Pytania — Rundy").</div>
         </div>
       </div>
     </div>
@@ -1106,7 +543,6 @@ function renderFinale() {
   content.innerHTML = `
     <div class="gs-cat-title">${t("gameSettings.categories.finale")}</div>
     <div class="gs-section">
-      <div class="gs-hint" style="margin-bottom:12px">${t("gameSettings.finale.dragHint")}</div>
       <div class="gs-badge-row">
         <span class="badge">${t("control.finalBadge")} <b>${picked.length}</b>/5</span>
       </div>
@@ -1117,7 +553,7 @@ function renderFinale() {
             ${pool.length === 0
               ? `<div class="gs-picker-empty">${t("control.finalPoolEmpty") || "Brak dostępnych pytań"}</div>`
               : pool.map(q => `<div class="qRow" data-qid="${escAttr(q.id)}" draggable="true">
-                  <div class="meta">${q.ord}</div>
+                  <div class="meta">#${q.ord}</div>
                   <div class="txt">${escText(q.text)}</div>
                 </div>`).join("")}
           </div>
@@ -1128,7 +564,7 @@ function renderFinale() {
             ${picked.length === 0
               ? `<div class="gs-picker-empty">${t("control.finalPickEmpty") || "Kliknij pytanie, aby dodać (max 5)"}</div>`
               : picked.map(q => `<div class="qRow gs-draggable" draggable="true" data-qid="${escAttr(q.id)}">
-                  <div class="meta">${q.ord}</div>
+                  <div class="meta">#${q.ord}</div>
                   <div class="txt">${escText(q.text)}</div>
                 </div>`).join("")}
           </div>
@@ -1149,8 +585,6 @@ function renderFinale() {
     const q = allQuestions.find(q => q.id === id);
     if (!q || localSettings.questions.final.some(p => p.id === id)) return;
     localSettings.questions.final = [...localSettings.questions.final, q];
-    // Usuń z listy rund (żeby nie było duplikatu)
-    localSettings.questions.rounds = localSettings.questions.rounds.filter(r => r.id !== id);
     markDirty();
     renderFinale();
   });
@@ -1161,12 +595,7 @@ function renderFinale() {
     if (!row) return;
     const id = row.dataset.qid;
     if (!id) return;
-    const q = allQuestions.find(q => q.id === id);
     localSettings.questions.final = localSettings.questions.final.filter(p => p.id !== id);
-    // Przywróć do rund (na końcu) jeśli jeszcze nie ma
-    if (q && !localSettings.questions.rounds.some(r => r.id === id)) {
-      localSettings.questions.rounds = [...localSettings.questions.rounds, q];
-    }
     markDirty();
     renderFinale();
   });
@@ -1215,13 +644,8 @@ function setupFinaleColumnDnd(poolEl, pickedEl) {
       const q = allQuestions.find(q => q.id === dragId);
       if (!q || localSettings.questions.final.some(p => p.id === dragId)) return;
       localSettings.questions.final = [...localSettings.questions.final, q];
-      localSettings.questions.rounds = localSettings.questions.rounds.filter(r => r.id !== dragId);
     } else {
-      const q = allQuestions.find(q => q.id === dragId);
       localSettings.questions.final = localSettings.questions.final.filter(p => p.id !== dragId);
-      if (q && !localSettings.questions.rounds.some(r => r.id === dragId)) {
-        localSettings.questions.rounds = [...localSettings.questions.rounds, q];
-      }
     }
     dragId = null; dragSide = null;
     markDirty();
@@ -1240,23 +664,20 @@ function setupFinaleColumnDnd(poolEl, pickedEl) {
 
 // --- PYTANIA — RUNDY ---
 function renderRounds() {
-  // Pytania w finale ZAWSZE wykluczone z rund (bez względu na tryb)
-  const finaleIds = new Set(localSettings.questions.final.map(q => q.id));
-
-  // Zbuduj pełną listę: najpierw zapisana kolejność (bez finalowych), potem brakujące
+  // Zbuduj pełną listę: najpierw zapisana kolejność, potem brakujące pytania
   const pickedIds = new Set(localSettings.questions.rounds.map(q => q.id));
-  const missing = allQuestions.filter(q => !pickedIds.has(q.id) && !finaleIds.has(q.id));
+  const missing = allQuestions.filter(q => !pickedIds.has(q.id));
   if (missing.length > 0) {
     // Uzupełnij bez markDirty — to inicjalizacja domyślna
     localSettings.questions.rounds = [...localSettings.questions.rounds, ...missing];
   }
-  // Przefiltruj rounds — usuń pytania które są teraz w finale
-  const questions = localSettings.questions.rounds.filter(q => !finaleIds.has(q.id));
+
+  const questions = localSettings.questions.rounds;
 
   content.innerHTML = `
     <div class="gs-cat-title">${t("gameSettings.categories.rounds")}</div>
     <div class="gs-section">
-      <div class="gs-hint" style="margin-bottom:12px">${t("gameSettings.rounds.hint")}</div>
+      <div class="gs-hint" style="margin-bottom:12px">${t("control.roundsPickHint") || "Ustaw kolejność pytań dla rund. Przeciągnij lub użyj strzałek."}</div>
       <div class="roundsOrderList" id="gsRoundsOrderList">
         ${questions.map((q, i) => `
           <div class="roundsOrderItem" draggable="true" data-qid="${escAttr(q.id)}">
@@ -1264,8 +685,8 @@ function renderRounds() {
             <div class="roundsOrderNum">${i + 1}</div>
             <div class="roundsOrderText">${escText(q.text)}</div>
             <div class="roundsOrderActions">
-              <button class="roundsOrderBtn" data-dir="up" title="${escAttr(t("gameSettings.rounds.up"))}" ${i === 0 ? "disabled" : ""}>↑</button>
-              <button class="roundsOrderBtn" data-dir="down" title="${escAttr(t("gameSettings.rounds.down"))}" ${i === questions.length - 1 ? "disabled" : ""}>↓</button>
+              <button class="roundsOrderBtn" data-dir="up" title="W górę" ${i === 0 ? "disabled" : ""}>↑</button>
+              <button class="roundsOrderBtn" data-dir="down" title="W dół" ${i === questions.length - 1 ? "disabled" : ""}>↓</button>
             </div>
           </div>
         `).join("")}
@@ -1276,7 +697,7 @@ function renderRounds() {
   const listEl = document.getElementById("gsRoundsOrderList");
   if (!listEl) return;
 
-  // Przyciski ↑↓ — operujemy na przefiltrowanej liście (bez finałowych)
+  // Przyciski ↑↓
   listEl.addEventListener("click", e => {
     const btn = e.target.closest(".roundsOrderBtn");
     if (!btn) return;
@@ -1284,10 +705,9 @@ function renderRounds() {
     if (!item) return;
     const id = item.dataset.qid;
     const dir = btn.dataset.dir;
-    const finaleSet = new Set(localSettings.questions.final.map(q => q.id));
-    const arr = localSettings.questions.rounds.filter(q => !finaleSet.has(q.id));
-    const idx = arr.findIndex(q => q.id === id);
+    const idx = localSettings.questions.rounds.findIndex(q => q.id === id);
     if (idx < 0) return;
+    const arr = [...localSettings.questions.rounds];
     const newIdx = dir === "up" ? idx - 1 : idx + 1;
     if (newIdx < 0 || newIdx >= arr.length) return;
     [arr[idx], arr[newIdx]] = [arr[newIdx], arr[idx]];
@@ -1312,13 +732,11 @@ function setupRoundsOrderDnd(listEl) {
     item.addEventListener("dragend", () => {
       if (dragged) dragged.classList.remove("dragging");
       listEl.querySelectorAll(".roundsOrderItem").forEach(el => el.classList.remove("gs-row-drag-over-top", "gs-row-drag-over-bot"));
-      // Zapisz nową kolejność z DOM (tylko widoczne, bez finalowych)
-      const finaleSet = new Set(localSettings.questions.final.map(q => q.id));
+      // Zapisz nową kolejność z DOM
       const newOrder = [...listEl.querySelectorAll(".roundsOrderItem")]
         .map(el => localSettings.questions.rounds.find(q => q.id === el.dataset.qid))
         .filter(Boolean);
-      // Zachowaj w rounds tylko pytania nie-finalowe, w nowej kolejności
-      localSettings.questions.rounds = newOrder.filter(q => !finaleSet.has(q.id));
+      localSettings.questions.rounds = newOrder;
       markDirty();
       dragged = null;
       renderRounds();
@@ -1405,58 +823,55 @@ function renderGame() {
   const endMode = adv.endScreenMode || "logo";
 
   content.innerHTML = `
-    <div class="gs-cat-title">${t("gameSettings.categories.game")}</div>
+    <div class="gs-cat-title">Ustawienia gry</div>
     <div class="gs-section">
       <div class="sectionBlock">
-        <div class="sectionTitle">${t("gameSettings.game.roundsScoreSection")}</div>
+        <div class="sectionTitle">Punktacja rund</div>
         <div class="setting-item">
-          <div class="lbl2">${t("gameSettings.game.roundMultipliers")}</div>
+          <div class="lbl2">Mnożniki rund (po przecinku)</div>
           <input class="inp" id="gsMultipliers" value="${escAttr(adv.roundMultipliers.join(", "))}" placeholder="1, 1, 1, 2, 3" style="margin-top:6px"/>
-          <div class="gs-hint">${t("gameSettings.game.roundMultipliersHint")}</div>
+          <div class="gs-hint">Ostatnia wartość powtarza się dla dalszych rund. Np. „1, 1, 2" → rundy 1, 2 × 1; rundy 3+ × 2.</div>
         </div>
       </div>
       <div class="sectionBlock">
-        <div class="sectionTitle">${t("gameSettings.game.finaleSection")}</div>
+        <div class="sectionTitle">Finał</div>
         <div class="setting-item">
-          <div class="lbl2">${t("gameSettings.game.finalMinPoints")}</div>
+          <div class="lbl2">Próg punktów do finału</div>
           <input class="inp" id="gsFinalMinPts" type="number" min="0" max="9999" value="${adv.finalMinPoints}" style="margin-top:6px;max-width:160px"/>
-          <div class="gs-hint">${t("gameSettings.game.finalMinPointsHint")}</div>
+          <div class="gs-hint">Przynajmniej jedna drużyna musi zdobyć tyle punktów, by odblokować finał.</div>
         </div>
         <div class="setting-item" id="gsFinalTargetField" style="display:${hasFinal ? "block" : "none"}">
-          <div class="lbl2">${t("gameSettings.game.finalTarget")}</div>
+          <div class="lbl2">Cel finału (pkt)</div>
           <input class="inp" id="gsFinalTarget" type="number" min="50" max="999" value="${adv.finalTarget}" style="margin-top:6px;max-width:160px"/>
         </div>
       </div>
       <div class="sectionBlock">
-        <div class="sectionTitle">${t("gameSettings.game.endScreenSection")}</div>
+        <div class="sectionTitle">Ekran końcowy</div>
         <div class="setting-item">
-          <div class="lbl2">${t("gameSettings.game.endModeLabel")}</div>
+          <div class="lbl2">Tryb ekranu po zakończeniu</div>
           <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
             <label style="display:flex;gap:8px;align-items:center;cursor:pointer">
-              <input type="radio" name="gsEndMode" value="logo" ${endMode === "logo" ? "checked" : ""}/>${t("gameSettings.game.endModeLogoShort")}
+              <input type="radio" name="gsEndMode" value="logo" ${endMode === "logo" ? "checked" : ""}/>Logo
             </label>
             <label style="display:flex;gap:8px;align-items:center;cursor:pointer">
-              <input type="radio" name="gsEndMode" value="points" ${endMode === "points" ? "checked" : ""}/>${t("gameSettings.game.endModePointsShort")}
+              <input type="radio" name="gsEndMode" value="points" ${endMode === "points" ? "checked" : ""}/>Punkty
             </label>
             <label style="display:${hasFinal ? "flex" : "none"};gap:8px;align-items:center;cursor:pointer" id="gsEndModeMoneyLabel">
-              <input type="radio" name="gsEndMode" value="money" ${endMode === "money" ? "checked" : ""}/>${t("gameSettings.game.endModeMoneyShort")}
+              <input type="radio" name="gsEndMode" value="money" ${endMode === "money" ? "checked" : ""}/>Kwota nagrody
             </label>
           </div>
         </div>
         <div class="setting-item" id="gsPrizeSettingsRow" style="display:${hasFinal && endMode === "money" ? "grid" : "none"};grid-template-columns:1fr 1fr;gap:14px">
           <div>
-            <div class="lbl2">${t("gameSettings.game.prizeAmount")}</div>
+            <div class="lbl2">Kwota główna nagrody</div>
             <input class="inp" id="gsMainPrize" type="number" min="1" max="99999" value="${adv.mainPrizeAmount}" style="margin-top:6px"/>
           </div>
           <div>
-            <div class="lbl2">${t("gameSettings.game.prizeMultiplier")}</div>
+            <div class="lbl2">Mnożnik nagrody (po finale)</div>
             <input class="inp" id="gsPrizeMultiplier" type="number" min="1" max="10" value="${adv.finalPrizeMultiplier}" style="margin-top:6px"/>
           </div>
         </div>
       </div>
-    </div>
-    <div class="sfx-foot">
-      <button class="btn" id="btnGameReset" type="button">${t("gameSettings.resetSection") || "Przywróć domyślne"}</button>
     </div>
   `;
 
@@ -1500,126 +915,50 @@ function renderGame() {
     const v = parseInt(e.target.value, 10);
     if (Number.isFinite(v) && v > 0) { localSettings.game.advanced.finalPrizeMultiplier = v; markDirty(); }
   });
-
-  document.getElementById("btnGameReset")?.addEventListener("click", async () => {
-    if (!await confirmModal({ text: t("gameSettings.resetSectionConfirm") || "Przywrócić domyślne ustawienia gry?" })) return;
-    localSettings.game.advanced = { ...DEFAULT_SETTINGS.game.advanced };
-    markDirty();
-    renderGame();
-  });
 }
 
 // ===== MAIN =====
 async function main() {
-  const user = await requireAuth("login");
+  const user = await requireAuth("../login");
   setTopbarAccount(user, { showAuthEntry: false });
-  document.querySelector('.topbar')?.classList.add('topbar-ready');
 
   if (!gameId) {
     location.href = "/my-games";
     return;
   }
 
-  // Load game, themes and questions in parallel
-  const [gameResult, themesJson, questionsList] = await Promise.all([
-    sb().from("games").select("id,name,settings").eq("id", gameId).single(),
-    fetch("/display/js/themes.json").then(r => r.json()).catch(() => ({ themes: [] })),
-    loadQuestions(gameId).catch(() => []),
-  ]);
+  // Load game + saved settings
+  const { data: game, error: gameErr } = await sb()
+    .from("games")
+    .select("id,name,settings")
+    .eq("id", gameId)
+    .single();
 
-  const { data: game, error: gameErr } = gameResult;
   if (gameErr || !game) {
-    if (content) content.innerHTML = `<p style="color:red;padding:20px">${escText(t("gameSettings.loadError"))}${escText(gameErr?.message || t("gameSettings.unknownError"))}</p>`;
+    if (content) content.innerHTML = `<p style="color:red;padding:20px">Nie można załadować gry: ${escText(gameErr?.message || "nieznany błąd")}</p>`;
     return;
   }
 
   if (titleEl) titleEl.textContent = game.name || "—";
-  document.title = `${game.name || t("gameSettings.defaultGameName")} — ${t("gameSettings.pageTitle")}`;
-
-  // Modal mode (opened from control-new) — odczyt z modułowej stałej _isModal
-  const isModal = _isModal;
-  if (isModal) {
-    // Hide back button — modal backdrop closes it
-    if (btnBack) btnBack.classList.add("hidden");
-
-    // Sidebar toggle (☰ button)
-    const btnToggle   = document.getElementById("btnToggleSidebar");
-    const sidebarEl   = document.getElementById("gsSidebar");
-    const backdropEl  = document.getElementById("gsSidebarBackdrop");
-    if (btnToggle) btnToggle.classList.remove("hidden");
-
-    function openSidebar()  {
-      sidebarEl?.classList.add("gs-sidebar-open");
-      backdropEl?.classList.add("gs-sidebar-open");
-    }
-    function closeSidebar() {
-      sidebarEl?.classList.remove("gs-sidebar-open");
-      backdropEl?.classList.remove("gs-sidebar-open");
-    }
-    btnToggle?.addEventListener("click", openSidebar);
-    backdropEl?.addEventListener("click", closeSidebar);
-    // Zamknij drawer po wyborze kategorii
-    sidebarEl?.addEventListener("click", (e) => {
-      if (e.target.closest(".gs-sidebar-item")) closeSidebar();
-    });
-
-    // Handle close requests — confirm if unsaved changes
-    async function tryClose() {
-      if (isDirty) {
-        if (!await confirmModal({ text: t("gameSettings.unsavedConfirmModal") || "Masz niezapisane zmiany. Czy chcesz zamknąć ustawienia?" })) return;
-      }
-      // Reset defaultValue na wszystkich inputach żeby przeglądarka nie pokazała
-      // natywnego "Masz niezapisane zmiany" przy nawigacji iframe
-      document.querySelectorAll("input, textarea, select").forEach(el => {
-        if (el.type === "checkbox" || el.type === "radio") el.defaultChecked = el.checked;
-        else el.defaultValue = el.value;
-      });
-      window.parent.postMessage({ type: "gs:close" }, "*");
-    }
-
-    window.addEventListener("message", (ev) => {
-      if (ev.data?.type === "gs:requestClose") tryClose();
-    });
-
-    const btnGsModalClose = document.getElementById("btnGsModalClose");
-    if (btnGsModalClose) {
-      btnGsModalClose.classList.remove("hidden");
-      btnGsModalClose.addEventListener("click", tryClose);
-    }
-  }
+  document.title = `${game.name || "Gra"} — Ustawienia rozgrywki`;
 
   localSettings = mergeSettings(game.settings);
 
-  // Cleanup: usuń pytania finałowe z rounds (mogły tam trafić przed wdrożeniem tej logiki)
-  {
-    const finalSet = new Set(localSettings.questions.final.map(q => q.id));
-    if (finalSet.size > 0) {
-      localSettings.questions.rounds = localSettings.questions.rounds.filter(q => !finalSet.has(q.id));
-    }
-  }
-
-  themeRaw = themesJson.themes || [];
-  allQuestions = questionsList;
-
-  function resolveThemeLabels() {
-    const lang = getUiLang() || "pl";
-    themeList = themeRaw.map(e => ({
+  // Load themes list
+  try {
+    const res = await fetch("/display/js/themes.json");
+    const json = await res.json();
+    const lang = document.documentElement.lang || "pl";
+    themeList = (json.themes || []).map(e => ({
       key: e.key,
       label: typeof e.label === "object" ? (e.label[lang] ?? e.label["pl"] ?? e.key) : (e.label || e.key),
     }));
-  }
+  } catch {}
 
-  resolveThemeLabels();
-
-  // Show "Graj" button if game has questions — only outside modal mode
-  if (btnPlay && !isModal) {
-    if (allQuestions.length > 0) {
-      btnPlay.classList.remove("hidden");
-    }
-    btnPlay.addEventListener("click", () => {
-      location.href = `control?id=${encodeURIComponent(gameId)}`;
-    });
-  }
+  // Load all questions for pickers
+  try {
+    allQuestions = await loadQuestions(gameId);
+  } catch {}
 
   updateSubTabStates();
 
@@ -1634,97 +973,18 @@ async function main() {
   // Save buttons
   btnSaveAll?.addEventListener("click", saveAll);
 
-  // Reset to defaults
-  btnResetAll?.addEventListener("click", async () => {
-    if (!await confirmModal({ text: t("gameSettings.resetAllConfirm") || "Przywrócić ustawienia domyślne? Niezapisane zmiany zostaną utracone." })) return;
-
-    // Wyczyść custom pliki dźwiękowe (IndexedDB + bucket)
-    let customKeys = [];
-    try { customKeys = [...(await getSfxCustomFiles(gameId)).keys()]; } catch {}
-    try { await clearAllSfxCustomFiles(gameId); } catch {}
-    if (customKeys.length > 0) {
-      _getSoundUserId().then(userId => {
-        if (userId) deleteAllGameSounds(sb(), userId, gameId, customKeys).catch(console.warn);
-      });
-    }
-
-    localSettings = mergeSettings(null);
-    markDirty();
-    updateSubTabStates();
-    setActiveCat(activeCat);
-  });
-
   // Back button
-  if (!isModal) {
-    btnBack?.addEventListener("click", async () => {
-      if (isDirty && !await confirmModal({ text: t("gameSettings.unsavedConfirm") || "Masz niezapisane zmiany. Czy na pewno chcesz wyjść?" })) return;
-      location.href = withLangParam('/builder');
-    });
-  }
+  btnBack?.addEventListener("click", () => {
+    if (isDirty && !confirm(t("gameSettings.unsavedConfirm") || "Masz niezapisane zmiany. Czy na pewno chcesz wyjść?")) return;
+    location.href = `/builder?id=${gameId}`;
+  });
 
   initColorModal();
 
-  // Manual / Legal overlays
-  const helpOverlay = document.getElementById("helpOverlay");
-  const helpFrame   = document.getElementById("helpFrame");
-  const legalOverlay = document.getElementById("legalOverlay");
-  const legalFrame   = document.getElementById("legalFrame");
-  const btnManual     = document.getElementById("btnManual");
-  const btnHelpClose  = document.getElementById("btnHelpClose");
-  const btnLegal      = document.getElementById("btnLegal");
-  const btnBackToManual = document.getElementById("btnBackToManual");
-  const btnLegalClose = document.getElementById("btnLegalClose");
-
-  function buildHelpUrl() {
-    const url = new URL("/manual", location.href);
-    url.searchParams.set("ret", `game-settings${location.search}`);
-    url.searchParams.set("modal", "control");
-    url.searchParams.set("lang", getUiLang() || "pl");
-    url.searchParams.set("tab", "gameSettings");
-    return url.toString();
-  }
-  function buildLegalUrl() {
-    const url = new URL("/privacy", location.href);
-    url.searchParams.set("ret", `game-settings${location.search}`);
-    url.searchParams.set("modal", "control");
-    url.searchParams.set("lang", getUiLang() || "pl");
-    return url.toString();
-  }
-
-  btnManual?.addEventListener("click", () => {
-    if (helpFrame) helpFrame.src = buildHelpUrl();
-    helpOverlay?.classList.remove("hidden");
-  });
-  btnHelpClose?.addEventListener("click", () => helpOverlay?.classList.add("hidden"));
-  helpOverlay?.addEventListener("click", (ev) => { if (ev.target === helpOverlay) helpOverlay.classList.add("hidden"); });
-
-  btnLegal?.addEventListener("click", (ev) => {
-    ev.stopImmediatePropagation();
-    if (legalFrame) legalFrame.src = buildLegalUrl();
-    legalOverlay?.classList.remove("hidden");
-  });
-  btnBackToManual?.addEventListener("click", () => {
-    legalOverlay?.classList.add("hidden");
-    if (helpFrame) helpFrame.src = buildHelpUrl();
-    helpOverlay?.classList.remove("hidden");
-  });
-  btnLegalClose?.addEventListener("click", () => legalOverlay?.classList.add("hidden"));
-  legalOverlay?.addEventListener("click", (ev) => { if (ev.target === legalOverlay) legalOverlay.classList.add("hidden"); });
-
-  // Create display preview iframe — skip in modal mode (real display managed by control-new)
-  if (!isModal) createDisplayIframe();
-  else sendDisplayInitCmds();
-
   setActiveCat("teams");
-  document.querySelectorAll('[data-skel-step]').forEach(el => el.classList.add('skel-step-ready'));
-
-  window.addEventListener("i18n:lang", () => {
-    resolveThemeLabels();
-    renderCat(activeCat);
-  });
 }
 
 main().catch(err => {
   console.error("[game-settings]", err);
-  if (content) content.innerHTML = `<p style="color:red;padding:20px">${escText(t("gameSettings.errorPrefix"))}${escText(String(err?.message || err))}</p>`;
+  if (content) content.innerHTML = `<p style="color:red;padding:20px">Błąd: ${escText(String(err?.message || err))}</p>`;
 });

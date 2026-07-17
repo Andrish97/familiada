@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-07-17T09161"/>
+  <meta name="app-version" content="v2026-07-10T21174"/>
   <meta charset="UTF-8"/>
   <meta name="robots" content="noindex, nofollow"/>
   <meta name="mobile-web-app-capable" content="yes"/>
@@ -11,83 +11,36 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
   <title data-i18n="gameSettings.title">Familiada — Ustawienia rozgrywki</title>
 
-  <link rel="icon" href="favicon.ico?v=v2026-07-17T09161"/>
-  <link rel="stylesheet" href="css/base.css?v=v2026-07-17T09161"/>
-  <link rel="stylesheet" href="css/game-settings.css?v=v2026-07-17T09161"/>
-  <script>if(new URLSearchParams(location.search).get("modal")==="1")document.documentElement.classList.add("gs-modal-mode");</script>
-  <script>if(matchMedia('(max-width:980px)').matches)document.documentElement.dataset.mobileGuard=''</script>
-  <style>html[data-mobile-guard]{overflow:hidden;touch-action:none}html[data-mobile-guard] body{visibility:hidden}</style>
-  <script>
-    document.documentElement.classList.add('page-loading');
-    try {
-      var _has = false;
-      for (var _i = 0; _i < localStorage.length; _i++) {
-        var _k = localStorage.key(_i);
-        if (_k && _k.startsWith('sb-') && _k.endsWith('-auth-token')) { _has = true; break; }
-      }
-      if (!_has) location.replace('login');
-    } catch(_e) {}
-  </script>
+  <link rel="icon" href="favicon.ico?v=v2026-07-10T21174"/>
+  <link rel="stylesheet" href="css/base.css?v=v2026-07-10T21174"/>
+  <link rel="stylesheet" href="css/game-settings.css?v=v2026-07-10T21174"/>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script src="js/core/security-warning.js?v=v2026-07-17T09161" defer></script>
+  <script src="js/core/security-warning.js?v=v2026-07-10T21174" defer></script>
   <script type="module">
-    import { initI18n } from "/translation/translation.js?v=v2026-07-17T09161";
-    await initI18n({ withSwitcher: true });
-    document.documentElement.classList.remove('page-loading');
-    import("/js/pages/game-settings.js?v=v2026-07-17T09161");
+    import { initI18n } from "/translation/translation.js?v=v2026-07-10T21174";
+    await initI18n({ withSwitcher: false });
+    import("/js/pages/game-settings.js?v=v2026-07-10T21174");
   </script>
 </head>
-<body class="gs-body skel-body">
+<body class="gs-body">
   <header class="topbar topbar-layout-4">
     <div class="topbar-section topbar-section-1">
       <div class="brand">FAMILIADA</div>
       <button class="btn" id="btnBack" type="button" data-i18n="gameSettings.back">← Moje gry</button>
     </div>
     <div class="topbar-section topbar-section-2">
-      <span class="gs-game-title" id="gsTitle"></span>
+      <span class="gs-game-title" id="gsTitle">—</span>
     </div>
     <div class="topbar-section topbar-section-3">
       <span class="badge bad gs-unsaved-badge hidden" id="gsUnsavedBadge" data-i18n="gameSettings.unsaved">Niezapisane</span>
-      <button class="btn" id="btnManual" type="button">ℹ️</button>
     </div>
     <div class="topbar-section topbar-section-4">
-      <span class="who" id="whoStatic">—</span>
-      <button class="btn" id="btnLogout" type="button" data-i18n="common.authEntry">Zaloguj / Załóż konto</button>
+      <button class="btn gold" id="btnSaveAll" type="button" data-i18n="gameSettings.saveAll">Zapisz wszystko</button>
     </div>
   </header>
 
-  <div class="helpOverlay hidden" id="helpOverlay">
-    <div class="helpModal" role="dialog" aria-modal="true">
-      <div class="helpModalToolbar">
-        <button class="btn btn-sm" id="btnLegal" type="button" data-i18n="manual.legal">🔐 Polityka prywatności</button>
-        <button class="btn sm" id="btnHelpClose" type="button" onclick="document.getElementById('helpOverlay').classList.add('hidden')">✕</button>
-      </div>
-      <iframe id="helpFrame" class="helpFrame" src="" title="Wskazówki"></iframe>
-    </div>
-  </div>
-
-  <div class="legalOverlay hidden" id="legalOverlay">
-    <div class="legalModal" role="dialog" aria-modal="true">
-      <div class="legalModalToolbar">
-        <button class="btn btn-sm" id="btnBackToManual" type="button" data-i18n="privacy.backToManual">← Wskazówki</button>
-        <button class="btn sm" id="btnLegalClose" type="button" onclick="document.getElementById('legalOverlay').classList.add('hidden')">✕</button>
-      </div>
-      <iframe id="legalFrame" class="legalFrame" src="" title="Polityka prywatności"></iframe>
-    </div>
-  </div>
-
   <div class="gs-layout">
-    <div class="gs-actionbar" id="gsFooter">
-      <button class="btn gs-sidebar-toggle hidden" id="btnToggleSidebar" type="button">☰</button>
-      <span class="gs-actionbar-msg hidden" id="gsFooterMsg" data-i18n="gameSettings.unsaved">Niezapisane zmiany</span>
-      <div style="flex:1"></div>
-      <button class="btn" id="btnResetAll" type="button" data-i18n="gameSettings.resetAll" data-skel-step>Przywróć domyślne</button>
-      <button class="btn gold" id="btnSaveAll" type="button" data-i18n="gameSettings.saveAll" data-skel-step>Zapisz wszystko</button>
-      <button class="btn green hidden" id="btnPlay" type="button" data-i18n="gameSettings.play">▶ Graj</button>
-      <button class="btn sm gs-close-btn hidden" id="btnGsModalClose" type="button">✕</button>
-    </div>
-
-    <div class="gs-sidebar-backdrop" id="gsSidebarBackdrop"></div>
     <nav class="gs-sidebar" id="gsSidebar">
       <button class="gs-sidebar-item active" data-cat="teams"     type="button" data-i18n="gameSettings.categories.teams">Drużyny</button>
       <button class="gs-sidebar-item"        data-cat="display"   type="button" data-i18n="gameSettings.categories.display">Wygląd</button>
@@ -99,14 +52,12 @@
     </nav>
 
     <main class="gs-content" id="gsContent">
-      <div id="gsContentInner" data-skel-step><!-- rendered by JS --></div>
-      <div id="gsDisplayIframeHolder" class="display-preview" style="display:none"></div>
+      <!-- rendered by JS -->
     </main>
 
-    <div class="footer gs-page-footer">
-      <div data-i18n="common.footer.left">© 2026 Familiada — system do gry na żywo</div>
-      <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
-    </div>
+    <footer class="gs-footer hidden" id="gsFooter">
+      <span class="gs-footer-msg" data-i18n="gameSettings.unsaved">Niezapisane zmiany</span>
+    </footer>
   </div>
 
 <div class="colorModalOverlay hidden" id="gsColorModal">
@@ -147,7 +98,5 @@
     </div>
   </div>
 </div>
-
-  <script type="module" src="js/core/contact-modal.js?v=v2026-07-17T09161"></script>
 </body>
 </html>
