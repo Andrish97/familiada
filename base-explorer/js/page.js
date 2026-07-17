@@ -52,10 +52,13 @@ btnBack?.addEventListener("click", () => {
 
 /* ================= Init ================= */
 (async function init() {
+  const requireAuthP = requireAuth(withLangParam("../login")); // start równolegle z initI18n
   await initI18n({ withSwitcher: true });
-  // auth
-  const user = await requireAuth(withLangParam("../login"));
+  document.documentElement.classList.remove('page-loading');
+
+  const user = await requireAuthP;
   initTopbarAccountDropdown(user, { accountHref: "../account", loginHref: "../login" });
+  document.querySelector('.topbar')?.classList.add('topbar-ready');
 
   // base id z URL
   const baseId = getBaseIdFromUrl();
@@ -109,10 +112,8 @@ btnBack?.addEventListener("click", () => {
 
     // refresh (żeby search/filter działały od razu spójnie)
     await api.refreshList();
-    document.documentElement.classList.remove('page-loading');
 
   } catch (e) {
-    document.documentElement.classList.remove('page-loading');
     console.error(e);
 
     // brak dostępu – wracamy do baz
