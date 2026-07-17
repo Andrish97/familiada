@@ -376,7 +376,7 @@ function initTopbarController() {
 
   topbar.dataset.mobileMenuControllerReady = '1';
 
-  const mobileMq = window.matchMedia('(max-width: 900px)');
+  const mobileMq = window.matchMedia('(max-width: 980px)');
   const section2Placeholder = document.createComment('topbar-section-2-restore');
   const section4Placeholder = document.createComment('topbar-section-4-restore');
   const tabsPlaceholder = document.createComment('topbar-tabs-restore');
@@ -512,7 +512,7 @@ function initTopbarController() {
     section2.style.display = 'none';
     section4.style.display = 'none';
 
-    const backBtn = section1.querySelector('#btnBack,#btnBackToBuilder,[data-mobile-back],.btn-back,.btn.back');
+    const backBtn = section1.querySelector('#btnBack,#btnBackToBuilder');
     if (backBtn) backBtn.classList.add('mobile-primary-back');
 
     badgeObserver = new MutationObserver(() => {

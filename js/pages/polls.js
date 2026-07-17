@@ -102,7 +102,7 @@ function redoAction() {
   if (window._textCloseRerenderAll) window._textCloseRerenderAll();
 }
 
-const backTarget = ret || "builder";
+const backTarget = withLangParam(ret || "builder");
 
 
 function getRetPathnameLower() {

@@ -4,9 +4,8 @@ import { requireAuth } from "../core/auth.js?v=v2026-07-17T07134";
 import { alertModal, confirmModal } from "../core/modal.js?v=v2026-07-17T07134";
 import { parseQaText, clip as clipN } from "../core/text-import.js?v=v2026-07-17T07134";
 import { canEnterEdit, RULES as GV_RULES, TYPES } from "../core/game-validate.js?v=v2026-07-17T07134";
-import { initI18n, t } from "../../translation/translation.js?v=v2026-07-17T07134";
-import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-07-17T07134";
-import "../core/contact-modal.js";
+import { initI18n, t, withLangParam, withLangParam } from "../../translation/translation.js?v=v2026-07-17T07134";
+import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-07-17T07134";import "../core/contact-modal.js";
 
 // initI18n + remove('page-loading') są w boot() — przed requireAuth, żeby body pojawiło się przed auth/danymi
 
@@ -507,7 +506,7 @@ async function boot() {
       leaveQuestionEditor();
       return;
     }
-    location.href = "builder";
+    location.href = withLangParam("builder");
   });
 
 
@@ -525,7 +524,7 @@ async function boot() {
   const gameId = getIdFromQuery();
   if (!gameId) {
     void alertModal({ text: t("editor.alert.missingId") });
-    location.href = "builder";
+    location.href = withLangParam("builder");
     return;
   }
 
@@ -535,14 +534,14 @@ async function boot() {
   const editInfo = canEnterEdit(game);
   if (!editInfo?.ok) {
     void alertModal({ text: editInfo?.reason || MSG.cannotEdit() });
-    location.href = "builder";
+    location.href = withLangParam("builder");
     return;
   }
 
   if (editInfo.needsResetWarning) {
     const ok = await confirmModal({ text: MSG.resetPollConfirm() });
     if (!ok) {
-      location.href = "builder";
+      location.href = withLangParam("builder");
       return;
     }
     await resetPollForEditing(gameId);

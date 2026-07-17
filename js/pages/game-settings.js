@@ -1,14 +1,13 @@
 // js/pages/game-settings.js
 import { requireAuth } from "../core/auth.js?v=v2026-07-17T07134";
-import { t, getUiLang } from "../../translation/translation.js?v=v2026-07-17T07134";
+import { t, getUiLang, withLangParam } from "../../translation/translation.js?v=v2026-07-17T07134";
 import { setTopbarAccount } from "../core/topbar-controller.js?v=v2026-07-17T07134";
 import { sb } from "../core/supabase.js?v=v2026-07-17T07134";
 import { loadQuestions } from "../core/game-validate.js?v=v2026-07-17T07134";
 import { loadFont5x7, buildLogoPreviewCanvas } from "../core/logo-preview.js?v=v2026-07-17T07134";
 import { v as cacheBust } from "../core/cache-bust.js?v=v2026-07-17T07134";
 import { alertModal, confirmModal } from "../core/modal.js?v=v2026-07-17T07134";
-import { initUiSelect } from "../core/ui-select.js?v=v2026-07-17T07134";
-import {
+import { initUiSelect } from "../core/ui-select.js?v=v2026-07-17T07134";import {
   loadSfxManifest, getSfxCategories,
   setSfxCustomBlob, clearSfxCustomFile, clearAllSfxCustomFiles, getSfxCustomFiles,
   playSfx, setSfxVolume,
@@ -1659,7 +1658,7 @@ async function main() {
   if (!isModal) {
     btnBack?.addEventListener("click", async () => {
       if (isDirty && !await confirmModal({ text: t("gameSettings.unsavedConfirm") || "Masz niezapisane zmiany. Czy na pewno chcesz wyjść?" })) return;
-      location.href = `/builder`;
+      location.href = withLangParam('/builder');
     });
   }
 

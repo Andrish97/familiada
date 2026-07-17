@@ -8,9 +8,8 @@ import { requireAuth } from "../core/auth.js?v=v2026-07-17T07134";
 import { alertModal, confirmModal } from "../core/modal.js?v=v2026-07-17T07134";
 import { isGuestUser, hideForGuest } from "../core/guest-mode.js?v=v2026-07-17T07134";
 import { initUiSelect } from "../core/ui-select.js?v=v2026-07-17T07134";
-import { getUiLang, initI18n, t } from "../../translation/translation.js?v=v2026-07-17T07134";
-import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-07-17T07134";
-import "../core/contact-modal.js";
+import { getUiLang, initI18n, t, withLangParam, withLangParam } from "../../translation/translation.js?v=v2026-07-17T07134";
+import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-07-17T07134";import "../core/contact-modal.js";
 
 initI18n({ withSwitcher: true }).then(() => {
   document.documentElement.classList.remove('page-loading');
@@ -1441,7 +1440,7 @@ function getRetParam() {
 
 function getBackLink() {
   const rawRet = getRetParam();
-  return rawRet || "builder";
+  return withLangParam(rawRet || "builder");
 }
 
 function getCurrentRelativeUrl() {
