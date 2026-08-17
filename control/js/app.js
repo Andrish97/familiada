@@ -551,6 +551,13 @@ function isEndedUiState() {
   return false;
 }
 
+function abandonedScoreSnapshot() {
+  const totals = store.state.rounds?.totals || {};
+  const a = Number.isFinite(totals.A) ? totals.A : null;
+  const b = Number.isFinite(totals.B) ? totals.B : null;
+  return { teamAScore: a, teamBScore: b };
+}
+
 async function sendZeroStatesToDevices() {
   if (!devices) return;
   try { await devices.sendDisplayCmd("APP GAME"); } catch {}
@@ -611,7 +618,7 @@ async function sendZeroStatesToDevices() {
     }
     // Zawsze próbuj zamknąć sesję jako porzuconą — no-op, jeśli
     // sessionEnd("final") już zdążył ją zamknąć wcześniej.
-    sessionEnd("abandoned");
+    sessionEnd("abandoned", abandonedScoreSnapshot());
     // Wygaś udostępnienia – fire-and-forget (przeglądarka może zabić JS)
     shareDevice.expireShares().catch(() => {});
     expireConnectCodes().catch(() => {});
@@ -948,7 +955,7 @@ async function sendZeroStatesToDevices() {
     // i isEndedUiState() oba zwracają "spokojnie" na ekranach przeglądu wyniku,
     // zanim host kliknie faktyczny przycisk kończący — sessionEnd musi więc
     // być wołany niezależnie od tych flag).
-    sessionEnd("abandoned");
+    sessionEnd("abandoned", abandonedScoreSnapshot());
 
     await shareDevice.expireShares();
     await expireConnectCodes();

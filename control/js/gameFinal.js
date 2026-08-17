@@ -51,7 +51,7 @@ const FINAL_MSG = {
 
 import { playSfx, getSfxDuration } from "../../js/core/sfx.js?v=v2026-08-17T12161";
 import { t } from "../../translation/translation.js?v=v2026-08-17T12161";
-import { sessionEnd } from "./sessionTracking.js?v=v2026-08-17T12161";
+import { sessionEnd, sessionFinalStep } from "./sessionTracking.js?v=v2026-08-17T12161";
 
 
 function nInt(v, d = 0) {
@@ -1519,6 +1519,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
 
       setStep("f_p1_entry");
       renderP1Entry();
+      sessionFinalStep("final_start");
 
       ui.setEnabled("btnFinalToP1MapQ1", false);
 
@@ -1617,6 +1618,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
 
   async function toP1MapQ(idx1based) {
     ensureRuntime();
+    sessionFinalStep(`p1_q${idx1based}`);
     await timerStopAndReset();
 
     const idx = idx1based - 1;
@@ -1696,6 +1698,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
 
   async function toP2MapQ(idx1based) {
     ensureRuntime();
+    sessionFinalStep(`p2_q${idx1based}`);
     await timerStopAndReset();
 
     const idx = idx1based - 1;
@@ -1810,7 +1813,11 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     } catch {}
 
     store.state.locks.gameEnded = true;
-    sessionEnd("final");
+    sessionEnd("final", {
+      winnerTeam,
+      teamAScore: winnerTeam === "A" ? roundsA + sum : roundsA,
+      teamBScore: winnerTeam === "B" ? roundsB + sum : roundsB,
+    });
   }
 
   function bootIfNeeded() {
