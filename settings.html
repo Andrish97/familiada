@@ -856,7 +856,10 @@
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px">
               <div class="panel-title" style="font-size:1rem" data-i18n="settings.marketingContacts.verifiedTitle">Zweryfikowane kontakty</div>
               <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-                <input class="inp" id="mcSearchInput" type="text" autocomplete="off" data-i18n-placeholder="settings.marketingContacts.searchPlaceholder" placeholder="Szukaj…" style="min-width:160px">
+                <div style="position:relative;display:inline-flex;align-items:center">
+                  <input class="inp" id="mcSearchInput" type="text" autocomplete="off" data-i18n-placeholder="settings.marketingContacts.searchPlaceholder" placeholder="Szukaj…" style="min-width:160px;padding-right:26px">
+                  <button type="button" id="mcSearchClearBtn" aria-label="Wyczyść" style="display:none;position:absolute;right:6px;top:50%;transform:translateY(-50%);background:transparent;border:0;color:rgba(255,255,255,.55);font-size:16px;line-height:1;cursor:pointer;padding:4px">✕</button>
+                </div>
                 <div class="ui-select" id="mcFilterUsed" style="min-width:120px">
                   <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
                     <span class="ui-select-label">—</span>
