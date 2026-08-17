@@ -608,9 +608,10 @@ async function sendZeroStatesToDevices() {
 
     if (isEndedUiState()) {
       sendZeroStatesToDevices().catch(() => {});
-    } else {
-      sessionEnd("abandoned");
     }
+    // Zawsze próbuj zamknąć sesję jako porzuconą — no-op, jeśli
+    // sessionEnd("final") już zdążył ją zamknąć wcześniej.
+    sessionEnd("abandoned");
     // Wygaś udostępnienia – fire-and-forget (przeglądarka może zabić JS)
     shareDevice.expireShares().catch(() => {});
     expireConnectCodes().catch(() => {});
@@ -941,9 +942,13 @@ async function sendZeroStatesToDevices() {
 
     if (isEndedUiState()) {
       await sendZeroStatesToDevices().catch(() => {});
-    } else if (midGame) {
-      sessionEnd("abandoned");
     }
+    // Zawsze próbuj zamknąć sesję jako porzuconą — no-op, jeśli
+    // sessionEnd("final") już zdążył ją zamknąć wcześniej (shouldWarnBeforeUnload()
+    // i isEndedUiState() oba zwracają "spokojnie" na ekranach przeglądu wyniku,
+    // zanim host kliknie faktyczny przycisk kończący — sessionEnd musi więc
+    // być wołany niezależnie od tych flag).
+    sessionEnd("abandoned");
 
     await shareDevice.expireShares();
     await expireConnectCodes();
