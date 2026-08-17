@@ -6572,13 +6572,26 @@ function wireEvents() {
   document.getElementById("mcRefreshBtn")?.addEventListener("click", () => { mcLoadRuns(); mcLoadContacts(); mcLoadLogs(); });
   {
     let mcSearchTimer = null;
-    document.getElementById("mcSearchInput")?.addEventListener("input", (e) => {
+    const searchInput = document.getElementById("mcSearchInput");
+    const searchClearBtn = document.getElementById("mcSearchClearBtn");
+    searchInput?.addEventListener("input", (e) => {
+      if (searchClearBtn) searchClearBtn.style.display = e.target.value ? "" : "none";
       clearTimeout(mcSearchTimer);
       mcSearchTimer = setTimeout(() => {
         mcSearchValue = e.target.value;
         mcState.page = 1;
         mcLoadContacts();
       }, 300);
+    });
+    searchClearBtn?.addEventListener("click", () => {
+      if (!searchInput) return;
+      searchInput.value = "";
+      searchClearBtn.style.display = "none";
+      clearTimeout(mcSearchTimer);
+      mcSearchValue = "";
+      mcState.page = 1;
+      mcLoadContacts();
+      searchInput.focus();
     });
   }
   initUiSelect(document.getElementById("mcFilterUsed"), {
