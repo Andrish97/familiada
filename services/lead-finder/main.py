@@ -613,53 +613,56 @@ def _models_list_headers(name, cfg):
         return {'x-api-key': cfg['key'], 'anthropic-version': '2023-06-01'}
     return {'Authorization': f'Bearer {cfg["key"]}'}
 
-async def resolve_provider_model(name):
+async def try_switch_model(name):
     """Sprawdza w API dostawcy jakie modele są faktycznie dostępne na koncie
-    i jeśli skonfigurowany model zniknął (np. wycofany przez dostawcę),
-    przełącza się na pierwszy dostępny kandydat z listy zamienników."""
+    i przełącza się na pierwszy dostępny kandydat z listy zamienników.
+    Wywoływane tylko gdy skonfigurowany model realnie zawiódł błędem 404 —
+    sama nieobecność na liście /models nie jest dowodem awarii (np. DeepSeek
+    nie zawsze wymienia tam działające jeszcze aliasy modeli)."""
     cfg = AI_PROVIDERS.get(name)
-    if not cfg or not cfg['key']: return
+    if not cfg or not cfg['key']: return False
     models_url = MODELS_LIST_URL.get(name)
-    if not models_url: return
+    if not models_url: return False
     try:
         r = await global_client.get(models_url, headers=_models_list_headers(name, cfg), timeout=15)
-        if r.status_code != 200:
-            logger.info(f"Nie udało się pobrać listy modeli {name} (status {r.status_code}) — zostaję przy {cfg['model']}")
-            return
+        if r.status_code != 200: return False
         available = {m['id'] for m in r.json().get('data', [])}
-    except Exception as e:
-        logger.info(f"Błąd pobierania listy modeli {name}: {e}")
-        return
-
-    if not available or cfg['model'] in available:
-        return
+    except Exception:
+        return False
 
     for candidate in MODEL_CANDIDATES.get(name, []):
-        if candidate in available:
-            logger.warning(f"Model {name}/{cfg['model']} niedostępny na koncie — przełączam na {candidate}")
+        if candidate != cfg['model'] and candidate in available:
+            logger.warning(f"Model {name}/{cfg['model']} niedostępny — przełączam na {candidate}")
             cfg['model'] = candidate
-            return
-
-    logger.error(f"Skonfigurowany model {name}/{cfg['model']} niedostępny, a żaden ze znanych zamienników też nie jest dostępny na koncie.")
-
-async def resolve_ai_models():
-    for name in AI_PROVIDERS:
-        await resolve_provider_model(name)
+            return True
+    return False
 
 async def warmup_ai_providers():
-    await resolve_ai_models()
     print("[SERVER] Rozgrzewanie modeli AI (Hey)...")
     providers = await supabase.select('marketing_ai_providers', '*', {'is_active': 'true'})
     if not providers: return
     for p in providers:
         name = p['name']
         status, _, err = await call_ai_provider(name, "Hey")
+
+        if status == 404 and any(x in str(err) for x in ("model_not_found", "does not exist")) and await try_switch_model(name):
+            status, _, err = await call_ai_provider(name, "Hey")
+
         if status == 200:
             logger.info(f"Model {name} jest gotowy.")
-        elif status in (401, 403, 429) and any(x in str(err) for x in ("day", "daily", "quota", "credit", "unauthorized", "insufficient")):
-            msg = f"Model {name} wyczerpał limit (Błąd {status}): {err}"
+        elif any(x in str(err) for x in ("day", "daily", "quota", "credit", "unauthorized", "insufficient")):
+            msg = f"Model {name} wyczerpał limit lub środki (Błąd {status}): {err}"
             logger.info(msg)
             await supabase.call_rpc('set_ai_provider_cooldown', {'p_name': name, 'p_seconds': PROVIDER_COOLDOWN_QUOTA, 'p_error': msg})
+        elif status == 404 and any(x in str(err) for x in ("model_not_found", "does not exist")):
+            msg = f"Model {name}/{AI_PROVIDERS[name]['model']} niedostępny, brak działającego zamiennika: {err}"
+            logger.error(msg)
+            await supabase.call_rpc('set_ai_provider_cooldown', {'p_name': name, 'p_seconds': PROVIDER_COOLDOWN_QUOTA, 'p_error': msg})
+            await send_telegram_notification(
+                f"⚠️ <b>Błędna konfiguracja dostawcy AI</b>\n"
+                f"Dostawca <b>{name}</b> zwraca błąd 404 — model nie istnieje, a żaden ze znanych zamienników też nie jest dostępny na koncie.\n\n"
+                f"<code>{msg[:300]}</code>"
+            )
         else:
             msg = f"Model {name} zwrócił błąd {status}: {err}"
             logger.info(msg)
