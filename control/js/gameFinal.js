@@ -51,6 +51,7 @@ const FINAL_MSG = {
 
 import { playSfx, getSfxDuration } from "../../js/core/sfx.js?v=v2026-07-17T17520";
 import { t } from "../../translation/translation.js?v=v2026-07-17T17520";
+import { sessionEnd } from "./sessionTracking.js?v=v2026-07-17T17520";
 
 
 function nInt(v, d = 0) {
@@ -1809,6 +1810,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     } catch {}
 
     store.state.locks.gameEnded = true;
+    sessionEnd("final");
   }
 
   function bootIfNeeded() {

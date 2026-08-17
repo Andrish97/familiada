@@ -58,6 +58,7 @@ import { createRounds } from "./gameRounds.js?v=v2026-07-17T17520";
 import { createFinal } from "./gameFinal.js?v=v2026-07-17T17520";
 import { initShareDevice } from "./share-device.js?v=v2026-07-17T17520";
 import { loadFont5x7, buildLogoPreviewCanvas } from "../../js/core/logo-preview.js?v=v2026-07-17T17520";
+import { sessionStart, sessionEnd, sessionLogError } from "./sessionTracking.js?v=v2026-07-17T17520";
 
 initI18n({ withSwitcher: true });
 
@@ -607,6 +608,8 @@ async function sendZeroStatesToDevices() {
 
     if (isEndedUiState()) {
       sendZeroStatesToDevices().catch(() => {});
+    } else {
+      sessionEnd("abandoned");
     }
     // Wygaś udostępnienia – fire-and-forget (przeglądarka może zabić JS)
     shareDevice.expireShares().catch(() => {});
@@ -925,7 +928,8 @@ async function sendZeroStatesToDevices() {
 
   // === Top bar ===
   ui.on("top.back", async () => {
-    if (shouldWarnBeforeUnload()) {
+    const midGame = shouldWarnBeforeUnload();
+    if (midGame) {
       const ok = await confirmModal({
         title: t("control.leaveTitle"),
         text: t("control.leaveText"),
@@ -937,6 +941,8 @@ async function sendZeroStatesToDevices() {
 
     if (isEndedUiState()) {
       await sendZeroStatesToDevices().catch(() => {});
+    } else if (midGame) {
+      sessionEnd("abandoned");
     }
 
     await shareDevice.expireShares();
@@ -1429,6 +1435,7 @@ async function sendZeroStatesToDevices() {
   ui.on("game.startIntro", async () => {
     if (!store.state.locks.gameStarted) {
       store.setGameStarted(true);
+      sessionStart(game.id);
       await rounds.stateGameReady();
     }
     await rounds.stateStartGameIntro();
@@ -1514,6 +1521,7 @@ window.addEventListener("unhandledrejection", (ev) => {
   const msg = ev.reason?.message || String(ev.reason ?? "Nieznany błąd");
   console.error("[unhandled]", msg);
   showGlobalError(msg);
+  sessionLogError(msg);
 });
 
 main().catch((e) => {

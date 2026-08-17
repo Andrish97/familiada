@@ -1,5 +1,6 @@
 import { playSfx, createSfxMixer, getSfxDuration } from "../../js/core/sfx.js?v=v2026-07-17T17520";
 import { t } from "../../translation/translation.js?v=v2026-07-17T17520";
+import { sessionRoundCompleted, sessionEnd } from "./sessionTracking.js?v=v2026-07-17T17520";
 
 
 function nInt(v, d = 0) {
@@ -1397,8 +1398,10 @@ function hostUpdate() {
   }
 
   function endRound() {
+    sessionRoundCompleted();
+
     const r = store.state.rounds;
-  
+
     r.roundNo = nInt(r.roundNo, 1) + 1;
   
     r.bankPts = 0;
@@ -1577,6 +1580,8 @@ function hostUpdate() {
           introMixer.play("show_intro");
         });
       }
+
+      sessionEnd("final");
     } catch (e) {
       console.warn("[rounds] gameEndShow error", e);
       store.state.locks.gameEnded = false;
