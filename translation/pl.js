@@ -5146,6 +5146,7 @@ const pl = {
       targetCount: "Ilość kontaktów:",
       start: "▶ Uruchom",
       refresh: "⟳ Odśwież",
+      searchPlaceholder: "Szukaj…",
       verifiedTitle: "Zweryfikowane kontakty",
       markUsed: "✓ Użyte",
       delete: "🗑 Usuń",

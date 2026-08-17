@@ -4858,6 +4858,7 @@ const uk = {
       targetCount: "Кількість контактів:",
       start: "▶ Запустити",
       refresh: "⟳ Оновити",
+      searchPlaceholder: "Пошук…",
       verifiedTitle: "Верифіковані контакти",
       markUsed: "✓ Використано",
       delete: "🗑 Видалити",

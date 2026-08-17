@@ -4867,6 +4867,7 @@ const en = {
       targetCount: "Target count:",
       start: "▶ Start",
       refresh: "⟳ Refresh",
+      searchPlaceholder: "Search…",
       verifiedTitle: "Verified contacts",
       markUsed: "✓ Mark used",
       delete: "🗑 Delete",

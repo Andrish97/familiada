@@ -5986,6 +5986,7 @@ function wireEvents() {
     return null;
   }
   let mcFilterUsedValue = "";
+  let mcSearchValue = "";
   let mcState = {
     runs: [],
     contacts: [],
@@ -6119,6 +6120,11 @@ function wireEvents() {
       let query = sb().from("marketing_verified_contacts").select("*", { count: 'exact' });
       const fUsed = mcFilterUsedValue;
       if (fUsed !== "") query = query.eq("is_used", fUsed === "true");
+      const search = mcSearchValue.trim();
+      if (search) {
+        const esc = search.replace(/[\\,()%_]/g, '\\$&');
+        query = query.or(`title.ilike.%${esc}%,email.ilike.%${esc}%,url.ilike.%${esc}%`);
+      }
       const from = (mcState.page - 1) * MC_PAGE_SIZE;
       const to = from + MC_PAGE_SIZE - 1;
       const { data, error, count } = await query.order(mcState.sortCol, {ascending: mcState.sortDir === 'asc'}).range(from, to);
@@ -6564,6 +6570,17 @@ function wireEvents() {
   document.getElementById("mcActionBtn")?.addEventListener("click", mcAction);
   document.getElementById("mcCancelBtn")?.addEventListener("click", mcCancel);
   document.getElementById("mcRefreshBtn")?.addEventListener("click", () => { mcLoadRuns(); mcLoadContacts(); mcLoadLogs(); });
+  {
+    let mcSearchTimer = null;
+    document.getElementById("mcSearchInput")?.addEventListener("input", (e) => {
+      clearTimeout(mcSearchTimer);
+      mcSearchTimer = setTimeout(() => {
+        mcSearchValue = e.target.value;
+        mcState.page = 1;
+        mcLoadContacts();
+      }, 300);
+    });
+  }
   initUiSelect(document.getElementById("mcFilterUsed"), {
     options: [
       { value: "", label: "Wszystkie" },
