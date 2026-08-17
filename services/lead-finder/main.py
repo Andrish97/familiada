@@ -598,7 +598,45 @@ async def consumer_task(run_id, target):
             await supabase.update('marketing_raw_contacts', {'status': 'rejected', 'reject_reason': reason[:500]}, {'id': lead['id']})
             logger.info(f"Odrzucono {lead['url']}. Przyczyna: {reason}")
 
+GROQ_MODEL_CANDIDATES = ["openai/gpt-oss-20b", "llama-3.3-70b-versatile", "llama-3.1-8b-instant", "llama3-70b-8192", "gemma2-9b-it"]
+DEEPSEEK_MODEL_CANDIDATES = ["deepseek-chat"]
+MODEL_CANDIDATES = {'groq': GROQ_MODEL_CANDIDATES, 'deepseek': DEEPSEEK_MODEL_CANDIDATES}
+
+async def resolve_provider_model(name):
+    """Sprawdza w API dostawcy jakie modele są faktycznie dostępne na koncie
+    i jeśli skonfigurowany model zniknął (np. wycofany przez dostawcę),
+    przełącza się na pierwszy dostępny kandydat z listy zamienników."""
+    cfg = AI_PROVIDERS.get(name)
+    if not cfg or not cfg['key']: return
+    models_url = cfg['endpoint'].rsplit('/chat/completions', 1)[0] + '/models'
+    try:
+        r = await global_client.get(models_url, headers={'Authorization': f'Bearer {cfg["key"]}'}, timeout=15)
+        if r.status_code != 200:
+            logger.info(f"Nie udało się pobrać listy modeli {name} (status {r.status_code}) — zostaję przy {cfg['model']}")
+            return
+        available = {m['id'] for m in r.json().get('data', [])}
+    except Exception as e:
+        logger.info(f"Błąd pobierania listy modeli {name}: {e}")
+        return
+
+    if not available or cfg['model'] in available:
+        return
+
+    for candidate in MODEL_CANDIDATES.get(name, []):
+        if candidate in available:
+            logger.warning(f"Model {name}/{cfg['model']} niedostępny na koncie — przełączam na {candidate}")
+            cfg['model'] = candidate
+            return
+
+    logger.error(f"Skonfigurowany model {name}/{cfg['model']} niedostępny, a żaden ze znanych zamienników też nie jest dostępny na koncie.")
+
+async def resolve_ai_models():
+    for name in AI_PROVIDERS:
+        if name == 'anthropic': continue  # inny format API list modeli
+        await resolve_provider_model(name)
+
 async def warmup_ai_providers():
+    await resolve_ai_models()
     print("[SERVER] Rozgrzewanie modeli AI (Hey)...")
     providers = await supabase.select('marketing_ai_providers', '*', {'is_active': 'true'})
     if not providers: return
