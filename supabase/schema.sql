@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict m17c3GW8FukohO8PkLqXXubeTZ49Hsfd1t5IQVVAA9NcyeyM2hpNWLfzcGujOW9
+\restrict YGdtFr5ubz7KcJq6KD8QMQTcCebNavbkAhQ9U17zSFUO7P61az6vo5KAdNNOGKp
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -10226,7 +10226,7 @@ CREATE TABLE "public"."game_sessions" (
     "team_b_score" integer,
     CONSTRAINT "game_sessions_rounds_played_check" CHECK (("rounds_played" >= 0)),
     CONSTRAINT "game_sessions_scores_check" CHECK (((("team_a_score" IS NULL) OR ("team_a_score" >= 0)) AND (("team_b_score" IS NULL) OR ("team_b_score" >= 0)))),
-    CONSTRAINT "game_sessions_status_check" CHECK (("status" = ANY (ARRAY['started'::"text", 'playing'::"text", 'final'::"text", 'won'::"text", 'lost'::"text", 'abandoned'::"text", 'error'::"text"]))),
+    CONSTRAINT "game_sessions_status_check" CHECK (("status" = ANY (ARRAY['started'::"text", 'playing'::"text", 'final'::"text", 'won'::"text", 'lost'::"text", 'abandoned'::"text", 'error'::"text", 'legacy'::"text"]))),
     CONSTRAINT "game_sessions_winner_team_check" CHECK ((("winner_team" = ANY (ARRAY['A'::"text", 'B'::"text"])) OR ("winner_team" IS NULL)))
 );
 
@@ -13921,5 +13921,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict m17c3GW8FukohO8PkLqXXubeTZ49Hsfd1t5IQVVAA9NcyeyM2hpNWLfzcGujOW9
+\unrestrict YGdtFr5ubz7KcJq6KD8QMQTcCebNavbkAhQ9U17zSFUO7P61az6vo5KAdNNOGKp
 
