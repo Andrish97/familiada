@@ -149,7 +149,7 @@ export default {
     }
 
     // Dynamic sitemap — includes all published game URLs
-    if (request.method === "GET" && url.pathname === "/sitemap.xml?v=v2026-08-17T13130") {
+    if (request.method === "GET" && url.pathname === "/sitemap.xml") {
       return serveDynamicSitemap(env);
     }
 
