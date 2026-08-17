@@ -658,6 +658,30 @@ async def start(target_count: int = 50):
 @app.get("/api/search-runs/status")
 async def status(): return {"status": task_status, "run_id": task_run_id, "verified": verified_in_run, "errors": critical_errors_in_run}
 
+@app.post("/api/search-runs/{run_id}/pause")
+async def pause(run_id: str):
+    global task_status
+    if task_run_id != run_id: raise HTTPException(404, "Nieznane zlecenie")
+    if task_status != "running": raise HTTPException(400, f"Nie można wstrzymać w stanie {task_status}")
+    task_status = "paused"
+    return {"ok": True, "status": task_status}
+
+@app.post("/api/search-runs/{run_id}/resume")
+async def resume(run_id: str):
+    global task_status
+    if task_run_id != run_id: raise HTTPException(404, "Nieznane zlecenie")
+    if task_status != "paused": raise HTTPException(400, f"Nie można wznowić w stanie {task_status}")
+    task_status = "running"
+    return {"ok": True, "status": task_status}
+
+@app.post("/api/search-runs/{run_id}/cancel")
+async def cancel(run_id: str):
+    global task_status
+    if task_run_id != run_id: raise HTTPException(404, "Nieznane zlecenie")
+    if task_status not in ("running", "paused"): raise HTTPException(400, "Brak aktywnego zlecenia do anulowania")
+    task_status = "cancelled"
+    return {"ok": True, "status": task_status}
+
 @app.get("/health")
 async def health(): return {"status": "ok"}
 
