@@ -105,7 +105,8 @@ const els = {
   statGamesQuality: document.getElementById("statGamesQuality"),
   statPlayedTotal: document.getElementById("statPlayedTotal"),
   statPlayedPeriods: document.getElementById("statPlayedPeriods"),
-  statBuzzerActivity: document.getElementById("statBuzzerActivity"),
+  statPlayedOutcomes: document.getElementById("statPlayedOutcomes"),
+  statPlayedIssues: document.getElementById("statPlayedIssues"),
   statBasesTotal: document.getElementById("statBasesTotal"),
   statBasesGrowth: document.getElementById("statBasesGrowth"),
   statLogosTotal: document.getElementById("statLogosTotal"),
@@ -1057,7 +1058,8 @@ async function loadAdminStats({ silent = false } = {}) {
 
     if (els.statPlayedTotal) els.statPlayedTotal.textContent = data.gameplay.played_30d;
     if (els.statPlayedPeriods) els.statPlayedPeriods.textContent = `Dziś: ${data.gameplay.played_today} | 7 dni: ${data.gameplay.played_7d} | 30 dni: ${data.gameplay.played_30d}`;
-    if (els.statBuzzerActivity) els.statBuzzerActivity.textContent = `Buzzer 7d: ${data.gameplay.buzzer_7d} | Sesje ankiet 7d: ${data.polls.sessions_7d}`;
+    if (els.statPlayedOutcomes) els.statPlayedOutcomes.textContent = `Zakończone: ${data.gameplay.finished_30d} | Porzucone: ${data.gameplay.abandoned_30d} | W trakcie: ${data.gameplay.in_progress}`;
+    if (els.statPlayedIssues) els.statPlayedIssues.textContent = `Z błędami: ${data.gameplay.errors_30d} | Sesje ankiet 7d: ${data.polls.sessions_7d} | Archiwalne: ${data.gameplay.legacy_total}`;
 
     if (els.statBasesTotal) els.statBasesTotal.textContent = data.bases.total;
     if (els.statBasesGrowth) els.statBasesGrowth.textContent = `Dziś: ${data.bases.new_today} | 7 dni: ${data.bases.new_7d} | 30 dni: ${data.bases.new_30d}`;
@@ -5057,8 +5059,17 @@ const STAT_DETAIL_CONFIG = {
   },
   gameplay: {
     title: "Rozgrywki",
-    cols: ["Gra", "Właściciel", "Ostatnia rozgrywka"],
-    row: r => [r.game_name || "—", r.owner || "—", fmtDate(r.last_seen_at)],
+    cols: ["Gra", "Właściciel", "Kiedy", "Czas trwania", "Rundy", "Wynik", "Zwycięzca", "Status"],
+    row: r => [
+      r.game_name || "—",
+      r.owner || "—",
+      fmtDate(r.started_at),
+      fmtSessionDuration(r),
+      r.effective_status === "legacy" ? "—" : (r.rounds_played ?? "—"),
+      (r.team_a_score != null && r.team_b_score != null) ? `${r.team_a_score}:${r.team_b_score}` : "—",
+      fmtSessionWinner(r),
+      fmtSessionStatus(r),
+    ],
   },
   bases: {
     title: "Bazy pytań",
@@ -5081,6 +5092,41 @@ function fmtDate(iso) {
   if (!iso) return "—";
   try { return new Date(iso).toLocaleString("pl-PL", { dateStyle: "short", timeStyle: "short" }); }
   catch { return iso; }
+}
+
+// Rozgrywki: pomocnicze formatowanie (proste, zrozumiałe dla admina, nie techniczne)
+function fmtSessionDuration(r) {
+  if (r.effective_status === "legacy" || !r.started_at || !r.ended_at) return "—";
+  const ms = new Date(r.ended_at) - new Date(r.started_at);
+  if (!(ms > 0)) return "—";
+  const mins = Math.round(ms / 60000);
+  if (mins < 1) return "< 1 min";
+  if (mins < 60) return `${mins} min`;
+  return `${Math.floor(mins / 60)} godz ${mins % 60} min`;
+}
+
+function fmtSessionWinner(r) {
+  if (r.winner_team === "A") return "Drużyna A";
+  if (r.winner_team === "B") return "Drużyna B";
+  if (r.effective_status === "final") return "Remis";
+  return "—";
+}
+
+const SESSION_STATUS_LABELS = {
+  started: "🔵 Rozpoczęta",
+  playing: "🔵 W trakcie",
+  final: "🟢 Zakończona",
+  won: "🟢 Zakończona",
+  lost: "🟢 Zakończona",
+  abandoned: "⚪ Porzucona",
+  error: "🔴 Błąd",
+  legacy: "📁 Archiwalna",
+};
+
+function fmtSessionStatus(r) {
+  const label = SESSION_STATUS_LABELS[r.effective_status] || r.effective_status || "—";
+  const errCount = Number(r.error_count) || 0;
+  return errCount > 0 ? `${label} ⚠️ ${errCount}` : label;
 }
 
 const STATS_DETAIL_PER_PAGE = 25;
