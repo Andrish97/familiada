@@ -6082,7 +6082,6 @@ function wireEvents() {
     cancelBtn.disabled = true;
     
     const tk = await mcGetToken();
-    await mcLoadRuns();
     if (mcState.status === "running") {
       await fetch(`${MC_API}/api/search-runs/${mcState.logRun}/pause`,{method:"POST", headers:{Authorization:`Bearer ${tk}`}});
       mcState.status = "paused";
