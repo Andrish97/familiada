@@ -600,7 +600,18 @@ async def consumer_task(run_id, target):
 
 GROQ_MODEL_CANDIDATES = ["openai/gpt-oss-20b", "llama-3.3-70b-versatile", "llama-3.1-8b-instant", "llama3-70b-8192", "gemma2-9b-it"]
 DEEPSEEK_MODEL_CANDIDATES = ["deepseek-chat"]
-MODEL_CANDIDATES = {'groq': GROQ_MODEL_CANDIDATES, 'deepseek': DEEPSEEK_MODEL_CANDIDATES}
+ANTHROPIC_MODEL_CANDIDATES = ["claude-haiku-4-5-20251001", "claude-sonnet-5", "claude-3-5-haiku-latest"]
+MODEL_CANDIDATES = {'groq': GROQ_MODEL_CANDIDATES, 'deepseek': DEEPSEEK_MODEL_CANDIDATES, 'anthropic': ANTHROPIC_MODEL_CANDIDATES}
+MODELS_LIST_URL = {
+    'groq': "https://api.groq.com/openai/v1/models",
+    'deepseek': "https://api.deepseek.com/models",
+    'anthropic': "https://api.anthropic.com/v1/models",
+}
+
+def _models_list_headers(name, cfg):
+    if name == 'anthropic':
+        return {'x-api-key': cfg['key'], 'anthropic-version': '2023-06-01'}
+    return {'Authorization': f'Bearer {cfg["key"]}'}
 
 async def resolve_provider_model(name):
     """Sprawdza w API dostawcy jakie modele są faktycznie dostępne na koncie
@@ -608,9 +619,10 @@ async def resolve_provider_model(name):
     przełącza się na pierwszy dostępny kandydat z listy zamienników."""
     cfg = AI_PROVIDERS.get(name)
     if not cfg or not cfg['key']: return
-    models_url = cfg['endpoint'].rsplit('/chat/completions', 1)[0] + '/models'
+    models_url = MODELS_LIST_URL.get(name)
+    if not models_url: return
     try:
-        r = await global_client.get(models_url, headers={'Authorization': f'Bearer {cfg["key"]}'}, timeout=15)
+        r = await global_client.get(models_url, headers=_models_list_headers(name, cfg), timeout=15)
         if r.status_code != 200:
             logger.info(f"Nie udało się pobrać listy modeli {name} (status {r.status_code}) — zostaję przy {cfg['model']}")
             return
@@ -632,7 +644,6 @@ async def resolve_provider_model(name):
 
 async def resolve_ai_models():
     for name in AI_PROVIDERS:
-        if name == 'anthropic': continue  # inny format API list modeli
         await resolve_provider_model(name)
 
 async def warmup_ai_providers():
