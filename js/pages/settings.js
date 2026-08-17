@@ -6080,20 +6080,31 @@ function wireEvents() {
     const cancelBtn = document.getElementById("mcCancelBtn");
     actionBtn.disabled = true;
     cancelBtn.disabled = true;
-    
-    const tk = await mcGetToken();
-    if (mcState.status === "running") {
-      await fetch(`${MC_API}/api/search-runs/${mcState.logRun}/pause`,{method:"POST", headers:{Authorization:`Bearer ${tk}`}});
-      mcState.status = "paused";
-      mcUpdateButtons();
-      mcStopLogAutoRefresh();
-    } else if (mcState.status === "paused") {
-      await fetch(`${MC_API}/api/search-runs/${mcState.logRun}/resume`,{method:"POST", headers:{Authorization:`Bearer ${tk}`}});
-      mcState.status = "running";
-      mcUpdateButtons();
-      mcStartLogAutoRefresh();
-    } else {
+
+    if (mcState.status !== "running" && mcState.status !== "paused") {
       await mcStartRun();
+      return;
+    }
+
+    try {
+      const tk = await mcGetToken();
+      if (mcState.status === "running") {
+        actionBtn.textContent = "⏸ Wstrzymywanie…";
+        const res = await fetch(`${MC_API}/api/search-runs/${mcState.logRun}/pause`,{method:"POST", headers:{Authorization:`Bearer ${tk}`}});
+        if (!res.ok) throw new Error("Nie udało się wstrzymać zlecenia");
+        mcState.status = "paused";
+        mcStopLogAutoRefresh();
+      } else {
+        actionBtn.textContent = "▶ Wznawianie…";
+        const res = await fetch(`${MC_API}/api/search-runs/${mcState.logRun}/resume`,{method:"POST", headers:{Authorization:`Bearer ${tk}`}});
+        if (!res.ok) throw new Error("Nie udało się wznowić zlecenia");
+        mcState.status = "running";
+        mcStartLogAutoRefresh();
+      }
+      mcUpdateButtons();
+    } catch(e) {
+      alertModal({ text: "Błąd: " + e.message });
+      await mcLoadRuns();
     }
   };
 
