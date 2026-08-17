@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict rvkgMjWF078lMEU9ESd8n4AfbeYbO4n1SYcVZKZQxtfNVrpyhlLbeDLUEShHtKe
+\restrict kjr6WKQeWuoA3hJkeMd8lHh5E7ljhqmsgSDS0dXgl1Tb8P5HFpCSSjy8fB4QY1d
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -2049,6 +2049,94 @@ select
     else null
   end as reason_poll
 from g, agg;
+$$;
+
+
+--
+-- Name: game_session_end("uuid", "text", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."game_session_end"("p_session_id" "uuid", "p_status" "text", "p_error_message" "text" DEFAULT NULL::"text") RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+declare
+  v_owner uuid;
+begin
+  select g.owner_id into v_owner
+  from public.game_sessions s
+  join public.games g on g.id = s.game_id
+  where s.id = p_session_id;
+
+  if not found then raise exception 'session not found'; end if;
+  if auth.uid() is null or v_owner <> auth.uid() then
+    raise exception 'forbidden';
+  end if;
+
+  update public.game_sessions
+  set
+    ended_at = now(),
+    last_seen_at = now(),
+    status = p_status,
+    error_message = coalesce(p_error_message, error_message)
+  where id = p_session_id;
+end;
+$$;
+
+
+--
+-- Name: game_session_start("uuid", "jsonb"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."game_session_start"("p_game_id" "uuid", "p_client_meta" "jsonb" DEFAULT '{}'::"jsonb") RETURNS "uuid"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+declare
+  v_owner uuid;
+  v_id uuid;
+begin
+  select owner_id into v_owner from public.games where id = p_game_id;
+  if not found then raise exception 'game not found'; end if;
+  if auth.uid() is null or v_owner <> auth.uid() then
+    raise exception 'forbidden';
+  end if;
+
+  insert into public.game_sessions(game_id, client_meta)
+  values (p_game_id, coalesce(p_client_meta, '{}'::jsonb))
+  returning id into v_id;
+
+  return v_id;
+end;
+$$;
+
+
+--
+-- Name: game_session_update("uuid", "text", integer, "jsonb"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."game_session_update"("p_session_id" "uuid", "p_status" "text" DEFAULT NULL::"text", "p_rounds_played" integer DEFAULT NULL::integer, "p_client_meta_patch" "jsonb" DEFAULT NULL::"jsonb") RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+declare
+  v_owner uuid;
+begin
+  select g.owner_id into v_owner
+  from public.game_sessions s
+  join public.games g on g.id = s.game_id
+  where s.id = p_session_id;
+
+  if not found then raise exception 'session not found'; end if;
+  if auth.uid() is null or v_owner <> auth.uid() then
+    raise exception 'forbidden';
+  end if;
+
+  update public.game_sessions
+  set
+    last_seen_at = now(),
+    status = coalesce(p_status, status),
+    rounds_played = coalesce(p_rounds_played, rounds_played),
+    client_meta = case when p_client_meta_patch is not null then client_meta || p_client_meta_patch else client_meta end
+  where id = p_session_id;
+end;
 $$;
 
 
@@ -10116,6 +10204,26 @@ CREATE TABLE "public"."game_gen_queue" (
 
 
 --
+-- Name: game_sessions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."game_sessions" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "game_id" "uuid" NOT NULL,
+    "started_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "last_seen_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "ended_at" timestamp with time zone,
+    "status" "text" DEFAULT 'started'::"text" NOT NULL,
+    "rounds_played" integer DEFAULT 0 NOT NULL,
+    "error_message" "text",
+    "client_meta" "jsonb" DEFAULT '{}'::"jsonb" NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    CONSTRAINT "game_sessions_rounds_played_check" CHECK (("rounds_played" >= 0)),
+    CONSTRAINT "game_sessions_status_check" CHECK (("status" = ANY (ARRAY['started'::"text", 'playing'::"text", 'final'::"text", 'won'::"text", 'lost'::"text", 'abandoned'::"text", 'error'::"text"])))
+);
+
+
+--
 -- Name: games; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -10896,6 +11004,14 @@ ALTER TABLE ONLY "public"."game_gen_queue"
 
 
 --
+-- Name: game_sessions game_sessions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."game_sessions"
+    ADD CONSTRAINT "game_sessions_pkey" PRIMARY KEY ("id");
+
+
+--
 -- Name: games games_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -11354,6 +11470,27 @@ CREATE INDEX "game_gen_queue_created_by_idx" ON "public"."game_gen_queue" USING 
 --
 
 CREATE INDEX "game_gen_queue_pick_idx" ON "public"."game_gen_queue" USING "btree" ("status", "created_at");
+
+
+--
+-- Name: game_sessions_game_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "game_sessions_game_id_idx" ON "public"."game_sessions" USING "btree" ("game_id");
+
+
+--
+-- Name: game_sessions_started_at_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "game_sessions_started_at_idx" ON "public"."game_sessions" USING "btree" ("started_at");
+
+
+--
+-- Name: game_sessions_status_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "game_sessions_status_idx" ON "public"."game_sessions" USING "btree" ("status");
 
 
 --
@@ -12152,6 +12289,14 @@ ALTER TABLE ONLY "public"."device_state"
 
 
 --
+-- Name: game_sessions game_sessions_game_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."game_sessions"
+    ADD CONSTRAINT "game_sessions_game_id_fkey" FOREIGN KEY ("game_id") REFERENCES "public"."games"("id") ON DELETE CASCADE;
+
+
+--
 -- Name: games games_owner_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -12811,6 +12956,21 @@ CREATE POLICY "game_gen_queue_select_own" ON "public"."game_gen_queue" FOR SELEC
 --
 
 CREATE POLICY "game_gen_queue_worker_all" ON "public"."game_gen_queue" TO "service_role" USING (true) WITH CHECK (true);
+
+
+--
+-- Name: game_sessions; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."game_sessions" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: game_sessions game_sessions_owner_read; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "game_sessions_owner_read" ON "public"."game_sessions" FOR SELECT TO "authenticated" USING ((EXISTS ( SELECT 1
+   FROM "public"."games" "g"
+  WHERE (("g"."id" = "game_sessions"."game_id") AND ("g"."owner_id" = "auth"."uid"())))));
 
 
 --
@@ -13728,5 +13888,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict rvkgMjWF078lMEU9ESd8n4AfbeYbO4n1SYcVZKZQxtfNVrpyhlLbeDLUEShHtKe
+\unrestrict kjr6WKQeWuoA3hJkeMd8lHh5E7ljhqmsgSDS0dXgl1Tb8P5HFpCSSjy8fB4QY1d
 
