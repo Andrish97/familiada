@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict YGdtFr5ubz7KcJq6KD8QMQTcCebNavbkAhQ9U17zSFUO7P61az6vo5KAdNNOGKp
+\restrict 9jaolhF7Vt0397I5XQHU32xG0vkKke8oxKQlye1swISu5OdCaeZzBH5BhPeCZzs
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -2326,10 +2326,14 @@ DECLARE
   games_new_30d    bigint;
   avg_questions    numeric;
 
-  played_today  bigint;
-  played_7d     bigint;
-  played_30d    bigint;
-  buzzer_7d     bigint;
+  played_today    bigint;
+  played_7d       bigint;
+  played_30d      bigint;
+  finished_30d    bigint;
+  abandoned_30d   bigint;
+  in_progress     bigint;
+  errors_30d      bigint;
+  legacy_total    bigint;
 
   poll_sessions_7d  bigint;
   poll_votes_7d     bigint;
@@ -2385,19 +2389,31 @@ BEGIN
           WHERE g.is_demo = false AND g.source_market_id IS NULL AND NOT (g.owner_id = ANY(excluded_ids))
           GROUP BY q.game_id) AS sub;
 
-  -- Gameplay (device_presence — game_sessions table does not exist)
-  SELECT COUNT(DISTINCT dp.game_id) INTO played_today FROM public.device_presence dp
-    JOIN public.games g ON g.id = dp.game_id
-    WHERE dp.device_type = 'display' AND dp.last_seen_at >= CURRENT_DATE AND g.is_demo = false AND NOT (g.owner_id = ANY(excluded_ids));
-  SELECT COUNT(DISTINCT dp.game_id) INTO played_7d FROM public.device_presence dp
-    JOIN public.games g ON g.id = dp.game_id
-    WHERE dp.device_type = 'display' AND dp.last_seen_at >= now() - interval '7 days' AND g.is_demo = false AND NOT (g.owner_id = ANY(excluded_ids));
-  SELECT COUNT(DISTINCT dp.game_id) INTO played_30d FROM public.device_presence dp
-    JOIN public.games g ON g.id = dp.game_id
-    WHERE dp.device_type = 'display' AND dp.last_seen_at >= now() - interval '30 days' AND g.is_demo = false AND NOT (g.owner_id = ANY(excluded_ids));
-  SELECT COUNT(DISTINCT dp.game_id) INTO buzzer_7d FROM public.device_presence dp
-    JOIN public.games g ON g.id = dp.game_id
-    WHERE dp.device_type = 'buzzer' AND dp.last_seen_at >= now() - interval '7 days' AND g.is_demo = false AND NOT (g.owner_id = ANY(excluded_ids));
+  -- Gameplay (game_sessions_effective — realne rozgrywki)
+  SELECT COUNT(*) INTO played_today FROM public.game_sessions_effective s
+    JOIN public.games g ON g.id = s.game_id
+    WHERE s.started_at >= CURRENT_DATE AND g.is_demo = false AND NOT (g.owner_id = ANY(excluded_ids));
+  SELECT COUNT(*) INTO played_7d FROM public.game_sessions_effective s
+    JOIN public.games g ON g.id = s.game_id
+    WHERE s.started_at >= now() - interval '7 days' AND g.is_demo = false AND NOT (g.owner_id = ANY(excluded_ids));
+  SELECT COUNT(*) INTO played_30d FROM public.game_sessions_effective s
+    JOIN public.games g ON g.id = s.game_id
+    WHERE s.started_at >= now() - interval '30 days' AND g.is_demo = false AND NOT (g.owner_id = ANY(excluded_ids));
+  SELECT COUNT(*) INTO finished_30d FROM public.game_sessions_effective s
+    JOIN public.games g ON g.id = s.game_id
+    WHERE s.effective_status = 'final' AND s.started_at >= now() - interval '30 days' AND g.is_demo = false AND NOT (g.owner_id = ANY(excluded_ids));
+  SELECT COUNT(*) INTO abandoned_30d FROM public.game_sessions_effective s
+    JOIN public.games g ON g.id = s.game_id
+    WHERE s.effective_status = 'abandoned' AND s.started_at >= now() - interval '30 days' AND g.is_demo = false AND NOT (g.owner_id = ANY(excluded_ids));
+  SELECT COUNT(*) INTO in_progress FROM public.game_sessions_effective s
+    JOIN public.games g ON g.id = s.game_id
+    WHERE s.effective_status IN ('started', 'playing') AND g.is_demo = false AND NOT (g.owner_id = ANY(excluded_ids));
+  SELECT COUNT(*) INTO errors_30d FROM public.game_sessions_effective s
+    JOIN public.games g ON g.id = s.game_id
+    WHERE COALESCE((s.client_meta->>'error_count')::int, 0) > 0 AND s.started_at >= now() - interval '30 days' AND g.is_demo = false AND NOT (g.owner_id = ANY(excluded_ids));
+  SELECT COUNT(*) INTO legacy_total FROM public.game_sessions_effective s
+    JOIN public.games g ON g.id = s.game_id
+    WHERE s.status = 'legacy' AND g.is_demo = false AND NOT (g.owner_id = ANY(excluded_ids));
 
   -- Polls
   SELECT COUNT(*) INTO poll_sessions_7d FROM public.poll_sessions WHERE created_at >= now() - interval '7 days';
@@ -2454,7 +2470,11 @@ BEGIN
       'played_today', played_today,
       'played_7d', played_7d,
       'played_30d', played_30d,
-      'buzzer_7d', buzzer_7d
+      'finished_30d', finished_30d,
+      'abandoned_30d', abandoned_30d,
+      'in_progress', in_progress,
+      'errors_30d', errors_30d,
+      'legacy_total', legacy_total
     ),
     'polls', jsonb_build_object(
       'sessions_7d', poll_sessions_7d,
@@ -3060,15 +3080,21 @@ BEGIN
       SELECT
         g.name AS game_name,
         pr.username AS owner,
-        MAX(dp.last_seen_at) AS last_seen_at
-      FROM public.device_presence dp
-      JOIN public.games g ON g.id = dp.game_id
+        s.started_at,
+        s.ended_at,
+        s.status,
+        s.effective_status,
+        s.rounds_played,
+        s.winner_team,
+        s.team_a_score,
+        s.team_b_score,
+        COALESCE((s.client_meta->>'error_count')::int, 0) AS error_count
+      FROM public.game_sessions_effective s
+      JOIN public.games g ON g.id = s.game_id
       LEFT JOIN public.profiles pr ON pr.id = g.owner_id
-      WHERE dp.device_type = 'display'
-        AND g.is_demo = false
+      WHERE g.is_demo = false
         AND NOT (g.owner_id = ANY(excluded_ids))
-      GROUP BY g.id, g.name, pr.username
-      ORDER BY MAX(dp.last_seen_at) DESC
+      ORDER BY s.started_at DESC
       LIMIT p_limit
     ) r;
 
@@ -13921,5 +13947,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict YGdtFr5ubz7KcJq6KD8QMQTcCebNavbkAhQ9U17zSFUO7P61az6vo5KAdNNOGKp
+\unrestrict 9jaolhF7Vt0397I5XQHU32xG0vkKke8oxKQlye1swISu5OdCaeZzBH5BhPeCZzs
 
