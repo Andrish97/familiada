@@ -519,10 +519,21 @@ async def verify_raw_lead(lead, target):
                     logger.error(msg)
                     await supabase.call_rpc('set_ai_provider_cooldown', {'p_name': provider, 'p_seconds': 30, 'p_error': msg})
                     continue
-            elif status in (401, 403, 429) and any(x in str(err) for x in ("day", "daily", "quota", "credit", "unauthorized", "insufficient")):
-                msg = f"Dostawca {provider} wyczerpał limit (Błąd {status}): {err}"
+            elif any(x in str(err) for x in ("day", "daily", "quota", "credit", "unauthorized", "insufficient")):
+                msg = f"Dostawca {provider} wyczerpał limit lub środki (Błąd {status}): {err}"
                 logger.info(msg)
                 await supabase.call_rpc('set_ai_provider_cooldown', {'p_name': provider, 'p_seconds': PROVIDER_COOLDOWN_QUOTA, 'p_error': msg})
+                continue
+            elif status == 404 and any(x in str(err) for x in ("model_not_found", "does not exist")):
+                msg = f"Dostawca {provider} ma błędnie skonfigurowany model (Błąd 404): {err}"
+                logger.error(msg)
+                await supabase.call_rpc('set_ai_provider_cooldown', {'p_name': provider, 'p_seconds': PROVIDER_COOLDOWN_QUOTA, 'p_error': msg})
+                await send_telegram_notification(
+                    f"⚠️ <b>Błędna konfiguracja dostawcy AI</b>\n"
+                    f"Dostawca <b>{provider}</b> zwraca błąd 404 — skonfigurowany model nie istnieje lub brak do niego dostępu.\n"
+                    f"Ustaw poprawną nazwę modelu w zmiennej {provider.upper()}_MODEL w .env na serwerze.\n\n"
+                    f"<code>{msg[:300]}</code>"
+                )
                 continue
             else:
                 msg = f"Dostawca {provider} zwrócił błąd {status}: {err}"
