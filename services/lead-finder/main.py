@@ -176,7 +176,7 @@ MAX_CONCURRENT_SCRAPES = CONFIG['MAX_CONCURRENT_SCRAPES']
 MAX_CONCURRENT_PLAYWRIGHT = CONFIG['MAX_CONCURRENT_PLAYWRIGHT']
 
 AI_PROVIDERS = {
-    'groq': {'key': os.getenv("GROQ_API_KEY", ""), 'model': os.getenv("GROQ_MODEL", "llama-3.1-8b-instant"), 'endpoint': "https://api.groq.com/openai/v1/chat/completions", 'timeout': TIMEOUT_AI},
+    'groq': {'key': os.getenv("GROQ_API_KEY", ""), 'model': os.getenv("GROQ_MODEL", "openai/gpt-oss-20b"), 'endpoint': "https://api.groq.com/openai/v1/chat/completions", 'timeout': TIMEOUT_AI},
     'deepseek': {'key': os.getenv("DEEP_SEEK_API_KEY", ""), 'model': "deepseek-chat", 'endpoint': "https://api.deepseek.com/chat/completions", 'timeout': 60},
     'anthropic': {'key': os.getenv("ANTHROPIC_API_KEY", ""), 'model': os.getenv("ANTHROPIC_MODEL", "claude-haiku-4-5-20251001"), 'endpoint': "https://api.anthropic.com/v1/messages", 'timeout': 60},
 }
