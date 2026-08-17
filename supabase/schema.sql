@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict kjr6WKQeWuoA3hJkeMd8lHh5E7ljhqmsgSDS0dXgl1Tb8P5HFpCSSjy8fB4QY1d
+\restrict m17c3GW8FukohO8PkLqXXubeTZ49Hsfd1t5IQVVAA9NcyeyM2hpNWLfzcGujOW9
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -2053,10 +2053,10 @@ $$;
 
 
 --
--- Name: game_session_end("uuid", "text", "text"); Type: FUNCTION; Schema: public; Owner: -
+-- Name: game_session_end("uuid", "text", "text", "text", integer, integer); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION "public"."game_session_end"("p_session_id" "uuid", "p_status" "text", "p_error_message" "text" DEFAULT NULL::"text") RETURNS "void"
+CREATE FUNCTION "public"."game_session_end"("p_session_id" "uuid", "p_status" "text", "p_error_message" "text" DEFAULT NULL::"text", "p_winner_team" "text" DEFAULT NULL::"text", "p_team_a_score" integer DEFAULT NULL::integer, "p_team_b_score" integer DEFAULT NULL::integer) RETURNS "void"
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
 declare
@@ -2077,7 +2077,10 @@ begin
     ended_at = now(),
     last_seen_at = now(),
     status = p_status,
-    error_message = coalesce(p_error_message, error_message)
+    error_message = coalesce(p_error_message, error_message),
+    winner_team = coalesce(p_winner_team, winner_team),
+    team_a_score = coalesce(p_team_a_score, team_a_score),
+    team_b_score = coalesce(p_team_b_score, team_b_score)
   where id = p_session_id;
 end;
 $$;
@@ -10218,9 +10221,39 @@ CREATE TABLE "public"."game_sessions" (
     "error_message" "text",
     "client_meta" "jsonb" DEFAULT '{}'::"jsonb" NOT NULL,
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "winner_team" "text",
+    "team_a_score" integer,
+    "team_b_score" integer,
     CONSTRAINT "game_sessions_rounds_played_check" CHECK (("rounds_played" >= 0)),
-    CONSTRAINT "game_sessions_status_check" CHECK (("status" = ANY (ARRAY['started'::"text", 'playing'::"text", 'final'::"text", 'won'::"text", 'lost'::"text", 'abandoned'::"text", 'error'::"text"])))
+    CONSTRAINT "game_sessions_scores_check" CHECK (((("team_a_score" IS NULL) OR ("team_a_score" >= 0)) AND (("team_b_score" IS NULL) OR ("team_b_score" >= 0)))),
+    CONSTRAINT "game_sessions_status_check" CHECK (("status" = ANY (ARRAY['started'::"text", 'playing'::"text", 'final'::"text", 'won'::"text", 'lost'::"text", 'abandoned'::"text", 'error'::"text"]))),
+    CONSTRAINT "game_sessions_winner_team_check" CHECK ((("winner_team" = ANY (ARRAY['A'::"text", 'B'::"text"])) OR ("winner_team" IS NULL)))
 );
+
+
+--
+-- Name: game_sessions_effective; Type: VIEW; Schema: public; Owner: -
+--
+
+CREATE VIEW "public"."game_sessions_effective" WITH ("security_invoker"='true') AS
+ SELECT "id",
+    "game_id",
+    "started_at",
+    "last_seen_at",
+    "ended_at",
+    "status",
+    "rounds_played",
+    "error_message",
+    "client_meta",
+    "created_at",
+    "winner_team",
+    "team_a_score",
+    "team_b_score",
+        CASE
+            WHEN (("ended_at" IS NULL) AND ("status" = ANY (ARRAY['started'::"text", 'playing'::"text"])) AND (("now"() - "last_seen_at") > '03:00:00'::interval)) THEN 'abandoned'::"text"
+            ELSE "status"
+        END AS "effective_status"
+   FROM "public"."game_sessions" "s";
 
 
 --
@@ -13888,5 +13921,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict kjr6WKQeWuoA3hJkeMd8lHh5E7ljhqmsgSDS0dXgl1Tb8P5HFpCSSjy8fB4QY1d
+\unrestrict m17c3GW8FukohO8PkLqXXubeTZ49Hsfd1t5IQVVAA9NcyeyM2hpNWLfzcGujOW9
 
