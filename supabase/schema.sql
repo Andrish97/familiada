@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict Pg6R2VxsvlxF9wfwReARcbcAINLKHMbZoMpmyFZ1ByPQe0kJYrbUO8fcgsBly2M
+\restrict rvkgMjWF078lMEU9ESd8n4AfbeYbO4n1SYcVZKZQxtfNVrpyhlLbeDLUEShHtKe
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -51,18 +51,6 @@ CREATE TYPE "public"."base_share_role" AS ENUM (
 
 
 --
--- Name: buzzer_ui_state; Type: TYPE; Schema: public; Owner: -
---
-
-CREATE TYPE "public"."buzzer_ui_state" AS ENUM (
-    'OFF',
-    'ON',
-    'PUSHED_A',
-    'PUSHED_B'
-);
-
-
---
 -- Name: device_kind; Type: TYPE; Schema: public; Owner: -
 --
 
@@ -82,58 +70,6 @@ CREATE TYPE "public"."device_type" AS ENUM (
     'display',
     'host',
     'buzzer'
-);
-
-
---
--- Name: display_app_mode; Type: TYPE; Schema: public; Owner: -
---
-
-CREATE TYPE "public"."display_app_mode" AS ENUM (
-    'GRA',
-    'QR',
-    'BLACK'
-);
-
-
---
--- Name: display_scene_mode; Type: TYPE; Schema: public; Owner: -
---
-
-CREATE TYPE "public"."display_scene_mode" AS ENUM (
-    'LOGO',
-    'ROUNDS',
-    'FINAL',
-    'WIN'
-);
-
-
---
--- Name: game_fsm_state; Type: TYPE; Schema: public; Owner: -
---
-
-CREATE TYPE "public"."game_fsm_state" AS ENUM (
-    'TOOLS_SETUP',
-    'TOOLS_LINKS',
-    'FINAL_QUESTIONS',
-    'TEAM_NAMES',
-    'GAME_READY',
-    'GAME_INTRO',
-    'ROUND_READY',
-    'ROUND_TRANSITION_IN',
-    'ROUND_BUZZ',
-    'BUZZ_CONFIRM',
-    'ROUND_PLAY',
-    'ROUND_STEAL',
-    'ROUND_END',
-    'FINAL_PREP',
-    'FINAL_P1_INPUT',
-    'FINAL_P1_REVEAL',
-    'FINAL_HIDE_FOR_P2',
-    'FINAL_P2_INPUT',
-    'FINAL_P2_REVEAL',
-    'FINAL_WIN',
-    'FINAL_LOSE'
 );
 
 
@@ -179,16 +115,6 @@ CREATE TYPE "public"."market_game_status" AS ENUM (
     'published',
     'withdrawn',
     'rejected'
-);
-
-
---
--- Name: team_code; Type: TYPE; Schema: public; Owner: -
---
-
-CREATE TYPE "public"."team_code" AS ENUM (
-    'A',
-    'B'
 );
 
 
@@ -1021,48 +947,6 @@ $$;
 
 
 --
--- Name: buzzer_press_v2("uuid", "text", "text"); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."buzzer_press_v2"("p_game_id" "uuid", "p_key" "text", "p_team" "text") RETURNS "jsonb"
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    AS $$
-declare
-  g public.games%rowtype;
-  updated int;
-  winner text;
-  locked boolean;
-begin
-  select * into g from public.games where id = p_game_id;
-  if not found then raise exception 'game not found'; end if;
-  if p_key <> g.share_key_buzzer then raise exception 'bad key'; end if;
-  if p_team not in ('A','B') then raise exception 'bad team'; end if;
-
-  perform public.ensure_runtime_and_devices(p_game_id);
-
-  update public.game_devices
-  set buzzer_locked = true,
-      buzzer_winner = p_team,
-      buzzer_at     = now(),
-      buzzer_state  = case when p_team='A' then 'PUSHED_A'::public.buzzer_ui_state else 'PUSHED_B'::public.buzzer_ui_state end
-  where game_id = p_game_id
-    and buzzer_locked = false;
-
-  get diagnostics updated = row_count;
-
-  select buzzer_winner, buzzer_locked into winner, locked
-  from public.game_devices
-  where game_id = p_game_id;
-
-  return jsonb_build_object(
-    'accepted', (updated = 1),
-    'winner', winner,
-    'locked', locked
-  );
-end $$;
-
-
---
 -- Name: can_access_base("uuid"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -1247,150 +1131,6 @@ CREATE FUNCTION "public"."contact_reports_set_updated_at"() RETURNS "trigger"
 begin
   new.updated_at := now();
   return new;
-end;
-$$;
-
-
---
--- Name: control_set_devices_v2("uuid", "text", "jsonb"); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."control_set_devices_v2"("p_game_id" "uuid", "p_key" "text", "p_patch" "jsonb") RETURNS "void"
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    AS $$
-declare
-  g public.games%rowtype;
-begin
-  select * into g from public.games where id = p_game_id;
-  if not found then raise exception 'game not found'; end if;
-  if p_key <> g.share_key_control then raise exception 'bad control key'; end if;
-
-  perform public.ensure_runtime_and_devices(p_game_id);
-
-  -- patch format (przykład):
-  -- {
-  --   "display_app_mode":"GRA",
-  --   "display_scene_mode":"ROUNDS",
-  --   "display_last_cmd":"RBATCH ...",
-  --   "host_hidden":false,
-  --   "host_text":"Pytanie ...",
-  --   "buzzer_state":"ON",
-  --   "buzzer_locked":false
-  -- }
-
-  update public.game_devices
-  set
-    display_app_mode  = coalesce((p_patch->>'display_app_mode')::public.display_app_mode, display_app_mode),
-    display_scene_mode= coalesce((p_patch->>'display_scene_mode')::public.display_scene_mode, display_scene_mode),
-    display_last_cmd  = coalesce(p_patch->>'display_last_cmd', display_last_cmd),
-
-    host_hidden = coalesce((p_patch->>'host_hidden')::boolean, host_hidden),
-    host_text   = coalesce(p_patch->>'host_text', host_text),
-
-    buzzer_state  = coalesce((p_patch->>'buzzer_state')::public.buzzer_ui_state, buzzer_state),
-    buzzer_locked = coalesce((p_patch->>'buzzer_locked')::boolean, buzzer_locked),
-    buzzer_winner = coalesce(p_patch->>'buzzer_winner', buzzer_winner),
-    buzzer_at     = coalesce((p_patch->>'buzzer_at')::timestamptz, buzzer_at)
-  where game_id = p_game_id;
-end $$;
-
-
---
--- Name: control_set_runtime_v2("uuid", "text", "jsonb"); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."control_set_runtime_v2"("p_game_id" "uuid", "p_key" "text", "p_patch" "jsonb") RETURNS "void"
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    AS $$
-declare
-  g public.games%rowtype;
-begin
-  select * into g from public.games where id = p_game_id;
-  if not found then raise exception 'game not found'; end if;
-  if p_key <> g.share_key_control then raise exception 'bad control key'; end if;
-
-  perform public.ensure_runtime_and_devices(p_game_id);
-
-  update public.game_runtime
-  set
-    state = coalesce(p_patch->>'state', state),
-    step  = coalesce(p_patch->>'step',  step),
-
-    round_no = coalesce((p_patch->>'round_no')::int, round_no),
-    multiplier = coalesce((p_patch->>'multiplier')::int, multiplier),
-
-    team_a_name = coalesce(p_patch->>'team_a_name', team_a_name),
-    team_b_name = coalesce(p_patch->>'team_b_name', team_b_name),
-    team_a_score = coalesce((p_patch->>'team_a_score')::int, team_a_score),
-    team_b_score = coalesce((p_patch->>'team_b_score')::int, team_b_score),
-
-    active_question_ord = coalesce((p_patch->>'active_question_ord')::int, active_question_ord),
-
-    revealed_answer_ords = coalesce(p_patch->'revealed_answer_ords', revealed_answer_ords),
-    used_question_ords   = coalesce(p_patch->'used_question_ords', used_question_ords),
-
-    round_sum = coalesce((p_patch->>'round_sum')::int, round_sum),
-    strikes   = coalesce((p_patch->>'strikes')::int, strikes),
-
-    playing_team = coalesce(p_patch->>'playing_team', playing_team),
-    steal_team   = coalesce(p_patch->>'steal_team', steal_team),
-
-    final = coalesce(p_patch->'final', final)
-  where game_id = p_game_id;
-end $$;
-
-
---
--- Name: control_set_state("uuid", "public"."game_fsm_state", "jsonb"); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."control_set_state"("p_game_id" "uuid", "p_state" "public"."game_fsm_state", "p_patch" "jsonb" DEFAULT '{}'::"jsonb") RETURNS "jsonb"
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    AS $$
-declare
-  v_old public.game_fsm_state;
-  v_row public.game_runtime%rowtype;
-begin
-  perform public.ensure_game_runtime(p_game_id);
-
-  select state into v_old
-  from public.game_runtime
-  where game_id = p_game_id
-  for update;
-
-  if not public.fsm_can_transition(v_old, p_state) and v_old is distinct from p_state then
-    raise exception 'FSM transition not allowed: % -> %', v_old, p_state
-      using errcode = 'P0001';
-  end if;
-
-  update public.game_runtime gr
-  set
-    state = p_state,
-    -- state_at ogarnie trigger touch_state_at() jeśli go dodałeś
-    team_a_name = coalesce(p_patch->>'team_a_name', gr.team_a_name),
-    team_b_name = coalesce(p_patch->>'team_b_name', gr.team_b_name),
-    round_no = coalesce((p_patch->>'round_no')::int, gr.round_no),
-    multiplier = coalesce((p_patch->>'multiplier')::int, gr.multiplier),
-    team_a_score = coalesce((p_patch->>'team_a_score')::int, gr.team_a_score),
-    team_b_score = coalesce((p_patch->>'team_b_score')::int, gr.team_b_score),
-    active_question_ord = coalesce((p_patch->>'active_question_ord')::int, gr.active_question_ord),
-    revealed_answer_ords = coalesce(p_patch->'revealed_answer_ords', gr.revealed_answer_ords),
-    strikes = coalesce((p_patch->>'strikes')::int, gr.strikes),
-    buzzer_locked = coalesce((p_patch->>'buzzer_locked')::boolean, gr.buzzer_locked),
-    buzzer_winner = coalesce((p_patch->>'buzzer_winner')::public.team_code, gr.buzzer_winner),
-    buzzer_at = coalesce((p_patch->>'buzzer_at')::timestamptz, gr.buzzer_at),
-    playing_team = coalesce((p_patch->>'playing_team')::public.team_code, gr.playing_team),
-    steal_team = coalesce((p_patch->>'steal_team')::public.team_code, gr.steal_team),
-    round_sum = coalesce((p_patch->>'round_sum')::int, gr.round_sum),
-    final_p1_answers = coalesce(p_patch->'final_p1_answers', gr.final_p1_answers),
-    final_p2_answers = coalesce(p_patch->'final_p2_answers', gr.final_p2_answers),
-    final_p1_points = coalesce(p_patch->'final_p1_points', gr.final_p1_points),
-    final_p2_points = coalesce(p_patch->'final_p2_points', gr.final_p2_points),
-    final_total = coalesce((p_patch->>'final_total')::int, gr.final_total)
-  where gr.game_id = p_game_id
-  returning * into v_row;
-
-  return to_jsonb(v_row);
 end;
 $$;
 
@@ -1762,37 +1502,6 @@ begin
   return jsonb_build_object('ok', true, 'device_id', did, 'ts', now());
 end;
 $$;
-
-
---
--- Name: device_ping_v2("uuid", "public"."device_kind", "text"); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."device_ping_v2"("p_game_id" "uuid", "p_kind" "public"."device_kind", "p_key" "text") RETURNS "jsonb"
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    AS $$
-declare
-  g public.games%rowtype;
-begin
-  select * into g from public.games where id = p_game_id;
-  if not found then raise exception 'game not found'; end if;
-
-  if p_kind = 'display' and p_key <> g.share_key_display then raise exception 'bad key'; end if;
-  if p_kind = 'host'    and p_key <> g.share_key_host    then raise exception 'bad key'; end if;
-  if p_kind = 'buzzer'  and p_key <> g.share_key_buzzer  then raise exception 'bad key'; end if;
-
-  perform public.ensure_runtime_and_devices(p_game_id);
-
-  if p_kind = 'display' then
-    update public.game_devices set seen_display_at = now() where game_id = p_game_id;
-  elsif p_kind = 'host' then
-    update public.game_devices set seen_host_at = now() where game_id = p_game_id;
-  elsif p_kind = 'buzzer' then
-    update public.game_devices set seen_buzzer_at = now() where game_id = p_game_id;
-  end if;
-
-  return jsonb_build_object('ok', true, 'ts', now());
-end $$;
 
 
 --
@@ -2179,53 +1888,6 @@ end $$;
 
 
 --
--- Name: ensure_game_rows("uuid"); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."ensure_game_rows"("p_game_id" "uuid") RETURNS "void"
-    LANGUAGE "plpgsql"
-    AS $$
-begin
-  insert into public.game_runtime(game_id) values (p_game_id)
-  on conflict (game_id) do nothing;
-
-  insert into public.game_devices(game_id) values (p_game_id)
-  on conflict (game_id) do nothing;
-end $$;
-
-
---
--- Name: ensure_game_runtime("uuid"); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."ensure_game_runtime"("p_game_id" "uuid") RETURNS "void"
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    AS $$
-begin
-  insert into public.game_runtime(game_id)
-  values (p_game_id)
-  on conflict (game_id) do nothing;
-end;
-$$;
-
-
---
--- Name: ensure_runtime_and_devices("uuid"); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."ensure_runtime_and_devices"("p_game_id" "uuid") RETURNS "void"
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    AS $$
-begin
-  insert into public.game_runtime(game_id) values (p_game_id)
-  on conflict (game_id) do nothing;
-
-  insert into public.game_devices(game_id) values (p_game_id)
-  on conflict (game_id) do nothing;
-end $$;
-
-
---
 -- Name: expire_my_device_shares(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -2275,40 +1937,6 @@ begin
 
   return query select true, v_report.id, v_report.email, v_report.lang;
 end;
-$$;
-
-
---
--- Name: fsm_can_transition("public"."game_fsm_state", "public"."game_fsm_state"); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."fsm_can_transition"("a" "public"."game_fsm_state", "b" "public"."game_fsm_state") RETURNS boolean
-    LANGUAGE "sql" IMMUTABLE
-    AS $$
-  select (a,b) in (
-    ('TOOLS_SETUP','TOOLS_LINKS'),
-    ('TOOLS_LINKS','TEAM_NAMES'),
-    ('TEAM_NAMES','GAME_READY'),
-    ('GAME_READY','GAME_INTRO'),
-    ('GAME_INTRO','ROUND_READY'),
-    ('ROUND_READY','ROUND_TRANSITION_IN'),
-    ('ROUND_TRANSITION_IN','ROUND_BUZZ'),
-    ('ROUND_BUZZ','BUZZ_CONFIRM'),
-    ('BUZZ_CONFIRM','ROUND_BUZZ'),
-    ('BUZZ_CONFIRM','ROUND_PLAY'),
-    ('ROUND_PLAY','ROUND_STEAL'),
-    ('ROUND_PLAY','ROUND_END'),
-    ('ROUND_STEAL','ROUND_END'),
-    ('ROUND_END','ROUND_READY'),
-    ('ROUND_END','FINAL_PREP'),
-    ('FINAL_PREP','FINAL_P1_INPUT'),
-    ('FINAL_P1_INPUT','FINAL_P1_REVEAL'),
-    ('FINAL_P1_REVEAL','FINAL_HIDE_FOR_P2'),
-    ('FINAL_HIDE_FOR_P2','FINAL_P2_INPUT'),
-    ('FINAL_P2_INPUT','FINAL_P2_REVEAL'),
-    ('FINAL_P2_REVEAL','FINAL_WIN'),
-    ('FINAL_P2_REVEAL','FINAL_LOSE')
-  );
 $$;
 
 
@@ -2807,36 +2435,6 @@ $$;
 
 
 --
--- Name: get_device_snapshot("uuid", "text", "text"); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."get_device_snapshot"("p_game_id" "uuid", "p_kind" "text", "p_key" "text") RETURNS "jsonb"
-    LANGUAGE "plpgsql"
-    AS $$
-declare
-  g public.games%rowtype;
-  d public.game_devices%rowtype;
-begin
-  select * into g from public.games where id = p_game_id;
-  if not found then raise exception 'game not found'; end if;
-
-  if p_kind = 'display' and p_key <> g.share_key_display then raise exception 'bad key'; end if;
-  if p_kind = 'host' and p_key <> g.share_key_host then raise exception 'bad key'; end if;
-  if p_kind = 'buzzer' and p_key <> g.share_key_buzzer then raise exception 'bad key'; end if;
-
-  perform public.ensure_game_rows(p_game_id);
-
-  select * into d from public.game_devices where game_id = p_game_id;
-
-  return jsonb_build_object(
-    'ok', true,
-    'game', jsonb_build_object('id', g.id, 'name', g.name),
-    'devices', to_jsonb(d)
-  );
-end $$;
-
-
---
 -- Name: get_email_intent_status("text"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -3139,41 +2737,6 @@ BEGIN
   );
 END;
 $$;
-
-
---
--- Name: get_public_snapshot_v2("uuid", "public"."device_kind", "text"); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."get_public_snapshot_v2"("p_game_id" "uuid", "p_kind" "public"."device_kind", "p_key" "text") RETURNS "jsonb"
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    AS $$
-declare
-  g public.games%rowtype;
-  rt public.game_runtime%rowtype;
-  dv public.game_devices%rowtype;
-  ok boolean := false;
-begin
-  select * into g from public.games where id = p_game_id;
-  if not found then raise exception 'game not found'; end if;
-
-  if p_kind = 'display' and p_key = g.share_key_display then ok := true; end if;
-  if p_kind = 'host'    and p_key = g.share_key_host    then ok := true; end if;
-  if p_kind = 'buzzer'  and p_key = g.share_key_buzzer  then ok := true; end if;
-
-  if not ok then raise exception 'forbidden'; end if;
-
-  perform public.ensure_runtime_and_devices(p_game_id);
-
-  select * into rt from public.game_runtime where game_id = p_game_id;
-  select * into dv from public.game_devices where game_id = p_game_id;
-
-  return jsonb_build_object(
-    'game', jsonb_build_object('id', g.id, 'name', g.name, 'type', g.type, 'status', g.status),
-    'runtime', to_jsonb(rt),
-    'devices', to_jsonb(dv)
-  );
-end $$;
 
 
 --
@@ -9504,55 +9067,6 @@ $$;
 
 
 --
--- Name: set_device_state("uuid", "text", "jsonb"); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."set_device_state"("p_game_id" "uuid", "p_kind" "text", "p_patch" "jsonb") RETURNS "jsonb"
-    LANGUAGE "plpgsql"
-    AS $$
-declare
-  g public.games%rowtype;
-begin
-  select * into g from public.games where id = p_game_id;
-  if not found then raise exception 'game not found'; end if;
-
-  if auth.uid() is null or g.owner_id <> auth.uid() then
-    raise exception 'forbidden';
-  end if;
-
-  perform public.ensure_game_rows(p_game_id);
-
-  if p_kind = 'display' then
-    update public.game_devices
-    set
-      display_mode = coalesce(p_patch->>'display_mode', display_mode),
-      display_scene = coalesce(p_patch->>'display_scene', display_scene),
-      display_payload = coalesce(p_patch->'display_payload', display_payload)
-    where game_id = p_game_id;
-
-  elsif p_kind = 'host' then
-    update public.game_devices
-    set
-      host_hidden = coalesce((p_patch->>'host_hidden')::boolean, host_hidden),
-      host_text = coalesce(p_patch->>'host_text', host_text),
-      host_hint = coalesce(p_patch->>'host_hint', host_hint)
-    where game_id = p_game_id;
-
-  elsif p_kind = 'buzzer' then
-    update public.game_devices
-    set
-      buzzer_mode = coalesce(p_patch->>'buzzer_mode', buzzer_mode)
-    where game_id = p_game_id;
-
-  else
-    raise exception 'bad kind';
-  end if;
-
-  return jsonb_build_object('ok', true);
-end $$;
-
-
---
 -- Name: set_owner_id_on_games_insert(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -9966,32 +9480,6 @@ BEGIN
   RETURN NULL;
 END;
 $$;
-
-
---
--- Name: touch_game_devices_updated_at(); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."touch_game_devices_updated_at"() RETURNS "trigger"
-    LANGUAGE "plpgsql"
-    AS $$
-begin
-  new.updated_at = now();
-  return new;
-end $$;
-
-
---
--- Name: touch_game_runtime_updated_at(); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."touch_game_runtime_updated_at"() RETURNS "trigger"
-    LANGUAGE "plpgsql"
-    AS $$
-begin
-  new.updated_at = now();
-  return new;
-end $$;
 
 
 --
@@ -14240,5 +13728,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict Pg6R2VxsvlxF9wfwReARcbcAINLKHMbZoMpmyFZ1ByPQe0kJYrbUO8fcgsBly2M
+\unrestrict rvkgMjWF078lMEU9ESd8n4AfbeYbO4n1SYcVZKZQxtfNVrpyhlLbeDLUEShHtKe
 
