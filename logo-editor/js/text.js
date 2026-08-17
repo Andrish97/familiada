@@ -2,7 +2,7 @@
 // Tryb: TEXT (font_3x10) -> zapis GLYPH_30x10
 // Stała 1 kolumna przerwy miedzy glifami.
 
-import { t, getUiLang } from "../../translation/translation.js?v=v2026-08-17T12070";
+import { t, getUiLang } from "../../translation/translation.js?v=v2026-08-17T12161";
 
 export function initTextEditor(ctx) {
   const paneText = document.getElementById("paneText");
