@@ -4868,6 +4868,7 @@ const en = {
       start: "▶ Start",
       refresh: "⟳ Refresh",
       searchPlaceholder: "Search…",
+      clearSearch: "Clear search",
       verifiedTitle: "Verified contacts",
       markUsed: "✓ Mark used",
       delete: "🗑 Delete",

@@ -4859,6 +4859,7 @@ const uk = {
       start: "▶ Запустити",
       refresh: "⟳ Оновити",
       searchPlaceholder: "Пошук…",
+      clearSearch: "Очистити пошук",
       verifiedTitle: "Верифіковані контакти",
       markUsed: "✓ Використано",
       delete: "🗑 Видалити",

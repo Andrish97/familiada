@@ -5147,6 +5147,7 @@ const pl = {
       start: "▶ Uruchom",
       refresh: "⟳ Odśwież",
       searchPlaceholder: "Szukaj…",
+      clearSearch: "Wyczyść wyszukiwanie",
       verifiedTitle: "Zweryfikowane kontakty",
       markUsed: "✓ Użyte",
       delete: "🗑 Usuń",
