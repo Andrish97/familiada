@@ -799,6 +799,12 @@ async function sendZeroStatesToDevices() {
 
     // ===== SETUP =====
 
+    // Blokada: nie pozwól zakończyć setupu (i wejść w rundy), jeśli finał
+    // jest włączony w trybie ręcznym, a 5 pytań finałowych nie zostało
+    // jeszcze potwierdzonych — inaczej próg finału pada w rundach, a finał
+    // i tak się nie odpali.
+    ui.setEnabled("btnSetupFinish2", store.canFinishSetup());
+
     // ===== detekcja wejścia z setup_finish =====
     const inSetupFinish =
       (state.activeCard === "setup" && state.steps?.setup === "setup_finish");
