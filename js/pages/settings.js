@@ -5065,17 +5065,18 @@ const STAT_DETAIL_CONFIG = {
   custom_settings: {
     title: "Niedomyślne ustawienia",
     cols: ["Gra", "Właściciel", "Co zmieniono", "Utworzono"],
-    row: r => [r.game_name || "—", r.owner || "—", fmtSettingsDiff(r.advanced), fmtDate(r.created_at)],
+    row: r => [r.game_name || "—", r.owner || "—", fmtSettingsDiff(r), fmtDate(r.created_at)],
   },
   gameplay: {
     title: "Rozgrywki",
-    cols: ["Gra", "Właściciel", "Kiedy", "Czas trwania", "Rundy", "Wynik", "Zwycięzca", "Status"],
+    cols: ["Gra", "Właściciel", "Kiedy", "Czas trwania", "Rundy", "Finał", "Wynik", "Zwycięzca", "Status"],
     row: r => [
       r.game_name || "—",
       r.owner || "—",
       fmtDate(r.started_at),
       fmtSessionDuration(r),
       r.effective_status === "legacy" ? "—" : (r.rounds_played ?? "—"),
+      fmtFinalStep(r.final_step),
       (r.team_a_score != null && r.team_b_score != null) ? `${r.team_a_score}:${r.team_b_score}` : "—",
       fmtSessionWinner(r),
       fmtSessionStatus(r),
@@ -5139,6 +5140,25 @@ function fmtSessionStatus(r) {
   return errCount > 0 ? `${label} ⚠️ ${errCount}` : label;
 }
 
+const FINAL_STEP_LABELS = {
+  final_start: "Rozpoczęty",
+  p1_q1: "Gracz 1 — pytanie 1",
+  p1_q2: "Gracz 1 — pytanie 2",
+  p1_q3: "Gracz 1 — pytanie 3",
+  p1_q4: "Gracz 1 — pytanie 4",
+  p1_q5: "Gracz 1 — pytanie 5",
+  p2_q1: "Gracz 2 — pytanie 1",
+  p2_q2: "Gracz 2 — pytanie 2",
+  p2_q3: "Gracz 2 — pytanie 3",
+  p2_q4: "Gracz 2 — pytanie 4",
+  p2_q5: "Gracz 2 — pytanie 5",
+};
+
+function fmtFinalStep(step) {
+  if (!step) return "—";
+  return FINAL_STEP_LABELS[step] || step;
+}
+
 // Niedomyślne ustawienia: te same wartości domyślne co w control/js/store.js (DEFAULT_ADVANCED)
 const ADVANCED_SETTINGS_DEFAULTS = {
   roundMultipliers: [1, 1, 1, 2, 3],
@@ -5159,6 +5179,8 @@ const ADVANCED_SETTINGS_LABELS = {
 };
 
 const END_SCREEN_MODE_LABELS = { logo: "Logo", points: "Punkty", money: "Kwota" };
+const QUESTIONS_MODE_LABELS = { random: "Losowo", pick: "Wybrane ręcznie" };
+const DISPLAY_COLOR_DEFAULTS = { A: "#c4002f", B: "#2a62ff", BACKGROUND: "#d21180", DOT: "#d7ff3d" };
 
 function fmtAdvancedSettingValue(key, value) {
   if (key === "roundMultipliers" && Array.isArray(value)) return value.join(", ");
@@ -5166,19 +5188,47 @@ function fmtAdvancedSettingValue(key, value) {
   return String(value);
 }
 
-function fmtSettingsDiff(advanced) {
-  if (!advanced || typeof advanced !== "object") return "—";
+// Pełne porównanie ustawień gry z domyślnymi (nie tylko "advanced" —
+// też wygląd ekranu, tryb wyboru pytań i niestandardowy dźwięk)
+function fmtSettingsDiff(r) {
   const parts = [];
-  for (const key of Object.keys(ADVANCED_SETTINGS_DEFAULTS)) {
-    const val = advanced[key];
-    if (val === undefined || val === null) continue;
-    const def = ADVANCED_SETTINGS_DEFAULTS[key];
-    const changed = Array.isArray(def) ? JSON.stringify(val) !== JSON.stringify(def) : val !== def;
-    if (changed) {
-      const label = ADVANCED_SETTINGS_LABELS[key] || key;
-      parts.push(`${label}: ${fmtAdvancedSettingValue(key, val)} (domyślnie: ${fmtAdvancedSettingValue(key, def)})`);
+
+  const advanced = r.advanced;
+  if (advanced && typeof advanced === "object") {
+    for (const key of Object.keys(ADVANCED_SETTINGS_DEFAULTS)) {
+      const val = advanced[key];
+      if (val === undefined || val === null) continue;
+      const def = ADVANCED_SETTINGS_DEFAULTS[key];
+      const changed = Array.isArray(def) ? JSON.stringify(val) !== JSON.stringify(def) : val !== def;
+      if (changed) {
+        const label = ADVANCED_SETTINGS_LABELS[key] || key;
+        parts.push(`${label}: ${fmtAdvancedSettingValue(key, val)} (domyślnie: ${fmtAdvancedSettingValue(key, def)})`);
+      }
     }
   }
+
+  const display = r.display;
+  if (display && typeof display === "object") {
+    if (display.colors && JSON.stringify(display.colors) !== JSON.stringify(DISPLAY_COLOR_DEFAULTS)) {
+      parts.push("Kolory ekranu: zmienione");
+    }
+    if (display.theme != null) parts.push(`Motyw ekranu: ${display.theme}`);
+    if (display.logoId != null) parts.push("Własne logo na ekranie");
+  }
+
+  if (r.has_final != null) {
+    parts.push(`Finał: ${r.has_final === "true" ? "włączony" : "wyłączony"}`);
+  }
+  if (r.final_questions_mode && r.final_questions_mode !== "random") {
+    parts.push(`Wybór pytań finału: ${QUESTIONS_MODE_LABELS[r.final_questions_mode] || r.final_questions_mode}`);
+  }
+  if (r.rounds_questions_mode && r.rounds_questions_mode !== "random") {
+    parts.push(`Wybór pytań rund: ${QUESTIONS_MODE_LABELS[r.rounds_questions_mode] || r.rounds_questions_mode}`);
+  }
+  if (r.sound && typeof r.sound === "object" && Object.keys(r.sound).length > 0) {
+    parts.push("Niestandardowy dźwięk");
+  }
+
   return parts.length ? parts.join(" • ") : "—";
 }
 
