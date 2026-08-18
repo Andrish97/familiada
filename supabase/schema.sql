@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict nfA8tdjVu9NhHrphccsFAstbrWOztZsrM3DbvlKg4CptTV3C3FR3voAYB1JnFFV
+\restrict H6D4CYGX9t8KWxXg7zQkfdyfSouPwQxdKX1NW2Uurr63UolCdeaVlxgCe0TVa6s
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -2391,10 +2391,11 @@ BEGIN
           GROUP BY q.game_id) AS sub;
 
   -- Niedomyślne ustawienia: advanced (mnożniki/finał) + wygląd ekranu +
-  -- tryb wyboru pytań + niestandardowy dźwięk (nie tylko finał/mnożniki)
+  -- tryb wyboru pytań + niestandardowy dźwięk (nie tylko finał/mnożniki).
+  -- WŁĄCZNIE z grami demo (jak w gameplay) — zmiana ustawień to działanie
+  -- użytkownika, nawet na grze dostarczonej mu automatycznie.
   SELECT COUNT(*) INTO custom_settings_total FROM public.games g
-    WHERE g.is_demo = false
-      AND NOT (g.owner_id = ANY(excluded_ids))
+    WHERE NOT (g.owner_id = ANY(excluded_ids))
       AND (
         (g.settings->'game'->'advanced' IS NOT NULL
           AND g.settings->'game'->'advanced' <> '{}'::jsonb
@@ -3114,8 +3115,7 @@ BEGIN
         g.settings->'sound' AS sound
       FROM public.games g
       LEFT JOIN public.profiles pr ON pr.id = g.owner_id
-      WHERE g.is_demo = false
-        AND NOT (g.owner_id = ANY(excluded_ids))
+      WHERE NOT (g.owner_id = ANY(excluded_ids))
         AND (
           (g.settings->'game'->'advanced' IS NOT NULL
             AND g.settings->'game'->'advanced' <> '{}'::jsonb
@@ -14007,5 +14007,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict nfA8tdjVu9NhHrphccsFAstbrWOztZsrM3DbvlKg4CptTV3C3FR3voAYB1JnFFV
+\unrestrict H6D4CYGX9t8KWxXg7zQkfdyfSouPwQxdKX1NW2Uurr63UolCdeaVlxgCe0TVa6s
 
