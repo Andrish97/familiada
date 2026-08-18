@@ -6,6 +6,7 @@ import { sb } from "../core/supabase.js?v=v2026-08-18T18164";
 import { loadQuestions } from "../core/game-validate.js?v=v2026-08-18T18164";
 import { loadFont5x7, buildLogoPreviewCanvas } from "../core/logo-preview.js?v=v2026-08-18T18164";
 import { v as cacheBust } from "../core/cache-bust.js?v=v2026-08-18T18164";
+import { alertModal } from "../core/modal.js?v=v2026-08-18T18164";
 
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
@@ -132,7 +133,10 @@ async function saveAll() {
   // inaczej gra dojdzie do progu finału i finał się nie odpali (host
   // dowie się o tym dopiero w trakcie rozgrywki). Blokujemy zapis.
   if (g.hasFinal === true && g.finalQuestionsMode === "pick" && localSettings.questions.final.length !== 5) {
-    alert(`Finał jest włączony w trybie ręcznym, ale wybrano tylko ${localSettings.questions.final.length}/5 pytań finałowych. Uzupełnij wybór w zakładce „Pytania — Finał", zanim zapiszesz.`);
+    await alertModal({
+      title: "Niepełny wybór pytań finału",
+      text: `Finał jest włączony w trybie ręcznym, ale wybrano tylko ${localSettings.questions.final.length}/5 pytań finałowych. Uzupełnij wybór w zakładce „Pytania — Finał", zanim zapiszesz.`,
+    });
     setActiveCat("finale");
     return;
   }
@@ -156,7 +160,10 @@ async function saveAll() {
     clearDirty();
   } catch (e) {
     console.error("[game-settings] saveAll error:", e);
-    alert("Błąd zapisu: " + (e?.message || e?.code || String(e)));
+    await alertModal({
+      title: "Błąd zapisu",
+      text: String(e?.message || e?.code || String(e)),
+    });
   } finally {
     if (btnSaveAll) btnSaveAll.disabled = false;
   }
