@@ -154,7 +154,9 @@ export function createStore(gameId) {
   }
 
   function teamsOk() {
-    return state.teams.teamA.trim().length > 0 && state.teams.teamB.trim().length > 0;
+    // Puste nazwy drużyn są poprawnym stanem — wszędzie (HUD, wyświetlacz, podsumowanie)
+    // pokazujemy wtedy domyślną nazwę zależną od języka (np. control.teamADefault).
+    return true;
   }
 
   function canFinishSetup() {

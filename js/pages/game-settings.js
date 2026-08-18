@@ -1655,6 +1655,7 @@ async function main() {
     markDirty();
     updateSubTabStates();
     setActiveCat(activeCat);
+    await saveAll();
   });
 
   // Back button
