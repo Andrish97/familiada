@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 2TP5m4e00sOcpWLfO04XRYQYC6xRU9dgbXJY8m2fYgK1pmDGsFkX5e1SE6aQn7z
+\restrict nfA8tdjVu9NhHrphccsFAstbrWOztZsrM3DbvlKg4CptTV3C3FR3voAYB1JnFFV
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -2390,13 +2390,24 @@ BEGIN
           WHERE g.is_demo = false AND g.source_market_id IS NULL AND NOT (g.owner_id = ANY(excluded_ids))
           GROUP BY q.game_id) AS sub;
 
-  -- Niedomyślne ustawienia zaawansowane (games.settings->game->advanced)
+  -- Niedomyślne ustawienia: advanced (mnożniki/finał) + wygląd ekranu +
+  -- tryb wyboru pytań + niestandardowy dźwięk (nie tylko finał/mnożniki)
   SELECT COUNT(*) INTO custom_settings_total FROM public.games g
     WHERE g.is_demo = false
       AND NOT (g.owner_id = ANY(excluded_ids))
-      AND g.settings->'game'->'advanced' IS NOT NULL
-      AND g.settings->'game'->'advanced' <> '{}'::jsonb
-      AND g.settings->'game'->'advanced' <> '{"roundMultipliers":[1,1,1,2,3],"finalMinPoints":300,"finalTarget":200,"endScreenMode":"logo","finalPrizeMultiplier":3,"mainPrizeAmount":25000}'::jsonb;
+      AND (
+        (g.settings->'game'->'advanced' IS NOT NULL
+          AND g.settings->'game'->'advanced' <> '{}'::jsonb
+          AND g.settings->'game'->'advanced' <> '{"roundMultipliers":[1,1,1,2,3],"finalMinPoints":300,"finalTarget":200,"endScreenMode":"logo","finalPrizeMultiplier":3,"mainPrizeAmount":25000}'::jsonb)
+        OR (g.settings->'display'->'colors' IS NOT NULL
+          AND g.settings->'display'->'colors' <> '{"A":"#c4002f","B":"#2a62ff","BACKGROUND":"#d21180","DOT":"#d7ff3d"}'::jsonb)
+        OR (g.settings->'display'->>'theme' IS NOT NULL)
+        OR (g.settings->'display'->>'logoId' IS NOT NULL)
+        OR (g.settings->'game'->>'hasFinal' IS NOT NULL)
+        OR (g.settings->'game'->>'finalQuestionsMode' IS NOT NULL AND g.settings->'game'->>'finalQuestionsMode' <> 'random')
+        OR (g.settings->'game'->>'roundsQuestionsMode' IS NOT NULL AND g.settings->'game'->>'roundsQuestionsMode' <> 'random')
+        OR (g.settings->'sound' IS NOT NULL AND g.settings->'sound' <> '{}'::jsonb)
+      );
 
   -- Gameplay (game_sessions_effective — realne rozgrywki, WŁĄCZNIE z sesjami
   -- na grach demo: rozegranie gry to działanie użytkownika, nawet jeśli sama
@@ -3095,14 +3106,29 @@ BEGIN
         g.name AS game_name,
         pr.username AS owner,
         g.created_at,
-        g.settings->'game'->'advanced' AS advanced
+        g.settings->'game'->'advanced' AS advanced,
+        g.settings->'display' AS display,
+        g.settings->'game'->>'hasFinal' AS has_final,
+        g.settings->'game'->>'finalQuestionsMode' AS final_questions_mode,
+        g.settings->'game'->>'roundsQuestionsMode' AS rounds_questions_mode,
+        g.settings->'sound' AS sound
       FROM public.games g
       LEFT JOIN public.profiles pr ON pr.id = g.owner_id
       WHERE g.is_demo = false
         AND NOT (g.owner_id = ANY(excluded_ids))
-        AND g.settings->'game'->'advanced' IS NOT NULL
-        AND g.settings->'game'->'advanced' <> '{}'::jsonb
-        AND g.settings->'game'->'advanced' <> '{"roundMultipliers":[1,1,1,2,3],"finalMinPoints":300,"finalTarget":200,"endScreenMode":"logo","finalPrizeMultiplier":3,"mainPrizeAmount":25000}'::jsonb
+        AND (
+          (g.settings->'game'->'advanced' IS NOT NULL
+            AND g.settings->'game'->'advanced' <> '{}'::jsonb
+            AND g.settings->'game'->'advanced' <> '{"roundMultipliers":[1,1,1,2,3],"finalMinPoints":300,"finalTarget":200,"endScreenMode":"logo","finalPrizeMultiplier":3,"mainPrizeAmount":25000}'::jsonb)
+          OR (g.settings->'display'->'colors' IS NOT NULL
+            AND g.settings->'display'->'colors' <> '{"A":"#c4002f","B":"#2a62ff","BACKGROUND":"#d21180","DOT":"#d7ff3d"}'::jsonb)
+          OR (g.settings->'display'->>'theme' IS NOT NULL)
+          OR (g.settings->'display'->>'logoId' IS NOT NULL)
+          OR (g.settings->'game'->>'hasFinal' IS NOT NULL)
+          OR (g.settings->'game'->>'finalQuestionsMode' IS NOT NULL AND g.settings->'game'->>'finalQuestionsMode' <> 'random')
+          OR (g.settings->'game'->>'roundsQuestionsMode' IS NOT NULL AND g.settings->'game'->>'roundsQuestionsMode' <> 'random')
+          OR (g.settings->'sound' IS NOT NULL AND g.settings->'sound' <> '{}'::jsonb)
+        )
       ORDER BY g.created_at DESC
       LIMIT p_limit
     ) r;
@@ -3122,6 +3148,7 @@ BEGIN
         s.winner_team,
         s.team_a_score,
         s.team_b_score,
+        s.client_meta->>'final_step' AS final_step,
         COALESCE((s.client_meta->>'error_count')::int, 0) AS error_count
       FROM public.game_sessions_effective s
       JOIN public.games g ON g.id = s.game_id
@@ -10309,7 +10336,7 @@ CREATE VIEW "public"."game_sessions_effective" WITH ("security_invoker"='true') 
     "team_a_score",
     "team_b_score",
         CASE
-            WHEN (("ended_at" IS NULL) AND ("status" = ANY (ARRAY['started'::"text", 'playing'::"text"])) AND (("now"() - "last_seen_at") > '03:00:00'::interval)) THEN 'abandoned'::"text"
+            WHEN (("ended_at" IS NULL) AND ("status" = ANY (ARRAY['started'::"text", 'playing'::"text"])) AND (("now"() - "last_seen_at") > '01:00:00'::interval)) THEN 'abandoned'::"text"
             ELSE "status"
         END AS "effective_status"
    FROM "public"."game_sessions" "s";
@@ -13980,5 +14007,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 2TP5m4e00sOcpWLfO04XRYQYC6xRU9dgbXJY8m2fYgK1pmDGsFkX5e1SE6aQn7z
+\unrestrict nfA8tdjVu9NhHrphccsFAstbrWOztZsrM3DbvlKg4CptTV3C3FR3voAYB1JnFFV
 
