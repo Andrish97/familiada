@@ -303,7 +303,7 @@ async function handleAdminApi(request, env) {
   if (url.pathname === "/_admin_api/stats/detail") {
     if (request.method !== "GET") return new Response("Method Not Allowed", { status: 405 });
     const type = String(url.searchParams.get("type") || "");
-    const allowed = new Set(["users", "games", "gameplay", "bases", "logos", "ratings"]);
+    const allowed = new Set(["users", "games", "custom_settings", "gameplay", "bases", "logos", "ratings"]);
     if (!allowed.has(type)) return json({ ok: false, error: "invalid_type" }, 400);
     const limit = clampInt(url.searchParams.get("limit"), 1, 500, 200);
     const res = await supabaseRpc(env, "get_stats_detail", { p_type: type, p_limit: limit });

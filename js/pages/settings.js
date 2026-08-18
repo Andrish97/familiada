@@ -103,6 +103,8 @@ const els = {
   statGamesTotal: document.getElementById("statGamesTotal"),
   statGamesGrowth: document.getElementById("statGamesGrowth"),
   statGamesQuality: document.getElementById("statGamesQuality"),
+  statCustomSettingsTotal: document.getElementById("statCustomSettingsTotal"),
+  statCustomSettingsSub: document.getElementById("statCustomSettingsSub"),
   statPlayedTotal: document.getElementById("statPlayedTotal"),
   statPlayedPeriods: document.getElementById("statPlayedPeriods"),
   statPlayedOutcomes: document.getElementById("statPlayedOutcomes"),
@@ -1055,6 +1057,9 @@ async function loadAdminStats({ silent = false } = {}) {
     if (els.statGamesTotal) els.statGamesTotal.textContent = data.games.total;
     if (els.statGamesGrowth) els.statGamesGrowth.textContent = `Dziś: ${data.games.new_today} | 7 dni: ${data.games.new_7d} | 30 dni: ${data.games.new_30d}`;
     if (els.statGamesQuality) els.statGamesQuality.textContent = `Gotowe: ${data.games.ready} | Śr. pytań: ${data.games.avg_q}`;
+
+    if (els.statCustomSettingsTotal) els.statCustomSettingsTotal.textContent = data.custom_settings.total;
+    if (els.statCustomSettingsSub) els.statCustomSettingsSub.textContent = `z ${data.games.total} gier ma zmienione ustawienia zaawansowane`;
 
     if (els.statPlayedTotal) els.statPlayedTotal.textContent = data.gameplay.played_30d;
     if (els.statPlayedPeriods) els.statPlayedPeriods.textContent = `Dziś: ${data.gameplay.played_today} | 7 dni: ${data.gameplay.played_7d} | 30 dni: ${data.gameplay.played_30d}`;
@@ -5057,6 +5062,11 @@ const STAT_DETAIL_CONFIG = {
     cols: ["Nazwa", "Typ", "Status", "Właściciel", "Data"],
     row: r => [r.name || "—", r.type || "—", r.status || "—", r.owner || "—", fmtDate(r.created_at)],
   },
+  custom_settings: {
+    title: "Niedomyślne ustawienia",
+    cols: ["Gra", "Właściciel", "Co zmieniono", "Utworzono"],
+    row: r => [r.game_name || "—", r.owner || "—", fmtSettingsDiff(r.advanced), fmtDate(r.created_at)],
+  },
   gameplay: {
     title: "Rozgrywki",
     cols: ["Gra", "Właściciel", "Kiedy", "Czas trwania", "Rundy", "Wynik", "Zwycięzca", "Status"],
@@ -5127,6 +5137,49 @@ function fmtSessionStatus(r) {
   const label = SESSION_STATUS_LABELS[r.effective_status] || r.effective_status || "—";
   const errCount = Number(r.error_count) || 0;
   return errCount > 0 ? `${label} ⚠️ ${errCount}` : label;
+}
+
+// Niedomyślne ustawienia: te same wartości domyślne co w control/js/store.js (DEFAULT_ADVANCED)
+const ADVANCED_SETTINGS_DEFAULTS = {
+  roundMultipliers: [1, 1, 1, 2, 3],
+  finalMinPoints: 300,
+  finalTarget: 200,
+  endScreenMode: "logo",
+  finalPrizeMultiplier: 3,
+  mainPrizeAmount: 25000,
+};
+
+const ADVANCED_SETTINGS_LABELS = {
+  roundMultipliers: "Mnożniki rund",
+  finalMinPoints: "Próg wejścia do finału",
+  finalTarget: "Cel finału",
+  endScreenMode: "Ekran końcowy",
+  finalPrizeMultiplier: "Mnożnik nagrody",
+  mainPrizeAmount: "Kwota nagrody głównej",
+};
+
+const END_SCREEN_MODE_LABELS = { logo: "Logo", points: "Punkty", money: "Kwota" };
+
+function fmtAdvancedSettingValue(key, value) {
+  if (key === "roundMultipliers" && Array.isArray(value)) return value.join(", ");
+  if (key === "endScreenMode") return END_SCREEN_MODE_LABELS[value] || String(value);
+  return String(value);
+}
+
+function fmtSettingsDiff(advanced) {
+  if (!advanced || typeof advanced !== "object") return "—";
+  const parts = [];
+  for (const key of Object.keys(ADVANCED_SETTINGS_DEFAULTS)) {
+    const val = advanced[key];
+    if (val === undefined || val === null) continue;
+    const def = ADVANCED_SETTINGS_DEFAULTS[key];
+    const changed = Array.isArray(def) ? JSON.stringify(val) !== JSON.stringify(def) : val !== def;
+    if (changed) {
+      const label = ADVANCED_SETTINGS_LABELS[key] || key;
+      parts.push(`${label}: ${fmtAdvancedSettingValue(key, val)} (domyślnie: ${fmtAdvancedSettingValue(key, def)})`);
+    }
+  }
+  return parts.length ? parts.join(" • ") : "—";
 }
 
 const STATS_DETAIL_PER_PAGE = 25;
