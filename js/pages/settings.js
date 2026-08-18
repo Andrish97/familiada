@@ -5404,7 +5404,9 @@ async function openStatsDetailModal(type) {
     text: "",
     okText: "Zamknij",
     body,
-    onReady: ({ cancelBtn }) => { if (cancelBtn) cancelBtn.style.display = "none"; },
+    onReady: ({ okBtn }) => {
+      if (okBtn?.parentElement) okBtn.parentElement.style.display = "none";
+    },
   });
 
   function renderPage(page) {
