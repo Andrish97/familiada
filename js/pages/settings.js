@@ -5064,8 +5064,25 @@ const STAT_DETAIL_CONFIG = {
   },
   custom_settings: {
     title: "Niedomyślne ustawienia",
-    cols: ["Gra", "Właściciel", "Co zmieniono", "Utworzono"],
-    row: r => [r.game_name || "—", r.owner || "—", fmtSettingsDiff(r), fmtDate(r.created_at)],
+    cols: ["Gra", "Właściciel", "Mnożniki rund", "Próg wejścia do finału", "Cel finału", "Ekran końcowy", "Mnożnik nagrody", "Kwota nagrody głównej", "Kolory ekranu", "Motyw ekranu", "Logo", "Finał", "Pytania finału", "Pytania rund", "Dźwięk", "Utworzono"],
+    row: r => [
+      r.game_name || "—",
+      r.owner || "—",
+      fmtAdvancedField(r, "roundMultipliers"),
+      fmtAdvancedField(r, "finalMinPoints"),
+      fmtAdvancedField(r, "finalTarget"),
+      fmtAdvancedField(r, "endScreenMode"),
+      fmtAdvancedField(r, "finalPrizeMultiplier"),
+      fmtAdvancedField(r, "mainPrizeAmount"),
+      buildColorsCell(r.display),
+      fmtDisplayTheme(r.display),
+      fmtDisplayLogo(r.display),
+      fmtHasFinal(r.has_final),
+      fmtQuestionsModeField(r.final_questions_mode),
+      fmtQuestionsModeField(r.rounds_questions_mode),
+      fmtCustomSound(r.sound),
+      fmtDate(r.created_at),
+    ],
   },
   gameplay: {
     title: "Rozgrywki",
@@ -5141,17 +5158,17 @@ function fmtSessionStatus(r) {
 }
 
 const FINAL_STEP_LABELS = {
-  final_start: "Rozpoczęty",
-  p1_q1: "Gracz 1 — pytanie 1",
-  p1_q2: "Gracz 1 — pytanie 2",
-  p1_q3: "Gracz 1 — pytanie 3",
-  p1_q4: "Gracz 1 — pytanie 4",
-  p1_q5: "Gracz 1 — pytanie 5",
-  p2_q1: "Gracz 2 — pytanie 1",
-  p2_q2: "Gracz 2 — pytanie 2",
-  p2_q3: "Gracz 2 — pytanie 3",
-  p2_q4: "Gracz 2 — pytanie 4",
-  p2_q5: "Gracz 2 — pytanie 5",
+  final_start: "Rozpoczęty (bez odpowiedzi)",
+  p1_q1: "Gracz 1 — pytanie 1 z 5",
+  p1_q2: "Gracz 1 — pytanie 2 z 5",
+  p1_q3: "Gracz 1 — pytanie 3 z 5",
+  p1_q4: "Gracz 1 — pytanie 4 z 5",
+  p1_q5: "Gracz 1 — pytanie 5 z 5",
+  p2_q1: "Gracz 2 — pytanie 1 z 5",
+  p2_q2: "Gracz 2 — pytanie 2 z 5",
+  p2_q3: "Gracz 2 — pytanie 3 z 5",
+  p2_q4: "Gracz 2 — pytanie 4 z 5",
+  p2_q5: "Gracz 2 — pytanie 5 z 5",
 };
 
 function fmtFinalStep(step) {
@@ -5188,48 +5205,65 @@ function fmtAdvancedSettingValue(key, value) {
   return String(value);
 }
 
-// Pełne porównanie ustawień gry z domyślnymi (nie tylko "advanced" —
-// też wygląd ekranu, tryb wyboru pytań i niestandardowy dźwięk)
-function fmtSettingsDiff(r) {
-  const parts = [];
-
+// Jedna kolumna = jedno ustawienie. "—" oznacza wartość domyślną (bez zmian).
+function fmtAdvancedField(r, key) {
   const advanced = r.advanced;
-  if (advanced && typeof advanced === "object") {
-    for (const key of Object.keys(ADVANCED_SETTINGS_DEFAULTS)) {
-      const val = advanced[key];
-      if (val === undefined || val === null) continue;
-      const def = ADVANCED_SETTINGS_DEFAULTS[key];
-      const changed = Array.isArray(def) ? JSON.stringify(val) !== JSON.stringify(def) : val !== def;
-      if (changed) {
-        const label = ADVANCED_SETTINGS_LABELS[key] || key;
-        parts.push(`${label}: ${fmtAdvancedSettingValue(key, val)} (domyślnie: ${fmtAdvancedSettingValue(key, def)})`);
-      }
-    }
-  }
+  if (!advanced || typeof advanced !== "object") return "—";
+  const val = advanced[key];
+  if (val === undefined || val === null) return "—";
+  const def = ADVANCED_SETTINGS_DEFAULTS[key];
+  const changed = Array.isArray(def) ? JSON.stringify(val) !== JSON.stringify(def) : val !== def;
+  return changed ? fmtAdvancedSettingValue(key, val) : "—";
+}
 
-  const display = r.display;
-  if (display && typeof display === "object") {
-    if (display.colors && JSON.stringify(display.colors) !== JSON.stringify(DISPLAY_COLOR_DEFAULTS)) {
-      parts.push("Kolory ekranu: zmienione");
-    }
-    if (display.theme != null) parts.push(`Motyw ekranu: ${display.theme}`);
-    if (display.logoId != null) parts.push("Własne logo na ekranie");
-  }
+const DISPLAY_COLOR_LABELS = { A: "Drużyna A", B: "Drużyna B", BACKGROUND: "Tło", DOT: "Kropka" };
+const HEX_COLOR_RE = /^#[0-9a-f]{3,8}$/i;
 
-  if (r.has_final != null) {
-    parts.push(`Finał: ${r.has_final === "true" ? "włączony" : "wyłączony"}`);
+// Kropki koloru zamiast samego tekstu "zmienione" — widać od razu jaki kolor.
+function buildColorsCell(display) {
+  const colors = display && typeof display === "object" ? display.colors : null;
+  const wrap = document.createElement("span");
+  wrap.style.cssText = "display:inline-flex;gap:5px;align-items:center";
+  if (!colors || typeof colors !== "object" || JSON.stringify(colors) === JSON.stringify(DISPLAY_COLOR_DEFAULTS)) {
+    wrap.textContent = "—";
+    return wrap;
   }
-  if (r.final_questions_mode && r.final_questions_mode !== "random") {
-    parts.push(`Wybór pytań finału: ${QUESTIONS_MODE_LABELS[r.final_questions_mode] || r.final_questions_mode}`);
+  for (const key of Object.keys(DISPLAY_COLOR_DEFAULTS)) {
+    const val = colors[key];
+    if (!val || val === DISPLAY_COLOR_DEFAULTS[key] || !HEX_COLOR_RE.test(val)) continue;
+    const dot = document.createElement("span");
+    dot.title = `${DISPLAY_COLOR_LABELS[key] || key}: ${val}`;
+    dot.style.cssText = `display:inline-block;width:13px;height:13px;border-radius:50%;background:${val};border:1px solid rgba(255,255,255,.3)`;
+    wrap.appendChild(dot);
   }
-  if (r.rounds_questions_mode && r.rounds_questions_mode !== "random") {
-    parts.push(`Wybór pytań rund: ${QUESTIONS_MODE_LABELS[r.rounds_questions_mode] || r.rounds_questions_mode}`);
-  }
-  if (r.sound && typeof r.sound === "object" && Object.keys(r.sound).length > 0) {
-    parts.push("Niestandardowy dźwięk");
-  }
+  if (!wrap.children.length) wrap.textContent = "—";
+  return wrap;
+}
 
-  return parts.length ? parts.join(" • ") : "—";
+function fmtDisplayTheme(display) {
+  const theme = display && typeof display === "object" ? display.theme : null;
+  return theme != null ? String(theme) : "—";
+}
+
+function fmtDisplayLogo(display) {
+  const logoId = display && typeof display === "object" ? display.logoId : null;
+  return logoId != null ? "Własne" : "—";
+}
+
+function fmtHasFinal(hasFinal) {
+  if (hasFinal == null) return "—";
+  return hasFinal === "true" ? "Włączony" : "Wyłączony";
+}
+
+function fmtQuestionsModeField(mode) {
+  if (!mode || mode === "random") return "—";
+  return QUESTIONS_MODE_LABELS[mode] || mode;
+}
+
+function fmtCustomSound(sound) {
+  if (!sound || typeof sound !== "object") return "—";
+  const count = Object.keys(sound).length;
+  return count > 0 ? `Niestandardowy (${count})` : "—";
 }
 
 const STATS_DETAIL_PER_PAGE = 25;
@@ -5265,7 +5299,8 @@ function buildStatsTable(cfg, rows) {
     tr.style.background = i % 2 === 0 ? "transparent" : "rgba(255,255,255,.02)";
     cfg.row(r).forEach(cell => {
       const td = document.createElement("td");
-      td.textContent = cell;
+      if (cell instanceof Node) td.appendChild(cell);
+      else td.textContent = cell;
       td.style.cssText = "padding:6px 10px;border-bottom:1px solid rgba(255,255,255,.05);max-width:240px;overflow:hidden;text-overflow:ellipsis";
       tr.appendChild(td);
     });
