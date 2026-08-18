@@ -159,19 +159,18 @@ export function createStore(gameId) {
 
   function canFinishSetup() {
     if (!teamsOk()) return false;
-    
-    // Jeśli nie gramy finału - OK
-    if (state.hasFinal === false) return true;
-    
-    // Jeśli gramy finał:
+
+    // Jeśli gramy finał (jedyny przypadek wymagający dodatkowego sprawdzenia):
     if (state.hasFinal === true) {
       // Tryb losowy - zawsze OK (losowanie w tle)
       if (state.finalQuestionsMode === "random") return true;
       // Tryb ręczny - wymaga potwierdzenia 5 pytań
       return state.final.confirmed === true && state.final.picked.length === 5;
     }
-    
-    return false;
+
+    // hasFinal === false LUB null/undefined (gra nigdy nie skonfigurowała
+    // tego pola) - nie ma finału do sprawdzenia, więc OK.
+    return true;
   }
 
   function allDevicesOnline() {
