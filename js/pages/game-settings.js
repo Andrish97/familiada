@@ -126,6 +126,25 @@ function clearDirty() {
 }
 
 async function saveAll() {
+  const g = localSettings.game;
+
+  // Finał włączony + tryb ręczny wymaga dokładnie 5 wybranych pytań —
+  // inaczej gra dojdzie do progu finału i finał się nie odpali (host
+  // dowie się o tym dopiero w trakcie rozgrywki). Blokujemy zapis.
+  if (g.hasFinal === true && g.finalQuestionsMode === "pick" && localSettings.questions.final.length !== 5) {
+    alert(`Finał jest włączony w trybie ręcznym, ale wybrano tylko ${localSettings.questions.final.length}/5 pytań finałowych. Uzupełnij wybór w zakładce „Pytania — Finał", zanim zapiszesz.`);
+    setActiveCat("finale");
+    return;
+  }
+
+  // Pytania ręcznie wybrane do finału nigdy nie mogą też być w rundach —
+  // ostatnie zabezpieczenie na wypadek, gdyby host nie odwiedził zakładki
+  // "Pytania — Rundy" po ustaleniu finału.
+  if (g.finalQuestionsMode === "pick") {
+    const finalIds = new Set(localSettings.questions.final.map(q => q.id));
+    localSettings.questions.rounds = localSettings.questions.rounds.filter(q => !finalIds.has(q.id));
+  }
+
   if (btnSaveAll) btnSaveAll.disabled = true;
   try {
     const payload = JSON.parse(JSON.stringify(localSettings));
@@ -502,6 +521,7 @@ function renderQuestions() {
             </label>
           </div>
           <div class="gs-hint">Losowe = każda runda losuje pytanie. Kolejność = pytania w ustalonej kolejności (zakładka „Pytania — Rundy").</div>
+          ${hasFinal && finalRandom && !roundsRandom ? `<div class="gs-hint" style="margin-top:6px">⚠️ Finał losowy + rundy w ustalonej kolejności: finał wylosuje 5 pytań spoza Twojej listy rund, dopiero przy starcie gry w panelu prowadzącego — jeśli baza ma niewiele pytań, pula do losowania finału będzie odpowiednio mniejsza.</div>` : ""}
         </div>
       </div>
     </div>
@@ -539,6 +559,7 @@ function renderFinale() {
   const picked = localSettings.questions.final;
   const pickedIds = new Set(picked.map(q => q.id));
   const pool = allQuestions.filter(q => !pickedIds.has(q.id));
+  const roundsIsOrdered = localSettings.game.roundsQuestionsMode === "pick";
 
   content.innerHTML = `
     <div class="gs-cat-title">${t("gameSettings.categories.finale")}</div>
@@ -546,6 +567,7 @@ function renderFinale() {
       <div class="gs-badge-row">
         <span class="badge">${t("control.finalBadge")} <b>${picked.length}</b>/5</span>
       </div>
+      ${roundsIsOrdered ? `<div class="gs-hint" style="margin-bottom:8px">Wybrane tu pytania znikną z listy pytań rund (zakładka „Pytania — Rundy").</div>` : ""}
       <div class="finalLists">
         <div class="finalCol">
           <div class="mini"><div class="hint">${t("control.finalPoolHint")}</div></div>
@@ -664,9 +686,18 @@ function setupFinaleColumnDnd(poolEl, pickedEl) {
 
 // --- PYTANIA — RUNDY ---
 function renderRounds() {
+  // Pytania wybrane ręcznie do finału nigdy nie mogą też być w rundach —
+  // wykluczamy je z listy rund (i usuwamy, jeśli tam już trafiły).
+  const finalIds = (localSettings.game.hasFinal === true && localSettings.game.finalQuestionsMode === "pick")
+    ? new Set(localSettings.questions.final.map(q => q.id))
+    : new Set();
+  if (finalIds.size > 0) {
+    localSettings.questions.rounds = localSettings.questions.rounds.filter(q => !finalIds.has(q.id));
+  }
+
   // Zbuduj pełną listę: najpierw zapisana kolejność, potem brakujące pytania
   const pickedIds = new Set(localSettings.questions.rounds.map(q => q.id));
-  const missing = allQuestions.filter(q => !pickedIds.has(q.id));
+  const missing = allQuestions.filter(q => !pickedIds.has(q.id) && !finalIds.has(q.id));
   if (missing.length > 0) {
     // Uzupełnij bez markDirty — to inicjalizacja domyślna
     localSettings.questions.rounds = [...localSettings.questions.rounds, ...missing];

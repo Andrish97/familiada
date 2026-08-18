@@ -1139,7 +1139,16 @@ async function sendZeroStatesToDevices() {
         let all = [];
         try { all = cached ? JSON.parse(cached) : []; } catch {}
         const roundsPool = store.state.rounds?._questionPool || [];
-        const usedIds = new Set(roundsPool.map(q => String(q.id)));
+        // Rundy w trybie "kolejność" mają już ustaloną listę pytań
+        // (roundsPicked, wczytaną z ustawień gry) — finał losowy musi ją
+        // ominąć, inaczej może wylosować pytanie, które i tak jest w rundach.
+        const roundsOrdered = store.state.roundsQuestionsMode === "pick"
+          ? (store.state.roundsPicked || [])
+          : [];
+        const usedIds = new Set([
+          ...roundsPool.map(q => String(q.id)),
+          ...roundsOrdered.map(q => String(q.id)),
+        ]);
         const pool = all.filter(q => !usedIds.has(String(q.id)));
         const shuffled = pool.slice();
         for (let i = shuffled.length - 1; i > 0; i--) {
