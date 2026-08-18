@@ -249,8 +249,21 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     ui.setText("finalSum", String(rt.sum || 0));
   }
 
+  // Drużyna z wyższym wynikiem po rundach głównych gra finał (tak samo jak
+  // w gameRounds.js przy zakończeniu gry bez finału). Remis jest tu
+  // strukturalnie niemożliwy: rundy przyznają punkty tylko jednej drużynie
+  // naraz, a gra blokuje dalsze rundy natychmiast po pierwszym przekroczeniu
+  // progu finału — więc w momencie tego sprawdzenia wyniki nie mogą być równe.
+  function computeWinnerTeam() {
+    const totals = store.state.rounds?.totals || { A: 0, B: 0 };
+    return nInt(totals.A, 0) >= nInt(totals.B, 0) ? "A" : "B";
+  }
+
+  // Liczone raz na start finału (w startFinal) i zapisywane do
+  // store.state.final.winnerTeam — żeby nie przeliczać przy każdym ticku
+  // timera, tylko czytać stabilną, już ustaloną wartość.
   function getWinnerTeam() {
-    return store.state?.winnerTeam || store.state?.final?.winnerTeam || "A";
+    return store.state?.final?.winnerTeam || "A";
   }
 
   function setUiTimerForPhase(phase, value) {
@@ -607,6 +620,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
   window.addEventListener("i18n:lang", refreshHostTranslations);
 
   // ---------------- TIMER ----------------
+  // Pełne ustawienie (obie strony tripletu) — tylko na start/reset timera.
   async function displaySetTimerSeconds(sec) {
     const txt = String(Math.max(0, sec));
     const phase = store.state.final?.runtime?.timer?.phase || null;
@@ -615,6 +629,18 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     if (phase === "P2") ui.setFinalTimerP2(txt);
 
     await display.finalSetSideTimer?.(getWinnerTeam(), txt);
+  }
+
+  // Co sekundę: tylko zmieniająca się cyfra timera, bez re-wysyłania
+  // statycznego wyniku drugiej drużyny (ten już ustawiony przez powyższe).
+  async function displayUpdateTimerDigit(sec) {
+    const txt = String(Math.max(0, sec));
+    const phase = store.state.final?.runtime?.timer?.phase || null;
+
+    if (phase === "P1") ui.setFinalTimerP1(txt);
+    if (phase === "P2") ui.setFinalTimerP2(txt);
+
+    await display.finalUpdateSideTimerDigit?.(getWinnerTeam(), txt);
   }
 
   // KLUCZ: timer reset ZAWSZE przywraca totals + czyści side timer
@@ -702,7 +728,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       if (s !== rt.timer.seconds) {
         rt.timer.seconds = s;
         hostUpdate();
-        displaySetTimerSeconds(s).catch(() => {});
+        displayUpdateTimerDigit(s).catch(() => {});
       }
 
       if (leftMs <= 0) {
@@ -1474,6 +1500,8 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
         ui.setEnabled?.("btnFinalStart", true);
         return;
       }
+
+      store.state.final.winnerTeam = computeWinnerTeam();
 
       if (typeof store.setFinalActive === "function") store.setFinalActive(true);
       else store.state.locks.finalActive = true;

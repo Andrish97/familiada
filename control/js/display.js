@@ -331,6 +331,14 @@ export function createDisplay({ devices, store }) {
     }
   }
 
+  // Sama zmiana cyfry timera (co sekundę) — bez re-wysyłania statycznego
+  // wyniku drugiej drużyny, który ustawia już finalSetSideTimer przy starcie.
+  async function finalUpdateSideTimerDigit(team, text) {
+    const t = String(text || "");
+    if (team === "A") await send(`LEFT ${t}`);
+    else if (team === "B") await send(`RIGHT ${t}`);
+  }
+
   async function finalHideBoard() {
     await send("FBATCH ANIMOUT edge down 1000");
   }
@@ -382,6 +390,7 @@ export function createDisplay({ devices, store }) {
     finalSetA,
     finalSetB,
     finalSetSideTimer,
+    finalUpdateSideTimerDigit,
     finalHideAnswersKeepSum,
     finalHalfPlaceholders,
     finalHalfFromRows,
