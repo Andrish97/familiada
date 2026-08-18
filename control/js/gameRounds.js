@@ -1579,7 +1579,7 @@ function hostUpdate() {
         });
       }
 
-      sessionEnd("final", { winnerTeam, teamAScore: a, teamBScore: b });
+      sessionEnd("final", { winnerTeam, teamAScore: a, teamBScore: b, roundsScoreA: a, roundsScoreB: b });
     } catch (e) {
       console.warn("[rounds] gameEndShow error", e);
       store.state.locks.gameEnded = false;

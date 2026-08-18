@@ -1849,6 +1849,9 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       winnerTeam,
       teamAScore: winnerTeam === "A" ? roundsA + sum : roundsA,
       teamBScore: winnerTeam === "B" ? roundsB + sum : roundsB,
+      roundsScoreA: roundsA,
+      roundsScoreB: roundsB,
+      finalPoints: sum,
     });
   }
 

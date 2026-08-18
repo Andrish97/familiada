@@ -109,7 +109,7 @@ export async function sessionLogError(message) {
   }
 }
 
-export async function sessionEnd(status, { errorMessage = null, winnerTeam = null, teamAScore = null, teamBScore = null } = {}) {
+export async function sessionEnd(status, { errorMessage = null, winnerTeam = null, teamAScore = null, teamBScore = null, roundsScoreA = null, roundsScoreB = null, finalPoints = null } = {}) {
   stopHeartbeat();
   if (!currentSessionId) return;
   const id = currentSessionId;
@@ -122,6 +122,9 @@ export async function sessionEnd(status, { errorMessage = null, winnerTeam = nul
       p_winner_team: winnerTeam,
       p_team_a_score: teamAScore,
       p_team_b_score: teamBScore,
+      p_rounds_score_a: roundsScoreA,
+      p_rounds_score_b: roundsScoreB,
+      p_final_points: finalPoints,
     });
     if (error) throw error;
   } catch (e) {

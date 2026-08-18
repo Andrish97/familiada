@@ -5086,14 +5086,16 @@ const STAT_DETAIL_CONFIG = {
   },
   gameplay: {
     title: "Rozgrywki",
-    cols: ["Gra", "Właściciel", "Kiedy", "Czas trwania", "Rundy", "Finał", "Wynik", "Zwycięzca", "Status"],
+    cols: ["Gra", "Właściciel", "Kiedy", "Czas trwania", "Rundy", "Wynik rund", "Finał", "Pkt w finale", "Wynik końcowy", "Zwycięzca", "Status"],
     row: r => [
       r.game_name || "—",
       r.owner || "—",
       fmtDate(r.started_at),
       fmtSessionDuration(r),
       r.effective_status === "legacy" ? "—" : (r.rounds_played ?? "—"),
+      (r.rounds_score_a != null && r.rounds_score_b != null) ? `${r.rounds_score_a}:${r.rounds_score_b}` : "—",
       fmtFinalStep(r.final_step),
+      r.final_points != null ? `+${r.final_points}` : "—",
       (r.team_a_score != null && r.team_b_score != null) ? `${r.team_a_score}:${r.team_b_score}` : "—",
       fmtSessionWinner(r),
       fmtSessionStatus(r),
