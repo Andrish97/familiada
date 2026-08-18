@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict IdQo3sm1OcPHhFLCDQ38LnlZbYnnsmtBA1K0PslwRuUrgsyBOYF2ciKDkqLyjz5
+\restrict s2gtVuG0raoWcop3GTA2glqNK3ocWReCJEpHfYK8qieWNll2gtx8C6sWXvS4dOG
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -3118,8 +3118,7 @@ BEGIN
         g.settings->'sound' AS sound
       FROM public.games g
       LEFT JOIN public.profiles pr ON pr.id = g.owner_id
-      WHERE g.is_demo = false
-        AND NOT (g.owner_id = ANY(excluded_ids))
+      WHERE NOT (g.owner_id = ANY(excluded_ids))
         AND (
           (g.settings->'game'->'advanced' IS NOT NULL
             AND g.settings->'game'->'advanced' <> '{}'::jsonb
@@ -14022,5 +14021,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict IdQo3sm1OcPHhFLCDQ38LnlZbYnnsmtBA1K0PslwRuUrgsyBOYF2ciKDkqLyjz5
+\unrestrict s2gtVuG0raoWcop3GTA2glqNK3ocWReCJEpHfYK8qieWNll2gtx8C6sWXvS4dOG
 
