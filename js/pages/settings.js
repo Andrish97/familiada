@@ -194,6 +194,7 @@ let mailLogLevelSelect = null;
 let mailLogPerPageSelect = null;
 const selectedQueueIds = new Set();
 const MODE_ORDER = ["message", "returnAt", "countdown"];
+const MODE_STATUS_LABELS = { message: "Wiadomość", returnAt: "Powrót…", countdown: "Odliczanie" };
 const MODE_TO_INDEX = {
   message: 0,
   returnAt: 1,
@@ -212,13 +213,13 @@ function shouldShowActionError() {
   return Date.now() - lastUserActionTs < 5000;
 }
 
-function showAuth(statusKey) {
+function showAuth(statusText) {
   els.authScreen.hidden = false;
   els.panelScreen.hidden = true;
   document.body.classList.add("settings-locked");
   document.body.classList.add("no-footer-line");
   moveLangSwitcher(true);
-  setText(els.authStatus, t(statusKey));
+  setText(els.authStatus, statusText);
 }
 
 function showPanel() {
@@ -482,8 +483,8 @@ function formatReturnAtUk(date) {
 function formatReturnPreview(date) {
   if (!date) return "—";
   const diff = date.getTime() - Date.now();
-  if (diff <= 0) return t("settings.preview.ready");
-  return t("settings.preview.at").replace("{time}", formatReturnAtValue(date));
+  if (diff <= 0) return "Powrót już możliwy";
+  return "Powrót {time}".replace("{time}", formatReturnAtValue(date));
 }
 
 function minAllowedDate() {
@@ -623,27 +624,19 @@ function rearrangeDateFields(prefix, order, sepChar) {
 }
 
 function applyDateOrderByLang() {
-  const lang = (document.documentElement.lang || "").toLowerCase();
-  if (lang.startsWith("en")) {
-    rearrangeDateFields("returnAt", ["month", "day", "year"], "/");
-    rearrangeDateFields("endAt", ["month", "day", "year"], "/");
-  } else {
-    rearrangeDateFields("returnAt", ["day", "month", "year"], ".");
-    rearrangeDateFields("endAt", ["day", "month", "year"], ".");
-  }
+  rearrangeDateFields("returnAt", ["day", "month", "year"], ".");
+  rearrangeDateFields("endAt", ["day", "month", "year"], ".");
 }
 
 function applyModalLabels() {
-  const set = (id, key, fallback) => {
+  const set = (id, text) => {
     const el = document.getElementById(id);
-    if (!el) return;
-    const val = t(key);
-    el.textContent = val && val !== key ? val : fallback;
+    if (el) el.textContent = text;
   };
-  set("dtToday", "settings.actions.today", "Dziś");
-  set("dtCancel", "settings.actions.cancel", "Anuluj");
-  set("dtOk", "settings.actions.ok", "OK");
-  set("dtTimeLabel", "settings.actions.time", "Czas");
+  set("dtToday", "Dziś");
+  set("dtCancel", "Anuluj");
+  set("dtOk", "OK");
+  set("dtTimeLabel", "Czas");
 }
 
 function renderCalendar() {
@@ -800,12 +793,12 @@ function updateStatus(state) {
     return;
   }
   if (!state.enabled || state.mode === "off") {
-    setText(els.statusValue, t("settings.status.off"));
+    setText(els.statusValue, "Wyłączone");
     if (els.modeStatus) els.modeStatus.hidden = true;
     return;
   }
-  const modeLabel = t(`settings.status.mode_${state.mode}`);
-  setText(els.statusValue, `${t("settings.status.on")} • ${modeLabel}`);
+  const modeLabel = MODE_STATUS_LABELS[state.mode] || state.mode;
+  setText(els.statusValue, `Włączone • ${modeLabel}`);
   updateModeStatus(state);
 }
 
@@ -813,7 +806,7 @@ function updateStartStop(state) {
   const enabled = Boolean(state?.enabled);
   if (els.btnStartStop) {
     els.btnStartStop.dataset.state = enabled ? "on" : "off";
-    els.btnStartStop.textContent = enabled ? t("settings.actions.stop") : t("settings.actions.start");
+    els.btnStartStop.textContent = enabled ? "Stop" : "Start";
   }
   setLocked(enabled);
 }
@@ -918,7 +911,7 @@ function updateModeStatus(state) {
     }
     const diff = date.getTime() - Date.now();
     if (diff <= 0) {
-      els.modeStatusValue.textContent = t("settings.preview.ready");
+      els.modeStatusValue.textContent = "Powrót już możliwy";
       return;
     }
     els.modeStatusValue.textContent = formatCountdownDisplay(diff);
@@ -1084,7 +1077,7 @@ async function loadAdminStats({ silent = false } = {}) {
   } catch (e) {
     console.error("[settings] loadAdminStats error:", e);
   } finally {
-    if (!silent) setStatus(t("settings.status.loaded") || "Załadowano");
+    if (!silent) setStatus("Załadowano");
   }
 }
 
@@ -1300,7 +1293,7 @@ async function loadRatings({ silent = false } = {}) {
     console.error("[settings] loadRatings error:", e);
     if (els.ratingsTableInfo) els.ratingsTableInfo.textContent = "Błąd ładowania ocen: " + e.message;
   } finally {
-    if (!silent) setStatus(t("settings.status.loaded") || "Załadowano");
+    if (!silent) setStatus("Załadowano");
   }
 }
 
@@ -1309,7 +1302,7 @@ async function loadState({ silent = false } = {}) {
     const res = await apiFetch(`${API_BASE}/state`, { method: "GET" });
     if (res.status === 401) {
       stopPolling();
-      showAuth("settings.login.accessRequired");
+      showAuth("Wymagane logowanie przez Cloudflare Access.");
       return;
     }
     if (!res.ok) throw new Error("state fetch failed");
@@ -1320,7 +1313,7 @@ async function loadState({ silent = false } = {}) {
       console.warn("[settings] state poll failed", err);
       return;
     }
-    if (shouldShowActionError()) showToast(t("settings.toast.error"), "error");
+    if (shouldShowActionError()) showToast("Błąd operacji", "error");
   }
 }
 
@@ -1334,9 +1327,9 @@ async function startMaintenance() {
     if (!res.ok) throw new Error("save failed");
     const data = await res.json();
     applyState(data);
-    showToast(t("settings.toast.saved"));
+    showToast("Zapisano");
   } catch(e) {
-    if (shouldShowActionError()) showToast(t("settings.toast.error"), "error");
+    if (shouldShowActionError()) showToast("Błąd operacji", "error");
   }
 }
 
@@ -1366,9 +1359,9 @@ async function stopMaintenance() {
     const now = roundToNext10Minutes(new Date());
     setFieldValue("returnAt", now);
     setFieldValue("endAt", now);
-    showToast(t("settings.toast.saved"));
+    showToast("Zapisano");
   } catch(e) {
-    if (shouldShowActionError()) showToast(t("settings.toast.error"), "error");
+    if (shouldShowActionError()) showToast("Błąd operacji", "error");
   }
 }
 
@@ -1376,21 +1369,16 @@ async function setBypass(state) {
   const path = state === "on" ? `${API_BASE}/bypass` : `${API_BASE}/bypass_off`;
   const res = await apiFetch(path, { method: "POST" });
   if (res.ok) {
-    showToast(state === "on" ? t("settings.toast.bypassOn") : t("settings.toast.bypassOff"));
+    showToast(state === "on" ? "Bypass włączony" : "Bypass wyłączony");
   } else {
-    if (shouldShowActionError()) showToast(t("settings.toast.error"), "error");
+    if (shouldShowActionError()) showToast("Błąd operacji", "error");
   }
 }
 
-function providerLabel(provider) {
-  const key = `settings.mail.providers.${provider}`;
-  const translated = t(key);
-  return translated === key ? provider : translated;
-}
+const PROVIDER_LABELS = { sendgrid: "SendGrid", brevo: "Brevo", mailgun: "Mailgun", ses: "AWS SES" };
 
-function trOr(key, fallback) {
-  const translated = t(key);
-  return translated === key ? fallback : translated;
+function providerLabel(provider) {
+  return PROVIDER_LABELS[provider] || provider;
 }
 
 function getCronPresetById(id) {
@@ -1403,42 +1391,57 @@ function getCronPresetBySchedule(schedule) {
   return CRON_PRESETS.find((p) => p.schedule === value) || null;
 }
 
+const CRON_PRESET_LABELS = {
+  "1m": "Co 1 minutę",
+  "2m": "Co 2 minuty",
+  "5m": "Co 5 minut",
+  "10m": "Co 10 minut",
+  "15m": "Co 15 minut",
+  "30m": "Co 30 minut",
+  "1h": "Co 1 godzinę",
+  "2h": "Co 2 godziny",
+  "4h": "Co 4 godziny",
+  "6h": "Co 6 godzin",
+  "12h": "Co 12 godzin",
+  "24h": "Co 24 godziny",
+};
+
 function cronPresetLabel(preset) {
   if (!preset) return "—";
-  return trOr(`settings.mail.cronPreset.${preset.id}`, `Every ${preset.minutes} min`);
+  return CRON_PRESET_LABELS[preset.id] || `Every ${preset.minutes} min`;
 }
 
 function getGreetingOptions() {
   return [
-    { value: "none", label: t("settings.mail.greetingOptions.none") || "Brak powitania" },
-    { value: "witaj", label: t("settings.mail.greetingOptions.witaj") || "Witaj" },
-    { value: "hello", label: t("settings.mail.greetingOptions.hello") || "Dzień dobry" },
-    { value: "hi", label: t("settings.mail.greetingOptions.hi") || "Cześć" },
-    { value: "dearUser", label: t("settings.mail.greetingOptions.dearUser") || "Szanowny Użytkowniku" },
-    { value: "dearCustomer", label: t("settings.mail.greetingOptions.dearCustomer") || "Szanowny Kliencie" },
-    { value: "custom", label: t("settings.mail.greetingOptions.custom") || "Własne..." },
+    { value: "none", label: "Brak powitania" },
+    { value: "witaj", label: "Witaj" },
+    { value: "hello", label: "Dzień dobry" },
+    { value: "hi", label: "Cześć" },
+    { value: "dearUser", label: "Szanowny Użytkowniku" },
+    { value: "dearCustomer", label: "Szanowny Kliencie" },
+    { value: "custom", label: "Własne..." },
   ];
 }
 
 function getFarewellOptions() {
   return [
-    { value: "none", label: t("settings.mail.farewellOptions.none") || "Brak pożegnania" },
-    { value: "regards", label: t("settings.mail.farewellOptions.regards") || "Pozdrawiam" },
-    { value: "regardsPl", label: t("settings.mail.farewellOptions.regardsPl") || "Pozdrawiamy" },
-    { value: "bestRegards", label: t("settings.mail.farewellOptions.bestRegards") || "Z poważaniem" },
-    { value: "kindRegards", label: t("settings.mail.farewellOptions.kindRegards") || "Łączę wyrazy szacunku" },
-    { value: "custom", label: t("settings.mail.farewellOptions.custom") || "Własne..." },
+    { value: "none", label: "Brak pożegnania" },
+    { value: "regards", label: "Pozdrawiam" },
+    { value: "regardsPl", label: "Pozdrawiamy" },
+    { value: "bestRegards", label: "Z poważaniem" },
+    { value: "kindRegards", label: "Łączę wyrazy szacunku" },
+    { value: "custom", label: "Własne..." },
   ];
 }
 
 function getSenderOptions() {
   return [
-    { value: "none", label: t("settings.mail.senderOptions.none") || "Brak nadawcy" },
-    { value: "team", label: t("settings.mail.senderOptions.team") || "Zespół Familiada" },
-    { value: "creator", label: t("settings.mail.senderOptions.creator") || "Twórca Familiada" },
-    { value: "admin", label: t("settings.mail.senderOptions.admin") || "Admin" },
-    { value: "support", label: t("settings.mail.senderOptions.support") || "Wsparcie techniczne" },
-    { value: "custom", label: t("settings.mail.senderOptions.custom") || "Własny..." },
+    { value: "none", label: "Brak nadawcy" },
+    { value: "team", label: "Zespół Familiada" },
+    { value: "creator", label: "Twórca Familiada" },
+    { value: "admin", label: "Admin" },
+    { value: "support", label: "Wsparcie techniczne" },
+    { value: "custom", label: "Własny..." },
   ];
 }
 
@@ -1448,11 +1451,11 @@ function buildEmailSignature({ greeting = "none", farewell = "none", sender = "n
     greetingText = greetingCustom.trim();
   } else if (greeting !== "none" && greeting !== "custom") {
     greetingText = {
-      witaj: t("settings.mail.greetingOptions.witaj") || "Witaj",
-      hello: t("settings.mail.greetingOptions.hello") || "Dzień dobry",
-      hi: t("settings.mail.greetingOptions.hi") || "Cześć",
-      dearUser: t("settings.mail.greetingOptions.dearUser") || "Szanowny Użytkowniku",
-      dearCustomer: t("settings.mail.greetingOptions.dearCustomer") || "Szanowny Kliencie",
+      witaj: "Witaj",
+      hello: "Dzień dobry",
+      hi: "Cześć",
+      dearUser: "Szanowny Użytkowniku",
+      dearCustomer: "Szanowny Kliencie",
     }[greeting] || "";
   }
 
@@ -1461,10 +1464,10 @@ function buildEmailSignature({ greeting = "none", farewell = "none", sender = "n
     farewellText = farewellCustom.trim();
   } else if (farewell !== "none" && farewell !== "custom") {
     farewellText = {
-      regards: t("settings.mail.farewellOptions.regards") || "Pozdrawiam",
-      regardsPl: t("settings.mail.farewellOptions.regardsPl") || "Pozdrawiamy",
-      bestRegards: t("settings.mail.farewellOptions.bestRegards") || "Z poważaniem",
-      kindRegards: t("settings.mail.farewellOptions.kindRegards") || "Łączę wyrazy szacunku",
+      regards: "Pozdrawiam",
+      regardsPl: "Pozdrawiamy",
+      bestRegards: "Z poważaniem",
+      kindRegards: "Łączę wyrazy szacunku",
     }[farewell] || "";
   }
 
@@ -1473,10 +1476,10 @@ function buildEmailSignature({ greeting = "none", farewell = "none", sender = "n
     senderText = senderCustom.trim();
   } else if (sender !== "none" && sender !== "custom") {
     senderText = {
-      team: t("settings.mail.senderOptions.team") || "Zespół Familiada",
-      creator: t("settings.mail.senderOptions.creator") || "Twórca Familiada",
-      admin: t("settings.mail.senderOptions.admin") || "Admin",
-      support: t("settings.mail.senderOptions.support") || "Wsparcie techniczne",
+      team: "Zespół Familiada",
+      creator: "Twórca Familiada",
+      admin: "Admin",
+      support: "Wsparcie techniczne",
     }[sender] || "";
   }
 
@@ -1496,16 +1499,16 @@ function buildEmailSignature({ greeting = "none", farewell = "none", sender = "n
 
 function mailQueueStatusOptions() {
   return [
-    { value: "all", label: t("settings.mail.filter.all") },
-    { value: "pending", label: t("settings.mail.filter.pending") },
-    { value: "sending", label: t("settings.mail.filter.sending") },
-    { value: "failed", label: t("settings.mail.filter.failed") },
+    { value: "all", label: "Wszystkie" },
+    { value: "pending", label: "Pending" },
+    { value: "sending", label: "Sending" },
+    { value: "failed", label: "Failed" },
   ];
 }
 
 function mailLogFnOptions() {
   return [
-    { value: "all", label: t("settings.mail.filter.allFunctions") },
+    { value: "all", label: "Wszystkie funkcje" },
     { value: "send-mail", label: "send-mail" },
     { value: "send-email", label: "send-email" },
     { value: "mail-worker", label: "mail-worker" },
@@ -1514,7 +1517,7 @@ function mailLogFnOptions() {
 
 function mailLogLevelOptions() {
   return [
-    { value: "all", label: t("settings.mail.filter.allLevels") },
+    { value: "all", label: "Wszystkie poziomy" },
     { value: "info", label: "info" },
     { value: "warn", label: "warn" },
     { value: "error", label: "error" },
@@ -1623,7 +1626,7 @@ function renderCronPresetOptions() {
 function updateCronHint() {
   if (!els.mailCronHint) return;
   if (!mailCronSupported) {
-    els.mailCronHint.textContent = t("settings.mail.cronUnavailable");
+    els.mailCronHint.textContent = "Cron niedostępny w tej bazie";
     return;
   }
   const selected = getCronPresetById(mailCronPresetValue) || getCronPresetById("5m") || CRON_PRESETS[0];
@@ -1631,10 +1634,7 @@ function updateCronHint() {
     els.mailCronHint.textContent = "—";
     return;
   }
-  const template = trOr(
-    "settings.mail.cronHint",
-    "Worker będzie uruchamiany co {minutes} min (cron: {schedule})."
-  );
+  const template = "Worker będzie uruchamiany co {minutes} min (cron: {schedule}).";
   els.mailCronHint.textContent = template
     .replace("{minutes}", String(selected.minutes))
     .replace("{schedule}", selected.schedule);
@@ -1899,19 +1899,19 @@ function moveAiProvider(idx, dir) {
 function updateMailSettingsStatus(cron) {
   if (!els.mailSettingsStatus) return;
   if (!cron || cron.supported === false) {
-    els.mailSettingsStatus.textContent = t("settings.mail.cronUnavailable");
+    els.mailSettingsStatus.textContent = "Cron niedostępny w tej bazie";
     return;
   }
   if (!cron.configured) {
-    els.mailSettingsStatus.textContent = t("settings.mail.cronNotConfigured");
+    els.mailSettingsStatus.textContent = "Cron nie jest skonfigurowany";
     return;
   }
-  const mode = cron.active ? t("settings.mail.active") : t("settings.mail.inactive");
+  const mode = cron.active ? "Aktywny" : "Nieaktywny";
   const schedule = String(cron.schedule || "—");
   const preset = getCronPresetBySchedule(schedule);
   const scheduleLabel = preset ? cronPresetLabel(preset) : schedule;
   const limit = clampInt(cron.limit, 1, 200, 25);
-  const limitLabel = trOr("settings.mail.limitBadge", "limit {count}").replace("{count}", String(limit));
+  const limitLabel = "limit {count}".replace("{count}", String(limit));
   els.mailSettingsStatus.textContent = `${mode} • ${scheduleLabel} • ${limitLabel}`;
 }
 
@@ -1980,7 +1980,7 @@ function renderQueueRows(rows) {
     const td = document.createElement("td");
     td.colSpan = 8;
     td.className = "mail-empty";
-    td.textContent = t("settings.mail.emptyQueue");
+    td.textContent = "Brak rekordów w kolejce dla wybranego filtra.";
     tr.appendChild(td);
     els.mailQueueBody.appendChild(tr);
     return;
@@ -2021,7 +2021,7 @@ function renderQueueRows(rows) {
     action.className = "btn sm mail-row-action";
     const status = String(row.status || "").toLowerCase();
     const isSending = status === "sending";
-    action.textContent = isSending ? t("settings.mail.sendingNow") : t("settings.mail.runNow");
+    action.textContent = isSending ? "Wysyłanie..." : "Wyślij teraz";
     action.disabled = isSending;
     if (!isSending) action.dataset.queueRunId = String(row.id);
     tdAction.appendChild(action);
@@ -2040,7 +2040,7 @@ function renderLogRows(rows) {
     const td = document.createElement("td");
     td.colSpan = 7;
     td.className = "mail-empty";
-    td.textContent = t("settings.mail.emptyLogs");
+    td.textContent = "Brak logów dla wybranego filtra.";
     tr.appendChild(td);
     els.mailLogsBody.appendChild(tr);
     return;
@@ -2062,7 +2062,7 @@ function renderLogRows(rows) {
     const tdLevel = document.createElement("td");
     tdLevel.appendChild(
       isSkipped
-        ? createPill(t("settings.mail.skippedPill"), "mail-pill-event-skipped")
+        ? createPill("pominięty", "mail-pill-event-skipped")
         : createPill(String(row.level || "—"), logLevelPillClass(row.level))
     );
 
@@ -2076,9 +2076,9 @@ function renderLogRows(rows) {
     if (isSkipped) {
       const reasonKey = String(row.provider || "");
       const label = reasonKey === "skipped_user_flag"
-        ? t("settings.mail.skipReasonUserFlag")
+        ? "wyłączone powiadomienia"
         : reasonKey === "skipped_suppression"
-          ? t("settings.mail.skipReasonSuppression")
+          ? "globalny unsubscribe"
           : reasonKey || "—";
       tdProvider.textContent = label;
     } else {
@@ -2104,7 +2104,7 @@ async function loadMarketplace({ silent = false } = {}) {
   const tbody = document.getElementById("marketTableBody");
   const info  = document.getElementById("marketTableInfo");
   if (!tbody) return;
-  if (!silent && info) info.textContent = t("settings.marketplace.loading") || "Ładowanie…";
+  if (!silent && info) info.textContent = "Ładowanie…";
 
   let data;
   try {
@@ -2120,7 +2120,7 @@ async function loadMarketplace({ silent = false } = {}) {
   tbody.innerHTML = "";
   if (!data.length) {
     const tr = document.createElement("tr");
-    tr.innerHTML = `<td colspan="5" style="text-align:center;opacity:.6">${t("settings.marketplace.empty") || "Brak pozycji."}</td>`;
+    tr.innerHTML = `<td colspan="5" style="text-align:center;opacity:.6">Brak pozycji.</td>`;
     tbody.appendChild(tr);
     if (info) info.textContent = "";
     return;
@@ -2131,10 +2131,10 @@ async function loadMarketplace({ silent = false } = {}) {
     const date = g.created_at ? new Date(g.created_at).toLocaleDateString() : "—";
     const note = g.moderation_note ? ` <span style="opacity:.6;font-size:.85em">(${escSetting(g.moderation_note)})</span>` : "";
 
-    let actions = `<button class="btn sm" data-market-preview="${escSetting(g.id)}">${t("settings.marketplace.marketPreview") || "Podgląd"}</button>`;
+    let actions = `<button class="btn sm" data-market-preview="${escSetting(g.id)}">Podgląd</button>`;
     if (marketActiveStatus === "pending") {
-      actions += ` <button class="btn sm gold" data-market-approve="${escSetting(g.id)}">${t("settings.marketplace.marketApprove") || "Zatwierdź"}</button>`;
-      actions += ` <button class="btn sm" data-market-reject="${escSetting(g.id)}">${t("settings.marketplace.marketReject") || "Odrzuć"}</button>`;
+      actions += ` <button class="btn sm gold" data-market-approve="${escSetting(g.id)}">Zatwierdź</button>`;
+      actions += ` <button class="btn sm" data-market-reject="${escSetting(g.id)}">Odrzuć</button>`;
     }
 
     const authorLabel = g.origin === "producer"
@@ -2150,7 +2150,7 @@ async function loadMarketplace({ silent = false } = {}) {
     tbody.appendChild(tr);
   }
 
-  if (info) info.textContent = `${data.length} ${t("settings.marketplace.items") || "pozycji"}`;
+  if (info) info.textContent = `${data.length} pozycji`;
 }
 
 async function openMarketPreview(id) {
@@ -2223,7 +2223,7 @@ async function approveMarketGame(id) {
     });
     const json = await res.json();
     if (!json.ok) throw new Error(json.error || "approve_failed");
-    showToast(t("settings.marketplace.approved") || "Zatwierdzono ✓");
+    showToast("Zatwierdzono ✓");
     closeMarketPreview();
     await loadMarketplace({ silent: true });
   } catch (err) {
@@ -2256,7 +2256,7 @@ async function confirmReject() {
     });
     const json = await res.json();
     if (!json.ok) throw new Error(json.error || "reject_failed");
-    showToast(t("settings.marketplace.rejected") || "Odrzucono.");
+    showToast("Odrzucono.");
     closeRejectModal();
     closeMarketPreview();
     await loadMarketplace({ silent: true });
@@ -2266,7 +2266,7 @@ async function confirmReject() {
 }
 
 async function adminForceWithdraw(id) {
-  const ok = await confirmModal({ text: t("settings.marketplace.forceWithdrawConfirm") || "Wycofać tę grę? Zniknie z browse, ale zostanie w bibliotekach." });
+  const ok = await confirmModal({ text: "Wycofać tę grę? Zniknie z browse, ale zostanie w bibliotekach osób które ją dodały." });
   if (!ok) return;
   try {
     const res = await adminFetch("/marketplace/withdraw", {
@@ -2276,7 +2276,7 @@ async function adminForceWithdraw(id) {
     });
     const json = await res.json();
     if (!json.ok) throw new Error(json.error || "withdraw_failed");
-    showToast(t("settings.marketplace.forceWithdrawn") || "Wycofano.");
+    showToast("Wycofano.");
     closeMarketPreview();
     await loadMarketplace({ silent: true });
   } catch (err) {
@@ -2286,7 +2286,7 @@ async function adminForceWithdraw(id) {
 }
 
 async function adminHardDelete(id) {
-  const ok = await confirmModal({ text: t("settings.marketplace.hardDeleteConfirm") || "Usunąć grę na stałe? Zniknie u wszystkich użytkowników. Tego nie da się cofnąć." });
+  const ok = await confirmModal({ text: "Usunąć grę na stałe? Zniknie u wszystkich użytkowników. Tego nie da się cofnąć." });
   if (!ok) return;
   try {
     const res = await adminFetch("/marketplace/delete", {
@@ -2300,7 +2300,7 @@ async function adminHardDelete(id) {
       if (json.debug) msg += ` (status: ${json.debug.status}, row_err: ${json.debug.row_err})`;
       throw new Error(msg);
     }
-    showToast(t("settings.marketplace.hardDeleted") || "Usunięto.");
+    showToast("Usunięto.");
     closeMarketPreview();
     await loadMarketplace({ silent: true });
   } catch (err) {
@@ -2314,7 +2314,7 @@ async function loadProducerRatings() {
   const tbody = document.getElementById("producerRatingsBody");
   const info  = document.getElementById("producerRatingsInfo");
   if (!tbody) return;
-  if (info) info.textContent = t("settings.marketplace.loading") || "Ładowanie…";
+  if (info) info.textContent = "Ładowanie…";
   try {
     const res = await adminFetch("/marketplace/producer-ratings");
     if (!res.ok) throw new Error(await res.text());
@@ -2330,7 +2330,7 @@ async function loadProducerRatings() {
       <td>${g.avg_rating > 0 ? (+(g.avg_rating)).toFixed(1) + " ★" : "—"}</td>
       <td>${g.rating_count}</td>
       <td>${g.library_count}</td>
-      <td><button class="btn sm" data-raters-id="${escSetting(g.id)}" data-raters-title="${escSetting(g.title)}" type="button">${t("settings.marketplace.producerRatersBtnView") || "Oceniający"}</button></td>
+      <td><button class="btn sm" data-raters-id="${escSetting(g.id)}" data-raters-title="${escSetting(g.title)}" type="button">Oceniający</button></td>
     </tr>`).join("");
     tbody.querySelectorAll("[data-raters-id]").forEach(btn => {
       btn.addEventListener("click", () => openRatersModal(btn.dataset.ratersId, btn.dataset.ratersTitle));
@@ -2345,8 +2345,8 @@ async function openRatersModal(gameId, title) {
   const body    = document.getElementById("ratersBody");
   const titleEl = document.getElementById("ratersTitle");
   if (!overlay || !body) return;
-  if (titleEl) titleEl.textContent = title || t("settings.marketplace.producerRatersBtnView") || "Oceniający";
-  body.innerHTML = t("settings.marketplace.loading") || "Ładowanie…";
+  if (titleEl) titleEl.textContent = title || "Oceniający";
+  body.innerHTML = "Ładowanie…";
   overlay.style.display = "";
   try {
     const res = await adminFetch(`/marketplace/game-raters?id=${encodeURIComponent(gameId)}`);
@@ -2376,8 +2376,8 @@ async function testTelegram() {
     const res  = await adminFetch("/config/telegram/test", { method: "POST" });
     const json = await res.json();
     if (!json.ok) throw new Error(json.error || "test_failed");
-    if (status) status.textContent = t("settings.marketplace.telegramTestSent") || "Testowe powiadomienie wysłane.";
-    showToast(t("settings.marketplace.telegramTestToast") || "Testowe powiadomienie Telegram wysłane.", "success");
+    if (status) status.textContent = "Testowe powiadomienie wysłane.";
+    showToast("Testowe powiadomienie Telegram wysłane.", "success");
   } catch (err) {
     showToast(String(err?.message || err), "error");
   }
@@ -2525,10 +2525,10 @@ function renderMailList(rows) {
   body.innerHTML = "";
 
   if (msgActiveFolder === "trash" && !filtered.length) {
-    body.innerHTML = `<div style="padding:20px;text-align:center;opacity:.35;font-size:12px">${t("settings.reports.trashEmpty") || "Kosz jest pusty."}</div>
-      <div style="padding:0 20px 16px;text-align:center;opacity:.25;font-size:11px">${t("settings.reports.trashNote") || "Elementy starsze niż 30 dni są usuwane automatycznie"}</div>
+    body.innerHTML = `<div style="padding:20px;text-align:center;opacity:.35;font-size:12px">Kosz jest pusty</div>
+      <div style="padding:0 20px 16px;text-align:center;opacity:.25;font-size:11px">Elementy starsze niż 30 dni są usuwane automatycznie</div>
       <div style="padding:0 20px 16px;text-align:center">
-        <button class="btn sm" id="btnCleanupTrashInList" type="button" style="width:100%;opacity:.55;font-size:11px">${t("settings.reports.cleanupTrash") || "Wyczyść kosz (30d)"}</button>
+        <button class="btn sm" id="btnCleanupTrashInList" type="button" style="width:100%;opacity:.55;font-size:11px">Wyczyść kosz (30d)</button>
       </div>`;
     document.getElementById("btnCleanupTrashInList")?.addEventListener("click", cleanupTrash);
     return;
@@ -2538,13 +2538,13 @@ function renderMailList(rows) {
   if (msgActiveFolder === "trash" && filtered.length) {
     const trashFooter = document.createElement("div");
     trashFooter.style.cssText = "padding:12px 16px;border-top:1px solid rgba(255,255,255,.08);margin-top:auto";
-    trashFooter.innerHTML = `<button class="btn sm" id="btnCleanupTrashInList" type="button" style="width:100%;opacity:.55;font-size:11px">${t("settings.reports.cleanupTrash") || "Wyczyść kosz (30d)"}</button>`;
+    trashFooter.innerHTML = `<button class="btn sm" id="btnCleanupTrashInList" type="button" style="width:100%;opacity:.55;font-size:11px">Wyczyść kosz (30d)</button>`;
     body.parentNode.appendChild(trashFooter);
     document.getElementById("btnCleanupTrashInList")?.addEventListener("click", cleanupTrash);
   }
 
   if (!filtered.length) {
-    body.innerHTML = `<div style="padding:20px;text-align:center;opacity:.35;font-size:12px">${t("settings.reports.noMessages") || "Brak wiadomości."}</div>`;
+    body.innerHTML = `<div style="padding:20px;text-align:center;opacity:.35;font-size:12px">Brak wiadomości</div>`;
     return;
   }
 
@@ -2711,7 +2711,7 @@ async function openMessage(id) {
 
   const conv = document.getElementById("mailConv");
   if (!conv) return;
-  conv.innerHTML = `<div style="flex:1;display:flex;align-items:center;justify-content:center;opacity:.35;font-size:12px">${t("settings.marketplace.loadingConv") || "Ładowanie…"}</div>`;
+  conv.innerHTML = `<div style="flex:1;display:flex;align-items:center;justify-content:center;opacity:.35;font-size:12px">Ładowanie…</div>`;
 
   try {
     const res = await adminFetch(`/messages/detail?id=${encodeURIComponent(id)}`);
@@ -2857,9 +2857,9 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
 
   const isInbound = msg.direction === "inbound";
   const sourceLabelMap = {
-    email:   t("settings.reports.sourceEmail")   || "Email",
-    form:    t("settings.reports.sourceForm")     || "Formularz",
-    compose: t("settings.reports.sourceCompose")  || "Wiadomość",
+    email:   "Email",
+    form:    "Formularz",
+    compose: "Wiadomość",
   };
   const sourceLabel = sourceLabelMap[msg.source] || msg.source;
   const from = isInbound ? msg.from_email : msg.to_email;
@@ -2870,7 +2870,7 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
   
   let ticketBadge = "";
   if (msg.ticket_number) {
-    ticketBadge = `<span class="mail-ticket-badge" data-report-id="${escSetting(msg.report_id)}" style="cursor:pointer;font-size:11px;padding:2px 7px;border-radius:6px;background:rgba(255,234,166,.15);color:#ffeaa6;margin-left:6px" title="${t("settings.marketplace.ticketBadgeTitle") || "Przejdź do zgłoszenia"}">${escSetting(msg.ticket_number)}</span>`;
+    ticketBadge = `<span class="mail-ticket-badge" data-report-id="${escSetting(msg.report_id)}" style="cursor:pointer;font-size:11px;padding:2px 7px;border-radius:6px;background:rgba(255,234,166,.15);color:#ffeaa6;margin-left:6px" title="Przejdź do zgłoszenia">${escSetting(msg.ticket_number)}</span>`;
   }
   
   // Marketing badge for conversation header
@@ -2882,7 +2882,7 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
   header.innerHTML = `
     <div class="mail-conv-subject">${escSetting(msg.subject || "—")}</div>
     <div class="mail-conv-meta">
-      ${isInbound ? (t("settings.marketplace.convFrom") || "Od:") : (t("settings.marketplace.convTo") || "Do:")} ${escSetting(from || "—")} · ${new Date(msg.created_at).toLocaleString("pl-PL")} · ${escSetting(sourceLabel)}${ticketBadge}${marketingBadge}
+      ${isInbound ? ("Od:") : ("Do:")} ${escSetting(from || "—")} · ${new Date(msg.created_at).toLocaleString("pl-PL")} · ${escSetting(sourceLabel)}${ticketBadge}${marketingBadge}
     </div>`;
   conv.appendChild(header);
 
@@ -3021,7 +3021,7 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
 
       if (isExpired) {
         chip.style.cssText = "display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;border:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.3);text-decoration:none;cursor:default;background:rgba(255,255,255,.02);";
-        chip.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>${escSetting(att.filename)} <span style="opacity:.5">${t("settings.marketplace.attachExpired") || "— załącznik wygasł"}</span>`;
+        chip.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>${escSetting(att.filename)} <span style="opacity:.5">— załącznik wygasł</span>`;
       } else {
         chip.style.cssText = "display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;border:1px solid rgba(255,255,255,.15);font-size:11px;color:rgba(255,255,255,.7);text-decoration:none;cursor:pointer;background:rgba(255,255,255,.04);";
         const icon = isImage
@@ -3090,7 +3090,7 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
     const btnAssign = document.createElement("button");
     btnAssign.className = "msg-icon-btn msg-icon-btn--gold";
     btnAssign.type = "button";
-    btnAssign.title = t("settings.reports.assignReport") || "Przydziel zgłoszenie";
+    btnAssign.title = "Przydziel zgłoszenie";
     btnAssign.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>`;
     btnAssign.addEventListener("click", () => assignReport(msg));
     leftGroup.appendChild(btnAssign);
@@ -3120,7 +3120,7 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
     const btnReply = document.createElement("button");
     btnReply.className = "msg-icon-btn";
     btnReply.type = "button";
-    btnReply.title = t("settings.reports.replyBtn") || "Odpowiedz";
+    btnReply.title = "Odpowiedz";
     btnReply.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 00-4-4H4"/></svg>`;
     btnReply.addEventListener("click", () => showCompose({ to: msg.from_email, subject: `Re: ${stripMarketingPrefix(msg.subject || "")}`, report_id: msg.report_id, quote: msg.body, quoteFrom: msg.from_email, quoteDate: msg.created_at }));
     leftGroup.appendChild(btnReply);
@@ -3145,7 +3145,7 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
     const btnTrash = document.createElement("button");
     btnTrash.className = "msg-icon-btn msg-icon-btn--danger";
     btnTrash.type = "button";
-    btnTrash.title = t("settings.reports.trashMsg") || "Do kosza";
+    btnTrash.title = "Do kosza";
     btnTrash.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>`;
     btnTrash.addEventListener("click", () => trashMessage(msg.id));
     rightGroup.appendChild(btnTrash);
@@ -3153,7 +3153,7 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
     const btnRestore = document.createElement("button");
     btnRestore.className = "msg-icon-btn";
     btnRestore.type = "button";
-    btnRestore.title = t("settings.reports.restore") || "Przywróć";
+    btnRestore.title = "Przywróć";
     btnRestore.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>`;
     btnRestore.addEventListener("click", () => restoreMessage(msg.id));
     rightGroup.appendChild(btnRestore);
@@ -3161,7 +3161,7 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
     const btnDelete = document.createElement("button");
     btnDelete.className = "msg-icon-btn msg-icon-btn--danger";
     btnDelete.type = "button";
-    btnDelete.title = t("settings.reports.deleteForever") || "Usuń na zawsze";
+    btnDelete.title = "Usuń na zawsze";
     btnDelete.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
     btnDelete.addEventListener("click", () => deleteForever(msg.id));
     rightGroup.appendChild(btnDelete);
@@ -3192,7 +3192,7 @@ async function openReport(id) {
 
   const conv = document.getElementById("mailConv");
   if (!conv) return;
-  conv.innerHTML = `<div style="flex:1;display:flex;align-items:center;justify-content:center;opacity:.35;font-size:12px">${t("settings.marketplace.loadingConv") || "Ładowanie…"}</div>`;
+  conv.innerHTML = `<div style="flex:1;display:flex;align-items:center;justify-content:center;opacity:.35;font-size:12px">Ładowanie…</div>`;
 
   try {
     const res = await adminFetch(`/reports/messages?id=${encodeURIComponent(id)}`);
@@ -3230,8 +3230,8 @@ function renderReportThread(report, messages, attsByMsg = {}) {
   const isOpen = !report || report.status === "open";
   const ticketNum = report?.ticket_number || "—";
   const statusLabel = isOpen
-    ? (t("settings.reports.status.open") || "Otwarte")
-    : (t("settings.reports.status.closed") || "Zamknięte");
+    ? ("Otwarte")
+    : ("Zamknięte");
 
   const header = document.createElement("div");
   header.className = "mail-conv-header";
@@ -3241,8 +3241,8 @@ function renderReportThread(report, messages, attsByMsg = {}) {
     <div class="mail-conv-actions">
       ${report
         ? isOpen
-          ? `<button class="btn sm danger" id="btnReportClose" type="button">${t("settings.reports.closeReport") || "Zamknij zgłoszenie"}</button>`
-          : `<button class="btn sm" id="btnReportOpen" type="button">${t("settings.reports.openReport") || "Otwórz zgłoszenie"}</button>`
+          ? `<button class="btn sm danger" id="btnReportClose" type="button">Zamknij zgłoszenie</button>`
+          : `<button class="btn sm" id="btnReportOpen" type="button">Otwórz zgłoszenie</button>`
         : ""}
     </div>`;
   conv.appendChild(header);
@@ -3374,7 +3374,7 @@ function renderReportThread(report, messages, attsByMsg = {}) {
         const isPdf   = att.mime_type === "application/pdf";
         if (isExpired) {
           chip.style.cssText = "display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;border:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.3);text-decoration:none;cursor:default;background:rgba(255,255,255,.02);";
-          chip.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>${escSetting(att.filename)} <span style="opacity:.5">${t("settings.marketplace.attachExpired") || "— wygasł"}</span>`;
+          chip.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>${escSetting(att.filename)} <span style="opacity:.5">— załącznik wygasł</span>`;
         } else {
           chip.style.cssText = "display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;border:1px solid rgba(255,255,255,.15);font-size:11px;color:rgba(255,255,255,.7);text-decoration:none;cursor:pointer;background:rgba(255,255,255,.04);";
           const icon = isImage
@@ -3411,7 +3411,7 @@ function renderReportThread(report, messages, attsByMsg = {}) {
     msgs.appendChild(el);
   }
   if (!messages.length) {
-    msgs.innerHTML = `<div style="padding:20px;text-align:center;opacity:.3;font-size:12px">${t("settings.reports.noMessages") || "Brak wiadomości"}</div>`;
+    msgs.innerHTML = `<div style="padding:20px;text-align:center;opacity:.3;font-size:12px">Brak wiadomości</div>`;
   }
   conv.appendChild(msgs);
   setTimeout(() => { msgs.scrollTop = msgs.scrollHeight; }, 50);
@@ -3421,7 +3421,7 @@ function renderReportThread(report, messages, attsByMsg = {}) {
   replyButtonSection.style.cssText = "padding:20px;text-align:center;border-top:1px solid rgba(255,255,255,.1);margin-top:20px";
   replyButtonSection.innerHTML = `
     <button class="btn gold" id="btnReportReply" type="button" style="padding:10px 24px;font-size:13px">
-      ✏️ ${t("settings.reports.replyBtn") || "Odpowiedz"}
+      ✏️ Odpowiedz
     </button>
   `;
   conv.appendChild(replyButtonSection);
@@ -3533,7 +3533,7 @@ async function doAssign(messageId, reportId, isNew, withQuote = false, ticketNum
     if (!res.ok) throw new Error(await res.text());
     const json = await res.json();
     if (!json.ok) throw new Error(json.error);
-    showToast(t("settings.reports.reportAssigned") || "Zgłoszenie przydzielone.", "success");
+    showToast("Zgłoszenie przydzielone", "success");
     closeAssignModal();
 
     if (isNew && withQuote && _assignMsgData && _assignMsgData.from_email) {
@@ -3625,10 +3625,10 @@ async function trashMessage(messageId) {
       body: JSON.stringify({ message_id: messageId }),
     });
     if (!res.ok) throw new Error(await res.text());
-    showToast(t("settings.reports.trashMsg") || "Do kosza.", "success");
+    showToast("Do kosza", "success");
     await loadMailFolder({ silent: true });
     const conv = document.getElementById("mailConv");
-    if (conv) conv.innerHTML = `<div class="mail-conv-placeholder"><div style="font-size:48px;margin-bottom:12px;opacity:.3">✉</div><div style="opacity:.4;font-size:13px">${t("settings.reports.selectMsg") || "Wybierz wątek"}</div></div>`;
+    if (conv) conv.innerHTML = `<div class="mail-conv-placeholder"><div style="font-size:48px;margin-bottom:12px;opacity:.3">✉</div><div style="opacity:.4;font-size:13px">Wybierz wątek</div></div>`;
     msgActiveId = null;
   } catch (err) {
     showToast(String(err?.message || err), "error");
@@ -3643,7 +3643,7 @@ async function restoreMessage(messageId) {
       body: JSON.stringify({ message_id: messageId }),
     });
     if (!res.ok) throw new Error(await res.text());
-    showToast(t("settings.reports.restore") || "Przywrócono.", "success");
+    showToast("Przywróć", "success");
     await loadMailFolder({ silent: true });
     if (msgActiveId) await openMessage(msgActiveId);
   } catch (err) {
@@ -3652,7 +3652,7 @@ async function restoreMessage(messageId) {
 }
 
 async function deleteForever(messageId) {
-  const ok = await confirmModal({ text: t("settings.reports.deleteForever") || "Usunąć na zawsze?" });
+  const ok = await confirmModal({ text: "Usuń na zawsze" });
   if (!ok) return;
   try {
     const res = await adminFetch("/messages/delete", {
@@ -3661,10 +3661,10 @@ async function deleteForever(messageId) {
       body: JSON.stringify({ message_id: messageId }),
     });
     if (!res.ok) throw new Error(await res.text());
-    showToast(t("settings.reports.deleteForever") || "Usunięto.", "success");
+    showToast("Usuń na zawsze", "success");
     await loadMailFolder({ silent: true });
     const conv = document.getElementById("mailConv");
-    if (conv) conv.innerHTML = `<div class="mail-conv-placeholder"><div style="font-size:48px;margin-bottom:12px;opacity:.3">✉</div><div style="opacity:.4;font-size:13px">${t("settings.reports.selectMsg") || "Wybierz wątek"}</div></div>`;
+    if (conv) conv.innerHTML = `<div class="mail-conv-placeholder"><div style="font-size:48px;margin-bottom:12px;opacity:.3">✉</div><div style="opacity:.4;font-size:13px">Wybierz wątek</div></div>`;
     msgActiveId = null;
   } catch (err) {
     showToast(String(err?.message || err), "error");
@@ -3680,7 +3680,7 @@ async function toggleReportStatus(reportId, currentStatus) {
       body: JSON.stringify({ report_id: reportId, status: newStatus }),
     });
     if (!res.ok) throw new Error(await res.text());
-    showToast(newStatus === "closed" ? (t("settings.reports.closeReport") || "Zamknięto.") : (t("settings.reports.openReport") || "Otwarto."), "success");
+    showToast(newStatus === "closed" ? ("Zamknij zgłoszenie") : ("Otwórz zgłoszenie"), "success");
     // Refresh list and reopen
     await loadMailFolder({ silent: true });
     if (msgActiveId) await openReport(msgActiveId);
@@ -3725,7 +3725,7 @@ function showCompose(defaults = {}) {
     <div class="mail-compose-pane">
       <div id="composePaneInner" class="mail-conv-header">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-shrink:0;padding:16px 16px 0 16px">
-          <div style="font-size:14px;font-weight:700">${t("settings.reports.compose.title") || "Napisz nową wiadomość"}</div>
+          <div style="font-size:14px;font-weight:700">Napisz wiadomość</div>
           <button id="btnComposeClose" type="button" title="Zamknij" style="background:none;border:none;cursor:pointer;padding:4px;color:rgba(255,255,255,.4);line-height:1;font-size:18px;border-radius:4px" onmouseover="this.style.color='rgba(255,255,255,.8)'" onmouseout="this.style.color='rgba(255,255,255,.4)'">✕</button>
         </div>
 
@@ -3735,7 +3735,7 @@ function showCompose(defaults = {}) {
             <input class="inp" id="composeToInput" type="email" style="width:100%;box-sizing:border-box" value="${escSetting(defaults.to || "")}" placeholder="np. kontakt@firma.pl" ${hasQuote ? 'disabled style="opacity:.5"' : ''}>
           </div>
           <div class="field" style="margin-bottom:12px">
-            <label class="field-label">${t("settings.reports.compose.subject") || "Temat"}</label>
+            <label class="field-label">Temat</label>
             <input class="inp" id="composeSubjectInput" type="text" autocomplete="off" style="width:100%;box-sizing:border-box" value="${escSetting(defaults.subject || "")}" placeholder="Wpisz temat wiadomości">
           </div>
 
@@ -3744,7 +3744,7 @@ function showCompose(defaults = {}) {
               <label class="field-label" style="font-size:12px">Powitanie</label>
               <div class="ui-select" id="composeGreetingSelect" style="width:100%">
                 <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
-                  <span class="ui-select-label">${t("settings.mail.greetingOptions.none") || "Brak"}</span>
+                  <span class="ui-select-label">Brak powitania</span>
                   <span class="ui-select-caret" aria-hidden="true">▾</span>
                 </button>
                 <div class="ui-select-menu" role="listbox"></div>
@@ -3755,7 +3755,7 @@ function showCompose(defaults = {}) {
               <label class="field-label" style="font-size:12px">Pożegnanie</label>
               <div class="ui-select" id="composeFarewellSelect" style="width:100%">
                 <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
-                  <span class="ui-select-label">${t("settings.mail.farewellOptions.none") || "Brak pożegnania"}</span>
+                  <span class="ui-select-label">Brak pożegnania</span>
                   <span class="ui-select-caret" aria-hidden="true">▾</span>
                 </button>
                 <div class="ui-select-menu" role="listbox"></div>
@@ -3766,7 +3766,7 @@ function showCompose(defaults = {}) {
               <label class="field-label" style="font-size:12px">Nadawca</label>
               <div class="ui-select" id="composeSenderSelect" style="width:100%">
                 <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
-                  <span class="ui-select-label">${t("settings.mail.senderOptions.none") || "Brak nadawcy"}</span>
+                  <span class="ui-select-label">Brak nadawcy</span>
                   <span class="ui-select-caret" aria-hidden="true">▾</span>
                 </button>
                 <div class="ui-select-menu" role="listbox"></div>
@@ -3776,7 +3776,7 @@ function showCompose(defaults = {}) {
           </div>
 
           <div class="field" style="margin-bottom:12px">
-            <label class="field-label" style="font-size:12px">${t("settings.reports.compose.templateLabel") || "Szablon odpowiedzi"}</label>
+            <label class="field-label" style="font-size:12px">Szablon odpowiedzi</label>
             <div class="ui-select" id="composeTemplateSelect" style="width:100%">
               <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
                 <span class="ui-select-label">—</span>
@@ -3788,9 +3788,9 @@ function showCompose(defaults = {}) {
 
           <div class="field" style="margin-bottom:12px;min-height:0;display:flex;flex-direction:column">
             <label class="field-label" style="margin-bottom:6px;display:block">
-              ${t("settings.reports.compose.message") || "Treść"}
+              Treść
               ${hasQuote ? `
-                <span style="opacity:.5;font-size:11px;margin-left:8px" data-i18n="settings.reports.compose.quoteHint">Użyj #quote aby wstawić cytat</span>
+                <span style="opacity:.5;font-size:11px;margin-left:8px">Użyj #quote aby wstawić cytat</span>
                 <button type="button" class="btn sm" id="btnInsertQuote" style="font-size:11px;padding:4px 8px;margin-left:8px" title="Wstaw #quote w miejscu kursora">#quote</button>
               ` : ""}
             </label>
@@ -3812,9 +3812,9 @@ function showCompose(defaults = {}) {
           <input type="hidden" id="composeToEmail" value="${escSetting(defaults.to || "")}">
 
           <div style="display:flex;justify-content:flex-end;gap:8px;align-items:center;padding-top:12px;margin-top:12px;border-top:1px solid rgba(255,255,255,.1)">
-            <button class="btn sm" id="btnComposePreview" type="button" data-i18n="settings.reports.compose.preview">👁 Podgląd</button>
+            <button class="btn sm" id="btnComposePreview" type="button">👁 Podgląd</button>
             <span class="field-hint" id="composeSendStatus"></span>
-            <button class="btn sm gold" id="btnComposeSend" type="button">${t("settings.reports.compose.send") || "Wyślij"}</button>
+            <button class="btn sm gold" id="btnComposeSend" type="button">Wyślij</button>
           </div>
         </div>
       </div>
@@ -4070,15 +4070,15 @@ function showCompose(defaults = {}) {
   // Template select - insert template text into TinyMCE body
   initUiSelect(document.getElementById("composeTemplateSelect"), {
     options: [
-      { value: "custom", label: t("settings.reports.compose.templates.custom") || "Własny" },
-      { value: "info", label: t("settings.reports.compose.templates.info") || "Podziękowanie" },
-      { value: "received", label: t("settings.reports.compose.templates.received") || "Potwierdzenie otrzymania" },
-      { value: "resolved", label: t("settings.reports.compose.templates.resolved") || "Zgłoszenie rozwiązane" },
-      { value: "pending", label: t("settings.reports.compose.templates.pending") || "W trakcie realizacji" },
-      { value: "more_info", label: t("settings.reports.compose.templates.moreInfo") || "Prośba o informacje" },
-      { value: "followup", label: t("settings.reports.compose.templates.followup") || "Follow-up" },
-      { value: "closed", label: t("settings.reports.compose.templates.closed") || "Zamknięcie zgłoszenia" },
-      { value: "thanks", label: t("settings.reports.compose.templates.thanks") || "Podziękowanie" },
+      { value: "custom", label: "Własny" },
+      { value: "info", label: "Podziękowanie" },
+      { value: "received", label: "Potwierdzenie otrzymania" },
+      { value: "resolved", label: "Zgłoszenie rozwiązane" },
+      { value: "pending", label: "W trakcie realizacji" },
+      { value: "more_info", label: "Prośba o informacje" },
+      { value: "followup", label: "Follow-up" },
+      { value: "closed", label: "Zamknięcie zgłoszenia" },
+      { value: "thanks", label: "Podziękowanie" },
     ],
     value: "custom",
     onChange: (templateKey) => {
@@ -4111,7 +4111,7 @@ function closeCompose() {
   } else {
     const conv = document.getElementById("mailConv");
     if (!conv) return;
-    conv.innerHTML = `<div class="mail-conv-placeholder"><div style="font-size:48px;margin-bottom:12px;opacity:.3">✉</div><div style="opacity:.4;font-size:13px">${t("settings.reports.selectMsg") || "Wybierz wątek"}</div></div>`;
+    conv.innerHTML = `<div class="mail-conv-placeholder"><div style="font-size:48px;margin-bottom:12px;opacity:.3">✉</div><div style="opacity:.4;font-size:13px">Wybierz wątek</div></div>`;
     msgActiveId = null;
 
     // On mobile: switch back to list view
@@ -4248,7 +4248,7 @@ async function sendComposeWithSignature(greetingSelect, farewellSelect, senderSe
     if (!res.ok) throw new Error(await res.text());
     const json = await res.json();
     if (!json.ok) throw new Error(json.error);
-    showToast(t("settings.reports.compose.sent") || "Wysłano.", "success");
+    showToast("Wysłano.", "success");
     closeCompose();
     await loadMailFolder({ silent: true });
   } catch (err) {
@@ -4372,7 +4372,7 @@ function showComposePreview(greetingSelect, farewellSelect, senderSelect) {
   wrapper.appendChild(frame);
   
   void confirmModal({
-    title: t("settings.reports.compose.previewTitle") || "Podgląd wiadomości",
+    title: "Podgląd wiadomości",
     text: "",
     body: wrapper,
     okText: "",
@@ -4471,7 +4471,7 @@ function wireReportsEvents() {
       msgActiveId = null;
       const conv = document.getElementById("mailConv");
       if (conv) {
-        conv.innerHTML = `<div class="mail-conv-placeholder"><div style="font-size:48px;margin-bottom:12px;opacity:.3">✉</div><div style="opacity:.4;font-size:13px">${t("settings.reports.selectMsg") || "Wybierz wątek"}</div></div>`;
+        conv.innerHTML = `<div class="mail-conv-placeholder"><div style="font-size:48px;margin-bottom:12px;opacity:.3">✉</div><div style="opacity:.4;font-size:13px">Wybierz wątek</div></div>`;
       }
       await loadMailFolder();
     });
@@ -4611,7 +4611,7 @@ async function loadMailSettings({ silent = false } = {}) {
     const res = await apiFetch(`${API_BASE}/mail/settings`, { method: "GET" });
     if (res.status === 401) {
       stopPolling();
-      showAuth("settings.login.accessRequired");
+      showAuth("Wymagane logowanie przez Cloudflare Access.");
       return false;
     }
     if (!res.ok) throw new Error(`mail settings fetch failed: ${res.status}`);
@@ -4668,7 +4668,7 @@ async function loadMailSettings({ silent = false } = {}) {
     mailSettingsLoaded = true;
     return true;
   } catch (err) {
-    if (!silent && shouldShowActionError()) showToast(t("settings.toast.error"), "error");
+    if (!silent && shouldShowActionError()) showToast("Błąd operacji", "error");
     console.warn("[settings] mail settings load failed", err);
     return false;
   }
@@ -4713,7 +4713,7 @@ async function saveMailSettings() {
   const data = await res.json();
   updateMailSettingsStatus(data?.cron);
   if (els.mailRunLimit) els.mailRunLimit.value = String(workerLimit);
-  showToast(t("settings.toast.saved"));
+  showToast("Zapisano");
 }
 
 async function loadMailQueue({ silent = false } = {}) {
@@ -4723,7 +4723,7 @@ async function loadMailQueue({ silent = false } = {}) {
     const res = await apiFetch(`${API_BASE}/mail/queue?status=${encodeURIComponent(status)}&limit=${limit}`, { method: "GET" });
     if (res.status === 401) {
       stopPolling();
-      showAuth("settings.login.accessRequired");
+      showAuth("Wymagane logowanie przez Cloudflare Access.");
       return false;
     }
     if (!res.ok) throw new Error(`queue fetch failed: ${res.status}`);
@@ -4732,11 +4732,11 @@ async function loadMailQueue({ silent = false } = {}) {
     queueSelectionSync(rows);
     renderQueueRows(rows);
     if (els.mailQueueInfo) {
-      els.mailQueueInfo.textContent = t("settings.mail.rows").replace("{count}", String(rows.length));
+      els.mailQueueInfo.textContent = "Wiersze: {count}".replace("{count}", String(rows.length));
     }
     return true;
   } catch (err) {
-    if (!silent && shouldShowActionError()) showToast(t("settings.toast.error"), "error");
+    if (!silent && shouldShowActionError()) showToast("Błąd operacji", "error");
     console.warn("[settings] mail queue load failed", err);
     return false;
   }
@@ -4835,7 +4835,7 @@ async function loadMailLogs({ silent = false, page } = {}) {
     );
     if (res.status === 401) {
       stopPolling();
-      showAuth("settings.login.accessRequired");
+      showAuth("Wymagane logowanie przez Cloudflare Access.");
       return false;
     }
     if (!res.ok) throw new Error(`logs fetch failed: ${res.status}`);
@@ -4852,21 +4852,21 @@ async function loadMailLogs({ silent = false, page } = {}) {
       const cntSkippedFlag = rows.filter((r) => r.event === "email_skipped" && r.provider === "skipped_user_flag").length;
       const cntSkippedSup = rows.filter((r) => r.event === "email_skipped" && r.provider === "skipped_suppression").length;
       const cntSkipped = cntSkippedFlag + cntSkippedSup;
-      const parts = [t("settings.mail.rows").replace("{count}", String(total))];
-      if (cntSent) parts.push(t("settings.mail.statsSent").replace("{count}", String(cntSent)));
-      if (cntFailed) parts.push(t("settings.mail.statsFailed").replace("{count}", String(cntFailed)));
+      const parts = ["Wiersze: {count}".replace("{count}", String(total))];
+      if (cntSent) parts.push("wysłane: {count}".replace("{count}", String(cntSent)));
+      if (cntFailed) parts.push("błędy: {count}".replace("{count}", String(cntFailed)));
       if (cntSkipped) {
         const skipDetail = [
-          cntSkippedFlag ? t("settings.mail.statsSkippedFlag").replace("{count}", String(cntSkippedFlag)) : "",
-          cntSkippedSup ? t("settings.mail.statsSkippedSup").replace("{count}", String(cntSkippedSup)) : "",
+          cntSkippedFlag ? "flaga: {count}".replace("{count}", String(cntSkippedFlag)) : "",
+          cntSkippedSup ? "unsub: {count}".replace("{count}", String(cntSkippedSup)) : "",
         ].filter(Boolean).join(", ");
-        parts.push(`${t("settings.mail.statsSkipped").replace("{count}", String(cntSkipped))} (${skipDetail})`);
+        parts.push(`${"pominięte: {count}".replace("{count}", String(cntSkipped))} (${skipDetail})`);
       }
       els.mailLogsInfo.textContent = parts.join(" · ");
     }
     return true;
   } catch (err) {
-    if (!silent && shouldShowActionError()) showToast(t("settings.toast.error"), "error");
+    if (!silent && shouldShowActionError()) showToast("Błąd operacji", "error");
     console.warn("[settings] mail logs load failed", err);
     return false;
   }
@@ -4889,7 +4889,7 @@ async function runMailWorker({ requeueFailed = false, ids = [] } = {}) {
     throw new Error(txt || `worker run failed (${res.status})`);
   }
 
-  showToast(requestedIds.length === 1 ? t("settings.mail.singleInvoked") : t("settings.mail.workerInvoked"));
+  showToast(requestedIds.length === 1 ? "Wysłanie maila uruchomione" : "Worker uruchomiony");
   await loadMailQueue({ silent: true });
   await loadMailLogs({ silent: true });
   setTimeout(() => {
@@ -4934,12 +4934,12 @@ async function loadToolsManifest() {
 
 async function initToolsSelect() {
   const items = await loadToolsManifest();
-  toolsOptions = [{ value: "", label: t("settings.tabs.tools") }, ...items];
+  toolsOptions = [{ value: "", label: "Narzędzia" }, ...items];
 
   uiSelect = initUiSelect(els.toolsSelect, {
     options: toolsOptions,
     value: "",
-    placeholder: t("settings.tabs.tools"),
+    placeholder: "Narzędzia",
     onChange: (val) => {
       if (!val) return;
       openTool(val);
@@ -5462,7 +5462,7 @@ function mktApplyTemplate(tplId) {
     subjectEl.value = tpl.subject;
   }
   if (bodyWrap) bodyWrap.style.display = tpl.hasBody ? "" : "none";
-  if (subjectHint) subjectHint.textContent = tpl.hasBody ? "" : (t("settings.marketing.subjectAutoHint") || "Temat ustawiony automatycznie — możesz go zmienić.");
+  if (subjectHint) subjectHint.textContent = tpl.hasBody ? "" : ("Temat ustawiony automatycznie — możesz go zmienić.");
   if (mktPreviewVisible) mktRefreshPreview();
 }
 
@@ -5519,11 +5519,11 @@ function mktParseEmails() {
   if (listEl) {
     listEl.innerHTML = valid.map(e =>
       `<span style="display:inline-block;margin:1px 4px 1px 0;padding:2px 8px;border-radius:4px;background:rgba(255,234,166,.12);color:#ffeaa6;font-size:11px">${esc(e)}</span>`
-    ).join("") + (invalid.length ? `<div style="margin-top:6px;color:rgba(255,80,80,.8);font-size:11px">${t("settings.marketing.invalidEmails") || "Niepoprawne:"} ${invalid.map(esc).join(", ")}</div>` : "");
+    ).join("") + (invalid.length ? `<div style="margin-top:6px;color:rgba(255,80,80,.8);font-size:11px">Niepoprawne: ${invalid.map(esc).join(", ")}</div>` : "");
   }
   const statsText = valid.length
-    ? `${valid.length} ${t("settings.marketing.validCount") || "poprawnych"}${invalid.length ? `, ${invalid.length} ${t("settings.marketing.invalidCount") || "niepoprawnych"}` : ""}`
-    : (t("settings.marketing.noValid") || "Brak poprawnych adresów.");
+    ? `${valid.length} poprawnych${invalid.length ? `, ${invalid.length} niepoprawnych` : ""}`
+    : ("Brak poprawnych adresów.");
   if (statsEl) statsEl.textContent = statsText;
   if (countEl) countEl.textContent = valid.length ? `${valid.length}` : "";
 }
@@ -5538,8 +5538,8 @@ async function sendMarketing() {
   }
   const bodyHtml = editor.getContent();
   const statusEl = document.getElementById("mktSendStatus");
-  if (!subject) { showToast(t("settings.marketing.errSubject") || "Podaj temat.", "error"); return; }
-  if (!mktValidEmails.length) { showToast(t("settings.marketing.errEmails") || "Waliduj listę adresów.", "error"); return; }
+  if (!subject) { showToast("Podaj temat.", "error"); return; }
+  if (!mktValidEmails.length) { showToast("Waliduj listę adresów przed wysyłką.", "error"); return; }
 
   // Build HTML email based on template type (templates in JS, not worker)
   let htmlBody = "";
@@ -5560,11 +5560,11 @@ async function sendMarketing() {
   }
 
   const confirmed = await confirmModal({
-    text: `${t("settings.marketing.confirmSend") || "Wysłać wiadomość do"} ${mktValidEmails.length} ${t("settings.marketing.confirmRecipients") || "odbiorców"}?`,
+    text: `Wysłać wiadomość do ${mktValidEmails.length} odbiorców??`,
   });
   if (!confirmed) return;
 
-  if (statusEl) statusEl.textContent = t("settings.marketing.sending") || "Wysyłam…";
+  if (statusEl) statusEl.textContent = "Wysyłam…";
   document.getElementById("btnMktSend")?.setAttribute("disabled", "");
 
   try {
@@ -5576,7 +5576,7 @@ async function sendMarketing() {
     if (!res.ok) throw new Error(await res.text());
     const json = await res.json();
     if (!json.ok) throw new Error(json.error);
-    showToast(`${t("settings.marketing.sent") || "Dodano do kolejki:"} ${json.queued}/${json.total}`, "success");
+    showToast(`Dodano do kolejki: ${json.queued}/${json.total}`, "success");
     if (statusEl) statusEl.textContent = "";
     
     // Clear email list after successful send
@@ -5636,8 +5636,8 @@ function wireMarketingEvents() {
     const btn  = document.getElementById("btnMktTogglePreview");
     if (wrap) wrap.style.display = mktPreviewVisible ? "" : "none";
     if (btn) btn.textContent = mktPreviewVisible
-      ? (t("settings.marketing.hidePreview") || "Ukryj podgląd")
-      : (t("settings.marketing.showPreview") || "Pokaż podgląd");
+      ? ("Ukryj podgląd")
+      : ("Pokaż podgląd");
     if (mktPreviewVisible) mktRefreshPreview();
   });
 
@@ -5916,7 +5916,7 @@ function wireEvents() {
       try {
         await runMailWorker({ ids: [id] });
       } catch(e) {
-        if (shouldShowActionError()) showToast(t("settings.toast.error"), "error");
+        if (shouldShowActionError()) showToast("Błąd operacji", "error");
       } finally {
         btn.disabled = false;
       }
@@ -5929,7 +5929,7 @@ function wireEvents() {
       await saveMailSettings();
       await refreshMailTab();
     } catch(e) {
-      if (shouldShowActionError()) showToast(t("settings.toast.error"), "error");
+      if (shouldShowActionError()) showToast("Błąd operacji", "error");
     }
   });
 
@@ -5960,7 +5960,7 @@ function wireEvents() {
     try {
       await runMailWorker();
     } catch(e) {
-      if (shouldShowActionError()) showToast(t("settings.toast.error"), "error");
+      if (shouldShowActionError()) showToast("Błąd operacji", "error");
     }
   });
 
@@ -5969,7 +5969,7 @@ function wireEvents() {
     try {
       await runMailWorker({ requeueFailed: true });
     } catch(e) {
-      if (shouldShowActionError()) showToast(t("settings.toast.error"), "error");
+      if (shouldShowActionError()) showToast("Błąd operacji", "error");
     }
   });
 
@@ -5977,13 +5977,13 @@ function wireEvents() {
     markUserAction();
     const ids = [...selectedQueueIds];
     if (!ids.length) {
-      showToast(t("settings.mail.selectRows"), "error");
+      showToast("Zaznacz rekordy kolejki", "error");
       return;
     }
     try {
       await runMailWorker({ ids });
     } catch(e) {
-      if (shouldShowActionError()) showToast(t("settings.toast.error"), "error");
+      if (shouldShowActionError()) showToast("Błąd operacji", "error");
     }
   });
 
@@ -6003,7 +6003,10 @@ function wireEvents() {
 }
 
 (async () => {
-  await initI18n({ withSwitcher: true, apply: true });
+  // Panel admina jest tylko po polsku — bez przełącznika języka. initI18n()
+  // nadal jest potrzebne, bo t() jest używane w openMaintenancePreview() do
+  // podglądu treści publicznej strony maintenance (ta zostaje wielojęzyczna).
+  await initI18n({ withSwitcher: false, apply: true });
   document.documentElement.classList.remove('page-loading');
   document.querySelector('.topbar')?.classList.add('topbar-ready');
 
@@ -6779,7 +6782,7 @@ function wireEvents() {
   const mcPanel = document.getElementById("marketingContactsPanel");
   if (mcPanel) mcObserver.observe(mcPanel, { attributes: true, attributeFilter: ["hidden"] });
 
-  showAuth("settings.login.checking");
+  showAuth("Trwa weryfikacja…");
   mcUpdateButtons();
 
   const ok = await checkMe();
@@ -6788,6 +6791,6 @@ function wireEvents() {
     await loadState();
     if (!pollTimer) pollTimer = setInterval(() => loadState({ silent: true }), POLL_MS);
   } else {
-    showAuth("settings.login.accessRequired");
+    showAuth("Wymagane logowanie przez Cloudflare Access.");
   }
 })();
