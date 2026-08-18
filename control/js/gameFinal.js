@@ -1502,6 +1502,9 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       }
 
       store.state.final.winnerTeam = computeWinnerTeam();
+      // Indykator drużyny grającej finał świeci przez cały finał — gaśnie
+      // dopiero w finishFinal(), na końcu.
+      try { await display.setIndicator?.(store.state.final.winnerTeam); } catch {}
 
       if (typeof store.setFinalActive === "function") store.setFinalActive(true);
       else store.state.locks.finalActive = true;
@@ -1803,6 +1806,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
 
     const showEndScreen = async () => {
       try { await display.finalHideBoard?.(); } catch {}
+      try { await display.setIndicator?.(null); } catch {}
       try {
         if (mode === "logo") { await display.showLogo?.(); return; }
         if (mode === "points") { await display.showWin?.(totalPointsAll); return; }
