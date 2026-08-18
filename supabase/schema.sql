@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 9jaolhF7Vt0397I5XQHU32xG0vkKke8oxKQlye1swISu5OdCaeZzBH5BhPeCZzs
+\restrict tAyxK8sLqmBcmxN2cyJso8QeWBHTxxxp4AMazQCZhA09znTtepJGcTCas1fNVpM
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -2389,31 +2389,33 @@ BEGIN
           WHERE g.is_demo = false AND g.source_market_id IS NULL AND NOT (g.owner_id = ANY(excluded_ids))
           GROUP BY q.game_id) AS sub;
 
-  -- Gameplay (game_sessions_effective — realne rozgrywki)
+  -- Gameplay (game_sessions_effective — realne rozgrywki, WŁĄCZNIE z sesjami
+  -- na grach demo: rozegranie gry to działanie użytkownika, nawet jeśli sama
+  -- gra została mu dostarczona automatycznie)
   SELECT COUNT(*) INTO played_today FROM public.game_sessions_effective s
     JOIN public.games g ON g.id = s.game_id
-    WHERE s.started_at >= CURRENT_DATE AND g.is_demo = false AND NOT (g.owner_id = ANY(excluded_ids));
+    WHERE s.started_at >= CURRENT_DATE AND NOT (g.owner_id = ANY(excluded_ids));
   SELECT COUNT(*) INTO played_7d FROM public.game_sessions_effective s
     JOIN public.games g ON g.id = s.game_id
-    WHERE s.started_at >= now() - interval '7 days' AND g.is_demo = false AND NOT (g.owner_id = ANY(excluded_ids));
+    WHERE s.started_at >= now() - interval '7 days' AND NOT (g.owner_id = ANY(excluded_ids));
   SELECT COUNT(*) INTO played_30d FROM public.game_sessions_effective s
     JOIN public.games g ON g.id = s.game_id
-    WHERE s.started_at >= now() - interval '30 days' AND g.is_demo = false AND NOT (g.owner_id = ANY(excluded_ids));
+    WHERE s.started_at >= now() - interval '30 days' AND NOT (g.owner_id = ANY(excluded_ids));
   SELECT COUNT(*) INTO finished_30d FROM public.game_sessions_effective s
     JOIN public.games g ON g.id = s.game_id
-    WHERE s.effective_status = 'final' AND s.started_at >= now() - interval '30 days' AND g.is_demo = false AND NOT (g.owner_id = ANY(excluded_ids));
+    WHERE s.effective_status = 'final' AND s.started_at >= now() - interval '30 days' AND NOT (g.owner_id = ANY(excluded_ids));
   SELECT COUNT(*) INTO abandoned_30d FROM public.game_sessions_effective s
     JOIN public.games g ON g.id = s.game_id
-    WHERE s.effective_status = 'abandoned' AND s.started_at >= now() - interval '30 days' AND g.is_demo = false AND NOT (g.owner_id = ANY(excluded_ids));
+    WHERE s.effective_status = 'abandoned' AND s.started_at >= now() - interval '30 days' AND NOT (g.owner_id = ANY(excluded_ids));
   SELECT COUNT(*) INTO in_progress FROM public.game_sessions_effective s
     JOIN public.games g ON g.id = s.game_id
-    WHERE s.effective_status IN ('started', 'playing') AND g.is_demo = false AND NOT (g.owner_id = ANY(excluded_ids));
+    WHERE s.effective_status IN ('started', 'playing') AND NOT (g.owner_id = ANY(excluded_ids));
   SELECT COUNT(*) INTO errors_30d FROM public.game_sessions_effective s
     JOIN public.games g ON g.id = s.game_id
-    WHERE COALESCE((s.client_meta->>'error_count')::int, 0) > 0 AND s.started_at >= now() - interval '30 days' AND g.is_demo = false AND NOT (g.owner_id = ANY(excluded_ids));
+    WHERE COALESCE((s.client_meta->>'error_count')::int, 0) > 0 AND s.started_at >= now() - interval '30 days' AND NOT (g.owner_id = ANY(excluded_ids));
   SELECT COUNT(*) INTO legacy_total FROM public.game_sessions_effective s
     JOIN public.games g ON g.id = s.game_id
-    WHERE s.status = 'legacy' AND g.is_demo = false AND NOT (g.owner_id = ANY(excluded_ids));
+    WHERE s.status = 'legacy' AND NOT (g.owner_id = ANY(excluded_ids));
 
   -- Polls
   SELECT COUNT(*) INTO poll_sessions_7d FROM public.poll_sessions WHERE created_at >= now() - interval '7 days';
@@ -3092,8 +3094,7 @@ BEGIN
       FROM public.game_sessions_effective s
       JOIN public.games g ON g.id = s.game_id
       LEFT JOIN public.profiles pr ON pr.id = g.owner_id
-      WHERE g.is_demo = false
-        AND NOT (g.owner_id = ANY(excluded_ids))
+      WHERE NOT (g.owner_id = ANY(excluded_ids))
       ORDER BY s.started_at DESC
       LIMIT p_limit
     ) r;
@@ -13947,5 +13948,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 9jaolhF7Vt0397I5XQHU32xG0vkKke8oxKQlye1swISu5OdCaeZzBH5BhPeCZzs
+\unrestrict tAyxK8sLqmBcmxN2cyJso8QeWBHTxxxp4AMazQCZhA09znTtepJGcTCas1fNVpM
 
