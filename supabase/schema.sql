@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict x0I9uNwjrNfXkOmsS7zVY3IGp8fe6SBH7pYyvKIrUBgRYLAjKgInZOnzCHGrEeB
+\restrict ScSboN1LKc5WbMGy8tr6RVZBm04OQ0EPO5gPMW4Kdfo8j3wLoxOosivL9xmJBM9
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -10336,7 +10336,7 @@ CREATE VIEW "public"."game_sessions_effective" WITH ("security_invoker"='true') 
     "team_a_score",
     "team_b_score",
         CASE
-            WHEN (("ended_at" IS NULL) AND ("status" = ANY (ARRAY['started'::"text", 'playing'::"text"])) AND (("now"() - "last_seen_at") > '01:00:00'::interval)) THEN 'abandoned'::"text"
+            WHEN (("ended_at" IS NULL) AND ("status" = ANY (ARRAY['started'::"text", 'playing'::"text", 'final'::"text"])) AND (("now"() - "last_seen_at") > '01:00:00'::interval)) THEN 'abandoned'::"text"
             ELSE "status"
         END AS "effective_status"
    FROM "public"."game_sessions" "s";
@@ -14007,5 +14007,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict x0I9uNwjrNfXkOmsS7zVY3IGp8fe6SBH7pYyvKIrUBgRYLAjKgInZOnzCHGrEeB
+\unrestrict ScSboN1LKc5WbMGy8tr6RVZBm04OQ0EPO5gPMW4Kdfo8j3wLoxOosivL9xmJBM9
 
