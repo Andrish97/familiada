@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict tAyxK8sLqmBcmxN2cyJso8QeWBHTxxxp4AMazQCZhA09znTtepJGcTCas1fNVpM
+\restrict 2TP5m4e00sOcpWLfO04XRYQYC6xRU9dgbXJY8m2fYgK1pmDGsFkX5e1SE6aQn7z
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -2325,6 +2325,7 @@ DECLARE
   games_new_7d     bigint;
   games_new_30d    bigint;
   avg_questions    numeric;
+  custom_settings_total bigint;
 
   played_today    bigint;
   played_7d       bigint;
@@ -2388,6 +2389,14 @@ BEGIN
           JOIN public.games g ON g.id = q.game_id
           WHERE g.is_demo = false AND g.source_market_id IS NULL AND NOT (g.owner_id = ANY(excluded_ids))
           GROUP BY q.game_id) AS sub;
+
+  -- Niedomyślne ustawienia zaawansowane (games.settings->game->advanced)
+  SELECT COUNT(*) INTO custom_settings_total FROM public.games g
+    WHERE g.is_demo = false
+      AND NOT (g.owner_id = ANY(excluded_ids))
+      AND g.settings->'game'->'advanced' IS NOT NULL
+      AND g.settings->'game'->'advanced' <> '{}'::jsonb
+      AND g.settings->'game'->'advanced' <> '{"roundMultipliers":[1,1,1,2,3],"finalMinPoints":300,"finalTarget":200,"endScreenMode":"logo","finalPrizeMultiplier":3,"mainPrizeAmount":25000}'::jsonb;
 
   -- Gameplay (game_sessions_effective — realne rozgrywki, WŁĄCZNIE z sesjami
   -- na grach demo: rozegranie gry to działanie użytkownika, nawet jeśli sama
@@ -2467,6 +2476,9 @@ BEGIN
       'new_7d', games_new_7d,
       'new_30d', games_new_30d,
       'avg_q', avg_questions
+    ),
+    'custom_settings', jsonb_build_object(
+      'total', custom_settings_total
     ),
     'gameplay', jsonb_build_object(
       'played_today', played_today,
@@ -3071,6 +3083,26 @@ BEGIN
       WHERE g.is_demo = false
         AND g.source_market_id IS NULL
         AND NOT (g.owner_id = ANY(excluded_ids))
+      ORDER BY g.created_at DESC
+      LIMIT p_limit
+    ) r;
+
+  WHEN 'custom_settings' THEN
+    SELECT jsonb_agg(r)
+    INTO result
+    FROM (
+      SELECT
+        g.name AS game_name,
+        pr.username AS owner,
+        g.created_at,
+        g.settings->'game'->'advanced' AS advanced
+      FROM public.games g
+      LEFT JOIN public.profiles pr ON pr.id = g.owner_id
+      WHERE g.is_demo = false
+        AND NOT (g.owner_id = ANY(excluded_ids))
+        AND g.settings->'game'->'advanced' IS NOT NULL
+        AND g.settings->'game'->'advanced' <> '{}'::jsonb
+        AND g.settings->'game'->'advanced' <> '{"roundMultipliers":[1,1,1,2,3],"finalMinPoints":300,"finalTarget":200,"endScreenMode":"logo","finalPrizeMultiplier":3,"mainPrizeAmount":25000}'::jsonb
       ORDER BY g.created_at DESC
       LIMIT p_limit
     ) r;
@@ -13948,5 +13980,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict tAyxK8sLqmBcmxN2cyJso8QeWBHTxxxp4AMazQCZhA09znTtepJGcTCas1fNVpM
+\unrestrict 2TP5m4e00sOcpWLfO04XRYQYC6xRU9dgbXJY8m2fYgK1pmDGsFkX5e1SE6aQn7z
 
