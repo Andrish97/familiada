@@ -1,21 +1,21 @@
 // base-explorerjs/page.js
 // Init strony menadżera bazy (warstwa 2)
 
-import { requireAuth } from "../../js/core/auth.js?v=v2026-08-18T13110";
-import { alertModal } from "../../js/core/modal.js?v=v2026-08-18T13110";
-import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-08-18T13110";
-import { initTopbarAccountDropdown } from "../../js/core/topbar-controller.js?v=v2026-08-18T13110";
-import { createState, setRole } from "./state.js?v=v2026-08-18T13110";
-import { renderAll } from "./render.js?v=v2026-08-18T13110";
+import { requireAuth } from "../../js/core/auth.js?v=v2026-08-18T17371";
+import { alertModal } from "../../js/core/modal.js?v=v2026-08-18T17371";
+import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-08-18T17371";
+import { initTopbarAccountDropdown } from "../../js/core/topbar-controller.js?v=v2026-08-18T17371";
+import { createState, setRole } from "./state.js?v=v2026-08-18T17371";
+import { renderAll } from "./render.js?v=v2026-08-18T17371";
 import {
   getBaseMeta,
   getBaseRole,
   listCategories,
   listTags,
   listAllQuestions,
-} from "./repo.js?v=v2026-08-18T13110";
-import { wireActions } from "./actions.js?v=v2026-08-18T13110";
-import { initDrawer, disableDragOnTouch } from "./mobile.js?v=v2026-08-18T13110";
+} from "./repo.js?v=v2026-08-18T17371";
+import { wireActions } from "./actions.js?v=v2026-08-18T17371";
+import { initDrawer, disableDragOnTouch } from "./mobile.js?v=v2026-08-18T17371";
 
 /* ================= DOM ================= */
 const btnBack = document.getElementById("btnBack");
