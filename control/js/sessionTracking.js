@@ -6,8 +6,35 @@ import { sb } from "../../js/core/supabase.js?v=v2026-08-18T11321";
 let currentSessionId = null;
 let roundsPlayedCount = 0;
 let errors = [];
+let heartbeatTimer = null;
 
 const MAX_TRACKED_ERRORS = 20;
+const HEARTBEAT_INTERVAL_MS = 5 * 60 * 1000;
+
+function stopHeartbeat() {
+  if (heartbeatTimer) {
+    clearInterval(heartbeatTimer);
+    heartbeatTimer = null;
+  }
+}
+
+// Odświeża last_seen_at bez czekania na koniec rundy — żeby długa runda
+// (przerwa, dyskusja, awaria) nie wyglądała w panelu admina jak porzucona
+// sesja, dopóki karta gry faktycznie jest otwarta.
+async function sessionHeartbeat() {
+  if (!currentSessionId) return;
+  try {
+    const { error } = await sb().rpc("game_session_update", {
+      p_session_id: currentSessionId,
+      p_status: null,
+      p_rounds_played: null,
+      p_client_meta_patch: null,
+    });
+    if (error) throw error;
+  } catch (e) {
+    console.warn("[sessionTracking] heartbeat failed:", e);
+  }
+}
 
 export async function sessionStart(gameId, meta = {}) {
   try {
@@ -19,6 +46,10 @@ export async function sessionStart(gameId, meta = {}) {
     currentSessionId = data || null;
     roundsPlayedCount = 0;
     errors = [];
+    stopHeartbeat();
+    if (currentSessionId) {
+      heartbeatTimer = setInterval(sessionHeartbeat, HEARTBEAT_INTERVAL_MS);
+    }
   } catch (e) {
     console.warn("[sessionTracking] start failed:", e);
   }
@@ -79,6 +110,7 @@ export async function sessionLogError(message) {
 }
 
 export async function sessionEnd(status, { errorMessage = null, winnerTeam = null, teamAScore = null, teamBScore = null } = {}) {
+  stopHeartbeat();
   if (!currentSessionId) return;
   const id = currentSessionId;
   currentSessionId = null;
