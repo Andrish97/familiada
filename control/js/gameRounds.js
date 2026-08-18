@@ -1141,10 +1141,6 @@ function hostUpdate() {
   
       r.canEndRound = true;
       updatePlayControls();
-  
-      if (display.setIndicator) {
-        await display.setIndicator(null);
-      }
     }
   }
 
@@ -1290,11 +1286,13 @@ function hostUpdate() {
     ui.setRoundsHud(r, store.state.teams);
     r.canEndRound = true;
     updatePlayControls();
-  
+
+    // Kradzież nieudana — bank zostaje przy drużynie, która grała rundę
+    // (r.controlTeam), więc indykator wraca na nią (nie gaśnie).
     if (display.setIndicator) {
-      await display.setIndicator(null);
+      try { await display.setIndicator(r.controlTeam); } catch {}
     }
-  
+
     // NOWE: duży X (idx 4) po stronie kradnącej
     try {
       const stealingTeam = r.steal.team; // "A" albo "B"
