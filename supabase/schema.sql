@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict ScSboN1LKc5WbMGy8tr6RVZBm04OQ0EPO5gPMW4Kdfo8j3wLoxOosivL9xmJBM9
+\restrict iwzDt6P1cbFc8BSGxqOFE4LSgRb3lLvgIq6ev5ndbDGHqZ5hjxU76rGM6figyKK
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -2053,10 +2053,10 @@ $$;
 
 
 --
--- Name: game_session_end("uuid", "text", "text", "text", integer, integer); Type: FUNCTION; Schema: public; Owner: -
+-- Name: game_session_end("uuid", "text", "text", "text", integer, integer, integer, integer, integer); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION "public"."game_session_end"("p_session_id" "uuid", "p_status" "text", "p_error_message" "text" DEFAULT NULL::"text", "p_winner_team" "text" DEFAULT NULL::"text", "p_team_a_score" integer DEFAULT NULL::integer, "p_team_b_score" integer DEFAULT NULL::integer) RETURNS "void"
+CREATE FUNCTION "public"."game_session_end"("p_session_id" "uuid", "p_status" "text", "p_error_message" "text" DEFAULT NULL::"text", "p_winner_team" "text" DEFAULT NULL::"text", "p_team_a_score" integer DEFAULT NULL::integer, "p_team_b_score" integer DEFAULT NULL::integer, "p_rounds_score_a" integer DEFAULT NULL::integer, "p_rounds_score_b" integer DEFAULT NULL::integer, "p_final_points" integer DEFAULT NULL::integer) RETURNS "void"
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
 declare
@@ -2080,7 +2080,10 @@ begin
     error_message = coalesce(p_error_message, error_message),
     winner_team = coalesce(p_winner_team, winner_team),
     team_a_score = coalesce(p_team_a_score, team_a_score),
-    team_b_score = coalesce(p_team_b_score, team_b_score)
+    team_b_score = coalesce(p_team_b_score, team_b_score),
+    rounds_score_a = coalesce(p_rounds_score_a, rounds_score_a),
+    rounds_score_b = coalesce(p_rounds_score_b, rounds_score_b),
+    final_points = coalesce(p_final_points, final_points)
   where id = p_session_id;
 end;
 $$;
@@ -3115,7 +3118,8 @@ BEGIN
         g.settings->'sound' AS sound
       FROM public.games g
       LEFT JOIN public.profiles pr ON pr.id = g.owner_id
-      WHERE NOT (g.owner_id = ANY(excluded_ids))
+      WHERE g.is_demo = false
+        AND NOT (g.owner_id = ANY(excluded_ids))
         AND (
           (g.settings->'game'->'advanced' IS NOT NULL
             AND g.settings->'game'->'advanced' <> '{}'::jsonb
@@ -3148,6 +3152,9 @@ BEGIN
         s.winner_team,
         s.team_a_score,
         s.team_b_score,
+        s.rounds_score_a,
+        s.rounds_score_b,
+        s.final_points,
         s.client_meta->>'final_step' AS final_step,
         COALESCE((s.client_meta->>'error_count')::int, 0) AS error_count
       FROM public.game_sessions_effective s
@@ -10310,7 +10317,12 @@ CREATE TABLE "public"."game_sessions" (
     "winner_team" "text",
     "team_a_score" integer,
     "team_b_score" integer,
+    "rounds_score_a" integer,
+    "rounds_score_b" integer,
+    "final_points" integer,
+    CONSTRAINT "game_sessions_final_points_check" CHECK ((("final_points" IS NULL) OR ("final_points" >= 0))),
     CONSTRAINT "game_sessions_rounds_played_check" CHECK (("rounds_played" >= 0)),
+    CONSTRAINT "game_sessions_rounds_scores_check" CHECK (((("rounds_score_a" IS NULL) OR ("rounds_score_a" >= 0)) AND (("rounds_score_b" IS NULL) OR ("rounds_score_b" >= 0)))),
     CONSTRAINT "game_sessions_scores_check" CHECK (((("team_a_score" IS NULL) OR ("team_a_score" >= 0)) AND (("team_b_score" IS NULL) OR ("team_b_score" >= 0)))),
     CONSTRAINT "game_sessions_status_check" CHECK (("status" = ANY (ARRAY['started'::"text", 'playing'::"text", 'final'::"text", 'won'::"text", 'lost'::"text", 'abandoned'::"text", 'error'::"text", 'legacy'::"text"]))),
     CONSTRAINT "game_sessions_winner_team_check" CHECK ((("winner_team" = ANY (ARRAY['A'::"text", 'B'::"text"])) OR ("winner_team" IS NULL)))
@@ -14007,5 +14019,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict ScSboN1LKc5WbMGy8tr6RVZBm04OQ0EPO5gPMW4Kdfo8j3wLoxOosivL9xmJBM9
+\unrestrict iwzDt6P1cbFc8BSGxqOFE4LSgRb3lLvgIq6ev5ndbDGHqZ5hjxU76rGM6figyKK
 
