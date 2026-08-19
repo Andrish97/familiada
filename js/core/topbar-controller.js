@@ -569,6 +569,16 @@ function initTopbarController() {
   } else {
     mobileMq.addListener?.(syncMode);
   }
+
+  // Na części tabletów obrót ekranu nie zawsze odpala matchMedia "change"
+  // niezawodnie — przyciski zostają wtedy zablokowane w nieaktualnym stanie
+  // (schowane, a hamburger też już niewidoczny wg CSS) aż do przeładowania.
+  // orientationchange jako dodatkowy, redundantny trigger; opóźnienie, bo
+  // niektóre przeglądarki chwilę raportują stare wymiary tuż po evencie.
+  window.addEventListener('orientationchange', () => {
+    syncMode();
+    setTimeout(syncMode, 300);
+  });
 }
 
 function updateTopbarHeight() {
