@@ -1388,6 +1388,14 @@ async function handleAdminMessagesApi(request, env, url) {
     const body = await readJson(request);
     const { message_id } = body || {};
     if (!message_id) return json({ ok: false, error: "missing_message_id" }, 400);
+
+    // Skasuj pliki załączników ZANIM skasujemy wiadomość — ON DELETE CASCADE
+    // usunie wiersze message_attachments, po czym pliki byłyby nie do znalezienia.
+    const attRes = await supabaseRpc(env, "get_message_attachments", { p_message_id: message_id });
+    if (attRes.ok && Array.isArray(attRes.data)) {
+      await deleteAttachmentStorageFiles(env, attRes.data);
+    }
+
     const res = await supabaseRpc(env, "delete_message", { p_message_id: message_id });
     if (!res.ok) return json({ ok: false, error: "delete_failed", details: summarizeSupabaseError(res) }, res.status || 500);
     return json({ ok: true });
@@ -1527,6 +1535,13 @@ async function handleAdminMessagesApi(request, env, url) {
 
   // POST /_admin_api/cleanup/trash
   if (url.pathname === "/_admin_api/cleanup/trash" && request.method === "POST") {
+    // Skasuj pliki załączników wiadomości które zaraz przepadną z kosza —
+    // ZANIM cleanup_trash je skasuje przez ON DELETE CASCADE.
+    const trashAttRes = await supabaseRpc(env, "get_trash_attachments", {});
+    if (trashAttRes.ok && Array.isArray(trashAttRes.data)) {
+      await deleteAttachmentStorageFiles(env, trashAttRes.data);
+    }
+
     const res = await supabaseRpc(env, "cleanup_trash", {});
     if (!res.ok) return json({ ok: false, error: "cleanup_failed", details: summarizeSupabaseError(res) }, res.status || 500);
     const deleted = extractScalarNumber(res.data, 0);
@@ -1872,6 +1887,28 @@ async function cleanupExpiredAttachments(env) {
     console.log(`[cron] expired ${listRes.data.length} attachments`);
   } catch (err) {
     console.error("[cron] cleanupExpiredAttachments failed:", err);
+  }
+}
+
+// Kasuje pliki załączników ze Storage (bucket message-attachments) dla
+// podanej listy {storage_path}. Używane PRZED faktycznym usunięciem
+// wiadomości (delete_message / cleanup_trash), żeby pliki nie zostały
+// osierocone po tym jak ON DELETE CASCADE skasuje wiersze message_attachments.
+async function deleteAttachmentStorageFiles(env, attachments) {
+  if (!Array.isArray(attachments) || !attachments.length) return;
+  const cfg = getSupabaseConfig(env);
+  if (!cfg) return;
+  for (const att of attachments) {
+    if (!att?.storage_path) continue;
+    try {
+      const storageUrl = `${cfg.baseUrl}/storage/v1/object/message-attachments/${encodeURIComponent(att.storage_path)}`;
+      await fetch(storageUrl, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${cfg.serviceRoleKey}`, apikey: cfg.serviceRoleKey },
+      });
+    } catch (err) {
+      console.error("[messages] storage delete failed:", att.storage_path, err);
+    }
   }
 }
 

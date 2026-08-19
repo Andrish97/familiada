@@ -6,6 +6,7 @@ import { initI18n, t, getUiLang, withLangParam } from "../../translation/transla
 import { confirmModal } from "../core/modal.js?v=v2026-08-19T16195";
 import { isGuestUser, showGuestBlockedOverlay } from "../core/guest-mode.js?v=v2026-08-19T16195";
 import "../core/contact-modal.js";
+import { deleteGameSoundsFolder } from "../core/sfx-cloud.js?v=v2026-08-19T16195";
 
 
 const status = document.getElementById("status");
@@ -376,6 +377,41 @@ async function loadUserRating(userId) {
   }
 }
 
+// Zwraca zestaw imageUrl (logo obrazkowe) i id gier usera — używane jako
+// "zdjęcie przed/po" wokół restore_my_demo, żeby wykryć co realnie
+// przepadło (niezależnie czy przez is_demo=true czy zbieżność nazwy) i
+// skasować tylko te pliki w storage, nic więcej.
+async function snapshotDemoStorageRefs(userId) {
+  const [logosRes, gamesRes] = await Promise.all([
+    sb().from("user_logos").select("payload").eq("user_id", userId),
+    sb().from("games").select("id").eq("owner_id", userId),
+  ]);
+  const imageUrls = new Set(
+    (logosRes.data || [])
+      .map((r) => r?.payload?.source?.imageUrl)
+      .filter(Boolean)
+  );
+  const gameIds = new Set((gamesRes.data || []).map((r) => r.id));
+  return { imageUrls, gameIds };
+}
+
+async function cleanupOrphanedDemoStorage(userId, before, after) {
+  const removedImageUrls = [...before.imageUrls].filter((u) => !after.imageUrls.has(u));
+  const removedGameIds = [...before.gameIds].filter((id) => !after.gameIds.has(id));
+
+  for (const url of removedImageUrls) {
+    const parts = String(url).split("/user-logos/");
+    if (parts.length !== 2) continue;
+    const path = parts[1];
+    if (!path.startsWith(`${userId}/`)) continue; // tylko własny folder
+    await sb().storage.from("user-logos").remove([path]).catch(() => {});
+  }
+
+  for (const gameId of removedGameIds) {
+    await deleteGameSoundsFolder(sb(), userId, gameId).catch(() => {});
+  }
+}
+
 async function wireDemoActions(user) {
   const btn = document.getElementById("demoRestoreBtn");
   if (!btn || !user?.id) return;
@@ -389,11 +425,24 @@ async function wireDemoActions(user) {
     });
     if (!ok) return;
     const lang = localStorage.getItem("uiLang") || "pl";
+
+    const before = await snapshotDemoStorageRefs(user.id).catch(() => null);
+
     const { error } = await sb().rpc("restore_my_demo", { p_lang: lang });
     if (error) {
       console.error("restore_my_demo error:", error);
       return;
     }
+
+    if (before) {
+      try {
+        const after = await snapshotDemoStorageRefs(user.id);
+        await cleanupOrphanedDemoStorage(user.id, before, after);
+      } catch (e) {
+        console.warn("[account] demo storage cleanup failed:", e);
+      }
+    }
+
     location.href = "./builder";
   });
 }

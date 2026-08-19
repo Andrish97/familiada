@@ -56,6 +56,26 @@ export async function deleteAllGameSounds(sb, userId, gameId, keys) {
 }
 
 /**
+ * Usuwa cały folder dźwięków danej gry z bucketu ({userId}/{gameId}/*),
+ * niezależnie od tego jakie klucze sfx zostały użyte. Wołane przy
+ * usuwaniu całej gry — nie znamy wtedy z góry listy kluczy.
+ */
+export async function deleteGameSoundsFolder(sb, userId, gameId) {
+  const folder = `${userId}/${gameId}`;
+  const { data: files, error: listError } = await sb.storage.from(BUCKET).list(folder);
+  if (listError) {
+    if (listError.statusCode === 404 || listError.message?.includes("Not Found")) return;
+    throw listError;
+  }
+  if (!files || files.length === 0) return;
+  const paths = files.map(f => `${folder}/${f.name}`);
+  const { error } = await sb.storage.from(BUCKET).remove(paths);
+  if (error && !error.message?.includes("Not Found") && error.statusCode !== 404) {
+    throw error;
+  }
+}
+
+/**
  * Zwraca podpisany URL dla pliku audio (wygasa po expiresIn sekund).
  */
 export async function getGameSoundSignedUrl(sb, userId, gameId, key, expiresIn = 3600) {
