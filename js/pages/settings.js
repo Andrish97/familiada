@@ -1440,99 +1440,80 @@ function cronPresetLabel(preset) {
 }
 
 const COMPOSE_LANG_META = {
-  pl: { flag: "🇵🇱", code: "PL" },
-  en: { flag: "🇬🇧", code: "EN" },
-  uk: { flag: "🇺🇦", code: "UK" },
+  pl: { flag: "🇵🇱", label: "Polski" },
+  en: { flag: "🇬🇧", label: "English" },
+  uk: { flag: "🇺🇦", label: "Українська" },
 };
 const COMPOSE_LANGS = Object.keys(COMPOSE_LANG_META);
 
 const GREETING_OPTIONS_I18N = {
   pl: [
-    { value: "none", label: "Brak powitania" },
     { value: "witaj", label: "Witaj" },
     { value: "hello", label: "Dzień dobry" },
     { value: "hi", label: "Cześć" },
     { value: "dearUser", label: "Szanowny Użytkowniku" },
     { value: "dearCustomer", label: "Szanowny Kliencie" },
-    { value: "custom", label: "Własne..." },
   ],
   en: [
-    { value: "none", label: "No greeting" },
     { value: "witaj", label: "Hello" },
     { value: "hello", label: "Good morning" },
     { value: "hi", label: "Hi" },
     { value: "dearUser", label: "Dear User" },
     { value: "dearCustomer", label: "Dear Customer" },
-    { value: "custom", label: "Custom..." },
   ],
   uk: [
-    { value: "none", label: "Без привітання" },
     { value: "witaj", label: "Вітаю" },
     { value: "hello", label: "Доброго дня" },
     { value: "hi", label: "Привіт" },
     { value: "dearUser", label: "Шановний Користувачу" },
     { value: "dearCustomer", label: "Шановний Клієнте" },
-    { value: "custom", label: "Власне..." },
   ],
 };
 
 const FAREWELL_OPTIONS_I18N = {
   pl: [
-    { value: "none", label: "Brak pożegnania" },
     { value: "regards", label: "Pozdrawiam" },
     { value: "regardsPl", label: "Pozdrawiamy" },
     { value: "bestRegards", label: "Z poważaniem" },
     { value: "kindRegards", label: "Łączę wyrazy szacunku" },
-    { value: "custom", label: "Własne..." },
   ],
   en: [
-    { value: "none", label: "No farewell" },
     { value: "regards", label: "Regards" },
     { value: "regardsPl", label: "Best regards" },
     { value: "bestRegards", label: "Sincerely" },
     { value: "kindRegards", label: "Kind regards" },
-    { value: "custom", label: "Custom..." },
   ],
   uk: [
-    { value: "none", label: "Без прощання" },
     { value: "regards", label: "З повагою" },
     { value: "regardsPl", label: "Вітаємо" },
     { value: "bestRegards", label: "З найкращими побажаннями" },
     { value: "kindRegards", label: "Щиро" },
-    { value: "custom", label: "Власне..." },
   ],
 };
 
 const SENDER_OPTIONS_I18N = {
   pl: [
-    { value: "none", label: "Brak nadawcy" },
     { value: "team", label: "Zespół Familiada" },
     { value: "creator", label: "Twórca Familiada" },
     { value: "admin", label: "Admin" },
     { value: "support", label: "Wsparcie techniczne" },
-    { value: "custom", label: "Własny..." },
   ],
   en: [
-    { value: "none", label: "No sender" },
     { value: "team", label: "Familiada Team" },
     { value: "creator", label: "Familiada Creator" },
     { value: "admin", label: "Admin" },
     { value: "support", label: "Technical Support" },
-    { value: "custom", label: "Custom..." },
   ],
   uk: [
-    { value: "none", label: "Без відправника" },
     { value: "team", label: "Команда Familiada" },
     { value: "creator", label: "Творець Familiada" },
     { value: "admin", label: "Адмін" },
     { value: "support", label: "Технічна підтримка" },
-    { value: "custom", label: "Власний..." },
   ],
 };
 
 const TEMPLATE_OPTIONS_I18N = {
   pl: [
-    { value: "custom", label: "Własny" },
     { value: "info", label: "Podziękowanie" },
     { value: "received", label: "Potwierdzenie otrzymania" },
     { value: "resolved", label: "Zgłoszenie rozwiązane" },
@@ -1543,7 +1524,6 @@ const TEMPLATE_OPTIONS_I18N = {
     { value: "thanks", label: "Podziękowanie" },
   ],
   en: [
-    { value: "custom", label: "Custom" },
     { value: "info", label: "Thank you" },
     { value: "received", label: "Confirmation received" },
     { value: "resolved", label: "Ticket resolved" },
@@ -1554,7 +1534,6 @@ const TEMPLATE_OPTIONS_I18N = {
     { value: "thanks", label: "Thank you" },
   ],
   uk: [
-    { value: "custom", label: "Власний" },
     { value: "info", label: "Подяка" },
     { value: "received", label: "Підтвердження отримання" },
     { value: "resolved", label: "Звернення вирішено" },
@@ -1566,20 +1545,26 @@ const TEMPLATE_OPTIONS_I18N = {
   ],
 };
 
+// "Brak"/"Własny" (none/custom) są UI-owymi opcjami bez realnej treści w mailu,
+// więc zostają zawsze po polsku - nie ma sensu ich tłumaczyć per język.
 function getGreetingOptions(lang = "pl") {
-  return GREETING_OPTIONS_I18N[lang] || GREETING_OPTIONS_I18N.pl;
+  const opts = GREETING_OPTIONS_I18N[lang] || GREETING_OPTIONS_I18N.pl;
+  return [{ value: "none", label: "Brak powitania" }, ...opts, { value: "custom", label: "Własne..." }];
 }
 
 function getFarewellOptions(lang = "pl") {
-  return FAREWELL_OPTIONS_I18N[lang] || FAREWELL_OPTIONS_I18N.pl;
+  const opts = FAREWELL_OPTIONS_I18N[lang] || FAREWELL_OPTIONS_I18N.pl;
+  return [{ value: "none", label: "Brak pożegnania" }, ...opts, { value: "custom", label: "Własne..." }];
 }
 
 function getSenderOptions(lang = "pl") {
-  return SENDER_OPTIONS_I18N[lang] || SENDER_OPTIONS_I18N.pl;
+  const opts = SENDER_OPTIONS_I18N[lang] || SENDER_OPTIONS_I18N.pl;
+  return [{ value: "none", label: "Brak nadawcy" }, ...opts, { value: "custom", label: "Własny..." }];
 }
 
 function getComposeTemplateOptions(lang = "pl") {
-  return TEMPLATE_OPTIONS_I18N[lang] || TEMPLATE_OPTIONS_I18N.pl;
+  const opts = TEMPLATE_OPTIONS_I18N[lang] || TEMPLATE_OPTIONS_I18N.pl;
+  return [{ value: "custom", label: "Własny" }, ...opts];
 }
 
 function buildEmailSignature({ greeting = "none", farewell = "none", sender = "none", greetingCustom = "", farewellCustom = "", senderCustom = "", lang = "pl" } = {}) {
@@ -3867,7 +3852,10 @@ function showCompose(defaults = {}) {
           </div>
 
           <div style="display:flex;justify-content:flex-end;margin-bottom:6px">
-            <button type="button" class="btn sm" id="composeLangToggle" title="Zmień język treści powitania, pożegnania, nadawcy i szablonu">🇵🇱 PL</button>
+            <div class="lang-switcher" id="composeLangSwitcher" style="position:relative">
+              <button type="button" class="btn lang-btn" id="composeLangBtn" aria-label="Zmień język treści powitania, pożegnania, nadawcy i szablonu" title="Zmień język treści powitania, pożegnania, nadawcy i szablonu">🇵🇱</button>
+              <div class="lang-menu" id="composeLangMenu" hidden></div>
+            </div>
           </div>
           <div class="mail-inline-grid" style="margin-bottom:12px">
             <div class="field">
@@ -4208,18 +4196,58 @@ function showCompose(defaults = {}) {
     },
   });
 
-  // Language toggle - cycles PL/EN/UK, swaps only the dropdown option texts above
-  document.getElementById("composeLangToggle")?.addEventListener("click", () => {
-    const idx = COMPOSE_LANGS.indexOf(composeLang);
-    composeLang = COMPOSE_LANGS[(idx + 1) % COMPOSE_LANGS.length];
-    composeGreetingSelect?.setOptions(getGreetingOptions(composeLang));
-    composeFarewellSelect?.setOptions(getFarewellOptions(composeLang));
-    composeSenderSelect?.setOptions(getSenderOptions(composeLang));
-    composeTemplateSelect?.setOptions(getComposeTemplateOptions(composeLang));
-    const meta = COMPOSE_LANG_META[composeLang];
-    const toggleBtn = document.getElementById("composeLangToggle");
-    if (toggleBtn) toggleBtn.textContent = `${meta.flag} ${meta.code}`;
-  });
+  // Language switcher - dropdown styled/behaving like the site's lang-switcher (translation.js),
+  // picks a language directly instead of cycling. Swaps only the dropdown option texts above.
+  {
+    const switcherEl = document.getElementById("composeLangSwitcher");
+    const btnEl = document.getElementById("composeLangBtn");
+    const menuEl = document.getElementById("composeLangMenu");
+
+    const applyComposeLang = (lang) => {
+      composeLang = lang;
+      composeGreetingSelect?.setOptions(getGreetingOptions(composeLang));
+      composeFarewellSelect?.setOptions(getFarewellOptions(composeLang));
+      composeSenderSelect?.setOptions(getSenderOptions(composeLang));
+      composeTemplateSelect?.setOptions(getComposeTemplateOptions(composeLang));
+      if (btnEl) btnEl.textContent = COMPOSE_LANG_META[composeLang].flag;
+    };
+
+    if (menuEl) {
+      COMPOSE_LANGS.forEach((lang) => {
+        const meta = COMPOSE_LANG_META[lang];
+        const opt = document.createElement("button");
+        opt.type = "button";
+        opt.className = "lang-option";
+        opt.dataset.lang = lang;
+        opt.textContent = `${meta.flag} ${meta.label}`;
+        opt.addEventListener("click", (e) => {
+          e.stopPropagation();
+          menuEl.hidden = true;
+          applyComposeLang(lang);
+        });
+        menuEl.appendChild(opt);
+      });
+    }
+
+    btnEl?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (!menuEl) return;
+      menuEl.hidden = !menuEl.hidden;
+      if (!menuEl.hidden && switcherEl) {
+        const rect = switcherEl.getBoundingClientRect();
+        menuEl.style.position = "fixed";
+        menuEl.style.top = `${rect.bottom + 6}px`;
+        menuEl.style.right = `${window.innerWidth - rect.right}px`;
+        menuEl.style.left = "auto";
+      }
+    });
+
+    document.addEventListener("click", (e) => {
+      if (menuEl && !menuEl.hidden && switcherEl && !switcherEl.contains(e.target) && !menuEl.contains(e.target)) {
+        menuEl.hidden = true;
+      }
+    });
+  }
 
   // Insert #quote button - only for replies (when hasQuote is true)
   document.getElementById("btnInsertQuote")?.addEventListener("click", async (e) => {
