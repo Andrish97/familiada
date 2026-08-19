@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict HekoRbCIgS1wejRLUKKQZY5ZgWb5Kum2Y2ErX9YbHdeh9fbkP5FAuGim3dHQIPa
+\restrict ygBHPPncoRo20QW2FCxichrpXA6afheCVdCcgELqCW4Ybm0Ao3BdKqeHfaFrHGu
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -3227,6 +3227,26 @@ $$;
 
 
 --
+-- Name: get_trash_attachments(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."get_trash_attachments"() RETURNS TABLE("id" "uuid", "storage_path" "text")
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+BEGIN
+  RETURN QUERY
+  SELECT a.id, a.storage_path
+  FROM public.message_attachments a
+  JOIN public.messages m ON m.id = a.message_id
+  WHERE m.deleted_at IS NOT NULL
+    AND m.deleted_at < now() - interval '30 days'
+    AND a.storage_path <> '';
+END;
+$$;
+
+
+--
 -- Name: get_unsub_info_for_task_emails("uuid", "text"[]); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -3265,7 +3285,12 @@ declare
   v_limit int := greatest(1, least(coalesce(p_limit, 500), 5000));
   v_deleted int := 0;
   v_id uuid;
+  v_url text;
+  v_jwt text;
 begin
+  select value into v_url from public.app_config where key = 'edge_url';
+  select value into v_jwt from public.app_config where key = 'edge_service_role_jwt';
+
   -- 1. Usuwanie wygasłych gości (zgodnie z istniejącą logiką)
   for v_id in
     select p.id
@@ -3278,6 +3303,18 @@ begin
   loop
     perform public.delete_user_everything(v_id);
     v_deleted := v_deleted + 1;
+
+    if coalesce(v_url, '') <> '' and coalesce(v_jwt, '') <> '' then
+      perform net.http_post(
+        url := v_url || '/functions/v1/cleanup-guest-storage',
+        headers := jsonb_build_object(
+          'Content-Type', 'application/json',
+          'Authorization', 'Bearer ' || v_jwt,
+          'apikey', v_jwt
+        ),
+        body := jsonb_build_object('userId', v_id)
+      );
+    end if;
   end loop;
 
   -- 2. Usuwanie niepotwierdzonych kont (brak username, brak logowania, > 5 dni)
@@ -3295,6 +3332,18 @@ begin
     loop
       perform public.delete_user_everything(v_id);
       v_deleted := v_deleted + 1;
+
+      if coalesce(v_url, '') <> '' and coalesce(v_jwt, '') <> '' then
+        perform net.http_post(
+          url := v_url || '/functions/v1/cleanup-guest-storage',
+          headers := jsonb_build_object(
+            'Content-Type', 'application/json',
+            'Authorization', 'Bearer ' || v_jwt,
+            'apikey', v_jwt
+          ),
+          body := jsonb_build_object('userId', v_id)
+        );
+      end if;
     end loop;
   end if;
 
@@ -13966,5 +14015,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict HekoRbCIgS1wejRLUKKQZY5ZgWb5Kum2Y2ErX9YbHdeh9fbkP5FAuGim3dHQIPa
+\unrestrict ygBHPPncoRo20QW2FCxichrpXA6afheCVdCcgELqCW4Ybm0Ao3BdKqeHfaFrHGu
 
