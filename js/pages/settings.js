@@ -23,17 +23,45 @@ const TOOLS_MANIFEST = "/settings-tools/tools.json?v=v2026-08-18T21140";
 const POLL_MS = 15000;
 const MINUTES_MIN = 10;
 const MAIL_PROVIDERS = ["brevo", "mailgun", "sendpulse", "zeptomail"];
-const EMAIL_TEMPLATES = {
-  custom: "",
-  info: "Dziękujemy za wiadomość. Odpowiemy tak szybko, jak to możliwe.",
-  received: "Twoja wiadomość została odebrana. Zajmiemy się nią wkrótce.",
-  resolved: "Twoje zgłoszenie zostało rozwiązane. Jeśli masz dodatkowe pytania, odpowiedz na tę wiadomość.",
-  pending: "Twoje zgłoszenie jest w trakcie realizacji. Otrzymasz aktualizację, gdy tylko będziemy mieli więcej informacji.",
-  more_info: "Aby lepiej zrozumieć Twój problem, prosimy o dodatkowe informacje:\n- Kiedy wystąpił problem?\n- Jakie kroki podjąłeś/aś przed wystąpieniem problemu?\n- Czy problem występuje nadal?",
-  followup: "Chcielibyśmy się upewnić, że wszystko działa poprawnie. Czy masz jeszcze jakieś pytania lub wątpliwości?",
-  closed: "To zgłoszenie zostało zamknięte. Jeśli potrzebujesz dalszej pomocy, utwórz nowe zgłoszenie.",
-  thanks: "Dziękujemy za kontakt z nami. Miłego dnia!",
+const EMAIL_TEMPLATES_I18N = {
+  pl: {
+    custom: "",
+    info: "Dziękujemy za wiadomość. Odpowiemy tak szybko, jak to możliwe.",
+    received: "Twoja wiadomość została odebrana. Zajmiemy się nią wkrótce.",
+    resolved: "Twoje zgłoszenie zostało rozwiązane. Jeśli masz dodatkowe pytania, odpowiedz na tę wiadomość.",
+    pending: "Twoje zgłoszenie jest w trakcie realizacji. Otrzymasz aktualizację, gdy tylko będziemy mieli więcej informacji.",
+    more_info: "Aby lepiej zrozumieć Twój problem, prosimy o dodatkowe informacje:\n- Kiedy wystąpił problem?\n- Jakie kroki podjąłeś/aś przed wystąpieniem problemu?\n- Czy problem występuje nadal?",
+    followup: "Chcielibyśmy się upewnić, że wszystko działa poprawnie. Czy masz jeszcze jakieś pytania lub wątpliwości?",
+    closed: "To zgłoszenie zostało zamknięte. Jeśli potrzebujesz dalszej pomocy, utwórz nowe zgłoszenie.",
+    thanks: "Dziękujemy za kontakt z nami. Miłego dnia!",
+  },
+  en: {
+    custom: "",
+    info: "Thank you for your message. We'll get back to you as soon as possible.",
+    received: "Your message has been received. We'll take care of it shortly.",
+    resolved: "Your ticket has been resolved. If you have any further questions, just reply to this message.",
+    pending: "Your ticket is currently being processed. We'll update you as soon as we have more information.",
+    more_info: "To better understand your issue, please provide some additional information:\n- When did the problem occur?\n- What steps did you take before it happened?\n- Is the problem still occurring?",
+    followup: "We just wanted to make sure everything is working properly. Do you have any further questions or concerns?",
+    closed: "This ticket has been closed. If you need further assistance, please open a new ticket.",
+    thanks: "Thank you for contacting us. Have a great day!",
+  },
+  uk: {
+    custom: "",
+    info: "Дякуємо за повідомлення. Відповімо якнайшвидше.",
+    received: "Ваше повідомлення отримано. Незабаром ми ним займемося.",
+    resolved: "Ваше звернення вирішено. Якщо у вас є додаткові запитання, відповідайте на цей лист.",
+    pending: "Ваше звернення перебуває в обробці. Ми повідомимо вас, щойно матимемо більше інформації.",
+    more_info: "Щоб краще зрозуміти вашу проблему, повідомте, будь ласка, додаткову інформацію:\n- Коли виникла проблема?\n- Які кроки ви виконали перед тим, як вона виникла?\n- Чи проблема досі актуальна?",
+    followup: "Хочемо переконатися, що все працює належним чином. Чи маєте ви ще якісь запитання або сумніви?",
+    closed: "Це звернення закрито. Якщо потрібна подальша допомога, створіть нове звернення.",
+    thanks: "Дякуємо за звернення до нас. Гарного дня!",
+  },
 };
+
+function getEmailTemplates(lang = "pl") {
+  return EMAIL_TEMPLATES_I18N[lang] || EMAIL_TEMPLATES_I18N.pl;
+}
 
 const CRON_PRESETS = [
   { id: "1m", schedule: "* * * * *", minutes: 1 },
@@ -4174,7 +4202,7 @@ function showCompose(defaults = {}) {
     options: getComposeTemplateOptions(composeLang),
     value: "custom",
     onChange: (templateKey) => {
-      const templateText = EMAIL_TEMPLATES[templateKey] || "";
+      const templateText = getEmailTemplates(composeLang)[templateKey] || "";
       const editor = tinymce.get("composeMessageArea");
       if (editor && templateText) editor.setContent(templateText);
     },
