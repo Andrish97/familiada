@@ -5404,8 +5404,18 @@ async function openStatsDetailModal(type) {
     text: "",
     okText: "Zamknij",
     body,
-    onReady: ({ okBtn }) => {
+    onReady: ({ okBtn, overlay }) => {
       if (okBtn?.parentElement) okBtn.parentElement.style.display = "none";
+      // Ten modal bywa wyższy niż widoczny obszar na małych ekranach (mobile) —
+      // pozwól całemu tłu się przewinąć, żeby nagłówek z X zawsze był osiągalny.
+      // Skopiowane tylko na ten overlay, żeby nie dotykać wspólnej klasy .overlay
+      // używanej przez ~20 innych stron.
+      if (overlay) {
+        overlay.style.overflowY = "auto";
+        overlay.style.padding = "24px 12px";
+        overlay.style.boxSizing = "border-box";
+        overlay.style.alignItems = "safe center";
+      }
     },
   });
 
