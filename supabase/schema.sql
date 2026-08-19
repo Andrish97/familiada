@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict YVX4XwDTEOakSeLKtoxE75BLFmPi6Hx2sDPahB2Os8G3PEwADi2fE1vVbghLABJ
+\restrict HekoRbCIgS1wejRLUKKQZY5ZgWb5Kum2Y2ErX9YbHdeh9fbkP5FAuGim3dHQIPa
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -8845,9 +8845,9 @@ BEGIN
   v_lang := lower(trim(coalesce(p_lang, 'pl')));
   IF v_lang NOT IN ('pl', 'en', 'uk') THEN v_lang := 'pl'; END IF;
 
-  DELETE FROM public.user_logos WHERE user_id = v_uid AND (is_demo = true OR name IN (SELECT payload->>'name' FROM public.demo_template_data WHERE lang = v_lang AND slot IN ('logo_text', 'logo_draw', 'logo_image')));
-  DELETE FROM public.question_bases WHERE owner_id = v_uid AND (is_demo = true OR name IN (SELECT payload->'base'->>'name' FROM public.demo_template_data WHERE lang = v_lang AND slot = 'base'));
-  DELETE FROM public.games WHERE owner_id = v_uid AND (is_demo = true OR name IN (SELECT payload->'game'->>'name' FROM public.demo_template_data WHERE lang = v_lang AND slot IN ('poll_text_open', 'poll_text_closed', 'poll_points_open', 'poll_points_closed', 'prepared', 'poll_points_draft', 'poll_text_draft')));
+  DELETE FROM public.user_logos WHERE user_id = v_uid AND is_demo = true;
+  DELETE FROM public.question_bases WHERE owner_id = v_uid AND is_demo = true;
+  DELETE FROM public.games WHERE owner_id = v_uid AND is_demo = true;
 
   PERFORM public.seed_demo_for_user(v_uid, v_lang);
 END;
@@ -13966,5 +13966,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict YVX4XwDTEOakSeLKtoxE75BLFmPi6Hx2sDPahB2Os8G3PEwADi2fE1vVbghLABJ
+\unrestrict HekoRbCIgS1wejRLUKKQZY5ZgWb5Kum2Y2ErX9YbHdeh9fbkP5FAuGim3dHQIPa
 
