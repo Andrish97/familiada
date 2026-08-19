@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 0nbc6vHl8MMkiWJbLshSCp8h5q4UgfTuIIsqHEA10sqlneMWeSX7Wh08R4e2B79
+\restrict YVX4XwDTEOakSeLKtoxE75BLFmPi6Hx2sDPahB2Os8G3PEwADi2fE1vVbghLABJ
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -4478,12 +4478,8 @@ CREATE FUNCTION "public"."market_admin_delete"("p_id" "uuid", "p_force" boolean 
 declare
     v_rows int;
 begin
-    -- gry z origin = 'producer' lub majace storage_path (dawniej gh_slug)
-    -- moga byc usuniete tylko przez admina z p_force = true
-    -- Sprawdzamy czy to gra producenta (admina), bo te sa 'chronione'
     if not p_force and exists (
-        select 1 from public.market_games
-         where id = p_id and (origin = 'producer' or storage_path is not null)
+        select 1 from public.market_games where id = p_id and origin = 'producer'
     ) then
         return query select false, 'admin_game_cannot_be_deleted_without_force';
         return;
@@ -4527,26 +4523,16 @@ $$;
 -- Name: market_admin_list("text"); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION "public"."market_admin_list"("p_status" "text" DEFAULT 'pending'::"text") RETURNS TABLE("id" "uuid", "title" "text", "description" "text", "lang" "text", "status" "public"."market_game_status", "moderation_note" "text", "library_count" integer, "author_username" "text", "author_email" "text", "storage_path" "text", "created_at" timestamp with time zone, "updated_at" timestamp with time zone, "source_game_id" "uuid", "origin" "text", "slug" "text")
+CREATE FUNCTION "public"."market_admin_list"("p_status" "text" DEFAULT 'pending'::"text") RETURNS TABLE("id" "uuid", "title" "text", "description" "text", "lang" "text", "status" "public"."market_game_status", "moderation_note" "text", "library_count" integer, "author_username" "text", "author_email" "text", "created_at" timestamp with time zone, "updated_at" timestamp with time zone, "source_game_id" "uuid", "origin" "text", "slug" "text")
     LANGUAGE "sql" STABLE SECURITY DEFINER
     SET "search_path" TO 'public'
     AS $$
   SELECT
-    mg.id,
-    mg.title,
-    mg.description,
-    mg.lang,
-    mg.status,
-    mg.moderation_note,
-    mg.library_count,
+    mg.id, mg.title, mg.description, mg.lang, mg.status, mg.moderation_note, mg.library_count,
     COALESCE(pr.username, '') AS author_username,
     COALESCE(pr.email, '')    AS author_email,
-    NULL::text                AS storage_path,
-    mg.created_at,
-    mg.updated_at,
-    mg.source_game_id,
-    mg.origin::text           AS origin,
-    mg.slug
+    mg.created_at, mg.updated_at, mg.source_game_id,
+    mg.origin::text AS origin, mg.slug
   FROM public.market_games mg
   LEFT JOIN public.profiles pr ON pr.id = mg.author_user_id
   WHERE mg.status = p_status::public.market_game_status
@@ -4612,37 +4598,6 @@ begin
    where id = p_id;
 
   return query select true, '';
-end;
-$$;
-
-
---
--- Name: market_admin_sync_cleanup("text"[]); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."market_admin_sync_cleanup"("p_storage_paths" "text"[]) RETURNS TABLE("deleted" integer, "paths" "text"[])
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public'
-    AS $$
-declare
-    v_paths text[];
-    v_count int;
-begin
-    -- zbierz ścieżki które zostaną usunięte (te, które są w marketplace/ ale nie ma ich w przesłanej liście)
-    select array_agg(storage_path)
-      into v_paths
-      from public.market_games
-     where storage_path LIKE 'marketplace/%'
-       and storage_path != all(p_storage_paths);
-
-    -- usuń
-    delete from public.market_games
-     where storage_path LIKE 'marketplace/%'
-       and storage_path != all(p_storage_paths);
-
-    get diagnostics v_count = row_count;
-
-    return query select v_count, coalesce(v_paths, '{}'::text[]);
 end;
 $$;
 
@@ -10477,7 +10432,6 @@ CREATE TABLE "public"."market_games" (
     "library_count" integer DEFAULT 0 NOT NULL,
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
-    "storage_path" "text",
     "origin" "public"."market_game_origin" DEFAULT 'community'::"public"."market_game_origin" NOT NULL,
     "questions_text" "text" DEFAULT ''::"text" NOT NULL,
     "questions_fingerprint" "text",
@@ -10489,13 +10443,6 @@ CREATE TABLE "public"."market_games" (
     CONSTRAINT "market_games_library_count_nn" CHECK (("library_count" >= 0)),
     CONSTRAINT "market_games_title_len" CHECK ((("char_length"("title") >= 1) AND ("char_length"("title") <= 120)))
 );
-
-
---
--- Name: COLUMN "market_games"."storage_path"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN "public"."market_games"."storage_path" IS 'Path to JSON in community-games bucket (prefix: marketplace/)';
 
 
 --
@@ -11853,13 +11800,6 @@ CREATE UNIQUE INDEX "market_games_slug_key" ON "public"."market_games" USING "bt
 --
 
 CREATE INDEX "market_games_status_idx" ON "public"."market_games" USING "btree" ("status");
-
-
---
--- Name: market_games_storage_path_idx; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX "market_games_storage_path_idx" ON "public"."market_games" USING "btree" ("storage_path");
 
 
 --
@@ -14026,5 +13966,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 0nbc6vHl8MMkiWJbLshSCp8h5q4UgfTuIIsqHEA10sqlneMWeSX7Wh08R4e2B79
+\unrestrict YVX4XwDTEOakSeLKtoxE75BLFmPi6Hx2sDPahB2Os8G3PEwADi2fE1vVbghLABJ
 
