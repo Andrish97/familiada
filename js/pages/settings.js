@@ -3854,7 +3854,7 @@ function showCompose(defaults = {}) {
           <div style="display:flex;justify-content:flex-end;margin-bottom:6px">
             <div class="lang-switcher" id="composeLangSwitcher" style="position:relative">
               <button type="button" class="btn lang-btn" id="composeLangBtn" aria-label="Zmień język treści powitania, pożegnania, nadawcy i szablonu" title="Zmień język treści powitania, pożegnania, nadawcy i szablonu">🇵🇱</button>
-              <div class="lang-menu" id="composeLangMenu" hidden></div>
+              <div class="lang-menu" id="composeLangMenu" hidden style="position:absolute;top:100%;right:0;left:auto;margin-top:6px"></div>
             </div>
           </div>
           <div class="mail-inline-grid" style="margin-bottom:12px">
@@ -4233,13 +4233,6 @@ function showCompose(defaults = {}) {
       e.stopPropagation();
       if (!menuEl) return;
       menuEl.hidden = !menuEl.hidden;
-      if (!menuEl.hidden && switcherEl) {
-        const rect = switcherEl.getBoundingClientRect();
-        menuEl.style.position = "fixed";
-        menuEl.style.top = `${rect.bottom + 6}px`;
-        menuEl.style.right = `${window.innerWidth - rect.right}px`;
-        menuEl.style.left = "auto";
-      }
     });
 
     document.addEventListener("click", (e) => {
