@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict s2gtVuG0raoWcop3GTA2glqNK3ocWReCJEpHfYK8qieWNll2gtx8C6sWXvS4dOG
+\restrict A1NW6oWMWgWaI5tvolgUMZlQP9cIoQVWtduEeFjPCMOjJirrrgNEodph5OV3k9M
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -2394,9 +2394,8 @@ BEGIN
           GROUP BY q.game_id) AS sub;
 
   -- Niedomyślne ustawienia: advanced (mnożniki/finał) + wygląd ekranu +
-  -- tryb wyboru pytań + niestandardowy dźwięk (nie tylko finał/mnożniki).
-  -- WŁĄCZNIE z grami demo (jak w gameplay) — zmiana ustawień to działanie
-  -- użytkownika, nawet na grze dostarczonej mu automatycznie.
+  -- tryb wyboru pytań + niestandardowy dźwięk (realnie wgrany plik, nie
+  -- sama zmiana głośności). WŁĄCZNIE z grami demo (jak w gameplay).
   SELECT COUNT(*) INTO custom_settings_total FROM public.games g
     WHERE NOT (g.owner_id = ANY(excluded_ids))
       AND (
@@ -2410,7 +2409,10 @@ BEGIN
         OR (g.settings->'game'->>'hasFinal' IS NOT NULL)
         OR (g.settings->'game'->>'finalQuestionsMode' IS NOT NULL AND g.settings->'game'->>'finalQuestionsMode' <> 'random')
         OR (g.settings->'game'->>'roundsQuestionsMode' IS NOT NULL AND g.settings->'game'->>'roundsQuestionsMode' <> 'random')
-        OR (g.settings->'sound' IS NOT NULL AND g.settings->'sound' <> '{}'::jsonb)
+        OR EXISTS (
+          SELECT 1 FROM jsonb_each_text(COALESCE(g.settings->'sound'->'variants', '{}'::jsonb)) v
+          WHERE v.value = '__custom__'
+        )
       );
 
   -- Gameplay (game_sessions_effective — realne rozgrywki, WŁĄCZNIE z sesjami
@@ -3130,7 +3132,10 @@ BEGIN
           OR (g.settings->'game'->>'hasFinal' IS NOT NULL)
           OR (g.settings->'game'->>'finalQuestionsMode' IS NOT NULL AND g.settings->'game'->>'finalQuestionsMode' <> 'random')
           OR (g.settings->'game'->>'roundsQuestionsMode' IS NOT NULL AND g.settings->'game'->>'roundsQuestionsMode' <> 'random')
-          OR (g.settings->'sound' IS NOT NULL AND g.settings->'sound' <> '{}'::jsonb)
+          OR EXISTS (
+            SELECT 1 FROM jsonb_each_text(COALESCE(g.settings->'sound'->'variants', '{}'::jsonb)) v
+            WHERE v.value = '__custom__'
+          )
         )
       ORDER BY g.created_at DESC
       LIMIT p_limit
@@ -14021,5 +14026,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict s2gtVuG0raoWcop3GTA2glqNK3ocWReCJEpHfYK8qieWNll2gtx8C6sWXvS4dOG
+\unrestrict A1NW6oWMWgWaI5tvolgUMZlQP9cIoQVWtduEeFjPCMOjJirrrgNEodph5OV3k9M
 
