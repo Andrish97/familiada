@@ -44,7 +44,7 @@
       <button class="btn sm tab-btn active" id="btnTabMaintenance" type="button">Prace techniczne</button>
       <button class="btn sm tab-btn" id="btnTabStats" type="button">Statystyki</button>
       <button class="btn sm tab-btn" id="btnTabRatings" type="button">Oceny</button>
-      <button class="btn sm tab-btn" id="btnTabMail" type="button">Maile</button>
+      <button class="btn sm tab-btn" id="btnTabMail" type="button">Ustawienia maili</button>
       <button class="btn sm tab-btn" id="btnTabReports" type="button">Zgłoszenia</button>
       <button class="btn sm tab-btn" id="btnTabMarketing" type="button">Marketing</button>
       <button class="btn sm tab-btn" id="btnTabMarketingContacts" type="button">Kontakty Marketingowe</button>
@@ -220,7 +220,7 @@
               <div class="field">
                 <label class="field-label" for="mailWorkerLimit">Ile maili na jedno uruchomienie workera</label>
                 <input id="mailWorkerLimit" type="number" min="1" max="200" step="1" value="25"/>
-                <div class="field-hint">Ile maili worker wysyła podczas jednego uruchomienia.</div>
+                <div class="field-hint">To limit na jedno odpalenie (cron lub ręczne).</div>
               </div>
             </div>
 
@@ -295,13 +295,13 @@
             <div class="settings-card-title">Ręczne akcje workera</div>
             <div class="mail-inline-grid">
               <div class="field">
-                <label class="field-label" for="mailRunLimit">Limit dla uruchomienia ręcznego</label>
+                <label class="field-label" for="mailRunLimit">Ile maili wysłać teraz</label>
                 <input id="mailRunLimit" type="number" min="1" max="200" step="1" value="25"/>
-                <div class="field-hint">Maksymalnie tyle rekordów wyśle jedno ręczne uruchomienie.</div>
+                <div class="field-hint">Maksymalnie tyle rekordów weźmie worker przy ręcznym uruchomieniu.</div>
               </div>
             </div>
             <div class="panel-actions">
-              <button class="btn sm gold" id="btnMailRunWorker" type="button">Uruchom worker</button>
+              <button class="btn sm gold" id="btnMailRunWorker" type="button">Wyślij zaległe teraz</button>
               <button class="btn sm" id="btnMailRetryFailed" type="button">Przywróć failed i wyślij</button>
               <button class="btn sm" id="btnMailRetrySelected" type="button">Wyślij zaznaczone</button>
             </div>
@@ -534,7 +534,7 @@
 
           <!-- Sidebar -->
           <div class="mail-sidebar">
-            <button class="btn gold sm" id="btnMailCompose" type="button" style="width:100%;margin-bottom:18px">✏ <span>Napisz nową</span></button>
+            <button class="btn gold sm" id="btnMailCompose" type="button" style="width:100%;margin-bottom:18px">✏ <span>Napisz wiadomość</span></button>
             <nav class="mail-folders">
               <div class="mail-folder active" data-folder="inbox" id="mfInbox">
                 <span class="mail-folder-icon">📥</span>

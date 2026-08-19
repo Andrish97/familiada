@@ -1411,8 +1411,15 @@ function cronPresetLabel(preset) {
   return CRON_PRESET_LABELS[preset.id] || `Every ${preset.minutes} min`;
 }
 
-function getGreetingOptions() {
-  return [
+const COMPOSE_LANG_META = {
+  pl: { flag: "🇵🇱", code: "PL" },
+  en: { flag: "🇬🇧", code: "EN" },
+  uk: { flag: "🇺🇦", code: "UK" },
+};
+const COMPOSE_LANGS = Object.keys(COMPOSE_LANG_META);
+
+const GREETING_OPTIONS_I18N = {
+  pl: [
     { value: "none", label: "Brak powitania" },
     { value: "witaj", label: "Witaj" },
     { value: "hello", label: "Dzień dobry" },
@@ -1420,67 +1427,157 @@ function getGreetingOptions() {
     { value: "dearUser", label: "Szanowny Użytkowniku" },
     { value: "dearCustomer", label: "Szanowny Kliencie" },
     { value: "custom", label: "Własne..." },
-  ];
-}
+  ],
+  en: [
+    { value: "none", label: "No greeting" },
+    { value: "witaj", label: "Hello" },
+    { value: "hello", label: "Good morning" },
+    { value: "hi", label: "Hi" },
+    { value: "dearUser", label: "Dear User" },
+    { value: "dearCustomer", label: "Dear Customer" },
+    { value: "custom", label: "Custom..." },
+  ],
+  uk: [
+    { value: "none", label: "Без привітання" },
+    { value: "witaj", label: "Вітаю" },
+    { value: "hello", label: "Доброго дня" },
+    { value: "hi", label: "Привіт" },
+    { value: "dearUser", label: "Шановний Користувачу" },
+    { value: "dearCustomer", label: "Шановний Клієнте" },
+    { value: "custom", label: "Власне..." },
+  ],
+};
 
-function getFarewellOptions() {
-  return [
+const FAREWELL_OPTIONS_I18N = {
+  pl: [
     { value: "none", label: "Brak pożegnania" },
     { value: "regards", label: "Pozdrawiam" },
     { value: "regardsPl", label: "Pozdrawiamy" },
     { value: "bestRegards", label: "Z poważaniem" },
     { value: "kindRegards", label: "Łączę wyrazy szacunku" },
     { value: "custom", label: "Własne..." },
-  ];
-}
+  ],
+  en: [
+    { value: "none", label: "No farewell" },
+    { value: "regards", label: "Regards" },
+    { value: "regardsPl", label: "Best regards" },
+    { value: "bestRegards", label: "Sincerely" },
+    { value: "kindRegards", label: "Kind regards" },
+    { value: "custom", label: "Custom..." },
+  ],
+  uk: [
+    { value: "none", label: "Без прощання" },
+    { value: "regards", label: "З повагою" },
+    { value: "regardsPl", label: "Вітаємо" },
+    { value: "bestRegards", label: "З найкращими побажаннями" },
+    { value: "kindRegards", label: "Щиро" },
+    { value: "custom", label: "Власне..." },
+  ],
+};
 
-function getSenderOptions() {
-  return [
+const SENDER_OPTIONS_I18N = {
+  pl: [
     { value: "none", label: "Brak nadawcy" },
     { value: "team", label: "Zespół Familiada" },
     { value: "creator", label: "Twórca Familiada" },
     { value: "admin", label: "Admin" },
     { value: "support", label: "Wsparcie techniczne" },
     { value: "custom", label: "Własny..." },
-  ];
+  ],
+  en: [
+    { value: "none", label: "No sender" },
+    { value: "team", label: "Familiada Team" },
+    { value: "creator", label: "Familiada Creator" },
+    { value: "admin", label: "Admin" },
+    { value: "support", label: "Technical Support" },
+    { value: "custom", label: "Custom..." },
+  ],
+  uk: [
+    { value: "none", label: "Без відправника" },
+    { value: "team", label: "Команда Familiada" },
+    { value: "creator", label: "Творець Familiada" },
+    { value: "admin", label: "Адмін" },
+    { value: "support", label: "Технічна підтримка" },
+    { value: "custom", label: "Власний..." },
+  ],
+};
+
+const TEMPLATE_OPTIONS_I18N = {
+  pl: [
+    { value: "custom", label: "Własny" },
+    { value: "info", label: "Podziękowanie" },
+    { value: "received", label: "Potwierdzenie otrzymania" },
+    { value: "resolved", label: "Zgłoszenie rozwiązane" },
+    { value: "pending", label: "W trakcie realizacji" },
+    { value: "more_info", label: "Prośba o informacje" },
+    { value: "followup", label: "Follow-up" },
+    { value: "closed", label: "Zamknięcie zgłoszenia" },
+    { value: "thanks", label: "Podziękowanie" },
+  ],
+  en: [
+    { value: "custom", label: "Custom" },
+    { value: "info", label: "Thank you" },
+    { value: "received", label: "Confirmation received" },
+    { value: "resolved", label: "Ticket resolved" },
+    { value: "pending", label: "In progress" },
+    { value: "more_info", label: "Request for information" },
+    { value: "followup", label: "Follow-up" },
+    { value: "closed", label: "Ticket closed" },
+    { value: "thanks", label: "Thank you" },
+  ],
+  uk: [
+    { value: "custom", label: "Власний" },
+    { value: "info", label: "Подяка" },
+    { value: "received", label: "Підтвердження отримання" },
+    { value: "resolved", label: "Звернення вирішено" },
+    { value: "pending", label: "В процесі" },
+    { value: "more_info", label: "Прохання про інформацію" },
+    { value: "followup", label: "Follow-up" },
+    { value: "closed", label: "Звернення закрито" },
+    { value: "thanks", label: "Подяка" },
+  ],
+};
+
+function getGreetingOptions(lang = "pl") {
+  return GREETING_OPTIONS_I18N[lang] || GREETING_OPTIONS_I18N.pl;
 }
 
-function buildEmailSignature({ greeting = "none", farewell = "none", sender = "none", greetingCustom = "", farewellCustom = "", senderCustom = "" } = {}) {
+function getFarewellOptions(lang = "pl") {
+  return FAREWELL_OPTIONS_I18N[lang] || FAREWELL_OPTIONS_I18N.pl;
+}
+
+function getSenderOptions(lang = "pl") {
+  return SENDER_OPTIONS_I18N[lang] || SENDER_OPTIONS_I18N.pl;
+}
+
+function getComposeTemplateOptions(lang = "pl") {
+  return TEMPLATE_OPTIONS_I18N[lang] || TEMPLATE_OPTIONS_I18N.pl;
+}
+
+function buildEmailSignature({ greeting = "none", farewell = "none", sender = "none", greetingCustom = "", farewellCustom = "", senderCustom = "", lang = "pl" } = {}) {
+  const greetingMap = Object.fromEntries(getGreetingOptions(lang).map((o) => [o.value, o.label]));
+  const farewellMap = Object.fromEntries(getFarewellOptions(lang).map((o) => [o.value, o.label]));
+  const senderMap = Object.fromEntries(getSenderOptions(lang).map((o) => [o.value, o.label]));
+
   let greetingText = "";
   if (greeting === "custom" && greetingCustom) {
     greetingText = greetingCustom.trim();
   } else if (greeting !== "none" && greeting !== "custom") {
-    greetingText = {
-      witaj: "Witaj",
-      hello: "Dzień dobry",
-      hi: "Cześć",
-      dearUser: "Szanowny Użytkowniku",
-      dearCustomer: "Szanowny Kliencie",
-    }[greeting] || "";
+    greetingText = greetingMap[greeting] || "";
   }
 
   let farewellText = "";
   if (farewell === "custom" && farewellCustom) {
     farewellText = farewellCustom.trim();
   } else if (farewell !== "none" && farewell !== "custom") {
-    farewellText = {
-      regards: "Pozdrawiam",
-      regardsPl: "Pozdrawiamy",
-      bestRegards: "Z poważaniem",
-      kindRegards: "Łączę wyrazy szacunku",
-    }[farewell] || "";
+    farewellText = farewellMap[farewell] || "";
   }
 
   let senderText = "";
   if (sender === "custom" && senderCustom) {
     senderText = senderCustom.trim();
   } else if (sender !== "none" && sender !== "custom") {
-    senderText = {
-      team: "Zespół Familiada",
-      creator: "Twórca Familiada",
-      admin: "Admin",
-      support: "Wsparcie techniczne",
-    }[sender] || "";
+    senderText = senderMap[sender] || "";
   }
 
   // Combine farewell and sender
@@ -3692,6 +3789,7 @@ async function toggleReportStatus(reportId, currentStatus) {
 let _composePrevActiveId   = null;
 let _composePrevIsReport   = false;
 let _composeCurrentAttachments = [];
+let composeLang = "pl";
 
 function showCompose(defaults = {}) {
   const conv = document.getElementById("mailConv");
@@ -3704,6 +3802,7 @@ function showCompose(defaults = {}) {
 
   _composePrevActiveId = msgActiveId;
   _composePrevIsReport = msgActiveFolder === "reports";
+  composeLang = "pl";
   msgActiveId = null;
   document.querySelectorAll(".mail-thread-item").forEach(el => el.classList.remove("active"));
 
@@ -3739,6 +3838,9 @@ function showCompose(defaults = {}) {
             <input class="inp" id="composeSubjectInput" type="text" autocomplete="off" style="width:100%;box-sizing:border-box" value="${escSetting(defaults.subject || "")}" placeholder="Wpisz temat wiadomości">
           </div>
 
+          <div style="display:flex;justify-content:flex-end;margin-bottom:6px">
+            <button type="button" class="btn sm" id="composeLangToggle" title="Zmień język treści powitania, pożegnania, nadawcy i szablonu">🇵🇱 PL</button>
+          </div>
           <div class="mail-inline-grid" style="margin-bottom:12px">
             <div class="field">
               <label class="field-label" style="font-size:12px">Powitanie</label>
@@ -3899,7 +4001,7 @@ function showCompose(defaults = {}) {
 
   // Initialize greeting select
   const composeGreetingSelect = initUiSelect(document.getElementById("composeGreetingSelect"), {
-    options: getGreetingOptions(),
+    options: getGreetingOptions(composeLang),
     value: defaults.greetingValue || "none",
     placeholder: "Brak",
     onChange: (val) => {
@@ -3913,7 +4015,7 @@ function showCompose(defaults = {}) {
   
   // Initialize farewell select
   const composeFarewellSelect = initUiSelect(document.getElementById("composeFarewellSelect"), {
-    options: getFarewellOptions(),
+    options: getFarewellOptions(composeLang),
     value: defaults.farewellValue || "none",
     placeholder: "Brak pożegnania",
     onChange: (val) => {
@@ -3927,7 +4029,7 @@ function showCompose(defaults = {}) {
 
   // Initialize sender select
   const composeSenderSelect = initUiSelect(document.getElementById("composeSenderSelect"), {
-    options: getSenderOptions(),
+    options: getSenderOptions(composeLang),
     value: defaults.senderValue || "team",
     placeholder: "Zespół Familiada",
     onChange: (val) => {
@@ -4068,24 +4170,27 @@ function showCompose(defaults = {}) {
   });
   
   // Template select - insert template text into TinyMCE body
-  initUiSelect(document.getElementById("composeTemplateSelect"), {
-    options: [
-      { value: "custom", label: "Własny" },
-      { value: "info", label: "Podziękowanie" },
-      { value: "received", label: "Potwierdzenie otrzymania" },
-      { value: "resolved", label: "Zgłoszenie rozwiązane" },
-      { value: "pending", label: "W trakcie realizacji" },
-      { value: "more_info", label: "Prośba o informacje" },
-      { value: "followup", label: "Follow-up" },
-      { value: "closed", label: "Zamknięcie zgłoszenia" },
-      { value: "thanks", label: "Podziękowanie" },
-    ],
+  const composeTemplateSelect = initUiSelect(document.getElementById("composeTemplateSelect"), {
+    options: getComposeTemplateOptions(composeLang),
     value: "custom",
     onChange: (templateKey) => {
       const templateText = EMAIL_TEMPLATES[templateKey] || "";
       const editor = tinymce.get("composeMessageArea");
       if (editor && templateText) editor.setContent(templateText);
     },
+  });
+
+  // Language toggle - cycles PL/EN/UK, swaps only the dropdown option texts above
+  document.getElementById("composeLangToggle")?.addEventListener("click", () => {
+    const idx = COMPOSE_LANGS.indexOf(composeLang);
+    composeLang = COMPOSE_LANGS[(idx + 1) % COMPOSE_LANGS.length];
+    composeGreetingSelect?.setOptions(getGreetingOptions(composeLang));
+    composeFarewellSelect?.setOptions(getFarewellOptions(composeLang));
+    composeSenderSelect?.setOptions(getSenderOptions(composeLang));
+    composeTemplateSelect?.setOptions(getComposeTemplateOptions(composeLang));
+    const meta = COMPOSE_LANG_META[composeLang];
+    const toggleBtn = document.getElementById("composeLangToggle");
+    if (toggleBtn) toggleBtn.textContent = `${meta.flag} ${meta.code}`;
   });
 
   // Insert #quote button - only for replies (when hasQuote is true)
@@ -4159,17 +4264,19 @@ async function sendComposeWithSignature(greetingSelect, farewellSelect, senderSe
     greetingCustom,
     farewellCustom,
     senderCustom,
+    lang: composeLang,
   });
 
   // Build HTML email body with Familiada wrapper (dark theme)
-  const greetingText = buildEmailSignature({ greeting: greetingValue, farewell: "none", greetingCustom, farewellCustom: "" });
-  const farewellText = buildEmailSignature({ 
-    greeting: "none", 
-    farewell: farewellValue, 
+  const greetingText = buildEmailSignature({ greeting: greetingValue, farewell: "none", greetingCustom, farewellCustom: "", lang: composeLang });
+  const farewellText = buildEmailSignature({
+    greeting: "none",
+    farewell: farewellValue,
     sender: senderValue,
-    greetingCustom: "", 
+    greetingCustom: "",
     farewellCustom,
-    senderCustom
+    senderCustom,
+    lang: composeLang,
   });
 
   // body from TinyMCE is already HTML (<p>, <strong>, etc.) - don't replace \n with <br>
@@ -4282,11 +4389,12 @@ function showComposePreview(greetingSelect, farewellSelect, senderSelect) {
     greetingCustom,
     farewellCustom: "",
     senderCustom: "",
+    lang: composeLang,
   });
-  
+
   // Add comma after greeting if present (but not if it already ends with comma)
   const greetingWithComma = greetingText ? `${greetingText}${greetingText.trim().endsWith(',') ? '' : ','}` : "";
-  
+
   const farewellText = buildEmailSignature({
     greeting: "none",
     farewell: farewellValue,
@@ -4294,6 +4402,7 @@ function showComposePreview(greetingSelect, farewellSelect, senderSelect) {
     greetingCustom: "",
     farewellCustom,
     senderCustom,
+    lang: composeLang,
   });
 
   // body from TinyMCE is already HTML (<p>, <strong>, etc.) - don't replace \n with <br>
