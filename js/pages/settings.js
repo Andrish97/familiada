@@ -5708,7 +5708,7 @@ async function sendMarketing() {
   }
 
   const confirmed = await confirmModal({
-    text: `Wysłać wiadomość do ${mktValidEmails.length} odbiorców??`,
+    text: `Wysłać wiadomość do ${mktValidEmails.length} odbiorców?`,
   });
   if (!confirmed) return;
 

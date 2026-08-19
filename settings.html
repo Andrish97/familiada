@@ -45,7 +45,7 @@
       <button class="btn sm tab-btn" id="btnTabStats" type="button">Statystyki</button>
       <button class="btn sm tab-btn" id="btnTabRatings" type="button">Oceny</button>
       <button class="btn sm tab-btn" id="btnTabMail" type="button">Ustawienia maili</button>
-      <button class="btn sm tab-btn" id="btnTabReports" type="button">Zgłoszenia</button>
+      <button class="btn sm tab-btn" id="btnTabReports" type="button">Poczta Familiada</button>
       <button class="btn sm tab-btn" id="btnTabMarketing" type="button">Marketing</button>
       <button class="btn sm tab-btn" id="btnTabMarketingContacts" type="button">Kontakty Marketingowe</button>
       <button class="btn sm tab-btn" id="btnTabMarketplace" type="button">Gry Społeczności</button>
@@ -126,7 +126,7 @@
           </div>
 
           <div class="mode-status" id="modeStatus" hidden>
-            <span class="mode-status-label">Podgląd:</span>
+            <span class="mode-status-label">Podgląd</span>
             <span class="mode-status-value" id="modeStatusValue">—</span>
           </div>
 
@@ -176,7 +176,7 @@
         </div>
 
         <div class="bypass-box">
-          <div class="bypass-title">Pomiń administratora</div>
+          <div class="bypass-title">Bypass</div>
           <div class="bypass-actions">
             <label class="toggle" for="bypassToggle">
               <input type="checkbox" id="bypassToggle"/>
@@ -305,7 +305,7 @@
               <button class="btn sm" id="btnMailRetryFailed" type="button">Przywróć failed i wyślij</button>
               <button class="btn sm" id="btnMailRetrySelected" type="button">Wyślij zaznaczone</button>
             </div>
-            <div class="field-hint">W tabeli możesz też kliknąć „Wyślij teraz" przy pojedynczym mailu.</div>
+            <div class="field-hint">W tabeli możesz też kliknąć „Wyślij teraz” przy pojedynczym mailu.</div>
           </section>
 
           <section class="settings-card settings-card-wide settings-card-logs">
@@ -418,7 +418,7 @@
       <div class="market-admin-panel" id="generatorPanel" hidden>
         <div class="settings-card" id="gen-session-card">
           <div class="panel-head">
-            <div class="panel-title">Generator gier</div>
+            <div class="panel-title">Gry Producenta</div>
             <div class="panel-sub">Generowanie i zarządzanie grami producenta</div>
           </div>
           <div class="settings-card-title">🌐 Sesja</div>
@@ -890,7 +890,7 @@
                     <th class="mc-sortable" data-col="email" style="padding:6px;text-align:left;width:20%;cursor:pointer;user-select:none">Email</th>
                     <th class="mc-sortable" data-col="url" style="padding:6px;text-align:left;width:25%;cursor:pointer;user-select:none">URL</th>
                     <th class="mc-sortable" data-col="added_at" style="padding:6px;text-align:left;width:15%;cursor:pointer;user-select:none">Dodano</th>
-                    <th class="mc-sortable" data-col="is_used" style="padding:6px;text-align:center;width:50px;cursor:pointer;user-select:none">Użyte</th>
+                    <th class="mc-sortable" data-col="is_used" style="padding:6px;text-align:center;width:50px;cursor:pointer;user-select:none">Użyto</th>
                   </tr>
                 </thead>
                 <tbody id="mcTableBody">
@@ -916,7 +916,7 @@
           <div style="font-size:15px;font-weight:700;margin-bottom:14px">Przydziel zgłoszenie</div>
           <div style="font-size:12px;opacity:.5;margin-bottom:8px">Wybierz istniejące:</div>
           <div id="assignReportList" style="max-height:200px;overflow-y:auto;border:1px solid rgba(255,255,255,.1);border-radius:8px;margin-bottom:14px;padding:4px"></div>
-          <div style="font-size:12px;opacity:.5;margin-bottom:6px">…lub utwórz nowe:</div>
+          <div style="font-size:12px;opacity:.5;margin-bottom:6px">Nowe zgłoszenie</div>
           <input class="inp" id="assignNewSubject" type="text" placeholder="Temat nowego zgłoszenia" style="width:100%;box-sizing:border-box;margin-bottom:8px">
           <label id="assignQuoteLabel" style="display:none;align-items:center;gap:7px;font-size:12px;opacity:.6;cursor:pointer;user-select:none;margin-bottom:14px">
             <input type="checkbox" id="assignQuoteCheck" style="accent-color:#ffeaa6">
@@ -924,7 +924,7 @@
           </label>
           <div style="display:flex;justify-content:flex-end;gap:8px">
             <button class="btn sm" id="btnAssignCancel" type="button">Anuluj</button>
-            <button class="btn sm gold" id="btnAssignConfirm" type="button">Przydziel</button>
+            <button class="btn sm gold" id="btnAssignConfirm" type="button">Przydziel zgłoszenie</button>
           </div>
         </div>
       </div>
@@ -1027,7 +1027,7 @@
   <div class="overlay" id="maintenancePreviewOverlay" style="display:none;">
     <div class="modal" style="max-width:720px;width:94vw;max-height:90vh;">
       <div class="mHead">
-        <div class="mTitle">Podgląd strony maintenance</div>
+        <div class="mTitle">Podgląd</div>
         <button class="btn sm" id="btnMaintenancePreviewClose" type="button" aria-label="Zamknij">✕</button>
       </div>
       <iframe id="maintenancePreviewFrame" style="width:100%;height:70vh;border:1px solid rgba(255,255,255,.1);border-radius:10px;background:#050914;margin-top:12px"></iframe>
