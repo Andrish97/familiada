@@ -159,11 +159,14 @@ function clearDirty() {
 async function saveAll() {
   const hasFinal = localSettings.game.hasFinal === true;
 
-  // Finał wyłączony — wyczyść wybrane pytania finału, żeby martwa lista
+  // Finał wyłączony — wyczyść wybrane pytania finału (żeby martwa lista
   // nie zostawała w bazie i nie wykluczała tych pytań z puli rund przy
-  // kolejnym wczytaniu ustawień ani w trakcie realnej rozgrywki.
-  if (!hasFinal && localSettings.questions.final.length > 0) {
-    localSettings.questions.final = [];
+  // kolejnym wczytaniu ustawień ani w trakcie realnej rozgrywki) i
+  // zresetuj tryb wyboru na domyślny, żeby nie zostawało osierocone
+  // "Wybrane ręcznie" bez żadnych wybranych pytań.
+  if (!hasFinal) {
+    if (localSettings.questions.final.length > 0) localSettings.questions.final = [];
+    if (localSettings.game.finalQuestionsMode !== "random") localSettings.game.finalQuestionsMode = "random";
   }
 
   // Walidacja: finale w trybie "pick" wymaga dokładnie 5 pytań
@@ -1084,10 +1087,15 @@ function renderQuestions() {
   content.querySelectorAll("[name='gsHasFinal']").forEach(radio => {
     radio.addEventListener("change", () => {
       localSettings.game.hasFinal = radio.value === "yes";
+      if (!localSettings.game.hasFinal) {
+        // Wyłączenie finału od razu w UI: wyczyść wybrane pytania finału
+        // (przywraca je do puli rund) i zresetuj tryb na domyślny (losowo).
+        localSettings.questions.final = [];
+        localSettings.game.finalQuestionsMode = "random";
+      }
       markDirty();
       updateSubTabStates();
-      const field = document.getElementById("gsFinalModeField");
-      if (field) field.style.display = localSettings.game.hasFinal ? "block" : "none";
+      renderQuestions();
     });
   });
 
