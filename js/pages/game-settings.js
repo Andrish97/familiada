@@ -1,22 +1,22 @@
 // js/pages/game-settings.js
-import { requireAuth } from "../core/auth.js?v=v2026-08-18T21140";
-import { t, getUiLang } from "../../translation/translation.js?v=v2026-08-18T21140";
-import { setTopbarAccount } from "../core/topbar-controller.js?v=v2026-08-18T21140";
-import { sb } from "../core/supabase.js?v=v2026-08-18T21140";
-import { loadQuestions } from "../core/game-validate.js?v=v2026-08-18T21140";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../core/logo-preview.js?v=v2026-08-18T21140";
-import { v as cacheBust } from "../core/cache-bust.js?v=v2026-08-18T21140";
-import { alertModal, confirmModal } from "../core/modal.js?v=v2026-08-18T21140";
-import { initUiSelect } from "../core/ui-select.js?v=v2026-08-18T21140";
+import { requireAuth } from "../core/auth.js?v=v2026-08-19T15582";
+import { t, getUiLang } from "../../translation/translation.js?v=v2026-08-19T15582";
+import { setTopbarAccount } from "../core/topbar-controller.js?v=v2026-08-19T15582";
+import { sb } from "../core/supabase.js?v=v2026-08-19T15582";
+import { loadQuestions } from "../core/game-validate.js?v=v2026-08-19T15582";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../core/logo-preview.js?v=v2026-08-19T15582";
+import { v as cacheBust } from "../core/cache-bust.js?v=v2026-08-19T15582";
+import { alertModal, confirmModal } from "../core/modal.js?v=v2026-08-19T15582";
+import { initUiSelect } from "../core/ui-select.js?v=v2026-08-19T15582";
 import {
   loadSfxManifest, getSfxCategories,
   setSfxCustomBlob, clearSfxCustomFile, clearAllSfxCustomFiles, getSfxCustomFiles,
   playSfx, setSfxVolume,
-} from "../core/sfx.js?v=v2026-08-18T21140";
+} from "../core/sfx.js?v=v2026-08-19T15582";
 import {
   uploadGameSound, deleteGameSound, deleteAllGameSounds,
-} from "../core/sfx-cloud.js?v=v2026-08-18T21140";
-import { guardDesktopOnly } from "../core/device-guard.js?v=v2026-08-18T21140";
+} from "../core/sfx-cloud.js?v=v2026-08-19T15582";
+import { guardDesktopOnly } from "../core/device-guard.js?v=v2026-08-19T15582";
 
 guardDesktopOnly();
 
@@ -157,8 +157,19 @@ function clearDirty() {
 }
 
 async function saveAll() {
-  // Walidacja: finale w trybie "pick" wymaga dokładnie 5 pytań
   const hasFinal = localSettings.game.hasFinal === true;
+
+  // Finał wyłączony — wyczyść wybrane pytania finału (żeby martwa lista
+  // nie zostawała w bazie i nie wykluczała tych pytań z puli rund przy
+  // kolejnym wczytaniu ustawień ani w trakcie realnej rozgrywki) i
+  // zresetuj tryb wyboru na domyślny, żeby nie zostawało osierocone
+  // "Wybrane ręcznie" bez żadnych wybranych pytań.
+  if (!hasFinal) {
+    if (localSettings.questions.final.length > 0) localSettings.questions.final = [];
+    if (localSettings.game.finalQuestionsMode !== "random") localSettings.game.finalQuestionsMode = "random";
+  }
+
+  // Walidacja: finale w trybie "pick" wymaga dokładnie 5 pytań
   if (hasFinal && localSettings.game.finalQuestionsMode === "pick") {
     const count = localSettings.questions.final.length;
     if (count < 5) {
@@ -1076,10 +1087,15 @@ function renderQuestions() {
   content.querySelectorAll("[name='gsHasFinal']").forEach(radio => {
     radio.addEventListener("change", () => {
       localSettings.game.hasFinal = radio.value === "yes";
+      if (!localSettings.game.hasFinal) {
+        // Wyłączenie finału od razu w UI: wyczyść wybrane pytania finału
+        // (przywraca je do puli rund) i zresetuj tryb na domyślny (losowo).
+        localSettings.questions.final = [];
+        localSettings.game.finalQuestionsMode = "random";
+      }
       markDirty();
       updateSubTabStates();
-      const field = document.getElementById("gsFinalModeField");
-      if (field) field.style.display = localSettings.game.hasFinal ? "block" : "none";
+      renderQuestions();
     });
   });
 
@@ -1242,9 +1258,18 @@ function setupFinaleColumnDnd(poolEl, pickedEl) {
 }
 
 // --- PYTANIA — RUNDY ---
+// Pytania z listy finału są wykluczane z puli rund TYLKO gdy finał jest
+// faktycznie włączony — inaczej martwa lista pytań finałowych (np. po
+// wcześniejszym wyłączeniu finału bez wyczyszczenia wyboru) bezsensownie
+// zawężałaby pulę pytań do rund, mimo że finał się nigdy nie odpali.
+function effectiveFinalIds() {
+  return localSettings.game.hasFinal === true
+    ? new Set(localSettings.questions.final.map(q => q.id))
+    : new Set();
+}
+
 function renderRounds() {
-  // Pytania w finale ZAWSZE wykluczone z rund (bez względu na tryb)
-  const finaleIds = new Set(localSettings.questions.final.map(q => q.id));
+  const finaleIds = effectiveFinalIds();
 
   // Zbuduj pełną listę: najpierw zapisana kolejność (bez finalowych), potem brakujące
   const pickedIds = new Set(localSettings.questions.rounds.map(q => q.id));
@@ -1287,7 +1312,7 @@ function renderRounds() {
     if (!item) return;
     const id = item.dataset.qid;
     const dir = btn.dataset.dir;
-    const finaleSet = new Set(localSettings.questions.final.map(q => q.id));
+    const finaleSet = effectiveFinalIds();
     const arr = localSettings.questions.rounds.filter(q => !finaleSet.has(q.id));
     const idx = arr.findIndex(q => q.id === id);
     if (idx < 0) return;
@@ -1316,7 +1341,7 @@ function setupRoundsOrderDnd(listEl) {
       if (dragged) dragged.classList.remove("dragging");
       listEl.querySelectorAll(".roundsOrderItem").forEach(el => el.classList.remove("gs-row-drag-over-top", "gs-row-drag-over-bot"));
       // Zapisz nową kolejność z DOM (tylko widoczne, bez finalowych)
-      const finaleSet = new Set(localSettings.questions.final.map(q => q.id));
+      const finaleSet = effectiveFinalIds();
       const newOrder = [...listEl.querySelectorAll(".roundsOrderItem")]
         .map(el => localSettings.questions.rounds.find(q => q.id === el.dataset.qid))
         .filter(Boolean);
@@ -1594,8 +1619,10 @@ async function main() {
   localSettings = mergeSettings(game.settings);
 
   // Cleanup: usuń pytania finałowe z rounds (mogły tam trafić przed wdrożeniem tej logiki)
+  // — tylko gdy finał faktycznie włączony, inaczej martwa lista finałowa
+  // (po wcześniejszym wyłączeniu finału) niepotrzebnie zawężałaby pulę rund.
   {
-    const finalSet = new Set(localSettings.questions.final.map(q => q.id));
+    const finalSet = effectiveFinalIds();
     if (finalSet.size > 0) {
       localSettings.questions.rounds = localSettings.questions.rounds.filter(q => !finalSet.has(q.id));
     }

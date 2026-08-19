@@ -5,9 +5,9 @@
 //
 // Eksportuje: setTopbarNavPriority, setTopbarAccount (alias: initTopbarAccountDropdown), autoInitTopbarAuthButton
 
-import { signOut } from './auth.js?v=v2026-08-18T21140';
-import { isGuestUser } from './guest-mode.js?v=v2026-08-18T21140';
-import { t, withLangParam } from '../../translation/translation.js?v=v2026-08-18T21140';
+import { signOut } from './auth.js?v=v2026-08-19T15582';
+import { isGuestUser } from './guest-mode.js?v=v2026-08-19T15582';
+import { t, withLangParam } from '../../translation/translation.js?v=v2026-08-19T15582';
 
 // ── Narzędzie: pozycjonowanie fixed dropdown ──────────────────────────────────
 function repositionDropdown(anchorEl, dropdownEl) {
@@ -354,7 +354,7 @@ export { setTopbarAccount as initTopbarAccountDropdown };
 export async function autoInitTopbarAuthButton(btn = document.getElementById('btnLogout')) {
   if (!btn) return;
   if (btn.dataset.topbarAuthReady === '1') return;
-  const { getUser } = await import('./auth.js?v=v2026-08-18T21140');
+  const { getUser } = await import('./auth.js?v=v2026-08-19T15582');
   if (btn.dataset.topbarAuthReady === '1') return;
   const user = await getUser();
   if (btn.dataset.topbarAuthReady === '1') return;
@@ -569,6 +569,16 @@ function initTopbarController() {
   } else {
     mobileMq.addListener?.(syncMode);
   }
+
+  // Na części tabletów obrót ekranu nie zawsze odpala matchMedia "change"
+  // niezawodnie — przyciski zostają wtedy zablokowane w nieaktualnym stanie
+  // (schowane, a hamburger też już niewidoczny wg CSS) aż do przeładowania.
+  // orientationchange jako dodatkowy, redundantny trigger; opóźnienie, bo
+  // niektóre przeglądarki chwilę raportują stare wymiary tuż po evencie.
+  window.addEventListener('orientationchange', () => {
+    syncMode();
+    setTimeout(syncMode, 300);
+  });
 }
 
 function updateTopbarHeight() {

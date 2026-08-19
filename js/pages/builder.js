@@ -1,22 +1,22 @@
-import { addRenameGesture } from "../core/rename-gesture.js?v=v2026-08-18T21140";
-import { sb } from "../core/supabase.js?v=v2026-08-18T21140";
-import { requireAuth } from "../core/auth.js?v=v2026-08-18T21140";
-import { alertModal, confirmModal } from "../core/modal.js?v=v2026-08-18T21140";
-import { hideForGuest, isGuestUser } from "../core/guest-mode.js?v=v2026-08-18T21140";
-import { initI18n, t, applyTranslations } from "../../translation/translation.js?v=v2026-08-18T21140";
-import { initRatingSystem } from "../core/rating-system.js?v=v2026-08-18T21140";
-import { initUiSelect } from "../core/ui-select.js?v=v2026-08-18T21140";
-import { maybeShowGuestInfoModal } from "../core/guest-info-modal.js?v=v2026-08-18T21140";
+import { addRenameGesture } from "../core/rename-gesture.js?v=v2026-08-19T15582";
+import { sb } from "../core/supabase.js?v=v2026-08-19T15582";
+import { requireAuth } from "../core/auth.js?v=v2026-08-19T15582";
+import { alertModal, confirmModal } from "../core/modal.js?v=v2026-08-19T15582";
+import { hideForGuest, isGuestUser } from "../core/guest-mode.js?v=v2026-08-19T15582";
+import { initI18n, t, applyTranslations } from "../../translation/translation.js?v=v2026-08-19T15582";
+import { initRatingSystem } from "../core/rating-system.js?v=v2026-08-19T15582";
+import { initUiSelect } from "../core/ui-select.js?v=v2026-08-19T15582";
+import { maybeShowGuestInfoModal } from "../core/guest-info-modal.js?v=v2026-08-19T15582";
 
-import { initPwa, isStandalone, isMobileDevice } from "../core/pwa.js?v=v2026-08-18T21140";
+import { initPwa, isStandalone, isMobileDevice } from "../core/pwa.js?v=v2026-08-19T15582";
 
 // Zarejestruj listener PWA jak najwcześniej – beforeinstallprompt może odpalić przed requireAuth
 const pwaApi = initPwa();
 // Jeśli beforeinstallprompt już odpalił zanim dodaliśmy listener w IIFE, sprawdzimy po zalogowaniu
 
 
-import { exportGame, importGame, downloadJson } from "./builder-import-export.js?v=v2026-08-18T21140";
-import { setTopbarNavPriority, setTopbarAccount } from '../core/topbar-controller.js?v=v2026-08-18T21140';
+import { exportGame, importGame, downloadJson } from "./builder-import-export.js?v=v2026-08-19T15582";
+import { setTopbarNavPriority, setTopbarAccount } from '../core/topbar-controller.js?v=v2026-08-19T15582';
 
 import "../core/contact-modal.js";
 import {
@@ -27,7 +27,7 @@ import {
   validateGameReadyToPlay,
   validatePollEntry,
   validatePollReadyToOpen,
-} from "../core/game-validate.js?v=v2026-08-18T21140";
+} from "../core/game-validate.js?v=v2026-08-19T15582";
 
 const MSG = {
   exportBaseEmpty: () => t("builder.exportBase.empty"),
