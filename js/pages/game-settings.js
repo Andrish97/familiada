@@ -1242,9 +1242,18 @@ function setupFinaleColumnDnd(poolEl, pickedEl) {
 }
 
 // --- PYTANIA — RUNDY ---
+// Pytania z listy finału są wykluczane z puli rund TYLKO gdy finał jest
+// faktycznie włączony — inaczej martwa lista pytań finałowych (np. po
+// wcześniejszym wyłączeniu finału bez wyczyszczenia wyboru) bezsensownie
+// zawężałaby pulę pytań do rund, mimo że finał się nigdy nie odpali.
+function effectiveFinalIds() {
+  return localSettings.game.hasFinal === true
+    ? new Set(localSettings.questions.final.map(q => q.id))
+    : new Set();
+}
+
 function renderRounds() {
-  // Pytania w finale ZAWSZE wykluczone z rund (bez względu na tryb)
-  const finaleIds = new Set(localSettings.questions.final.map(q => q.id));
+  const finaleIds = effectiveFinalIds();
 
   // Zbuduj pełną listę: najpierw zapisana kolejność (bez finalowych), potem brakujące
   const pickedIds = new Set(localSettings.questions.rounds.map(q => q.id));
@@ -1287,7 +1296,7 @@ function renderRounds() {
     if (!item) return;
     const id = item.dataset.qid;
     const dir = btn.dataset.dir;
-    const finaleSet = new Set(localSettings.questions.final.map(q => q.id));
+    const finaleSet = effectiveFinalIds();
     const arr = localSettings.questions.rounds.filter(q => !finaleSet.has(q.id));
     const idx = arr.findIndex(q => q.id === id);
     if (idx < 0) return;
@@ -1316,7 +1325,7 @@ function setupRoundsOrderDnd(listEl) {
       if (dragged) dragged.classList.remove("dragging");
       listEl.querySelectorAll(".roundsOrderItem").forEach(el => el.classList.remove("gs-row-drag-over-top", "gs-row-drag-over-bot"));
       // Zapisz nową kolejność z DOM (tylko widoczne, bez finalowych)
-      const finaleSet = new Set(localSettings.questions.final.map(q => q.id));
+      const finaleSet = effectiveFinalIds();
       const newOrder = [...listEl.querySelectorAll(".roundsOrderItem")]
         .map(el => localSettings.questions.rounds.find(q => q.id === el.dataset.qid))
         .filter(Boolean);
@@ -1594,8 +1603,10 @@ async function main() {
   localSettings = mergeSettings(game.settings);
 
   // Cleanup: usuń pytania finałowe z rounds (mogły tam trafić przed wdrożeniem tej logiki)
+  // — tylko gdy finał faktycznie włączony, inaczej martwa lista finałowa
+  // (po wcześniejszym wyłączeniu finału) niepotrzebnie zawężałaby pulę rund.
   {
-    const finalSet = new Set(localSettings.questions.final.map(q => q.id));
+    const finalSet = effectiveFinalIds();
     if (finalSet.size > 0) {
       localSettings.questions.rounds = localSettings.questions.rounds.filter(q => !finalSet.has(q.id));
     }
