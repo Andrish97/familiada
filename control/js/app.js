@@ -214,7 +214,11 @@ function applyGameSettingsToStore(settings, store) {
   }
 
   if (questions) {
-    if (Array.isArray(questions.final) && questions.final.length > 0) {
+    // Tylko gdy finał faktycznie włączony — inaczej martwa lista pytań
+    // finałowych (po wcześniejszym wyłączeniu finału bez wyczyszczenia
+    // wyboru) niepotrzebnie wykluczyłaby te pytania z puli rund w trakcie
+    // realnej rozgrywki (pickQuestionsForRounds w gameRounds.js).
+    if (game?.hasFinal === true && Array.isArray(questions.final) && questions.final.length > 0) {
       const ids = questions.final.map(q => q.id).filter(Boolean);
       if (ids.length > 0) store.confirmFinalQuestions(ids);
     }

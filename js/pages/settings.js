@@ -5264,7 +5264,8 @@ function fmtQuestionsModeField(mode) {
 
 function fmtCustomSound(sound) {
   if (!sound || typeof sound !== "object") return "—";
-  const count = Object.keys(sound).length;
+  const variants = sound.variants && typeof sound.variants === "object" ? sound.variants : {};
+  const count = Object.values(variants).filter(v => v === "__custom__").length;
   return count > 0 ? `Niestandardowy (${count})` : "—";
 }
 

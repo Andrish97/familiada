@@ -157,8 +157,16 @@ function clearDirty() {
 }
 
 async function saveAll() {
-  // Walidacja: finale w trybie "pick" wymaga dokładnie 5 pytań
   const hasFinal = localSettings.game.hasFinal === true;
+
+  // Finał wyłączony — wyczyść wybrane pytania finału, żeby martwa lista
+  // nie zostawała w bazie i nie wykluczała tych pytań z puli rund przy
+  // kolejnym wczytaniu ustawień ani w trakcie realnej rozgrywki.
+  if (!hasFinal && localSettings.questions.final.length > 0) {
+    localSettings.questions.final = [];
+  }
+
+  // Walidacja: finale w trybie "pick" wymaga dokładnie 5 pytań
   if (hasFinal && localSettings.game.finalQuestionsMode === "pick") {
     const count = localSettings.questions.final.length;
     if (count < 5) {
