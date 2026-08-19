@@ -28,6 +28,7 @@ import {
   validatePollEntry,
   validatePollReadyToOpen,
 } from "../core/game-validate.js?v=v2026-08-19T16195";
+import { deleteGameSoundsFolder } from "../core/sfx-cloud.js?v=v2026-08-19T16195";
 
 const MSG = {
   exportBaseEmpty: () => t("builder.exportBase.empty"),
@@ -748,6 +749,13 @@ async function deleteGame(game) {
     cancelText: MSG.deleteCancel(),
   });
   if (!ok) return;
+
+  try {
+    await deleteGameSoundsFolder(sb(), currentUser.id, game.id);
+  } catch (e) {
+    // Nie blokujemy usuwania gry, jeśli sprzątanie plików audio się nie powiedzie
+    console.warn("[builder] deleteGameSoundsFolder failed:", e);
+  }
 
   const { error } = await sb().from("games").delete().eq("id", game.id);
   if (error) {
