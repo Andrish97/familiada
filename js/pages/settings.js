@@ -4196,6 +4196,31 @@ function showCompose(defaults = {}) {
     },
   });
 
+  // Fix ui-select.js dropdown menus (Powitanie/Pożegnanie/Nadawca/Szablon) being visually
+  // offset ONLY inside this compose window on narrow screens (<=980px): .mail-conv gets a CSS
+  // transform there for its slide animation, which makes position:fixed children (the menus)
+  // render relative to .mail-conv instead of the viewport. Scoped to #composePaneInner only -
+  // does not touch ui-select.js itself, so every other dropdown on the site is unaffected.
+  document.getElementById("composePaneInner")?.addEventListener("click", (e) => {
+    const btn = e.target.closest(".ui-select-btn");
+    if (!btn) return;
+    const menu = btn.closest(".ui-select")?.querySelector(".ui-select-menu");
+    const mailConv = document.querySelector(".mail-conv");
+    if (!menu || !mailConv || getComputedStyle(menu).position !== "fixed") return;
+    const convTransform = getComputedStyle(mailConv).transform;
+    if (!convTransform || convTransform === "none") return;
+    const convRect = mailConv.getBoundingClientRect();
+    if (menu.style.left && menu.style.left !== "auto") {
+      menu.style.left = (parseFloat(menu.style.left) - convRect.left) + "px";
+    }
+    if (menu.style.top && menu.style.top !== "auto") {
+      menu.style.top = (parseFloat(menu.style.top) - convRect.top) + "px";
+    }
+    if (menu.style.bottom && menu.style.bottom !== "auto") {
+      menu.style.bottom = (parseFloat(menu.style.bottom) - (window.innerHeight - convRect.bottom)) + "px";
+    }
+  });
+
   // Language switcher - dropdown styled/behaving like the site's lang-switcher (translation.js),
   // picks a language directly instead of cycling. Swaps only the dropdown option texts above.
   {
