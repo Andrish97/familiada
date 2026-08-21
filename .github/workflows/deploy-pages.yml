@@ -66,10 +66,30 @@ jobs:
         with:
           enablement: true
 
+      - name: Prepare public-only deployment directory
+        run: |
+          mkdir -p _site_public
+          rsync -a \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='tests' \
+            --exclude='supabase' \
+            --exclude='cloudflare' \
+            --exclude='services' \
+            --exclude='scripts' \
+            --exclude='docs' \
+            --exclude='searxng' \
+            --exclude='node_modules' \
+            --exclude='_site_public' \
+            --exclude='README*' \
+            --exclude='LICENSE*' \
+            --exclude='*.md' \
+            ./ _site_public/
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: "."
+          path: "_site_public"
 
       - name: Deploy to GitHub Pages
         id: deploy
