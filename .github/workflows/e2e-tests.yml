@@ -1,0 +1,51 @@
+name: E2E Tests (Playwright)
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "tests/**"
+      - ".github/workflows/e2e-tests.yml"
+  workflow_dispatch: {}
+
+# WAŻNE: celowo brak triggera `pull_request` — ten workflow ma dostęp do
+# E2E_BYPASS_SECRET/TEST_PASSWORD, a PR z forka mógłby uruchomić dowolny
+# kod z dostępem do sekretów. Patrz tests/README.md.
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: tests
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+        working-directory: tests
+
+      - name: Run E2E tests
+        env:
+          E2E_BYPASS_SECRET: ${{ secrets.E2E_BYPASS_SECRET }}
+          TEST_USERNAME: ${{ secrets.TEST_USERNAME }}
+          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
+        run: npm test
+        working-directory: tests
+
+      - name: Upload failure screenshots
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-failure-screenshots
+          path: tests/test-results/
+          retention-days: 7

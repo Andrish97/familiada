@@ -105,6 +105,18 @@ export default {
       return serveMaintenance(request, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
     }
 
+    // E2E test bypass — tylko strona logowania, tylko z poprawnym jednorazowym
+    // tokenem (patrz tests/README.md). Podmienia data-captcha-site-key na
+    // oficjalny, zawsze-przechodzący testowy sitekey Turnstile — nic więcej.
+    if (
+      (host === "www.familiada.online" || host === "familiada.online") &&
+      url.pathname === "/login" &&
+      request.method === "GET"
+    ) {
+      const e2eRes = await handleE2ELoginBypass(request, env, url, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
+      if (e2eRes) return e2eRes;
+    }
+
     const isBypass = hasAdminBypass(request, env);
 
     // Bypass → przepuszcza WSZYSTKO (nawet przy włączonym maintenance)
@@ -2815,6 +2827,105 @@ function withHeaders(res, extra) {
 function fetchFromOrigin(request, url, originBase, originHost, resolveOverride) {
   const target = new URL(url.pathname + url.search, originBase);
   return fetchWithOrigin(target.toString(), request, originHost, resolveOverride);
+}
+
+// ============================================================
+// E2E TEST BYPASS (patrz tests/README.md dla pełnego opisu)
+// ============================================================
+
+const TURNSTILE_TEST_SITEKEY = "1x00000000000000000000AA"; // oficjalny, zawsze-przechodzący testowy sitekey Cloudflare
+const E2E_TOKEN_MAX_AGE_MS = 5 * 60 * 1000; // 5 minut
+const E2E_NONCE_TTL_SECONDS = 10 * 60; // 10 minut w KV, żeby pokryć zegar-skew
+
+function hexToBytes(hex) {
+  const bytes = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < bytes.length; i++) {
+    bytes[i] = parseInt(hex.substr(i * 2, 2), 16);
+  }
+  return bytes;
+}
+
+// Token = base64(JSON {iat, nonce}) + "." + hex(HMAC-SHA256(payload_b64, secret))
+async function verifyE2EToken(token, secret) {
+  if (!token || typeof token !== "string") return null;
+  const parts = token.split(".");
+  if (parts.length !== 2) return null;
+  const [payloadB64, sigHex] = parts;
+
+  let payload;
+  try {
+    payload = JSON.parse(atob(payloadB64));
+  } catch {
+    return null;
+  }
+  if (!payload || typeof payload.iat !== "number" || typeof payload.nonce !== "string" || !payload.nonce) {
+    return null;
+  }
+
+  let key;
+  try {
+    key = await crypto.subtle.importKey(
+      "raw",
+      new TextEncoder().encode(secret),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["verify"]
+    );
+  } catch {
+    return null;
+  }
+
+  let sigBytes;
+  try {
+    sigBytes = hexToBytes(sigHex);
+  } catch {
+    return null;
+  }
+
+  const ok = await crypto.subtle.verify("HMAC", key, sigBytes, new TextEncoder().encode(payloadB64));
+  if (!ok) return null;
+
+  const age = Date.now() - payload.iat;
+  if (age < 0 || age > E2E_TOKEN_MAX_AGE_MS) return null;
+
+  return payload;
+}
+
+async function handleE2ELoginBypass(request, env, url, originBase, originHost, resolveOverride) {
+  const secret = env.E2E_BYPASS_SECRET;
+  if (!secret) return null;
+
+  const token = request.headers.get("X-E2E-Token");
+  if (!token) return null;
+
+  const payload = await verifyE2EToken(token, secret);
+  if (!payload) return null;
+
+  // Jednorazowość: odrzuć jeśli nonce już użyty
+  const nonceKey = `e2e_nonce:${payload.nonce}`;
+  const alreadyUsed = await env.MAINT_KV.get(nonceKey);
+  if (alreadyUsed) return null;
+  await env.MAINT_KV.put(nonceKey, "1", { expirationTtl: E2E_NONCE_TTL_SECONDS });
+
+  console.log("[e2e] bypass captcha for /login, nonce:", payload.nonce);
+
+  const res = await fetchFromOrigin(request, url, originBase, originHost, resolveOverride);
+  if (res.status !== 200) return res;
+
+  const rewriter = new HTMLRewriter().on("body", {
+    element(el) {
+      el.setAttribute("data-captcha-site-key", TURNSTILE_TEST_SITEKEY);
+    },
+  });
+  const rewritten = rewriter.transform(res);
+
+  return new Response(rewritten.body, {
+    status: rewritten.status,
+    headers: {
+      "Content-Type": res.headers.get("Content-Type") || "text/html",
+      "Cache-Control": "no-store",
+    },
+  });
 }
 
 async function fetchWith404(request, originBase, originHost, resolveOverride) {
