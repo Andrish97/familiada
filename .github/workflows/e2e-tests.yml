@@ -104,3 +104,4 @@ jobs:
           name: e2e-failure-screenshots
           path: tests/test-results/
           retention-days: 7
+# retry after adding Bot Management permission
