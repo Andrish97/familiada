@@ -13,6 +13,11 @@ const { loginAsTestUser } = require("./helpers/login");
 // /account jest celowo zablokowane dla gości (guest-mode.js showGuestBlockedOverlay,
 // account.js:453) — restore demo można przetestować tylko na koncie testowym.
 test("restore_my_demo czyści osierocone pliki po edytowanym demo (logo i gra)", async ({ page, context }) => {
+  // Diagnostyka: przekieruj konsolę przeglądarki i błędy JS wprost do logu
+  // CI — patrz komentarz w game-deletion.spec.js.
+  page.on("console", (msg) => console.log(`[browser:${msg.type()}]`, msg.text()));
+  page.on("pageerror", (err) => console.log("[browser:pageerror]", err.message));
+
   await loginAsTestUser(page, context);
 
   const setup = await page.evaluate(async () => {
