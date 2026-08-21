@@ -34,68 +34,19 @@ jobs:
         run: npx playwright install --with-deps chromium
         working-directory: tests
 
-      # Cloudflare Free plan: Bot Fight Mode nie jest skipowalne per-request
-      # przez WAF Custom Rules (tylko płatny Super Bot Fight Mode jest).
-      # Jedyny sposób żeby testy w ogóle dotarły do /login: wyłączyć je na
-      # czas testu dla całej strefy, i włączyć z powrotem zaraz potem —
-      # ostatni krok ma if: always(), żeby to zagwarantować nawet gdy testy
-      # padną.
-      - name: Disable Cloudflare Bot Fight Mode (temporarily, for this run)
-        run: |
-          echo "-- aktualna konfiguracja bot_management --"
-          curl -sS "https://api.cloudflare.com/client/v4/zones/${CF_ZONE_ID}/bot_management" \
-            -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}"
-          echo
-          resp=$(curl -sS -w "\n%{http_code}" -X PUT \
-            "https://api.cloudflare.com/client/v4/zones/${CF_ZONE_ID}/bot_management" \
-            -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
-            -H "Content-Type: application/json" \
-            --data '{"fight_mode":false}')
-          body=$(echo "$resp" | head -n -1)
-          status=$(echo "$resp" | tail -n1)
-          echo "-- odpowiedź PUT fight_mode:false --"
-          echo "$body"
-          if [ "$status" != "200" ] || ! echo "$body" | grep -q '"success":true'; then
-            echo "::error::Nie udało się wyłączyć Bot Fight Mode (HTTP $status) — przerywam, żeby nie zostawić strefy w nieznanym stanie."
-            exit 1
-          fi
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CF_ZONE_ID: "594cf79cf5c237cf2a1294dda2ac53fe"
-
+      # Cloudflare Bot Fight Mode jest na stałe wyłączony w dashboardzie
+      # (Security → Bots) — na Free planie nie da się go pominąć per-request
+      # (nie działa na silniku reguł, WAF Custom Rules/Configuration Rules go
+      # nie dotyczą), więc jedyną opcją było albo płacić, albo wyłączyć na
+      # stałe. Turnstile na /login (osobny mechanizm, patrz e2e-token.js)
+      # zostaje jako właściwa ochrona przed botami przy logowaniu.
       - name: Run E2E tests
         env:
           E2E_BYPASS_SECRET: ${{ secrets.E2E_BYPASS_SECRET }}
-          E2E_WAF_BYPASS_SECRET: ${{ secrets.E2E_WAF_BYPASS_SECRET }}
           TEST_USERNAME: ${{ secrets.TEST_USERNAME }}
           TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
         run: npm test
         working-directory: tests
-
-      - name: Re-enable Cloudflare Bot Fight Mode
-        if: always()
-        run: |
-          for attempt in 1 2 3; do
-            resp=$(curl -sS -w "\n%{http_code}" -X PUT \
-              "https://api.cloudflare.com/client/v4/zones/${CF_ZONE_ID}/bot_management" \
-              -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
-              -H "Content-Type: application/json" \
-              --data '{"fight_mode":true}')
-            body=$(echo "$resp" | head -n -1)
-            status=$(echo "$resp" | tail -n1)
-            echo "$body"
-            if [ "$status" = "200" ]; then
-              echo "Bot Fight Mode włączony z powrotem."
-              exit 0
-            fi
-            echo "Próba $attempt nieudana (HTTP $status), ponawiam..."
-            sleep 5
-          done
-          echo "::error::NIE udało się włączyć z powrotem Bot Fight Mode po 3 próbach — strefa zostaje bez tej ochrony, wymaga ręcznej interwencji w dashboardzie Cloudflare!"
-          exit 1
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CF_ZONE_ID: "594cf79cf5c237cf2a1294dda2ac53fe"
 
       - name: Upload failure screenshots
         if: failure()
@@ -104,4 +55,3 @@ jobs:
           name: e2e-failure-screenshots
           path: tests/test-results/
           retention-days: 7
-# retry after adding Bot Management permission

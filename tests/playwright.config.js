@@ -5,7 +5,7 @@ const { defineConfig } = require("@playwright/test");
 module.exports = defineConfig({
   testDir: "./e2e",
   timeout: 60_000,
-  retries: 0, // tymczasowo 0 na czas diagnozy — szybszy feedback loop
+  retries: 1,
   reporter: [["list"]],
   use: {
     baseURL: "https://www.familiada.online",
