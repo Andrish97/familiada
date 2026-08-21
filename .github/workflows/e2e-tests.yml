@@ -42,13 +42,18 @@ jobs:
       # padną.
       - name: Disable Cloudflare Bot Fight Mode (temporarily, for this run)
         run: |
-          resp=$(curl -sS -w "\n%{http_code}" -X PATCH \
-            "https://api.cloudflare.com/client/v4/zones/${CF_ZONE_ID}/settings/bot_fight_mode" \
+          echo "-- aktualna konfiguracja bot_management --"
+          curl -sS "https://api.cloudflare.com/client/v4/zones/${CF_ZONE_ID}/bot_management" \
+            -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}"
+          echo
+          resp=$(curl -sS -w "\n%{http_code}" -X PUT \
+            "https://api.cloudflare.com/client/v4/zones/${CF_ZONE_ID}/bot_management" \
             -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
             -H "Content-Type: application/json" \
-            --data '{"value":"off"}')
+            --data '{"fight_mode":false}')
           body=$(echo "$resp" | head -n -1)
           status=$(echo "$resp" | tail -n1)
+          echo "-- odpowiedź PUT fight_mode:false --"
           echo "$body"
           if [ "$status" != "200" ] || ! echo "$body" | grep -q '"success":true'; then
             echo "::error::Nie udało się wyłączyć Bot Fight Mode (HTTP $status) — przerywam, żeby nie zostawić strefy w nieznanym stanie."
@@ -71,12 +76,14 @@ jobs:
         if: always()
         run: |
           for attempt in 1 2 3; do
-            resp=$(curl -sS -w "\n%{http_code}" -X PATCH \
-              "https://api.cloudflare.com/client/v4/zones/${CF_ZONE_ID}/settings/bot_fight_mode" \
+            resp=$(curl -sS -w "\n%{http_code}" -X PUT \
+              "https://api.cloudflare.com/client/v4/zones/${CF_ZONE_ID}/bot_management" \
               -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
               -H "Content-Type: application/json" \
-              --data '{"value":"on"}')
+              --data '{"fight_mode":true}')
+            body=$(echo "$resp" | head -n -1)
             status=$(echo "$resp" | tail -n1)
+            echo "$body"
             if [ "$status" = "200" ]; then
               echo "Bot Fight Mode włączony z powrotem."
               exit 0
