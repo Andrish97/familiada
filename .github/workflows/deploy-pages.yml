@@ -18,6 +18,7 @@ on:
       - "supabase/**"
       - "cloudflare/**"
       - "services/**"
+      - "tests/**"
       - "scripts/deploy-searxng.sh"
       - "scripts/deploy-edge.sh"
       - "scripts/apply-migrations.sh"
