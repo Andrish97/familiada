@@ -56,7 +56,7 @@ jobs:
           fi
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CF_ZONE_ID: "c8c792dc5e9e98a04275cdd371f8dde4"
+          CF_ZONE_ID: "594cf79cf5c237cf2a1294dda2ac53fe"
 
       - name: Run E2E tests
         env:
@@ -88,7 +88,7 @@ jobs:
           exit 1
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CF_ZONE_ID: "c8c792dc5e9e98a04275cdd371f8dde4"
+          CF_ZONE_ID: "594cf79cf5c237cf2a1294dda2ac53fe"
 
       - name: Upload failure screenshots
         if: failure()
