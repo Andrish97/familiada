@@ -140,6 +140,45 @@ strony. Zapisane tu, żeby nie trzeba było ich znowu wyłapywać po kolei:
   w `builder.html` — goły `.card` łapie oba i Playwright rzuca strict
   mode violation.
 
+## Co jest zablokowane dla gościa i dla niezalogowanego
+
+Przydatne przy pisaniu nowych testów — żeby nie zgadywać który tryb
+logowania (`loginAsTestUser` czy `loginAsGuest`) pasuje do danej strony.
+
+**Niezalogowany (brak sesji w ogóle):** każda strona appki wywołuje
+`requireAuth()` (`js/core/auth.js`) jako pierwszy krok i bez sesji
+przekierowuje na `/login`, zanim cokolwiek się wyrenderuje. Dotyczy to
+`builder`, `editor` (gra), `logo-editor`, `game-settings`, `manual`,
+`polls-hub`, `polls`, `bases`/`base-explorer`, `account`, `subscriptions`
+i `control/*`. Publicznie, bez logowania, dostępne są tylko strona
+główna (`index.html`) i sam `/login`.
+
+**Gość** (`user.is_guest === true`, konto założone przyciskiem "Wejdź
+jako gość") **ma sesję, więc mija powyższą blokadę**, ale trafia na
+pełnoekranowy, blokujący overlay (`showGuestBlockedOverlay`,
+`js/core/guest-mode.js`) na trzech konkretnych stronach — treść
+`guestGuard.message` w tłumaczeniach mówi wprost które to funkcje:
+- `/account` (`js/pages/account.js:453`) — ustawienia konta,
+- `/polls-hub` (`js/pages/polls-hub.js:1099`) — panel ankiet,
+- `/subscriptions` (`js/pages/subscriptions.js:699`) — subskrypcje.
+
+Reszta appki (`builder`, `editor`, `logo-editor`, `control/*`,
+`bases`/`base-explorer`, `manual`, `game-settings`) działa dla gościa
+normalnie — to nie jest blokada "gość = tryb tylko do odczytu", tylko
+konkretna lista trzech stron związanych z tożsamością/płatnościami.
+
+Dodatkowe różnice gościa, nieblokujące UI, ale istotne dla testów:
+- dane konta trzymane tylko w danej przeglądarce — brak cookies/localStorage
+  = brak dostępu do konta (nie ma emaila/hasła do odzyskania),
+- konto samo znika po 5 dniach nieaktywności (`guest_cleanup_expired`,
+  patrz `tryby logowania` niżej) — zero ręcznego sprzątania fixture'ów,
+- przy pierwszym wejściu pokazuje się jednorazowy modal informacyjny
+  (`js/core/guest-info-modal.js`, `maybeShowGuestInfoModal`) — w E2E nie
+  przeszkadza bo testy nie czekają na żaden konkretny stan strony przed
+  akcją inny niż to czego dotyczy dany test, ale jeśli nowy test zacznie
+  klikać po `loginAsGuest()` w coś co ten modal mógłby zasłaniać, warto
+  o nim pamiętać (analogicznie do `#ratingOverlay` opisanego wyżej).
+
 ## Tryby logowania w testach (`tests/e2e/helpers/login.js`)
 
 - `loginAsTestUser(page, context)` — loguje się loginem/hasłem konta
