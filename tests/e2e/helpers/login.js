@@ -20,6 +20,11 @@ async function withE2EBypass(context) {
   await context.addInitScript(() => {
     try {
       localStorage.setItem("fam:app_rating_suppressed", "true");
+      // getUiLang() (translation/translation.js) sięga po navigator.language
+      // zanim spadnie na domyślne "pl" — Chromium w CI ma en-US, więc bez
+      // tego cała strona (i teksty przycisków w modalach) renderuje się po
+      // angielsku, a testy oczekują polskich napisów.
+      localStorage.setItem("uiLang", "pl");
     } catch {
       // ignore
     }
