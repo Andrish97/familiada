@@ -63,7 +63,11 @@ test("restore_my_demo czyści osierocone pliki po edytowanym demo (logo i gra)",
 
   // Kliknij "przywróć demo" na stronie konta i potwierdź modal
   await page.goto("https://www.familiada.online/account", { waitUntil: "domcontentloaded" });
-  await page.waitForTimeout(1500); // czas na dowiązanie listenerów w account.js
+  // loadProfile() w account.js dowiązuje listener na #demoRestoreBtn dopiero
+  // po serii awaitów (requireAuth, sync języka, sprawdzenie ratingu) — stały
+  // sleep bywał za krótki i klik trafiał w jeszcze niepodłączony przycisk.
+  // Czekamy aż ruch sieciowy (te wywołania Supabase) faktycznie ucichnie.
+  await page.waitForLoadState("networkidle");
   await page.locator("#demoRestoreBtn").click();
   await page.getByRole("button", { name: "Przywróć", exact: true }).click();
 

@@ -11,6 +11,19 @@ async function withE2EBypass(context) {
   await context.setExtraHTTPHeaders({
     "X-E2E-Token": token, // weryfikowany (HMAC) przez Worker — omija Turnstile
   });
+
+  // Konto testowe istnieje dłużej niż 7 dni, więc js/core/rating-system.js
+  // pokazuje na każdej stronie pełnoekranowy #ratingOverlay proszący o ocenę
+  // — nie testujemy tego, a zasłania klikalne elementy. Suppress ustawiany
+  // przed pierwszą nawigacją (addInitScript), więc initRatingSystem() od
+  // razu wychodzi wcześnie (patrz rating-system.js:19).
+  await context.addInitScript(() => {
+    try {
+      localStorage.setItem("fam:app_rating_suppressed", "true");
+    } catch {
+      // ignore
+    }
+  });
 }
 
 async function clearE2EBypass(context) {
@@ -66,7 +79,10 @@ async function loginAsGuest(page, context) {
     await dumpPageDiagnostics(page, res);
     throw e;
   }
-  await page.waitForURL(/builder/, { timeout: 20000 });
+  // Zakładanie gościa to więcej pracy po stronie backendu niż zwykłe
+  // logowanie (auth signup + trigger seedujący dane demo + redirect) —
+  // w CI bywa wolniejsze niż 20s, stąd dłuższy limit niż w loginAsTestUser.
+  await page.waitForURL(/builder/, { timeout: 40000 });
   await clearE2EBypass(context);
 }
 

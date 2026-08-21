@@ -4,7 +4,7 @@ const { defineConfig } = require("@playwright/test");
 
 module.exports = defineConfig({
   testDir: "./e2e",
-  timeout: 60_000,
+  timeout: 90_000, // logowanie gościa (auth signup + seed demo) bywa wolne w CI
   retries: 1,
   reporter: [["list"]],
   use: {
