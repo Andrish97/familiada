@@ -20,6 +20,25 @@ async function clearE2EBypass(context) {
   await context.setExtraHTTPHeaders({});
 }
 
+// Wypisuje do logu (widocznego w output CI) co faktycznie wylądowało na
+// stronie — status HTTP, tytuł, początek treści body, czy #email istnieje.
+// Wołane tylko przy błędzie, żeby zdiagnozować bez potrzeby ściągania
+// screenshotów/artefaktów.
+async function dumpPageDiagnostics(page, gotoResponse) {
+  try {
+    console.log("[e2e-diag] goto status:", gotoResponse?.status(), gotoResponse?.statusText());
+    console.log("[e2e-diag] goto headers:", JSON.stringify(gotoResponse?.headers() || {}));
+    console.log("[e2e-diag] page.url():", page.url());
+    console.log("[e2e-diag] page title:", await page.title());
+    const bodyText = await page.evaluate(() => document.body?.innerText?.slice(0, 500) || "(brak body/innerText)");
+    console.log("[e2e-diag] body text (pierwsze 500 znaków):", bodyText);
+    const hasEmailField = await page.evaluate(() => !!document.getElementById("email"));
+    console.log("[e2e-diag] #email istnieje w DOM:", hasEmailField);
+  } catch (diagErr) {
+    console.log("[e2e-diag] dump się nie powiódł:", diagErr?.message || diagErr);
+  }
+}
+
 /** Loguje jako konto testowe (TEST_USERNAME/TEST_PASSWORD), zostawia stronę na /builder */
 async function loginAsTestUser(page, context) {
   const username = process.env.TEST_USERNAME;
@@ -27,8 +46,13 @@ async function loginAsTestUser(page, context) {
   if (!username || !password) throw new Error("Brak TEST_USERNAME/TEST_PASSWORD w zmiennych środowiskowych");
 
   await withE2EBypass(context);
-  await page.goto(LOGIN_URL, { waitUntil: "domcontentloaded" });
-  await page.fill("#email", username);
+  const res = await page.goto(LOGIN_URL, { waitUntil: "domcontentloaded" });
+  try {
+    await page.fill("#email", username, { timeout: 15000 });
+  } catch (e) {
+    await dumpPageDiagnostics(page, res);
+    throw e;
+  }
   await page.fill("#pass", password);
   await page.click("#btnPrimary");
   await page.waitForURL(/builder/, { timeout: 20000 });
@@ -38,8 +62,13 @@ async function loginAsTestUser(page, context) {
 /** Zakłada świeże konto gościa, zostawia stronę na /builder. Gość sam wygaśnie po 5 dniach. */
 async function loginAsGuest(page, context) {
   await withE2EBypass(context);
-  await page.goto(LOGIN_URL, { waitUntil: "domcontentloaded" });
-  await page.click("#btnGuest");
+  const res = await page.goto(LOGIN_URL, { waitUntil: "domcontentloaded" });
+  try {
+    await page.click("#btnGuest", { timeout: 15000 });
+  } catch (e) {
+    await dumpPageDiagnostics(page, res);
+    throw e;
+  }
   await page.waitForURL(/builder/, { timeout: 20000 });
   await clearE2EBypass(context);
 }
