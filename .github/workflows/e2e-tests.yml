@@ -37,6 +37,7 @@ jobs:
       - name: Run E2E tests
         env:
           E2E_BYPASS_SECRET: ${{ secrets.E2E_BYPASS_SECRET }}
+          E2E_WAF_BYPASS_SECRET: ${{ secrets.E2E_WAF_BYPASS_SECRET }}
           TEST_USERNAME: ${{ secrets.TEST_USERNAME }}
           TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
         run: npm test

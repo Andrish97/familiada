@@ -6,8 +6,14 @@ const LOGIN_URL = "https://www.familiada.online/login";
 async function withE2EBypass(context) {
   const secret = process.env.E2E_BYPASS_SECRET;
   if (!secret) throw new Error("Brak E2E_BYPASS_SECRET w zmiennych środowiskowych");
+  const wafSecret = process.env.E2E_WAF_BYPASS_SECRET;
+  if (!wafSecret) throw new Error("Brak E2E_WAF_BYPASS_SECRET w zmiennych środowiskowych");
+
   const token = generateE2EToken(secret);
-  await context.setExtraHTTPHeaders({ "X-E2E-Token": token });
+  await context.setExtraHTTPHeaders({
+    "X-E2E-Token": token, // weryfikowany (HMAC) przez Worker — omija Turnstile
+    "X-E2E-Waf-Bypass": wafSecret, // statyczny sekret — omija Cloudflare Bot Fight Mode dla /login
+  });
 }
 
 async function clearE2EBypass(context) {

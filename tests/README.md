@@ -32,12 +32,36 @@ odwiedzającego — brak jakiegokolwiek wpływu na prawdziwych użytkowników.
   na normalnej, prawdziwej sesji (ważnej ~1h), token bypass nie jest
   już nigdzie potrzebny w danym runie.
 
+## Cloudflare Bot Fight Mode — drugi, osobny bypass
+
+`Turnstile` w formularzu to nie jedyna ochrona na drodze — strefa
+Cloudflare ma też włączony **Bot Fight Mode** (Security → Bots), który
+wykrywa i wyzywa ruch z centrów danych (a runner GitHub Actions to
+dokładnie taki ruch) na poziomie edge, **zanim** żądanie w ogóle dotrze
+do naszego Workera. Bez ominięcia tego, `/login` w ogóle się nie
+renderuje dla testów — nie pomoże żadna poprawka w kodzie appki ani
+Workera.
+
+Reguły WAF Cloudflare nie potrafią weryfikować podpisu HMAC (brak
+kryptografii w języku reguł), więc to ominięcie jest prostsze niż
+token do Turnstile — statyczny, współdzielony sekret sprawdzany przez
+regułę WAF typu **Skip**:
+
+- Reguła (Security → WAF → Custom rules): warunek
+  `(http.request.uri.path eq "/login") and (http.request.headers["x-e2e-waf-bypass"][0] eq "<E2E_WAF_BYPASS_SECRET>")`,
+  akcja **Skip → Bot Fight Mode**. Skopowana wyłącznie do `/login`,
+  nic innego nie omija.
+- Wysyłany jako nagłówek `X-E2E-Waf-Bypass` obok `X-E2E-Token`
+  (`tests/e2e/helpers/login.js`).
+
 ## Wymagane sekrety
 
 **GitHub Actions** (Settings → Secrets and variables → Actions):
 - `E2E_BYPASS_SECRET` — losowy string (np. `openssl rand -hex 32`),
   **musi być identyczny** z sekretem `E2E_BYPASS_SECRET` ustawionym
   w Cloudflare Workerze (patrz niżej).
+- `E2E_WAF_BYPASS_SECRET` — osobny losowy string, wklejony wprost w
+  wyrażeniu reguły WAF opisanej wyżej (dashboard, nie Worker).
 - `TEST_USERNAME` / `TEST_PASSWORD` — dane logowania konta testowego
   (zwykłe konto, nie gość — używane tam gdzie test wymaga zalogowanego
   usera, np. `game-deletion.spec.js`).
@@ -48,6 +72,11 @@ odwiedzającego — brak jakiegokolwiek wpływu na prawdziwych użytkowników.
   Variables and Secrets) albo `wrangler secret put E2E_BYPASS_SECRET`.
   Nie jest częścią `deploy-worker.yml` — przetrwa kolejne deploye tak
   jak `SUPABASE_SERVICE_ROLE_KEY`.
+
+**Cloudflare WAF (dashboard, reguła, nie Worker):**
+- `E2E_WAF_BYPASS_SECRET` — wklejony bezpośrednio w wyrażeniu reguły
+  Skip opisanej wyżej. Nie jest kodem, nie przechodzi przez deploy —
+  zmiana wymaga ręcznej edycji reguły w dashboardzie.
 
 ## Bezpieczeństwo — czego to NIE jest
 
@@ -73,7 +102,7 @@ w issues/PR-y.
 cd tests
 npm install
 npx playwright install --with-deps chromium
-E2E_BYPASS_SECRET="..." TEST_USERNAME="..." TEST_PASSWORD="..." npm test
+E2E_BYPASS_SECRET="..." E2E_WAF_BYPASS_SECRET="..." TEST_USERNAME="..." TEST_PASSWORD="..." npm test
 ```
 
 ## Uruchomienie w CI
