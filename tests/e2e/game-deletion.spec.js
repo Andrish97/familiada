@@ -48,7 +48,10 @@ test("usunięcie gry przez UI czyści folder audio w buckecie user-sounds", asyn
   await page.waitForTimeout(1500); // czas na załadowanie listy gier z DB
 
   // Znajdź kartę naszej testowej gry po nazwie i kliknij jej przycisk usuwania (".x")
-  const card = page.locator(".card", { has: page.locator(".name", { hasText: gameName }) });
+  // Scoped do #grid — sama karta ma klasę "card", ale ma ją też otaczający ją
+  // panel (.card.builder-card w builder.html), więc bez zawężenia locator
+  // łapie oba elementy (strict mode violation).
+  const card = page.locator("#grid .card", { has: page.locator(".name", { hasText: gameName }) });
   await expect(card).toBeVisible({ timeout: 10000 });
   await card.locator(".x").click();
 

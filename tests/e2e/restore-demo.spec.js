@@ -8,10 +8,12 @@
 // updateLogo(), które nie dotyka is_demo).
 
 const { test, expect } = require("@playwright/test");
-const { loginAsGuest } = require("./helpers/login");
+const { loginAsTestUser } = require("./helpers/login");
 
+// /account jest celowo zablokowane dla gości (guest-mode.js showGuestBlockedOverlay,
+// account.js:453) — restore demo można przetestować tylko na koncie testowym.
 test("restore_my_demo czyści osierocone pliki po edytowanym demo (logo i gra)", async ({ page, context }) => {
-  await loginAsGuest(page, context);
+  await loginAsTestUser(page, context);
 
   const setup = await page.evaluate(async () => {
     const sb = window.__sbClient;
