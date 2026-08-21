@@ -5,7 +5,14 @@ const { defineConfig } = require("@playwright/test");
 module.exports = defineConfig({
   testDir: "./e2e",
   timeout: 90_000, // logowanie gościa (auth signup + seed demo) bywa wolne w CI
-  retries: 0, // tymczasowo 0 na czas diagnozy błędu modala (przywrócić do 1 potem)
+  retries: 1,
+  // game-deletion i restore-demo logują się na to samo TEST_USERNAME —
+  // przy domyślnej równoległości (2 workery) dwa jednoczesne logowania na
+  // jedno konto powodowały niedeterministyczne błędy (raz zawieszony modal
+  // potwierdzenia, raz timeout samego logowania). Testy w tym repo i tak
+  // dotykają współdzielonego stanu na produkcji, więc szeregowe wykonanie
+  // jest właściwym trade-offem, nie tylko obejściem.
+  workers: 1,
   reporter: [["list"]],
   use: {
     baseURL: "https://www.familiada.online",
