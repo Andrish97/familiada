@@ -106,6 +106,40 @@ E2E_BYPASS_SECRET="..." TEST_USERNAME="..." TEST_PASSWORD="..." npm test
 Automatycznie po pushu zmian w `tests/**` na `main`, albo ręcznie:
 Actions → "E2E Tests (Playwright)" → Run workflow.
 
+## Pułapki, na które łatwo wpaść (znalezione przy pierwszym realnym przebiegu)
+
+Bot Fight Mode blokował ruch przez wszystkie pierwsze przebiegi CI, więc
+te problemy ujawniły się dopiero gdy testy w ogóle zaczęły docierać do
+strony. Zapisane tu, żeby nie trzeba było ich znowu wyłapywać po kolei:
+
+- **Język UI: wymuszony na polski.** `getUiLang()`
+  (`translation/translation.js`) sięga po `navigator.language`, zanim
+  spadnie na domyślne `"pl"`. Chromium w CI zgłasza `en-US`, więc bez
+  interwencji cała strona (w tym teksty przycisków w modalach, np.
+  "Usuń"/"Przywróć") renderuje się po angielsku. `withE2EBypass()` w
+  `helpers/login.js` ustawia `localStorage.uiLang = "pl"` przez
+  `context.addInitScript` przed pierwszą nawigacją — **każdy nowy test
+  musi logować się przez `loginAsTestUser`/`loginAsGuest`**, inaczej traci
+  tę wymuszoną wartość i selektory z polskim tekstem przestaną trafiać.
+- **Overlay z prośbą o ocenę appki** (`js/core/rating-system.js`) pokazuje
+  się każdemu zalogowanemu (nie-gościowi) kontu starszemu niż 7 dni —
+  a `TEST_USERNAME` takie właśnie jest. Zasłania klikalne elementy na
+  całej stronie. Suppresowany tym samym `addInitScript`
+  (`localStorage["fam:app_rating_suppressed"] = "true"`).
+- **`/account` jest zablokowane dla gości** (`guest-mode.js`
+  `showGuestBlockedOverlay`, `account.js:453`) — testy dotykające tej
+  strony (np. restore-demo) muszą logować się przez `loginAsTestUser`,
+  nie `loginAsGuest`.
+- **Testy na współdzielonym `TEST_USERNAME` muszą iść sekwencyjnie.**
+  `playwright.config.js` ma `workers: 1` — dwa równoległe logowania na to
+  samo konto testowe powodowały niedeterministyczne błędy (raz timeout
+  logowania, raz "zawieszony" modal), bo sesje się gryzły. Jeśli kiedyś
+  dojdzie tu drugi test na `loginAsTestUser`, zostaw `workers: 1`.
+- **Selektor karty gry musi być zawężony do `#grid`.** Sam kontener karty
+  ma klasę `.card`, ale ma ją też otaczający panel `.card.builder-card`
+  w `builder.html` — goły `.card` łapie oba i Playwright rzuca strict
+  mode violation.
+
 ## Tryby logowania w testach (`tests/e2e/helpers/login.js`)
 
 - `loginAsTestUser(page, context)` — loguje się loginem/hasłem konta
