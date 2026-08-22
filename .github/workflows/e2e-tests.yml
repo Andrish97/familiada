@@ -7,12 +7,18 @@ on:
         description: 'Opcjonalnie: odpal tylko wybrany plik/wzorzec (np. "e2e/nowy-test.spec.js" albo "--grep nazwa"). Puste = wszystkie testy.'
         required: false
         default: ""
+  repository_dispatch:
+    types: [e2e-run]
 
-# WAŻNE: celowo tylko workflow_dispatch — ani push, ani pull_request.
-# Ten workflow loguje się na prawdziwe konta na produkcji (TEST_USERNAME,
-# świeże konta gości) i ma dostęp do E2E_BYPASS_SECRET/TEST_PASSWORD;
-# każda zmiana w tests/** (nawet dokumentacja) nie powinna sama z siebie
-# odpalać logowań na produkcję. Odpalaj świadomie: Actions → "E2E Tests
+# WAŻNE: celowo brak push/pull_request. Ten workflow loguje się na
+# prawdziwe konta na produkcji (TEST_USERNAME, świeże konta gości) i ma
+# dostęp do E2E_BYPASS_SECRET/TEST_PASSWORD; każda zmiana w tests/**
+# (nawet dokumentacja) nie powinna sama z siebie odpalać logowań na
+# produkcję. Dwa świadome sposoby odpalenia: ręcznie (workflow_dispatch,
+# patrz niżej), albo przez repository_dispatch (event_type "e2e-run") —
+# ten drugi wymaga tylko uprawnienia do zapisu w repo, nie "Actions:
+# write", więc może go wywołać token używany do zwykłego pusha kodu.
+# Odpalaj świadomie: Actions → "E2E Tests
 # (Playwright)" → Run workflow.
 
 jobs:
