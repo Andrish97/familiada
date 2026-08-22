@@ -3,8 +3,13 @@
 // poll-text.js): utworzenie, zebranie głosów od anonimowych uczestników
 // (osobne, niezalogowane konteksty przeglądarki — dokładnie tak jak w
 // realnym użyciu, bez logowania) i zamknięcie, dla obu typów (poll_points,
-// poll_text). Drugi test skupia się konkretnie na mechanice scalania
-// odpowiedzi w panelu zamykania ankiety tekstowej (.tcMergeBtn).
+// poll_text). Głosy rozkładają się nierówno (kilka popularnych odpowiedzi +
+// długi ogon unikalnych) zamiast idealnie równo — bliżej realnego głosowania.
+//
+// Drugi test skupia się na panelu zamykania ankiety tekstowej: literówki
+// (różna wielkość liter — auto-scalane przyciskiem "Scal identyczne"),
+// ręczna korekta literówki w polu tekstowym i ręczne scalanie dwóch różnie
+// nazwanych, ale znaczących to samo odpowiedzi (.tcMergeBtn).
 //
 // Ankieta wymaga min. 10 pytań, żeby "Uruchomić ankietę" było w ogóle
 // klikalne (RULES.QN_MIN w js/core/game-validate.js) — pytania/odpowiedzi
@@ -23,6 +28,21 @@ const MERGE_VOTERS = 100;
 // zamiast jednym Promise.all na 100, żeby zostać bliżej realnego obciążenia
 // (dużo ludzi skanujących QR "naraz", ale nie dosłownie w tej samej milisekundzie).
 const VOTER_CONCURRENCY = 20;
+
+// Nierówny rozkład głosów zamiast idealnie równego — realniej odwzorowuje
+// prawdziwe głosowanie (kilka popularnych opcji, nie identyczny podział).
+const POINTS_WEIGHTS = [45, 30, 15, 10]; // suma = POINTS_VOTERS, po jednej wadze na 4 predefiniowane odpowiedzi
+const TEXT_POOL = ["Pizza", "Kotek", "Herbata", "Rower"];
+const TEXT_WEIGHTS = [40, 30, 20, 10]; // suma = TEXT_VOTERS
+
+function weightedBucket(i, weights) {
+  let acc = 0;
+  for (let idx = 0; idx < weights.length; idx++) {
+    acc += weights[idx];
+    if (i < acc) return idx;
+  }
+  return weights.length - 1;
+}
 
 async function voteMany(count, voteOneFn) {
   for (let start = 0; start < count; start += VOTER_CONCURRENCY) {
@@ -107,15 +127,20 @@ async function voteAllPoints(browser, pollLink, answerIndex) {
   await voterContext.close();
 }
 
-/** Anonimowy uczestnik głosuje tekstowo we wszystkich pytaniach ankiety tekstowej. */
-async function voteAllText(browser, pollLink, prefix) {
+/**
+ * Anonimowy uczestnik głosuje tekstowo we wszystkich pytaniach ankiety tekstowej.
+ * answerForOrd(ord) zwraca tekst odpowiedzi dla danego numeru pytania (1..QN_COUNT),
+ * żeby ten sam głosujący mógł np. zawsze wybierać z tej samej puli popularnych
+ * odpowiedzi, albo wpisywać coś unikalnego dla danego pytania — w zależności od testu.
+ */
+async function voteAllText(browser, pollLink, answerForOrd) {
   const voterContext = await browser.newContext();
   const voterPage = await voterContext.newPage();
   await voterPage.goto(pollLink, { waitUntil: "domcontentloaded" });
   await voterPage.waitForLoadState("networkidle");
-  for (let i = 1; i <= QN_COUNT; i++) {
+  for (let ord = 1; ord <= QN_COUNT; ord++) {
     await expect(voterPage.locator("#answerInput")).toBeVisible({ timeout: 15000 });
-    await voterPage.locator("#answerInput").fill(`${prefix} ${i}`); // limit 17 znaków — zmieść się z zapasem
+    await voterPage.locator("#answerInput").fill(answerForOrd(ord)); // limit 17 znaków
     await voterPage.locator("#btnSend").click();
   }
   await voterContext.close();
@@ -131,8 +156,9 @@ test("ankieta punktowa i tekstowa: tworzenie, zbieranie głosów i zamknięcie",
   try {
     const pointsLink = await openPoll(page, pointsGame.gameId);
 
-    // ~100 głosujących, rozkładając głosy po 4 predefiniowanych odpowiedziach.
-    await voteMany(POINTS_VOTERS, (i) => voteAllPoints(browser, pointsLink, i));
+    // ~100 głosujących, nierówno rozłożonych po 4 predefiniowanych odpowiedziach
+    // (POINTS_WEIGHTS) — nie idealnie po równo, jak przy prawdziwym głosowaniu.
+    await voteMany(POINTS_VOTERS, (i) => voteAllPoints(browser, pointsLink, weightedBucket(i, POINTS_WEIGHTS)));
 
     await page.goto(`https://www.familiada.online/polls?id=${pointsGame.gameId}`, { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
@@ -153,8 +179,13 @@ test("ankieta punktowa i tekstowa: tworzenie, zbieranie głosów i zamknięcie",
   try {
     const textLink = await openPoll(page, textGame.gameId);
 
-    // ~100 głosujących, każdy wpisuje własny, unikalny tekst.
-    await voteMany(TEXT_VOTERS, (i) => voteAllText(browser, textLink, `V${i}`));
+    // ~100 głosujących z małej puli popularnych odpowiedzi (TEXT_WEIGHTS,
+    // ta sama odpowiedź na każde pytanie) — kilka popularnych + realny rozkład,
+    // zamiast każdy-inny-unikalny-tekst.
+    await voteMany(TEXT_VOTERS, (i) => {
+      const answer = TEXT_POOL[weightedBucket(i, TEXT_WEIGHTS)];
+      return voteAllText(browser, textLink, () => answer);
+    });
 
     await page.goto(`https://www.familiada.online/polls?id=${textGame.gameId}`, { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
@@ -174,7 +205,7 @@ test("ankieta punktowa i tekstowa: tworzenie, zbieranie głosów i zamknięcie",
   }
 });
 
-test("ankieta tekstowa: scalanie odpowiedzi w panelu zamykania", async ({ page, context, browser }) => {
+test("ankieta tekstowa: literówki, korekta i scalanie odpowiedzi w panelu zamykania", async ({ page, context, browser }) => {
   test.setTimeout(400_000); // ~100 głosujących w paczkach na jedno pytanie do scalenia
 
   await loginAsTestUser(page, context);
@@ -183,9 +214,28 @@ test("ankieta tekstowa: scalanie odpowiedzi w panelu zamykania", async ({ page, 
   try {
     const pollLink = await openPoll(page, game.gameId);
 
-    // ~100 głosujących na KAŻDE pytanie — scalimy dwóch w pierwszym pytaniu,
-    // zostawiając nadal dużo więcej niż wymagane min. 3 odpowiedzi.
-    await voteMany(MERGE_VOTERS, (i) => voteAllText(browser, pollLink, `V${i}`));
+    // Na pytaniu 1 celowo sadzimy realistyczny bałagan:
+    // - 3 głosy "Pizza", 2 głosy "PIZZA" (różna wielkość liter — to samo po
+    //   normalizacji, ale osobne wiersze w panelu, dopóki nie klikniesz
+    //   "Scal identyczne"),
+    // - 1 głos z literówką "Piza" (inne znaki, więc auto-scalanie tego NIE
+    //   złapie — trzeba ręcznie poprawić tekst),
+    // - "Kotek" i "Kot domowy" — różne sformułowania tej samej odpowiedzi,
+    //   do ręcznego scalenia przyciskiem ⇄ (.tcMergeBtn),
+    // - reszta głosujących: unikalny długi ogon, żeby zostało dużo więcej niż
+    //   wymagane min. 3 odpowiedzi po każdej operacji.
+    // Pozostałe 9 pytań: sam unikalny długi ogon (nieistotne dla tego testu).
+    function answerForVoter(voterIdx, ord) {
+      if (ord !== 1) return `V${voterIdx}-${ord}`;
+      if (voterIdx <= 2) return "Pizza";
+      if (voterIdx <= 4) return "PIZZA";
+      if (voterIdx === 5) return "Piza";
+      if (voterIdx === 6) return "Kotek";
+      if (voterIdx === 7) return "Kot domowy";
+      return `V${voterIdx}`;
+    }
+
+    await voteMany(MERGE_VOTERS, (i) => voteAllText(browser, pollLink, (ord) => answerForVoter(i, ord)));
 
     await page.goto(`https://www.familiada.online/polls?id=${game.gameId}`, { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
@@ -194,30 +244,70 @@ test("ankieta tekstowa: scalanie odpowiedzi w panelu zamykania", async ({ page, 
 
     const firstQuestion = page.locator("#textCloseList .tcQ").first();
     const items = firstQuestion.locator(".tcList .tcItem");
-    await expect(items).toHaveCount(MERGE_VOTERS, { timeout: 15000 });
+    // Surowych wierszy jest mniej niż głosujących, bo każdy identyczny tekst
+    // (3x "Pizza", 2x "PIZZA") to JEDEN wiersz z licznikiem — więc 3+2 głosy
+    // dają tylko 2 wiersze zamiast 5, czyli 3 "zaoszczędzone" wiersze łącznie.
+    const initialRowCount = MERGE_VOTERS - 3;
+    await expect(items).toHaveCount(initialRowCount, { timeout: 15000 });
 
-    const srcText = await items.nth(0).locator(".tcTxtInp").inputValue();
-    const srcCount = parseInt(await items.nth(0).locator(".tcCnt").innerText(), 10);
-    const targetText = await items.nth(1).locator(".tcTxtInp").inputValue();
-    const targetCount = parseInt(await items.nth(1).locator(".tcCnt").innerText(), 10);
-
-    // Klik ⇄ na pierwszej odpowiedzi (źródło), potem na drugiej (cel) — scala źródło w cel.
-    await items.nth(0).locator(".tcMergeBtn").click();
-    await items.nth(1).locator(".tcMergeBtn").click();
-
-    await expect(items).toHaveCount(MERGE_VOTERS - 1, { timeout: 5000 });
-
-    // .tcTxtInp to <input> — jego wartość nie jest "tekstem" w sensie Playwrighta
-    // (hasText/getByText nie widzą value inputa), więc szukamy ręcznie po inputValue().
-    let survivorCount = null;
-    let srcStillPresent = false;
-    for (const item of await items.all()) {
-      const val = await item.locator(".tcTxtInp").inputValue();
-      if (val === targetText) survivorCount = parseInt(await item.locator(".tcCnt").innerText(), 10);
-      if (val === srcText) srcStillPresent = true;
+    async function findItemByText(text) {
+      for (const item of await items.all()) {
+        if ((await item.locator(".tcTxtInp").inputValue()) === text) return item;
+      }
+      return null;
     }
-    expect(survivorCount, "scalona odpowiedź powinna istnieć z sumą głosów obu scalonych").toBe(srcCount + targetCount);
-    expect(srcStillPresent, "odpowiedź źródłowa powinna zniknąć po scaleniu").toBe(false);
+    async function itemCount(item) {
+      return parseInt(await item.locator(".tcCnt").innerText(), 10);
+    }
+
+    // --- Krok 1: "Scal identyczne" łapie różnicę w wielkości liter (Pizza + PIZZA) ---
+    await firstQuestion.locator(".tcMergeDup").click();
+    await expect(items).toHaveCount(initialRowCount - 1, { timeout: 5000 });
+
+    let pizzaItem = (await findItemByText("Pizza")) || (await findItemByText("PIZZA"));
+    expect(pizzaItem, "po 'Scal identyczne' powinien zostać jeden wiersz Pizza/PIZZA").not.toBeNull();
+    await expect.poll(() => itemCount(pizzaItem)).toBe(5); // 3 + 2 głosy
+    // Nie wiadomo z góry, który z dwóch surowych tekstów ("Pizza" czy "PIZZA")
+    // przetrwa scalenie — zapamiętaj faktyczny, zamiast zakładać "Pizza".
+    const pizzaSurvivorText = await pizzaItem.locator(".tcTxtInp").inputValue();
+
+    // Literówka "Piza" ma zupełnie inne znaki niż "pizza" po normalizacji,
+    // więc auto-scalanie jej nie ruszyło — nadal stoi osobno.
+    const typoItem = await findItemByText("Piza");
+    expect(typoItem, "literówka 'Piza' nie powinna zniknąć sama, dopóki jej nie poprawimy").not.toBeNull();
+
+    // --- Krok 2: poprawiamy literówkę ręcznie w polu tekstowym, potem scalamy
+    // ręcznie przyciskiem ⇄ (bezpieczniejsze niż zakładanie, że "Scal
+    // identyczne" da się bezpiecznie kliknąć drugi raz po edycji) ---
+    const pizzaCountBeforeTypoFix = await itemCount(pizzaItem);
+    await typoItem.locator(".tcTxtInp").fill("Pizza");
+    await typoItem.locator(".tcTxtInp").blur(); // zmiana zapisuje się dopiero na blur
+
+    await typoItem.locator(".tcMergeBtn").click(); // źródło: poprawiona literówka
+    await pizzaItem.locator(".tcMergeBtn").click(); // cel: istniejąca grupa "Pizza"
+
+    await expect(items).toHaveCount(initialRowCount - 2, { timeout: 5000 });
+    pizzaItem = await findItemByText(pizzaSurvivorText);
+    expect(pizzaItem, `po poprawce i scaleniu powinien zostać jeden wiersz '${pizzaSurvivorText}'`).not.toBeNull();
+    await expect.poll(() => itemCount(pizzaItem)).toBe(pizzaCountBeforeTypoFix + 1);
+
+    // --- Krok 3: ręczne scalanie dwóch różnie nazwanych, ale tożsamych odpowiedzi ---
+    const kotekItem = await findItemByText("Kotek");
+    const kotDomowyItem = await findItemByText("Kot domowy");
+    expect(kotekItem).not.toBeNull();
+    expect(kotDomowyItem).not.toBeNull();
+    const kotekCount = await itemCount(kotekItem);
+    const kotDomowyCount = await itemCount(kotDomowyItem);
+
+    // Klik ⇄ na źródle, potem na celu — scala źródło w cel.
+    await kotekItem.locator(".tcMergeBtn").click();
+    await kotDomowyItem.locator(".tcMergeBtn").click();
+
+    await expect(items).toHaveCount(initialRowCount - 3, { timeout: 5000 });
+    const kotSurvivor = await findItemByText("Kot domowy");
+    expect(kotSurvivor, "scalona odpowiedź 'Kot domowy' powinna zostać").not.toBeNull();
+    await expect.poll(() => itemCount(kotSurvivor)).toBe(kotekCount + kotDomowyCount);
+    expect(await findItemByText("Kotek"), "'Kotek' powinno zniknąć po scaleniu").toBeNull();
 
     await expect(page.locator("#btnFinishTextClose")).toBeEnabled({ timeout: 5000 });
     await page.locator("#btnFinishTextClose").click();
