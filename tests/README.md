@@ -103,16 +103,20 @@ E2E_BYPASS_SECRET="..." TEST_USERNAME="..." TEST_PASSWORD="..." npm test
 
 ## Uruchomienie w CI
 
-**Tylko ręcznie** — celowo brak triggera na push. Ten workflow loguje
-się na prawdziwe konta na produkcji, więc nie powinien się odpalać sam
-przy każdej zmianie w `tests/**` (nawet dokumentacji). Actions →
-"E2E Tests (Playwright)" → Run workflow.
+Dwa sposoby, oba świadome:
 
-Przy ręcznym odpaleniu jest opcjonalne pole **"spec_filter"** — pozwala
-odpalić tylko wybrany plik albo wzorzec, żeby przy dopisywaniu nowego
-testu nie czekać za każdym razem na całą resztę:
-- `e2e/nowy-test.spec.js` — tylko ten plik,
-- `--grep "fragment nazwy testu"` — tylko pasujące testy.
+- **Automatycznie po pushu do `tests/e2e/**`, `playwright.config.js` albo
+  `package.json`** — ale **inteligentnie**: krok "Determine which specs
+  to run" patrzy co się realnie zmieniło w danym pushu. Jeśli zmienił się
+  tylko jeden (albo kilka) plik `*.spec.js`, odpala **wyłącznie te
+  pliki** — reszta stabilnych testów nie leci na darmo. Jeśli zmienił się
+  coś współdzielonego (`helpers/*.js`, `playwright.config.js`), odpala
+  cały zestaw, bo nie da się bezpiecznie założyć że reszta nadal
+  przechodzi. `tests/README.md` celowo NIE jest w ścieżkach triggera —
+  sama dokumentacja nigdy nie odpala logowań na produkcję.
+- **Ręcznie** — Actions → "E2E Tests (Playwright)" → Run workflow, z
+  opcjonalnym polem **"spec_filter"** (plik albo `--grep wzorzec`).
+  Puste = wszystkie testy.
 
 Puste pole = wszystkie testy (tak jak przy zwykłym pushu). Lokalnie to
 samo bez żadnego dodatkowego ustawienia: `npx playwright test
