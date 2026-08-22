@@ -6,7 +6,12 @@ on:
     paths:
       - "tests/**"
       - ".github/workflows/e2e-tests.yml"
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      spec_filter:
+        description: 'Opcjonalnie: odpal tylko wybrany plik/wzorzec (np. "e2e/nowy-test.spec.js" albo "--grep nazwa"). Puste = wszystkie testy.'
+        required: false
+        default: ""
 
 # WAŻNE: celowo brak triggera `pull_request` — ten workflow ma dostęp do
 # E2E_BYPASS_SECRET/TEST_PASSWORD, a PR z forka mógłby uruchomić dowolny
@@ -45,7 +50,9 @@ jobs:
           E2E_BYPASS_SECRET: ${{ secrets.E2E_BYPASS_SECRET }}
           TEST_USERNAME: ${{ secrets.TEST_USERNAME }}
           TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
-        run: npm test
+        # spec_filter jest tylko w workflow_dispatch — na zwykłym pushu
+        # jest puste, więc leci cały zestaw testów jak dotychczas.
+        run: npm test -- ${{ github.event.inputs.spec_filter }}
         working-directory: tests
 
       - name: Upload failure screenshots

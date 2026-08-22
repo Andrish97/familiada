@@ -103,8 +103,19 @@ E2E_BYPASS_SECRET="..." TEST_USERNAME="..." TEST_PASSWORD="..." npm test
 
 ## Uruchomienie w CI
 
-Automatycznie po pushu zmian w `tests/**` na `main`, albo ręcznie:
-Actions → "E2E Tests (Playwright)" → Run workflow.
+Automatycznie po pushu zmian w `tests/**` na `main` (odpala **cały**
+zestaw testów), albo ręcznie: Actions → "E2E Tests (Playwright)" →
+Run workflow.
+
+Przy ręcznym odpaleniu jest opcjonalne pole **"spec_filter"** — pozwala
+odpalić tylko wybrany plik albo wzorzec, żeby przy dopisywaniu nowego
+testu nie czekać za każdym razem na całą resztę:
+- `e2e/nowy-test.spec.js` — tylko ten plik,
+- `--grep "fragment nazwy testu"` — tylko pasujące testy.
+
+Puste pole = wszystkie testy (tak jak przy zwykłym pushu). Lokalnie to
+samo bez żadnego dodatkowego ustawienia: `npx playwright test
+e2e/nowy-test.spec.js`.
 
 ## Pułapki, na które łatwo wpaść (znalezione przy pierwszym realnym przebiegu)
 
