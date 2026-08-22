@@ -1,8 +1,8 @@
 // js/core/guest-info-modal.js
 // Jednorazowy modal informacyjny dla konta gościa.
 
-import { alertModal } from './modal.js?v=v2026-08-21T21400';
-import { t } from '../../translation/translation.js?v=v2026-08-21T21400';
+import { alertModal } from './modal.js?v=v2026-08-22T07225';
+import { t } from '../../translation/translation.js?v=v2026-08-22T07225';
 
 const GUEST_INFO_SHOWN_PREFIX = 'fam:guest:info_shown:';
 
