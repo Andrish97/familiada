@@ -19,7 +19,12 @@ const ASSET_EXT = 'js|css|json|png|svg|ico|jpg|jpeg|gif|woff2?|ttf|otf|webp|avif
 const SOURCE_EXT = ['.html', '.js', '.json', '.css', '.webmanifest'];
 
 // Katalogi do całkowitego pominięcia
-const IGNORE_DIRS = ['.git', 'node_modules', '.claude', '.qwen', '.github', 'audio', 'img'];
+// "tests" pomijamy w całości: to zaplecze Playwright (package-lock.json,
+// specy Node.js), a nie zasoby serwowane przeglądarce. Regex wersjonujący
+// dopasowywał się też do składni JSON `"klucz": "cli.js"` w polach "bin"
+// w tests/package-lock.json, dopisując tam "?v=..." i psując binarkę
+// playwright w CI (npm ci przechodziło, ale bin/playwright nie istniał).
+const IGNORE_DIRS = ['.git', 'node_modules', '.claude', '.qwen', '.github', 'audio', 'img', 'tests'];
 
 /**
  * Rekurencyjnie pobiera listę plików do przetworzenia

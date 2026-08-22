@@ -34,12 +34,8 @@ jobs:
         run: npm ci
         working-directory: tests
 
-      # npx potrafiło nie znaleźć binarki mimo poprawnie zainstalowanego
-      # @playwright/test ("sh: 1: playwright: not found", exit 127) —
-      # powtórzone dwa razy z rzędu, więc nie flake. Wołamy bin bezpośrednio
-      # z node_modules/.bin, pomijając cały mechanizm rozwiązywania npx.
       - name: Install Playwright browsers
-        run: node_modules/.bin/playwright install --with-deps chromium
+        run: npx playwright install --with-deps chromium
         working-directory: tests
 
       # Cloudflare Bot Fight Mode jest na stałe wyłączony w dashboardzie
