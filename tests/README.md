@@ -103,9 +103,10 @@ E2E_BYPASS_SECRET="..." TEST_USERNAME="..." TEST_PASSWORD="..." npm test
 
 ## Uruchomienie w CI
 
-Automatycznie po pushu zmian w `tests/**` na `main` (odpala **cały**
-zestaw testów), albo ręcznie: Actions → "E2E Tests (Playwright)" →
-Run workflow.
+**Tylko ręcznie** — celowo brak triggera na push. Ten workflow loguje
+się na prawdziwe konta na produkcji, więc nie powinien się odpalać sam
+przy każdej zmianie w `tests/**` (nawet dokumentacji). Actions →
+"E2E Tests (Playwright)" → Run workflow.
 
 Przy ręcznym odpaleniu jest opcjonalne pole **"spec_filter"** — pozwala
 odpalić tylko wybrany plik albo wzorzec, żeby przy dopisywaniu nowego

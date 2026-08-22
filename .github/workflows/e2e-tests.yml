@@ -1,11 +1,6 @@
 name: E2E Tests (Playwright)
 
 on:
-  push:
-    branches: ["main"]
-    paths:
-      - "tests/**"
-      - ".github/workflows/e2e-tests.yml"
   workflow_dispatch:
     inputs:
       spec_filter:
@@ -13,9 +8,12 @@ on:
         required: false
         default: ""
 
-# WAŻNE: celowo brak triggera `pull_request` — ten workflow ma dostęp do
-# E2E_BYPASS_SECRET/TEST_PASSWORD, a PR z forka mógłby uruchomić dowolny
-# kod z dostępem do sekretów. Patrz tests/README.md.
+# WAŻNE: celowo tylko workflow_dispatch — ani push, ani pull_request.
+# Ten workflow loguje się na prawdziwe konta na produkcji (TEST_USERNAME,
+# świeże konta gości) i ma dostęp do E2E_BYPASS_SECRET/TEST_PASSWORD;
+# każda zmiana w tests/** (nawet dokumentacja) nie powinna sama z siebie
+# odpalać logowań na produkcję. Odpalaj świadomie: Actions → "E2E Tests
+# (Playwright)" → Run workflow.
 
 jobs:
   e2e:
