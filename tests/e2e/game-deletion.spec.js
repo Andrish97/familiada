@@ -7,13 +7,6 @@ const { test, expect } = require("@playwright/test");
 const { loginAsTestUser } = require("./helpers/login");
 
 test("usunięcie gry przez UI czyści folder audio w buckecie user-sounds", async ({ page, context }) => {
-  // Diagnostyka: przekieruj konsolę przeglądarki i błędy JS wprost do logu
-  // CI, żeby zdiagnozować dlaczego modal potwierdzenia czasem się nie
-  // pojawia, bez potrzeby ściągania zrzutów ekranu (Azure Blob niedostępny
-  // z części środowisk).
-  page.on("console", (msg) => console.log(`[browser:${msg.type()}]`, msg.text()));
-  page.on("pageerror", (err) => console.log("[browser:pageerror]", err.message));
-
   await loginAsTestUser(page, context);
 
   // Stwórz testową grę bezpośrednio przez API (nie testujemy tu kreatora gier,
