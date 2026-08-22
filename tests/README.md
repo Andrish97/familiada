@@ -61,6 +61,10 @@ osobno.
 - `TEST_USERNAME` / `TEST_PASSWORD` — dane logowania konta testowego
   (zwykłe konto, nie gość — używane tam gdzie test wymaga zalogowanego
   usera, np. `game-deletion.spec.js`).
+- `TEST_USERNAME_2` — drugie konto testowe, do testów wymagających dwóch
+  zalogowanych stron naraz (np. subskrypcje). **Hasło to to samo
+  `TEST_PASSWORD` co dla `TEST_USERNAME`** — nie ma osobnego
+  `TEST_PASSWORD_2`, oba konta mają wspólne hasło.
 
 **Cloudflare Worker** (`familiada`, `cloudflare/maintenance-worker`):
 - `E2E_BYPASS_SECRET` — ta sama wartość co w GitHub Actions. Ustawiane

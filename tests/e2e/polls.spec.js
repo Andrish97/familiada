@@ -15,6 +15,9 @@ const { test, expect } = require("@playwright/test");
 const { loginAsTestUser } = require("./helpers/login");
 
 const QN_COUNT = 10; // RULES.QN_MIN
+const POINTS_VOTERS = 10;
+const TEXT_VOTERS = 10;
+const MERGE_VOTERS = 8;
 
 async function seedPollGame(page, type) {
   return await page.evaluate(async (type) => {
@@ -116,11 +119,12 @@ test("ankieta punktowa i tekstowa: tworzenie, zbieranie głosów i zamknięcie",
   try {
     const pointsLink = await openPoll(page, pointsGame.gameId);
 
-    // 3 głosujących, każdy wybiera inną z 4 predefiniowanych odpowiedzi —
-    // gwarantuje min. 3 różne odpowiedzi z głosami wymagane do zamknięcia.
-    await voteAllPoints(browser, pointsLink, 0);
-    await voteAllPoints(browser, pointsLink, 1);
-    await voteAllPoints(browser, pointsLink, 2);
+    // Wielu głosujących naraz (osobne konteksty równolegle, nie sekwencyjnie —
+    // dokładnie tak jak wielu ludzi skanujących ten sam QR w tym samym czasie),
+    // rozkładając głosy po 4 predefiniowanych odpowiedziach.
+    await Promise.all(
+      Array.from({ length: POINTS_VOTERS }, (_, i) => voteAllPoints(browser, pointsLink, i))
+    );
 
     await page.goto(`https://www.familiada.online/polls?id=${pointsGame.gameId}`, { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
@@ -141,11 +145,10 @@ test("ankieta punktowa i tekstowa: tworzenie, zbieranie głosów i zamknięcie",
   try {
     const textLink = await openPoll(page, textGame.gameId);
 
-    // 3 głosujących, każdy wpisuje własny, unikalny tekst przy każdym pytaniu —
-    // min. 3 różne odpowiedzi na pytanie wymagane do zamknięcia.
-    await voteAllText(browser, textLink, "Alfa");
-    await voteAllText(browser, textLink, "Beta");
-    await voteAllText(browser, textLink, "Gamma");
+    // Wielu głosujących naraz, każdy wpisuje własny, unikalny tekst.
+    await Promise.all(
+      Array.from({ length: TEXT_VOTERS }, (_, i) => voteAllText(browser, textLink, `V${i}`))
+    );
 
     await page.goto(`https://www.familiada.online/polls?id=${textGame.gameId}`, { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
@@ -174,12 +177,11 @@ test("ankieta tekstowa: scalanie odpowiedzi w panelu zamykania", async ({ page, 
   try {
     const pollLink = await openPoll(page, game.gameId);
 
-    // 4 głosujących na KAŻDE pytanie — scalimy dwóch w pierwszym pytaniu,
-    // zostawiając nadal >= 3 różne odpowiedzi wymagane do zamknięcia.
-    await voteAllText(browser, pollLink, "Alfa");
-    await voteAllText(browser, pollLink, "Beta");
-    await voteAllText(browser, pollLink, "Gamma");
-    await voteAllText(browser, pollLink, "Delta");
+    // Wielu głosujących naraz na KAŻDE pytanie — scalimy dwóch w pierwszym
+    // pytaniu, zostawiając nadal dużo więcej niż wymagane min. 3 odpowiedzi.
+    await Promise.all(
+      Array.from({ length: MERGE_VOTERS }, (_, i) => voteAllText(browser, pollLink, `V${i}`))
+    );
 
     await page.goto(`https://www.familiada.online/polls?id=${game.gameId}`, { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
@@ -188,7 +190,7 @@ test("ankieta tekstowa: scalanie odpowiedzi w panelu zamykania", async ({ page, 
 
     const firstQuestion = page.locator("#textCloseList .tcQ").first();
     const items = firstQuestion.locator(".tcList .tcItem");
-    await expect(items).toHaveCount(4, { timeout: 15000 });
+    await expect(items).toHaveCount(MERGE_VOTERS, { timeout: 15000 });
 
     const srcText = await items.nth(0).locator(".tcTxtInp").inputValue();
     const srcCount = parseInt(await items.nth(0).locator(".tcCnt").innerText(), 10);
@@ -199,7 +201,7 @@ test("ankieta tekstowa: scalanie odpowiedzi w panelu zamykania", async ({ page, 
     await items.nth(0).locator(".tcMergeBtn").click();
     await items.nth(1).locator(".tcMergeBtn").click();
 
-    await expect(items).toHaveCount(3, { timeout: 5000 });
+    await expect(items).toHaveCount(MERGE_VOTERS - 1, { timeout: 5000 });
 
     // .tcTxtInp to <input> — jego wartość nie jest "tekstem" w sensie Playwrighta
     // (hasText/getByText nie widzą value inputa), więc szukamy ręcznie po inputValue().
