@@ -15,9 +15,21 @@ const { test, expect } = require("@playwright/test");
 const { loginAsTestUser } = require("./helpers/login");
 
 const QN_COUNT = 10; // RULES.QN_MIN
-const POINTS_VOTERS = 10;
-const TEXT_VOTERS = 10;
-const MERGE_VOTERS = 8;
+const POINTS_VOTERS = 100;
+const TEXT_VOTERS = 100;
+const MERGE_VOTERS = 100;
+// Wszystkich 100 kontekstów przeglądarki naraz zalałoby runnera CI (RAM/CPU)
+// i produkcję falą jednoczesnych requestów — głosujemy paczkami równoległymi
+// zamiast jednym Promise.all na 100, żeby zostać bliżej realnego obciążenia
+// (dużo ludzi skanujących QR "naraz", ale nie dosłownie w tej samej milisekundzie).
+const VOTER_CONCURRENCY = 20;
+
+async function voteMany(count, voteOneFn) {
+  for (let start = 0; start < count; start += VOTER_CONCURRENCY) {
+    const batch = Array.from({ length: Math.min(VOTER_CONCURRENCY, count - start) }, (_, i) => start + i);
+    await Promise.all(batch.map(voteOneFn));
+  }
+}
 
 async function seedPollGame(page, type) {
   return await page.evaluate(async (type) => {
@@ -110,7 +122,7 @@ async function voteAllText(browser, pollLink, prefix) {
 }
 
 test("ankieta punktowa i tekstowa: tworzenie, zbieranie głosów i zamknięcie", async ({ page, context, browser }) => {
-  test.setTimeout(240_000); // dwa pełne cykle (10 pytań x kilku głosujących) na jeden test
+  test.setTimeout(600_000); // dwa pełne cykle (10 pytań x ~100 głosujących w paczkach) na jeden test
 
   await loginAsTestUser(page, context);
 
@@ -119,12 +131,8 @@ test("ankieta punktowa i tekstowa: tworzenie, zbieranie głosów i zamknięcie",
   try {
     const pointsLink = await openPoll(page, pointsGame.gameId);
 
-    // Wielu głosujących naraz (osobne konteksty równolegle, nie sekwencyjnie —
-    // dokładnie tak jak wielu ludzi skanujących ten sam QR w tym samym czasie),
-    // rozkładając głosy po 4 predefiniowanych odpowiedziach.
-    await Promise.all(
-      Array.from({ length: POINTS_VOTERS }, (_, i) => voteAllPoints(browser, pointsLink, i))
-    );
+    // ~100 głosujących, rozkładając głosy po 4 predefiniowanych odpowiedziach.
+    await voteMany(POINTS_VOTERS, (i) => voteAllPoints(browser, pointsLink, i));
 
     await page.goto(`https://www.familiada.online/polls?id=${pointsGame.gameId}`, { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
@@ -145,10 +153,8 @@ test("ankieta punktowa i tekstowa: tworzenie, zbieranie głosów i zamknięcie",
   try {
     const textLink = await openPoll(page, textGame.gameId);
 
-    // Wielu głosujących naraz, każdy wpisuje własny, unikalny tekst.
-    await Promise.all(
-      Array.from({ length: TEXT_VOTERS }, (_, i) => voteAllText(browser, textLink, `V${i}`))
-    );
+    // ~100 głosujących, każdy wpisuje własny, unikalny tekst.
+    await voteMany(TEXT_VOTERS, (i) => voteAllText(browser, textLink, `V${i}`));
 
     await page.goto(`https://www.familiada.online/polls?id=${textGame.gameId}`, { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
@@ -169,7 +175,7 @@ test("ankieta punktowa i tekstowa: tworzenie, zbieranie głosów i zamknięcie",
 });
 
 test("ankieta tekstowa: scalanie odpowiedzi w panelu zamykania", async ({ page, context, browser }) => {
-  test.setTimeout(150_000);
+  test.setTimeout(400_000); // ~100 głosujących w paczkach na jedno pytanie do scalenia
 
   await loginAsTestUser(page, context);
 
@@ -177,11 +183,9 @@ test("ankieta tekstowa: scalanie odpowiedzi w panelu zamykania", async ({ page, 
   try {
     const pollLink = await openPoll(page, game.gameId);
 
-    // Wielu głosujących naraz na KAŻDE pytanie — scalimy dwóch w pierwszym
-    // pytaniu, zostawiając nadal dużo więcej niż wymagane min. 3 odpowiedzi.
-    await Promise.all(
-      Array.from({ length: MERGE_VOTERS }, (_, i) => voteAllText(browser, pollLink, `V${i}`))
-    );
+    // ~100 głosujących na KAŻDE pytanie — scalimy dwóch w pierwszym pytaniu,
+    // zostawiając nadal dużo więcej niż wymagane min. 3 odpowiedzi.
+    await voteMany(MERGE_VOTERS, (i) => voteAllText(browser, pollLink, `V${i}`));
 
     await page.goto(`https://www.familiada.online/polls?id=${game.gameId}`, { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
