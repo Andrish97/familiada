@@ -278,7 +278,7 @@ export function setTopbarAccount(user, {
   menu.hidden = true;
   whoEl.after(menu);
 
-  if (!guestMode && withAccountSettings) {
+  if (withAccountSettings) {
     const btnSettings = document.createElement('button');
     btnSettings.className = 'btn account-menu-item';
     btnSettings.type = 'button';
