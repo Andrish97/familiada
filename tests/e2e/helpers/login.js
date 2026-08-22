@@ -3,6 +3,25 @@ const { generateE2EToken } = require("./e2e-token");
 
 const LOGIN_URL = "https://www.familiada.online/login";
 
+// Trwała diagnostyka (nie tylko na czas jednego debugowania) — logowanie
+// bywa niedeterministycznie wolne/nieudane w CI (waitForURL timeout) bez
+// żadnego wcześniejszego sygnału dlaczego. Podpięte raz na page, żeby przy
+// kolejnym takim failu CI log od razu pokazał: błędy JS, błędy sieciowe
+// (zwłaszcza 429 — rate limit) i błędy konsoli, zamiast zgadywania.
+function instrumentPage(page) {
+  page.on("pageerror", (err) => console.log("[e2e-diag] pageerror:", err.message));
+  page.on("console", (msg) => {
+    if (msg.type() === "error" || msg.type() === "warning") {
+      console.log(`[e2e-diag] console:${msg.type()}`, msg.text());
+    }
+  });
+  page.on("response", (res) => {
+    if (res.status() >= 400) {
+      console.log("[e2e-diag] HTTP", res.status(), res.url());
+    }
+  });
+}
+
 async function withE2EBypass(context) {
   const secret = process.env.E2E_BYPASS_SECRET;
   if (!secret) throw new Error("Brak E2E_BYPASS_SECRET w zmiennych środowiskowych");
@@ -60,6 +79,7 @@ async function loginAsTestUser(page, context) {
   const password = process.env.TEST_PASSWORD;
   if (!username || !password) throw new Error("Brak TEST_USERNAME/TEST_PASSWORD w zmiennych środowiskowych");
 
+  instrumentPage(page);
   await withE2EBypass(context);
   const res = await page.goto(LOGIN_URL, { waitUntil: "domcontentloaded" });
   try {
@@ -70,12 +90,18 @@ async function loginAsTestUser(page, context) {
   }
   await page.fill("#pass", password);
   await page.click("#btnPrimary");
-  await page.waitForURL(/builder/, { timeout: 20000 });
+  try {
+    await page.waitForURL(/builder/, { timeout: 20000 });
+  } catch (e) {
+    await dumpPageDiagnostics(page, res);
+    throw e;
+  }
   await clearE2EBypass(context); // token już niepotrzebny, sesja jest prawdziwa
 }
 
 /** Zakłada świeże konto gościa, zostawia stronę na /builder. Gość sam wygaśnie po 5 dniach. */
 async function loginAsGuest(page, context) {
+  instrumentPage(page);
   await withE2EBypass(context);
   const res = await page.goto(LOGIN_URL, { waitUntil: "domcontentloaded" });
   try {
@@ -87,7 +113,12 @@ async function loginAsGuest(page, context) {
   // Zakładanie gościa to więcej pracy po stronie backendu niż zwykłe
   // logowanie (auth signup + trigger seedujący dane demo + redirect) —
   // w CI bywa wolniejsze niż 20s, stąd dłuższy limit niż w loginAsTestUser.
-  await page.waitForURL(/builder/, { timeout: 40000 });
+  try {
+    await page.waitForURL(/builder/, { timeout: 40000 });
+  } catch (e) {
+    await dumpPageDiagnostics(page, res);
+    throw e;
+  }
   await clearE2EBypass(context);
 }
 
