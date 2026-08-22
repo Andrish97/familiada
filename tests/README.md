@@ -141,10 +141,12 @@ strony. Zapisane tu, żeby nie trzeba było ich znowu wyłapywać po kolei:
   a `TEST_USERNAME` takie właśnie jest. Zasłania klikalne elementy na
   całej stronie. Suppresowany tym samym `addInitScript`
   (`localStorage["fam:app_rating_suppressed"] = "true"`).
-- **`/account` jest zablokowane dla gości** (`guest-mode.js`
-  `showGuestBlockedOverlay`, `account.js:453`) — testy dotykające tej
-  strony (np. restore-demo) muszą logować się przez `loginAsTestUser`,
-  nie `loginAsGuest`.
+- **`/account` dla gościa pokazuje tylko sekcję "Usuń konto"** — reszta
+  (w tym `#demoRestoreBtn`) jest schowana przez `hideForGuest()`
+  (`account.js` `loadProfile()`). Testy dotykające czegokolwiek poza
+  usuwaniem konta (np. restore-demo) nadal muszą logować się przez
+  `loginAsTestUser`, nie `loginAsGuest` — patrz pełny opis w sekcji
+  "Co jest zablokowane dla gościa" niżej.
 - **Testy na współdzielonym `TEST_USERNAME` muszą iść sekwencyjnie.**
   `playwright.config.js` ma `workers: 1` — dwa równoległe logowania na to
   samo konto testowe powodowały niedeterministyczne błędy (raz timeout
@@ -171,16 +173,27 @@ główna (`index.html`) i sam `/login`.
 **Gość** (`user.is_guest === true`, konto założone przyciskiem "Wejdź
 jako gość") **ma sesję, więc mija powyższą blokadę**, ale trafia na
 pełnoekranowy, blokujący overlay (`showGuestBlockedOverlay`,
-`js/core/guest-mode.js`) na trzech konkretnych stronach — treść
+`js/core/guest-mode.js`) na dwóch konkretnych stronach — treść
 `guestGuard.message` w tłumaczeniach mówi wprost które to funkcje:
-- `/account` (`js/pages/account.js:453`) — ustawienia konta,
 - `/polls-hub` (`js/pages/polls-hub.js:1099`) — panel ankiet,
 - `/subscriptions` (`js/pages/subscriptions.js:699`) — subskrypcje.
+
+**`/account` jest częściowym wyjątkiem** — gość NIE dostaje pełnego
+blokującego overlaya. `loadProfile()` (`js/pages/account.js`) chowa mu
+sekcje niedotyczące gościa (username/email/hasło, powiadomienia email,
+ocena appki, przywracanie demo) przez `hideForGuest()`, ale zostawia
+widoczną i działającą sekcję "Usuń konto" — jedyny sposób w UI, żeby
+gość mógł sam usunąć swoje konto. `handleDeleteAccount()` ma osobną
+gałąź dla gościa: bez weryfikacji hasłem (nie ma go), jedno
+potwierdzenie modalem (`account.deleteGuestModalTitle`/`...Text`,
+przycisk `account.deleteGuestModalOk` = "Usuń" — celowo inny tekst niż
+przycisk `#deleteAccount` na stronie, żeby oba nie miały identycznego
+tekstu widocznego jednocześnie, patrz `account-deletion.spec.js`).
 
 Reszta appki (`builder`, `editor`, `logo-editor`, `control/*`,
 `bases`/`base-explorer`, `manual`, `game-settings`) działa dla gościa
 normalnie — to nie jest blokada "gość = tryb tylko do odczytu", tylko
-konkretna lista trzech stron związanych z tożsamością/płatnościami.
+konkretna lista stron związanych z tożsamością/płatnościami.
 
 Dodatkowe różnice gościa, nieblokujące UI, ale istotne dla testów:
 - dane konta trzymane tylko w danej przeglądarce — brak cookies/localStorage

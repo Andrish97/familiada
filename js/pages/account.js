@@ -4,7 +4,7 @@ import { requireAuth, updateUserLanguage, validatePassword, validateUsername, si
 import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../core/user-flags.js?v=v2026-08-21T21400";
 import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js?v=v2026-08-21T21400";
 import { confirmModal } from "../core/modal.js?v=v2026-08-21T21400";
-import { isGuestUser, showGuestBlockedOverlay } from "../core/guest-mode.js?v=v2026-08-21T21400";
+import { isGuestUser, hideForGuest } from "../core/guest-mode.js?v=v2026-08-21T21400";
 import "../core/contact-modal.js";
 import { deleteGameSoundsFolder } from "../core/sfx-cloud.js?v=v2026-08-21T21400";
 
@@ -450,8 +450,23 @@ async function wireDemoActions(user) {
 async function loadProfile() {
   const user = await requireAuth("login?setup=username");
   if (!user) return;
+
   if (isGuestUser(user)) {
-    showGuestBlockedOverlay({ backHref: "builder", loginHref: "login?force_auth=1", showLoginButton: true });
+    // Gość nie ma username/email/hasła ani oceny/demo (demo dotyka
+    // wyłącznie zwykłych kont) — z całej strony zostaje mu tylko sekcja
+    // usuwania konta, z uproszczonym potwierdzeniem (patrz handleDeleteAccount).
+    hideForGuest(user, [
+      document.getElementById("usernameSection"),
+      document.getElementById("emailSection"),
+      document.getElementById("passwordSection"),
+      document.getElementById("emailNotifSection"),
+      document.getElementById("ratingSection"),
+      document.getElementById("demoSection"),
+      deletePassword,
+    ]);
+    const deleteHintEl = document.getElementById("deleteHint");
+    if (deleteHintEl) deleteHintEl.textContent = t("account.deleteHintGuest");
+    setStatus(t("account.statusLoaded"));
     return;
   }
 
@@ -681,17 +696,28 @@ async function handlePassSave() {
 async function handleDeleteAccount() {
   setErr("");
   try {
-    const pwd = String(deletePassword.value || "");
-    if (!pwd) throw new Error(t("account.errDeletePasswordMissing"));
-
     const { data: userData, error: userError } = await sb().auth.getUser();
-    if (userError || !userData?.user?.email) throw new Error(t("index.errNoSession"));
+    if (userError || !userData?.user) throw new Error(t("index.errNoSession"));
 
-    const { error: signInError } = await sb().auth.signInWithPassword({
-      email: userData.user.email,
-      password: pwd,
-    });
-    if (signInError) throw new Error(t("account.errInvalidPassword"));
+    if (isGuestUser(userData.user)) {
+      // Gość nie ma hasła — jedno potwierdzenie modalem zamiast weryfikacji hasłem.
+      const ok = await confirmModal({
+        title: t("account.deleteGuestModalTitle"),
+        text: t("account.deleteGuestModalText"),
+        okText: t("account.deleteGuestModalOk"),
+      });
+      if (!ok) return;
+    } else {
+      const pwd = String(deletePassword.value || "");
+      if (!pwd) throw new Error(t("account.errDeletePasswordMissing"));
+      if (!userData.user.email) throw new Error(t("index.errNoSession"));
+
+      const { error: signInError } = await sb().auth.signInWithPassword({
+        email: userData.user.email,
+        password: pwd,
+      });
+      if (signInError) throw new Error(t("account.errInvalidPassword"));
+    }
 
     setStatus(t("account.statusDeleting"));
     const { data, error } = await sb().functions.invoke("delete-account");

@@ -63,7 +63,7 @@
     </div>
 
     <div class="account-grid" data-skel-step>
-      <section class="account-panel">
+      <section class="account-panel" id="usernameSection">
         <div class="section-title" data-i18n="account.usernameTitle">Nazwa użytkownika</div>
         <div class="section-hint" data-i18n="account.usernameHint">Widoczna dla subskrybentów i w panelu.</div>
         <input class="inp" id="username" placeholder="Nazwa użytkownika" autocomplete="username" data-i18n-placeholder="account.usernamePlaceholder"/>
@@ -71,7 +71,7 @@
         <button class="btn gold full" id="saveUsername" type="button" data-i18n="account.usernameSave">Zapisz nazwę</button>
       </section>
 
-      <section class="account-panel">
+      <section class="account-panel" id="emailSection">
         <div class="section-title" data-i18n="account.emailTitle">E-mail</div>
         <div class="section-hint" data-i18n="account.emailHint">Zmieniaj adres logowania. Po zmianie sprawdź skrzynkę na obecnym i nowym e-mailu, aby potwierdzić operację.</div>
         <input class="inp" id="email" type="email" placeholder="Nowy e-mail" autocomplete="email" data-i18n-placeholder="account.emailPlaceholder"/>
@@ -88,7 +88,7 @@
         <div class="section-hint" id="emailPendingHint" hidden></div>
       </section>
 
-      <section class="account-panel">
+      <section class="account-panel" id="passwordSection">
         <div class="section-title" data-i18n="account.passwordTitle">Hasło</div>
         <div class="section-hint" data-i18n="account.passwordHint">Minimum 8 znaków, małe/duże litery, cyfra i znak specjalny.</div>
         <input class="inp" id="pass1" type="password" placeholder="Nowe hasło" autocomplete="new-password" data-i18n-placeholder="account.passwordPlaceholder"/>
@@ -97,14 +97,14 @@
         <button class="btn gold full" id="savePass" type="button" data-i18n="account.passwordSave">Zmień hasło</button>
       </section>
 
-      <section class="account-panel danger">
+      <section class="account-panel danger" id="deleteSection">
         <div class="section-title" data-i18n="account.deleteTitle">Usuń konto</div>
-        <div class="section-hint" data-i18n="account.deleteHint">Ta operacja jest nieodwracalna. Wpisz hasło, aby potwierdzić.</div>
+        <div class="section-hint" id="deleteHint" data-i18n="account.deleteHint">Ta operacja jest nieodwracalna. Wpisz hasło, aby potwierdzić.</div>
         <input class="inp" id="deletePassword" type="password" placeholder="Hasło" autocomplete="current-password" data-i18n-placeholder="account.deletePlaceholder"/>
         <button class="btn danger full" id="deleteAccount" type="button" data-i18n="account.deleteButton">Usuń konto i dane</button>
       </section>
 
-      <section class="account-panel account-panel--email-notif">
+      <section class="account-panel account-panel--email-notif" id="emailNotifSection">
         <div class="section-title" data-i18n="account.emailNotifTitle"></div>
         <div class="section-hint" data-i18n="account.emailNotifHint"></div>
 
@@ -116,7 +116,7 @@
         <div class="cooldown" id="emailNotifSaved" hidden></div>
       </section>
 
-      <section class="account-panel">
+      <section class="account-panel" id="ratingSection">
         <div class="section-title" data-i18n="common.rating.account.title">Twoja ocena systemu</div>
         <div class="section-hint" data-i18n="common.rating.account.hint">Twoja dotychczasowa ocena i komentarz.</div>
         <div id="userRatingInfo">
@@ -124,7 +124,7 @@
         </div>
       </section>
 
-      <section class="account-panel account-panel--demo">
+      <section class="account-panel account-panel--demo" id="demoSection">
         <div class="section-title" data-i18n="account.demo.title">Materiały Demo</div>
         <div class="section-hint" data-i18n="account.demo.hint">Przywróć przykładowe materiały startowe: bazę pytań, loga i gotowe gry różnych kategorii.</div>
         <button class="btn" id="demoRestoreBtn" type="button" data-i18n="account.demo.btn">↺ Przywróć pliki demo</button>
