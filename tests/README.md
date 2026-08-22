@@ -103,24 +103,23 @@ E2E_BYPASS_SECRET="..." TEST_USERNAME="..." TEST_PASSWORD="..." npm test
 
 ## Uruchomienie w CI
 
-Dwa sposoby, oba świadome:
+**Tylko ręcznie** — celowo brak triggera na push czy pull_request. Ten
+workflow loguje się na prawdziwe konta na produkcji, więc odpala się
+wyłącznie świadomie: Actions → "E2E Tests (Playwright)" → Run workflow.
 
-- **Automatycznie po pushu do `tests/e2e/**`, `playwright.config.js` albo
-  `package.json`** — ale **inteligentnie**: krok "Determine which specs
-  to run" patrzy co się realnie zmieniło w danym pushu. Jeśli zmienił się
-  tylko jeden (albo kilka) plik `*.spec.js`, odpala **wyłącznie te
-  pliki** — reszta stabilnych testów nie leci na darmo. Jeśli zmienił się
-  coś współdzielonego (`helpers/*.js`, `playwright.config.js`), odpala
-  cały zestaw, bo nie da się bezpiecznie założyć że reszta nadal
-  przechodzi. `tests/README.md` celowo NIE jest w ścieżkach triggera —
-  sama dokumentacja nigdy nie odpala logowań na produkcję.
-- **Ręcznie** — Actions → "E2E Tests (Playwright)" → Run workflow, z
-  opcjonalnym polem **"spec_filter"** (plik albo `--grep wzorzec`).
-  Puste = wszystkie testy.
+Sesja Claude Code nie ma uprawnień żeby triggerować to samodzielnie
+(sprawdzone: MCP, bezpośrednie API GitHuba i `repository_dispatch` —
+wszystkie zablokowane na poziomie infrastruktury Anthropic dla tego typu
+sesji) — odpalenie zawsze wymaga kliknięcia przez człowieka w zakładce
+Actions, albo uruchomienia lokalnie.
 
-Puste pole = wszystkie testy (tak jak przy zwykłym pushu). Lokalnie to
-samo bez żadnego dodatkowego ustawienia: `npx playwright test
-e2e/nowy-test.spec.js`.
+Pole **"spec_filter"** pozwala odpalić wyrywkowo tylko jeden plik albo
+wzorzec zamiast całego zestawu:
+- `e2e/nazwa-testu.spec.js` — tylko ten plik,
+- `--grep "fragment nazwy testu"` — tylko pasujące testy.
+
+Puste pole = wszystkie testy. Lokalnie to samo bez żadnego dodatkowego
+ustawienia: `npx playwright test e2e/nazwa-testu.spec.js`.
 
 ## Pułapki, na które łatwo wpaść (znalezione przy pierwszym realnym przebiegu)
 

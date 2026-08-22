@@ -1,14 +1,6 @@
 name: E2E Tests (Playwright)
 
 on:
-  push:
-    branches: ["main"]
-    paths:
-      - "tests/e2e/**"
-      - "tests/playwright.config.js"
-      - "tests/package.json"
-      - "tests/package-lock.json"
-      - ".github/workflows/e2e-tests.yml"
   workflow_dispatch:
     inputs:
       spec_filter:
@@ -16,17 +8,13 @@ on:
         required: false
         default: ""
 
-# WAŻNE: `tests/README.md` celowo NIE jest w paths — sama dokumentacja nie
-# ma odpalać logowań na produkcję. Push do `tests/e2e/**` odpala automatycznie,
-# ale tylko zmienione pliki testów (patrz krok "Determine which specs to
-# run") — zmiana w jednym spec.js nie odpala reszty, chyba że zmienił się
-# też coś współdzielonego (helpers/, playwright.config.js), bo wtedy nie da
-# się bezpiecznie założyć że reszta nadal przechodzi.
-#
+# WAŻNE: celowo tylko workflow_dispatch — ani push, ani pull_request.
 # Ten workflow loguje się na prawdziwe konta na produkcji (TEST_USERNAME,
-# świeże konta gości) i ma dostęp do E2E_BYPASS_SECRET/TEST_PASSWORD —
-# stąd brak triggera pull_request (PR z forka mógłby uruchomić dowolny
-# kod z dostępem do sekretów).
+# świeże konta gości) i ma dostęp do E2E_BYPASS_SECRET/TEST_PASSWORD;
+# odpalany wyłącznie ręcznie, świadomie, kiedy faktycznie trzeba:
+# Actions → "E2E Tests (Playwright)" → Run workflow. Pole "spec_filter"
+# pozwala odpalić wyrywkowo tylko jeden plik/wzorzec zamiast całego
+# zestawu.
 
 jobs:
   e2e:
@@ -36,8 +24,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -52,30 +38,6 @@ jobs:
         run: npx playwright install --with-deps chromium
         working-directory: tests
 
-      - name: Determine which specs to run
-        id: specs
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "filter=${{ github.event.inputs.spec_filter }}" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          changed=$(git diff --name-only "${{ github.event.before }}" "${{ github.sha }}" -- tests/e2e || true)
-          echo "Zmienione pliki pod tests/e2e:"
-          echo "$changed"
-
-          non_spec=$(echo "$changed" | grep -v '\.spec\.js$' || true)
-          spec_only=$(echo "$changed" | grep '\.spec\.js$' || true)
-
-          if [ -z "$non_spec" ] && [ -n "$spec_only" ]; then
-            filter=$(echo "$spec_only" | sed 's|^tests/||' | tr '\n' ' ')
-            echo "Zmieniły się tylko pliki spec — odpalam wyłącznie: $filter"
-            echo "filter=$filter" >> "$GITHUB_OUTPUT"
-          else
-            echo "Zmienił się plik współdzielony (albo brak wykrytych zmian) — odpalam cały zestaw."
-            echo "filter=" >> "$GITHUB_OUTPUT"
-          fi
-
       # Cloudflare Bot Fight Mode jest na stałe wyłączony w dashboardzie
       # (Security → Bots) — na Free planie nie da się go pominąć per-request
       # (nie działa na silniku reguł, WAF Custom Rules/Configuration Rules go
@@ -87,7 +49,7 @@ jobs:
           E2E_BYPASS_SECRET: ${{ secrets.E2E_BYPASS_SECRET }}
           TEST_USERNAME: ${{ secrets.TEST_USERNAME }}
           TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
-        run: npm test -- ${{ steps.specs.outputs.filter }}
+        run: npm test -- ${{ github.event.inputs.spec_filter }}
         working-directory: tests
 
       - name: Upload failure screenshots
