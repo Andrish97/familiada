@@ -198,8 +198,9 @@ konkretna lista stron związanych z tożsamością/płatnościami.
 Dodatkowe różnice gościa, nieblokujące UI, ale istotne dla testów:
 - dane konta trzymane tylko w danej przeglądarce — brak cookies/localStorage
   = brak dostępu do konta (nie ma emaila/hasła do odzyskania),
-- konto samo znika po 5 dniach nieaktywności (`guest_cleanup_expired`,
-  patrz `tryby logowania` niżej) — zero ręcznego sprzątania fixture'ów,
+- konto samo znika po 5 dniach nieaktywności (`guest_cleanup_expired`),
+  ale **testy nie powinny na tym polegać** — patrz obowiązkowe
+  sprzątanie w sekcji "Tryby logowania" niżej,
 - przy pierwszym wejściu pokazuje się jednorazowy modal informacyjny
   (`js/core/guest-info-modal.js`, `maybeShowGuestInfoModal`) — w E2E nie
   przeszkadza bo testy nie czekają na żaden konkretny stan strony przed
@@ -214,5 +215,14 @@ Dodatkowe różnice gościa, nieblokujące UI, ale istotne dla testów:
 - `loginAsGuest(page, context)` — zakłada świeże konto gościa przez
   przycisk "Wejdź jako gość", też przez prawdziwy formularz + bypass.
   Gość ma osobne ograniczenia w appce — używaj tego trybu gdy test ma
-  sprawdzać właśnie te ograniczenia. Konto samo zniknie po 5 dniach
-  (istniejący `guest_cleanup_expired`), zero ręcznego sprzątania.
+  sprawdzać właśnie te ograniczenia.
+
+  **Każdy test używający `loginAsGuest` musi na końcu sam usunąć to
+  konto** (przez prawdziwy UI flow — `#deleteAccount` +
+  `account.deleteGuestModalOk`, patrz `account-deletion.spec.js`) —
+  nie polegaj na automatycznym wygaśnięciu po 5 dniach
+  (`guest_cleanup_expired`). CI odpala się często i ręcznie, więc
+  poleganie na wygaśnięciu zostawiałoby stertę martwych kont gości w
+  prawdziwej produkcyjnej bazie między jednym czyszczeniem a drugim.
+  Usuwanie na końcu testu to jedyne "sprzątanie fixture'a", jakiego
+  tu potrzeba.
