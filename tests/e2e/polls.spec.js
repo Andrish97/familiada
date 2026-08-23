@@ -196,7 +196,7 @@ function textItemsForVoter(questions, answerForOrd) {
 }
 
 test("ankieta punktowa i tekstowa: tworzenie, zbieranie głosów i zamknięcie", async ({ page, context, browser }) => {
-  test.setTimeout(180_000);
+  test.setTimeout(300_000); // pierwsza próba padła DOKŁADNIE na 180s (na sprzątaniu ostatniego kroku) — za mało zapasu
 
   await loginAsTestUser(page, context);
 
@@ -274,14 +274,25 @@ test("ankieta tekstowa: literówki, korekta i scalanie odpowiedzi w panelu zamyk
   try {
     const { key: gameKey } = await openPoll(page, game.gameId); // link do głosowania niepotrzebny (głosujemy RPC), ale klucz tak
 
-    // Na pytaniu 1 celowo sadzimy realistyczny bałagan:
-    // - 3 głosy "Pizza", 2 głosy "PIZZA" (różna wielkość liter — to samo po
-    //   normalizacji, ale osobne wiersze w panelu, dopóki nie klikniesz
-    //   "Scal identyczne"),
-    // - 1 głos z literówką "Piza" (inne znaki, więc auto-scalanie tego NIE
-    //   złapie — trzeba ręcznie poprawić tekst),
+    // Na pytaniu 1 celowo sadzimy realistyczny bałagan. WAŻNE — sprawdzone
+    // bezpośrednio w kodzie (buildTextClosePanel w polls.js): panel buduje
+    // model z kolumny `answer_norm` (znormalizowany tekst), NIE z surowego
+    // tekstu głosującego — więc różnice samej wielkości liter ("Pizza" vs
+    // "PIZZA") zlewają się w JEDEN wiersz automatycznie, zanim cokolwiek
+    // klikniesz. ".tcMergeDup" ("Scal identyczne") nie służy do łapania
+    // tego — służy do scalania duplikatów, które powstają PO RĘCZNEJ EDYCJI
+    // tekstu w trakcie sesji (np. gdy poprawka literówki sprawi, że dwa
+    // wiersze mają teraz identyczny tekst). Tekst w `.tcTxtInp` też jest
+    // zawsze znormalizowany (małe litery) — nie oryginalną pisownią.
+    // - 4 głosy "Pizza" (dowolna wielkość liter) — mimo to JEDEN wiersz od
+    //   razu, count=4 (test tego istniejącego mechanizmu, nie coś do klikania),
+    // - 1 głos z literówką "Piza" (inne znaki niż "pizza" po normalizacji,
+    //   więc NIE zlewa się automatycznie) — poprawiamy ręcznie w polu tekstowym
+    //   na "pizza", co tworzy surowy duplikat, i DOPIERO WTEDY "Scal identyczne"
+    //   ma sens i faktycznie coś robi,
     // - "Kotek" i "Kot domowy" — różne sformułowania tej samej odpowiedzi,
-    //   do ręcznego scalenia przyciskiem ⇄ (.tcMergeBtn),
+    //   nigdy się nie znormalizują tak samo — do ręcznego scalenia przyciskiem
+    //   ⇄ (.tcMergeBtn),
     // - reszta głosujących: unikalny długi ogon, żeby zostało dużo więcej niż
     //   wymagane min. 3 odpowiedzi po każdej operacji.
     // Pozostałe 9 pytań: sam unikalny długi ogon (nieistotne dla tego testu).
@@ -289,11 +300,10 @@ test("ankieta tekstowa: literówki, korekta i scalanie odpowiedzi w panelu zamyk
     // panel zamykania, nie mechanika samego głosowania (tę sprawdza test wyżej).
     function answerForVoter(voterIdx, ord) {
       if (ord !== 1) return `V${voterIdx}-${ord}`;
-      if (voterIdx <= 2) return "Pizza";
-      if (voterIdx <= 4) return "PIZZA";
-      if (voterIdx === 5) return "Piza";
-      if (voterIdx === 6) return "Kotek";
-      if (voterIdx === 7) return "Kot domowy";
+      if (voterIdx <= 3) return "Pizza";
+      if (voterIdx === 4) return "Piza";
+      if (voterIdx === 5) return "Kotek";
+      if (voterIdx === 6) return "Kot domowy";
       return `V${voterIdx}`;
     }
 
@@ -310,9 +320,9 @@ test("ankieta tekstowa: literówki, korekta i scalanie odpowiedzi w panelu zamyk
 
     const firstQuestion = page.locator("#textCloseList .tcQ").first();
     const items = firstQuestion.locator(".tcList .tcItem");
-    // Surowych wierszy jest mniej niż głosujących, bo każdy identyczny tekst
-    // (3x "Pizza", 2x "PIZZA") to JEDEN wiersz z licznikiem — więc 3+2 głosy
-    // dają tylko 2 wiersze zamiast 5, czyli 3 "zaoszczędzone" wiersze łącznie.
+    // Surowych wierszy jest mniej niż głosujących, bo 4 identyczne (po
+    // normalizacji) głosy "Pizza" to JEDEN wiersz z licznikiem — 4 głosy
+    // dają 1 wiersz zamiast 4, czyli 3 "zaoszczędzone" wiersze.
     const initialRowCount = TOTAL_VOTERS - 3;
     await expect(items).toHaveCount(initialRowCount, { timeout: 15000 });
 
@@ -326,40 +336,34 @@ test("ankieta tekstowa: literówki, korekta i scalanie odpowiedzi w panelu zamyk
       return parseInt(await item.locator(".tcCnt").innerText(), 10);
     }
 
-    // --- Krok 1: "Scal identyczne" łapie różnicę w wielkości liter (Pizza + PIZZA) ---
-    await firstQuestion.locator(".tcMergeDup").click();
-    await expect(items).toHaveCount(initialRowCount - 1, { timeout: 5000 });
+    // Panel pokazuje tekst znormalizowany (małe litery) — "Pizza" wysłane
+    // przez głosujących wygląda tu jako "pizza".
+    const pizzaItem = await findItemByText("pizza");
+    expect(pizzaItem, "4 głosy 'Pizza' powinny być już jednym wierszem 'pizza'").not.toBeNull();
+    await expect.poll(() => itemCount(pizzaItem)).toBe(4);
 
-    let pizzaItem = (await findItemByText("Pizza")) || (await findItemByText("PIZZA"));
-    expect(pizzaItem, "po 'Scal identyczne' powinien zostać jeden wiersz Pizza/PIZZA").not.toBeNull();
-    await expect.poll(() => itemCount(pizzaItem)).toBe(5); // 3 + 2 głosy
-    // Nie wiadomo z góry, który z dwóch surowych tekstów ("Pizza" czy "PIZZA")
-    // przetrwa scalenie — zapamiętaj faktyczny, zamiast zakładać "Pizza".
-    const pizzaSurvivorText = await pizzaItem.locator(".tcTxtInp").inputValue();
+    // Literówka "Piza" ma inne znaki niż "pizza" po normalizacji, więc nie
+    // zlała się automatycznie — nadal stoi osobno.
+    const typoItem = await findItemByText("piza");
+    expect(typoItem, "literówka 'piza' nie powinna zniknąć sama, dopóki jej nie poprawimy").not.toBeNull();
 
-    // Literówka "Piza" ma zupełnie inne znaki niż "pizza" po normalizacji,
-    // więc auto-scalanie jej nie ruszyło — nadal stoi osobno.
-    const typoItem = await findItemByText("Piza");
-    expect(typoItem, "literówka 'Piza' nie powinna zniknąć sama, dopóki jej nie poprawimy").not.toBeNull();
-
-    // --- Krok 2: poprawiamy literówkę ręcznie w polu tekstowym, potem scalamy
-    // ręcznie przyciskiem ⇄ (bezpieczniejsze niż zakładanie, że "Scal
-    // identyczne" da się bezpiecznie kliknąć drugi raz po edycji) ---
+    // --- Poprawiamy literówkę ręcznie w polu tekstowym — dopiero to tworzy
+    // surowy duplikat "pizza" x2, który "Scal identyczne" faktycznie łapie ---
     const pizzaCountBeforeTypoFix = await itemCount(pizzaItem);
-    await typoItem.locator(".tcTxtInp").fill("Pizza");
+    await typoItem.locator(".tcTxtInp").fill("pizza");
     await typoItem.locator(".tcTxtInp").blur(); // zmiana zapisuje się dopiero na blur
 
-    await typoItem.locator(".tcMergeBtn").click(); // źródło: poprawiona literówka
-    await pizzaItem.locator(".tcMergeBtn").click(); // cel: istniejąca grupa "Pizza"
+    await firstQuestion.locator(".tcMergeDup").click();
 
-    await expect(items).toHaveCount(initialRowCount - 2, { timeout: 5000 });
-    pizzaItem = await findItemByText(pizzaSurvivorText);
-    expect(pizzaItem, `po poprawce i scaleniu powinien zostać jeden wiersz '${pizzaSurvivorText}'`).not.toBeNull();
-    await expect.poll(() => itemCount(pizzaItem)).toBe(pizzaCountBeforeTypoFix + 1);
+    await expect(items).toHaveCount(initialRowCount - 1, { timeout: 5000 });
+    const pizzaAfterFix = await findItemByText("pizza");
+    expect(pizzaAfterFix, "po poprawce i 'Scal identyczne' powinien zostać jeden wiersz 'pizza'").not.toBeNull();
+    await expect.poll(() => itemCount(pizzaAfterFix)).toBe(pizzaCountBeforeTypoFix + 1);
 
-    // --- Krok 3: ręczne scalanie dwóch różnie nazwanych, ale tożsamych odpowiedzi ---
-    const kotekItem = await findItemByText("Kotek");
-    const kotDomowyItem = await findItemByText("Kot domowy");
+    // --- Ręczne scalanie dwóch różnie nazwanych, ale tożsamych odpowiedzi
+    // (nigdy się nie znormalizują tak samo, więc to jedyna droga) ---
+    const kotekItem = await findItemByText("kotek");
+    const kotDomowyItem = await findItemByText("kot domowy");
     expect(kotekItem).not.toBeNull();
     expect(kotDomowyItem).not.toBeNull();
     const kotekCount = await itemCount(kotekItem);
@@ -369,11 +373,11 @@ test("ankieta tekstowa: literówki, korekta i scalanie odpowiedzi w panelu zamyk
     await kotekItem.locator(".tcMergeBtn").click();
     await kotDomowyItem.locator(".tcMergeBtn").click();
 
-    await expect(items).toHaveCount(initialRowCount - 3, { timeout: 5000 });
-    const kotSurvivor = await findItemByText("Kot domowy");
-    expect(kotSurvivor, "scalona odpowiedź 'Kot domowy' powinna zostać").not.toBeNull();
+    await expect(items).toHaveCount(initialRowCount - 2, { timeout: 5000 });
+    const kotSurvivor = await findItemByText("kot domowy");
+    expect(kotSurvivor, "scalona odpowiedź 'kot domowy' powinna zostać").not.toBeNull();
     await expect.poll(() => itemCount(kotSurvivor)).toBe(kotekCount + kotDomowyCount);
-    expect(await findItemByText("Kotek"), "'Kotek' powinno zniknąć po scaleniu").toBeNull();
+    expect(await findItemByText("kotek"), "'kotek' powinno zniknąć po scaleniu").toBeNull();
 
     await expect(page.locator("#btnFinishTextClose")).toBeEnabled({ timeout: 5000 });
     await page.locator("#btnFinishTextClose").click();
