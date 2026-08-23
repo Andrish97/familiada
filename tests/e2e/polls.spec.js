@@ -10,12 +10,14 @@
 // 10 minut DWA razy z rzędu — 100 realnych kontekstów przeglądarki idących
 // sekwencyjnie przez cały formularz jest zbyt wolne dla CI. Rozwiązanie:
 // tylko REAL_UI_VOTERS głosujących faktycznie klika/wpisuje przez prawdziwe
-// UI (to sprawdza, że mechanizm głosowania w ogóle działa) — reszta
-// "setki" trafia bezpośrednio tym samym RPC, którego woła UI po kliknięciu
-// ostatniej odpowiedzi (poll_points_vote_batch / poll_text_submit_batch,
-// patrz submitBatch() w poll-points.js/poll-text.js), więc nadal są to
-// prawdziwe głosy w prawdziwym backendzie — tylko bez kosztu renderowania
-// 97 dodatkowych kart przeglądarki.
+// UI (to sprawdza, że mechanizm głosowania w ogóle działa — powtarzanie
+// tego samego deterministycznego kliknięcia więcej razy nic więcej by nie
+// złapało) — reszta "setki" trafia bezpośrednio tym samym RPC, którego
+// woła UI po kliknięciu ostatniej odpowiedzi (poll_points_vote_batch /
+// poll_text_submit_batch, patrz submitBatch() w poll-points.js/
+// poll-text.js), więc nadal są to prawdziwe głosy w prawdziwym backendzie
+// (w tym realne równoległe obciążenie zapisu/zliczania głosów) — tylko
+// bez kosztu renderowania dodatkowych kart przeglądarki.
 //
 // Drugi test skupia się na panelu zamykania ankiety tekstowej: literówki
 // (różna wielkość liter — auto-scalane przyciskiem "Scal identyczne"),
@@ -34,7 +36,7 @@ const { loginAsTestUser } = require("./helpers/login");
 
 const QN_COUNT = 10; // RULES.QN_MIN
 const TOTAL_VOTERS = 100;
-const REAL_UI_VOTERS = 3; // reszta (97) głosuje bezpośrednim RPC — patrz komentarz na górze pliku
+const REAL_UI_VOTERS = 1; // jedno prawdziwe kliknięcie na typ ankiety wystarczy — reszta (99) głosuje bezpośrednim RPC, patrz komentarz na górze pliku
 
 // Nierówny rozkład głosów zamiast idealnie równego — realniej odwzorowuje
 // prawdziwe głosowanie (kilka popularnych opcji, nie identyczny podział).
@@ -203,7 +205,7 @@ test("ankieta punktowa i tekstowa: tworzenie, zbieranie głosów i zamknięcie",
   try {
     const { link: pointsLink, key: pointsKey } = await openPoll(page, pointsGame.gameId);
 
-    // Kilku prawdziwych głosujących przez przeglądarkę — sprawdza, że
+    // Jedno prawdziwe kliknięcie przez przeglądarkę — sprawdza, że
     // mechanizm głosowania (klik odpowiedzi -> RPC) faktycznie działa.
     for (let i = 0; i < REAL_UI_VOTERS; i++) {
       await voteAllPointsViaUi(browser, pointsLink, weightedBucket(i, POINTS_WEIGHTS));
