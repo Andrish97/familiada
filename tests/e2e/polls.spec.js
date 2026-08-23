@@ -1,15 +1,28 @@
 // tests/e2e/polls.spec.js
 // Weryfikuje pełny cykl życia ankiety (js/pages/polls.js + poll-points.js/
 // poll-text.js): utworzenie, zebranie głosów od anonimowych uczestników
-// (osobne, niezalogowane konteksty przeglądarki — dokładnie tak jak w
-// realnym użyciu, bez logowania) i zamknięcie, dla obu typów (poll_points,
-// poll_text). Głosy rozkładają się nierówno (kilka popularnych odpowiedzi +
-// długi ogon unikalnych) zamiast idealnie równo — bliżej realnego głosowania.
+// i zamknięcie, dla obu typów (poll_points, poll_text). Głosy rozkładają
+// się nierówno (kilka popularnych odpowiedzi + długi ogon unikalnych)
+// zamiast idealnie równo — bliżej realnego głosowania.
+//
+// Pierwsza próba tego testu (100 głosujących w pełni przez przeglądarkę,
+// klikających/wpisujących przez UI po 10 pytań każdy) padała na timeout
+// 10 minut DWA razy z rzędu — 100 realnych kontekstów przeglądarki idących
+// sekwencyjnie przez cały formularz jest zbyt wolne dla CI. Rozwiązanie:
+// tylko REAL_UI_VOTERS głosujących faktycznie klika/wpisuje przez prawdziwe
+// UI (to sprawdza, że mechanizm głosowania w ogóle działa) — reszta
+// "setki" trafia bezpośrednio tym samym RPC, którego woła UI po kliknięciu
+// ostatniej odpowiedzi (poll_points_vote_batch / poll_text_submit_batch,
+// patrz submitBatch() w poll-points.js/poll-text.js), więc nadal są to
+// prawdziwe głosy w prawdziwym backendzie — tylko bez kosztu renderowania
+// 97 dodatkowych kart przeglądarki.
 //
 // Drugi test skupia się na panelu zamykania ankiety tekstowej: literówki
 // (różna wielkość liter — auto-scalane przyciskiem "Scal identyczne"),
 // ręczna korekta literówki w polu tekstowym i ręczne scalanie dwóch różnie
-// nazwanych, ale znaczących to samo odpowiedzi (.tcMergeBtn).
+// nazwanych, ale znaczących to samo odpowiedzi (.tcMergeBtn). Tu wszystkie
+// głosy idą przez bezpośrednie RPC — przedmiotem testu jest panel, nie
+// mechanika głosowania (tę sprawdza już pierwszy test).
 //
 // Ankieta wymaga min. 10 pytań, żeby "Uruchomić ankietę" było w ogóle
 // klikalne (RULES.QN_MIN w js/core/game-validate.js) — pytania/odpowiedzi
@@ -20,20 +33,14 @@ const { test, expect } = require("@playwright/test");
 const { loginAsTestUser } = require("./helpers/login");
 
 const QN_COUNT = 10; // RULES.QN_MIN
-const POINTS_VOTERS = 100;
-const TEXT_VOTERS = 100;
-const MERGE_VOTERS = 100;
-// Wszystkich 100 kontekstów przeglądarki naraz zalałoby runnera CI (RAM/CPU)
-// i produkcję falą jednoczesnych requestów — głosujemy paczkami równoległymi
-// zamiast jednym Promise.all na 100, żeby zostać bliżej realnego obciążenia
-// (dużo ludzi skanujących QR "naraz", ale nie dosłownie w tej samej milisekundzie).
-const VOTER_CONCURRENCY = 20;
+const TOTAL_VOTERS = 100;
+const REAL_UI_VOTERS = 3; // reszta (97) głosuje bezpośrednim RPC — patrz komentarz na górze pliku
 
 // Nierówny rozkład głosów zamiast idealnie równego — realniej odwzorowuje
 // prawdziwe głosowanie (kilka popularnych opcji, nie identyczny podział).
-const POINTS_WEIGHTS = [45, 30, 15, 10]; // suma = POINTS_VOTERS, po jednej wadze na 4 predefiniowane odpowiedzi
+const POINTS_WEIGHTS = [45, 30, 15, 10]; // suma = TOTAL_VOTERS, po jednej wadze na 4 predefiniowane odpowiedzi
 const TEXT_POOL = ["Pizza", "Kotek", "Herbata", "Rower"];
-const TEXT_WEIGHTS = [40, 30, 20, 10]; // suma = TEXT_VOTERS
+const TEXT_WEIGHTS = [40, 30, 20, 10]; // suma = TOTAL_VOTERS
 
 function weightedBucket(i, weights) {
   let acc = 0;
@@ -44,11 +51,8 @@ function weightedBucket(i, weights) {
   return weights.length - 1;
 }
 
-async function voteMany(count, voteOneFn) {
-  for (let start = 0; start < count; start += VOTER_CONCURRENCY) {
-    const batch = Array.from({ length: Math.min(VOTER_CONCURRENCY, count - start) }, (_, i) => start + i);
-    await Promise.all(batch.map(voteOneFn));
-  }
+function normText(s) {
+  return String(s ?? "").trim().toLowerCase().replace(/\s+/g, " ");
 }
 
 async function seedPollGame(page, type) {
@@ -64,6 +68,7 @@ async function seedPollGame(page, type) {
       .single();
     if (error) throw new Error("insert games failed: " + error.message);
 
+    const questions = [];
     for (let ord = 1; ord <= 10; ord++) {
       const { data: q, error: qErr } = await sb
         .from("questions")
@@ -72,18 +77,25 @@ async function seedPollGame(page, type) {
         .single();
       if (qErr) throw new Error("insert questions failed: " + qErr.message);
 
+      const question = { id: q.id, ord, answers: [] };
+
       if (type === "poll_points") {
         // AN_MIN..AN_MAX = 3..6 odpowiedzi na pytanie, wymagane przed otwarciem
         for (let a = 1; a <= 4; a++) {
-          const { error: aErr } = await sb
+          const { data: ans, error: aErr } = await sb
             .from("answers")
-            .insert({ question_id: q.id, ord: a, text: `Odp ${ord}.${a}` });
+            .insert({ question_id: q.id, ord: a, text: `Odp ${ord}.${a}` })
+            .select("id")
+            .single();
           if (aErr) throw new Error("insert answers failed: " + aErr.message);
+          question.answers.push({ id: ans.id, ord: a });
         }
       }
+
+      questions.push(question);
     }
 
-    return { userId, gameId: game.id };
+    return { userId, gameId: game.id, questions };
   }, type);
 }
 
@@ -109,11 +121,13 @@ async function openPoll(page, gameId) {
   await page.locator("#btnPollAction").click();
   await page.getByRole("button", { name: "Uruchom", exact: true }).click();
   await expect(page.locator("#pollLink")).not.toHaveValue("", { timeout: 15000 });
-  return await page.inputValue("#pollLink");
+  const link = await page.inputValue("#pollLink");
+  const key = new URL(link).searchParams.get("key");
+  return { link, key };
 }
 
-/** Anonimowy uczestnik (świeży, niezalogowany kontekst) głosuje we wszystkich pytaniach ankiety punktowej. */
-async function voteAllPoints(browser, pollLink, answerIndex) {
+/** Prawdziwy, przeglądarkowy uczestnik (świeży, niezalogowany kontekst) głosuje we wszystkich pytaniach ankiety punktowej. */
+async function voteAllPointsViaUi(browser, pollLink, answerIndex) {
   const voterContext = await browser.newContext();
   const voterPage = await voterContext.newPage();
   await voterPage.goto(pollLink, { waitUntil: "domcontentloaded" });
@@ -128,12 +142,10 @@ async function voteAllPoints(browser, pollLink, answerIndex) {
 }
 
 /**
- * Anonimowy uczestnik głosuje tekstowo we wszystkich pytaniach ankiety tekstowej.
- * answerForOrd(ord) zwraca tekst odpowiedzi dla danego numeru pytania (1..QN_COUNT),
- * żeby ten sam głosujący mógł np. zawsze wybierać z tej samej puli popularnych
- * odpowiedzi, albo wpisywać coś unikalnego dla danego pytania — w zależności od testu.
+ * Prawdziwy, przeglądarkowy uczestnik głosuje tekstowo we wszystkich pytaniach.
+ * answerForOrd(ord) zwraca tekst odpowiedzi dla danego numeru pytania (1..QN_COUNT).
  */
-async function voteAllText(browser, pollLink, answerForOrd) {
+async function voteAllTextViaUi(browser, pollLink, answerForOrd) {
   const voterContext = await browser.newContext();
   const voterPage = await voterContext.newPage();
   await voterPage.goto(pollLink, { waitUntil: "domcontentloaded" });
@@ -146,19 +158,62 @@ async function voteAllText(browser, pollLink, answerForOrd) {
   await voterContext.close();
 }
 
+/**
+ * Wielu "uczestników" naraz, ale bez przeglądarki — bezpośrednio przez to samo
+ * RPC, którego woła prawdziwe UI po ostatnim pytaniu (submitBatch w
+ * poll-points.js/poll-text.js). voterPlans: [{ token, items }]. Wykonywane
+ * w paczkach z poziomu window.__sbClient właściciela ankiety — RPC-ki
+ * głosowania są zaprojektowane pod anonimowy dostęp (poll-points.js/
+ * poll-text.js nie mają requireAuth), więc działają niezależnie od tego,
+ * czyim klientem Supabase są wołane.
+ */
+async function bulkVote(page, rpcName, gameId, key, voterPlans) {
+  const CONCURRENCY = 20;
+  await page.evaluate(async ({ rpcName, gameId, key, voterPlans, CONCURRENCY }) => {
+    const sb = window.__sbClient;
+    for (let start = 0; start < voterPlans.length; start += CONCURRENCY) {
+      const batch = voterPlans.slice(start, start + CONCURRENCY);
+      const results = await Promise.all(
+        batch.map((v) => sb.rpc(rpcName, { p_game_id: gameId, p_key: key, p_voter_token: v.token, p_items: v.items }))
+      );
+      const failed = results.find((r) => r.error);
+      if (failed) throw new Error("bulk vote RPC failed: " + failed.error.message);
+    }
+  }, { rpcName, gameId, key, voterPlans, CONCURRENCY });
+}
+
+function pointsItemsForVoter(questions, answerIndex) {
+  return questions.map((q) => ({ question_id: q.id, answer_id: q.answers[answerIndex % q.answers.length].id }));
+}
+
+function textItemsForVoter(questions, answerForOrd) {
+  return questions.map((q) => {
+    const raw = String(answerForOrd(q.ord)).slice(0, 17);
+    return { question_id: q.id, answer_raw: raw, answer_norm: normText(raw) };
+  });
+}
+
 test("ankieta punktowa i tekstowa: tworzenie, zbieranie głosów i zamknięcie", async ({ page, context, browser }) => {
-  test.setTimeout(600_000); // dwa pełne cykle (10 pytań x ~100 głosujących w paczkach) na jeden test
+  test.setTimeout(180_000);
 
   await loginAsTestUser(page, context);
 
   // --- Ankieta punktowa ---
   const pointsGame = await seedPollGame(page, "poll_points");
   try {
-    const pointsLink = await openPoll(page, pointsGame.gameId);
+    const { link: pointsLink, key: pointsKey } = await openPoll(page, pointsGame.gameId);
 
-    // ~100 głosujących, nierówno rozłożonych po 4 predefiniowanych odpowiedziach
-    // (POINTS_WEIGHTS) — nie idealnie po równo, jak przy prawdziwym głosowaniu.
-    await voteMany(POINTS_VOTERS, (i) => voteAllPoints(browser, pointsLink, weightedBucket(i, POINTS_WEIGHTS)));
+    // Kilku prawdziwych głosujących przez przeglądarkę — sprawdza, że
+    // mechanizm głosowania (klik odpowiedzi -> RPC) faktycznie działa.
+    for (let i = 0; i < REAL_UI_VOTERS; i++) {
+      await voteAllPointsViaUi(browser, pointsLink, weightedBucket(i, POINTS_WEIGHTS));
+    }
+    // Reszta "setki" — te same RPC, bez przeglądarki, z nierównym rozkładem.
+    const bulkPlans = Array.from({ length: TOTAL_VOTERS - REAL_UI_VOTERS }, (_, k) => {
+      const i = REAL_UI_VOTERS + k;
+      return { token: `e2e-bulk-points-${Date.now()}-${i}`, items: pointsItemsForVoter(pointsGame.questions, weightedBucket(i, POINTS_WEIGHTS)) };
+    });
+    await bulkVote(page, "poll_points_vote_batch", pointsGame.gameId, pointsKey, bulkPlans);
 
     await page.goto(`https://www.familiada.online/polls?id=${pointsGame.gameId}`, { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
@@ -177,15 +232,18 @@ test("ankieta punktowa i tekstowa: tworzenie, zbieranie głosów i zamknięcie",
   // --- Ankieta tekstowa ---
   const textGame = await seedPollGame(page, "poll_text");
   try {
-    const textLink = await openPoll(page, textGame.gameId);
+    const { link: textLink, key: textKey } = await openPoll(page, textGame.gameId);
 
-    // ~100 głosujących z małej puli popularnych odpowiedzi (TEXT_WEIGHTS,
-    // ta sama odpowiedź na każde pytanie) — kilka popularnych + realny rozkład,
-    // zamiast każdy-inny-unikalny-tekst.
-    await voteMany(TEXT_VOTERS, (i) => {
+    for (let i = 0; i < REAL_UI_VOTERS; i++) {
       const answer = TEXT_POOL[weightedBucket(i, TEXT_WEIGHTS)];
-      return voteAllText(browser, textLink, () => answer);
+      await voteAllTextViaUi(browser, textLink, () => answer);
+    }
+    const bulkPlans = Array.from({ length: TOTAL_VOTERS - REAL_UI_VOTERS }, (_, k) => {
+      const i = REAL_UI_VOTERS + k;
+      const answer = TEXT_POOL[weightedBucket(i, TEXT_WEIGHTS)];
+      return { token: `e2e-bulk-text-${Date.now()}-${i}`, items: textItemsForVoter(textGame.questions, () => answer) };
     });
+    await bulkVote(page, "poll_text_submit_batch", textGame.gameId, textKey, bulkPlans);
 
     await page.goto(`https://www.familiada.online/polls?id=${textGame.gameId}`, { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
@@ -205,14 +263,14 @@ test("ankieta punktowa i tekstowa: tworzenie, zbieranie głosów i zamknięcie",
   }
 });
 
-test("ankieta tekstowa: literówki, korekta i scalanie odpowiedzi w panelu zamykania", async ({ page, context, browser }) => {
-  test.setTimeout(400_000); // ~100 głosujących w paczkach na jedno pytanie do scalenia
+test("ankieta tekstowa: literówki, korekta i scalanie odpowiedzi w panelu zamykania", async ({ page, context }) => {
+  test.setTimeout(120_000);
 
   await loginAsTestUser(page, context);
 
   const game = await seedPollGame(page, "poll_text");
   try {
-    const pollLink = await openPoll(page, game.gameId);
+    const { key: gameKey } = await openPoll(page, game.gameId); // link do głosowania niepotrzebny (głosujemy RPC), ale klucz tak
 
     // Na pytaniu 1 celowo sadzimy realistyczny bałagan:
     // - 3 głosy "Pizza", 2 głosy "PIZZA" (różna wielkość liter — to samo po
@@ -225,6 +283,8 @@ test("ankieta tekstowa: literówki, korekta i scalanie odpowiedzi w panelu zamyk
     // - reszta głosujących: unikalny długi ogon, żeby zostało dużo więcej niż
     //   wymagane min. 3 odpowiedzi po każdej operacji.
     // Pozostałe 9 pytań: sam unikalny długi ogon (nieistotne dla tego testu).
+    // Wszystkie 100 głosów idą bezpośrednim RPC — przedmiotem testu jest
+    // panel zamykania, nie mechanika samego głosowania (tę sprawdza test wyżej).
     function answerForVoter(voterIdx, ord) {
       if (ord !== 1) return `V${voterIdx}-${ord}`;
       if (voterIdx <= 2) return "Pizza";
@@ -235,7 +295,11 @@ test("ankieta tekstowa: literówki, korekta i scalanie odpowiedzi w panelu zamyk
       return `V${voterIdx}`;
     }
 
-    await voteMany(MERGE_VOTERS, (i) => voteAllText(browser, pollLink, (ord) => answerForVoter(i, ord)));
+    const voterPlans = Array.from({ length: TOTAL_VOTERS }, (_, i) => ({
+      token: `e2e-bulk-merge-${Date.now()}-${i}`,
+      items: textItemsForVoter(game.questions, (ord) => answerForVoter(i, ord)),
+    }));
+    await bulkVote(page, "poll_text_submit_batch", game.gameId, gameKey, voterPlans);
 
     await page.goto(`https://www.familiada.online/polls?id=${game.gameId}`, { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
@@ -247,7 +311,7 @@ test("ankieta tekstowa: literówki, korekta i scalanie odpowiedzi w panelu zamyk
     // Surowych wierszy jest mniej niż głosujących, bo każdy identyczny tekst
     // (3x "Pizza", 2x "PIZZA") to JEDEN wiersz z licznikiem — więc 3+2 głosy
     // dają tylko 2 wiersze zamiast 5, czyli 3 "zaoszczędzone" wiersze łącznie.
-    const initialRowCount = MERGE_VOTERS - 3;
+    const initialRowCount = TOTAL_VOTERS - 3;
     await expect(items).toHaveCount(initialRowCount, { timeout: 15000 });
 
     async function findItemByText(text) {
