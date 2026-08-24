@@ -216,6 +216,14 @@ function pointsItemsForVoter(questions, answerIndex) {
   return questions.map((q) => ({ question_id: q.id, answer_id: q.answers[answerIndex % q.answers.length].id }));
 }
 
+// Run #28/#29: test 1 wisi na pełne 5 minut bez jednoznacznego sygnału gdzie
+// (nowy timeout w bulkVote się nie uruchomił, więc zawieszenie jest gdzie
+// indziej w przepływie) — znaczniki czasu na każdym etapie, żeby następny
+// przebieg pokazał dokładnie który krok faktycznie wisi, zamiast zgadywać.
+function mark(label) {
+  console.log(`[timing] ${label} @ ${new Date().toISOString()}`);
+}
+
 function textItemsForVoter(questions, answerForOrd) {
   return questions.map((q) => {
     const raw = String(answerForOrd(q.ord)).slice(0, 17);
@@ -229,72 +237,95 @@ test("ankieta punktowa i tekstowa: tworzenie, zbieranie głosów i zamknięcie",
   await loginAsTestUser(page, context);
 
   // --- Ankieta punktowa ---
+  mark("start points seed");
   const pointsGame = await seedPollGame(page, "poll_points");
   try {
+    mark("points seeded, opening poll");
     const { link: pointsLink, key: pointsKey } = await openPoll(page, pointsGame.gameId);
+    mark("points poll opened, real UI voter starting");
 
     // Jedno prawdziwe kliknięcie przez przeglądarkę — sprawdza, że
     // mechanizm głosowania (klik odpowiedzi -> RPC) faktycznie działa.
     for (let i = 0; i < REAL_UI_VOTERS; i++) {
       await voteAllPointsViaUi(browser, pointsLink, weightedBucket(i, POINTS_WEIGHTS));
     }
+    mark("points real UI voter done, bulk voting starting");
     // Reszta "setki" — te same RPC, bez przeglądarki, z nierównym rozkładem.
     const bulkPlans = Array.from({ length: TOTAL_VOTERS - REAL_UI_VOTERS }, (_, k) => {
       const i = REAL_UI_VOTERS + k;
       return { token: `e2e-bulk-points-${Date.now()}-${i}`, items: pointsItemsForVoter(pointsGame.questions, weightedBucket(i, POINTS_WEIGHTS)) };
     });
     await bulkVote(page, "poll_points_vote_batch", pointsGame.gameId, pointsKey, bulkPlans);
+    mark("points bulk voting done, navigating back to owner page");
 
     await page.goto(`https://www.familiada.online/polls?id=${pointsGame.gameId}`, { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
-    await expect(page.locator("#btnPollAction")).toHaveText("Zamknąć ankietę", { timeout: 15000 });
+    mark("points owner page reloaded, waiting for close-poll button");
+    await expect(page.locator("#btnPollAction")).toHaveText("Zamknąć ankietę", { timeout: 60000 });
+    mark("points close button ready, clicking close");
     await page.locator("#btnPollAction").click();
     await page.getByRole("button", { name: "Zakończ", exact: true }).click();
+    mark("points close confirmed, waiting for status=ready");
 
     await expect.poll(() => getGameStatus(page, pointsGame.gameId), {
       timeout: 15000,
       message: "ankieta punktowa powinna mieć status 'ready' po zamknięciu",
     }).toBe("ready");
+    mark("points poll closed successfully");
   } finally {
     await deleteGame(page, pointsGame.gameId);
+    mark("points game deleted");
   }
 
   // --- Ankieta tekstowa ---
+  mark("start text seed");
   const textGame = await seedPollGame(page, "poll_text");
   try {
+    mark("text seeded, opening poll");
     const { link: textLink, key: textKey } = await openPoll(page, textGame.gameId);
+    mark("text poll opened, real UI voter starting");
 
     for (let i = 0; i < REAL_UI_VOTERS; i++) {
       const answer = TEXT_POOL[weightedBucket(i, TEXT_WEIGHTS)];
       await voteAllTextViaUi(browser, textLink, () => answer);
     }
+    mark("text real UI voter done, bulk voting starting");
     const bulkPlans = Array.from({ length: TOTAL_VOTERS - REAL_UI_VOTERS }, (_, k) => {
       const i = REAL_UI_VOTERS + k;
       const answer = TEXT_POOL[weightedBucket(i, TEXT_WEIGHTS)];
       return { token: `e2e-bulk-text-${Date.now()}-${i}`, items: textItemsForVoter(textGame.questions, () => answer) };
     });
     await bulkVote(page, "poll_text_submit_batch", textGame.gameId, textKey, bulkPlans);
+    mark("text bulk voting done, navigating back to owner page");
 
     await page.goto(`https://www.familiada.online/polls?id=${textGame.gameId}`, { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
-    await expect(page.locator("#btnPollAction")).toHaveText("Zamknąć ankietę", { timeout: 15000 });
+    mark("text owner page reloaded, waiting for close-poll button");
+    await expect(page.locator("#btnPollAction")).toHaveText("Zamknąć ankietę", { timeout: 60000 });
+    mark("text close button ready, opening close panel");
     await page.locator("#btnPollAction").click(); // dla poll_text otwiera panel scalania, jeszcze nie zamyka
 
-    await expect(page.locator("#btnFinishTextClose")).toBeEnabled({ timeout: 15000 });
+    // buildTextClosePanel() robi 10x2 sekwencyjne zapytania (sesja + wpisy na
+    // pytanie) — pod produkcyjnym obciążeniem to bywa wolniejsze niż 15s.
+    await expect(page.locator("#btnFinishTextClose")).toBeEnabled({ timeout: 60000 });
+    mark("text close panel ready, finishing close");
     await page.locator("#btnFinishTextClose").click();
     await page.getByRole("button", { name: "Zamknij", exact: true }).click();
+    mark("text close confirmed, waiting for status=ready");
 
     await expect.poll(() => getGameStatus(page, textGame.gameId), {
       timeout: 15000,
       message: "ankieta tekstowa powinna mieć status 'ready' po zamknięciu",
     }).toBe("ready");
+    mark("text poll closed successfully");
   } finally {
     await deleteGame(page, textGame.gameId);
+    mark("text game deleted");
   }
 });
 
 test("ankieta tekstowa: literówki, korekta i scalanie odpowiedzi w panelu zamykania", async ({ page, context }) => {
-  test.setTimeout(120_000);
+  test.setTimeout(180_000); // panel zamykania może teraz czekać do 60s samo w sobie
 
   await loginAsTestUser(page, context);
 
@@ -360,7 +391,12 @@ test("ankieta tekstowa: literówki, korekta i scalanie odpowiedzi w panelu zamyk
     // normalizacji) głosy "Pizza" to JEDEN wiersz z licznikiem — 4 głosy
     // dają 1 wiersz zamiast 4, czyli 3 "zaoszczędzone" wiersze.
     const initialRowCount = TOTAL_VOTERS - 3;
-    await expect(items).toHaveCount(initialRowCount, { timeout: 15000 });
+    // Run #28/#29: głosy potwierdzone w bazie (countTextEntries wyżej), ale
+    // panel pokazywał 0 wierszy przez pełne 15s — buildTextClosePanel() robi
+    // 10x2 sekwencyjne zapytania (sesja + wpisy na pytanie), co pod obecnym
+    // obciążeniem produkcji bywa wolniejsze niż 15s. Dłuższy limit zamiast
+    // dalszego zgadywania.
+    await expect(items).toHaveCount(initialRowCount, { timeout: 60000 });
 
     async function findItemByText(text) {
       for (const item of await items.all()) {
