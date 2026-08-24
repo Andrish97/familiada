@@ -309,13 +309,17 @@ test("ankieta punktowa i tekstowa: tworzenie, zbieranie głosów i zamknięcie",
     // pytanie) — pod produkcyjnym obciążeniem to bywa wolniejsze niż 15s.
     await expect(page.locator("#btnFinishTextClose")).toBeEnabled({ timeout: 60000 });
     mark("text close panel ready, finishing close");
-    await page.locator("#btnFinishTextClose").click();
+    await page.locator("#btnFinishTextClose").click({ timeout: 10000 });
+    mark("text close clicked, waiting for confirm modal");
     // Otwiera confirmModal z OK-em "Zamknij" — ten sam tekst co aria-label ✕
     // (modal.js: closeBtn ma aria-label "Zamknij"), więc getByRole("button",
-    // {name:"Zamknij"}) trafia w DWA elementy (strict-mode violation) i click()
-    // wisi w nieskończoność czekając aż liczba dopasowań spadnie do 1. Celujemy
-    // w OK po klasie (.uni-foot .btn.gold), nie po tekście.
-    await page.locator(".uni-foot .btn.gold").click();
+    // {name:"Zamknij"}) trafia w DWA elementy (strict-mode violation). Celujemy
+    // w OK po klasie (.uni-foot .btn.gold), nie po tekście. Jawny timeout na
+    // każdym kroku, żeby ewentualny brak modala rzucił błąd zamiast wisieć
+    // do końca testu.
+    await expect(page.locator(".uni-foot .btn.gold")).toBeVisible({ timeout: 10000 });
+    mark("confirm modal visible, clicking ok");
+    await page.locator(".uni-foot .btn.gold").click({ timeout: 10000 });
     mark("text close confirmed, waiting for status=ready");
 
     await expect.poll(() => getGameStatus(page, textGame.gameId), {
@@ -456,9 +460,13 @@ test("ankieta tekstowa: literówki, korekta i scalanie odpowiedzi w panelu zamyk
     const kotekCount = await itemCount(kotekItem);
     const kotDomowyCount = await itemCount(kotDomowyItem);
 
-    // Klik ⇄ na źródle, potem na celu — scala źródło w cel.
-    await kotekItem.locator(".tcMergeBtn").click();
-    await kotDomowyItem.locator(".tcMergeBtn").click();
+    // Klik ⇄ na źródle, potem na celu — scala źródło w cel. Jawny timeout,
+    // żeby ewentualny brak dopasowania (np. przez re-render po pierwszym
+    // kliku) rzucił błąd zamiast wisieć do końca testu.
+    await kotekItem.locator(".tcMergeBtn").click({ timeout: 10000 });
+    mark("merge-test: kotek merge-src clicked");
+    await kotDomowyItem.locator(".tcMergeBtn").click({ timeout: 10000 });
+    mark("merge-test: kot domowy merge-target clicked");
 
     await expect(items).toHaveCount(initialRowCount - 2, { timeout: 5000 });
     const kotSurvivor = await findItemByText("kot domowy");
@@ -468,12 +476,15 @@ test("ankieta tekstowa: literówki, korekta i scalanie odpowiedzi w panelu zamyk
     mark("merge-test: manual merge done, finishing close");
 
     await expect(page.locator("#btnFinishTextClose")).toBeEnabled({ timeout: 5000 });
-    await page.locator("#btnFinishTextClose").click();
+    await page.locator("#btnFinishTextClose").click({ timeout: 10000 });
+    mark("merge-test: close clicked, waiting for confirm modal");
     // Zobacz komentarz przy analogicznym kliku w teście wyżej — OK confirmModala
     // ma ten sam tekst "Zamknij" co aria-label przycisku ✕, więc celujemy w
     // klasę, nie w accessible name.
-    await page.locator(".uni-foot .btn.gold").click();
-    mark("merge-test: close clicked, waiting for status=ready");
+    await expect(page.locator(".uni-foot .btn.gold")).toBeVisible({ timeout: 10000 });
+    mark("merge-test: confirm modal visible, clicking ok");
+    await page.locator(".uni-foot .btn.gold").click({ timeout: 10000 });
+    mark("merge-test: close confirmed, waiting for status=ready");
 
     await expect.poll(() => getGameStatus(page, game.gameId), {
       timeout: 60000,
