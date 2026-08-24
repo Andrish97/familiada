@@ -171,17 +171,45 @@ async function voteAllTextViaUi(browser, pollLink, answerForOrd) {
  */
 async function bulkVote(page, rpcName, gameId, key, voterPlans) {
   const CONCURRENCY = 20;
+  // Run #27/#28: bez tego pojedyncze zawieszone wywołanie RPC wieszało cały
+  // test na pełne 5 minut (żaden feedback, dopiero opóźniony fail na
+  // deleteGame) — dokładnie ten sam problem co submitBatch() w
+  // poll-points.js/poll-text.js rozwiązuje przez withTimeout(). Robimy to
+  // samo: 25s na wywołanie, żeby zawieszenie stało się szybkim, czytelnym
+  // błędem zamiast cichego zawisu.
   await page.evaluate(async ({ rpcName, gameId, key, voterPlans, CONCURRENCY }) => {
     const sb = window.__sbClient;
+    const withTimeout = (p, ms, label) =>
+      Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error(`RPC timeout (${ms}ms): ${label}`)), ms))]);
+
     for (let start = 0; start < voterPlans.length; start += CONCURRENCY) {
       const batch = voterPlans.slice(start, start + CONCURRENCY);
       const results = await Promise.all(
-        batch.map((v) => sb.rpc(rpcName, { p_game_id: gameId, p_key: key, p_voter_token: v.token, p_items: v.items }))
+        batch.map((v) =>
+          withTimeout(
+            sb.rpc(rpcName, { p_game_id: gameId, p_key: key, p_voter_token: v.token, p_items: v.items }),
+            25000,
+            `${rpcName} voter=${v.token}`
+          )
+        )
       );
       const failed = results.find((r) => r.error);
       if (failed) throw new Error("bulk vote RPC failed: " + failed.error.message);
     }
   }, { rpcName, gameId, key, voterPlans, CONCURRENCY });
+}
+
+/** Diagnostyka: ile wpisów faktycznie wylądowało w bazie dla danego pytania (poll_text). */
+async function countTextEntries(page, gameId, questionId) {
+  return await page.evaluate(async ({ gameId, questionId }) => {
+    const { count, error } = await window.__sbClient
+      .from("poll_text_entries")
+      .select("id", { count: "exact", head: true })
+      .eq("game_id", gameId)
+      .eq("question_id", questionId);
+    if (error) throw new Error("count query failed: " + error.message);
+    return count;
+  }, { gameId, questionId });
 }
 
 function pointsItemsForVoter(questions, answerIndex) {
@@ -312,6 +340,14 @@ test("ankieta tekstowa: literówki, korekta i scalanie odpowiedzi w panelu zamyk
       items: textItemsForVoter(game.questions, (ord) => answerForVoter(i, ord)),
     }));
     await bulkVote(page, "poll_text_submit_batch", game.gameId, gameKey, voterPlans);
+
+    // Diagnostyka: run #28 pokazał panel z 0 wierszy mimo że bulkVote nie
+    // rzucił błędu (a poll_text_submit rzuca "No open session" gdyby sesji
+    // brakło, więc cichej utraty na poziomie RPC być nie powinno) — sprawdź
+    // wprost w bazie, żeby rozstrzygnąć czy głosy w ogóle tam wylądowały,
+    // zanim zaczniemy podejrzewać panel/timing.
+    const q1EntryCount = await countTextEntries(page, game.gameId, game.questions[0].id);
+    expect(q1EntryCount, "poll_text_entries dla pytania 1 powinno mieć 100 wpisów po bulkVote").toBe(TOTAL_VOTERS);
 
     await page.goto(`https://www.familiada.online/polls?id=${game.gameId}`, { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
