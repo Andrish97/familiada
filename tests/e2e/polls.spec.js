@@ -313,7 +313,7 @@ test("ankieta punktowa i tekstowa: tworzenie, zbieranie głosów i zamknięcie",
     mark("text close confirmed, waiting for status=ready");
 
     await expect.poll(() => getGameStatus(page, textGame.gameId), {
-      timeout: 15000,
+      timeout: 60000,
       message: "ankieta tekstowa powinna mieć status 'ready' po zamknięciu",
     }).toBe("ready");
     mark("text poll closed successfully");
@@ -328,9 +328,12 @@ test("ankieta tekstowa: literówki, korekta i scalanie odpowiedzi w panelu zamyk
 
   await loginAsTestUser(page, context);
 
+  mark("merge-test: start seed");
   const game = await seedPollGame(page, "poll_text");
   try {
+    mark("merge-test: seeded, opening poll");
     const { key: gameKey } = await openPoll(page, game.gameId); // link do głosowania niepotrzebny (głosujemy RPC), ale klucz tak
+    mark("merge-test: poll opened, bulk voting");
 
     // Na pytaniu 1 celowo sadzimy realistyczny bałagan. WAŻNE — sprawdzone
     // bezpośrednio w kodzie (buildTextClosePanel w polls.js): panel buduje
@@ -370,6 +373,7 @@ test("ankieta tekstowa: literówki, korekta i scalanie odpowiedzi w panelu zamyk
       items: textItemsForVoter(game.questions, (ord) => answerForVoter(i, ord)),
     }));
     await bulkVote(page, "poll_text_submit_batch", game.gameId, gameKey, voterPlans);
+    mark("merge-test: bulk voting done");
 
     // Diagnostyka: run #28 pokazał panel z 0 wierszy mimo że bulkVote nie
     // rzucił błędu (a poll_text_submit rzuca "No open session" gdyby sesji
@@ -378,10 +382,13 @@ test("ankieta tekstowa: literówki, korekta i scalanie odpowiedzi w panelu zamyk
     // zanim zaczniemy podejrzewać panel/timing.
     const q1EntryCount = await countTextEntries(page, game.gameId, game.questions[0].id);
     expect(q1EntryCount, "poll_text_entries dla pytania 1 powinno mieć 100 wpisów po bulkVote").toBe(TOTAL_VOTERS);
+    mark("merge-test: db count confirmed, navigating back to owner page");
 
     await page.goto(`https://www.familiada.online/polls?id=${game.gameId}`, { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
-    await expect(page.locator("#btnPollAction")).toHaveText("Zamknąć ankietę", { timeout: 15000 });
+    mark("merge-test: owner page reloaded, waiting for close-poll button");
+    await expect(page.locator("#btnPollAction")).toHaveText("Zamknąć ankietę", { timeout: 60000 });
+    mark("merge-test: close button ready, opening close panel");
     await page.locator("#btnPollAction").click();
 
     const firstQuestion = page.locator("#textCloseList .tcQ").first();
@@ -396,6 +403,7 @@ test("ankieta tekstowa: literówki, korekta i scalanie odpowiedzi w panelu zamyk
     // obciążeniem produkcji bywa wolniejsze niż 15s. Dłuższy limit zamiast
     // dalszego zgadywania.
     await expect(items).toHaveCount(initialRowCount, { timeout: 60000 });
+    mark("merge-test: panel rows loaded");
 
     async function findItemByText(text) {
       for (const item of await items.all()) {
@@ -417,6 +425,7 @@ test("ankieta tekstowa: literówki, korekta i scalanie odpowiedzi w panelu zamyk
     // zlała się automatycznie — nadal stoi osobno.
     const typoItem = await findItemByText("piza");
     expect(typoItem, "literówka 'piza' nie powinna zniknąć sama, dopóki jej nie poprawimy").not.toBeNull();
+    mark("merge-test: pizza/piza assertions done, fixing typo");
 
     // --- Poprawiamy literówkę ręcznie w polu tekstowym — dopiero to tworzy
     // surowy duplikat "pizza" x2, który "Scal identyczne" faktycznie łapie ---
@@ -430,6 +439,7 @@ test("ankieta tekstowa: literówki, korekta i scalanie odpowiedzi w panelu zamyk
     const pizzaAfterFix = await findItemByText("pizza");
     expect(pizzaAfterFix, "po poprawce i 'Scal identyczne' powinien zostać jeden wiersz 'pizza'").not.toBeNull();
     await expect.poll(() => itemCount(pizzaAfterFix)).toBe(pizzaCountBeforeTypoFix + 1);
+    mark("merge-test: auto-merge dup done, manual merge starting");
 
     // --- Ręczne scalanie dwóch różnie nazwanych, ale tożsamych odpowiedzi
     // (nigdy się nie znormalizują tak samo, więc to jedyna droga) ---
@@ -449,15 +459,19 @@ test("ankieta tekstowa: literówki, korekta i scalanie odpowiedzi w panelu zamyk
     expect(kotSurvivor, "scalona odpowiedź 'kot domowy' powinna zostać").not.toBeNull();
     await expect.poll(() => itemCount(kotSurvivor)).toBe(kotekCount + kotDomowyCount);
     expect(await findItemByText("kotek"), "'kotek' powinno zniknąć po scaleniu").toBeNull();
+    mark("merge-test: manual merge done, finishing close");
 
     await expect(page.locator("#btnFinishTextClose")).toBeEnabled({ timeout: 5000 });
     await page.locator("#btnFinishTextClose").click();
+    mark("merge-test: close clicked, waiting for status=ready");
 
     await expect.poll(() => getGameStatus(page, game.gameId), {
-      timeout: 15000,
+      timeout: 60000,
       message: "ankieta powinna mieć status 'ready' po zamknięciu",
     }).toBe("ready");
+    mark("merge-test: poll closed successfully");
   } finally {
     await deleteGame(page, game.gameId);
+    mark("merge-test: game deleted");
   }
 });
