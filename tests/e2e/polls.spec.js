@@ -114,6 +114,21 @@ async function getGameStatus(page, gameId) {
   }, gameId);
 }
 
+/** Diagnostyka: run #34 pokazało "element(s) not found" dla .uni-foot .btn.gold
+ * po kliknięciu #btnFinishTextClose — bez żadnego console.error/pageerror, co
+ * wyklucza rzucony wyjątek (catch loguje przed alertModal). Zrzut stanu DOM,
+ * żeby rozstrzygnąć czy modal w ogóle powstaje, zamiast zgadywać dalej. */
+async function dumpModalState(page, label) {
+  const state = await page.evaluate(() => ({
+    modalCount: document.querySelectorAll(".uni-modal").length,
+    overlayCount: document.querySelectorAll(".overlay").length,
+    btnFinishExists: !!document.querySelector("#btnFinishTextClose"),
+    btnFinishDisabled: document.querySelector("#btnFinishTextClose")?.disabled ?? null,
+    msgText: document.querySelector("#msg")?.textContent ?? null,
+  }));
+  console.log(`[e2e-diag] dumpModalState(${label}):`, JSON.stringify(state));
+}
+
 /** Na stronie /polls?id=... — klika główny przycisk akcji i potwierdza modal, zwraca link do głosowania. */
 async function openPoll(page, gameId) {
   await page.goto(`https://www.familiada.online/polls?id=${gameId}`, { waitUntil: "domcontentloaded" });
@@ -311,6 +326,7 @@ test("ankieta punktowa i tekstowa: tworzenie, zbieranie głosów i zamknięcie",
     mark("text close panel ready, finishing close");
     await page.locator("#btnFinishTextClose").click({ timeout: 10000 });
     mark("text close clicked, waiting for confirm modal");
+    await dumpModalState(page, "test1-post-click");
     // Otwiera confirmModal z OK-em "Zamknij" — ten sam tekst co aria-label ✕
     // (modal.js: closeBtn ma aria-label "Zamknij"), więc getByRole("button",
     // {name:"Zamknij"}) trafia w DWA elementy (strict-mode violation). Celujemy
@@ -460,13 +476,17 @@ test("ankieta tekstowa: literówki, korekta i scalanie odpowiedzi w panelu zamyk
     const kotekCount = await itemCount(kotekItem);
     const kotDomowyCount = await itemCount(kotDomowyItem);
 
-    // Klik ⇄ na źródle, potem na celu — scala źródło w cel. Jawny timeout,
-    // żeby ewentualny brak dopasowania (np. przez re-render po pierwszym
-    // kliku) rzucił błąd zamiast wisieć do końca testu.
-    await kotekItem.locator(".tcMergeBtn").click({ timeout: 10000 });
-    mark("merge-test: kotek merge-src clicked");
-    await kotDomowyItem.locator(".tcMergeBtn").click({ timeout: 10000 });
-    mark("merge-test: kot domowy merge-target clicked");
+    // .tcMergeBtn ("⇄") jest CELOWO ukryty na desktopie przez CSS —
+    // css/polls.css: "@media (hover: hover) and (pointer: fine) { .tcMergeBtn
+    // { display: none; } }" (komentarz w źródle: "Na desktopie ukryj ⇄ — tam
+    // działa DnD"). Playwright w CI to standardowa przeglądarka desktopowa
+    // (hover:hover, pointer:fine), więc ten przycisk jest tam niewidoczny —
+    // klik na nim wisiał w nieskończoność (run #34: "element is not
+    // visible"). Prawdziwy mechanizm na desktopie to natywny HTML5
+    // drag-and-drop (row.draggable=true, handlery dragstart/dragover/drop w
+    // polls.js) — .tcItem to cały wiersz, więc przeciągamy wiersz na wiersz.
+    await kotekItem.dragTo(kotDomowyItem);
+    mark("merge-test: kotek dragged onto kot domowy");
 
     await expect(items).toHaveCount(initialRowCount - 2, { timeout: 5000 });
     const kotSurvivor = await findItemByText("kot domowy");
@@ -478,6 +498,7 @@ test("ankieta tekstowa: literówki, korekta i scalanie odpowiedzi w panelu zamyk
     await expect(page.locator("#btnFinishTextClose")).toBeEnabled({ timeout: 5000 });
     await page.locator("#btnFinishTextClose").click({ timeout: 10000 });
     mark("merge-test: close clicked, waiting for confirm modal");
+    await dumpModalState(page, "test2-post-click");
     // Zobacz komentarz przy analogicznym kliku w teście wyżej — OK confirmModala
     // ma ten sam tekst "Zamknij" co aria-label przycisku ✕, więc celujemy w
     // klasę, nie w accessible name.
