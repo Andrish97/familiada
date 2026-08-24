@@ -310,7 +310,6 @@ test("ankieta punktowa i tekstowa: tworzenie, zbieranie głosów i zamknięcie",
     await expect(page.locator("#btnFinishTextClose")).toBeEnabled({ timeout: 60000 });
     mark("text close panel ready, finishing close");
     await page.locator("#btnFinishTextClose").click();
-    await page.getByRole("button", { name: "Zamknij", exact: true }).click();
     mark("text close confirmed, waiting for status=ready");
 
     await expect.poll(() => getGameStatus(page, textGame.gameId), {
@@ -453,7 +452,6 @@ test("ankieta tekstowa: literówki, korekta i scalanie odpowiedzi w panelu zamyk
 
     await expect(page.locator("#btnFinishTextClose")).toBeEnabled({ timeout: 5000 });
     await page.locator("#btnFinishTextClose").click();
-    await page.getByRole("button", { name: "Zamknij", exact: true }).click();
 
     await expect.poll(() => getGameStatus(page, game.gameId), {
       timeout: 15000,
