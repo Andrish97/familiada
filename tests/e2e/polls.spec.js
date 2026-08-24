@@ -310,6 +310,12 @@ test("ankieta punktowa i tekstowa: tworzenie, zbieranie głosów i zamknięcie",
     await expect(page.locator("#btnFinishTextClose")).toBeEnabled({ timeout: 60000 });
     mark("text close panel ready, finishing close");
     await page.locator("#btnFinishTextClose").click();
+    // Otwiera confirmModal z OK-em "Zamknij" — ten sam tekst co aria-label ✕
+    // (modal.js: closeBtn ma aria-label "Zamknij"), więc getByRole("button",
+    // {name:"Zamknij"}) trafia w DWA elementy (strict-mode violation) i click()
+    // wisi w nieskończoność czekając aż liczba dopasowań spadnie do 1. Celujemy
+    // w OK po klasie (.uni-foot .btn.gold), nie po tekście.
+    await page.locator(".uni-foot .btn.gold").click();
     mark("text close confirmed, waiting for status=ready");
 
     await expect.poll(() => getGameStatus(page, textGame.gameId), {
@@ -463,6 +469,10 @@ test("ankieta tekstowa: literówki, korekta i scalanie odpowiedzi w panelu zamyk
 
     await expect(page.locator("#btnFinishTextClose")).toBeEnabled({ timeout: 5000 });
     await page.locator("#btnFinishTextClose").click();
+    // Zobacz komentarz przy analogicznym kliku w teście wyżej — OK confirmModala
+    // ma ten sam tekst "Zamknij" co aria-label przycisku ✕, więc celujemy w
+    // klasę, nie w accessible name.
+    await page.locator(".uni-foot .btn.gold").click();
     mark("merge-test: close clicked, waiting for status=ready");
 
     await expect.poll(() => getGameStatus(page, game.gameId), {
