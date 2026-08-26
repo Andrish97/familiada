@@ -5,8 +5,8 @@
 // strona-hostująca musi mieć te atrybuty ustawione (patrz login.html).
 // Migracja konta gościa w account.js celowo NIE używa captchy (to
 // uwierzytelniona sesja, nie anonimowy formularz publiczny).
-import { t, getUiLang } from "../../translation/translation.js?v=v2026-08-22T07415";
-import { confirmModal } from "./modal.js?v=v2026-08-22T07415";
+import { t, getUiLang } from "../../translation/translation.js?v=v2026-08-26T21191";
+import { confirmModal } from "./modal.js?v=v2026-08-26T21191";
 
 const baseUrls = document.body?.dataset || {};
 const captchaProvider = String(baseUrls.captchaProvider || "hcaptcha").trim().toLowerCase();
