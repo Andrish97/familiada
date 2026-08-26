@@ -371,27 +371,36 @@ test("ankieta tekstowa: literówki, korekta i scalanie odpowiedzi w panelu zamyk
     // tekstu w trakcie sesji (np. gdy poprawka literówki sprawi, że dwa
     // wiersze mają teraz identyczny tekst). Tekst w `.tcTxtInp` też jest
     // zawsze znormalizowany (małe litery) — nie oryginalną pisownią.
-    // - 4 głosy "Pizza" (dowolna wielkość liter) — mimo to JEDEN wiersz od
-    //   razu, count=4 (test tego istniejącego mechanizmu, nie coś do klikania),
+    // - 5 głosów "Pizza" (dowolna wielkość liter) — mimo to JEDEN wiersz od
+    //   razu, count=5 (test tego istniejącego mechanizmu, nie coś do klikania),
     // - 1 głos z literówką "Piza" (inne znaki niż "pizza" po normalizacji,
     //   więc NIE zlewa się automatycznie) — poprawiamy ręcznie w polu tekstowym
     //   na "pizza", co tworzy surowy duplikat, i DOPIERO WTEDY "Scal identyczne"
     //   ma sens i faktycznie coś robi,
-    // - "Kotek" i "Kot domowy" — różne sformułowania tej samej odpowiedzi,
-    //   nigdy się nie znormalizują tak samo — do ręcznego scalenia przyciskiem
-    //   ⇄ (.tcMergeBtn),
-    // - reszta głosujących: unikalny długi ogon, żeby zostało dużo więcej niż
-    //   wymagane min. 3 odpowiedzi po każdej operacji.
-    // Pozostałe 9 pytań: sam unikalny długi ogon (nieistotne dla tego testu).
+    // - "Kotek" (3 głosy) i "Kot domowy" (3 głosy) — różne sformułowania tej
+    //   samej odpowiedzi, nigdy się nie znormalizują tak samo — do ręcznego
+    //   scalenia przeciągnięciem (dawniej przyciskiem ⇄, patrz niżej),
+    // - reszta głosujących: mała pula 4 realistycznych odpowiedzi (nie
+    //   unikalny "długi ogon" na głosującego — run #35 pokazało, że to
+    //   faktycznie psuje zamykanie: finishTextClose() woła
+    //   normalizeTo100Int(), które filtruje odpowiedzi z <3% głosów; przy
+    //   unikalnym ogonie KAŻDA odpowiedź ma ~1 głos na 100 == ~1 punkt, więc
+    //   WSZYSTKIE odpadają i zamknięcie rzuca "po edycji zostało mniej niż 3
+    //   odpowiedzi" — realny bug w projekcie testu, nie w aplikacji: pula
+    //   4 odpowiedzi daje każdej ~25% głosów, bezpiecznie powyżej progu).
+    // Pozostałe 9 pytań: ta sama pula 4 odpowiedzi dla wszystkich 100 głosów
+    // (nieistotne dla tego testu, ale z tego samego powodu nie mogą być
+    // unikalne per głosujący).
     // Wszystkie 100 głosów idą bezpośrednim RPC — przedmiotem testu jest
     // panel zamykania, nie mechanika samego głosowania (tę sprawdza test wyżej).
+    const TAIL_POOL = ["Burger", "Sushi", "Frytki", "Lody"];
     function answerForVoter(voterIdx, ord) {
-      if (ord !== 1) return `V${voterIdx}-${ord}`;
-      if (voterIdx <= 3) return "Pizza";
-      if (voterIdx === 4) return "Piza";
-      if (voterIdx === 5) return "Kotek";
-      if (voterIdx === 6) return "Kot domowy";
-      return `V${voterIdx}`;
+      if (ord !== 1) return TAIL_POOL[voterIdx % TAIL_POOL.length];
+      if (voterIdx <= 4) return "Pizza";
+      if (voterIdx === 5) return "Piza";
+      if (voterIdx >= 6 && voterIdx <= 8) return "Kotek";
+      if (voterIdx >= 9 && voterIdx <= 11) return "Kot domowy";
+      return TAIL_POOL[voterIdx % TAIL_POOL.length];
     }
 
     const voterPlans = Array.from({ length: TOTAL_VOTERS }, (_, i) => ({
@@ -419,10 +428,9 @@ test("ankieta tekstowa: literówki, korekta i scalanie odpowiedzi w panelu zamyk
 
     const firstQuestion = page.locator("#textCloseList .tcQ").first();
     const items = firstQuestion.locator(".tcList .tcItem");
-    // Surowych wierszy jest mniej niż głosujących, bo 4 identyczne (po
-    // normalizacji) głosy "Pizza" to JEDEN wiersz z licznikiem — 4 głosy
-    // dają 1 wiersz zamiast 4, czyli 3 "zaoszczędzone" wiersze.
-    const initialRowCount = TOTAL_VOTERS - 3;
+    // 8 odrębnych odpowiedzi na pytanie 1: pizza (1 wiersz, 5+1 głosów po
+    // scaleniu literówki), kotek, kot domowy, i 4 z puli TAIL_POOL.
+    const initialRowCount = 8;
     // Run #28/#29: głosy potwierdzone w bazie (countTextEntries wyżej), ale
     // panel pokazywał 0 wierszy przez pełne 15s — buildTextClosePanel() robi
     // 10x2 sekwencyjne zapytania (sesja + wpisy na pytanie), co pod obecnym
@@ -444,8 +452,8 @@ test("ankieta tekstowa: literówki, korekta i scalanie odpowiedzi w panelu zamyk
     // Panel pokazuje tekst znormalizowany (małe litery) — "Pizza" wysłane
     // przez głosujących wygląda tu jako "pizza".
     const pizzaItem = await findItemByText("pizza");
-    expect(pizzaItem, "4 głosy 'Pizza' powinny być już jednym wierszem 'pizza'").not.toBeNull();
-    await expect.poll(() => itemCount(pizzaItem)).toBe(4);
+    expect(pizzaItem, "5 głosów 'Pizza' powinno być już jednym wierszem 'pizza'").not.toBeNull();
+    await expect.poll(() => itemCount(pizzaItem)).toBe(5);
 
     // Literówka "Piza" ma inne znaki niż "pizza" po normalizacji, więc nie
     // zlała się automatycznie — nadal stoi osobno.
