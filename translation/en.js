@@ -432,6 +432,7 @@ const en = {
     statusMigrateResent: "Resent. Check your inbox.",
     statusMigrateCancelling: "Cancelling migration…",
     statusMigrateCancelled: "Migration cancelled.",
+    errCancelMigrationFailed: "Failed to cancel the migration.",
     title: "Familiada — account",
     pageTitle: "Familiada — account settings",
     backToGames: "← My games",

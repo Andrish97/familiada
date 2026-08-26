@@ -432,6 +432,7 @@ const pl = {
     statusMigrateResent: "Wysłano ponownie. Sprawdź maila.",
     statusMigrateCancelling: "Anuluję migrację…",
     statusMigrateCancelled: "Migracja anulowana.",
+    errCancelMigrationFailed: "Nie udało się anulować migracji.",
     title: "Familiada — konto",
     pageTitle: "Familiada — ustawienia konta",
     backToGames: "← Moje gry",

@@ -336,27 +336,41 @@ async function handleMigrateResend() {
 
 async function handleMigrateCancel() {
   setErr("");
+  let emailBeforeCancel = "";
   try {
     await refreshMigrateState();
     if (!migratePendingEmail) {
       setStatus(t("account.statusLoaded"));
       return;
     }
+    emailBeforeCancel = migratePendingEmail; // setMigratePendingUi("") poniżej nadpisuje migratePendingEmail
 
     setStatus(t("account.statusMigrateCancelling"));
     setMigratePendingUi(""); // optymistyczna aktualizacja UI
 
-    const { error: rpcErr } = await sb().rpc("cancel_my_email_change");
-    if (rpcErr) console.warn("[cancel_my_email_change] rpc error:", rpcErr.message);
+    // guest_convert_account() (wywołane przy submit) już wtedy nieodwracalnie
+    // ustawiło profiles.is_guest=false — samo wyczyszczenie pending e-maila
+    // (jak przy zwykłej zmianie e-maila zarejestrowanego usera) zostawiłoby
+    // konto w martwym stanie: ani gość (bez guest_expires_at), ani pełne
+    // konto (bez potwierdzonego e-maila). guest_cancel_migration() czyści
+    // pending e-mail I przywraca is_guest/guest_expires_at/email w bazie —
+    // działa tylko dopóki e-mail faktycznie nie został jeszcze potwierdzony.
+    const { data: rpcData, error: rpcErr } = await sb().rpc("guest_cancel_migration");
+    if (rpcErr) throw rpcErr;
+    if (!rpcData?.ok) throw new Error(rpcData?.error || t("account.errCancelMigrationFailed"));
 
+    // profiles.is_guest naprawione powyżej, ale isGuestUser() w innych
+    // miejscach (np. handleDeleteAccount) czyta świeży sb().auth.getUser(),
+    // czyli metadane JWT — te trzeba przywrócić osobno.
     const { error: metaErr } = await sb().auth.updateUser({
-      data: { familiada_email_change_pending: "", familiada_email_change_intent: "" },
+      data: { is_guest: true, familiada_email_change_pending: "", familiada_email_change_intent: "" },
     });
-    if (metaErr) console.warn("[migrate cancel] metadata clear error:", metaErr.message);
+    if (metaErr) console.warn("[migrate cancel] metadata restore error:", metaErr.message);
 
     setStatus(t("account.statusMigrateCancelled"));
   } catch (e) {
     console.error(e);
+    if (emailBeforeCancel) setMigratePendingUi(emailBeforeCancel); // cofnij optymistyczną aktualizację — anulowanie się nie udało
     setErr(niceAuthError(e));
   }
 }
@@ -913,6 +927,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   btnMigrate?.addEventListener("click", handleMigrateSubmit);
   migrateResend?.addEventListener("click", handleMigrateResend);
+  migrateCancel?.addEventListener("click", handleMigrateCancel);
   migrateCancel?.addEventListener("click", handleMigrateCancel);
 
   usernameInput?.addEventListener("keydown", (e) => {

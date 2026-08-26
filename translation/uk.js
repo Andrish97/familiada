@@ -432,6 +432,7 @@ const uk = {
     statusMigrateResent: "Надіслано повторно. Перевірте пошту.",
     statusMigrateCancelling: "Скасовую міграцію…",
     statusMigrateCancelled: "Міграцію скасовано.",
+    errCancelMigrationFailed: "Не вдалося скасувати міграцію.",
     title: "Familiada — акаунт",
     pageTitle: "Familiada — налаштування акаунта",
     backToGames: "← Мої ігри",
