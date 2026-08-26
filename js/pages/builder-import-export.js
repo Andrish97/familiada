@@ -1,6 +1,6 @@
 // js/pages/builder-import-export.js
-import { sb } from "../core/supabase.js?v=v2026-08-26T21265";
-import { t } from "../../translation/translation.js?v=v2026-08-26T21265";
+import { sb } from "../core/supabase.js?v=v2026-08-26T21430";
+import { t } from "../../translation/translation.js?v=v2026-08-26T21430";
 
 /* =========================================================
 	 Helpers (bezpieczne skracanie / typy)
