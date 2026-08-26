@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict qku1KmnIQn4duSpBHUNfqq9rwJKEChFddeQc2cxZHmEn2pZYshKgYWpG4E0czBm
+\restrict LeKhz5fvM87lHaGpqbe60dNvhbIjfbAkUVT53quSoovSOiZl3WCOHL4q0bPaJkP
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -3283,25 +3283,31 @@ CREATE FUNCTION "public"."guest_cancel_migration"() RETURNS "jsonb"
     AS $$
 declare
   v_uid uuid := auth.uid();
-  v_pending_email text;
+  v_email_confirmed_at timestamptz;
+  v_is_guest boolean;
 begin
   if v_uid is null then
     return jsonb_build_object('ok', false, 'error', 'not_authenticated');
   end if;
 
-  select email_change into v_pending_email
+  select coalesce(is_guest, false) into v_is_guest
+  from public.profiles
+  where id = v_uid;
+
+  if v_is_guest then
+    return jsonb_build_object('ok', false, 'error', 'already_guest');
+  end if;
+
+  select email_confirmed_at into v_email_confirmed_at
   from auth.users
   where id = v_uid;
 
-  if v_pending_email is null or v_pending_email = '' then
-    return jsonb_build_object('ok', false, 'error', 'no_pending_migration');
+  if v_email_confirmed_at is not null then
+    return jsonb_build_object('ok', false, 'error', 'already_confirmed');
   end if;
 
+  -- Bezpieczne no-op jeśli pending token już wcześniej wyczyszczony.
   perform public.auth_clear_email_change(v_uid);
-
-  update public.email_intents
-  set status = 'expired', updated_at = now()
-  where email = lower(v_pending_email);
 
   update public.profiles
   set is_guest = true,
@@ -14057,5 +14063,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict qku1KmnIQn4duSpBHUNfqq9rwJKEChFddeQc2cxZHmEn2pZYshKgYWpG4E0czBm
+\unrestrict LeKhz5fvM87lHaGpqbe60dNvhbIjfbAkUVT53quSoovSOiZl3WCOHL4q0bPaJkP
 
