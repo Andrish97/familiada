@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict ygBHPPncoRo20QW2FCxichrpXA6afheCVdCcgELqCW4Ybm0Ao3BdKqeHfaFrHGu
+\restrict qku1KmnIQn4duSpBHUNfqq9rwJKEChFddeQc2cxZHmEn2pZYshKgYWpG4E0czBm
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -3270,6 +3270,48 @@ BEGIN
       SELECT lower(e) FROM unnest(p_emails) AS e
     );
 END;
+$$;
+
+
+--
+-- Name: guest_cancel_migration(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."guest_cancel_migration"() RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+declare
+  v_uid uuid := auth.uid();
+  v_pending_email text;
+begin
+  if v_uid is null then
+    return jsonb_build_object('ok', false, 'error', 'not_authenticated');
+  end if;
+
+  select email_change into v_pending_email
+  from auth.users
+  where id = v_uid;
+
+  if v_pending_email is null or v_pending_email = '' then
+    return jsonb_build_object('ok', false, 'error', 'no_pending_migration');
+  end if;
+
+  perform public.auth_clear_email_change(v_uid);
+
+  update public.email_intents
+  set status = 'expired', updated_at = now()
+  where email = lower(v_pending_email);
+
+  update public.profiles
+  set is_guest = true,
+      email = null,
+      guest_last_active_at = now(),
+      guest_expires_at = now() + interval '5 days'
+  where id = v_uid;
+
+  return jsonb_build_object('ok', true);
+end;
 $$;
 
 
@@ -14015,5 +14057,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict ygBHPPncoRo20QW2FCxichrpXA6afheCVdCcgELqCW4Ybm0Ao3BdKqeHfaFrHGu
+\unrestrict qku1KmnIQn4duSpBHUNfqq9rwJKEChFddeQc2cxZHmEn2pZYshKgYWpG4E0czBm
 
