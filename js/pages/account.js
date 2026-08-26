@@ -1,6 +1,6 @@
 import { sb } from "../core/supabase.js?v=v2026-08-22T07415";
-import { cooldownGet, cooldownReserve, cooldownRelease } from "../core/cooldown.js?v=v2026-08-22T07415";
-import { requireAuth, updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles } from "../core/auth.js?v=v2026-08-22T07415";
+import { cooldownGet, cooldownReserve, cooldownRelease, cooldownEmailReserve } from "../core/cooldown.js?v=v2026-08-22T07415";
+import { requireAuth, updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegistered } from "../core/auth.js?v=v2026-08-22T07415";
 import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../core/user-flags.js?v=v2026-08-22T07415";
 import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js?v=v2026-08-22T07415";
 import { confirmModal } from "../core/modal.js?v=v2026-08-22T07415";
@@ -36,6 +36,16 @@ const emailPendingActions = document.getElementById("emailPendingActions");
 const emailPendingHint = document.getElementById("emailPendingHint");
 const resendEmailChange = document.getElementById("resendEmailChange");
 const cancelEmailChange = document.getElementById("cancelEmailChange");
+
+const migrateSection = document.getElementById("migrateSection");
+const migrateEmail = document.getElementById("migrateEmail");
+const migratePass1 = document.getElementById("migratePass1");
+const migratePass2 = document.getElementById("migratePass2");
+const btnMigrate = document.getElementById("btnMigrate");
+const migratePendingActions = document.getElementById("migratePendingActions");
+const migratePendingHint = document.getElementById("migratePendingHint");
+const migrateResend = document.getElementById("migrateResend");
+const migrateCancel = document.getElementById("migrateCancel");
 
 function setStatus(m = "") { if (status) status.textContent = m; }
 
@@ -211,6 +221,144 @@ async function reserveCooldownOrThrow(key) {
     throw new Error(t("account.errCooldown", { time: formatRemaining(rem) }));
   }
   return res;
+}
+
+// --- Migracja konta gościa ---
+// Ten sam klucz co w login.js (guest-migrate flow) — cooldown w bazie jest
+// per-email, więc musi być identyczny niezależnie skąd gość próbuje, inaczej
+// mógłby obejść 1h limit przełączając się między /login a /account.
+const GUEST_UPGRADE_ACTION_KEY = "auth:guest_upgrade_email";
+const GUEST_UPGRADE_COOLDOWN_SECONDS = 60 * 60;
+
+let migratePendingEmail = "";
+
+function lockMigrateEl(el, locked) {
+  if (!el) return;
+  if (locked) el.dataset.locked = "1";
+  else delete el.dataset.locked;
+  el.disabled = !!locked;
+}
+
+function setMigratePendingUi(pendingEmail) {
+  migratePendingEmail = pendingEmail || "";
+  const hasPending = !!migratePendingEmail;
+
+  if (migratePendingActions) migratePendingActions.hidden = !hasPending;
+  if (btnMigrate) btnMigrate.hidden = hasPending;
+
+  if (migratePendingHint) {
+    migratePendingHint.hidden = !hasPending;
+    migratePendingHint.textContent = hasPending
+      ? t("account.migratePendingHint", { email: migratePendingEmail })
+      : "";
+  }
+
+  [migrateEmail, migratePass1, migratePass2].forEach((el) => lockMigrateEl(el, hasPending));
+  if (hasPending && migrateEmail) migrateEmail.value = migratePendingEmail;
+}
+
+async function refreshMigrateState() {
+  try {
+    const st = await fetchEmailChangeStatus();
+    setMigratePendingUi(st?.pending_email || "");
+  } catch (e) {
+    console.warn("[migrate] refreshMigrateState failed:", e);
+  }
+}
+
+async function handleMigrateSubmit() {
+  setErr("");
+  try {
+    const mail = String(migrateEmail?.value || "").trim().toLowerCase();
+    if (!mail || !mail.includes("@")) throw new Error(t("index.errInvalidEmail"));
+
+    const pwd = migratePass1?.value || "";
+    if (pwd !== (migratePass2?.value || "")) throw new Error(t("account.errPasswordMismatch"));
+    validatePassword(pwd);
+
+    setStatus(t("account.statusMigrating"));
+
+    const reserve = await cooldownEmailReserve(mail, GUEST_UPGRADE_ACTION_KEY, GUEST_UPGRADE_COOLDOWN_SECONDS);
+    if (!reserve.ok) {
+      const left = (reserve.nextAllowedAtMs || 0) - Date.now();
+      throw new Error(
+        left > 0
+          ? t("index.errResendCooldown", { time: formatRemaining(left) })
+          : t("index.errResendCooldownGeneric")
+      );
+    }
+
+    await convertGuestToRegistered(mail, pwd, getUiLang());
+
+    setStatus(t("account.statusMigrateSent"));
+    setMigratePendingUi(mail);
+  } catch (e) {
+    console.error(e);
+    setErr(niceAuthError(e));
+  }
+}
+
+async function handleMigrateResend() {
+  setErr("");
+  try {
+    if (!migratePendingEmail) throw new Error(t("account.errNoPendingEmail"));
+
+    const reserve = await cooldownEmailReserve(migratePendingEmail, GUEST_UPGRADE_ACTION_KEY, GUEST_UPGRADE_COOLDOWN_SECONDS);
+    if (!reserve.ok) {
+      const left = (reserve.nextAllowedAtMs || 0) - Date.now();
+      throw new Error(
+        left > 0
+          ? t("index.errResendCooldown", { time: formatRemaining(left) })
+          : t("index.errResendCooldownGeneric")
+      );
+    }
+
+    setStatus(t("account.statusMigrateResending"));
+
+    const language = getUiLang();
+    const redirect = new URL("/confirm", location.origin);
+    redirect.searchParams.set("lang", language);
+    redirect.searchParams.set("to", migratePendingEmail);
+
+    const { error } = await sb().auth.resend({
+      type: "email_change",
+      email: migratePendingEmail,
+      options: { emailRedirectTo: redirect.toString() },
+    });
+    if (error) throw error;
+
+    setStatus(t("account.statusMigrateResent"));
+  } catch (e) {
+    console.error(e);
+    setErr(niceAuthError(e));
+  }
+}
+
+async function handleMigrateCancel() {
+  setErr("");
+  try {
+    await refreshMigrateState();
+    if (!migratePendingEmail) {
+      setStatus(t("account.statusLoaded"));
+      return;
+    }
+
+    setStatus(t("account.statusMigrateCancelling"));
+    setMigratePendingUi(""); // optymistyczna aktualizacja UI
+
+    const { error: rpcErr } = await sb().rpc("cancel_my_email_change");
+    if (rpcErr) console.warn("[cancel_my_email_change] rpc error:", rpcErr.message);
+
+    const { error: metaErr } = await sb().auth.updateUser({
+      data: { familiada_email_change_pending: "", familiada_email_change_intent: "" },
+    });
+    if (metaErr) console.warn("[migrate cancel] metadata clear error:", metaErr.message);
+
+    setStatus(t("account.statusMigrateCancelled"));
+  } catch (e) {
+    console.error(e);
+    setErr(niceAuthError(e));
+  }
 }
 
 
@@ -453,8 +601,9 @@ async function loadProfile() {
 
   if (isGuestUser(user)) {
     // Gość nie ma username/email/hasła ani oceny/demo (demo dotyka
-    // wyłącznie zwykłych kont) — z całej strony zostaje mu tylko sekcja
-    // usuwania konta, z uproszczonym potwierdzeniem (patrz handleDeleteAccount).
+    // wyłącznie zwykłych kont) — z całej strony zostaje mu sekcja usuwania
+    // konta (uproszczone potwierdzenie, patrz handleDeleteAccount) oraz
+    // sekcja migracji (zamiany konta gościa na pełne, patrz niżej).
     hideForGuest(user, [
       document.getElementById("usernameSection"),
       document.getElementById("emailSection"),
@@ -466,6 +615,10 @@ async function loadProfile() {
     ]);
     const deleteHintEl = document.getElementById("deleteHint");
     if (deleteHintEl) deleteHintEl.textContent = t("account.deleteHintGuest");
+
+    if (migrateSection) migrateSection.hidden = false;
+    await refreshMigrateState();
+
     setStatus(t("account.statusLoaded"));
     return;
   }
@@ -757,6 +910,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   resendEmailChange?.addEventListener("click", handleEmailResend);
   cancelEmailChange?.addEventListener("click", handleEmailCancel);
+
+  btnMigrate?.addEventListener("click", handleMigrateSubmit);
+  migrateResend?.addEventListener("click", handleMigrateResend);
+  migrateCancel?.addEventListener("click", handleMigrateCancel);
 
   usernameInput?.addEventListener("keydown", (e) => {
     if (e.key !== "Enter") return;

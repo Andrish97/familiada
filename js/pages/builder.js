@@ -7,6 +7,7 @@ import { initI18n, t, applyTranslations } from "../../translation/translation.js
 import { initRatingSystem } from "../core/rating-system.js?v=v2026-08-22T07415";
 import { initUiSelect } from "../core/ui-select.js?v=v2026-08-22T07415";
 import { maybeShowGuestInfoModal } from "../core/guest-info-modal.js?v=v2026-08-22T07415";
+import { maybeShowGuestMigrateReminder } from "../core/guest-migrate-reminder.js?v=v2026-08-22T07415";
 
 import { initPwa, isStandalone, isMobileDevice } from "../core/pwa.js?v=v2026-08-22T07415";
 
@@ -1071,6 +1072,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const guestMode = isGuestUser(currentUser);
 
   await maybeShowGuestInfoModal(currentUser);
+  maybeShowGuestMigrateReminder(currentUser);
 
   if (hideForGuest(currentUser, [btnPollsHub, btnSubscriptionsHub])) {
     // data-nav-hidden prevents recalc() from resetting display on these buttons
