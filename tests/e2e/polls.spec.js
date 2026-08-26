@@ -387,13 +387,18 @@ test("ankieta tekstowa: literówki, korekta i scalanie odpowiedzi w panelu zamyk
     //   unikalnym ogonie KAŻDA odpowiedź ma ~1 głos na 100 == ~1 punkt, więc
     //   WSZYSTKIE odpadają i zamknięcie rzuca "po edycji zostało mniej niż 3
     //   odpowiedzi" — realny bug w projekcie testu, nie w aplikacji: pula
-    //   4 odpowiedzi daje każdej ~25% głosów, bezpiecznie powyżej progu).
-    // Pozostałe 9 pytań: ta sama pula 4 odpowiedzi dla wszystkich 100 głosów
+    //   20 odpowiedzi daje każdej ~4-5% głosów, bezpiecznie powyżej progu).
+    // Pozostałe 9 pytań: ta sama pula 20 odpowiedzi dla wszystkich 100 głosów
     // (nieistotne dla tego testu, ale z tego samego powodu nie mogą być
-    // unikalne per głosujący).
+    // unikalne per głosujący). 100 głosujących zostaje bez zmian — zmienia
+    // się tylko liczba RÓŻNYCH odpowiedzi, między którymi się rozkładają.
     // Wszystkie 100 głosów idą bezpośrednim RPC — przedmiotem testu jest
     // panel zamykania, nie mechanika samego głosowania (tę sprawdza test wyżej).
-    const TAIL_POOL = ["Burger", "Sushi", "Frytki", "Lody"];
+    const TAIL_POOL = [
+      "Burger", "Sushi", "Frytki", "Lody", "Kebab", "Naleśniki", "Pierogi",
+      "Sałatka", "Makaron", "Zupa", "Kanapka", "Ciasto", "Owoce", "Ryż",
+      "Kurczak", "Ryba", "Placki", "Gofry", "Sernik", "Kawa",
+    ];
     function answerForVoter(voterIdx, ord) {
       if (ord !== 1) return TAIL_POOL[voterIdx % TAIL_POOL.length];
       if (voterIdx <= 4) return "Pizza";
@@ -428,9 +433,9 @@ test("ankieta tekstowa: literówki, korekta i scalanie odpowiedzi w panelu zamyk
 
     const firstQuestion = page.locator("#textCloseList .tcQ").first();
     const items = firstQuestion.locator(".tcList .tcItem");
-    // 8 odrębnych odpowiedzi na pytanie 1: pizza (1 wiersz, 5+1 głosów po
-    // scaleniu literówki), kotek, kot domowy, i 4 z puli TAIL_POOL.
-    const initialRowCount = 8;
+    // 24 odrębne odpowiedzi na pytanie 1: pizza (1 wiersz, 5+1 głosów po
+    // scaleniu literówki), kotek, kot domowy, i 20 z puli TAIL_POOL.
+    const initialRowCount = 24;
     // Run #28/#29: głosy potwierdzone w bazie (countTextEntries wyżej), ale
     // panel pokazywał 0 wierszy przez pełne 15s — buildTextClosePanel() robi
     // 10x2 sekwencyjne zapytania (sesja + wpisy na pytanie), co pod obecnym
