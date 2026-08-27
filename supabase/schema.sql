@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict LeKhz5fvM87lHaGpqbe60dNvhbIjfbAkUVT53quSoovSOiZl3WCOHL4q0bPaJkP
+\restrict JLe6ZPeaJ0ysG1qSHFxNzS6sgBXdVtpg1pCw0FrkRucx7Vg4yCCQgTOt7k4MF1S
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -3285,6 +3285,7 @@ declare
   v_uid uuid := auth.uid();
   v_email_confirmed_at timestamptz;
   v_is_guest boolean;
+  has_col boolean;
 begin
   if v_uid is null then
     return jsonb_build_object('ok', false, 'error', 'not_authenticated');
@@ -3308,6 +3309,14 @@ begin
 
   -- Bezpieczne no-op jeśli pending token już wcześniej wyczyszczony.
   perform public.auth_clear_email_change(v_uid);
+
+  select exists (
+    select 1 from information_schema.columns
+    where table_schema = 'auth' and table_name = 'users' and column_name = 'encrypted_password'
+  ) into has_col;
+  if has_col then
+    update auth.users set encrypted_password = null where id = v_uid;
+  end if;
 
   update public.profiles
   set is_guest = true,
@@ -14063,5 +14072,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict LeKhz5fvM87lHaGpqbe60dNvhbIjfbAkUVT53quSoovSOiZl3WCOHL4q0bPaJkP
+\unrestrict JLe6ZPeaJ0ysG1qSHFxNzS6sgBXdVtpg1pCw0FrkRucx7Vg4yCCQgTOt7k4MF1S
 
