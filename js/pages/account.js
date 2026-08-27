@@ -334,6 +334,31 @@ async function handleMigrateResend() {
   }
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// updateUser({data:{is_guest:true}}) samo w sobie nie gwarantuje, że
+// KOLEJNE, niezależne wywołanie sb().auth.getUser() (np. w handleDeleteAccount,
+// wywołane osobno chwilę później) od razu zobaczy nowe metadane — potwierdzone
+// live: świeży getUser() TUŻ PO updateUser() widział is_guest=true, a getUser()
+// wywołany kilka sekund później przez zupełnie inny handler — już nie.
+// Zamiast zgadywać czemu (opóźnienie propagacji tokena/cache), potwierdzamy
+// stan przed zgłoszeniem sukcesu: dociągamy świeżo i retry'ujemy z krótkim
+// odstępem, wymuszając refreshSession() między próbami — to jedyny sposób,
+// żeby "Anuluj" nie kłamało o sukcesie, zostawiając konto w rozjechanym stanie.
+async function waitForGuestMetadataSync(maxAttempts = 5) {
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const { data: userData } = await sb().auth.getUser();
+    if (isGuestUser(userData?.user)) return true;
+    if (attempt === Math.ceil(maxAttempts / 2)) {
+      try { await sb().auth.refreshSession(); } catch { /* spróbujemy dalej mimo to */ }
+    }
+    await sleep(400);
+  }
+  return false;
+}
+
 async function handleMigrateCancel() {
   setErr("");
   let emailBeforeCancel = "";
@@ -369,6 +394,9 @@ async function handleMigrateCancel() {
       data: { is_guest: true, familiada_email_change_pending: "", familiada_email_change_intent: "" },
     });
     if (metaErr) throw metaErr;
+
+    const synced = await waitForGuestMetadataSync();
+    if (!synced) throw new Error(t("account.errCancelMigrationFailed"));
 
     setStatus(t("account.statusMigrateCancelled"));
   } catch (e) {
