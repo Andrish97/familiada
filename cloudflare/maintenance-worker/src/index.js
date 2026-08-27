@@ -2097,21 +2097,31 @@ async function handleInboundEmail(message, env) {
   } catch {}
 }
 
+function decodeCharsetBytes(bytes, charset) {
+  try {
+    return new TextDecoder(charset).decode(bytes);
+  } catch {
+    try { return new TextDecoder("utf-8").decode(bytes); } catch { return null; }
+  }
+}
+
 function decodeMimePart(part, content) {
+  const charsetMatch = part.match(/charset=\"?([^\"\r\n;]+)\"?/i);
+  const charset = charsetMatch ? charsetMatch[1].trim().toLowerCase() : "utf-8";
+
   if (/Content-Transfer-Encoding:\s*quoted-printable/i.test(part)) {
     const latin = content.replace(/=\r?\n/g, "").replace(/=([0-9A-Fa-f]{2})/g, (_, h) => String.fromCharCode(parseInt(h, 16)));
-    try {
-      const bytes = new Uint8Array(latin.length);
-      for (let i = 0; i < latin.length; i++) bytes[i] = latin.charCodeAt(i);
-      return new TextDecoder("utf-8").decode(bytes);
-    } catch { return latin; }
+    const bytes = new Uint8Array(latin.length);
+    for (let i = 0; i < latin.length; i++) bytes[i] = latin.charCodeAt(i);
+    return decodeCharsetBytes(bytes, charset) ?? latin;
   }
   if (/Content-Transfer-Encoding:\s*base64/i.test(part)) {
     try {
       const latin = atob(content.replace(/\s+/g, ""));
       const bytes = new Uint8Array(latin.length);
       for (let i = 0; i < latin.length; i++) bytes[i] = latin.charCodeAt(i);
-      return new TextDecoder("utf-8").decode(bytes);
+      const decoded = decodeCharsetBytes(bytes, charset);
+      if (decoded !== null) return decoded;
     } catch {}
   }
   return content;

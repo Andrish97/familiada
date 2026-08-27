@@ -2620,6 +2620,16 @@ function stripMarketingPrefix(subject) {
   return (subject || "").replace(/^\[Marketing\]\s*/i, "").trim();
 }
 
+function extractHtmlPreviewText(html) {
+  // element.textContent includes the raw text of <style>/<script> children
+  // (they're just text nodes to the DOM) - strip them first so CSS source
+  // like "P {margin-top:0;...}" doesn't leak into the preview.
+  const tmp = document.createElement("div");
+  tmp.innerHTML = html;
+  tmp.querySelectorAll("style, script").forEach((el) => el.remove());
+  return (tmp.textContent || tmp.innerText || "").trim();
+}
+
 function renderMailList(rows) {
   const body = document.getElementById("mailListBody");
   if (!body) return;
@@ -2740,18 +2750,14 @@ function renderMailList(rows) {
 
     // Strategy 1: Try body_html first (has full HTML email)
     if (r.body_html) {
-      const tmp = document.createElement("div");
-      tmp.innerHTML = r.body_html;
-      previewText = (tmp.textContent || tmp.innerText || "").trim();
+      previewText = extractHtmlPreviewText(r.body_html);
     }
 
     // Strategy 2: Try body (might be plain text or HTML)
     if (!previewText && r.body) {
       if (r.body.trim().startsWith("<")) {
         // HTML - extract ALL text
-        const tmp = document.createElement("div");
-        tmp.innerHTML = r.body;
-        previewText = (tmp.textContent || tmp.innerText || "").trim();
+        previewText = extractHtmlPreviewText(r.body);
       } else {
         // Plain text
         previewText = r.body.trim();
