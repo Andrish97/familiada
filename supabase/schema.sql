@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict JLe6ZPeaJ0ysG1qSHFxNzS6sgBXdVtpg1pCw0FrkRucx7Vg4yCCQgTOt7k4MF1S
+\restrict v9JXOCDaRlrfYtUMvSH22RBFubZIF2tvzC2NlLxZaALeYwPvHoHVMkU1mxrx8iW
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -3284,19 +3284,10 @@ CREATE FUNCTION "public"."guest_cancel_migration"() RETURNS "jsonb"
 declare
   v_uid uuid := auth.uid();
   v_email_confirmed_at timestamptz;
-  v_is_guest boolean;
   has_col boolean;
 begin
   if v_uid is null then
     return jsonb_build_object('ok', false, 'error', 'not_authenticated');
-  end if;
-
-  select coalesce(is_guest, false) into v_is_guest
-  from public.profiles
-  where id = v_uid;
-
-  if v_is_guest then
-    return jsonb_build_object('ok', false, 'error', 'already_guest');
   end if;
 
   select email_confirmed_at into v_email_confirmed_at
@@ -3307,7 +3298,6 @@ begin
     return jsonb_build_object('ok', false, 'error', 'already_confirmed');
   end if;
 
-  -- Bezpieczne no-op jeśli pending token już wcześniej wyczyszczony.
   perform public.auth_clear_email_change(v_uid);
 
   select exists (
@@ -3317,6 +3307,8 @@ begin
   if has_col then
     update auth.users set encrypted_password = null where id = v_uid;
   end if;
+
+  delete from public.guest_migration_staging where user_id = v_uid;
 
   update public.profiles
   set is_guest = true,
@@ -3484,6 +3476,81 @@ $$;
 
 
 --
+-- Name: guest_finalize_migration(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."guest_finalize_migration"() RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+declare
+  v_uid uuid := auth.uid();
+  v_is_guest boolean;
+  v_email text;
+  v_email_confirmed_at timestamptz;
+  v_pending_username text;
+  v_pending_password_hash text;
+begin
+  if v_uid is null then
+    return jsonb_build_object('ok', false, 'error', 'not_authenticated');
+  end if;
+
+  select coalesce(is_guest, false) into v_is_guest
+  from public.profiles where id = v_uid;
+
+  if not v_is_guest then
+    return jsonb_build_object('ok', true);
+  end if;
+
+  select email, email_confirmed_at into v_email, v_email_confirmed_at
+  from auth.users where id = v_uid;
+
+  if v_email_confirmed_at is null then
+    return jsonb_build_object('ok', false, 'error', 'not_confirmed');
+  end if;
+
+  select pending_username, pending_password_hash
+    into v_pending_username, v_pending_password_hash
+  from public.guest_migration_staging
+  where user_id = v_uid;
+
+  update public.profiles
+  set is_guest = false,
+      guest_last_active_at = null,
+      guest_expires_at = null,
+      email = v_email
+  where id = v_uid;
+
+  if v_pending_username is not null then
+    -- Wyścig o nazwę (ktoś inny zajął ją między submitem a potwierdzeniem)
+    -- to unique_violation na profiles_username_ci_uq — nie ma powodu wywalać
+    -- całej finalizacji przez to; zostaw placeholder, istniejący fallback
+    -- (login.js, ekran setup=username) i tak to obsłuży.
+    begin
+      update public.profiles
+      set username = v_pending_username
+      where id = v_uid
+        and not exists (
+          select 1 from public.profiles pp
+          where lower(pp.username) = v_pending_username and pp.id <> v_uid
+        );
+    exception when unique_violation then
+      null;
+    end;
+  end if;
+
+  if v_pending_password_hash is not null then
+    update auth.users set encrypted_password = v_pending_password_hash where id = v_uid;
+  end if;
+
+  delete from public.guest_migration_staging where user_id = v_uid;
+
+  return jsonb_build_object('ok', true);
+end;
+$$;
+
+
+--
 -- Name: guest_is_expired("uuid"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -3496,6 +3563,56 @@ CREATE FUNCTION "public"."guest_is_expired"("p_user_id" "uuid" DEFAULT "auth"."u
   from public.profiles p
   where p.id = p_user_id;
 $$;
+
+
+--
+-- Name: guest_stage_migration("text", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."guest_stage_migration"("p_username" "text" DEFAULT NULL::"text", "p_password" "text" DEFAULT NULL::"text") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'extensions'
+    AS $_$
+declare
+  v_uid uuid := auth.uid();
+  v_is_guest boolean;
+  v_username text := nullif(lower(trim(coalesce(p_username, ''))), '');
+  v_hash text;
+begin
+  if v_uid is null then
+    return jsonb_build_object('ok', false, 'error', 'not_authenticated');
+  end if;
+
+  select coalesce(is_guest, false) into v_is_guest
+  from public.profiles where id = v_uid;
+
+  if not v_is_guest then
+    return jsonb_build_object('ok', false, 'error', 'not_guest');
+  end if;
+
+  if v_username is not null then
+    if length(v_username) < 3 or length(v_username) > 20
+       or v_username like 'guest\_%' escape '\'
+       or v_username !~ '^[a-zA-Z0-9_.-]+$'
+    then
+      return jsonb_build_object('ok', false, 'error', 'invalid_username');
+    end if;
+  end if;
+
+  if p_password is not null and p_password <> '' then
+    v_hash := extensions.crypt(p_password, extensions.gen_salt('bf'));
+  end if;
+
+  insert into public.guest_migration_staging (user_id, pending_username, pending_password_hash, created_at)
+  values (v_uid, v_username, v_hash, now())
+  on conflict (user_id) do update
+    set pending_username = excluded.pending_username,
+        pending_password_hash = excluded.pending_password_hash,
+        created_at = now();
+
+  return jsonb_build_object('ok', true);
+end;
+$_$;
 
 
 --
@@ -10460,6 +10577,18 @@ COMMENT ON COLUMN "public"."games"."settings" IS 'Per-game settings: teams, disp
 
 
 --
+-- Name: guest_migration_staging; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."guest_migration_staging" (
+    "user_id" "uuid" NOT NULL,
+    "pending_username" "text",
+    "pending_password_hash" "text",
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL
+);
+
+
+--
 -- Name: mail_function_logs; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -11216,6 +11345,14 @@ ALTER TABLE ONLY "public"."games"
 
 ALTER TABLE ONLY "public"."games"
     ADD CONSTRAINT "games_share_keys_unique" UNIQUE ("share_key_poll", "share_key_control", "share_key_display", "share_key_host", "share_key_buzzer");
+
+
+--
+-- Name: guest_migration_staging guest_migration_staging_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."guest_migration_staging"
+    ADD CONSTRAINT "guest_migration_staging_pkey" PRIMARY KEY ("user_id");
 
 
 --
@@ -12497,6 +12634,14 @@ ALTER TABLE ONLY "public"."games"
 
 
 --
+-- Name: guest_migration_staging guest_migration_staging_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."guest_migration_staging"
+    ADD CONSTRAINT "guest_migration_staging_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+--
 -- Name: market_game_ratings market_game_ratings_market_game_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -13196,6 +13341,19 @@ CREATE POLICY "games_owner_update" ON "public"."games" FOR UPDATE TO "authentica
 --
 
 CREATE POLICY "games_select_by_keys" ON "public"."games" FOR SELECT USING ((("share_key_poll" = (("current_setting"('request.jwt.claims'::"text", true))::json ->> 'share_key'::"text")) OR ("share_key_control" = (("current_setting"('request.jwt.claims'::"text", true))::json ->> 'share_key'::"text")) OR ("share_key_display" = (("current_setting"('request.jwt.claims'::"text", true))::json ->> 'share_key'::"text")) OR ("share_key_host" = (("current_setting"('request.jwt.claims'::"text", true))::json ->> 'share_key'::"text"))));
+
+
+--
+-- Name: guest_migration_staging; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."guest_migration_staging" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: guest_migration_staging guest_migration_staging_service_only; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "guest_migration_staging_service_only" ON "public"."guest_migration_staging" TO "authenticated" USING (false) WITH CHECK (false);
 
 
 --
@@ -14072,5 +14230,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict JLe6ZPeaJ0ysG1qSHFxNzS6sgBXdVtpg1pCw0FrkRucx7Vg4yCCQgTOt7k4MF1S
+\unrestrict v9JXOCDaRlrfYtUMvSH22RBFubZIF2tvzC2NlLxZaALeYwPvHoHVMkU1mxrx8iW
 
