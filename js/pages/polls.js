@@ -818,6 +818,15 @@ function validateTextCloseModel() {
 }
 
 async function buildTextClosePanel() {
+  // #btnFinishTextClose nie ma domyślnie atrybutu disabled w HTML — bez tego
+  // jest klikalne od razu po załadowaniu strony, na długo zanim poniższe
+  // zapytania (10x sekwencyjnie, sesja + wpisy na pytanie) w ogóle ustawią
+  // textCloseModel. Klik w tym oknie trafia w early-return w handlerze
+  // (textCloseModel jeszcze null) i nie robi kompletnie nic — bez błędu, bez
+  // modala — potwierdzone diagnostyką w e2e. validateTextCloseModel() poniżej
+  // dopiero WYŁĄCZA przycisk gdy walidacja nie przejdzie, nigdy go nie blokuje
+  // na starcie, więc trzeba to zrobić tutaj jawnie.
+  if (btnFinishTextClose) btnFinishTextClose.disabled = true;
   setTextCloseUi(true);
   if (textCloseList) textCloseList.innerHTML = "";
   if (textCloseMeta) textCloseMeta.textContent = t("polls.textClose.loading");
@@ -1379,12 +1388,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   btnFinishTextClose?.addEventListener("click", async () => {
-    // Diagnostyka: run z 26.08 pokazał zero efektu po tym kliknięciu (brak
-    // modala, brak jakiegokolwiek console.error/alertModal) — wygląda na
-    // wczesny return poniżej, ale bez logu nie da się tego odróżnić od handlera
-    // w ogóle niewywołanego. Tymczasowy log, do usunięcia po zdiagnozowaniu.
-    console.log("[polls-diag] btnFinishTextClose click " + JSON.stringify({ hasGame: !!game, gameType: game?.type, hasModel: !!textCloseModel }));
-
     if (!game || game.type !== TYPES.POLL_TEXT) return;
     if (!textCloseModel) return;
 
@@ -1410,14 +1413,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         payloadItems.push({ question_id: q.question_id, answers: final });
       }
 
-      console.log("[polls-diag] before confirmModal, payloadItems=" + payloadItems.length);
       const ok = await confirmModal({
         title: t("polls.modals.closeText.title"),
         text: t("polls.modals.closeText.text"),
         okText: t("polls.modals.closeText.ok"),
         cancelText: t("polls.modals.closeText.cancel"),
       });
-      console.log("[polls-diag] confirmModal resolved ok=" + ok);
       if (!ok) return;
 
       const { error } = await sb().rpc("poll_text_close_apply", {
