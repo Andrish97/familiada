@@ -9,6 +9,14 @@
 // patrz komentarz przy GUEST_UPGRADE_ACTION_KEY w account.js), i że
 // "Anuluj" realnie czyści stan niezależnie od cooldownu.
 //
+// Nazwa użytkownika i hasło podane w formularzu NIE trafiają do
+// profiles/auth.users przy submicie — leżą zahaszowane w
+// guest_migration_staging aż do realnego potwierdzenia maila
+// (guest_finalize_migration(), wołane z confirm.js). Dlatego profiles.is_guest
+// zostaje true przez cały ten test — submit migracji NIE flipuje go już
+// przedwcześnie (patrz komentarz przy convertGuestToRegisteredEmailOnly
+// w auth.js).
+//
 // Email do migracji celowo na domenie .invalid (RFC 2606 — zarezerwowana,
 // nigdy nie rozwiąże się do prawdziwej skrzynki) — testujemy zachowanie UI
 // po stronie klienta, nie dostarczalność maila.
@@ -64,7 +72,9 @@ test("migracja konta gościa: stan pending po submit, cooldown na resend, anulow
     await expect(page.locator("#usernameSection")).toBeHidden();
 
     const migrateEmail = `e2e-migrate-${Date.now()}@example.invalid`;
+    const migrateUsername = `e2emigrate${Date.now() % 1000000}`;
 
+    await page.locator("#migrateUsername").fill(migrateUsername);
     await page.locator("#migrateEmail").fill(migrateEmail);
     await page.locator("#migratePass1").fill(TEST_PASSWORD);
     await page.locator("#migratePass2").fill(TEST_PASSWORD);
@@ -78,6 +88,14 @@ test("migracja konta gościa: stan pending po submit, cooldown na resend, anulow
     await expect(page.locator("#migratePendingActions")).toBeVisible();
     await expect(page.locator("#migrateEmail")).toBeDisabled();
     await expect(page.locator("#migrateEmail")).toHaveValue(migrateEmail);
+
+    // Kluczowa właściwość nowej architektury: dopóki e-mail nie jest
+    // potwierdzony, konto MUSI zostać gościem — inaczej wraca stary bug
+    // (usuwanie/inne funkcje traktują niedomigrowane konto jak pełne).
+    await expect.poll(() => getGuestState(page), { timeout: 10000 }).toEqual({
+      profilesIsGuest: true,
+      metaIsGuest: true,
+    });
 
     // Cooldown (1h, per e-mail, klucz auth:guest_upgrade_email — ten sam co
     // login.js) był właśnie zarezerwowany przez submit powyżej, więc

@@ -1,6 +1,6 @@
 import { sb } from "../core/supabase.js?v=v2026-08-27T21492";
 import { cooldownGet, cooldownReserve, cooldownRelease, cooldownEmailReserve } from "../core/cooldown.js?v=v2026-08-27T21492";
-import { requireAuth, updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegistered } from "../core/auth.js?v=v2026-08-27T21492";
+import { requireAuth, updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../core/auth.js?v=v2026-08-27T21492";
 import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../core/user-flags.js?v=v2026-08-27T21492";
 import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js?v=v2026-08-27T21492";
 import { confirmModal } from "../core/modal.js?v=v2026-08-27T21492";
@@ -38,6 +38,7 @@ const resendEmailChange = document.getElementById("resendEmailChange");
 const cancelEmailChange = document.getElementById("cancelEmailChange");
 
 const migrateSection = document.getElementById("migrateSection");
+const migrateUsername = document.getElementById("migrateUsername");
 const migrateEmail = document.getElementById("migrateEmail");
 const migratePass1 = document.getElementById("migratePass1");
 const migratePass2 = document.getElementById("migratePass2");
@@ -253,7 +254,7 @@ function setMigratePendingUi(pendingEmail) {
       : "";
   }
 
-  [migrateEmail, migratePass1, migratePass2].forEach((el) => lockMigrateEl(el, hasPending));
+  [migrateUsername, migrateEmail, migratePass1, migratePass2].forEach((el) => lockMigrateEl(el, hasPending));
   if (hasPending && migrateEmail) migrateEmail.value = migratePendingEmail;
 }
 
@@ -276,6 +277,12 @@ async function handleMigrateSubmit() {
     if (pwd !== (migratePass2?.value || "")) throw new Error(t("account.errPasswordMismatch"));
     validatePassword(pwd);
 
+    // Opcjonalna — jeśli puste, po potwierdzeniu i tak zadziała istniejący
+    // fallback (login.js pokaże ekran ustawienia nazwy, tak jak dla każdego
+    // konta bez username).
+    const rawUsername = String(migrateUsername?.value || "").trim();
+    const username = rawUsername ? validateUsername(rawUsername) : "";
+
     setStatus(t("account.statusMigrating"));
 
     const reserve = await cooldownEmailReserve(mail, GUEST_UPGRADE_ACTION_KEY, GUEST_UPGRADE_COOLDOWN_SECONDS);
@@ -288,7 +295,22 @@ async function handleMigrateSubmit() {
       );
     }
 
-    await convertGuestToRegistered(mail, pwd, getUiLang());
+    // Hasło i nazwa NIE trafiają do auth.users/profiles teraz — leżą
+    // zahaszowane w guest_migration_staging aż do realnego potwierdzenia
+    // maila (guest_finalize_migration() w confirm.js). Dzięki temu konto
+    // zostaje gościem (is_guest=true) przez cały czas oczekiwania — patrz
+    // komentarz przy convertGuestToRegisteredEmailOnly w auth.js.
+    const { data: stageData, error: stageErr } = await sb().rpc("guest_stage_migration", {
+      p_username: username || null,
+      p_password: pwd,
+    });
+    if (stageErr) throw stageErr;
+    if (!stageData?.ok) {
+      if (stageData?.error === "invalid_username") throw new Error(t("auth.usernameChars"));
+      throw new Error(stageData?.error || t("account.errCancelMigrationFailed"));
+    }
+
+    await convertGuestToRegisteredEmailOnly(mail, getUiLang());
 
     setStatus(t("account.statusMigrateSent"));
     setMigratePendingUi(mail);
@@ -334,31 +356,6 @@ async function handleMigrateResend() {
   }
 }
 
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-// updateUser({data:{is_guest:true}}) samo w sobie nie gwarantuje, że
-// KOLEJNE, niezależne wywołanie sb().auth.getUser() (np. w handleDeleteAccount,
-// wywołane osobno chwilę później) od razu zobaczy nowe metadane — potwierdzone
-// live: świeży getUser() TUŻ PO updateUser() widział is_guest=true, a getUser()
-// wywołany kilka sekund później przez zupełnie inny handler — już nie.
-// Zamiast zgadywać czemu (opóźnienie propagacji tokena/cache), potwierdzamy
-// stan przed zgłoszeniem sukcesu: dociągamy świeżo i retry'ujemy z krótkim
-// odstępem, wymuszając refreshSession() między próbami — to jedyny sposób,
-// żeby "Anuluj" nie kłamało o sukcesie, zostawiając konto w rozjechanym stanie.
-async function waitForGuestMetadataSync(maxAttempts = 5) {
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    const { data: userData } = await sb().auth.getUser();
-    if (isGuestUser(userData?.user)) return true;
-    if (attempt === Math.ceil(maxAttempts / 2)) {
-      try { await sb().auth.refreshSession(); } catch { /* spróbujemy dalej mimo to */ }
-    }
-    await sleep(400);
-  }
-  return false;
-}
-
 async function handleMigrateCancel() {
   setErr("");
   let emailBeforeCancel = "";
@@ -373,30 +370,28 @@ async function handleMigrateCancel() {
     setStatus(t("account.statusMigrateCancelling"));
     setMigratePendingUi(""); // optymistyczna aktualizacja UI
 
-    // guest_convert_account() (wywołane przy submit) już wtedy nieodwracalnie
-    // ustawiło profiles.is_guest=false — samo wyczyszczenie pending e-maila
-    // (jak przy zwykłej zmianie e-maila zarejestrowanego usera) zostawiłoby
-    // konto w martwym stanie: ani gość (bez guest_expires_at), ani pełne
-    // konto (bez potwierdzonego e-maila). guest_cancel_migration() czyści
-    // pending e-mail I przywraca is_guest/guest_expires_at/email w bazie —
-    // działa tylko dopóki e-mail faktycznie nie został jeszcze potwierdzony.
+    // Odkąd submit migracji już NIE flipuje profiles.is_guest przedwcześnie
+    // (patrz komentarz przy guest_migration_staging w migracji 249), samo
+    // konto cały czas jest gościem — guest_cancel_migration() tylko czyści
+    // pending e-mail/token/staging (username+hasło czekające na potwierdzenie)
+    // i odświeża guest_expires_at. Działa dopóki e-mail faktycznie nie
+    // został jeszcze potwierdzony.
     const { data: rpcData, error: rpcErr } = await sb().rpc("guest_cancel_migration");
     if (rpcErr) throw rpcErr;
     if (!rpcData?.ok) throw new Error(rpcData?.error || t("account.errCancelMigrationFailed"));
 
-    // profiles.is_guest naprawione powyżej, ale isGuestUser() w innych
-    // miejscach (np. handleDeleteAccount) czyta świeży sb().auth.getUser(),
-    // czyli metadane JWT — te trzeba przywrócić osobno. Rzucamy błąd zamiast
-    // tylko ostrzegać: bez tego kroku handleDeleteAccount later widzi konto
-    // jako "pełne" (brak hasła => "Podaj hasło, aby potwierdzić"), mimo że
-    // profiles.is_guest jest już poprawne — cichy warn maskował ten rozjazd.
+    // Metadane JWT (familiada_email_change_pending/intent) trzeba wyczyścić
+    // osobno — RPC dotyka tylko profiles/auth.users, nie user_metadata.
     const { error: metaErr } = await sb().auth.updateUser({
-      data: { is_guest: true, familiada_email_change_pending: "", familiada_email_change_intent: "" },
+      data: { familiada_email_change_pending: "", familiada_email_change_intent: "" },
     });
     if (metaErr) throw metaErr;
 
-    const synced = await waitForGuestMetadataSync();
-    if (!synced) throw new Error(t("account.errCancelMigrationFailed"));
+    // Weryfikacja u źródła: ten sam mechanizm, którego UI używa do wykrywania
+    // stanu pending, musi teraz pokazywać "brak pending" — inaczej "Anuluj"
+    // kłamałoby o sukcesie (dokładnie ten bug, który złapał e2e test wcześniej).
+    await refreshMigrateState();
+    if (migratePendingEmail) throw new Error(t("account.errCancelMigrationFailed"));
 
     setStatus(t("account.statusMigrateCancelled"));
   } catch (e) {

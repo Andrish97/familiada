@@ -114,6 +114,29 @@ async function markEmailIntentConfirmed(email) {
   } catch {}
 }
 
+// Woływane po realnym potwierdzeniu zmiany e-maila (kliknięty link). Dla
+// zwykłej zmiany e-maila zarejestrowanego usera to tylko sprzątanie pending
+// flag. Dla migracji gościa (intent="guest_migrate") to jest TEN moment,
+// w którym is_guest faktycznie przełącza się na false — patrz komentarz przy
+// convertGuestToRegisteredEmailOnly w auth.js. Intent trzeba odczytać z
+// metadanych PRZED ich wyczyszczeniem poniżej.
+async function finishEmailChangeConfirmation(user) {
+  const intent = user?.user_metadata?.familiada_email_change_intent || "";
+  try {
+    await sb().auth.updateUser({ data: { familiada_email_change_pending: "", familiada_email_change_intent: "" } });
+  } catch {}
+  if (intent === "guest_migrate") {
+    try {
+      const { data: finData, error: finErr } = await sb().rpc("guest_finalize_migration");
+      if (finErr) console.error("[confirm] guest_finalize_migration failed:", finErr);
+      else if (!finData?.ok) console.error("[confirm] guest_finalize_migration returned error:", finData?.error);
+    } catch (e) {
+      console.error("[confirm] guest_finalize_migration threw:", e);
+    }
+  }
+  await markEmailIntentConfirmed(user?.email || "");
+}
+
 async function redirectAfterConfirm(user) {
   if (await shouldSetupUsername(user)) {
     location.href = withLangParam("login?setup=username");
@@ -201,10 +224,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           await syncLanguage();
           await syncProfileEmail(data.session.user);
           if (otpType === "email_change") {
-            try {
-              await sb().auth.updateUser({ data: { familiada_email_change_pending: "", familiada_email_change_intent: "" } });
-            } catch {}
-            await markEmailIntentConfirmed(data.session.user?.email || "");
+            await finishEmailChangeConfirmation(data.session.user);
           }
           setStatus(t("confirm.done"));
           go.style.display = "inline-flex";
@@ -233,10 +253,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           await syncLanguage();
           await syncProfileEmail(data.session.user);
           if (otpType === "email_change") {
-            try {
-              await sb().auth.updateUser({ data: { familiada_email_change_pending: "", familiada_email_change_intent: "" } });
-            } catch {}
-            await markEmailIntentConfirmed(data.session.user?.email || "");
+            await finishEmailChangeConfirmation(data.session.user);
           }
           setStatus(t("confirm.done"));
           go.style.display = "inline-flex";
@@ -272,10 +289,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       await syncLanguage();
       await syncProfileEmail(data.session.user);
       if (otpType === "email_change") {
-        try {
-          await sb().auth.updateUser({ data: { familiada_email_change_pending: "", familiada_email_change_intent: "" } });
-        } catch {}
-        await markEmailIntentConfirmed(data.session.user?.email || "");
+        await finishEmailChangeConfirmation(data.session.user);
       }
       setStatus(t("confirm.done"));
       go.style.display = "inline-flex";

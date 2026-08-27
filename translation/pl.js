@@ -418,7 +418,8 @@ const pl = {
   },
   account: {
     migrateTitle: "Zapisz swoje dane",
-    migrateHint: "Podaj e-mail i hasło, aby zamienić konto gościa na pełne konto — Twoje gry, bazy pytań i pliki zostaną zachowane.",
+    migrateHint: "Podaj e-mail i hasło (opcjonalnie też nazwę użytkownika), aby zamienić konto gościa na pełne konto — Twoje gry, bazy pytań i pliki zostaną zachowane.",
+    migrateUsernamePlaceholder: "Nazwa użytkownika (opcjonalnie)",
     migrateEmailPlaceholder: "Twój e-mail",
     migratePasswordPlaceholder: "Hasło",
     migratePasswordRepeatPlaceholder: "Powtórz hasło",

@@ -386,8 +386,13 @@ export async function convertGuestToRegistered(email, password, language, captch
 }
 
 /**
- * Guest upgrade flow (migrate data): attach only email first, then require password setup after confirm.
- * This avoids double-password forms and matches Supabase "email change" double-confirm requirement.
+ * Guest upgrade flow (migrate data): attach only email, require password/username
+ * separately via guest_stage_migration() (caller's job). Nothing in profiles/
+ * auth.users actually flips until the email is confirmed — guest_finalize_migration()
+ * (called from confirm.js) does that. is_guest stays true the whole time: an
+ * abandoned or cancelled attempt must never leave the account in limbo (neither
+ * guest nor registered), which is exactly what happened before this account
+ * used to flip is_guest here immediately, before confirmation.
  */
 export async function convertGuestToRegisteredEmailOnly(email, language, captchaToken = null) {
   const mail = String(email || "").trim().toLowerCase();
@@ -396,7 +401,6 @@ export async function convertGuestToRegisteredEmailOnly(email, language, captcha
   const payload = {
     email: mail,
     data: {
-      is_guest: false,
       familiada_email_change_pending: mail,
       familiada_email_change_intent: "guest_migrate",
     },
@@ -412,12 +416,7 @@ export async function convertGuestToRegisteredEmailOnly(email, language, captcha
   const { data, error } = await sb().auth.updateUser(payload, options);
   if (error) throw new Error(niceAuthError(error));
 
-  const { error: convErr } = await sb().rpc("guest_convert_account", { p_email: mail });
-  if (convErr) throw new Error(niceAuthError(convErr));
-
-  const user = data?.user || null;
-  if (user?.email_confirmed_at) clearGuestLocalMarker();
-  return user;
+  return data?.user || null;
 }
 
 export async function discardCurrentGuestAccount() {

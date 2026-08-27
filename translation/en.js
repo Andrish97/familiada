@@ -418,7 +418,8 @@ const en = {
   },
   account: {
     migrateTitle: "Save your data",
-    migrateHint: "Enter an email and password to turn your guest account into a full account — your games, question banks and files will be kept.",
+    migrateHint: "Enter an email and password (and optionally a username) to turn your guest account into a full account — your games, question banks and files will be kept.",
+    migrateUsernamePlaceholder: "Username (optional)",
     migrateEmailPlaceholder: "Your email",
     migratePasswordPlaceholder: "Password",
     migratePasswordRepeatPlaceholder: "Repeat password",

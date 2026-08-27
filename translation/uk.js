@@ -418,7 +418,8 @@ const uk = {
   },
   account: {
     migrateTitle: "Збережіть свої дані",
-    migrateHint: "Вкажіть email і пароль, щоб перетворити гостьовий акаунт на повний — ваші ігри, бази питань і файли залишаться.",
+    migrateHint: "Вкажіть email і пароль (і, за бажанням, ім'я користувача), щоб перетворити гостьовий акаунт на повний — ваші ігри, бази питань і файли залишаться.",
+    migrateUsernamePlaceholder: "Ім'я користувача (необов'язково)",
     migrateEmailPlaceholder: "Ваш email",
     migratePasswordPlaceholder: "Пароль",
     migratePasswordRepeatPlaceholder: "Повторіть пароль",
