@@ -1379,6 +1379,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   btnFinishTextClose?.addEventListener("click", async () => {
+    // Diagnostyka: run z 26.08 pokazał zero efektu po tym kliknięciu (brak
+    // modala, brak jakiegokolwiek console.error/alertModal) — wygląda na
+    // wczesny return poniżej, ale bez logu nie da się tego odróżnić od handlera
+    // w ogóle niewywołanego. Tymczasowy log, do usunięcia po zdiagnozowaniu.
+    console.log("[polls-diag] btnFinishTextClose click " + JSON.stringify({ hasGame: !!game, gameType: game?.type, hasModel: !!textCloseModel }));
+
     if (!game || game.type !== TYPES.POLL_TEXT) return;
     if (!textCloseModel) return;
 
@@ -1404,12 +1410,14 @@ document.addEventListener("DOMContentLoaded", async () => {
         payloadItems.push({ question_id: q.question_id, answers: final });
       }
 
+      console.log("[polls-diag] before confirmModal, payloadItems=" + payloadItems.length);
       const ok = await confirmModal({
         title: t("polls.modals.closeText.title"),
         text: t("polls.modals.closeText.text"),
         okText: t("polls.modals.closeText.ok"),
         cancelText: t("polls.modals.closeText.cancel"),
       });
+      console.log("[polls-diag] confirmModal resolved ok=" + ok);
       if (!ok) return;
 
       const { error } = await sb().rpc("poll_text_close_apply", {

@@ -249,6 +249,13 @@ function textItemsForVoter(questions, answerForOrd) {
 test("ankieta punktowa i tekstowa: tworzenie, zbieranie głosów i zamknięcie", async ({ page, context, browser }) => {
   test.setTimeout(300_000); // pierwsza próba padła DOKŁADNIE na 180s (na sprzątaniu ostatniego kroku) — za mało zapasu
 
+  // Tymczasowe: instrumentPage() w helpers/login.js loguje tylko error/warning,
+  // a diagnostyka wstawiona w btnFinishTextClose (polls.js) używa console.log —
+  // bez tego nie zobaczylibyśmy jej w CI. Do usunięcia razem z tamtym logiem.
+  page.on("console", (msg) => {
+    if (msg.text().startsWith("[polls-diag]")) console.log("[e2e-diag]", msg.text());
+  });
+
   await loginAsTestUser(page, context);
 
   // --- Ankieta punktowa ---
