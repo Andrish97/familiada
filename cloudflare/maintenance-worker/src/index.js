@@ -1928,9 +1928,35 @@ async function deleteAttachmentStorageFiles(env, attachments) {
 // INBOUND EMAIL HANDLER (Cloudflare Email Routing)
 // ============================================================
 
+// Decodes RFC 2047 "encoded-word" sequences (=?charset?B/Q?...?=) that mail
+// clients use for non-ASCII header values (e.g. Subject). Without this,
+// headers arrive as raw "=?utf-8?B?...?=" / "=?ISO-8859-2?Q?...?=" tokens.
+function decodeMimeWords(str) {
+  if (!str || typeof str !== "string") return str || "";
+  // Whitespace between two adjacent encoded-words is part of the encoding, not content
+  const joined = str.replace(/(\?=)[ \t]+(=\?)/g, "$1$2");
+  return joined.replace(/=\?([^?]+)\?([bBqQ])\?([^?]*)\?=/g, (match, charset, enc, text) => {
+    try {
+      let bytes;
+      if (enc.toLowerCase() === "b") {
+        const bin = atob(text.replace(/\s+/g, ""));
+        bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      } else {
+        const hexDecoded = text.replace(/_/g, " ").replace(/=([0-9A-Fa-f]{2})/g, (_, h) => String.fromCharCode(parseInt(h, 16)));
+        bytes = new Uint8Array(hexDecoded.length);
+        for (let i = 0; i < hexDecoded.length; i++) bytes[i] = hexDecoded.charCodeAt(i);
+      }
+      return new TextDecoder(charset.toLowerCase()).decode(bytes);
+    } catch {
+      return match;
+    }
+  });
+}
+
 async function handleInboundEmail(message, env) {
   const from    = message.from || "";
-  const subject = message.headers.get("subject") || "";
+  const subject = decodeMimeWords(message.headers.get("subject") || "");
 
   // Parse body from raw MIME stream
   let body = "";
