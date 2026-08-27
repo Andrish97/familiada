@@ -869,7 +869,22 @@ async function handleDeleteAccount() {
     const { data: userData, error: userError } = await sb().auth.getUser();
     if (userError || !userData?.user) throw new Error(t("index.errNoSession"));
 
-    if (isGuestUser(userData.user)) {
+    // isGuestUser(userData.user) sam w sobie czyta TYLKO metadane JWT
+    // (user_metadata.is_guest) — te potrafią być spóźnione względem
+    // profiles.is_guest tuż po guest_cancel_migration()/guest_convert_account()
+    // (potwierdzone live: świeży getUser() zaraz po "Anuluj" pokazywał
+    // poprawne is_guest=true, a getUser() wywołany tu chwilę później — już
+    // nie). profiles.is_guest jest jedynym źródłem prawdy (ustawiane tylko
+    // przez SECURITY DEFINER RPC), więc dociągamy je bezpośrednio zamiast
+    // ufać wyłącznie metadanym.
+    const { data: profileRow } = await sb()
+      .from("profiles")
+      .select("is_guest")
+      .eq("id", userData.user.id)
+      .maybeSingle();
+    const isGuest = profileRow?.is_guest === true || isGuestUser(userData.user);
+
+    if (isGuest) {
       // Gość nie ma hasła — jedno potwierdzenie modalem zamiast weryfikacji hasłem.
       const ok = await confirmModal({
         title: t("account.deleteGuestModalTitle"),
