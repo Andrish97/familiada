@@ -1,9 +1,9 @@
-import { sb } from "../core/supabase.js?v=v2026-08-27T22253";
-import { niceAuthError } from "../core/auth.js?v=v2026-08-27T22253";
-import { updateUserLanguage, discardCurrentGuestAccount } from "../core/auth.js?v=v2026-08-27T22253";
-import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js?v=v2026-08-27T22253";
-import { confirmModal } from "../core/modal.js?v=v2026-08-27T22253";
-import { isGuestUser } from "../core/guest-mode.js?v=v2026-08-27T22253";
+import { sb } from "../core/supabase.js?v=v2026-08-27T23362";
+import { niceAuthError } from "../core/auth.js?v=v2026-08-27T23362";
+import { updateUserLanguage, discardCurrentGuestAccount } from "../core/auth.js?v=v2026-08-27T23362";
+import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js?v=v2026-08-27T23362";
+import { confirmModal } from "../core/modal.js?v=v2026-08-27T23362";
+import { isGuestUser } from "../core/guest-mode.js?v=v2026-08-27T23362";
 import "../core/contact-modal.js";
 
 const status = document.getElementById("status");
