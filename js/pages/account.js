@@ -361,11 +361,14 @@ async function handleMigrateCancel() {
 
     // profiles.is_guest naprawione powyżej, ale isGuestUser() w innych
     // miejscach (np. handleDeleteAccount) czyta świeży sb().auth.getUser(),
-    // czyli metadane JWT — te trzeba przywrócić osobno.
+    // czyli metadane JWT — te trzeba przywrócić osobno. Rzucamy błąd zamiast
+    // tylko ostrzegać: bez tego kroku handleDeleteAccount later widzi konto
+    // jako "pełne" (brak hasła => "Podaj hasło, aby potwierdzić"), mimo że
+    // profiles.is_guest jest już poprawne — cichy warn maskował ten rozjazd.
     const { error: metaErr } = await sb().auth.updateUser({
       data: { is_guest: true, familiada_email_change_pending: "", familiada_email_change_intent: "" },
     });
-    if (metaErr) console.warn("[migrate cancel] metadata restore error:", metaErr.message);
+    if (metaErr) throw metaErr;
 
     setStatus(t("account.statusMigrateCancelled"));
   } catch (e) {
@@ -927,7 +930,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   btnMigrate?.addEventListener("click", handleMigrateSubmit);
   migrateResend?.addEventListener("click", handleMigrateResend);
-  migrateCancel?.addEventListener("click", handleMigrateCancel);
   migrateCancel?.addEventListener("click", handleMigrateCancel);
 
   usernameInput?.addEventListener("keydown", (e) => {

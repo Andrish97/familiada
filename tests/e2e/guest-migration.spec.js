@@ -18,6 +18,36 @@ const { loginAsGuest } = require("./helpers/login");
 
 const TEST_PASSWORD = "E2eTest123!";
 
+// handleMigrateCancel() aktualizuje UI OPTYMISTYCZNIE (#migratePendingHint
+// znika, zanim RPC/updateUser w ogóle odpowiedzą) — asercja tylko na UI
+// mogła więc "zaliczyć" krok anulowania, nawet gdyby backend faktycznie się
+// wywalił. Realny bug (znaleziony live: podwójny addEventListener na
+// #migrateCancel w account.js, wywołujący handleMigrateCancel() dwa razy na
+// jeden klik) manifestował się właśnie tak — bez czytelnego błędu w UI, a
+// handleDeleteAccount() później i tak trafiał w gałąź "zarejestrowany user".
+// Ta funkcja czyta źródło prawdy bezpośrednio: profiles.is_guest w bazie ORAZ
+// user_metadata.is_guest w świeżym JWT (to drugie czyta isGuestUser() w
+// handleDeleteAccount) — obie muszą się zgadzać, żeby uznać cancel za sukces.
+async function getGuestState(page) {
+  return await page.evaluate(async () => {
+    const sb = window.__sbClient;
+    const { data: userData, error: userErr } = await sb.auth.getUser();
+    if (userErr || !userData?.user) throw new Error("getUser failed: " + (userErr?.message || "brak usera"));
+
+    const { data: profile, error: profErr } = await sb
+      .from("profiles")
+      .select("is_guest")
+      .eq("id", userData.user.id)
+      .single();
+    if (profErr) throw new Error("profiles select failed: " + profErr.message);
+
+    return {
+      profilesIsGuest: profile?.is_guest === true,
+      metaIsGuest: userData.user.user_metadata?.is_guest === true,
+    };
+  });
+}
+
 test("migracja konta gościa: stan pending po submit, cooldown na resend, anulowanie czyści stan", async ({ page, context }) => {
   test.setTimeout(60_000);
 
@@ -63,6 +93,15 @@ test("migracja konta gościa: stan pending po submit, cooldown na resend, anulow
     await expect(page.locator("#btnMigrate")).toBeVisible();
     await expect(page.locator("#migratePendingActions")).toBeHidden();
     await expect(page.locator("#migrateEmail")).toBeEnabled();
+
+    // Weryfikacja u źródła prawdy, nie tylko po UI (patrz komentarz przy
+    // getGuestState) — obie flagi muszą wrócić na true, inaczej
+    // handleDeleteAccount() w finally poniżej trafi w złą gałąź i zawiśnie
+    // czekając na przycisk "Usuń", który nigdy się nie pojawi.
+    await expect.poll(() => getGuestState(page), { timeout: 15000 }).toEqual({
+      profilesIsGuest: true,
+      metaIsGuest: true,
+    });
   } finally {
     // Obowiązkowe sprzątanie kont gościa w e2e (patrz tests/README.md) —
     // przez prawdziwy UI flow, ta sama sekcja #deleteSection jest widoczna
