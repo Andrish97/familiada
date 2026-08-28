@@ -99,7 +99,11 @@ test("ustawienia gry: Warstwa 2 — zapis po zmianie ustawień z pominięciem UI
     await expect(page.locator("#gsTeamA")).toBeVisible({ timeout: 10000 });
     await page.locator("#gsTeamA").fill("Ekipa A");
     await page.locator("#btnSaveAll").click();
-    await expect(page.locator("#gsUnsavedBadge")).toBeHidden({ timeout: 10000 });
+    // #btnSaveAll jest disabled na czas zapisu i wraca enabled dopiero w
+    // finally — solidniejszy sygnał zakończenia niż #gsUnsavedBadge (który
+    // bywa ukryty od początku, gdy nic wcześniej nie ustawiło isDirty).
+    await expect(page.locator("#btnSaveAll")).toBeDisabled({ timeout: 10000 });
+    await expect(page.locator("#btnSaveAll")).toBeEnabled({ timeout: 10000 });
 
     // Symulacja ominięcia UI: zapis ustawień bezpośrednio w bazie, z
     // pominięciem tej karty — ta sama karta dalej "myśli", że zna
@@ -163,7 +167,12 @@ test("ustawienia gry: Warstwa 2 — zapis filtruje pytanie finału usunięte w m
 
     await openSettings(page, gameId);
     await page.locator("#btnSaveAll").click();
-    await expect(page.locator("#gsUnsavedBadge")).toBeHidden({ timeout: 10000 });
+    // Tu nic wcześniej nie ustawiło isDirty, więc #gsUnsavedBadge jest
+    // ukryty od początku — toBeHidden przeszłoby natychmiast bez czekania
+    // na realne zakończenie zapisu. #btnSaveAll faktycznie przełącza się
+    // disabled->enabled w try/finally niezależnie od stanu isDirty.
+    await expect(page.locator("#btnSaveAll")).toBeDisabled({ timeout: 10000 });
+    await expect(page.locator("#btnSaveAll")).toBeEnabled({ timeout: 10000 });
 
     const game = await getGameRow(page, gameId);
     const finalIds = (game.settings.questions.final || []).map((q) => q.id);
