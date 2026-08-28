@@ -17,6 +17,8 @@ import {
   uploadGameSound, deleteGameSound, deleteAllGameSounds,
 } from "../core/sfx-cloud.js?v=v2026-08-28T13123";
 import { guardDesktopOnly } from "../core/device-guard.js?v=v2026-08-28T13123";
+import { guardResourceLock } from "../core/resource-lock.js";
+import { updateChecked, ROW_GONE } from "../core/db-guard.js";
 
 guardDesktopOnly();
 
@@ -97,6 +99,7 @@ function mergeSettings(saved) {
 
 // ===== STATE =====
 let localSettings = mergeSettings(null);
+let lastSavedSettingsRaw = null; // ostatni znany serwerowi settings — CAS przy zapisie (Warstwa 2)
 let isDirty = false;
 let activeCat = "teams";
 let themeRaw = [];
@@ -157,6 +160,21 @@ function clearDirty() {
 }
 
 async function saveAll() {
+  // Warstwa 2 (świeżość referencji): allQuestions/final/rounds mogły
+  // wczytać się raz przy starcie i od tego czasu ktoś (np. w edytorze,
+  // inna karta) mógł usunąć któreś z wybranych pytań. Odśwież przed
+  // zapisem i wyczyść martwe odniesienia — inaczej settings zapisałoby
+  // wskazanie na już nieistniejące pytanie.
+  try {
+    const freshQuestions = await loadQuestions(gameId);
+    const freshIds = new Set(freshQuestions.map(q => q.id));
+    localSettings.questions.final = localSettings.questions.final.filter(q => freshIds.has(q.id));
+    localSettings.questions.rounds = localSettings.questions.rounds.filter(q => freshIds.has(q.id));
+    allQuestions = freshQuestions;
+  } catch (e) {
+    console.warn("[game-settings] refresh questions before save failed:", e);
+  }
+
   const hasFinal = localSettings.game.hasFinal === true;
 
   // Finał wyłączony — wyczyść wybrane pytania finału (żeby martwa lista
@@ -199,11 +217,13 @@ async function saveAll() {
     await _syncSoundFilenames();
 
     const payload = JSON.parse(JSON.stringify(localSettings));
-    const { error } = await sb()
-      .from("games")
-      .update({ settings: payload })
-      .eq("id", gameId);
-    if (error) throw error;
+    // CAS: nadpisz TYLKO jeśli settings w bazie wciąż równe temu, co
+    // wczytaliśmy (albo co sami ostatnio zapisaliśmy) — inaczej dwie karty
+    // otwarte na tych samych ustawieniach mogłyby bezpowrotnie skasować
+    // nawzajem swoje zmiany. 0 dopasowanych wierszy = ktoś inny zapisał
+    // w międzyczasie (albo gra zniknęła) → updateChecked rzuca ROW_GONE.
+    await updateChecked("games", { id: gameId, settings: lastSavedSettingsRaw }, { settings: payload });
+    lastSavedSettingsRaw = payload;
 
     // Synchronizuj custom pliki audio z bucketem (po sukcesie zapisu do DB)
     await _syncSoundBucket().catch(e => {
@@ -213,7 +233,11 @@ async function saveAll() {
     clearDirty();
   } catch (e) {
     console.error("[game-settings] saveAll error:", e);
-    alertModal({ text: t("gameSettings.saveErrorPrefix") + (e?.message || e?.code || String(e)) });
+    if (e?.code === ROW_GONE) {
+      await alertModal({ text: t("gameSettings.saveConflict") });
+    } else {
+      alertModal({ text: t("gameSettings.saveErrorPrefix") + (e?.message || e?.code || String(e)) });
+    }
   } finally {
     if (btnSaveAll) btnSaveAll.disabled = false;
   }
@@ -1560,6 +1584,16 @@ async function main() {
     if (content) content.innerHTML = `<p style="color:red;padding:20px">${escText(t("gameSettings.loadError"))}${escText(gameErr?.message || t("gameSettings.unknownError"))}</p>`;
     return;
   }
+
+  const lock = await guardResourceLock({
+    resourceType: "game_settings",
+    resourceId: gameId,
+    message: t("gameSettings.lock.message"),
+    backHref: "/builder",
+  });
+  if (!lock.ok) return;
+
+  lastSavedSettingsRaw = game.settings ?? {};
 
   if (titleEl) titleEl.textContent = game.name || "—";
   document.title = `${game.name || t("gameSettings.defaultGameName")} — ${t("gameSettings.pageTitle")}`;

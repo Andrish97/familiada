@@ -175,7 +175,7 @@ zasobu widzi czy jest zajęty, ale nie może nic zapisać poza RPC.
 | Zasób (klucz blokady) | Strona | Kiedy wdrożyć |
 |---|---|---|
 | `game_id` (edytor) | `js/pages/editor.js` | ✅ zrobione i przetestowane e2e |
-| `game_id` (ustawienia) | `js/pages/game-settings.js` | 🔲 po edytorze |
+| `game_id` (ustawienia) | `js/pages/game-settings.js` | ✅ zrobione, testy czekają na pierwsze uruchomienie |
 | `game_id` (ankieta) | `js/pages/polls.js` | 🔲 po ustawieniach (Warstwa 2 już ✅ gotowa — sam RPC ma guard) |
 | `logo_id` | `logo-editor/js/main.js` | 🔲 po ankiecie |
 | `base_id` | `base-explorer/` | 🔲 **świadomie odłożone** do PO dogłębnym audycie i testach bazy (patrz sekcja "Baza pytań") |
@@ -254,7 +254,7 @@ różnych użytkowników, albo nieaktualne dane po zmianie gdzie indziej):
 |---|---|---|
 | `js/pages/editor.js` | pytania/odpowiedzi gry | ✅ **ZAMKNIĘTE** — 21 testów e2e (run #52, 21/21), Warstwa 1 + Warstwa 2 zrobione |
 | `js/pages/polls.js` | zamykanie ankiety | ✅ Warstwa 2 gotowa (guard w RPC), 🔲 Warstwa 1 do dodania |
-| `js/pages/game-settings.js` | ustawienia gry (drużyny, wygląd, dźwięk, finał/rundy) | 🔲 2 realne bugi (Warstwa 2) + Warstwa 1 |
+| `js/pages/game-settings.js` | ustawienia gry (drużyny, wygląd, dźwięk, finał/rundy) | ✅ obie warstwy zrobione, 🔲 testy e2e napisane, czekają na pierwsze uruchomienie |
 | `logo-editor/js/main.js` | edytor logo (zapis do `user_logos`) | 🔲 nieprzejrzane + Warstwa 1 |
 | `js/pages/builder.js` | lista gier — tworzenie/nazwa/usuwanie/duplikowanie | 🔲 nieprzejrzane |
 | `js/pages/builder-import-export.js` | import/eksport całych gier | 🔲 nieprzejrzane |
@@ -311,25 +311,31 @@ Obie warstwy ochrony zrobione i przetestowane. Następny w kolejności:
 
 ---
 
-## Ustawienia gry (`js/pages/game-settings.js`) — 🔲 do zrobienia
+## Ustawienia gry (`js/pages/game-settings.js`) — ✅ zrobione, czeka na wynik testów
 
-Dwa realne problemy, gorsze niż w edytorze:
+Dwa realne problemy, gorsze niż w edytorze (oba naprawione):
 
-1. `saveAll()` nadpisuje CAŁĄ kolumnę `games.settings` (JSONB) lokalnym
-   obiektem wczytanym raz przy starcie strony — zero kontroli wersji
-   (brak porównania `updated_at`, brak merge). Dwie karty otwarte na tych
-   samych ustawieniach → kto zapisze ostatni, bezpowrotnie kasuje zmiany
-   drugiej karty, nawet z zupełnie innej zakładki ustawień (np. zapis
-   zmiany dźwięku w karcie B wymazuje zmianę nazw drużyn zrobioną wcześniej
-   w karcie A).
+1. `saveAll()` nadpisywało CAŁĄ kolumnę `games.settings` (JSONB) lokalnym
+   obiektem wczytanym raz przy starcie strony — zero kontroli wersji.
+   **Fix**: CAS (compare-and-swap) na całej kolumnie przez `updateChecked`
+   (`js/core/db-guard.js`) — `.eq("settings", lastSavedSettingsRaw)` jako
+   dodatkowy warunek `WHERE`. 0 dopasowanych wierszy = ktoś inny zapisał w
+   międzyczasie → `ROW_GONE`, pokazywany jako jawny konflikt
+   (`gameSettings.saveConflict`) zamiast cichego nadpisania.
+   `lastSavedSettingsRaw` aktualizowane po każdym udanym zapisie.
 2. `allQuestions` (lista pytań do wyboru finału/kolejności rund) wczytywana
-   raz przy starcie. Jeśli w międzyczasie w edytorze (inna karta) ktoś
-   usunie pytanie, karta ustawień dalej trzyma jego stary obiekt na liście
-   finałowej/rund — zapis wpisuje do `settings` odniesienie do już
-   nieistniejącego pytania.
+   raz przy starcie — martwe id usuniętego gdzie indziej pytania mogło
+   zostać zapisane do `settings`. **Fix**: `saveAll()` na starcie odświeża
+   żywą listę pytań (`loadQuestions`) i filtruje `questions.final`/`rounds`
+   z id, których już nie ma, PRZED jakąkolwiek walidacją/zapisem.
 
-🔲 Warstwa 1: blokada `game_id` (osobny klucz niż edytor — otwarcie
-ustawień nie blokuje edytora tej samej gry i odwrotnie).
+✅ Warstwa 1: blokada `game_id` (`resourceType: "game_settings"` — osobny
+klucz niż edytor, otwarcie ustawień nie blokuje edytora tej samej gry i
+odwrotnie), dokładnie ten sam `guardResourceLock` co w edytorze.
+
+🔲 Testy e2e napisane (`tests/e2e/game-settings.spec.js`, 3 testy: blokada
+dwóch kart, konflikt CAS przy zapisie, filtrowanie martwego id pytania
+finału) — czekają na pierwsze uruchomienie na produkcji.
 
 ---
 

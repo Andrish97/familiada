@@ -5017,6 +5017,10 @@ const en = {
     saveErrorPrefix: "Save error: ",
     saveErrorFinalNeed5: (v) => `Select 5 finale questions (${v.count}/5 selected).`,
     saveErrorCustomNoFile: "Custom sound selected but no file uploaded for: {names}",
+    saveConflict: "These settings were changed elsewhere in the meantime. Refresh the page and re-apply your changes.",
+    lock: {
+      message: "These settings are currently being edited in another tab or device.",
+    },
     loadError: "Could not load game: ",
     unknownError: "unknown error",
     errorPrefix: "Error: ",
