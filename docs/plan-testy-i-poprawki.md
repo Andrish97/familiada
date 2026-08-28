@@ -175,7 +175,7 @@ zasobu widzi czy jest zajęty, ale nie może nic zapisać poza RPC.
 | Zasób (klucz blokady) | Strona | Kiedy wdrożyć |
 |---|---|---|
 | `game_id` (edytor) | `js/pages/editor.js` | ✅ zrobione i przetestowane e2e |
-| `game_id` (ustawienia) | `js/pages/game-settings.js` | ✅ zrobione, testy czekają na pierwsze uruchomienie |
+| `game_id` (ustawienia) | `js/pages/game-settings.js` | ✅ zrobione i przetestowane e2e (run #56, 3/3) |
 | `game_id` (ankieta) | `js/pages/polls.js` | 🔲 po ustawieniach (Warstwa 2 już ✅ gotowa — sam RPC ma guard) |
 | `logo_id` | `logo-editor/js/main.js` | 🔲 po ankiecie |
 | `base_id` | `base-explorer/` | 🔲 **świadomie odłożone** do PO dogłębnym audycie i testach bazy (patrz sekcja "Baza pytań") |
@@ -223,8 +223,9 @@ audycie/poprawce każdej strony, zaczynając od edytora.
    też dwa dodatkowe realne bugi znalezione przez testy: overlay chowany
    bez re-renderu treści (fix: `location.reload()`) i wyścig debounced/blur
    nadpisujący komunikat `ROW_GONE` (fix: `debounce().cancel()`).
-2. **Ustawienia gry** (`game-settings.js`) — Warstwa 2 (fix nadpisywania
-   `settings` + nieaktualnej listy pytań) + Warstwa 1.
+2. **Ustawienia gry** (`game-settings.js`) — ✅ **ZAMKNIĘTE**. Warstwa 2
+   (fix nadpisywania `settings` + nieaktualnej listy pytań) + Warstwa 1,
+   3/3 testów e2e zielonych (run #56).
 3. **Ankieta** (`polls.js`) — Warstwa 2 już ✅ gotowa (guard w RPC), dołożyć
    tylko Warstwę 1 dla spójności UX.
 4. **Edytor logo** (`logo-editor/`) — audyt Warstwy 2 (nieprzejrzane) +
@@ -254,7 +255,7 @@ różnych użytkowników, albo nieaktualne dane po zmianie gdzie indziej):
 |---|---|---|
 | `js/pages/editor.js` | pytania/odpowiedzi gry | ✅ **ZAMKNIĘTE** — 21 testów e2e (run #52, 21/21), Warstwa 1 + Warstwa 2 zrobione |
 | `js/pages/polls.js` | zamykanie ankiety | ✅ Warstwa 2 gotowa (guard w RPC), 🔲 Warstwa 1 do dodania |
-| `js/pages/game-settings.js` | ustawienia gry (drużyny, wygląd, dźwięk, finał/rundy) | ✅ obie warstwy zrobione, 🔲 testy e2e napisane, czekają na pierwsze uruchomienie |
+| `js/pages/game-settings.js` | ustawienia gry (drużyny, wygląd, dźwięk, finał/rundy) | ✅ **ZAMKNIĘTE** — obie warstwy zrobione, 3/3 testów e2e (run #56, 3/3) |
 | `logo-editor/js/main.js` | edytor logo (zapis do `user_logos`) | 🔲 nieprzejrzane + Warstwa 1 |
 | `js/pages/builder.js` | lista gier — tworzenie/nazwa/usuwanie/duplikowanie | 🔲 nieprzejrzane |
 | `js/pages/builder-import-export.js` | import/eksport całych gier | 🔲 nieprzejrzane |
@@ -311,7 +312,7 @@ Obie warstwy ochrony zrobione i przetestowane. Następny w kolejności:
 
 ---
 
-## Ustawienia gry (`js/pages/game-settings.js`) — ✅ zrobione, czeka na wynik testów
+## Ustawienia gry (`js/pages/game-settings.js`) — ✅ ZAMKNIĘTE
 
 Dwa realne problemy, gorsze niż w edytorze (oba naprawione):
 
@@ -333,10 +334,9 @@ Dwa realne problemy, gorsze niż w edytorze (oba naprawione):
 klucz niż edytor, otwarcie ustawień nie blokuje edytora tej samej gry i
 odwrotnie), dokładnie ten sam `guardResourceLock` co w edytorze.
 
-🔲 Testy e2e napisane (`tests/e2e/game-settings.spec.js`, 3 testy: blokada
-dwóch kart, konflikt CAS przy zapisie, filtrowanie martwego id pytania
-finału) — pierwsze uruchomienie: 1/3 (blokada ✅), 2 testy CAS/filtrowania
-✘.
+✅ Testy e2e (`tests/e2e/game-settings.spec.js`, 3 testy: blokada dwóch
+kart, konflikt CAS przy zapisie, filtrowanie martwego id pytania finału)
+— **3/3 zielone na produkcji (run #56)**.
 
 Pierwszy realny bug znaleziony przez testy — **regresja na produkcji**:
 `updateChecked()` (`js/core/db-guard.js`) robił `.eq(col, val)` z `val`
@@ -348,19 +348,33 @@ ustawień gry był zepsuty na produkcji od razu po wdrożeniu Warstwy 2, nie
 tylko scenariusz testowy. Fix: `updateChecked` teraz jawnie
 `JSON.stringify()`-uje wartości obiektowe przed `.eq()` — PostgREST i tak
 rzutuje string filtra na typ kolumny (jsonb), więc porównanie jest po
-wartości, nie po tekście. Czeka na ponowne uruchomienie testów.
+wartości, nie po tekście. Potwierdzone testem B (CAS) w run #56.
+
+Drugi bug znaleziony przez testy — tym razem w samym teście, nie w
+aplikacji: testy B i C sprawdzały `#gsUnsavedBadge` `toBeHidden()` zaraz
+po kliknięciu Save, ale nic wcześniej nie ustawiało `isDirty`, więc odznaka
+była ukryta od początku — asercja przechodziła, zanim asynchroniczny zapis
+w ogóle się skończył (test czytał bazę zbyt wcześnie). Fix: czekanie na
+`#btnSaveAll` przełączające się `disabled → enabled` (realny sygnał
+zakończenia z własnego `try/finally` `saveAll()`, niezależny od stanu
+dirty).
 
 🔲 **Brakująca funkcja — blokada zmiany ustawień gdy gra jest w toku**:
 zależna od Control, więc szczegóły i implementacja przeniesione do sekcji
 "Control" niżej (nie robimy tu prowizorki na skróty). Na razie priorytet
 to dokończenie testów Warstwy 1/2 dla tego modułu.
 
-🔲 **Rozszerzenie testów**: po zielonym wyniku 3 testów blokady/CAS,
-dopisać pełne pokrycie `game-settings.js` analogiczne do
-`editor.spec.js` (20+ testów) — każda zakładka (drużyny, wygląd, dźwięk,
-pytania, finał, rundy, ustawienia gry/zaawansowane), walidacje (finał
-"pick" wymaga 5, własny dźwięk bez pliku blokuje zapis), reset do
-domyślnych, tryb modalny (otwarcie z `control-new`).
+**✅ MODUŁ ZAMKNIĘTY** — 3/3 testów e2e zielonych na produkcji (run #56).
+Obie warstwy ochrony zrobione i przetestowane. Następny w kolejności:
+`polls.js`.
+
+🔲 **Rozszerzenie testów** (opcjonalne, do ustalenia z użytkownikiem czy
+robić teraz czy po przejściu przez resztę modułów): pełne pokrycie
+`game-settings.js` analogiczne do `editor.spec.js` (20+ testów) — każda
+zakładka (drużyny, wygląd, dźwięk, pytania, finał, rundy, ustawienia
+gry/zaawansowane), walidacje (finał "pick" wymaga 5, własny dźwięk bez
+pliku blokuje zapis), reset do domyślnych, tryb modalny (otwarcie z
+`control-new`).
 
 ---
 
