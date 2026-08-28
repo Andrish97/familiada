@@ -407,6 +407,16 @@ test("ustawienia gry: finał — wybranie dokładnie 5 z 6 pytań zapisuje się,
     await expect(page.locator(".badge b")).toHaveText("5");
     await expect(page.locator("#gsFinalePool .qRow")).toHaveCount(1);
 
+    // localSettings.questions.rounds wypełnia się automatycznie dopiero przy
+    // wejściu w zakładkę Rundy (renderRounds()) — bez tego zostaje puste
+    // (roundsQuestionsMode="random" i tak je ignoruje w realnej rozgrywce).
+    // Wchodzimy tu celowo, żeby faktycznie sprawdzić wykluczenie pytań
+    // finałowych z auto-uzupełnionej puli rund, a nie tylko z pustej tablicy.
+    await switchTab(page, "questions");
+    await page.locator('.toggle-item:has(input[name="gsRoundsMode"][value="pick"])').click();
+    await switchTab(page, "rounds");
+    await expect(page.locator("#gsRoundsOrderList .roundsOrderItem")).toHaveCount(1);
+
     await saveAndWait(page);
 
     const game = await getGameRow(page, gameId);
@@ -526,6 +536,11 @@ test("ustawienia gry: przycisk Wstecz z niezapisanymi zmianami pyta o potwierdze
     await page.locator("#btnBack").click();
     await page.locator(".uni-foot .btn.gold").click();
     await expect(page).toHaveURL(/\/builder/, { timeout: 10000 });
+    // toHaveURL łapie tylko zmianę adresu — window.__sbClient na /builder
+    // jeszcze się nie zdążył ustawić, a deleteGame() w finally z niego
+    // korzysta. Bez tego czekania cleanup pada z "Cannot read properties
+    // of undefined (reading 'from')" mimo że sam test już przeszedł.
+    await page.waitForLoadState("networkidle");
   } finally {
     await deleteGame(page, gameId);
   }

@@ -408,6 +408,25 @@ bez akcji), 4 failed. Diagnoza:
   `.gs-unsaved-badge:not(.hidden){display:inline-flex}` w
   `game-settings.css`, wyższa specyficzność niż bazowe `.badge`.
 
+Poprawki wypchnięte, run #58: 11 passed, 1 flaky (drużyny — `saveAndWait`
+złapał zapis szybszy niż okno assercji `toBeDisabled`, przeszedł na
+retry, pojedynczy incydent — flaka, bez akcji), 2 failed:
+
+- **"finał 5/6" — błąd testu**: `questions.rounds` wypełnia się dopiero
+  przy realnym wejściu w zakładkę Rundy (`renderRounds()`), a test nigdy
+  jej nie odwiedzał — asercja `toHaveLength(1)` była błędnym założeniem
+  (realnie `rounds` zostawało puste, bo `roundsQuestionsMode` zostaje
+  "random" i tak je ignoruje w rozgrywce). Fix: test teraz faktycznie
+  wchodzi w zakładkę Rundy (przełącza na "pick", triggeruje
+  auto-uzupełnienie) przed zapisem, żeby realnie sprawdzić wykluczenie
+  pytań finałowych z puli rund, zamiast zgadywać stan który nigdy nie
+  powstał.
+- **"Wstecz" — błąd testu (cleanup)**: `deleteGame()` w `finally` padał na
+  `/builder` z "Cannot read properties of undefined (reading 'from')" —
+  `toHaveURL()` łapie tylko zmianę adresu, nie czeka aż `window.__sbClient`
+  zdąży się ustawić na nowej stronie. Fix: `page.waitForLoadState(
+  "networkidle")` po nawigacji, przed końcem testu.
+
 Poprawki wypchnięte, czeka na kolejne uruchomienie.
 
 ---
