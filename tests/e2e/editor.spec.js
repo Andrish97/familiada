@@ -596,13 +596,16 @@ test("edytor: dwie karty — otwarcie ankiety w karcie B nie blokuje dalszej edy
     expect(gameAfter.status, "sanity: ankieta faktycznie otwarta w tle").toBe("poll_open");
 
     // Karta A dalej "myśli", że jest draft — edytuje bez żadnego ostrzeżenia
+    // (tekst musi mieścić się w limicie 17 znaków pola odpowiedzi — inaczej
+    // sam zostanie ucięty przez app, co nie ma nic wspólnego z tym, co ten
+    // test sprawdza).
     await expect(aRow(pageA, 0).locator(".aText")).toBeVisible({ timeout: 10000 });
-    await aRow(pageA, 0).locator(".aText").fill("Zmieniona mimo otwartej ankiety");
+    await aRow(pageA, 0).locator(".aText").fill("Zmieniona w A!");
     await aRow(pageA, 0).locator(".aText").blur();
     await expect(pageA.locator("#msg")).toHaveText("Zapisano.", { timeout: 10000 });
 
     const answers = await getAnswersRows(pageA, firstQId);
-    expect(answers[0].text, "edycja w A powinna się realnie zapisać mimo otwartej w B ankiety — brak re-walidacji stanu per-akcja").toBe("Zmieniona mimo otwartej ankiety");
+    expect(answers[0].text, "edycja w A powinna się realnie zapisać mimo otwartej w B ankiety — brak re-walidacji stanu per-akcja").toBe("Zmieniona w A!");
 
     await pageB.close();
   } finally {
