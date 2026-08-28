@@ -192,7 +192,10 @@ test("edytor: import bez '#' pokazuje błąd formatu i nie rusza istniejącej za
 
     await openEditor(page, gameId);
     await page.locator("#btnImportTxt").click();
-    await page.locator("#txtTa").fill("byle jaki tekst bez hasha");
+    // Sama linia "@Nazwa" bez żadnego "#" — pętla kończy się z pustym items,
+    // bez przechodzenia przez gałąź "odpowiedź przed pierwszym pytaniem"
+    // (to inny, wcześniejszy błąd, na który wcześniej przypadkiem trafiał ten test).
+    await page.locator("#txtTa").fill("@Tylko nazwa, bez pytań");
     await page.locator("#btnTxtImport").click();
 
     await expect(page.locator("#txtMsg")).toHaveText(
@@ -581,6 +584,9 @@ test("edytor: dwie karty — otwarcie ankiety w karcie B nie blokuje dalszej edy
     await openEditor(pageA, gameId); // ładuje się jako draft
 
     const pageB = await context.newPage();
+    // window.__sbClient istnieje dopiero po załadowaniu strony aplikacji —
+    // świeża karta zaczyna na about:blank, więc trzeba ją najpierw nawigować.
+    await openEditor(pageB, gameId);
     const game = await getGameRow(pageB, gameId);
     await pageB.evaluate(async ({ gameId, key }) => {
       const { error } = await window.__sbClient.rpc("poll_open", { p_game_id: gameId, p_key: key });
@@ -643,7 +649,8 @@ test("edytor: pusta nazwa gry po blur zapisuje się jako domyślna, nie jako pus
 
     await page.locator("#gameName").fill("");
     await page.locator("#gameName").blur();
-    await expect(page.locator("#msg")).toHaveText("Zapisano.", { timeout: 10000 });
+    // Zapis nazwy gry ma własny, inny komunikat niż zapis pytania/odpowiedzi.
+    await expect(page.locator("#msg")).toHaveText("Zapisano nazwę.", { timeout: 10000 });
 
     const game = await getGameRow(page, gameId);
     expect(game.name, "pusta nazwa -> fallback do 'Nowa gra', nie błąd i nie pusty string").toBe("Nowa gra");
@@ -662,7 +669,7 @@ test("edytor: nazwa gry dłuższa niż 80 znaków zostaje ucięta do 80", async 
     const longName = "X".repeat(120);
     await page.locator("#gameName").fill(longName);
     await page.locator("#gameName").blur();
-    await expect(page.locator("#msg")).toHaveText("Zapisano.", { timeout: 10000 });
+    await expect(page.locator("#msg")).toHaveText("Zapisano nazwę.", { timeout: 10000 });
 
     const game = await getGameRow(page, gameId);
     expect(game.name.length, "nazwa w bazie nie powinna przekroczyć 80 znaków (games_name_len)").toBe(80);
