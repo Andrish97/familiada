@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict ajxBuTPcSEMQ4Zb4qbwnOumkCyjqqKH7dJX8f0THFvBzcQnMNukrCZ6G8DqvhLV
+\restrict Fvf7giNBsE3TxYKeoMSUvBzJnrRMahgxixBQNhYFBNQAyvo168cWly4el5dnl8U
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -179,6 +179,7 @@ CREATE FUNCTION "public"."acquire_edit_lock"("p_resource_type" "text", "p_resour
     AS $$
 declare
   v_uid uuid := auth.uid();
+  v_exists boolean := false;
   v_can boolean := false;
   v_row public.edit_locks;
   v_got boolean;
@@ -192,28 +193,30 @@ begin
   end if;
 
   if p_resource_type in ('game_editor', 'game_settings', 'poll', 'control') then
+    v_exists := exists (select 1 from public.games where id = p_resource_id);
     v_can := exists (select 1 from public.games where id = p_resource_id and owner_id = v_uid);
   elsif p_resource_type = 'logo' then
+    v_exists := exists (select 1 from public.user_logos where id = p_resource_id);
     v_can := exists (select 1 from public.user_logos where id = p_resource_id and user_id = v_uid);
   elsif p_resource_type = 'base' then
-    v_can := public.base_can_edit(p_resource_id, v_uid);
+    v_exists := exists (select 1 from public.question_bases where id = p_resource_id);
+    v_can := v_exists and public.base_can_edit(p_resource_id, v_uid);
   else
     return jsonb_build_object('ok', false, 'error', 'unknown_resource_type');
+  end if;
+
+  if not v_exists then
+    -- Zasób usunięty gdzie indziej, zanim zdążyliśmy go zająć (albo w
+    -- trakcie odnawiania heartbeatu). Odróżniamy od 'locked': tu nie ma
+    -- sensu odpytywać ponownie, bo nigdy się nie "zwolni" — wywołujący
+    -- (guardResourceLock) pokazuje inny komunikat i nie odpala pollingu.
+    return jsonb_build_object('ok', false, 'error', 'gone');
   end if;
 
   if not v_can then
     return jsonb_build_object('ok', false, 'error', 'forbidden');
   end if;
 
-  -- Jedna atomowa instrukcja zamiast "sprawdź, potem zapisz" (SELECT ...
-  -- FOR UPDATE nie zablokowałby wiersza, który jeszcze nie istnieje — dwie
-  -- karty acquire'ujące w tej samej milisekundzie mogłyby obie trafić w
-  -- INSERT i jedna dostałaby nieobsłużony unique_violation). ON CONFLICT
-  -- DO UPDATE ... WHERE jest niepodzielne: aktualizuje TYLKO gdy to ta sama
-  -- karta (odnowienie heartbeatu) albo poprzednia blokada wygasła (TTL 25s
-  -- = margines ~3 pominiętych heartbeatów na zerwanie sieci); w przeciwnym
-  -- razie WHERE nie przechodzi, nic się nie zmienia, RETURNING nic nie
-  -- zwraca — v_got zostaje NULL, traktowane niżej jak "nie wygrano".
   insert into public.edit_locks (resource_type, resource_id, holder_tab_id, holder_user_id, acquired_at, heartbeat_at)
   values (p_resource_type, p_resource_id, p_tab_id, v_uid, now(), now())
   on conflict (resource_type, resource_id) do update
@@ -222,8 +225,8 @@ begin
         heartbeat_at = excluded.heartbeat_at,
         acquired_at = case
           when public.edit_locks.holder_tab_id = excluded.holder_tab_id
-            then public.edit_locks.acquired_at  -- ta sama karta: zachowaj oryginalny czas zajęcia
-          else excluded.acquired_at             -- przejęcie po TTL: liczy się od teraz
+            then public.edit_locks.acquired_at
+          else excluded.acquired_at
         end
     where public.edit_locks.holder_tab_id = excluded.holder_tab_id
        or public.edit_locks.heartbeat_at < now() - interval '25 seconds'
@@ -1491,6 +1494,81 @@ CREATE FUNCTION "public"."delete_message"("p_message_id" "uuid") RETURNS "void"
 BEGIN
   DELETE FROM public.messages WHERE id = p_message_id AND deleted_at IS NOT NULL;
 END;
+$$;
+
+
+--
+-- Name: delete_resource_checked("text", "uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."delete_resource_checked"("p_resource_type" "text", "p_resource_id" "uuid") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+declare
+  v_uid uuid := auth.uid();
+  v_blocker record;
+begin
+  if v_uid is null then
+    return jsonb_build_object('ok', false, 'error', 'not_authenticated');
+  end if;
+
+  if p_resource_type = 'game' then
+    if not exists (select 1 from public.games where id = p_resource_id and owner_id = v_uid) then
+      return jsonb_build_object('ok', false, 'error', 'not_found_or_forbidden');
+    end if;
+
+    -- Żywa ankieta = ktoś aktualnie głosuje — usunięcie zerwałoby
+    -- wszystkim sesję bez ostrzeżenia.
+    if exists (select 1 from public.games where id = p_resource_id and status = 'poll_open') then
+      return jsonb_build_object('ok', false, 'in_use', true, 'reason', 'poll_open');
+    end if;
+
+    -- Ktoś ma teraz otwarty edytor/ustawienia/ankietę/control tej gry.
+    select resource_type into v_blocker
+    from public.edit_locks
+    where resource_type in ('game_editor', 'game_settings', 'poll', 'control')
+      and resource_id = p_resource_id
+      and heartbeat_at > now() - interval '25 seconds'
+    limit 1;
+
+    if found then
+      return jsonb_build_object('ok', false, 'in_use', true, 'reason', 'locked', 'blocker_type', v_blocker.resource_type);
+    end if;
+
+    delete from public.games where id = p_resource_id;
+    return jsonb_build_object('ok', true);
+
+  elsif p_resource_type = 'logo' then
+    if not exists (select 1 from public.user_logos where id = p_resource_id and user_id = v_uid) then
+      return jsonb_build_object('ok', false, 'error', 'not_found_or_forbidden');
+    end if;
+
+    -- Gry (tego samego właściciela) referencujące to logo w
+    -- settings.display.logoId, z TERAZ otwartymi ustawieniami. Kontrola
+    -- rozgrywki (Control) celowo pominięta — nie ma jeszcze żadnego
+    -- sygnału żywotności (patrz plan, sekcja Control).
+    select g.id as game_id into v_blocker
+    from public.games g
+    join public.edit_locks el
+      on el.resource_type = 'game_settings'
+     and el.resource_id = g.id
+     and el.heartbeat_at > now() - interval '25 seconds'
+    where g.owner_id = v_uid
+      and (g.settings #>> '{display,logoId}') = p_resource_id::text
+    limit 1;
+
+    if found then
+      return jsonb_build_object('ok', false, 'in_use', true, 'reason', 'locked', 'blocker_type', 'game_settings', 'blocker_game_id', v_blocker.game_id);
+    end if;
+
+    delete from public.user_logos where id = p_resource_id;
+    return jsonb_build_object('ok', true);
+
+  else
+    return jsonb_build_object('ok', false, 'error', 'unknown_resource_type');
+  end if;
+end;
 $$;
 
 
@@ -14381,5 +14459,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict ajxBuTPcSEMQ4Zb4qbwnOumkCyjqqKH7dJX8f0THFvBzcQnMNukrCZ6G8DqvhLV
+\unrestrict Fvf7giNBsE3TxYKeoMSUvBzJnrRMahgxixBQNhYFBNQAyvo168cWly4el5dnl8U
 
