@@ -97,6 +97,10 @@ const en = {
     back: "Back to my games",
     login: "Sign in / Create account",
   },
+  resourceLock: {
+    title: "In use elsewhere",
+    back: "Back",
+  },
   guestInfo: {
     title: "⚠️ Guest account",
     subtitle: "Before you start — a few important notes:",
@@ -3089,6 +3093,9 @@ const en = {
       missingId: "Missing editor id.",
       cannotEdit: "Cannot edit while poll is open.",
       editorError: "Editor error (console).",
+    },
+    lock: {
+      message: "This game is currently being edited in another tab or device.",
     },
   },
   pollText: {

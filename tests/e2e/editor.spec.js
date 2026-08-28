@@ -532,39 +532,39 @@ test("edytor: wejście gdy ankieta jest 'ready' i OK w confirmie -> realny reset
 // UPDATE ... WHERE id = <usunięte> pasuje do 0 wierszy — Supabase/PostgREST NIE
 // zwraca błędu w takiej sytuacji, więc UI karty B pokazuje "Zapisano.", mimo że
 // nic nie zostało zapisane (wiersz już nie istnieje).
-test("edytor: dwie karty — edycja pytania usuniętego w innej karcie kończy się CICHYM sukcesem, bez realnego zapisu", async ({ page, context }) => {
-  test.setTimeout(60_000);
+// Ta sama gra dwiema kartami naraz USTAWIAŁA kiedyś sytuację "cichego
+// sukcesu" (karta B edytowała pytanie usunięte w karcie A, zapis pozornie
+// się udawał). Warstwa 1 (docs/plan-testy-i-poprawki.md) usuwa ten problem
+// u źródła: karta B w ogóle nie wchodzi w tryb edycji, dopóki karta A
+// trzyma blokadę zasobu (resource-lock.js, edit_locks). Warstwa 2
+// (updateChecked, obrona przed ominięciem blokady) to osobny, wciąż
+// zaplanowany fix — ten test sprawdza już zbudowaną Warstwę 1.
+test("edytor: dwie karty — druga karta jest blokowana overlayem zamiast cichej edycji, zwalnia się po zamknięciu pierwszej", async ({ page, context }) => {
+  test.setTimeout(90_000);
   await loginAsTestUser(page, context);
 
   const gameId = await createGame(page, { type: "prepared" });
   try {
     await addQuestionApi(page, gameId, 1, "Q1");
-    const q2Id = await addQuestionApi(page, gameId, 2, "Q2");
+    await addQuestionApi(page, gameId, 2, "Q2");
 
-    const pageA = page;
-    const pageB = await context.newPage();
+    const pageA = await context.newPage(); // trzyma blokadę, zostanie zamknięta żeby ją zwolnić
+    const pageB = page; // fixture page — druga karta, też służy do końcowego sprzątania
 
     await openEditor(pageA, gameId);
     await openEditor(pageB, gameId);
 
-    // Karta B: aktywuje Q2
-    await qCard(pageB, 1).click();
-    await expect(pageB.locator("#qText")).toHaveValue("Q2", { timeout: 10000 });
+    // Karta B: overlay blokady, ZERO dostępu do edytowalnej treści pod spodem
+    await expect(pageB.locator("#resourceLockGuard")).toBeVisible({ timeout: 10000 });
+    await expect(pageB.locator("#qList .qcard:not(.addTile)")).toHaveCount(0);
 
-    // Karta A: usuwa Q2
-    await qCard(pageA, 1).locator(".x").click();
-    await pageA.locator(".uni-foot .btn.gold").click();
-    await expect(pageA.locator("#qList .qcard:not(.addTile)")).toHaveCount(1, { timeout: 10000 });
+    // Zamknięcie karty A zwalnia blokadę — best-effort przez pagehide+broadcast,
+    // a jeśli to zawiedzie, fallback to TTL (25s) + polling w karcie B (do 5s) —
+    // stąd hojny timeout na kolejny expect zamiast zakładania natychmiastowego zwolnienia.
+    await pageA.close();
 
-    // Karta B nie wie o usunięciu — dalej "edytuje" Q2 i próbuje zapisać
-    await pageB.locator("#qText").fill("Nowy tekst po usunięciu w innej karcie");
-    await pageB.locator("#qText").blur();
-    await expect(pageB.locator("#msg")).toHaveText("Zapisano.", { timeout: 10000 });
-
-    const questions = await getQuestionsRows(page, gameId);
-    expect(questions.find((q) => q.id === q2Id), "wiersz usunięty w A nie powinien zostać wskrzeszony przez 'udany' zapis w B").toBeUndefined();
-
-    await pageB.close();
+    await expect(pageB.locator("#resourceLockGuard")).toBeHidden({ timeout: 40000 });
+    await expect(pageB.locator("#qList .qcard:not(.addTile)")).toHaveCount(2, { timeout: 10000 });
   } finally {
     await deleteGame(page, gameId);
   }
@@ -589,7 +589,12 @@ test("edytor: dwie karty — otwarcie ankiety w karcie B nie blokuje dalszej edy
     const pageB = await context.newPage();
     // window.__sbClient istnieje dopiero po załadowaniu strony aplikacji —
     // świeża karta zaczyna na about:blank, więc trzeba ją najpierw nawigować.
-    await openEditor(pageB, gameId);
+    // NIE otwieramy tu edytora: od Warstwy 1 (resource-lock) druga karta na
+    // tej samej grze byłaby zablokowana overlayem, co psułoby sens tego
+    // testu (sprawdza brak re-walidacji stanu w karcie A, nie blokadę) —
+    // wystarczy dowolna zalogowana strona, żeby mieć klienta do wywołania RPC.
+    await pageB.goto("https://www.familiada.online/builder", { waitUntil: "domcontentloaded" });
+    await pageB.waitForLoadState("networkidle");
     const game = await getGameRow(pageB, gameId);
     await pageB.evaluate(async ({ gameId, key }) => {
       const { error } = await window.__sbClient.rpc("poll_open", { p_game_id: gameId, p_key: key });

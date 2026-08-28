@@ -8,6 +8,17 @@ per-akcja — druga karta może cicho nadpisać/zignorować zmiany pierwszej.
 Ten plik śledzi rozszerzenie tego audytu na resztę aplikacji i poprawki,
 które z niego wynikają.
 
+**Sposób pracy**: każdy krok jest od razu testowany, nie dopiero na końcu.
+Testy e2e (`tests/e2e/*.spec.js`, Playwright na produkcji) są dopisywane
+przy tym samym kroku, co poprawka/nowa funkcja — nie osobno później.
+Workflow `E2E Tests (Playwright)` w GitHub Actions jest celowo
+**wyłącznie ręczny** (`workflow_dispatch`, patrz komentarz w
+`.github/workflows/e2e-tests.yml` — loguje się na prawdziwe konta
+produkcyjne), więc po dopisaniu testu jest on odpalany przez Actions API
+(albo przez użytkownika ręcznie, jeśli o to poprosi), a wynik sprawdzany
+przed przejściem do kolejnego kroku — nie zakładamy, że coś działa tylko
+dlatego, że kod wygląda poprawnie.
+
 ---
 
 ## Dwie warstwy ochrony — 🔲 docelowy model

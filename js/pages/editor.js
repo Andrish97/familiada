@@ -4,6 +4,7 @@ import { requireAuth } from "../core/auth.js?v=v2026-08-28T10463";
 import { alertModal, confirmModal } from "../core/modal.js?v=v2026-08-28T10463";
 import { parseQaText, clip as clipN } from "../core/text-import.js?v=v2026-08-28T10463";
 import { canEnterEdit, RULES as GV_RULES, TYPES } from "../core/game-validate.js?v=v2026-08-28T10463";
+import { guardResourceLock } from "../core/resource-lock.js";
 import { initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-08-28T10463";
 import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-08-28T10463";
 import "../core/contact-modal.js";
@@ -548,6 +549,14 @@ async function boot() {
     await resetPollForEditing(gameId);
     game = await loadGame(gameId);
   }
+
+  const lock = await guardResourceLock({
+    resourceType: "game_editor",
+    resourceId: gameId,
+    message: t("editor.lock.message"),
+    backHref: withLangParam("builder"),
+  });
+  if (!lock.ok) return;
 
   /* ---------- UI header ---------- */
   const titleEl = $("pageTitle");

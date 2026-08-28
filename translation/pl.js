@@ -97,6 +97,10 @@ const pl = {
     back: "Wróć do moich gier",
     login: "Zaloguj / Załóż konto",
   },
+  resourceLock: {
+    title: "Zajęte w innym miejscu",
+    back: "Wróć",
+  },
   guestInfo: {
     title: "⚠️ Konto gościa",
     subtitle: "Zanim zaczniesz — kilka ważnych informacji:",
@@ -2962,6 +2966,9 @@ const pl = {
       missingId: "Brak identyfikatora edytora.",
       cannotEdit: "Nie można edytować w trakcie otwartej ankiety.",
       editorError: "Błąd edytora (konsola).",
+    },
+    lock: {
+      message: "Ta gra jest właśnie edytowana w innej karcie lub przez inne urządzenie.",
     },
   },
   pollText: {
