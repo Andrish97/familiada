@@ -10,6 +10,60 @@ które z niego wynikają.
 
 ---
 
+## Mechanizm: wspólne wykrywanie "cichego sukcesu" — 🔲 do wdrożenia stopniowo
+
+W kilku miejscach powtarza się dokładnie ten sam błąd źródłowy:
+Supabase/PostgREST `UPDATE ... WHERE id = X` trafiający w 0 wierszy (bo
+rekord został usunięty w innym miejscu) **nie zwraca błędu** — UI musi to
+sprawdzić samo (np. przez `.select()` po `.update()` i porównanie liczby
+zwróconych wierszy), inaczej pokazuje fałszywe "Zapisano." mimo że nic się
+nie zapisało.
+
+Osobny, pokrewny wzorzec: **nadpisanie całego obiektu/blobu zamiast
+pojedynczego pola** (np. `game-settings.js` zapisujący cały `settings`
+JSONB naraz) — tu nie ma czego "wykryć" przez `.select()`, bo zapis się
+udaje, tylko cicho kasuje zmiany zrobione w międzyczasie gdzie indziej.
+
+Decyzja: zamiast łatać to osobno w każdym pliku od zera, wprowadzić **jeden
+mały wspólny helper** w `js/core/` (roboczo: `updateChecked(table, match,
+patch)` — robi `.update().select()` i rzuca błąd z rozpoznawalnym kodem,
+gdy 0 wierszy) + **jeden wspólny klucz i18n** na komunikat "element został
+zmieniony/usunięty w innym miejscu, odśwież". Wprowadzać **stopniowo, przy
+audycie/poprawce każdej strony z listy niżej**, zaczynając od edytora — nie
+jako osobny, jednorazowy refaktor całej apki na raz.
+
+---
+
+## Pełna lista miejsc do audytu
+
+Wszystkie strony, które faktycznie zapisują dane (na podstawie realnych
+wywołań `.update/.upsert/.insert/.delete` w kodzie) i mogą ucierpieć na
+otwarciu "w dwóch miejscach naraz" (dwie karty tej samej osoby, dwóch
+różnych użytkowników, albo nieaktualne dane po zmianie gdzie indziej):
+
+| Strona | Co edytuje | Status |
+|---|---|---|
+| `js/pages/editor.js` | pytania/odpowiedzi gry | ✅ 20 testów e2e, 1 fix zrobiony, 🔲 1 fix zaplanowany (patrz sekcja "Edytor gier") |
+| `js/pages/polls.js` | zamykanie ankiety | ✅ sprawdzone, bezpieczne (guard status w samym RPC) |
+| `js/pages/game-settings.js` | ustawienia gry (drużyny, wygląd, dźwięk, finał/rundy) | 🔲 2 realne bugi znalezione (patrz sekcja dedykowana) |
+| `js/pages/builder.js` | lista gier — tworzenie/nazwa/usuwanie/duplikowanie | 🔲 nieprzejrzane |
+| `js/pages/builder-import-export.js` | import/eksport całych gier | 🔲 nieprzejrzane |
+| `js/pages/bases.js` | lista baz pytań, zarządzanie udostępnieniami | 🔲 nieprzejrzane |
+| `base-explorer/` (`actions.js`, `state.js`, `tags-modal.js`, `export-modal.js`) | edycja bazy pytań | 🔲 zaplanowane osobno — patrz sekcja "Baza pytań" (CRUD, dwóch różnych użytkowników, uprawnienia) |
+| `js/pages/generator.js` | generator gier (AI) — wpisuje pytania/odpowiedzi do gry | 🔲 nieprzejrzane — może kolidować z edytorem otwartym na tej samej grze |
+| `logo-editor/js/main.js` | edytor logo (zapis do `user_logos`) | 🔲 nieprzejrzane |
+| `js/pages/settings.js` | ustawienia konta użytkownika (nie gry) | 🔲 nieprzejrzane, niższy priorytet |
+| `js/pages/polls-hub.js` | lista ankiet (hub) | 🔲 nieprzejrzane, niższy priorytet |
+| `js/pages/subscriptions.js` | subskrypcja/płatności | 🔲 nieprzejrzane, niski priorytet |
+| `js/pages/login.js`, `account.js`, `confirm.js` | logowanie / migracja gościa | ✅ przerobione wcześniej (deferred guest migration) |
+| `control/` | prowadzenie rozgrywki — zapis/przywracanie stanu | 🔲 następne, inna kategoria (localStorage, nie DB) — patrz sekcja "Control" |
+
+Kolejność pracy: **najpierw dokończyć edytor** (fix niżej), potem iść po
+liście od góry, każdą stronę traktując jako osobny mini-audyt + ew.
+poprawka z użyciem wspólnego mechanizmu opisanego wyżej.
+
+---
+
 ## Edytor gier (`js/pages/editor.js`)
 
 ✅ 20 testów e2e (`tests/e2e/editor.spec.js`) — limity, import, kolejność
@@ -19,46 +73,30 @@ które z niego wynikają.
 już działało dla odpowiedzi), zamiast próby zapisania pustego stringa
 i cichego desyncu UI/bazy przy błędzie constraintu `questions_text_len`.
 
-🔲 Poprawka: edycja pytania/odpowiedzi usuniętej w innej karcie kończy
-się fałszywym "Zapisano." (UPDATE trafiający w 0 wierszy nie jest
-rozpoznawany jako błąd). Niski priorytet — do zrobienia razem z resztą
-audytu poniżej, nie osobno.
+🔲 Poprawka (następna w kolejce): edycja pytania/odpowiedzi usuniętej w
+innej karcie kończy się fałszywym "Zapisano." (UPDATE trafiający w 0
+wierszy nie jest rozpoznawany jako błąd). Ma być pierwszym miejscem, gdzie
+wchodzi wspólny helper `updateChecked` opisany wyżej — żeby edytor był
+"zamknięty" zanim przejdziemy do kolejnych stron z listy.
 
 ---
 
-## Audyt "dwóch miejsc naraz" / niezamkniętych kart — 🔄 w trakcie
+## Ustawienia gry (`js/pages/game-settings.js`) — 🔲 do zrobienia
 
-Ten sam wzorec co w edytorze (brak realtime sync, brak re-walidacji
-stanu per-akcja) do sprawdzenia w:
+Dwa realne problemy, gorsze niż w edytorze:
 
-- ✅ `js/pages/polls.js` — panel zamykania ankiety tekstowej.
-  **Sprawdzone, bezpieczne**: wszystkie akcje zmieniające status gry
-  (`poll_open`, `poll_points_close_and_normalize`, `poll_text_close_apply`)
-  mają server-side guard w samej funkcji RPC (`if g.status <> 'poll_open'
-  then raise exception`), więc dwie karty nie mogą się wzajemnie rozjechać —
-  nieaktualna akcja z drugiej karty zawsze wybuchnie błędem, nigdy nie
-  przejdzie cicho.
-- 🔲 `js/pages/game-settings.js` — zmiana ustawień rozgrywki.
-  **Dwa realne problemy, gorsze niż w edytorze**:
-  1. `saveAll()` nadpisuje CAŁĄ kolumnę `games.settings` (JSONB) lokalnym
-     obiektem wczytanym raz przy starcie strony — zero kontroli wersji
-     (brak porównania `updated_at`, brak merge). Dwie karty otwarte na tych
-     samych ustawieniach → kto zapisze ostatni, bezpowrotnie kasuje zmiany
-     drugiej karty, nawet z zupełnie innej zakładki ustawień (np. zapis
-     zmiany dźwięku w karcie B wymazuje zmianę nazw drużyn zrobioną wcześniej
-     w karcie A).
-  2. `allQuestions` (lista pytań do wyboru finału/kolejności rund) wczytywana
-     raz przy starcie. Jeśli w międzyczasie w edytorze (inna karta) ktoś
-     usunie pytanie, karta ustawień dalej trzyma jego stary obiekt na liście
-     finałowej/rund — zapis wpisuje do `settings` odniesienie do już
-     nieistniejącego pytania.
-- 🔲 `base-explorer/` — edycja bazy pytań, patrz sekcja dedykowana niżej
-  (osobno, bo baza pytań ma coś, czego reszta aplikacji nie ma: realne
-  współdzielenie między RÓŻNYMI kontami z rolami odczyt/edycja)
-
-Poza zakresem (świadomie pominięte na razie): samo prowadzenie
-rozgrywki na żywo (`control/`) jako **osobny, następny punkt** — patrz
-niżej.
+1. `saveAll()` nadpisuje CAŁĄ kolumnę `games.settings` (JSONB) lokalnym
+   obiektem wczytanym raz przy starcie strony — zero kontroli wersji
+   (brak porównania `updated_at`, brak merge). Dwie karty otwarte na tych
+   samych ustawieniach → kto zapisze ostatni, bezpowrotnie kasuje zmiany
+   drugiej karty, nawet z zupełnie innej zakładki ustawień (np. zapis
+   zmiany dźwięku w karcie B wymazuje zmianę nazw drużyn zrobioną wcześniej
+   w karcie A).
+2. `allQuestions` (lista pytań do wyboru finału/kolejności rund) wczytywana
+   raz przy starcie. Jeśli w międzyczasie w edytorze (inna karta) ktoś
+   usunie pytanie, karta ustawień dalej trzyma jego stary obiekt na liście
+   finałowej/rund — zapis wpisuje do `settings` odniesienie do już
+   nieistniejącego pytania.
 
 ---
 
@@ -118,7 +156,7 @@ zalogować DWA różne konta testowe na tej samej, współdzielonej bazie:
 
 ---
 
-## Control — zapis i przywracanie stanu rozgrywki — 🔲 NASTĘPNE
+## Control — zapis i przywracanie stanu rozgrywki — 🔲 NASTĘPNE (po liście wyżej)
 
 Znalezione podczas wstępnego przeglądu `control/js/store.js`:
 
