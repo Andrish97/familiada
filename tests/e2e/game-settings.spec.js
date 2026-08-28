@@ -346,8 +346,16 @@ test("ustawienia gry: finał w trybie 'wybierz' wymaga dokładnie 5 pytań — m
 
     await openSettings(page, gameId);
     await switchTab(page, "questions");
-    await page.locator('input[name="gsHasFinal"][value="yes"]').check();
-    await page.locator('input[name="gsFinalMode"][value="pick"]').check();
+    // Klikamy widoczną etykietę (.toggle-item), nie sam <input> — natywny
+    // radio tych przełączników jest celowo niewidoczny (.toggle-item
+    // input{opacity:0;width:0;height:0} w game-settings.css), więc
+    // .check() na samym inpucie czeka w nieskończoność na "widoczność"
+    // (akcje Playwright nie mają domyślnego limitu na pojedynczą akcję),
+    // aż zabije to test.setTimeout — potwierdzone w CI (run #57). Klik na
+    // <label> zawierającym input przełącza go tak samo jak realny klik
+    // użytkownika w widoczny .toggle-slider.
+    await page.locator('.toggle-item:has(input[name="gsHasFinal"][value="yes"])').click();
+    await page.locator('.toggle-item:has(input[name="gsFinalMode"][value="pick"])').click();
 
     await switchTab(page, "finale");
     await page.locator("#gsFinalePool .qRow").first().click(); // wybierz tylko 1 z 2
@@ -376,8 +384,16 @@ test("ustawienia gry: finał — wybranie dokładnie 5 z 6 pytań zapisuje się,
 
     await openSettings(page, gameId);
     await switchTab(page, "questions");
-    await page.locator('input[name="gsHasFinal"][value="yes"]').check();
-    await page.locator('input[name="gsFinalMode"][value="pick"]').check();
+    // Klikamy widoczną etykietę (.toggle-item), nie sam <input> — natywny
+    // radio tych przełączników jest celowo niewidoczny (.toggle-item
+    // input{opacity:0;width:0;height:0} w game-settings.css), więc
+    // .check() na samym inpucie czeka w nieskończoność na "widoczność"
+    // (akcje Playwright nie mają domyślnego limitu na pojedynczą akcję),
+    // aż zabije to test.setTimeout — potwierdzone w CI (run #57). Klik na
+    // <label> zawierającym input przełącza go tak samo jak realny klik
+    // użytkownika w widoczny .toggle-slider.
+    await page.locator('.toggle-item:has(input[name="gsHasFinal"][value="yes"])').click();
+    await page.locator('.toggle-item:has(input[name="gsFinalMode"][value="pick"])').click();
 
     await switchTab(page, "finale");
     for (let i = 0; i < 5; i++) {
@@ -420,7 +436,7 @@ test("ustawienia gry: rundy — zmiana kolejności strzałką zapisuje nową kol
     // startuje jako "random", updateSubTabStates dodaje gs-sidebar-item-disabled)
     // — trzeba najpierw przełączyć na "ustalona kolejność", żeby ją odblokować.
     await switchTab(page, "questions");
-    await page.locator('input[name="gsRoundsMode"][value="pick"]').check();
+    await page.locator('.toggle-item:has(input[name="gsRoundsMode"][value="pick"])').click(); // patrz komentarz przy gsHasFinal wyżej
 
     await switchTab(page, "rounds");
     await expect(page.locator("#gsRoundsOrderList .roundsOrderItem")).toHaveCount(3);

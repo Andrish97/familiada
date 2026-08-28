@@ -104,6 +104,14 @@
   display: none !important;
 }
 
+/* .badge (base.css) domyślnie ma display:none, widoczne tylko wewnątrz
+   .has-badge — ten badge nie jest dot-em na przycisku (jak reszta
+   .has-badge .badge w projekcie), tylko samodzielną pigułką tekstową w
+   topbarze, więc potrzebuje własnej reguły widoczności zamiast tamtej. */
+.gs-unsaved-badge:not(.hidden) {
+  display: inline-flex;
+}
+
 /* ===== DŹWIĘKI ===== */
 .sfx-table { display: flex; flex-direction: column; }
 

@@ -368,16 +368,47 @@ to dokończenie testów Warstwy 1/2 dla tego modułu.
 Obie warstwy ochrony zrobione i przetestowane. Następny w kolejności:
 `polls.js`.
 
-🔲 **Rozszerzenie testów** — dopisane (`tests/e2e/game-settings.spec.js`,
+✅ **Rozszerzenie testów** — dopisane (`tests/e2e/game-settings.spec.js`,
 11 nowych testów, 14 razem z A/B/C): drużyny (persystencja po
 przeładowaniu), wygląd (zmiana koloru przez modal, reset sekcji), dźwięk
 (walidacja "Własny bez pliku" blokuje zapis, zmiana głośności), finał
 (walidacja "pick wymaga 5", wybór 5/6 + limit UI + wykluczenie z rund),
 rundy (reorder strzałką), ustawienia gry (niepoprawny format
 multiplikatorów nie nadpisuje), reset wszystkich ustawień, przycisk
-Wstecz z niezapisanymi zmianami. Czeka na pierwsze uruchomienie na CI.
-Nieobjęte świadomie: tryb modalny (`control-new`) — wymaga osobnej
-strony-hosta do symulacji iframe, niższy priorytet.
+Wstecz z niezapisanymi zmianami. Nieobjęte świadomie: tryb modalny
+(`control-new`) — wymaga osobnej strony-hosta do symulacji iframe, niższy
+priorytet.
+
+Pierwsze uruchomienie (run #57): 9 passed, 1 flaky (kolor modal — jeden
+nietłumaczony hiccup, przeszedł na retry, brak powtórki wzorca — flaka,
+bez akcji), 4 failed. Diagnoza:
+
+- **3 testy (finał×2, rundy) zawiesiły się dokładnie na `test.setTimeout`
+  (60s)** — błąd testu, nie aplikacji: `.check()` na radiu z toggle-grupy
+  (`gsHasFinal`/`gsFinalMode`/`gsRoundsMode`) czekał w nieskończoność, bo
+  natywny `<input>` tych przełączników jest celowo niewidoczny
+  (`.toggle-item input{opacity:0;width:0;height:0}` w
+  `game-settings.css:342` — widoczny jest sąsiedni `.toggle-slider`), a
+  akcje Playwrighta nie mają domyślnego limitu na pojedynczą próbę (ten
+  sam mechanizm zawieszeń, co wcześniej w `polls.spec.js`). Fix: klik na
+  `.toggle-item` (etykietę zawierającą input), nie na sam `<input>` —
+  dokładnie to, co robi realny użytkownik klikając widoczny slider.
+- **Prawdziwy błąd aplikacji, znaleziony przez test "Wstecz"**: odznaka
+  "Niezapisane zmiany" (`#gsUnsavedBadge`) nigdy się nie pokazuje. `.badge`
+  (`base.css`) ma domyślnie `display:none`, widoczne tylko wewnątrz
+  `.has-badge` (wzorzec używany wszędzie indziej w projekcie —
+  `builder.js`, `topbar-controller.js`, `polls-hub.js` — przełącznik
+  liczbowej kropki na przycisku). `game-settings.js`'s `markDirty()`/
+  `clearDirty()` przełączają tylko klasę `hidden` na samym badge'u, nigdy
+  nie dotykając `.has-badge` — więc mimo poprawnego zdjęcia `hidden`,
+  `.badge{display:none}` z `base.css` i tak wygrywa. Efekt: użytkownik
+  nigdy nie widzi wizualnego sygnału "masz niezapisane zmiany" (same
+  potwierdzenia przy wyjściu/zamknięciu nadal działają poprawnie, bo
+  sprawdzają zmienną JS `isDirty`, nie CSS). Fix: dedykowana reguła
+  `.gs-unsaved-badge:not(.hidden){display:inline-flex}` w
+  `game-settings.css`, wyższa specyficzność niż bazowe `.badge`.
+
+Poprawki wypchnięte, czeka na kolejne uruchomienie.
 
 ---
 
