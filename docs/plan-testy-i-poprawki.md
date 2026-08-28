@@ -41,11 +41,43 @@ lub zostanie ominięta, dane i tak się nie skorumpują ani nie zgubią cicho.
 
 ---
 
-## Warstwa 1 — mapa blokad per zasób
+## Warstwa 1 — ogólny mechanizm blokady (budować JAKO PIERWSZE)
 
-Jeden wspólny mechanizm (`js/core/edit-lock.js`, nowa tabela `edit_locks`
-z heartbeatem i TTL, na wzór już istniejącego `device_presence`), użyty
-osobno dla każdego z tych zasobów:
+Blokada ma być **jednym wspólnym mechanizmem dla całego projektu**, nie
+osobną implementacją per strona — z **elastycznymi komunikatami** (tytuł,
+treść, przyciski/akcje parametryzowane per wywołanie, tak jak już działa w
+dwóch istniejących miejscach w kodzie, które są dokładnie tym wzorcem:
+
+- `guardDesktopOnly()` (`js/core/device-guard.js`) — pełnoekranowy overlay
+  (ciemne tło + blur, i18n tytuł/wiadomość, przycisk "Wróć"), pokazywany/
+  chowany reaktywnie.
+- `showGuestBlockedOverlay({ backHref, loginHref, showLoginButton })`
+  (`js/core/guest-mode.js`) — ten sam dokładnie styl overlay, ale już
+  parametryzowany: przyciski i ich cele (`backHref`/`loginHref`) i
+  widoczność (`showLoginButton`) ustawiane per wywołanie, treść nadal z
+  i18n (`guestGuard.*`).
+
+Nowy moduł (roboczo `js/core/resource-lock.js`) ma się złożyć z dwóch
+części, obie ogólne i reużywalne:
+
+1. **Warstwa danych** — nowa tabela `edit_locks` (heartbeat + TTL, na wzór
+   już istniejącego `device_presence`), z jedną funkcją
+   `acquireResourceLock({ resourceType, resourceId })` używaną identycznie
+   niezależnie od tego czy to gra, logo, baza czy rozgrywka.
+2. **Warstwa UI** — jeden `showResourceLockedOverlay({ title, message,
+   backHref, ... })`, kopiujący dokładnie wzorzec `showGuestBlockedOverlay`
+   (ten sam styl, ta sama struktura), ale z treścią/przyciskami
+   parametryzowanymi per zasób — inny komunikat dla gry ("Ta gra jest
+   edytowana w innej karcie"), inny dla bazy, inny dla logo, inny dla
+   rozgrywki — zamiast jednego sztywnego tekstu na wszystko.
+
+**To ma powstać jako pierwszy krok, przed poprawkami per-strona** —
+dopiero mając gotowy ogólny mechanizm, każda strona z listy niżej dokłada
+tylko jedno wywołanie `acquireResourceLock` + `showResourceLockedOverlay`
+z własnym `resourceType`/`resourceId`/treścią, zamiast każda strona
+wymyślała blokadę od nowa.
+
+### Mapa zasobów (po zbudowaniu ogólnego mechanizmu)
 
 | Zasób (klucz blokady) | Strona | Kiedy wdrożyć |
 |---|---|---|
@@ -89,6 +121,9 @@ audycie/poprawce każdej strony, zaczynając od edytora.
 
 ## Kolejność pracy
 
+0. **Ogólny mechanizm blokady** (`js/core/resource-lock.js`) — zbudować
+   NAJPIERW, na wzorcu `guardDesktopOnly()` + `showGuestBlockedOverlay()`
+   (patrz wyżej), zanim jakakolwiek strona dostanie Warstwę 1.
 1. **Edytor gier** (`editor.js`) — dokończyć Warstwę 2 (fix "cichego
    sukcesu"), potem dołożyć Warstwę 1 (blokada `game_id`). Ma być
    "zamknięty" jako pierwszy, w pełni od obu stron.
