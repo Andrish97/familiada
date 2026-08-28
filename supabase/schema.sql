@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 68quPZxnXGQkud2i7TGrQzIdPL8bKcH9DnwPj4eNat6SrqJKlfLlSDN6kePhz44
+\restrict ajxBuTPcSEMQ4Zb4qbwnOumkCyjqqKH7dJX8f0THFvBzcQnMNukrCZ6G8DqvhLV
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -166,6 +166,84 @@ CREATE FUNCTION "public"."_norm_email"("p" "text") RETURNS "text"
     LANGUAGE "sql" IMMUTABLE
     AS $$
   select nullif(lower(btrim(p)), '');
+$$;
+
+
+--
+-- Name: acquire_edit_lock("text", "uuid", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."acquire_edit_lock"("p_resource_type" "text", "p_resource_id" "uuid", "p_tab_id" "text") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+declare
+  v_uid uuid := auth.uid();
+  v_can boolean := false;
+  v_row public.edit_locks;
+  v_got boolean;
+begin
+  if v_uid is null then
+    return jsonb_build_object('ok', false, 'error', 'not_authenticated');
+  end if;
+
+  if coalesce(trim(p_tab_id), '') = '' then
+    return jsonb_build_object('ok', false, 'error', 'missing_tab_id');
+  end if;
+
+  if p_resource_type in ('game_editor', 'game_settings', 'poll', 'control') then
+    v_can := exists (select 1 from public.games where id = p_resource_id and owner_id = v_uid);
+  elsif p_resource_type = 'logo' then
+    v_can := exists (select 1 from public.user_logos where id = p_resource_id and user_id = v_uid);
+  elsif p_resource_type = 'base' then
+    v_can := public.base_can_edit(p_resource_id, v_uid);
+  else
+    return jsonb_build_object('ok', false, 'error', 'unknown_resource_type');
+  end if;
+
+  if not v_can then
+    return jsonb_build_object('ok', false, 'error', 'forbidden');
+  end if;
+
+  -- Jedna atomowa instrukcja zamiast "sprawdź, potem zapisz" (SELECT ...
+  -- FOR UPDATE nie zablokowałby wiersza, który jeszcze nie istnieje — dwie
+  -- karty acquire'ujące w tej samej milisekundzie mogłyby obie trafić w
+  -- INSERT i jedna dostałaby nieobsłużony unique_violation). ON CONFLICT
+  -- DO UPDATE ... WHERE jest niepodzielne: aktualizuje TYLKO gdy to ta sama
+  -- karta (odnowienie heartbeatu) albo poprzednia blokada wygasła (TTL 25s
+  -- = margines ~3 pominiętych heartbeatów na zerwanie sieci); w przeciwnym
+  -- razie WHERE nie przechodzi, nic się nie zmienia, RETURNING nic nie
+  -- zwraca — v_got zostaje NULL, traktowane niżej jak "nie wygrano".
+  insert into public.edit_locks (resource_type, resource_id, holder_tab_id, holder_user_id, acquired_at, heartbeat_at)
+  values (p_resource_type, p_resource_id, p_tab_id, v_uid, now(), now())
+  on conflict (resource_type, resource_id) do update
+    set holder_tab_id = excluded.holder_tab_id,
+        holder_user_id = excluded.holder_user_id,
+        heartbeat_at = excluded.heartbeat_at,
+        acquired_at = case
+          when public.edit_locks.holder_tab_id = excluded.holder_tab_id
+            then public.edit_locks.acquired_at  -- ta sama karta: zachowaj oryginalny czas zajęcia
+          else excluded.acquired_at             -- przejęcie po TTL: liczy się od teraz
+        end
+    where public.edit_locks.holder_tab_id = excluded.holder_tab_id
+       or public.edit_locks.heartbeat_at < now() - interval '25 seconds'
+  returning true into v_got;
+
+  if v_got is true then
+    return jsonb_build_object('ok', true, 'acquired', true);
+  end if;
+
+  select * into v_row
+  from public.edit_locks
+  where resource_type = p_resource_type and resource_id = p_resource_id;
+
+  return jsonb_build_object(
+    'ok', false,
+    'error', 'locked',
+    'holder_user_id', v_row.holder_user_id,
+    'acquired_at', v_row.acquired_at
+  );
+end;
 $$;
 
 
@@ -8986,6 +9064,25 @@ $$;
 
 
 --
+-- Name: release_edit_lock("text", "uuid", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."release_edit_lock"("p_resource_type" "text", "p_resource_id" "uuid", "p_tab_id" "text") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+begin
+  delete from public.edit_locks
+  where resource_type = p_resource_type
+    and resource_id = p_resource_id
+    and holder_tab_id = p_tab_id;
+
+  return jsonb_build_object('ok', true);
+end;
+$$;
+
+
+--
 -- Name: reset_email_limits(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -10388,6 +10485,20 @@ CREATE TABLE "public"."device_state" (
 
 
 --
+-- Name: edit_locks; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."edit_locks" (
+    "resource_type" "text" NOT NULL,
+    "resource_id" "uuid" NOT NULL,
+    "holder_tab_id" "text" NOT NULL,
+    "holder_user_id" "uuid" NOT NULL,
+    "acquired_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "heartbeat_at" timestamp with time zone DEFAULT "now"() NOT NULL
+);
+
+
+--
 -- Name: email_cooldowns; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -11265,6 +11376,14 @@ ALTER TABLE ONLY "public"."device_presence"
 
 ALTER TABLE ONLY "public"."device_state"
     ADD CONSTRAINT "device_state_pkey" PRIMARY KEY ("game_id", "device_type");
+
+
+--
+-- Name: edit_locks edit_locks_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."edit_locks"
+    ADD CONSTRAINT "edit_locks_pkey" PRIMARY KEY ("resource_type", "resource_id");
 
 
 --
@@ -13216,6 +13335,38 @@ CREATE POLICY "device_state_owner_read" ON "public"."device_state" FOR SELECT TO
 
 
 --
+-- Name: edit_locks; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."edit_locks" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: edit_locks edit_locks_read_if_can_edit_resource; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "edit_locks_read_if_can_edit_resource" ON "public"."edit_locks" FOR SELECT TO "authenticated" USING (
+CASE "resource_type"
+    WHEN 'game_editor'::"text" THEN (EXISTS ( SELECT 1
+       FROM "public"."games"
+      WHERE (("games"."id" = "edit_locks"."resource_id") AND ("games"."owner_id" = "auth"."uid"()))))
+    WHEN 'game_settings'::"text" THEN (EXISTS ( SELECT 1
+       FROM "public"."games"
+      WHERE (("games"."id" = "edit_locks"."resource_id") AND ("games"."owner_id" = "auth"."uid"()))))
+    WHEN 'poll'::"text" THEN (EXISTS ( SELECT 1
+       FROM "public"."games"
+      WHERE (("games"."id" = "edit_locks"."resource_id") AND ("games"."owner_id" = "auth"."uid"()))))
+    WHEN 'control'::"text" THEN (EXISTS ( SELECT 1
+       FROM "public"."games"
+      WHERE (("games"."id" = "edit_locks"."resource_id") AND ("games"."owner_id" = "auth"."uid"()))))
+    WHEN 'logo'::"text" THEN (EXISTS ( SELECT 1
+       FROM "public"."user_logos"
+      WHERE (("user_logos"."id" = "edit_locks"."resource_id") AND ("user_logos"."user_id" = "auth"."uid"()))))
+    WHEN 'base'::"text" THEN "public"."base_can_edit"("resource_id", "auth"."uid"())
+    ELSE false
+END);
+
+
+--
 -- Name: email_cooldowns; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -14230,5 +14381,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 68quPZxnXGQkud2i7TGrQzIdPL8bKcH9DnwPj4eNat6SrqJKlfLlSDN6kePhz44
+\unrestrict ajxBuTPcSEMQ4Zb4qbwnOumkCyjqqKH7dJX8f0THFvBzcQnMNukrCZ6G8DqvhLV
 
