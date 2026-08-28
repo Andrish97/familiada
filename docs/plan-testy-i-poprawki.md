@@ -519,6 +519,70 @@ zalogować DWA różne konta testowe na tej samej, współdzielonej bazie:
 
 ---
 
+## Krzyżowe blokady między zasobami — 🔲 rozpiska edge case'ów (nowa kategoria)
+
+Inna kategoria niż Warstwa 1/2 opisane wyżej — tamte chronią **ten sam
+zasób** otwarty w dwóch miejscach naraz. Tu chodzi o **parę różnych
+zasobów**, gdzie stan/istnienie jednego wpływa na bezpieczeństwo drugiego
+(np. usunięcie logo, którego gra używa w ustawieniach; usunięcie gry,
+której ankieta jest właśnie otwarta).
+
+**Ustalona zasada (nie sama referencja!)**: blokujemy edycję/usunięcie X
+tylko gdy jednocześnie: (a) jakiś zasób Y odwołuje się do X w swoich
+danych, ORAZ (b) Y ma **teraz aktywną, żywą stronę/sesję** — nie samo
+"X jest gdzieś wpisane, ale nikt tam teraz nie siedzi". Ten drugi,
+"martwy" przypadek i tak jest już bezpieczny dzięki Warstwie 2 (odśwież
+i przefiltruj martwe odniesienie przed zapisem/renderem, tak jak zrobione
+dla `questions.final/rounds` w `game-settings.js`) — nie trzeba go
+blokować, wystarczy że się nie wykrzacza.
+
+### Zweryfikowane w kodzie (nie zgadywane)
+
+| Para zasobów | Warstwa 1 (UX) dziś | Warstwa 2 (twarda) dziś | Status |
+|---|---|---|---|
+| Pytania/odpowiedzi gry ↔ status ankiety tej samej gry (`poll_open`) | ✅ `canEnterEdit()` (`game-validate.js`) blokuje wejście do edytora | ❌ **BRAK** — RLS `questions_owner_write`/`answers_owner_write` sprawdza wyłącznie `owner_id`, zero warunku na `games.status` | **Potwierdzona luka** — bezpośrednie wywołanie RPC/klienta może dowolnie edytować pytania/odpowiedzi gry z żywą, otwartą ankietą, korumpując dane pod głosującymi |
+| Usunięcie gry, gdy jej ankieta jest `poll_open` (żywi głosujący) | ❌ brak | ❌ brak (RLS `games` tylko `owner_id`) | Nowa luka — usunięcie w trakcie głosowania zrywa sesję wszystkim naraz bez ostrzeżenia |
+| Usunięcie gry, gdy `edit_locks` pokazuje aktywną blokadę (`game_editor`/`game_settings`/`poll`) | ❌ brak | ❌ brak | To był pierwszy wątek tej rozmowy — "blokada usuwania przy użyciu" |
+| Logo ↔ gra referencująca je w `settings.display.logoId` | ❌ brak | ❌ brak (potwierdzone: **zero FK** `user_logos`↔`games`, czysty JSONB) | Patrz niżej — rozbite na dwie połowy z osobnymi zależnościami |
+| Pytania bazy (`qb_questions`) ↔ gra utworzona z eksportu bazy | n/d | n/d | **Sprawdzone, brak ryzyka**: `base-explorer/js/export-modal.js` robi jednorazową kopię do nowych wierszy `games`/`questions` — zero trwałego powiązania po utworzeniu, więc "bazy są najłatwiejsze" się potwierdza |
+| Baza pytań ↔ wielu użytkowników (`editor`/`viewer`) | — | — | Inny typ zagrożenia (uprawnienia, nie żywotność) — zostaje w sekcji "Baza pytań" wyżej, już zaplanowane osobno |
+
+### Logo ↔ gra — konkretny przypadek z rozmowy
+
+Zawężona zasada: blokuj usunięcie/edycję logo **tylko** gdy gra, która je
+referencuje, ma teraz otwarte ustawienia (`game_settings` lock) **lub**
+jest w trakcie rozgrywki (Control live). Rozpada się na dwie połowy,
+obie zależne od rzeczy już wpisanych w plan, ale jeszcze niezrobionych:
+
+1. "Logo ↔ otwarte ustawienia gry" — wymaga najpierw własnej Warstwy 1
+   dla logo-editora (`resourceType: "logo"`, wciąż 🔲 w mapie zasobów
+   wyżej). Da się zbudować od razu po tym kroku.
+2. "Logo ↔ trwająca rozgrywka" — **niemożliwe do zbudowania teraz**: Control
+   nie ma dziś żadnego sygnału żywotności dla samej karty control (już
+   wcześniej znalezione przy audycie `game-settings.js` — zero
+   heartbeatu/presence, `control/js/presence.js` śledzi tylko
+   display/host/buzzer). Czeka na zbudowanie Control od podstaw.
+
+Otwarte pytanie (do decyzji, nie zakładam): czy **edycja treści** logo
+(nie usunięcie) podczas aktywnego wyświetlania na żywo w ogóle powinna
+być blokowana, czy to pożądana funkcja (aktualizacja wyglądu w trakcie
+pokazu)? To decyzja produktowa, nie techniczna.
+
+### Wniosek co do kolejności
+
+Ta kategoria **nie jest jednym zadaniem** — każda para ma inną
+zależność:
+- Poll-open hardening pytań/odpowiedzi (RLS) — da się zrobić **od razu**,
+  niezależnie od reszty planu, to czysto techniczny dług.
+- Blokada usuwania gry przy aktywnym `edit_locks` / otwartej ankiecie —
+  da się zrobić od razu, korzysta z już istniejącej tabeli `edit_locks`.
+- Logo ↔ ustawienia gry — czeka na Warstwę 1 dla logo (już w kolejce).
+- Logo ↔ Control, i cokolwiek innego "↔ trwająca rozgrywka" — czeka na
+  fundament Control (presence/heartbeat), czyli i tak trafia do sekcji
+  "Control" niżej jako jej rozszerzenie, nie osobny byt.
+
+---
+
 ## Control — 🔲 ODŁOŻONE, osobny kompleksowy punkt
 
 Świadomie nieruszane teraz — blokada (Warstwa 1) i zapis/przywracanie
