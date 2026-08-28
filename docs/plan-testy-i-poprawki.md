@@ -284,13 +284,15 @@ zamiast wejść w edycję, po zamknięciu pierwszej karty druga wchodzi i
 poprawnie widzi obie pytania. Przy okazji wyłapał i naprawił realny bug
 (patrz wyżej, sekcja "Warstwa 1 — ogólny mechanizm").
 
-🔲 Poprawka (Warstwa 2, jeszcze do zrobienia): edycja pytania/odpowiedzi
-usuniętej w innej karcie kończy się fałszywym "Zapisano." (UPDATE
-trafiający w 0 wierszy nie jest rozpoznawany jako błąd). Realnie już
-znacznie mniej prawdopodobne dzięki Warstwie 1 (dwie karty edytora tej
-samej gry naraz nie są już możliwe), ale wciąż warto jako defense-in-depth
-przeciwko ominięciu blokady. Ma być pierwszym miejscem, gdzie wchodzi
-wspólny helper `updateChecked`.
+✅ Warstwa 2: `updateQuestion`/`updateAnswer` idą teraz przez
+`updateChecked()` (`js/core/db-guard.js`) — `.select()` po `.update()`
+wykrywa 0 dopasowanych wierszy i rzuca `ROW_GONE` zamiast pozwalać
+Supabase/PostgREST cicho "udać" zapis. Handlery zapisu pytania/odpowiedzi
+łapią `ROW_GONE`, usuwają martwy element z lokalnego stanu, przerenderowują
+i pokazują jawny komunikat zamiast fałszywego "Zapisano.". Niezależna
+linia obrony od Warstwy 1 — chroni nawet gdy blokada zostanie ominięta
+(bezpośrednie wywołanie RPC/klienta, usunięcie przez proces spoza UI).
+Test e2e symuluje dokładnie to ominięcie.
 
 ---
 
@@ -313,6 +315,28 @@ Dwa realne problemy, gorsze niż w edytorze:
 
 🔲 Warstwa 1: blokada `game_id` (osobny klucz niż edytor — otwarcie
 ustawień nie blokuje edytora tej samej gry i odwrotnie).
+
+---
+
+## Edytor logo (`logo-editor/`) — 🔲 do zrobienia
+
+Znalezione przy okazji (nie dogłębny audyt, tylko obserwacja przy pytaniu
+o komunikaty w projekcie):
+
+- `logo-editor/js/draw.js:3060` (przycisk "Wyczyść") — jedyne miejsce w
+  całym projekcie używające natywnego `confirm()` przeglądarki, jako
+  fallback gdy `confirmModal()` (`core/modal.js`) rzuci wyjątek:
+  ```js
+  try { ok = await confirmModal({ text: t("logoEditor.draw.confirmClear") }); }
+  catch(e) { ok = confirm(t("logoEditor.draw.ui.confirmClearFallback")); }
+  ```
+  Do sprawdzenia przy audycie: czy `confirmModal()` faktycznie rzuca w
+  tym kontekście (kiedy i dlaczego), i czy fallback na natywny dialog jest
+  nadal potrzebny, czy to relikt z wcześniejszego etapu.
+
+Reszta (zapis do `user_logos`, Warstwa 1 blokady `logo_id`) — patrz wpis
+w "Pełnej liście miejsc do audytu" i "Mapie zasobów" wyżej, kolejność
+pracy: po `game-settings.js` i `polls.js`.
 
 ---
 
