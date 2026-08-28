@@ -472,7 +472,20 @@ retry, pojedynczy incydent — flaka, bez akcji), 2 failed:
   zdąży się ustawić na nowej stronie. Fix: `page.waitForLoadState(
   "networkidle")` po nawigacji, przed końcem testu.
 
-Poprawki wypchnięte, czeka na kolejne uruchomienie.
+Run #59 (po poprawkach z run #58): 13/14 passed — "finał 5/6" i "Wstecz"
+już zielone, ale **ten sam wyścig `saveAndWait`/`toBeDisabled`**, wcześniej
+uznany za pojedynczą flakę przy "drużynach", odpalił się teraz
+konsekwentnie 2/2 na teście "kolor". Przy dwóch trafieniach to już nie
+flaka do zignorowania, tylko realna słabość samego helpera: przy szybkim
+zapisie całe przejście `disabled→enabled` potrafi się zamknąć, zanim
+Playwright w ogóle zdąży sprawdzić stan `disabled` — asercja startuje już
+po powrocie do `enabled` i nigdy go nie widzi. Fix: `saveAndWait()`
+(i wszystkie równoważne miejsca w testach B/C/reset) czeka teraz na sam
+**network response** zapisu (`PATCH /rest/v1/games`) przez
+`page.waitForResponse()`, nie na stan przycisku — response nie da się
+"przegapić" w ten sposób, bo Playwright przechwytuje go na poziomie
+stosu sieciowego przeglądarki, nie przez polling DOM. Wypchnięte, czeka
+na kolejne uruchomienie.
 
 ---
 

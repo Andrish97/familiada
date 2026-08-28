@@ -59,13 +59,27 @@ async function switchTab(page, cat) {
   await page.locator(`.gs-sidebar-item[data-cat="${cat}"]`).click();
 }
 
-// #btnSaveAll przełącza się disabled -> enabled we własnym try/finally
-// saveAll() niezależnie od stanu isDirty — solidniejszy sygnał zakończenia
-// zapisu niż #gsUnsavedBadge (patrz komentarz przy teście B).
+// Wcześniej: czekanie na #btnSaveAll disabled->enabled. Realnie wyścig —
+// przy szybkim zapisie (dobre połączenie) całe przełączenie disabled->
+// ->enabled potrafi się zamknąć, zanim Playwright zdąży w ogóle sprawdzić
+// stan "disabled" (potwierdzone w CI: run #58 "drużyny" jako flaka, run
+// #59 "kolor" 2/2 konsekwentnie) — asercja startuje już PO powrocie do
+// enabled i nigdy nie widzi disabled. Czekanie na sam network response
+// zapisu nie ma tego problemu: Playwright nie może "przegapić" response,
+// który przechwytuje na poziomie stosu sieciowego przeglądarki.
+async function waitForGamesSave(page, action) {
+  const [response] = await Promise.all([
+    page.waitForResponse(
+      (res) => res.url().includes("/rest/v1/games") && res.request().method() === "PATCH",
+      { timeout: 10000 }
+    ),
+    action(),
+  ]);
+  expect(response.ok(), `zapis powinien się udać (status ${response.status()})`).toBe(true);
+}
+
 async function saveAndWait(page) {
-  await page.locator("#btnSaveAll").click();
-  await expect(page.locator("#btnSaveAll")).toBeDisabled({ timeout: 10000 });
-  await expect(page.locator("#btnSaveAll")).toBeEnabled({ timeout: 10000 });
+  await waitForGamesSave(page, () => page.locator("#btnSaveAll").click());
 }
 
 /* ================= A: Warstwa 1 — blokada wejścia ================= */
@@ -111,12 +125,7 @@ test("ustawienia gry: Warstwa 2 — zapis po zmianie ustawień z pominięciem UI
 
     await expect(page.locator("#gsTeamA")).toBeVisible({ timeout: 10000 });
     await page.locator("#gsTeamA").fill("Ekipa A");
-    await page.locator("#btnSaveAll").click();
-    // #btnSaveAll jest disabled na czas zapisu i wraca enabled dopiero w
-    // finally — solidniejszy sygnał zakończenia niż #gsUnsavedBadge (który
-    // bywa ukryty od początku, gdy nic wcześniej nie ustawiło isDirty).
-    await expect(page.locator("#btnSaveAll")).toBeDisabled({ timeout: 10000 });
-    await expect(page.locator("#btnSaveAll")).toBeEnabled({ timeout: 10000 });
+    await saveAndWait(page);
 
     // Symulacja ominięcia UI: zapis ustawień bezpośrednio w bazie, z
     // pominięciem tej karty — ta sama karta dalej "myśli", że zna
@@ -179,13 +188,11 @@ test("ustawienia gry: Warstwa 2 — zapis filtruje pytanie finału usunięte w m
     }, q2Id);
 
     await openSettings(page, gameId);
-    await page.locator("#btnSaveAll").click();
     // Tu nic wcześniej nie ustawiło isDirty, więc #gsUnsavedBadge jest
     // ukryty od początku — toBeHidden przeszłoby natychmiast bez czekania
-    // na realne zakończenie zapisu. #btnSaveAll faktycznie przełącza się
-    // disabled->enabled w try/finally niezależnie od stanu isDirty.
-    await expect(page.locator("#btnSaveAll")).toBeDisabled({ timeout: 10000 });
-    await expect(page.locator("#btnSaveAll")).toBeEnabled({ timeout: 10000 });
+    // na realne zakończenie zapisu; saveAndWait() (network response) nie
+    // ma tego problemu i działa niezależnie od stanu isDirty.
+    await saveAndWait(page);
 
     const game = await getGameRow(page, gameId);
     const finalIds = (game.settings.questions.final || []).map((q) => q.id);
@@ -499,11 +506,10 @@ test("ustawienia gry: reset wszystkich ustawień przywraca domyślne i zapisuje 
     await saveAndWait(page);
 
     await page.locator("#btnResetAll").click();
-    await page.locator(".uni-foot .btn.gold").click(); // potwierdź reset
-
-    // resetAll() sam wywołuje saveAll() na końcu — ten sam sygnał zakończenia
-    await expect(page.locator("#btnSaveAll")).toBeDisabled({ timeout: 10000 });
-    await expect(page.locator("#btnSaveAll")).toBeEnabled({ timeout: 10000 });
+    // resetAll() sam wywołuje saveAll() na końcu, od razu po potwierdzeniu —
+    // ten sam network-response wait co saveAndWait(), tylko wyzwolony
+    // kliknięciem w modal, nie w #btnSaveAll.
+    await waitForGamesSave(page, () => page.locator(".uni-foot .btn.gold").click());
 
     const game = await getGameRow(page, gameId);
     expect(game.settings.teams.teamA).toBe("");
