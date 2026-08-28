@@ -64,11 +64,14 @@ test("usuwanie gry: zablokowane, gdy jej ankieta jest otwarta (poll_open)", asyn
   try {
     await page.goto("https://www.familiada.online/builder", { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
+    // Domyślna aktywna zakładka to "Preparowana" — gra poll_text renderuje
+    // się dopiero po przełączeniu na zakładkę Ankieta tekstowa.
+    await page.locator("#tabPollText").click();
 
-    const card = page.locator(".card").filter({ hasText: gameName });
+    const card = page.locator("#grid .card").filter({ hasText: gameName });
     await expect(card).toBeVisible({ timeout: 10000 });
-    await card.locator(".x").click();
-    await page.locator(".uni-foot .btn.gold").click(); // potwierdź "Usuń"
+    await card.locator(".x").click({ timeout: 10000 });
+    await page.locator(".uni-foot .btn.gold").click({ timeout: 10000 }); // potwierdź "Usuń"
 
     await expect(page.locator(".mSub")).toContainText("otwarta", { timeout: 10000 });
     await page.locator(".uni-foot .btn.gold").click(); // zamknij alert blokady
@@ -103,10 +106,10 @@ test("usuwanie gry: zablokowane, gdy edytor jest otwarty w innej karcie", async 
     await page.goto("https://www.familiada.online/builder", { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
 
-    const card = page.locator(".card").filter({ hasText: gameName });
+    const card = page.locator("#grid .card").filter({ hasText: gameName });
     await expect(card).toBeVisible({ timeout: 10000 });
-    await card.locator(".x").click();
-    await page.locator(".uni-foot .btn.gold").click();
+    await card.locator(".x").click({ timeout: 10000 });
+    await page.locator(".uni-foot .btn.gold").click({ timeout: 10000 });
 
     await expect(page.locator(".mSub")).toContainText("innej karcie", { timeout: 10000 });
     await page.locator(".uni-foot .btn.gold").click();
@@ -119,7 +122,7 @@ test("usuwanie gry: zablokowane, gdy edytor jest otwarty w innej karcie", async 
 });
 
 test("usuwanie gry: działa normalnie, gdy nic jej nie blokuje", async ({ page, context }) => {
-  test.setTimeout(30_000);
+  test.setTimeout(40_000);
   await loginAsTestUser(page, context);
 
   const gameName = `E2E-XLOCK-FREE-${Date.now()}`;
@@ -138,10 +141,10 @@ test("usuwanie gry: działa normalnie, gdy nic jej nie blokuje", async ({ page, 
     await page.goto("https://www.familiada.online/builder", { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
 
-    const card = page.locator(".card").filter({ hasText: gameName });
+    const card = page.locator("#grid .card").filter({ hasText: gameName });
     await expect(card).toBeVisible({ timeout: 10000 });
-    await card.locator(".x").click();
-    await page.locator(".uni-foot .btn.gold").click();
+    await card.locator(".x").click({ timeout: 10000 });
+    await page.locator(".uni-foot .btn.gold").click({ timeout: 10000 });
 
     await expect(card).toHaveCount(0, { timeout: 10000 });
     deleted = true;
@@ -192,11 +195,18 @@ test("usuwanie logo: zablokowane, gdy używająca go gra ma teraz otwarte ustawi
 
     const tile = page.locator(`.logoTile[data-key="${logoId}"]`);
     await expect(tile).toBeVisible({ timeout: 10000 });
-    await tile.locator(".logoX").click();
-    await page.locator(".uni-foot .btn.gold").click(); // potwierdź usunięcie
+    await tile.locator(".logoX").click({ timeout: 10000 });
+    // .uni-foot .btn.gold potwierdzenia usunięcia (confirmModal) — czekamy
+    // aż realnie się pojawi, zanim klikniemy.
+    await expect(page.locator(".uni-foot .btn.gold")).toBeVisible({ timeout: 10000 });
+    await page.locator(".uni-foot .btn.gold").click({ timeout: 10000 });
 
-    await expect(page.locator(".mSub")).toContainText("używane", { timeout: 10000 });
-    await page.locator(".uni-foot .btn.gold").click(); // zamknij alert blokady
+    // logo-editor.html ma własne, statyczne modale (create/rename/preview/
+    // export) z klasą .mSub zawsze obecną w DOM — goły .mSub jest więc
+    // niejednoznaczny. .uni-modal .mSub celuje tylko w dynamiczny modal
+    // core/modal.js (confirmModal/alertModal).
+    await expect(page.locator(".uni-modal .mSub")).toContainText("używane", { timeout: 10000 });
+    await page.locator(".uni-modal .uni-foot .btn.gold").click({ timeout: 10000 }); // zamknij alert blokady
 
     expect(await logoExists(page, logoId), "logo używane przez grę z otwartymi ustawieniami nie powinno zostać usunięte").toBe(true);
   } finally {
@@ -207,7 +217,7 @@ test("usuwanie logo: zablokowane, gdy używająca go gra ma teraz otwarte ustawi
 });
 
 test("usuwanie logo: działa normalnie, gdy nic go nie blokuje", async ({ page, context }) => {
-  test.setTimeout(30_000);
+  test.setTimeout(40_000);
   await loginAsTestUser(page, context);
 
   const logoName = `E2E-XLOCK-LOGOFREE-${Date.now()}`;
@@ -228,8 +238,9 @@ test("usuwanie logo: działa normalnie, gdy nic go nie blokuje", async ({ page, 
 
     const tile = page.locator(`.logoTile[data-key="${logoId}"]`);
     await expect(tile).toBeVisible({ timeout: 10000 });
-    await tile.locator(".logoX").click();
-    await page.locator(".uni-foot .btn.gold").click();
+    await tile.locator(".logoX").click({ timeout: 10000 });
+    await expect(page.locator(".uni-foot .btn.gold")).toBeVisible({ timeout: 10000 });
+    await page.locator(".uni-foot .btn.gold").click({ timeout: 10000 });
 
     await expect(tile).toHaveCount(0, { timeout: 10000 });
     deleted = true;

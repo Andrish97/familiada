@@ -261,6 +261,30 @@ audycie/poprawce każdej strony, zaczynając od edytora.
      `owner_id`) — to osobny problem od powyższego (stan zapisany w
      bazie, nie "żywa karta"), ale tej samej kategorii "usztywnienia" i
      wypłynie przy audycie każdej kolejnej strony, nie tylko edytora.
+
+   Run #60 (pierwsze uruchomienie): 5/6 failed — wszystkie w testach, nie
+   w aplikacji (mechanizm sam w sobie działał poprawnie, testy źle celowały
+   w DOM):
+   - **`.card` niejednoznaczny w builderze** — `builder.html` ma statyczny
+     `<div class="card builder-card">` opakowujący `#grid` (kontener
+     zakładki, nie karta gry) — goły `.card` łapał zarówno wrapper, jak i
+     właściwą kartę (strict-mode violation). Fix: `#grid .card`.
+   - **Domyślna aktywna zakładka w builderze to "Preparowana"** — gra
+     `poll_text` w ogóle się nie renderuje, dopóki nie kliknie się
+     zakładki `#tabPollText`; test tego nie robił. Fix: kliknięcie
+     `#tabPollText` przed szukaniem karty.
+   - **`.mSub` niejednoznaczny w logo-editorze** — `logo-editor.html` ma
+     4 własne, statyczne modale (create/rename/preview/export), każdy z
+     klasą `.mSub` zawsze obecną w DOM, niezależnie od `core/modal.js`.
+     Fix: `.uni-modal .mSub` (scoped do dynamicznego modala
+     confirmModal/alertModal).
+   - **Brak jawnych timeoutów** na kliknięciach w teście "logo: działa
+     normalnie" — ten sam wzorzec nieskończonego zawieszenia co
+     wcześniej w `polls.spec.js` (akcje Playwrighta bez limitu na
+     pojedynczą próbę). Fix: `{timeout: 10000}` na każdym kliknięciu +
+     `toBeVisible` przed kliknięciem modala.
+   Jedyny zielony test za pierwszym razem: wykrycie `gone` przez heartbeat
+   w edytorze. Poprawki wypchnięte, czeka na kolejne uruchomienie.
 3. **Ankieta** (`polls.js`) — Warstwa 2 już ✅ gotowa (guard w RPC), dołożyć
    Warstwę 1 dla spójności UX, PLUS (nowe, z kroku 2.5) sprawdzić czy
    `polls.js` jest konsumentem/celem którejś krzyżowej relacji.
