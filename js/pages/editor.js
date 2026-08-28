@@ -988,11 +988,18 @@ async function boot() {
     if (!activeQId) return;
 
     try {
-      const t = normQ(qText?.value || "");
+      const q = questions.find((x) => x.id === activeQId);
+      const raw = normQ(qText?.value || "");
+      // questions_text_len (schema.sql) wymaga min. 1 znaku — bez tego
+      // fallbacku pusty tekst leciał do bazy, baza go odrzucała, a UI
+      // pokazywał generyczny błąd zapisu zostawiając textarea pustą, mimo
+      // że w bazie (i na kafelku po lewej) wciąż był stary tekst. Ten sam
+      // fallback do domyślnej etykiety, jakiego już używają odpowiedzi.
+      const t = raw || MSG.questionDefault(q?.ord ?? 1);
       await updateQuestion(activeQId, { text: t });
 
-      const q = questions.find((x) => x.id === activeQId);
       if (q) q.text = t;
+      if (qText) qText.value = t; // odśwież pole, gdyby fallback zmienił wartość
 
       renderQuestions();
       setMsg(MSG.saved());

@@ -125,13 +125,14 @@ async function seedPollPointsFull(page, gameId, { firstAnswerPoints = 0 } = {}) 
   return { qId: firstQ, aId: firstA };
 }
 
-/* ================= A: pytanie z pustym tekstem — desync UI/DB ================= */
-// questions_text_len (schema.sql) wymaga char_length>=1 — ale saveQuestionNow()
-// (w przeciwieństwie do odpowiedzi) NIE ma fallbacku na tekst domyślny gdy pole
-// jest puste. Update leci do bazy, baza go odrzuca (constraint), UI pokazuje
-// tylko generyczny "Błąd zapisu (konsola)." — textarea zostaje pusta, ale w
-// bazie (i w lewej liście pytań) wciąż jest STARY tekst.
-test("edytor: puste pole pytania — błąd zapisu, baza zostaje niezmieniona", async ({ page, context }) => {
+/* ================= A: pytanie z pustym tekstem -> fallback do domyślnego tekstu ================= */
+// questions_text_len (schema.sql) wymaga char_length>=1. Wcześniej
+// saveQuestionNow() (w przeciwieństwie do odpowiedzi) nie miało fallbacku na
+// tekst domyślny gdy pole jest puste — update leciał do bazy, baza go
+// odrzucała, a UI pokazywał generyczny błąd zostawiając textarea pustą, mimo
+// że w bazie wciąż był stary tekst. Naprawione: puste pole -> ten sam
+// fallback do domyślnej etykiety, jakiego już używają odpowiedzi.
+test("edytor: puste pole pytania zapisuje się jako domyślna etykieta (nie błąd, nie desync)", async ({ page, context }) => {
   test.setTimeout(60_000);
   await loginAsTestUser(page, context);
 
@@ -145,10 +146,12 @@ test("edytor: puste pole pytania — błąd zapisu, baza zostaje niezmieniona", 
     await page.locator("#qText").fill("");
     await page.locator("#qText").blur();
 
-    await expect(page.locator("#msg")).toHaveText("Błąd zapisu (konsola).", { timeout: 10000 });
+    await expect(page.locator("#msg")).toHaveText("Zapisano.", { timeout: 10000 });
+    // Pole powinno odzwierciedlać fallback, nie zostać puste (desync).
+    await expect(page.locator("#qText")).toHaveValue("Pytanie 1");
 
     const q = await getQuestionsRows(page, gameId);
-    expect(q.find((x) => x.id === qId)?.text, "tekst pytania w bazie nie powinien zniknąć mimo błędu zapisu").toBe("Pytanie testowe");
+    expect(q.find((x) => x.id === qId)?.text, "pusty tekst -> fallback do domyślnej etykiety w bazie").toBe("Pytanie 1");
   } finally {
     await deleteGame(page, gameId);
   }
