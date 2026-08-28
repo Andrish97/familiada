@@ -60,11 +60,21 @@ dwóch istniejących miejscach w kodzie, które są dokładnie tym wzorcem:
 Nowy moduł (roboczo `js/core/resource-lock.js`) ma się złożyć z dwóch
 części, obie ogólne i reużywalne:
 
-1. **Warstwa danych** — nowa tabela `edit_locks` (heartbeat + TTL, na wzór
-   już istniejącego `device_presence`), z jedną funkcją
+1. **Warstwa danych — tabela jako źródło prawdy** (heartbeat + TTL, na
+   wzór już istniejącego `device_presence`), z jedną funkcją
    `acquireResourceLock({ resourceType, resourceId })` używaną identycznie
    niezależnie od tego czy to gra, logo, baza czy rozgrywka.
-2. **Warstwa UI** — jeden `showResourceLockedOverlay({ title, message,
+2. **Warstwa live — Broadcast dla natychmiastowego zwolnienia** (już
+   gotowe `rt()` z `js/core/realtime.js`, ten sam mechanizm co synchronizacja
+   języka w `polls.js`). Tabela zostaje źródłem prawdy (bo działa nawet
+   zanim WS się połączy, i przetrwa restart karty), ale zwolnienie blokady
+   dodatkowo rozsyła broadcast, żeby czekająca karta nie musiała czekać na
+   najbliższy heartbeat/poll — dowiaduje się natychmiast. Świadomie NIE
+   używamy wbudowanego Supabase Presence — to nowy, niesprawdzony jeszcze
+   na tym self-hosted Supabase mechanizm, a `device_presence` (ten sam
+   problem: kto jest online) już od dawna działa na tabeli+pollingu, więc
+   zostajemy przy sprawdzonym wzorcu.
+3. **Warstwa UI** — jeden `showResourceLockedOverlay({ title, message,
    backHref, ... })`, kopiujący dokładnie wzorzec `showGuestBlockedOverlay`
    (ten sam styl, ta sama struktura), ale z treścią/przyciskami
    parametryzowanymi per zasób — inny komunikat dla gry ("Ta gra jest
@@ -76,6 +86,65 @@ dopiero mając gotowy ogólny mechanizm, każda strona z listy niżej dokłada
 tylko jedno wywołanie `acquireResourceLock` + `showResourceLockedOverlay`
 z własnym `resourceType`/`resourceId`/treścią, zamiast każda strona
 wymyślała blokadę od nowa.
+
+### Szkic tabeli
+
+```sql
+CREATE TABLE edit_locks (
+  resource_type  text        NOT NULL,  -- 'game_editor' | 'game_settings' | 'poll' | 'logo' | 'base' | 'control'
+  resource_id    uuid        NOT NULL,
+  holder_tab_id  text        NOT NULL,  -- losowe id karty z sessionStorage — NIE user_id,
+                                         -- bo blokujemy też własną drugą kartę tego samego usera
+  holder_user_id uuid        NOT NULL,  -- do komunikatu "zajęte przez X" i audytu
+  acquired_at    timestamptz NOT NULL DEFAULT now(),
+  heartbeat_at   timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (resource_type, resource_id)
+);
+```
+
+**Kto i jak pisze** — wyłącznie przez SECURITY DEFINER RPC, nigdy
+bezpośrednim INSERT/UPDATE z klienta (jak przy `device_presence`):
+
+- `acquire_edit_lock(p_resource_type, p_resource_id, p_tab_id)` — jedna
+  funkcja robi zarówno pierwsze zajęcie, jak i odnowienie heartbeatu
+  (wywoływana identycznie co ~8s):
+  1. Sprawdza, czy wołający w ogóle ma prawo edytować ten zasób (ten sam
+     check co dziś przy zapisie: `owner_id = auth.uid()` dla gry/logo,
+     `base_can_edit()` dla bazy) — inaczej odrzuca, zanim w ogóle dotknie
+     blokady.
+  2. Brak wiersza → wstawia, zwraca `{ok:true, acquired:true}`.
+  3. Wiersz jest, ale `holder_tab_id` = własny → to odnowienie, aktualizuje
+     `heartbeat_at`, zwraca `{ok:true}`.
+  4. Wiersz jest, cudzy, ale `heartbeat_at` starszy niż próg (np. 25s, ok.
+     3 pominięte heartbeaty — margines na zerwanie sieci) → przejmuje
+     (jak dziś `device_presence` traktuje martwe urządzenia jako offline),
+     zwraca `{ok:true, stolen:true}`.
+  5. Wiersz jest, cudzy, świeży → zwraca `{ok:false, holder_user_id,
+     acquired_at}` (dane do komunikatu "zajęte od X minut"), NIE
+     nadpisuje nic.
+  Cała logika w jednej instrukcji SQL (żeby dwie karty odpalające
+  `acquire` w tej samej milisekundzie nie obie "wygrały").
+- `release_edit_lock(p_resource_type, p_resource_id, p_tab_id)` — usuwa
+  wiersz TYLKO jeśli `holder_tab_id` się zgadza (nikt nie może zwolnić
+  cudzej blokady). Wołane na `visibilitychange`/`beforeunload` (best
+  effort) — jeśli nie zdąży odpalić (crash karty), i tak wygasa przez TTL
+  przy następnej próbie `acquire` kogoś innego.
+
+**Kto i jak czyta**: RLS `SELECT` z tym samym warunkiem dostępu co RPC
+(właściciel zasobu / `base_can_access()` dla bazy) — każdy uprawniony do
+zasobu widzi czy jest zajęty, ale nie może nic zapisać poza RPC.
+
+**Przepływ na stronie**:
+1. Start strony (po `requireAuth`, przed renderem edytowalnej treści):
+   `holder_tab_id` z `sessionStorage` (per-karta, przeżywa odświeżenie tej
+   samej karty) → `acquire_edit_lock`.
+2. `ok:false` → `showResourceLockedOverlay(...)`, treść nie ładowana;
+   subskrypcja `rt(`edit-lock:${type}:${id}`).onBroadcast("RELEASED", ...)`
+   żeby ponowić próbę natychmiast po zwolnieniu, bez czekania na kolejny
+   heartbeat.
+3. `ok:true` → renderuj normalnie, `setInterval` odnawiający co ~8s.
+4. Zamknięcie/schowanie karty → `release_edit_lock` + broadcast
+   `"RELEASED"` na kanale zasobu, żeby czekający dowiedzieli się od razu.
 
 ### Mapa zasobów (po zbudowaniu ogólnego mechanizmu)
 
