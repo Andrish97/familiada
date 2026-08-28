@@ -537,8 +537,8 @@ test("edytor: wejście gdy ankieta jest 'ready' i OK w confirmie -> realny reset
 // się udawał). Warstwa 1 (docs/plan-testy-i-poprawki.md) usuwa ten problem
 // u źródła: karta B w ogóle nie wchodzi w tryb edycji, dopóki karta A
 // trzyma blokadę zasobu (resource-lock.js, edit_locks). Warstwa 2
-// (updateChecked, obrona przed ominięciem blokady) to osobny, wciąż
-// zaplanowany fix — ten test sprawdza już zbudowaną Warstwę 1.
+// (updateChecked, obrona przed ominięciem blokady — patrz test niżej) to
+// dodatkowa, niezależna linia obrony — ten test sprawdza samą Warstwę 1.
 test("edytor: dwie karty — druga karta jest blokowana overlayem zamiast cichej edycji, zwalnia się po zamknięciu pierwszej", async ({ page, context }) => {
   test.setTimeout(90_000);
   await loginAsTestUser(page, context);
@@ -565,6 +565,50 @@ test("edytor: dwie karty — druga karta jest blokowana overlayem zamiast cichej
 
     await expect(pageB.locator("#resourceLockGuard")).toBeHidden({ timeout: 40000 });
     await expect(pageB.locator("#qList .qcard:not(.addTile)")).toHaveCount(2, { timeout: 10000 });
+  } finally {
+    await deleteGame(page, gameId);
+  }
+});
+
+// Warstwa 2: nawet gdy Warstwa 1 (blokada) zostanie ominięta — np. usunięcie
+// pytania przez proces spoza UI, albo bezpośrednie wywołanie RPC/klienta z
+// pominięciem edytora — zapis w TEJ SAMEJ karcie, która wciąż "myśli", że
+// edytuje usunięte już pytanie, musi się jawnie nie udać (updateChecked w
+// db-guard.js), zamiast pokazać fałszywe "Zapisano." (0-row UPDATE nie
+// zwraca błędu z Supabase/PostgREST — patrz komentarz w db-guard.js).
+test("edytor: Warstwa 2 — zapis pytania usuniętego z pominięciem blokady kończy się jawnym komunikatem, nie fałszywym 'Zapisano.'", async ({ page, context }) => {
+  test.setTimeout(60_000);
+  await loginAsTestUser(page, context);
+
+  const gameId = await createGame(page, { type: "prepared" });
+  try {
+    await addQuestionApi(page, gameId, 1, "Q1");
+    const q2Id = await addQuestionApi(page, gameId, 2, "Q2");
+
+    await openEditor(page, gameId);
+
+    await qCard(page, 1).click();
+    await expect(page.locator("#qText")).toHaveValue("Q2", { timeout: 10000 });
+
+    // Symulacja ominięcia Warstwy 1: usunięcie pytania bezpośrednio w bazie,
+    // z pominięciem edytora — ta sama karta dalej "myśli", że je edytuje.
+    await page.evaluate(async (id) => {
+      await window.__sbClient.from("questions").delete().eq("id", id);
+    }, q2Id);
+
+    await page.locator("#qText").fill("Nowy tekst po usunięciu gdzie indziej");
+    await page.locator("#qText").blur();
+
+    await expect(page.locator("#msg")).toHaveText(
+      "Ten element został zmieniony lub usunięty w innym miejscu. Odśwież stronę.",
+      { timeout: 10000 }
+    );
+
+    const questions = await getQuestionsRows(page, gameId);
+    expect(questions.find((q) => q.id === q2Id), "usunięty wiersz nie powinien zostać wskrzeszony przez zapis").toBeUndefined();
+
+    // Karta sama zauważa zniknięcie — kafelek Q2 znika z listy bez odświeżania strony
+    await expect(page.locator("#qList .qcard:not(.addTile)")).toHaveCount(1, { timeout: 10000 });
   } finally {
     await deleteGame(page, gameId);
   }

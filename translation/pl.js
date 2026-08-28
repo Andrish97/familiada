@@ -2923,6 +2923,7 @@ const pl = {
       pointsSaveError: "Błąd zapisu punktów (konsola).",
       saved: "Zapisano.",
       typing: "Piszesz…",
+      rowGone: "Ten element został zmieniony lub usunięty w innym miejscu. Odśwież stronę.",
       answerLimit: "Limit odpowiedzi: {limit}.",
       minQuestions: "Wymagane minimum: {min} (masz {count})",
       minQuestionsOk: "Minimum spełnione",

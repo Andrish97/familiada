@@ -5,6 +5,7 @@ import { alertModal, confirmModal } from "../core/modal.js?v=v2026-08-28T12400";
 import { parseQaText, clip as clipN } from "../core/text-import.js?v=v2026-08-28T12400";
 import { canEnterEdit, RULES as GV_RULES, TYPES } from "../core/game-validate.js?v=v2026-08-28T12400";
 import { guardResourceLock } from "../core/resource-lock.js?v=v2026-08-28T12400";
+import { updateChecked, ROW_GONE } from "../core/db-guard.js?v=v2026-08-28T12400";
 import { initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-08-28T12400";
 import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-08-28T12400";
 import "../core/contact-modal.js";
@@ -35,6 +36,7 @@ const MSG = {
   pointsRejected: () => t("editor.status.pointsRejected"),
   pointsSaveError: () => t("editor.status.pointsSaveError"),
   saved: () => t("editor.status.saved"),
+  rowGone: () => t("editor.status.rowGone"),
   typing: () => t("editor.status.typing"),
   deleteLabel: () => t("editor.actions.delete"),
   questionAdded: () => t("editor.status.questionAdded"),
@@ -190,8 +192,7 @@ async function createQuestion(gameId, ord) {
 }
 
 async function updateQuestion(qId, patch) {
-  const { error } = await sb().from("questions").update(patch).eq("id", qId);
-  if (error) throw error;
+  await updateChecked("questions", { id: qId }, patch);
 }
 
 async function deleteQuestionDeep(qId) {
@@ -216,8 +217,7 @@ async function createAnswer(questionId, ord, text, fixed_points) {
 }
 
 async function updateAnswer(aId, patch) {
-  const { error } = await sb().from("answers").update(patch).eq("id", aId);
-  if (error) throw error;
+  await updateChecked("answers", { id: aId }, patch);
 }
 
 async function deleteAnswer(aId) {
@@ -931,6 +931,14 @@ async function boot() {
           setMsg(MSG.saved());
         } catch (e) {
           console.error(e);
+          if (e?.code === ROW_GONE) {
+            answers = answers.filter((x) => x.id !== a.id);
+            await refreshCounts(questions);
+            renderQuestions();
+            renderAnswers();
+            setMsg(MSG.rowGone());
+            return;
+          }
           setMsg(MSG.saveError());
         }
       };
@@ -956,6 +964,14 @@ async function boot() {
           setMsg(MSG.saved());
         } catch (e) {
           console.error(e);
+          if (e?.code === ROW_GONE) {
+            answers = answers.filter((x) => x.id !== a.id);
+            await refreshCounts(questions);
+            renderQuestions();
+            renderAnswers();
+            setMsg(MSG.rowGone());
+            return;
+          }
           const msg = String(e?.message || "");
           if (e?.code === "23514" || msg.includes("violates check constraint")) {
             setMsg(MSG.pointsRejected());
@@ -1014,6 +1030,14 @@ async function boot() {
       setMsg(MSG.saved());
     } catch (e) {
       console.error(e);
+      if (e?.code === ROW_GONE) {
+        questions = questions.filter((x) => x.id !== activeQId);
+        activeQId = defaultActiveQuestionId();
+        renderQuestions();
+        renderEditor();
+        setMsg(MSG.rowGone());
+        return;
+      }
       setMsg(MSG.saveError());
     }
   };

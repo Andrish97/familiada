@@ -3050,6 +3050,7 @@ const en = {
       pointsSaveError: "Error saving points (console).",
       saved: "Saved.",
       typing: "Typing…",
+      rowGone: "This item was changed or deleted elsewhere. Refresh the page.",
       answerLimit: "Answer limit: {limit}.",
       minQuestions: "Required minimum: {min} (you have {count})",
       minQuestionsOk: "Minimum met",
