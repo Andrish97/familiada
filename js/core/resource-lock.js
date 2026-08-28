@@ -136,14 +136,6 @@ function showOverlay({ title, message, backHref }) {
   document.body.style.overflow = "hidden";
 }
 
-function hideOverlay() {
-  const overlay = document.getElementById("resourceLockGuard");
-  if (!overlay || overlay.style.display === "none") return;
-  overlay.style.display = "none";
-  document.documentElement.style.overflow = "";
-  document.body.style.overflow = "";
-}
-
 /**
  * Blokada wejścia w edycję zasobu — wołać PO auth, PRZED wyrenderowaniem
  * edytowalnej treści.
@@ -165,58 +157,40 @@ export async function guardResourceLock({ resourceType, resourceId, message, tit
   let heartbeatTimer = null;
   let retryTimer = null;
 
-  async function tryAcquire() {
-    const res = await acquireOnce(resourceType, resourceId);
-    if (res?.ok) {
-      hideOverlay();
-      return true;
-    }
+  const initial = await acquireOnce(resourceType, resourceId);
+
+  if (!initial?.ok) {
     showOverlay({ title, message, backHref });
-    return false;
-  }
 
-  function startHeartbeat() {
-    clearInterval(heartbeatTimer);
-    heartbeatTimer = setInterval(() => {
-      tryAcquire().catch((e) => console.warn("[resource-lock] heartbeat failed:", e));
-    }, HEARTBEAT_MS);
-  }
-
-  // Dopóki zablokowani: odpytuj niezależnie od broadcastu "RELEASED" — ten
-  // ostatni jest wysyłany na beforeunload/pagehide, co jest z natury
-  // best-effort (przeglądarka może ubić żądanie w trakcie nawigacji). Bez
-  // tego pollingu karta, która nie dostała broadcastu, wisiałaby na
-  // overlayu w nieskończoność, mimo że TTL po stronie serwera (25s) dawno
-  // by pozwolił wejść.
-  function startRetryPolling() {
-    clearInterval(retryTimer);
-    retryTimer = setInterval(async () => {
-      const ok = await tryAcquire().catch(() => false);
-      if (ok) {
-        clearInterval(retryTimer);
-        retryTimer = null;
-        startHeartbeat();
-      }
-    }, RETRY_POLL_MS);
-  }
-
-  const ok = await tryAcquire();
-
-  if (!ok) {
-    lockChannel(resourceType, resourceId).onBroadcast("RELEASED", async () => {
+    // Gdy zasób się zwolni, NIE chowamy tu tylko overlayu — strona już raz
+    // przerwała renderowanie edytowalnej treści przy pierwszej porażce
+    // (wywołujący dostaje { ok:false } i robi return), więc samo schowanie
+    // overlayu zostawiłoby pustą, niewyrenderowaną stronę pod spodem.
+    // Przeładowanie od zera jest proste i niezawodne: świeży boot() strony
+    // przejdzie normalnie przez guardResourceLock i realnie wyrenderuje
+    // treść, zamiast próbować "wznowić" stan w locie.
+    async function recheckAndReload() {
       if (released) return;
-      const gotIt = await tryAcquire().catch(() => false);
-      if (gotIt) {
+      const res = await acquireOnce(resourceType, resourceId).catch(() => null);
+      if (res?.ok) {
         clearInterval(retryTimer);
-        retryTimer = null;
-        startHeartbeat();
+        location.reload();
       }
-    });
-    startRetryPolling();
+    }
+
+    // Broadcast "RELEASED" (natychmiastowe, ale best-effort — wysyłane na
+    // pagehide, przeglądarka może ubić żądanie w trakcie nawigacji) +
+    // niezależny polling co ~5s jako fallback, żeby karta bez broadcastu
+    // i tak weszła najpóźniej po wygaśnięciu TTL (25s) po stronie serwera.
+    lockChannel(resourceType, resourceId).onBroadcast("RELEASED", recheckAndReload);
+    retryTimer = setInterval(recheckAndReload, RETRY_POLL_MS);
+
     return { ok: false };
   }
 
-  startHeartbeat();
+  heartbeatTimer = setInterval(() => {
+    acquireOnce(resourceType, resourceId).catch((e) => console.warn("[resource-lock] heartbeat failed:", e));
+  }, HEARTBEAT_MS);
 
   const release = () => {
     if (released) return;
