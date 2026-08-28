@@ -31,8 +31,27 @@ audytu poniżej, nie osobno.
 Ten sam wzorec co w edytorze (brak realtime sync, brak re-walidacji
 stanu per-akcja) do sprawdzenia w:
 
-- 🔲 `js/pages/polls.js` — panel zamykania ankiety tekstowej
-- 🔲 `js/pages/game-settings.js` — zmiana ustawień rozgrywki
+- ✅ `js/pages/polls.js` — panel zamykania ankiety tekstowej.
+  **Sprawdzone, bezpieczne**: wszystkie akcje zmieniające status gry
+  (`poll_open`, `poll_points_close_and_normalize`, `poll_text_close_apply`)
+  mają server-side guard w samej funkcji RPC (`if g.status <> 'poll_open'
+  then raise exception`), więc dwie karty nie mogą się wzajemnie rozjechać —
+  nieaktualna akcja z drugiej karty zawsze wybuchnie błędem, nigdy nie
+  przejdzie cicho.
+- 🔲 `js/pages/game-settings.js` — zmiana ustawień rozgrywki.
+  **Dwa realne problemy, gorsze niż w edytorze**:
+  1. `saveAll()` nadpisuje CAŁĄ kolumnę `games.settings` (JSONB) lokalnym
+     obiektem wczytanym raz przy starcie strony — zero kontroli wersji
+     (brak porównania `updated_at`, brak merge). Dwie karty otwarte na tych
+     samych ustawieniach → kto zapisze ostatni, bezpowrotnie kasuje zmiany
+     drugiej karty, nawet z zupełnie innej zakładki ustawień (np. zapis
+     zmiany dźwięku w karcie B wymazuje zmianę nazw drużyn zrobioną wcześniej
+     w karcie A).
+  2. `allQuestions` (lista pytań do wyboru finału/kolejności rund) wczytywana
+     raz przy starcie. Jeśli w międzyczasie w edytorze (inna karta) ktoś
+     usunie pytanie, karta ustawień dalej trzyma jego stary obiekt na liście
+     finałowej/rund — zapis wpisuje do `settings` odniesienie do już
+     nieistniejącego pytania.
 - 🔲 `base-explorer/` — edycja bazy pytań, patrz sekcja dedykowana niżej
   (osobno, bo baza pytań ma coś, czego reszta aplikacji nie ma: realne
   współdzielenie między RÓŻNYMI kontami z rolami odczyt/edycja)
