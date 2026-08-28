@@ -228,7 +228,7 @@ audycie/poprawce każdej strony, zaczynając od edytora.
    3/3 testów e2e zielonych (run #56).
 2.5. **Generyczny mechanizm krzyżowych blokad** (ustalony podczas
    dyskusji — patrz sekcja "Krzyżowe blokady między zasobami" niżej) —
-   ✅ **kod gotowy**, 🔲 czeka na pierwsze uruchomienie e2e:
+   ✅ **ZAMKNIĘTE**. 6/6 testów e2e zielonych na produkcji (run #63):
    - `acquire_edit_lock`/`guardResourceLock` → wynik trójstanowy zamiast
      dwustanowego: `ok` / `locked` (zajęte przez kogoś) / **`gone`**
      (zasób w ogóle już nie istnieje — przegrany wyścig z usunięciem).
@@ -312,7 +312,9 @@ audycie/poprawce każdej strony, zaczynając od edytora.
    siatce), nie w nasz `.logoX`. Fix: `tile.locator(".logoX").evaluate(el
    => el.click())` — wywołanie `.click()` bezpośrednio przez DOM, zero
    symulacji myszy, gwarantowane trafienie w dokładnie ten element.
-   Poprawki wypchnięte, czeka na kolejne uruchomienie.
+   Run #63 (po poprawce): **✅ 6/6 passed na produkcji.** Mechanizm
+   krzyżowych blokad (tri-state `gone`, `delete_resource_checked` dla
+   `game`/`logo`) w pełni potwierdzony e2e — **moduł zamknięty**.
 3. **Ankieta** (`polls.js`) — Warstwa 2 już ✅ gotowa (guard w RPC), dołożyć
    Warstwę 1 dla spójności UX, PLUS (nowe, z kroku 2.5) sprawdzić czy
    `polls.js` jest konsumentem/celem którejś krzyżowej relacji.
@@ -629,7 +631,16 @@ zalogować DWA różne konta testowe na tej samej, współdzielonej bazie:
 
 ---
 
-## Krzyżowe blokady między zasobami — 🔲 rozpiska edge case'ów (nowa kategoria)
+## Krzyżowe blokady między zasobami — mechanizm ✅ zamknięty, reszta kategorii otwarta
+
+Generyczny mechanizm (tri-state `gone`, `delete_resource_checked` dla
+`game`/`logo`) opisany niżej jest **zbudowany i przetestowany e2e (6/6,
+run #63)** — patrz krok 2.5 w "Kolejności pracy" wyżej. To, co zostaje
+otwarte w tej kategorii: Problem 1 (utwardzenie `poll_open` w RLS —
+osobny, niezależny dług), dołożenie kolejnych typów zasobów do
+`delete_resource_checked` w miarę audytu (`base` na razie pominięty,
+Control czeka na własny sygnał żywotności), i pytanie produktowe o
+edycję treści logo w trakcie rozgrywki (nierozstrzygnięte).
 
 Inna kategoria niż Warstwa 1/2 opisane wyżej — tamte chronią **ten sam
 zasób** otwarty w dwóch miejscach naraz. Tu chodzi o **parę różnych
