@@ -294,6 +294,15 @@ linia obrony od Warstwy 1 — chroni nawet gdy blokada zostanie ominięta
 (bezpośrednie wywołanie RPC/klienta, usunięcie przez proces spoza UI).
 Test e2e symuluje dokładnie to ominięcie.
 
+Po drodze test wyłapał kolejny realny bug (niezależny od ROW_GONE): pole
+tekstowe pytania/odpowiedzi miało DWA triggery zapisu — debounced (350ms
+po "input") i natychmiastowy (na "blur") — bez anulowania pierwszego przez
+drugi. Szybkie wpisanie tekstu i blur odpalało oba; ten z "blur" poprawnie
+łapał `ROW_GONE`, ale spóźniony debounced zapis (na już zmienionym w
+międzyczasie aktywnym stanie) kończył się sukcesem i cicho nadpisywał
+komunikat z powrotem na "Zapisano.". Fix: `debounce()` dostał `.cancel()`,
+wołane na "blur" przed natychmiastowym zapisem.
+
 ---
 
 ## Ustawienia gry (`js/pages/game-settings.js`) — 🔲 do zrobienia

@@ -101,10 +101,12 @@ function openOverlay(id, on) {
 
 function debounce(fn, ms = 350) {
   let timer = null;
-  return (...args) => {
+  const wrapped = (...args) => {
     clearTimeout(timer);
     timer = setTimeout(() => fn(...args), ms);
   };
+  wrapped.cancel = () => clearTimeout(timer);
+  return wrapped;
 }
 
 function getIdFromQuery() {
@@ -949,7 +951,14 @@ async function boot() {
         setMsg(MSG.typing());
         saveTextDebounced();
       });
-      iText.addEventListener("blur", saveTextNow);
+      iText.addEventListener("blur", () => {
+        // Anuluj ewentualny oczekujący debounced zapis z "input" — inaczej
+        // odpali się ~350ms po tym natychmiastowym, na już zmienionym
+        // aktywnym stanie, i cicho nadpisze ten komunikat (np. ROW_GONE
+        // nadpisane fałszywym "Zapisano.").
+        saveTextDebounced.cancel();
+        saveTextNow();
+      });
 
       const savePtsNow = async () => {
         if (!cfg.allowPoints || !iPts) return;
@@ -1048,7 +1057,10 @@ async function boot() {
     setMsg(MSG.typing());
     saveQuestionDebounced();
   });
-  qText?.addEventListener("blur", saveQuestionNow);
+  qText?.addEventListener("blur", () => {
+    saveQuestionDebounced.cancel();
+    saveQuestionNow();
+  });
 
   /* ---------- Import modal ---------- */
   const btnImportTxt = $("btnImportTxt");
