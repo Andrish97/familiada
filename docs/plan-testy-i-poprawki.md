@@ -217,10 +217,12 @@ audycie/poprawce każdej strony, zaczynając od edytora.
 0. **Ogólny mechanizm blokady** (`js/core/resource-lock.js`) — ✅ zbudowany,
    na wzorcu `guardDesktopOnly()` + `showGuestBlockedOverlay()` (patrz
    wyżej), pierwszy konsument (edytor) przetestowany e2e.
-1. **Edytor gier** (`editor.js`) — ✅ Warstwa 1 (blokada `game_id`) zrobiona
-   i przetestowana. 🔲 Zostaje jeszcze Warstwa 2 (fix "cichego sukcesu")
-   — mniej pilne teraz niż przed Warstwą 1, ale wciąż zaplanowane jako
-   defense-in-depth.
+1. **Edytor gier** (`editor.js`) — ✅ **ZAMKNIĘTE**. Warstwa 1 (blokada
+   `game_id`) i Warstwa 2 (`updateChecked`, fix "cichego sukcesu") obie
+   zrobione, 21/21 testów e2e zielonych (run #52). Po drodze naprawione
+   też dwa dodatkowe realne bugi znalezione przez testy: overlay chowany
+   bez re-renderu treści (fix: `location.reload()`) i wyścig debounced/blur
+   nadpisujący komunikat `ROW_GONE` (fix: `debounce().cancel()`).
 2. **Ustawienia gry** (`game-settings.js`) — Warstwa 2 (fix nadpisywania
    `settings` + nieaktualnej listy pytań) + Warstwa 1.
 3. **Ankieta** (`polls.js`) — Warstwa 2 już ✅ gotowa (guard w RPC), dołożyć
@@ -250,7 +252,7 @@ różnych użytkowników, albo nieaktualne dane po zmianie gdzie indziej):
 
 | Strona | Co edytuje | Status |
 |---|---|---|
-| `js/pages/editor.js` | pytania/odpowiedzi gry | ✅ 20+1 testów e2e, Warstwa 1 (blokada) zrobiona, 🔲 1 fix Warstwy 2 zaplanowany |
+| `js/pages/editor.js` | pytania/odpowiedzi gry | ✅ **ZAMKNIĘTE** — 21 testów e2e (run #52, 21/21), Warstwa 1 + Warstwa 2 zrobione |
 | `js/pages/polls.js` | zamykanie ankiety | ✅ Warstwa 2 gotowa (guard w RPC), 🔲 Warstwa 1 do dodania |
 | `js/pages/game-settings.js` | ustawienia gry (drużyny, wygląd, dźwięk, finał/rundy) | 🔲 2 realne bugi (Warstwa 2) + Warstwa 1 |
 | `logo-editor/js/main.js` | edytor logo (zapis do `user_logos`) | 🔲 nieprzejrzane + Warstwa 1 |
@@ -302,6 +304,10 @@ drugi. Szybkie wpisanie tekstu i blur odpalało oba; ten z "blur" poprawnie
 międzyczasie aktywnym stanie) kończył się sukcesem i cicho nadpisywał
 komunikat z powrotem na "Zapisano.". Fix: `debounce()` dostał `.cancel()`,
 wołane na "blur" przed natychmiastowym zapisem.
+
+**✅ MODUŁ ZAMKNIĘTY** — 21/21 testów e2e zielonych na produkcji (run #52).
+Obie warstwy ochrony zrobione i przetestowane. Następny w kolejności:
+`game-settings.js`.
 
 ---
 
