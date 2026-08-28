@@ -368,13 +368,16 @@ to dokończenie testów Warstwy 1/2 dla tego modułu.
 Obie warstwy ochrony zrobione i przetestowane. Następny w kolejności:
 `polls.js`.
 
-🔲 **Rozszerzenie testów** (opcjonalne, do ustalenia z użytkownikiem czy
-robić teraz czy po przejściu przez resztę modułów): pełne pokrycie
-`game-settings.js` analogiczne do `editor.spec.js` (20+ testów) — każda
-zakładka (drużyny, wygląd, dźwięk, pytania, finał, rundy, ustawienia
-gry/zaawansowane), walidacje (finał "pick" wymaga 5, własny dźwięk bez
-pliku blokuje zapis), reset do domyślnych, tryb modalny (otwarcie z
-`control-new`).
+🔲 **Rozszerzenie testów** — dopisane (`tests/e2e/game-settings.spec.js`,
+11 nowych testów, 14 razem z A/B/C): drużyny (persystencja po
+przeładowaniu), wygląd (zmiana koloru przez modal, reset sekcji), dźwięk
+(walidacja "Własny bez pliku" blokuje zapis, zmiana głośności), finał
+(walidacja "pick wymaga 5", wybór 5/6 + limit UI + wykluczenie z rund),
+rundy (reorder strzałką), ustawienia gry (niepoprawny format
+multiplikatorów nie nadpisuje), reset wszystkich ustawień, przycisk
+Wstecz z niezapisanymi zmianami. Czeka na pierwsze uruchomienie na CI.
+Nieobjęte świadomie: tryb modalny (`control-new`) — wymaga osobnej
+strony-hosta do symulacji iframe, niższy priorytet.
 
 ---
 
