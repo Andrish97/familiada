@@ -241,14 +241,16 @@ test("usuwanie logo: działa normalnie, gdy nic go nie blokuje", async ({ page, 
 
     const tile = page.locator(`.logoTile[data-key="${logoId}"]`);
     await expect(tile).toBeVisible({ timeout: 10000 });
-    // force: true — siatka logo dorysowuje podglądy canvas asynchronicznie
-    // po pierwszym renderze kafelków ("najpierw kafelki, potem canvas" w
-    // renderList()), więc inny, stały kafelek potrafi się chwilowo znaleźć
-    // "na wierzchu" tej samej pozycji i przechwycić kliknięcie mimo że
-    // nasz .logoX (dopasowany po dokładnym data-key) jest widoczny —
-    // potwierdzone w CI (run #61): "intercepts pointer events" od
-    // zupełnie innego, niezwiązanego z testem logo.
-    await tile.locator(".logoX").click({ timeout: 10000, force: true });
+    // Siatka logo dorysowuje podglądy canvas asynchronicznie po pierwszym
+    // renderze kafelków ("najpierw kafelki, potem canvas" w renderList()),
+    // a hover/ruch myszy po zatłoczonej siatce potrafi chwilowo podnieść
+    // z-index innego, niezwiązanego kafelka nad nasz — potwierdzone w CI
+    // (run #61: "intercepts pointer events"; run #62: {force:true} samo
+    // kliknięcie "przeszło", ale modal nigdy się nie pojawił, bo trafiło
+    // w faktycznie zasłaniający element, nie w nasz .logoX). Wywołanie
+    // .click() bezpośrednio przez DOM omija symulację myszy w ogóle —
+    // gwarantowanie odpala handler na dokładnie tym elemencie.
+    await tile.locator(".logoX").evaluate((el) => el.click());
     await expect(page.locator(".uni-foot .btn.gold")).toBeVisible({ timeout: 10000 });
     await page.locator(".uni-foot .btn.gold").click({ timeout: 10000 });
 

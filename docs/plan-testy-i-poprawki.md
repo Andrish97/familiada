@@ -301,6 +301,17 @@ audycie/poprawce każdej strony, zaczynając od edytora.
      `data-key`) był widoczny. Fix: `{force: true}` na tym kliknięciu —
      uzasadnione, bo cel jest jednoznacznie potwierdzony przez `data-key`,
      problem jest czysto wizualny/czasowy, nie pomyłką w wyborze elementu.
+
+   Run #62 (po poprawkach): **5/6 passed** — poll_open, locked, "działa
+   normalnie" (gra), "logo zablokowane" i "gone" już zielone. Jedyny
+   dalej czerwony: "logo: działa normalnie" — `{force: true}` z run #61
+   okazał się niewystarczający: samo kliknięcie "przechodziło" (bez błędu
+   przechwycenia), ale modal potwierdzenia nigdy się nie pojawiał —
+   `force` nadal symuluje kliknięcie myszą po współrzędnych, więc trafiało
+   w faktycznie zasłaniający kafelek (z hover/ruchem myszy po zatłoczonej
+   siatce), nie w nasz `.logoX`. Fix: `tile.locator(".logoX").evaluate(el
+   => el.click())` — wywołanie `.click()` bezpośrednio przez DOM, zero
+   symulacji myszy, gwarantowane trafienie w dokładnie ten element.
    Poprawki wypchnięte, czeka na kolejne uruchomienie.
 3. **Ankieta** (`polls.js`) — Warstwa 2 już ✅ gotowa (guard w RPC), dołożyć
    Warstwę 1 dla spójności UX, PLUS (nowe, z kroku 2.5) sprawdzić czy
