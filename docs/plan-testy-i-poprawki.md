@@ -337,6 +337,41 @@ odwrotnie), dokładnie ten sam `guardResourceLock` co w edytorze.
 dwóch kart, konflikt CAS przy zapisie, filtrowanie martwego id pytania
 finału) — czekają na pierwsze uruchomienie na produkcji.
 
+🔲 **Brakująca funkcja (znaleziona przy audycie, nie "dwóch miejsc naraz"
+tylko realna luka)**: zmiana ustawień gry NIE powinna być możliwa, gdy gra
+jest aktualnie prowadzona na żywo w `control/` — inaczej zmiana np.
+drużyn/dźwięku/multiplikatorów w trakcie rozgrywki rozjeżdża się z tym, co
+`control/` już wczytał do pamięci na starcie sesji. Dowód, że to było
+planowane: martwy klucz i18n `control.ingameGuard` (`title: "Gra w
+toku"`, `message: "Nie możesz zmieniać ustawień podczas trwającej gry..."`,
+`unlock: "Odblokuj ustawienia"`) istnieje w `translation/{pl,en,uk}.js`,
+ale **zero wystąpień w kodzie JS** — funkcja najwyraźniej zaprojektowana
+(tekst UI już gotowy) i nigdy nie dopięta.
+
+Problem: nie ma dziś żadnego sposobu wykrycia "gra jest aktualnie
+prowadzona" — `games.status` (draft/poll_open/ready) tego nie odzwierciedla,
+a `control/js/presence.js` śledzi tylko urządzenia display/host/buzzer,
+NIE samą kartę control (to ta sama luka co w sekcji "Control" niżej —
+kontrolka control nigdy się nie "melduje"). Czyli ta funkcja jest
+**zależna od tego samego braku**, co odłożony punkt "Control" — sensowne
+warianty:
+1. Zrobić to dopiero razem z Control (gdy control zacznie się meldować w
+   `device_presence` albo własnym heartbeatem) — spójne z resztą, ale
+   czeka do końca kolejki.
+2. Prowizorka już teraz: traktować "online" `display`/`host` (już śledzone
+   w `device_presence`) jako proxy "gra w toku" — mniej dokładne (host
+   może być podłączony bez realnej rozgrywki), ale nie wymaga czekania na
+   Control.
+Do ustalenia którą wersję robimy i kiedy — na razie priorytet to
+dokończenie testów Warstwy 1/2 dla tego modułu.
+
+🔲 **Rozszerzenie testów**: po zielonym wyniku 3 testów blokady/CAS,
+dopisać pełne pokrycie `game-settings.js` analogiczne do
+`editor.spec.js` (20+ testów) — każda zakładka (drużyny, wygląd, dźwięk,
+pytania, finał, rundy, ustawienia gry/zaawansowane), walidacje (finał
+"pick" wymaga 5, własny dźwięk bez pliku blokuje zapis), reset do
+domyślnych, tryb modalny (otwarcie z `control-new`).
+
 ---
 
 ## Edytor logo (`logo-editor/`) — 🔲 do zrobienia
