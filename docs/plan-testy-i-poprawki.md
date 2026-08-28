@@ -226,21 +226,53 @@ audycie/poprawce każdej strony, zaczynając od edytora.
 2. **Ustawienia gry** (`game-settings.js`) — ✅ **ZAMKNIĘTE**. Warstwa 2
    (fix nadpisywania `settings` + nieaktualnej listy pytań) + Warstwa 1,
    3/3 testów e2e zielonych (run #56).
+2.5. **Generyczny mechanizm krzyżowych blokad** (nowy krok, ustalony
+   podczas dyskusji — patrz sekcja "Krzyżowe blokady między zasobami"
+   niżej) — 🔲 do zbudowania, PRZED kontynuacją na kolejne strony, żeby
+   każda kolejna strona konsumowała gotowy mechanizm zamiast dostawać
+   osobną łatkę:
+   - `acquire_edit_lock`/`guardResourceLock` → wynik trójstanowy zamiast
+     dwustanowego: `ok` / `locked` (zajęte przez kogoś) / **`gone`**
+     (zasób w ogóle już nie istnieje — przegrany wyścig z usunięciem).
+     Ten sam overlay co dziś, inny tekst dla `gone`.
+   - Generyczne RPC `can_delete(resource_type, resource_id)` — dispatch
+     do resolvera "kto się do mnie odwołuje" per typ zasobu (bo ścieżki
+     referencji są różne: FK dla pytań, JSONB `settings->display->logoId`
+     dla logo, brak FK), sprawdza `edit_locks` po stronie każdego
+     odwołującego się zasobu — blokuje usunięcie z jasnym komunikatem
+     (`alertModal`, nie overlay), jeśli coś żywego z niego korzysta.
+   - Osobno: przegląd istniejących blokad-tylko-frontowych opartych o
+     stan trwały (znaleziona jedna: `canEnterEdit()`/`poll_open` w
+     edytorze — Warstwa 1 istnieje, Warstwa 2 **zero**, RLS na
+     `questions`/`answers` sprawdza wyłącznie `owner_id`) — to osobny
+     problem od powyższego (stan zapisany w bazie, nie "żywa karta"), ale
+     tej samej kategorii "usztywnienia" i wypłynie przy audycie każdej
+     kolejnej strony, nie tylko edytora.
 3. **Ankieta** (`polls.js`) — Warstwa 2 już ✅ gotowa (guard w RPC), dołożyć
-   tylko Warstwę 1 dla spójności UX.
+   Warstwę 1 dla spójności UX, PLUS (nowe, z kroku 2.5) sprawdzić czy
+   `polls.js` jest konsumentem/celem którejś krzyżowej relacji.
 4. **Edytor logo** (`logo-editor/`) — audyt Warstwy 2 (nieprzejrzane) +
-   Warstwa 1.
+   Warstwa 1, PLUS konkretna krzyżowa relacja logo↔gra ustalona w
+   dyskusji (patrz niżej) — usuwanie logo przez `can_delete`.
 5. Reszta z "Pełnej listy miejsc do audytu" niżej (`builder.js`,
    `builder-import-export.js`, `bases.js`, `generator.js`, `settings.js`,
    `polls-hub.js`, `subscriptions.js`) — audyt Warstwy 2, Warstwa 1 gdzie
-   ma to sens.
+   ma to sens, PLUS dla każdej: czy jest konsumentem/celem krzyżowej
+   relacji (np. `builder.js`'s usuwanie gry przez `can_delete`; strony
+   "hub" typu `polls-hub.js` mogą mieć własne, jeszcze nieznalezione
+   relacje — lista niżej rośnie w miarę audytu, nie jest zamknięta).
 6. **Baza pytań** (`base-explorer/`) — **najpierw** bardzo dogłębny audyt +
    testy (CRUD, dwóch różnych użytkowników, uprawnienia — sekcja niżej),
    **dopiero potem** Warstwa 1 (blokada `base_id`) i utwardzenie Warstwy 2
-   na podstawie tego, co audyt znajdzie.
+   na podstawie tego, co audyt znajdzie, PLUS usuwanie bazy przez
+   `can_delete` (zapytana: czy jakiś zasób poza samą bazą się do niej
+   odwołuje na żywo — do ustalenia przy audycie).
 7. **Control** — odłożone jako osobny, kompleksowy punkt: blokada
    (Warstwa 1) i zapis/przywracanie stanu rozgrywki robione razem, nie
-   osobno (sekcja niżej).
+   osobno (sekcja niżej). Dzięki krokowi 2.5 zbudowanemu wcześniej, gdy
+   dojdziemy do Control, cały mechanizm (`can_delete`, tri-state lock)
+   już istnieje — Control tylko dopina swój sygnał żywotności jako
+   kolejny `resource_type` w `edit_locks`, nie buduje niczego od zera.
 
 ---
 
@@ -536,6 +568,24 @@ i przefiltruj martwe odniesienie przed zapisem/renderem, tak jak zrobione
 dla `questions.final/rounds` w `game-settings.js`) — nie trzeba go
 blokować, wystarczy że się nie wykrzacza.
 
+### Dwa osobne problemy — nie mylić ze sobą
+
+Rozmowa wyłoniła dwie **niezależne** kategorie, przypadkiem obie nazwane
+"blokadą", ale różne w naturze i różnie naprawiane:
+
+1. **Blokady stanowe, dziś tylko front** — sprawdzenie trwałej flagi w
+   bazie (np. `games.status === 'poll_open'`), zaimplementowane WYŁĄCZNIE
+   jako zwykła funkcja JS (`canEnterEdit()`), bez żadnego odpowiednika po
+   stronie serwera. Nie ma tu nic "żywego" ani żadnej karty/sesji — to
+   zwykły dług: stan już istnieje w bazie, tylko nikt go nie sprawdza przy
+   zapisie. Naprawa: RLS/RPC, niezależnie od reszty tej sekcji. Znaleziona
+   na razie jedna instancja (`poll_open`), ale przy audycie każdej
+   kolejnej strony trzeba aktywnie szukać kolejnych — nie ma powodu
+   sądzić, że to jedyna.
+2. **Krzyżowe blokady żywe** — referencja do innego zasobu + ten inny
+   zasób ma aktualnie aktywną sesję/kartę (`edit_locks`). To jest właściwy
+   temat tej sekcji, model opisany niżej.
+
 ### Zweryfikowane w kodzie (nie zgadywane)
 
 | Para zasobów | Warstwa 1 (UX) dziś | Warstwa 2 (twarda) dziś | Status |
@@ -568,18 +618,58 @@ Otwarte pytanie (do decyzji, nie zakładam): czy **edycja treści** logo
 być blokowana, czy to pożądana funkcja (aktualizacja wyglądu w trakcie
 pokazu)? To decyzja produktowa, nie techniczna.
 
-### Wniosek co do kolejności
+### Model ogólny — ✅ ustalony w rozmowie, do zbudowania jako krok 2.5
 
-Ta kategoria **nie jest jednym zadaniem** — każda para ma inną
-zależność:
-- Poll-open hardening pytań/odpowiedzi (RLS) — da się zrobić **od razu**,
-  niezależnie od reszty planu, to czysto techniczny dług.
+Zamiast N osobnych łatek per para zasobów — jeden mechanizm, tym samym
+duchem co `resource-lock.js`/`updateChecked` (jedna implementacja,
+wszędzie reużywana):
+
+1. **`acquire_edit_lock`/`guardResourceLock` → wynik trójstanowy**:
+   `ok` / `locked` (zajęte przez kogoś — dzisiejszy przypadek) /
+   **`gone`** (zasób w ogóle już nie istnieje — przegrany wyścig z
+   usunięciem gdzie indziej). Ten sam overlay z `resource-lock.js`, inny
+   tekst dla `gone` ("Ten zasób został usunięty" + powrót) niż dla
+   `locked` ("Edytowane gdzie indziej").
+2. **Generyczne RPC `can_delete(resource_type, resource_id)`** — dispatch
+   do resolvera "kto się do mnie odwołuje" per typ (różne ścieżki:
+   FK dla pytań, `settings->display->logoId` dla logo, itd.), sprawdza
+   `edit_locks` po stronie każdego znalezionego odwołującego się zasobu.
+   Blokuje usunięcie jawnym `alertModal` (nie overlay — to jednorazowa
+   akcja na klik "Usuń", nie strona), jeśli coś żywego korzysta.
+   Wywoływane zamiast dzisiejszego gołego `.from(...).delete()` w
+   `builder.js` (gra), `logo-editor/js/main.js` (logo), docelowo też
+   `bases.js`/`base-explorer` (baza).
+3. **Per-strona, przy każdym kolejnym audycie (krok 3+ w "Kolejności
+   pracy"), dwa dodatkowe pytania** poza zwykłą Warstwą 1/2:
+   - *Jako konsument*: czy ta strona odwołuje się do czegoś, co może jej
+     zniknąć pod ręką (potrzebuje `gone` z punktu 1, albo odśwież-i-
+     -filtruj jak już zrobione dla pytań w `game-settings.js`)?
+   - *Jako cel*: czy ta strona ma akcję usuwania/zmiany, którą trzeba
+     przepuścić przez `can_delete` z punktu 2, bo coś innego może z niej
+     aktywnie korzystać?
+   Lista stron do sprawdzenia pod tym kątem **nie jest zamknięta** —
+   rośnie w miarę audytu. Na pewno dotyczy stron-hubów typu
+   `polls-hub.js` (może mieć własne, jeszcze nieznalezione relacje), nie
+   tylko stron już wymienionych wyżej.
+
+Control zostaje ostatni w kolejności tak czy inaczej (potrzebuje własnego
+big-bang projektu stanu rozgrywki), ale dzięki zbudowaniu punktów 1–2
+WCZEŚNIEJ, gdy do niego dojdziemy, cały mechanizm już istnieje — Control
+dopina tylko swój sygnał żywotności jako kolejny `resource_type` w
+`edit_locks`, zamiast wymyślać to od zera na końcu.
+
+### Zależności między konkretnymi parami (skrót)
+
+- Poll-open hardening pytań/odpowiedzi (RLS) — Problem 1, da się zrobić
+  **od razu**, niezależnie od reszty, czysto techniczny dług.
 - Blokada usuwania gry przy aktywnym `edit_locks` / otwartej ankiecie —
-  da się zrobić od razu, korzysta z już istniejącej tabeli `edit_locks`.
-- Logo ↔ ustawienia gry — czeka na Warstwę 1 dla logo (już w kolejce).
+  da się zrobić od razu przez `can_delete`, korzysta z już istniejącej
+  tabeli `edit_locks`.
+- Logo ↔ ustawienia gry — czeka na Warstwę 1 dla logo (już w kolejce,
+  krok 4).
 - Logo ↔ Control, i cokolwiek innego "↔ trwająca rozgrywka" — czeka na
-  fundament Control (presence/heartbeat), czyli i tak trafia do sekcji
-  "Control" niżej jako jej rozszerzenie, nie osobny byt.
+  fundament Control (presence/heartbeat), trafia jako jego rozszerzenie
+  (krok 7), nie osobny byt.
 
 ---
 
