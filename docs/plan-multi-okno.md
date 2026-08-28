@@ -33,11 +33,69 @@ stanu per-akcja) do sprawdzenia w:
 
 - 🔲 `js/pages/polls.js` — panel zamykania ankiety tekstowej
 - 🔲 `js/pages/game-settings.js` — zmiana ustawień rozgrywki
-- 🔲 `base-explorer/` — edycja bazy pytań
+- 🔲 `base-explorer/` — edycja bazy pytań, patrz sekcja dedykowana niżej
+  (osobno, bo baza pytań ma coś, czego reszta aplikacji nie ma: realne
+  współdzielenie między RÓŻNYMI kontami z rolami odczyt/edycja)
 
 Poza zakresem (świadomie pominięte na razie): samo prowadzenie
 rozgrywki na żywo (`control/`) jako **osobny, następny punkt** — patrz
 niżej.
+
+---
+
+## Baza pytań (`base-explorer/`) — bardzo dokładny test + współdzielenie — 🔲 do zrobienia
+
+Baza pytań ma realny, wielo-użytkownikowy model uprawnień w bazie danych
+(`question_base_shares.role`: `viewer` | `editor`, enum
+`base_share_role`), egzekwowany przez RLS na `qb_questions`/
+`qb_categories`/`qb_tags` przez funkcje `base_can_access()` (SELECT —
+właściciel LUB dowolna rola współdzielenia) i `base_can_edit()`
+(INSERT/UPDATE/DELETE — właściciel LUB rola `editor`, `viewer` odrzucany
+na poziomie bazy, nie tylko UI). Warto sprawdzić realnie na żywo, nie
+tylko czytając RLS. `question_bases_update` (zmiana samej nazwy bazy)
+dodatkowo dopuszcza WYŁĄCZNIE właściciela — nawet `editor` tego nie
+zmieni; to osobny, węższy przypadek do sprawdzenia.
+
+### A) Sam edytor bazy — dokładność jak w `editor.spec.js`
+- CRUD pytań/odpowiedzi/kategorii/tagów (`page.js`, `render.js`,
+  `actions.js`, `question-modal.js`, `tags-modal.js`) — limity, puste
+  pola, kolejność, duplikaty tagów/kategorii.
+- Import/eksport (`export-modal.js`) — analogicznie do importu w
+  edytorze gier: co się dzieje przy błędnym formacie, czy nadpisuje czy
+  dokleja istniejące dane.
+- Menu kontekstowe (`context-menu.js`) — akcje dostępne z klawiatury/PPM
+  na elementach, które w międzyczasie zniknęły (usunięte gdzie indziej).
+- Widok mobilny (`mobile.js`) — te same operacje, inny layout/przepływ
+  wejścia w edycję pytania.
+
+### B) Równoległa edycja przez DWÓCH RÓŻNYCH użytkowników (nie dwie karty tego samego)
+W odróżnieniu od edytora gier (tylko właściciel), tu trzeba realnie
+zalogować DWA różne konta testowe na tej samej, współdzielonej bazie:
+- Właściciel + `editor` edytują **to samo pytanie** niemal jednocześnie —
+  które wygrywa (ostatni zapis), czy drugi użytkownik dostaje jakikolwiek
+  sygnał, że coś się zmieniło pod nim.
+- Jeden usuwa pytanie/kategorię/tag, którego drugi używa/edytuje w tej
+  samej chwili (ten sam wzorzec "cichego sukcesu" co w edytorze gier —
+  do sprawdzenia, czy tu też występuje).
+- Właściciel usuwa dostęp (`question_base_shares` DELETE) drugiemu
+  użytkownikowi W TRAKCIE, gdy ten ma bazę otwartą i coś edytuje — czy
+  kolejna akcja jest poprawnie odrzucona (RLS powinno to i tak zablokować
+  na poziomie bazy), i czy UI to w ogóle komunikuje, czy tylko cicho
+  nic się nie dzieje.
+
+### C) Granica uprawnień odczyt/edycja
+- `viewer` nie może dodać/edytować/usunąć pytania, kategorii ani tagu —
+  potwierdzić, że to faktycznie blokuje RLS (próba bezpośrednio przez
+  RPC/klienta, nie tylko brak przycisku w UI), i że UI w ogóle nie
+  pokazuje kontrolek edycji dla `viewer` (albo pokazuje, ale klik kończy
+  się czytelnym błędem, nie cichą porażką).
+- Zmiana roli `editor` → `viewer` w locie (właściciel obniża uprawnienia
+  gdy tamten ma bazę otwartą) — czy klient to zauważa, czy trzeba
+  odświeżyć stronę, żeby przestać móc "edytować" coś, co i tak nie
+  zapisze się w bazie.
+- Próba `viewer`-a wywołania akcji właściciela (np. zmiana nazwy bazy,
+  zarządzanie udostępnieniami) — powinno być odrzucone już na poziomie
+  `qb_bases_update`/`qb_shares_write` (tylko `owner_id`).
 
 ---
 
