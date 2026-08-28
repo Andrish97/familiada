@@ -335,7 +335,20 @@ odwrotnie), dokładnie ten sam `guardResourceLock` co w edytorze.
 
 🔲 Testy e2e napisane (`tests/e2e/game-settings.spec.js`, 3 testy: blokada
 dwóch kart, konflikt CAS przy zapisie, filtrowanie martwego id pytania
-finału) — czekają na pierwsze uruchomienie na produkcji.
+finału) — pierwsze uruchomienie: 1/3 (blokada ✅), 2 testy CAS/filtrowania
+✘.
+
+Pierwszy realny bug znaleziony przez testy — **regresja na produkcji**:
+`updateChecked()` (`js/core/db-guard.js`) robił `.eq(col, val)` z `val`
+będącym obiektem (`settings: lastSavedSettingsRaw` w CAS) — supabase-js
+dla nie-prymitywów w `.eq()` robi zwykłe `String(val)`, czyli dosłowne
+`"[object Object]"` zamiast JSON, co PostgREST odrzucał jako
+`invalid input syntax for type json` (HTTP 400). Efekt: **każdy** zapis
+ustawień gry był zepsuty na produkcji od razu po wdrożeniu Warstwy 2, nie
+tylko scenariusz testowy. Fix: `updateChecked` teraz jawnie
+`JSON.stringify()`-uje wartości obiektowe przed `.eq()` — PostgREST i tak
+rzutuje string filtra na typ kolumny (jsonb), więc porównanie jest po
+wartości, nie po tekście. Czeka na ponowne uruchomienie testów.
 
 🔲 **Brakująca funkcja — blokada zmiany ustawień gdy gra jest w toku**:
 zależna od Control, więc szczegóły i implementacja przeniesione do sekcji

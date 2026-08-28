@@ -11,7 +11,16 @@ export const ROW_GONE = "ROW_GONE";
 
 export async function updateChecked(table, match, patch) {
   let q = sb().from(table).update(patch);
-  for (const [col, val] of Object.entries(match)) q = q.eq(col, val);
+  for (const [col, val] of Object.entries(match)) {
+    // supabase-js robi .eq(col, val) -> String(val) dla nie-prymitywów, czyli
+    // dosłowne "[object Object]" zamiast JSON — dla kolumn jsonb (np. CAS na
+    // games.settings w game-settings.js) to leci do PostgREST jako niepoprawny
+    // JSON i całe zapytanie kończy się 400 (potwierdzone w e2e). Serializuj
+    // ręcznie — PostgREST rzutuje string filtra na typ kolumny (jsonb), więc
+    // porównanie wciąż jest po wartości, nie tekście.
+    const filterVal = val && typeof val === "object" ? JSON.stringify(val) : val;
+    q = q.eq(col, filterVal);
+  }
   const { data, error } = await q.select("id");
   if (error) throw error;
   if (!data || data.length === 0) {
