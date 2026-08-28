@@ -73,8 +73,11 @@ test("usuwanie gry: zablokowane, gdy jej ankieta jest otwarta (poll_open)", asyn
     await card.locator(".x").click({ timeout: 10000 });
     await page.locator(".uni-foot .btn.gold").click({ timeout: 10000 }); // potwierdź "Usuń"
 
-    await expect(page.locator(".mSub")).toContainText("otwarta", { timeout: 10000 });
-    await page.locator(".uni-foot .btn.gold").click(); // zamknij alert blokady
+    // builder.html ma własne statyczne modale (eksport do bazy/pliku,
+    // zmiana nazwy), każdy z zawsze obecną w DOM klasą .mSub — jak w
+    // logo-editorze, goły .mSub jest niejednoznaczny.
+    await expect(page.locator(".uni-modal .mSub")).toContainText("otwarta", { timeout: 10000 });
+    await page.locator(".uni-modal .uni-foot .btn.gold").click(); // zamknij alert blokady
 
     expect(await gameExists(page, gameId), "gra z otwartą ankietą nie powinna zostać usunięta").toBe(true);
   } finally {
@@ -111,8 +114,8 @@ test("usuwanie gry: zablokowane, gdy edytor jest otwarty w innej karcie", async 
     await card.locator(".x").click({ timeout: 10000 });
     await page.locator(".uni-foot .btn.gold").click({ timeout: 10000 });
 
-    await expect(page.locator(".mSub")).toContainText("innej karcie", { timeout: 10000 });
-    await page.locator(".uni-foot .btn.gold").click();
+    await expect(page.locator(".uni-modal .mSub")).toContainText("innej karcie", { timeout: 10000 });
+    await page.locator(".uni-modal .uni-foot .btn.gold").click();
 
     expect(await gameExists(page, gameId), "gra otwarta w edytorze w innej karcie nie powinna zostać usunięta").toBe(true);
   } finally {
@@ -238,7 +241,14 @@ test("usuwanie logo: działa normalnie, gdy nic go nie blokuje", async ({ page, 
 
     const tile = page.locator(`.logoTile[data-key="${logoId}"]`);
     await expect(tile).toBeVisible({ timeout: 10000 });
-    await tile.locator(".logoX").click({ timeout: 10000 });
+    // force: true — siatka logo dorysowuje podglądy canvas asynchronicznie
+    // po pierwszym renderze kafelków ("najpierw kafelki, potem canvas" w
+    // renderList()), więc inny, stały kafelek potrafi się chwilowo znaleźć
+    // "na wierzchu" tej samej pozycji i przechwycić kliknięcie mimo że
+    // nasz .logoX (dopasowany po dokładnym data-key) jest widoczny —
+    // potwierdzone w CI (run #61): "intercepts pointer events" od
+    // zupełnie innego, niezwiązanego z testem logo.
+    await tile.locator(".logoX").click({ timeout: 10000, force: true });
     await expect(page.locator(".uni-foot .btn.gold")).toBeVisible({ timeout: 10000 });
     await page.locator(".uni-foot .btn.gold").click({ timeout: 10000 });
 

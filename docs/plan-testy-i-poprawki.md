@@ -284,7 +284,24 @@ audycie/poprawce każdej strony, zaczynając od edytora.
      pojedynczą próbę). Fix: `{timeout: 10000}` na każdym kliknięciu +
      `toBeVisible` przed kliknięciem modala.
    Jedyny zielony test za pierwszym razem: wykrycie `gone` przez heartbeat
-   w edytorze. Poprawki wypchnięte, czeka na kolejne uruchomienie.
+   w edytorze. Poprawki wypchnięte.
+
+   Run #61 (po poprawkach): 3/6 passed — "działa normalnie" (gra), "logo
+   zablokowane", "gone" już zielone. 3 nowe, znów wyłącznie testowe:
+   - **`.mSub` niejednoznaczny też w builderze** — dokładnie ten sam
+     wzorzec co w logo-editorze: `builder.html` ma własne statyczne
+     modale (eksport do bazy/pliku, zmiana nazwy), każdy z zawsze obecną
+     w DOM klasą `.mSub`. Fix: `.uni-modal .mSub` (te same 2 testy —
+     poll_open i locked — co wcześniej naprawiły `.card`).
+   - **Asynchroniczne canvas w siatce logo przesuwa kafelki** —
+     `renderList()` w logo-editorze celowo renderuje najpierw kafelki
+     bez podglądu, potem dorysowuje canvas asynchronicznie (kolejka) —
+     inny, stały kafelek logo potrafił się znaleźć "na wierzchu" i
+     przechwycić klik mimo że właściwy `.logoX` (dopasowany po dokładnym
+     `data-key`) był widoczny. Fix: `{force: true}` na tym kliknięciu —
+     uzasadnione, bo cel jest jednoznacznie potwierdzony przez `data-key`,
+     problem jest czysto wizualny/czasowy, nie pomyłką w wyborze elementu.
+   Poprawki wypchnięte, czeka na kolejne uruchomienie.
 3. **Ankieta** (`polls.js`) — Warstwa 2 już ✅ gotowa (guard w RPC), dołożyć
    Warstwę 1 dla spójności UX, PLUS (nowe, z kroku 2.5) sprawdzić czy
    `polls.js` jest konsumentem/celem którejś krzyżowej relacji.
