@@ -52,7 +52,7 @@ lub zostanie ominięta, dane i tak się nie skorumpują ani nie zgubią cicho.
 
 ---
 
-## Warstwa 1 — ogólny mechanizm blokady (budować JAKO PIERWSZE)
+## Warstwa 1 — ogólny mechanizm blokady — ✅ zbudowany i przetestowany
 
 Blokada ma być **jednym wspólnym mechanizmem dla całego projektu**, nie
 osobną implementacją per strona — z **elastycznymi komunikatami** (tytuł,
@@ -92,11 +92,21 @@ części, obie ogólne i reużywalne:
    edytowana w innej karcie"), inny dla bazy, inny dla logo, inny dla
    rozgrywki — zamiast jednego sztywnego tekstu na wszystko.
 
-**To ma powstać jako pierwszy krok, przed poprawkami per-strona** —
-dopiero mając gotowy ogólny mechanizm, każda strona z listy niżej dokłada
-tylko jedno wywołanie `acquireResourceLock` + `showResourceLockedOverlay`
-z własnym `resourceType`/`resourceId`/treścią, zamiast każda strona
-wymyślała blokadę od nowa.
+**Zbudowane i przetestowane** (`js/core/resource-lock.js`, migracja
+`2026-08-28_253_edit_locks.sql` — tabela `edit_locks` + RPC
+`acquire_edit_lock`/`release_edit_lock`), pierwszy konsument: edytor gry
+(patrz sekcja "Edytor gier" niżej). Reszta stron z listy dokłada teraz
+tylko jedno wywołanie `guardResourceLock({resourceType, resourceId,
+message, backHref})` z własną treścią, zamiast wymyślać blokadę od nowa.
+
+Po drodze e2e wyłapał realny bug we własnej implementacji: gdy karta
+odzyskiwała dostęp po zwolnieniu blokady przez drugą kartę, chowałem
+tylko overlay — ale strona już wcześniej przerwała renderowanie (`return`
+przy pierwszej porażce), więc pod overlayem zostawała pusta, niewyrenderowana
+treść. Fix: po odzyskaniu dostępu strona robi `location.reload()` zamiast
+próbować "wznowić" stan w locie — świeży `boot()` przechodzi normalnie
+przez `guardResourceLock` i realnie renderuje. Potwierdzone e2e (dwie
+karty, zamknięcie pierwszej, druga wchodzi i widzi pytania).
 
 ### Szkic tabeli
 
@@ -137,31 +147,34 @@ bezpośrednim INSERT/UPDATE z klienta (jak przy `device_presence`):
   `acquire` w tej samej milisekundzie nie obie "wygrały").
 - `release_edit_lock(p_resource_type, p_resource_id, p_tab_id)` — usuwa
   wiersz TYLKO jeśli `holder_tab_id` się zgadza (nikt nie może zwolnić
-  cudzej blokady). Wołane na `visibilitychange`/`beforeunload` (best
-  effort) — jeśli nie zdąży odpalić (crash karty), i tak wygasa przez TTL
-  przy następnej próbie `acquire` kogoś innego.
+  cudzej blokady). Wołane na `pagehide` (best effort — CELOWO NIE na
+  zwykłe schowanie karty/`visibilitychange`, bo alt-tab do innej aplikacji
+  podczas edycji nie powinien oddawać blokady komuś innemu) — jeśli nie
+  zdąży odpalić (crash karty), i tak wygasa przez TTL przy następnej
+  próbie `acquire` kogoś innego.
 
 **Kto i jak czyta**: RLS `SELECT` z tym samym warunkiem dostępu co RPC
 (właściciel zasobu / `base_can_access()` dla bazy) — każdy uprawniony do
 zasobu widzi czy jest zajęty, ale nie może nic zapisać poza RPC.
 
-**Przepływ na stronie**:
+**Przepływ na stronie** (`guardResourceLock`, zaimplementowane dokładnie tak):
 1. Start strony (po `requireAuth`, przed renderem edytowalnej treści):
    `holder_tab_id` z `sessionStorage` (per-karta, przeżywa odświeżenie tej
    samej karty) → `acquire_edit_lock`.
-2. `ok:false` → `showResourceLockedOverlay(...)`, treść nie ładowana;
-   subskrypcja `rt(`edit-lock:${type}:${id}`).onBroadcast("RELEASED", ...)`
-   żeby ponowić próbę natychmiast po zwolnieniu, bez czekania na kolejny
-   heartbeat.
+2. `ok:false` → overlay, wywołujący robi `return` (treść nie renderowana).
+   W tle: subskrypcja broadcastu `"RELEASED"` + niezależny polling co ~5s
+   (fallback gdyby broadcast nie doszedł — TTL 25s i tak w końcu zwolni).
+   Gdy którekolwiek wykryje, że zasób jest wolny → `location.reload()`
+   (nie samo chowanie overlayu — patrz fix wyżej).
 3. `ok:true` → renderuj normalnie, `setInterval` odnawiający co ~8s.
-4. Zamknięcie/schowanie karty → `release_edit_lock` + broadcast
+4. Zamknięcie/nawigacja karty (`pagehide`) → `release_edit_lock` + broadcast
    `"RELEASED"` na kanale zasobu, żeby czekający dowiedzieli się od razu.
 
 ### Mapa zasobów (po zbudowaniu ogólnego mechanizmu)
 
 | Zasób (klucz blokady) | Strona | Kiedy wdrożyć |
 |---|---|---|
-| `game_id` (edytor) | `js/pages/editor.js` | 🔲 **pierwsze** — razem z Warstwą 2 dla edytora |
+| `game_id` (edytor) | `js/pages/editor.js` | ✅ zrobione i przetestowane e2e |
 | `game_id` (ustawienia) | `js/pages/game-settings.js` | 🔲 po edytorze |
 | `game_id` (ankieta) | `js/pages/polls.js` | 🔲 po ustawieniach (Warstwa 2 już ✅ gotowa — sam RPC ma guard) |
 | `logo_id` | `logo-editor/js/main.js` | 🔲 po ankiecie |
@@ -201,12 +214,13 @@ audycie/poprawce każdej strony, zaczynając od edytora.
 
 ## Kolejność pracy
 
-0. **Ogólny mechanizm blokady** (`js/core/resource-lock.js`) — zbudować
-   NAJPIERW, na wzorcu `guardDesktopOnly()` + `showGuestBlockedOverlay()`
-   (patrz wyżej), zanim jakakolwiek strona dostanie Warstwę 1.
-1. **Edytor gier** (`editor.js`) — dokończyć Warstwę 2 (fix "cichego
-   sukcesu"), potem dołożyć Warstwę 1 (blokada `game_id`). Ma być
-   "zamknięty" jako pierwszy, w pełni od obu stron.
+0. **Ogólny mechanizm blokady** (`js/core/resource-lock.js`) — ✅ zbudowany,
+   na wzorcu `guardDesktopOnly()` + `showGuestBlockedOverlay()` (patrz
+   wyżej), pierwszy konsument (edytor) przetestowany e2e.
+1. **Edytor gier** (`editor.js`) — ✅ Warstwa 1 (blokada `game_id`) zrobiona
+   i przetestowana. 🔲 Zostaje jeszcze Warstwa 2 (fix "cichego sukcesu")
+   — mniej pilne teraz niż przed Warstwą 1, ale wciąż zaplanowane jako
+   defense-in-depth.
 2. **Ustawienia gry** (`game-settings.js`) — Warstwa 2 (fix nadpisywania
    `settings` + nieaktualnej listy pytań) + Warstwa 1.
 3. **Ankieta** (`polls.js`) — Warstwa 2 już ✅ gotowa (guard w RPC), dołożyć
@@ -236,7 +250,7 @@ różnych użytkowników, albo nieaktualne dane po zmianie gdzie indziej):
 
 | Strona | Co edytuje | Status |
 |---|---|---|
-| `js/pages/editor.js` | pytania/odpowiedzi gry | ✅ 20 testów e2e, 1 fix (Warstwa 2) zrobiony, 🔲 1 fix zaplanowany + Warstwa 1 |
+| `js/pages/editor.js` | pytania/odpowiedzi gry | ✅ 20+1 testów e2e, Warstwa 1 (blokada) zrobiona, 🔲 1 fix Warstwy 2 zaplanowany |
 | `js/pages/polls.js` | zamykanie ankiety | ✅ Warstwa 2 gotowa (guard w RPC), 🔲 Warstwa 1 do dodania |
 | `js/pages/game-settings.js` | ustawienia gry (drużyny, wygląd, dźwięk, finał/rundy) | 🔲 2 realne bugi (Warstwa 2) + Warstwa 1 |
 | `logo-editor/js/main.js` | edytor logo (zapis do `user_logos`) | 🔲 nieprzejrzane + Warstwa 1 |
@@ -262,14 +276,21 @@ różnych użytkowników, albo nieaktualne dane po zmianie gdzie indziej):
 już działało dla odpowiedzi), zamiast próby zapisania pustego stringa
 i cichego desyncu UI/bazy przy błędzie constraintu `questions_text_len`.
 
-🔲 Poprawka (Warstwa 2, następna w kolejce): edycja pytania/odpowiedzi
-usuniętej w innej karcie kończy się fałszywym "Zapisano." (UPDATE
-trafiający w 0 wierszy nie jest rozpoznawany jako błąd). Ma być pierwszym
-miejscem, gdzie wchodzi wspólny helper `updateChecked`.
+✅ Warstwa 1: blokada `game_id` na wejściu do edytora (`guardResourceLock`,
+`resourceType: "game_editor"`). Test e2e ("dwie karty — druga karta jest
+blokowana overlayem zamiast cichej edycji, zwalnia się po zamknięciu
+pierwszej") zielony na produkcji (run #50) — druga karta dostaje overlay
+zamiast wejść w edycję, po zamknięciu pierwszej karty druga wchodzi i
+poprawnie widzi obie pytania. Przy okazji wyłapał i naprawił realny bug
+(patrz wyżej, sekcja "Warstwa 1 — ogólny mechanizm").
 
-🔲 Warstwa 1: blokada `game_id` na wejściu do edytora, po dokończeniu
-Warstwy 2 — żeby edytor był "zamknięty" od obu stron zanim przejdziemy do
-kolejnych stron z listy.
+🔲 Poprawka (Warstwa 2, jeszcze do zrobienia): edycja pytania/odpowiedzi
+usuniętej w innej karcie kończy się fałszywym "Zapisano." (UPDATE
+trafiający w 0 wierszy nie jest rozpoznawany jako błąd). Realnie już
+znacznie mniej prawdopodobne dzięki Warstwie 1 (dwie karty edytora tej
+samej gry naraz nie są już możliwe), ale wciąż warto jako defense-in-depth
+przeciwko ominięciu blokady. Ma być pierwszym miejscem, gdzie wchodzi
+wspólny helper `updateChecked`.
 
 ---
 
