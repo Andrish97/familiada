@@ -2127,10 +2127,57 @@ function decodeMimePart(part, content) {
   return content;
 }
 
+// RFC 2822/5322 header folding: a continuation line starts with SP/TAB.
+// Some generators (seen on AWS SES notification emails) put "boundary="
+// on such a continuation line, so unfolding must run before *every*
+// header block is inspected - not just once on the whole raw message -
+// or a multi-line "Content-Type: multipart/...; boundary=..." silently
+// fails to match and the raw MIME source leaks through as if it were the
+// message body.
+function unfoldHeaderBlock(s) {
+  return s.replace(/\r\n[ \t]/g, " ").replace(/\n[ \t]/g, " ");
+}
+
+// Deliberately does NOT require "boundary=" to appear on the same
+// (unfolded) line as "Content-Type: multipart/..." - only that a
+// multipart Content-Type and a boundary parameter both exist somewhere
+// in this header block. More forgiving of unusual header ordering/folding
+// while still requiring both signals to be present.
+function findMultipartBoundary(unfoldedHeaderBlock) {
+  if (!/Content-Type:\s*multipart\//i.test(unfoldedHeaderBlock)) return null;
+  const m = unfoldedHeaderBlock.match(/boundary\s*=\s*"?([^"\r\n;]+)"?/i);
+  return m ? m[1].trim() : null;
+}
+
+// Header/body separator is normally "\r\n\r\n", but tolerate a bare
+// "\n\n" too in case line endings got normalized somewhere upstream.
+function splitHeadersAndBody(part) {
+  let idx = part.indexOf("\r\n\r\n");
+  if (idx !== -1) return { headers: part.slice(0, idx), body: part.slice(idx + 4) };
+  idx = part.indexOf("\n\n");
+  if (idx !== -1) return { headers: part.slice(0, idx), body: part.slice(idx + 2) };
+  return null;
+}
+
+// Structural fallback for when header-based boundary detection fails for
+// some unanticipated reason: a real MIME boundary delimiter line is used
+// at least twice (opening a part, and again to open the next part or
+// close the group), so the most frequent "--token" line is a strong signal
+// regardless of how the Content-Type header was written.
+function guessBoundaryFromBody(raw) {
+  const counts = new Map();
+  for (const line of raw.split(/\r?\n/)) {
+    const m = line.match(/^--([!-~]{8,}?)(?:--)?$/);
+    if (m) counts.set(m[1], (counts.get(m[1]) || 0) + 1);
+  }
+  let best = null, bestCount = 1;
+  for (const [token, count] of counts) {
+    if (count > bestCount) { best = token; bestCount = count; }
+  }
+  return best;
+}
+
 function extractMimeParts(raw) {
-  // Unfold RFC 2822 folded headers
-  const unfolded = raw.replace(/\r\n([ \t])/g, " ").replace(/\n([ \t])/g, " ");
-  
   const textParts = [];
   const htmlParts = [];
   const attachments = [];
@@ -2141,23 +2188,23 @@ function extractMimeParts(raw) {
     const escaped = boundary.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const rawParts = content.split(new RegExp(`--${escaped}(?:\r?\n|--)`, "")).slice(1);
 
-    for (const part of rawParts) {
-      if (part.trim() === "" || part.trim() === "--") continue;
+    for (const rawPart of rawParts) {
+      if (rawPart.trim() === "" || rawPart.trim() === "--") continue;
 
-      const bodyStart = part.indexOf("\r\n\r\n");
-      if (bodyStart === -1) continue;
+      const split = splitHeadersAndBody(rawPart);
+      if (!split) continue;
 
-      const headers = part.slice(0, bodyStart);
-      let body = part.slice(bodyStart + 4);
+      const headers = unfoldHeaderBlock(split.headers);
+      let body = split.body;
       // Remove trailing CRLF if present before the next boundary
       if (body.endsWith("\r\n")) body = body.slice(0, -2);
 
       const ctMatch = headers.match(/Content-Type:\s*([^;\r\n]+)/i);
       const mimeType = ctMatch ? ctMatch[1].trim().toLowerCase() : "application/octet-stream";
-      
-      const subBoundaryMatch = headers.match(/boundary="?([^"\r\n;]+)"?/i);
-      if (subBoundaryMatch && mimeType.startsWith("multipart/")) {
-        parseLevel(body, subBoundaryMatch[1]);
+
+      const subBoundary = findMultipartBoundary(headers);
+      if (subBoundary && mimeType.startsWith("multipart/")) {
+        parseLevel(body, subBoundary);
         continue;
       }
 
@@ -2182,7 +2229,7 @@ function extractMimeParts(raw) {
           const filename = fnMatch ? decodeURIComponent(fnMatch[1].trim()) : `attachment_${Date.now()}_${attachments.length}`;
           const cid = cidMatch ? cidMatch[1] : null;
           if (cid) cidMap[cid] = `data:${mimeType};base64,${b64}`;
-          
+
           attachments.push({
             filename,
             mimeType,
@@ -2196,21 +2243,32 @@ function extractMimeParts(raw) {
     }
   }
 
-  const boundaryMatch = unfolded.match(/Content-Type:\s*multipart\/[^\r\n]+boundary="?([^"\r\n;]+)"?/i);
-  if (boundaryMatch) {
-    parseLevel(raw, boundaryMatch[1]);
+  // Independent safety net: if the declared Content-Type/boundary pair
+  // couldn't be found (or found but yielded nothing), look directly for a
+  // repeated "--token" delimiter line in the body. This catches whatever
+  // we failed to anticipate in the header - it's the same delimiter the
+  // sender actually used to split parts, detected structurally instead of
+  // by trusting our header regex.
+  const topBoundary = findMultipartBoundary(unfoldHeaderBlock(raw)) || guessBoundaryFromBody(raw);
+  if (topBoundary) {
+    parseLevel(raw, topBoundary);
     let html = htmlParts.join("\n");
     if (html && Object.keys(cidMap).length) {
       for (const [cid, dataUri] of Object.entries(cidMap)) {
         html = html.split(`cid:${cid}`).join(dataUri);
       }
     }
-    return { text: textParts.join("\n"), html, attachments };
+    if (textParts.length || htmlParts.length || attachments.length) {
+      return { text: textParts.join("\n"), html, attachments };
+    }
+    // Boundary was declared but nothing came out of it (e.g. a deeper
+    // parsing mismatch) - fall through to the non-multipart path below
+    // rather than silently returning an empty message.
   }
 
-  // Non-multipart
-  const bodyStart = raw.indexOf("\r\n\r\n");
-  const content = bodyStart !== -1 ? raw.slice(bodyStart + 4).trim() : "";
+  // Non-multipart (or multipart parsing above yielded nothing usable)
+  const split = splitHeadersAndBody(raw);
+  const content = split ? split.body.trim() : "";
   const decoded = decodeMimePart(raw, content);
   const isHtml = /^\s*<!doctype html|^\s*<html/i.test(decoded);
   return { text: isHtml ? "" : decoded, html: isHtml ? decoded : "", attachments: [] };
