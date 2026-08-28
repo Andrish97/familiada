@@ -226,28 +226,41 @@ audycie/poprawce każdej strony, zaczynając od edytora.
 2. **Ustawienia gry** (`game-settings.js`) — ✅ **ZAMKNIĘTE**. Warstwa 2
    (fix nadpisywania `settings` + nieaktualnej listy pytań) + Warstwa 1,
    3/3 testów e2e zielonych (run #56).
-2.5. **Generyczny mechanizm krzyżowych blokad** (nowy krok, ustalony
-   podczas dyskusji — patrz sekcja "Krzyżowe blokady między zasobami"
-   niżej) — 🔲 do zbudowania, PRZED kontynuacją na kolejne strony, żeby
-   każda kolejna strona konsumowała gotowy mechanizm zamiast dostawać
-   osobną łatkę:
+2.5. **Generyczny mechanizm krzyżowych blokad** (ustalony podczas
+   dyskusji — patrz sekcja "Krzyżowe blokady między zasobami" niżej) —
+   ✅ **kod gotowy**, 🔲 czeka na pierwsze uruchomienie e2e:
    - `acquire_edit_lock`/`guardResourceLock` → wynik trójstanowy zamiast
      dwustanowego: `ok` / `locked` (zajęte przez kogoś) / **`gone`**
      (zasób w ogóle już nie istnieje — przegrany wyścig z usunięciem).
-     Ten sam overlay co dziś, inny tekst dla `gone`.
-   - Generyczne RPC `can_delete(resource_type, resource_id)` — dispatch
-     do resolvera "kto się do mnie odwołuje" per typ zasobu (bo ścieżki
-     referencji są różne: FK dla pytań, JSONB `settings->display->logoId`
-     dla logo, brak FK), sprawdza `edit_locks` po stronie każdego
-     odwołującego się zasobu — blokuje usunięcie z jasnym komunikatem
-     (`alertModal`, nie overlay), jeśli coś żywego z niego korzysta.
-   - Osobno: przegląd istniejących blokad-tylko-frontowych opartych o
-     stan trwały (znaleziona jedna: `canEnterEdit()`/`poll_open` w
-     edytorze — Warstwa 1 istnieje, Warstwa 2 **zero**, RLS na
-     `questions`/`answers` sprawdza wyłącznie `owner_id`) — to osobny
-     problem od powyższego (stan zapisany w bazie, nie "żywa karta"), ale
-     tej samej kategorii "usztywnienia" i wypłynie przy audycie każdej
-     kolejnej strony, nie tylko edytora.
+     Ten sam overlay co dziś (`#resourceLockGuard`), inny tekst
+     (`resourceLock.goneTitle`/`goneMessage`) dla `gone`, bez pollingu
+     odzyskania (to się nigdy nie "zwolni"). Migracja
+     `2026-08-28_254_cross_resource_locks.sql`.
+   - Generyczne RPC `delete_resource_checked(resource_type, resource_id)`
+     — sprawdza i usuwa ATOMOWO w jednej transakcji (nie check-potem-
+     -delete z dwóch round-tripów, bo to zostawiałoby wyścig). Dispatch
+     per typ zasobu wewnątrz jednej funkcji — na razie `game` (blokuje
+     przy `status='poll_open'` lub aktywnym `edit_locks` na
+     `game_editor`/`game_settings`/`poll`/`control`) i `logo` (blokuje,
+     gdy gra tego samego właściciela referencuje je w
+     `settings.display.logoId` I ma teraz aktywny `game_settings` lock —
+     Control pominięty, bo nie ma jeszcze żadnego sygnału żywotności).
+     Zastąpiono goły `.from(...).delete()` w `builder.js` (gra) i
+     `logo-editor/js/main.js` (logo), z jawnym `alertModal` przy
+     zablokowaniu zamiast cichej porażki.
+   - Nowe testy: `tests/e2e/cross-resource-locks.spec.js` (6 testów —
+     usuwanie gry blokowane przez `poll_open`/aktywny lock, usuwanie gry
+     działa gdy nic nie blokuje, usuwanie logo blokowane przez otwarte
+     ustawienia referencującej gry, usuwanie logo działa gdy nic nie
+     blokuje, wykrycie `gone` przez heartbeat w edytorze niezależnie od
+     tego, jaką drogą zasób zniknął).
+   - Osobno, NIE zrobione w tym kroku: przegląd istniejących blokad-
+     -tylko-frontowych opartych o stan trwały (znaleziona jedna:
+     `canEnterEdit()`/`poll_open` w edytorze — Warstwa 1 istnieje,
+     Warstwa 2 **zero**, RLS na `questions`/`answers` sprawdza wyłącznie
+     `owner_id`) — to osobny problem od powyższego (stan zapisany w
+     bazie, nie "żywa karta"), ale tej samej kategorii "usztywnienia" i
+     wypłynie przy audycie każdej kolejnej strony, nie tylko edytora.
 3. **Ankieta** (`polls.js`) — Warstwa 2 już ✅ gotowa (guard w RPC), dołożyć
    Warstwę 1 dla spójności UX, PLUS (nowe, z kroku 2.5) sprawdzić czy
    `polls.js` jest konsumentem/celem którejś krzyżowej relacji.

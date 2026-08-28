@@ -100,6 +100,8 @@ const en = {
   resourceLock: {
     title: "In use elsewhere",
     back: "Back",
+    goneTitle: "This was deleted",
+    goneMessage: "What you're trying to open was deleted elsewhere in the meantime.",
   },
   guestInfo: {
     title: "⚠️ Guest account",
@@ -2943,6 +2945,8 @@ const en = {
     },
     alert: {
       deleteFailed: "Failed to delete game.",
+      deleteInUsePollOpen: "Can't delete the game — its poll is currently open and someone may be voting right now.",
+      deleteInUseLocked: "Can't delete the game — it's currently open in another tab (editor, settings, or poll).",
       createFailed: "Failed to create game.",
       resetPollFailed: "Failed to reset poll status.",
       checkFailed: "Failed to check game status.",
@@ -4192,6 +4196,7 @@ const en = {
       invalidPixFormat: "Invalid PIX format.",
       unknownLogoFormat: "Unknown logo import format.",
       deleteFailed: "Couldn't delete.\n\n{error}",
+      deleteInUse: "Can't delete — this logo is used by a game whose settings are currently open in another tab.",
       createFailedDetailed: "Couldn't create.\n\n{error}",
       invalidType: "Unknown logo type.",
       cannotEditOldLogo: "This logo cannot be edited.",

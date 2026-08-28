@@ -100,6 +100,8 @@ const pl = {
   resourceLock: {
     title: "Zajęte w innym miejscu",
     back: "Wróć",
+    goneTitle: "Zasób został usunięty",
+    goneMessage: "To, co próbujesz otworzyć, zostało w międzyczasie usunięte gdzie indziej.",
   },
   guestInfo: {
     title: "⚠️ Konto gościa",
@@ -2816,6 +2818,8 @@ const pl = {
     },
     alert: {
       deleteFailed: "Nie udało się usunąć gry.",
+      deleteInUsePollOpen: "Nie można usunąć gry — jej ankieta jest właśnie otwarta i ktoś może aktualnie głosować.",
+      deleteInUseLocked: "Nie można usunąć gry — jest właśnie otwarta w innej karcie (edytor, ustawienia lub ankieta).",
       createFailed: "Nie udało się utworzyć gry.",
       resetPollFailed: "Nie udało się zresetować statusu ankiety.",
       checkFailed: "Nie udało się sprawdzić statusu gry.",
@@ -4066,6 +4070,7 @@ const pl = {
       invalidPixFormat: "Niepoprawny format PIX.",
       unknownLogoFormat: "Nieznany format importu logo.",
       deleteFailed: "Nie udało się usunąć.\n\n{error}",
+      deleteInUse: "Nie można usunąć — to logo jest używane w grze, której ustawienia są właśnie otwarte w innej karcie.",
       createFailedDetailed: "Nie udało się utworzyć.\n\n{error}",
       invalidType: "Nieznany typ logo.",
       cannotEditOldLogo: "To logo nie może być edytowane.",

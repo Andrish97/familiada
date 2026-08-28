@@ -157,7 +157,23 @@ export async function guardResourceLock({ resourceType, resourceId, message, tit
   let heartbeatTimer = null;
   let retryTimer = null;
 
+  function showGoneOverlay() {
+    showOverlay({
+      title: t("resourceLock.goneTitle"),
+      message: t("resourceLock.goneMessage"),
+      backHref,
+    });
+  }
+
   const initial = await acquireOnce(resourceType, resourceId);
+
+  if (initial?.error === "gone") {
+    // Zasób usunięty gdzie indziej, zanim zdążyliśmy wejść — inny
+    // komunikat niż "zajęte przez kogoś" i bez pollingu odzyskania (to
+    // się nigdy nie "zwolni").
+    showGoneOverlay();
+    return { ok: false, gone: true };
+  }
 
   if (!initial?.ok) {
     showOverlay({ title, message, backHref });
@@ -175,6 +191,11 @@ export async function guardResourceLock({ resourceType, resourceId, message, tit
       if (res?.ok) {
         clearInterval(retryTimer);
         location.reload();
+      } else if (res?.error === "gone") {
+        // Zniknęło całkiem, zanim zwolniła je karta, na którą czekaliśmy —
+        // dalsze odpytywanie nic już nie zmieni.
+        clearInterval(retryTimer);
+        showGoneOverlay();
       }
     }
 
@@ -188,8 +209,19 @@ export async function guardResourceLock({ resourceType, resourceId, message, tit
     return { ok: false };
   }
 
-  heartbeatTimer = setInterval(() => {
-    acquireOnce(resourceType, resourceId).catch((e) => console.warn("[resource-lock] heartbeat failed:", e));
+  heartbeatTimer = setInterval(async () => {
+    const res = await acquireOnce(resourceType, resourceId).catch((e) => {
+      console.warn("[resource-lock] heartbeat failed:", e);
+      return null;
+    });
+    if (res?.error === "gone") {
+      // Zasób zniknął w trakcie edycji (usunięty gdzie indziej, np. przez
+      // Warstwę 2 krzyżowych blokad gdzieś indziej albo mimo niej). Overlay
+      // na wierzchu już wyrenderowanej treści blokuje dalszą interakcję —
+      // nie trzeba nic chować/przerenderowywać pod spodem.
+      clearInterval(heartbeatTimer);
+      showGoneOverlay();
+    }
   }, HEARTBEAT_MS);
 
   const release = () => {

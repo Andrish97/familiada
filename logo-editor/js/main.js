@@ -869,7 +869,8 @@ async function updateLogo(id, patch){
 }
 
 async function deleteLogo(id){
-  // Najpierw pobierz logo, żeby uzyskać dostęp do imageUrl w payload
+  // Najpierw pobierz logo, żeby uzyskać dostęp do imageUrl w payload —
+  // PRZED usunięciem, bo po skasowaniu wiersza nie da się już go odczytać.
   const { data: logo, error: fetchError } = await sb()
     .from("user_logos")
     .select("payload")
@@ -879,6 +880,26 @@ async function deleteLogo(id){
   if (fetchError) {
     console.error("[deleteLogo] Fetch error:", fetchError);
     throw fetchError;
+  }
+
+  // Zamiast gołego .from("user_logos").delete() — RPC sprawdza i usuwa
+  // atomowo, blokując gdy to logo jest wybrane w ustawieniach gry, która
+  // ma je teraz aktywnie otwarte (patrz docs/plan-testy-i-poprawki.md,
+  // "Krzyżowe blokady między zasobami"). Musi się wykonać PRZED
+  // sprzątaniem storage niżej — inaczej blokada usunęłaby plik, mimo że
+  // sam wiersz w bazie zostaje.
+  const { data: result, error: rpcError } = await sb().rpc("delete_resource_checked", {
+    p_resource_type: "logo",
+    p_resource_id: id,
+  });
+  if (rpcError) {
+    console.error("[deleteLogo] RPC error:", rpcError);
+    throw rpcError;
+  }
+  if (!result?.ok) {
+    const e = new Error("logo in use");
+    e.code = "RESOURCE_IN_USE";
+    throw e;
   }
 
   // Jeśli logo ma imageUrl w payload.source, usuń plik ze storage
@@ -925,13 +946,7 @@ async function deleteLogo(id){
       // Nie rzucamy błędu - kontynuujemy usuwanie z DB
     }
   }
-
-  // Usuń rekord z bazy
-  const { error } = await sb().from("user_logos").delete().eq("id", id);
-  if (error) {
-    console.error("[deleteLogo] Database delete error:", error);
-    throw error;
-  }
+  // Wiersz w bazie już usunięty przez delete_resource_checked() wyżej.
 }
 
 /* =========================================================
@@ -1148,7 +1163,11 @@ function renderList(){
         setMsg(t("logoEditor.status.deleted"));
       }catch(e){
         console.error(e);
-        void alertModal({ text: t("logoEditor.errors.deleteFailed", { error: e?.message || e }) });
+        void alertModal({
+          text: e?.code === "RESOURCE_IN_USE"
+            ? t("logoEditor.errors.deleteInUse")
+            : t("logoEditor.errors.deleteFailed", { error: e?.message || e }),
+        });
         setMsg("");
       }
     });

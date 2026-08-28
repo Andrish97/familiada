@@ -52,6 +52,8 @@ const MSG = {
   deleteOk: () => t("builder.delete.ok"),
   deleteCancel: () => t("builder.delete.cancel"),
   alertDeleteFailed: () => t("builder.alert.deleteFailed"),
+  alertDeleteInUsePollOpen: () => t("builder.alert.deleteInUsePollOpen"),
+  alertDeleteInUseLocked: () => t("builder.alert.deleteInUseLocked"),
   alertCreateFailed: () => t("builder.alert.createFailed"),
   hintSelect: () => t("builder.hint.select"),
   hintSelectPlus: () => t("builder.hint.selectPlus"),
@@ -751,17 +753,35 @@ async function deleteGame(game) {
   });
   if (!ok) return;
 
+  // Zamiast gołego .from("games").delete() — RPC sprawdza i usuwa
+  // atomowo, blokując gdy gra ma teraz otwartą ankietę (poll_open, żywi
+  // głosujący) albo aktywny edit_lock (edytor/ustawienia/ankieta/control
+  // otwarte gdzie indziej) — patrz docs/plan-testy-i-poprawki.md,
+  // "Krzyżowe blokady między zasobami". MUSI się wykonać PRZED
+  // sprzątaniem plików dźwiękowych niżej — inaczej zablokowane usunięcie
+  // i tak osierociłoby pliki audio gry, która jednak zostaje.
+  const { data: result, error } = await sb().rpc("delete_resource_checked", {
+    p_resource_type: "game",
+    p_resource_id: game.id,
+  });
+  if (error) {
+    console.error("[builder] delete error:", error);
+    void alertModal({ text: MSG.alertDeleteFailed() });
+    return;
+  }
+  if (!result?.ok) {
+    console.warn("[builder] delete blocked:", result);
+    void alertModal({
+      text: result?.reason === "poll_open" ? MSG.alertDeleteInUsePollOpen() : MSG.alertDeleteInUseLocked(),
+    });
+    return;
+  }
+
   try {
     await deleteGameSoundsFolder(sb(), currentUser.id, game.id);
   } catch (e) {
     // Nie blokujemy usuwania gry, jeśli sprzątanie plików audio się nie powiedzie
     console.warn("[builder] deleteGameSoundsFolder failed:", e);
-  }
-
-  const { error } = await sb().from("games").delete().eq("id", game.id);
-  if (error) {
-    console.error("[builder] delete error:", error);
-    void alertModal({ text: MSG.alertDeleteFailed() });
   }
 }
 
