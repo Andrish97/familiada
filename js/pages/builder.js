@@ -1,23 +1,23 @@
-import { addRenameGesture } from "../core/rename-gesture.js?v=v2026-08-28T14094";
-import { sb } from "../core/supabase.js?v=v2026-08-28T14094";
-import { requireAuth } from "../core/auth.js?v=v2026-08-28T14094";
-import { alertModal, confirmModal } from "../core/modal.js?v=v2026-08-28T14094";
-import { hideForGuest, isGuestUser } from "../core/guest-mode.js?v=v2026-08-28T14094";
-import { initI18n, t, applyTranslations } from "../../translation/translation.js?v=v2026-08-28T14094";
-import { initRatingSystem } from "../core/rating-system.js?v=v2026-08-28T14094";
-import { initUiSelect } from "../core/ui-select.js?v=v2026-08-28T14094";
-import { maybeShowGuestInfoModal } from "../core/guest-info-modal.js?v=v2026-08-28T14094";
-import { maybeShowGuestMigrateReminder } from "../core/guest-migrate-reminder.js?v=v2026-08-28T14094";
+import { addRenameGesture } from "../core/rename-gesture.js?v=v2026-08-28T15115";
+import { sb } from "../core/supabase.js?v=v2026-08-28T15115";
+import { requireAuth } from "../core/auth.js?v=v2026-08-28T15115";
+import { alertModal, confirmModal } from "../core/modal.js?v=v2026-08-28T15115";
+import { hideForGuest, isGuestUser } from "../core/guest-mode.js?v=v2026-08-28T15115";
+import { initI18n, t, applyTranslations } from "../../translation/translation.js?v=v2026-08-28T15115";
+import { initRatingSystem } from "../core/rating-system.js?v=v2026-08-28T15115";
+import { initUiSelect } from "../core/ui-select.js?v=v2026-08-28T15115";
+import { maybeShowGuestInfoModal } from "../core/guest-info-modal.js?v=v2026-08-28T15115";
+import { maybeShowGuestMigrateReminder } from "../core/guest-migrate-reminder.js?v=v2026-08-28T15115";
 
-import { initPwa, isStandalone, isMobileDevice } from "../core/pwa.js?v=v2026-08-28T14094";
+import { initPwa, isStandalone, isMobileDevice } from "../core/pwa.js?v=v2026-08-28T15115";
 
 // Zarejestruj listener PWA jak najwcześniej – beforeinstallprompt może odpalić przed requireAuth
 const pwaApi = initPwa();
 // Jeśli beforeinstallprompt już odpalił zanim dodaliśmy listener w IIFE, sprawdzimy po zalogowaniu
 
 
-import { exportGame, importGame, downloadJson } from "./builder-import-export.js?v=v2026-08-28T14094";
-import { setTopbarNavPriority, setTopbarAccount } from '../core/topbar-controller.js?v=v2026-08-28T14094';
+import { exportGame, importGame, downloadJson } from "./builder-import-export.js?v=v2026-08-28T15115";
+import { setTopbarNavPriority, setTopbarAccount } from '../core/topbar-controller.js?v=v2026-08-28T15115';
 
 import "../core/contact-modal.js";
 import {
@@ -28,8 +28,8 @@ import {
   validateGameReadyToPlay,
   validatePollEntry,
   validatePollReadyToOpen,
-} from "../core/game-validate.js?v=v2026-08-28T14094";
-import { deleteGameSoundsFolder } from "../core/sfx-cloud.js?v=v2026-08-28T14094";
+} from "../core/game-validate.js?v=v2026-08-28T15115";
+import { deleteGameSoundsFolder } from "../core/sfx-cloud.js?v=v2026-08-28T15115";
 
 const MSG = {
   exportBaseEmpty: () => t("builder.exportBase.empty"),
