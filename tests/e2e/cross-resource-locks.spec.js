@@ -374,7 +374,10 @@ test("ustawienia blokują edytor tej samej gry", async ({ page, context }) => {
 
     await settingsPage.close();
 
+    // Po zwolnieniu blokady przez ustawienia — edytor realnie wchodzi
+    // (nie tylko chowa overlay w trakcie reloadu, zanim __sbClient wróci).
     await expect(page.locator("#resourceLockGuard")).toBeHidden({ timeout: 40000 });
+    await expect(page.locator("#qList")).not.toBeEmpty({ timeout: 10000 });
   } finally {
     await page.evaluate(async (id) => { await window.__sbClient.from("games").delete().eq("id", id); }, gameId);
   }
