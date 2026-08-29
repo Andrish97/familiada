@@ -198,6 +198,70 @@ w tym testy "edytor blokuje ustawienia" i "ustawienia blokują edytor").
 | `base_id` | `base-explorer/` | 🔲 **świadomie odłożone** do PO dogłębnym audycie i testach bazy (patrz sekcja "Baza pytań") |
 | `game` (rozgrywka) | `control/` | 🔲 **świadomie odłożone**, osobny kompleksowy punkt razem z zapisem/przywracaniem stanu (patrz sekcja "Control") — dołączy do tego samego wspólnego klucza `game`, nie osobnego |
 
+### Siatka połączeń — zasób × strona/proces × warunek blokady
+
+Zbudowana PO uwadze, że implementowanie `polls.js` bez pełnego obrazu
+(m.in. `game-settings.js` referencuje logo, ankiety mają swoją specyfikę,
+`builder.js` też pisze bezpośrednio do `games`/`answers`) było działaniem
+przed zrobieniem mapy, nie po. Poniżej pełny przegląd wszystkiego, co
+faktycznie pisze do którego zasobu, żeby dalsze kroki (logo-editor, baza,
+reszta stron) szły już z pełnym obrazem, a nie znowu punktowo.
+
+**Trzy tryby dostępu do zasobu** — to rozróżnienie jest kluczowe, bo nie
+każde miejsce, które pisze do zasobu, powinno brać blokadę:
+
+1. **Wyłączny edytor (sesja trzymana, dopóki karta żyje)** — strona
+   otwiera się, bierze `acquire_edit_lock` i trzyma go cały czas (heartbeat
+   co 8s). Każda inna próba wejścia na TEN SAM zasób = zablokowana
+   (overlay), niezależnie która to strona. To editor.js/game-settings.js/
+   polls.js dziś, docelowo logo-editor i base-explorer.
+2. **Wiele naraz z zamierzenia — NIE blokować** — współbieżne zapisy są
+   tu POŻĄDANYM zachowaniem, nie zagrożeniem. Ankieta: dziesiątki/setki
+   anonimowych głosujących poprawnie piszą jednocześnie do tej samej gry
+   (`poll_votes`/`poll_text_entries`) — to jest cała specyfika ankiet, o
+   której była mowa: blokowanie tu byłoby błędem, nie zabezpieczeniem.
+   Bezpieczne z natury, bo każdy głos to osobny wiersz z unikalnym
+   `voter_token`, zero współdzielonego stanu do nadpisania.
+3. **Jednorazowa akcja, bez trzymanej sesji, ale pisząca do tych samych
+   danych co tryb 1** — np. `builder.js` robi `resetPollForEditing()`
+   (zeruje `answers.fixed_points`, cofa `games.status` na `draft`) albo
+   import pytań z pliku — to nie jest "otwarta karta", tylko jeden zapis i
+   koniec. Blokada wejścia (Warstwa 1) nic tu nie da, bo strona się nie
+   "otwiera" na dłużej — ale zapis nadal może kolidować z kimś, kto W TYM
+   MOMENCIE ma otwarty edytor/ustawienia/ankietę tej samej gry.
+
+**Tabela główna** (✅ zrobione / 🔄 w toku / 🔲 do zrobienia / ⚠️ nowo
+znaleziona luka / n/d nie dotyczy):
+
+| Zasób | Strona/proces | Tryb | Co pisze | Warstwa 1 | Warstwa 2 | Status |
+|---|---|---|---|---|---|---|
+| `game` | `editor.js` | wyłączny edytor | `questions`, `answers` | ✅ trzyma lock `game` | `updateChecked` (CAS) + wykrycie `ROW_GONE` | ✅ zamknięte |
+| `game` | `game-settings.js` | wyłączny edytor | `games.settings` | ✅ trzyma lock `game` | CAS na `settings` + filtr nieaktualnych pytań | ✅ zamknięte |
+| `game` | `polls.js` (panel admina) | wyłączny edytor | `games.status`, `answers.fixed_points` (przy zamknięciu), `poll_sessions` | ✅ trzyma lock `game` | RPC-e (`poll_open`/`poll_points_close_and_normalize`/`poll_text_close_apply`) same sprawdzają status+ownership atomowo | 🔄 wdrożone w kodzie, e2e w toku |
+| `game` | `poll-text.js` / `poll-points.js` (głosujący) | **wiele naraz z zamierzenia** | `poll_votes` / `poll_text_entries` | ❌ celowo NIE blokować | RPC per-głos z `voter_token` — zero kolizji, różne wiersze | ✅ bezpieczne z natury, nie wymaga zmian |
+| `game` | `poll-qr.js` / `poll-go.js` (wyświetlacz/wejście) | tylko odczyt | — | n/d | — | n/d |
+| `game` | `builder.js` → `renameGame()` | jednorazowa akcja | `games.name` | 🔲 brak | brak CAS | 🔲 **do decyzji** — kosmetyka, niska szkodliwość nawet przy kolizji; propozycja: NIE blokować |
+| `game` | `builder.js` → `resetPollForEditing()` (wołane WPROST z buildera, nie tylko z `editor.js`) | jednorazowa akcja, ale zeruje `answers.fixed_points` + `games.status` | jw. | 🔲 brak | 🔲 brak | ⚠️ **nowo znaleziona luka** — jeśli w tym momencie ktoś ma otwarty edytor/ustawienia/ankietę tej samej gry, reset nadpisuje dane pod nim bez ostrzeżenia. Do naprawienia: sprawdzić aktywny lock `game` przed zapisem (ostrzeżenie/blokada), nie tylko pytać usera o potwierdzenie w UI |
+| `game` | `builder-import-export.js` (import pytań do gry) | jednorazowa akcja | `questions`, `answers` (insert) | 🔲 brak | 🔲 nieprzejrzane | 🔲 to samo ryzyko co reset — do audytu w kroku 5 |
+| `game` | `builder.js` → `deleteGame()` | usunięcie, nie edycja | `games` (delete) | n/d | ✅ `delete_resource_checked('game', …)` (`poll_open` LUB aktywny lock `game`) | ✅ zamknięte (krok 2.5) |
+| `game` | Control (rozgrywka) | wyłączny (docelowo) | dziś brak bezpośrednich zapisów do `questions`/`answers`/`settings` (tylko `localStorage` + `game_sessions` po zakończeniu) | 🔲 odłożone | — | 🔲 krok 7, potrzebuje najpierw sygnału żywotności |
+| `logo` | `logo-editor/js/main.js` | wyłączny edytor (docelowo) | `user_logos.payload`/`name` | 🔲 RPC już gotowe (`acquire_edit_lock('logo',…)`), strona jeszcze nie woła | 🔲 nieprzejrzane | 🔲 krok 4 |
+| `logo` (referencja) | `game-settings.js` — WYBÓR logo (nie edycja) | odczyt + referencja | `games.settings.display.logoId` | n/d — to nie edycja logo, tylko wskazanie | — | n/d |
+| `logo` ↔ `game` | usunięcie logo, gdy referencująca gra ma aktywny lock `game` | — | — | — | ✅ `delete_resource_checked('logo', …)` — join `games`+`edit_locks` | ✅ zamknięte (krok 2.5) |
+| `logo` ↔ `game` | **edycja treści logo**, gdy referencująca gra ma aktywny lock `game` (ktoś na żywo ogląda/edytuje ustawienia z tym logo) | — | — | — | 🔲 **otwarte pytanie, nierozstrzygnięte** — blokować czy to pożądana funkcja (aktualizacja wyglądu w locie)? | 🔲 decyzja produktowa |
+| `base` | `base-explorer/*` | wyłączny edytor (docelowo) | `qb_questions`, `qb_category_tags`, `qb_question_tags` | 🔲 nieprzejrzane | 🔲 nieprzejrzane — najpierw głęboki audyt CRUD+uprawnienia | 🔲 krok 6 |
+| `base` | `bases.js` (lista, udostępnienia) | zarządzanie, nie treść | `question_bases` (rename/delete), share RPC-i | 🔲 nieprzejrzane | — | 🔲 do audytu razem z `base-explorer` |
+| `base` → `game` | eksport bazy → nowa gra | jednorazowa KOPIA, nie referencja | — | n/d | — | ✅ potwierdzone bezpieczne (zero trwałego powiązania po skopiowaniu) |
+
+**Dwie rzeczy do decyzji, zanim pójdziemy dalej** (nie zakładam
+odpowiedzi):
+1. Czy `resetPollForEditing()`/import w `builder.js` mają sprawdzać aktywny
+   lock `game` przed zapisem (ostrzeżenie albo twarda blokada), skoro
+   piszą do tych samych danych co edytor/ustawienia/ankieta?
+2. Czy edycja TREŚCI logo (nie usunięcie) ma być blokowana, gdy
+   referencująca je gra ma aktywny lock `game` — czy to pożądane
+   (aktualizacja wyglądu na żywo)?
+
 Blokada obejmuje też własne drugie okno tego samego użytkownika (prościej
 i spójniej, niż robić wyjątek "to moja sesja" — to był oryginalny problem
 zgłoszony dla edytora).
