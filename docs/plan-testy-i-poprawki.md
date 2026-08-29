@@ -221,8 +221,8 @@ docelowo (krok 7), dziś NIE ustawia `busy` wcale (brak sygnału
 | Wejście do `game-settings.js` | OVERLAY |
 | Wejście/akcja w `polls.js` (otwórz/zamknij/odpal) | OVERLAY |
 | Wejście do Control ("Zagraj") | OVERLAY (docelowo, krok 7) |
-| `builder.js` → zmiana nazwy (modal rename) | ALERT MODAL, akcja przerwana |
-| `builder.js` → reset do draftu (`resetPollForEditing`) | ALERT MODAL, akcja przerwana |
+| `builder.js` → zmiana nazwy (modal rename) | ALERT MODAL, akcja przerwana — 🔄 wdrożone w kodzie (`isResourceBusy()` w `resource-lock.js`), e2e w toku |
+| `builder.js` → reset do draftu (`resetPollForEditing`) | ALERT MODAL, akcja przerwana — 🔄 wdrożone w kodzie, e2e w toku |
 | `builder.js` → usunięcie (`deleteGame`) | ALERT MODAL — ✅ już zrobione (krok 2.5) |
 | `polls-hub.js` → akcja na konkretnej grze (anuluj task, usuń głos) | ALERT MODAL (domyślne założenie, do potwierdzenia przy implementacji) |
 

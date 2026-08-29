@@ -12,6 +12,7 @@ import { rt } from "./realtime.js?v=v2026-08-29T21253";
 const TAB_ID_KEY = "familiada:tabId";
 const HEARTBEAT_MS = 8000; // znacznie poniżej TTL (25s) w acquire_edit_lock
 const RETRY_POLL_MS = 5000; // dopóki zablokowani: fallback niezależny od broadcastu
+const LOCK_TTL_MS = 25000; // musi być zgodne z progiem w acquire_edit_lock/delete_resource_checked
 
 function randomId() {
   try {
@@ -235,4 +236,23 @@ export async function guardResourceLock({ resourceType, resourceId, message, tit
   window.addEventListener("pagehide", release);
 
   return { ok: true, release };
+}
+
+/**
+ * Sprawdza, czy zasób ma teraz aktywną blokadę gdzie indziej — BEZ jej
+ * zajmowania. Do jednorazowych akcji spoza "wyłącznego edytora" (np.
+ * `builder.js`'s rename/reset), które nie otwierają własnej sesji, ale
+ * piszą do tych samych danych — patrz docs/plan-testy-i-poprawki.md,
+ * sekcja "Model: zasób ma stan busy/free".
+ */
+export async function isResourceBusy(resourceType, resourceId) {
+  const { data, error } = await sb()
+    .from("edit_locks")
+    .select("resource_type")
+    .eq("resource_type", resourceType)
+    .eq("resource_id", resourceId)
+    .gt("heartbeat_at", new Date(Date.now() - LOCK_TTL_MS).toISOString())
+    .maybeSingle();
+  if (error) throw error;
+  return !!data;
 }

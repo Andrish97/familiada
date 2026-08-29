@@ -456,3 +456,122 @@ test("edytor blokuje ankietę tej samej gry", async ({ page, context }) => {
     await page.evaluate(async (id) => { await window.__sbClient.from("games").delete().eq("id", id); }, gameId);
   }
 });
+
+/* ================= builder.js — jednorazowe akcje sprawdzają busy zamiast overlayu ================= */
+// Model "busy/free" (plan-testy-i-poprawki.md): rename i reset-do-draftu w
+// builder.js nie otwierają własnej sesji, ale piszą do tych samych danych
+// co editor.js/game-settings.js -- muszą sprawdzić aktywny lock 'game' i
+// pokazać alert modal zamiast zapisywać w ciemno.
+
+test("builder.js: zmiana nazwy gry zablokowana alert-modalem, gdy gra jest edytowana gdzie indziej", async ({ page, context }) => {
+  test.setTimeout(60_000);
+  await loginAsTestUser(page, context);
+
+  const originalName = `E2E-XLOCK-RENAME-${Date.now()}`;
+  const gameId = await page.evaluate(async (name) => {
+    const sb = window.__sbClient;
+    const { data: userData } = await sb.auth.getUser();
+    const { data, error } = await sb.from("games")
+      .insert({ name, owner_id: userData.user.id, type: "prepared" })
+      .select("id").single();
+    if (error) throw new Error(error.message);
+    return data.id;
+  }, originalName);
+
+  const editorPage = await context.newPage();
+  try {
+    await editorPage.goto(`https://www.familiada.online/editor?id=${gameId}`, { waitUntil: "domcontentloaded" });
+    await editorPage.waitForLoadState("networkidle");
+    await waitForLock(editorPage, "game", gameId);
+
+    await page.goto("https://www.familiada.online/builder", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("networkidle");
+
+    const card = page.locator("#grid .card").filter({ hasText: originalName });
+    await expect(card).toBeVisible({ timeout: 15000 });
+    await card.dblclick();
+
+    await expect(page.locator("#nameOverlay")).toBeVisible({ timeout: 5000 });
+    await page.locator("#nameInp").fill(`${originalName}-RENAMED`);
+    await page.locator("#btnNameOk").click();
+
+    await expect(page.locator(".uni-modal .mSub")).toBeVisible({ timeout: 10000 });
+    await expect(page.locator(".uni-modal .mSub")).toContainText("używana", { timeout: 5000 });
+    await page.locator(".uni-foot .btn.gold").click();
+
+    const nameAfter = await page.evaluate(async (id) => {
+      const { data } = await window.__sbClient.from("games").select("name").eq("id", id).single();
+      return data?.name;
+    }, gameId);
+    expect(nameAfter, "nazwa nie powinna się zmienić, skoro rename zostało zablokowane").toBe(originalName);
+  } finally {
+    await editorPage.close();
+    await page.evaluate(async (id) => { await window.__sbClient.from("games").delete().eq("id", id); }, gameId);
+  }
+});
+
+test("builder.js: reset gry do draftu po ankiecie zablokowany alert-modalem, gdy gra jest edytowana gdzie indziej", async ({ page, context }) => {
+  test.setTimeout(60_000);
+  await loginAsTestUser(page, context);
+
+  const gameName = `E2E-XLOCK-RESET-${Date.now()}`;
+  const { gameId, questionId } = await page.evaluate(async (name) => {
+    const sb = window.__sbClient;
+    const { data: userData } = await sb.auth.getUser();
+    const { data: game, error: gErr } = await sb.from("games")
+      .insert({ name, owner_id: userData.user.id, type: "poll_text", status: "ready" })
+      .select("id").single();
+    if (gErr) throw new Error(gErr.message);
+    const { data: q, error: qErr } = await sb.from("questions")
+      .insert({ game_id: game.id, ord: 1, text: "Pytanie 1" })
+      .select("id").single();
+    if (qErr) throw new Error(qErr.message);
+    const { error: aErr } = await sb.from("answers")
+      .insert({ question_id: q.id, ord: 1, text: "Odp 1", fixed_points: 42 });
+    if (aErr) throw new Error(aErr.message);
+    return { gameId: game.id, questionId: q.id };
+  }, gameName);
+
+  const settingsPage = await context.newPage();
+  try {
+    await settingsPage.goto(`https://www.familiada.online/game-settings?id=${gameId}`, { waitUntil: "domcontentloaded" });
+    await settingsPage.waitForLoadState("networkidle");
+    await waitForLock(settingsPage, "game", gameId);
+
+    await page.goto("https://www.familiada.online/builder", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("networkidle");
+    // Domyślna aktywna zakładka to "Preparowana" -- gra poll_text renderuje
+    // się dopiero po przejściu na jej własną zakładkę.
+    await page.locator("#tabPollText").click();
+
+    const card = page.locator("#grid .card").filter({ hasText: gameName });
+    await expect(card).toBeVisible({ timeout: 15000 });
+    await card.click();
+    await expect(page.locator("#btnEdit")).toBeEnabled({ timeout: 10000 });
+    await page.locator("#btnEdit").click();
+
+    // canEnterEdit() zwraca needsResetWarning dla poll_text/ready -- najpierw
+    // confirmModal "na pewno zresetować", dopiero potem (po OK) trafiamy w
+    // sprawdzenie busy wewnątrz resetPollForEditing().
+    await expect(page.locator(".uni-modal .mSub")).toBeVisible({ timeout: 10000 });
+    await page.locator(".uni-foot .btn.gold").click();
+
+    await expect(page.locator(".uni-modal .mSub")).toBeVisible({ timeout: 10000 });
+    await expect(page.locator(".uni-modal .mSub")).toContainText("używana", { timeout: 5000 });
+    await page.locator(".uni-foot .btn.gold").click();
+
+    await expect(page).toHaveURL(/\/builder/, { timeout: 5000 });
+
+    const after = await page.evaluate(async ({ gameId, questionId }) => {
+      const sb = window.__sbClient;
+      const { data: g } = await sb.from("games").select("status").eq("id", gameId).single();
+      const { data: answers } = await sb.from("answers").select("fixed_points").eq("question_id", questionId);
+      return { status: g?.status, points: answers?.[0]?.fixed_points };
+    }, { gameId, questionId });
+    expect(after.status, "status nie powinien wrócić do draft, skoro reset został zablokowany").toBe("ready");
+    expect(after.points, "punkty nie powinny zostać wyzerowane, skoro reset został zablokowany").toBe(42);
+  } finally {
+    await settingsPage.close();
+    await page.evaluate(async (id) => { await window.__sbClient.from("games").delete().eq("id", id); }, gameId);
+  }
+});

@@ -30,6 +30,7 @@ import {
   validatePollReadyToOpen,
 } from "../core/game-validate.js?v=v2026-08-29T21253";
 import { deleteGameSoundsFolder } from "../core/sfx-cloud.js?v=v2026-08-29T21253";
+import { isResourceBusy } from "../core/resource-lock.js?v=v2026-08-29T21253";
 
 const MSG = {
   exportBaseEmpty: () => t("builder.exportBase.empty"),
@@ -374,7 +375,16 @@ function closeRenameModal() {
 
 async function renameGame(gameId, newName) {
   const val = String(newName || "").trim();
-  if (!val) return;
+  if (!val) return true;
+
+  // Zasób "game" jest busy, gdy editor.js/game-settings.js/polls.js mają
+  // ją otwartą gdzie indziej — patrz docs/plan-testy-i-poprawki.md,
+  // "Model: zasób ma stan busy/free". Rename nie otwiera własnej sesji
+  // (jednorazowa akcja), więc dostaje alert modal zamiast overlayu.
+  if (await isResourceBusy("game", gameId)) {
+    void alertModal({ text: t("resourceLock.gameMessage") });
+    return false;
+  }
 
   const { error } = await sb()
     .from("games")
@@ -382,6 +392,7 @@ async function renameGame(gameId, newName) {
     .eq("id", gameId);
 
   if (error) throw error;
+  return true;
 }
 
 function setExportBaseMsg(t) {
@@ -786,6 +797,15 @@ async function deleteGame(game) {
 }
 
 async function resetPollForEditing(gameId) {
+  // Zeruje answers.fixed_points i cofa games.status na draft -- te same
+  // dane, które edytor/ustawienia/ankieta trzymają pod swoim lockiem
+  // "game". Jednorazowa akcja bez własnej sesji, więc alert modal
+  // zamiast overlayu -- patrz "Model: zasób ma stan busy/free".
+  if (await isResourceBusy("game", gameId)) {
+    void alertModal({ text: t("resourceLock.gameMessage") });
+    return false;
+  }
+
   const { error: gErr } = await sb()
     .from("games")
     .update({ status: STATUS.DRAFT })
@@ -800,7 +820,7 @@ async function resetPollForEditing(gameId) {
   if (qErr) throw qErr;
 
   const qIds = (qs || []).map(x => x.id);
-  if (!qIds.length) return;
+  if (!qIds.length) return true;
 
   const { error: aErr } = await sb()
     .from("answers")
@@ -808,6 +828,7 @@ async function resetPollForEditing(gameId) {
     .in("question_id", qIds);
 
   if (aErr) throw aErr;
+  return true;
 }
 
 /* ================= Render ================= */
@@ -1447,7 +1468,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (!ok) return;
 
       try {
-        await resetPollForEditing(g.id);
+        const resetOk = await resetPollForEditing(g.id);
+        if (!resetOk) return;
         await refresh();
       } catch (e) {
         console.error("[builder] resetPollForEditing error:", e);
@@ -1667,7 +1689,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         selectedId = g.id;
       } else {
         if (!renamingGameId) return;
-        await renameGame(renamingGameId, val);
+        const renamed = await renameGame(renamingGameId, val);
+        if (!renamed) return;
       }
       await refresh();
       closeRenameModal();
