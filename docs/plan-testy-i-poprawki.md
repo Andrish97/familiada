@@ -252,9 +252,9 @@ znaleziona luka / n/d nie dotyczy):
 | `base` | `bases.js` (lista, udostępnienia) | zarządzanie, nie treść | `question_bases` (rename/delete), share RPC-i | 🔲 nieprzejrzane | — | 🔲 do audytu razem z `base-explorer` |
 | `base` → `game` | eksport bazy → nowa gra | jednorazowa KOPIA, nie referencja | — | n/d | — | ✅ potwierdzone bezpieczne (zero trwałego powiązania po skopiowaniu) |
 
-**Decyzje** (2 rozstrzygnięte, 2 nowe otwarte):
+**Decyzje** (3 rozstrzygnięte, 1 nadal otwarta):
 
-1. **`builder.js` → `resetPollForEditing()`/import — do decyzji, doprecyzowane.**
+1. **`builder.js` → `resetPollForEditing()`/import — nadal otwarte, doprecyzowane.**
    Konkretny scenariusz: użytkownik ma otwarty `editor.js` dla gry X w
    karcie A (trzyma lock `game`/X) i właśnie coś tam poprawia. W karcie B
    ten sam użytkownik wchodzi na `/builder`, klika "Edytuj" na grze X,
@@ -271,22 +271,28 @@ znaleziona luka / n/d nie dotyczy):
    aktywną rozgrywkę (Control) lub otwarte ustawienia gry
    (`game-settings.js`). Komunikat rozróżnia tylko powód: "prowadzisz
    rozgrywkę" / "zmieniasz ustawienia rozgrywki".
-3. **Nowe, z rozstrzygnięcia #2**: czy `editor.js` (sam tekst pytań, nie
-   dotyka wyglądu/logo) też ma być wyzwalaczem blokady logo, czy tylko
-   `game-settings.js` i Control? Ma to też konsekwencję techniczną: jeśli
-   TAK — wystarczy sprawdzić "czy użytkownik ma jakikolwiek aktywny lock
-   `game`" (prosto, bo to już jeden wspólny klucz). Jeśli NIE (tylko
-   ustawienia+Control) — trzeba dodatkowo zapisywać w `edit_locks`, PRZEZ
-   KTÓRĄ stronę lock jest trzymany (dziś tego nie ma, scalone celowo w
-   jeden `resource_type='game'` bez rozróżnienia strony).
-4. **Nowe, z Twojego pytania o ankiety**: `polls.js` już poprawnie blokuje
-   się wzajemnie z `editor.js`/`game-settings.js` (wspólny lock `game`,
-   potwierdzone e2e) — ale NIE z Control (rozgrywką), bo Control w ogóle
-   nie trzyma dziś żadnego locka. Czyli dziś nic nie stoi na przeszkodzie,
-   żeby otworzyć/zamknąć/odpalić ponownie ankietę tej samej gry, która
-   jest akurat pokazywana na żywo w Control. Czy to ma być naprawione
-   teraz (minimalny sygnał żywotności Control, żeby dołączył do wspólnego
-   locka `game`), czy zostaje w kolejce jako krok 7, jak było zaplanowane?
+3. **ROZSTRZYGNIĘTE**: `editor.js` (sam tekst pytań) NIE jest wyzwalaczem
+   blokady logo — tylko `game-settings.js` i Control. Konsekwencja
+   techniczna: skoro nie wystarczy "jakikolwiek aktywny lock `game`",
+   trzeba w `edit_locks` zapisywać PRZEZ KTÓRĄ stronę lock jest trzymany
+   (dziś tego nie ma — scalone celowo w jeden `resource_type='game'` bez
+   rozróżnienia strony przy unifikacji edytor/ustawienia). Wymaga nowej
+   kolumny (np. `holder_context`) wypełnianej przez `acquire_edit_lock` i
+   przekazywanej z `guardResourceLock({..., context})` w każdym
+   wywołaniu (`editor.js` → `"editor"`, `game-settings.js` →
+   `"settings"`, `polls.js` → `"polls"`, docelowo Control → `"control"`).
+   Sam mechanizm wzajemnego wykluczania (Warstwa 1) się NIE zmienia —
+   `holder_context` to czysto informacyjna kolumna do TEGO dodatkowego
+   sprawdzenia, nie do exclusion. Do zbudowania razem z krokiem 4
+   (logo-editor), bo dopiero tam powstanie faktyczny konsument (blokada
+   edycji/usunięcia logo) — samą kolumnę+parametr można dorzucić już przy
+   okazji, żeby nie robić tego osobnym, rozłącznym krokiem.
+4. **ROZSTRZYGNIĘTE**: luka `polls.js` ↔ Control (rozgrywka) zostaje w
+   kolejce jako krok 7, zgodnie z pierwotnym planem — nie przyspieszamy
+   budowy sygnału żywotności Control teraz. Do czasu kroku 7: nic nie
+   stoi na przeszkodzie, żeby otworzyć/zamknąć/odpalić ponownie ankietę
+   tej samej gry pokazywanej na żywo w Control — świadomie zaakceptowana,
+   tymczasowa luka.
 
 Blokada obejmuje też własne drugie okno tego samego użytkownika (prościej
 i spójniej, niż robić wyjątek "to moja sesja" — to był oryginalny problem
