@@ -193,7 +193,7 @@ w tym testy "edytor blokuje ustawienia" i "ustawienia blokują edytor").
 | Zasób (klucz blokady) | Strony | Kiedy wdrożyć |
 |---|---|---|
 | `game` | `js/pages/editor.js`, `js/pages/game-settings.js` | ✅ zrobione i przetestowane e2e (wspólny klucz) |
-| `game` (ankieta) | `js/pages/polls.js` | 🔄 dołączona do już istniejącego wspólnego klucza `game` w kodzie (Warstwa 2 już ✅ gotowa — sam RPC ma guard), e2e jeszcze nie uruchomione |
+| `game` (ankieta) | `js/pages/polls.js` | ✅ dołączona do wspólnego klucza `game`, przetestowane e2e (run #67, 12/12) |
 | `logo_id` | `logo-editor/js/main.js` | 🔲 po ankiecie |
 | `base_id` | `base-explorer/` | 🔲 **świadomie odłożone** do PO dogłębnym audycie i testach bazy (patrz sekcja "Baza pytań") |
 | `game` (rozgrywka) | `control/` | 🔲 **świadomie odłożone**, osobny kompleksowy punkt razem z zapisem/przywracaniem stanu (patrz sekcja "Control") — dołączy do tego samego wspólnego klucza `game`, nie osobnego |
@@ -221,8 +221,8 @@ docelowo (krok 7), dziś NIE ustawia `busy` wcale (brak sygnału
 | Wejście do `game-settings.js` | OVERLAY |
 | Wejście/akcja w `polls.js` (otwórz/zamknij/odpal) | OVERLAY |
 | Wejście do Control ("Zagraj") | OVERLAY (docelowo, krok 7) |
-| `builder.js` → zmiana nazwy (modal rename) | ALERT MODAL, akcja przerwana — 🔄 wdrożone w kodzie (`isResourceBusy()` w `resource-lock.js`), e2e w toku |
-| `builder.js` → reset do draftu (`resetPollForEditing`) | ALERT MODAL, akcja przerwana — 🔄 wdrożone w kodzie, e2e w toku |
+| `builder.js` → zmiana nazwy (modal rename) | ALERT MODAL, akcja przerwana — ✅ zamknięte, e2e zielone (run #67) |
+| `builder.js` → reset do draftu (`resetPollForEditing`) | ALERT MODAL, akcja przerwana — ✅ zamknięte, e2e zielone (run #67) |
 | `builder.js` → usunięcie (`deleteGame`) | ALERT MODAL — ✅ już zrobione (krok 2.5) |
 | `polls-hub.js` → akcja na konkretnej grze (anuluj task, usuń głos) | ALERT MODAL (domyślne założenie, do potwierdzenia przy implementacji) |
 
@@ -255,11 +255,15 @@ na żywo przez nic innego). `base-explorer/*` edytuje bazę #N → busy #N
 
 ---
 
-**Kolejność dalszych prac** (page po page): najpierw dokończyć pętlę
-`game` — `builder.js` (rename + reset sprawdzają `busy` przed zapisem,
-alert modal). Potem krok 4: `logo-editor.js` (warstwa A) + kolumna
-`holder_context` i warstwa B. Potem reszta wg wcześniej ustalonej
-kolejności (baza — krok 6, Control — krok 7).
+**Pętla `game` — ✅ ZAMKNIĘTA** (run #67, 12/12 e2e): `editor.js`,
+`game-settings.js`, `polls.js` (wszystkie trzy trzymają wspólny lock),
+`builder.js` (rename + reset + delete sprawdzają `busy`). Jedyna
+świadomie zaakceptowana luka: Control jeszcze nie uczestniczy (krok 7).
+
+**Kolejność dalszych prac**: krok 4 — `logo-editor.js` (warstwa A: lock
+per konkretne logo) + kolumna `holder_context` w `edit_locks` + warstwa B
+(cała pula logo busy przy Control/`game-settings.js`). Potem reszta wg
+wcześniej ustalonej kolejności (baza — krok 6, Control — krok 7).
 
 ---
 
