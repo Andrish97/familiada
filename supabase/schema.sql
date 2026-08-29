@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict jNsqT5JRtzuSd948mDYcKGxd5WJNbloRgKy2SY1kHGboleuL74YKIpvFssWNV47
+\restrict I2Pm8a9LLScpigrBoqBiD53KELL9ufxscBrfjgcVytsYalnJIZVEqKF1lnTga6v
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -170,10 +170,10 @@ $$;
 
 
 --
--- Name: acquire_edit_lock("text", "uuid", "text"); Type: FUNCTION; Schema: public; Owner: -
+-- Name: acquire_edit_lock("text", "uuid", "text", "text"); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION "public"."acquire_edit_lock"("p_resource_type" "text", "p_resource_id" "uuid", "p_tab_id" "text") RETURNS "jsonb"
+CREATE FUNCTION "public"."acquire_edit_lock"("p_resource_type" "text", "p_resource_id" "uuid", "p_tab_id" "text", "p_context" "text" DEFAULT NULL::"text") RETURNS "jsonb"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
     AS $$
@@ -213,11 +213,12 @@ begin
     return jsonb_build_object('ok', false, 'error', 'forbidden');
   end if;
 
-  insert into public.edit_locks (resource_type, resource_id, holder_tab_id, holder_user_id, acquired_at, heartbeat_at)
-  values (p_resource_type, p_resource_id, p_tab_id, v_uid, now(), now())
+  insert into public.edit_locks (resource_type, resource_id, holder_tab_id, holder_user_id, holder_context, acquired_at, heartbeat_at)
+  values (p_resource_type, p_resource_id, p_tab_id, v_uid, p_context, now(), now())
   on conflict (resource_type, resource_id) do update
     set holder_tab_id = excluded.holder_tab_id,
         holder_user_id = excluded.holder_user_id,
+        holder_context = excluded.holder_context,
         heartbeat_at = excluded.heartbeat_at,
         acquired_at = case
           when public.edit_locks.holder_tab_id = excluded.holder_tab_id
@@ -1518,8 +1519,6 @@ begin
       return jsonb_build_object('ok', false, 'in_use', true, 'reason', 'poll_open');
     end if;
 
-    -- Jeden wspólny typ 'game' zamiast dawnej listy game_editor/
-    -- game_settings/poll/control.
     select resource_type into v_blocker
     from public.edit_locks
     where resource_type = 'game'
@@ -1539,18 +1538,31 @@ begin
       return jsonb_build_object('ok', false, 'error', 'not_found_or_forbidden');
     end if;
 
-    select g.id as game_id into v_blocker
-    from public.games g
-    join public.edit_locks el
-      on el.resource_type = 'game'
-     and el.resource_id = g.id
-     and el.heartbeat_at > now() - interval '25 seconds'
-    where g.owner_id = v_uid
-      and (g.settings #>> '{display,logoId}') = p_resource_id::text
+    -- Warstwa A: to konkretne logo ma aktywną sesję edycji gdzie indziej
+    -- (logo-editor.js trzyma acquire_edit_lock('logo', ten id, ...)).
+    if exists (
+      select 1 from public.edit_locks
+      where resource_type = 'logo'
+        and resource_id = p_resource_id
+        and heartbeat_at > now() - interval '25 seconds'
+    ) then
+      return jsonb_build_object('ok', false, 'in_use', true, 'reason', 'locked');
+    end if;
+
+    -- Warstwa B: cała pula logo właściciela jest busy, gdy ma aktywną
+    -- rozgrywkę (Control) lub otwarte game-settings.js dla którejkolwiek
+    -- swojej gry -- niezależnie od tego, czy TO konkretne logo jest przez
+    -- nią referencowane.
+    select holder_context into v_blocker
+    from public.edit_locks
+    where resource_type = 'game'
+      and holder_user_id = v_uid
+      and holder_context in ('settings', 'control')
+      and heartbeat_at > now() - interval '25 seconds'
     limit 1;
 
     if found then
-      return jsonb_build_object('ok', false, 'in_use', true, 'reason', 'locked', 'blocker_game_id', v_blocker.game_id);
+      return jsonb_build_object('ok', false, 'in_use', true, 'reason', v_blocker.holder_context);
     end if;
 
     delete from public.user_logos where id = p_resource_id;
@@ -10351,6 +10363,50 @@ $$;
 
 
 --
+-- Name: update_logo_checked("uuid", "jsonb"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."update_logo_checked"("p_logo_id" "uuid", "p_patch" "jsonb") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+declare
+  v_uid uuid := auth.uid();
+  v_blocker record;
+begin
+  if v_uid is null then
+    return jsonb_build_object('ok', false, 'error', 'not_authenticated');
+  end if;
+
+  if not exists (select 1 from public.user_logos where id = p_logo_id and user_id = v_uid) then
+    return jsonb_build_object('ok', false, 'error', 'not_found_or_forbidden');
+  end if;
+
+  select holder_context into v_blocker
+  from public.edit_locks
+  where resource_type = 'game'
+    and holder_user_id = v_uid
+    and holder_context in ('settings', 'control')
+    and heartbeat_at > now() - interval '25 seconds'
+  limit 1;
+
+  if found then
+    return jsonb_build_object('ok', false, 'in_use', true, 'reason', v_blocker.holder_context);
+  end if;
+
+  update public.user_logos
+  set
+    name = coalesce(p_patch->>'name', name),
+    type = coalesce(p_patch->>'type', type),
+    payload = coalesce(p_patch->'payload', payload)
+  where id = p_logo_id and user_id = v_uid;
+
+  return jsonb_build_object('ok', true);
+end;
+$$;
+
+
+--
 -- Name: update_marketing_updated_at(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -10563,7 +10619,8 @@ CREATE TABLE "public"."edit_locks" (
     "holder_tab_id" "text" NOT NULL,
     "holder_user_id" "uuid" NOT NULL,
     "acquired_at" timestamp with time zone DEFAULT "now"() NOT NULL,
-    "heartbeat_at" timestamp with time zone DEFAULT "now"() NOT NULL
+    "heartbeat_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "holder_context" "text"
 );
 
 
@@ -14441,5 +14498,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict jNsqT5JRtzuSd948mDYcKGxd5WJNbloRgKy2SY1kHGboleuL74YKIpvFssWNV47
+\unrestrict I2Pm8a9LLScpigrBoqBiD53KELL9ufxscBrfjgcVytsYalnJIZVEqKF1lnTga6v
 
