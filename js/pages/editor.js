@@ -552,10 +552,14 @@ async function boot() {
     game = await loadGame(gameId);
   }
 
+  // resourceType: "game" — wspólny klucz z game-settings.js (i docelowo
+  // polls.js/control): edytor i ustawienia operują na tych samych,
+  // powiązanych danych (pytania ↔ wybór finału/rund), więc wzajemnie się
+  // wykluczają dla tej samej gry, nie tylko w obrębie tej samej strony.
   const lock = await guardResourceLock({
-    resourceType: "game_editor",
+    resourceType: "game",
     resourceId: gameId,
-    message: t("editor.lock.message"),
+    message: t("resourceLock.gameMessage"),
     backHref: withLangParam("builder"),
   });
   if (!lock.ok) return;

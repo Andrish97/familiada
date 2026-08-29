@@ -172,17 +172,32 @@ zasobu widzi czy jest zajęty, ale nie może nic zapisać poza RPC.
 
 ### Mapa zasobów (po zbudowaniu ogólnego mechanizmu)
 
-| Zasób (klucz blokady) | Strona | Kiedy wdrożyć |
+**Korekta (istotna zmiana względem wcześniejszej wersji tej sekcji)**:
+zasada ogólna, nie specyficzna dla gry — gdy dwie różne strony dotykają
+**tego samego zasobu** (tu akurat: konkretnej gry o danym id, ale
+zasada dotyczy każdego typu zasobu), nie są od siebie niezależne, jeśli
+operują na tych samych, powiązanych danych. Konkretny przypadek: edytor
+zmienia pytania, ustawienia wybierają z tych samych pytań finał/rundy —
+więc obie strony dzielą **jeden wspólny klucz blokady dla tego zasobu**
+(`game` + `resource_id`), nie osobny per strona. Kto pierwszy otworzy
+dowolną stronę dotykającą danego zasobu, ten trzyma blokadę — każda inna
+próba wejścia na TEN SAM zasób dostaje overlay "zajęte", niezależnie od
+tego, która to konkretnie strona. Komunikat na overlayu rozróżnia tylko
+TYP zasobu (gra/logo/baza), nie która strona trzyma blokadę. Wdrożone w
+migracji
+`2026-08-28_255_unify_game_edit_locks.sql` (collapse
+`game_editor`/`game_settings`/`poll`/`control` → `game`), potwierdzone
+e2e (`cross-resource-locks.spec.js`, testy "edytor blokuje ustawienia"
+i "ustawienia blokują edytor").
+
+| Zasób (klucz blokady) | Strony | Kiedy wdrożyć |
 |---|---|---|
-| `game_id` (edytor) | `js/pages/editor.js` | ✅ zrobione i przetestowane e2e |
-| `game_id` (ustawienia) | `js/pages/game-settings.js` | ✅ zrobione i przetestowane e2e (run #56, 3/3) |
-| `game_id` (ankieta) | `js/pages/polls.js` | 🔲 po ustawieniach (Warstwa 2 już ✅ gotowa — sam RPC ma guard) |
+| `game` | `js/pages/editor.js`, `js/pages/game-settings.js` | ✅ zrobione i przetestowane e2e (wspólny klucz) |
+| `game` (ankieta) | `js/pages/polls.js` | 🔲 dołącza do już istniejącego wspólnego klucza `game` (Warstwa 2 już ✅ gotowa — sam RPC ma guard) |
 | `logo_id` | `logo-editor/js/main.js` | 🔲 po ankiecie |
 | `base_id` | `base-explorer/` | 🔲 **świadomie odłożone** do PO dogłębnym audycie i testach bazy (patrz sekcja "Baza pytań") |
-| `game_id` (rozgrywka) | `control/` | 🔲 **świadomie odłożone**, osobny kompleksowy punkt razem z zapisem/przywracaniem stanu (patrz sekcja "Control") |
+| `game` (rozgrywka) | `control/` | 🔲 **świadomie odłożone**, osobny kompleksowy punkt razem z zapisem/przywracaniem stanu (patrz sekcja "Control") — dołączy do tego samego wspólnego klucza `game`, nie osobnego |
 
-Każdy zasób blokowany osobno pod własnym kluczem — otwarcie edytora gry
-nie blokuje jej ustawień ani ankiety w innej karcie, i odwrotnie.
 Blokada obejmuje też własne drugie okno tego samego użytkownika (prościej
 i spójniej, niż robić wyjątek "to moja sesja" — to był oryginalny problem
 zgłoszony dla edytora).
@@ -240,11 +255,13 @@ audycie/poprawce każdej strony, zaczynając od edytora.
      — sprawdza i usuwa ATOMOWO w jednej transakcji (nie check-potem-
      -delete z dwóch round-tripów, bo to zostawiałoby wyścig). Dispatch
      per typ zasobu wewnątrz jednej funkcji — na razie `game` (blokuje
-     przy `status='poll_open'` lub aktywnym `edit_locks` na
-     `game_editor`/`game_settings`/`poll`/`control`) i `logo` (blokuje,
-     gdy gra tego samego właściciela referencuje je w
-     `settings.display.logoId` I ma teraz aktywny `game_settings` lock —
-     Control pominięty, bo nie ma jeszcze żadnego sygnału żywotności).
+     przy `status='poll_open'` lub aktywnym `edit_locks` na wspólnym
+     kluczu `game` — patrz korekta w "Mapa zasobów" niżej: edytor,
+     ustawienia i docelowo ankieta/control dzielą JEDEN klucz, nie
+     osobne) i `logo` (blokuje, gdy gra tego samego właściciela
+     referencuje je w `settings.display.logoId` I ma teraz aktywny lock
+     `game` — Control pominięty, bo nie ma jeszcze żadnego sygnału
+     żywotności).
      Zastąpiono goły `.from(...).delete()` w `builder.js` (gra) i
      `logo-editor/js/main.js` (logo), z jawnym `alertModal` przy
      zablokowaniu zamiast cichej porażki.
@@ -378,13 +395,17 @@ różnych użytkowników, albo nieaktualne dane po zmianie gdzie indziej):
 już działało dla odpowiedzi), zamiast próby zapisania pustego stringa
 i cichego desyncu UI/bazy przy błędzie constraintu `questions_text_len`.
 
-✅ Warstwa 1: blokada `game_id` na wejściu do edytora (`guardResourceLock`,
-`resourceType: "game_editor"`). Test e2e ("dwie karty — druga karta jest
-blokowana overlayem zamiast cichej edycji, zwalnia się po zamknięciu
-pierwszej") zielony na produkcji (run #50) — druga karta dostaje overlay
-zamiast wejść w edycję, po zamknięciu pierwszej karty druga wchodzi i
-poprawnie widzi obie pytania. Przy okazji wyłapał i naprawił realny bug
-(patrz wyżej, sekcja "Warstwa 1 — ogólny mechanizm").
+✅ Warstwa 1: blokada wejścia do edytora (`guardResourceLock`,
+`resourceType: "game"` — wspólny klucz z `game-settings.js`, patrz
+korekta w sekcji "Mapa zasobów" wyżej). Test e2e ("dwie karty — druga
+karta jest blokowana overlayem zamiast cichej edycji, zwalnia się po
+zamknięciu pierwszej") zielony na produkcji (run #50) — druga karta
+dostaje overlay zamiast wejść w edycję, po zamknięciu pierwszej karty
+druga wchodzi i poprawnie widzi obie pytania. Przy okazji wyłapał i
+naprawił realny bug (patrz wyżej, sekcja "Warstwa 1 — ogólny mechanizm").
+Dodatkowo: e2e potwierdza teraz też wykluczanie krzyżowe z
+`game-settings.js` dla tego samego zasobu (`cross-resource-locks.spec.js`,
+"edytor blokuje ustawienia" / "ustawienia blokują edytor").
 
 ✅ Warstwa 2: `updateQuestion`/`updateAnswer` idą teraz przez
 `updateChecked()` (`js/core/db-guard.js`) — `.select()` po `.update()`
@@ -429,9 +450,11 @@ Dwa realne problemy, gorsze niż w edytorze (oba naprawione):
    żywą listę pytań (`loadQuestions`) i filtruje `questions.final`/`rounds`
    z id, których już nie ma, PRZED jakąkolwiek walidacją/zapisem.
 
-✅ Warstwa 1: blokada `game_id` (`resourceType: "game_settings"` — osobny
-klucz niż edytor, otwarcie ustawień nie blokuje edytora tej samej gry i
-odwrotnie), dokładnie ten sam `guardResourceLock` co w edytorze.
+✅ Warstwa 1: blokada wejścia (`resourceType: "game"` — **wspólny klucz
+z edytorem**, korekta względem wcześniejszej wersji tej sekcji: otwarcie
+ustawień BLOKUJE edytor tej samej gry i odwrotnie, bo oba dotykają tego
+samego zasobu — patrz "Mapa zasobów" wyżej), dokładnie ten sam
+`guardResourceLock` co w edytorze.
 
 ✅ Testy e2e (`tests/e2e/game-settings.spec.js`, 3 testy: blokada dwóch
 kart, konflikt CAS przy zapisie, filtrowanie martwego id pytania finału)
@@ -681,7 +704,7 @@ Rozmowa wyłoniła dwie **niezależne** kategorie, przypadkiem obie nazwane
 |---|---|---|---|
 | Pytania/odpowiedzi gry ↔ status ankiety tej samej gry (`poll_open`) | ✅ `canEnterEdit()` (`game-validate.js`) blokuje wejście do edytora | ❌ **BRAK** — RLS `questions_owner_write`/`answers_owner_write` sprawdza wyłącznie `owner_id`, zero warunku na `games.status` | **Potwierdzona luka** — bezpośrednie wywołanie RPC/klienta może dowolnie edytować pytania/odpowiedzi gry z żywą, otwartą ankietą, korumpując dane pod głosującymi |
 | Usunięcie gry, gdy jej ankieta jest `poll_open` (żywi głosujący) | ❌ brak | ❌ brak (RLS `games` tylko `owner_id`) | Nowa luka — usunięcie w trakcie głosowania zrywa sesję wszystkim naraz bez ostrzeżenia |
-| Usunięcie gry, gdy `edit_locks` pokazuje aktywną blokadę (`game_editor`/`game_settings`/`poll`) | ❌ brak | ❌ brak | To był pierwszy wątek tej rozmowy — "blokada usuwania przy użyciu" |
+| Usunięcie gry, gdy `edit_locks` pokazuje aktywną blokadę (pierwotnie osobne `game_editor`/`game_settings`/`poll`, po korekcie wspólny klucz `game`) | ✅ `delete_resource_checked('game', …)` blokuje | ✅ Warstwa 2 = sama funkcja RPC (SECURITY DEFINER, atomowo) | **Rozwiązane** (migracje 254 + 255) — to był pierwszy wątek tej rozmowy — "blokada usuwania przy użyciu" |
 | Logo ↔ gra referencująca je w `settings.display.logoId` | ❌ brak | ❌ brak (potwierdzone: **zero FK** `user_logos`↔`games`, czysty JSONB) | Patrz niżej — rozbite na dwie połowy z osobnymi zależnościami |
 | Pytania bazy (`qb_questions`) ↔ gra utworzona z eksportu bazy | n/d | n/d | **Sprawdzone, brak ryzyka**: `base-explorer/js/export-modal.js` robi jednorazową kopię do nowych wierszy `games`/`questions` — zero trwałego powiązania po utworzeniu, więc "bazy są najłatwiejsze" się potwierdza |
 | Baza pytań ↔ wielu użytkowników (`editor`/`viewer`) | — | — | Inny typ zagrożenia (uprawnienia, nie żywotność) — zostaje w sekcji "Baza pytań" wyżej, już zaplanowane osobno |
@@ -689,7 +712,8 @@ Rozmowa wyłoniła dwie **niezależne** kategorie, przypadkiem obie nazwane
 ### Logo ↔ gra — konkretny przypadek z rozmowy
 
 Zawężona zasada: blokuj usunięcie/edycję logo **tylko** gdy gra, która je
-referencuje, ma teraz otwarte ustawienia (`game_settings` lock) **lub**
+referencuje, ma teraz aktywny lock `game` (edytor/ustawienia/ankieta —
+wspólny klucz, patrz korekta w "Mapa zasobów" niżej) **lub**
 jest w trakcie rozgrywki (Control live). Rozpada się na dwie połowy,
 obie zależne od rzeczy już wpisanych w plan, ale jeszcze niezrobionych:
 

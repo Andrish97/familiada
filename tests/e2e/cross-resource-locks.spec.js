@@ -104,7 +104,7 @@ test("usuwanie gry: zablokowane, gdy edytor jest otwarty w innej karcie", async 
   try {
     await editorPage.goto(`https://www.familiada.online/editor?id=${gameId}`, { waitUntil: "domcontentloaded" });
     await editorPage.waitForLoadState("networkidle");
-    await waitForLock(editorPage, "game_editor", gameId);
+    await waitForLock(editorPage, "game", gameId);
 
     await page.goto("https://www.familiada.online/builder", { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
@@ -191,7 +191,7 @@ test("usuwanie logo: zablokowane, gdy używająca go gra ma teraz otwarte ustawi
   try {
     await settingsPage.goto(`https://www.familiada.online/game-settings?id=${gameId}`, { waitUntil: "domcontentloaded" });
     await settingsPage.waitForLoadState("networkidle");
-    await waitForLock(settingsPage, "game_settings", gameId);
+    await waitForLock(settingsPage, "game", gameId);
 
     await page.goto("https://www.familiada.online/logo-editor", { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
@@ -283,7 +283,7 @@ test("edytor: zasób usunięty w trakcie edycji (gdziekolwiek, nie tylko przez d
   try {
     await page.goto(`https://www.familiada.online/editor?id=${gameId}`, { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
-    await waitForLock(page, "game_editor", gameId);
+    await waitForLock(page, "game", gameId);
 
     // Usuwamy grę "z zewnątrz" (bezpośredni DELETE, z pominięciem
     // delete_resource_checked) — to trzeci stan 'gone' ma wykrywać:
@@ -297,6 +297,84 @@ test("edytor: zasób usunięty w trakcie edycji (gdziekolwiek, nie tylko przez d
     // z innym komunikatem niż "zajęte przez kogoś".
     await expect(page.locator("#resourceLockGuard")).toBeVisible({ timeout: 15000 });
     await expect(page.locator("#resourceLockGuardTitle")).toHaveText("Zasób został usunięty");
+  } finally {
+    await page.evaluate(async (id) => { await window.__sbClient.from("games").delete().eq("id", id); }, gameId);
+  }
+});
+
+/* ================= Edytor ↔ ustawienia — wzajemne wykluczanie tej samej gry ================= */
+// Poprawka wcześniejszego założenia (Warstwa 1, "mapa zasobów"): edytor
+// i ustawienia NIE są niezależnymi zasobami dla tej samej gry — operują
+// na tych samych, powiązanych danych (pytania ↔ wybór finału/rund do
+// nich), więc dzielą teraz jeden wspólny klucz blokady ("game") zamiast
+// dwóch osobnych ("game_editor"/"game_settings"). Kto pierwszy otworzy
+// dowolną z tych stron, ten trzyma blokadę — druga dostaje overlay,
+// niezależnie od tego, która to konkretnie strona.
+
+test("edytor blokuje ustawienia tej samej gry", async ({ page, context }) => {
+  test.setTimeout(60_000);
+  await loginAsTestUser(page, context);
+
+  const gameId = await page.evaluate(async () => {
+    const sb = window.__sbClient;
+    const { data: userData } = await sb.auth.getUser();
+    const { data, error } = await sb.from("games")
+      .insert({ name: `E2E-XLOCK-CROSSPAGE-${Date.now()}`, owner_id: userData.user.id, type: "prepared" })
+      .select("id").single();
+    if (error) throw new Error(error.message);
+    return data.id;
+  });
+
+  const editorPage = await context.newPage();
+  try {
+    await editorPage.goto(`https://www.familiada.online/editor?id=${gameId}`, { waitUntil: "domcontentloaded" });
+    await editorPage.waitForLoadState("networkidle");
+    await waitForLock(editorPage, "game", gameId);
+
+    await page.goto(`https://www.familiada.online/game-settings?id=${gameId}`, { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("networkidle");
+
+    await expect(page.locator("#resourceLockGuard")).toBeVisible({ timeout: 10000 });
+    await expect(page.locator("#gsTeamA")).toHaveCount(0);
+
+    await editorPage.close();
+
+    // Po zwolnieniu blokady przez edytor — ustawienia realnie wchodzą.
+    await expect(page.locator("#resourceLockGuard")).toBeHidden({ timeout: 40000 });
+    await expect(page.locator("#gsTeamA")).toHaveCount(1, { timeout: 10000 });
+  } finally {
+    await page.evaluate(async (id) => { await window.__sbClient.from("games").delete().eq("id", id); }, gameId);
+  }
+});
+
+test("ustawienia blokują edytor tej samej gry", async ({ page, context }) => {
+  test.setTimeout(60_000);
+  await loginAsTestUser(page, context);
+
+  const gameId = await page.evaluate(async () => {
+    const sb = window.__sbClient;
+    const { data: userData } = await sb.auth.getUser();
+    const { data, error } = await sb.from("games")
+      .insert({ name: `E2E-XLOCK-CROSSPAGE2-${Date.now()}`, owner_id: userData.user.id, type: "prepared" })
+      .select("id").single();
+    if (error) throw new Error(error.message);
+    return data.id;
+  });
+
+  const settingsPage = await context.newPage();
+  try {
+    await settingsPage.goto(`https://www.familiada.online/game-settings?id=${gameId}`, { waitUntil: "domcontentloaded" });
+    await settingsPage.waitForLoadState("networkidle");
+    await waitForLock(settingsPage, "game", gameId);
+
+    await page.goto(`https://www.familiada.online/editor?id=${gameId}`, { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("networkidle");
+
+    await expect(page.locator("#resourceLockGuard")).toBeVisible({ timeout: 10000 });
+
+    await settingsPage.close();
+
+    await expect(page.locator("#resourceLockGuard")).toBeHidden({ timeout: 40000 });
   } finally {
     await page.evaluate(async (id) => { await window.__sbClient.from("games").delete().eq("id", id); }, gameId);
   }

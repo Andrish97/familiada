@@ -102,6 +102,10 @@ const pl = {
     back: "Wróć",
     goneTitle: "Zasób został usunięty",
     goneMessage: "To, co próbujesz otworzyć, zostało w międzyczasie usunięte gdzie indziej.",
+    // Wspólny komunikat dla gry — edytor, ustawienia (i docelowo ankieta/
+    // control) wzajemnie się wykluczają dla tej samej gry, więc komunikat
+    // rozróżnia tylko TYP zasobu, nie która konkretnie strona trzyma blokadę.
+    gameMessage: "Ta gra jest właśnie używana w innej karcie lub przez inne urządzenie.",
   },
   guestInfo: {
     title: "⚠️ Konto gościa",
@@ -2972,9 +2976,6 @@ const pl = {
       cannotEdit: "Nie można edytować w trakcie otwartej ankiety.",
       editorError: "Błąd edytora (konsola).",
     },
-    lock: {
-      message: "Ta gra jest właśnie edytowana w innej karcie lub przez inne urządzenie.",
-    },
   },
   pollText: {
     title: "Familiada — ankieta",
@@ -4904,9 +4905,6 @@ const pl = {
     saveErrorFinalNeed5: (v) => `Wybierz 5 pytań finałowych (wybrano ${v.count}/5).`,
     saveErrorCustomNoFile: "Wybrano własny dźwięk ale nie wgrano pliku dla: {names}",
     saveConflict: "Te ustawienia zostały w międzyczasie zmienione w innym miejscu. Odśwież stronę i wprowadź zmiany ponownie.",
-    lock: {
-      message: "Te ustawienia są właśnie edytowane w innej karcie lub przez inne urządzenie.",
-    },
     loadError: "Nie można załadować gry: ",
     unknownError: "nieznany błąd",
     errorPrefix: "Błąd: ",

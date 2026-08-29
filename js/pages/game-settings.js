@@ -1585,10 +1585,13 @@ async function main() {
     return;
   }
 
+  // resourceType: "game" — wspólny klucz z editor.js (i docelowo
+  // polls.js/control): patrz komentarz w editor.js przy tym samym
+  // wywołaniu.
   const lock = await guardResourceLock({
-    resourceType: "game_settings",
+    resourceType: "game",
     resourceId: gameId,
-    message: t("gameSettings.lock.message"),
+    message: t("resourceLock.gameMessage"),
     backHref: "/builder",
   });
   if (!lock.ok) return;

@@ -102,6 +102,7 @@ const en = {
     back: "Back",
     goneTitle: "This was deleted",
     goneMessage: "What you're trying to open was deleted elsewhere in the meantime.",
+    gameMessage: "This game is currently in use in another tab or device.",
   },
   guestInfo: {
     title: "⚠️ Guest account",
@@ -3099,9 +3100,6 @@ const en = {
       cannotEdit: "Cannot edit while poll is open.",
       editorError: "Editor error (console).",
     },
-    lock: {
-      message: "This game is currently being edited in another tab or device.",
-    },
   },
   pollText: {
     title: "Familiada — poll",
@@ -5023,9 +5021,6 @@ const en = {
     saveErrorFinalNeed5: (v) => `Select 5 finale questions (${v.count}/5 selected).`,
     saveErrorCustomNoFile: "Custom sound selected but no file uploaded for: {names}",
     saveConflict: "These settings were changed elsewhere in the meantime. Refresh the page and re-apply your changes.",
-    lock: {
-      message: "These settings are currently being edited in another tab or device.",
-    },
     loadError: "Could not load game: ",
     unknownError: "unknown error",
     errorPrefix: "Error: ",
