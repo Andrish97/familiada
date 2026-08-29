@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict Fvf7giNBsE3TxYKeoMSUvBzJnrRMahgxixBQNhYFBNQAyvo168cWly4el5dnl8U
+\restrict jNsqT5JRtzuSd948mDYcKGxd5WJNbloRgKy2SY1kHGboleuL74YKIpvFssWNV47
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -192,7 +192,7 @@ begin
     return jsonb_build_object('ok', false, 'error', 'missing_tab_id');
   end if;
 
-  if p_resource_type in ('game_editor', 'game_settings', 'poll', 'control') then
+  if p_resource_type = 'game' then
     v_exists := exists (select 1 from public.games where id = p_resource_id);
     v_can := exists (select 1 from public.games where id = p_resource_id and owner_id = v_uid);
   elsif p_resource_type = 'logo' then
@@ -206,10 +206,6 @@ begin
   end if;
 
   if not v_exists then
-    -- Zasób usunięty gdzie indziej, zanim zdążyliśmy go zająć (albo w
-    -- trakcie odnawiania heartbeatu). Odróżniamy od 'locked': tu nie ma
-    -- sensu odpytywać ponownie, bo nigdy się nie "zwolni" — wywołujący
-    -- (guardResourceLock) pokazuje inny komunikat i nie odpala pollingu.
     return jsonb_build_object('ok', false, 'error', 'gone');
   end if;
 
@@ -1518,22 +1514,21 @@ begin
       return jsonb_build_object('ok', false, 'error', 'not_found_or_forbidden');
     end if;
 
-    -- Żywa ankieta = ktoś aktualnie głosuje — usunięcie zerwałoby
-    -- wszystkim sesję bez ostrzeżenia.
     if exists (select 1 from public.games where id = p_resource_id and status = 'poll_open') then
       return jsonb_build_object('ok', false, 'in_use', true, 'reason', 'poll_open');
     end if;
 
-    -- Ktoś ma teraz otwarty edytor/ustawienia/ankietę/control tej gry.
+    -- Jeden wspólny typ 'game' zamiast dawnej listy game_editor/
+    -- game_settings/poll/control.
     select resource_type into v_blocker
     from public.edit_locks
-    where resource_type in ('game_editor', 'game_settings', 'poll', 'control')
+    where resource_type = 'game'
       and resource_id = p_resource_id
       and heartbeat_at > now() - interval '25 seconds'
     limit 1;
 
     if found then
-      return jsonb_build_object('ok', false, 'in_use', true, 'reason', 'locked', 'blocker_type', v_blocker.resource_type);
+      return jsonb_build_object('ok', false, 'in_use', true, 'reason', 'locked');
     end if;
 
     delete from public.games where id = p_resource_id;
@@ -1544,14 +1539,10 @@ begin
       return jsonb_build_object('ok', false, 'error', 'not_found_or_forbidden');
     end if;
 
-    -- Gry (tego samego właściciela) referencujące to logo w
-    -- settings.display.logoId, z TERAZ otwartymi ustawieniami. Kontrola
-    -- rozgrywki (Control) celowo pominięta — nie ma jeszcze żadnego
-    -- sygnału żywotności (patrz plan, sekcja Control).
     select g.id as game_id into v_blocker
     from public.games g
     join public.edit_locks el
-      on el.resource_type = 'game_settings'
+      on el.resource_type = 'game'
      and el.resource_id = g.id
      and el.heartbeat_at > now() - interval '25 seconds'
     where g.owner_id = v_uid
@@ -1559,7 +1550,7 @@ begin
     limit 1;
 
     if found then
-      return jsonb_build_object('ok', false, 'in_use', true, 'reason', 'locked', 'blocker_type', 'game_settings', 'blocker_game_id', v_blocker.game_id);
+      return jsonb_build_object('ok', false, 'in_use', true, 'reason', 'locked', 'blocker_game_id', v_blocker.game_id);
     end if;
 
     delete from public.user_logos where id = p_resource_id;
@@ -13424,16 +13415,7 @@ ALTER TABLE "public"."edit_locks" ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "edit_locks_read_if_can_edit_resource" ON "public"."edit_locks" FOR SELECT TO "authenticated" USING (
 CASE "resource_type"
-    WHEN 'game_editor'::"text" THEN (EXISTS ( SELECT 1
-       FROM "public"."games"
-      WHERE (("games"."id" = "edit_locks"."resource_id") AND ("games"."owner_id" = "auth"."uid"()))))
-    WHEN 'game_settings'::"text" THEN (EXISTS ( SELECT 1
-       FROM "public"."games"
-      WHERE (("games"."id" = "edit_locks"."resource_id") AND ("games"."owner_id" = "auth"."uid"()))))
-    WHEN 'poll'::"text" THEN (EXISTS ( SELECT 1
-       FROM "public"."games"
-      WHERE (("games"."id" = "edit_locks"."resource_id") AND ("games"."owner_id" = "auth"."uid"()))))
-    WHEN 'control'::"text" THEN (EXISTS ( SELECT 1
+    WHEN 'game'::"text" THEN (EXISTS ( SELECT 1
        FROM "public"."games"
       WHERE (("games"."id" = "edit_locks"."resource_id") AND ("games"."owner_id" = "auth"."uid"()))))
     WHEN 'logo'::"text" THEN (EXISTS ( SELECT 1
@@ -14459,5 +14441,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict Fvf7giNBsE3TxYKeoMSUvBzJnrRMahgxixBQNhYFBNQAyvo168cWly4el5dnl8U
+\unrestrict jNsqT5JRtzuSd948mDYcKGxd5WJNbloRgKy2SY1kHGboleuL74YKIpvFssWNV47
 
