@@ -186,9 +186,9 @@ tego, która to konkretnie strona. Komunikat na overlayu rozróżnia tylko
 TYP zasobu (gra/logo/baza), nie która strona trzyma blokadę. Wdrożone w
 migracji
 `2026-08-28_255_unify_game_edit_locks.sql` (collapse
-`game_editor`/`game_settings`/`poll`/`control` → `game`), potwierdzone
-e2e (`cross-resource-locks.spec.js`, testy "edytor blokuje ustawienia"
-i "ustawienia blokują edytor").
+`game_editor`/`game_settings`/`poll`/`control` → `game`) — ✅ **ZAMKNIĘTE**,
+8/8 e2e zielonych na produkcji (run #66, `cross-resource-locks.spec.js`,
+w tym testy "edytor blokuje ustawienia" i "ustawienia blokują edytor").
 
 | Zasób (klucz blokady) | Strony | Kiedy wdrożyć |
 |---|---|---|
