@@ -193,7 +193,7 @@ w tym testy "edytor blokuje ustawienia" i "ustawienia blokują edytor").
 | Zasób (klucz blokady) | Strony | Kiedy wdrożyć |
 |---|---|---|
 | `game` | `js/pages/editor.js`, `js/pages/game-settings.js` | ✅ zrobione i przetestowane e2e (wspólny klucz) |
-| `game` (ankieta) | `js/pages/polls.js` | 🔲 dołącza do już istniejącego wspólnego klucza `game` (Warstwa 2 już ✅ gotowa — sam RPC ma guard) |
+| `game` (ankieta) | `js/pages/polls.js` | 🔄 dołączona do już istniejącego wspólnego klucza `game` w kodzie (Warstwa 2 już ✅ gotowa — sam RPC ma guard), e2e jeszcze nie uruchomione |
 | `logo_id` | `logo-editor/js/main.js` | 🔲 po ankiecie |
 | `base_id` | `base-explorer/` | 🔲 **świadomie odłożone** do PO dogłębnym audycie i testach bazy (patrz sekcja "Baza pytań") |
 | `game` (rozgrywka) | `control/` | 🔲 **świadomie odłożone**, osobny kompleksowy punkt razem z zapisem/przywracaniem stanu (patrz sekcja "Control") — dołączy do tego samego wspólnego klucza `game`, nie osobnego |
@@ -332,9 +332,15 @@ audycie/poprawce każdej strony, zaczynając od edytora.
    Run #63 (po poprawce): **✅ 6/6 passed na produkcji.** Mechanizm
    krzyżowych blokad (tri-state `gone`, `delete_resource_checked` dla
    `game`/`logo`) w pełni potwierdzony e2e — **moduł zamknięty**.
-3. **Ankieta** (`polls.js`) — Warstwa 2 już ✅ gotowa (guard w RPC), dołożyć
-   Warstwę 1 dla spójności UX, PLUS (nowe, z kroku 2.5) sprawdzić czy
-   `polls.js` jest konsumentem/celem którejś krzyżowej relacji.
+3. **Ankieta** (`polls.js`) — Warstwa 2 już ✅ gotowa (guard w RPC). Dołożona
+   Warstwa 1 (`resourceType: "game"` — wspólny klucz z edytorem/
+   ustawieniami, bo zamykanie ankiety zapisuje znormalizowane punkty do
+   `answers.fixed_points`, tych samych danych co edytor/ustawienia).
+   Sprawdzone (z kroku 2.5) czy `polls.js` jest konsumentem/celem
+   krzyżowej relacji: usunięcie gry w trakcie `poll_open` już blokowane
+   przez `delete_resource_checked` od kroku 2.5 (patrz "Zweryfikowane w
+   kodzie" niżej) — nic nowego do zrobienia poza dopisaniem e2e. 🔄 e2e w
+   toku.
 4. **Edytor logo** (`logo-editor/`) — audyt Warstwy 2 (nieprzejrzane) +
    Warstwa 1, PLUS konkretna krzyżowa relacja logo↔gra ustalona w
    dyskusji (patrz niżej) — usuwanie logo przez `can_delete`.
@@ -703,7 +709,7 @@ Rozmowa wyłoniła dwie **niezależne** kategorie, przypadkiem obie nazwane
 | Para zasobów | Warstwa 1 (UX) dziś | Warstwa 2 (twarda) dziś | Status |
 |---|---|---|---|
 | Pytania/odpowiedzi gry ↔ status ankiety tej samej gry (`poll_open`) | ✅ `canEnterEdit()` (`game-validate.js`) blokuje wejście do edytora | ❌ **BRAK** — RLS `questions_owner_write`/`answers_owner_write` sprawdza wyłącznie `owner_id`, zero warunku na `games.status` | **Potwierdzona luka** — bezpośrednie wywołanie RPC/klienta może dowolnie edytować pytania/odpowiedzi gry z żywą, otwartą ankietą, korumpując dane pod głosującymi |
-| Usunięcie gry, gdy jej ankieta jest `poll_open` (żywi głosujący) | ❌ brak | ❌ brak (RLS `games` tylko `owner_id`) | Nowa luka — usunięcie w trakcie głosowania zrywa sesję wszystkim naraz bez ostrzeżenia |
+| Usunięcie gry, gdy jej ankieta jest `poll_open` (żywi głosujący) | ✅ `delete_resource_checked('game', …)` blokuje (`reason: 'poll_open'`) | ✅ sama funkcja RPC (SECURITY DEFINER, atomowo) | **Rozwiązane już w kroku 2.5** (migracja 254) — potwierdzone e2e (`cross-resource-locks.spec.js`, test "usuwanie gry: zablokowane, gdy jej ankieta jest otwarta") |
 | Usunięcie gry, gdy `edit_locks` pokazuje aktywną blokadę (pierwotnie osobne `game_editor`/`game_settings`/`poll`, po korekcie wspólny klucz `game`) | ✅ `delete_resource_checked('game', …)` blokuje | ✅ Warstwa 2 = sama funkcja RPC (SECURITY DEFINER, atomowo) | **Rozwiązane** (migracje 254 + 255) — to był pierwszy wątek tej rozmowy — "blokada usuwania przy użyciu" |
 | Logo ↔ gra referencująca je w `settings.display.logoId` | ❌ brak | ❌ brak (potwierdzone: **zero FK** `user_logos`↔`games`, czysty JSONB) | Patrz niżej — rozbite na dwie połowy z osobnymi zależnościami |
 | Pytania bazy (`qb_questions`) ↔ gra utworzona z eksportu bazy | n/d | n/d | **Sprawdzone, brak ryzyka**: `base-explorer/js/export-modal.js` robi jednorazową kopię do nowych wierszy `games`/`questions` — zero trwałego powiązania po utworzeniu, więc "bazy są najłatwiejsze" się potwierdza |

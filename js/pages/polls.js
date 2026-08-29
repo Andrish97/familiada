@@ -6,6 +6,7 @@ import { alertModal, confirmModal } from "../core/modal.js?v=v2026-08-29T07271";
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
 import { initI18n, t, withLangParam, getUiLang } from "../../translation/translation.js?v=v2026-08-29T07271";
 import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-08-29T07271";
+import { guardResourceLock } from "../core/resource-lock.js?v=v2026-08-29T07271";
 import "../core/contact-modal.js";
 
 // initI18n is called at the start of DOMContentLoaded (see below)
@@ -1440,6 +1441,21 @@ document.addEventListener("DOMContentLoaded", async () => {
       btnCancelTextClose.disabled = false;
     }
   });
+
+  // resourceType: "game" — dołącza do już istniejącego wspólnego klucza
+  // z editor.js/game-settings.js (patrz komentarz w editor.js przy tym
+  // samym wywołaniu): zamykanie ankiety zapisuje znormalizowane punkty do
+  // answers.fixed_points, więc otwarcie ankiety wyklucza edytor/ustawienia
+  // tej samej gry i odwrotnie, nie tylko drugą kartę tej samej strony.
+  if (gameId) {
+    const lock = await guardResourceLock({
+      resourceType: "game",
+      resourceId: gameId,
+      message: t("resourceLock.gameMessage"),
+      backHref: backTarget,
+    });
+    if (!lock.ok) return;
+  }
 
   await refresh();
 

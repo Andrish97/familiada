@@ -382,3 +382,77 @@ test("ustawienia blokują edytor tej samej gry", async ({ page, context }) => {
     await page.evaluate(async (id) => { await window.__sbClient.from("games").delete().eq("id", id); }, gameId);
   }
 });
+
+/* ================= Ankieta ↔ edytor — dołączenie do tego samego wspólnego klucza ================= */
+// polls.js dołączył do wspólnego klucza 'game' (krok 3 audytu, plan-testy-
+// i-poprawki.md): zamykanie ankiety zapisuje znormalizowane punkty do
+// answers.fixed_points, tych samych danych co edytor/ustawienia — więc
+// otwarcie ankiety wyklucza edytor tej samej gry i odwrotnie.
+
+test("ankieta blokuje edytor tej samej gry", async ({ page, context }) => {
+  test.setTimeout(60_000);
+  await loginAsTestUser(page, context);
+
+  const gameId = await page.evaluate(async () => {
+    const sb = window.__sbClient;
+    const { data: userData } = await sb.auth.getUser();
+    const { data, error } = await sb.from("games")
+      .insert({ name: `E2E-XLOCK-POLLS-${Date.now()}`, owner_id: userData.user.id, type: "prepared" })
+      .select("id").single();
+    if (error) throw new Error(error.message);
+    return data.id;
+  });
+
+  const pollsPage = await context.newPage();
+  try {
+    await pollsPage.goto(`https://www.familiada.online/polls?id=${gameId}`, { waitUntil: "domcontentloaded" });
+    await pollsPage.waitForLoadState("networkidle");
+    await waitForLock(pollsPage, "game", gameId);
+
+    await page.goto(`https://www.familiada.online/editor?id=${gameId}`, { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("networkidle");
+
+    await expect(page.locator("#resourceLockGuard")).toBeVisible({ timeout: 10000 });
+
+    await pollsPage.close();
+
+    await expect(page.locator("#resourceLockGuard")).toBeHidden({ timeout: 40000 });
+    await expect(page.locator("#qList")).not.toBeEmpty({ timeout: 10000 });
+  } finally {
+    await page.evaluate(async (id) => { await window.__sbClient.from("games").delete().eq("id", id); }, gameId);
+  }
+});
+
+test("edytor blokuje ankietę tej samej gry", async ({ page, context }) => {
+  test.setTimeout(60_000);
+  await loginAsTestUser(page, context);
+
+  const gameId = await page.evaluate(async () => {
+    const sb = window.__sbClient;
+    const { data: userData } = await sb.auth.getUser();
+    const { data, error } = await sb.from("games")
+      .insert({ name: `E2E-XLOCK-POLLS2-${Date.now()}`, owner_id: userData.user.id, type: "prepared" })
+      .select("id").single();
+    if (error) throw new Error(error.message);
+    return data.id;
+  });
+
+  const editorPage = await context.newPage();
+  try {
+    await editorPage.goto(`https://www.familiada.online/editor?id=${gameId}`, { waitUntil: "domcontentloaded" });
+    await editorPage.waitForLoadState("networkidle");
+    await waitForLock(editorPage, "game", gameId);
+
+    await page.goto(`https://www.familiada.online/polls?id=${gameId}`, { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("networkidle");
+
+    await expect(page.locator("#resourceLockGuard")).toBeVisible({ timeout: 10000 });
+
+    await editorPage.close();
+
+    await expect(page.locator("#resourceLockGuard")).toBeHidden({ timeout: 40000 });
+    await expect(page.locator("#gName")).not.toBeEmpty({ timeout: 10000 });
+  } finally {
+    await page.evaluate(async (id) => { await window.__sbClient.from("games").delete().eq("id", id); }, gameId);
+  }
+});
