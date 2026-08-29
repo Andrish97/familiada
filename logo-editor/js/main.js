@@ -12,6 +12,7 @@ import { getUiLang, initI18n, t, withLangParam } from "../../translation/transla
 import { initTopbarAccountDropdown } from "../../js/core/topbar-controller.js?v=v2026-08-29T22181";
 import { isMobileDevice } from "../../js/core/pwa.js?v=v2026-08-29T22181";
 import { v as cacheBust } from "../../js/core/cache-bust.js?v=v2026-08-29T22181";
+import { guardResourceLock, isResourceBusy, findBusyContext } from "../../js/core/resource-lock.js?v=v2026-08-29T22181";
 
 import { initTextEditor } from "./text.js?v=v2026-08-29T22181";
 import { initDrawEditor } from "./draw.js?v=v2026-08-29T22181";
@@ -141,6 +142,22 @@ let GLYPH_5x7 = null; // char -> [7 ints]
 
 let sessionSavedLogoId = null; // id logo zapisanego w tej sesji edytora (do UPDATE/DELETE)
 let sessionSavedMode = null;   // żeby Anuluj wiedział co resetować
+
+// Warstwa 1 dla zasobu 'logo' -- trzymana dopóki editorShell jest otwarty
+// dla KONKRETNEGO, już zapisanego logo (patrz otwieranie w openEditor()
+// niżej i zwolnienie w closeEditor()). Nowo tworzone logo (jeszcze bez id)
+// nie ma czego blokować, dopóki pierwszy zapis nie nada mu id.
+let currentLogoLock = null;
+
+/** Komunikat dla reason zwróconego przez RPC (update_logo_checked/
+ * delete_resource_checked) -- rozróżnia tylko POWÓD (rozgrywka/ustawienia/
+ * inna karta), nigdy która to konkretnie strona -- patrz "Model: zasób ma
+ * stan busy/free" w docs/plan-testy-i-poprawki.md. */
+function logoBusyMessage(reason) {
+  if (reason === "control") return t("resourceLock.logoPoolBusyControl");
+  if (reason === "settings") return t("resourceLock.logoPoolBusySettings");
+  return t("resourceLock.logoMessage");
+}
 
 
 /* =========================================================
@@ -861,11 +878,22 @@ async function createLogo(row){
 }
 
 async function updateLogo(id, patch){
-  const { error } = await sb()
-    .from("user_logos")
-    .update(patch)
-    .eq("id", id);
+  // Zamiast gołego .from("user_logos").update() -- RPC sprawdza atomowo,
+  // czy cała pula logo właściciela jest teraz busy (aktywna rozgrywka lub
+  // otwarte game-settings.js dla którejkolwiek jego gry) i blokuje zapis,
+  // zamiast pisać w ciemno -- patrz docs/plan-testy-i-poprawki.md, "Model:
+  // zasób ma stan busy/free".
+  const { data, error } = await sb().rpc("update_logo_checked", {
+    p_logo_id: id,
+    p_patch: patch,
+  });
   if (error) throw error;
+  if (!data?.ok) {
+    const e = new Error("logo pool busy");
+    e.code = "RESOURCE_IN_USE";
+    e.reason = data?.reason;
+    throw e;
+  }
 }
 
 async function deleteLogo(id){
@@ -899,6 +927,7 @@ async function deleteLogo(id){
   if (!result?.ok) {
     const e = new Error("logo in use");
     e.code = "RESOURCE_IN_USE";
+    e.reason = result?.reason;
     throw e;
   }
 
@@ -1005,6 +1034,15 @@ async function renameOk(){
       // Tworzenie nowego logo z podaną nazwą
       await createNewLogoWithType(createModeType, createModeMode, val);
     } else if (renameMode === "rename" && renameLogoId){
+      // Warstwa A: to konkretne logo może być edytowane w tej chwili w
+      // innej karcie (logo-editor.js trzyma acquire_edit_lock('logo', ...))
+      // -- rename z listy nie powinien wtedy cichutko nadpisać zapisu tej
+      // karty. Warstwa B (cała pula busy) jest już sprawdzana wewnątrz
+      // updateLogo() (RPC update_logo_checked).
+      if (await isResourceBusy("logo", renameLogoId)) {
+        setMsg(renameMsg, t("resourceLock.logoMessage"));
+        return;
+      }
       // Zmiana nazwy istniejącego logo
       await updateLogo(renameLogoId, { name: val });
     }
@@ -1012,7 +1050,9 @@ async function renameOk(){
     closeRenameModal();
   }catch(e){
     console.error(e);
-    setMsg(renameMsg, renameMode === "create" ? t("logoEditor.errors.createFailed") : t("logoEditor.rename.failed"));
+    setMsg(renameMsg, e?.code === "RESOURCE_IN_USE"
+      ? logoBusyMessage(e.reason)
+      : (renameMode === "create" ? t("logoEditor.errors.createFailed") : t("logoEditor.rename.failed")));
   } finally {
     if (btnOk) btnOk.disabled = false;
   }
@@ -1165,7 +1205,7 @@ function renderList(){
         console.error(e);
         void alertModal({
           text: e?.code === "RESOURCE_IN_USE"
-            ? t("logoEditor.errors.deleteInUse")
+            ? logoBusyMessage(e.reason)
             : t("logoEditor.errors.deleteFailed", { error: e?.message || e }),
         });
         setMsg("");
@@ -1410,6 +1450,9 @@ async function closeEditor(force = false){
   if (editorMode === "TEXT") textEditor.close();
   if (editorMode === "DRAW") drawEditor.close();
   if (editorMode === "IMAGE") imageEditor.close();
+
+  currentLogoLock?.release();
+  currentLogoLock = null;
 
   editorMode = null;
   setEditorShellMode("");
@@ -1724,6 +1767,28 @@ async function boot(){
      // Ustal tryb edycji
      const mode = l.payload?.source?.mode ||
                   (l.type === TYPE_GLYPH ? "TEXT" : "DRAW");
+
+     // Warstwa B: cała pula logo busy, gdy Control lub game-settings.js
+     // mają teraz aktywną którąkolwiek grę tego użytkownika -- niezależnie
+     // od tego, czy TO logo jest referencowane.
+     const busyCtx = await findBusyContext("game", ["settings", "control"]);
+     if (busyCtx) {
+       void alertModal({ text: logoBusyMessage(busyCtx) });
+       return;
+     }
+
+     // Warstwa A: to konkretne logo jest edytowane w innej karcie -- pełny
+     // overlay, tak jak przy wejściu na editor.js/game-settings.js tej
+     // samej gry (patrz resource-lock.js).
+     const lock = await guardResourceLock({
+       resourceType: "logo",
+       resourceId: l.id,
+       context: "logo-editor",
+       message: t("resourceLock.logoMessage"),
+       backHref: location.href,
+     });
+     if (!lock.ok) return;
+     currentLogoLock = lock;
 
      openEditor(mode, l);
    });

@@ -1451,6 +1451,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const lock = await guardResourceLock({
       resourceType: "game",
       resourceId: gameId,
+      context: "polls",
       message: t("resourceLock.gameMessage"),
       backHref: backTarget,
     });

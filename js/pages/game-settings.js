@@ -1591,6 +1591,7 @@ async function main() {
   const lock = await guardResourceLock({
     resourceType: "game",
     resourceId: gameId,
+    context: "settings",
     message: t("resourceLock.gameMessage"),
     backHref: "/builder",
   });

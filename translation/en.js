@@ -103,6 +103,9 @@ const en = {
     goneTitle: "This was deleted",
     goneMessage: "What you're trying to open was deleted elsewhere in the meantime.",
     gameMessage: "This game is currently in use in another tab or device.",
+    logoMessage: "This logo is currently being edited in another tab or device.",
+    logoPoolBusyControl: "You can't edit or delete a logo while playing a game.",
+    logoPoolBusySettings: "You can't edit or delete a logo while changing game settings.",
   },
   guestInfo: {
     title: "⚠️ Guest account",
@@ -4194,7 +4197,6 @@ const en = {
       invalidPixFormat: "Invalid PIX format.",
       unknownLogoFormat: "Unknown logo import format.",
       deleteFailed: "Couldn't delete.\n\n{error}",
-      deleteInUse: "Can't delete — this logo is used by a game whose settings are currently open in another tab.",
       createFailedDetailed: "Couldn't create.\n\n{error}",
       invalidType: "Unknown logo type.",
       cannotEditOldLogo: "This logo cannot be edited.",

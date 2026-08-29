@@ -194,7 +194,7 @@ w tym testy "edytor blokuje ustawienia" i "ustawienia blokują edytor").
 |---|---|---|
 | `game` | `js/pages/editor.js`, `js/pages/game-settings.js` | ✅ zrobione i przetestowane e2e (wspólny klucz) |
 | `game` (ankieta) | `js/pages/polls.js` | ✅ dołączona do wspólnego klucza `game`, przetestowane e2e (run #67, 12/12) |
-| `logo_id` | `logo-editor/js/main.js` | 🔲 po ankiecie |
+| `logo_id` | `logo-editor/js/main.js` | 🔄 krok 4 wdrożony w kodzie (Warstwa A + B), e2e w toku |
 | `base_id` | `base-explorer/` | 🔲 **świadomie odłożone** do PO dogłębnym audycie i testach bazy (patrz sekcja "Baza pytań") |
 | `game` (rozgrywka) | `control/` | 🔲 **świadomie odłożone**, osobny kompleksowy punkt razem z zapisem/przywracaniem stanu (patrz sekcja "Control") — dołączy do tego samego wspólnego klucza `game`, nie osobnego |
 
@@ -234,17 +234,21 @@ odczyt).
 
 Dwie NIEZALEŻNE warstwy `busy`:
 
-**A. Konkretne logo #N busy**, gdy `logo-editor.js` je edytuje (🔲 krok 4,
-RPC gotowe). Blokowane: druga karta otwierająca TO SAMO #N → OVERLAY;
-usunięcie/rename #N z listy → ALERT MODAL.
+**A. Konkretne logo #N busy**, gdy `logo-editor.js` je edytuje — 🔄
+wdrożone (migracja 256, `guardResourceLock` w `btnEdit`, zwolnienie w
+`closeEditor()`). Blokowane: druga karta otwierająca TO SAMO #N →
+OVERLAY (`#resourceLockGuard`); usunięcie #N z listy →
+`delete_resource_checked` (Warstwa 2); rename #N z listy → sprawdzenie
+klient-side `isResourceBusy` przed `update_logo_checked`. e2e w toku.
 
 **B. CAŁA pula logo usera busy**, gdy Control aktywny LUB
-`game-settings.js` otwarte (dla dowolnej gry usera) — ✅ zdecydowane,
-🔲 niezaimplementowane. Blokowane: jakakolwiek edycja/usunięcie/rename
-DOWOLNEGO logo → ALERT MODAL ("prowadzisz rozgrywkę" / "zmieniasz
-ustawienia rozgrywki"). `editor.js` NIE ustawia tej warstwy busy.
-Wymaga kolumny `holder_context` w `edit_locks` (rozróżnienie
-`game-settings.js` od `editor.js`/`polls.js` na wspólnym locku `game`).
+`game-settings.js` otwarte (dla dowolnej gry usera) — 🔄 wdrożone
+(kolumna `holder_context` w `edit_locks`, `findBusyContext()` w
+`resource-lock.js`, sprawdzane przed edycją/rename z listy i wewnątrz
+`update_logo_checked`/`delete_resource_checked` jako Warstwa 2).
+Blokowane: jakakolwiek edycja/usunięcie/rename DOWOLNEGO logo → ALERT
+MODAL ("prowadzisz rozgrywkę" / "zmieniasz ustawienia rozgrywki").
+`editor.js` NIE ustawia tej warstwy busy (rozstrzygnięte). e2e w toku.
 
 #### `base`
 
@@ -260,9 +264,9 @@ na żywo przez nic innego). `base-explorer/*` edytuje bazę #N → busy #N
 `builder.js` (rename + reset + delete sprawdzają `busy`). Jedyna
 świadomie zaakceptowana luka: Control jeszcze nie uczestniczy (krok 7).
 
-**Kolejność dalszych prac**: krok 4 — `logo-editor.js` (warstwa A: lock
-per konkretne logo) + kolumna `holder_context` w `edit_locks` + warstwa B
-(cała pula logo busy przy Control/`game-settings.js`). Potem reszta wg
+**Krok 4 (`logo-editor.js`) — 🔄 wdrożony w kodzie, e2e w toku.** Warstwa
+A + Warstwa B + migracja 256 (`holder_context`, `update_logo_checked`)
+opisane wyżej przy zasobie `logo`. Po potwierdzeniu e2e: reszta wg
 wcześniej ustalonej kolejności (baza — krok 6, Control — krok 7).
 
 ---
@@ -404,9 +408,10 @@ audycie/poprawce każdej strony, zaczynając od edytora.
    przez `delete_resource_checked` od kroku 2.5 (patrz "Zweryfikowane w
    kodzie" niżej) — nic nowego do zrobienia poza dopisaniem e2e. 🔄 e2e w
    toku.
-4. **Edytor logo** (`logo-editor/`) — audyt Warstwy 2 (nieprzejrzane) +
-   Warstwa 1, PLUS konkretna krzyżowa relacja logo↔gra ustalona w
-   dyskusji (patrz niżej) — usuwanie logo przez `can_delete`.
+4. **Edytor logo** (`logo-editor/`) — 🔄 wdrożone w kodzie: Warstwa 1 per
+   konkretne logo + Warstwa 2 (`update_logo_checked`, rozszerzony
+   `delete_resource_checked`) + reguła "cała pula logo busy przy
+   Control/ustawieniach" (migracja 256, `holder_context`). e2e w toku.
 5. Reszta z "Pełnej listy miejsc do audytu" niżej (`builder.js`,
    `builder-import-export.js`, `bases.js`, `generator.js`, `settings.js`,
    `polls-hub.js`, `subscriptions.js`) — audyt Warstwy 2, Warstwa 1 gdzie
@@ -441,7 +446,7 @@ różnych użytkowników, albo nieaktualne dane po zmianie gdzie indziej):
 | `js/pages/editor.js` | pytania/odpowiedzi gry | ✅ **ZAMKNIĘTE** — 21 testów e2e (run #52, 21/21), Warstwa 1 + Warstwa 2 zrobione |
 | `js/pages/polls.js` | zamykanie ankiety | ✅ Warstwa 2 gotowa (guard w RPC), 🔲 Warstwa 1 do dodania |
 | `js/pages/game-settings.js` | ustawienia gry (drużyny, wygląd, dźwięk, finał/rundy) | ✅ **ZAMKNIĘTE** — obie warstwy zrobione, 3/3 testów e2e (run #56, 3/3) |
-| `logo-editor/js/main.js` | edytor logo (zapis do `user_logos`) | 🔲 nieprzejrzane + Warstwa 1 |
+| `logo-editor/js/main.js` | edytor logo (zapis do `user_logos`) | 🔄 Warstwa 1 + Warstwa 2 wdrożone (krok 4), e2e w toku |
 | `js/pages/builder.js` | lista gier — tworzenie/nazwa/usuwanie/duplikowanie | 🔲 nieprzejrzane |
 | `js/pages/builder-import-export.js` | import/eksport całych gier | 🔲 nieprzejrzane |
 | `js/pages/bases.js` | lista baz pytań, zarządzanie udostępnieniami | 🔲 nieprzejrzane |

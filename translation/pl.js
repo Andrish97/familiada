@@ -106,6 +106,12 @@ const pl = {
     // control) wzajemnie się wykluczają dla tej samej gry, więc komunikat
     // rozróżnia tylko TYP zasobu, nie która konkretnie strona trzyma blokadę.
     gameMessage: "Ta gra jest właśnie używana w innej karcie lub przez inne urządzenie.",
+    logoMessage: "To logo jest właśnie edytowane w innej karcie lub przez inne urządzenie.",
+    // Cała pula logo użytkownika jest blokowana, gdy Control lub
+    // game-settings.js mają aktywną którąkolwiek jego grę — niezależnie od
+    // tego, czy TO logo jest przez nią referencowane.
+    logoPoolBusyControl: "Nie możesz edytować ani usunąć logo, bo prowadzisz rozgrywkę.",
+    logoPoolBusySettings: "Nie możesz edytować ani usunąć logo, bo zmieniasz ustawienia rozgrywki.",
   },
   guestInfo: {
     title: "⚠️ Konto gościa",
@@ -4071,7 +4077,6 @@ const pl = {
       invalidPixFormat: "Niepoprawny format PIX.",
       unknownLogoFormat: "Nieznany format importu logo.",
       deleteFailed: "Nie udało się usunąć.\n\n{error}",
-      deleteInUse: "Nie można usunąć — to logo jest używane w grze, której ustawienia są właśnie otwarte w innej karcie.",
       createFailedDetailed: "Nie udało się utworzyć.\n\n{error}",
       invalidType: "Nieznany typ logo.",
       cannotEditOldLogo: "To logo nie może być edytowane.",

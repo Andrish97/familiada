@@ -559,6 +559,7 @@ async function boot() {
   const lock = await guardResourceLock({
     resourceType: "game",
     resourceId: gameId,
+    context: "editor",
     message: t("resourceLock.gameMessage"),
     backHref: withLangParam("builder"),
   });

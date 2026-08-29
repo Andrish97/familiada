@@ -207,8 +207,9 @@ test("usuwanie logo: zablokowane, gdy używająca go gra ma teraz otwarte ustawi
     // logo-editor.html ma własne, statyczne modale (create/rename/preview/
     // export) z klasą .mSub zawsze obecną w DOM — goły .mSub jest więc
     // niejednoznaczny. .uni-modal .mSub celuje tylko w dynamiczny modal
-    // core/modal.js (confirmModal/alertModal).
-    await expect(page.locator(".uni-modal .mSub")).toContainText("używane", { timeout: 10000 });
+    // core/modal.js (confirmModal/alertModal). Komunikat od kroku 4 dotyczy
+    // już całej puli logo ("ustawienia rozgrywki"), nie tylko referencji.
+    await expect(page.locator(".uni-modal .mSub")).toContainText("ustawienia rozgrywki", { timeout: 10000 });
     await page.locator(".uni-modal .uni-foot .btn.gold").click({ timeout: 10000 }); // zamknij alert blokady
 
     expect(await logoExists(page, logoId), "logo używane przez grę z otwartymi ustawieniami nie powinno zostać usunięte").toBe(true);
@@ -573,5 +574,122 @@ test("builder.js: reset gry do draftu po ankiecie zablokowany alert-modalem, gdy
   } finally {
     await settingsPage.close();
     await page.evaluate(async (id) => { await window.__sbClient.from("games").delete().eq("id", id); }, gameId);
+  }
+});
+
+/* ================= Krok 4: logo-editor.js — Warstwa A (per logo) i Warstwa B (cała pula) ================= */
+// Warstwa A: dwie karty nie mogą edytować TEGO SAMEGO logo naraz (ten sam
+// wzorzec co editor.js/game-settings.js dla gry, ale w obrębie jednej
+// strony -- lock trzymany od kliknięcia "Edytuj" do zamknięcia edytora).
+// Warstwa B: Control/game-settings.js blokują edycję/zmianę nazwy/usunięcie
+// WSZYSTKICH logo użytkownika, nawet gdy dany logo nie jest w ogóle
+// referencowany przez żadną grę -- patrz docs/plan-testy-i-poprawki.md,
+// "Model: zasób ma stan busy/free".
+
+function blankGlyphPayload() {
+  return {
+    layers: [{ color: "main", rows: Array.from({ length: 10 }, () => " ".repeat(30)) }],
+    source: { mode: "TEXT" },
+  };
+}
+
+test("logo-editor.js: druga karta nie może edytować tego samego logo", async ({ page, context }) => {
+  test.setTimeout(60_000);
+  await loginAsTestUser(page, context);
+
+  const logoName = `E2E-XLOCK-LOGOEDIT-${Date.now()}`;
+  const logoId = await page.evaluate(async ({ name, payload }) => {
+    const sb = window.__sbClient;
+    const { data: userData } = await sb.auth.getUser();
+    const { data, error } = await sb.from("user_logos")
+      .insert({ user_id: userData.user.id, name, type: "GLYPH_30x10", payload })
+      .select("id").single();
+    if (error) throw new Error(error.message);
+    return data.id;
+  }, { name: logoName, payload: blankGlyphPayload() });
+
+  const tabA = await context.newPage();
+  try {
+    await tabA.goto("https://www.familiada.online/logo-editor", { waitUntil: "domcontentloaded" });
+    await tabA.waitForLoadState("networkidle");
+    const tileA = tabA.locator(`.logoTile[data-key="${logoId}"]`);
+    await expect(tileA).toBeVisible({ timeout: 10000 });
+    await tileA.evaluate((el) => el.click());
+    await expect(tabA.locator("#btnEdit")).toBeEnabled({ timeout: 10000 });
+    await tabA.locator("#btnEdit").click();
+    await waitForLock(tabA, "logo", logoId);
+
+    await page.goto("https://www.familiada.online/logo-editor", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("networkidle");
+    const tileB = page.locator(`.logoTile[data-key="${logoId}"]`);
+    await expect(tileB).toBeVisible({ timeout: 10000 });
+    await tileB.evaluate((el) => el.click());
+    await expect(page.locator("#btnEdit")).toBeEnabled({ timeout: 10000 });
+    await page.locator("#btnEdit").click();
+
+    await expect(page.locator("#resourceLockGuard")).toBeVisible({ timeout: 10000 });
+    await expect(page.locator("#editorShell")).toBeHidden({ timeout: 5000 });
+  } finally {
+    await tabA.close();
+    await page.evaluate(async (id) => { await window.__sbClient.from("user_logos").delete().eq("id", id); }, logoId);
+  }
+});
+
+test("logo-editor.js: edycja i zmiana nazwy DOWOLNEGO logo zablokowane, gdy game-settings.js ma otwartą inną grę użytkownika", async ({ page, context }) => {
+  test.setTimeout(60_000);
+  await loginAsTestUser(page, context);
+
+  const logoName = `E2E-XLOCK-LOGOPOOL-${Date.now()}`;
+  const { logoId, gameId } = await page.evaluate(async ({ name, payload }) => {
+    const sb = window.__sbClient;
+    const { data: userData } = await sb.auth.getUser();
+    // Logo celowo NIE referencowany przez tę grę -- dowód, że blokada
+    // dotyczy całej puli, nie tylko logo wskazanego w danej grze.
+    const { data: logo, error: logoErr } = await sb.from("user_logos")
+      .insert({ user_id: userData.user.id, name, type: "GLYPH_30x10", payload })
+      .select("id").single();
+    if (logoErr) throw new Error(logoErr.message);
+    const { data: game, error: gameErr } = await sb.from("games")
+      .insert({ name: `E2E-XLOCK-LOGOPOOLGAME-${Date.now()}`, owner_id: userData.user.id, type: "prepared" })
+      .select("id").single();
+    if (gameErr) throw new Error(gameErr.message);
+    return { logoId: logo.id, gameId: game.id };
+  }, { name: logoName, payload: blankGlyphPayload() });
+
+  const settingsPage = await context.newPage();
+  try {
+    await settingsPage.goto(`https://www.familiada.online/game-settings?id=${gameId}`, { waitUntil: "domcontentloaded" });
+    await settingsPage.waitForLoadState("networkidle");
+    await waitForLock(settingsPage, "game", gameId);
+
+    await page.goto("https://www.familiada.online/logo-editor", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("networkidle");
+
+    const tile = page.locator(`.logoTile[data-key="${logoId}"]`);
+    await expect(tile).toBeVisible({ timeout: 10000 });
+    await tile.evaluate((el) => el.click());
+    await expect(page.locator("#btnEdit")).toBeEnabled({ timeout: 10000 });
+    await page.locator("#btnEdit").click();
+
+    await expect(page.locator(".uni-modal .mSub")).toBeVisible({ timeout: 10000 });
+    await expect(page.locator(".uni-modal .mSub")).toContainText("ustawienia rozgrywki", { timeout: 5000 });
+    await page.locator(".uni-modal .uni-foot .btn.gold").click({ timeout: 10000 });
+    await expect(page.locator("#editorShell")).toBeHidden({ timeout: 5000 });
+
+    await tile.dblclick();
+    await expect(page.locator("#renameOverlay")).toBeVisible({ timeout: 5000 });
+    await page.locator("#renameInput").fill(`${logoName}-RENAMED`);
+    await page.locator("#btnRenameOk").click();
+    await expect(page.locator("#renameMsg")).toContainText("ustawienia rozgrywki", { timeout: 5000 });
+
+    const nameAfter = await page.evaluate(async (id) => {
+      const { data } = await window.__sbClient.from("user_logos").select("name").eq("id", id).single();
+      return data?.name;
+    }, logoId);
+    expect(nameAfter, "nazwa nie powinna się zmienić, skoro rename zostało zablokowane").toBe(logoName);
+  } finally {
+    await settingsPage.close();
+    await page.evaluate(async (id) => { await window.__sbClient.from("games").delete().eq("id", id); }, gameId);
+    await page.evaluate(async (id) => { await window.__sbClient.from("user_logos").delete().eq("id", id); }, logoId);
   }
 });

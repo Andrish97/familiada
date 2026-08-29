@@ -40,11 +40,12 @@ function lockChannel(resourceType, resourceId) {
   return rt(`familiada-edit-lock:${resourceType}:${resourceId}`);
 }
 
-async function acquireOnce(resourceType, resourceId) {
+async function acquireOnce(resourceType, resourceId, context) {
   const { data, error } = await sb().rpc("acquire_edit_lock", {
     p_resource_type: resourceType,
     p_resource_id: resourceId,
     p_tab_id: getTabId(),
+    p_context: context ?? null,
   });
   if (error) throw error;
   return data;
@@ -153,7 +154,7 @@ function showOverlay({ title, message, backHref }) {
  * bo alt-tab do innej aplikacji podczas edycji nie powinien oddawać
  * blokady komuś innemu.
  */
-export async function guardResourceLock({ resourceType, resourceId, message, title, backHref }) {
+export async function guardResourceLock({ resourceType, resourceId, message, title, backHref, context }) {
   let released = false;
   let heartbeatTimer = null;
   let retryTimer = null;
@@ -166,7 +167,7 @@ export async function guardResourceLock({ resourceType, resourceId, message, tit
     });
   }
 
-  const initial = await acquireOnce(resourceType, resourceId);
+  const initial = await acquireOnce(resourceType, resourceId, context);
 
   if (initial?.error === "gone") {
     // Zasób usunięty gdzie indziej, zanim zdążyliśmy wejść — inny
@@ -188,7 +189,7 @@ export async function guardResourceLock({ resourceType, resourceId, message, tit
     // treść, zamiast próbować "wznowić" stan w locie.
     async function recheckAndReload() {
       if (released) return;
-      const res = await acquireOnce(resourceType, resourceId).catch(() => null);
+      const res = await acquireOnce(resourceType, resourceId, context).catch(() => null);
       if (res?.ok) {
         clearInterval(retryTimer);
         location.reload();
@@ -211,7 +212,7 @@ export async function guardResourceLock({ resourceType, resourceId, message, tit
   }
 
   heartbeatTimer = setInterval(async () => {
-    const res = await acquireOnce(resourceType, resourceId).catch((e) => {
+    const res = await acquireOnce(resourceType, resourceId, context).catch((e) => {
       console.warn("[resource-lock] heartbeat failed:", e);
       return null;
     });
@@ -255,4 +256,26 @@ export async function isResourceBusy(resourceType, resourceId) {
     .maybeSingle();
   if (error) throw error;
   return !!data;
+}
+
+/**
+ * Jak isResourceBusy(), ale bez konkretnego resourceId — pyta "czy JAKIKOLWIEK
+ * zasób tego typu ma teraz aktywną blokadę trzymaną z jednego z podanych
+ * kontekstów" i zwraca KTÓRY kontekst pasował (albo null). Do reguł "cała
+ * pula X busy" (np. logo blokowane w całości, gdy Control lub
+ * game-settings.js mają aktywną grę) — patrz "Model: zasób ma stan
+ * busy/free" w docs/plan-testy-i-poprawki.md. RLS na edit_locks i tak
+ * ogranicza wynik do zasobów własnych wołającego.
+ */
+export async function findBusyContext(resourceType, contexts) {
+  const { data, error } = await sb()
+    .from("edit_locks")
+    .select("holder_context")
+    .eq("resource_type", resourceType)
+    .in("holder_context", contexts)
+    .gt("heartbeat_at", new Date(Date.now() - LOCK_TTL_MS).toISOString())
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return data?.holder_context || null;
 }
