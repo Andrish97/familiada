@@ -230,69 +230,108 @@ każde miejsce, które pisze do zasobu, powinno brać blokadę:
    "otwiera" na dłużej — ale zapis nadal może kolidować z kimś, kto W TYM
    MOMENCIE ma otwarty edytor/ustawienia/ankietę tej samej gry.
 
-**Tabela główna** (✅ zrobione / 🔄 w toku / 🔲 do zrobienia / ⚠️ nowo
-znaleziona luka / n/d nie dotyczy):
+**Rozpisane per zasób** (tabela okazała się nieczytelna — poniżej każdy
+przypadek osobno, w formie "kto/co → kiedy zablokowane"):
 
-| Zasób | Strona/proces | Tryb | Co pisze | Warstwa 1 | Warstwa 2 | Status |
-|---|---|---|---|---|---|---|
-| `game` | `editor.js` | wyłączny edytor | `questions`, `answers` | ✅ trzyma lock `game` | `updateChecked` (CAS) + wykrycie `ROW_GONE` | ✅ zamknięte |
-| `game` | `game-settings.js` | wyłączny edytor | `games.settings` | ✅ trzyma lock `game` | CAS na `settings` + filtr nieaktualnych pytań | ✅ zamknięte |
-| `game` | `polls.js` (panel admina — otwarcie/zamknięcie/ponowne odpalenie ankiety) | wyłączny edytor | `games.status`, `answers.fixed_points` (przy zamknięciu), `poll_sessions` | ✅ trzyma lock `game` — już blokuje wzajemnie z `editor.js`/`game-settings.js` (potwierdzone e2e) | RPC-e (`poll_open`/`poll_points_close_and_normalize`/`poll_text_close_apply`) same sprawdzają status+ownership atomowo | 🔄 blokada względem edytora/ustawień gotowa; ⚠️ **blokada względem Control (rozgrywki) NIE istnieje** — Control nie trzyma jeszcze żadnego locka (patrz wiersz niżej), więc dziś nic nie stoi na przeszkodzie, by odpalić/zamknąć ankietę w trakcie live rozgrywki tej samej gry |
-| `game` | `poll-text.js` / `poll-points.js` (głosujący) | **wiele naraz z zamierzenia** | `poll_votes` / `poll_text_entries` | ❌ celowo NIE blokować | RPC per-głos z `voter_token` — zero kolizji, różne wiersze | ✅ bezpieczne z natury, nie wymaga zmian |
-| `game` | `poll-qr.js` / `poll-go.js` (wyświetlacz/wejście) | tylko odczyt | — | n/d | — | n/d |
-| `game` | `builder.js` → `renameGame()` | jednorazowa akcja | `games.name` | 🔲 brak | brak CAS | 🔲 **do decyzji** — kosmetyka, niska szkodliwość nawet przy kolizji; propozycja: NIE blokować |
-| `game` | `builder.js` → `resetPollForEditing()` (wołane WPROST z buildera, nie tylko z `editor.js`) | jednorazowa akcja, ale zeruje `answers.fixed_points` + `games.status` | jw. | 🔲 brak | 🔲 brak | ⚠️ **nowo znaleziona luka** — jeśli w tym momencie ktoś ma otwarty edytor/ustawienia/ankietę tej samej gry, reset nadpisuje dane pod nim bez ostrzeżenia. Do naprawienia: sprawdzić aktywny lock `game` przed zapisem (ostrzeżenie/blokada), nie tylko pytać usera o potwierdzenie w UI |
-| `game` | `builder-import-export.js` (import pytań do gry) | jednorazowa akcja | `questions`, `answers` (insert) | 🔲 brak | 🔲 nieprzejrzane | 🔲 to samo ryzyko co reset — do audytu w kroku 5 |
-| `game` | `builder.js` → `deleteGame()` | usunięcie, nie edycja | `games` (delete) | n/d | ✅ `delete_resource_checked('game', …)` (`poll_open` LUB aktywny lock `game`) | ✅ zamknięte (krok 2.5) |
-| `game` | Control (rozgrywka) | wyłączny (docelowo) | dziś brak bezpośrednich zapisów do `questions`/`answers`/`settings` (tylko `localStorage` + `game_sessions` po zakończeniu) | 🔲 odłożone — **to jest właśnie luka opisana wyżej przy `polls.js`**: dopóki Control nie trzyma locka, nic nie blokuje edycji/ankiety tej samej gry w trakcie live rozgrywki, ani odwrotnie | — | 🔲 krok 7, potrzebuje najpierw sygnału żywotności — **do decyzji: przyspieszyć teraz (minimalny sygnał żywotności) czy zostawić w kolejce jak zaplanowano** |
-| `logo` | `logo-editor/js/main.js` | wyłączny edytor (docelowo) | `user_logos.payload`/`name` | 🔲 RPC już gotowe (`acquire_edit_lock('logo',…)`), strona jeszcze nie woła | 🔲 nieprzejrzane | 🔲 krok 4 |
-| `logo` (referencja) | `game-settings.js` — WYBÓR logo (nie edycja) | odczyt + referencja | `games.settings.display.logoId` | n/d — to nie edycja logo, tylko wskazanie | — | n/d |
-| `logo` — WSZYSTKIE logo użytkownika | usunięcie LUB edycja DOWOLNEGO logo, gdy użytkownik ma aktywną rozgrywkę (Control) LUB otwarte ustawienia gry (`game-settings.js`) | — | — | — | 🔲 **decyzja podjęta, jeszcze niewdrożona**: blokować obie akcje (usunięcie i edycję) dla WSZYSTKICH logo tego użytkownika, nie tylko tego referencowanego przez konkretną grę — bo Control/ustawienia korzystają z całej puli logo użytkownika. Komunikat: "nie możesz edytować/usunąć logo, bo prowadzisz rozgrywkę / zmieniasz ustawienia rozgrywki". **Otwarta podpytanie**: czy sesja `editor.js` (sam tekst pytań, bez dotykania wyglądu) też ma się liczyć jako wyzwalacz, czy tylko `game-settings.js`+Control? Wymaga też technicznie odróżnienia PRZEZ KTÓRĄ stronę trzymany jest wspólny lock `game` (dziś `edit_locks` nie zapisuje tego, po zamierzonym scaleniu resource_type) | 🔲 do zaimplementowania po rozstrzygnięciu podpytania |
-| `base` | `base-explorer/*` | wyłączny edytor (docelowo) | `qb_questions`, `qb_category_tags`, `qb_question_tags` | 🔲 nieprzejrzane | 🔲 nieprzejrzane — najpierw głęboki audyt CRUD+uprawnienia | 🔲 krok 6 |
-| `base` | `bases.js` (lista, udostępnienia) | zarządzanie, nie treść | `question_bases` (rename/delete), share RPC-i | 🔲 nieprzejrzane | — | 🔲 do audytu razem z `base-explorer` |
-| `base` → `game` | eksport bazy → nowa gra | jednorazowa KOPIA, nie referencja | — | n/d | — | ✅ potwierdzone bezpieczne (zero trwałego powiązania po skopiowaniu) |
+#### Zasób `game`
 
-**Decyzje** (3 rozstrzygnięte, 1 nadal otwarta):
+- **`editor.js` (otwarcie strony)** — ✅ zablokowane, gdy dowolna INNA
+  strona z tej listy (`game-settings.js`, `polls.js`, sama siebie w
+  drugiej karcie) trzyma aktywny lock `game` na tę samą grę. NIE
+  blokowane przez Control (luka, patrz niżej).
+- **`game-settings.js` (otwarcie strony)** — ✅ to samo, symetrycznie.
+- **`polls.js` (otwarcie strony / otwórz / zamknij / odpal ponownie
+  ankietę)** — ✅ zablokowane przez `editor.js`/`game-settings.js`
+  (potwierdzone e2e). ⚠️ NIE zablokowane przez Control — Control nie
+  trzyma dziś żadnego locka, więc nic nie stoi na przeszkodzie, żeby
+  otworzyć/zamknąć/odpalić ponownie ankietę tej samej gry, która jest
+  akurat pokazywana na żywo. **Decyzja: zostaje jako świadoma,
+  tymczasowa luka do kroku 7** (nie przyspieszamy budowy sygnału
+  żywotności Control teraz).
+- **`poll-text.js` / `poll-points.js` (głosujący, anonimowi)** — ❌
+  CELOWO nie blokowane. To jest właśnie specyfika ankiet, o której
+  mówiłeś: dziesiątki/setki ludzi poprawnie piszą jednocześnie do tej
+  samej gry (`poll_votes`/`poll_text_entries`) — blokowanie tu byłoby
+  błędem. Bezpieczne z natury: każdy głos to osobny wiersz z unikalnym
+  `voter_token`, zero wspólnego stanu do nadpisania.
+- **`poll-qr.js` / `poll-go.js` (wyświetlacz/wejście)** — tylko odczyt,
+  nie dotyczy.
+- **`builder.js` → przycisk "Edytuj" na grze ze statusem `ready`
+  (`resetPollForEditing()`)** — dziś ❌ nic nie sprawdza, zeruje
+  `answers.fixed_points` i cofa `games.status` na `draft` NIEZALEŻNIE od
+  tego, czy ta sama gra ma w tej chwili otwarty `editor.js`/
+  `game-settings.js`/`polls.js` gdzie indziej. **Decyzja: ✅ twarda
+  blokada** — jeśli gra ma aktywny lock `game` trzymany przez inną
+  kartę, akcja ma się zatrzymać z komunikatem "gra jest używana gdzie
+  indziej", zamiast zapisywać w ciemno. **Jeszcze niezaimplementowane.**
+- **`builder.js` → zmiana nazwy gry (`renameGame()`)** — dziś ❌ nic nie
+  sprawdza. **Otwarte pytanie** (patrz sekcja "Zmiana nazwy zasobu"
+  niżej) — czy to ma podlegać tej samej regule co reset, czy jest na
+  tyle niegroźne (sama kosmetyka, nie nadpisuje treści pytań/ustawień),
+  że może przejść bez blokady nawet przy aktywnym locku?
+- **`builder-import-export.js` → import gry z pliku** — **sprawdzone w
+  kodzie i skorygowane**: `importGame()` ZAWSZE tworzy NOWĄ grę (nowy
+  wiersz `games` z nowym id) — nigdy nie pisze do istniejącej, otwartej
+  gdzieś gry. Zero kolizji z tego tytułu — **usuwam to z listy
+  problemów**, wcześniejszy wpis w planie był błędny.
+- **`builder.js` → `deleteGame()`** — ✅ zamknięte (krok 2.5):
+  `delete_resource_checked('game', …)` blokuje, gdy `poll_open` lub
+  aktywny lock `game`.
+- **Control (rozgrywka)** — 🔲 odłożone do kroku 7. Dziś brak
+  bezpośrednich zapisów do `questions`/`answers`/`settings` (tylko
+  `localStorage` + `game_sessions` po zakończeniu) i brak JAKIEGOKOLWIEK
+  sygnału żywotności karty Control — stąd luka opisana przy `polls.js`
+  wyżej.
 
-1. **`builder.js` → `resetPollForEditing()`/import — nadal otwarte, doprecyzowane.**
-   Konkretny scenariusz: użytkownik ma otwarty `editor.js` dla gry X w
-   karcie A (trzyma lock `game`/X) i właśnie coś tam poprawia. W karcie B
-   ten sam użytkownik wchodzi na `/builder`, klika "Edytuj" na grze X,
-   która ma status `ready` (ankieta była zamknięta) — to od razu, bez
-   żadnego ostrzeżenia o karcie A, woła `resetPollForEditing(X)`: cofa
-   `games.status` na `draft` i zeruje WSZYSTKIE `answers.fixed_points` tej
-   gry. Karta A tego nie widzi (nie ma live-sync na wynik ankiety), więc
-   traci dane po cichu. Pytanie: czy `resetPollForEditing()`/import z
-   pliku mają najpierw sprawdzić, czy gra ma teraz aktywny lock `game`
-   (trzymany przez inną kartę) i jeśli tak — pokazać ostrzeżenie/blokadę
-   zamiast robić zapis w ciemno?
-2. **Logo — ROZSTRZYGNIĘTE**: blokować i edycję, i usunięcie, dla
-   WSZYSTKICH logo użytkownika (nie tylko referencowanego), gdy ma on
-   aktywną rozgrywkę (Control) lub otwarte ustawienia gry
-   (`game-settings.js`). Komunikat rozróżnia tylko powód: "prowadzisz
-   rozgrywkę" / "zmieniasz ustawienia rozgrywki".
-3. **ROZSTRZYGNIĘTE**: `editor.js` (sam tekst pytań) NIE jest wyzwalaczem
-   blokady logo — tylko `game-settings.js` i Control. Konsekwencja
-   techniczna: skoro nie wystarczy "jakikolwiek aktywny lock `game`",
-   trzeba w `edit_locks` zapisywać PRZEZ KTÓRĄ stronę lock jest trzymany
-   (dziś tego nie ma — scalone celowo w jeden `resource_type='game'` bez
-   rozróżnienia strony przy unifikacji edytor/ustawienia). Wymaga nowej
-   kolumny (np. `holder_context`) wypełnianej przez `acquire_edit_lock` i
-   przekazywanej z `guardResourceLock({..., context})` w każdym
-   wywołaniu (`editor.js` → `"editor"`, `game-settings.js` →
-   `"settings"`, `polls.js` → `"polls"`, docelowo Control → `"control"`).
-   Sam mechanizm wzajemnego wykluczania (Warstwa 1) się NIE zmienia —
-   `holder_context` to czysto informacyjna kolumna do TEGO dodatkowego
-   sprawdzenia, nie do exclusion. Do zbudowania razem z krokiem 4
-   (logo-editor), bo dopiero tam powstanie faktyczny konsument (blokada
-   edycji/usunięcia logo) — samą kolumnę+parametr można dorzucić już przy
-   okazji, żeby nie robić tego osobnym, rozłącznym krokiem.
-4. **ROZSTRZYGNIĘTE**: luka `polls.js` ↔ Control (rozgrywka) zostaje w
-   kolejce jako krok 7, zgodnie z pierwotnym planem — nie przyspieszamy
-   budowy sygnału żywotności Control teraz. Do czasu kroku 7: nic nie
-   stoi na przeszkodzie, żeby otworzyć/zamknąć/odpalić ponownie ankietę
-   tej samej gry pokazywanej na żywo w Control — świadomie zaakceptowana,
-   tymczasowa luka.
+#### Zasób `logo`
+
+- **`logo-editor.js` — dwie karty edytujące TEN SAM konkretny logo** —
+  🔲 RPC już gotowe (`acquire_edit_lock('logo', logoId, …)`), ale strona
+  jeszcze go nie woła. Do zbudowania w kroku 4: standardowa wyłączność
+  jak przy edytorze gry.
+- **Edycja LUB usunięcie DOWOLNEGO logo (nie tylko tego jednego, o
+  który akurat chodzi), gdy użytkownik ma aktywną rozgrywkę (Control)
+  LUB otwarte ustawienia gry (`game-settings.js`) dla KTÓREJKOLWIEK
+  swojej gry** — ✅ **decyzja podjęta**: blokować obie akcje. Powód:
+  Control i ustawienia korzystają z całej puli logo użytkownika, nie
+  tylko z jednego wskazanego. Komunikat rozróżnia tylko powód:
+  "prowadzisz rozgrywkę" / "zmieniasz ustawienia rozgrywki". `editor.js`
+  (sam tekst pytań) **NIE** jest wyzwalaczem tej blokady — ✅
+  rozstrzygnięte. Wymaga technicznie nowej kolumny `holder_context` w
+  `edit_locks` (żeby dało się rozróżnić "ustawienia" od "edytor" na tym
+  samym wspólnym locku `game`) — **jeszcze niezaimplementowane**, razem
+  z krokiem 4.
+- **`game-settings.js` — WYBÓR logo z listy (nie edycja jego treści)**
+  — to tylko odczyt + zapis referencji (`games.settings.display.logoId`),
+  nie dotyka `user_logos` w ogóle. Nie dotyczy blokady logo.
+- **Zmiana nazwy logo** — patrz sekcja "Zmiana nazwy zasobu" niżej,
+  otwarte pytanie wspólne dla wszystkich trzech zasobów.
+
+#### Zasób `base`
+
+- **`base-explorer/*` — edycja treści bazy (pytania, kategorie, tagi)**
+  — 🔲 odłożone do kroku 6, celowo PO dogłębnym audycie CRUD+uprawnień
+  (baza ma wielu użytkowników z rolami editor/viewer — inny rodzaj
+  ryzyka niż samo "dwie karty naraz").
+- **`bases.js` — lista, udostępnienia, usunięcie bazy** — 🔲
+  nieprzejrzane, audyt razem z `base-explorer`.
+- **Zmiana nazwy bazy** — patrz "Zmiana nazwy zasobu" niżej.
+- **Eksport bazy → nowa gra** — ✅ potwierdzone bezpieczne: jednorazowa
+  KOPIA do nowych wierszy, zero trwałego powiązania po skopiowaniu.
+
+#### Zmiana nazwy zasobu — jedno pytanie, trzy miejsca
+
+Ten sam dylemat występuje trzy razy niezależnie od typu zasobu:
+`builder.js` → `renameGame()` (`games.name`), docelowo zmiana nazwy logo
+(`user_logos.name`) i zmiana nazwy bazy (`question_bases.name`). Żadne z
+nich dziś nie sprawdza aktywnego locka. W przeciwieństwie do resetu
+ankiety (który nadpisuje realną treść — punkty) albo edycji logo (która
+nadpisuje wygląd na żywo), zmiana samej NAZWY nie niszczy niczyjej pracy
+nad treścią — najgorszy scenariusz to divergencja "co widzę w tytule
+karty vs. co jest w bazie" do czasu odświeżenia. Stąd pytanie: czy
+traktować rename tak samo jak resztę edycji zasobu (blokować pod tym
+samym warunkiem co Warstwa 1 tej strony), czy uznać za na tyle niegroźne,
+że przechodzi zawsze, niezależnie od aktywnego locka gdzie indziej?
 
 Blokada obejmuje też własne drugie okno tego samego użytkownika (prościej
 i spójniej, niż robić wyjątek "to moja sesja" — to był oryginalny problem
