@@ -4548,9 +4548,9 @@ export function wireActions({ state }) {
         return;
       }
     
-      // normalnie (FOLDER/ALL)
-      if (!canMutateHere(state)) return;
-    
+      // normalnie (FOLDER/ALL/SEARCH -- canDeleteHere już przepuściło SEARCH wyżej;
+      // canMutateHere by je tu ponownie zablokowało, bo wyklucza WSZYSTKIE widoki
+      // wirtualne, nie tylko META jak canDeleteHere)
       try {
         await deleteSelected(state);
       } catch (err) {

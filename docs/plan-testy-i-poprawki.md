@@ -899,12 +899,23 @@ test (nie chcę testu, który asertuje utratę danych jako sukces), tylko
 zapisuję tu jako potwierdzenie, że rekomendacja z audytu (lock
 per-pytanie, nie tylko per-baza) wciąż stoi.
 
+Kontynuacja tej samej rundy: systematyczne porównanie toolbar/menu
+kontekstowe/klawiatura znalazło TRZECI samodzielny bug — klawisz
+**Delete w widoku wyszukiwania (SEARCH) cicho nic nie robił**. Kod miał
+dwie bramki z rzędu: `canDeleteHere` (poprawnie przepuszcza SEARCH,
+blokuje tylko META) i zaraz potem zbędną drugą `canMutateHere` (blokuje
+WSZYSTKIE widoki wirtualne, więc też SEARCH) — toolbar i menu kontekstowe
+używają tylko pierwszej, więc obie działały poprawnie w SEARCH, a sam
+klawisz Delete nie. Usunięto zbędną drugą bramkę (`deleteItems()` i tak
+niezależnie sprawdza `canWrite` w środku). Dodany test: 40 testów łącznie.
+
 **Wciąż niesprawdzone / kolejna runda jeśli będzie potrzebna**: mobile
-long-press/double-tap jako e2e (tylko czytanie kodu), wyczerpująca
-macierz toolbar/menu-kontekstowe/klawiatura × widoki/role (znaleziono 2
-rozjazdy przypadkiem, nie przeszukano systematycznie), sortowanie po
-dacie (pominięte — trudne do kontrolowania w teście bez mockowania
-zegara), interakcje kombinacji filtrów (szukaj+tag+meta jednocześnie).
+long-press/double-tap jako e2e (tylko czytanie kodu), reszta macierzy
+toolbar/menu-kontekstowe/klawiatura × widoki/role (znaleziono 3 rozjazdy
+przypadkiem — Ctrl+C, tworzenie w META, Delete w SEARCH — nie
+przeszukano w pełni systematycznie), sortowanie po dacie (pominięte —
+trudne do kontrolowania w teście bez mockowania zegara), interakcje
+kombinacji filtrów (szukaj+tag+meta jednocześnie).
 
 Przy pisaniu tych testów znaleziony i naprawiony KOLEJNY samodzielny
 bug: `question-modal.js`'s `qSave` w ogóle nie sprawdzał, czy treść

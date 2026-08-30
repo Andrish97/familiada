@@ -1201,6 +1201,37 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
       await deleteBase(page, baseId);
     }
   });
+
+  test("Delete działa w widoku wyszukiwania (regresja: druga, zbędna bramka cicho blokowała SEARCH)", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context);
+    const baseId = await createBase(page, `E2E-XB-DELSEARCH-${Date.now()}`);
+
+    try {
+      const uniq = `DoUsuniecia${Date.now()}`;
+      const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: uniq, answers: [] } });
+
+      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+
+      await page.locator("#searchText").fill(uniq);
+      const row = page.locator(`#list .row[data-id="${qid}"]`);
+      await expect(row).toBeVisible({ timeout: 10000 });
+      await row.click();
+
+      await page.keyboard.press("Delete");
+
+      // przed naprawą: nic się nie działo (cicha, zbędna druga bramka canMutateHere
+      // blokowała SEARCH, mimo że pierwsza bramka canDeleteHere je przepuszczała)
+      await expect(page.locator(".uni-modal .mSub")).toBeVisible({ timeout: 5000 });
+      await page.locator(".uni-modal .uni-foot .btn.gold").click();
+
+      const fresh = await getQuestionRow(page, qid);
+      expect(fresh, "Delete w widoku wyszukiwania powinien realnie usuwać, tak jak toolbar/menu kontekstowe").toBeNull();
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
 });
 
 /* ================= 3) question-modal.js (edycja pytania) ================= */
