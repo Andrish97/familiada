@@ -412,13 +412,12 @@ audycie/poprawce każdej strony, zaczynając od edytora.
    konkretne logo + Warstwa 2 (`update_logo_checked`, rozszerzony
    `delete_resource_checked`) + reguła "cała pula logo busy przy
    Control/ustawieniach" (migracja 256, `holder_context`). ✅ e2e zielone (run #68).
-5. Reszta z "Pełnej listy miejsc do audytu" niżej (`builder.js`,
-   `builder-import-export.js`, `bases.js`, `generator.js`, `settings.js`,
-   `polls-hub.js`, `subscriptions.js`) — audyt Warstwy 2, Warstwa 1 gdzie
-   ma to sens, PLUS dla każdej: czy jest konsumentem/celem krzyżowej
-   relacji (np. `builder.js`'s usuwanie gry przez `can_delete`; strony
-   "hub" typu `polls-hub.js` mogą mieć własne, jeszcze nieznalezione
-   relacje — lista niżej rośnie w miarę audytu, nie jest zamknięta).
+5. Reszta z "Pełnej listy miejsc do audytu" niżej — **wysoki priorytet**:
+   `builder.js` (duplikowanie), `builder-import-export.js`, `bases.js`,
+   `generator.js`, `polls-hub.js` (dotyka gier — anuluje zadania
+   ankietowe, usuwa głosy po `game_id`, patrz wiersz przy zasobie `game`
+   wyżej). **Niski priorytet, bo nie dotykają żadnego z trzech zasobów**:
+   `settings.js` (konto), `subscriptions.js` (płatności).
 6. **Baza pytań** (`base-explorer/`) — **najpierw** bardzo dogłębny audyt +
    testy (CRUD, dwóch różnych użytkowników, uprawnienia — sekcja niżej),
    **dopiero potem** Warstwa 1 (blokada `base_id`) i utwardzenie Warstwy 2
@@ -452,9 +451,9 @@ różnych użytkowników, albo nieaktualne dane po zmianie gdzie indziej):
 | `js/pages/bases.js` | lista baz pytań, zarządzanie udostępnieniami | 🔲 nieprzejrzane |
 | `base-explorer/` (`actions.js`, `state.js`, `tags-modal.js`, `export-modal.js`) | edycja bazy pytań | 🔲 dogłębny audyt najpierw, Warstwa 1 dopiero potem — patrz sekcja "Baza pytań" |
 | `js/pages/generator.js` | generator gier (AI) — wpisuje pytania/odpowiedzi do gry | 🔲 nieprzejrzane — może kolidować z edytorem otwartym na tej samej grze |
-| `js/pages/settings.js` | ustawienia konta użytkownika (nie gry) | 🔲 nieprzejrzane, niższy priorytet |
-| `js/pages/polls-hub.js` | lista ankiet (hub) | 🔲 nieprzejrzane, niższy priorytet |
-| `js/pages/subscriptions.js` | subskrypcja/płatności | 🔲 nieprzejrzane, niski priorytet |
+| `js/pages/polls-hub.js` | lista ankiet (hub) — anuluje zadania ankietowe, usuwa głosy po `game_id` | 🔲 nieprzejrzane, **wysoki priorytet** (dotyka gier — patrz wiersz `polls-hub.js` przy zasobie `game` wyżej) |
+| `js/pages/settings.js` | ustawienia konta użytkownika (nie gry) | 🔲 nieprzejrzane, niski priorytet — nie dotyka żadnego z trzech zasobów |
+| `js/pages/subscriptions.js` | subskrypcja/płatności | 🔲 nieprzejrzane, niski priorytet — nie dotyka żadnego z trzech zasobów |
 | `js/pages/login.js`, `account.js`, `confirm.js` | logowanie / migracja gościa | ✅ przerobione wcześniej (deferred guest migration) |
 | `control/` | prowadzenie rozgrywki — zapis/przywracanie stanu | 🔲 **odłożone**, osobny kompleksowy punkt — patrz sekcja "Control" |
 
