@@ -73,9 +73,14 @@ async function dumpPageDiagnostics(page, gotoResponse) {
   }
 }
 
-/** Loguje jako konto testowe (TEST_USERNAME/TEST_PASSWORD), zostawia stronę na /builder */
-async function loginAsTestUser(page, context) {
-  const username = process.env.TEST_USERNAME;
+/**
+ * Loguje jako konto testowe (TEST_USERNAME/TEST_PASSWORD domyślnie), zostawia
+ * stronę na /builder. Przekaż { username: process.env.TEST_USERNAME_2 } żeby
+ * zalogować DRUGIE konto testowe w scenariuszach z dwoma użytkownikami
+ * naraz -- ma to samo TEST_PASSWORD (nie ma osobnego TEST_PASSWORD_2).
+ */
+async function loginAsTestUser(page, context, { username: usernameOverride } = {}) {
+  const username = usernameOverride || process.env.TEST_USERNAME;
   const password = process.env.TEST_PASSWORD;
   if (!username || !password) throw new Error("Brak TEST_USERNAME/TEST_PASSWORD w zmiennych środowiskowych");
 

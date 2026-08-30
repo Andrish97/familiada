@@ -819,6 +819,24 @@ naprawiony bug: eksport, cykl folderów, stale-payload rename, cascade
 usuwania folderu, hang modala tagów) — 🔄 e2e w toku (jeszcze nie
 uruchomione na CI).
 
+**Runda 2 (na żądanie: "przetestować cały panel", nie tylko już znalezione
+bugi)** — dodano `tests/e2e/base-explorer-crud.spec.js` (15 testów:
+question-modal CRUD + limity, tagi tri-state + duplikaty, wyszukiwanie
+tekstowe i po `#tagu`, wytnij/kopiuj/wklej, drag&drop pytania na folder w
+liście, oraz DWA REALNE konta testowe — `TEST_USERNAME`/`TEST_USERNAME_2`
+— dla `editor`/`viewer` na współdzielonej bazie, w tym próba zapisu
+viewera bezpośrednio przez klienta z pominięciem UI). `loginAsTestUser()`
+w `helpers/login.js` dostał opcjonalny `{ username }` do logowania
+drugiego konta. Przy pisaniu tych testów znaleziony i naprawiony KOLEJNY
+samodzielny bug: `Ctrl+A` (`actions.js` w keydown handlerze) filtrował
+wiersze po atrybucie `data-key`, którego żaden wiersz nigdy nie miał
+(wszystkie mają `data-kind`+`data-id`) — zaznacz-wszystko było od zawsze
+całkowicie martwe, naprawione przez użycie istniejącego `currentRowKeys()`.
+🔄 e2e w toku. Kolejne rundy będą dochodzić w miarę potrzeby (drag&drop
+folderów międzysobą poza cyklem, widok META z lewego panelu, mobile
+long-press/double-tap) — nie ma sztywnego celu liczby testów, chodzi o
+realne pokrycie funkcji panelu.
+
 ---
 
 ## Krzyżowe blokady między zasobami — mechanizm ✅ zamknięty, reszta kategorii otwarta

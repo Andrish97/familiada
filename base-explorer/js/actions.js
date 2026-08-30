@@ -4626,19 +4626,18 @@ export function wireActions({ state }) {
       
         const listEl = document.getElementById("list");
         if (!listEl) return;
-      
-        const rows = listEl.querySelectorAll(".row[data-key]");
-        if (!rows.length) return;
-      
+
+        // Wiersze mają data-kind+data-id, nie data-key -- currentRowKeys()
+        // buduje z nich prawdziwe klucze selekcji ("q:"/"c:").
+        const keys = currentRowKeys(listEl);
+        if (!keys.length) return;
+
         if (!state.selection) state.selection = {};
         if (!(state.selection.keys instanceof Set)) state.selection.keys = new Set();
-      
+
         state.selection.keys.clear();
-        rows.forEach((row) => {
-          const key = row.dataset.key;
-          if (key) state.selection.keys.add(key);
-        });
-      
+        for (const key of keys) state.selection.keys.add(key);
+
         renderList(state);
         return;
       }
