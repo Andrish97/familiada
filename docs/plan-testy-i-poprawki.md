@@ -194,7 +194,7 @@ w tym testy "edytor blokuje ustawienia" i "ustawienia blokują edytor").
 |---|---|---|
 | `game` | `js/pages/editor.js`, `js/pages/game-settings.js` | ✅ zrobione i przetestowane e2e (wspólny klucz) |
 | `game` (ankieta) | `js/pages/polls.js` | ✅ dołączona do wspólnego klucza `game`, przetestowane e2e (run #67, 12/12) |
-| `logo_id` | `logo-editor/js/main.js` | 🔄 krok 4 wdrożony w kodzie (Warstwa A + B), e2e w toku |
+| `logo_id` | `logo-editor/js/main.js` | ✅ krok 4 zamknięty (Warstwa A + B), e2e zielone (run #68, 14/14) |
 | `base_id` | `base-explorer/` | 🔲 **świadomie odłożone** do PO dogłębnym audycie i testach bazy (patrz sekcja "Baza pytań") |
 | `game` (rozgrywka) | `control/` | 🔲 **świadomie odłożone**, osobny kompleksowy punkt razem z zapisem/przywracaniem stanu (patrz sekcja "Control") — dołączy do tego samego wspólnego klucza `game`, nie osobnego |
 
@@ -239,7 +239,7 @@ wdrożone (migracja 256, `guardResourceLock` w `btnEdit`, zwolnienie w
 `closeEditor()`). Blokowane: druga karta otwierająca TO SAMO #N →
 OVERLAY (`#resourceLockGuard`); usunięcie #N z listy →
 `delete_resource_checked` (Warstwa 2); rename #N z listy → sprawdzenie
-klient-side `isResourceBusy` przed `update_logo_checked`. e2e w toku.
+klient-side `isResourceBusy` przed `update_logo_checked`. ✅ e2e zielone (run #68).
 
 **B. CAŁA pula logo usera busy**, gdy Control aktywny LUB
 `game-settings.js` otwarte (dla dowolnej gry usera) — 🔄 wdrożone
@@ -248,7 +248,7 @@ klient-side `isResourceBusy` przed `update_logo_checked`. e2e w toku.
 `update_logo_checked`/`delete_resource_checked` jako Warstwa 2).
 Blokowane: jakakolwiek edycja/usunięcie/rename DOWOLNEGO logo → ALERT
 MODAL ("prowadzisz rozgrywkę" / "zmieniasz ustawienia rozgrywki").
-`editor.js` NIE ustawia tej warstwy busy (rozstrzygnięte). e2e w toku.
+`editor.js` NIE ustawia tej warstwy busy (rozstrzygnięte). ✅ e2e zielone (run #68).
 
 #### `base`
 
@@ -264,7 +264,7 @@ na żywo przez nic innego). `base-explorer/*` edytuje bazę #N → busy #N
 `builder.js` (rename + reset + delete sprawdzają `busy`). Jedyna
 świadomie zaakceptowana luka: Control jeszcze nie uczestniczy (krok 7).
 
-**Krok 4 (`logo-editor.js`) — 🔄 wdrożony w kodzie, e2e w toku.** Warstwa
+**Krok 4 (`logo-editor.js`) — ✅ ZAMKNIĘTY, 14/14 e2e zielonych (run #68).** Warstwa
 A + Warstwa B + migracja 256 (`holder_context`, `update_logo_checked`)
 opisane wyżej przy zasobie `logo`. Po potwierdzeniu e2e: reszta wg
 wcześniej ustalonej kolejności (baza — krok 6, Control — krok 7).
@@ -411,7 +411,7 @@ audycie/poprawce każdej strony, zaczynając od edytora.
 4. **Edytor logo** (`logo-editor/`) — 🔄 wdrożone w kodzie: Warstwa 1 per
    konkretne logo + Warstwa 2 (`update_logo_checked`, rozszerzony
    `delete_resource_checked`) + reguła "cała pula logo busy przy
-   Control/ustawieniach" (migracja 256, `holder_context`). e2e w toku.
+   Control/ustawieniach" (migracja 256, `holder_context`). ✅ e2e zielone (run #68).
 5. Reszta z "Pełnej listy miejsc do audytu" niżej (`builder.js`,
    `builder-import-export.js`, `bases.js`, `generator.js`, `settings.js`,
    `polls-hub.js`, `subscriptions.js`) — audyt Warstwy 2, Warstwa 1 gdzie
@@ -446,8 +446,8 @@ różnych użytkowników, albo nieaktualne dane po zmianie gdzie indziej):
 | `js/pages/editor.js` | pytania/odpowiedzi gry | ✅ **ZAMKNIĘTE** — 21 testów e2e (run #52, 21/21), Warstwa 1 + Warstwa 2 zrobione |
 | `js/pages/polls.js` | zamykanie ankiety | ✅ Warstwa 2 gotowa (guard w RPC), 🔲 Warstwa 1 do dodania |
 | `js/pages/game-settings.js` | ustawienia gry (drużyny, wygląd, dźwięk, finał/rundy) | ✅ **ZAMKNIĘTE** — obie warstwy zrobione, 3/3 testów e2e (run #56, 3/3) |
-| `logo-editor/js/main.js` | edytor logo (zapis do `user_logos`) | 🔄 Warstwa 1 + Warstwa 2 wdrożone (krok 4), e2e w toku |
-| `js/pages/builder.js` | lista gier — tworzenie/nazwa/usuwanie/duplikowanie | 🔲 nieprzejrzane |
+| `logo-editor/js/main.js` | edytor logo (zapis do `user_logos`) | ✅ **ZAMKNIĘTE** — Warstwa 1 + Warstwa 2 (krok 4), 14/14 e2e (run #68) |
+| `js/pages/builder.js` | lista gier — tworzenie/nazwa/usuwanie/duplikowanie | 🔄 rename/reset/delete gotowe (busy-check), duplikowanie jeszcze nieprzejrzane |
 | `js/pages/builder-import-export.js` | import/eksport całych gier | 🔲 nieprzejrzane |
 | `js/pages/bases.js` | lista baz pytań, zarządzanie udostępnieniami | 🔲 nieprzejrzane |
 | `base-explorer/` (`actions.js`, `state.js`, `tags-modal.js`, `export-modal.js`) | edycja bazy pytań | 🔲 dogłębny audyt najpierw, Warstwa 1 dopiero potem — patrz sekcja "Baza pytań" |
