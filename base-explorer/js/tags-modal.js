@@ -354,15 +354,15 @@ export async function openTagsModal(state, opts = {}) {
     const tags = (state.tags || []).slice().sort((a, b) => (Number(a.ord) || 0) - (Number(b.ord) || 0));
 
     E.assignList.innerHTML = tags
-      .map((t) => {
-        const tri = m.tri.get(t.id) || "none";
+      .map((tag) => {
+        const tri = m.tri.get(tag.id) || "none";
         const ui = triToUi(tri);
 
         return `
-          <label class="tags-row" data-tag-id="${t.id}" style="opacity:${editor ? "1" : "0.75"}; cursor:${editor ? "pointer" : "default"};">
-            <input type="checkbox" data-tag-id="${t.id}" ${ui.checked ? "checked" : ""} ${editor ? "" : "disabled"} />
-            <span class="tag-dot" style="background:${t.color || "#777"}"></span>
-            <span class="m-p">#${String(t.name || "")}</span>
+          <label class="tags-row" data-tag-id="${tag.id}" style="opacity:${editor ? "1" : "0.75"}; cursor:${editor ? "pointer" : "default"};">
+            <input type="checkbox" data-tag-id="${tag.id}" ${ui.checked ? "checked" : ""} ${editor ? "" : "disabled"} />
+            <span class="tag-dot" style="background:${tag.color || "#777"}"></span>
+            <span class="m-p">#${String(tag.name || "")}</span>
             ${tri === "some" ? `<span class="m-note">${t("baseExplorer.tags.partial")}</span>` : `<span class="m-note" style="visibility:hidden;">.</span>`}
           </label>
         `;

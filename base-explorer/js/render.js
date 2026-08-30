@@ -124,9 +124,9 @@ function tagDotsHtml(state, id, kind /* "q" | "c" */) {
   const rest = all.length - shown.length;
 
   const dots = shown.map((tid) => {
-    const t = byId.get(tid);
-    const color = t?.color || "rgba(255,255,255,.25)";
-    const label = t?.name || t("baseExplorer.defaults.tag");
+    const tag = byId.get(tid);
+    const color = tag?.color || "rgba(255,255,255,.25)";
+    const label = tag?.name || t("baseExplorer.defaults.tag");
     return `<span class="tag-dot" style="background:${esc(color)}" data-tip="#${esc(label)}"></span>`;
   }).join("");
 
@@ -581,15 +581,15 @@ export function renderTags(state) {
   const rows = tags
     .slice()
     .sort((a, b) => (Number(a.ord) || 0) - (Number(b.ord) || 0))
-    .map((t) => {
-      const isSel = !!state?.tagSelection?.ids?.has?.(t.id);
+    .map((tag) => {
+      const isSel = !!state?.tagSelection?.ids?.has?.(tag.id);
       const selClass = isSel ? " is-selected" : "";
-      const dot = t.color ? `<span class="tag-dot" style="background:${esc(t.color)}"></span>` : `<span class="tag-dot"></span>`;
+      const dot = tag.color ? `<span class="tag-dot" style="background:${esc(tag.color)}"></span>` : `<span class="tag-dot"></span>`;
 
       return `
-        <div class="row${selClass}" data-kind="tag" data-id="${esc(t.id)}" style="padding:6px 8px; cursor:pointer; display:flex; align-items:center; gap:8px;">
+        <div class="row${selClass}" data-kind="tag" data-id="${esc(tag.id)}" style="padding:6px 8px; cursor:pointer; display:flex; align-items:center; gap:8px;">
           ${dot}
-          <div class="title-text">#${esc(t.name || t("baseExplorer.defaults.tag"))}</div>
+          <div class="title-text">#${esc(tag.name || t("baseExplorer.defaults.tag"))}</div>
         </div>`;
     })
     .join("");

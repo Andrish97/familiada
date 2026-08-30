@@ -11,6 +11,7 @@ import {
   pasteClipboardHere,
   deleteTags,
   duplicateSelected,
+  canDeleteHere,
 } from "./actions.js?v=v2026-08-30T19285";
 import { alertModal } from "../../js/core/modal.js?v=v2026-08-30T19285";
 import { t } from "../../translation/translation.js?v=v2026-08-30T19285";
@@ -442,7 +443,11 @@ export async function showContextMenu({ state, x, y, target }) {
         : t("baseExplorer.menu.delete"),
       shortcut: { win:"Delete", mac:"Fn⌫" },
       danger: true,
-      disabled: !editor || selectedRealCount === 0,
+      // TAG ma własną ścieżkę (zdejmowanie tagów, nie kasowanie) więc nie
+      // podlega canDeleteHere; poza TAG-iem musi się zgadzać z tym, co
+      // faktycznie blokuje toolbar/Delete -- inaczej PPM->Usuń w widoku
+      // META realnie kasuje element, mimo że reszta UI to blokuje.
+      disabled: selectedRealCount === 0 || (state.view !== VIEW.TAG && !canDeleteHere(state)),
       action: async () => {
         const key = (target.kind === "cat") ? `c:${target.id}` : `q:${target.id}`;
         if (!state.selection?.keys?.has?.(key)) {

@@ -909,19 +909,99 @@ używają tylko pierwszej, więc obie działały poprawnie w SEARCH, a sam
 klawisz Delete nie. Usunięto zbędną drugą bramkę (`deleteItems()` i tak
 niezależnie sprawdza `canWrite` w środku). Dodany test: 40 testów łącznie.
 
+Kontynuacja: systematyczne porównanie znalazło CZWARTY bug, poważniejszy
+niż Delete/SEARCH — menu kontekstowe "Usuń" w widoku **META nie miało
+ŻADNEJ blokady widoku** (tylko `!editor || selectedRealCount===0`),
+podczas gdy toolbar i klawisz Delete oba świadomie blokują usuwanie w
+META przez `canDeleteHere`. Prawoklik → Usuń w META FAKTYCZNIE kasował
+element, mimo że reszta UI to blokowała — realny bypass zamierzonego
+zabezpieczenia, nie tylko martwy klawisz. Naprawione: `canDeleteHere`
+wyeksportowane z `actions.js`, `context-menu.js` używa go teraz wprost
+zamiast własnej, niepełnej kopii logiki (TAG ma nadal swoją odrębną
+ścieżkę "zdejmij tagi zamiast kasuj").
+
+### Runda 5 — pierwszy realny przebieg CI (run #71, 31 testów na starym commicie f3f4e61): 20 failed / 11 passed
+
+Uruchomiony PRZED poprawkami z rund 4 (drzewo/Ctrl+T/Delete), więc część
+failów była już znana i naprawiona. Ale analiza logów (nie tylko
+"czerwone/zielone") ujawniła TRZY DALSZE, wcześniej nieznane, realne
+bugi w aplikacji — dokładnie to, po co robi się to ćwiczenie:
+
+1. **`openExportModal()` zawężał całą pulę pytań w modalu do samego
+   zaznaczenia** (`actions.js`) — `opts.questions` i `opts.preselectIds`
+   były budowane z TYCH SAMYCH, tylko zaznaczonych wierszy. Mechanizm
+   "dopełnij zaznaczenie do 10" w `export-modal.js`'s `open()` dopełnia
+   z `allQuestions` (=`opts.questions`), więc gdy zaznaczono mniej niż
+   10, nie było skąd dopełnić — `#xCreate` zostawał TRWALE wyłączony.
+   Eksport z pojedynczego zaznaczonego pytania (najczęstsza ścieżka:
+   "Utwórz grę" z listy) był w praktyce niemożliwy przy < 10 zaznaczonych
+   naraz. Naprawione: `opts.questions` to teraz cała `state._allQuestions`,
+   `preselectIds` zostaje ograniczone do realnego zaznaczenia.
+
+2. **Kolejne dwa (z czterech łącznie w całym module) wystąpienia bugu z
+   rundy 1** ("`let t` przesłania zaimportowaną funkcję tłumaczeń `t`")
+   — tym razem złapane przez realny `pageerror: t is not a function` w
+   logach CI, nie przez inspekcję kodu:
+   - `tags-modal.js`'s `renderAssignList()`: `tags.map((t) => ...)`
+     przesłaniało `t` wewnątrz callbacku, który wywoływał
+     `t("baseExplorer.tags.partial")` przy stanie "częściowym" (some) —
+     dokładnie scenariusz, który mój własny test wywołuje. Crash za
+     każdym razem gdy zaznaczenie miało mieszany stan przypisania tagu.
+   - `render.js`'s `renderTags()`: `tags.map((t) => ...)` z
+     `t.name || t("baseExplorer.defaults.tag")` — nie złapane przez CI
+     (moje tagi zawsze miały nazwę), ale ten sam wzorzec, znaleziony
+     prewencyjnie przy przeglądzie. Naprawione tak samo (zmienna pętli
+     `tag` zamiast `t`).
+   - `render.js`'s `tagDotsHtml()`: `const t = byId.get(tid); ...
+     t?.name || t("...")` — NAJGROŹNIEJSZY wariant: crashuje nie tylko
+     przy pustej nazwie, ale przy KAŻDYM `tid` który nie rozwiąże się do
+     realnego tagu (np. martwe odniesienie do usuniętego tagu). Naprawione.
+   Sprawdzone systematycznie (grep) wszystkie pliki importujące `t` w
+   całym module — te 4 to komplet, żadnych innych nie znaleziono.
+
+3. **Wyścig przy zamykaniu modala pytania/zmiany nazwy vs. faktyczny
+   zapis do DB** — `question-modal.js`'s i `openRenameModal()`'s
+   `close()` (chowa overlay) są SYNCHRONICZNE na klik Zapisz, ale
+   prawdziwy `UPDATE`/`PATCH` do `qb_questions` leci ASYNCHRONICZNIE już
+   PO zamknięciu (w `state._api.openQuestionModal`/`renameSelectedPrompt`,
+   nie w samym modalu) — więc "overlay się schował" nie gwarantuje, że
+   zapis doleciał do bazy. To ten sam klasyczny wzorzec flakiness, już
+   wcześniej łapany i naprawiany w innych plikach tego projektu
+   (`game-settings.spec.js`, `cross-resource-locks.spec.js`). Naprawione
+   w TEŚCIE (nie w aplikacji — to poprawne zachowanie UX, tylko test
+   musi czekać na właściwy sygnał): 5 testów dostało
+   `page.waitForResponse()` na PATCH do `qb_questions` opakowany razem z
+   klikiem Zapisz, zamiast polegać na zniknięciu overlayu.
+
+4. **Luka w konfiguracji CI, nie w kodzie**: test "viewer współdzielonej
+   bazy" failował, bo toolbar był WŁĄCZONY dla "viewera" — okazało się,
+   że `TEST_USERNAME_2` nie jest ustawione jako sekret w CI, więc
+   `loginAsTestUser(page2, context2, {username: process.env.TEST_USERNAME_2})`
+   cicho spadało na fallback `TEST_USERNAME` — "drugie konto" logowało
+   się jako TO SAMO konto co właściciel, więc oczywiście toolbar był
+   enabled (bo to naprawdę był owner, nie viewer). Naprawione w
+   `helpers/login.js`: jawnie podany, ale pusty `{ username }` teraz
+   rzuca głośny, czytelny błąd zamiast cichego fallbacku na złe konto.
+   **Akcja dla usera**: trzeba dodać `TEST_USERNAME_2` jako sekret w
+   ustawieniach repo/CI (patrz `tests/README.md`), żeby te dwa testy
+   (`editor współdzielonej bazy`/`viewer współdzielonej bazy`) w ogóle
+   miały sens.
+
+**Nierozwiązane, wymaga ponownego live-runu do diagnozy**: test
+"przeciągnięcie pytania na folder w liście przenosi je" failował z
+gołym `Test timeout of 60000ms exceeded` bez żadnego konkretnego
+asercji-fail — może to być realny bug w obsłudze drop (np. w
+`moveItemsTo`), albo znana już w tym projekcie klasa flakiness
+drag&drop (por. wcześniejszy problem z canvas w logo-editor). Do
+zdiagnozowania po kolejnym przebiegu CI na aktualnym HEAD.
+
 **Wciąż niesprawdzone / kolejna runda jeśli będzie potrzebna**: mobile
 long-press/double-tap jako e2e (tylko czytanie kodu), reszta macierzy
-toolbar/menu-kontekstowe/klawiatura × widoki/role (znaleziono 3 rozjazdy
-przypadkiem — Ctrl+C, tworzenie w META, Delete w SEARCH — nie
+toolbar/menu-kontekstowe/klawiatura × widoki/role (znaleziono 4 rozjazdy
+— Ctrl+C, tworzenie w META, Delete w SEARCH, Usuń w META — nie
 przeszukano w pełni systematycznie), sortowanie po dacie (pominięte —
 trudne do kontrolowania w teście bez mockowania zegara), interakcje
 kombinacji filtrów (szukaj+tag+meta jednocześnie).
-
-Przy pisaniu tych testów znaleziony i naprawiony KOLEJNY samodzielny
-bug: `question-modal.js`'s `qSave` w ogóle nie sprawdzał, czy treść
-pytania jest niepusta (tylko punkty/sumę) — można było zapisać pytanie
-bez żadnej treści. Dodano walidację + klucz tłumaczenia
-`baseExplorer.question.errors.textRequired` (pl/en/uk). 🔄 e2e w toku.
 
 ---
 

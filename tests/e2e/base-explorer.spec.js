@@ -328,7 +328,15 @@ test.describe("base-explorer: naprawy z audytu (nie tylko wiele kart naraz)", ()
       const input = page.locator("#renameModalInput");
       await expect(input).toBeVisible({ timeout: 5000 });
       await input.fill("Nowy tekst");
-      await page.locator("#renameModalSave").click();
+
+      // renameModal.close() (który chowa #renameModal) jest SYNCHRONICZNY na klik
+      // Zapisz -- prawdziwy zapis do qb_questions leci asynchronicznie już PO
+      // zamknięciu modala (w renameSelectedPrompt, nie w samym modalu), więc samo
+      // "modal się schował" nie gwarantuje, że PATCH już doleciał do bazy.
+      await Promise.all([
+        page.waitForResponse((res) => res.url().includes("/rest/v1/qb_questions") && res.request().method() === "PATCH"),
+        page.locator("#renameModalSave").click(),
+      ]);
       await expect(page.locator("#renameModal")).toBeHidden({ timeout: 10000 });
 
       const fresh = await getQuestionRow(page, qid);
@@ -513,7 +521,14 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
       await rowEl.locator(".qAnsText").fill("Odpowiedź A");
       await rowEl.locator(".qAnsPts").fill("42");
 
-      await page.locator("#qSave").click();
+      // questionModal.close() (chowa #questionOverlay) jest SYNCHRONICZNY na klik
+      // Zapisz -- prawdziwy UPDATE do qb_questions leci asynchronicznie już PO
+      // zamknięciu (w openQuestionModal, nie w samym modalu), więc trzeba poczekać
+      // na realny PATCH, nie tylko na zniknięcie overlay.
+      await Promise.all([
+        page.waitForResponse((res) => res.url().includes("/rest/v1/qb_questions") && res.request().method() === "PATCH"),
+        page.locator("#qSave").click(),
+      ]);
       await expect(page.locator("#questionOverlay")).toBeHidden({ timeout: 10000 });
 
       const fresh = await getQuestionRow(page, qid);
@@ -1261,7 +1276,14 @@ test.describe("base-explorer: question-modal.js (edycja pytania)", () => {
       const r = page.locator("#qAnswers .qRow").first();
       await r.locator(".qAnsText").fill("Nowa");
       await r.locator(".qAnsPts").fill("77");
-      await page.locator("#qSave").click();
+      // questionModal.close() (chowa #questionOverlay) jest SYNCHRONICZNY na klik
+      // Zapisz -- prawdziwy UPDATE do qb_questions leci asynchronicznie już PO
+      // zamknięciu (w openQuestionModal, nie w samym modalu), więc trzeba poczekać
+      // na realny PATCH, nie tylko na zniknięcie overlay.
+      await Promise.all([
+        page.waitForResponse((res) => res.url().includes("/rest/v1/qb_questions") && res.request().method() === "PATCH"),
+        page.locator("#qSave").click(),
+      ]);
       await expect(page.locator("#questionOverlay")).toBeHidden({ timeout: 10000 });
 
       const fresh = await getQuestionRow(page, qid);
@@ -1297,7 +1319,14 @@ test.describe("base-explorer: question-modal.js (edycja pytania)", () => {
       await page.locator("#qAnswers .qRow").nth(1).locator(".qDel").click(); // usuń A2
       await expect(page.locator("#qAnswers .qRow")).toHaveCount(2);
 
-      await page.locator("#qSave").click();
+      // questionModal.close() (chowa #questionOverlay) jest SYNCHRONICZNY na klik
+      // Zapisz -- prawdziwy UPDATE do qb_questions leci asynchronicznie już PO
+      // zamknięciu (w openQuestionModal, nie w samym modalu), więc trzeba poczekać
+      // na realny PATCH, nie tylko na zniknięcie overlay.
+      await Promise.all([
+        page.waitForResponse((res) => res.url().includes("/rest/v1/qb_questions") && res.request().method() === "PATCH"),
+        page.locator("#qSave").click(),
+      ]);
       await expect(page.locator("#questionOverlay")).toBeHidden({ timeout: 10000 });
 
       const fresh = await getQuestionRow(page, qid);
@@ -1330,7 +1359,14 @@ test.describe("base-explorer: question-modal.js (edycja pytania)", () => {
       await input.fill("To jest zdecydowanie za długi tekst odpowiedzi");
       await expect(input).toHaveValue("To jest zdecydowa", { timeout: 5000 }); // pierwsze 17 znaków
 
-      await page.locator("#qSave").click();
+      // questionModal.close() (chowa #questionOverlay) jest SYNCHRONICZNY na klik
+      // Zapisz -- prawdziwy UPDATE do qb_questions leci asynchronicznie już PO
+      // zamknięciu (w openQuestionModal, nie w samym modalu), więc trzeba poczekać
+      // na realny PATCH, nie tylko na zniknięcie overlay.
+      await Promise.all([
+        page.waitForResponse((res) => res.url().includes("/rest/v1/qb_questions") && res.request().method() === "PATCH"),
+        page.locator("#qSave").click(),
+      ]);
       await expect(page.locator("#questionOverlay")).toBeHidden({ timeout: 10000 });
 
       const fresh = await getQuestionRow(page, qid);

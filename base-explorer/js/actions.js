@@ -62,7 +62,7 @@ function isMetaView(state) {
   return state.view === VIEW.META;
 }
 
-function canDeleteHere(state) {
+export function canDeleteHere(state) {
   if (!canWrite(state)) return false;
   if (isMetaView(state)) return false;   // META: blokada
   return true;                           // SEARCH/FOLDER/ALL/TAG: dozwolone
@@ -4368,25 +4368,31 @@ export function wireActions({ state }) {
         if (!state._allQuestions) {
           state._allQuestions = await listAllQuestions(state.baseId);
         }
-  
+
         const byId = new Map((state._allQuestions || []).map(q => [q.id, q]));
-        const rows = qids.map(id => byId.get(id)).filter(Boolean);
-  
+
         // Normalizacja do formy, którą modal „łyka" zawsze:
         // - id musi być na top-level
         // - text/answers mogą być na top-level albo w payload (modal już jest odporny, ale tu też porządkujemy)
-        questionsForModal = rows.map(r => ({
+        const normalize = (r) => ({
           id: r.id,
           payload: (r.payload && typeof r.payload === "object") ? r.payload : { text: "", answers: [] },
           text: r.payload?.text ?? r.text ?? "",
           answers: Array.isArray(r.payload?.answers) ? r.payload.answers : (Array.isArray(r.answers) ? r.answers : []),
-        }));
-  
-        // jeśli ktoś zaznaczył mniej niż QN_MIN, modal i tak może się otworzyć (będzie blokada create)
+        });
+
+        // opts.questions musi być CAŁĄ pulą pytań bazy, nie tylko zaznaczeniem --
+        // export-modal.js's open() dopełnia selekcję do QN_MIN(10) z tej właśnie
+        // listy. Zawężenie jej do samego zaznaczenia (jak poprzednio) uniemożliwiało
+        // dopełnienie: przy zaznaczeniu < 10 przycisk "Utwórz" zostawał trwale
+        // wyłączony, bo nie było skąd dobrać brakujących pytań.
+        questionsForModal = (state._allQuestions || []).map(normalize);
+        const preselectRows = qids.map(id => byId.get(id)).filter(Boolean).map(normalize);
+
         opts = {
           ...opts,
           questions: questionsForModal,
-          preselectIds: questionsForModal.map(q => q.id),
+          preselectIds: preselectRows.map(q => q.id),
         };
       } else {
         // fallback: jeśli caller nie podał questions, a selection pusta — daj state.questions

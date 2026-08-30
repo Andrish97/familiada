@@ -79,8 +79,22 @@ async function dumpPageDiagnostics(page, gotoResponse) {
  * zalogować DRUGIE konto testowe w scenariuszach z dwoma użytkownikami
  * naraz -- ma to samo TEST_PASSWORD (nie ma osobnego TEST_PASSWORD_2).
  */
-async function loginAsTestUser(page, context, { username: usernameOverride } = {}) {
-  const username = usernameOverride || process.env.TEST_USERNAME;
+async function loginAsTestUser(page, context, opts = {}) {
+  // Rozróżniamy "nie podano username w ogóle" (użyj domyślnego TEST_USERNAME)
+  // od "podano klucz username, ale zmienna środowiskowa jest pusta" (np.
+  // TEST_USERNAME_2 brakuje w sekretach CI) -- to drugie MUSI głośno wybuchnąć,
+  // bo inaczej cicho logujemy się na TO SAMO konto co "pierwszy" user, co przy
+  // testach dwóch-kont (editor/viewer na współdzielonej bazie) daje mylący,
+  // trudny do zdiagnozowania fail (np. "toolbar viewera jest enabled" zamiast
+  // czytelnego komunikatu o brakującym sekrecie).
+  if ("username" in opts && !opts.username) {
+    throw new Error(
+      "loginAsTestUser wywołane z jawnym { username } które jest puste -- brakuje odpowiedniej " +
+      "zmiennej środowiskowej (np. TEST_USERNAME_2) w konfiguracji CI. Dodaj ją jako sekret, " +
+      "inaczej test cicho zalogowałby się na domyślne TEST_USERNAME zamiast na drugie konto."
+    );
+  }
+  const username = opts.username || process.env.TEST_USERNAME;
   const password = process.env.TEST_PASSWORD;
   if (!username || !password) throw new Error("Brak TEST_USERNAME/TEST_PASSWORD w zmiennych środowiskowych");
 
