@@ -39,6 +39,14 @@ export function createState({ baseId, role = "viewer" }) {
     questions: [],         // aktualnie załadowane do widoku (zależnie od view)
     // opcjonalnie później: mapy pomocnicze (byId, childrenByParent) – tworzone w renderze lub osobno
 
+    // drzewo folderów: które węzły są rozwinięte. "root" musi tu być od
+    // razu -- inaczej render.js's renderTree() (rootOpen = open.has("root"))
+    // pokazuje świeżo wczytaną stronę z samym zwiniętym "Root ▶" i ŻADNYM
+    // folderem najwyższego poziomu widocznym, dopóki user ręcznie nie
+    // kliknie strzałki. Auto-rozwijanie ścieżki do aktualnego folderu
+    // (refreshList()) i tak nigdy nie dodaje "root" samo z siebie.
+    treeOpen: new Set(["root"]),
+
     // widok
     view: VIEW.ALL,
     folderId: null,        // dla VIEW.FOLDER

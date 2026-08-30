@@ -858,10 +858,53 @@ uruchomione na CI):
 naprawione zostały 4 dodatkowe, samodzielne bugi: `deleteTags` nie
 czyściła cache tagów, obejście blokady widoków wirtualnych (META),
 osierocone pytania po usunięciu folderu, hang modala tagów, martwy
-Ctrl+A, brak walidacji pustej treści pytania. Kolejne rundy będą
-dochodzić w miarę potrzeby (drag&drop folderów niezwiązany z cyklem,
-widok META z lewego panelu, mobile long-press/double-tap) — nie ma
-sztywnego celu liczby testów, chodzi o realne pokrycie funkcji panelu.
+Ctrl+A, brak walidacji pustej treści pytania.
+
+**Runda 4 (na żądanie: "więcej, więcej, więcej")** — dobito pozostałe
+białe plamy z listy: `render.js` przeczytany w całości (sort, breadcrumbs,
+resize kolumn — bez nowych bugów), audyt marquee selection (bez bugów).
+Dodano 7 kolejnych testów w tym samym pliku: sortowanie po nazwie/typie
+(toggle asc/desc, foldery zawsze przed pytaniami), nawigacja breadcrumbs,
+Ctrl+D (duplikuj), reorder rodzeństwa w drzewie (przypadek POPRAWNY, nie
+cykl), kopiowanie folderu z zagnieżdżonym podfolderem i pytaniem
+(`copyFolderSubtree`), przeciągnięcie kilku zaznaczonych elementów naraz
+(folder + pytanie razem). Łącznie 39 testów w `base-explorer.spec.js`.
+
+Przy tej turze znalezione i naprawione DWA kolejne samodzielne bugi:
+- **`state.js`'s `createState()`** nie inicjalizowała `treeOpen` z
+  `"root"` w środku — `render.js`'s `renderTree()` liczy `rootOpen =
+  treeOpen.has("root")`, więc świeżo wczytana strona pokazywała drzewo z
+  samym zwiniętym "Root ▶" i ZEREM widocznych folderów najwyższego
+  poziomu, dopóki user ręcznie nie kliknął strzałki — auto-rozwijanie
+  ścieżki do aktualnego folderu też nigdy nie dodawało "root" samo z
+  siebie. Naprawione przez `treeOpen: new Set(["root"])` w
+  `createState()`. To by też złamało wcześniej wypchnięty test cyklu
+  folderów (zakładał, że folder widoczny bez rozwijania roota) — złapane
+  i naprawione zanim ktokolwiek uruchomił e2e na CI.
+- **Ctrl+T** (`actions.js`, zgłoszone wcześniej jako "nienaprawione") —
+  wywoływał `openTagsModal()` bez przekazania zaznaczenia; naprawione
+  przez przekierowanie na tę samą, poprawną ścieżkę co przycisk toolbara
+  (`state._api.openAssignTagsModal()`).
+
+**Świadomie NIE naprawione, bo to zadanie na Warstwę 1 (lock), nie
+osobna łatka**: przy audycie potwierdzono, że dwie ŻYWE sesje edytujące
+question-modal.js dla TEGO SAMEGO pytania — obie otwierają modal (świeży
+fetch), pierwsza dodaje odpowiedź i zapisuje, druga (dalej pracując na
+swojej, już nieaktualnej kopii) też zapisuje — nadpisze zmiany pierwszej.
+`fetchQuestionById()` przed otwarciem modala chroni tylko przed stale
+cache'em SPRZED otwarcia, nie przed równoległym zapisem W TRAKCIE gdy
+modal jest otwarty u obu naraz. To jest dokładnie ten typ problemu, po
+który sięgamy po lock per-pytanie — nie koduję tego jako "oczekiwany"
+test (nie chcę testu, który asertuje utratę danych jako sukces), tylko
+zapisuję tu jako potwierdzenie, że rekomendacja z audytu (lock
+per-pytanie, nie tylko per-baza) wciąż stoi.
+
+**Wciąż niesprawdzone / kolejna runda jeśli będzie potrzebna**: mobile
+long-press/double-tap jako e2e (tylko czytanie kodu), wyczerpująca
+macierz toolbar/menu-kontekstowe/klawiatura × widoki/role (znaleziono 2
+rozjazdy przypadkiem, nie przeszukano systematycznie), sortowanie po
+dacie (pominięte — trudne do kontrolowania w teście bez mockowania
+zegara), interakcje kombinacji filtrów (szukaj+tag+meta jednocześnie).
 
 Przy pisaniu tych testów znaleziony i naprawiony KOLEJNY samodzielny
 bug: `question-modal.js`'s `qSave` w ogóle nie sprawdzał, czy treść

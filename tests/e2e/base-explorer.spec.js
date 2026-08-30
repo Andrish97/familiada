@@ -946,6 +946,261 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
       await deleteBase(page, baseId);
     }
   });
+
+  test("sortowanie po nazwie: klik nagłówka przełącza rosnąco/malejąco", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context);
+    const baseId = await createBase(page, `E2E-XB-SORTNAME-${Date.now()}`);
+
+    try {
+      // ord celowo NIE zgodny z alfabetem, żeby sort po nazwie było jednoznacznie odróżnialne od ord
+      await createQuestion(page, { baseId, ord: 3, payload: { text: "Alfa", answers: [] } });
+      await createQuestion(page, { baseId, ord: 1, payload: { text: "Beta", answers: [] } });
+      await createQuestion(page, { baseId, ord: 2, payload: { text: "Gamma", answers: [] } });
+
+      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+
+      const titles = () => page.locator("#list tbody tr .title-text").allTextContents();
+
+      // domyślny sort: name/asc (createState)
+      await expect.poll(titles).toEqual(["Alfa", "Beta", "Gamma"]);
+
+      await page.locator(".list-head .h-main").click();
+      await expect.poll(titles).toEqual(["Gamma", "Beta", "Alfa"]);
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+
+  test("sortowanie po typie: foldery zawsze przed pytaniami, niezależnie od nazwy", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context);
+    const baseId = await createBase(page, `E2E-XB-SORTTYPE-${Date.now()}`);
+
+    try {
+      await createQuestion(page, { baseId, ord: 1, payload: { text: "A-pytanie", answers: [] } });
+      await createCategory(page, { baseId, name: "Z-folder", ord: 1 });
+
+      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+
+      const titles = () => page.locator("#list tbody tr .title-text").allTextContents();
+
+      // domyślnie (name/asc) pytanie "A-pytanie" jest przed folderem "Z-folder"
+      await expect.poll(titles).toEqual(["A-pytanie", "Z-folder"]);
+
+      await page.locator(".list-head .h-type").click();
+      // po typie: folder zawsze przed pytaniem, mimo że nazwą jest "później" alfabetycznie
+      await expect.poll(titles).toEqual(["Z-folder", "A-pytanie"]);
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+
+  test("breadcrumbs: nawigacja w głąb i powrót do korzenia", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context);
+    const baseId = await createBase(page, `E2E-XB-CRUMBS-${Date.now()}`);
+
+    try {
+      const catA = await createCategory(page, { baseId, name: "Folder A", ord: 1 });
+      const qInA = await createQuestion(page, { baseId, categoryId: catA, ord: 1, payload: { text: "W środku A", answers: [] } });
+
+      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+
+      await page.locator(`#list .row[data-kind="cat"][data-id="${catA}"]`).dblclick();
+      await expect(page.locator(`#list .row[data-id="${qInA}"]`)).toBeVisible({ timeout: 10000 });
+
+      await expect(page.locator("#breadcrumbs .crumb")).toHaveCount(2, { timeout: 5000 }); // Root / Folder A
+      await expect(page.locator("#breadcrumbs .crumb").last()).toHaveText("Folder A");
+
+      await page.locator('#breadcrumbs .crumb[data-kind="root"]').click();
+
+      // z powrotem w widoku Wszystkie: widać folder A jako wiersz, nie jego zawartość
+      await expect(page.locator(`#list .row[data-kind="cat"][data-id="${catA}"]`)).toBeVisible({ timeout: 10000 });
+      await expect(page.locator(`#list .row[data-id="${qInA}"]`)).toHaveCount(0);
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+
+  test("Ctrl+D duplikuje zaznaczone pytanie w tym samym miejscu", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context);
+    const baseId = await createBase(page, `E2E-XB-CTRLD-${Date.now()}`);
+
+    try {
+      const qid = await createQuestion(page, {
+        baseId, ord: 1, payload: { text: "Do zduplikowania", answers: [{ text: "A1" }] },
+      });
+
+      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+
+      const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
+      await expect(row).toBeVisible({ timeout: 15000 });
+      await row.click();
+      await page.keyboard.press("Control+d");
+
+      await expect(page.locator(`#list .row[data-kind="q"]`)).toHaveCount(2, { timeout: 10000 });
+
+      const all = await getAllQuestionsFlat(page, baseId);
+      expect(all.length).toBe(2);
+      expect(all.every((q) => q.category_id === null)).toBe(true);
+      expect(all.every((q) => q.payload?.text === "Do zduplikowania")).toBe(true);
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+
+  test("Ctrl+T pokazuje realny stan tri-state zaznaczenia (regresja: wcześniej zawsze 'none')", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context);
+    const baseId = await createBase(page, `E2E-XB-CTRLT-${Date.now()}`);
+
+    try {
+      const q1 = await createQuestion(page, { baseId, ord: 1, payload: { text: "P1", answers: [] } });
+      const q2 = await createQuestion(page, { baseId, ord: 2, payload: { text: "P2", answers: [] } });
+      const tagId = await createTag(page, { baseId, name: "e2e-ctrlt" });
+      await assignTag(page, { questionId: q1, tagId }); // tylko P1 -- przy zaznaczeniu obu stan powinien być "some"
+
+      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+
+      const row1 = page.locator(`#list .row[data-kind="q"][data-id="${q1}"]`);
+      const row2 = page.locator(`#list .row[data-kind="q"][data-id="${q2}"]`);
+      await expect(row1).toBeVisible({ timeout: 15000 });
+      await row1.click();
+      await row2.click({ modifiers: ["Control"] });
+
+      await page.keyboard.press("Control+t");
+      await expect(page.locator("#tagsOverlay")).toBeVisible({ timeout: 5000 });
+
+      const checkbox = page.locator(`#tagsAssignList input[type="checkbox"][data-tag-id="${tagId}"]`);
+      const isIndeterminate = await checkbox.evaluate((el) => el.indeterminate);
+      expect(
+        isIndeterminate,
+        "przed naprawą Ctrl+T nie przekazywał zaznaczenia -- tri-state zawsze wychodził 'none' (odznaczone), nie 'some'"
+      ).toBe(true);
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+
+  test("przeciągnięcie kilku zaznaczonych elementów naraz (folder + pytanie) przenosi oba", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context);
+    const baseId = await createBase(page, `E2E-XB-DRAGMULTI-${Date.now()}`);
+
+    try {
+      const catTarget = await createCategory(page, { baseId, name: "Cel", ord: 1 });
+      const catSrc = await createCategory(page, { baseId, name: "Przenoszony folder", ord: 2 });
+      const qSrc = await createQuestion(page, { baseId, ord: 1, payload: { text: "Przenoszone pytanie", answers: [] } });
+
+      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+
+      const catSrcRow = page.locator(`#list .row[data-kind="cat"][data-id="${catSrc}"]`);
+      const qSrcRow = page.locator(`#list .row[data-kind="q"][data-id="${qSrc}"]`);
+      const catTargetRow = page.locator(`#list .row[data-kind="cat"][data-id="${catTarget}"]`);
+      await expect(catSrcRow).toBeVisible({ timeout: 15000 });
+      await expect(qSrcRow).toBeVisible({ timeout: 15000 });
+
+      await catSrcRow.click();
+      await qSrcRow.click({ modifiers: ["Control"] });
+
+      // dragstart na dowolnym zaznaczonym wierszu przenosi CAŁE zaznaczenie
+      await catSrcRow.dragTo(catTargetRow);
+
+      await expect(page.locator(`#list .row[data-kind="cat"][data-id="${catSrc}"]`)).toHaveCount(0, { timeout: 10000 });
+      await expect(page.locator(`#list .row[data-kind="q"][data-id="${qSrc}"]`)).toHaveCount(0);
+
+      const freshCat = await getCategoryRow(page, catSrc);
+      const freshQ = await getQuestionRow(page, qSrc);
+      expect(freshCat?.parent_id, "folder z wieloselekcji powinien trafić do celu").toBe(catTarget);
+      expect(freshQ?.category_id, "pytanie z wieloselekcji powinno trafić do celu").toBe(catTarget);
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+
+  test("reorder rodzeństwa w drzewie (before/after) działa normalnie, gdy to nie jest cykl", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context);
+    const baseId = await createBase(page, `E2E-XB-REORDER-${Date.now()}`);
+
+    try {
+      const catA = await createCategory(page, { baseId, name: "Folder A", ord: 1 });
+      const catB = await createCategory(page, { baseId, name: "Folder B", ord: 2 });
+
+      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+
+      // root domyślnie rozwinięty -- oba widoczne bez dodatkowego klikania
+      const rowA = page.locator(`#tree .row[data-kind="cat"][data-id="${catA}"]`);
+      const rowB = page.locator(`#tree .row[data-kind="cat"][data-id="${catB}"]`);
+      await expect(rowA).toBeVisible({ timeout: 15000 });
+      await expect(rowB).toBeVisible({ timeout: 15000 });
+
+      // upuść B w górnej (25%) strefie A => "before" => B przed A wśród rodzeństwa (ten sam rodzic: null)
+      await rowB.dragTo(rowA, { targetPosition: { x: 20, y: 2 } });
+
+      await expect.poll(async () => {
+        const a = await getCategoryRow(page, catA);
+        const b = await getCategoryRow(page, catB);
+        return (b?.ord ?? 999) < (a?.ord ?? -1);
+      }, { timeout: 10000 }).toBe(true);
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+
+  test("kopiowanie folderu z podfolderem i pytaniem duplikuje całe poddrzewo", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context);
+    const baseId = await createBase(page, `E2E-XB-COPYSUBTREE-${Date.now()}`);
+
+    try {
+      const parent = await createCategory(page, { baseId, name: "Rodzic", ord: 1 });
+      const child = await createCategory(page, { baseId, parentId: parent, name: "Dziecko", ord: 1 });
+      await createQuestion(page, { baseId, categoryId: child, ord: 1, payload: { text: "W poddrzewie", answers: [] } });
+
+      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+
+      const parentRow = page.locator(`#list .row[data-kind="cat"][data-id="${parent}"]`);
+      await expect(parentRow).toBeVisible({ timeout: 15000 });
+      await parentRow.click();
+      await page.keyboard.press("Control+c");
+      await page.keyboard.press("Control+v");
+
+      await expect(page.locator(`#list .row[data-kind="cat"]`)).toHaveCount(2, { timeout: 10000 });
+
+      const allCats = await page.evaluate(async (id) => {
+        const { data, error } = await window.__sbClient.from("qb_categories").select("*").eq("base_id", id);
+        if (error) throw new Error(error.message);
+        return data || [];
+      }, baseId);
+      const allQs = await getAllQuestionsFlat(page, baseId);
+
+      expect(allCats.length, "oryginalny Rodzic+Dziecko oraz ich kopie = 4 kategorie").toBe(4);
+      expect(allQs.length, "pytanie z poddrzewa też powinno się zduplikować").toBe(2);
+
+      const copiedParent = allCats.find((c) => c.id !== parent && c.id !== child && c.parent_id === null);
+      expect(copiedParent, "kopia Rodzica powinna dostać unikalną nazwę (kopia)").toBeTruthy();
+      expect(copiedParent.name).toContain("kopia");
+
+      const copiedChild = allCats.find((c) => c.parent_id === copiedParent.id);
+      expect(copiedChild, "kopia Dziecka powinna wisieć pod kopią Rodzica, nie pod oryginałem").toBeTruthy();
+
+      const copiedQuestion = allQs.find((q) => q.category_id === copiedChild.id);
+      expect(copiedQuestion?.payload?.text).toBe("W poddrzewie");
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
 });
 
 /* ================= 3) question-modal.js (edycja pytania) ================= */

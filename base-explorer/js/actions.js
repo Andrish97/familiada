@@ -4687,12 +4687,14 @@ export function wireActions({ state }) {
       if (mod && (e.key === "t" || e.key === "T")) {
         e.preventDefault();
         if (!canWrite(state)) return;
-      
-        await ensureDerivedFolderMaps(state);
-        const { qIds, cIds } = selectionSplitIds(state);
-      
-        const res = await openTagsModal(state, { mode: "assign" });
-        await afterTagsModalClose(state, res);
+
+        // state._api.openAssignTagsModal() sam liczy selectionSplitIds() i
+        // przekazuje je jako opts.selection -- wcześniej ten handler wołał
+        // openTagsModal() bezpośrednio BEZ selection, więc modal zawsze
+        // startował z pustym zaznaczeniem (tri-state zawsze "none" mimo
+        // realnych przypisań). Toolbar ("editTags") już korzysta z tej
+        // samej, poprawnej ścieżki.
+        await state._api?.openAssignTagsModal?.();
         return;
       }
 
