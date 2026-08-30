@@ -253,7 +253,21 @@ test("usuwanie logo: działa normalnie, gdy nic go nie blokuje", async ({ page, 
     // gwarantowanie odpala handler na dokładnie tym elemencie.
     await tile.locator(".logoX").evaluate((el) => el.click());
     await expect(page.locator(".uni-foot .btn.gold")).toBeVisible({ timeout: 10000 });
-    await page.locator(".uni-foot .btn.gold").click({ timeout: 10000 });
+
+    // Run #68: kafelek czasem zostawał w DOM przez pełne 10s mimo że klik
+    // potwierdzenia "przeszedł" -- deleteLogo() woła delete_resource_checked
+    // i DOPIERO PO jej odpowiedzi refresh()/renderList() usuwa kafelek;
+    // czekanie tylko na DOM (bez sygnału sieciowego) mogło zacząć odliczanie
+    // zanim żądanie w ogóle wystartowało pod obciążeniem CI. Czekanie na
+    // samą odpowiedź RPC eliminuje tę niepewność, tak jak przy analogicznym
+    // problemie w game-settings.spec.js (saveAndWait / waitForResponse).
+    await Promise.all([
+      page.waitForResponse(
+        (res) => res.url().includes("/rest/v1/rpc/delete_resource_checked") && res.request().method() === "POST",
+        { timeout: 10000 }
+      ),
+      page.locator(".uni-foot .btn.gold").click({ timeout: 10000 }),
+    ]);
 
     await expect(tile).toHaveCount(0, { timeout: 10000 });
     deleted = true;
