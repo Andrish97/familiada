@@ -224,7 +224,7 @@ docelowo (krok 7), dziś NIE ustawia `busy` wcale (brak sygnału
 | `builder.js` → zmiana nazwy (modal rename) | ALERT MODAL, akcja przerwana — ✅ zamknięte, e2e zielone (run #67) |
 | `builder.js` → reset do draftu (`resetPollForEditing`) | ALERT MODAL, akcja przerwana — ✅ zamknięte, e2e zielone (run #67) |
 | `builder.js` → usunięcie (`deleteGame`) | ALERT MODAL — ✅ już zrobione (krok 2.5) |
-| `polls-hub.js` → akcja na konkretnej grze (anuluj task, usuń głos) | ALERT MODAL (domyślne założenie, do potwierdzenia przy implementacji) |
+| `polls-hub.js` → anuluj task / usuń głos | ✅ **sprawdzone w kodzie, poza zakresem** — `poll_admin_delete_vote` dotyka tylko `poll_votes`/`poll_text_entries`, cancel tylko `poll_tasks`; żadne nie rusza `questions`/`answers`/`settings`/`games.status` — ta sama kategoria co głosowanie, nie wymaga busy-check |
 
 **NIGDY nie ustawia i nie jest blokowane:** `poll-text.js`/`poll-points.js`
 (głosujący — to celowe "wiele naraz"), `poll-qr.js`/`poll-go.js` (czysty
@@ -412,12 +412,18 @@ audycie/poprawce każdej strony, zaczynając od edytora.
    konkretne logo + Warstwa 2 (`update_logo_checked`, rozszerzony
    `delete_resource_checked`) + reguła "cała pula logo busy przy
    Control/ustawieniach" (migracja 256, `holder_context`). ✅ e2e zielone (run #68).
-5. Reszta z "Pełnej listy miejsc do audytu" niżej — **wysoki priorytet**:
-   `builder.js` (duplikowanie), `builder-import-export.js`, `bases.js`,
-   `generator.js`, `polls-hub.js` (dotyka gier — anuluje zadania
-   ankietowe, usuwa głosy po `game_id`, patrz wiersz przy zasobie `game`
-   wyżej). **Niski priorytet, bo nie dotykają żadnego z trzech zasobów**:
-   `settings.js` (konto), `subscriptions.js` (płatności).
+5. Reszta z "Pełnej listy miejsc do audytu" niżej. `builder.js` (nie ma
+   funkcji duplikowania gry — sprawdzone w kodzie, wcześniejszy wpis w
+   planie był błędny) i `builder-import-export.js` (zero `.update`/
+   `.upsert`/`.delete` w całym pliku — eksport tylko czyta, import zawsze
+   tworzy nowe wiersze) — ✅ **oba już bezpieczne, nic do zrobienia**.
+   `bases.js` — ✅ sprawdzone, rename/delete odłożone do kroku 6 (patrz
+   wyżej). `generator.js` — ✅ poza zakresem (inna tabela, `market_games`).
+   `polls-hub.js` — ✅ poza zakresem (nie rusza chronionych pól gry).
+   **Krok 5 zamknięty** — nic więcej nie wymaga zmian poza tym co już
+   odłożone do kroku 6. **Niski priorytet, bo nie dotykają żadnego z
+   trzech zasobów**: `settings.js` (konto), `subscriptions.js` (płatności)
+   — pominięte celowo.
 6. **Baza pytań** (`base-explorer/`) — **najpierw** bardzo dogłębny audyt +
    testy (CRUD, dwóch różnych użytkowników, uprawnienia — sekcja niżej),
    **dopiero potem** Warstwa 1 (blokada `base_id`) i utwardzenie Warstwy 2
@@ -446,12 +452,12 @@ różnych użytkowników, albo nieaktualne dane po zmianie gdzie indziej):
 | `js/pages/polls.js` | zamykanie ankiety | ✅ Warstwa 2 gotowa (guard w RPC), 🔲 Warstwa 1 do dodania |
 | `js/pages/game-settings.js` | ustawienia gry (drużyny, wygląd, dźwięk, finał/rundy) | ✅ **ZAMKNIĘTE** — obie warstwy zrobione, 3/3 testów e2e (run #56, 3/3) |
 | `logo-editor/js/main.js` | edytor logo (zapis do `user_logos`) | ✅ **ZAMKNIĘTE** — Warstwa 1 + Warstwa 2 (krok 4), 14/14 e2e (run #68) |
-| `js/pages/builder.js` | lista gier — tworzenie/nazwa/usuwanie/duplikowanie | 🔄 rename/reset/delete gotowe (busy-check), duplikowanie jeszcze nieprzejrzane |
-| `js/pages/builder-import-export.js` | import/eksport całych gier | 🔲 nieprzejrzane |
-| `js/pages/bases.js` | lista baz pytań, zarządzanie udostępnieniami | 🔲 nieprzejrzane |
+| `js/pages/builder.js` | lista gier — tworzenie/nazwa/usuwanie | ✅ **ZAMKNIĘTE** — rename/reset/delete sprawdzają busy; duplikowanie NIE istnieje (sprawdzone w kodzie) |
+| `js/pages/builder-import-export.js` | import/eksport całych gier | ✅ **bezpieczne z natury** — zero `.update`/`.upsert`/`.delete` w pliku |
+| `js/pages/bases.js` | lista baz pytań, zarządzanie udostępnieniami | ✅ `createBase`/`exportBase`/`importBase` bezpieczne z natury (nowe wiersze/odczyt). 🔲 `renameBase`/`deleteBase` piszą bez busy-check — **celowo odłożone do kroku 6**, bo `base-explorer.js` jeszcze nie trzyma żadnego locka `base` do sprawdzenia (dodać RAZEM z Warstwą 1 tam) |
 | `base-explorer/` (`actions.js`, `state.js`, `tags-modal.js`, `export-modal.js`) | edycja bazy pytań | 🔲 dogłębny audyt najpierw, Warstwa 1 dopiero potem — patrz sekcja "Baza pytań" |
-| `js/pages/generator.js` | generator gier (AI) — wpisuje pytania/odpowiedzi do gry | 🔲 nieprzejrzane — może kolidować z edytorem otwartym na tej samej grze |
-| `js/pages/polls-hub.js` | lista ankiet (hub) — anuluje zadania ankietowe, usuwa głosy po `game_id` | 🔲 nieprzejrzane, **wysoki priorytet** (dotyka gier — patrz wiersz `polls-hub.js` przy zasobie `game` wyżej) |
+| `js/pages/generator.js` | generator gier (AI) dla producentów/marketplace | ✅ **poza zakresem tego audytu** — sprawdzone w kodzie: pisze wyłącznie przez Edge Function do `market_games`, fizycznie innej tabeli niż `games`/`questions`/`answers` — zero możliwej kolizji z edytorem/ustawieniami/ankietą. Wcześniejszy wpis w planie był błędny |
+| `js/pages/polls-hub.js` | lista ankiet (hub) — anuluje zadania ankietowe, usuwa głosy | ✅ **sprawdzone, poza zakresem** — patrz wiersz przy zasobie `game` wyżej |
 | `js/pages/settings.js` | ustawienia konta użytkownika (nie gry) | 🔲 nieprzejrzane, niski priorytet — nie dotyka żadnego z trzech zasobów |
 | `js/pages/subscriptions.js` | subskrypcja/płatności | 🔲 nieprzejrzane, niski priorytet — nie dotyka żadnego z trzech zasobów |
 | `js/pages/login.js`, `account.js`, `confirm.js` | logowanie / migracja gościa | ✅ przerobione wcześniej (deferred guest migration) |
