@@ -814,41 +814,54 @@ sensie, RLS je backstopuje):**
   ("Tagi…") działa poprawnie. Nie naprawione — osobny, drobny bug do
   ujęcia przy następnym przebiegu.
 
-E2e: `tests/e2e/base-explorer.spec.js` (5 testów, po jednym na każdy
-naprawiony bug: eksport, cykl folderów, stale-payload rename, cascade
-usuwania folderu, hang modala tagów) — 🔄 e2e w toku (jeszcze nie
-uruchomione na CI).
+E2e: całość żyje w jednym pliku `tests/e2e/base-explorer.spec.js` (na
+żądanie scalone z trzech roboczych plików w jeden), podzielonym na 4
+`test.describe` bloki, 31 testów łącznie — 🔄 e2e w toku (jeszcze nie
+uruchomione na CI):
 
-**Runda 2 (na żądanie: "przetestować cały panel", nie tylko już znalezione
-bugi)** — dodano `tests/e2e/base-explorer-crud.spec.js` (15 testów:
-question-modal CRUD + limity, tagi tri-state + duplikaty, wyszukiwanie
-tekstowe i po `#tagu`, wytnij/kopiuj/wklej, drag&drop pytania na folder w
-liście, oraz DWA REALNE konta testowe — `TEST_USERNAME`/`TEST_USERNAME_2`
-— dla `editor`/`viewer` na współdzielonej bazie, w tym próba zapisu
-viewera bezpośrednio przez klienta z pominięciem UI). `loginAsTestUser()`
-w `helpers/login.js` dostał opcjonalny `{ username }` do logowania
-drugiego konta. Przy pisaniu tych testów znaleziony i naprawiony KOLEJNY
-samodzielny bug: `Ctrl+A` (`actions.js` w keydown handlerze) filtrował
-wiersze po atrybucie `data-key`, którego żaden wiersz nigdy nie miał
-(wszystkie mają `data-kind`+`data-id`) — zaznacz-wszystko było od zawsze
-całkowicie martwe, naprawione przez użycie istniejącego `currentRowKeys()`.
-🔄 e2e w toku. Kolejne rundy będą dochodzić w miarę potrzeby (drag&drop
-folderów międzysobą poza cyklem, widok META z lewego panelu, mobile
-long-press/double-tap) — nie ma sztywnego celu liczby testów, chodzi o
-realne pokrycie funkcji panelu.
+1. **"naprawy z audytu"** (5 testów) — regresja 1:1 na pierwszych 3
+   krytycznych + 2 poważnych bugach: eksport, cykl folderów,
+   stale-payload rename, cascade usuwania folderu, hang modala tagów.
+2. **"codzienna funkcjonalność panelu"** (14 testów, na żądanie
+   "przetestować cały panel", nie tylko już znalezione bugi) —
+   question-modal CRUD + limity, tagi tri-state + duplikaty, wyszukiwanie
+   tekstowe i po `#tagu`, wytnij/kopiuj/wklej, drag&drop pytania na folder
+   w liście, oraz DWA REALNE konta testowe —
+   `TEST_USERNAME`/`TEST_USERNAME_2` — dla `editor`/`viewer` na
+   współdzielonej bazie, w tym próba zapisu viewera bezpośrednio przez
+   klienta z pominięciem UI. `loginAsTestUser()` w `helpers/login.js`
+   dostał opcjonalny `{ username }` do logowania drugiego konta. Przy
+   pisaniu tych testów znaleziony i naprawiony KOLEJNY samodzielny bug:
+   `Ctrl+A` (`actions.js` w keydown handlerze) filtrował wiersze po
+   atrybucie `data-key`, którego żaden wiersz nigdy nie miał (wszystkie
+   mają `data-kind`+`data-id`) — zaznacz-wszystko było od zawsze
+   całkowicie martwe, naprawione przez użycie istniejącego
+   `currentRowKeys()`.
+3. **"question-modal.js (edycja pytania)"** (6 testów, na żądanie —
+   modale edycji/eksportu są "bardzo ważne", wcześniejsze pokrycie było
+   za płytkie) — edycja istniejącej odpowiedzi (nie duplikuje), usuwanie
+   odpowiedzi, obcinanie tekstu do 17 znaków, clamp punktów 0–100 w locie,
+   anulowanie (X) nie zapisuje zmian, pusta treść blokuje zapis. Przy
+   pisaniu znaleziony i naprawiony KOLEJNY samodzielny bug: `qSave` w
+   ogóle nie sprawdzał, czy treść pytania jest niepusta (tylko
+   punkty/sumę) — dodana walidacja + klucz tłumaczenia
+   `baseExplorer.question.errors.textRequired` (pl/en/uk).
+4. **"export-modal.js ('Utwórz grę')"** (6 testów) — dynamiczne
+   włączanie/wyłączanie "Utwórz" przy zmianie liczby zaznaczonych,
+   oznaczenie ok/bad pytań przy przełączaniu typu gry, PUNKTACJA
+   faktycznie zeruje punkty w utworzonej grze, PREPAROWANA zachowuje
+   tekst+punkty (pełny round-trip przez realne
+   `games`/`questions`/`answers`), zamknięcie X nie tworzy gry, baza z
+   <10 pytań pokazuje błąd i blokuje przycisk.
 
-**Runda 3 (na żądanie: modale edycji pytania i eksportu są "bardzo
-ważne", wcześniejsze pokrycie było za płytkie)** — dodano
-`tests/e2e/base-explorer-modals.spec.js` (13 testów): dla
-`question-modal.js` — edycja istniejącej odpowiedzi (nie duplikuje),
-usuwanie odpowiedzi, obcinanie tekstu do 17 znaków, clamp punktów 0–100 w
-locie, anulowanie (X) nie zapisuje zmian, pusta treść blokuje zapis; dla
-`export-modal.js` — dynamiczne włączanie/wyłączanie "Utwórz" przy
-zmianie liczby zaznaczonych, oznaczenie ok/bad pytań przy przełączaniu
-typu gry, PUNKTACJA faktycznie zeruje punkty w utworzonej grze,
-PREPAROWANA zachowuje tekst+punkty (pełny round-trip przez realne
-`games`/`questions`/`answers`), zamknięcie X nie tworzy gry, baza z <10
-pytań pokazuje błąd i blokuje przycisk.
+Łącznie z pierwotnymi 3 krytycznymi (eksport/cykl/rename) znalezione i
+naprawione zostały 4 dodatkowe, samodzielne bugi: `deleteTags` nie
+czyściła cache tagów, obejście blokady widoków wirtualnych (META),
+osierocone pytania po usunięciu folderu, hang modala tagów, martwy
+Ctrl+A, brak walidacji pustej treści pytania. Kolejne rundy będą
+dochodzić w miarę potrzeby (drag&drop folderów niezwiązany z cyklem,
+widok META z lewego panelu, mobile long-press/double-tap) — nie ma
+sztywnego celu liczby testów, chodzi o realne pokrycie funkcji panelu.
 
 Przy pisaniu tych testów znaleziony i naprawiony KOLEJNY samodzielny
 bug: `question-modal.js`'s `qSave` w ogóle nie sprawdzał, czy treść
