@@ -926,7 +926,7 @@ async function nextOrdForQuestion(state, categoryId) {
 }
 
 export async function createFolderHere(state, { parentId = null } = {}) {
-  if (!canWrite(state)) return false;
+  if (!canMutateHere(state)) return false;
 
   const ord = await nextOrdForFolder(state, parentId);
 
@@ -947,7 +947,7 @@ export async function createFolderHere(state, { parentId = null } = {}) {
 }
 
 export async function createQuestionHere(state, { categoryId = null } = {}) {
-  if (!canWrite(state)) return false;
+  if (!canMutateHere(state)) return false;
 
   const ord = await nextOrdForQuestion(state, categoryId);
 
@@ -984,11 +984,25 @@ export async function deleteItems(state, keys) {
   // jeśli w zaznaczeniu nie ma realnych elementów (np. tylko "root") — nic nie rób
   if (!qIds.length && !cIds.length) return false;
 
-  // Uwaga: foldery mają dzieci/pytania -> DB ma FK? jeśli masz ON DELETE CASCADE to ok.
-  // Jeśli nie masz cascade, to najpierw trzeba usunąć pytania w folderach albo blokować usuwanie niepustych.
-  // Na tym etapie robimy najprościej: spróbuj usunąć, a w razie błędu pokaż komunikat.
-  if (qIds.length) {
-    const { error } = await sb().from("qb_questions").delete().in("id", qIds);
+  // qb_categories.parent_id ma ON DELETE CASCADE (podfoldery znikną same razem z rodzicem),
+  // ale qb_questions.category_id ma ON DELETE SET NULL -- bez jawnego usunięcia pytania
+  // w kasowanych folderach przetrwałyby, po cichu "spadając" do widoku "Wszystkie" zamiast
+  // zniknąć razem z folderem, którego dotyczą.
+  if (cIds.length) {
+    const subtreeCategoryIds = Array.from(new Set(
+      cIds.flatMap((cid) => collectSubtreeIds(state.categories || [], cid))
+    ));
+    const { data: nested, error: eNested } = await sb()
+      .from("qb_questions")
+      .select("id")
+      .in("category_id", subtreeCategoryIds);
+    if (eNested) throw eNested;
+    for (const row of (nested || [])) qIds.push(row.id);
+  }
+
+  const allQIds = Array.from(new Set(qIds));
+  if (allQIds.length) {
+    const { error } = await sb().from("qb_questions").delete().in("id", allQIds);
     if (error) throw error;
   }
 
@@ -1059,13 +1073,17 @@ export async function renameByKey(state, key, newValueRaw) {
   if (key.startsWith("q:")) {
     const id = key.slice(2);
 
-    // bierzemy istniejący payload z cache widoku jeśli jest
-    const q =
-      (Array.isArray(state.questions) ? state.questions : []).find(x => x.id === id) ||
-      (Array.isArray(state._viewQuestions) ? state._viewQuestions : []).find(x => x.id === id) ||
-      null;
+    // Pobierz świeży payload z DB tuż przed zapisem -- lokalny cache (state.questions/
+    // _viewQuestions) może być nieaktualny, jeśli ktoś w międzyczasie edytował to samo
+    // pytanie gdzie indziej (np. przez question-modal), a UPDATE nadpisuje CAŁY payload.
+    const { data: fresh, error: eFetch } = await sb()
+      .from("qb_questions")
+      .select("payload")
+      .eq("id", id)
+      .single();
+    if (eFetch) throw eFetch;
 
-    const payload = (q && q.payload && typeof q.payload === "object") ? { ...q.payload } : {};
+    const payload = (fresh?.payload && typeof fresh.payload === "object") ? { ...fresh.payload } : {};
     payload.text = val;
 
     const upd = { payload };
@@ -1248,6 +1266,12 @@ export async function deleteTags(state, tagIds) {
   if (!state.tagSelection) state.tagSelection = { ids: new Set(), anchorId: null };
   for (const id of ids) state.tagSelection.ids.delete(id);
   if (!state.tagSelection.ids.size) state.tagSelection.anchorId = null;
+
+  // unieważnij cache map tagów (bez tego kropki przy folderach dalej pokazują usunięty tag)
+  state._viewQuestionTagMap = null;
+  state._allQuestionTagMap = null;
+  state._allCategoryTagMap = null;
+  state._derivedCategoryTagMap = null;
 
   // 5) odśwież tagi i widok
   await state._api?.refreshTags?.();
@@ -2065,6 +2089,19 @@ async function reorderFoldersByDrop(state, movedFolderIds, targetId, mode) {
 
   // before/after => parent = parent targetu
   const parentIdOrNull = target.parent_id || null;
+
+  // walidacja cyklu: nowy rodzic (parent targetu) nie może być przenoszonym folderem
+  // ani leżeć w jego poddrzewie -- inaczej folder stałby się swoim własnym przodkiem
+  for (const fid of moved) {
+    if (fid === parentIdOrNull) {
+      void alertModal({ text: t("baseExplorer.errors.moveIntoChild") });
+      return;
+    }
+    if (isFolderDescendant(state, fid, parentIdOrNull)) {
+      void alertModal({ text: t("baseExplorer.errors.moveIntoChild") });
+      return;
+    }
+  }
 
   // pobierz rodzeństwo targetu (w tym target) i usuń z niego moved (żeby nie dublować)
   const siblings = (state.categories || [])
@@ -4372,7 +4409,7 @@ export function wireActions({ state }) {
           });
 
           // "pływający" pasek (symulacja), żeby nie stał na 0%
-          let t = null;
+          let tickTimer = null;
           let i = 0;
           const tick = () => {
             i = Math.min((n || 1) - 1, i + 1);
@@ -4383,7 +4420,7 @@ export function wireActions({ state }) {
               msg: "",
             });
           };
-          t = setInterval(tick, 120);
+          tickTimer = setInterval(tick, 120);
 
           try {
             const gameId = await importGame(payload, ownerId);
@@ -4395,7 +4432,7 @@ export function wireActions({ state }) {
             });
             return { gameId };
           } finally {
-            if (t) clearInterval(t);
+            if (tickTimer) clearInterval(tickTimer);
           }
         },
       };
@@ -4541,6 +4578,7 @@ export function wireActions({ state }) {
   
       if (mod && (e.key === "c" || e.key === "C")) {
         e.preventDefault();
+        if (!canWrite(state)) return;
         copySelectedToClipboard(state);
         return;
       }

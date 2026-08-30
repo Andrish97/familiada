@@ -228,7 +228,11 @@ export async function openTagsModal(state, opts = {}) {
     colorBase: "#4da3ff",
   };
 
+  // Promise + resolver tworzone od razu, ZANIM podepniemy listenery -- inaczej klik
+  // w X/Zapisz w trakcie poniższych `await` (refreshTags/initTriState) trafiłby na
+  // resolvePromise wciąż `null` i zawiesiłby ten Promise na zawsze.
   let resolvePromise = null;
+  const donePromise = new Promise((resolve) => { resolvePromise = resolve; });
 
   function close(result) {
     E.overlay.style.display = "none";
@@ -682,7 +686,5 @@ export async function openTagsModal(state, opts = {}) {
     enterL2("create", null);
   }
 
-  return await new Promise((resolve) => {
-    resolvePromise = resolve;
-  });
+  return await donePromise;
 }

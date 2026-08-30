@@ -43,7 +43,7 @@ function isEditor(state) {
 }
 
 function isReadOnlyView(state) {
-  return state?.view === VIEW.SEARCH || state?.view === VIEW.TAG;
+  return state?.view === VIEW.SEARCH || state?.view === VIEW.TAG || state?.view === VIEW.META;
 }
 
 function countRealSelected(state) {

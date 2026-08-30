@@ -731,6 +731,94 @@ zalogować DWA różne konta testowe na tej samej, współdzielonej bazie:
   zarządzanie udostępnieniami) — powinno być odrzucone już na poziomie
   `qb_bases_update`/`qb_shares_write` (tylko `owner_id`).
 
+### Wyniki audytu funkcjonalnego (2026-08-30) — ✅ zrobione, przed Warstwą 1
+
+Pełny audyt A) (cały `base-explorer/`: `actions.js` 4715 linii + wszystkie
+pozostałe pliki modułu + RLS/FK w `schema.sql`), zweryfikowany ręcznie
+linia po linii (nie tylko wynik subagenta). Znalezione bugi to błędy kodu
+niezależne od wielu kart naraz — naprawione PRZED projektowaniem locka,
+bo lock by ich nie rozwiązał:
+
+**Krytyczne (naprawione):**
+- `actions.js:4375` — `let t = null` w `run()` przesłaniało zaimportowaną
+  funkcję tłumaczeń `t` (temporal dead zone) → `ReferenceError` przy
+  KAŻDYM eksporcie ("Utwórz grę" było całkowicie martwe). Zmienna
+  przemianowana na `tickTimer`.
+- `actions.js:2045-2089` (`reorderFoldersByDrop`) — tryb before/after
+  drag&drop folderów w drzewie nie miał żadnej walidacji cyklu (w
+  przeciwieństwie do trybu "into"/`moveItemsTo`) — przeciągnięcie folderu
+  na jego bezpośrednie dziecko ustawiało mu `parent_id` na samego siebie.
+  Dodano identyczny self/descendant check jak w `moveItemsTo`.
+- `actions.js:1059-1084` (`renameByKey`) — F2 na pytaniu brał `payload` z
+  lokalnego cache (`state.questions`/`_viewQuestions`) i nadpisywał nim
+  CAŁY wiersz — realny lost-update przy równoległej edycji tego samego
+  pytania gdzie indziej. Teraz pobiera świeży `payload` z DB tuż przed
+  zapisem (ten sam wzorzec co `openQuestionModal`).
+
+**Poważne (naprawione):**
+- `deleteTags()` nie czyściła `state._allQuestionTagMap`/`_allCategoryTagMap`/
+  `_derivedCategoryTagMap` (jedyne miejsce modyfikujące tagi bez tego) —
+  kropki tagów przy folderach po usunięciu tagu pokazywały "duszka".
+- `createFolderHere`/`createQuestionHere` sprawdzały tylko `canWrite`, nie
+  `canMutateHere` — menu kontekstowe w widoku META (gdzie
+  `isReadOnlyView()` w `context-menu.js` nie uwzględniało METY) realnie
+  tworzyło wiersze w DB z pominięciem zamierzonej blokady widoków
+  wirtualnych. Naprawione dwustronnie: obie funkcje używają teraz
+  `canMutateHere`, a `isReadOnlyView()` uwzględnia też `VIEW.META`.
+- `deleteItems()` usuwało folder, ale FK `qb_questions.category_id` ma
+  `ON DELETE SET NULL` (nie CASCADE) — pytania z usuwanego folderu po
+  cichu "spadały" do widoku Wszystkie zamiast zniknąć razem z folderem.
+  Teraz jawnie zbiera i kasuje wszystkie pytania w całym poddrzewie
+  usuwanych folderów.
+- `tags-modal.js`: `openTagsModal()` podpinało listenery X/Zapisz PRZED
+  utworzeniem swojego Promise (dopiero po dwóch `await` niżej) — klik w
+  trakcie wolnej sieci wywoływał `resolvePromise(result)` gdy
+  `resolvePromise` było wciąż `null`, zawieszając Promise na zawsze.
+  Promise + resolver tworzone teraz na samym początku funkcji.
+- Ctrl+C (kopiuj) w globalnym skrócie klawiszowym nie sprawdzało
+  `canWrite` (w przeciwieństwie do tej samej akcji z toolbara/menu
+  kontekstowego) — dodano check dla spójności (niegroźne samo w sobie,
+  bo nic nie zapisuje do DB).
+
+**Świadomie odłożone (nie są "corruption przy wielu kartach" w wąskim
+sensie, RLS je backstopuje):**
+- Race na `ord` przy równoczesnym tworzeniu (`nextOrdForFolder`/
+  `nextOrdForQuestion`, read-then-insert bez unique indexu) — realnie
+  rozwiąże/ograniczy dopiero Warstwa 1 (blokada `base_id`), nie osobna
+  łatka.
+- Brak jakiegokolwiek realtime/synchronizacji między kartami (cały moduł
+  żyje wyłącznie w pamięci karty aż do ręcznego odświeżenia) — to jest
+  dokładnie uzasadnienie dla Warstwy 1, nie osobny fix.
+- `applyCategoryOrder` (drag-reorder) robi pętlę osobnych `UPDATE` per
+  folder, nietransakcyjnie — przy błędzie sieci w połowie zostaje
+  częściowo zaktualizowane drzewo. Wymagałoby RPC/transakcji — osobne
+  zadanie hardeningowe.
+- Brak walidacji reguł biznesowych na poziomie DB (max 6 odpowiedzi,
+  punkty 0–100, limity długości) — cała walidacja kliencka, RLS pilnuje
+  *kto* pisze, nie *co*. Osobne zadanie (CHECK constrainty/triggery).
+- `state.role` pobierana raz przy starcie strony i nigdy nie odświeżana
+  (`setRole()` wołane wyłącznie w `page.js:83`) — jeśli właściciel cofnie
+  komuś dostęp w trakcie sesji, UI tego nie zauważa (dopiero realny zapis
+  odbije się od RLS). Niska szkodliwość dzięki RLS, nie priorytet.
+- Drobne: niespójny limit długości tekstu pytania (`question-modal.js`
+  bez `maxlength` vs `safeQuestionText()` = 200 znaków przy F2), unikalność
+  nazwy tagu case-insensitive w UI vs case-sensitive w DB (`qb_tags_base_id_name_key`),
+  zahardkodowane polskie "Nowy folder"/"Nowe pytanie" zamiast `t()`,
+  `addDoubleTap` na mobile porównujące dokładnie ten sam węzeł DOM (gubi
+  rozpoznanie po re-renderze).
+- Znaleziono przy okazji (nie z audytu, przy budowie testów): skrót
+  Ctrl+T (`actions.js:4688-4696`) wywołuje `openTagsModal(state, { mode: "assign" })`
+  BEZ przekazania `selection: {qIds, cIds}` — modal zawsze startuje z
+  pustym zaznaczeniem (`sel.qIds=[]`), więc tri-state zawsze pokazuje
+  "none" niezależnie od realnych przypisań. Ścieżka z menu kontekstowego
+  ("Tagi…") działa poprawnie. Nie naprawione — osobny, drobny bug do
+  ujęcia przy następnym przebiegu.
+
+E2e: `tests/e2e/base-explorer.spec.js` (5 testów, po jednym na każdy
+naprawiony bug: eksport, cykl folderów, stale-payload rename, cascade
+usuwania folderu, hang modala tagów) — 🔄 e2e w toku (jeszcze nie
+uruchomione na CI).
+
 ---
 
 ## Krzyżowe blokady między zasobami — mechanizm ✅ zamknięty, reszta kategorii otwarta
