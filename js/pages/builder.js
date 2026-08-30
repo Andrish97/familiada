@@ -1565,6 +1565,17 @@ document.addEventListener("DOMContentLoaded", async () => {
   btnExport?.addEventListener("click", async () => {
     if (!selectedId || btnExport?.disabled) return;
 
+    // exportGame() czyta grę/pytania/odpowiedzi w kilku osobnych zapytaniach
+    // po kolei -- jeśli ktoś w tym czasie edytuje tę grę (editor/ustawienia/
+    // ankieta), eksport może złapać rozjechany stan (np. odpowiedź do
+    // pytania, które w międzyczasie zniknęło). Eksport niczego nie
+    // nadpisuje, ale sam wyeksportowany plik mógłby być niespójny, więc
+    // dostaje ten sam busy-check co reszta jednorazowych akcji buildera.
+    if (await isResourceBusy("game", selectedId)) {
+      void alertModal({ text: t("resourceLock.gameMessage") });
+      return;
+    }
+
     if (exportJsonSub) exportJsonSub.textContent = MSG.exportJsonSub();
     show(exportJsonOverlay, true);
     setProgUi(exportJsonStep, exportJsonCount, exportJsonBar, exportJsonMsg, { step: MSG.exportStart(), i: 0, n: 0, msg: "" });

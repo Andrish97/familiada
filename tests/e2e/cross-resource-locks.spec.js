@@ -591,6 +591,47 @@ test("builder.js: reset gry do draftu po ankiecie zablokowany alert-modalem, gdy
   }
 });
 
+test("builder.js: eksport gry zablokowany alert-modalem, gdy gra jest edytowana gdzie indziej", async ({ page, context }) => {
+  test.setTimeout(60_000);
+  await loginAsTestUser(page, context);
+
+  const gameName = `E2E-XLOCK-EXPORT-${Date.now()}`;
+  const gameId = await page.evaluate(async (name) => {
+    const sb = window.__sbClient;
+    const { data: userData } = await sb.auth.getUser();
+    const { data, error } = await sb.from("games")
+      .insert({ name, owner_id: userData.user.id, type: "prepared" })
+      .select("id").single();
+    if (error) throw new Error(error.message);
+    return data.id;
+  }, gameName);
+
+  const editorPage = await context.newPage();
+  try {
+    await editorPage.goto(`https://www.familiada.online/editor?id=${gameId}`, { waitUntil: "domcontentloaded" });
+    await editorPage.waitForLoadState("networkidle");
+    await waitForLock(editorPage, "game", gameId);
+
+    await page.goto("https://www.familiada.online/builder", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("networkidle");
+
+    const card = page.locator("#grid .card").filter({ hasText: gameName });
+    await expect(card).toBeVisible({ timeout: 15000 });
+    await card.click();
+    await expect(page.locator("#btnExport")).toBeEnabled({ timeout: 10000 });
+    await page.locator("#btnExport").click();
+
+    await expect(page.locator(".uni-modal .mSub")).toBeVisible({ timeout: 10000 });
+    await expect(page.locator(".uni-modal .mSub")).toContainText("używana", { timeout: 5000 });
+    // Eksport nigdy się nie zaczął -- overlay postępu eksportu nie mógł się pokazać.
+    await expect(page.locator("#exportJsonOverlay")).toBeHidden();
+    await page.locator(".uni-modal .uni-foot .btn.gold").click();
+  } finally {
+    await editorPage.close();
+    await page.evaluate(async (id) => { await window.__sbClient.from("games").delete().eq("id", id); }, gameId);
+  }
+});
+
 /* ================= Krok 4: logo-editor.js — Warstwa A (per logo) i Warstwa B (cała pula) ================= */
 // Warstwa A: dwie karty nie mogą edytować TEGO SAMEGO logo naraz (ten sam
 // wzorzec co editor.js/game-settings.js dla gry, ale w obrębie jednej
