@@ -4353,6 +4353,7 @@ const en = {
         maxAnswers: "Max 6 answers.",
         pointsRange: "Points must be between 0–100 (if set).",
         sumExceeded: "Points total cannot exceed 100.",
+        textRequired: "Question text cannot be empty.",
       },
     },
     list: {

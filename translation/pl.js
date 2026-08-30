@@ -4233,6 +4233,7 @@ const pl = {
         maxAnswers: "Max 6 odpowiedzi.",
         pointsRange: "Punkty muszą być w zakresie 0–100 (jeśli wpisane).",
         sumExceeded: "Suma punktów nie może przekroczyć 100.",
+        textRequired: "Treść pytania nie może być pusta.",
       },
     },
     list: {

@@ -837,6 +837,25 @@ folderów międzysobą poza cyklem, widok META z lewego panelu, mobile
 long-press/double-tap) — nie ma sztywnego celu liczby testów, chodzi o
 realne pokrycie funkcji panelu.
 
+**Runda 3 (na żądanie: modale edycji pytania i eksportu są "bardzo
+ważne", wcześniejsze pokrycie było za płytkie)** — dodano
+`tests/e2e/base-explorer-modals.spec.js` (13 testów): dla
+`question-modal.js` — edycja istniejącej odpowiedzi (nie duplikuje),
+usuwanie odpowiedzi, obcinanie tekstu do 17 znaków, clamp punktów 0–100 w
+locie, anulowanie (X) nie zapisuje zmian, pusta treść blokuje zapis; dla
+`export-modal.js` — dynamiczne włączanie/wyłączanie "Utwórz" przy
+zmianie liczby zaznaczonych, oznaczenie ok/bad pytań przy przełączaniu
+typu gry, PUNKTACJA faktycznie zeruje punkty w utworzonej grze,
+PREPAROWANA zachowuje tekst+punkty (pełny round-trip przez realne
+`games`/`questions`/`answers`), zamknięcie X nie tworzy gry, baza z <10
+pytań pokazuje błąd i blokuje przycisk.
+
+Przy pisaniu tych testów znaleziony i naprawiony KOLEJNY samodzielny
+bug: `question-modal.js`'s `qSave` w ogóle nie sprawdzał, czy treść
+pytania jest niepusta (tylko punkty/sumę) — można było zapisać pytanie
+bez żadnej treści. Dodano walidację + klucz tłumaczenia
+`baseExplorer.question.errors.textRequired` (pl/en/uk). 🔄 e2e w toku.
+
 ---
 
 ## Krzyżowe blokady między zasobami — mechanizm ✅ zamknięty, reszta kategorii otwarta

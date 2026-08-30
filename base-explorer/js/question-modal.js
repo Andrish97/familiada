@@ -205,6 +205,10 @@ export function initQuestionModal({ state } = {}) {
     setErr("");
     if (!current) return;
 
+    if (!String(current.payload.text || "").trim()) {
+      return setErr(t("baseExplorer.question.errors.textRequired"));
+    }
+
     const sum = calcSum();
 
     for (const a of (current.payload.answers || [])) {
