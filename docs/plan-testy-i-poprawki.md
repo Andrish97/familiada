@@ -1128,6 +1128,61 @@ Wciąż otwarte po tej rundzie: te same 5 niezdiagnozowanych testów z
 rundy 6 (potrzebny pełny log po przebiegu na aktualnym HEAD-zie, commit
 13e9290d + ten fix, 43 testy).
 
+### Runda 10 — pełny log run #73, wszystkie 7 failów zdiagnozowane
+
+Ściągnięty pełny log joba (nie tylko tail) ujawnił, że lista "5
+niezdiagnozowanych z rundy 6" była nieaktualna — jeden z nich to ten sam
+bug co w rundzie 9:
+
+- **Test #1 ("eksport przez menu kontekstowe faktycznie tworzy grę")** —
+  DOKŁADNIE ten sam duplikat gry co w rundzie 9 (`findGameByName`'s
+  "multiple rows"). Już naprawiony razem z rundą 9, bez dodatkowych
+  zmian w teście.
+- **Test "sortowanie po typie"** — realna przyczyna znaleziona:
+  `render.js`'s `.title-text` dla WIERSZA FOLDERU to
+  `${svgFolder()} ${esc(name)}` — SVG ikona nie ma własnego tekstu, więc
+  `textContent` tego spana to spacja-separator + nazwa, np. `" Z-folder"`
+  zamiast `"Z-folder"`. To zamierzony odstęp wizualny ikona↔etykieta
+  (tak samo jak w drzewie, linia ~472/892), nie bug aplikacji — ujawnił
+  się tylko dlatego, że ten jeden test miesza w jednej asercji tytuł
+  folderu (z ikoną) i tytuł pytania (bez ikony) i porównuje oba
+  dokładnie. Naprawione w teście: `titles()` teraz `.map(s => s.trim())`
+  przed porównaniem.
+- **3 testy drag&drop (folder-cykl, pytanie→folder w liście, reorder
+  rodzeństwa w drzewie)** — wszystkie failowały identycznie: gołe "Test
+  timeout of 60000ms exceeded" bez JAKIEGOKOLWIEK innego komunikatu, na
+  obu próbach (initial + retry), mimo że aplikacja używa naciwnego HTML5
+  D&D (`draggable="true"` + `dragstart`/`dragover`/`drop`), a handlery
+  drop nie robią nic, co mogłoby zawiesić samo wywołanie `dragTo()`
+  (żadne `await` w handlerze drop nie blokuje zwrotu Playwrighta — ten
+  kończy się, gdy przeglądarka skończy własną, natywną sekwencję
+  przeciągania, niezależnie od tego, czy handler aplikacji już
+  wykonał swoje). Brak jakiegokolwiek call-logu przy 60s timeout (zamiast
+  np. "waiting for element to be stable") silnie sugeruje, że to sam
+  `.dragTo()` się zawiesza na poziomie CDP -- znana klasa niestabilności
+  natywnego D&D w headless Chromium na CI, nie bug aplikacji. Nie dało
+  się tego dalej zdiagnozować bez `trace`/`video` (świadomie wyłączone w
+  `playwright.config.js` — mogłyby nagrać nagłówek z sekretem, patrz
+  `tests/README.md`), a artefakt ze screenshotami/`error-context.md`
+  jest na Azure Blob Storage, zablokowanym przez politykę proxy tego
+  środowiska. Naprawione minimalnie w testach: dodano jawny
+  `timeout: 20000` do wszystkich 4 wywołań `.dragTo()` w pliku (3
+  failujące + 1 już przechodzący, dla spójności) — krótszy niż
+  `test.setTimeout(60_000)`, więc kolejny hang da konkretny błąd
+  Playwrighta z call logiem zamiast pustego "Test timeout" bez żadnej
+  wskazówki. Jeśli po tym nadal będą failować identycznie (pusty
+  call log / prawdziwy hang CDP), to potwierdzi środowiskową
+  niestabilność, nie aplikację — do rozważenia wtedy: retry z osobnym
+  odczekaniem, albo (jeśli to się nie zmieni) świadome pominięcie D&D
+  w CI na rzecz manualnego QA tej ścieżki.
+
+Wszystkie 7 failów z run #73 ma teraz wyjaśnienie i albo realną naprawę
+(2× duplikat gry — bug aplikacji), albo naprawę/utwardzenie w teście
+(sortowanie po typie, 4× dragTo z jawnym timeout). Do zrobienia:
+poprosić o kolejny przebieg E2E na najnowszym HEAD-zie (43 testy) i
+sprawdzić, czy testy D&D przechodzą, czy nadal timeoutują (tym razem z
+konkretnym komunikatem).
+
 ---
 
 ## Krzyżowe blokady między zasobami — mechanizm ✅ zamknięty, reszta kategorii otwarta

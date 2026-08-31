@@ -291,7 +291,11 @@ test.describe("base-explorer: naprawy z audytu (nie tylko wiele kart naraz)", ()
       await expect(rowB).toBeVisible({ timeout: 10000 });
 
       // upuść A w górnej (25%) strefie B => tryb "before" => nowy rodzic A = parent(B) = A samo
-      await rowA.dragTo(rowB, { targetPosition: { x: 20, y: 2 } });
+      // jawny timeout (krótszy niż test.setTimeout) -- native HTML5 D&D w CI
+      // potrafił się zawiesić na całe 60s bez żadnego komunikatu (run #73);
+      // teraz co najmniej dostaniemy konkretny błąd z call logiem zamiast
+      // gołego "Test timeout of 60000ms exceeded"
+      await rowA.dragTo(rowB, { targetPosition: { x: 20, y: 2 }, timeout: 20000 });
 
       // przed naprawą: cichy zapis, A.parent_id = A.id, folder znika z nawigacji.
       // po naprawie: alertModal blokuje operację.
@@ -890,7 +894,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
       await expect(qRow).toBeVisible({ timeout: 15000 });
       await expect(catRow).toBeVisible({ timeout: 15000 });
 
-      await qRow.dragTo(catRow);
+      await qRow.dragTo(catRow, { timeout: 20000 });
 
       await expect(page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`)).toHaveCount(0, { timeout: 10000 });
 
@@ -1016,7 +1020,14 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
       await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
-      const titles = () => page.locator("#list tbody tr .title-text").allTextContents();
+      // .title-text folderu to ikona SVG + spacja + nazwa (render.js) -- spacja
+      // między ikoną a tekstem zostaje w textContent (widoczna tylko jako
+      // odstęp od ikony, nie w samej nazwie), więc trimujemy przy porównaniu;
+      // pytania nie mają ikony, więc to normalnie nie ma znaczenia gdzie
+      // indziej w tym pliku, ale ten test miesza oba typy wierszy.
+      const titles = () =>
+        page.locator("#list tbody tr .title-text").allTextContents()
+          .then((arr) => arr.map((s) => s.trim()));
 
       // domyślnie (name/asc) pytanie "A-pytanie" jest przed folderem "Z-folder"
       await expect.poll(titles).toEqual(["A-pytanie", "Z-folder"]);
@@ -1143,7 +1154,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
       await qSrcRow.click({ modifiers: ["Control"] });
 
       // dragstart na dowolnym zaznaczonym wierszu przenosi CAŁE zaznaczenie
-      await catSrcRow.dragTo(catTargetRow);
+      await catSrcRow.dragTo(catTargetRow, { timeout: 20000 });
 
       await expect(page.locator(`#list .row[data-kind="cat"][data-id="${catSrc}"]`)).toHaveCount(0, { timeout: 10000 });
       await expect(page.locator(`#list .row[data-kind="q"][data-id="${qSrc}"]`)).toHaveCount(0);
@@ -1176,7 +1187,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
       await expect(rowB).toBeVisible({ timeout: 15000 });
 
       // upuść B w górnej (25%) strefie A => "before" => B przed A wśród rodzeństwa (ten sam rodzic: null)
-      await rowB.dragTo(rowA, { targetPosition: { x: 20, y: 2 } });
+      await rowB.dragTo(rowA, { targetPosition: { x: 20, y: 2 }, timeout: 20000 });
 
       await expect.poll(async () => {
         const a = await getCategoryRow(page, catA);
