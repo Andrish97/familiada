@@ -1087,6 +1087,47 @@ jeśli po naprawie z rundy 6 dalej failują, to prawdopodobnie realne,
 osobne problemy (może faktycznie CI-owy flakiness drag&drop, znany już
 wcześniej w tym projekcie).
 
+### Runda 9 — trzeci przebieg CI (run #73, 40 testów na commicie f8d92833, sprzed rund 7–8): 33 passed / 7 failed
+
+Potwierdza, że naprawa z rundy 6 (debounce toolbara + `TEST_USERNAME_2`)
+zadziałała drastycznie: 22 faile → 7. Z tych 7:
+
+- **5 to te same, wciąż niezdiagnozowane z rundy 6** (eksport przez menu
+  kontekstowe, drag&drop folderu before/after, przeciągnięcie pytania na
+  folder, reorder rodzeństwa w drzewie, sortowanie po typie) —
+  niezmienione, więc potwierdzone jako niezwiązane z debounce'em.
+  Wciąż do zdiagnozowania (potrzebny pełny log, nie tylko tail — do
+  zrobienia po kolejnym przebiegu na najnowszym HEAD-zie).
+- **2 nowe, oba w `export-modal.js`**: "eksport typu PUNKTACJA zeruje
+  punkty..." i "eksport typu PREPAROWANA zachowuje tekst i punkty...".
+  Obydwa padały w `findGameByName()` z błędem PostgREST `JSON object
+  requested, multiple (or no) rows returned` — czyli zapytanie po
+  `name` zwracało **więcej niż jeden wiersz** w `games`.
+
+**Zdiagnozowane i naprawione — realny bug aplikacji, nie testu.**
+`actions.js`'s `openExportModal()` tworzył grę **DWA RAZY** przy każdym
+eksporcie:
+1. Raz wewnątrz `opts.run` (linia ~4381) — callback przekazany do
+   `exportModal.open()`, wołany przez `xCreate`'s click handler w
+   `export-modal.js`, który **czeka** na jego zakończenie przed
+   zamknięciem modala i zwraca `{ gameId }` jako `result`.
+2. Drugi raz **zaraz po** `await exportModal.open(opts)` (stara linia
+   ~4402): `const gameId = await importGame(payload, ownerId);` — ten
+   sam `payload`, ten sam `ownerId`, druga wstawka do `games`.
+
+W testach obie gry miały identyczną nazwę (`xName` z formularza), więc
+`findGameByName()`'s `.maybeSingle()` poprawnie wysadzał się na
+"multiple rows" — to nie był bug testu, tylko trafne wykrycie
+prawdziwego problemu: **każde użycie "Utwórz grę" w bazie pytań tworzyło
+dwie gry zamiast jednej**, każde jednakowo poprawnie wypełnione (stąd w
+ręcznym użyciu łatwo to przeoczyć — druga, "cicha" gra po prostu wisiała
+w liście gier). Naprawiono: usunięto drugie wywołanie `importGame()`,
+`gameId` bierzemy teraz z `res.result?.gameId` (wynik z kroku 1).
+
+Wciąż otwarte po tej rundzie: te same 5 niezdiagnozowanych testów z
+rundy 6 (potrzebny pełny log po przebiegu na aktualnym HEAD-zie, commit
+13e9290d + ten fix, 43 testy).
+
 ---
 
 ## Krzyżowe blokady między zasobami — mechanizm ✅ zamknięty, reszta kategorii otwarta

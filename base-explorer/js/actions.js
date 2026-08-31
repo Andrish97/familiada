@@ -4393,13 +4393,14 @@ export function wireActions({ state }) {
       };
   
       // === 2) Otwórz modal i poczekaj na wynik ===
+      // Gra jest już utworzona wewnątrz opts.run() (patrz wyżej) -- modal
+      // czeka na jego zakończenie przed zamknięciem. Wołanie importGame()
+      // tutaj ponownie tworzyłoby DRUGĄ grę o tej samej nazwie (realny bug:
+      // każdy eksport dawał 2 wiersze w "games").
       const res = await exportModal.open(opts);
       if (!res?.ok) return false;
-  
-      const payload = res.payload;
-  
-      // === 3) Utwórz grę przez importer (osobna baza "games") ===
-      const gameId = await importGame(payload, ownerId);
+
+      const gameId = res.result?.gameId;
 
       // (opcjonalnie) nawigacja do buildera:
       location.href = `../builder`;
