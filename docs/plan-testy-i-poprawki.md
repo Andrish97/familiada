@@ -1040,6 +1040,17 @@ samych testach/konfiguracji CI, nie w aplikacji:
    oznaczało failing testy, bo zmienna fizycznie nie docierała. Dodano
    `TEST_USERNAME_2: ${{ secrets.TEST_USERNAME_2 }}` do `env:`.
 
+**Runda 7 — asymetria "Edytuj pytanie" naprawiona na żądanie.**
+`context-menu.js`'s "Edytuj pytanie" blokowało się w SEARCH/TAG/META
+(`readOnlyView`), podczas gdy toolbar i Ctrl+E nigdy tego nie robiły —
+ta sama zasada co przy "Tagi" (editTags) niżej: edycja treści
+konkretnego pytania po id nie zależy od aktualnego widoku, w
+przeciwieństwie do tworzenia/przenoszenia. Usunięto `readOnlyView` z
+tego warunku, dopisano test regresji. Dodano też test sortowania po
+dacie (wcześniej pominięty jako "trudny bez mockowania zegara" — błędny
+osąd, wystarczyło ustawić `created_at`/`updated_at` wprost przy
+insertowaniu wierszy testowych). 42 testy łącznie.
+
 Pozostałe niezdiagnozowane z tej rundy (niepewne bez pełnej treści logu
 dla failów 1–15, których narzędzie do logów CI nie zwróciło — tylko
 ostatnie ~7 miało pełny szczegół): test #1 (eksport przez menu

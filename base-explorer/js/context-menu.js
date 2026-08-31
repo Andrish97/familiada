@@ -395,10 +395,14 @@ export async function showContextMenu({ state, x, y, target }) {
     pushSep(items);
 
     // --- Edytuj pytanie ---
+    // Bez readOnlyView: edycja treści konkretnego pytania (po id) nie zależy
+    // od "gdzie" jesteś, w przeciwieństwie do tworzenia/przenoszenia -- ta sama
+    // zasada co już przy "Tagi" (editTags) niżej. Toolbar/Ctrl+E i tak nigdy
+    // tego nie blokowały; to menu kontekstowe miało zbędne dodatkowe ograniczenie.
     items.push({
       label: t("baseExplorer.menu.editQuestion"),
       shortcut: { win:"Ctrl+E", mac:"⌘E" },
-      disabled: !editor || readOnlyView || selectedRealCount !== 1 || target.kind !== "q",
+      disabled: !editor || selectedRealCount !== 1 || target.kind !== "q",
       action: async () => {
         const qid = target.id;
         await state._api?.openQuestionModal?.(qid);

@@ -75,16 +75,20 @@ async function createCategory(page, { baseId, parentId = null, name, ord = 1 }) 
   }, { baseId, parentId, name, ord });
 }
 
-async function createQuestion(page, { baseId, categoryId = null, ord = 1, payload }) {
-  return await page.evaluate(async ({ baseId, categoryId, ord, payload }) => {
+async function createQuestion(page, { baseId, categoryId = null, ord = 1, payload, createdAt = null }) {
+  return await page.evaluate(async ({ baseId, categoryId, ord, payload, createdAt }) => {
+    const row = { base_id: baseId, category_id: categoryId, ord, payload };
+    // pickDate() w render.js priorytetyzuje updated_at nad created_at -- ustawiamy
+    // oba, żeby kontrolować kolejność sortowania po dacie bez niejasności co do defaultów.
+    if (createdAt) { row.created_at = createdAt; row.updated_at = createdAt; }
     const { data, error } = await window.__sbClient
       .from("qb_questions")
-      .insert({ base_id: baseId, category_id: categoryId, ord, payload })
+      .insert(row)
       .select("id")
       .single();
     if (error) throw new Error("insert qb_questions failed: " + error.message);
     return data.id;
-  }, { baseId, categoryId, ord, payload });
+  }, { baseId, categoryId, ord, payload, createdAt });
 }
 
 async function createTag(page, { baseId, name, color = "#4da3ff", ord = 1 }) {
@@ -1255,6 +1259,64 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
 
       const fresh = await getQuestionRow(page, qid);
       expect(fresh, "Delete w widoku wyszukiwania powinien realnie usuwać, tak jak toolbar/menu kontekstowe").toBeNull();
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+
+  test("Edytuj pytanie (menu kontekstowe) działa w widoku wyszukiwania (regresja: zbędna blokada widoku)", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context);
+    const baseId = await createBase(page, `E2E-XB-EDITSEARCH-${Date.now()}`);
+
+    try {
+      const uniq = `DoEdycji${Date.now()}`;
+      const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: uniq, answers: [] } });
+
+      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+
+      await page.locator("#searchText").fill(uniq);
+      const row = page.locator(`#list .row[data-id="${qid}"]`);
+      await expect(row).toBeVisible({ timeout: 10000 });
+      await row.click();
+      await row.click({ button: "right" });
+
+      const editItem = page.locator(".context-menu .cm-item", { hasText: /Edytuj pytanie/i });
+      await expect(editItem).toBeVisible({ timeout: 5000 });
+      await expect(editItem).toBeEnabled({
+        timeout: 5000,
+      }); // przed naprawą: disabled w SEARCH mimo że toolbar/Ctrl+E to pozwalały
+      await editItem.click();
+
+      await expect(page.locator("#questionOverlay")).toBeVisible({ timeout: 5000 });
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+
+  test("sortowanie po dacie: klik nagłówka przełącza rosnąco/malejąco", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context);
+    const baseId = await createBase(page, `E2E-XB-SORTDATE-${Date.now()}`);
+
+    try {
+      // nazwy celowo NIE w kolejności dat, żeby test nie mógł przypadkiem
+      // przejść dzięki sortowaniu po nazwie zamiast po dacie
+      await createQuestion(page, { baseId, ord: 1, payload: { text: "Najstarsze", answers: [] }, createdAt: "2020-01-01T00:00:00Z" });
+      await createQuestion(page, { baseId, ord: 2, payload: { text: "Środkowe", answers: [] }, createdAt: "2021-01-01T00:00:00Z" });
+      await createQuestion(page, { baseId, ord: 3, payload: { text: "Najnowsze", answers: [] }, createdAt: "2022-01-01T00:00:00Z" });
+
+      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+
+      const titles = () => page.locator("#list tbody tr .title-text").allTextContents();
+
+      await page.locator(".list-head .h-date").click();
+      await expect.poll(titles).toEqual(["Najstarsze", "Środkowe", "Najnowsze"]);
+
+      await page.locator(".list-head .h-date").click();
+      await expect.poll(titles).toEqual(["Najnowsze", "Środkowe", "Najstarsze"]);
     } finally {
       await deleteBase(page, baseId);
     }
