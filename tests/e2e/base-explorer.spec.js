@@ -190,6 +190,18 @@ async function seedTenPlainQuestions(page, baseId, startOrd = 1) {
   return ids;
 }
 
+// scheduleRenderList() w actions.js debounce'uje aktualizację toolbara o 180ms
+// po kliknięciu wiersza ("krótko: pozwala na dblclick") -- skróty klawiszowe
+// (Ctrl+E/Ctrl+G/Ctrl+D) klikają przycisk toolbara TYLKO gdy jego atrybut
+// disabled w DOM już zniknął. Wciśnięcie klawisza od razu po row.click(),
+// zanim debounce zdąży przerenderować toolbar, trafia na wciąż-disabled
+// przycisk i po cichu nic nie robi. Czekamy więc na realny stan przycisku,
+// nie tylko na to, że wiersz jest zaznaczony.
+async function pressToolbarShortcut(page, dataAct, keys) {
+  await expect(page.locator(`#toolbar button[data-act="${dataAct}"]`)).toBeEnabled({ timeout: 5000 });
+  await page.keyboard.press(keys);
+}
+
 /* ================= 1) Naprawy z audytu ================= */
 
 test.describe("base-explorer: naprawy z audytu (nie tylko wiele kart naraz)", () => {
@@ -512,7 +524,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
       const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
       await expect(row).toBeVisible({ timeout: 15000 });
       await row.click();
-      await page.keyboard.press("Control+e");
+      await pressToolbarShortcut(page, "editQuestion", "Control+e");
 
       await expect(page.locator("#questionOverlay")).toBeVisible({ timeout: 5000 });
       await page.locator("#qAdd").click();
@@ -561,7 +573,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
       const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
       await expect(row).toBeVisible({ timeout: 15000 });
       await row.click();
-      await page.keyboard.press("Control+e");
+      await pressToolbarShortcut(page, "editQuestion", "Control+e");
 
       await expect(page.locator("#questionOverlay")).toBeVisible({ timeout: 5000 });
       await expect(page.locator("#qAnswers .qRow")).toHaveCount(6, { timeout: 5000 });
@@ -593,7 +605,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
       const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
       await expect(row).toBeVisible({ timeout: 15000 });
       await row.click();
-      await page.keyboard.press("Control+e");
+      await pressToolbarShortcut(page, "editQuestion", "Control+e");
       await expect(page.locator("#questionOverlay")).toBeVisible({ timeout: 5000 });
 
       for (let i = 0; i < 3; i++) {
@@ -1057,7 +1069,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
       const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
       await expect(row).toBeVisible({ timeout: 15000 });
       await row.click();
-      await page.keyboard.press("Control+d");
+      await pressToolbarShortcut(page, "duplicate", "Control+d");
 
       await expect(page.locator(`#list .row[data-kind="q"]`)).toHaveCount(2, { timeout: 10000 });
 
@@ -1270,7 +1282,7 @@ test.describe("base-explorer: question-modal.js (edycja pytania)", () => {
       const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
       await expect(row).toBeVisible({ timeout: 15000 });
       await row.click();
-      await page.keyboard.press("Control+e");
+      await pressToolbarShortcut(page, "editQuestion", "Control+e");
       await expect(page.locator("#questionOverlay")).toBeVisible({ timeout: 5000 });
 
       const r = page.locator("#qAnswers .qRow").first();
@@ -1312,7 +1324,7 @@ test.describe("base-explorer: question-modal.js (edycja pytania)", () => {
       const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
       await expect(row).toBeVisible({ timeout: 15000 });
       await row.click();
-      await page.keyboard.press("Control+e");
+      await pressToolbarShortcut(page, "editQuestion", "Control+e");
       await expect(page.locator("#questionOverlay")).toBeVisible({ timeout: 5000 });
       await expect(page.locator("#qAnswers .qRow")).toHaveCount(3);
 
@@ -1351,7 +1363,7 @@ test.describe("base-explorer: question-modal.js (edycja pytania)", () => {
       const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
       await expect(row).toBeVisible({ timeout: 15000 });
       await row.click();
-      await page.keyboard.press("Control+e");
+      await pressToolbarShortcut(page, "editQuestion", "Control+e");
       await expect(page.locator("#questionOverlay")).toBeVisible({ timeout: 5000 });
 
       await page.locator("#qAdd").click();
@@ -1390,7 +1402,7 @@ test.describe("base-explorer: question-modal.js (edycja pytania)", () => {
       const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
       await expect(row).toBeVisible({ timeout: 15000 });
       await row.click();
-      await page.keyboard.press("Control+e");
+      await pressToolbarShortcut(page, "editQuestion", "Control+e");
       await expect(page.locator("#questionOverlay")).toBeVisible({ timeout: 5000 });
 
       await page.locator("#qAdd").click();
@@ -1422,7 +1434,7 @@ test.describe("base-explorer: question-modal.js (edycja pytania)", () => {
       const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
       await expect(row).toBeVisible({ timeout: 15000 });
       await row.click();
-      await page.keyboard.press("Control+e");
+      await pressToolbarShortcut(page, "editQuestion", "Control+e");
       await expect(page.locator("#questionOverlay")).toBeVisible({ timeout: 5000 });
 
       await page.locator("#qText").fill("Zmieniony, ale nie zapisany");
@@ -1453,7 +1465,7 @@ test.describe("base-explorer: question-modal.js (edycja pytania)", () => {
       const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
       await expect(row).toBeVisible({ timeout: 15000 });
       await row.click();
-      await page.keyboard.press("Control+e");
+      await pressToolbarShortcut(page, "editQuestion", "Control+e");
       await expect(page.locator("#questionOverlay")).toBeVisible({ timeout: 5000 });
 
       await page.locator("#qText").fill("   ");
@@ -1489,7 +1501,7 @@ test.describe("base-explorer: export-modal.js ('Utwórz grę')", () => {
       const firstRow = page.locator(`#list .row[data-kind="q"][data-id="${ids[0]}"]`);
       await expect(firstRow).toBeVisible({ timeout: 15000 });
       await firstRow.click();
-      await page.keyboard.press("Control+g");
+      await pressToolbarShortcut(page, "createGame", "Control+g");
 
       await expect(page.locator("#exportOverlay")).toBeVisible({ timeout: 5000 });
       await expect(page.locator("#xCreate")).toBeEnabled({ timeout: 5000 });
@@ -1566,7 +1578,7 @@ test.describe("base-explorer: export-modal.js ('Utwórz grę')", () => {
       const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
       await expect(row).toBeVisible({ timeout: 15000 });
       await row.click();
-      await page.keyboard.press("Control+g");
+      await pressToolbarShortcut(page, "createGame", "Control+g");
       await expect(page.locator("#exportOverlay")).toBeVisible({ timeout: 5000 });
 
       await page.locator("#lbl1").click(); // Punktacja (poll_points)
@@ -1613,7 +1625,7 @@ test.describe("base-explorer: export-modal.js ('Utwórz grę')", () => {
       const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
       await expect(row).toBeVisible({ timeout: 15000 });
       await row.click();
-      await page.keyboard.press("Control+g");
+      await pressToolbarShortcut(page, "createGame", "Control+g");
       await expect(page.locator("#exportOverlay")).toBeVisible({ timeout: 5000 });
 
       await page.locator("#lbl2").click(); // Preparowana (domyślna, ale ustawiamy jawnie)
@@ -1654,7 +1666,7 @@ test.describe("base-explorer: export-modal.js ('Utwórz grę')", () => {
       const row = page.locator(`#list .row[data-kind="q"][data-id="${ids[0]}"]`);
       await expect(row).toBeVisible({ timeout: 15000 });
       await row.click();
-      await page.keyboard.press("Control+g");
+      await pressToolbarShortcut(page, "createGame", "Control+g");
       await expect(page.locator("#exportOverlay")).toBeVisible({ timeout: 5000 });
 
       await page.locator("#xName").fill(gameName);
@@ -1682,7 +1694,7 @@ test.describe("base-explorer: export-modal.js ('Utwórz grę')", () => {
       const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
       await expect(row).toBeVisible({ timeout: 15000 });
       await row.click();
-      await page.keyboard.press("Control+g");
+      await pressToolbarShortcut(page, "createGame", "Control+g");
 
       await expect(page.locator("#exportOverlay")).toBeVisible({ timeout: 5000 });
       await expect(page.locator("#xErr")).toBeVisible({ timeout: 5000 });

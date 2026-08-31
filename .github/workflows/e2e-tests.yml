@@ -48,6 +48,7 @@ jobs:
         env:
           E2E_BYPASS_SECRET: ${{ secrets.E2E_BYPASS_SECRET }}
           TEST_USERNAME: ${{ secrets.TEST_USERNAME }}
+          TEST_USERNAME_2: ${{ secrets.TEST_USERNAME_2 }}
           TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
         run: npm test -- ${{ github.event.inputs.spec_filter }}
         working-directory: tests

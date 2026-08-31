@@ -1003,6 +1003,55 @@ przeszukano w pełni systematycznie), sortowanie po dacie (pominięte —
 trudne do kontrolowania w teście bez mockowania zegara), interakcje
 kombinacji filtrów (szukaj+tag+meta jednocześnie).
 
+### Runda 6 — drugi przebieg CI (run #72, 40 testów na HEAD po rundzie 5): 22 failed / 18 passed
+
+Znów uruchomiony przed pełnym zestawem najnowszych poprawek (test view
+tego HEAD-a), ale tym razem OBIE realne przyczyny okazały się leżeć w
+samych testach/konfiguracji CI, nie w aplikacji:
+
+1. **Wyścig: skrót klawiszowy Ctrl+E/Ctrl+G/Ctrl+D wciśnięty od razu po
+   `row.click()`, zanim zdąży odpalić się debounce toolbara.**
+   `scheduleRenderList()` w `actions.js` (komentarz w kodzie: "krótko:
+   pozwala na dblclick") aktualizuje atrybut `disabled` przycisków
+   toolbara dopiero **180ms** po kliknięciu wiersza — sam `state.selection`
+   aktualizuje się synchronicznie, ale DOM (i tym samym
+   `btn.disabled`, które sprawdzają handlery `Ctrl+E`/`Ctrl+G`/`Ctrl+D`
+   przed kliknięciem przycisku toolbara) nie. Testy robiły
+   `await row.click(); await page.keyboard.press("Control+e")` bez
+   żadnego odstępu — skrót trafiał na wciąż-`disabled` przycisk i po
+   cichu nic nie robił, więc `#questionOverlay`/`#exportOverlay` nigdy
+   się nie otwierały. To dokładnie wyjaśnia wszystkie 6 failów
+   `question-modal.js`, 5/6 failów `export-modal.js` (jedyny który
+   przeszedł używa menu kontekstowego, które czyta `state.selection`
+   bezpośrednio, nie przez DOM) i `Ctrl+D duplikuje`. Naprawione W
+   TEŚCIE (nie w aplikacji — debounce jest celowy): nowy helper
+   `pressToolbarShortcut(page, dataAct, keys)` czeka aż konkretny
+   przycisk toolbara faktycznie stanie się `enabled`, dopiero potem
+   wciska skrót. Podmienione we wszystkich 15 miejscach w pliku.
+2. **`TEST_USERNAME_2` mimo dodania jako sekret repo NIE trafiał do
+   testów** — sam sekret w ustawieniach GitHub nic nie daje, dopóki
+   workflow jawnie go nie zmapuje na zmienną środowiskową.
+   `.github/workflows/e2e-tests.yml`'s krok "Run E2E tests" miał w `env:`
+   tylko `E2E_BYPASS_SECRET`/`TEST_USERNAME`/`TEST_PASSWORD` —
+   `TEST_USERNAME_2` nigdy tam nie było, więc rundy 5 fix w
+   `login.js` (głośny błąd zamiast cichego fallbacku) poprawnie
+   wykrywał brak i wysadzał testy `editor`/`viewer współdzielonej bazy`
+   z czytelnym komunikatem zamiast mylącego fail-a — ale to dalej
+   oznaczało failing testy, bo zmienna fizycznie nie docierała. Dodano
+   `TEST_USERNAME_2: ${{ secrets.TEST_USERNAME_2 }}` do `env:`.
+
+Pozostałe niezdiagnozowane z tej rundy (niepewne bez pełnej treści logu
+dla failów 1–15, których narzędzie do logów CI nie zwróciło — tylko
+ostatnie ~7 miało pełny szczegół): test #1 (eksport przez menu
+kontekstowe, 10 realnych pytań) i trzy testy drag&drop/reorder w drzewie
+(`drag&drop folderu w tryb before/after`, `przeciągnięcie pytania na
+folder w liście`, `reorder rodzeństwa w drzewie`) oraz `sortowanie po
+typie` — żaden z nich pasuje do wzorca "toolbar 180ms", więc ich
+przyczyna wciąż nieznana. Do zdiagnozowania po kolejnym przebiegu CI —
+jeśli po naprawie z rundy 6 dalej failują, to prawdopodobnie realne,
+osobne problemy (może faktycznie CI-owy flakiness drag&drop, znany już
+wcześniej w tym projekcie).
+
 ---
 
 ## Krzyżowe blokady między zasobami — mechanizm ✅ zamknięty, reszta kategorii otwarta
