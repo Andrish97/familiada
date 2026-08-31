@@ -1051,6 +1051,30 @@ dacie (wcześniej pominięty jako "trudny bez mockowania zegara" — błędny
 osąd, wystarczyło ustawić `created_at`/`updated_at` wprost przy
 insertowaniu wierszy testowych). 42 testy łącznie.
 
+**Runda 8 — dwie kolejne pozycje z listy "świadomie odłożonych" zamknięte
+na żądanie ("trzeba będzie się zająć tymi wszystkimi rzeczami")**:
+- **Niespójny limit treści pytania** — `question-modal.js`'s `qText` nie
+  miał żadnego limitu, podczas gdy F2 (`safeQuestionText()` w
+  `actions.js`) przycinał do 200 znaków to samo pole. Dodano
+  `maxlength="200"` w `base-explorer.html` + twardy clamp w JS (ten sam
+  wzorzec co już istniał dla `qAnsText`/17 znaków) — oba wejścia do tego
+  pola mają teraz ten sam limit. Test regresji dodany.
+- **Martwy kod usunięty**: `uniqLower`/`parseSearchInputToTokens`/
+  `resolveTagIdsByNames`/`filterExistingTagNames` (`actions.js`) i
+  `setViewSearch`/`setSearchTokens`/`clearSearchTokens` (`state.js`) —
+  zero wywołań w całym module, potwierdzone grepem. Realna logika
+  parsowania `#tagów` w wyszukiwarce żyje gdzie indziej
+  (`tryConsumeHashTagTokenFromInput`). Przy okazji usunięto też martwe
+  pole `searchRaw`/`tagNames` z `createState()`. 43 testy łącznie.
+
+Wciąż otwarte z listy "do zajęcia się": brak walidacji reguł
+biznesowych na poziomie DB (wymaga CHECK constraintów/migracji),
+nietransakcyjny `applyCategoryOrder` (wymaga RPC), rola nieodświeżana na
+żywo, case-sensitive nazwa tagu vs case-insensitive sprawdzenie w UI
+(wymagałoby migracji na unikalny indeks funkcyjny `lower(name)`), mobile
+e2e, kombinacja filtrów META+TAG, pełna macierz
+toolbar/menu-kontekstowe/klawiatura.
+
 Pozostałe niezdiagnozowane z tej rundy (niepewne bez pełnej treści logu
 dla failów 1–15, których narzędzie do logów CI nie zwróciło — tylko
 ostatnie ~7 miało pełny szczegół): test #1 (eksport przez menu

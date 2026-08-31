@@ -1450,6 +1450,41 @@ test.describe("base-explorer: question-modal.js (edycja pytania)", () => {
     }
   });
 
+  test("treść pytania jest ograniczana do 200 znaków (ten sam limit co przy F2)", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context);
+    const baseId = await createBase(page, `E2E-QM-QTXTLEN-${Date.now()}`);
+
+    try {
+      const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "Pytanie", answers: [] } });
+      const long = "A".repeat(250);
+
+      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+
+      const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
+      await expect(row).toBeVisible({ timeout: 15000 });
+      await row.click();
+      await pressToolbarShortcut(page, "editQuestion", "Control+e");
+      await expect(page.locator("#questionOverlay")).toBeVisible({ timeout: 5000 });
+
+      const qText = page.locator("#qText");
+      await qText.fill(long);
+      await expect(qText).toHaveValue("A".repeat(200), { timeout: 5000 });
+
+      await Promise.all([
+        page.waitForResponse((res) => res.url().includes("/rest/v1/qb_questions") && res.request().method() === "PATCH"),
+        page.locator("#qSave").click(),
+      ]);
+      await expect(page.locator("#questionOverlay")).toBeHidden({ timeout: 10000 });
+
+      const fresh = await getQuestionRow(page, qid);
+      expect(fresh?.payload?.text?.length).toBeLessThanOrEqual(200);
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+
   test("punkty odpowiedzi są ograniczane do zakresu 0-100 w locie", async ({ page, context }) => {
     test.setTimeout(60_000);
     await loginAsTestUser(page, context);

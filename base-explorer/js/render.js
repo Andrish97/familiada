@@ -285,7 +285,7 @@ export function renderToolbar(state) {
   const inp = document.getElementById("searchText");
   const chipsEl = document.getElementById("searchChips");
 
-  const tokens = state.searchTokens || { text: state.searchQuery || "", tagNames: [], tagIds: [] };
+  const tokens = state.searchTokens || { text: state.searchQuery || "", tagIds: [] };
 
   // 1) Aktualizuj chipsy (kolor z qb_tags.color)
   if (chipsEl) {

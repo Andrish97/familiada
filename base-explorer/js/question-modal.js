@@ -198,7 +198,12 @@ export function initQuestionModal({ state } = {}) {
 
   qText?.addEventListener("input", () => {
     if (!current) return;
-    current.payload.text = qText.value;
+    // maxlength w HTML nie działa przy programowym ustawieniu .value (np. wklejenie
+    // przez skrypt) -- ten sam twardy limit co przy F2 (safeQuestionText w actions.js),
+    // żeby treść pytania miała ten sam limit niezależnie od ścieżki edycji.
+    const v = qText.value.slice(0, 200);
+    if (qText.value !== v) qText.value = v;
+    current.payload.text = v;
   });
 
   qSave?.addEventListener("click", () => {

@@ -52,12 +52,11 @@ export function createState({ baseId, role = "viewer" }) {
     folderId: null,        // dla VIEW.FOLDER
     tagIds: [],            // dla VIEW.TAG (multi)
     searchQuery: "",
-        // search jako "tokeny" (jak iOS: tagi jako elementy + zwykły tekst)
-    searchRaw: "",         // dokładnie to co user wpisał w input (z #tagami, przecinkami itd.)
+    // search jako "tokeny": zwykły tekst + #tagi jako chipsy (zobacz
+    // tryConsumeHashTagTokenFromInput w actions.js)
     searchTokens: {
       text: "",       // zwykły tekst (bez #tagów)
-      tagNames: [],   // np. ["pieski","kotki"] (bez #)
-      tagIds: [],     // resolved do state.tags (jeśli istnieją)
+      tagIds: [],     // resolved do state.tags
     },
     
     sort: { key: "name", dir: "asc" },
@@ -139,27 +138,6 @@ export function setSearch(state, q) {
 
 export function setSort(state, sortMode) {
   state.sortMode = sortMode || SORT.UPDATED_DESC;
-}
-
-export function setViewSearch(state, query) {
-  state.view = VIEW.SEARCH;
-  state.searchQuery = String(query || "");
-}
-
-export function setSearchTokens(state, { text = "", tagNames = [], tagIds = [] } = {}) {
-  state.searchTokens = state.searchTokens || { text: "", tagNames: [], tagIds: [] };
-  state.searchTokens.text = String(text || "");
-  state.searchTokens.tagNames = Array.isArray(tagNames) ? tagNames.slice() : [];
-  state.searchTokens.tagIds = Array.isArray(tagIds) ? tagIds.slice() : [];
-
-  // dla kompatybilności: searchQuery to "widoczny" string (tu tekst + #tagi)
-  const tags = state.searchTokens.tagNames.map(n => `#${n}`).join(", ");
-  const t = String(state.searchTokens.text || "").trim();
-  state.searchQuery = [tags, t].filter(Boolean).join(tags && t ? " " : "");
-}
-
-export function clearSearchTokens(state) {
-  setSearchTokens(state, { text: "", tagNames: [], tagIds: [] });
 }
 
 export function rememberBrowseLocation(state) {

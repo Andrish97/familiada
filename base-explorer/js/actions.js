@@ -9,7 +9,6 @@ import {
   selectionClear,
   selectionSetSingle,
   selectionToggle,
-  setViewSearch,
   rememberBrowseLocation,
   restoreBrowseLocation,
 } from "./state.js?v=v2026-08-31T18252";
@@ -143,56 +142,6 @@ function selectRange(state, listEl, clickedKey) {
   state.selection.keys.clear();
   for (let i = from; i <= to; i++) state.selection.keys.add(keys[i]);
   state.selection.anchorKey = clickedKey;
-}
-
-function uniqLower(arr) {
-  const out = [];
-  const seen = new Set();
-  for (const x of (arr || [])) {
-    const v = String(x || "").trim();
-    if (!v) continue;
-    const k = v.toLowerCase();
-    if (seen.has(k)) continue;
-    seen.add(k);
-    out.push(v);
-  }
-  return out;
-}
-
-// Wydobądź #tagi z wpisu, np. "#pieski, #kotki hello" => { tagNames:["pieski","kotki"], text:"hello" }
-function parseSearchInputToTokens(raw) {
-  const s = String(raw || "");
-
-  // łapiemy #... do pierwszej spacji/przecinka
-  const matches = s.match(/#[^\s,#]+/g) || [];
-  const tagNames = uniqLower(matches.map(m => m.replace(/^#/, "").trim()).filter(Boolean));
-
-  // usuń fragmenty #tagów z tekstu
-  let text = s;
-  for (const m of matches) {
-    // usuń też ewentualne przecinki/odstępy obok
-    text = text.replace(m, " ");
-  }
-  text = text.replace(/[,]+/g, " ");
-  text = text.replace(/\s+/g, " ").trim();
-
-  return { text, tagNames };
-}
-
-function resolveTagIdsByNames(state, tagNames) {
-  const byName = new Map((state.tags || []).map(t => [String(t.name || "").toLowerCase(), t.id]));
-  const tagIds = [];
-  for (const n of (tagNames || [])) {
-    const id = byName.get(String(n || "").toLowerCase());
-    if (id) tagIds.push(id);
-  }
-  // uniq
-  return Array.from(new Set(tagIds));
-}
-
-function filterExistingTagNames(state, tagNames) {
-  const byName = new Set((state.tags || []).map(t => String(t.name || "").toLowerCase()));
-  return (tagNames || []).filter(n => byName.has(String(n || "").toLowerCase()));
 }
 
 function selectionSplitIds(state) {
