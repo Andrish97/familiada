@@ -1183,6 +1183,64 @@ poprosić o kolejny przebieg E2E na najnowszym HEAD-zie (43 testy) i
 sprawdzić, czy testy D&D przechodzą, czy nadal timeoutują (tym razem z
 konkretnym komunikatem).
 
+### Runda 11 — run #74 (commit 46f639aa, 43 testy): 37 passed / 4 failed / 2 flaky
+
+Duży postęp (7→4 failed) i jeden ważny obalony wniosek z rundy 10.
+
+**Sortowanie po typie — potwierdzone naprawione.**
+
+**Nowy, realny bug testu znaleziony i naprawiony: wyścig z nawigacją po
+eksporcie.** `openExportModal()` (`actions.js`) po udanym eksporcie robi
+`location.href = "../builder"` — to zamierzone zachowanie appki (przejście
+do buildera nowo utworzonej gry). Trzy testy w `export-modal.js`
+(eksport przez menu kontekstowe, PUNKTACJA, PREPAROWANA) od razu po tym
+odpytują `window.__sbClient` (przez `findGameByName`/
+`getGameQuestionsWithAnswers`/`deleteGame`/`deleteBase`) bez czekania,
+aż nawigacja się dokończy i builder.html zdąży postawić WŁASNY
+`window.__sbClient` przy starcie. Objawy w run #74:
+- Test menu kontekstowego (test #1) failował **za każdym razem** (2/2) z
+  `TypeError: Cannot read properties of undefined (reading 'from')`
+  wewnątrz `deleteBase()` w `finally` — sam eksport i asercje przeszły,
+  tylko sprzątanie się wywaliło. To potwierdza, że duplikat gry z rund
+  9-10 jest naprawiony NAPRAWDĘ (żadnego "multiple rows" tu już nie ma).
+- PUNKTACJA i PREPAROWANA failowały **raz na dwie próby** (2 flaky w
+  podsumowaniu) z tym samym błędem, w tym samym miejscu -- czysty wyścig
+  czasowy, stąd niedeterminizm.
+
+Naprawione w testach: nowy helper `waitForSbClient(page)`
+(`page.waitForFunction(() => !!window.__sbClient, {timeout: 10000})`),
+wpięty przed każdym `page.evaluate` w `deleteBase()`, `deleteGame()` i
+`findGameByName()` -- niemal zerowy koszt, gdy klient już istnieje (co
+jest normą wszędzie indziej w pliku), realna ochrona akurat tu, gdzie
+appka robi pełną nawigację w trakcie testu.
+
+**Obalona hipoteza z rundy 10 o `dragTo()` jako miejscu zawieszenia.**
+3 testy D&D (folder-cykl, pytanie→folder, reorder rodzeństwa) failują
+DOKŁADNIE tak samo jak w rundzie 9 -- gołe "Test timeout of 60000ms
+exceeded", zero call logu -- **mimo dodanego `timeout: 20000` do
+`dragTo()`**. Gdyby to `dragTo()` się zawieszał, jawny, krótszy niż
+`test.setTimeout` timeout MUSIAŁBY dać konkretny błąd Playwrighta po
+20s zamiast pełnych 60s ciszy -- Playwright egzekwuje timeouty akcji
+po swojej stronie (nie czeka na odpowiedź przeglądarki, żeby je
+odmierzyć). Skoro tego nie widać, to nie jest zwykła "akcja się nie
+udaje" -- to wygląda na to, że **cała karta/proces renderera Chromium
+przestaje w ogóle odpowiadać na protokół CDP** podczas natywnego D&D w
+tym środowisku CI, co jest poważniejsze niż zwykła niestabilność
+pojedynczej akcji. Przejrzano handlery `dragover`/`drop` w `actions.js`
+pod kątem pętli nieskończonych/kosztownych operacji wywoływanych przy
+KAŻDYM zdarzeniu `dragover` (które CDP potrafi generować znacznie
+gęściej niż prawdziwa mysz) -- nic oczywistego nie znaleziono
+(`clearDropTarget`/`setDropTarget`/`pulseEl` to tanie, ograniczone
+operacje DOM).
+
+Bez `trace`/`video` nie da się tego dalej wiarygodnie zdiagnozować z tego
+środowiska (żadne dalsze polowanie na źródło w kodzie appki nie ma sensu
+bez realnego podglądu, co dzieje się w przeglądarce w chwili zawieszenia)
+-- do decyzji użytkownika: `video` (samo nagranie ekranu, BEZ przechwytywania
+nagłówków/sieci -- w odróżnieniu od `trace`, które faktycznie mogłoby
+złapać sekret) mógłby to pokazać bezpiecznie; `trace` zostaje wyłączone
+jak dotychczas.
+
 ---
 
 ## Krzyżowe blokady między zasobami — mechanizm ✅ zamknięty, reszta kategorii otwarta

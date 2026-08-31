@@ -57,7 +57,18 @@ async function createBase(page, name) {
   }, name);
 }
 
+// Eksport ('Utwórz grę') po sukcesie robi location.href do ../builder --
+// jeśli cleanup trafia tuż po tej nawigacji, window.__sbClient może na
+// chwilę nie istnieć (stara strona już zniknęła, nowa jeszcze nie
+// odpaliła własnego init). Bez tego deleteGame/deleteBase w finally
+// czasem łapały "Cannot read properties of undefined (reading 'from')"
+// (run #74, oba testy export-modal.js z PUNKTACJA/PREPAROWANA -- flaky).
+async function waitForSbClient(page) {
+  await page.waitForFunction(() => !!window.__sbClient, { timeout: 10000 });
+}
+
 async function deleteBase(page, baseId) {
+  await waitForSbClient(page);
   await page.evaluate(async (id) => {
     await window.__sbClient.from("question_bases").delete().eq("id", id);
   }, baseId);
@@ -156,6 +167,7 @@ async function updateQuestionPayload(page, questionId, payload) {
 }
 
 async function findGameByName(page, name) {
+  await waitForSbClient(page);
   return await page.evaluate(async (name) => {
     const { data, error } = await window.__sbClient
       .from("games").select("id,name").eq("name", name).maybeSingle();
@@ -177,6 +189,7 @@ async function getGameQuestionsWithAnswers(page, gameId) {
 }
 
 async function deleteGame(page, gameId) {
+  await waitForSbClient(page);
   await page.evaluate(async (id) => {
     await window.__sbClient.from("games").delete().eq("id", id);
   }, gameId);
