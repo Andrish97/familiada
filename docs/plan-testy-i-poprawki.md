@@ -1235,11 +1235,19 @@ operacje DOM).
 
 Bez `trace`/`video` nie da się tego dalej wiarygodnie zdiagnozować z tego
 środowiska (żadne dalsze polowanie na źródło w kodzie appki nie ma sensu
-bez realnego podglądu, co dzieje się w przeglądarce w chwili zawieszenia)
--- do decyzji użytkownika: `video` (samo nagranie ekranu, BEZ przechwytywania
-nagłówków/sieci -- w odróżnieniu od `trace`, które faktycznie mogłoby
-złapać sekret) mógłby to pokazać bezpiecznie; `trace` zostaje wyłączone
-jak dotychczas.
+bez realnego podglądu, co dzieje się w przeglądarce w chwili zawieszenia).
+**Decyzja użytkownika: włączyć `video`** (samo nagranie ekranu, BEZ
+przechwytywania nagłówków/sieci -- w odróżnieniu od `trace`, które
+faktycznie mogłoby złapać sekret). Ustawione w `playwright.config.js`
+jako `video: "retain-on-failure"` (nagrywa tylko failujące testy, zero
+kosztu dla reszty) + zaktualizowany komentarz w `tests/README.md`.
+`trace` zostaje wyłączone jak dotychczas.
+
+Do zrobienia po kolejnym przebiegu CI: jeśli 3 testy D&D nadal
+timeoutują, ściągnąć nagranie wideo z artefaktu i zobaczyć, co faktycznie
+dzieje się na ekranie w chwili zawieszenia (czy modal/wiersz się w ogóle
+rusza, czy przeglądarka wygląda na całkiem zamrożoną, czy coś nietypowego
+pojawia się tuż przed zawieszeniem).
 
 ---
 

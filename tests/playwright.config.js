@@ -18,6 +18,10 @@ module.exports = defineConfig({
     baseURL: "https://www.familiada.online",
     screenshot: "only-on-failure",
     trace: "off", // celowo wyłączone — trace potrafi nagrać nagłówki żądań (patrz tests/README.md)
-    video: "off",
+    // video to samo nagranie ekranu (bez sieci/nagłówków, w odróżnieniu od
+    // trace) -- bezpieczne, włączone tylko dla failujących testów, żeby
+    // zdiagnozować zawieszenia D&D w CI bez realnego podglądu (patrz
+    // Runda 11, docs/plan-testy-i-poprawki.md)
+    video: "retain-on-failure",
   },
 });

@@ -87,8 +87,10 @@ co go czyni praktycznie bezpiecznym:
 - jednorazowy + 5 min ważności — wyciek jednego tokenu ma minimalne okno,
 - weryfikacja po stronie Workera (Cloudflare), nie w publicznym JS —
   sam mechanizm nie jest widoczny/odtwarzalny z bundla appki,
-- `trace`/`video` Playwrighta celowo wyłączone w `playwright.config.js`
-  (mogłyby nagrać nagłówek z tokenem w artefakcie CI),
+- `trace` Playwrighta celowo wyłączone w `playwright.config.js` (mogłoby
+  nagrać nagłówek z tokenem w artefakcie CI) — `video` jest za to
+  włączone (`retain-on-failure`), bo to samo nagranie ekranu, bez
+  przechwytywania sieci/nagłówków, więc nie niesie tego ryzyka,
 - workflow nie odpala się na `pull_request` z forka.
 
 Realne ryzyko to przede wszystkim wyciek **sekretu bazowego**
