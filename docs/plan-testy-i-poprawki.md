@@ -1354,6 +1354,52 @@ pozycja to jak zawsze **Warstwa 1 (lock) dla zasobu `base`** -- audyt
 funkcjonalny i testy regresji (A, B, C) są teraz kompletne, mechanizm
 blokady jeszcze nie istnieje.
 
+### Runda 14 — run #77 (54 testy): 49 passed / 4 failed / 1 flaky -- prawdziwy bug we WŁASNYM `simulateDragDrop`
+
+Duży postęp: D&D już się NIE wiesza (dawne 60s hangi teraz kończą się w
+~19s z konkretnym błędem) -- ale 3 testy D&D failują z NOWYM powodem, i
+tym razem to bug w teście napisanym w Rundzie 12, nie w appce ani w
+Playwright/CDP.
+
+**Znaleziony i naprawiony: `simulateDragDrop()` trzymał referencje do
+elementów sprzed `dragstart`.** Dla wiersza, który NIE był wcześniej
+zaznaczony (2 z 3 failujących testów; trzeci -- reorder rodzeństwa --
+też), appka wewnątrz handlera `dragstart` woła
+`selectionSetSingle()` + `renderList()`/`renderAll()`, co wymienia węzły
+DOM listy/drzewa. `simulateDragDrop` łapał `source`/`target` przez
+`document.querySelector()` RAZ na samym początku i używał tych samych
+referencji do kolejnych `dragenter`/`dragover`/`drop` -- po
+`renderList()` te referencje były już ODŁĄCZONE od drzewa dokumentu, więc
+dispatchowane na nich zdarzenia przestawały bąbelkować do listenera na
+`#list`/`#tree` (delegacja zdarzeń). Efekt: drop nic nie robił, zero
+błędu, zero zmiany w DB -- appka nigdy nawet nie dowiedziała się o próbie
+dropu. Dlatego jedyny wcześniej-zawsze-przechodzący test D&D
+(multi-drag) nie łapał tego bugu -- on jawnie zaznacza wiersz PRZED
+przeciągnięciem (`.click()`), więc `renderList()` w dragstart nigdy się
+nie odpalał, referencje zostawały ważne. Naprawione: `simulateDragDrop`
+teraz szuka elementu selektorem OD NOWA tuż przed KAŻDYM dispatchem
+(`dragstart`/`dragenter`/`dragover`/`drop`/`dragend`), nigdy nie
+cache'uje węzła DOM między krokami.
+
+**Dodatkowo znaleziony i naprawiony: ten sam problem klasy "dwa osobne
+round-tripy" w nowym teście mobile.** "long-press anulowany przez ruch
+palca" failował deterministycznie (2/2, nie flaky) -- `pointerdown` i
+`pointermove` były dispatchowane w DWÓCH osobnych `page.evaluate()`,
+więc narzut samego round-tripu CDP między nimi mógł przekroczyć 500ms i
+timer long-pressa zdążył się odpalić PRZED dotarciem ruchu anulującego.
+Naprawione: oba zdarzenia w jednym atomowym `page.evaluate()`, ten sam
+wzorzec co przy `simulateDragDrop`.
+
+**Dodatkowo naprawiony pre-istniejący flaky test (nie z tej rundy):**
+"Delete działa w widoku wyszukiwania" -- klik confirm zamyka modal
+synchronicznie, ale sam DELETE leci asynchronicznie po nim (ten sam,
+wielokrotnie już spotykany w tym pliku wzorzec). Dodano
+`page.waitForResponse` na DELETE do `qb_questions` przed odczytem z DB.
+
+Do zrobienia: kolejny przebieg E2E (54 testy) -- jeśli te 4 poprawki
+się utrzymają, audyt base-explorera od strony testów będzie faktycznie
+kompletny (A, B, C + mobile), gotowe do Warstwy 1.
+
 ---
 
 ## Krzyżowe blokady między zasobami — mechanizm ✅ zamknięty, reszta kategorii otwarta

@@ -261,21 +261,29 @@ async function pressToolbarShortcut(page, dataAct, keys) {
 // całkiem omijając mechanizm dragTo().
 async function simulateDragDrop(page, sourceSelector, targetSelector, { targetOffsetX = null, targetOffsetY = null } = {}) {
   await page.evaluate(({ sourceSelector, targetSelector, targetOffsetX, targetOffsetY }) => {
-    const source = document.querySelector(sourceSelector);
-    const target = document.querySelector(targetSelector);
-    if (!source) throw new Error(`simulateDragDrop: source not found (${sourceSelector})`);
-    if (!target) throw new Error(`simulateDragDrop: target not found (${targetSelector})`);
-
-    const srcRect = source.getBoundingClientRect();
-    const tgtRect = target.getBoundingClientRect();
-    const startX = srcRect.left + srcRect.width / 2;
-    const startY = srcRect.top + srcRect.height / 2;
-    const endX = tgtRect.left + (targetOffsetX ?? tgtRect.width / 2);
-    const endY = tgtRect.top + (targetOffsetY ?? tgtRect.height / 2);
-
     const dataTransfer = new DataTransfer();
 
-    function fire(type, el, x, y) {
+    // WAŻNE: nie wolno zapamiętać elementów RAZ na początku. dragstart na
+    // jeszcze-niezaznaczonym wierszu wywołuje w appce selectionSetSingle()
+    // + renderList()/renderAll(), co wymienia węzły DOM listy/drzewa --
+    // stare referencje stają się odłączone i kolejne zdarzenia (dragover/
+    // drop) dispatchowane na nich już nie bąbelkują do listenera na
+    // #list/#tree (który nasłuchuje przez delegację). Efekt widoczny w
+    // run #77: drag "działał" (dragstart się odpalał), ale drop nic nie
+    // robił -- zero błędu, zero zmiany w DB, bo zdarzenia po prostu nigdy
+    // nie docierały do właściwego listenera. Trzeba więc doszukiwać
+    // elementu selektorem tuż przed KAŻDYM dispatchem.
+    function find(selector, label) {
+      const el = document.querySelector(selector);
+      if (!el) throw new Error(`simulateDragDrop: ${label} not found (${selector})`);
+      return el;
+    }
+
+    function fire(type, selector, label, offsetX, offsetY) {
+      const el = find(selector, label);
+      const r = el.getBoundingClientRect();
+      const x = r.left + (offsetX ?? r.width / 2);
+      const y = r.top + (offsetY ?? r.height / 2);
       el.dispatchEvent(new DragEvent(type, {
         bubbles: true,
         cancelable: true,
@@ -286,11 +294,11 @@ async function simulateDragDrop(page, sourceSelector, targetSelector, { targetOf
       }));
     }
 
-    fire("dragstart", source, startX, startY);
-    fire("dragenter", target, endX, endY);
-    fire("dragover", target, endX, endY);
-    fire("drop", target, endX, endY);
-    fire("dragend", source, endX, endY);
+    fire("dragstart", sourceSelector, "source", null, null);
+    fire("dragenter", targetSelector, "target", targetOffsetX, targetOffsetY);
+    fire("dragover", targetSelector, "target", targetOffsetX, targetOffsetY);
+    fire("drop", targetSelector, "target", targetOffsetX, targetOffsetY);
+    fire("dragend", sourceSelector, "source", null, null);
   }, { sourceSelector, targetSelector, targetOffsetX, targetOffsetY });
 }
 
@@ -1358,7 +1366,13 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
       // przed naprawą: nic się nie działo (cicha, zbędna druga bramka canMutateHere
       // blokowała SEARCH, mimo że pierwsza bramka canDeleteHere je przepuszczała)
       await expect(page.locator(".uni-modal .mSub")).toBeVisible({ timeout: 5000 });
-      await page.locator(".uni-modal .uni-foot .btn.gold").click();
+      // potwierdzenie zamyka modal synchronicznie, ale sam DELETE leci
+      // asynchronicznie po kliknięciu -- run #77 złapał to jako flaky
+      // (sprawdzenie DB, zanim żądanie realnie doleciało)
+      await Promise.all([
+        page.waitForResponse((res) => res.url().includes("/rest/v1/qb_questions") && res.request().method() === "DELETE"),
+        page.locator(".uni-modal .uni-foot .btn.gold").click(),
+      ]);
 
       const fresh = await getQuestionRow(page, qid);
       expect(fresh, "Delete w widoku wyszukiwania powinien realnie usuwać, tak jak toolbar/menu kontekstowe").toBeNull();
@@ -2196,18 +2210,6 @@ async function simulateLongPress(page, selector, holdMs = 650) {
   await page.waitForTimeout(holdMs);
 }
 
-async function simulateTouchMove(page, selector, dx, dy) {
-  await page.evaluate(({ selector, dx, dy }) => {
-    const el = document.querySelector(selector);
-    if (!el) throw new Error(`simulateTouchMove: element not found (${selector})`);
-    const r = el.getBoundingClientRect();
-    el.dispatchEvent(new PointerEvent("pointermove", {
-      bubbles: true, cancelable: true, pointerType: "touch",
-      clientX: r.left + r.width / 2 + dx, clientY: r.top + r.height / 2 + dy,
-    }));
-  }, { selector, dx, dy });
-}
-
 async function simulateDoubleTap(page, selector) {
   await page.evaluate(({ selector }) => {
     const el = document.querySelector(selector);
@@ -2295,7 +2297,11 @@ test.describe("base-explorer: mobile.js (drawer, long-press, podwójny tap)", ()
       await expect(page.locator(rowSel)).toBeVisible({ timeout: 15000 });
 
       // pointerdown, potem ruch > MOVE_THRESHOLD (10px) PRZED upływem 500ms --
-      // addLongPress() musi to potraktować jako przewijanie, nie długie tapnięcie
+      // addLongPress() musi to potraktować jako przewijanie, nie długie
+      // tapnięcie. Oba zdarzenia w JEDNYM page.evaluate() -- dwa osobne
+      // round-tripy (jak przy dragTo()/simulateDragDrop wyżej) ryzykowałyby,
+      // że sam narzut CDP między wywołaniami przekroczy 500ms i timer
+      // long-pressa zdąży odpalić się PRZED dotarciem ruchu.
       await page.evaluate((selector) => {
         const el = document.querySelector(selector);
         const r = el.getBoundingClientRect();
@@ -2303,8 +2309,11 @@ test.describe("base-explorer: mobile.js (drawer, long-press, podwójny tap)", ()
           bubbles: true, cancelable: true, pointerType: "touch",
           clientX: r.left + r.width / 2, clientY: r.top + r.height / 2,
         }));
+        el.dispatchEvent(new PointerEvent("pointermove", {
+          bubbles: true, cancelable: true, pointerType: "touch",
+          clientX: r.left + r.width / 2, clientY: r.top + r.height / 2 + 40,
+        }));
       }, rowSel);
-      await simulateTouchMove(page, rowSel, 0, 40);
       await page.waitForTimeout(650);
 
       await expect(page.locator(".context-menu")).toHaveCount(0);
