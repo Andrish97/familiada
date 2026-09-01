@@ -167,6 +167,14 @@ export async function guardResourceLock({ resourceType, resourceId, message, tit
     });
   }
 
+  function showForbiddenOverlay() {
+    showOverlay({
+      title: t("resourceLock.forbiddenTitle"),
+      message: t("resourceLock.forbiddenMessage"),
+      backHref,
+    });
+  }
+
   const initial = await acquireOnce(resourceType, resourceId, context);
 
   if (initial?.error === "gone") {
@@ -223,6 +231,12 @@ export async function guardResourceLock({ resourceType, resourceId, message, tit
       // nie trzeba nic chować/przerenderowywać pod spodem.
       clearInterval(heartbeatTimer);
       showGoneOverlay();
+    } else if (res?.error === "forbidden") {
+      // Utrata prawa edycji w trakcie sesji (np. rola współdzielenia
+      // zdegradowana z editor do viewer gdzie indziej). Ten sam wzorzec co
+      // "gone" -- overlay na wierzchu, bez pollingu odzyskania.
+      clearInterval(heartbeatTimer);
+      showForbiddenOverlay();
     }
   }, HEARTBEAT_MS);
 
@@ -237,6 +251,97 @@ export async function guardResourceLock({ resourceType, resourceId, message, tit
   window.addEventListener("pagehide", release);
 
   return { ok: true, release };
+}
+
+/**
+ * Zajmuje blokadę bez pełnoekranowego guarda. Ten wariant służy elementom
+ * edytowanym wewnątrz większego ekranu (pytanie/folder/tag w bazie pytań).
+ * Wywołujący sam decyduje, jak pokazać konflikt i MUSI wywołać release().
+ *
+ * Zwrócony lease ma mutowalne `ok`/`reason` -- gdy heartbeat wykryje że
+ * zasób zniknął (`gone`) albo wywołujący stracił prawo edycji (`forbidden`,
+ * np. rola współdzielenia zdegradowana w trakcie sesji), `ok` przechodzi
+ * na `false`. Sesje dłuższe niż jeden zapis (otwarty modal pytania/tagów)
+ * MUSZĄ sprawdzić `lease.ok` tuż przed realnym zapisem i przerwać z
+ * komunikatem zamiast próbować zapisać -- RLS i tak zablokuje sam zapis,
+ * to tylko zamienia generyczny błąd Supabase na jasny komunikat.
+ */
+export async function acquireResourceLock({ resourceType, resourceId, context = null } = {}) {
+  if (!resourceType || !resourceId) return { ok: false, error: "missing_resource" };
+
+  let released = false;
+  let heartbeatTimer = null;
+  const first = await acquireOnce(resourceType, resourceId, context);
+  if (!first?.ok) return first || { ok: false, error: "locked" };
+
+  const lease = { ok: true, reason: null };
+
+  heartbeatTimer = setInterval(async () => {
+    const result = await acquireOnce(resourceType, resourceId, context).catch((error) => {
+      console.warn("[resource-lock] scoped heartbeat failed:", error);
+      return null;
+    });
+    if (result?.error === "gone" || result?.error === "forbidden") {
+      lease.ok = false;
+      lease.reason = result.error;
+      clearInterval(heartbeatTimer);
+    }
+  }, HEARTBEAT_MS);
+
+  const release = () => {
+    if (released) return;
+    released = true;
+    clearInterval(heartbeatTimer);
+    window.removeEventListener("pagehide", release);
+    void releaseOnce(resourceType, resourceId);
+  };
+  window.addEventListener("pagehide", release);
+  lease.release = release;
+  return lease;
+}
+
+/**
+ * Atomowo z perspektywy klienta zajmuje uporządkowany zestaw blokad. Stała
+ * kolejność usuwa deadlock dwóch kart; porażka zwalnia wszystko już zajęte.
+ * `ok`/`reason` na zwróconym lease agregują stan wszystkich trzymanych
+ * blokad składowych (patrz `acquireResourceLock`).
+ */
+export async function acquireResourceLocks(resources, { context = null } = {}) {
+  const unique = new Map();
+  for (const item of (resources || [])) {
+    if (!item?.resourceType || !item?.resourceId) continue;
+    unique.set(`${item.resourceType}:${item.resourceId}`, item);
+  }
+  const ordered = Array.from(unique.values()).sort((a, b) =>
+    `${a.resourceType}:${a.resourceId}`.localeCompare(`${b.resourceType}:${b.resourceId}`)
+  );
+  const leases = [];
+  for (const item of ordered) {
+    let lease;
+    try {
+      lease = await acquireResourceLock({ ...item, context: item.context ?? context });
+    } catch (error) {
+      for (const held of leases.reverse()) held.release();
+      throw error;
+    }
+    if (!lease?.ok) {
+      for (const held of leases.reverse()) held.release();
+      return lease || { ok: false, error: "locked" };
+    }
+    leases.push(lease);
+  }
+  return {
+    get ok() {
+      return leases.every((l) => l.ok);
+    },
+    get reason() {
+      const lost = leases.find((l) => !l.ok);
+      return lost ? lost.reason : null;
+    },
+    release() {
+      for (const lease of leases.reverse()) lease.release();
+    },
+  };
 }
 
 /**

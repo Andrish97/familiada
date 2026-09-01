@@ -149,6 +149,35 @@ async function revokeShare(page, baseId, userId) {
   }, { baseId, userId });
 }
 
+// Symuluje "ktoś inny właśnie edytuje" bez realnego otwierania modala po
+// drugiej stronie -- woła dokładnie to samo RPC co acquireResourceLock()
+// w przeglądarce (js/core/resource-lock.js), z jednorazowym tab_id.
+async function acquireLockDirect(page, resourceType, resourceId, context = "e2e-test") {
+  const tabId = `e2e-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const data = await page.evaluate(async ({ resourceType, resourceId, tabId, context }) => {
+    const { data, error } = await window.__sbClient.rpc("acquire_edit_lock", {
+      p_resource_type: resourceType,
+      p_resource_id: resourceId,
+      p_tab_id: tabId,
+      p_context: context,
+    });
+    if (error) throw new Error(error.message);
+    return data;
+  }, { resourceType, resourceId, tabId, context });
+  return { ...data, tabId };
+}
+
+async function releaseLockDirect(page, resourceType, resourceId, tabId) {
+  await page.evaluate(async ({ resourceType, resourceId, tabId }) => {
+    const { error } = await window.__sbClient.rpc("release_edit_lock", {
+      p_resource_type: resourceType,
+      p_resource_id: resourceId,
+      p_tab_id: tabId,
+    });
+    if (error) throw new Error(error.message);
+  }, { resourceType, resourceId, tabId });
+}
+
 async function getCategoryRow(page, categoryId) {
   return await page.evaluate(async (id) => {
     const { data, error } = await window.__sbClient
@@ -2182,6 +2211,147 @@ test.describe("base-explorer: współdzielenie i uprawnienia (dwóch różnych u
       await deleteBase(page, baseId);
     }
   });
+
+  test("blokada pytania: drugi user je edytuje, pierwszy dostaje komunikat zamiast modala, zwolnienie odblokowuje od razu", async ({ page, context, browser }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context);
+
+    const baseId = await createBase(page, `E2E-XL-QLOCK-${Date.now()}`);
+    let context2 = null;
+
+    try {
+      context2 = await browser.newContext();
+      const page2 = await context2.newPage();
+      await loginAsTestUser(page2, context2, { username: process.env.TEST_USERNAME_2 });
+      const user2Id = await getUserId(page2);
+      await shareBaseWith(page, baseId, user2Id, "editor");
+
+      const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "Zablokowane pytanie", answers: [] } });
+
+      const lock = await acquireLockDirect(page2, "base_question", qid, "e2e-test:question-modal");
+      expect(lock?.ok, "drugi user musi realnie zająć blokadę przed próbą pierwszego").toBe(true);
+
+      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+      const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
+      await expect(row).toBeVisible({ timeout: 15000 });
+      await row.click();
+      await pressToolbarShortcut(page, "editQuestion", "Control+e");
+
+      await expect(page.locator(".uni-modal .mSub")).toBeVisible({ timeout: 5000 });
+      await expect(page.locator("#questionOverlay")).toBeHidden();
+      await page.locator(".uni-modal .uni-foot button").first().click();
+      await expect(page.locator(".uni-modal")).toHaveCount(0);
+
+      // zwolnienie blokady (odpowiednik zamknięcia modala/karty drugiego usera)
+      // musi natychmiast pozwolić pierwszemu wejść do edycji
+      await releaseLockDirect(page2, "base_question", qid, lock.tabId);
+
+      await row.click();
+      await pressToolbarShortcut(page, "editQuestion", "Control+e");
+      await expect(page.locator("#questionOverlay")).toBeVisible({ timeout: 5000 });
+    } finally {
+      if (context2) await context2.close();
+      await deleteBase(page, baseId);
+    }
+  });
+
+  test("blokada folderu obejmuje poddrzewo: usunięcie folderu jest zablokowane, gdy drugi user edytuje ZAGNIEŻDŻONE pytanie", async ({ page, context, browser }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context);
+
+    const baseId = await createBase(page, `E2E-XL-FOLDERSUBTREE-${Date.now()}`);
+    let context2 = null;
+
+    try {
+      context2 = await browser.newContext();
+      const page2 = await context2.newPage();
+      await loginAsTestUser(page2, context2, { username: process.env.TEST_USERNAME_2 });
+      const user2Id = await getUserId(page2);
+      await shareBaseWith(page, baseId, user2Id, "editor");
+
+      const catId = await createCategory(page, { baseId, name: "Folder z blokadą w środku", ord: 1 });
+      const qid = await createQuestion(page, { baseId, categoryId: catId, ord: 1, payload: { text: "Pytanie w folderze", answers: [] } });
+
+      // drugi user "edytuje" TYLKO zagnieżdżone pytanie -- nie sam folder
+      const lock = await acquireLockDirect(page2, "base_question", qid, "e2e-test:question-modal");
+      expect(lock?.ok).toBe(true);
+
+      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+      const folderRow = page.locator(`#list .row[data-kind="cat"][data-id="${catId}"]`);
+      await expect(folderRow).toBeVisible({ timeout: 15000 });
+      await folderRow.click();
+
+      await page.keyboard.press("Delete");
+      await expect(page.locator(".uni-modal .mSub")).toBeVisible({ timeout: 5000 });
+      // to jest okno POTWIERDZENIA usunięcia (confirmModal) -- potwierdź je,
+      // dopiero WTEDY appka próbuje zająć blokady i musi się zatrzymać na
+      // zablokowanym pytaniu w środku, zanim cokolwiek skasuje
+      await page.locator(".uni-modal .uni-foot .btn.gold").click();
+
+      await expect(page.locator(".uni-modal .mSub")).toBeVisible({ timeout: 5000 });
+      await page.locator(".uni-modal .uni-foot button").first().click();
+
+      const folderStillThere = await getCategoryRow(page, catId);
+      expect(folderStillThere, "folder nie może zniknąć, gdy pytanie w jego poddrzewie jest zablokowane gdzie indziej").not.toBeNull();
+      const questionStillThere = await getQuestionRow(page, qid);
+      expect(questionStillThere, "usunięcie musi być odrzucone w całości, nie częściowo").not.toBeNull();
+    } finally {
+      if (context2) await context2.close();
+      await deleteBase(page, baseId);
+    }
+  });
+
+  test("tagi (assign): blokada innego, niezmienianego tagu NIE przeszkadza zapisać innego tagu w tym samym modalu", async ({ page, context, browser }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context);
+
+    const baseId = await createBase(page, `E2E-XL-TAGSCOPE-${Date.now()}`);
+    let context2 = null;
+
+    try {
+      context2 = await browser.newContext();
+      const page2 = await context2.newPage();
+      await loginAsTestUser(page2, context2, { username: process.env.TEST_USERNAME_2 });
+      const user2Id = await getUserId(page2);
+      await shareBaseWith(page, baseId, user2Id, "editor");
+
+      const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "Pytanie do otagowania", answers: [] } });
+      const lockedTagId = await createTag(page, { baseId, name: "e2e-locked" });
+      const freeTagId = await createTag(page, { baseId, name: "e2e-free" });
+
+      // drugi user "zarządza" (edytuje) tagId, którego w tym teście NIE
+      // dotykamy w modalu przypisywania -- jeśli modal blokowałby WSZYSTKIE
+      // widoczne tagi (błąd pierwszej wersji implementacji), zapis niżej
+      // zostałby niesłusznie odrzucony.
+      const lock = await acquireLockDirect(page2, "base_tag", lockedTagId, "e2e-test:tags-edit");
+      expect(lock?.ok).toBe(true);
+
+      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+
+      const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
+      await expect(row).toBeVisible({ timeout: 15000 });
+      await row.click();
+      await row.click({ button: "right" });
+      await page.locator(".context-menu .cm-item", { hasText: /Tagi/i }).click();
+      await expect(page.locator("#tagsOverlay")).toBeVisible({ timeout: 5000 });
+
+      // oba tagi widoczne w L1 (w tym zablokowany) -- zaznaczamy tylko WOLNY
+      await expect(page.locator(`#tagsAssignList input[type="checkbox"][data-tag-id="${lockedTagId}"]`)).toBeVisible({ timeout: 5000 });
+      await page.locator(`#tagsAssignList input[type="checkbox"][data-tag-id="${freeTagId}"]`).click();
+      await page.locator("#tagsL1Save").click();
+
+      await expect(page.locator("#tagsOverlay")).toBeHidden({ timeout: 10000 });
+      const tagIds = await getQuestionTagIds(page, qid);
+      expect(tagIds, "wolny tag musi się zapisać mimo że inny, niedotykany tag jest zablokowany").toContain(freeTagId);
+      expect(tagIds).not.toContain(lockedTagId);
+    } finally {
+      if (context2) await context2.close();
+      await deleteBase(page, baseId);
+    }
+  });
 });
 
 /* ================= 6) mobile.js (drawer, long-press, podwójny tap) =================
@@ -2298,21 +2468,32 @@ test.describe("base-explorer: mobile.js (drawer, long-press, podwójny tap)", ()
 
       // pointerdown, potem ruch > MOVE_THRESHOLD (10px) PRZED upływem 500ms --
       // addLongPress() musi to potraktować jako przewijanie, nie długie
-      // tapnięcie. Oba zdarzenia w JEDNYM page.evaluate() -- dwa osobne
-      // round-tripy (jak przy dragTo()/simulateDragDrop wyżej) ryzykowałyby,
-      // że sam narzut CDP między wywołaniami przekroczy 500ms i timer
-      // long-pressa zdąży odpalić się PRZED dotarciem ruchu.
+      // tapnięcie. Wszystkie trzy zdarzenia w JEDNYM page.evaluate() -- dwa
+      // osobne round-tripy (jak przy dragTo()/simulateDragDrop wyżej)
+      // ryzykowałyby, że sam narzut CDP między wywołaniami przekroczy 500ms
+      // i timer long-pressa zdąży odpalić się PRZED dotarciem ruchu. Każde
+      // zdarzenie dostaje ŚWIEŻE document.querySelector()+getBoundingClientRect()
+      // tuż przed swoim dispatchem zamiast dzielenia jednego `el`/`r` między
+      // wszystkimi -- ten sam wzorzec co find()/fire() w simulateDragDrop()
+      // (commit f997d8dd): gdyby pointerdown zdążył wywołać synchroniczny
+      // re-render wiersza, dispatch na starej (odłączonej) referencji
+      // przestałby bąbelkować do delegowanego listenera na #list, a
+      // anulujący pointermove nigdy by nie dotarł. Dokładamy też pointerup
+      // (prawdziwy dotyk zawsze go wysyła) -- addLongPress ma na niego
+      // osobny, niezależny listener "pointerup -> cancel".
       await page.evaluate((selector) => {
-        const el = document.querySelector(selector);
-        const r = el.getBoundingClientRect();
-        el.dispatchEvent(new PointerEvent("pointerdown", {
-          bubbles: true, cancelable: true, pointerType: "touch",
-          clientX: r.left + r.width / 2, clientY: r.top + r.height / 2,
-        }));
-        el.dispatchEvent(new PointerEvent("pointermove", {
-          bubbles: true, cancelable: true, pointerType: "touch",
-          clientX: r.left + r.width / 2, clientY: r.top + r.height / 2 + 40,
-        }));
+        function fire(type, extra) {
+          const el = document.querySelector(selector);
+          if (!el) throw new Error(`simulateLongPress(move): element not found (${selector})`);
+          const r = el.getBoundingClientRect();
+          el.dispatchEvent(new PointerEvent(type, {
+            bubbles: true, cancelable: true, pointerType: "touch",
+            clientX: r.left + r.width / 2, clientY: r.top + r.height / 2 + (extra || 0),
+          }));
+        }
+        fire("pointerdown", 0);
+        fire("pointermove", 40);
+        fire("pointerup", 40);
       }, rowSel);
       await page.waitForTimeout(650);
 

@@ -17,7 +17,7 @@ import {
   uploadGameSound, deleteGameSound, deleteAllGameSounds,
 } from "../core/sfx-cloud.js?v=v2026-08-31T18470";
 import { guardDesktopOnly } from "../core/device-guard.js?v=v2026-08-31T18470";
-import { guardResourceLock } from "../core/resource-lock.js?v=v2026-08-31T18470";
+import { guardResourceLock } from "../core/resource-lock.js?v=v2026-09-01T00000";
 import { updateChecked, ROW_GONE } from "../core/db-guard.js?v=v2026-08-31T18470";
 
 guardDesktopOnly();

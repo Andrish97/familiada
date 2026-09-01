@@ -102,11 +102,14 @@ const pl = {
     back: "Wróć",
     goneTitle: "Zasób został usunięty",
     goneMessage: "To, co próbujesz otworzyć, zostało w międzyczasie usunięte gdzie indziej.",
+    forbiddenTitle: "Utracono dostęp do edycji",
+    forbiddenMessage: "Twoje uprawnienia do edycji tego zasobu zostały cofnięte w trakcie tej sesji.",
     // Wspólny komunikat dla gry — edytor, ustawienia (i docelowo ankieta/
     // control) wzajemnie się wykluczają dla tej samej gry, więc komunikat
     // rozróżnia tylko TYP zasobu, nie która konkretnie strona trzyma blokadę.
     gameMessage: "Ta gra jest właśnie używana w innej karcie lub przez inne urządzenie.",
     logoMessage: "To logo jest właśnie edytowane w innej karcie lub przez inne urządzenie.",
+    baseItemMessage: "Ten element bazy jest właśnie edytowany w innej karcie lub przez innego użytkownika.",
     // Cała pula logo użytkownika jest blokowana, gdy Control lub
     // game-settings.js mają aktywną którąkolwiek jego grę — niezależnie od
     // tego, czy TO logo jest przez nią referencowane.

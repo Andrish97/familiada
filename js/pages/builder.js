@@ -30,7 +30,7 @@ import {
   validatePollReadyToOpen,
 } from "../core/game-validate.js?v=v2026-08-31T18470";
 import { deleteGameSoundsFolder } from "../core/sfx-cloud.js?v=v2026-08-31T18470";
-import { isResourceBusy } from "../core/resource-lock.js?v=v2026-08-31T18470";
+import { isResourceBusy } from "../core/resource-lock.js?v=v2026-09-01T00000";
 
 const MSG = {
   exportBaseEmpty: () => t("builder.exportBase.empty"),

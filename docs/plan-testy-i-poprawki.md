@@ -669,10 +669,77 @@ pracy: po `game-settings.js` i `polls.js`.
 
 ## Baza pytań (`base-explorer/`) — bardzo dogłębny audyt + współdzielenie — 🔲 do zrobienia
 
+### Decyzja po audycie: precyzyjne blokady każdego elementu — 🚧 implementacja w toku (2026-09-01)
+
+Wybrany został wariant zachowujący równoległą pracę nad różnymi elementami,
+zamiast jednej blokady całej bazy. Klucze to `base_question` (treść,
+odpowiedzi, punkty, folder i przypisania tagów), `base_folder` (nazwa,
+położenie i kaskada usunięcia) oraz `base_tag` (nazwa, kolor i usunięcie).
+Operacja obejmująca kilka elementów zajmuje posortowany zestaw blokad i przy
+pierwszym konflikcie zwalnia już zajęte, dzięki czemu dwie karty nie tworzą
+deadlocka.
+
+Wiążąca specyfikacja momentu/zakresu blokady (ustalona z użytkownikiem):
+1. Blokada zajmowana przy rozpoczęciu rzeczywistej edycji, nie przy samym
+   wejściu na widok.
+2. Konflikt = operacja zablokowana + komunikat; bez wymuszonego przejęcia.
+3. Pytanie: blokada od otwarcia do zamknięcia/anulowania modala oraz na
+   czas rename/tagowania/przenoszenia/usuwania.
+4. Usunięcie folderu blokuje CAŁE poddrzewo (foldery + zagnieżdżone
+   pytania), nie tylko sam folder — operacje na potomkach muszą
+   respektować blokadę przodka.
+5. Przeniesienie/reorder folderu blokuje całe przenoszone poddrzewo oraz
+   miejsce docelowe potrzebne do bezpiecznej zmiany rodzica.
+6. Przypisanie tagu do pytań blokuje zmieniany tag oraz wszystkie
+   zmieniane pytania.
+7. Zarządzanie tagiem (rename/kolor) blokuje wyłącznie ten jeden tag, nie
+   wszystkie tagi widoczne w modalu przypisywania.
+8. Tworzenie nowego elementu i kolizje `ord` przy równoczesnym INSERT nie
+   dostają blokady (nowy wiersz nie ma jeszcze UUID) — to świadomie
+   odłożona pozycja Warstwy 2 (atomowy RPC), nie tego etapu. To samo
+   dotyczy kopiowania/duplikowania (źródło tylko odczytywane).
+9. Utrata uprawnień w trakcie sesji (rola zdegradowana/dostęp cofnięty) —
+   nieudany heartbeat (RPC zwraca `forbidden`) odbiera blokadę lokalnie
+   (`lease.ok = false`) i blokuje kolejną próbę zapisu komunikatem,
+   zamiast cicho kontynuować.
+
+Punkty 4 i 5 są zrealizowane BEZ osobnego mechanizmu chodzenia po
+łańcuchu przodków: każda operacja strukturalna na folderze (delete/move/
+reorder) zawsze rozwija się do PEŁNEGO poddrzewa (wspólny helper
+`collectSubtreeLockResources()` w `actions.js`) przed zajęciem blokad —
+skoro operacja na folderze X zajmuje blokady na wszystkich jego
+potomkach, każda równoległa próba dotknięcia dowolnego potomka trafia w
+kolizję na tym samym kluczu tabeli `edit_locks`.
+
+Punkt 6/7 wymagał korekty względem pierwszej wersji implementacji: modal
+przypisywania tagów (`tags-modal.js`, tryb "assign") pierwotnie blokował
+WSZYSTKIE tagi widoczne w modalu na cały czas otwarcia — to nadmiarowe i
+niezgodne ze specyfikacją. Naprawione: przy otwarciu blokowane są tylko
+PYTANIA (znane od razu), a blokada TAGU jest zajmowana dopiero przy
+Zapisz, tylko dla tagów faktycznie przełączonych (`m.dirty`), i zwalniana
+zaraz po zapisie — niezależnie od blokady pytań, która żyje przez cały
+czas modala.
+
+Migracja 257 rozszerza `can_edit_locked_resource()`/`acquire_edit_lock()`
+o `base_question`/`base_folder`/`base_tag`, generyczne scoped leases
+(`acquireResourceLock`/`acquireResourceLocks`) doszły do
+`resource-lock.js`. Przy tej okazji poprawiony też pre-istniejący brak w
+heartbeacie: ani `guardResourceLock`, ani (teraz) scoped warianty nie
+reagowały na `forbidden` z RPC (tylko na `gone`) — dodane analogiczne
+traktowanie obu w obu wariantach (punkt 9 wyżej).
+
+Ostatni wynik E2E zapisany w tym planie przed implementacją locków to run
+#77: 49 passed / 4 failed / 1 flaky, poprawione w `f997d8d`. Run #78
+(pierwszy po tamtej poprawce) miał jeszcze jeden osobny, niezwiązany z
+lockami failing test (`long-press anulowany przez ruch palca` w
+`mobile.js`/`base-explorer.spec.js`) — naprawiony przed tą rundą przez
+przepisanie testu na wzór już znanego w tym pliku buga (stara referencja
+DOM po synchronicznym re-renderze), patrz commit tej rundy.
+
 **Kolejność: najpierw pełny audyt i testy (A/B/C niżej), Warstwa 1
-(blokada `base_id`) i utwardzenie Warstwy 2 dopiero na końcu** — świadomie
-odłożone, żeby ochrona była oparta na tym, co audyt faktycznie znajdzie, a
-nie zgadywana z góry.
+(precyzyjne blokady elementów opisane wyżej) i utwardzenie Warstwy 2
+dopiero na końcu** — świadomie odłożone, żeby ochrona była oparta na tym,
+co audyt faktycznie znajdzie, a nie zgadywana z góry.
 
 Baza pytań ma realny, wielo-użytkownikowy model uprawnień w bazie danych
 (`question_base_shares.role`: `viewer` | `editor`, enum
@@ -685,10 +752,10 @@ tylko czytając RLS. `question_bases_update` (zmiana samej nazwy bazy)
 dodatkowo dopuszcza WYŁĄCZNIE właściciela — nawet `editor` tego nie
 zmieni; to osobny, węższy przypadek do sprawdzenia.
 
-Uwaga do Warstwy 1 dla bazy: blokada całej bazy na raz jest prostsza, ale
-wyklucza legalną jednoczesną pracę właściciela + `editor`-a nad różnymi
-pytaniami w tej samej bazie — decyzja do podjęcia po audycie B) niżej,
-kiedy będzie jasne jak bardzo to w praktyce przeszkadza.
+Uwaga do Warstwy 1 dla bazy: blokada całej bazy na raz byłaby prostsza,
+ale wykluczałaby legalną jednoczesną pracę właściciela + `editor`-a nad
+różnymi pytaniami w tej samej bazie — zdecydowane (patrz sekcja "Decyzja
+po audycie" wyżej) na precyzyjne blokady per element zamiast tego.
 
 ### A) Sam edytor bazy — dokładność jak w `editor.spec.js`
 - CRUD pytań/odpowiedzi/kategorii/tagów (`page.js`, `render.js`,

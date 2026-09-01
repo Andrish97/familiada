@@ -12,7 +12,7 @@ import { getUiLang, initI18n, t, withLangParam } from "../../translation/transla
 import { initTopbarAccountDropdown } from "../../js/core/topbar-controller.js?v=v2026-08-31T18470";
 import { isMobileDevice } from "../../js/core/pwa.js?v=v2026-08-31T18470";
 import { v as cacheBust } from "../../js/core/cache-bust.js?v=v2026-08-31T18470";
-import { guardResourceLock, isResourceBusy, findBusyContext } from "../../js/core/resource-lock.js?v=v2026-08-31T18470";
+import { guardResourceLock, isResourceBusy, findBusyContext } from "../../js/core/resource-lock.js?v=v2026-09-01T00000";
 
 import { initTextEditor } from "./text.js?v=v2026-08-31T18470";
 import { initDrawEditor } from "./draw.js?v=v2026-08-31T18470";

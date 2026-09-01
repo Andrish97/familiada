@@ -26,10 +26,11 @@ import {
 } from "./repo.js?v=v2026-08-31T18470";
 
 import { showContextMenu, hideContextMenu } from "./context-menu.js?v=v2026-08-31T18470";
-import { openTagsModal } from "./tags-modal.js?v=v2026-08-31T18470";
+import { openTagsModal } from "./tags-modal.js?v=v2026-09-01T00000";
 import { initExportModal } from "./export-modal.js?v=v2026-08-31T18470";
 import { initQuestionModal } from "./question-modal.js?v=v2026-08-31T18470";
 import { sb } from "../../js/core/supabase.js?v=v2026-08-31T18470";
+import { acquireResourceLock, acquireResourceLocks } from "../../js/core/resource-lock.js?v=v2026-09-01T00000";
 import { alertModal, confirmModal } from "../../js/core/modal.js?v=v2026-08-31T18470";
 import { t } from "../../translation/translation.js?v=v2026-08-31T18470";
 import { addLongPress, addDoubleTap } from "./mobile.js?v=v2026-08-31T18470";
@@ -937,27 +938,37 @@ export async function deleteItems(state, keys) {
   // ale qb_questions.category_id ma ON DELETE SET NULL -- bez jawnego usunięcia pytania
   // w kasowanych folderach przetrwałyby, po cichu "spadając" do widoku "Wszystkie" zamiast
   // zniknąć razem z folderem, którego dotyczą.
-  if (cIds.length) {
-    const subtreeCategoryIds = Array.from(new Set(
-      cIds.flatMap((cid) => collectSubtreeIds(state.categories || [], cid))
-    ));
-    const { data: nested, error: eNested } = await sb()
-      .from("qb_questions")
-      .select("id")
-      .in("category_id", subtreeCategoryIds);
-    if (eNested) throw eNested;
-    for (const row of (nested || [])) qIds.push(row.id);
+  const subtreeLockResources = cIds.length ? await collectSubtreeLockResources(state, cIds) : [];
+  const subtreeFolderIds = subtreeLockResources
+    .filter((r) => r.resourceType === "base_folder")
+    .map((r) => r.resourceId);
+  for (const r of subtreeLockResources) {
+    if (r.resourceType === "base_question") qIds.push(r.resourceId);
   }
 
   const allQIds = Array.from(new Set(qIds));
-  if (allQIds.length) {
-    const { error } = await sb().from("qb_questions").delete().in("id", allQIds);
-    if (error) throw error;
+
+  const lease = await acquireResourceLocks([
+    ...allQIds.map((resourceId) => ({ resourceType: "base_question", resourceId })),
+    ...subtreeFolderIds.map((resourceId) => ({ resourceType: "base_folder", resourceId })),
+  ], { context: "base-explorer:delete" });
+  if (!lease?.ok) {
+    void alertModal({ text: lease?.error === "gone" ? t("resourceLock.goneMessage") : t("resourceLock.baseItemMessage") });
+    return false;
   }
 
-  if (cIds.length) {
-    const { error } = await sb().from("qb_categories").delete().in("id", cIds);
-    if (error) throw error;
+  try {
+    if (allQIds.length) {
+      const { error } = await sb().from("qb_questions").delete().in("id", allQIds);
+      if (error) throw error;
+    }
+
+    if (cIds.length) {
+      const { error } = await sb().from("qb_categories").delete().in("id", cIds);
+      if (error) throw error;
+    }
+  } finally {
+    lease.release();
   }
 
   // cache root + odśwież
@@ -1159,16 +1170,42 @@ export async function renameSelectedPrompt(state) {
     ? t("baseExplorer.rename.folderTitle")
     : t("baseExplorer.rename.questionTitle");
   const maxLen = isFolder ? 80 : 200;
-
-  const next = await openRenameModal({ title, value: current, maxLen });
-  if (next === null) return false; // anulowano (X / ESC / tło)
-
+  const resourceId = key.slice(2);
+  let lease = null;
   try {
+    lease = await acquireResourceLock({
+      resourceType: isFolder ? "base_folder" : "base_question",
+      resourceId,
+      context: "base-explorer:rename",
+    });
+    if (!lease?.ok) {
+      void alertModal({
+        text: lease?.error === "gone"
+          ? t("resourceLock.goneMessage")
+          : t("resourceLock.baseItemMessage"),
+      });
+      return false;
+    }
+
+    const next = await openRenameModal({ title, value: current, maxLen });
+    if (next === null) return false; // anulowano (X / ESC / tło)
+
+    if (!lease.ok) {
+      void alertModal({
+        text: lease.reason === "gone"
+          ? t("resourceLock.goneMessage")
+          : t("resourceLock.forbiddenMessage"),
+      });
+      return false;
+    }
+
     return await renameByKey(state, key, next);
   } catch (e) {
     console.error(e);
     void alertModal({ text: t("baseExplorer.errors.renameFailed") });
     return false;
+  } finally {
+    lease?.release?.();
   }
 }
 
@@ -1183,32 +1220,45 @@ export async function deleteTags(state, tagIds) {
   const ok = await confirmModal({ text: t("baseExplorer.confirm.deleteTags", { label }) });
   if (!ok) return false;
 
-  // 1) usuń przypisania do pytań
-  {
-    const { error } = await sb()
-      .from("qb_question_tags")
-      .delete()
-      .in("tag_id", ids);
-    if (error) throw error;
+  const lease = await acquireResourceLocks(
+    ids.map((resourceId) => ({ resourceType: "base_tag", resourceId })),
+    { context: "base-explorer:delete-tags" }
+  );
+  if (!lease?.ok) {
+    void alertModal({ text: lease?.error === "gone" ? t("resourceLock.goneMessage") : t("resourceLock.baseItemMessage") });
+    return false;
   }
 
-  // 2) usuń przypisania do folderów (jeśli tabela jeszcze istnieje/używana)
-  // Jeśli nie istnieje/RLS blokuje — ignorujemy.
   try {
-    const { error } = await sb()
-      .from("qb_category_tags")
-      .delete()
-      .in("tag_id", ids);
-    if (error) throw error;
-  } catch {}
+    // 1) usuń przypisania do pytań
+    {
+      const { error } = await sb()
+        .from("qb_question_tags")
+        .delete()
+        .in("tag_id", ids);
+      if (error) throw error;
+    }
 
-  // 3) usuń same tagi
-  {
-    const { error } = await sb()
-      .from("qb_tags")
-      .delete()
-      .in("id", ids);
-    if (error) throw error;
+    // 2) usuń przypisania do folderów (jeśli tabela jeszcze istnieje/używana)
+    // Jeśli nie istnieje/RLS blokuje — ignorujemy.
+    try {
+      const { error } = await sb()
+        .from("qb_category_tags")
+        .delete()
+        .in("tag_id", ids);
+      if (error) throw error;
+    } catch {}
+
+    // 3) usuń same tagi
+    {
+      const { error } = await sb()
+        .from("qb_tags")
+        .delete()
+        .in("id", ids);
+      if (error) throw error;
+    }
+  } finally {
+    lease.release();
   }
 
   // 4) lokalnie wyczyść selekcję usuniętych tagów
@@ -1570,6 +1620,37 @@ function collectSubtreeIds(categories, rootId) {
   return out;
 }
 
+/**
+ * Rozwija listę folderów do PEŁNEGO poddrzewa (foldery + zagnieżdżone
+ * pytania) jako gotowa lista zasobów do zablokowania. Używane przez każdą
+ * operację STRUKTURALNĄ na folderze (delete/move/reorder) -- blokowanie
+ * całego poddrzewa, nie tylko samego folderu, to jedyny sposób, żeby
+ * równoległa próba dotknięcia dowolnego potomka (który acquire'uje blokadę
+ * na swoim WŁASNYM id) trafiła w kolizję na tym samym kluczu w edit_locks,
+ * bez osobnego mechanizmu chodzenia po łańcuchu przodków. Rename folderu
+ * (zmienia tylko `name`, nie rusza potomków) świadomie NIE korzysta z tego
+ * helpera.
+ */
+async function collectSubtreeLockResources(state, folderIds) {
+  const ids = Array.from(new Set((folderIds || []).filter(Boolean)));
+  if (!ids.length) return [];
+
+  const subtreeFolderIds = Array.from(new Set(
+    ids.flatMap((fid) => collectSubtreeIds(state.categories || [], fid))
+  ));
+
+  const { data: nested, error } = await sb()
+    .from("qb_questions")
+    .select("id")
+    .in("category_id", subtreeFolderIds);
+  if (error) throw error;
+
+  return [
+    ...subtreeFolderIds.map((resourceId) => ({ resourceType: "base_folder", resourceId })),
+    ...(nested || []).map((row) => ({ resourceType: "base_question", resourceId: row.id })),
+  ];
+}
+
 function uniqueNameInSiblings(categories, parentIdOrNull, baseName) {
   const siblings = (categories || []).filter(c => (c.parent_id || null) === (parentIdOrNull || null));
   const names = new Set(siblings.map(s => String(s.name || "").toLowerCase()));
@@ -1866,30 +1947,48 @@ async function moveItemsTo(state, targetFolderIdOrNull, { mode = "move" } = {}) 
     }
   }
 
-  // 4) MOVE — pytania
-  if (qIds.length) {
-    const upd = { category_id: targetFolderIdOrNull };
-    if (state.user?.id) upd.updated_by = state.user.id;
+  // Całe przenoszone poddrzewo (foldery + zagnieżdżone pytania), nie tylko
+  // sam przenoszony folder -- patrz collectSubtreeLockResources().
+  const subtreeLockResources = cIds.length ? await collectSubtreeLockResources(state, cIds) : [];
 
-    const { error } = await sb()
-      .from("qb_questions")
-      .update(upd)
-      .in("id", qIds);
-
-    if (error) throw error;
-    state._rootQuestions = null;
+  const moveLease = await acquireResourceLocks([
+    ...qIds.map((resourceId) => ({ resourceType: "base_question", resourceId })),
+    ...subtreeLockResources,
+    ...(targetFolderIdOrNull ? [{ resourceType: "base_folder", resourceId: targetFolderIdOrNull }] : []),
+  ], { context: "base-explorer:move" });
+  if (!moveLease?.ok) {
+    void alertModal({ text: moveLease?.error === "gone" ? t("resourceLock.goneMessage") : t("resourceLock.baseItemMessage") });
+    return;
   }
 
-  // 5) MOVE — foldery
-  if (cIds.length) {
-    const { error } = await sb()
-      .from("qb_categories")
-      .update({ parent_id: targetFolderIdOrNull })
-      .in("id", cIds);
+  try {
+    // 4) MOVE — pytania
+    if (qIds.length) {
+      const upd = { category_id: targetFolderIdOrNull };
+      if (state.user?.id) upd.updated_by = state.user.id;
 
-    if (error) throw error;
+      const { error } = await sb()
+        .from("qb_questions")
+        .update(upd)
+        .in("id", qIds);
 
-    if (state._api?.refreshCategories) await state._api.refreshCategories();
+      if (error) throw error;
+      state._rootQuestions = null;
+    }
+
+    // 5) MOVE — foldery
+    if (cIds.length) {
+      const { error } = await sb()
+        .from("qb_categories")
+        .update({ parent_id: targetFolderIdOrNull })
+        .in("id", cIds);
+
+      if (error) throw error;
+
+      if (state._api?.refreshCategories) await state._api.refreshCategories();
+    }
+  } finally {
+    moveLease.release();
   }
   invalidateDerivedCaches(state);
   await state._api?.refreshList?.();
@@ -1927,28 +2026,41 @@ async function applyTagToDraggedItems(state, tagId, draggedKeys) {
   const allQIds = Array.from(new Set([...qIds, ...qFromFolders])).filter(Boolean);
   if (!allQIds.length) return false;
 
-  // Pobierz istniejące linki (żeby nie robić duplikatów)
-  const { data: existing, error: e0 } = await sb()
-    .from("qb_question_tags")
-    .select("question_id,tag_id")
-    .in("question_id", allQIds)
-    .eq("tag_id", tagId);
-
-  if (e0) throw e0;
-
-  const have = new Set((existing || []).map(x => x.question_id));
-  const inserts = [];
-
-  for (const qid of allQIds) {
-    if (have.has(qid)) continue;
-    inserts.push({ question_id: qid, tag_id: tagId });
+  const lease = await acquireResourceLocks([
+    { resourceType: "base_tag", resourceId: tagId },
+    ...allQIds.map((resourceId) => ({ resourceType: "base_question", resourceId })),
+  ], { context: "base-explorer:assign-tag" });
+  if (!lease?.ok) {
+    void alertModal({ text: lease?.error === "gone" ? t("resourceLock.goneMessage") : t("resourceLock.baseItemMessage") });
+    return false;
   }
 
-  if (inserts.length) {
-    const { error: e1 } = await sb()
+  try {
+    // Pobierz istniejące linki (żeby nie robić duplikatów)
+    const { data: existing, error: e0 } = await sb()
       .from("qb_question_tags")
-      .insert(inserts, { defaultToNull: false });
-    if (e1) throw e1;
+      .select("question_id,tag_id")
+      .in("question_id", allQIds)
+      .eq("tag_id", tagId);
+
+    if (e0) throw e0;
+
+    const have = new Set((existing || []).map(x => x.question_id));
+    const inserts = [];
+
+    for (const qid of allQIds) {
+      if (have.has(qid)) continue;
+      inserts.push({ question_id: qid, tag_id: tagId });
+    }
+
+    if (inserts.length) {
+      const { error: e1 } = await sb()
+        .from("qb_question_tags")
+        .insert(inserts, { defaultToNull: false });
+      if (e1) throw e1;
+    }
+  } finally {
+    lease.release();
   }
 
   // Unieważnij cache tagów / derived folder tags
@@ -1994,14 +2106,32 @@ async function applyCategoryOrder(state, parentIdOrNull, orderedIds) {
     ord: i + 1,
   }));
 
+  // Całe poddrzewo każdego reorderowanego/przenoszonego folderu (foldery +
+  // zagnieżdżone pytania), nie tylko jego własne id -- patrz
+  // collectSubtreeLockResources(). Reorder w obrębie tego samego rodzica
+  // (bez zmiany parent_id) zyskuje trochę szerszą blokadę niż ściśle
+  // konieczna, ale to ten sam, jeden spójny model co przy delete/move.
+  const lease = await acquireResourceLocks([
+    ...(await collectSubtreeLockResources(state, ids)),
+    ...(dbParent ? [{ resourceType: "base_folder", resourceId: dbParent }] : []),
+  ], { context: "base-explorer:reorder-folders" });
+  if (!lease?.ok) {
+    void alertModal({ text: lease?.error === "gone" ? t("resourceLock.goneMessage") : t("resourceLock.baseItemMessage") });
+    return;
+  }
+
   // Supabase: najprościej i najczytelniej: pojedyncze update per element (ok dla małych list)
   // Jeśli kiedyś będzie tego tysiące, zrobimy RPC/batch.
-  for (const u of updates) {
-    const { error } = await sb()
-      .from("qb_categories")
-      .update({ parent_id: u.parent_id, ord: u.ord })
-      .eq("id", u.id);
-    if (error) throw error;
+  try {
+    for (const u of updates) {
+      const { error } = await sb()
+        .from("qb_categories")
+        .update({ parent_id: u.parent_id, ord: u.ord })
+        .eq("id", u.id);
+      if (error) throw error;
+    }
+  } finally {
+    lease.release();
   }
 
   // odśwież cache kategorii i UI
@@ -4241,15 +4371,29 @@ export function wireActions({ state }) {
   
   state._api.openQuestionModal = async (qid) => {
     if (!qid) return false;
-  
+    let lease = null;
     try {
+      lease = await acquireResourceLock({
+        resourceType: "base_question",
+        resourceId: qid,
+        context: "base-explorer:question-modal",
+      });
+      if (!lease?.ok) {
+        void alertModal({
+          text: lease?.error === "gone"
+            ? t("resourceLock.goneMessage")
+            : t("resourceLock.baseItemMessage"),
+        });
+        return false;
+      }
+
       const row = await fetchQuestionById(qid);
-  
+
       const input = {
         id: row.id,
         payload: (row.payload && typeof row.payload === "object") ? row.payload : { text: "", answers: [] },
       };
-  
+
       let res = null;
       if (typeof questionModal === "function") {
         res = await questionModal(input);
@@ -4261,25 +4405,36 @@ export function wireActions({ state }) {
         console.warn("Question modal has no open/show function. Check initQuestionModal() return value.");
         return false;
       }
-  
+
       if (!res || !res.ok) return false;
-  
+
+      if (!lease.ok) {
+        void alertModal({
+          text: lease.reason === "gone"
+            ? t("resourceLock.goneMessage")
+            : t("resourceLock.forbiddenMessage"),
+        });
+        return false;
+      }
+
       const { error } = await sb()
         .from("qb_questions")
         .update({ payload: res.payload })
         .eq("id", qid);
-  
+
       if (error) throw error;
-  
+
       await refreshList(state);
       return true;
     } catch (e) {
       console.error(e);
       void alertModal({ text: t("baseExplorer.errors.questionOpenSaveFailed") });
       return false;
+    } finally {
+      lease?.release?.();
     }
   };
-  
+
   // ---------- Export modal ----------
   if (!exportModal) {
     exportModal = initExportModal({ state });

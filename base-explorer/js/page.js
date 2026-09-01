@@ -14,7 +14,7 @@ import {
   listTags,
   listAllQuestions,
 } from "./repo.js?v=v2026-08-31T18470";
-import { wireActions } from "./actions.js?v=v2026-08-31T18470";
+import { wireActions } from "./actions.js?v=v2026-09-01T00000";
 import { initDrawer, disableDragOnTouch } from "./mobile.js?v=v2026-08-31T18470";
 
 /* ================= DOM ================= */

@@ -8,6 +8,7 @@
 // UWAGA: ten plik nie zna nic o SEARCH/TAG view. To jest czysty modal.
 
 import { sb } from "../../js/core/supabase.js?v=v2026-08-31T18470";
+import { acquireResourceLock, acquireResourceLocks } from "../../js/core/resource-lock.js?v=v2026-09-01T00000";
 import { alertModal } from "../../js/core/modal.js?v=v2026-08-31T18470";
 import { t } from "../../translation/translation.js?v=v2026-08-31T18470";
 import { listQuestionTags, listAllQuestions } from "./repo.js?v=v2026-08-31T18470";
@@ -209,6 +210,44 @@ export async function openTagsModal(state, opts = {}) {
   const editTagId = opts.tagId || null;
   const sel = opts.selection || { qIds: [], cIds: [] };
 
+  // Blokada pytań: dla trybu "assign" wiadomo od razu KTÓRE pytania są
+  // dotykane (edytowany jest ich komplet tagów) -- blokujemy je na cały
+  // czas otwarcia modala. Blokada TAGÓW jest inna: dopóki user nie
+  // przełączy konkretnego tagu (tri-state), ten tag nie jest "w edycji" --
+  // blokujemy więc tylko faktycznie zmieniane tagi (m.dirty), i dopiero
+  // przy Zapisz (patrz saveL1Assign), NIE z góry wszystkie tagi widoczne w
+  // modalu. Tryb "edit" (zarządzanie jednym tagiem) blokuje wyłącznie ten
+  // jeden tag przez cały czas otwarcia, tak jak dotąd. Tryb "create" nie
+  // ma jeszcze UUID do zablokowania.
+  const expandedQIdsForLock = mode === "assign"
+    ? await expandFoldersToQuestionIds(state, sel.cIds || [], opts)
+    : [];
+  const allTargetQIdsForLock = mode === "assign"
+    ? uniqIds([...(sel.qIds || []), ...expandedQIdsForLock])
+    : [];
+
+  let sessionLease = null;
+  if (mode === "assign" && allTargetQIdsForLock.length) {
+    sessionLease = await acquireResourceLocks(
+      allTargetQIdsForLock.map((resourceId) => ({ resourceType: "base_question", resourceId })),
+      { context: "base-explorer:tags-assign" }
+    );
+  } else if (mode === "edit" && editTagId) {
+    sessionLease = await acquireResourceLock({
+      resourceType: "base_tag",
+      resourceId: editTagId,
+      context: "base-explorer:tags-edit",
+    });
+  }
+  if (sessionLease && !sessionLease.ok) {
+    void alertModal({
+      text: sessionLease.error === "gone"
+        ? t("resourceLock.goneMessage")
+        : t("resourceLock.baseItemMessage"),
+    });
+    return false;
+  }
+
   const m = {
     layer: 1,
     mode,
@@ -254,6 +293,7 @@ export async function openTagsModal(state, opts = {}) {
     E.colorB?.removeEventListener("input", onSliderInput);
     E.colorHex?.removeEventListener("input", onHexInput);
 
+    sessionLease?.release?.();
     resolvePromise(result);
   }
 
@@ -478,7 +518,12 @@ export async function openTagsModal(state, opts = {}) {
       close(false);
       return false;
     }
-    
+
+    if (sessionLease && !sessionLease.ok) {
+      showErr(E.assignErr, sessionLease.reason === "gone" ? t("resourceLock.goneMessage") : t("resourceLock.forbiddenMessage"));
+      return false;
+    }
+
     // target pytania
     const qFromFolders = await expandFoldersToQuestionIds(state, sel.cIds || [], opts);
     const allQIds = uniqIds([...(sel.qIds || []), ...(qFromFolders || [])]);
@@ -495,43 +540,59 @@ export async function openTagsModal(state, opts = {}) {
       return true;
     }
 
-    // istniejące linki (qid x tid)
-    const { data: existing, error: e0 } = await sb()
-      .from("qb_question_tags")
-      .select("question_id,tag_id")
-      .in("question_id", allQIds)
-      .in("tag_id", dirtyTagIds);
-    if (e0) throw e0;
-
-    const have = new Set((existing || []).map((x) => `${x.question_id}::${x.tag_id}`));
-
-    const inserts = [];
-    const deletes = []; // { tid, qIds }
-
-    for (const tid of dirtyTagIds) {
-      const tri = m.tri.get(tid) || "none";
-      if (tri === "all") {
-        for (const qid of allQIds) {
-          const k = `${qid}::${tid}`;
-          if (!have.has(k)) inserts.push({ question_id: qid, tag_id: tid });
-        }
-      } else if (tri === "none") {
-        deletes.push({ tid, qIds: allQIds });
-      }
+    // Blokada tylko faktycznie zmienianych tagów, dopiero teraz -- patrz
+    // komentarz przy sessionLease wyżej. Krótkotrwała, niezależna od
+    // sessionLease (pytania): zajęta tuż przed zapisem, zwolniona zaraz po.
+    const tagLease = await acquireResourceLocks(
+      dirtyTagIds.map((resourceId) => ({ resourceType: "base_tag", resourceId })),
+      { context: "base-explorer:tags-assign-save" }
+    );
+    if (!tagLease?.ok) {
+      showErr(E.assignErr, tagLease?.error === "gone" ? t("resourceLock.goneMessage") : t("resourceLock.baseItemMessage"));
+      return false;
     }
 
-    for (const d of deletes) {
-      const { error } = await sb()
+    try {
+      // istniejące linki (qid x tid)
+      const { data: existing, error: e0 } = await sb()
         .from("qb_question_tags")
-        .delete()
-        .in("question_id", d.qIds)
-        .eq("tag_id", d.tid);
-      if (error) throw error;
-    }
+        .select("question_id,tag_id")
+        .in("question_id", allQIds)
+        .in("tag_id", dirtyTagIds);
+      if (e0) throw e0;
 
-    if (inserts.length) {
-      const { error } = await sb().from("qb_question_tags").insert(inserts, { defaultToNull: false });
-      if (error) throw error;
+      const have = new Set((existing || []).map((x) => `${x.question_id}::${x.tag_id}`));
+
+      const inserts = [];
+      const deletes = []; // { tid, qIds }
+
+      for (const tid of dirtyTagIds) {
+        const tri = m.tri.get(tid) || "none";
+        if (tri === "all") {
+          for (const qid of allQIds) {
+            const k = `${qid}::${tid}`;
+            if (!have.has(k)) inserts.push({ question_id: qid, tag_id: tid });
+          }
+        } else if (tri === "none") {
+          deletes.push({ tid, qIds: allQIds });
+        }
+      }
+
+      for (const d of deletes) {
+        const { error } = await sb()
+          .from("qb_question_tags")
+          .delete()
+          .in("question_id", d.qIds)
+          .eq("tag_id", d.tid);
+        if (error) throw error;
+      }
+
+      if (inserts.length) {
+        const { error } = await sb().from("qb_question_tags").insert(inserts, { defaultToNull: false });
+        if (error) throw error;
+      }
+    } finally {
+      tagLease.release();
     }
 
     close(true);
@@ -573,6 +634,10 @@ export async function openTagsModal(state, opts = {}) {
     const color = String(m.pickedColor || "#4da3ff").trim();
 
     if (m.edit.mode === "edit" && m.edit.tagId) {
+      if (sessionLease && !sessionLease.ok) {
+        showErr(E.editErr, sessionLease.reason === "gone" ? t("resourceLock.goneMessage") : t("resourceLock.forbiddenMessage"));
+        return false;
+      }
       const { error } = await sb().from("qb_tags").update({ name: nameRaw, color }).eq("id", m.edit.tagId);
       if (error) throw error;
     } else {
