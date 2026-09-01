@@ -1249,6 +1249,53 @@ dzieje się na ekranie w chwili zawieszenia (czy modal/wiersz się w ogóle
 rusza, czy przeglądarka wygląda na całkiem zamrożoną, czy coś nietypowego
 pojawia się tuż przed zawieszeniem).
 
+### Runda 12 — run #76 (video włączone): D&D naprawdę zamarza, wideo obejrzane, mechanizm testu wymieniony
+
+Ściągnięcie artefaktu przez narzędzia w tym środowisku dalej zablokowane
+(`gateway answered 403... policy denial` na Azure Blob Storage — twarda
+polityka sieci, nie coś przejściowego, potwierdzone przez
+`$HTTPS_PROXY/__agentproxy/status`). Użytkownik ściągnął artefakt ręcznie
+z GitHub UI i obejrzał nagrania dla wszystkich 3 failujących testów
+(pierwsza próba, bez retry): **we wszystkich trzech obraz jest identyczny
+-- strona się ładuje, źródłowy wiersz zostaje zaznaczony (dragstart się
+odpalił, appka poprawnie zareagowała), a potem dosłownie NIC się nie
+dzieje aż do końca nagrania.** Zero ruchu kursora, zero podświetlenia
+drop-targetu, zero czegokolwiek -- pełna cisza przez pozostałe ~55s.
+
+To rozstrzyga sprawę: `dragTo()` faktycznie zawiesza się w tym
+konkretnym środowisku CI (headless Chromium, GitHub Actions
+`ubuntu-latest`) na poziomie natywnej, CDP-owej symulacji przeciągania --
+zaraz po `dragstart` (który jest realnym zdarzeniem przeglądarki i
+faktycznie dotarł do appki), coś w dalszej części sekwencji (`dragover`
+w stronę celu, `drop`) nigdy nie zostaje wygenerowane przez Playwrighta.
+Ciekawostka, której nie udało się w pełni wyjaśnić: `timeout: 20000`
+przekazany do `dragTo()` (realna, udokumentowana opcja -- sprawdzona w
+typings `playwright-core`) i tak nigdy nie odpalił WŁASNEGO błędu w 3
+kolejnych przebiegach (#74, #75 bez tej opcji jeszcze, #76 z nią) --
+zawsze goły "Test timeout of 60000ms" po pełnych 60s. Dokładny mechanizm
+tego wewnątrz Playwrighta pozostaje niejasny, ale nie ma to już
+znaczenia przy naprawie poniżej.
+
+**Naprawione przez całkowite ominięcie `dragTo()`.** Appka i tak
+operuje wyłącznie na zwykłych zdarzeniach DOM (`dragstart`/`dragenter`/
+`dragover`/`drop`/`dragend` z `dataTransfer`) -- żaden z handlerów w
+`actions.js` nie sprawdza, czy to był "prawdziwy" natywny gest
+przeciągania OS-owego. Nowy helper `simulateDragDrop(page,
+sourceSelector, targetSelector, {targetOffsetX, targetOffsetY})`
+dispatchuje te zdarzenia ręcznie w `page.evaluate()` (z prawdziwym
+`new DataTransfer()`, prawidłowymi `clientX`/`clientY` liczonymi z
+`getBoundingClientRect()` -- dokładnie to, czego oczekują handlery
+`dragover` przy liczeniu stref before/after/into), całkowicie omijając
+CDP-ową symulację myszy Playwrighta, która się zawiesza. Podmienione we
+wszystkich 4 miejscach w pliku (3 failujące + multi-drag, który już
+przechodził -- dla spójności, żeby nie trzymać dwóch różnych mechanizmów
+D&D w jednym pliku testów).
+
+Do zrobienia: poprosić o kolejny przebieg E2E (43 testy) i sprawdzić,
+czy `simulateDragDrop` naprawdę usuwa zawieszenia. Jeśli tak -- audyt
+base-explorera od strony testów jest kompletny (43/43), gotowe do
+przejścia do Warstwy 1 (lock) dla zasobu `base`.
+
 ---
 
 ## Krzyżowe blokady między zasobami — mechanizm ✅ zamknięty, reszta kategorii otwarta

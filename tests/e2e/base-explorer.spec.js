@@ -219,6 +219,54 @@ async function pressToolbarShortcut(page, dataAct, keys) {
   await page.keyboard.press(keys);
 }
 
+// Zamiennik locator.dragTo() dla testów D&D w tym pliku. Wideo z CI (run
+// #76, video: retain-on-failure) pokazało, że wszystkie 3 failujące testy
+// D&D wyglądają identycznie: zaznaczenie źródła (dragstart się odpala --
+// appka poprawnie reaguje), a potem KOMPLETNA cisza aż do końca 60s okna --
+// zero ruchu, zero podświetlenia drop-targetu. Jawny `timeout: 20000` na
+// dragTo() (Playwright naprawdę wspiera tę opcję -- sprawdzone w typings)
+// mimo to nigdy nie odpalił WŁASNEGO błędu -- zawsze goły
+// "Test timeout of 60000ms exceeded", co wskazuje że to natywna,
+// CDP-owa symulacja przeciągania (nie appka, nie logika testu) się gdzieś
+// zawiesza w tym konkretnym środowisku headless Chromium. Appka i tak
+// operuje wyłącznie na zwykłych zdarzeniach DOM (dragstart/dragover/drop
+// z dataTransfer) -- więc dispatchujemy je ręcznie w kontekście strony,
+// całkiem omijając mechanizm dragTo().
+async function simulateDragDrop(page, sourceSelector, targetSelector, { targetOffsetX = null, targetOffsetY = null } = {}) {
+  await page.evaluate(({ sourceSelector, targetSelector, targetOffsetX, targetOffsetY }) => {
+    const source = document.querySelector(sourceSelector);
+    const target = document.querySelector(targetSelector);
+    if (!source) throw new Error(`simulateDragDrop: source not found (${sourceSelector})`);
+    if (!target) throw new Error(`simulateDragDrop: target not found (${targetSelector})`);
+
+    const srcRect = source.getBoundingClientRect();
+    const tgtRect = target.getBoundingClientRect();
+    const startX = srcRect.left + srcRect.width / 2;
+    const startY = srcRect.top + srcRect.height / 2;
+    const endX = tgtRect.left + (targetOffsetX ?? tgtRect.width / 2);
+    const endY = tgtRect.top + (targetOffsetY ?? tgtRect.height / 2);
+
+    const dataTransfer = new DataTransfer();
+
+    function fire(type, el, x, y) {
+      el.dispatchEvent(new DragEvent(type, {
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+        clientX: x,
+        clientY: y,
+        dataTransfer,
+      }));
+    }
+
+    fire("dragstart", source, startX, startY);
+    fire("dragenter", target, endX, endY);
+    fire("dragover", target, endX, endY);
+    fire("drop", target, endX, endY);
+    fire("dragend", source, endX, endY);
+  }, { sourceSelector, targetSelector, targetOffsetX, targetOffsetY });
+}
+
 /* ================= 1) Naprawy z audytu ================= */
 
 test.describe("base-explorer: naprawy z audytu (nie tylko wiele kart naraz)", () => {
@@ -298,17 +346,15 @@ test.describe("base-explorer: naprawy z audytu (nie tylko wiele kart naraz)", ()
       // rozwiń A w drzewie, żeby B było widoczne
       await page.locator(`#tree .tree-toggle[data-id="${catA}"]`).click();
 
-      const rowA = page.locator(`#tree .row[data-kind="cat"][data-id="${catA}"]`);
-      const rowB = page.locator(`#tree .row[data-kind="cat"][data-id="${catB}"]`);
+      const rowASel = `#tree .row[data-kind="cat"][data-id="${catA}"]`;
+      const rowBSel = `#tree .row[data-kind="cat"][data-id="${catB}"]`;
+      const rowA = page.locator(rowASel);
+      const rowB = page.locator(rowBSel);
       await expect(rowA).toBeVisible({ timeout: 10000 });
       await expect(rowB).toBeVisible({ timeout: 10000 });
 
       // upuść A w górnej (25%) strefie B => tryb "before" => nowy rodzic A = parent(B) = A samo
-      // jawny timeout (krótszy niż test.setTimeout) -- native HTML5 D&D w CI
-      // potrafił się zawiesić na całe 60s bez żadnego komunikatu (run #73);
-      // teraz co najmniej dostaniemy konkretny błąd z call logiem zamiast
-      // gołego "Test timeout of 60000ms exceeded"
-      await rowA.dragTo(rowB, { targetPosition: { x: 20, y: 2 }, timeout: 20000 });
+      await simulateDragDrop(page, rowASel, rowBSel, { targetOffsetX: 20, targetOffsetY: 2 });
 
       // przed naprawą: cichy zapis, A.parent_id = A.id, folder znika z nawigacji.
       // po naprawie: alertModal blokuje operację.
@@ -902,12 +948,14 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
       await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
-      const qRow = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
-      const catRow = page.locator(`#list .row[data-kind="cat"][data-id="${catTarget}"]`);
+      const qRowSel = `#list .row[data-kind="q"][data-id="${qid}"]`;
+      const catRowSel = `#list .row[data-kind="cat"][data-id="${catTarget}"]`;
+      const qRow = page.locator(qRowSel);
+      const catRow = page.locator(catRowSel);
       await expect(qRow).toBeVisible({ timeout: 15000 });
       await expect(catRow).toBeVisible({ timeout: 15000 });
 
-      await qRow.dragTo(catRow, { timeout: 20000 });
+      await simulateDragDrop(page, qRowSel, catRowSel);
 
       await expect(page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`)).toHaveCount(0, { timeout: 10000 });
 
@@ -1157,9 +1205,11 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
       await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
-      const catSrcRow = page.locator(`#list .row[data-kind="cat"][data-id="${catSrc}"]`);
+      const catSrcRowSel = `#list .row[data-kind="cat"][data-id="${catSrc}"]`;
+      const catTargetRowSel = `#list .row[data-kind="cat"][data-id="${catTarget}"]`;
+      const catSrcRow = page.locator(catSrcRowSel);
       const qSrcRow = page.locator(`#list .row[data-kind="q"][data-id="${qSrc}"]`);
-      const catTargetRow = page.locator(`#list .row[data-kind="cat"][data-id="${catTarget}"]`);
+      const catTargetRow = page.locator(catTargetRowSel);
       await expect(catSrcRow).toBeVisible({ timeout: 15000 });
       await expect(qSrcRow).toBeVisible({ timeout: 15000 });
 
@@ -1167,7 +1217,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
       await qSrcRow.click({ modifiers: ["Control"] });
 
       // dragstart na dowolnym zaznaczonym wierszu przenosi CAŁE zaznaczenie
-      await catSrcRow.dragTo(catTargetRow, { timeout: 20000 });
+      await simulateDragDrop(page, catSrcRowSel, catTargetRowSel);
 
       await expect(page.locator(`#list .row[data-kind="cat"][data-id="${catSrc}"]`)).toHaveCount(0, { timeout: 10000 });
       await expect(page.locator(`#list .row[data-kind="q"][data-id="${qSrc}"]`)).toHaveCount(0);
@@ -1194,13 +1244,15 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
       await page.waitForLoadState("networkidle");
 
       // root domyślnie rozwinięty -- oba widoczne bez dodatkowego klikania
-      const rowA = page.locator(`#tree .row[data-kind="cat"][data-id="${catA}"]`);
-      const rowB = page.locator(`#tree .row[data-kind="cat"][data-id="${catB}"]`);
+      const rowASel = `#tree .row[data-kind="cat"][data-id="${catA}"]`;
+      const rowBSel = `#tree .row[data-kind="cat"][data-id="${catB}"]`;
+      const rowA = page.locator(rowASel);
+      const rowB = page.locator(rowBSel);
       await expect(rowA).toBeVisible({ timeout: 15000 });
       await expect(rowB).toBeVisible({ timeout: 15000 });
 
       // upuść B w górnej (25%) strefie A => "before" => B przed A wśród rodzeństwa (ten sam rodzic: null)
-      await rowB.dragTo(rowA, { targetPosition: { x: 20, y: 2 }, timeout: 20000 });
+      await simulateDragDrop(page, rowBSel, rowASel, { targetOffsetX: 20, targetOffsetY: 2 });
 
       await expect.poll(async () => {
         const a = await getCategoryRow(page, catA);
