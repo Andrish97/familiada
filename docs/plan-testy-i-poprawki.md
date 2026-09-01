@@ -702,34 +702,52 @@ kiedy będzie jasne jak bardzo to w praktyce przeszkadza.
 - Widok mobilny (`mobile.js`) — te same operacje, inny layout/przepływ
   wejścia w edycję pytania.
 
-### B) Równoległa edycja przez DWÓCH RÓŻNYCH użytkowników (nie dwie karty tego samego)
+### B) Równoległa edycja przez DWÓCH RÓŻNYCH użytkowników (nie dwie karty tego samego) — ✅ pokryte testami (Runda 13)
 W odróżnieniu od edytora gier (tylko właściciel), tu trzeba realnie
 zalogować DWA różne konta testowe na tej samej, współdzielonej bazie:
 - Właściciel + `editor` edytują **to samo pytanie** niemal jednocześnie —
   które wygrywa (ostatni zapis), czy drugi użytkownik dostaje jakikolwiek
-  sygnał, że coś się zmieniło pod nim.
+  sygnał, że coś się zmieniło pod nim. **Zweryfikowane**: ostatni Zapisz
+  wygrywa i cicho nadpisuje CAŁY `payload` (żadnej sygnalizacji konfliktu,
+  żadnej wersji/timestampu do porównania) — `question-modal.js`'s
+  `openQuestionModal()` ładuje `payload` świeżo przy OTWARCIU modala, ale
+  `.update({payload})` przy zapisie nadpisuje bezwarunkowo, niezależnie od
+  tego co zmieniło się w międzyczasie. Test: `tests/e2e/base-explorer.spec.js`.
 - Jeden usuwa pytanie/kategorię/tag, którego drugi używa/edytuje w tej
-  samej chwili (ten sam wzorzec "cichego sukcesu" co w edytorze gier —
-  do sprawdzenia, czy tu też występuje).
+  samej chwili. **Zweryfikowane**: ten sam wzorzec "cichego sukcesu" co w
+  edytorze gier faktycznie tu występuje — UPDATE na już usuniętym wierszu
+  trafia w 0 wierszy bez błędu, modal zamyka się normalnie, nic nie
+  wskrzesza usuniętego pytania.
 - Właściciel usuwa dostęp (`question_base_shares` DELETE) drugiemu
-  użytkownikowi W TRAKCIE, gdy ten ma bazę otwartą i coś edytuje — czy
-  kolejna akcja jest poprawnie odrzucona (RLS powinno to i tak zablokować
-  na poziomie bazy), i czy UI to w ogóle komunikuje, czy tylko cicho
-  nic się nie dzieje.
+  użytkownikowi W TRAKCIE, gdy ten ma bazę otwartą. **Zweryfikowane**:
+  RLS blokuje kolejny zapis natychmiast (na poziomie bazy, niezależnie od
+  klienta) — ale UI **nie komunikuje tego w żaden sposób** (przyciski
+  zostają wyrenderowane jako enabled, żadnego live-refresh roli). To
+  udokumentowany, świadomie nie naprawiany teraz brak UX, nie luka
+  bezpieczeństwa.
 
-### C) Granica uprawnień odczyt/edycja
+### C) Granica uprawnień odczyt/edycja — ✅ pokryte testami (Runda 13)
 - `viewer` nie może dodać/edytować/usunąć pytania, kategorii ani tagu —
   potwierdzić, że to faktycznie blokuje RLS (próba bezpośrednio przez
-  RPC/klienta, nie tylko brak przycisku w UI), i że UI w ogóle nie
-  pokazuje kontrolek edycji dla `viewer` (albo pokazuje, ale klik kończy
-  się czytelnym błędem, nie cichą porażką).
+  RPC/klienta, nie tylko brak przycisku w UI). **Zweryfikowane** dla
+  `qb_categories` (już było), doszło pokrycie `qb_questions`/`qb_tags`.
 - Zmiana roli `editor` → `viewer` w locie (właściciel obniża uprawnienia
-  gdy tamten ma bazę otwartą) — czy klient to zauważa, czy trzeba
-  odświeżyć stronę, żeby przestać móc "edytować" coś, co i tak nie
-  zapisze się w bazie.
-- Próba `viewer`-a wywołania akcji właściciela (np. zmiana nazwy bazy,
-  zarządzanie udostępnieniami) — powinno być odrzucone już na poziomie
-  `qb_bases_update`/`qb_shares_write` (tylko `owner_id`).
+  gdy tamten ma bazę otwartą). **Zweryfikowane**: `base_can_edit()`
+  sprawdza rolę na żywo z DB przy KAŻDYM zapytaniu (nie cache'owaną w
+  żadnym tokenie/sesji), więc kolejny zapis z już otwartej karty jest
+  odrzucany od razu — tylko UI o tym nie wie bez odświeżenia (ten sam
+  brak co wyżej).
+- Próba `editor`-a (nie tylko `viewer`-a) wywołania akcji właściciela
+  (zmiana nazwy bazy) — powinno być odrzucone już na poziomie
+  `qb_bases_update` (tylko `owner_id`). **Zweryfikowane**: `UPDATE` przez
+  nie-właściciela nie rzuca błędu (RLS `USING` po prostu nie dopasuje
+  żadnego wiersza), więc asercja sprawdza że nazwa w DB fizycznie się nie
+  zmieniła, nie że poleciał wyjątek — inny kształt "porażki" niż przy
+  INSERT (`WITH CHECK`), warto pamiętać przy kolejnych testach RLS tego
+  typu. Zarządzanie udostępnieniami (`qb_shares_write`) przez `editor`-a
+  NIE zostało jeszcze przetestowane — mniejsze ryzyko (edytor bazy pytań
+  nie ma w UI żadnego przycisku do zarządzania dostępem), zostawione
+  jako mniejsza, otwarta pozycja.
 
 ### Wyniki audytu funkcjonalnego (2026-08-30) — ✅ zrobione, przed Warstwą 1
 
@@ -1295,6 +1313,46 @@ Do zrobienia: poprosić o kolejny przebieg E2E (43 testy) i sprawdzić,
 czy `simulateDragDrop` naprawdę usuwa zawieszenia. Jeśli tak -- audyt
 base-explorera od strony testów jest kompletny (43/43), gotowe do
 przejścia do Warstwy 1 (lock) dla zasobu `base`.
+
+### Runda 13 — dopisane testy punktów B), C) i mobile.js (11 nowych, 54 łącznie)
+
+Na żądanie użytkownika ("nie wydaje mi się że wszytko już ogarneliśmy") --
+poprzednia runda zamykała tylko punkt A) (sam edytor). Dopisano:
+
+**6 testów punktu B)/C)** (nowy blok "współdzielenie i uprawnienia dwóch
+różnych użytkowników", realne DWA konta -- `TEST_USERNAME`/
+`TEST_USERNAME_2`, nie dwa konteksty tego samego): edycja tego samego
+pytania niemal jednocześnie (ostatni zapis cicho nadpisuje), usunięcie
+pytania gdy drugi ma je otwarte do edycji (zapis w 0 wierszy, cicho),
+cofnięcie dostępu w trakcie sesji (RLS blokuje natychmiast, UI nie),
+degradacja roli editor→viewer na żywo (to samo), `viewer` blokowany też
+na `qb_questions`/`qb_tags` (nie tylko `qb_categories` jak dotąd), próba
+zmiany nazwy bazy przez `editor`-a (RLS: 0 zmienionych wierszy, nie
+błąd -- inny kształt niż blokada INSERT). Wszystkie te zachowania były
+tylko opisane w planie jako "do sprawdzenia" -- teraz są zweryfikowane i
+zablokowane testem regresji. Żadne z nich nie ujawniło nowego bugu
+aplikacji -- to udokumentowanie istniejącego, świadomego stanu (brak
+detekcji konfliktu, brak live-refresh roli), nie naprawa.
+
+**5 testów `mobile.js`** (zero pokrycia wcześniej): drawer (otwórz/
+zamknij + auto-zamknięcie po kliknięciu wiersza), long-press otwiera
+menu kontekstowe (zamiennik PPM), long-press anulowany ruchem palca
+>10px NIE otwiera menu (test regresji na `MOVE_THRESHOLD`), podwójny tap
+na pytaniu otwiera modal edycji, podwójny tap na folderze nawiguje do
+środka. Symulowane ręcznie przez `page.evaluate()`
+(`PointerEvent`/`TouchEvent` z odpowiednim `pointerType`/`Touch`), nie
+przez natywną emulację dotyku Playwrighta -- ta sama ostrożność co przy
+`simulateDragDrop()` w rundzie 12 (CDP-owa symulacja gestów okazała się
+niewiarygodna w tym CI, więc dispatch zdarzeń DOM bezpośrednio jest
+bezpieczniejszym wyborem od razu, bez czekania na kolejny failujący
+przebieg).
+
+Wciąż otwarte po tej rundzie (świadomie mniejszy priorytet): zarządzanie
+udostępnieniami (`qb_shares_write`) przez `editor`-a nieprzetestowane
+(brak przycisku w UI do tego, mniejsze ryzyko). Główna, wciąż niezaczęta
+pozycja to jak zawsze **Warstwa 1 (lock) dla zasobu `base`** -- audyt
+funkcjonalny i testy regresji (A, B, C) są teraz kompletne, mechanizm
+blokady jeszcze nie istnieje.
 
 ---
 

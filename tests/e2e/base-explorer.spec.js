@@ -122,6 +122,33 @@ async function assignTag(page, { questionId, tagId }) {
   }, { questionId, tagId });
 }
 
+async function getUserId(page) {
+  return await page.evaluate(async () => {
+    const { data } = await window.__sbClient.auth.getUser();
+    return data.user.id;
+  });
+}
+
+// Udostępnia bazę drugiemu użytkownikowi z daną rolą. `page` musi być
+// zalogowane jako WŁAŚCICIEL bazy (question_base_shares INSERT/UPDATE
+// wymaga tego po stronie RLS -- patrz qb_shares_write w schema.sql).
+async function shareBaseWith(page, baseId, userId, role) {
+  await page.evaluate(async ({ baseId, userId, role }) => {
+    const { error } = await window.__sbClient
+      .from("question_base_shares")
+      .upsert({ base_id: baseId, user_id: userId, role }, { onConflict: "base_id,user_id" });
+    if (error) throw new Error(error.message);
+  }, { baseId, userId, role });
+}
+
+async function revokeShare(page, baseId, userId) {
+  await page.evaluate(async ({ baseId, userId }) => {
+    const { error } = await window.__sbClient
+      .from("question_base_shares").delete().eq("base_id", baseId).eq("user_id", userId);
+    if (error) throw new Error(error.message);
+  }, { baseId, userId });
+}
+
 async function getCategoryRow(page, categoryId) {
   return await page.evaluate(async (id) => {
     const { data, error } = await window.__sbClient
@@ -1873,6 +1900,462 @@ test.describe("base-explorer: export-modal.js ('Utwórz grę')", () => {
       await expect(page.locator("#xErr")).toBeVisible({ timeout: 5000 });
       await expect(page.locator("#xErr")).toContainText("Potrzebujesz co najmniej", { timeout: 5000 });
       await expect(page.locator("#xCreate")).toBeDisabled();
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+});
+
+/* ================= 5) współdzielenie i uprawnienia (dwóch RÓŻNYCH użytkowników) =================
+ *
+ * W odróżnieniu od grupy 2) (jeden user, dwa konteksty tej samej sesji),
+ * tu logujemy NAPRAWDĘ drugie konto (TEST_USERNAME_2) na tej samej,
+ * współdzielonej bazie -- punkty B) i C) z planu audytu base-explorera.
+ * Cel: nie tylko "czy da się kliknąć", ale co się dzieje z DANYMI, gdy
+ * dwie osoby faktycznie nachodzą na siebie w czasie.
+ */
+
+test.describe("base-explorer: współdzielenie i uprawnienia (dwóch różnych użytkowników)", () => {
+
+  test("edycja tego samego pytania przez dwie osoby niemal jednocześnie -- późniejszy zapis cicho nadpisuje wcześniejszy", async ({ page, context, browser }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context);
+
+    const baseId = await createBase(page, `E2E-XS-RACE-${Date.now()}`);
+    let context2 = null;
+
+    try {
+      context2 = await browser.newContext();
+      const page2 = await context2.newPage();
+      await loginAsTestUser(page2, context2, { username: process.env.TEST_USERNAME_2 });
+      const user2Id = await getUserId(page2);
+
+      await shareBaseWith(page, baseId, user2Id, "editor");
+
+      const qid = await createQuestion(page, {
+        baseId, ord: 1,
+        payload: { text: "Wersja wyjściowa", answers: [{ text: "A1" }] },
+      });
+
+      // Właściciel otwiera pytanie do edycji -- payload zostaje wczytany do
+      // modala W TEJ CHWILI (fetchQuestionById w openQuestionModal), i to on
+      // dostaje nadpisany w całości przy Zapisz, niezależnie od tego co się
+      // zmieni w międzyczasie w DB.
+      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+      const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
+      await expect(row).toBeVisible({ timeout: 15000 });
+      await row.click();
+      await pressToolbarShortcut(page, "editQuestion", "Control+e");
+      await expect(page.locator("#questionOverlay")).toBeVisible({ timeout: 5000 });
+
+      // W międzyczasie drugi user (editor) modyfikuje to samo pytanie
+      // bezpośrednio (symulacja jego niezależnej edycji "gdzieś indziej")
+      await page2.evaluate(async ({ id }) => {
+        const { error } = await window.__sbClient
+          .from("qb_questions")
+          .update({ payload: { text: "Wersja od editora", answers: [{ text: "B1" }] } })
+          .eq("id", id);
+        if (error) throw new Error(error.message);
+      }, { id: qid });
+
+      // Właściciel kończy swoją edycję i zapisuje -- wciąż na bazie payloadu
+      // sprzed chwili (bez odpowiedzi editora)
+      await page.locator("#qText").fill("Wersja finalna właściciela");
+      await Promise.all([
+        page.waitForResponse((res) => res.url().includes("/rest/v1/qb_questions") && res.request().method() === "PATCH"),
+        page.locator("#qSave").click(),
+      ]);
+      await expect(page.locator("#questionOverlay")).toBeHidden({ timeout: 10000 });
+
+      const fresh = await getQuestionRow(page, qid);
+      expect(fresh?.payload?.text, "ostatni Zapisz wygrywa, bez błędu i bez ostrzeżenia o konflikcie").toBe("Wersja finalna właściciela");
+      expect(
+        (fresh?.payload?.answers || []).map((a) => a.text),
+        "edycja editora w międzyczasie (B1) zostaje bezpowrotnie i cicho nadpisana"
+      ).toEqual(["A1"]);
+    } finally {
+      if (context2) await context2.close();
+      await deleteBase(page, baseId);
+    }
+  });
+
+  test("usunięcie pytania przez jednego usera, gdy drugi ma je otwarte do edycji -- zapis kończy się cicho, pytanie nie wraca", async ({ page, context, browser }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context);
+
+    const baseId = await createBase(page, `E2E-XS-DELWHILEEDIT-${Date.now()}`);
+    let context2 = null;
+
+    try {
+      context2 = await browser.newContext();
+      const page2 = await context2.newPage();
+      await loginAsTestUser(page2, context2, { username: process.env.TEST_USERNAME_2 });
+      const user2Id = await getUserId(page2);
+      await shareBaseWith(page, baseId, user2Id, "editor");
+
+      const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "Do usunięcia gdzie indziej", answers: [] } });
+
+      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+      const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
+      await expect(row).toBeVisible({ timeout: 15000 });
+      await row.click();
+      await pressToolbarShortcut(page, "editQuestion", "Control+e");
+      await expect(page.locator("#questionOverlay")).toBeVisible({ timeout: 5000 });
+
+      // Drugi user usuwa to pytanie, podczas gdy pierwszy wciąż ma otwarty modal
+      await page2.evaluate(async (id) => {
+        const { error } = await window.__sbClient.from("qb_questions").delete().eq("id", id);
+        if (error) throw new Error(error.message);
+      }, qid);
+
+      // Pierwszy user kończy edycję i zapisuje -- UPDATE trafia w 0 wierszy,
+      // bez błędu (Postgres/PostgREST nie traktuje "nic nie pasowało" jak wyjątek)
+      await page.locator("#qText").fill("Ta zmiana nie ma już czego dotyczyć");
+      await page.locator("#qSave").click();
+      await expect(page.locator("#questionOverlay")).toBeHidden({ timeout: 10000 });
+      // brak alertModal z błędem -- zapis "powiódł się" po cichu
+      await expect(page.locator(".uni-modal")).toHaveCount(0);
+
+      const fresh = await getQuestionRow(page, qid);
+      expect(fresh, "UPDATE na usuniętym wierszu nie może go wskrzesić").toBeNull();
+    } finally {
+      if (context2) await context2.close();
+      await deleteBase(page, baseId);
+    }
+  });
+
+  test("cofnięcie dostępu w trakcie sesji -- kolejny zapis jest odrzucony przez RLS mimo wciąż otwartej karty", async ({ page, context, browser }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context);
+
+    const baseId = await createBase(page, `E2E-XS-REVOKE-${Date.now()}`);
+    let context2 = null;
+
+    try {
+      context2 = await browser.newContext();
+      const page2 = await context2.newPage();
+      await loginAsTestUser(page2, context2, { username: process.env.TEST_USERNAME_2 });
+      const user2Id = await getUserId(page2);
+      await shareBaseWith(page, baseId, user2Id, "editor");
+
+      await page2.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page2.waitForLoadState("networkidle");
+      await expect(page2.locator('#toolbar button[data-act="newFolder"]')).toBeEnabled({ timeout: 15000 });
+
+      // Właściciel cofa dostęp -- karta drugiego usera NIE jest odświeżana,
+      // nie ma żadnego live sygnału (znany, udokumentowany w planie brak)
+      await revokeShare(page, baseId, user2Id);
+
+      // Mimo że przycisk w UI wciąż pokazuje się jako aktywny (brak
+      // odświeżenia roli na żywo), RLS na poziomie bazy blokuje zapis
+      // natychmiast, niezależnie od tego co pamięta klient
+      const insertError = await page2.evaluate(async (baseId) => {
+        const { error } = await window.__sbClient
+          .from("qb_categories").insert({ base_id: baseId, parent_id: null, name: "Po cofnięciu dostępu", ord: 1 });
+        return error ? error.message : null;
+      }, baseId);
+      expect(insertError, "RLS musi odrzucić zapis natychmiast po cofnięciu udostępnienia, bez czekania na odświeżenie karty").not.toBeNull();
+    } finally {
+      if (context2) await context2.close();
+      await deleteBase(page, baseId);
+    }
+  });
+
+  test("degradacja roli editor -> viewer na żywo -- RLS blokuje zapis mimo nieodświeżonej karty", async ({ page, context, browser }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context);
+
+    const baseId = await createBase(page, `E2E-XS-DOWNGRADE-${Date.now()}`);
+    let context2 = null;
+
+    try {
+      context2 = await browser.newContext();
+      const page2 = await context2.newPage();
+      await loginAsTestUser(page2, context2, { username: process.env.TEST_USERNAME_2 });
+      const user2Id = await getUserId(page2);
+      await shareBaseWith(page, baseId, user2Id, "editor");
+
+      await page2.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page2.waitForLoadState("networkidle");
+      await expect(page2.locator('#toolbar button[data-act="newFolder"]')).toBeEnabled({ timeout: 15000 });
+
+      // Właściciel obniża rolę do viewer, bez żadnego sygnału do otwartej karty
+      await shareBaseWith(page, baseId, user2Id, "viewer");
+
+      const insertError = await page2.evaluate(async (baseId) => {
+        const { error } = await window.__sbClient
+          .from("qb_categories").insert({ base_id: baseId, parent_id: null, name: "Po degradacji roli", ord: 1 });
+        return error ? error.message : null;
+      }, baseId);
+      expect(insertError, "base_can_edit() sprawdza rolę na żywo z DB, nie z cache klienta").not.toBeNull();
+    } finally {
+      if (context2) await context2.close();
+      await deleteBase(page, baseId);
+    }
+  });
+
+  test("viewer nie zapisze bezpośrednio ani pytań, ani tagów (nie tylko kategorii)", async ({ page, context, browser }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context);
+
+    const baseId = await createBase(page, `E2E-XS-VIEWERWRITE-${Date.now()}`);
+    let context2 = null;
+
+    try {
+      context2 = await browser.newContext();
+      const page2 = await context2.newPage();
+      await loginAsTestUser(page2, context2, { username: process.env.TEST_USERNAME_2 });
+      const user2Id = await getUserId(page2);
+      await shareBaseWith(page, baseId, user2Id, "viewer");
+
+      await page2.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page2.waitForLoadState("networkidle");
+
+      const questionInsertError = await page2.evaluate(async (baseId) => {
+        const { error } = await window.__sbClient
+          .from("qb_questions").insert({ base_id: baseId, category_id: null, ord: 1, payload: { text: "Should fail", answers: [] } });
+        return error ? error.message : null;
+      }, baseId);
+      expect(questionInsertError, "viewer nie może dodać pytania bezpośrednio przez klienta").not.toBeNull();
+
+      const tagInsertError = await page2.evaluate(async (baseId) => {
+        const { error } = await window.__sbClient
+          .from("qb_tags").insert({ base_id: baseId, name: "Should fail", color: "#ffffff", ord: 1 });
+        return error ? error.message : null;
+      }, baseId);
+      expect(tagInsertError, "viewer nie może dodać tagu bezpośrednio przez klienta").not.toBeNull();
+    } finally {
+      if (context2) await context2.close();
+      await deleteBase(page, baseId);
+    }
+  });
+
+  test("editor nie może zmienić nazwy bazy -- to uprawnienie wyłącznie właściciela", async ({ page, context, browser }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context);
+
+    const originalName = `E2E-XS-RENAME-${Date.now()}`;
+    const baseId = await createBase(page, originalName);
+    let context2 = null;
+
+    try {
+      context2 = await browser.newContext();
+      const page2 = await context2.newPage();
+      await loginAsTestUser(page2, context2, { username: process.env.TEST_USERNAME_2 });
+      const user2Id = await getUserId(page2);
+      await shareBaseWith(page, baseId, user2Id, "editor");
+
+      await page2.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page2.waitForLoadState("networkidle");
+
+      // qb_bases_update: USING/WITH CHECK (owner_id = auth.uid()) -- editor
+      // nie jest właścicielem, więc RLS po prostu nie dopasuje żadnego wiersza
+      // (UPDATE "powiedzie się" z 0 zmienionych wierszy, bez jawnego błędu)
+      await page2.evaluate(async ({ baseId }) => {
+        await window.__sbClient.from("question_bases").update({ name: "Nazwa od editora" }).eq("id", baseId);
+      }, { baseId });
+
+      const fresh = await page.evaluate(async (id) => {
+        const { data, error } = await window.__sbClient.from("question_bases").select("name").eq("id", id).single();
+        if (error) throw new Error(error.message);
+        return data;
+      }, baseId);
+      expect(fresh?.name, "nazwa bazy może się zmienić WYŁĄCZNIE przez właściciela").toBe(originalName);
+    } finally {
+      if (context2) await context2.close();
+      await deleteBase(page, baseId);
+    }
+  });
+});
+
+/* ================= 6) mobile.js (drawer, long-press, podwójny tap) =================
+ *
+ * mobile.js nie ma żadnych własnych testów mimo osobnego, nietrywialnego
+ * mechanizmu wejścia (drawer, long-press jako zamiennik PPM, podwójny tap
+ * jako zamiennik dblclick). Symulujemy zdarzenia dotykowe (PointerEvent
+ * pointerType:"touch", TouchEvent) ręcznie przez page.evaluate() zamiast
+ * polegać na natywnej emulacji dotyku Playwrighta -- ta sama ostrożność
+ * co przy simulateDragDrop() wyżej: prościej i pewniej niż CDP-owa
+ * symulacja gestów, której akurat w tym środowisku CI nie można ufać
+ * (patrz Runda 12 w docs/plan-testy-i-poprawki.md).
+ */
+
+async function simulateLongPress(page, selector, holdMs = 650) {
+  await page.evaluate(({ selector }) => {
+    const el = document.querySelector(selector);
+    if (!el) throw new Error(`simulateLongPress: element not found (${selector})`);
+    const r = el.getBoundingClientRect();
+    const x = r.left + r.width / 2;
+    const y = r.top + r.height / 2;
+    el.dispatchEvent(new PointerEvent("pointerdown", {
+      bubbles: true, cancelable: true, pointerType: "touch", clientX: x, clientY: y,
+    }));
+  }, { selector });
+  await page.waitForTimeout(holdMs);
+}
+
+async function simulateTouchMove(page, selector, dx, dy) {
+  await page.evaluate(({ selector, dx, dy }) => {
+    const el = document.querySelector(selector);
+    if (!el) throw new Error(`simulateTouchMove: element not found (${selector})`);
+    const r = el.getBoundingClientRect();
+    el.dispatchEvent(new PointerEvent("pointermove", {
+      bubbles: true, cancelable: true, pointerType: "touch",
+      clientX: r.left + r.width / 2 + dx, clientY: r.top + r.height / 2 + dy,
+    }));
+  }, { selector, dx, dy });
+}
+
+async function simulateDoubleTap(page, selector) {
+  await page.evaluate(({ selector }) => {
+    const el = document.querySelector(selector);
+    if (!el) throw new Error(`simulateDoubleTap: element not found (${selector})`);
+    function tap() {
+      const touch = new Touch({ identifier: 1, target: el, clientX: 0, clientY: 0 });
+      el.dispatchEvent(new TouchEvent("touchend", {
+        bubbles: true, cancelable: true, composed: true,
+        touches: [], targetTouches: [], changedTouches: [touch],
+      }));
+    }
+    tap();
+    tap();
+  }, { selector });
+}
+
+test.describe("base-explorer: mobile.js (drawer, long-press, podwójny tap)", () => {
+
+  test("drawer: przycisk otwiera panel, klik w wiersz zamyka", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await page.setViewportSize({ width: 400, height: 800 });
+    await loginAsTestUser(page, context);
+    const baseId = await createBase(page, `E2E-XM-DRAWER-${Date.now()}`);
+
+    try {
+      await createCategory(page, { baseId, name: "Folder mobilny", ord: 1 });
+
+      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+
+      const btnDrawer = page.locator("#btnDrawerToggle");
+      const panel = page.locator("#explorerLeft");
+      await expect(btnDrawer).toBeVisible({ timeout: 15000 });
+      await expect(panel).not.toHaveClass(/is-open/);
+
+      await btnDrawer.click();
+      await expect(panel).toHaveClass(/is-open/);
+      await expect(page.locator("#drawerOverlay")).toBeVisible();
+
+      // klik w wiersz folderu (w drzewie, wewnątrz panelu) zamyka drawer
+      await page.locator(`#tree .row[data-kind="cat"]`).first().click();
+      await expect(panel).not.toHaveClass(/is-open/);
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+
+  test("long-press na wierszu listy otwiera menu kontekstowe (zamiennik PPM na dotyku)", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await page.setViewportSize({ width: 400, height: 800 });
+    await loginAsTestUser(page, context);
+    const baseId = await createBase(page, `E2E-XM-LONGPRESS-${Date.now()}`);
+
+    try {
+      const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "Long-press mnie", answers: [] } });
+
+      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+
+      const rowSel = `#list .row[data-kind="q"][data-id="${qid}"]`;
+      await expect(page.locator(rowSel)).toBeVisible({ timeout: 15000 });
+
+      await simulateLongPress(page, rowSel);
+
+      await expect(page.locator(".context-menu")).toBeVisible({ timeout: 5000 });
+      await expect(page.locator(".context-menu .cm-item", { hasText: /Edytuj pytanie/i })).toBeVisible();
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+
+  test("long-press anulowany przez ruch palca > 10px nie otwiera menu (nie blokuje zwykłego przewijania/scrollowania)", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await page.setViewportSize({ width: 400, height: 800 });
+    await loginAsTestUser(page, context);
+    const baseId = await createBase(page, `E2E-XM-LONGPRESSMOVE-${Date.now()}`);
+
+    try {
+      const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "Nie długo trzymane", answers: [] } });
+
+      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+
+      const rowSel = `#list .row[data-kind="q"][data-id="${qid}"]`;
+      await expect(page.locator(rowSel)).toBeVisible({ timeout: 15000 });
+
+      // pointerdown, potem ruch > MOVE_THRESHOLD (10px) PRZED upływem 500ms --
+      // addLongPress() musi to potraktować jako przewijanie, nie długie tapnięcie
+      await page.evaluate((selector) => {
+        const el = document.querySelector(selector);
+        const r = el.getBoundingClientRect();
+        el.dispatchEvent(new PointerEvent("pointerdown", {
+          bubbles: true, cancelable: true, pointerType: "touch",
+          clientX: r.left + r.width / 2, clientY: r.top + r.height / 2,
+        }));
+      }, rowSel);
+      await simulateTouchMove(page, rowSel, 0, 40);
+      await page.waitForTimeout(650);
+
+      await expect(page.locator(".context-menu")).toHaveCount(0);
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+
+  test("podwójny tap na pytaniu otwiera modal edycji (zamiennik dblclick na dotyku)", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await page.setViewportSize({ width: 400, height: 800 });
+    await loginAsTestUser(page, context);
+    const baseId = await createBase(page, `E2E-XM-DOUBLETAPQ-${Date.now()}`);
+
+    try {
+      const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "Dotknij mnie dwa razy", answers: [] } });
+
+      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+
+      const rowSel = `#list .row[data-kind="q"][data-id="${qid}"]`;
+      await expect(page.locator(rowSel)).toBeVisible({ timeout: 15000 });
+
+      await simulateDoubleTap(page, rowSel);
+
+      await expect(page.locator("#questionOverlay")).toBeVisible({ timeout: 5000 });
+      await expect(page.locator("#qText")).toHaveValue("Dotknij mnie dwa razy");
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+
+  test("podwójny tap na folderze nawiguje do jego wnętrza", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await page.setViewportSize({ width: 400, height: 800 });
+    await loginAsTestUser(page, context);
+    const baseId = await createBase(page, `E2E-XM-DOUBLETAPCAT-${Date.now()}`);
+
+    try {
+      const catId = await createCategory(page, { baseId, name: "Folder do wejścia", ord: 1 });
+      await createQuestion(page, { baseId, categoryId: catId, ord: 1, payload: { text: "W środku folderu", answers: [] } });
+
+      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+
+      const catRowSel = `#list .row[data-kind="cat"][data-id="${catId}"]`;
+      await expect(page.locator(catRowSel)).toBeVisible({ timeout: 15000 });
+
+      await simulateDoubleTap(page, catRowSel);
+
+      await expect(page.locator(`#list .row[data-kind="q"]`, { hasText: "W środku folderu" })).toBeVisible({ timeout: 10000 });
     } finally {
       await deleteBase(page, baseId);
     }
