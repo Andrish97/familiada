@@ -4,6 +4,7 @@
 import { addRenameGesture } from "../core/rename-gesture.js?v=v2026-09-01T19304";
 
 import { sb, SUPABASE_URL } from "../core/supabase.js?v=v2026-09-01T19304";
+import { updateChecked, ROW_GONE } from "../core/db-guard.js?v=v2026-09-02T00000";
 import { requireAuth } from "../core/auth.js?v=v2026-09-01T19304";
 import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-01T19304";
 import { isGuestUser, hideForGuest } from "../core/guest-mode.js?v=v2026-09-01T19304";
@@ -399,11 +400,11 @@ async function createBase(name) {
 }
 
 async function renameBase(baseId, newName) {
-  const { error } = await sb()
-    .from("question_bases")
-    .update({ name: safeName(newName), updated_at: new Date().toISOString() })
-    .eq("id", baseId);
-  if (error) throw error;
+  await updateChecked(
+    "question_bases",
+    { id: baseId },
+    { name: safeName(newName), updated_at: new Date().toISOString() }
+  );
 }
 
 async function deleteBase(base) {
@@ -415,10 +416,23 @@ async function deleteBase(base) {
   });
   if (!ok) return;
 
-  const { error } = await sb().from("question_bases").delete().eq("id", base.id);
+  // qb_questions/qb_categories/qb_tags mają ON DELETE CASCADE od
+  // question_bases -- gołe .delete() skasowałoby też elementy, które ktoś
+  // aktywnie edytuje w base-explorerze (Warstwa 1, edit_locks), bez
+  // żadnego ostrzeżenia. delete_resource_checked sprawdza to atomowo po
+  // stronie serwera, tak samo jak dla gry/logo w builder.js.
+  const { data, error } = await sb().rpc("delete_resource_checked", {
+    p_resource_type: "base",
+    p_resource_id: base.id,
+  });
   if (error) {
     console.warn("[bases] delete error:", error);
     void alertModal({ text: t("bases.delete.failed") });
+    return;
+  }
+  if (!data?.ok) {
+    console.warn("[bases] delete blocked:", data);
+    void alertModal({ text: data?.in_use ? t("bases.delete.inUse") : t("bases.delete.failed") });
   }
 }
 
@@ -1397,7 +1411,7 @@ async function nameOk() {
     closeNameModal();
   } catch (e) {
     console.warn("[bases] name ok error:", e);
-    setMsg(nameMsg, t("bases.nameModal.failed"));
+    setMsg(nameMsg, e?.code === ROW_GONE ? t("resourceLock.goneMessage") : t("bases.nameModal.failed"));
   } finally {
     if (btnNameOk) btnNameOk.disabled = false;
   }

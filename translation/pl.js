@@ -631,6 +631,7 @@ const pl = {
       ok: "Usuń",
       cancel: "Anuluj",
       failed: "Nie udało się usunąć.",
+      inUse: "Nie można usunąć bazy -- ktoś właśnie edytuje pytanie, folder lub tag w jej wnętrzu.",
     },
     leaveShared: {
       title: "Usuń udostępnioną bazę",

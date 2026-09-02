@@ -625,6 +625,7 @@ const en = {
       ok: "Delete",
       cancel: "Cancel",
       failed: "Failed to delete.",
+      inUse: "Can't delete this base -- someone is currently editing a question, folder, or tag inside it.",
     },
     leaveShared: {
       title: "Remove shared base",

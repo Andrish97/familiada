@@ -732,9 +732,66 @@ Ostatni wynik E2E zapisany w tym planie przed implementacją locków to run
 #77: 49 passed / 4 failed / 1 flaky, poprawione w `f997d8d`. Run #78
 (pierwszy po tamtej poprawce) miał jeszcze jeden osobny, niezwiązany z
 lockami failing test (`long-press anulowany przez ruch palca` w
-`mobile.js`/`base-explorer.spec.js`) — naprawiony przed tą rundą przez
-przepisanie testu na wzór już znanego w tym pliku buga (stara referencja
-DOM po synchronicznym re-renderze), patrz commit tej rundy.
+`mobile.js`/`base-explorer.spec.js`).
+
+**Run #79** (commit `fbee7cac` + auto-bumpy botów): **57/58 passed**.
+Wszystkie trzy nowe testy lockowania (blokada pytania blokuje wejście do
+edycji i zwalnia się po release; blokada zagnieżdżonego pytania blokuje
+usunięcie CAŁEGO folderu — potwierdza rozwinięcie do poddrzewa; blokada
+jednego, niedotykanego tagu NIE przeszkadza zapisać innego tagu w tym
+samym modalu przypisywania — potwierdza poprawkę zakresu blokady tagów)
+przeszły za pierwszym razem. Jedyny czerwony: ten sam `long-press
+anulowany przez ruch palca` co w #78 — **próba naprawy z tej rundy
+(świeże `document.querySelector()` przed każdym z trzech dispatchy +
+dodany `pointerup`) NIE pomogła**, identyczny błąd (`.context-menu`
+`count=1` zamiast `0`, deterministycznie w obu próbach). Statyczna
+analiza `mobile.js`'s `addLongPress()` po raz drugi nie znalazła w nim
+błędu — dodana tymczasowa diagnostyka (`console.log("[longpress-diag]"
+...)` w `pointerdown`/`pointermove`/`pointerup`/`cancel()`, projekt i tak
+przekazuje `console.*` do logów CI przez mechanizm `[e2e-diag]`) do
+zdiagnozowania w KOLEJNYM runie, zamiast zgadywać trzeci raz. Do usunięcia
+po znalezieniu przyczyny.
+
+### Rozszerzenie na `bases.js` (hub z listą baz) — ✅ zrobione (2026-09-02)
+
+Warstwa 1/2 opisana wyżej chroni to, co dzieje się WEWNĄTRZ już otwartej
+bazy w base-explorerze. Osobna, wcześniej niezaadresowana luka: sama
+strona-hub `bases.js` (lista "Moje"/"Udostępnione", przyciski zmiany
+nazwy/usunięcia całej bazy) nie miała ŻADNEJ ochrony ani ŻADNEGO
+pokrycia e2e — `resourceType: "base"` istniał w schemacie od dawna, ale
+nie był używany w żadnym miejscu kodu.
+
+Ryzyko: `qb_questions`/`qb_categories`/`qb_tags`/`question_base_shares`
+mają `ON DELETE CASCADE` od `question_bases` — usunięcie całej bazy przez
+właściciela na `bases.html`, podczas gdy `editor` ma akurat otwarty modal
+edycji pytania (trzyma `base_question` lock) w tej samej bazie, kasowałoby
+to pytanie spod ręki edytującego bez żadnego ostrzeżenia.
+
+Naprawione, tym samym wzorcem co już istniejący dla gry/logo:
+- **Migracja 258** — nowa gałąź `p_resource_type = 'base'` w
+  `delete_resource_checked()`: właściciel-only (RLS i tak to wymusza, ale
+  RPC sprawdza jawnie), blokuje usunięcie, jeśli KTÓRYKOLWIEK
+  `base_question`/`base_folder`/`base_tag` należący do tej bazy ma teraz
+  aktywny wiersz w `edit_locks` (sprawdzane przez `EXISTS` po
+  `qb_questions.base_id`/`qb_categories.base_id`/`qb_tags.base_id`, bo
+  `edit_locks` nie trzyma `base_id` bezpośrednio).
+- `bases.js`'s `deleteBase()` woła teraz `sb().rpc("delete_resource_checked",
+  {p_resource_type:"base", ...})` zamiast gołego `.delete()` — dokładnie
+  ten sam kształt co usuwanie gry w `builder.js`. Nowy komunikat
+  `bases.delete.inUse` (pl/en/uk).
+- `bases.js`'s `renameBase()` przepisany na `updateChecked()`
+  (`js/core/db-guard.js`) — `ROW_GONE` (baza usunięta w międzyczasie)
+  pokazuje teraz `resourceLock.goneMessage` zamiast cichego "sukcesu"
+  bez efektu.
+
+Nowy plik `tests/e2e/bases.spec.js` (strona nie miała wcześniej żadnego):
+codzienna funkcjonalność (tworzenie przez kafelek "+", zmiana nazwy przez
+podwójny klik, usunięcie przez "x"+potwierdzenie, widoczność udostępnionej
+bazy u DRUGIEGO, prawdziwego konta z właściwą rolą) + dwa testy ochrony
+(usunięcie zablokowane, gdy drugi user edytuje coś w środku — i explicit
+kontrola negatywna, że samo współdzielenie/istnienie treści BEZ aktywnej
+blokady nie przeszkadza usunąć; zmiana nazwy bazy usuniętej tuż przed
+zapisem pokazuje komunikat zamiast cichego sukcesu).
 
 **Kolejność: najpierw pełny audyt i testy (A/B/C niżej), Warstwa 1
 (precyzyjne blokady elementów opisane wyżej) i utwardzenie Warstwy 2

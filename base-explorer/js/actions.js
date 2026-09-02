@@ -33,7 +33,7 @@ import { sb } from "../../js/core/supabase.js?v=v2026-09-01T19304";
 import { acquireResourceLock, acquireResourceLocks } from "../../js/core/resource-lock.js?v=v2026-09-01T19304";
 import { alertModal, confirmModal } from "../../js/core/modal.js?v=v2026-09-01T19304";
 import { t } from "../../translation/translation.js?v=v2026-09-01T19304";
-import { addLongPress, addDoubleTap } from "./mobile.js?v=v2026-09-01T19304";
+import { addLongPress, addDoubleTap } from "./mobile.js?v=v2026-09-02T00000";
 
 let exportModal = null;
 

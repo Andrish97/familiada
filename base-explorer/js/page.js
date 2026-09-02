@@ -15,7 +15,7 @@ import {
   listAllQuestions,
 } from "./repo.js?v=v2026-09-01T19304";
 import { wireActions } from "./actions.js?v=v2026-09-01T19304";
-import { initDrawer, disableDragOnTouch } from "./mobile.js?v=v2026-09-01T19304";
+import { initDrawer, disableDragOnTouch } from "./mobile.js?v=v2026-09-02T00000";
 
 /* ================= DOM ================= */
 const btnBack = document.getElementById("btnBack");
