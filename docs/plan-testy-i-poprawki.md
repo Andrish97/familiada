@@ -449,15 +449,15 @@ różnych użytkowników, albo nieaktualne dane po zmianie gdzie indziej):
 | Strona | Co edytuje | Status |
 |---|---|---|
 | `js/pages/editor.js` | pytania/odpowiedzi gry | ✅ **ZAMKNIĘTE** — 21 testów e2e (run #52, 21/21), Warstwa 1 + Warstwa 2 zrobione |
-| `js/pages/polls.js` | zamykanie ankiety | ✅ Warstwa 2 gotowa (guard w RPC), 🔲 Warstwa 1 do dodania |
+| `js/pages/polls.js` | zamykanie ankiety | ✅ **ZAMKNIĘTE** — Warstwa 2 (guard w RPC) + Warstwa 1 (`guardResourceLock`, `resourceType:"game"`, wspólny klucz z edytorem/ustawieniami) obie zrobione — ten wiersz był nieaktualny, sprawdzone bezpośrednio w kodzie 2026-09-02 |
 | `js/pages/game-settings.js` | ustawienia gry (drużyny, wygląd, dźwięk, finał/rundy) | ✅ **ZAMKNIĘTE** — obie warstwy zrobione, 3/3 testów e2e (run #56, 3/3) |
 | `logo-editor/js/main.js` | edytor logo (zapis do `user_logos`) | ✅ **ZAMKNIĘTE** — Warstwa 1 + Warstwa 2 (krok 4), 14/14 e2e (run #68) |
 | `js/pages/builder.js` | lista gier — tworzenie/nazwa/usuwanie | ✅ **ZAMKNIĘTE** — rename/reset/delete sprawdzają busy; duplikowanie NIE istnieje (sprawdzone w kodzie) |
 | `js/pages/builder-import-export.js` | import/eksport całych gier | ✅ import bezpieczny z natury (zawsze nowe wiersze); eksport dostał busy-check w `builder.js` (czyta grę/pytania/odpowiedzi w kilku zapytaniach po kolei — bez tego mógłby złapać rozjechany stan przy edycji w tym samym momencie) — ✅ e2e zielone (run #70, 16/16) |
-| `js/pages/bases.js` | lista baz pytań, zarządzanie udostępnieniami | ✅ `createBase`/`exportBase`/`importBase` bezpieczne z natury (nowe wiersze/odczyt). 🔲 `renameBase`/`deleteBase` piszą bez busy-check — **celowo odłożone do kroku 6**, bo `base-explorer.js` jeszcze nie trzyma żadnego locka `base` do sprawdzenia (dodać RAZEM z Warstwą 1 tam) |
-| `base-explorer/` (`actions.js`, `state.js`, `tags-modal.js`, `export-modal.js`) | edycja bazy pytań | 🔲 dogłębny audyt najpierw, Warstwa 1 dopiero potem — patrz sekcja "Baza pytań" |
+| `js/pages/bases.js` | lista baz pytań, zarządzanie udostępnieniami | ✅ **ZAMKNIĘTE** (2026-09-02) — `renameBase` przez `updateChecked()`, `deleteBase` przez `delete_resource_checked('base', ...)` (blokuje, gdy coś w środku bazy ma aktywny lock) — patrz sekcja "Baza pytań" → "Rozszerzenie na bases.js" |
+| `base-explorer/` (`actions.js`, `state.js`, `tags-modal.js`, `export-modal.js`) | edycja bazy pytań | ✅ **ZAMKNIĘTE** (2026-09-02) — audyt A/B/C, Warstwa 1 (precyzyjne locki) i Warstwa 2 (`updateChecked`/`updateCheckedMany`) zrobione — patrz sekcja "Baza pytań" |
 | `js/pages/generator.js` | generator gier (AI) dla producentów/marketplace | ✅ **poza zakresem tego audytu** — sprawdzone w kodzie: pisze wyłącznie przez Edge Function do `market_games`, fizycznie innej tabeli niż `games`/`questions`/`answers` — zero możliwej kolizji z edytorem/ustawieniami/ankietą. Wcześniejszy wpis w planie był błędny |
-| `js/pages/polls-hub.js` | lista ankiet (hub) — anuluje zadania ankietowe, usuwa głosy | ✅ **sprawdzone, poza zakresem** — patrz wiersz przy zasobie `game` wyżej |
+| `js/pages/polls-hub.js` | lista ankiet (hub) — anuluje zadania ankietowe, usuwa głosy | ✅ podstawowy audyt zapisu (Warstwa 1/2) sprawdzony, poza zakresem — patrz wiersz przy zasobie `game` wyżej. 🔲 **OSOBNA, wciąż otwarta kwestia**: krzyżowe blokady jako KONSUMENT/CEL (sekcja "Krzyżowe blokady między zasobami" → "Model ogólny", punkt 3) — czy ta strona-hub odwołuje się do czegoś co może zniknąć pod ręką, i czy ma akcję usuwania która powinna respektować cudzy aktywny lock — jeszcze nieprzeanalizowane |
 | `js/pages/settings.js` | ustawienia konta użytkownika (nie gry) | 🔲 nieprzejrzane, niski priorytet — nie dotyka żadnego z trzech zasobów |
 | `js/pages/subscriptions.js` | subskrypcja/płatności | 🔲 nieprzejrzane, niski priorytet — nie dotyka żadnego z trzech zasobów |
 | `js/pages/login.js`, `account.js`, `confirm.js` | logowanie / migracja gościa | ✅ przerobione wcześniej (deferred guest migration) |
@@ -667,9 +667,9 @@ pracy: po `game-settings.js` i `polls.js`.
 
 ---
 
-## Baza pytań (`base-explorer/`) — bardzo dogłębny audyt + współdzielenie — 🔲 do zrobienia
+## Baza pytań (`base-explorer/`) — bardzo dogłębny audyt + współdzielenie — ✅ ZAMKNIĘTE (2026-09-02)
 
-### Decyzja po audycie: precyzyjne blokady każdego elementu — 🚧 implementacja w toku (2026-09-01)
+### Decyzja po audycie: precyzyjne blokady każdego elementu — ✅ zrobione (2026-09-01/02)
 
 Wybrany został wariant zachowujący równoległą pracę nad różnymi elementami,
 zamiast jednej blokady całej bazy. Klucze to `base_question` (treść,
@@ -867,6 +867,60 @@ Uwaga do Warstwy 1 dla bazy: blokada całej bazy na raz byłaby prostsza,
 ale wykluczałaby legalną jednoczesną pracę właściciela + `editor`-a nad
 różnymi pytaniami w tej samej bazie — zdecydowane (patrz sekcja "Decyzja
 po audycie" wyżej) na precyzyjne blokady per element zamiast tego.
+
+### Warstwa 2 dla base-explorera — ✅ zrobione (2026-09-02)
+
+Ostatnia otwarta dziura w module: `updateChecked()`/`ROW_GONE` (ten sam
+wzorzec co już zamknięty dla `editor.js` — patrz sekcja "Edytor gier")
+nie był używany nigdzie w `actions.js`/`tags-modal.js` — gołe
+`.from(...).update(...)` cicho "udawały" zapis, gdy element zniknął w
+międzyczasie (np. Warstwa 1 ominięta przez bezpośrednie wywołanie
+klienta/RPC, albo usunięty zanim ktokolwiek zdążył zająć blokadę).
+Naprawione, podmienione na `updateChecked()`
+(`js/core/db-guard.js`) w pięciu miejscach:
+- `renameByKey()` — obie gałęzie (folder i pytanie).
+- `state._api.openQuestionModal` — zapis `payload` po Zapisz w modalu.
+- `tags-modal.js`'s `saveL2Tag()` — gałąź `mode:"edit"` (rename/kolor
+  istniejącego tagu; tworzenie nowego tagu to INSERT, nie ma tego
+  problemu).
+
+Dwa miejsca operują na WIELU wierszach naraz (`.in("id", [...])`), gdzie
+`updateChecked()`'s pojedyncze `.eq()` nie pasuje — dodany nowy,
+współdzielony wariant `updateCheckedMany(table, ids, patch)` (też w
+`db-guard.js`): porównuje liczbę zwróconych wierszy z liczbą żądanych id,
+wykrywając częściowy, cichy brak skutku (np. połowa przenoszonego
+zaznaczenia zniknęła w międzyczasie). Użyty w:
+- `moveItemsTo()` — bulk update `qb_questions.category_id` i
+  `qb_categories.parent_id`.
+- `applyCategoryOrder()` — per-wiersz w istniejącej pętli (`ord`+
+  `parent_id`), czyli de facto `updateChecked()` w każdej iteracji.
+
+Wszystkie miejsca łapią `ROW_GONE` i pokazują
+`t("resourceLock.goneMessage")` (ten sam komunikat co Warstwa 1 dla
+`gone`) zamiast fałszywego potwierdzenia zapisu. Testy e2e: nowy opis
+"Warstwa 2 (updateChecked, ROW_GONE)" w `base-explorer.spec.js` — 3
+testy pokrywające 3 różne kształty wywołania (`updateChecked` przez F2 i
+przez question-modal, `saveL2Tag`'s edit branch) symulując ominięcie
+blokady bezpośrednim usunięciem tuż przed kliknięciem Zapisz.
+Świadomie NIE dodany osobny test dla `updateCheckedMany()`
+(`moveItemsTo`/drag&drop) — symulacja D&D w tym pliku jest jednym,
+atomowym `page.evaluate()` (dragstart→drop bez przerwy, patrz komentarz
+przy `simulateDragDrop()`), bez naturalnego miejsca na wstrzyknięcie
+usunięcia MIĘDZY zajęciem blokady a samym zapisem; pokrycie przez
+identyczność wzorca kodu z już przetestowanym `updateChecked()`
+uznane za wystarczające.
+
+`deleteItems`/`deleteTags`/`applyTagToDraggedItems` świadomie NIE
+dostały tego traktowania — DELETE trafiający w 0 wierszy nie jest
+"cichym sukcesem" (nic do skasowania = nic się nie stało, inna kategoria
+ryzyka niż nadpisanie przy UPDATE), a INSERT (przypisanie tagu) nie ma
+analogicznego trybu cichej porażki.
+
+**Baza pytań (`base-explorer/` + `bases.js`) — moduł w pełni zamknięty**:
+audyt (A/B/C), Warstwa 1 (precyzyjne locki per pytanie/folder/tag,
+rozszerzone na `bases.js`'s rename/delete) i teraz Warstwa 2 — obie
+warstwy ochrony zrobione i przetestowane, tak jak `editor.js`/
+`game-settings.js`/`logo-editor`/`polls.js` wcześniej.
 
 ### A) Sam edytor bazy — dokładność jak w `editor.spec.js`
 - CRUD pytań/odpowiedzi/kategorii/tagów (`page.js`, `render.js`,

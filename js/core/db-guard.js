@@ -30,3 +30,24 @@ export async function updateChecked(table, match, patch) {
   }
   return data;
 }
+
+// Wariant zbiorczy dla operacji na wielu wierszach naraz (np. przenoszenie/
+// reorder zaznaczenia w base-explorerze) -- gdzie updateChecked()'s pojedyncze
+// .eq() nie pasuje, bo dopasowanie jest przez .in(idColumn, ids). Ten sam
+// problem co przy pojedynczym wierszu: PostgREST po prostu pomija wiersze,
+// które już nie istnieją, więc UPDATE "udaje się" nawet gdy część zaznaczenia
+// zniknęła w międzyczasie gdzie indziej. Porównanie liczby zwróconych wierszy
+// z liczbą żądanych id wykrywa ten częściowy, cichy brak skutku.
+export async function updateCheckedMany(table, ids, patch, idColumn = "id") {
+  const uniqueIds = Array.from(new Set((ids || []).filter(Boolean)));
+  if (!uniqueIds.length) return [];
+
+  const { data, error } = await sb().from(table).update(patch).in(idColumn, uniqueIds).select(idColumn);
+  if (error) throw error;
+  if (!data || data.length !== uniqueIds.length) {
+    const e = new Error(`updateCheckedMany: expected ${uniqueIds.length} rows in "${table}", got ${data?.length || 0}`);
+    e.code = ROW_GONE;
+    throw e;
+  }
+  return data;
+}

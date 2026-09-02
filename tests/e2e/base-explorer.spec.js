@@ -2354,6 +2354,121 @@ test.describe("base-explorer: współdzielenie i uprawnienia (dwóch różnych u
   });
 });
 
+/* ================= 5.5) Warstwa 2 -- updateChecked()/ROW_GONE =================
+ *
+ * Warstwa 1 (locki per element, sekcja wyżej) chroni UX -- konflikt
+ * pokazuje jasny komunikat zamiast cichego rozjazdu. Warstwa 2 jest
+ * niezależną linią obrony: nawet gdy blokada zostanie ominięta (zasób
+ * usunięty bezpośrednio przez inny proces/klienta, nie przez UI, które by
+ * ją zajęło), UPDATE trafiający w 0 wierszy nie może cicho "udać się" --
+ * ten sam wzorzec co już zamknięty dla `editor.js` (docs, sekcja "Warstwa
+ * 2"). Symulujemy ominięcie usuwając zasób bezpośrednio przez
+ * window.__sbClient tuż przed kliknięciem Zapisz, w tej samej karcie --
+ * nie trzeba drugiego, prawdziwego konta, bo to nie test współdzielenia,
+ * tylko odporności samego zapisu.
+ */
+
+test.describe("base-explorer: Warstwa 2 (updateChecked, ROW_GONE)", () => {
+
+  test("F2: zmiana nazwy pytania usuniętego tuż przed Zapisz pokazuje komunikat zamiast cichego sukcesu", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context);
+    const baseId = await createBase(page, `E2E-XV-RENAMEGONE-${Date.now()}`);
+
+    try {
+      const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "Do usunięcia w trakcie edycji", answers: [] } });
+
+      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+
+      const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
+      await expect(row).toBeVisible({ timeout: 15000 });
+      await row.click();
+      await page.keyboard.press("F2");
+
+      const input = page.locator("#renameModalInput");
+      await expect(input).toBeVisible({ timeout: 5000 });
+      await input.fill("Nowa nazwa");
+
+      // pytanie znika "gdzieś indziej" (poza blokadą -- bezpośredni zapis)
+      // tuż przed kliknięciem Zapisz
+      await page.evaluate(async (id) => {
+        await window.__sbClient.from("qb_questions").delete().eq("id", id);
+      }, qid);
+
+      await page.locator("#renameModalSave").click();
+      await expect(page.locator(".uni-modal .mSub")).toHaveText(/w międzyczasie usunięte/i, { timeout: 5000 });
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+
+  test("Ctrl+E: zapis treści pytania usuniętego tuż przed Zapisz pokazuje komunikat zamiast cichego sukcesu", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context);
+    const baseId = await createBase(page, `E2E-XV-QSAVEGONE-${Date.now()}`);
+
+    try {
+      const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "Do usunięcia w trakcie edycji", answers: [] } });
+
+      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+
+      const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
+      await expect(row).toBeVisible({ timeout: 15000 });
+      await row.click();
+      await pressToolbarShortcut(page, "editQuestion", "Control+e");
+      await expect(page.locator("#questionOverlay")).toBeVisible({ timeout: 5000 });
+
+      await page.locator("#qText").fill("Nowa treść");
+
+      // pytanie znika "gdzieś indziej" tuż przed kliknięciem Zapisz
+      await page.evaluate(async (id) => {
+        await window.__sbClient.from("qb_questions").delete().eq("id", id);
+      }, qid);
+
+      await page.locator("#qSave").click();
+      await expect(page.locator(".uni-modal .mSub")).toHaveText(/w międzyczasie usunięte/i, { timeout: 5000 });
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+
+  test("Edytuj tag: zapis nazwy/koloru tagu usuniętego tuż przed Zapisz pokazuje komunikat w modalu", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context);
+    const baseId = await createBase(page, `E2E-XV-TAGEDITGONE-${Date.now()}`);
+
+    try {
+      const tagId = await createTag(page, { baseId, name: "e2e-do-znikniecia" });
+
+      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+
+      const tagRow = page.locator(`#tags .row[data-kind="tag"][data-id="${tagId}"]`);
+      await expect(tagRow).toBeVisible({ timeout: 15000 });
+      await tagRow.click({ button: "right" });
+
+      const editItem = page.locator(".context-menu .cm-item", { hasText: /Edytuj tag/i });
+      await expect(editItem).toBeVisible({ timeout: 5000 });
+      await editItem.click();
+
+      await expect(page.locator("#tagsOverlay")).toBeVisible({ timeout: 5000 });
+      await page.locator("#tagsEditName").fill("nowanazwa");
+
+      // tag znika "gdzieś indziej" tuż przed kliknięciem Zapisz
+      await page.evaluate(async (id) => {
+        await window.__sbClient.from("qb_tags").delete().eq("id", id);
+      }, tagId);
+
+      await page.locator("#tagsL2Save").click();
+      await expect(page.locator("#tagsEditErr")).toHaveText(/w międzyczasie usunięte/i, { timeout: 5000 });
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+});
+
 /* ================= 6) mobile.js (drawer, long-press, podwójny tap) =================
  *
  * mobile.js nie ma żadnych własnych testów mimo osobnego, nietrywialnego

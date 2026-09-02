@@ -30,6 +30,7 @@ import { openTagsModal } from "./tags-modal.js?v=v2026-09-02T20435";
 import { initExportModal } from "./export-modal.js?v=v2026-09-02T20435";
 import { initQuestionModal } from "./question-modal.js?v=v2026-09-02T20435";
 import { sb } from "../../js/core/supabase.js?v=v2026-09-02T20435";
+import { updateChecked, updateCheckedMany, ROW_GONE } from "../../js/core/db-guard.js?v=v2026-09-02T20435";
 import { acquireResourceLock, acquireResourceLocks } from "../../js/core/resource-lock.js?v=v2026-09-02T20435";
 import { alertModal, confirmModal } from "../../js/core/modal.js?v=v2026-09-02T20435";
 import { t } from "../../translation/translation.js?v=v2026-09-02T20435";
@@ -1018,11 +1019,15 @@ export async function renameByKey(state, key, newValueRaw) {
 
   if (key.startsWith("c:")) {
     const id = key.slice(2);
-    const { error } = await sb()
-      .from("qb_categories")
-      .update({ name: val })
-      .eq("id", id);
-    if (error) throw error;
+    try {
+      await updateChecked("qb_categories", { id }, { name: val });
+    } catch (e) {
+      if (e?.code === ROW_GONE) {
+        void alertModal({ text: t("resourceLock.goneMessage") });
+        return false;
+      }
+      throw e;
+    }
 
     // odśwież cache kategorii (bo lista folderów jest z state.categories)
     if (state._api?.refreshCategories) await state._api.refreshCategories();
@@ -1049,11 +1054,15 @@ export async function renameByKey(state, key, newValueRaw) {
     const upd = { payload };
     if (state.user?.id) upd.updated_by = state.user.id;
 
-    const { error } = await sb()
-      .from("qb_questions")
-      .update(upd)
-      .eq("id", id);
-    if (error) throw error;
+    try {
+      await updateChecked("qb_questions", { id }, upd);
+    } catch (e) {
+      if (e?.code === ROW_GONE) {
+        void alertModal({ text: t("resourceLock.goneMessage") });
+        return false;
+      }
+      throw e;
+    }
 
     // root cache może się zmienić
     state._rootQuestions = null;
@@ -1967,26 +1976,22 @@ async function moveItemsTo(state, targetFolderIdOrNull, { mode = "move" } = {}) 
       const upd = { category_id: targetFolderIdOrNull };
       if (state.user?.id) upd.updated_by = state.user.id;
 
-      const { error } = await sb()
-        .from("qb_questions")
-        .update(upd)
-        .in("id", qIds);
-
-      if (error) throw error;
+      await updateCheckedMany("qb_questions", qIds, upd);
       state._rootQuestions = null;
     }
 
     // 5) MOVE — foldery
     if (cIds.length) {
-      const { error } = await sb()
-        .from("qb_categories")
-        .update({ parent_id: targetFolderIdOrNull })
-        .in("id", cIds);
-
-      if (error) throw error;
+      await updateCheckedMany("qb_categories", cIds, { parent_id: targetFolderIdOrNull });
 
       if (state._api?.refreshCategories) await state._api.refreshCategories();
     }
+  } catch (e) {
+    if (e?.code === ROW_GONE) {
+      void alertModal({ text: t("resourceLock.goneMessage") });
+      return;
+    }
+    throw e;
   } finally {
     moveLease.release();
   }
@@ -2124,12 +2129,14 @@ async function applyCategoryOrder(state, parentIdOrNull, orderedIds) {
   // Jeśli kiedyś będzie tego tysiące, zrobimy RPC/batch.
   try {
     for (const u of updates) {
-      const { error } = await sb()
-        .from("qb_categories")
-        .update({ parent_id: u.parent_id, ord: u.ord })
-        .eq("id", u.id);
-      if (error) throw error;
+      await updateChecked("qb_categories", { id: u.id }, { parent_id: u.parent_id, ord: u.ord });
     }
+  } catch (e) {
+    if (e?.code === ROW_GONE) {
+      void alertModal({ text: t("resourceLock.goneMessage") });
+      return;
+    }
+    throw e;
   } finally {
     lease.release();
   }
@@ -4417,12 +4424,15 @@ export function wireActions({ state }) {
         return false;
       }
 
-      const { error } = await sb()
-        .from("qb_questions")
-        .update({ payload: res.payload })
-        .eq("id", qid);
-
-      if (error) throw error;
+      try {
+        await updateChecked("qb_questions", { id: qid }, { payload: res.payload });
+      } catch (e) {
+        if (e?.code === ROW_GONE) {
+          void alertModal({ text: t("resourceLock.goneMessage") });
+          return false;
+        }
+        throw e;
+      }
 
       await refreshList(state);
       return true;
