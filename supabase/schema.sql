@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 1zbn9bjGchTlp7mkZOJXyhYEre55jwLStZ3xJo2KxxHdLYA1hLKI6oUK3fTfP3Z
+\restrict tdIF5xFWJXCck9RJCQVH9lNppVjpd1ujZinOfmFebSDek7Fvo6QL3o85EBBwe9g
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -1589,6 +1589,35 @@ begin
     end if;
 
     delete from public.user_logos where id = p_resource_id;
+    return jsonb_build_object('ok', true);
+
+  elsif p_resource_type = 'base' then
+    if not exists (select 1 from public.question_bases where id = p_resource_id and owner_id = v_uid) then
+      return jsonb_build_object('ok', false, 'error', 'not_found_or_forbidden');
+    end if;
+
+    -- Którykolwiek element WEWNĄTRZ tej bazy (pytanie/folder/tag) ma teraz
+    -- aktywną sesję edycji (Warstwa 1, migracja 257) -- usunięcie całej
+    -- bazy skasowałoby go (CASCADE) spod ręki edytującego bez ostrzeżenia.
+    if exists (
+      select 1 from public.edit_locks l
+      where l.heartbeat_at > now() - interval '25 seconds'
+        and (
+          (l.resource_type = 'base_question' and exists (
+            select 1 from public.qb_questions q where q.id = l.resource_id and q.base_id = p_resource_id
+          ))
+          or (l.resource_type = 'base_folder' and exists (
+            select 1 from public.qb_categories c where c.id = l.resource_id and c.base_id = p_resource_id
+          ))
+          or (l.resource_type = 'base_tag' and exists (
+            select 1 from public.qb_tags t where t.id = l.resource_id and t.base_id = p_resource_id
+          ))
+        )
+    ) then
+      return jsonb_build_object('ok', false, 'in_use', true, 'reason', 'locked');
+    end if;
+
+    delete from public.question_bases where id = p_resource_id;
     return jsonb_build_object('ok', true);
 
   else
@@ -14511,5 +14540,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 1zbn9bjGchTlp7mkZOJXyhYEre55jwLStZ3xJo2KxxHdLYA1hLKI6oUK3fTfP3Z
+\unrestrict tdIF5xFWJXCck9RJCQVH9lNppVjpd1ujZinOfmFebSDek7Fvo6QL3o85EBBwe9g
 
