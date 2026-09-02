@@ -1,12 +1,12 @@
 // js/pages/polls.js
-import { sb } from "../core/supabase.js?v=v2026-09-02T21211";
-import { rt } from "../core/realtime.js?v=v2026-09-02T21211";
-import { requireAuth } from "../core/auth.js?v=v2026-09-02T21211";
-import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-02T21211";
+import { sb } from "../core/supabase.js?v=v2026-09-02T21283";
+import { rt } from "../core/realtime.js?v=v2026-09-02T21283";
+import { requireAuth } from "../core/auth.js?v=v2026-09-02T21283";
+import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-02T21283";
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
-import { initI18n, t, withLangParam, getUiLang } from "../../translation/translation.js?v=v2026-09-02T21211";
-import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-02T21211";
-import { guardResourceLock } from "../core/resource-lock.js?v=v2026-09-02T21211";
+import { initI18n, t, withLangParam, getUiLang } from "../../translation/translation.js?v=v2026-09-02T21283";
+import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-02T21283";
+import { guardResourceLock } from "../core/resource-lock.js?v=v2026-09-02T21283";
 import "../core/contact-modal.js";
 
 // initI18n is called at the start of DOMContentLoaded (see below)
