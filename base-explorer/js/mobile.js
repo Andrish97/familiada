@@ -74,6 +74,7 @@ export function addLongPress(el, callback) {
 
     timer = setTimeout(() => {
       timer = null;
+      console.warn("[lp-diag] TIMER FIRED -- callback(showContextMenu) wywołany mimo ruchu/upu");
       callback(e.clientX, e.clientY, e.target);
     }, LONG_PRESS_MS);
   }, { passive: true });
@@ -82,7 +83,11 @@ export function addLongPress(el, callback) {
     if (e.pointerType === "mouse") return;
     const dx = e.clientX - startX;
     const dy = e.clientY - startY;
-    if (Math.hypot(dx, dy) > MOVE_THRESHOLD) cancel();
+    const dist = Math.hypot(dx, dy);
+    if (dist > MOVE_THRESHOLD) {
+      console.warn(`[lp-diag] pointermove cancel: dist=${dist} timerWas=${!!timer}`);
+      cancel();
+    }
   }, { passive: true });
 
   el.addEventListener("pointerup", cancel, { passive: true });
@@ -110,7 +115,9 @@ export function addLongPress(el, callback) {
  */
 export function isTouchContextMenuWindow(el) {
   const t = touchDownAt.get(el);
-  return typeof t === "number" && (Date.now() - t) < LONG_PRESS_MS + 300;
+  const result = typeof t === "number" && (Date.now() - t) < LONG_PRESS_MS + 300;
+  console.warn(`[lp-diag] isTouchContextMenuWindow: hasTimestamp=${typeof t === "number"} elapsed=${typeof t === "number" ? Date.now() - t : "n/a"} result=${result}`);
+  return result;
 }
 
 /* ================= Double tap ================= */
