@@ -34,7 +34,7 @@ import { updateChecked, updateCheckedMany, ROW_GONE } from "../../js/core/db-gua
 import { acquireResourceLock, acquireResourceLocks } from "../../js/core/resource-lock.js?v=v2026-09-02T20564";
 import { alertModal, confirmModal } from "../../js/core/modal.js?v=v2026-09-02T20564";
 import { t } from "../../translation/translation.js?v=v2026-09-02T20564";
-import { addLongPress, addDoubleTap } from "./mobile.js?v=v2026-09-02T20564";
+import { addLongPress, addDoubleTap, isTouchContextMenuWindow } from "./mobile.js?v=v2026-09-02T21200";
 
 let exportModal = null;
 
@@ -1041,12 +1041,19 @@ export async function renameByKey(state, key, newValueRaw) {
     // Pobierz świeży payload z DB tuż przed zapisem -- lokalny cache (state.questions/
     // _viewQuestions) może być nieaktualny, jeśli ktoś w międzyczasie edytował to samo
     // pytanie gdzie indziej (np. przez question-modal), a UPDATE nadpisuje CAŁY payload.
+    // maybeSingle() (nie single()) -- pytanie mogło zniknąć w międzyczasie (usunięte
+    // gdzie indziej tuż przed Zapisz); single() rzuciłby wtedy PGRST116 zamiast
+    // pozwolić nam pokazać ten sam komunikat ROW_GONE co przy samym UPDATE-cie niżej.
     const { data: fresh, error: eFetch } = await sb()
       .from("qb_questions")
       .select("payload")
       .eq("id", id)
-      .single();
+      .maybeSingle();
     if (eFetch) throw eFetch;
+    if (!fresh) {
+      void alertModal({ text: t("resourceLock.goneMessage") });
+      return false;
+    }
 
     const payload = (fresh?.payload && typeof fresh.payload === "object") ? { ...fresh.payload } : {};
     payload.text = val;
@@ -3146,6 +3153,7 @@ export function wireActions({ state }) {
   // PPM na tagach (tag + puste tło)
   tagsEl?.addEventListener("contextmenu", async (e) => {
     e.preventDefault();
+    if (isTouchContextMenuWindow(tagsEl)) return; // natywne menu po long-pressie/scrollu na dotyku (patrz mobile.js)
     if (isLeftPanelLockedBySearch()) {
       warnLeftLockedBySearch();
       return;
@@ -3375,6 +3383,7 @@ export function wireActions({ state }) {
   // PPM na drzewie (foldery + puste tło)
   treeEl?.addEventListener("contextmenu", async (e) => {
     e.preventDefault();
+    if (isTouchContextMenuWindow(treeEl)) return; // natywne menu po long-pressie/scrollu na dotyku (patrz mobile.js)
 
     if (isTreeLocked(state)) {
       warnTreeLocked(state);
@@ -4582,6 +4591,7 @@ export function wireActions({ state }) {
   // PPM na liście (foldery/pytania/puste tło)
   listEl?.addEventListener("contextmenu", async (e) => {
     e.preventDefault();
+    if (isTouchContextMenuWindow(listEl)) return; // natywne menu po long-pressie/scrollu na dotyku (patrz mobile.js)
 
     const row = e.target?.closest?.(".row[data-kind][data-id]");
     if (row) {

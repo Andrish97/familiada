@@ -48,18 +48,19 @@ export function initDrawer() {
  * Wywołuje callback(x, y, target) po LONG_PRESS_MS ms bez ruchu.
  * Nie blokuje normalnych kliknięć.
  */
+// el -> timestamp ostatniego pointerdown dotykiem/rysikiem (do
+// isTouchContextMenuWindow, patrz niżej).
+const touchDownAt = new WeakMap();
+
 export function addLongPress(el, callback) {
   if (!el) return;
 
   let timer = null;
   let startX = 0;
   let startY = 0;
-  let fired = false;
-  let lastTouchDownAt = 0;
 
   function cancel() {
     if (timer) { clearTimeout(timer); timer = null; }
-    fired = false;
   }
 
   el.addEventListener("pointerdown", (e) => {
@@ -67,13 +68,11 @@ export function addLongPress(el, callback) {
     if (e.pointerType === "mouse") return;
 
     cancel();
-    fired = false;
     startX = e.clientX;
     startY = e.clientY;
-    lastTouchDownAt = Date.now();
+    touchDownAt.set(el, Date.now());
 
     timer = setTimeout(() => {
-      fired = true;
       timer = null;
       callback(e.clientX, e.clientY, e.target);
     }, LONG_PRESS_MS);
@@ -88,34 +87,30 @@ export function addLongPress(el, callback) {
 
   el.addEventListener("pointerup", cancel, { passive: true });
   el.addEventListener("pointercancel", cancel, { passive: true });
+}
 
-  // Zablokuj natywne context menu na touch (iOS/Android). Diagnostyka na
-  // żywo w CI (run #81, "[longpress-diag]") potwierdziła, że NASZ stan
-  // (fired/timer) jest zawsze poprawny -- pointermove wykrywa ruch,
-  // cancel() realnie czyści aktywny timer, callback NIGDY się nie odpala
-  // po ruchu. Mimo to menu się nadal otwierało (run #82, ta sama poprawka
-  // z oknem czasowym): przyczyna okazała się być KOLEJNOŚĆ REJESTRACJI,
-  // nie logika warunku. `wireActions()` rejestruje zwykły, desktopowy
-  // listener "contextmenu" (otwiera menu bezwarunkowo) na tym samym
-  // elemencie PRZED wywołaniem addLongPress() -- listenery na tym samym
-  // elemencie/zdarzeniu odpalają się w kolejności rejestracji, więc
-  // desktopowy opener zawsze wygrywał wyścig i otwierał menu, zanim to
-  // tłumienie (zarejestrowane później) miało szansę zawołać
-  // preventDefault()/stopPropagation() -- to i tak nie cofa już
-  // wykonanego, wcześniejszego listenera na tym samym elemencie.
-  // Naprawa: rejestracja w fazie CAPTURE (3. argument `true`) zamiast
-  // bubble -- faza capture na danym elemencie zawsze wykonuje się przed
-  // KAŻDYM listenerem bubble na nim, niezależnie od kolejności rejestracji
-  // w kodzie, więc `stopPropagation()` tutaj realnie powstrzymuje
-  // późniejszy, bezwarunkowy listener bubble przed uruchomieniem.
-  el.addEventListener("contextmenu", (e) => {
-    const withinTouchWindow = Date.now() - lastTouchDownAt < LONG_PRESS_MS + 300;
-    if (fired || withinTouchWindow) {
-      e.preventDefault();
-      e.stopPropagation();
-      fired = false;
-    }
-  }, true);
+/**
+ * Czy dany element jest w oknie czasowym tuż po dotykowym pointerdown, w
+ * którym przeglądarka może sama wygenerować NATYWNE zdarzenie "contextmenu"
+ * (własna, niezależna od tego JS-a detekcja przytrzymania dotyku — nasz
+ * `fired`/`timer` z addLongPress() bywa w tym momencie już poprawnie
+ * anulowany przez ruch palca, a natywne menu i tak przychodzi, patrz run
+ * #81). Wołający (desktopowy listener "contextmenu" w actions.js) ma
+ * ZAWSZE ignorować menu w tym oknie, niezależnie od tego czy nasz
+ * long-press "się udał" czy został anulowany — w obu przypadkach jest
+ * niechciane. Świadomie zaimplementowane jako WCZESNY GUARD wewnątrz
+ * JEDYNEGO listenera "contextmenu" na danym elemencie, a nie jako osobny,
+ * konkurujący listener (jak w poprzedniej wersji, run #82's poprawka
+ * capture-phase) — dwa listenery tego samego typu zdarzenia na tym samym
+ * elemencie potrafią odpalić się w kolejności REJESTRACJI zamiast
+ * kolejności faz (capture/bubble) zawsze wtedy, gdy element jest
+ * bezpośrednim `target`-em zdarzenia (tzw. AT_TARGET), więc capture-phase
+ * nie dawało twardej gwarancji pierwszeństwa. Jeden listener eliminuje ten
+ * wyścig całkowicie.
+ */
+export function isTouchContextMenuWindow(el) {
+  const t = touchDownAt.get(el);
+  return typeof t === "number" && (Date.now() - t) < LONG_PRESS_MS + 300;
 }
 
 /* ================= Double tap ================= */

@@ -806,6 +806,51 @@ przed KAŻDYM listenerem bubble na nim, niezależnie od kolejności
 rejestracji w kodzie, więc to rozwiązanie jest odporne na przyszłe
 zmiany kolejności w `wireActions()`, nie tylko na obecny układ linii.
 
+**Run #83** (commit `581a2a12`, `spec_filter` = `base-explorer.spec.js
+--grep "long-press|usuniętego tuż przed Zapisz"`): capture-phase z run
+#82 DALEJ nie wystarczyła dla testu "anulowany przez ruch palca"
+(identyczny błąd, `.context-menu` count=1), plus NOWY, osobny błąd w
+jednym z 3 testów Warstwy 2 (F2 rename pytania). Oba naprawione:
+
+- **Long-press**: capture-phase (run #82) zakładała, że `listEl`
+  (element z OBOMA listenerami "contextmenu" — naszym tłumiącym i
+  desktopowym openerem) jest tylko ANCESTOR-em zdarzenia, którego target
+  to `.row`-wiersz — wtedy capture rzeczywiście wygrywa z bubble. Ale gdy
+  dany element JEST bezpośrednim `target`-em zdarzenia (tzw.
+  `AT_TARGET`), DOM nie rozróżnia capture/bubble w ogóle — WSZYSTKIE
+  listenery na nim (obu typów) odpalają się w kolejności REJESTRACJI. Bo
+  desktopowy opener jest rejestrowany PRZED `addLongPress()` w kodzie
+  (patrz wyżej), w tym trybie i tak wygrywał, capture-flag nie miał
+  znaczenia. Naprawione przez **usunięcie całego wyścigu**: `addLongPress()`
+  w `mobile.js` już NIE rejestruje własnego listenera "contextmenu" —
+  zamiast tego eksportuje `isTouchContextMenuWindow(el)` (true przez
+  `LONG_PRESS_MS + 300` ms od ostatniego dotykowego `pointerdown` na tym
+  elemencie, niezależnie czy nasz long-press "się udał" czy został
+  anulowany ruchem — dokładnie ten sam warunek co poprzednio, tylko bez
+  osobnego listenera). Desktopowy opener w `actions.js` (3 miejsca:
+  `listEl`/`treeEl`/`tagsEl`) woła ten helper jako PIERWSZĄ instrukcję i
+  wychodzi wcześniej, jeśli `true` — jest to teraz JEDYNY listener
+  "contextmenu" na każdym z tych elementów, więc pytanie "który wygra
+  wyścig" przestaje w ogóle istnieć (nie ma z kim wygrywać).
+- **F2 rename pytania → ROW_GONE**: modal pokazywał ogólny komunikat
+  "Nie udało się zmienić." zamiast `resourceLock.goneMessage`. Przyczyna:
+  `renameByKey()`'s gałąź `"q:"` (`actions.js`) NAJPIERW robi osobny
+  odczyt świeżego payloadu (`.select("payload").eq("id",id).single()`),
+  ZANIM w ogóle dojdzie do `updateChecked()` — gdy pytanie już nie
+  istnieje (usunięte tuż przed Zapisz, jak w teście), `.single()` na 0
+  wierszach rzuca PostgREST-owy `PGRST116` ("Cannot coerce the result to
+  a single JSON object"), który NIE jest `ROW_GONE` i leci dalej jako
+  zwykły, nieobsłużony błąd do ogólnego catch-a. `updateChecked()` na tej
+  gałęzi w ogóle nie zdążał się wykonać. Naprawione: `.single()` →
+  `.maybeSingle()` + jawne sprawdzenie `if (!fresh)` pokazujące
+  `resourceLock.goneMessage` — ten sam komunikat co przy `ROW_GONE` z
+  samego UPDATE-u niżej, tylko wykryty wcześniej, na etapie odczytu.
+- Trzeci czerwony wynik tego runu ("Edytuj tag" ROW_GONE) okazał się
+  jednorazowym flakiem infrastruktury (`page.waitForURL(/builder/)`
+  timeout PODCZAS LOGOWANIA, przed dotarciem do właściwego testu) —
+  przeszedł na retry #1 bez żadnej zmiany w kodzie, niepowiązany z
+  aplikacją.
+
 ### Rozszerzenie na `bases.js` (hub z listą baz) — ✅ zrobione (2026-09-02)
 
 Warstwa 1/2 opisana wyżej chroni to, co dzieje się WEWNĄTRZ już otwartej
@@ -917,25 +962,21 @@ ryzyka niż nadpisanie przy UPDATE), a INSERT (przypisanie tagu) nie ma
 analogicznego trybu cichej porażki.
 
 **Baza pytań (`base-explorer/` + `bases.js`) — moduł zamknięty w kodzie,
-czeka na finalne potwierdzenie CI (stan na 2026-09-02)**:
+czeka na finalne potwierdzenie CI (stan na 2026-09-02, po run #83)**:
 audyt (A/B/C), Warstwa 1 (precyzyjne locki per pytanie/folder/tag,
 rozszerzone na `bases.js`'s rename/delete) i Warstwa 2 (`updateChecked`/
-`updateCheckedMany` opisane wyżej) — cały kod + testy zacommitowane i
-wypchnięte na `main` (commit `66d14347`, zawiera też naprawę long-press z
-capture-phase z commitu `48a3f8bb`). **Jeszcze nie potwierdzone zielonym
-CI** — poprzedni run (#82) padał na starym buggu long-press (naprawiony
-w `48a3f8bb`, ale ta konkretna naprawa nie była jeszcze uruchomiona w
-CI), a nowe 3 testy Warstwy 2 nigdy jeszcze nie odpaliły się w CI (dopiero
-co dodane). Zgodnie z ustaloną konwencją (odpalamy tylko to, co dotyczy
-zmiany lub wcześniej nie przeszło), poproszono użytkownika o scoped
-`spec_filter`:
+`updateCheckedMany` opisane wyżej) — cały kod + testy zacommitowane.
+Run #83 (patrz opis wyżej) znalazł DWA realne błędy (long-press dalej się
+otwierał mimo capture-phase z run #82; F2 rename pytania pokazywał zły
+komunikat przy ROW_GONE) — oba naprawione (nowy commit, jeszcze nie
+wypchnięty w chwili pisania tego akapitu). **Wciąż nie potwierdzone
+zielonym CI** — potrzebny kolejny scoped re-run tym samym `spec_filter`
+co poprzednio (te same testy, ten sam commit-punkt odniesienia):
 `tests/e2e/base-explorer.spec.js --grep "long-press|usuniętego tuż przed Zapisz"`
-— pokrywa oba testy long-press (weryfikacja naprawy capture-phase) i
-wszystkie 3 nowe testy ROW_GONE (współdzielą frazę "usuniętego tuż przed
-Zapisz" w tytule). Testy z `bases.spec.js` i wcześniejsze testy locków w
-`base-explorer.spec.js` (run #79/#80) już przeszły i nie zostały tym
-commitem dotknięte, więc pomijamy je w tym re-runie. Po zielonym wyniku
-ten akapit i nagłówek modułu (linia ~670) można zaktualizować na
+— pokrywa oba testy long-press i wszystkie 3 testy ROW_GONE Warstwy 2.
+Testy z `bases.spec.js` i wcześniejsze testy locków (run #79/#80) nadal
+nie są tym dotknięte, pomijamy je zgodnie z konwencją. Po zielonym
+wyniku ten akapit i nagłówek modułu (linia ~670) można zaktualizować na
 "✅ w pełni zamknięty i potwierdzone CI".
 
 ### A) Sam edytor bazy — dokładność jak w `editor.spec.js`
