@@ -11,11 +11,11 @@ import {
   selectionToggle,
   rememberBrowseLocation,
   restoreBrowseLocation,
-} from "./state.js?v=v2026-09-02T19075";
+} from "./state.js?v=v2026-09-02T20435";
 
-import { importGame } from "../../js/pages/builder-import-export.js?v=v2026-09-02T19075";
+import { importGame } from "../../js/pages/builder-import-export.js?v=v2026-09-02T20435";
 
-import { renderAll, renderToolbar, renderList, renderTree, renderTags } from "./render.js?v=v2026-09-02T19075";
+import { renderAll, renderToolbar, renderList, renderTree, renderTags } from "./render.js?v=v2026-09-02T20435";
 
 import {
   listQuestionsByCategory,
@@ -23,17 +23,17 @@ import {
   listCategories,
   listQuestionTags,
   listCategoryTags
-} from "./repo.js?v=v2026-09-02T19075";
+} from "./repo.js?v=v2026-09-02T20435";
 
-import { showContextMenu, hideContextMenu } from "./context-menu.js?v=v2026-09-02T19075";
-import { openTagsModal } from "./tags-modal.js?v=v2026-09-02T19075";
-import { initExportModal } from "./export-modal.js?v=v2026-09-02T19075";
-import { initQuestionModal } from "./question-modal.js?v=v2026-09-02T19075";
-import { sb } from "../../js/core/supabase.js?v=v2026-09-02T19075";
-import { acquireResourceLock, acquireResourceLocks } from "../../js/core/resource-lock.js?v=v2026-09-02T19075";
-import { alertModal, confirmModal } from "../../js/core/modal.js?v=v2026-09-02T19075";
-import { t } from "../../translation/translation.js?v=v2026-09-02T19075";
-import { addLongPress, addDoubleTap } from "./mobile.js?v=v2026-09-02T19200";
+import { showContextMenu, hideContextMenu } from "./context-menu.js?v=v2026-09-02T20435";
+import { openTagsModal } from "./tags-modal.js?v=v2026-09-02T20435";
+import { initExportModal } from "./export-modal.js?v=v2026-09-02T20435";
+import { initQuestionModal } from "./question-modal.js?v=v2026-09-02T20435";
+import { sb } from "../../js/core/supabase.js?v=v2026-09-02T20435";
+import { acquireResourceLock, acquireResourceLocks } from "../../js/core/resource-lock.js?v=v2026-09-02T20435";
+import { alertModal, confirmModal } from "../../js/core/modal.js?v=v2026-09-02T20435";
+import { t } from "../../translation/translation.js?v=v2026-09-02T20435";
+import { addLongPress, addDoubleTap } from "./mobile.js?v=v2026-09-02T20435";
 
 let exportModal = null;
 
