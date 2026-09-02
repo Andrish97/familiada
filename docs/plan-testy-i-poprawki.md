@@ -916,11 +916,27 @@ dostały tego traktowania — DELETE trafiający w 0 wierszy nie jest
 ryzyka niż nadpisanie przy UPDATE), a INSERT (przypisanie tagu) nie ma
 analogicznego trybu cichej porażki.
 
-**Baza pytań (`base-explorer/` + `bases.js`) — moduł w pełni zamknięty**:
+**Baza pytań (`base-explorer/` + `bases.js`) — moduł zamknięty w kodzie,
+czeka na finalne potwierdzenie CI (stan na 2026-09-02)**:
 audyt (A/B/C), Warstwa 1 (precyzyjne locki per pytanie/folder/tag,
-rozszerzone na `bases.js`'s rename/delete) i teraz Warstwa 2 — obie
-warstwy ochrony zrobione i przetestowane, tak jak `editor.js`/
-`game-settings.js`/`logo-editor`/`polls.js` wcześniej.
+rozszerzone na `bases.js`'s rename/delete) i Warstwa 2 (`updateChecked`/
+`updateCheckedMany` opisane wyżej) — cały kod + testy zacommitowane i
+wypchnięte na `main` (commit `66d14347`, zawiera też naprawę long-press z
+capture-phase z commitu `48a3f8bb`). **Jeszcze nie potwierdzone zielonym
+CI** — poprzedni run (#82) padał na starym buggu long-press (naprawiony
+w `48a3f8bb`, ale ta konkretna naprawa nie była jeszcze uruchomiona w
+CI), a nowe 3 testy Warstwy 2 nigdy jeszcze nie odpaliły się w CI (dopiero
+co dodane). Zgodnie z ustaloną konwencją (odpalamy tylko to, co dotyczy
+zmiany lub wcześniej nie przeszło), poproszono użytkownika o scoped
+`spec_filter`:
+`tests/e2e/base-explorer.spec.js --grep "long-press|usuniętego tuż przed Zapisz"`
+— pokrywa oba testy long-press (weryfikacja naprawy capture-phase) i
+wszystkie 3 nowe testy ROW_GONE (współdzielą frazę "usuniętego tuż przed
+Zapisz" w tytule). Testy z `bases.spec.js` i wcześniejsze testy locków w
+`base-explorer.spec.js` (run #79/#80) już przeszły i nie zostały tym
+commitem dotknięte, więc pomijamy je w tym re-runie. Po zielonym wyniku
+ten akapit i nagłówek modułu (linia ~670) można zaktualizować na
+"✅ w pełni zamknięty i potwierdzone CI".
 
 ### A) Sam edytor bazy — dokładność jak w `editor.spec.js`
 - CRUD pytań/odpowiedzi/kategorii/tagów (`page.js`, `render.js`,
