@@ -457,7 +457,7 @@ różnych użytkowników, albo nieaktualne dane po zmianie gdzie indziej):
 | `js/pages/bases.js` | lista baz pytań, zarządzanie udostępnieniami | ✅ **ZAMKNIĘTE** (2026-09-02) — `renameBase` przez `updateChecked()`, `deleteBase` przez `delete_resource_checked('base', ...)` (blokuje, gdy coś w środku bazy ma aktywny lock) — patrz sekcja "Baza pytań" → "Rozszerzenie na bases.js" |
 | `base-explorer/` (`actions.js`, `state.js`, `tags-modal.js`, `export-modal.js`) | edycja bazy pytań | ✅ **ZAMKNIĘTE** (2026-09-02) — audyt A/B/C, Warstwa 1 (precyzyjne locki) i Warstwa 2 (`updateChecked`/`updateCheckedMany`) zrobione — patrz sekcja "Baza pytań" |
 | `js/pages/generator.js` | generator gier (AI) dla producentów/marketplace | ✅ **poza zakresem tego audytu** — sprawdzone w kodzie: pisze wyłącznie przez Edge Function do `market_games`, fizycznie innej tabeli niż `games`/`questions`/`answers` — zero możliwej kolizji z edytorem/ustawieniami/ankietą. Wcześniejszy wpis w planie był błędny |
-| `js/pages/polls-hub.js` | lista ankiet (hub) — anuluje zadania ankietowe, usuwa głosy | ✅ podstawowy audyt zapisu (Warstwa 1/2) sprawdzony, poza zakresem — patrz wiersz przy zasobie `game` wyżej. 🔲 **OSOBNA, wciąż otwarta kwestia**: krzyżowe blokady jako KONSUMENT/CEL (sekcja "Krzyżowe blokady między zasobami" → "Model ogólny", punkt 3) — czy ta strona-hub odwołuje się do czegoś co może zniknąć pod ręką, i czy ma akcję usuwania która powinna respektować cudzy aktywny lock — jeszcze nieprzeanalizowane |
+| `js/pages/polls-hub.js` | lista ankiet (hub) — anuluje zadania ankietowe, usuwa głosy | ✅ **ZAMKNIĘTE (2026-09-02)** — krzyżowe blokady jako konsument/cel przeanalizowane, patrz sekcja "polls-hub.js: krzyżowe blokady — analiza" niżej |
 | `js/pages/settings.js` | ustawienia konta użytkownika (nie gry) | 🔲 nieprzejrzane, niski priorytet — nie dotyka żadnego z trzech zasobów |
 | `js/pages/subscriptions.js` | subskrypcja/płatności | 🔲 nieprzejrzane, niski priorytet — nie dotyka żadnego z trzech zasobów |
 | `js/pages/login.js`, `account.js`, `confirm.js` | logowanie / migracja gościa | ✅ przerobione wcześniej (deferred guest migration) |
@@ -1864,6 +1864,67 @@ dopina tylko swój sygnał żywotności jako kolejny `resource_type` w
 - Logo ↔ Control, i cokolwiek innego "↔ trwająca rozgrywka" — czeka na
   fundament Control (presence/heartbeat), trafia jako jego rozszerzenie
   (krok 7), nie osobny byt.
+
+### `polls-hub.js`: krzyżowe blokady — analiza — ✅ ZAMKNIĘTE (2026-09-02)
+
+Odpowiedź na oba pytania z punktu 3 wyżej ("jako konsument" / "jako cel"),
+dla `js/pages/polls-hub.js` konkretnie:
+
+**Jako cel (czy hub ma akcję, którą trzeba przepuścić przez blokadę
+`game`)**: NIE. Jedyne zapisy w tym pliku idą przez RPC-e
+(`poll_admin_delete_vote`, `polls_hub_share_poll`,
+`polls_hub_task_decline`, `polls_hub_tasks_mark_emailed`) i wszystkie
+operują wyłącznie na `poll_votes`/`poll_text_entries`/`poll_tasks`/
+`poll_subscriptions` — tabelach bookkeepingowych, prywatnych dla huba.
+Żadna z nich nie dotyka `questions`/`answers`/`games.settings` — czyli
+kolumn, które faktycznie chroni wspólny klucz `game` (edytor/ustawienia/
+zamknięcie ankiety). Nie ma więc czego blokować: hub nie koliduje z
+edytującym te same dane, bo po prostu nie zapisuje do tych samych
+wierszy/kolumn.
+
+**Jako konsument (czy hub odwołuje się do czegoś, co może zniknąć pod
+ręką — usunięta gra)**: TAK, referuje `game_id` (`selectedPollId`/
+`sharePollId`), ale to już bezpiecznie obsłużone PO STRONIE SERWERA —
+sprawdzone w `supabase/schema.sql`:
+- `poll_admin_delete_vote(p_game_id, ...)` — `IF NOT EXISTS (SELECT 1
+  FROM games WHERE id = p_game_id AND owner_id = u) THEN RETURN
+  jsonb_build_object('ok', false, 'error', 'not_owner')` — gra usunięta
+  = ten sam kod co "nie twój", RPC nie rzuca, nie kasuje niczego po
+  cichu.
+- `polls_hub_share_poll(p_game_id, ...)` — analogiczne `if not found
+  then return jsonb_build_object('ok', false, 'error', 'game not
+  found')`.
+- Obie ścieżki w JS **już prawidłowo sprawdzały** (`saveShareModal`) albo
+  **NIE sprawdzały wcale** (delete-vote handler w `renderDetailsList`,
+  linia ~904) wartości `data?.ok` przed kontynuowaniem — to nie jest
+  problem blokad między zasobami, tylko zwykły, mniejszy bug tej samej
+  kategorii co Warstwa 2 gdzie indziej (ignorowanie wyniku zapisu).
+  Naprawione przy okazji tej analizy:
+  - `poll_admin_delete_vote`'s wynik jest teraz sprawdzany
+    (`data?.ok === false` → rzuca, pokazuje `MSG.deleteVoteFail()`)
+    zanim kod zrobi follow-up update na `poll_tasks`.
+  - Ten follow-up update (`status: 'cancelled'`) przepisany na
+    `updateChecked("poll_tasks", {id, owner_id}, patch)` zamiast gołego
+    `.update()` — gdyby wiersz zniknął (np. kaskadowe usunięcie razem z
+    grą), rzuci zamiast cicho nic nie robić.
+  - `polls_hub_task_decline`'s zwracana wartość (`boolean` — `found`)
+    była całkowicie ignorowana — teraz sprawdzana, `false`/`null` rzuca
+    błąd zamiast fałszywie zamykać modal potwierdzenia jako sukces.
+  - `polls_hub_tasks_mark_emailed`'s wynik świadomie NIE dostał tego
+    traktowania — to najlepszej-próby bookkeeping PO wysłaniu maila
+    (już i tak w bloku bez krytycznego znaczenia dla użytkownika, sam
+    plik już ma podobne, świadomie nieblokujące try/catch obok niego).
+
+**Wniosek**: `polls-hub.js` nie potrzebuje Warstwy 1 (nie jest ani
+konsumentem, ani celem krzyżowej blokady zasobu `game` w sensie, który
+mógłby coś popsuć) — wcześniejszy wpis w planie "poza zakresem" był
+słuszny, tylko nieprzeanalizowany do końca. Dwa drobne bugi (ignorowane
+wyniki RPC/update) naprawione przy okazji, bez nowego pliku e2e — żaden
+z nich nie dotyczy modelu blokad, więc nie pasuje do żadnego istniejącego
+zestawu testów lockowania, a dodawanie osobnego pliku dla dwóch
+jednolinijkowych poprawek "sprawdź wynik przed kontynuacją" uznane za
+nieproporcjonalne; pokrycie przez samą oczywistość zmiany (ten sam wzorzec
+`if (error) throw` już wszędzie indziej w tym pliku).
 
 ---
 

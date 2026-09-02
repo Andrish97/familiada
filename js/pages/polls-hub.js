@@ -1,4 +1,5 @@
 import { sb, SUPABASE_URL } from "../core/supabase.js?v=v2026-09-02T21283";
+import { updateChecked } from "../core/db-guard.js?v=v2026-09-02T21283";
 import { requireAuth } from "../core/auth.js?v=v2026-09-02T21283";
 import { isGuestUser, showGuestBlockedOverlay } from "../core/guest-mode.js?v=v2026-09-02T21283";
 import { validatePollReadyToOpen } from "../core/game-validate.js?v=v2026-09-02T21283";
@@ -481,7 +482,9 @@ function renderTasks() {
           if (!ok) return;
           try {
             setProgress({ show: true, step: t("pollsHubPolls.progress.declineTask"), i: 0, n: 1 });
-            await sb().rpc("polls_hub_task_decline", { p_task_id: task.task_id });
+            const { data, error } = await sb().rpc("polls_hub_task_decline", { p_task_id: task.task_id });
+            if (error) throw error;
+            if (!data) throw new Error("decline_task_failed");
             await refreshData();
           } catch {
             await alertModal({ text: t("pollsHubPolls.errors.declineTask") });
@@ -901,8 +904,9 @@ function renderDetailsList(container, rows) {
       try {
         setProgress({ show: true, step: MSG.deleteVoteStep(), i: 0, n: 2 });
         if (!row.task_id) throw new Error("missing_task_id");
-        await sb().rpc("poll_admin_delete_vote", { p_game_id: selectedPollId, p_voter_token: `task:${row.task_id}` });
-        await sb().from("poll_tasks").update({ status: "cancelled", cancelled_at: new Date().toISOString() }).eq("id", row.task_id).eq("owner_id", currentUser.id);
+        const { data, error } = await sb().rpc("poll_admin_delete_vote", { p_game_id: selectedPollId, p_voter_token: `task:${row.task_id}` });
+        if (error || data?.ok === false) throw new Error(data?.error || error?.message || "delete_vote_failed");
+        await updateChecked("poll_tasks", { id: row.task_id, owner_id: currentUser.id }, { status: "cancelled", cancelled_at: new Date().toISOString() });
         setProgress({ show: true, step: MSG.deleteVoteStep(), i: 1, n: 2 });
         await openDetailsModal();
       } catch {
