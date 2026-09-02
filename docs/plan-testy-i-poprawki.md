@@ -1003,14 +1003,14 @@ dostały tego traktowania — DELETE trafiający w 0 wierszy nie jest
 ryzyka niż nadpisanie przy UPDATE), a INSERT (przypisanie tagu) nie ma
 analogicznego trybu cichej porażki.
 
-**Baza pytań (`base-explorer/` + `bases.js`) — moduł zamknięty w kodzie,
-czeka na finalne potwierdzenie CI (stan na 2026-09-02, po run #85)**:
-audyt (A/B/C), Warstwa 1 (precyzyjne locki per pytanie/folder/tag,
-rozszerzone na `bases.js`'s rename/delete) i Warstwa 2 (`updateChecked`/
-`updateCheckedMany` opisane wyżej) — cały kod + testy zacommitowane.
-Run #83/#84/#85 (patrz opis wyżej) znalazły i naprawiły PO KOLEI:
-long-press race (run #83, pojedynczy listener zamiast wyścigu), F2
-rename ROW_GONE (run #83, `.maybeSingle()`), i na końcu (run #85) samą
+**Baza pytań (`base-explorer/` + `bases.js`) — ✅ moduł w pełni zamknięty
+i potwierdzone zielonym CI (run #86, 2026-09-02)**: audyt (A/B/C),
+Warstwa 1 (precyzyjne locki per pytanie/folder/tag, rozszerzone na
+`bases.js`'s rename/delete) i Warstwa 2 (`updateChecked`/
+`updateCheckedMany`) — cały kod + testy zacommitowane, wypchnięte i
+zielone. Run #83/#84/#85 (patrz opis wyżej) znalazły i naprawiły PO
+KOLEI: long-press race (run #83, pojedynczy listener zamiast wyścigu),
+F2 rename ROW_GONE (run #83, `.maybeSingle()`), i na końcu (run #85) samą
 przyczynę uporczywie czerwonego testu "long-press anulowany przez ruch
 palca" — błędną asercję w SAMYM TEŚCIE (`toHaveCount(0)` na statycznym,
 zawsze obecnym w DOM elemencie `#contextMenu`, zamiast `toBeHidden()`).
@@ -1018,16 +1018,10 @@ Aplikacja przez cały czas działała poprawnie w tym scenariuszu — żadna z
 wcześniejszych aplikacyjnych napraw (okno czasowe, capture-phase, jeden
 listener) nie była zbędna per se, ale żadna z nich nie mogła naprawić
 tego konkretnego testu, bo test nie mógł przejść niezależnie od kodu
-aplikacji. **Wciąż nie potwierdzone zielonym CI** — potrzebny kolejny
-scoped re-run:
-`tests/e2e/base-explorer.spec.js --grep "long-press|usuniętego tuż przed Zapisz"`
-— pokrywa oba testy long-press i wszystkie 3 testy ROW_GONE Warstwy 2
-(wszystkie oprócz "long-press anulowany" już potwierdzone zielone w run
-#84, ale warto odpalić razem jeszcze raz jako regression-check po
-usunięciu diagnostyki). Testy z `bases.spec.js` i wcześniejsze testy
-locków (run #79/#80) nadal nie są tym dotknięte, pomijamy je zgodnie z
-konwencją. Po zielonym wyniku ten akapit i nagłówek modułu (linia ~670)
-można zaktualizować na "✅ w pełni zamknięty i potwierdzone CI".
+aplikacji. **Run #86** (commit `614e83ac` po autobocie, `spec_filter`
+= `base-explorer.spec.js --grep "long-press|usuniętego tuż przed
+Zapisz"`) — zielony, `conclusion: success`, krok "Run E2E tests" bez
+błędów. Moduł zamknięty.
 
 ### A) Sam edytor bazy — dokładność jak w `editor.spec.js`
 - CRUD pytań/odpowiedzi/kategorii/tagów (`page.js`, `render.js`,
