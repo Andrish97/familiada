@@ -93,17 +93,21 @@ export function addLongPress(el, callback) {
   // żywo w CI (run #81, "[longpress-diag]") potwierdziła, że NASZ stan
   // (fired/timer) jest zawsze poprawny -- pointermove wykrywa ruch,
   // cancel() realnie czyści aktywny timer, callback NIGDY się nie odpala
-  // po ruchu. A mimo to menu się otwierało: przeglądarka ma WŁASNĄ,
-  // niezależną od tego kodu detekcję przytrzymania dotyku i potrafi sama
-  // wygenerować natywne "contextmenu" na tym elemencie z WŁASNYM progiem
-  // czasowym -- nasze tłumienie sprawdzało wcześniej tylko `fired`
-  // (nasz long-press się udał), więc gdy MY uznaliśmy gest za
-  // przewijanie (ruch > MOVE_THRESHOLD, fired=false), natywne zdarzenie
-  // przechodziło dalej do zwykłego, desktopowego listenera "contextmenu"
-  // na tym samym elemencie i menu i tak się otwierało. Poprawka: tłumimy
-  // też gdy jesteśmy w oknie czasowym od pointerdown na dotyku/rysiku,
-  // niezależnie od tego czy TEN gest zakończył się naszym long-pressem
-  // czy przewijaniem -- oba mogą sprowokować natywną detekcję przeglądarki.
+  // po ruchu. Mimo to menu się nadal otwierało (run #82, ta sama poprawka
+  // z oknem czasowym): przyczyna okazała się być KOLEJNOŚĆ REJESTRACJI,
+  // nie logika warunku. `wireActions()` rejestruje zwykły, desktopowy
+  // listener "contextmenu" (otwiera menu bezwarunkowo) na tym samym
+  // elemencie PRZED wywołaniem addLongPress() -- listenery na tym samym
+  // elemencie/zdarzeniu odpalają się w kolejności rejestracji, więc
+  // desktopowy opener zawsze wygrywał wyścig i otwierał menu, zanim to
+  // tłumienie (zarejestrowane później) miało szansę zawołać
+  // preventDefault()/stopPropagation() -- to i tak nie cofa już
+  // wykonanego, wcześniejszego listenera na tym samym elemencie.
+  // Naprawa: rejestracja w fazie CAPTURE (3. argument `true`) zamiast
+  // bubble -- faza capture na danym elemencie zawsze wykonuje się przed
+  // KAŻDYM listenerem bubble na nim, niezależnie od kolejności rejestracji
+  // w kodzie, więc `stopPropagation()` tutaj realnie powstrzymuje
+  // późniejszy, bezwarunkowy listener bubble przed uruchomieniem.
   el.addEventListener("contextmenu", (e) => {
     const withinTouchWindow = Date.now() - lastTouchDownAt < LONG_PRESS_MS + 300;
     if (fired || withinTouchWindow) {
@@ -111,7 +115,7 @@ export function addLongPress(el, callback) {
       e.stopPropagation();
       fired = false;
     }
-  });
+  }, true);
 }
 
 /* ================= Double tap ================= */

@@ -788,6 +788,24 @@ nie mogły zadziałać — problem nigdy nie był w teście ani w timingu
 dispatchowania zdarzeń, tylko w zakresie warunku tłumienia natywnego
 menu w aplikacji.
 
+**Run #82**: ta sama poprawka (okno czasowe) DALEJ nie wystarczyła,
+identyczny błąd. Prawdziwa przyczyna okazała się być KOLEJNOŚĆ
+REJESTRACJI listenerów, nie logika warunku: `wireActions()` rejestruje
+zwykły, desktopowy listener `contextmenu` (otwiera menu bezwarunkowo,
+`e.preventDefault()` na starcie) na `listEl`/`treeEl`/`tagsEl` **przed**
+wywołaniem `addLongPress()` na tym samym elemencie (linie 4573/3140/3369
+vs 4589/4601/4614 w `actions.js`) — listenery tego samego typu na tym
+samym elemencie odpalają się w kolejności rejestracji, więc desktopowy
+opener zawsze wygrywał wyścig i otwierał menu, zanim tłumienie w
+`addLongPress()` (zarejestrowane później) zdążyło zawołać
+`preventDefault()`/`stopPropagation()` — a to i tak nie cofa już
+wykonanego, wcześniejszego listenera na tym samym elemencie. Naprawione
+przez rejestrację tłumienia w fazie **capture** (`addEventListener(...,
+true)`) zamiast bubble — capture na danym elemencie zawsze wykonuje się
+przed KAŻDYM listenerem bubble na nim, niezależnie od kolejności
+rejestracji w kodzie, więc to rozwiązanie jest odporne na przyszłe
+zmiany kolejności w `wireActions()`, nie tylko na obecny układ linii.
+
 ### Rozszerzenie na `bases.js` (hub z listą baz) — ✅ zrobione (2026-09-02)
 
 Warstwa 1/2 opisana wyżej chroni to, co dzieje się WEWNĄTRZ już otwartej
