@@ -328,7 +328,7 @@ test.describe("bases: ochrona bazy jako całości (delete_resource_checked + upd
       cleaned = true;
 
       await page.locator("#btnNameOk").click();
-      await expect(page.locator("#nameMsg")).toHaveText(/usunięte w międzyczasie/i, { timeout: 5000 });
+      await expect(page.locator("#nameMsg")).toHaveText(/w międzyczasie usunięte/i, { timeout: 5000 });
       // modal NIE zamyka się przy błędzie (patrz catch w nameOk())
       await expect(page.locator("#nameOverlay")).toBeVisible();
     } finally {

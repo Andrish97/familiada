@@ -57,7 +57,7 @@ export function addLongPress(el, callback) {
   let fired = false;
 
   function cancel() {
-    console.log("[longpress-diag] cancel() called, timer was:", !!timer);
+    console.warn("[longpress-diag] cancel() called, timer was:", !!timer);
     if (timer) { clearTimeout(timer); timer = null; }
     fired = false;
   }
@@ -74,12 +74,12 @@ export function addLongPress(el, callback) {
     // przez ruch palca" nadal pada mimo dwóch prób naprawy w samym teście;
     // statyczna analiza tego pliku nie znalazła buga, więc sprawdzamy na
     // żywo w CI, gdzie dokładnie się rozjeżdża). Usunąć po zdiagnozowaniu.
-    console.log("[longpress-diag] pointerdown", { x: e.clientX, y: e.clientY, target: e.target?.className });
+    console.warn("[longpress-diag] pointerdown", { x: e.clientX, y: e.clientY, target: e.target?.className });
 
     timer = setTimeout(() => {
       fired = true;
       timer = null;
-      console.log("[longpress-diag] TIMER FIRED -- callback wywołany mimo (ewentualnego) ruchu");
+      console.warn("[longpress-diag] TIMER FIRED -- callback wywołany mimo (ewentualnego) ruchu");
       callback(e.clientX, e.clientY, e.target);
     }, LONG_PRESS_MS);
   }, { passive: true });
@@ -89,12 +89,12 @@ export function addLongPress(el, callback) {
     const dx = e.clientX - startX;
     const dy = e.clientY - startY;
     const dist = Math.hypot(dx, dy);
-    console.log("[longpress-diag] pointermove", { dx, dy, dist, willCancel: dist > MOVE_THRESHOLD, timerActive: !!timer });
+    console.warn("[longpress-diag] pointermove", { dx, dy, dist, willCancel: dist > MOVE_THRESHOLD, timerActive: !!timer });
     if (dist > MOVE_THRESHOLD) cancel();
   }, { passive: true });
 
   el.addEventListener("pointerup", (e) => {
-    console.log("[longpress-diag] pointerup, timerActive:", !!timer);
+    console.warn("[longpress-diag] pointerup, timerActive:", !!timer);
     cancel();
   }, { passive: true });
   el.addEventListener("pointercancel", cancel, { passive: true });
