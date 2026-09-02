@@ -25,7 +25,7 @@ import {
   listCategoryTags
 } from "./repo.js?v=v2026-09-02T21211";
 
-import { showContextMenu, hideContextMenu } from "./context-menu.js?v=v2026-09-02T21211";
+import { showContextMenu, hideContextMenu } from "./context-menu.js?v=v2026-09-02T21500";
 import { openTagsModal } from "./tags-modal.js?v=v2026-09-02T21211";
 import { initExportModal } from "./export-modal.js?v=v2026-09-02T21211";
 import { initQuestionModal } from "./question-modal.js?v=v2026-09-02T21211";
@@ -34,7 +34,7 @@ import { updateChecked, updateCheckedMany, ROW_GONE } from "../../js/core/db-gua
 import { acquireResourceLock, acquireResourceLocks } from "../../js/core/resource-lock.js?v=v2026-09-02T21211";
 import { alertModal, confirmModal } from "../../js/core/modal.js?v=v2026-09-02T21211";
 import { t } from "../../translation/translation.js?v=v2026-09-02T21211";
-import { addLongPress, addDoubleTap, isTouchContextMenuWindow } from "./mobile.js?v=v2026-09-02T21211";
+import { addLongPress, addDoubleTap, isTouchContextMenuWindow } from "./mobile.js?v=v2026-09-02T21500";
 
 let exportModal = null;
 
@@ -4591,7 +4591,6 @@ export function wireActions({ state }) {
   // PPM na liście (foldery/pytania/puste tło)
   listEl?.addEventListener("contextmenu", async (e) => {
     e.preventDefault();
-    console.warn(`[lp-diag] contextmenu event on listEl, isTrusted=${e.isTrusted}, targetTag=${e.target?.tagName}`);
     if (isTouchContextMenuWindow(listEl)) return; // natywne menu po long-pressie/scrollu na dotyku (patrz mobile.js)
 
     const row = e.target?.closest?.(".row[data-kind][data-id]");

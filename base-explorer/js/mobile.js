@@ -74,7 +74,6 @@ export function addLongPress(el, callback) {
 
     timer = setTimeout(() => {
       timer = null;
-      console.warn("[lp-diag] TIMER FIRED -- callback(showContextMenu) wywołany mimo ruchu/upu");
       callback(e.clientX, e.clientY, e.target);
     }, LONG_PRESS_MS);
   }, { passive: true });
@@ -83,11 +82,7 @@ export function addLongPress(el, callback) {
     if (e.pointerType === "mouse") return;
     const dx = e.clientX - startX;
     const dy = e.clientY - startY;
-    const dist = Math.hypot(dx, dy);
-    if (dist > MOVE_THRESHOLD) {
-      console.warn(`[lp-diag] pointermove cancel: dist=${dist} timerWas=${!!timer}`);
-      cancel();
-    }
+    if (Math.hypot(dx, dy) > MOVE_THRESHOLD) cancel();
   }, { passive: true });
 
   el.addEventListener("pointerup", cancel, { passive: true });
@@ -96,28 +91,21 @@ export function addLongPress(el, callback) {
 
 /**
  * Czy dany element jest w oknie czasowym tuż po dotykowym pointerdown, w
- * którym przeglądarka może sama wygenerować NATYWNE zdarzenie "contextmenu"
- * (własna, niezależna od tego JS-a detekcja przytrzymania dotyku — nasz
- * `fired`/`timer` z addLongPress() bywa w tym momencie już poprawnie
- * anulowany przez ruch palca, a natywne menu i tak przychodzi, patrz run
- * #81). Wołający (desktopowy listener "contextmenu" w actions.js) ma
- * ZAWSZE ignorować menu w tym oknie, niezależnie od tego czy nasz
- * long-press "się udał" czy został anulowany — w obu przypadkach jest
- * niechciane. Świadomie zaimplementowane jako WCZESNY GUARD wewnątrz
- * JEDYNEGO listenera "contextmenu" na danym elemencie, a nie jako osobny,
- * konkurujący listener (jak w poprzedniej wersji, run #82's poprawka
- * capture-phase) — dwa listenery tego samego typu zdarzenia na tym samym
- * elemencie potrafią odpalić się w kolejności REJESTRACJI zamiast
- * kolejności faz (capture/bubble) zawsze wtedy, gdy element jest
- * bezpośrednim `target`-em zdarzenia (tzw. AT_TARGET), więc capture-phase
- * nie dawało twardej gwarancji pierwszeństwa. Jeden listener eliminuje ten
- * wyścig całkowicie.
+ * którym przeglądarka MOGŁABY sama wygenerować natywne zdarzenie
+ * "contextmenu" niezależne od naszego JS-a (teoretyczne ryzyko na
+ * prawdziwym touchscreenie, którego e2e -- oparte na syntetycznych
+ * PointerEventach -- nie odtwarza). Wołający (desktopowy listener
+ * "contextmenu" w actions.js) ma ignorować menu w tym oknie niezależnie od
+ * tego czy nasz long-press "się udał" czy został anulowany ruchem.
+ * Zaimplementowane jako WCZESNY GUARD wewnątrz JEDYNEGO listenera
+ * "contextmenu" na danym elemencie (a nie jako osobny, konkurujący
+ * listener) -- prostsze i odporne na kolejność rejestracji z
+ * `wireActions()`, niezależnie od tego czy realny wyścig kiedykolwiek się
+ * materializuje.
  */
 export function isTouchContextMenuWindow(el) {
   const t = touchDownAt.get(el);
-  const result = typeof t === "number" && (Date.now() - t) < LONG_PRESS_MS + 300;
-  console.warn(`[lp-diag] isTouchContextMenuWindow: hasTimestamp=${typeof t === "number"} elapsed=${typeof t === "number" ? Date.now() - t : "n/a"} result=${result}`);
-  return result;
+  return typeof t === "number" && (Date.now() - t) < LONG_PRESS_MS + 300;
 }
 
 /* ================= Double tap ================= */

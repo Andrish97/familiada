@@ -851,6 +851,48 @@ jednym z 3 testów Warstwy 2 (F2 rename pytania). Oba naprawione:
   przeszedł na retry #1 bez żadnej zmiany w kodzie, niepowiązany z
   aplikacją.
 
+**Run #84** (ten sam `spec_filter`): F2 rename, Ctrl+E, edycja tagu i
+"long-press otwiera menu" — WSZYSTKIE zielone (naprawy z run #83
+potwierdzone). "long-press anulowany przez ruch palca" DALEJ czerwony,
+identyczny objaw. Zamiast zgadywać po raz kolejny, dodana tymczasowa
+diagnostyka `console.warn("[lp-diag]...")` w trzech punktach
+(`addLongPress()`'s timer, `pointermove`'s `cancel()`, i na wejściu
+`listEl`'s listenera "contextmenu") i odpalona w kolejnym, zawężonym do
+JEDNEGO tego testu runie.
+
+**Run #85** (`spec_filter` = `base-explorer.spec.js --grep "long-press
+anulowany"`) — diagnostyka dała OSTATECZNĄ, jednoznaczną odpowiedź:
+jedyny log jaki się pojawił w OBU próbach to `[lp-diag] pointermove
+cancel: dist=40 timerWas=true` — nasz `pointermove` poprawnie anulował
+AKTYWNY timer. Log `"TIMER FIRED"` NIGDY się nie pojawił (nasz callback
+nigdy nie wywołał menu) i log `"[lp-diag] contextmenu event on
+listEl"` (na wejściu JEDYNEGO listenera "contextmenu") RÓWNIEŻ nigdy się
+nie pojawił — czyli żadne zdarzenie "contextmenu", natywne ani nasze,
+nigdy nie dotarło do żadnego z tych dwóch miejsc. Mimo to
+`.context-menu` dalej pokazywało count=1.
+
+**Prawdziwa przyczyna, znaleziona dzięki tej dwuznaczności**: `.context-menu`
+to nie efemeryczny element tworzony przy otwarciu menu — to STATYCZNY
+`<div id="contextMenu" class="context-menu" hidden></div>` obecny w
+`base-explorer.html` OD ZAŁADOWANIA STRONY. `showContextMenu()`/
+`hideContextMenu()` (`context-menu.js`) przełączają wyłącznie atrybut
+`hidden` i `innerHTML` tego jednego węzła — nigdy go nie tworzą ani nie
+usuwają. `page.locator(".context-menu").toHaveCount(0)` dopasowuje po
+klasie CSS, niezależnie od atrybutu `hidden` — więc ta asercja **nie
+mogła przejść NIGDY, niezależnie od poprawności aplikacji**. To
+wyjaśnia, dlaczego żadna z wcześniejszych, skądinąd słusznych napraw
+(run #81 okno czasowe, run #82 capture-phase, run #83 jeden listener
+zamiast wyścigu) nigdy nie dawała rezultatu na TYM konkretnym teście —
+gonili prawdziwy, ale niezwiązany z tym testem problem (błąd w teście, a
+nie w aplikacji). Naprawione: asercja zmieniona na
+`await expect(page.locator(".context-menu")).toBeHidden()` — sprawdza
+widoczność (respektuje `hidden`), nie liczność węzłów w DOM. Diagnostyka
+`[lp-diag]` usunięta z `mobile.js`/`actions.js` (spełniła swoją rolę);
+sam refaktor "jeden listener zamiast wyścigu" z run #83 pozostawiony —
+to wciąż uzasadnione uproszczenie/zabezpieczenie na wypadek prawdziwego
+touchscreena, tylko nie było źródłem TEGO konkretnego, zawsze czerwonego
+wyniku.
+
 ### Rozszerzenie na `bases.js` (hub z listą baz) — ✅ zrobione (2026-09-02)
 
 Warstwa 1/2 opisana wyżej chroni to, co dzieje się WEWNĄTRZ już otwartej
@@ -962,22 +1004,30 @@ ryzyka niż nadpisanie przy UPDATE), a INSERT (przypisanie tagu) nie ma
 analogicznego trybu cichej porażki.
 
 **Baza pytań (`base-explorer/` + `bases.js`) — moduł zamknięty w kodzie,
-czeka na finalne potwierdzenie CI (stan na 2026-09-02, po run #83)**:
+czeka na finalne potwierdzenie CI (stan na 2026-09-02, po run #85)**:
 audyt (A/B/C), Warstwa 1 (precyzyjne locki per pytanie/folder/tag,
 rozszerzone na `bases.js`'s rename/delete) i Warstwa 2 (`updateChecked`/
 `updateCheckedMany` opisane wyżej) — cały kod + testy zacommitowane.
-Run #83 (patrz opis wyżej) znalazł DWA realne błędy (long-press dalej się
-otwierał mimo capture-phase z run #82; F2 rename pytania pokazywał zły
-komunikat przy ROW_GONE) — oba naprawione (nowy commit, jeszcze nie
-wypchnięty w chwili pisania tego akapitu). **Wciąż nie potwierdzone
-zielonym CI** — potrzebny kolejny scoped re-run tym samym `spec_filter`
-co poprzednio (te same testy, ten sam commit-punkt odniesienia):
+Run #83/#84/#85 (patrz opis wyżej) znalazły i naprawiły PO KOLEI:
+long-press race (run #83, pojedynczy listener zamiast wyścigu), F2
+rename ROW_GONE (run #83, `.maybeSingle()`), i na końcu (run #85) samą
+przyczynę uporczywie czerwonego testu "long-press anulowany przez ruch
+palca" — błędną asercję w SAMYM TEŚCIE (`toHaveCount(0)` na statycznym,
+zawsze obecnym w DOM elemencie `#contextMenu`, zamiast `toBeHidden()`).
+Aplikacja przez cały czas działała poprawnie w tym scenariuszu — żadna z
+wcześniejszych aplikacyjnych napraw (okno czasowe, capture-phase, jeden
+listener) nie była zbędna per se, ale żadna z nich nie mogła naprawić
+tego konkretnego testu, bo test nie mógł przejść niezależnie od kodu
+aplikacji. **Wciąż nie potwierdzone zielonym CI** — potrzebny kolejny
+scoped re-run:
 `tests/e2e/base-explorer.spec.js --grep "long-press|usuniętego tuż przed Zapisz"`
-— pokrywa oba testy long-press i wszystkie 3 testy ROW_GONE Warstwy 2.
-Testy z `bases.spec.js` i wcześniejsze testy locków (run #79/#80) nadal
-nie są tym dotknięte, pomijamy je zgodnie z konwencją. Po zielonym
-wyniku ten akapit i nagłówek modułu (linia ~670) można zaktualizować na
-"✅ w pełni zamknięty i potwierdzone CI".
+— pokrywa oba testy long-press i wszystkie 3 testy ROW_GONE Warstwy 2
+(wszystkie oprócz "long-press anulowany" już potwierdzone zielone w run
+#84, ale warto odpalić razem jeszcze raz jako regression-check po
+usunięciu diagnostyki). Testy z `bases.spec.js` i wcześniejsze testy
+locków (run #79/#80) nadal nie są tym dotknięte, pomijamy je zgodnie z
+konwencją. Po zielonym wyniku ten akapit i nagłówek modułu (linia ~670)
+można zaktualizować na "✅ w pełni zamknięty i potwierdzone CI".
 
 ### A) Sam edytor bazy — dokładność jak w `editor.spec.js`
 - CRUD pytań/odpowiedzi/kategorii/tagów (`page.js`, `render.js`,

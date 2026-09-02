@@ -2612,7 +2612,13 @@ test.describe("base-explorer: mobile.js (drawer, long-press, podwójny tap)", ()
       }, rowSel);
       await page.waitForTimeout(650);
 
-      await expect(page.locator(".context-menu")).toHaveCount(0);
+      // #contextMenu jest STATYCZNYM elementem obecnym w DOM od załadowania
+      // strony (base-explorer.html: <div id="contextMenu" class="context-menu"
+      // hidden></div>) -- otwieranie/zamykanie menu przełącza tylko atrybut
+      // "hidden" (patrz context-menu.js), NIE tworzy/usuwa węzła. toHaveCount(0)
+      // NIGDY nie może przejść (element zawsze istnieje w DOM), niezależnie od
+      // poprawności aplikacji -- właściwa asercja to widoczność, nie liczność.
+      await expect(page.locator(".context-menu")).toBeHidden();
     } finally {
       await deleteBase(page, baseId);
     }

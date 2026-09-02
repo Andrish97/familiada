@@ -12,7 +12,7 @@ import {
   deleteTags,
   duplicateSelected,
   canDeleteHere,
-} from "./actions.js?v=v2026-09-02T21211";
+} from "./actions.js?v=v2026-09-02T21500";
 import { alertModal } from "../../js/core/modal.js?v=v2026-09-02T21211";
 import { t } from "../../translation/translation.js?v=v2026-09-02T21211";
 
