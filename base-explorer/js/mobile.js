@@ -55,9 +55,9 @@ export function addLongPress(el, callback) {
   let startX = 0;
   let startY = 0;
   let fired = false;
+  let lastTouchDownAt = 0;
 
   function cancel() {
-    console.warn("[longpress-diag] cancel() called, timer was:", !!timer);
     if (timer) { clearTimeout(timer); timer = null; }
     fired = false;
   }
@@ -70,16 +70,11 @@ export function addLongPress(el, callback) {
     fired = false;
     startX = e.clientX;
     startY = e.clientY;
-    // DIAGNOSTYKA TYMCZASOWA (run #78/#79 -- test "long-press anulowany
-    // przez ruch palca" nadal pada mimo dwóch prób naprawy w samym teście;
-    // statyczna analiza tego pliku nie znalazła buga, więc sprawdzamy na
-    // żywo w CI, gdzie dokładnie się rozjeżdża). Usunąć po zdiagnozowaniu.
-    console.warn("[longpress-diag] pointerdown", { x: e.clientX, y: e.clientY, target: e.target?.className });
+    lastTouchDownAt = Date.now();
 
     timer = setTimeout(() => {
       fired = true;
       timer = null;
-      console.warn("[longpress-diag] TIMER FIRED -- callback wywołany mimo (ewentualnego) ruchu");
       callback(e.clientX, e.clientY, e.target);
     }, LONG_PRESS_MS);
   }, { passive: true });
@@ -88,20 +83,30 @@ export function addLongPress(el, callback) {
     if (e.pointerType === "mouse") return;
     const dx = e.clientX - startX;
     const dy = e.clientY - startY;
-    const dist = Math.hypot(dx, dy);
-    console.warn("[longpress-diag] pointermove", { dx, dy, dist, willCancel: dist > MOVE_THRESHOLD, timerActive: !!timer });
-    if (dist > MOVE_THRESHOLD) cancel();
+    if (Math.hypot(dx, dy) > MOVE_THRESHOLD) cancel();
   }, { passive: true });
 
-  el.addEventListener("pointerup", (e) => {
-    console.warn("[longpress-diag] pointerup, timerActive:", !!timer);
-    cancel();
-  }, { passive: true });
+  el.addEventListener("pointerup", cancel, { passive: true });
   el.addEventListener("pointercancel", cancel, { passive: true });
 
-  // Zablokuj natywne context menu na touch (iOS/Android)
+  // Zablokuj natywne context menu na touch (iOS/Android). Diagnostyka na
+  // żywo w CI (run #81, "[longpress-diag]") potwierdziła, że NASZ stan
+  // (fired/timer) jest zawsze poprawny -- pointermove wykrywa ruch,
+  // cancel() realnie czyści aktywny timer, callback NIGDY się nie odpala
+  // po ruchu. A mimo to menu się otwierało: przeglądarka ma WŁASNĄ,
+  // niezależną od tego kodu detekcję przytrzymania dotyku i potrafi sama
+  // wygenerować natywne "contextmenu" na tym elemencie z WŁASNYM progiem
+  // czasowym -- nasze tłumienie sprawdzało wcześniej tylko `fired`
+  // (nasz long-press się udał), więc gdy MY uznaliśmy gest za
+  // przewijanie (ruch > MOVE_THRESHOLD, fired=false), natywne zdarzenie
+  // przechodziło dalej do zwykłego, desktopowego listenera "contextmenu"
+  // na tym samym elemencie i menu i tak się otwierało. Poprawka: tłumimy
+  // też gdy jesteśmy w oknie czasowym od pointerdown na dotyku/rysiku,
+  // niezależnie od tego czy TEN gest zakończył się naszym long-pressem
+  // czy przewijaniem -- oba mogą sprowokować natywną detekcję przeglądarki.
   el.addEventListener("contextmenu", (e) => {
-    if (fired) {
+    const withinTouchWindow = Date.now() - lastTouchDownAt < LONG_PRESS_MS + 300;
+    if (fired || withinTouchWindow) {
       e.preventDefault();
       e.stopPropagation();
       fired = false;

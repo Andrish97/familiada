@@ -749,8 +749,44 @@ analiza `mobile.js`'s `addLongPress()` po raz drugi nie znalazła w nim
 błędu — dodana tymczasowa diagnostyka (`console.log("[longpress-diag]"
 ...)` w `pointerdown`/`pointermove`/`pointerup`/`cancel()`, projekt i tak
 przekazuje `console.*` do logów CI przez mechanizm `[e2e-diag]`) do
-zdiagnozowania w KOLEJNYM runie, zamiast zgadywać trzeci raz. Do usunięcia
-po znalezieniu przyczyny.
+zdiagnozowania w KOLEJNYM runie, zamiast zgadywać trzeci raz.
+
+**Run #80** (`spec_filter` = pełny `base-explorer.spec.js` + nowy
+`bases.spec.js`): 64/66. Diagnostyka z run #79 w ogóle się nie pojawiła w
+logach — `login.js`'s `instrumentPage()` przekazuje do `[e2e-diag]`
+WYŁĄCZNIE `console:error`/`console:warning`, nie `console:log` — więc
+`console.log(...)` był całkowicie niewidoczny. Przełączone na
+`console.warn(...)`. Druga czerwona pozycja w tym runie
+(`bases.spec.js`'s "zmiana nazwy bazy usuniętej...") okazała się błędem
+w SAMYM TEŚCIE (zły szyk słów w regexie dopasowującym komunikat), nie w
+aplikacji — log pokazał, że `renameBase()`/`updateChecked()` zadziałały
+poprawnie; regex poprawiony.
+
+**Run #81** (`spec_filter` zawężony do tych dwóch testów, zgodnie z
+nową zasadą "odpalamy tylko to co dotyczy zmiany lub wcześniej nie
+przeszło" — grep po fragmentach nazw obu testów naraz): `bases.spec.js`
+✅, long-press dalej czerwony, ale tym razem **diagnostyka faktycznie
+zadziałała i dała jednoznaczną odpowiedź**: sekwencja
+`pointerdown → pointermove(dist:40, willCancel:true) → cancel()(timer
+was: true) → pointerup` przebiega DOKŁADNIE poprawnie, `"TIMER FIRED"`
+nigdy się nie pojawia -- callback `addLongPress()` nigdy się nie odpala.
+Menu mimo to się otwiera, więc źródłem NIE jest ten kod. Wniosek:
+przeglądarka ma WŁASNĄ, niezależną od tego JS-a detekcję przytrzymania
+dotyku i potrafi sama wygenerować natywne zdarzenie `contextmenu` na tym
+elemencie z WŁASNYM progiem czasowym — a listener tłumiący natywne menu
+w `addLongPress()` sprawdzał dotąd tylko `fired` (nasz long-press się
+udał), więc gdy MY uznaliśmy gest za przewijanie (`fired=false`),
+natywne zdarzenie przechodziło dalej do zwykłego, desktopowego listenera
+`contextmenu` na tym samym elemencie (`actions.js`) i menu się otwierało
+mimo poprawnie anulowanego naszego timera. Naprawione: tłumienie
+obejmuje teraz też okno czasowe od `pointerdown` na dotyku/rysiku
+(`Date.now() - lastTouchDownAt < LONG_PRESS_MS + 300`), niezależnie od
+tego czy dany gest zakończył się naszym long-pressem czy przewijaniem —
+diagnostyka usunięta, zastąpiona realną poprawką. To wyjaśnia też,
+dlaczego DWIE wcześniejsze próby naprawy samego TESTU (run #78, #79)
+nie mogły zadziałać — problem nigdy nie był w teście ani w timingu
+dispatchowania zdarzeń, tylko w zakresie warunku tłumienia natywnego
+menu w aplikacji.
 
 ### Rozszerzenie na `bases.js` (hub z listą baz) — ✅ zrobione (2026-09-02)
 
