@@ -2,7 +2,8 @@
   "name": "familiada-e2e-tests",
   "private": true,
   "scripts": {
-    "test": "playwright test"
+    "test": "playwright test",
+    "test:unit": "node --test unit/*.test.js"
   },
   "devDependencies": {
     "@playwright/test": "^1.56.1"
