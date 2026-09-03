@@ -1,13 +1,13 @@
 // js/pages/editor.js
-import { sb } from "../core/supabase.js?v=v2026-09-03T06084";
-import { requireAuth } from "../core/auth.js?v=v2026-09-03T06084";
-import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-03T06084";
-import { parseQaText, clip as clipN } from "../core/text-import.js?v=v2026-09-03T06084";
-import { canEnterEdit, RULES as GV_RULES, TYPES } from "../core/game-validate.js?v=v2026-09-03T06084";
-import { guardResourceLock } from "../core/resource-lock.js?v=v2026-09-03T06084";
-import { updateChecked, ROW_GONE } from "../core/db-guard.js?v=v2026-09-03T06084";
-import { initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-09-03T06084";
-import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-03T06084";
+import { sb } from "../core/supabase.js?v=v2026-09-03T21554";
+import { requireAuth } from "../core/auth.js?v=v2026-09-03T21554";
+import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-03T21554";
+import { parseQaText, clip as clipN } from "../core/text-import.js?v=v2026-09-03T21554";
+import { canEnterEdit, RULES as GV_RULES, TYPES } from "../core/game-validate.js?v=v2026-09-03T21554";
+import { guardResourceLock } from "../core/resource-lock.js?v=v2026-09-03T21554";
+import { updateChecked, ROW_GONE } from "../core/db-guard.js?v=v2026-09-03T21554";
+import { initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-09-03T21554";
+import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-03T21554";
 import "../core/contact-modal.js";
 // initI18n + remove('page-loading') są w boot() — przed requireAuth, żeby body pojawiło się przed auth/danymi
 
