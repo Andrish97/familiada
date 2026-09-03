@@ -1149,6 +1149,46 @@ sprawdza że wiersz od razu dostaje `is-selected`, że "Zmień nazwę" nie
 jest wyszarzone, i że rename przez tę ścieżkę faktycznie zapisuje się w
 DB.
 
+### Runda 17 — czwarte zgłoszenie: chmurka (tooltip) kropki meta nie znika, "zostaje przy palcu"
+
+Ten sam wzorzec błędu ("kod pisany pod mysz, nigdy nie przemyślany pod
+dotyk") czwarty raz z rzędu. `wireActions()` w `actions.js` tworzy jeden
+globalny portal tooltipa (`div.dot-tooltip`, `tipEl`) dla kropek
+tag/meta w liście i pokazuje/chowa go WYŁĄCZNIE parą `mouseover`/
+`mouseout` na `#list`, z pozycją aktualizowaną przez `mousemove`.
+
+Na prawdziwym dotyku: tapnięcie w kropkę wywołuje syntetyczny
+`mouseover` (stąd chmurka w ogóle się pokazuje — to nie było zgłoszone
+jako "nie pokazuje się"), ale przeglądarka NIE generuje ani `mousemove`
+w trakcie (palec już nieruchomy albo odsunięty), ani `mouseout` po
+zdjęciu palca z ekranu (nie ma kursora, który mógłby "wyjść" z
+elementu). Efekt: chmurka zostaje przyklejona dokładnie w miejscu
+tapnięcia w nieskończoność — kolejne tapnięcia GDZIEKOLWIEK indziej
+(nawet poza listą) jej nie zamykają, bo nic nigdy nie wywołuje
+`mouseout` na tamtej konkretnej kropce. Dokładnie to zgłosił użytkownik:
+"chmurka (...) nie znika jeśli klikam gdzie indziej i dziwnie zostaje
+przy palcu".
+
+Naprawa: dodatkowy globalny listener `pointerdown` na `document` (a nie
+kolejna para mysz-specyficznych zdarzeń) — jeśli chmurka jest widoczna, a
+kliknięcie/tapnięcie trafiło poza kropkę, chowa ją. `pointerdown` odpala
+się identycznie dla myszy, dotyku i rysika, więc to jedno dopisanie
+naprawia oba tryby wejścia naraz, bez rozdzielania ścieżek touch/mouse.
+Analogiczny mechanizm dla kropek w DRZEWIE (foldery) nie istnieje w ogóle
+(`mouseover`/`mouseout` są wpięte tylko na `#list`) — świadomie
+nieruszane w tej rundzie, bo nie było zgłoszone i to osobny, mniejszy
+brak (foldery w drzewie po prostu nie pokazują tooltipa kropek), a nie
+regresja tego samego mechanizmu.
+
+Nowy test regresyjny: `tests/e2e/base-explorer.spec.js`, "regresja:
+chmurka (tooltip) kropki meta znika po kliknięciu gdzie indziej, nie
+zostaje 'przy palcu'" — pytanie z 3 odpowiedziami dającymi meta
+`prepared`+`poll_points`+`poll_text` (kropki), `hover()` pokazuje
+chmurkę, klik w puste tło listy ją chowa. Test używa zwykłej myszy
+(Playwright nie ma stabilnego API do symulacji prawdziwego dotyku z
+natywnym brakiem `mouseout`), ale mechanizm naprawy (`pointerdown`) jest
+identyczny dla obu trybów wejścia, więc pokrycie myszą wystarcza.
+
 ### A) Sam edytor bazy — dokładność jak w `editor.spec.js`
 - CRUD pytań/odpowiedzi/kategorii/tagów (`page.js`, `render.js`,
   `actions.js`, `question-modal.js`, `tags-modal.js`) — limity, puste

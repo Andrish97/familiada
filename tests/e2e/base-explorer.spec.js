@@ -734,6 +734,62 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
     }
   });
 
+  test("regresja: chmurka (tooltip) kropki meta znika po kliknięciu gdzie indziej, nie zostaje 'przy palcu'", async ({ page, context }) => {
+    // Zgłoszenie użytkownika: na dotyku tapnięcie w kropkę meta ("preparowane"/
+    // "punktowane"/"typowe") pokazuje chmurkę, ale ta nigdy nie znika -- zostaje
+    // przyklejona w miejscu tapnięcia niezależnie od tego, gdzie klika się
+    // później. Przyczyna: #dot-tooltip w actions.js chowa się WYŁĄCZNIE na
+    // "mouseout" konkretnej kropki -- prawdziwe urządzenia dotykowe nie
+    // generują "mouseout" po odsunięciu palca ani "mousemove" po drodze
+    // (tylko syntetyczny "mouseover" przy samym tapnięciu), więc chmurka
+    // zostaje na ekranie w nieskończoność. Naprawa: globalny "pointerdown"
+    // poza kropką chowa chmurkę niezależnie od typu urządzenia -- test
+    // weryfikuje to zwykłą myszą (hover pokazuje, klik gdzie indziej chowa),
+    // bo mechanizm jest wspólny dla obu (pointerdown odpala się też dla myszy).
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context);
+
+    const baseId = await createBase(page, `E2E-XB-METATIP-${Date.now()}`);
+
+    try {
+      // 3 odpowiedzi z fixed_points sumującymi się <=100 -> meta: prepared + poll_points + poll_text
+      const qid = await createQuestion(page, {
+        baseId, ord: 1,
+        payload: {
+          text: "Pytanie preparowane",
+          answers: [
+            { text: "A", fixed_points: 40 },
+            { text: "B", fixed_points: 30 },
+            { text: "C", fixed_points: 20 },
+          ],
+        },
+      });
+
+      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+
+      const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
+      await expect(row).toBeVisible({ timeout: 15000 });
+
+      const dot = row.locator(".meta-dot").first();
+      await expect(dot).toBeVisible({ timeout: 10000 });
+
+      const tip = page.locator(".dot-tooltip");
+      await expect(tip).toBeHidden();
+
+      await dot.hover();
+      await expect(tip).toBeVisible({ timeout: 5000 });
+
+      // klik w puste tło listy (poniżej wiersza), NIE w samą kropkę
+      const box = await page.locator("#list").boundingBox();
+      await page.mouse.click(box.x + 10, box.y + box.height - 10);
+
+      await expect(tip).toBeHidden({ timeout: 5000 });
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+
   test("question-modal: dodanie odpowiedzi z punktami zapisuje się w DB", async ({ page, context }) => {
     test.setTimeout(60_000);
     await loginAsTestUser(page, context);
