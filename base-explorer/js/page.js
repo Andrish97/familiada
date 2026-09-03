@@ -6,7 +6,7 @@ import { alertModal } from "../../js/core/modal.js?v=v2026-09-03T21554";
 import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-09-03T21554";
 import { initTopbarAccountDropdown } from "../../js/core/topbar-controller.js?v=v2026-09-03T21554";
 import { createState, setRole } from "./state.js?v=v2026-09-03T21554";
-import { renderAll } from "./render.js?v=v2026-09-03T21554";
+import { renderAll } from "./render.js?v=v2026-09-03T220254";
 import {
   getBaseMeta,
   getBaseRole,
@@ -14,7 +14,7 @@ import {
   listTags,
   listAllQuestions,
 } from "./repo.js?v=v2026-09-03T21554";
-import { wireActions } from "./actions.js?v=v2026-09-03T21554";
+import { wireActions } from "./actions.js?v=v2026-09-03T220254";
 import { initDrawer, disableDragOnTouch } from "./mobile.js?v=v2026-09-03T21554";
 
 /* ================= DOM ================= */

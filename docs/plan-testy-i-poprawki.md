@@ -1319,6 +1319,20 @@ odpowiedzi) pytanie, wszystkie zaznaczone, typ Punktacja: "Utwórz"
 wyłączone mimo 11 zaznaczonych (>= progu); odznaczenie czerwonego
 (zostaje 10 zielonych) odblokowuje przycisk.
 
+### Runda 21 — ikona "odśwież" w toolbarze była wizualnie zepsuta
+
+Zgłoszenie: "kółko tam" (ikona `svgRefresh()` w `render.js`, przycisk
+toolbara "Odśwież widok") wygląda na zepsute. Przyczyna: ręcznie
+napisana ścieżka SVG łączyła strzałkę (rysowaną przez `A7.95 7.95...`)
+z "kółkiem" narysowanym DWOMA różnymi łukami o różnych promieniach i
+środkach (`a5 5...` i `A7 7...`) w jednym `<path>` -- nie składały się w
+spójny, zamknięty pierścień. Zamieniono na sprawdzony, jednościeżkowy
+glif Material Icons "refresh" (ten sam wzorzec co reszta ikon toolbara --
+jeden `<path>` w `svgBase()`). Czysto kosmetyczne, bez zmiany zachowania
+przycisku -- brak nowego testu (poprawność kształtu SVG nie jest
+sensownie sprawdzalna istniejącymi narzędziami e2e tego projektu, które
+nie robią porównań wizualnych/zrzutów ekranu).
+
 ### A) Sam edytor bazy — dokładność jak w `editor.spec.js`
 - CRUD pytań/odpowiedzi/kategorii/tagów (`page.js`, `render.js`,
   `actions.js`, `question-modal.js`, `tags-modal.js`) — limity, puste

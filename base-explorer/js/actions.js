@@ -15,7 +15,7 @@ import {
 
 import { importGame } from "../../js/pages/builder-import-export.js?v=v2026-09-03T21554";
 
-import { renderAll, renderToolbar, renderList, renderTree, renderTags } from "./render.js?v=v2026-09-03T21554";
+import { renderAll, renderToolbar, renderList, renderTree, renderTags } from "./render.js?v=v2026-09-03T220254";
 
 import {
   listQuestionsByCategory,
@@ -25,7 +25,7 @@ import {
   listCategoryTags
 } from "./repo.js?v=v2026-09-03T21554";
 
-import { showContextMenu, hideContextMenu } from "./context-menu.js?v=v2026-09-03T21554";
+import { showContextMenu, hideContextMenu } from "./context-menu.js?v=v2026-09-03T220254";
 import { openTagsModal } from "./tags-modal.js?v=v2026-09-03T21554";
 import { initExportModal } from "./export-modal.js?v=v2026-09-03T21554";
 import { initQuestionModal } from "./question-modal.js?v=v2026-09-03T21554";
