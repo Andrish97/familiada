@@ -49,9 +49,9 @@ const FINAL_MSG = {
 
 // =========================================================
 
-import { playSfx, getSfxDuration } from "../../js/core/sfx.js?v=v2026-09-03T05574";
-import { t } from "../../translation/translation.js?v=v2026-09-03T05574";
-import { sessionEnd, sessionFinalStep } from "./sessionTracking.js?v=v2026-09-03T05574";
+import { playSfx, getSfxDuration } from "../../js/core/sfx.js?v=v2026-09-03T06084";
+import { t } from "../../translation/translation.js?v=v2026-09-03T06084";
+import { sessionEnd, sessionFinalStep } from "./sessionTracking.js?v=v2026-09-03T06084";
 
 
 function nInt(v, d = 0) {
