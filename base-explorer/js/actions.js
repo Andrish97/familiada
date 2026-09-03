@@ -25,7 +25,7 @@ import {
   listCategoryTags
 } from "./repo.js?v=v2026-09-03T22071";
 
-import { showContextMenu, hideContextMenu } from "./context-menu.js?v=v2026-09-03T22071";
+import { showContextMenu, hideContextMenu } from "./context-menu.js?v=v2026-09-03T220254";
 import { openTagsModal } from "./tags-modal.js?v=v2026-09-03T22071";
 import { initExportModal } from "./export-modal.js?v=v2026-09-03T22071";
 import { initQuestionModal } from "./question-modal.js?v=v2026-09-03T22071";
@@ -34,7 +34,7 @@ import { updateChecked, updateCheckedMany, ROW_GONE } from "../../js/core/db-gua
 import { acquireResourceLock, acquireResourceLocks } from "../../js/core/resource-lock.js?v=v2026-09-03T22071";
 import { alertModal, confirmModal } from "../../js/core/modal.js?v=v2026-09-03T22071";
 import { t } from "../../translation/translation.js?v=v2026-09-03T22071";
-import { addLongPress, addDoubleTap, isTouchContextMenuWindow } from "./mobile.js?v=v2026-09-03T22071";
+import { addLongPress, addDoubleTap, isTouchContextMenuWindow } from "./mobile.js?v=v2026-09-03T221036";
 
 let exportModal = null;
 

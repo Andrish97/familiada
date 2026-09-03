@@ -2864,14 +2864,24 @@ async function simulateDoubleTap(page, selector) {
 
 test.describe("base-explorer: mobile.js (drawer, long-press, podwójny tap)", () => {
 
-  test("drawer: przycisk otwiera panel, klik w wiersz zamyka", async ({ page, context }) => {
+  test("drawer: przycisk otwiera/zamyka panel; klik w wiersz go NIE zamyka", async ({ page, context }) => {
+    // Na życzenie: zaznaczenie/nawigacja w drzewie/tagach nie ma już
+    // automatycznie zamykać drawera (dawniej zamykał się po KAŻDYM kliku,
+    // nawet samym zaznaczeniu) -- lista po prawej i tak aktualizuje się w
+    // tle, user zamyka drawer ręcznie (hamburger albo klik w overlay).
     test.setTimeout(60_000);
     await page.setViewportSize({ width: 400, height: 800 });
     await loginAsTestUser(page, context);
     const baseId = await createBase(page, `E2E-XM-DRAWER-${Date.now()}`);
 
     try {
-      await createCategory(page, { baseId, name: "Folder mobilny", ord: 1 });
+      const catId = await createCategory(page, { baseId, name: "Folder mobilny", ord: 1 });
+      for (let i = 0; i < 10; i++) {
+        await createQuestion(page, {
+          baseId, categoryId: catId, ord: i + 1,
+          payload: { text: `Pytanie ${i + 1}`, answers: [] },
+        });
+      }
 
       await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
@@ -2885,8 +2895,20 @@ test.describe("base-explorer: mobile.js (drawer, long-press, podwójny tap)", ()
       await expect(panel).toHaveClass(/is-open/);
       await expect(page.locator("#drawerOverlay")).toBeVisible();
 
-      // klik w wiersz folderu (w drzewie, wewnątrz panelu) zamyka drawer
-      await page.locator(`#tree .row[data-kind="cat"]`).first().click();
+      const folderRow = page.locator(`#tree .row[data-kind="cat"][data-id="${catId}"]`);
+
+      // pojedynczy klik (samo zaznaczenie) -- drawer zostaje otwarty
+      await folderRow.click();
+      await expect(panel).toHaveClass(/is-open/);
+
+      // dblclick (realna nawigacja do folderu) -- drawer WCIĄŻ otwarty,
+      // ale lista po prawej i tak się zaktualizowała w tle
+      await folderRow.dblclick();
+      await expect(panel).toHaveClass(/is-open/);
+      await expect(page.locator('#list .row[data-kind="q"]')).toHaveCount(10, { timeout: 10000 });
+
+      // zamyka się tylko ręcznie: hamburger
+      await btnDrawer.click();
       await expect(panel).not.toHaveClass(/is-open/);
     } finally {
       await deleteBase(page, baseId);

@@ -1333,6 +1333,29 @@ przycisku -- brak nowego testu (poprawność kształtu SVG nie jest
 sensownie sprawdzalna istniejącymi narzędziami e2e tego projektu, które
 nie robią porównań wizualnych/zrzutów ekranu).
 
+### Runda 22 — drawer na mobile miał się zamykać tylko ręcznie, nie po każdym kliku
+
+Prośba: "zaznaczenie folderu w drzewie i podwójne kliknięcie ma nie
+zamykać otwartego left na mobile [...] tak samo z kategoriami czy
+tagami". Doprecyzowano z użytkownikiem: żaden klik (ani pojedynczy —
+samo zaznaczenie, ani podwójny — realna nawigacja) nie ma automatycznie
+zamykać drawera. User zamyka go wyłącznie ręcznie (przycisk hamburger
+albo klik w `#drawerOverlay`); lista po prawej i tak aktualizuje się w
+tle niezależnie od tego, czy drawer jest otwarty.
+
+`mobile.js`'s `initDrawer()` miał dedykowany listener `panel.addEventListener("click", ...)`
+zamykający drawer po KAŻDYM kliku w wiersz (`.row`) wewnątrz panelu
+(wspólny dla drzewa i tagów, bo oba żyją w tym samym `#explorerLeft`) --
+usunięty w całości. `open()`/`close()`/przycisk hamburger/klik w overlay
+zostają bez zmian.
+
+Zaktualizowano test "drawer: przycisk otwiera panel, klik w wiersz
+zamyka" (nazwa i treść odwracały teraz sens) na "drawer: przycisk
+otwiera/zamyka panel; klik w wiersz go NIE zamyka" -- sprawdza że
+zarówno pojedynczy klik (zaznaczenie folderu), jak i dblclick (nawigacja
+do folderu, lista po prawej faktycznie się aktualizuje w tle) zostawiają
+drawer otwarty, i że zamyka się dopiero po ręcznym kliknięciu hamburgera.
+
 ### A) Sam edytor bazy — dokładność jak w `editor.spec.js`
 - CRUD pytań/odpowiedzi/kategorii/tagów (`page.js`, `render.js`,
   `actions.js`, `question-modal.js`, `tags-modal.js`) — limity, puste

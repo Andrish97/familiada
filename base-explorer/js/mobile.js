@@ -45,12 +45,9 @@ export function initDrawer() {
 
   overlay.addEventListener("click", close);
 
-  // Zamknij drawer po wyborze folderu/tagu (klik w lewy panel)
-  panel.addEventListener("click", (e) => {
-    if (!panel.classList.contains("is-open")) return;
-    // zamknij tylko jeśli kliknięto w wiersz (folder/tag), nie w scrollbar
-    if (e.target?.closest?.(".row")) close();
-  });
+  // Na życzenie: zaznaczenie/nawigacja (klik ani dblclick) w drzewie/tagach
+  // NIE zamyka już drawera automatycznie -- lista po prawej i tak aktualizuje
+  // się w tle, user zamyka drawer ręcznie (hamburger / klik w overlay).
 }
 
 /* ================= Long press → context menu ================= */

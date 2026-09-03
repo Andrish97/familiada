@@ -14,8 +14,8 @@ import {
   listTags,
   listAllQuestions,
 } from "./repo.js?v=v2026-09-03T22071";
-import { wireActions } from "./actions.js?v=v2026-09-03T22071";
-import { initDrawer, disableDragOnTouch } from "./mobile.js?v=v2026-09-03T22071";
+import { wireActions } from "./actions.js?v=v2026-09-03T221036";
+import { initDrawer, disableDragOnTouch } from "./mobile.js?v=v2026-09-03T221036";
 
 /* ================= DOM ================= */
 const btnBack = document.getElementById("btnBack");
