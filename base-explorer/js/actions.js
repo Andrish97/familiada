@@ -25,9 +25,9 @@ import {
   listCategoryTags
 } from "./repo.js?v=v2026-09-03T05393";
 
-import { showContextMenu, hideContextMenu } from "./context-menu.js?v=v2026-09-03T05393";
+import { showContextMenu, hideContextMenu } from "./context-menu.js?v=v2026-09-03T055530";
 import { openTagsModal } from "./tags-modal.js?v=v2026-09-03T05393";
-import { initExportModal } from "./export-modal.js?v=v2026-09-03T05393";
+import { initExportModal } from "./export-modal.js?v=v2026-09-03T055530";
 import { initQuestionModal } from "./question-modal.js?v=v2026-09-03T05393";
 import { sb } from "../../js/core/supabase.js?v=v2026-09-03T05393";
 import { updateChecked, updateCheckedMany, ROW_GONE } from "../../js/core/db-guard.js?v=v2026-09-03T05393";
@@ -4486,7 +4486,28 @@ export function wireActions({ state }) {
         void alertModal({ text: t("baseExplorer.errors.exportModalMissing") });
         return false;
       }
-  
+
+      // Tworzenie gry "z folderu" -> podpowiedz jego nazwę jako nazwę gry:
+      // albo zaznaczony jest dokładnie jeden folder (PPM/Ctrl+G na folderze),
+      // albo nic nie jest zaznaczone, a po prostu przeglądamy jego zawartość
+      // (Ctrl+G z toolbara wewnątrz folderu). W pozostałych przypadkach
+      // (pojedyncze pytania, mieszane zaznaczenie, widoki wirtualne) zostaw
+      // domyślną nazwę modala bez zmian.
+      if (!opts.defaultName) {
+        const realKeys = Array.from(state.selection?.keys || [])
+          .filter(k => typeof k === "string" && (k.startsWith("c:") || k.startsWith("q:")));
+
+        let folderId = null;
+        if (realKeys.length === 1 && realKeys[0].startsWith("c:")) {
+          folderId = realKeys[0].slice(2);
+        } else if (!realKeys.length && state.view === VIEW.FOLDER && state.folderId) {
+          folderId = state.folderId;
+        }
+
+        const folder = folderId ? (state.categories || []).find(c => c.id === folderId) : null;
+        if (folder?.name) opts = { ...opts, defaultName: folder.name };
+      }
+
       // === 1) Źródło pytań: preferuj zaznaczenie (pytania + foldery + podfoldery) ===
       let qids = [];
       try {

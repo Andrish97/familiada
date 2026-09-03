@@ -296,6 +296,11 @@ export function initExportModal({ state } = {}) {
       }
     }
 
+    // Domyślna nazwa gry: nazwa folderu, gdy caller ją poda (tworzenie
+    // gry "z folderu" -- patrz actions.js's openExportModal), w
+    // pozostałych przypadkach zwykły domyślny placeholder.
+    if (xName) xName.value = opts.defaultName || t("baseExplorer.export.defaultGameName");
+
     renderList();
     updateTypeUI();
 

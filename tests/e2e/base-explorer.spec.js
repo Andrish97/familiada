@@ -1911,6 +1911,68 @@ test.describe("base-explorer: export-modal.js ('Utwórz grę')", () => {
     }
   });
 
+  test("Utwórz grę z zaznaczonego folderu podpowiada jego nazwę jako nazwę gry", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context);
+    const baseId = await createBase(page, `E2E-XM-FOLDERNAME-${Date.now()}`);
+
+    try {
+      const catId = await createCategory(page, { baseId, name: "Sport", ord: 1 });
+      for (let i = 0; i < 10; i++) {
+        await createQuestion(page, {
+          baseId, categoryId: catId, ord: i + 1,
+          payload: { text: `Pytanie sportowe ${i + 1}`, answers: [] },
+        });
+      }
+
+      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+
+      const folderRow = page.locator(`#list .row[data-kind="cat"][data-id="${catId}"]`);
+      await expect(folderRow).toBeVisible({ timeout: 15000 });
+      await folderRow.click();
+      await pressToolbarShortcut(page, "createGame", "Control+g");
+
+      await expect(page.locator("#exportOverlay")).toBeVisible({ timeout: 5000 });
+      await expect(page.locator("#xName")).toHaveValue("Sport");
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+
+  test("modal typu gry: bez angielskich podpisów technicznych pod przyciskami, suwak cały złoty", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context);
+    const baseId = await createBase(page, `E2E-XM-TYPEUI-${Date.now()}`);
+
+    try {
+      const ids = await seedTenPlainQuestions(page, baseId);
+
+      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+
+      const firstRow = page.locator(`#list .row[data-kind="q"][data-id="${ids[0]}"]`);
+      await expect(firstRow).toBeVisible({ timeout: 15000 });
+      await firstRow.click();
+      await pressToolbarShortcut(page, "createGame", "Control+g");
+
+      await expect(page.locator("#exportOverlay")).toBeVisible({ timeout: 5000 });
+
+      // brak "poll_text"/"poll_points"/"prepared" pod przyciskami typu
+      await expect(page.locator(".xTypeLbl span")).toHaveCount(0);
+
+      // suwak: --track ma być jednolicie złoty, nie domyślny czarno-biały .rng
+      const track = await page.locator("#xTypeRange").evaluate(
+        (el) => getComputedStyle(el).getPropertyValue("--track")
+      );
+      expect(track).toContain("#f5d26b");
+      expect(track).not.toContain("#000");
+      expect(track).not.toContain("#fff");
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+
   test("zmiana typu na PUNKTACJA oznacza pytania spoza zakresu 3-6 odpowiedzi jako niepasujące", async ({ page, context }) => {
     test.setTimeout(60_000);
     await loginAsTestUser(page, context);

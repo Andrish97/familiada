@@ -12,7 +12,7 @@ import {
   deleteTags,
   duplicateSelected,
   canDeleteHere,
-} from "./actions.js?v=v2026-09-03T05393";
+} from "./actions.js?v=v2026-09-03T055530";
 import { alertModal } from "../../js/core/modal.js?v=v2026-09-03T05393";
 import { t } from "../../translation/translation.js?v=v2026-09-03T05393";
 import { renderAll } from "./render.js?v=v2026-09-03T05393";
@@ -449,7 +449,12 @@ export async function showContextMenu({ state, x, y, target }) {
     items.push({
       label: t("baseExplorer.menu.createGame"),
       shortcut: { win:"Ctrl+G", mac:"⌘G" },
-      disabled: !editor || readOnlyView || !Array.from(state.selection?.keys || []).some(k => String(k).startsWith("q:")),
+      // Spójnie z toolbarem (render.js: hasQuestionInSel || hasFolderInSel) --
+      // PPM na SAMYM folderze (bez żadnego "q:" w selekcji) musiało dawać
+      // wyszarzone "Utwórz grę", mimo że selectionToQuestionIds() poniżej i tak
+      // rozwija foldery do pytań. Blokowało to dokładnie "tworzenie gry z
+      // folderu" przez menu kontekstowe.
+      disabled: !editor || readOnlyView || selectedRealCount === 0,
       action: async () => {
         const qIds = await state._api?.selectionToQuestionIds?.();
         if (!qIds?.length) return;

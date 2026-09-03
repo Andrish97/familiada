@@ -1189,6 +1189,54 @@ chmurkę, klik w puste tło listy ją chowa. Test używa zwykłej myszy
 natywnym brakiem `mouseout`), ale mechanizm naprawy (`pointerdown`) jest
 identyczny dla obu trybów wejścia, więc pokrycie myszą wystarcza.
 
+### Runda 18 — trzy prośby UI dla modala "Utwórz grę" (`export-modal.js`)
+
+Tym razem nie zgłoszenia bugów tylko wprost poproszone poprawki UX:
+
+1. **Domyślna nazwa gry = nazwa folderu, przy tworzeniu "z folderu".**
+   `export-modal.js`'s `open(opts)` nigdy nie ustawiał `#xName` — pole
+   trzymało cokolwiek zostało wpisane poprzednim razem (albo statyczny
+   `value="gra"` z HTML przy pierwszym otwarciu). Dodano `opts.defaultName`:
+   `actions.js`'s `state._api.openExportModal()` sam wykrywa "tworzenie z
+   folderu" -- albo zaznaczony jest dokładnie jeden folder (`c:<id>`, np.
+   PPM na folderze -> Utwórz grę, albo Ctrl+G z folderem zaznaczonym w
+   liście), albo nic nie jest zaznaczone a użytkownik po prostu przegląda
+   zawartość folderu (`state.view === VIEW.FOLDER`) i woła Ctrl+G z
+   toolbara -- i w obu przypadkach podaje nazwę tego folderu jako
+   `opts.defaultName`. W pozostałych przypadkach (pojedyncze pytania,
+   mieszane zaznaczenie, widoki wirtualne SEARCH/TAG/META) nazwa zostaje
+   bez zmian (`baseExplorer.export.defaultGameName`, "gra").
+
+   Przy okazji naprawiono blokujący tę funkcję bug w menu kontekstowym:
+   "Utwórz grę" (PPM) miało `disabled` liczone z `.some(k =>
+   k.startsWith("q:"))` -- PPM na SAMYM folderze (bez żadnego
+   bezpośredniego `q:` w selekcji) dawało wyszarzoną pozycję, niespójnie z
+   toolbarem (`render.js`: `hasQuestionInSel || hasFolderInSel`), mimo że
+   `selectionToQuestionIds()` woływane w środku i tak poprawnie rozwija
+   folder do pytań. Ujednolicono do `selectedRealCount === 0` -- ten sam
+   warunek co reszta menu (kopiuj/wytnij/duplikuj).
+
+2. **Suwak typu gry ma być cały złoty, nie czarno-biały.** `.rng` (klasa
+   dzielona z suwakami R/G/B koloru tagów w `tags-modal.js`, gdzie
+   czarno-biały/kolorowy `--track` ma sens) miał domyślny fallback
+   `--track: linear-gradient(to right, #000, #fff)`. `#xTypeRange` nigdy
+   nie dostawał własnego `--track` (JS ustawia go inline tylko dla R/G/B),
+   więc dziedziczył ten czarno-biały gradient. Dodano scoped override
+   `.xRange .rng { --track: linear-gradient(to right, #f5d26b, #f5d26b) }`
+   (ten sam złoty co już miał kciuk suwaka) -- nie dotyka bazowej `.rng`
+   ani R/G/B.
+
+3. **Usunięto angielskie podpisy techniczne** (`poll_text`/`poll_points`/
+   `prepared`) spod przycisków typu gry w `base-explorer.html` -- czysto
+   kosmetyczne, etykieta `<b>` (polska nazwa) zostaje.
+
+Nowe testy w `tests/e2e/base-explorer.spec.js`: "Utwórz grę z
+zaznaczonego folderu podpowiada jego nazwę jako nazwę gry" (folder z 10
+pytaniami, zaznaczenie + Ctrl+G, `#xName` === nazwa folderu) i "modal
+typu gry: bez angielskich podpisów technicznych pod przyciskami, suwak
+cały złoty" (`.xTypeLbl span` count 0, `--track` zawiera `#f5d26b` i nie
+zawiera `#000`/`#fff`).
+
 ### A) Sam edytor bazy — dokładność jak w `editor.spec.js`
 - CRUD pytań/odpowiedzi/kategorii/tagów (`page.js`, `render.js`,
   `actions.js`, `question-modal.js`, `tags-modal.js`) — limity, puste

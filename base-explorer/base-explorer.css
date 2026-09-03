@@ -1343,6 +1343,13 @@ tr.row .tag-dot[data-tip]::before {
     width: 100%
 }
 
+/* Suwak typu gry ma być cały złoty, nie domyślny czarno-biały gradient
+   .rng-a (ten sam dzielony ze suwakami R/G/B w kolorze tagów, gdzie
+   czarno-biały/kolorowy gradient ma sens -- tu nie). */
+.xRange .rng {
+    --track: linear-gradient(to right, #f5d26b, #f5d26b);
+}
+
 .xTypeLabels {
     margin-top: 10px;
     display: grid;
