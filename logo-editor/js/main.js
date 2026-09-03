@@ -1,22 +1,22 @@
 // familiada/logo-editorjs/main.js
 // Glowna logika strony + lista kafelkow + routing do edytorow.
 
-import { addRenameGesture } from "../../js/core/rename-gesture.js?v=v2026-09-03T05345";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../../js/core/logo-preview.js?v=v2026-09-03T05345";
+import { addRenameGesture } from "../../js/core/rename-gesture.js?v=v2026-09-03T05393";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../../js/core/logo-preview.js?v=v2026-09-03T05393";
 
-import { sb } from "../../js/core/supabase.js?v=v2026-09-03T05345";
-import { requireAuth } from "../../js/core/auth.js?v=v2026-09-03T05345";
-import { isGuestUser } from "../../js/core/guest-mode.js?v=v2026-09-03T05345";
-import { alertModal, confirmModal } from "../../js/core/modal.js?v=v2026-09-03T05345";
-import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-09-03T05345";
-import { initTopbarAccountDropdown } from "../../js/core/topbar-controller.js?v=v2026-09-03T05345";
-import { isMobileDevice } from "../../js/core/pwa.js?v=v2026-09-03T05345";
-import { v as cacheBust } from "../../js/core/cache-bust.js?v=v2026-09-03T05345";
-import { guardResourceLock, isResourceBusy, findBusyContext } from "../../js/core/resource-lock.js?v=v2026-09-03T05345";
+import { sb } from "../../js/core/supabase.js?v=v2026-09-03T05393";
+import { requireAuth } from "../../js/core/auth.js?v=v2026-09-03T05393";
+import { isGuestUser } from "../../js/core/guest-mode.js?v=v2026-09-03T05393";
+import { alertModal, confirmModal } from "../../js/core/modal.js?v=v2026-09-03T05393";
+import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-09-03T05393";
+import { initTopbarAccountDropdown } from "../../js/core/topbar-controller.js?v=v2026-09-03T05393";
+import { isMobileDevice } from "../../js/core/pwa.js?v=v2026-09-03T05393";
+import { v as cacheBust } from "../../js/core/cache-bust.js?v=v2026-09-03T05393";
+import { guardResourceLock, isResourceBusy, findBusyContext } from "../../js/core/resource-lock.js?v=v2026-09-03T05393";
 
-import { initTextEditor } from "./text.js?v=v2026-09-03T05345";
-import { initDrawEditor } from "./draw.js?v=v2026-09-03T05345";
-import { initImageEditor } from "./image.js?v=v2026-09-03T05345";
+import { initTextEditor } from "./text.js?v=v2026-09-03T05393";
+import { initDrawEditor } from "./draw.js?v=v2026-09-03T05393";
+import { initImageEditor } from "./image.js?v=v2026-09-03T05393";
 
 window.addEventListener("error", (e) => {
   console.error("window error", e.error || e.message);
@@ -35,9 +35,9 @@ const DOT_H = 70;  // 10*7
 
 // UWAGA: to sa sciezki wzgledne wobec logo-editor
 // (ustalone, nie zgadujemy)
-const FONT_3x10_URL = "display/font_3x10.json?v=v2026-09-03T05345";
-const FONT_5x7_URL  = "display/font_5x7.json?v=v2026-09-03T05345";
-const DEFAULT_LOGO_URL = "display/logo_familiada.json?v=v2026-09-03T05345";
+const FONT_3x10_URL = "display/font_3x10.json?v=v2026-09-03T05393";
+const FONT_5x7_URL  = "display/font_5x7.json?v=v2026-09-03T05393";
+const DEFAULT_LOGO_URL = "display/logo_familiada.json?v=v2026-09-03T05393";
 
 /* =========================================================
    DOM
@@ -1622,7 +1622,7 @@ async function boot(){
    imageEditor = initImageEditor(editorCtx);
 
   // Updater - sprawdzanie nowej wersji (TYLKO RAZ)
-  import('../../js/core/updater.js?v=v2026-09-03T05345').then(m => m.initUpdater()).catch(() => {});
+  import('../../js/core/updater.js?v=v2026-09-03T05393').then(m => m.initUpdater()).catch(() => {});
 
    armNavGuard();
 
