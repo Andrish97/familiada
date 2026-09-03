@@ -6,7 +6,7 @@ import { alertModal } from "../../js/core/modal.js?v=v2026-09-02T21390";
 import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-09-02T21390";
 import { initTopbarAccountDropdown } from "../../js/core/topbar-controller.js?v=v2026-09-02T21390";
 import { createState, setRole } from "./state.js?v=v2026-09-02T21390";
-import { renderAll } from "./render.js?v=v2026-09-02T21390";
+import { renderAll } from "./render.js?v=v2026-09-03T050947";
 import {
   getBaseMeta,
   getBaseRole,
@@ -14,8 +14,8 @@ import {
   listTags,
   listAllQuestions,
 } from "./repo.js?v=v2026-09-02T21390";
-import { wireActions } from "./actions.js?v=v2026-09-02T21390";
-import { initDrawer, disableDragOnTouch } from "./mobile.js?v=v2026-09-02T21390";
+import { wireActions } from "./actions.js?v=v2026-09-03T050947";
+import { initDrawer, disableDragOnTouch } from "./mobile.js?v=v2026-09-03T050947";
 
 /* ================= DOM ================= */
 const btnBack = document.getElementById("btnBack");

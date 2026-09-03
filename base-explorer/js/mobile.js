@@ -13,7 +13,19 @@ export function initDrawer() {
   const overlay = document.getElementById("drawerOverlay");
   if (!btn || !panel || !overlay) return;
 
+  // #toolbar zajmuje realną, zmienną wysokość (1 wiersz na szerszym mobile,
+  // 2 wiersze gdy przyciski się zawiną) -- drawer/overlay w CSS doliczają
+  // to do --topbar-h, żeby nie zasłaniać toolbara. Mierzymy przy każdym
+  // otwarciu (nie raz przy init), bo wysokość może się zmienić między
+  // otwarciami (obrót ekranu, dojście do innej szerokości viewportu).
+  function updateToolbarOffset() {
+    const toolbarEl = document.getElementById("toolbar");
+    const h = toolbarEl ? Math.ceil(toolbarEl.getBoundingClientRect().height) : 0;
+    document.body.style.setProperty("--be-toolbar-h", `${h}px`);
+  }
+
   function open() {
+    updateToolbarOffset();
     panel.classList.add("is-open");
     overlay.hidden = false;
     btn.setAttribute("aria-expanded", "true");

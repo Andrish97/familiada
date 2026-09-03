@@ -1021,7 +1021,86 @@ tego konkretnego testu, bo test nie mógł przejść niezależnie od kodu
 aplikacji. **Run #86** (commit `614e83ac` po autobocie, `spec_filter`
 = `base-explorer.spec.js --grep "long-press|usuniętego tuż przed
 Zapisz"`) — zielony, `conclusion: success`, krok "Run E2E tests" bez
-błędów. Moduł zamknięty.
+błędów.
+
+### Runda 15 — zgłoszenie użytkownika po "zamknięciu" modułu: 2 realne bugi UI, testami nieuktyte
+
+Powyższe "moduł zamknięty" okazało się przedwczesne — audyt A/B/C i
+Warstwy 1/2 (dane w DB) były rzeczywiście pokryte, ale **stan samego UI**
+(disabled przycisków toolbara, layout drawera na mobile) nie miał
+żadnego testu regresyjnego, mimo że to dokładnie ten rodzaj bugów, który
+psuje się najciszej (appka "działa", dane się nie psują, tylko UI kłamie
+o tym co jest zaznaczone/dostępne). Użytkownik trafnie zauważył, że
+edytor bazy pytań był pisany iteracyjnie na czacie z GPT (przed
+włączeniem Claude do tego repo) i ma dużo takich "szwów" — miejsc, gdzie
+ten sam efekt (aktualizacja UI po zmianie selekcji) był powielany ręcznie
+w wielu miejscach zamiast być scentralizowany, więc część miejsc go po
+prostu nie doniosła.
+
+**Bug 1 — toolbar nie aktualizuje `disabled` po ODZNACZENIU.**
+`base-explorer/js/actions.js` ma dedykowany `scheduleRenderList()`
+(`renderToolbar(state); renderList(state);`) używany PO zaznaczeniu
+wiersza w liście — to działało. Ale co najmniej 5 miejsc, które
+ODZNACZAJĄ selekcję (klik w puste tło listy — `e.target === listEl`,
+globalny listener `Escape`, start/koniec marquee-selection na liście,
+touch-marquee na liście) wołały WYŁĄCZNIE `renderList(state)` (albo samo
+zdejmowanie klas `.is-selected` z DOM), nigdy `renderToolbar(state)`.
+Efekt dokładnie taki jak zgłoszony: zaznaczasz coś (toolbar poprawnie się
+odblokowuje), potem odznaczasz (wiersz wizualnie traci podświetlenie, ale
+"Usuń"/"Zmień nazwę"/... zostają klikalne, bo toolbar nigdy nie dostał
+komunikatu że selekcja zniknęła). Strona drzewa (`scheduleRenderTree()`)
+nie miała tego problemu — tam każda zmiana selekcji, w tym odznaczenie,
+zawsze leci przez pełne `renderAll(state)`.
+
+Naprawa scentralizowana zamiast łatana punktowo (żeby nie zostawić
+kolejnego, sensownego z pozoru miejsca bez tego wywołania w przyszłości):
+`renderList()` w `render.js` sam woła `renderToolbar()` na wejściu.
+`renderToolbar()` jest tani i idempotentny poza pierwszym wywołaniem
+(buduje DOM przycisków raz, `dataset.ready==="1"`, dalej tylko
+aktualizuje `disabled`/tooltips/chipsy wyszukiwania) — podwójne wywołanie
+w ramach jednego `renderAll()` (który i tak woła oba osobno) jest
+nieszkodliwe. To gwarantuje poprawny stan toolbara przy KAŻDYM
+`renderList()`, niezależnie od tego które z wielu miejsc w `actions.js`
+je wywołało.
+
+Nowy test regresyjny: `tests/e2e/base-explorer.spec.js`, "regresja:
+toolbar aktualizuje disabled po ODZNACZENIU (Escape / klik w puste tło),
+nie tylko po zaznaczeniu" — zaznacza pytanie (toolbar enabled), Escape
+(toolbar disabled), zaznacza ponownie, klik w puste tło pod jedynym
+wierszem listy (toolbar disabled).
+
+**Bug 2 — drawer na mobile zasłania toolbar.** `#toolbar` (search +
+przyciski) jest w `base-explorer.html` OSOBNYM elementem, siedzącym
+POD globalnym topbarem strony, ale NAD `<main class="explorer">`
+(który dopiero zawiera `.explorer-left`/`.explorer-right`). Drawer
+(`.explorer-left` na mobile, `position:fixed`) i jego overlay miały
+`top: var(--topbar-h, 60px)` — czyli liczyły tylko wysokość globalnego
+topbara strony, kompletnie pomijając wysokość samego `#toolbar`. Efekt:
+otwarty drawer zaczynał się dokładnie tam, gdzie zaczynał się toolbar, i
+go w całości zasłaniał (łącznie z przyciskiem, który go otwiera/zamyka).
+
+Naprawa: `initDrawer()` w `mobile.js` mierzy realną,
+`getBoundingClientRect().height` toolbara przy każdym otwarciu drawera
+(zmienna, bo toolbar zawija się do 2 wierszy poniżej pewnej szerokości) i
+ustawia `--be-toolbar-h` na `document.body`. CSS
+(`.explorer-left`/`.drawer-overlay` w media query mobile) liczy
+`top: calc(var(--topbar-h, 60px) + var(--be-toolbar-h, 96px))` zamiast
+samego `--topbar-h`.
+
+Nowy test regresyjny: `tests/e2e/base-explorer.spec.js`, "regresja:
+otwarty drawer nie zasłania toolbara" — po otwarciu drawera sprawdza
+bounding boxy `#toolbar` i `#explorerLeft`, asercja że drawer zaczyna się
+na/poniżej dołu toolbara (brak nakładania w pionie).
+
+Świadomie NIE przeprowadzono w tej rundzie pełnego przeglądu "czy są
+jeszcze inne miejsca w `base-explorer/`, gdzie zmiana stanu pomija
+odświeżenie zależnego UI" — dwa zgłoszone bugi naprawione punktowo (Bug 1
+scentralizowany na poziomie `renderList()`, więc realnie zamyka całą
+klasę "selekcja zmienia się, toolbar nie wie"), ale np. `renderTags()`
+(panel tagów po lewej) czy `renderTree()` mogą mieć analogiczne,
+niezgłoszone jeszcze luki tego samego autorstwa (kod pisany na czacie z
+GPT) — to świadomie odłożone, do zgłoszenia/audytu na żądanie, nie
+domysłem "na wszelki wypadek".
 
 ### A) Sam edytor bazy — dokładność jak w `editor.spec.js`
 - CRUD pytań/odpowiedzi/kategorii/tagów (`page.js`, `render.js`,

@@ -638,6 +638,50 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
     }
   });
 
+  test("regresja: toolbar aktualizuje disabled po ODZNACZENIU (Escape / klik w puste tło), nie tylko po zaznaczeniu", async ({ page, context }) => {
+    // Przed naprawą: renderList() (wołane samo, bez renderToolbar()) po
+    // selectionClear() w kliku-w-puste-tło listy i w globalnym Escape zostawiało
+    // toolbar ze stanem enabled sprzed odznaczenia -- widoczne w wierszu (klasa
+    // is-selected) znikało poprawnie, ale np. "Usuń"/"Zmień nazwę" dalej dawały
+    // się kliknąć mimo braku realnej selekcji.
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context);
+
+    const baseId = await createBase(page, `E2E-XB-TBDESELECT-${Date.now()}`);
+
+    try {
+      const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "Pytanie", answers: [] } });
+
+      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+
+      const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
+      const deleteBtn = page.locator('#toolbar button[data-act="delete"]');
+
+      await expect(row).toBeVisible({ timeout: 15000 });
+      await row.click();
+      await expect(deleteBtn).toBeEnabled({ timeout: 5000 });
+
+      // 1) Escape -- global keydown handler w actions.js
+      await page.keyboard.press("Escape");
+      await expect(row).not.toHaveClass(/is-selected/);
+      await expect(deleteBtn).toBeDisabled({ timeout: 5000 });
+
+      // 2) klik w puste tło listy (poniżej jedynego wiersza -- #list ma
+      // flex:1 1 auto i jest znacznie wyższe niż tabela z 1 wierszem)
+      await row.click();
+      await expect(deleteBtn).toBeEnabled({ timeout: 5000 });
+
+      const box = await page.locator("#list").boundingBox();
+      await page.mouse.click(box.x + 10, box.y + box.height - 10);
+
+      await expect(row).not.toHaveClass(/is-selected/);
+      await expect(deleteBtn).toBeDisabled({ timeout: 5000 });
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+
   test("question-modal: dodanie odpowiedzi z punktami zapisuje się w DB", async ({ page, context }) => {
     test.setTimeout(60_000);
     await loginAsTestUser(page, context);
@@ -2537,6 +2581,39 @@ test.describe("base-explorer: mobile.js (drawer, long-press, podwójny tap)", ()
       // klik w wiersz folderu (w drzewie, wewnątrz panelu) zamyka drawer
       await page.locator(`#tree .row[data-kind="cat"]`).first().click();
       await expect(panel).not.toHaveClass(/is-open/);
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+
+  test("regresja: otwarty drawer nie zasłania toolbara (#toolbar jest osobnym elementem NAD .explorer)", async ({ page, context }) => {
+    // Przed naprawą: .explorer-left/.drawer-overlay pozycjonowały się na
+    // top: var(--topbar-h) (tylko globalny topbar strony) -- ale #toolbar
+    // (search + przyciski) leży JESZCZE NIŻEJ, między topbarem a .explorer
+    // (patrz base-explorer.html), więc drawer zaczynał się dokładnie tam
+    // gdzie zaczynał się toolbar i go zasłaniał. initDrawer() w mobile.js
+    // mierzy realną wysokość #toolbar i doi ją do --be-toolbar-h.
+    test.setTimeout(60_000);
+    await page.setViewportSize({ width: 400, height: 800 });
+    await loginAsTestUser(page, context);
+    const baseId = await createBase(page, `E2E-XM-DRAWERTOOLBAR-${Date.now()}`);
+
+    try {
+      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+
+      const btnDrawer = page.locator("#btnDrawerToggle");
+      await expect(btnDrawer).toBeVisible({ timeout: 15000 });
+      await btnDrawer.click();
+      await expect(page.locator("#explorerLeft")).toHaveClass(/is-open/);
+
+      const toolbarBox = await page.locator("#toolbar").boundingBox();
+      const drawerBox = await page.locator("#explorerLeft").boundingBox();
+      expect(toolbarBox).toBeTruthy();
+      expect(drawerBox).toBeTruthy();
+
+      // brak nakładania w pionie: drawer musi zaczynać się na/poniżej dołu toolbara
+      expect(drawerBox.y).toBeGreaterThanOrEqual(toolbarBox.y + toolbarBox.height - 1);
     } finally {
       await deleteBase(page, baseId);
     }

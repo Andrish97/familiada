@@ -760,6 +760,13 @@ function initColumnResizers() {
 }
 
 export function renderList(state) {
+  // Wiele miejsc w actions.js po zmianie selekcji (klik w puste tło, Escape,
+  // koniec marquee...) odświeża tylko listę, nie cały renderAll() -- bez tego
+  // toolbar (disabled przycisków rename/delete/copy/...) zostawał ze stanem
+  // sprzed odznaczenia. renderToolbar() jest idempotentny/tani (patrz jego
+  // ciało: buduje DOM tylko raz), więc wywołanie "na wszelki wypadek" tutaj
+  // jest bezpieczne nawet gdy renderAll() i tak woła je osobno tuż obok.
+  renderToolbar(state);
   if (!elList) return;
 
   const foldersRaw = Array.isArray(state.folders) ? state.folders : [];
