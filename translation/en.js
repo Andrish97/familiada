@@ -4326,6 +4326,7 @@ const en = {
       errors: {
         minQuestions: "You need at least {count} questions to export.",
         pickMin: "Select at least {count} questions.",
+        pickBad: "Uncheck the red questions (they don't meet the selected type's requirements) or fix their data.",
         createFailed: "Failed to create the game (see progress bar / console for details).",
       },
       progress: {

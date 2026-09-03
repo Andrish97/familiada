@@ -263,6 +263,27 @@ async function seedTenPlainQuestions(page, baseId, startOrd = 1) {
   return ids;
 }
 
+// Jak seedTenPlainQuestions, ale z odpowiedziami spełniającymi warunki
+// WSZYSTKICH trzech typów naraz (3 odpowiedzi, fixed_points 0..100 sumujące
+// się <=100) -- do testów eksportu PUNKTACJA/PREPAROWANA, gdzie wypełniacz
+// musi zostać "zielony" (validateForType) w każdym z tych typów, inaczej
+// export-modal.js's hasBadSelected() blokuje "Utwórz" (patrz zgłoszenie:
+// czerwone pytania i tak trafiały do gry -- teraz naprawdę blokują eksport).
+async function seedTenTypeCompatibleQuestions(page, baseId, startOrd = 1) {
+  const ids = [];
+  for (let i = 0; i < 10; i++) {
+    const id = await createQuestion(page, {
+      baseId, ord: startOrd + i,
+      payload: {
+        text: `Pytanie wypełniające ${i + 1}`,
+        answers: [{ text: "A", fixed_points: 0 }, { text: "B", fixed_points: 0 }, { text: "C", fixed_points: 0 }],
+      },
+    });
+    ids.push(id);
+  }
+  return ids;
+}
+
 // scheduleRenderList() w actions.js debounce'uje aktualizację toolbara o 180ms
 // po kliknięciu wiersza ("krótko: pozwala na dblclick") -- skróty klawiszowe
 // (Ctrl+E/Ctrl+G/Ctrl+D) klikają przycisk toolbara TYLKO gdy jego atrybut
@@ -1906,6 +1927,13 @@ test.describe("base-explorer: export-modal.js ('Utwórz grę')", () => {
       await pressToolbarShortcut(page, "createGame", "Control+g");
 
       await expect(page.locator("#exportOverlay")).toBeVisible({ timeout: 5000 });
+
+      // domyślny typ to "Preparowana" (3-6 odpowiedzi wymagane) -- te pytania
+      // są puste (0 odpowiedzi), więc byłyby czerwone/blokujące "Utwórz" z
+      // powodu TYPU, nie liczby. "Typowa ankieta" nie ma tego wymogu --
+      // test sprawdza wyłącznie próg liczby zaznaczonych, nie walidację typu.
+      await page.locator("#lbl0").click();
+
       await expect(page.locator("#xCreate")).toBeEnabled({ timeout: 5000 });
       await expect(page.locator("#xCountVal")).toHaveText("10");
 
@@ -1913,6 +1941,50 @@ test.describe("base-explorer: export-modal.js ('Utwórz grę')", () => {
 
       await expect(page.locator("#xCountVal")).toHaveText("9", { timeout: 5000 });
       await expect(page.locator("#xCreate")).toBeDisabled();
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+
+  test("regresja: czerwone (niespełniające warunków typu) pytanie blokuje Utwórz, nawet gdy zaznaczone", async ({ page, context }) => {
+    // Zgłoszenie użytkownika: podtytuł modala mówi "czerwone nie spełniają
+    // warunków wybranego typu -- odhacz je albo popraw dane", ale gra i tak
+    // powstawała z czerwonym (niepasującym) pytaniem w środku --
+    // buildExportPayload() brało wszystko z selectedIds bez sprawdzania
+    // validateForType(). Naprawa: "Utwórz" jest wyłączone dopóki
+    // którekolwiek zaznaczone pytanie jest czerwone dla aktualnego typu.
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context);
+    const baseId = await createBase(page, `E2E-XM-BADBLOCKS-${Date.now()}`);
+
+    try {
+      // 10 z 3 odpowiedziami (zielone dla Punktacji/Preparowanej) + 1 z
+      // 0 odpowiedziami (czerwone dla obu -- wymagają 3-6)
+      await seedTenTypeCompatibleQuestions(page, baseId);
+      const badQid = await createQuestion(page, {
+        baseId, ord: 11, payload: { text: "Za mało odpowiedzi", answers: [] },
+      });
+
+      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+      await expect(page.locator('#list .row[data-kind="q"]')).toHaveCount(11, { timeout: 15000 });
+
+      await page.locator("#list").click();
+      await page.keyboard.press("Control+a");
+      await pressToolbarShortcut(page, "createGame", "Control+g");
+      await expect(page.locator("#exportOverlay")).toBeVisible({ timeout: 5000 });
+
+      await page.locator("#lbl1").click(); // Punktacja -- wymaga 3-6 odpowiedzi
+      await expect(page.locator(`#xList .xPickItem[data-qid="${badQid}"]`)).toHaveClass(/\bbad\b/, { timeout: 5000 });
+
+      // 11 zaznaczonych (>=10), ale jedno czerwone -> Utwórz ma być wyłączone
+      await expect(page.locator("#xCountVal")).toHaveText("11");
+      await expect(page.locator("#xCreate")).toBeDisabled();
+
+      // odznaczenie czerwonego odblokowuje (zostaje 10 zielonych)
+      await page.locator(`#xList .xPickItem[data-qid="${badQid}"]`).click();
+      await expect(page.locator("#xCountVal")).toHaveText("10");
+      await expect(page.locator("#xCreate")).toBeEnabled({ timeout: 5000 });
     } finally {
       await deleteBase(page, baseId);
     }
@@ -2086,7 +2158,7 @@ test.describe("base-explorer: export-modal.js ('Utwórz grę')", () => {
           { text: "A1", fixed_points: 30 }, { text: "A2", fixed_points: 40 }, { text: "A3", fixed_points: 30 },
         ] },
       });
-      await seedTenPlainQuestions(page, baseId, 2);
+      await seedTenTypeCompatibleQuestions(page, baseId, 2);
 
       await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
@@ -2136,7 +2208,7 @@ test.describe("base-explorer: export-modal.js ('Utwórz grę')", () => {
           { text: "Jeden", fixed_points: 60 }, { text: "Dwa", fixed_points: 40 }, { text: "Trzy", fixed_points: 0 },
         ] },
       });
-      await seedTenPlainQuestions(page, baseId, 2);
+      await seedTenTypeCompatibleQuestions(page, baseId, 2);
 
       await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");

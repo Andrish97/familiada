@@ -11,8 +11,8 @@ import { sb } from "../../js/core/supabase.js?v=v2026-09-03T06084";
 import { updateChecked, ROW_GONE } from "../../js/core/db-guard.js?v=v2026-09-03T06084";
 import { acquireResourceLock, acquireResourceLocks } from "../../js/core/resource-lock.js?v=v2026-09-03T06084";
 import { alertModal } from "../../js/core/modal.js?v=v2026-09-03T06084";
-import { t } from "../../translation/translation.js?v=v2026-09-03T06084";
-import { listQuestionTags, listAllQuestions } from "./repo.js?v=v2026-09-03T06084";
+import { t } from "../../translation/translation.js?v=v2026-09-03T215015";
+import { listQuestionTags, listAllQuestions } from "./repo.js?v=v2026-09-03T215015";
 
 /* ================= Utils ================= */
 

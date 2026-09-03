@@ -4206,6 +4206,7 @@ const pl = {
       errors: {
         minQuestions: "Potrzebujesz co najmniej {count} pytań, żeby zrobić eksport.",
         pickMin: "Zaznacz co najmniej {count} pytań.",
+        pickBad: "Odznacz czerwone pytania (nie spełniają warunków wybranego typu) albo popraw ich dane.",
         createFailed: "Nie udało się utworzyć gry (szczegóły w pasku progresu / konsoli).",
       },
       progress: {

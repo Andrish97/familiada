@@ -1280,6 +1280,45 @@ pytania, nie dopełnia losowymi resztkami do progu 10" -- baza z 15
 pytaniami, zaznaczone tylko 3 konkretne, sprawdza że w modalu zaznaczone
 jest dokładnie tych 3 (po `data-qid`), a pozostałych 12 -- nie.
 
+### Runda 20 — szóste zgłoszenie: czerwone (niepasujące) pytania i tak trafiały do utworzonej gry
+
+Zgłoszenie: "czerwone nie spełniają a gra się tworzy i tak". Podtytuł
+modala mówi wprost: "Wybierz co najmniej 10 pytań. Czerwone nie spełniają
+warunków wybranego typu — odhacz je albo popraw dane." — ale nic tego nie
+egzekwowało. `validateForType(q, type)` (3-6 odpowiedzi dla
+Punktacji/Preparowanej, dodatkowo suma punktów <=100 dla Preparowanej)
+było używane WYŁĄCZNIE do pokolorowania wiersza na czerwono/zielono w
+`renderList()` -- sam klik "Utwórz" (`xCreate` handler) i
+`buildExportPayload()` brały wszystko z `selectedIds` bez sprawdzania tej
+walidacji. Zostawienie zaznaczonego czerwonego pytania (np. z 2
+odpowiedziami przy wybranej Punktacji, gdzie wymagane jest 3-6) i tak
+tworzyło z niego pytanie w nowej grze.
+
+Naprawa: nowy `hasBadSelected()` (sprawdza `validateForType` dla
+KAŻDEGO zaznaczonego pytania względem aktualnie wybranego typu) wpięty
+we wszystkie trzy miejsca, które decydują czy "Utwórz" jest klikalne --
+`updateCountUI()` (na żywo przy (od)zaznaczaniu w liście modala i przy
+zmianie typu), `lockUi()` (stan po zakończeniu/błędzie eksportu) i sam
+handler kliknięcia `xCreate` (obrona w głębi, na wypadek gdyby coś
+ominęło disabled). Nowy komunikat błędu `baseExplorer.export.errors.pickBad`
+("Odznacz czerwone pytania... albo popraw ich dane.") na wszelki wypadek
+gdyby handler się jednak wykonał.
+
+Poprawiono test "odznaczenie pytania poniżej progu 10..." (seedował
+puste, 0-odpowiedziowe pytania, a domyślny typ modala to "Preparowana" --
+te pytania są teraz też czerwone z powodu TYPU, nie tylko licznika, więc
+test explicite przełącza na "Typowa ankieta", jedyny typ bez wymogu co do
+liczby odpowiedzi) i oba testy eksportu PUNKTACJA/PREPAROWANA (używały
+`seedTenPlainQuestions` — 0 odpowiedzi, teraz czerwone dla obu tych typów
+— zamieniono na nowy `seedTenTypeCompatibleQuestions`, z 3 zerowymi
+odpowiedziami, zielony dla wszystkich trzech typów naraz).
+
+Nowy test: "regresja: czerwone (niespełniające warunków typu) pytanie
+blokuje Utwórz, nawet gdy zaznaczone" — 10 zielonych + 1 czerwone (0
+odpowiedzi) pytanie, wszystkie zaznaczone, typ Punktacja: "Utwórz"
+wyłączone mimo 11 zaznaczonych (>= progu); odznaczenie czerwonego
+(zostaje 10 zielonych) odblokowuje przycisk.
+
 ### A) Sam edytor bazy — dokładność jak w `editor.spec.js`
 - CRUD pytań/odpowiedzi/kategorii/tagów (`page.js`, `render.js`,
   `actions.js`, `question-modal.js`, `tags-modal.js`) — limity, puste
