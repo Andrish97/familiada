@@ -1,7 +1,7 @@
 // /base-explorerjs/question-modal.js
 // Modal pytania: open() zwraca Promise z wynikiem {ok,...}
 
-import { t } from "../../translation/translation.js?v=v2026-09-03T05393";
+import { t } from "../../translation/translation.js?v=v2026-09-03T05574";
 
 const $ = (id) => document.getElementById(id);
 
