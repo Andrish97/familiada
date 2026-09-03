@@ -357,11 +357,13 @@ test.describe("base-explorer: naprawy z audytu (nie tylko wiele kart naraz)", ()
       await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
-      // zaznacz jedno pytanie i otwórz eksport przez menu kontekstowe (export-modal
-      // sam dopełni zaznaczenie do 10 z state.questions)
+      // zaznacz wszystkie 10 (modal wybiera dokładnie zaznaczenie, bez
+      // dopełniania losowymi resztkami z bazy) i otwórz eksport przez menu
+      // kontekstowe
       const row = page.locator(`#list .row[data-kind="q"][data-id="${firstQid}"]`);
       await expect(row).toBeVisible({ timeout: 15000 });
-      await row.click();
+      await page.locator("#list").click();
+      await page.keyboard.press("Control+a");
       await row.click({ button: "right" });
 
       const createGameItem = page.locator(".context-menu .cm-item", { hasText: /Utwórz grę/i });
@@ -1888,14 +1890,19 @@ test.describe("base-explorer: export-modal.js ('Utwórz grę')", () => {
     const baseId = await createBase(page, `E2E-XM-COUNT-${Date.now()}`);
 
     try {
-      const ids = await seedTenPlainQuestions(page, baseId);
+      await seedTenPlainQuestions(page, baseId);
 
       await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
-      const firstRow = page.locator(`#list .row[data-kind="q"][data-id="${ids[0]}"]`);
-      await expect(firstRow).toBeVisible({ timeout: 15000 });
-      await firstRow.click();
+      await expect(page.locator("#list .row[data-kind=\"q\"]")).toHaveCount(10, { timeout: 15000 });
+
+      // Ctrl+A zaznacza wszystkie 10 -- modal ma teraz wybierać DOKŁADNIE
+      // to co user zaznaczył (patrz test "modal wybiera DOKŁADNIE
+      // zaznaczone pytania" niżej), więc żeby wystartować z pełnym
+      // zaznaczeniem trzeba zaznaczyć wszystko, a nie tylko jedno pytanie.
+      await page.locator("#list").click();
+      await page.keyboard.press("Control+a");
       await pressToolbarShortcut(page, "createGame", "Control+g");
 
       await expect(page.locator("#exportOverlay")).toBeVisible({ timeout: 5000 });
@@ -1906,6 +1913,58 @@ test.describe("base-explorer: export-modal.js ('Utwórz grę')", () => {
 
       await expect(page.locator("#xCountVal")).toHaveText("9", { timeout: 5000 });
       await expect(page.locator("#xCreate")).toBeDisabled();
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+
+  test("regresja: modal wybiera DOKŁADNIE zaznaczone pytania, nie dopełnia losowymi resztkami do progu 10", async ({ page, context }) => {
+    // Zgłoszenie użytkownika: w modalu tworzenia gry zaznaczonych jest
+    // zawsze dokładnie 10 pytań, mimo że user zaznaczył/wybrał mniej --
+    // export-modal.js's open() dopełniało selekcję losowo dobranymi
+    // pytaniami z całej bazy do progu QN_MIN(10). Naprawa: brak dopełniania
+    // -- selekcja w modalu = dokładnie to co user zaznaczył, nawet jeśli to
+    // mniej niż 10 (przycisk "Utwórz" zostaje wtedy po prostu wyłączony).
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context);
+    const baseId = await createBase(page, `E2E-XM-NORANDOM-${Date.now()}`);
+
+    try {
+      // 15 pytań w bazie -- gdyby modal dopełniał do 10, wybrałby 7 spośród
+      // TYCH 12 niezaznaczonych (obce dla zaznaczenia użytkownika).
+      const ids = [];
+      for (let i = 0; i < 15; i++) {
+        ids.push(await createQuestion(page, {
+          baseId, ord: i + 1, payload: { text: `Pytanie ${i + 1}`, answers: [] },
+        }));
+      }
+
+      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+
+      // zaznacz tylko 3 konkretne pytania (Ctrl+klik)
+      const chosen = ids.slice(0, 3);
+      for (const qid of chosen) {
+        await page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`).click({ modifiers: ["Control"] });
+      }
+      await expect(page.locator("#list .row.is-selected")).toHaveCount(3, { timeout: 5000 });
+
+      await pressToolbarShortcut(page, "createGame", "Control+g");
+      await expect(page.locator("#exportOverlay")).toBeVisible({ timeout: 5000 });
+
+      // dokładnie 3, nie 10 -- i to te same 3, nie jakiekolwiek inne
+      await expect(page.locator("#xCountVal")).toHaveText("3");
+      await expect(page.locator("#xCreate")).toBeDisabled();
+
+      for (const qid of chosen) {
+        const cb = page.locator(`#xList .xPickItem[data-qid="${qid}"] input[type="checkbox"]`);
+        await expect(cb).toBeChecked();
+      }
+      const notChosen = ids.filter((id) => !chosen.includes(id));
+      for (const qid of notChosen) {
+        const cb = page.locator(`#xList .xPickItem[data-qid="${qid}"] input[type="checkbox"]`);
+        await expect(cb).not.toBeChecked();
+      }
     } finally {
       await deleteBase(page, baseId);
     }
@@ -2034,7 +2093,10 @@ test.describe("base-explorer: export-modal.js ('Utwórz grę')", () => {
 
       const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
       await expect(row).toBeVisible({ timeout: 15000 });
-      await row.click();
+      // Modal wybiera dokładnie zaznaczenie (bez dopełniania do 10 losowymi
+      // resztkami) -- zaznacz więc wszystkie 11, żeby "Utwórz" się odblokowało.
+      await page.locator("#list").click();
+      await page.keyboard.press("Control+a");
       await pressToolbarShortcut(page, "createGame", "Control+g");
       await expect(page.locator("#exportOverlay")).toBeVisible({ timeout: 5000 });
 
@@ -2081,7 +2143,10 @@ test.describe("base-explorer: export-modal.js ('Utwórz grę')", () => {
 
       const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
       await expect(row).toBeVisible({ timeout: 15000 });
-      await row.click();
+      // Modal wybiera dokładnie zaznaczenie (bez dopełniania do 10 losowymi
+      // resztkami) -- zaznacz więc wszystkie 11, żeby "Utwórz" się odblokowało.
+      await page.locator("#list").click();
+      await page.keyboard.press("Control+a");
       await pressToolbarShortcut(page, "createGame", "Control+g");
       await expect(page.locator("#exportOverlay")).toBeVisible({ timeout: 5000 });
 

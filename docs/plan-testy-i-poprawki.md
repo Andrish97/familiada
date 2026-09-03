@@ -1237,6 +1237,49 @@ typu gry: bez angielskich podpisów technicznych pod przyciskami, suwak
 cały złoty" (`.xTypeLbl span` count 0, `--track` zawiera `#f5d26b` i nie
 zawiera `#000`/`#fff`).
 
+### Runda 19 — piąte zgłoszenie: modal "Utwórz grę" dopełniał zaznaczenie losowymi pytaniami do progu 10
+
+Zgłoszenie: "w modalu tworzenia gry losowo są wybierane pytania,
+dokładnie 10, jak one są wybierane? najlepiej żeby były wybrane wszystkie
+lub żadne".
+
+Przyczyna w `export-modal.js`'s `open(opts)`: gdy `opts.preselectIds`
+(zaznaczenie usera, rozwinięte z folderów do pytań przez
+`selectionToQuestionIds()` w `actions.js`) miało mniej niż `RULES.QN_MIN`
+(10), kod DOPEŁNIAŁ selekcję kolejnymi pytaniami z `allQuestions` (cała
+pula bazy, w kolejności zwróconej przez zapytanie do DB -- bez związku z
+tym co user faktycznie wybrał) aż do osiągnięcia 10:
+```js
+selectedIds = new Set(pre);
+for (const q of allQuestions) {
+  if (selectedIds.size >= RULES.QN_MIN) break;
+  selectedIds.add(q.id);
+}
+```
+Efekt dokładnie jak w zgłoszeniu: zaznaczysz 3 konkretne pytania (albo
+mały folder), a modal pokazuje 10 zaznaczonych -- 3 twoje + 7 obcych,
+dobranych z gdziekolwiek w bazie, bez ostrzeżenia że coś zostało dodane
+za ciebie.
+
+Naprawa: usunięto dopełnianie. Selekcja w modalu = dokładnie
+`opts.preselectIds`, nawet jeśli to mniej niż 10 -- wtedy przycisk
+"Utwórz" jest po prostu wyłączony (istniejący, poprawny mechanizm progu
+QN_MIN), zamiast cicho podmieniać czego user nie wybrał. Dla brakującego
+`opts.preselectIds` (teoretyczny fallback -- w praktyce nieosiągalny przez
+UI, bo toolbar/menu kontekstowe wymagają niepustego zaznaczenia żeby w
+ogóle odblokować "Utwórz grę") zmieniono domyślne "pierwsze 10 z tablicy"
+na "zaznacz wszystkie" -- zgodnie z drugą częścią prośby ("wszystkie lub
+żadne").
+
+Poprawiono 4 istniejące testy, które nieświadomie polegały na starym
+dopełnianiu (zaznaczały 1 pytanie i oczekiwały że "Utwórz" i tak się
+odblokuje z automatu do 10) -- teraz jawnie zaznaczają Ctrl+A tam gdzie
+chodziło tylko o odblokowanie przycisku, nie o to co konkretnie zostanie
+wyeksportowane. Nowy test: "regresja: modal wybiera DOKŁADNIE zaznaczone
+pytania, nie dopełnia losowymi resztkami do progu 10" -- baza z 15
+pytaniami, zaznaczone tylko 3 konkretne, sprawdza że w modalu zaznaczone
+jest dokładnie tych 3 (po `data-qid`), a pozostałych 12 -- nie.
+
 ### A) Sam edytor bazy — dokładność jak w `editor.spec.js`
 - CRUD pytań/odpowiedzi/kategorii/tagów (`page.js`, `render.js`,
   `actions.js`, `question-modal.js`, `tags-modal.js`) — limity, puste

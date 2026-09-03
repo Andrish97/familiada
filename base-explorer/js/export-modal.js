@@ -277,13 +277,18 @@ export function initExportModal({ state } = {}) {
 
     const pre = Array.isArray(opts.preselectIds) ? opts.preselectIds.filter(Boolean) : [];
     if (pre.length) {
+      // Dokładnie to, co user faktycznie wybrał (pytania/folder rozwinięty
+      // do pytań) -- bez dopełniania losowo dobranymi resztkami z całej
+      // bazy do progu QN_MIN. Jeśli to mniej niż 10, "Utwórz" zostaje
+      // wyłączone, dopóki user sam nie doda więcej -- uczciwiej niż ciche
+      // dorzucanie obcych pytań, których nigdy nie wybrał.
       selectedIds = new Set(pre);
-      for (const q of allQuestions) {
-        if (selectedIds.size >= RULES.QN_MIN) break;
-        selectedIds.add(q.id);
-      }
     } else {
-      selectedIds = new Set(allQuestions.slice(0, RULES.QN_MIN).map((q) => q.id));
+      // Brak jakiegokolwiek kontekstu wyboru (np. Ctrl+G bez zaznaczenia) --
+      // zaznacz WSZYSTKIE dostępne pytania zamiast arbitralnych pierwszych
+      // 10 z tablicy. User odznacza to, czego nie chce, zamiast zgadywać
+      // dlaczego akurat te zostały wybrane za niego.
+      selectedIds = new Set(allQuestions.map((q) => q.id));
     }
 
     // typ startowy z UI (range), ale możesz nadpisać przez opts.type

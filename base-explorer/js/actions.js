@@ -25,9 +25,9 @@ import {
   listCategoryTags
 } from "./repo.js?v=v2026-09-03T05574";
 
-import { showContextMenu, hideContextMenu } from "./context-menu.js?v=v2026-09-03T05574";
+import { showContextMenu, hideContextMenu } from "./context-menu.js?v=v2026-09-03T060640";
 import { openTagsModal } from "./tags-modal.js?v=v2026-09-03T05574";
-import { initExportModal } from "./export-modal.js?v=v2026-09-03T05574";
+import { initExportModal } from "./export-modal.js?v=v2026-09-03T060640";
 import { initQuestionModal } from "./question-modal.js?v=v2026-09-03T05574";
 import { sb } from "../../js/core/supabase.js?v=v2026-09-03T05574";
 import { updateChecked, updateCheckedMany, ROW_GONE } from "../../js/core/db-guard.js?v=v2026-09-03T05574";
