@@ -682,6 +682,58 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
     }
   });
 
+  test("regresja: PPM na NIEZAZNACZONYM pytaniu od razu je zaznacza (menu kontekstowe nie jest wyszarzone)", async ({ page, context }) => {
+    // Przed naprawą: showContextMenu() liczyło selectedRealCount ze STAREJ
+    // selekcji sprzed kliknięcia -- lazy-select wewnątrz np. action() dla
+    // "Zmień nazwę"/"Usuń" nigdy się nie wykonywał, bo renderMenu() w ogóle
+    // nie podpina click handlera do <button disabled>. Efekt: żeby cokolwiek
+    // zrobić przez PPM, trzeba było najpierw kliknąć lewym (zaznaczyć), potem
+    // dopiero PPM -- dokładnie to na co poskarżył się użytkownik. Naprawa:
+    // showContextMenu() sam zaznacza cel PRZED policzeniem disabled (tak jak
+    // już wcześniej robił dla tagów w lewym panelu).
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context);
+
+    const baseId = await createBase(page, `E2E-XB-PPMSELECT-${Date.now()}`);
+
+    try {
+      const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "Oryginalny tekst", answers: [] } });
+
+      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+
+      const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
+      await expect(row).toBeVisible({ timeout: 15000 });
+
+      // BEZ wcześniejszego lewego kliknięcia -- prosto PPM na nieznaczonym wierszu
+      await row.click({ button: "right" });
+
+      // widoczne podświetlenie od razu po PPM
+      await expect(row).toHaveClass(/is-selected/);
+
+      const renameItem = page.locator(".context-menu .cm-item", { hasText: /Zmień nazwę/i });
+      await expect(renameItem).toBeVisible({ timeout: 5000 });
+      await expect(renameItem).toBeEnabled();
+
+      await renameItem.click();
+
+      const input = page.locator("#renameModalInput");
+      await expect(input).toBeVisible({ timeout: 5000 });
+      await input.fill("Zmienione przez PPM");
+
+      await Promise.all([
+        page.waitForResponse((res) => res.url().includes("/rest/v1/qb_questions") && res.request().method() === "PATCH"),
+        page.locator("#renameModalSave").click(),
+      ]);
+      await expect(page.locator("#renameModal")).toBeHidden({ timeout: 10000 });
+
+      const fresh = await getQuestionRow(page, qid);
+      expect(fresh?.payload?.text).toBe("Zmienione przez PPM");
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+
   test("question-modal: dodanie odpowiedzi z punktami zapisuje się w DB", async ({ page, context }) => {
     test.setTimeout(60_000);
     await loginAsTestUser(page, context);

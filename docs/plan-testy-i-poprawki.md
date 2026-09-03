@@ -1102,6 +1102,53 @@ niezgłoszone jeszcze luki tego samego autorstwa (kod pisany na czacie z
 GPT) — to świadomie odłożone, do zgłoszenia/audytu na żądanie, nie
 domysłem "na wszelki wypadek".
 
+### Runda 16 — kolejne zgłoszenie: PPM/long-press na niezaznaczonym elemencie nic nie robił
+
+Trzeci bug tej samej "rodziny" (UI nie reaguje na realny stan) zgłoszony
+zaraz po Rundzie 15: żeby cokolwiek zrobić z elementem listy/drzewa przez
+menu kontekstowe (PPM) albo long-press na mobile, trzeba było go NAJPIERW
+zaznaczyć zwykłym kliknięciem — samo PPM/long-press na niezaznaczonym
+pytaniu/folderze pokazywało menu z "Zmień nazwę"/"Usuń"/"Tagi"
+wyszarzonymi.
+
+Przyczyna w `context-menu.js`'s `showContextMenu()`: `selectedRealCount`
+(używane do `disabled` w budowanych pozycjach menu) liczone było ze STAREJ
+`state.selection` sprzed kliknięcia. Trzy akcje (Tagi/Zmień nazwę/Usuń)
+faktycznie MIAŁY już kod "jeśli cel nie jest zaznaczony, zaznacz go" —
+ale w środku swojego `action()`, czyli PO zbudowaniu menu z `disabled`
+policzonym na starej selekcji. `renderMenu()` w ogóle nie podpina click
+handlera do `<button disabled>` (`if (!it || it.disabled || !it.action)
+continue;`), więc ten "naprawiający" kod był martwy — nigdy się nie
+wykonywał w scenariuszu, który miał obsługiwać. Gałąź TAGI (lewy panel,
+`target.kind === "tag"/"meta"`) miała ten wzorzec zrobiony PRAWIDŁOWO od
+początku (zaznaczenie PRZED liczeniem `disabled`) — stąd wiadomo było jak
+to ma wyglądać.
+
+Naprawa: na wejściu do gałęzi LISTA/DRZEWO (`target.kind === "cat"/"q"`),
+PRZED policzeniem `selectedRealCount`, `showContextMenu()` sam ustawia
+`selectionSetSingle()` na klikniętym elemencie, jeśli nie jest już
+częścią bieżącej selekcji (PPM na elemencie już będącym w wielo-zaznaczeniu
+zostawia je bez zmian — jak w prawdziwym Explorerze). Dorzucono
+`renderAll(state)` od razu po takim zaznaczeniu (i analogicznie w gałęzi
+TAGI, która miała tę samą, osobną, niezgłoszoną lukę — selekcja w stanie
+była poprawna, ale wiersz tagu nie podświetlał się od razu) — inaczej
+`state.selection` byłaby poprawna "po cichu", a wiersz wyglądałby na
+dalej odznaczony aż do najbliższego, niepowiązanego rerendera. Ponieważ
+ta naprawa działa na poziomie `showContextMenu()`, obejmuje od razu
+WSZYSTKIE 4 wejścia, które przez nią przechodzą: PPM na liście, PPM na
+drzewie, long-press na liście (mobile), long-press na drzewie (mobile) —
+bez potrzeby duplikowania logiki w `actions.js` przy każdym z osobna.
+Trzy teraz-martwe kopie "zaznacz jeśli nie zaznaczone" wewnątrz
+`action()` dla Tagi/Zmień nazwę/Usuń usunięte (nie mogły się już wykonać,
+zostawienie ich sugerowałoby nieistniejący wyścig).
+
+Nowy test regresyjny: `tests/e2e/base-explorer.spec.js`, "regresja: PPM
+na NIEZAZNACZONYM pytaniu od razu je zaznacza" — PPM na świeżym,
+nigdy-nie-klikniętym wierszu, bez wcześniejszego lewego kliknięcia;
+sprawdza że wiersz od razu dostaje `is-selected`, że "Zmień nazwę" nie
+jest wyszarzone, i że rename przez tę ścieżkę faktycznie zapisuje się w
+DB.
+
 ### A) Sam edytor bazy — dokładność jak w `editor.spec.js`
 - CRUD pytań/odpowiedzi/kategorii/tagów (`page.js`, `render.js`,
   `actions.js`, `question-modal.js`, `tags-modal.js`) — limity, puste
