@@ -151,12 +151,24 @@ test("postgres_changes na public.game_state dochodzi do anonimowego klienta (Dis
     expect(secondWriteError, "game_state_write (drugi zapis) nie powiodło się").toBeNull();
 
     // 5) Poczekaj aż anon dostanie CHOĆ JEDNO zdarzenie (INSERT lub UPDATE).
-    await anonPage.waitForFunction(() => window.__spikeEvents && window.__spikeEvents.length > 0, {
-      timeout: 20000,
-    });
-    console.log("[spike] anon otrzymał zdarzenie(a) postgres_changes");
+    //
+    //    UWAGA (run #95, 2026-09-04): page.waitForFunction() domyślnie
+    //    polluje przez requestAnimationFrame ("polling: 'raf'") — a rAF w
+    //    Chromium nie odpala się dla karty w tle/bez fokusu. anonPage to
+    //    drugi, nigdy niefokusowany kontekst, więc rAF-polling potrafił
+    //    utknąć bez końca mimo podanego timeout:20000 (widać było SUBSCRIBED
+    //    i oba udane zapisy w logu, potem cisza aż do zewnętrznego limitu
+    //    testu). Zamiast tego: ręczne pollowanie po stronie Node, całkowicie
+    //    niezależne od stanu widoczności/fokusu strony.
+    const pollDeadline = Date.now() + 20000;
+    let events = [];
+    while (Date.now() < pollDeadline) {
+      events = await anonPage.evaluate(() => window.__spikeEvents || []);
+      if (events.length > 0) break;
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    }
+    console.log("[spike] po pollowaniu — liczba zdarzeń:", events.length);
 
-    const events = await anonPage.evaluate(() => window.__spikeEvents);
     expect(events.length, "anon powinien dostać przynajmniej jedno zdarzenie postgres_changes").toBeGreaterThan(0);
     // Diagnostyka w logu CI — przydatna niezależnie od wyniku.
     console.log(
