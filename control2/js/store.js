@@ -14,9 +14,9 @@
 // wstrzyknięcie zależności (ten sam wzorzec co dzisiejsze createRounds/
 // createFinal), więc dają się testować w gołym Node z atrapą store.
 
-import { sb } from "../../js/core/supabase.js";
-import { createPersist, StaleWriteError } from "./persist.js";
-import { makeDefaultState, DEFAULT_SETTINGS, PERSISTED_KEYS } from "../../shared/gameStateShape.js";
+import { sb } from "../../js/core/supabase.js?v=v2026-09-04T18491";
+import { createPersist, StaleWriteError } from "./persist.js?v=v2026-09-04T18491";
+import { makeDefaultState, DEFAULT_SETTINGS, PERSISTED_KEYS } from "../../shared/gameStateShape.js?v=v2026-09-04T18491";
 
 export { StaleWriteError, makeDefaultState, DEFAULT_SETTINGS };
 
