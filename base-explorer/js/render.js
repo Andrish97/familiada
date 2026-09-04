@@ -1,8 +1,8 @@
 // base-explorerjs/render.js
 // Renderowanie UI eksploratora na podstawie state (bez DB, bez akcji).
 
-import { VIEW, META, META_ORDER } from "./state.js?v=v2026-09-02T21390";
-import { t } from "../../translation/translation.js?v=v2026-09-02T21390";
+import { VIEW, META, META_ORDER } from "./state.js?v=v2026-09-04T06255";
+import { t } from "../../translation/translation.js?v=v2026-09-04T06255";
 
 /* ================= DOM ================= */
 const elBaseName = document.getElementById("baseName");
@@ -760,6 +760,13 @@ function initColumnResizers() {
 }
 
 export function renderList(state) {
+  // Wiele miejsc w actions.js po zmianie selekcji (klik w puste tło, Escape,
+  // koniec marquee...) odświeża tylko listę, nie cały renderAll() -- bez tego
+  // toolbar (disabled przycisków rename/delete/copy/...) zostawał ze stanem
+  // sprzed odznaczenia. renderToolbar() jest idempotentny/tani (patrz jego
+  // ciało: buduje DOM tylko raz), więc wywołanie "na wszelki wypadek" tutaj
+  // jest bezpieczne nawet gdy renderAll() i tak woła je osobno tuż obok.
+  renderToolbar(state);
   if (!elList) return;
 
   const foldersRaw = Array.isArray(state.folders) ? state.folders : [];
@@ -947,7 +954,11 @@ function svgCut(){ return svgBase("M9.64 7.64L12 10l2.36-2.36a3 3 0 1 1 1.41 1.4
 function svgPaste(){ return svgBase("M19 4h-3.18A3 3 0 0 0 13 2h-2a3 3 0 0 0-2.82 2H5a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm-8-1h2a1 1 0 0 1 1 1v1H10V4a1 1 0 0 1 1-1zm8 19H5V6h2v2h10V6h2v16z"); }
 function svgDuplicate(){ return svgBase("M7 7h12v14H7V7zm-2 2H3V3h14v2H5v4z"); }
 function svgPlay(){ return svgBase("M8 5v14l11-7L8 5z"); }
-function svgRefresh(){ return svgBase("M17.65 6.35A7.95 7.95 0 0 0 12 4V1L7 6l5 5V7a5 5 0 1 1-5 5H5a7 7 0 1 0 12.65-5.65z"); }
+// Poprzednia ścieżka mieszała dwa łuki o różnych promieniach/środkach
+// (A7.95.../a5 5.../A7 7...) dla strzałki i "kółka" -- nie składały się w
+// spójny pierścień, więc ikona wyglądała na wizualnie zepsutą. To
+// sprawdzony, jednościeżkowy glif Material Icons "refresh".
+function svgRefresh(){ return svgBase("M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-8 3.58-8 8s3.58 8 8 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"); }
 
 /* small inline icons for tree/list rows */
 function svgFolder(){

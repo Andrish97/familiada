@@ -1343,6 +1343,13 @@ tr.row .tag-dot[data-tip]::before {
     width: 100%
 }
 
+/* Suwak typu gry ma być cały złoty, nie domyślny czarno-biały gradient
+   .rng-a (ten sam dzielony ze suwakami R/G/B w kolorze tagów, gdzie
+   czarno-biały/kolorowy gradient ma sens -- tu nie). */
+.xRange .rng {
+    --track: linear-gradient(to right, #f5d26b, #f5d26b);
+}
+
 .xTypeLabels {
     margin-top: 10px;
     display: grid;
@@ -1723,9 +1730,17 @@ tr.row .tag-dot[data-tip]::before {
 
   /* Topbar layout — dwie kolumny na mobile (obsługiwane przez topbar-mobile-menu.js) */
 
-  /* Layout: jeden panel zamiast dwóch kolumn */
+  /* Layout: jeden panel zamiast dwóch kolumn.
+     display:flex (nie block) -- .explorer-left/.drawerOverlay są na mobile
+     position:fixed (poza flow), więc jedynym flex-childem w praktyce jest
+     .explorer-right, który dzięki temu może się rozciągnąć (flex:1 1 auto
+     poniżej) na całą dostępną wysokość, tak jak na desktopie robi to
+     align-items:stretch w grid. Bez tego .explorer-right miał wysokość
+     content+min-height:50vh, czyli kończył się w połowie ekranu zamiast na
+     dole -- stąd pusta przestrzeń pod tabelą i poziomy suwak "w środku". */
   .explorer {
-    display: block;
+    display: flex;
+    flex-direction: column;
     padding: 0 8px 8px;
     min-height: 0;
   }
@@ -1733,7 +1748,13 @@ tr.row .tag-dot[data-tip]::before {
   /* Lewy panel jako drawer */
   .explorer-left {
     position: fixed;
-    top: var(--topbar-h, 60px);
+    /* #toolbar jest osobnym elementem NAD .explorer (patrz base-explorer.html) --
+       samo --topbar-h (wysokość globalnego topbara strony) zaczyna drawer
+       tuż pod topbarem, czyli DOKŁADNIE tam gdzie zaczyna się #toolbar, więc
+       drawer go zasłaniał. --be-toolbar-h (mierzone w mobile.js's initDrawer())
+       dosuwa start drawera pod realną, aktualną wysokość toolbara (1 albo 2
+       wiersze, zależnie od zawijania). */
+    top: calc(var(--topbar-h, 60px) + var(--be-toolbar-h, 96px));
     left: 0;
     bottom: 0;
     width: min(300px, 85vw);
@@ -1751,10 +1772,10 @@ tr.row .tag-dot[data-tip]::before {
     transform: translateX(0);
   }
 
-  /* Overlay za drawerem */
+  /* Overlay za drawerem — patrz komentarz przy .explorer-left o --be-toolbar-h */
   .drawer-overlay {
     position: fixed;
-    top: var(--topbar-h, 60px);
+    top: calc(var(--topbar-h, 60px) + var(--be-toolbar-h, 96px));
     left: 0;
     right: 0;
     bottom: 0;
@@ -1764,11 +1785,14 @@ tr.row .tag-dot[data-tip]::before {
 
   .drawer-overlay[hidden] { display: none !important; }
 
-  /* Prawy panel — pełna szerokość */
+  /* Prawy panel — pełna szerokość, rozciągnięty na całą wysokość .explorer
+     (flex:1 1 auto zamiast sztywnego min-height:50vh, patrz komentarz przy
+     .explorer powyżej). */
   .explorer-right {
     padding-left: 0;
     min-width: 0;
-    min-height: 50vh;
+    flex: 1 1 auto;
+    min-height: 0;
   }
 
   /* Toolbar — dwa wiersze na mobile */

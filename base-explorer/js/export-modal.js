@@ -1,7 +1,7 @@
 // /base-explorerjs/export-modal.js
 // Modal eksportu: open() zwraca Promise z wynikiem {ok, payload}
 
-import { t } from "../../translation/translation.js?v=v2026-09-02T21390";
+import { t } from "../../translation/translation.js?v=v2026-09-04T06255";
 
 const RULES = { QN_MIN: 10, AN_MIN: 3, AN_MAX: 6, SUM_PREPARED: 100 };
 const TYPES = ["poll_text", "poll_points", "prepared"];
@@ -151,10 +151,21 @@ export function initExportModal({ state } = {}) {
     renderList();
   }
 
+  // Podtytuł modala mówi wprost "czerwone nie spełniają warunków wybranego
+  // typu -- odhacz je albo popraw dane", ale nic tego nie egzekwowało:
+  // buildExportPayload() bierze WSZYSTKO co jest w selectedIds bez względu
+  // na validateForType(), więc zaznaczone-a-czerwone pytanie i tak trafiało
+  // do utworzonej gry. "Utwórz" musi być zablokowane dopóki którekolwiek
+  // zaznaczone pytanie jest czerwone dla aktualnie wybranego typu.
+  function hasBadSelected() {
+    const type = TYPES[typeIndex] || "prepared";
+    return allQuestions.some((q) => selectedIds.has(q.id) && !validateForType(q, type));
+  }
+
   function updateCountUI() {
     const c = selectedIds.size;
     if (xCountVal) xCountVal.textContent = String(c);
-    const ok = c >= RULES.QN_MIN;
+    const ok = c >= RULES.QN_MIN && !hasBadSelected();
     if (xCountPill) xCountPill.classList.toggle("bad", !ok);
     if (xCreate) xCreate.disabled = !ok;
   }
@@ -239,7 +250,7 @@ export function initExportModal({ state } = {}) {
     overlay?.querySelector?.(".export-modal")?.classList.toggle("is-running", running);
 
     if (xClose) xClose.disabled = running;
-    if (xCreate) xCreate.disabled = running || (selectedIds.size < RULES.QN_MIN);
+    if (xCreate) xCreate.disabled = running || selectedIds.size < RULES.QN_MIN || hasBadSelected();
   }
 
   function close(result = { ok: false }) {
@@ -277,13 +288,18 @@ export function initExportModal({ state } = {}) {
 
     const pre = Array.isArray(opts.preselectIds) ? opts.preselectIds.filter(Boolean) : [];
     if (pre.length) {
+      // Dokładnie to, co user faktycznie wybrał (pytania/folder rozwinięty
+      // do pytań) -- bez dopełniania losowo dobranymi resztkami z całej
+      // bazy do progu QN_MIN. Jeśli to mniej niż 10, "Utwórz" zostaje
+      // wyłączone, dopóki user sam nie doda więcej -- uczciwiej niż ciche
+      // dorzucanie obcych pytań, których nigdy nie wybrał.
       selectedIds = new Set(pre);
-      for (const q of allQuestions) {
-        if (selectedIds.size >= RULES.QN_MIN) break;
-        selectedIds.add(q.id);
-      }
     } else {
-      selectedIds = new Set(allQuestions.slice(0, RULES.QN_MIN).map((q) => q.id));
+      // Brak jakiegokolwiek kontekstu wyboru (np. Ctrl+G bez zaznaczenia) --
+      // zaznacz WSZYSTKIE dostępne pytania zamiast arbitralnych pierwszych
+      // 10 z tablicy. User odznacza to, czego nie chce, zamiast zgadywać
+      // dlaczego akurat te zostały wybrane za niego.
+      selectedIds = new Set(allQuestions.map((q) => q.id));
     }
 
     // typ startowy z UI (range), ale możesz nadpisać przez opts.type
@@ -295,6 +311,11 @@ export function initExportModal({ state } = {}) {
         if (xTypeRange) xTypeRange.value = String(idx);
       }
     }
+
+    // Domyślna nazwa gry: nazwa folderu, gdy caller ją poda (tworzenie
+    // gry "z folderu" -- patrz actions.js's openExportModal), w
+    // pozostałych przypadkach zwykły domyślny placeholder.
+    if (xName) xName.value = opts.defaultName || t("baseExplorer.export.defaultGameName");
 
     renderList();
     updateTypeUI();
@@ -332,6 +353,15 @@ export function initExportModal({ state } = {}) {
     const picked = allQuestions.filter((q) => selectedIds.has(q.id));
     if (picked.length < RULES.QN_MIN) {
       setErr(t("baseExplorer.export.errors.pickMin", { count: RULES.QN_MIN }));
+      return;
+    }
+
+    // Powielone tu na wszelki wypadek (disabled na przycisku już to
+    // egzekwuje przez updateCountUI()/lockUi()) -- podtytuł modala wprost
+    // mówi że czerwone trzeba odznaczyć albo poprawić, więc export nie może
+    // po cichu przepuścić pytania, które nie spełnia warunków typu.
+    if (hasBadSelected()) {
+      setErr(t("baseExplorer.export.errors.pickBad"));
       return;
     }
 

@@ -13,7 +13,19 @@ export function initDrawer() {
   const overlay = document.getElementById("drawerOverlay");
   if (!btn || !panel || !overlay) return;
 
+  // #toolbar zajmuje realną, zmienną wysokość (1 wiersz na szerszym mobile,
+  // 2 wiersze gdy przyciski się zawiną) -- drawer/overlay w CSS doliczają
+  // to do --topbar-h, żeby nie zasłaniać toolbara. Mierzymy przy każdym
+  // otwarciu (nie raz przy init), bo wysokość może się zmienić między
+  // otwarciami (obrót ekranu, dojście do innej szerokości viewportu).
+  function updateToolbarOffset() {
+    const toolbarEl = document.getElementById("toolbar");
+    const h = toolbarEl ? Math.ceil(toolbarEl.getBoundingClientRect().height) : 0;
+    document.body.style.setProperty("--be-toolbar-h", `${h}px`);
+  }
+
   function open() {
+    updateToolbarOffset();
     panel.classList.add("is-open");
     overlay.hidden = false;
     btn.setAttribute("aria-expanded", "true");
@@ -33,12 +45,9 @@ export function initDrawer() {
 
   overlay.addEventListener("click", close);
 
-  // Zamknij drawer po wyborze folderu/tagu (klik w lewy panel)
-  panel.addEventListener("click", (e) => {
-    if (!panel.classList.contains("is-open")) return;
-    // zamknij tylko jeśli kliknięto w wiersz (folder/tag), nie w scrollbar
-    if (e.target?.closest?.(".row")) close();
-  });
+  // Na życzenie: zaznaczenie/nawigacja (klik ani dblclick) w drzewie/tagach
+  // NIE zamyka już drawera automatycznie -- lista po prawej i tak aktualizuje
+  // się w tle, user zamyka drawer ręcznie (hamburger / klik w overlay).
 }
 
 /* ================= Long press → context menu ================= */

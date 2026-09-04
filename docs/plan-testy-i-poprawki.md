@@ -1021,7 +1021,397 @@ tego konkretnego testu, bo test nie mógł przejść niezależnie od kodu
 aplikacji. **Run #86** (commit `614e83ac` po autobocie, `spec_filter`
 = `base-explorer.spec.js --grep "long-press|usuniętego tuż przed
 Zapisz"`) — zielony, `conclusion: success`, krok "Run E2E tests" bez
-błędów. Moduł zamknięty.
+błędów.
+
+### Runda 15 — zgłoszenie użytkownika po "zamknięciu" modułu: 2 realne bugi UI, testami nieuktyte
+
+Powyższe "moduł zamknięty" okazało się przedwczesne — audyt A/B/C i
+Warstwy 1/2 (dane w DB) były rzeczywiście pokryte, ale **stan samego UI**
+(disabled przycisków toolbara, layout drawera na mobile) nie miał
+żadnego testu regresyjnego, mimo że to dokładnie ten rodzaj bugów, który
+psuje się najciszej (appka "działa", dane się nie psują, tylko UI kłamie
+o tym co jest zaznaczone/dostępne). Użytkownik trafnie zauważył, że
+edytor bazy pytań był pisany iteracyjnie na czacie z GPT (przed
+włączeniem Claude do tego repo) i ma dużo takich "szwów" — miejsc, gdzie
+ten sam efekt (aktualizacja UI po zmianie selekcji) był powielany ręcznie
+w wielu miejscach zamiast być scentralizowany, więc część miejsc go po
+prostu nie doniosła.
+
+**Bug 1 — toolbar nie aktualizuje `disabled` po ODZNACZENIU.**
+`base-explorer/js/actions.js` ma dedykowany `scheduleRenderList()`
+(`renderToolbar(state); renderList(state);`) używany PO zaznaczeniu
+wiersza w liście — to działało. Ale co najmniej 5 miejsc, które
+ODZNACZAJĄ selekcję (klik w puste tło listy — `e.target === listEl`,
+globalny listener `Escape`, start/koniec marquee-selection na liście,
+touch-marquee na liście) wołały WYŁĄCZNIE `renderList(state)` (albo samo
+zdejmowanie klas `.is-selected` z DOM), nigdy `renderToolbar(state)`.
+Efekt dokładnie taki jak zgłoszony: zaznaczasz coś (toolbar poprawnie się
+odblokowuje), potem odznaczasz (wiersz wizualnie traci podświetlenie, ale
+"Usuń"/"Zmień nazwę"/... zostają klikalne, bo toolbar nigdy nie dostał
+komunikatu że selekcja zniknęła). Strona drzewa (`scheduleRenderTree()`)
+nie miała tego problemu — tam każda zmiana selekcji, w tym odznaczenie,
+zawsze leci przez pełne `renderAll(state)`.
+
+Naprawa scentralizowana zamiast łatana punktowo (żeby nie zostawić
+kolejnego, sensownego z pozoru miejsca bez tego wywołania w przyszłości):
+`renderList()` w `render.js` sam woła `renderToolbar()` na wejściu.
+`renderToolbar()` jest tani i idempotentny poza pierwszym wywołaniem
+(buduje DOM przycisków raz, `dataset.ready==="1"`, dalej tylko
+aktualizuje `disabled`/tooltips/chipsy wyszukiwania) — podwójne wywołanie
+w ramach jednego `renderAll()` (który i tak woła oba osobno) jest
+nieszkodliwe. To gwarantuje poprawny stan toolbara przy KAŻDYM
+`renderList()`, niezależnie od tego które z wielu miejsc w `actions.js`
+je wywołało.
+
+Nowy test regresyjny: `tests/e2e/base-explorer.spec.js`, "regresja:
+toolbar aktualizuje disabled po ODZNACZENIU (Escape / klik w puste tło),
+nie tylko po zaznaczeniu" — zaznacza pytanie (toolbar enabled), Escape
+(toolbar disabled), zaznacza ponownie, klik w puste tło pod jedynym
+wierszem listy (toolbar disabled).
+
+**Bug 2 — drawer na mobile zasłania toolbar.** `#toolbar` (search +
+przyciski) jest w `base-explorer.html` OSOBNYM elementem, siedzącym
+POD globalnym topbarem strony, ale NAD `<main class="explorer">`
+(który dopiero zawiera `.explorer-left`/`.explorer-right`). Drawer
+(`.explorer-left` na mobile, `position:fixed`) i jego overlay miały
+`top: var(--topbar-h, 60px)` — czyli liczyły tylko wysokość globalnego
+topbara strony, kompletnie pomijając wysokość samego `#toolbar`. Efekt:
+otwarty drawer zaczynał się dokładnie tam, gdzie zaczynał się toolbar, i
+go w całości zasłaniał (łącznie z przyciskiem, który go otwiera/zamyka).
+
+Naprawa: `initDrawer()` w `mobile.js` mierzy realną,
+`getBoundingClientRect().height` toolbara przy każdym otwarciu drawera
+(zmienna, bo toolbar zawija się do 2 wierszy poniżej pewnej szerokości) i
+ustawia `--be-toolbar-h` na `document.body`. CSS
+(`.explorer-left`/`.drawer-overlay` w media query mobile) liczy
+`top: calc(var(--topbar-h, 60px) + var(--be-toolbar-h, 96px))` zamiast
+samego `--topbar-h`.
+
+Nowy test regresyjny: `tests/e2e/base-explorer.spec.js`, "regresja:
+otwarty drawer nie zasłania toolbara" — po otwarciu drawera sprawdza
+bounding boxy `#toolbar` i `#explorerLeft`, asercja że drawer zaczyna się
+na/poniżej dołu toolbara (brak nakładania w pionie).
+
+Świadomie NIE przeprowadzono w tej rundzie pełnego przeglądu "czy są
+jeszcze inne miejsca w `base-explorer/`, gdzie zmiana stanu pomija
+odświeżenie zależnego UI" — dwa zgłoszone bugi naprawione punktowo (Bug 1
+scentralizowany na poziomie `renderList()`, więc realnie zamyka całą
+klasę "selekcja zmienia się, toolbar nie wie"), ale np. `renderTags()`
+(panel tagów po lewej) czy `renderTree()` mogą mieć analogiczne,
+niezgłoszone jeszcze luki tego samego autorstwa (kod pisany na czacie z
+GPT) — to świadomie odłożone, do zgłoszenia/audytu na żądanie, nie
+domysłem "na wszelki wypadek".
+
+### Runda 16 — kolejne zgłoszenie: PPM/long-press na niezaznaczonym elemencie nic nie robił
+
+Trzeci bug tej samej "rodziny" (UI nie reaguje na realny stan) zgłoszony
+zaraz po Rundzie 15: żeby cokolwiek zrobić z elementem listy/drzewa przez
+menu kontekstowe (PPM) albo long-press na mobile, trzeba było go NAJPIERW
+zaznaczyć zwykłym kliknięciem — samo PPM/long-press na niezaznaczonym
+pytaniu/folderze pokazywało menu z "Zmień nazwę"/"Usuń"/"Tagi"
+wyszarzonymi.
+
+Przyczyna w `context-menu.js`'s `showContextMenu()`: `selectedRealCount`
+(używane do `disabled` w budowanych pozycjach menu) liczone było ze STAREJ
+`state.selection` sprzed kliknięcia. Trzy akcje (Tagi/Zmień nazwę/Usuń)
+faktycznie MIAŁY już kod "jeśli cel nie jest zaznaczony, zaznacz go" —
+ale w środku swojego `action()`, czyli PO zbudowaniu menu z `disabled`
+policzonym na starej selekcji. `renderMenu()` w ogóle nie podpina click
+handlera do `<button disabled>` (`if (!it || it.disabled || !it.action)
+continue;`), więc ten "naprawiający" kod był martwy — nigdy się nie
+wykonywał w scenariuszu, który miał obsługiwać. Gałąź TAGI (lewy panel,
+`target.kind === "tag"/"meta"`) miała ten wzorzec zrobiony PRAWIDŁOWO od
+początku (zaznaczenie PRZED liczeniem `disabled`) — stąd wiadomo było jak
+to ma wyglądać.
+
+Naprawa: na wejściu do gałęzi LISTA/DRZEWO (`target.kind === "cat"/"q"`),
+PRZED policzeniem `selectedRealCount`, `showContextMenu()` sam ustawia
+`selectionSetSingle()` na klikniętym elemencie, jeśli nie jest już
+częścią bieżącej selekcji (PPM na elemencie już będącym w wielo-zaznaczeniu
+zostawia je bez zmian — jak w prawdziwym Explorerze). Dorzucono
+`renderAll(state)` od razu po takim zaznaczeniu (i analogicznie w gałęzi
+TAGI, która miała tę samą, osobną, niezgłoszoną lukę — selekcja w stanie
+była poprawna, ale wiersz tagu nie podświetlał się od razu) — inaczej
+`state.selection` byłaby poprawna "po cichu", a wiersz wyglądałby na
+dalej odznaczony aż do najbliższego, niepowiązanego rerendera. Ponieważ
+ta naprawa działa na poziomie `showContextMenu()`, obejmuje od razu
+WSZYSTKIE 4 wejścia, które przez nią przechodzą: PPM na liście, PPM na
+drzewie, long-press na liście (mobile), long-press na drzewie (mobile) —
+bez potrzeby duplikowania logiki w `actions.js` przy każdym z osobna.
+Trzy teraz-martwe kopie "zaznacz jeśli nie zaznaczone" wewnątrz
+`action()` dla Tagi/Zmień nazwę/Usuń usunięte (nie mogły się już wykonać,
+zostawienie ich sugerowałoby nieistniejący wyścig).
+
+Nowy test regresyjny: `tests/e2e/base-explorer.spec.js`, "regresja: PPM
+na NIEZAZNACZONYM pytaniu od razu je zaznacza" — PPM na świeżym,
+nigdy-nie-klikniętym wierszu, bez wcześniejszego lewego kliknięcia;
+sprawdza że wiersz od razu dostaje `is-selected`, że "Zmień nazwę" nie
+jest wyszarzone, i że rename przez tę ścieżkę faktycznie zapisuje się w
+DB.
+
+### Runda 17 — czwarte zgłoszenie: chmurka (tooltip) kropki meta nie znika, "zostaje przy palcu"
+
+Ten sam wzorzec błędu ("kod pisany pod mysz, nigdy nie przemyślany pod
+dotyk") czwarty raz z rzędu. `wireActions()` w `actions.js` tworzy jeden
+globalny portal tooltipa (`div.dot-tooltip`, `tipEl`) dla kropek
+tag/meta w liście i pokazuje/chowa go WYŁĄCZNIE parą `mouseover`/
+`mouseout` na `#list`, z pozycją aktualizowaną przez `mousemove`.
+
+Na prawdziwym dotyku: tapnięcie w kropkę wywołuje syntetyczny
+`mouseover` (stąd chmurka w ogóle się pokazuje — to nie było zgłoszone
+jako "nie pokazuje się"), ale przeglądarka NIE generuje ani `mousemove`
+w trakcie (palec już nieruchomy albo odsunięty), ani `mouseout` po
+zdjęciu palca z ekranu (nie ma kursora, który mógłby "wyjść" z
+elementu). Efekt: chmurka zostaje przyklejona dokładnie w miejscu
+tapnięcia w nieskończoność — kolejne tapnięcia GDZIEKOLWIEK indziej
+(nawet poza listą) jej nie zamykają, bo nic nigdy nie wywołuje
+`mouseout` na tamtej konkretnej kropce. Dokładnie to zgłosił użytkownik:
+"chmurka (...) nie znika jeśli klikam gdzie indziej i dziwnie zostaje
+przy palcu".
+
+Naprawa: dodatkowy globalny listener `pointerdown` na `document` (a nie
+kolejna para mysz-specyficznych zdarzeń) — jeśli chmurka jest widoczna, a
+kliknięcie/tapnięcie trafiło poza kropkę, chowa ją. `pointerdown` odpala
+się identycznie dla myszy, dotyku i rysika, więc to jedno dopisanie
+naprawia oba tryby wejścia naraz, bez rozdzielania ścieżek touch/mouse.
+Analogiczny mechanizm dla kropek w DRZEWIE (foldery) nie istnieje w ogóle
+(`mouseover`/`mouseout` są wpięte tylko na `#list`) — świadomie
+nieruszane w tej rundzie, bo nie było zgłoszone i to osobny, mniejszy
+brak (foldery w drzewie po prostu nie pokazują tooltipa kropek), a nie
+regresja tego samego mechanizmu.
+
+Nowy test regresyjny: `tests/e2e/base-explorer.spec.js`, "regresja:
+chmurka (tooltip) kropki meta znika po kliknięciu gdzie indziej, nie
+zostaje 'przy palcu'" — pytanie z 3 odpowiedziami dającymi meta
+`prepared`+`poll_points`+`poll_text` (kropki), `hover()` pokazuje
+chmurkę, klik w puste tło listy ją chowa. Test używa zwykłej myszy
+(Playwright nie ma stabilnego API do symulacji prawdziwego dotyku z
+natywnym brakiem `mouseout`), ale mechanizm naprawy (`pointerdown`) jest
+identyczny dla obu trybów wejścia, więc pokrycie myszą wystarcza.
+
+### Runda 18 — trzy prośby UI dla modala "Utwórz grę" (`export-modal.js`)
+
+Tym razem nie zgłoszenia bugów tylko wprost poproszone poprawki UX:
+
+1. **Domyślna nazwa gry = nazwa folderu, przy tworzeniu "z folderu".**
+   `export-modal.js`'s `open(opts)` nigdy nie ustawiał `#xName` — pole
+   trzymało cokolwiek zostało wpisane poprzednim razem (albo statyczny
+   `value="gra"` z HTML przy pierwszym otwarciu). Dodano `opts.defaultName`:
+   `actions.js`'s `state._api.openExportModal()` sam wykrywa "tworzenie z
+   folderu" -- albo zaznaczony jest dokładnie jeden folder (`c:<id>`, np.
+   PPM na folderze -> Utwórz grę, albo Ctrl+G z folderem zaznaczonym w
+   liście), albo nic nie jest zaznaczone a użytkownik po prostu przegląda
+   zawartość folderu (`state.view === VIEW.FOLDER`) i woła Ctrl+G z
+   toolbara -- i w obu przypadkach podaje nazwę tego folderu jako
+   `opts.defaultName`. W pozostałych przypadkach (pojedyncze pytania,
+   mieszane zaznaczenie, widoki wirtualne SEARCH/TAG/META) nazwa zostaje
+   bez zmian (`baseExplorer.export.defaultGameName`, "gra").
+
+   Przy okazji naprawiono blokujący tę funkcję bug w menu kontekstowym:
+   "Utwórz grę" (PPM) miało `disabled` liczone z `.some(k =>
+   k.startsWith("q:"))` -- PPM na SAMYM folderze (bez żadnego
+   bezpośredniego `q:` w selekcji) dawało wyszarzoną pozycję, niespójnie z
+   toolbarem (`render.js`: `hasQuestionInSel || hasFolderInSel`), mimo że
+   `selectionToQuestionIds()` woływane w środku i tak poprawnie rozwija
+   folder do pytań. Ujednolicono do `selectedRealCount === 0` -- ten sam
+   warunek co reszta menu (kopiuj/wytnij/duplikuj).
+
+2. **Suwak typu gry ma być cały złoty, nie czarno-biały.** `.rng` (klasa
+   dzielona z suwakami R/G/B koloru tagów w `tags-modal.js`, gdzie
+   czarno-biały/kolorowy `--track` ma sens) miał domyślny fallback
+   `--track: linear-gradient(to right, #000, #fff)`. `#xTypeRange` nigdy
+   nie dostawał własnego `--track` (JS ustawia go inline tylko dla R/G/B),
+   więc dziedziczył ten czarno-biały gradient. Dodano scoped override
+   `.xRange .rng { --track: linear-gradient(to right, #f5d26b, #f5d26b) }`
+   (ten sam złoty co już miał kciuk suwaka) -- nie dotyka bazowej `.rng`
+   ani R/G/B.
+
+3. **Usunięto angielskie podpisy techniczne** (`poll_text`/`poll_points`/
+   `prepared`) spod przycisków typu gry w `base-explorer.html` -- czysto
+   kosmetyczne, etykieta `<b>` (polska nazwa) zostaje.
+
+Nowe testy w `tests/e2e/base-explorer.spec.js`: "Utwórz grę z
+zaznaczonego folderu podpowiada jego nazwę jako nazwę gry" (folder z 10
+pytaniami, zaznaczenie + Ctrl+G, `#xName` === nazwa folderu) i "modal
+typu gry: bez angielskich podpisów technicznych pod przyciskami, suwak
+cały złoty" (`.xTypeLbl span` count 0, `--track` zawiera `#f5d26b` i nie
+zawiera `#000`/`#fff`).
+
+### Runda 19 — piąte zgłoszenie: modal "Utwórz grę" dopełniał zaznaczenie losowymi pytaniami do progu 10
+
+Zgłoszenie: "w modalu tworzenia gry losowo są wybierane pytania,
+dokładnie 10, jak one są wybierane? najlepiej żeby były wybrane wszystkie
+lub żadne".
+
+Przyczyna w `export-modal.js`'s `open(opts)`: gdy `opts.preselectIds`
+(zaznaczenie usera, rozwinięte z folderów do pytań przez
+`selectionToQuestionIds()` w `actions.js`) miało mniej niż `RULES.QN_MIN`
+(10), kod DOPEŁNIAŁ selekcję kolejnymi pytaniami z `allQuestions` (cała
+pula bazy, w kolejności zwróconej przez zapytanie do DB -- bez związku z
+tym co user faktycznie wybrał) aż do osiągnięcia 10:
+```js
+selectedIds = new Set(pre);
+for (const q of allQuestions) {
+  if (selectedIds.size >= RULES.QN_MIN) break;
+  selectedIds.add(q.id);
+}
+```
+Efekt dokładnie jak w zgłoszeniu: zaznaczysz 3 konkretne pytania (albo
+mały folder), a modal pokazuje 10 zaznaczonych -- 3 twoje + 7 obcych,
+dobranych z gdziekolwiek w bazie, bez ostrzeżenia że coś zostało dodane
+za ciebie.
+
+Naprawa: usunięto dopełnianie. Selekcja w modalu = dokładnie
+`opts.preselectIds`, nawet jeśli to mniej niż 10 -- wtedy przycisk
+"Utwórz" jest po prostu wyłączony (istniejący, poprawny mechanizm progu
+QN_MIN), zamiast cicho podmieniać czego user nie wybrał. Dla brakującego
+`opts.preselectIds` (teoretyczny fallback -- w praktyce nieosiągalny przez
+UI, bo toolbar/menu kontekstowe wymagają niepustego zaznaczenia żeby w
+ogóle odblokować "Utwórz grę") zmieniono domyślne "pierwsze 10 z tablicy"
+na "zaznacz wszystkie" -- zgodnie z drugą częścią prośby ("wszystkie lub
+żadne").
+
+Poprawiono 4 istniejące testy, które nieświadomie polegały na starym
+dopełnianiu (zaznaczały 1 pytanie i oczekiwały że "Utwórz" i tak się
+odblokuje z automatu do 10) -- teraz jawnie zaznaczają Ctrl+A tam gdzie
+chodziło tylko o odblokowanie przycisku, nie o to co konkretnie zostanie
+wyeksportowane. Nowy test: "regresja: modal wybiera DOKŁADNIE zaznaczone
+pytania, nie dopełnia losowymi resztkami do progu 10" -- baza z 15
+pytaniami, zaznaczone tylko 3 konkretne, sprawdza że w modalu zaznaczone
+jest dokładnie tych 3 (po `data-qid`), a pozostałych 12 -- nie.
+
+### Runda 20 — szóste zgłoszenie: czerwone (niepasujące) pytania i tak trafiały do utworzonej gry
+
+Zgłoszenie: "czerwone nie spełniają a gra się tworzy i tak". Podtytuł
+modala mówi wprost: "Wybierz co najmniej 10 pytań. Czerwone nie spełniają
+warunków wybranego typu — odhacz je albo popraw dane." — ale nic tego nie
+egzekwowało. `validateForType(q, type)` (3-6 odpowiedzi dla
+Punktacji/Preparowanej, dodatkowo suma punktów <=100 dla Preparowanej)
+było używane WYŁĄCZNIE do pokolorowania wiersza na czerwono/zielono w
+`renderList()` -- sam klik "Utwórz" (`xCreate` handler) i
+`buildExportPayload()` brały wszystko z `selectedIds` bez sprawdzania tej
+walidacji. Zostawienie zaznaczonego czerwonego pytania (np. z 2
+odpowiedziami przy wybranej Punktacji, gdzie wymagane jest 3-6) i tak
+tworzyło z niego pytanie w nowej grze.
+
+Naprawa: nowy `hasBadSelected()` (sprawdza `validateForType` dla
+KAŻDEGO zaznaczonego pytania względem aktualnie wybranego typu) wpięty
+we wszystkie trzy miejsca, które decydują czy "Utwórz" jest klikalne --
+`updateCountUI()` (na żywo przy (od)zaznaczaniu w liście modala i przy
+zmianie typu), `lockUi()` (stan po zakończeniu/błędzie eksportu) i sam
+handler kliknięcia `xCreate` (obrona w głębi, na wypadek gdyby coś
+ominęło disabled). Nowy komunikat błędu `baseExplorer.export.errors.pickBad`
+("Odznacz czerwone pytania... albo popraw ich dane.") na wszelki wypadek
+gdyby handler się jednak wykonał.
+
+Poprawiono test "odznaczenie pytania poniżej progu 10..." (seedował
+puste, 0-odpowiedziowe pytania, a domyślny typ modala to "Preparowana" --
+te pytania są teraz też czerwone z powodu TYPU, nie tylko licznika, więc
+test explicite przełącza na "Typowa ankieta", jedyny typ bez wymogu co do
+liczby odpowiedzi) i oba testy eksportu PUNKTACJA/PREPAROWANA (używały
+`seedTenPlainQuestions` — 0 odpowiedzi, teraz czerwone dla obu tych typów
+— zamieniono na nowy `seedTenTypeCompatibleQuestions`, z 3 zerowymi
+odpowiedziami, zielony dla wszystkich trzech typów naraz).
+
+Nowy test: "regresja: czerwone (niespełniające warunków typu) pytanie
+blokuje Utwórz, nawet gdy zaznaczone" — 10 zielonych + 1 czerwone (0
+odpowiedzi) pytanie, wszystkie zaznaczone, typ Punktacja: "Utwórz"
+wyłączone mimo 11 zaznaczonych (>= progu); odznaczenie czerwonego
+(zostaje 10 zielonych) odblokowuje przycisk.
+
+### Runda 21 — ikona "odśwież" w toolbarze była wizualnie zepsuta
+
+Zgłoszenie: "kółko tam" (ikona `svgRefresh()` w `render.js`, przycisk
+toolbara "Odśwież widok") wygląda na zepsute. Przyczyna: ręcznie
+napisana ścieżka SVG łączyła strzałkę (rysowaną przez `A7.95 7.95...`)
+z "kółkiem" narysowanym DWOMA różnymi łukami o różnych promieniach i
+środkach (`a5 5...` i `A7 7...`) w jednym `<path>` -- nie składały się w
+spójny, zamknięty pierścień. Zamieniono na sprawdzony, jednościeżkowy
+glif Material Icons "refresh" (ten sam wzorzec co reszta ikon toolbara --
+jeden `<path>` w `svgBase()`). Czysto kosmetyczne, bez zmiany zachowania
+przycisku -- brak nowego testu (poprawność kształtu SVG nie jest
+sensownie sprawdzalna istniejącymi narzędziami e2e tego projektu, które
+nie robią porównań wizualnych/zrzutów ekranu).
+
+### Runda 22 — drawer na mobile miał się zamykać tylko ręcznie, nie po każdym kliku
+
+Prośba: "zaznaczenie folderu w drzewie i podwójne kliknięcie ma nie
+zamykać otwartego left na mobile [...] tak samo z kategoriami czy
+tagami". Doprecyzowano z użytkownikiem: żaden klik (ani pojedynczy —
+samo zaznaczenie, ani podwójny — realna nawigacja) nie ma automatycznie
+zamykać drawera. User zamyka go wyłącznie ręcznie (przycisk hamburger
+albo klik w `#drawerOverlay`); lista po prawej i tak aktualizuje się w
+tle niezależnie od tego, czy drawer jest otwarty.
+
+`mobile.js`'s `initDrawer()` miał dedykowany listener `panel.addEventListener("click", ...)`
+zamykający drawer po KAŻDYM kliku w wiersz (`.row`) wewnątrz panelu
+(wspólny dla drzewa i tagów, bo oba żyją w tym samym `#explorerLeft`) --
+usunięty w całości. `open()`/`close()`/przycisk hamburger/klik w overlay
+zostają bez zmian.
+
+Zaktualizowano test "drawer: przycisk otwiera panel, klik w wiersz
+zamyka" (nazwa i treść odwracały teraz sens) na "drawer: przycisk
+otwiera/zamyka panel; klik w wiersz go NIE zamyka" -- sprawdza że
+zarówno pojedynczy klik (zaznaczenie folderu), jak i dblclick (nawigacja
+do folderu, lista po prawej faktycznie się aktualizuje w tle) zostawiają
+drawer otwarty, i że zamyka się dopiero po ręcznym kliknięciu hamburgera.
+
+### Runda 23 — siódme zgłoszenie: tabela pytań kończyła się w ~3/4 wysokości karty, poziomy suwak "w środku" zamiast na dole strony
+
+Dwa powiązane zgłoszenia z rzędu: "dlaczego tabela się kończy gdzieś w
+3/4 wysokości karty? w sensie pytania po prawej" i zaraz potem "ale
+suwak poziomy ma być na dole strony a nie na środku".
+
+Diagnoza empiryczna (analiza samego CSS nie dawała pewnej odpowiedzi na
+zachowanie CSS Grid `align-items:stretch` vs. flex `min-height:50vh`,
+więc zbudowano minimalną statyczną kopię prawdziwego DOM-u/CSS
+`.explorer`/`.explorer-right`/`#list` i zmierzono ją Playwrightem przy
+viewport 390×844, symulując telefon):
+
+- Na desktopie `.explorer` jest CSS Gridem z `align-items: stretch` —
+  `.explorer-right` (a przez `flex:1 1 auto` w środku, także `#list`)
+  poprawnie rozciąga się na całą wysokość wiersza grida, dopasowaną do
+  wyższego z dwóch paneli (lewego drzewa/tagów albo prawej listy).
+- Na mobile (`@media max-width:900px`) `.explorer` zamieniało się w
+  zwykłe `display:block`, a `.explorer-right` miało tylko
+  `min-height:50vh` — bez żadnego mechanizmu rozciągania. Efekt: panel
+  z listą kończył się na `max(50vh, wysokość treści)`, czyli praktycznie
+  zawsze DUŻO wcześniej niż realna dostępna wysokość pod toolbarem
+  (zmierzone: przy 844px wysokości viewportu i 6 wierszach panel kończył
+  się na y≈538px zamiast na y≈836px). Stąd puste miejsce pod tabelą
+  ("kończy się w 3/4") i poziomy suwak przewijania `#list` (potrzebny,
+  bo `.list-table` ma na mobile `min-width:560px`, celowo szerszą niż
+  wąski ekran — patrz komentarz "scroll poziomy zamiast ukrywania
+  kolumn") — suwak jest zawsze na DOLE swojego kontenera, więc skoro
+  kontener kończył się w połowie ekranu, suwak też tam wisiał zamiast na
+  dole strony.
+- `.explorer-left`/`#drawerOverlay` są na mobile `position:fixed`
+  (drawer), więc w praktyce `.explorer-right` jest JEDYNYM
+  elementem w normalnym przepływie wewnątrz `.explorer` — bezpiecznie
+  można więc zamienić `.explorer` na `display:flex;flex-direction:column`
+  i dać `.explorer-right` `flex:1 1 auto; min-height:0` zamiast sztywnego
+  `min-height:50vh`, odtwarzając na mobile dokładnie ten sam efekt
+  rozciągania co `align-items:stretch` na desktopie.
+
+Naprawiono w `base-explorer/base-explorer.css`, w bloku
+`@media (max-width:900px)`: `.explorer` → `display:flex;flex-direction:column`
+(było `display:block`), `.explorer-right` → `flex:1 1 auto;min-height:0`
+(było `min-height:50vh`). Zweryfikowano ponownie tym samym Playwrightowym
+reprodukcyjnym pomiarem: `#list` teraz kończy się na y≈836px (viewport
+844px, minus padding), niezależnie od liczby wierszy.
+
+Nowy test: `tests/e2e/base-explorer.spec.js` — "regresja: #list na
+mobile rozciąga się do dołu ekranu, nawet gdy pytań jest mało" (viewport
+400×800, jedno pytanie, sprawdza że dół `#list` jest w granicach 40px od
+dołu viewportu).
+
+Osobno pozostaje niezaadresowana kwestia estetyczna zgłoszona przy
+okazji pierwszego z tych dwóch zgłoszeń: `.list`/`.tree`/`.tags`/
+`.breadcrumbs` nie mają żadnego tła (`background: 0 0`), więc nawet po
+tej naprawie pusta przestrzeń pod krótką tabelą (mniej niż mieści się w
+rozciągniętym `#list`) będzie nadal wizualnie "niewidoczna" (brak karty
+obejmującej pełną wysokość) — czeka na decyzję użytkownika, czy dodać
+tło/obramowanie na pełną rozciągniętą wysokość panelu.
 
 ### A) Sam edytor bazy — dokładność jak w `editor.spec.js`
 - CRUD pytań/odpowiedzi/kategorii/tagów (`page.js`, `render.js`,

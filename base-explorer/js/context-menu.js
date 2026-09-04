@@ -1,6 +1,6 @@
 // base-explorerjs/context-menu.js
 
-import { VIEW, setViewFolder, selectionSetSingle, rememberBrowseLocation } from "./state.js?v=v2026-09-02T21390";
+import { VIEW, setViewFolder, selectionSetSingle, rememberBrowseLocation } from "./state.js?v=v2026-09-04T06255";
 import {
   createFolderHere,
   createQuestionHere,
@@ -12,9 +12,10 @@ import {
   deleteTags,
   duplicateSelected,
   canDeleteHere,
-} from "./actions.js?v=v2026-09-02T21390";
-import { alertModal } from "../../js/core/modal.js?v=v2026-09-02T21390";
-import { t } from "../../translation/translation.js?v=v2026-09-02T21390";
+} from "./actions.js?v=v2026-09-04T06255";
+import { alertModal } from "../../js/core/modal.js?v=v2026-09-04T06255";
+import { t } from "../../translation/translation.js?v=v2026-09-04T06255";
+import { renderAll } from "./render.js?v=v2026-09-04T06255";
 
 
 const IS_MAC = navigator.platform.toLowerCase().includes("mac");
@@ -137,6 +138,8 @@ export async function showContextMenu({ state, x, y, target }) {
   
     // Explorer-style: PPM na niezaznaczonym elemencie lewego panelu => najpierw single-select
     if (target.id) {
+      let justSelected = false;
+
       if (target.kind === "tag") {
         const tid = target.id;
         if (!state?.tagSelection?.ids?.has?.(tid)) {
@@ -144,9 +147,10 @@ export async function showContextMenu({ state, x, y, target }) {
           state.tagSelection.ids.clear();
           state.tagSelection.ids.add(tid);
           state.tagSelection.anchorId = tid;
+          justSelected = true;
         }
       }
-  
+
       if (target.kind === "meta") {
         const mid = target.id;
         if (!state?.metaSelection?.ids?.has?.(mid)) {
@@ -154,8 +158,12 @@ export async function showContextMenu({ state, x, y, target }) {
           state.metaSelection.ids.clear();
           state.metaSelection.ids.add(mid);
           state.metaSelection.anchorId = mid;
+          justSelected = true;
         }
       }
+
+      // widoczne podświetlenie w panelu tagów, tak samo jak przy cat/q niżej
+      if (justSelected) renderAll(state);
     }
   
     const selectedTagIds = Array.from(state?.tagSelection?.ids || []).filter(Boolean);
@@ -263,9 +271,28 @@ export async function showContextMenu({ state, x, y, target }) {
        - Niebezpieczne
   ========================================================= */
 
+  // Explorer-style: PPM/long-press na NIEZAZNACZONYM elemencie listy/drzewa
+  // => najpierw single-select, PRZED policzeniem selectedRealCount (analogicznie
+  // do tagów wyżej). Bez tego menu budowało disabled na starej selekcji sprzed
+  // kliknięcia -- "Zmień nazwę"/"Usuń"/... same lazy-select'owały cel w środku
+  // swojej action(), ale przycisk był już wyszarzony (renderMenu() w ogóle nie
+  // podpina click handlera do disabled), więc ten kod nigdy się nie wykonywał.
+  // PPM na elemencie który JEST już częścią wielo-zaznaczenia zostawia je bez
+  // zmian (jak w prawdziwym Explorerze).
+  if ((target.kind === "cat" || target.kind === "q") && target.id) {
+    const key = (target.kind === "cat") ? `c:${target.id}` : `q:${target.id}`;
+    if (!state.selection?.keys?.has?.(key)) {
+      selectionSetSingle(state, key);
+      // widoczne podświetlenie wiersza (lista i/lub drzewo) + toolbar --
+      // bez tego zaznaczenie w state byłoby poprawne "po cichu", ale wiersz
+      // wyglądałby na dalej odznaczony do najbliższego, niepowiązanego rerendera.
+      renderAll(state);
+    }
+  }
+
   // ile realnie zaznaczono (bez "root")
   const selectedRealCount = countRealSelected(state);
-  
+
   // ROOT (puste tło listy itp.)
   if (target.kind === "root") {
     const parentId = (state.view === VIEW.FOLDER && state.folderId) ? state.folderId : null;
@@ -345,10 +372,6 @@ export async function showContextMenu({ state, x, y, target }) {
       shortcut: { win:"Ctrl+T", mac:"⌘T" },
       disabled: !editor, // viewer ogląda
       action: async () => {
-        const key = (target.kind === "cat") ? `c:${target.id}` : `q:${target.id}`;
-        if (!state.selection?.keys?.has?.(key)) {
-          selectionSetSingle(state, key);
-        }
         await state._api?.openAssignTagsModal?.();
       }
     });
@@ -416,10 +439,6 @@ export async function showContextMenu({ state, x, y, target }) {
       shortcut: { win:"F2", mac:"F2" },
       disabled: !editor || readOnlyView || selectedRealCount !== 1,
       action: async () => {
-        const key = (target.kind === "cat") ? `c:${target.id}` : `q:${target.id}`;
-        if (!state.selection?.keys?.has?.(key)) {
-          selectionSetSingle(state, key);
-        }
         await renameSelectedPrompt(state);
       }
     });
@@ -430,7 +449,12 @@ export async function showContextMenu({ state, x, y, target }) {
     items.push({
       label: t("baseExplorer.menu.createGame"),
       shortcut: { win:"Ctrl+G", mac:"⌘G" },
-      disabled: !editor || readOnlyView || !Array.from(state.selection?.keys || []).some(k => String(k).startsWith("q:")),
+      // Spójnie z toolbarem (render.js: hasQuestionInSel || hasFolderInSel) --
+      // PPM na SAMYM folderze (bez żadnego "q:" w selekcji) musiało dawać
+      // wyszarzone "Utwórz grę", mimo że selectionToQuestionIds() poniżej i tak
+      // rozwija foldery do pytań. Blokowało to dokładnie "tworzenie gry z
+      // folderu" przez menu kontekstowe.
+      disabled: !editor || readOnlyView || selectedRealCount === 0,
       action: async () => {
         const qIds = await state._api?.selectionToQuestionIds?.();
         if (!qIds?.length) return;
@@ -453,11 +477,6 @@ export async function showContextMenu({ state, x, y, target }) {
       // META realnie kasuje element, mimo że reszta UI to blokuje.
       disabled: selectedRealCount === 0 || (state.view !== VIEW.TAG && !canDeleteHere(state)),
       action: async () => {
-        const key = (target.kind === "cat") ? `c:${target.id}` : `q:${target.id}`;
-        if (!state.selection?.keys?.has?.(key)) {
-          selectionSetSingle(state, key);
-        }
-    
         try {
           if (state.view === VIEW.TAG) {
             await state._api?.untagSelectedInTagView?.();

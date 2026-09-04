@@ -11,11 +11,11 @@ import {
   selectionToggle,
   rememberBrowseLocation,
   restoreBrowseLocation,
-} from "./state.js?v=v2026-09-02T21390";
+} from "./state.js?v=v2026-09-04T06255";
 
-import { importGame } from "../../js/pages/builder-import-export.js?v=v2026-09-02T21390";
+import { importGame } from "../../js/pages/builder-import-export.js?v=v2026-09-04T06255";
 
-import { renderAll, renderToolbar, renderList, renderTree, renderTags } from "./render.js?v=v2026-09-02T21390";
+import { renderAll, renderToolbar, renderList, renderTree, renderTags } from "./render.js?v=v2026-09-04T06255";
 
 import {
   listQuestionsByCategory,
@@ -23,18 +23,18 @@ import {
   listCategories,
   listQuestionTags,
   listCategoryTags
-} from "./repo.js?v=v2026-09-02T21390";
+} from "./repo.js?v=v2026-09-04T06255";
 
-import { showContextMenu, hideContextMenu } from "./context-menu.js?v=v2026-09-02T21390";
-import { openTagsModal } from "./tags-modal.js?v=v2026-09-02T21390";
-import { initExportModal } from "./export-modal.js?v=v2026-09-02T21390";
-import { initQuestionModal } from "./question-modal.js?v=v2026-09-02T21390";
-import { sb } from "../../js/core/supabase.js?v=v2026-09-02T21390";
-import { updateChecked, updateCheckedMany, ROW_GONE } from "../../js/core/db-guard.js?v=v2026-09-02T21390";
-import { acquireResourceLock, acquireResourceLocks } from "../../js/core/resource-lock.js?v=v2026-09-02T21390";
-import { alertModal, confirmModal } from "../../js/core/modal.js?v=v2026-09-02T21390";
-import { t } from "../../translation/translation.js?v=v2026-09-02T21390";
-import { addLongPress, addDoubleTap, isTouchContextMenuWindow } from "./mobile.js?v=v2026-09-02T21390";
+import { showContextMenu, hideContextMenu } from "./context-menu.js?v=v2026-09-04T06255";
+import { openTagsModal } from "./tags-modal.js?v=v2026-09-04T06255";
+import { initExportModal } from "./export-modal.js?v=v2026-09-04T06255";
+import { initQuestionModal } from "./question-modal.js?v=v2026-09-04T06255";
+import { sb } from "../../js/core/supabase.js?v=v2026-09-04T06255";
+import { updateChecked, updateCheckedMany, ROW_GONE } from "../../js/core/db-guard.js?v=v2026-09-04T06255";
+import { acquireResourceLock, acquireResourceLocks } from "../../js/core/resource-lock.js?v=v2026-09-04T06255";
+import { alertModal, confirmModal } from "../../js/core/modal.js?v=v2026-09-04T06255";
+import { t } from "../../translation/translation.js?v=v2026-09-04T06255";
+import { addLongPress, addDoubleTap, isTouchContextMenuWindow } from "./mobile.js?v=v2026-09-04T06255";
 
 let exportModal = null;
 
@@ -2363,6 +2363,19 @@ export function wireActions({ state }) {
     tipEl.hidden = true;
   });
 
+  // Na dotyku przeglądarka po tapnięciu synteryzuje "mouseover" (stąd chmurka
+  // w ogóle się pokazuje), ale nigdy realnego "mouseout" po odsunięciu palca
+  // -- ani "mousemove" po drodze. Efekt: tapnięcie w kropkę pokazuje chmurkę,
+  // która potem zostaje na ekranie w miejscu tamtego tapnięcia w nieskończoność
+  // (kolejny tap GDZIEKOLWIEK indziej, nawet poza listą, jej nie zamyka).
+  // Globalny "pointerdown" poza samą kropką ją chowa niezależnie od
+  // urządzenia wejściowego.
+  document.addEventListener("pointerdown", (e) => {
+    if (tipEl.hidden) return;
+    const dot = e.target?.closest?.("[data-tip].tag-dot, [data-tip].meta-dot");
+    if (!dot) tipEl.hidden = true;
+  });
+
   /* ================= Sort (TYLKO 3 kolumny: Nazwa/Typ/Data) ================= */
 
   const SORT_KEYS = new Set(["name", "type", "date"]);
@@ -4473,7 +4486,28 @@ export function wireActions({ state }) {
         void alertModal({ text: t("baseExplorer.errors.exportModalMissing") });
         return false;
       }
-  
+
+      // Tworzenie gry "z folderu" -> podpowiedz jego nazwę jako nazwę gry:
+      // albo zaznaczony jest dokładnie jeden folder (PPM/Ctrl+G na folderze),
+      // albo nic nie jest zaznaczone, a po prostu przeglądamy jego zawartość
+      // (Ctrl+G z toolbara wewnątrz folderu). W pozostałych przypadkach
+      // (pojedyncze pytania, mieszane zaznaczenie, widoki wirtualne) zostaw
+      // domyślną nazwę modala bez zmian.
+      if (!opts.defaultName) {
+        const realKeys = Array.from(state.selection?.keys || [])
+          .filter(k => typeof k === "string" && (k.startsWith("c:") || k.startsWith("q:")));
+
+        let folderId = null;
+        if (realKeys.length === 1 && realKeys[0].startsWith("c:")) {
+          folderId = realKeys[0].slice(2);
+        } else if (!realKeys.length && state.view === VIEW.FOLDER && state.folderId) {
+          folderId = state.folderId;
+        }
+
+        const folder = folderId ? (state.categories || []).find(c => c.id === folderId) : null;
+        if (folder?.name) opts = { ...opts, defaultName: folder.name };
+      }
+
       // === 1) Źródło pytań: preferuj zaznaczenie (pytania + foldery + podfoldery) ===
       let qids = [];
       try {
