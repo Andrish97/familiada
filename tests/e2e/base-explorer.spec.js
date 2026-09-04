@@ -2948,6 +2948,40 @@ test.describe("base-explorer: mobile.js (drawer, long-press, podwójny tap)", ()
     }
   });
 
+  test("regresja: #list na mobile rozciąga się do dołu ekranu, nawet gdy pytań jest mało", async ({ page, context }) => {
+    // Przed naprawą: .explorer na mobile miało display:block, a .explorer-right
+    // tylko min-height:50vh -- przy niewielu wierszach panel kończył się w
+    // połowie ekranu zamiast na jego dole (jak na desktopie robi to
+    // align-items:stretch w CSS grid), zostawiając pustą przestrzeń pod
+    // tabelą i przesuwając poziomy suwak przewijania listy "w środek"
+    // zamiast na sam dół strony. Naprawa: .explorer -> display:flex (jego
+    // jedynym flex-childem w praktyce jest .explorer-right, bo
+    // .explorer-left/.drawer-overlay są na mobile position:fixed), a
+    // .explorer-right -> flex:1 1 auto zamiast sztywnego min-height:50vh.
+    test.setTimeout(60_000);
+    await page.setViewportSize({ width: 400, height: 800 });
+    await loginAsTestUser(page, context);
+    const baseId = await createBase(page, `E2E-XM-LISTSTRETCH-${Date.now()}`);
+
+    try {
+      await createQuestion(page, { baseId, ord: 1, payload: { text: "Jedno pytanie", answers: [] } });
+
+      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+
+      await expect(page.locator('#list .row[data-kind="q"]')).toHaveCount(1, { timeout: 15000 });
+
+      const listBox = await page.locator("#list").boundingBox();
+      expect(listBox).toBeTruthy();
+
+      // #list musi kończyć się blisko dołu viewportu (mała tolerancja na
+      // padding kontenera .explorer), a nie w połowie ekranu.
+      expect(listBox.y + listBox.height).toBeGreaterThan(800 - 40);
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+
   test("long-press na wierszu listy otwiera menu kontekstowe (zamiennik PPM na dotyku)", async ({ page, context }) => {
     test.setTimeout(60_000);
     await page.setViewportSize({ width: 400, height: 800 });

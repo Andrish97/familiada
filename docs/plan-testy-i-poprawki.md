@@ -1356,6 +1356,63 @@ zarówno pojedynczy klik (zaznaczenie folderu), jak i dblclick (nawigacja
 do folderu, lista po prawej faktycznie się aktualizuje w tle) zostawiają
 drawer otwarty, i że zamyka się dopiero po ręcznym kliknięciu hamburgera.
 
+### Runda 23 — siódme zgłoszenie: tabela pytań kończyła się w ~3/4 wysokości karty, poziomy suwak "w środku" zamiast na dole strony
+
+Dwa powiązane zgłoszenia z rzędu: "dlaczego tabela się kończy gdzieś w
+3/4 wysokości karty? w sensie pytania po prawej" i zaraz potem "ale
+suwak poziomy ma być na dole strony a nie na środku".
+
+Diagnoza empiryczna (analiza samego CSS nie dawała pewnej odpowiedzi na
+zachowanie CSS Grid `align-items:stretch` vs. flex `min-height:50vh`,
+więc zbudowano minimalną statyczną kopię prawdziwego DOM-u/CSS
+`.explorer`/`.explorer-right`/`#list` i zmierzono ją Playwrightem przy
+viewport 390×844, symulując telefon):
+
+- Na desktopie `.explorer` jest CSS Gridem z `align-items: stretch` —
+  `.explorer-right` (a przez `flex:1 1 auto` w środku, także `#list`)
+  poprawnie rozciąga się na całą wysokość wiersza grida, dopasowaną do
+  wyższego z dwóch paneli (lewego drzewa/tagów albo prawej listy).
+- Na mobile (`@media max-width:900px`) `.explorer` zamieniało się w
+  zwykłe `display:block`, a `.explorer-right` miało tylko
+  `min-height:50vh` — bez żadnego mechanizmu rozciągania. Efekt: panel
+  z listą kończył się na `max(50vh, wysokość treści)`, czyli praktycznie
+  zawsze DUŻO wcześniej niż realna dostępna wysokość pod toolbarem
+  (zmierzone: przy 844px wysokości viewportu i 6 wierszach panel kończył
+  się na y≈538px zamiast na y≈836px). Stąd puste miejsce pod tabelą
+  ("kończy się w 3/4") i poziomy suwak przewijania `#list` (potrzebny,
+  bo `.list-table` ma na mobile `min-width:560px`, celowo szerszą niż
+  wąski ekran — patrz komentarz "scroll poziomy zamiast ukrywania
+  kolumn") — suwak jest zawsze na DOLE swojego kontenera, więc skoro
+  kontener kończył się w połowie ekranu, suwak też tam wisiał zamiast na
+  dole strony.
+- `.explorer-left`/`#drawerOverlay` są na mobile `position:fixed`
+  (drawer), więc w praktyce `.explorer-right` jest JEDYNYM
+  elementem w normalnym przepływie wewnątrz `.explorer` — bezpiecznie
+  można więc zamienić `.explorer` na `display:flex;flex-direction:column`
+  i dać `.explorer-right` `flex:1 1 auto; min-height:0` zamiast sztywnego
+  `min-height:50vh`, odtwarzając na mobile dokładnie ten sam efekt
+  rozciągania co `align-items:stretch` na desktopie.
+
+Naprawiono w `base-explorer/base-explorer.css`, w bloku
+`@media (max-width:900px)`: `.explorer` → `display:flex;flex-direction:column`
+(było `display:block`), `.explorer-right` → `flex:1 1 auto;min-height:0`
+(było `min-height:50vh`). Zweryfikowano ponownie tym samym Playwrightowym
+reprodukcyjnym pomiarem: `#list` teraz kończy się na y≈836px (viewport
+844px, minus padding), niezależnie od liczby wierszy.
+
+Nowy test: `tests/e2e/base-explorer.spec.js` — "regresja: #list na
+mobile rozciąga się do dołu ekranu, nawet gdy pytań jest mało" (viewport
+400×800, jedno pytanie, sprawdza że dół `#list` jest w granicach 40px od
+dołu viewportu).
+
+Osobno pozostaje niezaadresowana kwestia estetyczna zgłoszona przy
+okazji pierwszego z tych dwóch zgłoszeń: `.list`/`.tree`/`.tags`/
+`.breadcrumbs` nie mają żadnego tła (`background: 0 0`), więc nawet po
+tej naprawie pusta przestrzeń pod krótką tabelą (mniej niż mieści się w
+rozciągniętym `#list`) będzie nadal wizualnie "niewidoczna" (brak karty
+obejmującej pełną wysokość) — czeka na decyzję użytkownika, czy dodać
+tło/obramowanie na pełną rozciągniętą wysokość panelu.
+
 ### A) Sam edytor bazy — dokładność jak w `editor.spec.js`
 - CRUD pytań/odpowiedzi/kategorii/tagów (`page.js`, `render.js`,
   `actions.js`, `question-modal.js`, `tags-modal.js`) — limity, puste

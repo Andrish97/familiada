@@ -1730,9 +1730,17 @@ tr.row .tag-dot[data-tip]::before {
 
   /* Topbar layout — dwie kolumny na mobile (obsługiwane przez topbar-mobile-menu.js) */
 
-  /* Layout: jeden panel zamiast dwóch kolumn */
+  /* Layout: jeden panel zamiast dwóch kolumn.
+     display:flex (nie block) -- .explorer-left/.drawerOverlay są na mobile
+     position:fixed (poza flow), więc jedynym flex-childem w praktyce jest
+     .explorer-right, który dzięki temu może się rozciągnąć (flex:1 1 auto
+     poniżej) na całą dostępną wysokość, tak jak na desktopie robi to
+     align-items:stretch w grid. Bez tego .explorer-right miał wysokość
+     content+min-height:50vh, czyli kończył się w połowie ekranu zamiast na
+     dole -- stąd pusta przestrzeń pod tabelą i poziomy suwak "w środku". */
   .explorer {
-    display: block;
+    display: flex;
+    flex-direction: column;
     padding: 0 8px 8px;
     min-height: 0;
   }
@@ -1777,11 +1785,14 @@ tr.row .tag-dot[data-tip]::before {
 
   .drawer-overlay[hidden] { display: none !important; }
 
-  /* Prawy panel — pełna szerokość */
+  /* Prawy panel — pełna szerokość, rozciągnięty na całą wysokość .explorer
+     (flex:1 1 auto zamiast sztywnego min-height:50vh, patrz komentarz przy
+     .explorer powyżej). */
   .explorer-right {
     padding-left: 0;
     min-width: 0;
-    min-height: 50vh;
+    flex: 1 1 auto;
+    min-height: 0;
   }
 
   /* Toolbar — dwa wiersze na mobile */
