@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict tdIF5xFWJXCck9RJCQVH9lNppVjpd1ujZinOfmFebSDek7Fvo6QL3o85EBBwe9g
+\restrict t9DOfbrmfJLAKjSM5BviAFeiupKzdoaHCoBhcoCA00g7fR8hmwL7DdhLIDF2eed
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -74,6 +74,20 @@ CREATE TYPE "public"."device_type" AS ENUM (
 
 
 --
+-- Name: game_round_phase; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE "public"."game_round_phase" AS ENUM (
+    'IDLE',
+    'READY',
+    'DUEL',
+    'PLAY',
+    'STEAL',
+    'REVEAL'
+);
+
+
+--
 -- Name: game_status; Type: TYPE; Schema: public; Owner: -
 --
 
@@ -81,6 +95,59 @@ CREATE TYPE "public"."game_status" AS ENUM (
     'draft',
     'poll_open',
     'ready'
+);
+
+
+--
+-- Name: game_step; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE "public"."game_step" AS ENUM (
+    'devices_display',
+    'devices_hostbuzzer',
+    'setup_finish',
+    'r_intro',
+    'r_roundStart',
+    'r_duel',
+    'r_play',
+    'r_gameEnd',
+    'f_start',
+    'f_p1_entry',
+    'f_p1_map_q1',
+    'f_p1_map_q2',
+    'f_p1_map_q3',
+    'f_p1_map_q4',
+    'f_p1_map_q5',
+    'f_p2_start',
+    'f_p2_entry',
+    'f_p2_map_q1',
+    'f_p2_map_q2',
+    'f_p2_map_q3',
+    'f_p2_map_q4',
+    'f_p2_map_q5',
+    'f_end'
+);
+
+
+--
+-- Name: game_team; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE "public"."game_team" AS ENUM (
+    'A',
+    'B'
+);
+
+
+--
+-- Name: game_top_card; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE "public"."game_top_card" AS ENUM (
+    'devices',
+    'setup',
+    'rounds',
+    'final'
 );
 
 
@@ -2353,6 +2420,256 @@ begin
     rounds_played = coalesce(p_rounds_played, rounds_played),
     client_meta = case when p_client_meta_patch is not null then client_meta || p_client_meta_patch else client_meta end
   where id = p_session_id;
+end;
+$$;
+
+
+--
+-- Name: game_state; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."game_state" (
+    "game_id" "uuid" NOT NULL,
+    "rev" bigint DEFAULT 0 NOT NULL,
+    "top_card" "public"."game_top_card" DEFAULT 'devices'::"public"."game_top_card" NOT NULL,
+    "step" "public"."game_step" DEFAULT 'devices_display'::"public"."game_step" NOT NULL,
+    "phase" "public"."game_round_phase",
+    "control_team" "public"."game_team",
+    "sound_cue_key" "text",
+    "sound_cue_seq" bigint DEFAULT 0 NOT NULL,
+    "detail" "jsonb" DEFAULT '{}'::"jsonb" NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL
+);
+
+ALTER TABLE ONLY "public"."game_state" REPLICA IDENTITY FULL;
+
+
+--
+-- Name: TABLE "game_state"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE "public"."game_state" IS 'Control v2: jedyne, autorytatywne źródło "co jest teraz prawdą o grze". Zapis wyłącznie przez game_state_write/game_state_buzzer_press/game_state_undo (SECURITY DEFINER) — brak polityk INSERT/UPDATE dla klienta wprost na tabeli.';
+
+
+--
+-- Name: COLUMN "game_state"."rev"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN "public"."game_state"."rev" IS 'Monotoniczny licznik — optymistyczna kontrola współbieżności (p_expected_rev) i tania de-duplikacja odczytu po stronie urządzeń.';
+
+
+--
+-- Name: COLUMN "game_state"."detail"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN "public"."game_state"."detail" IS 'Wszystko poza jawnymi kolumnami: drużyny, wyniki, bank, X-y, pytanie/odpowiedzi/odkryte, timery jako endsAt, mapowanie odpowiedzi finału, detail.settings (zdenormalizowane z games.settings raz na start gry), detail.display.{mode,qrTarget}, detail.host.covered.';
+
+
+--
+-- Name: game_state_buzzer_press("uuid", "text", "public"."game_team"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."game_state_buzzer_press"("p_game_id" "uuid", "p_key" "text", "p_team" "public"."game_team") RETURNS "public"."game_state"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+declare
+  g public.games;
+  ok boolean := false;
+  v_new public.game_state;
+begin
+  select * into g from public.games where id = p_game_id;
+  if not found then raise exception 'not found'; end if;
+
+  if coalesce(g.share_key_buzzer,'') <> '' and g.share_key_buzzer = p_key then ok := true; end if;
+  if coalesce(g.share_key_buzzer,'') = ''  and g.share_key_host   = p_key then ok := true; end if;
+  if not ok then raise exception 'forbidden'; end if;
+
+  update public.game_state
+  set detail = jsonb_set(
+        detail,
+        '{rounds,duel,lastPressed}',
+        to_jsonb(p_team::text)
+      ),
+      rev = rev + 1,
+      updated_at = now()
+  where game_id = p_game_id
+    and step = 'r_duel'
+    and (detail #>> '{rounds,duel,lastPressed}') is null
+  returning * into v_new;
+
+  if not found then
+    raise exception 'already_pressed';
+  end if;
+
+  return v_new;
+end;
+$$;
+
+
+--
+-- Name: game_state_get("uuid", "public"."device_type", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."game_state_get"("p_game_id" "uuid", "p_device_type" "public"."device_type", "p_key" "text") RETURNS "public"."game_state"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+declare
+  g public.games;
+  ok boolean := false;
+  out public.game_state;
+begin
+  select * into g from public.games where id = p_game_id;
+  if not found then raise exception 'not found'; end if;
+
+  if p_device_type = 'display' and g.share_key_display = p_key then ok := true; end if;
+  if p_device_type = 'host'    and g.share_key_host    = p_key then ok := true; end if;
+
+  if p_device_type = 'buzzer' then
+    if coalesce(g.share_key_buzzer,'') <> '' and g.share_key_buzzer = p_key then ok := true; end if;
+    if coalesce(g.share_key_buzzer,'') = ''  and g.share_key_host   = p_key then ok := true; end if;
+  end if;
+
+  if not ok then raise exception 'forbidden'; end if;
+
+  select * into out from public.game_state where game_id = p_game_id;
+  return out; -- NULL, jeśli Control jeszcze nigdy nic nie zapisał dla tej gry
+end;
+$$;
+
+
+--
+-- Name: game_state_undo("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."game_state_undo"("p_game_id" "uuid") RETURNS "public"."game_state"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+declare
+  v_owner uuid;
+  v_hist public.game_state_history;
+  v_cur public.game_state;
+  v_new public.game_state;
+begin
+  select owner_id into v_owner from public.games where id = p_game_id;
+  if not found then raise exception 'game not found'; end if;
+  if auth.uid() is null or v_owner <> auth.uid() then
+    raise exception 'forbidden';
+  end if;
+
+  select * into v_cur from public.game_state where game_id = p_game_id for update;
+  if not found then raise exception 'no_state'; end if;
+
+  select * into v_hist from public.game_state_history
+  where game_id = p_game_id
+  order by rev desc
+  limit 1;
+  if not found then raise exception 'no_history'; end if;
+
+  update public.game_state
+  set rev = v_cur.rev + 1,
+      top_card = (v_hist.snapshot->>'top_card')::public.game_top_card,
+      step = (v_hist.snapshot->>'step')::public.game_step,
+      phase = nullif(v_hist.snapshot->>'phase', '')::public.game_round_phase,
+      control_team = nullif(v_hist.snapshot->>'control_team', '')::public.game_team,
+      sound_cue_key = v_hist.snapshot->>'sound_cue_key',
+      sound_cue_seq = coalesce((v_hist.snapshot->>'sound_cue_seq')::bigint, 0),
+      detail = coalesce(v_hist.snapshot->'detail', '{}'::jsonb),
+      updated_at = now()
+  where game_id = p_game_id
+  returning * into v_new;
+
+  delete from public.game_state_history where id = v_hist.id;
+
+  return v_new;
+end;
+$$;
+
+
+--
+-- Name: game_state_write("uuid", "public"."game_step", "public"."game_top_card", "public"."game_round_phase", "public"."game_team", "jsonb", "text", bigint); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."game_state_write"("p_game_id" "uuid", "p_step" "public"."game_step", "p_top_card" "public"."game_top_card", "p_phase" "public"."game_round_phase" DEFAULT NULL::"public"."game_round_phase", "p_control_team" "public"."game_team" DEFAULT NULL::"public"."game_team", "p_detail" "jsonb" DEFAULT NULL::"jsonb", "p_sound_cue_key" "text" DEFAULT NULL::"text", "p_expected_rev" bigint DEFAULT NULL::bigint) RETURNS "public"."game_state"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+declare
+  v_owner uuid;
+  v_old public.game_state;
+  v_new public.game_state;
+  v_next_sound_key text;
+  v_next_sound_seq bigint;
+begin
+  select owner_id into v_owner from public.games where id = p_game_id;
+  if not found then raise exception 'game not found'; end if;
+  if auth.uid() is null or v_owner <> auth.uid() then
+    raise exception 'forbidden';
+  end if;
+
+  select * into v_old from public.game_state where game_id = p_game_id for update;
+
+  if not found then
+    -- pierwszy zapis dla tej gry — nie ma z czym porównać expected_rev
+    if p_expected_rev is not null and p_expected_rev <> 0 then
+      raise exception 'stale_write';
+    end if;
+  else
+    if p_expected_rev is not null and p_expected_rev <> v_old.rev then
+      raise exception 'stale_write';
+    end if;
+
+    insert into public.game_state_history(game_id, rev, snapshot)
+    values (v_old.game_id, v_old.rev, to_jsonb(v_old));
+
+    delete from public.game_state_history
+    where game_id = p_game_id
+      and id not in (
+        select id from public.game_state_history
+        where game_id = p_game_id
+        order by rev desc
+        limit 20
+      );
+  end if;
+
+  if p_sound_cue_key is not null then
+    v_next_sound_key := p_sound_cue_key;
+    if v_old.sound_cue_key is distinct from p_sound_cue_key then
+      v_next_sound_seq := coalesce(v_old.sound_cue_seq, 0) + 1;
+    else
+      v_next_sound_seq := coalesce(v_old.sound_cue_seq, 0);
+    end if;
+  else
+    v_next_sound_key := v_old.sound_cue_key;
+    v_next_sound_seq := coalesce(v_old.sound_cue_seq, 0);
+  end if;
+
+  insert into public.game_state as gs
+    (game_id, rev, top_card, step, phase, control_team, sound_cue_key, sound_cue_seq, detail, updated_at)
+  values (
+    p_game_id,
+    coalesce(v_old.rev, 0) + 1,
+    p_top_card,
+    p_step,
+    p_phase,
+    p_control_team,
+    v_next_sound_key,
+    v_next_sound_seq,
+    coalesce(p_detail, v_old.detail, '{}'::jsonb),
+    now()
+  )
+  on conflict (game_id) do update set
+    rev = excluded.rev,
+    top_card = excluded.top_card,
+    step = excluded.step,
+    phase = excluded.phase,
+    control_team = excluded.control_team,
+    sound_cue_key = excluded.sound_cue_key,
+    sound_cue_seq = excluded.sound_cue_seq,
+    detail = excluded.detail,
+    updated_at = excluded.updated_at
+  returning * into v_new;
+
+  return v_new;
 end;
 $$;
 
@@ -10829,6 +11146,26 @@ CREATE VIEW "public"."game_sessions_effective" WITH ("security_invoker"='true') 
 
 
 --
+-- Name: game_state_history; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."game_state_history" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "game_id" "uuid" NOT NULL,
+    "rev" bigint NOT NULL,
+    "snapshot" "jsonb" NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL
+);
+
+
+--
+-- Name: TABLE "game_state_history"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE "public"."game_state_history" IS 'Migawki wiersza game_state SPRZED każdej zmiany (pisane przez game_state_write) — jednopoziomowe "Cofnij ostatnią akcję" w Control v2 przez game_state_undo. Przycinane do ~20 najnowszych na grę.';
+
+
+--
 -- Name: games; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -11629,6 +11966,22 @@ ALTER TABLE ONLY "public"."game_sessions"
 
 
 --
+-- Name: game_state_history game_state_history_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."game_state_history"
+    ADD CONSTRAINT "game_state_history_pkey" PRIMARY KEY ("id");
+
+
+--
+-- Name: game_state game_state_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."game_state"
+    ADD CONSTRAINT "game_state_pkey" PRIMARY KEY ("game_id");
+
+
+--
 -- Name: games games_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -12116,6 +12469,13 @@ CREATE INDEX "game_sessions_started_at_idx" ON "public"."game_sessions" USING "b
 --
 
 CREATE INDEX "game_sessions_status_idx" ON "public"."game_sessions" USING "btree" ("status");
+
+
+--
+-- Name: game_state_history_game_id_rev_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "game_state_history_game_id_rev_idx" ON "public"."game_state_history" USING "btree" ("game_id", "rev" DESC);
 
 
 --
@@ -12915,6 +13275,22 @@ ALTER TABLE ONLY "public"."game_sessions"
 
 
 --
+-- Name: game_state game_state_game_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."game_state"
+    ADD CONSTRAINT "game_state_game_id_fkey" FOREIGN KEY ("game_id") REFERENCES "public"."games"("id") ON DELETE CASCADE;
+
+
+--
+-- Name: game_state_history game_state_history_game_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."game_state_history"
+    ADD CONSTRAINT "game_state_history_game_id_fkey" FOREIGN KEY ("game_id") REFERENCES "public"."games"("id") ON DELETE CASCADE;
+
+
+--
 -- Name: games games_owner_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -13610,6 +13986,45 @@ ALTER TABLE "public"."game_sessions" ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "game_sessions_owner_read" ON "public"."game_sessions" FOR SELECT TO "authenticated" USING ((EXISTS ( SELECT 1
    FROM "public"."games" "g"
   WHERE (("g"."id" = "game_sessions"."game_id") AND ("g"."owner_id" = "auth"."uid"())))));
+
+
+--
+-- Name: game_state; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."game_state" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: game_state game_state_anon_read_ready; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "game_state_anon_read_ready" ON "public"."game_state" FOR SELECT TO "anon" USING ((EXISTS ( SELECT 1
+   FROM "public"."games" "g"
+  WHERE (("g"."id" = "game_state"."game_id") AND ("g"."status" = 'ready'::"public"."game_status")))));
+
+
+--
+-- Name: game_state_history; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."game_state_history" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: game_state_history game_state_history_owner_read; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "game_state_history_owner_read" ON "public"."game_state_history" FOR SELECT TO "authenticated" USING ((EXISTS ( SELECT 1
+   FROM "public"."games" "g"
+  WHERE (("g"."id" = "game_state_history"."game_id") AND ("g"."owner_id" = "auth"."uid"())))));
+
+
+--
+-- Name: game_state game_state_owner_read; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "game_state_owner_read" ON "public"."game_state" FOR SELECT TO "authenticated" USING ((EXISTS ( SELECT 1
+   FROM "public"."games" "g"
+  WHERE (("g"."id" = "game_state"."game_id") AND ("g"."owner_id" = "auth"."uid"())))));
 
 
 --
@@ -14540,5 +14955,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict tdIF5xFWJXCck9RJCQVH9lNppVjpd1ujZinOfmFebSDek7Fvo6QL3o85EBBwe9g
+\unrestrict t9DOfbrmfJLAKjSM5BviAFeiupKzdoaHCoBhcoCA00g7fR8hmwL7DdhLIDF2eed
 
