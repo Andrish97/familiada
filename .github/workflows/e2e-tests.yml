@@ -29,10 +29,31 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
+          cache: "npm"
+          cache-dependency-path: tests/package-lock.json
 
       - name: Install dependencies
         run: npm ci
         working-directory: tests
+
+      # Cache samych binarek przeglądarki (~/.cache/ms-playwright) osobno od
+      # npm cache powyżej — klucz po wersji @playwright/test z package-lock,
+      # więc bump wersji automatycznie unieważnia cache i ściąga nową. Playwright
+      # CLI samo wykrywa już obecne binarki i pomija ich pobieranie (nawet bez
+      # tego kroku by nie pobrał drugi raz w tym samym jobie) — cache pozwala to
+      # wykryć MIĘDZY uruchomieniami, bo każdy run zaczyna na świeżej maszynie.
+      # System deps (apt, --with-deps) i tak instalują się na nowo za każdym
+      # razem — ta VM resetuje się między runami, nic tu nie da się scache'ować.
+      - name: Get installed Playwright version
+        id: playwright-version
+        run: echo "version=$(node -e "console.log(require('./node_modules/@playwright/test/package.json').version)")" >> "$GITHUB_OUTPUT"
+        working-directory: tests
+
+      - name: Cache Playwright browser binaries
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-browsers-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
