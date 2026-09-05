@@ -12,7 +12,8 @@ import { initI18n, getUiLang } from "../../translation/translation.js?v=v2026-09
 import { requireAuth } from "../../js/core/auth.js?v=v2026-09-05T07140";
 import { sb } from "../../js/core/supabase.js?v=v2026-09-05T07140";
 import { loadQuestions, loadAnswers } from "../../js/core/game-validate.js?v=v2026-09-05T07140";
-import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio } from "../../js/core/sfx.js?v=v2026-09-05T07140";
+import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud } from "../../js/core/sfx.js?v=v2026-09-05T07140";
+import { listGameSounds } from "../../js/core/sfx-cloud.js?v=v2026-09-05T07140";
 import { assertTransition } from "../../shared/gameStateMachine.js?v=v2026-09-05T07140";
 import { confirmModal } from "../../js/core/modal.js?v=v2026-09-05T07140";
 import { DEFAULT_SETTINGS } from "../../shared/gameStateShape.js?v=v2026-09-05T07140";
@@ -122,6 +123,26 @@ async function main() {
   setCurrentGameId(gameId);
   await loadSfxManifest();
   await initSfx();
+
+  // Głośności/warianty dźwięku skonfigurowane w game-settings (poza
+  // Control) — dokładnie jak dzisiejsze control/js/app.js's main().
+  if (game.settings?.sound) {
+    applySfxGameSettings(game.settings.sound);
+    const customKeys = Object.entries(game.settings.sound.variants || {})
+      .filter(([, v]) => v === "__custom__")
+      .map(([k]) => k);
+    if (customKeys.length > 0) {
+      (async () => {
+        try {
+          const { data: { user } } = await sb().auth.getUser();
+          if (user?.id) {
+            const urlMap = await listGameSounds(sb(), user.id, gameId, customKeys);
+            if (urlMap.size > 0) loadSfxFromCloud(urlMap);
+          }
+        } catch (e) { console.warn("[control2] wczytanie własnych dźwięków nie powiodło się:", e); }
+      })();
+    }
+  }
 
   const store = createStore(gameId);
   const expiredTimer = await store.hydrate();
