@@ -16,6 +16,7 @@ import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio } from "../../j
 import { assertTransition } from "../../shared/gameStateMachine.js?v=v2026-09-05T00001";
 import { confirmModal } from "../../js/core/modal.js?v=v2026-09-05T00001";
 import { DEFAULT_SETTINGS } from "../../shared/gameStateShape.js?v=v2026-09-05T00001";
+import { rt } from "../../js/core/realtime.js?v=v2026-09-05T00001";
 
 // Ustawienia "advanced" zachowywane przez "Zacznij od nowa" (sekcja 3a pkt 2
 // — dokładnie jak dzisiejsze resetProgress({keepAdvanced:true})).
@@ -82,6 +83,28 @@ async function main() {
     // zanim cokolwiek się wyrenderuje operatorowi.
     await engine.dispatch({ type: "EXPIRE_TIMER" });
   }
+
+  // Control jest jedynym urządzeniem "authenticated" — może czytać
+  // game_state bezpośrednio (dla siebie), więc na dzwonek reaguje pełnym
+  // hydrate() zamiast RPC z kluczem jak anon. To jedyny sposób, żeby
+  // Control zauważył zmianę zapisaną przez KOGOŚ INNEGO — jedyny taki
+  // przypadek to Buzzer piszący bezpośrednio przez game_state_buzzer_press
+  // (sekcja 1/4 planu). Własne zapisy Control i tak już ma zaaplikowane
+  // synchronicznie przez commit() zanim ten sam dzwonek do niego wróci —
+  // stąd warunek rev > store.state.rev, żeby nie robić zbędnego refetchu.
+  let externalRefreshInFlight = false;
+  rt(`familiada-state:${gameId}`).onBroadcast("rev", async (msg) => {
+    const rev = msg?.payload?.rev;
+    if (typeof rev !== "number" || rev <= store.state.rev) return;
+    if (externalRefreshInFlight) return;
+    externalRefreshInFlight = true;
+    try {
+      const expiredNow = await store.hydrate();
+      if (expiredNow) await engine.dispatch({ type: "EXPIRE_TIMER" });
+    } finally {
+      externalRefreshInFlight = false;
+    }
+  });
 
   const devices = createDevices({ game });
   const urls = devices.buildUrls(getUiLang());
