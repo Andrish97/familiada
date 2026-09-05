@@ -1,7 +1,7 @@
 // Śledzenie realnych rozgrywek (public.game_sessions) — czysto dodatkowe,
 // nie wpływa na przebieg gry. Każda funkcja połyka własne błędy: awaria
 // zapisu statystyk nigdy nie ma przerywać ani spowalniać rozgrywki.
-import { sb } from "../../js/core/supabase.js?v=v2026-09-05T18380";
+import { sb } from "../../js/core/supabase.js?v=v2026-09-05T18495";
 
 let currentSessionId = null;
 let roundsPlayedCount = 0;
