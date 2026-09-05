@@ -7,27 +7,27 @@
 // assertTransition(), żeby tabela stanów była mechanizmem wszędzie, nie
 // tylko wewnątrz silnika reguł gry.
 
-import { guardDesktopOnly } from "../../js/core/device-guard.js?v=v2026-09-05T07140";
-import { initI18n, getUiLang } from "../../translation/translation.js?v=v2026-09-05T07140";
-import { requireAuth } from "../../js/core/auth.js?v=v2026-09-05T07140";
-import { sb } from "../../js/core/supabase.js?v=v2026-09-05T07140";
-import { loadQuestions, loadAnswers } from "../../js/core/game-validate.js?v=v2026-09-05T07140";
-import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio } from "../../js/core/sfx.js?v=v2026-09-05T07140";
-import { assertTransition } from "../../shared/gameStateMachine.js?v=v2026-09-05T07140";
-import { confirmModal } from "../../js/core/modal.js?v=v2026-09-05T07140";
-import { DEFAULT_SETTINGS } from "../../shared/gameStateShape.js?v=v2026-09-05T07140";
-import { rt } from "../../js/core/realtime.js?v=v2026-09-05T07140";
+import { guardDesktopOnly } from "../../js/core/device-guard.js?v=v2026-09-05T07201";
+import { initI18n, getUiLang } from "../../translation/translation.js?v=v2026-09-05T07201";
+import { requireAuth } from "../../js/core/auth.js?v=v2026-09-05T07201";
+import { sb } from "../../js/core/supabase.js?v=v2026-09-05T07201";
+import { loadQuestions, loadAnswers } from "../../js/core/game-validate.js?v=v2026-09-05T07201";
+import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio } from "../../js/core/sfx.js?v=v2026-09-05T07201";
+import { assertTransition } from "../../shared/gameStateMachine.js?v=v2026-09-05T07201";
+import { confirmModal } from "../../js/core/modal.js?v=v2026-09-05T07201";
+import { DEFAULT_SETTINGS } from "../../shared/gameStateShape.js?v=v2026-09-05T07201";
+import { rt } from "../../js/core/realtime.js?v=v2026-09-05T07201";
 
 // Ustawienia "advanced" zachowywane przez "Zacznij od nowa" (sekcja 3a pkt 2
 // — dokładnie jak dzisiejsze resetProgress({keepAdvanced:true})).
 const ADVANCED_SETTINGS_KEYS = ["roundMultipliers", "finalMinPoints", "finalTarget", "endScreenMode", "finalPrizeMultiplier", "mainPrizeAmount"];
 
-import { createStore } from "./store.js?v=v2026-09-05T07140";
-import { createEngine } from "./engine.js?v=v2026-09-05T07140";
-import { createDevices } from "./devices.js?v=v2026-09-05T07140";
-import { createPresence } from "./presence.js?v=v2026-09-05T07140";
-import { createSoundReactor } from "./soundReactor.js?v=v2026-09-05T07140";
-import { createUI } from "./ui.js?v=v2026-09-05T07140";
+import { createStore } from "./store.js?v=v2026-09-05T07201";
+import { createEngine } from "./engine.js?v=v2026-09-05T07201";
+import { createDevices } from "./devices.js?v=v2026-09-05T07201";
+import { createPresence } from "./presence.js?v=v2026-09-05T07201";
+import { createSoundReactor } from "./soundReactor.js?v=v2026-09-05T07201";
+import { createUI } from "./ui.js?v=v2026-09-05T07201";
 
 guardDesktopOnly();
 
