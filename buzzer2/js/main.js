@@ -15,6 +15,7 @@ import { startKeepAlive } from "../../js/core/keep-alive.js?v=v2026-09-05T07140"
 import { sb } from "../../js/core/supabase.js?v=v2026-09-05T07140";
 import { createSubscription } from "../../js/core/game-state-subscribe.js?v=v2026-09-05T07140";
 import { createButtonRenderer, STATE, deriveButtonState } from "./render.js?v=v2026-09-05T07140";
+import { ringDoorbell } from "../../js/core/game-state-doorbell.js?v=v2026-09-05T00002";
 
 startKeepAlive();
 
@@ -75,7 +76,18 @@ async function main() {
     const { data, error } = await sb().rpc("game_state_buzzer_press", {
       p_game_id: gameId, p_key: key, p_team: team,
     });
-    if (!error) { subscription.applyRow(data); lastRow = data; renderer.render(data); return; }
+    if (!error) {
+      subscription.applyRow(data);
+      lastRow = data;
+      renderer.render(data);
+      // game_state_buzzer_press idzie z pominięciem control2/js/store.js,
+      // więc nic INNEGO nie zadzwoni dzwonkiem po tym zapisie — bez tego
+      // Control (i Display/Host) nigdy by się nie dowiedzieli, że ktoś
+      // nacisnął (znalezione na żywo przez control2-full-game.spec.js:
+      // Buzzer widział własne wciśnięcie, ale Control — nie).
+      ringDoorbell(gameId, data.rev);
+      return;
+    }
     if (String(error.message || "").includes("already_pressed")) {
       await subscription.refetchNow();
       return;

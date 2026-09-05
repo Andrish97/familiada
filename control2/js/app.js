@@ -17,6 +17,7 @@ import { assertTransition } from "../../shared/gameStateMachine.js?v=v2026-09-05
 import { confirmModal } from "../../js/core/modal.js?v=v2026-09-05T07140";
 import { DEFAULT_SETTINGS } from "../../shared/gameStateShape.js?v=v2026-09-05T07140";
 import { rt } from "../../js/core/realtime.js?v=v2026-09-05T07140";
+import { doorbellTopic } from "../../js/core/game-state-doorbell.js?v=v2026-09-05T00002";
 
 // Ustawienia "advanced" zachowywane przez "Zacznij od nowa" (sekcja 3a pkt 2
 // — dokładnie jak dzisiejsze resetProgress({keepAdvanced:true})).
@@ -93,7 +94,7 @@ async function main() {
   // synchronicznie przez commit() zanim ten sam dzwonek do niego wróci —
   // stąd warunek rev > store.state.rev, żeby nie robić zbędnego refetchu.
   let externalRefreshInFlight = false;
-  rt(`familiada-state:${gameId}`).onBroadcast("rev", async (msg) => {
+  rt(doorbellTopic(gameId)).onBroadcast("rev", async (msg) => {
     const rev = msg?.payload?.rev;
     if (typeof rev !== "number" || rev <= store.state.rev) return;
     if (externalRefreshInFlight) return;

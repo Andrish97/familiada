@@ -18,10 +18,7 @@
 
 import { sb } from "./supabase.js?v=v2026-09-05T07140";
 import { rt } from "./realtime.js?v=v2026-09-05T07140";
-
-function doorbellTopic(gameId) {
-  return `familiada-state:${gameId}`;
-}
+import { doorbellTopic } from "./game-state-doorbell.js?v=v2026-09-05T00002";
 
 export function createSubscription({ gameId, deviceType, key, onRow, onError }) {
   let lastRev = -1;

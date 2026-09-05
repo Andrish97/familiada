@@ -15,7 +15,7 @@
 // createFinal), więc dają się testować w gołym Node z atrapą store.
 
 import { sb } from "../../js/core/supabase.js?v=v2026-09-05T07140";
-import { rt } from "../../js/core/realtime.js?v=v2026-09-05T07140";
+import { ringDoorbell } from "../../js/core/game-state-doorbell.js?v=v2026-09-05T00002";
 import { createPersist, StaleWriteError } from "./persist.js?v=v2026-09-05T07140";
 import { makeDefaultState, DEFAULT_SETTINGS, PERSISTED_KEYS } from "../../shared/gameStateShape.js?v=v2026-09-05T07140";
 
@@ -23,12 +23,10 @@ import { makeDefaultState, DEFAULT_SETTINGS, PERSISTED_KEYS } from "../../shared
 // ma bezpośredniego dostępu do odczytu game_state wcale, więc postgres_changes
 // nigdy nie zadziała dla Display/Host/Buzzer, i to jest świadome, nie
 // fallback). Niesie WYŁĄCZNIE {rev} — nieautorytatywne, samo w sobie nic nie
-// znaczy poza "coś się zmieniło, dogoń przez game_state_get". Reużywa
-// dokładnie ten sam, już sprawdzony broadcast co dzisiejsze komendy
-// (js/core/realtime.js), bez żadnej zmiany w tym module.
-function doorbellTopic(gameId) {
-  return `familiada-state:${gameId}`;
-}
+// znaczy poza "coś się zmieniło, dogoń przez game_state_get". Nazwa kanału +
+// wysyłka wydzielone do js/core/game-state-doorbell.js, bo dzwonić musi
+// KAŻDY zapis do game_state, nie tylko te stąd — patrz buzzer2/js/main.js
+// (game_state_buzzer_press idzie z pominięciem tego store).
 
 export { StaleWriteError, makeDefaultState, DEFAULT_SETTINGS };
 
@@ -115,7 +113,7 @@ export function createStore(gameId) {
     });
     applyRow(row);
     emit();
-    ringDoorbell(row);
+    ringDoorbell(gameId, row.rev);
     return row;
   }
 
@@ -123,16 +121,8 @@ export function createStore(gameId) {
     const row = await persist.undo();
     applyRow(row);
     emit();
-    ringDoorbell(row);
+    ringDoorbell(gameId, row.rev);
     return row;
-  }
-
-  // Nieautorytatywny "dzwonek" — {rev} wystarczy, żeby urządzenie wiedziało
-  // "coś się zmieniło, doczytaj przez game_state_get". Fire-and-forget:
-  // zgubiony dzwonek nie jest problemem, bo urządzenie i tak dogoni stan
-  // przy następnej zmianie albo przy własnym reconnect (renderSnapshot).
-  function ringDoorbell(row) {
-    rt(doorbellTopic(gameId)).sendBroadcast("rev", { rev: row.rev }, { mode: "http" }).catch(() => {});
   }
 
   return { state, subscribe, emit, hydrate, commit, undo, applyRow };
