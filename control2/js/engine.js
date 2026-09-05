@@ -269,7 +269,7 @@ const REDUCERS = {
     if (r.revealed.length < r.answers.length) {
       return { step: "r_play", phase: "REVEAL", controlTeam: state.controlTeam, topCard: "rounds", soundCueKey: "round_transition" };
     }
-    return finalizeRound(state);
+    return { ...finalizeRound(state), soundCueKey: "round_transition" };
   },
 
   // ---- R8: odkrywanie reszty (czysto pokazowe, nie dolicza do banku) ----
@@ -442,7 +442,11 @@ const REDUCERS = {
     const f = state.final;
     state.rounds.totals[f.winnerTeam] = (state.rounds.totals[f.winnerTeam] || 0) + f.runtime.sum;
     state.locks.gameEnded = true;
-    return sameStep(state);
+    // "final_end" (nie "round_transition"): gameFinal.js's finishFinal()
+    // nakłada round_transition+reveal zsynchronizowane, a PO nich show_intro
+    // — inna sekwencja niż F7's sam combo, więc osobny klucz zamiast
+    // przeciążania "round_transition" (soundReactor.js rozróżnia po kluczu).
+    return { ...sameStep(state), soundCueKey: "final_end" };
   },
 };
 

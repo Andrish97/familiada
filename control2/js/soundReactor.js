@@ -14,28 +14,55 @@
 // przełącznikiem po stronie Control — dźwięk i tak gra wyłącznie tutaj, więc
 // wystarczy nie wołać playSfx() gdy wyciszone; nie trafia do game_state ani
 // nie jest widoczne dla innych urządzeń.
+//
+// Cztery miejsca w control/js/gameRounds.js i gameFinal.js nakładają DWA
+// dźwięki na jedną zmianę zamiast jednego bare cue — sprawdzone linia po
+// linii, żeby nie zgadywać:
+//   - R1->R2 (startRound) i F7 (toP2Start): "round_transition"+"reveal"
+//     ZSYNCHRONIZOWANE na koniec (krótszy czeka, żeby oba skończyły się
+//     razem) — ta sama para w obu miejscach, ten sam kod.
+//   - R6-R7 (goEndRound): "reveal" najpierw, "round_transition" dopiero PO
+//     jego długości (sekwencyjnie, ODWROTNA kolejność niż wyżej).
+//   - F0 (startFinal): "final_theme" najpierw, "reveal" dopiero po nim.
+//   - F14 (finishFinal): synced "round_transition"+"reveal" jak przy
+//     starcie rundy, a PO całej tej parze dodatkowo "show_intro".
 
 import { deriveEvents } from "../../shared/deriveEvents.js?v=v2026-09-05T07292";
 import { playSfx, getSfxDuration } from "../../js/core/sfx.js?v=v2026-09-05T07292";
 
 const MUTE_KEY = "familiada_control2_muted";
 
-// Start rundy dziś nakłada "reveal" i "round_transition" zsynchronizowane
-// na KONIEC (control/js/gameRounds.js's startRound(): krótszy z dwóch
-// startuje z opóźnieniem, tak żeby oba skończyły się razem) — a nie jeden
-// bare "round_transition" jak w pierwszym przebiegu control2.
-async function playRoundStartCombo() {
-  let rtDur = 0, revealDur = 0;
-  try {
-    [rtDur, revealDur] = await Promise.all([getSfxDuration("round_transition"), getSfxDuration("reveal")]);
-  } catch {}
-  if (rtDur >= revealDur) {
-    playSfx("round_transition");
-    setTimeout(() => playSfx("reveal"), Math.max(0, (rtDur - revealDur) * 1000));
+async function durationOf(key) {
+  try { return (await getSfxDuration(key)) || 0; } catch { return 0; }
+}
+
+// Dwa dźwięki zsynchronizowane na KONIEC — krótszy startuje z opóźnieniem,
+// tak żeby oba skończyły się razem. Zwraca całkowity czas (s) do użycia
+// przez wywołującego (np. F14 czeka na to przed show_intro).
+async function playSyncedCombo(keyA, keyB) {
+  const [durA, durB] = await Promise.all([durationOf(keyA), durationOf(keyB)]);
+  if (durA >= durB) {
+    playSfx(keyA);
+    setTimeout(() => playSfx(keyB), Math.max(0, (durA - durB) * 1000));
   } else {
-    playSfx("reveal");
-    setTimeout(() => playSfx("round_transition"), Math.max(0, (revealDur - rtDur) * 1000));
+    playSfx(keyB);
+    setTimeout(() => playSfx(keyA), Math.max(0, (durB - durA) * 1000));
   }
+  return Math.max(durA, durB);
+}
+
+// Dwa dźwięki SEKWENCYJNIE — keyA gra od razu, keyB dopiero po jego długości.
+async function playSequentialCombo(keyA, keyB) {
+  playSfx(keyA);
+  const durA = await durationOf(keyA);
+  setTimeout(() => playSfx(keyB), Math.max(0, durA * 1000));
+}
+
+// F14 (finishFinal): synced round_transition+reveal, a PO całej tej parze
+// dodatkowo show_intro.
+async function playFinalEndCombo() {
+  const totalS = await playSyncedCombo("round_transition", "reveal");
+  setTimeout(() => playSfx("show_intro"), Math.max(0, totalS * 1000));
 }
 
 export function createSoundReactor(store) {
@@ -52,11 +79,21 @@ export function createSoundReactor(store) {
     if (prevRow) {
       const events = deriveEvents(prevRow, nextRow);
       const isRoundStart = nextRow.step === "r_duel" && nextRow.phase === "DUEL" && prevRow.step === "r_roundStart";
+      // END_ROUND jest zawsze dispatchowany z step="r_play", phase PLAY lub
+      // STEAL (rozstrzygnięta kradzież zostaje w fazie STEAL aż do końca
+      // rundy) — to jedyne miejsce, gdzie "round_transition" oznacza koniec
+      // rundy, nie jej start ani przejście do 2. rundy finału.
+      const isRoundEnd = prevRow.step === "r_play" && (prevRow.phase === "PLAY" || prevRow.phase === "STEAL");
+      // F7: NEXT_QUESTION -> f_p2_start niesie ten sam klucz "round_transition",
+      // ale to synced-combo jak start rundy, nie koniec.
+      const isFinalP2Start = nextRow.step === "f_p2_start";
       for (const ev of events) {
-        if (ev.kind === "SOUND_CUE" && ev.key && !muted) {
-          if (ev.key === "round_transition" && isRoundStart) playRoundStartCombo();
-          else playSfx(ev.key);
-        }
+        if (ev.kind !== "SOUND_CUE" || !ev.key || muted) continue;
+        if (ev.key === "round_transition" && (isRoundStart || isFinalP2Start)) playSyncedCombo("round_transition", "reveal");
+        else if (ev.key === "round_transition" && isRoundEnd) playSequentialCombo("reveal", "round_transition");
+        else if (ev.key === "final_theme") playSequentialCombo("final_theme", "reveal");
+        else if (ev.key === "final_end") playFinalEndCombo();
+        else playSfx(ev.key);
       }
     }
     prevRow = nextRow;
