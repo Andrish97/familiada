@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict t9DOfbrmfJLAKjSM5BviAFeiupKzdoaHCoBhcoCA00g7fR8hmwL7DdhLIDF2eed
+\restrict LYLa6LrwBzQr0VacXG6qUS87bqF1WFPSgnmmEnuz76xzAbyJv43DlDN0AdqqDz4
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -13995,15 +13995,6 @@ CREATE POLICY "game_sessions_owner_read" ON "public"."game_sessions" FOR SELECT 
 ALTER TABLE "public"."game_state" ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: game_state game_state_anon_read_ready; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "game_state_anon_read_ready" ON "public"."game_state" FOR SELECT TO "anon" USING ((EXISTS ( SELECT 1
-   FROM "public"."games" "g"
-  WHERE (("g"."id" = "game_state"."game_id") AND ("g"."status" = 'ready'::"public"."game_status")))));
-
-
---
 -- Name: game_state_history; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -14955,5 +14946,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict t9DOfbrmfJLAKjSM5BviAFeiupKzdoaHCoBhcoCA00g7fR8hmwL7DdhLIDF2eed
+\unrestrict LYLa6LrwBzQr0VacXG6qUS87bqF1WFPSgnmmEnuz76xzAbyJv43DlDN0AdqqDz4
 
