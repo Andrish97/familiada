@@ -122,6 +122,42 @@ test("public.game_state: anon nie ma bezpośredniego dostępu do odczytu, jedyn�
     expect(goodKeyResult.error, "game_state_get z poprawnym kluczem nie powinno się nie udać").toBeNull();
     expect(goodKeyResult.step, "game_state_get z poprawnym kluczem powinno zwrócić zapisany stan").toBe("devices_display");
 
+    // 4) Pomiar czasu odpowiedzi — czy odczyt przez RPC jest wystarczająco
+    //    szybki dla realnego użycia (bootstrap urządzenia + ponowny odczyt po
+    //    każdym broadcastowym "dzwonku"). 10 kolejnych wywołań z tej samej,
+    //    anonimowej karty, tak jak realnie robiłoby to Display/Host/Buzzer.
+    const timings = await anonPage.evaluate(
+      async ({ gid, key }) => {
+        const sb = window.__sbClient;
+        const results = [];
+        for (let i = 0; i < 10; i++) {
+          const t0 = performance.now();
+          const { error } = await sb.rpc("game_state_get", {
+            p_game_id: gid,
+            p_device_type: "display",
+            p_key: key,
+          });
+          results.push({ ms: performance.now() - t0, error: error?.message || null });
+        }
+        return results;
+      },
+      { gid: game.id, key: game.share_key_display }
+    );
+    const failedTimings = timings.filter((t) => t.error);
+    expect(failedTimings.length, "żadne z 10 wywołań pomiarowych nie powinno się nie udać").toBe(0);
+    const ms = timings.map((t) => t.ms);
+    const avg = ms.reduce((a, b) => a + b, 0) / ms.length;
+    const max = Math.max(...ms);
+    console.log(
+      `[spike] czas odpowiedzi game_state_get (10 wywołań): avg=${avg.toFixed(1)}ms max=${max.toFixed(1)}ms wszystkie=[${ms
+        .map((v) => v.toFixed(0))
+        .join(", ")}]ms`
+    );
+    // Luźny górny limit — to nie jest ścisły budżet wydajności, tylko sanity
+    // check, że pojedynczy odczyt nie jest rzędu sekund (co realnie zepsułoby
+    // odczuwalną responsywność urządzeń po "dzwonku").
+    expect(avg, "średni czas odpowiedzi game_state_get powinien być wyraźnie poniżej 1s").toBeLessThan(1000);
+
     await anonContext.close();
   } finally {
     await page.evaluate(async (gid) => {
