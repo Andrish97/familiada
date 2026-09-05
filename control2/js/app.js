@@ -378,11 +378,11 @@ async function main() {
     location.href = "/builder";
   });
 
-  async function advance(nextStep, extra = {}) {
+  async function advance(nextStep, extra = {}, soundCueKey) {
     assertTransition(store.state.step, nextStep);
     store.state.step = nextStep;
     Object.assign(store.state, extra);
-    await store.commit();
+    await store.commit({ soundCueKey });
   }
 
   async function handle(action, payload) {
@@ -500,7 +500,12 @@ async function main() {
         location.href = "/builder";
         return;
       }
-      if (action === "rounds.introNext") { await advance("r_roundStart", { phase: "READY" }); return; }
+      if (action === "rounds.introNext") {
+        // Dokładnie jak dzisiejsze gameRounds.js: intro logo + dźwięk na
+        // starcie gry (nie tylko na końcu — show_intro gra też tutaj).
+        await advance("r_roundStart", { phase: "READY" }, "show_intro");
+        return;
+      }
       if (action === "game.dispatch") { await engine.dispatch(payload); return; }
     } catch (e) {
       console.error("[control2] akcja nie powiodła się:", action, e);

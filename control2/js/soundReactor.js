@@ -16,9 +16,27 @@
 // nie jest widoczne dla innych urządzeń.
 
 import { deriveEvents } from "../../shared/deriveEvents.js?v=v2026-09-05T07292";
-import { playSfx } from "../../js/core/sfx.js?v=v2026-09-05T07292";
+import { playSfx, getSfxDuration } from "../../js/core/sfx.js?v=v2026-09-05T07292";
 
 const MUTE_KEY = "familiada_control2_muted";
+
+// Start rundy dziś nakłada "reveal" i "round_transition" zsynchronizowane
+// na KONIEC (control/js/gameRounds.js's startRound(): krótszy z dwóch
+// startuje z opóźnieniem, tak żeby oba skończyły się razem) — a nie jeden
+// bare "round_transition" jak w pierwszym przebiegu control2.
+async function playRoundStartCombo() {
+  let rtDur = 0, revealDur = 0;
+  try {
+    [rtDur, revealDur] = await Promise.all([getSfxDuration("round_transition"), getSfxDuration("reveal")]);
+  } catch {}
+  if (rtDur >= revealDur) {
+    playSfx("round_transition");
+    setTimeout(() => playSfx("reveal"), Math.max(0, (rtDur - revealDur) * 1000));
+  } else {
+    playSfx("reveal");
+    setTimeout(() => playSfx("round_transition"), Math.max(0, (revealDur - rtDur) * 1000));
+  }
+}
 
 export function createSoundReactor(store) {
   let prevRow = null;
@@ -33,9 +51,11 @@ export function createSoundReactor(store) {
     // wznowienia/odczytu, tylko realnych zmian).
     if (prevRow) {
       const events = deriveEvents(prevRow, nextRow);
+      const isRoundStart = nextRow.step === "r_duel" && nextRow.phase === "DUEL" && prevRow.step === "r_roundStart";
       for (const ev of events) {
         if (ev.kind === "SOUND_CUE" && ev.key && !muted) {
-          playSfx(ev.key);
+          if (ev.key === "round_transition" && isRoundStart) playRoundStartCombo();
+          else playSfx(ev.key);
         }
       }
     }
