@@ -23,6 +23,60 @@ import { doorbellTopic } from "../../js/core/game-state-doorbell.js?v=v2026-09-0
 // — dokładnie jak dzisiejsze resetProgress({keepAdvanced:true})).
 const ADVANCED_SETTINGS_KEYS = ["roundMultipliers", "finalMinPoints", "finalTarget", "endScreenMode", "finalPrizeMultiplier", "mainPrizeAmount"];
 
+// Denormalizacja games.settings (skonfigurowane osobno, na stronie
+// game-settings, ZANIM operator w ogóle otworzy Control) do płaskiego
+// game_state.detail — odpowiednik dzisiejszego control/js/app.js's
+// applyGameSettingsToStore(). D3 ("setup_finish") to w nowej wersji
+// wyłącznie PODSUMOWANIE tych już zapisanych ustawień (plan, tabela D3),
+// nie formularz do wypełnienia — więc to musi się wykonać, zanim operator
+// tam dotrze, nie jako efekt kliknięcia "Rozpocznij".
+function applyGameSettingsToState(settings, state) {
+  if (!settings || typeof settings !== "object") return;
+  const { teams, display, game, questions } = settings;
+
+  if (teams?.teamA || teams?.teamB) {
+    state.teams.teamA = teams.teamA || "";
+    state.teams.teamB = teams.teamB || "";
+  }
+
+  if (display) {
+    if (display.colors) state.display.colors = { ...state.display.colors, ...display.colors };
+    if (display.theme !== undefined) state.display.theme = display.theme;
+    if (display.logoId !== undefined) state.display.logoId = display.logoId;
+  }
+
+  if (game) {
+    if (game.hasFinal !== undefined && game.hasFinal !== null) state.settings.hasFinal = game.hasFinal;
+    if (game.finalQuestionsMode) state.settings.finalQuestionsMode = game.finalQuestionsMode;
+    if (game.roundsQuestionsMode) state.settings.roundsQuestionsMode = game.roundsQuestionsMode;
+    if (game.advanced && typeof game.advanced === "object") {
+      const adv = game.advanced;
+      if (Array.isArray(adv.roundMultipliers) && adv.roundMultipliers.length) state.settings.roundMultipliers = adv.roundMultipliers;
+      if (typeof adv.finalMinPoints === "number") state.settings.finalMinPoints = adv.finalMinPoints;
+      if (typeof adv.finalTarget === "number") state.settings.finalTarget = adv.finalTarget;
+      if (typeof adv.endScreenMode === "string") state.settings.endScreenMode = adv.endScreenMode;
+      if (typeof adv.finalPrizeMultiplier === "number") state.settings.finalPrizeMultiplier = adv.finalPrizeMultiplier;
+      if (typeof adv.mainPrizeAmount === "number") state.settings.mainPrizeAmount = adv.mainPrizeAmount;
+    }
+  }
+
+  if (questions) {
+    // Tak jak w starym applyGameSettingsToStore: tylko gdy finał faktycznie
+    // włączony — inaczej martwa lista pytań finałowych niepotrzebnie
+    // wykluczyłaby te pytania z puli rund (pickQuestionPool niżej).
+    if (game?.hasFinal === true && Array.isArray(questions.final) && questions.final.length > 0) {
+      const ids = questions.final.map((q) => q.id).filter(Boolean);
+      if (ids.length > 0) {
+        state.final.picked = ids.slice(0, 5);
+        state.final.confirmed = true;
+      }
+    }
+    if (Array.isArray(questions.rounds) && questions.rounds.length > 0) {
+      state.settings.roundsPicked = questions.rounds.slice();
+    }
+  }
+}
+
 import { createStore } from "./store.js?v=v2026-09-05T07140";
 import { createEngine } from "./engine.js?v=v2026-09-05T07140";
 import { createDevices } from "./devices.js?v=v2026-09-05T07140";
@@ -71,6 +125,14 @@ async function main() {
 
   const store = createStore(gameId);
   const expiredTimer = await store.hydrate();
+
+  // Tylko przed startem gry (D0-D3) — po "Rozpocznij" te pola żyją już
+  // wyłącznie w game_state i nie mają być nadpisywane przy każdym
+  // wznowieniu Control w trakcie rozgrywki (patrz komentarz przy funkcji).
+  if (!store.state.locks.gameStarted) {
+    applyGameSettingsToState(game.settings, store.state);
+    await store.commit();
+  }
 
   const engine = createEngine({
     store,
@@ -173,11 +235,36 @@ async function main() {
         return;
       }
       if (action === "setup.start") {
-        store.state.teams.teamA = payload.teamA;
-        store.state.teams.teamB = payload.teamB;
-        store.state.settings.hasFinal = payload.hasFinal;
+        // D3 to już tylko podsumowanie — drużyny/finał/pytania są od dawna
+        // ustawione w games.settings i zdenormalizowane wyżej w main().
         store.state.locks.gameStarted = true;
         await advance("r_intro", { topCard: "rounds" });
+        return;
+      }
+      if (action === "setup.reshuffleRounds") {
+        // Sekcja 3a pkt 1: "Losuj ponownie" — tylko w trybie losowym i tylko
+        // przed startem gry (potem pula jest już w grze). Wymusza budowę puli
+        // teraz (normalnie leniwie budowana dopiero przy pierwszym
+        // START_ROUND), żeby dało się ją przetasować z góry.
+        if (store.state.settings.roundsQuestionsMode === "pick" || store.state.locks.gameStarted) return;
+        store.state.rounds._questionPool = await pickQuestionPool(store.state);
+        await store.commit();
+        return;
+      }
+      if (action === "setup.reshuffleFinal") {
+        if (store.state.settings.finalQuestionsMode === "pick" || store.state.locks.gameStarted) return;
+        const all = await loadQuestions(store.state.gameId);
+        const roundsPicked = new Set((store.state.settings.roundsPicked || []).map((q) => String(q.id)));
+        const pool = store.state.settings.roundsQuestionsMode === "pick" && roundsPicked.size
+          ? all.filter((q) => !roundsPicked.has(String(q.id)))
+          : all.slice();
+        for (let i = pool.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [pool[i], pool[j]] = [pool[j], pool[i]];
+        }
+        store.state.final.picked = pool.slice(0, 5).map((q) => q.id);
+        store.state.final.confirmed = true;
+        await store.commit();
         return;
       }
       if (action === "rounds.introNext") { await advance("r_roundStart", { phase: "READY" }); return; }
@@ -214,7 +301,7 @@ async function main() {
       stealWon: false, _questionPool: [], _usedQuestionIds: [],
     };
     store.state.final = {
-      picked: [], confirmed: false, winnerTeam: null,
+      picked: [], confirmed: false, winnerTeam: null, questions: [],
       runtime: { sum: 0, timer: { running: false, phase: null, endsAt: 0 }, map1: [null,null,null,null,null], map2: [null,null,null,null,null], p1: [null,null,null,null,null], p2: [null,null,null,null,null], reached200: false },
     };
     store.state.display = { mode: "BLACK", qrTarget: null, colors: store.state.display.colors, theme: store.state.display.theme, logoId: store.state.display.logoId };
@@ -223,6 +310,14 @@ async function main() {
     store.state.phase = null;
     store.state.controlTeam = null;
     store.state.topCard = "devices";
+    // D3 znów pokaże podsumowanie games.settings (drużyny/finał/pytania) —
+    // odśwież je z bazy, bo mogły się zmienić od czasu wejścia w Control.
+    try {
+      const { data: freshGame } = await sb().from("games").select("settings").eq("id", gameId).single();
+      applyGameSettingsToState(freshGame?.settings, store.state);
+    } catch (e) {
+      console.warn("[control2] odświeżenie games.settings po 'Zacznij od nowa' nie powiodło się:", e);
+    }
     await store.commit();
   });
 

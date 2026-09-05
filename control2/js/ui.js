@@ -79,29 +79,54 @@ export function createUI({ root, emit }) {
   }
 
   // ============================================================
-  // D3: podsumowanie ustawień (formularz prosty — patrz komentarz u góry)
+  // D3: podsumowanie ustawień. Drużyny/finał/tryby doboru pytań/ustawienia
+  // zaawansowane są od dawna skonfigurowane na osobnej stronie
+  // (game-settings, poza Control) i zdenormalizowane do stanu przez
+  // control2/js/app.js's applyGameSettingsToState() — to jest wyłącznie
+  // READ-ONLY podsumowanie tego, co już ustawiono (plan, tabela D3), nie
+  // formularz danych wejściowych.
   // ============================================================
   function renderSetupFinish(state) {
     clear();
-    const teamA = h("input", { type: "text", value: state.teams.teamA, placeholder: "Drużyna A" });
-    const teamB = h("input", { type: "text", value: state.teams.teamB, placeholder: "Drużyna B" });
-    const hasFinalSel = h("select", {}, [
-      h("option", { value: "true", text: "Tak" }),
-      h("option", { value: "false", text: "Nie" }),
+    const s = state.settings;
+    const hasFinal = s.hasFinal === true;
+
+    const row = (label, value) => h("div", { class: "c2-device-row" }, [
+      h("span", { text: label }),
+      h("span", { text: value }),
     ]);
-    hasFinalSel.value = state.settings.hasFinal === true ? "true" : "false";
 
-    const start = h("button", { class: "c2-btn primary", type: "button", onclick: () => emit("setup.start", {
-      teamA: teamA.value, teamB: teamB.value, hasFinal: hasFinalSel.value === "true",
-    }) }, [document.createTextNode("Rozpocznij")]);
+    const rows = [
+      row("Drużyna A", state.teams.teamA || "—"),
+      row("Drużyna B", state.teams.teamB || "—"),
+      row("Finał", hasFinal ? "Tak" : "Nie"),
+      row("Pytania rund", s.roundsQuestionsMode === "pick" ? `Ustalona kolejność (${s.roundsPicked?.length || 0})` : "Losowo"),
+    ];
+    if (hasFinal) {
+      rows.push(row("Pytania finału", s.finalQuestionsMode === "pick" ? `Wybrane ręcznie (${state.final.picked?.length || 0}/5)` : "Losowo"));
+    }
 
-    root.appendChild(h("div", { class: "c2-card-inner" }, [
-      h("h2", { text: "Ustawienia gry" }),
-      h("label", { text: "Nazwa drużyny A" }), teamA,
-      h("label", { text: "Nazwa drużyny B" }), teamB,
-      h("label", { text: "Finał" }), hasFinalSel,
-      start,
-    ]));
+    const reshuffleBtns = [];
+    if (s.roundsQuestionsMode !== "pick") {
+      reshuffleBtns.push(h("button", { class: "c2-btn", type: "button", onclick: () => emit("setup.reshuffleRounds") }, [document.createTextNode("Losuj ponownie pytania rund")]));
+    }
+    if (hasFinal && s.finalQuestionsMode !== "pick") {
+      reshuffleBtns.push(h("button", { class: "c2-btn", type: "button", onclick: () => emit("setup.reshuffleFinal") }, [document.createTextNode("Losuj ponownie pytania finału")]));
+    }
+
+    const finalIncomplete = hasFinal && s.finalQuestionsMode === "pick" && (state.final.picked?.length !== 5 || !state.final.confirmed);
+    const start = h("button", {
+      class: "c2-btn primary", type: "button",
+      disabled: finalIncomplete ? "" : undefined,
+      onclick: () => emit("setup.start"),
+    }, [document.createTextNode("Rozpocznij")]);
+
+    const children = [h("h2", { text: "Podsumowanie ustawień" }), ...rows];
+    if (reshuffleBtns.length) children.push(h("div", { class: "c2-topbar-actions" }, reshuffleBtns));
+    if (finalIncomplete) children.push(h("div", { class: "gs-hint" }, [document.createTextNode("Finał ustawiony na \"wybrane ręcznie\", ale nie wybrano 5 pytań w ustawieniach gry.")]));
+    children.push(start);
+
+    root.appendChild(h("div", { class: "c2-card-inner" }, children));
   }
 
   // ============================================================
