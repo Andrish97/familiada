@@ -42,6 +42,11 @@ export function createStore(gameId) {
 
   function applyRow(row) {
     if (!row) return;
+    // Surowy wiersz z bazy (rev/step/phase/... w snake_case), obok stanu
+    // camelCase powyżej — soundReactor.js diffuje TO pole przez
+    // shared/deriveEvents.js (które oczekuje kształtu wiersza game_state,
+    // nie zrzutowanego camelCase stanu). Prywatne, nie część PERSISTED_KEYS.
+    state.__row = row;
     state.rev = row.rev ?? 0;
     state.topCard = row.top_card;
     state.step = row.step;
