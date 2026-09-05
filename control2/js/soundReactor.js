@@ -15,8 +15,8 @@
 // wystarczy nie wołać playSfx() gdy wyciszone; nie trafia do game_state ani
 // nie jest widoczne dla innych urządzeń.
 
-import { deriveEvents } from "../../shared/deriveEvents.js?v=v2026-09-05T07140";
-import { playSfx } from "../../js/core/sfx.js?v=v2026-09-05T07140";
+import { deriveEvents } from "../../shared/deriveEvents.js?v=v2026-09-05T07201";
+import { playSfx } from "../../js/core/sfx.js?v=v2026-09-05T07201";
 
 const MUTE_KEY = "familiada_control2_muted";
 
