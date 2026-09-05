@@ -38,25 +38,33 @@ export function createUI({ root, emit }) {
     const { urls, presenceFlags = {}, connectCodes = {} } = ctx;
     const wrap = h("div", { class: "c2-devices" });
 
-    const row = (label, kind, url) => {
+    const row = (label, kind, url, { showQrToggle = false } = {}) => {
       const online = !!presenceFlags[kind];
       const code = connectCodes[kind];
+      const isShowingThis = state.display.mode === "QR" && state.display.qrTarget === kind;
+      const actions = [
+        h("button", { class: "c2-btn", type: "button", onclick: () => window.open(url, "_blank") }, [document.createTextNode("Otwórz link")]),
+        h("span", { class: "c2-code", text: code ? `Kod: ${code}` : "" }),
+      ];
+      if (showQrToggle) {
+        actions.push(h("button", {
+          class: `c2-btn ${isShowingThis ? "primary" : ""}`, type: "button",
+          onclick: () => emit(isShowingThis ? "devices.hideQr" : "devices.showQr", { kind, url, code }),
+        }, [document.createTextNode(isShowingThis ? "Ukryj QR" : "Pokaż QR na wyświetlaczu")]));
+      }
       return h("div", { class: "c2-device-row" }, [
         h("div", { class: "c2-device-label" }, [
           h("span", { class: `c2-dot ${online ? "on" : "off"}` }),
           h("span", { text: label }),
         ]),
-        h("div", { class: "c2-device-actions" }, [
-          h("button", { class: "c2-btn", type: "button", onclick: () => window.open(url, "_blank") }, [document.createTextNode("Otwórz link")]),
-          h("span", { class: "c2-code", text: code ? `Kod: ${code}` : "" }),
-        ]),
+        h("div", { class: "c2-device-actions" }, actions),
       ]);
     };
 
     wrap.appendChild(row("Wyświetlacz", "display", urls.displayUrl));
     if (state.step === "devices_hostbuzzer") {
-      if (!state.settings.noHostTablet) wrap.appendChild(row("Prowadzący", "host", urls.hostUrl));
-      if (!state.settings.physicalBuzzer) wrap.appendChild(row("Buzzer", "buzzer", urls.buzzerUrl));
+      if (!state.settings.noHostTablet) wrap.appendChild(row("Prowadzący", "host", urls.hostUrl, { showQrToggle: true }));
+      if (!state.settings.physicalBuzzer) wrap.appendChild(row("Buzzer", "buzzer", urls.buzzerUrl, { showQrToggle: true }));
     }
 
     const next = h("button", { class: "c2-btn primary", type: "button", onclick: () => emit("devices.next") }, [

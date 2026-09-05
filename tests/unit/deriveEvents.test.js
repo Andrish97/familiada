@@ -32,6 +32,20 @@ test("zmiana step generuje STEP_CHANGE", () => {
   assert.ok(events.some((e) => e.kind === "STEP_CHANGE" && e.from === "r_duel" && e.to === "r_play"));
 });
 
+test("locks.gameEnded false->true generuje GAME_ENDED (GAME_END_SHOW/FINISH_FINAL — ten sam step, więc STEP_CHANGE nie wystarcza)", () => {
+  const a = row({ step: "r_gameEnd", detail: { rounds: { revealed: [] }, final: { runtime: {} }, display: {}, host: {}, locks: { gameEnded: false } } });
+  const b = row({ step: "r_gameEnd", detail: { rounds: { revealed: [] }, final: { runtime: {} }, display: {}, host: {}, locks: { gameEnded: true } } });
+  const events = deriveEvents(a, b);
+  assert.ok(events.some((e) => e.kind === "GAME_ENDED"));
+  assert.equal(events.some((e) => e.kind === "STEP_CHANGE"), false);
+});
+
+test("locks.gameEnded już true w obu wierszach => brak GAME_ENDED (nie odpala się ponownie)", () => {
+  const a = row({ detail: { rounds: { revealed: [] }, final: { runtime: {} }, display: {}, host: {}, locks: { gameEnded: true } } });
+  const b = row({ detail: { rounds: { revealed: [] }, final: { runtime: {} }, display: {}, host: {}, locks: { gameEnded: true } } });
+  assert.equal(deriveEvents(a, b).some((e) => e.kind === "GAME_ENDED"), false);
+});
+
 test("zmiana control_team generuje CONTROL_CHANGED", () => {
   const events = deriveEvents(row({ control_team: "A" }), row({ control_team: "B" }));
   assert.ok(events.some((e) => e.kind === "CONTROL_CHANGED" && e.team === "B"));

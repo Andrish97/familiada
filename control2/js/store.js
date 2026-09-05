@@ -15,8 +15,20 @@
 // createFinal), więc dają się testować w gołym Node z atrapą store.
 
 import { sb } from "../../js/core/supabase.js?v=v2026-09-04T18491";
+import { rt } from "../../js/core/realtime.js?v=v2026-09-05T00001";
 import { createPersist, StaleWriteError } from "./persist.js?v=v2026-09-04T18491";
 import { makeDefaultState, DEFAULT_SETTINGS, PERSISTED_KEYS } from "../../shared/gameStateShape.js?v=v2026-09-04T18491";
+
+// Kanał broadcastowy "dzwonek" (plan, sekcja 1 — decyzja końcowa: anon nie
+// ma bezpośredniego dostępu do odczytu game_state wcale, więc postgres_changes
+// nigdy nie zadziała dla Display/Host/Buzzer, i to jest świadome, nie
+// fallback). Niesie WYŁĄCZNIE {rev} — nieautorytatywne, samo w sobie nic nie
+// znaczy poza "coś się zmieniło, dogoń przez game_state_get". Reużywa
+// dokładnie ten sam, już sprawdzony broadcast co dzisiejsze komendy
+// (js/core/realtime.js), bez żadnej zmiany w tym module.
+function doorbellTopic(gameId) {
+  return `familiada-state:${gameId}`;
+}
 
 export { StaleWriteError, makeDefaultState, DEFAULT_SETTINGS };
 
@@ -103,6 +115,7 @@ export function createStore(gameId) {
     });
     applyRow(row);
     emit();
+    ringDoorbell(row);
     return row;
   }
 
@@ -110,7 +123,16 @@ export function createStore(gameId) {
     const row = await persist.undo();
     applyRow(row);
     emit();
+    ringDoorbell(row);
     return row;
+  }
+
+  // Nieautorytatywny "dzwonek" — {rev} wystarczy, żeby urządzenie wiedziało
+  // "coś się zmieniło, doczytaj przez game_state_get". Fire-and-forget:
+  // zgubiony dzwonek nie jest problemem, bo urządzenie i tak dogoni stan
+  // przy następnej zmianie albo przy własnym reconnect (renderSnapshot).
+  function ringDoorbell(row) {
+    rt(doorbellTopic(gameId)).sendBroadcast("rev", { rev: row.rev }, { mode: "http" }).catch(() => {});
   }
 
   return { state, subscribe, emit, hydrate, commit, undo, applyRow };

@@ -121,9 +121,30 @@ async function main() {
 
   async function handle(action, payload) {
     try {
+      if (action === "devices.showQr") {
+        store.state.display.mode = "QR";
+        store.state.display.qrTarget = payload.kind;
+        store.state.display.qrUrl = payload.url;
+        store.state.display.qrCode = payload.code || null;
+        await store.commit();
+        return;
+      }
+      if (action === "devices.hideQr") {
+        store.state.display.mode = "BLACK";
+        store.state.display.qrTarget = null;
+        store.state.display.qrUrl = null;
+        store.state.display.qrCode = null;
+        await store.commit();
+        return;
+      }
       if (action === "devices.next") {
-        if (store.state.step === "devices_display") await advance("devices_hostbuzzer");
-        else await advance("setup_finish");
+        if (store.state.step === "devices_display") { await advance("devices_hostbuzzer"); return; }
+        // Wyjście z D1: wracamy do BLACK, jeśli operator zostawił widoczny QR.
+        store.state.display.mode = "BLACK";
+        store.state.display.qrTarget = null;
+        store.state.display.qrUrl = null;
+        store.state.display.qrCode = null;
+        await advance("setup_finish");
         return;
       }
       if (action === "setup.start") {

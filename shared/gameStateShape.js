@@ -74,6 +74,12 @@ export function makeDefaultState(gameId) {
     display: {
       mode: "BLACK",
       qrTarget: null,
+      // Pełny URL/kod widoczny na wyświetlaczu podczas parowania (D1) — nie
+      // computed przez Display samo (nie zna share_key_host/buzzer, to by je
+      // niepotrzebnie ujawniało poza tym jednym, zamierzonym miejscem), tylko
+      // zapisywany tu przez Control, który jedyny zna wartości kluczy.
+      qrUrl: null,
+      qrCode: null,
       colors: { A: "#c4002f", B: "#2a62ff", BACKGROUND: "#d21180", DOT: "#d7ff3d" },
       theme: null,
       logoId: null,

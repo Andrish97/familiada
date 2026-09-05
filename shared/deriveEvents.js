@@ -112,5 +112,17 @@ export function deriveEvents(prevRow, nextRow) {
     events.push({ kind: "SOUND_CUE", key: nextRow.sound_cue_key });
   }
 
+  // GAME_END_SHOW/FINISH_FINAL zapisują locks.gameEnded=true na TYM SAMYM
+  // kroku (r_gameEnd/f_end), które weszło się wcześniej (finalizeRound()/
+  // wcześniejsze STEP_CHANGE) — więc samo STEP_CHANGE nie wystarcza jako
+  // sygnał "pokaż ekran końcowy". To jedyny moment, w którym Display ma
+  // narysować WIN/logo (i tylko wtedy — pierwsze wejście w r_gameEnd/f_end
+  // samo w sobie jeszcze niczego końcowego nie pokazuje).
+  const prevGameEnded = get(prevRow.detail, ["locks", "gameEnded"]) || false;
+  const nextGameEnded = get(nextRow.detail, ["locks", "gameEnded"]) || false;
+  if (!prevGameEnded && nextGameEnded) {
+    events.push({ kind: "GAME_ENDED" });
+  }
+
   return events;
 }
