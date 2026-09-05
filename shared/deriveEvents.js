@@ -78,6 +78,15 @@ export function deriveEvents(prevRow, nextRow) {
   const nextXB = get(nextRow.detail, ["rounds", "xB"]) || 0;
   if (nextXB > prevXB) events.push({ kind: "STRIKE", team: "B", count: nextXB });
 
+  // Pudło w pojedynku (DUEL) — osobne od STRIKE (xA/xB), bo silnik ich tam
+  // nie rusza wcale; krótki błysk na Display (control/js/display.js's
+  // roundsFlashDuelX), nie licznik.
+  const prevMissSeq = get(prevRow.detail, ["rounds", "duel", "missSeq"]) || 0;
+  const nextMissSeq = get(nextRow.detail, ["rounds", "duel", "missSeq"]) || 0;
+  if (nextMissSeq > prevMissSeq) {
+    events.push({ kind: "DUEL_MISS", team: get(nextRow.detail, ["rounds", "duel", "lastMissTeam"]) });
+  }
+
   const prevStealUsed = get(prevRow.detail, ["rounds", "steal", "used"]) || false;
   const nextStealUsed = get(nextRow.detail, ["rounds", "steal", "used"]) || false;
   if (!prevStealUsed && nextStealUsed) {

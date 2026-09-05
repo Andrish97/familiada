@@ -86,15 +86,24 @@ export function createRenderer({ scene, qr }) {
     paintForStep(row);
   }
 
-  function paintRoundsBoard(row, { animIn } = {}) {
+  // control/js/display.js's PLACE.roundsText/roundsPts — sloty nieodkryte
+  // pokazują placeholder (nie pustkę), żeby widzowie widzieli ILE jest
+  // odpowiedzi do zgadnięcia, nie tylko te już odkryte.
+  const ROUNDS_TEXT_PLACEHOLDER = "…".repeat(17);
+  const ROUNDS_PTS_PLACEHOLDER = "——";
+
+  function paintRoundsBoard(row, { animIn, animOut } = {}) {
     const r = row.detail.rounds;
+    const answerCount = Math.max(1, Math.min(6, r.answers?.length || 6));
     const rows = Array.from({ length: 6 }, (_, i) => {
       const ord = i + 1;
       const ans = r.answers?.find((a) => a.ord === ord);
       const revealed = (r.revealed || []).includes(ord);
-      return revealed && ans ? { text: ans.text, pts: String(ans.fixed_points) } : { text: "", pts: "" };
+      if (revealed && ans) return { text: ans.text, pts: String(ans.fixed_points) };
+      if (ord <= answerCount) return { text: ROUNDS_TEXT_PLACEHOLDER, pts: ROUNDS_PTS_PLACEHOLDER };
+      return { text: "", pts: "" };
     });
-    api.rounds.setAll({ rows, suma: String(r.bankPts ?? 0), animIn });
+    api.rounds.setAll({ rows, suma: String(r.bankPts ?? 0), animIn, animOut });
     for (const key of ["1A", "2A", "3A", "4A", "1B", "2B", "3B", "4B"]) {
       const [n, side] = [key[0], key[1]];
       const count = side === "A" ? r.xA : r.xB;
@@ -109,15 +118,20 @@ export function createRenderer({ scene, qr }) {
     applyIndicator(row);
   }
 
+  // control/js/display.js's PLACE.finalText/finalPts — tak samo jak w
+  // rundach, nieodkryte pola dostają placeholder, nie pustkę.
+  const FINAL_TEXT_PLACEHOLDER = "—".repeat(11);
+  const FINAL_PTS_PLACEHOLDER = "▒▒";
+
   function paintFinalBoard(row, { animIn } = {}) {
     const f = row.detail.final;
     const rows = Array.from({ length: 5 }, (_, i) => {
       const m1 = f.runtime.map1[i], m2 = f.runtime.map2[i];
       return {
-        left: m1?.revealedAnswer ? m1.outText : "",
-        a: m1?.revealedPoints ? String(m1.pts) : "",
-        b: m2?.revealedPoints ? String(m2.pts) : "",
-        right: m2?.revealedAnswer ? m2.outText : "",
+        left: m1?.revealedAnswer ? m1.outText : FINAL_TEXT_PLACEHOLDER,
+        a: m1?.revealedPoints ? String(m1.pts) : FINAL_PTS_PLACEHOLDER,
+        b: m2?.revealedPoints ? String(m2.pts) : FINAL_PTS_PLACEHOLDER,
+        right: m2?.revealedAnswer ? m2.outText : FINAL_TEXT_PLACEHOLDER,
       };
     });
     api.final.setAll({ rows, animIn });
@@ -126,9 +140,18 @@ export function createRenderer({ scene, qr }) {
     if (!f.runtime.timer?.running) paintTotals(row);
   }
 
+  // Nazwy drużyn (LONG1/LONG2 w starym systemie) — dziś malowane wprost z
+  // detail.teams, zamiast wysyłane raz przez stateGameReady(). Widoczne
+  // przez całą właściwą rozgrywkę (rundy+finał), tak jak w oryginale.
+  function paintTeamNames(row) {
+    const teams = row.detail?.teams || {};
+    api.small.long1(teams.teamA || "");
+    api.small.long2(teams.teamB || "");
+  }
+
   function paintForStep(row) {
-    if (row.top_card === "rounds") { paintRoundsBoard(row); return; }
-    if (row.top_card === "final") { paintFinalBoard(row); return; }
+    if (row.top_card === "rounds") { paintTeamNames(row); paintRoundsBoard(row); return; }
+    if (row.top_card === "final") { paintTeamNames(row); paintFinalBoard(row); return; }
     if (row.step === "r_intro") { api.logo.show(); return; }
     api.big.clear();
   }
@@ -183,17 +206,34 @@ export function createRenderer({ scene, qr }) {
           break;
         case "STEP_CHANGE":
           if (ev.to === "r_duel" && ev.from === "r_roundStart") {
+            // Pierwsza runda: sama SUMA...ANIMIN (plansza wjeżdża na pusto).
+            // Kolejne rundy: najpierw ANIMOUT starej planszy, DOPIERO PO NIM
+            // (nie równolegle — setAll() sam sekwencjonuje) nowa SUMA...ANIMIN
+            // — dokładnie control/js/display.js's roundsBoardPlaceholdersNewRound().
             const isFirstRound = nextRow.detail.rounds.roundNo === 1;
-            paintRoundsBoard(nextRow, { animIn: ROUND_INTRO_ANIM });
-            if (!isFirstRound) api.big.animOut({ ...ROUND_OUT_ANIM });
+            paintRoundsBoard(nextRow, { animIn: ROUND_INTRO_ANIM, animOut: isFirstRound ? null : ROUND_OUT_ANIM });
           } else if (ev.to === "r_gameEnd" || ev.to === "f_start") {
             api.big.animOut(ROUND_OUT_ANIM).then(() => {
               if (ev.to === "f_start") paintFinalBoard(nextRow, { animIn: FINAL_BOARD_ANIM });
             });
           } else if (ev.to === "f_p2_start") {
-            const f = nextRow.detail.final;
-            const rows = Array.from({ length: 5 }, (_, i) => ({ left: "", a: "" }));
+            // Zamaskuj odpowiedzi gracza 1 z powrotem na placeholdery.
+            const rows = Array.from({ length: 5 }, () => ({ left: FINAL_TEXT_PLACEHOLDER, a: FINAL_PTS_PLACEHOLDER }));
             api.final.setHalf("A", { rows, animOut: FINAL_OUT_ANIM });
+          } else if (ev.to === "f_p2_entry" && ev.from === "f_p2_start") {
+            // Naprawiona luka (uzgodniona z Tobą, patrz engine.js's
+            // START_P2_ROUND): odpowiedzi gracza 1 wracają na Display W TYM
+            // SAMYM momencie co odsłonięcie Hosta (HOST_COVER_CHANGED,
+            // obsłużone niżej dla host2, Display samo o tym nie wie).
+            const f = nextRow.detail.final;
+            const rows = Array.from({ length: 5 }, (_, i) => {
+              const m1 = f.runtime.map1[i];
+              return {
+                left: m1?.revealedAnswer ? m1.outText : FINAL_TEXT_PLACEHOLDER,
+                a: m1?.revealedPoints ? String(m1.pts) : FINAL_PTS_PLACEHOLDER,
+              };
+            });
+            api.final.setHalf("A", { rows, animIn: FINAL_BOARD_ANIM });
           } else if (ev.to === "r_intro") {
             api.logo.show();
           }
@@ -208,10 +248,26 @@ export function createRenderer({ scene, qr }) {
             if (!ans) continue;
             api.rounds.setRow(ord, { text: ans.text, pts: String(ans.fixed_points), animIn: ANSWER_ANIM });
           }
-          api.rounds.setSuma(String(r.bankPts ?? 0), { animIn: ANSWER_ANIM });
-          api.small.topDigits(pad3(r.bankPts));
+          // R8 (odkrywanie reszty, phase REVEAL) jest czysto pokazowe —
+          // bankPts się wtedy nie zmienia (control/js/display.js's
+          // roundsRevealRow tam w ogóle nie woła RSUMA/TOP) — bez tego
+          // sprawdzenia SUMA dostawałaby zbędną animację na niezmienioną
+          // liczbę przy każdym kliknięciu w R8.
+          const prevBank = prevRow.detail?.rounds?.bankPts ?? 0;
+          if (r.bankPts !== prevBank) {
+            api.rounds.setSuma(String(r.bankPts ?? 0), { animIn: ANSWER_ANIM });
+            api.small.topDigits(pad3(r.bankPts));
+          }
           break;
         }
+        case "DUEL_MISS":
+          // Krótki błysk (slot 4), nie stały X — control/js/display.js's
+          // roundsFlashDuelX: ON, potem OFF po ~1s, bez czekania.
+          if (ev.team) {
+            api.rounds.setX(`4${ev.team}`, true);
+            setTimeout(() => api.rounds.setX(`4${ev.team}`, false), 1000);
+          }
+          break;
         case "STRIKE":
           api.rounds.setX(`${ev.count}${ev.team}`, true);
           break;

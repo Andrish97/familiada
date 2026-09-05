@@ -50,7 +50,10 @@ export function makeDefaultState(gameId) {
       question: null,
       answers: [],
       revealed: [],
-      duel: { enabled: false, lastPressed: null, firstTeam: null, secondTeam: null, currentTeam: null },
+      // missSeq/lastMissTeam: krótki błysk X (slot 4) na Display przy KAŻDYM
+      // pudle w pojedynku (control/js/display.js's roundsFlashDuelX) — osobne
+      // od xA/xB (liczniki rundy), bo pudło w DUEL ich nie rusza wcale.
+      duel: { enabled: false, lastPressed: null, firstTeam: null, secondTeam: null, currentTeam: null, missSeq: 0, lastMissTeam: null },
       timer3: { running: false, endsAt: 0, resolved: null },
       steal: { active: false, used: false, team: null, won: null },
       stealWon: false,

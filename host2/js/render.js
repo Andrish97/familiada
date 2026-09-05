@@ -28,6 +28,11 @@ export function createHostRenderer() {
 
   let authoritativeCovered = false;
   let peeked = false;
+  let timerHandle = null;
+
+  function stopTimerTick() {
+    if (timerHandle) { clearInterval(timerHandle); timerHandle = null; }
+  }
 
   function applyCover() {
     const covered = authoritativeCovered && !peeked;
@@ -38,9 +43,27 @@ export function createHostRenderer() {
   function setPane1(text) { if (paperText1) paperText1.textContent = text; }
   function setPane2(text) { if (paperText2) paperText2.textContent = text; }
 
+  // control/js/gameRounds.js's hostTitleForRounds() — dokładnie te same 4
+  // warianty tytułu wg fazy (translation/pl.js's roundTitle*). Pominięty:
+  // stary system miał piąty, przejściowy wariant "POJEDYNEK" trwający
+  // ułamek sekundy tuż po rozstrzygnięciu pojedynku (duel.enabled=false na
+  // chwilę przed zmianą fazy) — bez odpowiednika w nowym silniku (nie ma
+  // takiej przejściowej flagi), więc cały czas trwania DUEL pokazuje
+  // "PRZYCISK", tak jak widoczna jest niemal cała reszta tego czasu i tak.
+  function roundTitle(row) {
+    const rn = row.detail.rounds.roundNo;
+    switch (row.phase) {
+      case "DUEL": return `RUNDA ${rn} — PRZYCISK`;
+      case "PLAY": return `RUNDA ${rn} — ROZGRYWKA`;
+      case "STEAL": return `RUNDA ${rn} — KRADZIEŻ`;
+      case "REVEAL": return `RUNDA ${rn} — ODSŁANIANIE`;
+      default: return `RUNDA ${rn}`;
+    }
+  }
+
   function renderRounds(row) {
     const r = row.detail.rounds;
-    setPane1(`Runda ${r.roundNo}\n\n${r.question?.text || ""}`);
+    setPane1(`${roundTitle(row)}\n\n${r.question?.text || ""}`);
     const lines = (r.answers || [])
       .slice()
       .sort((a, b) => a.ord - b.ord)
@@ -84,10 +107,31 @@ export function createHostRenderer() {
     setPane2(lines.join("\n"));
   }
 
+  // control/js/gameFinal.js's hostEntryStatus(): per-pytanie status widoczny
+  // NA ŻYWO w trakcie wpisywania (nie tylko przy odsłanianiu) — bez tego
+  // prowadzący nie wie, które pytania gracz już wypełnił.
+  function entryStatus(f, round, idx) {
+    const key = round === 1 ? "p1" : "p2";
+    const row = f.runtime[key][idx] || {};
+    if (round === 2 && row.repeat === true) return "powtórzenie";
+    return (row.text || "").trim().length > 0 ? "wpisano" : "brak";
+  }
+
   function renderFinalEntry(row, round) {
     const f = row.detail.final;
-    setPane1(`Finał — Gracz ${round}, wpisywanie odpowiedzi`);
-    const lines = (f.questions || []).map((q, i) => `${i + 1}. ${q.text}`);
+    const timer = f.runtime?.timer;
+    const phaseKey = round === 1 ? "P1" : "P2";
+    const counting = timer?.running && timer.phase === phaseKey;
+
+    const tick = () => {
+      const remaining = Math.max(0, Math.ceil((timer.endsAt - Date.now()) / 1000));
+      setPane1(`FINAŁ RUNDA ${round} — ODLICZANIE ${remaining}s`);
+      if (remaining <= 0) stopTimerTick();
+    };
+    if (counting) { tick(); timerHandle = setInterval(tick, 1000); }
+    else setPane1(`FINAŁ RUNDA ${round}`);
+
+    const lines = (f.questions || []).map((q, i) => `${i + 1}) ${q.text} — ${entryStatus(f, round, i)}`);
     setPane2(lines.join("\n"));
   }
 
@@ -104,6 +148,7 @@ export function createHostRenderer() {
   function render(row) {
     authoritativeCovered = !!row.detail?.host?.covered;
     peeked = false; // nowy stan resetuje podgląd
+    stopTimerTick(); // nowy wiersz zastępuje ewentualny poprzedni tick jednorazowo w renderFinalEntry
     if (row.top_card === "rounds") renderRounds(row);
     else if (row.top_card === "final") renderFinal(row);
     else { setPane1(""); setPane2(""); }

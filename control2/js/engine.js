@@ -211,12 +211,19 @@ const REDUCERS = {
     const r = state.rounds;
 
     if (state.phase === "DUEL") {
+      // Krótki błysk na Display (slot 4, roundsFlashDuelX w starym systemie)
+      // przy KAŻDYM pudle w pojedynku, nie tylko przy jego rozstrzygnięciu —
+      // missSeq/lastMissTeam to jedyny sposób, żeby deriveEvents (diff stanu)
+      // w ogóle zauważył to zdarzenie, bo pudło w DUEL nie rusza xA/xB.
+      const missedTeam = r.duel.currentTeam;
+      r.duel.lastMissTeam = missedTeam;
+      r.duel.missSeq = (r.duel.missSeq || 0) + 1;
       if (r.duel.currentTeam === r.duel.firstTeam) {
         r.duel.currentTeam = r.duel.secondTeam;
         return { step: "r_play", phase: "DUEL", controlTeam: null, topCard: "rounds", soundCueKey: "answer_wrong" };
       }
       // obie drużyny spudłowały -> pełny RESET, powrót do r_duel
-      r.duel = { enabled: true, lastPressed: null, firstTeam: null, secondTeam: null, currentTeam: null };
+      r.duel = { enabled: true, lastPressed: null, firstTeam: null, secondTeam: null, currentTeam: null, missSeq: r.duel.missSeq, lastMissTeam: missedTeam };
       return { step: "r_duel", phase: "DUEL", controlTeam: null, topCard: "rounds" };
     }
 

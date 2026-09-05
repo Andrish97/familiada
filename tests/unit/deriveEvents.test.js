@@ -65,6 +65,14 @@ test("wzrost xA generuje STRIKE dla drużyny A, spadek/brak zmiany nic nie gener
   assert.ok(!events.some((e) => e.kind === "STRIKE" && e.team === "B"));
 });
 
+test("wzrost rounds.duel.missSeq generuje DUEL_MISS z lastMissTeam (pudło w pojedynku, xA/xB nietknięte)", () => {
+  const prev = row({ detail: { rounds: { xA: 0, xB: 0, duel: { missSeq: 0, lastMissTeam: null } } } });
+  const next = row({ detail: { rounds: { xA: 0, xB: 0, duel: { missSeq: 1, lastMissTeam: "A" } } } });
+  const events = deriveEvents(prev, next);
+  assert.ok(events.some((e) => e.kind === "DUEL_MISS" && e.team === "A"));
+  assert.ok(!events.some((e) => e.kind === "STRIKE"));
+});
+
 test("steal.used flip na true generuje STEAL_RESOLVED z poprawnym won", () => {
   const prev = row({ detail: { rounds: { steal: { used: false } } } });
   const next = row({ detail: { rounds: { steal: { used: true, won: true } } } });
