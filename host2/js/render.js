@@ -48,20 +48,57 @@ export function createHostRenderer() {
     setPane2(lines.join("\n"));
   }
 
-  function renderFinal(row) {
+  // Dokładnie ten sam zestaw informacji co dzisiejsze gameFinal.js's
+  // hostMappingLeft/hostMappingRight (pytanie, co wpisał gracz, status
+  // dopasowania, pełna lista możliwych odpowiedzi z zaznaczoną trafioną) —
+  // bez kolorowego formatowania (to kosmetyka), ale ta sama treść.
+  function renderFinalMapping(row, round, idx) {
     const f = row.detail.final;
-    const isP2 = row.step.startsWith("f_p2");
-    const round = isP2 ? 2 : 1;
-    const entries = f.runtime[isP2 ? "p2" : "p1"] || [];
-    const mapRows = f.runtime[isP2 ? "map2" : "map1"] || [];
-    setPane1(`Finał — Gracz ${round}`);
-    const lines = entries.map((entry, i) => {
-      const mapped = mapRows[i];
-      const typed = entry?.text || "";
-      const status = mapped?.revealedAnswer ? "✓" : "…";
-      return `${i + 1}. [${status}] ${typed}`;
-    });
+    const question = f.questions?.[idx];
+    const mapArr = f.runtime[round === 1 ? "map1" : "map2"];
+    const row1 = mapArr[idx] || {};
+    const entryKey = round === 1 ? "p1" : "p2";
+    const input = (f.runtime[entryKey][idx]?.text || "").trim();
+    const rep = round === 2 && f.runtime.p2[idx]?.repeat === true;
+
+    setPane1(`Odsłanianie — Gracz ${round}\n\nPytanie ${idx + 1}: ${question?.text || ""}`);
+
+    const lines = [];
+    if (round === 2) {
+      const p1Text = f.runtime.p1[idx]?.text || "";
+      lines.push(`Gracz 1: ${p1Text || "—"}`, "");
+    }
+    if (!rep && input) lines.push(`Wprowadzono: ${input}`);
+    let status;
+    if (rep) status = "POWTÓRZENIE";
+    else if (!input) status = "PUSTO";
+    else if (row1.kind === "MATCH" && row1.matchId) status = "TRAFIONE";
+    else status = "BRAK";
+    lines.push(`Status: ${status}`, "");
+    lines.push("Możliwe odpowiedzi:");
+    const sorted = (question?.answers || []).slice().sort((a, b) => b.fixed_points - a.fixed_points);
+    for (const a of sorted) {
+      const marker = row1.kind === "MATCH" && row1.matchId === a.id ? "✓ " : "  ";
+      lines.push(`${marker}${a.text} (${a.fixed_points})`);
+    }
     setPane2(lines.join("\n"));
+  }
+
+  function renderFinalEntry(row, round) {
+    const f = row.detail.final;
+    setPane1(`Finał — Gracz ${round}, wpisywanie odpowiedzi`);
+    const lines = (f.questions || []).map((q, i) => `${i + 1}. ${q.text}`);
+    setPane2(lines.join("\n"));
+  }
+
+  function renderFinal(row) {
+    const step = row.step;
+    if (step === "f_p1_entry") return renderFinalEntry(row, 1);
+    if (step === "f_p2_entry") return renderFinalEntry(row, 2);
+    if (step.startsWith("f_p1_map_q")) return renderFinalMapping(row, 1, Number(step.slice(-1)) - 1);
+    if (step.startsWith("f_p2_map_q")) return renderFinalMapping(row, 2, Number(step.slice(-1)) - 1);
+    setPane1("Finał");
+    setPane2("");
   }
 
   function render(row) {

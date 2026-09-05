@@ -291,10 +291,35 @@ const REDUCERS = {
   },
 
   // ---- F0: start finału ----
-  async START_FINAL(state) {
+  // Ładuje pełne dane 5 wybranych pytań (tekst + lista odpowiedzi z
+  // punktami) i trzyma je w f.questions — potrzebne zarówno Control (operator
+  // wybiera, która odpowiedź z listy pasuje do tego, co wpisał gracz), jak i
+  // Hostowi (pokazuje treść pytania + tę samą listę z podświetlonym
+  // dopasowaniem, dokładnie jak dzisiejszy control/js/gameFinal.js's
+  // hostMappingLeft/Right). Bez tego dane w ogóle nie istniałyby w
+  // game_state — dzisiejszy odpowiednik (qPicked/answersByQ) żyje wyłącznie
+  // w pamięci Control, więc Host nie mógłby tego zobaczyć przez RPC.
+  async START_FINAL(state, action, deps) {
     if (state.settings.hasFinal !== true) return null;
     const f = state.final;
     f.winnerTeam = computeWinnerTeam(state);
+
+    const allQuestions = await deps.loadQuestions(state.gameId);
+    const byId = new Map(allQuestions.map((q) => [String(q.id), q]));
+    const questions = [];
+    for (const id of f.picked || []) {
+      const q = byId.get(String(id));
+      if (!q) continue;
+      const answers = await deps.loadAnswers(q.id);
+      questions.push({
+        id: q.id,
+        text: q.text,
+        answers: answers.map((a) => ({ id: a.id, text: a.text, fixed_points: a.fixed_points })),
+      });
+    }
+    if (questions.length !== 5) return null; // niekompletna pula — nie wchodzimy w finał w połowie skonfigurowany
+
+    f.questions = questions;
     f.runtime = {
       sum: 0,
       timer: { running: false, phase: null, endsAt: 0 },
@@ -421,8 +446,8 @@ const REDUCERS = {
   },
 };
 
-export function createEngine({ store, loadQuestionPool, loadAnswers, now = Date.now }) {
-  const deps = { loadQuestionPool, loadAnswers, now };
+export function createEngine({ store, loadQuestionPool, loadQuestions, loadAnswers, now = Date.now }) {
+  const deps = { loadQuestionPool, loadQuestions, loadAnswers, now };
 
   async function dispatch(action) {
     const reducer = REDUCERS[action.type];

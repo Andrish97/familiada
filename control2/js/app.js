@@ -75,6 +75,7 @@ async function main() {
   const engine = createEngine({
     store,
     loadQuestionPool: () => pickQuestionPool(store.state),
+    loadQuestions,
     loadAnswers,
     now: Date.now,
   });

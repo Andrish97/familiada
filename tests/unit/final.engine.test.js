@@ -9,14 +9,26 @@ import { createFakeStore } from "./helpers/fakeStore.js";
 import { DEFAULT_SETTINGS } from "../../shared/gameStateShape.js";
 import { resolveFinalEndScreen } from "../../shared/endScreen.js";
 
+const FAKE_PICKED_IDS = ["q1", "q2", "q3", "q4", "q5"];
+const FAKE_QUESTIONS = FAKE_PICKED_IDS.map((id, i) => ({ id, ord: i + 1, text: `Pytanie finałowe ${i + 1}` }));
+const FAKE_ANSWERS_BY_Q = new Map(
+  FAKE_PICKED_IDS.map((id) => [id, [{ id: `${id}-a1`, ord: 1, text: "Odpowiedź A", fixed_points: 40 }]])
+);
+
 function makeEngine(settingsOverrides = {}, nowFn) {
   const store = createFakeStore("g1", {
     step: "f_start",
     topCard: "final",
     settings: { ...DEFAULT_SETTINGS, hasFinal: true, ...settingsOverrides },
     rounds: { ...createFakeStore().state.rounds, totals: { A: 350, B: 200 } },
+    final: { ...createFakeStore().state.final, picked: FAKE_PICKED_IDS },
   });
-  const engine = createEngine({ store, now: nowFn || (() => 1_000_000) });
+  const engine = createEngine({
+    store,
+    now: nowFn || (() => 1_000_000),
+    loadQuestions: async () => FAKE_QUESTIONS,
+    loadAnswers: async (id) => FAKE_ANSWERS_BY_Q.get(id) || [],
+  });
   return { store, dispatch: engine.dispatch };
 }
 

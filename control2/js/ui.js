@@ -201,7 +201,9 @@ export function createUI({ root, emit }) {
     const body = [];
     for (let i = 0; i < 5; i++) {
       const row = f.runtime[key][i] || {};
-      const inp = h("input", { type: "text", value: row.text || "", placeholder: `Pytanie ${i + 1}` });
+      const question = f.questions?.[i];
+      body.push(h("label", { text: question?.text || `Pytanie ${i + 1}` }));
+      const inp = h("input", { type: "text", value: row.text || "", placeholder: `Odpowiedź gracza` });
       on(inp, "input", () => emit("game.dispatch", { type: "SET_ENTRY_TEXT", round, idx: i, text: inp.value }));
       body.push(inp);
       if (round === 2) {
@@ -219,21 +221,60 @@ export function createUI({ root, emit }) {
     gameplayShell({ stepLabel: `Finał — gracz ${round}, wpisywanie`, body, nav });
   }
 
+  // Dokładnie jak dzisiejsze gameFinal.js's ensureDefaultMapping(): dopóki
+  // operator nie kliknął konkretnej odpowiedzi z listy, domyślne
+  // rozstrzygnięcie to MISS (jest wpisany tekst) albo SKIP (pusto) — "AUTO"
+  // nie robi żadnego dopasowania fuzzy, to tylko ten domyślny fallback.
+  function defaultResolve(inputText) {
+    const hasInput = (inputText || "").trim().length > 0;
+    return hasInput
+      ? { mode: "AUTO", kind: "MISS", matchId: null, outText: inputText, pts: 0 }
+      : { mode: "AUTO", kind: "SKIP", matchId: null, outText: "", pts: 0 };
+  }
+
   function renderFinalMapping(state, round, idx) {
     const f = state.final;
     const mapArr = f.runtime[round === 1 ? "map1" : "map2"];
     const row = mapArr[idx];
+    const question = f.questions?.[idx];
+    const entryKey = round === 1 ? "p1" : "p2";
+    const inputText = f.runtime[entryKey][idx]?.text || "";
+    const locked = row.revealedAnswer; // po odsłonięciu odpowiedzi wybór jest zamrożony
+
     const body = [
-      h("div", { class: "c2-question", text: `Pytanie ${idx + 1} (gracz ${round})` }),
-      h("div", { text: `Odpowiedź: ${row.revealedAnswer ? row.outText : "—ukryte—"}` }),
-      h("div", { text: `Punkty: ${row.revealedPoints ? row.pts : "—"}` }),
+      h("div", { class: "c2-question", text: question?.text || `Pytanie ${idx + 1}` }),
+      h("div", { text: `Odpowiedź gracza: ${inputText || "—"}` }),
     ];
+
+    const answersList = h("div", { class: "c2-final-answers" });
+    for (const a of question?.answers || []) {
+      const isMatch = row.kind === "MATCH" && row.matchId === a.id;
+      const btn = h("button", {
+        class: `c2-answer-btn ${isMatch ? "revealed" : ""}`,
+        type: "button",
+        onclick: () => emit("game.dispatch", { type: "RESOLVE_MAPPING", round, idx, mode: "MANUAL", kind: "MATCH", matchId: a.id, outText: a.text, pts: a.fixed_points }),
+      }, [document.createTextNode(`${a.text} (${a.fixed_points})`)]);
+      if (locked) btn.disabled = true;
+      answersList.appendChild(btn);
+    }
+    body.push(answersList);
+
+    if (!locked) {
+      body.push(h("button", { class: "c2-btn", onclick: () => emit("game.dispatch", { type: "RESOLVE_MAPPING", round, idx, mode: "MANUAL", kind: "MISS", matchId: null, outText: inputText, pts: 0 }) }, [document.createTextNode("Brak dopasowania")]));
+    }
+
+    body.push(h("div", { text: `Pokazana odpowiedź: ${row.revealedAnswer ? row.outText : "—ukryte—"}` }));
+    body.push(h("div", { text: `Punkty: ${row.revealedPoints ? row.pts : "—"}` }));
+
     const nav = [
       !row.revealedAnswer
-        ? h("button", { class: "c2-btn", onclick: () => emit("game.dispatch", { type: "REVEAL_ANSWER_ONLY", round, idx }) }, [document.createTextNode("Pokaż odpowiedź")])
+        ? h("button", { class: "c2-btn primary", onclick: async () => {
+            if (row.kind == null) await emit("game.dispatch", { type: "RESOLVE_MAPPING", round, idx, ...defaultResolve(inputText) });
+            await emit("game.dispatch", { type: "REVEAL_ANSWER_ONLY", round, idx });
+          } }, [document.createTextNode("Pokaż odpowiedź")])
         : !row.revealedPoints
-        ? h("button", { class: "c2-btn", onclick: () => emit("game.dispatch", { type: "REVEAL_POINTS", round, idx }) }, [document.createTextNode("Pokaż punkty")])
-        : h("button", { class: "c2-btn primary", onclick: () => emit("game.dispatch", { type: round === 1 ? "NEXT_QUESTION" : "NEXT_QUESTION", round, idx }) }, [document.createTextNode("Dalej")]),
+        ? h("button", { class: "c2-btn primary", onclick: () => emit("game.dispatch", { type: "REVEAL_POINTS", round, idx }) }, [document.createTextNode("Pokaż punkty")])
+        : h("button", { class: "c2-btn primary", onclick: () => emit("game.dispatch", { type: "NEXT_QUESTION", round, idx }) }, [document.createTextNode("Dalej")]),
     ];
     gameplayShell({ stepLabel: `Finał — mapowanie ${idx + 1}/5`, body, nav });
   }

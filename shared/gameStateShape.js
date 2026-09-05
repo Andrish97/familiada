@@ -61,6 +61,11 @@ export function makeDefaultState(gameId) {
       picked: [],
       confirmed: false,
       winnerTeam: null,
+      // Pełne dane 5 wybranych pytań (tekst + lista odpowiedzi z punktami),
+      // wypełniane przez engine.js's START_FINAL — potrzebne Hostowi (i
+      // samemu Control) do pokazania treści pytania i listy możliwych
+      // odpowiedzi, nie tylko surowych ID z `picked`.
+      questions: [],
       runtime: {
         sum: 0,
         timer: { running: false, phase: null, endsAt: 0 },
