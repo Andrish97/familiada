@@ -290,6 +290,14 @@ export function createUI({ root, emit }) {
     }
 
     const nav = [];
+    // X (pudło) w fazie DUEL — dopiero PO przyjęciu zgłoszenia (r.duel.firstTeam
+    // ustawione), bo wcześniej ADD_X nie ma jeszcze kogo przełączyć (engine.js:
+    // "pudło w DUEL idzie przez ADD_X", to jedyna droga do rozstrzygnięcia
+    // pojedynku pudłem — bez tego przycisku pojedynek nie mógł się zakończyć
+    // pudłem wcale).
+    if (state.phase === "DUEL" && r.duel.firstTeam) {
+      nav.push(h("button", { class: "c2-btn", onclick: () => emit("game.dispatch", { type: "ADD_X" }) }, [document.createTextNode("X")]));
+    }
     if (state.phase === "PLAY" || state.phase === "STEAL") {
       nav.push(h("button", { class: "c2-btn", onclick: () => emit("game.dispatch", { type: "ADD_X" }) }, [document.createTextNode("X")]));
       if (r.allowPass && !r.passUsed) nav.push(h("button", { class: "c2-btn", onclick: () => emit("game.dispatch", { type: "PASS" }) }, [document.createTextNode("Pass")]));
@@ -305,7 +313,7 @@ export function createUI({ root, emit }) {
       body: [h("p", { text: `Wynik końcowy: A ${state.rounds.totals.A} — B ${state.rounds.totals.B}` })],
       nav: [
         state.locks.gameEnded
-          ? null
+          ? h("button", { class: "c2-btn primary", onclick: () => emit("session.finish") }, [document.createTextNode("Zakończ rozgrywkę")])
           : h("button", { class: "c2-btn primary", onclick: () => emit("game.dispatch", { type: "GAME_END_SHOW" }) }, [document.createTextNode("Pokaż koniec gry")]),
       ],
     });
@@ -418,7 +426,7 @@ export function createUI({ root, emit }) {
       body: [h("p", { text: `Suma finału: ${state.final.runtime.sum}` })],
       nav: [
         state.locks.gameEnded
-          ? null
+          ? h("button", { class: "c2-btn primary", onclick: () => emit("session.finish") }, [document.createTextNode("Zakończ rozgrywkę")])
           : h("button", { class: "c2-btn primary", onclick: () => emit("game.dispatch", { type: "FINISH_FINAL" }) }, [document.createTextNode("Zakończ")]),
       ],
     });

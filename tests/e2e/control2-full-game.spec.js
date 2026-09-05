@@ -33,9 +33,16 @@ test("control2: pełna runda przez wszystkie 4 urządzenia + wznowienie Control 
   const game = await page.evaluate(async (name) => {
     const sb = window.__sbClient;
     const { data: userData } = await sb.auth.getUser();
+    // Drużyny/finał NIE są już wpisywane w Control (D3 to tylko
+    // podsumowanie) — pochodzą z games.settings, dokładnie jak dziś
+    // konfiguruje je operator na stronie game-settings PRZED otwarciem
+    // Control.
     const { data: g, error: gErr } = await sb
       .from("games")
-      .insert({ name, owner_id: userData.user.id, type: "prepared", status: "ready" })
+      .insert({
+        name, owner_id: userData.user.id, type: "prepared", status: "ready",
+        settings: { teams: { teamA: "Alfa", teamB: "Beta" }, game: { hasFinal: false } },
+      })
       .select("id, share_key_display, share_key_host, share_key_buzzer")
       .single();
     if (gErr) throw new Error("insert games failed: " + gErr.message);
@@ -67,7 +74,7 @@ test("control2: pełna runda przez wszystkie 4 urządzenia + wznowienie Control 
   try {
     trackErrors(page, "control");
     await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
-    await expect(page.locator("h2")).toHaveText("Podłącz wyświetlacz", { timeout: 15000 });
+    await expect(page.locator(".stepTitle")).toHaveText("Urządzenia — Wyświetlacz", { timeout: 15000 });
 
     const openAnon = async (path, label) => {
       const ctx = await browser.newContext();
@@ -84,14 +91,14 @@ test("control2: pełna runda przez wszystkie 4 urządzenia + wznowienie Control 
 
     // D0 -> D1 -> D3
     await page.getByRole("button", { name: "Dalej" }).click();
-    await expect(page.locator("h2")).toHaveText("Podłącz prowadzącego i buzzer", { timeout: 15000 });
+    await expect(page.locator(".stepTitle")).toHaveText("Urządzenia — Prowadzący i Przycisk", { timeout: 15000 });
     await page.getByRole("button", { name: "Zakończ podłączanie" }).click();
-    await expect(page.locator("h2")).toHaveText("Ustawienia gry", { timeout: 10000 });
+    await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });
 
-    await page.locator('input[placeholder="Drużyna A"]').fill("Alfa");
-    await page.locator('input[placeholder="Drużyna B"]').fill("Beta");
-    await page.locator("select").selectOption("false"); // hasFinal = Nie
-    await page.getByRole("button", { name: "Rozpocznij" }).click();
+    // D3 to teraz wyłącznie podsumowanie games.settings — drużyny już
+    // widoczne, nic do wypełnienia.
+    await expect(page.getByText("Alfa vs Beta")).toBeVisible();
+    await page.getByRole("button", { name: "Gotowe — przejdź do rund" }).click();
 
     // r_intro -> r_roundStart (runda 1)
     await page.getByRole("button", { name: "Dalej" }).click();

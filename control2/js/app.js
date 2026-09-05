@@ -494,6 +494,12 @@ async function main() {
         await store.commit();
         return;
       }
+      if (action === "session.finish") {
+        // Gra już zakończona (locks.gameEnded) — czysta nawigacja z powrotem
+        // do listy gier, bez żadnego dalszego zapisu do game_state.
+        location.href = "/builder";
+        return;
+      }
       if (action === "rounds.introNext") { await advance("r_roundStart", { phase: "READY" }); return; }
       if (action === "game.dispatch") { await engine.dispatch(payload); return; }
     } catch (e) {
@@ -506,6 +512,22 @@ async function main() {
   function syncMuteButton() { if (btnMute) btnMute.textContent = soundReactor.isMuted() ? "🔇" : "🔊"; }
   syncMuteButton();
   btnMute?.addEventListener("click", () => { soundReactor.toggleMuted(); syncMuteButton(); });
+
+  // "Cofnij ostatnią akcję" (plan, sekcja 4) — jednopoziomowe cofnięcie
+  // przez game_state_undo/game_state_history. Nigdy nie było wcześniej
+  // wystawione w UI (tylko store.undo() istniał) — dopięte tu.
+  document.getElementById("btnUndo")?.addEventListener("click", async () => {
+    try {
+      await store.undo();
+    } catch (e) {
+      if (String(e?.message || e).includes("no_history")) {
+        alert("Brak akcji do cofnięcia.");
+      } else {
+        console.error("[control2] cofnięcie nie powiodło się:", e);
+        alert(`Błąd cofnięcia: ${e.message || e}`);
+      }
+    }
+  });
 
   document.getElementById("btnStartOver")?.addEventListener("click", async () => {
     const ok = await confirmModal({

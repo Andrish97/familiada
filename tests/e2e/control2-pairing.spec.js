@@ -37,7 +37,7 @@ test("control2: parowanie urządzeń — linki renderują się bez błędu, Cont
   const contexts = [];
   try {
     await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
-    await expect(page.locator("h2")).toHaveText("Podłącz wyświetlacz", { timeout: 15000 });
+    await expect(page.locator(".stepTitle")).toHaveText("Urządzenia — Wyświetlacz", { timeout: 15000 });
 
     const displayUrl = `/display2?id=${game.id}&key=${game.share_key_display}`;
     const hostUrl = `/host2?id=${game.id}&key=${game.share_key_host}`;
@@ -64,16 +64,20 @@ test("control2: parowanie urządzeń — linki renderują się bez błędu, Cont
     const buzzerPage = await openAnon(buzzerUrl);
     await expect(buzzerPage.locator("#offScreen")).toBeVisible({ timeout: 10000 });
 
-    // Control powinien w końcu zobaczyć wszystkie trzy jako online (presence
-    // pinguje co ~3s z urządzeń, Control odpytuje co 1.5s).
-    await expect(page.locator(".c2-dot.on")).toHaveCount(1, { timeout: 15000 });
+    // Control powinien w końcu zobaczyć Wyświetlacz jako online w topbarze
+    // (presence pinguje co ~3s z urządzeń, Control odpytuje co 1.5s).
+    await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/, { timeout: 15000 });
 
     await page.getByRole("button", { name: "Dalej" }).click();
-    await expect(page.locator("h2")).toHaveText("Podłącz prowadzącego i buzzer", { timeout: 10000 });
-    await expect(page.locator(".c2-dot.on")).toHaveCount(3, { timeout: 15000 });
+    await expect(page.locator(".stepTitle")).toHaveText("Urządzenia — Prowadzący i Przycisk", { timeout: 10000 });
+    await expect(page.locator("#dotHost")).toHaveClass(/\bok\b/, { timeout: 15000 });
+    await expect(page.locator("#dotBuzzer")).toHaveClass(/\bok\b/, { timeout: 15000 });
+    // Każdy device-row pokazuje też własny badge "Online" (nie tylko kropka w topbarze).
+    await expect(page.locator('.device-row[data-device="host"] .badge')).toHaveText("Online", { timeout: 10000 });
+    await expect(page.locator('.device-row[data-device="buzzer"] .badge')).toHaveText("Online", { timeout: 10000 });
 
     await page.getByRole("button", { name: "Zakończ podłączanie" }).click();
-    await expect(page.locator("h2")).toHaveText("Ustawienia gry", { timeout: 10000 });
+    await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });
   } finally {
     for (const ctx of contexts) await ctx.close().catch(() => {});
     await page.evaluate(async (gid) => {
