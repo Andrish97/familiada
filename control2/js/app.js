@@ -179,6 +179,23 @@ async function main() {
     await store.commit();
   }
 
+  // Język urządzeń (Display/Host/Buzzer) idzie za językiem operatora w
+  // Control — dokładnie jak dzisiejsze control/js/app.js's LANG-push na
+  // starcie i przy każdej zmianie, tylko teraz przez zwykły zapis do
+  // game_state zamiast broadcastu komend (urządzenia go stamtąd czytają,
+  // patrz *2/js/main.js). Nieograniczone do fazy przedmeczowej — operator
+  // może przełączyć język w dowolnym momencie rozgrywki.
+  if (store.state.settings.uiLang !== getUiLang()) {
+    store.state.settings.uiLang = getUiLang();
+    await store.commit();
+  }
+  window.addEventListener("i18n:lang", async (event) => {
+    const nextLang = event?.detail?.lang;
+    if (!nextLang || store.state.settings.uiLang === nextLang) return;
+    store.state.settings.uiLang = nextLang;
+    await store.commit();
+  });
+
   const engine = createEngine({
     store,
     loadQuestionPool: () => pickQuestionPool(store.state),

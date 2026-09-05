@@ -22,11 +22,56 @@ export function createButtonRenderer() {
   const btnA = $("btnA");
   const btnB = $("btnB");
 
+  // js/pages/buzzer.js's derivePalette()/parseHexToRgb()/mixRgb() — css/buzzer.css
+  // maluje przycisk (gradient + glow) wyłącznie z --team-X-hi/-lo/--glow-X, NIE
+  // z gołego --team-a/--team-b, więc bez przeliczenia tych trzech pochodnych
+  // niestandardowy kolor drużyny (z ustawień gry) nigdy nie dotrze do przycisku
+  // — wcześniej ustawiano tu tylko --team-a/--team-b, co wizualnie nic nie robiło.
+  function clamp01(x) { return Math.max(0, Math.min(1, x)); }
+  function parseHexToRgb(hex) {
+    let h = String(hex).trim();
+    if (!h.startsWith("#")) return null;
+    h = h.slice(1);
+    if (h.length === 3) return { r: parseInt(h[0] + h[0], 16), g: parseInt(h[1] + h[1], 16), b: parseInt(h[2] + h[2], 16) };
+    if (h.length === 6 || h.length === 8) return { r: parseInt(h.slice(0, 2), 16), g: parseInt(h.slice(2, 4), 16), b: parseInt(h.slice(4, 6), 16) };
+    return null;
+  }
+  function rgbToHex({ r, g, b }) {
+    const to2 = (n) => n.toString(16).padStart(2, "0");
+    return `#${to2(r)}${to2(g)}${to2(b)}`;
+  }
+  function mixRgb(a, b, t) {
+    t = clamp01(t);
+    const lerp = (x, y) => Math.round(x + (y - x) * t);
+    return { r: lerp(a.r, b.r), g: lerp(a.g, b.g), b: lerp(a.b, b.b) };
+  }
+  function derivePalette(baseColor) {
+    const rgb = parseHexToRgb(baseColor);
+    if (!rgb) return { hi: baseColor, lo: baseColor, glowRgba: "rgba(255,255,255,.35)" };
+    const white = { r: 255, g: 255, b: 255 };
+    const black = { r: 0, g: 0, b: 0 };
+    const hi = rgbToHex(mixRgb(rgb, white, 0.25));
+    const lo = rgbToHex(mixRgb(rgb, black, 0.45));
+    return { hi, lo, glowRgba: `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, .35)` };
+  }
+
   function applyColors(colors) {
     if (!colors) return;
     const root = document.documentElement;
-    if (colors.A) root.style.setProperty("--team-a", colors.A);
-    if (colors.B) root.style.setProperty("--team-b", colors.B);
+    if (colors.A) {
+      root.style.setProperty("--team-a", colors.A);
+      const pa = derivePalette(colors.A);
+      root.style.setProperty("--team-a-hi", pa.hi);
+      root.style.setProperty("--team-a-lo", pa.lo);
+      root.style.setProperty("--glow-a", pa.glowRgba);
+    }
+    if (colors.B) {
+      root.style.setProperty("--team-b", colors.B);
+      const pb = derivePalette(colors.B);
+      root.style.setProperty("--team-b-hi", pb.hi);
+      root.style.setProperty("--team-b-lo", pb.lo);
+      root.style.setProperty("--glow-b", pb.glowRgba);
+    }
   }
 
   function show(state) {

@@ -7,7 +7,7 @@
 // snap-to-grid z dzisiejszego host.js (kosmetyka do dostrojenia wizualnie
 // później, nie architektura).
 
-import { initI18n } from "../../translation/translation.js?v=v2026-09-05T19011";
+import { initI18n, setUiLang } from "../../translation/translation.js?v=v2026-09-05T19011";
 import { startKeepAlive } from "../../js/core/keep-alive.js?v=v2026-09-05T19011";
 import { sb } from "../../js/core/supabase.js?v=v2026-09-05T19011";
 import { createSubscription } from "../../js/core/game-state-subscribe.js?v=v2026-09-05T19011";
@@ -110,9 +110,21 @@ async function main() {
   const renderer = createHostRenderer();
   setupPeekSwipe(renderer);
 
+  let appliedLang = null;
   const subscription = createSubscription({
     gameId, deviceType: "host", key,
-    onRow: (row) => renderer.render(row),
+    onRow: (row) => {
+      // Język idzie za operatorem w Control (patrz display2/js/main.js —
+      // ta sama zasada). Uwaga: samo pasmo 1/2 (tytuł/pytanie/odpowiedzi)
+      // render.js buduje dziś na sztywno po polsku — to NIE tłumaczy treści
+      // gry, tylko resztę chrome'u strony (data-i18n w host2.html).
+      const lang = row.detail?.settings?.uiLang;
+      if (lang && lang !== appliedLang) {
+        appliedLang = lang;
+        setUiLang(lang, { persist: true, updateUrl: true, apply: true }).catch(() => {});
+      }
+      renderer.render(row);
+    },
     onError: (error) => console.warn("[host2] game_state_get failed:", error),
   });
   await subscription.start();

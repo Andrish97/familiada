@@ -10,7 +10,7 @@
 // autorytatywny wiersz już to wie), błąd sieci (przycisk wraca do ON,
 // można spróbować ponownie).
 
-import { initI18n } from "../../translation/translation.js?v=v2026-09-05T19011";
+import { initI18n, setUiLang } from "../../translation/translation.js?v=v2026-09-05T19011";
 import { startKeepAlive } from "../../js/core/keep-alive.js?v=v2026-09-05T19011";
 import { sb } from "../../js/core/supabase.js?v=v2026-09-05T19011";
 import { createSubscription } from "../../js/core/game-state-subscribe.js?v=v2026-09-05T19011";
@@ -64,10 +64,20 @@ async function main() {
 
   const renderer = createButtonRenderer();
   let lastRow = null;
+  let appliedLang = null;
 
   const subscription = createSubscription({
     gameId, deviceType: "buzzer", key,
-    onRow: (row) => { lastRow = row; renderer.render(row); },
+    onRow: (row) => {
+      // Język idzie za operatorem w Control — patrz display2/js/main.js.
+      const lang = row.detail?.settings?.uiLang;
+      if (lang && lang !== appliedLang) {
+        appliedLang = lang;
+        setUiLang(lang, { persist: true, updateUrl: true, apply: true }).catch(() => {});
+      }
+      lastRow = row;
+      renderer.render(row);
+    },
     onError: (error) => console.warn("[buzzer2] game_state_get failed:", error),
   });
 

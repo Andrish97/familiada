@@ -60,6 +60,16 @@ export function createRenderer({ scene, qr }) {
     api.small.rightDigits(String(totals.B ?? 0));
   }
 
+  // control/js/gameFinal.js's startFinal()/startP2Round(): tuż po wejściu
+  // w f_p1_entry/f_p2_entry (zanim operator w ogóle kliknie "start timera")
+  // strona zwycięskiej drużyny dostaje "15"/"20" jako zapowiedź — TIMER_STARTED
+  // dopiero potem zaczyna właściwe odliczanie tych samych cyfr w dół.
+  function showTimerPlaceholder(row, text) {
+    const winnerTeam = row.detail?.final?.winnerTeam;
+    if (winnerTeam === "A") api.small.leftDigits(text);
+    else if (winnerTeam === "B") api.small.rightDigits(text);
+  }
+
   function applyIndicator(row) {
     if (row.control_team === "A") return api.indicator.set("ON_A");
     if (row.control_team === "B") return api.indicator.set("ON_B");
@@ -216,6 +226,10 @@ export function createRenderer({ scene, qr }) {
             api.big.animOut(ROUND_OUT_ANIM).then(() => {
               if (ev.to === "f_start") paintFinalBoard(nextRow, { animIn: FINAL_BOARD_ANIM });
             });
+          } else if (ev.to === "f_p1_entry" && ev.from === "f_start") {
+            // control/js/gameFinal.js's startFinal(): zapowiedź "15" po
+            // stronie zwycięzcy, zanim operator w ogóle uruchomi timer.
+            showTimerPlaceholder(nextRow, "15");
           } else if (ev.to === "f_p2_start") {
             // Zamaskuj odpowiedzi gracza 1 z powrotem na placeholdery.
             const rows = Array.from({ length: 5 }, () => ({ left: FINAL_TEXT_PLACEHOLDER, a: FINAL_PTS_PLACEHOLDER }));
@@ -234,6 +248,9 @@ export function createRenderer({ scene, qr }) {
               };
             });
             api.final.setHalf("A", { rows, animIn: FINAL_BOARD_ANIM });
+            // control/js/gameFinal.js's startP2Round(): zapowiedź "20" po
+            // stronie zwycięzcy, ten sam mechanizm co przy f_p1_entry.
+            showTimerPlaceholder(nextRow, "20");
           } else if (ev.to === "r_intro") {
             api.logo.show();
           }

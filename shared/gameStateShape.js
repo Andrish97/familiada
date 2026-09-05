@@ -9,6 +9,9 @@
 
 export const DEFAULT_SETTINGS = {
   hasFinal: null,
+  // Język Display/Host/Buzzer — control2/js/app.js's LANG-push zapisuje tu
+  // język operatora zamiast wysyłać osobną komendę (control/js/app.js).
+  uiLang: null,
   roundsQuestionsMode: "random",
   finalQuestionsMode: "random",
   roundsPicked: [],

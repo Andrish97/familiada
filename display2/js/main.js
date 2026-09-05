@@ -7,7 +7,7 @@
 // niezwiązane z komendami RPC co dziś — reużyte bez zmian.
 
 import { initFullscreenButton } from "../../display/js/fullscreen.js?v=v2026-09-05T19011";
-import { initI18n } from "../../translation/translation.js?v=v2026-09-05T19011";
+import { initI18n, setUiLang } from "../../translation/translation.js?v=v2026-09-05T19011";
 import { startKeepAlive } from "../../js/core/keep-alive.js?v=v2026-09-05T19011";
 import { sb } from "../../js/core/supabase.js?v=v2026-09-05T19011";
 import { createScene } from "./scene.js?v=v2026-09-05T19011";
@@ -94,12 +94,22 @@ window.addEventListener("DOMContentLoaded", async () => {
 
     const renderer = createRenderer({ scene, qr });
     let prevRow = null;
+    let appliedLang = null;
 
     const subscription = createSubscription({
       gameId: game.id,
       deviceType: "display",
       key,
       onRow: (row) => {
+        // Język idzie za operatorem w Control (control2/js/app.js's
+        // LANG-push, dawniej osobna komenda `LANG <code>` — dziś zwykłe
+        // pole w game_state, patrz shared/gameStateShape.js).
+        const lang = row.detail?.settings?.uiLang;
+        if (lang && lang !== appliedLang) {
+          appliedLang = lang;
+          setUiLang(lang, { persist: true, updateUrl: true, apply: true }).catch(() => {});
+        }
+
         // Widoczność kontenerów zależy wyłącznie od trybu — samo malowanie
         // planszy/QR/czarnego to render.js.
         const mode = row.detail?.display?.mode || "BLACK";
