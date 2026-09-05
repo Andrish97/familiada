@@ -1,8 +1,10 @@
-// display2/js/subscribe.js
-// Odczyt stanu gry dla Display v2 — WYŁĄCZNIE przez game_state_get (RPC,
-// SECURITY DEFINER, sprawdza share_key wewnątrz siebie), nigdy przez
-// bezpośredni SELECT ani postgres_changes (świadomie zablokowane dla anon,
-// patrz plan sekcja 1 — decyzja końcowa, nie tymczasowy fallback).
+// js/core/game-state-subscribe.js
+// Odczyt stanu gry dla urządzeń v2 (Display/Host/Buzzer) — WYŁĄCZNIE przez
+// game_state_get (RPC, SECURITY DEFINER, sprawdza share_key wewnątrz
+// siebie), nigdy przez bezpośredni SELECT ani postgres_changes (świadomie
+// zablokowane dla anon, patrz plan sekcja 1 — decyzja końcowa, nie
+// tymczasowy fallback). Wspólne dla display2/host2/buzzer2 — parametryzowane
+// przez deviceType, żeby nie duplikować identycznej logiki trzy razy.
 //
 // Mechanizm: (1) bootstrap — jedno wywołanie RPC przy starcie strony;
 // (2) "dzwonek" — Control po każdym zapisie wysyła malutki, nieautorytatywny
@@ -14,8 +16,8 @@
 // na starym stanie na zawsze" to brak JAKIEJKOLWIEK kolejnej zmiany w grze,
 // co i tak nie ma znaczenia (nic nowego do pokazania).
 
-import { sb } from "../../js/core/supabase.js?v=v2026-09-05T00001";
-import { rt } from "../../js/core/realtime.js?v=v2026-09-05T00001";
+import { sb } from "./supabase.js?v=v2026-09-05T00001";
+import { rt } from "./realtime.js?v=v2026-09-05T00001";
 
 function doorbellTopic(gameId) {
   return `familiada-state:${gameId}`;
@@ -58,5 +60,21 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError }) 
     });
   }
 
-  return { start };
+  // Dla Buzzera: game_state_buzzer_press zwraca już świeży wiersz w tej
+  // samej odpowiedzi RPC, więc nie ma sensu czekać na własny dzwonek, żeby
+  // zobaczyć efekt własnego kliknięcia — ale trzeba to nakarmić do tego
+  // samego licznika lastRev, żeby późniejszy (spóźniony) dzwonek z niższym
+  // rev nie próbował go nadpisać wstecz.
+  function applyRow(row) {
+    if (!row || row.rev <= lastRev) return;
+    lastRev = row.rev;
+    onRow(row);
+  }
+
+  // Wywoływane wprost po błędzie already_pressed z game_state_buzzer_press —
+  // ktoś inny właśnie wygrał, więc autorytatywny wiersz już to pokazuje;
+  // nie czekamy na własny dzwonek, tylko dociągamy od razu.
+  function refetchNow() { return fetchGuarded(); }
+
+  return { start, applyRow, refetchNow };
 }

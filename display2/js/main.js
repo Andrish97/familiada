@@ -12,7 +12,7 @@ import { startKeepAlive } from "../../js/core/keep-alive.js?v=v2026-09-05T00001"
 import { sb } from "../../js/core/supabase.js?v=v2026-09-05T00001";
 import { createScene } from "./scene.js?v=v2026-09-05T00001";
 import { createQrOverlay } from "./qr.js?v=v2026-09-05T00001";
-import { createSubscription } from "./subscribe.js?v=v2026-09-05T00001";
+import { createSubscription } from "../../js/core/game-state-subscribe.js?v=v2026-09-05T00001";
 import { createRenderer } from "./render.js?v=v2026-09-05T00001";
 
 startKeepAlive();
