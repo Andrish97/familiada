@@ -36,6 +36,39 @@ function startPresenceHeartbeat({ gameId, key }, pingMs = 3000) {
   setInterval(ping, pingMs);
 }
 
+// css/host.css pozycjonuje .text (paperText1/2) jako position:absolute, a
+// jego left/right SĄ ZDEFINIOWANE WYŁĄCZNIE pod selektorami
+// `html.portrait .pane1 .text`/`html.landscape .pane1 .text` — bez tej
+// klasy na <html> tekst nie ma żadnego left/right w ogóle. To nie kosmetyka
+// do dostrojenia później, tylko wymóg funkcjonalny, żeby cokolwiek się
+// wyświetliło (znalezione przez pierwszy przebieg control2-pairing.spec.js
+// na żywo: #paperText1 istniał w DOM, ale toBeVisible() padało — zero
+// wymiarów bez tej klasy).
+function setupOrientationClass() {
+  function apply() {
+    const portrait = window.innerHeight >= window.innerWidth;
+    document.documentElement.classList.toggle("portrait", portrait);
+    document.documentElement.classList.toggle("landscape", !portrait);
+
+    // html.landscape .pane1 .text czyta --outer-left/--outer-right (patrz
+    // css/host.css) — bez nich left/right w landscape jest niepoprawnym
+    // calc() i cała reguła pozycjonująca zostaje zignorowana.
+    const root = document.documentElement;
+    const cs = getComputedStyle(root);
+    const safeL = parseFloat(cs.getPropertyValue("--safe-left")) || 0;
+    const safeR = parseFloat(cs.getPropertyValue("--safe-right")) || 0;
+    if (!portrait) {
+      root.style.setProperty("--outer-left", `${safeL}px`);
+      root.style.setProperty("--outer-right", `${safeR}px`);
+    } else {
+      root.style.setProperty("--outer-left", "0px");
+      root.style.setProperty("--outer-right", "0px");
+    }
+  }
+  apply();
+  window.addEventListener("resize", apply);
+}
+
 function setupFullscreenButton() {
   const btn = document.getElementById("btnFS");
   const ico = document.getElementById("fsIco");
@@ -67,6 +100,7 @@ function setupPeekSwipe(renderer) {
 async function main() {
   await initI18n({ withSwitcher: false });
   setupFullscreenButton();
+  setupOrientationClass();
   document.documentElement.classList.remove("page-loading");
 
   const { gameId, key } = parseParams();
