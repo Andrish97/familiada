@@ -72,7 +72,7 @@ export function createRenderer({ scene, qr }) {
   function applyDisplayMode(row) {
     const mode = row.detail?.display?.mode || "BLACK";
     if (mode === "QR") {
-      qr.show(row.detail.display.qrUrl);
+      qr.show(row.detail.display.qr);
       return;
     }
     qr.hide();

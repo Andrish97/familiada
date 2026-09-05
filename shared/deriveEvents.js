@@ -98,8 +98,14 @@ export function deriveEvents(prevRow, nextRow) {
 
   const prevDisplayMode = get(prevRow.detail, ["display", "mode"]);
   const nextDisplayMode = get(nextRow.detail, ["display", "mode"]);
-  if (prevDisplayMode !== nextDisplayMode) {
-    events.push({ kind: "DISPLAY_MODE_CHANGED", mode: nextDisplayMode, qrTarget: get(nextRow.detail, ["display", "qrTarget"]) });
+  const prevQr = get(prevRow.detail, ["display", "qr"]);
+  const nextQr = get(nextRow.detail, ["display", "qr"]);
+  // Host/buzzer QR są niezależne (jeden LUB dwa naraz) — więc trzeba
+  // odświeżyć widok QR nawet gdy `mode` zostaje "QR" przez cały czas, a
+  // zmienia się tylko KTÓRE urządzenie jest teraz pokazane.
+  const qrChanged = JSON.stringify(prevQr) !== JSON.stringify(nextQr);
+  if (prevDisplayMode !== nextDisplayMode || (nextDisplayMode === "QR" && qrChanged)) {
+    events.push({ kind: "DISPLAY_MODE_CHANGED", mode: nextDisplayMode, qr: nextQr });
   }
 
   const prevHostCovered = get(prevRow.detail, ["host", "covered"]);

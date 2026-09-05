@@ -35,9 +35,9 @@ export const STEPS = {
   devices_hostbuzzer: {
     card: "devices",
     entryTrigger: "operator potwierdza połączenie Display",
-    dataShape: "detail.display.mode ('BLACK'|'QR'), detail.display.qrTarget ('host'|'buzzer'|null)",
+    dataShape: "detail.display.mode ('BLACK'|'QR'), detail.display.qr.{host,buzzer}.show (niezależne, jeden LUB oba naraz)",
     gatedBy: [],
-    display: "BLACK domyślnie; QR z qrTarget gdy operator kliknie 'Pokaż kod QR' dla Hosta/Buzzera.",
+    display: "BLACK domyślnie; QR z qr.host.show/qr.buzzer.show gdy operator kliknie 'QR na wyświetlaczu' dla Hosta/Buzzera (niezależnie).",
     host: "Czeka na połączenie (lub pominięty przez flags.noHostTablet).",
     buzzer: "Czeka na połączenie (lub pominięty przez flags.physicalBuzzer).",
     soundCues: [],

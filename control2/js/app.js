@@ -8,8 +8,10 @@
 // tylko wewnątrz silnika reguł gry.
 
 import { guardDesktopOnly } from "../../js/core/device-guard.js?v=v2026-09-05T07140";
-import { initI18n, getUiLang } from "../../translation/translation.js?v=v2026-09-05T07140";
+import { guardResourceLock } from "../../js/core/resource-lock.js?v=v2026-09-05T07201";
+import { initI18n, getUiLang, t } from "../../translation/translation.js?v=v2026-09-05T07140";
 import { requireAuth } from "../../js/core/auth.js?v=v2026-09-05T07140";
+import { setTopbarAccount } from "../../js/core/topbar-controller.js?v=v2026-09-05T07201";
 import { sb } from "../../js/core/supabase.js?v=v2026-09-05T07140";
 import { loadQuestions, loadAnswers } from "../../js/core/game-validate.js?v=v2026-09-05T07140";
 import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud } from "../../js/core/sfx.js?v=v2026-09-05T07140";
@@ -19,6 +21,11 @@ import { confirmModal } from "../../js/core/modal.js?v=v2026-09-05T07140";
 import { DEFAULT_SETTINGS } from "../../shared/gameStateShape.js?v=v2026-09-05T07140";
 import { rt } from "../../js/core/realtime.js?v=v2026-09-05T07140";
 import { doorbellTopic } from "../../js/core/game-state-doorbell.js?v=v2026-09-05T00002";
+
+function qrImgSrc(url) {
+  const u = encodeURIComponent(String(url ?? ""));
+  return `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${u}`;
+}
 
 // Ustawienia "advanced" zachowywane przez "Zacznij od nowa" (sekcja 3a pkt 2
 // — dokładnie jak dzisiejsze resetProgress({keepAdvanced:true})).
@@ -117,8 +124,25 @@ async function main() {
   const user = await requireAuth();
   if (!user) return; // requireAuth already redirected
 
+  setTopbarAccount(user, { showAuthEntry: true });
+
   const { data: game, error: gameError } = await sb().from("games").select("*").eq("id", gameId).single();
   if (gameError || !game) { root.textContent = "Nie znaleziono gry."; return; }
+
+  // Warstwa 1 blokady (docs/plan-testy-i-poprawki.md, sekcja "Control" —
+  // punkt odłożony do teraz, bo dopiero game_state daje realny stan do
+  // przejęcia). resourceType:"game" to WSPÓLNY klucz z game-settings.js/
+  // editor.js — Control blokuje edycję ustawień w trakcie rozgrywki, i
+  // widzi odwrotnie, gdy ktoś inny (druga karta Control, ustawienia,
+  // edytor) już trzyma tę samą grę.
+  const lock = await guardResourceLock({
+    resourceType: "game",
+    resourceId: gameId,
+    context: "control",
+    message: t("resourceLock.gameMessage"),
+    backHref: "/builder",
+  });
+  if (!lock.ok) return;
 
   setCurrentGameId(gameId);
   await loadSfxManifest();
@@ -220,6 +244,140 @@ async function main() {
     ui.render(store.state, { urls, presenceFlags, connectCodes });
   }
 
+  // ===== Modal QR z topbaru (prywatny podgląd operatora — nie to samo co
+  // "QR na wyświetlaczu"; identyczna logika/DOM co dzisiejsze
+  // control/js/app.js's showQrModal/hideQrModal). =====
+  function getDeviceUrl(kind) {
+    if (kind === "display") return urls.displayUrl;
+    if (kind === "host") return urls.hostUrl;
+    if (kind === "buzzer") return urls.buzzerUrl;
+    return null;
+  }
+  function qrModalLabel(kind) {
+    if (kind === "host") return t("control.deviceHost");
+    if (kind === "buzzer") return t("control.deviceBuzzer");
+    return t("control.qrModalTitle");
+  }
+  function showQrModal(kind) {
+    const url = getDeviceUrl(kind);
+    if (!url) return;
+    const overlay = document.getElementById("qrModalOverlay");
+    const titleEl = document.getElementById("qrModalTitle");
+    const imgEl = document.getElementById("qrModalImg");
+    const codeValEl = document.getElementById("qrModalCodeVal");
+    if (!overlay || !titleEl) return;
+    titleEl.textContent = qrModalLabel(kind);
+    if (codeValEl) codeValEl.textContent = connectCodes[kind] || "——————";
+    const qrWrap = document.getElementById("qrModalQrWrap");
+    if (kind === "display") { if (qrWrap) qrWrap.style.display = "none"; }
+    else { if (qrWrap) qrWrap.style.display = ""; if (imgEl) imgEl.src = qrImgSrc(url); }
+    const openBtn = document.getElementById("qrModalOpen");
+    if (openBtn) {
+      if (kind === "display") { openBtn.href = url; openBtn.classList.remove("hidden"); }
+      else openBtn.classList.add("hidden");
+    }
+    overlay.dataset.kind = kind;
+    overlay.classList.remove("hidden");
+  }
+  function hideQrModal() {
+    document.getElementById("qrModalOverlay")?.classList.add("hidden");
+  }
+  document.getElementById("qrModalClose")?.addEventListener("click", hideQrModal);
+  document.getElementById("qrModalOverlay")?.addEventListener("click", (ev) => {
+    if (ev.target?.id === "qrModalOverlay") hideQrModal();
+  });
+  document.getElementById("qrModalCopy")?.addEventListener("click", async () => {
+    const kind = document.getElementById("qrModalOverlay")?.dataset.kind;
+    const code = kind && connectCodes[kind];
+    if (code) { try { await navigator.clipboard.writeText(code); } catch {} }
+  });
+
+  // ===== Info / Polityka prywatności — identyczna logika co dzisiejszy
+  // control/js/app.js (helpOverlay -> iframe /manual, legalOverlay -> /privacy). =====
+  const helpOverlay = document.getElementById("helpOverlay");
+  const helpFrame = document.getElementById("helpFrame");
+  const legalOverlay = document.getElementById("legalOverlay");
+  const legalFrame = document.getElementById("legalFrame");
+  function buildHelpUrl() {
+    const url = new URL("manual", location.href);
+    url.searchParams.set("modal", "control");
+    url.searchParams.set("lang", getUiLang() || "pl");
+    url.searchParams.set("tab", "control");
+    url.hash = "control";
+    return url.toString();
+  }
+  function buildLegalUrl() {
+    const url = new URL("privacy", location.href);
+    url.searchParams.set("modal", "control");
+    url.searchParams.set("lang", getUiLang() || "pl");
+    url.hash = "control";
+    return url.toString();
+  }
+  function openHelpModal() { if (helpFrame) helpFrame.src = buildHelpUrl(); helpOverlay?.classList.remove("hidden"); }
+  function closeHelpModal() { helpOverlay?.classList.add("hidden"); }
+  function openLegalModal() { if (legalFrame) legalFrame.src = buildLegalUrl(); legalOverlay?.classList.remove("hidden"); }
+  function closeLegalModal() { legalOverlay?.classList.add("hidden"); }
+  document.getElementById("btnManual")?.addEventListener("click", openHelpModal);
+  document.getElementById("btnHelpClose")?.addEventListener("click", (ev) => { ev.stopImmediatePropagation(); closeHelpModal(); });
+  helpOverlay?.addEventListener("click", (ev) => { if (ev.target === helpOverlay) closeHelpModal(); });
+  document.getElementById("btnLegal")?.addEventListener("click", (ev) => { ev.stopImmediatePropagation(); openLegalModal(); });
+  document.getElementById("btnBackToManual")?.addEventListener("click", (ev) => { ev.stopImmediatePropagation(); closeLegalModal(); openHelpModal(); });
+  document.getElementById("btnLegalClose")?.addEventListener("click", (ev) => { ev.stopImmediatePropagation(); closeLegalModal(); });
+  legalOverlay?.addEventListener("click", (ev) => { if (ev.target === legalOverlay) closeLegalModal(); });
+
+  // ===== Modal ustawień gry (edycja WYŁĄCZNIE w game-settings — Control
+  // tylko otwiera ten sam modal co dzisiejszy btnOpenGsModal/gsOverlay,
+  // identyczny protokół postMessage gs:requestClose / gs:close). Inaczej
+  // niż dziś: nie przekazujemy gs:displayCmd do żadnego prawdziwego
+  // urządzenia — sekcja 3a pkt 5 planu: Display zostaje BLACK przez cały
+  // etap ustawień, podgląd na żywo to tylko lokalna miniaturka w D3 (patrz
+  // niżej), odświeżana po ZAMKNIĘCIU modala, nie w locie przy każdej
+  // zmianie suwaka.
+  const gsOverlayEl = document.getElementById("gsOverlay");
+  const gsFrameEl = document.getElementById("gsFrame");
+  function openGsModal() {
+    if (gsFrameEl) gsFrameEl.src = `/game-settings?id=${encodeURIComponent(gameId)}&modal=1`;
+    gsOverlayEl?.classList.remove("hidden");
+  }
+  async function onGsModalClose() {
+    gsOverlayEl?.classList.add("hidden");
+    if (gsFrameEl) gsFrameEl.src = "";
+    // Ustawienia mogły się zmienić (drużyny/finał/pytania/dźwięk) —
+    // odśwież podsumowanie D3, tylko gdy gra jeszcze nie wystartowała
+    // (patrz applyGameSettingsToState — po starcie to już wyłącznie
+    // game_state, nie games.settings).
+    if (!store.state.locks.gameStarted) {
+      try {
+        const { data: freshGame } = await sb().from("games").select("settings").eq("id", gameId).single();
+        applyGameSettingsToState(freshGame?.settings, store.state);
+        await store.commit();
+      } catch (e) { console.warn("[control2] odświeżenie ustawień po zamknięciu modala nie powiodło się:", e); }
+    }
+  }
+  function requestGsModalClose() {
+    gsFrameEl?.contentWindow?.postMessage({ type: "gs:requestClose" }, "*");
+  }
+  document.getElementById("btnOpenGsModal")?.addEventListener("click", openGsModal);
+  gsOverlayEl?.addEventListener("click", (ev) => { if (ev.target === gsOverlayEl) requestGsModalClose(); });
+  window.addEventListener("message", (ev) => {
+    if (ev.data?.type === "gs:close" && ev.source === gsFrameEl?.contentWindow) onGsModalClose();
+  });
+
+  document.getElementById("btnBack")?.addEventListener("click", async () => {
+    // Ostrzeżenie tylko w trakcie realnej rozgrywki (jak dzisiejsze
+    // shouldWarnBeforeUnload()) — z D0-D3 wychodzimy bez pytania.
+    if (store.state.locks.gameStarted && !store.state.locks.gameEnded) {
+      const ok = await confirmModal({
+        title: t("control.leaveTitle"),
+        text: t("control.leaveText"),
+        okText: t("control.leaveOk"),
+        cancelText: t("control.leaveCancel"),
+      });
+      if (!ok) return;
+    }
+    location.href = "/builder";
+  });
+
   async function advance(nextStep, extra = {}) {
     assertTransition(store.state.step, nextStep);
     store.state.step = nextStep;
@@ -229,30 +387,78 @@ async function main() {
 
   async function handle(action, payload) {
     try {
-      if (action === "devices.showQr") {
-        store.state.display.mode = "QR";
-        store.state.display.qrTarget = payload.kind;
-        store.state.display.qrUrl = payload.url;
-        store.state.display.qrCode = payload.code || null;
-        await store.commit();
+      if (action === "ui.rerender") {
+        // Czysto lokalna zmiana UI (np. zaznaczenie drużyny w trybie
+        // physicalBuzzer, przed potwierdzeniem) — bez zapisu do game_state.
+        renderCurrent();
         return;
       }
-      if (action === "devices.hideQr") {
-        store.state.display.mode = "BLACK";
-        store.state.display.qrTarget = null;
-        store.state.display.qrUrl = null;
-        store.state.display.qrCode = null;
+      // Host/buzzer NIEZALEŻNE — jeden LUB oba naraz na Display (dokładnie
+      // jak dzisiejsze qrHostOnDisplay/qrBuzzerOnDisplay + syncQrDisplay w
+      // control/js/app.js, nie jeden qrTarget na raz jak w pierwszym
+      // przebiegu control2).
+      async function syncQrDisplay() {
+        const q = store.state.display.qr;
+        const wantHost = !!q.host.show && !store.state.settings.noHostTablet;
+        const wantBuzzer = !!q.buzzer.show && !store.state.settings.physicalBuzzer;
+        q.host.show = wantHost;
+        q.buzzer.show = wantBuzzer;
+        q.host.url = wantHost ? urls.hostUrl : null;
+        q.host.code = wantHost ? connectCodes.host : null;
+        q.buzzer.url = wantBuzzer ? urls.buzzerUrl : null;
+        q.buzzer.code = wantBuzzer ? connectCodes.buzzer : null;
+        store.state.display.mode = (wantHost || wantBuzzer) ? "QR" : "BLACK";
         await store.commit();
+      }
+      if (action === "qr.host.toggle") {
+        store.state.display.qr.host.show = !store.state.display.qr.host.show;
+        await syncQrDisplay();
+        return;
+      }
+      if (action === "qr.buzzer.toggle") {
+        store.state.display.qr.buzzer.show = !store.state.display.qr.buzzer.show;
+        await syncQrDisplay();
+        return;
+      }
+      if (action === "qr.toggle") {
+        // Globalny "Schowaj QR" — chowa oba naraz.
+        store.state.display.qr.host.show = false;
+        store.state.display.qr.buzzer.show = false;
+        await syncQrDisplay();
+        return;
+      }
+      if (action === "devices.noHostTablet") {
+        store.state.settings.noHostTablet = !!payload;
+        if (payload) { store.state.display.qr.host.show = false; }
+        await syncQrDisplay();
+        return;
+      }
+      if (action === "devices.physicalBuzzer") {
+        store.state.settings.physicalBuzzer = !!payload;
+        if (payload) { store.state.display.qr.buzzer.show = false; }
+        await syncQrDisplay();
+        return;
+      }
+      if (action === "qr.modal.show") {
+        showQrModal(payload);
+        return;
+      }
+      if (action === "devices.copyCode") {
+        const code = connectCodes[payload];
+        if (code) { try { await navigator.clipboard.writeText(code); } catch {} }
         return;
       }
       if (action === "devices.next") {
         if (store.state.step === "devices_display") { await advance("devices_hostbuzzer"); return; }
         // Wyjście z D1: wracamy do BLACK, jeśli operator zostawił widoczny QR.
         store.state.display.mode = "BLACK";
-        store.state.display.qrTarget = null;
-        store.state.display.qrUrl = null;
-        store.state.display.qrCode = null;
+        store.state.display.qr.host = { show: false, url: null, code: null };
+        store.state.display.qr.buzzer = { show: false, url: null, code: null };
         await advance("setup_finish");
+        return;
+      }
+      if (action === "setup.openSettings") {
+        openGsModal();
         return;
       }
       if (action === "setup.start") {
@@ -325,7 +531,11 @@ async function main() {
       picked: [], confirmed: false, winnerTeam: null, questions: [],
       runtime: { sum: 0, timer: { running: false, phase: null, endsAt: 0 }, map1: [null,null,null,null,null], map2: [null,null,null,null,null], p1: [null,null,null,null,null], p2: [null,null,null,null,null], reached200: false },
     };
-    store.state.display = { mode: "BLACK", qrTarget: null, colors: store.state.display.colors, theme: store.state.display.theme, logoId: store.state.display.logoId };
+    store.state.display = {
+      mode: "BLACK",
+      qr: { host: { show: false, url: null, code: null }, buzzer: { show: false, url: null, code: null } },
+      colors: store.state.display.colors, theme: store.state.display.theme, logoId: store.state.display.logoId,
+    };
     store.state.host = { covered: false };
     store.state.step = "devices_display";
     store.state.phase = null;

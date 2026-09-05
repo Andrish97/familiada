@@ -1561,6 +1561,45 @@ function renderGame() {
   });
 }
 
+// ===== control.ingameGuard: overlay dedykowany, gdy Control ma aktywną grę =====
+function showIngameGuard() {
+  let overlay = document.getElementById("ingameGuard");
+  if (!overlay) {
+    overlay = document.createElement("div");
+    overlay.id = "ingameGuard";
+    Object.assign(overlay.style, {
+      position: "fixed", inset: "0", width: "100vw", height: "100vh",
+      fontFamily: "system-ui,-apple-system,Segoe UI,sans-serif",
+      background: "rgba(0,0,0,.78)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)",
+      color: "#fff", zIndex: "2147483647", display: "flex", alignItems: "center", justifyContent: "center",
+      padding: "16px", boxSizing: "border-box", overscrollBehavior: "none",
+    });
+    overlay.innerHTML = `
+      <div style="width:100%;max-width:560px;box-sizing:border-box;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);border-radius:18px;padding:18px;text-align:left;">
+        <div style="font-weight:900;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px;">${escText(t("control.ingameGuard.title"))}</div>
+        <div style="opacity:.9;line-height:1.4;word-wrap:break-word;">${escText(t("control.ingameGuard.message"))}</div>
+        <div style="margin-top:14px;display:flex;gap:10px;align-items:center;">
+          <button id="ingameGuardBack" type="button" style="appearance:none;border:0;border-radius:12px;padding:10px 14px;font-weight:800;cursor:pointer;background:rgba(255,255,255,.14);color:#fff;">${escText(t("control.ingameGuard.back"))}</button>
+          <button id="ingameGuardUnlock" type="button" style="appearance:none;border:0;border-radius:12px;padding:10px 14px;font-weight:800;cursor:pointer;background:rgba(255,234,166,.85);color:#3a2c00;">${escText(t("control.ingameGuard.unlock"))}</button>
+        </div>
+      </div>
+    `;
+    document.documentElement.appendChild(overlay);
+    overlay.querySelector("#ingameGuardBack").addEventListener("click", () => { location.href = "/builder"; });
+    overlay.querySelector("#ingameGuardUnlock").addEventListener("click", async () => {
+      // "Odblokuj ustawienia" — nie jest to wymuszenie: acquire_edit_lock
+      // i tak sam zwolni blokadę po ~25s bez odnowienia (Control naprawdę
+      // zamknięty). To tylko ręczne "sprawdź teraz" zamiast czekać na
+      // automatyczny recheck — bezpieczne, bo jeśli Control WCIĄŻ jest
+      // otwarty, poniższe po prostu przeładuje i trafi w ten sam guard.
+      location.reload();
+    });
+  }
+  overlay.style.display = "flex";
+  document.documentElement.style.overflow = "hidden";
+  document.body.style.overflow = "hidden";
+}
+
 // ===== MAIN =====
 async function main() {
   const user = await requireAuth("login");
@@ -1583,6 +1622,31 @@ async function main() {
   if (gameErr || !game) {
     if (content) content.innerHTML = `<p style="color:red;padding:20px">${escText(t("gameSettings.loadError"))}${escText(gameErr?.message || t("gameSettings.unknownError"))}</p>`;
     return;
+  }
+
+  // control.ingameGuard (dokończone — docs/plan-testy-i-poprawki.md, sekcja
+  // "Control", punkt 3): gdy Control ma dla TEJ gry aktywną, świeżą blokadę
+  // (kontekst "control"), pokaż dedykowany komunikat "Gra w toku" zamiast
+  // ogólnego resourceLock — inny tekst, bo tu przyczyna jest konkretna i
+  // znana (rozgrywka jest prowadzona na żywo), nie "ktoś inny edytuje".
+  // Pominięte w trybie modala (otwartego z samego Control): iframe dzieli
+  // ten sam tab_id co strona nadrzędna, więc acquire_edit_lock i tak
+  // pozwala mu przejąć/odnowić własną blokadę bez kolizji — pre-check
+  // tutaj wykrywałby wyłącznie WŁASNĄ blokadę Control i fałszywie blokował
+  // operatora we własnym modalu.
+  if (!_isModal) {
+    const { data: controlLock } = await sb()
+      .from("edit_locks")
+      .select("holder_context")
+      .eq("resource_type", "game")
+      .eq("resource_id", gameId)
+      .eq("holder_context", "control")
+      .gt("heartbeat_at", new Date(Date.now() - 25000).toISOString())
+      .maybeSingle();
+    if (controlLock) {
+      showIngameGuard();
+      return;
+    }
   }
 
   // resourceType: "game" — wspólny klucz z editor.js (i docelowo

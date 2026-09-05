@@ -2,70 +2,161 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Familiada — Control (v2)</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-<style>
-  :root { color-scheme: dark; --bg:#0b0e14; --card:#12161f; --line:rgba(255,255,255,.12); --text:#eef1f6; --accent:#ffeaa6; }
-  * { box-sizing: border-box; }
-  html, body { height: 100%; margin: 0; }
-  body { background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; display: flex; flex-direction: column; }
+  <meta charset="utf-8" />
+  <meta name="robots" content="noindex, nofollow"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="preconnect" href="https://supabase.familiada.online">
+  <title>Familiada — Control (v2)</title>
 
-  .c2-topbar { display:flex; align-items:center; justify-content:space-between; padding:10px 16px; border-bottom:1px solid var(--line); }
-  .c2-topbar-actions { display:flex; gap:8px; }
-  .c2-icon-btn { background:rgba(255,255,255,.06); border:1px solid var(--line); color:var(--text); border-radius:10px; padding:6px 10px; cursor:pointer; }
-  .c2-icon-btn:hover { background:rgba(255,255,255,.12); }
+  <link rel="icon" href="/favicon.ico?v=v2026-09-05T07201"/>
+  <link rel="stylesheet" href="/css/base.css?v=v2026-09-05T07201"/>
+  <link rel="stylesheet" href="/control/control.css?v=v2026-09-05T07201"/>
+  <script>
+    document.documentElement.classList.add('page-loading');
+    try {
+      var _has = false;
+      for (var _i = 0; _i < localStorage.length; _i++) {
+        var _k = localStorage.key(_i);
+        if (_k && _k.startsWith('sb-') && _k.endsWith('-auth-token')) { _has = true; break; }
+      }
+      if (!_has) location.replace('login');
+    } catch(_e) {}
+  </script>
 
-  .c2-main { flex:1; display:flex; align-items:center; justify-content:center; padding:16px; overflow:hidden; }
-  .card.c2-card { width:min(720px, 100%); max-height:100%; background:var(--card); border:1px solid var(--line); border-radius:20px; box-shadow:0 24px 60px rgba(0,0,0,.4); overflow:auto; }
-  .c2-card-inner { padding:24px; display:flex; flex-direction:column; gap:14px; }
+  <script>if(matchMedia('(max-width:980px)').matches)document.documentElement.dataset.mobileGuard=''</script>
+  <style>html[data-mobile-guard]{overflow:hidden;touch-action:none}html[data-mobile-guard] body{visibility:hidden}</style>
 
-  .c2-device-row { display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--line); }
-  .c2-device-label { display:flex; align-items:center; gap:8px; }
-  .c2-dot { width:10px; height:10px; border-radius:50%; background:#555; }
-  .c2-dot.on { background:#5fd97a; }
-  .c2-dot.off { background:#e05c5c; }
-  .c2-device-actions { display:flex; align-items:center; gap:10px; }
-  .c2-code { opacity:.75; font-variant-numeric: tabular-nums; }
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="js/core/security-warning.js?v=v2026-09-05T07201" defer></script>
+  <script type="module">
+    import { initI18n } from "/translation/translation.js?v=v2026-09-05T07201";
+    await initI18n({ withSwitcher: false });
+    document.documentElement.classList.remove('page-loading');
+    import("/control2/js/app.js?v=v2026-09-05T07201");
+  </script>
 
-  .c2-btn { background:rgba(255,255,255,.08); border:1px solid var(--line); color:var(--text); border-radius:12px; padding:10px 14px; cursor:pointer; font-weight:600; }
-  .c2-btn:hover { background:rgba(255,255,255,.14); }
-  .c2-btn.primary { background:rgba(255,234,166,.14); border-color:rgba(255,234,166,.4); color:var(--accent); }
-  .c2-btn:disabled { opacity:.4; cursor:not-allowed; }
-
-  label { font-size:.85rem; opacity:.8; margin-top:6px; }
-  input[type="text"], select { background:rgba(255,255,255,.06); border:1px solid var(--line); color:var(--text); border-radius:10px; padding:8px 10px; }
-
-  /* Wspólny szablon 3 głównych ekranów rozgrywki (sekcja 3b) — jedna karta,
-     zero przewijania, mały stepper na górze, nawigacja na dole. */
-  .c2-gameplay { height: 100%; max-height: 640px; }
-  .c2-stepper { font-size:.75rem; letter-spacing:.08em; text-transform:uppercase; opacity:.65; border-bottom:1px solid var(--line); padding-bottom:8px; }
-  .c2-gameplay-body { flex:1; overflow:auto; display:flex; flex-direction:column; gap:12px; }
-  .c2-gameplay-nav { display:flex; gap:8px; justify-content:flex-end; border-top:1px solid var(--line); padding-top:10px; flex-wrap:wrap; }
-
-  .c2-question { font-size:1.1rem; font-weight:700; }
-  .c2-answers-grid { display:grid; grid-template-columns:repeat(2, 1fr); gap:8px; }
-  .c2-answer-btn { padding:12px; border-radius:12px; border:1px solid var(--line); background:rgba(255,255,255,.05); color:var(--text); cursor:pointer; }
-  .c2-answer-btn.revealed { background:rgba(95,217,122,.15); border-color:rgba(95,217,122,.4); }
-  .c2-bank { font-weight:700; }
-  .c2-duel { display:flex; align-items:center; gap:10px; }
-  .c2-repeat-label { display:flex; align-items:center; gap:6px; margin-top:0; }
-  .c2-final-answers { display:flex; flex-direction:column; gap:6px; }
-</style>
+  <style>
+    /* Tylko to, czego NIE ma dzisiejszy control.css: nowy, wspólny szablon
+       trzech ekranów rozgrywki (Rundy / Finał-wpisywanie / Finał-odsłanianie
+       — plan, sekcja 3b). Topbar/urządzenia/podsumowanie ustawień/modale
+       reużywają control.css один do jednego. */
+    .c2-gameplay-card { width:min(720px, 100%); max-height:100%; }
+    .c2-gameplay { height: 100%; max-height: 640px; display:flex; flex-direction:column; gap:12px; }
+    .c2-stepper { font-size:.75rem; letter-spacing:.08em; text-transform:uppercase; opacity:.65; border-bottom:1px solid rgba(255,255,255,.12); padding-bottom:8px; }
+    .c2-gameplay-body { flex:1; overflow:auto; display:flex; flex-direction:column; gap:12px; }
+    .c2-gameplay-nav { display:flex; gap:8px; justify-content:flex-end; border-top:1px solid rgba(255,255,255,.12); padding-top:10px; flex-wrap:wrap; }
+    .c2-question { font-size:1.1rem; font-weight:700; }
+    .c2-answers-grid { display:grid; grid-template-columns:repeat(2, 1fr); gap:8px; }
+    .c2-answer-btn.revealed { background:rgba(95,217,122,.15); border-color:rgba(95,217,122,.4); }
+    .c2-duel { display:flex; align-items:center; gap:10px; }
+    .c2-repeat-label { display:flex; align-items:center; gap:6px; margin-top:0; }
+    .c2-final-answers { display:flex; flex-direction:column; gap:6px; }
+    #c2DisplayPreview { width:100%; aspect-ratio:16/9; background:#000; border-radius:10px; overflow:hidden; position:relative; }
+    #c2DisplayPreview svg { width:100%; height:100%; display:block; }
+  </style>
 </head>
-<body>
-  <div class="c2-topbar">
-    <div class="c2-topbar-title">Familiada — Control</div>
-    <div class="c2-topbar-actions">
-      <button class="c2-icon-btn" id="btnMute" type="button" title="Wycisz dźwięk">🔊</button>
-      <button class="c2-icon-btn" id="btnStartOver" type="button" title="Zacznij od nowa">↺ Zacznij od nowa</button>
+<body class="control-body skel-body">
+  <header class="topbar topbar-layout-4">
+    <div class="topbar-section topbar-section-1">
+      <div class="brand">FAMILIADA</div>
+      <button class="btn" id="btnBack" type="button" data-i18n="control.backToGames">← Moje gry</button>
+    </div>
+    <div class="topbar-section topbar-section-2">
+      <div class="top-status" aria-label="Status urządzeń" data-i18n-aria-label="control.statusLabel">
+        <div class="dotRow" title="Wyświetlacz" id="dotDisplayRow" data-i18n-title="control.deviceDisplay">
+          <span class="dot mid" id="dotDisplay"></span><span class="lbl" data-i18n="control.deviceDisplay">Wyświetlacz</span>
+        </div>
+        <div class="dotRow" title="Prowadzący" id="dotHostRow" data-i18n-title="control.deviceHost">
+          <span class="dot mid" id="dotHost"></span><span class="lbl" data-i18n="control.deviceHost">Prowadzący</span>
+        </div>
+        <div class="dotRow" title="Przycisk" id="dotBuzzerRow" data-i18n-title="control.deviceBuzzer">
+          <span class="dot mid" id="dotBuzzer"></span><span class="lbl" data-i18n="control.deviceBuzzer">Przycisk</span>
+        </div>
+      </div>
+    </div>
+    <div class="topbar-section topbar-section-3">
+      <button class="btn" id="btnMute" type="button" title="Wycisz dźwięk">🔊</button>
+      <button class="btn" id="btnStartOver" type="button" title="Zacznij od nowa">↺</button>
+      <button class="btn" id="btnManual" type="button">ℹ️</button>
+    </div>
+    <div class="topbar-section topbar-section-4">
+      <span class="who" id="who">—</span>
+      <button class="btn" id="btnLogout" type="button" data-i18n="control.logout">Wyloguj</button>
+    </div>
+  </header>
+
+  <div class="helpOverlay hidden" id="helpOverlay">
+    <div class="helpModal" role="dialog" aria-modal="true">
+      <div class="helpModalToolbar">
+        <button class="btn btn-sm" id="btnLegal" type="button" data-i18n="manual.legal">🔐 Polityka prywatności</button>
+        <button class="btn sm" id="btnHelpClose" type="button" onclick="document.getElementById('helpOverlay').classList.add('hidden')">✕</button>
+      </div>
+      <iframe id="helpFrame" class="helpFrame" src="" title="Wskazówki"></iframe>
     </div>
   </div>
-  <div class="c2-main">
-    <div class="card c2-card" id="app"><!-- renderowane przez ui.js --></div>
+
+  <div class="legalOverlay hidden" id="legalOverlay">
+    <div class="legalModal" role="dialog" aria-modal="true">
+      <div class="legalModalToolbar">
+        <button class="btn btn-sm" id="btnBackToManual" type="button" data-i18n="privacy.backToManual">← Wskazówki</button>
+        <button class="btn sm" id="btnLegalClose" type="button" onclick="document.getElementById('legalOverlay').classList.add('hidden')">✕</button>
+      </div>
+      <iframe id="legalFrame" class="legalFrame" src="" title="Polityka prywatności"></iframe>
+    </div>
   </div>
 
-  <script type="module" src="control2/js/app.js?v=v2026-09-05T07201"></script>
+  <!-- Ustawienia gry NIE są edytowalne w Control — wyłącznie w game-settings,
+       tu tylko otwierane w tym samym modalu co dziś (control.html's gsOverlay). -->
+  <div class="gsOverlay hidden" id="gsOverlay">
+    <div class="gsModal" role="dialog" aria-modal="true">
+      <iframe id="gsFrame" class="gsFrame" src="" title="Ustawienia rozgrywki"></iframe>
+    </div>
+  </div>
+
+  <!-- Modal QR urządzeń z top bara -->
+  <div class="qrModalOverlay hidden" id="qrModalOverlay">
+    <div class="qrModalBox">
+      <div class="qrModalHead">
+        <div class="qrModalTitle" id="qrModalTitle" data-i18n="control.qrModalTitle">Urządzenie</div>
+        <button class="btn xs" id="qrModalClose" type="button">✕</button>
+      </div>
+
+      <div class="qrModalBody">
+        <div class="qrModalQr" id="qrModalQrWrap">
+          <img id="qrModalImg" alt="Kod QR" data-i18n-alt="control.qrModalImgAlt"/>
+        </div>
+
+        <div class="qrModalCode">
+          <span class="qrModalCodeVal" id="qrModalCodeVal">——————</span>
+        </div>
+
+        <div class="qrModalActions">
+          <button class="btn gold" id="qrModalCopy" type="button" data-i18n="common.copy">Kopiuj</button>
+          <a class="btn hidden" id="qrModalOpen" target="_blank" rel="noopener" data-i18n="common.open">Otwórz</a>
+        </div>
+        <div class="qrModalCodeHint" data-i18n="control.qrModalCodeHint">Wejdź na familiada.online → Podłącz urządzenie → wprowadź kod</div>
+      </div>
+    </div>
+  </div>
+
+  <main class="wrap wide">
+    <div class="shell">
+      <div class="control-tabs-card">
+        <section class="main control-main-card">
+          <div class="card c2-gameplay-card" id="app"><!-- renderowane przez control2/js/ui.js --></div>
+        </section>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div data-i18n="common.footer.left">© 2026 Familiada — system do gry na żywo</div>
+      <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
+    </div>
+  </main>
+  <script type="module" src="js/core/contact-modal.js?v=v2026-09-05T07201"></script>
 </body>
 </html>

@@ -97,11 +97,18 @@ test("zmiana sound_cue_seq generuje SOUND_CUE z aktualnym kluczem (nawet gdy klu
   assert.ok(events.some((e) => e.kind === "SOUND_CUE" && e.key === "answer_correct"));
 });
 
-test("zmiana display.mode generuje DISPLAY_MODE_CHANGED z qrTarget", () => {
+test("zmiana display.mode generuje DISPLAY_MODE_CHANGED z qr", () => {
   const prev = row({ detail: { display: { mode: "BLACK" } } });
-  const next = row({ detail: { display: { mode: "QR", qrTarget: "host" } } });
+  const next = row({ detail: { display: { mode: "QR", qr: { host: { show: true }, buzzer: { show: false } } } } });
   const events = deriveEvents(prev, next);
-  assert.ok(events.some((e) => e.kind === "DISPLAY_MODE_CHANGED" && e.mode === "QR" && e.qrTarget === "host"));
+  assert.ok(events.some((e) => e.kind === "DISPLAY_MODE_CHANGED" && e.mode === "QR" && e.qr?.host?.show === true));
+});
+
+test("QR host/buzzer NIEZALEŻNE: dodanie drugiego bez zmiany mode też generuje DISPLAY_MODE_CHANGED", () => {
+  const prev = row({ detail: { display: { mode: "QR", qr: { host: { show: true }, buzzer: { show: false } } } } });
+  const next = row({ detail: { display: { mode: "QR", qr: { host: { show: true }, buzzer: { show: true } } } } });
+  const events = deriveEvents(prev, next);
+  assert.ok(events.some((e) => e.kind === "DISPLAY_MODE_CHANGED" && e.qr?.buzzer?.show === true));
 });
 
 test("zmiana host.covered generuje HOST_COVER_CHANGED", () => {

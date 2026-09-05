@@ -21,8 +21,8 @@ Ta strona jest wygenerowana z `shared/gameStateMachine.js` — jedynego źródł
 
 - **Karta**: `devices`
 - **Wejście**: operator potwierdza połączenie Display
-- **Zapis (`detail`)**: detail.display.mode ('BLACK'|'QR'), detail.display.qrTarget ('host'|'buzzer'|null)
-- **Display**: BLACK domyślnie; QR z qrTarget gdy operator kliknie 'Pokaż kod QR' dla Hosta/Buzzera.
+- **Zapis (`detail`)**: detail.display.mode ('BLACK'|'QR'), detail.display.qr.{host,buzzer}.show (niezależne, jeden LUB oba naraz)
+- **Display**: BLACK domyślnie; QR z qr.host.show/qr.buzzer.show gdy operator kliknie 'QR na wyświetlaczu' dla Hosta/Buzzera (niezależnie).
 - **Host**: Czeka na połączenie (lub pominięty przez flags.noHostTablet).
 - **Buzzer**: Czeka na połączenie (lub pominięty przez flags.physicalBuzzer).
 - **Dźwięki**: —

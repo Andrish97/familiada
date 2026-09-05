@@ -78,13 +78,15 @@ export function makeDefaultState(gameId) {
     },
     display: {
       mode: "BLACK",
-      qrTarget: null,
-      // Pełny URL/kod widoczny na wyświetlaczu podczas parowania (D1) — nie
-      // computed przez Display samo (nie zna share_key_host/buzzer, to by je
-      // niepotrzebnie ujawniało poza tym jednym, zamierzonym miejscem), tylko
-      // zapisywany tu przez Control, który jedyny zna wartości kluczy.
-      qrUrl: null,
-      qrCode: null,
+      // QR na wyświetlaczu (D1) — host i buzzer NIEZALEŻNE, mogą być
+      // pokazane pojedynczo albo oba naraz (dokładnie jak dzisiejsze
+      // qrHostOnDisplay/qrBuzzerOnDisplay + "SINGLE" w control/js/devices.js).
+      // URL/kod nie są computed przez Display (nie zna share_key_host/
+      // buzzer), tylko zapisywane tu przez Control, który jedyny zna klucze.
+      qr: {
+        host: { show: false, url: null, code: null },
+        buzzer: { show: false, url: null, code: null },
+      },
       colors: { A: "#c4002f", B: "#2a62ff", BACKGROUND: "#d21180", DOT: "#d7ff3d" },
       theme: null,
       logoId: null,

@@ -11,7 +11,7 @@ import { initI18n } from "../../translation/translation.js?v=v2026-09-05T07201";
 import { startKeepAlive } from "../../js/core/keep-alive.js?v=v2026-09-05T07201";
 import { sb } from "../../js/core/supabase.js?v=v2026-09-05T07201";
 import { createScene } from "./scene.js?v=v2026-09-05T07201";
-import { createQrOverlay } from "./qr.js?v=v2026-09-05T07201";
+import { createQRController } from "./qr.js?v=v2026-09-05T07201";
 import { createSubscription } from "../../js/core/game-state-subscribe.js?v=v2026-09-05T07201";
 import { createRenderer } from "./render.js?v=v2026-09-05T07201";
 
@@ -65,17 +65,30 @@ window.addEventListener("DOMContentLoaded", async () => {
     startPresenceHeartbeat({ gameId: game.id, key });
 
     const scene = await createScene();
-    const qrOverlay = createQrOverlay({ overlayEl: $("qrScreen"), imgEl: $("qrImg") });
+    const qrCtrl = createQRController({
+      qrScreen: $("qrScreen"), gameScreen: $("gameScreen"),
+      hostCard: $("qrHostCard"), buzzerCard: $("qrBuzzerCard"),
+      hostImg: $("qrHostImg"), buzzerImg: $("qrBuzzerImg"),
+      hostCodeEl: $("qrHostCode"), buzzerCodeEl: $("qrBuzzerCode"),
+    });
     await scene.api.logo.bindGame?.(game.id);
 
+    // Host/buzzer NIEZALEŻNE — jeden LUB oba naraz (plan, korekta po
+    // feedbacku: pierwszy przebieg pokazywał tylko jeden na raz, źle).
     const qr = {
-      show(url) {
+      show(qrDetail) {
         $("blackScreen")?.classList.add("hidden");
-        $("gameScreen")?.classList.add("hidden");
-        qrOverlay.show(url);
+        const host = qrDetail?.host || {};
+        const buzzer = qrDetail?.buzzer || {};
+        qrCtrl.setHost(host.show ? host.url || "" : "");
+        qrCtrl.setHostCode(host.show ? host.code || "" : "");
+        qrCtrl.setBuzzer(buzzer.show ? buzzer.url || "" : "");
+        qrCtrl.setBuzzerCode(buzzer.show ? buzzer.code || "" : "");
+        qrCtrl.setSingle(!!host.show !== !!buzzer.show);
+        qrCtrl.show();
       },
       hide() {
-        qrOverlay.hide();
+        qrCtrl.hide();
       },
     };
 

@@ -30,51 +30,105 @@ function h(tag, attrs = {}, children = []) {
 export function createUI({ root, emit }) {
   function clear() { root.innerHTML = ""; }
 
+  // Tryb physicalBuzzer (plan, tabela A/R2): operator wybiera drużynę
+  // wprost zamiast czekać na Buzzer — dwuetapowo (zaznacz → potwierdź, jak
+  // sekcja 3a pkt 7), więc trzyma się to lokalnie w UI, nie w game_state
+  // (nic się jeszcze nie zmieniło w grze, dopóki nie ma potwierdzenia).
+  let pendingPhysicalTeam = null;
+
+  // Statusy urządzeń w TOPBARZE (poza #app, statyczne w control2.html) —
+  // dokładnie jak dzisiejsze control/js/ui.js's setDeviceBadges: aktualizacja
+  // imperatywna przy każdym renderze, nie przebudowa DOM.
+  function updateTopbarDots(presenceFlags = {}) {
+    for (const kind of ["display", "host", "buzzer"]) {
+      const dot = $(`dot${kind[0].toUpperCase()}${kind.slice(1)}`);
+      if (dot) dot.className = `dot ${presenceFlags[kind] ? "ok" : "bad"}`;
+    }
+  }
+
   // ============================================================
-  // D0/D1: parowanie urządzeń
+  // D0/D1: parowanie urządzeń — struktura/klasy jak dzisiejsze control.html
+  // (device-row/device-row-1/device-row-2/device-row-opt/badge), żeby
+  // reużyć control.css один do jednego zamiast osobnego, uproszczonego stylu.
   // ============================================================
   function renderDevicesStep(state, ctx) {
     clear();
     const { urls, presenceFlags = {}, connectCodes = {} } = ctx;
-    const wrap = h("div", { class: "c2-devices" });
 
-    const row = (label, kind, url, { showQrToggle = false } = {}) => {
+    const deviceRow = (label, kind, url, { withQr = false } = {}) => {
       const online = !!presenceFlags[kind];
       const code = connectCodes[kind];
-      const isShowingThis = state.display.mode === "QR" && state.display.qrTarget === kind;
-      const actions = [
-        h("button", { class: "c2-btn", type: "button", onclick: () => window.open(url, "_blank") }, [document.createTextNode("Otwórz link")]),
-        h("span", { class: "c2-code", text: code ? `Kod: ${code}` : "" }),
+      const row2 = [
+        h("div", { class: "device-connect-code" }, [h("span", { class: "device-connect-code-val", text: code || "——————" })]),
+        h("button", { class: "btn gold", type: "button", onclick: () => emit("devices.copyCode", kind) }, [document.createTextNode("Kopiuj")]),
+        h("a", { class: "btn", href: url, target: "_blank", rel: "noopener" }, [document.createTextNode("Otwórz")]),
       ];
-      if (showQrToggle) {
-        actions.push(h("button", {
-          class: `c2-btn ${isShowingThis ? "primary" : ""}`, type: "button",
-          onclick: () => emit(isShowingThis ? "devices.hideQr" : "devices.showQr", { kind, url, code }),
-        }, [document.createTextNode(isShowingThis ? "Ukryj QR" : "Pokaż QR na wyświetlaczu")]));
+      if (withQr) {
+        const shown = !!state.display.qr[kind].show;
+        row2.push(h("button", { class: "btn", type: "button", onclick: () => emit("qr.modal.show", kind) }, [document.createTextNode("Kod QR")]));
+        row2.push(h("button", {
+          class: `btn ${shown ? "primary" : ""}`, type: "button",
+          onclick: () => emit(kind === "host" ? "qr.host.toggle" : "qr.buzzer.toggle"),
+        }, [document.createTextNode(shown ? "Ukryj QR" : "QR na wyświetlaczu")]));
       }
-      return h("div", { class: "c2-device-row" }, [
-        h("div", { class: "c2-device-label" }, [
-          h("span", { class: `c2-dot ${online ? "on" : "off"}` }),
-          h("span", { text: label }),
+      return h("div", { class: "device-row", "data-device": kind }, [
+        h("div", { class: "device-row-1" }, [
+          h("div", { class: "device-name", text: label }),
+          h("div", { class: `badge ${online ? "ok" : "bad"}`, text: online ? "Online" : "Offline" }),
         ]),
-        h("div", { class: "c2-device-actions" }, actions),
+        h("div", { class: "device-row-2" }, row2),
       ]);
     };
 
-    wrap.appendChild(row("Wyświetlacz", "display", urls.displayUrl));
+    const rows = [deviceRow("Wyświetlacz", "display", urls.displayUrl)];
+
     if (state.step === "devices_hostbuzzer") {
-      if (!state.settings.noHostTablet) wrap.appendChild(row("Prowadzący", "host", urls.hostUrl, { showQrToggle: true }));
-      if (!state.settings.physicalBuzzer) wrap.appendChild(row("Buzzer", "buzzer", urls.buzzerUrl, { showQrToggle: true }));
+      if (!state.settings.noHostTablet) {
+        const hostRow = deviceRow("Prowadzący", "host", urls.hostUrl, { withQr: true });
+        const noHostChk = h("input", { type: "checkbox" });
+        on(noHostChk, "change", () => emit("devices.noHostTablet", noHostChk.checked));
+        hostRow.appendChild(h("div", { class: "device-row-opt" }, [
+          h("label", { class: "device-opt-check" }, [noHostChk, h("div", { class: "device-opt-check-text" }, [
+            h("span", { class: "device-opt-check-label", text: "Nie używaj tabletu prowadzącego" }),
+          ])]),
+        ]));
+        rows.push(hostRow);
+      } else {
+        rows.push(h("div", { class: "device-row" }, [reenableRow("Prowadzący", "noHostTablet")]));
+      }
+
+      if (!state.settings.physicalBuzzer) {
+        const buzzerRow = deviceRow("Przycisk", "buzzer", urls.buzzerUrl, { withQr: true });
+        const physBuzzChk = h("input", { type: "checkbox" });
+        on(physBuzzChk, "change", () => emit("devices.physicalBuzzer", physBuzzChk.checked));
+        buzzerRow.appendChild(h("div", { class: "device-row-opt" }, [
+          h("label", { class: "device-opt-check" }, [physBuzzChk, h("div", { class: "device-opt-check-text" }, [
+            h("span", { class: "device-opt-check-label", text: "Fizyczny przycisk" }),
+          ])]),
+        ]));
+        rows.push(buzzerRow);
+      } else {
+        rows.push(h("div", { class: "device-row" }, [reenableRow("Przycisk", "physicalBuzzer")]));
+      }
     }
 
-    const next = h("button", { class: "c2-btn primary", type: "button", onclick: () => emit("devices.next") }, [
+    function reenableRow(label, flagKey) {
+      const chk = h("input", { type: "checkbox" });
+      chk.checked = true;
+      on(chk, "change", () => emit(flagKey === "noHostTablet" ? "devices.noHostTablet" : "devices.physicalBuzzer", chk.checked));
+      return h("label", { class: "device-opt-check" }, [chk, h("div", { class: "device-opt-check-text" }, [
+        h("span", { class: "device-opt-check-label", text: `${label} pominięty (odznacz, żeby podłączyć)` }),
+      ])]);
+    }
+
+    const next = h("button", { class: "btn gold", type: "button", onclick: () => emit("devices.next") }, [
       document.createTextNode(state.step === "devices_display" ? "Dalej" : "Zakończ podłączanie"),
     ]);
 
-    root.appendChild(h("div", { class: "c2-card-inner" }, [
-      h("h2", { text: state.step === "devices_display" ? "Podłącz wyświetlacz" : "Podłącz prowadzącego i buzzer" }),
-      wrap,
-      next,
+    root.appendChild(h("div", { class: "cardBody" }, [
+      h("div", { class: "stepTitle", text: state.step === "devices_display" ? "Urządzenia — Wyświetlacz" : "Urządzenia — Prowadzący i Przycisk" }),
+      ...rows,
+      h("div", { class: "stepFoot" }, [h("div", { class: "stepFootButtons" }, [next])]),
     ]));
   }
 
@@ -86,47 +140,73 @@ export function createUI({ root, emit }) {
   // READ-ONLY podsumowanie tego, co już ustawiono (plan, tabela D3), nie
   // formularz danych wejściowych.
   // ============================================================
+  function colorDots(colors) {
+    return h("span", {}, ["A", "B", "BACKGROUND", "DOT"].map((k) =>
+      h("span", { style: `display:inline-block;width:14px;height:14px;border-radius:50%;margin-right:4px;background:${colors?.[k] || "#000"};border:1px solid rgba(255,255,255,.3)`, title: k })
+    ));
+  }
+
+  function summarySection(title, valueNode) {
+    return h("div", { class: "summarySection" }, [
+      h("div", { class: "summarySectionTitle", text: title }),
+      valueNode,
+    ]);
+  }
+
   function renderSetupFinish(state) {
     clear();
     const s = state.settings;
+    const d = state.display;
     const hasFinal = s.hasFinal === true;
 
-    const row = (label, value) => h("div", { class: "c2-device-row" }, [
-      h("span", { text: label }),
-      h("span", { text: value }),
-    ]);
-
-    const rows = [
-      row("Drużyna A", state.teams.teamA || "—"),
-      row("Drużyna B", state.teams.teamB || "—"),
-      row("Finał", hasFinal ? "Tak" : "Nie"),
-      row("Pytania rund", s.roundsQuestionsMode === "pick" ? `Ustalona kolejność (${s.roundsPicked?.length || 0})` : "Losowo"),
+    const sections = [
+      summarySection("Drużyny", h("div", { class: "summarySectionValue", text: `${state.teams.teamA || "Drużyna A"} vs ${state.teams.teamB || "Drużyna B"}` })),
+      summarySection("Wygląd", h("div", { class: "summaryDisplayInfo" }, [
+        h("div", { class: "summaryDisplayRow" }, [h("span", { class: "summaryDisplayLabel", text: "Kolory: " }), colorDots(d.colors)]),
+        h("div", { class: "summaryDisplayRow" }, [h("span", { class: "summaryDisplayLabel", text: "Motyw: " }), document.createTextNode(d.theme || "domyślny")]),
+        h("div", { class: "summaryDisplayRow" }, [h("span", { class: "summaryDisplayLabel", text: "Logo: " }), document.createTextNode(d.logoId ? "niestandardowe" : "domyślne")]),
+        h("div", { id: "c2DisplayPreview" }, [
+          h("div", { style: `position:absolute;inset:0;background:${d.colors?.BACKGROUND || "#000"};display:flex;align-items:center;justify-content:center;gap:12px` }, [
+            h("span", { style: `width:28px;height:28px;border-radius:50%;background:${d.colors?.A || "#c4002f"}` }),
+            h("span", { style: `width:14px;height:14px;border-radius:50%;background:${d.colors?.DOT || "#d7ff3d"}` }),
+            h("span", { style: `width:28px;height:28px;border-radius:50%;background:${d.colors?.B || "#2a62ff"}` }),
+          ]),
+        ]),
+      ])),
+      summarySection("Finał", h("div", { class: "summarySectionValue", text: hasFinal ? "Tak" : "Nie" })),
     ];
+    sections.push(summarySection("Pytania rund", h("div", { class: "summaryQMode", text:
+      s.roundsQuestionsMode === "pick" ? `Ustalona kolejność (${s.roundsPicked?.length || 0})` : "Losowo" })));
     if (hasFinal) {
-      rows.push(row("Pytania finału", s.finalQuestionsMode === "pick" ? `Wybrane ręcznie (${state.final.picked?.length || 0}/5)` : "Losowo"));
+      sections.push(summarySection("Pytania finału", h("div", { class: "summaryQMode", text:
+        s.finalQuestionsMode === "pick" ? `Wybrane ręcznie (${state.final.picked?.length || 0}/5)` : "Losowo" })));
     }
 
     const reshuffleBtns = [];
     if (s.roundsQuestionsMode !== "pick") {
-      reshuffleBtns.push(h("button", { class: "c2-btn", type: "button", onclick: () => emit("setup.reshuffleRounds") }, [document.createTextNode("Losuj ponownie pytania rund")]));
+      reshuffleBtns.push(h("button", { class: "btn sm", type: "button", onclick: () => emit("setup.reshuffleRounds") }, [document.createTextNode("Losuj ponownie pytania rund")]));
     }
     if (hasFinal && s.finalQuestionsMode !== "pick") {
-      reshuffleBtns.push(h("button", { class: "c2-btn", type: "button", onclick: () => emit("setup.reshuffleFinal") }, [document.createTextNode("Losuj ponownie pytania finału")]));
+      reshuffleBtns.push(h("button", { class: "btn sm", type: "button", onclick: () => emit("setup.reshuffleFinal") }, [document.createTextNode("Losuj ponownie pytania finału")]));
     }
 
     const finalIncomplete = hasFinal && s.finalQuestionsMode === "pick" && (state.final.picked?.length !== 5 || !state.final.confirmed);
     const start = h("button", {
-      class: "c2-btn primary", type: "button",
+      class: "btn gold", type: "button",
       disabled: finalIncomplete ? "" : undefined,
       onclick: () => emit("setup.start"),
-    }, [document.createTextNode("Rozpocznij")]);
+    }, [document.createTextNode("Gotowe — przejdź do rund")]);
+    const changeSettings = h("button", { class: "btn sm", type: "button", onclick: () => emit("setup.openSettings") }, [document.createTextNode("Zmień ustawienia")]);
 
-    const children = [h("h2", { text: "Podsumowanie ustawień" }), ...rows];
-    if (reshuffleBtns.length) children.push(h("div", { class: "c2-topbar-actions" }, reshuffleBtns));
-    if (finalIncomplete) children.push(h("div", { class: "gs-hint" }, [document.createTextNode("Finał ustawiony na \"wybrane ręcznie\", ale nie wybrano 5 pytań w ustawieniach gry.")]));
-    children.push(start);
+    const body = [h("div", { class: "stepTitle", text: "Podsumowanie" }), h("div", { class: "card" }, [
+      h("div", { class: "cardBody" }, sections),
+      h("div", { class: "stepFoot" }, [
+        h("div", { class: "stepFootButtons" }, [changeSettings, ...reshuffleBtns, start]),
+        finalIncomplete ? h("div", { class: "msg msg-pill", text: "Finał ustawiony na \"wybrane ręcznie\", ale nie wybrano 5 pytań w ustawieniach gry." }) : null,
+      ]),
+    ])];
 
-    root.appendChild(h("div", { class: "c2-card-inner" }, children));
+    root.appendChild(h("div", { class: "cardBody" }, body));
   }
 
   // ============================================================
@@ -181,12 +261,32 @@ export function createUI({ root, emit }) {
     body.push(h("div", { class: "c2-bank", text: `Bank: ${r.bankPts}` }));
 
     if (state.phase === "DUEL") {
-      body.push(h("div", { class: "c2-duel" }, [
-        h("span", { text: `Zgłoszono: ${r.duel.lastPressed || "—"}` }),
-        r.duel.lastPressed && !r.duel.firstTeam
-          ? h("button", { class: "c2-btn primary", onclick: () => emit("game.dispatch", { type: "ACCEPT_BUZZ", team: r.duel.lastPressed }) }, [document.createTextNode("Przyjmij")])
-          : null,
-      ]));
+      if (state.settings.physicalBuzzer === true) {
+        // Brak Buzzera na ekranie — operator sam wskazuje, kto pierwszy
+        // nacisnął fizyczny przycisk. Zaznacz → potwierdź, żeby nie zaliczyć
+        // przypadkowego kliknięcia (plan: "physicalSelectTeam→potwierdź").
+        if (!pendingPhysicalTeam) {
+          body.push(h("div", { class: "c2-duel" }, [
+            h("button", { class: "c2-btn", onclick: () => { pendingPhysicalTeam = "A"; emit("ui.rerender"); } }, [document.createTextNode("Drużyna A")]),
+            h("button", { class: "c2-btn", onclick: () => { pendingPhysicalTeam = "B"; emit("ui.rerender"); } }, [document.createTextNode("Drużyna B")]),
+          ]));
+        } else {
+          body.push(h("div", { class: "c2-duel" }, [
+            h("span", { text: `Wybrano: ${pendingPhysicalTeam}` }),
+            h("button", { class: "c2-btn primary", onclick: () => { const t = pendingPhysicalTeam; pendingPhysicalTeam = null; emit("game.dispatch", { type: "ACCEPT_BUZZ", team: t }); } }, [document.createTextNode("Potwierdź")]),
+            h("button", { class: "c2-btn", onclick: () => { pendingPhysicalTeam = null; emit("ui.rerender"); } }, [document.createTextNode("Anuluj")]),
+          ]));
+        }
+      } else {
+        body.push(h("div", { class: "c2-duel" }, [
+          h("span", { text: `Zgłoszono: ${r.duel.lastPressed || "—"}` }),
+          r.duel.lastPressed && !r.duel.firstTeam
+            ? h("button", { class: "c2-btn primary", onclick: () => emit("game.dispatch", { type: "ACCEPT_BUZZ", team: r.duel.lastPressed }) }, [document.createTextNode("Przyjmij")])
+            : null,
+        ]));
+      }
+    } else if (pendingPhysicalTeam) {
+      pendingPhysicalTeam = null; // faza się zmieniła spod nas — porzuć nieaktualne zaznaczenie
     }
 
     const nav = [];
@@ -325,6 +425,7 @@ export function createUI({ root, emit }) {
   }
 
   function render(state, ctx = {}) {
+    updateTopbarDots(ctx.presenceFlags);
     const s = state.step;
     if (s === "devices_display" || s === "devices_hostbuzzer") return renderDevicesStep(state, ctx);
     if (s === "setup_finish") return renderSetupFinish(state);
