@@ -99,6 +99,31 @@ test("timer P2: 20s zamiast 15s", async () => {
   assert.equal(store.state.final.runtime.timer.endsAt, t + 20_000);
 });
 
+test("timer P1: jednorazowy — po naturalnym wygaśnięciu NIE da się go wystartować drugi raz w tej samej rundzie", async () => {
+  let t = 1_000_000;
+  const { store, dispatch } = makeEngine({}, () => t);
+  await dispatch({ type: "START_FINAL" });
+  await dispatch({ type: "START_TIMER", phase: "P1" });
+  await dispatch({ type: "EXPIRE_TIMER" });
+
+  const revBefore = store.state.rev;
+  const result = await dispatch({ type: "START_TIMER", phase: "P1" });
+  assert.equal(result, null, "control/js/gameFinal.js's p1StartTimer(): usedP1 raz true nigdy nie wraca");
+  assert.equal(store.state.rev, revBefore);
+});
+
+test("timer P1/P2: usedP1/usedP2 są niezależne — wyczerpanie P1 nie blokuje P2", async () => {
+  let t = 1_000_000;
+  const { store, dispatch } = makeEngine({}, () => t);
+  await dispatch({ type: "START_FINAL" });
+  await dispatch({ type: "START_TIMER", phase: "P1" });
+  await dispatch({ type: "EXPIRE_TIMER" });
+
+  await dispatch({ type: "START_TIMER", phase: "P2" });
+  assert.equal(store.state.final.runtime.timer.running, true);
+  assert.equal(store.state.final.runtime.timer.phase, "P2");
+});
+
 test("START_MAPPING: czyści timer, jeśli operator kliknął 'Dalej' zanim ten naturalnie wygasł (bez tego running=true zostałoby w zapisanym stanie na zawsze)", async () => {
   let t = 1_000_000;
   const { store, dispatch } = makeEngine({}, () => t);

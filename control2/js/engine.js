@@ -91,6 +91,49 @@ function clearTimer3(r) {
   r.timer3 = { running: false, endsAt: 0, resolved: null };
 }
 
+// control/js/gameRounds.js's duelResetCycle(): w pojedynku drużyny walczą
+// o TĘ SAMĄ odpowiedź na zmianę, nie tylko o odpowiedź #1 — pudło idzie
+// przez ADD_X (pts=0,isX=true), trafienie przez REVEAL_ANSWER (pts=realne
+// punkty tej odpowiedzi, może być dowolna, nie tylko topowa). Pierwsza
+// próba w cyklu wygrywa natychmiast TYLKO gdy trafiono odpowiedź #1 bez
+// pudła; w każdym innym przypadku (pudło ALBO trafienie nie-topowej
+// odpowiedzi) oddaje głos drugiej drużynie. Druga próba porównuje punkty
+// obu prób (pudło liczy się jako 0, remis idzie do pierwszej drużyny w
+// cyklu). Gdy obie spudłowały (obie ≤0), reset NIE czyści firstTeam/
+// secondTeam i NIE wraca do r_duel — nie ma "ponownego buzzera" (Ty masz
+// jakieś sprzeczne informacje — nie ma czegoś takiego), po prostu kolej
+// wraca do firstTeam na tę samą, wciąż otwartą rundę pojedynku.
+function duelResetCycle(d) {
+  d.cycleFirstAnswered = false;
+  d.cycleSecondAnswered = false;
+  d.cycleFirstPts = 0;
+  d.cycleSecondPts = 0;
+  d.cycleFirstIsX = false;
+  d.cycleSecondIsX = false;
+  d.currentTeam = d.firstTeam || null;
+}
+
+function duelRegisterResult(d, team, { pts, isX, isTop }) {
+  if (!d.cycleFirstAnswered) {
+    d.cycleFirstAnswered = true;
+    d.cycleFirstPts = pts;
+    d.cycleFirstIsX = !!isX;
+    if (!isX && isTop) return { type: "WIN", winner: team };
+    d.currentTeam = team === d.firstTeam ? d.secondTeam : d.firstTeam;
+    return { type: "CONTINUE_SECOND" };
+  }
+  d.cycleSecondAnswered = true;
+  d.cycleSecondPts = pts;
+  d.cycleSecondIsX = !!isX;
+  const firstPts = d.cycleFirstIsX ? 0 : d.cycleFirstPts;
+  const secondPts = d.cycleSecondIsX ? 0 : d.cycleSecondPts;
+  if (firstPts <= 0 && secondPts <= 0) {
+    duelResetCycle(d);
+    return { type: "RESET" };
+  }
+  return secondPts > firstPts ? { type: "WIN", winner: d.secondTeam } : { type: "WIN", winner: d.firstTeam };
+}
+
 function gotoEnd(state) {
   state.final.runtime.timer = { running: false, phase: null, endsAt: 0 };
   return { step: "f_end", phase: null, controlTeam: null, topCard: "final" };
@@ -149,7 +192,11 @@ const REDUCERS = {
     r.lockPlayControls = false;
     r.stealWon = false;
     r.steal = { active: false, used: false, team: null, won: null };
-    r.duel = { enabled: true, lastPressed: null, firstTeam: null, secondTeam: null, currentTeam: null };
+    r.duel = {
+      enabled: true, lastPressed: null, firstTeam: null, secondTeam: null, currentTeam: null,
+      cycleFirstAnswered: false, cycleSecondAnswered: false, cycleFirstPts: 0, cycleSecondPts: 0,
+      cycleFirstIsX: false, cycleSecondIsX: false,
+    };
     clearTimer3(r);
 
     return { step: "r_duel", phase: "DUEL", controlTeam: null, topCard: "rounds", soundCueKey: "round_transition" };
@@ -157,13 +204,24 @@ const REDUCERS = {
 
   // ---- R2->R3: przyjęcie bzyczenia (lastPressed już w state — zapisane
   // bezpośrednio przez Buzzer przez game_state_buzzer_press) ----
+  // control/js/gameRounds.js's acceptBuzz() samo nigdy nie gra dźwięku
+  // (confirmPhysicalTeam() woła je z jawnym komentarzem "bez dźwięku"); w
+  // trybie physicalBuzzer operator tylko zatwierdza, kto kliknął pierwszy,
+  // bez żadnego sygnału dźwiękowego.
   async ACCEPT_BUZZ(state, action) {
     const r = state.rounds;
     const other = action.team === "A" ? "B" : "A";
     r.duel.firstTeam = action.team;
     r.duel.secondTeam = other;
     r.duel.currentTeam = action.team;
-    return { step: "r_play", phase: "DUEL", controlTeam: null, topCard: "rounds", soundCueKey: "buzzer_press" };
+    r.duel.cycleFirstAnswered = false;
+    r.duel.cycleSecondAnswered = false;
+    r.duel.cycleFirstPts = 0;
+    r.duel.cycleSecondPts = 0;
+    r.duel.cycleFirstIsX = false;
+    r.duel.cycleSecondIsX = false;
+    const soundCueKey = state.settings.physicalBuzzer ? undefined : "buzzer_press";
+    return { step: "r_play", phase: "DUEL", controlTeam: null, topCard: "rounds", soundCueKey };
   },
 
   // ---- R3/R4/R5/R8: odsłonięcie odpowiedzi — jeden reducer, gałąź wg
@@ -177,18 +235,23 @@ const REDUCERS = {
     clearTimer3(r);
 
     if (state.phase === "DUEL") {
+      // control/js/gameRounds.js's revealAnswerByOrd(): w pojedynku wolno
+      // odsłonić DOWOLNĄ odpowiedź, nie tylko #1 — jej punkty zawsze trafiają
+      // do banku, a wynik (trafienie/nie-topowa) idzie przez
+      // duelRegisterResult tak samo jak pudło z ADD_X.
       const top = topAnswer(r.answers);
-      if (!top || action.ord !== top.ord) return null; // pudło w DUEL idzie przez ADD_X
+      const isTop = !!top && action.ord === top.ord;
+      const team = r.duel.currentTeam || r.duel.firstTeam || "A";
       r.revealed.push(action.ord);
       r.bankPts += ans.fixed_points;
-      r.allowPass = true;
-      return {
-        step: "r_play",
-        phase: "PLAY",
-        controlTeam: r.duel.currentTeam,
-        topCard: "rounds",
-        soundCueKey: "answer_correct",
-      };
+      const result = duelRegisterResult(r.duel, team, { pts: ans.fixed_points, isX: false, isTop });
+      if (result.type === "WIN") {
+        r.allowPass = true;
+        return { step: "r_play", phase: "PLAY", controlTeam: result.winner, topCard: "rounds", soundCueKey: "answer_correct" };
+      }
+      // CONTINUE_SECOND lub RESET — duel.currentTeam już zaktualizowany przez
+      // duelRegisterResult, zostajemy w tym samym kroku/fazie.
+      return { step: "r_play", phase: "DUEL", controlTeam: null, topCard: "rounds", soundCueKey: "answer_correct" };
     }
 
     r.revealed.push(action.ord);
@@ -229,16 +292,17 @@ const REDUCERS = {
       // przy KAŻDYM pudle w pojedynku, nie tylko przy jego rozstrzygnięciu —
       // missSeq/lastMissTeam to jedyny sposób, żeby deriveEvents (diff stanu)
       // w ogóle zauważył to zdarzenie, bo pudło w DUEL nie rusza xA/xB.
-      const missedTeam = r.duel.currentTeam;
+      const missedTeam = r.duel.currentTeam || r.duel.firstTeam || "A";
       r.duel.lastMissTeam = missedTeam;
       r.duel.missSeq = (r.duel.missSeq || 0) + 1;
-      if (r.duel.currentTeam === r.duel.firstTeam) {
-        r.duel.currentTeam = r.duel.secondTeam;
-        return { step: "r_play", phase: "DUEL", controlTeam: null, topCard: "rounds", soundCueKey: "answer_wrong" };
+      const result = duelRegisterResult(r.duel, missedTeam, { pts: 0, isX: true, isTop: false });
+      if (result.type === "WIN") {
+        r.allowPass = true;
+        return { step: "r_play", phase: "PLAY", controlTeam: result.winner, topCard: "rounds", soundCueKey: "answer_wrong" };
       }
-      // obie drużyny spudłowały -> pełny RESET, powrót do r_duel
-      r.duel = { enabled: true, lastPressed: null, firstTeam: null, secondTeam: null, currentTeam: null, missSeq: r.duel.missSeq, lastMissTeam: missedTeam };
-      return { step: "r_duel", phase: "DUEL", controlTeam: null, topCard: "rounds" };
+      // CONTINUE_SECOND lub RESET (obie spudłowały — kolej wraca do
+      // firstTeam, BEZ ponownego buzzera: firstTeam/secondTeam zostają).
+      return { step: "r_play", phase: "DUEL", controlTeam: null, topCard: "rounds", soundCueKey: "answer_wrong" };
     }
 
     if (state.phase === "STEAL") {
@@ -365,7 +429,7 @@ const REDUCERS = {
     f.questions = questions;
     f.runtime = {
       sum: 0,
-      timer: { running: false, phase: null, endsAt: 0 },
+      timer: { running: false, phase: null, endsAt: 0, usedP1: false, usedP2: false },
       map1: emptyMapRows(),
       map2: emptyMapRows(),
       p1: new Array(5).fill(null),
@@ -398,9 +462,16 @@ const REDUCERS = {
     return { ...sameStep(state), soundCueKey: action.repeat ? "answer_repeat" : undefined };
   },
 
+  // control/js/gameFinal.js's p1StartTimer()/p2StartTimer(): timer gracza to
+  // JEDNORAZOWA szansa na rundę — `usedP1`/`usedP2` raz ustawione na true nie
+  // wraca (nie da się "odświeżyć" 15/20 sekund ponownym startem, ani po
+  // naturalnym wygaśnięciu, ani po wcześniejszym zatrzymaniu).
   async START_TIMER(state, action, deps) {
+    const t = state.final.runtime.timer;
+    const usedKey = action.phase === "P1" ? "usedP1" : "usedP2";
+    if (t[usedKey]) return null;
     const seconds = TIMER_SECONDS[action.phase];
-    state.final.runtime.timer = { running: true, phase: action.phase, endsAt: deps.now() + seconds * 1000 };
+    state.final.runtime.timer = { ...t, running: true, phase: action.phase, endsAt: deps.now() + seconds * 1000, [usedKey]: true };
     return sameStep(state);
   },
 
@@ -409,7 +480,7 @@ const REDUCERS = {
   async EXPIRE_TIMER(state) {
     const t = state.final.runtime.timer;
     if (!t.running) return null;
-    state.final.runtime.timer = { running: false, phase: t.phase, endsAt: 0 };
+    state.final.runtime.timer = { ...t, running: false, endsAt: 0 };
     return { ...sameStep(state), soundCueKey: "time_over" };
     // Brak auto-przejścia do mapowania — operator klika "dalej" ręcznie
     // (START_MAPPING/NEXT_QUESTION), dokładnie jak w oryginale.
@@ -463,7 +534,7 @@ const REDUCERS = {
   // trakcie mapowania) fałszywie odpalałoby EXPIRE_TIMER/"time_over" poza
   // kontekstem wpisywania.
   async START_MAPPING(state, action) {
-    state.final.runtime.timer = { running: false, phase: null, endsAt: 0 };
+    state.final.runtime.timer = { ...state.final.runtime.timer, running: false, phase: null, endsAt: 0 };
     return { step: `f_p${action.round}_map_q1`, phase: null, controlTeam: null, topCard: "final" };
   },
 

@@ -85,12 +85,12 @@ Ta strona jest wygenerowana z `shared/gameStateMachine.js` — jedynego źródł
 - **Karta**: `rounds`
 - **Dozwolone fazy**: `DUEL`, `PLAY`, `STEAL`, `REVEAL`
 - **Wejście**: przyjęcie bzyczenia (phase pozostaje DUEL do rozstrzygnięcia pojedynku), potem naturalne przejścia PLAY→STEAL→REVEAL wewnątrz tego samego kroku
-- **Zapis (`detail`)**: controlTeam, bankPts, xA, xB, revealed[], steal={active,used,team,won}, allowPass, passUsed
+- **Zapis (`detail`)**: controlTeam, bankPts, xA, xB, revealed[], steal={active,used,team,won}, allowPass, passUsed, duel={...,cycleFirstAnswered,cycleSecondAnswered,cycleFirstPts,cycleSecondPts,cycleFirstIsX,cycleSecondIsX}
 - **Display**: INDICATOR ON_A/ON_B (kto ma kontrolę — zmienia się przy CONTINUE_SECOND/RESET/STEAL); odsłonięte odpowiedzi z punktami; lampki X (sloty 1-3 licznik, slot 4 osobny 'duży X'/flash); TOP=bank; LEFT/RIGHT=wyniki drużyn.
 - **Host**: SET1=tytuł zależny od fazy + pytanie, SET2=lista odpowiedzi z zielonym podświetleniem odkrytych. Host NIGDY nie pokazuje banku, X ani wskaźnika kontroli.
 - **Buzzer**: Wyłączony przez cały ten krok.
 - **Dźwięki**: `buzzer_press`, `answer_correct`, `answer_wrong`, `reveal`, `round_transition`
-- **Dozwolone kolejne kroki**: `r_duel`, `r_play`, `r_roundStart`, `f_start`, `r_gameEnd`
+- **Dozwolone kolejne kroki**: `r_play`, `r_roundStart`, `f_start`, `r_gameEnd`
 
 ### `r_gameEnd`
 

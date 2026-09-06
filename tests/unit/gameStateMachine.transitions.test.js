@@ -93,8 +93,8 @@ test("każdy krok mapowania finału (obu rund) może wcześnie wyjść na f_end 
   }
 });
 
-test("r_play dopuszcza pętlę powrotną do r_duel (pełny RESET pojedynku)", () => {
-  assert.ok(STEPS.r_play.next.includes("r_duel"));
+test("r_play NIE wraca do r_duel — RESET pojedynku (obie drużyny spudłowały) zostaje w r_play, bez ponownego buzzera", () => {
+  assert.ok(!STEPS.r_play.next.includes("r_duel"));
 });
 
 test("terminalne kroki (r_gameEnd, f_end) nie mają dalszych przejść", () => {

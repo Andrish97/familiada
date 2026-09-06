@@ -89,14 +89,46 @@ test("pojedynek: trafienie w odpowiedź #1 przy pierwszej próbie -> WIN, phase=
   assert.equal(store.state.rounds.bankPts, 40);
 });
 
-test("pojedynek: REVEAL_ANSWER na złej (nie-topowej) odpowiedzi w DUEL jest no-opem, nie liczy się jako pudło", async () => {
+test("pojedynek: REVEAL_ANSWER na nie-topowej odpowiedzi w DUEL NIE wygrywa od razu — oddaje głos drugiej drużynie, punkty i tak trafiają do banku", async () => {
   const { store, dispatch } = makeEngine();
   await dispatch({ type: "START_ROUND" });
   await dispatch({ type: "ACCEPT_BUZZ", team: "A" });
-  const revBefore = store.state.rev;
-  const result = await dispatch({ type: "REVEAL_ANSWER", ord: 2 }); // nie najwyżej punktowana
-  assert.equal(result, null);
-  assert.equal(store.state.rev, revBefore);
+  await dispatch({ type: "REVEAL_ANSWER", ord: 2 }); // A trafia w #2 (30 pkt), ale to nie #1
+  assert.equal(store.state.phase, "DUEL", "wciąż trwa rozstrzyganie pojedynku");
+  assert.equal(store.state.rounds.duel.currentTeam, "B");
+  assert.ok(store.state.rounds.revealed.includes(2));
+  assert.equal(store.state.rounds.bankPts, 30, "punkty trafiają do banku niezależnie od wyniku pojedynku");
+});
+
+test("pojedynek: obie drużyny trafiają nie-topowe odpowiedzi — wyższe punkty wygrywają (bez względu na #1)", async () => {
+  const { store, dispatch } = makeEngine();
+  await dispatch({ type: "START_ROUND" });
+  await dispatch({ type: "ACCEPT_BUZZ", team: "A" });
+  await dispatch({ type: "REVEAL_ANSWER", ord: 3 }); // A: 20 pkt, nie-topowa -> CONTINUE_SECOND (B)
+  await dispatch({ type: "REVEAL_ANSWER", ord: 2 }); // B: 30 pkt > 20 -> WIN dla B
+  assert.equal(store.state.phase, "PLAY");
+  assert.equal(store.state.controlTeam, "B");
+  assert.equal(store.state.rounds.bankPts, 50);
+});
+
+test("pojedynek: remis punktowy w drugiej próbie idzie do pierwszej drużyny cyklu", async () => {
+  const { store, dispatch } = makeEngine();
+  await dispatch({ type: "START_ROUND" });
+  await dispatch({ type: "ACCEPT_BUZZ", team: "A" });
+  await dispatch({ type: "REVEAL_ANSWER", ord: 2 }); // A: 30 pkt -> CONTINUE_SECOND (B)
+  await dispatch({ type: "ADD_X" }); // B pudłuje po trafieniu A -> ale to nie remis, sprawdzone osobno
+  assert.equal(store.state.phase, "PLAY", "A miał punkty (30), B spudłował (0) -> WIN dla A");
+  assert.equal(store.state.controlTeam, "A");
+});
+
+test("pojedynek: trafienie w #1 przez drugą drużynę po nie-topowej pierwszej próbie -> WIN dla drugiej", async () => {
+  const { store, dispatch } = makeEngine();
+  await dispatch({ type: "START_ROUND" });
+  await dispatch({ type: "ACCEPT_BUZZ", team: "A" });
+  await dispatch({ type: "REVEAL_ANSWER", ord: 4 }); // A: 10 pkt, nie-topowa -> CONTINUE_SECOND (B)
+  await dispatch({ type: "REVEAL_ANSWER", ord: 1 }); // B: 40 pkt > 10 -> WIN dla B
+  assert.equal(store.state.controlTeam, "B");
+  assert.equal(store.state.rounds.bankPts, 50);
 });
 
 test("pojedynek: pierwsza drużyna pudłuje (ADD_X), druga trafia -> WIN dla drugiej", async () => {
@@ -111,16 +143,34 @@ test("pojedynek: pierwsza drużyna pudłuje (ADD_X), druga trafia -> WIN dla dru
   assert.equal(store.state.controlTeam, "B");
 });
 
-test("pojedynek: obie drużyny pudłują -> pełny RESET, powrót do r_duel z odblokowanym buzzerem", async () => {
+test("pojedynek: obie drużyny pudłują -> RESET cyklu, BEZ ponownego buzzera — firstTeam/secondTeam zostają, kolej wraca do firstTeam", async () => {
   const { store, dispatch } = makeEngine();
   await dispatch({ type: "START_ROUND" });
   await dispatch({ type: "ACCEPT_BUZZ", team: "A" });
   await dispatch({ type: "ADD_X" }); // A pudłuje
-  await dispatch({ type: "ADD_X" }); // B też pudłuje -> RESET
-  assert.equal(store.state.step, "r_duel");
+  await dispatch({ type: "ADD_X" }); // B też pudłuje -> RESET cyklu (nie pełny reset pojedynku)
+  assert.equal(store.state.step, "r_play", "nie ma czegoś takiego jak ponowny buzer");
   assert.equal(store.state.phase, "DUEL");
-  assert.equal(store.state.rounds.duel.lastPressed, null);
-  assert.equal(store.state.rounds.duel.firstTeam, null);
+  assert.equal(store.state.rounds.duel.firstTeam, "A", "firstTeam/secondTeam nie są czyszczone przy RESET");
+  assert.equal(store.state.rounds.duel.secondTeam, "B");
+  assert.equal(store.state.rounds.duel.currentTeam, "A", "kolej wraca do firstTeam");
+
+  // ta sama runda, bez nowego buzzera, toczy się dalej: A trafia w #1 -> WIN
+  await dispatch({ type: "REVEAL_ANSWER", ord: 1 });
+  assert.equal(store.state.phase, "PLAY");
+  assert.equal(store.state.controlTeam, "A");
+});
+
+test("ACCEPT_BUZZ: gra buzzer_press w trybie normalnym, ale NIE gra żadnego dźwięku w trybie physicalBuzzer", async () => {
+  const normal = makeEngine();
+  await normal.dispatch({ type: "START_ROUND" });
+  await normal.dispatch({ type: "ACCEPT_BUZZ", team: "A" });
+  assert.equal(normal.store.commits.at(-1).soundCueKey, "buzzer_press");
+
+  const physical = makeEngine({ settings: { ...DEFAULT_SETTINGS, physicalBuzzer: true } });
+  await physical.dispatch({ type: "START_ROUND" });
+  await physical.dispatch({ type: "ACCEPT_BUZZ", team: "A" });
+  assert.equal(physical.store.commits.at(-1).soundCueKey, null, "physicalBuzzer: zatwierdzamy kto kliknął pierwszy, bez dźwięku");
 });
 
 test("PLAY: trafienia dokładają do banku, X poniżej progu nie wywołuje STEAL", async () => {
