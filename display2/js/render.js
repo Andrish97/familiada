@@ -19,8 +19,8 @@
 // opóźnienia między krokami tej samej zmiany) wymagają dostrojenia
 // wizualnego względem prawdziwego wyglądu — nie zgadywane tu na ślepo.
 
-import { deriveEvents } from "../../shared/deriveEvents.js?v=v2026-09-05T19503";
-import { resolveRoundsEndScreen, resolveFinalEndScreen } from "../../shared/endScreen.js?v=v2026-09-05T19503";
+import { deriveEvents } from "../../shared/deriveEvents.js?v=v2026-09-06T07370";
+import { resolveRoundsEndScreen, resolveFinalEndScreen } from "../../shared/endScreen.js?v=v2026-09-06T07370";
 
 const ROUND_INTRO_ANIM = { type: "matrix", axis: "down", ms: 1500 };
 const ROUND_OUT_ANIM = { type: "edge", dir: "down", ms: 1000 };
