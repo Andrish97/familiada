@@ -81,6 +81,16 @@ function sameStep(state) {
   return { step: state.step, phase: state.phase, controlTeam: state.controlTeam, topCard: state.topCard };
 }
 
+// control/js/gameRounds.js's clearTimer3(): 3-sekundowy zegarek na decyzję
+// (DUEL/PLAY/STEAL) — jeśli operator sam rozstrzygnie coś przed jego
+// wygaśnięciem (odsłoni odpowiedź, doda X ręcznie, odda pytanie, ręcznie
+// wejdzie w kradzież, zakończy rundę), zegarek trzeba zdjąć, inaczej
+// zaplanowane w control2/js/app.js wywołanie EXPIRE_TIMER3 later doliczyłoby
+// dodatkowe, nieproszone pudło po fakcie.
+function clearTimer3(r) {
+  r.timer3 = { running: false, endsAt: 0, resolved: null };
+}
+
 function gotoEnd(state) {
   state.final.runtime.timer = { running: false, phase: null, endsAt: 0 };
   return { step: "f_end", phase: null, controlTeam: null, topCard: "final" };
@@ -140,6 +150,7 @@ const REDUCERS = {
     r.stealWon = false;
     r.steal = { active: false, used: false, team: null, won: null };
     r.duel = { enabled: true, lastPressed: null, firstTeam: null, secondTeam: null, currentTeam: null };
+    clearTimer3(r);
 
     return { step: "r_duel", phase: "DUEL", controlTeam: null, topCard: "rounds", soundCueKey: "round_transition" };
   },
@@ -163,6 +174,7 @@ const REDUCERS = {
 
     const ans = r.answers.find((a) => a.ord === action.ord);
     if (!ans || r.revealed.includes(action.ord)) return null;
+    clearTimer3(r);
 
     if (state.phase === "DUEL") {
       const top = topAnswer(r.answers);
@@ -200,6 +212,7 @@ const REDUCERS = {
   async PASS(state) {
     const r = state.rounds;
     if (state.phase !== "PLAY" || !r.allowPass || r.passUsed) return null;
+    clearTimer3(r);
     r.passUsed = true;
     r.allowPass = false;
     const nextControl = state.controlTeam === "A" ? "B" : "A";
@@ -209,6 +222,7 @@ const REDUCERS = {
   // ---- R3/R4/R5: pudło — gałąź wg fazy ----
   async ADD_X(state) {
     const r = state.rounds;
+    clearTimer3(r);
 
     if (state.phase === "DUEL") {
       // Krótki błysk na Display (slot 4, roundsFlashDuelX w starym systemie)
@@ -257,15 +271,37 @@ const REDUCERS = {
   async GO_STEAL(state) {
     const r = state.rounds;
     if (state.phase !== "PLAY" || !state.controlTeam) return null;
+    clearTimer3(r);
     const other = state.controlTeam === "A" ? "B" : "A";
     r.steal = { active: true, used: false, team: other, won: null };
     return { step: "r_play", phase: "STEAL", controlTeam: state.controlTeam, topCard: "rounds" };
+  },
+
+  // ---- 3s zegarek na decyzję (DUEL/PLAY/STEAL) — control/js/gameRounds.js's
+  // startTimer3Internal(): opcjonalny, operator włącza go sam; jeśli nikt nie
+  // rozstrzygnie w ciągu 3s, EXPIRE_TIMER3 (dispatch'owane z zegarka w
+  // control2/js/app.js, ten sam mechanizm co finałowy timer) dolicza X
+  // dokładnie tak samo jak ręczne kliknięcie ADD_X. ----
+  async START_TIMER3(state, action, deps) {
+    const r = state.rounds;
+    if (state.phase === "REVEAL" || r.canEndRound || r.lockPlayControls) return null;
+    if (r.timer3?.running) return null;
+    r.timer3 = { running: true, endsAt: deps.now() + 3000, resolved: null };
+    return sameStep(state);
+  },
+
+  async EXPIRE_TIMER3(state) {
+    const r = state.rounds;
+    if (!r.timer3?.running) return null;
+    r.timer3 = { running: false, endsAt: 0, resolved: "X" };
+    return REDUCERS.ADD_X(state);
   },
 
   // ---- R6-R7: koniec rundy ----
   async END_ROUND(state) {
     const r = state.rounds;
     if (!state.controlTeam) return null;
+    clearTimer3(r);
     r.lockPlayControls = true;
 
     const winner = r.steal.used && r.steal.won ? r.steal.team : state.controlTeam;

@@ -153,11 +153,56 @@ export function createUI({ root, emit }) {
     ]);
   }
 
-  function renderSetupFinish(state) {
+  // Wiersz-atrapa "rundy w toku" do podglądu D3 — Display umie renderować
+  // WYŁĄCZNIE prawdziwy wiersz game_state, więc żeby operator zobaczył
+  // realny wygląd (kolory/motyw/logo/nazwy drużyn) przed startem gry,
+  // trzeba mu dać kompletny, choć zmyślony, taki wiersz. Treść przykładowa,
+  // ale kształt 1:1 z tym, co produkuje control2/js/engine.js.
+  function buildPreviewRow(state) {
+    const d = state.display;
+    return {
+      top_card: "rounds", step: "r_play", phase: "PLAY", control_team: "A",
+      sound_cue_key: null, sound_cue_seq: 0,
+      detail: {
+        teams: { teamA: state.teams.teamA || "Drużyna A", teamB: state.teams.teamB || "Drużyna B" },
+        rounds: {
+          roundNo: 1, bankPts: 70, xA: 1, xB: 0, totals: { A: 120, B: 80 },
+          question: { text: "PRZYKŁADOWE PYTANIE" },
+          answers: [
+            { ord: 1, text: "Pierwsza odpowiedź", fixed_points: 40 },
+            { ord: 2, text: "Druga odpowiedź", fixed_points: 30 },
+            { ord: 3, text: "Trzecia odpowiedź", fixed_points: 20 },
+            { ord: 4, text: "Czwarta odpowiedź", fixed_points: 10 },
+            { ord: 5, text: "Piąta odpowiedź", fixed_points: 6 },
+            { ord: 6, text: "Szósta odpowiedź", fixed_points: 4 },
+          ],
+          revealed: [1, 2], steal: {}, duel: {},
+        },
+        final: { runtime: {} },
+        display: { mode: "GAME", colors: d.colors, theme: d.theme, logoId: d.logoId, qr: { host: { show: false }, buzzer: { show: false } } },
+        host: { covered: false },
+        locks: { gameEnded: false },
+      },
+    };
+  }
+
+  function renderSetupFinish(state, ctx = {}) {
     clear();
     const s = state.settings;
     const d = state.display;
     const hasFinal = s.hasFinal === true;
+
+    const previewSrc = ctx.urls?.displayUrl
+      ? `${ctx.urls.displayUrl}${ctx.urls.displayUrl.includes("?") ? "&" : "?"}preview=1`
+      : null;
+    const previewFrame = previewSrc ? h("iframe", { src: previewSrc, title: "Podgląd wyświetlacza" }) : null;
+    if (previewFrame) {
+      window.addEventListener("message", function onReady(e) {
+        if (e.data?.type !== "familiada:preview-ready" || e.source !== previewFrame.contentWindow) return;
+        window.removeEventListener("message", onReady);
+        previewFrame.contentWindow.postMessage({ type: "familiada:preview-row", row: buildPreviewRow(state) }, "*");
+      });
+    }
 
     const sections = [
       summarySection("Drużyny", h("div", { class: "summarySectionValue", text: `${state.teams.teamA || "Drużyna A"} vs ${state.teams.teamB || "Drużyna B"}` })),
@@ -165,13 +210,7 @@ export function createUI({ root, emit }) {
         h("div", { class: "summaryDisplayRow" }, [h("span", { class: "summaryDisplayLabel", text: "Kolory: " }), colorDots(d.colors)]),
         h("div", { class: "summaryDisplayRow" }, [h("span", { class: "summaryDisplayLabel", text: "Motyw: " }), document.createTextNode(d.theme || "domyślny")]),
         h("div", { class: "summaryDisplayRow" }, [h("span", { class: "summaryDisplayLabel", text: "Logo: " }), document.createTextNode(d.logoId ? "niestandardowe" : "domyślne")]),
-        h("div", { id: "c2DisplayPreview" }, [
-          h("div", { style: `position:absolute;inset:0;background:${d.colors?.BACKGROUND || "#000"};display:flex;align-items:center;justify-content:center;gap:12px` }, [
-            h("span", { style: `width:28px;height:28px;border-radius:50%;background:${d.colors?.A || "#c4002f"}` }),
-            h("span", { style: `width:14px;height:14px;border-radius:50%;background:${d.colors?.DOT || "#d7ff3d"}` }),
-            h("span", { style: `width:28px;height:28px;border-radius:50%;background:${d.colors?.B || "#2a62ff"}` }),
-          ]),
-        ]),
+        h("div", { id: "c2DisplayPreview" }, previewFrame ? [previewFrame] : []),
       ])),
       summarySection("Finał", h("div", { class: "summarySectionValue", text: hasFinal ? "Tak" : "Nie" })),
     ];
@@ -218,8 +257,36 @@ export function createUI({ root, emit }) {
     root.appendChild(h("div", { class: "c2-card-inner c2-gameplay" }, [
       h("div", { class: "c2-stepper", text: stepLabel }),
       h("div", { class: "c2-gameplay-body" }, body),
-      h("div", { class: "c2-gameplay-nav" }, nav),
+      nav ? h("div", { class: "c2-gameplay-nav" }, nav) : null,
     ]));
+  }
+
+  // ============================================================
+  // Siatka 3x5 współdzielona przez Rundy-odsłanianie i Finał-odsłanianie —
+  // ustalona wspólnie z właścicielem projektu: jednostka to 1/3 szerokości
+  // wiersza, niektóre kafle zajmują 1,5 jednostki (pół wiersza). Wewnętrznie
+  // 6 kolumn (LCD z 2 i 3), żeby obie szerokości wyrazić całkowitym `span`.
+  // Wiersz 4 zostaje pusty, chyba że akurat trzeba w nim pokazać coś
+  // rzadkiego (Pass/Kradzież) — nieużywane kafle po prostu nie istnieją w
+  // DOM, więc rytm 5 wierszy się nie rusza niezależnie od tego, co akurat
+  // jest dostępne.
+  const THIRD = (i) => `${i * 2 + 1} / ${i * 2 + 3}`; // i=0,1,2 — 1 jednostka
+  const HALF = (i) => `${i * 3 + 1} / ${i * 3 + 4}`;  // i=0,1   — 1,5 jednostki
+
+  function tile(content, { row, col, cls = "", onclick, disabled = false } = {}) {
+    const el = h("button", {
+      class: `c2-tile ${cls}`.trim(),
+      type: "button",
+      onclick: disabled ? undefined : onclick,
+    }, [typeof content === "string" ? document.createTextNode(content) : content]);
+    el.style.gridRow = String(row);
+    el.style.gridColumn = col;
+    if (disabled) el.disabled = true;
+    return el;
+  }
+
+  function tileGrid(tiles) {
+    return h("div", { class: "c2-tilegrid" }, tiles.filter(Boolean));
   }
 
   // ---- Rundy (r_intro..r_gameEnd) ----
@@ -242,24 +309,18 @@ export function createUI({ root, emit }) {
       return;
     }
 
-    // r_duel / r_play (wspólny ekran gry właściwej)
+    // r_duel / r_play (wspólny ekran gry właściwej) — siatka 3x5: wiersze
+    // 1-3 to do 6 odpowiedzi (2 na wiersz, 1,5 jednostki szerokości), wiersz
+    // 4 to Pass/Kradzież (tylko gdy akurat dostępne), wiersz 5 to X / zegarek
+    // 3s (środek) / Zakończ rundę.
     const body = [];
     body.push(h("div", { class: "c2-question", text: r.question?.text || "—" }));
-    const answersGrid = h("div", { class: "c2-answers-grid" });
-    for (const a of r.answers) {
-      const revealed = r.revealed.includes(a.ord);
-      const btn = h("button", {
-        class: `c2-answer-btn ${revealed ? "revealed" : ""}`,
-        type: "button",
-        disabled: revealed || state.phase === "REVEAL" ? undefined : undefined,
-        onclick: () => emit("game.dispatch", { type: state.phase === "REVEAL" ? "REVEAL_LEFT" : "REVEAL_ANSWER", ord: a.ord }),
-      }, [document.createTextNode(revealed ? `${a.text} — ${a.fixed_points}` : `#${a.ord}`)]);
-      if (revealed) btn.disabled = true;
-      answersGrid.appendChild(btn);
-    }
-    body.push(answersGrid);
     body.push(h("div", { class: "c2-bank", text: `Bank: ${r.bankPts}` }));
 
+    // Status pojedynku (Zgłoszono/Przyjmij albo wybór ręczny) idzie PRZED
+    // siatką, nie po niej — siatka ma flex:1 i wypełnia całą resztę miejsca,
+    // więc coś wepchnięte za nią przy overflow:hidden (zero przewijania)
+    // zostałoby niewidocznie obcięte.
     if (state.phase === "DUEL") {
       if (state.settings.physicalBuzzer === true) {
         // Brak Buzzera na ekranie — operator sam wskazuje, kto pierwszy
@@ -289,22 +350,56 @@ export function createUI({ root, emit }) {
       pendingPhysicalTeam = null; // faza się zmieniła spod nas — porzuć nieaktualne zaznaczenie
     }
 
-    const nav = [];
-    // X (pudło) w fazie DUEL — dopiero PO przyjęciu zgłoszenia (r.duel.firstTeam
-    // ustawione), bo wcześniej ADD_X nie ma jeszcze kogo przełączyć (engine.js:
-    // "pudło w DUEL idzie przez ADD_X", to jedyna droga do rozstrzygnięcia
-    // pojedynku pudłem — bez tego przycisku pojedynek nie mógł się zakończyć
-    // pudłem wcale).
+    // Siatka 3x5: wiersze 1-3 to do 6 odpowiedzi (2 na wiersz, 1,5 jednostki
+    // szerokości), wiersz 4 to Pass/Kradzież (tylko gdy akurat dostępne),
+    // wiersz 5 to X / zegarek 3s (środek) / Zakończ rundę.
+    const tiles = [];
+    const sortedAnswers = r.answers.slice().sort((a, b) => a.ord - b.ord).slice(0, 6);
+    sortedAnswers.forEach((a, i) => {
+      const revealed = r.revealed.includes(a.ord);
+      tiles.push(tile(revealed ? `${a.text} — ${a.fixed_points}` : `#${a.ord}`, {
+        row: Math.floor(i / 2) + 1,
+        col: HALF(i % 2),
+        cls: revealed ? "c2-tile-revealed" : "",
+        disabled: revealed,
+        onclick: () => emit("game.dispatch", { type: state.phase === "REVEAL" ? "REVEAL_LEFT" : "REVEAL_ANSWER", ord: a.ord }),
+      }));
+    });
+
+    // Wiersz 4: Pass i Kradzież, każdy niezależnie, tylko gdy akurat dostępny.
+    if (state.phase === "PLAY" && r.allowPass && !r.passUsed) {
+      tiles.push(tile("Pass", { row: 4, col: HALF(0), cls: "c2-tile-warn", onclick: () => emit("game.dispatch", { type: "PASS" }) }));
+    }
+    if (state.phase === "PLAY") {
+      tiles.push(tile("Kradzież", { row: 4, col: HALF(1), cls: "c2-tile-warn", onclick: () => emit("game.dispatch", { type: "GO_STEAL" }) }));
+    }
+
+    // Wiersz 5: X (lewo) / zegarek 3s (środek) / Zakończ rundę (prawo).
+    const timer3 = r.timer3;
+    const timer3Available = (state.phase === "PLAY" || state.phase === "STEAL" || (state.phase === "DUEL" && r.duel.firstTeam))
+      && !r.canEndRound && !r.lockPlayControls;
     if (state.phase === "DUEL" && r.duel.firstTeam) {
-      nav.push(h("button", { class: "c2-btn", onclick: () => emit("game.dispatch", { type: "ADD_X" }) }, [document.createTextNode("X")]));
+      tiles.push(tile("X", { row: 5, col: THIRD(0), cls: "c2-tile-danger", onclick: () => emit("game.dispatch", { type: "ADD_X" }) }));
     }
     if (state.phase === "PLAY" || state.phase === "STEAL") {
-      nav.push(h("button", { class: "c2-btn", onclick: () => emit("game.dispatch", { type: "ADD_X" }) }, [document.createTextNode("X")]));
-      if (r.allowPass && !r.passUsed) nav.push(h("button", { class: "c2-btn", onclick: () => emit("game.dispatch", { type: "PASS" }) }, [document.createTextNode("Pass")]));
-      if (state.phase === "PLAY") nav.push(h("button", { class: "c2-btn", onclick: () => emit("game.dispatch", { type: "GO_STEAL" }) }, [document.createTextNode("Kradzież")]));
-      if (r.canEndRound) nav.push(h("button", { class: "c2-btn primary", onclick: () => emit("game.dispatch", { type: "END_ROUND" }) }, [document.createTextNode("Zakończ rundę")]));
+      tiles.push(tile("X", { row: 5, col: THIRD(0), cls: "c2-tile-danger", onclick: () => emit("game.dispatch", { type: "ADD_X" }) }));
     }
-    gameplayShell({ stepLabel: `Runda ${r.roundNo} — bank ${r.bankPts}`, body, nav });
+    if (timer3Available) {
+      const running = !!timer3?.running;
+      const secLeft = running ? Math.max(0, Math.ceil((timer3.endsAt - Date.now()) / 1000)) : null;
+      tiles.push(tile(running ? String(secLeft) : "Timer 3s", {
+        row: 5, col: THIRD(1),
+        cls: running ? "c2-tile-timer" : "c2-tile-timer startable",
+        disabled: running,
+        onclick: running ? undefined : () => emit("game.dispatch", { type: "START_TIMER3" }),
+      }));
+    }
+    if ((state.phase === "PLAY" || state.phase === "STEAL") && r.canEndRound) {
+      tiles.push(tile("Zakończ rundę", { row: 5, col: THIRD(2), cls: "c2-tile-primary", onclick: () => emit("game.dispatch", { type: "END_ROUND" }) }));
+    }
+    body.push(tileGrid(tiles));
+
+    gameplayShell({ stepLabel: `Runda ${r.roundNo} — bank ${r.bankPts}`, body, nav: null });
   }
 
   function renderGameEnd(state) {
@@ -328,24 +423,34 @@ export function createUI({ root, emit }) {
     });
   }
 
+  // Ta sama rytmika 5 wierszy co siatka odsłaniania (jeden wiersz na
+  // pytanie), ale podział W POZIOMIE inny — treść pytania | pole tekstowe |
+  // (runda 2) checkbox powtórzenia — zamiast kafli-przycisków, bo tu treścią
+  // jest wpisywanie, nie wybór z listy. "Jednolity styl" z resztą: te same
+  // tokeny koloru/obramowania/zaokrąglenia co .c2-tile.
   function renderFinalEntry(state, round) {
     const f = state.final;
     const key = round === 1 ? "p1" : "p2";
-    const body = [];
+    const rows = [];
     for (let i = 0; i < 5; i++) {
       const row = f.runtime[key][i] || {};
       const question = f.questions?.[i];
-      body.push(h("label", { text: question?.text || `Pytanie ${i + 1}` }));
-      const inp = h("input", { type: "text", value: row.text || "", placeholder: `Odpowiedź gracza` });
+      const inp = h("input", { type: "text", value: row.text || "", placeholder: "Odpowiedź gracza" });
       on(inp, "input", () => emit("game.dispatch", { type: "SET_ENTRY_TEXT", round, idx: i, text: inp.value }));
-      body.push(inp);
+      const rowChildren = [
+        h("div", { class: "c2-entryrow-q", text: question?.text || `Pytanie ${i + 1}` }),
+        h("div", { class: "c2-entryrow-input" }, [inp]),
+      ];
       if (round === 2) {
         const repeatChk = h("input", { type: "checkbox" });
         repeatChk.checked = !!row.repeat;
         on(repeatChk, "change", () => emit("game.dispatch", { type: "SET_REPEAT", round: 2, idx: i, repeat: repeatChk.checked }));
-        body.push(h("label", { class: "c2-repeat-label" }, [repeatChk, document.createTextNode(" powtórzenie")]));
+        rowChildren.push(h("label", { class: "c2-repeat-label" }, [repeatChk, document.createTextNode(" powtórzenie")]));
       }
+      rows.push(h("div", { class: "c2-entryrow" }, rowChildren));
     }
+    const body = [h("div", { class: "c2-entryrows" }, rows)];
+
     const timerRunning = f.runtime.timer.running;
     const nav = [
       !timerRunning ? h("button", { class: "c2-btn", onclick: () => emit("game.dispatch", { type: "START_TIMER", phase: round === 1 ? "P1" : "P2" }) }, [document.createTextNode("Start timera")]) : null,
@@ -365,6 +470,11 @@ export function createUI({ root, emit }) {
       : { mode: "AUTO", kind: "SKIP", matchId: null, outText: "", pts: 0 };
   }
 
+  // Ta sama siatka 3x5 co Rundy-odsłanianie (ustalone z właścicielem
+  // projektu): wiersze 1-3 to kafle odpowiedzi + "Brak dopasowania" (do 6,
+  // 2 na wiersz), wiersz 4 zostaje pusty, wiersz 5 to "Pokaż odpowiedź"
+  // (lewo) / "Pokaż punkty" (prawo, zmienia się w "Dalej" po odsłonięciu
+  // punktów) — środek pusty.
   function renderFinalMapping(state, round, idx) {
     const f = state.final;
     const mapArr = f.runtime[round === 1 ? "map1" : "map2"];
@@ -376,40 +486,46 @@ export function createUI({ root, emit }) {
 
     const body = [
       h("div", { class: "c2-question", text: question?.text || `Pytanie ${idx + 1}` }),
-      h("div", { text: `Odpowiedź gracza: ${inputText || "—"}` }),
+      h("div", { class: "c2-bank", text: `Odpowiedź gracza: ${inputText || "—"} · Pokazana: ${row.revealedAnswer ? row.outText : "—ukryte—"} · Punkty: ${row.revealedPoints ? row.pts : "—"}` }),
     ];
 
-    const answersList = h("div", { class: "c2-final-answers" });
-    for (const a of question?.answers || []) {
-      const isMatch = row.kind === "MATCH" && row.matchId === a.id;
-      const btn = h("button", {
-        class: `c2-answer-btn ${isMatch ? "revealed" : ""}`,
-        type: "button",
-        onclick: () => emit("game.dispatch", { type: "RESOLVE_MAPPING", round, idx, mode: "MANUAL", kind: "MATCH", matchId: a.id, outText: a.text, pts: a.fixed_points }),
-      }, [document.createTextNode(`${a.text} (${a.fixed_points})`)]);
-      if (locked) btn.disabled = true;
-      answersList.appendChild(btn);
+    const options = (question?.answers || []).map((a) => ({
+      key: a.id,
+      text: `${a.text} (${a.fixed_points})`,
+      active: row.kind === "MATCH" && row.matchId === a.id,
+      onclick: () => emit("game.dispatch", { type: "RESOLVE_MAPPING", round, idx, mode: "MANUAL", kind: "MATCH", matchId: a.id, outText: a.text, pts: a.fixed_points }),
+    }));
+    options.push({
+      key: "__miss__",
+      text: "Brak dopasowania",
+      active: row.kind === "MISS",
+      onclick: () => emit("game.dispatch", { type: "RESOLVE_MAPPING", round, idx, mode: "MANUAL", kind: "MISS", matchId: null, outText: inputText, pts: 0 }),
+    });
+
+    const tiles = options.slice(0, 6).map((o, i) => tile(o.text, {
+      row: Math.floor(i / 2) + 1,
+      col: HALF(i % 2),
+      cls: o.active ? "c2-tile-revealed" : "",
+      disabled: locked,
+      onclick: o.onclick,
+    }));
+
+    if (!row.revealedAnswer) {
+      tiles.push(tile("Pokaż odpowiedź", {
+        row: 5, col: THIRD(0), cls: "c2-tile-primary",
+        onclick: async () => {
+          if (row.kind == null) await emit("game.dispatch", { type: "RESOLVE_MAPPING", round, idx, ...defaultResolve(inputText) });
+          await emit("game.dispatch", { type: "REVEAL_ANSWER_ONLY", round, idx });
+        },
+      }));
+    } else if (!row.revealedPoints) {
+      tiles.push(tile("Pokaż punkty", { row: 5, col: THIRD(2), cls: "c2-tile-primary", onclick: () => emit("game.dispatch", { type: "REVEAL_POINTS", round, idx }) }));
+    } else {
+      tiles.push(tile("Dalej", { row: 5, col: THIRD(2), cls: "c2-tile-primary", onclick: () => emit("game.dispatch", { type: "NEXT_QUESTION", round, idx }) }));
     }
-    body.push(answersList);
+    body.push(tileGrid(tiles));
 
-    if (!locked) {
-      body.push(h("button", { class: "c2-btn", onclick: () => emit("game.dispatch", { type: "RESOLVE_MAPPING", round, idx, mode: "MANUAL", kind: "MISS", matchId: null, outText: inputText, pts: 0 }) }, [document.createTextNode("Brak dopasowania")]));
-    }
-
-    body.push(h("div", { text: `Pokazana odpowiedź: ${row.revealedAnswer ? row.outText : "—ukryte—"}` }));
-    body.push(h("div", { text: `Punkty: ${row.revealedPoints ? row.pts : "—"}` }));
-
-    const nav = [
-      !row.revealedAnswer
-        ? h("button", { class: "c2-btn primary", onclick: async () => {
-            if (row.kind == null) await emit("game.dispatch", { type: "RESOLVE_MAPPING", round, idx, ...defaultResolve(inputText) });
-            await emit("game.dispatch", { type: "REVEAL_ANSWER_ONLY", round, idx });
-          } }, [document.createTextNode("Pokaż odpowiedź")])
-        : !row.revealedPoints
-        ? h("button", { class: "c2-btn primary", onclick: () => emit("game.dispatch", { type: "REVEAL_POINTS", round, idx }) }, [document.createTextNode("Pokaż punkty")])
-        : h("button", { class: "c2-btn primary", onclick: () => emit("game.dispatch", { type: "NEXT_QUESTION", round, idx }) }, [document.createTextNode("Dalej")]),
-    ];
-    gameplayShell({ stepLabel: `Finał — mapowanie ${idx + 1}/5`, body, nav });
+    gameplayShell({ stepLabel: `Finał — mapowanie ${idx + 1}/5`, body, nav: null });
   }
 
   function renderFinalP2Start(state) {
@@ -436,7 +552,7 @@ export function createUI({ root, emit }) {
     updateTopbarDots(ctx.presenceFlags);
     const s = state.step;
     if (s === "devices_display" || s === "devices_hostbuzzer") return renderDevicesStep(state, ctx);
-    if (s === "setup_finish") return renderSetupFinish(state);
+    if (s === "setup_finish") return renderSetupFinish(state, ctx);
     if (s === "r_intro" || s === "r_roundStart") return renderRounds(state);
     if (s === "r_duel" || s === "r_play") return renderRounds(state);
     if (s === "r_gameEnd") return renderGameEnd(state);

@@ -81,9 +81,54 @@ function instrumentSceneApi(api) {
   return wrap(api, "api");
 }
 
+// Tryb podglądu dla D3 w Control (plan, sekcja 3a pkt 5: "Podgląd kolorów/
+// motywu/logo w małej miniaturce w panelu Control" — Control osadza tę samą
+// stronę w iframe zamiast montować scene.js osobno, prościej i bez
+// duplikowania kodu rysującego). Zero autoryzacji/subskrypcji real
+// game_state — Control (jedyne, co go osadza) sam zna aktualne ustawienia i
+// przesyła gotowy, spreparowany wiersz przez postMessage; nie ma potrzeby
+// przekazywać do iframe klucza dostępu do prawdziwej gry.
+async function bootPreview(params) {
+  const scene = await createScene();
+  // Logo prawdziwej gry (jeśli jest) — jedyna rzecz w podglądzie wymagająca
+  // realnego id+key (Control i tak już je zna i pokazuje w kodach QR/modalu
+  // kopiowania, więc to nie jest nowy wyciek danych).
+  const previewGameId = params.get("id");
+  if (previewGameId) { try { await scene.api.logo.bindGame(previewGameId); } catch {} }
+  const qrCtrl = createQRController({
+    qrScreen: $("qrScreen"), gameScreen: $("gameScreen"),
+    hostCard: $("qrHostCard"), buzzerCard: $("qrBuzzerCard"),
+    hostImg: $("qrHostImg"), buzzerImg: $("qrBuzzerImg"),
+    hostCodeEl: $("qrHostCode"), buzzerCodeEl: $("qrBuzzerCode"),
+  });
+  const qr = { show() {}, hide() { qrCtrl.hide(); } };
+  const renderer = createRenderer({ scene, qr });
+
+  $("blackScreen")?.classList.add("hidden");
+  $("qrScreen")?.classList.add("hidden");
+  $("gameScreen")?.classList.remove("hidden");
+
+  let prevRow = null;
+  window.addEventListener("message", (e) => {
+    if (e.data?.type !== "familiada:preview-row") return;
+    if (!prevRow) renderer.renderSnapshot(e.data.row);
+    else renderer.renderDiff(prevRow, e.data.row);
+    prevRow = e.data.row;
+  });
+
+  document.documentElement.classList.remove("page-loading");
+  parent.postMessage({ type: "familiada:preview-ready" }, "*");
+}
+
 window.addEventListener("DOMContentLoaded", async () => {
   await initI18n({ withSwitcher: false });
   initFullscreenButton();
+
+  const params = new URL(location.href).searchParams;
+  if (params.get("preview") === "1") {
+    await bootPreview(params);
+    return;
+  }
 
   try {
     const { gameId, key } = parseParams();

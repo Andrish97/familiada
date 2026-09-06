@@ -257,31 +257,45 @@ async function main() {
   const root2 = document.getElementById("app");
   const ui = createUI({ root: root2, emit: handle });
 
-  // Timer finału (15s/20s) sam z siebie NIE wygasa w żywej karcie Control —
-  // silnik dostaje EXPIRE_TIMER wyłącznie z hydrate() (start/wznowienie) i z
-  // dzwonka po cudzym zapisie (patrz wyżej). Bez tego zegarka operator
-  // musiałby ręcznie odświeżyć kartę, żeby usłyszeć "koniec czasu" i cyfry
-  // na Display/Hoście wróciły do wyników — dokładnie to, co w oryginalnym
-  // control/js/gameFinal.js robił nieprzerwanie działający requestAnimationFrame.
-  // Zdublowane wywołanie po naturalnym wygaśnięciu jest nieszkodliwe:
-  // EXPIRE_TIMER samo sprawdza `running` i jest no-opem, gdy go już nie ma.
-  let timerWatch = { endsAt: null, handle: null };
-  function scheduleTimerWatch() {
-    const timer = store.state.final?.runtime?.timer;
-    const endsAt = timer?.running ? timer.endsAt : null;
-    if (endsAt === timerWatch.endsAt) return;
-    if (timerWatch.handle) { clearTimeout(timerWatch.handle); timerWatch.handle = null; }
-    timerWatch.endsAt = endsAt;
-    if (endsAt == null) return;
-    timerWatch.handle = setTimeout(() => {
-      engine.dispatch({ type: "EXPIRE_TIMER" }).catch(() => {});
-    }, Math.max(0, endsAt - Date.now()));
+  // Timery (finał 15s/20s, 3s decyzja w rundach) same z siebie NIE wygasają w
+  // żywej karcie Control — silnik dostaje EXPIRE_TIMER/EXPIRE_TIMER3
+  // wyłącznie z hydrate() (start/wznowienie) i z dzwonka po cudzym zapisie
+  // (patrz wyżej). Bez tego zegarka operator musiałby ręcznie odświeżyć
+  // kartę, żeby usłyszeć "koniec czasu"/dostać auto-X — dokładnie to, co w
+  // oryginalnych control/js/gameRounds.js/gameFinal.js robił nieprzerwanie
+  // działający requestAnimationFrame. Zdublowane wywołanie po naturalnym
+  // wygaśnięciu jest nieszkodliwe: oba EXPIRE_* same sprawdzają `running` i
+  // są no-opem, gdy timera już nie ma (np. operator sam rozstrzygnął wcześniej).
+  function makeTimerWatch(getTimer, expireAction) {
+    const w = { endsAt: null, handle: null };
+    return () => {
+      const timer = getTimer();
+      const endsAt = timer?.running ? timer.endsAt : null;
+      if (endsAt === w.endsAt) return;
+      if (w.handle) { clearTimeout(w.handle); w.handle = null; }
+      w.endsAt = endsAt;
+      if (endsAt == null) return;
+      w.handle = setTimeout(() => {
+        engine.dispatch({ type: expireAction }).catch(() => {});
+      }, Math.max(0, endsAt - Date.now()));
+    };
   }
+  const scheduleFinalTimerWatch = makeTimerWatch(() => store.state.final?.runtime?.timer, "EXPIRE_TIMER");
+  const scheduleTimer3Watch = makeTimerWatch(() => store.state.rounds?.timer3, "EXPIRE_TIMER3");
 
   function renderCurrent() {
-    scheduleTimerWatch();
+    scheduleFinalTimerWatch();
+    scheduleTimer3Watch();
     ui.render(store.state, { urls, presenceFlags, connectCodes });
   }
+
+  // Samo renderCurrent() maluje cyfry timera3 tylko RAZ, w momencie zmiany
+  // stanu (START_TIMER3) — bez czegoś, co odświeża widok co sekundę, kafel
+  // pokazywałby tę samą liczbę aż do wygaśnięcia. Odświeżamy tylko wtedy,
+  // gdy faktycznie coś odlicza — reszta czasu bez zbędnej pracy.
+  setInterval(() => {
+    if (store.state.rounds?.timer3?.running) ui.render(store.state, { urls, presenceFlags, connectCodes });
+  }, 250);
 
   // ===== Modal QR z topbaru (prywatny podgląd operatora — nie to samo co
   // "QR na wyświetlaczu"; identyczna logika/DOM co dzisiejsze

@@ -23,7 +23,7 @@ function answersFor(questionId) {
   ];
 }
 
-function makeEngine(overrides = {}) {
+function makeEngine(overrides = {}, nowFn) {
   // Testy silnika zaczynają od stanu "gotowe do pierwszej rundy" (po
   // przejściu przez pre-grę devices_display->...->r_intro, celowo poza
   // zakresem tego silnika — patrz komentarz w control2/js/engine.js).
@@ -33,6 +33,7 @@ function makeEngine(overrides = {}) {
     store,
     loadQuestionPool: async () => pool.slice(),
     loadAnswers: async (qid) => answersFor(qid),
+    now: nowFn,
   });
   return { store, dispatch: engine.dispatch };
 }
@@ -173,6 +174,68 @@ test("STEAL: nieudana kradzież -> steal.won=false, canEndRound=true, bank zosta
   assert.equal(store.state.rounds.steal.used, true);
   assert.equal(store.state.rounds.steal.won, false);
   assert.equal(store.state.rounds.canEndRound, true);
+});
+
+test("timer3 (3s decyzja): START_TIMER3 ustawia endsAt +3s, EXPIRE_TIMER3 dolicza X dokładnie jak ręczne ADD_X", async () => {
+  let t = 2_000_000;
+  const { store, dispatch } = makeEngine({}, () => t);
+  await dispatch({ type: "START_ROUND" });
+  await dispatch({ type: "ACCEPT_BUZZ", team: "A" });
+  await dispatch({ type: "REVEAL_ANSWER", ord: 1 }); // WIN -> PLAY, controlTeam=A
+
+  await dispatch({ type: "START_TIMER3" });
+  assert.equal(store.state.rounds.timer3.running, true);
+  assert.equal(store.state.rounds.timer3.endsAt, t + 3000);
+
+  await dispatch({ type: "EXPIRE_TIMER3" });
+  assert.equal(store.state.rounds.timer3.running, false);
+  assert.equal(store.state.rounds.xA, 1, "auto-wygaśnięcie liczy się jak pudło drużyny z kontrolą");
+});
+
+test("timer3: EXPIRE_TIMER3 jest no-opem, jeśli operator sam rozstrzygnął wcześniej (timer już wyczyszczony)", async () => {
+  const { store, dispatch } = makeEngine();
+  await dispatch({ type: "START_ROUND" });
+  await dispatch({ type: "ACCEPT_BUZZ", team: "A" });
+  await dispatch({ type: "REVEAL_ANSWER", ord: 1 });
+  await dispatch({ type: "START_TIMER3" });
+
+  await dispatch({ type: "REVEAL_ANSWER", ord: 2 }); // rozstrzygnięcie ręczne PRZED wygaśnięciem
+  assert.equal(store.state.rounds.timer3.running, false, "REVEAL_ANSWER czyści timer3");
+
+  const revBefore = store.state.rev;
+  const result = await dispatch({ type: "EXPIRE_TIMER3" });
+  assert.equal(result, null, "spóźniony zegarek nie dokłada drugiego X");
+  assert.equal(store.state.rev, revBefore);
+});
+
+test("timer3: ADD_X/PASS/GO_STEAL/END_ROUND ręcznie też czyszczą aktywny zegarek", async () => {
+  const { store, dispatch } = makeEngine();
+  await dispatch({ type: "START_ROUND" });
+  await dispatch({ type: "ACCEPT_BUZZ", team: "A" });
+  await dispatch({ type: "REVEAL_ANSWER", ord: 1 });
+
+  await dispatch({ type: "START_TIMER3" });
+  await dispatch({ type: "PASS" });
+  assert.equal(store.state.rounds.timer3.running, false, "PASS czyści timer3");
+
+  await dispatch({ type: "START_TIMER3" });
+  await dispatch({ type: "GO_STEAL" });
+  assert.equal(store.state.rounds.timer3.running, false, "GO_STEAL czyści timer3");
+});
+
+test("timer3: niedostępny w fazie REVEAL ani po ustawieniu canEndRound", async () => {
+  const { store, dispatch } = makeEngine();
+  await dispatch({ type: "START_ROUND" });
+  await dispatch({ type: "ACCEPT_BUZZ", team: "A" });
+  await dispatch({ type: "REVEAL_ANSWER", ord: 1 });
+  await dispatch({ type: "ADD_X" });
+  await dispatch({ type: "ADD_X" });
+  await dispatch({ type: "ADD_X" }); // STEAL
+  await dispatch({ type: "ADD_X" }); // przegrana kradzież -> canEndRound=true
+  assert.equal(store.state.rounds.canEndRound, true);
+
+  const result = await dispatch({ type: "START_TIMER3" });
+  assert.equal(result, null, "nie ma już czego rozstrzygać w tej rundzie");
 });
 
 test("PASS: dozwolony raz, tylko w PLAY, tylko przed pierwszym trafieniem — przełącza controlTeam", async () => {
