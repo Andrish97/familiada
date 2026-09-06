@@ -55,6 +55,32 @@ function showBlack() {
   $("gameScreen")?.classList.add("hidden");
 }
 
+// Instrumentacja WYŁĄCZNIE do obserwacji w E2E (tests/e2e/control2.spec.js).
+// Display maluje na SVG dot-matrix, bez żadnego tekstu w DOM (w
+// odróżnieniu od Hosta, gdzie zwykły .textContent wystarcza) — bez tego
+// zapisu nie dałoby się z Playwrighta zweryfikować, co render.js FAKTYCZNIE
+// kazał narysować scene.js (dokładny tekst/punkty/animacja), tylko czy
+// strona się nie wywaliła. Zero wpływu na realne rysowanie — owija wywołania
+// przezroczyście, oryginalna funkcja i tak się wykonuje.
+function instrumentSceneApi(api) {
+  window.__displayLog = [];
+  const wrap = (obj, path) => {
+    const out = {};
+    for (const k of Object.keys(obj)) {
+      const v = obj[k];
+      if (typeof v === "function") {
+        out[k] = (...args) => { window.__displayLog.push({ call: `${path}.${k}`, args }); return v.apply(obj, args); };
+      } else if (v && typeof v === "object") {
+        out[k] = wrap(v, `${path}.${k}`);
+      } else {
+        out[k] = v;
+      }
+    }
+    return out;
+  };
+  return wrap(api, "api");
+}
+
 window.addEventListener("DOMContentLoaded", async () => {
   await initI18n({ withSwitcher: false });
   initFullscreenButton();
@@ -65,6 +91,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     startPresenceHeartbeat({ gameId: game.id, key });
 
     const scene = await createScene();
+    scene.api = instrumentSceneApi(scene.api);
     const qrCtrl = createQRController({
       qrScreen: $("qrScreen"), gameScreen: $("gameScreen"),
       hostCard: $("qrHostCard"), buzzerCard: $("qrBuzzerCard"),

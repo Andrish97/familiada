@@ -99,6 +99,19 @@ test("timer P2: 20s zamiast 15s", async () => {
   assert.equal(store.state.final.runtime.timer.endsAt, t + 20_000);
 });
 
+test("START_MAPPING: czyści timer, jeśli operator kliknął 'Dalej' zanim ten naturalnie wygasł (bez tego running=true zostałoby w zapisanym stanie na zawsze)", async () => {
+  let t = 1_000_000;
+  const { store, dispatch } = makeEngine({}, () => t);
+  await dispatch({ type: "START_FINAL" });
+  await dispatch({ type: "START_TIMER", phase: "P1" });
+  assert.equal(store.state.final.runtime.timer.running, true);
+
+  t += 3_000; // operator klika "Dalej" po 3s, timer miał jeszcze 12s
+  await dispatch({ type: "START_MAPPING", round: 1 });
+  assert.equal(store.state.final.runtime.timer.running, false, "inaczej kolejny hydrate() fałszywie odpali EXPIRE_TIMER poza wpisywaniem");
+  assert.equal(store.state.final.runtime.timer.endsAt, 0);
+});
+
 test("START_MAPPING: f_p1_entry -> f_p1_map_q1 (dozwolone przejście z tabeli)", async () => {
   const { store, dispatch } = makeEngine();
   await dispatch({ type: "START_FINAL" });

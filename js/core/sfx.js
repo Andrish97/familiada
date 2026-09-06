@@ -297,7 +297,15 @@ export function onSfxEnd(key, fn) {
   return () => a.removeEventListener("ended", fn);
 }
 
+// Instrumentacja WYŁĄCZNIE do obserwacji w E2E (tests/e2e/control2.spec.js) —
+// zero wpływu na normalne działanie: jedna operacja push() na window, zawsze
+// włączona (nie ma trybu "testowego" do przełączania). Bez tego nie dałoby
+// się z Playwrighta zweryfikować, JAKI dźwięk (i w jakiej kolejności) faktycznie
+// poleciał — Audio Web API nie eksponuje tego nigdzie w DOM.
 export function playSfx(key) {
+  if (typeof window !== "undefined") {
+    (window.__sfxLog ??= []).push({ key, at: Date.now() });
+  }
   const a = cache.get(key);
   if (!a) return;
   try {

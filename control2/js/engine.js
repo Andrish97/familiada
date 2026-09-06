@@ -418,7 +418,16 @@ const REDUCERS = {
   },
 
   // ---- F1->F2 / F8->F9: pierwsze wejście w mapowanie danej rundy ----
+  // control/js/gameFinal.js's toP1MapQ()/toP2MapQ() zawsze wołają
+  // timerStopAndReset() PRZED wejściem w mapowanie — niezależnie od tego,
+  // czy operator kliknął "Dalej" podczas gdy timer jeszcze leciał, czy
+  // dopiero po jego naturalnym wygaśnięciu. Bez tego runtime.timer.running
+  // zostawałby true w zapisanym stanie na zawsze (nic więcej go nie
+  // czyści), co przy kolejnym hydrate() Control (np. po przeładowaniu w
+  // trakcie mapowania) fałszywie odpalałoby EXPIRE_TIMER/"time_over" poza
+  // kontekstem wpisywania.
   async START_MAPPING(state, action) {
+    state.final.runtime.timer = { running: false, phase: null, endsAt: 0 };
     return { step: `f_p${action.round}_map_q1`, phase: null, controlTeam: null, topCard: "final" };
   },
 

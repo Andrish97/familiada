@@ -257,7 +257,29 @@ async function main() {
   const root2 = document.getElementById("app");
   const ui = createUI({ root: root2, emit: handle });
 
+  // Timer finału (15s/20s) sam z siebie NIE wygasa w żywej karcie Control —
+  // silnik dostaje EXPIRE_TIMER wyłącznie z hydrate() (start/wznowienie) i z
+  // dzwonka po cudzym zapisie (patrz wyżej). Bez tego zegarka operator
+  // musiałby ręcznie odświeżyć kartę, żeby usłyszeć "koniec czasu" i cyfry
+  // na Display/Hoście wróciły do wyników — dokładnie to, co w oryginalnym
+  // control/js/gameFinal.js robił nieprzerwanie działający requestAnimationFrame.
+  // Zdublowane wywołanie po naturalnym wygaśnięciu jest nieszkodliwe:
+  // EXPIRE_TIMER samo sprawdza `running` i jest no-opem, gdy go już nie ma.
+  let timerWatch = { endsAt: null, handle: null };
+  function scheduleTimerWatch() {
+    const timer = store.state.final?.runtime?.timer;
+    const endsAt = timer?.running ? timer.endsAt : null;
+    if (endsAt === timerWatch.endsAt) return;
+    if (timerWatch.handle) { clearTimeout(timerWatch.handle); timerWatch.handle = null; }
+    timerWatch.endsAt = endsAt;
+    if (endsAt == null) return;
+    timerWatch.handle = setTimeout(() => {
+      engine.dispatch({ type: "EXPIRE_TIMER" }).catch(() => {});
+    }, Math.max(0, endsAt - Date.now()));
+  }
+
   function renderCurrent() {
+    scheduleTimerWatch();
     ui.render(store.state, { urls, presenceFlags, connectCodes });
   }
 
