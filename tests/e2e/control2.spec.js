@@ -30,6 +30,8 @@
 //       tylko jeden zaakceptowany, oba urządzenia się zgadzają.
 //   13. Wyciszenie dźwięku — po kliknięciu Mute żaden klucz SFX się nie
 //       odtwarza mimo normalnie grającej akcji.
+//   14. Zmiana języka propaguje się do Hosta, w tym samą TREŚĆ tytułu fazy
+//       (nie tylko chrome strony) — regresja na dzisiejszą naprawę i18n.
 //
 // Każdy test tworzy i kasuje własną grę testową — niezależne od siebie,
 // można je uruchamiać pojedynczo (--grep) przy diagnozowaniu awarii.
@@ -234,7 +236,7 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia — Wyświetlacz", { timeout: 15000 });
 
     await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", errors);
-    await openAnon(browser, contexts, `/host2?id=${game.id}&key=${game.share_key_host}`, "host", errors);
+    const hostPage = await openAnon(browser, contexts, `/host2?id=${game.id}&key=${game.share_key_host}`, "host", errors);
     const buzzerPage = await openAnon(browser, contexts, `/buzzer2?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", errors);
 
     await page.getByRole("button", { name: "Dalej" }).click();
@@ -247,6 +249,13 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
     await page.getByRole("button", { name: "Dalej" }).click();
     await expect(page.locator(".c2-stepper")).toContainText("Runda 1", { timeout: 10000 });
     await page.getByRole("button", { name: "Start rundy" }).click();
+
+    // Regresja: Prowadzący musi widzieć PEŁNĄ treść i punkty KAŻDEJ
+    // odpowiedzi od początku rundy, nie tylko już odsłoniętych dla widzów
+    // (inaczej nie mógłby ocenić, czy to, co powiedział kontestant, pasuje
+    // do listy) — wcześniejsza wersja chowała je pod "______".
+    await expect(hostPage.locator("#paperText2")).toContainText("Odpowiedź B (30)", { timeout: 10000 });
+    await expect(hostPage.locator("#paperText2")).toContainText("Odpowiedź C (20)", { timeout: 10000 });
 
     await expect(buzzerPage.getByRole("button", { name: "Buzzer A" })).toBeEnabled({ timeout: 10000 });
     await buzzerPage.getByRole("button", { name: "Buzzer A" }).click();
@@ -877,6 +886,42 @@ test("control2: wyciszenie dźwięku — po Mute żaden klucz SFX się nie odtwa
     await expect(page.getByText("Bank: 40")).toBeVisible({ timeout: 10000 });
 
     expect(await getSfxKeys(page), "wyciszenie ma zablokować KAŻDY dźwięk, nie tylko część").toEqual([]);
+  } finally {
+    for (const ctx of contexts) await ctx.close().catch(() => {});
+    await deleteGame(page, game.id);
+  }
+});
+
+// ===== 14. Zmiana języka propaguje się do urządzeń, w tym treść Hosta =====
+//
+// Sprawdza całą ścieżkę na raz: przełącznik w topbarze Control -> zapis
+// settings.uiLang do game_state -> odczyt przez host2/js/main.js -> setUiLang
+// -> host2/js/render.js's t()-owane tytuły faz. Regresja na dzisiejszą
+// naprawę: wcześniej host2/js/render.js miał te napisy zaszyte na sztywno po
+// polsku, więc nawet gdyby cała reszta ścieżki działała, treść by się nie
+// zmieniła.
+
+test("control2: zmiana języka w Control propaguje się do Hosta — tytuł fazy faktycznie się tłumaczy", async ({ page, browser }) => {
+  await loginAsTestUser(page, page.context());
+  const game = await makeGame(page, `E2E-CONTROL2-LANG-${Date.now()}`, { roundQuestions: [TWO_QUESTIONS[0]] });
+  const contexts = [];
+  try {
+    const hostPage = await openAnon(browser, contexts, `/host2?id=${game.id}&key=${game.share_key_host}`, "host", []);
+    await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator(".stepTitle")).toHaveText("Urządzenia — Wyświetlacz", { timeout: 15000 });
+    await page.getByRole("button", { name: "Dalej" }).click();
+    await page.getByRole("button", { name: "Zakończ podłączanie" }).click();
+    await page.getByRole("button", { name: "Gotowe — przejdź do rund" }).click();
+    await page.getByRole("button", { name: "Dalej" }).click();
+    await page.getByRole("button", { name: "Start rundy" }).click();
+
+    await expect(hostPage.locator("#paperText1")).toContainText("PRZYCISK", { timeout: 10000 });
+
+    await page.locator(".lang-btn").click();
+    await page.locator('.lang-option[data-lang="en"]').click();
+
+    await expect(hostPage.locator("#paperText1")).toContainText("BUZZER", { timeout: 10000 });
+    await expect(hostPage.locator("#paperText1")).not.toContainText("PRZYCISK");
   } finally {
     for (const ctx of contexts) await ctx.close().catch(() => {});
     await deleteGame(page, game.id);

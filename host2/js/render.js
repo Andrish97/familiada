@@ -14,11 +14,31 @@
 // lokalny podgląd (peek) — nigdy nie zapisuje się do game_state, bo to nie
 // jest fakt o grze, tylko wygoda tego jednego urządzenia. Każda nowa zmiana
 // stanu (nowy wiersz) resetuje peek z powrotem do authoritative wartości.
+//
+// i18n: cały tekst pasma 1/2 idzie przez t() z tych samych kluczy co dawniej
+// control/js/gameRounds.js's roundsHost()/control/js/gameFinal.js's
+// finalHost() (translation/{pl,en,uk}.js) — audyt znalazł, że ten plik miał
+// to wcześniej na sztywno po polsku, więc zmiana języka w Control (patrz
+// shared/gameStateShape.js's settings.uiLang) nie miała żadnego wpływu na
+// treść, którą prowadzący faktycznie czyta.
+import { t } from "../../translation/translation.js?v=v2026-09-05T19503";
 
 const $ = (id) => document.getElementById(id);
+const rh = (key, vars) => t(`control.roundsHost.${key}`, vars);
+const fh = (key, vars) => t(`control.finalHost.${key}`, vars);
+const fu = (key, vars) => t(`control.finalUi.${key}`, vars);
 
-function answerLine(ord, text, revealed) {
-  return revealed ? `${ord}. ${text}` : `${ord}. ______`;
+// control/js/gameRounds.js's hostAnswersLines(): prowadzący widzi PEŁNĄ
+// treść i punkty KAŻDEJ odpowiedzi od razu, niezależnie od tego, czy jest
+// już odsłonięta dla widzów — inaczej nie mógłby ocenić, czy to, co
+// powiedział kontestant, w ogóle pasuje do listy. Odsłonięcie zmienia tam
+// tylko kolor (kosmetyka, pominięta — patrz komentarz przy renderFinalMapping);
+// tu zamiast koloru: znacznik "✓" (ten sam styl co w renderFinalMapping niżej).
+// Naprawiona luka: wcześniejsza wersja chowała tekst i punkty pod "______"
+// aż do odsłonięcia, co w praktyce robiłoby ekran Prowadzącego bezużytecznym.
+function answerLine(ord, text, pts, revealed) {
+  const marker = revealed ? "✓ " : "  ";
+  return `${marker}${ord}) ${text} (${pts})`;
 }
 
 export function createHostRenderer() {
@@ -53,11 +73,11 @@ export function createHostRenderer() {
   function roundTitle(row) {
     const rn = row.detail.rounds.roundNo;
     switch (row.phase) {
-      case "DUEL": return `RUNDA ${rn} — PRZYCISK`;
-      case "PLAY": return `RUNDA ${rn} — ROZGRYWKA`;
-      case "STEAL": return `RUNDA ${rn} — KRADZIEŻ`;
-      case "REVEAL": return `RUNDA ${rn} — ODSŁANIANIE`;
-      default: return `RUNDA ${rn}`;
+      case "DUEL": return rh("roundTitleDuelBuzzer", { round: rn });
+      case "PLAY": return rh("roundTitlePlay", { round: rn });
+      case "STEAL": return rh("roundTitleSteal", { round: rn });
+      case "REVEAL": return rh("roundTitleReveal", { round: rn });
+      default: return rh("roundTitleDefault", { round: rn });
     }
   }
 
@@ -67,7 +87,7 @@ export function createHostRenderer() {
     const lines = (r.answers || [])
       .slice()
       .sort((a, b) => a.ord - b.ord)
-      .map((a) => answerLine(a.ord, a.text, (r.revealed || []).includes(a.ord)));
+      .map((a) => answerLine(a.ord, a.text, a.fixed_points, (r.revealed || []).includes(a.ord)));
     setPane2(lines.join("\n"));
   }
 
@@ -84,21 +104,22 @@ export function createHostRenderer() {
     const input = (f.runtime[entryKey][idx]?.text || "").trim();
     const rep = round === 2 && f.runtime.p2[idx]?.repeat === true;
 
-    setPane1(`Odsłanianie — Gracz ${round}\n\nPytanie ${idx + 1}: ${question?.text || ""}`);
+    const title = round === 1 ? fh("titleRevealRound1") : fh("titleRevealRound2");
+    setPane1(`${title}\n\n${fh("questionLabel", { n: idx + 1 })}: ${question?.text || ""}`);
 
     const lines = [];
     if (round === 2) {
       const p1Text = f.runtime.p1[idx]?.text || "";
-      lines.push(`Gracz 1: ${p1Text || "—"}`, "");
+      lines.push(`${fh("player1Label")}: ${p1Text || fu("fallbackAnswer")}`, "");
     }
-    if (!rep && input) lines.push(`Wprowadzono: ${input}`);
+    if (!rep && input) lines.push(`${fh("enteredLabel")}: ${input}`);
     let status;
-    if (rep) status = "POWTÓRZENIE";
-    else if (!input) status = "PUSTO";
-    else if (row1.kind === "MATCH" && row1.matchId) status = "TRAFIONE";
-    else status = "BRAK";
-    lines.push(`Status: ${status}`, "");
-    lines.push("Możliwe odpowiedzi:");
+    if (rep) status = fh("statusRepeat");
+    else if (!input) status = fh("statusEmpty");
+    else if (row1.kind === "MATCH" && row1.matchId) status = fh("statusMatch");
+    else status = fh("statusMissing");
+    lines.push(`${fh("statusLabel")}: ${status}`, "");
+    lines.push(fh("answersListLabel"));
     const sorted = (question?.answers || []).slice().sort((a, b) => b.fixed_points - a.fixed_points);
     for (const a of sorted) {
       const marker = row1.kind === "MATCH" && row1.matchId === a.id ? "✓ " : "  ";
@@ -113,8 +134,8 @@ export function createHostRenderer() {
   function entryStatus(f, round, idx) {
     const key = round === 1 ? "p1" : "p2";
     const row = f.runtime[key][idx] || {};
-    if (round === 2 && row.repeat === true) return "powtórzenie";
-    return (row.text || "").trim().length > 0 ? "wpisano" : "brak";
+    if (round === 2 && row.repeat === true) return fh("entryRepeat");
+    return (row.text || "").trim().length > 0 ? fh("entryDone") : fh("entryEmpty");
   }
 
   function renderFinalEntry(row, round) {
@@ -122,26 +143,31 @@ export function createHostRenderer() {
     const timer = f.runtime?.timer;
     const phaseKey = round === 1 ? "P1" : "P2";
     const counting = timer?.running && timer.phase === phaseKey;
+    const titleKey = round === 1 ? "titleRound1" : "titleRound2";
+    const titleTimerKey = round === 1 ? "titleRound1Timer" : "titleRound2Timer";
 
     const tick = () => {
       const remaining = Math.max(0, Math.ceil((timer.endsAt - Date.now()) / 1000));
-      setPane1(`FINAŁ RUNDA ${round} — ODLICZANIE ${remaining}s`);
+      setPane1(fh(titleTimerKey, { seconds: remaining }));
       if (remaining <= 0) stopTimerTick();
     };
     if (counting) { tick(); timerHandle = setInterval(tick, 1000); }
-    else setPane1(`FINAŁ RUNDA ${round}`);
+    else setPane1(fh(titleKey));
 
     const lines = (f.questions || []).map((q, i) => `${i + 1}) ${q.text} — ${entryStatus(f, round, i)}`);
     setPane2(lines.join("\n"));
   }
 
+  // control/js/gameFinal.js's hostUpdate(): kroki poza wpisywaniem/mapowaniem
+  // (f_start, f_p2_start, f_end) czyszczą obie strony całkowicie (hostClearAll()),
+  // nie pokazują żadnego zastępczego napisu.
   function renderFinal(row) {
     const step = row.step;
     if (step === "f_p1_entry") return renderFinalEntry(row, 1);
     if (step === "f_p2_entry") return renderFinalEntry(row, 2);
     if (step.startsWith("f_p1_map_q")) return renderFinalMapping(row, 1, Number(step.slice(-1)) - 1);
     if (step.startsWith("f_p2_map_q")) return renderFinalMapping(row, 2, Number(step.slice(-1)) - 1);
-    setPane1("Finał");
+    setPane1("");
     setPane2("");
   }
 

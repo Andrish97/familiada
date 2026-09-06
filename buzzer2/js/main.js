@@ -40,18 +40,58 @@ function startPresenceHeartbeat({ gameId, key }, pingMs = 3000) {
   setInterval(ping, pingMs);
 }
 
+// js/pages/buzzer.js's isIOSSafari()/setPseudoFS()/toggleFullscreen() — na
+// iPhone/iPad w zwykłej karcie Safari (nie zainstalowane jako aplikacja)
+// prawdziwy Fullscreen API nie istnieje wcale (celowe ograniczenie
+// przeglądarki), więc bez tego fallbacku kliknięcie przycisku po prostu nic
+// by nie robiło (catch połyka błąd w ciszy) — kontestant zostaje bez żadnej
+// informacji, dlaczego "pełny ekran" nie działa. Naprawiona luka: pierwszy
+// przebieg buzzer2 miał tylko goły requestFullscreen(), bez tego wykrywania.
+function isIOSSafari() {
+  const ua = navigator.userAgent || "";
+  const iOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const webkit = /WebKit/.test(ua);
+  const notChrome = !/CriOS|FxiOS|EdgiOS/.test(ua);
+  return iOS && webkit && notChrome;
+}
+
 function setupFullscreenButton() {
   const btn = document.getElementById("btnFS");
   const ico = document.getElementById("fsIco");
-  function syncIcon() { if (ico) ico.textContent = document.fullscreenElement ? "⧉" : "▢"; }
-  btn?.addEventListener("click", async () => {
-    try {
-      if (document.fullscreenElement) await document.exitFullscreen();
-      else await document.documentElement.requestFullscreen?.({ navigationUI: "hide" });
-    } catch {}
+  let pseudoFS = false;
+
+  function syncIcon() { if (ico) ico.textContent = (document.fullscreenElement || pseudoFS) ? "⧉" : "▢"; }
+
+  function setPseudoFS(on) {
+    pseudoFS = !!on;
+    document.documentElement.classList.toggle("pseudoFS", pseudoFS);
+    setTimeout(() => window.scrollTo(0, 1), 50); // iOS: próba schowania paska adresu
     syncIcon();
+  }
+
+  btn?.addEventListener("click", async () => {
+    if (isIOSSafari() && !window.navigator.standalone) {
+      // W Safari nie zrobimy prawdziwego FS — pokaż instrukcję "dodaj do ekranu głównego".
+      document.documentElement.classList.toggle("showA2HS");
+      return;
+    }
+    try {
+      if (document.fullscreenElement) { await document.exitFullscreen?.(); syncIcon(); return; }
+      if (pseudoFS) { setPseudoFS(false); return; }
+      const el = document.documentElement;
+      const req = el.requestFullscreen || el.webkitRequestFullscreen;
+      if (!req) throw new Error("fullscreen unavailable");
+      await req.call(el, { navigationUI: "hide" });
+      syncIcon();
+    } catch (e) {
+      // iOS / blokady / iframe => pseudo-fullscreen
+      setPseudoFS(true);
+      console.warn("[buzzer2] fullscreen fallback:", e);
+    }
   });
   document.addEventListener("fullscreenchange", syncIcon);
+
+  if (window.navigator.standalone) document.documentElement.classList.add("webapp");
 }
 
 async function main() {
