@@ -315,28 +315,26 @@ test("control2: reset pojedynku, pass, kradzież wygrana/przegrana, odkrywanie r
     await expect(page.getByText("Zgłoszono: A")).toBeVisible({ timeout: 10000 });
     await page.getByRole("button", { name: "Przyjmij" }).click();
     await page.getByRole("button", { name: "X", exact: true }).click(); // A pudłuje -> kolej B
-    await page.getByRole("button", { name: "X", exact: true }).click(); // B pudłuje też -> RESET
+    // B pudłuje też -> RESET CYKLU: kolej wraca do A, BEZ nowego zgłoszenia
+    // buzzera (firstTeam/secondTeam nie są czyszczone — "nie ma czegoś
+    // takiego jak ponowny buzer").
+    await page.getByRole("button", { name: "X", exact: true }).click();
 
-    await expect(buzzerPage.getByRole("button", { name: "Buzzer B" })).toBeEnabled({ timeout: 10000 });
-    await buzzerPage.getByRole("button", { name: "Buzzer B" }).click();
-    await expect(page.getByText("Zgłoszono: B")).toBeVisible({ timeout: 10000 });
-    await page.getByRole("button", { name: "Przyjmij" }).click();
-
-    await page.getByRole("button", { name: "#1" }).click(); // B trafia (40 pkt) -> wygrywa pojedynek
+    await page.getByRole("button", { name: "#1" }).click(); // A trafia (40 pkt) -> wygrywa pojedynek, BEZ nowego zgłoszenia
     await expect(page.getByText("Bank: 40")).toBeVisible({ timeout: 10000 });
 
     await page.getByRole("button", { name: "X", exact: true }).click();
     await page.getByRole("button", { name: "X", exact: true }).click();
-    await page.getByRole("button", { name: "X", exact: true }).click(); // 3x pudło B -> auto-KRADZIEŻ dla A
+    await page.getByRole("button", { name: "X", exact: true }).click(); // 3x pudło A -> auto-KRADZIEŻ dla B
 
-    await page.getByRole("button", { name: "#2" }).click(); // A kradnie WYGRANĄ (30 pkt)
+    await page.getByRole("button", { name: "#2" }).click(); // B kradnie WYGRANĄ (30 pkt)
     await expect(page.getByText("Bank: 70")).toBeVisible({ timeout: 10000 });
 
     await page.getByRole("button", { name: "Zakończ rundę" }).click();
     await page.getByRole("button", { name: "#3" }).click(); // #3 nieodkryte -> R8
 
     await expect(page.locator(".c2-stepper")).toContainText("Runda 2", { timeout: 10000 });
-    await expect(page.getByText(/Wyniki: A 70/)).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText(/Wyniki: A 0 — B 70/)).toBeVisible({ timeout: 10000 });
 
     // ===== RUNDA 2 =====
     await page.getByRole("button", { name: "Start rundy" }).click();
@@ -360,9 +358,9 @@ test("control2: reset pojedynku, pass, kradzież wygrana/przegrana, odkrywanie r
     await page.getByRole("button", { name: "#3" }).click(); // R8 ponownie
 
     // Pula wyczerpana (2/2), próg nieosiągnięty, hasFinal=false -> r_gameEnd.
-    // Wynik: A 70+70=140, B 0.
+    // Runda 1 dała bank drużynie B (70), runda 2 zostaje przy A (70) -> remis.
     await expect(page.locator(".c2-stepper")).toContainText("Koniec gry", { timeout: 10000 });
-    await expect(page.getByText("Wynik końcowy: A 140 — B 0")).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText("Wynik końcowy: A 70 — B 70")).toBeVisible({ timeout: 10000 });
 
     await page.getByRole("button", { name: "Pokaż koniec gry" }).click();
     const finishBtn = page.getByRole("button", { name: "Zakończ rozgrywkę" });

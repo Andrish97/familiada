@@ -222,14 +222,14 @@ async function scenarioRoundsMechanics(pages) {
   await buzzer.getByRole("button", { name: "Buzzer A" }).click();
   await control.getByRole("button", { name: "Przyjmij" }).click();
   await control.getByRole("button", { name: "X", exact: true }).click(); // A pudłuje -> kolej B
-  await control.getByRole("button", { name: "X", exact: true }).click(); // B pudłuje też -> RESET
-  await buzzer.getByRole("button", { name: "Buzzer B" }).click();
-  await control.getByRole("button", { name: "Przyjmij" }).click();
-  await control.getByRole("button", { name: "#1" }).click(); // B trafia -> wygrywa pojedynek
+  // B pudłuje też -> RESET CYKLU: kolej wraca do A, BEZ nowego zgłoszenia
+  // buzzera (firstTeam/secondTeam nie są czyszczone — nie ma ponownego buzera).
+  await control.getByRole("button", { name: "X", exact: true }).click();
+  await control.getByRole("button", { name: "#1" }).click(); // A trafia -> wygrywa pojedynek, bez nowego zgłoszenia
   await control.getByRole("button", { name: "X", exact: true }).click();
   await control.getByRole("button", { name: "X", exact: true }).click();
-  await control.getByRole("button", { name: "X", exact: true }).click(); // 3x pudło -> auto-KRADZIEŻ
-  await control.getByRole("button", { name: "#2" }).click(); // kradzież WYGRANA
+  await control.getByRole("button", { name: "X", exact: true }).click(); // 3x pudło A -> auto-KRADZIEŻ dla B
+  await control.getByRole("button", { name: "#2" }).click(); // B kradnie WYGRANĄ
   await control.getByRole("button", { name: "Zakończ rundę" }).click();
   await control.getByRole("button", { name: "#3" }).click(); // dosłanianie reszty
 
