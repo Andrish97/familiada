@@ -467,8 +467,17 @@ export function createUI({ root, emit }) {
     const body = [hintBlock(getFinalHint(state)), h("div", { class: "c2-entryrows" }, rows)];
 
     const timerRunning = f.runtime.timer.running;
+    // Zegarek jest jednorazowy (engine.js's START_TIMER, usedP1/usedP2) —
+    // przycisk zostaje widoczny po naturalnym wygaśnięciu (tak jak w starym
+    // Control, setTimerBtnEnabled(phase,false)), ale zablokowany, zamiast
+    // dawać złudzenie, że można go kliknąć drugi raz.
+    const used = round === 1 ? f.runtime.timer.usedP1 : f.runtime.timer.usedP2;
     const nav = [
-      !timerRunning ? h("button", { class: "c2-btn", onclick: () => emit("game.dispatch", { type: "START_TIMER", phase: round === 1 ? "P1" : "P2" }) }, [document.createTextNode("Start timera")]) : null,
+      !timerRunning ? h("button", {
+        class: "c2-btn",
+        disabled: used ? "" : undefined,
+        onclick: used ? undefined : () => emit("game.dispatch", { type: "START_TIMER", phase: round === 1 ? "P1" : "P2" }),
+      }, [document.createTextNode("Start timera")]) : null,
       h("button", { class: "c2-btn primary", onclick: () => emit("game.dispatch", { type: "START_MAPPING", round }) }, [document.createTextNode("Dalej")]),
     ];
     gameplayShell({ stepLabel: `Finał — gracz ${round}, wpisywanie`, body, nav });

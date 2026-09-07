@@ -1,0 +1,82 @@
+name: E2E Recorded Playthrough (Control v2)
+
+on:
+  workflow_dispatch: {}
+
+# WAŻNE: tak samo jak e2e-tests.yml — celowo tylko workflow_dispatch. Ten
+# workflow loguje się na prawdziwe konto testowe na produkcji i tworzy
+# realne (choć krótkotrwałe, kasowane na końcu) gry testowe. Dodatkowo
+# uruchamia przeglądarki w trybie headed (nie headless) na wirtualnym
+# ekranie X11 z wirtualnym urządzeniem dźwiękowym, żeby nagrać obraz I
+# dźwięk czterech urządzeń na raz — patrz tests/e2e/record-playthrough.js.
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: tests/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: tests
+
+      - name: Cache Playwright browser binaries
+        id: playwright-version
+        run: echo "version=$(node -e "console.log(require('./node_modules/@playwright/test/package.json').version)")" >> "$GITHUB_OUTPUT"
+        working-directory: tests
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-browsers-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
+
+      - name: Install Playwright browsers (with system deps for headed mode)
+        run: npx playwright install --with-deps chromium
+        working-directory: tests
+
+      # Xvfb (wirtualny ekran, żeby uruchomić headed Chromium bez prawdziwego
+      # monitora) + PulseAudio z zerowym/wirtualnym zlewem (żeby Chromium
+      # miało dokąd wypuścić dźwięk, a ffmpeg miał co nagrać z jego monitora)
+      # + ffmpeg (nagrywanie ekranu+dźwięku do mp4).
+      - name: Install Xvfb, PulseAudio, ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y xvfb pulseaudio ffmpeg
+
+      - name: Start Xvfb
+        run: |
+          Xvfb :99 -screen 0 1920x1080x24 &
+          sleep 2
+          echo "DISPLAY=:99" >> "$GITHUB_ENV"
+
+      - name: Start PulseAudio with a virtual capture sink
+        run: |
+          pulseaudio --start --exit-idle-time=-1 --disallow-exit
+          sleep 1
+          pactl load-module module-null-sink sink_name=CaptureSink sink_properties=device.description=CaptureSink
+          pactl set-default-sink CaptureSink
+          echo "PULSE_SINK=CaptureSink" >> "$GITHUB_ENV"
+
+      - name: Run recorded playthroughs
+        env:
+          E2E_BYPASS_SECRET: ${{ secrets.E2E_BYPASS_SECRET }}
+          TEST_USERNAME: ${{ secrets.TEST_USERNAME }}
+          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
+          RECORD_OUT_DIR: ${{ github.workspace }}/tests/recordings
+        run: node tests/e2e/record-playthrough.js
+
+      - name: Upload recordings
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: control2-playthrough-recordings
+          path: tests/recordings/
+          retention-days: 14

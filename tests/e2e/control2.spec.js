@@ -682,9 +682,11 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     await clearSfxLog(page);
     await page.getByRole("button", { name: "Start timera" }).click();
     // Bez klikania niczego: dograny dziś zegarek w control2/js/app.js sam
-    // dispatch'uje EXPIRE_TIMER po 15s — przycisk "Start timera" wraca,
-    // bo tylko `!timerRunning` go pokazuje (engine.js nie ma już `usedP1`).
+    // dispatch'uje EXPIRE_TIMER po 15s. Zegarek jest jednorazowy (usedP1) —
+    // przycisk "Start timera" wraca WIDOCZNY (jak w starym Control), ale
+    // ZABLOKOWANY, bo nie da się już odpalić go drugi raz w tej samej rundzie.
     await expect(page.getByRole("button", { name: "Start timera" })).toBeVisible({ timeout: 20000 });
+    await expect(page.getByRole("button", { name: "Start timera" })).toBeDisabled();
     await expect.poll(() => getSfxKeys(page), { timeout: 5000 }).toEqual(expect.arrayContaining(["time_over"]));
 
     // ===== F4/F5: mapowanie gracza 1 — trafienie wszystkich 5x15 pkt =====

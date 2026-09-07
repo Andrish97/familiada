@@ -22,3 +22,7 @@ node_modules/
 version.txt
 sw.js
 .aider*
+
+# Playwright artifacts (screenshots/videos/recorded playthroughs) — CI-only
+tests/test-results/
+tests/recordings/
