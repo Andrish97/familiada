@@ -381,7 +381,7 @@ test("control2: reset pojedynku, pass, kradzież wygrana/przegrana, odkrywanie r
 test("control2: próg w rundzie -> finał, wczesne zakończenie po 4/5 pytaniach, pomija gracza 2", async ({ page, browser }) => {
   await loginAsTestUser(page, page.context());
   const game = await makeGame(page, `E2E-CONTROL2-FINAL-${Date.now()}`, {
-    roundQuestions: [{ ord: 1, text: "Pytanie testowe (runda)", answers: [{ ord: 1, text: "Odpowiedź warta 300", fixed_points: 300 }] }],
+    roundQuestions: [{ ord: 1, text: "Pytanie testowe (runda)", answers: [{ ord: 1, text: "Odp. warta 300", fixed_points: 300 }] }],
     finalAnswerPts: 50,
   });
   const contexts = [];
@@ -624,7 +624,7 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
   test.setTimeout(180_000); // + realne 15s oczekiwania na naturalne wygaśnięcie timera gracza 1
   await loginAsTestUser(page, page.context());
   const game = await makeGame(page, `E2E-CONTROL2-FINALFULL-${Date.now()}`, {
-    roundQuestions: [{ ord: 1, text: "Pytanie testowe (runda)", answers: [{ ord: 1, text: "Odpowiedź warta 300", fixed_points: 300 }] }],
+    roundQuestions: [{ ord: 1, text: "Pytanie testowe (runda)", answers: [{ ord: 1, text: "Odp. warta 300", fixed_points: 300 }] }],
     finalAnswerPts: 15,
   });
   const contexts = [];

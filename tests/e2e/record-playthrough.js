@@ -398,7 +398,7 @@ const SCENARIOS = [
   {
     file: "02-final-pelny.mp4",
     makeGame: (setupPage) => makeGame(setupPage, `E2E-REC-FINAL-${Date.now()}`, {
-      roundQuestions: [{ ord: 1, text: "Pytanie testowe (runda)", answers: [{ ord: 1, text: "Odpowiedź warta 300", fixed_points: 300 }] }],
+      roundQuestions: [{ ord: 1, text: "Pytanie testowe (runda)", answers: [{ ord: 1, text: "Odp. warta 300", fixed_points: 300 }] }],
       finalAnswerPts: 15,
     }),
     run: scenarioFinalFull,
