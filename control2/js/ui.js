@@ -12,6 +12,12 @@
 // ui.js nie zna store'a/silnika wprost — dostaje `dispatch(handlerName, payload)`
 // i renderuje na podstawie przekazanego `state`. Zero logiki gry tutaj.
 
+// Blok podpowiedzi nad siatką — odpowiednik starego setDuelMsg/setPlayMsg/
+// setStealMsg/setRevealMsg/ROUNDS_MSG/FINAL_MSG, ale jako czysta funkcja
+// bieżącego game_state (shared/hints.js), nie ulotny stan ustawiany przy
+// każdym zdarzeniu — "wszystko idzie przez tabelę stanów".
+import { getRoundsHint, getFinalHint } from "../../shared/hints.js?v=v2026-09-06T07453";
+
 const $ = (id) => document.getElementById(id);
 const on = (el, ev, fn) => el && el.addEventListener(ev, fn);
 
@@ -289,6 +295,14 @@ export function createUI({ root, emit }) {
     return h("div", { class: "c2-tilegrid" }, tiles.filter(Boolean));
   }
 
+  // Blok podpowiedzi — zawsze bezpośrednio NAD siatką/wierszami wpisywania,
+  // dokładnie jak stary control/js/gameRounds.js's msgDuel/msgRoundsPlay/
+  // msgSteal itd. Pusty tekst = nic nie renderujemy (nie zostawiamy pustego
+  // paska).
+  function hintBlock(text) {
+    return text ? h("div", { class: "c2-hint", text }) : null;
+  }
+
   // ---- Rundy (r_intro..r_gameEnd) ----
   function renderRounds(state) {
     const r = state.rounds;
@@ -397,6 +411,7 @@ export function createUI({ root, emit }) {
     if ((state.phase === "PLAY" || state.phase === "STEAL") && r.canEndRound) {
       tiles.push(tile("Zakończ rundę", { row: 5, col: THIRD(2), cls: "c2-tile-primary", onclick: () => emit("game.dispatch", { type: "END_ROUND" }) }));
     }
+    body.push(hintBlock(getRoundsHint(state)));
     body.push(tileGrid(tiles));
 
     gameplayShell({ stepLabel: `Runda ${r.roundNo} — bank ${r.bankPts}`, body, nav: null });
@@ -449,7 +464,7 @@ export function createUI({ root, emit }) {
       }
       rows.push(h("div", { class: "c2-entryrow" }, rowChildren));
     }
-    const body = [h("div", { class: "c2-entryrows" }, rows)];
+    const body = [hintBlock(getFinalHint(state)), h("div", { class: "c2-entryrows" }, rows)];
 
     const timerRunning = f.runtime.timer.running;
     const nav = [
@@ -521,8 +536,14 @@ export function createUI({ root, emit }) {
     } else if (!row.revealedPoints) {
       tiles.push(tile("Pokaż punkty", { row: 5, col: THIRD(2), cls: "c2-tile-primary", onclick: () => emit("game.dispatch", { type: "REVEAL_POINTS", round, idx }) }));
     } else {
-      tiles.push(tile("Dalej", { row: 5, col: THIRD(2), cls: "c2-tile-primary", onclick: () => emit("game.dispatch", { type: "NEXT_QUESTION", round, idx }) }));
+      // NEXT_QUESTION's `idx` to 1-bazowy numer PYTANIA, z którego schodzimy
+      // (nextIdx = action.idx+1 w engine.js) — nie 0-bazowy indeks tablicy,
+      // którym operuje reszta tego ekranu. Bez +1 operator zostawałby
+      // uwięziony na tym samym pytaniu (nextIdx trafiałby z powrotem w ten
+      // sam krok).
+      tiles.push(tile("Dalej", { row: 5, col: THIRD(2), cls: "c2-tile-primary", onclick: () => emit("game.dispatch", { type: "NEXT_QUESTION", round, idx: idx + 1 }) }));
     }
+    body.push(hintBlock(getFinalHint(state)));
     body.push(tileGrid(tiles));
 
     gameplayShell({ stepLabel: `Finał — mapowanie ${idx + 1}/5`, body, nav: null });
