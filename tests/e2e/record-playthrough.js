@@ -210,14 +210,55 @@ async function hostPeekSwipe(hostPage) {
 // wróci i rev się zaktualizuje, wysyła kolejny zapis z JUŻ NIEAKTUALNYM
 // p_expected_rev (stale_write, patrz plan sekcja 4 o bezpiecznym retry).
 // Zwykłe .click() Playwrighta czeka tylko, aż element jest klikalny w DOM —
-// nie wie nic o tym asynchronicznym zapisie w tle, więc same locatory nie
-// wystarczą. Pierwszy prawdziwy przebieg w CI złapał to dokładnie na 3.
-// kliknięciu X pod rząd. =====
-const CLICK_PACE_MS = 500;
+// nie wie nic o tym asynchronicznym zapisie w tle.
+//
+// Stały odstęp (500ms) okazał się niewystarczający: na współdzielonym
+// runnerze CI (4 konteksty przeglądarki + Xvfb + ffmpeg nagrywające na
+// żywo) pojedynczy zapis do produkcyjnego Supabase czasem trwa dłużej niż
+// 500ms, więc kolejne kliknięcie i tak trafiało na jeszcze nieodświeżony
+// state.rev (run #34161808665: stale_write na 7. kliknięciu X w rundzie 2,
+// mimo pełnego pacingu). Zamiast zgadywać stały czas, czekamy wprost na
+// odpowiedź sieciową zapisu wywołanego tym kliknięciem — to samo, na co
+// i tak czeka prawdziwy operator (patrz plan, sekcja 4: "przycisk pokazuje
+// stan wysyłania, dopiero po potwierdzeniu... ekran się aktualizuje").
+const CLICK_PACE_MS = 300;
+const WRITE_RPC_RE = /\/rpc\/(game_state_write|game_state_buzzer_press|game_state_undo)(\?|$)/;
+
+function waitForWrite(page) {
+  // Zarejestruj oczekiwanie PRZED akcją, żeby nie przegapić odpowiedzi,
+  // która wróci bardzo szybko. Nie każda akcja w tym scenariuszu wywołuje
+  // zapis (np. czysto lokalne "Anuluj") — stąd .catch(() => null) zamiast
+  // wywalać cały scenariusz na braku pasującej odpowiedzi.
+  return page
+    .waitForResponse((resp) => WRITE_RPC_RE.test(resp.url()), { timeout: 15000 })
+    .catch(() => null);
+}
 
 async function clickPaced(locator, ms = CLICK_PACE_MS) {
+  const page = locator.page();
+  const responded = waitForWrite(page);
   await locator.click();
-  await locator.page().waitForTimeout(ms);
+  await responded;
+  await page.waitForTimeout(ms);
+}
+
+// Jak clickPaced, ale dla .fill()/.check() — SET_ENTRY_TEXT/SET_REPEAT też
+// zapisują do game_state (ui.js's "input"/"change" listenery), więc podlegają
+// dokładnie temu samemu wyścigowi z p_expected_rev co kliknięcia.
+async function fillPaced(locator, text, ms = CLICK_PACE_MS) {
+  const page = locator.page();
+  const responded = waitForWrite(page);
+  await locator.fill(text);
+  await responded;
+  await page.waitForTimeout(ms);
+}
+
+async function checkPaced(locator, ms = CLICK_PACE_MS) {
+  const page = locator.page();
+  const responded = waitForWrite(page);
+  await locator.check();
+  await responded;
+  await page.waitForTimeout(ms);
 }
 
 // ===== Scenariusz 1: pojedynek z resetem, pass, kradzież wygrana i
@@ -303,8 +344,7 @@ async function scenarioFinalFull(pages) {
   // Gracz 1: wpisz wszystkie 5, uruchom zegarek, poczekaj na NATURALNE wygaśnięcie (15s)
   const p1Inputs = control.locator("#app input[type=text]");
   for (let i = 0; i < 5; i++) {
-    await p1Inputs.nth(i).fill("Odpowiedź finałowa");
-    await control.waitForTimeout(CLICK_PACE_MS);
+    await fillPaced(p1Inputs.nth(i), "Odpowiedź finałowa");
   }
   await clickPaced(control.getByRole("button", { name: "Start timera" }));
   await control.waitForTimeout(16_000);
@@ -327,12 +367,10 @@ async function scenarioFinalFull(pages) {
   await host.waitForTimeout(1500);
 
   // Gracz 2: pytanie #1 = powtórzenie, reszta wpisana normalnie
-  await control.getByLabel("powtórzenie").first().check();
-  await control.waitForTimeout(CLICK_PACE_MS);
+  await checkPaced(control.getByLabel("powtórzenie").first());
   const p2Inputs = control.locator("#app input[type=text]");
   for (let i = 1; i < 5; i++) {
-    await p2Inputs.nth(i).fill("Odpowiedź finałowa");
-    await control.waitForTimeout(CLICK_PACE_MS);
+    await fillPaced(p2Inputs.nth(i), "Odpowiedź finałowa");
   }
   await clickPaced(control.getByRole("button", { name: "Start timera" }));
   await clickPaced(control.getByRole("button", { name: "Dalej" })); // tym razem NIE czekamy na naturalne wygaśnięcie
