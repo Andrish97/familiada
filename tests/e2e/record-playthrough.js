@@ -185,6 +185,21 @@ async function closeAll(contexts) {
   for (const ctx of Object.values(contexts)) await ctx.close().catch(() => {});
 }
 
+// Symuluje gest przesunięcia (peek) na Hoście — host2/js/main.js's
+// setupPeekSwipe(): pointerdown -> pointerup w odległości >= 60px, lokalnie
+// pokazuje to, co jest pod zasłoną pasma 2, BEZ żadnego zapisu do
+// game_state (patrz notatka w figurze 7 "Mapa Rozgrywki": Host ma treść
+// zawsze, zasłona to tylko wizualna nakładka). Ten podgląd sam się cofa
+// przy KOLEJNEJ zmianie stanu (host2/js/render.js's `peeked = false` na
+// nowym wierszu) — więc następna scripted akcja w scenariuszu naturalnie
+// pokaże na nagraniu, że zasłona wraca sama.
+async function hostPeekSwipe(hostPage) {
+  await hostPage.mouse.move(300, 220);
+  await hostPage.mouse.down();
+  await hostPage.mouse.move(300, 360, { steps: 10 });
+  await hostPage.mouse.up();
+}
+
 // ===== Scenariusz 1: pojedynek z resetem, pass, kradzież wygrana i
 // przegrana, dosłanianie reszty, mnożnik pominięty (2 pytania), koniec gry
 // bez finału. Ten sam przebieg co control2.spec.js's test "reset
@@ -239,7 +254,7 @@ async function scenarioRoundsMechanics(pages) {
 // control2.spec.js's test "finał — obaj gracze, wszystkie 10 pytań...". =====
 
 async function scenarioFinalFull(pages) {
-  const { control, buzzer } = pages;
+  const { control, buzzer, host } = pages;
 
   await control.getByRole("button", { name: "Dalej" }).click();
   await control.getByRole("button", { name: "Zakończ podłączanie" }).click();
@@ -258,6 +273,13 @@ async function scenarioFinalFull(pages) {
   await control.getByRole("button", { name: "Start finału" }).click();
   await control.waitForTimeout(4000); // final_theme + reveal
 
+  // Host: zasłona pasma 2 właśnie się włączyła (startFinal). Prowadzący
+  // sam podgląda gestem przesunięcia — Host ma treść zawsze, zasłona to
+  // tylko lokalna nakładka. Ta próba znika sama na następnej akcji
+  // (wpisanie pierwszej odpowiedzi wysyła nowy stan, co resetuje peek).
+  await hostPeekSwipe(host);
+  await host.waitForTimeout(1500);
+
   // Gracz 1: wpisz wszystkie 5, uruchom zegarek, poczekaj na NATURALNE wygaśnięcie (15s)
   const p1Inputs = control.locator("#app input[type=text]");
   for (let i = 0; i < 5; i++) await p1Inputs.nth(i).fill("Odpowiedź finałowa");
@@ -273,7 +295,13 @@ async function scenarioFinalFull(pages) {
   }
 
   await control.getByRole("button", { name: "Start rundy 2" }).click();
-  await control.waitForTimeout(1500); // niech nagranie złapie odsłonięcie Display+Host
+  await control.waitForTimeout(1500); // niech nagranie złapie pełne odsłonięcie odpowiedzi gracza 1 na Display
+
+  // Host NIE dostaje żadnego automatycznego odsłonięcia razem z Display —
+  // zasłona pasma 2 zostaje włączona przez cały finał (patrz figura 7).
+  // Prowadzący znowu peekuje sam, żeby to pokazać na nagraniu wprost.
+  await hostPeekSwipe(host);
+  await host.waitForTimeout(1500);
 
   // Gracz 2: pytanie #1 = powtórzenie, reszta wpisana normalnie
   await control.getByLabel("powtórzenie").first().check();
