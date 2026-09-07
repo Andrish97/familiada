@@ -49,6 +49,15 @@ const QUAD_W = SCREEN_W / 2, QUAD_H = SCREEN_H / 2;
 
 async function makeGame(page, name, { settings = {}, roundQuestions = [], finalAnswerPts = null } = {}) {
   return page.evaluate(async ({ name, settings, roundQuestions, finalAnswerPts }) => {
+    // js/pages/editor.js's clip17()/normQ() clip answer/question text
+    // client-side before a real user's save ever reaches the DB (maxlength=17
+    // on the input, same limit here) — the DB's CHECK constraint is a second
+    // line of defense, not the primary UX. Ten test wstawia bezpośrednio przez
+    // Supabase, z pominięciem tego UI, więc musi sam sobie zrobić to samo
+    // obcięcie, żeby literał wpisany tutaj nigdy nie wywalał 400 z bazy.
+    const clip17 = (s) => String(s ?? "").trim().slice(0, 17);
+    const clip200 = (s) => String(s ?? "").trim().slice(0, 200);
+
     const sb = window.__sbClient;
     const { data: userData } = await sb.auth.getUser();
     const { data: g, error: gErr } = await sb
@@ -63,10 +72,10 @@ async function makeGame(page, name, { settings = {}, roundQuestions = [], finalA
 
     for (const q of roundQuestions) {
       const { data: qRow, error: qErr } = await sb
-        .from("questions").insert({ game_id: g.id, ord: q.ord, text: q.text }).select("id").single();
+        .from("questions").insert({ game_id: g.id, ord: q.ord, text: clip200(q.text) }).select("id").single();
       if (qErr) throw new Error("insert questions failed: " + qErr.message);
       const { error: aErr } = await sb.from("answers").insert(
-        q.answers.map((a) => ({ question_id: qRow.id, ...a }))
+        q.answers.map((a) => ({ ...a, question_id: qRow.id, text: clip17(a.text) }))
       );
       if (aErr) throw new Error("insert answers failed: " + aErr.message);
     }
@@ -75,10 +84,10 @@ async function makeGame(page, name, { settings = {}, roundQuestions = [], finalA
     if (finalAnswerPts) {
       for (let i = 1; i <= 5; i++) {
         const { data: fq, error: fqErr } = await sb
-          .from("questions").insert({ game_id: g.id, ord: 100 + i, text: `Pytanie finałowe ${i}` }).select("id").single();
+          .from("questions").insert({ game_id: g.id, ord: 100 + i, text: clip200(`Pytanie finałowe ${i}`) }).select("id").single();
         if (fqErr) throw new Error("insert final question failed: " + fqErr.message);
         const { error: faErr } = await sb.from("answers").insert([
-          { question_id: fq.id, ord: 1, text: "Odp. finałowa", fixed_points: finalAnswerPts },
+          { question_id: fq.id, ord: 1, text: clip17("Odp. finałowa"), fixed_points: finalAnswerPts },
         ]);
         if (faErr) throw new Error("insert final answer failed: " + faErr.message);
         finalPicked.push({ id: fq.id });
