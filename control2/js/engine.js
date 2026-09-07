@@ -552,10 +552,13 @@ const REDUCERS = {
   },
 
   // ---- F7->F8: start rundy 2 ----
+  // Host pasmo 2 zostaje zasłonięte przez CAŁY finał, obie tury — to nie
+  // jest luka (wcześniejszy zapis w planie to twierdził błędnie, odwrócone
+  // po uzgodnieniu). Jedyny sposób podejrzenia treści to lokalny gest
+  // peek na urządzeniu Hosta (host2/js/render.js), nigdy zapis do
+  // game_state. Display, w odróżnieniu od Hosta, dostaje pełne odsłonięcie
+  // odpowiedzi gracza 1 przy starcie zegarka gracza 2 (patrz START_TIMER).
   async START_P2_ROUND(state) {
-    // Naprawiona luka (uzgodniona z Tobą): Host odsłania się razem z
-    // Display, zamiast zostawać zasłonięty do końca gry jak dziś.
-    state.host.covered = false;
     return { step: "f_p2_entry", phase: null, controlTeam: null, topCard: "final" };
   },
 

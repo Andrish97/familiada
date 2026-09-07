@@ -113,7 +113,7 @@ Ta strona jest wygenerowana z `shared/gameStateMachine.js` — jedynego źródł
 - **Zapis (`detail`)**: winnerTeam, final.picked (5 pytań)
 - **Bramkowane przez ustawienia**: `hasFinal`, `finalMinPoints`, `finalQuestionsMode`
 - **Display**: Plansza finału z placeholderami od razu widoczna (nie czeka na pierwsze odsłonięcie).
-- **Host**: COVER + puste pole 2.
+- **Host**: COVER + puste pole 2. Zasłona pasma 2 zostaje włączona przez CAŁY finał, obie tury, bez wyjątku — jedyny sposób, żeby coś pod nią zobaczyć, to lokalny gest przesunięcia (peek) na urządzeniu Hosta, nigdy nie zapisywany do game_state.
 - **Buzzer**: Wyłączony na cały finał (jedyna komenda do Buzzera w finale).
 - **Dźwięki**: `final_theme`, `reveal`
 - **Dozwolone kolejne kroki**: `f_p1_entry`
@@ -206,7 +206,7 @@ Ta strona jest wygenerowana z `shared/gameStateMachine.js` — jedynego źródł
 - **Wejście**: operator klika 'Start rundy 2'
 - **Zapis (`detail`)**: runtime.timer={running,phase:'P2',endsAt}, runtime.p2[i].{text,repeat}
 - **Display**: LEFT/RIGHT po stronie zwycięzcy pokazują odliczanie (20s). Przy starcie timera: FHALF A z pełną, jednorazową odsłoną wszystkich 5 odpowiedzi gracza 1 (nie stopniowo).
-- **Host**: Tytuł rundy 2 + status 5 pytań. Odsłania się RAZEM z Display (naprawiona luka — dziś UNCOVER nigdy nie jest wysyłane, patrz plan sekcja 2a).
+- **Host**: Tytuł rundy 2 + status 5 pytań. Pasmo 2 NADAL zasłonięte — to NIE jest luka do naprawienia (dawniejszy zapis w planie, sekcja 3a punkt 7a, był błędny i został odwrócony): zasłona u Hosta nigdy się oficjalnie nie zdejmuje przez cały finał, tylko lokalny peek. Display, w odróżnieniu od Hosta, DOSTAJE pełne, jednorazowe odsłonięcie przy starcie tego timera.
 - **Buzzer**: Wyłączony.
 - **Dźwięki**: `time_over`, `answer_repeat`
 - **Dozwolone kolejne kroki**: `f_p2_map_q1`

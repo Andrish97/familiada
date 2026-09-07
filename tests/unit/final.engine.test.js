@@ -185,7 +185,7 @@ test("wcześniejsze wyjście: osiągnięcie finalTarget w trakcie rundy 1 przesk
   assert.equal(store.state.final.runtime.reached200, true);
 });
 
-test("po f_p1_map_q5 bez wcześniejszego wyjścia -> f_p2_start (round_transition), START_P2_ROUND odsłania Host", async () => {
+test("po f_p1_map_q5 bez wcześniejszego wyjścia -> f_p2_start (round_transition), START_P2_ROUND NIE odsłania Hosta", async () => {
   const { store, dispatch } = makeEngine({ finalTarget: 999 }); // nigdy nie trafiony
   await dispatch({ type: "START_FINAL" });
   await dispatch({ type: "START_MAPPING", round: 1 });
@@ -198,7 +198,7 @@ test("po f_p1_map_q5 bez wcześniejszego wyjścia -> f_p2_start (round_transitio
 
   await dispatch({ type: "START_P2_ROUND" });
   assert.equal(store.state.step, "f_p2_entry");
-  assert.equal(store.state.host.covered, false, "naprawiona luka: Host odsłania się razem z Display");
+  assert.equal(store.state.host.covered, true, "pasmo 2 u Hosta zostaje zasłonięte przez cały finał — jedyny podgląd to lokalny peek");
 });
 
 test("po f_p2_map_q5 bez wcześniejszego wyjścia -> f_end", async () => {
