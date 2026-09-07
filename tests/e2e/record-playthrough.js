@@ -78,7 +78,7 @@ async function makeGame(page, name, { settings = {}, roundQuestions = [], finalA
           .from("questions").insert({ game_id: g.id, ord: 100 + i, text: `Pytanie finałowe ${i}` }).select("id").single();
         if (fqErr) throw new Error("insert final question failed: " + fqErr.message);
         const { error: faErr } = await sb.from("answers").insert([
-          { question_id: fq.id, ord: 1, text: "Odpowiedź finałowa", fixed_points: finalAnswerPts },
+          { question_id: fq.id, ord: 1, text: "Odp. finałowa", fixed_points: finalAnswerPts },
         ]);
         if (faErr) throw new Error("insert final answer failed: " + faErr.message);
         finalPicked.push({ id: fq.id });
@@ -344,14 +344,14 @@ async function scenarioFinalFull(pages) {
   // Gracz 1: wpisz wszystkie 5, uruchom zegarek, poczekaj na NATURALNE wygaśnięcie (15s)
   const p1Inputs = control.locator("#app input[type=text]");
   for (let i = 0; i < 5; i++) {
-    await fillPaced(p1Inputs.nth(i), "Odpowiedź finałowa");
+    await fillPaced(p1Inputs.nth(i), "Odp. finałowa");
   }
   await clickPaced(control.getByRole("button", { name: "Start timera" }));
   await control.waitForTimeout(16_000);
 
   await clickPaced(control.getByRole("button", { name: "Dalej" }));
   for (let i = 0; i < 5; i++) {
-    await clickPaced(control.getByRole("button", { name: "Odpowiedź finałowa (15)" }));
+    await clickPaced(control.getByRole("button", { name: "Odp. finałowa (15)" }));
     await clickPaced(control.getByRole("button", { name: "Pokaż odpowiedź" }));
     await clickPaced(control.getByRole("button", { name: "Pokaż punkty" }));
     await clickPaced(control.getByRole("button", { name: "Dalej" }));
@@ -370,13 +370,13 @@ async function scenarioFinalFull(pages) {
   await checkPaced(control.getByLabel("powtórzenie").first());
   const p2Inputs = control.locator("#app input[type=text]");
   for (let i = 1; i < 5; i++) {
-    await fillPaced(p2Inputs.nth(i), "Odpowiedź finałowa");
+    await fillPaced(p2Inputs.nth(i), "Odp. finałowa");
   }
   await clickPaced(control.getByRole("button", { name: "Start timera" }));
   await clickPaced(control.getByRole("button", { name: "Dalej" })); // tym razem NIE czekamy na naturalne wygaśnięcie
 
   for (let i = 0; i < 5; i++) {
-    if (i > 0) await clickPaced(control.getByRole("button", { name: "Odpowiedź finałowa (15)" }));
+    if (i > 0) await clickPaced(control.getByRole("button", { name: "Odp. finałowa (15)" }));
     await clickPaced(control.getByRole("button", { name: "Pokaż odpowiedź" }));
     await clickPaced(control.getByRole("button", { name: "Pokaż punkty" }));
     await clickPaced(control.getByRole("button", { name: "Dalej" }));

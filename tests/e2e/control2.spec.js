@@ -129,7 +129,7 @@ async function makeGame(page, name, { settings = {}, roundQuestions = [], finalA
           .from("questions").insert({ game_id: g.id, ord: 100 + i, text: `Pytanie finałowe ${i}` }).select("id").single();
         if (fqErr) throw new Error("insert final question failed: " + fqErr.message);
         const { error: faErr } = await sb.from("answers").insert([
-          { question_id: fq.id, ord: 1, text: "Odpowiedź finałowa", fixed_points: finalAnswerPts },
+          { question_id: fq.id, ord: 1, text: "Odp. finałowa", fixed_points: finalAnswerPts },
         ]);
         if (faErr) throw new Error("insert final answer failed: " + faErr.message);
         finalPicked.push({ id: fq.id });
@@ -425,7 +425,7 @@ test("control2: próg w rundzie -> finał, wczesne zakończenie po 4/5 pytaniach
 
     for (let i = 0; i < 4; i++) {
       await expect(page.locator(".c2-stepper")).toContainText(`Finał — mapowanie ${i + 1}/5`, { timeout: 10000 });
-      await page.getByRole("button", { name: "Odpowiedź finałowa (50)" }).click();
+      await page.getByRole("button", { name: "Odp. finałowa (50)" }).click();
       await page.getByRole("button", { name: "Pokaż odpowiedź" }).click();
       await page.getByRole("button", { name: "Pokaż punkty" }).click();
       await expect(page.getByText("Punkty: 50")).toBeVisible({ timeout: 10000 });
@@ -675,7 +675,7 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     await expect(page.locator(".c2-stepper")).toContainText("Finał — gracz 1, wpisywanie", { timeout: 10000 });
     const p1Inputs = page.locator("#app input[type=text]");
     await expect(p1Inputs).toHaveCount(5, { timeout: 10000 });
-    for (let i = 0; i < 5; i++) await p1Inputs.nth(i).fill(`Odpowiedź finałowa`);
+    for (let i = 0; i < 5; i++) await p1Inputs.nth(i).fill(`Odp. finałowa`);
 
     await clearSfxLog(page);
     await page.getByRole("button", { name: "Start timera" }).click();
@@ -691,7 +691,7 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     await page.getByRole("button", { name: "Dalej" }).click();
     for (let i = 0; i < 5; i++) {
       await expect(page.locator(".c2-stepper")).toContainText(`Finał — mapowanie ${i + 1}/5`, { timeout: 10000 });
-      await page.getByRole("button", { name: "Odpowiedź finałowa (15)" }).click();
+      await page.getByRole("button", { name: "Odp. finałowa (15)" }).click();
       await page.getByRole("button", { name: "Pokaż odpowiedź" }).click();
       await page.getByRole("button", { name: "Pokaż punkty" }).click();
       await page.getByRole("button", { name: "Dalej" }).click();
@@ -711,7 +711,7 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
       return !!last
         && last.args[0] === "A"
         && !!last.args[1].animIn
-        && last.args[1].rows.every((r) => r.left === "Odpowiedź finałowa" && r.a === "15");
+        && last.args[1].rows.every((r) => r.left === "Odp. finałowa" && r.a === "15");
     }, { timeout: 10000 }).toBe(true);
     // Host: odsłania się W TYM SAMYM momencie (naprawiona luka — dawniej
     // zostawał zasłonięty do końca gry mimo że Display już odsłaniał).
@@ -724,7 +724,7 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     await expect.poll(() => getSfxKeys(page), { timeout: 5000 }).toEqual(expect.arrayContaining(["answer_repeat"]));
 
     const p2Inputs = page.locator("#app input[type=text]");
-    for (let i = 1; i < 5; i++) await p2Inputs.nth(i).fill("Odpowiedź finałowa");
+    for (let i = 1; i < 5; i++) await p2Inputs.nth(i).fill("Odp. finałowa");
     await page.getByRole("button", { name: "Start timera" }).click();
     // Tym razem NIE czekamy na naturalne wygaśnięcie — klikamy "Dalej" od
     // razu (jak w teście 4), sprawdzając DRUGĄ naprawę z dzisiejszego audytu:
@@ -734,7 +734,7 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     // ===== F8/F9: mapowanie gracza 2 — pytanie #1 to SKIP (powtórzenie), reszta MATCH =====
     for (let i = 0; i < 5; i++) {
       await expect(page.locator(".c2-stepper")).toContainText(`Finał — mapowanie ${i + 1}/5`, { timeout: 10000 });
-      if (i > 0) await page.getByRole("button", { name: "Odpowiedź finałowa (15)" }).click();
+      if (i > 0) await page.getByRole("button", { name: "Odp. finałowa (15)" }).click();
       await page.getByRole("button", { name: "Pokaż odpowiedź" }).click();
       await page.getByRole("button", { name: "Pokaż punkty" }).click();
       await page.getByRole("button", { name: "Dalej" }).click();
