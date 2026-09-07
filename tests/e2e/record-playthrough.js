@@ -35,7 +35,11 @@ const BASE_URL = "https://www.familiada.online";
 const DISPLAY_NUM = process.env.DISPLAY || ":99";
 const PULSE_SINK = process.env.PULSE_SINK || "CaptureSink";
 const OUT_DIR = process.env.RECORD_OUT_DIR || path.join(__dirname, "..", "recordings");
-const SCREEN_W = 1920, SCREEN_H = 1080;
+// control2/js/app.js's guardDesktopOnly() blokuje interakcję (#deviceGuard
+// overlay przechwytuje kliknięcia) pod matchMedia('(max-width:980px)') —
+// pierwszy przebieg z ćwiartkami 960px szerokości nadział się dokładnie na
+// to. 2560x1440 -> ćwiartki 1280x720, bezpiecznie powyżej progu 980px.
+const SCREEN_W = 2560, SCREEN_H = 1440;
 const QUAD_W = SCREEN_W / 2, QUAD_H = SCREEN_H / 2;
 
 // ===== Pomocnicze — skopiowane z control2.spec.js. Zamierzone
