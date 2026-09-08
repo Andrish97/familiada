@@ -82,8 +82,14 @@
     .c2-gameplay-card { flex:1; min-height:0; display:flex; flex-direction:column; }
     /* .cardBody (Urządzenia/Podsumowanie) ma już flex:1 z control.css — brakuje
        tylko min-height:0, inaczej flex item nie chce się skurczyć poniżej
-       wysokości treści i .c2-scroll-area nigdy realnie nie zaczyna scrollować. */
-    #app > .cardBody { min-height:0; overflow:hidden; }
+       wysokości treści i .c2-scroll-area nigdy realnie nie zaczyna scrollować.
+       padding-bottom:0 — control.css's własne 12px tu się SUMOWAŁY z
+       .control-main-card's 16px pod spodem (28px razem), podczas gdy nad
+       przyciskami było tylko .stepFoot's 10px (zgłoszone: nierówna
+       przestrzeń nad/pod przyciskami) — teraz dół to WYŁĄCZNIE
+       .control-main-card's 16px, dokładnie tyle, ile .stepFoot dostaje u
+       góry (patrz niżej). */
+    #app > .cardBody { min-height:0; overflow:hidden; padding-bottom:0; }
     /* Środkowa, przewijana treść Urządzeń/Podsumowania — .stepFoot (obok, NIE
        w środku) zawsze zostaje widoczny na dole karty, wyłączony z tego
        przewijania (zgłoszone: "dolne przyciski mają być wyłączone z
@@ -91,7 +97,13 @@
     .c2-scroll-area { flex:1; min-height:0; overflow-y:auto; display:flex; flex-direction:column; gap:10px; }
     .c2-stepper { font-size:.75rem; letter-spacing:.08em; text-transform:uppercase; opacity:.65; border-bottom:1px solid rgba(255,255,255,.12); padding-bottom:8px; }
     .c2-gameplay-body { flex:1; overflow:hidden; display:flex; flex-direction:column; gap:12px; min-height:0; }
-    .c2-gameplay-nav { display:flex; gap:8px; justify-content:flex-end; border-top:1px solid rgba(255,255,255,.12); padding-top:10px; flex-wrap:wrap; }
+    /* padding-top:16px == .control-main-card's własne padding-bottom:16px
+       pod spodem — nad i pod przyciskami tyle samo miejsca (zgłoszone). */
+    .c2-gameplay-nav { display:flex; gap:8px; justify-content:flex-end; border-top:1px solid rgba(255,255,255,.12); padding-top:16px; flex-wrap:wrap; }
+    /* To samo dla Urządzeń/Podsumowania (control.css's .stepFoot, domyślnie
+       tylko 10px u góry vs 28px u dołu po odjęciu cardBody's paddingu
+       wyżej — teraz 16px u góry == 16px .control-main-card u dołu). */
+    .stepFoot { padding-top:16px; }
     .c2-question { font-size:1.4rem; font-weight:700; }
     /* r_intro/r_roundStart ("Rozpocznij grę"/"Rozpocznij rundę") — wyśrodkowana
        "hero" treść zamiast gołego akapitu, zgłoszone jako wyglądające źle. */

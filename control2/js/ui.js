@@ -677,7 +677,16 @@ export function createUI({ root, emit }) {
   function renderGameEnd(state) {
     gameplayShell({
       stepLabel: "Koniec gry",
-      body: [h("p", { text: `Wynik końcowy: A ${state.rounds.totals.A} — B ${state.rounds.totals.B}` })],
+      // Nazwy drużyn wszędzie, nie gołe litery A/B (jak w r_roundStart's
+      // wyniku i pasku statusu Rund) — ta sama c2-intro-score stylistyka.
+      body: [h("div", { class: "c2-intro" }, [
+        h("div", { class: "c2-intro-title", text: "Koniec gry" }),
+        h("div", { class: "c2-intro-score" }, [
+          h("span", { class: "c2-intro-score-a", text: `${teamName(state, "A")}: ${state.rounds.totals.A}` }),
+          h("span", { class: "c2-intro-score-sep", text: "—" }),
+          h("span", { class: "c2-intro-score-b", text: `${teamName(state, "B")}: ${state.rounds.totals.B}` }),
+        ]),
+      ])],
       nav: [
         state.locks.gameEnded
           ? h("button", { class: "c2-btn primary", onclick: () => emit("session.finish") }, [document.createTextNode("Zakończ rozgrywkę")])
