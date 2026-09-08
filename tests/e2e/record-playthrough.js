@@ -92,10 +92,14 @@ async function makeGame(page, name, { settings = {}, roundQuestions = [], finalA
         if (faErr) throw new Error("insert final answer failed: " + faErr.message);
         finalPicked.push({ id: fq.id });
       }
+      // Scal z tym, co już przyszło w `settings` (np. game.advanced.finalMinPoints
+      // dla scenariuszy progresji rund) zamiast nadpisywać cały obiekt — inaczej
+      // ten update kasowałby ustawienia zaawansowane wstawione przy tworzeniu gry.
       const { error: upErr } = await sb.from("games").update({
         settings: {
           teams: { teamA: "Alfa", teamB: "Beta" },
-          game: { hasFinal: true, finalQuestionsMode: "pick" },
+          ...settings,
+          game: { ...(settings.game || {}), hasFinal: true, finalQuestionsMode: "pick" },
           questions: { final: finalPicked, rounds: [] },
         },
       }).eq("id", g.id);
@@ -125,6 +129,36 @@ const TWO_QUESTIONS = [
     { ord: 3, text: "Odpowiedź C", fixed_points: 20 },
   ] },
 ];
+
+// 3 rundy do scenariusza "progresja + próg": kolejność i wartości punktów
+// dobrane tak, żeby próg (finalMinPoints, obniżony do 180 w ustawieniach
+// gry poniżej) padał dopiero PO trzeciej rundzie, nie wcześniej — inaczej
+// runda 3. nigdy by się nie odbyła i "kilka rund" byłoby tylko dwiema.
+// Ręczne przeliczenie (patrz REDUCERS w control2/js/engine.js):
+//   R1: pojedynek wygrany za pierwszym razem (A, #1=40) -> reszta odsłonięta
+//       zwykłym PLAY (30+20) -> bank 90 -> mnożnik r1=1 -> totals.A=90
+//   R2: pojedynek — B pudłuje (X) -> BEZ resetu (to nie jest RESET, tylko
+//       CONTINUE_SECOND) kolej NA DRUGĄ próbę idzie do A, która trafia
+//       odpowiedź NIE-topową (#2=10) i WYGRYWA, bo B miał 0 -> reszta
+//       (#1=50) odsłonięta w PLAY -> bank 60 -> mnożnik r2=1 -> totals.A=150
+//   R3: pojedynek wygrany za pierwszym razem (A, #1=40) -> reszta (#2=10)
+//       -> bank 50 -> mnożnik r3=1 -> totals.A=200 >= 180 -> PRÓG OSIĄGNIĘTY
+const PROGRESSION_QUESTIONS = [
+  { ord: 1, text: "Pytanie progresji 1", answers: [
+    { ord: 1, text: "40 punktów", fixed_points: 40 },
+    { ord: 2, text: "30 punktów", fixed_points: 30 },
+    { ord: 3, text: "20 punktów", fixed_points: 20 },
+  ] },
+  { ord: 2, text: "Pytanie progresji 2", answers: [
+    { ord: 1, text: "50 punktów", fixed_points: 50 },
+    { ord: 2, text: "10 punktów", fixed_points: 10 },
+  ] },
+  { ord: 3, text: "Pytanie progresji 3", answers: [
+    { ord: 1, text: "40 punktów", fixed_points: 40 },
+    { ord: 2, text: "10 punktów", fixed_points: 10 },
+  ] },
+];
+const PROGRESSION_FINAL_MIN_POINTS = 180;
 
 // ===== Kafelkowanie okien 2x2 na wirtualnym ekranie (CDP Browser.setWindowBounds) =====
 
@@ -349,7 +383,62 @@ async function scenarioRoundsMechanics(pages) {
   await control.waitForTimeout(2500); // zostaw ekran końcowy widoczny chwilę na nagraniu
 }
 
-// ===== Scenariusz 2: finał pełny — oba bloki, naturalne wygaśnięcie
+// ===== Scenariusz 2/3: progresja przez KILKA rund aż do naturalnego
+// osiągnięcia progu (finalMinPoints, obniżony do 180 — patrz
+// PROGRESSION_QUESTIONS) — nie jeden sztuczny strzał na dużą liczbę punktów.
+// Runda 2. dodatkowo pokazuje jedyną gałąź pojedynku, której nie było w
+// żadnym innym scenariuszu: pierwsza drużyna pudłuje, DRUGA wygrywa na
+// swojej próbie odpowiedzią NIE-topową, bez żadnego resetu (to inny
+// przypadek niż RESET z scenariusza 1, gdzie pudłują OBIE drużyny).
+// `expectFinal` przełącza wyłącznie to, co się dzieje PO 3. rundzie: wejście
+// w finał (próg + hasFinal=true) albo prosto na ekran końca gry (próg +
+// hasFinal=false) — sama progresja rund jest identyczna w obu wariantach. =====
+
+async function scenarioRoundsThreshold(pages, { expectFinal }) {
+  const { control, buzzer } = pages;
+
+  await clickPaced(control.getByRole("button", { name: "Dalej" }));
+  await clickPaced(control.getByRole("button", { name: "Zakończ podłączanie" }));
+  await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rund" }));
+  await clickPaced(control.getByRole("button", { name: "Dalej" }));
+
+  // ===== RUNDA 1: pojedynek wygrany za pierwszym razem (bez pudła) =====
+  await clickPaced(control.getByRole("button", { name: "Start rundy" }));
+  await clickPaced(buzzer.getByRole("button", { name: "Buzzer A" }));
+  await clickPaced(control.getByRole("button", { name: "Przyjmij" }));
+  await clickPaced(control.getByRole("button", { name: "#1" })); // A trafia topową odpowiedź od razu -> wygrywa pojedynek
+  await clickPaced(control.getByRole("button", { name: "#2" }));
+  await clickPaced(control.getByRole("button", { name: "#3" })); // wszystko odsłonięte -> koniec rundy pomija ekran dosłaniania
+  await clickPaced(control.getByRole("button", { name: "Zakończ rundę" }));
+
+  // ===== RUNDA 2: B pudłuje -> BEZ resetu, druga próba (A) wygrywa
+  // odpowiedzią nie-topową =====
+  await clickPaced(control.getByRole("button", { name: "Start rundy" }));
+  await clickPaced(buzzer.getByRole("button", { name: "Buzzer B" }));
+  await clickPaced(control.getByRole("button", { name: "Przyjmij" }));
+  await clickPaced(control.getByRole("button", { name: "X", exact: true })); // B pudłuje -> kolej na drugą próbę (A), NIE reset
+  await clickPaced(control.getByRole("button", { name: "#2" })); // A trafia odpowiedź nie-topową -> WYGRYWA, bo B miał 0 pkt
+  await clickPaced(control.getByRole("button", { name: "#1" })); // A dosłania resztę
+  await clickPaced(control.getByRole("button", { name: "Zakończ rundę" }));
+
+  // ===== RUNDA 3: pojedynek wygrany za pierwszym razem, dobicie do progu =====
+  await clickPaced(control.getByRole("button", { name: "Start rundy" }));
+  await clickPaced(buzzer.getByRole("button", { name: "Buzzer A" }));
+  await clickPaced(control.getByRole("button", { name: "Przyjmij" }));
+  await clickPaced(control.getByRole("button", { name: "#1" }));
+  await clickPaced(control.getByRole("button", { name: "#2" }));
+  await clickPaced(control.getByRole("button", { name: "Zakończ rundę" })); // próg (180) osiągnięty
+
+  if (expectFinal) {
+    await clickPaced(control.getByRole("button", { name: "Start finału" }));
+    await control.waitForTimeout(3000); // ekran wpisywania gracza 1 widoczny chwilę — pełny final to osobne scenariusze
+  } else {
+    await clickPaced(control.getByRole("button", { name: "Pokaż koniec gry" }));
+    await control.waitForTimeout(2500);
+  }
+}
+
+// ===== Scenariusz 4: finał pełny — oba bloki, naturalne wygaśnięcie
 // zegarka gracza 1, powtórzenie u gracza 2, odsłonięcie odpowiedzi gracza 1
 // na Display I Host przy starcie tury gracza 2. Ten sam przebieg co
 // control2.spec.js's test "finał — obaj gracze, wszystkie 10 pytań...". =====
@@ -381,17 +470,32 @@ async function scenarioFinalFull(pages) {
   await hostPeekSwipe(host);
   await host.waitForTimeout(1500);
 
-  // Gracz 1: wpisz wszystkie 5, uruchom zegarek, poczekaj na NATURALNE wygaśnięcie (15s)
+  // Nie trzeba wpisywać WSZYSTKICH pięciu odpowiedzi na gracza, żeby
+  // pokazać ekran mapowania — puste pole samo rozstrzyga się jako SKIP
+  // (defaultResolve w ui.js), a wpisany, ale niedopasowany ręcznie tekst
+  // jako MISS. true=wpisz i kliknij dopasowanie (MATCH), "miss"=wpisz, ale
+  // NIE klikaj dopasowania (AUTO+MISS), false=zostaw puste (AUTO+SKIP).
+  // Gracz 1: 2× MATCH, 1× MISS, 2× SKIP — pokazuje wszystkie trzy wyniki
+  // mapowania jednym przebiegiem, bez wpisywania 5 identycznych odpowiedzi.
+  const P1_PLAN = [true, false, "miss", true, false];
+  // Gracz 2: idx 0 to powtórzenie (osobna gałąź, obsłużona niżej) — reszta
+  // 2× MATCH, 2× SKIP.
+  const P2_PLAN = [null, true, false, true, false];
+
+  // Gracz 1: wpisz zaplanowane odpowiedzi, uruchom zegarek, poczekaj na
+  // NATURALNE wygaśnięcie (15s).
   const p1Inputs = control.locator("#app input[type=text]");
   for (let i = 0; i < 5; i++) {
-    await typePaced(p1Inputs.nth(i), "Odp. finałowa");
+    if (P1_PLAN[i] === true) await typePaced(p1Inputs.nth(i), "Odp. finałowa");
+    else if (P1_PLAN[i] === "miss") await typePaced(p1Inputs.nth(i), "Zła odpowiedź");
+    // false: nic nie wpisujemy -> AUTO+SKIP przy "Pokaż odpowiedź"
   }
   await clickPaced(control.getByRole("button", { name: "Start timera" }));
   await control.waitForTimeout(16_000);
 
   await clickPaced(control.getByRole("button", { name: "Dalej" }));
   for (let i = 0; i < 5; i++) {
-    await clickPaced(control.getByRole("button", { name: "Odp. finałowa (15)" }));
+    if (P1_PLAN[i] === true) await clickPaced(control.getByRole("button", { name: "Odp. finałowa (15)" }));
     await clickPaced(control.getByRole("button", { name: "Pokaż odpowiedź" }));
     await clickPaced(control.getByRole("button", { name: "Pokaż punkty" }));
     await clickPaced(control.getByRole("button", { name: "Dalej" }));
@@ -406,21 +510,79 @@ async function scenarioFinalFull(pages) {
   await hostPeekSwipe(host);
   await host.waitForTimeout(1500);
 
-  // Gracz 2: pytanie #1 = powtórzenie, reszta wpisana normalnie
+  // Gracz 2: pytanie #1 = powtórzenie, reszta wg P2_PLAN.
   await checkPaced(control.getByLabel("powtórzenie").first());
   const p2Inputs = control.locator("#app input[type=text]");
   for (let i = 1; i < 5; i++) {
-    await typePaced(p2Inputs.nth(i), "Odp. finałowa");
+    if (P2_PLAN[i] === true) await typePaced(p2Inputs.nth(i), "Odp. finałowa");
+    // false: nic nie wpisujemy -> AUTO+SKIP
   }
   await clickPaced(control.getByRole("button", { name: "Start timera" }));
   await clickPaced(control.getByRole("button", { name: "Dalej" })); // tym razem NIE czekamy na naturalne wygaśnięcie
 
   for (let i = 0; i < 5; i++) {
-    if (i > 0) await clickPaced(control.getByRole("button", { name: "Odp. finałowa (15)" }));
+    if (P2_PLAN[i] === true) await clickPaced(control.getByRole("button", { name: "Odp. finałowa (15)" }));
     await clickPaced(control.getByRole("button", { name: "Pokaż odpowiedź" }));
     await clickPaced(control.getByRole("button", { name: "Pokaż punkty" }));
     await clickPaced(control.getByRole("button", { name: "Dalej" }));
   }
+
+  await clickPaced(control.getByRole("button", { name: "Zakończ", exact: true }));
+  await control.waitForTimeout(3000); // ekran końcowy widoczny chwilę na nagraniu
+}
+
+// ===== Scenariusz 5: finał z WCZESNYM zakończeniem — pierwsza odpowiedź
+// gracza 1 sama przekracza próg finału (finalTarget, domyślnie 200; tu
+// odpowiedź warta 250), więc silnik przeskakuje prosto do f_end
+// (REVEAL_POINTS w engine.js), pomijając resztę pytań gracza 1 I CAŁEGO
+// gracza 2. Ta gałąź nie była w ogóle ćwiczona wcześniej — dotychczasowy
+// "final pełny" celowo dobiera niskie wartości punktowe, żeby NIGDY nie
+// trafić progu przed końcem. Wymaga wpisania tylko JEDNEJ odpowiedzi —
+// dokładnie to, o co chodziło w uwadze "nie musimy wpisywać wszystkich
+// odpowiedzi". =====
+
+async function scenarioFinalEarlyExit(pages) {
+  const { control, buzzer, host } = pages;
+
+  await clickPaced(control.getByRole("button", { name: "Dalej" }));
+  await clickPaced(control.getByRole("button", { name: "Zakończ podłączanie" }));
+  await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rund" }));
+  await clickPaced(control.getByRole("button", { name: "Dalej" }));
+  await clickPaced(control.getByRole("button", { name: "Start rundy" }));
+
+  await clickPaced(buzzer.getByRole("button", { name: "Buzzer A" }));
+  await clickPaced(control.getByRole("button", { name: "Przyjmij" }));
+  await clickPaced(control.getByRole("button", { name: "#1" })); // A dobija do progu rund (300 pkt) -> wchodzimy w finał
+  // Ta jedyna odpowiedź w pytaniu została już odsłonięta PRZEZ sam pojedynek
+  // (wygrana na pierwszej próbie odsłania ją od razu) — canEndRound ustawia
+  // się TYLKO w gałęzi PLAY po odsłonięciu (engine.js's REVEAL_ANSWER), a
+  // gałąź DUEL tego nie robi. Bez nic więcej do odsłonięcia jedyną drogą do
+  // canEndRound jest 3x X w PLAY (ADD_X: xA>=STRIKE_LIMIT -> canEndRound),
+  // dokładnie jak w scenarioFinalFull's identycznej rundzie na 300 pkt.
+  await clickPaced(control.getByRole("button", { name: "X", exact: true }));
+  await clickPaced(control.getByRole("button", { name: "X", exact: true }));
+  await clickPaced(control.getByRole("button", { name: "X", exact: true }));
+  await clickPaced(control.getByRole("button", { name: "Zakończ rundę" }));
+
+  await clickPaced(control.getByRole("button", { name: "Start finału" }));
+  await control.waitForTimeout(4000); // final_theme + reveal
+
+  await hostPeekSwipe(host);
+  await host.waitForTimeout(1500);
+
+  // Tylko JEDNA odpowiedź — reszta pól gracza 1 zostaje pusta, bo i tak
+  // nigdy do nich nie dojdziemy. Zegarek pomijamy całkowicie (opcjonalny —
+  // "Dalej" działa niezależnie od tego, czy w ogóle był uruchomiony).
+  const p1Inputs = control.locator("#app input[type=text]");
+  await typePaced(p1Inputs.nth(0), "Odp. finałowa");
+  await clickPaced(control.getByRole("button", { name: "Dalej" }));
+
+  await clickPaced(control.getByRole("button", { name: "Odp. finałowa (250)" }));
+  await clickPaced(control.getByRole("button", { name: "Pokaż odpowiedź" }));
+  // 250 >= finalTarget (200) -> REVEAL_POINTS w engine.js skacze prosto do
+  // f_end, pomijając NEXT_QUESTION/pytania 2-5 gracza 1 i CAŁEGO gracza 2 —
+  // "Pokaż punkty" to ostatnie kliknięcie w mapowaniu w tym scenariuszu.
+  await clickPaced(control.getByRole("button", { name: "Pokaż punkty" }));
 
   await clickPaced(control.getByRole("button", { name: "Zakończ", exact: true }));
   await control.waitForTimeout(3000); // ekran końcowy widoczny chwilę na nagraniu
@@ -436,12 +598,41 @@ const SCENARIOS = [
     run: scenarioRoundsMechanics,
   },
   {
-    file: "02-final-pelny.mp4",
+    // Ta sama progresja rund co scenariusz 3, ale hasFinal=true -> R9 kończy
+    // się wejściem w finał zamiast w ekran końca gry.
+    file: "02-rundy-progresja-final.mp4",
+    makeGame: (setupPage) => makeGame(setupPage, `E2E-REC-PROGRESJA-FINAL-${Date.now()}`, {
+      roundQuestions: PROGRESSION_QUESTIONS,
+      settings: { game: { hasFinal: true, advanced: { finalMinPoints: PROGRESSION_FINAL_MIN_POINTS } } },
+      finalAnswerPts: 15, // treść finału nieużywana (scenariusz zatrzymuje się na f_p1_entry) — wymagana tylko, żeby canEnterFinal() przepuściło
+    }),
+    run: (pages) => scenarioRoundsThreshold(pages, { expectFinal: true }),
+  },
+  {
+    file: "03-rundy-progresja-bez-finalu.mp4",
+    makeGame: (setupPage) => makeGame(setupPage, `E2E-REC-PROGRESJA-KONIEC-${Date.now()}`, {
+      roundQuestions: PROGRESSION_QUESTIONS,
+      settings: { game: { hasFinal: false, advanced: { finalMinPoints: PROGRESSION_FINAL_MIN_POINTS } } },
+    }),
+    run: (pages) => scenarioRoundsThreshold(pages, { expectFinal: false }),
+  },
+  {
+    file: "04-final-pelny.mp4",
     makeGame: (setupPage) => makeGame(setupPage, `E2E-REC-FINAL-${Date.now()}`, {
       roundQuestions: [{ ord: 1, text: "Pytanie testowe (runda)", answers: [{ ord: 1, text: "Odp. warta 300", fixed_points: 300 }] }],
       finalAnswerPts: 15,
     }),
     run: scenarioFinalFull,
+  },
+  {
+    // finalAnswerPts=250 > finalTarget domyślne (200) -> pierwsza trafiona
+    // odpowiedź gracza 1 sama kończy finał wcześniej.
+    file: "05-final-wczesne-zakonczenie.mp4",
+    makeGame: (setupPage) => makeGame(setupPage, `E2E-REC-FINAL-WCZESNY-${Date.now()}`, {
+      roundQuestions: [{ ord: 1, text: "Pytanie testowe (runda)", answers: [{ ord: 1, text: "Odp. warta 300", fixed_points: 300 }] }],
+      finalAnswerPts: 250,
+    }),
+    run: scenarioFinalEarlyExit,
   },
 ];
 
