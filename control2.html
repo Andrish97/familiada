@@ -55,18 +55,47 @@
        wewnętrznego kontenera, nie do #app. Urządzenia/Podsumowanie mają
        zostać na pełną szerokość .control-main-card, tak jak w starym
        Control — to NIE jest klasa na #app. */
-    .c2-gameplay-card { width:min(720px, 100%); max-height:100%; margin:0 auto; }
-    .c2-gameplay { height: 100%; max-height: 640px; display:flex; flex-direction:column; gap:12px; }
+    .c2-gameplay { height: 100%; display:flex; flex-direction:column; gap:12px; }
+    /* "Karta ma być na całą wysokość" (Rundy) — cały łańcuch od .wrap.wide
+       w dół dostaje display:flex/flex:1, żeby #app faktycznie wypełniał
+       resztę wysokości strony, ZAMIAST tylko dopasowywać się do treści.
+       :has(.c2-gameplay-card) ogranicza to WYŁĄCZNIE do ekranów rozgrywki
+       (Rundy/Final, jedyne które wstawiają ten element przez gameplayShell())
+       — Urządzenia/Podsumowanie (bez tego elementu) zostają na dotychczasowej,
+       dopasowanej-do-treści wysokości, nietknięte. Reguły żyją tu (scoped do
+       tej jednej strony), nie w współdzielonym control.css. */
+    .wrap.wide:has(.c2-gameplay-card) { display:flex; flex-direction:column; }
+    .wrap.wide:has(.c2-gameplay-card) > .shell { flex:1; min-height:0; display:flex; flex-direction:column; }
+    .shell:has(.c2-gameplay-card) > .control-tabs-card { flex:1; min-height:0; display:flex; flex-direction:column; }
+    .control-tabs-card:has(.c2-gameplay-card) > .control-main-card { flex:1; min-height:0; display:flex; flex-direction:column; }
+    .control-main-card:has(.c2-gameplay-card) > #app { flex:1; min-height:0; display:flex; flex-direction:column; }
+    .c2-gameplay-card { width:min(720px, 100%); margin:0 auto; flex:1; min-height:0; display:flex; flex-direction:column; }
     .c2-stepper { font-size:.75rem; letter-spacing:.08em; text-transform:uppercase; opacity:.65; border-bottom:1px solid rgba(255,255,255,.12); padding-bottom:8px; }
     .c2-gameplay-body { flex:1; overflow:hidden; display:flex; flex-direction:column; gap:12px; min-height:0; }
     .c2-gameplay-nav { display:flex; gap:8px; justify-content:flex-end; border-top:1px solid rgba(255,255,255,.12); padding-top:10px; flex-wrap:wrap; }
     .c2-question { font-size:1.1rem; font-weight:700; }
-    .c2-bank { font-size:.9rem; opacity:.8; }
     .c2-duel { display:flex; align-items:center; gap:10px; }
-    /* Blok podpowiedzi nad siatką — ten sam wizualny wzorzec co dzisiejsze
+    /* Blok podpowiedzi — ten sam wizualny wzorzec co dzisiejsze
        .summaryDefaultHint w control.css (bursztynowy pasek), tylko krócej,
-       bo tu treść zmienia się co kliknięcie zamiast być statycznym opisem. */
+       bo tu treść zmienia się co kliknięcie zamiast być statycznym opisem.
+       W Rundach żyje w prawej kolumnie (.c2-roundlayout-side), nie nad
+       siatką — stąd height:100%, żeby wypełniał całą wysokość tej kolumny. */
     .c2-hint { padding:8px 12px; border-radius:10px; background:rgba(180,140,0,.13); border:1px solid rgba(200,160,0,.35); font-size:.85rem; line-height:1.4; flex:none; }
+    /* ---- Rundy: siatka odpowiedzi (lewo) + pionowa kreska + podpowiedź
+       (prawo). Tylko renderRounds() używa tego — Finał-mapowanie zostaje
+       przy dawnym układzie (hint nad siatką), nie było proszone o zmianę. ---- */
+    .c2-roundlayout { display:flex; gap:16px; flex:1; min-height:0; }
+    .c2-roundlayout-main { flex:1; min-width:0; display:flex; }
+    .c2-roundlayout-main .c2-tilegrid { flex:1; }
+    .c2-roundlayout-divider { width:1px; background:rgba(255,255,255,.14); flex:none; }
+    .c2-roundlayout-side { flex:0 0 240px; min-width:0; display:flex; flex-direction:column; }
+    .c2-roundlayout-side .c2-hint { flex:1; }
+    /* Pasek statusu — pod siatką/podpowiedzią, nad dolnymi przyciskami
+       (gameplayShell's nav). Krótkie pary etykieta:wartość w jednym wierszu,
+       nie osobny blok na każdą — to jest "dodatkowe info", nie treść do
+       przeczytania w całości. */
+    .c2-statusbar { display:flex; gap:18px; flex-wrap:wrap; padding:8px 2px 0; border-top:1px solid rgba(255,255,255,.12); font-size:.85rem; opacity:.92; flex:none; }
+    .c2-statusbar b { color:var(--gold); font-weight:800; }
     /* .c2-btn: przyciski POZA siatką (start rundy/finału, przyjęcie zgłoszenia,
        "Dalej" na ekranach przejściowych) — nigdy nie miały żadnego stylu,
        dograne tu, żeby nie odstawały wizualnie od nowej siatki obok nich. */

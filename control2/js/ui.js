@@ -357,13 +357,13 @@ export function createUI({ root, emit }) {
       return;
     }
 
-    // r_duel / r_play (wspólny ekran gry właściwej) — siatka 3x5: wiersze
-    // 1-3 to do 6 odpowiedzi (2 na wiersz, 1,5 jednostki szerokości), wiersz
-    // 4 to Pass/Kradzież (tylko gdy akurat dostępne), wiersz 5 to X / zegarek
-    // 3s (środek) / Zakończ rundę.
+    // r_duel / r_play (wspólny ekran gry właściwej). Układ: pytanie na
+    // górze; poniżej dwie kolumny — siatka odpowiedzi (lewo) i podpowiedź za
+    // pionową kreską (prawo); pod tym pasek statusu (kto ma kontrolę, bank,
+    // inne info); na samym dole przyciski nawigacji (Oddaj kontrolę/Zakończ
+    // rundę — dawniej kafle w siatce, teraz gameplayShell's nav, jak Finał).
     const body = [];
     body.push(h("div", { class: "c2-question", text: r.question?.text || "—" }));
-    body.push(h("div", { class: "c2-bank", text: `Bank: ${r.bankPts}` }));
 
     // Status pojedynku (Zgłoszono/Przyjmij albo wybór ręczny) idzie PRZED
     // siatką, nie po niej — siatka ma flex:1 i wypełnia całą resztę miejsca,
@@ -399,13 +399,17 @@ export function createUI({ root, emit }) {
     }
 
     // Siatka 3x5: wiersze 1-3 to do 6 odpowiedzi (2 na wiersz, 1,5 jednostki
-    // szerokości), wiersz 4 to Pass/Kradzież (tylko gdy akurat dostępne),
-    // wiersz 5 to X / zegarek 3s (środek) / Zakończ rundę.
+    // szerokości) — TREŚĆ odpowiedzi widoczna zawsze (operator musi wiedzieć,
+    // co klika), po odsłonięciu zmienia się tylko KOLOR/styl kafla (zielony),
+    // nie treść — dopisywane są tylko punkty. Wiersz 4 zostaje pusty (Pass i
+    // Kradzież już tu nie mieszkają — Kradzież znika całkiem, odpala się sama
+    // po 3. X; Pass/"Oddaj kontrolę" przeniesiony do nav na dole). Wiersz 5:
+    // X / licznik pudeł / przycisk zegarka 3s.
     const tiles = [];
     const sortedAnswers = r.answers.slice().sort((a, b) => a.ord - b.ord).slice(0, 6);
     sortedAnswers.forEach((a, i) => {
       const revealed = r.revealed.includes(a.ord);
-      tiles.push(tile(revealed ? `${a.text} — ${a.fixed_points}` : `#${a.ord}`, {
+      tiles.push(tile(revealed ? `${a.text} — ${a.fixed_points}` : a.text, {
         row: Math.floor(i / 2) + 1,
         col: HALF(i % 2),
         cls: revealed ? "c2-tile-revealed" : "",
@@ -414,41 +418,59 @@ export function createUI({ root, emit }) {
       }));
     });
 
-    // Wiersz 4: Pass i Kradzież, każdy niezależnie, tylko gdy akurat dostępny.
-    if (state.phase === "PLAY" && r.allowPass && !r.passUsed) {
-      tiles.push(tile("Pass", { row: 4, col: HALF(0), cls: "c2-tile-warn", onclick: () => emit("game.dispatch", { type: "PASS" }) }));
-    }
-    if (state.phase === "PLAY") {
-      tiles.push(tile("Kradzież", { row: 4, col: HALF(1), cls: "c2-tile-warn", onclick: () => emit("game.dispatch", { type: "GO_STEAL" }) }));
-    }
-
-    // Wiersz 5: X (lewo) / zegarek 3s (środek) / Zakończ rundę (prawo).
+    // Wiersz 5: X (lewo) / licznik pudeł tej drużyny — tylko PLAY/STEAL, w
+    // DUEL nie ma sensu (tam nie liczy się do 3) — (środek) / przycisk
+    // zegarka 3s (prawo).
     const timer3 = r.timer3;
     const timer3Available = (state.phase === "PLAY" || state.phase === "STEAL" || (state.phase === "DUEL" && r.duel.firstTeam))
       && !r.canEndRound && !r.lockPlayControls;
-    if (state.phase === "DUEL" && r.duel.firstTeam) {
+    if ((state.phase === "DUEL" && r.duel.firstTeam) || state.phase === "PLAY" || state.phase === "STEAL") {
       tiles.push(tile("X", { row: 5, col: THIRD(0), cls: "c2-tile-danger", onclick: () => emit("game.dispatch", { type: "ADD_X" }) }));
     }
-    if (state.phase === "PLAY" || state.phase === "STEAL") {
-      tiles.push(tile("X", { row: 5, col: THIRD(0), cls: "c2-tile-danger", onclick: () => emit("game.dispatch", { type: "ADD_X" }) }));
+    if ((state.phase === "PLAY" || state.phase === "STEAL") && state.controlTeam) {
+      const strikes = state.controlTeam === "A" ? r.xA : r.xB;
+      tiles.push(tile(`${strikes} / 3`, { row: 5, col: THIRD(1), cls: "c2-tile-timer" }));
     }
     if (timer3Available) {
       const running = !!timer3?.running;
       const secLeft = running ? Math.max(0, Math.ceil((timer3.endsAt - Date.now()) / 1000)) : null;
       tiles.push(tile(running ? String(secLeft) : "Timer 3s", {
-        row: 5, col: THIRD(1),
+        row: 5, col: THIRD(2),
         cls: running ? "c2-tile-timer" : "c2-tile-timer startable",
         disabled: running,
         onclick: running ? undefined : () => emit("game.dispatch", { type: "START_TIMER3" }),
       }));
     }
-    if ((state.phase === "PLAY" || state.phase === "STEAL") && r.canEndRound) {
-      tiles.push(tile("Zakończ rundę", { row: 5, col: THIRD(2), cls: "c2-tile-primary", onclick: () => emit("game.dispatch", { type: "END_ROUND" }) }));
-    }
-    body.push(hintBlock(getRoundsHint(state)));
-    body.push(tileGrid(tiles));
 
-    gameplayShell({ stepLabel: `Runda ${r.roundNo} — bank ${r.bankPts}`, body, nav: null });
+    body.push(h("div", { class: "c2-roundlayout" }, [
+      h("div", { class: "c2-roundlayout-main" }, [tileGrid(tiles)]),
+      h("div", { class: "c2-roundlayout-divider" }),
+      h("div", { class: "c2-roundlayout-side" }, [hintBlock(getRoundsHint(state))]),
+    ]));
+
+    // Pasek statusu — kto ma kontrolę, bank, status kradzieży. Bank żył
+    // wcześniej DWA razy (nad siatką i w nagłówku kroku) — teraz wyłącznie tu.
+    const statusItems = [
+      h("span", {}, [document.createTextNode("Kontrolę ma: "), h("b", { text: state.controlTeam || "—" })]),
+      h("span", {}, [document.createTextNode("Bank: "), h("b", { text: String(r.bankPts) })]),
+    ];
+    if (state.phase === "STEAL" && r.steal.active) {
+      statusItems.push(h("span", {}, [document.createTextNode("Kradzież: "), h("b", { text: r.steal.team || "—" })]));
+    }
+    body.push(h("div", { class: "c2-statusbar" }, statusItems));
+
+    // Nav na dole (jak Finał) — "Oddaj kontrolę" (dawny Pass) i "Zakończ
+    // rundę" (dawniej kafle w siatce). justify-content:flex-end w
+    // .c2-gameplay-nav ustawia je po prawej samo z siebie.
+    const nav = [];
+    if (state.phase === "PLAY" && r.allowPass && !r.passUsed) {
+      nav.push(h("button", { class: "c2-btn", onclick: () => emit("game.dispatch", { type: "PASS" }) }, [document.createTextNode("Oddaj kontrolę")]));
+    }
+    if ((state.phase === "PLAY" || state.phase === "STEAL") && r.canEndRound) {
+      nav.push(h("button", { class: "c2-btn primary", onclick: () => emit("game.dispatch", { type: "END_ROUND" }) }, [document.createTextNode("Zakończ rundę")]));
+    }
+
+    gameplayShell({ stepLabel: `Runda ${r.roundNo}`, body, nav: nav.length ? nav : null });
   }
 
   function renderGameEnd(state) {
