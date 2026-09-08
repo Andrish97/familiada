@@ -101,6 +101,7 @@ export function createUI({ root, emit }) {
       hostRow.appendChild(h("div", { class: "device-row-opt" }, [
         h("label", { class: "device-opt-check" }, [noHostChk, h("div", { class: "device-opt-check-text" }, [
           h("span", { class: "device-opt-check-label", text: "Nie używaj tabletu prowadzącego" }),
+          h("span", { class: "device-opt-check-hint", text: "Jeśli prowadzący nie używa osobnego tabletu/telefonu, zaznacz tę opcję." }),
         ])]),
       ]));
       rows.push(hostRow);
@@ -115,6 +116,7 @@ export function createUI({ root, emit }) {
       buzzerRow.appendChild(h("div", { class: "device-row-opt" }, [
         h("label", { class: "device-opt-check" }, [physBuzzChk, h("div", { class: "device-opt-check-text" }, [
           h("span", { class: "device-opt-check-label", text: "Fizyczny przycisk" }),
+          h("span", { class: "device-opt-check-hint", text: "Jeśli posiadasz fizyczny przycisk buzzer, zaznacz tę opcję." }),
         ])]),
       ]));
       rows.push(buzzerRow);
@@ -138,6 +140,7 @@ export function createUI({ root, emit }) {
     root.appendChild(h("div", { class: "cardBody" }, [
       h("div", { class: "stepTitle", text: "Urządzenia" }),
       ...rows,
+      h("div", { class: "device-code-hint", text: "Wejdź na familiada.online, kliknij „Podłącz urządzenie” i wprowadź kod urządzenia." }),
       h("div", { class: "stepFoot" }, [h("div", { class: "stepFootButtons" }, [next])]),
     ]));
   }
