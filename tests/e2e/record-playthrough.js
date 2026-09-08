@@ -262,6 +262,25 @@ async function fillPaced(locator, text, ms = CLICK_PACE_MS) {
   await page.waitForTimeout(ms);
 }
 
+// To nagranie ma pokazywać, jak realnie wygląda praca operatora — .fill()
+// wsadza cały tekst do pola w jednej klatce, co na wideo wygląda jak wklejenie,
+// nie jak wpisywanie. Tu wpisujemy znak po znaku (page.keyboard.insertText —
+// obsługuje polskie znaki, w odróżnieniu od .press(), które operuje na
+// nazwach klawiszy). ui.js's "input" listener wysyła SET_ENTRY_TEXT po
+// KAŻDYM znaku (tak samo jak przy prawdziwym pisaniu na klawiaturze), więc
+// każdy znak czeka na własną odpowiedź zapisu — ten sam wyścig co przy
+// clickPaced, tylko na poziomie pojedynczego znaku zamiast kliknięcia.
+async function typePaced(locator, text, msPerChar = 90) {
+  const page = locator.page();
+  await locator.click();
+  for (const ch of text) {
+    const responded = waitForWrite(page);
+    await page.keyboard.insertText(ch);
+    await responded;
+    await page.waitForTimeout(msPerChar);
+  }
+}
+
 async function checkPaced(locator, ms = CLICK_PACE_MS) {
   const page = locator.page();
   const responded = waitForWrite(page);
@@ -353,7 +372,7 @@ async function scenarioFinalFull(pages) {
   // Gracz 1: wpisz wszystkie 5, uruchom zegarek, poczekaj na NATURALNE wygaśnięcie (15s)
   const p1Inputs = control.locator("#app input[type=text]");
   for (let i = 0; i < 5; i++) {
-    await fillPaced(p1Inputs.nth(i), "Odp. finałowa");
+    await typePaced(p1Inputs.nth(i), "Odp. finałowa");
   }
   await clickPaced(control.getByRole("button", { name: "Start timera" }));
   await control.waitForTimeout(16_000);
@@ -379,7 +398,7 @@ async function scenarioFinalFull(pages) {
   await checkPaced(control.getByLabel("powtórzenie").first());
   const p2Inputs = control.locator("#app input[type=text]");
   for (let i = 1; i < 5; i++) {
-    await fillPaced(p2Inputs.nth(i), "Odp. finałowa");
+    await typePaced(p2Inputs.nth(i), "Odp. finałowa");
   }
   await clickPaced(control.getByRole("button", { name: "Start timera" }));
   await clickPaced(control.getByRole("button", { name: "Dalej" })); // tym razem NIE czekamy na naturalne wygaśnięcie
