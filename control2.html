@@ -48,7 +48,14 @@
        jedynym widocznym obramowaniem/tłem/cieniem wokół treści; min-height
        przeniesione tutaj, żeby krótsze ekrany (np. Urządzenia) nie zapadały
        się wizualnie bez .card's dawnego min-height:320px. */
-    .c2-gameplay-card { width:min(720px, 100%); max-height:100%; min-height:320px; }
+    #app { min-height:320px; }
+    /* Wąska, wyśrodkowana szerokość (720px) dotyczy WYŁĄCZNIE trzech
+       przeprojektowanych ekranów rozgrywki (Rundy/Final — plan, sekcja 3b)
+       — control2/js/ui.js's gameplayShell() dokłada tę klasę do SWOJEGO
+       wewnętrznego kontenera, nie do #app. Urządzenia/Podsumowanie mają
+       zostać na pełną szerokość .control-main-card, tak jak w starym
+       Control — to NIE jest klasa na #app. */
+    .c2-gameplay-card { width:min(720px, 100%); max-height:100%; margin:0 auto; }
     .c2-gameplay { height: 100%; max-height: 640px; display:flex; flex-direction:column; gap:12px; }
     .c2-stepper { font-size:.75rem; letter-spacing:.08em; text-transform:uppercase; opacity:.65; border-bottom:1px solid rgba(255,255,255,.12); padding-bottom:8px; }
     .c2-gameplay-body { flex:1; overflow:hidden; display:flex; flex-direction:column; gap:12px; min-height:0; }
@@ -197,7 +204,7 @@
     <div class="shell">
       <div class="control-tabs-card">
         <section class="main control-main-card">
-          <div class="c2-gameplay-card" id="app"><!-- renderowane przez control2/js/ui.js --></div>
+          <div id="app"><!-- renderowane przez control2/js/ui.js --></div>
         </section>
       </div>
     </div>

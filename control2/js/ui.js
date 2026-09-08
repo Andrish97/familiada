@@ -290,7 +290,11 @@ export function createUI({ root, emit }) {
   // ============================================================
   function gameplayShell({ stepLabel, body, nav }) {
     clear();
-    root.appendChild(h("div", { class: "c2-card-inner c2-gameplay" }, [
+    // .c2-gameplay-card (720px, wyśrodkowane) tylko TU — na WŁASNYM
+    // kontenerze tego szablonu, nie na #app. Urządzenia/Podsumowanie mają
+    // zostać na pełną szerokość (patrz control2.html) — tylko te trzy
+    // przeprojektowane ekrany rozgrywki mają być węższe (plan, sekcja 3b).
+    root.appendChild(h("div", { class: "c2-card-inner c2-gameplay c2-gameplay-card" }, [
       h("div", { class: "c2-stepper", text: stepLabel }),
       h("div", { class: "c2-gameplay-body" }, body),
       nav ? h("div", { class: "c2-gameplay-nav" }, nav) : null,
